@@ -6,6 +6,9 @@ end
 
 function ents.PFMScene:Initialize()
 	BaseEntityComponent.Initialize(self)
+	
+	self:AddEntityComponent(ents.COMPONENT_LOGIC)
+	self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")
 
 	self.m_tracks = {}
 	self.m_start = 0.0
@@ -13,15 +16,19 @@ function ents.PFMScene:Initialize()
 	self.m_bCameraEnabled = true
 end
 
+function ents.PFMScene:OnTick(dt)
+	
+end
+
 function ents.PFMScene:Start()
 	for _,track in ipairs(self.m_tracks) do
 		if(self.m_offsetTransform ~= nil) then
 			track:SetOffsetTransform(self.m_offsetTransform[1],self.m_offsetTransform[2])
 		end
-		track:SetCameraEnabled(self.m_bCameraEnabled)
+		track:GetComponent(ents.COMPONENT_PFM_TRACK):SetCameraEnabled(self.m_bCameraEnabled)
 	end
 	local tStart
-	self.m_cbThink = game.add_callback("Think",function()
+	--[[self.m_cbThink = game.add_callback("Think",function()
 		tStart = tStart or time.cur_time()
 		local t = time.cur_time()
 		local tDelta = t -tStart
@@ -31,9 +38,9 @@ function ents.PFMScene:Start()
 			return
 		end
 		for _,track in ipairs(self.m_tracks) do
-			track:Run(tDelta)
+			track:GetComponent(ents.COMPONENT_PFM_TRACK):Run(tDelta)
 		end
-	end)
+	end)]]
 end
 
 function ents.PFMScene:Stop()
@@ -58,9 +65,12 @@ function ents.PFMScene:GetTimeSpan() return self.m_start,self.m_duration end
 
 function ents.PFMScene:AddTrack(name,start,dur,offset)
 	for _,track in ipairs(self.m_tracks) do
-		if(track:GetName() == name) then return track end
+		if(track:GetComponent(ents.COMPONENT_NAME):GetName() == name) then return track end
 	end
-	table.insert(self.m_tracks,ents.PFMScene.Track(name,start,dur,offset))
+	local track = ents.create("pfm_track")
+	track:GetComponent(ents.COMPONENT_NAME):SetName(name)
+	-- ents.PFMScene.Track(name,start,dur,offset)
+	table.insert(self.m_tracks,track)
 	return self.m_tracks[#self.m_tracks]
 end
 

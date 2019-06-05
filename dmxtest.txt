@@ -1,0 +1,1767 @@
+session (DmElement, 5 attributes)
+	activeClip (Element):
+			test (DmeFilmClip, 25 attributes)
+				concommands (StringArray):
+					Array [StringArray][0 elements]
+				activeBookmarkSet (Int):
+					0
+				displayScale (Float):
+					1
+				timeFrame (Element):
+						unnamed (DmeTimeFrame, 4 attributes)
+							start (Time):
+								0
+							duration (Time):
+								60
+							offset (Time):
+								0
+							scale (Float):
+								1
+				materialOverlay (Element):
+					NULL
+				inputs (ElementArray):
+					Array [ElementArray][0 elements]
+				color (Color):
+					0 0 0 0
+				camera (Element):
+					NULL
+				text (String):
+					
+				trackGroups (ElementArray):
+					Array [ElementArray][2 elements]
+				bookmarkSets (ElementArray):
+					Array [ElementArray][1 elements]
+				mute (Bool):
+					0
+				mapname (String):
+					arena_nucleus.bsp
+				scene (Element):
+					NULL
+				monitorCameras (ElementArray):
+					Array [ElementArray][0 elements]
+				activeMonitor (Int):
+					-1
+				aviFile (String):
+					
+				fadeIn (Time):
+					0
+				fadeOut (Time):
+					0
+				operators (ElementArray):
+					Array [ElementArray][0 elements]
+				useAviFile (Bool):
+					0
+				animationSets (ElementArray):
+					Array [ElementArray][0 elements]
+				subClipTrackGroup (Element):
+						subClipTrackGroup (DmeTrackGroup, 7 attributes)
+							tracks (ElementArray):
+								Array [ElementArray][1 elements]
+							displayScale (Float):
+								1
+							visible (Bool):
+								1
+							mute (Bool):
+								0
+							minimized (Bool):
+								0
+							volume (Float):
+								1
+							forcemultitrack (Bool):
+								0
+				volume (Float):
+					1
+				convars (StringArray):
+					Array [StringArray][0 elements]
+	miscBin (ElementArray):
+		Array [ElementArray][0 elements]
+	cameraBin (ElementArray):
+		Array [ElementArray][0 elements]
+	settings (Element):
+			sessionSettings (DmElement, 7 attributes)
+				movieSettings (Element):
+						movieSettings (DmElement, 8 attributes)
+							videoTarget (Int):
+								6
+							clearDecals (Bool):
+								0
+							stereoscopic (Bool):
+								0
+							audioTarget (Int):
+								2
+							width (Int):
+								1280
+							stereoSingleFile (Bool):
+								0
+							height (Int):
+								720
+							filename (String):
+								
+				timeSelection (Element):
+						timeSelection (DmeTimeSelection, 11 attributes)
+							enabled (Bool):
+								0
+							hold_right (Time):
+								214748
+							relative (Bool):
+								0
+							falloff_left (Time):
+								-214748
+							interpolator_left (Int):
+								6
+							falloff_right (Time):
+								214748
+							threshold (Float):
+								0.0005
+							hold_left (Time):
+								-214748
+							interpolator_right (Int):
+								6
+							resampleinterval (Time):
+								0.01
+							recordingstate (Int):
+								3
+				sharedPresetGroupSettings (Element):
+						sharedPresetGroupSettings (DmElement, 1 attributes)
+							presetGroupInfos (ElementArray):
+								Array [ElementArray][1 elements]
+				graphEditorState (Element):
+						graphEditorState (DmeGraphEditorState, 1 attributes)
+							displayGrid (Bool):
+								1
+				proceduralPresets (Element):
+						proceduralPresets (DmeProceduralPresetSettings, 7 attributes)
+							jitteriterations (Int):
+								5
+							jitterscale_vector (Float):
+								2.5
+							jitterscale (Float):
+								1
+							smoothiterations (Int):
+								5
+							smoothscale_vector (Float):
+								2.5
+							smoothscale (Float):
+								1
+							staggerinterval (Time):
+								0.0833
+				renderSettings (Element):
+						renderSettings (DmElement, 10 attributes)
+							frameRate (Float):
+								24
+							drawToolRenderablesMask (Int):
+								15
+							engineCameraEffects (Bool):
+								0
+							lightAverage (Int):
+								0
+							toneMapScale (Float):
+								1
+							modelLod (Int):
+								0
+							ambientOcclusionMode (Int):
+								1
+							showAmbientOcclusion (Int):
+								0
+							drawGameRenderablesMask (Int):
+								216
+							ProgressiveRefinement (Element):
+									ProgressiveRefinementSettings (DmElement, 10 attributes)
+										useAntialiasing (Bool):
+											1
+										useDepthOfField (Bool):
+											1
+										on (Bool):
+											1
+										overrideDepthOfFieldQuality (Bool):
+											0
+										overrideMotionBlurQuality (Bool):
+											0
+										useMotionBlur (Bool):
+											1
+										overrideDepthOfFieldQualityValue (Int):
+											1
+										overrideMotionBlurQualityValue (Int):
+											1
+										overrideShutterSpeed (Bool):
+											0
+										overrideShutterSpeedValue (Float):
+											0.0208333
+				posterSettings (Element):
+						posterSettings (DmElement, 7 attributes)
+							width (Int):
+								1920
+							constrainAspect (Bool):
+								1
+							height (Int):
+								1080
+							DPI (Int):
+								300
+							heightInPixels (Bool):
+								1
+							units (Int):
+								0
+							widthInPixels (Bool):
+								1
+	clipBin (ElementArray):
+		Array [ElementArray][1 elements]
+sessionSettings (DmElement, 7 attributes)
+	movieSettings (Element):
+			movieSettings (DmElement, 8 attributes)
+				videoTarget (Int):
+					6
+				clearDecals (Bool):
+					0
+				stereoscopic (Bool):
+					0
+				audioTarget (Int):
+					2
+				width (Int):
+					1280
+				stereoSingleFile (Bool):
+					0
+				height (Int):
+					720
+				filename (String):
+					
+	timeSelection (Element):
+			timeSelection (DmeTimeSelection, 11 attributes)
+				enabled (Bool):
+					0
+				hold_right (Time):
+					214748
+				relative (Bool):
+					0
+				falloff_left (Time):
+					-214748
+				interpolator_left (Int):
+					6
+				falloff_right (Time):
+					214748
+				threshold (Float):
+					0.0005
+				hold_left (Time):
+					-214748
+				interpolator_right (Int):
+					6
+				resampleinterval (Time):
+					0.01
+				recordingstate (Int):
+					3
+	sharedPresetGroupSettings (Element):
+			sharedPresetGroupSettings (DmElement, 1 attributes)
+				presetGroupInfos (ElementArray):
+					Array [ElementArray][1 elements]
+	graphEditorState (Element):
+			graphEditorState (DmeGraphEditorState, 1 attributes)
+				displayGrid (Bool):
+					1
+	proceduralPresets (Element):
+			proceduralPresets (DmeProceduralPresetSettings, 7 attributes)
+				jitteriterations (Int):
+					5
+				jitterscale_vector (Float):
+					2.5
+				jitterscale (Float):
+					1
+				smoothiterations (Int):
+					5
+				smoothscale_vector (Float):
+					2.5
+				smoothscale (Float):
+					1
+				staggerinterval (Time):
+					0.0833
+	renderSettings (Element):
+			renderSettings (DmElement, 10 attributes)
+				frameRate (Float):
+					24
+				drawToolRenderablesMask (Int):
+					15
+				engineCameraEffects (Bool):
+					0
+				lightAverage (Int):
+					0
+				toneMapScale (Float):
+					1
+				modelLod (Int):
+					0
+				ambientOcclusionMode (Int):
+					1
+				showAmbientOcclusion (Int):
+					0
+				drawGameRenderablesMask (Int):
+					216
+				ProgressiveRefinement (Element):
+						ProgressiveRefinementSettings (DmElement, 10 attributes)
+							useAntialiasing (Bool):
+								1
+							useDepthOfField (Bool):
+								1
+							on (Bool):
+								1
+							overrideDepthOfFieldQuality (Bool):
+								0
+							overrideMotionBlurQuality (Bool):
+								0
+							useMotionBlur (Bool):
+								1
+							overrideDepthOfFieldQualityValue (Int):
+								1
+							overrideMotionBlurQualityValue (Int):
+								1
+							overrideShutterSpeed (Bool):
+								0
+							overrideShutterSpeedValue (Float):
+								0.0208333
+	posterSettings (Element):
+			posterSettings (DmElement, 7 attributes)
+				width (Int):
+					1920
+				constrainAspect (Bool):
+					1
+				height (Int):
+					1080
+				DPI (Int):
+					300
+				heightInPixels (Bool):
+					1
+				units (Int):
+					0
+				widthInPixels (Bool):
+					1
+sharedPresetGroupSettings (DmElement, 1 attributes)
+	presetGroupInfos (ElementArray):
+		Array [ElementArray][1 elements]
+dday_map (DmePresetGroupInfo, 2 attributes)
+	filenameBase (String):
+		models\props_doomsday\dday_map
+	presetGroups (ElementArray):
+		Array [ElementArray][0 elements]
+movieSettings (DmElement, 8 attributes)
+	videoTarget (Int):
+		6
+	clearDecals (Bool):
+		0
+	stereoscopic (Bool):
+		0
+	audioTarget (Int):
+		2
+	width (Int):
+		1280
+	stereoSingleFile (Bool):
+		0
+	height (Int):
+		720
+	filename (String):
+		
+posterSettings (DmElement, 7 attributes)
+	width (Int):
+		1920
+	constrainAspect (Bool):
+		1
+	height (Int):
+		1080
+	DPI (Int):
+		300
+	heightInPixels (Bool):
+		1
+	units (Int):
+		0
+	widthInPixels (Bool):
+		1
+renderSettings (DmElement, 10 attributes)
+	frameRate (Float):
+		24
+	drawToolRenderablesMask (Int):
+		15
+	engineCameraEffects (Bool):
+		0
+	lightAverage (Int):
+		0
+	toneMapScale (Float):
+		1
+	modelLod (Int):
+		0
+	ambientOcclusionMode (Int):
+		1
+	showAmbientOcclusion (Int):
+		0
+	drawGameRenderablesMask (Int):
+		216
+	ProgressiveRefinement (Element):
+			ProgressiveRefinementSettings (DmElement, 10 attributes)
+				useAntialiasing (Bool):
+					1
+				useDepthOfField (Bool):
+					1
+				on (Bool):
+					1
+				overrideDepthOfFieldQuality (Bool):
+					0
+				overrideMotionBlurQuality (Bool):
+					0
+				useMotionBlur (Bool):
+					1
+				overrideDepthOfFieldQualityValue (Int):
+					1
+				overrideMotionBlurQualityValue (Int):
+					1
+				overrideShutterSpeed (Bool):
+					0
+				overrideShutterSpeedValue (Float):
+					0.0208333
+ProgressiveRefinementSettings (DmElement, 10 attributes)
+	useAntialiasing (Bool):
+		1
+	useDepthOfField (Bool):
+		1
+	on (Bool):
+		1
+	overrideDepthOfFieldQuality (Bool):
+		0
+	overrideMotionBlurQuality (Bool):
+		0
+	useMotionBlur (Bool):
+		1
+	overrideDepthOfFieldQualityValue (Int):
+		1
+	overrideMotionBlurQualityValue (Int):
+		1
+	overrideShutterSpeed (Bool):
+		0
+	overrideShutterSpeedValue (Float):
+		0.0208333
+proceduralPresets (DmeProceduralPresetSettings, 7 attributes)
+	jitteriterations (Int):
+		5
+	jitterscale_vector (Float):
+		2.5
+	jitterscale (Float):
+		1
+	smoothiterations (Int):
+		5
+	smoothscale_vector (Float):
+		2.5
+	smoothscale (Float):
+		1
+	staggerinterval (Time):
+		0.0833
+graphEditorState (DmeGraphEditorState, 1 attributes)
+	displayGrid (Bool):
+		1
+timeSelection (DmeTimeSelection, 11 attributes)
+	enabled (Bool):
+		0
+	hold_right (Time):
+		214748
+	relative (Bool):
+		0
+	falloff_left (Time):
+		-214748
+	interpolator_left (Int):
+		6
+	falloff_right (Time):
+		214748
+	threshold (Float):
+		0.0005
+	hold_left (Time):
+		-214748
+	interpolator_right (Int):
+		6
+	resampleinterval (Time):
+		0.01
+	recordingstate (Int):
+		3
+test (DmeFilmClip, 25 attributes)
+	concommands (StringArray):
+		Array [StringArray][0 elements]
+	activeBookmarkSet (Int):
+		0
+	displayScale (Float):
+		1
+	timeFrame (Element):
+			unnamed (DmeTimeFrame, 4 attributes)
+				start (Time):
+					0
+				duration (Time):
+					60
+				offset (Time):
+					0
+				scale (Float):
+					1
+	materialOverlay (Element):
+		NULL
+	inputs (ElementArray):
+		Array [ElementArray][0 elements]
+	color (Color):
+		0 0 0 0
+	camera (Element):
+		NULL
+	text (String):
+		
+	trackGroups (ElementArray):
+		Array [ElementArray][2 elements]
+	bookmarkSets (ElementArray):
+		Array [ElementArray][1 elements]
+	mute (Bool):
+		0
+	mapname (String):
+		arena_nucleus.bsp
+	scene (Element):
+		NULL
+	monitorCameras (ElementArray):
+		Array [ElementArray][0 elements]
+	activeMonitor (Int):
+		-1
+	aviFile (String):
+		
+	fadeIn (Time):
+		0
+	fadeOut (Time):
+		0
+	operators (ElementArray):
+		Array [ElementArray][0 elements]
+	useAviFile (Bool):
+		0
+	animationSets (ElementArray):
+		Array [ElementArray][0 elements]
+	subClipTrackGroup (Element):
+			subClipTrackGroup (DmeTrackGroup, 7 attributes)
+				tracks (ElementArray):
+					Array [ElementArray][1 elements]
+				displayScale (Float):
+					1
+				visible (Bool):
+					1
+				mute (Bool):
+					0
+				minimized (Bool):
+					0
+				volume (Float):
+					1
+				forcemultitrack (Bool):
+					0
+	volume (Float):
+		1
+	convars (StringArray):
+		Array [StringArray][0 elements]
+subClipTrackGroup (DmeTrackGroup, 7 attributes)
+	tracks (ElementArray):
+		Array [ElementArray][1 elements]
+	displayScale (Float):
+		1
+	visible (Bool):
+		1
+	mute (Bool):
+		0
+	minimized (Bool):
+		0
+	volume (Float):
+		1
+	forcemultitrack (Bool):
+		0
+Film (DmeTrack, 7 attributes)
+	children (ElementArray):
+		Array [ElementArray][1 elements]
+	collapsed (Bool):
+		0
+	mute (Bool):
+		0
+	volume (Float):
+		1
+	synched (Bool):
+		1
+	clipType (Int):
+		3
+	displayScale (Float):
+		1
+shot1 (DmeFilmClip, 25 attributes)
+	concommands (StringArray):
+		Array [StringArray][0 elements]
+	activeBookmarkSet (Int):
+		0
+	displayScale (Float):
+		1
+	timeFrame (Element):
+			unnamed (DmeTimeFrame, 4 attributes)
+				start (Time):
+					0
+				duration (Time):
+					60
+				offset (Time):
+					0
+				scale (Float):
+					1
+	materialOverlay (Element):
+		NULL
+	inputs (ElementArray):
+		Array [ElementArray][0 elements]
+	color (Color):
+		0 0 0 0
+	camera (Element):
+			camera1 (DmeCamera, 37 attributes)
+				fieldOfView (Float):
+					30
+				transform (Element):
+						unnamed (DmeTransform, 2 attributes)
+							position (Vector3):
+								-107.242 98.8999 22.6386
+							orientation (Quaternion):
+								1.52447 10.6426 -8.05801
+				eyeSeparation (Float):
+					0.75
+				zfar (Float):
+					28377.9
+				scale3 (Float):
+					1
+				lookat1 (Vector3):
+					0 0 0
+				depthOfFieldQuality (Int):
+					0
+				shape (Element):
+					NULL
+				visible (Bool):
+					1
+				children (ElementArray):
+					Array [ElementArray][0 elements]
+				motionBlurQuality (Int):
+					0
+				zeroParallaxDistance (Float):
+					75
+				znear (Float):
+					3
+				focalDistance (Float):
+					72
+				behindfrustum (Bool):
+					0
+				toneMapScale (Float):
+					1
+				aperture (Float):
+					0.2
+				shutterSpeed (Time):
+					0.0208
+				distance (Float):
+					32
+				SSAOBias (Float):
+					0.0005
+				SSAOStrength (Float):
+					1
+				SSAORadius (Float):
+					15
+				bloomScale (Float):
+					0.28
+				SSAOTint (Color):
+					0 0 0 255
+				bloomWidth (Float):
+					9
+				lookat4 (Vector3):
+					0 0 0
+				ortho (Bool):
+					0
+				axis (Int):
+					0
+				lookat2 (Vector3):
+					0 0 0
+				scale0 (Float):
+					1
+				scale2 (Float):
+					1
+				lookat0 (Vector3):
+					0 0 0
+				lookat3 (Vector3):
+					0 0 0
+				scale1 (Float):
+					1
+				scale4 (Float):
+					1
+				scale5 (Float):
+					1
+				lookat5 (Vector3):
+					0 0 0
+	text (String):
+		
+	trackGroups (ElementArray):
+		Array [ElementArray][1 elements]
+	bookmarkSets (ElementArray):
+		Array [ElementArray][1 elements]
+	mute (Bool):
+		0
+	mapname (String):
+		
+	scene (Element):
+			scene (DmeDag, 4 attributes)
+				transform (Element):
+						unnamed (DmeTransform, 2 attributes)
+							position (Vector3):
+								0 0 0
+							orientation (Quaternion):
+								-0 0 0
+				shape (Element):
+					NULL
+				visible (Bool):
+					1
+				children (ElementArray):
+					Array [ElementArray][2 elements]
+	monitorCameras (ElementArray):
+		Array [ElementArray][0 elements]
+	activeMonitor (Int):
+		-1
+	aviFile (String):
+		
+	fadeIn (Time):
+		0
+	fadeOut (Time):
+		0
+	operators (ElementArray):
+		Array [ElementArray][0 elements]
+	useAviFile (Bool):
+		0
+	animationSets (ElementArray):
+		Array [ElementArray][1 elements]
+	subClipTrackGroup (Element):
+		NULL
+	volume (Float):
+		1
+	convars (StringArray):
+		Array [StringArray][0 elements]
+Default Set (DmeBookmarkSet, 1 attributes)
+	bookmarks (ElementArray):
+		Array [ElementArray][0 elements]
+dday_map1 (DmeAnimationSet, 6 attributes)
+	controls (ElementArray):
+		Array [ElementArray][2 elements]
+	presetGroups (ElementArray):
+		Array [ElementArray][0 elements]
+	phonememap (ElementArray):
+		Array [ElementArray][0 elements]
+	operators (ElementArray):
+		Array [ElementArray][0 elements]
+	rootControlGroup (Element):
+			unnamed (DmeControlGroup, 7 attributes)
+				children (ElementArray):
+					Array [ElementArray][2 elements]
+				controls (ElementArray):
+					Array [ElementArray][0 elements]
+				snappable (Bool):
+					1
+				groupColor (Color):
+					200 200 200 255
+				visible (Bool):
+					1
+				controlColor (Color):
+					200 200 200 255
+				selectable (Bool):
+					1
+	gameModel (Element):
+			dday_map_GameModel (DmeGameModel, 16 attributes)
+				flexWeights (FloatArray):
+					Array [FloatArray][128 elements]
+				illumPositionDag (Element):
+						bone 0 (static_prop) (DmeDag, 4 attributes)
+							transform (Element):
+									bone 0 (static_prop) (DmeTransform, 2 attributes)
+										position (Vector3):
+											0 0 0
+										orientation (Quaternion):
+											-0 0 0
+							shape (Element):
+								NULL
+							visible (Bool):
+								1
+							children (ElementArray):
+								Array [ElementArray][0 elements]
+				transform (Element):
+						unnamed (DmeTransform, 2 attributes)
+							position (Vector3):
+								-63.0867 92.537 21.6183
+							orientation (Quaternion):
+								180 180 -8.20001
+				shape (Element):
+					NULL
+				visible (Bool):
+					1
+				modelName (String):
+					models/props_doomsday/dday_map.mdl
+				children (ElementArray):
+					Array [ElementArray][1 elements]
+				sequence (Int):
+					0
+				skin (Int):
+					0
+				body (Int):
+					0
+				flags (Int):
+					0
+				bones (ElementArray):
+					Array [ElementArray][1 elements]
+				globalFlexControllers (ElementArray):
+					Array [ElementArray][0 elements]
+				computeBounds (Bool):
+					1
+				evaluateProceduralBones (Bool):
+					1
+				flexnames (StringArray):
+					Array [StringArray][128 elements]
+dday_map_GameModel (DmeGameModel, 16 attributes)
+	flexWeights (FloatArray):
+		Array [FloatArray][128 elements]
+	illumPositionDag (Element):
+			bone 0 (static_prop) (DmeDag, 4 attributes)
+				transform (Element):
+						bone 0 (static_prop) (DmeTransform, 2 attributes)
+							position (Vector3):
+								0 0 0
+							orientation (Quaternion):
+								-0 0 0
+				shape (Element):
+					NULL
+				visible (Bool):
+					1
+				children (ElementArray):
+					Array [ElementArray][0 elements]
+	transform (Element):
+			unnamed (DmeTransform, 2 attributes)
+				position (Vector3):
+					-63.0867 92.537 21.6183
+				orientation (Quaternion):
+					180 180 -8.20001
+	shape (Element):
+		NULL
+	visible (Bool):
+		1
+	modelName (String):
+		models/props_doomsday/dday_map.mdl
+	children (ElementArray):
+		Array [ElementArray][1 elements]
+	sequence (Int):
+		0
+	skin (Int):
+		0
+	body (Int):
+		0
+	flags (Int):
+		0
+	bones (ElementArray):
+		Array [ElementArray][1 elements]
+	globalFlexControllers (ElementArray):
+		Array [ElementArray][0 elements]
+	computeBounds (Bool):
+		1
+	evaluateProceduralBones (Bool):
+		1
+	flexnames (StringArray):
+		Array [StringArray][128 elements]
+bone 0 (static_prop) (DmeDag, 4 attributes)
+	transform (Element):
+			bone 0 (static_prop) (DmeTransform, 2 attributes)
+				position (Vector3):
+					0 0 0
+				orientation (Quaternion):
+					-0 0 0
+	shape (Element):
+		NULL
+	visible (Bool):
+		1
+	children (ElementArray):
+		Array [ElementArray][0 elements]
+bone 0 (static_prop) (DmeTransform, 2 attributes)
+	position (Vector3):
+		0 0 0
+	orientation (Quaternion):
+		-0 0 0
+unnamed (DmeTransform, 2 attributes)
+	position (Vector3):
+		-63.0867 92.537 21.6183
+	orientation (Quaternion):
+		180 180 -8.20001
+unnamed (DmeControlGroup, 7 attributes)
+	children (ElementArray):
+		Array [ElementArray][2 elements]
+	controls (ElementArray):
+		Array [ElementArray][0 elements]
+	snappable (Bool):
+		1
+	groupColor (Color):
+		200 200 200 255
+	visible (Bool):
+		1
+	controlColor (Color):
+		200 200 200 255
+	selectable (Bool):
+		1
+Body (DmeControlGroup, 7 attributes)
+	children (ElementArray):
+		Array [ElementArray][0 elements]
+	controls (ElementArray):
+		Array [ElementArray][1 elements]
+	snappable (Bool):
+		1
+	groupColor (Color):
+		0 128 255 255
+	visible (Bool):
+		1
+	controlColor (Color):
+		200 200 200 255
+	selectable (Bool):
+		1
+rootTransform (DmeTransformControl, 4 attributes)
+	positionChannel (Element):
+			rootTransform_p (DmeChannel, 8 attributes)
+				fromAttribute (String):
+					valuePosition
+				fromElement (Element):
+
+				fromIndex (Int):
+					0
+				toAttribute (String):
+					position
+				toElement (Element):
+						unnamed (DmeTransform, 2 attributes)
+							position (Vector3):
+								-63.0867 92.537 21.6183
+							orientation (Quaternion):
+								180 180 -8.20001
+				toIndex (Int):
+					0
+				mode (Int):
+					3
+				log (Element):
+						vector3 log (DmeVector3Log, 7 attributes)
+							defaultvalue (Vector3):
+								0 0 0
+							layers (ElementArray):
+								Array [ElementArray][1 elements]
+							curveinfo (Element):
+								NULL
+							usedefaultvalue (Bool):
+								0
+							bookmarksX (TimeArray):
+								Array [TimeArray][0 elements]
+							bookmarksY (TimeArray):
+								Array [TimeArray][0 elements]
+							bookmarksZ (TimeArray):
+								Array [TimeArray][0 elements]
+	valuePosition (Vector3):
+		-63.0867 92.537 21.6183
+	valueOrientation (Quaternion):
+		180 180 -8.20001
+	orientationChannel (Element):
+			rootTransform_o (DmeChannel, 8 attributes)
+				fromAttribute (String):
+					valueOrientation
+				fromElement (Element):
+
+				fromIndex (Int):
+					0
+				toAttribute (String):
+					orientation
+				toElement (Element):
+
+				toIndex (Int):
+					0
+				mode (Int):
+					3
+				log (Element):
+						quaternion log (DmeQuaternionLog, 7 attributes)
+							defaultvalue (Quaternion):
+								-0 0 0
+							layers (ElementArray):
+								Array [ElementArray][1 elements]
+							curveinfo (Element):
+								NULL
+							usedefaultvalue (Bool):
+								0
+							bookmarksX (TimeArray):
+								Array [TimeArray][0 elements]
+							bookmarksY (TimeArray):
+								Array [TimeArray][0 elements]
+							bookmarksZ (TimeArray):
+								Array [TimeArray][0 elements]
+rootTransform_o (DmeChannel, 8 attributes)
+	fromAttribute (String):
+		valueOrientation
+	fromElement (Element):
+			rootTransform (DmeTransformControl, 4 attributes)
+				positionChannel (Element):
+						rootTransform_p (DmeChannel, 8 attributes)
+							fromAttribute (String):
+								valuePosition
+							fromElement (Element):
+
+							fromIndex (Int):
+								0
+							toAttribute (String):
+								position
+							toElement (Element):
+									unnamed (DmeTransform, 2 attributes)
+										position (Vector3):
+											-63.0867 92.537 21.6183
+										orientation (Quaternion):
+											180 180 -8.20001
+							toIndex (Int):
+								0
+							mode (Int):
+								3
+							log (Element):
+									vector3 log (DmeVector3Log, 7 attributes)
+										defaultvalue (Vector3):
+											0 0 0
+										layers (ElementArray):
+											Array [ElementArray][1 elements]
+										curveinfo (Element):
+											NULL
+										usedefaultvalue (Bool):
+											0
+										bookmarksX (TimeArray):
+											Array [TimeArray][0 elements]
+										bookmarksY (TimeArray):
+											Array [TimeArray][0 elements]
+										bookmarksZ (TimeArray):
+											Array [TimeArray][0 elements]
+				valuePosition (Vector3):
+					-63.0867 92.537 21.6183
+				valueOrientation (Quaternion):
+					180 180 -8.20001
+				orientationChannel (Element):
+
+	fromIndex (Int):
+		0
+	toAttribute (String):
+		orientation
+	toElement (Element):
+
+	toIndex (Int):
+		0
+	mode (Int):
+		3
+	log (Element):
+			quaternion log (DmeQuaternionLog, 7 attributes)
+				defaultvalue (Quaternion):
+					-0 0 0
+				layers (ElementArray):
+					Array [ElementArray][1 elements]
+				curveinfo (Element):
+					NULL
+				usedefaultvalue (Bool):
+					0
+				bookmarksX (TimeArray):
+					Array [TimeArray][0 elements]
+				bookmarksY (TimeArray):
+					Array [TimeArray][0 elements]
+				bookmarksZ (TimeArray):
+					Array [TimeArray][0 elements]
+quaternion log (DmeQuaternionLog, 7 attributes)
+	defaultvalue (Quaternion):
+		-0 0 0
+	layers (ElementArray):
+		Array [ElementArray][1 elements]
+	curveinfo (Element):
+		NULL
+	usedefaultvalue (Bool):
+		0
+	bookmarksX (TimeArray):
+		Array [TimeArray][0 elements]
+	bookmarksY (TimeArray):
+		Array [TimeArray][0 elements]
+	bookmarksZ (TimeArray):
+		Array [TimeArray][0 elements]
+quaternion log (DmeQuaternionLogLayer, 4 attributes)
+	curvetypes (IntArray):
+		Array [IntArray][0 elements]
+	times (TimeArray):
+		Array [TimeArray][1 elements]
+	values (QuaternionArray):
+		Array [QuaternionArray][1 elements]
+	compressed (Binary):
+		Binary (0 bytes)
+rootTransform_p (DmeChannel, 8 attributes)
+	fromAttribute (String):
+		valuePosition
+	fromElement (Element):
+			rootTransform (DmeTransformControl, 4 attributes)
+				positionChannel (Element):
+
+				valuePosition (Vector3):
+					-63.0867 92.537 21.6183
+				valueOrientation (Quaternion):
+					180 180 -8.20001
+				orientationChannel (Element):
+						rootTransform_o (DmeChannel, 8 attributes)
+							fromAttribute (String):
+								valueOrientation
+							fromElement (Element):
+
+							fromIndex (Int):
+								0
+							toAttribute (String):
+								orientation
+							toElement (Element):
+									unnamed (DmeTransform, 2 attributes)
+										position (Vector3):
+											-63.0867 92.537 21.6183
+										orientation (Quaternion):
+											180 180 -8.20001
+							toIndex (Int):
+								0
+							mode (Int):
+								3
+							log (Element):
+									quaternion log (DmeQuaternionLog, 7 attributes)
+										defaultvalue (Quaternion):
+											-0 0 0
+										layers (ElementArray):
+											Array [ElementArray][1 elements]
+										curveinfo (Element):
+											NULL
+										usedefaultvalue (Bool):
+											0
+										bookmarksX (TimeArray):
+											Array [TimeArray][0 elements]
+										bookmarksY (TimeArray):
+											Array [TimeArray][0 elements]
+										bookmarksZ (TimeArray):
+											Array [TimeArray][0 elements]
+	fromIndex (Int):
+		0
+	toAttribute (String):
+		position
+	toElement (Element):
+
+	toIndex (Int):
+		0
+	mode (Int):
+		3
+	log (Element):
+			vector3 log (DmeVector3Log, 7 attributes)
+				defaultvalue (Vector3):
+					0 0 0
+				layers (ElementArray):
+					Array [ElementArray][1 elements]
+				curveinfo (Element):
+					NULL
+				usedefaultvalue (Bool):
+					0
+				bookmarksX (TimeArray):
+					Array [TimeArray][0 elements]
+				bookmarksY (TimeArray):
+					Array [TimeArray][0 elements]
+				bookmarksZ (TimeArray):
+					Array [TimeArray][0 elements]
+vector3 log (DmeVector3Log, 7 attributes)
+	defaultvalue (Vector3):
+		0 0 0
+	layers (ElementArray):
+		Array [ElementArray][1 elements]
+	curveinfo (Element):
+		NULL
+	usedefaultvalue (Bool):
+		0
+	bookmarksX (TimeArray):
+		Array [TimeArray][0 elements]
+	bookmarksY (TimeArray):
+		Array [TimeArray][0 elements]
+	bookmarksZ (TimeArray):
+		Array [TimeArray][0 elements]
+vector3 log (DmeVector3LogLayer, 4 attributes)
+	curvetypes (IntArray):
+		Array [IntArray][0 elements]
+	times (TimeArray):
+		Array [TimeArray][1 elements]
+	values (Vector3Array):
+		Array [Vector3Array][1 elements]
+	compressed (Binary):
+		Binary (0 bytes)
+Unknown (DmeControlGroup, 7 attributes)
+	children (ElementArray):
+		Array [ElementArray][0 elements]
+	controls (ElementArray):
+		Array [ElementArray][1 elements]
+	snappable (Bool):
+		1
+	groupColor (Color):
+		0 128 255 255
+	visible (Bool):
+		1
+	controlColor (Color):
+		200 200 200 255
+	selectable (Bool):
+		1
+static_prop (DmeTransformControl, 4 attributes)
+	positionChannel (Element):
+			static_prop_p (DmeChannel, 8 attributes)
+				fromAttribute (String):
+					valuePosition
+				fromElement (Element):
+
+				fromIndex (Int):
+					0
+				toAttribute (String):
+					position
+				toElement (Element):
+						bone 0 (static_prop) (DmeTransform, 2 attributes)
+							position (Vector3):
+								0 0 0
+							orientation (Quaternion):
+								-0 0 0
+				toIndex (Int):
+					0
+				mode (Int):
+					3
+				log (Element):
+						vector3 log (DmeVector3Log, 7 attributes)
+							defaultvalue (Vector3):
+								0 0 0
+							layers (ElementArray):
+								Array [ElementArray][1 elements]
+							curveinfo (Element):
+								NULL
+							usedefaultvalue (Bool):
+								0
+							bookmarksX (TimeArray):
+								Array [TimeArray][0 elements]
+							bookmarksY (TimeArray):
+								Array [TimeArray][0 elements]
+							bookmarksZ (TimeArray):
+								Array [TimeArray][0 elements]
+	valuePosition (Vector3):
+		0 0 0
+	valueOrientation (Quaternion):
+		-0 0 0
+	orientationChannel (Element):
+			static_prop_o (DmeChannel, 8 attributes)
+				fromAttribute (String):
+					valueOrientation
+				fromElement (Element):
+
+				fromIndex (Int):
+					0
+				toAttribute (String):
+					orientation
+				toElement (Element):
+
+				toIndex (Int):
+					0
+				mode (Int):
+					3
+				log (Element):
+						quaternion log (DmeQuaternionLog, 7 attributes)
+							defaultvalue (Quaternion):
+								-0 0 0
+							layers (ElementArray):
+								Array [ElementArray][1 elements]
+							curveinfo (Element):
+								NULL
+							usedefaultvalue (Bool):
+								0
+							bookmarksX (TimeArray):
+								Array [TimeArray][0 elements]
+							bookmarksY (TimeArray):
+								Array [TimeArray][0 elements]
+							bookmarksZ (TimeArray):
+								Array [TimeArray][0 elements]
+static_prop_o (DmeChannel, 8 attributes)
+	fromAttribute (String):
+		valueOrientation
+	fromElement (Element):
+			static_prop (DmeTransformControl, 4 attributes)
+				positionChannel (Element):
+						static_prop_p (DmeChannel, 8 attributes)
+							fromAttribute (String):
+								valuePosition
+							fromElement (Element):
+
+							fromIndex (Int):
+								0
+							toAttribute (String):
+								position
+							toElement (Element):
+									bone 0 (static_prop) (DmeTransform, 2 attributes)
+										position (Vector3):
+											0 0 0
+										orientation (Quaternion):
+											-0 0 0
+							toIndex (Int):
+								0
+							mode (Int):
+								3
+							log (Element):
+									vector3 log (DmeVector3Log, 7 attributes)
+										defaultvalue (Vector3):
+											0 0 0
+										layers (ElementArray):
+											Array [ElementArray][1 elements]
+										curveinfo (Element):
+											NULL
+										usedefaultvalue (Bool):
+											0
+										bookmarksX (TimeArray):
+											Array [TimeArray][0 elements]
+										bookmarksY (TimeArray):
+											Array [TimeArray][0 elements]
+										bookmarksZ (TimeArray):
+											Array [TimeArray][0 elements]
+				valuePosition (Vector3):
+					0 0 0
+				valueOrientation (Quaternion):
+					-0 0 0
+				orientationChannel (Element):
+
+	fromIndex (Int):
+		0
+	toAttribute (String):
+		orientation
+	toElement (Element):
+
+	toIndex (Int):
+		0
+	mode (Int):
+		3
+	log (Element):
+			quaternion log (DmeQuaternionLog, 7 attributes)
+				defaultvalue (Quaternion):
+					-0 0 0
+				layers (ElementArray):
+					Array [ElementArray][1 elements]
+				curveinfo (Element):
+					NULL
+				usedefaultvalue (Bool):
+					0
+				bookmarksX (TimeArray):
+					Array [TimeArray][0 elements]
+				bookmarksY (TimeArray):
+					Array [TimeArray][0 elements]
+				bookmarksZ (TimeArray):
+					Array [TimeArray][0 elements]
+quaternion log (DmeQuaternionLog, 7 attributes)
+	defaultvalue (Quaternion):
+		-0 0 0
+	layers (ElementArray):
+		Array [ElementArray][1 elements]
+	curveinfo (Element):
+		NULL
+	usedefaultvalue (Bool):
+		0
+	bookmarksX (TimeArray):
+		Array [TimeArray][0 elements]
+	bookmarksY (TimeArray):
+		Array [TimeArray][0 elements]
+	bookmarksZ (TimeArray):
+		Array [TimeArray][0 elements]
+quaternion log (DmeQuaternionLogLayer, 4 attributes)
+	curvetypes (IntArray):
+		Array [IntArray][0 elements]
+	times (TimeArray):
+		Array [TimeArray][1 elements]
+	values (QuaternionArray):
+		Array [QuaternionArray][1 elements]
+	compressed (Binary):
+		Binary (0 bytes)
+static_prop_p (DmeChannel, 8 attributes)
+	fromAttribute (String):
+		valuePosition
+	fromElement (Element):
+			static_prop (DmeTransformControl, 4 attributes)
+				positionChannel (Element):
+
+				valuePosition (Vector3):
+					0 0 0
+				valueOrientation (Quaternion):
+					-0 0 0
+				orientationChannel (Element):
+						static_prop_o (DmeChannel, 8 attributes)
+							fromAttribute (String):
+								valueOrientation
+							fromElement (Element):
+
+							fromIndex (Int):
+								0
+							toAttribute (String):
+								orientation
+							toElement (Element):
+									bone 0 (static_prop) (DmeTransform, 2 attributes)
+										position (Vector3):
+											0 0 0
+										orientation (Quaternion):
+											-0 0 0
+							toIndex (Int):
+								0
+							mode (Int):
+								3
+							log (Element):
+									quaternion log (DmeQuaternionLog, 7 attributes)
+										defaultvalue (Quaternion):
+											-0 0 0
+										layers (ElementArray):
+											Array [ElementArray][1 elements]
+										curveinfo (Element):
+											NULL
+										usedefaultvalue (Bool):
+											0
+										bookmarksX (TimeArray):
+											Array [TimeArray][0 elements]
+										bookmarksY (TimeArray):
+											Array [TimeArray][0 elements]
+										bookmarksZ (TimeArray):
+											Array [TimeArray][0 elements]
+	fromIndex (Int):
+		0
+	toAttribute (String):
+		position
+	toElement (Element):
+
+	toIndex (Int):
+		0
+	mode (Int):
+		3
+	log (Element):
+			vector3 log (DmeVector3Log, 7 attributes)
+				defaultvalue (Vector3):
+					0 0 0
+				layers (ElementArray):
+					Array [ElementArray][1 elements]
+				curveinfo (Element):
+					NULL
+				usedefaultvalue (Bool):
+					0
+				bookmarksX (TimeArray):
+					Array [TimeArray][0 elements]
+				bookmarksY (TimeArray):
+					Array [TimeArray][0 elements]
+				bookmarksZ (TimeArray):
+					Array [TimeArray][0 elements]
+vector3 log (DmeVector3Log, 7 attributes)
+	defaultvalue (Vector3):
+		0 0 0
+	layers (ElementArray):
+		Array [ElementArray][1 elements]
+	curveinfo (Element):
+		NULL
+	usedefaultvalue (Bool):
+		0
+	bookmarksX (TimeArray):
+		Array [TimeArray][0 elements]
+	bookmarksY (TimeArray):
+		Array [TimeArray][0 elements]
+	bookmarksZ (TimeArray):
+		Array [TimeArray][0 elements]
+vector3 log (DmeVector3LogLayer, 4 attributes)
+	curvetypes (IntArray):
+		Array [IntArray][0 elements]
+	times (TimeArray):
+		Array [TimeArray][1 elements]
+	values (Vector3Array):
+		Array [Vector3Array][1 elements]
+	compressed (Binary):
+		Binary (0 bytes)
+scene (DmeDag, 4 attributes)
+	transform (Element):
+			unnamed (DmeTransform, 2 attributes)
+				position (Vector3):
+					0 0 0
+				orientation (Quaternion):
+					-0 0 0
+	shape (Element):
+		NULL
+	visible (Bool):
+		1
+	children (ElementArray):
+		Array [ElementArray][2 elements]
+Cameras (DmeDag, 4 attributes)
+	transform (Element):
+			unnamed (DmeTransform, 2 attributes)
+				position (Vector3):
+					0 0 0
+				orientation (Quaternion):
+					-0 0 0
+	shape (Element):
+		NULL
+	visible (Bool):
+		1
+	children (ElementArray):
+		Array [ElementArray][1 elements]
+camera1 (DmeCamera, 37 attributes)
+	fieldOfView (Float):
+		30
+	transform (Element):
+			unnamed (DmeTransform, 2 attributes)
+				position (Vector3):
+					-107.242 98.8999 22.6386
+				orientation (Quaternion):
+					1.52447 10.6426 -8.05801
+	eyeSeparation (Float):
+		0.75
+	zfar (Float):
+		28377.9
+	scale3 (Float):
+		1
+	lookat1 (Vector3):
+		0 0 0
+	depthOfFieldQuality (Int):
+		0
+	shape (Element):
+		NULL
+	visible (Bool):
+		1
+	children (ElementArray):
+		Array [ElementArray][0 elements]
+	motionBlurQuality (Int):
+		0
+	zeroParallaxDistance (Float):
+		75
+	znear (Float):
+		3
+	focalDistance (Float):
+		72
+	behindfrustum (Bool):
+		0
+	toneMapScale (Float):
+		1
+	aperture (Float):
+		0.2
+	shutterSpeed (Time):
+		0.0208
+	distance (Float):
+		32
+	SSAOBias (Float):
+		0.0005
+	SSAOStrength (Float):
+		1
+	SSAORadius (Float):
+		15
+	bloomScale (Float):
+		0.28
+	SSAOTint (Color):
+		0 0 0 255
+	bloomWidth (Float):
+		9
+	lookat4 (Vector3):
+		0 0 0
+	ortho (Bool):
+		0
+	axis (Int):
+		0
+	lookat2 (Vector3):
+		0 0 0
+	scale0 (Float):
+		1
+	scale2 (Float):
+		1
+	lookat0 (Vector3):
+		0 0 0
+	lookat3 (Vector3):
+		0 0 0
+	scale1 (Float):
+		1
+	scale4 (Float):
+		1
+	scale5 (Float):
+		1
+	lookat5 (Vector3):
+		0 0 0
+unnamed (DmeTransform, 2 attributes)
+	position (Vector3):
+		-107.242 98.8999 22.6386
+	orientation (Quaternion):
+		1.52447 10.6426 -8.05801
+unnamed (DmeTransform, 2 attributes)
+	position (Vector3):
+		0 0 0
+	orientation (Quaternion):
+		-0 0 0
+dday_map1 (DmeDag, 4 attributes)
+	transform (Element):
+			unnamed (DmeTransform, 2 attributes)
+				position (Vector3):
+					0 0 0
+				orientation (Quaternion):
+					-0 0 0
+	shape (Element):
+		NULL
+	visible (Bool):
+		1
+	children (ElementArray):
+		Array [ElementArray][1 elements]
+unnamed (DmeTransform, 2 attributes)
+	position (Vector3):
+		0 0 0
+	orientation (Quaternion):
+		-0 0 0
+unnamed (DmeTransform, 2 attributes)
+	position (Vector3):
+		0 0 0
+	orientation (Quaternion):
+		-0 0 0
+channelTrackGroup (DmeTrackGroup, 7 attributes)
+	tracks (ElementArray):
+		Array [ElementArray][1 elements]
+	displayScale (Float):
+		1
+	visible (Bool):
+		1
+	mute (Bool):
+		0
+	minimized (Bool):
+		0
+	volume (Float):
+		1
+	forcemultitrack (Bool):
+		0
+animSetEditorChannels (DmeTrack, 7 attributes)
+	children (ElementArray):
+		Array [ElementArray][1 elements]
+	collapsed (Bool):
+		0
+	mute (Bool):
+		0
+	volume (Float):
+		1
+	synched (Bool):
+		1
+	clipType (Int):
+		0
+	displayScale (Float):
+		1
+dday_map1 (DmeChannelsClip, 7 attributes)
+	displayScale (Float):
+		1
+	timeFrame (Element):
+			unnamed (DmeTimeFrame, 4 attributes)
+				start (Time):
+					-5
+				duration (Time):
+					70
+				offset (Time):
+					0
+				scale (Float):
+					1
+	color (Color):
+		0 0 0 0
+	text (String):
+		
+	trackGroups (ElementArray):
+		Array [ElementArray][0 elements]
+	mute (Bool):
+		0
+	channels (ElementArray):
+		Array [ElementArray][4 elements]
+unnamed (DmeTimeFrame, 4 attributes)
+	start (Time):
+		-5
+	duration (Time):
+		70
+	offset (Time):
+		0
+	scale (Float):
+		1
+unnamed (DmeTimeFrame, 4 attributes)
+	start (Time):
+		0
+	duration (Time):
+		60
+	offset (Time):
+		0
+	scale (Float):
+		1
+Default Set (DmeBookmarkSet, 1 attributes)
+	bookmarks (ElementArray):
+		Array [ElementArray][0 elements]
+Sound (DmeTrackGroup, 7 attributes)
+	tracks (ElementArray):
+		Array [ElementArray][3 elements]
+	displayScale (Float):
+		1
+	visible (Bool):
+		1
+	mute (Bool):
+		0
+	minimized (Bool):
+		0
+	volume (Float):
+		1
+	forcemultitrack (Bool):
+		0
+Dialog (DmeTrack, 7 attributes)
+	children (ElementArray):
+		Array [ElementArray][0 elements]
+	collapsed (Bool):
+		0
+	mute (Bool):
+		0
+	volume (Float):
+		1
+	synched (Bool):
+		1
+	clipType (Int):
+		1
+	displayScale (Float):
+		1
+Music (DmeTrack, 7 attributes)
+	children (ElementArray):
+		Array [ElementArray][0 elements]
+	collapsed (Bool):
+		0
+	mute (Bool):
+		0
+	volume (Float):
+		1
+	synched (Bool):
+		1
+	clipType (Int):
+		1
+	displayScale (Float):
+		1
+Effects (DmeTrack, 7 attributes)
+	children (ElementArray):
+		Array [ElementArray][0 elements]
+	collapsed (Bool):
+		0
+	mute (Bool):
+		0
+	volume (Float):
+		1
+	synched (Bool):
+		1
+	clipType (Int):
+		1
+	displayScale (Float):
+		1
+Overlay (DmeTrackGroup, 7 attributes)
+	tracks (ElementArray):
+		Array [ElementArray][1 elements]
+	displayScale (Float):
+		1
+	visible (Bool):
+		1
+	mute (Bool):
+		0
+	minimized (Bool):
+		0
+	volume (Float):
+		1
+	forcemultitrack (Bool):
+		0
+Effects (DmeTrack, 7 attributes)
+	children (ElementArray):
+		Array [ElementArray][0 elements]
+	collapsed (Bool):
+		0
+	mute (Bool):
+		0
+	volume (Float):
+		1
+	synched (Bool):
+		1
+	clipType (Int):
+		2
+	displayScale (Float):
+		1
+unnamed (DmeTimeFrame, 4 attributes)
+	start (Time):
+		0
+	duration (Time):
+		60
+	offset (Time):
+		0
+	scale (Float):
+		1

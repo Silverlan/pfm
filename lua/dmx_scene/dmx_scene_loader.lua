@@ -4,25 +4,71 @@ if(r ~= true) then
 	return
 end
 
-include("/cinematic_scene/cinematic_scene.lua")
-
 util.register_class("dmx.Scene")
-function dmx.Scene:__init(fpath)
+
+sfm = sfm or {}
+util.register_class("sfm.Scene")
+
+include("dmx_session.lua")
+
+function dmx.Scene:__init()
+end
+
+function dmx.Scene:Import(fpath)
 	local f = file.open(fpath,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
-	if(f == nil) then return end
+	if(f == nil) then return false end
 	local elements = dmx.load(f)
 	f:Close()
 	
-	self.m_scene = CinematicScene()
+	local dmxData
+	dmxData:Get("session")[1]:Get("settings")
+	
+	for _,el in ipairs(elements) do
+		if(el:GetName() == "session") then
+			local session = sfm.Scene.Session(el)
+			local settings = session:GetSettings()
+			local movieSettings = settings:GetMovieSettings()
+			local videoTarget = movieSettings:GetVideoTarget()
+			print("Video Target: ",videoTarget)
+			break
+		end
+	end
+	
+	return false
+	--[[local str = ""
+	for _,el in ipairs(elements) do
+		str = str .. tostring(el) .. "\n"
+	end
+	
+	
+	for _,el in ipairs(elements) do
+		if(el:GetName() == "session") then
+			self:LoadSession(el)
+			break
+		end
+	end]]
+	
+	--[[local fOut = file.open("dmxtest.txt",bit.bor(file.OPEN_MODE_WRITE))
+	fOut:WriteString(str)
+	fOut:Close()]]
+	
+	--[[if(true) then
+		return false
+	end
+	
+	self.m_scene = ents.create("pfm_scene")
 	for _,el in ipairs(elements) do
 		if(el:GetName() == "session") then
 			self:InitializeSession(el)
 			break
 		end
 	end
+	return true]]
 end
 
-local function get_channel_values(channel)
+function dmx.Scene:GetPFMScene() return self.m_scene end
+
+function dmx.Scene:GetChannelValues(channel)
 	local log = channel:GetAttributeValue("log")
 	local layers = log:GetAttributeValue("layers")
 	local outValues = {}
@@ -39,7 +85,7 @@ local function get_channel_values(channel)
 	return outValues
 end
 
-local function get_transform(el)
+function dmx.Scene:GetTransform(el)
 	local transform = el:GetAttributeValue("transform")
 	local pos = transform:GetAttributeValue("position")
 	local rot = transform:GetAttributeValue("orientation")
@@ -64,7 +110,7 @@ local function get_transform(el)
 	return pos,rot
 end
 
-local function get_time_frame(el)
+function dmx.Scene:GetTimeFrame(el)
 	local ts = el:GetAttributeValue("timeFrame")
 	local start = ts:GetAttributeValue("start")
 	local duration = ts:GetAttributeValue("duration")
@@ -109,8 +155,9 @@ function dmx.Scene:InitializeAnimationSet(track,animSet)
 	--if(bSpawned == true) then return end
 	--bSpawned = true
 	
-	local pos,rot = get_transform(gameModel)
-	local actor = track:AddActor(animSet:GetName(),modelName,pos,rot)
+	local pos,rot = self:GetTransform(gameModel)
+	local actor = track:GetComponent(ents.COMPONENT_PFM_TRACK):AddActor(animSet:GetName(),modelName,pos,rot)
+	local actorComponent = actor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	
 	local controls = animSet:GetAttributeValue("controls")
 	--console.print_table(controls)
@@ -125,21 +172,21 @@ function dmx.Scene:InitializeAnimationSet(track,animSet)
 			-- Probably a flex controller?
 			
 			if(channel ~= nil) then
-				local values = get_channel_values(channel)
+				local values = self:GetChannelValues(channel)
 				for _,v in ipairs(values) do
-					actor:AddFlexTransform(name,v[1],v[2])
+					actorComponent:AddFlexTransform(name,v[1],v[2])
 				end
 			end
 			if(rvChannel ~= nil) then
-				local values = get_channel_values(rvChannel)
+				local values = self:GetChannelValues(rvChannel)
 				for _,v in ipairs(values) do
-					actor:AddFlexTransform("right_" .. name,v[1],v[2])
+					actorComponent:AddFlexTransform("right_" .. name,v[1],v[2])
 				end
 			end
 			if(lvChannel ~= nil) then
-				local values = get_channel_values(lvChannel)
+				local values = self:GetChannelValues(lvChannel)
 				for _,v in ipairs(values) do
-					actor:AddFlexTransform("left_" .. name,v[1],v[2])
+					actorComponent:AddFlexTransform("left_" .. name,v[1],v[2])
 				end
 			end
 		else
@@ -148,7 +195,7 @@ function dmx.Scene:InitializeAnimationSet(track,animSet)
 			-- Position
 			local posChannel = ctrl:GetAttributeValue("positionChannel")
 			if(posChannel ~= nil) then
-				local values = get_channel_values(posChannel)
+				local values = self:GetChannelValues(posChannel)
 				for _,v in ipairs(values) do
 					if(bRoot == false) then-- and name ~= "bip_pelvis") then
 						local y = v[2].y
@@ -160,14 +207,14 @@ function dmx.Scene:InitializeAnimationSet(track,animSet)
 						v[2].z = -y
 					end
 					--if(name == "bip_pelvis") then print("XXXX: ",v[2]) v[2] = Vector() end
-					actor:AddBoneTransform(name,v[1],v[2],nil)
+					actorComponent:AddBoneTransform(name,v[1],v[2],nil)
 				end
 			end
 			
 			-- Rotation
 			local rotChannel = ctrl:GetAttributeValue("orientationChannel")
 			if(rotChannel ~= nil) then
-				local values = get_channel_values(rotChannel)
+				local values = self:GetChannelValues(rotChannel)
 				for _,v in ipairs(values) do
 					if(bRoot == false) then-- and name ~= "bip_pelvis") then
 						local y = v[2].y
@@ -180,7 +227,7 @@ function dmx.Scene:InitializeAnimationSet(track,animSet)
 						v[2].z = y
 						v[2] = EulerAngles(0,180,0):ToQuaternion() *v[2]
 					end
-					actor:AddBoneTransform(name,v[1],nil,v[2])
+					actorComponent:AddBoneTransform(name,v[1],nil,v[2])
 				end
 			end
 		end
@@ -341,8 +388,9 @@ end]]
 function dmx.Scene:InitializeSession(el)
 	local clip = el:GetAttributeValue("activeClip")
 	
+	local sceneComponent = self.m_scene:GetComponent(ents.COMPONENT_PFM_SCENE)
 	-- Retrieve time span
-	self.m_scene:SetTimeSpan(get_time_frame(clip))
+	sceneComponent:SetTimeSpan(self:GetTimeFrame(clip))
 	--
 	
 	local subClipTrackGroup = clip:GetAttributeValue("subClipTrackGroup")
@@ -351,7 +399,8 @@ function dmx.Scene:InitializeSession(el)
 		for _,attrChild in ipairs(track:GetAttributeValue("children")) do
 			local child = attrChild:GetValue()
 			
-			local sceneTrack = self.m_scene:AddTrack(child:GetName(),get_time_frame(child))
+			local sceneTrack = sceneComponent:AddTrack(child:GetName(),self:GetTimeFrame(child))
+			local trackComponent = sceneTrack:GetComponent(ents.COMPONENT_PFM_TRACK)
 			for _,attrAnimSet in ipairs(child:GetAttributeValue("animationSets")) do
 				local animSet = attrAnimSet:GetValue()
 				self:InitializeAnimationSet(sceneTrack,animSet)
@@ -359,15 +408,15 @@ function dmx.Scene:InitializeSession(el)
 			
 			local cam = child:GetAttributeValue("camera")
 			if(cam ~= nil) then
-				local pos,rot = get_transform(cam)
-				sceneTrack:AddCamera(cam:GetName(),pos,rot)
+				local pos,rot = self:GetTransform(cam)
+				trackComponent:AddCamera(cam:GetName(),pos,rot)
 			end
 			
 			local cam = child:GetAttributeValue("camera")
 			if(cam ~= nil and cam:GetType() == "DmeCamera") then
-				local pos,rot = get_transform(cam)
-				sceneTrack:SetCamPos(pos)
-				sceneTrack:SetCamRot(rot)
+				local pos,rot = self:GetTransform(cam)
+				trackComponent:SetCamPos(pos)
+				trackComponent:SetCamRot(rot)
 			end
 			for _,attrTrackGroup in ipairs(child:GetAttributeValue("trackGroups")) do
 				local trackGroup = attrTrackGroup:GetValue()
@@ -376,9 +425,9 @@ function dmx.Scene:InitializeSession(el)
 					for _,attrChild in ipairs(track:GetAttributeValue("children")) do
 						local child = attrChild:GetValue()
 						local name = child:GetName()
-						local actor = sceneTrack:GetActor(name)
+						local actor = trackComponent:GetActor(name)
 						if(actor ~= nil) then
-							actor:SetTimeSpan(get_time_frame(child))
+							actor:GetComponent(ents.COMPONENT_PFM_ACTOR):SetTimeSpan(self:GetTimeFrame(child))
 						end
 						
 						--[[local cam = sceneTrack:GetCamera(name)
@@ -399,8 +448,9 @@ function dmx.Scene:InitializeSession(el)
 				for _,attrChild in ipairs(audio:GetAttributeValue("children")) do
 					local child = attrChild:GetValue()
 					if(child:GetAttributeValue("mute") == false) then
-						local start,duration = get_time_frame(child)
-						local track = self.m_scene:AddTrack(child:GetName(),start,duration)
+						local start,duration = self:GetTimeFrame(child)
+						local track = sceneComponent:AddTrack(child:GetName(),start,duration)
+						local trackComponent = track:GetComponent(ents.COMPONENT_PFM_TRACK)
 						
 						local sound = child:GetAttributeValue("sound")
 						local soundName = sound:GetAttributeValue("soundname")
@@ -424,7 +474,7 @@ function dmx.Scene:InitializeSession(el)
 						direction.z = -y
 						local channel = sound:GetAttributeValue("channel")
 						local level = sound:GetAttributeValue("level")
-						track:AddSoundEvent(CinematicScene.SoundEvent(soundName,start,duration,volume,pitch /100.0,origin,direction))
+						trackComponent:AddSoundEvent(soundName,start,duration,volume,pitch /100.0,origin,direction)
 					end
 				end
 			end
@@ -433,8 +483,9 @@ function dmx.Scene:InitializeSession(el)
 end
 
 import.import_dmx_scene = function(sceneFile,origin)
-	local scene = dmx.Scene(sceneFile)
-	scene.m_scene:SetCameraEnabled(false)
-	scene.m_scene:SetOffsetTransform(origin,EulerAngles(180,180,0):ToQuaternion())
-	return scene
+	local scene = dmx.Scene()
+	if(scene:Import(sceneFile) == false) then return end
+	--scene.m_scene:SetCameraEnabled(false)
+	--scene.m_scene:SetOffsetTransform(origin,EulerAngles(180,180,0):ToQuaternion())
+	return scene:GetPFMScene()
 end

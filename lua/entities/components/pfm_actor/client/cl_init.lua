@@ -7,6 +7,7 @@ end
 function ents.PFMActorComponent:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
+	self:AddEntityComponent(ents.COMPONENT_NAME)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
@@ -15,7 +16,8 @@ function ents.PFMActorComponent:Initialize()
 	self.m_flexTransforms = {}
 end
 
-function ents.PFMActorComponent:GetModelName() return self.m_modelName end
+function ents.PFMActorComponent:SetTimeSpan(ts) end -- TODO
+
 function ents.PFMActorComponent:GetBoneTransforms() return self.m_boneTransforms end
 function ents.PFMActorComponent:GetFlexTransforms() return self.m_flexTransforms end
 

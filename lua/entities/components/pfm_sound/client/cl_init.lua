@@ -7,6 +7,8 @@ end
 function ents.PFMSound:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
+	self:AddEntityComponent(ents.COMPONENT_SOUND)
+	
 	self.m_soundName = soundName
 	self.m_volume = volume
 	self.m_pitch = pitch
@@ -14,11 +16,6 @@ function ents.PFMSound:Initialize()
 	self.m_direction = direction
 end
 
-function ents.PFMSound:GetSoundName() return self.m_soundName end
-function ents.PFMSound:GetVolume() return self.m_volume end
-function ents.PFMSound:GetPitch() return self.m_pitch end
-function ents.PFMSound:GetOrigin() return self.m_origin end
-function ents.PFMSound:GetDirection() return self.m_direction end
 function ents.PFMSound:OnStart()
 	if(self:GetSoundName() ~= "mixes\\meet_the_engineer\\mtt_engineer_m17_44khz.wav") then return end -- Dirty hack for Meet the Engineer, fix this once cinematic scenes are implemented properly
 	local snd = sound.create(self:GetSoundName(),sound.TYPE_EFFECT)

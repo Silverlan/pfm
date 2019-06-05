@@ -1,0 +1,1162 @@
+<!-- dmx encoding keyvalues2 1 format tex 1 -->
+"DmElement"
+{
+	"id" "elementid" "8499d4ec-3a86-4d8f-af0e-b9e5edaf8c96"
+	"name" "string" "session"
+	"activeClip" "element" "3d059933-dfe3-4360-a95a-6c292107cb8a"
+	"miscBin" "element_array" 
+	[
+	]
+	"cameraBin" "element_array" 
+	[
+	]
+	"clipBin" "element_array" 
+	[
+		"element" "3d059933-dfe3-4360-a95a-6c292107cb8a"
+	]
+	"settings" "DmElement"
+	{
+		"id" "elementid" "19cf9d8b-bbad-4f1a-95a7-b22846e04443"
+		"name" "string" "sessionSettings"
+		"timeSelection" "DmeTimeSelection"
+		{
+			"id" "elementid" "d7da437c-3993-4dda-bad6-acb74351d725"
+			"name" "string" "timeSelection"
+			"enabled" "bool" "0"
+			"relative" "bool" "0"
+			"falloff_left" "time" "-214748.3647"
+			"falloff_right" "time" "214748.3647"
+			"hold_left" "time" "-214748.3647"
+			"hold_right" "time" "214748.3647"
+			"interpolator_left" "int" "6"
+			"interpolator_right" "int" "6"
+			"threshold" "float" "0.0005"
+			"resampleinterval" "time" "0.0100"
+			"recordingstate" "int" "3"
+		}
+		
+		"graphEditorState" "DmeGraphEditorState"
+		{
+			"id" "elementid" "0e24a46c-163e-4b19-8abc-641d16b494ef"
+			"name" "string" "graphEditorState"
+			"displayGrid" "bool" "1"
+		}
+		
+		"proceduralPresets" "DmeProceduralPresetSettings"
+		{
+			"id" "elementid" "910de829-a066-4a53-af55-4c74dd06746c"
+			"name" "string" "proceduralPresets"
+			"jitterscale" "float" "1"
+			"smoothscale" "float" "1"
+			"jitterscale_vector" "float" "2.5"
+			"smoothscale_vector" "float" "2.5"
+			"jitteriterations" "int" "5"
+			"smoothiterations" "int" "5"
+			"staggerinterval" "time" "0.0833"
+		}
+		
+		"renderSettings" "DmElement"
+		{
+			"id" "elementid" "a0a0795f-ee76-4eef-b2ec-5353e61d6d6e"
+			"name" "string" "renderSettings"
+			"frameRate" "float" "24"
+			"lightAverage" "int" "0"
+			"modelLod" "int" "0"
+			"engineCameraEffects" "bool" "0"
+			"ambientOcclusionMode" "int" "1"
+			"showAmbientOcclusion" "int" "0"
+			"drawGameRenderablesMask" "int" "216"
+			"drawToolRenderablesMask" "int" "15"
+			"toneMapScale" "float" "1"
+			"ProgressiveRefinement" "DmElement"
+			{
+				"id" "elementid" "5b463519-99e9-4130-958e-55a77f17e9c1"
+				"name" "string" "ProgressiveRefinementSettings"
+				"on" "bool" "1"
+				"useDepthOfField" "bool" "1"
+				"overrideDepthOfFieldQuality" "bool" "0"
+				"overrideDepthOfFieldQualityValue" "int" "1"
+				"useMotionBlur" "bool" "1"
+				"overrideMotionBlurQuality" "bool" "0"
+				"overrideMotionBlurQualityValue" "int" "1"
+				"useAntialiasing" "bool" "1"
+				"overrideShutterSpeed" "bool" "0"
+				"overrideShutterSpeedValue" "float" "0.020833334"
+			}
+			
+		}
+		
+		"posterSettings" "DmElement"
+		{
+			"id" "elementid" "57b41b51-d193-4a86-9f5d-d7668ae7491b"
+			"name" "string" "posterSettings"
+			"width" "int" "1920"
+			"height" "int" "1080"
+			"DPI" "int" "300"
+			"units" "int" "0"
+			"constrainAspect" "bool" "1"
+			"heightInPixels" "bool" "1"
+			"widthInPixels" "bool" "1"
+		}
+		
+		"movieSettings" "DmElement"
+		{
+			"id" "elementid" "8b3608d1-7b0c-4458-a0a9-ae5e27c2f560"
+			"name" "string" "movieSettings"
+			"videoTarget" "int" "6"
+			"audioTarget" "int" "2"
+			"stereoscopic" "bool" "0"
+			"stereoSingleFile" "bool" "0"
+			"clearDecals" "bool" "0"
+			"width" "int" "1280"
+			"height" "int" "720"
+			"filename" "string" ""
+		}
+		
+		"sharedPresetGroupSettings" "DmElement"
+		{
+			"id" "elementid" "efee2b4b-fe38-4f81-a25c-36ff17d65780"
+			"name" "string" "sharedPresetGroupSettings"
+			"presetGroupInfos" "element_array" 
+			[
+				"DmePresetGroupInfo"
+				{
+					"id" "elementid" "0429cd87-bb10-435d-8fa0-2ed42f177044"
+					"name" "string" "dday_map"
+					"filenameBase" "string" "models\\props_doomsday\\dday_map"
+					"presetGroups" "element_array" 
+					[
+					]
+				}
+			]
+		}
+		
+	}
+	
+}
+
+"DmeFilmClip"
+{
+	"id" "elementid" "3d059933-dfe3-4360-a95a-6c292107cb8a"
+	"name" "string" "test"
+	"timeFrame" "DmeTimeFrame"
+	{
+		"id" "elementid" "e65554fb-9ef4-4f39-aa8c-2bbcba3d9efd"
+		"name" "string" "unnamed"
+		"start" "time" "0.0000"
+		"duration" "time" "60.0000"
+		"offset" "time" "0.0000"
+		"scale" "float" "1"
+	}
+	
+	"color" "color" "0 0 0 0"
+	"text" "string" ""
+	"mute" "bool" "0"
+	"trackGroups" "element_array" 
+	[
+		"DmeTrackGroup"
+		{
+			"id" "elementid" "afb4fcf5-d736-4098-9d09-4832b688eda8"
+			"name" "string" "Sound"
+			"tracks" "element_array" 
+			[
+				"DmeTrack"
+				{
+					"id" "elementid" "d4218e94-20cf-44df-9809-aa544f26a44d"
+					"name" "string" "Dialog"
+					"children" "element_array" 
+					[
+					]
+					"collapsed" "bool" "0"
+					"mute" "bool" "0"
+					"synched" "bool" "1"
+					"clipType" "int" "1"
+					"volume" "float" "1"
+					"displayScale" "float" "1"
+				},
+				"DmeTrack"
+				{
+					"id" "elementid" "72b3bfac-a736-429c-98ae-cd7be578688a"
+					"name" "string" "Music"
+					"children" "element_array" 
+					[
+					]
+					"collapsed" "bool" "0"
+					"mute" "bool" "0"
+					"synched" "bool" "1"
+					"clipType" "int" "1"
+					"volume" "float" "1"
+					"displayScale" "float" "1"
+				},
+				"DmeTrack"
+				{
+					"id" "elementid" "c55a0aa8-f7c4-4326-afb5-e15acef6515a"
+					"name" "string" "Effects"
+					"children" "element_array" 
+					[
+					]
+					"collapsed" "bool" "0"
+					"mute" "bool" "0"
+					"synched" "bool" "1"
+					"clipType" "int" "1"
+					"volume" "float" "1"
+					"displayScale" "float" "1"
+				}
+			]
+			"visible" "bool" "1"
+			"mute" "bool" "0"
+			"displayScale" "float" "1"
+			"minimized" "bool" "0"
+			"volume" "float" "1"
+			"forcemultitrack" "bool" "0"
+		},
+		"DmeTrackGroup"
+		{
+			"id" "elementid" "900b09b0-371e-4f06-8ae6-f218d6ec9b1a"
+			"name" "string" "Overlay"
+			"tracks" "element_array" 
+			[
+				"DmeTrack"
+				{
+					"id" "elementid" "9fd21724-2c42-43e1-b1b9-67eed85c2b50"
+					"name" "string" "Effects"
+					"children" "element_array" 
+					[
+					]
+					"collapsed" "bool" "0"
+					"mute" "bool" "0"
+					"synched" "bool" "1"
+					"clipType" "int" "2"
+					"volume" "float" "1"
+					"displayScale" "float" "1"
+				}
+			]
+			"visible" "bool" "1"
+			"mute" "bool" "0"
+			"displayScale" "float" "1"
+			"minimized" "bool" "0"
+			"volume" "float" "1"
+			"forcemultitrack" "bool" "0"
+		}
+	]
+	"displayScale" "float" "1"
+	"materialOverlay" "element" ""
+	"mapname" "string" "arena_nucleus.bsp"
+	"camera" "element" ""
+	"monitorCameras" "element_array" 
+	[
+	]
+	"activeMonitor" "int" "-1"
+	"scene" "element" ""
+	"aviFile" "string" ""
+	"fadeIn" "time" "0.0000"
+	"fadeOut" "time" "0.0000"
+	"inputs" "element_array" 
+	[
+	]
+	"operators" "element_array" 
+	[
+	]
+	"useAviFile" "bool" "0"
+	"animationSets" "element_array" 
+	[
+	]
+	"bookmarkSets" "element_array" 
+	[
+		"DmeBookmarkSet"
+		{
+			"id" "elementid" "5105bc6c-f5be-44e2-9424-6a345de66f44"
+			"name" "string" "Default Set"
+			"bookmarks" "element_array" 
+			[
+			]
+		}
+	]
+	"activeBookmarkSet" "int" "0"
+	"subClipTrackGroup" "DmeTrackGroup"
+	{
+		"id" "elementid" "21fc639b-ea67-4a6d-9f87-ebe4ec6aebcb"
+		"name" "string" "subClipTrackGroup"
+		"tracks" "element_array" 
+		[
+			"DmeTrack"
+			{
+				"id" "elementid" "0cbe0922-a73c-4137-af39-fc4085e49770"
+				"name" "string" "Film"
+				"children" "element_array" 
+				[
+					"DmeFilmClip"
+					{
+						"id" "elementid" "5f820405-051e-4ff7-891c-a36eb085fcc3"
+						"name" "string" "shot1"
+						"timeFrame" "DmeTimeFrame"
+						{
+							"id" "elementid" "eb5bd9ce-5a76-4aba-9ee1-ab696c964ed0"
+							"name" "string" "unnamed"
+							"start" "time" "0.0000"
+							"duration" "time" "60.0000"
+							"offset" "time" "0.0000"
+							"scale" "float" "1"
+						}
+						
+						"color" "color" "0 0 0 0"
+						"text" "string" ""
+						"mute" "bool" "0"
+						"trackGroups" "element_array" 
+						[
+							"DmeTrackGroup"
+							{
+								"id" "elementid" "afde1b03-b73f-4f80-bd73-09c7761c43d5"
+								"name" "string" "channelTrackGroup"
+								"tracks" "element_array" 
+								[
+									"DmeTrack"
+									{
+										"id" "elementid" "e37d6e54-0d87-4049-a896-02280494a9dd"
+										"name" "string" "animSetEditorChannels"
+										"children" "element_array" 
+										[
+											"DmeChannelsClip"
+											{
+												"id" "elementid" "99115618-76d8-4096-b570-7352433bcbb3"
+												"name" "string" "dday_map1"
+												"timeFrame" "DmeTimeFrame"
+												{
+													"id" "elementid" "fadff7ca-ffa6-40b9-b948-be84360afbcb"
+													"name" "string" "unnamed"
+													"start" "time" "-5.0000"
+													"duration" "time" "70.0000"
+													"offset" "time" "0.0000"
+													"scale" "float" "1"
+												}
+												
+												"color" "color" "0 0 0 0"
+												"text" "string" ""
+												"mute" "bool" "0"
+												"trackGroups" "element_array" 
+												[
+												]
+												"displayScale" "float" "1"
+												"channels" "element_array" 
+												[
+													"element" "3e28c2b2-7e82-46f1-a051-4eddd27c3b8e",
+													"element" "0be85a64-2434-4f81-87e1-2124396fdcbb",
+													"element" "5d7a41fe-d6a2-47cd-b98f-6549e8e22155",
+													"element" "fc4c473d-7dc5-4bdf-80bf-c9e2eb5061f5"
+												]
+											}
+										]
+										"collapsed" "bool" "0"
+										"mute" "bool" "0"
+										"synched" "bool" "1"
+										"clipType" "int" "0"
+										"volume" "float" "1"
+										"displayScale" "float" "1"
+									}
+								]
+								"visible" "bool" "1"
+								"mute" "bool" "0"
+								"displayScale" "float" "1"
+								"minimized" "bool" "0"
+								"volume" "float" "1"
+								"forcemultitrack" "bool" "0"
+							}
+						]
+						"displayScale" "float" "1"
+						"materialOverlay" "element" ""
+						"mapname" "string" ""
+						"camera" "element" "ae4f05c0-673b-46fe-bd6e-2cc513f6c4a4"
+						"monitorCameras" "element_array" 
+						[
+						]
+						"activeMonitor" "int" "-1"
+						"scene" "DmeDag"
+						{
+							"id" "elementid" "48bf6ea9-dc0b-43e1-927d-cd3f2dd4780f"
+							"name" "string" "scene"
+							"transform" "DmeTransform"
+							{
+								"id" "elementid" "92588bcc-3efc-4bb9-93c1-acda804646da"
+								"name" "string" "unnamed"
+								"position" "vector3" "0 0 0"
+								"orientation" "quaternion" "0 0 0 1"
+							}
+							
+							"shape" "element" ""
+							"visible" "bool" "1"
+							"children" "element_array" 
+							[
+								"DmeDag"
+								{
+									"id" "elementid" "903da25a-8d84-41ef-96fb-63a221dd7b7d"
+									"name" "string" "Cameras"
+									"transform" "DmeTransform"
+									{
+										"id" "elementid" "da2d1de9-745a-42b7-837e-5563970d8f52"
+										"name" "string" "unnamed"
+										"position" "vector3" "0 0 0"
+										"orientation" "quaternion" "0 0 0 1"
+									}
+									
+									"shape" "element" ""
+									"visible" "bool" "1"
+									"children" "element_array" 
+									[
+										"element" "ae4f05c0-673b-46fe-bd6e-2cc513f6c4a4"
+									]
+								},
+								"DmeDag"
+								{
+									"id" "elementid" "5fea38de-a81e-4594-b883-2bb976dce365"
+									"name" "string" "dday_map1"
+									"transform" "DmeTransform"
+									{
+										"id" "elementid" "ff617509-199c-4680-9837-562c5e6a182b"
+										"name" "string" "unnamed"
+										"position" "vector3" "0 0 0"
+										"orientation" "quaternion" "0 0 0 1"
+									}
+									
+									"shape" "element" ""
+									"visible" "bool" "1"
+									"children" "element_array" 
+									[
+										"element" "68cd8a3a-a475-42c2-9b05-05ceea1867c7"
+									]
+								}
+							]
+						}
+						
+						"aviFile" "string" ""
+						"fadeIn" "time" "0.0000"
+						"fadeOut" "time" "0.0000"
+						"inputs" "element_array" 
+						[
+						]
+						"operators" "element_array" 
+						[
+						]
+						"useAviFile" "bool" "0"
+						"animationSets" "element_array" 
+						[
+							"DmeAnimationSet"
+							{
+								"id" "elementid" "047723b8-495f-46e1-9eb0-4b38972ec443"
+								"name" "string" "dday_map1"
+								"controls" "element_array" 
+								[
+									"element" "f88fdc22-6ae4-4b22-bfe7-e25665d4208a",
+									"element" "d526f530-66f7-4136-9af1-e91e4b97f1a6"
+								]
+								"presetGroups" "element_array" 
+								[
+								]
+								"phonememap" "element_array" 
+								[
+								]
+								"operators" "element_array" 
+								[
+								]
+								"rootControlGroup" "DmeControlGroup"
+								{
+									"id" "elementid" "54288ba4-e075-4e63-b393-b1f3426fbb48"
+									"name" "string" "unnamed"
+									"children" "element_array" 
+									[
+										"DmeControlGroup"
+										{
+											"id" "elementid" "dd616486-04ef-4fbe-8d41-67bb48dd67a9"
+											"name" "string" "Body"
+											"children" "element_array" 
+											[
+											]
+											"controls" "element_array" 
+											[
+												"element" "f88fdc22-6ae4-4b22-bfe7-e25665d4208a"
+											]
+											"groupColor" "color" "0 128 255 255"
+											"controlColor" "color" "200 200 200 255"
+											"visible" "bool" "1"
+											"selectable" "bool" "1"
+											"snappable" "bool" "1"
+										},
+										"DmeControlGroup"
+										{
+											"id" "elementid" "e96124cb-99bd-4136-a3ed-655127b17db4"
+											"name" "string" "Unknown"
+											"children" "element_array" 
+											[
+											]
+											"controls" "element_array" 
+											[
+												"element" "d526f530-66f7-4136-9af1-e91e4b97f1a6"
+											]
+											"groupColor" "color" "0 128 255 255"
+											"controlColor" "color" "200 200 200 255"
+											"visible" "bool" "1"
+											"selectable" "bool" "1"
+											"snappable" "bool" "1"
+										}
+									]
+									"controls" "element_array" 
+									[
+									]
+									"groupColor" "color" "200 200 200 255"
+									"controlColor" "color" "200 200 200 255"
+									"visible" "bool" "1"
+									"selectable" "bool" "1"
+									"snappable" "bool" "1"
+								}
+								
+								"gameModel" "element" "68cd8a3a-a475-42c2-9b05-05ceea1867c7"
+							}
+						]
+						"bookmarkSets" "element_array" 
+						[
+							"DmeBookmarkSet"
+							{
+								"id" "elementid" "04477db4-a28c-4f26-83b9-392dee208cdf"
+								"name" "string" "Default Set"
+								"bookmarks" "element_array" 
+								[
+								]
+							}
+						]
+						"activeBookmarkSet" "int" "0"
+						"subClipTrackGroup" "element" ""
+						"volume" "float" "1"
+						"concommands" "string_array" 
+						[
+						]
+						"convars" "string_array" 
+						[
+						]
+					}
+				]
+				"collapsed" "bool" "0"
+				"mute" "bool" "0"
+				"synched" "bool" "1"
+				"clipType" "int" "3"
+				"volume" "float" "1"
+				"displayScale" "float" "1"
+			}
+		]
+		"visible" "bool" "1"
+		"mute" "bool" "0"
+		"displayScale" "float" "1"
+		"minimized" "bool" "0"
+		"volume" "float" "1"
+		"forcemultitrack" "bool" "0"
+	}
+	
+	"volume" "float" "1"
+	"concommands" "string_array" 
+	[
+	]
+	"convars" "string_array" 
+	[
+	]
+}
+
+"DmeGameModel"
+{
+	"id" "elementid" "68cd8a3a-a475-42c2-9b05-05ceea1867c7"
+	"name" "string" "dday_map_GameModel"
+	"transform" "element" "e04de97c-347a-4393-be96-3d3906d54f4c"
+	"shape" "element" ""
+	"visible" "bool" "1"
+	"children" "element_array" 
+	[
+		"element" "7b9342f5-79ca-4c02-8807-f630d7f2d50b"
+	]
+	"flexWeights" "float_array" 
+	[
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0",
+		"0"
+	]
+	"modelName" "string" "models/props_doomsday/dday_map.mdl"
+	"skin" "int" "0"
+	"body" "int" "0"
+	"sequence" "int" "0"
+	"flags" "int" "0"
+	"bones" "element_array" 
+	[
+		"element" "74e575f6-ecdd-4776-96d9-8de6324a1144"
+	]
+	"globalFlexControllers" "element_array" 
+	[
+	]
+	"computeBounds" "bool" "1"
+	"evaluateProceduralBones" "bool" "1"
+	"flexnames" "string_array" 
+	[
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		""
+	]
+	"illumPositionDag" "element" "7b9342f5-79ca-4c02-8807-f630d7f2d50b"
+}
+
+"DmeDag"
+{
+	"id" "elementid" "7b9342f5-79ca-4c02-8807-f630d7f2d50b"
+	"name" "string" "bone 0 (static_prop)"
+	"transform" "element" "74e575f6-ecdd-4776-96d9-8de6324a1144"
+	"shape" "element" ""
+	"visible" "bool" "1"
+	"children" "element_array" 
+	[
+	]
+}
+
+"DmeTransform"
+{
+	"id" "elementid" "74e575f6-ecdd-4776-96d9-8de6324a1144"
+	"name" "string" "bone 0 (static_prop)"
+	"position" "vector3" "0 0 0"
+	"orientation" "quaternion" "0 0 0 1"
+}
+
+"DmeTransform"
+{
+	"id" "elementid" "e04de97c-347a-4393-be96-3d3906d54f4c"
+	"name" "string" "unnamed"
+	"position" "vector3" "-63.0866928101 92.5370330811 21.6183452606"
+	"orientation" "quaternion" "0 0 0.9974407554 0.0714976117"
+}
+
+"DmeTransformControl"
+{
+	"id" "elementid" "f88fdc22-6ae4-4b22-bfe7-e25665d4208a"
+	"name" "string" "rootTransform"
+	"valuePosition" "vector3" "-63.0866928101 92.5370330811 21.6183452606"
+	"valueOrientation" "quaternion" "0 0 0.9974407554 0.0714976117"
+	"positionChannel" "element" "5d7a41fe-d6a2-47cd-b98f-6549e8e22155"
+	"orientationChannel" "element" "fc4c473d-7dc5-4bdf-80bf-c9e2eb5061f5"
+}
+
+"DmeChannel"
+{
+	"id" "elementid" "fc4c473d-7dc5-4bdf-80bf-c9e2eb5061f5"
+	"name" "string" "rootTransform_o"
+	"fromElement" "element" "f88fdc22-6ae4-4b22-bfe7-e25665d4208a"
+	"fromAttribute" "string" "valueOrientation"
+	"fromIndex" "int" "0"
+	"toElement" "element" "e04de97c-347a-4393-be96-3d3906d54f4c"
+	"toAttribute" "string" "orientation"
+	"toIndex" "int" "0"
+	"mode" "int" "3"
+	"log" "DmeQuaternionLog"
+	{
+		"id" "elementid" "62ffa044-5f1f-4093-b49b-ca934961ce0c"
+		"name" "string" "quaternion log"
+		"layers" "element_array" 
+		[
+			"DmeQuaternionLogLayer"
+			{
+				"id" "elementid" "142948cc-c18b-41b3-8082-a7ee03bdfcd8"
+				"name" "string" "quaternion log"
+				"times" "time_array" 
+				[
+					"0.0000"
+				]
+				"curvetypes" "int_array" 
+				[
+				]
+				"values" "quaternion_array" 
+				[
+					"0 0 0.9974407554 0.0714976117"
+				]
+				"compressed" "binary" 
+				"
+				"
+			}
+		]
+		"curveinfo" "element" ""
+		"usedefaultvalue" "bool" "0"
+		"defaultvalue" "quaternion" "0 0 0 1"
+		"bookmarksX" "time_array" 
+		[
+		]
+		"bookmarksY" "time_array" 
+		[
+		]
+		"bookmarksZ" "time_array" 
+		[
+		]
+	}
+	
+}
+
+"DmeChannel"
+{
+	"id" "elementid" "5d7a41fe-d6a2-47cd-b98f-6549e8e22155"
+	"name" "string" "rootTransform_p"
+	"fromElement" "element" "f88fdc22-6ae4-4b22-bfe7-e25665d4208a"
+	"fromAttribute" "string" "valuePosition"
+	"fromIndex" "int" "0"
+	"toElement" "element" "e04de97c-347a-4393-be96-3d3906d54f4c"
+	"toAttribute" "string" "position"
+	"toIndex" "int" "0"
+	"mode" "int" "3"
+	"log" "DmeVector3Log"
+	{
+		"id" "elementid" "66f65f68-09da-489e-8fab-a86a7c3e3b91"
+		"name" "string" "vector3 log"
+		"layers" "element_array" 
+		[
+			"DmeVector3LogLayer"
+			{
+				"id" "elementid" "c38134fc-3997-4735-b0b3-cc399d77532b"
+				"name" "string" "vector3 log"
+				"times" "time_array" 
+				[
+					"0.0000"
+				]
+				"curvetypes" "int_array" 
+				[
+				]
+				"values" "vector3_array" 
+				[
+					"-63.0866928101 92.5370330811 21.6183452606"
+				]
+				"compressed" "binary" 
+				"
+				"
+			}
+		]
+		"curveinfo" "element" ""
+		"usedefaultvalue" "bool" "0"
+		"defaultvalue" "vector3" "0 0 0"
+		"bookmarksX" "time_array" 
+		[
+		]
+		"bookmarksY" "time_array" 
+		[
+		]
+		"bookmarksZ" "time_array" 
+		[
+		]
+	}
+	
+}
+
+"DmeTransformControl"
+{
+	"id" "elementid" "d526f530-66f7-4136-9af1-e91e4b97f1a6"
+	"name" "string" "static_prop"
+	"valuePosition" "vector3" "0 0 0"
+	"valueOrientation" "quaternion" "0 0 0 1"
+	"positionChannel" "element" "3e28c2b2-7e82-46f1-a051-4eddd27c3b8e"
+	"orientationChannel" "element" "0be85a64-2434-4f81-87e1-2124396fdcbb"
+}
+
+"DmeChannel"
+{
+	"id" "elementid" "0be85a64-2434-4f81-87e1-2124396fdcbb"
+	"name" "string" "static_prop_o"
+	"fromElement" "element" "d526f530-66f7-4136-9af1-e91e4b97f1a6"
+	"fromAttribute" "string" "valueOrientation"
+	"fromIndex" "int" "0"
+	"toElement" "element" "74e575f6-ecdd-4776-96d9-8de6324a1144"
+	"toAttribute" "string" "orientation"
+	"toIndex" "int" "0"
+	"mode" "int" "3"
+	"log" "DmeQuaternionLog"
+	{
+		"id" "elementid" "095aa866-e66e-4e74-b8b4-eda8e3dac9d5"
+		"name" "string" "quaternion log"
+		"layers" "element_array" 
+		[
+			"DmeQuaternionLogLayer"
+			{
+				"id" "elementid" "e7de2bd2-bb7d-43e3-a90d-99291a4a8833"
+				"name" "string" "quaternion log"
+				"times" "time_array" 
+				[
+					"0.0000"
+				]
+				"curvetypes" "int_array" 
+				[
+				]
+				"values" "quaternion_array" 
+				[
+					"0 0 0 1"
+				]
+				"compressed" "binary" 
+				"
+				"
+			}
+		]
+		"curveinfo" "element" ""
+		"usedefaultvalue" "bool" "0"
+		"defaultvalue" "quaternion" "0 0 0 1"
+		"bookmarksX" "time_array" 
+		[
+		]
+		"bookmarksY" "time_array" 
+		[
+		]
+		"bookmarksZ" "time_array" 
+		[
+		]
+	}
+	
+}
+
+"DmeChannel"
+{
+	"id" "elementid" "3e28c2b2-7e82-46f1-a051-4eddd27c3b8e"
+	"name" "string" "static_prop_p"
+	"fromElement" "element" "d526f530-66f7-4136-9af1-e91e4b97f1a6"
+	"fromAttribute" "string" "valuePosition"
+	"fromIndex" "int" "0"
+	"toElement" "element" "74e575f6-ecdd-4776-96d9-8de6324a1144"
+	"toAttribute" "string" "position"
+	"toIndex" "int" "0"
+	"mode" "int" "3"
+	"log" "DmeVector3Log"
+	{
+		"id" "elementid" "d4725935-612d-4eb8-a3e0-079b25b7b918"
+		"name" "string" "vector3 log"
+		"layers" "element_array" 
+		[
+			"DmeVector3LogLayer"
+			{
+				"id" "elementid" "726e6047-d1ff-4bc0-8f3a-ad25cea17ca6"
+				"name" "string" "vector3 log"
+				"times" "time_array" 
+				[
+					"0.0000"
+				]
+				"curvetypes" "int_array" 
+				[
+				]
+				"values" "vector3_array" 
+				[
+					"0 0 0"
+				]
+				"compressed" "binary" 
+				"
+				"
+			}
+		]
+		"curveinfo" "element" ""
+		"usedefaultvalue" "bool" "0"
+		"defaultvalue" "vector3" "0 0 0"
+		"bookmarksX" "time_array" 
+		[
+		]
+		"bookmarksY" "time_array" 
+		[
+		]
+		"bookmarksZ" "time_array" 
+		[
+		]
+	}
+	
+}
+
+"DmeCamera"
+{
+	"id" "elementid" "ae4f05c0-673b-46fe-bd6e-2cc513f6c4a4"
+	"name" "string" "camera1"
+	"transform" "DmeTransform"
+	{
+		"id" "elementid" "601b6a9d-f811-49a6-9d4b-b673461fd00c"
+		"name" "string" "unnamed"
+		"position" "vector3" "-107.2420959473 98.8999328613 22.6385936737"
+		"orientation" "quaternion" "0.0066974694 0.093434386 -0.0711831674 0.9930550456"
+	}
+	
+	"shape" "element" ""
+	"visible" "bool" "1"
+	"children" "element_array" 
+	[
+	]
+	"fieldOfView" "float" "30"
+	"znear" "float" "3"
+	"zfar" "float" "28377.919921875"
+	"focalDistance" "float" "72"
+	"zeroParallaxDistance" "float" "75"
+	"eyeSeparation" "float" "0.75"
+	"aperture" "float" "0.200000003"
+	"shutterSpeed" "time" "0.0208"
+	"toneMapScale" "float" "1"
+	"SSAOBias" "float" "0.0005"
+	"SSAOStrength" "float" "1"
+	"SSAORadius" "float" "15"
+	"SSAOTint" "color" "0 0 0 255"
+	"bloomScale" "float" "0.2800000012"
+	"depthOfFieldQuality" "int" "0"
+	"motionBlurQuality" "int" "0"
+	"bloomWidth" "float" "9"
+	"ortho" "bool" "0"
+	"axis" "int" "0"
+	"behindfrustum" "bool" "0"
+	"distance" "float" "32"
+	"scale0" "float" "1"
+	"lookat0" "vector3" "0 0 0"
+	"scale1" "float" "1"
+	"lookat1" "vector3" "0 0 0"
+	"scale2" "float" "1"
+	"lookat2" "vector3" "0 0 0"
+	"scale3" "float" "1"
+	"lookat3" "vector3" "0 0 0"
+	"scale4" "float" "1"
+	"lookat4" "vector3" "0 0 0"
+	"scale5" "float" "1"
+	"lookat5" "vector3" "0 0 0"
+}
+

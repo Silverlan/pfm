@@ -6,8 +6,9 @@ end
 
 function ents.PFMTrack:Initialize()
 	BaseEntityComponent.Initialize(self)
+	
+	self:AddEntityComponent(ents.COMPONENT_NAME)
 
-	self.m_name = name
 	self.m_soundEvents = {}
 	self.m_actors = {}
 	self.m_cameras = {}
@@ -16,7 +17,6 @@ end
 
 function ents.PFMTrack:SetCamPos(pos) self.m_camPos = pos end
 function ents.PFMTrack:SetCamRot(rot) self.m_camRot = rot end
-function ents.PFMTrack:GetName() return self.m_name end
 function ents.PFMTrack:GetSoundEvents() return self.m_soundEvents end
 function ents.PFMTrack:AddSoundEvent(ev)
 	for i,evOther in ipairs(self.m_soundEvents) do
@@ -28,17 +28,30 @@ function ents.PFMTrack:AddSoundEvent(ev)
 	table.insert(self.m_soundEvents,ev)
 end
 function ents.PFMTrack:AddActor(name,mdlName,origin,rot)
-	game.load_model(mdlName)
-	table.insert(self.m_actors,CinematicScene.Actor(name,mdlName,origin,rot))
+	local actor = ents.create("pfm_actor")
+	actor:GetComponent(ents.COMPONENT_NAME):SetName(name)
+	actor:GetComponent(ents.COMPONENT_MODEL):SetModel(mdlName)
+	local trc = actor:GetComponent(ents.COMPONENT_TRANSFORM)
+	trc:SetPos(origin)
+	trc:SetRotation(rot)
+	table.insert(self.m_actors,actor)
 	return self.m_actors[#self.m_actors]
 end
 function ents.PFMTrack:GetActor(name)
 	for _,actor in ipairs(self.m_actors) do
-		if(actor:GetName() == name) then return actor end
+		if(actor:GetComponent(ents.COMPONENT_NAME):GetName() == name) then return actor end
 	end
 end
+function ents.PFMTrack:AddSoundEvent(name,start,duration,volume,pitch,origin,direction)
+	-- TODO
+end
 function ents.PFMTrack:AddCamera(name,origin,rot)
-	table.insert(self.m_cameras,CinematicScene.Camera(name,origin,rot))
+	local cam = ents.create("pfm_camera")
+	cam:GetComponent(ents.COMPONENT_NAME):SetName(name)
+	local trc = cam:GetComponent(ents.COMPONENT_TRANSFORM)
+	trc:SetPos(origin)
+	trc:SetRotation(rot)
+	table.insert(self.m_cameras,cam)
 	return self.m_cameras[#self.m_cameras]
 end
 function ents.PFMTrack:GetCamera(name)
@@ -84,6 +97,4 @@ function ents.PFMTrack:SetOffsetTransform(pos,rot)
 	self.m_offsetTransform = {pos,rot}
 end
 function ents.PFMTrack:SetCameraEnabled(b) self.m_bCameraEnabled = b end
-
-
 ents.COMPONENT_PFM_TRACK = ents.register_component("pfm_track",ents.PFMTrack)

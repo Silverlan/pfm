@@ -7,6 +7,7 @@ end
 function ents.PFMCamera:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
+	self:AddEntityComponent(ents.COMPONENT_NAME)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 end
 
