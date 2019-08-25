@@ -1,7 +1,13 @@
-util.register_class("udm.BaseAttribute")
+include("udm_base.lua")
 
-local registered_attributes = {}
+util.register_class("udm.BaseAttribute",udm.BaseItem)
+
+udm.impl = udm.impl or {}
+udm.impl.registered_attributes = udm.impl.registered_attributes or {}
+udm.impl.class_to_attribute_id = udm.impl.class_to_attribute_id or {}
+local registered_attributes = udm.impl.registered_attributes
 function udm.BaseAttribute:__init(class,value)
+  udm.BaseItem.__init(self)
   self:SetValue(value)
   self.m_class = class
 end
@@ -24,6 +30,10 @@ function udm.BaseAttribute:Copy()
   return self.m_class(self:GetValue())
 end
 
+function udm.BaseAttribute:IsArray()
+  return self:GetType() == udm.ATTRIBUTE_TYPE_ARRAY
+end
+
 -- These should be overwritten by derived classes
 function udm.BaseAttribute:WriteToBinary(ds) end
 function udm.BaseAttribute:ReadFromBinary(ds) end
@@ -35,6 +45,7 @@ function udm.BaseAttribute:LoadFromASCIIString(str) end
 function udm.register_attribute(className,defaultValue)
   util.register_class("udm." .. className,udm.BaseAttribute)
   local class = udm[className]
+  if(udm.impl.class_to_attribute_id[class] ~= nil) then return udm.impl.class_to_attribute_id[class] end
   function class:__init(value)
     udm.BaseAttribute.__init(self,class,value or defaultValue)
   end
@@ -51,10 +62,18 @@ function udm.register_attribute(className,defaultValue)
   registered_attributes[typeId] = {
     class = class
   }
-  return #registered_attributes
+  udm.impl.class_to_attribute_id[class] = typeId
+  return typeId
 end
 
 function udm.create_attribute(attrType,value)
   if(registered_attributes[attrType] == nil) then return end
   return registered_attributes[attrType].class(value)
+end
+
+function udm.create_attribute_array(attrType)
+  if(registered_attributes[attrType] == nil) then return end
+  local array = udm.create_attribute(udm.ATTRIBUTE_TYPE_ARRAY)
+  array:SetElementType(attrType)
+  return array
 end

@@ -1,9 +1,15 @@
-util.register_class("udm.BaseElement")
+util.register_class("udm.BaseElement",udm.BaseItem)
 
-local registered_elements = {}
+udm.impl = udm.impl or {}
+udm.impl.registered_elements = udm.impl.registered_elements or {}
+udm.impl.class_to_element_id = udm.impl.class_to_element_id or {}
+local registered_elements = udm.impl.registered_elements
 function udm.BaseElement:__init(class,name)
+  udm.BaseItem.__init(self)
   self:SetName(name or "")
   self.m_class = class
+  self.m_children = {}
+  self.m_attributes = {}
   
   local type = self:GetType()
   local elData = registered_elements[type]
@@ -18,6 +24,48 @@ end
 
 function udm.BaseElement:SetName(name) self.m_name = name end
 function udm.BaseElement:GetName() return self.m_name end
+
+function udm.BaseElement:GetChildren() return self.m_children end
+function udm.BaseElement:GetAttributes() return self.m_attributes end
+
+function udm.BaseElement:CreateChild(type,name)
+  local el = udm.create_element(type,name)
+  if(el == nil) then return end
+  self:AddChild(el,name)
+  return el
+end
+
+function udm.BaseElement:CreateAttribute(type,name)
+  local attr = udm.create_attribute(type,name)
+  if(attr == nil) then return end
+  self:AddAttribute(attr,name)
+  return attr
+end
+
+function udm.BaseElement:CreateAttributeArray(type,name)
+  local attr = udm.create_attribute_array(type,name)
+  if(attr == nil) then return end
+  self:AddAttribute(attr,name)
+  return attr
+end
+
+function udm.BaseElement:AddChild(element,name)
+  self.m_children[name] = element
+  return element
+end
+
+function udm.BaseElement:RemoveChild(name)
+  self.m_children[name] = nil
+end
+
+function udm.BaseElement:AddAttribute(attr,name)
+  self.m_attributes[name] = attr
+  return attr
+end
+
+function udm.BaseElement:RemoveAttribute(name)
+  self.m_attributes[name] = nil
+end
 
 function udm.BaseElement:GetType() return -1 end
 
@@ -57,6 +105,7 @@ end
 function udm.register_element(className)
   util.register_class("udm." .. className,udm.BaseElement)
   local class = udm[className]
+  if(udm.impl.class_to_element_id[class] ~= nil) then return udm.impl.class_to_element_id[class] end
   function class:__init(name)
     udm.BaseElement.__init(self,class,name)
   end
@@ -65,12 +114,16 @@ function udm.register_element(className)
   function class:GetType()
     return typeId
   end
+  function class:__tostring()
+    return "UDLElement[" .. className .. "]"
+  end
   
   registered_elements[typeId] = {
     class = class,
     properties = {}
   }
-  return #registered_elements
+  udm.impl.class_to_element_id[class] = typeId
+  return typeId
 end
 
 function udm.register_element_property(elType,propIdentifier,defaultValue)

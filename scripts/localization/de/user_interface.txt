@@ -1,0 +1,8 @@
+sfm_playback_first_frame = "Erste Frame"
+sfm_playback_previous_clip = "Vorheriger Clip"
+sfm_playback_previous_frame = "Vorherige Frame"
+sfm_playback_record = "Aufnahme starten"
+sfm_playback_play = "Abspielen"
+sfm_playback_next_frame = "Nächste Frame"
+sfm_playback_next_clip = "Nächster Clip"
+sfm_playback_last_frame = "Letzte Frame"

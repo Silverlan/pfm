@@ -3,7 +3,9 @@ include("udm_attribute.lua")
 udm.ATTRIBUTE_TYPE_VECTOR3 = udm.register_attribute("Vector3",Vector())
 function udm.Vector3:WriteToBinary(ds) ds:WriteVector(self:GetValue()) end
 function udm.Vector3:ReadFromBinary(ds) return ds:ReadVector() end
-
+function udm.Vector3:Copy()
+  return self.m_class(self:GetValue():Copy())
+end
 function udm.Vector3:ToASCIIString()
   local v = self:GetValue()
   return v.x .. " " .. v.y .. " " .. v.z

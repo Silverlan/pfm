@@ -1,0 +1,1 @@
+ents.register("pfm_clip",{"pfm_clip"},Entity.TYPE_SHARED)

@@ -1,1 +1,0 @@
-ents.register("pfm_camera",{"pfm_camera"},Entity.TYPE_SHARED)
