@@ -17,8 +17,8 @@ function udm.BaseElement:__init(class,name)
     console.print_warning("Unregistered element type!")
     return
   end
-  for _,prop in ipairs(elData.properties) do
-    self["m_" .. prop.identifier] = prop.defaultValue:Copy()
+  for identifier,prop in pairs(elData.properties) do
+    self["m_" .. identifier] = prop.defaultValue:Copy()
   end
 end
 
@@ -75,7 +75,7 @@ function udm.BaseElement:Copy()
   local type = self:GetType()
   local elData = registered_elements[type]
   if(elData == nil) then return copy end
-  for _,prop in ipairs(elData.properties) do
+  for _,prop in pairs(elData.properties) do
     prop.setter(copy,prop.getter(self):Copy())
   end
   return copy
@@ -87,7 +87,7 @@ function udm.BaseElement:SaveToBinary(ds)
   local type = self:GetType()
   local elData = registered_elements[type]
   if(elData == nil) then return end
-  for _,prop in ipairs(elData.properties) do
+  for _,prop in pairs(elData.properties) do
     prop.getter(self):SaveToBinary(ds)
   end
 end
@@ -97,7 +97,7 @@ function udm.BaseElement:LoadFromBinary(ds)
   local type = self:GetType()
   local elData = registered_elements[type]
   if(elData == nil) then return end
-  for _,prop in ipairs(elData.properties) do
+  for _,prop in pairs(elData.properties) do
     prop.getter(self):LoadFromBinary(ds)
   end
 end
@@ -131,12 +131,11 @@ function udm.register_element_property(elType,propIdentifier,defaultValue)
   local methodIdentifier = propIdentifier:sub(1,1):upper() .. propIdentifier:sub(2)
   elData.class["Get" .. methodIdentifier] = function(self) return self["m_" .. propIdentifier] end
   elData.class["Set" .. methodIdentifier] = function(self,value) self["m_" .. propIdentifier] = value end
-  table.insert(elData.properties,{
-    identifier = propIdentifier,
+  elData.properties[propIdentifier] = {
     getter = elData.class["Get" .. methodIdentifier],
     setter = elData.class["Set" .. methodIdentifier],
     defaultValue = defaultValue
-  })
+  }
 end
 
 function udm.create_element(elType,name)

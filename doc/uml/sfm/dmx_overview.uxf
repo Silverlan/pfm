@@ -4,8 +4,8 @@
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>360</x>
-      <y>340</y>
+      <x>350</x>
+      <y>360</y>
       <w>210</w>
       <h>80</h>
     </coordinates>
@@ -19,8 +19,8 @@
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>360</x>
-      <y>510</y>
+      <x>350</x>
+      <y>530</y>
       <w>210</w>
       <h>40</h>
     </coordinates>
@@ -31,8 +31,8 @@
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>360</x>
-      <y>630</y>
+      <x>350</x>
+      <y>700</y>
       <w>210</w>
       <h>50</h>
     </coordinates>
@@ -44,8 +44,8 @@
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>450</x>
-      <y>410</y>
+      <x>440</x>
+      <y>430</y>
       <w>50</w>
       <h>120</h>
     </coordinates>
@@ -57,34 +57,34 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>450</x>
-      <y>540</y>
+      <x>440</x>
+      <y>560</y>
       <w>50</w>
-      <h>110</h>
+      <h>160</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-
 m1=1
 m2=0..*</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;90.0</additional_attributes>
+    <additional_attributes>10.0;10.0;10.0;140.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>270</x>
-      <y>390</y>
+      <x>260</x>
+      <y>410</y>
       <w>110</w>
-      <h>280</h>
+      <h>330</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-
 m1=1
 m2=0..*</panel_attributes>
-    <additional_attributes>90.0;250.0;10.0;250.0;10.0;10.0;90.0;10.0</additional_attributes>
+    <additional_attributes>90.0;300.0;10.0;300.0;10.0;10.0;90.0;10.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>670</x>
-      <y>630</y>
+      <x>660</x>
+      <y>700</y>
       <w>240</w>
       <h>80</h>
     </coordinates>
@@ -98,8 +98,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>560</x>
-      <y>630</y>
+      <x>550</x>
+      <y>700</y>
       <w>130</w>
       <h>40</h>
     </coordinates>
@@ -111,8 +111,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>980</x>
-      <y>630</y>
+      <x>970</x>
+      <y>700</y>
       <w>240</w>
       <h>130</h>
     </coordinates>
@@ -129,8 +129,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>900</x>
-      <y>630</y>
+      <x>890</x>
+      <y>700</y>
       <w>100</w>
       <h>30</h>
     </coordinates>
@@ -140,8 +140,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>980</x>
-      <y>770</y>
+      <x>970</x>
+      <y>840</y>
       <w>240</w>
       <h>120</h>
     </coordinates>
@@ -157,8 +157,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>900</x>
-      <y>650</y>
+      <x>890</x>
+      <y>720</y>
       <w>100</w>
       <h>150</h>
     </coordinates>
@@ -168,8 +168,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>10</x>
-      <y>340</y>
+      <x>0</x>
+      <y>360</y>
       <w>240</w>
       <h>50</h>
     </coordinates>
@@ -181,8 +181,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>240</x>
-      <y>340</y>
+      <x>230</x>
+      <y>360</y>
       <w>140</w>
       <h>30</h>
     </coordinates>
@@ -192,8 +192,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>990</x>
-      <y>340</y>
+      <x>1030</x>
+      <y>360</y>
       <w>240</w>
       <h>100</h>
     </coordinates>
@@ -208,33 +208,33 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>670</x>
-      <y>340</y>
+      <x>660</x>
+      <y>360</y>
       <w>240</w>
       <h>70</h>
     </coordinates>
     <panel_attributes>AnimationSet
 --
 + GetName() : string
-+ GetGameModel() : string</panel_attributes>
++ GetGameModel() : sfm.GameModel</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>900</x>
-      <y>340</y>
-      <w>110</w>
+      <x>890</x>
+      <y>360</y>
+      <w>160</w>
       <h>30</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>90.0;10.0;10.0;10.0</additional_attributes>
+    <additional_attributes>140.0;10.0;10.0;10.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>560</x>
-      <y>340</y>
+      <x>550</x>
+      <y>360</y>
       <w>130</w>
       <h>40</h>
     </coordinates>
@@ -246,8 +246,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>340</x>
-      <y>200</y>
+      <x>330</x>
+      <y>220</y>
       <w>240</w>
       <h>50</h>
     </coordinates>
@@ -259,8 +259,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1280</x>
-      <y>200</y>
+      <x>1270</x>
+      <y>220</y>
       <w>330</w>
       <h>120</h>
     </coordinates>
@@ -276,8 +276,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>450</x>
-      <y>240</y>
+      <x>440</x>
+      <y>260</y>
       <w>50</w>
       <h>120</h>
     </coordinates>
@@ -289,8 +289,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>570</x>
-      <y>200</y>
+      <x>560</x>
+      <y>220</y>
       <w>730</w>
       <h>30</h>
     </coordinates>
@@ -300,8 +300,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>340</x>
-      <y>70</y>
+      <x>330</x>
+      <y>90</y>
       <w>240</w>
       <h>30</h>
     </coordinates>
@@ -312,8 +312,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>450</x>
-      <y>90</y>
+      <x>440</x>
+      <y>110</y>
       <w>50</w>
       <h>130</h>
     </coordinates>
@@ -321,5 +321,188 @@ m2=0..*</panel_attributes>
 m1=1
 m2=0..*</panel_attributes>
     <additional_attributes>10.0;10.0;10.0;110.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1030</x>
+      <y>470</y>
+      <w>240</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>Control
+--
++ GetValue() : float
++ GetLeftValue() : float
++ GetRightValue() : float
++ GetDefaultValue() : float</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>890</x>
+      <y>410</y>
+      <w>160</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*
+controls</panel_attributes>
+    <additional_attributes>10.0;10.0;50.0;10.0;50.0;70.0;140.0;70.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1420</x>
+      <y>470</y>
+      <w>240</w>
+      <h>160</h>
+    </coordinates>
+    <panel_attributes>Channel
+--
++ GetLog() : sfm.Log</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1260</x>
+      <y>470</y>
+      <w>180</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=channel</panel_attributes>
+    <additional_attributes>160.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1260</x>
+      <y>490</y>
+      <w>180</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=leftValueChannel</panel_attributes>
+    <additional_attributes>160.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1260</x>
+      <y>510</y>
+      <w>180</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=rightValueChannel</panel_attributes>
+    <additional_attributes>160.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1420</x>
+      <y>670</y>
+      <w>240</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>Log&lt;T&gt;
+--
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1520</x>
+      <y>620</y>
+      <w>150</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=T = float/Vector3/int</panel_attributes>
+    <additional_attributes>10.0;50.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1420</x>
+      <y>780</y>
+      <w>240</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>LogLayer&lt;T&gt;
+--
++ GetTimes() : vector&lt;T&gt;
++ GetValues() : vector&lt;T&gt;</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1520</x>
+      <y>700</y>
+      <w>50</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1030</x>
+      <y>600</y>
+      <w>240</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>TransformControl
+--
++ GetValuePosition() : Vector3
++ GetValueOrientation() : Quaternion</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1260</x>
+      <y>600</y>
+      <w>180</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=positionChannel</panel_attributes>
+    <additional_attributes>160.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1260</x>
+      <y>620</y>
+      <w>180</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=orientationChannel</panel_attributes>
+    <additional_attributes>160.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>870</x>
+      <y>420</y>
+      <w>180</w>
+      <h>220</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*
+transformControls</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;190.0;160.0;190.0</additional_attributes>
   </element>
 </diagram>

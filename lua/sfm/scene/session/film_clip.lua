@@ -1,25 +1,26 @@
 include("film_clip")
+include("time_frame.lua")
 
 util.register_class("sfm.FilmClip",sfm.BaseElement)
+
+sfm.BaseElement.RegisterAttribute(sfm.FilmClip,"mapname","")
+sfm.BaseElement.RegisterArray(sfm.FilmClip,"trackGroups",sfm.TrackGroup)
+sfm.BaseElement.RegisterArray(sfm.FilmClip,"animationSets",sfm.AnimationSet)
+sfm.BaseElement.RegisterProperty(sfm.FilmClip,"subClipTrackGroup",sfm.SubClipTrackGroup)
+sfm.BaseElement.RegisterProperty(sfm.FilmClip,"camera",sfm.Camera)
+sfm.BaseElement.RegisterProperty(sfm.FilmClip,"timeFrame",sfm.TimeFrame)
+
 function sfm.FilmClip:__init()
-  sfm.BaseElement.__init(self)
+  sfm.BaseElement.__init(self,sfm.FilmClip)
 end
 
 function sfm.FilmClip:GetType() return "DmeFilmClip" end
 
-function sfm.FilmClip:Load(el)
-  sfm.BaseElement.Load(self,el)
-  self.m_mapName = self:LoadAttributeValue(el,"mapname","")
-  self.m_trackGroups = self:LoadArray(el,"trackGroups",sfm.TrackGroup)
-  self.m_subClipTrackGroup = self:LoadProperty(el,"subClipTrackGroup",sfm.SubClipTrackGroup)
-  self.m_animationSets = self:LoadArray(el,"animationSets",sfm.AnimationSet)
-  self.m_camera = self:LoadProperty(el,"camera",sfm.Camera)
-  self.m_timeFrame = self:LoadProperty(el,"timeFrame",sfm.TimeFrame)
+function sfm.FilmClip:ToPFMFilmClip(pfmFilmClip)
+  self:GetTimeFrame():ToPFMTimeFrame(pfmFilmClip:GetTimeFrame())
+  for _,animSet in ipairs(self:GetAnimationSets()) do
+    local pfmAnimSet = udm.PFMAnimationSet()
+    animSet:ToPFMAnimationSet(pfmAnimSet)
+    pfmFilmClip:GetAnimationSets():PushBack(pfmAnimSet)
+  end
 end
-
-function sfm.FilmClip:GetMapName() return self.m_mapName end
-function sfm.FilmClip:GetSubClipTrackGroup() return self.m_subClipTrackGroup end
-function sfm.FilmClip:GetTrackGroups() return self.m_trackGroups end
-function sfm.FilmClip:GetAnimationSets() return self.m_animationSets end
-function sfm.FilmClip:GetCamera() return self.m_camera end
-function sfm.FilmClip:GetTimeFrame() return self.m_timeFrame end

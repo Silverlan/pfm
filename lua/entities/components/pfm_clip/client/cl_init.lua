@@ -23,16 +23,21 @@ end
 function ents.PFMClip:Advance(dt) self:SetOffset(self:GetOffset() +dt) end
 
 function ents.PFMClip:UpdateClip()
-	--print("Updateing clip...")
-	--
+	-- print("Updating clip...")
 end
 
 function ents.PFMClip:SetClip(udmClip) self.m_clip = udmClip end
 function ents.PFMClip:GetClip() return self.m_clip end
 
-function ents.PFMClip:InitializeActors()
-	-- Iterate animation sets of clip and create actors accordingly
-	
+function ents.PFMClip:CreateActor(animSet)
+	local mdlInfo = animSet:GetModel()
+	local mdlName = mdlInfo:GetModelName()
+	if(#mdlName == 0) then return end
+	print("Creating actor with model '" .. mdlName .. "'...")
+	local entActor = ents.create("pfm_actor")
+	entActor:GetComponent(ents.COMPONENT_PFM_ACTOR):Setup(self,animSet)
+	entActor:Spawn()
+	table.insert(self.m_entities,entActor)
 end
 
 function ents.PFMClip:Start()
@@ -45,6 +50,10 @@ function ents.PFMClip:Start()
 		entSound:GetComponent(ents.COMPONENT_PFM_SOUND_SOURCE):Setup(self,clip:GetSound())
 		entSound:Spawn()
 		table.insert(self.m_entities,entSound)
+	elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP) then
+		for _,animSet in ipairs(clip:GetAnimationSets():GetValue()) do
+			self:CreateActor(animSet)
+		end
 	end
 end
 

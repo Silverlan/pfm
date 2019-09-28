@@ -1,15 +1,22 @@
 util.register_class("sfm.GameModel",sfm.BaseElement)
+util.register_class("sfm.Transform",sfm.BaseElement) -- Predeclaration
+
+sfm.BaseElement.RegisterProperty(sfm.GameModel,"transform",sfm.Transform)
+sfm.BaseElement.RegisterAttribute(sfm.GameModel,"modelName","")
+sfm.BaseElement.RegisterAttribute(sfm.GameModel,"skin",0)
+
 function sfm.GameModel:__init()
-  sfm.BaseElement.__init(self)
+  sfm.BaseElement.__init(self,sfm.GameModel)
 end
 
-function sfm.GameModel:Load(el)
-  sfm.BaseElement.Load(self,el)
-  self.m_transform = self:LoadProperty(el,"transform",sfm.Transform)
-  self.m_modelName = self:LoadAttributeValue(el,"modelName","")
-  self.m_skin = self:LoadAttributeValue(el,"skin",0)
+function sfm.GameModel:ToPFMModel(pfmModel)
+  local mdlName = self:GetModelName()
+  if(#mdlName > 0) then
+    mdlName = mdlName:sub(7) -- Remove "models/"-prefix
+    mdlName = file.remove_file_extension(mdlName) .. ".wmd"
+  end
+  
+  pfmModel:SetModelName(mdlName)
+  self:GetTransform():ToPFMTransform(pfmModel:GetTransform())
+  pfmModel:SetSkin(self:GetSkin())
 end
-
-function sfm.GameModel:GetTransform() return self.m_transform end
-function sfm.GameModel:GetModelName() return self.m_modelName end
-function sfm.GameModel:GetSkin() return self.m_skin end

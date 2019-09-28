@@ -36,8 +36,11 @@ function udm.Array:ReadFromBinary(ds)
 end
 
 function udm.Array:Insert(pos,attr)
+  if(self:GetElementType() == nil) then self:SetElementType(attr:GetType()) end
   if(attr:GetType() ~= self:GetElementType()) then
-    console.print_warning("Attempted to push attribute of type " .. attr:GetType() .. " into array of type " .. self:GetElementType() .. "!")
+    console.print_warning(
+      "Attempted to push attribute of type " .. (udm.get_type_name(attr:GetType()) or "") .. " into array of type " .. (udm.get_type_name(self:GetElementType()) or "") .. "!"
+    )
     return
   end
   table.insert(self:GetValue(),pos,attr)

@@ -1,12 +1,9 @@
+include("track.lua")
+
 util.register_class("sfm.SubClipTrackGroup",sfm.BaseElement)
+
+sfm.BaseElement.RegisterArray(sfm.SubClipTrackGroup,"tracks",sfm.Track)
+
 function sfm.SubClipTrackGroup:__init()
-  sfm.BaseElement.__init(self)
-  self.m_tracks = {}
+  sfm.BaseElement.__init(self,sfm.SubClipTrackGroup)
 end
-
-function sfm.SubClipTrackGroup:Load(el)
-  sfm.BaseElement.Load(self,el)
-  self.m_tracks = self:LoadArray(el,"tracks",sfm.Track)
-end
-
-function sfm.SubClipTrackGroup:GetTracks() return self.m_tracks end

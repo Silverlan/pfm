@@ -1,6 +1,10 @@
 util.register_class("sfm.Track",sfm.BaseElement)
+
+sfm.BaseElement.RegisterAttribute(sfm.Track,"mute",false,"IsMuted")
+sfm.BaseElement.RegisterAttribute(sfm.Track,"volume",1.0)
+
 function sfm.Track:__init()
-  sfm.BaseElement.__init(self)
+  sfm.BaseElement.__init(self,sfm.Track)
   self.m_filmClips = {}
   self.m_soundClips = {}
 end
@@ -21,11 +25,7 @@ function sfm.Track:Load(el)
       table.insert(self.m_soundClips,clip)
     end
   end
-  self.m_bMuted = self:LoadAttributeValue(el,"mute",false)
-  self.m_volume = self:LoadAttributeValue(el,"volume",1.0)
 end
 
 function sfm.Track:GetFilmClips() return self.m_filmClips end
 function sfm.Track:GetSoundClips() return self.m_soundClips end
-function sfm.Track:IsMuted() return self.m_bMuted end
-function sfm.Track:GetVolume() return self.m_volume end

@@ -1,13 +1,13 @@
 util.register_class("sfm.Transform",sfm.BaseElement)
+
+sfm.BaseElement.RegisterAttribute(sfm.Transform,"position",Vector())
+sfm.BaseElement.RegisterAttribute(sfm.Transform,"orientation",Quaternion())
+
 function sfm.Transform:__init()
-  sfm.BaseElement.__init(self)
+  sfm.BaseElement.__init(self,sfm.Transform)
 end
 
-function sfm.Transform:Load(el)
-  sfm.BaseElement.Load(self,el)
-  self.m_position = self:LoadAttributeValue(el,"position",Vector())
-  self.m_orientation = self:LoadAttributeValue(el,"orientation",Quaternion())
+function sfm.Transform:ToPFMTransform(pfmTransform)
+  pfmTransform:SetPosition(self:GetPosition()) -- TODO: Convert coordinate system
+  pfmTransform:SetRotation(self:GetOrientation()) -- TODO: Convert coordinate system
 end
-
-function sfm.Transform:GetPosition() return self.m_position end
-function sfm.Transform:GetOrientation() return self.m_orientation end

@@ -1,24 +1,15 @@
 util.register_class("sfm.Sound",sfm.BaseElement)
+
+sfm.BaseElement.RegisterAttribute(sfm.Sound,"soundname","")
+sfm.BaseElement.RegisterAttribute(sfm.Sound,"gameSoundName","")
+sfm.BaseElement.RegisterAttribute(sfm.Sound,"volume",1.0)
+sfm.BaseElement.RegisterAttribute(sfm.Sound,"pitch",100)
+sfm.BaseElement.RegisterAttribute(sfm.Sound,"origin",Vector())
+sfm.BaseElement.RegisterAttribute(sfm.Sound,"direction",Vector())
+
 function sfm.Sound:__init()
-  sfm.BaseElement.__init(self)
+  sfm.BaseElement.__init(self,sfm.Sound)
 end
-
-function sfm.Sound:Load(el)
-  sfm.BaseElement.Load(self,el)
-  self.m_soundName = self:LoadAttributeValue(el,"soundname","")
-  self.m_gameSoundName = self:LoadAttributeValue(el,"gameSoundName","")
-  self.m_volume = self:LoadAttributeValue(el,"volume",1.0)
-  self.m_pitch = self:LoadAttributeValue(el,"pitch",100)
-  self.m_origin = self:LoadAttributeValue(el,"origin",Vector())
-  self.m_direction = self:LoadAttributeValue(el,"direction",Vector())
-end
-
-function sfm.Sound:GetSoundName() return self.m_soundName end
-function sfm.Sound:GetGameSoundName() return self.m_gameSoundName end
-function sfm.Sound:GetVolume() return self.m_volume end
-function sfm.Sound:GetPitch() return self.m_pitch end
-function sfm.Sound:GetOrigin() return self.m_origin end
-function sfm.Sound:GetDirection() return self.m_direction end
 
 function sfm.Sound:ToPFMSound(pfmSound)
 	pfmSound:SetSoundName(self:GetSoundName())

@@ -1,11 +1,8 @@
 util.register_class("sfm.Camera",sfm.BaseElement)
+util.register_class("sfm.Transform",sfm.BaseElement) -- Predeclaration
+
+sfm.BaseElement.RegisterProperty(sfm.Camera,"transform",sfm.Transform)
+
 function sfm.Camera:__init()
-  sfm.BaseElement.__init(self)
+  sfm.BaseElement.__init(self,sfm.Camera)
 end
-
-function sfm.Camera:Load(el)
-  sfm.BaseElement.Load(self,el)
-  self.m_transform = self:LoadProperty(el,"transform",sfm.Transform)
-end
-
-function sfm.Camera:GetTransform() return self.m_transform end

@@ -43,17 +43,25 @@ function ents.PFMTrack:UpdateTrack()
 	end
 	
 	-- Check if there are new clips that need to be started
-	local clips = self.m_track:GetAudioClips():GetValue()
+	self:UpdateClips(self.m_track:GetAudioClips():GetValue(),offset,clipsActive)
+	self:UpdateClips(self.m_track:GetFilmClips():GetValue(),offset,clipsActive)
+	
+	-- Update offsets for active clips
+	for _,clipC in ipairs(self.m_activeClips) do
+		if(clipC:IsValid()) then
+			local clip = clipC:GetClip()
+			local timeFrame = clip:GetTimeFrame()
+			local clipOffset = offset -timeFrame:GetStart()
+			clipC:SetOffset(clipOffset)
+		end
+	end
+end
+
+function ents.PFMTrack:UpdateClips(clips,offset,clipsActive)
 	for name,clip in pairs(clips) do
 		local timeFrame = clip:GetTimeFrame()
 		if(clipsActive[clip] == nil and offset >= timeFrame:GetStart() and offset < timeFrame:GetEnd()) then
 			self:StartClip(clip)
-		end
-	end
-	
-	for _,clipC in ipairs(self.m_activeClips) do
-		if(clipC:IsValid()) then
-			clipC:UpdateClip()
 		end
 	end
 end

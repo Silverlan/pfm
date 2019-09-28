@@ -60,10 +60,16 @@ function udm.register_attribute(className,defaultValue)
   end
   
   registered_attributes[typeId] = {
-    class = class
+    class = class,
+    typeName = className
   }
   udm.impl.class_to_attribute_id[class] = typeId
   return typeId
+end
+
+function udm.get_type_name(typeId)
+  if(registered_attributes[typeId] == nil) then return end
+  return registered_attributes[typeId].typeName
 end
 
 function udm.create_attribute(attrType,value)
