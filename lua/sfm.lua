@@ -5,6 +5,29 @@ if(r ~= true) then
 end
 
 sfm = sfm or {}
+
+sfm.convert_source_position_to_pragma = function(pos)
+	return Vector(pos.x,pos.z,-pos.y)
+end
+
+sfm.convert_source_rotation_to_pragma = function(rot)
+	return Quaternion(rot.w,rot.x,-rot.z,rot.y)
+end
+
+sfm.convert_source_normal_to_pragma = function(n)
+	return Vector(n.x,-n.z,n.y)
+end
+
+-- Note: For some reason animation set root bone positions require a different
+-- conversion, I'm not sure why.
+sfm.convert_source_anim_set_position_to_pragma = function(pos)
+	return Vector(pos.x,-pos.z,pos.y)
+end
+
+sfm.convert_source_anim_set_rotation_to_pragma = function(rot)
+	return sfm.convert_source_rotation_to_pragma(rot)
+end
+
 include("sfm/scene.lua")
 
 sfm.import_scene = function(fpath)

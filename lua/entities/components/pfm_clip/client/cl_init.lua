@@ -40,6 +40,12 @@ function ents.PFMClip:CreateActor(animSet)
 	table.insert(self.m_entities,entActor)
 end
 
+function ents.PFMClip:GetTimeFrame()
+	local clip = self:GetClip()
+	if(clip == nil) then return udm.PFMTimeFrame() end
+	return clip:GetTimeFrame()
+end
+
 function ents.PFMClip:Start()
 	if(self:IsActive()) then return end
 	self.m_bActive = true

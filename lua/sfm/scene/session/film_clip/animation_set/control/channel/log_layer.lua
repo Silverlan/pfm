@@ -40,10 +40,10 @@ function sfm.LogLayer:ToPFMLogLayer(pfmLogLayer)
     local udmValue
     if(type == TYPE_FLOAT) then udmValue = udm.Float(v)
     elseif(type == TYPE_VECTOR3) then
-      v = Vector(v.x,-v.z,v.y) -- Conversion into Pragma coordinate system
+      v = sfm.convert_source_anim_set_position_to_pragma(v)
       udmValue = udm.Vector3(v)
     elseif(type == TYPE_QUATERNION) then
-      v = Quaternion(v.w,v.x,-v.z,v.y) -- Conversion into Pragma coordinate system
+      v = sfm.convert_source_anim_set_rotation_to_pragma(v)
       udmValue = udm.Quaternion(v)
     end
     pfmLogLayer:GetValues():PushBack(udmValue)

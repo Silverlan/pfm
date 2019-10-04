@@ -11,7 +11,7 @@ if(true) then return end]]
 
 -- Input SFM scene
 print("Loading SFM scene...")
-local sfmScene = sfm.import_scene("lua/mtt_engineer.dmx")
+local sfmScene = sfm.import_scene("lua/mtt_engineer.dmx")--lua/mtt_engineer.dmx")--test_counter.dmx")
 if(sfmScene == nil) then return end
 
 local function initialize_track(pfmScene,sfmTrack)
@@ -113,4 +113,4 @@ for _,session in ipairs(sfmScene:GetSessions()) do
   print("Video Target: ",videoTarget)
 end]]
 
--- lua_exec_cl test_import_sfm.lua
+-- lua_exec_cl test_import_sfm.lua; cl_render_occlusion_culling 0

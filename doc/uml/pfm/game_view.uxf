@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <diagram program="umlet" version="14.3.0">
-  <zoom_level>10</zoom_level>
+  <zoom_level>9</zoom_level>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>420</x>
-      <y>270</y>
-      <w>210</w>
-      <h>40</h>
+      <x>1134</x>
+      <y>261</y>
+      <w>189</w>
+      <h>36</h>
     </coordinates>
     <panel_attributes>Scene
 --</panel_attributes>
@@ -16,10 +16,10 @@
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>420</x>
-      <y>490</y>
-      <w>210</w>
-      <h>40</h>
+      <x>1134</x>
+      <y>459</y>
+      <w>189</w>
+      <h>36</h>
     </coordinates>
     <panel_attributes>Clip
 --</panel_attributes>
@@ -28,10 +28,10 @@
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>510</x>
-      <y>300</y>
-      <w>50</w>
-      <h>100</h>
+      <x>1215</x>
+      <y>288</y>
+      <w>45</w>
+      <h>90</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-
 m1=1
@@ -41,10 +41,10 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>290</x>
-      <y>610</y>
-      <w>210</w>
-      <h>40</h>
+      <x>1017</x>
+      <y>567</y>
+      <w>189</w>
+      <h>36</h>
     </coordinates>
     <panel_attributes>Actor
 --</panel_attributes>
@@ -53,10 +53,10 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>430</x>
-      <y>520</y>
-      <w>50</w>
-      <h>110</h>
+      <x>1143</x>
+      <y>486</y>
+      <w>45</w>
+      <h>99</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-
 m1=1
@@ -66,10 +66,10 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>420</x>
-      <y>380</y>
-      <w>210</w>
-      <h>40</h>
+      <x>1134</x>
+      <y>360</y>
+      <w>189</w>
+      <h>36</h>
     </coordinates>
     <panel_attributes>Track
 --</panel_attributes>
@@ -78,10 +78,10 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>510</x>
-      <y>410</y>
-      <w>50</w>
-      <h>100</h>
+      <x>1215</x>
+      <y>387</y>
+      <w>45</w>
+      <h>90</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-
 m1=1
@@ -91,10 +91,10 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>550</x>
-      <y>610</y>
-      <w>210</w>
-      <h>40</h>
+      <x>1251</x>
+      <y>567</y>
+      <w>189</w>
+      <h>36</h>
     </coordinates>
     <panel_attributes>SoundSource
 --</panel_attributes>
@@ -103,14 +103,139 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>600</x>
-      <y>520</y>
-      <w>50</w>
-      <h>110</h>
+      <x>1296</x>
+      <y>486</y>
+      <w>45</w>
+      <h>99</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-
 m1=1
 m2=0..1</panel_attributes>
     <additional_attributes>10.0;10.0;10.0;90.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>0</x>
+      <y>540</y>
+      <w>396</w>
+      <h>108</h>
+    </coordinates>
+    <panel_attributes>Channel
+--
++ AddTransform(ctrlId : int,time : float,value : any)
++ GetTransforms() : table
++ Apply(ent : Entity,offset : float)
+/+ GetInterpolatedValue(value0 : any,value1 : any,float amount) : any/
+/+ ApplyValue(ent : Entity,ctrlId : int,value : any) : bool/</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>450</x>
+      <y>441</y>
+      <w>450</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>TranslationChannel
+--
+/+ GetInterpolatedValue(value0 : Vector,value1 : Vector,float amount) : Vector/
+/+ ApplyValue(ent : Entity,ctrlId : int,value : Vector) : bool/</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>441</x>
+      <y>567</y>
+      <w>414</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>RotationChannel
+--
+/+ GetInterpolatedValue(value0 : Quat,value1 : Quat,float amount) : Quat/
+/+ ApplyValue(ent : Entity,ctrlId : int,value : Quat) : bool/</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>450</x>
+      <y>675</y>
+      <w>405</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>FlexControllerChannel
+--
+/+ GetInterpolatedValue(value0 : float,value1 : float,float amount) : float/
+/+ ApplyValue(ent : Entity,ctrlId : int,value : float) : bool/</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>351</x>
+      <y>441</y>
+      <w>117</w>
+      <h>117</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;110.0;10.0;10.0;110.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>891</x>
+      <y>441</y>
+      <w>171</w>
+      <h>144</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;170.0;10.0;170.0;140.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>846</x>
+      <y>567</y>
+      <w>189</w>
+      <h>27</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;190.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>846</x>
+      <y>594</y>
+      <w>216</w>
+      <h>108</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;100.0;220.0;100.0;220.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>351</x>
+      <y>639</y>
+      <w>117</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0;110.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>387</x>
+      <y>567</y>
+      <w>72</w>
+      <h>27</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;60.0;10.0</additional_attributes>
   </element>
 </diagram>

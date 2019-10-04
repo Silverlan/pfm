@@ -4,6 +4,7 @@ function ents.PFMTrack:Initialize()
 	BaseEntityComponent.Initialize(self)
 	self.m_offset = 0.0
 	self.m_activeClips = {}
+	self.m_timeFrame = udm.PFMTimeFrame()
 end
 
 function ents.PFMTrack:OnRemove()
@@ -57,6 +58,10 @@ function ents.PFMTrack:UpdateTrack()
 	end
 end
 
+function ents.PFMTrack:GetTimeFrame()
+	return self.m_timeFrame
+end
+
 function ents.PFMTrack:UpdateClips(clips,offset,clipsActive)
 	for name,clip in pairs(clips) do
 		local timeFrame = clip:GetTimeFrame()
@@ -66,7 +71,34 @@ function ents.PFMTrack:UpdateClips(clips,offset,clipsActive)
 	end
 end
 
-function ents.PFMTrack:SetTrack(udmTrack) self.m_track = udmTrack end
+function ents.PFMTrack:SetTrack(udmTrack)
+	self.m_track = udmTrack
+
+	local startTime = math.huge
+	local endTime = -math.huge
+	for _,filmClip in ipairs(udmTrack:GetFilmClips():GetValue()) do
+		local timeFrame = filmClip:GetTimeFrame()
+		local clipStart = timeFrame:GetStart()
+		local clipEnd = timeFrame:GetEnd()
+		startTime = math.min(startTime,clipStart)
+		endTime = math.max(endTime,clipEnd)
+	end
+	for _,audioClip in ipairs(udmTrack:GetAudioClips():GetValue()) do
+		local timeFrame = audioClip:GetTimeFrame()
+		local clipStart = timeFrame:GetStart()
+		local clipEnd = timeFrame:GetEnd()
+		startTime = math.min(startTime,clipStart)
+		endTime = math.max(endTime,clipEnd)
+	end
+	if(startTime == math.huge or endTime == -math.huge) then
+		startTime = 0.0
+		endTime = 0.0
+	end
+
+	self.m_timeFrame = udm.PFMTimeFrame()
+	self.m_timeFrame:SetStart(startTime)
+	self.m_timeFrame:SetDuration(endTime -startTime)
+end
 function ents.PFMTrack:GetTrack() return self.m_track end
 
 function ents.PFMTrack:Stop()

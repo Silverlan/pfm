@@ -3,6 +3,7 @@ pfm.impl = pfm.impl or {}
 
 pfm.impl.scenes = pfm.impl.scenes or {}
 
+include("log.lua")
 include("/udm/udm.lua")
 include("udm")
 include("tree/pfm_tree.lua")

@@ -8,6 +8,6 @@ function sfm.Transform:__init()
 end
 
 function sfm.Transform:ToPFMTransform(pfmTransform)
-  pfmTransform:SetPosition(self:GetPosition()) -- TODO: Convert coordinate system
-  pfmTransform:SetRotation(self:GetOrientation()) -- TODO: Convert coordinate system
+  pfmTransform:SetPosition(sfm.convert_source_position_to_pragma(self:GetPosition()))
+  pfmTransform:SetRotation(sfm.convert_source_rotation_to_pragma(self:GetOrientation()))
 end

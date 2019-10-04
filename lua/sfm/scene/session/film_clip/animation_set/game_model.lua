@@ -9,13 +9,17 @@ function sfm.GameModel:__init()
   sfm.BaseElement.__init(self,sfm.GameModel)
 end
 
-function sfm.GameModel:ToPFMModel(pfmModel)
+function sfm.GameModel:GetPragmaModelPath()
   local mdlName = self:GetModelName()
   if(#mdlName > 0) then
     mdlName = mdlName:sub(7) -- Remove "models/"-prefix
     mdlName = file.remove_file_extension(mdlName) .. ".wmd"
   end
-  
+  return mdlName
+end
+
+function sfm.GameModel:ToPFMModel(pfmModel)
+  local mdlName = self:GetPragmaModelPath()
   pfmModel:SetModelName(mdlName)
   self:GetTransform():ToPFMTransform(pfmModel:GetTransform())
   pfmModel:SetSkin(self:GetSkin())
