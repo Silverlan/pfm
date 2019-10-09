@@ -1,3 +1,11 @@
+--[[
+    Copyright (C) 2019  Florian Weischer
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+]]
+
 local r = engine.load_library("pr_dmx")
 if(r ~= true) then
 	print("WARNING: An error occured trying to load the 'pr_dmx' module: ",r)

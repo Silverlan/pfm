@@ -5,7 +5,7 @@
     <id>UMLClass</id>
     <coordinates>
       <x>350</x>
-      <y>330</y>
+      <y>410</y>
       <w>210</w>
       <h>80</h>
     </coordinates>
@@ -20,7 +20,7 @@
     <id>UMLClass</id>
     <coordinates>
       <x>350</x>
-      <y>500</y>
+      <y>580</y>
       <w>210</w>
       <h>40</h>
     </coordinates>
@@ -32,7 +32,7 @@
     <id>UMLClass</id>
     <coordinates>
       <x>350</x>
-      <y>670</y>
+      <y>750</y>
       <w>210</w>
       <h>50</h>
     </coordinates>
@@ -45,7 +45,7 @@
     <id>Relation</id>
     <coordinates>
       <x>440</x>
-      <y>400</y>
+      <y>480</y>
       <w>50</w>
       <h>120</h>
     </coordinates>
@@ -58,7 +58,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>440</x>
-      <y>530</y>
+      <y>610</y>
       <w>50</w>
       <h>160</h>
     </coordinates>
@@ -71,7 +71,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>260</x>
-      <y>380</y>
+      <y>460</y>
       <w>110</w>
       <h>330</h>
     </coordinates>
@@ -84,7 +84,7 @@ m2=0..*</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>660</x>
-      <y>670</y>
+      <y>750</y>
       <w>240</w>
       <h>80</h>
     </coordinates>
@@ -99,7 +99,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>550</x>
-      <y>670</y>
+      <y>750</y>
       <w>130</w>
       <h>40</h>
     </coordinates>
@@ -112,7 +112,7 @@ m2=0..*</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>970</x>
-      <y>670</y>
+      <y>750</y>
       <w>240</w>
       <h>130</h>
     </coordinates>
@@ -130,7 +130,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>890</x>
-      <y>670</y>
+      <y>750</y>
       <w>100</w>
       <h>30</h>
     </coordinates>
@@ -141,7 +141,7 @@ m2=0..*</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>970</x>
-      <y>810</y>
+      <y>890</y>
       <w>240</w>
       <h>120</h>
     </coordinates>
@@ -158,7 +158,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>890</x>
-      <y>690</y>
+      <y>770</y>
       <w>100</w>
       <h>150</h>
     </coordinates>
@@ -169,7 +169,7 @@ m2=0..*</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>0</x>
-      <y>330</y>
+      <y>410</y>
       <w>240</w>
       <h>50</h>
     </coordinates>
@@ -182,7 +182,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>230</x>
-      <y>330</y>
+      <y>410</y>
       <w>140</w>
       <h>30</h>
     </coordinates>
@@ -193,7 +193,7 @@ m2=0..*</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>1030</x>
-      <y>330</y>
+      <y>410</y>
       <w>240</w>
       <h>100</h>
     </coordinates>
@@ -209,7 +209,7 @@ m2=0..*</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>660</x>
-      <y>330</y>
+      <y>410</y>
       <w>240</w>
       <h>70</h>
     </coordinates>
@@ -223,7 +223,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>890</x>
-      <y>330</y>
+      <y>430</y>
       <w>160</w>
       <h>30</h>
     </coordinates>
@@ -234,7 +234,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>550</x>
-      <y>330</y>
+      <y>410</y>
       <w>130</w>
       <h>40</h>
     </coordinates>
@@ -247,7 +247,7 @@ m2=0..*</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>330</x>
-      <y>190</y>
+      <y>270</y>
       <w>240</w>
       <h>50</h>
     </coordinates>
@@ -259,8 +259,8 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1270</x>
-      <y>190</y>
+      <x>640</x>
+      <y>270</y>
       <w>330</w>
       <h>120</h>
     </coordinates>
@@ -277,7 +277,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>440</x>
-      <y>230</y>
+      <y>310</y>
       <w>50</w>
       <h>120</h>
     </coordinates>
@@ -290,18 +290,18 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>560</x>
-      <y>190</y>
-      <w>730</w>
+      <y>270</y>
+      <w>100</w>
       <h>30</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>710.0;10.0;10.0;10.0</additional_attributes>
+    <additional_attributes>80.0;10.0;10.0;10.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
       <x>330</x>
-      <y>60</y>
+      <y>140</y>
       <w>240</w>
       <h>30</h>
     </coordinates>
@@ -313,7 +313,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>440</x>
-      <y>80</y>
+      <y>160</y>
       <w>50</w>
       <h>130</h>
     </coordinates>
@@ -326,7 +326,7 @@ m2=0..*</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>1030</x>
-      <y>440</y>
+      <y>520</y>
       <w>240</w>
       <h>100</h>
     </coordinates>
@@ -342,7 +342,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>890</x>
-      <y>380</y>
+      <y>460</y>
       <w>160</w>
       <h>100</h>
     </coordinates>
@@ -356,7 +356,7 @@ controls</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>1420</x>
-      <y>440</y>
+      <y>520</y>
       <w>240</w>
       <h>160</h>
     </coordinates>
@@ -369,7 +369,7 @@ controls</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>1260</x>
-      <y>440</y>
+      <y>520</y>
       <w>180</w>
       <h>40</h>
     </coordinates>
@@ -381,7 +381,7 @@ m1=channel</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>1260</x>
-      <y>460</y>
+      <y>540</y>
       <w>180</w>
       <h>40</h>
     </coordinates>
@@ -393,7 +393,7 @@ m1=leftValueChannel</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>1260</x>
-      <y>480</y>
+      <y>560</y>
       <w>180</w>
       <h>40</h>
     </coordinates>
@@ -405,7 +405,7 @@ m1=rightValueChannel</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>1420</x>
-      <y>640</y>
+      <y>720</y>
       <w>240</w>
       <h>40</h>
     </coordinates>
@@ -418,7 +418,7 @@ m1=rightValueChannel</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>1520</x>
-      <y>590</y>
+      <y>670</y>
       <w>150</w>
       <h>70</h>
     </coordinates>
@@ -430,7 +430,7 @@ m1=T = float/Vector3/int</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>1420</x>
-      <y>750</y>
+      <y>830</y>
       <w>240</w>
       <h>70</h>
     </coordinates>
@@ -444,7 +444,7 @@ m1=T = float/Vector3/int</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>1520</x>
-      <y>670</y>
+      <y>750</y>
       <w>50</w>
       <h>100</h>
     </coordinates>
@@ -457,7 +457,7 @@ m2=0..*</panel_attributes>
     <id>UMLClass</id>
     <coordinates>
       <x>1030</x>
-      <y>570</y>
+      <y>650</y>
       <w>240</w>
       <h>70</h>
     </coordinates>
@@ -471,7 +471,7 @@ m2=0..*</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>1260</x>
-      <y>570</y>
+      <y>650</y>
       <w>180</w>
       <h>40</h>
     </coordinates>
@@ -483,7 +483,7 @@ m1=positionChannel</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>1260</x>
-      <y>590</y>
+      <y>670</y>
       <w>180</w>
       <h>40</h>
     </coordinates>
@@ -495,7 +495,7 @@ m1=orientationChannel</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>870</x>
-      <y>390</y>
+      <y>470</y>
       <w>180</w>
       <h>220</h>
     </coordinates>
@@ -504,5 +504,37 @@ m1=1
 m2=0..*
 transformControls</panel_attributes>
     <additional_attributes>10.0;10.0;10.0;190.0;160.0;190.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1030</x>
+      <y>220</y>
+      <w>240</w>
+      <h>180</h>
+    </coordinates>
+    <panel_attributes>Camera
+--
++ GetName() : string
++ GetTransform() : sfm.Transform
++ GetFieldOfView() : float
++ GetZNear() : float
++ GetZFar() : float
++ GetFocalDistance() : float
++ GetEyeSeparation() : float
++ GetAperture() : float
++ GetShutterSpeed() : float</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>890</x>
+      <y>220</y>
+      <w>160</w>
+      <h>220</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>140.0;10.0;110.0;10.0;110.0;200.0;10.0;200.0</additional_attributes>
   </element>
 </diagram>

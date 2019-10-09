@@ -6,12 +6,13 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("pfm.Tree")
+util.register_class("ents.PFMCamera",BaseEntityComponent)
 
-include("pfm_tree_node.lua")
+function ents.PFMCamera:Initialize()
+	BaseEntityComponent.Initialize(self)
 
-function pfm.Tree:__init()
-  self.m_rootNode = pfm.Tree.Node()
 end
-
-function pfm.Tree:GetRootNode() return self.m_rootNode end
+function ents.PFMCamera:Setup(cameraData)
+	
+end
+ents.COMPONENT_PFM_CAMERA = ents.register_component("pfm_camera",ents.PFMCamera)

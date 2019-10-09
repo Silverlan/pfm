@@ -1,3 +1,11 @@
+--[[
+    Copyright (C) 2019  Florian Weischer
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+]]
+
 util.register_class("udm.BaseElement",udm.BaseItem)
 
 udm.impl = udm.impl or {}
@@ -21,6 +29,12 @@ function udm.BaseElement:__init(class,name)
     self["m_" .. identifier] = prop.defaultValue:Copy()
   end
 end
+
+function udm.BaseElement:SetProperty(name,prop)
+  self["m_" .. name] = prop
+  return self:GetProperty(name)
+end
+function udm.BaseElement:GetProperty(name) return self["m_" .. name] end
 
 function udm.BaseElement:SetName(name) self.m_name = name end
 function udm.BaseElement:GetName() return self.m_name end

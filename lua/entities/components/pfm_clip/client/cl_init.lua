@@ -1,3 +1,11 @@
+--[[
+    Copyright (C) 2019  Florian Weischer
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+]]
+
 util.register_class("ents.PFMClip",BaseEntityComponent)
 
 function ents.PFMClip:Initialize()
@@ -30,10 +38,7 @@ function ents.PFMClip:SetClip(udmClip) self.m_clip = udmClip end
 function ents.PFMClip:GetClip() return self.m_clip end
 
 function ents.PFMClip:CreateActor(animSet)
-	local mdlInfo = animSet:GetModel()
-	local mdlName = mdlInfo:GetModelName()
-	if(#mdlName == 0) then return end
-	print("Creating actor with model '" .. mdlName .. "'...")
+	print("Creating actor '" .. animSet:GetName() .. "'...")
 	local entActor = ents.create("pfm_actor")
 	entActor:GetComponent(ents.COMPONENT_PFM_ACTOR):Setup(self,animSet)
 	entActor:Spawn()

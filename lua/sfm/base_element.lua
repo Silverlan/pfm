@@ -1,5 +1,15 @@
+--[[
+    Copyright (C) 2019  Florian Weischer
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+]]
+
 util.register_class("sfm.BaseElement")
 sfm.BaseElement.class_data = {}
+sfm.BaseElement.PROPERTY_FLAG_NONE = 0
+sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL = 1
 function sfm.BaseElement:__init(class)
 	self.m_name = ""
 	self.m_type = ""
@@ -14,7 +24,9 @@ function sfm.BaseElement:__init(class)
 	end
 	if(classData.properties ~= nil) then
 		for name,propData in pairs(classData.properties) do
-			self["m_" .. name] = propData[1]()
+			if(bit.band(propData[2],sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL) == 0) then
+				self["m_" .. name] = propData[1]()
+			end
 		end
 	end
 	if(classData.arrays ~= nil) then
@@ -25,7 +37,7 @@ function sfm.BaseElement:__init(class)
 end
 
 function sfm.BaseElement.RegisterGetter(elClass,name,getterName)
-	if(getterName == nil) then
+	if(getterName == nil or #getterName == 0) then
 		getterName = "Get" .. name:sub(1,1):upper() .. name:sub(2)
 	end
 	elClass[getterName] = function(el) return el["m_" .. name] end
@@ -41,17 +53,25 @@ function sfm.BaseElement.RegisterAttribute(elClass,name,default,getterName)
 	sfm.BaseElement.RegisterGetter(elClass,name,getterName)
 end
 
-function sfm.BaseElement.RegisterProperty(elClass,name,class,getterName)
+function sfm.BaseElement.RegisterProperty(elClass,name,class,getterName,flags)
+	if(class == nil) then
+		console.print_warning("Attempted to register SFM property '" .. name .. "', but specified class does not exist!")
+		return
+	end
 	local classData = sfm.BaseElement.class_data
 	classData[elClass] = classData[elClass] or {}
 	classData[elClass].properties = classData[elClass].properties or {}
 	
-	classData[elClass].properties[name] = {class}
+	classData[elClass].properties[name] = {class,flags or 0}
 	
 	sfm.BaseElement.RegisterGetter(elClass,name,getterName)
 end
 
 function sfm.BaseElement.RegisterArray(elClass,name,class,getterName)
+	if(class == nil) then
+		console.print_warning("Attempted to register SFM array '" .. name .. "', but specified class does not exist!")
+		return
+	end
 	local classData = sfm.BaseElement.class_data
 	classData[elClass] = classData[elClass] or {}
 	classData[elClass].arrays = classData[elClass].arrays or {}
@@ -77,6 +97,9 @@ function sfm.BaseElement:Load(el)
 	if(classData.properties ~= nil) then
 		for name,propData in pairs(classData.properties) do
 			self["m_" .. name] = self:LoadProperty(el,name,propData[1])
+			if(bit.band(propData[2],sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL) == 0 and self["m_" .. name] == nil) then
+				self["m_" .. name] = propData[1]()
+			end
 		end
 	end
 	if(classData.arrays ~= nil) then
@@ -94,9 +117,10 @@ function sfm.BaseElement:LoadAttributeValue(el,name,default)
 end
 
 function sfm.BaseElement:LoadProperty(el,name,class)
-  local elVal = el:GetAttributeValue(name)
+	local elVal = el:GetAttributeValue(name)
+	if(elVal == nil) then return end
 	local o = class()
-	if(elVal ~= nil) then o:Load(elVal) end
+	o:Load(elVal)
 	return o
 end
 
@@ -104,11 +128,11 @@ function sfm.BaseElement:LoadArray(el,name,class)
 	local t = {}
 	local attr = el:GetAttrV(name)
 	if(attr == nil) then return t end
-  for _,attr in ipairs(attr) do
-    local elChild = attr:GetValue()
-    local o = class()
+	for _,attr in ipairs(attr) do
+		local elChild = attr:GetValue()
+		local o = class()
 		if(type(o) == "userdata") then o:Load(elChild) end
-    table.insert(t,o)
-  end
+		table.insert(t,o)
+	end
 	return t
 end
