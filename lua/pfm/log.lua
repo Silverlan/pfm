@@ -17,7 +17,7 @@ end
 
 pfm.log = function(msg,categories,severity)
 	severity = severity or pfm.LOG_SEVERITY_NORMAL
-	categories = categories or 0
+	categories = categories or pfm.LOG_CATEGORY_PFM
 	if(pfm.is_log_category_enabled(categories) == false) then return false end
 	if(severity == pfm.LOG_SEVERITY_NORMAL) then console.print_messageln(msg)
 	elseif(severity == pfm.LOG_SEVERITY_WARNING) then console.print_warning(msg)

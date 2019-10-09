@@ -27,6 +27,12 @@ function ents.PFMScene:SetOffset(offset)
 	end
 end
 
+function ents.PFMScene:GetOffset()
+	if(util.is_valid(self.m_entTrack) == false) then return 0.0 end
+	local trackC = self.m_entTrack:GetComponent(ents.COMPONENT_PFM_TRACK)
+	return (trackC ~= nil) and trackC:GetOffset() or 0.0
+end
+
 function ents.PFMScene:GetTrackTimeFrame()
 	local trackC = util.is_valid(self.m_entTrack) and self.m_entTrack:GetComponent(ents.COMPONENT_PFM_TRACK) or nil
 	if(trackC == nil) then return udm.PFMTimeFrame() end
