@@ -14,12 +14,6 @@ function ents.PFMActorComponent.TranslationChannel:GetInterpolatedValue(value0,v
 	return value0:Lerp(value1,interpAm)
 end
 function ents.PFMActorComponent.TranslationChannel:ApplyValue(ent,controllerId,value)
-	local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
-	if(animC == nil) then return false end
-	if(controllerId == ents.PFMActorComponent.ROOT_TRANSFORM_ID) then
-		ent:SetPos(value)
-		return true
-	end
-	animC:SetBonePos(controllerId,value)
+	ent:SetPos(value)
 	return true
 end

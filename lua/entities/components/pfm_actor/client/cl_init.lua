@@ -14,22 +14,21 @@ function ents.PFMActorComponent:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
 	self:AddEntityComponent(ents.COMPONENT_NAME)
+
+	self.m_channels = {}
+	self.m_translationChannel = self:AddChannel(ents.PFMActorComponent.TranslationChannel())
+	self.m_rotationChannel = self:AddChannel(ents.PFMActorComponent.RotationChannel())
 end
+
+function ents.PFMActorComponent:AddChannel(channel)
+	table.insert(self.m_channels,channel)
+	return channel
+end
+
+function ents.PFMActorComponent:GetChannels() return self.m_channels end
 
 function ents.PFMActorComponent:OnRemove()
-	if(util.is_valid(self.m_cbUpdateSkeleton)) then self.m_cbUpdateSkeleton:Remove() end
 	if(util.is_valid(self.m_cbOnOffsetChanged)) then self.m_cbOnOffsetChanged:Remove() end
-end
-
-function ents.PFMActorComponent:OnEntitySpawn()
-	local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
-	if(animC ~= nil) then
-		animC:PlayAnimation("reference") -- Play reference animation to make sure animation callbacks are being called
-	end
-end
-
-function ents.PFMActorComponent:OnClipOffsetChanged(newOffset)
-
 end
 
 function ents.PFMActorComponent:ApplyTransforms()
@@ -40,12 +39,9 @@ function ents.PFMActorComponent:ApplyTransforms()
 	self.m_oldOffset = newOffset
 	
 	local ent = self:GetEntity()
-	local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
-	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
-	local mdl = mdlC:GetModel()
-	self.m_channels[ents.PFMActorComponent.CHANNEL_BONE_TRANSLATIONS]:Apply(ent,newOffset)
-	self.m_channels[ents.PFMActorComponent.CHANNEL_BONE_ROTATIONS]:Apply(ent,newOffset)
-	self.m_channels[ents.PFMActorComponent.CHANNEL_FLEX_CONTROLLER_TRANSFORMS]:Apply(ent,newOffset)
+	for _,channel in ipairs(self:GetChannels()) do
+		channel:Apply(ent,newOffset)
+	end
 end
 
 function ents.PFMActorComponent:Setup(clipC,animSet)
@@ -55,35 +51,51 @@ function ents.PFMActorComponent:Setup(clipC,animSet)
 	self:GetEntity():SetName(animSet:GetName())
 
 	self.m_cbOnOffsetChanged = clipC:AddEventCallback(ents.PFMClip.EVENT_ON_OFFSET_CHANGED,function(newOffset)
-		self:OnClipOffsetChanged(newOffset)
+		self:ApplyTransforms()
 	end)
 
 	print("Initializing actor '" .. self:GetEntity():GetName() .. "'...")
 	local mdlInfo = animSet:GetProperty("model")
 	if(mdlInfo ~= nil) then
 		local mdlC = self:AddEntityComponent("pfm_model")
-		mdlC:Setup(mdlInfo)
+		mdlC:Setup(animSet,mdlInfo)
 	end
 
 	local camera = animSet:GetProperty("camera")
 	if(camera ~= nil) then
 		local cameraC = self:AddEntityComponent("pfm_camera")
-		mdlC:Setup(camera)
+		cameraC:Setup(animSet,camera)
 	end
 
-	local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
-	-- TODO
-	if(animC ~= nil) then
-		-- TODO
-		self.m_cbUpdateSkeleton = animC:AddEventCallback(ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED,function()
-			-- TODO: Do this whenever the offset changes?
-			self:ApplyTransforms()
-		end)
+	local transformControls = animSet:GetTransformControls():GetValue()
+	for iCtrl,ctrl in ipairs(transformControls) do
+		local boneControllerName = ctrl:GetName()
+		if(boneControllerName == "transform") then
+			local posChannel = ctrl:GetPositionChannel()
+			local log = posChannel:GetLog()
+			for _,layer in ipairs(log:GetLayers():GetValue()) do
+				local times = layer:GetTimes():GetValue()
+				local values = layer:GetValues():GetValue()
+				for i=1,#times do
+					self.m_translationChannel:AddTransform(0,times[i]:GetValue(),values[i]:GetValue())
+				end
+			end
+
+			local rotChannel = ctrl:GetRotationChannel()
+			log = rotChannel:GetLog()
+			for _,layer in ipairs(log:GetLayers():GetValue()) do
+				local times = layer:GetTimes():GetValue()
+				local tPrev = 0.0
+				for _,t in ipairs(times) do
+					tPrev = t:GetValue()
+				end
+				local values = layer:GetValues():GetValue()
+				for i=1,#times do
+					self.m_rotationChannel:AddTransform(0,times[i]:GetValue(),values[i]:GetValue())
+				end
+			end
+		end
 	end
 	print("Done!")
-end
-function ents.PFMActorComponent:AddChannelTransform(channel,controllerName,time,value)
-	if(self.m_channels[channel] == nil) then return end
-	self.m_channels[channel]:AddTransform(controllerName,time,value)
 end
 ents.COMPONENT_PFM_ACTOR = ents.register_component("pfm_actor",ents.PFMActorComponent)

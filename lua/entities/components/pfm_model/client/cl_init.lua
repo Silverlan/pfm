@@ -8,11 +8,7 @@
 
 util.register_class("ents.PFMModel",BaseEntityComponent)
 
-ents.PFMModel.CHANNEL_BONE_TRANSLATIONS = 1
-ents.PFMModel.CHANNEL_BONE_ROTATIONS = 2
-ents.PFMModel.CHANNEL_FLEX_CONTROLLER_TRANSFORMS = 3
-
-ents.PFMModel.CHANNEL_COUNT = 3
+include("channel")
 
 ents.PFMModel.ROOT_TRANSFORM_ID = -2
 function ents.PFMModel:Initialize()
@@ -26,18 +22,61 @@ function ents.PFMModel:Initialize()
 	-- TODO: Only add these if this is an articulated actor
 	self:AddEntityComponent(ents.COMPONENT_FLEX)
 	self:AddEntityComponent(ents.COMPONENT_VERTEX_ANIMATED)
+	local actorC = self:AddEntityComponent("pfm_actor")
+	self.m_boneTranslationChannel = actorC:AddChannel(ents.PFMModel.BoneTranslationChannel(self))
+	self.m_boneRotationChannel = actorC:AddChannel(ents.PFMModel.BoneRotationChannel(self))
+	self.m_flexControllerChannel = actorC:AddChannel(ents.PFMModel.FlexControllerChannel())
 
-	self.m_channels = {}
-	self.m_channels[ents.PFMModel.CHANNEL_BONE_TRANSLATIONS] = ents.PFMModel.TranslationChannel()
-	self.m_channels[ents.PFMModel.CHANNEL_BONE_ROTATIONS] = ents.PFMModel.RotationChannel()
-	self.m_channels[ents.PFMModel.CHANNEL_FLEX_CONTROLLER_TRANSFORMS] = ents.PFMModel.FlexControllerChannel()
+	self.m_cbUpdateSkeleton = animC:AddEventCallback(ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED,function()
+		-- We have to apply our bone transforms every time the entity's skeleton/animations have been updated
+		self:ApplyBoneTransforms()
+	end)
 
 	self.m_boneIds = {}
 	self.m_flexControllerIds = {}
+	self.m_currentBoneTransforms = {}
 end
 
-function ents.PFMModel:Setup(mdlInfo)
-	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
+function ents.PFMModel:OnRemove()
+	if(util.is_valid(self.m_cbUpdateSkeleton)) then self.m_cbUpdateSkeleton:Remove() end
+end
+
+function ents.PFMModel:SetBonePos(boneId,pos)
+	self.m_currentBoneTransforms[boneId] = self.m_currentBoneTransforms[boneId] or {Vector(),Quaternion()}
+	self.m_currentBoneTransforms[boneId][1] = pos
+end
+
+function ents.PFMModel:SetBoneRot(boneId,rot)
+	self.m_currentBoneTransforms[boneId] = self.m_currentBoneTransforms[boneId] or {}
+	self.m_currentBoneTransforms[boneId][2] = rot
+end
+
+function ents.PFMModel:ApplyBoneTransforms()
+	local ent = self:GetEntity()
+	local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
+	local transformC = ent:GetComponent(ents.COMPONENT_TRANSFORM)
+	if(transformC == nil or animC == nil) then return end
+	for boneId,t in pairs(self.m_currentBoneTransforms) do
+		if(boneId == ents.PFMModel.ROOT_TRANSFORM_ID) then
+			if(t[1] ~= nil) then transformC:SetPos(t[1]) end
+			if(t[2] ~= nil) then transformC:SetRotation(t[2]) end
+		else
+			if(t[1] ~= nil) then animC:SetBonePos(boneId,t[1]) end
+			if(t[2] ~= nil) then animC:SetBoneRot(boneId,t[2]) end
+		end
+	end
+end
+
+function ents.PFMModel:OnEntitySpawn()
+	local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
+	if(animC ~= nil) then
+		animC:PlayAnimation("reference") -- Play reference animation to make sure animation callbacks are being called
+	end
+end
+
+function ents.PFMModel:Setup(animSet,mdlInfo)
+	local ent = self:GetEntity()
+	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil) then return end
 	local mdlName = mdlInfo:GetModelName()
 	mdlC:SetModel(mdlName)
@@ -50,18 +89,17 @@ function ents.PFMModel:Setup(mdlInfo)
 
 	local actorName = self:GetEntity():GetName()
 	
-	-- TODO: Only if model!!
 	self.m_boneIds = {}
 	self.m_flexControllerIds = {}
 	
 	-- Initialize bone ids
 	local mdl = ent:GetModel()
 	if(mdl == nil) then return end
-	local boneControls = animSet:GetBoneControls():GetValue()
+	local boneControls = animSet:GetTransformControls():GetValue()
 	for _,ctrl in ipairs(boneControls) do
 		local boneName = ctrl:GetName()
 		local boneId = mdl:LookupBone(boneName)
-		if(boneId == -1 and boneName == "rootTransform") then boneId = ents.PFMModel.ROOT_TRANSFORM_ID end -- Root transform will be handled as a special case
+		if(boneId == -1 and boneName == "rootTransform") then boneId = ents.PFMModel.ROOT_TRANSFORM_ID end -- Root transform will be handled as a special case (i.e. for translating/rotating the actual entity)
 		table.insert(self.m_boneIds,boneId)
 		if(boneId == -1) then console.print_warning("Unknown bone '" .. boneName .. "'!") end
 	end
@@ -94,7 +132,7 @@ function ents.PFMModel:Setup(mdlInfo)
 				local times = layer:GetTimes():GetValue()
 				local values = layer:GetValues():GetValue()
 				for i=1,#times do
-					self:AddChannelTransform(ents.PFMModel.CHANNEL_FLEX_CONTROLLER_TRANSFORMS,ctrlId,times[i]:GetValue(),values[i]:GetValue())
+					self.m_flexControllerChannel:AddTransform(ctrlId,times[i]:GetValue(),values[i]:GetValue())
 				end
 			end
 		end
@@ -107,7 +145,7 @@ function ents.PFMModel:Setup(mdlInfo)
 				local times = layer:GetTimes():GetValue()
 				local values = layer:GetValues():GetValue()
 				for i=1,#times do
-					self:AddChannelTransform(ents.PFMModel.CHANNEL_FLEX_CONTROLLER_TRANSFORMS,ctrlId,times[i]:GetValue(),values[i]:GetValue())
+					self.m_flexControllerChannel:AddTransform(ctrlId,times[i]:GetValue(),values[i]:GetValue())
 				end
 			end
 		end
@@ -120,40 +158,42 @@ function ents.PFMModel:Setup(mdlInfo)
 				local times = layer:GetTimes():GetValue()
 				local values = layer:GetValues():GetValue()
 				for i=1,#times do
-					self:AddChannelTransform(ents.PFMModel.CHANNEL_FLEX_CONTROLLER_TRANSFORMS,ctrlId,times[i]:GetValue(),values[i]:GetValue())
+					self.m_flexControllerChannel:AddTransform(ctrlId,times[i]:GetValue(),values[i]:GetValue())
 				end
 			end
 		end
 	end
 
 	print("Applying bone transforms to actor '" .. actorName .. "'...")
-	local boneControls = animSet:GetBoneControls():GetValue()
-	for iCtrl,ctrl in ipairs(boneControls) do
+	local transformControls = animSet:GetTransformControls():GetValue()
+	for iCtrl,ctrl in ipairs(transformControls) do
 		local boneControllerName = ctrl:GetName()
-		local boneId = self.m_boneIds[iCtrl]
-		-- Root transform will be handled as a special case
-		if(boneId ~= -1) then
-			local posChannel = ctrl:GetPositionChannel()
-			local log = posChannel:GetLog()
-			for _,layer in ipairs(log:GetLayers():GetValue()) do
-				local times = layer:GetTimes():GetValue()
-				local values = layer:GetValues():GetValue()
-				for i=1,#times do
-					self:AddChannelTransform(ents.PFMModel.CHANNEL_BONE_TRANSLATIONS,boneId,times[i]:GetValue(),values[i]:GetValue())
+		if(boneControllerName ~= "transform") then -- Transform control is handled by actor component
+			local boneId = self.m_boneIds[iCtrl]
+			-- Root transform will be handled as a special case
+			if(boneId ~= -1) then
+				local posChannel = ctrl:GetPositionChannel()
+				local log = posChannel:GetLog()
+				for _,layer in ipairs(log:GetLayers():GetValue()) do
+					local times = layer:GetTimes():GetValue()
+					local values = layer:GetValues():GetValue()
+					for i=1,#times do
+						self.m_boneTranslationChannel:AddTransform(boneId,times[i]:GetValue(),values[i]:GetValue())
+					end
 				end
-			end
 
-			local rotChannel = ctrl:GetRotationChannel()
-			log = rotChannel:GetLog()
-			for _,layer in ipairs(log:GetLayers():GetValue()) do
-				local times = layer:GetTimes():GetValue()
-				local tPrev = 0.0
-				for _,t in ipairs(times) do
-					tPrev = t:GetValue()
-				end
-				local values = layer:GetValues():GetValue()
-				for i=1,#times do
-					self:AddChannelTransform(ents.PFMModel.CHANNEL_BONE_ROTATIONS,boneId,times[i]:GetValue(),values[i]:GetValue())
+				local rotChannel = ctrl:GetRotationChannel()
+				log = rotChannel:GetLog()
+				for _,layer in ipairs(log:GetLayers():GetValue()) do
+					local times = layer:GetTimes():GetValue()
+					local tPrev = 0.0
+					for _,t in ipairs(times) do
+						tPrev = t:GetValue()
+					end
+					local values = layer:GetValues():GetValue()
+					for i=1,#times do
+						self.m_boneRotationChannel:AddTransform(boneId,times[i]:GetValue(),values[i]:GetValue())
+					end
 				end
 			end
 		end

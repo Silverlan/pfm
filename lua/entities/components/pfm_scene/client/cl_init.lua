@@ -57,16 +57,22 @@ function ents.PFMScene:StartPlayback(track)
 end
 
 function ents.PFMScene:Start()
+	pfm.log("Starting PFM scene...",pfm.LOG_CATEGORY_PFM)
 	local scene = self.m_scene
-	if(scene == nil) then return end
+	if(scene == nil) then
+		pfm.log("Unable to start PFM scene: Scene object is invalid!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+		return
+	end
 	for name,node in pairs(scene:GetUDMRootNode():GetChildren()) do
 		if(node:GetType() == udm.ELEMENT_TYPE_PFM_TRACK) then
 			if(node:GetMuted() == false and node:GetName() == "Film") then
+				pfm.log("Found unmuted film track '" .. name .. "'! Starting playback...",pfm.LOG_CATEGORY_PFM)
 				self:StartPlayback(node)
-				break
+				return
 			end
 		end
 	end
+	pfm.log("Unable to start PFM scene: No unmuted film track has been found!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 end
 
 function ents.PFMScene:StopPlayback()

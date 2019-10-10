@@ -9,12 +9,45 @@
 include("/sfm.lua")
 include("/pfm/pfm.lua")
 
+pfm.register_log_category("sfm_converter")
+
 util.register_class("sfm.ProjectConverter")
 sfm.ProjectConverter.convert_project = function(projectFilePath)
 	local sfmScene = sfm.import_scene(projectFilePath)
 	if(sfmScene == nil) then return false end
 	local converter = sfm.ProjectConverter(sfmScene)
-	return converter:GetConvertedScene()
+	local pfmScene = converter:GetConvertedScene()
+
+	-- Collect and print debug information
+	local numTracks = 0
+	local numFilmClips = 0
+	local numAudioClips = 0
+	local numAnimationSets = 0
+	for name,node in pairs(pfmScene:GetUDMRootNode():GetChildren()) do
+		if(node:GetType() == udm.ELEMENT_TYPE_PFM_TRACK) then
+			numTracks = numTracks +1
+			for name,child in pairs(node:GetChildren()) do
+				if(child:GetType() == udm.ELEMENT_TYPE_FILM_CLIP) then
+					numFilmClips = numFilmClips +1
+					for name,child in pairs(child:GetChildren()) do
+						if(child:GetType() == udm.ELEMENT_TYPE_ANIMATION_SET) then
+							numAnimationSets = numAnimationSets +1
+						end
+					end
+				elseif(child:GetType() == udm.ELEMENT_TYPE_AUDIO_CLIP) then
+					numAudioClips = numAudioClips +1
+				end
+			end
+		end
+	end
+	pfm.log("---------------------------------------",pfm.LOG_CATEGORY_PFM_CONVERTER)
+	pfm.log("PFM project information:",pfm.LOG_CATEGORY_PFM_CONVERTER)
+	pfm.log("Number of tracks: " .. numTracks,pfm.LOG_CATEGORY_PFM_CONVERTER)
+	pfm.log("Number of film clips: " .. numFilmClips,pfm.LOG_CATEGORY_PFM_CONVERTER)
+	pfm.log("Number of audio clips: " .. numAudioClips,pfm.LOG_CATEGORY_PFM_CONVERTER)
+	pfm.log("Number of animation sets: " .. numAnimationSets,pfm.LOG_CATEGORY_PFM_CONVERTER)
+	pfm.log("---------------------------------------",pfm.LOG_CATEGORY_PFM_CONVERTER)
+	return pfmScene
 end
 function sfm.ProjectConverter:__init(sfmScene)
 	self.m_sfmScene = sfmScene -- Input project

@@ -27,6 +27,7 @@ pfm.log = function(msg,categories,severity)
 	severity = severity or pfm.LOG_SEVERITY_NORMAL
 	categories = categories or pfm.LOG_CATEGORY_PFM
 	if(pfm.is_log_category_enabled(categories) == false) then return false end
+	msg = "[PFM] " .. msg
 	if(severity == pfm.LOG_SEVERITY_NORMAL) then console.print_messageln(msg)
 	elseif(severity == pfm.LOG_SEVERITY_WARNING) then console.print_warning(msg)
 	elseif(severity == pfm.LOG_SEVERITY_ERROR) then console.print_error(msg)
@@ -43,7 +44,7 @@ pfm.register_log_category = function(name)
 		console.print_warning("Unable to register log category '" .. name .. "': Max log category count of " .. MAX_LOG_CATEGORIES .. " has been exceeded!")
 		return -1
 	end
-	local catId = #g_logCategories
+	local catId = bit.lshift(1,#g_logCategories)
 	table.insert(g_logCategories,{
 		name = name
 	})

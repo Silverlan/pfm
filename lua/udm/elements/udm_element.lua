@@ -22,7 +22,7 @@ function udm.BaseElement:__init(class,name)
   local type = self:GetType()
   local elData = registered_elements[type]
   if(elData == nil) then
-    console.print_warning("Unregistered element type!")
+    console.print_warning("Attempted to use unregistered element type " .. type .. " for UDM element '" .. self:GetName() .. "'!")
     return
   end
   for identifier,prop in pairs(elData.properties) do
