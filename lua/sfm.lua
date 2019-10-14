@@ -14,6 +14,8 @@ end
 
 sfm = sfm or {}
 
+sfm.source_units_to_pragma_units = function(units) return units end
+
 sfm.convert_source_position_to_pragma = function(pos)
 	return Vector(pos.x,pos.z,-pos.y)
 end
@@ -26,7 +28,7 @@ sfm.convert_source_normal_to_pragma = function(n)
 	return Vector(n.x,-n.z,n.y)
 end
 
--- Note: For some reason animation set root bone positions require a different
+-- Note: For some reason animation set positions require a different
 -- conversion, I'm not sure why.
 sfm.convert_source_anim_set_position_to_pragma = function(pos)
 	return Vector(pos.x,-pos.z,pos.y)
@@ -36,7 +38,18 @@ sfm.convert_source_anim_set_rotation_to_pragma = function(rot)
 	return sfm.convert_source_rotation_to_pragma(rot)
 end
 
-include("sfm/scene.lua")
+-- "transform" transforms (which specify the animation set's actual position/rotation) are another special case
+sfm.convert_source_transform_position_to_pragma = function(pos)
+	return sfm.convert_source_position_to_pragma(pos)
+end
+
+local rot90Yaw = EulerAngles(0,90,0):ToQuaternion()
+sfm.convert_source_transform_rotation_to_pragma = function(rot)
+	rot = rot90Yaw *Quaternion(rot.w,rot.y,rot.z,rot.x)
+	return rot
+end
+
+include("sfm/project.lua")
 
 sfm.import_scene = function(fpath)
 	local f = file.open(fpath,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
@@ -44,5 +57,5 @@ sfm.import_scene = function(fpath)
 	local dmxData = dmx.load(f)
 	f:Close()
 	if(dmxData == false) then return end
-	return sfm.Scene(dmxData)
+	return sfm.Project(dmxData)
 end

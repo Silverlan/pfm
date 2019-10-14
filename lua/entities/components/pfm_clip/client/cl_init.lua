@@ -37,10 +37,10 @@ end
 function ents.PFMClip:SetClip(udmClip) self.m_clip = udmClip end
 function ents.PFMClip:GetClip() return self.m_clip end
 
-function ents.PFMClip:CreateActor(animSet)
-	print("Creating actor '" .. animSet:GetName() .. "'...")
+function ents.PFMClip:CreateActor(actor)
+	pfm.log("Creating actor '" .. actor:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
 	local entActor = ents.create("pfm_actor")
-	entActor:GetComponent(ents.COMPONENT_PFM_ACTOR):Setup(self,animSet)
+	entActor:GetComponent(ents.COMPONENT_PFM_ACTOR):Setup(self,actor)
 	entActor:Spawn()
 	table.insert(self.m_entities,entActor)
 end
@@ -53,25 +53,55 @@ end
 
 function ents.PFMClip:Start()
 	if(self:IsActive()) then return end
+
+	-- Turn off the default game camera
+	local camGame = game.get_primary_camera()
+	local toggleC = (camGame ~= nil) and camGame:GetEntity():GetComponent(ents.COMPONENT_TOGGLE) or nil
+	if(toggleC ~= nil) then toggleC:TurnOff() end
+
 	self.m_bActive = true
-	print("Clip " .. self:GetClip():GetName() .. " has been started!")
 	local clip = self:GetClip()
+	pfm.log("Starting clip '" .. clip:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
 	if(clip:GetType() == udm.ELEMENT_TYPE_PFM_AUDIO_CLIP) then
 		local entSound = ents.create("pfm_sound_source")
 		entSound:GetComponent(ents.COMPONENT_PFM_SOUND_SOURCE):Setup(self,clip:GetSound())
 		entSound:Spawn()
 		table.insert(self.m_entities,entSound)
 	elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP) then
-		for _,animSet in ipairs(clip:GetAnimationSets():GetValue()) do
-			self:CreateActor(animSet)
+		for _,actor in ipairs(clip:GetActors():GetValue()) do
+			self:CreateActor(actor)
+		end
+
+		-- Initialize camera
+		local cam = self:GetClip():GetProperty("camera")
+		local foundCamera = false
+		for _,entActor in ipairs(self.m_entities) do
+			if(entActor:IsValid()) then
+				if(cam ~= nil and entActor:HasComponent("pfm_camera") and entActor:GetName() == cam:GetName()) then -- TODO: Identify by unique id instead of the name!
+					pfm.log("Using camera '" .. cam:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME)
+					local toggleC = entActor:GetComponent(ents.COMPONENT_TOGGLE)
+					if(toggleC ~= nil) then toggleC:TurnOn() end
+					foundCamera = true
+					break
+				end
+			end
+		end
+		if(foundCamera == false) then
+			pfm.log("No camera found for the currently active clip ('" .. self:GetEntity():GetName() .. "')!",pfm.LOG_CATEGORY_PFM_GAME)
 		end
 	end
 end
 
 function ents.PFMClip:Stop()
 	if(self:IsActive() == false) then return end
+
+	-- Re-enable the default game camera
+	local camGame = game.get_primary_camera()
+	local toggleC = (camGame ~= nil) and camGame:GetEntity():GetComponent(ents.COMPONENT_TOGGLE) or nil
+	if(toggleC ~= nil) then toggleC:TurnOn() end
+
 	self.m_bActive = false
-	print("Clip " .. self:GetClip():GetName() .. " has been stopped!")
+	pfm.log("Stopping clip '" .. self:GetClip():GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
 	for _,ent in ipairs(self.m_entities) do
 		if(ent:IsValid()) then ent:Remove() end
 	end

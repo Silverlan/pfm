@@ -53,3 +53,4 @@ pfm.register_log_category = function(name)
 end
 
 pfm.register_log_category("pfm")
+pfm.register_log_category("pfm_game")

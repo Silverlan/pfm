@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_attribute.lua")
-
 udm.ATTRIBUTE_TYPE_STRING = udm.register_attribute("String","")
 function udm.String:WriteToBinary(ds) ds:WriteString(self:GetValue()) end
 function udm.String:ReadFromBinary(ds) return ds:ReadString() end

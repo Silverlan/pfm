@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_attribute.lua")
-
 udm.ATTRIBUTE_TYPE_VECTOR3 = udm.register_attribute("Vector3",Vector())
 function udm.Vector3:WriteToBinary(ds) ds:WriteVector(self:GetValue()) end
 function udm.Vector3:ReadFromBinary(ds) return ds:ReadVector() end

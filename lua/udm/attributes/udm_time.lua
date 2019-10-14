@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_attribute.lua")
-
 udm.ATTRIBUTE_TYPE_TIME = udm.register_attribute("Time",0.0)
 function udm.Time:WriteToBinary(ds) ds:WriteFloat(self:GetValue()) end
 function udm.Time:ReadFromBinary(ds) return ds:ReadFloat() end

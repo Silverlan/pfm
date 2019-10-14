@@ -10,7 +10,9 @@ util.register_class("ents.PFMActorComponent.Channel")
 
 function ents.PFMActorComponent.Channel:__init()
 	self.m_transforms = {}
+	self.m_defaultValues = {}
 end
+function ents.PFMActorComponent.Channel:SetDefault(controllerId,defaultValue) self.m_defaultValues[controllerId] = defaultValue end
 function ents.PFMActorComponent.Channel:AddTransform(controllerId,time,value)
 	self.m_transforms[controllerId] = self.m_transforms[controllerId] or {
 		lastIndex = 1,
@@ -27,6 +29,7 @@ function ents.PFMActorComponent.Channel:ApplyValue(ent,controllerId,value)
 	return false
 end
 function ents.PFMActorComponent.Channel:Apply(ent,offset)
+	local wasTransformApplied = false
 	for controllerId,transformData in pairs(self.m_transforms) do
 		-- We'd have to do a LOT of iterations here, but in most cases the new offset will be very
 		-- close to the previous offset, which we can use to our advantage. Using this information we
@@ -53,8 +56,14 @@ function ents.PFMActorComponent.Channel:Apply(ent,offset)
 				local value = self:GetInterpolatedValue(tPrev[2],t[2],interpFactor)
 				self:ApplyValue(ent,controllerId,value)
 				transformData.lastIndex = i -- Optimization: This will be the new start index next time the offset has changed
+				wasTransformApplied = true
 				break
 			end
+		end
+	end
+	if(wasTransformApplied == false) then
+		for controllerId,value in pairs(self.m_defaultValues) do
+			self:ApplyValue(ent,controllerId,value)
 		end
 	end
 end

@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/udm/elements/udm_element.lua")
-
 udm.ELEMENT_TYPE_PFM_SOUND = udm.register_element("PFMSound")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_SOUND,"soundName",udm.String(""))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_SOUND,"volume",udm.Float(1.0))

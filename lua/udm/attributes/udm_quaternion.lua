@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_attribute.lua")
-
 udm.ATTRIBUTE_TYPE_QUATERNION = udm.register_attribute("Quaternion",Quaternion())
 function udm.Quaternion:WriteToBinary(ds)
   ds:WriteQuaternion(self:GetValue())

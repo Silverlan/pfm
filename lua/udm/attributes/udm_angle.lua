@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_attribute.lua")
-
 udm.ATTRIBUTE_TYPE_ANGLE = udm.register_attribute("Angle",EulerAngles())
 function udm.Angle:WriteToBinary(ds)
   ds:WriteAngles(self:GetValue())

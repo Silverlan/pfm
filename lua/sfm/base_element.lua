@@ -14,6 +14,7 @@ function sfm.BaseElement:__init(class)
 	self.m_name = ""
 	self.m_type = ""
 	self.m_class = class
+	self.m_cachedProperties = {}
 	
 	local classData = sfm.BaseElement.class_data[class]
 	if(classData == nil) then return end
@@ -83,30 +84,30 @@ end
 
 function sfm.BaseElement:Load(el)
   self.m_name = el:GetName()
-	self.m_type = el:GetType()
-	
-	local classData = sfm.BaseElement.class_data[self.m_class]
-	if(classData == nil) then return end
-	if(classData.attributes ~= nil) then
-		for name,attrData in pairs(classData.attributes) do
-			local v = el:GetAttrV(name)
-			if(v ~= nil) then self["m_" .. name] = v
-			else self["m_" .. name] = attrData[1] end
-		end
-	end
-	if(classData.properties ~= nil) then
-		for name,propData in pairs(classData.properties) do
-			self["m_" .. name] = self:LoadProperty(el,name,propData[1])
-			if(bit.band(propData[2],sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL) == 0 and self["m_" .. name] == nil) then
-				self["m_" .. name] = propData[1]()
-			end
-		end
-	end
-	if(classData.arrays ~= nil) then
-		for name,arrayData in pairs(classData.arrays) do
-			self["m_" .. name] = self:LoadArray(el,name,arrayData[1])
-		end
-	end
+  self.m_type = el:GetType()
+
+  local classData = sfm.BaseElement.class_data[self.m_class]
+  if(classData == nil) then return end
+  if(classData.attributes ~= nil) then
+    for name,attrData in pairs(classData.attributes) do
+      local v = el:GetAttrV(name)
+      if(v ~= nil) then self["m_" .. name] = v
+      else self["m_" .. name] = attrData[1] end
+    end
+  end
+  if(classData.properties ~= nil) then
+    for name,propData in pairs(classData.properties) do
+      self["m_" .. name] = self:LoadProperty(el,name,propData[1])
+      if(bit.band(propData[2],sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL) == 0 and self["m_" .. name] == nil) then
+        self["m_" .. name] = propData[1]()
+      end
+    end
+  end
+  if(classData.arrays ~= nil) then
+    for name,arrayData in pairs(classData.arrays) do
+      self["m_" .. name] = self:LoadArray(el,name,arrayData[1])
+    end
+  end
 end
 
 function sfm.BaseElement:GetName() return self.m_name end
@@ -117,10 +118,19 @@ function sfm.BaseElement:LoadAttributeValue(el,name,default)
 end
 
 function sfm.BaseElement:LoadProperty(el,name,class)
+	local attr = el:GetAttribute(name)
 	local elVal = el:GetAttributeValue(name)
 	if(elVal == nil) then return end
+	local cacheId
+	if(util.get_type_name(elVal) == "Element") then
+		local guid = elVal:GetGUID()
+		if(self.m_cachedProperties[guid] ~= nil) then return self.m_cachedProperties[guid] end
+		cacheId = guid
+	end
+
 	local o = class()
 	o:Load(elVal)
+	if(cacheId ~= nil) then self.m_cachedProperties[cacheId] = o end
 	return o
 end
 
@@ -132,6 +142,7 @@ function sfm.BaseElement:LoadArray(el,name,class)
 		local elChild = attr:GetValue()
 		local o = class()
 		if(type(o) == "userdata") then o:Load(elChild) end
+		if(cacheId ~= nil) then self.m_cachedProperties[cacheId] = o end
 		table.insert(t,o)
 	end
 	return t

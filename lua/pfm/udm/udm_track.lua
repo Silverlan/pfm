@@ -6,7 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/udm/elements/udm_element.lua")
 include("udm_audio_clip.lua")
 
 udm.ELEMENT_TYPE_PFM_TRACK = udm.register_element("PFMTrack")

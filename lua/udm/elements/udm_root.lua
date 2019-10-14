@@ -6,6 +6,4 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_element.lua")
-
 udm.ELEMENT_TYPE_ROOT = udm.register_element("Root")

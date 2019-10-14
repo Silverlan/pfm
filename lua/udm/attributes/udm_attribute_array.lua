@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_attribute.lua")
-
 udm.ATTRIBUTE_TYPE_ARRAY = udm.register_attribute("Array",udm.ATTRIBUTE_TYPE_STRING)
 function udm.Array:__init(elementType,defaultValue)
   udm.BaseAttribute.__init(self,udm.Array,defaultValue or {})

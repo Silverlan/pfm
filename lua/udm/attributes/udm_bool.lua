@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_attribute.lua")
-
 udm.ATTRIBUTE_TYPE_BOOL = udm.register_attribute("Bool",false)
 function udm.Bool:WriteToBinary(ds) ds:WriteBool(self:GetValue()) end
 function udm.Bool:ReadFromBinary(ds) return ds:ReadBool() end

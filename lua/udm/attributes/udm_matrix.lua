@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_attribute.lua")
-
 udm.ATTRIBUTE_TYPE_MATRIX = udm.register_attribute("Matrix",Mat4(1.0))
 function udm.Matrix:WriteToBinary(ds)
   ds:WriteMat4(self:GetValue())

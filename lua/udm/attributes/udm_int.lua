@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_attribute.lua")
-
 udm.ATTRIBUTE_TYPE_INT = udm.register_attribute("Int",0)
 function udm.Int:WriteToBinary(ds) ds:WriteInt32(self:GetValue()) end
 function udm.Int:ReadFromBinary(ds) return ds:ReadInt32() end

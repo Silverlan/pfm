@@ -6,8 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_attribute.lua")
-
 udm.ATTRIBUTE_TYPE_BINARY = udm.register_attribute("Binary",util.DataStream())
 function udm.Binary:WriteToBinary(ds) ds:WriteBinary(ds) end
 function udm.Binary:ReadFromBinary(ds) return ds:ReadBinary() end

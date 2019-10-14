@@ -264,7 +264,7 @@ function gui.WIFilmmaker:LoadProject(projectFilePath)
 	sceneC:Start()
 	if(util.is_valid(self.m_playbackControls)) then
 		local timeFrame = sceneC:GetTrackTimeFrame()
-		self.m_playbackControls:SetDuration(timeFrame:GetDuration():GetValue())
+		self.m_playbackControls:SetDuration(timeFrame:GetDuration())
 	end
 	return entScene
 end

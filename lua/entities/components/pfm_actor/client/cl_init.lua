@@ -16,8 +16,6 @@ function ents.PFMActorComponent:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_NAME)
 
 	self.m_channels = {}
-	self.m_translationChannel = self:AddChannel(ents.PFMActorComponent.TranslationChannel())
-	self.m_rotationChannel = self:AddChannel(ents.PFMActorComponent.RotationChannel())
 end
 
 function ents.PFMActorComponent:AddChannel(channel)
@@ -44,58 +42,29 @@ function ents.PFMActorComponent:ApplyTransforms()
 	end
 end
 
-function ents.PFMActorComponent:Setup(clipC,animSet)
-	self.m_animationSet = animSet
+function ents.PFMActorComponent:Setup(clipC,actorData)
 	self.m_clipComponent = clipC
 	
-	self:GetEntity():SetName(animSet:GetName())
+	self:GetEntity():SetName(actorData:GetName())
 
 	self.m_cbOnOffsetChanged = clipC:AddEventCallback(ents.PFMClip.EVENT_ON_OFFSET_CHANGED,function(newOffset)
 		self:ApplyTransforms()
 	end)
 
-	print("Initializing actor '" .. self:GetEntity():GetName() .. "'...")
-	local mdlInfo = animSet:GetProperty("model")
-	if(mdlInfo ~= nil) then
-		local mdlC = self:AddEntityComponent("pfm_model")
-		mdlC:Setup(animSet,mdlInfo)
-	end
-
-	local camera = animSet:GetProperty("camera")
-	if(camera ~= nil) then
-		local cameraC = self:AddEntityComponent("pfm_camera")
-		cameraC:Setup(animSet,camera)
-	end
-
-	local transformControls = animSet:GetTransformControls():GetValue()
-	for iCtrl,ctrl in ipairs(transformControls) do
-		local boneControllerName = ctrl:GetName()
-		if(boneControllerName == "transform") then
-			local posChannel = ctrl:GetPositionChannel()
-			local log = posChannel:GetLog()
-			for _,layer in ipairs(log:GetLayers():GetValue()) do
-				local times = layer:GetTimes():GetValue()
-				local values = layer:GetValues():GetValue()
-				for i=1,#times do
-					self.m_translationChannel:AddTransform(0,times[i]:GetValue(),values[i]:GetValue())
-				end
-			end
-
-			local rotChannel = ctrl:GetRotationChannel()
-			log = rotChannel:GetLog()
-			for _,layer in ipairs(log:GetLayers():GetValue()) do
-				local times = layer:GetTimes():GetValue()
-				local tPrev = 0.0
-				for _,t in ipairs(times) do
-					tPrev = t:GetValue()
-				end
-				local values = layer:GetValues():GetValue()
-				for i=1,#times do
-					self.m_rotationChannel:AddTransform(0,times[i]:GetValue(),values[i]:GetValue())
-				end
-			end
+	print("Initializing components for actor '" .. self:GetEntity():GetName() .. "'...")
+	for _,value in ipairs(actorData:GetComponents():GetValue()) do
+		local componentData = value:GetValue()
+		local err
+		if(componentData.GetComponentName == nil) then
+			err = "Component is missing method 'GetComponentName'"
+		end
+		if(err ~= nil) then
+			pfm.log("Attempted to add malformed component '" .. componentData:GetTypeName() .. "' to actor '" .. self:GetEntity():GetName() .. "': " .. err .. "!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_ERROR)
+		else
+			local c = self:AddEntityComponent(componentData:GetComponentName())
+			if(c == nil) then pfm.log("Attempted to add unknown component '" .. componentData:GetComponentName() .. "' to actor '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+			else c:Setup(actorData,componentData) end
 		end
 	end
-	print("Done!")
 end
 ents.COMPONENT_PFM_ACTOR = ents.register_component("pfm_actor",ents.PFMActorComponent)
