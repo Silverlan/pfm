@@ -24,8 +24,7 @@ function ents.PFMSoundSource:Setup(clipC,sndInfo)
 		self:OnOffsetChanged(offset)
 		return util.EVENT_REPLY_UNHANDLED
 	end)
-	
-	self:GetEntity():SetKeyValue("spawnflags","16") -- Play on spawn
+
 	local sndC = self:GetEntity():GetComponent(ents.COMPONENT_SOUND)
 	if(sndC ~= nil) then
 		sndC:SetSoundSource(sndInfo:GetSoundName())
@@ -35,11 +34,17 @@ function ents.PFMSoundSource:Setup(clipC,sndInfo)
 	end
 end
 
-function ents.PFMSoundSource:OnEntitySpawn()
+function ents.PFMSoundSource:Play()
 	local sndC = self:GetEntity():GetComponent(ents.COMPONENT_SOUND)
 	if(sndC ~= nil) then
-		sndC:PlaySound()
-		print("Playing sound...")
+		sndC:Play()
+	end
+end
+
+function ents.PFMSoundSource:Pause()
+	local sndC = self:GetEntity():GetComponent(ents.COMPONENT_SOUND)
+	if(sndC ~= nil) then
+		sndC:Pause()
 	end
 end
 
@@ -48,7 +53,6 @@ function ents.PFMSoundSource:OnOffsetChanged(offset)
 	if(soundC == nil) then return end
 	local snd = soundC:GetSound()
 	if(snd == nil) then return end
-	print("CHANGING SOUND OFFSET!!!")
-	-- snd:SetOffset() -- TODO: In Range [0,1]
+	snd:SetTimeOffset(offset)
 end
 ents.COMPONENT_PFM_SOUND_SOURCE = ents.register_component("pfm_sound_source",ents.PFMSoundSource)

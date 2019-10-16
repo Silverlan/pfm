@@ -22,7 +22,9 @@ function gui.PFMRenderResultWindow:__init(parent)
 	frame:SetWidth(tex:GetRight() +margin)
 	frame:SetHeight(tex:GetBottom() +margin *2)
 	frame:SetResizeRatioLocked(true)
-	frame:SetPos(10,280)
+	frame:SetMinSize(128,128)
+	frame:SetMaxSize(1024,1024)
+	frame:SetCloseButtonEnabled(false)
 	tex:SetAnchor(0,0,1,1)
 	tex:SetMouseInputEnabled(true)
 	tex:AddCallback("OnMouseEvent",function(tex,button,state,mods)
@@ -38,6 +40,7 @@ function gui.PFMRenderResultWindow:__init(parent)
 	end)
 	self.m_frame = frame
 end
+function gui.PFMRenderResultWindow:GetFrame() return self.m_frame end
 function gui.PFMRenderResultWindow:SetTexture(tex)
 	if(util.is_valid(self.m_result)) then self.m_result:SetTexture(tex) end
 end

@@ -20,7 +20,9 @@ function gui.PFMRenderPreviewWindow:__init(parent)
 	frame:SetWidth(tex:GetRight() +margin)
 	frame:SetHeight(tex:GetBottom() +margin *2)
 	frame:SetResizeRatioLocked(true)
-	frame:SetPos(10,256)
+	frame:SetCloseButtonEnabled(false)
+	frame:SetMinSize(128,128)
+	frame:SetMaxSize(1024,1024)
 	tex:SetAnchor(0,0,1,1)
 	self.m_previewFrame = frame
 	frame:AddCallback("Think",function()
@@ -54,7 +56,9 @@ function gui.PFMRenderPreviewWindow:OnThink()
 	if(self.m_raytracingJob:IsSuccessful()) then
 		local imgBuffer = self.m_raytracingJob:GetResult()
 		local img = vulkan.create_image(imgBuffer)
-		local tex = vulkan.create_texture(img,vulkan.TextureCreateInfo(),vulkan.ImageViewCreateInfo(),vulkan.SamplerCreateInfo())
+		local imgViewCreateInfo = vulkan.ImageViewCreateInfo()
+		imgViewCreateInfo.swizzleAlpha = vulkan.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
+		local tex = vulkan.create_texture(img,vulkan.TextureCreateInfo(),imgViewCreateInfo,vulkan.SamplerCreateInfo())
 		
 		if(util.is_valid(self.m_preview)) then self.m_preview:SetTexture(tex) end
 		if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetVisible(false) end
@@ -69,6 +73,7 @@ function gui.PFMRenderPreviewWindow:Refresh()
 
 	if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetVisible(true) end
 end
+function gui.PFMRenderPreviewWindow:GetFrame() return self.m_previewFrame end
 function gui.PFMRenderPreviewWindow:Remove()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
 	if(util.is_valid(self.m_previewFrame)) then self.m_previewFrame:Remove() end

@@ -8,6 +8,10 @@
 
 util.register_class("ents.PFMClip",BaseEntityComponent)
 
+local CLIP_CAMERA_ENABLED = true
+ents.PFMClip.set_clip_camera_enabled = function(enabled)
+	CLIP_CAMERA_ENABLED = enabled
+end
 function ents.PFMClip:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
@@ -51,13 +55,26 @@ function ents.PFMClip:GetTimeFrame()
 	return clip:GetTimeFrame()
 end
 
+function ents.PFMClip:PlayAudio()
+	for _,actor in ipairs(self.m_entities) do
+		if(actor:IsValid()) then
+			local sndC = actor:GetComponent(ents.COMPONENT_PFM_SOUND_SOURCE)
+			if(sndC ~= nil) then sndC:Play() end
+		end
+	end
+end
+
+function ents.PFMClip:PauseAudio()
+	for _,actor in ipairs(self.m_entities) do
+		if(actor:IsValid()) then
+			local sndC = actor:GetComponent(ents.COMPONENT_PFM_SOUND_SOURCE)
+			if(sndC ~= nil) then sndC:Pause() end
+		end
+	end
+end
+
 function ents.PFMClip:Start()
 	if(self:IsActive()) then return end
-
-	-- Turn off the default game camera
-	local camGame = game.get_primary_camera()
-	local toggleC = (camGame ~= nil) and camGame:GetEntity():GetComponent(ents.COMPONENT_TOGGLE) or nil
-	if(toggleC ~= nil) then toggleC:TurnOff() end
 
 	self.m_bActive = true
 	local clip = self:GetClip()
@@ -72,22 +89,24 @@ function ents.PFMClip:Start()
 			self:CreateActor(actor)
 		end
 
-		-- Initialize camera
-		local cam = self:GetClip():GetProperty("camera")
-		local foundCamera = false
-		for _,entActor in ipairs(self.m_entities) do
-			if(entActor:IsValid()) then
-				if(cam ~= nil and entActor:HasComponent("pfm_camera") and entActor:GetName() == cam:GetName()) then -- TODO: Identify by unique id instead of the name!
-					pfm.log("Using camera '" .. cam:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME)
-					local toggleC = entActor:GetComponent(ents.COMPONENT_TOGGLE)
-					if(toggleC ~= nil) then toggleC:TurnOn() end
-					foundCamera = true
-					break
+		if(CLIP_CAMERA_ENABLED == true) then
+			-- Initialize camera
+			local cam = self:GetClip():GetProperty("camera")
+			local foundCamera = false
+			for _,entActor in ipairs(self.m_entities) do
+				if(entActor:IsValid()) then
+					if(cam ~= nil and entActor:HasComponent("pfm_camera") and entActor:GetName() == cam:GetName()) then -- TODO: Identify by unique id instead of the name!
+						pfm.log("Using camera '" .. cam:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME)
+						local toggleC = entActor:GetComponent(ents.COMPONENT_TOGGLE)
+						if(toggleC ~= nil) then toggleC:TurnOn() end
+						foundCamera = true
+						break
+					end
 				end
 			end
-		end
-		if(foundCamera == false) then
-			pfm.log("No camera found for the currently active clip ('" .. self:GetEntity():GetName() .. "')!",pfm.LOG_CATEGORY_PFM_GAME)
+			if(foundCamera == false) then
+				pfm.log("No camera found for the currently active clip ('" .. self:GetEntity():GetName() .. "')!",pfm.LOG_CATEGORY_PFM_GAME)
+			end
 		end
 	end
 end

@@ -12,3 +12,21 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_TIME_FRAME,"duration",udm.Flo
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_TIME_FRAME,"offset",udm.Float(0.0))
 
 function udm.PFMTimeFrame:GetEnd() return self:GetStart() +self:GetDuration() end
+function udm.PFMTimeFrame:Max(timeFrameOther)
+	local startTime = math.min(self:GetStart(),timeFrameOther:GetStart())
+	local endTime = math.max(self:GetEnd(),timeFrameOther:GetEnd())
+	local duration = endTime -startTime
+	local result = udm.PFMTimeFrame()
+	result:SetStart(startTime)
+	result:SetDuration(endTime)
+	return result
+end
+function udm.PFMTimeFrame:Min(timeFrameOther)
+	local startTime = math.max(self:GetStart(),timeFrameOther:GetStart())
+	local endTime = math.min(self:GetEnd(),timeFrameOther:GetEnd())
+	local duration = endTime -startTime
+	local result = udm.PFMTimeFrame()
+	result:SetStart(startTime)
+	result:SetDuration(endTime)
+	return result
+end

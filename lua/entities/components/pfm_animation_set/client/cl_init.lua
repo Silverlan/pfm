@@ -227,6 +227,5 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 			end
 		end
 	end
-	print("Done!")
 end
 ents.COMPONENT_PFM_ANIMATION_SET = ents.register_component("pfm_animation_set",ents.PFMAnimationSet)

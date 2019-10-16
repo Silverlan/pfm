@@ -119,8 +119,7 @@ function gui.PlaybackControls:GetFormattedTime(t)
 end
 function gui.PlaybackControls:SetDuration(duration)
 	if(util.is_valid(self.m_progressBar) == false) then return end
-	self.m_progressBar:SetRange(0,0,0.01)
-	self.m_progressBar:SetRange(0,duration,0.01)
+	self.m_progressBar:SetRange(0,duration,0.0)
 end
 function gui.PlaybackControls:GetDuration()
 	if(util.is_valid(self.m_progressBar) == false) then return 0.0 end
@@ -136,9 +135,9 @@ function gui.PlaybackControls:SetState(state)
 	self.m_state = state
 	if(util.is_valid(self.m_cbThink)) then self.m_cbThink:Remove()
 	elseif(state == gui.PlaybackControls.STATE_PLAYING) then
-		self.m_cbThink = game.add_callback("Think",function()
+		self.m_cbThink = game.add_callback("DrawFrame",function()
 			if(util.is_valid(self.m_progressBar) == false or self:IsPlaying() == false) then return end
-			local dt = time.delta_time()
+			local dt = time.frame_time()
 			self.m_progressBar:SetValue(self.m_progressBar:GetValue() +dt)
 		end)
 	end

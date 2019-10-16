@@ -18,6 +18,13 @@ locale.load("pfm_user_interface.txt")
 include("windows")
 include("video_recorder.lua")
 
+include_component("pfm_clip")
+
+gui.WIFilmmaker.CAMERA_MODE_PLAYBACK = 0
+gui.WIFilmmaker.CAMERA_MODE_FLY = 1
+gui.WIFilmmaker.CAMERA_MODE_WALK = 2
+gui.WIFilmmaker.CAMERA_MODE_COUNT = 3
+
 function gui.WIFilmmaker:__init()
 	gui.WIBaseEditor.__init(self)
 end
@@ -35,7 +42,9 @@ function gui.WIFilmmaker:OnThink()
 	end
 	local imgBuffer = self.m_raytracingJob:GetResult()
 	local img = vulkan.create_image(imgBuffer)
-	local tex = vulkan.create_texture(img,vulkan.TextureCreateInfo(),vulkan.ImageViewCreateInfo(),vulkan.SamplerCreateInfo())
+	local imgViewCreateInfo = vulkan.ImageViewCreateInfo()
+	imgViewCreateInfo.swizzleAlpha = vulkan.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
+	local tex = vulkan.create_texture(img,vulkan.TextureCreateInfo(),imgViewCreateInfo,vulkan.SamplerCreateInfo())
 	if(self.m_renderResultWindow ~= nil) then self.m_renderResultWindow:SetTexture(tex) end
 	if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetVisible(false) end
 
@@ -96,6 +105,7 @@ function gui.WIFilmmaker:OnInitialize()
 	pMenuBar:Update()
 
 	local framePlaybackControls = gui.create("WIFrame",self)
+	framePlaybackControls:SetCloseButtonEnabled(false)
 	local playbackControls = gui.create("PlaybackControls",framePlaybackControls)
 	playbackControls:SetX(10)
 	playbackControls:SetY(24)
@@ -105,6 +115,12 @@ function gui.WIFilmmaker:OnInitialize()
 			local sceneC = self.m_scene:GetComponent(ents.COMPONENT_PFM_SCENE)
 			if(sceneC ~= nil) then sceneC:SetOffset(timeOffset) end
 		end
+	end)
+	playbackControls:AddCallback("OnStateChanged",function(playbackControls,oldState,newState)
+		local sceneC = self.m_scene:GetComponent(ents.COMPONENT_PFM_SCENE)
+		if(sceneC == nil) then return end
+		if(newState == gui.PlaybackControls.STATE_PLAYING) then sceneC:PlayAudio()
+		else sceneC:PauseAudio() end
 	end)
 	self.m_playbackControls = playbackControls
 
@@ -191,8 +207,16 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self.m_previewWindow = gui.PFMRenderPreviewWindow(self)
 	self.m_renderResultWindow = gui.PFMRenderResultWindow(self)
+	self.m_previewWindow:GetFrame():SetY(24)
+	self.m_renderResultWindow:GetFrame():SetY(self.m_previewWindow:GetFrame():GetBottom() +10)
 	self.m_videoRecorder = pfm.VideoRecorder()
 
+	local btCam = gui.create_button("Toggle Camera",self,100,20)
+	btCam:AddCallback("OnPressed",function()
+		self:SetCameraMode((self.m_cameraMode +1) %gui.WIFilmmaker.CAMERA_MODE_COUNT)
+	end)
+
+	self:SetCameraMode(gui.WIFilmmaker.CAMERA_MODE_PLAYBACK)
 	self:CreateNewProject()
 end
 function gui.WIFilmmaker:OnRemove()
@@ -202,9 +226,29 @@ function gui.WIFilmmaker:OnRemove()
 	if(self.m_previewWindow ~= nil) then self.m_previewWindow:Remove() end
 	if(self.m_renderResultWindow ~= nil) then self.m_renderResultWindow:Remove() end
 end
+function gui.WIFilmmaker:SetCameraMode(camMode)
+	pfm.log("Changing camera mode to " .. ((camMode == gui.WIFilmmaker.CAMERA_MODE_PLAYBACK and "playback") or (camMode == gui.WIFilmmaker.CAMERA_MODE_FLY and "fly") or "walk"))
+	self.m_cameraMode = camMode
+	ents.PFMClip.set_clip_camera_enabled(camMode == gui.WIFilmmaker.CAMERA_MODE_PLAYBACK)
+
+	local camGame = game.get_primary_camera()
+	local toggleC = (camGame ~= nil) and camGame:GetEntity():GetComponent(ents.COMPONENT_TOGGLE) or nil
+	if(camMode == gui.WIFilmmaker.CAMERA_MODE_FLY) then
+		if(toggleC ~= nil) then toggleC:TurnOn() end
+	elseif(camMode == gui.WIFilmmaker.CAMERA_MODE_WALK) then
+		if(toggleC ~= nil) then toggleC:TurnOn() end
+	else
+		if(toggleC ~= nil) then toggleC:TurnOff() end
+	end
+
+	-- We need to notify the server to change the player's movement mode (i.e. noclip/walk)
+	local packet = net.Packet()
+	packet:WriteUInt8(camMode)
+	net.send(net.PROTOCOL_SLOW_RELIABLE,"sv_pfm_camera_mode",packet)
+end
 function gui.WIFilmmaker:CaptureRaytracedImage()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
-	local job = util.capture_raytraced_screenshot(1024,1024,64)--2048,2048,1024)
+	local job = util.capture_raytraced_screenshot(2048,2048,1024)
 	job:Start()
 	self.m_raytracingJob = job
 

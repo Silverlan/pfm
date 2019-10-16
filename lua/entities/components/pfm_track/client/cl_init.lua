@@ -26,9 +26,21 @@ function ents.PFMTrack:SetOffset(offset)
 end
 function ents.PFMTrack:Advance(dt) self:SetOffset(self:GetOffset() +dt) end
 
+function ents.PFMTrack:PlayAudio()
+	for _,clipC in ipairs(self.m_activeClips) do
+		if(clipC:IsValid()) then clipC:PlayAudio() end
+	end
+end
+
+function ents.PFMTrack:PauseAudio()
+	for _,clipC in ipairs(self.m_activeClips) do
+		if(clipC:IsValid()) then clipC:PauseAudio() end
+	end
+end
+
 function ents.PFMTrack:UpdateTrack()
 	local offset = self:GetOffset()
-	
+
 	-- Update clips that are already playing
 	local clipsActive = {}
 	local i = 1
@@ -50,7 +62,7 @@ function ents.PFMTrack:UpdateTrack()
 			clipsActive[clipC:GetClip()] = true
 		end
 	end
-	
+
 	-- Check if there are new clips that need to be started
 	self:UpdateClips(self.m_track:GetAudioClips():GetValue(),offset,clipsActive)
 	self:UpdateClips(self.m_track:GetFilmClips():GetValue(),offset,clipsActive)
@@ -80,6 +92,7 @@ function ents.PFMTrack:UpdateClips(clips,offset,clipsActive)
 end
 
 function ents.PFMTrack:SetTrack(udmTrack)
+	self:GetEntity():SetName(udmTrack:GetName())
 	self.m_track = udmTrack
 
 	local startTime = math.huge
