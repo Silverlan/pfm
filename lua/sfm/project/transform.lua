@@ -19,3 +19,9 @@ function sfm.Transform:ToPFMTransform(pfmTransform)
   pfmTransform:SetPosition(sfm.convert_source_position_to_pragma(self:GetPosition()))
   pfmTransform:SetRotation(sfm.convert_source_rotation_to_pragma(self:GetOrientation()))
 end
+
+-- Some transforms are in a different coordinate system for some reason, so we need a different conversion
+function sfm.Transform:ToPFMTransformAlt(pfmTransform)
+  pfmTransform:SetPosition(sfm.convert_source_transform_position_to_pragma(self:GetPosition()))
+  pfmTransform:SetRotation(sfm.convert_source_transform_rotation_to_pragma(self:GetOrientation()))
+end

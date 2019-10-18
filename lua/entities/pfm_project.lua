@@ -6,4 +6,4 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-ents.register("pfm_scene",{"pfm_scene"},Entity.TYPE_SHARED)
+ents.register("pfm_project",{"pfm_project"},Entity.TYPE_SHARED)

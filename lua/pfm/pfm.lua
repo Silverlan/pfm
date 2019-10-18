@@ -9,29 +9,29 @@
 pfm = pfm or {}
 pfm.impl = pfm.impl or {}
 
-pfm.impl.scenes = pfm.impl.scenes or {}
+pfm.impl.projects = pfm.impl.projects or {}
 
 include("log.lua")
 include("/udm/udm.lua")
 include("udm")
 include("tree/pfm_tree.lua")
 
-util.register_class("pfm.Scene")
-function pfm.Scene:__init()
+util.register_class("pfm.Project")
+function pfm.Project:__init()
   self.m_udmRoot = udm.create_element(udm.ELEMENT_TYPE_ROOT,"root")
 end
 
-function pfm.Scene:AddTrack(name)
-  return self:GetUDMRootNode():CreateChild(udm.ELEMENT_TYPE_PFM_TRACK,name)
+function pfm.Project:AddFilmClip(name)
+  return self:GetUDMRootNode():CreateChild(udm.ELEMENT_TYPE_PFM_FILM_CLIP,name)
 end
 
-function pfm.Scene:GetUDMRootNode() return self.m_udmRoot end
+function pfm.Project:GetUDMRootNode() return self.m_udmRoot end
 
 
-pfm.create_scene = function()
-  local scene = pfm.Scene()
-  table.insert(pfm.impl.scenes,scene)
-  return scene
+pfm.create_project = function()
+  local project = pfm.Project()
+  table.insert(pfm.impl.projects,project)
+  return project
 end
 
-pfm.get_scenes = function() return pfm.impl.scenes end
+pfm.get_projects = function() return pfm.impl.projects end

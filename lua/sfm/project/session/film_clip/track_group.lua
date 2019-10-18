@@ -11,7 +11,19 @@ include("track.lua")
 util.register_class("sfm.TrackGroup",sfm.BaseElement)
 
 sfm.BaseElement.RegisterArray(sfm.TrackGroup,"tracks",sfm.Track)
+sfm.BaseElement.RegisterAttribute(sfm.TrackGroup,"visible",true,"IsVisible")
+sfm.BaseElement.RegisterAttribute(sfm.TrackGroup,"mute",false,"IsMuted")
 
 function sfm.TrackGroup:__init()
   sfm.BaseElement.__init(self,sfm.TrackGroup)
+end
+
+function sfm.TrackGroup:ToPFMTrackGroup(pfmTrackGroup)
+	pfmTrackGroup:SetVisible(self:IsVisible())
+	pfmTrackGroup:SetMuted(self:IsMuted())
+	for _,track in ipairs(self:GetTracks()) do
+		local pfmTrack = udm.PFMTrack(track:GetName())
+		track:ToPFMTrack(pfmTrack)
+		pfmTrackGroup:GetTracksAttr():PushBack(pfmTrack)
+	end
 end

@@ -14,7 +14,6 @@ function ents.PFMActorComponent:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
 	self:AddEntityComponent(ents.COMPONENT_NAME)
-
 	self.m_channels = {}
 end
 
@@ -24,15 +23,14 @@ function ents.PFMActorComponent:AddChannel(channel)
 end
 
 function ents.PFMActorComponent:GetChannels() return self.m_channels end
+function ents.PFMActorComponent:GetActorData() return self.m_actorData end
 
 function ents.PFMActorComponent:OnRemove()
-	if(util.is_valid(self.m_cbOnOffsetChanged)) then self.m_cbOnOffsetChanged:Remove() end
 end
 
-function ents.PFMActorComponent:ApplyTransforms()
-	if(util.is_valid(self.m_clipComponent) == false) then return end
-	self.m_oldOffset = self.m_oldOffset or self.m_clipComponent:GetOffset()
-	local newOffset = self.m_clipComponent:GetOffset()
+function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
+	self.m_oldOffset = self.m_oldOffset or clipOffset
+	local newOffset = clipOffset
 	local tDelta = newOffset -self.m_oldOffset
 	self.m_oldOffset = newOffset
 	
@@ -42,17 +40,12 @@ function ents.PFMActorComponent:ApplyTransforms()
 	end
 end
 
-function ents.PFMActorComponent:Setup(clipC,actorData)
-	self.m_clipComponent = clipC
-	
+function ents.PFMActorComponent:Setup(actorData)
+	self.m_actorData = actorData
 	self:GetEntity():SetName(actorData:GetName())
 
-	self.m_cbOnOffsetChanged = clipC:AddEventCallback(ents.PFMClip.EVENT_ON_OFFSET_CHANGED,function(newOffset)
-		self:ApplyTransforms()
-	end)
-
-	print("Initializing components for actor '" .. self:GetEntity():GetName() .. "'...")
-	for _,value in ipairs(actorData:GetComponents():GetValue()) do
+	pfm.log("Initializing " .. #actorData:GetComponents() .. " components for actor '" .. self:GetEntity():GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
+	for _,value in ipairs(actorData:GetComponents()) do
 		local componentData = value:GetValue()
 		local err
 		if(componentData.GetComponentName == nil) then

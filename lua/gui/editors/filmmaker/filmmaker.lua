@@ -18,7 +18,8 @@ locale.load("pfm_user_interface.txt")
 include("windows")
 include("video_recorder.lua")
 
-include_component("pfm_clip")
+include_component("pfm_camera")
+include_component("pfm_sound_source")
 
 gui.WIFilmmaker.CAMERA_MODE_PLAYBACK = 0
 gui.WIFilmmaker.CAMERA_MODE_FLY = 1
@@ -53,10 +54,10 @@ function gui.WIFilmmaker:OnThink()
 	-- Write the rendered frame and kick off the next one
 	self.m_videoRecorder:WriteFrame(imgBuffer)
 
-	local scene = self:GetScene()
-	local sceneC = util.is_valid(scene) and scene:GetComponent(ents.COMPONENT_PFM_SCENE) or nil
-	if(sceneC ~= nil) then
-		sceneC:SetOffset(sceneC:GetOffset() +self.m_videoRecorder:GetFrameDeltaTime())
+	local gameView = self:GetGameView()
+	local projectC = util.is_valid(gameView) and gameView:GetComponent(ents.COMPONENT_PFM_PROJECT) or nil
+	if(projectC ~= nil) then
+		projectC:SetOffset(projectC:GetOffset() +self.m_videoRecorder:GetFrameDeltaTime())
 		self:CaptureRaytracedImage()
 	end
 end
@@ -111,16 +112,13 @@ function gui.WIFilmmaker:OnInitialize()
 	playbackControls:SetY(24)
 	playbackControls:SetWidth(512)
 	playbackControls:AddCallback("OnProgressChanged",function(playbackControls,progress,timeOffset)
-		if(util.is_valid(self.m_scene)) then
-			local sceneC = self.m_scene:GetComponent(ents.COMPONENT_PFM_SCENE)
-			if(sceneC ~= nil) then sceneC:SetOffset(timeOffset) end
+		if(util.is_valid(self.m_gameView)) then
+			local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
+			if(projectC ~= nil) then projectC:SetOffset(timeOffset) end
 		end
 	end)
 	playbackControls:AddCallback("OnStateChanged",function(playbackControls,oldState,newState)
-		local sceneC = self.m_scene:GetComponent(ents.COMPONENT_PFM_SCENE)
-		if(sceneC == nil) then return end
-		if(newState == gui.PlaybackControls.STATE_PLAYING) then sceneC:PlayAudio()
-		else sceneC:PauseAudio() end
+		ents.PFMSoundSource.set_audio_enabled(newState == gui.PlaybackControls.STATE_PLAYING)
 	end)
 	self.m_playbackControls = playbackControls
 
@@ -229,7 +227,8 @@ end
 function gui.WIFilmmaker:SetCameraMode(camMode)
 	pfm.log("Changing camera mode to " .. ((camMode == gui.WIFilmmaker.CAMERA_MODE_PLAYBACK and "playback") or (camMode == gui.WIFilmmaker.CAMERA_MODE_FLY and "fly") or "walk"))
 	self.m_cameraMode = camMode
-	ents.PFMClip.set_clip_camera_enabled(camMode == gui.WIFilmmaker.CAMERA_MODE_PLAYBACK)
+
+	ents.PFMCamera.set_camera_enabled(camMode == gui.WIFilmmaker.CAMERA_MODE_PLAYBACK)
 
 	local camGame = game.get_primary_camera()
 	local toggleC = (camGame ~= nil) and camGame:GetEntity():GetComponent(ents.COMPONENT_TOGGLE) or nil
@@ -266,23 +265,23 @@ function gui.WIFilmmaker:StopRecording()
 end
 function gui.WIFilmmaker:CloseProject()
 	pfm.log("Closing project...",pfm.LOG_CATEGORY_PFM)
-	if(util.is_valid(self.m_scene)) then self.m_scene:Remove() end
+	if(util.is_valid(self.m_gameView)) then self.m_gameView:Remove() end
 end
-function gui.WIFilmmaker:GetScene() return self.m_scene end
+function gui.WIFilmmaker:GetGameView() return self.m_gameView end
 function gui.WIFilmmaker:CreateNewProject()
 	self:CloseProject()
 	pfm.log("Creating new project...",pfm.LOG_CATEGORY_PFM)
 
-	local entScene = ents.create("pfm_scene")
+	local entScene = ents.create("pfm_project")
 	if(util.is_valid(entScene) == false) then
-		pfm.log("Unable to initialize PFM scene: Count not create 'pfm_scene' entity!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+		pfm.log("Unable to initialize PFM project: Count not create 'pfm_project' entity!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
 		return false
 	end
-	local sceneC = entScene:GetComponent(ents.COMPONENT_PFM_SCENE)
-	sceneC:SetScene(pfm.create_scene())
+	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
+	projectC:SetProjectData(pfm.create_project())
 	entScene:Spawn()
-	self.m_scene = entScene
-	sceneC:Start()
+	self.m_gameView = entScene
+	projectC:Start()
 	if(util.is_valid(self.m_playbackControls)) then self.m_playbackControls:SetDuration(0.0) end
 	return entScene
 end
@@ -295,20 +294,21 @@ function gui.WIFilmmaker:LoadProject(projectFilePath)
 		return false
 	end
 
-	pfm.log("Initializing PFM scene...",pfm.LOG_CATEGORY_PFM)
-	local entScene = ents.create("pfm_scene")
+	pfm.log("Initializing PFM project...",pfm.LOG_CATEGORY_PFM)
+	local entScene = ents.create("pfm_project")
 	if(util.is_valid(entScene) == false) then
-		pfm.log("Unable to initialize PFM scene: Count not create 'pfm_scene' entity!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+		pfm.log("Unable to initialize PFM project: Count not create 'pfm_project' entity!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
 		return false
 	end
-	local sceneC = entScene:GetComponent(ents.COMPONENT_PFM_SCENE)
-	sceneC:SetScene(pfmScene)
+	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
+	projectC:SetProjectData(pfmScene)
 	entScene:Spawn()
-	self.m_scene = entScene
-	sceneC:Start()
+	self.m_gameView = entScene
+	projectC:Start()
 	if(util.is_valid(self.m_playbackControls)) then
-		local timeFrame = sceneC:GetTrackTimeFrame()
+		local timeFrame = projectC:GetTimeFrame()
 		self.m_playbackControls:SetDuration(timeFrame:GetDuration())
+		self.m_playbackControls:SetOffset(0.0)
 	end
 	return entScene
 end

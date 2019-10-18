@@ -8,12 +8,33 @@
 
 util.register_class("ents.PFMCamera",BaseEntityComponent)
 
+local g_activeCamera = nil
+local g_cameraEnabled = false
+ents.PFMCamera.set_camera_enabled = function(enabled)
+	g_cameraEnabled = enabled
+	ents.PFMCamera.set_active_camera(g_activeCamera)
+end
+ents.PFMCamera.set_active_camera = function(cam)
+	if(util.is_valid(g_activeCamera)) then
+		local toggleC = g_activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
+		if(toggleC ~= nil) then toggleC:TurnOff() end
+		g_activeCamera = nil
+	end
+	if(util.is_valid(cam) == false) then return end
+	g_activeCamera = cam
+	local toggleC = g_activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
+	if(toggleC ~= nil) then toggleC:SetTurnedOn(g_cameraEnabled) end
+end
 function ents.PFMCamera:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_CAMERA)
+	local toggleC = self:AddEntityComponent(ents.COMPONENT_TOGGLE)
 	self:AddEntityComponent("pfm_actor")
+
+	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
+	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"OnTurnOff")
 end
 function ents.PFMCamera:Setup(animSet,cameraData)
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
@@ -23,5 +44,9 @@ function ents.PFMCamera:Setup(animSet,cameraData)
 		camC:SetFOV(cameraData:GetFov())
 		camC:UpdateProjectionMatrix()
 	end
+end
+function ents.PFMCamera:OnEntitySpawn()
+	local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
+	if(toggleC ~= nil) then toggleC:TurnOff() end
 end
 ents.COMPONENT_PFM_CAMERA = ents.register_component("pfm_camera",ents.PFMCamera)

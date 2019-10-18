@@ -66,20 +66,57 @@ function udm.register_element(className)
   return register_type(className,udm.BaseElement,nil,true)
 end
 
-function udm.register_element_property(elType,propIdentifier,defaultValue)
+function udm.register_element_property(elType,propIdentifier,defaultValue,settings)
   local elData = udm.impl.registered_types[elType]
   if(elData == nil or elData.isElement == false) then
     console.print_warning("Attempted to register property '" .. propIdentifier .. "' with element of type '" .. elType .. "', which is not a valid UDM element type!")
     return
   end
+  settings = settings or {}
   local methodIdentifier = propIdentifier:sub(1,1):upper() .. propIdentifier:sub(2)
-  elData.class["Get" .. methodIdentifier] = function(self) return self["m_" .. propIdentifier] end
-  elData.class["Set" .. methodIdentifier] = function(self,value) self["m_" .. propIdentifier] = value end
-  elData.properties[propIdentifier] = {
-    getter = elData.class["Get" .. methodIdentifier],
-    setter = elData.class["Set" .. methodIdentifier],
-    defaultValue = defaultValue
-  }
+  local getterName = settings.getter or ("Get" .. methodIdentifier)
+  local setterName = settings.setter or ("Set" .. methodIdentifier)
+
+  -- Depending on whether or not the property is an element or an attribute, we'll handle the getter/setter functions differently
+  local isElement = false
+  if(defaultValue ~= nil) then
+    local propertyData = udm.impl.registered_types[defaultValue:GetType()]
+    isElement = propertyData.isElement
+  end
+
+  if(isElement) then
+    elData.class[getterName] = function(self) return self["m_" .. propIdentifier] end
+    elData.class[setterName] = function(self,value) self["m_" .. propIdentifier] = value end
+
+    elData.properties[propIdentifier] = {
+      getter = elData.class[getterName],
+      getterAttribute = elData.class[getterName],
+      setter = elData.class[setterName],
+      setterAttribute = elData.class[setterName],
+      defaultValue = defaultValue
+    }
+  else
+    -- When calling the getter-function, the caller most likely wants the underlying value instead of the attribute
+    elData.class[getterName] = function(self) return self["m_" .. propIdentifier]:GetValue() end
+    elData.class[setterName] = function(self,value) self["m_" .. propIdentifier]:SetValue(value) end
+
+    -- We'll register an additional getter in case they do want to get the attribute instead of the underlying value
+    local getterNameAttribute = getterName .. "Attribute"
+    elData.class[getterNameAttribute] = function(self) return self["m_" .. propIdentifier] end
+    -- Shorthand alias
+    elData.class[getterName .. "Attr"] = function(self) return self[getterNameAttribute](self) end
+
+    local setterNameAttribute = setterName .. "Attribute"
+    elData.class[setterNameAttribute] = function(self,value) self["m_" .. propIdentifier] = value end
+
+    elData.properties[propIdentifier] = {
+      getter = elData.class[getterName],
+      getterAttribute = elData.class[getterNameAttribute],
+      setter = elData.class[setterName],
+      setterAttribute = elData.class[setterNameAttribute],
+      defaultValue = defaultValue
+    }
+  end
 end
 
 function udm.create(typeIdentifier,arg,shouldBeElement) -- Note: 'shouldBeElement' is for internal purposes only!

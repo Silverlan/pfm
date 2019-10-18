@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <diagram program="umlet" version="14.3.0">
-  <zoom_level>10</zoom_level>
+  <zoom_level>8</zoom_level>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>310</x>
-      <y>250</y>
-      <w>210</w>
-      <h>40</h>
+      <x>72</x>
+      <y>248</y>
+      <w>168</w>
+      <h>32</h>
     </coordinates>
-    <panel_attributes>PFMScene
+    <panel_attributes>PFMProject
 --
 </panel_attributes>
     <additional_attributes/>
@@ -17,120 +17,68 @@
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>570</x>
-      <y>370</y>
-      <w>210</w>
-      <h>40</h>
-    </coordinates>
-    <panel_attributes>PFMCamera
---</panel_attributes>
-    <additional_attributes/>
-  </element>
-  <element>
-    <id>UMLClass</id>
-    <coordinates>
-      <x>470</x>
-      <y>600</y>
-      <w>210</w>
-      <h>80</h>
+      <x>272</x>
+      <y>424</y>
+      <w>168</w>
+      <h>64</h>
     </coordinates>
     <panel_attributes>PFMTimeFrame
 --
-+ GetStart() : float
-+ GetDuration() : float
-+ GetEnd() : float</panel_attributes>
-    <additional_attributes/>
-  </element>
-  <element>
-    <id>UMLClass</id>
-    <coordinates>
-      <x>310</x>
-      <y>370</y>
-      <w>210</w>
-      <h>80</h>
-    </coordinates>
-    <panel_attributes>PFMTrack
---
-+ GetMuted() : bool
-+ GetVolume() : float</panel_attributes>
++ GetStart() : udm.Float
++ GetDuration() : udm.Float
++ GetEnd() : udm.Float</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>400</x>
-      <y>600</y>
-      <w>90</w>
-      <h>30</h>
+      <x>200</x>
+      <y>480</y>
+      <w>104</w>
+      <h>160</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>70.0;10.0;10.0;10.0</additional_attributes>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>410</x>
-      <y>280</y>
-      <w>50</w>
-      <h>110</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
-m1=1
-m2=0..*</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;90.0</additional_attributes>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>490</x>
-      <y>440</y>
-      <w>50</w>
-      <h>100</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
-m1=1
-m2=0..*</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
+    <additional_attributes>110.0;10.0;110.0;140.0;10.0;140.0;10.0;180.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>180</x>
-      <y>700</y>
-      <w>210</w>
-      <h>120</h>
+      <x>72</x>
+      <y>704</y>
+      <w>168</w>
+      <h>96</h>
     </coordinates>
     <panel_attributes>PFMSound
 --
-+ GetSoundName() : string
-+ GetVolume() : float
-+ GetPitch() : float
-+ GetOrigin() : Vector3
-+ GetDirection() : Vector3</panel_attributes>
++ GetSoundName() : udm.String
++ GetVolume() : udm.Float
++ GetPitch() : udm.Float
++ GetOrigin() : udm.Vector3
++ GetDirection() : udm.Vector3</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1090</x>
-      <y>520</y>
-      <w>230</w>
-      <h>120</h>
+      <x>720</x>
+      <y>432</y>
+      <w>184</w>
+      <h>64</h>
     </coordinates>
     <panel_attributes>PFMModel
 --
-+ GetModelName() : string
++ GetModelName() : udm.String
 + GetTransform() : udm.Transform
-+ GetSkin() : int</panel_attributes>
++ GetSkin() : udm.Int</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1510</x>
-      <y>660</y>
-      <w>230</w>
-      <h>40</h>
+      <x>1456</x>
+      <y>568</y>
+      <w>184</w>
+      <h>32</h>
     </coordinates>
     <panel_attributes>PFMLog
 --
@@ -140,10 +88,10 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1900</x>
-      <y>660</y>
-      <w>230</w>
-      <h>70</h>
+      <x>1752</x>
+      <y>568</y>
+      <w>184</w>
+      <h>56</h>
     </coordinates>
     <panel_attributes>PFMLogList
 --
@@ -154,37 +102,24 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1730</x>
-      <y>650</y>
-      <w>190</w>
-      <h>50</h>
+      <x>1632</x>
+      <y>560</y>
+      <w>136</w>
+      <h>40</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-
 m1=1
 m2=0..*
 layers</panel_attributes>
-    <additional_attributes>10.0;20.0;170.0;20.0</additional_attributes>
+    <additional_attributes>10.0;20.0;150.0;20.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>460</x>
-      <y>520</y>
-      <w>240</w>
-      <h>50</h>
-    </coordinates>
-    <panel_attributes>PFMFilmClip
---
-+ GetTimeFrame() : PFMTimeFrame</panel_attributes>
-    <additional_attributes/>
-  </element>
-  <element>
-    <id>UMLClass</id>
-    <coordinates>
-      <x>800</x>
-      <y>520</y>
-      <w>240</w>
-      <h>50</h>
+      <x>944</x>
+      <y>432</y>
+      <w>144</w>
+      <h>40</h>
     </coordinates>
     <panel_attributes>PFMAnimationSet
 --
@@ -194,85 +129,35 @@ layers</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>170</x>
-      <y>520</y>
-      <w>240</w>
-      <h>100</h>
+      <x>64</x>
+      <y>624</y>
+      <w>192</w>
+      <h>56</h>
     </coordinates>
     <panel_attributes>PFMAudioClip
 --
-+ GetTimeFrame() : PFMTimeFrame
-+ GetSound() : PFMSound
-+ GetFadeInTime() : float
-+ GetFadeOutTime() : float</panel_attributes>
++ GetFadeInTime() : udm.Float
++ GetFadeOutTime() : udm.Float</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>280</x>
-      <y>610</y>
-      <w>30</w>
-      <h>110</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>10.0;90.0;10.0;10.0</additional_attributes>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>560</x>
-      <y>560</y>
-      <w>30</w>
-      <h>60</h>
+      <x>152</x>
+      <y>672</y>
+      <w>24</w>
+      <h>48</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
     <additional_attributes>10.0;40.0;10.0;10.0</additional_attributes>
   </element>
   <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>690</x>
-      <y>520</y>
-      <w>130</w>
-      <h>40</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
-m1=1
-m2=0..*</panel_attributes>
-    <additional_attributes>10.0;10.0;110.0;10.0</additional_attributes>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>320</x>
-      <y>440</y>
-      <w>50</w>
-      <h>100</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
-m1=1
-m2=0..*</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
-  </element>
-  <element>
-    <id>Relation</id>
-    <coordinates>
-      <x>1030</x>
-      <y>530</y>
-      <w>80</w>
-      <h>30</h>
-    </coordinates>
-    <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>60.0;10.0;10.0;10.0</additional_attributes>
-  </element>
-  <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>810</x>
-      <y>770</y>
-      <w>270</w>
-      <h>70</h>
+      <x>936</x>
+      <y>656</y>
+      <w>216</w>
+      <h>56</h>
     </coordinates>
     <panel_attributes>PFMTransformControl
 --
@@ -283,10 +168,10 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>810</x>
-      <y>680</y>
-      <w>270</w>
-      <h>60</h>
+      <x>936</x>
+      <y>584</y>
+      <w>216</w>
+      <h>48</h>
     </coordinates>
     <panel_attributes>PFMFlexControl
 --
@@ -298,10 +183,10 @@ m2=0..*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1240</x>
-      <y>660</y>
-      <w>230</w>
-      <h>150</h>
+      <x>1280</x>
+      <y>568</y>
+      <w>136</w>
+      <h>120</h>
     </coordinates>
     <panel_attributes>PFMChannel
 --
@@ -311,21 +196,21 @@ m2=0..*</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1460</x>
-      <y>660</y>
-      <w>70</w>
-      <h>30</h>
+      <x>1408</x>
+      <y>568</y>
+      <w>64</w>
+      <h>24</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>50.0;10.0;10.0;10.0</additional_attributes>
+    <additional_attributes>60.0;10.0;10.0;10.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1070</x>
-      <y>760</y>
-      <w>190</w>
-      <h>40</h>
+      <x>1144</x>
+      <y>648</y>
+      <w>152</w>
+      <h>32</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
 positionChannel</panel_attributes>
@@ -334,10 +219,10 @@ positionChannel</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1070</x>
-      <y>780</y>
-      <w>190</w>
-      <h>40</h>
+      <x>1144</x>
+      <y>664</y>
+      <w>152</w>
+      <h>32</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
 rotationChannel</panel_attributes>
@@ -346,10 +231,10 @@ rotationChannel</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1070</x>
-      <y>680</y>
-      <w>190</w>
-      <h>40</h>
+      <x>1144</x>
+      <y>584</y>
+      <w>152</w>
+      <h>32</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
 m1=channel</panel_attributes>
@@ -358,10 +243,10 @@ m1=channel</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1070</x>
-      <y>700</y>
-      <w>190</w>
-      <h>40</h>
+      <x>1144</x>
+      <y>600</y>
+      <w>152</w>
+      <h>32</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
 m1=leftValueChannel</panel_attributes>
@@ -370,10 +255,10 @@ m1=leftValueChannel</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1070</x>
-      <y>720</y>
-      <w>190</w>
-      <h>40</h>
+      <x>1144</x>
+      <y>616</y>
+      <w>152</w>
+      <h>32</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
 m1=rightValueChannel</panel_attributes>
@@ -382,53 +267,347 @@ m1=rightValueChannel</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>910</x>
-      <y>560</y>
-      <w>100</w>
-      <h>140</h>
+      <x>1016</x>
+      <y>464</y>
+      <w>80</w>
+      <h>136</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-
 m1=1
 m2=0..*
 flexControls</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;120.0</additional_attributes>
+    <additional_attributes>10.0;10.0;10.0;150.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>710</x>
-      <y>560</y>
-      <w>120</w>
-      <h>250</h>
+      <x>896</x>
+      <y>456</y>
+      <w>96</w>
+      <h>232</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;&lt;&lt;-
 m1=1
 m2=0..*
 boneControls</panel_attributes>
-    <additional_attributes>90.0;10.0;10.0;10.0;10.0;220.0;100.0;220.0</additional_attributes>
+    <additional_attributes>60.0;10.0;20.0;10.0;20.0;260.0;50.0;260.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1090</x>
-      <y>380</y>
-      <w>230</w>
-      <h>120</h>
+      <x>520</x>
+      <y>432</y>
+      <w>184</w>
+      <h>80</h>
     </coordinates>
     <panel_attributes>PFMCamera
 --
-+ GetTransform() : udm.Transform</panel_attributes>
++ GetTransform() : udm.Transform
++ GetFOV() : udm.Float
++ GetZNear() : udm.Float
++ GetZFar() : udm.Float</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>64</x>
+      <y>336</y>
+      <w>192</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>PFMFilmClip
+--
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>64</x>
+      <y>424</y>
+      <w>192</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>PFMTrackGroup
+--
++ IsVisible() : udm.Bool
++ IsMuted() : udm.Bool</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>64</x>
+      <y>528</y>
+      <w>192</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>PFMTrack
+--
+</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1030</x>
-      <y>380</y>
-      <w>80</w>
-      <h>170</h>
+      <x>152</x>
+      <y>368</y>
+      <w>40</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;70.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>152</x>
+      <y>464</y>
+      <w>40</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>16</x>
+      <y>336</y>
+      <w>64</w>
+      <h>224</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>60.0;250.0;10.0;250.0;10.0;10.0;60.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>336</x>
+      <y>528</y>
+      <w>168</w>
+      <h>32</h>
+    </coordinates>
+    <panel_attributes>PFMChannelClip
+--
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>480</x>
+      <y>336</y>
+      <w>192</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>PFMActor
+--</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>928</x>
+      <y>336</y>
+      <w>192</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>PFMActorComponent
+--
+/+ GetComponentName() : string/</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>664</x>
+      <y>336</y>
+      <w>280</w>
+      <h>32</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>10.0;10.0;330.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>608</x>
+      <y>368</y>
+      <w>352</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>420.0;10.0;420.0;40.0;10.0;40.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>800</x>
+      <y>368</y>
+      <w>192</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>220.0;10.0;220.0;60.0;10.0;60.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1112</x>
+      <y>432</y>
+      <w>184</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>PFMSpotLight
+--
++ GetColor() : udm.Color
++ GetIntensity() : udm.Float
++ GetIntensityType() : udm.UInt8
++ GetFalloffExponent() : udm.Float</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1080</x>
+      <y>368</y>
+      <w>136</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;40.0;150.0;40.0;150.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1008</x>
+      <y>368</y>
+      <w>24</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>248</x>
+      <y>528</y>
+      <w>104</w>
+      <h>32</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>10.0;10.0;110.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>144</x>
+      <y>560</y>
+      <w>40</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>152</x>
+      <y>272</y>
+      <w>40</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>248</x>
+      <y>352</y>
+      <w>120</w>
+      <h>88</h>
     </coordinates>
     <panel_attributes>lt=&lt;-</panel_attributes>
-    <additional_attributes>60.0;10.0;40.0;10.0;40.0;150.0;10.0;150.0</additional_attributes>
+    <additional_attributes>130.0;90.0;130.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>248</x>
+      <y>336</y>
+      <w>248</w>
+      <h>32</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>10.0;10.0;290.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>360</x>
+      <y>480</y>
+      <w>24</w>
+      <h>64</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;60.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>480</x>
+      <y>368</y>
+      <w>40</w>
+      <h>176</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;200.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>336</x>
+      <y>624</y>
+      <w>168</w>
+      <h>32</h>
+    </coordinates>
+    <panel_attributes>[TODO] PFMChannel
+--</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>408</x>
+      <y>552</y>
+      <w>40</w>
+      <h>88</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-
+m1=1
+m2=0..*</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;90.0</additional_attributes>
   </element>
 </diagram>

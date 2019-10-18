@@ -13,6 +13,6 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"layers",udm.Array(udm.EL
 
 function udm.PFMLog:AddLayer(name)
   local logLayer = self:CreateChild(udm.ELEMENT_TYPE_PFM_LOG_LIST,name)
-  self:GetLayers():PushBack(logLayer)
+  self:GetLayersAttr():PushBack(logLayer)
   return logLayer
 end

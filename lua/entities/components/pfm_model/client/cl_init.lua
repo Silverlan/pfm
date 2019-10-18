@@ -13,7 +13,11 @@ function ents.PFMModel:Initialize()
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
+	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent("pfm_actor")
+	if(renderC ~= nil) then
+		renderC:SetCastShadows(true)
+	end
 end
 function ents.PFMModel:Setup(actorData,mdlInfo)
 	local ent = self:GetEntity()
@@ -22,10 +26,5 @@ function ents.PFMModel:Setup(actorData,mdlInfo)
 	local mdlName = mdlInfo:GetModelName()
 	mdlC:SetModel(mdlName)
 	mdlC:SetSkin(mdlInfo:GetSkin())
-
-	local transform = mdlInfo:GetTransform()
-	-- Transform information seem to be composite of other data, we'll just ignore it for now.
-	-- ent:SetPos(transform:GetPosition())
-	-- ent:SetRotation(transform:GetRotation())
 end
 ents.COMPONENT_PFM_MODEL = ents.register_component("pfm_model",ents.PFMModel)

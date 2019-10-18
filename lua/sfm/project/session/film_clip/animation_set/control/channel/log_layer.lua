@@ -31,7 +31,7 @@ function sfm.LogLayer:GetType() return self.m_type end
 
 function sfm.LogLayer:ToPFMLogLayer(pfmLogLayer,isBoneTransform)
   for _,t in ipairs(self:GetTimes()) do
-    pfmLogLayer:GetTimes():PushBack(udm.Float(t))
+    pfmLogLayer:GetTimesAttr():PushBack(udm.Float(t))
   end
   local TYPE_FLOAT = 0
   local TYPE_VECTOR3 = 1
@@ -56,6 +56,6 @@ function sfm.LogLayer:ToPFMLogLayer(pfmLogLayer,isBoneTransform)
       else v = sfm.convert_source_transform_rotation_to_pragma(v) end
       udmValue = udm.Quaternion(v)
     end
-    pfmLogLayer:GetValues():PushBack(udmValue)
+    pfmLogLayer:GetValuesAttr():PushBack(udmValue)
   end
 end

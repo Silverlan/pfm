@@ -6,11 +6,12 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("components")
+include("actor/components")
 
 udm.ELEMENT_TYPE_PFM_ACTOR = udm.register_element("PFMActor")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"components",udm.Array(udm.ELEMENT_TYPE_ANY))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"transform",udm.Transform())
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"components",udm.Array(udm.ATTRIBUTE_TYPE_ANY))
 
 function udm.PFMActor:AddComponent(pfmComponent)
-  self:GetComponents():PushBack(udm.Any(pfmComponent))
+  self:GetComponentsAttr():PushBack(udm.Any(pfmComponent))
 end

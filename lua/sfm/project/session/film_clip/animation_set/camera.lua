@@ -23,7 +23,6 @@ function sfm.Camera:__init()
 end
 
 function sfm.Camera:ToPFMCamera(pfmCamera)
-  self:GetTransform():ToPFMTransform(pfmCamera:GetTransform())
   pfmCamera:SetFov(self:GetFieldOfView())
   pfmCamera:SetZNear(sfm.source_units_to_pragma_units(self:GetZNear()))
   pfmCamera:SetZFar(sfm.source_units_to_pragma_units(self:GetZFar()))

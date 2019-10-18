@@ -6,12 +6,4 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("track.lua")
-
-util.register_class("sfm.SubClipTrackGroup",sfm.BaseElement)
-
-sfm.BaseElement.RegisterArray(sfm.SubClipTrackGroup,"tracks",sfm.Track)
-
-function sfm.SubClipTrackGroup:__init()
-  sfm.BaseElement.__init(self,sfm.SubClipTrackGroup)
-end
+ents.register("pfm_film_clip",{"pfm_film_clip"},Entity.TYPE_SHARED)

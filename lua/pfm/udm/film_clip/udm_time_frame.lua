@@ -30,3 +30,6 @@ function udm.PFMTimeFrame:Min(timeFrameOther)
 	result:SetDuration(endTime)
 	return result
 end
+function udm.PFMTimeFrame:IsInTimeFrame(t)
+	return t >= self:GetStart() and t < self:GetEnd()
+end

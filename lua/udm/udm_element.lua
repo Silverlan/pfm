@@ -88,7 +88,7 @@ function udm.BaseElement:Copy()
   local elData = udm.impl.get_type_data(type)
   if(elData == nil) then return copy end
   for _,prop in pairs(elData.properties) do
-    prop.setter(copy,prop.getter(self):Copy())
+    prop.setterAttribute(copy,prop.getterAttribute(self):Copy())
   end
   return copy
 end

@@ -6,4 +6,4 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-ents.register("pfm_clip",{"pfm_clip"},Entity.TYPE_SHARED)
+ents.register("pfm_track_group",{"pfm_track_group"},Entity.TYPE_SHARED)

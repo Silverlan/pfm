@@ -14,13 +14,13 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_ANIMATION_SET,"transformContr
 
 function udm.PFMAnimationSet:AddFlexControl(name)
   local ctrl = self:CreateChild(udm.ELEMENT_TYPE_PFM_FLEX_CONTROL,name)
-  self:GetFlexControls():PushBack(ctrl)
+  self:GetFlexControlsAttr():PushBack(ctrl)
   return ctrl
 end
 
 function udm.PFMAnimationSet:AddTransformControl(name)
   local ctrl = self:CreateChild(udm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,name)
-  self:GetTransformControls():PushBack(ctrl)
+  self:GetTransformControlsAttr():PushBack(ctrl)
   return ctrl
 end
 

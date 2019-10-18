@@ -49,7 +49,7 @@ function udm.BaseAttribute:LoadFromASCIIString(str) end
 --
 
 function udm.create_attribute(type,value)
-  return udm.create(type,arg,false)
+  return udm.create(type,value,false)
 end
 
 function udm.create_attribute_array(attrType)

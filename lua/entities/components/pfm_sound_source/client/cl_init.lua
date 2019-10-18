@@ -7,6 +7,18 @@
 ]]
 
 util.register_class("ents.PFMSoundSource",BaseEntityComponent)
+
+local g_audioEnabled = false
+ents.PFMSoundSource.set_audio_enabled = function(enabled)
+	g_audioEnabled = enabled
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_SOUND_SOURCE)}) do
+		local sndC = ent:GetComponent(ents.COMPONENT_PFM_SOUND_SOURCE)
+		if(sndC ~= nil) then
+			if(g_audioEnabled) then sndC:Play()
+			else sndC:Pause() end
+		end
+	end
+end
 function ents.PFMSoundSource:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
@@ -18,9 +30,16 @@ function ents.PFMSoundSource:OnRemove()
 	if(self.m_sound ~= nil) then self.m_sound:Stop() end
 end
 
+function ents.PFMSoundSource:OnEntitySpawn()
+	if(g_audioEnabled) then
+		local sndC = self:GetEntity():GetComponent(ents.COMPONENT_SOUND)
+		if(sndC ~= nil) then sndC:SetPlayOnSpawn(true) end
+	end
+end
+
 function ents.PFMSoundSource:Setup(clipC,sndInfo)
 	self.m_clipComponent = clipC
-	self.m_cbOnOffsetChanged = clipC:AddEventCallback(ents.PFMClip.EVENT_ON_OFFSET_CHANGED,function(offset)
+	self.m_cbOnOffsetChanged = clipC:AddEventCallback(ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED,function(offset)
 		self:OnOffsetChanged(offset)
 		return util.EVENT_REPLY_UNHANDLED
 	end)
@@ -53,6 +72,9 @@ function ents.PFMSoundSource:OnOffsetChanged(offset)
 	if(soundC == nil) then return end
 	local snd = soundC:GetSound()
 	if(snd == nil) then return end
-	snd:SetTimeOffset(offset)
+	if(math.abs(offset -snd:GetTimeOffset()) > 0.05) then
+		print("!!!")
+		snd:SetTimeOffset(offset)
+	end
 end
 ents.COMPONENT_PFM_SOUND_SOURCE = ents.register_component("pfm_sound_source",ents.PFMSoundSource)

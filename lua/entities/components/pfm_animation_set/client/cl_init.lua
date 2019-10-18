@@ -85,7 +85,7 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 	-- Initialize bone ids
 	local mdl = ent:GetModel()
 	if(mdl ~= nil) then
-		local boneControls = animSet:GetTransformControls():GetValue()
+		local boneControls = animSet:GetTransformControls()
 		for _,ctrl in ipairs(boneControls) do
 			local boneName = ctrl:GetName()
 			local boneId = mdl:LookupBone(boneName)
@@ -95,7 +95,7 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 		end
 		
 		-- Initialize flex controller ids
-		local flexControls = animSet:GetFlexControls():GetValue()
+		local flexControls = animSet:GetFlexControls()
 		for _,ctrl in ipairs(flexControls) do
 			local flexControllerName = ctrl:GetName()
 			local ids = {
@@ -110,7 +110,7 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 		end
 		
 		print("Applying flex transforms to actor '" .. actorName .. "'...")
-		local flexControls = animSet:GetFlexControls():GetValue()
+		local flexControls = animSet:GetFlexControls()
 		for iCtrl,ctrl in ipairs(flexControls) do
 			local flexControllerName = ctrl:GetName()
 			
@@ -119,9 +119,9 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 			local ctrlId = self.m_flexControllerIds[iCtrl][1]
 			if(ctrlId ~= -1) then
 				self.m_flexControllerChannel:SetDefault(ctrlId,ctrl:GetValue())
-				for _,layer in ipairs(log:GetLayers():GetValue()) do
-					local times = layer:GetTimes():GetValue()
-					local values = layer:GetValues():GetValue()
+				for _,layer in ipairs(log:GetLayers()) do
+					local times = layer:GetTimes()
+					local values = layer:GetValues()
 					for i=1,#times do
 						self.m_flexControllerChannel:AddTransform(ctrlId,times[i]:GetValue(),values[i]:GetValue())
 					end
@@ -133,9 +133,9 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 			local ctrlId = self.m_flexControllerIds[iCtrl][2]
 			if(ctrlId ~= -1) then
 				self.m_flexControllerChannel:SetDefault(ctrlId,ctrl:GetLeftValue())
-				for _,layer in ipairs(log:GetLayers():GetValue()) do
-					local times = layer:GetTimes():GetValue()
-					local values = layer:GetValues():GetValue()
+				for _,layer in ipairs(log:GetLayers()) do
+					local times = layer:GetTimes()
+					local values = layer:GetValues()
 					for i=1,#times do
 						self.m_flexControllerChannel:AddTransform(ctrlId,times[i]:GetValue(),values[i]:GetValue())
 					end
@@ -147,9 +147,9 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 			local ctrlId = self.m_flexControllerIds[iCtrl][3]
 			if(ctrlId ~= -1) then
 				self.m_flexControllerChannel:SetDefault(ctrlId,ctrl:GetRightValue())
-				for _,layer in ipairs(log:GetLayers():GetValue()) do
-					local times = layer:GetTimes():GetValue()
-					local values = layer:GetValues():GetValue()
+				for _,layer in ipairs(log:GetLayers()) do
+					local times = layer:GetTimes()
+					local values = layer:GetValues()
 					for i=1,#times do
 						self.m_flexControllerChannel:AddTransform(ctrlId,times[i]:GetValue(),values[i]:GetValue())
 					end
@@ -159,7 +159,7 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 	end
 
 	print("Applying bone transforms to actor '" .. actorName .. "'...")
-	local transformControls = animSet:GetTransformControls():GetValue()
+	local transformControls = animSet:GetTransformControls()
 	for iCtrl,ctrl in ipairs(transformControls) do
 		local boneControllerName = ctrl:GetName()
 		if(boneControllerName ~= "transform") then -- Transform control is handled by actor component
@@ -169,9 +169,9 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 				local posChannel = ctrl:GetPositionChannel()
 				self.m_boneTranslationChannel:SetDefault(boneId,ctrl:GetValuePosition())
 				local log = posChannel:GetLog()
-				for _,layer in ipairs(log:GetLayers():GetValue()) do
-					local times = layer:GetTimes():GetValue()
-					local values = layer:GetValues():GetValue()
+				for _,layer in ipairs(log:GetLayers()) do
+					local times = layer:GetTimes()
+					local values = layer:GetValues()
 					for i=1,#times do
 						self.m_boneTranslationChannel:AddTransform(boneId,times[i]:GetValue(),values[i]:GetValue())
 					end
@@ -180,13 +180,13 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 				local rotChannel = ctrl:GetRotationChannel()
 				self.m_boneRotationChannel:SetDefault(boneId,ctrl:GetValueRotation())
 				log = rotChannel:GetLog()
-				for _,layer in ipairs(log:GetLayers():GetValue()) do
-					local times = layer:GetTimes():GetValue()
+				for _,layer in ipairs(log:GetLayers()) do
+					local times = layer:GetTimes()
 					local tPrev = 0.0
 					for _,t in ipairs(times) do
 						tPrev = t:GetValue()
 					end
-					local values = layer:GetValues():GetValue()
+					local values = layer:GetValues()
 					for i=1,#times do
 						self.m_boneRotationChannel:AddTransform(boneId,times[i]:GetValue(),values[i]:GetValue())
 					end
@@ -196,16 +196,16 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 	end
 
 	-- Position / rotation transform controls
-	local transformControls = animSet:GetTransformControls():GetValue()
+	local transformControls = animSet:GetTransformControls()
 	for iCtrl,ctrl in ipairs(transformControls) do
 		local boneControllerName = ctrl:GetName()
 		if(boneControllerName == "transform") then
 			local posChannel = ctrl:GetPositionChannel()
 			self.m_translationChannel:SetDefault(0,ctrl:GetValuePosition())
 			local log = posChannel:GetLog()
-			for _,layer in ipairs(log:GetLayers():GetValue()) do
-				local times = layer:GetTimes():GetValue()
-				local values = layer:GetValues():GetValue()
+			for _,layer in ipairs(log:GetLayers()) do
+				local times = layer:GetTimes()
+				local values = layer:GetValues()
 				for i=1,#times do
 					self.m_translationChannel:AddTransform(0,times[i]:GetValue(),values[i]:GetValue())
 				end
@@ -214,13 +214,13 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 			local rotChannel = ctrl:GetRotationChannel()
 			self.m_rotationChannel:SetDefault(0,ctrl:GetValueRotation())
 			log = rotChannel:GetLog()
-			for _,layer in ipairs(log:GetLayers():GetValue()) do
-				local times = layer:GetTimes():GetValue()
+			for _,layer in ipairs(log:GetLayers()) do
+				local times = layer:GetTimes()
 				local tPrev = 0.0
 				for _,t in ipairs(times) do
 					tPrev = t:GetValue()
 				end
-				local values = layer:GetValues():GetValue()
+				local values = layer:GetValues()
 				for i=1,#times do
 					self.m_rotationChannel:AddTransform(0,times[i]:GetValue(),values[i]:GetValue())
 				end

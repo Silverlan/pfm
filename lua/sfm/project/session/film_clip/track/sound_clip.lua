@@ -7,7 +7,7 @@
 ]]
 
 include("sound_clip")
-include("time_frame.lua")
+include("../../time_frame.lua")
 
 util.register_class("sfm.SoundClip",sfm.BaseElement)
 

@@ -135,10 +135,14 @@ function gui.PlaybackControls:SetState(state)
 	self.m_state = state
 	if(util.is_valid(self.m_cbThink)) then self.m_cbThink:Remove()
 	elseif(state == gui.PlaybackControls.STATE_PLAYING) then
+		local tStart = time.real_time()
+		local value = self.m_progressBar:GetValue() 
 		self.m_cbThink = game.add_callback("DrawFrame",function()
 			if(util.is_valid(self.m_progressBar) == false or self:IsPlaying() == false) then return end
-			local dt = time.frame_time()
-			self.m_progressBar:SetValue(self.m_progressBar:GetValue() +dt)
+			--local dt = time.frame_time()
+			--self.m_progressBar:SetValue(self.m_progressBar:GetValue() +dt)
+			local dt = time.real_time() -tStart
+			self.m_progressBar:SetValue(value +dt)
 		end)
 	end
 	self:CallCallbacks("OnStateChanged",oldState,state)
@@ -168,11 +172,11 @@ function gui.PlaybackControls:Stop()
 end
 function gui.PlaybackControls:SetOffset(offset)
 	if(util.is_valid(self.m_progressBar) == false) then return end
-	self.m_progressBar:SetOffset(offset)
+	self.m_progressBar:SetProgress(offset)
 end
 function gui.PlaybackControls:GetOffset()
 	if(util.is_valid(self.m_progressBar) == false) then return 0.0 end
-	return self.m_progressBar:GetOffset()
+	return self.m_progressBar:GetProgress()
 end
 function gui.PlaybackControls:SetSecOffset(offset)
 	if(util.is_valid(self.m_progressBar) == false) then return end

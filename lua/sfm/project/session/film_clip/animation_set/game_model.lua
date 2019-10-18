@@ -29,6 +29,5 @@ end
 function sfm.GameModel:ToPFMModel(pfmModel)
   local mdlName = self:GetPragmaModelPath()
   pfmModel:SetModelName(mdlName)
-  self:GetTransform():ToPFMTransform(pfmModel:GetTransform())
   pfmModel:SetSkin(self:GetSkin())
 end

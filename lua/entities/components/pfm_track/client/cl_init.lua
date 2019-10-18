@@ -6,105 +6,47 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include_component("pfm_channel_clip")
+include_component("pfm_audio_clip")
+
 util.register_class("ents.PFMTrack",BaseEntityComponent)
 
 function ents.PFMTrack:Initialize()
 	BaseEntityComponent.Initialize(self)
-	self.m_offset = 0.0
-	self.m_activeClips = {}
 	self.m_timeFrame = udm.PFMTimeFrame()
+
+	self.m_activeClips = {}
 end
 
 function ents.PFMTrack:OnRemove()
-	self:Stop()
+	self:Reset()
 end
 
-function ents.PFMTrack:GetOffset() return self.m_offset end
-function ents.PFMTrack:SetOffset(offset)
-	self.m_offset = offset
-	self:UpdateTrack()
-end
-function ents.PFMTrack:Advance(dt) self:SetOffset(self:GetOffset() +dt) end
+function ents.PFMTrack:GetTrackData() return self.m_trackData end
+function ents.PFMTrack:GetTrackGroup() return self.m_trackGroup end
 
-function ents.PFMTrack:PlayAudio()
-	for _,clipC in ipairs(self.m_activeClips) do
-		if(clipC:IsValid()) then clipC:PlayAudio() end
+function ents.PFMTrack:Reset()
+	for clipData,ent in pairs(self.m_activeClips) do
+		if(ent:IsValid()) then ent:Remove() end
 	end
+	self.m_activeClips = {}
 end
 
-function ents.PFMTrack:PauseAudio()
-	for _,clipC in ipairs(self.m_activeClips) do
-		if(clipC:IsValid()) then clipC:PauseAudio() end
-	end
-end
-
-function ents.PFMTrack:UpdateTrack()
-	local offset = self:GetOffset()
-
-	-- Update clips that are already playing
-	local clipsActive = {}
-	local i = 1
-	while(i <= #self.m_activeClips) do
-		local clipC = self.m_activeClips[i]
-		local keepClip = true
-		if(clipC:IsValid()) then
-			local clip = clipC:GetClip()
-			local timeFrame = clip:GetTimeFrame()
-			if(offset < timeFrame:GetStart() or offset >= timeFrame:GetEnd()) then keepClip = false end
-		else keepClip = false end
-		
-		if(keepClip == false) then
-			clipC:Stop()
-			clipC:GetEntity():RemoveSafely()
-			table.remove(self.m_activeClips,i)
-		else
-			i = i +1
-			clipsActive[clipC:GetClip()] = true
-		end
-	end
-
-	-- Check if there are new clips that need to be started
-	self:UpdateClips(self.m_track:GetAudioClips():GetValue(),offset,clipsActive)
-	self:UpdateClips(self.m_track:GetFilmClips():GetValue(),offset,clipsActive)
-	
-	-- Update offsets for active clips
-	for _,clipC in ipairs(self.m_activeClips) do
-		if(clipC:IsValid()) then
-			local clip = clipC:GetClip()
-			local timeFrame = clip:GetTimeFrame()
-			local clipOffset = offset -timeFrame:GetStart()
-			clipC:SetOffset(clipOffset)
-		end
-	end
-end
-
-function ents.PFMTrack:GetTimeFrame()
-	return self.m_timeFrame
-end
-
-function ents.PFMTrack:UpdateClips(clips,offset,clipsActive)
-	for name,clip in pairs(clips) do
-		local timeFrame = clip:GetTimeFrame()
-		if(clipsActive[clip] == nil and offset >= timeFrame:GetStart() and offset < timeFrame:GetEnd()) then
-			self:StartClip(clip)
-		end
-	end
-end
-
-function ents.PFMTrack:SetTrack(udmTrack)
-	self:GetEntity():SetName(udmTrack:GetName())
-	self.m_track = udmTrack
+function ents.PFMTrack:Setup(trackData,trackGroup)
+	self.m_trackData = trackData
+	self.m_trackGroup = trackGroup
+	self:GetEntity():SetName(trackData:GetName())
 
 	local startTime = math.huge
 	local endTime = -math.huge
-	for _,filmClip in ipairs(udmTrack:GetFilmClips():GetValue()) do
+	for _,filmClip in ipairs(trackData:GetFilmClips()) do
 		local timeFrame = filmClip:GetTimeFrame()
 		local clipStart = timeFrame:GetStart()
 		local clipEnd = timeFrame:GetEnd()
 		startTime = math.min(startTime,clipStart)
 		endTime = math.max(endTime,clipEnd)
 	end
-	for _,audioClip in ipairs(udmTrack:GetAudioClips():GetValue()) do
+	for _,audioClip in ipairs(trackData:GetAudioClips()) do
 		local timeFrame = audioClip:GetTimeFrame()
 		local clipStart = timeFrame:GetStart()
 		local clipEnd = timeFrame:GetEnd()
@@ -120,24 +62,81 @@ function ents.PFMTrack:SetTrack(udmTrack)
 	self.m_timeFrame:SetStart(startTime)
 	self.m_timeFrame:SetDuration(endTime -startTime)
 end
-function ents.PFMTrack:GetTrack() return self.m_track end
 
-function ents.PFMTrack:Stop()
-	for _,clipC in ipairs(self.m_activeClips) do
-		if(clipC:IsValid()) then
-			clipC:Stop()
-			clipC:GetEntity():RemoveSafely()
+function ents.PFMTrack:OnOffsetChanged(offset)
+	-- Update film and channel clips
+	for _,clipSet in ipairs({self:GetTrackData():GetFilmClips(),self:GetTrackData():GetChannelClips(),self:GetTrackData():GetAudioClips()}) do
+		for _,clip in ipairs(clipSet) do
+			local timeFrame = clip:GetTimeFrame()
+			if(timeFrame:IsInTimeFrame(offset)) then
+				if(util.is_valid(self.m_activeClips[clip]) == false) then
+					if(clip:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP) then
+						self.m_activeClips[clip] = self:CreateFilmClip(clip)
+					elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP) then
+						self.m_activeClips[clip] = self:CreateChannelClip(clip)
+					elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_AUDIO_CLIP) then
+						self.m_activeClips[clip] = self:CreateAudioClip(clip)
+					else
+						pfm.log("Unsupported clip type '" .. clip:GetTypeName() .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME)
+					end
+				end
+			elseif(util.is_valid(self.m_activeClips[clip])) then
+				-- New offset is out of the range of this film clip; Remove it
+				local ent = self.m_activeClips[clip]
+				ent:Remove()
+				self.m_activeClips[clip] = nil
+			end
 		end
 	end
-	self.m_activeClips = {}
+	for node,clip in pairs(self.m_activeClips) do
+		if(clip:IsValid()) then
+			local clipC = clip:GetComponent(ents.COMPONENT_PFM_FILM_CLIP) or clip:GetComponent(ents.COMPONENT_PFM_CHANNEL_CLIP) or clip:GetComponent(ents.COMPONENT_PFM_AUDIO_CLIP) or nil
+			if(clipC ~= nil) then
+				clipC:SetOffset(offset)
+			end
+		end
+	end
 end
 
-function ents.PFMTrack:StartClip(clip)
-	local entClip = ents.create("pfm_clip")
-	local clipC = entClip:GetComponent(ents.COMPONENT_PFM_CLIP)
-	table.insert(self.m_activeClips,clipC)
-	clipC:SetClip(clip)
-	entClip:Spawn()
-	clipC:Start()
+function ents.PFMTrack:CreateFilmClip(filmClipData)
+	pfm.log("Creating film clip '" .. filmClipData:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
+	local ent = ents.create("pfm_film_clip")
+	ent:GetComponent(ents.COMPONENT_PFM_FILM_CLIP):Setup(filmClipData,self)
+	ent:Spawn()
+	return ent
+end
+
+function ents.PFMTrack:CreateChannelClip(channelClipData)
+	pfm.log("Creating channel clip '" .. channelClipData:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
+	local ent = ents.create("pfm_channel_clip")
+	ent:GetComponent(ents.COMPONENT_PFM_CHANNEL_CLIP):Setup(channelClipData,self)
+	ent:Spawn()
+	return ent
+end
+
+function ents.PFMTrack:CreateAudioClip(audioClipData)
+	pfm.log("Creating audio clip '" .. audioClipData:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
+	local ent = ents.create("pfm_audio_clip")
+	ent:GetComponent(ents.COMPONENT_PFM_AUDIO_CLIP):Setup(audioClipData,self)
+	ent:Spawn()
+	return ent
+end
+
+function ents.PFMTrack:PlayAudio()
+	-- TODO
+	--[[for _,clipC in ipairs(self.m_activeClips) do
+		if(clipC:IsValid()) then clipC:PlayAudio() end
+	end]]
+end
+
+function ents.PFMTrack:PauseAudio()
+	-- TODO
+	--[[for _,clipC in ipairs(self.m_activeClips) do
+		if(clipC:IsValid()) then clipC:PauseAudio() end
+	end]]
+end
+
+function ents.PFMTrack:GetTimeFrame()
+	return self.m_timeFrame
 end
 ents.COMPONENT_PFM_TRACK = ents.register_component("pfm_track",ents.PFMTrack)

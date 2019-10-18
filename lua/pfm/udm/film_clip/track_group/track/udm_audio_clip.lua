@@ -6,7 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_time_frame.lua")
 include("udm_sound.lua")
 
 udm.ELEMENT_TYPE_PFM_AUDIO_CLIP = udm.register_element("PFMAudioClip")
