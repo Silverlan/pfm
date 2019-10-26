@@ -49,6 +49,20 @@ sfm.convert_source_transform_rotation_to_pragma = function(rot)
 	return rot
 end
 
+-- root bones are yet another special case. Note that these assume that sfm.convert_source_position_to_pragma/sfm.convert_source_rotation_to_pragma have already been called
+sfm.convert_source_root_bone_position_to_pragma = function(pos)
+	return Vector(pos.x,-pos.y,-pos.z)
+end
+
+local rot180Pitch = EulerAngles(180,0,0):ToQuaternion()
+sfm.convert_source_root_bone_rotation_to_pragma = function(rot)
+	return rot180Pitch *rot
+end
+
+sfm.convert_source_global_rotation_to_pragma = function(rot)
+	return Quaternion(rot.w,rot.x,rot.z,-rot.y)
+end
+
 include("sfm/project.lua")
 
 sfm.import_scene = function(fpath)

@@ -11,8 +11,14 @@ util.register_class("sfm.Transform",sfm.BaseElement) -- Predeclaration
 
 sfm.BaseElement.RegisterProperty(sfm.Camera,"transform",sfm.Transform)
 sfm.BaseElement.RegisterAttribute(sfm.Camera,"fieldOfView",36.0)
-sfm.BaseElement.RegisterAttribute(sfm.Camera,"znear",3,"GetZNear")
-sfm.BaseElement.RegisterAttribute(sfm.Camera,"zfar",28377.919921875,"GetZFar")
+sfm.BaseElement.RegisterAttribute(sfm.Camera,"znear",3,{
+	getterName = "GetZNear",
+	setterName = "SetZNear"
+})
+sfm.BaseElement.RegisterAttribute(sfm.Camera,"zfar",28377.919921875,{
+	getterName = "GetZFar",
+	setterName = "SetZFar"
+})
 sfm.BaseElement.RegisterAttribute(sfm.Camera,"focalDistance",72)
 sfm.BaseElement.RegisterAttribute(sfm.Camera,"eyeSeparation",0.75)
 sfm.BaseElement.RegisterAttribute(sfm.Camera,"aperture",0.2)

@@ -7,10 +7,12 @@
 ]]
 
 include("../../time_frame.lua")
+include("../animation_set/control/channel.lua")
 
 util.register_class("sfm.ChannelClip",sfm.BaseElement)
 
 sfm.BaseElement.RegisterProperty(sfm.ChannelClip,"timeFrame",sfm.TimeFrame)
+sfm.BaseElement.RegisterArray(sfm.ChannelClip,"channels",sfm.Channel)
 
 function sfm.ChannelClip:__init()
   sfm.BaseElement.__init(self,sfm.ChannelClip)

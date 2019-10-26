@@ -73,7 +73,6 @@ function ents.PFMSoundSource:OnOffsetChanged(offset)
 	local snd = soundC:GetSound()
 	if(snd == nil) then return end
 	if(math.abs(offset -snd:GetTimeOffset()) > 0.05) then
-		print("!!!")
 		snd:SetTimeOffset(offset)
 	end
 end

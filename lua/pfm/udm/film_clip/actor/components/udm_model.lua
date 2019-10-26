@@ -9,5 +9,6 @@
 udm.ELEMENT_TYPE_PFM_MODEL = udm.register_element("PFMModel")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"modelName",udm.String(""))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"skin",udm.Int(0))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"bones",udm.Array(udm.ELEMENT_TYPE_TRANSFORM))
 
 function udm.PFMModel:GetComponentName() return "pfm_model" end

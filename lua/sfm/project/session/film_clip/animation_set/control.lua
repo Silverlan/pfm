@@ -15,8 +15,14 @@ sfm.BaseElement.RegisterAttribute(sfm.Control,"leftValue")
 sfm.BaseElement.RegisterAttribute(sfm.Control,"rightValue")
 sfm.BaseElement.RegisterAttribute(sfm.Control,"defaultValue",0.0)
 sfm.BaseElement.RegisterProperty(sfm.Control,"channel",sfm.Channel)
-sfm.BaseElement.RegisterProperty(sfm.Control,"rightvaluechannel",sfm.Channel,"GetRightValueChannel")
-sfm.BaseElement.RegisterProperty(sfm.Control,"leftvaluechannel",sfm.Channel,"GetLeftValueChannel")
+sfm.BaseElement.RegisterProperty(sfm.Control,"rightvaluechannel",sfm.Channel,{
+  getterName = "GetRightValueChannel",
+  setterName = "SetRightValueChannel"
+})
+sfm.BaseElement.RegisterProperty(sfm.Control,"leftvaluechannel",sfm.Channel,{
+  getterName = "GetLeftValueChannel",
+  setterName = "SetLeftValueChannel"
+})
 
 function sfm.Control:__init()
   sfm.BaseElement.__init(self,sfm.Control)

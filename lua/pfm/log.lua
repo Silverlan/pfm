@@ -13,14 +13,18 @@ pfm.LOG_SEVERITY_WARNING = 1
 pfm.LOG_SEVERITY_ERROR = 2
 pfm.LOG_SEVERITY_CRITICAL = 3
 
-local MAX_LOG_CATEGORIES = 30
-local g_enabledCategories = bit.lshift(1,MAX_LOG_CATEGORIES) -1 -- Enable all call categories by default
+pfm.MAX_LOG_CATEGORIES = 30
+local g_enabledCategories = bit.lshift(1,pfm.MAX_LOG_CATEGORIES) -1 -- Enable all call categories by default
 pfm.is_log_category_enabled = function(categories)
 	return bit.band(categories,g_enabledCategories) ~= 0
 end
 
 pfm.set_log_category_enabled = function(category,enabled)
 	g_enabledCategories = math.set_flag_enabled(g_enabledCategories,category,enabled)
+end
+
+pfm.set_enabled_log_categories = function(categories)
+	g_enabledCategories = categories
 end
 
 pfm.log = function(msg,categories,severity)
@@ -40,8 +44,8 @@ local g_logCategories = {}
 pfm.register_log_category = function(name)
 	local catName = "LOG_CATEGORY_" .. name:upper()
 	if(pfm[catName] ~= nil) then return pfm[catName] end
-	if(#g_logCategories >= MAX_LOG_CATEGORIES) then
-		console.print_warning("Unable to register log category '" .. name .. "': Max log category count of " .. MAX_LOG_CATEGORIES .. " has been exceeded!")
+	if(#g_logCategories >= pfm.MAX_LOG_CATEGORIES) then
+		console.print_warning("Unable to register log category '" .. name .. "': Max log category count of " .. pfm.MAX_LOG_CATEGORIES .. " has been exceeded!")
 		return -1
 	end
 	local catId = bit.lshift(1,#g_logCategories)

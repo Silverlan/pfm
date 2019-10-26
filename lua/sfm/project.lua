@@ -19,7 +19,7 @@ function sfm.Project:__init(dmxData)
 		end
 	end
 
-	-- For some reason the root bone of animation sets requires a different transformation than other bones,
+	-- For some reason root bones requires a different transformation than other bones,
 	-- so we'll have to apply that in post-processing here.
 	for _,session in ipairs(self:GetSessions()) do
 		for _,clipSet in ipairs({session:GetClipBin(),session:GetMiscBin()}) do
@@ -39,13 +39,18 @@ function sfm.Project:__init(dmxData)
 									for _,transformControl in ipairs(animSet:GetTransformControls()) do
 										local boneName = transformControl:GetName()
 										local boneId = mdl:LookupBone(boneName)
-										if(boneName == "rootTransform" or rootBones[boneId] ~= nil) then
+										-- local isRootTransform = (boneName == "rootTransform")
+										local isRootBone = (rootBones[boneId] ~= nil)
+										if(isRootBone) then
+											transformControl:SetValuePosition(sfm.convert_source_root_bone_position_to_pragma(transformControl:GetValuePosition()))
+											transformControl:SetValueOrientation(sfm.convert_source_root_bone_rotation_to_pragma(transformControl:GetValueOrientation()))
+
 											local posChannel = transformControl:GetPositionChannel()
 											local log = posChannel:GetLog()
 											for _,layer in ipairs(log:GetLayers()) do
 												if(layer:GetType() == "DmeVector3LogLayer") then
 													for _,v in ipairs(layer:GetValues()) do
-														v:Set(Vector(v.x,-v.y,-v.z))
+														v:Set(sfm.convert_source_root_bone_position_to_pragma(v))
 													end
 												end
 											end
@@ -55,8 +60,7 @@ function sfm.Project:__init(dmxData)
 											for _,layer in ipairs(log:GetLayers()) do
 												if(layer:GetType() == "DmeQuaternionLogLayer") then
 													for _,v in ipairs(layer:GetValues()) do
-														local newRot = EulerAngles(180,0,0):ToQuaternion() *v
-														v:Set(newRot.w,newRot.x,newRot.y,newRot.z)
+														v:Set(sfm.convert_source_root_bone_rotation_to_pragma(v))
 													end
 												end
 											end

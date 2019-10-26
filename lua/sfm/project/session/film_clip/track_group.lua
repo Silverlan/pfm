@@ -11,8 +11,12 @@ include("track.lua")
 util.register_class("sfm.TrackGroup",sfm.BaseElement)
 
 sfm.BaseElement.RegisterArray(sfm.TrackGroup,"tracks",sfm.Track)
-sfm.BaseElement.RegisterAttribute(sfm.TrackGroup,"visible",true,"IsVisible")
-sfm.BaseElement.RegisterAttribute(sfm.TrackGroup,"mute",false,"IsMuted")
+sfm.BaseElement.RegisterAttribute(sfm.TrackGroup,"visible",true,{
+	getterName = "IsVisible"
+})
+sfm.BaseElement.RegisterAttribute(sfm.TrackGroup,"mute",false,{
+	getterName = "IsMuted"
+})
 
 function sfm.TrackGroup:__init()
   sfm.BaseElement.__init(self,sfm.TrackGroup)

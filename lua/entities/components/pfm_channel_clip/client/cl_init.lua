@@ -23,7 +23,10 @@ function ents.PFMChannelClip:Setup(channelClipData,trackC)
 	local trackGroupC = util.is_valid(trackC) and trackC:GetTrackGroup() or nil
 	local filmClipC = util.is_valid(trackGroupC) and trackGroupC:GetFilmClip() or nil
 	local actor = util.is_valid(filmClipC) and filmClipC:FindActorByName(self:GetEntity():GetName()) or nil
-	if(util.is_valid(actor) == false) then return end
+	if(util.is_valid(actor) == false) then
+		pfm.log("Could not find actor for channel clip '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
 	self.m_targetActor = actor
 end
 

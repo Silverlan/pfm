@@ -10,6 +10,8 @@ include("scene")
 
 util.register_class("sfm.Scene",sfm.BaseElement)
 
+sfm.BaseElement.RegisterProperty(sfm.Scene,"transform",sfm.Transform)
+
 function sfm.Scene:__init()
   sfm.BaseElement.__init(self,sfm.Scene)
   self.m_children = {}

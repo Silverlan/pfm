@@ -37,24 +37,32 @@ function sfm.BaseElement:__init(class)
 	end
 end
 
-function sfm.BaseElement.RegisterGetter(elClass,name,getterName)
-	if(getterName == nil or #getterName == 0) then
-		getterName = "Get" .. name:sub(1,1):upper() .. name:sub(2)
-	end
+function sfm.BaseElement.RegisterGetter(elClass,name,settings)
+	local getterName
+	if(settings ~= nil and settings.getterName ~= nil) then getterName = settings.getterName
+	else getterName = "Get" .. name:sub(1,1):upper() .. name:sub(2) end
 	elClass[getterName] = function(el) return el["m_" .. name] end
 end
 
-function sfm.BaseElement.RegisterAttribute(elClass,name,default,getterName)
+function sfm.BaseElement.RegisterSetter(elClass,name,settings)
+	local setterName
+	if(settings ~= nil and settings.setterName ~= nil) then setterName = settings.setterName
+	else setterName = "Set" .. name:sub(1,1):upper() .. name:sub(2) end
+	elClass[setterName] = function(el,value) el["m_" .. name] = value end
+end
+
+function sfm.BaseElement.RegisterAttribute(elClass,name,default,settings)
 	local classData = sfm.BaseElement.class_data
 	classData[elClass] = classData[elClass] or {}
 	classData[elClass].attributes = classData[elClass].attributes or {}
 	
 	classData[elClass].attributes[name] = {default}
 	
-	sfm.BaseElement.RegisterGetter(elClass,name,getterName)
+	sfm.BaseElement.RegisterGetter(elClass,name,settings)
+	sfm.BaseElement.RegisterSetter(elClass,name,settings)
 end
 
-function sfm.BaseElement.RegisterProperty(elClass,name,class,getterName,flags)
+function sfm.BaseElement.RegisterProperty(elClass,name,class,settings,flags)
 	if(class == nil) then
 		console.print_warning("Attempted to register SFM property '" .. name .. "', but specified class does not exist!")
 		return
@@ -65,10 +73,11 @@ function sfm.BaseElement.RegisterProperty(elClass,name,class,getterName,flags)
 	
 	classData[elClass].properties[name] = {class,flags or 0}
 	
-	sfm.BaseElement.RegisterGetter(elClass,name,getterName)
+	sfm.BaseElement.RegisterGetter(elClass,name,settings)
+	sfm.BaseElement.RegisterSetter(elClass,name,settings)
 end
 
-function sfm.BaseElement.RegisterArray(elClass,name,class,getterName)
+function sfm.BaseElement.RegisterArray(elClass,name,class,settings)
 	if(class == nil) then
 		console.print_warning("Attempted to register SFM array '" .. name .. "', but specified class does not exist!")
 		return
@@ -79,7 +88,8 @@ function sfm.BaseElement.RegisterArray(elClass,name,class,getterName)
 	
 	classData[elClass].arrays[name] = {class}
 	
-	sfm.BaseElement.RegisterGetter(elClass,name,getterName)
+	sfm.BaseElement.RegisterGetter(elClass,name,settings)
+	sfm.BaseElement.RegisterSetter(elClass,name,settings)
 end
 
 function sfm.BaseElement:Load(el)
@@ -111,6 +121,7 @@ function sfm.BaseElement:Load(el)
 end
 
 function sfm.BaseElement:GetName() return self.m_name end
+function sfm.BaseElement:SetName(name) self.m_name = name end
 function sfm.BaseElement:GetType() return self.m_type end
 
 function sfm.BaseElement:LoadAttributeValue(el,name,default)

@@ -230,7 +230,7 @@ function gui.WIFilmmaker:SetCameraMode(camMode)
 
 	ents.PFMCamera.set_camera_enabled(camMode == gui.WIFilmmaker.CAMERA_MODE_PLAYBACK)
 
-	local camGame = game.get_primary_camera()
+	--[[local camGame = game.get_primary_camera()
 	local toggleC = (camGame ~= nil) and camGame:GetEntity():GetComponent(ents.COMPONENT_TOGGLE) or nil
 	if(camMode == gui.WIFilmmaker.CAMERA_MODE_FLY) then
 		if(toggleC ~= nil) then toggleC:TurnOn() end
@@ -238,7 +238,7 @@ function gui.WIFilmmaker:SetCameraMode(camMode)
 		if(toggleC ~= nil) then toggleC:TurnOn() end
 	else
 		if(toggleC ~= nil) then toggleC:TurnOff() end
-	end
+	end]]
 
 	-- We need to notify the server to change the player's movement mode (i.e. noclip/walk)
 	local packet = net.Packet()
@@ -247,7 +247,7 @@ function gui.WIFilmmaker:SetCameraMode(camMode)
 end
 function gui.WIFilmmaker:CaptureRaytracedImage()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
-	local job = util.capture_raytraced_screenshot(2048,2048,1024)
+	local job = util.capture_raytraced_screenshot(1024,1024,64)--2048,2048,1024)
 	job:Start()
 	self.m_raytracingJob = job
 

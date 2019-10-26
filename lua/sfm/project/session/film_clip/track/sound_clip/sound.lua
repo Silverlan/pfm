@@ -8,7 +8,10 @@
 
 util.register_class("sfm.Sound",sfm.BaseElement)
 
-sfm.BaseElement.RegisterAttribute(sfm.Sound,"soundname","","GetSoundName")
+sfm.BaseElement.RegisterAttribute(sfm.Sound,"soundname","",{
+	getterName = "GetSoundName",
+	setterName = "SetSoundName"
+})
 sfm.BaseElement.RegisterAttribute(sfm.Sound,"gameSoundName","")
 sfm.BaseElement.RegisterAttribute(sfm.Sound,"volume",1.0)
 sfm.BaseElement.RegisterAttribute(sfm.Sound,"pitch",100)

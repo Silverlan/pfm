@@ -97,8 +97,8 @@ end
 function ents.PFMFilmClip:CreateTrackGroup(trackGroup)
 	pfm.log("Creating track group '" .. trackGroup:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
 	local ent = ents.create("pfm_track_group")
-	ent:GetComponent(ents.COMPONENT_PFM_TRACK_GROUP):Setup(trackGroup,self)
 	ent:Spawn()
+	ent:GetComponent(ents.COMPONENT_PFM_TRACK_GROUP):Setup(trackGroup,self)
 	table.insert(self.m_trackGroups,ent)
 end
 

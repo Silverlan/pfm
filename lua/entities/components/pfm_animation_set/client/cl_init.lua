@@ -89,7 +89,8 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 		for _,ctrl in ipairs(boneControls) do
 			local boneName = ctrl:GetName()
 			local boneId = mdl:LookupBone(boneName)
-			if(boneId == -1 and boneName == "rootTransform") then boneId = ents.PFMAnimationSet.ROOT_TRANSFORM_ID end -- Root transform will be handled as a special case (i.e. for translating/rotating the actual entity)
+			-- TODO: Obsolete? Remove this!
+			-- if(boneId == -1 and boneName == "rootTransform") then boneId = ents.PFMAnimationSet.ROOT_TRANSFORM_ID end -- Root transform will be handled as a special case (i.e. for translating/rotating the actual entity)
 			table.insert(self.m_boneIds,boneId)
 			if(boneId == -1) then console.print_warning("Unknown bone '" .. boneName .. "'!") end
 		end

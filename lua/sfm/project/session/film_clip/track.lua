@@ -10,7 +10,9 @@ util.register_class("sfm.Track",sfm.BaseElement)
 
 include("track")
 
-sfm.BaseElement.RegisterAttribute(sfm.Track,"mute",false,"IsMuted")
+sfm.BaseElement.RegisterAttribute(sfm.Track,"mute",false,{
+  getterName = "IsMuted"
+})
 sfm.BaseElement.RegisterAttribute(sfm.Track,"volume",1.0)
 
 function sfm.Track:__init()

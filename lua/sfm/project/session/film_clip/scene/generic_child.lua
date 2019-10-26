@@ -8,6 +8,8 @@
 
 util.register_class("sfm.GenericDmeChild",sfm.BaseElement)
 
+sfm.BaseElement.RegisterProperty(sfm.GenericDmeChild,"transform",sfm.Transform,nil,sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL)
+
 function sfm.GenericDmeChild:__init()
   sfm.BaseElement.__init(self,sfm.GenericDmeChild)
   self.m_children = {}

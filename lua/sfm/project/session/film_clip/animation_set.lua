@@ -10,8 +10,8 @@ include("animation_set")
 
 util.register_class("sfm.AnimationSet",sfm.BaseElement)
 
-sfm.BaseElement.RegisterProperty(sfm.AnimationSet,"gameModel",sfm.GameModel,"",sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL)
-sfm.BaseElement.RegisterProperty(sfm.AnimationSet,"camera",sfm.Camera,"",sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL)
+sfm.BaseElement.RegisterProperty(sfm.AnimationSet,"gameModel",sfm.GameModel,nil,sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL)
+sfm.BaseElement.RegisterProperty(sfm.AnimationSet,"camera",sfm.Camera,nil,sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL)
 
 function sfm.AnimationSet:__init()
   sfm.BaseElement.__init(self,sfm.AnimationSet)
