@@ -8,17 +8,18 @@
 
 include("log_layer.lua")
 
-util.register_class("sfm.Log",sfm.BaseElement)
+sfm.register_element_type("Log")
+sfm.link_dmx_type("DmeBoolLog",sfm.Log)
+sfm.link_dmx_type("DmeColorLog",sfm.Log)
+sfm.link_dmx_type("DmeFloatLog",sfm.Log)
+sfm.link_dmx_type("DmeIntLog",sfm.Log)
+sfm.link_dmx_type("DmeQAngleLog",sfm.Log)
+sfm.link_dmx_type("DmeQuaternionLog",sfm.Log)
+sfm.link_dmx_type("DmeStringLog",sfm.Log)
+sfm.link_dmx_type("DmeTimeLog",sfm.Log)
+sfm.link_dmx_type("DmeVector2Log",sfm.Log)
+sfm.link_dmx_type("DmeVector3Log",sfm.Log)
+sfm.link_dmx_type("DmeVector4Log",sfm.Log)
+sfm.link_dmx_type("DmeVMatrixLog",sfm.Log)
 
 sfm.BaseElement.RegisterArray(sfm.Log,"layers",sfm.LogLayer)
-
-function sfm.Log:__init()
-  sfm.BaseElement.__init(self,sfm.Log)
-end
-
-function sfm.Log:ToPFMLog(pfmLog,isBoneTransform)
-  for _,logLayer in ipairs(self:GetLayers()) do
-    local pfmLogLayer = pfmLog:AddLayer(logLayer:GetName())
-    logLayer:ToPFMLogLayer(pfmLogLayer,isBoneTransform)
-  end
-end

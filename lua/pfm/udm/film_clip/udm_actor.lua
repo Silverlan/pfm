@@ -10,8 +10,33 @@ include("actor/components")
 
 udm.ELEMENT_TYPE_PFM_ACTOR = udm.register_element("PFMActor")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"transform",udm.Transform())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"components",udm.Array(udm.ATTRIBUTE_TYPE_ANY))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"components",udm.Array(udm.ELEMENT_TYPE_ANY))
 
 function udm.PFMActor:AddComponent(pfmComponent)
-  self:GetComponentsAttr():PushBack(udm.Any(pfmComponent))
+	self:GetComponentsAttr():PushBack(pfmComponent)
+end
+
+local function apply_parent_pose(el,pose)
+	-- TODO: We need to apply the pose of the parent Dag (group) elements, up to the
+	-- scene of the film clip. An element may belong to multiple groups though, so
+	-- the code below may not work correctly in all cases.
+	for _,parent in ipairs(el:GetParents()) do
+		if(parent:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then
+			local t = parent:GetTransform()
+			pose:TransformGlobal(t:GetPose())
+			apply_parent_pose(parent,pose)
+			break
+		end
+	end
+end
+
+function udm.PFMActor:GetAbsolutePose()
+	local t = self:GetTransform()
+	local pose = t:GetPose()
+	apply_parent_pose(self,pose)
+	return pose
+end
+
+function udm.PFMActor:GetPose()
+	return self:GetTransform():GetPose()
 end

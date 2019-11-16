@@ -11,8 +11,19 @@ include("udm_log_list.lua")
 udm.ELEMENT_TYPE_PFM_LOG = udm.register_element("PFMLog")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"layers",udm.Array(udm.ELEMENT_TYPE_PFM_LOG_LIST))
 
-function udm.PFMLog:AddLayer(name)
-  local logLayer = self:CreateChild(udm.ELEMENT_TYPE_PFM_LOG_LIST,name)
-  self:GetLayersAttr():PushBack(logLayer)
-  return logLayer
+function udm.PFMLog:AddLayer(layer)
+	local logLayer = (type(layer) == "string") and self:CreateChild(udm.ELEMENT_TYPE_PFM_LOG_LIST,layer) or layer
+	self:GetLayersAttr():PushBack(logLayer)
+	return logLayer
+end
+
+function udm.PFMLog:SetPlaybackOffset(offset)
+	-- TODO: I'm not sure why logs can even have multiple layers, I've yet to see a case where this actually applies.
+	-- Maybe merge layers with the log?
+	for _,layer in ipairs(self:GetLayers():GetTable()) do
+		local value = layer:SetPlaybackOffset(offset)
+		if(value ~= nil) then
+			return value
+		end
+	end
 end

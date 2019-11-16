@@ -10,9 +10,9 @@ udm.ATTRIBUTE_TYPE_NIL = udm.register_attribute("Nil",nil)
 function udm.Nil:WriteToBinary(ds) end
 function udm.Nil:ReadFromBinary(ds) return nil end
 function udm.Nil:Copy()
-  return self.m_class(self:GetValue():Copy())
+	return self.m_class(nil)
 end
 function udm.Nil:ToASCIIString()
-  return "nil"
+	return "nil"
 end
 function udm.Nil:LoadFromASCIIString(str) end

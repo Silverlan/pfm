@@ -9,17 +9,8 @@
 include("../../time_frame.lua")
 include("../animation_set/control/channel.lua")
 
-util.register_class("sfm.ChannelClip",sfm.BaseElement)
+sfm.register_element_type("ChannelClip")
+sfm.link_dmx_type("DmeChannelsClip",sfm.ChannelClip)
 
 sfm.BaseElement.RegisterProperty(sfm.ChannelClip,"timeFrame",sfm.TimeFrame)
 sfm.BaseElement.RegisterArray(sfm.ChannelClip,"channels",sfm.Channel)
-
-function sfm.ChannelClip:__init()
-  sfm.BaseElement.__init(self,sfm.ChannelClip)
-end
-
-function sfm.ChannelClip:GetType() return "DmeChannelClip" end
-
-function sfm.ChannelClip:ToPFMChannelClip(pfmChannelClip)
-  self:GetTimeFrame():ToPFMTimeFrame(pfmChannelClip:GetTimeFrame())
-end

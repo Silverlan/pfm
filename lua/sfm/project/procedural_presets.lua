@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("sfm.ProceduralPresets",sfm.BaseElement)
+sfm.register_element_type("ProceduralPresets")
 
 sfm.BaseElement.RegisterAttribute(sfm.ProceduralPresets,"jitteriterations",5)
 sfm.BaseElement.RegisterAttribute(sfm.ProceduralPresets,"jitterscale_vector",2.5)
@@ -15,7 +15,3 @@ sfm.BaseElement.RegisterAttribute(sfm.ProceduralPresets,"smoothiterations",5)
 sfm.BaseElement.RegisterAttribute(sfm.ProceduralPresets,"smoothscale_vector",2.5)
 sfm.BaseElement.RegisterAttribute(sfm.ProceduralPresets,"smoothscale",1)
 sfm.BaseElement.RegisterAttribute(sfm.ProceduralPresets,"staggerinterval",0.0833)
-
-function sfm.ProceduralPresets:__init()
-  sfm.BaseElement.__init(self,sfm.ProceduralPresets)
-end

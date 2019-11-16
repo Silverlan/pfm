@@ -9,6 +9,17 @@
 util.register_class("udm.BaseItem")
 
 function udm.BaseItem:__init(class,value)
+	self.m_parents = {}
+end
+
+function udm.BaseItem:Initialize() end
+
+function udm.BaseItem:GetParents() return self.m_parents end
+
+function udm.BaseItem:FindParent(filter)
+	for _,parent in ipairs(self.m_parents) do
+		if(filter(parent)) then return parent end
+	end
 end
 
 function udm.BaseItem:IsAttribute() return false end

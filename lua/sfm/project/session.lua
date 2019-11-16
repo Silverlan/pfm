@@ -8,14 +8,10 @@
 
 include("session")
 include("settings.lua")
+include("dag.lua")
 
-util.register_class("sfm.Session",sfm.BaseElement)
+sfm.register_element_type("Session")
 
 sfm.BaseElement.RegisterProperty(sfm.Session,"settings",sfm.Settings)
 sfm.BaseElement.RegisterArray(sfm.Session,"clipBin",sfm.FilmClip)
 sfm.BaseElement.RegisterArray(sfm.Session,"miscBin",sfm.FilmClip)
-
-function sfm.Session:__init(elSession)
-  sfm.BaseElement.__init(self,sfm.Session)
-  self:Load(elSession)
-end

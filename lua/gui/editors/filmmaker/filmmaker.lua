@@ -10,8 +10,16 @@ include("../base_editor.lua")
 
 util.register_class("gui.WIFilmmaker",gui.WIBaseEditor)
 
+include("/gui/vbox.lua")
+include("/gui/hbox.lua")
+include("/gui/resizer.lua")
+include("/gui/filmstrip.lua")
 include("/gui/witabbedpanel.lua")
 include("/gui/editors/wieditorwindow.lua")
+include("/gui/pfm/frame.lua")
+include("/gui/pfm/viewport.lua")
+include("/gui/pfm/timeline.lua")
+include("/gui/pfm/elementviewer.lua")
 
 locale.load("pfm_user_interface.txt")
 
@@ -29,44 +37,13 @@ gui.WIFilmmaker.CAMERA_MODE_COUNT = 3
 function gui.WIFilmmaker:__init()
 	gui.WIBaseEditor.__init(self)
 end
-function gui.WIFilmmaker:OnRemove()
-	gui.WIBaseEditor.OnRemove(self)
-end
-function gui.WIFilmmaker:OnThink()
-	if(self.m_raytracingJob == nil) then return end
-	local progress = self.m_raytracingJob:GetProgress()
-	if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetProgress(progress) end
-	if(self.m_raytracingJob:IsComplete() == false) then return end
-	if(self.m_raytracingJob:IsSuccessful() == false) then
-		self.m_raytracingJob = nil
-		return
-	end
-	local imgBuffer = self.m_raytracingJob:GetResult()
-	local img = vulkan.create_image(imgBuffer)
-	local imgViewCreateInfo = vulkan.ImageViewCreateInfo()
-	imgViewCreateInfo.swizzleAlpha = vulkan.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
-	local tex = vulkan.create_texture(img,vulkan.TextureCreateInfo(),imgViewCreateInfo,vulkan.SamplerCreateInfo())
-	if(self.m_renderResultWindow ~= nil) then self.m_renderResultWindow:SetTexture(tex) end
-	if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetVisible(false) end
-
-	self.m_raytracingJob = nil
-	if(self:IsRecording() == false) then return end
-	-- Write the rendered frame and kick off the next one
-	self.m_videoRecorder:WriteFrame(imgBuffer)
-
-	local gameView = self:GetGameView()
-	local projectC = util.is_valid(gameView) and gameView:GetComponent(ents.COMPONENT_PFM_PROJECT) or nil
-	if(projectC ~= nil) then
-		projectC:SetOffset(projectC:GetOffset() +self.m_videoRecorder:GetFrameDeltaTime())
-		self:CaptureRaytracedImage()
-	end
-end
 function gui.WIFilmmaker:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
-	
-	if(util.is_valid(self.m_pMain)) then self.m_pMain:SetVisible(false) end
+
 	self:SetSize(1280,1024)
 	local pMenuBar = self:GetMenuBar()
+	self.m_menuBar = pMenuBar
+
 	pMenuBar:AddItem(locale.get_text("file"),function(pContext)
 		pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
 			if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
@@ -105,7 +82,7 @@ function gui.WIFilmmaker:OnInitialize()
 	end)
 	pMenuBar:Update()
 
-	local framePlaybackControls = gui.create("WIFrame",self)
+	--[[local framePlaybackControls = gui.create("WIFrame",self)
 	framePlaybackControls:SetCloseButtonEnabled(false)
 	local playbackControls = gui.create("PlaybackControls",framePlaybackControls)
 	playbackControls:SetX(10)
@@ -115,6 +92,9 @@ function gui.WIFilmmaker:OnInitialize()
 		if(util.is_valid(self.m_gameView)) then
 			local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
 			if(projectC ~= nil) then projectC:SetOffset(timeOffset) end
+
+			local project = self:GetProject()
+			project:SetPlaybackOffset(timeOffset)
 		end
 	end)
 	playbackControls:AddCallback("OnStateChanged",function(playbackControls,oldState,newState)
@@ -212,10 +192,50 @@ function gui.WIFilmmaker:OnInitialize()
 	local btCam = gui.create_button("Toggle Camera",self,100,20)
 	btCam:AddCallback("OnPressed",function()
 		self:SetCameraMode((self.m_cameraMode +1) %gui.WIFilmmaker.CAMERA_MODE_COUNT)
-	end)
+	end)]]
 
+	self:ClearProjectUI()
 	self:SetCameraMode(gui.WIFilmmaker.CAMERA_MODE_PLAYBACK)
 	self:CreateNewProject()
+end
+function gui.WIFilmmaker:OnRemove()
+	gui.WIBaseEditor.OnRemove(self)
+end
+function gui.WIFilmmaker:AddFrame(parent)
+	if(util.is_valid(self.m_contents) == false) then return end
+	local frame = gui.create("WIPFMFrame",parent)
+	if(frame == nil) then return end
+	table.insert(self.m_frames,frame)
+	return frame
+end
+function gui.WIFilmmaker:OnThink()
+	if(self.m_raytracingJob == nil) then return end
+	local progress = self.m_raytracingJob:GetProgress()
+	if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetProgress(progress) end
+	if(self.m_raytracingJob:IsComplete() == false) then return end
+	if(self.m_raytracingJob:IsSuccessful() == false) then
+		self.m_raytracingJob = nil
+		return
+	end
+	local imgBuffer = self.m_raytracingJob:GetResult()
+	local img = vulkan.create_image(imgBuffer)
+	local imgViewCreateInfo = vulkan.ImageViewCreateInfo()
+	imgViewCreateInfo.swizzleAlpha = vulkan.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
+	local tex = vulkan.create_texture(img,vulkan.TextureCreateInfo(),imgViewCreateInfo,vulkan.SamplerCreateInfo())
+	if(self.m_renderResultWindow ~= nil) then self.m_renderResultWindow:SetTexture(tex) end
+	if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetVisible(false) end
+
+	self.m_raytracingJob = nil
+	if(self:IsRecording() == false) then return end
+	-- Write the rendered frame and kick off the next one
+	self.m_videoRecorder:WriteFrame(imgBuffer)
+
+	local gameView = self:GetGameView()
+	local projectC = util.is_valid(gameView) and gameView:GetComponent(ents.COMPONENT_PFM_PROJECT) or nil
+	if(projectC ~= nil) then
+		projectC:SetOffset(projectC:GetOffset() +self.m_videoRecorder:GetFrameDeltaTime())
+		self:CaptureRaytracedImage()
+	end
 end
 function gui.WIFilmmaker:OnRemove()
 	self:CloseProject()
@@ -247,7 +267,7 @@ function gui.WIFilmmaker:SetCameraMode(camMode)
 end
 function gui.WIFilmmaker:CaptureRaytracedImage()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
-	local job = util.capture_raytraced_screenshot(1024,1024,64)--2048,2048,1024)
+	local job = util.capture_raytraced_screenshot(1024,1024,512)--2048,2048,1024)
 	job:Start()
 	self.m_raytracingJob = job
 
@@ -277,8 +297,9 @@ function gui.WIFilmmaker:CreateNewProject()
 		pfm.log("Unable to initialize PFM project: Count not create 'pfm_project' entity!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
 		return false
 	end
+	self.m_project = pfm.create_project()
 	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
-	projectC:SetProjectData(pfm.create_project())
+	projectC:SetProjectData(self.m_project)
 	entScene:Spawn()
 	self.m_gameView = entScene
 	projectC:Start()
@@ -300,6 +321,8 @@ function gui.WIFilmmaker:LoadProject(projectFilePath)
 		pfm.log("Unable to initialize PFM project: Count not create 'pfm_project' entity!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
 		return false
 	end
+	self.m_project = pfmScene
+	self:InitializeProjectUI()
 	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
 	projectC:SetProjectData(pfmScene)
 	entScene:Spawn()
@@ -312,4 +335,87 @@ function gui.WIFilmmaker:LoadProject(projectFilePath)
 	end
 	return entScene
 end
+function gui.WIFilmmaker:ClearProjectUI()
+	if(util.is_valid(self.m_contents)) then self.m_contents:Remove() end
+	self.m_frames = {}
+end
+function gui.WIFilmmaker:InitializeProjectUI()
+	self:ClearProjectUI()
+	if(util.is_valid(self.m_menuBar) == false) then return end
+	self.m_contents = gui.create("WIHBox",self,0,self.m_menuBar:GetHeight(),self:GetWidth(),self:GetHeight() -self.m_menuBar:GetHeight(),0,0,1,1)
+	self.m_contents:SetFixedSize(true)
+
+	local elementViewerFrame = self:AddFrame(self.m_contents)
+	local elementViewer = gui.create("WIPFMElementViewer")
+	elementViewerFrame:AddTab("Element Viewer",elementViewer)
+	
+	gui.create("WIResizer",self.m_contents)
+
+	self.m_contentsRight = gui.create("WIVBox",self.m_contents)
+	self.m_contents:Update()
+	self.m_contentsRight:SetFixedSize(true)
+
+	local viewportFrame = self:AddFrame(self.m_contentsRight)
+	local viewport = gui.create("WIPFMViewport")
+	viewportFrame:AddTab("Primary Viewport",viewport)
+
+	gui.create("WIResizer",self.m_contentsRight)
+
+	local timelineFrame = self:AddFrame(self.m_contentsRight)
+	local pfmTimeline = gui.create("WIPFMTimeline")
+	timelineFrame:AddTab("Timeline",pfmTimeline)
+
+	-- Playhead GetTimeOffsetProperty
+
+	-- Populate UI with project data
+	local project = self:GetProject()
+	local root = project:GetUDMRootNode()
+	elementViewer:PopulateFromUDMData(root)
+
+	local playhead = pfmTimeline:GetPlayhead()
+	playhead:GetTimeOffsetProperty():AddCallback(function(oldOffset,offset)
+		local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
+		if(projectC ~= nil) then projectC:SetOffset(offset) end
+		project:SetPlaybackOffset(offset)
+	end)
+
+	-- Film strip
+	local filmClip
+	for k,v in pairs(root:GetChildren()) do
+		if(v:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP) then
+			filmClip = v
+			break
+		end
+	end
+	local filmStrip
+	if(filmClip ~= nil) then
+		filmStrip = gui.create("WIFilmStrip")
+
+		local trackGroup = filmClip:FindElementsByName("subClipTrackGroup")[1]
+		local track = trackGroup:FindElementsByName("Film")[1]
+		for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+			filmStrip:AddFilmClip(filmClip)
+		end
+		filmStrip:SetSize(1024,64)
+		filmStrip:Update()
+	end
+
+
+	local timeline = pfmTimeline:GetTimeline()
+	local timeFrame = filmStrip:GetTimeFrame()
+	print("TIME FRAME: ",timeFrame:GetStart(),timeFrame:GetDuration())
+
+	local group = timeline:AddTrackGroup("Picture")
+	local elClips = gui.create("WIHBox")
+	for _,filmClip in ipairs(filmStrip:GetFilmClips()) do
+		local elWrapper = timeline:AddTimelineItem(filmClip,filmClip:GetTimeFrame())
+		elWrapper:SetParent(elClips)
+	end
+	group:AddElement(elClips)
+	elClips:Update()
+	elClips:SizeToContents()
+
+	group:AddElement(filmStrip)
+end
+function gui.WIFilmmaker:GetProject() return self.m_project end
 gui.register("WIFilmmaker",gui.WIFilmmaker)

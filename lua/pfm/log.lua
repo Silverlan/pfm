@@ -16,7 +16,7 @@ pfm.LOG_SEVERITY_CRITICAL = 3
 pfm.MAX_LOG_CATEGORIES = 30
 local g_enabledCategories = bit.lshift(1,pfm.MAX_LOG_CATEGORIES) -1 -- Enable all call categories by default
 pfm.is_log_category_enabled = function(categories)
-	return bit.band(categories,g_enabledCategories) ~= 0
+	return categories == 0 or bit.band(categories,g_enabledCategories) ~= 0
 end
 
 pfm.set_log_category_enabled = function(category,enabled)
@@ -38,6 +38,14 @@ pfm.log = function(msg,categories,severity)
 	elseif(severity == pfm.LOG_SEVERITY_CRITICAL) then console.print_error(msg)
 	else return false end
 	return true
+end
+
+pfm.error = function(msg)
+	local severity = pfm.LOG_SEVERITY_ERROR
+	local category = 0
+	local r = pfm.log(msg,category,severity)
+	error(msg)
+	return r
 end
 
 local g_logCategories = {}

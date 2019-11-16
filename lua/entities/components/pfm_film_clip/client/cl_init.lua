@@ -46,11 +46,33 @@ function ents.PFMFilmClip:GetCamera() return self.m_camera end
 function ents.PFMFilmClip:Setup(filmClip,trackC)
 	self.m_filmClipData = filmClip
 	self.m_track = trackC
-	for _,actorData in ipairs(filmClip:GetActors()) do
+
+	local matOverlay = filmClip:GetMaterialOverlay()
+	if(matOverlay ~= nil and #matOverlay:GetMaterial() > 0) then
+		local entActor = ents.create("pfm_material_overlay")
+		entActor:GetComponent("pfm_material_overlay"):Setup(self,matOverlay)
+		entActor:Spawn()
+		table.insert(self.m_actors,entActor)
+	end
+
+	local fadeIn = filmClip:GetFadeIn()
+	local fadeOut = filmClip:GetFadeOut()
+	if(fadeIn > 0.0 or fadeOut > 0.0) then
+		local matOverlayData = udm.PFMMaterialOverlayFXClip()
+		matOverlayData:SetTimeFrame(filmClip:GetTimeFrame())
+		matOverlayData:SetMaterial("black")
+		matOverlayData:SetFullscreen(true)
+		local entActor = ents.create("pfm_material_overlay")
+		entActor:GetComponent("pfm_material_overlay"):Setup(self,matOverlayData,fadeIn,fadeOut)
+		entActor:Spawn()
+		table.insert(self.m_actors,entActor)
+	end
+
+	for _,actorData in ipairs(filmClip:GetActors():GetTable()) do
 		self:CreateActor(actorData)
 	end
 
-	for _,trackGroupData in ipairs(filmClip:GetTrackGroups()) do
+	for _,trackGroupData in ipairs(filmClip:GetTrackGroups():GetTable()) do
 		if(trackGroupData:IsMuted() == false) then
 			self:CreateTrackGroup(trackGroupData)
 		end
@@ -77,12 +99,13 @@ function ents.PFMFilmClip:GetTrack() return self.m_track end
 function ents.PFMFilmClip:GetOffset() return self.m_offset end
 function ents.PFMFilmClip:SetOffset(offset)
 	local timeFrame = self:GetTimeFrame()
-	offset = offset -timeFrame:GetStart() +timeFrame:GetOffset()
+	local absOffset = offset
+	offset = timeFrame:LocalizeOffset(offset)
 	if(offset == self.m_offset) then return end
 	self.m_offset = offset
 	self:UpdateClip()
 	
-	self:BroadcastEvent(ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED,{offset})
+	self:BroadcastEvent(ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED,{offset,absOffset})
 end
 
 function ents.PFMFilmClip:UpdateClip()
@@ -103,19 +126,14 @@ function ents.PFMFilmClip:CreateTrackGroup(trackGroup)
 end
 
 function ents.PFMFilmClip:CreateActor(actor)
-	local transform = actor:GetTransform()
-	local pos = transform:GetPosition()
-	local rot = transform:GetRotation()
-
-	local ang = rot:ToEulerAngles()
-	pfm.log("Creating actor '" .. actor:GetName() .. "' at position (" .. util.round_string(pos.x,0) .. "," .. util.round_string(pos.y,0) .. "," .. util.round_string(pos.z,0) .. ") with rotation (" .. util.round_string(ang.p,0) .. "," .. util.round_string(ang.y,0) .. "," .. util.round_string(ang.r,0) .. ")...",pfm.LOG_CATEGORY_PFM_GAME)
-
 	local entActor = ents.create("pfm_actor")
 	entActor:GetComponent(ents.COMPONENT_PFM_ACTOR):Setup(actor)
-	entActor:SetPos(pos)
-	entActor:SetRotation(rot)
 	entActor:Spawn()
 	table.insert(self.m_actors,entActor)
+
+	local pos = entActor:GetPos()
+	local ang = entActor:GetRotation():ToEulerAngles()
+	pfm.log("Created actor '" .. actor:GetName() .. "' at position (" .. util.round_string(pos.x,0) .. "," .. util.round_string(pos.y,0) .. "," .. util.round_string(pos.z,0) .. ") with rotation (" .. util.round_string(ang.p,0) .. "," .. util.round_string(ang.y,0) .. "," .. util.round_string(ang.r,0) .. ")...",pfm.LOG_CATEGORY_PFM_GAME)
 end
 
 function ents.PFMFilmClip:GetTimeFrame()

@@ -6,7 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("sfm.Sound",sfm.BaseElement)
+sfm.register_element_type("Sound")
+sfm.link_dmx_type("DmeGameSound",sfm.Sound)
 
 sfm.BaseElement.RegisterAttribute(sfm.Sound,"soundname","",{
 	getterName = "GetSoundName",
@@ -17,15 +18,3 @@ sfm.BaseElement.RegisterAttribute(sfm.Sound,"volume",1.0)
 sfm.BaseElement.RegisterAttribute(sfm.Sound,"pitch",100)
 sfm.BaseElement.RegisterAttribute(sfm.Sound,"origin",Vector())
 sfm.BaseElement.RegisterAttribute(sfm.Sound,"direction",Vector())
-
-function sfm.Sound:__init()
-  sfm.BaseElement.__init(self,sfm.Sound)
-end
-
-function sfm.Sound:ToPFMSound(pfmSound)
-	pfmSound:SetSoundName(self:GetSoundName())
-	pfmSound:SetVolume(self:GetVolume())
-	pfmSound:SetPitch(self:GetPitch() /100.0)
-	pfmSound:SetOrigin(sfm.convert_source_position_to_pragma(self:GetOrigin()))
-	pfmSound:SetDirection(sfm.convert_source_normal_to_pragma(self:GetDirection()))
-end

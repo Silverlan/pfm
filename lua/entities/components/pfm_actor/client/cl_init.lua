@@ -15,6 +15,7 @@ function ents.PFMActorComponent:Initialize()
 	
 	self:AddEntityComponent(ents.COMPONENT_NAME)
 	self.m_channels = {}
+	self.m_listeners = {}
 end
 
 function ents.PFMActorComponent:AddChannel(channel)
@@ -26,6 +27,23 @@ function ents.PFMActorComponent:GetChannels() return self.m_channels end
 function ents.PFMActorComponent:GetActorData() return self.m_actorData end
 
 function ents.PFMActorComponent:OnRemove()
+	for _,listener in ipairs(self.m_listeners) do
+		if(listener:IsValid()) then listener:Remove() end
+	end
+end
+
+function ents.PFMActorComponent:OnEntitySpawn()
+	local actorData = self:GetActorData()
+
+	local ent = self:GetEntity()
+	ent:SetPose(actorData:GetAbsolutePose())
+	local t = actorData:GetTransform()
+	table.insert(self.m_listeners,t:GetPositionAttr():AddChangeListener(function(newPos)
+		ent:SetPose(actorData:GetAbsolutePose())
+	end))
+	table.insert(self.m_listeners,t:GetRotationAttr():AddChangeListener(function(newRot)
+		ent:SetPose(actorData:GetAbsolutePose())
+	end))
 end
 
 function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
@@ -45,8 +63,8 @@ function ents.PFMActorComponent:Setup(actorData)
 	self:GetEntity():SetName(actorData:GetName())
 
 	pfm.log("Initializing " .. #actorData:GetComponents() .. " components for actor '" .. self:GetEntity():GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
-	for _,value in ipairs(actorData:GetComponents()) do
-		local componentData = value:GetValue()
+	for _,value in ipairs(actorData:GetComponents():GetTable()) do
+		local componentData = value
 		local err
 		if(componentData.GetComponentName == nil) then
 			err = "Component is missing method 'GetComponentName'"

@@ -16,3 +16,9 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK_GROUP,"visible",udm.Boo
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK_GROUP,"muted",udm.Bool(false),{
 	getter = "IsMuted"
 })
+
+function udm.PFMTrackGroup:SetPlaybackOffset(localOffset,absOffset)
+	for _,track in ipairs(self:GetTracks():GetTable()) do
+		track:SetPlaybackOffset(localOffset,absOffset)
+	end
+end

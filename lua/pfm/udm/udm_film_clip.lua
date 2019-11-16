@@ -7,8 +7,23 @@
 ]]
 
 include("film_clip")
+include("udm_group.lua")
 
 udm.ELEMENT_TYPE_PFM_FILM_CLIP = udm.register_element("PFMFilmClip")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"timeFrame",udm.PFMTimeFrame())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"actors",udm.Array(udm.ELEMENT_TYPE_PFM_ACTOR))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"trackGroups",udm.Array(udm.ELEMENT_TYPE_PFM_TRACK_GROUP))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"scene",udm.PFMGroup())
+-- TODO: Material overlay should be an actor with a material overlay component
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"materialOverlay",udm.PFMMaterialOverlayFXClip())
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"fadeIn",udm.Float())
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"fadeOut",udm.Float())
+
+function udm.PFMFilmClip:SetPlaybackOffset(offset)
+	if(self:GetTimeFrame():IsInTimeFrame(offset) == false) then return end
+	local timeFrame = self:GetTimeFrame()
+	local localOffset = timeFrame:LocalizeOffset(offset)
+	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do
+		trackGroup:SetPlaybackOffset(localOffset,offset)
+	end
+end

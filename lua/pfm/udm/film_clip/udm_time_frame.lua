@@ -10,6 +10,7 @@ udm.ELEMENT_TYPE_PFM_TIME_FRAME = udm.register_element("PFMTimeFrame")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_TIME_FRAME,"start",udm.Float(0.0))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_TIME_FRAME,"duration",udm.Float(0.0))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_TIME_FRAME,"offset",udm.Float(0.0))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_TIME_FRAME,"scale",udm.Float(1.0))
 
 function udm.PFMTimeFrame:GetEnd() return self:GetStart() +self:GetDuration() end
 function udm.PFMTimeFrame:Max(timeFrameOther)
@@ -29,6 +30,9 @@ function udm.PFMTimeFrame:Min(timeFrameOther)
 	result:SetStart(startTime)
 	result:SetDuration(endTime)
 	return result
+end
+function udm.PFMTimeFrame:LocalizeOffset(offset)
+	return offset -self:GetStart() +self:GetOffset()
 end
 function udm.PFMTimeFrame:IsInTimeFrame(t)
 	return t >= self:GetStart() and t < self:GetEnd()

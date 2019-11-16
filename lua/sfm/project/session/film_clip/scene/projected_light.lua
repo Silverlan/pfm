@@ -6,23 +6,12 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("sfm.ProjectedLight",sfm.BaseElement)
+sfm.register_element_type("ProjectedLight")
+sfm.link_dmx_type("DmeProjectedLight",sfm.ProjectedLight)
 
 sfm.BaseElement.RegisterProperty(sfm.ProjectedLight,"transform",sfm.Transform)
-sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"color",sfm.Color())
+sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"color",sfm.Color)
 sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"intensity",0.0)
 sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"constantAttenuation",0.0)
 sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"linearAttenuation",0.0)
 sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"quadraticAttenuation",0.0)
-
-function sfm.ProjectedLight:__init()
-  sfm.BaseElement.__init(self,sfm.ProjectedLight)
-end
-
-function sfm.ProjectedLight:ToPFMLight(pfmLightSource)
-  -- TODO
-  pfmLightSource:SetColor(Color.Red)--self:GetColor())
-  pfmLightSource:SetIntensity(2000.0)--self:GetIntensity())
-  pfmLightSource:SetIntensityType(ents.LightComponent.INTENSITY_TYPE_CANDELA)
-  pfmLightSource:SetFalloffExponent(1.0)
-end

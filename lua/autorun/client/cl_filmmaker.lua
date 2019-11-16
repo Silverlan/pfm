@@ -7,7 +7,6 @@
 ]]
 
 include("/sfm/project_converter.lua")
-include("/gui/wifiledialog.lua")
 
 pfm.register_log_category("sfm")
 
@@ -16,23 +15,28 @@ tool = tool or {}
 tool.close_filmmaker = function()
 	local entScene = ents.find_by_class("pfm_scene")[1]
 	if(util.is_valid(entScene)) then entScene:Remove() end -- TODO: Do this properly once the actual filmmaker tool is ready
-	if(tool.is_editor_open() == false) then return end
-	pEditor:Remove()
+	if(tool.is_filmmaker_open() == false) then return end
+	pEditor:Close()
 	pEditor = nil
 end
+tool.get_filmmaker = function() return pEditor end
 tool.is_filmmaker_open = function() return util.is_valid(pEditor) end
 tool.open_filmmaker = function(projectFilePath)
 	include("/gui/editors/filmmaker/filmmaker.lua")
 	tool.close_editor()
 	pEditor = gui.create("WIFilmmaker")
 	pEditor:SetAutoAlignToParent(true)
+	-- pEditor:SetZPos(1000)
 
 	pEditor:Open()
 	return pEditor
 end
 
-local pOpenDialogue
 console.register_command("pfm",function(pl,...)
+	if(tool.is_filmmaker_open()) then
+		tool.close_filmmaker()
+		return
+	end
 	local logCategories = 0
 	for cmd,args in pairs(console.parse_command_arguments({...})) do
 		if(cmd == "log") then
@@ -53,7 +57,7 @@ console.register_command("pfm",function(pl,...)
 
 	-- TODO: This code should only be enabled during development/testing!
 	-- Remove it for the public release!
-	console.run("cl_render_shadow_resolution 4096")
+	console.run("cl_render_shadow_resolution 256")
 	console.run("cl_render_occlusion_culling 0")
 
 	local ent = ents.find_by_name("pfm_light_demo")[1]
@@ -74,7 +78,5 @@ console.register_command("pfm",function(pl,...)
 		if(toggleC ~= nil) then toggleC:TurnOn() end
 	end
 	--
-
-	if(tool.is_filmmaker_open()) then tool.close_filmmaker()
-	else tool.open_filmmaker() end
+	tool.open_filmmaker()
 end)

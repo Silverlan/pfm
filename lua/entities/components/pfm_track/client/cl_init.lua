@@ -39,14 +39,14 @@ function ents.PFMTrack:Setup(trackData,trackGroup)
 
 	local startTime = math.huge
 	local endTime = -math.huge
-	for _,filmClip in ipairs(trackData:GetFilmClips()) do
+	for _,filmClip in ipairs(trackData:GetFilmClips():GetTable()) do
 		local timeFrame = filmClip:GetTimeFrame()
 		local clipStart = timeFrame:GetStart()
 		local clipEnd = timeFrame:GetEnd()
 		startTime = math.min(startTime,clipStart)
 		endTime = math.max(endTime,clipEnd)
 	end
-	for _,audioClip in ipairs(trackData:GetAudioClips()) do
+	for _,audioClip in ipairs(trackData:GetAudioClips():GetTable()) do
 		local timeFrame = audioClip:GetTimeFrame()
 		local clipStart = timeFrame:GetStart()
 		local clipEnd = timeFrame:GetEnd()
@@ -65,7 +65,7 @@ end
 
 function ents.PFMTrack:OnOffsetChanged(offset)
 	-- Update film and channel clips
-	for _,clipSet in ipairs({self:GetTrackData():GetFilmClips(),self:GetTrackData():GetChannelClips(),self:GetTrackData():GetAudioClips()}) do
+	for _,clipSet in ipairs({self:GetTrackData():GetFilmClips():GetTable(),self:GetTrackData():GetChannelClips():GetTable(),self:GetTrackData():GetAudioClips():GetTable()}) do
 		for _,clip in ipairs(clipSet) do
 			local timeFrame = clip:GetTimeFrame()
 			if(timeFrame:IsInTimeFrame(offset)) then

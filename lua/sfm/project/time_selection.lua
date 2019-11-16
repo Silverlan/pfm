@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("sfm.TimeSelection",sfm.BaseElement)
+sfm.register_element_type("TimeSelection")
 
 sfm.BaseElement.RegisterAttribute(sfm.TimeSelection,"enabled",false)
 sfm.BaseElement.RegisterAttribute(sfm.TimeSelection,"hold_right",214748)
@@ -19,7 +19,3 @@ sfm.BaseElement.RegisterAttribute(sfm.TimeSelection,"hold_left",-214748)
 sfm.BaseElement.RegisterAttribute(sfm.TimeSelection,"interpolator_right",6)
 sfm.BaseElement.RegisterAttribute(sfm.TimeSelection,"resampleinterval",0.01)
 sfm.BaseElement.RegisterAttribute(sfm.TimeSelection,"recordingstate",3)
-
-function sfm.TimeSelection:__init()
-  sfm.BaseElement.__init(self,sfm.TimeSelection)
-end

@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("sfm.PosterSettings",sfm.BaseElement)
+sfm.register_element_type("PosterSettings")
 
 sfm.BaseElement.RegisterAttribute(sfm.PosterSettings,"width",1920)
 sfm.BaseElement.RegisterAttribute(sfm.PosterSettings,"constrainAspect",true)
@@ -15,7 +15,3 @@ sfm.BaseElement.RegisterAttribute(sfm.PosterSettings,"DPI",300)
 sfm.BaseElement.RegisterAttribute(sfm.PosterSettings,"heightInPixels",true)
 sfm.BaseElement.RegisterAttribute(sfm.PosterSettings,"units",0)
 sfm.BaseElement.RegisterAttribute(sfm.PosterSettings,"widthInPixels",true)
-
-function sfm.PosterSettings:__init()
-  sfm.BaseElement.__init(self,sfm.PosterSettings)
-end

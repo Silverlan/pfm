@@ -6,8 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("sfm.Camera",sfm.BaseElement)
-util.register_class("sfm.Transform",sfm.BaseElement) -- Predeclaration
+sfm.register_element_type("Camera")
+sfm.link_dmx_type("DmeCamera",sfm.Camera)
+
+sfm.register_element_type("Transform") -- Predeclaration
 
 sfm.BaseElement.RegisterProperty(sfm.Camera,"transform",sfm.Transform)
 sfm.BaseElement.RegisterAttribute(sfm.Camera,"fieldOfView",36.0)
@@ -23,13 +25,3 @@ sfm.BaseElement.RegisterAttribute(sfm.Camera,"focalDistance",72)
 sfm.BaseElement.RegisterAttribute(sfm.Camera,"eyeSeparation",0.75)
 sfm.BaseElement.RegisterAttribute(sfm.Camera,"aperture",0.2)
 sfm.BaseElement.RegisterAttribute(sfm.Camera,"shutterSpeed",0.0208)
-
-function sfm.Camera:__init()
-  sfm.BaseElement.__init(self,sfm.Camera)
-end
-
-function sfm.Camera:ToPFMCamera(pfmCamera)
-  pfmCamera:SetFov(self:GetFieldOfView())
-  pfmCamera:SetZNear(sfm.source_units_to_pragma_units(self:GetZNear()))
-  pfmCamera:SetZFar(sfm.source_units_to_pragma_units(self:GetZFar()))
-end

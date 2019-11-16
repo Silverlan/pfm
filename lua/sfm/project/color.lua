@@ -6,14 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("sfm.Color",sfm.BaseElement)
+sfm.register_element_type("Color")
+sfm.link_dmx_type("DmeColor",sfm.Color)
 
 sfm.BaseElement.RegisterAttribute(sfm.Color,"color",Color())
-
-function sfm.Color:__init()
-  sfm.BaseElement.__init(self,sfm.Color)
-end
-
-function sfm.Color:ToPFMTransform(pfmColor)
-  pfmColor:SetValue(self:GetColor())
-end

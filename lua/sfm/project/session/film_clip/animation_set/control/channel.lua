@@ -8,15 +8,9 @@
 
 include("channel")
 
-util.register_class("sfm.Channel",sfm.BaseElement)
+sfm.register_element_type("Channel")
+sfm.link_dmx_type("DmeChannel",sfm.Channel)
 
 sfm.BaseElement.RegisterProperty(sfm.Channel,"log",sfm.Log)
-
-function sfm.Channel:__init()
-  sfm.BaseElement.__init(self,sfm.Channel)
-end
-
-function sfm.Channel:ToPFMChannel(pfmChannel,isBoneTransform)
-  local log = self:GetLog()
-  log:ToPFMLog(pfmChannel:GetLog(),isBoneTransform)
-end
+sfm.BaseElement.RegisterProperty(sfm.Channel,"toElement")
+sfm.BaseElement.RegisterAttribute(sfm.Channel,"toAttribute","")

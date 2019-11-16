@@ -1,0 +1,31 @@
+/*
+    Copyright (C) 2019  Florian Weischer
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+#version 400
+
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
+layout(location = 0) in vec2 in_vert_pos;
+
+#include "sh_timeline.gls"
+
+void main()
+{
+	float y = in_vert_pos.y;
+	if((gl_InstanceIndex %5) != 0)
+		y = (y *0.5) -0.5;
+	else if((gl_InstanceIndex %10) != 0)
+		y = (y *0.8) -0.2;
+	y *= u_pushConstants.yMultiplier;
+	gl_Position = u_pushConstants.transformMatrix *vec4(
+		-1.0 +gl_InstanceIndex *u_pushConstants.strideX,
+		y,
+		0.0,1.0
+	);
+}

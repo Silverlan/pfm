@@ -11,17 +11,18 @@ include("base_element.lua")
 include("project")
 
 function sfm.Project:__init(dmxData)
-	local elements = dmxData:GetElements()
-	self.m_sessions = {}
-	for _,el in ipairs(elements) do
-		if(el:GetName() == "session") then
-			table.insert(self.m_sessions,sfm.Session(el))
-		end
-	end
+	self.m_dmxToElement = {}
+	self.m_elementToDMX = {}
+	self.m_cachedElements = {}
 
+	self.m_sessions = {}
+	local elSession = dmxData:GetRootAttribute():GetValue()
+	if(elSession ~= nil) then table.insert(self.m_sessions,self:CreatePropertyFromDMXElement(elSession,sfm.Session)) end
+
+	-- TODO: Obsolete! Now done in project converter!
 	-- For some reason root bones requires a different transformation than other bones,
 	-- so we'll have to apply that in post-processing here.
-	for _,session in ipairs(self:GetSessions()) do
+	--[[for _,session in ipairs(self:GetSessions()) do
 		for _,clipSet in ipairs({session:GetClipBin(),session:GetMiscBin()}) do
 			for _,clip in ipairs(clipSet) do
 				local subClipTrackGroup = clip:GetSubClipTrackGroup()
@@ -73,7 +74,59 @@ function sfm.Project:__init(dmxData)
 				end
 			end
 		end
+	end]]
+end
+
+function sfm.Project:CreatePropertyFromDMXElement(dmxEl,class,parent)
+	local cachedElement = self:GetCachedElement(dmxEl)
+	if(cachedElement ~= nil) then
+		if(parent ~= nil) then cachedElement:AddParent(parent) end
+		return cachedElement
+	end
+	local o = self:CreateElement(class,parent)
+	self:CacheElement(dmxEl,o) -- Needs to be cached before loading to prevent possible infinite recursion
+	if(type(o) == "userdata") then o:Load(dmxEl) end
+	return o
+end
+
+function sfm.Project:GetCachedElement(dmxEl,name)
+	local cacheId = dmxEl:GetGUID()
+	if(self.m_cachedElements[cacheId] ~= nil) then
+		if(name ~= nil) then return self.m_cachedElements[cacheId] and self.m_cachedElements[cacheId][name] or nil end
+		return self.m_cachedElements[cacheId]
 	end
 end
 
+function sfm.Project:CacheElement(dmxEl,el,name)
+	local cacheId = dmxEl:GetGUID()
+	if(name == nil) then self.m_cachedElements[cacheId] = el
+	else
+		self.m_cachedElements[cacheId] = self.m_cachedElements[cacheId] or {}
+		self.m_cachedElements[cacheId][name] = el
+	end
+end
+
+function sfm.Project:MapDMXElement(dmxElement,element)
+	self.m_dmxToElement[dmxElement] = element
+	self.m_elementToDMX[element] = dmxElement
+end
+
+function sfm.Project:GetElementFromDMXElement(dmxElement)
+	return self.m_dmxToElement[dmxElement]
+end
+
+function sfm.Project:GetDMXElement(element)
+	return self.m_elementToDMX[element]
+end
+
 function sfm.Project:GetSessions() return self.m_sessions end
+
+function sfm.Project:CreateElement(elType,parent,...)
+	if(elType == nil) then
+		error("Attempted to create element of unknown type: Type is nil!")
+	end
+	local class = (type(elType) == "string") and sfm.get_type_data(elType) or elType
+	local el = class(self,...)
+	if(parent ~= nil) then el:AddParent(parent) end
+	return el
+end

@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("udm_channel.lua")
+include("/pfm/udm/film_clip/track_group/track/udm_channel.lua")
 
 udm.ELEMENT_TYPE_PFM_FLEX_CONTROL = udm.register_element("PFMFlexControl")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FLEX_CONTROL,"value",udm.Float())

@@ -8,54 +8,32 @@
 
 include("animation_set")
 
-util.register_class("sfm.AnimationSet",sfm.BaseElement)
+sfm.register_element_type("AnimationSet")
+sfm.link_dmx_type("DmeAnimationSet",sfm.AnimationSet)
 
 sfm.BaseElement.RegisterProperty(sfm.AnimationSet,"gameModel",sfm.GameModel,nil,sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL)
 sfm.BaseElement.RegisterProperty(sfm.AnimationSet,"camera",sfm.Camera,nil,sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL)
 
-function sfm.AnimationSet:__init()
-  sfm.BaseElement.__init(self,sfm.AnimationSet)
-  self.m_controls = {}
-  self.m_transformControls = {}
+function sfm.AnimationSet:Initialize()
+	self.m_controls = {}
+	self.m_transformControls = {}
 end
 
 function sfm.AnimationSet:Load(el)
-  sfm.BaseElement.Load(self,el)
+	sfm.BaseElement.Load(self,el)
 	
-	local attr = el:GetAttrV("controls")
-  if(attr ~= nil) then
-    for _,attr in ipairs(attr) do
-      local elChild = attr:GetValue()
-      if(elChild:GetType() == "DmeTransformControl") then
-        local o = sfm.TransformControl()
-        o:Load(elChild)
-        table.insert(self.m_transformControls,o)
-      else
-        local o = sfm.Control()
-        o:Load(elChild)
-        table.insert(self.m_controls,o)
-      end
-    end
-  end
+	local elControls = el:GetAttrV("controls")
+	if(elControls ~= nil) then
+		for _,attr in ipairs(elControls) do
+			local elChild = attr:GetValue()
+			if(elChild:GetType() == "DmeTransformControl") then
+				table.insert(self.m_transformControls,self:LoadArrayValue(attr,sfm.TransformControl))
+			else
+				table.insert(self.m_controls,self:LoadArrayValue(attr,sfm.Control))
+			end
+		end
+	end
 end
 
 function sfm.AnimationSet:GetControls() return self.m_controls end
 function sfm.AnimationSet:GetTransformControls() return self.m_transformControls end
-
-function sfm.AnimationSet:ToPFMAnimationSet(pfmAnimSet)
-	-- Flex controls
-	for _,sfmControl in ipairs(self:GetControls()) do
-		local pfmControl = pfmAnimSet:AddFlexControl(sfmControl:GetName())
-		sfmControl:ToPFMControl(pfmControl)
-	end
-	
-	-- Transform controls
-	for _,sfmControl in ipairs(self:GetTransformControls()) do
-		local pfmControl = pfmAnimSet:AddTransformControl(sfmControl:GetName())
-
-    -- Bone transforms use a different coordinate system than everything else, so we
-    -- have to determine what type of transform this is.
-    local isBoneTransform = sfmControl:GetName() ~= "transform"
-		sfmControl:ToPFMControl(pfmControl,isBoneTransform)
-	end
-end

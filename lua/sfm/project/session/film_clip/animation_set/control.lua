@@ -8,7 +8,7 @@
 
 include("control")
 
-util.register_class("sfm.Control",sfm.BaseElement)
+sfm.register_element_type("Control")
 
 sfm.BaseElement.RegisterAttribute(sfm.Control,"value")
 sfm.BaseElement.RegisterAttribute(sfm.Control,"leftValue")
@@ -16,34 +16,10 @@ sfm.BaseElement.RegisterAttribute(sfm.Control,"rightValue")
 sfm.BaseElement.RegisterAttribute(sfm.Control,"defaultValue",0.0)
 sfm.BaseElement.RegisterProperty(sfm.Control,"channel",sfm.Channel)
 sfm.BaseElement.RegisterProperty(sfm.Control,"rightvaluechannel",sfm.Channel,{
-  getterName = "GetRightValueChannel",
-  setterName = "SetRightValueChannel"
+	getterName = "GetRightValueChannel",
+	setterName = "SetRightValueChannel"
 })
 sfm.BaseElement.RegisterProperty(sfm.Control,"leftvaluechannel",sfm.Channel,{
-  getterName = "GetLeftValueChannel",
-  setterName = "SetLeftValueChannel"
+	getterName = "GetLeftValueChannel",
+	setterName = "SetLeftValueChannel"
 })
-
-function sfm.Control:__init()
-  sfm.BaseElement.__init(self,sfm.Control)
-end
-
-function sfm.Control:ToPFMControl(pfmControl)
-  pfmControl:SetValue(self:GetValue())
-  pfmControl:SetLeftValue(self:GetLeftValue())
-  pfmControl:SetRightValue(self:GetRightValue())
-  local sfmChannel = self:GetChannel()
-  if(sfmChannel ~= nil) then
-    sfmChannel:ToPFMChannel(pfmControl:GetChannel())
-  end
-  
-  sfmChannel = self:GetRightValueChannel()
-  if(sfmChannel ~= nil) then
-    sfmChannel:ToPFMChannel(pfmControl:GetRightValueChannel())
-  end
-  
-  sfmChannel = self:GetLeftValueChannel()
-  if(sfmChannel ~= nil) then
-    sfmChannel:ToPFMChannel(pfmControl:GetLeftValueChannel())
-  end
-end
