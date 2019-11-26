@@ -95,12 +95,33 @@ function udm.BaseElement:FindElementsByType(type,elements,iterated)
 	return self:FindElementsByFilter(function(keyName,child) return child:GetType() == type end,elements,iterated)
 end
 
+-- Returns the first parent element that isn't a reference. If the parent is an array, the parent
+-- of that array will be returned.
+function udm.BaseElement:FindParentElement()
+  for _,elParent in ipairs(self:GetParents()) do
+    local type = elParent:GetType()
+    if(type ~= udm.ELEMENT_TYPE_REFERENCE) then -- A reference means that this isn't our actual parent
+      if(type == udm.ELEMENT_TYPE_ARRAY) then
+        -- We don't care about arrays, so we'll skip them and go for their parent instead.
+        return elParent:FindParentElement()
+      end
+      return elParent
+    end
+  end
+end
+
 function udm.BaseElement:SetProperty(name,prop)
 	if(prop:IsElement()) then prop:SetName(name) end
 	self:AddChild(prop,name)
 	return self:GetProperty(name)
 end
-function udm.BaseElement:GetProperty(name) return self:GetChild(name) end
+function udm.BaseElement:GetProperty(name)
+  local property = self:GetChild(name)
+  if(property ~= nil and property:GetType() == udm.ELEMENT_TYPE_REFERENCE) then
+    return property:GetTarget()
+  end
+  return property
+end
 
 function udm.BaseElement:SetName(name)
 	local parents = {}
@@ -163,7 +184,7 @@ function udm.BaseElement:RemoveChild(name)
 	if(child == nil) then return end
 	self.m_children[name] = nil
 	for i,p in ipairs(child.m_parents) do
-		if(p == self) then
+		if(util.is_same_object(p,self)) then
 			table.remove(child.m_parents,i)
 			break
 		end

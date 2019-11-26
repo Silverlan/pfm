@@ -27,3 +27,13 @@ function udm.PFMFilmClip:SetPlaybackOffset(offset)
 		trackGroup:SetPlaybackOffset(localOffset,offset)
 	end
 end
+
+function udm.PFMFilmClip:GetChildFilmClip(offset)
+	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do
+		for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
+			for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+				if(filmClip:GetTimeFrame():IsInTimeFrame(offset)) then return filmClip end
+			end
+		end
+	end
+end

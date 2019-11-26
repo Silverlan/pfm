@@ -15,8 +15,12 @@ sfm.register_element_type("Transform") -- Predeclaration
 sfm.register_element_type("GlobalFlexControllerOperator") -- Predeclaration
 
 sfm.BaseElement.RegisterProperty(sfm.GameModel,"transform",sfm.Transform)
+sfm.BaseElement.RegisterProperty(sfm.GameModel,"overrideParent")
+sfm.BaseElement.RegisterAttribute(sfm.GameModel,"overridePos")
+sfm.BaseElement.RegisterAttribute(sfm.GameModel,"overrideRot")
 sfm.BaseElement.RegisterAttribute(sfm.GameModel,"modelName","")
 sfm.BaseElement.RegisterAttribute(sfm.GameModel,"skin",0)
+sfm.BaseElement.RegisterArray(sfm.GameModel,"children",sfm.Dag)
 sfm.BaseElement.RegisterArray(sfm.GameModel,"bones",sfm.Transform)
 sfm.BaseElement.RegisterArray(sfm.GameModel,"flexnames","",{
 	getterName = "GetFlexNames",

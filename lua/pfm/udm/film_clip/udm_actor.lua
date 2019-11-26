@@ -14,20 +14,32 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"components",udm.Array(
 
 function udm.PFMActor:AddComponent(pfmComponent)
 	self:GetComponentsAttr():PushBack(pfmComponent)
+	self:AddChild(pfmComponent)
 end
 
 local function apply_parent_pose(el,pose)
-	-- TODO: We need to apply the pose of the parent Dag (group) elements, up to the
-	-- scene of the film clip. An element may belong to multiple groups though, so
-	-- the code below may not work correctly in all cases.
-	for _,parent in ipairs(el:GetParents()) do
-		if(parent:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then
-			local t = parent:GetTransform()
-			pose:TransformGlobal(t:GetPose())
-			apply_parent_pose(parent,pose)
-			break
+	local poseParent = phys.ScaledTransform()
+	local parent = (el.GetOverrideParent ~= nil) and el:GetOverrideParent() or nil
+	-- TODO: Take into account whether overridePos or overrideRot are enabled or not!
+	local useOverrideParent = (parent ~= nil)
+	if(useOverrideParent == false) then
+		parent = el:FindParentElement()
+		if(parent ~= nil and parent:GetType() == udm.ELEMENT_TYPE_PFM_MODEL) then
+			parent = parent:FindParentElement() -- If the element is a model component, we'll want to redirect to the parent actor instead.
 		end
 	end
+
+	if(parent ~= nil and parent.GetTransform ~= nil) then
+		local t = parent:GetTransform()
+		poseParent:TransformGlobal(t:GetPose())
+
+		-- TODO: Obsolete? Remove this line!
+		-- if(useOverrideParent) then parent = t end -- If we're using an override parent, we'll want to use the transform as base for going up in the hierarchy
+		apply_parent_pose(parent,poseParent)
+	end
+
+	pose:TransformGlobal(poseParent)
+	return pose
 end
 
 function udm.PFMActor:GetAbsolutePose()

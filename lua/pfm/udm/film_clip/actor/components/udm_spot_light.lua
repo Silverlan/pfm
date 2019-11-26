@@ -12,5 +12,6 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"color",udm.Color(
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"intensity",udm.Float(1000.0))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"intensityType",udm.UInt8(ents.LightComponent.INTENSITY_TYPE_CANDELA))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"falloffExponent",udm.Float(1.0))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"maxDistance",udm.Float(1000.0))
 
 function udm.PFMSpotLight:GetComponentName() return "pfm_light_spot" end

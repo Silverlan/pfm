@@ -1,10 +1,24 @@
+--[[
+    Copyright (C) 2019  Florian Weischer
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+]]
+
 include("/gui/wiviewport.lua")
 include("/gui/hbox.lua")
+include("/gui/aspectratio.lua")
 include("/gui/pfm/button.lua")
+include("/gui/pfm/playbutton.lua")
 include("/pfm/fonts.lua")
 
 util.register_class("gui.PFMViewport",gui.Base)
 
+gui.PFMViewport.CAMERA_MODE_PLAYBACK = 0
+gui.PFMViewport.CAMERA_MODE_FLY = 1
+gui.PFMViewport.CAMERA_MODE_WALK = 2
+gui.PFMViewport.CAMERA_MODE_COUNT = 3
 function gui.PFMViewport:__init()
 	gui.Base.__init(self)
 end
@@ -21,17 +35,25 @@ function gui.PFMViewport:OnInitialize()
 
 	self.m_vpBg = gui.create("WIRect",self,0,37,self:GetWidth(),hViewport,0,0,1,1)
 	self.m_vpBg:SetColor(Color.Black)
-	self.m_vpBg:AddCallback("SetSize",function()
-		if(util.is_valid(self.m_viewport) == false) then return end
-		local size = self.m_vpBg:GetSize()
-		local ratio = self:GetAspectRatio()
-		local w,h = util.clamp_resolution_to_aspect_ratio(size.x,size.y,ratio)
-		self.m_viewport:SetSize(w,h)
-		self.m_viewport:SetPos(size.x *0.5 -w *0.5,size.y *0.5 -h *0.5)
-	end)
 
-	self.m_viewport = gui.create("WIViewport",self.m_vpBg)
-	self:SetAspectRatio(16.0 /9.0)
+	self.m_aspectRatioWrapper = gui.create("WIAspectRatio",self.m_vpBg,0,0,self.m_vpBg:GetWidth(),self.m_vpBg:GetHeight(),0,0,1,1)
+	self.m_aspectRatioWrapper:AddCallback("OnAspectRatioChanged",function(el,aspectRatio)
+		if(util.is_valid(self.m_viewport)) then
+			local scene = self.m_viewport:GetScene()
+			if(scene ~= nil) then
+				local cam = scene:GetActiveCamera()
+				if(cam ~= nil) then
+					cam:SetAspectRatio(aspectRatio)
+					cam:UpdateMatrices()
+				end
+			end
+		end
+		--[[local maxResolution = engine.get_window_resolution()
+		local w,h = util.clamp_resolution_to_aspect_ratio(maxResolution.x,maxResolution.y,aspectRatio)
+		self.m_viewport:SetupScene(maxResolution.x,maxResolution.y)]]
+		--self:Update()
+	end)
+	self.m_viewport = gui.create("WIViewport",self.m_aspectRatioWrapper)
 
 	local function create_text_element(font,pos,color)
 		local textColor = Color(182,182,182)
@@ -43,27 +65,113 @@ function gui.PFMViewport:OnInitialize()
 	end
 	local textColor = Color(182,182,182)
 	self.m_timeGlobal = create_text_element("pfm_large",Vector2(20,15),textColor)
-	self.m_timeGlobal:SetText("00:00:17.083") -- TODO
+	self.m_timeGlobal:SetText(util.get_pretty_time(0.0))
 	self.m_timeGlobal:SizeToContents()
 
 	self.m_timeLocal = create_text_element("pfm_large",Vector2(0,15),textColor)
-	self.m_timeLocal:SetText("00:00:04.958") -- TODO
+	self.m_timeLocal:SetText(util.get_pretty_time(0.0))
 	self.m_timeLocal:SizeToContents()
 
 	textColor = Color(152,152,152)
 	self.m_filmClipParent = create_text_element("pfm_medium",Vector2(0,3),textColor)
-	self.m_filmClipParent:SetText("mtt_engineer") -- TODO
-	self.m_filmClipParent:SizeToContents()
 
 	self.m_filmClip = create_text_element("pfm_medium",Vector2(0,16),textColor)
-	self.m_filmClip:SetText("slug") -- TODO
-	self.m_filmClip:SizeToContents()
 
 	self:InitializePlayControls()
 	self:InitializeManipulatorControls()
 	self:InitializeCameraControls()
 
-	self:GetViewport():SetType(gui.WIViewport.VIEWPORT_TYPE_3D)
+	self.m_viewport:SetType(gui.WIViewport.VIEWPORT_TYPE_3D)
+
+	-- This controls the behavior that allows controlling the camera while holding the right mouse button down
+	self.m_viewport:SetMouseInputEnabled(true)
+	self.m_cbClickMouseInput = self.m_viewport:AddCallback("OnMouseEvent",function(el,mouseButton,state,mods)
+		if(mouseButton ~= input.MOUSE_BUTTON_LEFT and mouseButton ~= input.MOUSE_BUTTON_RIGHT) then return util.EVENT_REPLY_UNHANDLED end
+		if(state ~= input.STATE_PRESS and state ~= input.STATE_RELEASE) then return util.EVENT_REPLY_UNHANDLED end
+
+		local filmmaker = tool.get_filmmaker()
+		if(self.m_inCameraControlMode and mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE and filmmaker:IsValid() and filmmaker:HasFocus() == false) then
+			self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK)
+			filmmaker:TrapFocus(true)
+			filmmaker:RequestFocus()
+			input.set_cursor_pos(self.m_oldCursorPos)
+			self.m_inCameraControlMode = false
+			return util.EVENT_REPLY_HANDLED
+		end
+
+		local el = gui.get_element_under_cursor()
+		if(util.is_valid(el) and (el == self or el:IsDescendantOf(self))) then
+			local action
+			if(mouseButton == input.MOUSE_BUTTON_LEFT) then action = input.ACTION_ATTACK
+			else action = input.ACTION_ATTACK2 end
+
+			local filmmaker = tool.get_filmmaker()
+			if(mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+				self.m_oldCursorPos = input.get_cursor_pos()
+				self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_WALK)
+				input.center_cursor()
+				filmmaker:TrapFocus(false)
+				filmmaker:KillFocus()
+				self.m_inCameraControlMode = true
+			end
+			return util.EVENT_REPLY_HANDLED
+		end
+		return util.EVENT_REPLY_UNHANDLED
+	end)
+	self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK)
+end
+function gui.PFMViewport:SetCameraMode(camMode)
+	pfm.log("Changing camera mode to " .. ((camMode == gui.PFMViewport.CAMERA_MODE_PLAYBACK and "playback") or (camMode == gui.PFMViewport.CAMERA_MODE_FLY and "fly") or "walk"))
+	self.m_cameraMode = camMode
+
+	ents.PFMCamera.set_camera_enabled(camMode == gui.PFMViewport.CAMERA_MODE_PLAYBACK)
+
+	-- We need to notify the server to change the player's movement mode (i.e. noclip/walk)
+	local packet = net.Packet()
+	packet:WriteUInt8(camMode)
+	local cam = game.get_render_scene_camera()
+	if(cam ~= nil) then
+		packet:WriteBool(true)
+		packet:WriteVector(cam:GetEntity():GetPos())
+		packet:WriteQuaternion(cam:GetEntity():GetRotation())
+	else packet:WriteBool(false) end
+	net.send(net.PROTOCOL_SLOW_RELIABLE,"sv_pfm_camera_mode",packet)
+end
+function gui.PFMViewport:SetGlobalTime(time)
+	if(util.is_valid(self.m_timeGlobal)) then
+		self.m_timeGlobal:SetText(util.get_pretty_time(time))
+		self.m_timeGlobal:SizeToContents()
+	end
+end
+function gui.PFMViewport:SetLocalTime(time)
+	if(util.is_valid(self.m_timeLocal)) then
+		self.m_timeLocal:SetText(util.get_pretty_time(time))
+		self.m_timeLocal:SizeToContents()
+	end
+end
+function gui.PFMViewport:SetFilmClipName(name)
+	if(util.is_valid(self.m_filmClip)) then
+		self.m_filmClip:SetText(name)
+		self.m_filmClip:SizeToContents()
+
+		self:UpdateFilmLabelPositions()
+	end
+end
+function gui.PFMViewport:SetFilmClipParentName(name)
+	if(util.is_valid(self.m_filmClipParent)) then
+		self.m_filmClipParent:SetText(name)
+		self.m_filmClipParent:SizeToContents()
+
+		self:UpdateFilmLabelPositions()
+	end
+end
+function gui.PFMViewport:UpdateFilmLabelPositions()
+	if(util.is_valid(self.m_filmClipParent)) then
+		self.m_filmClipParent:SetX(self:GetWidth() *0.5 -self.m_filmClipParent:GetWidth() *0.5)
+	end
+	if(util.is_valid(self.m_filmClip)) then
+		self.m_filmClip:SetX(self:GetWidth() *0.5 -self.m_filmClip:GetWidth() *0.5)
+	end
 end
 function gui.PFMViewport:InitializePlayControls()
 	local controls = gui.create("WIHBox",self,0,self.m_vpBg:GetBottom() +4)
@@ -79,9 +187,7 @@ function gui.PFMViewport:InitializePlayControls()
 	self.m_btRecord = gui.PFMButton.create(controls,"gui/pfm/icon_cp_record","gui/pfm/icon_cp_record_activated",function()
 		print("PRESS")
 	end)
-	self.m_btPlay = gui.PFMButton.create(controls,"gui/pfm/icon_cp_play","gui/pfm/icon_cp_play_activated",function()
-		print("PRESS")
-	end)
+	self.m_btPlay = gui.create("WIPFMPlayButton",controls)
 	self.m_btNextFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_nextframe","gui/pfm/icon_cp_nextframe_activated",function()
 		print("PRESS")
 	end)
@@ -119,6 +225,24 @@ function gui.PFMViewport:InitializeManipulatorControls()
 end
 function gui.PFMViewport:InitializeCameraControls()
 	local controls = gui.create("WIHBox",self,0,self.m_vpBg:GetBottom() +4)
+	self.m_toneMapping = gui.create("WIDropDownMenu",controls)
+	self.m_toneMapping:SetText("Tonemapping")
+	local toneMappingOptions = {
+		"Gamma Correction",
+		"Reinhard",
+		"Hejil-Richard",
+		"Uncharted",
+		"Aces",
+		"Gran Turismo"
+	}
+	for _,option in ipairs(toneMappingOptions) do
+		self.m_toneMapping:AddOption(option)
+	end
+	self.m_toneMapping:AddCallback("OnOptionSelected",function(el,idx)
+		console.run("cl_render_tone_mapping " .. tostring(idx))
+	end)
+	self.m_toneMapping:SetSize(128,25)
+
 	self.m_btAutoAim = gui.PFMButton.create(controls,"gui/pfm/icon_viewport_autoaim","gui/pfm/icon_viewport_autoaim_activated",function()
 		print("PRESS")
 	end)
@@ -134,39 +258,15 @@ function gui.PFMViewport:InitializeCameraControls()
 	controls:SetAnchor(1,1,1,1)
 	self.manipulatorControls = controls
 end
+function gui.PFMViewport:GetPlayButton() return self.m_btPlay end
 function gui.PFMViewport:GetViewport() return self.m_viewport end
 function gui.PFMViewport:OnSizeChanged(w,h)
 	self:Update()
 end
-function gui.PFMViewport:SetAspectRatio(aspectRatio)
-	self.m_aspectRatio = aspectRatio
-
-	if(util.is_valid(self.m_viewport)) then
-		local scene = self.m_viewport:GetScene()
-		if(scene ~= nil) then
-			local cam = scene:GetActiveCamera()
-			if(cam ~= nil) then
-				cam:SetAspectRatio(aspectRatio)
-				cam:UpdateMatrices()
-			end
-		end
-	end
-	--[[local maxResolution = engine.get_window_resolution()
-	local w,h = util.clamp_resolution_to_aspect_ratio(maxResolution.x,maxResolution.y,aspectRatio)
-	self.m_viewport:SetupScene(maxResolution.x,maxResolution.y)]]
-
-	self:Update()
-end
-function gui.PFMViewport:GetAspectRatio() return self.m_aspectRatio end
-function gui.PFMViewport:Update()
+function gui.PFMViewport:OnUpdate()
 	if(util.is_valid(self.m_timeLocal)) then
 		self.m_timeLocal:SetX(self:GetWidth() -self.m_timeLocal:GetWidth() -20)
 	end
-	if(util.is_valid(self.m_filmClipParent)) then
-		self.m_filmClipParent:SetX(self:GetWidth() *0.5 -self.m_filmClipParent:GetWidth() *0.5)
-	end
-	if(util.is_valid(self.m_filmClip)) then
-		self.m_filmClip:SetX(self:GetWidth() *0.5 -self.m_filmClip:GetWidth() *0.5)
-	end
+	self:UpdateFilmLabelPositions()
 end
 gui.register("WIPFMViewport",gui.PFMViewport)

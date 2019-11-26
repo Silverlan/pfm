@@ -7,14 +7,13 @@
 ]]
 
 include("/pfm/fonts.lua")
+include("selectionoutline.lua")
 
 util.register_class("gui.FilmClip",gui.Base)
 
 gui.FilmClip.BACKGROUND_COLOR = Color(47,47,121)
 gui.FilmClip.BACKGROUND_COLOR_SELECTED = Color(58,56,115)
 gui.FilmClip.OUTLINE_COLOR = Color(182,182,182)
-
-gui.FilmClip.SELECTION_COLOR = Color(238,201,75)
 
 gui.FilmClip.TITLE_COLOR = Color.White
 gui.FilmClip.TITLE_COLOR_SELECTED = Color(63,53,20)
@@ -35,9 +34,8 @@ function gui.FilmClip:OnInitialize()
 	self.m_bgOutline = gui.create("WIOutlinedRect",self,0,0,w,h,0,0,1,1)
 	self.m_bgOutline:SetColor(gui.FilmClip.OUTLINE_COLOR)
 
-	self.m_bgSelection = gui.create("WIRect",self,0,0,w,14,0,0,1,1)
-	self.m_bgSelection:SetColor(gui.FilmClip.SELECTION_COLOR)
-	self.m_bgSelection:SetVisible(false)
+	self.m_selection = gui.create("WISelectionOutline",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	self.m_selection:SetVisible(false)
 
 	self.m_text = gui.create("WIText",self,4,0,w -8,14,0,0,1,0)
 	self.m_text:SetFont("pfm_small")
@@ -52,16 +50,6 @@ function gui.FilmClip:OnInitialize()
 		self:SetSelected(true)
 	end)
 end
-local function get_formatted_time(time)
-	local seconds = math.floor(time)
-	local milliseconds = (time -seconds) *1000
-	local minutes = seconds /60.0
-	local formattedTime = string.fill_zeroes(seconds,2) .. "." .. string.fill_zeroes(milliseconds,2)
-	if(minutes > 0) then
-		formattedTime = string.fill_zeroes(minutes,2) .. ":" .. formattedTime
-	end
-	return formattedTime
-end
 function gui.FilmClip:SetFilmClipData(filmClip)
 	self.m_filmClip = filmClip
 	if(self.m_text:IsValid()) then self.m_text:SetText(filmClip:GetName()) end
@@ -69,38 +57,19 @@ function gui.FilmClip:SetFilmClipData(filmClip)
 	local timeFrame = filmClip:GetTimeFrame()
 	local offset = timeFrame:GetOffset()
 	local duration = timeFrame:GetDuration()
-	offset = get_formatted_time(offset)
-	duration = get_formatted_time(duration)
+	offset = util.get_pretty_time(offset)
+	duration = util.get_pretty_time(duration)
 	if(self.m_textDetails:IsValid()) then self.m_textDetails:SetText("scale " .. util.round_string(timeFrame:GetScale(),2) .. " offset " .. offset .. " duration " .. duration) end
 
 	local t = "\t\t"
-	self:SetTooltip("Film Clip:\n" .. filmClip:GetName() .. "\nStart:" .. t .. timeFrame:GetStart() .. "\nEnd:" .. t .. timeFrame:GetEnd() .. "\nDuration:" .. timeFrame:GetDuration() .. "\nOffset:" .. t .. timeFrame:GetOffset() .. "\nScale:" .. t .. timeFrame:GetScale())
+	self:SetTooltip("Film Clip:\n" .. filmClip:GetName() .. "\nStart:" .. t .. util.get_pretty_time(timeFrame:GetStart()) .. "\nEnd:" .. t .. util.get_pretty_time(timeFrame:GetEnd()) .. "\nDuration:" .. util.get_pretty_time(timeFrame:GetDuration()) .. "\nOffset:" .. t .. util.get_pretty_time(timeFrame:GetOffset()) .. "\nScale:" .. t .. timeFrame:GetScale())
 end
 function gui.FilmClip:GetFilmClipData() return self.m_filmClip end
 function gui.FilmClip:GetTimeFrame() return self.m_filmClip:GetTimeFrame() end
 function gui.FilmClip:SetSelected(selected)
-	if(selected) then
-		if(self.m_bgOutline:IsValid()) then
-			self.m_bgOutline:SetColor(gui.FilmClip.SELECTION_COLOR)
-			self.m_bgOutline:SetOutlineWidth(2)
-		end
-		if(self.m_bgSelection:IsValid()) then
-			self.m_bgSelection:SetVisible(true)
-		end
-		if(self.m_text:IsValid()) then
-			self.m_text:SetColor(gui.FilmClip.TITLE_COLOR_SELECTED)
-		end
-	else
-		if(self.m_bgOutline:IsValid()) then
-			self.m_bgOutline:SetColor(gui.FilmClip.OUTLINE_COLOR)
-			self.m_bgOutline:SetOutlineWidth(1)
-		end
-		if(self.m_bgSelection:IsValid()) then
-			self.m_bgSelection:SetVisible(false)
-		end
-		if(self.m_text:IsValid()) then
-			self.m_text:SetColor(gui.FilmClip.TITLE_COLOR)
-		end
+	self.m_selection:SetVisible(selected)
+	if(self.m_text:IsValid()) then
+		self.m_text:SetColor(selected and gui.FilmClip.TITLE_COLOR_SELECTED or gui.FilmClip.TITLE_COLOR)
 	end
 	if(selected) then self:CallCallbacks("OnSelected")
 	else self:CallCallbacks("OnDeselected") end

@@ -27,7 +27,6 @@ end
 
 function ents.PFMSoundSource:OnRemove()
 	if(util.is_valid(self.m_cbOnOffsetChanged)) then self.m_cbOnOffsetChanged:Remove() end
-	if(self.m_sound ~= nil) then self.m_sound:Stop() end
 end
 
 function ents.PFMSoundSource:OnEntitySpawn()

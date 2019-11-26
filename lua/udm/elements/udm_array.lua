@@ -50,10 +50,14 @@ end
 function udm.Array:Get(i) return self:GetTable()[i] end
 
 function udm.Array:Insert(pos,attr)
-	if(self:GetElementType() == nil) then self:SetElementType(attr:GetType()) end
+	local attrType = attr:GetType()
+	if(attrType == udm.ELEMENT_TYPE_REFERENCE) then
+		attrType = attr:GetTarget():GetType()
+	end
+	if(self:GetElementType() == nil) then self:SetElementType(attrType) end
 	local t = self:GetElementType()
-	if(t ~= udm.ELEMENT_TYPE_ANY and t ~= udm.ATTRIBUTE_TYPE_ANY and attr:GetType() ~= t) then
-		pfm.error("Attempted to push attribute of type " .. (udm.get_type_name(attr:GetType()) or "") .. " into array of type " .. (udm.get_type_name(t) or "") .. "!")
+	if(t ~= udm.ELEMENT_TYPE_ANY and t ~= udm.ATTRIBUTE_TYPE_ANY and attrType ~= t) then
+		pfm.error("Attempted to push attribute of type " .. (udm.get_type_name(attrType) or "") .. " into array of type " .. (udm.get_type_name(t) or "") .. "!")
 		return
 	end
 	table.insert(self:GetValue(),pos,attr)

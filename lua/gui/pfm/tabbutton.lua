@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/gui/pfm/progressbar.lua")
+
 util.register_class("gui.PFMTabButton",gui.Base)
 
 function gui.PFMTabButton:__init()
@@ -23,6 +25,9 @@ function gui.PFMTabButton:OnInitialize()
 	self.m_text:SetColor(Color(152,152,152))
 	self.m_text:SetFont("pfm_medium")
 
+	self.m_progressBar = gui.create("WIPFMProgressBar",self,0,self:GetHeight() -5,self:GetWidth(),5,0,1,1,1)
+	self.m_progressBar:SetVisible(false)
+
 	self:SetMouseInputEnabled(true)
 
 	self:SetActive(false)
@@ -33,6 +38,23 @@ function gui.PFMTabButton:OnInitialize()
 	if(texInfo == nil) then return end
 	self:SetSize(texInfo:GetWidth(),texInfo:GetHeight())
 end
+function gui.PFMTabButton:GetContents() return self.m_contentsPanel end
+function gui.PFMTabButton:SetContents(panel)
+	self.m_contentsPanel = panel
+	panel:SetVisible(false)
+
+	panel:AddCallback("OnProgressChanged",function(el,progress)
+		self:SetProgress(progress)
+	end)
+end
+function gui.PFMTabButton:SetProgress(progress)
+	if(util.is_valid(self.m_progressBar) == false) then return end
+	self.m_progressBar:SetProgress(progress)
+	self.m_progressBar:SetVisible(progress > 0.0)
+end
+function gui.PFMTabButton:GetProgress()
+	return util.is_valid(self.m_progressBar) and self.m_progressBar:GetProgress() or 0.0
+end
 function gui.PFMTabButton:MouseCallback(button,state,mods)
 	if(button == input.MOUSE_BUTTON_LEFT) then
 		if(state == input.STATE_RELEASE) then
@@ -41,9 +63,16 @@ function gui.PFMTabButton:MouseCallback(button,state,mods)
 	end
 	return util.EVENT_REPLY_HANDLED
 end
+function gui.PFMTabButton:OnThink()
+	if(self:IsActive() == false) then return end
+	if(self:GetProgress() == 1.0) then self.m_progressBar:SetVisible(false) end
+end
+function gui.PFMTabButton:IsActive() return self.m_active end
 function gui.PFMTabButton:SetActive(active)
+	self.m_active = active
 	if(active) then self:SetColor(Color.White)
 	else self:SetColor(Color(200,200,200)) end
+	if(util.is_valid(self.m_contentsPanel)) then self.m_contentsPanel:SetVisible(active) end
 end
 function gui.PFMTabButton:SetText(text)
 	if(util.is_valid(self.m_text)) then

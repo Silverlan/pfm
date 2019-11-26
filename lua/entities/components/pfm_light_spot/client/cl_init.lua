@@ -17,20 +17,29 @@ function ents.PFMLightSpot:Initialize()
 	self:AddEntityComponent("pfm_actor")
 end
 function ents.PFMLightSpot:Setup(actorData,lightData)
-	local lightC = self:GetEntity():GetComponent(ents.COMPONENT_LIGHT)
+	local ent = self:GetEntity()
+	local colorC = ent:GetComponent(ents.COMPONENT_COLOR)
+	if(colorC ~= nil) then
+		colorC:SetColor(lightData:GetColor())
+	end
+
+	local lightC = ent:GetComponent(ents.COMPONENT_LIGHT)
 	if(lightC ~= nil) then
 		lightC:SetLightIntensity(lightData:GetIntensity(),lightData:GetIntensityType())
 		lightC:SetFalloffExponent(lightData:GetFalloffExponent())
 	end
 
-	local spotLightC = self:GetEntity():GetComponent(ents.COMPONENT_LIGHT_SPOT)
+	local spotLightC = ent:GetComponent(ents.COMPONENT_LIGHT_SPOT)
 	if(spotLightC ~= nil) then
 		-- TODO
 		spotLightC:SetInnerCutoffAngle(40.0)
 		spotLightC:SetOuterCutoffAngle(50.0)
 	end
 
-	local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
+	local radiusC = ent:GetComponent(ents.COMPONENT_RADIUS)
+	if(radiusC ~= nil) then radiusC:SetRadius(lightData:GetMaxDistance()) end
+
+	local toggleC = ent:GetComponent(ents.COMPONENT_TOGGLE)
 	if(toggleC ~= nil) then
 		toggleC:TurnOn()
 	end

@@ -81,7 +81,7 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 
 	local cam = self:GetClipData():GetProperty("camera")
 	if(cam ~= nil) then
-		local entCam = self:FindActorByName(cam:GetName(),function(ent) return ent:HasComponent("pfm_camera") end)
+		local entCam = self:GetActor(cam)
 		self.m_camera = entCam and entCam:GetComponent("pfm_camera") or entCam
 	end
 	if(util.is_valid(self.m_camera) == false) then
@@ -104,6 +104,15 @@ function ents.PFMFilmClip:SetOffset(offset)
 	if(offset == self.m_offset) then return end
 	self.m_offset = offset
 	self:UpdateClip()
+
+	for _,actor in ipairs(self:GetActors()) do
+		if(actor:IsValid()) then
+			local actorC = actor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if(actorC ~= nil) then
+				actorC:OnOffsetChanged(offset)
+			end
+		end
+	end
 	
 	self:BroadcastEvent(ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED,{offset,absOffset})
 end
@@ -125,6 +134,16 @@ function ents.PFMFilmClip:CreateTrackGroup(trackGroup)
 	table.insert(self.m_trackGroups,ent)
 end
 
+function ents.PFMFilmClip:GetActor(actorData)
+	for _,actor in ipairs(self:GetActors()) do
+		if(actor:IsValid() and actor:HasComponent(ents.COMPONENT_PFM_ACTOR)) then
+			if(util.is_same_object(actor:GetComponent(ents.COMPONENT_PFM_ACTOR):GetActorData(),actorData)) then
+				return actor
+			end
+		end
+	end
+end
+
 function ents.PFMFilmClip:CreateActor(actor)
 	local entActor = ents.create("pfm_actor")
 	entActor:GetComponent(ents.COMPONENT_PFM_ACTOR):Setup(actor)
@@ -133,7 +152,12 @@ function ents.PFMFilmClip:CreateActor(actor)
 
 	local pos = entActor:GetPos()
 	local ang = entActor:GetRotation():ToEulerAngles()
-	pfm.log("Created actor '" .. actor:GetName() .. "' at position (" .. util.round_string(pos.x,0) .. "," .. util.round_string(pos.y,0) .. "," .. util.round_string(pos.z,0) .. ") with rotation (" .. util.round_string(ang.p,0) .. "," .. util.round_string(ang.y,0) .. "," .. util.round_string(ang.r,0) .. ")...",pfm.LOG_CATEGORY_PFM_GAME)
+	local trC = entActor:GetComponent(ents.COMPONENT_TRANSFORM)
+	local scale = (trC ~= nil) and trC:GetScale() or Vector(1,1,1)
+	pfm.log("Created actor '" .. actor:GetName() ..
+		"' at position (" .. util.round_string(pos.x,0) .. "," .. util.round_string(pos.y,0) .. "," .. util.round_string(pos.z,0) ..
+		") with rotation (" .. util.round_string(ang.p,0) .. "," .. util.round_string(ang.y,0) .. "," .. util.round_string(ang.r,0) ..
+		") with scale (" .. util.round_string(scale.x,2) .. "," .. util.round_string(scale.y,2) .. "," .. util.round_string(scale.z,2) .. ")...",pfm.LOG_CATEGORY_PFM_GAME)
 end
 
 function ents.PFMFilmClip:GetTimeFrame()

@@ -17,11 +17,13 @@ function gui.FilmStrip:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self.m_timeFrame = udm.PFMTimeFrame()
+	self.m_container = gui.create("WIContainer",self)
+	self:GetSizeProperty():Link(self.m_container:GetSizeProperty())
 	self.m_filmClips = {}
 end
 function gui.FilmStrip:GetTimeFrame() return self.m_timeFrame end
 function gui.FilmStrip:AddFilmClip(filmClip)
-	local el = gui.create("WIFilmClip",self)
+	local el = gui.create("WIFilmClip",self.m_container)
 	table.insert(self.m_filmClips,el)
 
 	el:SetFilmClipData(filmClip)
@@ -32,9 +34,11 @@ function gui.FilmStrip:AddFilmClip(filmClip)
 			end
 		end
 	end)
+	self:ScheduleUpdate()
+	return el
 end
 function gui.FilmStrip:GetFilmClips() return self.m_filmClips end
-function gui.FilmStrip:Update()
+function gui.FilmStrip:OnUpdate()
 	local timeFrame
 	-- Calculate total time frame
 	for _,el in ipairs(self.m_filmClips) do
@@ -46,17 +50,5 @@ function gui.FilmStrip:Update()
 		end
 	end
 	self.m_timeFrame = timeFrame
-
-	--[[local width = self:GetWidth()
-	local x = 0
-	for _,el in ipairs(self.m_filmClips) do
-		if(el:IsValid()) then
-			local widthClip = el:GetFilmClipData():GetTimeFrame():GetDuration() /timeFrame:GetDuration() *width
-			el:SetWidth(widthClip)
-
-			el:SetX(x)
-			x = x +el:GetWidth()
-		end
-	end]]
 end
 gui.register("WIFilmStrip",gui.FilmStrip)

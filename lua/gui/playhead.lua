@@ -42,20 +42,23 @@ end
 function gui.Playhead:SetTimeOffset(offset) self.m_timeOffset:Set(offset) end
 function gui.Playhead:GetTimeOffset() return self.m_timeOffset:Get() end
 function gui.Playhead:GetTimeOffsetProperty() return self.m_timeOffset end
+function gui.Playhead:SetCursorMoveModeEnabled(enabled)
+	if(enabled) then
+		self:SetCursorMovementCheckEnabled(true)
+		if(util.is_valid(self.m_cbMove) == false) then
+			self.m_cbMove = self:AddCallback("OnCursorMoved",function(el,x,y)
+				local pos = self:GetParent():GetCursorPos()
+				self:SetTimeOffset(self.m_timeline:XOffsetToTimeOffset(pos.x))
+			end)
+		end
+	else
+		self:SetCursorMovementCheckEnabled(false)
+		if(util.is_valid(self.m_cbMove)) then self.m_cbMove:Remove() end
+	end
+end
 function gui.Playhead:MouseCallback(mouseButton,state,mods)
 	if(util.is_valid(self.m_timeline) and mouseButton == input.MOUSE_BUTTON_LEFT) then
-		if(state == input.STATE_PRESS) then
-			self:SetCursorMovementCheckEnabled(true)
-			if(util.is_valid(self.m_cbMove) == false) then
-				self.m_cbMove = self:AddCallback("OnCursorMoved",function(el,x,y)
-					local pos = self:GetParent():GetCursorPos()
-					self:SetTimeOffset(self.m_timeline:XOffsetToTimeOffset(pos.x))
-				end)
-			end
-		else
-			self:SetCursorMovementCheckEnabled(false)
-			if(util.is_valid(self.m_cbMove)) then self.m_cbMove:Remove() end
-		end
+		self:SetCursorMoveModeEnabled(state == input.STATE_PRESS)
 		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED

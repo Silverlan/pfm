@@ -19,26 +19,23 @@ function ents.PFMProject:OnRemove()
 	self:Reset()
 end
 
-function ents.PFMProject:SetProjectData(scene)
-	self.m_scene = scene
+function ents.PFMProject:SetProjectData(project)
+	self.m_project = project
 
 	local timeFrame
-	for name,node in pairs(self:GetScene():GetUDMRootNode():GetChildren()) do
-		if(node:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP or node:GetType() == udm.ELEMENT_TYPE_PFM_AUDIO_CLIP) then
-			local timeFrameClip = node:GetTimeFrame()
+	local session = project:GetSessions()[1] -- TODO: How to handle multiple sessions?
+	if(session ~= nil) then
+		for _,filmClip in ipairs(session:GetClips():GetTable()) do
+			local timeFrameClip = filmClip:GetTimeFrame()
 			timeFrame = timeFrame and timeFrame:Max(timeFrameClip) or timeFrameClip
-		else
-			pfm.log("Unsupported project root node type '" .. node:GetTypeName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
 		end
 	end
 	self.m_timeFrame = timeFrame or udm.PFMTimeFrame()
 
 	self.m_rootTrack = udm.PFMTrack()
-	for name,node in pairs(self:GetScene():GetUDMRootNode():GetChildren()) do
-		if(node:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP) then
-			self.m_rootTrack:GetFilmClipsAttr():PushBack(node)
-		elseif(node:GetType() == udm.ELEMENT_TYPE_PFM_AUDIO_CLIP) then
-			self.m_rootTrack:GetAudioClipsAttr():PushBack(node)
+	if(session ~= nil) then
+		for _,filmClip in ipairs(session:GetClips():GetTable()) do
+			self.m_rootTrack:GetFilmClipsAttr():PushBack(filmClip)
 		end
 	end
 end
@@ -52,7 +49,7 @@ function ents.PFMProject:Start()
 	self.m_entRootTrack = ent
 end
 
-function ents.PFMProject:GetScene() return self.m_scene end
+function ents.PFMProject:GetProject() return self.m_project end
 
 function ents.PFMProject:SetOffset(offset)
 	if(offset == self.m_offset) then return end

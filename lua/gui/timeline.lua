@@ -19,10 +19,26 @@ function gui.Timeline:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(128,64)
+	local onTimelineMouseEvent = function(el,mouseButton,keyState,mods)
+		if(util.is_valid(self.m_playhead) == false) then return util.EVENT_REPLY_UNHANDLED end
+		if(mouseButton == input.MOUSE_BUTTON_LEFT) then
+			if(keyState == input.STATE_PRESS) then
+				local pos = self:GetCursorPos()
+				local timeOffset = self:XOffsetToTimeOffset(pos.x)
+				self.m_playhead:SetTimeOffset(timeOffset)
+			end
+			self.m_playhead:SetCursorMoveModeEnabled(keyState == input.STATE_PRESS)
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
 	self.m_timelineStripUpper = gui.create("WILabelledTimelineStrip",self,0,0,self:GetWidth(),16,0,0,1,0)
+	self.m_timelineStripUpper:SetMouseInputEnabled(true)
+	self.m_timelineStripUpper:AddCallback("OnMouseEvent",onTimelineMouseEvent)
 
 	self.m_timelineStripLower = gui.create("WILabelledTimelineStrip",self,0,self:GetBottom() -16,self:GetWidth(),16,0,1,1,1)
 	self.m_timelineStripLower:SetFlipped(true)
+	self.m_timelineStripLower:SetMouseInputEnabled(true)
+	self.m_timelineStripLower:AddCallback("OnMouseEvent",onTimelineMouseEvent)
 	self.m_contentsScroll = gui.create("WIScrollContainer",self,
 		0,self.m_timelineStripUpper:GetBottom(),
 		self:GetWidth(),self.m_timelineStripLower:GetTop() -self.m_timelineStripUpper:GetBottom(),
@@ -32,6 +48,7 @@ function gui.Timeline:OnInitialize()
 	self.m_playhead = gui.create("WIPlayhead",self)
 	self.m_playhead:SetHeight(self:GetHeight())
 	self.m_playhead:GetTimeOffsetProperty():AddCallback(function()
+		print("Time offset changed: " .. self.m_playhead:GetTimeOffset())
 		self:OnTimelinePropertiesChanged()
 	end)
 	self.m_playhead:LinkToTimeline(self)
@@ -84,7 +101,7 @@ function gui.Timeline:AddTimelineItem(el,timeFrame)
 	if(util.is_valid(self.m_contents) == false) then return end
 	local elWrapper = el:Wrap("WITimelineItem")
 	if(elWrapper == nil) then return end
-	elWrapper:LinkToTimeline(self,timeFrame)
+	elWrapper:LinkToTimeline(self,timeFrame,el)
 	return elWrapper
 end
 function gui.Timeline:AddTrackGroup(groupName)
@@ -168,7 +185,7 @@ function gui.Timeline:XOffsetToTimeOffset(x)
 	x = x /self:GetStridePerUnit() *self:GetZoomLevelMultiplier()
 	return x +self:GetStartOffset()
 end
-function gui.Timeline:Update()
+function gui.Timeline:OnUpdate()
 	if(util.is_valid(self.m_timelineStripUpper)) then self.m_timelineStripUpper:Update() end
 	if(util.is_valid(self.m_timelineStripLower)) then self.m_timelineStripLower:Update() end
 	self:CallCallbacks("OnTimelineUpdate")
@@ -184,21 +201,27 @@ end
 function gui.TimelineItem:OnRemove()
 	self:UnlinkFromTimeline()
 end
-function gui.TimelineItem:LinkToTimeline(timeline,timeFrame)
+function gui.TimelineItem:LinkToTimeline(timeline,timeFrame,el)
 	self:UnlinkFromTimeline()
+	self.m_wrappedElement = el
 	self.m_timeline = timeline
 	self.m_timeFrame = timeFrame
 	self.m_cbUpdate = timeline:AddCallback("OnTimelineUpdate",function()
-		self:Update()
+		self:ScheduleUpdate()
 	end)
-	self:Update()
+	el:ClearAnchor()
+	el:AddCallback("SetSize",function()
+		if(el:IsValid()) then self:SetSize(el:GetSize()) end
+	end)
+	self:SetHeight(el:GetHeight())
+	self:ScheduleUpdate()
 end
 function gui.TimelineItem:UnlinkFromTimeline()
 	self.m_timeline = nil
 	self.m_timeFrame = nil
 	if(util.is_valid(self.m_cbUpdate)) then self.m_cbUpdate:Remove() end
 end
-function gui.TimelineItem:Update()
+function gui.TimelineItem:OnUpdate()
 	if(util.is_valid(self.m_timeline) == false) then return end
 	local startOffset = self.m_timeFrame:GetStart()
 	local endOffset = self.m_timeFrame:GetEnd()
@@ -206,10 +229,14 @@ function gui.TimelineItem:Update()
 	local xEnd = self.m_timeline:TimeOffsetToXOffset(endOffset)
 	local w = xEnd -xStart
 
-	xStart = self.m_timeline:GetAbsolutePos().x +xStart
+	local xStartAbs = self.m_timeline:GetAbsolutePos().x +xStart
 	local pos = self:GetAbsolutePos()
-	pos.x = xStart
+	pos.x = xStartAbs
 	self:SetAbsolutePos(pos)
-	self:SetWidth(w)
+	if(util.is_valid(self.m_wrappedElement)) then self.m_wrappedElement:SetWidth(w) end
+
+	if(util.is_valid(self.m_wrappedElement)) then
+		self.m_wrappedElement:CallCallbacks("OnTimelineUpdate",self,self.m_timeline)
+	end
 end
 gui.register("WITimelineItem",gui.TimelineItem)

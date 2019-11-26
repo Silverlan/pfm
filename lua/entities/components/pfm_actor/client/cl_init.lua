@@ -8,7 +8,7 @@
 
 util.register_class("ents.PFMActorComponent",BaseEntityComponent)
 
-include("channel.lua")
+include("channel.lua") -- TODO: This is obsolete; Remove the channels!
 
 function ents.PFMActorComponent:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -44,18 +44,27 @@ function ents.PFMActorComponent:OnEntitySpawn()
 	table.insert(self.m_listeners,t:GetRotationAttr():AddChangeListener(function(newRot)
 		ent:SetPose(actorData:GetAbsolutePose())
 	end))
+	table.insert(self.m_listeners,t:GetScaleAttr():AddChangeListener(function(newScale)
+		ent:SetPose(actorData:GetAbsolutePose())
+	end))
 end
 
 function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
-	self.m_oldOffset = self.m_oldOffset or clipOffset
+	local actorData = self:GetActorData()
+	local ent = self:GetEntity()
+	ent:SetPose(actorData:GetAbsolutePose())
+	--print(ent,ent:GetPos())
+	--[[self.m_oldOffset = self.m_oldOffset or clipOffset
 	local newOffset = clipOffset
 	local tDelta = newOffset -self.m_oldOffset
 	self.m_oldOffset = newOffset
+
+	print("NEW OFFSET")
 	
 	local ent = self:GetEntity()
 	for _,channel in ipairs(self:GetChannels()) do
 		channel:Apply(ent,newOffset)
-	end
+	end]]
 end
 
 function ents.PFMActorComponent:Setup(actorData)

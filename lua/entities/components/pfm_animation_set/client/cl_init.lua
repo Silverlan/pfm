@@ -60,7 +60,6 @@ function ents.PFMAnimationSet:SetFlexController(fcId,value)
 	local fc = (mdl ~= nil) and mdl:GetFlexController(fcId) or nil -- TODO: Cache this
 	local flexC = ent:GetComponent(ents.COMPONENT_FLEX)
 	if(flexC == nil or fc == nil) then return false end
-	print(fcId,value)
 	flexC:SetFlexController(fcId,translate_flex_controller_value(fc,value))
 end
 

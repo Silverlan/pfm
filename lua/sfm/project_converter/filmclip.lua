@@ -82,9 +82,11 @@ sfm.register_element_type_conversion(sfm.FilmClip,udm.PFMFilmClip,function(conve
 		-- In this case we'll just add the camera manually here.
 		-- pfm.log("Camera '" .. camName .. "' of clip '" .. pfmFilmClip:GetName() .. "' not found in list of actors! Adding manually...",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 
-		local actor = converter:CreateActor(cam)
-		pfmFilmClip:SetProperty("camera",actor)
-		pfmFilmClip:GetActorsAttr():PushBack(actor)
+		local actor,isNewActor = converter:CreateActor(cam)
+		pfmFilmClip:SetProperty("camera",udm.create_reference(actor))
+		if(isNewActor == true) then -- This is a new actor we didn't know about yet
+			pfmFilmClip:GetActorsAttr():PushBack(actor)
+		end
 	end
 
 	local trackGroups = {}

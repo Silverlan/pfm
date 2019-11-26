@@ -12,6 +12,9 @@ sfm.register_element_type("Dag")
 sfm.link_dmx_type("DmeDag",sfm.Dag)
 
 sfm.BaseElement.RegisterProperty(sfm.Dag,"transform",sfm.Transform)
+sfm.BaseElement.RegisterProperty(sfm.Dag,"overrideParent")
+sfm.BaseElement.RegisterAttribute(sfm.Dag,"overridePos")
+sfm.BaseElement.RegisterAttribute(sfm.Dag,"overrideRot")
 
 function sfm.Dag:Initialize()
 	self.m_children = {}

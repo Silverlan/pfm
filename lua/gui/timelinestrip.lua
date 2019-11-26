@@ -72,6 +72,7 @@ function gui.TimelineStrip:GetStrideX()
 	return strideX /w
 end
 function gui.TimelineStrip:SetZoomLevel(zoomLevel)
+	print("SetZoomLevel: ",zoomLevel)
 	zoomLevel = math.clamp(zoomLevel,-3,3)
 	self.m_zoomLevel:Set(zoomLevel)
 end
@@ -116,15 +117,15 @@ function gui.LabelledTimelineStrip:OnInitialize()
 
 	self:SetFlipped(false)
 end
+function gui.LabelledTimelineStrip:OnSizeChanged(w,h)
+	self:ScheduleUpdate()
+end
 function gui.LabelledTimelineStrip:SetFlipped(flipped)
 	self.m_flipped = flipped
 	if(util.is_valid(self.m_strip)) then
 		self.m_strip:SetFlipped(flipped)
-		if(flipped) then
-			self.m_strip:SetY(0)
-		else
-			self.m_strip:SetY(self:GetHeight() -self.m_strip:GetHeight())
-		end
+		if(flipped) then self.m_strip:SetY(0)
+		else self.m_strip:SetY(self:GetHeight() -self.m_strip:GetHeight()) end
 	end
 	for _,el in ipairs(self.m_textElements) do
 		if(el:IsValid()) then
@@ -177,10 +178,10 @@ function gui.LabelledTimelineStrip:TimeOffsetToXOffset(timeInSeconds)
 	return timeInSeconds *self:GetStridePerUnit()
 end
 function gui.LabelledTimelineStrip:XOffsetToTimeOffset(x)
-	x = x /self:GetStridePerUnit()
-	return x +self:GetStartOffset()
+	if(util.is_valid(self.m_strip) == false) then return 0.0 end
+	return self.m_strip:XOffsetToTimeOffset(x)
 end
-function gui.LabelledTimelineStrip:Update()
+function gui.LabelledTimelineStrip:OnUpdate()
 	if(util.is_valid(self.m_strip) == false) then return end
 	local stridePerUnit = self:GetStridePerUnit()
 	if(stridePerUnit == 0.0) then
@@ -190,7 +191,7 @@ function gui.LabelledTimelineStrip:Update()
 	-- just add a stride to its width
 	self.m_strip:SetWidth(self:GetWidth() +stridePerUnit *2)
 
-	local numTextElements = math.ceil(self:GetWidth() /stridePerUnit)
+	local numTextElements = math.ceil(self:GetWidth() /stridePerUnit) +1
 	local multiplier = self:GetZoomLevelMultiplier()
 	local startOffset = self:GetStartOffset() /multiplier
 	local startIndex = math.floor(startOffset)

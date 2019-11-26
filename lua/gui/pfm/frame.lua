@@ -32,7 +32,6 @@ function gui.PFMFrame:OnInitialize()
 
 	self.m_contents = gui.create("WIBase",self,0,28,self:GetWidth(),self:GetHeight() -28,0,0,1,1)
 	self.m_tabButtons = {}
-	self.m_tabPanels = {}
 	self.m_tabButtonContainer = gui.create("WIHBox",self)
 	self.m_tabButtonContainer:SetHeight(28)
 
@@ -40,15 +39,12 @@ function gui.PFMFrame:OnInitialize()
 end
 function gui.PFMFrame:SetActiveTab(tabId)
 	if(util.is_valid(self.m_activeTabButton)) then self.m_activeTabButton:SetActive(false) end
-	if(util.is_valid(self.m_activeTabPanel)) then self.m_activeTabPanel:SetVisible(false) end
 
 	local bt = self.m_tabButtons[tabId]
-	local panel = self.m_tabPanels[tabId]
 	if(util.is_valid(bt)) then bt:SetActive(true) end
-	if(util.is_valid(panel)) then panel:SetVisible(true) end
 
 	self.m_activeTabButton = bt
-	self.m_activeTabPanel = panel
+	self.m_activeTabPanel = bt:GetContents()
 end
 function gui.PFMFrame:AddTab(name,panel)
 	if(util.is_valid(self.m_contents) == false or util.is_valid(self.m_tabButtonContainer) == false) then
@@ -65,9 +61,9 @@ function gui.PFMFrame:AddTab(name,panel)
 	panel:SetPos(0,0)
 	panel:SetSize(self.m_contents:GetWidth(),self.m_contents:GetHeight())
 	panel:SetAnchor(0,0,1,1)
-	panel:SetVisible(false)
+
+	bt:SetContents(panel)
 	table.insert(self.m_tabButtons,bt)
-	table.insert(self.m_tabPanels,panel)
 end
 function gui.PFMFrame:OnUpdate()
 	if(self.m_activeTabButton == nil) then self:SetActiveTab(1) end

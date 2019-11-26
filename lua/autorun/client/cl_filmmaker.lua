@@ -21,7 +21,7 @@ tool.close_filmmaker = function()
 end
 tool.get_filmmaker = function() return pEditor end
 tool.is_filmmaker_open = function() return util.is_valid(pEditor) end
-tool.open_filmmaker = function(projectFilePath)
+tool.open_filmmaker = function()
 	include("/gui/editors/filmmaker/filmmaker.lua")
 	tool.close_editor()
 	pEditor = gui.create("WIFilmmaker")
@@ -33,11 +33,8 @@ tool.open_filmmaker = function(projectFilePath)
 end
 
 console.register_command("pfm",function(pl,...)
-	if(tool.is_filmmaker_open()) then
-		tool.close_filmmaker()
-		return
-	end
 	local logCategories = 0
+	local reload = false
 	for cmd,args in pairs(console.parse_command_arguments({...})) do
 		if(cmd == "log") then
 			for _,catName in ipairs(args) do
@@ -51,14 +48,30 @@ console.register_command("pfm",function(pl,...)
 					console.print_warning("Unknown pfm log category '" .. catName .. "'! Ignoring...")
 				end
 			end
-		end
+		elseif(cmd == "reload") then reload = true end
 	end
 	pfm.set_enabled_log_categories(logCategories)
 
+	if(tool.is_filmmaker_open()) then
+		if(reload) then
+			-- Fast way of reloading the editor without having to reload the project as well.
+			-- Mainly used for developing and testing the interface.
+			local pfm = tool.get_filmmaker()
+			local project = pfm:GetProject()
+			pfm:Close()
+			pfm = tool.open_filmmaker()
+			pfm:InitializeProject(project)
+			return
+		end
+		tool.close_filmmaker()
+		return
+	end
+
 	-- TODO: This code should only be enabled during development/testing!
 	-- Remove it for the public release!
-	console.run("cl_render_shadow_resolution 256")
+	console.run("cl_render_shadow_resolution 2048")
 	console.run("cl_render_occlusion_culling 0")
+	console.run("render_clear_scene 1")
 
 	local ent = ents.find_by_name("pfm_light_demo")[1]
 	if(util.is_valid(ent) == false) then

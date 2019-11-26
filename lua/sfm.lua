@@ -43,8 +43,40 @@ sfm.convert_source_transform_position_to_pragma = function(pos)
 	return sfm.convert_source_position_to_pragma(pos)
 end
 
-local rot90Yaw = EulerAngles(0,90,0):ToQuaternion()
 sfm.convert_source_transform_rotation_to_pragma = function(rot)
+	rot = Quaternion(rot.w,rot.y,rot.z,rot.x)
+	return rot
+end
+
+sfm.convert_source_transform_rotation_to_pragma_special = function(actor,rot)
+	local specialActors = {
+		["hat_kid_smug_dance_GameModel"] = true,
+		["hat_kid_base_hat1"] = true,
+		["skydome_realistic_v5_GameModel"] = true,
+		["hat_kid_base_hat1"] = true,
+		["hat_kid_smug_dance1"] = true,
+		["bow_kid_GameModel"] = true,
+		["mustache_girl_GameModel"] = true,
+		["mafia_dude_GameModel"] = true,
+		["mafia_dude2"] = true,
+		["seal_GameModel"] = true,
+		["captain_walrus_GameModel"] = true,
+		["seal2"] = true,
+		["snatcher_GameModel"] = true,
+		["cuddle_team_leader_GameModel"] = true,
+		["jonesy_GameModel"] = true
+	}
+	if(actor ~= nil) then
+		if(actor:GetName() == "skydome_realistic_v5_GameModel") then return EulerAngles(180,0,0):ToQuaternion() *rot end
+		if(specialActors[actor:GetName()] == true) then
+			return sfm.convert_source_transform_rotation_to_pragma(rot)
+		end
+	end
+	return sfm.convert_source_transform_rotation_to_pragma2(rot)
+end
+
+local rot90Yaw = EulerAngles(0,90,0):ToQuaternion()
+sfm.convert_source_transform_rotation_to_pragma2 = function(rot)
 	rot = rot90Yaw *Quaternion(rot.w,rot.y,rot.z,rot.x)
 	return rot
 end

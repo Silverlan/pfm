@@ -20,7 +20,6 @@ local function log_sfm_project_debug_info(project)
 	local numAnimationSets = 0
 	for _,session in ipairs(project:GetSessions()) do
 		numSessions = numSessions +1
-		print("SESSION: ",util.get_type_name(session))
 		for _,clipSet in ipairs({session:GetClipBin(),session:GetMiscBin()}) do
 			for _,clip in ipairs(clipSet) do
 				numClips = numClips +1
@@ -66,9 +65,9 @@ local function log_pfm_project_debug_info(project)
 			end
 		end
 	end
-	for name,node in pairs(project:GetUDMRootNode():GetChildren()) do
-		if(node:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP) then
-			iterate_film_clip(node)
+	for _,session in ipairs(project:GetSessions()) do
+		for _,clip in ipairs(session:GetClips():GetTable()) do
+			iterate_film_clip(clip)
 		end
 	end
 	pfm.log("---------------------------------------",pfm.LOG_CATEGORY_PFM_CONVERTER)
@@ -106,15 +105,8 @@ end
 function sfm.ProjectConverter:GetSFMProject() return self.m_sfmProject end
 function sfm.ProjectConverter:GetPFMProject() return self.m_pfmProject end
 function sfm.ProjectConverter:ConvertSession(sfmSession)
-	for _,clipSet in ipairs({sfmSession:GetClipBin(),sfmSession:GetMiscBin()}) do
-		for _,clip in ipairs(clipSet) do
-			if(clip:GetType() == "DmeFilmClip") then
-				self.m_pfmProject:AddFilmClip(self:ConvertNewElement(clip))
-			else
-				pfm.log("Unsupported clip type '" .. clip:GetType() .. "'! Skipping...",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
-			end
-		end
-	end
+	local pfmSession = self:ConvertNewElement(sfmSession)
+	self.m_pfmProject:AddSession(pfmSession)
 end
 function sfm.ProjectConverter:GetPFMActor(pfmComponent)
 	return self.m_sfmObjectToPfmActor[pfmComponent]
@@ -125,7 +117,7 @@ end
 function sfm.ProjectConverter:CreateActor(sfmComponent)
 	local pfmComponent = self:ConvertNewElement(sfmComponent)
 	local actor = self:GetPFMActor(pfmComponent) -- Check if this component has already been associated with an actor
-	if(actor ~= nil) then return actor end
+	if(actor ~= nil) then return actor,false end
 	actor = udm.create_element(udm.ELEMENT_TYPE_PFM_ACTOR)
 	actor:SetName(pfmComponent:GetName()) -- TODO: Remove suffix (e.g. _model)
 
@@ -133,10 +125,9 @@ function sfm.ProjectConverter:CreateActor(sfmComponent)
 	if(sfmComponent:GetType() == "DmeCamera") then transformType = sfm.ProjectConverter.TRANSFORM_TYPE_ALT end
 
 	actor:SetTransformAttr(self:ConvertNewElement(sfmComponent:GetTransform(),transformType))
-	print("CREATING ACTOR WITH ROTATION ",actor:GetName(),actor:GetTransform():GetRotation())
 	actor:AddComponent(pfmComponent)
 	self:CachePFMActor(pfmComponent,actor)
-	return actor
+	return actor,true
 end
 function sfm.ProjectConverter:GetPFMElement(element)
 	return self.m_sfmElementToPfmElement[element]
@@ -161,10 +152,12 @@ local function convert_bone_transforms(filmClip,processedObjects,mdlMsgCache)
 						mdlMsgCache[mdlName] = true
 						pfm.log("Unable to load model '" .. mdlName .. "'! Bone transforms for this model will be incorrect!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 					end
-					for boneId,t in ipairs(component:GetBones():GetTable()) do
+					for boneId,bone in ipairs(component:GetBoneList():GetTable()) do
+						bone = bone:GetTarget()
 						-- TODO: I'm not sure if the index actually corresponds to the bone id, keep this under observation
 						local isRootBone = (mdl ~= nil) and mdl:IsRootBone(boneId -1) or false
 
+						local t = bone:GetTransform()
 						local pos = t:GetPosition():Copy()
 						local rot = t:GetRotation():Copy()
 						pos = sfm.convert_source_anim_set_position_to_pragma(pos)
@@ -197,14 +190,19 @@ local function apply_post_processing(project,filmClip,processedObjects)
 					local isPosTransform = (toAttr == "position")
 					local isRotTransform = (toAttr == "rotation")
 					if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_TRANSFORM and (isPosTransform or isRotTransform)) then
-						-- Bone transforms require a special conversion, so we need to determine whether this log layer refers to a bone.
-						-- We do so by going backwards through the hierarchy and checking if the layer is part of the bones array of a model.
-						local boneArray = toElement and (toElement:GetType() == udm.ELEMENT_TYPE_TRANSFORM) and toElement:FindParent(function(p) return p:GetType() == udm.ELEMENT_TYPE_ARRAY and p:GetName() == "bones" end) or nil
-						local pfmModel = boneArray and boneArray:FindParent(function(p) return p:GetType() == udm.ELEMENT_TYPE_PFM_MODEL end) or nil
-						local isBoneTransform = (pfmModel ~= nil)
-
+						local isBoneTransform = false
+						local pfmModel
+						local pfmBone
+						if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_TRANSFORM) then
+							local parent = toElement:FindParentElement()
+							if(parent ~= nil and parent:GetType() == udm.ELEMENT_TYPE_PFM_BONE) then
+								pfmBone = parent
+								pfmModel = parent:GetModelComponent()
+								isBoneTransform = (pfmModel ~= nil)
+							end
+						end
 						if(isBoneTransform) then
-							local boneName = toElement:GetName()
+							local boneName = pfmBone:GetName()
 							local mdlName = pfmModel:GetModelName()
 							local mdl = game.load_model(mdlName)
 							local boneId = mdl and mdl:LookupBone(boneName) or -1
@@ -237,15 +235,37 @@ local function apply_post_processing(project,filmClip,processedObjects)
 								end
 							end
 						else
+							local actor = toElement and toElement:FindParent(function(p) return p:GetType() == udm.ELEMENT_TYPE_PFM_ACTOR end) or nil
+							local isCamera = false
+							if(actor ~= nil) then
+								for _,component in ipairs(actor:GetComponents():GetTable()) do
+									if(component:GetType() == udm.ELEMENT_TYPE_PFM_CAMERA) then
+										isCamera = true
+										break
+									end
+								end
+							end
+
 							local log = channel:GetLog()
 							for _,layer in ipairs(log:GetLayers():GetTable()) do
 								if(processedObjects[layer] == nil) then
 									processedObjects[layer] = true
 									for _,value in ipairs(layer:GetValues():GetTable()) do
-										if(isPosTransform) then
-											value:Set(sfm.convert_source_transform_position_to_pragma(value))
+										-- TODO: Note: These conversions have been confirmed to work with
+										-- the skydome test session, but it's unclear if they work
+										-- in all cases! Keep it under observation!
+										if(isCamera) then
+											if(isPosTransform) then
+												value:Set(sfm.convert_source_transform_position_to_pragma(value))
+											else
+												value:Set(sfm.convert_source_transform_rotation_to_pragma2(value))
+											end
 										else
-											value:Set(sfm.convert_source_transform_rotation_to_pragma(value))
+											if(isPosTransform) then
+												value:Set(sfm.convert_source_transform_position_to_pragma(value))
+											else
+												value:Set(sfm.convert_source_transform_rotation_to_pragma_special(actor,value))
+											end
 										end
 									end
 								end
@@ -261,10 +281,34 @@ local function apply_post_processing(project,filmClip,processedObjects)
 	end
 end
 function sfm.ProjectConverter:ApplyPostProcessing()
+	local function iterate_session(el,type,callback,iterated)
+		iterated = iterated or {}
+		for name,child in pairs(el:GetChildren()) do
+			if(child:IsElement() and iterated[child] == nil) then
+				iterated[child] = true
+				iterate_session(child,type,callback,iterated)
+			end
+			if(child:GetType() == type) then callback(child) end
+		end
+	end
+
 	local project = self:GetPFMProject()
-	for name,node in pairs(project:GetUDMRootNode():GetChildren()) do
-		if(node:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP) then
-			apply_post_processing(project,node)
+	for _,session in ipairs(project:GetSessions()) do
+		iterate_session(session,udm.ELEMENT_TYPE_TRANSFORM,function(elTransform)
+			-- The "overrideParent" attribute of some transforms may be pointing to an actor component, but
+			-- we want it to point to the actor instead.
+			local overrideParent = elTransform:GetOverrideParent()
+			if(overrideParent ~= nil) then
+				local type = overrideParent:GetType()
+				if(type == udm.ELEMENT_TYPE_PFM_MODEL or type == udm.ELEMENT_TYPE_PFM_CAMERA or type == udm.ELEMENT_TYPE_PFM_SPOT_LIGHT) then
+					local overrideParentActor = overrideParent:FindParentElement()
+					elTransform:SetOverrideParent((overrideParentActor ~= nil) and udm.create_reference(overrideParentActor) or nil)
+				end
+			end
+		end)
+
+		for _,filmClip in ipairs(session:GetClips():GetTable()) do
+			apply_post_processing(project,filmClip)
 		end
 	end
 end
@@ -305,21 +349,40 @@ end
 
 function sfm.ProjectConverter:ConvertNewElement(sfmElement,...)
 	if(self.m_sfmElementToPfmElement[sfmElement] ~= nil) then
-		return self.m_sfmElementToPfmElement[sfmElement] -- Return cached element
+		return self.m_sfmElementToPfmElement[sfmElement],false -- Return cached element
 	end
 	local data = sfm.get_pfm_conversion_data(util.get_type_name(sfmElement))
 	if(data == nil) then
 		pfm.error("No PFM conversion function exists for SFM element of type '" .. util.get_type_name(sfmElement) .. "'!")
 	end
-	local pfmElement = data[2]()
+	local pfmType = data[2]
+	if(type(pfmType) == "function") then
+		pfmType = pfmType(self,sfmElement)
+	end
+	local pfmElement = pfmType()
 	pfmElement:SetName(sfmElement:GetName())
 	self:ConvertElement(sfmElement,pfmElement,...)
-	return pfmElement
+	return pfmElement,true
 end
 
 ----------------------
 
 include("project_converter")
+
+sfm.register_element_type_conversion(sfm.Session,udm.PFMSession,function(converter,sfmSession,pfmSession)
+	local activeClip = sfmSession:GetActiveClip()
+	pfmSession:SetActiveClip(converter:ConvertNewElement(activeClip))
+
+	for _,clipSet in ipairs({sfmSession:GetClipBin(),sfmSession:GetMiscBin()}) do
+		for _,clip in ipairs(clipSet) do
+			if(clip:GetType() == "DmeFilmClip") then
+				pfmSession:GetClipsAttr():PushBack(converter:ConvertNewElement(clip))
+			else
+				pfm.log("Unsupported session clip type '" .. clip:GetType() .. "'! Skipping...",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+			end
+		end
+	end
+end)
 
 sfm.register_element_type_conversion(sfm.Color,udm.Color,function(converter,sfmColor,pfmColor)
 	pfmColor:SetValue(sfmColor:GetColor())
@@ -432,17 +495,31 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 	pfmGameModel:SetModelName(mdlName)
 	pfmGameModel:SetSkin(sfmGameModel:GetSkin())
 
-	for _,node in ipairs(sfmGameModel:GetBones()) do
-		local name = string.remove_whitespace(node:GetName()) -- Format: "name (boneName)"
-		local boneNameStart = name:find("%(")
-		local boneNameEnd = name:match('.*()' .. "%)") -- Reverse find
-		if(boneNameStart ~= nil and boneNameEnd ~= nil) then
-			local boneName = name:sub(boneNameStart +1,boneNameEnd -1)
-			local t = converter:ConvertNewElement(node,sfm.ProjectConverter.TRANSFORM_TYPE_NONE)
-			t:SetName(boneName)
+	local transformToBone = {}
+	local function add_child_bones(sfmElement,parent)
+		for _,child in ipairs(sfmElement:GetChildren()) do
+			local bone = converter:ConvertNewElement(child)
 
-			pfmGameModel:GetBonesAttr():PushBack(t)
+			local name = string.remove_whitespace(child:GetName()) -- Format: "name (boneName)"
+			local boneNameStart = name:find("%(")
+			local boneNameEnd = name:match('.*()' .. "%)") -- Reverse find
+			if(boneNameStart ~= nil and boneNameEnd ~= nil) then
+				local boneName = name:sub(boneNameStart +1,boneNameEnd -1)
+				bone:SetName(boneName)
+			else pfm.log("Invalid format for bone name '" .. name .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING) end
+
+			if(parent:GetType() == udm.ELEMENT_TYPE_PFM_MODEL) then parent:GetRootBonesAttr():PushBack(bone)
+			else parent:AddChild(bone) end
+
+			transformToBone[child:GetTransform()] = bone
+			add_child_bones(child,bone)
 		end
+	end
+	add_child_bones(sfmGameModel,pfmGameModel)
+
+	for _,node in ipairs(sfmGameModel:GetBones()) do
+		local pfmBone = transformToBone[node]
+		pfmGameModel:GetBoneListAttr():PushBack(udm.create_reference(pfmBone))
 	end
 
 	for _,weight in ipairs(sfmGameModel:GetFlexWeights()) do
@@ -460,7 +537,7 @@ end)
 
 sfm.register_element_type_conversion(sfm.GlobalFlexControllerOperator,udm.PFMGlobalFlexControllerOperator,function(converter,sfmOp,pfmOp)
 	pfmOp:SetFlexWeight(sfmOp:GetFlexWeight())
-	pfmOp:SetGameModelAttr(converter:ConvertNewElement(sfmOp:GetGameModel()))
+	pfmOp:SetGameModelAttr(udm.create_reference(converter:ConvertNewElement(sfmOp:GetGameModel())))
 end)
 
 sfm.register_element_type_conversion(sfm.Channel,udm.PFMChannel,function(converter,sfmChannel,pfmChannel)
@@ -476,7 +553,7 @@ sfm.register_element_type_conversion(sfm.Channel,udm.PFMChannel,function(convert
 		-- pfm.log("Unsupported 'to'-element for channel '" .. sfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 	else
 		local pfmElement = converter:ConvertNewElement(toElement)
-		pfmChannel:SetToElementAttr(pfmElement)
+		pfmChannel:SetToElementAttr(udm.create_reference(pfmElement))
 		if(pfmElement:GetChild(toAttr) == nil) then
 			pfm.log("Invalid to-attribute '" .. toAttr .. "' of element '" .. pfmElement:GetName() .. "' used for channel '" .. pfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 		end
@@ -511,17 +588,62 @@ sfm.register_element_type_conversion(sfm.Log,udm.PFMLog,function(converter,sfmLo
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.Dag,udm.PFMGroup,function(converter,sfmDag,pfmDag)
-	pfmDag:SetTransformAttr(converter:ConvertNewElement(sfmDag:GetTransform(),sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL))
-	for _,child in ipairs(sfmDag:GetChildren()) do
-		local type = child:GetType()
-		if(type == "DmeGameModel" or type == "DmeCamera" or type == "DmeProjectedLight") then
-			local actor = converter:CreateActor(child)
-			pfmDag:AddChild(actor)
-		else
-			local pfmElement = converter:ConvertNewElement(child)
-			pfmDag:AddChild(pfmElement)
+local function is_sfm_bone(el)
+	for _,parent in ipairs(el:GetParents()) do
+		local type = parent:GetType()
+		if(type == "DmeGameModel" or (type == "DmeDag" and is_sfm_bone(parent))) then
+			return true -- Element is a child of a DmeGameModel, which means it must be a bone
 		end
+	end
+	return false
+end
+
+local function apply_override_parent(converter,sfmEl,pfmEl)
+	local overrideParent = sfmEl:GetOverrideParent()
+	if(overrideParent == nil) then return end
+	local pos = sfmEl:GetOverridePos() or false
+	local rot = sfmEl:GetOverrideRot() or false
+	local transform = pfmEl:GetTransform()
+	transform:SetOverridePos(pos)
+	transform:SetOverrideRot(rot)
+	local pfmOverrideParent,isNewElement = converter:ConvertNewElement(overrideParent)
+	-- Override parent is probably a game model, we'll just turn it into a reference.
+	-- We'll turn it into a reference to the actor in post-processing.
+	pfmOverrideParent = udm.create_reference(pfmOverrideParent)
+	transform:SetOverrideParentAttr(pfmOverrideParent)
+end
+
+sfm.register_element_type_conversion(sfm.Dag,function(converter,sfmDag)
+	if(is_sfm_bone(sfmDag)) then return udm.PFMBone end
+	return udm.PFMGroup
+end,function(converter,sfmDag,pfmEl)
+	if(pfmEl:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then
+		local pfmDag = pfmEl
+		pfmDag:SetTransformAttr(converter:ConvertNewElement(sfmDag:GetTransform(),sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL))
+		apply_override_parent(converter,sfmDag,pfmDag)
+		for _,child in ipairs(sfmDag:GetChildren()) do
+			local type = child:GetType()
+
+			if(type == "DmeGameModel" or type == "DmeCamera" or type == "DmeProjectedLight") then
+				local actor = converter:CreateActor(child)
+				pfmDag:AddChild(udm.create_reference(actor))
+
+				apply_override_parent(converter,child,actor)
+			else
+				local pfmElement = converter:ConvertNewElement(child)
+				pfmDag:AddChild(udm.create_reference(pfmElement))
+
+				apply_override_parent(converter,child,pfmElement)
+			end
+
+
+		end
+		return
+	end
+	pfmEl:SetTransformAttr(converter:ConvertNewElement(sfmDag:GetTransform(),sfm.ProjectConverter.TRANSFORM_TYPE_NONE))
+	apply_override_parent(converter,sfmDag,pfmEl)
+	for _,child in ipairs(sfmDag:GetChildren()) do
+		pfmEl:GetChildBones():PushBack(converter:ConvertNewElement(child))
 	end
 end)
 
@@ -538,11 +660,11 @@ sfm.register_element_type_conversion(sfm.MaterialOverlayFXClip,udm.PFMMaterialOv
 end)
 
 sfm.register_element_type_conversion(sfm.ProjectedLight,udm.PFMSpotLight,function(converter,sfmLight,pfmLight)
-	-- TODO
-	pfmLight:SetColor(Color.Red)--sfmLight:GetColor())
-	pfmLight:SetIntensity(2000.0)--sfmLight:GetIntensity())
+	pfmLight:SetColor(sfmLight:GetColor())
+	pfmLight:SetIntensity(sfmLight:GetIntensity())
 	pfmLight:SetIntensityType(ents.LightComponent.INTENSITY_TYPE_CANDELA)
 	pfmLight:SetFalloffExponent(1.0)
+	pfmLight:SetMaxDistance(sfmLight:GetMaxDistance())
 end)
 
 sfm.register_element_type_conversion(sfm.ChannelClip,udm.PFMChannelClip,function(converter,sfmChannelClip,pfmChannelClip)
@@ -584,9 +706,12 @@ sfm.register_element_type_conversion(sfm.Transform,udm.Transform,function(conver
 		pfmTransform:SetRotation(sfm.convert_source_anim_set_rotation_to_pragma(sfmTransform:GetOrientation()))
 	elseif(type == sfm.ProjectConverter.TRANSFORM_TYPE_ALT) then
 		pfmTransform:SetPosition(sfm.convert_source_transform_position_to_pragma(sfmTransform:GetPosition()))
-		pfmTransform:SetRotation(sfm.convert_source_transform_rotation_to_pragma(sfmTransform:GetOrientation()))
+		pfmTransform:SetRotation(sfm.convert_source_transform_rotation_to_pragma2(sfmTransform:GetOrientation()))
 	else
 		pfmTransform:SetPosition(sfmTransform:GetPosition())
 		pfmTransform:SetRotation(sfmTransform:GetOrientation())
 	end
+
+	local scale = sfmTransform:GetScale()
+	pfmTransform:SetScale(Vector(scale,scale,scale))
 end)

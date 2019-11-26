@@ -14,12 +14,14 @@ include("/gui/vbox.lua")
 include("/gui/hbox.lua")
 include("/gui/resizer.lua")
 include("/gui/filmstrip.lua")
+include("/gui/genericclip.lua")
 include("/gui/witabbedpanel.lua")
 include("/gui/editors/wieditorwindow.lua")
 include("/gui/pfm/frame.lua")
 include("/gui/pfm/viewport.lua")
 include("/gui/pfm/timeline.lua")
 include("/gui/pfm/elementviewer.lua")
+include("/gui/pfm/renderpreview.lua")
 
 locale.load("pfm_user_interface.txt")
 
@@ -28,11 +30,6 @@ include("video_recorder.lua")
 
 include_component("pfm_camera")
 include_component("pfm_sound_source")
-
-gui.WIFilmmaker.CAMERA_MODE_PLAYBACK = 0
-gui.WIFilmmaker.CAMERA_MODE_FLY = 1
-gui.WIFilmmaker.CAMERA_MODE_WALK = 2
-gui.WIFilmmaker.CAMERA_MODE_COUNT = 3
 
 function gui.WIFilmmaker:__init()
 	gui.WIBaseEditor.__init(self)
@@ -149,39 +146,6 @@ function gui.WIFilmmaker:OnInitialize()
 	raytracingProgressBar:SetVisible(false)
 	raytracingProgressBar:SetAnchor(0,0,1,1)
 	self.m_raytracingProgressBar = raytracingProgressBar
-	
-	-- This controls the behavior that allows controlling the camera while holding the right mouse button down
-	self.m_cbClickMouseInput = input.add_callback("OnMouseInput",function(mouseButton,state,mods)
-		if(mouseButton ~= input.MOUSE_BUTTON_LEFT and mouseButton ~= input.MOUSE_BUTTON_RIGHT) then return util.EVENT_REPLY_UNHANDLED end
-		if(state ~= input.STATE_PRESS and state ~= input.STATE_RELEASE) then return util.EVENT_REPLY_UNHANDLED end
-
-		local pFrame = self
-		if(self.m_inCameraControlMode and mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE and pFrame:IsValid() and pFrame:HasFocus() == false) then
-			pFrame:TrapFocus(true)
-			pFrame:RequestFocus()
-			input.set_cursor_pos(self.m_oldCursorPos)
-			self.m_inCameraControlMode = false
-			return util.EVENT_REPLY_HANDLED
-		end
-
-		local el = gui.get_element_under_cursor()
-		if(util.is_valid(el) and (el == self or el == gui.get_base_element())) then
-			local action
-			if(mouseButton == input.MOUSE_BUTTON_LEFT) then action = input.ACTION_ATTACK
-			else action = input.ACTION_ATTACK2 end
-
-			local pFrame = self
-			if(mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-				self.m_oldCursorPos = input.get_cursor_pos()
-				input.center_cursor()
-				pFrame:TrapFocus(false)
-				pFrame:KillFocus()
-				self.m_inCameraControlMode = true
-			end
-			return util.EVENT_REPLY_HANDLED
-		end
-		return util.EVENT_REPLY_UNHANDLED
-	end)
 
 	self.m_previewWindow = gui.PFMRenderPreviewWindow(self)
 	self.m_renderResultWindow = gui.PFMRenderResultWindow(self)
@@ -195,7 +159,6 @@ function gui.WIFilmmaker:OnInitialize()
 	end)]]
 
 	self:ClearProjectUI()
-	self:SetCameraMode(gui.WIFilmmaker.CAMERA_MODE_PLAYBACK)
 	self:CreateNewProject()
 end
 function gui.WIFilmmaker:OnRemove()
@@ -239,31 +202,9 @@ function gui.WIFilmmaker:OnThink()
 end
 function gui.WIFilmmaker:OnRemove()
 	self:CloseProject()
-	if(util.is_valid(self.m_cbClickMouseInput)) then self.m_cbClickMouseInput:Remove() end
 	if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
 	if(self.m_previewWindow ~= nil) then self.m_previewWindow:Remove() end
 	if(self.m_renderResultWindow ~= nil) then self.m_renderResultWindow:Remove() end
-end
-function gui.WIFilmmaker:SetCameraMode(camMode)
-	pfm.log("Changing camera mode to " .. ((camMode == gui.WIFilmmaker.CAMERA_MODE_PLAYBACK and "playback") or (camMode == gui.WIFilmmaker.CAMERA_MODE_FLY and "fly") or "walk"))
-	self.m_cameraMode = camMode
-
-	ents.PFMCamera.set_camera_enabled(camMode == gui.WIFilmmaker.CAMERA_MODE_PLAYBACK)
-
-	--[[local camGame = game.get_primary_camera()
-	local toggleC = (camGame ~= nil) and camGame:GetEntity():GetComponent(ents.COMPONENT_TOGGLE) or nil
-	if(camMode == gui.WIFilmmaker.CAMERA_MODE_FLY) then
-		if(toggleC ~= nil) then toggleC:TurnOn() end
-	elseif(camMode == gui.WIFilmmaker.CAMERA_MODE_WALK) then
-		if(toggleC ~= nil) then toggleC:TurnOn() end
-	else
-		if(toggleC ~= nil) then toggleC:TurnOff() end
-	end]]
-
-	-- We need to notify the server to change the player's movement mode (i.e. noclip/walk)
-	local packet = net.Packet()
-	packet:WriteUInt8(camMode)
-	net.send(net.PROTOCOL_SLOW_RELIABLE,"sv_pfm_camera_mode",packet)
 end
 function gui.WIFilmmaker:CaptureRaytracedImage()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
@@ -288,23 +229,32 @@ function gui.WIFilmmaker:CloseProject()
 	if(util.is_valid(self.m_gameView)) then self.m_gameView:Remove() end
 end
 function gui.WIFilmmaker:GetGameView() return self.m_gameView end
-function gui.WIFilmmaker:CreateNewProject()
-	self:CloseProject()
-	pfm.log("Creating new project...",pfm.LOG_CATEGORY_PFM)
-
+function gui.WIFilmmaker:InitializeProject(project)
+	pfm.log("Initializing PFM project...",pfm.LOG_CATEGORY_PFM)
 	local entScene = ents.create("pfm_project")
 	if(util.is_valid(entScene) == false) then
 		pfm.log("Unable to initialize PFM project: Count not create 'pfm_project' entity!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
 		return false
 	end
-	self.m_project = pfm.create_project()
+
+	self.m_project = project
 	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
 	projectC:SetProjectData(self.m_project)
 	entScene:Spawn()
 	self.m_gameView = entScene
 	projectC:Start()
-	if(util.is_valid(self.m_playbackControls)) then self.m_playbackControls:SetDuration(0.0) end
+	if(util.is_valid(self.m_playbackControls)) then
+		local timeFrame = projectC:GetTimeFrame()
+		self.m_playbackControls:SetDuration(timeFrame:GetDuration())
+		self.m_playbackControls:SetOffset(0.0)
+	end
+	self:InitializeProjectUI()
 	return entScene
+end
+function gui.WIFilmmaker:CreateNewProject()
+	self:CloseProject()
+	pfm.log("Creating new project...",pfm.LOG_CATEGORY_PFM)
+	return self:InitializeProject(pfm.create_project())
 end
 function gui.WIFilmmaker:LoadProject(projectFilePath)
 	self:CloseProject()
@@ -314,26 +264,7 @@ function gui.WIFilmmaker:LoadProject(projectFilePath)
 		pfm.log("Unable to convert SFM project '" .. projectFilePath .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 		return false
 	end
-
-	pfm.log("Initializing PFM project...",pfm.LOG_CATEGORY_PFM)
-	local entScene = ents.create("pfm_project")
-	if(util.is_valid(entScene) == false) then
-		pfm.log("Unable to initialize PFM project: Count not create 'pfm_project' entity!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
-		return false
-	end
-	self.m_project = pfmScene
-	self:InitializeProjectUI()
-	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
-	projectC:SetProjectData(pfmScene)
-	entScene:Spawn()
-	self.m_gameView = entScene
-	projectC:Start()
-	if(util.is_valid(self.m_playbackControls)) then
-		local timeFrame = projectC:GetTimeFrame()
-		self.m_playbackControls:SetDuration(timeFrame:GetDuration())
-		self.m_playbackControls:SetOffset(0.0)
-	end
-	return entScene
+	return self:InitializeProject(pfmScene)
 end
 function gui.WIFilmmaker:ClearProjectUI()
 	if(util.is_valid(self.m_contents)) then self.m_contents:Remove() end
@@ -359,13 +290,14 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	local viewport = gui.create("WIPFMViewport")
 	viewportFrame:AddTab("Primary Viewport",viewport)
 
+	local renderPreview = gui.create("WIPFMRenderPreview")
+	viewportFrame:AddTab("Render Preview",renderPreview)
+
 	gui.create("WIResizer",self.m_contentsRight)
 
 	local timelineFrame = self:AddFrame(self.m_contentsRight)
 	local pfmTimeline = gui.create("WIPFMTimeline")
 	timelineFrame:AddTab("Timeline",pfmTimeline)
-
-	-- Playhead GetTimeOffsetProperty
 
 	-- Populate UI with project data
 	local project = self:GetProject()
@@ -376,46 +308,94 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	playhead:GetTimeOffsetProperty():AddCallback(function(oldOffset,offset)
 		local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
 		if(projectC ~= nil) then projectC:SetOffset(offset) end
-		project:SetPlaybackOffset(offset)
+		local session = project:GetSessions()[1]
+		local activeClip = (session ~= nil) and session:GetActiveClip() or nil
+		if(activeClip == nil) then return end
+		activeClip:SetPlaybackOffset(offset)
+
+		if(viewport:IsValid()) then
+			viewport:SetGlobalTime(offset)
+
+			local childClip = activeClip:GetChildFilmClip(offset)
+			if(childClip ~= nil) then
+				viewport:SetLocalTime(childClip:GetTimeFrame():LocalizeOffset(offset))
+				viewport:SetFilmClipName(childClip:GetName())
+				viewport:SetFilmClipParentName(activeClip:GetName())
+			end
+		end
+	end)
+	local playButton = viewport:GetPlayButton()
+	playButton:AddCallback("OnTimeAdvance",function(el,dt)
+		if(playhead:IsValid()) then
+			playhead:SetTimeOffset(playhead:GetTimeOffset() +dt)
+		end
+	end)
+	playButton:AddCallback("OnStateChanged",function(el,oldState,state)
+		ents.PFMSoundSource.set_audio_enabled(state == gui.PFMPlayButton.STATE_PLAYING)
 	end)
 
 	-- Film strip
-	local filmClip
-	for k,v in pairs(root:GetChildren()) do
-		if(v:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP) then
-			filmClip = v
-			break
-		end
-	end
+	local session = project:GetSessions()[1]
+	local filmClip = (session ~= nil) and session:GetActiveClip() or nil
 	local filmStrip
 	if(filmClip ~= nil) then
+		local timeline = pfmTimeline:GetTimeline()
+
 		filmStrip = gui.create("WIFilmStrip")
+		filmStrip:SetScrollInputEnabled(true)
+		filmStrip:AddCallback("OnScroll",function(el,x,y)
+			if(timeline:IsValid()) then
+				timeline:SetStartOffset(timeline:GetStartOffset() -y *timeline:GetZoomLevelMultiplier())
+				timeline:Update()
+				return util.EVENT_REPLY_HANDLED
+			end
+			return util.EVENT_REPLY_UNHANDLED
+		end)
 
 		local trackGroup = filmClip:FindElementsByName("subClipTrackGroup")[1]
-		local track = trackGroup:FindElementsByName("Film")[1]
-		for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
-			filmStrip:AddFilmClip(filmClip)
+		local trackFilm = trackGroup:FindElementsByName("Film")[1]
+		if(trackFilm ~= nil) then
+			for _,filmClip in ipairs(trackFilm:GetFilmClips():GetTable()) do
+				filmStrip:AddFilmClip(filmClip)
+			end
 		end
 		filmStrip:SetSize(1024,64)
 		filmStrip:Update()
+
+		local timeFrame = filmStrip:GetTimeFrame()
+
+		local groupPicture = timeline:AddTrackGroup("Picture")
+		if(filmStrip ~= nil) then
+			for _,filmClip in ipairs(filmStrip:GetFilmClips()) do
+				timeline:AddTimelineItem(filmClip,filmClip:GetTimeFrame())
+			end
+		end
+		groupPicture:AddElement(filmStrip)
+
+		local groupSound = timeline:AddTrackGroup("Sound")
+		local trackGroupSound = filmClip:GetTrackGroups():FindElementsByName("Sound")[1]
+		if(trackGroupSound ~= nil) then
+			for _,track in ipairs(trackGroupSound:GetTracks():GetTable()) do
+				local subGroup = groupSound:AddGroup(track:GetName())
+				--timeline:AddTimelineItem(subGroup,timeFrame)
+
+				--[[for _,audioClip in ipairs(track:GetAudioClips():GetTable()) do
+					local groupClip = gui.create("WIGenericClip")
+					subGroup:AddElement(groupClip)
+					groupClip:SetText(audioClip:GetName())
+
+					timeline:AddTimelineItem(groupClip,audioClip:GetTimeFrame())
+				end]]
+			end
+			--print(util.get_type_name(trackSound))
+			--[[for _,audioClip in ipairs(trackSound:GetAudioClips():GetTable()) do
+				print("AUDIO CLIP: ",audioClip:GetName())
+			end]]
+		end
+
+		-- TODO: Same as for 'Sound'
+		local groupOverlay = timeline:AddTrackGroup("Overlay")
 	end
-
-
-	local timeline = pfmTimeline:GetTimeline()
-	local timeFrame = filmStrip:GetTimeFrame()
-	print("TIME FRAME: ",timeFrame:GetStart(),timeFrame:GetDuration())
-
-	local group = timeline:AddTrackGroup("Picture")
-	local elClips = gui.create("WIHBox")
-	for _,filmClip in ipairs(filmStrip:GetFilmClips()) do
-		local elWrapper = timeline:AddTimelineItem(filmClip,filmClip:GetTimeFrame())
-		elWrapper:SetParent(elClips)
-	end
-	group:AddElement(elClips)
-	elClips:Update()
-	elClips:SizeToContents()
-
-	group:AddElement(filmStrip)
 end
 function gui.WIFilmmaker:GetProject() return self.m_project end
 gui.register("WIFilmmaker",gui.WIFilmmaker)
