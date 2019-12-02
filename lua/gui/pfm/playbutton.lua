@@ -28,6 +28,14 @@ end
 function gui.PFMPlayButton:OnRemove()
 	if(util.is_valid(self.m_cbThink)) then self.m_cbThink:Remove() end
 end
+function gui.PFMPlayButton:SetActivated(activated)
+	if(util.is_valid(self.m_btPlay) == false) then return end
+	if(self:GetState() == gui.PFMPlayButton.STATE_PLAYING) then
+		self.m_btPlay:SetMaterial(activated and "gui/pfm/icon_cp_pause_activated" or "gui/pfm/icon_cp_pause")
+	else
+		self.m_btPlay:SetMaterial(activated and "gui/pfm/icon_cp_play_activated" or "gui/pfm/icon_cp_play")
+	end
+end
 function gui.PFMPlayButton:SetState(state)
 	if(state == self:GetState()) then return end
 	local oldState = self:GetState()
@@ -54,12 +62,12 @@ end
 function gui.PFMPlayButton:GetState() return self.m_state end
 function gui.PFMPlayButton:IsPlaying() return self.m_state == gui.PFMPlayButton.STATE_PLAYING end
 function gui.PFMPlayButton:Play()
-	local playButton = self.m_playButton
+	local playButton = self.m_btPlay
 	if(util.is_valid(playButton)) then playButton:SetMaterial("gui/pfm/playback/pause") end
 	self:SetState(gui.PFMPlayButton.STATE_PLAYING)
 end
 function gui.PFMPlayButton:Pause()
-	local playButton = self.m_playButton
+	local playButton = self.m_btPlay
 	if(util.is_valid(playButton)) then playButton:SetMaterial("gui/pfm/playback/play") end
 	self:SetState(gui.PFMPlayButton.STATE_PAUSED)
 end

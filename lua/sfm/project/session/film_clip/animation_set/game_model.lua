@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/sfm/project/float.lua")
+include("material.lua")
 
 sfm.register_element_type("GameModel")
 sfm.link_dmx_type("DmeGameModel",sfm.GameModel)
@@ -20,6 +20,7 @@ sfm.BaseElement.RegisterAttribute(sfm.GameModel,"overridePos")
 sfm.BaseElement.RegisterAttribute(sfm.GameModel,"overrideRot")
 sfm.BaseElement.RegisterAttribute(sfm.GameModel,"modelName","")
 sfm.BaseElement.RegisterAttribute(sfm.GameModel,"skin",0)
+sfm.BaseElement.RegisterAttribute(sfm.GameModel,"body",0)
 sfm.BaseElement.RegisterArray(sfm.GameModel,"children",sfm.Dag)
 sfm.BaseElement.RegisterArray(sfm.GameModel,"bones",sfm.Transform)
 sfm.BaseElement.RegisterArray(sfm.GameModel,"flexnames","",{
@@ -28,6 +29,10 @@ sfm.BaseElement.RegisterArray(sfm.GameModel,"flexnames","",{
 })
 sfm.BaseElement.RegisterArray(sfm.GameModel,"flexWeights",0.0)
 sfm.BaseElement.RegisterArray(sfm.GameModel,"globalFlexControllers",sfm.GlobalFlexControllerOperator)
+sfm.BaseElement.RegisterArray(sfm.GameModel,"materials",sfm.Material)
+sfm.BaseElement.RegisterAttribute(sfm.GameModel,"visible",false,{
+	getterName = "IsVisible"
+})
 
 function sfm.GameModel:GetPragmaModelPath()
 	local mdlName = self:GetModelName()

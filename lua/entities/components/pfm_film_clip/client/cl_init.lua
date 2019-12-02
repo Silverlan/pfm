@@ -31,6 +31,8 @@ function ents.PFMFilmClip:OnRemove()
 	for _,trackGroup in ipairs(self.m_trackGroups) do
 		if(trackGroup:IsValid()) then trackGroup:Remove() end
 	end
+
+	game.clear_unused_materials() -- Clear unused materials that may have been created through material overrides of actor model components
 end
 
 function ents.PFMFilmClip:FindActorByName(name,filter)

@@ -38,21 +38,29 @@ function ents.PFMActorComponent:OnEntitySpawn()
 	local ent = self:GetEntity()
 	ent:SetPose(actorData:GetAbsolutePose())
 	local t = actorData:GetTransform()
-	table.insert(self.m_listeners,t:GetPositionAttr():AddChangeListener(function(newPos)
-		ent:SetPose(actorData:GetAbsolutePose())
-	end))
-	table.insert(self.m_listeners,t:GetRotationAttr():AddChangeListener(function(newRot)
-		ent:SetPose(actorData:GetAbsolutePose())
-	end))
-	table.insert(self.m_listeners,t:GetScaleAttr():AddChangeListener(function(newScale)
-		ent:SetPose(actorData:GetAbsolutePose())
-	end))
+	local update_pose = function() self:UpdatePose() end
+	table.insert(self.m_listeners,t:GetPositionAttr():AddChangeListener(update_pose))
+	table.insert(self.m_listeners,t:GetRotationAttr():AddChangeListener(update_pose))
+	table.insert(self.m_listeners,t:GetScaleAttr():AddChangeListener(update_pose))
+end
+
+function ents.PFMActorComponent:UpdatePose()
+	local actorData = self:GetActorData()
+	local pose = actorData:GetAbsolutePose()
+	self:GetEntity():SetPose(pose)
 end
 
 function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
 	local actorData = self:GetActorData()
 	local ent = self:GetEntity()
-	ent:SetPose(actorData:GetAbsolutePose())
+	self:UpdatePose()
+
+	local renderMode = ents.RenderComponent.RENDERMODE_WORLD
+	if(actorData:IsAbsoluteVisible() == false) then
+		renderMode = ents.RenderComponent.RENDERMODE_NONE
+	end
+	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+	if(renderC ~= nil) then renderC:SetRenderMode(renderMode) end
 	--print(ent,ent:GetPos())
 	--[[self.m_oldOffset = self.m_oldOffset or clipOffset
 	local newOffset = clipOffset

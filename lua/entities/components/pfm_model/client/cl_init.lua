@@ -52,13 +52,13 @@ function ents.PFMModel:OnEntitySpawn()
 			end
 		end
 
-		self.m_cbOnSkeletonUpdated = animC:AddEventCallback(ents.AnimatedComponent.EVENT_ON_SKELETON_UPDATED,function()
+		--[[self.m_cbOnSkeletonUpdated = animC:AddEventCallback(ents.AnimatedComponent.EVENT_ON_SKELETON_UPDATED,function()
 			local entInvPose = ent:GetPose():GetInverse()
 			entInvPose:SetScale(Vector(1,1,1)) -- Entity scale will be applied separately
 			for _,bone in ipairs(modelData:GetRootBones():GetTable()) do
 				apply_bone_transforms(entInvPose,bone)
 			end
-		end)
+		end)]]
 		--[[self.m_cbOnSkeletonUpdated = animC:AddEventCallback(ents.AnimatedComponent.EVENT_ON_SKELETON_UPDATED,function()
 			local testPose = phys.Transform()
 			local function iterate_skeleton(bone,parentPose)
@@ -81,25 +81,23 @@ bip_ponytail01  55
 bip_ponytail02  56
 bip_ponytail03  57
 ]]
-	print("-----------",ent)
 	for _,bone in ipairs(bones) do
 		bone = bone:GetTarget()
 		local boneName = bone:GetName()
 		local boneId = mdl:LookupBone(boneName)
-		print(boneName,boneId)
 		if(boneId ~= -1) then
 			local t = bone:GetTransform() -- TODO: Remove this
 			local pose = t:GetPose()
 			animSetC:SetBonePos(boneId,pose:GetOrigin())
 			animSetC:SetBoneRot(boneId,pose:GetRotation())
-			--[[table.insert(self.m_listeners,t:GetPositionAttr():AddChangeListener(function(newPos)
-				print("Pos: ",boneName,boneId,newPos)
+			table.insert(self.m_listeners,t:GetPositionAttr():AddChangeListener(function(newPos)
+				--print("Pos: ",boneName,boneId,newPos)
 				animSetC:SetBonePos(boneId,newPos)
 			end))
 			table.insert(self.m_listeners,t:GetRotationAttr():AddChangeListener(function(newRot)
-				print("Rot: ",boneName,boneId,newRot)
+				--print("Rot: ",boneName,boneId,newRot)
 				animSetC:SetBoneRot(boneId,newRot)
-			end))]]
+			end))
 		else
 			pfm.log("Unknown bone '" .. boneName .. "' for actor with model '" .. mdl:GetName() .. "'! Bone pose will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 		end
@@ -127,6 +125,34 @@ bip_ponytail03  57
 end
 function ents.PFMModel:GetModelData() return self.m_mdlInfo end
 function ents.PFMModel:GetActorData() return self.m_actorData end
+
+-- Calculates local bodygroup indices from a global bodygroup index
+function ents.PFMModel:GetBodyGroups(bgIdx)
+	local mdl = self:GetEntity():GetModel()
+	if(mdl == nil) then return {} end
+	local bodyGroups = mdl:GetBodyGroups()
+
+	-- Calculate total number of bodygroup combinations
+	local numCombinations = 1
+	for _,bg in ipairs(bodyGroups) do
+		numCombinations = numCombinations *#bg.meshGroups
+	end
+
+	local localBgIndices = {}
+	for i=#bodyGroups,1,-1 do
+		local bg = bodyGroups[i]
+		numCombinations = numCombinations /#bg.meshGroups
+		local localBgIdx = math.floor(bgIdx /numCombinations)
+		bgIdx = bgIdx %numCombinations
+
+		-- TODO: This is in reverse order because that's how it's done in the SFM,
+		-- but there's really no reason to. Instead the global index should be inversed
+		-- in the SFM->PFM conversion script!
+		table.insert(localBgIndices,1,localBgIdx)
+	end
+	return localBgIndices
+end
+
 function ents.PFMModel:Setup(actorData,mdlInfo)
 	self.m_mdlInfo = mdlInfo
 	self.m_actorData = actorData
@@ -136,5 +162,36 @@ function ents.PFMModel:Setup(actorData,mdlInfo)
 	local mdlName = mdlInfo:GetModelName()
 	mdlC:SetModel(mdlName)
 	mdlC:SetSkin(mdlInfo:GetSkin())
+
+	local mdl = mdlC:GetModel()
+	if(mdl == nil) then return end
+	local materials = mdl:GetMaterials()
+	for _,matOverride in ipairs(mdlInfo:GetMaterialOverrides():GetTable()) do
+		local matName = matOverride:GetMaterialName()
+		local origMat = game.load_material(matName)
+		if(origMat ~= nil) then
+			local newMat = origMat:Copy()
+			local data = newMat:GetDataBlock()
+			for key,val in pairs(matOverride:GetOverrideValues():GetTable()) do
+				local type = data:GetValueType(key)
+				if(type ~= nil and val:GetType() == udm.ATTRIBUTE_TYPE_STRING) then
+					if(type == "texture") then newMat:SetTexture(key,val:GetValue())
+					else data:SetValue(type,key,val:GetValue()) end
+				end
+			end
+			newMat:UpdateTextures()
+			for matIdx,matMdl in ipairs(materials) do
+				if(matMdl:GetName() == origMat:GetName()) then
+					mdlC:SetMaterialOverride(matIdx -1,newMat)
+					break
+				end
+			end
+		end
+	end
+
+	local globalBgIdx = mdlInfo:GetBodyGroup()
+	for bgIdx,bgMdlIdx in ipairs(self:GetBodyGroups(globalBgIdx)) do
+		mdlC:SetBodyGroup(bgIdx -1,bgMdlIdx)
+	end
 end
 ents.COMPONENT_PFM_MODEL = ents.register_component("pfm_model",ents.PFMModel)

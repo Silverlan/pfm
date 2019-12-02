@@ -6,4 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-sfm.register_element_type("Float")
+sfm.register_element_type("Material")
+sfm.link_dmx_type("DmeMaterial",sfm.Material)
+
+sfm.BaseElement.RegisterAttribute(sfm.Material,"mtlName","")
+sfm.BaseElement.RegisterAttribute(sfm.Material,"$basetexture","")

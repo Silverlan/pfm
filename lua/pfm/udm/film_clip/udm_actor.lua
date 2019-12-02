@@ -11,6 +11,9 @@ include("actor/components")
 udm.ELEMENT_TYPE_PFM_ACTOR = udm.register_element("PFMActor")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"transform",udm.Transform())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"components",udm.Array(udm.ELEMENT_TYPE_ANY))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"visible",udm.Bool(false),{
+	getter = "IsVisible"
+})
 
 function udm.PFMActor:AddComponent(pfmComponent)
 	self:GetComponentsAttr():PushBack(pfmComponent)
@@ -51,4 +54,11 @@ end
 
 function udm.PFMActor:GetPose()
 	return self:GetTransform():GetPose()
+end
+
+function udm.PFMActor:IsAbsoluteVisible()
+	if(self:IsVisible() == false) then return false end
+	local parent = self:FindParentElement()
+	if(parent == nil or parent.IsAbsoluteVisible == nil) then return true end
+	return parent:IsAbsoluteVisible()
 end

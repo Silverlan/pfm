@@ -28,3 +28,6 @@ sfm.BaseElement.RegisterAttribute(sfm.Camera,"shutterSpeed",0.0208)
 sfm.BaseElement.RegisterProperty(sfm.Camera,"overrideParent")
 sfm.BaseElement.RegisterAttribute(sfm.Camera,"overridePos")
 sfm.BaseElement.RegisterAttribute(sfm.Camera,"overrideRot")
+sfm.BaseElement.RegisterAttribute(sfm.Camera,"visible",false,{
+	getterName = "IsVisible"
+})

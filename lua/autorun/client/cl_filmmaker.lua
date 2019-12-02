@@ -69,7 +69,7 @@ console.register_command("pfm",function(pl,...)
 
 	-- TODO: This code should only be enabled during development/testing!
 	-- Remove it for the public release!
-	console.run("cl_render_shadow_resolution 2048")
+	console.run("cl_render_shadow_resolution 512")--2048")
 	console.run("cl_render_occlusion_culling 0")
 	console.run("render_clear_scene 1")
 

@@ -19,3 +19,6 @@ sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"constantAttenuation",0.0)
 sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"linearAttenuation",0.0)
 sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"quadraticAttenuation",0.0)
 sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"maxDistance",0.0)
+sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"visible",false,{
+	getterName = "IsVisible"
+})

@@ -10,6 +10,9 @@ util.register_class("ents.PFMCamera",BaseEntityComponent)
 
 local g_activeCamera = nil
 local g_cameraEnabled = false
+local g_vrEnabled = false
+ents.PFMCamera.get_active_camera = function() return g_activeCamera end
+ents.PFMCamera.is_camera_enabled = function() return g_cameraEnabled end
 ents.PFMCamera.set_camera_enabled = function(enabled)
 	if(enabled) then pfm.log("Enabling camera...",pfm.LOG_CATEGORY_PFM_GAME)
 	else pfm.log("Disabling camera...",pfm.LOG_CATEGORY_PFM_GAME) end
@@ -30,7 +33,18 @@ ents.PFMCamera.set_active_camera = function(cam)
 	g_activeCamera = cam
 	local toggleC = g_activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
 	if(toggleC ~= nil) then toggleC:SetTurnedOn(g_cameraEnabled) end
+	g_activeCamera:UpdateVRView()
 end
+ents.PFMCamera.set_vr_view_enabled = function(enabled)
+	if(enabled) then pfm.log("Enabling VR view...",pfm.LOG_CATEGORY_PFM_GAME)
+	else pfm.log("Disabling VR view...",pfm.LOG_CATEGORY_PFM_GAME) end
+	g_vrEnabled = enabled
+	if(util.is_valid(g_activeCamera)) then
+		g_activeCamera:UpdateVRView()
+	end
+end
+ents.PFMCamera.is_vr_view_enabled = function() return g_vrEnabled end
+
 function ents.PFMCamera:Initialize()
 	BaseEntityComponent.Initialize(self)
 
@@ -38,9 +52,13 @@ function ents.PFMCamera:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_CAMERA)
 	local toggleC = self:AddEntityComponent(ents.COMPONENT_TOGGLE)
 	self:AddEntityComponent("pfm_actor")
-
-	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
-	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"OnTurnOff")
+end
+function ents.PFMCamera:UpdateVRView()
+	if(ents.PFMCamera.is_vr_view_enabled()) then
+		self:GetEntity():AddComponent("pfm_vr_camera")
+	else
+		self:GetEntity():RemoveComponent("pfm_vr_camera")
+	end
 end
 function ents.PFMCamera:GetCameraData() return self.m_cameraData end
 function ents.PFMCamera:Setup(animSet,cameraData)

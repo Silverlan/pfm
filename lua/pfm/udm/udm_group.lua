@@ -8,6 +8,17 @@
 
 udm.ELEMENT_TYPE_PFM_GROUP = udm.register_element("PFMGroup")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_GROUP,"transform",udm.Transform())
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_GROUP,"visible",udm.Bool(false),{
+	getter = "IsVisible"
+})
+
 function udm.PFMGroup:Initialize()
 	udm.BaseElement.Initialize(self)
+end
+
+function udm.PFMGroup:IsAbsoluteVisible()
+	if(self:IsVisible() == false) then return false end
+	local parent = self:FindParentElement()
+	if(parent == nil or parent.IsAbsoluteVisible == nil) then return true end
+	return parent:IsAbsoluteVisible()
 end

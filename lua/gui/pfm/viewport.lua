@@ -119,6 +119,13 @@ function gui.PFMViewport:OnInitialize()
 		return util.EVENT_REPLY_UNHANDLED
 	end)
 	self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK)
+
+	self.m_vrControllers = {}
+end
+function gui.PFMViewport:OnRemove()
+	for _,ent in ipairs(self.m_vrControllers) do
+		if(ent:IsValid()) then ent:Remove() end
+	end
 end
 function gui.PFMViewport:SetCameraMode(camMode)
 	pfm.log("Changing camera mode to " .. ((camMode == gui.PFMViewport.CAMERA_MODE_PLAYBACK and "playback") or (camMode == gui.PFMViewport.CAMERA_MODE_FLY and "fly") or "walk"))
@@ -225,6 +232,52 @@ function gui.PFMViewport:InitializeManipulatorControls()
 end
 function gui.PFMViewport:InitializeCameraControls()
 	local controls = gui.create("WIHBox",self,0,self.m_vpBg:GetBottom() +4)
+
+	self.m_btVr = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic","gui/pfm/icon_cp_generic",function()
+		ents.PFMCamera.set_vr_view_enabled(not ents.PFMCamera.is_vr_view_enabled())
+		if(ents.PFMCamera.is_vr_view_enabled()) then
+			for i=0,openvr.MAX_TRACKED_DEVICE_COUNT -1 do
+				if(openvr.get_tracked_device_class(i) == openvr.TRACKED_DEVICE_CLASS_CONTROLLER) then
+					local ent = ents.create("pfm_vr_controller")
+					ent:Spawn()
+
+					table.insert(self.m_vrControllers,ent)
+
+					local vrC = ent:GetComponent(ents.COMPONENT_VR_CONTROLLER)
+					if(vrC ~= nil) then vrC:SetControllerId(i) end
+
+					local pfmVrC = ent:GetComponent(ents.COMPONENT_PFM_VR_CONTROLLER)
+					if(pfmVrC ~= nil) then
+						-- TODO: This is just a prototype implementation, do this properly!
+						local el = pfmVrC:GetGUIElement():GetPlayButton()
+						if(util.is_valid(el)) then
+							el:AddCallback("OnStateChanged",function(el,oldState,state)
+								local btPlay = self:GetPlayButton()
+								if(util.is_valid(btPlay) == false) then return end
+								if(state == gui.PFMPlayButton.STATE_PLAYING) then
+									btPlay:Pause()
+								elseif(state == gui.PFMPlayButton.STATE_PAUSED) then
+									btPlay:Play()
+								end
+							end)
+						end
+					end
+				end
+			end
+		else
+			for _,ent in ipairs(self.m_vrControllers) do
+				if(ent:IsValid()) then ent:Remove() end
+			end
+			self.m_vrControllers = {}
+		end
+	end)
+	local pText = gui.create("WIText",self.m_btVr)
+	pText:SetText("VR")
+	pText:SizeToContents()
+	pText:SetPos(self.m_btVr:GetWidth() *0.5 -pText:GetWidth() *0.5,self.m_btVr:GetHeight() *0.5 -pText:GetHeight() *0.5)
+	pText:SetAnchor(0.5,0.5,0.5,0.5)
+	pText:SetColor(Color.White)
+
 	self.m_toneMapping = gui.create("WIDropDownMenu",controls)
 	self.m_toneMapping:SetText("Tonemapping")
 	local toneMappingOptions = {

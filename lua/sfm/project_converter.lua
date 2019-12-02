@@ -120,6 +120,7 @@ function sfm.ProjectConverter:CreateActor(sfmComponent)
 	if(actor ~= nil) then return actor,false end
 	actor = udm.create_element(udm.ELEMENT_TYPE_PFM_ACTOR)
 	actor:SetName(pfmComponent:GetName()) -- TODO: Remove suffix (e.g. _model)
+	actor:SetVisible(sfmComponent:IsVisible())
 
 	local transformType = sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL
 	if(sfmComponent:GetType() == "DmeCamera") then transformType = sfm.ProjectConverter.TRANSFORM_TYPE_ALT end
@@ -132,13 +133,24 @@ end
 function sfm.ProjectConverter:GetPFMElement(element)
 	return self.m_sfmElementToPfmElement[element]
 end
+local rotN90Yaw = EulerAngles(0,-90,0):ToQuaternion()
 local function convert_root_bone_pos(pos)
+	-- Root bones seems to be in a different coordinate system than everything else in the source engine?
+	-- I don't know why that is the case, but we have to take it into account here.
 	pos:Set(pos.x,-pos.y,-pos.z)
+
+	if(isStaticModel == true) then return end
+	-- Dynamic models and static models require different rotations, I am not sure why that is the case though.
+	pos:Rotate(rotN90Yaw)
 end
 local rot180Pitch = EulerAngles(180,0,0):ToQuaternion()
-local function convert_root_bone_rot(rot)
+local function convert_root_bone_rot(rot,isStaticModel)
 	local newRot = rot180Pitch *rot
 	rot:Set(newRot.w,newRot.x,newRot.y,newRot.z)
+
+	if(isStaticModel == true) then return end
+	-- Dynamic models and static models require different rotations, I am not sure why that is the case though.
+	rot:Set(rotN90Yaw *rot)
 end
 local function convert_bone_transforms(filmClip,processedObjects,mdlMsgCache)
 	for _,actor in ipairs(filmClip:GetActors():GetTable()) do
@@ -163,8 +175,8 @@ local function convert_bone_transforms(filmClip,processedObjects,mdlMsgCache)
 						pos = sfm.convert_source_anim_set_position_to_pragma(pos)
 						rot = sfm.convert_source_anim_set_rotation_to_pragma(rot)
 						if(isRootBone) then
-							convert_root_bone_pos(pos)
-							convert_root_bone_rot(rot)
+							convert_root_bone_pos(pos,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
+							convert_root_bone_rot(rot,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
 						end
 						t:SetPosition(pos)
 						t:SetRotation(rot)
@@ -223,12 +235,12 @@ local function apply_post_processing(project,filmClip,processedObjects)
 										if(isPosTransform) then
 											value:Set(sfm.convert_source_anim_set_position_to_pragma(value))
 											if(isRootBone) then
-												convert_root_bone_pos(value)
+												convert_root_bone_pos(value,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
 											end
 										else
 											value:Set(sfm.convert_source_anim_set_rotation_to_pragma(value))
 											if(isRootBone) then
-												convert_root_bone_rot(value)
+												convert_root_bone_rot(value,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
 											end
 										end
 									end
@@ -384,6 +396,14 @@ sfm.register_element_type_conversion(sfm.Session,udm.PFMSession,function(convert
 	end
 end)
 
+sfm.register_element_type_conversion(sfm.Material,udm.PFMMaterial,function(converter,sfmMaterial,pfmMaterial)
+	pfmMaterial:SetMaterialName(sfmMaterial:GetMtlName())
+	local baseTexture = sfmMaterial["Get$basetexture"](sfmMaterial)
+	if(baseTexture ~= nil and #baseTexture > 0) then
+		pfmMaterial:GetOverrideValuesAttr():Insert("albedo_map",udm.String(baseTexture))
+	end
+end)
+
 sfm.register_element_type_conversion(sfm.Color,udm.Color,function(converter,sfmColor,pfmColor)
 	pfmColor:SetValue(sfmColor:GetColor())
 end)
@@ -494,6 +514,7 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 	local mdlName = sfmGameModel:GetPragmaModelPath()
 	pfmGameModel:SetModelName(mdlName)
 	pfmGameModel:SetSkin(sfmGameModel:GetSkin())
+	pfmGameModel:SetBodyGroup(sfmGameModel:GetBody())
 
 	local transformToBone = {}
 	local function add_child_bones(sfmElement,parent)
@@ -532,6 +553,10 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 
 	for _,name in ipairs(sfmGameModel:GetFlexNames()) do
 		pfmGameModel:GetFlexControllerNamesAttr():PushBack(udm.String(name))
+	end
+
+	for _,material in ipairs(sfmGameModel:GetMaterials()) do
+		pfmGameModel:GetMaterialOverridesAttr():PushBack(converter:ConvertNewElement(material))
 	end
 end)
 
@@ -620,6 +645,7 @@ end,function(converter,sfmDag,pfmEl)
 	if(pfmEl:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then
 		local pfmDag = pfmEl
 		pfmDag:SetTransformAttr(converter:ConvertNewElement(sfmDag:GetTransform(),sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL))
+		pfmDag:SetVisible(sfmDag:IsVisible())
 		apply_override_parent(converter,sfmDag,pfmDag)
 		for _,child in ipairs(sfmDag:GetChildren()) do
 			local type = child:GetType()

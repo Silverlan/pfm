@@ -15,6 +15,9 @@ sfm.BaseElement.RegisterProperty(sfm.Dag,"transform",sfm.Transform)
 sfm.BaseElement.RegisterProperty(sfm.Dag,"overrideParent")
 sfm.BaseElement.RegisterAttribute(sfm.Dag,"overridePos")
 sfm.BaseElement.RegisterAttribute(sfm.Dag,"overrideRot")
+sfm.BaseElement.RegisterAttribute(sfm.Dag,"visible",false,{
+	getterName = "IsVisible"
+})
 
 function sfm.Dag:Initialize()
 	self.m_children = {}
