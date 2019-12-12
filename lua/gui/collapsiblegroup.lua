@@ -19,14 +19,11 @@ end
 function gui.CollapsibleGroup:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(256,25)
-	self.m_base = gui.create("WIVBox",self,0,0,self:GetWidth(),0)
-	self.m_base:AddCallback("SetSize",function()
-		self:SetHeight(self.m_base:GetHeight())
-	end)
+	self:SetSize(256,20)
+	self.m_base = gui.create("WIVBox",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 
 	self.m_titleBar = gui.create("WICollapsibleGroupTitleBar",self.m_base)
-	self.m_titleBar:SetWidth(self.m_base:GetWidth())
+	self.m_titleBar:SetSize(self.m_base:GetWidth(),self:GetHeight())
 	self.m_titleBar:SetAnchor(0,0,1,0)
 	self.m_titleBar:AddCallback("OnCollapse",function()
 		self:OnCollapse()
@@ -51,6 +48,7 @@ function gui.CollapsibleGroup:OnInitialize()
 	end)
 
 	self:Collapse()
+	self:SetAutoSizeToContents(false,true)
 end
 function gui.CollapsibleGroup:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_base)) then self.m_base:SetWidth(w) end

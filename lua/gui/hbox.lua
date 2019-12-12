@@ -14,21 +14,26 @@ function gui.HBox:__init()
 	gui.BaseBox.__init(self)
 end
 function gui.HBox:OnUpdate()
-	self.m_skipSizeUpdate = true
 	local size = self:GetSize()
 	local x = 0
+	local h = 0
 	local lastChild
 	for _,child in ipairs(self:GetChildren()) do
 		if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
 			child:SetX(x)
-			if(self.m_fixedSize == true) then child:SetHeight(size.y) end
+			if(self.m_autoFillHeight == true and child:HasAnchor() == false) then child:SetHeight(size.y) end
 			x = x +child:GetWidth()
+			h = math.max(h,child:GetBottom())
 
 			lastChild = child
 		end
 	end
-	if(self.m_fixedSize ~= true) then self:SetWidth(x)
-	elseif(lastChild ~= nil) then lastChild:SetWidth(size.x -lastChild:GetLeft()) end
-	self.m_skipSizeUpdate = nil
+
+	local curSize = size:Copy()
+	if(self.m_fixedWidth ~= true) then size.x = x
+	elseif(self.m_autoFillWidth == true and lastChild ~= nil and lastChild:HasAnchor() == false) then lastChild:SetWidth(size.x -lastChild:GetLeft()) end
+	if(self.m_fixedHeight ~= true) then size.y = h end
+	if(size ~= curSize and self:HasAnchor() == false) then self:SetSize(size) end
 end
+function gui.HBox:IsHorizontalBox() return true end
 gui.register("WIHBox",gui.HBox)

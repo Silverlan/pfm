@@ -98,6 +98,11 @@ sfm.register_element_type_conversion(sfm.FilmClip,udm.PFMFilmClip,function(conve
 		table.insert(trackGroups,subClipTrackGroup)
 	end
 
+	for _,bookmarkSet in ipairs(sfmFilmClip:GetBookmarkSets()) do
+		pfmFilmClip:GetBookmarkSets():PushBack(converter:ConvertNewElement(bookmarkSet))
+	end
+	pfmFilmClip:SetActiveBookmarkSet(sfmFilmClip:GetActiveBookmarkSet())
+
 	-- Note: The channel clips within the tracks refer to animation sets through their name, but
 	-- animation sets in PFM cannot be referenced directly. For this reason we'll change the reference
 	-- of the channel clips from the animation set to the actors that the animation set belongs to.

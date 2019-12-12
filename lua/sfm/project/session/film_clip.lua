@@ -15,6 +15,8 @@ sfm.link_dmx_type("DmeFilmClip",sfm.FilmClip)
 sfm.BaseElement.RegisterAttribute(sfm.FilmClip,"mapname","")
 sfm.BaseElement.RegisterArray(sfm.FilmClip,"trackGroups",sfm.TrackGroup)
 -- sfm.BaseElement.RegisterArray(sfm.FilmClip,"animationSets",sfm.AnimationSet) -- TODO: Obsolete?
+sfm.BaseElement.RegisterArray(sfm.FilmClip,"bookmarkSets",sfm.BookmarkSet)
+sfm.BaseElement.RegisterAttribute(sfm.FilmClip,"activeBookmarkSet",0)
 sfm.BaseElement.RegisterProperty(sfm.FilmClip,"subClipTrackGroup",sfm.TrackGroup)
 sfm.BaseElement.RegisterProperty(sfm.FilmClip,"camera",sfm.Camera)
 sfm.BaseElement.RegisterProperty(sfm.FilmClip,"timeFrame",sfm.TimeFrame)

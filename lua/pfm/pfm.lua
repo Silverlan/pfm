@@ -54,3 +54,7 @@ pfm.create_project = function()
 end
 
 pfm.get_projects = function() return pfm.impl.projects end
+
+pfm.get_key_binding = function(identifier)
+	return "TODO"
+end

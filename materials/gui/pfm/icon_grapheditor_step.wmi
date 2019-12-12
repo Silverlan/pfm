@@ -1,0 +1,4 @@
+"wguitextured"
+{
+	$texture diffuse_map "gui/pfm/icon_grapheditor_step"
+}

@@ -50,6 +50,8 @@ function gui.PFMRenderPreview:OnInitialize()
 
 	self.m_preview = gui.create("WITexturedRect",self.m_aspectRatioWrapper)
 	self:InitializeControls()
+	
+	self:EnableThinking()
 end
 function gui.PFMRenderPreview:InitializeControls()
 	local controls = gui.create("WIHBox",self,0,self.m_vpBg:GetBottom() +4)

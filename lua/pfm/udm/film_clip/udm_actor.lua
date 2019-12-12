@@ -20,6 +20,12 @@ function udm.PFMActor:AddComponent(pfmComponent)
 	self:AddChild(pfmComponent)
 end
 
+function udm.PFMActor:FindComponent(name)
+	for _,component in ipairs(self:GetComponents():GetTable()) do
+		if(component:GetComponentName() == name) then return component end
+	end
+end
+
 local function apply_parent_pose(el,pose)
 	local poseParent = phys.ScaledTransform()
 	local parent = (el.GetOverrideParent ~= nil) and el:GetOverrideParent() or nil

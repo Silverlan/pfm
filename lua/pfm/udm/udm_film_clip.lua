@@ -18,6 +18,8 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"scene",udm.PFMGrou
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"materialOverlay",udm.PFMMaterialOverlayFXClip())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"fadeIn",udm.Float())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"fadeOut",udm.Float())
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"bookmarkSets",udm.Array(udm.ELEMENT_TYPE_PFM_BOOKMARK_SET))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"activeBookmarkSet",udm.Int())
 
 function udm.PFMFilmClip:SetPlaybackOffset(offset)
 	if(self:GetTimeFrame():IsInTimeFrame(offset) == false) then return end

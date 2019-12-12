@@ -31,6 +31,7 @@ function gui.PFMTabButton:OnInitialize()
 	self:SetMouseInputEnabled(true)
 
 	self:SetActive(false)
+	self:EnableThinking()
 
 	local mat = self.m_bg:GetMaterial()
 	if(mat == nil) then return end

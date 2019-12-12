@@ -22,7 +22,7 @@ function gui.FilmStrip:OnInitialize()
 	self.m_filmClips = {}
 end
 function gui.FilmStrip:GetTimeFrame() return self.m_timeFrame end
-function gui.FilmStrip:AddFilmClip(filmClip)
+function gui.FilmStrip:AddFilmClip(filmClip,fOnSelected)
 	local el = gui.create("WIFilmClip",self.m_container)
 	table.insert(self.m_filmClips,el)
 
@@ -33,6 +33,7 @@ function gui.FilmStrip:AddFilmClip(filmClip)
 				elOther:SetSelected(false)
 			end
 		end
+		if(fOnSelected ~= nil) then fOnSelected() end
 	end)
 	self:ScheduleUpdate()
 	return el
@@ -49,6 +50,6 @@ function gui.FilmStrip:OnUpdate()
 			else timeFrame = timeFrame:Max(timeFrameClip) end
 		end
 	end
-	self.m_timeFrame = timeFrame
+	self.m_timeFrame = timeFrame or udm.PFMTimeFrame()
 end
 gui.register("WIFilmStrip",gui.FilmStrip)

@@ -10,6 +10,7 @@ include("/gui/timelinestrip.lua")
 include("/gui/playhead.lua")
 include("/gui/vbox.lua")
 include("/gui/collapsiblegroup.lua")
+include("/gui/pfm/bookmark.lua")
 
 util.register_class("gui.Timeline",gui.Base)
 function gui.Timeline:__init()
@@ -31,7 +32,10 @@ function gui.Timeline:OnInitialize()
 		end
 		return util.EVENT_REPLY_HANDLED
 	end
-	self.m_timelineStripUpper = gui.create("WILabelledTimelineStrip",self,0,0,self:GetWidth(),16,0,0,1,0)
+
+	self.m_bookmarkBar = gui.create("WIBase",self,0,0,self:GetWidth(),16,0,0,1,0)
+
+	self.m_timelineStripUpper = gui.create("WILabelledTimelineStrip",self,0,self.m_bookmarkBar:GetBottom(),self:GetWidth(),16,0,0,1,0)
 	self.m_timelineStripUpper:SetMouseInputEnabled(true)
 	self.m_timelineStripUpper:AddCallback("OnMouseEvent",onTimelineMouseEvent)
 
@@ -39,16 +43,16 @@ function gui.Timeline:OnInitialize()
 	self.m_timelineStripLower:SetFlipped(true)
 	self.m_timelineStripLower:SetMouseInputEnabled(true)
 	self.m_timelineStripLower:AddCallback("OnMouseEvent",onTimelineMouseEvent)
-	self.m_contentsScroll = gui.create("WIScrollContainer",self,
+
+	self.m_contents = gui.create("WIBase",self,
 		0,self.m_timelineStripUpper:GetBottom(),
 		self:GetWidth(),self.m_timelineStripLower:GetTop() -self.m_timelineStripUpper:GetBottom(),
 		0,0,1,1
 	)
-	self.m_contents = gui.create("WIVBox",self.m_contentsScroll,0,0,self:GetWidth(),0)
-	self.m_playhead = gui.create("WIPlayhead",self)
+
+	self.m_playhead = gui.create("WIPlayhead",self,0,self.m_bookmarkBar:GetBottom())
 	self.m_playhead:SetHeight(self:GetHeight())
 	self.m_playhead:GetTimeOffsetProperty():AddCallback(function()
-		print("Time offset changed: " .. self.m_playhead:GetTimeOffset())
 		self:OnTimelinePropertiesChanged()
 	end)
 	self.m_playhead:LinkToTimeline(self)
@@ -65,6 +69,7 @@ function gui.Timeline:OnInitialize()
 	self:SetStartOffset(0.0)
 	self:Update()
 end
+function gui.Timeline:GetContents() return self.m_contents end
 function gui.Timeline:GetPlayhead() return self.m_playhead end
 function gui.Timeline:GetUpperTimelineStrip() return self.m_timelineStripUpper end
 function gui.Timeline:GetLowerTimelineStrip() return self.m_timelineStripLower end
@@ -94,22 +99,19 @@ function gui.Timeline:ScrollCallback(x,y)
 	return util.EVENT_REPLY_HANDLED
 end
 function gui.Timeline:OnSizeChanged(w,h)
-	if(util.is_valid(self.m_playhead)) then self.m_playhead:SetHeight(h) end
-	if(util.is_valid(self.m_contents)) then self.m_contents:SetWidth(w) end
+	if(util.is_valid(self.m_playhead)) then self.m_playhead:SetHeight(h -self.m_bookmarkBar:GetBottom()) end
 end
 function gui.Timeline:AddTimelineItem(el,timeFrame)
-	if(util.is_valid(self.m_contents) == false) then return end
 	local elWrapper = el:Wrap("WITimelineItem")
 	if(elWrapper == nil) then return end
 	elWrapper:LinkToTimeline(self,timeFrame,el)
 	return elWrapper
 end
-function gui.Timeline:AddTrackGroup(groupName)
-	if(util.is_valid(self.m_contents) == false) then return end
-	local p = gui.create("WICollapsibleGroup",self.m_contents)
-	p:SetWidth(self.m_contents:GetWidth())
-	p:SetAnchor(0,0,1,0)
-	p:SetGroupName(groupName)
+function gui.Timeline:AddBookmark(bookmark)
+	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
+	local p = gui.create("WIPFMBookmark",self,0,5)
+	self:AddTimelineItem(p,bookmark:GetTimeRange())
+	print("Placing bookmark at time offset " .. bookmark:GetTimeRange():GetTime() .. "...")
 	return p
 end
 function gui.Timeline:SetZoomLevel(zoomLevel)
@@ -223,17 +225,40 @@ function gui.TimelineItem:UnlinkFromTimeline()
 end
 function gui.TimelineItem:OnUpdate()
 	if(util.is_valid(self.m_timeline) == false) then return end
-	local startOffset = self.m_timeFrame:GetStart()
-	local endOffset = self.m_timeFrame:GetEnd()
-	local xStart = self.m_timeline:TimeOffsetToXOffset(startOffset)
-	local xEnd = self.m_timeline:TimeOffsetToXOffset(endOffset)
-	local w = xEnd -xStart
+	if(util.get_type_name(self.m_timeFrame) == "PFMTimeFrame") then
+		local startOffset = 0--self.m_timeFrame:GetStart()
+		local endOffset = 3--self.m_timeFrame:GetEnd()
+		local xStart = self.m_timeline:TimeOffsetToXOffset(startOffset)
+		local xEnd = self.m_timeline:TimeOffsetToXOffset(endOffset)
 
-	local xStartAbs = self.m_timeline:GetAbsolutePos().x +xStart
-	local pos = self:GetAbsolutePos()
-	pos.x = xStartAbs
-	self:SetAbsolutePos(pos)
-	if(util.is_valid(self.m_wrappedElement)) then self.m_wrappedElement:SetWidth(w) end
+		--[[if(util.is_valid(_x) == false) then
+			_x = gui.create("WIRect",self.m_timeline)
+			_x:SetSize(64,64)
+			_x:SetColor(Color.Lime)
+		end
+		local absPos = _x:GetAbsolutePos()
+		absPos.x = self.m_timeline:GetAbsolutePos().x +xStart
+		_x:SetAbsolutePos(absPos)
+		--_x:SetX(xStart)
+		_x:SetWidth(xEnd -xStart)]]
+
+		local xStartAbs = self.m_timeline:GetAbsolutePos().x +xStart
+		local pos = self:GetAbsolutePos()
+		pos.x = xStartAbs
+		local w = xEnd -pos.x
+		print("PARENT: ",self:GetParent())
+		self:SetAbsolutePos(pos)
+		--if(util.is_valid(self.m_wrappedElement)) then self.m_wrappedElement:SetWidth(w) end
+		print("W: ",w)
+	else
+		local offset = self.m_timeFrame:GetTime()
+		local x = self.m_timeline:TimeOffsetToXOffset(offset)
+		x = x -self:GetWidth() /2
+
+		local pos = self:GetAbsolutePos()
+		pos.x = self.m_timeline:GetAbsolutePos().x +x
+		self:SetAbsolutePos(pos)
+	end
 
 	if(util.is_valid(self.m_wrappedElement)) then
 		self.m_wrappedElement:CallCallbacks("OnTimelineUpdate",self,self.m_timeline)

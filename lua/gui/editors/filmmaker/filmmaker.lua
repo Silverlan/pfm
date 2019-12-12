@@ -21,8 +21,10 @@ include("/gui/pfm/frame.lua")
 include("/gui/pfm/viewport.lua")
 include("/gui/pfm/timeline.lua")
 include("/gui/pfm/elementviewer.lua")
+include("/gui/pfm/actoreditor.lua")
 include("/gui/pfm/renderpreview.lua")
 
+gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
 
 include("windows")
@@ -37,7 +39,9 @@ end
 function gui.WIFilmmaker:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
 
+	self:EnableThinking()
 	self:SetSize(1280,1024)
+	self:SetSkin("pfm")
 	local pMenuBar = self:GetMenuBar()
 	self.m_menuBar = pMenuBar
 
@@ -274,35 +278,40 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:ClearProjectUI()
 	if(util.is_valid(self.m_menuBar) == false) then return end
 	self.m_contents = gui.create("WIHBox",self,0,self.m_menuBar:GetHeight(),self:GetWidth(),self:GetHeight() -self.m_menuBar:GetHeight(),0,0,1,1)
-	self.m_contents:SetFixedSize(true)
+	self.m_contents:SetAutoFillContents(true)
 
-	local elementViewerFrame = self:AddFrame(self.m_contents)
+	local actorDataFrame = self:AddFrame(self.m_contents)
+	local actorEditor = gui.create("WIPFMActorEditor")
+	actorDataFrame:AddTab(locale.get_text("pfm_actor_editor"),actorEditor)
+	self.m_actorEditor = actorEditor -- TODO Determine dynamically
+
 	local elementViewer = gui.create("WIPFMElementViewer")
-	elementViewerFrame:AddTab("Element Viewer",elementViewer)
+	actorDataFrame:AddTab(locale.get_text("pfm_element_viewer"),elementViewer)
 	
 	gui.create("WIResizer",self.m_contents)
 
 	self.m_contentsRight = gui.create("WIVBox",self.m_contents)
 	self.m_contents:Update()
-	self.m_contentsRight:SetFixedSize(true)
+	self.m_contentsRight:SetAutoFillContents(true)
 
 	local viewportFrame = self:AddFrame(self.m_contentsRight)
+	viewportFrame:SetHeight(self:GetHeight())
 	local viewport = gui.create("WIPFMViewport")
-	viewportFrame:AddTab("Primary Viewport",viewport)
+	viewportFrame:AddTab(locale.get_text("pfm_primary_viewport"),viewport)
 
 	local renderPreview = gui.create("WIPFMRenderPreview")
-	viewportFrame:AddTab("Render Preview",renderPreview)
+	viewportFrame:AddTab(locale.get_text("pfm_render_result"),renderPreview)
 
 	gui.create("WIResizer",self.m_contentsRight)
 
 	local timelineFrame = self:AddFrame(self.m_contentsRight)
 	local pfmTimeline = gui.create("WIPFMTimeline")
-	timelineFrame:AddTab("Timeline",pfmTimeline)
+	timelineFrame:AddTab(locale.get_text("pfm_timeline"),pfmTimeline)
 
 	-- Populate UI with project data
 	local project = self:GetProject()
 	local root = project:GetUDMRootNode()
-	elementViewer:PopulateFromUDMData(root)
+	elementViewer:Setup(root)
 
 	local playhead = pfmTimeline:GetPlayhead()
 	playhead:GetTimeOffsetProperty():AddCallback(function(oldOffset,offset)
@@ -356,7 +365,16 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		local trackFilm = trackGroup:FindElementsByName("Film")[1]
 		if(trackFilm ~= nil) then
 			for _,filmClip in ipairs(trackFilm:GetFilmClips():GetTable()) do
-				filmStrip:AddFilmClip(filmClip)
+				filmStrip:AddFilmClip(filmClip,function(elFilmClip)
+					local filmClipData = elFilmClip:GetFilmClipData()
+					if(util.is_valid(self.m_actorEditor)) then
+						self.m_actorEditor:Setup(filmClipData)
+					end
+				end)
+				if(_ == 1) then
+					-- TODO: For debugging only!
+					self.m_actorEditor:Setup(filmClip)
+				end
 			end
 		end
 		filmStrip:SetSize(1024,64)
@@ -364,7 +382,8 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 		local timeFrame = filmStrip:GetTimeFrame()
 
-		local groupPicture = timeline:AddTrackGroup("Picture")
+		local pfmClipEditor = pfmTimeline:GetEditorTimelineElement(gui.PFMTimeline.EDITOR_CLIP)
+		local groupPicture = pfmClipEditor:AddTrackGroup("Picture")
 		if(filmStrip ~= nil) then
 			for _,filmClip in ipairs(filmStrip:GetFilmClips()) do
 				timeline:AddTimelineItem(filmClip,filmClip:GetTimeFrame())
@@ -372,20 +391,22 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		end
 		groupPicture:AddElement(filmStrip)
 
-		local groupSound = timeline:AddTrackGroup("Sound")
+		local groupSound = pfmClipEditor:AddTrackGroup("Sound")
 		local trackGroupSound = filmClip:GetTrackGroups():FindElementsByName("Sound")[1]
 		if(trackGroupSound ~= nil) then
 			for _,track in ipairs(trackGroupSound:GetTracks():GetTable()) do
-				local subGroup = groupSound:AddGroup(track:GetName())
-				--timeline:AddTimelineItem(subGroup,timeFrame)
+				if(track:GetName() == "Music") then
+					local subGroup = groupSound:AddGroup(track:GetName())
+					timeline:AddTimelineItem(subGroup,timeFrame)
 
-				--[[for _,audioClip in ipairs(track:GetAudioClips():GetTable()) do
-					local groupClip = gui.create("WIGenericClip")
-					subGroup:AddElement(groupClip)
-					groupClip:SetText(audioClip:GetName())
+					--[[for _,audioClip in ipairs(track:GetAudioClips():GetTable()) do
+						local groupClip = gui.create("WIGenericClip")
+						subGroup:AddElement(groupClip)
+						groupClip:SetText(audioClip:GetName())
 
-					timeline:AddTimelineItem(groupClip,audioClip:GetTimeFrame())
-				end]]
+						timeline:AddTimelineItem(groupClip,audioClip:GetTimeFrame())
+					end]]
+				end
 			end
 			--print(util.get_type_name(trackSound))
 			--[[for _,audioClip in ipairs(trackSound:GetAudioClips():GetTable()) do
@@ -394,7 +415,15 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		end
 
 		-- TODO: Same as for 'Sound'
-		local groupOverlay = timeline:AddTrackGroup("Overlay")
+		--[[local groupOverlay = pfmClipEditor:AddTrackGroup("Overlay")
+
+		local activeBookmarkSet = filmClip:GetActiveBookmarkSet()
+		local bookmarkSet = filmClip:GetBookmarkSets():Get(activeBookmarkSet +1)
+		if(bookmarkSet ~= nil) then
+			for _,bookmark in ipairs(bookmarkSet:GetBookmarks():GetTable()) do
+				timeline:AddBookmark(bookmark)
+			end
+		end]]
 	end
 end
 function gui.WIFilmmaker:GetProject() return self.m_project end

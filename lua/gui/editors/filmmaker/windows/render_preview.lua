@@ -48,6 +48,10 @@ function gui.PFMRenderPreviewWindow:__init(parent)
 		self:Refresh()
 	end)
 end
+function gui.PFMRenderPreviewWindow:OnInitialize()
+	gui.Base.OnInitialize(self)
+	self:EnableThinking()
+end
 function gui.PFMRenderPreviewWindow:OnThink()
 	if(self.m_raytracingJob == nil) then return end
 	local progress = self.m_raytracingJob:GetProgress()

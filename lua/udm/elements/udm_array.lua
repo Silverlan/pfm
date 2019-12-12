@@ -49,6 +49,14 @@ end
 
 function udm.Array:Get(i) return self:GetTable()[i] end
 
+function udm.Array:FindByName(name)
+	for _,child in ipairs(self:GetTable()) do
+		if(child:GetName() == name) then
+			return child
+		end
+	end
+end
+
 function udm.Array:Insert(pos,attr)
 	local attrType = attr:GetType()
 	if(attrType == udm.ELEMENT_TYPE_REFERENCE) then

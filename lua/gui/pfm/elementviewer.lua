@@ -10,6 +10,7 @@ include("button.lua")
 include("/gui/vbox.lua")
 include("/gui/hbox.lua")
 include("/gui/resizer.lua")
+include("/pfm/history.lua")
 
 util.register_class("gui.PFMElementViewer",gui.Base)
 
@@ -39,7 +40,7 @@ function gui.PFMElementViewer:OnInitialize()
 		0,self.m_btTools:GetBottom(),self:GetWidth(),self:GetHeight() -self.m_btTools:GetBottom(),
 		0,0,1,1
 	)
-	self.m_contents:SetFixedSize(true)
+	self.m_contents:SetAutoFillContents(true)
 
 	local treeVBox = gui.create("WIVBox",self.m_contents)
 	treeVBox:SetFixedSize(true)
@@ -47,7 +48,7 @@ function gui.PFMElementViewer:OnInitialize()
 	local dataVBox = gui.create("WIVBox",self.m_contents)
 	dataVBox:SetFixedSize(true)
 
-	local function create_header_button(text,parent)
+	local function create_header_text(text,parent)
 		local pHeader = gui.create("WIRect",parent,0,0,parent:GetWidth(),21,0,0,1,0)
 		pHeader:SetColor(Color(35,35,35))
 		local pHeaderText = gui.create("WIText",pHeader)
@@ -60,16 +61,24 @@ function gui.PFMElementViewer:OnInitialize()
 			pHeaderText:SetPos(pHeader:GetWidth() *0.5 -pHeaderText:GetWidth() *0.5,pHeader:GetHeight() *0.5 -pHeaderText:GetHeight() *0.5)
 		end)
 	end
-	create_header_button("Tree",treeVBox)
-	create_header_button("Data",dataVBox)
+	create_header_text(locale.get_text("tree"),treeVBox)
+	create_header_text(locale.get_text("data"),dataVBox)
 
 	self.m_tree = gui.create("WITreeList",treeVBox,0,0,treeVBox:GetWidth(),treeVBox:GetHeight(),0,0,1,1)
+	self.m_tree:SetSelectableMode(gui.Table.SELECTABLE_MODE_SINGLE)
 	self.m_data = gui.create("WITable",dataVBox,0,0,dataVBox:GetWidth(),dataVBox:GetHeight(),0,0,1,1)
 
 	self.m_data:SetRowHeight(self.m_tree:GetRowHeight())
-	self.m_data:SetSelectable(true)
+	self.m_data:SetSelectableMode(gui.Table.SELECTABLE_MODE_SINGLE)
 
 	self.m_treeElementToDataElement = {}
+	self.m_history = pfm.History()
+	self.m_history:AddCallback("OnPositionChanged",function(item,index)
+		if(item ~= nil) then self:PopulateFromUDMData(item) end
+		if(util.is_valid(self.m_btBack)) then self.m_btBack:SetEnabled(index > 1) end
+		if(util.is_valid(self.m_btForward)) then self.m_btForward:SetEnabled(index < #self:GetHistory()) end
+		if(util.is_valid(self.m_btUp)) then self.m_btUp:SetVisible(true) end -- TODO
+	end)
 end
 function gui.PFMElementViewer:UpdateDataElementPositions()
 	if(util.is_valid(self.m_tree) == false) then return end
@@ -83,10 +92,17 @@ function gui.PFMElementViewer:UpdateDataElementPositions()
 end
 function gui.PFMElementViewer:PopulateFromUDMData(rootNode)
 	if(util.is_valid(self.m_tree) == false) then return end
-	self:AddUDMNode(rootNode,"root",self.m_tree,self.m_tree)
+	self.m_tree:Clear()
+	self:AddUDMNode(rootNode,rootNode:GetName(),self.m_tree,self.m_tree)
 	self.m_tree:Update()
 	self:UpdateDataElementPositions()
 end
+function gui.PFMElementViewer:Setup(rootNode)
+	self.m_rootNode = rootNode
+	self:GetHistory():Clear()
+	self:GetHistory():Add(rootNode)
+end
+function gui.PFMElementViewer:GetHistory() return self.m_history end
 function gui.PFMElementViewer:AddUDMNode(node,name,elTreeParent,elTreePrevious)
 	if(util.is_valid(self.m_data) == false) then return end
 	local elTreeChild
@@ -98,6 +114,17 @@ function gui.PFMElementViewer:AddUDMNode(node,name,elTreeParent,elTreePrevious)
 				elTreePrevious = self:AddUDMNode(child,name,elTree,elTreePrevious)
 			end
 			self:UpdateDataElementPositions()
+		end)
+		elTreeChild:AddCallback("OnMouseEvent",function(elTreeChild,button,state,mods)
+			if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+				local pContext = gui.open_context_menu()
+				if(util.is_valid(pContext) == false) then return end
+				pContext:SetPos(input.get_cursor_pos())
+				pContext:AddItem(locale.get_text("pfm_make_root"),function()
+					self:GetHistory():Add(node)
+				end)
+				pContext:Update()
+			end
 		end)
 		text = node:GetTypeName()
 	else
@@ -156,19 +183,62 @@ function gui.PFMElementViewer:OnSizeChanged(w,h)
 end
 function gui.PFMElementViewer:InitializeNavigationBar()
 	self.m_btHome = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_home","gui/pfm/icon_nav_home_activated",function()
-		print("PRESS")
+		if(self.m_rootNode == nil) then return end
+		self:GetHistory():Clear()
+		self:GetHistory():Add(self.m_rootNode)
 	end)
 	gui.create("WIBase",self.navBar):SetSize(5,1) -- Gap
+
 	self.m_btUp = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_up","gui/pfm/icon_nav_up_activated",function()
-		print("PRESS")
+		print("TODO")
 	end)
+	self.m_btUp:SetupContextMenu(function(pContext)
+		print("TODO")
+	end)
+
 	gui.create("WIBase",self.navBar):SetSize(5,1) -- Gap
+
 	self.m_btBack = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_back","gui/pfm/icon_nav_back_activated",function()
-		print("PRESS")
+		self:GetHistory():GoBack()
 	end)
+	self.m_btBack:SetupContextMenu(function(pContext)
+		local history = self:GetHistory()
+		local pos = history:GetCurrentPosition()
+		if(pos > 1) then
+			for i=pos -1,1,-1 do
+				local el = history:Get(i)
+				pContext:AddItem(el:GetName(),function()
+					history:SetCurrentPosition(i)
+				end)
+			end
+		end
+		pContext:AddLine()
+		pContext:AddItem(locale.get_text("pfm_reset_history"),function()
+			history:Clear()
+		end)
+	end)
+
 	gui.create("WIBase",self.navBar):SetSize(5,1) -- Gap
+
 	self.m_btForward = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_forward","gui/pfm/icon_nav_forward_activated",function()
-		print("PRESS")
+		self:GetHistory():GoForward()
+	end)
+	self.m_btForward:SetupContextMenu(function(pContext)
+		local history = self:GetHistory()
+		local pos = history:GetCurrentPosition()
+		local numItems = #history
+		if(pos < numItems) then
+			for i=pos +1,numItems do
+				local el = history:Get(i)
+				pContext:AddItem(el:GetName(),function()
+					history:SetCurrentPosition(i)
+				end)
+			end
+		end
+		pContext:AddLine()
+		pContext:AddItem(locale.get_text("pfm_reset_history"),function()
+			history:Clear()
+		end)
 	end)
 end
 gui.register("WIPFMElementViewer",gui.PFMElementViewer)

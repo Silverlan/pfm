@@ -396,6 +396,18 @@ sfm.register_element_type_conversion(sfm.Session,udm.PFMSession,function(convert
 	end
 end)
 
+sfm.register_element_type_conversion(sfm.BookmarkSet,udm.PFMBookmarkSet,function(converter,sfmBookmarkSet,pfmBookmarkSet)
+	for _,bookmark in ipairs(sfmBookmarkSet:GetBookmarks()) do
+		pfmBookmarkSet:GetBookmarks():PushBack(converter:ConvertNewElement(bookmark))
+	end
+end)
+
+sfm.register_element_type_conversion(sfm.Bookmark,udm.PFMBookmark,function(converter,sfmBookmark,pfmBookmark)
+	pfmBookmark:GetTimeRange():SetTime(sfmBookmark:GetTime())
+	pfmBookmark:GetTimeRange():SetDuration(sfmBookmark:GetDuration())
+	pfmBookmark:SetNote(sfmBookmark:GetNote())
+end)
+
 sfm.register_element_type_conversion(sfm.Material,udm.PFMMaterial,function(converter,sfmMaterial,pfmMaterial)
 	pfmMaterial:SetMaterialName(sfmMaterial:GetMtlName())
 	local baseTexture = sfmMaterial["Get$basetexture"](sfmMaterial)
