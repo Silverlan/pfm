@@ -7,6 +7,7 @@
 ]]
 
 include("/pfm/fonts.lua")
+include("slidercursor.lua")
 
 util.register_class("gui.PFMWeightSlider",gui.Base)
 
@@ -55,9 +56,12 @@ function gui.PFMWeightSlider:OnInitialize()
 	self.m_endIndicator = gui.create("WIRect",self,0,0,1,3)
 	self.m_endIndicator:SetColor(color)
 	self.m_endIndicator:SetY(7)
+
+	self:SetFraction(0.5)
 end
 function gui.PFMWeightSlider:GetFraction() return util.is_valid(self.m_sliderBar) and self.m_sliderBar:GetFraction() or 0.0 end
 function gui.PFMWeightSlider:SetFraction(fraction) if(util.is_valid(self.m_sliderBar)) then self.m_sliderBar:SetFraction(fraction) end end
+function gui.PFMWeightSlider:GetFractionProperty() return self.m_sliderBar:GetFractionProperty() end
 function gui.PFMWeightSlider:GetStepSize() return util.is_valid(self.m_sliderBar) and self.m_sliderBar:GetStepSize() or 0.0 end
 function gui.PFMWeightSlider:SetStepSize(stepSize) if(util.is_valid(self.m_sliderBar)) then self.m_sliderBar:SetStepSize(stepSize) end end
 function gui.PFMWeightSlider:OnSizeChanged(w,h)
@@ -83,8 +87,14 @@ function gui.PFMWeightSliderBar:OnInitialize()
 	self.m_sliderLine:SetColor(Color.Black)
 	self.m_sliderLine:CenterToParent()
 
-	self.m_cursor = gui.create("WIRect",self,0,0,12,15)
-	self.m_cursor:SetColor(Color(126,126,126))
+	local cursorRect = gui.create("WIRect",self,0,0,12,15)
+	cursorRect:SetColor(Color(126,126,126))
+
+	self.m_cursor = cursorRect:Wrap("WIPFMSliderCursor")
+	self.m_cursor:AddCallback("OnFractionChanged",function(el,fraction)
+		self:CallCallbacks("OnFractionChanged",fraction)
+	end)
+
 	self:SetFraction(0.5)
 	self:SetStepSize(0.05)
 end
@@ -95,17 +105,10 @@ function gui.PFMWeightSliderBar:FractionToX(fraction)
 	fraction = fraction *(self:GetWidth() -self.m_cursor:GetWidth())
 	return fraction +self.m_cursor:GetHalfWidth()
 end
-function gui.PFMWeightSliderBar:SetStepSize(stepSize) self.m_stepSize = stepSize end
-function gui.PFMWeightSliderBar:GetStepSize(stepSize) return self.m_stepSize end
-function gui.PFMWeightSliderBar:GetFraction() return self.m_fraction end
-function gui.PFMWeightSliderBar:SetFraction(fraction)
-	if(util.is_valid(self.m_cursor) == false) then return end
-	self.m_fraction = math.round(math.clamp(fraction,0.0,1.0),self:GetStepSize())
-	local x = self.m_fraction *(self:GetWidth() -self.m_cursor:GetWidth())
-	self.m_cursor:SetX(x)
-	self:CallCallbacks("OnFractionChanged",self:GetFraction())
-end
-function gui.PFMWeightSliderBar:OnSizeChanged(w,h)
-	self:SetFraction(self:GetFraction())
-end
+function gui.PFMWeightSliderBar:SetStepSize(stepSize) if(util.is_valid(self.m_cursor)) then self.m_cursor:SetStepSize(stepSize) end end
+function gui.PFMWeightSliderBar:GetStepSize(stepSize) return util.is_valid(self.m_cursor) and self.m_cursor:GetStepSize() or 0.0 end
+function gui.PFMWeightSliderBar:GetFraction() return util.is_valid(self.m_cursor) and self.m_cursor:GetFraction() or 0.0 end
+function gui.PFMWeightSliderBar:GetFractionProperty() return self.m_cursor:GetFractionProperty() end
+function gui.PFMWeightSliderBar:SetFraction(fraction) if(util.is_valid(self.m_cursor)) then self.m_cursor:SetFraction(fraction) end end
+function gui.PFMWeightSliderBar:OnSizeChanged(w,h) self:SetFraction(self:GetFraction()) end
 gui.register("WIPFMWeightSliderBar",gui.PFMWeightSliderBar)

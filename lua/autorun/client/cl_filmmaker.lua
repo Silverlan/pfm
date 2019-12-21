@@ -10,26 +10,25 @@ include("/sfm/project_converter.lua")
 
 pfm.register_log_category("sfm")
 
-local pEditor
 tool = tool or {}
 tool.close_filmmaker = function()
 	local entScene = ents.find_by_class("pfm_scene")[1]
 	if(util.is_valid(entScene)) then entScene:Remove() end -- TODO: Do this properly once the actual filmmaker tool is ready
 	if(tool.is_filmmaker_open() == false) then return end
-	pEditor:Close()
-	pEditor = nil
+	tool.editor:Close()
+	tool.editor = nil
 end
-tool.get_filmmaker = function() return pEditor end
-tool.is_filmmaker_open = function() return util.is_valid(pEditor) end
+tool.get_filmmaker = function() return tool.editor end
+tool.is_filmmaker_open = function() return util.is_valid(tool.editor) end
 tool.open_filmmaker = function()
 	include("/gui/editors/filmmaker/filmmaker.lua")
 	tool.close_editor()
-	pEditor = gui.create("WIFilmmaker")
-	pEditor:SetAutoAlignToParent(true)
-	-- pEditor:SetZPos(1000)
+	tool.editor = gui.create("WIFilmmaker")
+	tool.editor:SetAutoAlignToParent(true)
+	-- tool.editor:SetZPos(1000)
 
-	pEditor:Open()
-	return pEditor
+	tool.editor:Open()
+	return tool.editor
 end
 
 console.register_command("pfm",function(pl,...)
@@ -69,11 +68,11 @@ console.register_command("pfm",function(pl,...)
 
 	-- TODO: This code should only be enabled during development/testing!
 	-- Remove it for the public release!
-	console.run("cl_render_shadow_resolution 512")--2048")
+	console.run("cl_render_shadow_resolution 2048")
 	console.run("cl_render_occlusion_culling 0")
 	console.run("render_clear_scene 1")
 
-	local ent = ents.find_by_name("pfm_light_demo")[1]
+	--[[local ent = ents.find_by_name("pfm_light_demo")[1]
 	if(util.is_valid(ent) == false) then
 		local ent = ents.create("env_light_point")
 		ent:SetPos(Vector(28.4143,605.566,-2673.99))
@@ -89,7 +88,7 @@ console.register_command("pfm",function(pl,...)
 
 		local toggleC = ent:GetComponent(ents.COMPONENT_TOGGLE)
 		if(toggleC ~= nil) then toggleC:TurnOn() end
-	end
+	end]]
 	--
 	tool.open_filmmaker()
 end)

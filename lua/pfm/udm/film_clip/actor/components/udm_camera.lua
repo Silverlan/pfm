@@ -10,8 +10,10 @@ udm.ELEMENT_TYPE_PFM_CAMERA = udm.register_element("PFMCamera")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"fov",udm.Float(ents.CameraComponent.DEFAULT_FOV))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"zNear",udm.Float(ents.CameraComponent.DEFAULT_NEAR_Z))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"zFar",udm.Float(ents.CameraComponent.DEFAULT_FAR_Z))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"aspectRatio",udm.Float(1.0))
 
 function udm.PFMCamera:GetComponentName() return "pfm_camera" end
+function udm.PFMCamera:GetIconMaterial() return "gui/pfm/icon_camera_item" end
 
 function udm.PFMCamera:SetupControls(actorEditor,itemComponent)
 	actorEditor:AddControl(self,itemComponent,{

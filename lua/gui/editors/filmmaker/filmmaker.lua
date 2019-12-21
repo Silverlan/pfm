@@ -29,6 +29,7 @@ locale.load("pfm_user_interface.txt")
 
 include("windows")
 include("video_recorder.lua")
+include("selection_manager.lua")
 
 include_component("pfm_camera")
 include_component("pfm_sound_source")
@@ -42,6 +43,7 @@ function gui.WIFilmmaker:OnInitialize()
 	self:EnableThinking()
 	self:SetSize(1280,1024)
 	self:SetSkin("pfm")
+	self.m_selectionManager = pfm.SelectionManager()
 	local pMenuBar = self:GetMenuBar()
 	self.m_menuBar = pMenuBar
 
@@ -162,12 +164,26 @@ function gui.WIFilmmaker:OnInitialize()
 		self:SetCameraMode((self.m_cameraMode +1) %gui.WIFilmmaker.CAMERA_MODE_COUNT)
 	end)]]
 
+	self:SetKeyboardInputEnabled(true)
 	self:ClearProjectUI()
 	self:CreateNewProject()
 end
+function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
+	-- TODO: Implement a keybinding system for this! Keybindings should also appear in tooltips!
+	if(key == input.KEY_SPACE and state == input.STATE_PRESS) then
+		if(util.is_valid(self.m_viewport)) then
+			local playButton = self.m_viewport:GetPlayButton()
+			playButton:TogglePlay()
+			return util.EVENT_REPLY_HANDLED
+		end
+	end
+	return util.EVENT_REPLY_UNHANDLED
+end
 function gui.WIFilmmaker:OnRemove()
 	gui.WIBaseEditor.OnRemove(self)
+	self.m_selectionManager:Remove()
 end
+function gui.WIFilmmaker:GetSelectionManager() return self.m_selectionManager end
 function gui.WIFilmmaker:AddFrame(parent)
 	if(util.is_valid(self.m_contents) == false) then return end
 	local frame = gui.create("WIPFMFrame",parent)
@@ -297,6 +313,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	local viewportFrame = self:AddFrame(self.m_contentsRight)
 	viewportFrame:SetHeight(self:GetHeight())
 	local viewport = gui.create("WIPFMViewport")
+	self.m_viewport = viewport
 	viewportFrame:AddTab(locale.get_text("pfm_primary_viewport"),viewport)
 
 	local renderPreview = gui.create("WIPFMRenderPreview")
@@ -306,6 +323,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 	local timelineFrame = self:AddFrame(self.m_contentsRight)
 	local pfmTimeline = gui.create("WIPFMTimeline")
+	self.m_timeline = pfmTimeline
 	timelineFrame:AddTab(locale.get_text("pfm_timeline"),pfmTimeline)
 
 	-- Populate UI with project data
@@ -314,6 +332,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	elementViewer:Setup(root)
 
 	local playhead = pfmTimeline:GetPlayhead()
+	self.m_playhead = playhead
 	playhead:GetTimeOffsetProperty():AddCallback(function(oldOffset,offset)
 		local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
 		if(projectC ~= nil) then projectC:SetOffset(offset) end
@@ -341,6 +360,13 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	end)
 	playButton:AddCallback("OnStateChanged",function(el,oldState,state)
 		ents.PFMSoundSource.set_audio_enabled(state == gui.PFMPlayButton.STATE_PLAYING)
+		if(state == gui.PFMPlayButton.STATE_PAUSED) then
+			self:ClampTimeOffsetToFrame()
+		end
+	end)
+
+	pfmTimeline:AddCallback("OnClipSelected",function(el,clip)
+		if(util.is_valid(self.m_actorEditor) and util.get_type_name(clip) == "PFMFilmClip") then self.m_actorEditor:Setup(clip) end
 	end)
 
 	-- Film strip
@@ -351,6 +377,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		local timeline = pfmTimeline:GetTimeline()
 
 		filmStrip = gui.create("WIFilmStrip")
+		self.m_filmStrip = filmStrip
 		filmStrip:SetScrollInputEnabled(true)
 		filmStrip:AddCallback("OnScroll",function(el,x,y)
 			if(timeline:IsValid()) then
@@ -365,25 +392,19 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		local trackFilm = trackGroup:FindElementsByName("Film")[1]
 		if(trackFilm ~= nil) then
 			for _,filmClip in ipairs(trackFilm:GetFilmClips():GetTable()) do
-				filmStrip:AddFilmClip(filmClip,function(elFilmClip)
+				pfmTimeline:AddFilmClip(filmStrip,filmClip,function(elFilmClip)
 					local filmClipData = elFilmClip:GetFilmClipData()
 					if(util.is_valid(self.m_actorEditor)) then
 						self.m_actorEditor:Setup(filmClipData)
 					end
 				end)
-				if(_ == 1) then
-					-- TODO: For debugging only!
-					self.m_actorEditor:Setup(filmClip)
-				end
 			end
 		end
 		filmStrip:SetSize(1024,64)
 		filmStrip:Update()
 
-		local timeFrame = filmStrip:GetTimeFrame()
-
 		local pfmClipEditor = pfmTimeline:GetEditorTimelineElement(gui.PFMTimeline.EDITOR_CLIP)
-		local groupPicture = pfmClipEditor:AddTrackGroup("Picture")
+		local groupPicture = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_picture"))
 		if(filmStrip ~= nil) then
 			for _,filmClip in ipairs(filmStrip:GetFilmClips()) do
 				timeline:AddTimelineItem(filmClip,filmClip:GetTimeFrame())
@@ -391,31 +412,34 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		end
 		groupPicture:AddElement(filmStrip)
 
-		local groupSound = pfmClipEditor:AddTrackGroup("Sound")
+		local timeFrame = filmClip:GetTimeFrame()
+		local groupSound = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_sound"))
 		local trackGroupSound = filmClip:GetTrackGroups():FindElementsByName("Sound")[1]
 		if(trackGroupSound ~= nil) then
 			for _,track in ipairs(trackGroupSound:GetTracks():GetTable()) do
-				if(track:GetName() == "Music") then
+				--if(track:GetName() == "Music") then
 					local subGroup = groupSound:AddGroup(track:GetName())
 					timeline:AddTimelineItem(subGroup,timeFrame)
 
-					--[[for _,audioClip in ipairs(track:GetAudioClips():GetTable()) do
-						local groupClip = gui.create("WIGenericClip")
-						subGroup:AddElement(groupClip)
-						groupClip:SetText(audioClip:GetName())
-
-						timeline:AddTimelineItem(groupClip,audioClip:GetTimeFrame())
-					end]]
-				end
+					for _,audioClip in ipairs(track:GetAudioClips():GetTable()) do
+						pfmTimeline:AddAudioClip(subGroup,audioClip)
+					end
+				--end
 			end
-			--print(util.get_type_name(trackSound))
-			--[[for _,audioClip in ipairs(trackSound:GetAudioClips():GetTable()) do
-				print("AUDIO CLIP: ",audioClip:GetName())
-			end]]
 		end
 
-		-- TODO: Same as for 'Sound'
-		--[[local groupOverlay = pfmClipEditor:AddTrackGroup("Overlay")
+		local groupOverlay = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_overlay"))
+		local trackGroupOverlay = filmClip:GetTrackGroups():FindElementsByName("Overlay")[1]
+		if(trackGroupOverlay ~= nil) then
+			for _,track in ipairs(trackGroupOverlay:GetTracks():GetTable()) do
+				local subGroup = groupOverlay:AddGroup(track:GetName())
+				timeline:AddTimelineItem(subGroup,timeFrame)
+
+				for _,overlayClip in ipairs(track:GetOverlayClips():GetTable()) do
+					pfmTimeline:AddOverlayClip(subGroup,overlayClip)
+				end
+			end
+		end
 
 		local activeBookmarkSet = filmClip:GetActiveBookmarkSet()
 		local bookmarkSet = filmClip:GetBookmarkSets():Get(activeBookmarkSet +1)
@@ -423,8 +447,107 @@ function gui.WIFilmmaker:InitializeProjectUI()
 			for _,bookmark in ipairs(bookmarkSet:GetBookmarks():GetTable()) do
 				timeline:AddBookmark(bookmark)
 			end
-		end]]
+		end
 	end
+end
+function gui.WIFilmmaker:GetTimeline() return self.m_timeline end
+function gui.WIFilmmaker:GetFilmStrip() return self.m_filmStrip end
+function gui.WIFilmmaker:GetTimeOffset()
+	if(util.is_valid(self.m_playhead) == false) then return 0.0 end
+	return self.m_playhead:GetTimeOffset()
+end
+function gui.WIFilmmaker:SetTimeOffset(offset)
+	if(util.is_valid(self.m_playhead) == false) then return end
+	self.m_playhead:SetTimeOffset(offset)
+end
+function gui.WIFilmmaker:GetSession()
+	local project = self:GetProject()
+	local session = (project ~= nil) and project:GetSessions()[1] or nil
+	return session
+end
+function gui.WIFilmmaker:GetFrameRate()
+	local session = self:GetSession()
+	if(session == nil) then return 24 end
+	local settings = session:GetSettings()
+	local renderSettings = settings:GetRenderSettings()
+	return renderSettings:GetFrameRate()
+end
+function gui.WIFilmmaker:TimeOffsetToFrameOffset(offset) return offset *self:GetFrameRate() end
+function gui.WIFilmmaker:FrameOffsetToTimeOffset(offset) return offset /self:GetFrameRate() end
+function gui.WIFilmmaker:SetFrameOffset(frame) self:SetTimeOffset(self:FrameOffsetToTimeOffset(self:GetClampedFrameOffset(frame))) end
+function gui.WIFilmmaker:GetFrameOffset() return self:TimeOffsetToFrameOffset(self:GetTimeOffset()) end
+function gui.WIFilmmaker:GetClampedFrameOffset(frame) return math.round(frame or self:GetFrameOffset()) end
+function gui.WIFilmmaker:ClampTimeOffsetToFrame() self:SetFrameOffset(self:GetClampedFrameOffset()) end
+function gui.WIFilmmaker:GoToNextFrame() self:SetFrameOffset(self:GetClampedFrameOffset() +1) end
+function gui.WIFilmmaker:GoToPreviousFrame() self:SetFrameOffset(self:GetClampedFrameOffset() -1) end
+function gui.WIFilmmaker:GoToFirstFrame()
+	local session = self:GetSession()
+	local filmClip = (session ~= nil) and session:GetActiveClip() or nil
+	if(filmClip == nil) then return end
+	local timeFrame = filmClip:GetTimeFrame()
+	self:SetFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetStart()))
+end
+function gui.WIFilmmaker:GoToPreviousClip()
+	local offset = self:GetTimeOffset()
+	local timeline = self:GetTimeline()
+	local filmStrip = self:GetFilmStrip()
+	local filmClips = filmStrip:GetFilmClips()
+	if(#filmClips == 0) then return end
+	for i,filmClip in ipairs(filmClips) do
+		local filmClipData = filmClip:GetFilmClipData()
+		local timeFrame = filmClipData:GetTimeFrame()
+		if(timeFrame:IsInTimeFrame(offset,0.001)) then
+			if(i > 1) then
+				local filmClipPrev = filmClips[i -1]
+				self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClipPrev:GetTimeFrame():GetEnd()))
+				return
+			end
+			-- There is no previous clip, just jump to start of this one
+			self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClip:GetTimeFrame():GetStart()))
+			return
+		end
+	end
+	-- Current offset must be either before first clip or after last clip, so we'll
+	-- just clamp it to whichever it is.
+	local firstTimeFrame = filmClips[1]:GetTimeFrame()
+	local lastTimeFrame = filmClips[#filmClips]:GetTimeFrame()
+	local newOffset = (offset < firstTimeFrame:GetStart()) and firstTimeFrame:GetStart() or lastTimeFrame:GetEnd()
+	self:SetFrameOffset(self:TimeOffsetToFrameOffset(newOffset))
+end
+function gui.WIFilmmaker:GoToNextClip()
+	local offset = self:GetTimeOffset()
+	local timeline = self:GetTimeline()
+	local filmStrip = self:GetFilmStrip()
+	local filmClips = filmStrip:GetFilmClips()
+	if(#filmClips == 0) then return end
+	for i=#filmClips,1,-1 do
+		local filmClip = filmClips[i]
+		local filmClipData = filmClip:GetFilmClipData()
+		local timeFrame = filmClipData:GetTimeFrame()
+		if(timeFrame:IsInTimeFrame(offset,0.001)) then
+			if(i < #filmClips) then
+				local filmClipNext = filmClips[i +1]
+				self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClipNext:GetTimeFrame():GetStart()))
+				return
+			end
+			-- There is no next clip, just jump to end of this one
+			self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClip:GetTimeFrame():GetEnd()))
+			return
+		end
+	end
+	-- Current offset must be either before first clip or after last clip, so we'll
+	-- just clamp it to whichever it is.
+	local firstTimeFrame = filmClips[1]:GetTimeFrame()
+	local lastTimeFrame = filmClips[#filmClips]:GetTimeFrame()
+	local newOffset = (offset < firstTimeFrame:GetStart()) and firstTimeFrame:GetStart() or lastTimeFrame:GetEnd()
+	self:SetFrameOffset(self:TimeOffsetToFrameOffset(newOffset))
+end
+function gui.WIFilmmaker:GoToLastFrame()
+	local session = self:GetSession()
+	local filmClip = (session ~= nil) and session:GetActiveClip() or nil
+	if(filmClip == nil) then return end
+	local timeFrame = filmClip:GetTimeFrame()
+	self:SetFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetEnd()))
 end
 function gui.WIFilmmaker:GetProject() return self.m_project end
 gui.register("WIFilmmaker",gui.WIFilmmaker)

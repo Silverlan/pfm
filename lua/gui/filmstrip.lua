@@ -22,22 +22,6 @@ function gui.FilmStrip:OnInitialize()
 	self.m_filmClips = {}
 end
 function gui.FilmStrip:GetTimeFrame() return self.m_timeFrame end
-function gui.FilmStrip:AddFilmClip(filmClip,fOnSelected)
-	local el = gui.create("WIFilmClip",self.m_container)
-	table.insert(self.m_filmClips,el)
-
-	el:SetFilmClipData(filmClip)
-	el:AddCallback("OnSelected",function()
-		for _,elOther in ipairs(self.m_filmClips) do
-			if(elOther:IsValid() and elOther ~= el) then
-				elOther:SetSelected(false)
-			end
-		end
-		if(fOnSelected ~= nil) then fOnSelected() end
-	end)
-	self:ScheduleUpdate()
-	return el
-end
 function gui.FilmStrip:GetFilmClips() return self.m_filmClips end
 function gui.FilmStrip:OnUpdate()
 	local timeFrame

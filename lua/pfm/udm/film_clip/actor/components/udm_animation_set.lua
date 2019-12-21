@@ -25,3 +25,4 @@ function udm.PFMAnimationSet:AddTransformControl(transformControl)
 end
 
 function udm.PFMAnimationSet:GetComponentName() return "pfm_animation_set" end
+function udm.PFMAnimationSet:GetIconMaterial() return "gui/pfm/icon_model_item" end

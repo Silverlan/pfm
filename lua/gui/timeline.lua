@@ -226,8 +226,8 @@ end
 function gui.TimelineItem:OnUpdate()
 	if(util.is_valid(self.m_timeline) == false) then return end
 	if(util.get_type_name(self.m_timeFrame) == "PFMTimeFrame") then
-		local startOffset = 0--self.m_timeFrame:GetStart()
-		local endOffset = 3--self.m_timeFrame:GetEnd()
+		local startOffset = self.m_timeFrame:GetStart()
+		local endOffset = self.m_timeFrame:GetEnd()
 		local xStart = self.m_timeline:TimeOffsetToXOffset(startOffset)
 		local xEnd = self.m_timeline:TimeOffsetToXOffset(endOffset)
 
@@ -242,14 +242,14 @@ function gui.TimelineItem:OnUpdate()
 		--_x:SetX(xStart)
 		_x:SetWidth(xEnd -xStart)]]
 
+		local w = xEnd -xStart
 		local xStartAbs = self.m_timeline:GetAbsolutePos().x +xStart
 		local pos = self:GetAbsolutePos()
 		pos.x = xStartAbs
-		local w = xEnd -pos.x
-		print("PARENT: ",self:GetParent())
+		print("Parent: ",self:GetParent())
 		self:SetAbsolutePos(pos)
-		--if(util.is_valid(self.m_wrappedElement)) then self.m_wrappedElement:SetWidth(w) end
-		print("W: ",w)
+		if(util.is_valid(self.m_wrappedElement)) then self.m_wrappedElement:SetWidth(w) end
+		print("Width: ",xEnd,xStart)--pos.x,xEnd,w)
 	else
 		local offset = self.m_timeFrame:GetTime()
 		local x = self.m_timeline:TimeOffsetToXOffset(offset)

@@ -52,6 +52,13 @@ function ents.PFMCamera:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_CAMERA)
 	local toggleC = self:AddEntityComponent(ents.COMPONENT_TOGGLE)
 	self:AddEntityComponent("pfm_actor")
+
+	self.m_listeners = {}
+end
+function ents.PFMCamera:OnRemove()
+	for _,cb in ipairs(self.m_listeners) do
+		if(cb:IsValid()) then cb:Remove() end
+	end
 end
 function ents.PFMCamera:UpdateVRView()
 	if(ents.PFMCamera.is_vr_view_enabled()) then
@@ -60,8 +67,15 @@ function ents.PFMCamera:UpdateVRView()
 		self:GetEntity():RemoveComponent("pfm_vr_camera")
 	end
 end
+function ents.PFMCamera:UpdateAspectRatio()
+	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
+	if(camC == nil) then return end
+	local camData = self:GetCameraData()
+	camC:SetAspectRatio(camData:GetAspectRatio())
+	camC:UpdateProjectionMatrix()
+end
 function ents.PFMCamera:GetCameraData() return self.m_cameraData end
-function ents.PFMCamera:Setup(animSet,cameraData)
+function ents.PFMCamera:Setup(actorData,cameraData)
 	self.m_cameraData = cameraData
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
 	if(camC ~= nil) then
@@ -69,6 +83,29 @@ function ents.PFMCamera:Setup(animSet,cameraData)
 		camC:SetFarZ(cameraData:GetZFar())
 		camC:SetFOV(cameraData:GetFov())
 		camC:UpdateProjectionMatrix()
+
+		table.insert(self.m_listeners,cameraData:GetZNearAttr():AddChangeListener(function(newZNear)
+			if(camC:IsValid()) then
+				camC:SetNearZ(newZNear)
+				camC:UpdateProjectionMatrix()
+			end
+		end))
+		table.insert(self.m_listeners,cameraData:GetZFarAttr():AddChangeListener(function(newZFar)
+			if(camC:IsValid()) then
+				camC:SetFarZ(newZFar)
+				camC:UpdateProjectionMatrix()
+			end
+		end))
+		table.insert(self.m_listeners,cameraData:GetFovAttr():AddChangeListener(function(newFov)
+			if(camC:IsValid()) then
+				camC:SetFOV(newFov)
+				camC:UpdateProjectionMatrix()
+			end
+		end))
+		table.insert(self.m_listeners,cameraData:GetAspectRatioAttr():AddChangeListener(function(newAspectRatio)
+			self:UpdateAspectRatio()
+		end))
+		self:UpdateAspectRatio()
 	end
 end
 function ents.PFMCamera:OnEntitySpawn()

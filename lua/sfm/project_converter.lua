@@ -55,6 +55,9 @@ local function log_pfm_project_debug_info(project)
 	local function iterate_film_clip(filmClip)
 		numFilmClips = numFilmClips +1
 		numActors = numActors +#filmClip:GetActors()
+		for _,actor in ipairs(filmClip:GetActors():GetTable()) do
+			print("ACTOR: ",actor)
+		end
 		for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
 			for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
 				for _,filmClipOther in ipairs(track:GetFilmClips():GetTable()) do
@@ -312,7 +315,7 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 			local overrideParent = elTransform:GetOverrideParent()
 			if(overrideParent ~= nil) then
 				local type = overrideParent:GetType()
-				if(type == udm.ELEMENT_TYPE_PFM_MODEL or type == udm.ELEMENT_TYPE_PFM_CAMERA or type == udm.ELEMENT_TYPE_PFM_SPOT_LIGHT) then
+				if(type == udm.ELEMENT_TYPE_PFM_MODEL or type == udm.ELEMENT_TYPE_PFM_CAMERA or type == udm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM) then
 					local overrideParentActor = overrideParent:FindParentElement()
 					elTransform:SetOverrideParent((overrideParentActor ~= nil) and udm.create_reference(overrideParentActor) or nil)
 				end
@@ -384,6 +387,7 @@ include("project_converter")
 sfm.register_element_type_conversion(sfm.Session,udm.PFMSession,function(converter,sfmSession,pfmSession)
 	local activeClip = sfmSession:GetActiveClip()
 	pfmSession:SetActiveClip(converter:ConvertNewElement(activeClip))
+	pfmSession:SetSettings(converter:ConvertNewElement(sfmSession:GetSettings()))
 
 	for _,clipSet in ipairs({sfmSession:GetClipBin(),sfmSession:GetMiscBin()}) do
 		for _,clip in ipairs(clipSet) do
@@ -394,6 +398,14 @@ sfm.register_element_type_conversion(sfm.Session,udm.PFMSession,function(convert
 			end
 		end
 	end
+end)
+
+sfm.register_element_type_conversion(sfm.Settings,udm.PFMSettings,function(converter,sfmSettings,pfmSettings)
+	pfmSettings:SetRenderSettings(converter:ConvertNewElement(sfmSettings:GetRenderSettings()))
+end)
+
+sfm.register_element_type_conversion(sfm.RenderSettings,udm.PFMRenderSettings,function(converter,sfmRenderSettings,pfmRenderSettings)
+	pfmRenderSettings:SetFrameRate(sfmRenderSettings:GetFrameRate())
 end)
 
 sfm.register_element_type_conversion(sfm.BookmarkSet,udm.PFMBookmarkSet,function(converter,sfmBookmarkSet,pfmBookmarkSet)
@@ -455,6 +467,11 @@ sfm.register_element_type_conversion(sfm.Track,udm.PFMTrack,function(converter,s
 		local pfmClip = converter:ConvertNewElement(clip)
 		pfmTrack:GetAudioClipsAttr():PushBack(pfmClip)
 	end
+
+	for _,clip in ipairs(sfmTrack:GetOverlayClips()) do
+		local pfmClip = converter:ConvertNewElement(clip)
+		pfmTrack:GetOverlayClipsAttr():PushBack(pfmClip)
+	end
 	
 	for _,clip in ipairs(sfmTrack:GetChannelClips()) do
 		local pfmClip = converter:ConvertNewElement(clip)
@@ -475,6 +492,7 @@ sfm.register_element_type_conversion(sfm.Camera,udm.PFMCamera,function(converter
 	pfmCamera:SetFov(sfmCamera:GetFieldOfView())
 	pfmCamera:SetZNear(sfm.source_units_to_pragma_units(sfmCamera:GetZNear()))
 	pfmCamera:SetZFar(sfm.source_units_to_pragma_units(sfmCamera:GetZFar()))
+	pfmCamera:SetAspectRatio(16.0 /9.0)
 end)
 
 sfm.register_element_type_conversion(sfm.Control,udm.PFMFlexControl,function(converter,sfmControl,pfmControl)
@@ -662,7 +680,7 @@ end,function(converter,sfmDag,pfmEl)
 		for _,child in ipairs(sfmDag:GetChildren()) do
 			local type = child:GetType()
 
-			if(type == "DmeGameModel" or type == "DmeCamera" or type == "DmeProjectedLight") then
+			if(type == "DmeGameModel" or type == "DmeCamera" or type == "DmeProjectedLight" or type == "DmeGameParticleSystem") then
 				local actor = converter:CreateActor(child)
 				pfmDag:AddChild(udm.create_reference(actor))
 
@@ -685,7 +703,7 @@ end,function(converter,sfmDag,pfmEl)
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.MaterialOverlayFXClip,udm.PFMMaterialOverlayFXClip,function(converter,sfmMat,pfmMat)
+sfm.register_element_type_conversion(sfm.MaterialOverlayFXClip,udm.PFMOverlayClip,function(converter,sfmMat,pfmMat)
 	pfmMat:SetTimeFrameAttr(converter:ConvertNewElement(sfmMat:GetTimeFrame()))
 	local matName = sfmMat:GetMaterial()
 	if(#matName > 0) then matName = file.remove_file_extension(matName) .. ".wmi" end
@@ -703,6 +721,43 @@ sfm.register_element_type_conversion(sfm.ProjectedLight,udm.PFMSpotLight,functio
 	pfmLight:SetIntensityType(ents.LightComponent.INTENSITY_TYPE_CANDELA)
 	pfmLight:SetFalloffExponent(1.0)
 	pfmLight:SetMaxDistance(sfmLight:GetMaxDistance())
+	pfmLight:SetCastShadows(sfmLight:ShouldCastShadows())
+	pfmLight:SetVolumetric(sfmLight:IsVolumetric())
+	pfmLight:SetVolumetricIntensity(sfmLight:GetVolumetricIntensity() *0.05)
+end)
+
+sfm.register_element_type_conversion(sfm.GameParticleSystem,udm.PFMParticleSystem,function(converter,sfmParticle,pfmParticle)
+	pfmParticle:SetTimeScale(sfmParticle:GetSimulationTimeScale())
+	pfmParticle:SetDefinition(converter:ConvertNewElement(sfmParticle:GetParticleSystemDefinition()))
+end)
+
+sfm.register_element_type_conversion(sfm.ParticleSystemDefinition,udm.PFMParticleSystemDefinition,function(converter,sfmParticleDef,pfmParticleDef)
+	pfmParticleDef:SetMaxParticles(sfmParticleDef:GetMaxParticles())
+	pfmParticleDef:SetMaterial(sfmParticleDef:GetMaterial())
+	pfmParticleDef:SetRadius(sfmParticleDef:GetRadius())
+	pfmParticleDef:SetLifetime(sfmParticleDef:GetLifetime())
+	pfmParticleDef:SetColor(sfmParticleDef:GetColor())
+	pfmParticleDef:SetSortParticles(sfmParticleDef:ShouldSortParticles())
+
+	for _,renderer in ipairs(sfmParticleDef:GetRenderers()) do
+		local pfmRenderer = converter:ConvertNewElement(renderer)
+		pfmParticleDef:GetRenderersAttr():PushBack(pfmRenderer)
+	end
+
+	for _,operator in ipairs(sfmParticleDef:GetOperators()) do
+		local pfmOperator = converter:ConvertNewElement(operator)
+		pfmParticleDef:GetOperatorsAttr():PushBack(pfmOperator)
+	end
+
+	for _,initializer in ipairs(sfmParticleDef:GetInitializers()) do
+		local pfmInitializer = converter:ConvertNewElement(initializer)
+		pfmParticleDef:GetInitializersAttr():PushBack(pfmInitializer)
+	end
+end)
+
+sfm.register_element_type_conversion(sfm.ParticleSystemOperator,udm.PFMParticleSystemOperator,function(converter,sfmParticleOp,pfmParticleOp)
+	pfmParticleOp:SetOperatorName(sfmParticleOp:GetFunctionName())
+	-- TODO: Set operator attributes
 end)
 
 sfm.register_element_type_conversion(sfm.ChannelClip,udm.PFMChannelClip,function(converter,sfmChannelClip,pfmChannelClip)

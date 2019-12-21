@@ -22,3 +22,10 @@ sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"maxDistance",0.0)
 sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"visible",false,{
 	getterName = "IsVisible"
 })
+sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"castShadows",false,{
+	getterName = "ShouldCastShadows"
+})
+sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"volumetric",false,{
+	getterName = "IsVolumetric"
+})
+sfm.BaseElement.RegisterAttribute(sfm.ProjectedLight,"volumetricIntensity",1.0)

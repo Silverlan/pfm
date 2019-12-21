@@ -20,6 +20,7 @@ sfm.BaseElement.RegisterAttribute(sfm.Track,"volume",1.0)
 function sfm.Track:Initialize()
 	self.m_channelClips = {}
 	self.m_soundClips = {}
+	self.m_overlayClips = {}
 	self.m_filmClips = {}
 end
 
@@ -35,6 +36,8 @@ function sfm.Track:Load(el)
 			table.insert(self.m_channelClips,self:LoadArrayValue(attrClip,sfm.ChannelClip))
 		elseif(type == "DmeFilmClip") then
 			table.insert(self.m_filmClips,self:LoadArrayValue(attrClip,sfm.FilmClip))
+		elseif(type == "DmeMaterialOverlayFXClip") then
+			table.insert(self.m_overlayClips,self:LoadArrayValue(attrClip,sfm.MaterialOverlayFXClip))
 		else
 			pfm.log("Unsupported track child type '" .. type .. "' for track '" .. self:GetName() .. "'! Child will be ignored!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 		end
@@ -44,3 +47,4 @@ end
 function sfm.Track:GetChannelClips() return self.m_channelClips end
 function sfm.Track:GetSoundClips() return self.m_soundClips end
 function sfm.Track:GetFilmClips() return self.m_filmClips end
+function sfm.Track:GetOverlayClips() return self.m_overlayClips end

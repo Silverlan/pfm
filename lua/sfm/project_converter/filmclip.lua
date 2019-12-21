@@ -1,7 +1,7 @@
 
 local function iterate_film_clip_children(converter,pfmFilmClip,node,parentName)
 	local numTypes = 0
-	if(node:GetType() == "DmeProjectedLight" or node:GetType() == "DmeGameModel" or node:GetType() == "DmeCamera") then
+	if(node:GetType() == "DmeProjectedLight" or node:GetType() == "DmeGameModel" or node:GetType() == "DmeCamera" or node:GetType() == "DmeGameParticleSystem") then
 		local pfmActor = converter:CreateActor(node)
 		pfmFilmClip:GetActorsAttr():PushBack(pfmActor)
 		numTypes = numTypes +1
@@ -25,7 +25,6 @@ end
 sfm.register_element_type_conversion(sfm.FilmClip,udm.PFMFilmClip,function(converter,sfmFilmClip,pfmFilmClip)
 	pfmFilmClip:SetTimeFrameAttr(converter:ConvertNewElement(sfmFilmClip:GetTimeFrame()))
 	pfmFilmClip:SetSceneAttr(converter:ConvertNewElement(sfmFilmClip:GetScene()))
-	pfmFilmClip:SetMaterialOverlay(converter:ConvertNewElement(sfmFilmClip:GetMaterialOverlay()))
 	pfmFilmClip:SetFadeIn(sfmFilmClip:GetFadeIn())
 	pfmFilmClip:SetFadeOut(sfmFilmClip:GetFadeOut())
 

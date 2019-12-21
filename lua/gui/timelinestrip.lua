@@ -6,92 +6,39 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("basetimelinegrid.lua")
 include("/shaders/pfm/pfm_timeline.lua")
 include("/pfm/fonts.lua")
 
-util.register_class("gui.TimelineStrip",gui.Base)
+util.register_class("gui.TimelineStrip",gui.BaseTimelineGrid)
 
 function gui.TimelineStrip:__init()
-	gui.Base.__init(self)
+	gui.BaseTimelineGrid.__init(self)
 end
 function gui.TimelineStrip:OnInitialize()
-	gui.Base.OnInitialize(self)
+	gui.BaseTimelineGrid.OnInitialize(self)
 
-	self.m_startOffset = util.FloatProperty(0.0)
-	self.m_zoomLevel = util.FloatProperty(0.0)
-	self.m_xMultiplier = 1.0
-
-	local fOnPropsChanged = function() self:CallCallbacks("OnTimelinePropertiesChanged") end
-	self.m_startOffset:AddCallback(fOnPropsChanged)
-	self.m_zoomLevel:AddCallback(fOnPropsChanged)
-	self:GetSizeProperty():AddCallback(fOnPropsChanged)
-
-	self:SetSize(128,6)
 	self.m_line = gui.create("WIRect",self,0,0,self:GetWidth(),1,0,0,1,0)
-	self.m_line:SetColor(Color.Black)
-	self.m_timeFrame = udm.PFMTimeFrame()
-	self.m_shader = shader.get("pfm_timeline")
-	self:SetZoomLevel(1)
-	self:SetStartOffset(0.0)
-	self:Update()
+	self.m_line:GetColorProperty():Link(self:GetColorProperty())
 
+	self:SetColor(Color.Black)
 	self:SetFlipped(false)
+	self:SetShader("pfm_timeline")
 end
 function gui.TimelineStrip:SetFlipped(flipped)
 	if(flipped) then
-		self.m_yMultiplier = 1.0
+		self:SetYMultiplier(1.0)
 		if(util.is_valid(self.m_line)) then
 			self.m_line:SetY(0)
 			self.m_line:SetAnchor(0,0,1,0)
 		end
 	else
-		self.m_yMultiplier = -1.0
+		self:SetYMultiplier(-1.0)
 		if(util.is_valid(self.m_line)) then
 			self.m_line:SetY(self:GetBottom() -1)
 			self.m_line:SetAnchor(0,1,1,1)
 		end
 	end
-end
-function gui.TimelineStrip:OnDraw(w,h,pose)
-	if(self.m_shader == nil) then return end
-	local parent = self:GetParent()
-	local drawCmd = game.get_draw_command_buffer()
-	local x,y,w,h = gui.get_render_scissor_rect()
-	self.m_shader:Draw(drawCmd,pose,x,y,w,h,self:GetLineCount(),self:GetStrideX(),Color.Black,self.m_yMultiplier)
-end
-function gui.TimelineStrip:GetLineCount()
-	local w = self:GetWidth()
-	local stridePerSecond = self:GetStridePerUnit()
-	local strideX = stridePerSecond /10.0
-	return math.ceil(w /strideX)
-end
-function gui.TimelineStrip:GetStrideX()
-	local w = self:GetWidth()
-	local stridePerSecond = self:GetStridePerUnit()
-	local strideX = stridePerSecond /10.0
-	return strideX /w
-end
-function gui.TimelineStrip:SetZoomLevel(zoomLevel)
-	print("SetZoomLevel: ",zoomLevel)
-	zoomLevel = math.clamp(zoomLevel,-3,3)
-	self.m_zoomLevel:Set(zoomLevel)
-end
-function gui.TimelineStrip:GetZoomLevel() return self.m_zoomLevel:Get() end
-function gui.TimelineStrip:GetZoomLevelProperty() return self.m_zoomLevel end
-function gui.TimelineStrip:GetUnitZoomLevel() return self:GetZoomLevel() %1.0 end
-function gui.TimelineStrip:GetZoomLevelMultiplier() return 10 ^math.floor(self:GetZoomLevel()) end
-function gui.TimelineStrip:SetStartOffset(offset) self.m_startOffset:Set(offset) end
-function gui.TimelineStrip:GetStartOffset() return self.m_startOffset:Get() end
-function gui.TimelineStrip:GetStartOffsetProperty() return self.m_startOffset end
-function gui.TimelineStrip:GetEndOffset() return self:XOffsetToTimeOffset(self:GetRight()) end
-function gui.TimelineStrip:GetStridePerUnit() return (1.0 +(1.0 -self:GetUnitZoomLevel())) *30 end
-function gui.TimelineStrip:TimeOffsetToXOffset(timeInSeconds)
-	timeInSeconds = timeInSeconds -self:GetStartOffset() /self:GetZoomLevelMultiplier()
-	return timeInSeconds *self:GetStridePerUnit()
-end
-function gui.TimelineStrip:XOffsetToTimeOffset(x)
-	x = x /self:GetStridePerUnit()
-	return x +self:GetStartOffset() /self:GetZoomLevelMultiplier()
 end
 gui.register("WITimelineStrip",gui.TimelineStrip)
 

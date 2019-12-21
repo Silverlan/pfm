@@ -28,10 +28,10 @@ function gui.PFMRenderPreview:OnInitialize()
 			local pContext = gui.open_context_menu()
 			if(util.is_valid(pContext) == false) then return end
 			pContext:SetPos(input.get_cursor_pos())
-			pContext:AddItem("Save As...",function()
+			pContext:AddItem(locale.get_text("save_as"),function()
 				local dialoge = gui.create_file_save_dialog(function(pDialoge,file)
 					--self:SaveModel(file:sub(8)) -- Strip "models/"-prefix
-					print("TODO: Save image")
+					print("TODO")
 					--[[local writeInfo = util.ImageSaveInfo()
 					writeInfo.outputFormat = 
 					util.save_image(fileName,)]]
@@ -58,14 +58,16 @@ function gui.PFMRenderPreview:InitializeControls()
 	self.m_btRefreshPreview = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_rotate","gui/pfm/icon_manipulator_rotate_activated",function()
 		self:Refresh(512,512,4)
 	end)
+	self.m_btRefreshPreview:SetTooltip(locale.get_text("pfm_refresh_preview"))
 	self.m_btRefresh = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_rotate","gui/pfm/icon_manipulator_rotate_activated",function()
 		self:Refresh(1024,1024,512)
 	end)
+	self.m_btRefresh:SetTooltip(locale.get_text("pfm_render_frame"))
 
-	self.m_toneMapping = gui.create("WIDropDownMenu",controls)
-	self.m_toneMapping:SetText("Tonemapping")
+	--[[self.m_toneMapping = gui.create("WIDropDownMenu",controls)
+	self.m_toneMapping:SetText(locale.get_text("tonemapping"))
 	local toneMappingOptions = {
-		"Gamma Correction",
+		locale.get_text("gamma_correction"),
 		"Reinhard",
 		"Hejil-Richard",
 		"Uncharted",
@@ -84,9 +86,7 @@ function gui.PFMRenderPreview:InitializeControls()
 		self.m_toneMapping:AddOption(option)
 	end
 	self.m_toneMapping:AddCallback("OnOptionSelected",function(el,idx)
-		print("A")
 		if(self.m_imageResultBuffer == nil) then return end
-		print("B")
 		local imgBuffer = self.m_imageResultBuffer:ApplyToneMapping(toneMappingEnums[idx +1])
 
 		-- TODO: Update image data instead of creating new one!
@@ -97,7 +97,7 @@ function gui.PFMRenderPreview:InitializeControls()
 		
 		if(util.is_valid(self.m_preview)) then self.m_preview:SetTexture(tex) end
 	end)
-	self.m_toneMapping:SetSize(128,25)
+	self.m_toneMapping:SetSize(128,25)]]
 
 	controls:SetHeight(self.m_btRefreshPreview:GetHeight())
 	controls:Update()
@@ -125,6 +125,9 @@ function gui.PFMRenderPreview:OnThink()
 		if(util.is_valid(self.m_preview)) then self.m_preview:SetTexture(tex) end
 	end
 	self.m_raytracingJob = nil
+
+	if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(true) end
+	if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetEnabled(true) end
 end
 function gui.PFMRenderPreview:IsComplete()
 	if(self.m_raytracingJob == nil) then return true end
@@ -136,6 +139,9 @@ function gui.PFMRenderPreview:GetProgress()
 end
 function gui.PFMRenderPreview:Refresh(width,height,samples)
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
+	if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(false) end
+	if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetEnabled(false) end
+
 	local job = util.capture_raytraced_screenshot(width,height,samples)
 	job:Start()
 	self.m_raytracingJob = job

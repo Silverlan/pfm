@@ -34,14 +34,16 @@ function gui.AspectRatio:OnInitialize()
 		end
 	end)
 
+	self.m_aspectRatio = util.FloatProperty(1.0)
 	self:SetAspectRatio(16.0 /9.0)
 end
 function gui.AspectRatio:SetAspectRatio(aspectRatio)
-	self.m_aspectRatio = aspectRatio
+	self.m_aspectRatio:Set(aspectRatio)
 	self:Update()
 	self:CallCallbacks("OnAspectRatioChanged",aspectRatio)
 end
-function gui.AspectRatio:GetAspectRatio() return self.m_aspectRatio end
+function gui.AspectRatio:GetAspectRatio() return self.m_aspectRatio:Get() end
+function gui.AspectRatio:GetAspectRatioProperty() return self.m_aspectRatio end
 function gui.AspectRatio:OnUpdate()
 	if(util.is_valid(self.m_targetElement) == false) then return end
 	local size = self:GetSize()

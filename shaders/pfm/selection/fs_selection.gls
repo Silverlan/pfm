@@ -1,0 +1,22 @@
+/*
+    Copyright (C) 2019  Florian Weischer
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+#version 440
+
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
+#include "sh_selection.gls"
+#include "../../modules/fs_world.gls"
+#include "../../modules/sh_csm.gls"
+
+void main()
+{
+	fs_color = u_pushConstants.selectionColor;
+	extract_bright_color(fs_color);
+}

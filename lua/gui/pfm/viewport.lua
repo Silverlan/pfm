@@ -127,6 +127,12 @@ function gui.PFMViewport:OnRemove()
 		if(ent:IsValid()) then ent:Remove() end
 	end
 end
+function gui.PFMViewport:GetAspectRatio()
+	return util.is_valid(self.m_aspectRatioWrapper) and self.m_aspectRatioWrapper:GetAspectRatio() or 1.0
+end
+function gui.PFMViewport:GetAspectRatioProperty()
+	return util.is_valid(self.m_aspectRatioWrapper) and self.m_aspectRatioWrapper:GetAspectRatioProperty() or nil
+end
 function gui.PFMViewport:SetCameraMode(camMode)
 	pfm.log("Changing camera mode to " .. ((camMode == gui.PFMViewport.CAMERA_MODE_PLAYBACK and "playback") or (camMode == gui.PFMViewport.CAMERA_MODE_FLY and "fly") or "walk"))
 	self.m_cameraMode = camMode
@@ -182,28 +188,57 @@ function gui.PFMViewport:UpdateFilmLabelPositions()
 end
 function gui.PFMViewport:InitializePlayControls()
 	local controls = gui.create("WIHBox",self,0,self.m_vpBg:GetBottom() +4)
+
 	self.m_btFirstFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_firstframe","gui/pfm/icon_cp_firstframe_activated",function()
-		print("PRESS")
+		local filmmaker = tool.get_filmmaker()
+		if(util.is_valid(filmmaker) == false) then return end
+		filmmaker:GoToFirstFrame()
 	end)
+	self.m_btFirstFrame:SetTooltip(locale.get_text("pfm_playback_first_frame"))
+
 	self.m_btPrevClip = gui.PFMButton.create(controls,"gui/pfm/icon_cp_prevclip","gui/pfm/icon_cp_prevclip_activated",function()
-		print("PRESS")
+		local filmmaker = tool.get_filmmaker()
+		if(util.is_valid(filmmaker) == false) then return end
+		filmmaker:GoToPreviousClip()
 	end)
+	self.m_btPrevClip:SetTooltip(locale.get_text("pfm_playback_previous_clip"))
+
 	self.m_btPrevFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_prevframe","gui/pfm/icon_cp_prevframe_activated",function()
-		print("PRESS")
+		local filmmaker = tool.get_filmmaker()
+		if(util.is_valid(filmmaker) == false) then return end
+		filmmaker:GoToPreviousFrame()
 	end)
+	self.m_btPrevFrame:SetTooltip(locale.get_text("pfm_playback_previous_frame"))
+
 	self.m_btRecord = gui.PFMButton.create(controls,"gui/pfm/icon_cp_record","gui/pfm/icon_cp_record_activated",function()
-		print("PRESS")
+		print("TODO")
 	end)
+	self.m_btRecord:SetTooltip(locale.get_text("pfm_playback_record"))
+
 	self.m_btPlay = gui.create("WIPFMPlayButton",controls)
+	self.m_btPlay:SetTooltip(locale.get_text("pfm_playback_play"))
+
 	self.m_btNextFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_nextframe","gui/pfm/icon_cp_nextframe_activated",function()
-		print("PRESS")
+		local filmmaker = tool.get_filmmaker()
+		if(util.is_valid(filmmaker) == false) then return end
+		filmmaker:GoToNextFrame()
 	end)
+	self.m_btNextFrame:SetTooltip(locale.get_text("pfm_playback_next_frame"))
+
 	self.m_btNextClip = gui.PFMButton.create(controls,"gui/pfm/icon_cp_nextclip","gui/pfm/icon_cp_nextclip_activated",function()
-		print("PRESS")
+		local filmmaker = tool.get_filmmaker()
+		if(util.is_valid(filmmaker) == false) then return end
+		filmmaker:GoToNextClip()
 	end)
+	self.m_btNextClip:SetTooltip(locale.get_text("pfm_playback_next_clip"))
+
 	self.m_btLastFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_lastframe","gui/pfm/icon_cp_lastframe_activated",function()
-		print("PRESS")
+		local filmmaker = tool.get_filmmaker()
+		if(util.is_valid(filmmaker) == false) then return end
+		filmmaker:GoToLastFrame()
 	end)
+	self.m_btLastFrame:SetTooltip(locale.get_text("pfm_playback_last_frame"))
+
 	controls:SetHeight(self.m_btFirstFrame:GetHeight())
 	controls:Update()
 	controls:SetX(self:GetWidth() *0.5 -controls:GetWidth() *0.5)
@@ -213,16 +248,16 @@ end
 function gui.PFMViewport:InitializeManipulatorControls()
 	local controls = gui.create("WIHBox",self,0,self.m_vpBg:GetBottom() +4)
 	self.m_btSelect = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_select","gui/pfm/icon_manipulator_select_activated",function()
-		print("PRESS")
+		print("TODO")
 	end)
 	self.m_btMove = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_move","gui/pfm/icon_manipulator_move_activated",function()
-		print("PRESS")
+		print("TODO")
 	end)
 	self.m_btRotate = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_rotate","gui/pfm/icon_manipulator_rotate_activated",function()
-		print("PRESS")
+		print("TODO")
 	end)
 	self.m_btScreen = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_screen","gui/pfm/icon_manipulator_screen_activated",function()
-		print("PRESS")
+		print("TODO")
 	end)
 	controls:SetHeight(self.m_btSelect:GetHeight())
 	controls:Update()
@@ -272,16 +307,16 @@ function gui.PFMViewport:InitializeCameraControls()
 		end
 	end)
 	local pText = gui.create("WIText",self.m_btVr)
-	pText:SetText("VR")
+	pText:SetText(locale.get_text("virtual_reality_abbreviation"))
 	pText:SizeToContents()
 	pText:SetPos(self.m_btVr:GetWidth() *0.5 -pText:GetWidth() *0.5,self.m_btVr:GetHeight() *0.5 -pText:GetHeight() *0.5)
 	pText:SetAnchor(0.5,0.5,0.5,0.5)
 	pText:SetColor(Color.White)
 
 	self.m_toneMapping = gui.create("WIDropDownMenu",controls)
-	self.m_toneMapping:SetText("Tonemapping")
+	self.m_toneMapping:SetText(locale.get_text("tonemapping"))
 	local toneMappingOptions = {
-		"Gamma Correction",
+		locale.get_text("gamma_correction"),
 		"Reinhard",
 		"Hejil-Richard",
 		"Uncharted",
@@ -297,13 +332,13 @@ function gui.PFMViewport:InitializeCameraControls()
 	self.m_toneMapping:SetSize(128,25)
 
 	self.m_btAutoAim = gui.PFMButton.create(controls,"gui/pfm/icon_viewport_autoaim","gui/pfm/icon_viewport_autoaim_activated",function()
-		print("PRESS")
+		print("TODO")
 	end)
 	self.m_btCamera = gui.PFMButton.create(controls,"gui/pfm/icon_cp_camera","gui/pfm/icon_cp_camera_activated",function()
-		print("PRESS")
+		print("TODO")
 	end)
 	self.m_btGear = gui.PFMButton.create(controls,"gui/pfm/icon_gear","gui/pfm/icon_gear_activated",function()
-		print("PRESS")
+		print("TODO")
 	end)
 	controls:SetHeight(self.m_btAutoAim:GetHeight())
 	controls:Update()

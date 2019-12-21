@@ -11,6 +11,7 @@ include("track")
 udm.ELEMENT_TYPE_PFM_TRACK = udm.register_element("PFMTrack")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"audioClips",udm.Array(udm.ELEMENT_TYPE_PFM_AUDIO_CLIP))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"filmClips",udm.Array(udm.ELEMENT_TYPE_PFM_FILM_CLIP))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"overlayClips",udm.Array(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"channelClips",udm.Array(udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"muted",udm.Bool(false),{
 	getter = "IsMuted"
@@ -24,6 +25,11 @@ end
 function udm.PFMTrack:AddFilmClip(name)
 	local clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_FILM_CLIP,name)
 	self:GetFilmClipsAttr():PushBack(clip)
+	return clip
+end
+function udm.PFMTrack:AddOverlayClip(name)
+	local clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,name)
+	self:GetOverlayClipsAttr():PushBack(clip)
 	return clip
 end
 function udm.PFMTrack:AddChannelClip(name)

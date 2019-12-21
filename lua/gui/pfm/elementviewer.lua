@@ -7,6 +7,7 @@
 ]]
 
 include("button.lua")
+include("treeview.lua")
 include("/gui/vbox.lua")
 include("/gui/hbox.lua")
 include("/gui/resizer.lua")
@@ -32,7 +33,7 @@ function gui.PFMElementViewer:OnInitialize()
 	self.navBar:SetAnchor(0,0,1,0)
 
 	self.m_btTools = gui.PFMButton.create(self,"gui/pfm/icon_gear","gui/pfm/icon_gear_activated",function()
-		print("PRESS")
+		print("TODO")
 	end)
 	self.m_btTools:SetX(self:GetWidth() -self.m_btTools:GetWidth())
 
@@ -64,12 +65,10 @@ function gui.PFMElementViewer:OnInitialize()
 	create_header_text(locale.get_text("tree"),treeVBox)
 	create_header_text(locale.get_text("data"),dataVBox)
 
-	self.m_tree = gui.create("WITreeList",treeVBox,0,0,treeVBox:GetWidth(),treeVBox:GetHeight(),0,0,1,1)
-	self.m_tree:SetSelectableMode(gui.Table.SELECTABLE_MODE_SINGLE)
-	self.m_data = gui.create("WITable",dataVBox,0,0,dataVBox:GetWidth(),dataVBox:GetHeight(),0,0,1,1)
-
-	self.m_data:SetRowHeight(self.m_tree:GetRowHeight())
-	self.m_data:SetSelectableMode(gui.Table.SELECTABLE_MODE_SINGLE)
+	self.m_tree = gui.create("WIPFMTreeView",treeVBox,0,0,treeVBox:GetWidth(),treeVBox:GetHeight(),0,0,1,1)
+	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_SINGLE)
+	self.m_data = gui.create("WIPFMTreeView",dataVBox,0,0,dataVBox:GetWidth(),dataVBox:GetHeight(),0,0,1,1)
+	self.m_data:SetSelectable(gui.Table.SELECTABLE_MODE_SINGLE)
 
 	self.m_treeElementToDataElement = {}
 	self.m_history = pfm.History()
@@ -133,21 +132,27 @@ function gui.PFMElementViewer:AddUDMNode(node,name,elTreeParent,elTreePrevious)
 		text = node:ToASCIIString()
 	end
 
-	local pRow = self.m_data:AddRow()
-	if(node:GetType() == udm.ATTRIBUTE_TYPE_BOOL) then
+	local itemParent = self.m_treeElementToDataElement[elTreePrevious]
+	local insertIndex
+	if(util.is_valid(itemParent)) then
+		insertIndex = itemParent:GetParent():FindChildIndex(itemParent)
+		if(insertIndex ~= nil) then insertIndex = insertIndex +1 end
+	end
+	local item = self.m_data:AddItem(text,nil,insertIndex)
+	--[[if(node:GetType() == udm.ATTRIBUTE_TYPE_BOOL) then
 		local el = gui.create("WICheckbox")
 		pRow:InsertElement(0,el)
 		el:SetChecked(node:GetValue())
 	else
 		pRow:SetValue(0,text)
-	end
+	end]]
 	if(node:IsAttribute()) then
-		pRow:AddCallback("OnDoubleClick",function()
+		--[[item:AddCallback("OnDoubleClick",function()
 			local pEntry = gui.create("WITextEntry")
-			pEntry:SetSize(pRow:GetSize())
+			pEntry:SetSize(item:GetSize())
 			pEntry:SetAnchor(0,0,1,1)
 			pEntry:SetText(node:ToASCIIString())
-			pRow:InsertElement(0,pEntry)
+			item:InsertElement(0,pEntry)
 
 			pEntry:RequestFocus()
 			pEntry:AddCallback("OnTextEntered",function()
@@ -155,25 +160,22 @@ function gui.PFMElementViewer:AddUDMNode(node,name,elTreeParent,elTreePrevious)
 				local newValue = pEntry:GetText()
 				node:LoadFromASCIIString(newValue)
 			end)
-		end)
+		end)]]
 	end
-	local pRowParent = self.m_treeElementToDataElement[elTreePrevious]
-	if(util.is_valid(pRowParent)) then
-		self.m_data:MoveRow(pRow,pRowParent)
-	end
-	pRowParent = pRow
-	self.m_treeElementToDataElement[elTreeChild] = pRow
+	itemParent = item
+	self.m_treeElementToDataElement[elTreeChild] = item
 
 	--
 	elTreeChild:AddCallback("OnRemove",function()
-		if(self.m_data:IsValid() and pRow:IsValid()) then
-			self.m_data:RemoveRow(pRow:GetRowIndex())
+		if(self.m_data:IsValid() and item:IsValid()) then
+			self.m_data:GetRoot():RemoveItem(item)
 		end
 	end)
 
 	if(node:IsAttribute()) then
 		node:AddChangeListener(function(newVal)
-			if(pRow:IsValid()) then pRow:SetValue(0,node:ToASCIIString()) end
+			-- TODO
+			--if(item:IsValid()) then item:SetValue(0,node:ToASCIIString()) end
 		end)
 	end
 	return elTreeChild

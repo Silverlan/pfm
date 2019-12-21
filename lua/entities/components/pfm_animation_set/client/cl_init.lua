@@ -34,6 +34,13 @@ function ents.PFMAnimationSet:Initialize()
 	end)
 
 	self.m_currentBoneTransforms = {}
+	self.m_listeners = {}
+end
+
+function ents.PFMAnimationSet:OnRemove()
+	for _,cb in ipairs(self.m_listeners) do
+		if(cb:IsValid()) then cb:Remove() end
+	end
 end
 
 function ents.PFMAnimationSet:OnRemove()
@@ -60,7 +67,7 @@ function ents.PFMAnimationSet:SetFlexController(fcId,value)
 	local fc = (mdl ~= nil) and mdl:GetFlexController(fcId) or nil -- TODO: Cache this
 	local flexC = ent:GetComponent(ents.COMPONENT_FLEX)
 	if(flexC == nil or fc == nil) then return false end
-	flexC:SetFlexController(fcId,translate_flex_controller_value(fc,value))
+	flexC:SetFlexController(fcId,translate_flex_controller_value(fc,value),0.0,false)
 end
 
 function ents.PFMAnimationSet:ApplyBoneTransforms()

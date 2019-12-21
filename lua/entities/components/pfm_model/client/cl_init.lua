@@ -111,10 +111,10 @@ bip_ponytail03  57
 			local weight = flexWeights[i]
 			local fcId = mdl:LookupFlexController(name)
 			if(fcId ~= -1) then
-				animSetC:SetFlexController(fcId,weight:GetValue())
+				animSetC:SetFlexController(fcId,weight:GetValue(),0.0,false)
 				table.insert(self.m_listeners,weight:AddChangeListener(function(newValue)
 					if(animSetC:IsValid()) then
-						animSetC:SetFlexController(fcId,newValue)
+						animSetC:SetFlexController(fcId,newValue,0.0,false)
 					end
 				end))
 			else
@@ -122,6 +122,11 @@ bip_ponytail03  57
 			end
 		end
 	end
+
+	table.insert(self.m_listeners,modelData:GetFlexControllerScaleAttr():AddChangeListener(function(newScale)
+		local flexC = self:GetEntity():GetComponent(ents.COMPONENT_FLEX)
+		if(flexC ~= nil) then flexC:SetFlexControllerScale(newScale) end
+	end))
 end
 function ents.PFMModel:GetModelData() return self.m_mdlInfo end
 function ents.PFMModel:GetActorData() return self.m_actorData end

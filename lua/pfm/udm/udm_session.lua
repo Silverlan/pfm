@@ -7,7 +7,9 @@
 ]]
 
 include("udm_film_clip.lua")
+include("udm_settings.lua")
 
 udm.ELEMENT_TYPE_PFM_SESSION = udm.register_element("PFMSession")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_SESSION,"activeClip",udm.PFMFilmClip())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_SESSION,"clips",udm.Array(udm.ELEMENT_TYPE_PFM_FILM_CLIP))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_SESSION,"settings",udm.PFMSettings())

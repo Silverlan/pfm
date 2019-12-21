@@ -49,7 +49,8 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 	self.m_filmClipData = filmClip
 	self.m_track = trackC
 
-	local matOverlay = filmClip:GetMaterialOverlay()
+	-- TODO
+	--[[local matOverlay = filmClip:GetMaterialOverlay()
 	if(matOverlay ~= nil and #matOverlay:GetMaterial() > 0) then
 		local entActor = ents.create("pfm_material_overlay")
 		entActor:GetComponent("pfm_material_overlay"):Setup(self,matOverlay)
@@ -69,7 +70,7 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 		entActor:Spawn()
 		table.insert(self.m_actors,entActor)
 	end
-
+]]
 	for _,actorData in ipairs(filmClip:GetActors():GetTable()) do
 		self:CreateActor(actorData)
 	end

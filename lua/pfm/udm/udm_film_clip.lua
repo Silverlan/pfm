@@ -15,7 +15,6 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"actors",udm.Array(
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"trackGroups",udm.Array(udm.ELEMENT_TYPE_PFM_TRACK_GROUP))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"scene",udm.PFMGroup())
 -- TODO: Material overlay should be an actor with a material overlay component
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"materialOverlay",udm.PFMMaterialOverlayFXClip())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"fadeIn",udm.Float())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"fadeOut",udm.Float())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"bookmarkSets",udm.Array(udm.ELEMENT_TYPE_PFM_BOOKMARK_SET))

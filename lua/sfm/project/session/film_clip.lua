@@ -21,6 +21,5 @@ sfm.BaseElement.RegisterProperty(sfm.FilmClip,"subClipTrackGroup",sfm.TrackGroup
 sfm.BaseElement.RegisterProperty(sfm.FilmClip,"camera",sfm.Camera)
 sfm.BaseElement.RegisterProperty(sfm.FilmClip,"timeFrame",sfm.TimeFrame)
 sfm.BaseElement.RegisterProperty(sfm.FilmClip,"scene",sfm.Dag)
-sfm.BaseElement.RegisterProperty(sfm.FilmClip,"materialOverlay",sfm.MaterialOverlayFXClip)
 sfm.BaseElement.RegisterAttribute(sfm.FilmClip,"fadeIn",0.0)
 sfm.BaseElement.RegisterAttribute(sfm.FilmClip,"fadeOut",0.0)

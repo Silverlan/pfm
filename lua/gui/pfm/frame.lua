@@ -24,7 +24,7 @@ function gui.PFMFrame:OnInitialize()
 	self.m_bg:SetColor(Color(41,41,41))
 
 	self.m_btClose = gui.PFMButton.create(self,"gui/pfm/icon_clear","gui/pfm/icon_clear_activated",function()
-		print("TODO: Close frame")
+		print("TODO")
 	end)
 	self.m_btClose:SetSize(11,11)
 	self.m_btClose:SetPos(self:GetWidth() -self.m_btClose:GetWidth() -7,10)

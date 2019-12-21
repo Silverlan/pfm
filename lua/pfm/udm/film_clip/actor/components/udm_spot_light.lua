@@ -13,8 +13,16 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"intensity",udm.Fl
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"intensityType",udm.UInt8(ents.LightComponent.INTENSITY_TYPE_CANDELA))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"falloffExponent",udm.Float(1.0))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"maxDistance",udm.Float(1000.0))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"castShadows",udm.Bool(false),{
+	getter = "ShouldCastShadows"
+})
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"volumetric",udm.Bool(false),{
+	getter = "IsVolumetric"
+})
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"volumetricIntensity",udm.Float(1.0))
 
 function udm.PFMSpotLight:GetComponentName() return "pfm_light_spot" end
+function udm.PFMSpotLight:GetIconMaterial() return "gui/pfm/icon_light_item" end
 
 function udm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 	actorEditor:AddControl(self,itemComponent,{
@@ -26,7 +34,7 @@ function udm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 	})
 	actorEditor:AddControl(self,itemComponent,{
 		name = locale.get_text("radius"),
-		-- property = "", -- TODO
+		property = "maxDistance",
 		min = 0.0,
 		max = 1000.0,
 		default = 100.0

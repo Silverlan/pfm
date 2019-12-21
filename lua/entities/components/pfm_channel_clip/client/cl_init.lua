@@ -68,13 +68,12 @@ end
 ]]
 			--[[print(util.get_type_name(toElement))
 			toElement:GetPositionAttr():AddChangeListener(function(newValue)
-				print("VALUE HAS CHANGED: ",newValue)
+				print("Postion value has changed: ",newValue)
 			end)
 			toElement:SetPosition(Vector(1,2,3))]]
 		end
 		--if(toElement:GetType() ~= udm.ELEMENT_TYPE_NIL) then
 			--if(channel:GetName() == "player/hwm/pyro_bonePos 1") then
-			--	print("###")
 				--local actorC = self.m_targetActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				--[[local actorData = _actor--actorC:GetActorData()
 				for _,component in ipairs(actorData:GetComponents():GetTable()) do
@@ -82,18 +81,18 @@ end
 						local bones = component:GetBones()
 						for _,bone in ipairs(bones) do
 							if(bone:GetName() == "player/hwm/pyro_bonePos 1") then
-								print("BONE FOUND!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+								print("Found bone " .. bone:GetName())
 								local pos = bone:GetPosition()
-								print("POS: ",pos)
+								print("Bone Pos: ",pos)
 							end
 						end
 					end
 				end]]
 			--end
-			--print("CHANNEL: ",channel:GetName())
+			--print("Channel: ",channel:GetName())
 			--print("To Element Type: ",util.get_type_name(toElement))
 			--if(toElement:IsElement()) then
-			--	print("TO ELEMENT: ",toElement:GetName())
+			--	print("To Element: ",toElement:GetName())
 			--end
 		--end
 --[[

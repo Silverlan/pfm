@@ -1,0 +1,40 @@
+/*
+    Copyright (C) 2019  Florian Weischer
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+#version 400
+
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
+layout(location = 0) in vec2 in_vert_pos;
+
+#include "sh_grid.gls"
+
+void main()
+{
+	if(u_pushConstants.horizontal == 1)
+	{
+		float x = in_vert_pos.x;
+		x *= u_pushConstants.vMultiplier;
+		gl_Position = u_pushConstants.transformMatrix *vec4(
+			x,
+			-1.0 +gl_InstanceIndex *u_pushConstants.strideV,
+			0.0,1.0
+		);
+	}
+	else
+	{
+		float y = in_vert_pos.y;
+		y *= u_pushConstants.vMultiplier;
+		gl_Position = u_pushConstants.transformMatrix *vec4(
+			-1.0 +gl_InstanceIndex *u_pushConstants.strideV,
+			y,
+			0.0,1.0
+		);
+	}
+}

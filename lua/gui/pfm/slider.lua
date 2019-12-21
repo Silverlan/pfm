@@ -8,7 +8,8 @@
 
 include("/pfm/fonts.lua")
 include("/gui/wicontextmenu.lua")
-include("/gui/pfm/sliderbar.lua")
+include("sliderbar.lua")
+include("window.lua")
 
 util.register_class("gui.PFMSlider",gui.Base)
 
@@ -28,6 +29,7 @@ function gui.PFMSlider:OnInitialize()
 	self.m_sliderBarUpper:SetAnchor(0,0,1,0)
 	self.m_sliderBarUpper:AddCallback("OnValueChanged",function(el,value)
 		self:CallCallbacks("OnLeftValueChanged",value)
+		self:UpdateText()
 	end)
 
 	self.m_sliderBarLower = gui.create("WIPFMSliderBar",self,0,self.m_sliderBarUpper:GetBottom())
@@ -35,6 +37,7 @@ function gui.PFMSlider:OnInitialize()
 	self.m_sliderBarLower:SetAnchor(0,0,1,0)
 	self.m_sliderBarLower:AddCallback("OnValueChanged",function(el,value)
 		self:CallCallbacks("OnRightValueChanged",value)
+		self:UpdateText()
 	end)
 
 	self.m_text = gui.create("WIText",self)
@@ -45,6 +48,7 @@ function gui.PFMSlider:OnInitialize()
 	self.m_outline = gui.create("WIOutlinedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	self.m_outline:SetColor(Color(57,57,57))
 
+	self.m_leftRightRatio = util.FloatProperty(0.5)
 	self:SetRange(0,1)
 	self:SetLeftRightValueRatio(0.5)
 
@@ -53,8 +57,13 @@ function gui.PFMSlider:OnInitialize()
 		self:OnCursorMoved(x,y)
 	end)
 end
-function gui.PFMSlider:SetLeftRightValueRatio(ratio) self.m_leftRightRatio = math.clamp(ratio,0.0,1.0) end
-function gui.PFMSlider:GetLeftRightValueRatio() return self.m_leftRightRatio end
+function gui.PFMSlider:OnSizeChanged(w,h)
+	if(util.is_valid(self.m_sliderBarUpper)) then self.m_sliderBarUpper:Update() end
+	if(util.is_valid(self.m_sliderBarLower)) then self.m_sliderBarLower:Update() end
+end
+function gui.PFMSlider:SetLeftRightValueRatio(ratio) self.m_leftRightRatio:Set(math.clamp(ratio,0.0,1.0)) end
+function gui.PFMSlider:GetLeftRightValueRatio() return self.m_leftRightRatio:Get() end
+function gui.PFMSlider:GetLeftRightValueRatioProperty() return self.m_leftRightRatio end
 function gui.PFMSlider:GetLeftSliderBar() return self.m_sliderBarUpper end
 function gui.PFMSlider:GetRightSliderBar() return self.m_sliderBarLower end
 function gui.PFMSlider:SetLeftRange(min,max,optDefault) local bar = self:GetLeftSliderBar() if(util.is_valid(bar)) then bar:SetRange(min,max,optDefault) end end
@@ -186,6 +195,16 @@ end
 function gui.PFMSlider:SetText(text)
 	if(util.is_valid(self.m_text) == false) then return end
 	self.m_text:SetVisible(#text > 0)
+	self.m_baseText = text
+	self:UpdateText()
+end
+function gui.PFMSlider:UpdateText()
+	if(self.m_baseText == nil) then return end
+	local text = self.m_baseText .. ": "
+	text = text .. util.round_string(self:GetLeftValue(),2)
+	if(self:GetLeftRightValueRatio() ~= 0.5) then
+		text = text .. " / " .. util.round_string(self:GetRightValue(),2)
+	end
 	self.m_text:SetText(text)
 	self.m_text:SizeToContents()
 	self.m_text:CenterToParent(true)
@@ -207,10 +226,10 @@ function gui.PFMSlider:OnCursorMoved(x,y)
 		scaleRight = ratio /0.5
 		scaleLeft = 1.0
 	end
-	local fractionLeft = xDelta *scaleRight
-	local fractionRight = xDelta *scaleLeft
-	local leftValue = self:GetLeftValue() +self:GetLeftSliderBar():XToValue(fractionLeft)
-	local rightValue = self:GetRightValue() +self:GetRightSliderBar():XToValue(fractionRight)
+	local fractionLeft = xDelta *scaleLeft
+	local fractionRight = xDelta *scaleRight
+	local leftValue = self:GetLeftValue() +self:GetLeftSliderBar():XToValue(fractionLeft) -self:GetLeftSliderBar():GetMin()
+	local rightValue = self:GetRightValue() +self:GetRightSliderBar():XToValue(fractionRight) -self:GetRightSliderBar():GetMin()
 	self:SetLeftValue(leftValue)
 	self:SetRightValue(rightValue)
 end

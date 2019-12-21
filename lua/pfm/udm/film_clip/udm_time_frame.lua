@@ -34,6 +34,7 @@ end
 function udm.PFMTimeFrame:LocalizeOffset(offset)
 	return offset -self:GetStart() +self:GetOffset()
 end
-function udm.PFMTimeFrame:IsInTimeFrame(t)
-	return t >= self:GetStart() and t < self:GetEnd()
+function udm.PFMTimeFrame:IsInTimeFrame(t,e)
+	e = e or 0.0
+	return t >= self:GetStart() -e and t < self:GetEnd() +e
 end

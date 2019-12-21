@@ -20,11 +20,11 @@ function gui.CollapsibleGroup:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(256,20)
-	self.m_base = gui.create("WIVBox",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	self.m_base = gui.create("WIVBox",self,0,0,self:GetWidth(),self:GetHeight())
+	self.m_base:SetName("global_container")
 
-	self.m_titleBar = gui.create("WICollapsibleGroupTitleBar",self.m_base)
-	self.m_titleBar:SetSize(self.m_base:GetWidth(),self:GetHeight())
-	self.m_titleBar:SetAnchor(0,0,1,0)
+	self.m_titleBar = gui.create("WICollapsibleGroupTitleBar",self.m_base,0,0,self.m_base:GetWidth(),self:GetHeight(),0,0,1,0)
+	self.m_titleBar:SetName("titlebar")
 	self.m_titleBar:AddCallback("OnCollapse",function()
 		self:OnCollapse()
 	end)
@@ -32,12 +32,13 @@ function gui.CollapsibleGroup:OnInitialize()
 		self:OnExpand()
 	end)
 
-	self.m_contents = gui.create("WIVBox",self.m_base,0,0,self.m_base:GetWidth(),0)
-	self.m_bgBottom = gui.create("WIRect",self.m_base,0,self.m_base:GetBottom() -5,self.m_base:GetWidth(),5,0,1,1,1)
+	self.m_contents = gui.create("WIVBox",self.m_base,0,0,self.m_base:GetWidth(),self:GetHeight())
+	self.m_contents:SetName("inner_contents")
+	--[[self.m_bgBottom = gui.create("WIRect",self.m_base,0,self.m_base:GetBottom() -5,self.m_base:GetWidth(),5)--,0,1,1,1)
 	local bgColor = Color(40,40,45)
-	self.m_bgBottom:SetColor(bgColor)
+	self.m_bgBottom:SetColor(bgColor)]]
 
-	self:AddCallback("OnTimelineUpdate",function(el,elWrapper,elTimeline)
+	--[[self:AddCallback("OnTimelineUpdate",function(el,elWrapper,elTimeline)
 		local x = elTimeline:TimeOffsetToXOffset(0.0)
 		if(x < 0) then
 			local w = elWrapper:GetWidth()
@@ -45,20 +46,20 @@ function gui.CollapsibleGroup:OnInitialize()
 			elWrapper:SetX(0)
 			elWrapper:SetWidth(w)
 		end
-	end)
+	end)]]
 
 	self:Collapse()
 	self:SetAutoSizeToContents(false,true)
 end
 function gui.CollapsibleGroup:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_base)) then self.m_base:SetWidth(w) end
-	if(util.is_valid(self.m_contents)) then self.m_contents:SetWidth(w) end
+	--if(util.is_valid(self.m_contents)) then self.m_contents:SetWidth(w) end
 end
 function gui.CollapsibleGroup:AddGroup(groupName)
 	if(util.is_valid(self.m_contents) == false) then return end
 	local p = gui.create("WICollapsibleGroup",self.m_contents)
+	p:SetName("group_" .. groupName)
 	p:SetWidth(self.m_contents:GetWidth())
-	p:SetAnchor(0,0,1,0)
 	p:SetGroupName(groupName)
 	return p
 end

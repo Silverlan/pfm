@@ -41,34 +41,22 @@ end]]
 
 local skin = {}
 ------------ WIButton ------------
-skin["wipfmbutton"] = {
+skin["timeline_clip_film"] = {
 	Initialize = function(GUI,pElement)
-		print("Initializing pfm button...")
-		--pElement:SetColor(Color.Red)
-	end,
-	Release = clear_element
+		local elBg = pElement:FindChildByName("background")
+		if(elBg ~= nil) then elBg:SetColor(Color(47,47,121)) end
+	end
 }
------------------------------------------
------------- WIButton ------------
-skin["witreelistelement"] = {
+skin["timeline_clip_audio"] = {
 	Initialize = function(GUI,pElement)
-		-- TODO: Create arrow
-		-- Add callback: Collapse / expand
-	end,
-	Release = clear_element,
-	children = {
-		["witext"] = {
-			Initialize = function(GUI,pElement)
-				pElement:SetFont("pfm_medium")
-				pElement:SetColor(Color(182,182,182))
-			end
-		}
-	}
+		local elBg = pElement:FindChildByName("background")
+		if(elBg ~= nil) then elBg:SetColor(Color(50,127,50)) end
+	end
 }
-skin["tree_list_element_text"] = {
+skin["timeline_clip_overlay"] = {
 	Initialize = function(GUI,pElement)
-		pElement:SetFont("pfm_medium")
-		pElement:SetColor(Color(182,182,182))
+		local elBg = pElement:FindChildByName("background")
+		if(elBg ~= nil) then elBg:SetColor(Color(122,48,48)) end
 	end
 }
 -----------------------------------------

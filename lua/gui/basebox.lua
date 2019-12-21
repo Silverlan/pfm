@@ -43,6 +43,10 @@ function gui.BaseBox:OnInitialize()
 			if(elChild:HasAnchor()) then return end
 			self:ScheduleUpdate()
 		end))
+		table.insert(self.m_childCallbacks[elChild],elChild:AddCallback("OnRemove",function(elChild)
+			-- We'll have to update whenever one of our children has been removed
+			self:ScheduleUpdate()
+		end))
 		local visProp = elChild:GetVisibilityProperty()
 		table.insert(self.m_childCallbacks[elChild],visProp:AddCallback(function()
 			self:ScheduleUpdate()

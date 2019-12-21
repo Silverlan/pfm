@@ -67,7 +67,7 @@ function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
 	local tDelta = newOffset -self.m_oldOffset
 	self.m_oldOffset = newOffset
 
-	print("NEW OFFSET")
+	print("Actor offset changed: ",clipOffset)
 	
 	local ent = self:GetEntity()
 	for _,channel in ipairs(self:GetChannels()) do

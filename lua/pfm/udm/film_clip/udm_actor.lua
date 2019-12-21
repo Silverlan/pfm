@@ -26,6 +26,13 @@ function udm.PFMActor:FindComponent(name)
 	end
 end
 
+function udm.PFMActor:FindEntity()
+	for ent in ents.iterator({ents.IteratorFilterComponent("pfm_actor")}) do
+		local actorC = ent:GetComponent("pfm_actor")
+		if(util.is_same_object(actorC:GetActorData(),self)) then return ent end
+	end
+end
+
 local function apply_parent_pose(el,pose)
 	local poseParent = phys.ScaledTransform()
 	local parent = (el.GetOverrideParent ~= nil) and el:GetOverrideParent() or nil

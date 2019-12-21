@@ -21,35 +21,35 @@ function udm.BaseElement:__init(class)
 		return
 	end
 	for identifier,prop in pairs(elData.properties) do
-    if(prop.defaultValue ~= nil) then
-  		local val = prop.defaultValue:Copy()
-  		self:SetProperty(identifier,val)
-    end
+		if(prop.defaultValue ~= nil) then
+			local val = prop.defaultValue:Copy()
+			self:SetProperty(identifier,val)
+		end
 	end
 end
 
 function udm.BaseElement:DebugPrint(t,cache)
 	cache = cache or {}
-  if(cache[self] ~= nil) then return end
-  cache[self] = true
-  t = t or ""
-  for name,child in pairs(self:GetChildren()) do
-    if(name:sub(1,1) == '[' and name:sub(-1) == ']') then
-      local val = tonumber(name:sub(2,#name -2))
-      if(val ~= nil) then
-        if(val > 5) then return end
-        if(val == 5) then name = "[...]" end
-      end
-    end
-    if(child:IsElement()) then
-      print(t .. "[" .. name .. "]: " .. child:GetName() .. " of type " .. child:GetTypeName())
-    else
-      print(t .. "[" .. name .. "]: " .. tostring(child:GetValue()) .. " of type " .. child:GetTypeName())
-    end
-    if(child:IsElement()) then
-      child:DebugPrint(t .. "\t")
-    end
-  end
+	if(cache[self] ~= nil) then return end
+	cache[self] = true
+	t = t or ""
+	for name,child in pairs(self:GetChildren()) do
+		if(name:sub(1,1) == '[' and name:sub(-1) == ']') then
+			local val = tonumber(name:sub(2,#name -2))
+			if(val ~= nil) then
+				if(val > 5) then return end
+				if(val == 5) then name = "[...]" end
+			end
+		end
+		if(child:IsElement()) then
+			print(t .. "[" .. name .. "]: " .. child:GetName() .. " of type " .. child:GetTypeName())
+		else
+			print(t .. "[" .. name .. "]: " .. tostring(child:GetValue()) .. " of type " .. child:GetTypeName())
+		end
+		if(child:IsElement()) then
+			child:DebugPrint(t .. "\t")
+		end
+	end
 end
 
 function udm.BaseElement:DebugDump(f,t,name)
@@ -84,7 +84,7 @@ function udm.BaseElement:FindElementsByFilter(filter,elements,iterated)
 end
 
 function udm.BaseElement:FindElementsByKey(name,elements,iterated)
-  return self:FindElementsByFilter(function(keyName,child) return keyName == name end,elements,iterated)
+	return self:FindElementsByFilter(function(keyName,child) return keyName == name end,elements,iterated)
 end
 
 function udm.BaseElement:FindElementsByName(name,elements,iterated)
@@ -98,16 +98,16 @@ end
 -- Returns the first parent element that isn't a reference. If the parent is an array, the parent
 -- of that array will be returned.
 function udm.BaseElement:FindParentElement()
-  for _,elParent in ipairs(self:GetParents()) do
-    local type = elParent:GetType()
-    if(type ~= udm.ELEMENT_TYPE_REFERENCE) then -- A reference means that this isn't our actual parent
-      if(type == udm.ELEMENT_TYPE_ARRAY) then
-        -- We don't care about arrays, so we'll skip them and go for their parent instead.
-        return elParent:FindParentElement()
-      end
-      return elParent
-    end
-  end
+	for _,elParent in ipairs(self:GetParents()) do
+		local type = elParent:GetType()
+		if(type ~= udm.ELEMENT_TYPE_REFERENCE) then -- A reference means that this isn't our actual parent
+			if(type == udm.ELEMENT_TYPE_ARRAY) then
+				-- We don't care about arrays, so we'll skip them and go for their parent instead.
+				return elParent:FindParentElement()
+			end
+			return elParent
+		end
+	end
 end
 
 function udm.BaseElement:SetProperty(name,prop)
@@ -116,11 +116,11 @@ function udm.BaseElement:SetProperty(name,prop)
 	return self:GetProperty(name)
 end
 function udm.BaseElement:GetProperty(name)
-  local property = self:GetChild(name)
-  if(property ~= nil and property:GetType() == udm.ELEMENT_TYPE_REFERENCE) then
-    return property:GetTarget()
-  end
-  return property
+	local property = self:GetChild(name)
+	if(property ~= nil and property:GetType() == udm.ELEMENT_TYPE_REFERENCE) then
+		return property:GetTarget()
+	end
+	return property
 end
 
 function udm.BaseElement:SetName(name)
@@ -173,7 +173,7 @@ function udm.BaseElement:AddChild(element,name)
 	name = name or element:GetName()
 	self:RemoveChild(name)
 	self.m_children[name] = element
-  if(element == nil) then return end
+	if(element == nil) then return end
 	table.insert(element.m_parents,self)
 	return element
 end
@@ -211,10 +211,10 @@ function udm.BaseElement:Copy()
 	for name,prop in pairs(elData.properties) do
 		if(prop.getterAttribute(self) == nil) then
 			-- pfm.error("Property '" .. name .. "' of type '" .. util.get_type_name(prop) .. "' is invalid!") -- TODO: Should this be a warning?
-      prop.setterAttribute(copy,nil)
+			prop.setterAttribute(copy,nil)
 		else
-		  prop.setterAttribute(copy,prop.getterAttribute(self):Copy())
-    end
+			prop.setterAttribute(copy,prop.getterAttribute(self):Copy())
+		end
 	end
 	return copy
 end
