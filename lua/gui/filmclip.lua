@@ -28,6 +28,7 @@ function gui.FilmClip:OnInitialize()
 	self:SetMouseInputEnabled(true)
 	self:AddCallback("OnMousePressed",function()
 		self:SetSelected(true)
+		return util.EVENT_REPLY_HANDLED
 	end)
 
 	self:AddStyleClass("timeline_clip_film")

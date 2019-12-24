@@ -102,6 +102,9 @@ function gui.PFMElementViewer:Setup(rootNode)
 	self:GetHistory():Add(rootNode)
 end
 function gui.PFMElementViewer:GetHistory() return self.m_history end
+function gui.PFMElementViewer:MakeElementRoot(element)
+	self:GetHistory():Add(element)
+end
 function gui.PFMElementViewer:AddUDMNode(node,name,elTreeParent,elTreePrevious)
 	if(util.is_valid(self.m_data) == false) then return end
 	local elTreeChild
@@ -120,7 +123,7 @@ function gui.PFMElementViewer:AddUDMNode(node,name,elTreeParent,elTreePrevious)
 				if(util.is_valid(pContext) == false) then return end
 				pContext:SetPos(input.get_cursor_pos())
 				pContext:AddItem(locale.get_text("pfm_make_root"),function()
-					self:GetHistory():Add(node)
+					self:MakeElementRoot(node)
 				end)
 				pContext:Update()
 			end

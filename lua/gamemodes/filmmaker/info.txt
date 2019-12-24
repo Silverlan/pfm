@@ -1,0 +1,7 @@
+"filmmaker"
+{
+	$string class "game.Filmmaker"
+	$string name "Filmmaker"
+	$string author "Silverlan"
+	$float version 0.1
+}

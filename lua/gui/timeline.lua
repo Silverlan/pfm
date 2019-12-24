@@ -246,10 +246,10 @@ function gui.TimelineItem:OnUpdate()
 		local xStartAbs = self.m_timeline:GetAbsolutePos().x +xStart
 		local pos = self:GetAbsolutePos()
 		pos.x = xStartAbs
-		print("Parent: ",self:GetParent())
+		-- print("Parent: ",self:GetParent())
 		self:SetAbsolutePos(pos)
 		if(util.is_valid(self.m_wrappedElement)) then self.m_wrappedElement:SetWidth(w) end
-		print("Width: ",xEnd,xStart)--pos.x,xEnd,w)
+		-- print("Width: ",xEnd,xStart)--pos.x,xEnd,w)
 	else
 		local offset = self.m_timeFrame:GetTime()
 		local x = self.m_timeline:TimeOffsetToXOffset(offset)

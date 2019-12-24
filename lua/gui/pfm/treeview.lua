@@ -120,21 +120,6 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self.m_header:SetFixedHeight(true)
 	self.m_header:SetBackgroundElement(self.m_selection)
 	self.m_header:SetName("header")
-	self.m_header:SetMouseInputEnabled(true)
-	self.m_header:AddCallback("OnMouseEvent",function(el,button,state,mods)
-		if(button ~= input.MOUSE_BUTTON_LEFT or state ~= input.STATE_PRESS) then return util.EVENT_REPLY_UNHANDLED end
-		local treeView = self:GetTreeView()
-		if(util.is_valid(treeView) == false or treeView:GetSelectableMode() == gui.Table.SELECTABLE_MODE_NONE) then return util.EVENT_REPLY_UNHANDLED end
-		local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE or
-			input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
-		if(treeView:GetSelectableMode() == gui.Table.SELECTABLE_MODE_SINGLE or isCtrlDown == false) then treeView:DeselectAll() end
-
-		local select = true
-		if(isCtrlDown) then select = not self:IsSelected() end
-
-		self:SetSelected(select)
-		return util.EVENT_REPLY_HANDLED
-	end)
 	self.m_header:AddCallback("OnDoubleClick",function(el)
 		self:Toggle()
 	end)
@@ -145,8 +130,23 @@ function gui.PFMTreeViewElement:OnInitialize()
 
 	gui.create("WIBase",self.m_header,0,0,3,1) -- gap
 
+	self:SetMouseInputEnabled(true)
 	self:SetAutoSizeToContents(false,true)
 	self:SetSelected(false)
+end
+function gui.PFMTreeViewElement:MouseCallback(button,state,mods)
+	if(button ~= input.MOUSE_BUTTON_LEFT or state ~= input.STATE_PRESS or self.m_header:IsValid() == false or self.m_header:IsCursorInBounds() == false) then return util.EVENT_REPLY_UNHANDLED end
+	local treeView = self:GetTreeView()
+	if(util.is_valid(treeView) == false or treeView:GetSelectableMode() == gui.Table.SELECTABLE_MODE_NONE) then return util.EVENT_REPLY_UNHANDLED end
+	local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE or
+		input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
+	if(treeView:GetSelectableMode() == gui.Table.SELECTABLE_MODE_SINGLE or isCtrlDown == false) then treeView:DeselectAll() end
+
+	local select = true
+	if(isCtrlDown) then select = not self:IsSelected() end
+
+	self:SetSelected(select)
+	return util.EVENT_REPLY_HANDLED
 end
 function gui.PFMTreeViewElement:IsRoot() return self:GetParentItem() == nil end
 function gui.PFMTreeViewElement:RemoveItem(item) if(item:IsValid()) then item:Remove() end end

@@ -23,6 +23,7 @@ include("/gui/pfm/timeline.lua")
 include("/gui/pfm/elementviewer.lua")
 include("/gui/pfm/actoreditor.lua")
 include("/gui/pfm/renderpreview.lua")
+include("/gui/pfm/infobar.lua")
 
 gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
@@ -48,18 +49,53 @@ function gui.WIFilmmaker:OnInitialize()
 	self.m_menuBar = pMenuBar
 
 	pMenuBar:AddItem(locale.get_text("file"),function(pContext)
-		pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
+		--[[pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
+
+		end)]]
+		pContext:AddItem(locale.get_text("import") .. "...",function(pItem)
 			if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
-				self:LoadProject(fileName)
+				self:ImportSFMProject(fileName)
 			end)
-			self.m_openDialogue:SetRootPath("sfm_sessions")
+			self.m_openDialogue:SetRootPath("elements/sessions")
 			self.m_openDialogue:SetExtensions({"dmx"})
+			self.m_openDialogue:GetFileList():SetFileFinder(function(path)
+				local tFiles,tDirs = file.find(path)
+				local tFilesExt,tDirsExt = file.find_external_game_asset_files(path .. "*")
+				tFilesExt = file.find_external_game_asset_files(path .. ".dmx")
+				
+				local tFilesExtUnique = {}
+				for _,f in ipairs(tFilesExt) do
+					f = file.remove_file_extension(f) .. ".dmx"
+					tFilesExtUnique[f] = true
+				end
+				for _,f in ipairs(tFiles) do
+					f = file.remove_file_extension(f) .. ".dmx"
+					tFilesExtUnique[f] = true
+				end
+				
+				local tDirsExtUnique = {}
+				for _,f in ipairs(tDirsExt) do
+					tDirsExtUnique[f] = true
+				end
+				for _,f in ipairs(tDirs) do
+					tDirsExtUnique[f] = true
+				end
+				
+				tFiles = {}
+				tDirs = {}
+				for f,_ in pairs(tFilesExtUnique) do
+					table.insert(tFiles,f)
+				end
+				table.sort(tFiles)
+				
+				for d,_ in pairs(tDirsExtUnique) do
+					table.insert(tDirs,d)
+				end
+				table.sort(tDirs)
+				return tFiles,tDirs
+			end)
 			self.m_openDialogue:Update()
-		end)
-		pContext:AddItem(locale.get_text("import") .. "...",function(pItem)
-			if(util.is_valid(self) == false) then return end
-			
 		end)
 		pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
@@ -71,7 +107,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 		pContext:Update()
 	end)
-	pMenuBar:AddItem(locale.get_text("edit"),function(pContext)
+	--[[pMenuBar:AddItem(locale.get_text("edit"),function(pContext)
 
 	end)
 	pMenuBar:AddItem(locale.get_text("windows"),function(pContext)
@@ -82,8 +118,14 @@ function gui.WIFilmmaker:OnInitialize()
 	end)
 	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
 
-	end)
+	end)]]
 	pMenuBar:Update()
+
+	local pInfoBar = gui.create("WIPFMInfobar",self)
+	pInfoBar:SetWidth(self:GetWidth())
+	pInfoBar:SetY(self:GetHeight() -pInfoBar:GetHeight())
+	pInfoBar:SetAnchor(0,1,1,1)
+	self.m_infoBar = pInfoBar
 
 	--[[local framePlaybackControls = gui.create("WIFrame",self)
 	framePlaybackControls:SetCloseButtonEnabled(false)
@@ -276,7 +318,7 @@ function gui.WIFilmmaker:CreateNewProject()
 	pfm.log("Creating new project...",pfm.LOG_CATEGORY_PFM)
 	return self:InitializeProject(pfm.create_project())
 end
-function gui.WIFilmmaker:LoadProject(projectFilePath)
+function gui.WIFilmmaker:ImportSFMProject(projectFilePath)
 	self:CloseProject()
 	pfm.log("Converting SFM project '" .. projectFilePath .. "' to PFM...",pfm.LOG_CATEGORY_SFM)
 	local pfmScene = sfm.ProjectConverter.convert_project(projectFilePath)
@@ -292,8 +334,8 @@ function gui.WIFilmmaker:ClearProjectUI()
 end
 function gui.WIFilmmaker:InitializeProjectUI()
 	self:ClearProjectUI()
-	if(util.is_valid(self.m_menuBar) == false) then return end
-	self.m_contents = gui.create("WIHBox",self,0,self.m_menuBar:GetHeight(),self:GetWidth(),self:GetHeight() -self.m_menuBar:GetHeight(),0,0,1,1)
+	if(util.is_valid(self.m_menuBar) == false or util.is_valid(self.m_infoBar) == false) then return end
+	self.m_contents = gui.create("WIHBox",self,0,self.m_menuBar:GetHeight(),self:GetWidth(),self:GetHeight() -self.m_menuBar:GetHeight() -self.m_infoBar:GetHeight(),0,0,1,1)
 	self.m_contents:SetAutoFillContents(true)
 
 	local actorDataFrame = self:AddFrame(self.m_contents)
@@ -392,11 +434,26 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		local trackFilm = trackGroup:FindElementsByName("Film")[1]
 		if(trackFilm ~= nil) then
 			for _,filmClip in ipairs(trackFilm:GetFilmClips():GetTable()) do
-				pfmTimeline:AddFilmClip(filmStrip,filmClip,function(elFilmClip)
+				local pFilmClip = pfmTimeline:AddFilmClip(filmStrip,filmClip,function(elFilmClip)
 					local filmClipData = elFilmClip:GetFilmClipData()
 					if(util.is_valid(self.m_actorEditor)) then
 						self.m_actorEditor:Setup(filmClipData)
 					end
+				end)
+				pFilmClip:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)
+					if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+						local pContext = gui.open_context_menu()
+						if(util.is_valid(pContext) == false) then return end
+						pContext:SetPos(input.get_cursor_pos())
+						pContext:AddItem(locale.get_text("pfm_show_in_element_viewer"),function()
+							if(elementViewer:IsValid()) then
+								elementViewer:MakeElementRoot(filmClip)
+							end
+						end)
+						pContext:Update()
+						return util.EVENT_REPLY_HANDLED
+					end
+					return util.EVENT_REPLY_UNHANDLED
 				end)
 			end
 		end
