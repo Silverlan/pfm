@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/graph_axis.lua")
+
 util.register_class("gui.Playhead",gui.Base)
 
 function gui.Playhead:__init()
@@ -33,12 +35,8 @@ function gui.Playhead:OnInitialize()
 	self:SetMouseInputEnabled(true)
 	self:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
 end
-function gui.Playhead:LinkToTimeline(timeline)
-	self.m_timeline = timeline
-end
-function gui.Playhead:UnlinkFromTimeline()
-	self.m_timeline = nil
-end
+function gui.Playhead:SetAxis(axis) self.m_axis = axis end
+function gui.Playhead:GetAxis() return self.m_axis end
 function gui.Playhead:SetTimeOffset(offset) self.m_timeOffset:Set(offset) end
 function gui.Playhead:GetTimeOffset() return self.m_timeOffset:Get() end
 function gui.Playhead:GetTimeOffsetProperty() return self.m_timeOffset end
@@ -48,7 +46,7 @@ function gui.Playhead:SetCursorMoveModeEnabled(enabled)
 		if(util.is_valid(self.m_cbMove) == false) then
 			self.m_cbMove = self:AddCallback("OnCursorMoved",function(el,x,y)
 				local pos = self:GetParent():GetCursorPos()
-				self:SetTimeOffset(self.m_timeline:XOffsetToTimeOffset(pos.x))
+				self:SetTimeOffset(self:GetAxis():XOffsetToValue(pos.x))
 			end)
 		end
 	else
@@ -57,7 +55,7 @@ function gui.Playhead:SetCursorMoveModeEnabled(enabled)
 	end
 end
 function gui.Playhead:MouseCallback(mouseButton,state,mods)
-	if(util.is_valid(self.m_timeline) and mouseButton == input.MOUSE_BUTTON_LEFT) then
+	if(mouseButton == input.MOUSE_BUTTON_LEFT) then
 		self:SetCursorMoveModeEnabled(state == input.STATE_PRESS)
 		return util.EVENT_REPLY_HANDLED
 	end

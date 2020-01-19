@@ -22,7 +22,7 @@ tool.get_filmmaker = function() return tool.editor end
 tool.is_filmmaker_open = function() return util.is_valid(tool.editor) end
 tool.open_filmmaker = function()
 	include("/gui/editors/filmmaker/filmmaker.lua")
-	tool.close_editor()
+	tool.close_filmmaker()
 	tool.editor = gui.create("WIFilmmaker")
 	tool.editor:SetAutoAlignToParent(true)
 	-- tool.editor:SetZPos(1000)

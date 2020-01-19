@@ -29,6 +29,17 @@ function gui.PFMButton:OnInitialize()
 	self.m_pressed = false
 	self.m_enabled = true
 end
+function gui.PFMButton:SetText(text)
+	if(util.is_valid(self.m_text) == false) then
+		self.m_text = gui.create("WIText",self)
+		self.m_text:SetFont("pfm_medium")
+		self.m_text:SetColor(Color(182,182,182))
+	end
+	self.m_text:SetText(text)
+	self.m_text:SizeToContents()
+	self.m_text:CenterToParent()
+	self.m_text:SetAnchor(0.5,0.5,0.5,0.5)
+end
 function gui.PFMButton:SetEnabled(enabled)
 	if(enabled == self:IsEnabled()) then return end
 	if(enabled == false) then self:SetActivated(false) end

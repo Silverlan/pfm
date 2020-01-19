@@ -23,6 +23,7 @@ function gui.PFMTreeView:OnInitialize()
 	self.m_rootElement:SetWidth(self:GetWidth())
 	self.m_rootElement:SetText("ROOT")
 	self.m_rootElement.m_treeView = self
+	self.m_rootElement.m_collapsed = false
 	self.m_selectedElements = {}
 
 	self:SetAutoSizeToContents(false,true)
@@ -105,6 +106,7 @@ end
 function gui.PFMTreeViewElement:OnInitialize()
 	gui.Base.OnInitialize(self)
 
+	self.m_collapsed = true
 	self.m_items = {}
 	self.m_itemElements = {}
 	self:SetSize(64,19)
@@ -120,6 +122,7 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self.m_header:SetFixedHeight(true)
 	self.m_header:SetBackgroundElement(self.m_selection)
 	self.m_header:SetName("header")
+	self.m_header:SetMouseInputEnabled(true)
 	self.m_header:AddCallback("OnDoubleClick",function(el)
 		self:Toggle()
 	end)
@@ -133,6 +136,9 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self:SetMouseInputEnabled(true)
 	self:SetAutoSizeToContents(false,true)
 	self:SetSelected(false)
+end
+function gui.PFMTreeViewElement:OnRemove()
+	if(self:IsSelected()) then self:Deselect() end
 end
 function gui.PFMTreeViewElement:MouseCallback(button,state,mods)
 	if(button ~= input.MOUSE_BUTTON_LEFT or state ~= input.STATE_PRESS or self.m_header:IsValid() == false or self.m_header:IsCursorInBounds() == false) then return util.EVENT_REPLY_UNHANDLED end
@@ -180,7 +186,6 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 	if(self:IsCollapsed()) then self.m_childHBox:SetVisible(false) end
 end
 function gui.PFMTreeViewElement:OnSizeChanged(w,h)
-	--print("OnSizeChanged...")
 	if(util.is_valid(self.m_vBox)) then
 		self.m_vBox:SetWidth(w)
 		-- We need to update immediately to avoid some weird twitching effects
@@ -244,7 +249,8 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 	end)
 	item:RemoveElementOnRemoval(expandIcon)
 	item.m_expandIcon = expandIcon
-	expandIcon:Collapse()
+	if(self.m_collapsed) then expandIcon:Collapse()
+	else expandIcon:Expand() end
 	return item.m_expandIcon
 end
 function gui.PFMTreeViewElement:UpdateChildBoxBounds()
@@ -261,7 +267,7 @@ function gui.PFMTreeViewElement:UpdateChildBoxBounds()
 end
 function gui.PFMTreeViewElement:GetParentItem() return self.m_parent end
 function gui.PFMTreeViewElement:GetItems() return self.m_items end
-function gui.PFMTreeViewElement:IsCollapsed() return util.is_valid(self.m_childHBox) == false or self.m_childHBox:IsVisible() == false end
+function gui.PFMTreeViewElement:IsCollapsed() return self.m_collapsed end
 function gui.PFMTreeViewElement:Toggle()
 	if(self:IsCollapsed()) then self:Expand()
 	else self:Collapse() end
@@ -282,9 +288,11 @@ function gui.PFMTreeViewElement:ExpandAll()
 end
 function gui.PFMTreeViewElement:Collapse()
 	if(self:IsRoot()) then return end -- Root item can never be collapsed
+	self.m_collapsed = true
 	if(util.is_valid(self.m_expandIcon)) then self.m_expandIcon:Collapse() end
 end
 function gui.PFMTreeViewElement:Expand()
+	self.m_collapsed = false
 	if(util.is_valid(self.m_expandIcon)) then self.m_expandIcon:Expand() end
 end
 function gui.PFMTreeViewElement:Clear()
@@ -294,6 +302,8 @@ function gui.PFMTreeViewElement:Clear()
 	self.m_items = {}
 	self.m_itemElements = {}
 end
+function gui.PFMTreeViewElement:GetTextElement() return self.m_text end
+function gui.PFMTreeViewElement:GetText() return util.is_valid(self.m_text) and self.m_text:GetText() or "" end
 function gui.PFMTreeViewElement:SetText(text)
 	if(util.is_valid(self.m_text) == false) then
 		self.m_text = gui.create("WIText",self.m_header)
@@ -374,7 +384,7 @@ function gui.PFMTreeExpandIcon:OnInitialize()
 	self.m_tex = tex
 
 	self:SetMouseInputEnabled(true)
-	self:Expand()
+	self:Collapse()
 end
 function gui.PFMTreeExpandIcon:IsCollapsed() return self.m_collapsed end
 function gui.PFMTreeExpandIcon:Expand()

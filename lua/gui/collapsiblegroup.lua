@@ -39,7 +39,7 @@ function gui.CollapsibleGroup:OnInitialize()
 	self.m_bgBottom:SetColor(bgColor)]]
 
 	--[[self:AddCallback("OnTimelineUpdate",function(el,elWrapper,elTimeline)
-		local x = elTimeline:TimeOffsetToXOffset(0.0)
+		local x = elTimeline:ValueToXOffset(0.0)
 		if(x < 0) then
 			local w = elWrapper:GetWidth()
 			w = w +elWrapper:GetX()

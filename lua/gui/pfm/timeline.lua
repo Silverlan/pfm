@@ -52,6 +52,9 @@ function gui.PFMTimeline:OnInitialize()
 	self.m_timelineMotion:SetName("timeline_motion_editor")
 	self.m_timelineGraph = gui.create("WIPFMTimelineGraph",contents,0,0,contents:GetWidth(),contents:GetHeight(),0,0,1,1)
 	self.m_timelineGraph:SetName("timeline_graph_editor")
+	self.m_timelineGraph:SetTimeAxis(self.m_timeline:GetTimeAxis())
+	self.m_timelineGraph:SetDataAxis(self.m_timeline:GetDataAxis())
+	self.m_timelineGraph:SetTimeline(self)
 
 	self.m_contents:SetAutoFillContentsToHeight(true)
 	self.m_contents:SetAutoFillContentsToWidth(true)
@@ -60,34 +63,11 @@ function gui.PFMTimeline:OnInitialize()
 
 	self:OnTimelineUpdate()
 
-	-- TODO
-	local fm = tool.get_filmmaker()
-	if(fm ~= nil) then
-		local project = fm:GetProject()
-		local session = project:GetSessions()[1]
-		if(session ~= nil) then
-			local filmClip = session:GetActiveClip()
-			local trackGroup = filmClip:GetTrackGroups():Get(3)
-			local track = (trackGroup ~= nil) and trackGroup:GetTracks():Get(1) or nil
-			local clip = (track ~= nil) and track:GetFilmClips():Get(1) or nil
-			local actor = (clip ~= nil) and clip:GetActors():Get(1) or nil
-
-			trackGroup = (trackGroup ~= nil) and clip:GetTrackGroups():Get(1) or nil
-			track = (trackGroup ~= nil) and trackGroup:GetTracks():Get(1) or nil
-			if(track ~= nil) then
-				local channelClip = track:GetChannelClips():Get(1)
-				self.m_timelineGraph:Setup(actor,channelClip)
-			end
-		end
-	end
-	--
-
 	self.m_editorType = gui.PFMTimeline.EDITOR_GRAPH
 	self:SetEditor(gui.PFMTimeline.EDITOR_CLIP)
 end
 function gui.PFMTimeline:GetSelectedClip() return self.m_selectedClip end
 function gui.PFMTimeline:InitializeClip(clip,fOnSelected)
-
 	clip:AddCallback("OnSelected",function(el)
 		if(self:IsValid() == false) then return end
 		if(util.is_valid(self.m_selectedClip)) then self.m_selectedClip:SetSelected(false) end
@@ -143,9 +123,10 @@ function gui.PFMTimeline:OnTimelineUpdate()
 	if(util.is_valid(self.m_timelineGraph)) then
 		local posTimeline = self.m_timeline:GetAbsolutePos()
 		local posGraph = self.m_timelineGraph:GetAbsolutePos()
-		local startTime = self.m_timeline:XOffsetToTimeOffset(posGraph.x -posTimeline.x)
-		local endTime = self.m_timeline:XOffsetToTimeOffset(posGraph.x +self.m_timelineGraph:GetWidth() -posTimeline.x)
-		self.m_timelineGraph:SetTimeRange(startTime,endTime,self.m_timeline:GetStartOffset(),self.m_timeline:GetZoomLevel())
+		local axis = self.m_timeline:GetTimeAxis():GetAxis()
+		local startTime = axis:XOffsetToValue(posGraph.x -posTimeline.x)
+		local endTime = axis:XOffsetToValue(posGraph.x +self.m_timelineGraph:GetWidth() -posTimeline.x)
+		self.m_timelineGraph:SetTimeRange(startTime,endTime,axis:GetStartOffset(),axis:GetZoomLevel())
 	end
 end
 function gui.PFMTimeline:GetEditor() return self.m_editorType end
@@ -183,8 +164,25 @@ function gui.PFMTimeline:UpdateEditorButtonInactiveMaterial(editorType,matRegula
 	if(util.is_valid(bt) == false) then return end
 	bt:SetUnpressedMaterial((self.m_lastEditorType == editorType) and matPreselected or matRegular)
 end
+function gui.PFMTimeline:GetClipEditor() return self.m_timelineClip end
+function gui.PFMTimeline:GetMotionEditor() return self.m_timelineMotion end
+function gui.PFMTimeline:GetGraphEditor() return self.m_timelineGraph end
 function gui.PFMTimeline:GetTimeline() return self.m_timeline end
 function gui.PFMTimeline:GetPlayhead() return util.is_valid(self.m_timeline) and self.m_timeline:GetPlayhead() or nil end
+function gui.PFMTimeline:SetGraphCursorMode(cursorMode)
+	local buttons = {
+		[gui.PFMTimelineGraph.CURSOR_MODE_SELECT] = self.m_btCtrlSelect,
+		[gui.PFMTimelineGraph.CURSOR_MODE_MOVE] = self.m_btCtrlMove,
+		[gui.PFMTimelineGraph.CURSOR_MODE_PAN] = self.m_btCtrlPan,
+		[gui.PFMTimelineGraph.CURSOR_MODE_SCALE] = self.m_btCtrlScale,
+		[gui.PFMTimelineGraph.CURSOR_MODE_ZOOM] = self.m_btCtrlZoom,
+	}
+	for btCursorMode,bt in pairs(buttons) do
+		if(bt:IsValid()) then
+			bt:SetActivated(btCursorMode == cursorMode)
+		end
+	end
+end
 function gui.PFMTimeline:InitializeToolbar()
 	local toolbar = gui.create("WIBase",self.m_contents,0,0,self:GetWidth(),0)
 	toolbar:SetName("timeline_toolbar")
@@ -217,19 +215,24 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_controls = gui.create("WIHBox",toolbarLeft)
 	self.m_controls:SetName("timeline_controls")
 	self.m_btCtrlSelect = gui.PFMButton.create(self.m_controls,"gui/pfm/icon_grapheditor_select","gui/pfm/icon_grapheditor_select_activated",function()
-		print("TODO")
+		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_SELECT)
+		return true
 	end)
 	self.m_btCtrlMove = gui.PFMButton.create(self.m_controls,"gui/pfm/icon_manipulator_move","gui/pfm/icon_manipulator_move_activated",function()
-		print("TODO")
+		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_MOVE)
+		return true
 	end)
 	self.m_btCtrlPan = gui.PFMButton.create(self.m_controls,"gui/pfm/icon_grapheditor_pan","gui/pfm/icon_grapheditor_pan_activated",function()
-		print("TODO")
+		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_PAN)
+		return true
 	end)
 	self.m_btCtrlScale = gui.PFMButton.create(self.m_controls,"gui/pfm/icon_grapheditor_scale","gui/pfm/icon_grapheditor_scale_activated",function()
-		print("TODO")
+		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_SCALE)
+		return true
 	end)
 	self.m_btCtrlZoom = gui.PFMButton.create(self.m_controls,"gui/pfm/icon_grapheditor_zoom","gui/pfm/icon_grapheditor_zoom_activated",function()
-		print("TODO")
+		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_ZOOM)
+		return true
 	end)
 	gui.create("WIBase",self.m_controls):SetSize(18,1) -- Gap
 

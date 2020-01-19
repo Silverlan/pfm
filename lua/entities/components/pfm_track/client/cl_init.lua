@@ -76,6 +76,8 @@ function ents.PFMTrack:OnOffsetChanged(offset)
 						self.m_activeClips[clip] = self:CreateChannelClip(clip)
 					elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_AUDIO_CLIP) then
 						self.m_activeClips[clip] = self:CreateAudioClip(clip)
+					elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP) then
+						self.m_activeClips[clip] = self:CreateOverlayClip(clip)
 					else
 						pfm.log("Unsupported clip type '" .. clip:GetTypeName() .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME)
 					end
@@ -118,6 +120,14 @@ function ents.PFMTrack:CreateAudioClip(audioClipData)
 	pfm.log("Creating audio clip '" .. audioClipData:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
 	local ent = ents.create("pfm_audio_clip")
 	ent:GetComponent(ents.COMPONENT_PFM_AUDIO_CLIP):Setup(audioClipData,self)
+	ent:Spawn()
+	return ent
+end
+
+function ents.PFMTrack:CreateOverlayClip(overlayClipData)
+	pfm.log("Creating overlay clip '" .. overlayClipData:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
+	local ent = ents.create("pfm_overlay_clip")
+	ent:GetComponent(ents.COMPONENT_PFM_OVERLAY_CLIP):Setup(overlayClipData,self)
 	ent:Spawn()
 	return ent
 end

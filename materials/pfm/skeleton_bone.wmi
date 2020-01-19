@@ -1,0 +1,4 @@
+"pfm_flat"
+{
+	$texture albedo_map "white"
+}

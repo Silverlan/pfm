@@ -3,7 +3,7 @@ local function iterate_film_clip_children(converter,pfmFilmClip,node,parentName)
 	local numTypes = 0
 	if(node:GetType() == "DmeProjectedLight" or node:GetType() == "DmeGameModel" or node:GetType() == "DmeCamera" or node:GetType() == "DmeGameParticleSystem") then
 		local pfmActor = converter:CreateActor(node)
-		pfmFilmClip:GetActorsAttr():PushBack(pfmActor)
+		pfmFilmClip:AddActor(pfmActor)
 		numTypes = numTypes +1
 	elseif(node:GetType() == "DmeDag") then
 		local children = node:GetChildren()
@@ -80,12 +80,9 @@ sfm.register_element_type_conversion(sfm.FilmClip,udm.PFMFilmClip,function(conve
 		-- Note: For some reason in some cases the camera may not be in the list of the scene children for the film clip, but the camera is still usable.
 		-- In this case we'll just add the camera manually here.
 		-- pfm.log("Camera '" .. camName .. "' of clip '" .. pfmFilmClip:GetName() .. "' not found in list of actors! Adding manually...",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
-
-		local actor,isNewActor = converter:CreateActor(cam)
+		local actor = converter:CreateActor(cam)
 		pfmFilmClip:SetProperty("camera",udm.create_reference(actor))
-		if(isNewActor == true) then -- This is a new actor we didn't know about yet
-			pfmFilmClip:GetActorsAttr():PushBack(actor)
-		end
+		pfmFilmClip:AddActor(actor)
 	end
 
 	local trackGroups = {}

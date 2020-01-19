@@ -38,6 +38,16 @@ function gui.PFMFrame:OnInitialize()
 	self:ScheduleUpdate()
 end
 function gui.PFMFrame:SetActiveTab(tabId)
+	if(type(tabId) ~= "number") then
+		local el = tabId
+		for tabId,bt in ipairs(self.m_tabButtons) do
+			if(bt:IsValid() and bt:GetContents() == el) then
+				self:SetActiveTab(tabId)
+				break
+			end
+		end
+		return
+	end
 	if(util.is_valid(self.m_activeTabButton)) then self.m_activeTabButton:SetActive(false) end
 
 	local bt = self.m_tabButtons[tabId]

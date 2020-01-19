@@ -54,6 +54,7 @@ function gui.PFMViewport:OnInitialize()
 		--self:Update()
 	end)
 	self.m_viewport = gui.create("WIViewport",self.m_aspectRatioWrapper)
+	self.m_viewport:SetMovementControlsEnabled(false)
 
 	local function create_text_element(font,pos,color)
 		local textColor = Color(182,182,182)
@@ -101,18 +102,16 @@ function gui.PFMViewport:OnInitialize()
 
 		local el = gui.get_element_under_cursor()
 		if(util.is_valid(el) and (el == self or el:IsDescendantOf(self))) then
-			local action
-			if(mouseButton == input.MOUSE_BUTTON_LEFT) then action = input.ACTION_ATTACK
-			else action = input.ACTION_ATTACK2 end
-
 			local filmmaker = tool.get_filmmaker()
 			if(mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 				self.m_oldCursorPos = input.get_cursor_pos()
-				self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_WALK)
+				self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY)
 				input.center_cursor()
 				filmmaker:TrapFocus(false)
 				filmmaker:KillFocus()
 				self.m_inCameraControlMode = true
+			elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
+				ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS)
 			end
 			return util.EVENT_REPLY_HANDLED
 		end
@@ -137,7 +136,7 @@ function gui.PFMViewport:SetCameraMode(camMode)
 	pfm.log("Changing camera mode to " .. ((camMode == gui.PFMViewport.CAMERA_MODE_PLAYBACK and "playback") or (camMode == gui.PFMViewport.CAMERA_MODE_FLY and "fly") or "walk"))
 	self.m_cameraMode = camMode
 
-	ents.PFMCamera.set_camera_enabled(camMode == gui.PFMViewport.CAMERA_MODE_PLAYBACK)
+	-- ents.PFMCamera.set_camera_enabled(camMode == gui.PFMViewport.CAMERA_MODE_PLAYBACK)
 
 	-- We need to notify the server to change the player's movement mode (i.e. noclip/walk)
 	local packet = net.Packet()
@@ -335,8 +334,44 @@ function gui.PFMViewport:InitializeCameraControls()
 		print("TODO")
 	end)
 	self.m_btCamera = gui.PFMButton.create(controls,"gui/pfm/icon_cp_camera","gui/pfm/icon_cp_camera_activated",function()
-		print("TODO")
+		self:ToggleCamera()
 	end)
+	self.m_btCamera:SetupContextMenu(function(pContext)
+		local sceneCamera = self:IsSceneCamera()
+		local camName = sceneCamera and locale.get_text("pfm_scene_camera") or locale.get_text("pfm_work_camera")
+		pContext:AddItem(locale.get_text("pfm_switch_to_camera",{camName}),function() self:ToggleCamera() end)
+		pContext:AddItem(locale.get_text("pfm_copy_to_camera",{camName}),function() end) -- TODO
+
+		pContext:AddLine()
+
+		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_change_scene_camera"))
+		pSubMenu:AddItem(locale.get_text("pfm_new_camera"),function() end) -- TODO
+		pSubMenu:AddLine()
+		-- TODO: Add all available cameras
+		pSubMenu:Update()
+
+		pContext:AddLine()
+
+		if(sceneCamera) then
+			pContext:AddItem(locale.get_text("pfm_select_actor"),function()
+				local camC = ents.PFMCamera.get_active_camera()
+				local actorC = (camC ~= nil) and camC:GetEntity():GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
+				if(actorC == nil) then return end
+				local actor = actorC:GetActorData()
+				tool.get_filmmaker():SelectActor(actor)
+			end)
+
+			pContext:AddLine()
+
+			pContext:AddItem(locale.get_text("pfm_show_camera_in_element_viewer"),function()
+				local camC = ents.PFMCamera.get_active_camera()
+				if(util.is_valid(camC) == false) then return end
+				tool.get_filmmaker():ShowInElementViewer(camC:GetCameraData())
+			end)
+		end
+		pContext:AddItem(locale.get_text("pfm_auto_aim_work_camera"),function() end) -- TODO
+	end)
+	self:SwitchToWorkCamera()
 	self.m_btGear = gui.PFMButton.create(controls,"gui/pfm/icon_gear","gui/pfm/icon_gear_activated",function()
 		print("TODO")
 	end)
@@ -345,6 +380,27 @@ function gui.PFMViewport:InitializeCameraControls()
 	controls:SetX(self:GetWidth() -controls:GetWidth() -3)
 	controls:SetAnchor(1,1,1,1)
 	self.manipulatorControls = controls
+end
+function gui.PFMViewport:SwitchToSceneCamera()
+	local camScene = ents.PFMCamera.get_active_camera()
+	if(util.is_valid(camScene)) then
+		local camData = camScene:GetCameraData()
+		if(util.is_valid(self.m_btCamera)) then self.m_btCamera:SetText(camData:GetName()) end
+	end
+	ents.PFMCamera.set_camera_enabled(true)
+end
+function gui.PFMViewport:SwitchToWorkCamera()
+	if(util.is_valid(self.m_btCamera)) then self.m_btCamera:SetText(locale.get_text("pfm_work_camera")) end
+	ents.PFMCamera.set_camera_enabled(false)
+end
+function gui.PFMViewport:CopyToCamera(camSrc,camDst)
+
+end
+function gui.PFMViewport:IsSceneCamera() return ents.PFMCamera.is_camera_enabled() end
+function gui.PFMViewport:IsWorkCamera() return not self:IsSceneCamera() end
+function gui.PFMViewport:ToggleCamera()
+	if(self:IsSceneCamera()) then self:SwitchToWorkCamera()
+	else self:SwitchToSceneCamera() end
 end
 function gui.PFMViewport:GetPlayButton() return self.m_btPlay end
 function gui.PFMViewport:GetViewport() return self.m_viewport end

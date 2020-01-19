@@ -38,6 +38,25 @@ function udm.PFMTrack:AddChannelClip(name)
 	return clip
 end
 
+function udm.PFMTrack:CalcBonePose(transform,t)
+	local posLayer,posChannel,posChannelClip = self:FindBoneChannelLayer(transform,"position")
+	local rotLayer,rotChannel,rotChannelClip = self:FindBoneChannelLayer(transform,"rotation")
+
+	-- We need the time relative to the respective channel clip
+	local tPos = (posChannelClip ~= nil) and (t -posChannelClip:GetTimeFrame():GetStart()) or t
+	local tRot = (rotChannelClip ~= nil) and (t -rotChannelClip:GetTimeFrame():GetStart()) or t
+
+	local pos = (posLayer ~= nil) and posLayer:CalcInterpolatedValue(tPos) or Vector()
+	local rot = (rotLayer ~= nil) and rotLayer:CalcInterpolatedValue(tRot) or Quaternion()
+	return phys.ScaledTransform(pos,rot,Vector(1,1,1))
+end
+
+function udm.PFMTrack:FindBoneChannelLayer(transform,attribute)
+	local channel,channelClip = self:FindBoneChannel(transform,attribute)
+	local log = (channel ~= nil) and channel:GetLog() or nil
+	if(log ~= nil) then return log:GetLayers():Get(1),channel,channelClip end
+end
+
 function udm.PFMTrack:SetPlaybackOffset(localOffset,absOffset)
 	for _,filmClip in ipairs(self:GetFilmClips():GetTable()) do
 		filmClip:SetPlaybackOffset(absOffset)
@@ -45,5 +64,34 @@ function udm.PFMTrack:SetPlaybackOffset(localOffset,absOffset)
 
 	for _,channelClip in ipairs(self:GetChannelClips():GetTable()) do
 		channelClip:SetPlaybackOffset(localOffset)
+	end
+end
+
+function udm.PFMTrack:FindFlexControllerChannel(flexWeight)
+	for _,channelClip in ipairs(self:GetChannelClips():GetTable()) do
+		for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
+			local toElement = channel:GetToElement()
+			if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR) then
+				local flexWeightTo = toElement:FindModelFlexWeight()
+				if(util.is_same_object(flexWeight,flexWeightTo)) then
+					return channel,channelClip
+				end
+			end
+		end
+	end
+end
+
+function udm.PFMTrack:FindBoneChannel(transform,attribute)
+	for _,channelClip in ipairs(self:GetChannelClips():GetTable()) do
+		for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
+			local toElement = channel:GetToElement()
+			if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_TRANSFORM) then
+				if(util.is_same_object(toElement,transform)) then
+					if(attribute == nil or channel:GetToAttribute() == attribute) then
+						return channel,channelClip
+					end
+				end
+			end
+		end
 	end
 end

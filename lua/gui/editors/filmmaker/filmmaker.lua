@@ -50,9 +50,11 @@ function gui.WIFilmmaker:OnInitialize()
 
 	pMenuBar:AddItem(locale.get_text("file"),function(pContext)
 		--[[pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
+			if(util.is_valid(self) == false) then return end
 
 		end)]]
 		pContext:AddItem(locale.get_text("import") .. "...",function(pItem)
+			if(util.is_valid(self) == false) then return end
 			if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
 				self:ImportSFMProject(fileName)
@@ -97,13 +99,26 @@ function gui.WIFilmmaker:OnInitialize()
 			end)
 			self.m_openDialogue:Update()
 		end)
+		pContext:AddItem(locale.get_text("pfm_export_blender_scene") .. "...",function(pItem)
+			import.export_scene("test")
+		end)
 		pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
-			
+			local project = self:GetProject()
+			local node = project:GetUDMRootNode()
+			local ds = util.DataStream()
+			print("NODE: ",node)
+			node:SaveToBinary(ds)
+			print("Size: ",ds:GetSize())
 		end)
+		--[[pContext:AddItem(locale.get_text("close"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			tool.close_filmmaker()
+		end)]]
 		pContext:AddItem(locale.get_text("exit"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			tool.close_filmmaker()
+			engine.shutdown()
 		end)
 		pContext:Update()
 	end)
@@ -210,6 +225,7 @@ function gui.WIFilmmaker:OnInitialize()
 	self:ClearProjectUI()
 	self:CreateNewProject()
 end
+function gui.WIFilmmaker:GetViewport() return self.m_viewport end
 function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 	-- TODO: Implement a keybinding system for this! Keybindings should also appear in tooltips!
 	if(key == input.KEY_SPACE and state == input.STATE_PRESS) then
@@ -289,6 +305,7 @@ end
 function gui.WIFilmmaker:CloseProject()
 	pfm.log("Closing project...",pfm.LOG_CATEGORY_PFM)
 	if(util.is_valid(self.m_gameView)) then self.m_gameView:Remove() end
+	if(util.is_valid(self.m_cbPlayOffset)) then self.m_cbPlayOffset:Remove() end
 end
 function gui.WIFilmmaker:GetGameView() return self.m_gameView end
 function gui.WIFilmmaker:InitializeProject(project)
@@ -310,6 +327,35 @@ function gui.WIFilmmaker:InitializeProject(project)
 		self.m_playbackControls:SetDuration(timeFrame:GetDuration())
 		self.m_playbackControls:SetOffset(0.0)
 	end
+
+	local session = self:GetSession()
+	if(session ~= nil) then
+		self.m_cbPlayOffset = session:GetSettings():GetPlayheadOffsetAttr():AddChangeListener(function(newOffset)
+			self.m_updatingProjectTimeOffset = true
+			if(util.is_valid(self.m_playhead)) then self.m_playhead:SetTimeOffset(newOffset) end
+
+			local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
+			if(projectC ~= nil) then projectC:SetOffset(newOffset) end
+			local session = self:GetSession()
+			local activeClip = (session ~= nil) and session:GetActiveClip() or nil
+			if(activeClip ~= nil) then
+				activeClip:SetPlaybackOffset(newOffset)
+
+				if(util.is_valid(self.m_viewport)) then
+					self.m_viewport:SetGlobalTime(newOffset)
+
+					local childClip = activeClip:GetChildFilmClip(newOffset)
+					if(childClip ~= nil) then
+						self.m_viewport:SetLocalTime(childClip:GetTimeFrame():LocalizeOffset(newOffset))
+						self.m_viewport:SetFilmClipName(childClip:GetName())
+						self.m_viewport:SetFilmClipParentName(activeClip:GetName())
+					end
+				end
+			end
+			self.m_updatingProjectTimeOffset = false
+		end)
+	end
+
 	self:InitializeProjectUI()
 	return entScene
 end
@@ -340,11 +386,27 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 	local actorDataFrame = self:AddFrame(self.m_contents)
 	local actorEditor = gui.create("WIPFMActorEditor")
+	actorEditor:AddCallback("OnControlSelected",function(actorEditor,component,controlData,slider)
+		local filmClip = actorEditor:GetFilmClip()
+		if(filmClip == nil) then return end
+		if(controlData.type == "flexController" or controlData.type == "bone") then
+			local graphEditor = self:GetTimeline():GetGraphEditor()
+			local itemCtrl = graphEditor:AddControl(filmClip,controlData)
+
+			local fRemoveCtrl = function() if(util.is_valid(itemCtrl)) then itemCtrl:Remove() end end
+			slider:AddCallback("OnDeselected",fRemoveCtrl)
+			slider:AddCallback("OnRemove",fRemoveCtrl)
+		else
+			-- TODO: Allow generic properties?
+		end
+	end)
 	actorDataFrame:AddTab(locale.get_text("pfm_actor_editor"),actorEditor)
 	self.m_actorEditor = actorEditor -- TODO Determine dynamically
 
 	local elementViewer = gui.create("WIPFMElementViewer")
 	actorDataFrame:AddTab(locale.get_text("pfm_element_viewer"),elementViewer)
+	self.m_elementViewer = elementViewer
+	self.m_actorDataFrame = actorDataFrame
 	
 	gui.create("WIResizer",self.m_contents)
 
@@ -376,22 +438,8 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	local playhead = pfmTimeline:GetPlayhead()
 	self.m_playhead = playhead
 	playhead:GetTimeOffsetProperty():AddCallback(function(oldOffset,offset)
-		local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
-		if(projectC ~= nil) then projectC:SetOffset(offset) end
-		local session = project:GetSessions()[1]
-		local activeClip = (session ~= nil) and session:GetActiveClip() or nil
-		if(activeClip == nil) then return end
-		activeClip:SetPlaybackOffset(offset)
-
-		if(viewport:IsValid()) then
-			viewport:SetGlobalTime(offset)
-
-			local childClip = activeClip:GetChildFilmClip(offset)
-			if(childClip ~= nil) then
-				viewport:SetLocalTime(childClip:GetTimeFrame():LocalizeOffset(offset))
-				viewport:SetFilmClipName(childClip:GetName())
-				viewport:SetFilmClipParentName(activeClip:GetName())
-			end
+		if(self.m_updatingProjectTimeOffset ~= true) then
+			self:SetTimeOffset(offset)
 		end
 	end)
 	local playButton = viewport:GetPlayButton()
@@ -423,14 +471,15 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		filmStrip:SetScrollInputEnabled(true)
 		filmStrip:AddCallback("OnScroll",function(el,x,y)
 			if(timeline:IsValid()) then
-				timeline:SetStartOffset(timeline:GetStartOffset() -y *timeline:GetZoomLevelMultiplier())
+				local axis = timeline:GetTimeAxis()
+				timeline:SetStartOffset(axis:GetStartOffset() -y *axis:GetZoomLevelMultiplier())
 				timeline:Update()
 				return util.EVENT_REPLY_HANDLED
 			end
 			return util.EVENT_REPLY_UNHANDLED
 		end)
 
-		local trackGroup = filmClip:FindElementsByName("subClipTrackGroup")[1]
+		local trackGroup = filmClip:FindSubClipTrackGroup()
 		local trackFilm = trackGroup:FindElementsByName("Film")[1]
 		if(trackFilm ~= nil) then
 			for _,filmClip in ipairs(trackFilm:GetFilmClips():GetTable()) do
@@ -446,9 +495,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 						if(util.is_valid(pContext) == false) then return end
 						pContext:SetPos(input.get_cursor_pos())
 						pContext:AddItem(locale.get_text("pfm_show_in_element_viewer"),function()
-							if(elementViewer:IsValid()) then
-								elementViewer:MakeElementRoot(filmClip)
-							end
+							self:ShowInElementViewer(filmClip)
 						end)
 						pContext:Update()
 						return util.EVENT_REPLY_HANDLED
@@ -502,11 +549,33 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		local bookmarkSet = filmClip:GetBookmarkSets():Get(activeBookmarkSet +1)
 		if(bookmarkSet ~= nil) then
 			for _,bookmark in ipairs(bookmarkSet:GetBookmarks():GetTable()) do
-				timeline:AddBookmark(bookmark)
+				timeline:AddBookmark(bookmark:GetTimeRange():GetTimeAttr())
 			end
 		end
 	end
 end
+function gui.WIFilmmaker:GetActiveFilmClip()
+	local session = self:GetSession()
+	local filmClip = (session ~= nil) and session:GetActiveClip() or nil
+	return (filmClip ~= nil) and filmClip:GetChildFilmClip(self:GetTimeOffset()) or nil
+end
+function gui.WIFilmmaker:ShowInElementViewer(el)
+	if(util.is_valid(self.m_elementViewer) == false) then return end
+	self.m_elementViewer:MakeElementRoot(el)
+
+	if(util.is_valid(self.m_actorDataFrame)) then
+		self.m_actorDataFrame:SetActiveTab(self.m_elementViewer)
+	end
+end
+function gui.WIFilmmaker:SelectActor(actor)
+	if(util.is_valid(self.m_actorEditor) == false) then return end
+	self.m_actorEditor:SelectActor(actor)
+
+	if(util.is_valid(self.m_actorDataFrame)) then
+		self.m_actorDataFrame:SetActiveTab(self.m_actorEditor)
+	end
+end
+function gui.WIFilmmaker:GetSelectedClip() return self:GetTimeline():GetSelectedClip() end
 function gui.WIFilmmaker:GetTimeline() return self.m_timeline end
 function gui.WIFilmmaker:GetFilmStrip() return self.m_filmStrip end
 function gui.WIFilmmaker:GetTimeOffset()
@@ -514,8 +583,10 @@ function gui.WIFilmmaker:GetTimeOffset()
 	return self.m_playhead:GetTimeOffset()
 end
 function gui.WIFilmmaker:SetTimeOffset(offset)
-	if(util.is_valid(self.m_playhead) == false) then return end
-	self.m_playhead:SetTimeOffset(offset)
+	local session = self:GetSession()
+	if(session == nil) then return end
+	local settings = session:GetSettings()
+	settings:SetPlayheadOffset(offset)
 end
 function gui.WIFilmmaker:GetSession()
 	local project = self:GetProject()
@@ -524,10 +595,7 @@ function gui.WIFilmmaker:GetSession()
 end
 function gui.WIFilmmaker:GetFrameRate()
 	local session = self:GetSession()
-	if(session == nil) then return 24 end
-	local settings = session:GetSettings()
-	local renderSettings = settings:GetRenderSettings()
-	return renderSettings:GetFrameRate()
+	return (session ~= nil) and session:GetFrameRate() or 24
 end
 function gui.WIFilmmaker:TimeOffsetToFrameOffset(offset) return offset *self:GetFrameRate() end
 function gui.WIFilmmaker:FrameOffsetToTimeOffset(offset) return offset /self:GetFrameRate() end

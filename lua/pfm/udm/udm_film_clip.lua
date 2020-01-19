@@ -20,14 +20,42 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"fadeOut",udm.Float
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"bookmarkSets",udm.Array(udm.ELEMENT_TYPE_PFM_BOOKMARK_SET))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"activeBookmarkSet",udm.Int())
 
+function udm.PFMFilmClip:AddActor(actor)
+	for _,actorOther in ipairs(self:GetActors():GetTable()) do
+		if(util.is_same_object(actor,actorOther)) then return end
+	end
+	self:GetActors():PushBack(actor)
+end
+
+function udm.PFMFilmClip:FindActor(name)
+	for _,actor in ipairs(self:GetActors():GetTable()) do
+		if(actor:GetName() == name) then return actor end
+	end
+end
+
+function udm.PFMFilmClip:FindTrackGroup(name)
+	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do
+		if(trackGroup:GetName() == name) then return trackGroup end
+	end
+end
+
+function udm.PFMFilmClip:FindChannelTrackGroup() return self:FindTrackGroup("channelTrackGroup") end
+function udm.PFMFilmClip:FindSubClipTrackGroup() return self:FindTrackGroup("subClipTrackGroup") end
+
+function udm.PFMFilmClip:FindAnimationChannelTrack()
+	local channelTrackGroup = self:FindChannelTrackGroup()
+	return (channelTrackGroup ~= nil) and channelTrackGroup:FindTrack("animSetEditorChannels") or nil
+end
+
 function udm.PFMFilmClip:SetPlaybackOffset(offset)
 	if(self:GetTimeFrame():IsInTimeFrame(offset) == false) then return end
-	local timeFrame = self:GetTimeFrame()
-	local localOffset = timeFrame:LocalizeOffset(offset)
+	local localOffset = self:LocalizeTimeOffset(offset)
 	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do
 		trackGroup:SetPlaybackOffset(localOffset,offset)
 	end
 end
+
+function udm.PFMFilmClip:LocalizeTimeOffset(offset) return self:GetTimeFrame():LocalizeOffset(offset) end
 
 function udm.PFMFilmClip:GetChildFilmClip(offset)
 	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do

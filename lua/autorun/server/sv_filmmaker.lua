@@ -8,9 +8,9 @@
 
 net.register("sv_pfm_camera_mode")
 
-local CAMERA_MODE_PLAYBACK = 1
-local CAMERA_MODE_FLY = 2
-local CAMERA_MODE_WALK = 3
+local CAMERA_MODE_PLAYBACK = 0
+local CAMERA_MODE_FLY = 1
+local CAMERA_MODE_WALK = 2
 net.receive("sv_pfm_camera_mode",function(packet,pl)
 	local physC = util.is_valid(pl) and pl:GetEntity():GetComponent(ents.COMPONENT_PHYSICS)
 	local camMode = packet:ReadUInt8()

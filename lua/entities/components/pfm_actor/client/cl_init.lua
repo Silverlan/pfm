@@ -14,6 +14,7 @@ function ents.PFMActorComponent:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
 	self:AddEntityComponent(ents.COMPONENT_NAME)
+	self:AddEntityComponent("click")
 	self.m_channels = {}
 	self.m_listeners = {}
 end
@@ -50,17 +51,26 @@ function ents.PFMActorComponent:UpdatePose()
 	self:GetEntity():SetPose(pose)
 end
 
-function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
-	local actorData = self:GetActorData()
-	local ent = self:GetEntity()
-	self:UpdatePose()
+function ents.PFMActorComponent:SetDefaultRenderMode(renderMode)
+	self.m_defaultRenderMode = renderMode
+	self:UpdateRenderMode()
+end
 
-	local renderMode = ents.RenderComponent.RENDERMODE_WORLD
+function ents.PFMActorComponent:UpdateRenderMode()
+	local actorData = self:GetActorData()
+	local renderMode = self.m_defaultRenderMode or ents.RenderComponent.RENDERMODE_WORLD
 	if(actorData:IsAbsoluteVisible() == false) then
 		renderMode = ents.RenderComponent.RENDERMODE_NONE
 	end
-	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 	if(renderC ~= nil) then renderC:SetRenderMode(renderMode) end
+end
+
+function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
+	local ent = self:GetEntity()
+	self:UpdatePose()
+
+	self:UpdateRenderMode()
 	--print(ent,ent:GetPos())
 	--[[self.m_oldOffset = self.m_oldOffset or clipOffset
 	local newOffset = clipOffset

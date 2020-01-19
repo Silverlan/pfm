@@ -31,19 +31,19 @@ function gui.Grid:CreateGridLayer(horizontal,lineWidth,stride)
 	local gridLayer = gui.create("WIGridLayer",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	gridLayer:SetHorizontal(horizontal)
 	gridLayer:SetLineWidth(lineWidth)
-	gridLayer:SetStrideInPixels(stride)
+	gridLayer:GetAxis():SetStrideInPixels(stride)
 	gridLayer:SetColor(gui.Grid.GRID_COLOR)
 	table.insert(self.m_layers,gridLayer)
 	return gridLayer
 end
 function gui.Grid:SetZoomLevel(zoomLevel)
 	for _,layer in ipairs(self.m_layers) do
-		if(layer:IsValid()) then layer:SetZoomLevel(zoomLevel) end
+		if(layer:IsValid()) then layer:GetAxis():SetZoomLevel(zoomLevel) end
 	end
 end
 function gui.Grid:SetStartOffset(startOffset)
 	for _,layer in ipairs(self.m_layers) do
-		if(layer:IsValid()) then layer:SetStartOffset(startOffset) end
+		if(layer:IsValid()) then layer:GetAxis():SetStartOffset(startOffset) end
 	end
 end
 function gui.Grid:Setup()

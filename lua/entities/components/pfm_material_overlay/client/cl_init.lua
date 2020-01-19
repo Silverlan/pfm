@@ -18,7 +18,7 @@ end
 
 function ents.PFMMaterialOverlay:GetMaterialOverlayData() return self.m_materialOverlayData end
 
-function ents.PFMMaterialOverlay:Setup(filmClipC,matOverlayData,fadeInTime,fadeOutTime)
+function ents.PFMMaterialOverlay:Setup(overlayClipC,matOverlayData,fadeInTime,fadeOutTime)
 	fadeInTime = fadeInTime or 0.0
 	fadeOutTime = fadeOutTime or 0.0
 
@@ -27,7 +27,7 @@ function ents.PFMMaterialOverlay:Setup(filmClipC,matOverlayData,fadeInTime,fadeO
 	self.m_fadeOutTime = fadeOutTime
 
 	if(fadeInTime == 0.0) then return end
-	self.m_cbOnOffsetChanged = filmClipC:AddEventCallback(ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED,function(filmClipOffset,absOffset)
+	self.m_cbOnOffsetChanged = overlayClipC:AddEventCallback(ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED,function(filmClipOffset,absOffset)
 		self:OnOffsetChanged(filmClipOffset)
 	end)
 end
@@ -45,7 +45,7 @@ function ents.PFMMaterialOverlay:OnEntitySpawn()
 	if(#mat == 0) then return end
 	local el = gui.create("WITexturedRect")
 	el:SetMaterial(mat)
-	el:SetZPos(-2)
+	el:SetZPos(2000)---2)
 	if(matOverlayData:IsFullscreen()) then
 		local resolution = engine.get_render_resolution()
 		el:SetPos(0,0)

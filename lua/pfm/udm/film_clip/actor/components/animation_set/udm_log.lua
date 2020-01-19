@@ -10,6 +10,7 @@ include("udm_log_list.lua")
 
 udm.ELEMENT_TYPE_PFM_LOG = udm.register_element("PFMLog")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"layers",udm.Array(udm.ELEMENT_TYPE_PFM_LOG_LIST))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"bookmarks",udm.Array(udm.ATTRIBUTE_TYPE_FLOAT))
 
 function udm.PFMLog:AddLayer(layer)
 	local logLayer = (type(layer) == "string") and self:CreateChild(udm.ELEMENT_TYPE_PFM_LOG_LIST,layer) or layer

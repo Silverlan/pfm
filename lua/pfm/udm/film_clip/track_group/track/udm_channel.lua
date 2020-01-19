@@ -7,11 +7,13 @@
 ]]
 
 include("/pfm/udm/film_clip/actor/components/animation_set/udm_log.lua")
+include("/pfm/udm/film_clip/actor/components/animation_set/udm_graph_curve.lua")
 
 udm.ELEMENT_TYPE_PFM_CHANNEL = udm.register_element("PFMChannel")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"log",udm.PFMLog())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"toAttribute",udm.String())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"toElement",udm.ELEMENT_TYPE_ANY)
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"graphCurve",udm.PFMGraphCurve())
 
 function udm.PFMChannel:SetPlaybackOffset(offset)
 	local toElement = self:GetToElement()

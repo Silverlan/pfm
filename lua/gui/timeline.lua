@@ -11,6 +11,7 @@ include("/gui/playhead.lua")
 include("/gui/vbox.lua")
 include("/gui/collapsiblegroup.lua")
 include("/gui/pfm/bookmark.lua")
+include("/gui/pfm/axis.lua")
 
 util.register_class("gui.Timeline",gui.Base)
 function gui.Timeline:__init()
@@ -25,7 +26,7 @@ function gui.Timeline:OnInitialize()
 		if(mouseButton == input.MOUSE_BUTTON_LEFT) then
 			if(keyState == input.STATE_PRESS) then
 				local pos = self:GetCursorPos()
-				local timeOffset = self:XOffsetToTimeOffset(pos.x)
+				local timeOffset = self:GetTimeAxis():GetAxis():XOffsetToValue(pos.x)
 				self.m_playhead:SetTimeOffset(timeOffset)
 			end
 			self.m_playhead:SetCursorMoveModeEnabled(keyState == input.STATE_PRESS)
@@ -34,6 +35,7 @@ function gui.Timeline:OnInitialize()
 	end
 
 	self.m_bookmarkBar = gui.create("WIBase",self,0,0,self:GetWidth(),16,0,0,1,0)
+	self.m_bookmarks = {}
 
 	self.m_timelineStripUpper = gui.create("WILabelledTimelineStrip",self,0,self.m_bookmarkBar:GetBottom(),self:GetWidth(),16,0,0,1,0)
 	self.m_timelineStripUpper:SetMouseInputEnabled(true)
@@ -55,79 +57,140 @@ function gui.Timeline:OnInitialize()
 	self.m_playhead:GetTimeOffsetProperty():AddCallback(function()
 		self:OnTimelinePropertiesChanged()
 	end)
-	self.m_playhead:LinkToTimeline(self)
 
-	self.m_timelineStripLower:GetStartOffsetProperty():Link(self.m_timelineStripUpper:GetStartOffsetProperty())
-	self.m_timelineStripLower:GetZoomLevelProperty():Link(self.m_timelineStripUpper:GetZoomLevelProperty())
+	self.m_timeAxis = gui.create("WIAxis",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	self.m_dataAxis = gui.create("WIAxis",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 
-	self.m_timelineStripUpper:AddCallback("OnTimelinePropertiesChanged",function()
-		self:OnTimelinePropertiesChanged()
-	end)
+	self:SetTimeAxis(util.GraphAxis())
+	self:SetDataAxis(util.GraphAxis())
 
 	self:SetScrollInputEnabled(true)
 	self:SetZoomLevel(1)
 	self:SetStartOffset(0.0)
 	self:Update()
+
+	-- TODO
+	self:SetMouseInputEnabled(true)
+end
+function gui.Timeline:OnRemove()
+	if(util.is_valid(self.m_cbTimeAxisPropertiesChanged)) then self.m_cbTimeAxisPropertiesChanged:Remove() end
+end
+function gui.Timeline:SetTimeAxis(axis)
+	self.m_timeAxis:SetAxis(axis,true)
+	if(util.is_valid(self.m_timelineStripLower)) then self.m_timelineStripLower:SetAxis(axis) end
+	if(util.is_valid(self.m_timelineStripUpper)) then self.m_timelineStripUpper:SetAxis(axis) end
+	if(util.is_valid(self.m_playhead)) then self.m_playhead:SetAxis(axis) end
+
+	if(util.is_valid(self.m_cbTimeAxisPropertiesChanged)) then self.m_cbTimeAxisPropertiesChanged:Remove() end
+	self.m_cbTimeAxisPropertiesChanged = axis:AddCallback("OnPropertiesChanged",function()
+		self:OnTimelinePropertiesChanged()
+	end)
+end
+function gui.Timeline:SetDataAxis(axis) self.m_dataAxis:SetAxis(axis,false) end
+function gui.Timeline:GetTimeAxis() return self.m_timeAxis end
+function gui.Timeline:GetDataAxis() return self.m_dataAxis end
+function gui.Timeline:AddTimelineItem(el,timeFrame)
+	self.m_timeAxis:AttachElementToRange(el,timeFrame:GetStartAttr(),timeFrame:GetDurationAttr())
+end
+function gui.Timeline:MouseCallback(mouseButton,state,mods)
+	if(mouseButton == input.MOUSE_BUTTON_LEFT) then
+		self:SetCursorMoveModeEnabled(state == input.STATE_PRESS)
+		return util.EVENT_REPLY_HANDLED
+	end
+	return util.EVENT_REPLY_UNHANDLED
+end
+function gui.Timeline:SetCursorMoveModeEnabled(enabled)
+	if(enabled) then
+		self:SetCursorMovementCheckEnabled(true)
+		if(util.is_valid(self.m_cbMove) == false) then
+			local axis = self:GetTimeAxis():GetAxis()
+			local dataAxis = self:GetDataAxis():GetAxis()
+			local startPos = self:GetCursorPos()
+			local offset = axis:GetStartOffset()
+			local dataOffset = dataAxis:GetStartOffset()
+			self.m_cbMove = self:AddCallback("OnCursorMoved",function(el,x,y)
+				x = x -startPos.x
+				y = y -startPos.y
+
+				x = axis:XDeltaToValue(x)
+				y = dataAxis:XDeltaToValue(y)
+				axis:SetStartOffset(offset -x)
+				dataAxis:SetStartOffset(dataOffset -y)
+				self:Update()
+				--local pos = self:GetParent():GetCursorPos()
+				--self:SetTimeOffset(self.m_timeline:XOffsetToValue(pos.x))
+
+				--self.m_timelineGraph
+			end)
+		end
+	else
+		self:SetCursorMovementCheckEnabled(false)
+		if(util.is_valid(self.m_cbMove)) then self.m_cbMove:Remove() end
+	end
 end
 function gui.Timeline:GetContents() return self.m_contents end
 function gui.Timeline:GetPlayhead() return self.m_playhead end
 function gui.Timeline:GetUpperTimelineStrip() return self.m_timelineStripUpper end
 function gui.Timeline:GetLowerTimelineStrip() return self.m_timelineStripLower end
+function gui.Timeline:GetEndOffset() return self:GetTimeAxis():GetAxis():XOffsetToValue(self:GetRight()) end
 function gui.Timeline:OnTimelinePropertiesChanged()
 	if(self.m_skipPlayheadUpdate) then return end
 	if(util.is_valid(self.m_playhead)) then
 		if(self.m_skipUpdatePlayOffset ~= true) then
 			self.m_skipUpdatePlayOffset = true
 			local timeOffset = self.m_playhead:GetTimeOffset()
-			local x = self:TimeOffsetToXOffset(timeOffset)
+			local axis = self:GetTimeAxis():GetAxis()
+			local x = axis:ValueToXOffset(timeOffset)
 			self.m_playhead:SetPlayOffset(x)
 			self.m_skipUpdatePlayOffset = nil
 
-			if(timeOffset < self:GetStartOffset()) then
-				self:SetStartOffset(timeOffset)
+			if(timeOffset < axis:GetStartOffset()) then
+				axis:SetStartOffset(timeOffset)
 				self:Update()
 			elseif(timeOffset > self:GetEndOffset()) then
-				self:SetStartOffset(self:GetStartOffset() +(timeOffset -self:GetEndOffset()))
+				axis:SetStartOffset(axis:GetStartOffset() +(timeOffset -self:GetEndOffset()))
 				self:Update()
 			end
 		end
 	end
 end
 function gui.Timeline:ScrollCallback(x,y)
-	self:SetZoomLevel(self:GetZoomLevel() -(y /20.0))
+	self:SetZoomLevel(self:GetTimeAxis():GetAxis():GetZoomLevel() -(y /20.0))
 	self:Update()
 	return util.EVENT_REPLY_HANDLED
 end
 function gui.Timeline:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_playhead)) then self.m_playhead:SetHeight(h -self.m_bookmarkBar:GetBottom()) end
 end
-function gui.Timeline:AddTimelineItem(el,timeFrame)
-	local elWrapper = el:Wrap("WITimelineItem")
-	if(elWrapper == nil) then return end
-	elWrapper:LinkToTimeline(self,timeFrame,el)
-	return elWrapper
-end
-function gui.Timeline:AddBookmark(bookmark)
+function gui.Timeline:AddBookmark(time)
 	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
 	local p = gui.create("WIPFMBookmark",self,0,5)
-	self:AddTimelineItem(p,bookmark:GetTimeRange())
-	print("Placing bookmark at time offset " .. bookmark:GetTimeRange():GetTime() .. "...")
+	self.m_timeAxis:AttachElementToValue(p,time)
+	table.insert(self.m_bookmarks,p)
+	print("Placing bookmark at time offset " .. time:GetValue() .. "...")
 	return p
 end
+function gui.Timeline:ClearBookmarks()
+	for _,bookmark in ipairs(self.m_bookmarks) do
+		if(bookmark:IsValid()) then bookmark:Remove() end
+	end
+end
 function gui.Timeline:SetZoomLevel(zoomLevel)
+	-- TODO: Use SetZoomLevel from GraphAxis class
 	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
 	local xOffsetPlayhead
 	local timeOffset
+	local axis = self:GetTimeAxis():GetAxis()
 	if(util.is_valid(self.m_playhead)) then
-		xOffsetPlayhead = self:TimeOffsetToXOffset(self.m_playhead:GetTimeOffset())
+		xOffsetPlayhead = axis:ValueToXOffset(self.m_playhead:GetTimeOffset())
 		timeOffset = self.m_playhead:GetTimeOffset()
 	end
-	self.m_timelineStripUpper:SetZoomLevel(zoomLevel)
+	axis:SetZoomLevel(zoomLevel)
 
 	if(util.is_valid(self.m_playhead)) then
 		-- We want the playhead to stay in place, so we have to change the start offset accordingly
-		local startOffset = timeOffset -xOffsetPlayhead /self:GetStridePerUnit() *self:GetZoomLevelMultiplier()
-		self:SetStartOffset(startOffset)
+		local startOffset = timeOffset -axis:XDeltaToValue(xOffsetPlayhead)
+		axis:SetStartOffset(startOffset)
 
 		-- Changing the start offset can change the playhead offset if it's out of range,
 		-- so we'll reset its position here.
@@ -135,57 +198,20 @@ function gui.Timeline:SetZoomLevel(zoomLevel)
 		self.m_playhead:SetTimeOffset(timeOffset)
 		self.m_skipPlayheadUpdate = nil
 
-		self.m_playhead:SetPlayOffset(self:TimeOffsetToXOffset(timeOffset))
+		self.m_playhead:SetPlayOffset(axis:ValueToXOffset(timeOffset))
 	end
 end
-function gui.Timeline:GetZoomLevel()
-	if(util.is_valid(self.m_timelineStripUpper) == false) then return 1 end
-	return self.m_timelineStripUpper:GetZoomLevel()
-end
-function gui.Timeline:GetZoomLevelProperty()
-	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
-	return self.m_timelineStripUpper:GetZoomLevelProperty()
-end
-function gui.Timeline:GetZoomLevelMultiplier()
-	if(util.is_valid(self.m_timelineStripUpper) == false) then return 1.0 end
-	return self.m_timelineStripUpper:GetZoomLevelMultiplier()
-end
 function gui.Timeline:SetStartOffset(offset)
+	local axis = self:GetTimeAxis():GetAxis()
 	if(util.is_valid(self.m_playhead)) then
 		local startOffset = offset
-		local endOffset = startOffset +(self:GetEndOffset() -self:GetStartOffset())
+		local endOffset = startOffset +(self:GetEndOffset() -axis:GetStartOffset())
 		local playheadOffset = math.clamp(self.m_playhead:GetTimeOffset(),startOffset,endOffset)
 		if(playheadOffset ~= self.m_playhead:GetTimeOffset()) then
 			self.m_playhead:SetTimeOffset(playheadOffset)
 		end
 	end
-	if(util.is_valid(self.m_timelineStripUpper)) then
-		self.m_timelineStripUpper:SetStartOffset(offset)
-	end
-end
-function gui.Timeline:GetStartOffset()
-	if(util.is_valid(self.m_timelineStripUpper) == false) then return 0.0 end
-	return self.m_timelineStripUpper:GetStartOffset()
-end
-function gui.Timeline:GetStartOffsetProperty()
-	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
-	return self.m_timelineStripUpper:GetStartOffsetProperty()
-end
-function gui.Timeline:GetEndOffset()
-	if(util.is_valid(self.m_timelineStripUpper) == false) then return 0.0 end
-	return self.m_timelineStripUpper:XOffsetToTimeOffset(self:GetRight())
-end
-function gui.Timeline:GetStridePerUnit()
-	if(util.is_valid(self.m_timelineStripUpper) == false) then return 0.0 end
-	return self.m_timelineStripUpper:GetStridePerUnit()
-end
-function gui.Timeline:TimeOffsetToXOffset(timeInSeconds)
-	timeInSeconds = timeInSeconds -self:GetStartOffset()
-	return (timeInSeconds /self:GetZoomLevelMultiplier()) *self:GetStridePerUnit()
-end
-function gui.Timeline:XOffsetToTimeOffset(x)
-	x = x /self:GetStridePerUnit() *self:GetZoomLevelMultiplier()
-	return x +self:GetStartOffset()
+	axis:SetStartOffset(offset)
 end
 function gui.Timeline:OnUpdate()
 	if(util.is_valid(self.m_timelineStripUpper)) then self.m_timelineStripUpper:Update() end
@@ -193,75 +219,3 @@ function gui.Timeline:OnUpdate()
 	self:CallCallbacks("OnTimelineUpdate")
 end
 gui.register("WITimeline",gui.Timeline)
-
--------------
-
-util.register_class("gui.TimelineItem",gui.Base)
-function gui.TimelineItem:__init()
-	gui.Base.__init(self)
-end
-function gui.TimelineItem:OnRemove()
-	self:UnlinkFromTimeline()
-end
-function gui.TimelineItem:LinkToTimeline(timeline,timeFrame,el)
-	self:UnlinkFromTimeline()
-	self.m_wrappedElement = el
-	self.m_timeline = timeline
-	self.m_timeFrame = timeFrame
-	self.m_cbUpdate = timeline:AddCallback("OnTimelineUpdate",function()
-		self:ScheduleUpdate()
-	end)
-	el:ClearAnchor()
-	el:AddCallback("SetSize",function()
-		if(el:IsValid()) then self:SetSize(el:GetSize()) end
-	end)
-	self:SetHeight(el:GetHeight())
-	self:ScheduleUpdate()
-end
-function gui.TimelineItem:UnlinkFromTimeline()
-	self.m_timeline = nil
-	self.m_timeFrame = nil
-	if(util.is_valid(self.m_cbUpdate)) then self.m_cbUpdate:Remove() end
-end
-function gui.TimelineItem:OnUpdate()
-	if(util.is_valid(self.m_timeline) == false) then return end
-	if(util.get_type_name(self.m_timeFrame) == "PFMTimeFrame") then
-		local startOffset = self.m_timeFrame:GetStart()
-		local endOffset = self.m_timeFrame:GetEnd()
-		local xStart = self.m_timeline:TimeOffsetToXOffset(startOffset)
-		local xEnd = self.m_timeline:TimeOffsetToXOffset(endOffset)
-
-		--[[if(util.is_valid(_x) == false) then
-			_x = gui.create("WIRect",self.m_timeline)
-			_x:SetSize(64,64)
-			_x:SetColor(Color.Lime)
-		end
-		local absPos = _x:GetAbsolutePos()
-		absPos.x = self.m_timeline:GetAbsolutePos().x +xStart
-		_x:SetAbsolutePos(absPos)
-		--_x:SetX(xStart)
-		_x:SetWidth(xEnd -xStart)]]
-
-		local w = xEnd -xStart
-		local xStartAbs = self.m_timeline:GetAbsolutePos().x +xStart
-		local pos = self:GetAbsolutePos()
-		pos.x = xStartAbs
-		-- print("Parent: ",self:GetParent())
-		self:SetAbsolutePos(pos)
-		if(util.is_valid(self.m_wrappedElement)) then self.m_wrappedElement:SetWidth(w) end
-		-- print("Width: ",xEnd,xStart)--pos.x,xEnd,w)
-	else
-		local offset = self.m_timeFrame:GetTime()
-		local x = self.m_timeline:TimeOffsetToXOffset(offset)
-		x = x -self:GetWidth() /2
-
-		local pos = self:GetAbsolutePos()
-		pos.x = self.m_timeline:GetAbsolutePos().x +x
-		self:SetAbsolutePos(pos)
-	end
-
-	if(util.is_valid(self.m_wrappedElement)) then
-		self.m_wrappedElement:CallCallbacks("OnTimelineUpdate",self,self.m_timeline)
-	end
-end
-gui.register("WITimelineItem",gui.TimelineItem)

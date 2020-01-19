@@ -10,10 +10,6 @@ include_component("pfm_track_group")
 
 util.register_class("ents.PFMFilmClip",BaseEntityComponent)
 
-local CLIP_CAMERA_ENABLED = true
-ents.PFMFilmClip.set_clip_camera_enabled = function(enabled)
-	CLIP_CAMERA_ENABLED = enabled
-end
 function ents.PFMFilmClip:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
@@ -86,6 +82,9 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 	if(cam ~= nil) then
 		local entCam = self:GetActor(cam)
 		self.m_camera = entCam and entCam:GetComponent("pfm_camera") or entCam
+		if(util.is_valid(self.m_camera)) then
+			self.m_camera:SetFrustumModelVisible(true)
+		end
 	end
 	if(util.is_valid(self.m_camera) == false) then
 		if(cam == nil) then

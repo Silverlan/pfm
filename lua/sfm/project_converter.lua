@@ -55,9 +55,6 @@ local function log_pfm_project_debug_info(project)
 	local function iterate_film_clip(filmClip)
 		numFilmClips = numFilmClips +1
 		numActors = numActors +#filmClip:GetActors()
-		for _,actor in ipairs(filmClip:GetActors():GetTable()) do
-			print("ACTOR: ",actor)
-		end
 		for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
 			for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
 				for _,filmClipOther in ipairs(track:GetFilmClips():GetTable()) do
@@ -613,6 +610,21 @@ sfm.register_element_type_conversion(sfm.Channel,udm.PFMChannel,function(convert
 			pfm.log("Invalid to-attribute '" .. toAttr .. "' of element '" .. pfmElement:GetName() .. "' used for channel '" .. pfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 		end
 	end
+
+	--[[local graphCurve = sfmChannel:GetGraphCurve()
+	if(graphCurve ~= nil) then
+		pfmChannel:SetGraphCurveAttr(converter:ConvertNewElement(graphCurve))
+	end]]
+end)
+
+-- TODO: Graph editor element is obsolete; Remove it!
+sfm.register_element_type_conversion(sfm.GraphEditorCurve,udm.PFMGraphCurve,function(converter,sfmGraphCurve,pfmGraphCurve)
+	for _,t in ipairs(sfmGraphCurve:GetKeysTime_0()) do
+		pfmGraphCurve:GetKeyTimesAttr():PushBack(udm.Float(t))
+	end
+	for _,v in ipairs(sfmGraphCurve:GetKeysValue_0()) do
+		pfmGraphCurve:GetKeyValuesAttr():PushBack(udm.Float(v))
+	end
 end)
 
 sfm.register_element_type_conversion(sfm.LogLayer,udm.PFMLogList,function(converter,sfmLogLayer,pfmLogLayer)
@@ -640,6 +652,9 @@ sfm.register_element_type_conversion(sfm.Log,udm.PFMLog,function(converter,sfmLo
 	for _,logLayer in ipairs(sfmLog:GetLayers()) do
 		local pfmLogLayer = converter:ConvertNewElement(logLayer)
 		pfmLog:AddLayer(pfmLogLayer)
+	end
+	for _,t in ipairs(sfmLog:GetBookmarks()) do
+		pfmLog:GetBookmarks():PushBack(udm.Float(t))
 	end
 end)
 

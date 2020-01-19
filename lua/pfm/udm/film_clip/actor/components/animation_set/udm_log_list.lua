@@ -21,6 +21,32 @@ function udm.PFMLogList:Initialize()
 	self.m_lastIndex = 1
 end
 
+function udm.PFMLogList:CalcInterpolatedValue(targetTime)
+	local times = self:GetTimes():GetTable()
+	local values = self:GetValues():GetTable()
+	local numItems = math.min(#times,#values)
+	if(numItems == 0) then return end
+	local type = self:GetValues():GetValueType()
+	local interpolationFunction = interpolationFunctions[type]
+	if(interpolationFunction == nil) then
+		pfm.log("No interpolation function found for log attribute type '" .. udm.get_type_name(type) .. "'! Log layer '" .. self:GetName() .. "' will be ignored!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+	
+	for i,t in ipairs(times) do
+		local tNext = times[i +1] or t
+		local v = values[i]
+		local vNext = values[i +1] or v
+
+		if(targetTime >= t and (targetTime < tNext or t == tNext)) then
+			local dt = tNext -t
+			local interpFactor = (dt > 0.0) and math.clamp((targetTime -t) /dt,0.0,1.0) or 0.0
+
+			return interpolationFunction(v,vNext,interpFactor)
+		end
+	end
+end
+
 function udm.PFMLogList:SetPlaybackOffset(offset)
 	local times = self:GetTimes():GetTable()
 	local values = self:GetValues():GetTable()

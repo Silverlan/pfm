@@ -22,3 +22,9 @@ function udm.PFMTrackGroup:SetPlaybackOffset(localOffset,absOffset)
 		track:SetPlaybackOffset(localOffset,absOffset)
 	end
 end
+
+function udm.PFMTrackGroup:FindTrack(name)
+	for _,track in ipairs(self:GetTracks():GetTable()) do
+		if(track:GetName() == name) then return track end
+	end
+end

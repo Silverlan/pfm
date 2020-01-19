@@ -9,6 +9,7 @@
 include("basetimelinegrid.lua")
 include("/shaders/pfm/pfm_timeline.lua")
 include("/pfm/fonts.lua")
+include("/graph_axis.lua")
 
 util.register_class("gui.TimelineStrip",gui.BaseTimelineGrid)
 
@@ -20,11 +21,14 @@ function gui.TimelineStrip:OnInitialize()
 
 	self.m_line = gui.create("WIRect",self,0,0,self:GetWidth(),1,0,0,1,0)
 	self.m_line:GetColorProperty():Link(self:GetColorProperty())
+	self.m_axis = util.GraphAxis()
 
 	self:SetColor(Color.Black)
 	self:SetFlipped(false)
 	self:SetShader("pfm_timeline")
 end
+function gui.TimelineStrip:SetAxis(axis) self.m_axis = axis end
+function gui.TimelineStrip:GetAxis() return self.m_axis end
 function gui.TimelineStrip:SetFlipped(flipped)
 	if(flipped) then
 		self:SetYMultiplier(1.0)
@@ -84,53 +88,18 @@ function gui.LabelledTimelineStrip:GetLabelYPos(el)
 	if(self.m_flipped == true) then return 5 end
 	return self:GetHeight() -el:GetHeight() -7
 end
-function gui.LabelledTimelineStrip:SetZoomLevel(zoomLevel)
+function gui.LabelledTimelineStrip:SetAxis(axis)
 	if(util.is_valid(self.m_strip) == false) then return end
-	self.m_strip:SetZoomLevel(zoomLevel)
+	self.m_strip:SetAxis(axis)
 end
-function gui.LabelledTimelineStrip:GetZoomLevel()
-	if(util.is_valid(self.m_strip) == false) then return 1 end
-	return self.m_strip:GetZoomLevel()
-end
-function gui.LabelledTimelineStrip:GetZoomLevelProperty()
+function gui.LabelledTimelineStrip:GetAxis()
 	if(util.is_valid(self.m_strip) == false) then return end
-	return self.m_strip:GetZoomLevelProperty()
-end
-function gui.LabelledTimelineStrip:GetZoomLevelMultiplier()
-	if(util.is_valid(self.m_strip) == false) then return 1.0 end
-	return self.m_strip:GetZoomLevelMultiplier()
-end
-function gui.LabelledTimelineStrip:SetStartOffset(offset)
-	if(util.is_valid(self.m_strip) == false) then return end
-	self.m_strip:SetStartOffset(offset)
-end
-function gui.LabelledTimelineStrip:GetStartOffset()
-	if(util.is_valid(self.m_strip) == false) then return 0.0 end
-	return self.m_strip:GetStartOffset()
-end
-function gui.LabelledTimelineStrip:GetStartOffsetProperty()
-	if(util.is_valid(self.m_strip) == false) then return end
-	return self.m_strip:GetStartOffsetProperty()
-end
-function gui.LabelledTimelineStrip:GetEndOffset()
-	if(util.is_valid(self.m_strip) == false) then return 0.0 end
-	return self.m_strip:GetEndOffset()
-end
-function gui.LabelledTimelineStrip:GetStridePerUnit()
-	if(util.is_valid(self.m_strip) == false) then return 0.0 end
-	return self.m_strip:GetStridePerUnit()
-end
-function gui.LabelledTimelineStrip:TimeOffsetToXOffset(timeInSeconds)
-	timeInSeconds = timeInSeconds -self:GetStartOffset()
-	return timeInSeconds *self:GetStridePerUnit()
-end
-function gui.LabelledTimelineStrip:XOffsetToTimeOffset(x)
-	if(util.is_valid(self.m_strip) == false) then return 0.0 end
-	return self.m_strip:XOffsetToTimeOffset(x)
+	return self.m_strip:GetAxis()
 end
 function gui.LabelledTimelineStrip:OnUpdate()
 	if(util.is_valid(self.m_strip) == false) then return end
-	local stridePerUnit = self:GetStridePerUnit()
+	local axis = self:GetAxis()
+	local stridePerUnit = axis:GetStridePerUnit()
 	if(stridePerUnit == 0.0) then
 		error("Illegal timeline stride: ",stridePerUnit)
 	end
@@ -139,8 +108,8 @@ function gui.LabelledTimelineStrip:OnUpdate()
 	self.m_strip:SetWidth(self:GetWidth() +stridePerUnit *2)
 
 	local numTextElements = math.ceil(self:GetWidth() /stridePerUnit) +1
-	local multiplier = self:GetZoomLevelMultiplier()
-	local startOffset = self:GetStartOffset() /multiplier
+	local multiplier = axis:GetZoomLevelMultiplier()
+	local startOffset = axis:GetStartOffset() /multiplier
 	local startIndex = math.floor(startOffset)
 	local xStartOffset = (startIndex -startOffset) *stridePerUnit
 	self.m_strip:SetX(-((startOffset *stridePerUnit) %stridePerUnit))

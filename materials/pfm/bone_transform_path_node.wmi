@@ -1,0 +1,4 @@
+"particle"
+{
+	$texture albedo_map "pfm/bone_transform_path_node"
+}

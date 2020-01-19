@@ -50,8 +50,10 @@ function gui.PFMRenderPreview:OnInitialize()
 
 	self.m_preview = gui.create("WITexturedRect",self.m_aspectRatioWrapper)
 	self:InitializeControls()
-	
-	self:EnableThinking()
+	self:InitializeSettings()
+end
+function gui.PFMRenderPreview:InitializeSettings()
+
 end
 function gui.PFMRenderPreview:InitializeControls()
 	local controls = gui.create("WIHBox",self,0,self.m_vpBg:GetBottom() +4)
@@ -60,7 +62,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	end)
 	self.m_btRefreshPreview:SetTooltip(locale.get_text("pfm_refresh_preview"))
 	self.m_btRefresh = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_rotate","gui/pfm/icon_manipulator_rotate_activated",function()
-		self:Refresh(1024,1024,512)
+		self:Refresh(1024,768,1024)
 	end)
 	self.m_btRefresh:SetTooltip(locale.get_text("pfm_render_frame"))
 
@@ -128,6 +130,9 @@ function gui.PFMRenderPreview:OnThink()
 
 	if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(true) end
 	if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetEnabled(true) end
+
+	self:DisableThinking()
+	self:SetAlwaysUpdate(false)
 end
 function gui.PFMRenderPreview:IsComplete()
 	if(self.m_raytracingJob == nil) then return true end
@@ -142,10 +147,36 @@ function gui.PFMRenderPreview:Refresh(width,height,samples)
 	if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(false) end
 	if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetEnabled(false) end
 
-	local job = util.capture_raytraced_screenshot(width,height,samples)
+	local r = engine.load_library("cycles/pr_cycles")
+	if(r ~= true) then
+		print("WARNING: An error occured trying to load the 'pr_cycles' module: ",r)
+		return
+	end
+
+	local cam = game.get_render_scene_camera()
+	if(cam == nil) then return end
+	local renderMode = cycles.Scene.RENDER_MODE_COMBINED
+	samples = 100
+	local scene = cycles.create_scene(renderMode,samples,false,false)
+	local pos = cam:GetEntity():GetPos()
+	local rot = cam:GetEntity():GetRotation()
+	local nearZ = cam:GetNearZ()
+	local farZ = cam:GetFarZ()
+	local fov = cam:GetFOV()
+	scene:InitializeFromGameScene(pos,rot,nearZ,farZ,fov,function(ent) return true end)
+	scene:SetSky("428-free-hdri-skies-com.hdr")
+	scene:SetResolution(width,height)
+	--scene:SetSkyAngles(EulerAngles(0,100,0))
+	scene:SetSkyAngles(EulerAngles(0,180,0))
+	scene:SetSkyStrength(1.0)
+	print("Creating new job...")
+	local job = scene:CreateRenderJob()
 	job:Start()
+
 	self.m_raytracingJob = job
 
 	self.m_lastProgress = 0.0
+	self:EnableThinking()
+	self:SetAlwaysUpdate(true)
 end
 gui.register("WIPFMRenderPreview",gui.PFMRenderPreview)

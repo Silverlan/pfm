@@ -38,6 +38,7 @@ function gui.Curve:OnThink()
 	self:SetHorizontalRange(range.x,range.y)
 end
 function gui.Curve:BuildCurve(curveValues)
+	if(#curveValues == 0) then return end
 	--[[local verts = {}
 	for _,v in ipairs(curveValues) do
 		local x = (v[1] -self.m_xRange[1]) /(self.m_xRange[2] -self.m_xRange[1])

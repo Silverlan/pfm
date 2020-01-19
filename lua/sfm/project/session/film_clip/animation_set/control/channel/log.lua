@@ -23,3 +23,4 @@ sfm.link_dmx_type("DmeVector4Log",sfm.Log)
 sfm.link_dmx_type("DmeVMatrixLog",sfm.Log)
 
 sfm.BaseElement.RegisterArray(sfm.Log,"layers",sfm.LogLayer)
+sfm.BaseElement.RegisterArray(sfm.Log,"bookmarks",0.0)
