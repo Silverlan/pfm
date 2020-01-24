@@ -8,6 +8,7 @@
 
 include("/gui/hbox.lua")
 include("/pfm/fonts.lua")
+include("/gui/marquee.lua")
 
 util.register_class("gui.PFMInfobar",gui.Base)
 
@@ -21,6 +22,31 @@ function gui.PFMInfobar:OnInitialize()
 
 	local bg = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	bg:SetColor(Color(38,38,38))
+
+	local patronTickerContainer = gui.create("WIHBox",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	patronTickerContainer:SetAutoFillContents(true)
+
+	gui.create("WIBase",patronTickerContainer,0,0,10,1) -- Gap
+
+	local patronTickerLabel = gui.create("WIText",patronTickerContainer)
+	patronTickerLabel:SetText(locale.get_text("pfm_patrons") .. ":")
+	patronTickerLabel:SizeToContents()
+	patronTickerLabel:CenterToParentY()
+	patronTickerLabel:AddStyleClass("input_field_text")
+
+	local patronTicker = gui.create("WITicker",patronTickerContainer)
+	local text = ""
+	local patrons = engine.get_info().patrons
+	for i,patron in ipairs(patrons) do
+		if(i > 1) then text = text .. ", "
+		else text = text .. " " end
+		text = text .. patron
+	end
+	local numAnonymous = engine.get_info().totalPatronCount -#patrons
+	if(numAnonymous > 0) then text = text .. " and " .. numAnonymous .. " anonymous." end
+	patronTicker:SetText(text)
+	patronTicker:SetSize(64,self:GetHeight())
+	patronTicker:SetAnchor(0,0,1,1)
 
 	self.m_iconContainer = gui.create("WIHBox",self)
 

@@ -60,4 +60,25 @@ skin["timeline_clip_overlay"] = {
 	end
 }
 -----------------------------------------
+------------ Input fields ------------
+skin["input_field"] = {
+	Initialize = function(GUI,pElement)
+		local bg = gui.create("WIRect",pElement,0,0,pElement:GetWidth(),pElement:GetHeight(),0,0,1,1)
+		bg:SetColor(Color(38,38,38))
+		bg:SetZPos(-10000)
+		bg:SetBackgroundElement(true)
+		pElement.bg = bg
+
+		local outline = gui.create("WIOutlinedRect",pElement,0,0,pElement:GetWidth(),pElement:GetHeight(),0,0,1,1)
+		outline:SetColor(Color(57,57,57))
+		outline:SetZPos(-9000)
+		outline:SetBackgroundElement(true)
+	end
+}
+skin["input_field_text"] = {
+	Initialize = function(GUI,pElement)
+		pElement:SetColor(Color(182,182,182))
+		pElement:SetFont("pfm_medium")
+	end
+}
 gui.register_skin("pfm",t,skin,"default")

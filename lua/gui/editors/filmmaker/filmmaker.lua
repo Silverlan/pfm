@@ -100,17 +100,25 @@ function gui.WIFilmmaker:OnInitialize()
 			self.m_openDialogue:Update()
 		end)
 		pContext:AddItem(locale.get_text("pfm_export_blender_scene") .. "...",function(pItem)
-			import.export_scene("test")
+			local dialoge = gui.create_file_save_dialog(function(pDialoge)
+				local fname = pDialoge:GetFilePath(true)
+				file.create_path(file.get_file_path(fname))
+
+				import.export_scene(fname)
+			end)
+			dialoge:SetExtensions({"fbx"})
+			dialoge:SetRootPath(util.get_addon_path())
+			dialoge:Update()
 		end)
-		pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
+		--[[pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
 			local project = self:GetProject()
 			local node = project:GetUDMRootNode()
 			local ds = util.DataStream()
-			print("NODE: ",node)
+			print("Node: ",node)
 			node:SaveToBinary(ds)
 			print("Size: ",ds:GetSize())
-		end)
+		end)]]
 		--[[pContext:AddItem(locale.get_text("close"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			tool.close_filmmaker()
@@ -130,10 +138,13 @@ function gui.WIFilmmaker:OnInitialize()
 	end)
 	pMenuBar:AddItem(locale.get_text("view"),function(pContext)
 
-	end)
-	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
-
 	end)]]
+	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
+		pContext:AddItem(locale.get_text("pfm_getting_started"),function(pItem)
+			util.open_url_in_browser("https://wiki.pragma-engine.com/index.php?title=Pfm_firststeps")
+		end)
+		pContext:Update()
+	end)
 	pMenuBar:Update()
 
 	local pInfoBar = gui.create("WIPFMInfobar",self)
@@ -421,7 +432,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	viewportFrame:AddTab(locale.get_text("pfm_primary_viewport"),viewport)
 
 	local renderPreview = gui.create("WIPFMRenderPreview")
-	viewportFrame:AddTab(locale.get_text("pfm_render_result"),renderPreview)
+	viewportFrame:AddTab(locale.get_text("pfm_cycles_renderer"),renderPreview)
 
 	gui.create("WIResizer",self.m_contentsRight)
 

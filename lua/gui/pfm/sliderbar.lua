@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("slidercursor.lua")
+
 util.register_class("gui.PFMSliderBar",gui.Base)
 
 function gui.PFMSliderBar:__init()
@@ -19,52 +21,65 @@ function gui.PFMSliderBar:OnInitialize()
 	self.m_offsetFromDefaultIndicator = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight())
 	self.m_offsetFromDefaultIndicator:SetColor(Color(61,61,61))
 
-	self.m_cursor = gui.create("WIRect",self,0,0,1,self:GetHeight())
-	self.m_cursor:SetVisible(false)
-	self.m_cursor:SetColor(Color(131,131,131))
+	local cursorRect = gui.create("WIRect",self,0,0,1,self:GetHeight())
+	cursorRect:SetColor(Color(131,131,131))
+
+	self.m_cursor = cursorRect:Wrap("WIPFMSliderCursor")
+	self.m_cursor:AddCallback("OnFractionChanged",function(el,fraction)
+		self:OnFractionChanged(fraction)
+	end)
 
 	self:SetRange(0,1)
+	self:ScheduleUpdate()
 end
-function gui.PFMSliderBar:SetRange(min,max,optDefault)
-	self.m_min = min
-	self.m_max = max
-	self.m_default = optDefault
+function gui.PFMSliderBar:GetCursor() return self.m_cursor end
+function gui.PFMSliderBar:SetDefault(default)
+	self.m_default = default
+	self:SetValue(default)
 	self:Update()
 end
-function gui.PFMSliderBar:SetValue(optValue)
-	if(optValue ~= nil) then optValue = math.clamp(optValue,self:GetMin(),self:GetMax()) end
-	self.m_value = optValue
+function gui.PFMSliderBar:SetRange(min,max) self.m_cursor:SetRange(min,max) end
+function gui.PFMSliderBar:SetWeight(weight) self.m_cursor:SetWeight(weight) end
+function gui.PFMSliderBar:GetMin() return self.m_cursor:GetMin() end
+function gui.PFMSliderBar:GetMax() return self.m_cursor:GetMax() end
+function gui.PFMSliderBar:SetValue(value) self.m_cursor:SetValue(value) end
+function gui.PFMSliderBar:SetInteger(b) self.m_cursor:SetInteger(b) end
+function gui.PFMSliderBar:OnFractionChanged(fraction)
 	self:CallCallbacks("OnValueChanged",self:GetValue())
 	self:Update()
 end
-function gui.PFMSliderBar:GetMin() return self.m_min end
-function gui.PFMSliderBar:GetMax() return self.m_max end
 function gui.PFMSliderBar:GetDefault() return self.m_default end
-function gui.PFMSliderBar:GetValue() return self.m_value end
+function gui.PFMSliderBar:GetValue() return self.m_cursor:GetValue() end
 function gui.PFMSliderBar:GetFraction(value)
 	return ((value or self:GetValue()) -self:GetMin()) /(self:GetMax() -self:GetMin())
 end
-function gui.PFMSliderBar:FractionToX(fraction)
+function gui.PFMSliderBar:SetFraction(fraction)
+	self.m_cursor:SetFraction(fraction)
+end
+function gui.PFMSliderBar:FractionToOffset(fraction)
 	return fraction *self:GetWidth()
 end
-function gui.PFMSliderBar:ValueToX(value)
-	return self:FractionToX(self:GetFraction(value))
+function gui.PFMSliderBar:ValueToOffset(value)
+	return self:FractionToOffset(self:GetFraction(value))
 end
-function gui.PFMSliderBar:XToValue(x)
+function gui.PFMSliderBar:OffsetToValue(x)
 	x = x /self:GetWidth()
 	return self:GetMin() +(self:GetMax() -self:GetMin()) *x
+end
+function gui.PFMSliderBar:OnSizeChanged()
+	self:ScheduleUpdate()
 end
 function gui.PFMSliderBar:OnUpdate()
 	local value = self:GetValue()
 	if(value == nil) then
 		if(util.is_valid(self.m_offsetFromDefaultIndicator)) then self.m_offsetFromDefaultIndicator:SetVisible(false) end
-		if(util.is_valid(self.m_cursor)) then self.m_cursor:SetVisible(false) end
+		--if(util.is_valid(self.m_cursor)) then self.m_cursor:SetVisible(false) end
 		return
 	end
 
-	local x = self:ValueToX(self:GetValue())
+	local x = self:ValueToOffset(self:GetValue())
 	if(util.is_valid(self.m_cursor)) then
-		self.m_cursor:SetVisible(true)
+		--self.m_cursor:SetVisible(true)
 		self.m_cursor:SetX(x)
 	end
 
@@ -74,7 +89,7 @@ function gui.PFMSliderBar:OnUpdate()
 		return
 	end
 	self.m_offsetFromDefaultIndicator:SetVisible(true)
-	local xDefault = self:ValueToX(default)
+	local xDefault = self:ValueToOffset(default)
 	local xMin = math.min(x,xDefault)
 	local xMax = math.max(x,xDefault)
 	self.m_offsetFromDefaultIndicator:SetX(xMin)

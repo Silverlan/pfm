@@ -24,7 +24,7 @@ function gui.FileEntry:OnInitialize()
 	browseButton:AddCallback("OnPressed",function()
 		if(self.m_fBrowseHandler ~= nil) then
 			self.m_fBrowseHandler(function(result)
-				self.m_textEntry:SetText(result)
+				self:SetValue(result)
 			end)
 		end
 		return util.EVENT_REPLY_HANDLED
@@ -35,7 +35,20 @@ function gui.FileEntry:OnInitialize()
 	textEntry:SetHeight(self:GetHeight())
 	textEntry:SetWidth(browseButton:GetX() -5)
 	textEntry:SetAnchor(0,0,1,1)
+	textEntry:AddCallback("OnTextEntered",function(el)
+		self:SetValue(el:GetText())
+	end)
 	self.m_textEntry = textEntry
+end
+function gui.FileEntry:SetValue(value)
+	self.m_textEntry:SetText(value)
+	self:CallCallbacks("OnValueChanged",value)
+end
+function gui.FileEntry:GetValue()
+	return self.m_textEntry:GetText()
+end
+function gui.FileEntry:OnFocusGained()
+	if(util.is_valid(self.m_textEntry)) then self.m_textEntry:RequestFocus() end
 end
 function gui.FileEntry:GetTextEntry() return self.m_textEntry end
 function gui.FileEntry:GetBrowseButton() return self.m_browseButton end

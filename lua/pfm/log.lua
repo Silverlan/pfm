@@ -66,3 +66,4 @@ end
 
 pfm.register_log_category("pfm")
 pfm.register_log_category("pfm_game")
+pfm.register_log_category("pfm_interface")

@@ -21,9 +21,6 @@ function gui.PFMSlider:OnInitialize()
 
 	self:SetSize(128,20)
 
-	self.m_bg = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	self.m_bg:SetColor(Color(38,38,38))
-
 	self.m_sliderBarUpper = gui.create("WIPFMSliderBar",self,0,3)
 	self.m_sliderBarUpper:SetWidth(self:GetWidth())
 	self.m_sliderBarUpper:SetAnchor(0,0,1,0)
@@ -41,27 +38,53 @@ function gui.PFMSlider:OnInitialize()
 	end)
 
 	self.m_text = gui.create("WIText",self)
-	self.m_text:SetColor(Color(182,182,182))
-	self.m_text:SetFont("pfm_medium")
+	self.m_text:AddStyleClass("input_field_text")
 	self.m_text:SetVisible(false)
 
-	self.m_outline = gui.create("WIOutlinedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	self.m_outline:SetColor(Color(57,57,57))
-
 	self.m_leftRightRatio = util.FloatProperty(0.5)
+	self:SetStepSize(0.0)
 	self:SetRange(0,1)
 	self:SetLeftRightValueRatio(0.5)
 
 	self:SetMouseInputEnabled(true)
-	self:AddCallback("OnCursorMoved",function(el,x,y)
-		self:OnCursorMoved(x,y)
+	self:AddCallback("OnDoubleClick",function()
+		-- TODO: Add edit field!
+		return util.EVENT_REPLY_HANDLED
 	end)
+
+	self:AddStyleClass("input_field")
 end
 function gui.PFMSlider:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_sliderBarUpper)) then self.m_sliderBarUpper:Update() end
 	if(util.is_valid(self.m_sliderBarLower)) then self.m_sliderBarLower:Update() end
 end
-function gui.PFMSlider:SetLeftRightValueRatio(ratio) self.m_leftRightRatio:Set(math.clamp(ratio,0.0,1.0)) end
+function gui.PFMSlider:SetStepSize(stepSize)
+	self.m_stepSize = stepSize
+	self:UpdateStepSize()
+end
+function gui.PFMSlider:GetStepSize() return self.m_stepSize end
+function gui.PFMSlider:UpdateStepSize()
+	local stepSize = self:GetStepSize()
+	if(util.is_valid(self.m_sliderBarUpper)) then self.m_sliderBarUpper:GetCursor():SetStepSize(stepSize /(self:GetMax() -self:GetMin())) end
+	if(util.is_valid(self.m_sliderBarLower)) then self.m_sliderBarLower:GetCursor():SetStepSize(stepSize /(self:GetMax() -self:GetMin())) end
+end
+function gui.PFMSlider:SetLeftRightValueRatio(ratio)
+	self.m_leftRightRatio:Set(math.clamp(ratio,0.0,1.0))
+
+	local scaleRight = 0.0
+	local scaleLeft = 0.0
+	-- If ratio >= 0.5 -> left slider will be at full speed, otherwise right slider.
+	-- Other slider will be scaled accordingly.
+	if(ratio > 0.5) then
+		scaleRight = 1.0
+		scaleLeft = ((1.0 -ratio) /0.5)
+	else
+		scaleRight = ratio /0.5
+		scaleLeft = 1.0
+	end
+	self.m_sliderBarUpper:SetWeight(scaleLeft)
+	self.m_sliderBarLower:SetWeight(scaleRight)
+end
 function gui.PFMSlider:GetLeftRightValueRatio() return self.m_leftRightRatio:Get() end
 function gui.PFMSlider:GetLeftRightValueRatioProperty() return self.m_leftRightRatio end
 function gui.PFMSlider:GetLeftSliderBar() return self.m_sliderBarUpper end
@@ -71,12 +94,21 @@ function gui.PFMSlider:SetRightRange(min,max,optDefault) local bar = self:GetRig
 function gui.PFMSlider:SetRange(min,max,optDefault)
 	self:SetLeftRange(min,max,optDefault)
 	self:SetRightRange(min,max,optDefault)
+	self:UpdateStepSize()
+end
+function gui.PFMSlider:SetDefault(default)
+	self:GetLeftSliderBar():SetDefault(default)
+	self:GetRightSliderBar():SetDefault(default)
 end
 function gui.PFMSlider:SetLeftValue(value) local bar = self:GetLeftSliderBar() if(util.is_valid(bar)) then bar:SetValue(value) end end
 function gui.PFMSlider:SetRightValue(value) local bar = self:GetRightSliderBar() if(util.is_valid(bar)) then bar:SetValue(value) end end
 function gui.PFMSlider:SetValue(optValue)
 	self:SetLeftValue(optValue)
 	self:SetRightValue(optValue)
+end
+function gui.PFMSlider:SetInteger(b)
+	self:GetLeftSliderBar():SetInteger(b)
+	self:GetRightSliderBar():SetInteger(b)
 end
 function gui.PFMSlider:GetLeftMin(value) local bar = self:GetLeftSliderBar() return util.is_valid(bar) and bar:GetMin() or 0.0 end
 function gui.PFMSlider:GetRightMin(value) local bar = self:GetRightSliderBar() return util.is_valid(bar) and bar:GetMin() or 0.0 end
@@ -90,21 +122,11 @@ function gui.PFMSlider:GetMin() return self:GetLeftMin() end
 function gui.PFMSlider:GetMax() return self:GetLeftMax() end
 function gui.PFMSlider:GetDefault() return self:GetLeftDefault() end
 function gui.PFMSlider:GetValue() return self:GetLeftValue() end
-function gui.PFMSlider:OnRemove()
-	self:EndMouseControl()
-end
-function gui.PFMSlider:EndMouseControl()
-	if(self.m_lastCursorX == nil) then return end
-	self:SetCursorMovementCheckEnabled(false)
-	self.m_lastCursorX = nil
-	gui.set_cursor_input_mode(gui.CURSOR_MODE_NORMAL)
-end
 function gui.PFMSlider:CreateSliderRangeEditWindow(min,max,default,fOnClose)
 	local p = gui.create("WIPFMWindow")
 
 	p:SetWindowSize(Vector2i(202,160))
 	p:SetTitle(locale.get_text("pfm_slider_range_edit_window_title"))
-
 
 	local contents = p:GetContents()
 
@@ -163,13 +185,8 @@ function gui.PFMSlider:CreateSliderRangeEditWindow(min,max,default,fOnClose)
 end
 function gui.PFMSlider:MouseCallback(button,state,mods)
 	if(button == input.MOUSE_BUTTON_LEFT) then
-		if(state == input.STATE_PRESS) then
-			self:SetCursorMovementCheckEnabled(true)
-			self.m_lastCursorX = self:GetCursorPos().x
-			gui.set_cursor_input_mode(gui.CURSOR_MODE_HIDDEN)
-		elseif(state == input.STATE_RELEASE) then
-			self:EndMouseControl()
-		end
+		if(util.is_valid(self.m_sliderBarUpper)) then self.m_sliderBarUpper:GetCursor():InjectMouseInput(self.m_sliderBarUpper:GetCursor():GetCursorPos(),button,state,mods) end
+		if(util.is_valid(self.m_sliderBarLower)) then self.m_sliderBarLower:GetCursor():InjectMouseInput(self.m_sliderBarLower:GetCursor():GetCursorPos(),button,state,mods) end
 	elseif(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE) then
 		local pContext = gui.open_context_menu()
 		if(util.is_valid(pContext) == false) then return end
@@ -208,29 +225,5 @@ function gui.PFMSlider:UpdateText()
 	self.m_text:SetText(text)
 	self.m_text:SizeToContents()
 	self.m_text:CenterToParent(true)
-end
-function gui.PFMSlider:OnCursorMoved(x,y)
-	if(self.m_lastCursorX == nil) then return end
-	local xDelta = x -self.m_lastCursorX
-	self.m_lastCursorX = x
-
-	local ratio = self:GetLeftRightValueRatio()
-	local scaleRight = 0.0
-	local scaleLeft = 0.0
-	-- If ratio >= 0.5 -> left slider will be at full speed, otherwise right slider.
-	-- Other slider will be scaled accordingly.
-	if(ratio > 0.5) then
-		scaleRight = 1.0
-		scaleLeft = ((1.0 -ratio) /0.5)
-	else
-		scaleRight = ratio /0.5
-		scaleLeft = 1.0
-	end
-	local fractionLeft = xDelta *scaleLeft
-	local fractionRight = xDelta *scaleRight
-	local leftValue = self:GetLeftValue() +self:GetLeftSliderBar():XToValue(fractionLeft) -self:GetLeftSliderBar():GetMin()
-	local rightValue = self:GetRightValue() +self:GetRightSliderBar():XToValue(fractionRight) -self:GetRightSliderBar():GetMin()
-	self:SetLeftValue(leftValue)
-	self:SetRightValue(rightValue)
 end
 gui.register("WIPFMSlider",gui.PFMSlider)
