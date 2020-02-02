@@ -139,9 +139,41 @@ function gui.WIFilmmaker:OnInitialize()
 	pMenuBar:AddItem(locale.get_text("view"),function(pContext)
 
 	end)]]
+	pMenuBar:AddItem(locale.get_text("render"),function(pContext)
+		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pbr"))
+		pSubMenu:AddItem(locale.get_text("pfm_generate_ambient_occlusion_maps"),function(pItem)
+			local entPbrConverter = ents.find_by_component("pbr_converter")[1]
+			if(util.is_valid(entPbrConverter) == false) then return end
+			local pbrC = entPbrConverter:GetComponent(ents.COMPONENT_PBR_CONVERTER)
+			for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_MODEL)}) do
+				local mdl = ent:GetModel()
+				if(mdl == nil or ent:IsWorld()) then return end
+				pbrC:GenerateAmbientOcclusionMaps(mdl)
+				-- TODO: Also include all models for entire project which haven't been loaded yet
+			end
+		end)
+		pSubMenu:AddItem(locale.get_text("pfm_rebuild_reflection_probes"),function(pItem)
+			
+		end)
+		pSubMenu:Update()
+
+		pContext:Update()
+	end)
+	--[[pMenuBar:AddItem(locale.get_text("map"),function(pContext)
+		pContext:AddItem(locale.get_text("pfm_generate_lightmaps"),function(pItem)
+			
+		end)
+		pContext:AddItem(locale.get_text("pfm_write_lightmaps_to_bsp"),function(pItem)
+			
+		end)
+		pContext:Update()
+	end)]]
 	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
 		pContext:AddItem(locale.get_text("pfm_getting_started"),function(pItem)
 			util.open_url_in_browser("https://wiki.pragma-engine.com/index.php?title=Pfm_firststeps")
+		end)
+		pContext:AddItem(locale.get_text("pfm_report_a_bug"),function(pItem)
+			util.open_url_in_browser("https://gitlab.com/Silverlan/pfm/issues")
 		end)
 		pContext:Update()
 	end)

@@ -185,6 +185,7 @@ function ents.PFMModel:Setup(actorData,mdlInfo)
 				end
 			end
 			newMat:UpdateTextures()
+			newMat:InitializeShaderDescriptorSet()
 			for matIdx,matMdl in ipairs(materials) do
 				if(matMdl:GetName() == origMat:GetName()) then
 					mdlC:SetMaterialOverride(matIdx -1,newMat)

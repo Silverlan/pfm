@@ -545,6 +545,11 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 
 	local transformToBone = {}
 	local function add_child_bones(sfmElement,parent)
+		local type = sfmElement:GetType()
+		if(type ~= "DmeDag" and type ~= "DmeGameModel") then
+			pfm.log("Expected bones of element '" .. pfmGameModel:GetName() .. "' to be of type 'DmeDag', but bone with type '" .. sfmElement:GetType() .. "' found! This is currently not supported!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+			return
+		end
 		for _,child in ipairs(sfmElement:GetChildren()) do
 			local bone = converter:ConvertNewElement(child)
 
@@ -706,15 +711,19 @@ end,function(converter,sfmDag,pfmEl)
 
 				apply_override_parent(converter,child,pfmElement)
 			end
-
-
 		end
 		return
 	end
 	pfmEl:SetTransformAttr(converter:ConvertNewElement(sfmDag:GetTransform(),sfm.ProjectConverter.TRANSFORM_TYPE_NONE))
 	apply_override_parent(converter,sfmDag,pfmEl)
 	for _,child in ipairs(sfmDag:GetChildren()) do
-		pfmEl:GetChildBones():PushBack(converter:ConvertNewElement(child))
+		if(child:GetType() == "DmeDag") then
+			pfmEl:GetChildBones():PushBack(converter:ConvertNewElement(child))
+		else
+			-- Note: Meet-the-Heavy has a case where a 'PFMParticleSystem' element is in the list of bones. TODO: What does that mean exactly?
+			-- See also add_child_bones in sfm.GameModel conversion
+			pfm.log("Expected bones of element '" .. pfmEl:GetName() .. "' to be of type 'DmeDag', but bone with type '" .. child:GetType() .. "' found! This is currently not supported!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+		end
 	end
 end)
 

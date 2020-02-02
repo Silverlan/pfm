@@ -28,13 +28,17 @@ function sfm.Dag:Load(el)
 	
 	for _,value in ipairs(el:GetAttrV("children") or {}) do
 		local child = value:GetValue()
-		local dmxType = child:GetType()
-		local sfmType = sfm.get_dmx_element_type(dmxType)
-		if(sfmType ~= nil) then
-			local el = self:CreatePropertyFromDMXElement(child,sfmType,self)
-			table.insert(self.m_children,el)
+		if(child == nil) then
+			pfm.log("Dag '" .. self:GetName() .. "' has invalid child reference! Ignoring...",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 		else
-			pfm.log("Unsupported DMX type '" .. dmxType .. "' ('" .. child:GetName() .. "') of element '" .. self:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+			local dmxType = child:GetType()
+			local sfmType = sfm.get_dmx_element_type(dmxType)
+			if(sfmType ~= nil) then
+				local el = self:CreatePropertyFromDMXElement(child,sfmType,self)
+				table.insert(self.m_children,el)
+			else
+				pfm.log("Unsupported DMX type '" .. dmxType .. "' ('" .. child:GetName() .. "') of element '" .. self:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+			end
 		end
 	end
 end

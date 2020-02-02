@@ -15,6 +15,9 @@ function ents.PFMActorComponent:Initialize()
 	
 	self:AddEntityComponent(ents.COMPONENT_NAME)
 	self:AddEntityComponent("click")
+	self:BindComponentInitEvent(ents.COMPONENT_RENDER,function(renderC)
+		renderC:SetExemptFromOcclusionCulling(true)
+	end)
 	self.m_channels = {}
 	self.m_listeners = {}
 end

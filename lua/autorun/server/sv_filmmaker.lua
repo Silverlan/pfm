@@ -15,7 +15,9 @@ net.receive("sv_pfm_camera_mode",function(packet,pl)
 	local physC = util.is_valid(pl) and pl:GetEntity():GetComponent(ents.COMPONENT_PHYSICS)
 	local camMode = packet:ReadUInt8()
 	if(physC ~= nil) then
-		if(camMode == CAMERA_MODE_PLAYBACK or camMode == CAMERA_MODE_FLY) then physC:SetMoveType(ents.PhysicsComponent.MOVETYPE_NOCLIP)
+		if(camMode == CAMERA_MODE_PLAYBACK or camMode == CAMERA_MODE_FLY) then
+			physC:SetMoveType(ents.PhysicsComponent.MOVETYPE_NOCLIP)
+			physC:SetCollisionFilterGroup(phys.COLLISIONMASK_NO_COLLISION)
 		else physC:SetMoveType(ents.PhysicsComponent.MOVETYPE_WALK) end
 	end
 
