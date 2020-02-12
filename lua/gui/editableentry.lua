@@ -42,8 +42,14 @@ function gui.EditableEntry:OnInitialize()
 		end
 	end)
 	self:SetMouseInputEnabled(true)
-	self:AddCallback("OnDoubleClick",function()
-		self:StartEditMode(true)
+	self:AddCallback("OnMousePressed",function()
+		if(util.is_valid(self.m_target) and self.m_target:GetClass() == "widropdownmenu") then
+			local numOptions = self.m_target:GetOptionCount()
+			local option = self.m_target:GetSelectedOption()
+			if(option == -1 or option == numOptions -1) then option = 0
+			else option = option +1 end
+			self.m_target:SelectOption(option)
+		else self:StartEditMode(true) end
 		return util.EVENT_REPLY_HANDLED
 	end)
 
