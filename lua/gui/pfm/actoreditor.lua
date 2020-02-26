@@ -42,7 +42,19 @@ function gui.PFMActorEditor:OnInitialize()
 
 			local actorIndex = 1
 			while(filmClip:FindActor(actorName .. actorIndex) ~= nil) do actorIndex = actorIndex +1 end
-			actor:SetName(actorName .. actorIndex)
+			actor:ChangeName(actorName .. actorIndex)
+
+			local pos = Vector()
+			local rot = Quaternion()
+			local cam = tool.get_filmmaker():GetActiveCamera()
+			if(util.is_valid(cam)) then
+				local entCam = cam:GetEntity()
+				pos = entCam:GetPos() +entCam:GetForward() *100.0
+				rot = EulerAngles(0,entCam:GetAngles().y,0):ToQuaternion()
+			end
+			local t = actor:GetTransform()
+			t:SetPosition(pos)
+			t:SetRotation(rot)
 
 			filmClip:GetActors():PushBack(actor)
 			self:AddActor(actor)
@@ -62,7 +74,7 @@ function gui.PFMActorEditor:OnInitialize()
 		pContext:AddItem(locale.get_text("pfm_reset_history"),function()
 			history:Clear()
 		end)]]
-	end)
+	end,true)
 
 	self.m_contents = gui.create("WIHBox",self,
 		0,self.m_btTools:GetBottom(),self:GetWidth(),self:GetHeight() -self.m_btTools:GetBottom(),
@@ -289,7 +301,7 @@ function gui.PFMActorEditor:AddActor(actor)
 					local componentName = component:GetComponentName() .. "_component"
 					local componentIndex = 1
 					while(actor:FindComponent(componentName .. componentIndex) ~= nil) do componentIndex = componentIndex +1 end
-					component:SetName((componentIndex == 1) and componentName or (componentName .. componentIndex))
+					component:ChangeName((componentIndex == 1) and componentName or (componentName .. componentIndex))
 
 					actor:AddComponent(component)
 					self:AddActorComponent(itemActor,itemComponents,component)

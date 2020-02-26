@@ -7,7 +7,7 @@
 ]]
 
 util.register_class("udm.Listener")
-function udm.Listener:__init(class,value)
+function udm.Listener:__init()
 end
 
 function udm.Listener:AddChangeListener(listener)
@@ -17,7 +17,7 @@ function udm.Listener:AddChangeListener(listener)
 	return cb
 end
 
-function udm.Listener:InvokeChangeListeners()
+function udm.Listener:InvokeChangeListeners(...)
 	if(self.m_listeners == nil) then return end
 	local val = self:GetValue()
 	local numListeners = #self.m_listeners
@@ -25,7 +25,8 @@ function udm.Listener:InvokeChangeListeners()
 	while(i <= numListeners) do
 		local listener = self.m_listeners[i]
 		if(listener:IsValid()) then
-			listener:Call(val)
+			if(select(1,...) ~= nil) then listener:Call(...)
+			else listener:Call(val) end
 			i = i +1
 		else
 			table.remove(self.m_listeners,i)

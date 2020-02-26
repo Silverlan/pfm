@@ -6,7 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_VALUE_ARRAY = udm.register_element("ValueArray")
+include("../udm_listener.lua")
+
+udm.ELEMENT_TYPE_VALUE_ARRAY = udm.register_type("ValueArray",{udm.BaseElement,udm.Listener},true)
 function udm.ValueArray:Initialize(valType)
 	udm.BaseElement.Initialize(self)
 	self.m_array = {}
@@ -134,6 +136,7 @@ function udm.ValueArray:Insert(pos,value)
 	end
 	-- Note: It's the caller's responsibility to ensure that the value is of the right type!
 	table.insert(self:GetValue(),pos,value)
+	self:InvokeChangeListeners(value,pos)
 end
 
 function udm.ValueArray:PushFront(value)

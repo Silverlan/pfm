@@ -25,8 +25,14 @@ end
 function pfm.Project:GetSessions() return self.m_sessions end
 
 function pfm.Project:AddSession(session)
+	if(type(session) == "string") then
+		local name = session
+		session = udm.create_element(udm.ELEMENT_TYPE_PFM_SESSION)
+		session:ChangeName(name)
+	end
 	self:GetUDMRootNode():AddChild(session)
 	table.insert(self.m_sessions,session)
+	return session
 end
 
 function pfm.Project:GetUDMRootNode() return self.m_udmRoot end
@@ -50,6 +56,28 @@ end
 pfm.create_project = function()
 	local project = pfm.Project()
 	table.insert(pfm.impl.projects,project)
+	return project
+end
+
+pfm.create_empty_project = function()
+	local project = pfm.create_project()
+
+	local session = project:AddSession("session")
+	local filmClip = session:GetActiveClip()
+	filmClip:ChangeName("new_project")
+	session:GetClips():PushBack(filmClip)
+
+	local subClipTrackGroup = udm.create_element(udm.ELEMENT_TYPE_PFM_TRACK_GROUP)
+	subClipTrackGroup:ChangeName("subClipTrackGroup")
+	filmClip:GetTrackGroupsAttr():PushBack(subClipTrackGroup)
+
+	local filmTrack = udm.create_element(udm.ELEMENT_TYPE_PFM_TRACK)
+	filmTrack:ChangeName("Film")
+	subClipTrackGroup:GetTracksAttr():PushBack(filmTrack)
+
+	local shot1 = session:AddFilmClip()
+	shot1:GetTimeFrame():SetDuration(60.0)
+
 	return project
 end
 

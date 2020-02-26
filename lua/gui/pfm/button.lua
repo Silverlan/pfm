@@ -11,7 +11,7 @@ util.register_class("gui.PFMButton",gui.Base)
 gui.PFMButton.create = function(parent,matUnpressed,matPressed,onPressed)
 	local bt = gui.create("WIPFMButton",parent)
 	bt:SetMaterials(matUnpressed,matPressed)
-	bt:AddCallback("OnPressed",onPressed)
+	if(onPressed ~= nil) then bt:AddCallback("OnPressed",onPressed) end
 	return bt
 end
 
@@ -55,11 +55,11 @@ function gui.PFMButton:SetActivated(activated)
 	self:SetMaterial(activated and self.m_pressedMaterial or self.m_unpressedMaterial)
 end
 function gui.PFMButton:SetPressedMaterial(mat)
-	self.m_pressedMaterial = pressedMat
+	self.m_pressedMaterial = mat
 	if(self:IsActivated()) then self:SetMaterial(mat) end
 end
 function gui.PFMButton:SetUnpressedMaterial(mat)
-	self.m_unpressedMaterial = unpressedMat
+	self.m_unpressedMaterial = mat
 	if(self:IsActivated() == false) then self:SetMaterial(mat) end
 end
 function gui.PFMButton:SetMaterials(unpressedMat,pressedMat)
@@ -75,26 +75,36 @@ end
 function gui.PFMButton:SetMaterial(mat)
 	if(mat ~= nil and util.is_valid(self.m_icon)) then self.m_icon:SetMaterial(mat) end
 end
-function gui.PFMButton:SetupContextMenu(fPopulateContextMenu)
+function gui.PFMButton:SetupContextMenu(fPopulateContextMenu,openOnClick)
+	self.m_fPopulateContextMenu = fPopulateContextMenu
 	local w = 12
 	self.m_contextTrigger = gui.create("WIBase",self,self:GetWidth() -w,0,w,self:GetHeight(),1,0,1,0)
 	self.m_contextTrigger:SetMouseInputEnabled(true)
 	self.m_contextTrigger:AddCallback("OnMouseEvent",function(el,button,state,mods)
 		if(button ~= input.MOUSE_BUTTON_LEFT or self:IsEnabled() == false) then return util.EVENT_REPLY_UNHANDLED end
 		if(state == input.STATE_PRESS) then
-			self:SetActivated(true)
-			local pContext = gui.open_context_menu()
-			if(util.is_valid(pContext) == false) then return end
-			local pos = self:GetAbsolutePos()
-			pContext:SetPos(pos.x,pos.y +self:GetHeight())
-			fPopulateContextMenu(pContext)
-			pContext:Update()
-
-			pContext:AddCallback("OnRemove",function()
-				if(self:IsValid()) then self:SetActivated(false) end
-			end)
+			self:OpenContextMenu()
 		end
 		return util.EVENT_REPLY_HANDLED
+	end)
+	if(openOnClick == true) then
+		self:AddCallback("OnPressed",function()
+			self:OpenContextMenu()
+		end)
+	end
+end
+function gui.PFMButton:OpenContextMenu()
+	if(self.m_fPopulateContextMenu == nil) then return end
+	self:SetActivated(true)
+	local pContext = gui.open_context_menu()
+	if(util.is_valid(pContext) == false) then return end
+	local pos = self:GetAbsolutePos()
+	pContext:SetPos(pos.x,pos.y +self:GetHeight())
+	self.m_fPopulateContextMenu(pContext)
+	pContext:Update()
+
+	pContext:AddCallback("OnRemove",function()
+		if(self:IsValid()) then self:SetActivated(false) end
 	end)
 end
 function gui.PFMButton:MouseCallback(button,state,mods)

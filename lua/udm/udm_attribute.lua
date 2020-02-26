@@ -12,6 +12,7 @@ include("udm_listener.lua")
 util.register_class("udm.BaseAttribute",udm.BaseItem,udm.Listener)
 function udm.BaseAttribute:__init(class,value)
 	udm.BaseItem.__init(self)
+	udm.Listener.__init(self)
 	self.m_class = class
 	self:SetValue(value)
 end

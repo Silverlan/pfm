@@ -76,6 +76,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	local p = gui.create("WIVBox",parent)
 	p:SetAutoFillContentsToWidth(true)
 	
+	-- Render Mode
 	local renderMode = gui.create("WIDropDownMenu",p)
 	renderMode:AddOption(locale.get_text("pfm_cycles_bake_type_combined"),"combined")
 	renderMode:AddOption(locale.get_text("pfm_cycles_bake_type_albedo"),"albedo")
@@ -85,6 +86,16 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlRenderMode = renderMode
 
 	renderMode:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_render_mode"))
+
+	-- Device Type
+	local deviceType = gui.create("WIDropDownMenu",p)
+	deviceType:AddOption(locale.get_text("pfm_cycles_device_type_gpu"),"gpu")
+	deviceType:AddOption(locale.get_text("pfm_cycles_device_type_cpu"),"cpu")
+	deviceType:SelectOption(0)
+	-- deviceType:SetTooltip(locale.get_text("pfm_cycles_device_type_desc"))
+	self.m_ctrlDeviceType = deviceType
+
+	deviceType:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_device_type"))
 
 	-- Sample count
 	local samplesPerPixel = gui.create("WIPFMSlider",p)
@@ -149,6 +160,22 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	skyYaw:SetDefault(0)
 	skyYaw:SetTooltip(locale.get_text("pfm_sky_yaw_angle_desc"))
 	self.m_ctrlSkyYaw = skyYaw
+
+	-- Max transparency bounces
+	local maxTransparencyBounces = gui.create("WIPFMSlider",p)
+	maxTransparencyBounces:SetText(locale.get_text("pfm_max_transparency_bounces"))
+	maxTransparencyBounces:SetRange(0,200)
+	maxTransparencyBounces:SetDefault(128)
+	maxTransparencyBounces:SetTooltip(locale.get_text("pfm_max_transparency_bounces_desc"))
+	self.m_ctrlMaxTransparencyBounces = maxTransparencyBounces
+
+	-- Light intensity factor
+	local lightIntensityFactor = gui.create("WIPFMSlider",p)
+	lightIntensityFactor:SetText(locale.get_text("pfm_light_intensity_factor"))
+	lightIntensityFactor:SetRange(0,20)
+	lightIntensityFactor:SetDefault(1.0)
+	lightIntensityFactor:SetTooltip(locale.get_text("pfm_light_intensity_factor_desc"))
+	self.m_ctrlLightIntensityFactor = lightIntensityFactor
 
 	-- Number of frames
 	local frameCount = gui.create("WIPFMSlider",p)
@@ -307,13 +334,21 @@ function gui.PFMRenderPreview:RenderNextFrame()
 	local cam = game.get_render_scene_camera()
 	if(cam == nil) then return end
 
-	local scene = cycles.create_scene(renderSettings.renderMode,renderSettings.samples,false,renderSettings.denoise)
+	local createInfo = cycles.Scene.CreateInfo()
+	createInfo.denoise = renderSettings.denoise
+	createInfo.hdrOutput = false
+	createInfo.deviceType = renderSettings.deviceType
+	createInfo:SetSamplesPerPixel(renderSettings.samples)
+
+	local scene = cycles.create_scene(renderSettings.renderMode,createInfo)
 	local pos = cam:GetEntity():GetPos()
 	local rot = cam:GetEntity():GetRotation()
 	local nearZ = cam:GetNearZ()
 	local farZ = cam:GetFarZ()
 	local fov = cam:GetFOV()
-	scene:InitializeFromGameScene(pos,rot,nearZ,farZ,fov,function(ent)
+	local vp = cam:GetProjectionMatrix() *cam:GetViewMatrix()
+	local cullObjectsOutsidePvs = true
+	scene:InitializeFromGameScene(pos,rot,vp,nearZ,farZ,fov,cullObjectsOutsidePvs,function(ent)
 		if(ent:IsWorld()) then return renderSettings.renderWorld end
 		if(ent:IsPlayer()) then return renderSettings.renderPlayer end
 		return renderSettings.renderGameEntities or ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
@@ -324,6 +359,8 @@ function gui.PFMRenderPreview:RenderNextFrame()
 	
 	scene:SetSkyAngles(EulerAngles(0,renderSettings.skyYaw,0))
 	scene:SetSkyStrength(renderSettings.skyStrength)
+	scene:SetMaxTransparencyBounces(renderSettings.maxTransparencyBounces)
+	scene:SetLightIntensityFactor(renderSettings.lightIntensityFactor)
 	scene:SetResolution(renderSettings.width,renderSettings.height)
 	
 	pfm.log("Starting render job for frame " .. renderSettings.currentFrame .. "...",pfm.LOG_CATEGORY_PFM_INTERFACE)
@@ -361,6 +398,11 @@ function gui.PFMRenderPreview:Refresh(preview)
 	elseif(selectedRenderMode == "albedo") then renderMode = cycles.Scene.RENDER_MODE_ALBEDO
 	elseif(selectedRenderMode == "normals") then renderMode = cycles.Scene.RENDER_MODE_NORMALS end
 
+	local deviceType = cycles.Scene.DEVICE_TYPE_GPU
+	local selectedDeviceType = self.m_ctrlDeviceType:GetValue()
+	if(selectedDeviceType == "cpu") then deviceType = cycles.Scene.DEVICE_TYPE_CPU
+	elseif(selectedDeviceType == "gpu") then deviceType = cycles.Scene.DEVICE_TYPE_GPU end
+
 	preview = preview or false
 	local samples = preview and 4 or nil
 
@@ -370,9 +412,12 @@ function gui.PFMRenderPreview:Refresh(preview)
 		sky = self.m_ctrlSkyOverride:GetValue(),
 		skyStrength = self.m_ctrlSkyStrength:GetValue(),
 		skyYaw = self.m_ctrlSkyYaw:GetValue(),
+		maxTransparencyBounces = self.m_ctrlMaxTransparencyBounces:GetValue(),
+		lightIntensityFactor = self.m_ctrlLightIntensityFactor:GetValue(),
 		frameCount = preview and 1 or self.m_ctrlFrameCount:GetValue(),
 		outputDir = self.m_ctrlOutputDir:GetValue(),
 		denoise = self.m_ctrlDenoise:IsChecked(),
+		deviceType = deviceType,
 		renderWorld = self.m_ctrlRenderWorld:IsChecked(),
 		renderGameEntities = self.m_ctrlRenderGameEntities:IsChecked(),
 		renderPlayer = self.m_ctrlRenderPlayer:IsChecked(),

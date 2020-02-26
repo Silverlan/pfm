@@ -68,7 +68,7 @@ sfm.register_element_type_conversion(sfm.FilmClip,udm.PFMFilmClip,function(conve
 		local animSet = actorNameToAnimSet[actorName]
 		if(animSet ~= nil) then -- Check if there is an animation set for this actor
 			local pfmAnimSet = converter:ConvertNewElement(animSet)
-			pfmAnimSet:SetName(actorName .. "_animset")
+			pfmAnimSet:ChangeName(actorName .. "_animset")
 			actor:AddComponent(pfmAnimSet)
 			animSetToActor[animSet] = actor
 		end
@@ -111,7 +111,7 @@ sfm.register_element_type_conversion(sfm.FilmClip,udm.PFMFilmClip,function(conve
 					local actor = animSetToActor[animSet]
 					if(actor ~= nil) then
 						pfm.log("Renaming channel clip '" .. channelClip:GetName() .. "' of track '" .. track:GetName() .. "' of track group '" .. trackGroup:GetName() .. "' to name of associated actor '" .. actor:GetName() .. "'!",pfm.LOG_CATEGORY_SFM)
-						channelClip:SetName(actor:GetName())
+						channelClip:ChangeName(actor:GetName())
 					else
 						pfm.log("Animation set '" .. animSetName .. "' of channel clip '" .. channelClip:GetName() .. "' of track '" .. track:GetName() .. "' of track group '" .. trackGroup:GetName() .. "' has no associated actor! This clip will not be used!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 					end

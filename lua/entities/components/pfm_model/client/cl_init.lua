@@ -13,6 +13,7 @@ function ents.PFMModel:Initialize()
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
+	self:AddEntityComponent(ents.COMPONENT_EYE)
 	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent("pfm_actor")
 	if(renderC ~= nil) then
@@ -164,6 +165,8 @@ function ents.PFMModel:Setup(actorData,mdlInfo)
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil) then return end
+	table.insert(self.m_listeners,mdlInfo:GetModelNameAttr():AddChangeListener(function(newModel) ent:SetModel(newModel) end))
+	table.insert(self.m_listeners,mdlInfo:GetSkinAttr():AddChangeListener(function(newSkin) ent:SetSkin(newSkin) end))
 	local mdlName = mdlInfo:GetModelName()
 	mdlC:SetModel(mdlName)
 	mdlC:SetSkin(mdlInfo:GetSkin())

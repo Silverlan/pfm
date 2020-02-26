@@ -17,23 +17,44 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"muted",udm.Bool(false)
 	getter = "IsMuted"
 })
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"volume",udm.Float(1.0))
-function udm.PFMTrack:AddAudioClip(name)
-	local clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_AUDIO_CLIP,name)
+
+function udm.PFMTrack:CalcTimeFrame()
+	local timeFrame = udm.PFMTimeFrame()
+	for _,filmClip in ipairs(self:GetFilmClips():GetTable()) do
+		timeFrame = timeFrame:Max(filmClip:GetTimeFrame())
+	end
+	return timeFrame
+end
+
+function udm.PFMTrack:AddAudioClip(clip)
+	if(type(clip) == "string") then
+		local name = clip
+		clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_AUDIO_CLIP,name)
+	end
 	self:GetAudioClipsAttr():PushBack(clip)
 	return clip
 end
-function udm.PFMTrack:AddFilmClip(name)
-	local clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_FILM_CLIP,name)
+function udm.PFMTrack:AddFilmClip(clip)
+	if(type(clip) == "string") then
+		local name = clip
+		clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_FILM_CLIP,name)
+	end
 	self:GetFilmClipsAttr():PushBack(clip)
 	return clip
 end
-function udm.PFMTrack:AddOverlayClip(name)
-	local clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,name)
+function udm.PFMTrack:AddOverlayClip(clip)
+	if(type(clip) == "string") then
+		local name = clip
+		clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,name)
+	end
 	self:GetOverlayClipsAttr():PushBack(clip)
 	return clip
 end
-function udm.PFMTrack:AddChannelClip(name)
-	local clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,name)
+function udm.PFMTrack:AddChannelClip(clip)
+	if(type(clip) == "string") then
+		local name = clip
+		clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,name)
+	end
 	self:GetChannelClipsAttr():PushBack(clip)
 	return clip
 end

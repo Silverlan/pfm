@@ -75,7 +75,8 @@ end
 include("sfm/project.lua")
 
 sfm.import_scene = function(fpath)
-	local f = file.open_external_asset_file(fpath)
+	local f = file.open(fpath,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
+	if(f == nil) then f = file.open_external_asset_file(fpath) end
 	if(f == nil) then
 		pfm.log("Unable to import SFM project '" .. fpath .. "': File not found!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
 		return

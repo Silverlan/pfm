@@ -69,7 +69,7 @@ function ents.UtilTransformArrowComponent:SetUtilTransformComponent(c)
     attC:AttachToEntity(c:GetEntity(),attInfo)
   end
 end
-function ents.UtilTransformArrowComponent:GetBaseUtilTransformComponent() return self.m_transformComponent end
+function ents.UtilTransformArrowComponent:GetBaseUtilTransformComponent() return util.is_valid(self.m_transformComponent) and self.m_transformComponent or nil end
 function ents.UtilTransformArrowComponent:UpdateAxis()
   local ent = self:GetEntity()
   if(ent:IsSpawned() == false) then return end
@@ -84,6 +84,7 @@ function ents.UtilTransformArrowComponent:UpdateAxis()
 end
 function ents.UtilTransformArrowComponent:UpdateModel()
   local ent = self:GetEntity()
+  if(ent:IsSpawned() == false) then return end
   local mdl
   if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then mdl = self:GetArrowModel()
   else mdl = self:GetDiskModel() end
@@ -139,7 +140,7 @@ function ents.UtilTransformArrowComponent:GetCursorIntersectionWithAxisPlane()
     end
   end
 
-  local pos,dir = clickC:GetRayData()
+  local pos,dir = ents.ClickComponent.get_ray_data()
   local maxDist = 32768
   local bIntersect,t = intersect.line_with_plane(pos,dir *maxDist,plane:GetNormal(),plane:GetDistance())
   if(bIntersect == false) then return end
@@ -225,6 +226,7 @@ function ents.UtilTransformArrowComponent:ToGlobalSpace(pos)
   return transformC:GetEntity():GetPose() *pos
 end
 function ents.UtilTransformArrowComponent:OnClick(action,pressed,hitPos)
+  print("OnClick")
   if(action ~= input.ACTION_ATTACK) then return util.EVENT_REPLY_UNHANDLED end
   if(pressed == true) then
     local intersectPos = self:GetCursorIntersectionWithAxisPlane()
@@ -266,7 +268,7 @@ function ents.UtilTransformArrowComponent:GetArrowModel()
   meshGroup:AddMesh(mesh)
 
   mdl:Update(game.Model.FUPDATE_ALL)
-  mdl:AddMaterial(0,"tools/toolswhite")
+  mdl:AddMaterial(0,"white")
   
   arrowModel = mdl
   return mdl
@@ -291,7 +293,7 @@ function ents.UtilTransformArrowComponent:GetDiskModel()
   meshGroup:AddMesh(mesh)
 
   mdl:Update(game.Model.FUPDATE_ALL)
-  mdl:AddMaterial(0,"tools/toolswhite")
+  mdl:AddMaterial(0,"white")
   
   diskModel = mdl
   return mdl

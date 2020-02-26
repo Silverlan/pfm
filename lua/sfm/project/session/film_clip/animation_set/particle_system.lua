@@ -19,6 +19,7 @@ sfm.BaseElement.RegisterAttribute(sfm.GameParticleSystem,"overridePos")
 sfm.BaseElement.RegisterAttribute(sfm.GameParticleSystem,"overrideRot")
 sfm.BaseElement.RegisterAttribute(sfm.GameParticleSystem,"simulationTimeScale",0)
 sfm.BaseElement.RegisterProperty(sfm.GameParticleSystem,"particleSystemDefinition",sfm.ParticleSystemDefinition)
+sfm.BaseElement.RegisterArray(sfm.GameParticleSystem,"controlPoints",sfm.Transform)
 sfm.BaseElement.RegisterAttribute(sfm.GameParticleSystem,"visible",false,{
 	getterName = "IsVisible"
 })

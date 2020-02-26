@@ -9,7 +9,7 @@
 util.register_class("udm.BaseElement",udm.BaseItem)
 function udm.BaseElement:__init(class)
 	udm.BaseItem.__init(self)
-	self:SetName("")
+	self:ChangeName("")
 	self.m_class = class
 	self.m_children = {}
 	self.m_attributes = {}
@@ -111,7 +111,7 @@ function udm.BaseElement:FindParentElement()
 end
 
 function udm.BaseElement:SetProperty(name,prop)
-	if(prop:IsElement()) then prop:SetName(name) end
+	if(prop:IsElement()) then prop:ChangeName(name) end
 	self:AddChild(prop,name)
 	return self:GetProperty(name)
 end
@@ -123,21 +123,7 @@ function udm.BaseElement:GetProperty(name)
 	return property
 end
 
-function udm.BaseElement:SetName(name)
-	local parents = {}
-	for _,parent in ipairs(self:GetParents()) do
-		table.insert(parents,parent)
-	end
-
-	local oldName = self:GetName()
-	self.m_name = name
-	for _,parent in ipairs(parents) do
-		parent:RemoveChild(oldName)
-	end
-	for _,parent in ipairs(parents) do
-		parent:AddChild(self)
-	end
-end
+function udm.BaseElement:ChangeName(name) self.m_name = name end
 function udm.BaseElement:GetName() return self.m_name end
 
 function udm.BaseElement:GetChild(name) return self.m_children[name] end
@@ -230,7 +216,7 @@ function udm.BaseElement:SaveToBinary(ds)
 	end
 end
 function udm.BaseElement:LoadFromBinary(ds)
-	self:SetName(ds:ReadString())
+	self:ChangeName(ds:ReadString())
 	
 	local type = self:GetType()
 	local elData = udm.impl.get_type_data(type)

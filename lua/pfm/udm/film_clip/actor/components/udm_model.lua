@@ -189,14 +189,32 @@ function udm.PFMModel:SetupControls(actorEditor,itemComponent)
 		max = 8.0,
 		default = 1.0
 	})
+
+	-- Properties
 	actorEditor:AddProperty(locale.get_text("model"),itemBaseProps,function(parent)
 		local el = gui.create("WIFileEntry",parent)
+		el:SetValue(self:GetModelName())
 		el:SetBrowseHandler(function(resultHandler)
 			gui.open_model_dialog(function(dialogResult,mdlName)
 				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
 				resultHandler(mdlName)
 			end)
 		end)
+		el:AddCallback("OnValueChanged",function(el,value)
+			self:SetModelName(value)
+		end)
 		return el
+	end)
+
+	actorEditor:AddProperty(locale.get_text("skin"),itemBaseProps,function(parent)
+		local slider = gui.create("WIPFMSlider",parent)
+		slider:SetText(locale.get_text("skin"))
+		slider:SetInteger(true)
+		slider:SetRange(0,10,0) -- TODO: Change depending on model!
+		slider:SetValue(self:GetSkin())
+		slider:AddCallback("OnLeftValueChanged",function(el,value)
+			self:SetSkin(value)
+		end)
+		return slider
 	end)
 end

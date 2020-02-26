@@ -13,9 +13,10 @@ udm.impl.registered_types = udm.impl.registered_types or {}
 udm.impl.class_to_type_id = udm.impl.class_to_type_id or {}
 udm.impl.name_to_type_id = udm.impl.name_to_type_id or {}
 local registered_types = udm.impl.registered_types
-local function register_type(className,baseClass,elementType,defaultArg,...)
+function udm.register_type(className,baseClass,elementType,defaultArg,...)
 	if(udm[className] ~= nil) then return udm.get_type_id(className) end
-	util.register_class("udm." .. className,baseClass)
+	if(type(baseClass) == "table") then util.register_class("udm." .. className,unpack(baseClass))
+	else util.register_class("udm." .. className,baseClass) end
 	local class = udm[className]
 	if(udm.impl.class_to_type_id[class] ~= nil) then return udm.impl.class_to_type_id[class] end
 
@@ -26,7 +27,8 @@ local function register_type(className,baseClass,elementType,defaultArg,...)
 		defaultArg = nil
 
 		function class:__init(...)
-			baseClass.__init(self,class)
+			if(type(baseClass) == "table") then for _,p in ipairs(baseClass) do p.__init(self,class) end
+			else baseClass.__init(self,class) end
 
 			local initArgs = {}
 			local userArgs = {...}
@@ -84,11 +86,11 @@ function udm.get_type_id(typeName)
 end
 
 function udm.register_attribute(className,defaultValue)
-	return register_type(className,udm.BaseAttribute,false,defaultValue)
+	return udm.register_type(className,udm.BaseAttribute,false,defaultValue)
 end
 
 function udm.register_element(className,...)
-	return register_type(className,udm.BaseElement,true,...)
+	return udm.register_type(className,udm.BaseElement,true,...)
 end
 
 function udm.register_element_property(elType,propIdentifier,defaultValue,settings)
@@ -99,7 +101,8 @@ function udm.register_element_property(elType,propIdentifier,defaultValue,settin
 	end
 	settings = settings or {}
 	local methodIdentifier = propIdentifier:sub(1,1):upper() .. propIdentifier:sub(2)
-	local getterName = settings.getter or ("Get" .. methodIdentifier)
+	local baseGetterName = "Get" .. methodIdentifier
+	local getterName = settings.getter or baseGetterName
 	local setterName = settings.setter or ("Set" .. methodIdentifier)
 
 	-- Depending on whether or not the property is an element or an attribute, we'll handle the getter/setter functions differently
@@ -111,8 +114,8 @@ function udm.register_element_property(elType,propIdentifier,defaultValue,settin
 
 	if(isElement) then
 		elData.class[getterName] = function(self) return self:GetProperty(propIdentifier) end
-		elData.class[getterName .. "Attribute"] = elData.class[getterName]
-		elData.class[getterName .. "Attr"] = elData.class[getterName]
+		elData.class[baseGetterName .. "Attribute"] = elData.class[getterName]
+		elData.class[baseGetterName .. "Attr"] = elData.class[getterName]
 		elData.class[setterName] = function(self,value) self:AddChild(value,propIdentifier) end
 		elData.class[setterName .. "Attribute"] = elData.class[setterName]
 		elData.class[setterName .. "Attr"] = elData.class[setterName]
@@ -130,10 +133,10 @@ function udm.register_element_property(elType,propIdentifier,defaultValue,settin
 		elData.class[setterName] = function(self,value) self:GetProperty(propIdentifier):SetValue(value) end
 
 		-- We'll register an additional getter in case they do want to get the attribute instead of the underlying value
-		local getterNameAttribute = getterName .. "Attribute"
+		local getterNameAttribute = baseGetterName .. "Attribute"
 		elData.class[getterNameAttribute] = function(self) return self:GetProperty(propIdentifier) end
 		-- Shorthand alias
-		elData.class[getterName .. "Attr"] = function(self) return self[getterNameAttribute](self) end
+		elData.class[baseGetterName .. "Attr"] = function(self) return self[getterNameAttribute](self) end
 
 		local setterNameAttribute = setterName .. "Attribute"
 		elData.class[setterNameAttribute] = function(self,value) self:AddChild(value,propIdentifier) end

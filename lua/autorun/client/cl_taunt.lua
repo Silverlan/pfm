@@ -6,5 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/gamemodes/generic/server/init.lua")
-include("../shared.lua")
+console.register_command("taunt",function(pl,joystickAxisMagnitude)
+	if(util.is_valid(pl) == false) then return end
+	local pfmPlC = pl:GetEntity():GetComponent("pfm_player")
+	if(pfmPlC ~= nil) then
+		pfmPlC:Taunt()
+	end
+end)

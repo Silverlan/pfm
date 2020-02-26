@@ -79,6 +79,12 @@ local function log_pfm_project_debug_info(project)
 	pfm.log("---------------------------------------",pfm.LOG_CATEGORY_PFM_CONVERTER)
 end
 
+local function is_udm_element_entity_component(el)
+	local type = el:GetType()
+	-- We only have to check the component types that have a corresponding type in SFM
+	return (type == udm.ELEMENT_TYPE_PFM_MODEL or type == udm.ELEMENT_TYPE_PFM_CAMERA or type == udm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM)
+end
+
 util.register_class("sfm.ProjectConverter")
 sfm.ProjectConverter.convert_project = function(projectFilePath)
 	local sfmProject = sfm.import_scene(projectFilePath)
@@ -119,7 +125,7 @@ function sfm.ProjectConverter:CreateActor(sfmComponent)
 	local actor = self:GetPFMActor(pfmComponent) -- Check if this component has already been associated with an actor
 	if(actor ~= nil) then return actor,false end
 	actor = udm.create_element(udm.ELEMENT_TYPE_PFM_ACTOR)
-	actor:SetName(pfmComponent:GetName()) -- TODO: Remove suffix (e.g. _model)
+	actor:ChangeName(pfmComponent:GetName()) -- TODO: Remove suffix (e.g. _model)
 	actor:SetVisible(sfmComponent:IsVisible())
 
 	local transformType = sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL
@@ -135,7 +141,7 @@ function sfm.ProjectConverter:GetPFMElement(element)
 end
 local rotN90Yaw = EulerAngles(0,-90,0):ToQuaternion()
 local function convert_root_bone_pos(pos)
-	-- Root bones seems to be in a different coordinate system than everything else in the source engine?
+	-- Root bones seem to be in a different coordinate system than everything else in the source engine?
 	-- I don't know why that is the case, but we have to take it into account here.
 	pos:Set(pos.x,-pos.y,-pos.z)
 
@@ -199,6 +205,18 @@ local function apply_post_processing(project,filmClip,processedObjects)
 				for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
 					local toElement = channel:GetToElement()
 					local toAttr = channel:GetToAttribute()
+
+					if(toElement ~= nil and is_udm_element_entity_component(toElement)) then
+						-- Some attributes (like visibility) are stored in the SFM GameModel/Camera/etc. elements. In Pragma these are
+						-- components of an actor, and these attributes are stored in the actor, not the components, so we have to
+						-- redirect the reference to the actor.
+						local actor = toElement:FindParent(function(p) return p:GetType() == udm.ELEMENT_TYPE_PFM_ACTOR end) or nil
+						if(actor ~= nil) then
+							channel:SetToElement(actor)
+							toElement = actor
+						end
+					end
+
 					local isPosTransform = (toAttr == "position")
 					local isRotTransform = (toAttr == "rotation")
 					if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_TRANSFORM and (isPosTransform or isRotTransform)) then
@@ -311,8 +329,7 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 			-- we want it to point to the actor instead.
 			local overrideParent = elTransform:GetOverrideParent()
 			if(overrideParent ~= nil) then
-				local type = overrideParent:GetType()
-				if(type == udm.ELEMENT_TYPE_PFM_MODEL or type == udm.ELEMENT_TYPE_PFM_CAMERA or type == udm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM) then
+				if(is_udm_element_entity_component(overrideParent)) then
 					local overrideParentActor = overrideParent:FindParentElement()
 					elTransform:SetOverrideParent((overrideParentActor ~= nil) and udm.create_reference(overrideParentActor) or nil)
 				end
@@ -354,7 +371,7 @@ function sfm.ProjectConverter:ConvertElement(sfmElement,pfmElement,...)
 	--[[if(sfmElement:GetDMXElement() == nil) then
 		pfm.error("Attempted to convert SFM element '" .. sfmElement:GetName() .. "' of type '" .. util.get_type_name(sfmElement) .. "', but was not loaded from DMX element!")
 	end]]
-	pfmElement:SetName(sfmElement:GetName())
+	pfmElement:ChangeName(sfmElement:GetName())
 	self.m_sfmElementToPfmElement[sfmElement] = pfmElement -- Has to be cached before conversion function is called!
 	data[1](self,sfmElement,pfmElement,...)
 end
@@ -372,7 +389,7 @@ function sfm.ProjectConverter:ConvertNewElement(sfmElement,...)
 		pfmType = pfmType(self,sfmElement)
 	end
 	local pfmElement = pfmType()
-	pfmElement:SetName(sfmElement:GetName())
+	pfmElement:ChangeName(sfmElement:GetName())
 	self:ConvertElement(sfmElement,pfmElement,...)
 	return pfmElement,true
 end
@@ -558,7 +575,7 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 			local boneNameEnd = name:match('.*()' .. "%)") -- Reverse find
 			if(boneNameStart ~= nil and boneNameEnd ~= nil) then
 				local boneName = name:sub(boneNameStart +1,boneNameEnd -1)
-				bone:SetName(boneName)
+				bone:ChangeName(boneName)
 			else pfm.log("Invalid format for bone name '" .. name .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING) end
 
 			if(parent:GetType() == udm.ELEMENT_TYPE_PFM_MODEL) then parent:GetRootBonesAttr():PushBack(bone)
@@ -753,6 +770,10 @@ end)
 sfm.register_element_type_conversion(sfm.GameParticleSystem,udm.PFMParticleSystem,function(converter,sfmParticle,pfmParticle)
 	pfmParticle:SetTimeScale(sfmParticle:GetSimulationTimeScale())
 	pfmParticle:SetDefinition(converter:ConvertNewElement(sfmParticle:GetParticleSystemDefinition()))
+	for _,cp in ipairs(sfmParticle:GetControlPoints()) do
+		local pfmCp = converter:ConvertNewElement(cp)
+		pfmParticle:GetControlPointsAttr():PushBack(pfmCp)
+	end
 end)
 
 sfm.register_element_type_conversion(sfm.ParticleSystemDefinition,udm.PFMParticleSystemDefinition,function(converter,sfmParticleDef,pfmParticleDef)
@@ -781,7 +802,24 @@ end)
 
 sfm.register_element_type_conversion(sfm.ParticleSystemOperator,udm.PFMParticleSystemOperator,function(converter,sfmParticleOp,pfmParticleOp)
 	pfmParticleOp:SetOperatorName(sfmParticleOp:GetFunctionName())
-	-- TODO: Set operator attributes
+
+	for name,attr in pairs(sfmParticleOp:GetDMXElement():GetAttributes()) do
+		local type = attr:GetType()
+		local v = attr:GetValue()
+		if(type == dmx.Attribute.TYPE_INT) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
+		elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_FLOAT,v))
+		elseif(type == dmx.Attribute.TYPE_BOOL) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_BOOL,v))
+		elseif(type == dmx.Attribute.TYPE_STRING) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_STRING,v))
+		elseif(type == dmx.Attribute.TYPE_COLOR) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_COLOR,v))
+		elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_VECTOR3,v))
+		elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_ANGLE,v))
+		elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_QUATERNION,v))
+		elseif(type == dmx.Attribute.TYPE_UINT64) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
+		elseif(type == dmx.Attribute.TYPE_UINT8) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
+		else
+			pfm.log("Unsupported particle attribute type '" .. dmx.type_to_string(type) .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+		end
+	end
 end)
 
 sfm.register_element_type_conversion(sfm.ChannelClip,udm.PFMChannelClip,function(converter,sfmChannelClip,pfmChannelClip)
@@ -810,7 +848,7 @@ sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL = 1
 sfm.ProjectConverter.TRANSFORM_TYPE_BONE = 2
 sfm.ProjectConverter.TRANSFORM_TYPE_ALT = 3
 sfm.register_element_type_conversion(sfm.Transform,udm.Transform,function(converter,sfmTransform,pfmTransform,type)
-	pfmTransform:SetName(sfmTransform:GetName())
+	pfmTransform:ChangeName(sfmTransform:GetName())
 	type = type or sfm.ProjectConverter.TRANSFORM_TYPE_GENERIC
 	if(type == sfm.ProjectConverter.TRANSFORM_TYPE_GENERIC) then
 		pfmTransform:SetPosition(sfm.convert_source_position_to_pragma(sfmTransform:GetPosition()))

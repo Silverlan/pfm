@@ -15,6 +15,11 @@ include("/pfm/fonts.lua")
 
 util.register_class("gui.PFMViewport",gui.Base)
 
+gui.PFMViewport.MANIPULATOR_MODE_SELECT = 0
+gui.PFMViewport.MANIPULATOR_MODE_MOVE = 1
+gui.PFMViewport.MANIPULATOR_MODE_ROTATE = 2
+gui.PFMViewport.MANIPULATOR_MODE_SCREEN = 3
+
 gui.PFMViewport.CAMERA_MODE_PLAYBACK = 0
 gui.PFMViewport.CAMERA_MODE_FLY = 1
 gui.PFMViewport.CAMERA_MODE_WALK = 2
@@ -30,6 +35,7 @@ function gui.PFMViewport:OnInitialize()
 	local hViewport = 221
 	self:SetSize(512,hViewport +hTop +hBottom)
 
+	self.m_gameplayEnabled = false
 	self.m_bg = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	self.m_bg:SetColor(Color(38,38,38))
 
@@ -92,7 +98,7 @@ function gui.PFMViewport:OnInitialize()
 
 		local filmmaker = tool.get_filmmaker()
 		if(self.m_inCameraControlMode and mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE and filmmaker:IsValid() and filmmaker:HasFocus() == false) then
-			self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK)
+			if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK) end
 			filmmaker:TrapFocus(true)
 			filmmaker:RequestFocus()
 			input.set_cursor_pos(self.m_oldCursorPos)
@@ -105,13 +111,19 @@ function gui.PFMViewport:OnInitialize()
 			local filmmaker = tool.get_filmmaker()
 			if(mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 				self.m_oldCursorPos = input.get_cursor_pos()
-				self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY)
+				if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY) end
 				input.center_cursor()
 				filmmaker:TrapFocus(false)
 				filmmaker:KillFocus()
 				self.m_inCameraControlMode = true
 			elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
-				ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS)
+				local cursorPos = self.m_viewport:GetCursorPos()
+				local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS,self.m_viewport:GetWidth(),self.m_viewport:GetHeight(),cursorPos.x,cursorPos.y)
+				if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
+					local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+					local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+					if(actor) then filmmaker:SelectActor(actor) end
+				end
 			end
 			return util.EVENT_REPLY_HANDLED
 		end
@@ -120,6 +132,7 @@ function gui.PFMViewport:OnInitialize()
 	self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK)
 
 	self.m_vrControllers = {}
+	self.m_manipulatorMode = gui.PFMViewport.MANIPULATOR_MODE_SELECT
 end
 function gui.PFMViewport:OnRemove()
 	for _,ent in ipairs(self.m_vrControllers) do
@@ -244,19 +257,55 @@ function gui.PFMViewport:InitializePlayControls()
 	controls:SetAnchor(0.5,1,0.5,1)
 	self.m_playControls = controls
 end
+function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
+	self.m_manipulatorMode = manipulatorMode
+	self.m_btSelect:SetActivated(manipulatorMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT)
+	self.m_btMove:SetActivated(manipulatorMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE)
+	self.m_btRotate:SetActivated(manipulatorMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE)
+	self.m_btScreen:SetActivated(manipulatorMode == gui.PFMViewport.MANIPULATOR_MODE_SCREEN)
+
+	for ent,b in pairs(tool.get_filmmaker():GetSelectionManager():GetSelectedActors()) do
+		if(ent:IsValid()) then self:UpdateActorManipulation(ent,true) end
+	end
+end
+function gui.PFMViewport:UpdateActorManipulation(ent,selected)
+	local manipMode = self.m_manipulatorMode
+	if(selected == false or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SCREEN) then
+		ent:RemoveComponent("util_transform")
+	elseif(manipMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE) then
+		local tc = ent:AddComponent("util_transform")
+		if(tc ~= nil) then
+			tc:SetTranslationEnabled(true)
+			tc:SetRotationEnabled(false)
+		end
+	elseif(manipMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE) then
+		local tc = ent:AddComponent("util_transform")
+		if(tc ~= nil) then
+			tc:SetTranslationEnabled(false)
+			tc:SetRotationEnabled(true)
+		end
+	end
+end
+function gui.PFMViewport:OnActorSelectionChanged(ent,selected)
+	self:UpdateActorManipulation(ent,selected)
+end
 function gui.PFMViewport:InitializeManipulatorControls()
 	local controls = gui.create("WIHBox",self,0,self.m_vpBg:GetBottom() +4)
 	self.m_btSelect = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_select","gui/pfm/icon_manipulator_select_activated",function()
-		print("TODO")
+		self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_SELECT)
+		return true
 	end)
 	self.m_btMove = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_move","gui/pfm/icon_manipulator_move_activated",function()
-		print("TODO")
+		self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_MOVE)
+		return true
 	end)
 	self.m_btRotate = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_rotate","gui/pfm/icon_manipulator_rotate_activated",function()
-		print("TODO")
+		self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_ROTATE)
+		return true
 	end)
 	self.m_btScreen = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_screen","gui/pfm/icon_manipulator_screen_activated",function()
-		print("TODO")
+		self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_SCREEN)
+		return true
 	end)
 	controls:SetHeight(self.m_btSelect:GetHeight())
 	controls:Update()
@@ -340,6 +389,7 @@ function gui.PFMViewport:InitializeCameraControls()
 		local sceneCamera = self:IsSceneCamera()
 		local camName = sceneCamera and locale.get_text("pfm_scene_camera") or locale.get_text("pfm_work_camera")
 		pContext:AddItem(locale.get_text("pfm_switch_to_camera",{camName}),function() self:ToggleCamera() end)
+		pContext:AddItem(locale.get_text("pfm_switch_to_gameplay"),function() self:SwitchToGameplay() end)
 		pContext:AddItem(locale.get_text("pfm_copy_to_camera",{camName}),function() end) -- TODO
 
 		pContext:AddLine()
@@ -371,7 +421,7 @@ function gui.PFMViewport:InitializeCameraControls()
 		end
 		pContext:AddItem(locale.get_text("pfm_auto_aim_work_camera"),function() end) -- TODO
 	end)
-	self:SwitchToWorkCamera()
+	self:SwitchToSceneCamera()
 	self.m_btGear = gui.PFMButton.create(controls,"gui/pfm/icon_gear","gui/pfm/icon_gear_activated",function()
 		print("TODO")
 	end)
@@ -381,15 +431,36 @@ function gui.PFMViewport:InitializeCameraControls()
 	controls:SetAnchor(1,1,1,1)
 	self.manipulatorControls = controls
 end
+function gui.PFMViewport:IsGameplayEnabled() return self.m_gameplayEnabled end
+function gui.PFMViewport:SwitchToGameplay(enabled)
+	if(enabled == nil) then enabled = true end
+	if(enabled == self.m_gameplayEnabled) then return end
+	self.m_gameplayEnabled = enabled
+
+	local pl = ents.get_local_player()
+	if(enabled) then
+		self:SwitchToWorkCamera(true)
+		self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_WALK)
+		if(pl ~= nil) then pl:SetObserverMode(ents.PlayerComponent.OBSERVERMODE_THIRDPERSON) end
+	else
+		self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK)
+		if(pl ~= nil) then pl:SetObserverMode(ents.PlayerComponent.OBSERVERMODE_FIRSTPERSON) end
+	end
+end
 function gui.PFMViewport:SwitchToSceneCamera()
+	self:SwitchToGameplay(false)
 	local camScene = ents.PFMCamera.get_active_camera()
+	local camName = ""
 	if(util.is_valid(camScene)) then
 		local camData = camScene:GetCameraData()
-		if(util.is_valid(self.m_btCamera)) then self.m_btCamera:SetText(camData:GetName()) end
+		if(util.is_valid(self.m_btCamera)) then camName = camData:GetName() end
 	end
+	if(#camName == 0) then camName = locale.get_text("pfm_scene_camera") end
+	self.m_btCamera:SetText(camName)
 	ents.PFMCamera.set_camera_enabled(true)
 end
-function gui.PFMViewport:SwitchToWorkCamera()
+function gui.PFMViewport:SwitchToWorkCamera(ignoreGameplay)
+	if(ignoreGameplay ~= true) then self:SwitchToGameplay(false) end
 	if(util.is_valid(self.m_btCamera)) then self.m_btCamera:SetText(locale.get_text("pfm_work_camera")) end
 	ents.PFMCamera.set_camera_enabled(false)
 end

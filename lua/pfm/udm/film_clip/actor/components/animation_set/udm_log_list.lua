@@ -11,7 +11,11 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG_LIST,"times",udm.ValueArr
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG_LIST,"values",udm.ValueArray())
 
 local interpolationFunctions = {
-	[util.VAR_TYPE_INT32] = function(value0,value1,interpAm) return value0 end, -- No interpolation, just return the lower value
+	[util.VAR_TYPE_INT32] = function(value0,value1,interpAm) return (interpAm == 1.0) and value1 or value0 end, -- No interpolation, just return the lower value
+	[util.VAR_TYPE_BOOL] = function(value0,value1,interpAm)
+		if(interpAm == 1.0) then return value1 end
+		return value0
+	end, -- No interpolation, just return the lower value
 	[util.VAR_TYPE_FLOAT] = function(value0,value1,interpAm) return math.lerp(value0,value1,interpAm) end,
 	[util.VAR_TYPE_VECTOR] = function(value0,value1,interpAm) return value0:Lerp(value1,interpAm) end,
 	[util.VAR_TYPE_QUATERNION] = function(value0,value1,interpAm) return value0:Slerp(value1,interpAm) end
@@ -29,7 +33,7 @@ function udm.PFMLogList:CalcInterpolatedValue(targetTime)
 	local type = self:GetValues():GetValueType()
 	local interpolationFunction = interpolationFunctions[type]
 	if(interpolationFunction == nil) then
-		pfm.log("No interpolation function found for log attribute type '" .. udm.get_type_name(type) .. "'! Log layer '" .. self:GetName() .. "' will be ignored!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		pfm.log("No interpolation function found for log attribute type '" .. util.variable_type_to_string(type) .. "'! Log layer '" .. self:GetName() .. "' will be ignored!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
 	

@@ -21,6 +21,7 @@ function ents.PFMAnimationSet:Initialize()
 	-- TODO: Only add these if this is an articulated actor
 	self:AddEntityComponent(ents.COMPONENT_FLEX)
 	self:AddEntityComponent(ents.COMPONENT_VERTEX_ANIMATED)
+	
 	local actorC = self:AddEntityComponent("pfm_actor")
 	self.m_translationChannel = actorC:AddChannel(ents.PFMActorComponent.TranslationChannel())
 	self.m_rotationChannel = actorC:AddChannel(ents.PFMActorComponent.RotationChannel())

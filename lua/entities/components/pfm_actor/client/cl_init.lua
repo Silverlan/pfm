@@ -46,6 +46,8 @@ function ents.PFMActorComponent:OnEntitySpawn()
 	table.insert(self.m_listeners,t:GetPositionAttr():AddChangeListener(update_pose))
 	table.insert(self.m_listeners,t:GetRotationAttr():AddChangeListener(update_pose))
 	table.insert(self.m_listeners,t:GetScaleAttr():AddChangeListener(update_pose))
+
+	table.insert(self.m_listeners,actorData:GetVisibleAttr():AddChangeListener(function(visible) self:UpdateRenderMode() end))
 end
 
 function ents.PFMActorComponent:UpdatePose()
@@ -86,6 +88,7 @@ function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
 	for _,channel in ipairs(self:GetChannels()) do
 		channel:Apply(ent,newOffset)
 	end]]
+	self:BroadcastEvent(ents.PFMActorComponent.EVENT_ON_OFFSET_CHANGED,{clipOffset})
 end
 
 function ents.PFMActorComponent:Setup(actorData)
@@ -109,3 +112,4 @@ function ents.PFMActorComponent:Setup(actorData)
 	end
 end
 ents.COMPONENT_PFM_ACTOR = ents.register_component("pfm_actor",ents.PFMActorComponent)
+ents.PFMActorComponent.EVENT_ON_OFFSET_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR,"on_offset_changed")

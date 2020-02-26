@@ -45,6 +45,9 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetSize(1280,1024)
 	self:SetSkin("pfm")
 	self.m_selectionManager = pfm.SelectionManager()
+	self.m_selectionManager:AddChangeListener(function(ent,selected)
+		self:OnActorSelectionChanged(ent,selected)
+	end)
 	local pMenuBar = self:GetMenuBar()
 	self.m_menuBar = pMenuBar
 
@@ -53,6 +56,10 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 
 		end)]]
+		pContext:AddItem(locale.get_text("new") .. "...",function(pItem)
+			if(util.is_valid(self) == false) then return end
+			self:CreateNewProject()
+		end)
 		pContext:AddItem(locale.get_text("import") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
 			if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
@@ -62,7 +69,9 @@ function gui.WIFilmmaker:OnInitialize()
 			self.m_openDialogue:SetRootPath("elements/sessions")
 			self.m_openDialogue:SetExtensions({"dmx"})
 			self.m_openDialogue:GetFileList():SetFileFinder(function(path)
-				local tFiles,tDirs = file.find(path)
+				local tFiles,tDirs = file.find(path .. "*")
+				tFiles = file.find(path .. "*.dmx")
+
 				local tFilesExt,tDirsExt = file.find_external_game_asset_files(path .. "*")
 				tFilesExt = file.find_external_game_asset_files(path .. ".dmx")
 				
@@ -146,10 +155,12 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(entPbrConverter) == false) then return end
 			local pbrC = entPbrConverter:GetComponent(ents.COMPONENT_PBR_CONVERTER)
 			for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_MODEL)}) do
-				local mdl = ent:GetModel()
-				if(mdl == nil or ent:IsWorld()) then return end
-				pbrC:GenerateAmbientOcclusionMaps(mdl)
-				-- TODO: Also include all models for entire project which haven't been loaded yet
+				if(ent:IsWorld() == false) then
+					local mdl = ent:GetModel()
+					if(mdl == nil or ent:IsWorld()) then return end
+					pbrC:GenerateAmbientOcclusionMaps(mdl)
+					-- TODO: Also include all models for entire project which haven't been loaded yet
+				end
 			end
 		end)
 		pSubMenu:AddItem(locale.get_text("pfm_rebuild_reflection_probes"),function(pItem)
@@ -280,10 +291,6 @@ function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
-function gui.WIFilmmaker:OnRemove()
-	gui.WIBaseEditor.OnRemove(self)
-	self.m_selectionManager:Remove()
-end
 function gui.WIFilmmaker:GetSelectionManager() return self.m_selectionManager end
 function gui.WIFilmmaker:AddFrame(parent)
 	if(util.is_valid(self.m_contents) == false) then return end
@@ -326,6 +333,7 @@ function gui.WIFilmmaker:OnRemove()
 	if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
 	if(self.m_previewWindow ~= nil) then self.m_previewWindow:Remove() end
 	if(self.m_renderResultWindow ~= nil) then self.m_renderResultWindow:Remove() end
+	self.m_selectionManager:Remove()
 end
 function gui.WIFilmmaker:CaptureRaytracedImage()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
@@ -373,6 +381,14 @@ function gui.WIFilmmaker:InitializeProject(project)
 
 	local session = self:GetSession()
 	if(session ~= nil) then
+		local filmTrack = session:GetFilmTrack()
+		if(filmTrack ~= nil) then
+			filmTrack:GetFilmClipsAttr():AddChangeListener(function(newEl)
+				if(util.is_valid(self.m_timeline) == false) then return end
+				self:AddFilmClipElement(newEl)
+				self:RefreshGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.
+			end)
+		end
 		self.m_cbPlayOffset = session:GetSettings():GetPlayheadOffsetAttr():AddChangeListener(function(newOffset)
 			self.m_updatingProjectTimeOffset = true
 			if(util.is_valid(self.m_playhead)) then self.m_playhead:SetTimeOffset(newOffset) end
@@ -402,10 +418,38 @@ function gui.WIFilmmaker:InitializeProject(project)
 	self:InitializeProjectUI()
 	return entScene
 end
+function gui.WIFilmmaker:RefreshGameView()
+	if(util.is_valid(self.m_gameView) == false) then return end
+	local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
+	if(projectC == nil) then return end
+	projectC:Start()
+end
+function gui.WIFilmmaker:AddFilmClipElement(filmClip)
+	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip,filmClip,function(elFilmClip)
+		local filmClipData = elFilmClip:GetFilmClipData()
+		if(util.is_valid(self.m_actorEditor)) then
+			self.m_actorEditor:Setup(filmClipData)
+		end
+	end)
+	pFilmClip:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)
+		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+			local pContext = gui.open_context_menu()
+			if(util.is_valid(pContext) == false) then return end
+			pContext:SetPos(input.get_cursor_pos())
+			pContext:AddItem(locale.get_text("pfm_show_in_element_viewer"),function()
+				self:ShowInElementViewer(filmClip)
+			end)
+			pContext:Update()
+			return util.EVENT_REPLY_HANDLED
+		end
+		return util.EVENT_REPLY_UNHANDLED
+	end)
+	return pFilmClip
+end
 function gui.WIFilmmaker:CreateNewProject()
 	self:CloseProject()
 	pfm.log("Creating new project...",pfm.LOG_CATEGORY_PFM)
-	return self:InitializeProject(pfm.create_project())
+	return self:InitializeProject(pfm.create_empty_project())
 end
 function gui.WIFilmmaker:ImportSFMProject(projectFilePath)
 	self:CloseProject()
@@ -522,29 +566,10 @@ function gui.WIFilmmaker:InitializeProjectUI()
 			return util.EVENT_REPLY_UNHANDLED
 		end)
 
-		local trackGroup = filmClip:FindSubClipTrackGroup()
-		local trackFilm = trackGroup:FindElementsByName("Film")[1]
+		local trackFilm = session:GetFilmTrack()
 		if(trackFilm ~= nil) then
 			for _,filmClip in ipairs(trackFilm:GetFilmClips():GetTable()) do
-				local pFilmClip = pfmTimeline:AddFilmClip(filmStrip,filmClip,function(elFilmClip)
-					local filmClipData = elFilmClip:GetFilmClipData()
-					if(util.is_valid(self.m_actorEditor)) then
-						self.m_actorEditor:Setup(filmClipData)
-					end
-				end)
-				pFilmClip:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)
-					if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-						local pContext = gui.open_context_menu()
-						if(util.is_valid(pContext) == false) then return end
-						pContext:SetPos(input.get_cursor_pos())
-						pContext:AddItem(locale.get_text("pfm_show_in_element_viewer"),function()
-							self:ShowInElementViewer(filmClip)
-						end)
-						pContext:Update()
-						return util.EVENT_REPLY_HANDLED
-					end
-					return util.EVENT_REPLY_UNHANDLED
-				end)
+				self:AddFilmClipElement(filmClip)
 			end
 		end
 		filmStrip:SetSize(1024,64)
@@ -596,6 +621,13 @@ function gui.WIFilmmaker:InitializeProjectUI()
 			end
 		end
 	end
+end
+function gui.WIFilmmaker:OnActorSelectionChanged(ent,selected)
+	if(util.is_valid(self.m_viewport) == false) then return end
+	self.m_viewport:OnActorSelectionChanged(ent,selected)
+end
+function gui.WIFilmmaker:GetActiveCamera()
+	return game.get_render_scene_camera()
 end
 function gui.WIFilmmaker:GetActiveFilmClip()
 	local session = self:GetSession()

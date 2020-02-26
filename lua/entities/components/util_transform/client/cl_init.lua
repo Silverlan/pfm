@@ -1,7 +1,7 @@
 include("../shared.lua")
 include_component("util_transform_arrow")
 
-local flags = bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER)
+local flags = bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER,ents.BaseEntityComponent.MEMBER_FLAG_BIT_PROPERTY)
 ents.UtilTransformComponent:RegisterMember("TranslationEnabled",util.VAR_TYPE_BOOL,true,flags,1)
 ents.UtilTransformComponent:RegisterMember("RotationEnabled",util.VAR_TYPE_BOOL,true,flags,1)
 
@@ -70,6 +70,14 @@ function ents.UtilTransformComponent:SetTransformRotation(ang)
   self:BroadcastEvent(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,{ang})
 end
 
+function ents.UtilTransformComponent:OnRemove()
+  for type,t in pairs(self.m_arrows) do
+    for axis,ent in pairs(t) do
+      if(ent:IsValid()) then ent:RemoveSafely() end
+    end
+  end
+end
+
 function ents.UtilTransformComponent:CreateTransformUtility(axis,type)
   local entArrow = ents.create("entity")
   local arrowC = entArrow:AddComponent("util_transform_arrow")
@@ -79,8 +87,8 @@ function ents.UtilTransformComponent:CreateTransformUtility(axis,type)
   arrowC:SetType(type)
   arrowC:SetUtilTransformComponent(self)
   
-  table.insert(self.m_arrows,entArrow)
-  self:GetEntity():RemoveEntityOnRemoval(entArrow)
+  self.m_arrows[type] = self.m_arrows[type] or {}
+  self.m_arrows[type][axis] = entArrow
 end
 
 ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_pos_changed")

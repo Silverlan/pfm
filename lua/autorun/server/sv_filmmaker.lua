@@ -18,10 +18,13 @@ net.receive("sv_pfm_camera_mode",function(packet,pl)
 		if(camMode == CAMERA_MODE_PLAYBACK or camMode == CAMERA_MODE_FLY) then
 			physC:SetMoveType(ents.PhysicsComponent.MOVETYPE_NOCLIP)
 			physC:SetCollisionFilterGroup(phys.COLLISIONMASK_NO_COLLISION)
-		else physC:SetMoveType(ents.PhysicsComponent.MOVETYPE_WALK) end
+		else
+			physC:SetMoveType(ents.PhysicsComponent.MOVETYPE_WALK)
+			physC:SetCollisionFilterGroup(phys.COLLISIONMASK_PLAYER)
+		end
 	end
 
-	local updatePos = packet:ReadBool()
+	--[[local updatePos = packet:ReadBool()
 	if(updatePos == true) then
 		local pos = packet:ReadVector()
 		local rot = packet:ReadQuaternion()
@@ -38,18 +41,5 @@ net.receive("sv_pfm_camera_mode",function(packet,pl)
 		local charC = ent:GetComponent(ents.COMPONENT_CHARACTER)
 		if(charC ~= nil) then charC:SetViewAngles(ang)
 		else ent:SetAngles(ang) end
-	end
+	end]]
 end)
-
---[[
-
-	local packet = net.Packet()
-	packet:WriteUInt8(camMode)
-	local cam = game.get_render_scene_camera()
-	if(cam ~= nil) then
-		packet:WriteBool(true)
-		packet:WriteVector(cam:GetEntity():GetPos())
-		packet:WriteQuaternion(cam:GetEntity():GetRotation())
-	else packet:WriteBool(false) end
-	net.send(net.PROTOCOL_SLOW_RELIABLE,"sv_pfm_camera_mode",packet)
-]]

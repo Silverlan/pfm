@@ -6,7 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_ARRAY = udm.register_element("Array")
+include("../udm_listener.lua")
+
+udm.ELEMENT_TYPE_ARRAY = udm.register_type("Array",{udm.BaseElement,udm.Listener},true)
 function udm.Array:Initialize(elementType)
 	udm.BaseElement.Initialize(self)
 	self.m_array = {}
@@ -70,6 +72,7 @@ function udm.Array:Insert(pos,attr)
 	end
 	table.insert(self:GetValue(),pos,attr)
 	self:AddChild(attr,"[" .. tostring(#self -1) .. "]")
+	self:InvokeChangeListeners(attr,pos)
 end
 
 function udm.Array:PushFront(attr)

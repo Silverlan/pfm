@@ -19,3 +19,40 @@ function udm.PFMSession:GetPlayheadOffset() return self:GetSettings():GetPlayhea
 function udm.PFMSession:GetFrameRate() return self:GetSettings():GetFrameRate() end
 function udm.PFMSession:TimeOffsetToFrameOffset(offset) return self:GetSettings():TimeOffsetToFrameOffset(offset) end
 function udm.PFMSession:FrameOffsetToTimeOffset(offset) return self:GetSettings():FrameOffsetToTimeOffset(offset) end
+
+function udm.PFMSession:GetFilmTrack()
+	local filmClip = self:GetActiveClip()
+	if(filmClip == nil) then return end
+	local trackGroup = filmClip:FindSubClipTrackGroup()
+	return (trackGroup ~= nil) and trackGroup:FindElementsByName("Film")[1] or nil
+end
+
+function udm.PFMSession:UpdateTimeFrame()
+	local filmTrack = self:GetFilmTrack()
+	local activeClip = self:GetActiveClip()
+	if(filmTrack == nil or activeClip == nil) then return end
+	local timeFrame = filmTrack:CalcTimeFrame()
+	local clipTimeFrame = activeClip:GetTimeFrame()
+	clipTimeFrame:SetStart(timeFrame:GetStart())
+	clipTimeFrame:SetDuration(timeFrame:GetDuration())
+end
+
+function udm.PFMSession:AddFilmClip()
+	local filmTrack = self:GetFilmTrack()
+	if(filmTrack == nil) then return end
+	local name = "shot"
+	local filmClipNames = {}
+	local endTime = 0.0
+	for _,filmClip in ipairs(filmTrack:GetFilmClips():GetTable()) do
+		filmClipNames[filmClip:GetName()] = true
+		endTime = math.max(endTime,filmClip:GetTimeFrame():GetEnd())
+	end
+	local i = 1
+	while(filmClipNames[name .. i] ~= nil) do i = i +1 end
+	local filmClip = udm.create_element(udm.ELEMENT_TYPE_PFM_FILM_CLIP,name)
+	filmClip:GetTimeFrame():SetDuration(10.0)
+	filmClip:GetTimeFrame():SetStart(endTime)
+	filmTrack:AddFilmClip(filmClip)
+	self:UpdateTimeFrame()
+	return filmClip
+end

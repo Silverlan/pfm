@@ -286,9 +286,14 @@ function gui.PFMTimeline:InitializeToolbar()
 
 	gui.create("WIBase",toolbarLeft):SetSize(6,1) -- Gap
 	self.m_clipControls = gui.create("WIHBox",toolbarLeft)
-	self.m_btAddTrackGroup = gui.PFMButton.create(self.m_clipControls,"gui/pfm/icon_cp_plus_drop","gui/pfm/icon_cp_plus_drop_activated",function()
-		print("TODO")
-	end)
+	self.m_btAddTrackGroup = gui.PFMButton.create(self.m_clipControls,"gui/pfm/icon_cp_plus_drop","gui/pfm/icon_cp_plus_drop_activated")
+	self.m_btAddTrackGroup:SetupContextMenu(function(pContext)
+		pContext:AddItem(locale.get_text("pfm_add_film_clip"),function()
+			local filmmaker = tool.get_filmmaker()
+			local session = filmmaker:GetSession()
+			session:AddFilmClip()
+		end)
+	end,true)
 	gui.create("WIBase",self.m_clipControls):SetSize(18,1) -- Gap
 	self.m_btUp = gui.PFMButton.create(self.m_clipControls,"gui/pfm/icon_timeline_up","gui/pfm/icon_timeline_up_activated",function()
 		print("TODO")

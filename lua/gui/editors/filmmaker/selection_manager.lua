@@ -19,7 +19,12 @@ function pfm.SelectionManager:__init()
 	self.m_shader = shader.get("pfm_selection")
 	self.m_shaderWireframe = shader.get("pfm_selection_wireframe")
 	self.m_valid = (self.m_material ~= nil and self.m_shader ~= nil and self.m_shaderWireframe ~= nil)
+	self.m_listeners = {}
 end
+
+function pfm.SelectionManager:AddChangeListener(listener) table.insert(self.m_listeners,listener) end
+
+function pfm.SelectionManager:GetSelectedActors() return self.m_selections end
 
 function pfm.SelectionManager:PrepareSelectionMeshesForRendering(renderer)
 	if(self.m_valid == false) then return end
@@ -49,6 +54,9 @@ end
 
 function pfm.SelectionManager:SetSelected(ent,selected)
 	self.m_selections[ent] = selected or nil
+	for _,listener in ipairs(self.m_listeners) do
+		listener(ent,selected)
+	end
 end
 
 function pfm.SelectionManager:Select(ent) self:SetSelected(ent,true) end

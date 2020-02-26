@@ -11,7 +11,7 @@ include("actor/components")
 udm.ELEMENT_TYPE_PFM_ACTOR = udm.register_element("PFMActor")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"transform",udm.Transform())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"components",udm.Array(udm.ELEMENT_TYPE_ANY))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"visible",udm.Bool(false),{
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"visible",udm.Bool(true),{
 	getter = "IsVisible"
 })
 
