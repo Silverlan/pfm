@@ -12,6 +12,12 @@ udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM = udm.register_element("PFMParticleSystem")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"timeScale",udm.Float(1.0))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"definition",udm.PFMParticleSystemDefinition())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"controlPoints",udm.Array(udm.ELEMENT_TYPE_PFM_TRANSFORM))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"simulating",udm.Bool(true),{
+	getter = "IsSimulating"
+})
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"emitting",udm.Bool(true),{
+	getter = "IsEmitting"
+})
 
 function udm.PFMParticleSystem:GetComponentName() return "pfm_particle_system" end
 function udm.PFMParticleSystem:GetIconMaterial() return "gui/pfm/icon_particle_item" end

@@ -97,6 +97,46 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	deviceType:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_device_type"))
 
+	-- Quality preset
+	local presets = {
+		{
+			name = "very_low",
+			emission_strength = 0.0,
+			samples = 20.0,
+			max_transparency_bounces = 1
+		},
+		{
+			name = "low",
+			emission_strength = 0.0,
+			samples = 40.0,
+			max_transparency_bounces = 4
+		},
+		{
+			name = "medium",
+			emission_strength = 0.0,
+			samples = 80.0,
+			max_transparency_bounces = 8
+		},
+		{
+			name = "high",
+			emission_strength = 1.0,
+			samples = 120.0,
+			max_transparency_bounces = 64
+		},
+		{
+			name = "very_high",
+			emission_strength = 1.0,
+			samples = 200.0,
+			max_transparency_bounces = 128
+		}
+	}
+	local qualityPreset = gui.create("WIDropDownMenu",p)
+	for _,preset in ipairs(presets) do
+		qualityPreset:AddOption(locale.get_text("pfm_cycles_quality_preset_" .. preset.name),preset.name)
+	end
+	-- qualityPreset:SetTooltip(locale.get_text("pfm_cycles_quality_preset_desc"))
+	qualityPreset:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_quality_preset"))
+
 	-- Sample count
 	local samplesPerPixel = gui.create("WIPFMSlider",p)
 	samplesPerPixel:SetText(locale.get_text("pfm_samples_per_pixel"))
@@ -141,6 +181,10 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		pFileDialog:Update()
 	end)
 	skyOverride:SetTooltip(locale.get_text("pfm_sky_override_desc"))
+
+	-- Choose a default sky
+	local skies = file.find("materials/skies/*.hdr")
+	if(#skies > 0) then skyOverride:SetValue("skies/" .. skies[1]) end
 	self.m_ctrlSkyOverride = skyOverride
 
 	skyOverride:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_sky_override"))
@@ -149,7 +193,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	local skyStrength = gui.create("WIPFMSlider",p)
 	skyStrength:SetText(locale.get_text("pfm_sky_strength"))
 	skyStrength:SetRange(0,100)
-	skyStrength:SetDefault(1)
+	skyStrength:SetDefault(30)
 	skyStrength:SetTooltip(locale.get_text("pfm_sky_strength_desc"))
 	self.m_ctrlSkyStrength = skyStrength
 
@@ -176,6 +220,14 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	lightIntensityFactor:SetDefault(1.0)
 	lightIntensityFactor:SetTooltip(locale.get_text("pfm_light_intensity_factor_desc"))
 	self.m_ctrlLightIntensityFactor = lightIntensityFactor
+
+	-- Emission strength
+	local emissionStrength = gui.create("WIPFMSlider",p)
+	emissionStrength:SetText(locale.get_text("pfm_emission_strength"))
+	emissionStrength:SetRange(0,20)
+	emissionStrength:SetDefault(1.0)
+	emissionStrength:SetTooltip(locale.get_text("pfm_emission_strength_desc"))
+	self.m_ctrlEmissionStrength = emissionStrength
 
 	-- Number of frames
 	local frameCount = gui.create("WIPFMSlider",p)
@@ -229,11 +281,15 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	renderPlayer:SetTooltip(locale.get_text("pfm_render_player_desc"))
 	self.m_ctrlRenderPlayer = renderPlayer
 
-	local sceneLights = gui.create("WIToggleOption",p)
-	sceneLights:SetText(locale.get_text("pfm_render_scene_lights"))
-	sceneLights:SetChecked(false)
-	sceneLights:SetTooltip(locale.get_text("pfm_render_scene_lights_desc"))
-	self.m_ctrlSceneLights = sceneLights
+	-- Presets
+	qualityPreset:AddCallback("OnOptionSelected",function(el,option)
+		local preset = presets[option +1]
+		if(preset == nil) then return end
+		if(preset.samples ~= nil) then samplesPerPixel:SetValue(preset.samples) end
+		if(preset.max_transparency_bounces ~= nil) then maxTransparencyBounces:SetValue(preset.max_transparency_bounces) end
+		if(preset.emission_strength ~= nil) then emissionStrength:SetValue(preset.emission_strength) end
+	end)
+	qualityPreset:SelectOption(2)
 end
 function gui.PFMRenderPreview:InitializeControls()
 	local controls = gui.create("WIHBox",self.m_contents)
@@ -248,6 +304,10 @@ function gui.PFMRenderPreview:InitializeControls()
 	gui.create("WIBase",controls,0,0,5,1) -- Gap
 
 	self.m_btRefresh = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
+		if(self:IsRendering()) then
+			self:CancelRendering()
+			return
+		end
 		self:Refresh()
 	end)
 	self.m_btRefresh:SetText(locale.get_text("pfm_render_image"))
@@ -267,7 +327,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	controls:SetAnchor(0,1,0,1)
 end
 function gui.PFMRenderPreview:OnRemove()
-	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
+	self:CancelRendering()
 end
 function gui.PFMRenderPreview:OnThink()
 	if(self.m_raytracingJob == nil) then return end
@@ -304,7 +364,7 @@ function gui.PFMRenderPreview:OnThink()
 	self.m_raytracingJob = nil
 
 	if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(true) end
-	if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetEnabled(true) end
+	if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetText(locale.get_text("pfm_render_image")) end
 
 	self:DisableThinking()
 	self:SetAlwaysUpdate(false)
@@ -348,20 +408,23 @@ function gui.PFMRenderPreview:RenderNextFrame()
 	local fov = cam:GetFOV()
 	local vp = cam:GetProjectionMatrix() *cam:GetViewMatrix()
 	local cullObjectsOutsidePvs = true
+	
+	-- Note: Settings have to be initialized before setting up the game scene
+	scene:SetSkyAngles(EulerAngles(0,renderSettings.skyYaw,0))
+	scene:SetSkyStrength(renderSettings.skyStrength)
+	scene:SetEmissionStrength(renderSettings.emissionStrength)
+	scene:SetMaxTransparencyBounces(renderSettings.maxTransparencyBounces)
+	scene:SetLightIntensityFactor(renderSettings.lightIntensityFactor)
+	scene:SetResolution(renderSettings.width,renderSettings.height)
+
 	scene:InitializeFromGameScene(pos,rot,vp,nearZ,farZ,fov,cullObjectsOutsidePvs,function(ent)
 		if(ent:IsWorld()) then return renderSettings.renderWorld end
 		if(ent:IsPlayer()) then return renderSettings.renderPlayer end
 		return renderSettings.renderGameEntities or ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
 	end,function(ent)
-		return renderSettings.renderSceneLights
+		return true
 	end)
 	if(#renderSettings.sky > 0) then scene:SetSky(renderSettings.sky) end
-	
-	scene:SetSkyAngles(EulerAngles(0,renderSettings.skyYaw,0))
-	scene:SetSkyStrength(renderSettings.skyStrength)
-	scene:SetMaxTransparencyBounces(renderSettings.maxTransparencyBounces)
-	scene:SetLightIntensityFactor(renderSettings.lightIntensityFactor)
-	scene:SetResolution(renderSettings.width,renderSettings.height)
 	
 	pfm.log("Starting render job for frame " .. renderSettings.currentFrame .. "...",pfm.LOG_CATEGORY_PFM_INTERFACE)
 
@@ -380,10 +443,17 @@ function gui.PFMRenderPreview:RenderNextFrame()
 		if(util.is_valid(filmmaker)) then filmmaker:GoToNextFrame() end
 	end
 end
+function gui.PFMRenderPreview:IsRendering() return (self.m_raytracingJob ~= nil and self.m_raytracingJob:IsComplete() == false) end
+function gui.PFMRenderPreview:CancelRendering()
+	if(self:IsRendering() == false) then return end
+	self.m_raytracingJob:Cancel()
+end
 function gui.PFMRenderPreview:Refresh(preview)
-	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
+	self:CancelRendering()
 	if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(false) end
-	if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetEnabled(false) end
+	if(util.is_valid(self.m_btRefresh)) then
+		self.m_btRefresh:SetText(locale.get_text("pfm_cancel_rendering"))
+	end
 
 	local r = engine.load_library("cycles/pr_cycles")
 	if(r ~= true) then
@@ -411,6 +481,7 @@ function gui.PFMRenderPreview:Refresh(preview)
 		samples = samples or self.m_ctrlSamplesPerPixel:GetValue(),
 		sky = self.m_ctrlSkyOverride:GetValue(),
 		skyStrength = self.m_ctrlSkyStrength:GetValue(),
+		emissionStrength = self.m_ctrlEmissionStrength:GetValue(),
 		skyYaw = self.m_ctrlSkyYaw:GetValue(),
 		maxTransparencyBounces = self.m_ctrlMaxTransparencyBounces:GetValue(),
 		lightIntensityFactor = self.m_ctrlLightIntensityFactor:GetValue(),
@@ -421,7 +492,6 @@ function gui.PFMRenderPreview:Refresh(preview)
 		renderWorld = self.m_ctrlRenderWorld:IsChecked(),
 		renderGameEntities = self.m_ctrlRenderGameEntities:IsChecked(),
 		renderPlayer = self.m_ctrlRenderPlayer:IsChecked(),
-		renderSceneLights = self.m_ctrlSceneLights:IsChecked(),
 		currentFrame = -1,
 		width = preview and 512 or self.m_ctrlResolutionWidth:GetValue(),
 		height = preview and 512 or self.m_ctrlResolutionHeight:GetValue(),

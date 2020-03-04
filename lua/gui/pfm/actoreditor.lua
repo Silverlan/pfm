@@ -35,29 +35,53 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_btTools:SetX(self:GetWidth() -self.m_btTools:GetWidth())
 	self.m_btTools:SetupContextMenu(function(pContext)
 		pContext:AddItem(locale.get_text("pfm_create_new_actor"),function()
-			local filmClip = self:GetFilmClip()
-			if(filmClip == nil) then return end
-			local actor = udm.PFMActor()
-			local actorName = "actor"
-
-			local actorIndex = 1
-			while(filmClip:FindActor(actorName .. actorIndex) ~= nil) do actorIndex = actorIndex +1 end
-			actor:ChangeName(actorName .. actorIndex)
-
-			local pos = Vector()
-			local rot = Quaternion()
-			local cam = tool.get_filmmaker():GetActiveCamera()
-			if(util.is_valid(cam)) then
-				local entCam = cam:GetEntity()
-				pos = entCam:GetPos() +entCam:GetForward() *100.0
-				rot = EulerAngles(0,entCam:GetAngles().y,0):ToQuaternion()
-			end
-			local t = actor:GetTransform()
-			t:SetPosition(pos)
-			t:SetRotation(rot)
-
-			filmClip:GetActors():PushBack(actor)
-			self:AddActor(actor)
+			self:AddNewActor()
+		end)
+		pContext:AddItem(locale.get_text("pfm_create_new_articulated_actor"),function()
+			gui.open_model_dialog(function(dialogResult,mdlName)
+				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
+				if(self:IsValid() == false) then return end
+				local actor = self:CreateNewActor()
+				if(actor == nil) then return end
+				local mdlC = self:CreateNewActorComponent(actor,"PFMModel")
+				self:CreateNewActorComponent(actor,"PFMAnimationSet")
+				if(mdlC ~= nil) then mdlC:SetModelName(mdlName) end
+			end)
+		end)
+		pContext:AddItem(locale.get_text("pfm_create_new_prop"),function()
+			gui.open_model_dialog(function(dialogResult,mdlName)
+				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
+				if(self:IsValid() == false) then return end
+				local actor = self:CreateNewActor()
+				if(actor == nil) then return end
+				local mdlC = self:CreateNewActorComponent(actor,"PFMModel")
+				if(mdlC ~= nil) then mdlC:SetModelName(mdlName) end
+			end)
+		end)
+		pContext:AddItem(locale.get_text("pfm_create_new_camera"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			self:CreateNewActorComponent(actor,"PFMCamera")
+		end)
+		pContext:AddItem(locale.get_text("pfm_create_new_particle_system"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			self:CreateNewActorComponent(actor,"PFMParticleSystem")
+		end)
+		pContext:AddItem(locale.get_text("pfm_create_new_spot_light"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			self:CreateNewActorComponent(actor,"PFMSpotLight")
+		end)
+		pContext:AddItem(locale.get_text("pfm_create_new_point_light"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			self:CreateNewActorComponent(actor,"PFMPointLight")
+		end)
+		pContext:AddItem(locale.get_text("pfm_create_new_directional_light"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			self:CreateNewActorComponent(actor,"PFMDirectionalLight")
 		end)
 		--[[local history = self:GetHistory()
 		local pos = history:GetCurrentPosition()
@@ -125,7 +149,7 @@ function gui.PFMActorEditor:OnInitialize()
 
 	self.m_tree = gui.create("WIPFMTreeView",treeScrollContainer,0,0,treeScrollContainer:GetWidth(),treeScrollContainer:GetHeight())
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
-	self.m_treeElementToActor = {}
+	self.m_treeElementToActorData = {}
 	self.m_tree:AddCallback("OnItemSelectChanged",function(tree,el,selected)
 		self:UpdateSelectedEntities()
 	end)
@@ -136,6 +160,55 @@ function gui.PFMActorEditor:OnInitialize()
 
 	self.m_leftRightWeightSlider = gui.create("WIPFMWeightSlider",self.m_animSetControlsVBox)
 	return slider
+end
+function gui.PFMActorEditor:CreateNewActor()
+	local filmClip = self:GetFilmClip()
+	if(filmClip == nil) then return end
+	local actor = udm.PFMActor()
+	local actorName = "actor"
+
+	local actorIndex = 1
+	while(filmClip:FindActor(actorName .. actorIndex) ~= nil) do actorIndex = actorIndex +1 end
+	actor:ChangeName(actorName .. actorIndex)
+
+	local pos = Vector()
+	local rot = Quaternion()
+	local cam = tool.get_filmmaker():GetActiveCamera()
+	if(util.is_valid(cam)) then
+		local entCam = cam:GetEntity()
+		pos = entCam:GetPos() +entCam:GetForward() *100.0
+		rot = EulerAngles(0,entCam:GetAngles().y,0):ToQuaternion()
+	end
+	local t = actor:GetTransform()
+	t:SetPosition(pos)
+	t:SetRotation(rot)
+
+	filmClip:GetActors():PushBack(actor)
+	self:AddActor(actor)
+	return actor
+end
+function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType)
+	local itemActor
+	for elTree,data in pairs(self.m_treeElementToActorData) do
+		if(util.is_same_object(actor,data.actor)) then
+			itemActor = elTree
+			break
+		end
+	end
+
+	local component = udm[componentType]()
+	if(itemActor == nil or component == nil) then return end
+	local actorData = self.m_treeElementToActorData[itemActor]
+	local componentName = component:GetComponentName() .. "_component"
+	local componentIndex = 1
+	while(actor:FindComponent(componentName .. componentIndex) ~= nil) do componentIndex = componentIndex +1 end
+	component:ChangeName((componentIndex == 1) and componentName or (componentName .. componentIndex))
+
+	actor:AddComponent(component)
+
+	self:AddActorComponent(itemActor,actorData.componentsEntry,component)
+	actorData.componentsEntry:Update()
+	return component
 end
 function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	if(util.is_valid(self.m_animSetControlsVBox) == false) then return end
@@ -252,8 +325,8 @@ function gui.PFMActorEditor:UpdateSelectedEntities()
 		end
 		if(selected and level == 1) then
 			-- Root element or one of its children is selected; Select entity associated with the actor
-			local actorData = self.m_treeElementToActor[el]
-			local ent = actorData:FindEntity()
+			local actorData = self.m_treeElementToActorData[el]
+			local ent = actorData.actor:FindEntity()
 			if(ent ~= nil) then
 				selectionManager:Select(ent)
 			end
@@ -265,8 +338,8 @@ end
 function gui.PFMActorEditor:GetFilmClip() return self.m_filmClip end
 function gui.PFMActorEditor:SelectActor(actor)
 	if(util.is_valid(self.m_tree)) then self.m_tree:DeselectAll() end
-	for itemActor,actorOther in pairs(self.m_treeElementToActor) do
-		if(util.is_same_object(actor,actorOther)) then
+	for itemActor,actorData in pairs(self.m_treeElementToActorData) do
+		if(util.is_same_object(actor,actorData.actor)) then
 			if(itemActor:IsValid()) then itemActor:Select() end
 			break
 		end
@@ -284,8 +357,11 @@ function gui.PFMActorEditor:AddActorComponent(itemActor,itemComponents,component
 end
 function gui.PFMActorEditor:AddActor(actor)
 	local itemActor = self.m_tree:AddItem(actor:GetName())
-	self.m_treeElementToActor[itemActor] = actor
 	local itemComponents = itemActor:AddItem(locale.get_text("components"))
+	self.m_treeElementToActorData[itemActor] = {
+		actor = actor,
+		componentsEntry = itemComponents
+	}
 	itemComponents:AddCallback("OnMouseEvent",function(tex,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 			local pContext = gui.open_context_menu()
@@ -296,16 +372,7 @@ function gui.PFMActorEditor:AddActor(actor)
 			for _,componentType in ipairs(components) do
 				-- TODO: Only show in list if actor doesn't already have this component!
 				pComponentsMenu:AddItem(locale.get_text("pfm_add_component_type",{componentType}),function()
-					local component = udm[componentType]()
-
-					local componentName = component:GetComponentName() .. "_component"
-					local componentIndex = 1
-					while(actor:FindComponent(componentName .. componentIndex) ~= nil) do componentIndex = componentIndex +1 end
-					component:ChangeName((componentIndex == 1) and componentName or (componentName .. componentIndex))
-
-					actor:AddComponent(component)
-					self:AddActorComponent(itemActor,itemComponents,component)
-					itemComponents:Update()
+					self:CreateNewActorComponent(actor,componentType)
 				end)
 			end
 			pComponentsMenu:Update()
@@ -321,7 +388,7 @@ function gui.PFMActorEditor:Setup(filmClip)
 	if(util.is_same_object(filmClip,self.m_filmClip)) then return end
 	self.m_filmClip = filmClip
 	self.m_tree:Clear()
-	self.m_treeElementToActor = {}
+	self.m_treeElementToActorData = {}
 	-- TODO: Include groups the actors belong to!
 	for _,actor in ipairs(filmClip:GetActors():GetTable()) do
 		self:AddActor(actor)

@@ -22,6 +22,7 @@ include("/gui/pfm/viewport.lua")
 include("/gui/pfm/timeline.lua")
 include("/gui/pfm/elementviewer.lua")
 include("/gui/pfm/actoreditor.lua")
+include("/gui/pfm/modelcatalog.lua")
 include("/gui/pfm/renderpreview.lua")
 include("/gui/pfm/infobar.lua")
 
@@ -489,6 +490,10 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	end)
 	actorDataFrame:AddTab(locale.get_text("pfm_actor_editor"),actorEditor)
 	self.m_actorEditor = actorEditor -- TODO Determine dynamically
+
+	local modelCatalog = gui.create("WIPFMModelCatalog")
+	actorDataFrame:AddTab(locale.get_text("pfm_model_catalog"),modelCatalog)
+	self.m_modelCatalog = modelCatalog -- TODO Determine dynamically
 
 	local elementViewer = gui.create("WIPFMElementViewer")
 	actorDataFrame:AddTab(locale.get_text("pfm_element_viewer"),elementViewer)

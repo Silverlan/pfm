@@ -10,10 +10,6 @@ include("/sfm/project_converter.lua")
 
 pfm.register_log_category("sfm")
 
-game.add_callback("OnGameReady",function()
-	console.run("map_build_reflection_probes") -- TODO: This should be handled somewhere else
-end)
-
 tool = tool or {}
 tool.close_filmmaker = function()
 	local entScene = ents.find_by_class("pfm_scene")[1]

@@ -21,11 +21,15 @@ function ents.PFMParticleSystem:Initialize()
 
 	self.m_listeners = {}
 	self.m_lastSimulationOffset = 0.0
+	self.m_queuedSimSteps = 0
 end
 function ents.PFMParticleSystem:OnTick(dt)
 	local ptC = self:GetEntity():GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
 	if(ptC == nil) then return end
-	ptC:Simulate(dt)
+	--ptC:Simulate(1 /24.0)--dt)
+	if(self.m_queuedSimSteps == 0) then return end
+	self.m_queuedSimSteps = self.m_queuedSimSteps -1
+	ptC:Simulate(1 /24.0)--dt)
 end
 function ents.PFMParticleSystem:OnOffsetChanged(offset)
 	local dt = offset -self.m_lastSimulationOffset
@@ -33,7 +37,8 @@ function ents.PFMParticleSystem:OnOffsetChanged(offset)
 
 	local ptC = self:GetEntity():GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
 	if(ptC == nil) then return end
-	-- ptC:Simulate(1 /60.0)--dt)
+	self.m_queuedSimSteps = self.m_queuedSimSteps +1
+	--ptC:Simulate(1 /24.0)--dt)
 end
 function ents.PFMParticleSystem:OnRemove()
 	for _,cb in ipairs(self.m_listeners) do
@@ -45,9 +50,10 @@ function ents.PFMParticleSystem:OnEntitySpawn()
 	self:InitializeParticleSystem()
 end
 local function convert_vector(v)
-	return Vector(-v.x,v.z,-v.y)
+	return Vector(v.z,v.y,v.x)
 end
 function ents.PFMParticleSystem:InitializeParticleSystem()
+	if(true) then return end
 	local particleData = self.m_particleData
 	local def = particleData:GetDefinition()
 	local numParticles = def:GetMaxParticles()
@@ -68,8 +74,9 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 	ent:SetKeyValue("emission_rate","100") -- -- TODO: Emitter tostring(1))--tostring(numParticles))
 	ent:SetKeyValue("loop","1")
 	ent:SetKeyValue("auto_simulate","0")
+	ent:SetKeyValue("transform_with_emitter","1")
 	print("MATERIAL: ",material)
-	--particleData:DebugPrint()
+	particleData:DebugPrint()
 	--ent:SetKeyValue("transform_with_emitter","1")
 
 	for _,rendererData in ipairs(def:GetRenderers():GetTable()) do
@@ -80,6 +87,13 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 			pfm.log("Unsupported particle system renderer '" .. name .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME)
 		end
 	end
+	ptC:AddInitializer("random_initial_frame",{
+		
+	})
+	ptC:AddOperator("flamethrower",{})
+	ptC:AddOperator("animation",{
+
+	})
 	for _,operatorData in ipairs(def:GetOperators():GetTable()) do
 		local name = operatorData:GetName()
 		if(string.compare(name,"radius scale",false)) then
@@ -103,6 +117,10 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 				color_fade = tostring(colorFade:GetValue()),
 				fade_start = tostring(startTime:GetValue()),
 				fade_end = tostring(endTime:GetValue())
+			})
+		elseif(string.compare(name,"movement basic",false) or string.compare(name,"basic_movement",false)) then
+			ptC:AddOperator("movement_basic",{
+
 			})
 		elseif(string.compare(name,"alpha fade and decay",false)) then
 			local startFadeIn = operatorData:GetProperty("start_fade_in_time")
@@ -133,15 +151,23 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 		if(string.compare(name,"position within sphere random",false)) then
 			local speedInLocalCoordinateSystemMin = convert_vector(initializerData:GetProperty("speed_in_local_coordinate_system_min"):GetValue())
 			local speedInLocalCoordinateSystemMax = convert_vector(initializerData:GetProperty("speed_in_local_coordinate_system_max"):GetValue())
+			print("Velocity: ",speedInLocalCoordinateSystemMin,speedInLocalCoordinateSystemMax)
 
 			ptC:AddInitializer("initial_velocity",{
-				velocity_min = tostring(speedInLocalCoordinateSystemMin /4.0),
-				velocity_max = tostring(speedInLocalCoordinateSystemMax /4.0)
+				velocity_min = tostring(speedInLocalCoordinateSystemMin),
+				velocity_max = tostring(speedInLocalCoordinateSystemMax)
 			})
 		elseif(string.compare(name,"radius random",false)) then
 			ptC:AddInitializer("radius_random",{
 				radius_min = tostring(initializerData:GetProperty("radius_min"):GetValue()),
 				radius_max = tostring(initializerData:GetProperty("radius_max"):GetValue())
+			})
+		elseif(string.compare(name,"color random",false)) then
+			local color1 = initializerData:GetProperty("color1"):GetValue()
+			local color2 = initializerData:GetProperty("color2"):GetValue()
+			ptC:AddInitializer("color_random",{
+				color1 = tostring(color1),
+				color2 = tostring(color2)
 			})
 		else
 			pfm.log("Unsupported particle system renderer '" .. name .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME)
@@ -152,9 +178,29 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 		table.insert(self.m_listeners,cp:GetPositionAttr():AddChangeListener(function(newPos)
 			self:GetEntity():SetPos(newPos)
 		end))
+		table.insert(self.m_listeners,cp:GetRotationAttr():AddChangeListener(function(newRot)
+			self:GetEntity():SetRotation(newRot)
+		end))
 	end
+	self:UpdateSimulationState()
+	table.insert(self.m_listeners,particleData:GetSimulatingAttr():AddChangeListener(function(simulating)
+		self:UpdateSimulationState()
+	end))
+	table.insert(self.m_listeners,particleData:GetEmittingAttr():AddChangeListener(function(emitting)
+		self:UpdateSimulationState()
+	end))
 	ptC:Start()
 end
+function ents.PFMParticleSystem:UpdateSimulationState()
+	self.m_simulating = (self.m_particleData:IsSimulating() and self.m_particleData:IsEmitting())
+	if(self:IsSimulating() == false) then
+		local ptC = self:GetEntity():GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
+		if(ptC ~= nil) then
+			ptC:Stop()
+		end
+	end
+end
+function ents.PFMParticleSystem:IsSimulating() return self.m_simulating end
 function ents.PFMParticleSystem:Setup(actorData,particleData)
 	self.m_particleData = particleData
 end

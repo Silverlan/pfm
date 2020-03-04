@@ -25,7 +25,7 @@ function udm.PFMChannel:SetPlaybackOffset(offset)
 		if(value ~= nil) then
 			local property = toElement:GetProperty(toAttribute)
 			if(property ~= nil) then
-				-- print("Channel '" .. self:GetName() .. "': Changing value of attribute " .. toAttribute .. " of element " .. toElement:GetName() .. " (" .. toElement:GetTypeName() .. ") to " .. tostring(value))
+				--print("Channel '" .. self:GetName() .. "': Changing value of attribute " .. toAttribute .. " of element " .. toElement:GetName() .. " (" .. toElement:GetTypeName() .. ") to " .. tostring(value))
 				property:SetValue(value)
 			end
 		end

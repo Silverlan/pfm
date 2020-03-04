@@ -23,3 +23,9 @@ sfm.BaseElement.RegisterArray(sfm.GameParticleSystem,"controlPoints",sfm.Transfo
 sfm.BaseElement.RegisterAttribute(sfm.GameParticleSystem,"visible",false,{
 	getterName = "IsVisible"
 })
+sfm.BaseElement.RegisterAttribute(sfm.GameParticleSystem,"simulating",false,{
+	getterName = "IsSimulating"
+})
+sfm.BaseElement.RegisterAttribute(sfm.GameParticleSystem,"emitting",false,{
+	getterName = "IsEmitting"
+})

@@ -13,7 +13,7 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,"timeFrame",udm.
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,"channels",udm.Array(udm.ELEMENT_TYPE_PFM_CHANNEL))
 
 function udm.PFMChannelClip:SetPlaybackOffset(offset)
-	if(self:GetTimeFrame():IsInTimeFrame(offset) == false) then return end
+	--if(self:GetTimeFrame():IsInTimeFrame(offset) == false) then return end
 	local timeFrame = self:GetTimeFrame()
 	local localOffset = timeFrame:LocalizeOffset(offset)
 	for _,channel in ipairs(self:GetChannels():GetTable()) do

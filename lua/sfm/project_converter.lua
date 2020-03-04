@@ -206,7 +206,7 @@ local function apply_post_processing(project,filmClip,processedObjects)
 					local toElement = channel:GetToElement()
 					local toAttr = channel:GetToAttribute()
 
-					if(toElement ~= nil and is_udm_element_entity_component(toElement)) then
+					if(toElement ~= nil and is_udm_element_entity_component(toElement) and toElement:GetChild(toAttr) == nil) then
 						-- Some attributes (like visibility) are stored in the SFM GameModel/Camera/etc. elements. In Pragma these are
 						-- components of an actor, and these attributes are stored in the actor, not the components, so we have to
 						-- redirect the reference to the actor.
@@ -769,6 +769,8 @@ end)
 
 sfm.register_element_type_conversion(sfm.GameParticleSystem,udm.PFMParticleSystem,function(converter,sfmParticle,pfmParticle)
 	pfmParticle:SetTimeScale(sfmParticle:GetSimulationTimeScale())
+	pfmParticle:SetSimulating(sfmParticle:IsSimulating())
+	pfmParticle:SetEmitting(sfmParticle:IsEmitting())
 	pfmParticle:SetDefinition(converter:ConvertNewElement(sfmParticle:GetParticleSystemDefinition()))
 	for _,cp in ipairs(sfmParticle:GetControlPoints()) do
 		local pfmCp = converter:ConvertNewElement(cp)
