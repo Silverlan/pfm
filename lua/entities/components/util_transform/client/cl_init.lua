@@ -6,14 +6,33 @@ ents.UtilTransformComponent:RegisterMember("TranslationEnabled",util.VAR_TYPE_BO
 ents.UtilTransformComponent:RegisterMember("RotationEnabled",util.VAR_TYPE_BOOL,true,flags,1)
 
 function ents.UtilTransformComponent:OnEntitySpawn()
-  for i=0,2 do
-    if(self:IsTranslationEnabled()) then self:CreateTransformUtility(i,ents.UtilTransformArrowComponent.TYPE_TRANSLATION) end
-    if(self:IsRotationEnabled()) then self:CreateTransformUtility(i,ents.UtilTransformArrowComponent.TYPE_ROTATION) end
-  end
+  self:UpdateAxes()
 
   local parent = self:GetParent()
   self.m_angles = util.is_valid(parent) and parent:GetAngles() or EulerAngles()
   if(util.is_valid(parent)) then self:GetEntity():SetPos(parent:GetPos()) end
+end
+
+function ents.UtilTransformComponent:SetTranslationAxisEnabled(axis,enabled)
+  self.m_translationAxisEnabled[axis] = enabled
+  self:UpdateAxes()
+end
+function ents.UtilTransformComponent:SetRotationAxisEnabled(axis,enabled)
+  self.m_rotationAxisEnabled[axis] = enabled
+  self:UpdateAxes()
+end
+function ents.UtilTransformComponent:IsTranslationAxisEnabled(axis) return self:IsTranslationEnabled() and self.m_translationAxisEnabled[axis] end
+function ents.UtilTransformComponent:IsRotationAxisEnabled(axis) return self:IsRotationEnabled() and self.m_rotationAxisEnabled[axis] end
+
+function ents.UtilTransformComponent:UpdateAxes()
+  if(self:GetEntity():IsSpawned() == false) then return end
+  for i=0,2 do
+    if(self:IsTranslationAxisEnabled(i)) then self:CreateTransformUtility(i,ents.UtilTransformArrowComponent.TYPE_TRANSLATION)
+    elseif(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_TRANSLATION] ~= nil and util.is_valid(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_TRANSLATION][i])) then self.m_arrows[ents.UtilTransformArrowComponent.TYPE_TRANSLATION][i]:Remove() end
+   
+    if(self:IsRotationAxisEnabled(i)) then self:CreateTransformUtility(i,ents.UtilTransformArrowComponent.TYPE_ROTATION)
+    elseif(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION] ~= nil and util.is_valid(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION][i])) then self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION][i]:Remove() end
+  end
 end
 
 function ents.UtilTransformComponent:SetParent(parent,relative)
@@ -66,6 +85,7 @@ function ents.UtilTransformComponent:GetTransformRotation() return self.m_angles
 
 function ents.UtilTransformComponent:SetTransformRotation(ang)
   if(ang:Equals(self.m_angles)) then return end
+  self:GetEntity():SetAngles(ang)
   self.m_angles = ang
   self:BroadcastEvent(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,{ang})
 end
@@ -78,7 +98,13 @@ function ents.UtilTransformComponent:OnRemove()
   end
 end
 
+function ents.UtilTransformComponent:GetTransformUtility(type,axis)
+  if(self.m_arrows[type] == nil) then return end
+  return self.m_arrows[type][axis]
+end
+
 function ents.UtilTransformComponent:CreateTransformUtility(axis,type)
+  if(self.m_arrows[type] ~= nil and util.is_valid(self.m_arrows[type][axis])) then return end
   local entArrow = ents.create("entity")
   local arrowC = entArrow:AddComponent("util_transform_arrow")
   entArrow:Spawn()

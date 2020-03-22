@@ -6,6 +6,8 @@ function ents.UtilTransformComponent:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	if(CLIENT) then
+		self.m_translationAxisEnabled = {true,true,true}
+		self.m_rotationAxisEnabled = {true,true,true}
 		self.m_arrows = {}
 		self:AddEntityComponent(ents.COMPONENT_LOGIC)
 		self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")

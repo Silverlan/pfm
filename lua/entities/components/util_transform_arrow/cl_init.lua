@@ -195,23 +195,26 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
       transformC:SetAbsTransformPosition(pos)
     end
 	else
-    local cursorAxisAngle = self:GetCursorAxisAngle()
-    if(cursorAxisAngle ~= nil) then
-      local ang = transformC:GetTransformRotation()
-      local axis = self:GetAxis()
+    local intersectPos = self:GetCursorIntersectionWithAxisPlane()
+    if(intersectPos ~= nil) then
+      local cursorAxisAngle = self:GetCursorAxisAngle()
+      if(cursorAxisAngle ~= nil) then
+        local ang = transformC:GetTransformRotation()
+        local axis = self:GetAxis()
 
-      local angAxis = EulerAngles()
-      angAxis:Set(axis,cursorAxisAngle -self.m_rotStartAngle)
-      local rot = ang:ToQuaternion()
-      if(self:IsRelative() == false) then
-        rot = angAxis:ToQuaternion() *rot
-      else
-        rot = rot *rotAxis:ToQuaternion()
+        local angAxis = EulerAngles()
+        angAxis:Set(axis,cursorAxisAngle -self.m_rotStartAngle)
+        local rot = ang:ToQuaternion()
+        if(self:IsRelative() == false) then
+          rot = angAxis:ToQuaternion() *rot
+        else
+          rot = rot *rotAxis:ToQuaternion()
+        end
+        ang = rot:ToEulerAngles()
+
+        self.m_rotStartAngle = cursorAxisAngle
+        transformC:SetTransformRotation(ang)
       end
-      ang = rot:ToEulerAngles()
-
-      self.m_rotStartAngle = cursorAxisAngle
-      transformC:SetTransformRotation(ang)
     end
 	end
 end
@@ -226,18 +229,22 @@ function ents.UtilTransformArrowComponent:ToGlobalSpace(pos)
   return transformC:GetEntity():GetPose() *pos
 end
 function ents.UtilTransformArrowComponent:OnClick(action,pressed,hitPos)
-  print("OnClick")
   if(action ~= input.ACTION_ATTACK) then return util.EVENT_REPLY_UNHANDLED end
-  if(pressed == true) then
-    local intersectPos = self:GetCursorIntersectionWithAxisPlane()
-    if(intersectPos == nil) then return util.EVENT_REPLY_UNHANDLED end
-
-    if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then self.m_moveStartPos = intersectPos
-    else self.m_rotStartAngle = self:GetCursorAxisAngle() end
-  end
-  self:SetSelected(pressed)
+  if(pressed) then self:StartTransform()
+  else self:StopTransform() end
   return util.EVENT_REPLY_HANDLED
 end
+
+function ents.UtilTransformArrowComponent:StartTransform()
+  local intersectPos = self:GetCursorIntersectionWithAxisPlane()
+  if(intersectPos == nil) then return util.EVENT_REPLY_UNHANDLED end
+
+  if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then self.m_moveStartPos = intersectPos
+  else self.m_rotStartAngle = self:GetCursorAxisAngle() end
+  self:SetSelected(true)
+end
+
+function ents.UtilTransformArrowComponent:StopTransform() self:SetSelected(false) end
 
 local arrowModel
 function ents.UtilTransformArrowComponent:GetArrowModel()
@@ -288,7 +295,6 @@ function ents.UtilTransformArrowComponent:GetDiskModel()
   meshDisk:SetSkinTextureIndex(0)
   meshDisk:Scale(scale)
   mesh:AddSubMesh(meshDisk)
-
   
   meshGroup:AddMesh(mesh)
 

@@ -68,7 +68,7 @@ function gui.Curve:SetLineBuffer(buffer,vertexCount)
 	self.m_lineBuffer = buffer
 	self.m_vertexCount = vertexCount
 end
-function gui.Curve:OnDraw(w,h,pose)
+function gui.Curve:OnDraw(drawInfo,pose)
 	if(self.m_shader == nil or self.m_lineBuffer == nil) then return end
 	local parent = self:GetParent()
 	local drawCmd = game.get_draw_command_buffer()

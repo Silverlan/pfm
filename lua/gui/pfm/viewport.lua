@@ -11,6 +11,7 @@ include("/gui/hbox.lua")
 include("/gui/aspectratio.lua")
 include("/gui/pfm/button.lua")
 include("/gui/pfm/playbutton.lua")
+include("/gui/draganddrop.lua")
 include("/pfm/fonts.lua")
 
 util.register_class("gui.PFMViewport",gui.Base)
@@ -117,8 +118,7 @@ function gui.PFMViewport:OnInitialize()
 				filmmaker:KillFocus()
 				self.m_inCameraControlMode = true
 			elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
-				local cursorPos = self.m_viewport:GetCursorPos()
-				local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS,self.m_viewport:GetWidth(),self.m_viewport:GetHeight(),cursorPos.x,cursorPos.y)
+				local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS)
 				if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
 					local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 					local actor = (actorC ~= nil) and actorC:GetActorData() or nil
@@ -133,6 +133,7 @@ function gui.PFMViewport:OnInitialize()
 
 	self.m_vrControllers = {}
 	self.m_manipulatorMode = gui.PFMViewport.MANIPULATOR_MODE_SELECT
+	gui.mark_as_drag_and_drop_target(self.m_viewport,"ModelCatalog")
 end
 function gui.PFMViewport:OnRemove()
 	for _,ent in ipairs(self.m_vrControllers) do

@@ -10,7 +10,7 @@ include("/shaders/pfm/pfm_wireframe_line.lua")
 
 util.register_class("ents.PFMCamera",BaseEntityComponent)
 
-ents.PFMCamera.impl = {
+ents.PFMCamera.impl = util.get_class_value(ents.PFMCamera,"impl") or {
 	activeCamera = nil,
 	cameraEnabled = false,
 	vrEnabled = false

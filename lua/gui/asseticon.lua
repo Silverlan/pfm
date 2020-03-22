@@ -8,12 +8,13 @@
 
 include("/gui/wiviewport.lua")
 include("/gui/wimodelview.lua")
+include("/gui/wiimageicon.lua")
 
-util.register_class("gui.AssetIcon",gui.Base)
+util.register_class("gui.AssetIcon",gui.ImageIcon)
 
 local function get_icon_location(mdl)
 	if(type(mdl) ~= "string") then mdl = mdl:GetName() end
-	return "model_icons/" .. string.format("%18.0f",util.get_string_hash(mdl))
+	return "model_icons/" .. util.get_string_hash(mdl)
 end
 
 util.register_class("gui.AssetIcon.IconGenerator")
@@ -27,6 +28,23 @@ function gui.AssetIcon.IconGenerator:__init(width,height)
 	local el = gui.create("WIModelView")
 	self.m_modelView = el
 	el:InitializeViewport(width,height)
+	-- el:SetSize(512,512)
+	local entLight = el:GetLightSource()
+	if(util.is_valid(entLight)) then
+		local lightC = entLight:GetComponent(ents.COMPONENT_LIGHT)
+		if(lightC ~= nil) then
+			lightC:SetLightIntensity(20)
+		end
+		local radiusC = entLight:GetComponent(ents.COMPONENT_RADIUS)
+		if(radiusC ~= nil) then
+			radiusC:SetRadius(2000)
+		end
+		local colorC = entLight:GetComponent(ents.COMPONENT_COLOR)
+		if(colorC ~= nil) then
+			colorC:SetColor(Color.White)
+		end
+		--el:UpdateLightPose(Vector(0,1,0))
+	end
 end
 
 function gui.AssetIcon.IconGenerator:Clear()
@@ -43,13 +61,14 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 
 	local iconLocation = get_icon_location(data.model)
 	print("Saving icon as " .. iconLocation)
-	local img = self.m_modelView:GetRenderTarget():GetTexture():GetImage()
+	local img = self.m_modelView:GetPresentationTexture():GetImage()
 
 	local texInfo = util.TextureInfo()
 	texInfo.inputFormat = util.TextureInfo.INPUT_FORMAT_R8G8B8A8_UINT
 	texInfo.outputFormat = util.TextureInfo.OUTPUT_FORMAT_DXT1
 	texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
 	util.save_image(img,"materials/" .. iconLocation,texInfo)
+	game.load_texture(iconLocation,bit.bor(game.TEXTURE_LOAD_FLAG_BIT_LOAD_INSTANTLY,game.TEXTURE_LOAD_FLAG_BIT_RELOAD))
 
 	local mat = game.create_material(iconLocation,"wguitextured")
 	mat:SetTexture("albedo_map",iconLocation)
@@ -69,39 +88,36 @@ end
 
 function gui.AssetIcon.IconGenerator:GenerateNextIcon()
 	if(#self.m_mdlQueue == 0 or util.is_valid(self.m_modelView) == false) then return end
-	print("Generating next icon...")
-	local data = self.m_mdlQueue[1]
-	self.m_modelView:SetModel(data.model)
 	self.m_saveImage = true
 	self.m_tSaveIcon = time.real_time() +0.1 -- Add a small detail to ensure the model has been set up properly
+	local data = self.m_mdlQueue[1]
+	print("Generating next icon for model " .. data.model .. "...")
+	self.m_modelView:SetModel(data.model)
+	local mdl = self.m_modelView:GetModel()
+	if(mdl ~= nil) then
+		local anim = mdl:SelectWeightedAnimation(game.Model.Animation.ACT_IDLE)
+		if(anim == -1) then anim = mdl:LookupAnimation("idle") end
+		if(anim == -1) then
+			local r = string.find_similar_elements("idle",mdl:GetAnimationNames(),1)
+			anim = r[1] or -1
+		end
+		if(anim == -1) then anim = mdl:LookupAnimation("ragdoll") end
+		if(anim ~= -1) then
+			self.m_modelView:PlayAnimation(anim)
+		end
+	end
 end
 
 ------------
 
-gui.AssetIcon.impl = {}
+gui.AssetIcon.impl = util.get_class_value(gui.AssetIcon,"impl") or {}
 function gui.AssetIcon:__init()
-	gui.Base.__init(self)
+	gui.ImageIcon.__init(self)
 end
 function gui.AssetIcon:OnInitialize()
-	gui.Base.OnInitialize(self)
-	self:SetSize(128,128)
+	gui.ImageIcon.OnInitialize(self)
 
-	local el = gui.create("WITexturedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	el:SetMaterial("error")
-	self.m_texture = el
-
-	local textBg = gui.create("WIRect",self,0,self:GetHeight() -18,self:GetWidth(),18,0,1,1,1)
-	textBg:SetColor(Color(16,16,16,240))
-
-	local elText = gui.create("WIText",self)
-	elText:SetColor(Color.White)
-	elText:SetFont("pfm_small")
-	self.m_text = elText
-
-	local outline = gui.create("WIOutlinedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	outline:SetColor(Color.Red)
-	self.m_outline = outline
-
+	self.m_isDirectory = false
 	gui.AssetIcon.impl.count = gui.AssetIcon.impl.count and (gui.AssetIcon.impl.count +1) or 1
 end
 function gui.AssetIcon:OnRemove()
@@ -111,34 +127,69 @@ function gui.AssetIcon:OnRemove()
 		gui.AssetIcon.impl.iconGenerator = nil
 	end
 end
-function gui.AssetIcon:SetSelected(selected)
-	self.m_selected = selected
-	self.m_outline:SetColor(selected and Color.White or Color.Red)
-end
-function gui.AssetIcon:IsSelected() return self.m_selected or false end
-function gui.AssetIcon:SetAsset(path)
-	self.m_text:SetText(path)
-	self.m_text:SizeToContents()
-	self.m_text:CenterToParentX()
-	self.m_text:SetY(self:GetHeight() -self.m_text:GetHeight() -4)
-	if(file.is_directory(path)) then
+function gui.AssetIcon:MouseCallback(button,state,mods)
+	if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS and self:IsDirectory() == false) then
+		local pContext = gui.open_context_menu()
+		if(util.is_valid(pContext)) then
+			pContext:SetPos(input.get_cursor_pos())
 
-		return
+			pContext:AddItem(locale.get_text("pfm_asset_icon_reload"),function()
+				self:ClearIcon()
+				self:SetAsset(self.m_assetPath,self.m_assetName,self:IsDirectory())
+			end)
+			self:CallCallbacks("PopulateContextMenu",pContext)
+			pContext:Update()
+			return util.EVENT_REPLY_HANDLED
+		end
+	end
+	return util.EVENT_REPLY_UNHANDLED
+end
+function gui.AssetIcon:IsDirectory() return self.m_isDirectory end
+function gui.AssetIcon:GetAsset() return self.m_assetPath .. self.m_assetName end
+function gui.AssetIcon:SetAsset(path,assetName,isDirectory)
+	self.m_assetPath = path
+	self.m_assetName = assetName
+
+	self:SetText(assetName)
+
+	self.m_isDirectory = isDirectory
+
+	if(self:IsDirectory()) then self:SetMaterial("gui/pfm/folder",64,64)
+	else
+		path = util.Path(path)
+		if(path:GetFront() == "models") then
+			path:PopFront()
+			path = path +assetName
+			self:SetModel(path:GetString())
+		else
+			-- Unknown asset type
+			self:SetMaterial("error",128,128)
+		end
 	end
 end
-function gui.AssetIcon:SetModel(mdl)
+function gui.AssetIcon:ClearIcon()
+	local path = util.Path(self.m_assetPath)
+	path:PopFront()
+	path = path +self.m_assetName
+	path = path:GetString()
 
-	--[[local iconPath = get_icon_location(mdl)
+	local iconPath = get_icon_location(path)
+	file.delete("materials/" .. iconPath .. ".wmi")
+	file.delete("materials/" .. iconPath .. ".dds")
+end
+function gui.AssetIcon:SetModel(mdl)
+	local iconPath = get_icon_location(mdl)
 	if(file.exists("materials/" .. iconPath .. ".wmi")) then
-		self.m_texture:SetMaterial(iconPath)
+		self:SetMaterial(iconPath)
 		return
 	end
 	if(gui.AssetIcon.impl.iconGenerator == nil) then
+		print("Creating new icon generator...")
 		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128,128)
 	end
 	gui.AssetIcon.impl.iconGenerator:AddModelToQueue(mdl,function()
 		if(self:IsValid() == false) then return end
-		self.m_texture:SetMaterial(iconPath)
-	end)]]
+		self:SetMaterial(iconPath)
+	end)
 end
 gui.register("WIAssetIcon",gui.AssetIcon)

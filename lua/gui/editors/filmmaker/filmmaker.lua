@@ -23,6 +23,7 @@ include("/gui/pfm/timeline.lua")
 include("/gui/pfm/elementviewer.lua")
 include("/gui/pfm/actoreditor.lua")
 include("/gui/pfm/modelcatalog.lua")
+include("/gui/pfm/actorcatalog.lua")
 include("/gui/pfm/renderpreview.lua")
 include("/gui/pfm/infobar.lua")
 
@@ -35,6 +36,7 @@ include("selection_manager.lua")
 
 include_component("pfm_camera")
 include_component("pfm_sound_source")
+include_component("pfm_grid")
 
 function gui.WIFilmmaker:__init()
 	gui.WIBaseEditor.__init(self)
@@ -281,6 +283,15 @@ function gui.WIFilmmaker:OnInitialize()
 	self:CreateNewProject()
 end
 function gui.WIFilmmaker:GetViewport() return self.m_viewport end
+function gui.WIFilmmaker:GetActorEditor() return self.m_actorEditor end
+function gui.WIFilmmaker:CreateNewActor()
+	-- TODO: What if no actor editor is open?
+	return self.m_actorEditor:CreateNewActor()
+end
+function gui.WIFilmmaker:CreateNewActorComponent(actor,componentType)
+	-- TODO: What if no actor editor is open?
+	return self.m_actorEditor:CreateNewActorComponent(actor,componentType)
+end
 function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 	-- TODO: Implement a keybinding system for this! Keybindings should also appear in tooltips!
 	if(key == input.KEY_SPACE and state == input.STATE_PRESS) then
@@ -289,7 +300,30 @@ function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 			playButton:TogglePlay()
 			return util.EVENT_REPLY_HANDLED
 		end
+	else
+		-- TODO: UNDO ME
+		local entGhost = ents.find_by_class("pfm_ghost")[1]
+		if(util.is_valid(entGhost)) then
+			local lightC = entGhost:GetComponent(ents.COMPONENT_LIGHT)
+			lightC.colTemp = lightC.colTemp or light.get_average_color_temperature(light.NATURAL_LIGHT_TYPE_LED_LAMP)
+			if(key == input.KEY_KP_ADD and state == input.STATE_PRESS) then
+				lightC.colTemp = lightC.colTemp +500
+			elseif(key == input.KEY_KP_SUBTRACT and state == input.STATE_PRESS) then
+				lightC.colTemp = lightC.colTemp -500
+			end
+			lightC.colTemp = math.clamp(lightC.colTemp,965,12000)
+			local colorC = entGhost:GetComponent(ents.COMPONENT_COLOR)
+			colorC:SetColor(light.color_temperature_to_color(lightC.colTemp))
+		end
+		return util.EVENT_REPLY_HANDLED
 	end
+	--[[elseif(key == input.KEY_KP_ADD and state == input.STATE_PRESS) then
+		ents.PFMGrid.decrease_grid_size()
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_KP_SUBTRACT and state == input.STATE_PRESS) then
+		ents.PFMGrid.increase_grid_size()
+		return util.EVENT_REPLY_HANDLED
+	end]]
 	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.WIFilmmaker:GetSelectionManager() return self.m_selectionManager end
@@ -424,6 +458,7 @@ function gui.WIFilmmaker:RefreshGameView()
 	local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
 	if(projectC == nil) then return end
 	projectC:Start()
+	projectC:SetOffset(self:GetTimeOffset())
 end
 function gui.WIFilmmaker:AddFilmClipElement(filmClip)
 	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip,filmClip,function(elFilmClip)
@@ -494,6 +529,10 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	local modelCatalog = gui.create("WIPFMModelCatalog")
 	actorDataFrame:AddTab(locale.get_text("pfm_model_catalog"),modelCatalog)
 	self.m_modelCatalog = modelCatalog -- TODO Determine dynamically
+
+	local actorCatalog = gui.create("WIPFMActorCatalog")
+	actorDataFrame:AddTab(locale.get_text("pfm_actor_catalog"),actorCatalog)
+	self.m_actorCatalog = actorCatalog -- TODO Determine dynamically
 
 	local elementViewer = gui.create("WIPFMElementViewer")
 	actorDataFrame:AddTab(locale.get_text("pfm_element_viewer"),elementViewer)

@@ -44,7 +44,7 @@ function gui.BaseTimelineGrid:IsVertical() return self:IsHorizontal() == false e
 function gui.BaseTimelineGrid:SetShader(shaderName) self.m_shader = shader.get(shaderName) end
 function gui.BaseTimelineGrid:SetLineWidth(lineWidth) self.m_lineWidth = lineWidth end
 function gui.BaseTimelineGrid:GetLineWidth() return self.m_lineWidth end
-function gui.BaseTimelineGrid:OnDraw(w,h,pose)
+function gui.BaseTimelineGrid:OnDraw(drawInfo,pose)
 	if(self.m_shader == nil) then return end
 	local parent = self:GetParent()
 	local drawCmd = game.get_draw_command_buffer()

@@ -78,7 +78,7 @@ function gui.Grid:SetLineBuffer(buffer,colorBuffer,vertexCount)
 	self.m_colorBuffer = colorBuffer
 	self.m_vertexCount = vertexCount]]
 end
---function gui.Grid:OnDraw(w,h,pose)
+--function gui.Grid:OnDraw(drawInfo,pose)
 	--[[if(self.m_shader == nil or self.m_lineBuffer == nil) then return end
 	local parent = self:GetParent()
 	local drawCmd = game.get_draw_command_buffer()
@@ -134,7 +134,7 @@ function gui.GridLayer:SetLineBuffer(buffer,colorBuffer,vertexCount)
 	self.m_colorBuffer = colorBuffer
 	self.m_vertexCount = vertexCount]]
 end
---function gui.GridLayer:OnDraw(w,h,pose)
+--function gui.GridLayer:OnDraw(drawInfo,pose)
 	--[[if(self.m_shader == nil or self.m_lineBuffer == nil) then return end
 	local parent = self:GetParent()
 	local drawCmd = game.get_draw_command_buffer()

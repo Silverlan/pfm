@@ -81,7 +81,9 @@ end
 function gui.EditableEntry:UpdateText()
 	if(util.is_valid(self.m_pText) == false or util.is_valid(self.m_target) == false) then return end
 	local text = self.m_baseText .. ": "
-	local value = self.m_target:GetValue()
+	local value
+	if(self.m_target:GetClass() == "widropdownmenu") then value = self.m_target:GetOptionText(self.m_target:GetSelectedOption())
+	else value = self.m_target:GetValue() end
 	if(#value == 0) then value = "-" end
 	text = text .. value
 	self.m_pText:SetText(text)

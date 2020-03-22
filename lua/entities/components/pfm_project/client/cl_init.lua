@@ -67,6 +67,7 @@ end
 
 function ents.PFMProject:Reset()
 	if(util.is_valid(self.m_entRootTrack)) then self.m_entRootTrack:Remove() end
+	self.m_offset = 0.0
 end
 
 function ents.PFMProject:GetTimeFrame() return self.m_timeFrame end

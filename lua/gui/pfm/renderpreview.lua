@@ -14,6 +14,7 @@ include("/gui/pfm/button.lua")
 include("/gui/editableentry.lua")
 include("/gui/wifiledialog.lua")
 include("/gui/toggleoption.lua")
+include("/pfm/raytracing_render_job.lua")
 
 util.register_class("gui.PFMRenderPreview",gui.Base)
 
@@ -38,7 +39,8 @@ function gui.PFMRenderPreview:OnInitialize()
 	self.m_vpBg:SetMouseInputEnabled(true)
 	self.m_vpBg:AddCallback("OnMouseEvent",function(el,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-			if(self.m_renderSettings ~= nil and self.m_renderSettings.currentImageBuffer ~= nil) then
+			local imgBuf = (self.m_rtJob ~= nil) and self.m_rtJob:GetRenderResult()
+			if(imgBuf ~= nil) then
 				local pContext = gui.open_context_menu()
 				if(util.is_valid(pContext) == false) then return end
 				pContext:SetPos(input.get_cursor_pos())
@@ -46,7 +48,7 @@ function gui.PFMRenderPreview:OnInitialize()
 					local dialoge = gui.create_file_save_dialog(function(pDialoge)
 						local fname = pDialoge:GetFilePath(true)
 						file.create_path(file.get_file_path(fname))
-						local result = util.save_image(self.m_renderSettings.currentImageBuffer,fname,util.IMAGE_FORMAT_PNG)
+						local result = util.save_image(imgBuf,fname,util.IMAGE_FORMAT_PNG)
 						if(result == false) then
 							pfm.log("Unable to save image as '" .. fname .. "'!",pfm.LOG_CATEGORY_PFM_INTERFACE,pfm.LOG_SEVERITY_WARNING)
 						end
@@ -96,6 +98,34 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlDeviceType = deviceType
 
 	deviceType:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_device_type"))
+
+	-- Camera type
+	local panoramaTypeWrapper
+	local camType = gui.create("WIDropDownMenu",p)
+	camType:AddOption(locale.get_text("pfm_cycles_cam_type_perspective"),tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE))
+	camType:AddOption(locale.get_text("pfm_cycles_cam_type_orthographic"),tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_ORTHOGRAPHIC))
+	camType:AddOption(locale.get_text("pfm_cycles_cam_type_panorama"),tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA))
+	camType:SelectOption(0)
+	camType:AddCallback("OnOptionSelected",function(camType,idx)
+		panoramaTypeWrapper:SetVisible(idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
+	end)
+	self.m_ctrlCamType = camType
+
+	camType:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_cam_type"))
+
+	local panoramaType = gui.create("WIDropDownMenu",p)
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equirectangular"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equidistant"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUIDISTANT))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equisolid"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_mirrorball"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_cubemap"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP))
+	panoramaType:SelectOption(0)
+	-- panoramaType:SetTooltip(locale.get_text("pfm_cycles_image_type_desc"))
+	self.m_ctrlPanoramaType = panoramaType
+
+	panoramaTypeWrapper = panoramaType:Wrap("WIEditableEntry")
+	panoramaTypeWrapper:SetText(locale.get_text("pfm_cycles_cam_panorama"))
+	panoramaTypeWrapper:SetVisible(false)
 
 	-- Quality preset
 	local presets = {
@@ -329,124 +359,32 @@ end
 function gui.PFMRenderPreview:OnRemove()
 	self:CancelRendering()
 end
-function gui.PFMRenderPreview:OnThink()
-	if(self.m_raytracingJob == nil) then return end
-	local progress = self.m_raytracingJob:GetProgress()
-	if(progress ~= self.m_lastProgress) then
-		self.m_lastProgress = progress
-		self:CallCallbacks("OnProgressChanged",self.m_lastProgress)
-	end
-	if(self:IsComplete() == false) then return end
-	local successful = self.m_raytracingJob:IsSuccessful()
-	if(successful) then
-		local imgBuffer = self.m_raytracingJob:GetResult()
-		self.m_imageResultBuffer = imgBuffer
-		local img = vulkan.create_image(imgBuffer)
-		local imgViewCreateInfo = vulkan.ImageViewCreateInfo()
-		imgViewCreateInfo.swizzleAlpha = vulkan.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
-		local tex = vulkan.create_texture(img,vulkan.TextureCreateInfo(),imgViewCreateInfo,vulkan.SamplerCreateInfo())
-		
-		if(util.is_valid(self.m_preview)) then self.m_preview:SetTexture(tex) end
-
-		local renderSettings = self.m_renderSettings
-		renderSettings.currentImageBuffer = imgBuffer
-		if(#renderSettings.outputDir > 0 and renderSettings.preview == false) then
-			file.create_path(renderSettings.outputDir)
-			local path = renderSettings.outputDir
-			if(path:sub(-1) ~= "/") then path = path .. "/" end
-			path = path .. "frame" .. renderSettings.currentFrame
-			local result = util.save_image(imgBuffer,path,util.IMAGE_FORMAT_PNG)
-			if(result == false) then
-				pfm.log("Unable to save image as '" .. path .. "'!",pfm.LOG_CATEGORY_PFM_INTERFACE,pfm.LOG_SEVERITY_WARNING)
-			end
-		end
-	end
-	self.m_raytracingJob = nil
-
-	if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(true) end
-	if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetText(locale.get_text("pfm_render_image")) end
-
-	self:DisableThinking()
-	self:SetAlwaysUpdate(false)
-
-	if(successful) then self:RenderNextFrame() end
-end
-function gui.PFMRenderPreview:IsComplete()
-	if(self.m_raytracingJob == nil) then return true end
-	return self.m_raytracingJob:IsComplete()
-end
-function gui.PFMRenderPreview:GetProgress()
-	if(self.m_raytracingJob == nil) then return 1.0 end
-	return self.m_raytracingJob:GetProgress()
-end
-function gui.PFMRenderPreview:RenderNextFrame()
-	local renderSettings = self.m_renderSettings
-	if(renderSettings == nil) then return end
-	renderSettings.currentFrame = renderSettings.currentFrame +1
-	if(renderSettings.currentFrame == renderSettings.frameCount) then
-		local msg
-		if(renderSettings.preview) then msg = "Preview rendering complete!"
-		else msg = "Rendering complete! " .. renderSettings.frameCount .. " frames have been rendered and stored in \"" .. renderSettings.outputDir .. "\"!" end
-		pfm.log(msg,pfm.LOG_CATEGORY_PFM_INTERFACE)
-		return
-	end
-
-	local cam = game.get_render_scene_camera()
-	if(cam == nil) then return end
-
-	local createInfo = cycles.Scene.CreateInfo()
-	createInfo.denoise = renderSettings.denoise
-	createInfo.hdrOutput = false
-	createInfo.deviceType = renderSettings.deviceType
-	createInfo:SetSamplesPerPixel(renderSettings.samples)
-
-	local scene = cycles.create_scene(renderSettings.renderMode,createInfo)
-	local pos = cam:GetEntity():GetPos()
-	local rot = cam:GetEntity():GetRotation()
-	local nearZ = cam:GetNearZ()
-	local farZ = cam:GetFarZ()
-	local fov = cam:GetFOV()
-	local vp = cam:GetProjectionMatrix() *cam:GetViewMatrix()
-	local cullObjectsOutsidePvs = true
-	
-	-- Note: Settings have to be initialized before setting up the game scene
-	scene:SetSkyAngles(EulerAngles(0,renderSettings.skyYaw,0))
-	scene:SetSkyStrength(renderSettings.skyStrength)
-	scene:SetEmissionStrength(renderSettings.emissionStrength)
-	scene:SetMaxTransparencyBounces(renderSettings.maxTransparencyBounces)
-	scene:SetLightIntensityFactor(renderSettings.lightIntensityFactor)
-	scene:SetResolution(renderSettings.width,renderSettings.height)
-
-	scene:InitializeFromGameScene(pos,rot,vp,nearZ,farZ,fov,cullObjectsOutsidePvs,function(ent)
-		if(ent:IsWorld()) then return renderSettings.renderWorld end
-		if(ent:IsPlayer()) then return renderSettings.renderPlayer end
-		return renderSettings.renderGameEntities or ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
-	end,function(ent)
-		return true
-	end)
-	if(#renderSettings.sky > 0) then scene:SetSky(renderSettings.sky) end
-	
-	pfm.log("Starting render job for frame " .. renderSettings.currentFrame .. "...",pfm.LOG_CATEGORY_PFM_INTERFACE)
-
-	local job = scene:CreateRenderJob()
-	job:Start()
-
-	self.m_raytracingJob = job
-
-	self.m_lastProgress = 0.0
-	self:EnableThinking()
-	self:SetAlwaysUpdate(true)
-
-	-- Move to next frame in case we're rendering an image sequence
-	if(renderSettings.currentFrame < (renderSettings.frameCount -1)) then
-		local filmmaker = tool.get_filmmaker()
-		if(util.is_valid(filmmaker)) then filmmaker:GoToNextFrame() end
-	end
-end
-function gui.PFMRenderPreview:IsRendering() return (self.m_raytracingJob ~= nil and self.m_raytracingJob:IsComplete() == false) end
 function gui.PFMRenderPreview:CancelRendering()
-	if(self:IsRendering() == false) then return end
-	self.m_raytracingJob:Cancel()
+	if(self.m_rtJob == nil) then return end
+	self.m_rtJob:CancelRendering()
+end
+function gui.PFMRenderPreview:IsRendering()
+	return (self.m_rtJob ~= nil) and self.m_rtJob:IsRendering() or false
+end
+function gui.PFMRenderPreview:OnThink()
+	if(self.m_rtJob == nil) then return end
+	local progress = self.m_rtJob:GetProgress()
+	local state = self.m_rtJob:Update()
+	local newProgress = self.m_rtJob:GetProgress()
+	if(newProgress ~= progress) then
+		self:CallCallbacks("OnProgressChanged",newProgress)
+	end
+	if((state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE) and util.is_valid(self.m_preview)) then
+		local tex = self.m_rtJob:GetRenderResultTexture()
+		if(tex ~= nil) then self.m_preview:SetTexture(tex) end
+	end
+	if(state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FAILED) then
+		if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(true) end
+		if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetText(locale.get_text("pfm_render_image")) end
+
+		self:DisableThinking()
+		self:SetAlwaysUpdate(false)
+	end
 end
 function gui.PFMRenderPreview:Refresh(preview)
 	self:CancelRendering()
@@ -476,28 +414,53 @@ function gui.PFMRenderPreview:Refresh(preview)
 	preview = preview or false
 	local samples = preview and 4 or nil
 
-	self.m_renderSettings = {
-		renderMode = renderMode,
-		samples = samples or self.m_ctrlSamplesPerPixel:GetValue(),
-		sky = self.m_ctrlSkyOverride:GetValue(),
-		skyStrength = self.m_ctrlSkyStrength:GetValue(),
-		emissionStrength = self.m_ctrlEmissionStrength:GetValue(),
-		skyYaw = self.m_ctrlSkyYaw:GetValue(),
-		maxTransparencyBounces = self.m_ctrlMaxTransparencyBounces:GetValue(),
-		lightIntensityFactor = self.m_ctrlLightIntensityFactor:GetValue(),
-		frameCount = preview and 1 or self.m_ctrlFrameCount:GetValue(),
-		outputDir = self.m_ctrlOutputDir:GetValue(),
-		denoise = self.m_ctrlDenoise:IsChecked(),
-		deviceType = deviceType,
-		renderWorld = self.m_ctrlRenderWorld:IsChecked(),
-		renderGameEntities = self.m_ctrlRenderGameEntities:IsChecked(),
-		renderPlayer = self.m_ctrlRenderPlayer:IsChecked(),
-		currentFrame = -1,
-		width = preview and 512 or self.m_ctrlResolutionWidth:GetValue(),
-		height = preview and 512 or self.m_ctrlResolutionHeight:GetValue(),
-		preview = preview
-	}
-	pfm.log("Rendering image with resolution " .. self.m_renderSettings.width .. "x" .. self.m_renderSettings.height .. " and " .. self.m_renderSettings.samples .. " samples...",pfm.LOG_CATEGORY_PFM_INTERFACE)
-	self:RenderNextFrame()
+	self.m_rtJob = pfm.RaytracingRenderJob()
+	local settings = self.m_rtJob:GetSettings()
+	settings:SetRenderMode(renderMode)
+	settings:SetSamples(samples or self.m_ctrlSamplesPerPixel:GetValue())
+	settings:SetSky(self.m_ctrlSkyOverride:GetValue())
+	settings:SetSkyStrength(self.m_ctrlSkyStrength:GetValue())
+	settings:SetEmissionStrength(self.m_ctrlEmissionStrength:GetValue())
+	settings:SetSkyYaw(self.m_ctrlSkyYaw:GetValue())
+	settings:SetMaxTransparencyBounces(self.m_ctrlMaxTransparencyBounces:GetValue())
+	settings:SetLightIntensityFactor(self.m_ctrlLightIntensityFactor:GetValue())
+	settings:SetFrameCount(preview and 1 or self.m_ctrlFrameCount:GetValue())
+	settings:SetOutputDir(self.m_ctrlOutputDir:GetValue())
+	settings:SetDenoise(self.m_ctrlDenoise:IsChecked())
+	settings:SetDeviceType(deviceType)
+	settings:SetRenderWorld(self.m_ctrlRenderWorld:IsChecked())
+	settings:SetRenderGameEntities(self.m_ctrlRenderGameEntities:IsChecked())
+	settings:SetRenderPlayer(self.m_ctrlRenderPlayer:IsChecked())
+	settings:SetCamType(tonumber(self.m_ctrlCamType:GetValue()))
+	settings:SetPanoramaType(tonumber(self.m_ctrlPanoramaType:GetValue()))
+	settings:SetWidth(preview and 512 or self.m_ctrlResolutionWidth:GetValue())
+	settings:SetHeight(preview and 512 or self.m_ctrlResolutionHeight:GetValue())
+
+--[[
+	local camType = gui.create("WIDropDownMenu",p)
+	camType:AddOption(locale.get_text("pfm_cycles_cam_type_perspective"),tostring(cycles.Camera.TYPE_PERSPECTIVE))
+	camType:AddOption(locale.get_text("pfm_cycles_cam_type_orthographic"),tostring(cycles.Camera.TYPE_ORTHOGRAPHIC))
+	camType:AddOption(locale.get_text("pfm_cycles_cam_type_panorama"),tostring(cycles.Camera.TYPE_PANORAMA))
+	camType:SelectOption(0)
+	-- camType:SetTooltip(locale.get_text("pfm_cycles_image_type_desc"))
+	self.m_ctrlCamType = camType
+
+	camType:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_cam_type"))
+
+	local panoramaType = gui.create("WIDropDownMenu",p)
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equirectangular"),tostring(cycles.Camera.PANORAMA_TYPE_EQUIRECTANGULAR))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equidistant"),tostring(cycles.Camera.PANORAMA_TYPE_FISHEYE_EQUIDISTANT))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equisolid"),tostring(cycles.Camera.PANORAMA_TYPE_FISHEYE_EQUISOLID))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_mirrorball"),tostring(cycles.Camera.PANORAMA_TYPE_MIRRORBALL))
+	panoramaType:SelectOption(0)
+	-- panoramaType:SetTooltip(locale.get_text("pfm_cycles_image_type_desc"))
+	self.m_ctrlPanoramaType = panoramaType
+]]
+	settings:SetRenderPreview(preview)
+	pfm.log("Rendering image with resolution " .. settings:GetWidth() .. "x" .. settings:GetHeight() .. " and " .. settings:GetSamples() .. " samples...",pfm.LOG_CATEGORY_PFM_INTERFACE)
+	self.m_rtJob:Start()
+
+	self:EnableThinking()
+	self:SetAlwaysUpdate(true)
 end
 gui.register("WIPFMRenderPreview",gui.PFMRenderPreview)

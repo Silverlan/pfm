@@ -70,7 +70,6 @@ function gui.GridBox:OnUpdate()
 		end
 	end
 	y = y +(childHeight or 0)
-	print(y)
-	self:SetHeight(y)
+	if(y ~= self:GetHeight()) then self:SetHeight(y) end
 end
 gui.register("WIGridBox",gui.GridBox)
