@@ -31,7 +31,7 @@ function gui.PFMFrame:OnInitialize()
 	self.m_btClose:SetAnchor(1,0,1,0)
 
 	self.m_contents = gui.create("WIBase",self,0,28,self:GetWidth(),self:GetHeight() -28,0,0,1,1)
-	self.m_tabButtons = {}
+	self.m_tabs = {}
 	self.m_tabButtonContainer = gui.create("WIHBox",self)
 	self.m_tabButtonContainer:SetHeight(28)
 
@@ -40,8 +40,8 @@ end
 function gui.PFMFrame:SetActiveTab(tabId)
 	if(type(tabId) ~= "number") then
 		local el = tabId
-		for tabId,bt in ipairs(self.m_tabButtons) do
-			if(bt:IsValid() and bt:GetContents() == el) then
+		for tabId,tabData in ipairs(self.m_tabs) do
+			if(tabData.button:IsValid() and tabData.button:GetContents() == el) then
 				self:SetActiveTab(tabId)
 				break
 			end
@@ -50,21 +50,40 @@ function gui.PFMFrame:SetActiveTab(tabId)
 	end
 	if(util.is_valid(self.m_activeTabButton)) then self.m_activeTabButton:SetActive(false) end
 
-	local bt = self.m_tabButtons[tabId]
+	local bt = self.m_tabs[tabId].button
 	if(util.is_valid(bt)) then bt:SetActive(true) end
 
 	self.m_activeTabButton = bt
 	self.m_activeTabPanel = bt:GetContents()
+	self.m_activeTabIndex = tabId
 end
-function gui.PFMFrame:AddTab(name,panel)
+function gui.PFMFrame:GetTabId(identifier)
+	for i,tabData in ipairs(self.m_tabs) do
+		if(tabData.identifier == identifier) then
+			return i
+		end
+	end
+end
+function gui.PFMFrame:RemoveTab(identifier)
+	local i = self:GetTabId(identifier)
+	if(i == nil) then return end
+	local tabData = self.m_tabs[i]
+	if(tabData.panel:IsValid()) then tabData.panel:Remove() end
+	if(tabData.button:IsValid()) then tabData.button:Remove() end
+	table.remove(self.m_tabs,i)
+	if(self.m_activeTabIndex >= i) then
+		self:SetActiveTab(self.m_activeTabIndex -1)
+	end
+end
+function gui.PFMFrame:AddTab(identifier,name,panel)
 	if(util.is_valid(self.m_contents) == false or util.is_valid(self.m_tabButtonContainer) == false) then
 		panel:RemoveSafely()
 		return
 	end
 	local bt = gui.create("WIPFMTabButton",self.m_tabButtonContainer)
 	bt:SetText(name)
-	local tabId = #self.m_tabButtons +1
 	bt:AddCallback("OnPressed",function()
+		local tabId = self:GetTabId(identifier)
 		self:SetActiveTab(tabId)
 	end)
 	panel:SetParent(self.m_contents)
@@ -73,7 +92,13 @@ function gui.PFMFrame:AddTab(name,panel)
 	panel:SetAnchor(0,0,1,1)
 
 	bt:SetContents(panel)
-	table.insert(self.m_tabButtons,bt)
+
+	table.insert(self.m_tabs,{
+		identifier = identifier,
+		button = bt,
+		panel = panel
+	})
+	return #self.m_tabs
 end
 function gui.PFMFrame:OnUpdate()
 	if(self.m_activeTabButton == nil) then self:SetActiveTab(1) end

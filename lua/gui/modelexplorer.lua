@@ -6,113 +6,46 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/gui/gridbox.lua")
-include("/gui/wibasefileexplorer.lua")
-include("/gui/asseticon.lua")
-include("/gui/icongridview.lua")
+include("assetexplorer.lua")
 
-util.register_class("gui.ModelExplorer",gui.IconGridView,gui.BaseFileExplorer)
+util.register_class("gui.ModelExplorer",gui.AssetExplorer)
 function gui.ModelExplorer:__init()
-	gui.IconGridView.__init(self)
-	gui.BaseFileExplorer.__init(self)
+	gui.AssetExplorer.__init(self)
 end
 function gui.ModelExplorer:OnInitialize()
-	gui.IconGridView.OnInitialize(self)
+	gui.AssetExplorer.OnInitialize(self)
 
-	self.m_favorites = {} -- TODO: Load/Save from/to file
-	self:AddCallback("OnIconSelected",function(self,icon)
-		self:CallCallbacks("OnFileClicked",icon:GetText())
-	end)
-	self:SetIconFactory(function(parent)
-		return gui.create("WIAssetIcon",parent)
-	end)
+	self:SetAssetType(asset.TYPE_MODEL)
+	self:SetFileExtensions(asset.MODEL_FILE_EXTENSION,{"mdl","vmdl_c","nif"})
 end
-function gui.ModelExplorer:AddToFavorites(mdl)
-	self.m_favorites[mdl] = true
-end
-function gui.ModelExplorer:IsInFavorites(mdl)
-	return self.m_favorites[mdl] == true
-end
-function gui.ModelExplorer:RemoveFromFavorites(mdl)
-	self.m_favorites[mdl] = nil
-end
-function gui.ModelExplorer:GetFavorites() return self.m_favorites end
-function gui.ModelExplorer:OnUpdate()
-	self:ListFiles()
-end
-function gui.ModelExplorer:AddIcon(assetName,fDirClickHandler)
-	local el = gui.IconGridView.AddIcon(self,assetName)
-	if(el == nil) then return end
-
-	local path = self:GetAbsolutePath()
-	el:SetAsset(path,assetName,(fDirClickHandler ~= nil) or file.is_directory(path .. assetName))
-
-	if(el:IsDirectory()) then
-		el:AddCallback("OnDoubleClick",function(el)
-			if(util.is_valid(self) == false) then return end
-			if(fDirClickHandler ~= nil) then fDirClickHandler()
-			else
-				self:SetPath(self:GetPath() .. assetName)
-				self:Update()
-			end
-			--self:CallCallbacks("OnFileSelected",fPath)
+function gui.ModelExplorer:PopulateContextMenu(pContext,tSelectedFiles)
+	if(#tSelectedFiles == 1) then
+		local path = tSelectedFiles[1]:GetRelativeAsset()
+		pContext:AddItem(locale.get_text("pfm_show_in_model_viewer"),function()
+			local pDialog,frame,el = gui.open_model_dialog()
+			el:SetModel(path)
 		end)
-	else
-		el:AddCallback("PopulateContextMenu",function(el,pContext)
-			local path = util.Path(el:GetAsset())
-			path:MakeRelative(self:GetRootPath())
-			path = path:GetString()
-			if(self:IsInFavorites(path)) then
-				pContext:AddItem(locale.get_text("pfm_asset_icon_remove_from_favorites"),function()
-					self:RemoveFromFavorites(path)
-					if(self.m_inFavorites) then
-						self:ReloadPath()
-						self:ScheduleUpdate()
-					end
-				end)
-			else
-				pContext:AddItem(locale.get_text("pfm_asset_icon_add_to_favorites"),function()
-					self:AddToFavorites(path)
-				end)
-			end
-			pContext:AddItem(locale.get_text("pfm_show_in_model_viewer"),function()
-				local pDialog,frame,el = gui.open_model_dialog()
-				el:SetModel(path)
+
+		if(asset.is_loaded(path,asset.TYPE_MODEL) == false) then
+			pContext:AddItem(locale.get_text("pfm_load"),function()
+				game.load_model(path)
 			end)
-		end)
-	end
-	return el
-end
-function gui.ModelExplorer:ListFiles()
-	for _,icon in ipairs(self.m_icons) do
-		if(icon:IsValid()) then icon:RemoveSafely() end
-	end
-	self.m_icons = {}
-
-	if(self.m_inFavorites) then
-		self:AddIcon("..",function()
-			self.m_inFavorites = nil
-			self:Update()
-		end)
-		for f,b in pairs(self:GetFavorites()) do
-			self:AddIcon(f)
+		else
+			local mdl = game.load_model(path)
+			local materials = mdl:GetMaterials()
+			if(#materials > 0) then
+				local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
+				for _,mat in ipairs(materials) do
+					if(mat:IsError() == false) then
+						local name = file.remove_file_extension(file.get_file_name(mat:GetName()))
+						pSubMenu:AddItem(name,function(pItem)
+							tool.get_filmmaker():OpenMaterialEditor(mat:GetName(),path)
+						end)
+					end
+				end
+				pSubMenu:Update()
+			end
 		end
-		self.m_iconContainer:Update()
-		return
 	end
-	local tFiles,tDirectories = self:FindFiles()
-	if(self:IsAtRoot()) then
-		self:AddIcon("favorites",function()
-			self.m_inFavorites = true
-			self:Update()
-		end)
-	end
-	for _,d in ipairs(tDirectories) do
-		self:AddIcon(d)
-	end
-	for _,f in ipairs(tFiles) do
-		self:AddIcon(f)
-	end
-	self.m_iconContainer:Update()
 end
 gui.register("WIModelExplorer",gui.ModelExplorer)

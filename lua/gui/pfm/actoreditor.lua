@@ -357,6 +357,24 @@ function gui.PFMActorEditor:AddActorComponent(itemActor,itemComponents,component
 end
 function gui.PFMActorEditor:AddActor(actor)
 	local itemActor = self.m_tree:AddItem(actor:GetName())
+
+	itemActor:AddCallback("OnMouseEvent",function(tex,button,state,mods)
+		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+			local pContext = gui.open_context_menu()
+			if(util.is_valid(pContext) == false) then return end
+			pContext:SetPos(input.get_cursor_pos())
+
+			pContext:AddItem(locale.get_text("pfm_export_animation"),function()
+				local entActor = actor:FindEntity()
+				if(util.is_valid(entActor) == false) then return end
+				local filmmaker = tool.get_filmmaker()
+				filmmaker:ExportAnimation(entActor)
+			end)
+			pContext:Update()
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
+
 	local itemComponents = itemActor:AddItem(locale.get_text("components"))
 	self.m_treeElementToActorData[itemActor] = {
 		actor = actor,

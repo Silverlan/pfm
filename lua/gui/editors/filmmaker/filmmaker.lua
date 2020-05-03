@@ -23,9 +23,11 @@ include("/gui/pfm/timeline.lua")
 include("/gui/pfm/elementviewer.lua")
 include("/gui/pfm/actoreditor.lua")
 include("/gui/pfm/modelcatalog.lua")
+include("/gui/pfm/materialcatalog.lua")
 include("/gui/pfm/actorcatalog.lua")
 include("/gui/pfm/renderpreview.lua")
 include("/gui/pfm/infobar.lua")
+include("/gui/pfm/materialeditor.lua")
 
 gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
@@ -33,6 +35,7 @@ locale.load("pfm_user_interface.txt")
 include("windows")
 include("video_recorder.lua")
 include("selection_manager.lua")
+include("animation_export.lua")
 
 include_component("pfm_camera")
 include_component("pfm_sound_source")
@@ -53,6 +56,19 @@ function gui.WIFilmmaker:OnInitialize()
 	end)
 	local pMenuBar = self:GetMenuBar()
 	self.m_menuBar = pMenuBar
+
+	self.m_cbDropped = game.add_callback("OnFilesDropped",function(tFiles)
+		local foundElement = false
+		gui.get_element_under_cursor(function(el)
+			if(foundElement or el:IsDescendantOf(self) == false) then return false end
+			local result = el:CallCallbacks("OnFilesDropped",tFiles)
+			if(result == util.EVENT_REPLY_HANDLED) then
+				foundElement = true
+				return true
+			end
+			return false
+		end)
+	end)
 
 	pMenuBar:AddItem(locale.get_text("file"),function(pContext)
 		--[[pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
@@ -281,6 +297,32 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetKeyboardInputEnabled(true)
 	self:ClearProjectUI()
 	self:CreateNewProject()
+
+	if(ents.get_world() == nil) then
+		pfm.log("Empty map. Creating a default reflection probe and light source...",pfm.LOG_CATEGORY_PFM)
+		local entReflectionProbe = ents.create("env_reflection_probe")
+		entReflectionProbe:SetKeyValue("ibl_material","pbr/ibl/venice_sunset")
+		entReflectionProbe:SetKeyValue("ibl_strength","1.4")
+		entReflectionProbe:Spawn()
+		self.m_reflectionProbe = entReflectionProbe
+
+		local entLight = ents.create("env_light_environment")
+		entLight:SetKeyValue("spawnflags",tostring(1024))
+		entLight:SetAngles(EulerAngles(65,45,0))
+		entLight:Spawn()
+
+		local colorC = entLight:GetComponent(ents.COMPONENT_COLOR)
+		if(colorC ~= nil) then colorC:SetColor(light.color_temperature_to_color(light.get_average_color_temperature(light.NATURAL_LIGHT_TYPE_CLEAR_BLUESKY))) end
+
+		local lightC = entLight:GetComponent(ents.COMPONENT_LIGHT)
+		if(lightC ~= nil) then
+			lightC:SetShadowType(ents.LightComponent.SHADOW_TYPE_FULL)
+			lightC:SetLightIntensity(4)
+		end
+		local toggleC = entLight:GetComponent(ents.COMPONENT_TOGGLE)
+		if(toggleC ~= nil) then toggleC:TurnOn() end
+		self.m_entLight = entLight
+	end
 end
 function gui.WIFilmmaker:GetViewport() return self.m_viewport end
 function gui.WIFilmmaker:GetActorEditor() return self.m_actorEditor end
@@ -302,7 +344,7 @@ function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 		end
 	else
 		-- TODO: UNDO ME
-		local entGhost = ents.find_by_class("pfm_ghost")[1]
+		--[[local entGhost = ents.find_by_class("pfm_ghost")[1]
 		if(util.is_valid(entGhost)) then
 			local lightC = entGhost:GetComponent(ents.COMPONENT_LIGHT)
 			lightC.colTemp = lightC.colTemp or light.get_average_color_temperature(light.NATURAL_LIGHT_TYPE_LED_LAMP)
@@ -315,7 +357,7 @@ function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 			local colorC = entGhost:GetComponent(ents.COMPONENT_COLOR)
 			colorC:SetColor(light.color_temperature_to_color(lightC.colTemp))
 		end
-		return util.EVENT_REPLY_HANDLED
+		return util.EVENT_REPLY_HANDLED]]
 	end
 	--[[elseif(key == input.KEY_KP_ADD and state == input.STATE_PRESS) then
 		ents.PFMGrid.decrease_grid_size()
@@ -365,10 +407,19 @@ function gui.WIFilmmaker:OnThink()
 end
 function gui.WIFilmmaker:OnRemove()
 	self:CloseProject()
+	if(util.is_valid(self.m_cbDropped)) then self.m_cbDropped:Remove() end
 	if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
 	if(self.m_previewWindow ~= nil) then self.m_previewWindow:Remove() end
 	if(self.m_renderResultWindow ~= nil) then self.m_renderResultWindow:Remove() end
 	self.m_selectionManager:Remove()
+
+	if(self.m_animRecorder ~= nil) then
+		self.m_animRecorder:Clear()
+		self.m_animRecorder = nil
+	end
+
+	if(util.is_valid(self.m_reflectionProbe)) then self.m_reflectionProbe:Remove() end
+	if(util.is_valid(self.m_entLight)) then self.m_entLight:Remove() end
 end
 function gui.WIFilmmaker:CaptureRaytracedImage()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
@@ -451,6 +502,10 @@ function gui.WIFilmmaker:InitializeProject(project)
 	end
 
 	self:InitializeProjectUI()
+	-- TODO: If we directly move to frame 0, the actors don't get spawned
+	-- FIXME
+	self:SetFrameOffset(1)
+	self:SetFrameOffset(0)
 	return entScene
 end
 function gui.WIFilmmaker:RefreshGameView()
@@ -523,19 +578,23 @@ function gui.WIFilmmaker:InitializeProjectUI()
 			-- TODO: Allow generic properties?
 		end
 	end)
-	actorDataFrame:AddTab(locale.get_text("pfm_actor_editor"),actorEditor)
+	actorDataFrame:AddTab("actor_editor",locale.get_text("pfm_actor_editor"),actorEditor)
 	self.m_actorEditor = actorEditor -- TODO Determine dynamically
 
 	local modelCatalog = gui.create("WIPFMModelCatalog")
-	actorDataFrame:AddTab(locale.get_text("pfm_model_catalog"),modelCatalog)
+	actorDataFrame:AddTab("model_catalog",locale.get_text("pfm_model_catalog"),modelCatalog)
 	self.m_modelCatalog = modelCatalog -- TODO Determine dynamically
 
+	local materialCatalog = gui.create("WIPFMMaterialCatalog")
+	actorDataFrame:AddTab("material_catalog",locale.get_text("pfm_material_catalog"),materialCatalog)
+	self.m_materialCatalog = materialCatalog -- TODO Determine dynamically
+
 	local actorCatalog = gui.create("WIPFMActorCatalog")
-	actorDataFrame:AddTab(locale.get_text("pfm_actor_catalog"),actorCatalog)
+	actorDataFrame:AddTab("actor_catalog",locale.get_text("pfm_actor_catalog"),actorCatalog)
 	self.m_actorCatalog = actorCatalog -- TODO Determine dynamically
 
 	local elementViewer = gui.create("WIPFMElementViewer")
-	actorDataFrame:AddTab(locale.get_text("pfm_element_viewer"),elementViewer)
+	actorDataFrame:AddTab("element_viewer",locale.get_text("pfm_element_viewer"),elementViewer)
 	self.m_elementViewer = elementViewer
 	self.m_actorDataFrame = actorDataFrame
 	
@@ -549,17 +608,17 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	viewportFrame:SetHeight(self:GetHeight())
 	local viewport = gui.create("WIPFMViewport")
 	self.m_viewport = viewport
-	viewportFrame:AddTab(locale.get_text("pfm_primary_viewport"),viewport)
+	viewportFrame:AddTab("primary_viewport",locale.get_text("pfm_primary_viewport"),viewport)
 
 	local renderPreview = gui.create("WIPFMRenderPreview")
-	viewportFrame:AddTab(locale.get_text("pfm_cycles_renderer"),renderPreview)
+	viewportFrame:AddTab("cycles_renderer",locale.get_text("pfm_cycles_renderer"),renderPreview)
 
 	gui.create("WIResizer",self.m_contentsRight)
 
 	local timelineFrame = self:AddFrame(self.m_contentsRight)
 	local pfmTimeline = gui.create("WIPFMTimeline")
 	self.m_timeline = pfmTimeline
-	timelineFrame:AddTab(locale.get_text("pfm_timeline"),pfmTimeline)
+	timelineFrame:AddTab("timeline",locale.get_text("pfm_timeline"),pfmTimeline)
 
 	-- Populate UI with project data
 	local project = self:GetProject()
@@ -666,6 +725,15 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		end
 	end
 end
+function gui.WIFilmmaker:OpenMaterialEditor(mat,optMdl)
+	self.m_actorDataFrame:RemoveTab("material_editor")
+
+	local matEd = gui.create("WIPFMMaterialEditor")
+	local tabId = self.m_actorDataFrame:AddTab("material_editor",locale.get_text("pfm_material_editor"),matEd)
+	self.m_actorDataFrame:SetActiveTab(tabId)
+
+	matEd:SetMaterial(mat,optMdl)
+end
 function gui.WIFilmmaker:OnActorSelectionChanged(ent,selected)
 	if(util.is_valid(self.m_viewport) == false) then return end
 	self.m_viewport:OnActorSelectionChanged(ent,selected)
@@ -693,6 +761,17 @@ function gui.WIFilmmaker:SelectActor(actor)
 	if(util.is_valid(self.m_actorDataFrame)) then
 		self.m_actorDataFrame:SetActiveTab(self.m_actorEditor)
 	end
+end
+function gui.WIFilmmaker:ExportAnimation(actor)
+	if(self.m_animRecorder ~= nil) then
+		self.m_animRecorder:Clear()
+		self.m_animRecorder = nil
+	end
+	local activeFilmClip = self:GetActiveFilmClip()
+	if(activeFilmClip == nil) then return end
+	local recorder = pfm.AnimationRecorder(actor,activeFilmClip)
+	recorder:StartRecording()
+	self.m_animRecorder = recorder
 end
 function gui.WIFilmmaker:GetSelectedClip() return self:GetTimeline():GetSelectedClip() end
 function gui.WIFilmmaker:GetTimeline() return self.m_timeline end

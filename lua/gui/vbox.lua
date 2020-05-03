@@ -34,6 +34,7 @@ function gui.VBox:OnUpdate()
 	if(self.m_fixedHeight ~= true) then size.y = y
 	elseif(self.m_autoFillHeight == true and lastChild ~= nil and lastChild:HasAnchor() == false) then lastChild:SetHeight(size.y -lastChild:GetTop()) end
 	if(size ~= curSize and self:HasAnchor() == false) then self:SetSize(size) end
+	self:CallCallbacks("OnContentsUpdated")
 end
 function gui.VBox:IsVerticalBox() return true end
 gui.register("WIVBox",gui.VBox)

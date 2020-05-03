@@ -66,3 +66,8 @@ materials/models/mmd/yoshi/pc07_eye_white.dds
 materials/models/mmd/yoshi/pc07_eye_white.wmi
 materials/models/mmd/yoshi/sph3.dds
 materials/models/mmd/yoshi/sph3.wmi
+materials/model_icons/
+render/
+export/
+cache/
+elements/

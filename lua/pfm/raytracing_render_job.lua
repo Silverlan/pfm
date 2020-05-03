@@ -22,6 +22,20 @@ pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUIDISTANT = 1
 pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID = 2
 pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL = 3
 pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP = 4
+
+-- Note: These map to cycles enums and are redundant, but at this
+-- point in time it cannot be guaranteed that the Cycles module has
+-- been loaded.
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED = 0
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_BAKE_AMBIENT_OCCLUSION = 1
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_BAKE_NORMALS = 2
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_BAKE_DIFFUSE_LIGHTING = 3
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALBEDO = 4
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_NORMALS = 5
+
+pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU = 0
+pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU = 1
+
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderMode")
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"samples",80.0)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"sky","")
@@ -45,10 +59,34 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderPreview",fa
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"width",512)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"height",512)
 function pfm.RaytracingRenderJob.Settings:__init()
-	self:SetRenderMode(cycles.Scene.RENDER_MODE_COMBINED)
+	self:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
 end
 function pfm.RaytracingRenderJob.Settings:IsCubemapPanorama()
 	return self:GetCamType() == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA and self:GetPanoramaType() == pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP
+end
+function pfm.RaytracingRenderJob.Settings:Copy()
+	local cpy = pfm.RaytracingRenderJob.Settings()
+	cpy:SetRenderMode(self:GetRenderMode())
+	cpy:SetSamples(self:GetSamples())
+	cpy:SetSky(self:GetSky())
+	cpy:SetSkyStrength(self:GetSkyStrength())
+	cpy:SetEmissionStrength(self:GetEmissionStrength())
+	cpy:SetSkyYaw(self:GetSkyYaw())
+	cpy:SetMaxTransparencyBounces(self:GetMaxTransparencyBounces())
+	cpy:SetLightIntensityFactor(self:GetLightIntensityFactor())
+	cpy:SetFrameCount(self:GetFrameCount())
+	cpy:SetOutputDir(self:GetOutputDir())
+	cpy:SetDenoise(self:GetDenoise())
+	cpy:SetDeviceType(self:GetDeviceType())
+	cpy:SetRenderWorld(self:GetRenderWorld())
+	cpy:SetRenderGameEntities(self:GetRenderGameEntities())
+	cpy:SetRenderPlayer(self:GetRenderPlayer())
+	cpy:SetCamType(self:GetCamType())
+	cpy:SetPanoramaType(self:GetPanoramaType())
+	cpy:SetRenderPreview(self:IsRenderPreview())
+	cpy:SetWidth(self:GetWidth())
+	cpy:SetHeight(self:GetHeight())
+	return cpy
 end
 
 pfm.RaytracingRenderJob.STATE_IDLE = 0
@@ -56,10 +94,12 @@ pfm.RaytracingRenderJob.STATE_RENDERING = 1
 pfm.RaytracingRenderJob.STATE_FAILED = 2
 pfm.RaytracingRenderJob.STATE_COMPLETE = 3
 pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE = 4
-function pfm.RaytracingRenderJob:__init()
-	self.m_settings = pfm.RaytracingRenderJob.Settings()
+function pfm.RaytracingRenderJob:__init(settings)
+	self.m_settings = (settings and settings:Copy()) or pfm.RaytracingRenderJob.Settings()
 	self.m_currentFrame = -1
+	self.m_gameScene = game.get_scene()
 end
+function pfm.RaytracingRenderJob:SetGameScene(scene) self.m_gameScene = scene end
 function pfm.RaytracingRenderJob:GetSettings() return self.m_settings end
 
 function pfm.RaytracingRenderJob:IsComplete()
@@ -147,7 +187,7 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 		return true
 	end
 
-	local cam = game.get_render_scene_camera()
+	local cam = self.m_gameScene:GetActiveCamera()
 	if(cam == nil) then return end
 
 	local createInfo = cycles.Scene.CreateInfo()
@@ -213,7 +253,7 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	clCam:SetCameraType(camTypeToClType[camType])
 	clCam:SetPanoramaType(panoramaTypeToClType[panoramaType])
 
-	scene:InitializeFromGameScene(pos,rot,vp,nearZ,farZ,fov,cullObjectsOutsidePvs,function(ent)
+	scene:InitializeFromGameScene(self.m_gameScene,pos,rot,vp,nearZ,farZ,fov,cullObjectsOutsidePvs,function(ent)
 		if(ent:IsWorld()) then return renderSettings:GetRenderWorld() end
 		if(ent:IsPlayer()) then return renderSettings:GetRenderPlayer() end
 		return renderSettings:GetRenderGameEntities() or ent:HasComponent(ents.COMPONENT_PFM_ACTOR)

@@ -43,6 +43,8 @@ local function find_actor_under_cursor(pos,dir)
 	return actorClosest,hitPos
 end
 
+function ents.PFMGhost:SetHoverMode(b) self.m_hoverMode = b end
+
 function ents.PFMGhost:OnTick()
 	local filmmaker = tool.get_filmmaker()
 	local viewport = filmmaker:GetViewport():GetViewport()
@@ -63,11 +65,29 @@ function ents.PFMGhost:OnTick()
 	local rayData = charComponent:GetAimRayData(1200.0)
 	rayData:SetSource(pos)
 	rayData:SetTarget(posDst)
-	local ray = phys.raycast(rayData)
-	if(ray ~= false) then posDst = ray.position end
 	local ent = self:GetEntity()
-
 	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+	local ray = phys.raycast(rayData)
+	if(ray ~= false) then posDst = ray.position
+	else
+		local min,max = Vector(),Vector()
+		if(renderC ~= nil) then min,max = renderC:GetRenderBounds() end
+		local maxAxisLength = math.max(max.x -min.x,max.y -min.y,max.z -min.z)
+		posDst = pos +dir *(maxAxisLength +20.0) -- Move position away from camera
+
+		-- Since we have no level as reference, we'll try to find a good position for placing the object
+		-- by creating an implicit plane relative to the camera (angled by 20 degrees)
+		local rot = entCam:GetRotation()
+		rot = rot *EulerAngles(-20,0,0):ToQuaternion()
+		local planeUp = rot:GetUp()
+		local d = planeUp:DotProduct(pos)
+		local intersect,t = intersect.line_with_plane(pos,dir *2048.0,planeUp,-d +60.0)
+		-- debug.draw_plane(planeUp,-d +60.0,Color(255,0,0,128),0.1)
+		if(intersect) then
+			posDst = pos +dir *2048.0 *t
+		end
+	end
+
 	if(renderC ~= nil) then
 		local min,max = renderC:GetRenderBounds()
 		-- debug.draw_box(ent:GetPos() +min,ent:GetPos() +max,Color.Red,0.1)
@@ -97,9 +117,11 @@ function ents.PFMGhost:OnTick()
 	end
 	ent:SetPos(posDst)
 
-	local actorClosest,hitPos = find_actor_under_cursor(pos,dir)
-	if(actorClosest ~= nil) then
-		ent:SetPos(hitPos +Vector(0,50,0))
+	if(self.m_hoverMode) then
+		local actorClosest,hitPos = find_actor_under_cursor(pos,dir)
+		if(actorClosest ~= nil) then
+			ent:SetPos(hitPos +Vector(0,50,0))
+		end
 	end
 
 	if(ray ~= false) then

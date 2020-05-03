@@ -27,11 +27,18 @@ function gui.EditableEntry:OnInitialize()
 
 	local cbOnChildAdded
 	cbOnChildAdded = self:AddCallback("OnChildAdded",function(el,elChild)
+		if(self.m_empty) then return end
 		self.m_target = elChild
 		elChild:SetVisible(false)
-		elChild:AddCallback("OnValueChanged",function()
-			self:UpdateText()
-		end)
+		if(elChild:GetClass() == "witextentry") then
+			elChild:AddCallback("OnTextChanged",function()
+				self:UpdateText()
+			end)
+		else
+			elChild:AddCallback("OnValueChanged",function()
+				self:UpdateText()
+			end)
+		end
 		if(util.is_valid(cbOnChildAdded)) then cbOnChildAdded:Remove() end
 	end)
 	local cbOnChildRemoved
@@ -42,19 +49,34 @@ function gui.EditableEntry:OnInitialize()
 		end
 	end)
 	self:SetMouseInputEnabled(true)
-	self:AddCallback("OnMousePressed",function()
+	self:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)
+		if(state ~= input.STATE_PRESS or (button ~= input.MOUSE_BUTTON_LEFT and button ~= input.MOUSE_BUTTON_RIGHT)) then return util.EVENT_REPLY_UNHANDLED end
 		if(util.is_valid(self.m_target) and self.m_target:GetClass() == "widropdownmenu") then
 			local numOptions = self.m_target:GetOptionCount()
 			local option = self.m_target:GetSelectedOption()
-			if(option == -1 or option == numOptions -1) then option = 0
-			else option = option +1 end
+			if(button == input.MOUSE_BUTTON_LEFT) then
+				if(option == -1 or option == numOptions -1) then option = 0
+				else option = option +1 end
+			else
+				if(option == -1 or option == 0) then option = numOptions -1
+				else option = option -1 end
+			end
 			self.m_target:SelectOption(option)
-		else self:StartEditMode(true) end
-		return util.EVENT_REPLY_HANDLED
+			return util.EVENT_REPLY_HANDLED
+		end
+		if(button == input.MOUSE_BUTTON_LEFT) then
+			self:StartEditMode(true)
+			return util.EVENT_REPLY_HANDLED
+		end
+		return util.EVENT_REPLY_UNHANDLED
 	end)
 
 	self:SetText("")
 	self:AddStyleClass("input_field")
+end
+function gui.EditableEntry:SetEmpty()
+	self.m_target = nil
+	self.m_empty = true
 end
 function gui.EditableEntry:OnThink()
 	local endEditMode = true
@@ -79,12 +101,16 @@ function gui.EditableEntry:SetText(text)
 	self:UpdateText()
 end
 function gui.EditableEntry:UpdateText()
-	if(util.is_valid(self.m_pText) == false or util.is_valid(self.m_target) == false) then return end
-	local text = self.m_baseText .. ": "
+	if(util.is_valid(self.m_pText) == false) then return end
+	local text = self.m_baseText
 	local value
-	if(self.m_target:GetClass() == "widropdownmenu") then value = self.m_target:GetOptionText(self.m_target:GetSelectedOption())
-	else value = self.m_target:GetValue() end
-	if(#value == 0) then value = "-" end
+	if(util.is_valid(self.m_target)) then
+		text = text .. ": "
+		if(self.m_target:GetClass() == "widropdownmenu") then value = self.m_target:GetOptionText(self.m_target:GetSelectedOption())
+		else value = self.m_target:GetValue() end
+
+		if(#value == 0) then value = "-" end
+	else value = "" end
 	text = text .. value
 	self.m_pText:SetText(text)
 	self.m_pText:SizeToContents()

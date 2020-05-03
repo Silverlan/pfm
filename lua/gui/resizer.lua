@@ -37,6 +37,15 @@ function gui.Resizer:OnInitialize()
 	else
 		self:SetResizeMode(gui.Resizer.RESIZE_MODE_HORIZONTAL)
 	end
+	self:SetFraction(0.5)
+	parent:AddCallback("SetSize",function(p)
+		self.m_updateRequired = true
+	end)
+	parent:AddCallback("OnContentsUpdated",function(p)
+		if(self.m_updateRequired ~= true) then return end
+		self.m_updateRequired = nil
+		self:ScheduleUpdate()
+	end)
 	self:ScheduleUpdate()
 end
 function gui.Resizer:OnUpdate()
@@ -72,6 +81,7 @@ function gui.Resizer:OnUpdate()
 			child1:SetHeight(h -h0)
 		end
 	end
+	self:UpdateFraction()
 end
 function gui.Resizer:SetResizeMode(mode)
 	self.m_resizeMode = mode
@@ -112,6 +122,71 @@ function gui.Resizer:SetElements(el0,el1)
 	self.m_element0 = el0
 	self.m_element1 = el1
 end
+function gui.Resizer:SetFraction(fraction)
+	fraction = math.clamp(fraction,0.0,1.0)
+	self.m_fraction = fraction
+	self:ScheduleUpdate()
+end
+function gui.Resizer:GetFraction() return self.m_fraction end
+function gui.Resizer:GetRangeExtents()
+	if(util.is_valid(self.m_element0) == false or util.is_valid(self.m_element1) == false) then return 0.0 end
+	return self:GetExtent(self.m_element0) +self:GetExtent(self) +self:GetExtent(self.m_element1)
+end
+function gui.Resizer:FindBorderingElements()
+	local before,after
+	local children = self:GetParent():GetChildren()
+	for i,child in ipairs(children) do
+		if(child == self.m_element0) then before = children[i -1]
+		elseif(child == self.m_element1) then after = children[i +1] end
+	end
+	return before,after
+end
+function gui.Resizer:ClampFraction(fraction)
+	local before,after = self:FindBorderingElements()
+	local minFraction = ((before and (self:GetCoord(before) +self:GetExtent(before)) or 0.0) +self:GetExtent(self) /2.0) /self:GetExtent(self:GetParent())
+	local maxFraction = ((after and self:GetCoord(after) or self:GetExtent(self:GetParent())) -self:GetExtent(self) /2.0) /self:GetExtent(self:GetParent())
+	return math.clamp(fraction,minFraction,maxFraction)
+end
+function gui.Resizer:GetRelativeFraction(fraction)
+	if(util.is_valid(self.m_element0) == false or util.is_valid(self.m_element1) == false) then return 0.0 end
+	local w = self:GetExtent(self:GetParent())
+
+	local start = self:GetCoord(self.m_element0)
+	local wLocal = self:GetRangeExtents()
+	return ((fraction *w) -start) /wLocal
+end
+function gui.Resizer:UpdateFraction()
+	if(util.is_valid(self.m_element0) == false or util.is_valid(self.m_element1) == false) then return end
+	local fraction = self:GetRelativeFraction(self:GetFraction())
+	local e = self:GetRangeExtents()
+	local e0 = math.floor(fraction *e) -self:GetExtent(self) /2
+	local e1 = e -e0 -self:GetExtent(self)
+	self:SetExtent(self.m_element0,e0)
+	self:SetExtent(self.m_element1,e1)
+	-- We need to update the parent VBox/HBox element right away,
+	-- in case there are other resizer elements within it
+	self:GetParent():Update()
+end
+function gui.Resizer:GetExtent(el)
+	local mode = self:GetResizeMode()
+	return (mode == gui.Resizer.RESIZE_MODE_VERTICAL) and el:GetWidth() or el:GetHeight()
+end
+function gui.Resizer:GetCoord(el)
+	local mode = self:GetResizeMode()
+	return (mode == gui.Resizer.RESIZE_MODE_VERTICAL) and el:GetX() or el:GetY()
+end
+function gui.Resizer:SetExtent(el,ext)
+	local mode = self:GetResizeMode()
+	if(mode == gui.Resizer.RESIZE_MODE_VERTICAL) then el:SetWidth(ext)
+	else el:SetHeight(ext) end
+end
+function gui.Resizer:GetFullExtent()
+	if(util.is_valid(self.m_element0) == false or util.is_valid(self.m_element1) == false) then return 0.0 end
+	return self:GetExtent(self.m_element0) +self:GetExtent(self.m_element1) +self:GetExtent(self)
+end
+function gui.Resizer:CalcFraction(pos)
+	return pos /self:GetExtent(self:GetParent())
+end
 function gui.Resizer:MouseCallback(mouseButton,state,mods)
 	if(mouseButton == input.MOUSE_BUTTON_LEFT) then
 		if(state == input.STATE_PRESS) then
@@ -121,24 +196,18 @@ function gui.Resizer:MouseCallback(mouseButton,state,mods)
 				if(mode == gui.Resizer.RESIZE_MODE_VERTICAL) then
 					local xStart = self:GetCursorPos().x
 					self.m_cbMove = self:AddCallback("OnCursorMoved",function(el,x,y)
-						if(util.is_valid(self.m_element0) and util.is_valid(self.m_element1)) then
-							local wOld = self.m_element0:GetWidth()
-							local wNew = self:GetX() +(x -xStart)
-							wNew = math.clamp(wNew,0,self:GetParent():GetWidth() -self:GetWidth())
-							self.m_element0:SetWidth(wNew)
-							self.m_element1:SetWidth(self.m_element1:GetWidth() -(wNew -wOld))
-						end
+						local fraction = self:CalcFraction(self:GetX() +self:GetExtent(self) /2.0 +(x -xStart))
+						fraction = self:ClampFraction(fraction)
+						self:SetFraction(fraction)
+						self:UpdateFraction()
 					end)
 				elseif(mode == gui.Resizer.RESIZE_MODE_HORIZONTAL) then
 					local yStart = self:GetCursorPos().y
 					self.m_cbMove = self:AddCallback("OnCursorMoved",function(el,x,y)
-						if(util.is_valid(self.m_element0) and util.is_valid(self.m_element1)) then
-							local hOld = self.m_element0:GetHeight()
-							local hNew = self:GetY() +(y -yStart)
-							hNew = math.clamp(hNew,0,self:GetParent():GetHeight() -self:GetHeight())
-							self.m_element0:SetHeight(hNew)
-							self.m_element1:SetHeight(self.m_element1:GetHeight() -(hNew -hOld))
-						end
+						local fraction = self:CalcFraction(self:GetY() +self:GetExtent(self) /2.0 +(y -yStart))
+						fraction = self:ClampFraction(fraction)
+						self:SetFraction(fraction)
+						self:UpdateFraction()
 					end)
 				end
 			end

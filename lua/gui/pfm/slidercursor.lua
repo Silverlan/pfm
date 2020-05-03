@@ -115,6 +115,7 @@ function gui.PFMSliderCursor:OnCursorMoved(x,y)
 		end
 		return
 	end
+
 	-- Note: Our cursor element behaves slightly different than the actual mouse cursor.
 	-- When moving in the range [0,1], the cursor element will start at offset 0 and move to width -cursorWidth (if the slider is horizontal).
 	-- The mouse cursor, however, has to start at offset 0 and move all the way to width. This causes a visual disconnect between the mouse cursor

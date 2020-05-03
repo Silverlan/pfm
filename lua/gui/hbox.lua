@@ -34,6 +34,7 @@ function gui.HBox:OnUpdate()
 	elseif(self.m_autoFillWidth == true and lastChild ~= nil and lastChild:HasAnchor() == false) then lastChild:SetWidth(size.x -lastChild:GetLeft()) end
 	if(self.m_fixedHeight ~= true) then size.y = h end
 	if(size ~= curSize and self:HasAnchor() == false) then self:SetSize(size) end
+	self:CallCallbacks("OnContentsUpdated")
 end
 function gui.HBox:IsHorizontalBox() return true end
 gui.register("WIHBox",gui.HBox)

@@ -6,8 +6,17 @@ function ents.UtilTransformComponent:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	if(CLIENT) then
-		self.m_translationAxisEnabled = {true,true,true}
-		self.m_rotationAxisEnabled = {true,true,true}
+		self.m_translationAxisEnabled = {}
+		self.m_rotationAxisEnabled = {}
+
+		self.m_translationAxisEnabled[math.AXIS_X] = true
+		self.m_translationAxisEnabled[math.AXIS_Y] = true
+		self.m_translationAxisEnabled[math.AXIS_Z] = true
+
+		self.m_rotationAxisEnabled[math.AXIS_X] = true
+		self.m_rotationAxisEnabled[math.AXIS_Y] = true
+		self.m_rotationAxisEnabled[math.AXIS_Z] = true
+
 		self.m_arrows = {}
 		self:AddEntityComponent(ents.COMPONENT_LOGIC)
 		self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")

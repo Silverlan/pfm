@@ -14,7 +14,7 @@ include("/gui/pfm/button.lua")
 include("/gui/editableentry.lua")
 include("/gui/wifiledialog.lua")
 include("/gui/toggleoption.lua")
-include("/pfm/raytracing_render_job.lua")
+include("/gui/raytracedviewport.lua")
 
 util.register_class("gui.PFMRenderPreview",gui.Base)
 
@@ -34,37 +34,20 @@ function gui.PFMRenderPreview:OnInitialize()
 	self.vpContents = gui.create("WIHBox",self.m_contents,0,0,self:GetWidth(),hViewport,0,0,1,1)
 	self.vpContents:SetAutoFillContents(true)
 
-	self.m_vpBg = gui.create("WIRect",self.vpContents)
-	self.m_vpBg:SetColor(Color.Black)
-	self.m_vpBg:SetMouseInputEnabled(true)
-	self.m_vpBg:AddCallback("OnMouseEvent",function(el,button,state,mods)
-		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-			local imgBuf = (self.m_rtJob ~= nil) and self.m_rtJob:GetRenderResult()
-			if(imgBuf ~= nil) then
-				local pContext = gui.open_context_menu()
-				if(util.is_valid(pContext) == false) then return end
-				pContext:SetPos(input.get_cursor_pos())
-				pContext:AddItem(locale.get_text("save_as"),function()
-					local dialoge = gui.create_file_save_dialog(function(pDialoge)
-						local fname = pDialoge:GetFilePath(true)
-						file.create_path(file.get_file_path(fname))
-						local result = util.save_image(imgBuf,fname,util.IMAGE_FORMAT_PNG)
-						if(result == false) then
-							pfm.log("Unable to save image as '" .. fname .. "'!",pfm.LOG_CATEGORY_PFM_INTERFACE,pfm.LOG_SEVERITY_WARNING)
-						end
-					end)
-					dialoge:SetExtensions({"png"})
-					dialoge:SetRootPath(util.get_addon_path())
-					dialoge:Update()
-				end)
-				pContext:Update()
-			end
-			return util.EVENT_REPLY_HANDLED
-		end
-		return util.EVENT_REPLY_UNHANDLED
+	self.m_rt = gui.create("WIRaytracedViewport",self.vpContents)
+	self.m_rt:AddCallback("OnProgressChanged",function(rt,progress)
+		self:CallCallbacks("OnProgressChanged",progress)
 	end)
-
-	self.m_aspectRatioWrapper = gui.create("WIAspectRatio",self.m_vpBg,0,0,self.m_vpBg:GetWidth(),self.m_vpBg:GetHeight(),0,0,1,1)
+	self.m_rt:AddCallback("OnFrameComplete",function(rt,state,job)
+		if(util.is_valid(self.m_preview) == false) then return end
+		local tex = job:GetRenderResultTexture()
+		if(tex ~= nil) then self.m_preview:SetTexture(tex) end
+	end)
+	self.m_rt:AddCallback("OnComplete",function(rt,state)
+		if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(true) end
+		if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetText(locale.get_text("pfm_render_image")) end
+	end)
+	self.m_aspectRatioWrapper = gui.create("WIAspectRatio",self.m_rt,0,0,self.m_rt:GetWidth(),self.m_rt:GetHeight(),0,0,1,1)
 
 	gui.create("WIResizer",self.vpContents)
 
@@ -93,7 +76,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	local deviceType = gui.create("WIDropDownMenu",p)
 	deviceType:AddOption(locale.get_text("pfm_cycles_device_type_gpu"),"gpu")
 	deviceType:AddOption(locale.get_text("pfm_cycles_device_type_cpu"),"cpu")
-	deviceType:SelectOption(0)
+	deviceType:SelectOption(1)
 	-- deviceType:SetTooltip(locale.get_text("pfm_cycles_device_type_desc"))
 	self.m_ctrlDeviceType = deviceType
 
@@ -323,7 +306,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 end
 function gui.PFMRenderPreview:InitializeControls()
 	local controls = gui.create("WIHBox",self.m_contents)
-	controls:SetHeight(self:GetHeight() -self.m_vpBg:GetBottom())
+	controls:SetHeight(self:GetHeight() -self.m_rt:GetBottom())
 
 	self.m_btRefreshPreview = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
 		self:Refresh(true)
@@ -334,8 +317,8 @@ function gui.PFMRenderPreview:InitializeControls()
 	gui.create("WIBase",controls,0,0,5,1) -- Gap
 
 	self.m_btRefresh = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
-		if(self:IsRendering()) then
-			self:CancelRendering()
+		if(self.m_rt:IsRendering()) then
+			self.m_rt:CancelRendering()
 			return
 		end
 		self:Refresh()
@@ -356,66 +339,28 @@ function gui.PFMRenderPreview:InitializeControls()
 	controls:Update()
 	controls:SetAnchor(0,1,0,1)
 end
-function gui.PFMRenderPreview:OnRemove()
-	self:CancelRendering()
-end
-function gui.PFMRenderPreview:CancelRendering()
-	if(self.m_rtJob == nil) then return end
-	self.m_rtJob:CancelRendering()
-end
-function gui.PFMRenderPreview:IsRendering()
-	return (self.m_rtJob ~= nil) and self.m_rtJob:IsRendering() or false
-end
-function gui.PFMRenderPreview:OnThink()
-	if(self.m_rtJob == nil) then return end
-	local progress = self.m_rtJob:GetProgress()
-	local state = self.m_rtJob:Update()
-	local newProgress = self.m_rtJob:GetProgress()
-	if(newProgress ~= progress) then
-		self:CallCallbacks("OnProgressChanged",newProgress)
-	end
-	if((state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE) and util.is_valid(self.m_preview)) then
-		local tex = self.m_rtJob:GetRenderResultTexture()
-		if(tex ~= nil) then self.m_preview:SetTexture(tex) end
-	end
-	if(state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FAILED) then
-		if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(true) end
-		if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetText(locale.get_text("pfm_render_image")) end
-
-		self:DisableThinking()
-		self:SetAlwaysUpdate(false)
-	end
-end
 function gui.PFMRenderPreview:Refresh(preview)
-	self:CancelRendering()
 	if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(false) end
 	if(util.is_valid(self.m_btRefresh)) then
 		self.m_btRefresh:SetText(locale.get_text("pfm_cancel_rendering"))
 	end
 
-	local r = engine.load_library("cycles/pr_cycles")
-	if(r ~= true) then
-		print("WARNING: An error occured trying to load the 'pr_cycles' module: ",r)
-		return
-	end
-
-	local renderMode = cycles.Scene.RENDER_MODE_COMBINED
+	local settings = self.m_rt:GetRenderSettings()
+	local renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED
 
 	local selectedRenderMode = self.m_ctrlRenderMode:GetValue()
-	if(selectedRenderMode == "combined") then renderMode = cycles.Scene.RENDER_MODE_COMBINED
-	elseif(selectedRenderMode == "albedo") then renderMode = cycles.Scene.RENDER_MODE_ALBEDO
-	elseif(selectedRenderMode == "normals") then renderMode = cycles.Scene.RENDER_MODE_NORMALS end
+	if(selectedRenderMode == "combined") then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED
+	elseif(selectedRenderMode == "albedo") then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALBEDO
+	elseif(selectedRenderMode == "normals") then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_NORMALS end
 
-	local deviceType = cycles.Scene.DEVICE_TYPE_GPU
+	local deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU
 	local selectedDeviceType = self.m_ctrlDeviceType:GetValue()
-	if(selectedDeviceType == "cpu") then deviceType = cycles.Scene.DEVICE_TYPE_CPU
-	elseif(selectedDeviceType == "gpu") then deviceType = cycles.Scene.DEVICE_TYPE_GPU end
+	if(selectedDeviceType == "cpu") then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU
+	elseif(selectedDeviceType == "gpu") then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU end
 
 	preview = preview or false
 	local samples = preview and 4 or nil
 
-	self.m_rtJob = pfm.RaytracingRenderJob()
-	local settings = self.m_rtJob:GetSettings()
 	settings:SetRenderMode(renderMode)
 	settings:SetSamples(samples or self.m_ctrlSamplesPerPixel:GetValue())
 	settings:SetSky(self.m_ctrlSkyOverride:GetValue())
@@ -435,32 +380,6 @@ function gui.PFMRenderPreview:Refresh(preview)
 	settings:SetPanoramaType(tonumber(self.m_ctrlPanoramaType:GetValue()))
 	settings:SetWidth(preview and 512 or self.m_ctrlResolutionWidth:GetValue())
 	settings:SetHeight(preview and 512 or self.m_ctrlResolutionHeight:GetValue())
-
---[[
-	local camType = gui.create("WIDropDownMenu",p)
-	camType:AddOption(locale.get_text("pfm_cycles_cam_type_perspective"),tostring(cycles.Camera.TYPE_PERSPECTIVE))
-	camType:AddOption(locale.get_text("pfm_cycles_cam_type_orthographic"),tostring(cycles.Camera.TYPE_ORTHOGRAPHIC))
-	camType:AddOption(locale.get_text("pfm_cycles_cam_type_panorama"),tostring(cycles.Camera.TYPE_PANORAMA))
-	camType:SelectOption(0)
-	-- camType:SetTooltip(locale.get_text("pfm_cycles_image_type_desc"))
-	self.m_ctrlCamType = camType
-
-	camType:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_cam_type"))
-
-	local panoramaType = gui.create("WIDropDownMenu",p)
-	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equirectangular"),tostring(cycles.Camera.PANORAMA_TYPE_EQUIRECTANGULAR))
-	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equidistant"),tostring(cycles.Camera.PANORAMA_TYPE_FISHEYE_EQUIDISTANT))
-	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equisolid"),tostring(cycles.Camera.PANORAMA_TYPE_FISHEYE_EQUISOLID))
-	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_mirrorball"),tostring(cycles.Camera.PANORAMA_TYPE_MIRRORBALL))
-	panoramaType:SelectOption(0)
-	-- panoramaType:SetTooltip(locale.get_text("pfm_cycles_image_type_desc"))
-	self.m_ctrlPanoramaType = panoramaType
-]]
-	settings:SetRenderPreview(preview)
-	pfm.log("Rendering image with resolution " .. settings:GetWidth() .. "x" .. settings:GetHeight() .. " and " .. settings:GetSamples() .. " samples...",pfm.LOG_CATEGORY_PFM_INTERFACE)
-	self.m_rtJob:Start()
-
-	self:EnableThinking()
-	self:SetAlwaysUpdate(true)
+	self.m_rt:Refresh(preview)
 end
 gui.register("WIPFMRenderPreview",gui.PFMRenderPreview)

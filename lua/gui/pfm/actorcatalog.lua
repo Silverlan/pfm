@@ -47,6 +47,7 @@ function gui.PFMActorCatalog:OnInitialize()
 				--entGhost:AddComponent("pfm_ghost")
 				local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
 				if(ghostC ~= nil) then
+					ghostC:SetHoverMode(true)
 					ghostC:SetPlacementCallback(function(pos,ray)
 						if(ray == false) then return end
 						pos:Set(ray.position +ray.normal *100)

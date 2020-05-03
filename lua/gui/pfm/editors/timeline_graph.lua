@@ -156,46 +156,50 @@ function gui.PFMTimelineGraph:AddControl(filmClip,controlData)
 		if(controlData.dualChannel ~= true) then
 			local property = controlData.getProperty(component)
 			local channel = track:FindFlexControllerChannel(property)
-			addChannel(channel,itemCtrl)
+			if(channel ~= nil) then
+				addChannel(channel,itemCtrl)
 
-			local log = channel:GetLog()
-			local layers = log:GetLayers()
-			local layer = layers:Get(1) -- TODO: Which layer(s) are the bookmarks refering to?
-			if(layer ~= nil) then
-				local bookmarks = log:GetBookmarks()
-				for _,bookmark in ipairs(bookmarks:GetTable()) do
-					self:AddKey(bookmark)
-					-- Get from layer
+				local log = channel:GetLog()
+				local layers = log:GetLayers()
+				local layer = layers:Get(1) -- TODO: Which layer(s) are the bookmarks refering to?
+				if(layer ~= nil) then
+					local bookmarks = log:GetBookmarks()
+					for _,bookmark in ipairs(bookmarks:GetTable()) do
+						self:AddKey(bookmark)
+						-- Get from layer
+					end
+					--[[local graphCurve = channel:GetGraphCurve()
+					local keyTimes = graphCurve:GetKeyTimes()
+					local keyValues = graphCurve:GetKeyValues()
+					local n = math.min(#keyTimes,#keyValues)
+					for i=1,n do
+						local t = keyTimes:Get(i)
+						local v = keyValues:Get(i)
+						self:AddKey(t,v)
+					end]]
 				end
-				--[[local graphCurve = channel:GetGraphCurve()
-				local keyTimes = graphCurve:GetKeyTimes()
-				local keyValues = graphCurve:GetKeyValues()
-				local n = math.min(#keyTimes,#keyValues)
-				for i=1,n do
-					local t = keyTimes:Get(i)
-					local v = keyValues:Get(i)
-					self:AddKey(t,v)
-				end]]
 			end
 		else
 			local leftProperty = controlData.getLeftProperty(component)
 			local leftChannel = track:FindFlexControllerChannel(leftProperty)
-			addChannel(leftChannel,itemCtrl:AddItem(locale.get_text("left")))
+			if(leftChannel ~= nil) then addChannel(leftChannel,itemCtrl:AddItem(locale.get_text("left"))) end
 
 			local rightProperty = controlData.getRightProperty(component)
 			local rightChannel = track:FindFlexControllerChannel(rightProperty)
-			addChannel(rightChannel,itemCtrl:AddItem(locale.get_text("right")))
+			if(rightChannel ~= nil) then addChannel(rightChannel,itemCtrl:AddItem(locale.get_text("right"))) end
 		end
 	elseif(controlData.type == "bone") then
 		local channel = track:FindBoneChannel(controlData.bone:GetTransform())
 		-- TODO: Localization
-		addChannel(channel,itemCtrl:AddItem("Position X"),function(v) return v.x end)
-		addChannel(channel,itemCtrl:AddItem("Position Y"),function(v) return v.y end)
-		addChannel(channel,itemCtrl:AddItem("Position Z"),function(v) return v.z end)
+		if(channel ~= nil) then
+			addChannel(channel,itemCtrl:AddItem("Position X"),function(v) return v.x end)
+			addChannel(channel,itemCtrl:AddItem("Position Y"),function(v) return v.y end)
+			addChannel(channel,itemCtrl:AddItem("Position Z"),function(v) return v.z end)
 
-		addChannel(channel,itemCtrl:AddItem("Rotation X"),function(v) return v:ToEulerAngles().p end)
-		addChannel(channel,itemCtrl:AddItem("Rotation Y"),function(v) return v:ToEulerAngles().y end)
-		addChannel(channel,itemCtrl:AddItem("Rotation Z"),function(v) return v:ToEulerAngles().r end)
+			addChannel(channel,itemCtrl:AddItem("Rotation X"),function(v) return v:ToEulerAngles().p end)
+			addChannel(channel,itemCtrl:AddItem("Rotation Y"),function(v) return v:ToEulerAngles().y end)
+			addChannel(channel,itemCtrl:AddItem("Rotation Z"),function(v) return v:ToEulerAngles().r end)
+		end
 	end
 
 	itemCtrl:AddCallback("OnSelected",function(elCtrl)
