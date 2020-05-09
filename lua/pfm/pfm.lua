@@ -14,6 +14,7 @@ pfm.impl.projects = pfm.impl.projects or {}
 include("log.lua")
 include("/udm/udm.lua")
 include("udm")
+include("math.lua")
 include("tree/pfm_tree.lua")
 
 util.register_class("pfm.Project")

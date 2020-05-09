@@ -160,24 +160,21 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	samplesPerPixel:SetStepSize(1.0)
 	self.m_ctrlSamplesPerPixel = samplesPerPixel
 
-	-- Resolution Width
+	-- Resolution
 	local resolution = engine.get_render_resolution()
 
-	local resolutionWidth = gui.create("WIPFMSlider",p)
-	resolutionWidth:SetText(locale.get_text("pfm_resolution_width"))
-	resolutionWidth:SetInteger(true)
-	resolutionWidth:SetRange(64,4096)
-	resolutionWidth:SetDefault(resolution.x)
-	resolutionWidth:SetStepSize(1.0)
-	self.m_ctrlResolutionWidth = resolutionWidth
-
-	local resolutionHeight = gui.create("WIPFMSlider",p)
-	resolutionHeight:SetText(locale.get_text("pfm_resolution_height"))
-	resolutionHeight:SetInteger(true)
-	resolutionHeight:SetRange(64,4096)
-	resolutionHeight:SetDefault(resolution.y)
-	resolutionHeight:SetStepSize(1.0)
-	self.m_ctrlResolutionHeight = resolutionHeight
+	local resolution = gui.create("WIDropDownMenu",p)
+	resolution:SetEditable(true)
+	resolution:AddOption(locale.get_text("pfm_resolution_hd_ready"),"1280x720")
+	resolution:AddOption(locale.get_text("pfm_resolution_full_hd"),"1920x1080")
+	resolution:AddOption(locale.get_text("pfm_resolution_quad_hd"),"2560x1440")
+	resolution:AddOption(locale.get_text("pfm_resolution_2k"),"2048×1080")
+	resolution:AddOption(locale.get_text("pfm_resolution_4k"),"3840x2160")
+	resolution:AddOption(locale.get_text("pfm_resolution_8k"),"7680x4320")
+	resolution:SelectOption(1)
+	resolution:SetTooltip(locale.get_text("pfm_resolution_desc"))
+	self.m_ctrlResolution = resolution
+	resolution:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_resolution"))
 
 	-- Sky override
 	local skyOverride = gui.create("WIFileEntry",p)
@@ -361,6 +358,24 @@ function gui.PFMRenderPreview:Refresh(preview)
 	preview = preview or false
 	local samples = preview and 4 or nil
 
+	local width = 512
+	local height = 512
+	if(preview == false) then
+		local selectedOption = self.m_ctrlResolution:GetSelectedOption()
+		local resolution
+		if(selectedOption ~= -1) then resolution = self.m_ctrlResolution:GetOptionValue(selectedOption)
+		else resolution = self.m_ctrlResolution:GetValue() end
+		resolution = string.split(resolution,"x")
+		if(resolution[1] ~= nil) then width = tonumber(resolution[1]) or 0 end
+		if(resolution[2] ~= nil) then height = tonumber(resolution[2]) or 0 end
+	end
+
+	width = math.max(width,2)
+	height = math.max(height,2)
+	-- Resolution has to be dividable by 2
+	if((width %2) ~= 0) then width = width +1 end
+	if((height %2) ~= 0) then height = height +1 end
+
 	settings:SetRenderMode(renderMode)
 	settings:SetSamples(samples or self.m_ctrlSamplesPerPixel:GetValue())
 	settings:SetSky(self.m_ctrlSkyOverride:GetValue())
@@ -378,8 +393,24 @@ function gui.PFMRenderPreview:Refresh(preview)
 	settings:SetRenderPlayer(self.m_ctrlRenderPlayer:IsChecked())
 	settings:SetCamType(tonumber(self.m_ctrlCamType:GetValue()))
 	settings:SetPanoramaType(tonumber(self.m_ctrlPanoramaType:GetValue()))
-	settings:SetWidth(preview and 512 or self.m_ctrlResolutionWidth:GetValue())
-	settings:SetHeight(preview and 512 or self.m_ctrlResolutionHeight:GetValue())
+	settings:SetWidth(width)
+	settings:SetHeight(height)
+
+	local filmmaker = tool.get_filmmaker()
+	local camC = filmmaker:GetActiveCamera()
+	if(util.is_valid(camC)) then
+		local pfmCamC = camC:GetEntity():GetComponent("pfm_camera")
+		local camData = pfmCamC and pfmCamC:GetCameraData() or nil
+		if(camData ~= nil) then
+			settings:SetFocalDistance(camData:GetFocalDistance())
+			settings:SetFStop(camData:GetFStop())
+			settings:SetApertureBokehRatio(camData:GetApertureBokehRatio())
+			settings:SetApertureBladeCount(camData:GetApertureBladeCount())
+			settings:SetApertureBladesRotation(camData:GetApertureBladesRotation())
+			settings:SetDepthOfFieldEnabled(camData:IsDepthOfFieldEnabled())
+		end
+	end
+
 	self.m_rt:Refresh(preview)
 end
 gui.register("WIPFMRenderPreview",gui.PFMRenderPreview)

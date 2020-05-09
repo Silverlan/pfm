@@ -56,6 +56,7 @@ end
 
 local function get_asset_list(assetPath,assetType,extensions,recursive)
 	if(asset.exists(assetPath,assetType)) then return {assetPath} end
+	local fileAssetPath = assetPath
 	if(assetPath:sub(#assetPath) ~= "/" and assetPath:sub(#assetPath) ~= "\\") then assetPath = assetPath .. "/" end
 	local rootDir
 	if(assetType == asset.TYPE_MODEL) then rootDir = "models/"
@@ -65,7 +66,7 @@ local function get_asset_list(assetPath,assetType,extensions,recursive)
 		local _,tDirs = file.find_external_game_asset_files(rootDir .. assetPath)
 		isDir = (#tDirs > 0)
 	end
-	if(isDir == false) then return {assetPath} end
+	if(isDir == false) then return {fileAssetPath} end
 	print("'" .. assetPath .. "' is directory! Collecting assets...")
 	return find_assets(util.Path(rootDir .. assetPath):GetString(),extensions,recursive)
 end

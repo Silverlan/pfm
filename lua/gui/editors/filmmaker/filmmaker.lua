@@ -661,7 +661,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		filmStrip:SetScrollInputEnabled(true)
 		filmStrip:AddCallback("OnScroll",function(el,x,y)
 			if(timeline:IsValid()) then
-				local axis = timeline:GetTimeAxis()
+				local axis = timeline:GetTimeAxis():GetAxis()
 				timeline:SetStartOffset(axis:GetStartOffset() -y *axis:GetZoomLevelMultiplier())
 				timeline:Update()
 				return util.EVENT_REPLY_HANDLED

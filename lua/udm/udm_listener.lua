@@ -20,17 +20,23 @@ end
 function udm.Listener:InvokeChangeListeners(...)
 	if(self.m_listeners == nil) then return end
 	local val = self:GetValue()
-	local numListeners = #self.m_listeners
-	local i = 1
-	while(i <= numListeners) do
-		local listener = self.m_listeners[i]
+
+	local hasRemoved = false
+	for i,listener in ipairs(self.m_listeners) do
 		if(listener:IsValid()) then
 			if(select(1,...) ~= nil) then listener:Call(...)
 			else listener:Call(val) end
-			i = i +1
 		else
-			table.remove(self.m_listeners,i)
-			numListeners = numListeners -1
+			self.m_listeners[i] = nil
+			hasRemoved = true
+		end
+	end
+
+	if(hasRemoved) then
+		for i=#self.m_listeners,1,-1 do
+			if(self.m_listeners[i] == nil) then
+				table.remove(self.m_listeners,i)
+			end
 		end
 	end
 end

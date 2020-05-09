@@ -246,7 +246,6 @@ function ents.PFMCamera:Setup(actorData,cameraData)
 			self:SetFrustumModelDirty()
 		end))
 		table.insert(self.m_listeners,cameraData:GetFovAttr():AddChangeListener(function(newFov)
-			print("NEW FOV: ",newFov)
 			if(camC:IsValid()) then
 				camC:SetFOV(newFov)
 				camC:UpdateProjectionMatrix()

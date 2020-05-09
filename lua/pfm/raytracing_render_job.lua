@@ -58,6 +58,20 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderPreview",fa
 })
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"width",512)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"height",512)
+
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"focalDistance",72.0)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"fstop",2.8,{
+	getter = "GetFStop",
+	setter = "SetFStop"
+})
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"apertureBokehRatio",1.0)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"apertureBladeCount",0)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"apertureBladesRotation",0.0)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"sensorSize",36.0)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"depthOfFieldEnabled",false,{
+	getter = "IsDepthOfFieldEnabled"
+})
+
 function pfm.RaytracingRenderJob.Settings:__init()
 	self:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
 end
@@ -86,6 +100,14 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetRenderPreview(self:IsRenderPreview())
 	cpy:SetWidth(self:GetWidth())
 	cpy:SetHeight(self:GetHeight())
+
+	cpy:SetFocalDistance(self:GetFocalDistance())
+	cpy:SetFStop(self:GetFStop())
+	cpy:SetApertureBokehRatio(self:GetApertureBokehRatio())
+	cpy:SetApertureBladeCount(self:GetApertureBladeCount())
+	cpy:SetApertureBladesRotation(self:GetApertureBladesRotation())
+	cpy:SetSensorSize(self:GetSensorSize())
+	cpy:SetDepthOfFieldEnabled(self:IsDepthOfFieldEnabled())
 	return cpy
 end
 
@@ -252,6 +274,12 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	local clCam = scene:GetCamera()
 	clCam:SetCameraType(camTypeToClType[camType])
 	clCam:SetPanoramaType(panoramaTypeToClType[panoramaType])
+	clCam:SetFocalDistance(renderSettings:GetFocalDistance())
+	clCam:SetBokehRatio(renderSettings:GetApertureBokehRatio())
+	clCam:SetBladeCount(renderSettings:GetApertureBladeCount())
+	clCam:SetBladesRotation(renderSettings:GetApertureBladesRotation())
+	clCam:SetDepthOfFieldEnabled(renderSettings:IsDepthOfFieldEnabled())
+	clCam:SetApertureSizeFromFStop(renderSettings:GetFStop(),math.calc_focal_length_from_fov(fov,renderSettings:GetSensorSize()))
 
 	scene:InitializeFromGameScene(self.m_gameScene,pos,rot,vp,nearZ,farZ,fov,cullObjectsOutsidePvs,function(ent)
 		if(ent:IsWorld()) then return renderSettings:GetRenderWorld() end

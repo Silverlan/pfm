@@ -277,6 +277,46 @@ function gui.PFMMaterialEditor:InitializeControls()
 	ssaoFactor:SetStepSize(0.01)
 	self.m_ctrlSSAOFactor = ssaoFactor
 
+	-- Alpha Mode
+	local alphaMode = gui.create("WIDropDownMenu",ctrlVbox)
+	alphaMode:AddOption(locale.get_text("alpha_mode_opaque"),tostring(game.Material.ALPHA_MODE_OPAQUE))
+	alphaMode:AddOption(locale.get_text("alpha_mode_mask"),tostring(game.Material.ALPHA_MODE_MASK))
+	alphaMode:AddOption(locale.get_text("alpha_mode_blend"),tostring(game.Material.ALPHA_MODE_BLEND))
+	alphaMode:SelectOption(0)
+	alphaMode:AddCallback("OnOptionSelected",function(renderMode,idx)
+		local alphaMode = tonumber(renderMode:GetOptionValue(idx))
+		self.m_ctrlAlphaCutoff:SetVisible(alphaMode == 1)
+		self:SetMaterialParameter("int","alpha_mode",alphaMode)
+	end)
+	self.m_alphaMode = alphaMode
+	alphaMode:Wrap("WIEditableEntry"):SetText(locale.get_text("alpha_mode"))
+
+	-- Alpha Cutoff
+	local alphaCutoff = gui.create("WIPFMSlider",ctrlVbox)
+	alphaCutoff:SetText(locale.get_text("alpha_cutoff"))
+	alphaCutoff:SetRange(0.0,1.0)
+	alphaCutoff:SetDefault(0.5)
+	-- alphaCutoff:SetTooltip(locale.get_text("alpha_cutoff_desc"))
+	alphaCutoff:SetStepSize(0.01)
+	alphaCutoff:SetVisible(false)
+	alphaCutoff:AddCallback("OnLeftValueChanged",function(el,value)
+		self:SetMaterialParameter("float","alpha_cutoff",tostring(value))
+	end)
+	self.m_ctrlAlphaCutoff = alphaCutoff
+
+	-- Color (placeholder)
+	local color = gui.create("WIDropDownMenu",ctrlVbox)
+	color:AddOption(locale.get_text("white"),"1 1 1 1")
+	color:AddOption(locale.get_text("red"),"1 0 0 1")
+	color:AddOption(locale.get_text("green"),"0 1 0 1")
+	color:AddOption(locale.get_text("blue"),"0 0 1 1")
+	color:SelectOption(0)
+	color:AddCallback("OnOptionSelected",function(renderMode,idx)
+		self:SetMaterialParameter("vector4","color_factor",renderMode:GetOptionValue(idx))
+	end)
+	self.m_color = color
+	color:Wrap("WIEditableEntry"):SetText(locale.get_text("color"))
+
 	gui.create("WIBase",ctrlVbox)
 end
 function gui.PFMMaterialEditor:SetMaterialParameter(type,key,val)

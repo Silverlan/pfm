@@ -30,7 +30,7 @@ function gui.EditableEntry:OnInitialize()
 		if(self.m_empty) then return end
 		self.m_target = elChild
 		elChild:SetVisible(false)
-		if(elChild:GetClass() == "witextentry") then
+		if(elChild:GetClass() == "witextentry" or elChild:GetClass() == "widropdownmenu") then
 			elChild:AddCallback("OnTextChanged",function()
 				self:UpdateText()
 			end)
@@ -52,6 +52,12 @@ function gui.EditableEntry:OnInitialize()
 	self:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)
 		if(state ~= input.STATE_PRESS or (button ~= input.MOUSE_BUTTON_LEFT and button ~= input.MOUSE_BUTTON_RIGHT)) then return util.EVENT_REPLY_UNHANDLED end
 		if(util.is_valid(self.m_target) and self.m_target:GetClass() == "widropdownmenu") then
+			local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
+				input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
+			if(self.m_target:IsEditable() and isAltDown) then
+				self:StartEditMode(true)
+				return util.EVENT_REPLY_HANDLED
+			end
 			local numOptions = self.m_target:GetOptionCount()
 			local option = self.m_target:GetSelectedOption()
 			if(button == input.MOUSE_BUTTON_LEFT) then
@@ -106,9 +112,11 @@ function gui.EditableEntry:UpdateText()
 	local value
 	if(util.is_valid(self.m_target)) then
 		text = text .. ": "
-		if(self.m_target:GetClass() == "widropdownmenu") then value = self.m_target:GetOptionText(self.m_target:GetSelectedOption())
+		if(self.m_target:GetClass() == "widropdownmenu") then
+			local selectedOption = self.m_target:GetSelectedOption()
+			if(selectedOption ~= -1) then value = self.m_target:GetOptionText(selectedOption)
+			else value = self.m_target:GetText() end
 		else value = self.m_target:GetValue() end
-
 		if(#value == 0) then value = "-" end
 	else value = "" end
 	text = text .. value

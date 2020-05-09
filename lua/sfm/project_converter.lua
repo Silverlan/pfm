@@ -85,6 +85,12 @@ local function is_udm_element_entity_component(el)
 	return (type == udm.ELEMENT_TYPE_PFM_MODEL or type == udm.ELEMENT_TYPE_PFM_CAMERA or type == udm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM)
 end
 
+local sfm_attr_to_pragma_table = {
+	[udm.ELEMENT_TYPE_PFM_CAMERA] = {
+		["fieldofview"] = "fov"
+	}
+}
+
 util.register_class("sfm.ProjectConverter")
 sfm.ProjectConverter.convert_project = function(projectFilePath)
 	local sfmProject = sfm.import_scene(projectFilePath)
@@ -95,6 +101,23 @@ sfm.ProjectConverter.convert_project = function(projectFilePath)
 	local pfmProject = converter:GetPFMProject()
 	log_pfm_project_debug_info(pfmProject)
 	return pfmProject
+end
+sfm.assign_generic_attribute = function(name,attr,pfmObj)
+	local type = attr:GetType()
+	local v = attr:GetValue()
+	if(type == dmx.Attribute.TYPE_INT) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
+	elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_FLOAT,v))
+	elseif(type == dmx.Attribute.TYPE_BOOL) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_BOOL,v))
+	elseif(type == dmx.Attribute.TYPE_STRING) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_STRING,v))
+	elseif(type == dmx.Attribute.TYPE_COLOR) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_COLOR,v))
+	elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_VECTOR3,v))
+	elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_ANGLE,v))
+	elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_QUATERNION,v))
+	elseif(type == dmx.Attribute.TYPE_UINT64) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
+	elseif(type == dmx.Attribute.TYPE_UINT8) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
+	else
+		pfm.log("Unsupported attribute type '" .. dmx.type_to_string(type) .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+	end
 end
 function sfm.ProjectConverter:__init(sfmProject)
 	self.m_sfmProject = sfmProject -- Input project
@@ -205,6 +228,10 @@ local function apply_post_processing(project,filmClip,processedObjects)
 				for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
 					local toElement = channel:GetToElement()
 					local toAttr = channel:GetToAttribute()
+
+					if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_PFM_CAMERA and string.compare(toAttr,"focalDistance",false)) then
+						toElement:SetDepthOfFieldEnabled(true)
+					end
 
 					if(toElement ~= nil and is_udm_element_entity_component(toElement) and toElement:GetChild(toAttr) == nil) then
 						-- Some attributes (like visibility) are stored in the SFM GameModel/Camera/etc. elements. In Pragma these are
@@ -507,6 +534,16 @@ sfm.register_element_type_conversion(sfm.Camera,udm.PFMCamera,function(converter
 	pfmCamera:SetZNear(sfm.source_units_to_pragma_units(sfmCamera:GetZNear()))
 	pfmCamera:SetZFar(sfm.source_units_to_pragma_units(sfmCamera:GetZFar()))
 	pfmCamera:SetAspectRatio(16.0 /9.0)
+	local aperture = sfmCamera:GetAperture()
+	if(aperture > 0.0) then
+		pfmCamera:SetDepthOfFieldEnabled(true)
+		-- SFM's 'aperature' value doesn't appear to be based on anything physical, so the
+		-- conversion is mostly subjective. This may need some more tweaking in the future!
+		pfmCamera:SetFStop((20.0 -math.min(aperture,20.0)) /2.2)
+	end
+	pfmCamera:SetFocalDistance(sfm.source_units_to_pragma_units(sfmCamera:GetFocalDistance()))
+	pfmCamera:SetSensorSize(36.0)
+	pfmCamera:SetApertureBladeCount(3)
 end)
 
 sfm.register_element_type_conversion(sfm.Control,udm.PFMFlexControl,function(converter,sfmControl,pfmControl)
@@ -618,18 +655,62 @@ sfm.register_element_type_conversion(sfm.Channel,udm.PFMChannel,function(convert
 	local log = sfmChannel:GetLog()
 	local pfmLog = converter:ConvertNewElement(log)
 	pfmChannel:SetLogAttr(pfmLog)
+
 	local toAttr = sfmChannel:GetToAttribute()
 	if(toAttr == "orientation") then toAttr = "rotation" end
 	pfmChannel:SetToAttribute(toAttr)
 
+	-- To
 	local toElement = sfmChannel:GetToElement()
 	if(toElement == nil) then
 		-- pfm.log("Unsupported 'to'-element for channel '" .. sfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 	else
 		local pfmElement = converter:ConvertNewElement(toElement)
 		pfmChannel:SetToElementAttr(udm.create_reference(pfmElement))
+
+		-- Translate attribute
+		if(pfmElement ~= nil and toAttr ~= nil) then
+			local attrTranslationTable = sfm_attr_to_pragma_table[pfmElement:GetType()]
+			if(attrTranslationTable ~= nil) then
+				local toAttrL = toAttr:lower()
+				if(attrTranslationTable[toAttrL] ~= nil) then
+					toAttr = attrTranslationTable[toAttrL]
+					pfmChannel:SetToAttribute(toAttr)
+				end
+			end
+		end
+
 		if(pfmElement:GetChild(toAttr) == nil) then
 			pfm.log("Invalid to-attribute '" .. toAttr .. "' of element '" .. pfmElement:GetName() .. "' used for channel '" .. pfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+		end
+	end
+
+	-- From
+	local fromAttr = sfmChannel:GetFromAttribute()
+	if(fromAttr == "orientation") then fromAttr = "rotation" end
+	pfmChannel:SetFromAttribute(fromAttr)
+
+	local fromElement = sfmChannel:GetFromElement()
+	if(fromElement == nil) then
+		-- pfm.log("Unsupported 'from'-element for channel '" .. sfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+	else
+		local pfmElement = converter:ConvertNewElement(fromElement)
+		pfmChannel:SetFromElementAttr(udm.create_reference(pfmElement))
+
+		-- Translate attribute
+		if(pfmElement ~= nil and fromAttr ~= nil) then
+			local attrTranslationTable = sfm_attr_to_pragma_table[pfmElement:GetType()]
+			if(attrTranslationTable ~= nil) then
+				local toAttrL = fromAttr:lower()
+				if(attrTranslationTable[toAttrL] ~= nil) then
+					fromAttr = attrTranslationTable[toAttrL]
+					pfmChannel:SetFromAttribute(fromAttr)
+				end
+			end
+		end
+
+		if(pfmElement:GetChild(fromAttr) == nil) then
+			pfm.log("Invalid from-attribute '" .. fromAttr .. "' of element '" .. pfmElement:GetName() .. "' used for channel '" .. pfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 		end
 	end
 
@@ -637,6 +718,19 @@ sfm.register_element_type_conversion(sfm.Channel,udm.PFMChannel,function(convert
 	if(graphCurve ~= nil) then
 		pfmChannel:SetGraphCurveAttr(converter:ConvertNewElement(graphCurve))
 	end]]
+end)
+
+sfm.register_element_type_conversion(sfm.ExpressionOperator,udm.PFMExpressionOperator,function(converter,sfmOperator,pfmOperator)
+	local varNames = {}
+	for name,attr in pairs(sfmOperator:GetDMXElement():GetAttributes()) do
+		if(name ~= "name" and name ~= "spewresult" and name ~= "result" and name ~= "expr" and name ~= "value") then
+			table.insert(varNames,name)
+			sfm.assign_generic_attribute(name,attr,pfmOperator)
+		end
+	end
+	pfmOperator:SetExpression(sfm.convert_math_expression_to_pragma(sfmOperator:GetExpr(),varNames))
+	pfmOperator:SetResult(sfmOperator:GetResult())
+	pfmOperator:SetValue(sfmOperator:GetValue())
 end)
 
 -- TODO: Graph editor element is obsolete; Remove it!
@@ -806,21 +900,7 @@ sfm.register_element_type_conversion(sfm.ParticleSystemOperator,udm.PFMParticleS
 	pfmParticleOp:SetOperatorName(sfmParticleOp:GetFunctionName())
 
 	for name,attr in pairs(sfmParticleOp:GetDMXElement():GetAttributes()) do
-		local type = attr:GetType()
-		local v = attr:GetValue()
-		if(type == dmx.Attribute.TYPE_INT) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
-		elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_FLOAT,v))
-		elseif(type == dmx.Attribute.TYPE_BOOL) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_BOOL,v))
-		elseif(type == dmx.Attribute.TYPE_STRING) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_STRING,v))
-		elseif(type == dmx.Attribute.TYPE_COLOR) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_COLOR,v))
-		elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_VECTOR3,v))
-		elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_ANGLE,v))
-		elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_QUATERNION,v))
-		elseif(type == dmx.Attribute.TYPE_UINT64) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
-		elseif(type == dmx.Attribute.TYPE_UINT8) then pfmParticleOp:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
-		else
-			pfm.log("Unsupported particle attribute type '" .. dmx.type_to_string(type) .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
-		end
+		sfm.assign_generic_attribute(name,attr,pfmParticleOp)
 	end
 end)
 

@@ -105,23 +105,21 @@ bip_ponytail03  57
 	end
 
 	local flexWeights = modelData:GetFlexWeights():GetTable()
-	local flexNames = modelData:GetFlexControllerNames():GetTable()
-	for i,name in ipairs(flexNames) do
-		name = name:GetValue()
-		if(#name > 0) then
-			local weight = flexWeights[i]
-			local fcId = mdl:LookupFlexController(name)
-			if(fcId ~= -1) then
-				animSetC:SetFlexController(fcId,weight:GetValue(),0.0,false)
-				table.insert(self.m_listeners,weight:AddChangeListener(function(newValue)
-					if(animSetC:IsValid()) then
-						animSetC:SetFlexController(fcId,newValue,0.0,false)
-					end
-				end))
-			else
-				pfm.log("Unknown flex controller '" .. name .. "' for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
-			end
-		end
+	-- Flex controller names are only specified sometimes?
+	-- local flexNames = modelData:GetFlexControllerNames():GetTable()
+	for fcId,weight in ipairs(flexWeights) do
+		fcId = fcId -1
+		--local fcId = mdl:LookupFlexController(name)
+		--if(fcId ~= -1) then
+			animSetC:SetFlexController(fcId,weight:GetValue(),0.0,false)
+			table.insert(self.m_listeners,weight:AddChangeListener(function(newValue)
+				if(animSetC:IsValid()) then
+					animSetC:SetFlexController(fcId,newValue,0.0,false)
+				end
+			end))
+		--else
+		--	pfm.log("Unknown flex controller '" .. name .. "' for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+		--end
 	end
 
 	table.insert(self.m_listeners,modelData:GetFlexControllerScaleAttr():AddChangeListener(function(newScale)

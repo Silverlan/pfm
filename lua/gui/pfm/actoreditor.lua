@@ -215,6 +215,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	local slider = gui.create("WIPFMSlider",self.m_animSetControlsVBox)
 	slider:SetText(controlData.name)
 	slider:SetRange(controlData.min,controlData.max,controlData.default)
+	if(controlData.integer or controlData.boolean) then slider:SetInteger(true) end
 	local callbacks = {}
 	if(controlData.type == "flexController") then
 		if(controlData.dualChannel == true) then
@@ -259,6 +260,20 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 				end
 			end
 		end
+	elseif(controlData.property ~= nil) then
+		local prop = component:GetProperty(controlData.property)
+		if(prop ~= nil) then
+			local function get_numeric_value(val)
+				if(val == true) then val = 1.0
+				elseif(val == false) then val = 0.0 end
+				return val
+			end
+			local cb = prop:AddChangeListener(function(newValue)
+				slider:SetValue(get_numeric_value(newValue))
+			end)
+			table.insert(callbacks,cb)
+			slider:SetValue(get_numeric_value(prop:GetValue()))
+		end
 	end
 	if(#callbacks > 0) then
 		slider:AddCallback("OnRemove",function()
@@ -268,6 +283,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 		end)
 	end
 	slider:AddCallback("OnLeftValueChanged",function(el,value)
+		if(controlData.boolean) then value = toboolean(value) end
 		if(controlData.property ~= nil) then
 			component:GetProperty(controlData.property):SetValue(value)
 		elseif(controlData.set ~= nil) then
@@ -277,6 +293,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 		end
 	end)
 	slider:AddCallback("OnRightValueChanged",function(el,value)
+		if(controlData.boolean) then value = toboolean(value) end
 		if(controlData.setRight ~= nil) then
 			controlData.setRight(component,value)
 		end

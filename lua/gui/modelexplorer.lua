@@ -35,8 +35,8 @@ function gui.ModelExplorer:PopulateContextMenu(pContext,tSelectedFiles)
 			local materials = mdl:GetMaterials()
 			if(#materials > 0) then
 				local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
-				for _,mat in ipairs(materials) do
-					if(mat:IsError() == false) then
+				for _,mat in pairs(materials) do
+					if(mat ~= nil and mat:IsError() == false) then
 						local name = file.remove_file_extension(file.get_file_name(mat:GetName()))
 						pSubMenu:AddItem(name,function(pItem)
 							tool.get_filmmaker():OpenMaterialEditor(mat:GetName(),path)
