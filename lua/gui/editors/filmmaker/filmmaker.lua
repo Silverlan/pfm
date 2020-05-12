@@ -24,10 +24,12 @@ include("/gui/pfm/elementviewer.lua")
 include("/gui/pfm/actoreditor.lua")
 include("/gui/pfm/modelcatalog.lua")
 include("/gui/pfm/materialcatalog.lua")
+include("/gui/pfm/particlecatalog.lua")
 include("/gui/pfm/actorcatalog.lua")
 include("/gui/pfm/renderpreview.lua")
 include("/gui/pfm/infobar.lua")
 include("/gui/pfm/materialeditor.lua")
+include("/gui/pfm/particleeditor.lua")
 
 gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
@@ -589,6 +591,10 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	actorDataFrame:AddTab("material_catalog",locale.get_text("pfm_material_catalog"),materialCatalog)
 	self.m_materialCatalog = materialCatalog -- TODO Determine dynamically
 
+	local particleCatalog = gui.create("WIPFMParticleCatalog")
+	actorDataFrame:AddTab("particle_catalog",locale.get_text("pfm_particle_catalog"),particleCatalog)
+	self.m_materialCatalog = particleCatalog -- TODO Determine dynamically
+
 	local actorCatalog = gui.create("WIPFMActorCatalog")
 	actorDataFrame:AddTab("actor_catalog",locale.get_text("pfm_actor_catalog"),actorCatalog)
 	self.m_actorCatalog = actorCatalog -- TODO Determine dynamically
@@ -733,6 +739,15 @@ function gui.WIFilmmaker:OpenMaterialEditor(mat,optMdl)
 	self.m_actorDataFrame:SetActiveTab(tabId)
 
 	matEd:SetMaterial(mat,optMdl)
+end
+function gui.WIFilmmaker:OpenParticleEditor(ptFile,ptName)
+	self.m_actorDataFrame:RemoveTab("particle_editor")
+
+	local ptEd = gui.create("WIPFMParticleEditor")
+	local tabId = self.m_actorDataFrame:AddTab("particle_editor",locale.get_text("pfm_particle_editor"),ptEd)
+	self.m_actorDataFrame:SetActiveTab(tabId)
+
+	ptEd:LoadParticleSystem(ptFile,ptName)
 end
 function gui.WIFilmmaker:OnActorSelectionChanged(ent,selected)
 	if(util.is_valid(self.m_viewport) == false) then return end

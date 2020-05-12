@@ -25,17 +25,26 @@ function gui.PFMBrightnessSlider:OnInitialize()
 	bg:SetTexture(TEX_BRIGHTNESS_GRADIENT)
 
 	local locator = gui.create("WIPFMLocator",self)
-	locator:GetCursor():CenterToParentX()
-	locator:GetCursor():SetType(gui.PFMSliderCursor.TYPE_VERTICAL)
-	locator:AddCallback("OnFractionChanged",function(el,fraction)
-		self:CallCallbacks("OnBrightnessChanged",fraction)
+	local cursor = locator:Wrap("WIPFMSliderCursor")
+	cursor:CenterToParentX()
+	cursor:SetType(gui.PFMSliderCursor.TYPE_VERTICAL)
+	cursor:AddCallback("OnFractionChanged",function(el,fraction)
+		self:CallCallbacks("OnBrightnessChanged",1.0 -fraction)
 	end)
 	self.m_locator = locator
+	self.m_cursor = cursor
+	self:SetMouseInputEnabled(true)
+end
+function gui.PFMBrightnessSlider:OnMouseEvent(button,state,mods)
+	local cursorPos = self.m_locator:GetCursorPos()
+	self.m_cursor:InjectMouseInput(cursorPos,button,state,mods)
+	self.m_cursor:CallCallbacks("OnCursorMoved",cursorPos.x,cursorPos.y)
+	return util.EVENT_REPLY_HANDLED
 end
 function gui.PFMBrightnessSlider:SetBrightness(brightness)
-	self.m_locator:GetCursor():SetFraction(brightness)
+	self.m_cursor:SetFraction(1.0 -brightness)
 end
 function gui.PFMBrightnessSlider:GetBrightness()
-	return 1.0 -self.m_locator:GetCursor():GetFraction()
+	return 1.0 -self.m_cursor:GetFraction()
 end
 gui.register("WIPFMBrightnessSlider",gui.PFMBrightnessSlider)

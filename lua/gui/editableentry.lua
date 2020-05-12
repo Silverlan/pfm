@@ -29,15 +29,30 @@ function gui.EditableEntry:OnInitialize()
 	cbOnChildAdded = self:AddCallback("OnChildAdded",function(el,elChild)
 		if(self.m_empty) then return end
 		self.m_target = elChild
-		elChild:SetVisible(false)
 		if(elChild:GetClass() == "witextentry" or elChild:GetClass() == "widropdownmenu") then
 			elChild:AddCallback("OnTextChanged",function()
 				self:UpdateText()
 			end)
+			elChild:SetVisible(false)
+		elseif(elChild:GetClass() == "wipfmcolorentry") then
+			self:RemoveStyleClass("input_field")
+			self:AddStyleClass("input_field_outline")
+			self.m_activeTarget = true
+			self.m_descContainer:SetZPos(10)
+
+			local function update_text_color()
+				if(self:IsValid() == false) then return end
+				if(util.is_valid(self.m_pText)) then
+					self.m_pText:SetColor(elChild:GetColor():GetContrastColor())
+				end
+			end
+			elChild:GetColorProperty():AddCallback(update_text_color)
+			update_text_color()
 		else
 			elChild:AddCallback("OnValueChanged",function()
 				self:UpdateText()
 			end)
+			elChild:SetVisible(false)
 		end
 		if(util.is_valid(cbOnChildAdded)) then cbOnChildAdded:Remove() end
 	end)
@@ -70,7 +85,8 @@ function gui.EditableEntry:OnInitialize()
 			self.m_target:SelectOption(option)
 			return util.EVENT_REPLY_HANDLED
 		end
-		if(button == input.MOUSE_BUTTON_LEFT) then
+		if(button == input.MOUSE_BUTTON_LEFT and self.m_empty ~= true) then
+			if(util.is_valid(self.m_target) and self.m_activeTarget == true) then return util.EVENT_REPLY_UNHANDLED end
 			self:StartEditMode(true)
 			return util.EVENT_REPLY_HANDLED
 		end
@@ -93,6 +109,7 @@ function gui.EditableEntry:OnThink()
 	if(endEditMode) then self:StartEditMode(false) end
 end
 function gui.EditableEntry:StartEditMode(enabled)
+	if(self.m_activeTarget) then return end
 	self:SetThinkingEnabled(enabled)
 	self.m_descContainer:SetVisible(not enabled)
 	if(util.is_valid(self.m_target)) then
@@ -116,7 +133,7 @@ function gui.EditableEntry:UpdateText()
 			local selectedOption = self.m_target:GetSelectedOption()
 			if(selectedOption ~= -1) then value = self.m_target:GetOptionText(selectedOption)
 			else value = self.m_target:GetText() end
-		else value = self.m_target:GetValue() end
+		else value = tostring(self.m_target:GetValue()) end
 		if(#value == 0) then value = "-" end
 	else value = "" end
 	text = text .. value

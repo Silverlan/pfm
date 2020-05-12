@@ -60,7 +60,7 @@ function gui.PFMTreeView:OnElementSelectionChanged(elTgt,selected)
 			end
 		end
 	end
-	self:CallCallbacks("OnItemSelectChanged",el,selected)
+	self:CallCallbacks("OnItemSelectChanged",elTgt,selected)
 end
 function gui.PFMTreeView:SetAutoSelectChildren(autoSelected) self.m_autoSelectChildren = autoSelected end
 function gui.PFMTreeView:ShouldAutoSelectChildren() return self.m_autoSelectChildren or false end

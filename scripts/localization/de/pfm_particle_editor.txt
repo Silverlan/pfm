@@ -1,0 +1,7 @@
+pfm_pted_add_initializer = "Initialisierer hinzufügen"
+pfm_pted_add_operator = "Operator hinzufügen"
+pfm_pted_add_renderer = "Renderer hinzufügen"
+pfm_pted_base_properties = "Grundeinstellungen"
+pfm_pted_initializers = "Initialisierer"
+pfm_pted_operators = "Operatoren"
+pfm_pted_renderers = "Renderer"

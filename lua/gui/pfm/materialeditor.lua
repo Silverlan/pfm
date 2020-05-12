@@ -8,6 +8,7 @@
 
 include("/gui/wiviewport.lua")
 include("/gui/raytracedviewport.lua")
+include("/gui/pfm/colorentry.lua")
 include("/gui/pfm/colorslider.lua")
 include("textureslot.lua")
 include("rmacomposerdialog.lua")
@@ -304,18 +305,15 @@ function gui.PFMMaterialEditor:InitializeControls()
 	end)
 	self.m_ctrlAlphaCutoff = alphaCutoff
 
-	-- Color (placeholder)
-	local color = gui.create("WIDropDownMenu",ctrlVbox)
-	color:AddOption(locale.get_text("white"),"1 1 1 1")
-	color:AddOption(locale.get_text("red"),"1 0 0 1")
-	color:AddOption(locale.get_text("green"),"0 1 0 1")
-	color:AddOption(locale.get_text("blue"),"0 0 1 1")
-	color:SelectOption(0)
-	color:AddCallback("OnOptionSelected",function(renderMode,idx)
-		self:SetMaterialParameter("vector4","color_factor",renderMode:GetOptionValue(idx))
+	-- Color
+	local colorEntry = gui.create("WIPFMColorEntry",ctrlVbox)
+	colorEntry:GetColorProperty():AddCallback(function(oldCol,newCol)
+		local vCol = newCol:ToVector4()
+		self:SetMaterialParameter("vector4","color_factor",tostring(vCol))
 	end)
-	self.m_color = color
-	color:Wrap("WIEditableEntry"):SetText(locale.get_text("color"))
+	local colorEntryWrapper = colorEntry:Wrap("WIEditableEntry")
+	colorEntryWrapper:SetText(locale.get_text("color_factor"))
+	self.m_colorEntry = colorEntry
 
 	gui.create("WIBase",ctrlVbox)
 end

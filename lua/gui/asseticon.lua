@@ -242,6 +242,8 @@ function gui.AssetIcon:SetAsset(path,assetName,isDirectory,importAsset)
 			self:SetModelAsset(path:GetString(),importAsset)
 		elseif(root == "materials") then
 			self:SetMaterialAsset(path:GetString(),importAsset)
+		elseif(root == "particles") then
+			self:SetParticleAsset(path:GetString(),importAsset)
 		else
 			-- Unknown asset type
 			self:SetMaterial("error",128,128)
@@ -279,6 +281,27 @@ function gui.AssetIcon:GetMaterialOverride()
 	local path = util.Path(self:GetAssetPath())
 	path:PopFront()
 	return path:GetString() .. self:GetAssetName()
+end
+function gui.AssetIcon:SetParticleAsset(pt,importAsset)
+	self.m_assetType = asset.TYPE_PARTICLE_SYSTEM
+	local iconPath = self:GetIconLocation()
+	if(file.exists("materials/" .. iconPath .. ".wmi")) then
+		self:SetMaterial(iconPath)
+		return
+	end
+	if(gui.AssetIcon.impl.iconGenerator == nil) then
+		print("Creating new icon generator...")
+		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128,128)
+	end
+	if(importAsset == true or asset.exists(mdl,asset.TYPE_PARTICLE_SYSTEM)) then
+		-- TODO
+		--[[gui.AssetIcon.impl.iconGenerator:AddModelToQueue(mdl,function()
+			if(self:IsValid() == false) then return end
+			self:SetMaterial(iconPath)
+		end,iconPath)]]
+	else
+		self:SetMaterial("third_party/source_engine",100,30)
+	end
 end
 function gui.AssetIcon:SetMaterialAsset(mat,importAsset)
 	self.m_assetType = asset.TYPE_MATERIAL

@@ -67,12 +67,34 @@ skin["input_field"] = {
 		bg:SetColor(Color(38,38,38))
 		bg:SetZPos(-10000)
 		bg:SetBackgroundElement(true)
+		bg:SetName("background")
 		pElement.bg = bg
 
 		local outline = gui.create("WIOutlinedRect",pElement,0,0,pElement:GetWidth(),pElement:GetHeight(),0,0,1,1)
 		outline:SetColor(Color(57,57,57))
 		outline:SetZPos(-9000)
 		outline:SetBackgroundElement(true)
+		outline:SetName("outline")
+	end,
+	Release = function(GUI,pElement)
+		local bg = pElement:FindChildByName("background")
+		if(bg ~= nil) then bg:Remove() end
+
+		local outline = pElement:FindChildByName("outline")
+		if(outline ~= nil) then outline:Remove() end
+	end
+}
+skin["input_field_outline"] = {
+	Initialize = function(GUI,pElement)
+		local outline = gui.create("WIOutlinedRect",pElement,0,0,pElement:GetWidth(),pElement:GetHeight(),0,0,1,1)
+		outline:SetColor(Color(57,57,57))
+		outline:SetZPos(-9000)
+		outline:SetBackgroundElement(true)
+		outline:SetName("outline")
+	end,
+	Release = function(GUI,pElement)
+		local bg = pElement:FindChildByName("background")
+		if(bg ~= nil) then bg:Remove() end
 	end
 }
 skin["input_field_text"] = {
