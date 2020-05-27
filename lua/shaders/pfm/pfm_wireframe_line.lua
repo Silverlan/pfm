@@ -13,11 +13,11 @@ end
 function shader.PFMWireframeLine:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
 
-	pipelineInfo:SetPolygonMode(vulkan.POLYGON_MODE_LINE)
-	pipelineInfo:SetPrimitiveTopology(vulkan.PRIMITIVE_TOPOLOGY_LINE_LIST)
+	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
+	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_LIST)
 end
 function shader.PFMWireframeLine:InitializeGfxPipelinePushConstantRanges(pipelineInfo,pipelineIdx)
-	pipelineInfo:AttachPushConstantRange(0,shader.TexturedLit3D.PUSH_CONSTANTS_SIZE +self.m_dsPushConstants:GetSize(),bit.bor(vulkan.SHADER_STAGE_FRAGMENT_BIT,vulkan.SHADER_STAGE_VERTEX_BIT))
+	pipelineInfo:AttachPushConstantRange(0,shader.TexturedLit3D.PUSH_CONSTANTS_SIZE +self.m_dsPushConstants:GetSize(),bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_VERTEX_BIT))
 end
 function shader.PFMWireframeLine:OnBindEntity(ent)
 	local drawCmd = self:GetCurrentCommandBuffer()

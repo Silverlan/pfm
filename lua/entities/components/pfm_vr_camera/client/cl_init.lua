@@ -85,9 +85,9 @@ function ents.PFMVRCamera:RenderVRView()
 			drawSceneInfo.clearColor = Color.Black
 
 			local img = rt:GetTexture():GetImage()
-			drawCmd:RecordImageBarrier(img,vulkan.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,vulkan.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+			drawCmd:RecordImageBarrier(img,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 			game.draw_scene(drawSceneInfo,img)
-			drawCmd:RecordImageBarrier(img,vulkan.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,vulkan.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+			drawCmd:RecordImageBarrier(img,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
 
 			openvr.stop_recording()
 		end

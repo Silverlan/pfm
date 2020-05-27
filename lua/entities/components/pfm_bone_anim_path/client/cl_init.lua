@@ -79,7 +79,7 @@ function ents.PFMBoneAnimPath:Setup(boneName,session,filmClip)
 	for _,p in ipairs(points) do
 		dsPoints:WriteVector(p[1])
 	end
-	self.m_bufPoints = vulkan.util.allocate_temporary_buffer(dsPoints)
+	self.m_bufPoints = prosper.util.allocate_temporary_buffer(dsPoints)
 
 	self.m_cbRender = game.add_callback("Render",function()
 		self:Render()

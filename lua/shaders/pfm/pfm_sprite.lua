@@ -20,18 +20,18 @@ function shader.PFMSprite:InitializeRenderPass(pipelineIdx)
 end
 function shader.PFMSprite:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(vulkan.VERTEX_INPUT_RATE_VERTEX),{
-		shader.VertexAttribute(vulkan.FORMAT_R32G32_SFLOAT), -- Position
-		shader.VertexAttribute(vulkan.FORMAT_R32G32_SFLOAT) -- UV
+	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX),{
+		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
+		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT) -- UV
 	})
 	pipelineInfo:AttachDescriptorSetInfo(shader.DescriptorSetInfo({
-		shader.DescriptorSetBinding(vulkan.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,vulkan.SHADER_STAGE_FRAGMENT_BIT)
+		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,prosper.SHADER_STAGE_FRAGMENT_BIT)
 	}))
 
-	pipelineInfo:AttachPushConstantRange(0,self.m_dsPushConstants:GetSize(),bit.bor(vulkan.SHADER_STAGE_VERTEX_BIT,vulkan.SHADER_STAGE_FRAGMENT_BIT))
+	pipelineInfo:AttachPushConstantRange(0,self.m_dsPushConstants:GetSize(),bit.bor(prosper.SHADER_STAGE_VERTEX_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT))
 
-	pipelineInfo:SetPolygonMode(vulkan.POLYGON_MODE_FILL)
-	pipelineInfo:SetPrimitiveTopology(vulkan.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
+	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_FILL)
+	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 	pipelineInfo:SetDepthTestEnabled(true)
 	pipelineInfo:SetDepthWritesEnabled(true)
 	pipelineInfo:SetDepthBiasEnabled(true)
@@ -54,7 +54,7 @@ function shader.PFMSprite:Draw(drawCmd,origin,size,color,mvp)
 	end
 
 	if(self:IsValid() == false or self.m_dsTex == nil or self:RecordBeginDraw(drawCmd) == false) then return end
-	local buf,numVerts = vulkan.util.get_square_vertex_uv_buffer()
+	local buf,numVerts = prosper.util.get_square_vertex_uv_buffer()
 	self:RecordBindVertexBuffers({buf})
 	self:RecordBindDescriptorSet(self.m_dsTex)
 
@@ -65,7 +65,7 @@ function shader.PFMSprite:Draw(drawCmd,origin,size,color,mvp)
 	self.m_dsPushConstants:WriteVector2(size)
 
 	self:RecordPushConstants(self.m_dsPushConstants)
-	self:RecordDraw(vulkan.util.get_square_vertex_count())
+	self:RecordDraw(prosper.util.get_square_vertex_count())
 	self:RecordEndDraw()
 end
 shader.register("pfm_sprite",shader.PFMSprite)

@@ -29,7 +29,6 @@ function gui.PFMModelCatalog:OnInitialize()
 	self.m_contents:SetAutoFillContents(true)
 
 	local fit = pfm.FileIndexTable("models","models/",{"wmd"},{"mdl","vmdl_c","nif"})
-	fit:LoadOrGenerate()
 	self.m_fit = fit
 
 	self.m_teLocation = gui.create("WITextEntry",self.m_contents,0,0,self:GetWidth(),24)
@@ -167,12 +166,20 @@ function gui.PFMModelCatalog:OnInitialize()
 		end
 		return tFiles,tDirs
 	end)
-	explorer:Update()
 	self.m_explorer = explorer
 
 	self.m_contents:Update()
 	scrollContainer:SetAnchor(0,0,1,1)
 	self.m_teLocation:SetAnchor(0,0,1,1)
 	self.m_teFilter:SetAnchor(0,0,1,1)
+
+	self:EnableThinking()
+end
+function gui.PFMModelCatalog:OnThink()
+	-- Lazy initialization
+	self.m_fit:LoadOrGenerate()
+	self.m_explorer:Update()
+
+	self:DisableThinking()
 end
 gui.register("WIPFMModelCatalog",gui.PFMModelCatalog)

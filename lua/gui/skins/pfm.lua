@@ -28,7 +28,7 @@ local function clear_element(GUI,pElement)
 end
 
 local function create_gradient(colStart,colEnd)
-	return vulkan.create_gradient_texture(128,64,vulkan.FORMAT_R8G8B8A8_UNORM,Vector2(0,-1),{
+	return prosper.create_gradient_texture(128,64,prosper.FORMAT_R8G8B8A8_UNORM,Vector2(0,-1),{
 		{offset = 0.0,color = colStart},
 		{offset = 1.0,color = colEnd}
 	})

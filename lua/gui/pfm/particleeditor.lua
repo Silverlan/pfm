@@ -14,6 +14,8 @@ include("/gui/vbox.lua")
 include("/gui/pfm/treeview.lua")
 
 locale.load("pfm_particle_editor.txt")
+locale.load("pfm_particle_operators.txt")
+locale.load("pfm_particle_operators_source.txt")
 
 util.register_class("gui.PFMParticleEditor",gui.Base)
 function gui.PFMParticleEditor:__init()
@@ -93,7 +95,7 @@ function gui.PFMParticleEditor:OnInitialize()
 			if(#propertyList == 0) then return end
 			local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_pted_add_" .. propertyType))
 			for _,property in ipairs(propertyList) do
-				pSubMenu:AddItem(property,function()
+				pSubMenu:AddItem(locale.get_text("pts_" .. property),function()
 					self:AddProperty(propertyType,property)
 				end)
 				pSubMenu:Update()
@@ -133,8 +135,14 @@ function gui.PFMParticleEditor:OnInitialize()
 	self.m_properties = {}
 	self.m_operatorData = {}
 
-	self.m_particleSystemDesc = util.DataBlock.load("scripts/particle_system_desc/test.txt")
-	--self:CreateParticleSystem()
+	self.m_particleSystemDesc = util.DataBlock.create()
+	local tFiles,_ = file.find("scripts/particle_system_desc/*.txt")
+	for _,f in ipairs(tFiles) do
+		local ds = util.DataBlock.load("scripts/particle_system_desc/" .. f)
+		if(ds ~= nil) then
+			self.m_particleSystemDesc:Merge(ds)
+		end
+	end
 end
 function gui.PFMParticleEditor:OnRemove()
 	self:DestroyParticleSystem()
@@ -147,18 +155,43 @@ function gui.PFMParticleEditor:InitializeViewportControls()
 	colorCtrl:SetColor(Color.Black)
 	colorCtrl:Wrap("WIEditableEntry"):SetText(locale.get_text("background_color"))
 
+	local btRaytracying = gui.create("WIPFMButton",self.m_renderControlsVbox)
+	btRaytracying:SetText(locale.get_text("pfm_render_preview"))
+	btRaytracying:AddCallback("OnPressed",function(btRaytracying)
+		btRaytracying:SetEnabled(false)
+		self.m_viewport:SetVisible(false)
+		self.m_rtViewport:SetVisible(true)
+		self.m_rtViewport:Refresh()
+	end)
+	self.m_btRaytracying = btRaytracying
+
 	gui.create("WIBase",self.m_renderControlsVbox)
 end
 function gui.PFMParticleEditor:InitializeViewport()
 	local width = 1024
 	local height = 1024
-	local vpContainer = gui.create("WIBase",self.m_vpBox,0,0,width,height)
+	local vpContainer = gui.create("WIRect",self.m_vpBox,0,0,width,height)
+	vpContainer:SetColor(Color.Black) -- Background has to be black, in case transparent pixels are being rendered
 	self.m_viewport = gui.create("WIModelView",vpContainer,0,0,vpContainer:GetWidth(),vpContainer:GetHeight(),0,0,1,1)
 	self.m_viewport:SetClearColor(Color.Black)--Color.Clear)
 	self.m_viewport:InitializeViewport(width,height)
 	self.m_viewport:SetFov(math.horizontal_fov_to_vertical_fov(45.0,width,height))
 	self.m_viewport:SetModel("error")
 	self.m_viewport:SetAlwaysRender(true)
+
+	self.m_rtViewport = gui.create("WIRaytracedViewport",vpContainer,0,0,vpContainer:GetWidth(),vpContainer:GetHeight(),0,0,1,1)
+	self.m_rtViewport:SetGameScene(self.m_viewport:GetScene())
+	self.m_rtViewport:SetVisible(false)
+	self.m_rtViewport:SetUseElementSizeAsRenderResolution(true)
+	self.m_rtViewport:AddCallback("OnComplete",function()
+		self.m_btRaytracying:SetEnabled(true)
+	end)
+
+	local settings = self.m_rtViewport:GetRenderSettings()
+	settings:SetSky("skies/dusk379.hdr")
+	settings:SetWidth(width)
+	settings:SetHeight(height)
+	settings:SetSamples(40)
 end
 function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType)
 	local data = self.m_particleSystemDesc
@@ -211,18 +244,19 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType)
 			pt:SetKeyValue(key,val)
 		end
 		for name,kvData in pairs(keyValueBlock:GetChildBlocks()) do
+			local locName = locale.get_text("pts_" .. opType .. "_" .. name)
 			local type = kvData:GetString("type")
 			local ctrl
-			if(type == "float" or type == "int" or type == "bool") then
+			if(type == "float" or type == "int") then -- or type == "bool") then
 				local min = kvData:GetFloat("min",0.0)
 				local max = kvData:GetFloat("max",0.0)
 				local default = kvData:GetFloat("default",0.0)
 				local stepSize = kvData:GetFloat("step_size",1)--0.01)
 				local sliderCtrl = gui.create("WIPFMSlider",self.m_propertiesBox)
-				sliderCtrl:SetText(name)
+				sliderCtrl:SetText(locName)
 				sliderCtrl:SetRange(min,max)
 				sliderCtrl:SetDefault(default)
-				sliderCtrl:SetTooltip(locale.get_text("pfm_metalness_desc"))
+				-- sliderCtrl:SetTooltip(locale.get_text("pfm_metalness_desc"))
 				sliderCtrl:SetStepSize(stepSize)
 
 				local val = get_key_value(name)
@@ -242,7 +276,7 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType)
 					-- self:ReloadParticle()
 				end)
 				local wrapper = teCtrl:Wrap("WIEditableEntry")
-				wrapper:SetText(name)
+				wrapper:SetText(locName)
 				teCtrl:SetText(default)
 
 				local val = get_key_value(name)
@@ -257,13 +291,13 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType)
 					-- self:ReloadParticle()
 				end)
 				local wrapper = colorCtrl:Wrap("WIEditableEntry")
-				wrapper:SetText(name)
+				wrapper:SetText(locName)
 
 				local val = get_key_value(name)
 				if(val ~= nil) then colorCtrl:SetColor(Color(val)) end
 
 				ctrl = wrapper
-			end
+			else console.print_warning("Unsupported particle field type '" .. type .. "' for key '" .. name .. "' of operator '" .. opType .. "'! Ignoring...") end
 			if(util.is_valid(ctrl)) then table.insert(self.m_properties,ctrl) end
 		end
 	end
@@ -285,10 +319,14 @@ function gui.PFMParticleEditor:LoadParticleSystem(fileName,ptName)
 	game.precache_particle_system(fileName)
 	self.m_viewport:SetParticleSystem(ptName)
 	self.m_particleSystem = self.m_viewport:GetEntity()
-
 	self:PopulateParticleProperties()
 end
+function gui.PFMParticleEditor:GetParticleSystem()
+	return util.is_valid(self.m_particleSystem) and self.m_particleSystem:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) or nil
+end
 function gui.PFMParticleEditor:CreateNewParticleSystem()
+	self.m_viewport:SetParticleSystem()
+	self.m_particleSystem = self.m_viewport:GetEntity()
 	--[[local ent = self:CreateParticleSystem(fileName,ptName)
 	local ptC = ent:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
 
@@ -348,6 +386,9 @@ function gui.PFMParticleEditor:CreateParticleSystem(fileName,ptName)
 	end)]]
 	return ent
 end
+function gui.PFMParticleEditor:AddInitializer(initializer) self:AddProperty("initializer",initializer) end
+function gui.PFMParticleEditor:AddOperator(operator) self:AddProperty("operator",operator) end
+function gui.PFMParticleEditor:AddEmitter(emitter) self:AddProperty("emitter",emitter) end
 function gui.PFMParticleEditor:AddProperty(propertyType,property)
 	local pt = self.m_particleSystem
 	local ptC = util.is_valid(pt) and pt:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) or nil
@@ -376,7 +417,7 @@ function gui.PFMParticleEditor:RemoveProperty(propertyType,property)
 end
 function gui.PFMParticleEditor:PopulateProperty(ptC,propertyType,property)
 	local type = property:GetType()
-	local el = self.m_propertyItems[propertyType]:AddItem(type)
+	local el = self.m_propertyItems[propertyType]:AddItem(locale.get_text("pts_" .. type))
 	self.m_operatorData[el] = {
 		operatorType = propertyType,
 		type = type

@@ -30,6 +30,7 @@ include("/gui/pfm/renderpreview.lua")
 include("/gui/pfm/infobar.lua")
 include("/gui/pfm/materialeditor.lua")
 include("/gui/pfm/particleeditor.lua")
+include("/pfm/util_particle_system.lua")
 
 gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
@@ -388,10 +389,10 @@ function gui.WIFilmmaker:OnThink()
 		return
 	end
 	local imgBuffer = self.m_raytracingJob:GetResult()
-	local img = vulkan.create_image(imgBuffer)
-	local imgViewCreateInfo = vulkan.ImageViewCreateInfo()
-	imgViewCreateInfo.swizzleAlpha = vulkan.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
-	local tex = vulkan.create_texture(img,vulkan.TextureCreateInfo(),imgViewCreateInfo,vulkan.SamplerCreateInfo())
+	local img = prosper.create_image(imgBuffer)
+	local imgViewCreateInfo = prosper.ImageViewCreateInfo()
+	imgViewCreateInfo.swizzleAlpha = prosper.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
+	local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,prosper.SamplerCreateInfo())
 	if(self.m_renderResultWindow ~= nil) then self.m_renderResultWindow:SetTexture(tex) end
 	if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetVisible(false) end
 

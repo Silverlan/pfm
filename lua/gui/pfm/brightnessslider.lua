@@ -10,7 +10,7 @@ include("locator.lua")
 
 util.register_class("gui.PFMBrightnessSlider",gui.Base)
 
-local TEX_BRIGHTNESS_GRADIENT = vulkan.create_gradient_texture(16,256,vulkan.FORMAT_R8G8B8A8_UNORM,Vector2(0,-1),{
+local TEX_BRIGHTNESS_GRADIENT = prosper.create_gradient_texture(16,256,prosper.FORMAT_R8G8B8A8_UNORM,Vector2(0,-1),{
 	{offset = 0.0,color = Color.White},
 	{offset = 1.0,color = Color.Black}
 })

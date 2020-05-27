@@ -12,11 +12,11 @@ function ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom:__in
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom:Initialize()
-	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_number") or "0")
-	self.m_offsetMin = vector.create_from_string(self:GetKeyValue("offset min") or "0 0 0")
-	self.m_offsetMax = vector.create_from_string(self:GetKeyValue("offset max") or "0 0 0")
-	self.m_offsetInLocalSpace = toboolean(self:GetKeyValue("offset in local space 0/1") or "0")
-	self.m_offsetProportionalToRadius = toboolean(self:GetKeyValue("offset proportional to radius 0/1") or "0")
+	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id") or "0")
+	self.m_offsetMin = vector.create_from_string(self:GetKeyValue("offset_min") or "0 0 0")
+	self.m_offsetMax = vector.create_from_string(self:GetKeyValue("offset_max") or "0 0 0")
+	self.m_offsetInLocalSpace = toboolean(self:GetKeyValue("offset_in_local_space") or "0")
+	self.m_offsetProportionalToRadius = toboolean(self:GetKeyValue("offset_proportional_to_radius") or "0")
 end
 function ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")
@@ -30,20 +30,17 @@ function ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom:OnPa
 	if(self.m_offsetProportionalToRadius) then
 		randPos = RandomVector((self.m_offsetMin *radius),self.m_offsetMax *radius)
 	else
-		randPos = RandomVector(m_offsetMin,m_offsetMax)
+		randPos = RandomVector(self.m_offsetMin,self.m_offsetMax)
 	end
 
 	if(self.m_offsetInLocalSpace) then
-		-- TODO
-		--[[local mat = Mat3x4()
-		pParticles:GetControlPointTransformAtTime( m_nControlPointNumber, ct, mat )
-		local vecTransformLocal = Vector()
-		VectorRotate( randpos, mat, vecTransformLocal )
-		randpos = vecTransformLocal]]
+		local pose = GetControlPointTransformAtTime(self,self.m_controlPointNumber,pt:GetTimeCreated())
+		randPos:Rotate(pose:GetRotation())
 	end
 	pt:SetPosition(pt:GetPosition() +randPos)
+	pt:SetPreviousPosition(pt:GetPreviousPosition() +randPos)
 end
 function ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("position modify offset random",ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom)
+ents.ParticleSystemComponent.register_initializer("source_position_modify_random_offset",ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom)

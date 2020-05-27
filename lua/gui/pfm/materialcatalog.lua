@@ -28,7 +28,6 @@ function gui.PFMMaterialCatalog:OnInitialize()
 	self.m_contents:SetAutoFillContents(true)
 
 	local fit = pfm.FileIndexTable("materials","materials/",{"wmi"},{"vmt","vmat_c"})
-	fit:LoadOrGenerate()
 	self.m_fit = fit
 
 	self.m_teLocation = gui.create("WITextEntry",self.m_contents,0,0,self:GetWidth(),24)
@@ -74,12 +73,20 @@ function gui.PFMMaterialCatalog:OnInitialize()
 		end
 		return tFiles,tDirs
 	end)
-	explorer:Update()
 	self.m_explorer = explorer
 
 	self.m_contents:Update()
 	scrollContainer:SetAnchor(0,0,1,1)
 	self.m_teLocation:SetAnchor(0,0,1,1)
 	self.m_teFilter:SetAnchor(0,0,1,1)
+
+	self:EnableThinking()
+end
+function gui.PFMMaterialCatalog:OnThink()
+	-- Lazy initialization
+	self.m_fit:LoadOrGenerate()
+	self.m_explorer:Update()
+
+	self:DisableThinking()
 end
 gui.register("WIPFMMaterialCatalog",gui.PFMMaterialCatalog)

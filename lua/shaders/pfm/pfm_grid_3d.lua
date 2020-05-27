@@ -20,22 +20,22 @@ function shader.PFMGrid3D:__init()
 end
 function shader.PFMGrid3D:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(vulkan.VERTEX_INPUT_RATE_VERTEX),{
-		shader.VertexAttribute(vulkan.FORMAT_R32G32B32_SFLOAT) -- Position
+	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX),{
+		shader.VertexAttribute(prosper.FORMAT_R32G32B32_SFLOAT) -- Position
 	})
 	pipelineInfo:AttachDescriptorSetInfo(shader.DescriptorSetInfo({
-		shader.DescriptorSetBinding(vulkan.DESCRIPTOR_TYPE_UNIFORM_BUFFER,bit.bor(vulkan.SHADER_STAGE_FRAGMENT_BIT,vulkan.SHADER_STAGE_VERTEX_BIT,vulkan.SHADER_STAGE_GEOMETRY_BIT)), -- Camera
-		shader.DescriptorSetBinding(vulkan.DESCRIPTOR_TYPE_UNIFORM_BUFFER,bit.bor(vulkan.SHADER_STAGE_FRAGMENT_BIT,vulkan.SHADER_STAGE_VERTEX_BIT,vulkan.SHADER_STAGE_GEOMETRY_BIT)), -- Render settings
-		shader.DescriptorSetBinding(vulkan.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,bit.bor(vulkan.SHADER_STAGE_FRAGMENT_BIT)), -- SSAO Map
-		shader.DescriptorSetBinding(vulkan.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,bit.bor(vulkan.SHADER_STAGE_FRAGMENT_BIT)) -- Light Map
+		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_UNIFORM_BUFFER,bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_VERTEX_BIT,prosper.SHADER_STAGE_GEOMETRY_BIT)), -- Camera
+		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_UNIFORM_BUFFER,bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_VERTEX_BIT,prosper.SHADER_STAGE_GEOMETRY_BIT)), -- Render settings
+		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT)), -- SSAO Map
+		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT)) -- Light Map
 	}))
 
-	pipelineInfo:SetPrimitiveTopology(vulkan.PRIMITIVE_TOPOLOGY_LINE_LIST)
+	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_LIST)
 	pipelineInfo:SetDepthTestEnabled(true)
 	pipelineInfo:SetDepthWritesEnabled(true)
-	pipelineInfo:SetPolygonMode(vulkan.POLYGON_MODE_LINE)
-	pipelineInfo:AttachPushConstantRange(0,self.m_dsPushConstants:GetSize(),bit.bor(vulkan.SHADER_STAGE_FRAGMENT_BIT,vulkan.SHADER_STAGE_VERTEX_BIT))
-	pipelineInfo:SetDynamicStateEnabled(vulkan.DYNAMIC_STATE_LINE_WIDTH_BIT,true)
+	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
+	pipelineInfo:AttachPushConstantRange(0,self.m_dsPushConstants:GetSize(),bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_VERTEX_BIT))
+	pipelineInfo:SetDynamicStateEnabled(prosper.DYNAMIC_STATE_LINE_WIDTH_BIT,true)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
 function shader.PFMGrid3D:InitializeRenderPass(pipelineIdx)
@@ -60,11 +60,11 @@ function shader.PFMGrid3D:InitializeBuffer()
 		dsVerts:WriteVector(Vector(-maxRadius,0,-x))
 		dsVerts:WriteVector(Vector(maxRadius,0,-x))
 	end
-	local bufCreateInfo = vulkan.BufferCreateInfo()
+	local bufCreateInfo = prosper.BufferCreateInfo()
 	bufCreateInfo.size = dsVerts:GetSize()
-	bufCreateInfo.usageFlags = vulkan.BUFFER_USAGE_VERTEX_BUFFER_BIT
-	bufCreateInfo.memoryFeatures = vulkan.MEMORY_FEATURE_GPU_BULK_BIT
-	local bufVerts = vulkan.create_buffer(bufCreateInfo,dsVerts)
+	bufCreateInfo.usageFlags = prosper.BUFFER_USAGE_VERTEX_BUFFER_BIT
+	bufCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
+	local bufVerts = prosper.create_buffer(bufCreateInfo,dsVerts)
 	if(bufVerts == nil) then return end
 	self.m_bufVerts = bufVerts
 	return bufVerts

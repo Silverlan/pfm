@@ -17,7 +17,7 @@ function shader.PFMSelection:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetDepthBiasSlopeFactor(-0.001)
 end
 function shader.PFMSelection:InitializeGfxPipelinePushConstantRanges(pipelineInfo,pipelineIdx)
-	pipelineInfo:AttachPushConstantRange(0,shader.TexturedLit3D.PUSH_CONSTANTS_SIZE +self.m_dsPushConstants:GetSize(),bit.bor(vulkan.SHADER_STAGE_FRAGMENT_BIT,vulkan.SHADER_STAGE_VERTEX_BIT))
+	pipelineInfo:AttachPushConstantRange(0,shader.TexturedLit3D.PUSH_CONSTANTS_SIZE +self.m_dsPushConstants:GetSize(),bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_VERTEX_BIT))
 end
 function shader.PFMSelection:OnBindEntity(ent)
 	local drawCmd = self:GetCurrentCommandBuffer()

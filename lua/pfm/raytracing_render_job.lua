@@ -139,16 +139,16 @@ function pfm.RaytracingRenderJob:GenerateResult()
 	local img
 	if(#self.m_imageBuffers == 1) then
 		self.m_currentImageBuffer = self.m_imageBuffers[1]
-		img = vulkan.create_image(self.m_currentImageBuffer)
+		img = prosper.create_image(self.m_currentImageBuffer)
 	else
 		self.m_currentImageBuffer = util.ImageBuffer.CreateCubemap(self.m_imageBuffers)
-		img = vulkan.create_image(self.m_currentImageBuffer)
+		img = prosper.create_image(self.m_currentImageBuffer)
 	end
 	self.m_imageBuffers = {}
 
-	local imgViewCreateInfo = vulkan.ImageViewCreateInfo()
-	imgViewCreateInfo.swizzleAlpha = vulkan.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
-	self.m_renderResult = vulkan.create_texture(img,vulkan.TextureCreateInfo(),imgViewCreateInfo,vulkan.SamplerCreateInfo())
+	local imgViewCreateInfo = prosper.ImageViewCreateInfo()
+	imgViewCreateInfo.swizzleAlpha = prosper.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
+	self.m_renderResult = prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,prosper.SamplerCreateInfo())
 end
 function pfm.RaytracingRenderJob:Update()
 	if(self.m_raytracingJob == nil) then return pfm.RaytracingRenderJob.STATE_IDLE end

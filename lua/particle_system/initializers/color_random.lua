@@ -12,13 +12,13 @@ function ents.ParticleSystemComponent.InitializerColorRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerColorRandom:Initialize()
-	self.m_controlPointNumber = tonumber(self:GetKeyValue("tint control point") or "0")
+	self.m_controlPointNumber = tonumber(self:GetKeyValue("tint_control_point") or "0")
 	self.m_color1 = Color(self:GetKeyValue("color1") or "255 255 255 255")
 	self.m_color2 = Color(self:GetKeyValue("color2") or "255 255 255 255")
 	self.m_tintPerc = tonumber(self:GetKeyValue("tint_perc") or "0")
-	self.m_tintClampMin = Color(self:GetKeyValue("tint clamp min") or "0 0 0 0")
-	self.m_tintClampMax = Color(self:GetKeyValue("tint clamp max") or "255 255 255 255")
-	self.m_tintUpdateMovementTreshold = tonumber(self:GetKeyValue("tint update movement threshold") or "32")
+	self.m_tintClampMin = Color(self:GetKeyValue("tint_clamp_min") or "0 0 0 0")
+	self.m_tintClampMax = Color(self:GetKeyValue("tint_clamp_max") or "255 255 255 255")
+	self.m_tintUpdateMovementTreshold = tonumber(self:GetKeyValue("tint_update_movement_threshold") or "32")
 end
 function ents.ParticleSystemComponent.InitializerColorRandom:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")
@@ -39,14 +39,15 @@ function ents.ParticleSystemComponent.InitializerColorRandom:OnParticleCreated(p
 	local colorMin = self.m_color1:ToVector4()
 	local colorMax = self.m_color2:ToVector4()
 	local color = colorMin +(colorMax -colorMin) *randomPerc
+	color.a = pt:GetAlpha()
 
 	-- Tint the particles
 	if(self.m_tintPerc ~= 0.0) then
 		-- TODO
 	end
-	pt:SetColor(Color(color))
+	pt:SetColor(color)
 end
 function ents.ParticleSystemComponent.InitializerColorRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("color random",ents.ParticleSystemComponent.InitializerColorRandom)
+ents.ParticleSystemComponent.register_initializer("source_color_random",ents.ParticleSystemComponent.InitializerColorRandom)

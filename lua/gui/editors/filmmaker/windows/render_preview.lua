@@ -59,10 +59,10 @@ function gui.PFMRenderPreviewWindow:OnThink()
 	if(self.m_raytracingJob:IsComplete() == false) then return end
 	if(self.m_raytracingJob:IsSuccessful()) then
 		local imgBuffer = self.m_raytracingJob:GetResult()
-		local img = vulkan.create_image(imgBuffer)
-		local imgViewCreateInfo = vulkan.ImageViewCreateInfo()
-		imgViewCreateInfo.swizzleAlpha = vulkan.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
-		local tex = vulkan.create_texture(img,vulkan.TextureCreateInfo(),imgViewCreateInfo,vulkan.SamplerCreateInfo())
+		local img = prosper.create_image(imgBuffer)
+		local imgViewCreateInfo = prosper.ImageViewCreateInfo()
+		imgViewCreateInfo.swizzleAlpha = prosper.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
+		local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,prosper.SamplerCreateInfo())
 		
 		if(util.is_valid(self.m_preview)) then self.m_preview:SetTexture(tex) end
 		if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetVisible(false) end

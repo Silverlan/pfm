@@ -25,24 +25,40 @@ local function create_model_view(width,height,parent)
 	return el
 end
 
-local function set_model_view_model(mdlView,model,materialOverride,iconPath)
-	mdlView:SetModel(model)
-	mdlView:PlayIdleAnimation()
-
-	local ent = mdlView:GetEntity()
-	if(util.is_valid(ent)) then
-		local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
-		if(mdlC ~= nil) then
-			if(materialOverride) then mdlC:SetMaterialOverride(0,materialOverride)
-			else mdlC:ClearMaterialOverride(0) end
+local function set_model_view_model(mdlView,model,settings,iconPath)
+	if(settings.particleFileName) then
+		local ptFileName = settings.particleFileName
+		local ptName = settings.particleName
+		game.precache_particle_system(ptFileName)
+		local ptC = mdlView:SetParticleSystem(ptName)
+		if(util.is_valid(ptC)) then
+			-- Simulate the particle system to a point
+			-- where it's likely to be in full effect.
+			if(settings.dontPreSimulate ~= true) then
+				local tSimulate = 1.0
+				local tCur = 0.0
+				local tDelta = 1.0 /60.0
+				while(tCur < tSimulate) do
+					ptC:Simulate(tDelta)
+					tCur = tCur +tDelta
+				end
+			end
+		end
+	else
+		mdlView:SetModel(model)
+		mdlView:PlayIdleAnimation()
+		local ent = mdlView:GetEntity()
+		if(util.is_valid(ent)) then
+			local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
+			if(mdlC ~= nil) then
+				if(settings.materialOverride) then mdlC:SetMaterialOverride(0,settings.materialOverride)
+				else mdlC:ClearMaterialOverride(0) end
+			end
 		end
 	end
 
-	if(type(model) == "string") then model = game.load_model(model) end
-	if(model == nil) then return end
-
 	iconLocation = iconPath or get_icon_location(model)
-	if(asset.is_loaded(iconLocation,asset.TYPE_MATERIAL) == false) then print(iconLocation) return end
+	if(asset.is_loaded(iconLocation,asset.TYPE_MATERIAL) == false) then return end
 	local mat = game.load_material(iconLocation)
 	if(mat == nil) then return end
 	local db = mat:GetDataBlock()
@@ -117,12 +133,12 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 	self:GenerateNextIcon()
 end
 
-function gui.AssetIcon.IconGenerator:AddModelToQueue(mdl,callback,iconPath,materialOverride)
+function gui.AssetIcon.IconGenerator:AddModelToQueue(mdl,callback,iconPath,settings)
 	table.insert(self.m_mdlQueue,{
 		model = mdl,
 		callback = callback,
 		iconPath = iconPath,
-		materialOverride = materialOverride
+		settings = settings or {}
 	})
 	if(#self.m_mdlQueue == 1) then self:GenerateNextIcon() end
 end
@@ -130,10 +146,10 @@ end
 function gui.AssetIcon.IconGenerator:GenerateNextIcon()
 	if(#self.m_mdlQueue == 0 or util.is_valid(self.m_modelView) == false) then return end
 	self.m_saveImage = true
-	self.m_tSaveIcon = time.real_time() +0.1 -- Add a small detail to ensure the model has been set up properly
+	self.m_tSaveIcon = time.real_time() +0.1 -- Add a small delay to ensure the model has been set up properly
 	local data = self.m_mdlQueue[1]
 	print("Generating next icon for model " .. data.model .. "...")
-	set_model_view_model(self.m_modelView,data.model,data.materialOverride,data.iconPath)
+	set_model_view_model(self.m_modelView,data.model,data.settings,data.iconPath)
 end
 
 ------------
@@ -167,7 +183,16 @@ function gui.AssetIcon:MouseCallback(button,state,mods)
 
 			local p = create_model_view(pBg:GetWidth(),pBg:GetHeight(),pBg)
 			p:SetSize(pBg:GetWidth(),pBg:GetHeight())
-			set_model_view_model(p,self:GetPreviewModel(),self:GetMaterialOverride())
+			local settings = {
+				materialOverride = self:GetMaterialOverride(),
+				dontPreSimulate = true
+			}
+			if(self:GetAssetType() == asset.TYPE_PARTICLE_SYSTEM) then
+				local ptFileName,ptName = self:GetParticleSystemFileName()
+				settings.particleFileName = ptFileName
+				settings.particleName = ptName
+			end
+			set_model_view_model(p,self:GetPreviewModel(),settings)
 
 			local pos = input.get_cursor_pos()
 			pos.x = math.max(pos.x -pBg:GetWidth() /2,0)
@@ -183,8 +208,7 @@ function gui.AssetIcon:MouseCallback(button,state,mods)
 					return
 				end
 				if(input.get_mouse_button_state(input.MOUSE_BUTTON_RIGHT) == input.STATE_RELEASE) then
-					local mdl = p:GetModel()
-
+					local mdl = p:GetModel() or p:GetParticleSystemName()
 					if(mdl ~= nil) then
 						save_model_icon(mdl,p,self:GetIconLocation())
 						self:ReloadFromCache()
@@ -265,7 +289,7 @@ function gui.AssetIcon:SetMaterialSphere(matSphere)
 	self:Reload()
 end
 function gui.AssetIcon:GetPreviewModel()
-	if(self:GetAssetType() ~= asset.TYPE_MODEL) then return "pfm/texture_sphere" end
+	if(self:GetAssetType() ~= asset.TYPE_MODEL and self:GetAssetType() ~= asset.TYPE_PARTICLE_SYSTEM) then return "pfm/texture_sphere" end
 	local path = util.Path(self:GetAssetPath())
 	path:PopFront()
 	return path:GetString() .. self:GetAssetName()
@@ -282,6 +306,25 @@ function gui.AssetIcon:GetMaterialOverride()
 	path:PopFront()
 	return path:GetString() .. self:GetAssetName()
 end
+function gui.AssetIcon:GetParticleSystemFileName()
+	if(self:GetAssetType() ~= asset.TYPE_PARTICLE_SYSTEM) then return end
+	local path = util.Path(self:GetAssetPath())
+
+	-- Check if we're in a particle system file
+	local ptPath = path:GetString()
+	ptPath = ptPath:sub(0,#ptPath -1)
+	local ext = file.get_file_extension(ptPath)
+	if(ext == nil or string.compare(ext,"wpt",false) == false) then return end
+
+	path:PopFront()
+	path = util.Path(path:GetString() .. self:GetAssetName())
+
+	local ptName = path:GetBack()
+	path:PopBack()
+	local ptFileName = path:GetString()
+	ptFileName = ptFileName:sub(0,#ptFileName -1)
+	return ptFileName,ptName
+end
 function gui.AssetIcon:SetParticleAsset(pt,importAsset)
 	self.m_assetType = asset.TYPE_PARTICLE_SYSTEM
 	local iconPath = self:GetIconLocation()
@@ -293,12 +336,16 @@ function gui.AssetIcon:SetParticleAsset(pt,importAsset)
 		print("Creating new icon generator...")
 		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128,128)
 	end
-	if(importAsset == true or asset.exists(mdl,asset.TYPE_PARTICLE_SYSTEM)) then
-		-- TODO
-		--[[gui.AssetIcon.impl.iconGenerator:AddModelToQueue(mdl,function()
+
+	local ptFileName,ptName = self:GetParticleSystemFileName()
+	if(ptFileName ~= nil and (importAsset == true or asset.exists(ptFileName,asset.TYPE_PARTICLE_SYSTEM))) then
+		gui.AssetIcon.impl.iconGenerator:AddModelToQueue(pt,function()
 			if(self:IsValid() == false) then return end
 			self:SetMaterial(iconPath)
-		end,iconPath)]]
+		end,iconPath,{
+			particleFileName = ptFileName,
+			particleName = ptName
+		})
 	else
 		self:SetMaterial("third_party/source_engine",100,30)
 	end
@@ -322,7 +369,9 @@ function gui.AssetIcon:SetMaterialAsset(mat,importAsset)
 			gui.AssetIcon.impl.iconGenerator:AddModelToQueue(self:GetPreviewModel(),function()
 				if(self:IsValid() == false) then return end
 				self:SetMaterial(iconPath)
-			end,iconPath,self:GetMaterialOverride())
+			end,iconPath,{
+				materialOverride = self:GetMaterialOverride()
+			})
 		end
 	else
 		self:SetMaterial("third_party/source_engine",100,30)

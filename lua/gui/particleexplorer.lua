@@ -23,14 +23,15 @@ function gui.ParticleExplorer:PopulateContextMenu(pContext,tSelectedFiles)
 		local path = tSelectedFiles[1]:GetRelativeAsset()
 		if(asset.is_loaded(path,asset.TYPE_PARTICLE_SYSTEM) == false) then
 			pContext:AddItem(locale.get_text("pfm_load"),function()
-				-- game.load_material(path)
+				-- TODO
+				-- game.precache_particle_system(ptFileName)
 			end)
-		else
-			--[[local mat = game.load_material(path)
-			local name = file.remove_file_extension(file.get_file_name(mat:GetName()))
-			pContext:AddItem(locale.get_text("pfm_edit_material"),function(pItem)
-				tool.get_filmmaker():OpenMaterialEditor(path)
-			end)]]
+		end
+		local ptFileName,ptName = tSelectedFiles[1]:GetParticleSystemFileName()
+		if(ptFileName ~= nil) then
+			pContext:AddItem(locale.get_text("pfm_edit_particle_system"),function(pItem)
+				tool.get_filmmaker():OpenParticleEditor(ptFileName,ptName)
+			end)
 		end
 	end
 end

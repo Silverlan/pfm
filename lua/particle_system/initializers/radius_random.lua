@@ -30,4 +30,4 @@ end
 function ents.ParticleSystemComponent.InitializerRadiusRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("radius random",ents.ParticleSystemComponent.InitializerRadiusRandom)
+ents.ParticleSystemComponent.register_initializer("source_radius_random",ents.ParticleSystemComponent.InitializerRadiusRandom)

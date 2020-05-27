@@ -50,7 +50,7 @@ function gui.Curve:BuildCurve(curveValues)
 	for _,v in ipairs(verts) do
 		ds:WriteVector2(v *2 -Vector2(1,1))
 	end
-	local buf = vulkan.util.allocate_temporary_buffer(ds)
+	local buf = prosper.util.allocate_temporary_buffer(ds)
 	self:SetLineBuffer(buf,#verts)]]
 	local verts = {}
 	for _,v in ipairs(curveValues) do
@@ -61,7 +61,7 @@ function gui.Curve:BuildCurve(curveValues)
 	for _,v in ipairs(verts) do
 		ds:WriteVector2(v)
 	end
-	local buf = vulkan.util.allocate_temporary_buffer(ds)
+	local buf = prosper.util.allocate_temporary_buffer(ds)
 	self:SetLineBuffer(buf,#verts)
 end
 function gui.Curve:SetLineBuffer(buffer,vertexCount)

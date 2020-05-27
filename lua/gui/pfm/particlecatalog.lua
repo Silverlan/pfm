@@ -28,7 +28,6 @@ function gui.PFMParticleCatalog:OnInitialize()
 	self.m_contents:SetAutoFillContents(true)
 
 	local fit = pfm.FileIndexTable("particles","particles/",{"wpt"},{})
-	fit:LoadOrGenerate()
 	self.m_fit = fit
 
 	self.m_teLocation = gui.create("WITextEntry",self.m_contents,0,0,self:GetWidth(),24)
@@ -56,7 +55,7 @@ function gui.PFMParticleCatalog:OnInitialize()
 	local explorer = gui.create("WIParticleExplorer",scrollContainer,0,0,self:GetWidth(),self:GetHeight())
 	explorer:SetAutoAlignToParent(true,false)
 	explorer:SetRootPath("particles")
-	explorer:SetExtensions({"wmi"})
+	explorer:SetExtensions({"wpt"})
 	explorer:AddCallback("OnPathChanged",function(explorer,path)
 		self.m_teLocation:SetText(path)
 	end)
@@ -74,12 +73,20 @@ function gui.PFMParticleCatalog:OnInitialize()
 		end
 		return tFiles,tDirs
 	end)
-	explorer:Update()
 	self.m_explorer = explorer
 
 	self.m_contents:Update()
 	scrollContainer:SetAnchor(0,0,1,1)
 	self.m_teLocation:SetAnchor(0,0,1,1)
 	self.m_teFilter:SetAnchor(0,0,1,1)
+
+	self:EnableThinking()
+end
+function gui.PFMParticleCatalog:OnThink()
+	-- Lazy initialization
+	self.m_fit:LoadOrGenerate()
+	self.m_explorer:Update()
+
+	self:DisableThinking()
 end
 gui.register("WIPFMParticleCatalog",gui.PFMParticleCatalog)

@@ -39,8 +39,8 @@ function gui.RMAComposerDialog:OnThink()
 	if(self.m_aoJob:IsComplete() == false) then return end
 	if(self.m_aoJob:GetStatus() == util.ParallelJob.JOB_STATUS_SUCCESSFUL) then
 		local result = self.m_aoJob:GetResult()
-		local img = vulkan.create_image(result)
-		local tex = vulkan.create_texture(img,vulkan.TextureCreateInfo(),vulkan.ImageViewCreateInfo(),vulkan.SamplerCreateInfo())
+		local img = prosper.create_image(result)
+		local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),prosper.SamplerCreateInfo())
 		self.m_slotAo:SetTexture(tex)
 	end
 end

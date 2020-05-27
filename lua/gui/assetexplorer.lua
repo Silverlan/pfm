@@ -130,6 +130,32 @@ function gui.AssetExplorer:AddIcon(assetName,isDirectory,fDirClickHandler)
 			--self:CallCallbacks("OnFileSelected",fPath)
 		end)
 	else
+		if(el:GetAssetType() == asset.TYPE_PARTICLE_SYSTEM) then
+			el:AddCallback("OnDoubleClick",function(el)
+				if(util.is_valid(self) == false) then return end
+				local ptFileName,ptName = el:GetParticleSystemFileName()
+				if(ptFileName ~= nil) then
+					tool.get_filmmaker():OpenParticleEditor(ptFileName,ptName)
+					return
+				end
+				local ptPath = util.Path(el:GetAsset())
+				ptPath:PopFront()
+				if(asset.exists(ptPath:GetString(),asset.TYPE_PARTICLE_SYSTEM) == false) then
+					-- Attempt to import the particle system from a Source Engine PCF file
+					-- TODO: This should be done automatically by 'precache_particle_system'!
+					local sePath = util.Path(ptPath)
+					sePath:RemoveFileExtension()
+					sePath = sePath +".pcf"
+					sfm.convert_particle_systems("particles/" .. sePath:GetString())
+				end
+				game.precache_particle_system(ptPath:GetString())
+
+				local relPath = util.Path(path)
+				relPath:MakeRelative(self:GetRootPath())
+				self:SetPath(relPath:GetString() .. assetName)
+				self:Update()
+			end)
+		end
 		el:AddCallback("PopulateContextMenu",function(el,pContext)
 			local tSelected = self:GetSelectedIcons()
 			local tSelectedDirs = {}
@@ -252,7 +278,23 @@ function gui.AssetExplorer:ListFiles()
 		self.m_iconContainer:Update()
 		return
 	end
-	local tFiles,tDirectories = self:FindFiles()
+	local tFiles,tDirectories
+	if(self:GetAssetType() == asset.TYPE_PARTICLE_SYSTEM) then
+		local path = util.Path(self:GetPath())
+		local back = path:GetBack()
+		back = back:sub(0,#back -1)
+		local ext = file.get_file_extension(back)
+		if(ext ~= nil and string.compare(ext,"wpt")) then
+			local ptPath = path:GetString()
+			ptPath = ptPath:sub(0,#ptPath -1)
+			local headerData = ents.ParticleSystemComponent.read_header_data(ptPath)
+			if(headerData ~= nil) then
+				tFiles = headerData.particleSystemNames
+				tDirectories = {".."}
+			end
+		end
+	end
+	if(tFiles == nil) then tFiles,tDirectories = self:FindFiles() end
 	if(self:IsAtRoot()) then
 		self:AddIcon("favorites",true,function()
 			self.m_inFavorites = true

@@ -21,14 +21,14 @@ function shader.PFMCurve:InitializeRenderPass(pipelineIdx)
 end
 function shader.PFMCurve:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(vulkan.VERTEX_INPUT_RATE_VERTEX),{
-		shader.VertexAttribute(vulkan.FORMAT_R32G32_SFLOAT), -- Position
+	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX),{
+		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 	})
 
-	pipelineInfo:AttachPushConstantRange(0,self.m_dsPushConstants:GetSize(),vulkan.SHADER_STAGE_VERTEX_BIT)
+	pipelineInfo:AttachPushConstantRange(0,self.m_dsPushConstants:GetSize(),prosper.SHADER_STAGE_VERTEX_BIT)
 	
-	pipelineInfo:SetPolygonMode(vulkan.POLYGON_MODE_LINE)
-	pipelineInfo:SetPrimitiveTopology(vulkan.PRIMITIVE_TOPOLOGY_LINE_STRIP)
+	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
+	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_STRIP)
 	pipelineInfo:SetDepthTestEnabled(false)
 	pipelineInfo:SetDepthWritesEnabled(false)
 	pipelineInfo:SetCommonAlphaBlendProperties()

@@ -69,8 +69,8 @@ function gui.Grid:BuildGrid(curveValues)
 			dsColors:WriteVector4(Color.Red:ToVector4())
 		end
 	end
-	local buf = vulkan.util.allocate_temporary_buffer(ds)
-	local colorBuffer = vulkan.util.allocate_temporary_buffer(dsColors)
+	local buf = prosper.util.allocate_temporary_buffer(ds)
+	local colorBuffer = prosper.util.allocate_temporary_buffer(dsColors)
 	self:SetLineBuffer(buf,colorBuffer,#verts)]]
 end
 function gui.Grid:SetLineBuffer(buffer,colorBuffer,vertexCount)
@@ -125,8 +125,8 @@ function gui.GridLayer:BuildGrid(curveValues)
 			dsColors:WriteVector4(Color.Red:ToVector4())
 		end
 	end
-	local buf = vulkan.util.allocate_temporary_buffer(ds)
-	local colorBuffer = vulkan.util.allocate_temporary_buffer(dsColors)
+	local buf = prosper.util.allocate_temporary_buffer(ds)
+	local colorBuffer = prosper.util.allocate_temporary_buffer(dsColors)
 	self:SetLineBuffer(buf,colorBuffer,#verts)]]
 end
 function gui.GridLayer:SetLineBuffer(buffer,colorBuffer,vertexCount)

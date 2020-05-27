@@ -1,0 +1,1006 @@
+source_radius_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		radius_min
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 100.0
+		}
+		radius_max
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 100.0
+		}
+		radius_random_exponent
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+source_lifetime_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		lifetime_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		lifetime_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		lifetime_random_exponent
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+source_lifetime_from_sequence
+{
+	$string type "initializer"
+	keyvalues
+	{
+		frames_per_second
+		{
+			$string type "int"
+			$int default 30
+			$int min 0
+			$int max 100
+		}
+	}
+}
+
+source_sequence_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		sequence_min
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		sequence_max
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+	}
+}
+
+source_rotation_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		rotation_initial
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 360.0
+		}
+		rotation_offset_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 360.0
+		}
+		rotation_offset_max
+		{
+			$string type "float"
+			$float default 360.0
+			$float min 0.0
+			$float max 360.0
+		}
+		rotation_random_exponent
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+source_rotation_yaw_flip_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		flip_percentage
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0.0
+			$float max 1.0
+		}
+	}
+}
+
+source_alpha_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		alpha_min
+		{
+			$string type "float"
+			$float default 255
+			$float min 0.0
+			$float max 255.0
+		}
+		alpha_max
+		{
+			$string type "float"
+			$float default 255
+			$float min 0.0
+			$float max 255.0
+		}
+		alpha_random_exponent
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+source_color_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		tint_control_point
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		color1
+		{
+			$string type "color"
+			$color default "255 255 255 255"
+		}
+		color2
+		{
+			$string type "color"
+			$color default "255 255 255 255"
+		}
+		tint_perc
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 1.0
+		}
+		tint_clamp_min
+		{
+			$string type "color"
+			$color default "0 0 0 0"
+		}
+		tint_clamp_max
+		{
+			$string type "color"
+			$color default "255 255 255 255"
+		}
+		tint_update_movement_threshold
+		{
+			$string type "int"
+			$int default 32
+			$int min 0
+			$int max 64
+		}
+	}
+}
+
+source_trail_length_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		length_min
+		{
+			$string type "float"
+			$float default 0.1
+			$float min 0.0
+			$float max 100.0
+		}
+		length_max
+		{
+			$string type "float"
+			$float default 0.1
+			$float min 0.0
+			$float max 100.0
+		}
+		length_random_exponent
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+source_position_modify_random_offset
+{
+	$string type "initializer"
+	keyvalues
+	{
+		control_point_id
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		offset_min
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		offset_max
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		offset_in_local_space
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		offset_proportional_to_radius
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+
+source_position_random_box
+{
+	$string type "initializer"
+	keyvalues
+	{
+		control_point_id
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		min
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		max
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+	}
+}
+
+source_velocity_random_noise
+{
+	$string type "initializer"
+	keyvalues
+	{
+		control_point_id
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		time_noise_coordinate_scale
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 5.0
+		}
+		spatial_noise_coordinate_scale
+		{
+			$string type "float"
+			$float default 0.01
+			$float min 0.0
+			$float max 1.0
+		}
+		time_coordinate_offset
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 5.0
+		}
+		spatial_coordinate_offset
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		absolute_value
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		invert_abs_value
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		output_minimum
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		output_maximum
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		apply_velocity_in_local_space
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+
+source_position_random_sphere
+{
+	$string type "initializer"
+	keyvalues
+	{
+		distance_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		distance_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		distance_bias
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		distance_bias_absolute_value
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		bias_in_local_system
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		control_point_id
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		speed_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		speed_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		speed_random_exponent
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 5.0
+		}
+		speed_in_local_coordinate_system_min
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		speed_in_local_coordinate_system_max
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		create_in_model
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		randomly_distribute_to_cp
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		random_distribution_growth_time
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+source_radius_scale
+{
+	$string type "operator"
+	keyvalues
+	{
+		start_time
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		end_time
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 30.0
+		}
+		radius_start_scale
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 50.0
+		}
+		radius_end_scale
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 50.0
+		}
+		ease_in_and_out
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		scale_bias
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0.0
+			$float max 2.0
+		}
+	}
+}
+
+source_animation
+{
+	$string type "operator"
+	keyvalues
+	{
+		animation_rate
+		{
+			$string type "float"
+			$float default 0.1
+			$float min 0.0
+			$float max 5.0
+		}
+		animation_fit_lifetime
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		use_animation_rate_as_fps
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+
+source_color_fade
+{
+	$string type "operator"
+	keyvalues
+	{
+		fade_start_time
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		fade_end_time
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		ease_in_and_out
+		{
+			$string type "bool"
+			$bool default 1
+		}
+		color_fade
+		{
+			$string type "color"
+			$color default "255 255 255 255"
+		}
+	}
+}
+
+source_alpha_fade_and_decay
+{
+	$string type "operator"
+	keyvalues
+	{
+		start_alpha
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 1.0
+		}
+		end_alpha
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 1.0
+		}
+		start_fade_in_time
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		end_fade_in_time
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0.0
+			$float max 30.0
+		}
+		start_fade_out_time
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0.0
+			$float max 30.0
+		}
+		end_fade_out_time
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 30.0
+		}
+	}
+}
+
+source_oscillate_scalar
+{
+	$string type "operator"
+	keyvalues
+	{
+		oscillation_field
+		{
+			$string type "string"
+		}
+		oscillation_rate_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		oscillation_rate_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		oscillation_frequency_min
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 10.0
+		}
+		oscillation_frequency_max
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 10.0
+		}
+		proportional
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		start_time_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		start_time_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		end_time_min
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 30.0
+		}
+		end_time_max
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 30.0
+		}
+		start_end_proportional
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		oscillation_multiplier
+		{
+			$string type "float"
+			$float default 2.0
+			$float min 0.0
+			$float max 5.0
+		}
+		oscillation_start_phase
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+source_oscillate_vector
+{
+	$string type "operator"
+	keyvalues
+	{
+		oscillation_field
+		{
+			$string type "string"
+		}
+		oscillation_rate_min
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		oscillation_rate_max
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		oscillation_frequency_min
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		oscillation_frequency_max
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		proportional
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		start_time_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		start_time_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		end_time_min
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 30.0
+		}
+		end_time_max
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 30.0
+		}
+		start_end_proportional
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		oscillation_multiplier
+		{
+			$string type "float"
+			$float default 2.0
+			$float min 0.0
+			$float max 5.0
+		}
+		oscillation_start_phase
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+source_pull_towards_control_point
+{
+	$string type "operator"
+	keyvalues
+	{
+		amount_of_force
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10000.0
+		}
+		falloff_power
+		{
+			$string type "float"
+			$float default 2.0
+			$float min 0.0
+			$float max 50.0
+		}
+		control_point_id
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+	}
+}
+
+source_twist_around_axis
+{
+	$string type "operator"
+	keyvalues
+	{
+		amount_of_force
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10000.0
+		}
+		twist_axis
+		{
+			$string type "vector"
+			$vector default "0 1 0"
+			$bool normalized 1
+		}
+		control_point_id
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		local_space_axis
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+
+source_force_random
+{
+	$string type "operator"
+	keyvalues
+	{
+		min_force
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		max_force
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+	}
+}
+
+source_movement_rotate_particle_around_axis
+{
+	$string type "operator"
+	keyvalues
+	{
+		rotation_axis
+		{
+			$string type "vector"
+			$vector default "0 1 0"
+			$bool normalized 1
+		}
+		rotation_rate
+		{
+			$string type "float"
+			$float default 180.0
+			$float min 0.0
+			$float max 360.0
+		}
+		control_point_id
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		use_local_space
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+
+source_movement_basic
+{
+	$string type "operator"
+	keyvalues
+	{
+		drag
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 5.0
+		}
+		max_constraint_passes
+		{
+			$string type "int"
+			$int default 3
+			$int min 0
+			$int max 10
+		}
+		gravity
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+	}
+}
+
+source_render_animated_sprites
+{
+	$string type "renderer"
+	keyvalues
+	{
+		orientation_type
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		control_point_id
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		second_sequence_animation_rate
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+source_render_sprite_trail
+{
+	$string type "renderer"
+	keyvalues
+	{
+		min_length
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		max_length
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		length_fade_in_time
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		animation_rate
+		{
+			$string type "float"
+			$float default 0.1
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}

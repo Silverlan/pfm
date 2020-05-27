@@ -25,9 +25,9 @@ end
 function ents.ParticleSystemComponent.InitializerLifetimeRandom:OnParticleCreated(pt)
 	--print("[Particle Initializer] On particle created")
 	local lifetime = self.m_lifetimeMin +(math.randomf(0.0,self.m_lifetimeMax -self.m_lifetimeMin) ^self.m_lifetimeRandomExponent)
-	pt:SetLifeTime(lifetime)
+	pt:SetLife(lifetime)
 end
 function ents.ParticleSystemComponent.InitializerLifetimeRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("lifetime random",ents.ParticleSystemComponent.InitializerLifetimeRandom)
+ents.ParticleSystemComponent.register_initializer("source_lifetime_random",ents.ParticleSystemComponent.InitializerLifetimeRandom)

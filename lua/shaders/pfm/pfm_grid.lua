@@ -21,16 +21,16 @@ function shader.PFMGrid:InitializeRenderPass(pipelineIdx)
 end
 function shader.PFMGrid:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(vulkan.VERTEX_INPUT_RATE_VERTEX),{
-		shader.VertexAttribute(vulkan.FORMAT_R32G32_SFLOAT), -- Position
+	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX),{
+		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 	})
 
-	pipelineInfo:AttachPushConstantRange(0,self.m_dsTransformMatrix:GetSize(),bit.bor(vulkan.SHADER_STAGE_VERTEX_BIT,vulkan.SHADER_STAGE_FRAGMENT_BIT))
+	pipelineInfo:AttachPushConstantRange(0,self.m_dsTransformMatrix:GetSize(),bit.bor(prosper.SHADER_STAGE_VERTEX_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT))
 	
-	pipelineInfo:SetDynamicStateEnabled(vulkan.DYNAMIC_STATE_SCISSOR_BIT,true)
-	pipelineInfo:SetDynamicStateEnabled(vulkan.DYNAMIC_STATE_LINE_WIDTH_BIT,true)
-	pipelineInfo:SetPolygonMode(vulkan.POLYGON_MODE_LINE)
-	pipelineInfo:SetPrimitiveTopology(vulkan.PRIMITIVE_TOPOLOGY_LINE_LIST)
+	pipelineInfo:SetDynamicStateEnabled(prosper.DYNAMIC_STATE_SCISSOR_BIT,true)
+	pipelineInfo:SetDynamicStateEnabled(prosper.DYNAMIC_STATE_LINE_WIDTH_BIT,true)
+	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
+	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_LIST)
 	pipelineInfo:SetDepthTestEnabled(false)
 	pipelineInfo:SetDepthWritesEnabled(false)
 	pipelineInfo:SetCommonAlphaBlendProperties()
@@ -39,7 +39,7 @@ function shader.PFMGrid:Draw(drawCmd,transformMatrix,x,y,w,h,lineCount,strideX,c
 	if(self:IsValid() == false or self:RecordBeginDraw(drawCmd) == false) then return end
 	yMultiplier = yMultiplier or 1.0
 	
-	local vertexBuffer = vulkan.util.get_line_vertex_buffer()
+	local vertexBuffer = prosper.util.get_line_vertex_buffer()
 	self:RecordBindVertexBuffers({vertexBuffer})
 	drawCmd:RecordSetScissor(w,h,x,y)
 	drawCmd:RecordSetLineWidth(lineWidth or 1)

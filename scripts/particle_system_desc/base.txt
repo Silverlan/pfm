@@ -1,0 +1,1109 @@
+color_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		color_min
+		{
+			$string type "color"
+			$color default "255 255 255 255"
+		}
+		color_max
+		{
+			$string type "color"
+			$color default "255 255 255 255"
+		}
+	}
+}
+
+position_random_box
+{
+	$string type "initializer"
+	keyvalues
+	{
+		min
+		{
+			$string type "min"
+			$vector default "0 0 0"
+		}
+		max
+		{
+			$string type "max"
+			$vector default "0 0 0"
+		}
+		origin
+		{
+			$string type "max"
+			$vector default "0 0 0"
+		}
+		on_sides
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+
+position_random_sphere
+{
+	$string type "initializer"
+	keyvalues
+	{
+		distance_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		distance_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		distance_bias
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		origin
+		{
+			$string type "vector"
+		}
+	}
+}
+
+position_random_circle
+{
+	$string type "initializer"
+	keyvalues
+	{
+		axis
+		{
+			$string type "vector"
+			$vector default "0 1 0"
+		}
+		distance_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		distance_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		origin
+		{
+			$string type "vector"
+		}
+	}
+}
+
+shoot_cone
+{
+	$string type "initializer"
+	keyvalues
+	{
+		angle_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 360.0
+		}
+		angle_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 360.0
+		}
+		direction
+		{
+			$string type "vector"
+			$vector default "1 0 0"
+			$bool normalized 1
+		}
+	}
+}
+
+shoot_outward
+{
+	$string type "initializer"
+	keyvalues
+	{
+		bias
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+	}
+}
+
+speed
+{
+	$string type "initializer"
+	keyvalues
+	{
+		speed
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 2000.0
+		}
+		speed_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 2000.0
+		}
+		speed_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 2000.0
+		}
+	}
+}
+
+initial_angular_velocity
+{
+	$string type "initializer"
+	keyvalues
+	{
+		velocity
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		spread_min
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		spread_max
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		velocity_min
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		velocity_max
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+	}
+}
+
+initial_animation_frame
+{
+	$string type "initializer"
+	keyvalues
+	{
+		frame_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		frame_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		frame_min_fraction
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 1.0
+		}
+		frame_max_fraction
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 1.0
+		}
+	}
+}
+
+initial_velocity
+{
+	$string type "initializer"
+	keyvalues
+	{
+		velocity
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		spread_min
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		spread_max
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		velocity_min
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		velocity_max
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+	}
+}
+
+radius_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		radius_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		radius_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+	}
+}
+
+length_random
+{
+	$string type "initializer"
+	keyvalues
+	{
+		length_min
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		length_max
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+	}
+}
+
+color_fade
+{
+	$string type "operator"
+	keyvalues
+	{
+		color_start
+		{
+			$string type "color"
+			$color default "255 255 255 255"
+		}
+		color_end
+		{
+			$string type "color"
+			$color default "255 255 255 255"
+		}
+		fade_start
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		fade_end
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		ease_in
+		{
+			$string type "bool"
+			$bool default 1
+		}
+		ease_out
+		{
+			$string type "bool"
+			$bool default 1
+		}
+		ease
+		{
+			$string type "enum"
+			enums
+			{
+				$int "back" 0
+				$int "bounce" 1
+				$int "circular" 2
+				$int "cubic" 3
+				$int "elastic" 4
+				$int "exponential" 5
+				$int "linear" 6
+				$int "quadratic" 7
+				$int "quartic" 8
+				$int "quintic" 9
+				$int "sine" 10
+			}
+			$string default "back"
+		}
+		fade_lifetime_fraction
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+
+gravity
+{
+	$string type "operator"
+	keyvalues
+	{
+		effective_scale
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		acceleration
+		{
+			$string type "vector"
+			$vector default "0 -1 0"
+		}
+	}
+}
+
+texture_scrolling
+{
+	$string type "operator"
+	keyvalues
+	{
+		horizontal_speed
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		vertical_speed
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+	}
+}
+
+physics_sphere
+{
+	$string type "operator"
+	keyvalues
+	{
+		mass
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		linear_damping
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		linear_factor
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		angular_damping
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		angular_factor
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		rotation_offset
+		{
+			$string type "vector4"
+			$vector4 default "1 0 0 0"
+		}
+		translation_offset
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		radius
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+	}
+}
+
+physics_box
+{
+	$string type "operator"
+	keyvalues
+	{
+		mass
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		linear_damping
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		linear_factor
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		angular_damping
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		angular_factor
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		rotation_offset
+		{
+			$string type "vector4"
+			$vector4 default "1 0 0 0"
+		}
+		translation_offset
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		extent
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+	}
+}
+
+physics_cylinder
+{
+	$string type "operator"
+	keyvalues
+	{
+		mass
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		linear_damping
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		linear_factor
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		angular_damping
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		angular_factor
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		rotation_offset
+		{
+			$string type "vector4"
+			$vector4 default "1 0 0 0"
+		}
+		translation_offset
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		radius
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		height
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+	}
+}
+
+physics_model
+{
+	$string type "operator"
+	keyvalues
+	{
+		mass
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		linear_damping
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		linear_factor
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		angular_damping
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		angular_factor
+		{
+			$string type "vector"
+			$vector default "1 1 1"
+		}
+		rotation_offset
+		{
+			$string type "vector4"
+			$vector4 default "1 0 0 0"
+		}
+		translation_offset
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+		model
+		{
+			$string type "model"
+		}
+	}
+}
+
+radius_fade
+{
+	$string type "operator"
+	keyvalues
+	{
+		radius_start
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		radius_end
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+	}
+}
+
+length_fade
+{
+	$string type "operator"
+	keyvalues
+	{
+		length_start
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+		length_end
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 50.0
+		}
+	}
+}
+
+trail
+{
+	$string type "operator"
+	keyvalues
+	{
+		travel_time
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 30.0
+		}
+	}
+}
+
+velocity
+{
+	$string type "operator"
+	keyvalues
+	{
+		velocity
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+	}
+}
+
+angular_acceleration
+{
+	$string type "operator"
+	keyvalues
+	{
+		acceleration
+		{
+			$string type "vector"
+			$vector default "0 0 0"
+		}
+	}
+}
+
+cylindrical_vortex
+{
+	$string type "operator"
+	keyvalues
+	{
+		axis
+		{
+			$string type "vector"
+			$vector default "0 1 0"
+			$bool normalized 1
+		}
+		strength
+		{
+			$string type "float"
+			$float default 2.0
+			$float min 0.0
+			$float max 100.0
+		}
+		divergence
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+	}
+}
+
+wander
+{
+	$string type "operator"
+	keyvalues
+	{
+		strength
+		{
+			$string type "float"
+			$float default 0.05
+			$float min 0.0
+			$float max 2.0
+		}
+		frequency
+		{
+			$string type "float"
+			$float default 2.0
+			$float min 0.0
+			$float max 50.0
+		}
+	}
+}
+
+jitter
+{
+	$string type "operator"
+	keyvalues
+	{
+		strength
+		{
+			$string type "float"
+			$float default 0.05
+			$float min 0.0
+			$float max 2.0
+		}
+		frequency
+		{
+			$string type "float"
+			$float default 2.0
+			$float min 0.0
+			$float max 50.0
+		}
+	}
+}
+
+linear_drag
+{
+	$string type "operator"
+	keyvalues
+	{
+		drag
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+pause_emission
+{
+	$string type "operator"
+	keyvalues
+	{
+		pause_start
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		pause_end
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+	}
+}
+
+pause_child_emission
+{
+	$string type "operator"
+	keyvalues
+	{
+		pause_start
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		pause_end
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 30.0
+		}
+		name
+		{
+			$string type "string"
+		}
+	}
+}
+
+quadratic_drag
+{
+	$string type "operator"
+	keyvalues
+	{
+		drag
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 5.0
+		}
+	}
+}
+
+emission_rate_random
+{
+	$string type "operator"
+	keyvalues
+	{
+		minimum
+		{
+			$string type "float"
+			$float default 0.07
+			$float min 0.0
+			$float max 100.0
+		}
+		maximum
+		{
+			$string type "float"
+			$float default 0.2
+			$float min 0.0
+			$float max 100.0
+		}
+	}
+}
+
+toroidal_vortex
+{
+	$string type "operator"
+	keyvalues
+	{
+		axis
+		{
+			$string type "vector"
+			$vector default "0 1 0"
+			$bool normalized 1
+		}
+		strength
+		{
+			$string type "float"
+			$float default 2.0
+			$float min 0.0
+			$float max 100.0
+		}
+		divergence
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 100.0
+		}
+		height
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 50.0
+		}
+		radius
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 50.0
+		}
+	}
+}
+
+wind
+{
+	$string type "operator"
+	keyvalues
+	{
+		strength
+		{
+			$string type "float"
+			$float default 2.0
+			$float min 0.0
+			$float max 100.0
+		}
+		direction
+		{
+			$string type "vector"
+			$vector default "1 0 0"
+			$bool normalized 1
+		}
+		rotate_with_emitter
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+
+beam
+{
+	$string type "renderer"
+	keyvalues
+	{
+		node_start
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		node_end
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		curvature
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 10.0
+		}
+	}
+}
+
+blob
+{
+	$string type "renderer"
+	keyvalues
+	{
+		specular_color
+		{
+			$string type "vector4"
+			$vector4 default "0 0 0 0"
+		}
+		specular_shininess
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 1.0
+		}
+		reflection_intensity
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 1.0
+		}
+		refraction_index_ratio
+		{
+			$string type "float"
+			$float default 1.0
+			$float min 0.0
+			$float max 1.0
+		}
+	}
+}
+
+model
+{
+	$string type "renderer"
+	keyvalues
+	{
+		model
+		{
+			$string type "model"
+		}
+		skin
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		animation
+		{
+			$string type "animation"
+		}
+		bodygroup0
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		bodygroup1
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+		bodygroup2
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+	}
+}
+
+sprite
+{
+	$string type "renderer"
+	keyvalues
+	{
+		planar_rotation
+		{
+			$string type "bool"
+			$bool default 1
+		}
+		align_velocity
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}

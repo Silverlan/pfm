@@ -16,16 +16,16 @@ function ents.ParticleSystemComponent.InitializerPositionWithinSphere:Initialize
 	self.m_distanceMax = tonumber(self:GetKeyValue("distance_max") or "0")
 	self.m_distanceBias = vector.create_from_string(self:GetKeyValue("distance_bias") or "1 1 1")
 	self.m_distanceBiasAbsoluteValue = vector.create_from_string(self:GetKeyValue("distance_bias_absolute_value") or "0 0 0")
-	self.m_biasInLocalSystem = toboolean(self:GetKeyValue("bias in local system") or "0")
-	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_number") or "0")
+	self.m_biasInLocalSystem = toboolean(self:GetKeyValue("bias_in_local_system") or "0")
+	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id") or "0")
 	self.m_speedMin = tonumber(self:GetKeyValue("speed_min") or "0")
 	self.m_speedMax = tonumber(self:GetKeyValue("speed_max") or "0")
 	self.m_speedRandomExponent = tonumber(self:GetKeyValue("speed_random_exponent") or "1")
 	self.m_speedInLocalCoordinateSystemMin = vector.create_from_string(self:GetKeyValue("speed_in_local_coordinate_system_min") or "0 0 0")
 	self.m_speedInLocalCoordinateSystemMax = vector.create_from_string(self:GetKeyValue("speed_in_local_coordinate_system_max") or "0 0 0")
-	self.m_createInModel = tonumber(self:GetKeyValue("create in model") or "0")
-	self.m_randomlyDistributeToHighestSuppliedControlPoint = toboolean(self:GetKeyValue("randomly distribute to highest supplied Control Point") or "0")
-	self.m_randomlyDistributionGrowthTime = tonumber(self:GetKeyValue("randomly distribution growth time") or "0")
+	self.m_createInModel = tonumber(self:GetKeyValue("create_in_model") or "0")
+	self.m_randomlyDistributeToHighestSuppliedControlPoint = toboolean(self:GetKeyValue("randomly_distribute_to_cp") or "0")
+	self.m_randomlyDistributionGrowthTime = tonumber(self:GetKeyValue("random_distribution_growth_time") or "0")
 
 	self.m_hasDistanceBias = (self.m_distanceBias.x ~= 1.0 and self.m_distanceBias.y ~= 1.0 and self.m_distanceBias.z ~= 1.0)
 	self.m_hasDistanceBiasAbs = (self.m_distanceBiasAbsoluteValue.x ~= 0.0 and self.m_distanceBiasAbsoluteValue.y ~= 0.0 and self.m_distanceBiasAbsoluteValue.z ~= 0.0)
@@ -99,25 +99,12 @@ function ents.ParticleSystemComponent.InitializerPositionWithinSphere:OnParticle
 		math.randomf(self.m_speedInLocalCoordinateSystemMin.z,self.m_speedInLocalCoordinateSystemMax.z)*
 		GetControlPointPose(self,nCurrentControlPoint):GetRotation():GetUp()
 
-	local prevDt = 0.04166666790843 -- TODO
-	pOffset = pOffset *prevDt
+	local prevDt = GetPrevPtDelta() -- TODO
+	pOffset = pOffset *prevDt *0.2
 	randPos = randPos +pOffset
-	SetPrevPos(pt:GetIndex(),randPos)
-			--[[poffset *= pParticles->m_flPreviousDt;
-			randpos += poffset;
-			pxyz[0] = randpos.x;
-			pxyz[4] = randpos.y;
-			pxyz[8] = randpos.z;]]
-
-	--pt:SetVelocity(pt:GetVelocity() +pOffset)
-
-	--[[pOffset = pOffset *pParticles->m_flPreviousDt;
-	randPos = randPos +pOffset;
-	pxyz[0] = randPos.x;
-	pxyz[4] = randPos.y;
-	pxyz[8] = randPos.z;]]
+	pt:SetPreviousPosition(randPos)
 end
 function ents.ParticleSystemComponent.InitializerPositionWithinSphere:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("position_within_sphere",ents.ParticleSystemComponent.InitializerPositionWithinSphere)
+ents.ParticleSystemComponent.register_initializer("source_position_random_sphere",ents.ParticleSystemComponent.InitializerPositionWithinSphere)
