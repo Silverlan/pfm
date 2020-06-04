@@ -11,7 +11,7 @@ include("udm_group.lua")
 
 udm.ELEMENT_TYPE_PFM_FILM_CLIP = udm.register_element("PFMFilmClip")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"timeFrame",udm.PFMTimeFrame())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"actors",udm.Array(udm.ELEMENT_TYPE_PFM_ACTOR))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"actors",udm.Array(udm.ELEMENT_TYPE_ANY)) -- Can contain actors or groups
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"trackGroups",udm.Array(udm.ELEMENT_TYPE_PFM_TRACK_GROUP))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"scene",udm.PFMGroup())
 -- TODO: Material overlay should be an actor with a material overlay component
@@ -21,15 +21,31 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"bookmarkSets",udm.
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"activeBookmarkSet",udm.Int())
 
 function udm.PFMFilmClip:AddActor(actor)
-	for _,actorOther in ipairs(self:GetActors():GetTable()) do
+	for _,actorOther in ipairs(self:GetActorList()) do
 		if(util.is_same_object(actor,actorOther)) then return end
 	end
 	self:GetActors():PushBack(actor)
 end
 
+function udm.PFMFilmClip:AddGroup(group)
+	self:AddActor(group)
+end
+
+function udm.PFMFilmClip:GetActorList(list)
+	list = list or {}
+	for _,actor in ipairs(self:GetActors():GetTable()) do
+		if(actor:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then actor:GetActorList(list)
+		else table.insert(list,actor) end
+	end
+	return list
+end
+
 function udm.PFMFilmClip:FindActor(name)
 	for _,actor in ipairs(self:GetActors():GetTable()) do
-		if(actor:GetName() == name) then return actor end
+		if(actor:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then
+			local el = actor:FindActor(name)
+			if(el ~= nil) then return el end
+		elseif(actor:GetName() == name) then return actor end
 	end
 end
 

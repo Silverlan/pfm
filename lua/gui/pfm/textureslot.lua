@@ -87,6 +87,9 @@ function gui.PFMTextureSlot:OnMouseEvent(button,state,mods)
 end
 function gui.PFMTextureSlot:SetImportPath(matPath) self.m_matPath = matPath end
 function gui.PFMTextureSlot:SetNormalMap(normalMap) self.m_normalMap = normalMap end
+function gui.PFMTextureSlot:SetTransparencyEnabled(enabled)
+	-- TODO
+end
 function gui.PFMTextureSlot:SetTexture(tex)
 	if(type(tex) ~= "string") then
 		self.m_texRect:SetTexture(tex)

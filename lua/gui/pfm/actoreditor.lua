@@ -425,7 +425,7 @@ function gui.PFMActorEditor:Setup(filmClip)
 	self.m_tree:Clear()
 	self.m_treeElementToActorData = {}
 	-- TODO: Include groups the actors belong to!
-	for _,actor in ipairs(filmClip:GetActors():GetTable()) do
+	for _,actor in ipairs(filmClip:GetActorList()) do
 		self:AddActor(actor)
 	end
 end

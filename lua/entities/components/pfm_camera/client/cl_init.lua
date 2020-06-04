@@ -138,8 +138,9 @@ function ents.PFMCamera:UpdateModel()
 	if(subMesh == nil) then return end
 
 	local pos = Vector()
-	local nearPlaneBoundaries = math.get_frustum_plane_boundaries(pos,vector.FORWARD,vector.UP,camC:GetFOVRad(),camC:GetAspectRatio(),camC:GetNearZ())
-	local farPlaneBoundaries = math.get_frustum_plane_boundaries(pos,vector.FORWARD,vector.UP,camC:GetFOVRad(),camC:GetAspectRatio(),camC:GetFarZ())
+	local fov = camC:GetFOVRad()
+	local nearPlaneBoundaries = math.get_frustum_plane_boundaries(pos,vector.FORWARD,vector.UP,fov,camC:GetAspectRatio(),camC:GetNearZ())
+	local farPlaneBoundaries = math.get_frustum_plane_boundaries(pos,vector.FORWARD,vector.UP,fov,camC:GetAspectRatio(),camC:GetFarZ())
 	local vertIdx = 0
 
 	-- Near plane
@@ -183,7 +184,7 @@ function ents.PFMCamera:UpdateModel()
 
 	-- Focal distance plane
 	local focalDistance = self:GetCameraData():GetFocalDistance()
-	local focalPlaneBoundaries = math.get_frustum_plane_boundaries(pos,vector.FORWARD,vector.UP,camC:GetFOVRad(),camC:GetAspectRatio(),focalDistance)
+	local focalPlaneBoundaries = math.get_frustum_plane_boundaries(pos,vector.FORWARD,vector.UP,fov,camC:GetAspectRatio(),focalDistance)
 
 	subMesh:SetVertexPosition(vertIdx,focalPlaneBoundaries[1]) vertIdx = vertIdx +1
 	subMesh:SetVertexPosition(vertIdx,focalPlaneBoundaries[2]) vertIdx = vertIdx +1

@@ -11,6 +11,7 @@ include("base_element.lua")
 include("project")
 
 function sfm.Project:__init(dmxData)
+	self.m_dmxData = dmxData
 	self.m_dmxToElement = {}
 	self.m_elementToDMX = {}
 	self.m_cachedElements = {}

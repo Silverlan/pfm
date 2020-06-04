@@ -12,9 +12,9 @@ function ents.ParticleSystemComponent.InitializerRadiusRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerRadiusRandom:Initialize()
-	self.m_radiusMin = tonumber(self:GetKeyValue("radius_min") or "1.0")
-	self.m_radiusMax = tonumber(self:GetKeyValue("radius_max") or "1.0")
-	self.m_radiusRandomExponent = tonumber(self:GetKeyValue("radius_random_exponent") or "1.0")
+	self.m_radiusMin = tonumber(self:GetKeyValue("radius_min")) or 1.0
+	self.m_radiusMax = tonumber(self:GetKeyValue("radius_max")) or 1.0
+	self.m_radiusRandomExponent = tonumber(self:GetKeyValue("radius_random_exponent")) or 1.0
 end
 function ents.ParticleSystemComponent.InitializerRadiusRandom:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

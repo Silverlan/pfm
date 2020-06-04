@@ -54,7 +54,7 @@ local function log_pfm_project_debug_info(project)
 	local numActors = 0
 	local function iterate_film_clip(filmClip)
 		numFilmClips = numFilmClips +1
-		numActors = numActors +#filmClip:GetActors()
+		numActors = numActors +#filmClip:GetActorList()
 		for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
 			for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
 				for _,filmClipOther in ipairs(track:GetFilmClips():GetTable()) do
@@ -100,6 +100,11 @@ sfm.ProjectConverter.convert_project = function(projectFilePath)
 	local converter = sfm.ProjectConverter(sfmProject)
 	local pfmProject = converter:GetPFMProject()
 	log_pfm_project_debug_info(pfmProject)
+
+	-- Clear the SFM session data from memory immediately
+	converter = nil
+	collectgarbage()
+
 	return pfmProject
 end
 sfm.assign_generic_attribute = function(name,attr,pfmObj)
@@ -124,6 +129,7 @@ function sfm.ProjectConverter:__init(sfmProject)
 	self.m_pfmProject = pfm.create_project() -- Output project
 	self.m_sfmElementToPfmElement = {} -- Cache of converted elements
 	self.m_sfmObjectToPfmActor = {}
+	self.m_ptConversions = {}
 
 	for _,session in ipairs(sfmProject:GetSessions()) do
 		self:ConvertSession(session)
@@ -133,6 +139,56 @@ function sfm.ProjectConverter:__init(sfmProject)
 end
 function sfm.ProjectConverter:GetSFMProject() return self.m_sfmProject end
 function sfm.ProjectConverter:GetPFMProject() return self.m_pfmProject end
+function sfm.ProjectConverter:AddParticleSystemDefinitionForConversion(pfmParticle,sfmSystemDef)
+	table.insert(self.m_ptConversions,{pfmParticle,sfmSystemDef})
+end
+function sfm.ProjectConverter:GenerateEmbeddedParticleSystemFile()
+	if(#self.m_ptConversions == 0) then return end
+	local project = self:GetPFMProject()
+	local projectName = project:GetName()
+	local ptPrefix = projectName .. "_"
+	local particleSystems = {}
+	local function extract_children(particleSystems,t)
+		local children = {}
+		for name,child in pairs(t.children) do
+			local delay = child.delay
+			local childData = child.childData
+			local newName = ptPrefix .. name
+			table.insert(children,{
+				delay = delay,
+				childName = newName
+			})
+			extract_children(particleSystems,childData)
+			particleSystems[newName] = childData
+		end
+		t.children = children
+	end
+	for _,ptData in ipairs(self.m_ptConversions) do
+		local pfmParticle = ptData[1]
+		local sfmSystemDef = ptData[2]
+		local name = sfmSystemDef:GetName()
+		local dmxEl = sfmSystemDef:GetDMXElement()
+		local keyValues = sfm.convert_dmx_particle_system(dmxEl)
+
+		extract_children(particleSystems,keyValues)
+		particleSystems[ptPrefix .. name] = keyValues
+
+		pfmParticle:SetParticleSystemName(ptPrefix .. name)
+	end
+
+	-- Convert particle systems to Pragma
+	for name,ptDef in pairs(particleSystems) do
+		sfm.convert_particle_system(ptDef)
+	end
+
+	-- Save in Pragma's format
+	local fileName = util.Path("sessions/" .. projectName .. "_instanced")
+	-- console.print_table(particleSystems)
+	local success = game.save_particle_system(fileName:GetString(),particleSystems)
+	if(success == false) then
+		pfm.log("Unable to save particle system file '" .. fileName:GetString() .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+	end
+end
 function sfm.ProjectConverter:ConvertSession(sfmSession)
 	local pfmSession = self:ConvertNewElement(sfmSession)
 	self.m_pfmProject:AddSession(pfmSession)
@@ -182,7 +238,7 @@ local function convert_root_bone_rot(rot,isStaticModel)
 	rot:Set(rotN90Yaw *rot)
 end
 local function convert_bone_transforms(filmClip,processedObjects,mdlMsgCache)
-	for _,actor in ipairs(filmClip:GetActors():GetTable()) do
+	for _,actor in ipairs(filmClip:GetActorList()) do
 		if(processedObjects[actor] == nil) then
 			processedObjects[actor] = true
 			for _,component in ipairs(actor:GetComponents():GetTable()) do
@@ -225,12 +281,52 @@ local function apply_post_processing(project,filmClip,processedObjects)
 	for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
 		for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
 			for _,channelClip in ipairs(track:GetChannelClips():GetTable()) do
+				local channels = channelClip:GetChannels()
+				local numChannels = #channels
+				local i = 1
+				while(i < numChannels) do
+					local channel = channels:Get(i)
+					local name = channel:GetName()
+					-- We have no use for scaled channels, so we'll get rid of them to make things easier for us.
+					if(name:sub(1,7) == "scaled_" and name:sub(-8) == "_channel") then
+						local fromElement = channel:GetFromElement()
+						local lo = fromElement:GetProperty("lo"):GetValue()
+						local hi = fromElement:GetProperty("hi"):GetValue()
+						for _,channelOther in ipairs(channelClip:GetChannels():GetTable()) do
+							if(util.is_same_object(channelOther:GetToElement(),channel:GetFromElement())) then
+								local log = channelOther:GetLog()
+								for _,layer in ipairs(log:GetLayers():GetTable()) do
+									local values = layer:GetValues()
+									for i,value in ipairs(values:GetTable()) do
+										value = math.lerp(lo,hi,value)
+										values:Set(i,value)
+									end
+								end
+							end
+						end
+						channels:Remove(i)
+						numChannels = numChannels -1
+					else i = i +1 end
+				end
+
 				for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
 					local toElement = channel:GetToElement()
 					local toAttr = channel:GetToAttribute()
-
-					if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_PFM_CAMERA and string.compare(toAttr,"focalDistance",false)) then
-						toElement:SetDepthOfFieldEnabled(true)
+					if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_PFM_CAMERA) then
+						if(string.compare(toAttr,"focalDistance",false)) then toElement:SetDepthOfFieldEnabled(true)
+						elseif(string.compare(toAttr,"fov",false)) then
+							local log = channel:GetLog()
+							log:SetDefaultValue(sfm.convert_source_fov_to_pragma(log:GetDefaultValue()))
+							for _,layer in ipairs(log:GetLayers():GetTable()) do
+								if(processedObjects[layer] == nil) then
+									processedObjects[layer] = true
+									local values = layer:GetValues()
+									for i,value in ipairs(values:GetTable()) do
+										values:Set(i,sfm.convert_source_fov_to_pragma(value))
+									end
+								end
+							end
+						end
 					end
 
 					if(toElement ~= nil and is_udm_element_entity_component(toElement) and toElement:GetChild(toAttr) == nil) then
@@ -273,6 +369,19 @@ local function apply_post_processing(project,filmClip,processedObjects)
 							end
 
 							local log = channel:GetLog()
+							if(isPosTransform) then
+								local value = sfm.convert_source_anim_set_position_to_pragma(log:GetDefaultValue())
+								if(isRootBone) then
+									convert_root_bone_pos(value,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
+								end
+								log:SetDefaultValue(value)
+							else
+								local value = sfm.convert_source_anim_set_rotation_to_pragma(log:GetDefaultValue())
+								if(isRootBone) then
+									convert_root_bone_rot(value,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
+								end
+								log:SetDefaultValue(value)
+							end
 							for _,layer in ipairs(log:GetLayers():GetTable()) do
 								if(processedObjects[layer] == nil) then
 									processedObjects[layer] = true
@@ -304,6 +413,19 @@ local function apply_post_processing(project,filmClip,processedObjects)
 							end
 
 							local log = channel:GetLog()
+							if(isCamera) then
+								if(isPosTransform) then
+									log:SetDefaultValue(sfm.convert_source_transform_position_to_pragma(log:GetDefaultValue()))
+								else
+									log:SetDefaultValue(sfm.convert_source_transform_rotation_to_pragma2(log:GetDefaultValue()))
+								end
+							else
+								if(isPosTransform) then
+									log:SetDefaultValue(sfm.convert_source_transform_position_to_pragma(log:GetDefaultValue()))
+								else
+									log:SetDefaultValue(sfm.convert_source_transform_rotation_to_pragma_special(actor,log:GetDefaultValue()))
+								end
+							end
 							for _,layer in ipairs(log:GetLayers():GetTable()) do
 								if(processedObjects[layer] == nil) then
 									processedObjects[layer] = true
@@ -367,6 +489,7 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 			apply_post_processing(project,filmClip)
 		end
 	end
+	self:GenerateEmbeddedParticleSystemFile()
 end
 
 local g_sfmToPfmConversion = {}
@@ -530,10 +653,10 @@ sfm.register_element_type_conversion(sfm.TrackGroup,udm.PFMTrackGroup,function(c
 end)
 
 sfm.register_element_type_conversion(sfm.Camera,udm.PFMCamera,function(converter,sfmCamera,pfmCamera)
-	pfmCamera:SetFov(sfmCamera:GetFieldOfView())
+	pfmCamera:SetFov(sfm.convert_source_fov_to_pragma(sfmCamera:GetFieldOfView()))
 	pfmCamera:SetZNear(sfm.source_units_to_pragma_units(sfmCamera:GetZNear()))
 	pfmCamera:SetZFar(sfm.source_units_to_pragma_units(sfmCamera:GetZFar()))
-	pfmCamera:SetAspectRatio(16.0 /9.0)
+	pfmCamera:SetAspectRatio(sfm.ASPECT_RATIO)
 	local aperture = sfmCamera:GetAperture()
 	if(aperture > 0.0) then
 		pfmCamera:SetDepthOfFieldEnabled(true)
@@ -571,10 +694,16 @@ sfm.register_element_type_conversion(sfm.Control,udm.PFMFlexControl,function(con
 end)
 
 sfm.register_element_type_conversion(sfm.TransformControl,udm.PFMTransformControl,function(converter,sfmControl,pfmControl)
-	-- TODO: Obsolete? We don't need animation set information anymore
 	local pos = sfmControl:GetValuePosition()
 	local rot = sfmControl:GetValueOrientation()
-	local isBoneTransform = true -- TODO
+	-- TODO: The Source Engine uses different coordinate systems depending on what we're dealing with.
+	-- We need to determine whether or not this is a bone transform, but there's really no good way to do it, so
+	-- we'll just check if this is one of the typical known non-bone transforms.
+	-- TODO: This will fail if the name has been changed. Find a better way to do this!
+	local nonBoneTransforms = {
+		["rootTransform"] = true
+	}
+	local isBoneTransform = not (nonBoneTransforms[pfmControl:GetName()] or false)
 	pfmControl:SetValuePosition(isBoneTransform and sfm.convert_source_anim_set_position_to_pragma(pos) or sfm.convert_source_transform_position_to_pragma(pos))
 	pfmControl:SetValueRotation(isBoneTransform and sfm.convert_source_anim_set_rotation_to_pragma(rot) or sfm.convert_source_transform_rotation_to_pragma(rot))
 
@@ -687,7 +816,8 @@ sfm.register_element_type_conversion(sfm.Channel,udm.PFMChannel,function(convert
 
 	-- From
 	local fromAttr = sfmChannel:GetFromAttribute()
-	if(fromAttr == "orientation") then fromAttr = "rotation" end
+	if(fromAttr == "orientation") then fromAttr = "rotation"
+	elseif(fromAttr == "valueOrientation") then fromAttr = "valueRotation" end
 	pfmChannel:SetFromAttribute(fromAttr)
 
 	local fromElement = sfmChannel:GetFromElement()
@@ -772,6 +902,28 @@ sfm.register_element_type_conversion(sfm.Log,udm.PFMLog,function(converter,sfmLo
 	for _,t in ipairs(sfmLog:GetBookmarks()) do
 		pfmLog:GetBookmarks():PushBack(udm.Float(t))
 	end
+	pfmLog:SetUseDefaultValue(sfmLog:GetUsedefaultvalue())
+
+	local defaultValue = sfmLog:GetDMXElement():GetAttr("defaultvalue")
+	local type = defaultValue:GetType()
+	if(type == dmx.Attribute.TYPE_INT) then pfmLog:SetDefaultValueAttr(udm.Int(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmLog:SetDefaultValueAttr(udm.Float(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_BOOL) then pfmLog:SetDefaultValueAttr(udm.Bool(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_STRING) then pfmLog:SetDefaultValueAttr(udm.String(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_COLOR) then pfmLog:SetDefaultValueAttr(udm.Color(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmLog:SetDefaultValueAttr(udm.Vector3(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_VECTOR2) then pfmLog:SetDefaultValueAttr(udm.Vector2(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_VECTOR4) then pfmLog:SetDefaultValueAttr(udm.Vector4(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmLog:SetDefaultValueAttr(udm.Angle(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmLog:SetDefaultValueAttr(udm.Quaternion(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_UINT8) then pfmLog:SetDefaultValueAttr(udm.UInt8(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_UINT64) then pfmLog:SetDefaultValueAttr(udm.UInt64(defaultValue:GetValue()))
+	elseif(type == dmx.Attribute.TYPE_MATRIX) then pfmLog:SetDefaultValueAttr(udm.Matrix(defaultValue:GetValue()))
+	else
+		local msg = "Unsupported default value type '" .. dmx.type_to_string(type) .. "' for log '" .. pfmLog:GetName() .. "'!"
+		pfm.log(msg,pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_ERROR)
+		error(msg)
+	end
 end)
 
 local function is_sfm_bone(el)
@@ -805,7 +957,9 @@ sfm.register_element_type_conversion(sfm.Dag,function(converter,sfmDag)
 end,function(converter,sfmDag,pfmEl)
 	if(pfmEl:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then
 		local pfmDag = pfmEl
-		pfmDag:SetTransformAttr(converter:ConvertNewElement(sfmDag:GetTransform(),sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL))
+		-- TODO: Unsure about sfm.ProjectConverter.TRANSFORM_TYPE_ALT, but has been confirmed to work with groups that contain particle
+		-- systems! (e.g. session mtt_soldier_pyro_explosion_pos.dmx)
+		pfmDag:SetTransformAttr(converter:ConvertNewElement(sfmDag:GetTransform(),sfm.ProjectConverter.TRANSFORM_TYPE_ALT))
 		pfmDag:SetVisible(sfmDag:IsVisible())
 		apply_override_parent(converter,sfmDag,pfmDag)
 		for _,child in ipairs(sfmDag:GetChildren()) do
@@ -865,7 +1019,16 @@ sfm.register_element_type_conversion(sfm.GameParticleSystem,udm.PFMParticleSyste
 	pfmParticle:SetTimeScale(sfmParticle:GetSimulationTimeScale())
 	pfmParticle:SetSimulating(sfmParticle:IsSimulating())
 	pfmParticle:SetEmitting(sfmParticle:IsEmitting())
-	pfmParticle:SetDefinition(converter:ConvertNewElement(sfmParticle:GetParticleSystemDefinition()))
+	local ptSystemName = sfmParticle:GetParticleSystemType()
+	pfmParticle:SetParticleSystemName(ptSystemName)
+	if(#ptSystemName == 0) then
+		local ptSystemDef = sfmParticle:GetParticleSystemDefinition()
+		local dmxEl = ptSystemDef:GetDMXElement()
+		if(dmxEl ~= nil) then
+			converter:AddParticleSystemDefinitionForConversion(pfmParticle,ptSystemDef)
+		end
+	end
+	-- pfmParticle:SetDefinition(converter:ConvertNewElement())
 	for _,cp in ipairs(sfmParticle:GetControlPoints()) do
 		local pfmCp = converter:ConvertNewElement(cp)
 		pfmParticle:GetControlPointsAttr():PushBack(pfmCp)

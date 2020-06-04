@@ -155,17 +155,34 @@ function gui.PFMParticleEditor:InitializeViewportControls()
 	colorCtrl:SetColor(Color.Black)
 	colorCtrl:Wrap("WIEditableEntry"):SetText(locale.get_text("background_color"))
 
+	local btSwitchViewport = gui.create("WIPFMButton",self.m_renderControlsVbox)
+	btSwitchViewport:SetText(locale.get_text("pfm_pted_switch_to_raytracing_viewport"))
+	btSwitchViewport:AddCallback("OnPressed",function(btSwitchViewport)
+		if(self.m_viewport:IsVisible()) then self:SwitchToRaytracingViewport()
+		else self:SwitchToRealtimeViewport() end
+	end)
+	self.m_btSwitchViewport = btSwitchViewport
+
 	local btRaytracying = gui.create("WIPFMButton",self.m_renderControlsVbox)
 	btRaytracying:SetText(locale.get_text("pfm_render_preview"))
 	btRaytracying:AddCallback("OnPressed",function(btRaytracying)
 		btRaytracying:SetEnabled(false)
-		self.m_viewport:SetVisible(false)
-		self.m_rtViewport:SetVisible(true)
+		self:SwitchToRaytracingViewport()
 		self.m_rtViewport:Refresh()
 	end)
 	self.m_btRaytracying = btRaytracying
 
 	gui.create("WIBase",self.m_renderControlsVbox)
+end
+function gui.PFMParticleEditor:SwitchToRaytracingViewport()
+	self.m_viewport:SetVisible(false)
+	self.m_rtViewport:SetVisible(true)
+	self.m_btSwitchViewport:SetText(locale.get_text("pfm_pted_switch_to_realtime_viewport"))
+end
+function gui.PFMParticleEditor:SwitchToRealtimeViewport()
+	self.m_viewport:SetVisible(true)
+	self.m_rtViewport:SetVisible(false)
+	self.m_btSwitchViewport:SetText(locale.get_text("pfm_pted_switch_to_raytracing_viewport"))
 end
 function gui.PFMParticleEditor:InitializeViewport()
 	local width = 1024

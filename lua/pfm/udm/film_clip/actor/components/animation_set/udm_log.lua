@@ -9,6 +9,10 @@
 include("udm_log_list.lua")
 
 udm.ELEMENT_TYPE_PFM_LOG = udm.register_element("PFMLog")
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"useDefaultValue",udm.Bool(true),{
+	getter = "ShouldUseDefaultValue"
+})
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"defaultValue",udm.ATTRIBUTE_TYPE_ANY)
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"layers",udm.Array(udm.ELEMENT_TYPE_PFM_LOG_LIST))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"bookmarks",udm.Array(udm.ATTRIBUTE_TYPE_FLOAT))
 
@@ -27,4 +31,5 @@ function udm.PFMLog:SetPlaybackOffset(offset)
 			return value
 		end
 	end
+	if(self:ShouldUseDefaultValue()) then return self:GetDefaultValue() end
 end

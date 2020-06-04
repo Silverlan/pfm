@@ -19,6 +19,38 @@ function shader.PFMParticleSpriteTrail:InitializePipeline(pipelineInfo,pipelineI
 	shader.BaseParticle2D.InitializePipeline(self,pipelineInfo,pipelineIdx)
 	pipelineInfo:AttachPushConstantRange(shader.BaseParticle2D.PUSH_CONSTANTS_USER_DATA_OFFSET,self.m_dsPushConstants:GetSize(),bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_VERTEX_BIT))
 end
+function shader.PFMParticleSpriteTrail:CalcVertexPosition(ptc,ptIdx,localVertIdx,posCam,camUp,camRight)
+	-- Note: This has to match the calculations performed in the vertex shader
+	local renderer = ptc:GetRenderers()[1]
+	if(renderer == nil) then return posCam:Copy() end
+	local pt = ptc:GetParticle(ptIdx)
+	local ptWorldPos = pt:GetPosition()
+	local ptPrevWorldPos = pt:GetPreviousPosition()
+	local dtPosWs = ptPrevWorldPos -ptWorldPos
+	local l = dtPosWs:Length()
+	dtPosWs:Normalize()
+
+	local dt = 1.0 /(1.0 /100.0) -- 100 is arbitrary, try using actual delta time!
+	local age = pt:GetTimeAlive()
+	local lengthFadeInTime = renderer:GetLengthFadeInTime()
+	local lengthScale = (age >= lengthFadeInTime) and 1.0 or (age /lengthFadeInTime)
+	local ptLen = pt:GetLength()
+	l = lengthScale *l *dt *ptLen;
+	if(l <= 0.0) then return posCam:Copy() end
+	l = math.clamp(l,renderer:GetMinLength(),renderer:GetMaxLength())
+
+	local rad = math.min(pt:GetRadius(),l)
+	dtPosWs = dtPosWs *l
+
+	local dirToBeam = ptWorldPos -posCam
+	local tangentY = dirToBeam:Cross(dtPosWs)
+	tangentY:Normalize()
+
+	if(localVertIdx == 0) then return ptWorldPos -tangentY *rad *0.5 end
+	if(localVertIdx == 1) then return ptWorldPos +tangentY *rad *0.5 end
+	if(localVertIdx == 2) then return (ptWorldPos -tangentY *rad *0.5) +dtPosWs end
+	return (ptWorldPos +tangentY *rad *0.5) +dtPosWs
+end
 function shader.PFMParticleSpriteTrail:Draw(drawCmd,ps,renderer,bloom,minLength,maxLength,lengthFadeInTime,animRate)
 	if(self:RecordBeginDraw(drawCmd,ps) == false) then return end
 	local dsLightSources = renderer:GetLightSourceDescriptorSet()

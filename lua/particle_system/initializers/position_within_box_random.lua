@@ -25,6 +25,8 @@ end
 function ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom:OnParticleCreated(pt)
 	--print("[Particle Initializer] On particle created")
 	local v = RandomVector(self.m_min,self.m_max)
+	local vecControlPoint = GetControlPointAtTime(self,self.m_controlPointNumber,pt:GetTimeCreated())
+	v = v +vecControlPoint
 	pt:SetPosition(v)
 	pt:SetPreviousPosition(v)
 end

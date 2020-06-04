@@ -53,6 +53,11 @@ end
 function ents.PFMActorComponent:UpdatePose()
 	local actorData = self:GetActorData()
 	local pose = actorData:GetAbsolutePose()
+
+	--print("Pose: ",pose:GetOrigin())
+	--print(actorData:GetParents()[1]:GetParents()[1]:GetTransform():GetPosition())
+	--print(actorData:FindParentElement())
+	--print(actorData:GetTransform():GetPosition())
 	self:GetEntity():SetPose(pose)
 end
 

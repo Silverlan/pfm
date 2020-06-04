@@ -6,19 +6,23 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local function iterate_film_clip_children(converter,pfmFilmClip,node,parentName)
+local function iterate_film_clip_children(converter,parent,node,parentName)
 	local numTypes = 0
 	if(node:GetType() == "DmeProjectedLight" or node:GetType() == "DmeGameModel" or node:GetType() == "DmeCamera" or node:GetType() == "DmeGameParticleSystem") then
 		local pfmActor = converter:CreateActor(node)
-		pfmFilmClip:AddActor(pfmActor)
+		parent:AddActor(pfmActor)
 		numTypes = numTypes +1
 	elseif(node:GetType() == "DmeDag") then
 		local children = node:GetChildren()
 		local actorName = node:GetName()
 
+		local umdNode = converter:ConvertNewElement(node)
+		if(umdNode:GetType() ~= udm.ELEMENT_TYPE_PFM_GROUP) then umdNode = parent
+		else parent:AddGroup(umdNode) end
+
 		-- Get the parent transform which will be applied to the children
 		for _,child in ipairs(node:GetChildren()) do
-			iterate_film_clip_children(converter,pfmFilmClip,child,actorName)
+			iterate_film_clip_children(converter,umdNode,child,actorName)
 		end
 	else
 		pfm.log("Unsupported film clip child type '" .. node:GetType() .. "' of parent '" .. node:GetName() .. "'! Child will be ignored!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
@@ -70,7 +74,7 @@ sfm.register_element_type_conversion(sfm.FilmClip,udm.PFMFilmClip,function(conve
 	-- We'll add the animation sets (FilmTrack->animationSets) to the actors (i.e. game models) as components.
 	-- Some game models may not have an animation set associated with them.
 	local animSetToActor = {}
-	for _,actor in ipairs(pfmFilmClip:GetActors():GetTable()) do
+	for _,actor in ipairs(pfmFilmClip:GetActorList()) do
 		local actorName = actor:GetName()
 		local animSet = actorNameToAnimSet[actorName]
 		if(animSet ~= nil) then -- Check if there is an animation set for this actor

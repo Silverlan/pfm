@@ -21,7 +21,12 @@ util.register_class("pfm.Project")
 function pfm.Project:__init()
 	self.m_udmRoot = udm.create_element(udm.ELEMENT_TYPE_ROOT,"root")
 	self.m_sessions = {}
+
+	self:SetName("new_project") -- TODO
 end
+
+function pfm.Project:SetName(name) self.m_projectName = name end
+function pfm.Project:GetName() return self.m_projectName end
 
 function pfm.Project:GetSessions() return self.m_sessions end
 

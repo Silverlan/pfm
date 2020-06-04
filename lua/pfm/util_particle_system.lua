@@ -260,9 +260,8 @@ function MatrixBuildRotationAboutAxis(vAxisOfRot,angleDegrees)
 end
 
 function GetControlPointTransformAtTime(self,nControlPoint,flTime)
-	-- TODO
-	local ent = self:GetParticleSystem():GetEntity()
-	return ent:GetPose()
+	local pose = self:GetParticleSystem():GetEntity():GetPose()
+	return --[[pose *]](self:GetParticleSystem():GetControlPointPose(nControlPoint or 0) or phys.Transform())
 end
 
 function GetControlPointAtTime(self,nControlPoint,flTime)
@@ -270,7 +269,8 @@ function GetControlPointAtTime(self,nControlPoint,flTime)
 end
 
 function GetControlPointPose(self,nControlPoint)
-	return self:GetParticleSystem():GetEntity():GetPose()
+	--return self:GetParticleSystem():GetEntity():GetPose()
+	return (self:GetParticleSystem():GetControlPointPose(nControlPoint or 0) or phys.Transform())
 end
 
 function TransformAxis(self,srcAxis,localSpace,nControlPoint)

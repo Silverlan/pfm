@@ -44,6 +44,9 @@ local function set_model_view_model(mdlView,model,settings,iconPath)
 				end
 			end
 		end
+		-- Camera has to be placed AFTER the particle simulation to ensure
+		-- the bounds can be calculated properly
+		mdlView:FitCameraToScene()
 	else
 		mdlView:SetModel(model)
 		mdlView:PlayIdleAnimation()

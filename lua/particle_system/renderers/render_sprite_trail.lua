@@ -22,6 +22,11 @@ function ents.ParticleSystemComponent.RendererSpriteTrail:Initialize()
 	self:SetShader(shader.get("pfm_particle_sprite_trail"))
 end
 
+function ents.ParticleSystemComponent.RendererSpriteTrail:GetMinLength() return self.m_minLength end
+function ents.ParticleSystemComponent.RendererSpriteTrail:GetMaxLength() return self.m_maxLength end
+function ents.ParticleSystemComponent.RendererSpriteTrail:GetLengthFadeInTime() return self.m_lengthFadeInTime end
+function ents.ParticleSystemComponent.RendererSpriteTrail:GetAnimationRate() return self.m_animationRate end
+
 function ents.ParticleSystemComponent.RendererSpriteTrail:Render(drawCmd,renderer,bloom)
 	local shader = self:GetShader()
 	if(shader == nil) then return end

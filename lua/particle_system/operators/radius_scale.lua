@@ -23,7 +23,6 @@ function ents.ParticleSystemComponent.OperatorRadiusScale:Initialize()
 end
 function ents.ParticleSystemComponent.OperatorRadiusScale:Simulate(pt,dt)
 	if(self.m_endTime <= self.m_startTime) then return end
-	local creationTime = pt:GetTimeCreated()
 	local lifeDuration = pt:GetLifeSpan()
 	local radius = pt:GetRadius()
 	local initialRadius = pt:GetInitialRadius()
@@ -33,8 +32,7 @@ function ents.ParticleSystemComponent.OperatorRadiusScale:Simulate(pt,dt)
 	local scaleWidth = self.m_radiusEndScale -self.m_radiusStartScale
 	local startScale = self.m_radiusStartScale
 
-	local curTime = time.real_time()--pt:GetTimeAlive()
-	local lifeTime = (curTime -creationTime) *ReciprocalEst(lifeDuration)
+	local lifeTime = pt:GetTimeAlive() *ReciprocalEst(lifeDuration)
 	local goodMask = (lifeDuration > 0.0 and lifeTime >= startTime and lifeTime < endTime)
 	if(self.m_easeInAndOut) then
 		if(lifeDuration > 0.0) then

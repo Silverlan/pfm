@@ -11,10 +11,13 @@ include("particle_system_operator.lua")
 sfm.register_element_type("ParticleSystemDefinition")
 sfm.link_dmx_type("DmeParticleSystemDefinition",sfm.ParticleSystemDefinition)
 
+include("particle_child.lua")
+
 sfm.BaseElement.RegisterArray(sfm.ParticleSystemDefinition,"renderers",sfm.ParticleSystemOperator)
 sfm.BaseElement.RegisterArray(sfm.ParticleSystemDefinition,"operators",sfm.ParticleSystemOperator)
 sfm.BaseElement.RegisterArray(sfm.ParticleSystemDefinition,"initializers",sfm.ParticleSystemOperator)
 sfm.BaseElement.RegisterArray(sfm.ParticleSystemDefinition,"emitters",sfm.ParticleSystemOperator)
+sfm.BaseElement.RegisterArray(sfm.ParticleSystemDefinition,"children",sfm.ParticleChild)
 sfm.BaseElement.RegisterAttribute(sfm.ParticleSystemDefinition,"max_particles",0,{
 	getterName = "GetMaxParticles",
 	setterName = "SetMaxParticles"

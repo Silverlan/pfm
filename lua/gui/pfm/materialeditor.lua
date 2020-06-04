@@ -71,7 +71,7 @@ function gui.PFMMaterialEditor:ApplyTexture(texIdentifier,texPath,updateTextureS
 	local te = self.m_texSlots[texIdentifier].textEntry
 	if(te:IsValid()) then te:SetText(texPath) end
 end
-function gui.PFMMaterialEditor:AddTextureSlot(parent,text,texIdentifier,normalMap)
+function gui.PFMMaterialEditor:AddTextureSlot(parent,text,texIdentifier,normalMap,enableTransparency)
 	local box = gui.create("WIBase",parent,0,0,256,128)
 
 	local te
@@ -79,6 +79,7 @@ function gui.PFMMaterialEditor:AddTextureSlot(parent,text,texIdentifier,normalMa
 	local texSlot = gui.create("WIPFMTextureSlot",hBoxTexSlots,box:GetWidth() /2 -64,0,128 -24,128 -24)
 	texSlot:SetMouseInputEnabled(true)
 	texSlot:SetNormalMap(normalMap or false)
+	texSlot:SetTransparencyEnabled(enableTransparency or false)
 	texSlot:AddCallback("OnTextureCleared",function(texSlot)
 		if(util.is_valid(self.m_material) == false) then return end
 		local data = self.m_material:GetDataBlock()
@@ -115,16 +116,17 @@ function gui.PFMMaterialEditor:InitializeControls()
 	local mapVbox = gui.create("WIVBox",self.m_controlBox)
 	mapVbox:SetAutoFillContents(true)
 	-- Albedo map
-	local fractionPerMap = 0.25
-	self.m_teAlbedoMap = self:AddTextureSlot(mapVbox,locale.get_text("albedo_map"),"albedo_map")
+	local numMaps = 6
+	local fractionPerMap = 1.0 /numMaps
+	self.m_teAlbedoMap = self:AddTextureSlot(mapVbox,locale.get_text("albedo_map"),"albedo_map",false,true)
 	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap)
 
 	-- Normal map
-	self.m_teNormalMap = self:AddTextureSlot(mapVbox,locale.get_text("normal_map"),"normal_map",true)
+	self.m_teNormalMap = self:AddTextureSlot(mapVbox,locale.get_text("normal_map"),"normal_map",true,false)
 	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap *2)
 
 	-- RMA map
-	local teRMAMap,texSlotRMA = self:AddTextureSlot(mapVbox,locale.get_text("rma_map"),"rma_map")
+	local teRMAMap,texSlotRMA = self:AddTextureSlot(mapVbox,locale.get_text("rma_map"),"rma_map",false,false)
 	self.m_teRMAMap = teRMAMap
 	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap *3)
 
@@ -184,7 +186,14 @@ function gui.PFMMaterialEditor:InitializeControls()
 	end)
 
 	-- Emission map
-	self.m_teEmissionMap = self:AddTextureSlot(mapVbox,locale.get_text("emission_map"),"emission_map")
+	self.m_teEmissionMap = self:AddTextureSlot(mapVbox,locale.get_text("emission_map"),"emission_map",false,false)
+	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap *4)
+
+	-- Wrinkles
+	self.m_teWrinkleCompressMap = self:AddTextureSlot(mapVbox,locale.get_text("wrinkle_compress_map"),"wrinkle_compress_map",false,false)
+	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap *5)
+
+	self.m_teWrinkleStretchMap = self:AddTextureSlot(mapVbox,locale.get_text("wrinkle_stretch_map"),"wrinkle_stretch_map",false,false)
 
 	mapVbox:Update()
 	
@@ -269,14 +278,63 @@ function gui.PFMMaterialEditor:InitializeControls()
 	end)
 	self.m_ctrlAoFactor = aoFactor
 
+	-- Subsurface method
+	local sssMethod = gui.create("WIDropDownMenu",ctrlVbox)
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_none"),tostring(-1))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_cubic"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_CUBIC))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_gaussian"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_GAUSSIAN))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_principled"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_burley"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_BURLEY))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_random_walk"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_RANDOM_WALK))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_principled_random_walk"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED_RANDOM_WALK))
+	sssMethod:SelectOption(0)
+	sssMethod:AddCallback("OnOptionSelected",function(renderMode,idx)
+		local val = tonumber(renderMode:GetOptionValue(idx))
+		local sssEnabled = (val ~= -1)
+		self.m_ctrlSSSFactor:SetVisible(sssEnabled)
+		self.m_ctrlSSSColorWrapper:SetVisible(sssEnabled)
+		self.m_ctrlSSSRadiusWrapper:SetVisible(sssEnabled)
+		self:ApplySubsurfaceScattering()
+	end)
+	self.m_ctrlSSSMethod = sssMethod
+	sssMethod:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_mated_sss_method"))
+
 	-- Subsurface Scattering
-	local ssaoFactor = gui.create("WIPFMSlider",ctrlVbox)
-	ssaoFactor:SetText(locale.get_text("sss_factor"))
-	ssaoFactor:SetRange(0.0,1.0)
-	ssaoFactor:SetDefault(0.0)
-	-- ssaoFactor:SetTooltip(locale.get_text("sss_factor_desc"))
-	ssaoFactor:SetStepSize(0.01)
-	self.m_ctrlSSAOFactor = ssaoFactor
+	local sssFactor = gui.create("WIPFMSlider",ctrlVbox)
+	sssFactor:SetText(locale.get_text("pfm_mated_sss_factor"))
+	sssFactor:SetRange(0.0,0.2)
+	sssFactor:SetDefault(0.01)
+	-- sssFactor:SetTooltip(locale.get_text("sss_factor_desc"))
+	sssFactor:SetStepSize(0.01)
+	sssFactor:AddCallback("OnLeftValueChanged",function(el,value)
+		self:ApplySubsurfaceScattering()
+	end)
+	self.m_ctrlSSSFactor = sssFactor
+	self.m_ctrlSSSFactor:SetVisible(false)
+
+	-- Subsurface color
+	local sssColorEntry = gui.create("WIPFMColorEntry",ctrlVbox)
+	sssColorEntry:GetColorProperty():AddCallback(function(oldCol,newCol)
+		self:ApplySubsurfaceScattering()
+	end)
+	sssColorEntry:SetColor(Color(242,210,157))
+	local sssColorEntryWrapper = sssColorEntry:Wrap("WIEditableEntry")
+	sssColorEntryWrapper:SetText(locale.get_text("pfm_mated_sss_color"))
+	self.m_ctrlSSSColor = sssColorEntry
+	self.m_ctrlSSSColorWrapper = sssColorEntryWrapper
+	self.m_ctrlSSSColorWrapper:SetVisible(false)
+
+	-- Subsurface radius
+	local sssRadius = gui.create("WITextEntry",ctrlVbox)
+	sssRadius:SetText("112 52.8 1.6")
+	sssRadius:AddCallback("OnTextEntered",function(pEntry)
+		self:ApplySubsurfaceScattering()
+	end)
+	local sssRadiusWrapper = sssRadius:Wrap("WIEditableEntry")
+	sssRadiusWrapper:SetText(locale.get_text("pfm_mated_sss_radius"))
+	self.m_ctrlSSSRadius = sssRadius
+	self.m_ctrlSSSRadiusWrapper = sssRadiusWrapper
+	self.m_ctrlSSSRadiusWrapper:SetVisible(false)
 
 	-- Alpha Mode
 	local alphaMode = gui.create("WIDropDownMenu",ctrlVbox)
@@ -326,6 +384,20 @@ end
 function gui.PFMMaterialEditor:ReloadMaterialDescriptor()
 	self.m_material:InitializeShaderDescriptorSet(true)
 	self.m_viewport:Render()
+end
+function gui.PFMMaterialEditor:ApplySubsurfaceScattering()
+	if(util.is_valid(self.m_material) == false) then return end
+	local data = self.m_material:GetDataBlock()
+	local method = tonumber(self.m_ctrlSSSMethod:GetOptionValue(self.m_ctrlSSSMethod:GetSelectedOption()))
+	if(method == -1) then data:RemoveValue("subsurface_scattering")
+	else
+		local block = data:AddBlock("subsurface_scattering")
+		block:SetValue("int","method",tostring(method))
+		block:SetValue("float","factor",tostring(self.m_ctrlSSSFactor:GetValue()))
+		block:SetValue("color","color",tostring(self.m_ctrlSSSColor:GetValue()))
+		block:SetValue("vector","radius",tostring(self.m_ctrlSSSRadius:GetValue()))
+	end
+	self:ReloadMaterialDescriptor()
 end
 function gui.PFMMaterialEditor:ApplyRoughnessFactor(roughness)
 	self:SetMaterialParameter("float","roughness_factor",roughness)
@@ -404,6 +476,47 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 	if(data:HasValue("emission_map")) then
 		local emissionMap = data:GetString("emission_map")
 		self:ApplyTexture("emission_map",emissionMap,true)
+	end
+
+	if(data:HasValue("wrinkle_compress_map")) then
+		local wrinkleCompressMap = data:GetString("wrinkle_compress_map")
+		self:ApplyTexture("wrinkle_compress_map",wrinkleCompressMap,true)
+	end
+
+	if(data:HasValue("wrinkle_stretch_map")) then
+		local wrinkleStretchMap = data:GetString("wrinkle_stretch_map")
+		self:ApplyTexture("wrinkle_stretch_map",wrinkleStretchMap,true)
+	end
+
+	if(data:HasValue("alpha_mode")) then
+		local alphaMode = data:GetInt("alpha_mode")
+		self.m_alphaMode:SelectOption(tostring(alphaMode))
+	end
+
+	if(data:HasValue("alpha_cutoff")) then
+		local alphaCutoff = data:GetFloat("alpha_cutoff")
+		self.m_ctrlAlphaCutoff:SetValue(tostring(alphaCutoff))
+	end
+
+	if(data:HasValue("color_factor")) then
+		local colorFactor = data:GetVector("color_factor")
+		self.m_colorEntry:SetValue(Color(colorFactor))
+	end
+
+	local blockSSS = data:FindBlock("subsurface_scattering")
+	if(blockSSS ~= nil) then
+		if(blockSSS:HasValue("method")) then
+			self.m_ctrlSSSMethod:SelectOption(tostring(blockSSS:GetInt("method")))
+		end
+		if(blockSSS:HasValue("factor")) then
+			self.m_ctrlSSSFactor:SetValue(blockSSS:GetFloat("factor"))
+		end
+		if(blockSSS:HasValue("color")) then
+			self.m_ctrlSSSColor:SetColor(blockSSS:GetColor("color"))
+		end
+		if(blockSSS:HasValue("radius")) then
+			self.m_ctrlSSSRadius:SetValue(blockSSS:GetFloat("radius"))
+		end
 	end
 end
 function gui.PFMMaterialEditor:InitializePreviewControls()

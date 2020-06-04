@@ -304,6 +304,7 @@ function gui.AssetExplorer:ListFiles()
 	for _,d in ipairs(tDirectories) do
 		self:AddIcon(d,true)
 	end
+	table.sort(tFiles)
 	for _,f in ipairs(tFiles) do
 		self:AddIcon(f,false)
 	end

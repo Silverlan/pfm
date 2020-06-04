@@ -24,3 +24,5 @@ sfm.link_dmx_type("DmeVMatrixLog",sfm.Log)
 
 sfm.BaseElement.RegisterArray(sfm.Log,"layers",sfm.LogLayer)
 sfm.BaseElement.RegisterArray(sfm.Log,"bookmarks",0.0)
+sfm.BaseElement.RegisterAttribute(sfm.Log,"defaultvalue")
+sfm.BaseElement.RegisterAttribute(sfm.Log,"usedefaultvalue",true)

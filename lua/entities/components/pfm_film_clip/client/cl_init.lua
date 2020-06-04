@@ -67,7 +67,7 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 		table.insert(self.m_actors,entActor)
 	end
 ]]
-	for _,actorData in ipairs(filmClip:GetActors():GetTable()) do
+	for _,actorData in ipairs(filmClip:GetActorList()) do
 		self:CreateActor(actorData)
 	end
 

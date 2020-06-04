@@ -97,6 +97,12 @@ function udm.Transform:GetPose()
 	return phys.ScaledTransform(self:GetPosition(),self:GetRotation(),self:GetScale())
 end
 
+function udm.Transform:SetPose(pose)
+	self:SetPosition(pose:GetOrigin())
+	self:SetRotation(pose:GetRotation())
+	self:SetScale(pose:GetScale())
+end
+
 local function apply_parent_pose(el,pose)
 	local transform = el:GetTransform()
 	local parent = (transform.GetOverrideParent ~= nil) and transform:GetOverrideParent() or nil

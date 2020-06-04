@@ -345,17 +345,19 @@ local function load_particle_systems(fileName)
 	return particleSystems
 end
 
-sfm.convert_particle_systems = function(pcfFile)
+sfm.convert_particle_system = function(ptData)
 	local tVectorKeyValues = {
 		initializers = {
 			["position modify offset random"] = {"offset min","offset max"},
 			["position within box random"] = {"min","max"},
 			["position within sphere random"] = {"distance_bias","distance_bias_absolute_value","speed_in_local_coordinate_system_min","speed_in_local_coordinate_system_max"},
-			["velocity noise"] = {"spatial coordinate offset","absolute value","invert abs value","output minimum","output maximum"}
+			["velocity noise"] = {"spatial coordinate offset","absolute value","invert abs value","output minimum","output maximum"},
+			["position modify offset random"] = {"offset min","offset max"}
 		},
 		operators = {
 			["movement basic"] = {"gravity"},
-			["movement rotate particle around axis"] = {"rotation axis"}
+			["movement rotate particle around axis"] = {"rotation axis"},
+			["oscillate vector"] = {"oscillation rate min","oscillation rate max","oscillation frequency min","oscillation frequency max"}
 		},
 		forces = {
 			["twist around axis"] = {"twist axis"},
@@ -423,9 +425,6 @@ sfm.convert_particle_systems = function(pcfFile)
 		renameTable[k:lower()] = v:lower()
 	end
 
-	local particleSystems = load_particle_systems(pcfFile)
-	if(particleSystems == false) then return false end
-
 	-- Lower keyvalues
 	local function to_lower_keys(t)
 		for k,v in pairs(t) do
@@ -433,52 +432,49 @@ sfm.convert_particle_systems = function(pcfFile)
 			t[k:lower()] = v
 		end
 	end
-	for ptName,ptData in pairs(particleSystems) do
-		for k,v in pairs(ptData) do
-			if(is_operator_type(k)) then
-				for opName,opData in pairs(v) do
-					to_lower_keys(opData)
-				end
-			else
-				ptData[k] = nil
-				ptData[k:lower()] = v
-			end
-		end
 
-		-- Move forces to operators
-		if(ptData.forces) then
-			ptData.operators = ptData.operators or {}
-			for k,v in pairs(ptData.forces) do
-				ptData.operators[k] = v
+	for k,v in pairs(ptData) do
+		if(is_operator_type(k)) then
+			for opName,opData in pairs(v) do
+				to_lower_keys(opData)
 			end
-			ptData.forces = nil
+		else
+			ptData[k] = nil
+			ptData[k:lower()] = v
 		end
+	end
+
+	-- Move forces to operators
+	if(ptData.forces) then
+		ptData.operators = ptData.operators or {}
+		for k,v in pairs(ptData.forces) do
+			ptData.operators[k] = v
+		end
+		ptData.forces = nil
 	end
 	--
 
-	for ptName,ptData in pairs(particleSystems) do
-		for name,data in pairs(ptData) do
-			if(is_operator_type(name)) then
-				local newData = {}
-				for opName,keyValues in pairs(data) do
-					opName = opName:lower()
-					opName = renameTable[opName] or opName
-					newData[opName] = keyValues
-				end
-				ptData[name] = newData
+	for name,data in pairs(ptData) do
+		if(is_operator_type(name)) then
+			local newData = {}
+			for opName,keyValues in pairs(data) do
+				opName = opName:lower()
+				opName = renameTable[opName] or opName
+				newData[opName] = keyValues
 			end
+			ptData[name] = newData
 		end
-		-- Convert coordinate system
-		for name,t in pairs(tVectorKeyValues) do
-			if(ptData[name] ~= nil) then
-				for opName,keyValues in pairs(t) do
-					if(ptData[name][opName] ~= nil) then
-						for _,key in pairs(keyValues) do
-							if(ptData[name][opName][key] ~= nil) then
-								local v = vector.create_from_string(ptData[name][opName][key])
-								v = Vector(v.x,v.z,-v.y)
-								ptData[name][opName][key] = tostring(v)
-							end
+	end
+	-- Convert coordinate system
+	for name,t in pairs(tVectorKeyValues) do
+		if(ptData[name] ~= nil) then
+			for opName,keyValues in pairs(t) do
+				if(ptData[name][opName] ~= nil) then
+					for _,key in pairs(keyValues) do
+						if(ptData[name][opName][key] ~= nil) then
+							local v = vector.create_from_string(ptData[name][opName][key])
+							v = Vector(v.x,v.z,-v.y)
+							ptData[name][opName][key] = tostring(v)
 						end
 					end
 				end
@@ -486,101 +482,110 @@ sfm.convert_particle_systems = function(pcfFile)
 		end
 	end
 
-	for ptName,ptData in pairs(particleSystems) do
-		-- Note: Particle systems in Source have a default lifetime of 1,
-		-- however this lifetime has no effect unless a "decay" operator is added.
-		-- Pragma kills the particle regardless of such an operator, so we'll need a minor work-around.
-		local defaultLifetime = math.huge
-		if(ptData.operators ~= nil and ptData.operators["alpha fade and decay"] ~= nil) then
-			defaultLifetime = 1.0
-		end
-
-		if(ptData.renderers ~= nil) then
-			local renderer = ptData.renderers["render_animated_sprites"]
-			if(renderer ~= nil) then
-				local animKeys = {
-					"animation rate","animation_fit_lifetime","use animation rate as fps"
-				}
-				ptData.operators["animation"] = {}
-				for _,k in ipairs(animKeys) do
-					ptData.operators["animation"][k] = renderer[k]
-					renderer[k] = nil
-				end
-			end
-		end
-
-		local emissionRate = 100
-		if(ptData.emitters ~= nil) then
-			if(ptData.emitters["emit_continuously"] ~= nil) then
-				emissionRates = tonumber(ptData.emitters["emit_continuously"]["emission_rate"])
-			elseif(ptData.emitters["emit_instantaneously"] ~= nil) then
-				-- TODO: Do this properly
-				emissionRates = 1000000
-			end
-		end
-
-		local sortParticles = false
-		if(ptData["sort particles"] ~= nil) then
-			sortParticles = toboolean(ptData["sort particles"])
-		end
-
-		local material = util.Path(ptData["material"])
-		material:RemoveFileExtension()
-		ptData["maxparticles"] = ptData["max_particles"]
-		ptData["material"] = material:GetString()
-		ptData["lifetime"] = tostring(defaultLifetime)
-		ptData["sort_particles"] = sortParticles and "1" or "0"
-		ptData["emission_rate"] = tostring(emissionRates)
-		ptData["loop"] = "1"
-		ptData["auto_simulate"] = "1"
-		ptData["transform_with_emitter"] = "1"
-		ptData["alpha_mode"] = "additive"
-
-		-- ptData["radius"] = ptData["radius"]
-		-- ptData["color"] = ptData["color"]
-
-		ptData["max_particles"] = nil
-		ptData["sort particles"] = nil
+	-- Note: Particle systems in Source have a default lifetime of 1,
+	-- however this lifetime has no effect unless a "decay" operator is added.
+	-- Pragma kills the particle regardless of such an operator, so we'll need a minor work-around.
+	local defaultLifetime = math.huge
+	if(ptData.operators ~= nil and ptData.operators["alpha fade and decay"] ~= nil) then
+		defaultLifetime = 1.0
 	end
 
-	for ptName,ptData in pairs(particleSystems) do
-		for k,v in pairs(ptData) do
-			if(is_operator_type(k)) then
-				for opName,opData in pairs(v) do
-					if(opName == "oscillate vector" or opName == "oscillate scalar") then
-						local fieldId = tonumber(opData["oscillation field"])
-						local fieldName = sfmFieldIdToFieldName[fieldId]
-						if(fieldName == nil) then pfm.log("Unsupported oscillation field id: " .. fieldId .. "!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
-						else opData["oscillation field"] = fieldName end
-					end
+	if(ptData.renderers ~= nil) then
+		local renderer = ptData.renderers["render_animated_sprites"]
+		if(renderer ~= nil) then
+			local animKeys = {
+				"animation rate","animation_fit_lifetime","use animation rate as fps"
+			}
+			ptData.operators["animation"] = {}
+			for _,k in ipairs(animKeys) do
+				ptData.operators["animation"][k] = renderer[k]
+				renderer[k] = nil
+			end
+		end
+	end
+
+	local emissionRate = 100
+	local particleLimit
+	if(ptData.emitters ~= nil) then
+		if(ptData.emitters["emit_continuously"] ~= nil) then
+			emissionRate = tonumber(ptData.emitters["emit_continuously"]["emission_rate"])
+		elseif(ptData.emitters["emit_instantaneously"] ~= nil) then
+			particleLimit = ptData.emitters["emit_instantaneously"]["num_to_emit"]
+			-- Just emit everything immediately
+			emissionRate = 10000000
+		end
+	end
+
+	local sortParticles = false
+	if(ptData["sort particles"] ~= nil) then
+		sortParticles = toboolean(ptData["sort particles"])
+	end
+
+	local material = util.Path(ptData["material"])
+	material:RemoveFileExtension()
+	ptData["maxparticles"] = ptData["max_particles"]
+	ptData["material"] = material:GetString()
+	ptData["lifetime"] = tostring(defaultLifetime)
+	ptData["sort_particles"] = sortParticles and "1" or "0"
+	ptData["emission_rate"] = tostring(emissionRate)
+	if(particleLimit ~= nil) then ptData["limit_particle_count"] = tostring(particleLimit) end
+	-- ptData["loop"] = "1"
+	-- ptData["auto_simulate"] = "1"
+	-- ptData["transform_with_emitter"] = "1"
+	ptData["alpha_mode"] = "additive"
+
+	-- ptData["radius"] = ptData["radius"]
+	-- ptData["color"] = ptData["color"]
+
+	ptData["max_particles"] = nil
+	ptData["sort particles"] = nil
+
+	for k,v in pairs(ptData) do
+		if(is_operator_type(k)) then
+			for opName,opData in pairs(v) do
+				if(opName == "oscillate vector" or opName == "oscillate scalar") then
+					local fieldId = tonumber(opData["oscillation field"])
+					local fieldName = sfmFieldIdToFieldName[fieldId]
+					if(fieldName == nil) then pfm.log("Unsupported oscillation field id: " .. fieldId .. "!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+					else opData["oscillation field"] = fieldName end
 				end
 			end
 		end
 	end
 
 	-- Convert operator and keyvalue names
-	for ptName,ptData in pairs(particleSystems) do
-		for opType,operators in pairs(ptData) do
-			if(is_operator_type(opType)) then
-				for opName,opData in pairs(operators) do
-					if(sfmOperatorToPragma[opName] ~= nil) then
-						local translationData = sfmOperatorToPragma[opName]
-						if(translationData.pragmaName ~= nil) then
-							operators[opName] = nil
-							operators[translationData.pragmaName] = opData
-						end
-						if(translationData.keyValues ~= nil) then
-							for k,v in pairs(opData) do
-								if(translationData.keyValues[k] ~= nil) then
-									opData[k] = nil
-									opData[translationData.keyValues[k]] = v
-								end
+	for opType,operators in pairs(ptData) do
+		if(is_operator_type(opType)) then
+			local newOperators = {}
+			for opName,opData in pairs(operators) do
+				newOperators[opName] = opData
+				if(sfmOperatorToPragma[opName] ~= nil) then
+					local translationData = sfmOperatorToPragma[opName]
+					if(translationData.pragmaName ~= nil) then
+						newOperators[opName] = nil
+						newOperators[translationData.pragmaName] = opData
+					end
+					if(translationData.keyValues ~= nil) then
+						for k,v in pairs(opData) do
+							if(translationData.keyValues[k] ~= nil) then
+								opData[k] = nil
+								opData[translationData.keyValues[k]] = v
 							end
 						end
 					end
 				end
 			end
+			ptData[opType] = newOperators
 		end
+	end
+end
+
+sfm.convert_particle_systems = function(pcfFile)
+	local particleSystems = load_particle_systems(pcfFile)
+	if(particleSystems == false) then return false end
+
+	for name,ptDef in pairs(particleSystems) do
+		sfm.convert_particle_system(ptDef)
 	end
 
 	-- Save in Pragma's format
@@ -592,4 +597,52 @@ sfm.convert_particle_systems = function(pcfFile)
 		pfm.log("Unable to save particle system file '" .. pragmaFileName .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 	end
 	return particleSystems
+end
+
+local function dmx_value_to_string(val)
+	local type = val:GetType()
+	if(type == dmx.Attribute.TYPE_STRING) then return val:GetValue() end
+	if(
+		type == dmx.Attribute.TYPE_INT or type == dmx.Attribute.TYPE_FLOAT or type == dmx.Attribute.TYPE_VECTOR2 or type == dmx.Attribute.TYPE_VECTOR3 or type == dmx.Attribute.TYPE_VECTOR4 or
+		type == dmx.Attribute.TYPE_ANGLE or type == dmx.Attribute.TYPE_COLOR or type == dmx.Attribute.TYPE_UINT64 or type == dmx.Attribute.TYPE_UINT8
+	) then
+		return tostring(val:GetValue())
+	end
+	if(type == dmx.Attribute.TYPE_BOOL) then return val:GetValue() and "1" or "0" end
+	if(type == dmx.Attribute.TYPE_QUATERNION) then
+		val = val:GetValue()
+		return val.w .. " " .. val.x .. " " .. val.y .. " " .. val.z
+	end
+	console.print_warning("Unhandled type '" .. dmx.type_to_string(type) .. "'!")
+end
+
+sfm.convert_dmx_particle_system = function(el,keyValues)
+	keyValues = keyValues or {}
+	for k,v in pairs(el:GetAttributes()) do
+		if(v:GetType() == dmx.Attribute.TYPE_ELEMENT_ARRAY) then
+			keyValues[k] = {}
+			for _,el in ipairs(v:GetValue()) do
+				el = el:GetValue()
+				if(el ~= nil) then
+					if(k == "children") then
+						local ptData = el:GetAttrV("child")
+						local delay = el:GetAttrV("delay")
+						local name = ptData:GetName() -- el:GetName()
+						keyValues[k][name] = {
+							delay = delay,
+							childData = {}
+						}
+						sfm.convert_dmx_particle_system(ptData,keyValues[k][name].childData)
+					else
+						local name = el:GetName()
+						keyValues[k][name] = {}
+						sfm.convert_dmx_particle_system(el,keyValues[k][name])
+					end
+				end
+			end
+		else
+			keyValues[k] = dmx_value_to_string(v)
+		end
+	end
+	return keyValues
 end

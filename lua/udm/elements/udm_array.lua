@@ -83,6 +83,10 @@ function udm.Array:PushBack(attr)
 	self:Insert(#self +1,attr)
 end
 
+function udm.Array:Remove(pos)
+	table.remove(self:GetValue(),pos)
+end
+
 function udm.Array:PopBack()
 	return table.remove(self:GetValue(),#self)
 end

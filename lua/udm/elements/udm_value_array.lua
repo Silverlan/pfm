@@ -117,6 +117,7 @@ function udm.ValueArray:ReadFromBinary(ds)
 end
 
 function udm.ValueArray:Get(i) return self:GetTable()[i] end
+function udm.ValueArray:Set(i,v) self:GetTable()[i] = v end
 
 function udm.ValueArray:Insert(pos,value)
 	local t = self:GetValueType()

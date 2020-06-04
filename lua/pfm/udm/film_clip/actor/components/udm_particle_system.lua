@@ -10,7 +10,9 @@ include("particle_system")
 
 udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM = udm.register_element("PFMParticleSystem")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"timeScale",udm.Float(1.0))
+-- TODO: 'definition' field is obsolete, remove it! Particle definitions are ALWAYS stored in separate particle system files.
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"definition",udm.PFMParticleSystemDefinition())
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"particleSystemName",udm.String())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"controlPoints",udm.Array(udm.ELEMENT_TYPE_PFM_TRANSFORM))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"simulating",udm.Bool(true),{
 	getter = "IsSimulating"

@@ -155,8 +155,8 @@ function sfm.BaseElement:LoadAttributeValue(el,name,default)
 		if(cachedElement ~= nil) then return cachedElement end
 		self:CacheElement(el,elVal,name)
 	end
-
-	return elVal or default
+	if(elVal ~= nil) then return elVal end
+	return default
 end
 
 function sfm.BaseElement:LoadProperty(el,name,class)

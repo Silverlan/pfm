@@ -40,8 +40,8 @@ function ents.ParticleSystemComponent.InitializerPositionWithinSphere:OnParticle
 	--print("[Particle Initializer] On particle created")
 	local randPos = Vector()
 	local randDir = Vector()
+	local nCurrentControlPoint = self.m_nControlPointNumber;
 	for nTryCtr=0,9 do
-		local nCurrentControlPoint = m_nControlPointNumber;
 		local len
 		randPos,len = RandomVectorInUnitSphere()
 		-- Absolute value and biasing for creating hemispheres and ovoids.
@@ -72,12 +72,13 @@ function ents.ParticleSystemComponent.InitializerPositionWithinSphere:OnParticle
 		end
 			
 		-- now, force to be in model if we can
-		if (
+		-- TODO
+		--[[if (
 			( self.m_createInModel == 0 ) or 
 			(g_pParticleSystemMgr:Query():MovePointInsideControllingObject( 
 				pParticles, pParticles.m_ControlPoints[nCurrentControlPoint].m_pObject, randPos ) ) ) then
 			break
-		end
+		end]]
 	end
 	pt:SetPosition(randPos)
 

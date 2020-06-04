@@ -39,9 +39,9 @@ end
 
 local function rotate_vector(v,m)
 	return Vector(
-		math.dot(v,Vector(m:Get(0,0),m:Get(0,1),m:Get(0,2))),
-		math.dot(v,Vector(m:Get(1,0),m:Get(1,1),m:Get(1,2))),
-		math.dot(v,Vector(m:Get(2,0),m:Get(2,1),m:Get(2,2)))
+		v:DotProduct(Vector(m:Get(0,0),m:Get(0,1),m:Get(0,2))),
+		v:DotProduct(Vector(m:Get(1,0),m:Get(1,1),m:Get(1,2))),
+		v:DotProduct(Vector(m:Get(2,0),m:Get(2,1),m:Get(2,2)))
 	)
 end
 
@@ -76,20 +76,21 @@ function shader.PFMParticleRenderAnimatedSprites:CalcVertexPosition(ptc,ptIdx,lo
 	local radius = pt:GetRadius()
 	local viewToPos = ptWorldPos -posCam
 	local l = viewToPos:Length()
-	if(l < radius /2.0) then return posCam end -- TODO: How to handle this?
+	if(l < radius /2.0) then return posCam:Copy() end -- TODO: How to handle this?
 
 	camRight = -camRight
-	local camForward = normalize(camUp:Cross(camRight))
+	local camForward = camUp:Cross(camRight)
+	camForward:Normalize()
 	if(yaw ~= 0.0) then
-		local matRot = calc_rotation_matrix_around_axis(vecUp,yaw)
-		local ptRight = rotate_vector(camRight,matRot)
+		local matRot = calc_rotation_matrix_around_axis(camUp,yaw)
+		camRight = rotate_vector(camRight,matRot)
 	end
 
 	camRight = camRight *radius
 	camUp = camUp *radius
 
-	local ca = math.cos(-rotation)
-	local sa = math.sin(-rotation)
+	local ca = math.cos(-rot)
+	local sa = math.sin(-rot)
 
 	if(localVertIdx == 0) then
 		local x = ca -sa
@@ -100,20 +101,20 @@ function shader.PFMParticleRenderAnimatedSprites:CalcVertexPosition(ptc,ptIdx,lo
 	elseif(localVertIdx == 1) then
 		local x = ca +sa
 		local y = ca -sa
-		local vecCorner = vecWorldPos +x *vecRight
-		vecCorner = vecCorner +y *vecUp
+		local vecCorner = ptWorldPos +x *camRight
+		vecCorner = vecCorner +y *camUp
 		return vecCorner
 	elseif(localVertIdx == 2) then
 		local x = -ca +sa
 		local y = ca +sa
-		local vecCorner = vecWorldPos +x *vecRight
-		vecCorner = vecCorner +y *vecUp
+		local vecCorner = ptWorldPos +x *camRight
+		vecCorner = vecCorner +y *camUp
 		return vecCorner
 	end
 	local x = -ca -sa
 	local y = -ca +sa
-	local vecCorner = vecWorldPos +x *vecRight
-	vecCorner = vecCorner +y *vecUp
+	local vecCorner = ptWorldPos +x *camRight
+	vecCorner = vecCorner +y *camUp
 	return vecCorner
 end
 function shader.PFMParticleRenderAnimatedSprites:Draw(drawCmd,ps,renderer,bloom,camBias)
