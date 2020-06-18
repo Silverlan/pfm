@@ -16,7 +16,7 @@ function shader.PFMLines:__init()
 	self.m_dsPushConstants = util.DataStream(util.SIZEOF_MAT4 +util.SIZEOF_VECTOR4)
 end
 function shader.PFMLines:InitializeRenderPass(pipelineIdx)
-	return {shader.Scene3D.GetRenderPass()}
+	return {shader.Scene3D.get_render_pass()}
 end
 function shader.PFMLines:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)

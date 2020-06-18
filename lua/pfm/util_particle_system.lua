@@ -10,7 +10,8 @@ include("/particle_system/initializers")
 include("/particle_system/operators")
 include("/particle_system/renderers")
 
--- TODO: Clean this up
+-- TODO: These functions are only used by Source Engine particle operators and are merely placeholders until the system is complete.
+-- Clean this up!
 function RandomVectorInUnitSphere()
 	-- Guarantee uniform random distribution within a sphere
 	-- Graphics gems III contains this algorithm ("Nonuniform random point sets via warping")
@@ -261,7 +262,8 @@ end
 
 function GetControlPointTransformAtTime(self,nControlPoint,flTime)
 	local pose = self:GetParticleSystem():GetEntity():GetPose()
-	return --[[pose *]](self:GetParticleSystem():GetControlPointPose(nControlPoint or 0) or phys.Transform())
+	-- TODO: Entity pose is confirmed to be required for ExplosionCore_MidAir, but NOT for flamethrower?
+	return pose *(self:GetParticleSystem():GetControlPointPose(nControlPoint or 0,flTime) or phys.Transform())
 end
 
 function GetControlPointAtTime(self,nControlPoint,flTime)
@@ -269,8 +271,9 @@ function GetControlPointAtTime(self,nControlPoint,flTime)
 end
 
 function GetControlPointPose(self,nControlPoint)
+	local pose = self:GetParticleSystem():GetEntity():GetPose()
 	--return self:GetParticleSystem():GetEntity():GetPose()
-	return (self:GetParticleSystem():GetControlPointPose(nControlPoint or 0) or phys.Transform())
+	return pose *(self:GetParticleSystem():GetControlPointPose(nControlPoint or 0) or phys.Transform())
 end
 
 function TransformAxis(self,srcAxis,localSpace,nControlPoint)
@@ -282,7 +285,7 @@ function TransformAxis(self,srcAxis,localSpace,nControlPoint)
 	local right = rot:GetRight()
 	local forward = rot:GetForward()
 	local up = rot:GetUp()
-	return srcAxis.x *right +srcAxis.z *forward +srcAxis.y *up
+	return -srcAxis.x *right +srcAxis.z *forward +srcAxis.y *up
 end
 
 --[[function ExponentialDecay(halflife,dt)
@@ -313,10 +316,12 @@ function ReciprocalSaturate(a)
 end
 
 function ReciprocalEst(a)
+	if(math.abs(a) < 0.0001) then return 0.0 end
 	return 1.0 /a
 end
 
 function Reciprocal(a)
+	if(math.abs(a) < 0.0001) then return 0.0 end
 	return 1.0 /a
 end
 
@@ -332,20 +337,14 @@ end
 function GetPtDelta() return 0.04166666790843 end
 function GetPrevPtDelta() return GetPtDelta() end
 
-function ents.ParticleSystemComponent:GetControlPointAtTime(nControlPoint,flTime)
-	return self:GetControlPointTransformAtTime(nControlPoint,flTime):GetOrigin()
+function fsel(c,x,y)
+	if(c >= 0) then return x end
+	return y
 end
 
-function ents.ParticleSystemComponent:GetControlPointTransformAtTime(nControlPoint,flTime)
-	-- TODO
-	local ent = self:GetEntity()
-	return ent:GetTransform()
-end
-
-function ents.ParticleSystemComponent.ParticleModifier:GetControlPointAtTime(nControlPoint,flTime)
-	return self:GetParticleSystem():GetControlPointAtTime(nControlPoint,flTime)
-end
-
-function ents.ParticleSystemComponent.ParticleModifier:GetControlPointTransformAtTime(nControlPoint,flTime)
-	return self:GetParticleSystem():GetControlPointTransformAtTime(nControlPoint,flTime)
+function RemapValClamped(val,a,b,c,d)
+	if(a == b) then return fsel(val -b,d,c) end
+	local cVal = (val -a) /(b -a)
+	cVal = math.clamp(cVal,0.0,1.0)
+	return c +(d -c) *cVal
 end

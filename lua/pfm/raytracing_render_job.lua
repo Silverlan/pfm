@@ -32,6 +32,7 @@ pfm.RaytracingRenderJob.Settings.RENDER_MODE_BAKE_NORMALS = 2
 pfm.RaytracingRenderJob.Settings.RENDER_MODE_BAKE_DIFFUSE_LIGHTING = 3
 pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALBEDO = 4
 pfm.RaytracingRenderJob.Settings.RENDER_MODE_NORMALS = 5
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH = 6
 
 pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU = 0
 pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU = 1
@@ -45,8 +46,11 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"skyYaw",0.0)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"maxTransparencyBounces",128)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"lightIntensityFactor",1.0)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"frameCount",1)
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"outputDir","render/")
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"denoise",true)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"hdrOutput",false,{
+	getter = "GetHDROutput",
+	setter = "SetHDROutput"
+})
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"deviceType","gpu")
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderWorld",true)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderGameEntities",true)
@@ -59,17 +63,12 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderPreview",fa
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"width",512)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"height",512)
 
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"focalDistance",72.0)
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"fstop",2.8,{
-	getter = "GetFStop",
-	setter = "SetFStop"
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"cameraFrustumCullingEnabled",true,{
+	getter = "IsCameraFrustumCullingEnabled"
 })
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"apertureBokehRatio",1.0)
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"apertureBladeCount",0)
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"apertureBladesRotation",0.0)
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"sensorSize",36.0)
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"depthOfFieldEnabled",false,{
-	getter = "IsDepthOfFieldEnabled"
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"pvsCullingEnabled",true,{
+	setter = "SetPVSCullingEnabled",
+	getter = "IsPVSCullingEnabled"
 })
 
 function pfm.RaytracingRenderJob.Settings:__init()
@@ -89,8 +88,8 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetMaxTransparencyBounces(self:GetMaxTransparencyBounces())
 	cpy:SetLightIntensityFactor(self:GetLightIntensityFactor())
 	cpy:SetFrameCount(self:GetFrameCount())
-	cpy:SetOutputDir(self:GetOutputDir())
 	cpy:SetDenoise(self:GetDenoise())
+	cpy:SetHDROutput(self:GetHDROutput())
 	cpy:SetDeviceType(self:GetDeviceType())
 	cpy:SetRenderWorld(self:GetRenderWorld())
 	cpy:SetRenderGameEntities(self:GetRenderGameEntities())
@@ -100,14 +99,8 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetRenderPreview(self:IsRenderPreview())
 	cpy:SetWidth(self:GetWidth())
 	cpy:SetHeight(self:GetHeight())
-
-	cpy:SetFocalDistance(self:GetFocalDistance())
-	cpy:SetFStop(self:GetFStop())
-	cpy:SetApertureBokehRatio(self:GetApertureBokehRatio())
-	cpy:SetApertureBladeCount(self:GetApertureBladeCount())
-	cpy:SetApertureBladesRotation(self:GetApertureBladesRotation())
-	cpy:SetSensorSize(self:GetSensorSize())
-	cpy:SetDepthOfFieldEnabled(self:IsDepthOfFieldEnabled())
+	cpy:SetCameraFrustumCullingEnabled(self:IsCameraFrustumCullingEnabled())
+	cpy:SetPVSCullingEnabled(self:IsPVSCullingEnabled())
 	return cpy
 end
 
@@ -122,6 +115,7 @@ function pfm.RaytracingRenderJob:__init(settings)
 	self.m_gameScene = game.get_scene()
 end
 function pfm.RaytracingRenderJob:SetGameScene(scene) self.m_gameScene = scene end
+function pfm.RaytracingRenderJob:GetGameScene() return self.m_gameScene end
 function pfm.RaytracingRenderJob:GetSettings() return self.m_settings end
 
 function pfm.RaytracingRenderJob:IsComplete()
@@ -134,21 +128,32 @@ function pfm.RaytracingRenderJob:GetProgress()
 end
 function pfm.RaytracingRenderJob:GetRenderResultTexture() return self.m_renderResult end
 function pfm.RaytracingRenderJob:GetRenderResult() return self.m_currentImageBuffer end
+function pfm.RaytracingRenderJob:GetRenderResultFrameIndex() return self.m_renderResultFrameIndex end
+function pfm.RaytracingRenderJob:GetRenderResultRemainingSubStages() return self.m_renderResultRemainingSubStages end
 function pfm.RaytracingRenderJob:GenerateResult()
 	if(#self.m_imageBuffers == 0) then return end
 	local img
-	if(#self.m_imageBuffers == 1) then
+	local cubemap = (#self.m_imageBuffers > 1)
+	local imgCreateInfo = prosper.create_image_create_info(self.m_imageBuffers[1],cubemap)
+	imgCreateInfo.usageFlags = bit.bor(imgCreateInfo.usageFlags,prosper.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,prosper.IMAGE_USAGE_TRANSFER_SRC_BIT,prosper.IMAGE_USAGE_TRANSFER_DST_BIT)
+	if(cubemap == false) then
 		self.m_currentImageBuffer = self.m_imageBuffers[1]
-		img = prosper.create_image(self.m_currentImageBuffer)
+		img = prosper.create_image(self.m_currentImageBuffer,imgCreateInfo)
 	else
 		self.m_currentImageBuffer = util.ImageBuffer.CreateCubemap(self.m_imageBuffers)
-		img = prosper.create_image(self.m_currentImageBuffer)
+		img = prosper.create_image(self.m_currentImageBuffer,imgCreateInfo)
 	end
 	self.m_imageBuffers = {}
+	self.m_renderResultFrameIndex = self.m_currentFrame
+	self.m_renderResultRemainingSubStages = self.m_remainingSubStages
 
 	local imgViewCreateInfo = prosper.ImageViewCreateInfo()
 	imgViewCreateInfo.swizzleAlpha = prosper.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
-	self.m_renderResult = prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,prosper.SamplerCreateInfo())
+	local samplerCreateInfo = prosper.SamplerCreateInfo()
+	samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors
+	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+	self.m_renderResult = prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,samplerCreateInfo)
 end
 function pfm.RaytracingRenderJob:Update()
 	if(self.m_raytracingJob == nil) then return pfm.RaytracingRenderJob.STATE_IDLE end
@@ -161,22 +166,7 @@ function pfm.RaytracingRenderJob:Update()
 		local imgBuffer = self.m_raytracingJob:GetResult()
 		table.insert(self.m_imageBuffers,imgBuffer)
 
-		if(isFrameComplete) then
-			self:GenerateResult()
-			local renderSettings = self.m_settings
-			if(#renderSettings:GetOutputDir() > 0 and renderSettings:IsRenderPreview() == false) then
-				file.create_path(renderSettings:GetOutputDir())
-				local path = renderSettings:GetOutputDir()
-				if(path:sub(-1) ~= "/") then path = path .. "/" end
-				path = path .. "frame" .. self.m_currentFrame
-				if(self.m_remainingSubStages > 0) then path = path .. "_" .. self.m_remainingSubStages end
-
-				local result = util.save_image(self.m_currentImageBuffer,path,util.IMAGE_FORMAT_PNG)
-				if(result == false) then
-					pfm.log("Unable to save image as '" .. path .. "'!",pfm.LOG_CATEGORY_PFM_INTERFACE,pfm.LOG_SEVERITY_WARNING)
-				end
-			end
-		end
+		if(isFrameComplete) then self:GenerateResult() end
 	end
 	self.m_raytracingJob = nil
 
@@ -204,7 +194,7 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	if(self.m_currentFrame == renderSettings:GetFrameCount()) then
 		local msg
 		if(renderSettings:IsRenderPreview()) then msg = "Preview rendering complete!"
-		else msg = "Rendering complete! " .. renderSettings:GetFrameCount() .. " frames have been rendered and stored in \"" .. renderSettings:GetOutputDir() .. "\"!" end
+		else msg = "Rendering complete! " .. renderSettings:GetFrameCount() .. " frames have been rendered!" end
 		pfm.log(msg,pfm.LOG_CATEGORY_PFM_INTERFACE)
 		return true
 	end
@@ -214,7 +204,7 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 
 	local createInfo = cycles.Scene.CreateInfo()
 	createInfo.denoise = renderSettings:GetDenoise()
-	createInfo.hdrOutput = false
+	createInfo.hdrOutput = renderSettings:GetHDROutput()
 	createInfo.deviceType = renderSettings:GetDeviceType()
 	createInfo:SetSamplesPerPixel(renderSettings:GetSamples())
 
@@ -244,7 +234,9 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	local farZ = cam:GetFarZ()
 	local fov = cam:GetFOV()
 	local vp = cam:GetProjectionMatrix() *cam:GetViewMatrix()
-	local cullObjectsOutsidePvs = true
+	local sceneFlags = cycles.Scene.SCENE_FLAG_NONE
+	if(renderSettings:IsCameraFrustumCullingEnabled()) then sceneFlags = bit.bor(sceneFlags,cycles.Scene.SCENE_FLAG_BIT_CULL_OBJECTS_OUTSIDE_CAMERA_FRUSTUM) end
+	if(renderSettings:IsPVSCullingEnabled()) then sceneFlags = bit.bor(sceneFlags,cycles.Scene.SCENE_FLAG_BIT_CULL_OBJECTS_OUTSIDE_PVS) end
 	
 	-- Note: Settings have to be initialized before setting up the game scene
 	scene:SetSkyAngles(EulerAngles(0,renderSettings:GetSkyYaw(),0))
@@ -274,16 +266,22 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	local clCam = scene:GetCamera()
 	clCam:SetCameraType(camTypeToClType[camType])
 	clCam:SetPanoramaType(panoramaTypeToClType[panoramaType])
-	clCam:SetFocalDistance(renderSettings:GetFocalDistance())
-	clCam:SetBokehRatio(renderSettings:GetApertureBokehRatio())
-	clCam:SetBladeCount(renderSettings:GetApertureBladeCount())
-	clCam:SetBladesRotation(renderSettings:GetApertureBladesRotation())
-	clCam:SetDepthOfFieldEnabled(renderSettings:IsDepthOfFieldEnabled())
-	clCam:SetApertureSizeFromFStop(renderSettings:GetFStop(),math.calc_focal_length_from_fov(fov,renderSettings:GetSensorSize()))
 
-	scene:InitializeFromGameScene(self.m_gameScene,pos,rot,vp,nearZ,farZ,fov,cullObjectsOutsidePvs,function(ent)
+	local pfmCam = cam:GetEntity():GetComponent(ents.COMPONENT_PFM_CAMERA)
+	if(pfmCam ~= nil) then
+		local camData = pfmCam:GetCameraData()
+		clCam:SetFocalDistance(camData:GetFocalDistance())
+		clCam:SetBokehRatio(camData:GetApertureBokehRatio())
+		clCam:SetBladeCount(camData:GetApertureBladeCount())
+		clCam:SetBladesRotation(camData:GetApertureBladesRotation())
+		clCam:SetDepthOfFieldEnabled(camData:IsDepthOfFieldEnabled())
+		clCam:SetApertureSizeFromFStop(camData:GetFStop(),math.calc_focal_length_from_fov(fov,camData:GetSensorSize()))
+	else clCam:SetDepthOfFieldEnabled(false) end
+
+	scene:InitializeFromGameScene(self.m_gameScene,pos,rot,vp,nearZ,farZ,fov,sceneFlags,function(ent)
 		if(ent:IsWorld()) then return renderSettings:GetRenderWorld() end
 		if(ent:IsPlayer()) then return renderSettings:GetRenderPlayer() end
+		if(ent:HasComponent(ents.COMPONENT_PARTICLE_SYSTEM) == true) then return false end -- TODO
 		return renderSettings:GetRenderGameEntities() or ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
 	end,function(ent)
 		return true

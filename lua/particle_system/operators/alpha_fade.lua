@@ -52,12 +52,12 @@ function ents.ParticleSystemComponent.OperatorAlphaFade:Simulate(pt,dt)
 	if(age < 1.0) then
 		if(age >= self.m_startFadeInTime and age <= self.m_endFadeInTime) then
 			local goal = initialAlpha *self.m_startAlpha
-			local newAlpha = SimpleSplineRemapValWithDeltasClamped(age,self.m_startFadeInTime,fadeInDuration,fadeInDurationOO,goal,(initialAlpha -goal))
+			local newAlpha = (fadeInDuration > 0.0) and SimpleSplineRemapValWithDeltasClamped(age,self.m_startFadeInTime,fadeInDuration,fadeInDurationOO,goal,(initialAlpha -goal)) or initialAlpha
 			pt:SetAlpha(newAlpha)
 		end
 		if(age >= self.m_startFadeOutTime and age <= self.m_endFadeOutTime) then
 			local goal = initialAlpha *self.m_endAlpha
-			local newAlpha = SimpleSplineRemapValWithDeltasClamped(age,self.m_startFadeOutTime,fadeOutDuration,fadeOutDurationOO,initialAlpha,(goal -initialAlpha))
+			local newAlpha = (fadeOutDuration > 0.0) and SimpleSplineRemapValWithDeltasClamped(age,self.m_startFadeOutTime,fadeOutDuration,fadeOutDurationOO,initialAlpha,(goal -initialAlpha)) or self.m_endAlpha
 			pt:SetAlpha(newAlpha)
 		end
 	else

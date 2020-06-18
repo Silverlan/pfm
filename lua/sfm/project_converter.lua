@@ -208,7 +208,8 @@ function sfm.ProjectConverter:CreateActor(sfmComponent)
 	actor:SetVisible(sfmComponent:IsVisible())
 
 	local transformType = sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL
-	if(sfmComponent:GetType() == "DmeCamera") then transformType = sfm.ProjectConverter.TRANSFORM_TYPE_ALT end
+	-- TODO: Unsure about light sources; Confirm that this is correct!
+	if(sfmComponent:GetType() == "DmeCamera" or sfmComponent:GetType() == "DmeGameParticleSystem" or sfmComponent:GetType() == "DmeProjectedLight") then transformType = sfm.ProjectConverter.TRANSFORM_TYPE_ALT end
 
 	actor:SetTransformAttr(self:ConvertNewElement(sfmComponent:GetTransform(),transformType))
 	actor:AddComponent(pfmComponent)
@@ -660,9 +661,7 @@ sfm.register_element_type_conversion(sfm.Camera,udm.PFMCamera,function(converter
 	local aperture = sfmCamera:GetAperture()
 	if(aperture > 0.0) then
 		pfmCamera:SetDepthOfFieldEnabled(true)
-		-- SFM's 'aperature' value doesn't appear to be based on anything physical, so the
-		-- conversion is mostly subjective. This may need some more tweaking in the future!
-		pfmCamera:SetFStop((20.0 -math.min(aperture,20.0)) /2.2)
+		pfmCamera:SetFStop(sfm.convert_source_aperture_to_fstop(aperture))
 	end
 	pfmCamera:SetFocalDistance(sfm.source_units_to_pragma_units(sfmCamera:GetFocalDistance()))
 	pfmCamera:SetSensorSize(36.0)

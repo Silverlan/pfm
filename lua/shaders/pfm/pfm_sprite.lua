@@ -16,7 +16,7 @@ function shader.PFMSprite:__init()
 	self.m_dsPushConstants = util.DataStream(util.SIZEOF_MAT4 +util.SIZEOF_VECTOR4 *2 +util.SIZEOF_VECTOR2)
 end
 function shader.PFMSprite:InitializeRenderPass(pipelineIdx)
-	return {shader.Scene3D.GetRenderPass()}
+	return {shader.Scene3D.get_render_pass()}
 end
 function shader.PFMSprite:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)

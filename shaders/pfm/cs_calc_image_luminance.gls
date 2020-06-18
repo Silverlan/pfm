@@ -1,0 +1,136 @@
+/*
+    Copyright (C) 2020  Florian Weischer
+
+    This Source Code Form is subject to the terms of the Mozilla Public
+    License, v. 2.0. If a copy of the MPL was not distributed with this
+    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+#version 430
+
+#include "/modules/sh_math.gls"
+
+#define SHADER_UNIFORM_DATA_SET 0
+#define SHADER_DATA_BINDING_HDR_IMAGE 0
+#define DATA_BINDING_LUMINANCE 1
+
+layout(local_size_x = 32,local_size_y = 32,local_size_z = 1) in;
+
+layout(set = SHADER_UNIFORM_DATA_SET,binding = SHADER_DATA_BINDING_HDR_IMAGE) uniform sampler2D u_texture;
+
+layout(push_constant) uniform Settings {
+	uint width;
+	uint height;
+} u_settings;
+
+layout(std430,set = SHADER_UNIFORM_DATA_SET,binding = DATA_BINDING_LUMINANCE) buffer Luminance {
+	float avgLuminance;
+	float minLuminance;
+	float maxLuminance;
+	float logAvgLuminance;
+	vec3 avgIntensity;
+} out_luminance;
+
+#define NUM_RESULT_PARTITIONS 4
+// To avoid overflow issues, we'll split the accumulation data into
+// partitions.
+shared uint wgAccLuminance[NUM_RESULT_PARTITIONS];
+shared int wgAccLuminanceLog[NUM_RESULT_PARTITIONS];
+shared uvec3 wgAccIntensity[NUM_RESULT_PARTITIONS];
+shared uint wgMinLuminance;
+shared uint wgMaxLuminance;
+void main(void)
+{
+	// Note: This shader must only use a single work group! (Because work groups cannot be synchronized)
+	if(gl_LocalInvocationIndex == 0)
+	{
+		for(uint i=0;i<NUM_RESULT_PARTITIONS;++i)
+		{
+			wgAccLuminance[i] = 0;
+			wgAccLuminanceLog[i] = 0;
+			wgAccIntensity[i] = uvec3(0,0,0);
+		}
+		wgMinLuminance = 0xFFFFFFFF;
+		wgMaxLuminance = 0;
+	}
+
+	memoryBarrierShared();
+	barrier();
+
+	uvec2 pxPerThread = uvec2(
+		uint(ceil(u_settings.width /float(gl_WorkGroupSize.x))),
+		uint(ceil(u_settings.height /float(gl_WorkGroupSize.y)))
+	);
+
+	// We need to accumulate float-data between threads, so we need to use atomics.
+	// Since there are no atomic floats, we'll have to convert them to integers.
+	// We'll just multiply it by a factor to keep some of the decimal places.
+	// A higher factor results in higher precision, but may also cause overflows for
+	// very large images.
+	const float FLOAT_TO_INT_FACTOR = 100;
+
+	uvec2 offset = gl_GlobalInvocationID.xy *pxPerThread;
+	uint numPixels = u_settings.width *u_settings.height;
+	for(uint x=offset.x;x<min(offset.x +pxPerThread.x,u_settings.width);++x)
+	{
+		for(uint y=offset.y;y<min(offset.y +pxPerThread.y,u_settings.height);++y)
+		{
+			uint pxIdx = x *y;
+			uint i = uint((pxIdx /float(numPixels)) *NUM_RESULT_PARTITIONS);
+
+			vec3 col = texelFetch(u_texture,ivec2(x,y),0).rgb;
+
+			float lum = calc_luminance(col);
+			uint lumInt = floatBitsToUint(lum);
+			atomicMin(wgMinLuminance,lumInt);
+			atomicMax(wgMaxLuminance,lumInt);
+
+			uint lumi = uint(lum *FLOAT_TO_INT_FACTOR);
+			atomicAdd(wgAccLuminance[i],lumi);
+
+			float delta = 1e-4;
+			int lumLogi = int(log(delta +lum) *FLOAT_TO_INT_FACTOR);
+			atomicAdd(wgAccLuminanceLog[i],lumLogi);
+
+			uvec3 coli = uvec3(
+				uint(col.r *FLOAT_TO_INT_FACTOR),
+				uint(col.g *FLOAT_TO_INT_FACTOR),
+				uint(col.b *FLOAT_TO_INT_FACTOR)
+			);
+			atomicAdd(wgAccIntensity[i].r,coli.r);
+			atomicAdd(wgAccIntensity[i].g,coli.g);
+			atomicAdd(wgAccIntensity[i].b,coli.b);
+		}
+	}
+
+	memoryBarrierShared();
+	barrier();
+
+	if(gl_LocalInvocationIndex == 0)
+	{
+		float avgLuminance = 0.0;
+		float avgLuminanceLog = 0.0;
+		vec3 avgIntensity = vec3(0,0,0);
+		// Accumulate the partitions
+		for(uint i=0;i<NUM_RESULT_PARTITIONS;++i)
+		{
+			avgLuminance += (wgAccLuminance[i] /FLOAT_TO_INT_FACTOR);
+			avgLuminanceLog += (wgAccLuminanceLog[i] /FLOAT_TO_INT_FACTOR);
+			avgIntensity += vec3(
+				(wgAccIntensity[i].r /FLOAT_TO_INT_FACTOR),
+				(wgAccIntensity[i].g /FLOAT_TO_INT_FACTOR),
+				(wgAccIntensity[i].b /FLOAT_TO_INT_FACTOR)
+			);
+		}
+
+		avgLuminance /= float(numPixels);
+		avgLuminanceLog /= float(numPixels);
+		avgIntensity /= float(numPixels);
+
+		out_luminance.minLuminance = uintBitsToFloat(wgMinLuminance);
+		out_luminance.maxLuminance = uintBitsToFloat(wgMaxLuminance);
+		out_luminance.avgLuminance = avgLuminance;
+		out_luminance.logAvgLuminance = exp(avgLuminanceLog);
+		out_luminance.avgIntensity = avgIntensity;
+	}
+}

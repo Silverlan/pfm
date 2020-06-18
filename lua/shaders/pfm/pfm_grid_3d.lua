@@ -39,7 +39,7 @@ function shader.PFMGrid3D:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
 function shader.PFMGrid3D:InitializeRenderPass(pipelineIdx)
-	return {shader.Scene3D.GetRenderPass()}
+	return {shader.Scene3D.get_render_pass()}
 end
 function shader.PFMGrid3D:InitializeBuffer()
 	if(self.m_bBufferInitialized == true) then return self.m_bufVerts end

@@ -87,23 +87,34 @@ function ents.ParticleSystemComponent.InitializerPositionWithinSphere:OnParticle
 		local randSpeed = self.m_speedMin +(math.randomf(0.0,self.m_speedMax -self.m_speedMin) ^self.m_speedRandomExponent)
 		pOffset = pOffset -randSpeed *randDir
 	end
+	--print(self.m_speedInLocalCoordinateSystemMin,self.m_speedInLocalCoordinateSystemMax)
 	pOffset =
 		pOffset -
 		math.randomf(self.m_speedInLocalCoordinateSystemMin.x,self.m_speedInLocalCoordinateSystemMax.x)*
-		GetControlPointPose(self,nCurrentControlPoint):GetRotation():GetForward()
+		-GetControlPointPose(self,nCurrentControlPoint):GetRotation():GetRight()
 	pOffset =
 		pOffset -
 		math.randomf(self.m_speedInLocalCoordinateSystemMin.y,self.m_speedInLocalCoordinateSystemMax.y)*
-		GetControlPointPose(self,nCurrentControlPoint):GetRotation():GetRight()
+		GetControlPointPose(self,nCurrentControlPoint):GetRotation():GetUp()
 	pOffset =
 		pOffset -
 		math.randomf(self.m_speedInLocalCoordinateSystemMin.z,self.m_speedInLocalCoordinateSystemMax.z)*
-		GetControlPointPose(self,nCurrentControlPoint):GetRotation():GetUp()
+		GetControlPointPose(self,nCurrentControlPoint):GetRotation():GetForward()
 
 	local prevDt = GetPrevPtDelta() -- TODO
-	pOffset = pOffset *prevDt *0.2
+	pOffset = pOffset *prevDt *0.2 -- TODO: Factor of 0.2 is arbitrary
 	randPos = randPos +pOffset
 	pt:SetPreviousPosition(randPos)
+
+	-- This is an attempt to try and fix a translational difference between the behavior in Pragma and Source.
+	-- It may not work properly for all cases
+	-- TODO: Confirm!
+	local renderer = self:GetParticleSystem():GetRenderers()[1]
+	if(renderer == nil or renderer:GetName() ~= "source_render_sprite_trail") then return end -- TODO: Find a better way to do this!
+	local offset = pt:GetPosition() -pt:GetPreviousPosition()
+	offset = offset *1 -- 5
+	pt:SetPosition(pt:GetPosition() +offset)
+	pt:SetPreviousPosition(pt:GetPreviousPosition() +offset)
 end
 function ents.ParticleSystemComponent.InitializerPositionWithinSphere:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")

@@ -17,7 +17,7 @@ local sfmFieldIdToFieldName = {
 	[6] = "color",
 	[7] = "alpha",
 
-	-- [8] = "creation_time",
+	[8] = "creation_time",
 	-- [9] = "sequence_number",
 	[10] = "length",
 	-- [11] = "particle_id",
@@ -46,6 +46,13 @@ local sfmFieldIdToFieldName = {
 	[29] = nil,
 	[30] = nil,
 	[31] = nil
+}
+
+local sfmOpFields = {
+	["oscillate vector"] = {"oscillation field"},
+	["oscillate scalar"] = {"oscillation field"},
+	["remap initial scalar"] = {"input field","output field"},
+	["remap scalar to vector"] = {"input field","output field"},
 }
 
 local sfmOperatorToPragma = {
@@ -237,11 +244,54 @@ local sfmOperatorToPragma = {
 			["length fade in time"] = "length_fade_in_time",
 			["animation rate"] = "animation_rate"
 		}
+	},
+	["remap initial scalar"] = {
+		pragmaName = "source_remap_initial_scalar",
+		keyValues = {
+			["emitter lifetime start time (seconds)"] = "emitter_lifetime_start_time",
+			["emitter lifetime end time (seconds)"] = "emitter_lifetime_end_time",
+			["input field"] = "input_field",
+			["input minimum"] = "input_minimum",
+			["input maximum"] = "input_maximum",
+			["output field"] = "output_field",
+			["output minimum"] = "output_minimum",
+			["output maximum"] = "output_maximum",
+			["output is scalar of initial random range"] = "output_scalar_of_initial_random_range",
+			["only active within specified input range"] = "only_active_within_specified_input_range"
+		}
+	},
+	["remap scalar to vector"] = {
+		pragmaName = "source_remap_scalar_to_vector",
+		keyValues = {
+			["emitter lifetime start time (seconds)"] = "emitter_lifetime_start_time",
+			["emitter lifetime end time (seconds)"] = "emitter_lifetime_end_time",
+			["input field"] = "input_field",
+			["input minimum"] = "input_minimum",
+			["input maximum"] = "input_maximum",
+			["output field"] = "output_field",
+			["output minimum"] = "output_minimum",
+			["output maximum"] = "output_maximum",
+			["output is scalar of initial random range"] = "output_scalar_of_initial_random_range",
+			["use local system"] = "use_local_system",
+			["control_point_number"] = "control_point_id"
+		}
 	}
 }
 
 local function is_operator_type(type)
 	return type == "initializers" or type == "operators" or type == "renderers" or type == "emitters" or type == "forces"
+end
+
+local function translate_color(strCol)
+	local col = Color(strCol)
+	--[[col.r = col.r *col.r *2.0
+	col.g = col.g *col.g *2.0
+	col.b = col.b *col.b *2.0]]
+	-- Arbitrary factors, but they match the original Source Engine colors more closely (not sure why)
+	--col.r = col.r *0.5
+	--col.g = col.g *0.5
+	--col.b = col.b *0.5
+	return tostring(col)
 end
 
 local function read_key_values(el)
@@ -260,7 +310,8 @@ local function read_element_array_data(attr)
 		read_key_values(el)
 
 		local keyValues = read_key_values(el)
-		arrayData[keyValues["functionName"] or el:GetName()] = keyValues
+		table.insert(arrayData,keyValues)
+		arrayData[#arrayData].operatorType = (keyValues["functionName"] or el:GetName())
 	end
 	return arrayData
 end
@@ -352,7 +403,8 @@ sfm.convert_particle_system = function(ptData)
 			["position within box random"] = {"min","max"},
 			["position within sphere random"] = {"distance_bias","distance_bias_absolute_value","speed_in_local_coordinate_system_min","speed_in_local_coordinate_system_max"},
 			["velocity noise"] = {"spatial coordinate offset","absolute value","invert abs value","output minimum","output maximum"},
-			["position modify offset random"] = {"offset min","offset max"}
+			["position modify offset random"] = {"offset min","offset max"},
+			["remap scalar to vector"] = {"output minimum","output maximum"}
 		},
 		operators = {
 			["movement basic"] = {"gravity"},
@@ -362,6 +414,14 @@ sfm.convert_particle_system = function(ptData)
 		forces = {
 			["twist around axis"] = {"twist axis"},
 			["random force"] = {"min force","max force"}
+		}
+	}
+	local tColorKeyValues = {
+		initializers = {
+			["color random"] = {"color1","color2"}
+		},
+		operators = {
+			["color fade"] = {"color_fade"}
 		}
 	}
 
@@ -428,14 +488,16 @@ sfm.convert_particle_system = function(ptData)
 	-- Lower keyvalues
 	local function to_lower_keys(t)
 		for k,v in pairs(t) do
-			t[k] = nil
-			t[k:lower()] = v
+			if(k ~= "operatorType") then
+				t[k] = nil
+				t[k:lower()] = v
+			end
 		end
 	end
 
 	for k,v in pairs(ptData) do
 		if(is_operator_type(k)) then
-			for opName,opData in pairs(v) do
+			for _,opData in ipairs(v) do
 				to_lower_keys(opData)
 			end
 		else
@@ -444,37 +506,56 @@ sfm.convert_particle_system = function(ptData)
 		end
 	end
 
+	for name,data in pairs(ptData) do
+		if(is_operator_type(name)) then
+			for _,keyValues in ipairs(data) do
+				local opName = keyValues.operatorType
+				opName = opName:lower()
+				opName = renameTable[opName] or opName
+				keyValues.operatorType = opName
+			end
+		end
+	end
+	-- Convert coordinate system for vector attributes
+	for opCat,t in pairs(tVectorKeyValues) do
+		if(ptData[opCat] ~= nil) then
+			for vectorOpType,vectorOpKeyValues in pairs(t) do
+				for _,opData in ipairs(ptData[opCat]) do
+					if(opData.operatorType == vectorOpType) then
+						for _,key in ipairs(vectorOpKeyValues) do
+							if(opData[key] ~= nil) then
+								local v = vector.create_from_string(opData[key])
+								v = sfm.convert_source_position_to_pragma(v)
+								opData[key] = tostring(v)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+
 	-- Move forces to operators
 	if(ptData.forces) then
 		ptData.operators = ptData.operators or {}
-		for k,v in pairs(ptData.forces) do
-			ptData.operators[k] = v
+		for _,v in ipairs(ptData.forces) do
+			table.insert(ptData.operators,v)
 		end
 		ptData.forces = nil
 	end
 	--
 
-	for name,data in pairs(ptData) do
-		if(is_operator_type(name)) then
-			local newData = {}
-			for opName,keyValues in pairs(data) do
-				opName = opName:lower()
-				opName = renameTable[opName] or opName
-				newData[opName] = keyValues
-			end
-			ptData[name] = newData
-		end
-	end
-	-- Convert coordinate system
-	for name,t in pairs(tVectorKeyValues) do
-		if(ptData[name] ~= nil) then
-			for opName,keyValues in pairs(t) do
-				if(ptData[name][opName] ~= nil) then
-					for _,key in pairs(keyValues) do
-						if(ptData[name][opName][key] ~= nil) then
-							local v = vector.create_from_string(ptData[name][opName][key])
-							v = Vector(v.x,v.z,-v.y)
-							ptData[name][opName][key] = tostring(v)
+	-- Convert colors
+	if(ptData["color"] ~= nil) then ptData["color"] = translate_color(ptData["color"]) end
+	for opCat,t in pairs(tColorKeyValues) do
+		if(ptData[opCat] ~= nil) then
+			for vectorOpType,vectorOpKeyValues in pairs(t) do
+				for _,opData in ipairs(ptData[opCat]) do
+					if(opData.operatorType == vectorOpType) then
+						for _,key in ipairs(vectorOpKeyValues) do
+							if(opData[key] ~= nil) then
+								opData[key] = translate_color(opData[key])
+							end
 						end
 					end
 				end
@@ -491,15 +572,18 @@ sfm.convert_particle_system = function(ptData)
 	end
 
 	if(ptData.renderers ~= nil) then
-		local renderer = ptData.renderers["render_animated_sprites"]
-		if(renderer ~= nil) then
-			local animKeys = {
-				"animation rate","animation_fit_lifetime","use animation rate as fps"
-			}
-			ptData.operators["animation"] = {}
-			for _,k in ipairs(animKeys) do
-				ptData.operators["animation"][k] = renderer[k]
-				renderer[k] = nil
+		for _,renderer in ipairs(ptData.renderers) do
+			if(renderer.operatorType == "render_animated_sprites") then
+				local animKeys = {
+					"animation rate","animation_fit_lifetime","use animation rate as fps"
+				}
+				table.insert(ptData.operators,{operatorType = "animation"})
+				local opAnim = ptData.operators[#ptData.operators]
+				for _,k in ipairs(animKeys) do
+					opAnim[k] = renderer[k]
+					renderer[k] = nil
+				end
+				break
 			end
 		end
 	end
@@ -507,12 +591,15 @@ sfm.convert_particle_system = function(ptData)
 	local emissionRate = 100
 	local particleLimit
 	if(ptData.emitters ~= nil) then
-		if(ptData.emitters["emit_continuously"] ~= nil) then
-			emissionRate = tonumber(ptData.emitters["emit_continuously"]["emission_rate"])
-		elseif(ptData.emitters["emit_instantaneously"] ~= nil) then
-			particleLimit = ptData.emitters["emit_instantaneously"]["num_to_emit"]
-			-- Just emit everything immediately
-			emissionRate = 10000000
+		for _,emitter in ipairs(ptData.emitters) do
+			local opType = emitter.operatorType
+			if(opType == "emit_continuously") then
+				emissionRate = tonumber(emitter["emission_rate"])
+			elseif(opType == "emit_instantaneously") then
+				particleLimit = emitter["num_to_emit"]
+				-- Just emit everything immediately
+				emissionRate = 10000000
+			end
 		end
 	end
 
@@ -532,7 +619,7 @@ sfm.convert_particle_system = function(ptData)
 	-- ptData["loop"] = "1"
 	-- ptData["auto_simulate"] = "1"
 	-- ptData["transform_with_emitter"] = "1"
-	ptData["alpha_mode"] = "additive"
+	-- ptData["alpha_mode"] = "additive"
 
 	-- ptData["radius"] = ptData["radius"]
 	-- ptData["color"] = ptData["color"]
@@ -542,12 +629,15 @@ sfm.convert_particle_system = function(ptData)
 
 	for k,v in pairs(ptData) do
 		if(is_operator_type(k)) then
-			for opName,opData in pairs(v) do
-				if(opName == "oscillate vector" or opName == "oscillate scalar") then
-					local fieldId = tonumber(opData["oscillation field"])
-					local fieldName = sfmFieldIdToFieldName[fieldId]
-					if(fieldName == nil) then pfm.log("Unsupported oscillation field id: " .. fieldId .. "!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
-					else opData["oscillation field"] = fieldName end
+			for _,opData in ipairs(v) do
+				local opName = opData.operatorType
+				if(sfmOpFields[opName] ~= nil) then
+					for _,fieldKey in ipairs(sfmOpFields[opName]) do
+						local fieldId = tonumber(opData[fieldKey])
+						local fieldName = sfmFieldIdToFieldName[fieldId]
+						if(fieldName == nil) then pfm.log("Unsupported oscillation field id: " .. fieldId .. "!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+						else opData[fieldKey] = fieldName end
+					end
 				end
 			end
 		end
@@ -556,14 +646,12 @@ sfm.convert_particle_system = function(ptData)
 	-- Convert operator and keyvalue names
 	for opType,operators in pairs(ptData) do
 		if(is_operator_type(opType)) then
-			local newOperators = {}
-			for opName,opData in pairs(operators) do
-				newOperators[opName] = opData
+			for _,opData in ipairs(operators) do
+				local opName = opData.operatorType
 				if(sfmOperatorToPragma[opName] ~= nil) then
 					local translationData = sfmOperatorToPragma[opName]
 					if(translationData.pragmaName ~= nil) then
-						newOperators[opName] = nil
-						newOperators[translationData.pragmaName] = opData
+						opData.operatorType = translationData.pragmaName
 					end
 					if(translationData.keyValues ~= nil) then
 						for k,v in pairs(opData) do
@@ -575,7 +663,6 @@ sfm.convert_particle_system = function(ptData)
 					end
 				end
 			end
-			ptData[opType] = newOperators
 		end
 	end
 end
@@ -633,6 +720,13 @@ sfm.convert_dmx_particle_system = function(el,keyValues)
 							childData = {}
 						}
 						sfm.convert_dmx_particle_system(ptData,keyValues[k][name].childData)
+					elseif(is_operator_type(k)) then
+						local name = el:GetName()
+						keyValues[k] = keyValues[k] or {}
+						table.insert(keyValues[k],{
+							operatorType = name
+						})
+						sfm.convert_dmx_particle_system(el,keyValues[k][#keyValues[k]])
 					else
 						local name = el:GetName()
 						keyValues[k][name] = {}

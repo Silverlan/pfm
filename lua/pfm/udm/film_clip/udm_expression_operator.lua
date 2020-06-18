@@ -35,6 +35,14 @@ function udm.PFMExpressionOperator:CalcResult()
 		console.print_warning("Expected math expression '" .. expression .. "' to return a number, " .. type(res) .. " was returned instead!")
 		return
 	end
+	if(self:GetName() == "focalDistance_rescale") then
+		-- TODO: For testing purposes only, remove this!
+		local ent = ents.find_by_name("camera91")[1]
+		local camC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_PFM_CAMERA) or nil
+		if(camC ~= nil) then
+			camC:GetCameraData():SetFocalDistance(res)
+		end
+	end
 	return res
 end
 

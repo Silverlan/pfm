@@ -302,10 +302,10 @@ function gui.PFMMaterialEditor:InitializeControls()
 	-- Subsurface Scattering
 	local sssFactor = gui.create("WIPFMSlider",ctrlVbox)
 	sssFactor:SetText(locale.get_text("pfm_mated_sss_factor"))
-	sssFactor:SetRange(0.0,0.2)
+	sssFactor:SetRange(0.0,0.1)
 	sssFactor:SetDefault(0.01)
 	-- sssFactor:SetTooltip(locale.get_text("sss_factor_desc"))
-	sssFactor:SetStepSize(0.01)
+	sssFactor:SetStepSize(0.001)
 	sssFactor:AddCallback("OnLeftValueChanged",function(el,value)
 		self:ApplySubsurfaceScattering()
 	end)
@@ -372,6 +372,15 @@ function gui.PFMMaterialEditor:InitializeControls()
 	local colorEntryWrapper = colorEntry:Wrap("WIEditableEntry")
 	colorEntryWrapper:SetText(locale.get_text("color_factor"))
 	self.m_colorEntry = colorEntry
+
+	-- Save
+	local btSave = gui.create("WIPFMButton",ctrlVbox)
+	btSave:SetText(locale.get_text("save"))
+	btSave:AddCallback("OnPressed",function(btRaytracying)
+		if(util.is_valid(self.m_material) == false or self.m_material:IsError()) then return end
+		self.m_material:Save()
+	end)
+	self.m_btSave = btSave
 
 	gui.create("WIBase",ctrlVbox)
 end
@@ -500,7 +509,7 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 
 	if(data:HasValue("color_factor")) then
 		local colorFactor = data:GetVector("color_factor")
-		self.m_colorEntry:SetValue(Color(colorFactor))
+		self.m_colorEntry:SetColor(Color(colorFactor))
 	end
 
 	local blockSSS = data:FindBlock("subsurface_scattering")
@@ -515,7 +524,7 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 			self.m_ctrlSSSColor:SetColor(blockSSS:GetColor("color"))
 		end
 		if(blockSSS:HasValue("radius")) then
-			self.m_ctrlSSSRadius:SetValue(blockSSS:GetFloat("radius"))
+			self.m_ctrlSSSRadius:SetText(tostring(blockSSS:GetVector("radius")))
 		end
 	end
 end

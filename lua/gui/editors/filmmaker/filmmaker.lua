@@ -49,6 +49,7 @@ function gui.WIFilmmaker:__init()
 end
 function gui.WIFilmmaker:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
+	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 
 	self:EnableThinking()
 	self:SetSize(1280,1024)
@@ -339,12 +340,18 @@ function gui.WIFilmmaker:CreateNewActorComponent(actor,componentType)
 end
 function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 	-- TODO: Implement a keybinding system for this! Keybindings should also appear in tooltips!
-	if(key == input.KEY_SPACE and state == input.STATE_PRESS) then
-		if(util.is_valid(self.m_viewport)) then
+	if(key == input.KEY_SPACE) then
+		if(state == input.STATE_PRESS and util.is_valid(self.m_viewport)) then
 			local playButton = self.m_viewport:GetPlayButton()
 			playButton:TogglePlay()
-			return util.EVENT_REPLY_HANDLED
 		end
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_COMMA) then
+		if(state == input.STATE_PRESS) then self:GoToPreviousFrame() end
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_PERIOD) then
+		if(state == input.STATE_PRESS) then self:GoToNextFrame() end
+		return util.EVENT_REPLY_HANDLED
 	else
 		-- TODO: UNDO ME
 		--[[local entGhost = ents.find_by_class("pfm_ghost")[1]
@@ -468,6 +475,10 @@ function gui.WIFilmmaker:InitializeProject(project)
 		self.m_playbackControls:SetOffset(0.0)
 	end
 
+	-- We want the frame offset to start at 0, but the default value is already 0, which means the
+	-- callbacks would not get triggered properly. To fix that, we'll just set it to some random value != 0
+	-- before actually setting it to 0 further below.
+	self:SetTimeOffset(1.0)
 	local session = self:GetSession()
 	if(session ~= nil) then
 		local filmTrack = session:GetFilmTrack()
@@ -501,14 +512,13 @@ function gui.WIFilmmaker:InitializeProject(project)
 				end
 			end
 			self.m_updatingProjectTimeOffset = false
+
+			self:CallCallbacks("OnTimeOffsetChanged",self:GetTimeOffset())
 		end)
 	end
 
 	self:InitializeProjectUI()
-	-- TODO: If we directly move to frame 0, the actors don't get spawned
-	-- FIXME
-	self:SetFrameOffset(1)
-	self:SetFrameOffset(0)
+	self:SetTimeOffset(0)
 	return entScene
 end
 function gui.WIFilmmaker:RefreshGameView()

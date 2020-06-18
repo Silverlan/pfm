@@ -17,7 +17,7 @@ function shader.PFMCurve:__init()
 	self.m_dsPushConstants = util.DataStream(util.SIZEOF_VECTOR4 +util.SIZEOF_VECTOR2 *2)
 end
 function shader.PFMCurve:InitializeRenderPass(pipelineIdx)
-	return {shader.Graphics.GetRenderPass()}
+	return {shader.Graphics.get_render_pass()}
 end
 function shader.PFMCurve:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)

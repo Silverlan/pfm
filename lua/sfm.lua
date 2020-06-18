@@ -18,6 +18,7 @@ sfm.ASPECT_RATIO = 16.0 /9.0
 
 sfm.source_units_to_pragma_units = function(units) return units end
 
+-- TODO: Clean this code up
 sfm.convert_source_position_to_pragma = function(pos)
 	pos = Vector(pos.x,pos.z,-pos.y)
 	pos:Rotate(EulerAngles(0,-90,0):ToQuaternion())
@@ -277,6 +278,70 @@ sfm.convert_source_fov_to_pragma = function(fov)
 	local t1 = translationTable[i1]
 	local interpFactor = (t1.sfm > t0.sfm) and ((fov -t0.sfm) /(t1.sfm -t0.sfm)) or 0.0
 	return math.lerp(t0.deg,t1.deg,interpFactor)
+end
+
+sfm.convert_source_aperture_to_fstop = function(aperture)
+	-- Source Engine depth of field values can't be directly translated to Pragma/Cycles values, so
+	-- we'll use a translation table of manually determined values for the conversion.
+	-- This may have to be tweaked in the future!
+	local translationTable = {
+		{
+			sfmAperture = 0,
+			fstop = 100
+		},
+		{
+			sfmAperture = 1,
+			fstop = 25
+		},
+		{
+			sfmAperture = 3,
+			fstop = 15
+		},
+		{
+			sfmAperture = 5,
+			fstop = 10
+		},
+		{
+			sfmAperture = 10,
+			fstop = 5
+		},
+		{
+			sfmAperture = 20,
+			fstop = 4
+		},
+		{
+			sfmAperture = 30,
+			fstop = 3
+		},
+		{
+			sfmAperture = 50,
+			fstop = 2
+		},
+		{
+			sfmAperture = 100,
+			fstop = 1
+		},
+		{
+			sfmAperture = 1000,
+			fstop = 0.1
+		}
+	}
+	local i0
+	local i1
+	for i,t in ipairs(translationTable) do
+		if(aperture < t.sfmAperture) then
+			i0 = (i > 1) and (i -1) or 1
+			i1 = i
+			break
+		end
+	end
+	i1 = i1 or #translationTable
+	i0 = i0 or i1
+
+	local t0 = translationTable[i0]
+	local t1 = translationTable[i1]
+	local interpFactor = (t1.sfmAperture > t0.sfmAperture) and ((aperture -t0.sfmAperture) /(t1.sfmAperture -t0.sfmAperture)) or 0.0
+	return math.lerp(t0.fstop,t1.fstop,interpFactor)
 end
 
 include("sfm/project.lua")

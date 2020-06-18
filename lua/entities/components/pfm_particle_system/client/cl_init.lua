@@ -22,28 +22,42 @@ function ents.PFMParticleSystem:Initialize()
 	self.m_listeners = {}
 	self.m_lastSimulationOffset = 0.0
 	self.m_queuedSimOffset = 0
+	self.m_ptSimTime = 0
 end
 function ents.PFMParticleSystem:OnTick(dt)
 	local ptC = self:GetEntity():GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
 	if(ptC == nil) then return end
 	--ptC:Simulate(1 /24.0)--dt)
+	self:ApplySimulationState()
 	if(self.m_queuedSimOffset == 0) then return end
 
 	-- Particles are simulated at 60 ticks per second
 	local ptSimRate = 1 /60.0
+	local dtAcc = 0.0
 	while(self.m_queuedSimOffset > ptSimRate) do
 		self.m_queuedSimOffset = self.m_queuedSimOffset -ptSimRate
+
+	--local cp0 = self:GetEntity():GetPose() *ptC:GetControlPointPose(0)
+	--local cp0Prev = self:GetEntity():GetPose() *ptC:GetPrevControlPointPose(0)
+	--debug.draw_line(cp0Prev:GetOrigin(),cp0:GetOrigin(),Color.Red,12)
+	--debug.draw_line(cp0:GetOrigin(),cp0:GetOrigin() +Vector(0,100,0),Color.Lime,12)
+	--debug.draw_line(cp0Prev:GetOrigin(),cp0Prev:GetOrigin() +Vector(0,100,0),Color.Aqua,12)
+
 		ptC:Simulate(ptSimRate)
+
+		dtAcc = dtAcc +ptSimRate
 	end
 end
 function ents.PFMParticleSystem:OnOffsetChanged(offset)
 	local ptC = self:GetEntity():GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
+	if(ptC:IsActive() == false) then return end
 	if(self:IsSimulating() == false and (ptC == nil or ptC:IsDying() == false)) then return end
 	local dt = offset -self.m_lastSimulationOffset
 	self.m_lastSimulationOffset = offset
 
 	if(ptC == nil) then return end
 	self.m_queuedSimOffset = self.m_queuedSimOffset +(1 /tool.get_filmmaker():GetFrameRate()) -- TODO: Use dt
+	self.m_ptSimTime = self.m_ptSimTime +(1 /tool.get_filmmaker():GetFrameRate())
 end
 function ents.PFMParticleSystem:OnRemove()
 	for _,cb in ipairs(self.m_listeners) do
@@ -175,7 +189,6 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 			if(string.compare(name,"position within sphere random",false)) then
 				local speedInLocalCoordinateSystemMin = convert_vector(initializerData:GetProperty("speed_in_local_coordinate_system_min"):GetValue())
 				local speedInLocalCoordinateSystemMax = convert_vector(initializerData:GetProperty("speed_in_local_coordinate_system_max"):GetValue())
-				print("Velocity: ",speedInLocalCoordinateSystemMin,speedInLocalCoordinateSystemMax)
 
 				ptC:AddInitializer("initial_velocity",{
 					velocity_min = tostring(speedInLocalCoordinateSystemMin),
@@ -202,12 +215,16 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 	for i,cp in ipairs(particleData:GetControlPoints():GetTable()) do
 		table.insert(self.m_listeners,cp:GetPositionAttr():AddChangeListener(function(newPos)
 			if(ptC == nil) then return end
-			ptC:SetControlPointPosition(i -1,newPos)
+			local pose = ptC:GetControlPointPose(i -1)
+			pose:SetOrigin(newPos)
+			ptC:SetControlPointPose(i -1,pose,self.m_ptSimTime -0.02) -- TODO: FIXME: How to we properly synchronize the film clip time with the particle simulation time?
 		end))
 		table.insert(self.m_listeners,cp:GetRotationAttr():AddChangeListener(function(newRot)
 			local ptC = self:GetEntity():GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
 			if(ptC == nil) then return end
-			ptC:SetControlPointRotation(i -1,newRot)
+			local pose = ptC:GetControlPointPose(i -1)
+			pose:SetRotation(newRot)
+			ptC:SetControlPointPose(i -1,pose,self.m_ptSimTime -0.02) -- TODO: FIXME: How to we properly synchronize the film clip time with the particle simulation time?
 		end))
 		if(ptC ~= nil) then
 			ptC:SetControlPointPosition(i -1,cp:GetPosition())
@@ -224,11 +241,16 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 end
 function ents.PFMParticleSystem:UpdateSimulationState()
 	self.m_simulating = (self.m_particleData:IsSimulating() and self.m_particleData:IsEmitting())
+end
+function ents.PFMParticleSystem:ApplySimulationState()
 	local ptC = self:GetEntity():GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
 	if(ptC ~= nil) then
 		if(self:IsSimulating() == false) then
 			if(ptC:IsActive() and ptC:IsDying() == false) then ptC:Die() end
-		elseif(ptC:IsActive() == false) then ptC:Start() end
+		elseif(ptC:IsActive() == false) then
+			ptC:Start()
+			self.m_ptSimTime = 0.0
+		end
 	end
 end
 function ents.PFMParticleSystem:IsSimulating() return self.m_simulating end

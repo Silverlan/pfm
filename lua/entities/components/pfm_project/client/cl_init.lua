@@ -11,7 +11,7 @@ util.register_class("ents.PFMProject",BaseEntityComponent)
 function ents.PFMProject:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
-	self.m_offset = 0.0 -- Current playback offset in seconds
+	self.m_offset = math.huge -- Current playback offset in seconds
 	self.m_timeFrame = udm.PFMTimeFrame()
 end
 
@@ -67,7 +67,7 @@ end
 
 function ents.PFMProject:Reset()
 	if(util.is_valid(self.m_entRootTrack)) then self.m_entRootTrack:Remove() end
-	self.m_offset = 0.0
+	self.m_offset = math.huge
 end
 
 function ents.PFMProject:GetTimeFrame() return self.m_timeFrame end

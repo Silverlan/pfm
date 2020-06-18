@@ -17,7 +17,7 @@ function shader.PFMGrid:__init()
 	self.m_dsTransformMatrix = util.DataStream(util.SIZEOF_MAT4 +util.SIZEOF_VECTOR4 +util.SIZEOF_INT +util.SIZEOF_FLOAT +util.SIZEOF_FLOAT +util.SIZEOF_INT)
 end
 function shader.PFMGrid:InitializeRenderPass(pipelineIdx)
-	return {shader.Graphics.GetRenderPass()}
+	return {shader.Graphics.get_render_pass()}
 end
 function shader.PFMGrid:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)

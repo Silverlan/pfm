@@ -469,6 +469,149 @@ source_position_random_sphere
 	}
 }
 
+source_remap_initial_scalar
+{
+	$string type "initializer"
+	keyvalues
+	{
+		emitter_lifetime_start_time
+		{
+			$string type "float"
+			$float default -1.0
+			$float min 0.0
+			$float max 30.0
+		}
+		emitter_lifetime_end_time
+		{
+			$string type "float"
+			$float default -1.0
+			$float min 0.0
+			$float max 30.0
+		}
+		input_field
+		{
+			$string type "string"
+		}
+		input_minimum
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		input_maximum
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		output_field
+		{
+			$string type "string"
+		}
+		output_minimum
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		output_maximum
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		output_scalar_of_initial_random_range
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		only_active_within_specified_input_range
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+
+source_remap_scalar_to_vector
+{
+	$string type "initializer"
+	keyvalues
+	{
+		emitter_lifetime_start_time
+		{
+			$string type "float"
+			$float default -1.0
+			$float min 0.0
+			$float max 30.0
+		}
+		emitter_lifetime_end_time
+		{
+			$string type "float"
+			$float default -1.0
+			$float min 0.0
+			$float max 30.0
+		}
+		input_field
+		{
+			$string type "string"
+		}
+		input_minimum
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		input_maximum
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		output_field
+		{
+			$string type "string"
+		}
+		output_minimum
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		output_maximum
+		{
+			$string type "float"
+			$float default 0.0
+			$float min 0.0
+			$float max 10.0
+		}
+		output_scalar_of_initial_random_range
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		use_local_system
+		{
+			$string type "bool"
+			$bool default 1
+		}
+		control_point_id
+		{
+			$string type "int"
+			$int default 0
+			$int min 0
+			$int max 10
+		}
+	}
+}
+
 source_radius_scale
 {
 	$string type "operator"

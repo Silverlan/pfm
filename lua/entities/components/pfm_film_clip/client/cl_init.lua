@@ -132,8 +132,13 @@ function ents.PFMFilmClip:CreateTrackGroup(trackGroup)
 	pfm.log("Creating track group '" .. trackGroup:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
 	local ent = ents.create("pfm_track_group")
 	ent:Spawn()
-	ent:GetComponent(ents.COMPONENT_PFM_TRACK_GROUP):Setup(trackGroup,self)
 	table.insert(self.m_trackGroups,ent)
+
+	local trackGroupC = ent:GetComponent(ents.COMPONENT_PFM_TRACK_GROUP)
+	if(trackGroupC ~= nil) then
+		trackGroupC:Setup(trackGroup,self)
+		trackGroupC:OnOffsetChanged(self:GetOffset())
+	end
 end
 
 function ents.PFMFilmClip:GetActor(actorData)
@@ -148,7 +153,8 @@ end
 
 function ents.PFMFilmClip:CreateActor(actor)
 	local entActor = ents.create("pfm_actor")
-	entActor:GetComponent(ents.COMPONENT_PFM_ACTOR):Setup(actor)
+	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+	actorC:Setup(actor)
 	entActor:Spawn()
 	table.insert(self.m_actors,entActor)
 
@@ -160,6 +166,7 @@ function ents.PFMFilmClip:CreateActor(actor)
 		"' at position (" .. util.round_string(pos.x,0) .. "," .. util.round_string(pos.y,0) .. "," .. util.round_string(pos.z,0) ..
 		") with rotation (" .. util.round_string(ang.p,0) .. "," .. util.round_string(ang.y,0) .. "," .. util.round_string(ang.r,0) ..
 		") with scale (" .. util.round_string(scale.x,2) .. "," .. util.round_string(scale.y,2) .. "," .. util.round_string(scale.z,2) .. ")...",pfm.LOG_CATEGORY_PFM_GAME)
+	actorC:OnOffsetChanged(self:GetOffset())
 end
 
 function ents.PFMFilmClip:GetTimeFrame()

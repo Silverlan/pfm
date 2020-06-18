@@ -35,7 +35,8 @@ function shader.PFMParticleSpriteTrail:CalcVertexPosition(ptc,ptIdx,localVertIdx
 	local lengthFadeInTime = renderer:GetLengthFadeInTime()
 	local lengthScale = (age >= lengthFadeInTime) and 1.0 or (age /lengthFadeInTime)
 	local ptLen = pt:GetLength()
-	l = lengthScale *l *dt *ptLen;
+	l = lengthScale *l *ptLen -- *dt
+	l = math.log(l +2) *12;
 	if(l <= 0.0) then return posCam:Copy() end
 	l = math.clamp(l,renderer:GetMinLength(),renderer:GetMaxLength())
 
@@ -48,8 +49,8 @@ function shader.PFMParticleSpriteTrail:CalcVertexPosition(ptc,ptIdx,localVertIdx
 
 	if(localVertIdx == 0) then return ptWorldPos -tangentY *rad *0.5 end
 	if(localVertIdx == 1) then return ptWorldPos +tangentY *rad *0.5 end
-	if(localVertIdx == 2) then return (ptWorldPos -tangentY *rad *0.5) +dtPosWs end
-	return (ptWorldPos +tangentY *rad *0.5) +dtPosWs
+	if(localVertIdx == 2) then return (ptWorldPos +tangentY *rad *0.5) +dtPosWs end
+	return (ptWorldPos -tangentY *rad *0.5) +dtPosWs
 end
 function shader.PFMParticleSpriteTrail:Draw(drawCmd,ps,renderer,bloom,minLength,maxLength,lengthFadeInTime,animRate)
 	if(self:RecordBeginDraw(drawCmd,ps) == false) then return end

@@ -89,7 +89,7 @@ function ents.ParticleSystemComponent.OperatorOscillateVector:Simulate(pt,dt,str
 			cos = cosFactor *frequency
 		end
 		cos = cos *math.pi
-		local scaleFactor = strength
+		local scaleFactor = strength *dt *0.01 -- TODO: Factor 0.01 is arbitrary but resulted in a closer match for field 'rotation' (See particle system "Explosions_MA_Smoke_1")
 		local oscMultiplier = rate *scaleFactor
 
 		local curVal = pt:GetField(self.m_fieldId)

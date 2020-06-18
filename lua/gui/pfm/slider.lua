@@ -64,6 +64,12 @@ function gui.PFMSlider:OnSizeChanged(w,h)
 end
 function gui.PFMSlider:SetStepSize(stepSize)
 	self.m_stepSize = stepSize
+	local strStepSize = tostring(stepSize)
+	local decimalPlacePos = strStepSize:find(".")
+	self.m_numDecimalPlaces = 0
+	if(decimalPlacePos ~= nil) then
+		self.m_numDecimalPlaces = #strStepSize -decimalPlacePos -1
+	end
 	self:UpdateStepSize()
 end
 function gui.PFMSlider:GetStepSize() return self.m_stepSize end
@@ -222,9 +228,9 @@ end
 function gui.PFMSlider:UpdateText()
 	if(self.m_baseText == nil) then return end
 	local text = self.m_baseText .. ": "
-	text = text .. util.round_string(self:GetLeftValue(),2)
+	text = text .. util.round_string(self:GetLeftValue(),self.m_numDecimalPlaces)
 	if(self:GetLeftRightValueRatio() ~= 0.5) then
-		text = text .. " / " .. util.round_string(self:GetRightValue(),2)
+		text = text .. " / " .. util.round_string(self:GetRightValue(),self.m_numDecimalPlaces)
 	end
 	self.m_text:SetText(text)
 	self.m_text:SizeToContents()

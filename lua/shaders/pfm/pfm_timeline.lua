@@ -17,7 +17,7 @@ function shader.PFMTimeline:__init()
 	self.m_dsTransformMatrix = util.DataStream(util.SIZEOF_MAT4 +util.SIZEOF_VECTOR4 +util.SIZEOF_INT +util.SIZEOF_FLOAT +util.SIZEOF_FLOAT)
 end
 function shader.PFMTimeline:InitializeRenderPass(pipelineIdx)
-	return {shader.Graphics.GetRenderPass()}
+	return {shader.Graphics.get_render_pass()}
 end
 function shader.PFMTimeline:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
