@@ -52,8 +52,8 @@ function shader.PFMParticleSpriteTrail:CalcVertexPosition(ptc,ptIdx,localVertIdx
 	if(localVertIdx == 2) then return (ptWorldPos +tangentY *rad *0.5) +dtPosWs end
 	return (ptWorldPos -tangentY *rad *0.5) +dtPosWs
 end
-function shader.PFMParticleSpriteTrail:Draw(drawCmd,ps,renderer,bloom,minLength,maxLength,lengthFadeInTime,animRate)
-	if(self:RecordBeginDraw(drawCmd,ps) == false) then return end
+function shader.PFMParticleSpriteTrail:Draw(drawCmd,ps,renderer,renderFlags,minLength,maxLength,lengthFadeInTime,animRate)
+	if(self:RecordBeginDraw(drawCmd,ps,renderFlags) == false) then return end
 	local dsLightSources = renderer:GetLightSourceDescriptorSet()
 	local dsShadows = renderer:GetPSSMTextureDescriptorSet()
 	self:RecordBindLights(dsShadows,dsLightSources)
@@ -67,7 +67,7 @@ function shader.PFMParticleSpriteTrail:Draw(drawCmd,ps,renderer,bloom,minLength,
 	self.m_dsPushConstants:WriteFloat(animRate)
 	self:RecordPushConstants(self.m_dsPushConstants,shader.BaseParticle2D.PUSH_CONSTANTS_USER_DATA_OFFSET)
 
-	self:RecordDraw(renderer,ps,bloom)
+	self:RecordDraw(renderer,ps,renderFlags)
 	self:RecordEndDraw()
 end
 shader.register("pfm_particle_sprite_trail",shader.PFMParticleSpriteTrail)

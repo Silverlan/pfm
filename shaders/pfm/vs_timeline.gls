@@ -18,13 +18,13 @@ layout(location = 0) in vec2 in_vert_pos;
 void main()
 {
 	float y = in_vert_pos.y;
-	if((gl_InstanceIndex %5) != 0)
+	if((SH_INSTANCE_INDEX %5) != 0)
 		y = (y *0.5) -0.5;
-	else if((gl_InstanceIndex %10) != 0)
+	else if((SH_INSTANCE_INDEX %10) != 0)
 		y = (y *0.8) -0.2;
 	y *= u_pushConstants.yMultiplier;
 	gl_Position = u_pushConstants.transformMatrix *vec4(
-		-1.0 +gl_InstanceIndex *u_pushConstants.strideX,
+		-1.0 +SH_INSTANCE_INDEX *u_pushConstants.strideX,
 		y,
 		0.0,1.0
 	);

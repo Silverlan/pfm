@@ -75,6 +75,11 @@ function gui.PFMFrame:RemoveTab(identifier)
 		self:SetActiveTab(self.m_activeTabIndex -1)
 	end
 end
+function gui.PFMFrame:FindTab(name)
+	for _,tab in ipairs(self.m_tabs) do
+		if(name == tab.identifier) then return tab.panel end
+	end
+end
 function gui.PFMFrame:AddTab(identifier,name,panel)
 	if(util.is_valid(self.m_contents) == false or util.is_valid(self.m_tabButtonContainer) == false) then
 		panel:RemoveSafely()

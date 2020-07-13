@@ -590,11 +590,13 @@ sfm.convert_particle_system = function(ptData)
 
 	local emissionRate = 100
 	local particleLimit
+	local emitContinuously = false
 	if(ptData.emitters ~= nil) then
 		for _,emitter in ipairs(ptData.emitters) do
 			local opType = emitter.operatorType
 			if(opType == "emit_continuously") then
 				emissionRate = tonumber(emitter["emission_rate"])
+				emitContinuously = true
 			elseif(opType == "emit_instantaneously") then
 				particleLimit = emitter["num_to_emit"]
 				-- Just emit everything immediately
@@ -608,7 +610,7 @@ sfm.convert_particle_system = function(ptData)
 		sortParticles = toboolean(ptData["sort particles"])
 	end
 
-	local material = util.Path(ptData["material"])
+	local material = util.Path(ptData["material"] or "")
 	material:RemoveFileExtension()
 	ptData["maxparticles"] = ptData["max_particles"]
 	ptData["material"] = material:GetString()
@@ -616,7 +618,18 @@ sfm.convert_particle_system = function(ptData)
 	ptData["sort_particles"] = sortParticles and "1" or "0"
 	ptData["emission_rate"] = tostring(emissionRate)
 	if(particleLimit ~= nil) then ptData["limit_particle_count"] = tostring(particleLimit) end
-	-- ptData["loop"] = "1"
+
+	local mat = game.load_material(material:GetString())
+	if(mat ~= nil and mat:IsError() == false) then
+		-- Disable bloom if the material doesn't have any
+		local db = mat:GetDataBlock()
+		if(db:HasValue("bloom_color_factor")) then
+			ptData["bloom_color_factor"] = "1 1 1"
+		else
+			ptData["bloom_color_factor"] = "0 0 0"
+		end
+	end
+	if(emitContinuously) then ptData["loop"] = "1" end
 	-- ptData["auto_simulate"] = "1"
 	-- ptData["transform_with_emitter"] = "1"
 	-- ptData["alpha_mode"] = "additive"
@@ -635,7 +648,7 @@ sfm.convert_particle_system = function(ptData)
 					for _,fieldKey in ipairs(sfmOpFields[opName]) do
 						local fieldId = tonumber(opData[fieldKey])
 						local fieldName = sfmFieldIdToFieldName[fieldId]
-						if(fieldName == nil) then pfm.log("Unsupported oscillation field id: " .. fieldId .. "!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+						if(fieldName == nil) then pfm.log("Unsupported oscillation field id: " .. fieldKey .. "!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 						else opData[fieldKey] = fieldName end
 					end
 				end

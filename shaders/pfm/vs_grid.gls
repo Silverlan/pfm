@@ -23,7 +23,7 @@ void main()
 		x *= u_pushConstants.vMultiplier;
 		gl_Position = u_pushConstants.transformMatrix *vec4(
 			x,
-			-1.0 +gl_InstanceIndex *u_pushConstants.strideV,
+			-1.0 +SH_INSTANCE_INDEX *u_pushConstants.strideV,
 			0.0,1.0
 		);
 	}
@@ -32,7 +32,7 @@ void main()
 		float y = in_vert_pos.y;
 		y *= u_pushConstants.vMultiplier;
 		gl_Position = u_pushConstants.transformMatrix *vec4(
-			-1.0 +gl_InstanceIndex *u_pushConstants.strideV,
+			-1.0 +SH_INSTANCE_INDEX *u_pushConstants.strideV,
 			y,
 			0.0,1.0
 		);

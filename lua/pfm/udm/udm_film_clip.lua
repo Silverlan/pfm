@@ -65,13 +65,14 @@ end
 
 function udm.PFMFilmClip:SetPlaybackOffset(offset)
 	if(self:GetTimeFrame():IsInTimeFrame(offset) == false) then return end
-	local localOffset = self:LocalizeTimeOffset(offset)
+	local localOffset = self:LocalizeOffset(offset)
 	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do
 		trackGroup:SetPlaybackOffset(localOffset,offset)
 	end
 end
 
-function udm.PFMFilmClip:LocalizeTimeOffset(offset) return self:GetTimeFrame():LocalizeOffset(offset) end
+function udm.PFMFilmClip:LocalizeOffset(offset) return self:GetTimeFrame():LocalizeOffset(offset) end
+function udm.PFMFilmClip:LocalizeTimeOffset(offset) return self:GetTimeFrame():LocalizeTimeOffset(offset) end
 
 function udm.PFMFilmClip:GetChildFilmClip(offset)
 	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do

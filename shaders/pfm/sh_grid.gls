@@ -9,7 +9,7 @@
 #ifndef F_SH_GRID_GLS
 #define F_SH_GRID_GLS
 
-layout(push_constant) uniform PushConstants
+layout(LAYOUT_PUSH_CONSTANTS()) uniform PushConstants
 {
 	mat4 transformMatrix;
 	vec4 color;

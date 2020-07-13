@@ -32,9 +32,19 @@ function udm.PFMTimeFrame:Min(timeFrameOther)
 	return result
 end
 function udm.PFMTimeFrame:LocalizeOffset(offset)
-	return offset -self:GetStart() +self:GetOffset()
+	return (offset -self:GetStart() +self:GetOffset()) *self:GetScale()
+end
+function udm.PFMTimeFrame:GlobalizeOffset(offset)
+	return (self:GetStart() +offset -self:GetOffset()) /self:GetScale()
+end
+function udm.PFMTimeFrame:LocalizeTimeOffset(offset)
+	return offset -self:GetStart()
+end
+function udm.PFMTimeFrame:GlobalizeTimeOffset(offset)
+	return offset +self:GetStart()
 end
 function udm.PFMTimeFrame:IsInTimeFrame(t,e)
-	e = e or 0.0
-	return t >= self:GetStart() -e and t < self:GetEnd() +e
+	e = e or 0.001
+	-- Note: -e for both start and end is on purpose
+	return t >= self:GetStart() -e and t < self:GetEnd() -e
 end

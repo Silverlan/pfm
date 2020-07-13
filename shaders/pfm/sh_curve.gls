@@ -9,7 +9,7 @@
 #ifndef F_SH_CURVE_GLS
 #define F_SH_CURVE_GLS
 
-layout(push_constant) uniform PushConstants
+layout(LAYOUT_PUSH_CONSTANTS()) uniform PushConstants
 {
 	vec4 color;
 	vec2 xRange;

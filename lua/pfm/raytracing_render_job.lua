@@ -7,6 +7,7 @@
 ]]
 
 include("/util/class_property.lua")
+include("/shaders/pfm/pfm_calc_image_luminance.lua")
 
 pfm = pfm or {}
 
@@ -46,6 +47,9 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"skyYaw",0.0)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"maxTransparencyBounces",128)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"lightIntensityFactor",1.0)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"frameCount",1)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"preStageOnly",false,{
+	getter = "IsPreStageOnly"
+})
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"denoise",true)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"hdrOutput",false,{
 	getter = "GetHDROutput",
@@ -88,6 +92,7 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetMaxTransparencyBounces(self:GetMaxTransparencyBounces())
 	cpy:SetLightIntensityFactor(self:GetLightIntensityFactor())
 	cpy:SetFrameCount(self:GetFrameCount())
+	cpy:SetPreStageOnly(self:IsPreStageOnly())
 	cpy:SetDenoise(self:GetDenoise())
 	cpy:SetHDROutput(self:GetHDROutput())
 	cpy:SetDeviceType(self:GetDeviceType())
@@ -109,14 +114,19 @@ pfm.RaytracingRenderJob.STATE_RENDERING = 1
 pfm.RaytracingRenderJob.STATE_FAILED = 2
 pfm.RaytracingRenderJob.STATE_COMPLETE = 3
 pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE = 4
+pfm.RaytracingRenderJob.STATE_SUB_FRAME_COMPLETE = 5
 function pfm.RaytracingRenderJob:__init(settings)
 	self.m_settings = (settings and settings:Copy()) or pfm.RaytracingRenderJob.Settings()
-	self.m_currentFrame = -1
+	self.m_startFrame = 0
 	self.m_gameScene = game.get_scene()
+	self:SetAutoAdvanceSequence(false)
 end
+function pfm.RaytracingRenderJob:GetPreStageScene() return self.m_preStage end
 function pfm.RaytracingRenderJob:SetGameScene(scene) self.m_gameScene = scene end
 function pfm.RaytracingRenderJob:GetGameScene() return self.m_gameScene end
 function pfm.RaytracingRenderJob:GetSettings() return self.m_settings end
+function pfm.RaytracingRenderJob:SetStartFrame(startFrame) self.m_startFrame = startFrame end
+function pfm.RaytracingRenderJob:SetAutoAdvanceSequence(autoAdvance) self.m_autoAdvanceSequence = autoAdvance end
 
 function pfm.RaytracingRenderJob:IsComplete()
 	if(self.m_raytracingJob == nil) then return true end
@@ -126,6 +136,7 @@ function pfm.RaytracingRenderJob:GetProgress()
 	if(self.m_raytracingJob == nil) then return 1.0 end
 	return self.m_raytracingJob:GetProgress()
 end
+function pfm.RaytracingRenderJob:GetRenderTime() return self.m_tRender end
 function pfm.RaytracingRenderJob:GetRenderResultTexture() return self.m_renderResult end
 function pfm.RaytracingRenderJob:GetRenderResult() return self.m_currentImageBuffer end
 function pfm.RaytracingRenderJob:GetRenderResultFrameIndex() return self.m_renderResultFrameIndex end
@@ -144,8 +155,6 @@ function pfm.RaytracingRenderJob:GenerateResult()
 		img = prosper.create_image(self.m_currentImageBuffer,imgCreateInfo)
 	end
 	self.m_imageBuffers = {}
-	self.m_renderResultFrameIndex = self.m_currentFrame
-	self.m_renderResultRemainingSubStages = self.m_remainingSubStages
 
 	local imgViewCreateInfo = prosper.ImageViewCreateInfo()
 	imgViewCreateInfo.swizzleAlpha = prosper.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
@@ -156,52 +165,67 @@ function pfm.RaytracingRenderJob:GenerateResult()
 	self.m_renderResult = prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,samplerCreateInfo)
 end
 function pfm.RaytracingRenderJob:Update()
-	if(self.m_raytracingJob == nil) then return pfm.RaytracingRenderJob.STATE_IDLE end
-	local progress = self.m_raytracingJob:GetProgress()
-	self.m_lastProgress = progress
-	if(self:IsComplete() == false) then return pfm.RaytracingRenderJob.STATE_RENDERING end
-	local successful = self.m_raytracingJob:IsSuccessful()
-	local isFrameComplete = (self.m_remainingSubStages == 0) -- No sub-stages remaining
-	if(successful) then
-		local imgBuffer = self.m_raytracingJob:GetResult()
-		table.insert(self.m_imageBuffers,imgBuffer)
-
-		if(isFrameComplete) then self:GenerateResult() end
+	if(self.m_tRenderStart ~= nil) then
+		if(time.cur_time() >= self.m_tRenderStart) then
+			self:RenderCurrentFrame()
+		end
+		return
 	end
-	self.m_raytracingJob = nil
+
+	local isFrameComplete = (self.m_remainingSubStages == 0) -- No sub-stages remaining
+
+	if(self.m_raytracingJob == nil and self.m_preStage == nil) then return pfm.RaytracingRenderJob.STATE_IDLE end
+	local progress = (self.m_raytracingJob ~= nil) and self.m_raytracingJob:GetProgress() or 1.0
+	self.m_lastProgress = progress
+	local successful = true
+	if(self.m_raytracingJob ~= nil) then
+		if(self:IsComplete() == false) then return pfm.RaytracingRenderJob.STATE_RENDERING end
+		successful = self.m_raytracingJob:IsSuccessful()
+		if(successful) then
+			local imgBuffer = self.m_raytracingJob:GetResult()
+			table.insert(self.m_imageBuffers,imgBuffer)
+
+			if(isFrameComplete) then self:GenerateResult() end
+		end
+		self.m_raytracingJob = nil
+	end
+	self.m_renderResultFrameIndex = self.m_currentFrame
+	self.m_renderResultRemainingSubStages = self.m_remainingSubStages
 
 	if(successful) then
-		local complete = self:RenderNextImage()
-		if(complete) then return pfm.RaytracingRenderJob.STATE_COMPLETE end
-		return isFrameComplete and pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE or pfm.RaytracingRenderJob.STATE_RENDERING
+		self.m_tRender = (time.time_since_epoch() -self.m_renderStartTime) /1000000000.0
+		local nextFrame = self.m_currentFrame
+		if(self.m_remainingSubStages == 0) then
+			nextFrame = nextFrame +1
+		end
+
+		if(nextFrame == self.m_endFrame +1) then
+			local msg
+			local renderSettings = self.m_settings
+			if(renderSettings:IsRenderPreview()) then msg = "Preview rendering complete!"
+			else msg = "Rendering complete! " .. renderSettings:GetFrameCount() .. " frames have been rendered!" end
+			pfm.log(msg,pfm.LOG_CATEGORY_PFM_RENDER)
+			return pfm.RaytracingRenderJob.STATE_COMPLETE
+		end
+		if(self.m_autoAdvanceSequence) then self:RenderNextImage() end
+		return isFrameComplete and pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE or pfm.RaytracingRenderJob.STATE_SUB_FRAME_COMPLETE
 	end
 	return pfm.RaytracingRenderJob.STATE_FAILED
 end
 function pfm.RaytracingRenderJob:Start()
 	self.m_remainingSubStages = 0
 	self.m_imageBuffers = {}
+	self.m_currentFrame = self.m_startFrame -1
+	self.m_endFrame = self.m_currentFrame +self:GetSettings():GetFrameCount()
 	self:RenderNextImage()
 end
-function pfm.RaytracingRenderJob:RenderNextImage()
-	if(self.m_remainingSubStages == 0) then
-		self.m_currentFrame = self.m_currentFrame +1
-		self.m_remainingSubStages = self:GetSettings():IsCubemapPanorama() and 6 or 1
-	end
-	self.m_remainingSubStages = self.m_remainingSubStages -1
-	local subStageIdx = self.m_remainingSubStages
-
-	local renderSettings = self.m_settings
-	if(self.m_currentFrame == renderSettings:GetFrameCount()) then
-		local msg
-		if(renderSettings:IsRenderPreview()) then msg = "Preview rendering complete!"
-		else msg = "Rendering complete! " .. renderSettings:GetFrameCount() .. " frames have been rendered!" end
-		pfm.log(msg,pfm.LOG_CATEGORY_PFM_INTERFACE)
-		return true
-	end
-
+function pfm.RaytracingRenderJob:RenderCurrentFrame()
+	self.m_tRenderStart = nil
 	local cam = self.m_gameScene:GetActiveCamera()
 	if(cam == nil) then return end
 
+	self.m_renderStartTime = time.time_since_epoch()
+	local renderSettings = self.m_settings
 	local createInfo = cycles.Scene.CreateInfo()
 	createInfo.denoise = renderSettings:GetDenoise()
 	createInfo.hdrOutput = renderSettings:GetHDROutput()
@@ -243,6 +267,9 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	scene:SetSkyStrength(renderSettings:GetSkyStrength())
 	scene:SetEmissionStrength(renderSettings:GetEmissionStrength())
 	scene:SetMaxTransparencyBounces(renderSettings:GetMaxTransparencyBounces())
+	-- TODO: Add user options for these
+	scene:SetMaxDiffuseBounces(4)
+	scene:SetMaxGlossyBounces(4)
 	scene:SetLightIntensityFactor(renderSettings:GetLightIntensityFactor())
 	scene:SetResolution(w,h)
 
@@ -270,11 +297,12 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	local pfmCam = cam:GetEntity():GetComponent(ents.COMPONENT_PFM_CAMERA)
 	if(pfmCam ~= nil) then
 		local camData = pfmCam:GetCameraData()
+		print("Using focal distance: ",camData:GetFocalDistance())
 		clCam:SetFocalDistance(camData:GetFocalDistance())
 		clCam:SetBokehRatio(camData:GetApertureBokehRatio())
 		clCam:SetBladeCount(camData:GetApertureBladeCount())
 		clCam:SetBladesRotation(camData:GetApertureBladesRotation())
-		clCam:SetDepthOfFieldEnabled(camData:IsDepthOfFieldEnabled())
+		clCam:SetDepthOfFieldEnabled(false)--camData:IsDepthOfFieldEnabled())
 		clCam:SetApertureSizeFromFStop(camData:GetFStop(),math.calc_focal_length_from_fov(fov,camData:GetSensorSize()))
 	else clCam:SetDepthOfFieldEnabled(false) end
 
@@ -287,8 +315,78 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 		return true
 	end)
 	if(#renderSettings:GetSky() > 0) then scene:SetSky(renderSettings:GetSky()) end
+
+	-- We want particle effects with bloom to emit light, so we'll add a light source for each particle.
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PARTICLE_SYSTEM)}) do
+		local ptC = ent:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
+		if(ptC:IsBloomEnabled()) then
+			local mat = ptC:GetMaterial()
+			if(mat ~= nil) then
+				-- print("Adding light source for particles of particle system " .. tostring(ent) .. ", which uses material '" .. mat:GetName() .. "'...")
+				-- print("Particle system uses " .. util.get_type_name(ptC:GetRenderers()[1]) .. " renderer!")
+				-- To get the correct color for the particles, we need to know the color of the texture.
+				-- If we don't know the color, we'll compute it using the luminance shader (and store it
+				-- in the material for future use).
+				local luminance = util.Luminance.get_material_luminance(mat)
+				if(luminance == nil) then
+					pfm.log("Particle system " .. tostring(ent) .. " uses material '" .. mat:GetName() .. "', but material has no luminance information, which is required to determine emission color! Computing...",pfm.LOG_CATEGORY_PFM_RENDER)
+					local texInfo = (mat ~= nil) and mat:GetTextureInfo("albedo_map") or nil
+					local tex = (texInfo ~= nil) and texInfo:GetTexture() or nil
+					local vkTex = (tex ~= nil) and tex:GetVkTexture() or nil
+					if(vkTex ~= nil) then
+						-- No luminance information available; Calculate it now
+						local alphaMode = ptC:GetEffectiveAlphaMode()
+						local useBlackAsTransparency = (alphaMode == ents.ParticleSystemComponent.ALPHA_MODE_ADDITIVE_BY_COLOR)
+						luminance = shader.get("pfm_calc_image_luminance"):CalcImageLuminance(vkTex,useBlackAsTransparency)
+						-- TODO: What about animated textures?
+
+						local msg = "Computed luminance: " .. tostring(luminance)
+						if(useBlackAsTransparency) then msg = msg .. " (Black was interpreted as transparency)" end
+						msg = msg .. "! Applying to material..."
+						pfm.log(msg,pfm.LOG_CATEGORY_PFM_RENDER)
+
+						util.Luminance.set_material_luminance(mat,luminance)
+						mat:Save()
+					end
+				end
+				if(luminance ~= nil) then
+					local avgIntensity = luminance:GetAvgIntensity()
+					local bloomCol = ptC:GetEffectiveBloomColorFactor()
+					local numRenderParticles = ptC:GetRenderParticleCount()
+					-- print("Adding light source(s) for " .. numRenderParticles .. " particles...")
+					local intensityFactor = 1.0
+					-- TODO: Handle this differently
+					if(util.get_type_name(ptC:GetRenderers()[1]) == "RendererSpriteTrail") then intensityFactor = 0.05 end
+					for i=1,numRenderParticles do
+						local ptIdx = ptC:GetParticleIndexFromParticleBufferIndex(i -1)
+						local pt = ptC:GetParticle(ptIdx)
+						local radius = pt:GetRadius()
+						-- TODO: Take length into account, as well as the particle shader?
+						local alpha = pt:GetAlpha()
+						local col = pt:GetColor() *bloomCol
+						col = Color(col *Vector4(avgIntensity,1.0))
+						col.a = 255
+						
+						local pos = pt:GetPosition()
+						local light = scene:AddLightSource(cycles.LightSource.TYPE_POINT,pos)
+						light:SetColor(col)
+						local intensity = intensityFactor *math.pow(10.0 *(alpha ^2.0) *radius,1.0 /1.5) -- Decline growth for larger factors
+						-- print("Light: ",intensity,alpha,radius,intensityFactor)
+						light:SetIntensity(intensity) -- TODO: This may require some tweaking
+					end
+				end
+			end
+		end
+	end
 	
-	pfm.log("Starting render job for frame " .. self.m_currentFrame .. "...",pfm.LOG_CATEGORY_PFM_INTERFACE)
+	pfm.log("Starting render job for frame " .. (self.m_currentFrame +1) .. "...",pfm.LOG_CATEGORY_PFM_RENDER)
+
+	if(renderSettings:IsPreStageOnly()) then
+		self.m_preStage = scene
+		self.m_lastProgress = 0.0
+		return
+	end
+	self.m_preStage = nil
 
 	local job = scene:CreateRenderJob()
 	job:Start()
@@ -296,16 +394,37 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	self.m_raytracingJob = job
 
 	self.m_lastProgress = 0.0
-
-	-- Move to next frame in case we're rendering an image sequence
-	if(self.m_currentFrame < (renderSettings:GetFrameCount() -1)) then
-		local filmmaker = tool.get_filmmaker()
-		if(util.is_valid(filmmaker)) then filmmaker:GoToNextFrame() end
+end
+function pfm.RaytracingRenderJob:RenderNextImage()
+	if(self.m_remainingSubStages == 0) then
+		self.m_currentFrame = self.m_currentFrame +1
+		self.m_remainingSubStages = self:GetSettings():IsCubemapPanorama() and 6 or 1
 	end
+	self.m_remainingSubStages = self.m_remainingSubStages -1
+	local subStageIdx = self.m_remainingSubStages
+
+	local renderSettings = self.m_settings
+	--[[if(self.m_currentFrame == self.m_endFrame +1) then
+		local msg
+		if(renderSettings:IsRenderPreview()) then msg = "Preview rendering complete!"
+		else msg = "Rendering complete! " .. renderSettings:GetFrameCount() .. " frames have been rendered!" end
+		pfm.log(msg,pfm.LOG_CATEGORY_PFM_RENDER)
+		return true
+	end]]
+
+	local filmmaker = tool.get_filmmaker()
+	-- Make sure we're at the right frame
+	filmmaker:GoToFrame(self.m_currentFrame)
+	-- We want to wait for a bit before rendering, to make sure
+	-- everything for this frame has been set up properly.
+	-- If the scene contains particle systems, the frame must not be
+	-- changed until rendering has been completed!
+	self.m_tRenderStart = time.cur_time() +0.2
 	return false
 end
 function pfm.RaytracingRenderJob:IsRendering() return (self.m_raytracingJob ~= nil and self.m_raytracingJob:IsComplete() == false) end
 function pfm.RaytracingRenderJob:CancelRendering()
+	self.m_tRenderStart = nil
 	if(self:IsRendering() == false) then return end
 	self.m_raytracingJob:Cancel()
 end

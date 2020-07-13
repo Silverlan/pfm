@@ -35,6 +35,7 @@ function ents.PFMParticleSystem:OnTick(dt)
 	local ptSimRate = 1 /60.0
 	local dtAcc = 0.0
 	while(self.m_queuedSimOffset > ptSimRate) do
+		print(self:GetEntity())
 		self.m_queuedSimOffset = self.m_queuedSimOffset -ptSimRate
 
 	--local cp0 = self:GetEntity():GetPose() *ptC:GetControlPointPose(0)
@@ -97,6 +98,7 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 		game.precache_particle_system("stickybomb",true)
 		game.precache_particle_system("muzzle_flash",true)
 		game.precache_particle_system("bullet_tracers",true)
+		game.precache_particle_system("nailtrails",true)
 		game.precache_particle_system("sessions/" .. tool.get_filmmaker():GetProject():GetName() .. "_instanced",true)
 		ent:SetKeyValue("particle_file",ptSystemFileName)
 		ent:SetKeyValue("particle",ptSystemName)

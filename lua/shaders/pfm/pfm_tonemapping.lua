@@ -24,28 +24,6 @@ shader.PFMTonemapping.TONE_MAPPING_FILMLIC1 = shader.PFMTonemapping.TONE_MAPPING
 shader.PFMTonemapping.TONE_MAPPING_FILMLIC2 = shader.PFMTonemapping.TONE_MAPPING_FILMLIC1 +1
 shader.PFMTonemapping.TONE_MAPPING_INSOMNIAC = shader.PFMTonemapping.TONE_MAPPING_FILMLIC2 +1
 
-util.register_class("shader.PFMTonemapping.Luminance")
-function shader.PFMTonemapping.Luminance:__init(avgLuminance,minLuminance,maxLuminance,avgIntensity,logAvgLuminance)
-	self:SetAvgLuminance(avgLuminance or 0.0)
-	self:SetMinLuminance(minLuminance or 0.0)
-	self:SetMaxLuminance(maxLuminance or 0.0)
-	self:SetAvgIntensity(avgIntensity or Vector())
-	self:SetAvgLuminanceLog(logAvgLuminance or 0.0)
-end
-function shader.PFMTonemapping.Luminance:__tostring()
-	return "Luminance[Avg: " .. self:GetAvgLuminance() .. "][Min: " .. self:GetMinLuminance() .. "][Max: " .. self:GetMaxLuminance() .. "][Avg Intensity: " .. tostring(self:GetAvgIntensity()) .. "][AvgLog: " .. self:GetAvgLuminanceLog() .. "]"
-end
-function shader.PFMTonemapping.Luminance:SetAvgLuminance(avgLuminance) self.m_avgLuminance = avgLuminance end
-function shader.PFMTonemapping.Luminance:GetAvgLuminance() return self.m_avgLuminance end
-function shader.PFMTonemapping.Luminance:SetMinLuminance(minLuminance) self.m_minLuminance = minLuminance end
-function shader.PFMTonemapping.Luminance:GetMinLuminance() return self.m_minLuminance end
-function shader.PFMTonemapping.Luminance:SetMaxLuminance(maxLuminance) self.m_maxLuminance = maxLuminance end
-function shader.PFMTonemapping.Luminance:GetMaxLuminance() return self.m_maxLuminance end
-function shader.PFMTonemapping.Luminance:SetAvgLuminanceLog(avgLuminanceLog) self.m_avgLuminanceLog = avgLuminanceLog end
-function shader.PFMTonemapping.Luminance:GetAvgLuminanceLog() return self.m_avgLuminanceLog end
-function shader.PFMTonemapping.Luminance:SetAvgIntensity(avgIntensity) self.m_avgIntensity = avgIntensity end
-function shader.PFMTonemapping.Luminance:GetAvgIntensity() return self.m_avgIntensity end
-
 function shader.PFMTonemapping:__init()
 	shader.BaseGraphics.__init(self)
 

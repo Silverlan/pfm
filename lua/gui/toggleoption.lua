@@ -26,6 +26,7 @@ function gui.ToggleOption:OnInitialize()
 end
 function gui.ToggleOption:SetChecked(checked) self.m_checkbox:SetChecked(checked) end
 function gui.ToggleOption:IsChecked() return self.m_checkbox:IsChecked() end
+function gui.ToggleOption:GetCheckbox() return self.m_checkbox end
 function gui.ToggleOption:Toggle() self.m_checkbox:Toggle() end
 function gui.ToggleOption:SetText(text)
 	self.m_label:SetText(text)

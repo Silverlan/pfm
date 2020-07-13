@@ -31,6 +31,7 @@ include("/gui/pfm/infobar.lua")
 include("/gui/pfm/materialeditor.lua")
 include("/gui/pfm/particleeditor.lua")
 include("/pfm/util_particle_system.lua")
+include("project_packer.lua")
 
 gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
@@ -139,6 +140,15 @@ function gui.WIFilmmaker:OnInitialize()
 				import.export_scene(fname)
 			end)
 			dialoge:SetExtensions({"fbx"})
+			dialoge:SetRootPath(util.get_addon_path())
+			dialoge:Update()
+		end)
+		pContext:AddItem(locale.get_text("pfm_pack_project") .. "...",function(pItem)
+			local dialoge = gui.create_file_save_dialog(function(pDialoge)
+				local fname = pDialoge:GetFilePath(true)
+				self:PackProject(fname)
+			end)
+			dialoge:SetExtensions({"zip"})
 			dialoge:SetRootPath(util.get_addon_path())
 			dialoge:Update()
 		end)
@@ -328,7 +338,9 @@ function gui.WIFilmmaker:OnInitialize()
 		self.m_entLight = entLight
 	end
 end
+function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
 function gui.WIFilmmaker:GetViewport() return self.m_viewport end
+function gui.WIFilmmaker:GetRenderTab() return self.m_viewportFrame:FindTab("render") end
 function gui.WIFilmmaker:GetActorEditor() return self.m_actorEditor end
 function gui.WIFilmmaker:CreateNewActor()
 	-- TODO: What if no actor editor is open?
@@ -430,6 +442,7 @@ function gui.WIFilmmaker:OnRemove()
 
 	if(util.is_valid(self.m_reflectionProbe)) then self.m_reflectionProbe:Remove() end
 	if(util.is_valid(self.m_entLight)) then self.m_entLight:Remove() end
+	collectgarbage()
 end
 function gui.WIFilmmaker:CaptureRaytracedImage()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
@@ -453,6 +466,7 @@ function gui.WIFilmmaker:CloseProject()
 	pfm.log("Closing project...",pfm.LOG_CATEGORY_PFM)
 	if(util.is_valid(self.m_gameView)) then self.m_gameView:Remove() end
 	if(util.is_valid(self.m_cbPlayOffset)) then self.m_cbPlayOffset:Remove() end
+	collectgarbage()
 end
 function gui.WIFilmmaker:GetGameView() return self.m_gameView end
 function gui.WIFilmmaker:InitializeProject(project)
@@ -625,10 +639,11 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	viewportFrame:SetHeight(self:GetHeight())
 	local viewport = gui.create("WIPFMViewport")
 	self.m_viewport = viewport
+	self.m_viewportFrame = viewportFrame
 	viewportFrame:AddTab("primary_viewport",locale.get_text("pfm_primary_viewport"),viewport)
 
 	local renderPreview = gui.create("WIPFMRenderPreview")
-	viewportFrame:AddTab("cycles_renderer",locale.get_text("pfm_cycles_renderer"),renderPreview)
+	viewportFrame:AddTab("render",locale.get_text("pfm_cycles_renderer"),renderPreview)
 
 	gui.create("WIResizer",self.m_contentsRight)
 
@@ -821,12 +836,33 @@ function gui.WIFilmmaker:GetFrameRate()
 	local session = self:GetSession()
 	return (session ~= nil) and session:GetFrameRate() or 24
 end
+function gui.WIFilmmaker:GetTimeFrameFrameIndexRange(timeFrame)
+	return self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetStart())),self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetEnd()))
+end
+function gui.WIFilmmaker:GetLastFrameIndex()
+	local session = self:GetSession()
+	local filmTrack = session:GetFilmTrack()
+	local filmClipLast
+	local tLast = -math.huge
+	for _,filmClip in ipairs(filmTrack:GetFilmClips():GetTable()) do
+		local timeFrame = filmClip:GetTimeFrame()
+		if(timeFrame:GetEnd() > tLast) then
+			filmClipLast = filmClip
+			tLast = timeFrame:GetEnd()
+		end
+	end
+	return self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(tLast))
+end
+function gui.WIFilmmaker:GetFrameIndexRange()
+	return 0,self:GetLastFrameIndex()
+end
 function gui.WIFilmmaker:TimeOffsetToFrameOffset(offset) return offset *self:GetFrameRate() end
 function gui.WIFilmmaker:FrameOffsetToTimeOffset(offset) return offset /self:GetFrameRate() end
 function gui.WIFilmmaker:SetFrameOffset(frame) self:SetTimeOffset(self:FrameOffsetToTimeOffset(self:GetClampedFrameOffset(frame))) end
 function gui.WIFilmmaker:GetFrameOffset() return self:TimeOffsetToFrameOffset(self:GetTimeOffset()) end
 function gui.WIFilmmaker:GetClampedFrameOffset(frame) return math.round(frame or self:GetFrameOffset()) end
 function gui.WIFilmmaker:ClampTimeOffsetToFrame() self:SetFrameOffset(self:GetClampedFrameOffset()) end
+function gui.WIFilmmaker:GoToFrame(frame) self:SetFrameOffset(frame) end
 function gui.WIFilmmaker:GoToNextFrame() self:SetFrameOffset(self:GetClampedFrameOffset() +1) end
 function gui.WIFilmmaker:GoToPreviousFrame() self:SetFrameOffset(self:GetClampedFrameOffset() -1) end
 function gui.WIFilmmaker:GoToFirstFrame()

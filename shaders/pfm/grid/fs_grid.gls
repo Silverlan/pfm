@@ -21,7 +21,7 @@ bool is_grid_spacing(float v)
 	return mod(abs(fs_in.vertPos_ws.x) +e,v) <= e *2.0 || mod(abs(fs_in.vertPos_ws.z) +e,v) <= e *2.0;
 }
 
-layout(push_constant) uniform Data {
+layout(LAYOUT_PUSH_CONSTANTS()) uniform Data {
 	mat4 M;
 	vec4 gridOrigin; // w component is scale
 	float radius;

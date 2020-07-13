@@ -117,8 +117,8 @@ function shader.PFMParticleRenderAnimatedSprites:CalcVertexPosition(ptc,ptIdx,lo
 	vecCorner = vecCorner +y *camUp
 	return vecCorner
 end
-function shader.PFMParticleRenderAnimatedSprites:Draw(drawCmd,ps,renderer,bloom,camBias)
-	if(self:RecordBeginDraw(drawCmd,ps) == false) then return end
+function shader.PFMParticleRenderAnimatedSprites:Draw(drawCmd,ps,renderer,renderFlags,camBias)
+	if(self:RecordBeginDraw(drawCmd,ps,renderFlags) == false) then return end
 	local dsLightSources = renderer:GetLightSourceDescriptorSet()
 	local dsShadows = renderer:GetPSSMTextureDescriptorSet()
 	self:RecordBindLights(dsShadows,dsLightSources)
@@ -129,7 +129,7 @@ function shader.PFMParticleRenderAnimatedSprites:Draw(drawCmd,ps,renderer,bloom,
 	self.m_dsPushConstants:WriteFloat(camBias)
 	self:RecordPushConstants(self.m_dsPushConstants,shader.BaseParticle2D.PUSH_CONSTANTS_USER_DATA_OFFSET)
 
-	self:RecordDraw(renderer,ps,bloom)
+	self:RecordDraw(renderer,ps,renderFlags)
 	self:RecordEndDraw()
 end
 shader.register("pfm_particle_animated_sprites",shader.PFMParticleRenderAnimatedSprites)

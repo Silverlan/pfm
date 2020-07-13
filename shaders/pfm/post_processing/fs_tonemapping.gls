@@ -5,9 +5,9 @@
 
 layout(location = 0) in vec2 vs_vert_uv;
 
-layout(set = 0,binding = 0) uniform sampler2D u_texture;
+layout(LAYOUT_ID(0,0)) uniform sampler2D u_texture;
 
-layout(push_constant) uniform RenderSettings {
+layout(LAYOUT_PUSH_CONSTANTS()) uniform RenderSettings {
 	mat4 MVP;
 	float exposure;
 	int toneMapping;

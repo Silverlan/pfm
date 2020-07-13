@@ -80,21 +80,27 @@ end
 function udm.Transform:ApplyTransformGlobal(t)
 	local tThis = self:GetPose()
 	tThis = t *tThis
+	local scale = tThis:GetScale()
+	if(type(scale) == "number") then scale = Vector(scale,scale,scale) end
 	self:SetPosition(tThis:GetOrigin())
 	self:SetRotation(tThis:GetRotation())
-	self:SetScale(tThis:GetScale())
+	self:SetScale(scale)
 end
 
 function udm.Transform:ApplyTransformLocal(t)
 	local tThis = self:GetPose()
 	tThis = tThis *t
+	local scale = tThis:GetScale()
+	if(type(scale) == "number") then scale = Vector(scale,scale,scale) end
 	self:SetPosition(tThis:GetOrigin())
 	self:SetRotation(tThis:GetRotation())
-	self:SetScale(tThis:GetScale())
+	self:SetScale(scale)
 end
 
 function udm.Transform:GetPose()
-	return phys.ScaledTransform(self:GetPosition(),self:GetRotation(),self:GetScale())
+	local scale = self:GetScale()
+	if(type(scale) == "number") then scale = Vector(scale,scale,scale) end
+	return phys.ScaledTransform(self:GetPosition(),self:GetRotation(),scale)
 end
 
 function udm.Transform:SetPose(pose)

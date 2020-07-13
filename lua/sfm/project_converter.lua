@@ -150,16 +150,20 @@ function sfm.ProjectConverter:GenerateEmbeddedParticleSystemFile()
 	local particleSystems = {}
 	local function extract_children(particleSystems,t)
 		local children = {}
-		for name,child in pairs(t.children) do
-			local delay = child.delay
-			local childData = child.childData
-			local newName = ptPrefix .. name
-			table.insert(children,{
-				delay = delay,
-				childName = newName
-			})
-			extract_children(particleSystems,childData)
-			particleSystems[newName] = childData
+		if(t.children ~= nil) then
+			for name,child in pairs(t.children) do
+				local delay = child.delay
+				local childData = child.childData
+				local newName = ptPrefix .. name
+				table.insert(children,{
+					delay = delay,
+					childName = newName
+				})
+				extract_children(particleSystems,childData)
+				particleSystems[newName] = childData
+			end
+		else
+			-- No children?
 		end
 		t.children = children
 	end
@@ -284,6 +288,10 @@ local function apply_post_processing(project,filmClip,processedObjects)
 			for _,channelClip in ipairs(track:GetChannelClips():GetTable()) do
 				local channels = channelClip:GetChannels()
 				local numChannels = #channels
+
+				-- Note: This is commented because it causes issues with some channels that use expression operators (e.g. fov/dof/etc.)
+				-- I don't remember what this block was for in the first place, if any problems should occur by this being commented,
+				-- uncomment it, but also make sure it works properly with expression operators!
 				local i = 1
 				while(i < numChannels) do
 					local channel = channels:Get(i)
@@ -903,25 +911,30 @@ sfm.register_element_type_conversion(sfm.Log,udm.PFMLog,function(converter,sfmLo
 	end
 	pfmLog:SetUseDefaultValue(sfmLog:GetUsedefaultvalue())
 
-	local defaultValue = sfmLog:GetDMXElement():GetAttr("defaultvalue")
-	local type = defaultValue:GetType()
-	if(type == dmx.Attribute.TYPE_INT) then pfmLog:SetDefaultValueAttr(udm.Int(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmLog:SetDefaultValueAttr(udm.Float(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_BOOL) then pfmLog:SetDefaultValueAttr(udm.Bool(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_STRING) then pfmLog:SetDefaultValueAttr(udm.String(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_COLOR) then pfmLog:SetDefaultValueAttr(udm.Color(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmLog:SetDefaultValueAttr(udm.Vector3(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_VECTOR2) then pfmLog:SetDefaultValueAttr(udm.Vector2(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_VECTOR4) then pfmLog:SetDefaultValueAttr(udm.Vector4(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmLog:SetDefaultValueAttr(udm.Angle(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmLog:SetDefaultValueAttr(udm.Quaternion(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_UINT8) then pfmLog:SetDefaultValueAttr(udm.UInt8(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_UINT64) then pfmLog:SetDefaultValueAttr(udm.UInt64(defaultValue:GetValue()))
-	elseif(type == dmx.Attribute.TYPE_MATRIX) then pfmLog:SetDefaultValueAttr(udm.Matrix(defaultValue:GetValue()))
+	local dmxLog = sfmLog:GetDMXElement()
+	if(dmxLog ~= nil) then
+		local defaultValue = dmxLog:GetAttr("defaultvalue")
+		local type = defaultValue:GetType()
+		if(type == dmx.Attribute.TYPE_INT) then pfmLog:SetDefaultValueAttr(udm.Int(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmLog:SetDefaultValueAttr(udm.Float(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_BOOL) then pfmLog:SetDefaultValueAttr(udm.Bool(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_STRING) then pfmLog:SetDefaultValueAttr(udm.String(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_COLOR) then pfmLog:SetDefaultValueAttr(udm.Color(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmLog:SetDefaultValueAttr(udm.Vector3(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_VECTOR2) then pfmLog:SetDefaultValueAttr(udm.Vector2(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_VECTOR4) then pfmLog:SetDefaultValueAttr(udm.Vector4(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmLog:SetDefaultValueAttr(udm.Angle(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmLog:SetDefaultValueAttr(udm.Quaternion(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_UINT8) then pfmLog:SetDefaultValueAttr(udm.UInt8(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_UINT64) then pfmLog:SetDefaultValueAttr(udm.UInt64(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_MATRIX) then pfmLog:SetDefaultValueAttr(udm.Matrix(defaultValue:GetValue()))
+		else
+			local msg = "Unsupported default value type '" .. dmx.type_to_string(type) .. "' for log '" .. pfmLog:GetName() .. "'!"
+			pfm.log(msg,pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_ERROR)
+			error(msg)
+		end
 	else
-		local msg = "Unsupported default value type '" .. dmx.type_to_string(type) .. "' for log '" .. pfmLog:GetName() .. "'!"
-		pfm.log(msg,pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_ERROR)
-		error(msg)
+		pfm.log("Log " .. tostring(sfmLog:GetName()) .. " does not have valid DMX element associated! Default value will be incorrect.",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 	end
 end)
 

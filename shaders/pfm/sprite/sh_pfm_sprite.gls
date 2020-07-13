@@ -11,7 +11,7 @@
 
 #include "../../modules/sh_export.gls"
 
-layout(push_constant) uniform PushConstants
+layout(LAYOUT_PUSH_CONSTANTS()) uniform PushConstants
 {
 	mat4 MVP;
 	vec4 origin;
