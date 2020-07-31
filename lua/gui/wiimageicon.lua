@@ -14,7 +14,10 @@ function gui.ImageIcon:OnInitialize()
 	gui.Base.OnInitialize(self)
 	self:SetSize(128,128)
 
-	local el = gui.create("WITexturedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	local bg = gui.create("WIBase",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	self.m_bg = bg
+
+	local el = gui.create("WITexturedRect",bg,0,0,bg:GetWidth(),bg:GetHeight(),0,0,1,1)
 	self.m_texture = el
 
 	local textBg = gui.create("WIRect",self,0,self:GetHeight() -18,self:GetWidth(),18,0,1,1,1)
@@ -41,6 +44,8 @@ function gui.ImageIcon:SetText(text)
 	self.m_text:CenterToParentX()
 	self.m_text:SetY(self:GetHeight() -self.m_text:GetHeight() -4)
 end
+function gui.ImageIcon:GetTextureElement() return self.m_texture end
+function gui.ImageIcon:GetBackgroundElement() return self.m_bg end
 function gui.ImageIcon:SetMaterial(mat,w,h)
 	self.m_texture:SetMaterial(mat)
 	w = w or self:GetWidth()

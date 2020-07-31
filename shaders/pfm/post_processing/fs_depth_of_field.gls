@@ -1,4 +1,4 @@
-e/*
+/*
 DoF with bokeh GLSL shader v2.4
 by Martins Upitis (martinsh) (devlog-martinsh.blogspot.com)
 
@@ -41,7 +41,7 @@ changelog:
 
 */
 
-#version 400
+#version 440
 
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_shading_language_420pack : enable

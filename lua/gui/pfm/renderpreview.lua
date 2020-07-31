@@ -15,7 +15,6 @@ include("/gui/editableentry.lua")
 include("/gui/wifiledialog.lua")
 include("/gui/toggleoption.lua")
 include("/gui/pfm/raytracedanimationviewport.lua")
-include("/shaders/pfm/pfm_tonemapping.lua")
 
 util.register_class("gui.PFMRenderPreview",gui.Base)
 
@@ -40,7 +39,7 @@ function gui.PFMRenderPreview:OnInitialize()
 	self.m_rtBox:SetColor(Color.Black)
 	self.m_aspectRatioWrapper = gui.create("WIAspectRatio",self.m_rtBox,0,0,self.m_rtBox:GetWidth(),self.m_rtBox:GetHeight(),0,0,1,1)
 
-	gui.create("WIResizer",self.m_vpContents)
+	gui.create("WIResizer",self.m_vpContents):SetFraction(0.85)
 
 	self.m_rt = gui.create("WIPFMRaytracedAnimationViewport",self.m_aspectRatioWrapper)
 	self.m_rt:AddCallback("OnProgressChanged",function(rt,progress)
@@ -60,20 +59,10 @@ function gui.PFMRenderPreview:OnInitialize()
 			print("Saving image as " .. outputPath .. "...")
 			local framePath = self:GetFrameFilePath(rtJob:GetRenderResultFrameIndex())
 			self.m_rt:ClearCachedPreview()
-			self.m_rt:SaveImage(outputPath,true)
-			self.m_rt:GeneratePreviewImage("render/" .. framePath,self.m_rt:GetRenderResultRenderSettings())
+			self.m_rt:SaveImage(outputPath,self.m_rt:GetImageSaveFormat())
+			-- TODO
+			-- self.m_rt:GeneratePreviewImage("render/" .. framePath,self.m_rt:GetRenderResultRenderSettings())
 		end
-
-		local luminance = rt:GetLuminance()
-		local Lmax = luminance:GetMaxLuminance()
-		local Lav = luminance:GetAvgLuminance()
-		local Llav = luminance:GetAvgLuminance()
-		local Lmin = luminance:GetMinLuminance()
-		local k = (math.log(Lmax) -math.log(Llav)) /(math.log(Lmax) -math.log(Lmin))
-		local m = 0.3 +0.7 *math.pow(k,1.4)
-
-		self.m_ctrlCompressionCurveParam:SetDefault(m)
-		self.m_ctrlCompressionCurveParam:SetValue(m)
 	end)
 	self.m_rt:AddCallback("OnSceneComplete",function(rt,scene)
 		local outputPath = self:GetOutputPath()
@@ -91,299 +80,21 @@ function gui.PFMRenderPreview:OnInitialize()
 		f:Close()
 	end)
 	self.m_rt:AddCallback("OnComplete",function(rt,state)
-		if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(true) end
-		if(util.is_valid(self.m_btRefresh)) then self.m_btRefresh:SetText(locale.get_text("pfm_render_image")) end
+		self.m_renderBtContainer:SetVisible(true)
+		self.m_btCancel:SetVisible(false)
 	end)
 
 	self.m_cbOnTimeOffsetChanged = tool.get_filmmaker():AddCallback("OnTimeOffsetChanged",function(fm,offset)
 		local imgFilePath = self:GetCurrentFrameFilePath()
 		if(imgFilePath == nil) then return end
 		self.m_rt:LoadPreviewImage("render/" .. imgFilePath)
-		self:UpdateDepthOfField()
-		self.m_test = true
+		--self:UpdateDepthOfField()
+		-- self.m_test = true
 		self:EnableThinking()
 	end)
 
 	self:InitializeSettings(self.m_vpContents)
 	self:InitializeControls()
-end
-function gui.PFMRenderPreview:GetOutputPath()
-	local rtJob = self.m_rt:GetRTJob()
-
-	local renderSettings = self.m_rt:GetRenderSettings()
-	if(renderSettings:IsRenderPreview() == true) then return end
-	local framePath = self:GetFrameFilePath(rtJob:GetRenderResultFrameIndex())
-	local outputPath = "render/" .. framePath
-	local remainingSubStages = rtJob:GetRenderResultRemainingSubStages()
-	if(remainingSubStages > 0) then outputPath = outputPath .. "_" .. remainingSubStages end
-	return outputPath
-end
-function gui.PFMRenderPreview:OnRemove()
-	if(util.is_valid(self.m_cbOnTimeOffsetChanged)) then self.m_cbOnTimeOffsetChanged:Remove() end
-end
-function gui.PFMRenderPreview:AddControl(name,ctrl) self.m_controls[name] = ctrl end
-function gui.PFMRenderPreview:GetControl(name) return self.m_controls[name] end
-function gui.PFMRenderPreview:InitializeSettings(parent)
-	local p = gui.create("WIVBox",parent)
-	p:SetAutoFillContentsToWidth(true)
-	self.m_settingsBox = p
-	
-	-- Render Mode
-	local renderMode = gui.create("WIDropDownMenu",p)
-	renderMode:AddOption(locale.get_text("pfm_cycles_bake_type_combined"),"combined")
-	renderMode:AddOption(locale.get_text("pfm_cycles_bake_type_albedo"),"albedo")
-	renderMode:AddOption(locale.get_text("pfm_cycles_bake_type_normals"),"normals")
-	renderMode:AddOption(locale.get_text("pfm_cycles_bake_type_depth"),"depth")
-	renderMode:SelectOption(0)
-	-- renderMode:SetTooltip(locale.get_text("pfm_cycles_bake_type_desc"))
-	self:AddControl("render_mode",renderMode)
-	self.m_ctrlRenderMode = renderMode
-
-	renderMode:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_render_mode"))
-
-	-- Device Type
-	local deviceType = gui.create("WIDropDownMenu",p)
-	deviceType:AddOption(locale.get_text("pfm_cycles_device_type_gpu"),"gpu")
-	deviceType:AddOption(locale.get_text("pfm_cycles_device_type_cpu"),"cpu")
-	deviceType:SelectOption(1)
-	-- deviceType:SetTooltip(locale.get_text("pfm_cycles_device_type_desc"))
-	self:AddControl("device_type",deviceType)
-	self.m_ctrlDeviceType = deviceType
-
-	deviceType:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_device_type"))
-
-	-- Camera type
-	local panoramaTypeWrapper
-	local camType = gui.create("WIDropDownMenu",p)
-	camType:AddOption(locale.get_text("pfm_cycles_cam_type_perspective"),tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE))
-	camType:AddOption(locale.get_text("pfm_cycles_cam_type_orthographic"),tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_ORTHOGRAPHIC))
-	camType:AddOption(locale.get_text("pfm_cycles_cam_type_panorama"),tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA))
-	camType:SelectOption(0)
-	camType:AddCallback("OnOptionSelected",function(camType,idx)
-		panoramaTypeWrapper:SetVisible(idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
-	end)
-	self:AddControl("cam_type",camType)
-	self.m_ctrlCamType = camType
-
-	camType:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_cam_type"))
-
-	local panoramaType = gui.create("WIDropDownMenu",p)
-	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equirectangular"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR))
-	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equidistant"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUIDISTANT))
-	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equisolid"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID))
-	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_mirrorball"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL))
-	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_cubemap"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP))
-	panoramaType:SelectOption(0)
-	-- panoramaType:SetTooltip(locale.get_text("pfm_cycles_image_type_desc"))
-	self:AddControl("panorama_type",panoramaType)
-	self.m_ctrlPanoramaType = panoramaType
-
-	panoramaTypeWrapper = panoramaType:Wrap("WIEditableEntry")
-	panoramaTypeWrapper:SetText(locale.get_text("pfm_cycles_cam_panorama"))
-	panoramaTypeWrapper:SetVisible(false)
-
-	-- Quality preset
-	local presets = {
-		{
-			name = "very_low",
-			emission_strength = 0.0,
-			samples = 20.0,
-			max_transparency_bounces = 1
-		},
-		{
-			name = "low",
-			emission_strength = 0.0,
-			samples = 40.0,
-			max_transparency_bounces = 4
-		},
-		{
-			name = "medium",
-			emission_strength = 0.0,
-			samples = 80.0,
-			max_transparency_bounces = 8
-		},
-		{
-			name = "high",
-			emission_strength = 1.0,
-			samples = 120.0,
-			max_transparency_bounces = 64
-		},
-		{
-			name = "very_high",
-			emission_strength = 1.0,
-			samples = 200.0,
-			max_transparency_bounces = 128
-		}
-	}
-	local qualityPreset = gui.create("WIDropDownMenu",p)
-	for _,preset in ipairs(presets) do
-		qualityPreset:AddOption(locale.get_text("pfm_cycles_quality_preset_" .. preset.name),preset.name)
-	end
-	-- qualityPreset:SetTooltip(locale.get_text("pfm_cycles_quality_preset_desc"))
-	qualityPreset:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_quality_preset"))
-
-	-- Sample count
-	self.m_ctrlSamplesPerPixel = self:AddSliderControl("pfm_samples_per_pixel","samples",40,1,500,nil,1.0,true)
-
-	-- Resolution
-	local resolution = engine.get_render_resolution()
-
-	local resolution = gui.create("WIDropDownMenu",p)
-	resolution:SetEditable(true)
-	resolution:AddOption(locale.get_text("pfm_resolution_hd_ready"),"1280x720")
-	resolution:AddOption(locale.get_text("pfm_resolution_full_hd"),"1920x1080")
-	resolution:AddOption(locale.get_text("pfm_resolution_quad_hd"),"2560x1440")
-	resolution:AddOption(locale.get_text("pfm_resolution_2k"),"2048x1080")
-	resolution:AddOption(locale.get_text("pfm_resolution_4k"),"3840x2160")
-	resolution:AddOption(locale.get_text("pfm_resolution_8k"),"7680x4320")
-	resolution:SelectOption(1)
-	resolution:SetTooltip(locale.get_text("pfm_resolution_desc"))
-	self:AddControl("resolution",resolution)
-	self.m_ctrlResolution = resolution
-	resolution:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_resolution"))
-
-	-- Sky override
-	local skyOverride = gui.create("WIFileEntry",p)
-	skyOverride:SetBrowseHandler(function(resultHandler)
-		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
-			if(fileName == nil) then return end
-			resultHandler(el:GetFilePath(true))
-		end)
-		pFileDialog:SetRootPath("materials")
-		local path = file.get_file_path(skyOverride:GetValue())
-		if(#path == 0) then path = "skies" end
-		pFileDialog:SetPath(path)
-		pFileDialog:SetExtensions({"hdr"})
-		pFileDialog:Update()
-	end)
-	skyOverride:SetTooltip(locale.get_text("pfm_sky_override_desc"))
-
-	-- Choose a default sky
-	local skies = file.find("materials/skies/*.hdr")
-	if(#skies > 0) then skyOverride:SetValue("skies/" .. skies[1]) end
-	self:AddControl("sky",skyOverride)
-	self.m_ctrlSkyOverride = skyOverride
-
-	skyOverride:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_sky_override"))
-
-	-- Sky strength
-	self.m_ctrlSkyStrength = self:AddSliderControl("pfm_sky_strength","sky_strength",30,0,100)
-
-	-- Sky yaw
-	self.m_ctrlSkyYaw = self:AddSliderControl("pfm_sky_yaw_angle","sky_yaw",0,0,360)
-
-	-- Max transparency bounces
-	self.m_ctrlMaxTransparencyBounces = self:AddSliderControl("pfm_max_transparency_bounces","max_transparency_bounces",128,0,100)
-
-	-- Light intensity factor
-	self.m_ctrlLightIntensityFactor = self:AddSliderControl("pfm_light_intensity_factor","light_intensity_factor",1.0,0,20)
-
-	-- Emission strength
-	self.m_ctrlEmissionStrength = self:AddSliderControl("pfm_emission_strength","emission_strength",1.0,0,20)
-
-	-- Number of frames
-	self.m_ctrlFrameCount = self:AddSliderControl("pfm_number_of_frames_to_render","frame_count",1,1,100,nil,1.0,true)
-
-	-- Tonemapping
-	self:InitializeToneMapControls(p)
-
-	-- DOF
-	self:InitializeDOFControls(p)
-
-	-- Output directory
-	--[[local outputDir = gui.create("WIFileEntry",p)
-	outputDir:SetBrowseHandler(function(resultHandler)
-		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
-			if(fileName == nil) then return end
-			resultHandler(fileName)
-		end)
-		pFileDialog:MakeDirectoryExplorer()
-		pFileDialog:SetRootPath(util.get_addon_path())
-		pFileDialog:SetPath(outputDir:GetValue())
-		pFileDialog:Update()
-	end)
-	outputDir:SetValue("render/")
-	outputDir:SetTooltip(locale.get_text("pfm_output_directory_desc"))
-	self.m_ctrlOutputDir = outputDir
-
-	outputDir:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_output_directory"))]]
-
-	self.m_ctrlDenoise = self:AddToggleControl("pfm_denoise_image","denoise",true)
-	self.m_ctrlPreStage = self:AddToggleControl("pfm_prestage_only","prestage",false)
-	self.m_ctrlRenderWorld = self:AddToggleControl("pfm_render_world","render_world",true)
-	self.m_ctrlRenderGameEntities = self:AddToggleControl("pfm_render_game_objects","render_game_entities",true)
-	self.m_ctrlRenderPlayer = self:AddToggleControl("pfm_render_player","render_player",false)
-	self.m_ctrlFrustumCulling = self:AddToggleControl("pfm_render_frustum_culling","frustum_culling",true)
-	self.m_ctrlPVSCulling = self:AddToggleControl("pfm_render_pvs_culling","pvs_culling",true)
-
-	-- Presets
-	qualityPreset:AddCallback("OnOptionSelected",function(el,option)
-		local preset = presets[option +1]
-		if(preset == nil) then return end
-		if(preset.samples ~= nil) then self.m_ctrlSamplesPerPixel:SetValue(preset.samples) end
-		if(preset.max_transparency_bounces ~= nil) then self.m_ctrlMaxTransparencyBounces:SetValue(preset.max_transparency_bounces) end
-		if(preset.emission_strength ~= nil) then self.m_ctrlEmissionStrength:SetValue(preset.emission_strength) end
-	end)
-	qualityPreset:SelectOption(2)
-end
-function gui.PFMRenderPreview:UpdateDepthOfField()
-	self.m_rt:UpdateGameSceneTextures()
-
-	-- TODO: Handle this properly
-	local gameScene = self.m_rt:GetGameScene()
-	local cam = gameScene:GetActiveCamera():GetEntity():GetComponent(ents.COMPONENT_PFM_CAMERA)
-	if(cam == nil) then return end
-	local camData = cam:GetCameraData()
-	local dofSettings = self.m_rt:GetDOFSettings()
-	-- TODO: Add callbacks for these!
-	--self.m_rt:SetDOFEnabled(camData:IsDepthOfFieldEnabled())
-	self.m_rt:SetDOFEnabled(self.m_ctrlDofEnabled:IsChecked())
-	self.m_rt:InitializeDepthTexture(gameScene:GetWidth(),gameScene:GetHeight(),camData:GetZNear(),camData:GetZFar())
-	dofSettings:SetFocalDistance(camData:GetFocalDistance())
-	dofSettings:SetFStop(camData:GetFStop())
-	dofSettings:SetRingCount(camData:GetApertureBladeCount()) -- TODO: I'm not sure if these are equivalent
-end
-function gui.PFMRenderPreview:AddToggleControl(name,identifier,checked,onChange)
-	local el = gui.create("WIToggleOption",self.m_settingsBox)
-	el:SetText(locale.get_text(name))
-	el:SetChecked(checked)
-	el:SetTooltip(locale.get_text(name .. "_desc"))
-	if(onChange ~= nil) then el:GetCheckbox():AddCallback("OnChange",onChange) end
-	if(identifier ~= nil) then self:AddControl(identifier,el) end
-	return el
-end
-function gui.PFMRenderPreview:AddSliderControl(name,identifier,default,min,max,onChange,stepSize,integer)
-	local slider = gui.create("WIPFMSlider",self.m_settingsBox)
-	slider:SetText(locale.get_text(name))
-	slider:SetRange(min,max)
-	slider:SetDefault(default)
-	slider:SetTooltip(locale.get_text(name .. "_desc"))
-	if(integer ~= nil) then slider:SetInteger(integer) end
-	if(stepSize ~= nil) then slider:SetStepSize(stepSize) end
-	if(onChange ~= nil) then slider:AddCallback("OnLeftValueChanged",onChange) end
-	if(identifier ~= nil) then self:AddControl(identifier,slider) end
-	return slider
-end
-function gui.PFMRenderPreview:InitializeDOFControls(p)
-	local fApplyDOFSettings = function() self:ApplyDOFSettings() end
-	self.m_ctrlDofEnabled = self:AddToggleControl("pfm_dof_enabled",nil,false,fApplyDOFSettings)
-	self.m_ctrlDofShowFocus = self:AddToggleControl("pfm_dof_debug_show_focus",nil,false,fApplyDOFSettings)
-	self.m_ctrlDofShowDepth = self:AddToggleControl("pfm_dof_debug_show_depth",nil,false,fApplyDOFSettings)
-	self.m_ctrlDofEnableVignette = self:AddToggleControl("pfm_dof_enable_vignette",nil,false,fApplyDOFSettings)
-	self.m_ctrlDofUsePentagonBokehShape = self:AddToggleControl("pfm_dof_use_pentagon_bokeh_shape",nil,false,fApplyDOFSettings)
-
-	self.m_ctrlParticleIntensity = self:AddSliderControl("pfm_pp_particle_intensity",nil,1,0,10,function()
-		local intensity = self.m_ctrlParticleIntensity:GetValue()
-		self.m_rt:SetParticleSystemColorFactor(Vector4(intensity,intensity,intensity,1.0))
-	end)
-	self.m_ctrlDofRings = self:AddSliderControl("pfm_dof_rings",nil,3,0,10,fApplyDOFSettings,1,true)
-	self.m_ctrlDofRingSamples = self:AddSliderControl("pfm_dof_ring_samples",nil,3,0,10,fApplyDOFSettings,1,true)
-	self.m_ctrlCoC = self:AddSliderControl("pfm_dof_coc",nil,0.03,0,0.1,fApplyDOFSettings)
-	self.m_ctrlMaxBlur = self:AddSliderControl("pfm_dof_max_blur",nil,1.0,0,10,fApplyDOFSettings)
-	self.m_ctrlDither = self:AddSliderControl("pfm_dof_dither_amount",nil,0.0001,0,0.01,fApplyDOFSettings,0.0001)
-	self.m_ctrlVignIn = self:AddSliderControl("pfm_dof_vignette_inner_border",nil,0.0,0,5,fApplyDOFSettings)
-	self.m_ctrlVignOut = self:AddSliderControl("pfm_dof_vignette_outer_border",nil,1.3,0,5,fApplyDOFSettings)
-	self.m_ctrlPentagonShapeFeather = self:AddSliderControl("pfm_dof_pentagon_shape_feather",nil,0.4,0,2,fApplyDOFSettings)
 end
 function gui.PFMRenderPreview:InitializeToneMapControls(p)
 	local toneMapping = gui.create("WIDropDownMenu",p)
@@ -531,26 +242,6 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p)
 
 	toneMapping:SelectOption(4)
 end
-function gui.PFMRenderPreview:ApplyDOFSettings()
-	self.m_rt:SetDOFEnabled(self.m_ctrlDofEnabled:IsChecked())
-
-	local dofSettings = self.m_rt:GetDOFSettings()
-	local flags = dofSettings:GetFlags()
-	flags = math.set_flag(flags,shader.PFMDepthOfField.DOFSettings.FLAG_BIT_DEBUG_SHOW_FOCUS,self.m_ctrlDofShowFocus:IsChecked())
-	flags = math.set_flag(flags,shader.PFMDepthOfField.DOFSettings.FLAG_BIT_DEBUG_SHOW_DEPTH,self.m_ctrlDofShowDepth:IsChecked())
-	flags = math.set_flag(flags,shader.PFMDepthOfField.DOFSettings.FLAG_BIT_ENABLE_VIGNETTE,self.m_ctrlDofEnableVignette:IsChecked())
-	flags = math.set_flag(flags,shader.PFMDepthOfField.DOFSettings.FLAG_BIT_PENTAGON_BOKEH_SHAPE,self.m_ctrlDofUsePentagonBokehShape:IsChecked())
-	dofSettings:SetFlags(flags)
-
-	dofSettings:SetRingCount(self.m_ctrlDofRings:GetValue())
-	dofSettings:SetRingSamples(self.m_ctrlDofRingSamples:GetValue())
-	dofSettings:SetCircleOfConfusionSize(self.m_ctrlCoC:GetValue())
-	dofSettings:SetMaxBlur(self.m_ctrlMaxBlur:GetValue())
-	dofSettings:SetDitherAmount(self.m_ctrlDither:GetValue())
-	dofSettings:SetVignettingInnerBorder(self.m_ctrlVignIn:GetValue())
-	dofSettings:SetVignettingOuterBorder(self.m_ctrlVignOut:GetValue())
-	dofSettings:SetPentagonShapeFeather(self.m_ctrlPentagonShapeFeather:GetValue())
-end
 function gui.PFMRenderPreview:ApplyToneMappingSettings(toneMapping)
 	self.m_rt:SetExposure(self.m_ctrlExposure:GetValue())
 
@@ -586,37 +277,327 @@ function gui.PFMRenderPreview:ApplyToneMappingSettings(toneMapping)
 	end
 	self.m_rt:SetToneMappingArguments(args)
 end
+function gui.PFMRenderPreview:GetOutputPath()
+	local rtJob = self.m_rt:GetRTJob()
+
+	local renderSettings = self.m_rt:GetRenderSettings()
+	if(renderSettings:IsRenderPreview() == true) then return end
+	local framePath = self:GetFrameFilePath(rtJob:GetRenderResultFrameIndex())
+	local outputPath = "render/" .. framePath
+	local remainingSubStages = rtJob:GetRenderResultRemainingSubStages()
+	if(remainingSubStages > 0) then outputPath = outputPath .. "_" .. remainingSubStages end
+	return outputPath
+end
+function gui.PFMRenderPreview:OnRemove()
+	if(util.is_valid(self.m_cbOnTimeOffsetChanged)) then self.m_cbOnTimeOffsetChanged:Remove() end
+end
+function gui.PFMRenderPreview:AddControl(name,ctrl) self.m_controls[name] = ctrl end
+function gui.PFMRenderPreview:GetControl(name) return self.m_controls[name] end
+function gui.PFMRenderPreview:InitializeSettings(parent)
+	local p = gui.create("WIVBox",parent)
+	p:SetAutoFillContentsToWidth(true)
+	self.m_settingsBox = p
+	
+	-- Render Mode
+	local renderMode = gui.create("WIDropDownMenu",p)
+	renderMode:AddOption(locale.get_text("pfm_cycles_bake_type_combined"),"combined")
+	renderMode:AddOption(locale.get_text("pfm_cycles_bake_type_albedo"),"albedo")
+	renderMode:AddOption(locale.get_text("pfm_cycles_bake_type_normals"),"normals")
+	renderMode:AddOption(locale.get_text("pfm_cycles_bake_type_depth"),"depth")
+	renderMode:SelectOption(0)
+	-- renderMode:SetTooltip(locale.get_text("pfm_cycles_bake_type_desc"))
+	self:AddControl("render_mode",renderMode)
+	self.m_ctrlRenderMode = renderMode
+
+	renderMode:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_render_mode"))
+
+	-- Device Type
+	local deviceType = gui.create("WIDropDownMenu",p)
+	deviceType:AddOption(locale.get_text("pfm_cycles_device_type_gpu"),"gpu")
+	deviceType:AddOption(locale.get_text("pfm_cycles_device_type_cpu"),"cpu")
+	deviceType:SelectOption(1)
+	-- deviceType:SetTooltip(locale.get_text("pfm_cycles_device_type_desc"))
+	self:AddControl("device_type",deviceType)
+	self.m_ctrlDeviceType = deviceType
+
+	deviceType:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_device_type"))
+
+	-- Camera type
+	local panoramaTypeWrapper
+	local panoramaRangeWrapper
+	local camType = gui.create("WIDropDownMenu",p)
+	camType:AddOption(locale.get_text("pfm_cycles_cam_type_perspective"),tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE))
+	camType:AddOption(locale.get_text("pfm_cycles_cam_type_orthographic"),tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_ORTHOGRAPHIC))
+	camType:AddOption(locale.get_text("pfm_cycles_cam_type_panorama"),tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA))
+	camType:SelectOption(0)
+	camType:AddCallback("OnOptionSelected",function(camType,idx)
+		panoramaTypeWrapper:SetVisible(idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
+		panoramaRangeWrapper:SetVisible(idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
+		self.m_ctrlStereo:SetVisible(idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
+	end)
+	self:AddControl("cam_type",camType)
+	self.m_ctrlCamType = camType
+
+	camType:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_cam_type"))
+
+	local panoramaType = gui.create("WIDropDownMenu",p)
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equirectangular"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equidistant"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUIDISTANT))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_equisolid"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_mirrorball"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL))
+	panoramaType:AddOption(locale.get_text("pfm_cycles_cam_panorama_type_cubemap"),tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP))
+	panoramaType:SelectOption(0)
+	-- panoramaType:SetTooltip(locale.get_text("pfm_cycles_image_type_desc"))
+	self:AddControl("panorama_type",panoramaType)
+	self.m_ctrlPanoramaType = panoramaType
+
+	panoramaTypeWrapper = panoramaType:Wrap("WIEditableEntry")
+	panoramaTypeWrapper:SetText(locale.get_text("pfm_cycles_cam_panorama"))
+	panoramaTypeWrapper:SetVisible(false)
+
+	-- Horizontal panorama range
+	local panoramaRange = gui.create("WIDropDownMenu",p)
+	panoramaRange:AddOption(locale.get_text("pfm_cycles_degrees",{360}),tostring(360))
+	panoramaRange:AddOption(locale.get_text("pfm_cycles_degrees",{180}),tostring(180))
+	panoramaRange:SelectOption(0)
+	self:AddControl("panorama_range",panoramaRange)
+	self.m_ctrlPanoramaRange = panoramaRange
+
+	panoramaRangeWrapper = panoramaRange:Wrap("WIEditableEntry")
+	panoramaRangeWrapper:SetText(locale.get_text("pfm_cycles_cam_panorama_range"))
+	panoramaRangeWrapper:SetVisible(false)
+
+
+	-- Quality preset
+	local presets = {
+		{
+			name = "very_low",
+			emission_strength = 0.0,
+			samples = 20.0,
+			max_transparency_bounces = 1
+		},
+		{
+			name = "low",
+			emission_strength = 0.0,
+			samples = 40.0,
+			max_transparency_bounces = 4
+		},
+		{
+			name = "medium",
+			emission_strength = 0.0,
+			samples = 80.0,
+			max_transparency_bounces = 8
+		},
+		{
+			name = "high",
+			emission_strength = 1.0,
+			samples = 120.0,
+			max_transparency_bounces = 64
+		},
+		{
+			name = "very_high",
+			emission_strength = 1.0,
+			samples = 200.0,
+			max_transparency_bounces = 128
+		}
+	}
+	local qualityPreset = gui.create("WIDropDownMenu",p)
+	for _,preset in ipairs(presets) do
+		qualityPreset:AddOption(locale.get_text("pfm_cycles_quality_preset_" .. preset.name),preset.name)
+	end
+	-- qualityPreset:SetTooltip(locale.get_text("pfm_cycles_quality_preset_desc"))
+	qualityPreset:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_quality_preset"))
+
+	-- Sample count
+	self.m_ctrlSamplesPerPixel = self:AddSliderControl("pfm_samples_per_pixel","samples",40,1,500,nil,1.0,true)
+
+	-- Resolution
+	local resolution = engine.get_render_resolution()
+
+	local resolution = gui.create("WIDropDownMenu",p)
+	resolution:SetEditable(true)
+	resolution:AddOption(locale.get_text("pfm_resolution_hd_ready"),"1280x720")
+	resolution:AddOption(locale.get_text("pfm_resolution_full_hd"),"1920x1080")
+	resolution:AddOption(locale.get_text("pfm_resolution_quad_hd"),"2560x1440")
+	resolution:AddOption(locale.get_text("pfm_resolution_2k"),"2048x1080")
+	resolution:AddOption(locale.get_text("pfm_resolution_4k"),"3840x2160")
+	resolution:AddOption(locale.get_text("pfm_resolution_8k"),"7680x4320")
+	resolution:SelectOption(1)
+	resolution:SetTooltip(locale.get_text("pfm_resolution_desc"))
+	self:AddControl("resolution",resolution)
+	self.m_ctrlResolution = resolution
+	resolution:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_resolution"))
+
+	-- Sky override
+	local skyOverride = gui.create("WIFileEntry",p)
+	skyOverride:SetBrowseHandler(function(resultHandler)
+		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
+			if(fileName == nil) then return end
+			resultHandler(el:GetFilePath(true))
+		end)
+		pFileDialog:SetRootPath("materials")
+		local path = file.get_file_path(skyOverride:GetValue())
+		if(#path == 0) then path = "skies" end
+		pFileDialog:SetPath(path)
+		pFileDialog:SetExtensions({"hdr"})
+		pFileDialog:Update()
+	end)
+	skyOverride:SetTooltip(locale.get_text("pfm_sky_override_desc"))
+
+	-- Choose a default sky
+	local skies = file.find("materials/skies/*.hdr")
+	if(#skies > 0) then skyOverride:SetValue("skies/" .. skies[1]) end
+	self:AddControl("sky",skyOverride)
+	self.m_ctrlSkyOverride = skyOverride
+
+	skyOverride:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_sky_override"))
+
+	-- Sky strength
+	self.m_ctrlSkyStrength = self:AddSliderControl("pfm_sky_strength","sky_strength",30,0,100)
+
+	-- Sky yaw
+	self.m_ctrlSkyYaw = self:AddSliderControl("pfm_sky_yaw_angle","sky_yaw",0,0,360)
+
+	-- Max transparency bounces
+	self.m_ctrlMaxTransparencyBounces = self:AddSliderControl("pfm_max_transparency_bounces","max_transparency_bounces",128,0,100)
+
+	-- Light intensity factor
+	self.m_ctrlLightIntensityFactor = self:AddSliderControl("pfm_light_intensity_factor","light_intensity_factor",1.0,0,20)
+
+	-- Emission strength
+	self.m_ctrlEmissionStrength = self:AddSliderControl("pfm_emission_strength","emission_strength",1.0,0,20)
+
+	-- Number of frames
+	self.m_ctrlFrameCount = self:AddSliderControl("pfm_number_of_frames_to_render","frame_count",1,1,100,nil,1.0,true)
+
+	-- Output format
+	local outputFormat = gui.create("WIDropDownMenu",p)
+	outputFormat:AddOption("HDR",tostring(util.IMAGE_FORMAT_HDR))
+	outputFormat:AddOption("PNG (" .. locale.get_text("pfm_tone_mapped") .. ")",tostring(util.IMAGE_FORMAT_PNG))
+	outputFormat:AddOption("BMP (" .. locale.get_text("pfm_tone_mapped") .. ")",tostring(util.IMAGE_FORMAT_BMP))
+	outputFormat:AddOption("TGA (" .. locale.get_text("pfm_tone_mapped") .. ")",tostring(util.IMAGE_FORMAT_TGA))
+	outputFormat:AddOption("JPG (" .. locale.get_text("pfm_tone_mapped") .. ")",tostring(util.IMAGE_FORMAT_JPG))
+	outputFormat:SelectOption(0)
+	outputFormat:SetTooltip(locale.get_text("pfm_cycles_output_format_desc"))
+	self:AddControl("pfm_cycles_output_format",outputFormat)
+	self.m_ctrlOutputFormat = outputFormat
+	outputFormat:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_cycles_output_format"))
+	outputFormat:AddCallback("OnOptionSelected",function(el,option)
+		local format = tonumber(outputFormat:GetOptionValue(outputFormat:GetSelectedOption()))
+		self.m_rt:SetImageSaveFormat(format)
+	end)
+	outputFormat:SelectOption(0)
+
+	-- Output directory
+	--[[local outputDir = gui.create("WIFileEntry",p)
+	outputDir:SetBrowseHandler(function(resultHandler)
+		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
+			if(fileName == nil) then return end
+			resultHandler(fileName)
+		end)
+		pFileDialog:MakeDirectoryExplorer()
+		pFileDialog:SetRootPath(util.get_addon_path())
+		pFileDialog:SetPath(outputDir:GetValue())
+		pFileDialog:Update()
+	end)
+	outputDir:SetValue("render/")
+	outputDir:SetTooltip(locale.get_text("pfm_output_directory_desc"))
+	self.m_ctrlOutputDir = outputDir
+
+	outputDir:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_output_directory"))]]
+
+	self.m_ctrlStereo = self:AddToggleControl("pfm_stereo","stereo",true)
+	self.m_ctrlStereo:SetVisible(false)
+	self.m_ctrlDenoise = self:AddToggleControl("pfm_denoise_image","denoise",true)
+	-- self.m_ctrlPreStage = self:AddToggleControl("pfm_prestage_only","prestage",false)
+	self.m_ctrlRenderWorld = self:AddToggleControl("pfm_render_world","render_world",true)
+	self.m_ctrlRenderGameEntities = self:AddToggleControl("pfm_render_game_objects","render_game_entities",true)
+	self.m_ctrlRenderPlayer = self:AddToggleControl("pfm_render_player","render_player",false)
+	self.m_ctrlFrustumCulling = self:AddToggleControl("pfm_render_frustum_culling","frustum_culling",true)
+	self.m_ctrlPVSCulling = self:AddToggleControl("pfm_render_pvs_culling","pvs_culling",true)
+
+	-- Presets
+	qualityPreset:AddCallback("OnOptionSelected",function(el,option)
+		local preset = presets[option +1]
+		if(preset == nil) then return end
+		if(preset.samples ~= nil) then self.m_ctrlSamplesPerPixel:SetValue(preset.samples) end
+		if(preset.max_transparency_bounces ~= nil) then self.m_ctrlMaxTransparencyBounces:SetValue(preset.max_transparency_bounces) end
+		if(preset.emission_strength ~= nil) then self.m_ctrlEmissionStrength:SetValue(preset.emission_strength) end
+	end)
+	qualityPreset:SelectOption(2)
+
+	self:InitializeToneMapControls(p)
+end
+function gui.PFMRenderPreview:AddToggleControl(name,identifier,checked,onChange)
+	local el = gui.create("WIToggleOption",self.m_settingsBox)
+	el:SetText(locale.get_text(name))
+	el:SetChecked(checked)
+	el:SetTooltip(locale.get_text(name .. "_desc"))
+	if(onChange ~= nil) then el:GetCheckbox():AddCallback("OnChange",onChange) end
+	if(identifier ~= nil) then self:AddControl(identifier,el) end
+	return el
+end
+function gui.PFMRenderPreview:AddSliderControl(name,identifier,default,min,max,onChange,stepSize,integer)
+	local slider = gui.create("WIPFMSlider",self.m_settingsBox)
+	slider:SetText(locale.get_text(name))
+	slider:SetRange(min,max)
+	slider:SetDefault(default)
+	slider:SetTooltip(locale.get_text(name .. "_desc"))
+	if(integer ~= nil) then slider:SetInteger(integer) end
+	if(stepSize ~= nil) then slider:SetStepSize(stepSize) end
+	if(onChange ~= nil) then slider:AddCallback("OnLeftValueChanged",onChange) end
+	if(identifier ~= nil) then self:AddControl(identifier,slider) end
+	return slider
+end
 function gui.PFMRenderPreview:InitializeControls()
 	local controls = gui.create("WIHBox",self.m_contents)
 	controls:SetHeight(self:GetHeight() -self.m_rt:GetBottom())
 
-	self.m_btRefreshPreview = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
+	self.m_btCancel = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
+		if(self.m_rt:IsRendering()) then
+			self.m_rt:CancelRendering()
+			return
+		end
+		self.m_btCancel:SetVisible(false)
+		self.m_renderBtContainer:SetVisible(true)
+	end)
+	self.m_btCancel:SetText(locale.get_text("pfm_cancel_rendering"))
+	-- self.m_btCancel:SetTooltip(locale.get_text("pfm_refresh_preview"))
+	self.m_btCancel:SetVisible(false)
+
+	local btContainer = gui.create("WIHBox",controls)
+	self.m_renderBtContainer = btContainer
+	self.m_btRefreshPreview = gui.PFMButton.create(btContainer,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
 		self:Refresh(true)
 	end)
 	self.m_btRefreshPreview:SetText(locale.get_text("pfm_render_preview"))
 	self.m_btRefreshPreview:SetTooltip(locale.get_text("pfm_refresh_preview"))
 
-	gui.create("WIBase",controls,0,0,5,1) -- Gap
+	gui.create("WIBase",btContainer,0,0,5,1) -- Gap
 
-	self.m_btRefresh = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
-		if(self.m_rt:IsRendering()) then
-			self.m_rt:CancelRendering()
-			return
-		end
+	self.m_btRefresh = gui.PFMButton.create(btContainer,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
 		self:Refresh()
 	end)
 	self.m_btRefresh:SetText(locale.get_text("pfm_render_image"))
 	self.m_btRefresh:SetTooltip(locale.get_text("pfm_render_frame"))
 
+	gui.create("WIBase",btContainer,0,0,5,1) -- Gap
+
+	self.m_btPrepare = gui.PFMButton.create(btContainer,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
+		self:Refresh(false,true)
+	end)
+	self.m_btPrepare:SetText(locale.get_text("pfm_create_render_job"))
+	self.m_btPrepare:SetTooltip(locale.get_text("pfm_create_render_job_desc"))
+
 	gui.create("WIBase",controls,0,0,5,1) -- Gap
 
 	self.m_btOpenOutputDir = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
 		local path = util.Path(util.get_addon_path() .. "render/" .. self:GetCurrentFrameFilePath())
-		util.open_path_in_explorer(path:GetPath(),path:GetFileName() .. ".png")
+		util.open_path_in_explorer(path:GetPath(),path:GetFileName() .. "." .. util.get_image_format_file_extension(self.m_rt:GetImageSaveFormat()))
 	end)
 	self.m_btOpenOutputDir:SetText(locale.get_text("pfm_open_output_dir"))
 
-	self.m_btApplyPostProcessing = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
+	--[[self.m_btApplyPostProcessing = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
 		local filmmaker = tool.get_filmmaker()
 		local frameStart = filmmaker:GetClampedFrameOffset()
 		local frameEnd = math.max(math.min(frameStart +self.m_ctrlFrameCount:GetValue() -1,filmmaker:GetLastFrameIndex()),frameStart)
@@ -629,7 +610,7 @@ function gui.PFMRenderPreview:InitializeControls()
 		filmmaker:GoToFrame(frameStart)
 		self:EnableThinking()
 	end)
-	self.m_btApplyPostProcessing:SetText(locale.get_text("pfm_apply_post_processing"))
+	self.m_btApplyPostProcessing:SetText(locale.get_text("pfm_apply_post_processing"))]]
 
 	controls:SetHeight(self.m_btRefreshPreview:GetHeight())
 	controls:Update()
@@ -638,22 +619,17 @@ end
 function gui.PFMRenderPreview:OnThink()
 	gui.Base.OnThink(self)
 
-	if(self.m_test) then
-		self.m_test = false
-		self:UpdateDepthOfField()
-	end
-
 	if(self.m_applyPostProcessing == nil) then return end
 
 	local t = time.cur_time()
 	if(t < self.m_applyPostProcessing.nextUpdate) then return end
 	self.m_applyPostProcessing.nextUpdate = time.cur_time() +4
 
-	self:UpdateDepthOfField()
+	-- self:UpdateDepthOfField()
 	local filmmaker = tool.get_filmmaker()
 	local framePath = self:GetFrameFilePath(filmmaker:GetClampedFrameOffset())
 	local outputPath = "render/" .. framePath
-	self.m_rt:SaveImage(outputPath,false)
+	self.m_rt:SaveImage(outputPath)
 
 	local nextFrame = self.m_applyPostProcessing.curFrame +1
 	self.m_applyPostProcessing.curFrame = nextFrame
@@ -681,11 +657,10 @@ end
 function gui.PFMRenderPreview:GetCurrentFrameFilePath()
 	return self:GetFrameFilePath(tool.get_filmmaker():GetFrameOffset())
 end
-function gui.PFMRenderPreview:Refresh(preview)
-	if(util.is_valid(self.m_btRefreshPreview)) then self.m_btRefreshPreview:SetEnabled(false) end
-	if(util.is_valid(self.m_btRefresh)) then
-		self.m_btRefresh:SetText(locale.get_text("pfm_cancel_rendering"))
-	end
+function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
+	if(self.m_rt:IsRendering()) then self.m_rt:CancelRendering() end
+	self.m_btCancel:SetVisible(true)
+	self.m_renderBtContainer:SetVisible(false)
 
 	local settings = self.m_rt:GetRenderSettings()
 	local renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED
@@ -731,7 +706,7 @@ function gui.PFMRenderPreview:Refresh(preview)
 	settings:SetMaxTransparencyBounces(self.m_ctrlMaxTransparencyBounces:GetValue())
 	settings:SetLightIntensityFactor(self.m_ctrlLightIntensityFactor:GetValue())
 	settings:SetFrameCount(preview and 1 or self.m_ctrlFrameCount:GetValue())
-	settings:SetPreStageOnly(self.m_ctrlPreStage:IsChecked())
+	settings:SetPreStageOnly(prepareOnly == true)
 	settings:SetDenoise(self.m_ctrlDenoise:IsChecked())
 	settings:SetDeviceType(deviceType)
 	settings:SetRenderWorld(self.m_ctrlRenderWorld:IsChecked())
@@ -741,6 +716,8 @@ function gui.PFMRenderPreview:Refresh(preview)
 	settings:SetPVSCullingEnabled(self.m_ctrlPVSCulling:IsChecked())
 	settings:SetCamType(tonumber(self.m_ctrlCamType:GetValue()))
 	settings:SetPanoramaType(tonumber(self.m_ctrlPanoramaType:GetValue()))
+	settings:SetPanoramaHorizontalRange(tonumber(self.m_ctrlPanoramaRange:GetOptionValue(self.m_ctrlPanoramaRange:GetSelectedOption())))
+	settings:SetStereoscopic(self.m_ctrlStereo:IsChecked())
 	settings:SetWidth(width)
 	settings:SetHeight(height)
 

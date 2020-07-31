@@ -6,12 +6,16 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_PFM_BONE = udm.register_element("PFMBone")
+include("/pfm/udm/udm_scene_element.lua")
+
+udm.ELEMENT_TYPE_PFM_BONE = udm.register_type("PFMBone",{udm.PFMSceneElement},true)
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_BONE,"transform",udm.Transform())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_BONE,"childBones",udm.Array(udm.ELEMENT_TYPE_PFM_BONE))
 
+function udm.PFMBone:GetSceneChildren() return self:GetChildBones():GetTable() end
+
 function udm.PFMBone:GetModelComponent()
-	local parent = self:FindParentElement()
+	local parent = self:FindParentElement(function(el) return el:GetType() == udm.ELEMENT_TYPE_PFM_BONE or el:GetType() == udm.ELEMENT_TYPE_PFM_MODEL end)
 	if(parent == nil) then return end
 	if(parent:GetType() == udm.ELEMENT_TYPE_PFM_BONE) then return parent:GetModelComponent() end
 	if(parent:GetType() == udm.ELEMENT_TYPE_PFM_MODEL) then return parent end

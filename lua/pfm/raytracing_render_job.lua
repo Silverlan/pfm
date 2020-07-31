@@ -74,6 +74,10 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"pvsCullingEnabled
 	setter = "SetPVSCullingEnabled",
 	getter = "IsPVSCullingEnabled"
 })
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"panoramaHorizontalRange",360.0)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"stereoscopic",true,{
+	getter = "IsStereoscopic"
+})
 
 function pfm.RaytracingRenderJob.Settings:__init()
 	self:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
@@ -106,6 +110,8 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetHeight(self:GetHeight())
 	cpy:SetCameraFrustumCullingEnabled(self:IsCameraFrustumCullingEnabled())
 	cpy:SetPVSCullingEnabled(self:IsPVSCullingEnabled())
+	cpy:SetPanoramaHorizontalRange(self:GetPanoramaHorizontalRange())
+	cpy:SetStereoscopic(self:IsStereoscopic())
 	return cpy
 end
 
@@ -305,6 +311,9 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		clCam:SetDepthOfFieldEnabled(false)--camData:IsDepthOfFieldEnabled())
 		clCam:SetApertureSizeFromFStop(camData:GetFStop(),math.calc_focal_length_from_fov(fov,camData:GetSensorSize()))
 	else clCam:SetDepthOfFieldEnabled(false) end
+
+	clCam:SetEquirectangularHorizontalRange(renderSettings:GetPanoramaHorizontalRange())
+	clCam:SetStereoscopic(renderSettings:IsStereoscopic())
 
 	scene:InitializeFromGameScene(self.m_gameScene,pos,rot,vp,nearZ,farZ,fov,sceneFlags,function(ent)
 		if(ent:IsWorld()) then return renderSettings:GetRenderWorld() end

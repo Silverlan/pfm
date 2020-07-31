@@ -12,6 +12,7 @@ include("/gui/aspectratio.lua")
 include("/gui/pfm/button.lua")
 include("/gui/pfm/playbutton.lua")
 include("/gui/draganddrop.lua")
+include("/gui/playbackcontrols.lua")
 include("/pfm/fonts.lua")
 
 util.register_class("gui.PFMViewport",gui.Base)
@@ -85,7 +86,12 @@ function gui.PFMViewport:OnInitialize()
 
 	self.m_filmClip = create_text_element("pfm_medium",Vector2(0,16),textColor)
 
-	self:InitializePlayControls()
+	self.m_playControls = gui.create("PlaybackControls",self)
+	self.m_playControls:CenterToParentX()
+	self.m_playControls:SetY(self:GetHeight() -self.m_playControls:GetHeight())
+	self.m_playControls:SetAnchor(0.5,1,0.5,1)
+	self.m_playControls:LinkToPFMProject(tool.get_filmmaker())
+	self.m_btPlay = self.m_playControls:GetPlayButton()
 	self:InitializeManipulatorControls()
 	self:InitializeCameraControls()
 
@@ -198,65 +204,6 @@ function gui.PFMViewport:UpdateFilmLabelPositions()
 	if(util.is_valid(self.m_filmClip)) then
 		self.m_filmClip:SetX(self:GetWidth() *0.5 -self.m_filmClip:GetWidth() *0.5)
 	end
-end
-function gui.PFMViewport:InitializePlayControls()
-	local controls = gui.create("WIHBox",self,0,self.m_vpBg:GetBottom() +4)
-
-	self.m_btFirstFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_firstframe","gui/pfm/icon_cp_firstframe_activated",function()
-		local filmmaker = tool.get_filmmaker()
-		if(util.is_valid(filmmaker) == false) then return end
-		filmmaker:GoToFirstFrame()
-	end)
-	self.m_btFirstFrame:SetTooltip(locale.get_text("pfm_playback_first_frame"))
-
-	self.m_btPrevClip = gui.PFMButton.create(controls,"gui/pfm/icon_cp_prevclip","gui/pfm/icon_cp_prevclip_activated",function()
-		local filmmaker = tool.get_filmmaker()
-		if(util.is_valid(filmmaker) == false) then return end
-		filmmaker:GoToPreviousClip()
-	end)
-	self.m_btPrevClip:SetTooltip(locale.get_text("pfm_playback_previous_clip"))
-
-	self.m_btPrevFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_prevframe","gui/pfm/icon_cp_prevframe_activated",function()
-		local filmmaker = tool.get_filmmaker()
-		if(util.is_valid(filmmaker) == false) then return end
-		filmmaker:GoToPreviousFrame()
-	end)
-	self.m_btPrevFrame:SetTooltip(locale.get_text("pfm_playback_previous_frame"))
-
-	self.m_btRecord = gui.PFMButton.create(controls,"gui/pfm/icon_cp_record","gui/pfm/icon_cp_record_activated",function()
-		print("TODO")
-	end)
-	self.m_btRecord:SetTooltip(locale.get_text("pfm_playback_record"))
-
-	self.m_btPlay = gui.create("WIPFMPlayButton",controls)
-	self.m_btPlay:SetTooltip(locale.get_text("pfm_playback_play"))
-
-	self.m_btNextFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_nextframe","gui/pfm/icon_cp_nextframe_activated",function()
-		local filmmaker = tool.get_filmmaker()
-		if(util.is_valid(filmmaker) == false) then return end
-		filmmaker:GoToNextFrame()
-	end)
-	self.m_btNextFrame:SetTooltip(locale.get_text("pfm_playback_next_frame"))
-
-	self.m_btNextClip = gui.PFMButton.create(controls,"gui/pfm/icon_cp_nextclip","gui/pfm/icon_cp_nextclip_activated",function()
-		local filmmaker = tool.get_filmmaker()
-		if(util.is_valid(filmmaker) == false) then return end
-		filmmaker:GoToNextClip()
-	end)
-	self.m_btNextClip:SetTooltip(locale.get_text("pfm_playback_next_clip"))
-
-	self.m_btLastFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_lastframe","gui/pfm/icon_cp_lastframe_activated",function()
-		local filmmaker = tool.get_filmmaker()
-		if(util.is_valid(filmmaker) == false) then return end
-		filmmaker:GoToLastFrame()
-	end)
-	self.m_btLastFrame:SetTooltip(locale.get_text("pfm_playback_last_frame"))
-
-	controls:SetHeight(self.m_btFirstFrame:GetHeight())
-	controls:Update()
-	controls:SetX(self:GetWidth() *0.5 -controls:GetWidth() *0.5)
-	controls:SetAnchor(0.5,1,0.5,1)
-	self.m_playControls = controls
 end
 function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
 	self.m_manipulatorMode = manipulatorMode

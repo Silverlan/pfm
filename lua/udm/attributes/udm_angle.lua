@@ -7,12 +7,8 @@
 ]]
 
 udm.ATTRIBUTE_TYPE_ANGLE = udm.register_attribute("Angle",EulerAngles())
-function udm.Angle:WriteToBinary(ds)
-	ds:WriteAngles(self:GetValue())
-end
-function udm.Angle:ReadFromBinary(ds)
-	self:SetValue(ds:ReadAngles())
-end
+function udm.Angle:WriteToBinary(ds) ds:WriteAngles(self:GetValue()) end
+function udm.Angle:ReadFromBinary(ds) return ds:ReadAngles() end
 function udm.Angle:Copy()
 	return self.m_class(self:GetValue():Copy())
 end

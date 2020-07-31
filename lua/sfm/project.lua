@@ -18,7 +18,40 @@ function sfm.Project:__init(dmxData)
 
 	self.m_sessions = {}
 	local elSession = dmxData:GetRootAttribute():GetValue()
-	if(elSession ~= nil) then table.insert(self.m_sessions,self:CreatePropertyFromDMXElement(elSession,sfm.Session)) end
+	if(elSession ~= nil) then
+		-- The 'clipBin' and 'miscBin' containers should only contain elements of type 'DmeFilmClip'
+		-- but in some cases they can also contain sessions, which in turn contain clip elements.
+		-- I don't know why that is, but it messes with out importer, so we'll move them up to the main 'clipBin'/'miscBin' containers.
+		-- TODO: This might be obsolete
+		local attrClipBin = elSession:GetAttribute("clipBin")
+		local attrMiscBin = elSession:GetAttribute("miscBin")
+		local bins = {}
+		if(attrClipBin ~= nil) then table.insert(bins,attrClipBin) end
+		if(attrMiscBin ~= nil) then table.insert(bins,attrMiscBin) end
+		for _,bin in ipairs(bins) do
+			for _,attr in ipairs(bin:GetValue()) do
+				local val = attr:GetValue()
+				if(val:GetType() == "DmElement") then
+					local attrChildClipBin = val:GetAttribute("clipBin")
+					if(attrChildClipBin ~= nil) then
+						for _,elChild in ipairs(attrChildClipBin:GetValue()) do
+							bin:AddArrayValue(elChild)
+						end
+					end
+
+					local attrChildMiscBin = val:GetAttribute("miscBin")
+					if(attrChildMiscBin ~= nil) then
+						for _,elChild in ipairs(attrChildMiscBin:GetValue()) do
+							attrMiscBin:AddArrayValue(elChild)
+						end
+					end
+					bin:RemoveArrayValue(attr)
+				end
+			end
+		end
+
+		table.insert(self.m_sessions,self:CreatePropertyFromDMXElement(elSession,sfm.Session))
+	end
 
 	-- TODO: Obsolete! Now done in project converter!
 	-- For some reason root bones requires a different transformation than other bones,

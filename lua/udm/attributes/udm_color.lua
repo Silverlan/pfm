@@ -6,22 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ATTRIBUTE_TYPE_COLOR = udm.register_attribute("Color",{0,0,0,0})
-function udm.Color:WriteToBinary(ds)
-	local v = self:GetValue()
-	ds:WriteUInt8(v[1])
-	ds:WriteUInt8(v[2])
-	ds:WriteUInt8(v[3])
-	ds:WriteUInt8(v[4])
-end
-function udm.Color:ReadFromBinary(ds)
-	local v = {}
-	table.insert(v,ds:ReadUInt8())
-	table.insert(v,ds:ReadUInt8())
-	table.insert(v,ds:ReadUInt8())
-	table.insert(v,ds:ReadUInt8())
-	self:SetValue(v)
-end
+udm.ATTRIBUTE_TYPE_COLOR = udm.register_attribute("Color",Color.White)
+function udm.Color:WriteToBinary(ds) ds:WriteColor(self:GetValue()) end
+function udm.Color:ReadFromBinary(ds) return ds:ReadColor() end
 function udm.Color:Copy()
 	return self.m_class(self:GetValue():Copy())
 end

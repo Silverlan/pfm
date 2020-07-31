@@ -19,6 +19,7 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"fadeIn",udm.Float(
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"fadeOut",udm.Float())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"bookmarkSets",udm.Array(udm.ELEMENT_TYPE_PFM_BOOKMARK_SET))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"activeBookmarkSet",udm.Int())
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_FILM_CLIP,"mapName",udm.String())
 
 function udm.PFMFilmClip:AddActor(actor)
 	for _,actorOther in ipairs(self:GetActorList()) do

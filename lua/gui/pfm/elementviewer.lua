@@ -44,10 +44,10 @@ function gui.PFMElementViewer:OnInitialize()
 	self.m_contents:SetAutoFillContents(true)
 
 	local treeVBox = gui.create("WIVBox",self.m_contents)
-	treeVBox:SetFixedSize(true)
+	treeVBox:SetAutoFillContents(true)
 	local resizer = gui.create("WIResizer",self.m_contents)
 	local dataVBox = gui.create("WIVBox",self.m_contents)
-	dataVBox:SetFixedSize(true)
+	dataVBox:SetAutoFillContents(true)
 
 	local function create_header_text(text,parent)
 		local pHeader = gui.create("WIRect",parent,0,0,parent:GetWidth(),21,0,0,1,0)
@@ -65,9 +65,26 @@ function gui.PFMElementViewer:OnInitialize()
 	create_header_text(locale.get_text("tree"),treeVBox)
 	create_header_text(locale.get_text("data"),dataVBox)
 
-	self.m_tree = gui.create("WIPFMTreeView",treeVBox,0,0,treeVBox:GetWidth(),treeVBox:GetHeight(),0,0,1,1)
+	-- Tree
+	local treeScrollContainerBg = gui.create("WIBase",treeVBox,0,0,64,128)
+	local treeScrollContainer = gui.create("WIScrollContainer",treeScrollContainerBg,0,0,64,128,0,0,1,1)
+	treeScrollContainerBg:AddCallback("SetSize",function(el)
+		if(self:IsValid() and util.is_valid(self.m_tree)) then
+			self.m_tree:SetWidth(el:GetWidth())
+		end
+	end)
+	self.m_tree = gui.create("WIPFMTreeView",treeScrollContainer,0,0,treeScrollContainer:GetWidth(),treeScrollContainer:GetHeight())
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_SINGLE)
-	self.m_data = gui.create("WIPFMTreeView",dataVBox,0,0,dataVBox:GetWidth(),dataVBox:GetHeight(),0,0,1,1)
+
+	-- Data
+	local dataScrollContainerBg = gui.create("WIBase",dataVBox,0,0,64,128)
+	local dataScrollContainer = gui.create("WIScrollContainer",dataScrollContainerBg,0,0,64,128,0,0,1,1)
+	dataScrollContainerBg:AddCallback("SetSize",function(el)
+		if(self:IsValid() and util.is_valid(self.m_data)) then
+			self.m_data:SetWidth(el:GetWidth())
+		end
+	end)
+	self.m_data = gui.create("WIPFMTreeView",dataScrollContainer,0,0,dataScrollContainer:GetWidth(),dataScrollContainer:GetHeight())
 	self.m_data:SetSelectable(gui.Table.SELECTABLE_MODE_SINGLE)
 
 	self.m_treeElementToDataElement = {}
@@ -77,6 +94,20 @@ function gui.PFMElementViewer:OnInitialize()
 		if(util.is_valid(self.m_btBack)) then self.m_btBack:SetEnabled(index > 1) end
 		if(util.is_valid(self.m_btForward)) then self.m_btForward:SetEnabled(index < #self:GetHistory()) end
 		if(util.is_valid(self.m_btUp)) then self.m_btUp:SetVisible(true) end -- TODO
+	end)
+
+	local inCallback = false
+	treeScrollContainer:GetVerticalScrollBar():AddCallback("OnScrollOffsetChanged",function(el,offset)
+		if(inCallback == true) then return end
+		inCallback = true
+			dataScrollContainer:GetVerticalScrollBar():SetScrollOffset(offset)
+		inCallback = false
+	end)
+	dataScrollContainer:GetVerticalScrollBar():AddCallback("OnScrollOffsetChanged",function(el,offset)
+		if(inCallback == true) then return end
+		inCallback = true
+			treeScrollContainer:GetVerticalScrollBar():SetScrollOffset(offset)
+		inCallback = false
 	end)
 end
 function gui.PFMElementViewer:UpdateDataElementPositions()

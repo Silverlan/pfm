@@ -6,9 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("udm_entity_component.lua")
 include("particle_system")
 
-udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM = udm.register_element("PFMParticleSystem")
+udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM = udm.register_type("PFMParticleSystem",{udm.PFMEntityComponent},true)
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"timeScale",udm.Float(1.0))
 -- TODO: 'definition' field is obsolete, remove it! Particle definitions are ALWAYS stored in separate particle system files.
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM,"definition",udm.PFMParticleSystemDefinition())

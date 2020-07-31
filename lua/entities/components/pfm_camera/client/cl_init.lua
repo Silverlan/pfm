@@ -57,10 +57,10 @@ function ents.PFMCamera:Initialize()
 	local toggleC = self:AddEntityComponent(ents.COMPONENT_TOGGLE)
 	self:AddEntityComponent("pfm_actor")
 
-	if(toggleC ~= nil) then
-		self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
-		self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"OnTurnOff")
-	end
+	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
+	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"OnTurnOff")
+
+	self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"OnUpdateRenderData")
 
 	self.m_listeners = {}
 end
@@ -76,7 +76,6 @@ function ents.PFMCamera:OnRemove()
 	for _,cb in ipairs(self.m_listeners) do
 		if(cb:IsValid()) then cb:Remove() end
 	end
-	if(util.is_valid(self.m_cbFrustumModelUpdate)) then self.m_cbFrustumModelUpdate:Remove() end
 end
 function ents.PFMCamera:UpdateVRView()
 	if(ents.PFMCamera.is_vr_view_enabled()) then
@@ -213,15 +212,13 @@ function ents.PFMCamera:SetFrustumModelVisible(visible)
 	if(model == nil) then return end
 	mdlC:SetModel(model)
 end
+function ents.PFMCamera:OnUpdateRenderData()
+	if(self.m_updateFrustumModel ~= true) then return end
+	self.m_updateFrustumModel = nil
+	self:UpdateModel()
+end
 function ents.PFMCamera:SetFrustumModelDirty()
-	if(util.is_valid(self.m_cbFrustumModelUpdate)) then return end
-	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
-	if(renderC == nil) then return end
-	self.m_cbFrustumModelUpdate = renderC:AddEventCallback(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,function()
-		if(util.is_valid(self.m_cbFrustumModelUpdate)) then self.m_cbFrustumModelUpdate:Remove() end
-		self:UpdateModel()
-		return util.EVENT_REPLY_UNHANDLED
-	end)
+	self.m_updateFrustumModel = true
 end
 function ents.PFMCamera:Setup(actorData,cameraData)
 	self.m_cameraData = cameraData

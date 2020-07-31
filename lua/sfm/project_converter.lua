@@ -79,7 +79,7 @@ local function log_pfm_project_debug_info(project)
 	pfm.log("---------------------------------------",pfm.LOG_CATEGORY_PFM_CONVERTER)
 end
 
-local function is_udm_element_entity_component(el)
+function sfm.is_udm_element_entity_component(el)
 	local type = el:GetType()
 	-- We only have to check the component types that have a corresponding type in SFM
 	return (type == udm.ELEMENT_TYPE_PFM_MODEL or type == udm.ELEMENT_TYPE_PFM_CAMERA or type == udm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM)
@@ -218,6 +218,40 @@ function sfm.ProjectConverter:CreateActor(sfmComponent)
 	actor:SetTransformAttr(self:ConvertNewElement(sfmComponent:GetTransform(),transformType))
 	actor:AddComponent(pfmComponent)
 	self:CachePFMActor(pfmComponent,actor)
+
+	if(sfmComponent:GetType() == "DmeGameModel") then
+		-- Locate animation set associated with this actor
+		local elFilmClip
+		local filmClipParentLevel = math.huge
+		local iterated = {}
+		local function find_parent_film_clip(el,level)
+			if(iterated[el] ~= nil) then return end
+			iterated[el] = true
+			if(el:GetType() == "DmeFilmClip") then
+				if(level < filmClipParentLevel) then
+					elFilmClip = el
+					filmClipParentLevel = level
+				end
+				return
+			end
+			for _,parent in ipairs(el:GetParents()) do
+				find_parent_film_clip(parent,level +1)
+			end
+		end
+		find_parent_film_clip(sfmComponent,0)
+		if(elFilmClip ~= nil) then
+			local animSets = elFilmClip:GetAnimationSets()
+			for _,animSet in ipairs(animSets) do
+				if(util.is_same_object(animSet:GetGameModel(),sfmComponent)) then
+					-- Found animation set. Now we'll move the operators from the animation set to our new actor.
+					for _,op in ipairs(animSet:GetOperators()) do
+						actor:GetOperatorsAttr():PushBack(self:ConvertNewElement(op))
+					end
+					break
+				end
+			end
+		end
+	end
 	return actor,true
 end
 function sfm.ProjectConverter:GetPFMElement(element)
@@ -338,7 +372,7 @@ local function apply_post_processing(project,filmClip,processedObjects)
 						end
 					end
 
-					if(toElement ~= nil and is_udm_element_entity_component(toElement) and toElement:GetChild(toAttr) == nil) then
+					if(toElement ~= nil and sfm.is_udm_element_entity_component(toElement) and toElement:GetChild(toAttr) == nil) then
 						-- Some attributes (like visibility) are stored in the SFM GameModel/Camera/etc. elements. In Pragma these are
 						-- components of an actor, and these attributes are stored in the actor, not the components, so we have to
 						-- redirect the reference to the actor.
@@ -469,6 +503,7 @@ local function apply_post_processing(project,filmClip,processedObjects)
 	end
 end
 function sfm.ProjectConverter:ApplyPostProcessing()
+	pfm.log("Applying post-processing...",pfm.LOG_CATEGORY_PFM_CONVERTER)
 	local function iterate_session(el,type,callback,iterated)
 		iterated = iterated or {}
 		for name,child in pairs(el:GetChildren()) do
@@ -487,7 +522,7 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 			-- we want it to point to the actor instead.
 			local overrideParent = elTransform:GetOverrideParent()
 			if(overrideParent ~= nil) then
-				if(is_udm_element_entity_component(overrideParent)) then
+				if(sfm.is_udm_element_entity_component(overrideParent)) then
 					local overrideParentActor = overrideParent:FindParentElement()
 					elTransform:SetOverrideParent((overrideParentActor ~= nil) and udm.create_reference(overrideParentActor) or nil)
 				end
@@ -498,7 +533,15 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 			apply_post_processing(project,filmClip)
 		end
 	end
+	pfm.log("Generating particle system files for embedded particle systems...",pfm.LOG_CATEGORY_PFM_CONVERTER)
 	self:GenerateEmbeddedParticleSystemFile()
+
+	-- SFM uses scalar scaling factors, Pragma uses 3D vectors, so we'll have to do some conversions.
+	pfm.log("Converting scalar scaling factors to vectors...",pfm.LOG_CATEGORY_PFM_CONVERTER)
+	sfm.convert_scale_factors_to_vectors(project)
+
+	pfm.log("Fixing element references...",pfm.LOG_CATEGORY_PFM_CONVERTER)
+	sfm.fix_element_references(project)
 end
 
 local g_sfmToPfmConversion = {}
@@ -562,7 +605,8 @@ sfm.register_element_type_conversion(sfm.Session,udm.PFMSession,function(convert
 	pfmSession:SetActiveClip(converter:ConvertNewElement(activeClip))
 	pfmSession:SetSettings(converter:ConvertNewElement(sfmSession:GetSettings()))
 
-	for _,clipSet in ipairs({sfmSession:GetClipBin(),sfmSession:GetMiscBin()}) do
+	pfmSession:GetClipsAttr():PushBack(pfmSession:GetActiveClip())
+	--[[for _,clipSet in ipairs({sfmSession:GetClipBin(),sfmSession:GetMiscBin()}) do
 		for _,clip in ipairs(clipSet) do
 			if(clip:GetType() == "DmeFilmClip") then
 				pfmSession:GetClipsAttr():PushBack(converter:ConvertNewElement(clip))
@@ -570,7 +614,7 @@ sfm.register_element_type_conversion(sfm.Session,udm.PFMSession,function(convert
 				pfm.log("Unsupported session clip type '" .. clip:GetType() .. "'! Skipping...",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 			end
 		end
-	end
+	end]]
 end)
 
 sfm.register_element_type_conversion(sfm.Settings,udm.PFMSettings,function(converter,sfmSettings,pfmSettings)
@@ -755,6 +799,7 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 			else parent:AddChild(bone) end
 
 			transformToBone[child:GetTransform()] = bone
+			transformToBone[child:GetName()] = bone
 			add_child_bones(child,bone)
 		end
 	end
@@ -762,7 +807,21 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 
 	for _,node in ipairs(sfmGameModel:GetBones()) do
 		local pfmBone = transformToBone[node]
-		pfmGameModel:GetBoneListAttr():PushBack(udm.create_reference(pfmBone))
+		if(pfmBone == nil) then
+			-- Transform in bone list doesn't match transform in child hierarchy.
+			-- This can happen if a rig is involved.
+			-- In this case we'll attempt to find it by name, although this
+			-- isn't reliable as the name can be changed arbitrarily.
+			pfmBone = transformToBone[node:GetName()]
+		end
+		if(pfmBone ~= nil) then
+			pfmGameModel:GetBoneListAttr():PushBack(udm.create_reference(pfmBone))
+			-- Note: The transform in the bone hierarchy is not necessarily the actual final transform for the bone,
+			-- we'll use the one from the bone list instead.
+			pfmBone:SetProperty("transform",converter:ConvertNewElement(node))
+		else
+			pfm.log("Found bone '" .. node:GetName() .. "' in list of bones for actor '" .. sfmGameModel:GetName() .. "', but bone not found in child hierarchy of that actor! Animation data for this bone will not be available!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+		end
 	end
 
 	for _,weight in ipairs(sfmGameModel:GetFlexWeights()) do
@@ -949,6 +1008,7 @@ local function is_sfm_bone(el)
 end
 
 local function apply_override_parent(converter,sfmEl,pfmEl)
+	if(sfmEl.GetOverrideParent == nil) then return end
 	local overrideParent = sfmEl:GetOverrideParent()
 	if(overrideParent == nil) then return end
 	local pos = sfmEl:GetOverridePos() or false
@@ -1126,4 +1186,43 @@ sfm.register_element_type_conversion(sfm.Transform,udm.Transform,function(conver
 
 	local scale = sfmTransform:GetScale()
 	pfmTransform:SetScale(Vector(scale,scale,scale))
+end)
+
+sfm.register_element_type_conversion(sfm.RigPointConstraintOperator,udm.PFMRigPointConstraintOperator,function(converter,sfmOp,pfmOp)
+	pfmOp:SetSlaveAttr(converter:ConvertNewElement(sfmOp:GetSlave()))
+	for _,target in ipairs(sfmOp:GetTargets()) do
+		pfmOp:GetTargetsAttr():PushBack(converter:ConvertNewElement(target))
+	end
+end)
+
+sfm.register_element_type_conversion(sfm.RigOrientConstraintOperator,udm.PFMRigRotationConstraintOperator,function(converter,sfmOp,pfmOp)
+	pfmOp:SetSlaveAttr(converter:ConvertNewElement(sfmOp:GetSlave()))
+	for _,target in ipairs(sfmOp:GetTargets()) do
+		pfmOp:GetTargetsAttr():PushBack(converter:ConvertNewElement(target))
+	end
+end)
+
+sfm.register_element_type_conversion(sfm.RigParentConstraintOperator,udm.PFMRigParentConstraintOperator,function(converter,sfmOp,pfmOp)
+	pfmOp:SetSlaveAttr(converter:ConvertNewElement(sfmOp:GetSlave()))
+	for _,target in ipairs(sfmOp:GetTargets()) do
+		pfmOp:GetTargetsAttr():PushBack(converter:ConvertNewElement(target))
+	end
+end)
+
+sfm.register_element_type_conversion(sfm.ConstraintTarget,udm.PFMConstraintTarget,function(converter,sfmTarget,pfmTarget)
+	pfmTarget:SetTargetAttr(converter:ConvertNewElement(sfmTarget:GetTarget()))
+	pfmTarget:SetTargetWeight(sfmTarget:GetTargetWeight())
+	pfmTarget:SetOffset(sfm.convert_source_constraint_target_offset_to_pragma(sfmTarget:GetVecOffset()))
+	pfmTarget:SetRotationOffset(sfm.convert_source_constraint_target_rotation_offset_to_pragma(sfmTarget:GetOOffset()))
+end)
+
+sfm.register_element_type_conversion(sfm.ConstraintSlave,udm.PFMConstraintSlave,function(converter,sfmSlave,pfmSlave)
+	pfmSlave:SetTargetAttr(converter:ConvertNewElement(sfmSlave:GetTarget()))
+	-- TODO: Transform coordinate system
+	pfmSlave:SetPosition(sfm.convert_source_anim_set_position_to_pragma(sfmSlave:GetPosition()))
+	pfmSlave:SetRotation(sfm.convert_source_anim_set_rotation_to_pragma(sfmSlave:GetOrientation()))
+end)
+
+sfm.register_element_type_conversion(sfm.RigHandle,udm.PFMRigHandle,function(converter,sfmHandle,pfmHandle)
+	pfmHandle:SetTransformAttr(converter:ConvertNewElement(sfmHandle:GetTransform()))
 end)

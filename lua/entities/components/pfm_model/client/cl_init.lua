@@ -40,7 +40,7 @@ function ents.PFMModel:OnEntitySpawn()
 
 	local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 	if(animC ~= nil) then
-		local function apply_bone_transforms(entInvPose,bone)
+		--[[local function apply_bone_transforms(entInvPose,bone)
 			local boneName = bone:GetName()
 			local boneId = mdl:LookupBone(boneName) -- TODO: Cache this
 			if(boneId ~= -1) then
@@ -51,7 +51,7 @@ function ents.PFMModel:OnEntitySpawn()
 			for _,child in ipairs(bone:GetChildBones():GetTable()) do
 				apply_bone_transforms(entInvPose,child)
 			end
-		end
+		end]]
 
 		--[[self.m_cbOnSkeletonUpdated = animC:AddEventCallback(ents.AnimatedComponent.EVENT_ON_SKELETON_UPDATED,function()
 			local entInvPose = ent:GetPose():GetInverse()
@@ -92,11 +92,11 @@ bip_ponytail03  57
 			animSetC:SetBonePos(boneId,pose:GetOrigin())
 			animSetC:SetBoneRot(boneId,pose:GetRotation())
 			table.insert(self.m_listeners,t:GetPositionAttr():AddChangeListener(function(newPos)
-				--print("Pos: ",boneName,boneId,newPos)
+				-- print("New bone pos (" .. tostring(self:GetEntity()) .. ": ",boneName,boneId,newPos)
 				animSetC:SetBonePos(boneId,newPos)
 			end))
 			table.insert(self.m_listeners,t:GetRotationAttr():AddChangeListener(function(newRot)
-				--print("Rot: ",boneName,boneId,newRot)
+				-- print("Rot: ",boneName,boneId,newRot)
 				animSetC:SetBoneRot(boneId,newRot)
 			end))
 		else

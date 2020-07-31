@@ -7,12 +7,8 @@
 ]]
 
 udm.ATTRIBUTE_TYPE_QUATERNION = udm.register_attribute("Quaternion",Quaternion())
-function udm.Quaternion:WriteToBinary(ds)
-	ds:WriteQuaternion(self:GetValue())
-end
-function udm.Quaternion:ReadFromBinary(ds)
-	self:SetValue(ds:ReadQuaternion())
-end
+function udm.Quaternion:WriteToBinary(ds) ds:WriteQuaternion(self:GetValue()) end
+function udm.Quaternion:ReadFromBinary(ds) return ds:ReadQuaternion() end
 function udm.Quaternion:Copy()
 	return self.m_class(self:GetValue():Copy())
 end

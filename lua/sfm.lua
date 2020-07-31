@@ -75,6 +75,15 @@ sfm.convert_source_global_rotation_to_pragma = function(rot)
 	return Quaternion(rot.w,rot.x,rot.z,-rot.y)
 end
 
+-- Constraint target offsets and rotation offsets are YET another special case.
+sfm.convert_source_constraint_target_offset_to_pragma = function(pos)
+	return Vector(pos.y,pos.z,pos.x)
+end
+
+sfm.convert_source_constraint_target_rotation_offset_to_pragma = function(rot)
+	return sfm.convert_source_rotation_to_pragma(rot)
+end
+
 sfm.convert_source_fov_to_pragma = function(fov)
 	-- The fov values specified in SFM sessions do not match expected
 	-- horizontal/vertical/diagonal fov values or focus lengths.

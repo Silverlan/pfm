@@ -103,10 +103,20 @@ function gui.AssetExplorer:GetFavorites() return self.m_favorites end
 function gui.AssetExplorer:OnUpdate()
 	self:ListFiles()
 end
-function gui.AssetExplorer:AddIcon(assetName,isDirectory,fDirClickHandler)
-	if(#assetName == 0) then return end
-	local el = gui.IconGridView.AddIcon(self,assetName)
+function gui.AssetExplorer:CreateAssetIcon(path,assetName,isDirectory,importAsset)
+	local oPath = util.Path(path)
+	local front = oPath:GetFront()
+	local el
+	if(isDirectory) then el = gui.create("WIDirectoryAssetIcon",self) -- TODO
+	elseif(string.compare(front,"materials",false)) then el = gui.create("WIMaterialAssetIcon")
+	elseif(string.compare(front,"models",false)) then el = gui.create("WIModelAssetIcon")
+	elseif(string.compare(front,"particles",false)) then el = gui.create("WIParticleAssetIcon") end
 	if(el == nil) then return end
+	el:SetAsset(path,assetName,importAsset)
+	return el
+end
+function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
+	if(#assetName == 0) then return end
 	local path
 	local isAbsolutePath = (assetName:sub(1,1) == "/")
 	if(isAbsolutePath) then
@@ -114,9 +124,12 @@ function gui.AssetExplorer:AddIcon(assetName,isDirectory,fDirClickHandler)
 		path = file.get_file_path(assetName)
 		assetName = file.get_file_name(assetName)
 	else path = self:GetAbsolutePath() end
-
-	el:SetAsset(path,assetName,isDirectory)
-
+	local el = self:CreateAssetIcon(path,assetName,isDirectory)
+	if(el == nil) then
+		console.print_warning("Unable to populate asset explorer with item '" .. assetName .. "': Unable to create icon for type!")
+		return
+	end
+	gui.IconGridView.AddIcon(self,assetName,el)
 	if(el:IsDirectory()) then
 		el:AddCallback("OnDoubleClick",function(el)
 			if(util.is_valid(self) == false) then return end
@@ -130,32 +143,6 @@ function gui.AssetExplorer:AddIcon(assetName,isDirectory,fDirClickHandler)
 			--self:CallCallbacks("OnFileSelected",fPath)
 		end)
 	else
-		if(el:GetAssetType() == asset.TYPE_PARTICLE_SYSTEM) then
-			el:AddCallback("OnDoubleClick",function(el)
-				if(util.is_valid(self) == false) then return end
-				local ptFileName,ptName = el:GetParticleSystemFileName()
-				if(ptFileName ~= nil) then
-					tool.get_filmmaker():OpenParticleEditor(ptFileName,ptName)
-					return
-				end
-				local ptPath = util.Path(el:GetAsset())
-				ptPath:PopFront()
-				if(asset.exists(ptPath:GetString(),asset.TYPE_PARTICLE_SYSTEM) == false) then
-					-- Attempt to import the particle system from a Source Engine PCF file
-					-- TODO: This should be done automatically by 'precache_particle_system'!
-					local sePath = util.Path(ptPath)
-					sePath:RemoveFileExtension()
-					sePath = sePath +".pcf"
-					sfm.convert_particle_systems("particles/" .. sePath:GetString())
-				end
-				game.precache_particle_system(ptPath:GetString())
-
-				local relPath = util.Path(path)
-				relPath:MakeRelative(self:GetRootPath())
-				self:SetPath(relPath:GetString() .. assetName)
-				self:Update()
-			end)
-		end
 		el:AddCallback("PopulateContextMenu",function(el,pContext)
 			local tSelected = self:GetSelectedIcons()
 			local tSelectedDirs = {}
@@ -261,6 +248,9 @@ function gui.AssetExplorer:AddIcon(assetName,isDirectory,fDirClickHandler)
 	return el
 end
 function gui.AssetExplorer:PopulateContextMenu(pContext,tSelectedFiles) end
+function gui.AssetExplorer:AddAsset(assetName,isDirectory,fDirClickHandler)
+	return self:AddItem(assetName,isDirectory,fDirClickHandler)
+end
 function gui.AssetExplorer:ListFiles()
 	for _,icon in ipairs(self.m_icons) do
 		if(icon:IsValid()) then icon:RemoveSafely() end
@@ -268,12 +258,12 @@ function gui.AssetExplorer:ListFiles()
 	self.m_icons = {}
 
 	if(self.m_inFavorites) then
-		self:AddIcon("..",true,function()
+		self:AddAsset("..",true,function()
 			self.m_inFavorites = nil
 			self:Update()
 		end)
 		for f,b in pairs(self:GetFavorites()) do
-			self:AddIcon(f,false)
+			self:AddAsset(f,false)
 		end
 		self.m_iconContainer:Update()
 		return
@@ -296,17 +286,17 @@ function gui.AssetExplorer:ListFiles()
 	end
 	if(tFiles == nil) then tFiles,tDirectories = self:FindFiles() end
 	if(self:IsAtRoot()) then
-		self:AddIcon("favorites",true,function()
+		self:AddAsset(locale.get_text("favorites"),true,function()
 			self.m_inFavorites = true
 			self:Update()
 		end)
 	end
 	for _,d in ipairs(tDirectories) do
-		self:AddIcon(d,true)
+		self:AddAsset(d,true)
 	end
 	table.sort(tFiles)
 	for _,f in ipairs(tFiles) do
-		self:AddIcon(f,false)
+		self:AddAsset(f,false)
 	end
 	self.m_iconContainer:Update()
 end

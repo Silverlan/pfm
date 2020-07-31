@@ -106,31 +106,33 @@ end
 function udm.Transform:SetPose(pose)
 	self:SetPosition(pose:GetOrigin())
 	self:SetRotation(pose:GetRotation())
-	self:SetScale(pose:GetScale())
+	if(pose.GetScale) then self:SetScale(pose:GetScale()) end
 end
 
-local function apply_parent_pose(el,pose)
+local function apply_parent_pose(el,pose,filter)
 	local transform = el:GetTransform()
 	local parent = (transform.GetOverrideParent ~= nil) and transform:GetOverrideParent() or nil
 	-- TODO: Take into account whether overridePos or overrideRot are enabled or not!
 	local useOverrideParent = (parent ~= nil)
 	if(useOverrideParent == false) then
-		parent = el:FindParentElement()
+		parent = el:FindParentElement(filter)
 		if(parent ~= nil and parent:GetType() == udm.ELEMENT_TYPE_PFM_MODEL) then
-			parent = parent:FindParentElement() -- If the element is a model component, we'll want to redirect to the parent actor instead.
+			parent = parent:FindParentElement(filter) -- If the element is a model component, we'll want to redirect to the parent actor instead.
 		end
 	end
 
 	if(parent ~= nil and parent.GetTransform ~= nil) then
+		print("PARENT: ",parent,parent:GetTransform():GetPose())
 		local t = parent:GetTransform()
-		pose:TransformGlobal(t:GetAbsolutePose())
+		pose:TransformGlobal(t:GetAbsolutePose(filter))
 	end
 end
 
-function udm.Transform:GetAbsolutePose()
+function udm.Transform:GetAbsolutePose(filter)
 	local pose = self:GetPose()
-	local parent = self:FindParentElement()
+	local parent = self:FindParentElement(filter)
+	--print("PARENT: ",parent:FindParentElement(filter))
 	if(parent == nil) then return pose end
-	apply_parent_pose(parent,pose)
+	apply_parent_pose(parent,pose,filter)
 	return pose
 end

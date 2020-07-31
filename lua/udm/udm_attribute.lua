@@ -18,7 +18,6 @@ function udm.BaseAttribute:__init(class,value)
 end
 
 function udm.BaseAttribute:__finalize()
-	print("Attribute removed!")
 end
 
 function udm.BaseAttribute:__tostring()
@@ -42,7 +41,10 @@ end
 function udm.BaseAttribute:SetValue(value)
 	local oldValue = self.m_value
 	if(value ~= nil and util.get_type_name(value) ~= "Nil" and oldValue ~= nil and util.get_type_name(oldValue) ~= "Nil") then
-		if(value == oldValue) then return end
+		--if(value == oldValue) then return end
+		if(util.get_type_name(value) ~= util.get_type_name(oldValue)) then
+			error("Type mismatch detected when attempting to change attribute value for attribute '" .. tostring(self) .. "', with current type '" .. util.get_type_name(oldValue) .. "' and new value type '" .. util.get_type_name(value) .. "'!")
+		end
 	end
 	self.m_value = value
 
@@ -51,12 +53,8 @@ end
 function udm.BaseAttribute:GetValue() return self.m_value end
 function udm.BaseAttribute:GetStringValue() return self:ToASCIIString() end
 
-function udm.BaseAttribute:SaveToBinary(ds)
-	self:WriteToBinary(ds)
-end
-function udm.BaseAttribute:LoadFromBinary(ds)
-	self:SetValue(self:ReadFromBinary(ds))
-end
+function udm.BaseAttribute:LoadFromBinary(ds) self:SetValue(self:ReadFromBinary(ds)) end
+
 function udm.BaseAttribute:Copy()
 	return self.m_class(self:GetValue())
 end
@@ -67,10 +65,6 @@ end
 
 function udm.BaseAttribute:IsElement() return false end
 function udm.BaseAttribute:IsAttribute() return true end
-
--- These should be overwritten by derived classes
-function udm.BaseAttribute:WriteToBinary(ds) end
-function udm.BaseAttribute:ReadFromBinary(ds) end
 
 function udm.BaseAttribute:ToASCIIString() end
 function udm.BaseAttribute:LoadFromASCIIString(str) end

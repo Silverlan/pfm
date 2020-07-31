@@ -6,9 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("udm_entity_component.lua")
 include("animation_set")
 
-udm.ELEMENT_TYPE_PFM_ANIMATION_SET = udm.register_element("PFMAnimationSet")
+udm.ELEMENT_TYPE_PFM_ANIMATION_SET = udm.register_type("PFMAnimationSet",{udm.PFMEntityComponent},true)
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_ANIMATION_SET,"flexControls",udm.Array(udm.ELEMENT_TYPE_PFM_FLEX_CONTROL))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_ANIMATION_SET,"transformControls",udm.Array(udm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL))
 

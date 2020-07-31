@@ -7,8 +7,9 @@
 ]]
 
 include("../base_editor.lua")
+include("/pfm/project_manager.lua")
 
-util.register_class("gui.WIFilmmaker",gui.WIBaseEditor)
+util.register_class("gui.WIFilmmaker",gui.WIBaseEditor,pfm.ProjectManager)
 
 include("/gui/vbox.lua")
 include("/gui/hbox.lua")
@@ -19,6 +20,7 @@ include("/gui/witabbedpanel.lua")
 include("/gui/editors/wieditorwindow.lua")
 include("/gui/pfm/frame.lua")
 include("/gui/pfm/viewport.lua")
+include("/gui/pfm/postprocessing.lua")
 include("/gui/pfm/timeline.lua")
 include("/gui/pfm/elementviewer.lua")
 include("/gui/pfm/actoreditor.lua")
@@ -47,6 +49,7 @@ include_component("pfm_grid")
 
 function gui.WIFilmmaker:__init()
 	gui.WIBaseEditor.__init(self)
+	pfm.ProjectManager.__init(self)
 end
 function gui.WIFilmmaker:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
@@ -83,6 +86,28 @@ function gui.WIFilmmaker:OnInitialize()
 		pContext:AddItem(locale.get_text("new") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
 			self:CreateNewProject()
+		end)
+		pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
+			if(util.is_valid(self) == false) then return end
+			if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
+			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
+				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfm"
+				self:LoadProject(fileName)
+			end)
+			self.m_openDialogue:SetRootPath("projects")
+			self.m_openDialogue:SetExtensions({"pfm"})
+			self.m_openDialogue:Update()
+		end)
+		pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
+			if(util.is_valid(self) == false) then return end
+			if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
+			self.m_openDialogue = gui.create_file_save_dialog(function(pDialog,fileName)
+				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfm"
+				self:SaveProject(fileName)
+			end)
+			self.m_openDialogue:SetRootPath("projects")
+			self.m_openDialogue:SetExtensions({"pfm"})
+			self.m_openDialogue:Update()
 		end)
 		pContext:AddItem(locale.get_text("import") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
@@ -165,6 +190,10 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 			tool.close_filmmaker()
 		end)]]
+		pContext:AddItem(locale.get_text("close"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			self:CreateNewProject()
+		end)
 		pContext:AddItem(locale.get_text("exit"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			tool.close_filmmaker()
@@ -310,7 +339,6 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:SetKeyboardInputEnabled(true)
 	self:ClearProjectUI()
-	self:CreateNewProject()
 
 	if(ents.get_world() == nil) then
 		pfm.log("Empty map. Creating a default reflection probe and light source...",pfm.LOG_CATEGORY_PFM)
@@ -337,6 +365,7 @@ function gui.WIFilmmaker:OnInitialize()
 		if(toggleC ~= nil) then toggleC:TurnOn() end
 		self.m_entLight = entLight
 	end
+	pfm.ProjectManager.OnInitialize(self)
 end
 function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
 function gui.WIFilmmaker:GetViewport() return self.m_viewport end
@@ -462,32 +491,38 @@ function gui.WIFilmmaker:IsRecording() return self.m_videoRecorder:IsRecording()
 function gui.WIFilmmaker:StopRecording()
 	self.m_videoRecorder:StopRecording()
 end
-function gui.WIFilmmaker:CloseProject()
-	pfm.log("Closing project...",pfm.LOG_CATEGORY_PFM)
-	if(util.is_valid(self.m_gameView)) then self.m_gameView:Remove() end
-	if(util.is_valid(self.m_cbPlayOffset)) then self.m_cbPlayOffset:Remove() end
-	collectgarbage()
-end
-function gui.WIFilmmaker:GetGameView() return self.m_gameView end
-function gui.WIFilmmaker:InitializeProject(project)
-	pfm.log("Initializing PFM project...",pfm.LOG_CATEGORY_PFM)
-	local entScene = ents.create("pfm_project")
-	if(util.is_valid(entScene) == false) then
-		pfm.log("Unable to initialize PFM project: Count not create 'pfm_project' entity!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
-		return false
-	end
+function gui.WIFilmmaker:SetGameViewOffset(offset)
+	self.m_updatingProjectTimeOffset = true
+	if(util.is_valid(self.m_playhead)) then self.m_playhead:SetTimeOffset(offset) end
 
-	self.m_project = project
-	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
-	projectC:SetProjectData(self.m_project)
-	entScene:Spawn()
-	self.m_gameView = entScene
-	projectC:Start()
+	pfm.ProjectManager.SetGameViewOffset(self,offset)
+
+	local session = self:GetSession()
+	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
+	if(activeClip ~= nil) then
+		if(util.is_valid(self.m_viewport)) then
+			self.m_viewport:SetGlobalTime(offset)
+
+			local childClip = activeClip:GetChildFilmClip(offset)
+			if(childClip ~= nil) then
+				self.m_viewport:SetLocalTime(childClip:GetTimeFrame():LocalizeOffset(offset))
+				self.m_viewport:SetFilmClipName(childClip:GetName())
+				self.m_viewport:SetFilmClipParentName(activeClip:GetName())
+			end
+		end
+	end
+	self.m_updatingProjectTimeOffset = false
+
+	self:CallCallbacks("OnTimeOffsetChanged",self:GetTimeOffset())
+end
+function gui.WIFilmmaker:InitializeProject(project)
 	if(util.is_valid(self.m_playbackControls)) then
 		local timeFrame = projectC:GetTimeFrame()
 		self.m_playbackControls:SetDuration(timeFrame:GetDuration())
 		self.m_playbackControls:SetOffset(0.0)
 	end
+
+	local entScene = pfm.ProjectManager.InitializeProject(self,project)
 
 	-- We want the frame offset to start at 0, but the default value is already 0, which means the
 	-- callbacks would not get triggered properly. To fix that, we'll just set it to some random value != 0
@@ -503,44 +538,12 @@ function gui.WIFilmmaker:InitializeProject(project)
 				self:RefreshGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.
 			end)
 		end
-		self.m_cbPlayOffset = session:GetSettings():GetPlayheadOffsetAttr():AddChangeListener(function(newOffset)
-			self.m_updatingProjectTimeOffset = true
-			if(util.is_valid(self.m_playhead)) then self.m_playhead:SetTimeOffset(newOffset) end
-
-			local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
-			if(projectC ~= nil) then projectC:SetOffset(newOffset) end
-			local session = self:GetSession()
-			local activeClip = (session ~= nil) and session:GetActiveClip() or nil
-			if(activeClip ~= nil) then
-				activeClip:SetPlaybackOffset(newOffset)
-
-				if(util.is_valid(self.m_viewport)) then
-					self.m_viewport:SetGlobalTime(newOffset)
-
-					local childClip = activeClip:GetChildFilmClip(newOffset)
-					if(childClip ~= nil) then
-						self.m_viewport:SetLocalTime(childClip:GetTimeFrame():LocalizeOffset(newOffset))
-						self.m_viewport:SetFilmClipName(childClip:GetName())
-						self.m_viewport:SetFilmClipParentName(activeClip:GetName())
-					end
-				end
-			end
-			self.m_updatingProjectTimeOffset = false
-
-			self:CallCallbacks("OnTimeOffsetChanged",self:GetTimeOffset())
-		end)
 	end
 
 	self:InitializeProjectUI()
 	self:SetTimeOffset(0)
+
 	return entScene
-end
-function gui.WIFilmmaker:RefreshGameView()
-	if(util.is_valid(self.m_gameView) == false) then return end
-	local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
-	if(projectC == nil) then return end
-	projectC:Start()
-	projectC:SetOffset(self:GetTimeOffset())
 end
 function gui.WIFilmmaker:AddFilmClipElement(filmClip)
 	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip,filmClip,function(elFilmClip)
@@ -563,21 +566,6 @@ function gui.WIFilmmaker:AddFilmClipElement(filmClip)
 		return util.EVENT_REPLY_UNHANDLED
 	end)
 	return pFilmClip
-end
-function gui.WIFilmmaker:CreateNewProject()
-	self:CloseProject()
-	pfm.log("Creating new project...",pfm.LOG_CATEGORY_PFM)
-	return self:InitializeProject(pfm.create_empty_project())
-end
-function gui.WIFilmmaker:ImportSFMProject(projectFilePath)
-	self:CloseProject()
-	pfm.log("Converting SFM project '" .. projectFilePath .. "' to PFM...",pfm.LOG_CATEGORY_SFM)
-	local pfmScene = sfm.ProjectConverter.convert_project(projectFilePath)
-	if(pfmScene == false) then
-		pfm.log("Unable to convert SFM project '" .. projectFilePath .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
-		return false
-	end
-	return self:InitializeProject(pfmScene)
 end
 function gui.WIFilmmaker:ClearProjectUI()
 	if(util.is_valid(self.m_contents)) then self.m_contents:Remove() end
@@ -629,7 +617,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self.m_elementViewer = elementViewer
 	self.m_actorDataFrame = actorDataFrame
 	
-	gui.create("WIResizer",self.m_contents)
+	gui.create("WIResizer",self.m_contents):SetFraction(0.25)
 
 	self.m_contentsRight = gui.create("WIVBox",self.m_contents)
 	self.m_contents:Update()
@@ -645,7 +633,10 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	local renderPreview = gui.create("WIPFMRenderPreview")
 	viewportFrame:AddTab("render",locale.get_text("pfm_cycles_renderer"),renderPreview)
 
-	gui.create("WIResizer",self.m_contentsRight)
+	local postProcessing = gui.create("WIPFMPostProcessing")
+	viewportFrame:AddTab("post_processing",locale.get_text("pfm_post_processing"),postProcessing)
+
+	gui.create("WIResizer",self.m_contentsRight):SetFraction(0.75)
 
 	local timelineFrame = self:AddFrame(self.m_contentsRight)
 	local pfmTimeline = gui.create("WIPFMTimeline")
@@ -817,122 +808,4 @@ end
 function gui.WIFilmmaker:GetSelectedClip() return self:GetTimeline():GetSelectedClip() end
 function gui.WIFilmmaker:GetTimeline() return self.m_timeline end
 function gui.WIFilmmaker:GetFilmStrip() return self.m_filmStrip end
-function gui.WIFilmmaker:GetTimeOffset()
-	if(util.is_valid(self.m_playhead) == false) then return 0.0 end
-	return self.m_playhead:GetTimeOffset()
-end
-function gui.WIFilmmaker:SetTimeOffset(offset)
-	local session = self:GetSession()
-	if(session == nil) then return end
-	local settings = session:GetSettings()
-	settings:SetPlayheadOffset(offset)
-end
-function gui.WIFilmmaker:GetSession()
-	local project = self:GetProject()
-	local session = (project ~= nil) and project:GetSessions()[1] or nil
-	return session
-end
-function gui.WIFilmmaker:GetFrameRate()
-	local session = self:GetSession()
-	return (session ~= nil) and session:GetFrameRate() or 24
-end
-function gui.WIFilmmaker:GetTimeFrameFrameIndexRange(timeFrame)
-	return self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetStart())),self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetEnd()))
-end
-function gui.WIFilmmaker:GetLastFrameIndex()
-	local session = self:GetSession()
-	local filmTrack = session:GetFilmTrack()
-	local filmClipLast
-	local tLast = -math.huge
-	for _,filmClip in ipairs(filmTrack:GetFilmClips():GetTable()) do
-		local timeFrame = filmClip:GetTimeFrame()
-		if(timeFrame:GetEnd() > tLast) then
-			filmClipLast = filmClip
-			tLast = timeFrame:GetEnd()
-		end
-	end
-	return self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(tLast))
-end
-function gui.WIFilmmaker:GetFrameIndexRange()
-	return 0,self:GetLastFrameIndex()
-end
-function gui.WIFilmmaker:TimeOffsetToFrameOffset(offset) return offset *self:GetFrameRate() end
-function gui.WIFilmmaker:FrameOffsetToTimeOffset(offset) return offset /self:GetFrameRate() end
-function gui.WIFilmmaker:SetFrameOffset(frame) self:SetTimeOffset(self:FrameOffsetToTimeOffset(self:GetClampedFrameOffset(frame))) end
-function gui.WIFilmmaker:GetFrameOffset() return self:TimeOffsetToFrameOffset(self:GetTimeOffset()) end
-function gui.WIFilmmaker:GetClampedFrameOffset(frame) return math.round(frame or self:GetFrameOffset()) end
-function gui.WIFilmmaker:ClampTimeOffsetToFrame() self:SetFrameOffset(self:GetClampedFrameOffset()) end
-function gui.WIFilmmaker:GoToFrame(frame) self:SetFrameOffset(frame) end
-function gui.WIFilmmaker:GoToNextFrame() self:SetFrameOffset(self:GetClampedFrameOffset() +1) end
-function gui.WIFilmmaker:GoToPreviousFrame() self:SetFrameOffset(self:GetClampedFrameOffset() -1) end
-function gui.WIFilmmaker:GoToFirstFrame()
-	local session = self:GetSession()
-	local filmClip = (session ~= nil) and session:GetActiveClip() or nil
-	if(filmClip == nil) then return end
-	local timeFrame = filmClip:GetTimeFrame()
-	self:SetFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetStart()))
-end
-function gui.WIFilmmaker:GoToPreviousClip()
-	local offset = self:GetTimeOffset()
-	local timeline = self:GetTimeline()
-	local filmStrip = self:GetFilmStrip()
-	local filmClips = filmStrip:GetFilmClips()
-	if(#filmClips == 0) then return end
-	for i,filmClip in ipairs(filmClips) do
-		local filmClipData = filmClip:GetFilmClipData()
-		local timeFrame = filmClipData:GetTimeFrame()
-		if(timeFrame:IsInTimeFrame(offset,0.001)) then
-			if(i > 1) then
-				local filmClipPrev = filmClips[i -1]
-				self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClipPrev:GetTimeFrame():GetEnd()))
-				return
-			end
-			-- There is no previous clip, just jump to start of this one
-			self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClip:GetTimeFrame():GetStart()))
-			return
-		end
-	end
-	-- Current offset must be either before first clip or after last clip, so we'll
-	-- just clamp it to whichever it is.
-	local firstTimeFrame = filmClips[1]:GetTimeFrame()
-	local lastTimeFrame = filmClips[#filmClips]:GetTimeFrame()
-	local newOffset = (offset < firstTimeFrame:GetStart()) and firstTimeFrame:GetStart() or lastTimeFrame:GetEnd()
-	self:SetFrameOffset(self:TimeOffsetToFrameOffset(newOffset))
-end
-function gui.WIFilmmaker:GoToNextClip()
-	local offset = self:GetTimeOffset()
-	local timeline = self:GetTimeline()
-	local filmStrip = self:GetFilmStrip()
-	local filmClips = filmStrip:GetFilmClips()
-	if(#filmClips == 0) then return end
-	for i=#filmClips,1,-1 do
-		local filmClip = filmClips[i]
-		local filmClipData = filmClip:GetFilmClipData()
-		local timeFrame = filmClipData:GetTimeFrame()
-		if(timeFrame:IsInTimeFrame(offset,0.001)) then
-			if(i < #filmClips) then
-				local filmClipNext = filmClips[i +1]
-				self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClipNext:GetTimeFrame():GetStart()))
-				return
-			end
-			-- There is no next clip, just jump to end of this one
-			self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClip:GetTimeFrame():GetEnd()))
-			return
-		end
-	end
-	-- Current offset must be either before first clip or after last clip, so we'll
-	-- just clamp it to whichever it is.
-	local firstTimeFrame = filmClips[1]:GetTimeFrame()
-	local lastTimeFrame = filmClips[#filmClips]:GetTimeFrame()
-	local newOffset = (offset < firstTimeFrame:GetStart()) and firstTimeFrame:GetStart() or lastTimeFrame:GetEnd()
-	self:SetFrameOffset(self:TimeOffsetToFrameOffset(newOffset))
-end
-function gui.WIFilmmaker:GoToLastFrame()
-	local session = self:GetSession()
-	local filmClip = (session ~= nil) and session:GetActiveClip() or nil
-	if(filmClip == nil) then return end
-	local timeFrame = filmClip:GetTimeFrame()
-	self:SetFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetEnd()))
-end
-function gui.WIFilmmaker:GetProject() return self.m_project end
 gui.register("WIFilmmaker",gui.WIFilmmaker)

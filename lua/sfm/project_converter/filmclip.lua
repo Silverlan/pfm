@@ -38,6 +38,7 @@ sfm.register_element_type_conversion(sfm.FilmClip,udm.PFMFilmClip,function(conve
 	pfmFilmClip:SetSceneAttr(converter:ConvertNewElement(sfmFilmClip:GetScene()))
 	pfmFilmClip:SetFadeIn(sfmFilmClip:GetFadeIn())
 	pfmFilmClip:SetFadeOut(sfmFilmClip:GetFadeOut())
+	pfmFilmClip:SetMapName(sfmFilmClip:GetMapname())
 
 	-- Note: In PFM game models and cameras are actors and animation sets are actor components.
 	-- In SFM that relationship is the other way around, so we have to iterate through the list of

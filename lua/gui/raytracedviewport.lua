@@ -8,9 +8,7 @@
 
 include("/pfm/raytracing_render_job.lua")
 -- include("/shaders/pfm/pfm_composite.lua")
-include("/shaders/pfm/pfm_scene_composition.lua")
 include("/shaders/pfm/pfm_calc_image_luminance.lua")
-include("/shaders/pfm/pfm_depth_of_field.lua")
 include("tonemappedimage.lua")
 
 util.register_class("gui.RaytracedViewport",gui.Base)
@@ -36,6 +34,123 @@ function gui.RaytracedViewport:OnInitialize()
 	self.m_renderSettings:SetPanoramaType(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
 
 	self:SetToneMapping(shader.TONE_MAPPING_GAMMA_CORRECTION)
+end
+function gui.RaytracedViewport:SetTextureFromImageBuffer(imgBuf)
+	-- Test:
+	-- lua_run_cl imgJob = util.load_image("render/new_project/shot08b/frame0001.hdr",true,util.ImageBuffer.FORMAT_RGBA_HDR) imgJob:Start()
+	-- lua_run_cl tool.get_filmmaker():GetRenderTab().m_rt:SetTextureFromImageBuffer(imgJob:GetResult())
+	local img
+	local imgCreateInfo = prosper.create_image_create_info(imgBuf)
+	imgCreateInfo.usageFlags = bit.bor(imgCreateInfo.usageFlags,prosper.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,prosper.IMAGE_USAGE_TRANSFER_SRC_BIT,prosper.IMAGE_USAGE_TRANSFER_DST_BIT)
+	img = prosper.create_image(imgBuf,imgCreateInfo)
+
+	local imgViewCreateInfo = prosper.ImageViewCreateInfo()
+	imgViewCreateInfo.swizzleAlpha = prosper.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
+	local samplerCreateInfo = prosper.SamplerCreateInfo()
+	samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors
+	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+	self.m_tex:SetTexture(prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,samplerCreateInfo))
+end
+function gui.RaytracedViewport:SaveImage(path,imgFormat)
+	local img
+	local imgBufFormat
+	if(imgFormat == util.IMAGE_FORMAT_HDR) then
+		-- Image is not tonemapped, we'll save it with the original HDR colors
+		img = self.m_tex:GetTexture():GetImage()
+		imgBufFormat = util.ImageBuffer.FORMAT_RGBA_HDR
+	else
+		-- Apply Tonemapping
+		img = self:ApplyToneMapping()
+		if(img == nil) then return false end
+		imgBufFormat = util.ImageBuffer.FORMAT_RGBA_LDR
+	end
+
+	local buf = prosper.util.allocate_temporary_buffer(img:GetWidth() *img:GetHeight() *prosper.get_byte_size(img:GetFormat()))
+	local drawCmd = game.get_setup_command_buffer()
+	drawCmd:RecordImageBarrier(
+		img,
+		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_READ_BIT
+	)
+	drawCmd:RecordCopyImageToBuffer(img,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,buf,prosper.BufferImageCopyInfo())
+	drawCmd:RecordImageBarrier(
+		img,
+		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
+	)
+	game.flush_setup_command_buffer()
+	local imgData = buf:ReadMemory()
+	local imgBuf = util.ImageBuffer.Create(img:GetWidth(),img:GetHeight(),imgBufFormat,imgData)
+
+	local result = util.save_image(imgBuf,path,imgFormat)
+	if(result == false) then
+		pfm.log("Unable to save image as '" .. path .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
+	else
+		pfm.log("Successfully saved image as '" .. path .. "'!",pfm.LOG_CATEGORY_PFM_RENDER)
+	end
+	buf = nil
+	collectgarbage()
+	return result
+end
+function gui.RaytracedViewport:ApplyToneMapping(toneMapping)
+	local hdrTex = self.m_tex:GetTexture()
+	if(hdrTex == nil) then return end
+	local w = hdrTex:GetWidth()
+	local h = hdrTex:GetHeight()
+	local rt = self:InitializeLDRRenderTarget(w,h)
+
+	local tonemappedImg = self.m_tex
+	local wasDofEnabled = tonemappedImg:IsDOFEnabled()
+	tonemappedImg:SetDOFEnabled(false)
+
+	local drawCmd = game.get_setup_command_buffer()
+	local exportImg = rt:GetTexture():GetImage()
+	drawCmd:RecordImageBarrier(
+		exportImg,
+		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		prosper.ACCESS_SHADER_READ_BIT,bit.bor(prosper.ACCESS_COLOR_ATTACHMENT_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
+	)
+
+	local rpInfo = prosper.RenderPassInfo(rt)
+	if(drawCmd:RecordBeginRenderPass(rpInfo)) then
+		tonemappedImg:Render(drawCmd,Mat4(1.0),toneMapping)
+		drawCmd:RecordEndRenderPass()
+	end
+
+	drawCmd:RecordImageBarrier(
+		exportImg,
+		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		bit.bor(prosper.ACCESS_COLOR_ATTACHMENT_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT),prosper.ACCESS_SHADER_READ_BIT
+	)
+	game.flush_setup_command_buffer()
+	rt = nil
+	collectgarbage() -- Clear render target
+	tonemappedImg:SetDOFEnabled(wasDofEnabled)
+	return exportImg
+end
+function gui.RaytracedViewport:InitializeLDRRenderTarget(w,h)
+	collectgarbage() -- Make sure the old texture is cleared from cache
+
+	local imgCreateInfo = prosper.ImageCreateInfo()
+	imgCreateInfo.width = w
+	imgCreateInfo.height = h
+	imgCreateInfo.format = prosper.FORMAT_R8G8B8A8_UNORM
+	imgCreateInfo.usageFlags = bit.bor(prosper.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,prosper.IMAGE_USAGE_SAMPLED_BIT)
+	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
+	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
+	imgCreateInfo.postCreateLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+	local img = prosper.create_image(imgCreateInfo)
+	local samplerCreateInfo = prosper.SamplerCreateInfo()
+	samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors
+	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
+	local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),samplerCreateInfo)
+	return prosper.create_render_target(prosper.RenderTargetCreateInfo(),{tex},shader.Graphics.get_render_pass())
 end
 function gui.RaytracedViewport:SetUseElementSizeAsRenderResolution(b) self.m_useElementSizeAsRenderResolution = b end
 function gui.RaytracedViewport:GetRenderSettings() return self.m_renderSettings end
@@ -79,7 +194,9 @@ function gui.RaytracedViewport:OnThink()
 				-- The scene has been completely rendered with Cycles with the exception of
 				-- particles. Particle effects are rendered in post-processing with Pragma.
 				self.m_renderResultSettings = self.m_rtJob:GetSettings():Copy()
-				self:ApplyPostProcessing(tex)
+
+				self.m_tex:SetTexture(tex)
+				-- self:ApplyPostProcessing(tex)
 			end
 
 			self:CallCallbacks("OnFrameComplete",state,self.m_rtJob)
@@ -91,171 +208,6 @@ function gui.RaytracedViewport:OnThink()
 
 		self:CallCallbacks("OnComplete",state,self.m_rtJob)
 	elseif(state == pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE or state == pfm.RaytracingRenderJob.STATE_SUB_FRAME_COMPLETE) then self.m_rtJob:RenderNextImage() end
-end
-function gui.RaytracedViewport:ApplyDepthOfField()
-	local shaderDof = shader.get("pfm_dof")
-
-	self:InitializeSceneTexture(w,h)
-	local sceneHdrTex = renderer:GetHDRPresentationTexture()
-	local sceneBloomTex = renderer:GetBloomTexture()
-	local sceneGlowTex = renderer:GetGlowTexture()
-
-	self.m_dsSceneComposition:SetBindingTexture(shader.PFMSceneComposition.TEXTURE_BINDING_HDR_COLOR,sceneHdrTex)
-	self.m_dsSceneComposition:SetBindingTexture(shader.PFMSceneComposition.TEXTURE_BINDING_BLOOM,sceneBloomTex)
-	self.m_dsSceneComposition:SetBindingTexture(shader.PFMSceneComposition.TEXTURE_BINDING_GLOW,sceneGlowTex)
-
-	-- Scene HDR texture is in transfer-src layout
-	-- Bloom texture is in shader-read-only layout
-	-- Glow texture is in color-attachment layout
-	-- Move them all to shader-read-only layout
-	drawCmd:RecordImageBarrier(
-		sceneHdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)
-	drawCmd:RecordImageBarrier(
-		sceneBloomTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)
-	drawCmd:RecordImageBarrier(
-		sceneGlowTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)
-	--
-
-	-- Move target image to color-attachment layout
-	drawCmd:RecordImageBarrier(
-		self.m_hdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-	)
-	--
-
-	if(drawCmd:RecordBeginRenderPass(prosper.RenderPassInfo(self.m_hdrRt))) then
-		local shaderComposition = shader.get("pfm_scene_composition")
-		-- TODO
-		local bloomScale = 1.0
-		local glowScale = 1.0
-		shaderComposition:Draw(drawCmd,self.m_dsSceneComposition,bloomScale,glowScale)
-		drawCmd:RecordEndRenderPass()
-	end
-	-- (Render pass has already moved target image to shader-read layout)
-	--[[drawCmd:RecordImageBarrier(
-		self.m_hdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)]]
-	--
-
-	-- Move scene textures back to original layouts
-	drawCmd:RecordImageBarrier(
-		sceneHdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_READ_BIT
-	)
-	drawCmd:RecordImageBarrier(
-		sceneBloomTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)
-	drawCmd:RecordImageBarrier(
-		sceneGlowTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-	)
-end
-function gui.RaytracedViewport:ComposeSceneTextures(drawCmd,w,h,renderer,rtOut)
-	self:InitializeSceneTexture(w,h)
-	rtOut = rtOut or self.m_hdrRt
-	local sceneHdrTex = renderer:GetHDRPresentationTexture()
-	local sceneBloomTex = renderer:GetBloomTexture()
-	local sceneGlowTex = renderer:GetGlowTexture()
-
-	self.m_dsSceneComposition:SetBindingTexture(shader.PFMSceneComposition.TEXTURE_BINDING_HDR_COLOR,sceneHdrTex)
-	self.m_dsSceneComposition:SetBindingTexture(shader.PFMSceneComposition.TEXTURE_BINDING_BLOOM,sceneBloomTex)
-	self.m_dsSceneComposition:SetBindingTexture(shader.PFMSceneComposition.TEXTURE_BINDING_GLOW,sceneGlowTex)
-
-	-- Scene HDR texture is in transfer-src layout
-	-- Bloom texture is in shader-read-only layout
-	-- Glow texture is in color-attachment layout
-	-- Move them all to shader-read-only layout
-	drawCmd:RecordImageBarrier(
-		sceneHdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)
-	drawCmd:RecordImageBarrier(
-		sceneBloomTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)
-	drawCmd:RecordImageBarrier(
-		sceneGlowTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)
-	--
-
-	-- Move target image to color-attachment layout
-	drawCmd:RecordImageBarrier(
-		self.m_hdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-	)
-	--
-
-	if(drawCmd:RecordBeginRenderPass(prosper.RenderPassInfo(rtOut))) then
-		local shaderComposition = shader.get("pfm_scene_composition")
-		-- TODO
-		local bloomScale = 1.0
-		local glowScale = 1.0
-		shaderComposition:Draw(drawCmd,self.m_dsSceneComposition,bloomScale,glowScale)
-		drawCmd:RecordEndRenderPass()
-	end
-	-- (Render pass has already moved target image to shader-read layout)
-	--[[drawCmd:RecordImageBarrier(
-		self.m_hdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)]]
-	--
-
-	-- Move scene textures back to original layouts
-	drawCmd:RecordImageBarrier(
-		sceneHdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_READ_BIT
-	)
-	drawCmd:RecordImageBarrier(
-		sceneBloomTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)
-	drawCmd:RecordImageBarrier(
-		sceneGlowTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT
-	)
-	--
-	return rtOut
 end
 function gui.RaytracedViewport:ComputeLuminance(drawCmd)
 	return shader.get("pfm_calc_image_luminance"):CalcImageLuminance(self.m_hdrTex,false,drawCmd)
@@ -276,106 +228,6 @@ function gui.RaytracedViewport:GetExposure() return self.m_tex:GetExposure() end
 function gui.RaytracedViewport:GetToneMappedImageElement() return self.m_tex end
 function gui.RaytracedViewport:GetSceneTexture() return self.m_hdrTex end
 function gui.RaytracedViewport:GetRenderResultRenderSettings() return self.m_renderResultSettings end
-function gui.RaytracedViewport:InitializeSceneTexture(w,h)
-	if(self.m_hdrTex ~= nil and self.m_hdrTex:GetWidth() == w and self.m_hdrTex:GetHeight() == h) then return self.m_hdrTex end
-	self.m_hdrTex = nil
-	collectgarbage() -- Make sure the old texture is cleared from cache
-
-	local imgCreateInfo = prosper.ImageCreateInfo()
-	imgCreateInfo.width = w
-	imgCreateInfo.height = h
-	imgCreateInfo.format = shader.Scene3D.RENDER_PASS_COLOR_FORMAT
-	imgCreateInfo.usageFlags = bit.bor(prosper.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,prosper.IMAGE_USAGE_SAMPLED_BIT)
-	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
-	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
-	imgCreateInfo.postCreateLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-	local imgHdr = prosper.create_image(imgCreateInfo)
-	local samplerCreateInfo = prosper.SamplerCreateInfo()
-	samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors
-	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
-	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
-	local texHdr = prosper.create_texture(imgHdr,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),samplerCreateInfo)
-	self.m_hdrTex = texHdr
-
-	self.m_tex:SetTexture(texHdr)
-
-	local shaderComposition = shader.get("pfm_scene_composition")
-	self.m_hdrRt = prosper.create_render_target(prosper.RenderTargetCreateInfo(),{self.m_hdrTex},shaderComposition:GetRenderPass())
-
-	self.m_dsSceneComposition = shaderComposition:CreateDescriptorSet(shader.PFMSceneComposition.DESCRIPTOR_SET_TEXTURE)
-	return texHdr
-end
-function gui.RaytracedViewport:InitializeDepthTexture(w,h,nearZ,farZ)
-	self.m_tex:SetDepthBounds(nearZ,farZ)
-	if(self.m_depthTex ~= nil and self.m_depthTex:GetWidth() == w and self.m_depthTex:GetHeight() == h) then return end
-	self.m_depthTex = nil
-	collectgarbage() -- Make sure the old texture is cleared from cache
-
-	local imgCreateInfo = prosper.ImageCreateInfo()
-	imgCreateInfo.width = w
-	imgCreateInfo.height = h
-	imgCreateInfo.format = shader.Scene3D.RENDER_PASS_DEPTH_FORMAT
-	imgCreateInfo.usageFlags = bit.bor(prosper.IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,prosper.IMAGE_USAGE_SAMPLED_BIT)
-	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
-	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
-	imgCreateInfo.postCreateLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-	local imgDepth = prosper.create_image(imgCreateInfo)
-	local samplerCreateInfo = prosper.SamplerCreateInfo()
-	samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors
-	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
-	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
-	local texDepth = prosper.create_texture(imgDepth,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),samplerCreateInfo)
-	self.m_depthTex = texDepth
-	self.m_tex:SetDepthTexture(texDepth)
-end
-function gui.RaytracedViewport:UpdateGameSceneTextures()
-	local gameScene = self:GetGameScene()
-	local cam = gameScene:GetActiveCamera()
-	local renderer = self.m_testRenderer--gameScene:GetRenderer()
-	if(renderer == nil or cam == nil) then return end
-	self:InitializeDepthTexture(gameScene:GetWidth(),gameScene:GetHeight(),cam:GetNearZ(),cam:GetFarZ())
-
-	local drawCmd = game.get_setup_command_buffer()
-	local depthTex = renderer:GetPostPrepassDepthTexture()
-	drawCmd:RecordImageBarrier(
-		depthTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		bit.bor(prosper.ACCESS_MEMORY_READ_BIT,prosper.ACCESS_MEMORY_WRITE_BIT),prosper.ACCESS_TRANSFER_READ_BIT
-	)
-	drawCmd:RecordBlitImage(depthTex:GetImage(),self.m_depthTex:GetImage(),prosper.BlitInfo())
-	drawCmd:RecordImageBarrier(
-		depthTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		prosper.ACCESS_TRANSFER_READ_BIT,bit.bor(prosper.ACCESS_MEMORY_READ_BIT,prosper.ACCESS_MEMORY_WRITE_BIT)
-	)
-	self:RenderParticleSystemDepth(drawCmd)
-	game.flush_setup_command_buffer()
-end
-function gui.RaytracedViewport:RenderParticleSystemDepth(drawCmd)
-	-- TODO: Skip this step if we're not using DOF
-	-- Particle systems are usually not written to the depth buffer,
-	-- however to properly calculate depth of field for particles, they
-	-- need to be included. We'll add a render pass specifically for rendering
-	-- particle depths here.
-	drawCmd:RecordImageBarrier(
-		self.m_depthTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-		bit.bor(prosper.ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,prosper.ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT),bit.bor(prosper.ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,prosper.ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
-	)
-	local rtDepth = prosper.create_render_target(prosper.RenderTargetCreateInfo(),{self.m_depthTex},shader.BaseParticle2D.get_depth_pipeline_render_pass())
-	if(drawCmd:RecordBeginRenderPass(prosper.RenderPassInfo(rtDepth))) then
-		local gameScene = self:GetGameScene()
-		local renderer = self.m_testRenderer--gameScene:GetRenderer()
-		local particleSystems = renderer:GetRenderParticleSystems()
-		for _,pts in ipairs(particleSystems) do
-			pts:Render(drawCmd,renderer,ents.ParticleSystemComponent.RENDER_FLAG_BIT_DEPTH_ONLY)
-		end
-		drawCmd:RecordEndRenderPass()
-	end
-end
 function gui.RaytracedViewport:Refresh(preview)
 	self:CancelRendering()
 	local r = engine.load_library("cycles/pr_cycles")

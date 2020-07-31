@@ -26,3 +26,10 @@ function udm.BaseItem:IsAttribute() return false end
 function udm.BaseItem:IsElement() return false end
 
 function udm.BaseItem:GetTypeName() return udm.get_type_name(self:GetType()) end
+
+function udm.BaseItem:SaveToBinary(ds) self:WriteToBinary(ds) end
+function udm.BaseItem:LoadFromBinary(ds) end
+
+-- These should be overwritten by derived classes
+function udm.BaseItem:WriteToBinary(ds) end
+function udm.BaseItem:ReadFromBinary(ds) end

@@ -6,7 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_PFM_POINT_LIGHT = udm.register_element("PFMPointLight")
+include("udm_entity_component.lua")
+
+udm.ELEMENT_TYPE_PFM_POINT_LIGHT = udm.register_type("PFMPointLight",{udm.PFMEntityComponent},true)
 
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_POINT_LIGHT,"color",udm.Color(Color.White))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_POINT_LIGHT,"intensity",udm.Float(1000.0))

@@ -158,13 +158,14 @@ end
 ------------
 
 gui.AssetIcon.impl = util.get_class_value(gui.AssetIcon,"impl") or {}
+gui.AssetIcon.ASSET_TYPE_CUSTOM = -1
 function gui.AssetIcon:__init()
 	gui.ImageIcon.__init(self)
 end
+function gui.AssetIcon:GetTypeIdentifier() return "invalid" end
 function gui.AssetIcon:OnInitialize()
 	gui.ImageIcon.OnInitialize(self)
 
-	self.m_isDirectory = false
 	gui.AssetIcon.impl.count = gui.AssetIcon.impl.count and (gui.AssetIcon.impl.count +1) or 1
 end
 function gui.AssetIcon:OnRemove()
@@ -190,7 +191,7 @@ function gui.AssetIcon:MouseCallback(button,state,mods)
 				materialOverride = self:GetMaterialOverride(),
 				dontPreSimulate = true
 			}
-			if(self:GetAssetType() == asset.TYPE_PARTICLE_SYSTEM) then
+			if(self:GetTypeIdentifier() == "particle") then
 				local ptFileName,ptName = self:GetParticleSystemFileName()
 				settings.particleFileName = ptFileName
 				settings.particleName = ptName
@@ -233,7 +234,7 @@ function gui.AssetIcon:MouseCallback(button,state,mods)
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
-function gui.AssetIcon:IsDirectory() return self.m_isDirectory end
+function gui.AssetIcon:IsDirectory() return false end
 function gui.AssetIcon:GetAssetName() return self.m_assetName end
 function gui.AssetIcon:GetAssetPath() return self.m_assetPath end
 function gui.AssetIcon:GetAsset() return self.m_assetPath .. self.m_assetName end
@@ -250,33 +251,20 @@ end
 function gui.AssetIcon:ReloadFromCache(importAsset)
 	self:SetAsset(self.m_assetPath,self.m_assetName,self:IsDirectory(),importAsset)
 end
-function gui.AssetIcon:SetAsset(path,assetName,isDirectory,importAsset)
+function gui.AssetIcon:SetAsset(path,assetName,importAsset)
 	self.m_assetPath = path
 	self.m_assetName = assetName
 
 	self:SetText(assetName)
 	self:SetTooltip(self:GetAsset())
 
-	self.m_isDirectory = isDirectory
-
-	if(self:IsDirectory()) then self:SetMaterial("gui/pfm/folder",64,64)
-	else
-		path = util.Path(path)
-		local root = path:GetFront()
-		path:PopFront()
-		path = path +assetName
-		if(root == "models") then
-			self:SetModelAsset(path:GetString(),importAsset)
-		elseif(root == "materials") then
-			self:SetMaterialAsset(path:GetString(),importAsset)
-		elseif(root == "particles") then
-			self:SetParticleAsset(path:GetString(),importAsset)
-		else
-			-- Unknown asset type
-			self:SetMaterial("error",128,128)
-		end
-	end
+	path = util.Path(path)
+	local root = path:GetFront()
+	path:PopFront()
+	path = path +assetName
+	self:ApplyAsset(path:GetString(),importAsset)
 end
+function gui.AssetIcon:ApplyAsset(path,importAsset) self:SetMaterial("error",128,128) end
 function gui.AssetIcon:ClearIcon()
 	local path = util.Path(self.m_assetPath)
 	path:PopFront()
@@ -292,7 +280,6 @@ function gui.AssetIcon:SetMaterialSphere(matSphere)
 	self:Reload()
 end
 function gui.AssetIcon:GetPreviewModel()
-	if(self:GetAssetType() ~= asset.TYPE_MODEL and self:GetAssetType() ~= asset.TYPE_PARTICLE_SYSTEM) then return "pfm/texture_sphere" end
 	local path = util.Path(self:GetAssetPath())
 	path:PopFront()
 	return path:GetString() .. self:GetAssetName()
@@ -304,32 +291,38 @@ function gui.AssetIcon:GetIconLocation()
 	return get_icon_location(path:GetString())
 end
 function gui.AssetIcon:GetMaterialOverride()
-	if(self:GetAssetType() == asset.TYPE_MODEL) then return end
 	local path = util.Path(self:GetAssetPath())
 	path:PopFront()
 	return path:GetString() .. self:GetAssetName()
 end
-function gui.AssetIcon:GetParticleSystemFileName()
-	if(self:GetAssetType() ~= asset.TYPE_PARTICLE_SYSTEM) then return end
-	local path = util.Path(self:GetAssetPath())
+gui.register("WIAssetIcon",gui.AssetIcon)
 
-	-- Check if we're in a particle system file
-	local ptPath = path:GetString()
-	ptPath = ptPath:sub(0,#ptPath -1)
-	local ext = file.get_file_extension(ptPath)
-	if(ext == nil or string.compare(ext,"wpt",false) == false) then return end
+-----------------
 
-	path:PopFront()
-	path = util.Path(path:GetString() .. self:GetAssetName())
-
-	local ptName = path:GetBack()
-	path:PopBack()
-	local ptFileName = path:GetString()
-	ptFileName = ptFileName:sub(0,#ptFileName -1)
-	return ptFileName,ptName
+util.register_class("gui.DirectoryAssetIcon",gui.AssetIcon)
+function gui.DirectoryAssetIcon:__init()
+	gui.AssetIcon.__init(self)
 end
-function gui.AssetIcon:SetParticleAsset(pt,importAsset)
-	self.m_assetType = asset.TYPE_PARTICLE_SYSTEM
+function gui.DirectoryAssetIcon:ApplyAsset(path,importAsset)
+	self:SetMaterial("gui/pfm/folder",64,64)
+end
+function gui.DirectoryAssetIcon:GetTypeIdentifier() return "directory" end
+function gui.DirectoryAssetIcon:IsDirectory() return true end
+gui.register("WIDirectoryAssetIcon",gui.DirectoryAssetIcon)
+
+-----------------
+
+util.register_class("gui.ModelAssetIcon",gui.AssetIcon)
+function gui.ModelAssetIcon:__init()
+	gui.AssetIcon.__init(self)
+end
+function gui.ModelAssetIcon:ApplyAsset(path,importAsset)
+	self:SetModelAsset(path,importAsset)
+end
+function gui.ModelAssetIcon:GetTypeIdentifier() return "model" end
+function gui.ModelAssetIcon:GetMaterialOverride() end
+function gui.ModelAssetIcon:SetModelAsset(mdl,importAsset)
+	self.m_assetType = asset.TYPE_MODEL
 	local iconPath = self:GetIconLocation()
 	if(file.exists("materials/" .. iconPath .. ".wmi")) then
 		self:SetMaterial(iconPath)
@@ -339,21 +332,29 @@ function gui.AssetIcon:SetParticleAsset(pt,importAsset)
 		print("Creating new icon generator...")
 		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128,128)
 	end
-
-	local ptFileName,ptName = self:GetParticleSystemFileName()
-	if(ptFileName ~= nil and (importAsset == true or asset.exists(ptFileName,asset.TYPE_PARTICLE_SYSTEM))) then
-		gui.AssetIcon.impl.iconGenerator:AddModelToQueue(pt,function()
+	if(importAsset == true or asset.exists(mdl,asset.TYPE_MODEL)) then
+		gui.AssetIcon.impl.iconGenerator:AddModelToQueue(mdl,function()
 			if(self:IsValid() == false) then return end
 			self:SetMaterial(iconPath)
-		end,iconPath,{
-			particleFileName = ptFileName,
-			particleName = ptName
-		})
+		end,iconPath)
 	else
 		self:SetMaterial("third_party/source_engine",100,30)
 	end
 end
-function gui.AssetIcon:SetMaterialAsset(mat,importAsset)
+gui.register("WIModelAssetIcon",gui.ModelAssetIcon)
+
+-----------------
+
+util.register_class("gui.MaterialAssetIcon",gui.AssetIcon)
+function gui.MaterialAssetIcon:__init()
+	gui.AssetIcon.__init(self)
+end
+function gui.MaterialAssetIcon:ApplyAsset(path,importAsset)
+	self:SetMaterialAsset(path,importAsset)
+end
+function gui.MaterialAssetIcon:GetTypeIdentifier() return "material" end
+function gui.MaterialAssetIcon:GetPreviewModel() return "pfm/texture_sphere" end
+function gui.MaterialAssetIcon:SetMaterialAsset(mat,importAsset)
 	self.m_assetType = asset.TYPE_MATERIAL
 	local iconPath = self:GetIconLocation()
 	if(file.exists("materials/" .. iconPath .. ".wmi")) then
@@ -382,8 +383,47 @@ function gui.AssetIcon:SetMaterialAsset(mat,importAsset)
 		-- self:SetMaterial("third_party/gamebryo_logo",100,41)
 	end
 end
-function gui.AssetIcon:SetModelAsset(mdl,importAsset)
-	self.m_assetType = asset.TYPE_MODEL
+gui.register("WIMaterialAssetIcon",gui.MaterialAssetIcon)
+
+-----------------
+
+util.register_class("gui.ParticleAssetIcon",gui.AssetIcon)
+function gui.ParticleAssetIcon:__init()
+	gui.AssetIcon.__init(self)
+end
+function gui.ParticleAssetIcon:OnInitialize()
+	gui.AssetIcon.OnInitialize(self)
+	self:AddCallback("OnDoubleClick",function(el)
+		if(util.is_valid(self) == false) then return end
+		local ptFileName,ptName = el:GetParticleSystemFileName()
+		if(ptFileName ~= nil) then
+			tool.get_filmmaker():OpenParticleEditor(ptFileName,ptName)
+			return
+		end
+		local ptPath = util.Path(el:GetAsset())
+		ptPath:PopFront()
+		if(asset.exists(ptPath:GetString(),asset.TYPE_PARTICLE_SYSTEM) == false) then
+			-- Attempt to import the particle system from a Source Engine PCF file
+			-- TODO: This should be done automatically by 'precache_particle_system'!
+			local sePath = util.Path(ptPath)
+			sePath:RemoveFileExtension()
+			sePath = sePath +".pcf"
+			sfm.convert_particle_systems("particles/" .. sePath:GetString())
+		end
+		game.precache_particle_system(ptPath:GetString())
+
+		local relPath = util.Path(path)
+		relPath:MakeRelative(self:GetRootPath())
+		self:SetPath(relPath:GetString() .. assetName)
+		self:Update()
+	end)
+end
+function gui.ParticleAssetIcon:ApplyAsset(path,importAsset)
+	self:SetParticleAsset(path,importAsset)
+end
+function gui.ParticleAssetIcon:GetTypeIdentifier() return "particle" end
+function gui.ParticleAssetIcon:SetParticleAsset(pt,importAsset)
+	self.m_assetType = asset.TYPE_PARTICLE_SYSTEM
 	local iconPath = self:GetIconLocation()
 	if(file.exists("materials/" .. iconPath .. ".wmi")) then
 		self:SetMaterial(iconPath)
@@ -393,13 +433,36 @@ function gui.AssetIcon:SetModelAsset(mdl,importAsset)
 		print("Creating new icon generator...")
 		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128,128)
 	end
-	if(importAsset == true or asset.exists(mdl,asset.TYPE_MODEL)) then
-		gui.AssetIcon.impl.iconGenerator:AddModelToQueue(mdl,function()
+
+	local ptFileName,ptName = self:GetParticleSystemFileName()
+	if(ptFileName ~= nil and (importAsset == true or asset.exists(ptFileName,asset.TYPE_PARTICLE_SYSTEM))) then
+		gui.AssetIcon.impl.iconGenerator:AddModelToQueue(pt,function()
 			if(self:IsValid() == false) then return end
 			self:SetMaterial(iconPath)
-		end,iconPath)
+		end,iconPath,{
+			particleFileName = ptFileName,
+			particleName = ptName
+		})
 	else
 		self:SetMaterial("third_party/source_engine",100,30)
 	end
 end
-gui.register("WIAssetIcon",gui.AssetIcon)
+function gui.ParticleAssetIcon:GetParticleSystemFileName()
+	local path = util.Path(self:GetAssetPath())
+
+	-- Check if we're in a particle system file
+	local ptPath = path:GetString()
+	ptPath = ptPath:sub(0,#ptPath -1)
+	local ext = file.get_file_extension(ptPath)
+	if(ext == nil or string.compare(ext,"wpt",false) == false) then return end
+
+	path:PopFront()
+	path = util.Path(path:GetString() .. self:GetAssetName())
+
+	local ptName = path:GetBack()
+	path:PopBack()
+	local ptFileName = path:GetString()
+	ptFileName = ptFileName:sub(0,#ptFileName -1)
+	return ptFileName,ptName
+end
+gui.register("WIParticleAssetIcon",gui.ParticleAssetIcon)

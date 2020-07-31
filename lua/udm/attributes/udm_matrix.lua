@@ -7,12 +7,8 @@
 ]]
 
 udm.ATTRIBUTE_TYPE_MATRIX = udm.register_attribute("Matrix",Mat4(1.0))
-function udm.Matrix:WriteToBinary(ds)
-	ds:WriteMat4(self:GetValue())
-end
-function udm.Matrix:ReadFromBinary(ds)
-	self:SetValue(ds:ReadMat4())
-end
+function udm.Matrix:WriteToBinary(ds) ds:WriteMat4(self:GetValue()) end
+function udm.Matrix:ReadFromBinary(ds) return ds:ReadMat4() end
 function udm.Matrix:Copy()
 	return self.m_class(self:GetValue():Copy())
 end

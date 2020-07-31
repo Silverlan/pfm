@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_PFM_GROUP = udm.register_element("PFMGroup")
+udm.ELEMENT_TYPE_PFM_GROUP = udm.register_type("PFMGroup",{udm.PFMSceneElement},true)
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_GROUP,"transform",udm.Transform())
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_GROUP,"actors",udm.Array(udm.ELEMENT_TYPE_ANY)) -- Can contain actors or groups
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_GROUP,"visible",udm.Bool(false),{
@@ -15,6 +15,13 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_GROUP,"visible",udm.Bool(fals
 
 function udm.PFMGroup:Initialize()
 	udm.BaseElement.Initialize(self)
+end
+
+function udm.PFMGroup:GetSceneChildren() return self:GetActors():GetTable() end
+
+function udm.PFMGroup:IsScene()
+	local parent = self:FindParentElement(function(el) return udm.ELEMENT_TYPE_PFM_FILM_CLIP end)
+	return parent ~= nil and util.is_same_object(self,parent:GetScene())
 end
 
 function udm.PFMGroup:IsAbsoluteVisible()

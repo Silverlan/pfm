@@ -24,12 +24,15 @@ function gui.PFMRaytracedAnimationViewport:OnInitialize()
 				local pContext = gui.open_context_menu()
 				if(util.is_valid(pContext) == false) then return end
 				pContext:SetPos(input.get_cursor_pos())
-				pContext:AddItem(locale.get_text("save_as"),function()
-					self:SaveAs(false)
-				end)
-				pContext:AddItem(locale.get_text("pfm_save_as_hdr"),function()
-					self:SaveAs(true)
-				end)
+
+				local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("save_as"))
+				for i=0,(util.IMAGE_FORMAT_COUNT -1) do
+					pSubMenu:AddItem(util.get_image_format_file_extension(i),function(pItem)
+						self:SaveAs(i)
+					end)
+				end
+				pSubMenu:Update()
+
 				pContext:AddItem(locale.get_text("pfm_apply_render_settings"),function()
 					local mat = self:LoadPreviewMaterial()
 					if(mat == nil) then return end
@@ -45,21 +48,24 @@ function gui.PFMRaytracedAnimationViewport:OnInitialize()
 		return util.EVENT_REPLY_UNHANDLED
 	end)
 	self:SetParticleSystemColorFactor(Vector4(1,1,1,1))
+	self:SetImageSaveFormat(util.IMAGE_FORMAT_HDR)
 end
-function gui.PFMRaytracedAnimationViewport:SaveAs(saveAsHDR)
-	saveAsHDR = saveAsHDR or false
+function gui.PFMRaytracedAnimationViewport:SaveAs(format)
+	format = format or self.m_imgSaveFormat
 	local dialoge = gui.create_file_save_dialog(function(pDialoge)
 		local fname = pDialoge:GetFilePath(true)
 		file.create_path(file.get_file_path(fname))
 
 		-- Make sure HDR image is loaded
 		if(self:LoadHighDefImage(true) == false) then return end
-		self:SaveImage(fname,saveAsHDR)
+		self:SaveImage(fname,format)
 	end)
-	dialoge:SetExtensions({saveAsHDR and "hdr" or "png"})
+	dialoge:SetExtensions({util.get_image_format_file_extension(format)})
 	dialoge:SetRootPath(util.get_addon_path())
 	dialoge:Update()
 end
+function gui.PFMRaytracedAnimationViewport:SetImageSaveFormat(format) self.m_imgSaveFormat = format end
+function gui.PFMRaytracedAnimationViewport:GetImageSaveFormat() return self.m_imgSaveFormat end
 function gui.PFMRaytracedAnimationViewport:GetRTJob() return self.m_rtJob end
 function gui.PFMRaytracedAnimationViewport:LoadPreviewMaterial(reload)
 	if(self.m_curImagePath == nil) then return end
@@ -116,6 +122,7 @@ function gui.PFMRaytracedAnimationViewport:LoadHighDefImage(waitForCompletion,re
 	if(self.m_imgJob ~= nil) then self.m_imgJob:Cancel() end
 	-- Loading the image may take some time, so we'll do it on a separate thread in the background.
 	-- Once loaded, the algorithm continues in :OnThink
+	print(path .. ".hdr")
 	self.m_imgJob = util.load_image(path .. ".hdr",true,util.ImageBuffer.FORMAT_RGBA_HDR)
 	if(self.m_imgJob == nil) then return false end
 	self.m_imgJob:Start()
@@ -125,6 +132,7 @@ function gui.PFMRaytracedAnimationViewport:LoadHighDefImage(waitForCompletion,re
 	return false
 end
 function gui.PFMRaytracedAnimationViewport:InitializeHighDefImage()
+	if(true) then return end -- TODO
 	if(self.m_imgJob:IsSuccessful()) then
 		-- HDR image has been loaded; Apply it instead of the preview image
 		local imgBuf = self.m_imgJob:GetResult()
@@ -263,8 +271,9 @@ function gui.PFMRaytracedAnimationViewport:ClearCachedPreview()
 	file.delete("materials/" .. thumbnailLocation .. ".dds")
 end
 function gui.PFMRaytracedAnimationViewport:ApplyPostProcessing(tex)
-	if(self:LoadHighDefImage(true,true) == false) then return end -- TODO: Avoid reloading image
-	self:RenderPragmaParticleSystems(tex)
+	-- TODO
+	-- if(self:LoadHighDefImage(true,true) == false) then return end -- TODO: Avoid reloading image
+	-- self:RenderPragmaParticleSystems(tex)
 
 	local drawCmd = game.get_setup_command_buffer()
 	self.m_tex:RenderDOF(drawCmd)
@@ -367,54 +376,6 @@ function gui.PFMRaytracedAnimationViewport:RenderPragmaParticleSystems(tex,drawC
 	gameScene:SetParticleSystemColorFactor(ptColorFactor)
 	return rtOutput
 end
-function gui.PFMRaytracedAnimationViewport:SaveImage(path,saveAsHDR)
-	saveAsHDR = saveAsHDR or false
-
-	local img
-	local imgFormat
-	local imgBufFormat
-	if(saveAsHDR) then
-		-- Image is not tonemapped, we'll save it with the original HDR colors
-		img = self:GetSceneTexture():GetImage()
-		imgFormat = util.IMAGE_FORMAT_HDR
-		imgBufFormat = util.ImageBuffer.FORMAT_RGBA_HDR
-	else
-		-- TODO: Only do this if particles haven't been rendered yet?
-		img = self:ApplyPostProcessing()
-		if(img == nil) then return false end
-		imgFormat = util.IMAGE_FORMAT_PNG
-		imgBufFormat = util.ImageBuffer.FORMAT_RGBA_LDR
-	end
-
-	local buf = prosper.util.allocate_temporary_buffer(img:GetWidth() *img:GetHeight() *prosper.get_byte_size(img:GetFormat()))
-	local drawCmd = game.get_setup_command_buffer()
-	drawCmd:RecordImageBarrier(
-		img,
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_READ_BIT
-	)
-	drawCmd:RecordCopyImageToBuffer(img,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,buf,prosper.BufferImageCopyInfo())
-	drawCmd:RecordImageBarrier(
-		img,
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)
-	game.flush_setup_command_buffer()
-	local imgData = buf:ReadMemory()
-	local imgBuf = util.ImageBuffer.Create(img:GetWidth(),img:GetHeight(),imgBufFormat,imgData)
-
-	local result = util.save_image(imgBuf,path,imgFormat)
-	if(result == false) then
-		pfm.log("Unable to save image as '" .. path .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
-	else
-		pfm.log("Successfully saved image as '" .. path .. "'!",pfm.LOG_CATEGORY_PFM_RENDER)
-	end
-	buf = nil
-	collectgarbage()
-	return result
-end
 function gui.PFMRaytracedAnimationViewport:UpdateThinkState()
 	if(self.m_imgJob ~= nil or self.m_tLoadHighDefImageDelay ~= nil) then
 		self:EnableThinking()
@@ -422,44 +383,6 @@ function gui.PFMRaytracedAnimationViewport:UpdateThinkState()
 		return
 	end
 	gui.RaytracedViewport.UpdateThinkState(self)
-end
-function gui.PFMRaytracedAnimationViewport:ApplyToneMapping(toneMapping)
-	toneMapping = toneMapping or self:GetToneMapping()
-	if(self:LoadHighDefImage(true) == false) then return end
-	local hdrTex = self:GetSceneTexture()
-	if(hdrTex == nil) then return end
-	local w = hdrTex:GetWidth()
-	local h = hdrTex:GetHeight()
-	self:InitializeExportTexture(w,h)
-
-	local tonemappedImg = self:GetToneMappedImageElement()
-	local wasDofEnabled = tonemappedImg:IsDOFEnabled()
-	tonemappedImg:SetDOFEnabled(false)
-
-	local drawCmd = game.get_setup_command_buffer()
-	local exportImg = self.m_exportTexture:GetImage()
-	drawCmd:RecordImageBarrier(
-		exportImg,
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,bit.bor(prosper.ACCESS_COLOR_ATTACHMENT_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
-	)
-
-	local rpInfo = prosper.RenderPassInfo(self.m_exportRenderTarget)
-	if(drawCmd:RecordBeginRenderPass(rpInfo)) then
-		tonemappedImg:Render(drawCmd,Mat4(1.0),toneMapping)
-		drawCmd:RecordEndRenderPass()
-	end
-
-	drawCmd:RecordImageBarrier(
-		exportImg,
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
-		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		bit.bor(prosper.ACCESS_COLOR_ATTACHMENT_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT),prosper.ACCESS_SHADER_READ_BIT
-	)
-	game.flush_setup_command_buffer()
-	tonemappedImg:SetDOFEnabled(wasDofEnabled)
-	return exportImg
 end
 function gui.PFMRaytracedAnimationViewport:OnThink()
 	gui.RaytracedViewport.OnThink(self)
@@ -494,30 +417,6 @@ function gui.PFMRaytracedAnimationViewport:InitializeStagingTexture(w,h)
 	self.m_stagingTexture = tex
 
 	self.m_stagingRenderTarget = prosper.create_render_target(prosper.RenderTargetCreateInfo(),{tex},shader.Graphics.get_render_pass())
-	return tex
-end
-function gui.PFMRaytracedAnimationViewport:InitializeExportTexture(w,h)
-	if(self.m_exportTexture ~= nil and self.m_exportTexture:GetWidth() == w and self.m_exportTexture:GetHeight() == h) then return self.m_exportTexture end
-	self.m_exportTexture = nil
-	collectgarbage() -- Make sure the old texture is cleared from cache
-
-	local imgCreateInfo = prosper.ImageCreateInfo()
-	imgCreateInfo.width = w
-	imgCreateInfo.height = h
-	imgCreateInfo.format = prosper.FORMAT_R8G8B8A8_UNORM
-	imgCreateInfo.usageFlags = bit.bor(prosper.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,prosper.IMAGE_USAGE_SAMPLED_BIT)
-	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
-	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
-	imgCreateInfo.postCreateLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
-	local img = prosper.create_image(imgCreateInfo)
-	local samplerCreateInfo = prosper.SamplerCreateInfo()
-	samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors
-	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
-	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
-	local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),samplerCreateInfo)
-	self.m_exportTexture = tex
-
-	self.m_exportRenderTarget = prosper.create_render_target(prosper.RenderTargetCreateInfo(),{tex},shader.Graphics.get_render_pass())
 	return tex
 end
 gui.register("WIPFMRaytracedAnimationViewport",gui.PFMRaytracedAnimationViewport)

@@ -6,13 +6,14 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("udm_entity_component.lua")
 include("udm_global_flex_controller_operator.lua")
 include("udm_bone.lua")
 include("udm_material.lua")
 include("/gui/fileentry.lua")
 include("/gui/wimodeldialog.lua")
 
-udm.ELEMENT_TYPE_PFM_MODEL = udm.register_element("PFMModel")
+udm.ELEMENT_TYPE_PFM_MODEL = udm.register_type("PFMModel",{udm.PFMEntityComponent},true)
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"modelName",udm.String(""))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"skin",udm.Int(0))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"bodyGroup",udm.Int(0))
@@ -26,6 +27,8 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"flexControllerScale",u
 
 function udm.PFMModel:GetComponentName() return "pfm_model" end
 function udm.PFMModel:GetIconMaterial() return "gui/pfm/icon_model_item" end
+
+function udm.PFMModel:GetSceneChildren() return self:GetRootBones():GetTable() end
 
 function udm.PFMModel:GetModel() return game.load_model(self:GetModelName()) end
 

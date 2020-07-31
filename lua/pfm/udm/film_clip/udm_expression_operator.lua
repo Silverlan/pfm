@@ -9,7 +9,7 @@
 udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR = udm.register_element("PFMExpressionOperator")
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"result",udm.Float(0.0))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"expression",udm.String(""))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"value",udm.Float(0.0))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"value",udm.Float(0.0)) -- TODO: Can by Vector as well!
 
 function udm.PFMExpressionOperator:Initialize()
 	local propValue = self:GetProperty("value")

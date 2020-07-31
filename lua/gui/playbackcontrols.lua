@@ -7,149 +7,104 @@
 ]]
 
 util.register_class("gui.PlaybackControls",gui.Base)
-
-gui.PlaybackControls.STATE_INITIAL = 0
-gui.PlaybackControls.STATE_PLAYING = 1
-gui.PlaybackControls.STATE_PAUSED = 2
+gui.PlaybackControls.BUTTON_FIRST_FRAME = 0
+gui.PlaybackControls.BUTTON_PREVIOUS_CLIP = 1
+gui.PlaybackControls.BUTTON_PREVIOUS_FRAME = 2
+gui.PlaybackControls.BUTTON_RECORD = 3
+gui.PlaybackControls.BUTTON_PLAY = 4
+gui.PlaybackControls.BUTTON_PAUSE = 5
+gui.PlaybackControls.BUTTON_NEXT_FRAME = 6
+gui.PlaybackControls.BUTTON_NEXT_CLIP = 7
+gui.PlaybackControls.BUTTON_LAST_FRAME = 8
 function gui.PlaybackControls:__init()
 	gui.Base.__init(self)
 end
 function gui.PlaybackControls:OnInitialize()
 	gui.Base.OnInitialize(self)
 	
-	self.m_buttons = {}
-	self.m_state = gui.PlaybackControls.STATE_INITIAL
+	local controls = gui.create("WIHBox",self)
 
-	local playButton = gui.create("WITexturedRect",self)
-	playButton:SetSize(24,24)
-	playButton:SetMaterial("gui/pfm/playback/play")
-	playButton:SetMouseInputEnabled(true)
-	playButton:AddCallback("OnMousePressed",function()
-		self:TogglePlay()
+	self.m_btFirstFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_firstframe","gui/pfm/icon_cp_firstframe_activated",function()
+		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_FIRST_FRAME)
 	end)
-	self.m_playButton = playButton
+	self.m_btFirstFrame:SetTooltip(locale.get_text("pfm_playback_first_frame"))
 
-	local progressBar = gui.create("WISlider",self)
-	progressBar:SetSize(128,24)
-	progressBar:SetLeft(playButton:GetRight() +5)
-	progressBar:SetProgress(0.5)
-	progressBar:AddCallback("TranslateValue",function()
-		return self:GetFormattedTime(self.m_progressBar:GetValue())
+	self.m_btPrevClip = gui.PFMButton.create(controls,"gui/pfm/icon_cp_prevclip","gui/pfm/icon_cp_prevclip_activated",function()
+		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_PREVIOUS_CLIP)
 	end)
-	progressBar:AddCallback("OnChange",function(progressBar,progress,value)
-		self:OnProgressChanged(progress,value)
+	self.m_btPrevClip:SetTooltip(locale.get_text("pfm_playback_previous_clip"))
+
+	self.m_btPrevFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_prevframe","gui/pfm/icon_cp_prevframe_activated",function()
+		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_PREVIOUS_FRAME)
 	end)
-	self.m_progressBar = progressBar
+	self.m_btPrevFrame:SetTooltip(locale.get_text("pfm_playback_previous_frame"))
+
+	self.m_btRecord = gui.PFMButton.create(controls,"gui/pfm/icon_cp_record","gui/pfm/icon_cp_record_activated",function()
+		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_RECORD)
+	end)
+	self.m_btRecord:SetTooltip(locale.get_text("pfm_playback_record"))
+
+	self.m_btPlay = gui.create("WIPFMPlayButton",controls)
+	self.m_btPlay:SetTooltip(locale.get_text("pfm_playback_play"))
+	self.m_btPlay:AddCallback("OnStateChanged",function(btPlay,oldState,newState)
+		if(newState == gui.PFMPlayButton.STATE_PLAYING) then self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_PLAY)
+		elseif(newState == gui.PFMPlayButton.STATE_PAUSED) then self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_PAUSE) end
+	end)
+	self.m_btPlay:AddCallback("OnTimeAdvance",function(el,dt)
+		self:CallCallbacks("OnTimeAdvance",dt)
+	end)
+
+	self.m_btNextFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_nextframe","gui/pfm/icon_cp_nextframe_activated",function()
+		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_NEXT_FRAME)
+	end)
+	self.m_btNextFrame:SetTooltip(locale.get_text("pfm_playback_next_frame"))
+
+	self.m_btNextClip = gui.PFMButton.create(controls,"gui/pfm/icon_cp_nextclip","gui/pfm/icon_cp_nextclip_activated",function()
+		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_NEXT_CLIP)
+	end)
+	self.m_btNextClip:SetTooltip(locale.get_text("pfm_playback_next_clip"))
+
+	self.m_btLastFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_lastframe","gui/pfm/icon_cp_lastframe_activated",function()
+		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_LAST_FRAME)
+	end)
+	self.m_btLastFrame:SetTooltip(locale.get_text("pfm_playback_last_frame"))
+
+	controls:SetHeight(self.m_btFirstFrame:GetHeight())
+	controls:Update()
+	self.m_playControls = controls
 
 	self:SizeToContents()
+	return controls
+end
+function gui.PlaybackControls:GetPlayButton() return self.m_btPlay end
+function gui.PlaybackControls:HandleKeyboardInput(key,state,mods)
+	local bt
+	if(key == input.KEY_SPACE) then bt = self.m_btPlay
+	elseif(key == input.KEY_LEFT) then bt = self.m_btPrevFrame
+	elseif(key == input.KEY_RIGHT) then bt = self.m_btNextFrame
+	elseif(key == input.KEY_UP) then bt = self.m_btPrevClip
+	elseif(key == input.KEY_DOWN) then bt = self.m_btNextClip
+	elseif(key == input.KEY_HOME) then bt = self.m_btFirstFrame
+	elseif(key == input.KEY_END) then bt = self.m_btLastFrame end
+	if(util.is_valid(bt)) then
+		bt:InjectMouseInput(Vector2(0,0),input.MOUSE_BUTTON_LEFT,state)
+		return util.EVENT_REPLY_HANDLED
+	end
+	return util.EVENT_REPLY_UNHANDLED
+end
+function gui.PlaybackControls:LinkToPFMProject(projectManager)
+	if(util.is_valid(self.m_cbButtonPressed)) then self.m_cbButtonPressed:Remove() end
+	self.m_cbButtonPressed = self:AddCallback("OnButtonPressed",function(el,button)
+		if(button == gui.PlaybackControls.BUTTON_FIRST_FRAME) then projectManager:GoToFirstFrame()
+		elseif(button == gui.PlaybackControls.BUTTON_PREVIOUS_CLIP) then projectManager:GoToPreviousClip()
+		elseif(button == gui.PlaybackControls.BUTTON_PREVIOUS_FRAME) then projectManager:GoToPreviousFrame()
+		elseif(button == gui.PlaybackControls.BUTTON_RECORD) then -- TODO
+		elseif(button == gui.PlaybackControls.BUTTON_NEXT_FRAME) then projectManager:GoToNextFrame()
+		elseif(button == gui.PlaybackControls.BUTTON_NEXT_CLIP) then projectManager:GoToNextClip()
+		elseif(button == gui.PlaybackControls.BUTTON_LAST_FRAME) then projectManager:GoToLastFrame() end
+	end)
+end
 
-	playButton:SetAnchor(0,0,0,1)
-	progressBar:SetAnchor(0,0,1,1)
-	self:SetDuration(60.0)
-end
-function gui.PlaybackControls:OnProgressChanged(progress,value)
-	self:CallCallbacks("OnProgressChanged",progress,value)
-end
-function gui.PlaybackControls:GetProgressBar() return self.m_progressBar end
-function gui.PlaybackControls:GetFormattedTime(t)
-	if(util.is_valid(self.m_progressBar) == false) then return "00:00:00" end
-	local seconds = math.floor(t)
-	local minutes = math.floor(seconds /60.0)
-	seconds = seconds %60.0
-
-	local hours = math.floor(minutes /60.0)
-	hours = hours %60.0
-
-	return string.fill_zeroes(hours,2) .. ":" .. string.fill_zeroes(minutes,2) .. ":" .. string.fill_zeroes(seconds,2)
-end
-function gui.PlaybackControls:SetDuration(duration)
-	if(util.is_valid(self.m_progressBar) == false) then return end
-	self.m_progressBar:SetRange(0,duration,0.0)
-end
-function gui.PlaybackControls:GetDuration()
-	if(util.is_valid(self.m_progressBar) == false) then return 0.0 end
-	local min,max,stepSize = self.m_progressBar:GetRange()
-	return max
-end
 function gui.PlaybackControls:OnRemove()
-	if(util.is_valid(self.m_cbThink)) then self.m_cbThink:Remove() end
-end
-function gui.PlaybackControls:SetState(state)
-	if(state == self:GetState()) then return end
-	local oldState = self:GetState()
-	self.m_state = state
-	if(util.is_valid(self.m_cbThink)) then self.m_cbThink:Remove()
-	elseif(state == gui.PlaybackControls.STATE_PLAYING) then
-		local tStart = time.real_time()
-		local value = self.m_progressBar:GetValue() 
-		self.m_cbThink = game.add_callback("DrawFrame",function()
-			if(util.is_valid(self.m_progressBar) == false or self:IsPlaying() == false) then return end
-			--local dt = time.frame_time()
-			--self.m_progressBar:SetValue(self.m_progressBar:GetValue() +dt)
-			local dt = time.real_time() -tStart
-			self.m_progressBar:SetValue(value +dt)
-		end)
-	end
-	self:CallCallbacks("OnStateChanged",oldState,state)
-end
-function gui.PlaybackControls:GetState() return self.m_state end
-function gui.PlaybackControls:IsPlaying() return self.m_state == gui.PlaybackControls.STATE_PLAYING end
-function gui.PlaybackControls:Play()
-	local playButton = self.m_playButton
-	if(util.is_valid(playButton)) then playButton:SetMaterial("gui/pfm/playback/pause") end
-	self:SetState(gui.PlaybackControls.STATE_PLAYING)
-end
-function gui.PlaybackControls:Pause()
-	local playButton = self.m_playButton
-	if(util.is_valid(playButton)) then playButton:SetMaterial("gui/pfm/playback/play") end
-	self:SetState(gui.PlaybackControls.STATE_PAUSED)
-end
-function gui.PlaybackControls:TogglePlay()
-	if(self:IsPlaying()) then
-		self:Pause()
-		return
-	end
-	self:Play()
-end
-function gui.PlaybackControls:Stop()
-	self:Pause()
-	self:SetOffset(0.0)
-end
-function gui.PlaybackControls:SetOffset(offset)
-	if(util.is_valid(self.m_progressBar) == false) then return end
-	self.m_progressBar:SetProgress(offset)
-end
-function gui.PlaybackControls:GetOffset()
-	if(util.is_valid(self.m_progressBar) == false) then return 0.0 end
-	return self.m_progressBar:GetProgress()
-end
-function gui.PlaybackControls:SetSecOffset(offset)
-	if(util.is_valid(self.m_progressBar) == false) then return end
-	self.m_progressBar:SetValue(offset)
-end
-function gui.PlaybackControls:GetSecOffset()
-	if(util.is_valid(self.m_progressBar) == false) then return 0.0 end
-	return self.m_progressBar:GetValue()
-end
-function gui.PlaybackControls:MoveToFirstFrame()
-	print("TODO")
-end
-function gui.PlaybackControls:MoveToPreviousClip()
-	print("TODO")
-end
-function gui.PlaybackControls:MoveToPreviousFrame()
-	print("TODO")
-end
-function gui.PlaybackControls:Record()
-	print("TODO")
-end
-function gui.PlaybackControls:MoveToNextFrame()
-	print("TODO")
-end
-function gui.PlaybackControls:MoveToNextClip()
-	print("TODO")
-end
-function gui.PlaybackControls:MoveToLastFrame()
-	print("TODO")
 end
 gui.register("PlaybackControls",gui.PlaybackControls)

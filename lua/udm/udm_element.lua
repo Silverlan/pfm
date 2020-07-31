@@ -9,10 +9,10 @@
 util.register_class("udm.BaseElement",udm.BaseItem)
 function udm.BaseElement:__init(class)
 	udm.BaseItem.__init(self)
-	self:ChangeName("")
 	self.m_class = class
 	self.m_children = {}
 	self.m_attributes = {}
+	self:SetProperty("name",udm.String(""))
 	
 	local type = self:GetType()
 	local elData = udm.impl.get_type_data(type)
@@ -97,21 +97,21 @@ end
 
 -- Returns the first parent element that isn't a reference. If the parent is an array, the parent
 -- of that array will be returned.
-function udm.BaseElement:FindParentElement()
+function udm.BaseElement:FindParentElement(filter)
 	for _,elParent in ipairs(self:GetParents()) do
 		local type = elParent:GetType()
 		if(type ~= udm.ELEMENT_TYPE_REFERENCE) then -- A reference means that this isn't our actual parent
 			if(type == udm.ELEMENT_TYPE_ARRAY) then
 				-- We don't care about arrays, so we'll skip them and go for their parent instead.
-				return elParent:FindParentElement()
+				elParent = elParent:FindParentElement(filter)
 			end
-			return elParent
+			if(elParent ~= nil and (filter == nil or filter(elParent) == true)) then return elParent end
 		end
 	end
 end
 
 function udm.BaseElement:SetProperty(name,prop)
-	if(prop:IsElement()) then prop:ChangeName(name) end
+	-- if(prop:IsElement()) then prop:ChangeName(name) end
 	self:AddChild(prop,name)
 	return self:GetProperty(name)
 end
@@ -123,8 +123,8 @@ function udm.BaseElement:GetProperty(name)
 	return property
 end
 
-function udm.BaseElement:ChangeName(name) self.m_name = name end
-function udm.BaseElement:GetName() return self.m_name end
+function udm.BaseElement:ChangeName(name) self:GetProperty("name"):SetValue(name) end
+function udm.BaseElement:GetName() return self:GetProperty("name"):GetValue() end
 
 function udm.BaseElement:GetChild(name) return self.m_children[name] end
 
@@ -165,7 +165,7 @@ function udm.BaseElement:AddChild(element,name)
 end
 
 function udm.BaseElement:RemoveChild(name)
-	if(type(name) ~= "string") then name = name:GetName() end
+	if(type(name) ~= "string" and type(name) ~= "number") then name = name:GetName() end
 	local child = self.m_children[name]
 	if(child == nil) then return end
 	self.m_children[name] = nil
@@ -206,24 +206,10 @@ function udm.BaseElement:Copy()
 end
 
 function udm.BaseElement:SaveToBinary(ds)
-	ds:WriteString(self:GetName())
-	
-	local type = self:GetType()
-	local elData = udm.impl.get_type_data(type)
-	if(elData == nil) then return end
-	for _,prop in pairs(elData.properties) do
-		prop.getter(self):SaveToBinary(ds)
-	end
+	self:WriteToBinary(ds)
 end
 function udm.BaseElement:LoadFromBinary(ds)
-	self:ChangeName(ds:ReadString())
-	
-	local type = self:GetType()
-	local elData = udm.impl.get_type_data(type)
-	if(elData == nil) then return end
-	for _,prop in pairs(elData.properties) do
-		prop.getter(self):LoadFromBinary(ds)
-	end
+	self:ReadFromBinary(ds)
 end
 
 function udm.create_element(type,name)

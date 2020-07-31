@@ -109,10 +109,14 @@ function gui.IconGridView:KeyboardCallback(key,scanCode,action,mods)
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
-function gui.IconGridView:AddIcon(text,...)
+function gui.IconGridView:CreateIcon(text,...)
 	local el = self.m_iconFactory(self.m_iconContainer,...)
 	if(el == nil) then return end
+	return self:AddIcon(text,el,...)
+end
+function gui.IconGridView:AddIcon(text,el,...)
 	el:SetText(text)
+	el:SetParent(self.m_iconContainer)
 	table.insert(self.m_icons,el)
 
 	el:SetMouseInputEnabled(true)
@@ -154,7 +158,7 @@ function gui.IconGridView:AddIcon(text,...)
 		end
 		self:DeselectAll()
 		self:SetIconSelected(el)
-		return util.EVENT_REPLY_UNHANDLED -- Unhandled to allow other callbacks (e.g. for drag-and-drop)
+		return util.EVENT_REPLY_HANDLED
 	end)
 	self:CallCallbacks("OnIconAdded",el)
 	return el

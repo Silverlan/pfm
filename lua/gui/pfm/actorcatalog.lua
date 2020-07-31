@@ -133,7 +133,7 @@ function gui.PFMActorCatalog:OnInitialize()
 			end]]
 		end)
 	end)
-	local icon = explorer:AddIcon("Light Source")
+	local icon = explorer:CreateIcon("Light Source")
 	explorer:Update()
 	self.m_explorer = explorer
 end

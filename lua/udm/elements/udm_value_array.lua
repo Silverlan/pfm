@@ -60,7 +60,7 @@ function udm.ValueArray:GetTable() return self.m_array end
 function udm.ValueArray:WriteToBinary(ds)
 	local array = self:GetValue()
 	local type = self:GetValueType()
-	ds:WriteUInt32(type)
+	ds:WriteUInt32(type or math.MAX_UINT32)
 	ds:WriteUInt32(#array)
 	for _,v in ipairs(array) do
 		if(type == util.VAR_TYPE_BOOL) then ds:WriteBool(v)
@@ -86,9 +86,10 @@ function udm.ValueArray:WriteToBinary(ds)
 end
 
 function udm.ValueArray:ReadFromBinary(ds)
-	local array = {}
+	self.m_array = {}
+	local array = self.m_array
 	local type = ds:ReadUInt32()
-	self:SetValueType(type)
+	self:SetValueType((type ~= math.MAX_UINT32) and type or nil)
 	local numElements = ds:ReadUInt32()
 	for i=1,numElements do
 		local v
@@ -155,4 +156,8 @@ end
 function udm.ValueArray:PopFront()
 	-- TODO: Update name in parent(s)
 	return table.remove(self:GetValue(),1)
+end
+
+function udm.ValueArray:Clear()
+	self.m_array = {}
 end

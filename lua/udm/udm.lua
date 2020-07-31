@@ -172,6 +172,18 @@ function udm.create(typeIdentifier,arg,shouldBeElement) -- Note: 'shouldBeElemen
 	return elData.class(arg)
 end
 
+function udm.load(ds)
+	local typeName = ds:ReadString()
+	local el = udm.create(udm.get_type_id(udm[typeName]))
+	el:LoadFromBinary(ds)
+	return el
+end
+
+function udm.save(ds,el)
+	ds:WriteString(el:GetTypeName())
+	el:SaveToBinary(ds)
+end
+
 include("udm_attribute.lua")
 include("udm_element.lua")
 

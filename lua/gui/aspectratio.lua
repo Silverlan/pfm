@@ -14,14 +14,11 @@ end
 function gui.AspectRatio:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	local hTop = 37
-	local hBottom = 42
-	local hViewport = 221
-	self:SetSize(512,hViewport +hTop +hBottom)
+	self:SetSize(512,512)
 
-	self.m_contents = gui.create("WIBase",self,0,37,self:GetWidth(),hViewport,0,0,1,1)
-	self.m_contents:SetColor(Color.Black)
-	self.m_contents:AddCallback("SetSize",function()
+	self.m_background = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	self.m_background:SetColor(Color.Black)
+	self.m_background:AddCallback("SetSize",function()
 		self:Update()
 	end)
 
@@ -37,6 +34,7 @@ function gui.AspectRatio:OnInitialize()
 	self.m_aspectRatio = util.FloatProperty(1.0)
 	self:SetAspectRatio(16.0 /9.0)
 end
+function gui.AspectRatio:SetBackgroundColor(col) self.m_background:SetColor(col) end
 function gui.AspectRatio:SetAspectRatio(aspectRatio)
 	self.m_aspectRatio:Set(aspectRatio)
 	self:Update()

@@ -79,6 +79,7 @@ end
 function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
 	local ent = self:GetEntity()
 	self:UpdatePose()
+	self:UpdateOperators()
 
 	self:UpdateRenderMode()
 	--print(ent,ent:GetPos())
@@ -94,6 +95,128 @@ function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
 		channel:Apply(ent,newOffset)
 	end]]
 	self:BroadcastEvent(ents.PFMActorComponent.EVENT_ON_OFFSET_CHANGED,{clipOffset})
+
+	--[[local actorData = self:GetActorData()
+	if(actorData == nil) then return end
+	local operators = actorData:GetOperators()
+	for _,op in ipairs(operators:GetTable()) do
+		local targets = op:GetTargets()
+		for _,constraintTarget in ipairs(targets:GetTable()) do
+			local target = constraintTarget:GetTarget()
+
+		end
+
+		local slave = op:GetSlave()
+		local target = (slave ~= nil) and slave:GetTarget() or nil
+		if(target ~= nil) then
+			local pos = slave:GetPosition()
+			local rot = slave:GetRotation()
+			
+		end
+	end]]
+end
+
+--[[local function get_target_value(target,opType)
+	local offset = target:GetOffset()
+	local rotOffset = target:GetRotationOffset()
+
+	--sfm.convert_source_anim_set_position_to_pragma(sfmTarget:GetVecOffset())
+	local poseOffset = phys.Transform(offset,rotOffset)
+	target = target:GetTarget()
+	local pose = (target ~= nil) and pfm.util.get_absolute_pose(target) or phys.Transform()
+	if(opType == udm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR or opType == udm.ELEMENT_TYPE_PFM_RIG_PARENT_CONSTRAINT_OPERATOR) then
+		pose:TranslateGlobal(offset)
+	elseif(opType == udm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR or opType == udm.ELEMENT_TYPE_PFM_RIG_PARENT_CONSTRAINT_OPERATOR) then
+		pose:RotateLocal(rotOffset)
+	end
+	-- pose = poseOffset *pose -- TODO: Not sure about this
+	return pose
+end]]
+function ents.PFMActorComponent:UpdateOperators()
+	local actorData = self:GetActorData()
+	if(actorData == nil) then return end
+	local operators = actorData:GetOperators():GetTable()
+	for _,op in ipairs(operators) do
+		local slave = op:GetSlave()
+		local slaveTarget = (slave ~= nil) and slave:GetTarget() or nil
+		if(slaveTarget ~= nil) then
+			local slaveTargetTransform = slaveTarget:GetTransform()
+			-- debug.draw_pose(slaveTarget:GetAbsoluteParentPose(),12)
+			local poseBase = slaveTarget:GetAbsoluteParentPose():GetInverse()
+
+			local poseConstraint = phys.Transform()
+			op:ApplyConstraint(poseConstraint)
+			print(poseConstraint)
+			--local poseConstraint = slaveTarget:GetConstraintPose()
+
+			--local poseConstraint = slaveTarget:GetAbsoluteParentPose(nil,true)
+			--print("PC" ,poseConstraint:GetRotation(),Quaternion(0.70710504055023,-0.70710849761963,-2.9802382783828e-08,-3.427267074585e-06))
+			--poseConstraint:SetRotation(Quaternion(0.70710504055023,-0.70710849761963,-2.9802382783828e-08,-3.427267074585e-06))
+			local pose = poseBase *poseConstraint
+			-- Should be unit quaternion for actor 32
+			if(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR) then
+				slaveTargetTransform:SetPosition(pose:GetOrigin())
+			elseif(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR) then
+				slaveTargetTransform:SetRotation(pose:GetRotation())
+			else
+				slaveTargetTransform:SetPose(pose)
+			end
+		end
+	end
+	--[[local actorData = self:GetActorData()
+	if(actorData == nil) then return end
+	local operators = actorData:GetOperators()
+	for _,op in ipairs(operators:GetTable()) do
+		--print(op:GetTypeName())
+		--if(op:GetName() == "pointConstraint_rootTransform") then
+			--local transform = op:GetSlave():GetTarget():GetTransform()
+			--print(transform:GetPosition(),transform:GetRotation())
+			local slave = op:GetSlave()
+			local slaveTarget = (slave ~= nil) and slave:GetTarget() or nil
+			if(slaveTarget ~= nil) then
+				local slaveTargetTransform = slaveTarget:GetTransform()
+				print("slaveTarget: ",slaveTarget)
+				local pose = pfm.util.get_absolute_parent_pose(slaveTarget):GetInverse()
+
+				local targetPose = get_target_value(op:GetTargets():Get(1),op:GetType())
+				pose = pose *targetPose
+
+				if(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR) then
+					slaveTargetTransform:SetPosition(pose:GetOrigin())
+				elseif(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR) then
+					slaveTargetTransform:SetRotation(pose:GetRotation())
+				else
+					slaveTargetTransform:SetPose(pose)
+				end]]
+
+				--slaveTargetTransform:SetPose(pose *targetPose)
+
+				--[[local slaveTargetTransform = slaveTarget:GetTransform()
+				local pose = slaveTargetTransform:GetPose() *phys.Transform(slave:GetPosition(),slave:GetRotation())
+				--local absPose = slave:GetAbsoluteBonePose()
+				--absPose:TransformGlobal(pose:GetInverse()) -- TODO
+				--absPose = absPose:TransformGlobal() -- Inverse parent pose
+
+				pose = pfm.util.get_absolute_pose(slaveTargetTransform):GetInverse() *pose
+
+				local targetPose = get_target_value(op:GetTargets():Get(1))]]
+				--targetPose = targetPose *pose
+
+				--[[for _,target in ipairs(op:GetTargets():GetTable()) do
+					-- TODO: Apply weight
+					local targetPose = get_target_value(target)
+					if(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR) then
+						pose:TranslateGlobal(targetPose:GetOrigin())
+					elseif(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR) then
+						pose:RotateGlobal(targetPose:GetRotation())
+					else
+						pose:TransformGlobal(targetPose)
+					end
+				end]]
+				--slaveTargetTransform:SetPose(pose)
+			--end
+		--end
+	--end
 end
 
 function ents.PFMActorComponent:Setup(actorData)
