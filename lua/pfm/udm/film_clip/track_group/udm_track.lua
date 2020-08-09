@@ -60,8 +60,20 @@ function udm.PFMTrack:AddChannelClip(clip)
 end
 
 function udm.PFMTrack:CalcBonePose(transform,t)
-	local posLayer,posChannel,posChannelClip = self:FindBoneChannelLayer(transform,"position")
-	local rotLayer,rotChannel,rotChannelClip = self:FindBoneChannelLayer(transform,"rotation")
+	local posLayer,posChannel,posChannelClip
+	local rotLayer,rotChannel,rotChannelClip
+	self.m_cachedBoneLayer = self.m_cachedBoneLayer or {}
+	if(self.m_cachedBoneLayer[transform] ~= nil) then
+		posLayer,posChannel,posChannelClip = unpack(self.m_cachedBoneLayer[transform].position)
+		rotLayer,rotChannel,rotChannelClip = unpack(self.m_cachedBoneLayer[transform].rotation)
+	else
+		posLayer,posChannel,posChannelClip = self:FindBoneChannelLayer(transform,"position")
+		rotLayer,rotChannel,rotChannelClip = self:FindBoneChannelLayer(transform,"rotation")
+		self.m_cachedBoneLayer[transform] = {
+			position = {posLayer,posChannel,posChannelClip},
+			rotation = {rotLayer,rotChannel,rotChannelClip}
+		}
+	end
 
 	-- We need the time relative to the respective channel clip
 	local tPos = (posChannelClip ~= nil) and (t -posChannelClip:GetTimeFrame():GetStart()) or t
@@ -78,13 +90,13 @@ function udm.PFMTrack:FindBoneChannelLayer(transform,attribute)
 	if(log ~= nil) then return log:GetLayers():Get(1),channel,channelClip end
 end
 
-function udm.PFMTrack:SetPlaybackOffset(localOffset,absOffset)
+function udm.PFMTrack:SetPlaybackOffset(localOffset,absOffset,filter)
 	for _,filmClip in ipairs(self:GetFilmClips():GetTable()) do
-		filmClip:SetPlaybackOffset(absOffset)
+		filmClip:SetPlaybackOffset(absOffset,filter)
 	end
 
 	for _,channelClip in ipairs(self:GetChannelClips():GetTable()) do
-		channelClip:SetPlaybackOffset(localOffset)
+		channelClip:SetPlaybackOffset(localOffset,filter)
 	end
 end
 

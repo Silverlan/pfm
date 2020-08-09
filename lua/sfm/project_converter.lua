@@ -542,6 +542,19 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 
 	pfm.log("Fixing element references...",pfm.LOG_CATEGORY_PFM_CONVERTER)
 	sfm.fix_element_references(project)
+
+	-- Build scene graph
+	local groups = {}
+	project:GetUDMRootNode():FindElementsByType(udm.ELEMENT_TYPE_PFM_GROUP,groups)
+	for _,group in ipairs(groups) do
+		local elParent = group:FindParentElement(function(el) return el:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP end)
+		if(elParent ~= nil) then
+			-- We'll assume the 'group' element is a scene
+			for _,actor in ipairs(group:GetActors():GetTable()) do
+				actor:BuildSceneParents(group)
+			end
+		end
+	end
 end
 
 local g_sfmToPfmConversion = {}

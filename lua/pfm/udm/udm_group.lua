@@ -20,13 +20,13 @@ end
 function udm.PFMGroup:GetSceneChildren() return self:GetActors():GetTable() end
 
 function udm.PFMGroup:IsScene()
-	local parent = self:FindParentElement(function(el) return udm.ELEMENT_TYPE_PFM_FILM_CLIP end)
+	local parent = self:GetSceneParent()
 	return parent ~= nil and util.is_same_object(self,parent:GetScene())
 end
 
 function udm.PFMGroup:IsAbsoluteVisible()
 	if(self:IsVisible() == false) then return false end
-	local parent = self:FindParentElement()
+	local parent = self:GetSceneParent()
 	if(parent == nil or parent.IsAbsoluteVisible == nil) then return true end
 	return parent:IsAbsoluteVisible()
 end

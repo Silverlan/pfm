@@ -7,6 +7,7 @@
 ]]
 
 include("game_view.lua")
+include("/pfm/animation_cache.lua")
 
 pfm = pfm or {}
 
@@ -29,22 +30,56 @@ function pfm.ProjectManager:LoadProject(fileName)
 		pfm.log("Unable to load project '" .. fileName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return self:CreateNewProject()
 	end
+	local session = project:GetSessions()[1]
+	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
+	self:LoadAnimationCache(fileName)
 	return self:InitializeProject(project)
 end
 function pfm.ProjectManager:SaveProject(fileName)
 	local project = self:GetProject()
 	if(project == nil) then return false end
-	return project:Save(fileName)
+	local success = project:Save(fileName)
+	if(success == false) then return success end
+	self:SaveAnimationCache(fileName)
+	return success
+end
+function pfm.ProjectManager:GetAnimationCacheFilePath(projectFileName)
+	return "cache/pfm/animation_cache/" .. util.get_string_hash(projectFileName) .. ".pfa"
+end
+function pfm.ProjectManager:SaveAnimationCache(projectFileName)
+	if(self.m_animationCache == nil) then return end
+	local cacheFileName = self:GetAnimationCacheFilePath(projectFileName)
+	file.create_path(file.get_file_path(cacheFileName))
+	local f = file.open(cacheFileName,bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
+	if(f == nil) then return end
+	pfm.log("Saving animation cache...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+	self.m_animationCache:SaveToBinary(f)
+	f:Close()
+end
+function pfm.ProjectManager:LoadAnimationCache(projectFileName)
+	local cacheFileName = self:GetAnimationCacheFilePath(projectFileName)
+	local f = file.open(cacheFileName,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
+	if(f == nil) then
+		pfm.log("No animation cache file found for project '" .. projectFileName .. "'! Playback may be very slow!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+	pfm.log("Loading animation cache...",pfm.LOG_CATEGORY_PFM)
+	self.m_animationCache:LoadFromBinary(f)
+	f:Close()
 end
 function pfm.ProjectManager:CreateNewProject()
 	self:CloseProject()
 	pfm.log("Creating new project...",pfm.LOG_CATEGORY_PFM)
-	return self:InitializeProject(pfm.create_empty_project())
+	local project = pfm.create_empty_project()
+	local session = project:GetSessions()[1]
+	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
+	return self:InitializeProject(project)
 end
 function pfm.ProjectManager:CloseProject()
 	pfm.log("Closing project...",pfm.LOG_CATEGORY_PFM)
 	self:ClearGameView()
 	if(util.is_valid(self.m_cbPlayOffset)) then self.m_cbPlayOffset:Remove() end
+	self.m_animationCache = nil
 	collectgarbage()
 end
 function pfm.ProjectManager:ImportSFMProject(projectFilePath)
@@ -55,6 +90,8 @@ function pfm.ProjectManager:ImportSFMProject(projectFilePath)
 		pfm.log("Unable to convert SFM project '" .. projectFilePath .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 		return false
 	end
+	local session = pfmScene:GetSessions()[1]
+	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
 	return self:InitializeProject(pfmScene)
 end
 function pfm.ProjectManager:SetTimeOffset(offset)
@@ -64,8 +101,11 @@ function pfm.ProjectManager:SetTimeOffset(offset)
 	settings:SetPlayheadOffset(offset)
 end
 function pfm.ProjectManager:GetProject() return self.m_project end
+function pfm.ProjectManager:OnFilmClipAdded(el) end
+function pfm.ProjectManager:GetAnimationCache() return self.m_animationCache end
 function pfm.ProjectManager:InitializeProject(project)
 	pfm.log("Initializing PFM project...",pfm.LOG_CATEGORY_PFM)
+
 	local entScene = self:StartGameView(project)
 	if(entScene == nil) then return false end
 	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
@@ -80,30 +120,47 @@ function pfm.ProjectManager:InitializeProject(project)
 		local filmTrack = session:GetFilmTrack()
 		if(filmTrack ~= nil) then
 			filmTrack:GetFilmClipsAttr():AddChangeListener(function(newEl)
-				if(util.is_valid(self.m_timeline) == false) then return end
-				self:AddFilmClipElement(newEl)
+				self:OnFilmClipAdded(newEl)
 				self:RefreshGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.
 			end)
-
-			for _,filmClip in ipairs(filmTrack:GetFilmClips():GetTable()) do
-				local timeFrame = filmClip:GetTimeFrame()
-				local start = timeFrame:GetStart()
-				if(start > 0.0) then self.m_timeline:AddChapter(start) end
-			end
 		end
 		self.m_cbPlayOffset = session:GetSettings():GetPlayheadOffsetAttr():AddChangeListener(function(newOffset)
 			self:SetGameViewOffset(newOffset)
 			self:OnTimeOffsetChanged(newOffset)
 		end)
 	end
+	self:CacheAnimations()
 	return entScene
+end
+function pfm.ProjectManager:CacheAnimations()
+	if(console.get_convar_bool("pfm_animation_cache_enabled") == false) then return end
+	local firstFrame,lastFrame = self:GetFrameIndexRange()
+	print("Frame range: ",firstFrame,lastFrame)
+	for i=firstFrame,lastFrame do
+		print("Frame: ",i)
+		if(self.m_animationCache:IsFrameDirty(i)) then self:GoToFrame(i) end
+	end
 end
 function pfm.ProjectManager:OnTimeOffsetChanged(offset) end
 function pfm.ProjectManager:SetGameViewOffset(offset)
+	local isAnimCacheEnabled = console.get_convar_bool("pfm_animation_cache_enabled")
+	local frameIndex = self:TimeOffsetToFrameOffset(offset)
+	local isInterpFrame = (math.round(frameIndex) -frameIndex >= 0.001) -- If we're not exactly at a frame, we'll have to interpolate (and can't save to the cache)
+
 	local session = self:GetSession()
 	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
-	if(activeClip ~= nil) then activeClip:SetPlaybackOffset(offset) end
-	pfm.GameView.SetGameViewOffset(self,offset)
+	local gameViewFlags = ents.PFMProject.GAME_VIEW_FLAG_NONE
+	if(activeClip ~= nil) then
+		local filter
+		if(isAnimCacheEnabled and self.m_animationCache:IsFrameDirty(math.floor(frameIndex)) == false and (isInterpFrame == false or self.m_animationCache:IsFrameDirty(math.ceil(frameIndex)) == false)) then
+			gameViewFlags = bit.bor(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE)
+			filter = function(channel) return channel:IsBoneTransformChannel() == false and channel:IsFlexControllerChannel() == false end
+		end
+		activeClip:SetPlaybackOffset(offset,filter)
+	end
+	pfm.GameView.SetGameViewOffset(self,offset,gameViewFlags)
+
+	if(isAnimCacheEnabled and isInterpFrame == false) then self.m_animationCache:UpdateCache(math.round(frameIndex)) end
 end
 function pfm.ProjectManager:GetSession()
 	local project = self:GetProject()
@@ -122,22 +179,11 @@ function pfm.ProjectManager:GetTimeFrameFrameIndexRange(timeFrame)
 	return self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetStart())),self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetEnd()))
 end
 function pfm.ProjectManager:GetLastFrameIndex()
-	local session = self:GetSession()
-	local filmTrack = session:GetFilmTrack()
-	local filmClipLast
-	local tLast = -math.huge
-	for _,filmClip in ipairs(filmTrack:GetFilmClips():GetTable()) do
-		local timeFrame = filmClip:GetTimeFrame()
-		if(timeFrame:GetEnd() > tLast) then
-			filmClipLast = filmClip
-			tLast = timeFrame:GetEnd()
-		end
-	end
-	return self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(tLast))
+	local firstFrame,lastFrame = self:GetSession():GetLastFrameIndex()
+	lastFrame = self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(lastFrame))
+	return firstFrame,lastFrame
 end
-function pfm.ProjectManager:GetFrameIndexRange()
-	return 0,self:GetLastFrameIndex()
-end
+function pfm.ProjectManager:GetFrameIndexRange() return self:GetSession():GetFrameIndexRange() end
 function pfm.ProjectManager:TimeOffsetToFrameOffset(offset) return offset *self:GetFrameRate() end
 function pfm.ProjectManager:FrameOffsetToTimeOffset(offset) return offset /self:GetFrameRate() end
 function pfm.ProjectManager:SetFrameOffset(frame) self:SetTimeOffset(self:FrameOffsetToTimeOffset(self:GetClampedFrameOffset(frame))) end

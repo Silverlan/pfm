@@ -269,7 +269,7 @@ sfm.convert_source_fov_to_pragma = function(fov)
 		}
 	}
 	for i=1,#translationTable do
-		translationTable[i].deg = math.deg(math.horizontal_fov_to_vertical_fov(math.rad(translationTable[i].deg),sfm.ASPECT_RATIO))
+		translationTable[i].deg = math.horizontal_fov_to_vertical_fov(translationTable[i].deg,sfm.ASPECT_RATIO)
 	end
 	local i0
 	local i1

@@ -45,7 +45,7 @@ function gui.DragGhost:OnThink()
 		if(self.m_hoverElement ~= elCursor) then
 			self:ClearHover()
 			self.m_hoverElement = elCursor
-			self:CallCallbacks("OnDragTargetHoverStart")
+			self:CallCallbacks("OnDragTargetHoverStart",elCursor)
 			self.m_targetElement:CallCallbacks("OnDragTargetHoverStart",elCursor)
 		end
 	else self:ClearHover() end
@@ -86,6 +86,7 @@ gui.enable_drag_and_drop = function(src,catName,fOnGhostCreated)
 			return util.EVENT_REPLY_HANDLED
 		end
 	end)
+	--
 	src:SetMouseInputEnabled(true)
 end
 

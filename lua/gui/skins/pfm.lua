@@ -84,6 +84,12 @@ skin["input_field"] = {
 		if(outline ~= nil) then outline:Remove() end
 	end
 }
+skin["input_field_category"] = {
+	Initialize = function(GUI,pElement)
+		local bg = pElement:FindChildByName("background")
+		if(bg ~= nil) then bg:SetColor(Color(64,64,64)) end
+	end
+}
 skin["input_field_outline"] = {
 	Initialize = function(GUI,pElement)
 		local outline = gui.create("WIOutlinedRect",pElement,0,0,pElement:GetWidth(),pElement:GetHeight(),0,0,1,1)

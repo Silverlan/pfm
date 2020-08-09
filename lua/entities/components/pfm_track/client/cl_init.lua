@@ -63,7 +63,7 @@ function ents.PFMTrack:Setup(trackData,trackGroup)
 	self.m_timeFrame:SetDuration(endTime -startTime)
 end
 
-function ents.PFMTrack:OnOffsetChanged(offset)
+function ents.PFMTrack:OnOffsetChanged(offset,gameViewFlags)
 	-- Update film and channel clips
 	for _,clipSet in ipairs({self:GetTrackData():GetFilmClips():GetTable(),self:GetTrackData():GetChannelClips():GetTable(),self:GetTrackData():GetAudioClips():GetTable()}) do
 		for _,clip in ipairs(clipSet) do
@@ -73,7 +73,7 @@ function ents.PFMTrack:OnOffsetChanged(offset)
 					if(clip:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP) then
 						self.m_activeClips[clip] = self:CreateFilmClip(clip)
 					elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP) then
-						self.m_activeClips[clip] = self:CreateChannelClip(clip)
+						-- self.m_activeClips[clip] = self:CreateChannelClip(clip) -- Obsolete?
 					elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_AUDIO_CLIP) then
 						self.m_activeClips[clip] = self:CreateAudioClip(clip)
 					elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP) then
@@ -94,7 +94,7 @@ function ents.PFMTrack:OnOffsetChanged(offset)
 		if(clip:IsValid()) then
 			local clipC = clip:GetComponent(ents.COMPONENT_PFM_FILM_CLIP) or clip:GetComponent(ents.COMPONENT_PFM_CHANNEL_CLIP) or clip:GetComponent(ents.COMPONENT_PFM_AUDIO_CLIP) or nil
 			if(clipC ~= nil) then
-				clipC:SetOffset(offset)
+				clipC:SetOffset(offset,gameViewFlags)
 			end
 		end
 	end

@@ -96,6 +96,11 @@ function gui.EditableEntry:OnInitialize()
 	self:SetText("")
 	self:AddStyleClass("input_field")
 end
+function gui.EditableEntry:SetCategory(text)
+	self:SetEmpty()
+	self:SetText(text)
+	self:AddStyleClass("input_field_category")
+end
 function gui.EditableEntry:SetEmpty()
 	self.m_target = nil
 	self.m_empty = true

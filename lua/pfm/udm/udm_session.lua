@@ -21,10 +21,40 @@ function udm.PFMSession:TimeOffsetToFrameOffset(offset) return self:GetSettings(
 function udm.PFMSession:FrameOffsetToTimeOffset(offset) return self:GetSettings():FrameOffsetToTimeOffset(offset) end
 
 function udm.PFMSession:GetFilmTrack()
+	if(self.m_cachedFilmTrack ~= nil) then return self.m_cachedFilmTrack end
 	local filmClip = self:GetActiveClip()
 	if(filmClip == nil) then return end
 	local trackGroup = filmClip:FindSubClipTrackGroup()
-	return (trackGroup ~= nil) and trackGroup:FindElementsByName("Film")[1] or nil
+	self.m_cachedFilmTrack = (trackGroup ~= nil) and trackGroup:FindElementsByName("Film")[1] or nil
+	return self.m_cachedFilmTrack
+end
+
+function udm.PFMSession:GetLastFrameIndex()
+	local filmTrack = self:GetFilmTrack()
+	local filmClipLast
+	local tLast = -math.huge
+	for _,filmClip in ipairs(filmTrack:GetFilmClips():GetTable()) do
+		local timeFrame = filmClip:GetTimeFrame()
+		if(timeFrame:GetEnd() > tLast) then
+			filmClipLast = filmClip
+			tLast = timeFrame:GetEnd()
+		end
+	end
+	return self:TimeOffsetToFrameOffset(tLast)
+end
+function udm.PFMSession:GetFrameIndexRange()
+	return 0,self:GetLastFrameIndex()
+end
+
+function udm.PFMSession:GetFilmClip(t)
+	t = t or self:GetTimeOffset()
+	local filmTrack = self:GetFilmTrack()
+	for _,filmClip in ipairs(filmTrack:GetFilmClips():GetTable()) do
+		local timeFrame = filmClip:GetTimeFrame()
+		if(timeFrame:IsInTimeFrame(t)) then
+			return filmClip
+		end
+	end
 end
 
 function udm.PFMSession:UpdateTimeFrame()

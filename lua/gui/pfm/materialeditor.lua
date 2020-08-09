@@ -12,6 +12,7 @@ include("/gui/pfm/colorentry.lua")
 include("/gui/pfm/colorslider.lua")
 include("textureslot.lua")
 include("rmacomposerdialog.lua")
+include("controls_menu.lua")
 
 locale.load("pfm_material_editor.txt")
 
@@ -56,6 +57,7 @@ function gui.PFMMaterialEditor:OnInitialize()
 	self:InitializePreviewControls()
 
 	self.m_contents:Update()
+	self:ResetOptions()
 end
 function gui.PFMMaterialEditor:ApplyTexture(texIdentifier,texPath,updateTextureSlot)
 	if(util.is_valid(self.m_material) == false) then return end
@@ -81,11 +83,12 @@ function gui.PFMMaterialEditor:AddTextureSlot(parent,text,texIdentifier,normalMa
 	texSlot:SetNormalMap(normalMap or false)
 	texSlot:SetTransparencyEnabled(enableTransparency or false)
 	texSlot:AddCallback("OnTextureCleared",function(texSlot)
-		if(util.is_valid(self.m_material) == false) then return end
-		local data = self.m_material:GetDataBlock()
-		data:RemoveValue(texIdentifier)
-		self.m_material:UpdateTextures()
-		self:ReloadMaterialDescriptor()
+		if(util.is_valid(self.m_material)) then
+			local data = self.m_material:GetDataBlock()
+			data:RemoveValue(texIdentifier)
+			self.m_material:UpdateTextures()
+			self:ReloadMaterialDescriptor()
+		end
 		self.m_viewport:Render()
 
 		te:SetText("")
@@ -199,8 +202,8 @@ function gui.PFMMaterialEditor:InitializeControls()
 	
 	gui.create("WIResizer",self.m_controlBox):SetFraction(0.6)
 
-	local ctrlVbox = gui.create("WIVBox",self.m_controlBox)
-	ctrlVbox:SetAutoFillContents(true)
+	local ctrlVbox = gui.create("WIPFMControlsMenu",self.m_controlBox)
+	self.m_ctrlVBox = ctrlVbox
 
 	-- Presets
 	local preset = gui.create("WIDropDownMenu",ctrlVbox)
@@ -227,121 +230,31 @@ function gui.PFMMaterialEditor:InitializeControls()
 		if(preset.emission_strength ~= nil) then emissionStrength:SetValue(preset.emission_strength) end]]
 	end)
 	preset:SelectOption(0)
+	self.m_pbrPreset = preset
 
 	-- Metalness
-	local metalness = gui.create("WIPFMSlider",ctrlVbox)
-	metalness:SetText(locale.get_text("metalness"))
-	metalness:SetRange(0.0,1.0)
-	metalness:SetDefault(0.0)
-	metalness:SetTooltip(locale.get_text("pfm_metalness_desc"))
-	metalness:SetStepSize(0.01)
-	metalness:AddCallback("OnLeftValueChanged",function(el,value)
-		self:ApplyMetalnessFactor(value)
-	end)
-	self.m_ctrlMetalness = metalness
+	self.m_ctrlMetalness = ctrlVbox:AddSliderControl("metalness","metalness",0.0,0.0,1.0,function(el,value) self:ApplyMetalnessFactor(value) end,0.01)
+	self.m_ctrlMetalness:SetTooltip(locale.get_text("pfm_metalness_desc"))
 
 	-- Roughness
-	local roughness = gui.create("WIPFMSlider",ctrlVbox)
-	roughness:SetText(locale.get_text("roughness"))
-	roughness:SetRange(0.0,1.0)
-	roughness:SetDefault(0.5)
-	roughness:SetTooltip(locale.get_text("pfm_roughness_desc"))
-	roughness:SetStepSize(0.01)
-	roughness:AddCallback("OnLeftValueChanged",function(el,value)
-		self:ApplyRoughnessFactor(value)
-	end)
-	self.m_ctrlRoughness = roughness
+	self.m_ctrlRoughness = ctrlVbox:AddSliderControl("roughness","roughness",0.5,0.0,1.0,function(el,value) self:ApplyRoughnessFactor(value) end,0.01)
+	self.m_ctrlRoughness:SetTooltip(locale.get_text("pfm_roughness_desc"))
 
 	-- Emission factor
 	-- TODO: RGB!
 	-- RGB Sliders?
-	local emissionFactor = gui.create("WIPFMSlider",ctrlVbox)
-	emissionFactor:SetText(locale.get_text("emission_factor"))
-	emissionFactor:SetRange(0.0,1.0)
-	emissionFactor:SetDefault(0.0)
-	emissionFactor:SetTooltip(locale.get_text("pfm_emission_factor_desc"))
-	emissionFactor:SetStepSize(0.01)
-	emissionFactor:AddCallback("OnLeftValueChanged",function(el,value)
-		self:ApplyEmissionFactor(value)
-	end)
-	self.m_ctrlEmissionFactor = emissionFactor
+	self.m_ctrlEmissionFactor = ctrlVbox:AddSliderControl("emission_factor","emission_factor",0.0,0.0,1.0,function(el,value) self:ApplyEmissionFactor(value) end,0.01)
+	self.m_ctrlEmissionFactor:SetTooltip(locale.get_text("pfm_emission_factor_desc"))
 
 	-- Ao factor
-	local aoFactor = gui.create("WIPFMSlider",ctrlVbox)
-	aoFactor:SetText(locale.get_text("ao_factor"))
-	aoFactor:SetRange(0.0,1.0)
-	aoFactor:SetDefault(1.0)
-	aoFactor:SetTooltip(locale.get_text("pfm_ao_factor_desc"))
-	aoFactor:SetStepSize(0.01)
-	aoFactor:AddCallback("OnLeftValueChanged",function(el,value)
-		self:ApplyAmbientOcclusionFactor(value)
-	end)
-	self.m_ctrlAoFactor = aoFactor
-
-	-- Subsurface method
-	local sssMethod = gui.create("WIDropDownMenu",ctrlVbox)
-	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_none"),tostring(-1))
-	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_cubic"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_CUBIC))
-	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_gaussian"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_GAUSSIAN))
-	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_principled"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED))
-	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_burley"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_BURLEY))
-	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_random_walk"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_RANDOM_WALK))
-	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_principled_random_walk"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED_RANDOM_WALK))
-	sssMethod:SelectOption(0)
-	sssMethod:AddCallback("OnOptionSelected",function(renderMode,idx)
-		local val = tonumber(renderMode:GetOptionValue(idx))
-		local sssEnabled = (val ~= -1)
-		self.m_ctrlSSSFactor:SetVisible(sssEnabled)
-		self.m_ctrlSSSColorWrapper:SetVisible(sssEnabled)
-		self.m_ctrlSSSRadiusWrapper:SetVisible(sssEnabled)
-		self:ApplySubsurfaceScattering()
-	end)
-	self.m_ctrlSSSMethod = sssMethod
-	sssMethod:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_mated_sss_method"))
-
-	-- Subsurface Scattering
-	local sssFactor = gui.create("WIPFMSlider",ctrlVbox)
-	sssFactor:SetText(locale.get_text("pfm_mated_sss_factor"))
-	sssFactor:SetRange(0.0,0.1)
-	sssFactor:SetDefault(0.01)
-	-- sssFactor:SetTooltip(locale.get_text("sss_factor_desc"))
-	sssFactor:SetStepSize(0.001)
-	sssFactor:AddCallback("OnLeftValueChanged",function(el,value)
-		self:ApplySubsurfaceScattering()
-	end)
-	self.m_ctrlSSSFactor = sssFactor
-	self.m_ctrlSSSFactor:SetVisible(false)
-
-	-- Subsurface color
-	local sssColorEntry = gui.create("WIPFMColorEntry",ctrlVbox)
-	sssColorEntry:GetColorProperty():AddCallback(function(oldCol,newCol)
-		self:ApplySubsurfaceScattering()
-	end)
-	sssColorEntry:SetColor(Color(242,210,157))
-	local sssColorEntryWrapper = sssColorEntry:Wrap("WIEditableEntry")
-	sssColorEntryWrapper:SetText(locale.get_text("pfm_mated_sss_color"))
-	self.m_ctrlSSSColor = sssColorEntry
-	self.m_ctrlSSSColorWrapper = sssColorEntryWrapper
-	self.m_ctrlSSSColorWrapper:SetVisible(false)
-
-	-- Subsurface radius
-	local sssRadius = gui.create("WITextEntry",ctrlVbox)
-	sssRadius:SetText("112 52.8 1.6")
-	sssRadius:AddCallback("OnTextEntered",function(pEntry)
-		self:ApplySubsurfaceScattering()
-	end)
-	local sssRadiusWrapper = sssRadius:Wrap("WIEditableEntry")
-	sssRadiusWrapper:SetText(locale.get_text("pfm_mated_sss_radius"))
-	self.m_ctrlSSSRadius = sssRadius
-	self.m_ctrlSSSRadiusWrapper = sssRadiusWrapper
-	self.m_ctrlSSSRadiusWrapper:SetVisible(false)
+	self.m_ctrlAoFactor = ctrlVbox:AddSliderControl("ao_factor","ao_factor",1.0,0.0,1.0,function(el,value) self:ApplyAmbientOcclusionFactor(value) end,0.01)
+	self.m_ctrlAoFactor:SetTooltip(locale.get_text("pfm_ao_factor_desc"))
 
 	-- Alpha Mode
 	local alphaMode = gui.create("WIDropDownMenu",ctrlVbox)
 	alphaMode:AddOption(locale.get_text("alpha_mode_opaque"),tostring(game.Material.ALPHA_MODE_OPAQUE))
 	alphaMode:AddOption(locale.get_text("alpha_mode_mask"),tostring(game.Material.ALPHA_MODE_MASK))
 	alphaMode:AddOption(locale.get_text("alpha_mode_blend"),tostring(game.Material.ALPHA_MODE_BLEND))
-	alphaMode:SelectOption(0)
 	alphaMode:AddCallback("OnOptionSelected",function(renderMode,idx)
 		local alphaMode = tonumber(renderMode:GetOptionValue(idx))
 		self.m_ctrlAlphaCutoff:SetVisible(alphaMode == 1)
@@ -351,17 +264,9 @@ function gui.PFMMaterialEditor:InitializeControls()
 	alphaMode:Wrap("WIEditableEntry"):SetText(locale.get_text("alpha_mode"))
 
 	-- Alpha Cutoff
-	local alphaCutoff = gui.create("WIPFMSlider",ctrlVbox)
-	alphaCutoff:SetText(locale.get_text("alpha_cutoff"))
-	alphaCutoff:SetRange(0.0,1.0)
-	alphaCutoff:SetDefault(0.5)
-	-- alphaCutoff:SetTooltip(locale.get_text("alpha_cutoff_desc"))
-	alphaCutoff:SetStepSize(0.01)
-	alphaCutoff:SetVisible(false)
-	alphaCutoff:AddCallback("OnLeftValueChanged",function(el,value)
-		self:SetMaterialParameter("float","alpha_cutoff",tostring(value))
-	end)
-	self.m_ctrlAlphaCutoff = alphaCutoff
+	self.m_ctrlAlphaCutoff = ctrlVbox:AddSliderControl("alpha_cutoff","alpha_cutoff",0.5,0.0,1.0,function(el,value) self:SetMaterialParameter("float","alpha_cutoff",tostring(value)) end,0.01)
+	-- self.m_ctrlAlphaCutoff:SetTooltip(locale.get_text("alpha_cutoff_desc"))
+	self.m_ctrlAlphaCutoff:SetVisible(false)
 
 	-- Color
 	local colorEntry = gui.create("WIPFMColorEntry",ctrlVbox)
@@ -372,6 +277,160 @@ function gui.PFMMaterialEditor:InitializeControls()
 	local colorEntryWrapper = colorEntry:Wrap("WIEditableEntry")
 	colorEntryWrapper:SetText(locale.get_text("color_factor"))
 	self.m_colorEntry = colorEntry
+
+	-- Cycles options
+	local cyclesHeader = gui.create("WIEditableEntry",ctrlVbox)
+	cyclesHeader:SetEmpty()
+	cyclesHeader:SetCategory(locale.get_text("pfm_mated_cycles_sss"))
+
+	-- See https://blender.stackexchange.com/a/179561 for more information of SSS in Cycles
+	-- Source: http://www.graphics.stanford.edu/papers/bssrdf/bssrdf.pdf / https://i.stack.imgur.com/npIk8.png
+	local sssPresets = {
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_apple"),
+			color = {0.846,0.841,0.528},
+			radiusRGB = {0.696,0.640,0.190},
+			radiusMM = {6.96,6.40,1.90},
+			factor = 0.01,
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_chicken") .. " 01",
+			color = {0.314,0.156,0.126},
+			radiusRGB = {0.578,0.195,0.087},
+			radiusMM = {11.61,3.88,1.75},
+			factor = 0.02
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_chicken") .. " 02",
+			color = {0.321,0.160,0.108},
+			radiusRGB = {0.944,0.335,0.179},
+			radiusMM = {9.44,3.35,1.79},
+			factor = 0.01
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_cream"),
+			color = {0.846,0.841,0.528},
+			radiusRGB = {0.753,0.234,0.127},
+			radiusMM = {15.03,4.66,2.54},
+			factor = 0.02
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_ketchup"),
+			color = {0.164,0.006,0.002},
+			radiusRGB = {0.476,0.058,0.039},
+			radiusMM = {4.76,0.58,0.39},
+			factor = 0.01
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_marble"),
+			color = {0.830,0.791,0.753},
+			radiusRGB = {0.851,0.557,0.395},
+			radiusMM = {8.51,5.57,3.95},
+			factor = 0.01
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_potato"),
+			color = {0.764,0.613,0.213},
+			radiusRGB = {0.714,0.361,0.102},
+			radiusMM = {14.27,7.23,2.04},
+			factor = 0.02
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_skin") .. " 01",
+			color = {0.436,0.227,0.131},
+			radiusRGB = {0.367,0.137,0.068},
+			radiusMM = {3.67,1.37,0.68},
+			factor = 0.01
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_skin") .. " 02",
+			color = {0.623,0.433,0.343},
+			radiusRGB = {0.482,0.169,0.109},
+			radiusMM = {4.82,1.69,1.09},
+			factor = 0.01
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_skim_milk"),
+			color = {0.815,0.813,0.682},
+			radiusRGB = {0.921,0.522,0.175},
+			radiusMM = {18.42,10.44,3.50},
+			factor = 0.02
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_sss_preset_whole_milk"),
+			color = {0.908,0.881,0.759},
+			radiusRGB = {0.545,0.329,0.125},
+			radiusMM = {10.9,6.58,2.51},
+			factor = 0.02
+		}
+	}
+	local presetSSS = gui.create("WIDropDownMenu",ctrlVbox)
+	presetSSS:AddOption("-","-")
+	for i,preset in ipairs(sssPresets) do
+		presetSSS:AddOption(preset.name,tostring(i))
+	end
+	presetSSS:Wrap("WIEditableEntry"):SetText(locale.get_text("preset"))
+	presetSSS:AddCallback("OnOptionSelected",function(el,option)
+		local preset = tonumber(el:GetOptionValue(el:GetSelectedOption()))
+		if(sssPresets[preset] == nil) then return end
+		preset = sssPresets[preset]
+		-- self.m_ctrlSSSColor:SetColor(Color(Vector(preset.color[1],preset.color[2],preset.color[3])))
+		self.m_ctrlSSSScatterColor:SetColor(Color(Vector(preset.radiusRGB[1],preset.radiusRGB[2],preset.radiusRGB[3])))
+		self.m_ctrlSSSFactor:SetValue(preset.factor)
+		if(tonumber(self.m_ctrlSSSMethod:GetOptionValue(self.m_ctrlSSSMethod:GetSelectedOption())) == -1) then
+			self.m_ctrlSSSMethod:SelectOption(1)
+		end
+	end)
+	self.m_presetSSS = presetSSS
+
+	-- Subsurface method
+	local sssMethod = gui.create("WIDropDownMenu",ctrlVbox)
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_none"),tostring(-1))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_principled_random_walk"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED_RANDOM_WALK))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_burley"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_BURLEY))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_cubic"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_CUBIC))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_gaussian"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_GAUSSIAN))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_principled"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED))
+	sssMethod:AddOption(locale.get_text("pfm_mated_sss_method_random_walk"),tostring(game.SurfaceMaterial.SUBSURFACE_SCATTERING_METHOD_RANDOM_WALK))
+	sssMethod:AddCallback("OnOptionSelected",function(renderMode,idx)
+		local val = tonumber(renderMode:GetOptionValue(idx))
+		local sssEnabled = (val ~= -1)
+		self.m_ctrlSSSFactor:SetVisible(sssEnabled)
+		-- self.m_ctrlSSSColorWrapper:SetVisible(sssEnabled)
+		self.m_ctrlSSSScatterColorWrapper:SetVisible(sssEnabled)
+		self:ApplySubsurfaceScattering()
+	end)
+	self.m_ctrlSSSMethod = sssMethod
+	sssMethod:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_mated_sss_method"))
+
+	-- Subsurface Scattering
+	self.m_ctrlSSSFactor = ctrlVbox:AddSliderControl("sss_factor","pfm_mated_sss_factor",0.01,0.0,0.1,function(el,value) self:ApplySubsurfaceScattering() end,0.001)
+	-- self.m_ctrlSSSFactor:SetTooltip(locale.get_text("sss_factor_desc"))
+	self.m_ctrlSSSFactor:SetVisible(false)
+
+	-- Subsurface color
+	--[[local sssColorEntry = gui.create("WIPFMColorEntry",ctrlVbox)
+	sssColorEntry:GetColorProperty():AddCallback(function(oldCol,newCol)
+		self:ApplySubsurfaceScattering()
+	end)
+	sssColorEntry:SetColor(Color(242,210,157))
+	local sssColorEntryWrapper = sssColorEntry:Wrap("WIEditableEntry")
+	sssColorEntryWrapper:SetText(locale.get_text("pfm_mated_sss_color"))
+	self.m_ctrlSSSColor = sssColorEntry
+	self.m_ctrlSSSColorWrapper = sssColorEntryWrapper
+	self.m_ctrlSSSColorWrapper:SetVisible(false)]]
+
+	-- Subsurface radius
+	local sssScatterColorEntry = gui.create("WIPFMColorEntry",ctrlVbox)
+	sssScatterColorEntry:GetColorProperty():AddCallback(function(oldCol,newCol)
+		self:ApplySubsurfaceScattering()
+	end)
+	sssScatterColorEntry:SetColor(Color(Vector(0.367,0.137,0.068))) -- Skin 01
+	local sssScatterColorEntryWrapper = sssScatterColorEntry:Wrap("WIEditableEntry")
+	sssScatterColorEntryWrapper:SetText(locale.get_text("pfm_mated_sss_scatter_color"))
+	self.m_ctrlSSSScatterColor = sssScatterColorEntry
+	self.m_ctrlSSSScatterColorWrapper = sssScatterColorEntryWrapper
+	self.m_ctrlSSSScatterColorWrapper:SetVisible(false)
 
 	-- Save
 	local btSave = gui.create("WIPFMButton",ctrlVbox)
@@ -403,8 +462,8 @@ function gui.PFMMaterialEditor:ApplySubsurfaceScattering()
 		local block = data:AddBlock("subsurface_scattering")
 		block:SetValue("int","method",tostring(method))
 		block:SetValue("float","factor",tostring(self.m_ctrlSSSFactor:GetValue()))
-		block:SetValue("color","color",tostring(self.m_ctrlSSSColor:GetValue()))
-		block:SetValue("vector","radius",tostring(self.m_ctrlSSSRadius:GetValue()))
+		block:SetValue("vector","color_factor","1 1 1")
+		block:SetValue("color","scatter_color",tostring(self.m_ctrlSSSScatterColor:GetValue()))
 	end
 	self:ReloadMaterialDescriptor()
 end
@@ -420,11 +479,31 @@ end
 function gui.PFMMaterialEditor:ApplyEmissionFactor(emission)
 	self:SetMaterialParameter("vector","emission_factor",tostring(emission) .. " " .. tostring(emission) .. " " .. tostring(emission))
 end
+function gui.PFMMaterialEditor:ResetOptions()
+	self.m_pbrPreset:SelectOption(0)
+	self.m_ctrlRoughness:ResetToDefault()
+	self.m_ctrlMetalness:ResetToDefault()
+	self.m_ctrlAoFactor:ResetToDefault()
+	self.m_ctrlEmissionFactor:ResetToDefault()
+	self.m_alphaMode:SelectOption(0) -- Opaque
+	self.m_ctrlAlphaCutoff:ResetToDefault()
+	self.m_colorEntry:SetColor(Color.White)
+
+	self.m_presetSSS:SelectOption(0)
+	self.m_ctrlSSSMethod:SelectOption(0) -- Principled random walk
+	self.m_ctrlSSSFactor:ResetToDefault()
+	self.m_ctrlSSSScatterColor:SetColor(Color.White)
+	for texIdentifier,texSlotData in pairs(self.m_texSlots) do
+		if(texSlotData.textureSlot:IsValid()) then
+			texSlotData.textureSlot:ClearTexture()
+		end
+	end
+end
 function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 	self.m_viewport:SetModel(mdl or "pfm/texture_sphere")
 	self.m_viewport:ScheduleUpdate()
 
-	self.m_material = game.load_material(mat)
+	self.m_material = nil
 	self.m_model = nil
 
 	local matPath = util.Path(mat)
@@ -441,7 +520,10 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 	mdlC:SetMaterialOverride(0,mat)
 	self.m_viewport:Render()
 
-	local data = self.m_material:GetDataBlock()
+	local material = game.load_material(mat)
+	local data = material:GetDataBlock()
+
+	self:ResetOptions()
 
 	if(data:HasValue("roughness_factor")) then
 		local roughnessFactor = data:GetFloat("roughness_factor")
@@ -466,6 +548,40 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 		self.m_ctrlEmissionFactor:SetValue(emissionFactor.x)
 		self.m_ctrlEmissionFactor:SetDefault(emissionFactor.x)
 	end
+
+	if(data:HasValue("alpha_mode")) then
+		local alphaMode = data:GetInt("alpha_mode")
+		self.m_alphaMode:SelectOption(tostring(alphaMode))
+	end
+
+	if(data:HasValue("alpha_cutoff")) then
+		local alphaCutoff = data:GetFloat("alpha_cutoff")
+		self.m_ctrlAlphaCutoff:SetValue(tostring(alphaCutoff))
+	end
+
+	if(data:HasValue("color_factor")) then
+		local colorFactor = data:GetVector("color_factor")
+		self.m_colorEntry:SetColor(Color(colorFactor))
+	end
+
+	local blockSSS = data:FindBlock("subsurface_scattering")
+	if(blockSSS ~= nil) then
+		if(blockSSS:HasValue("method")) then
+			self.m_ctrlSSSMethod:SelectOption(tostring(blockSSS:GetInt("method")))
+		end
+		if(blockSSS:HasValue("factor")) then
+			self.m_ctrlSSSFactor:SetValue(blockSSS:GetFloat("factor"))
+		end
+		--[[if(blockSSS:HasValue("color_factor")) then
+			self.m_ctrlSSSColor:SetColor(blockSSS:GetColor("color_factor"))
+		end]]
+		if(blockSSS:HasValue("scatter_color")) then
+			self.m_ctrlSSSScatterColor:SetColor(blockSSS:GetColor("scatter_color"))
+		end
+	end
+
+	-- We have to set the material AFTER the non-texture settings have been initialized, otherwise changing the settings may inadvertently affect the material as well
+	self.m_material = material
 
 	if(data:HasValue("albedo_map")) then
 		local albedoMap = data:GetString("albedo_map")
@@ -496,43 +612,19 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 		local wrinkleStretchMap = data:GetString("wrinkle_stretch_map")
 		self:ApplyTexture("wrinkle_stretch_map",wrinkleStretchMap,true)
 	end
-
-	if(data:HasValue("alpha_mode")) then
-		local alphaMode = data:GetInt("alpha_mode")
-		self.m_alphaMode:SelectOption(tostring(alphaMode))
-	end
-
-	if(data:HasValue("alpha_cutoff")) then
-		local alphaCutoff = data:GetFloat("alpha_cutoff")
-		self.m_ctrlAlphaCutoff:SetValue(tostring(alphaCutoff))
-	end
-
-	if(data:HasValue("color_factor")) then
-		local colorFactor = data:GetVector("color_factor")
-		self.m_colorEntry:SetColor(Color(colorFactor))
-	end
-
-	local blockSSS = data:FindBlock("subsurface_scattering")
-	if(blockSSS ~= nil) then
-		if(blockSSS:HasValue("method")) then
-			self.m_ctrlSSSMethod:SelectOption(tostring(blockSSS:GetInt("method")))
-		end
-		if(blockSSS:HasValue("factor")) then
-			self.m_ctrlSSSFactor:SetValue(blockSSS:GetFloat("factor"))
-		end
-		if(blockSSS:HasValue("color")) then
-			self.m_ctrlSSSColor:SetColor(blockSSS:GetColor("color"))
-		end
-		if(blockSSS:HasValue("radius")) then
-			self.m_ctrlSSSRadius:SetText(tostring(blockSSS:GetVector("radius")))
-		end
-	end
 end
 function gui.PFMMaterialEditor:InitializePreviewControls()
 	local btRaytracying = gui.create("WIPFMButton",self.m_renderControlsVbox)
 	btRaytracying:SetText(locale.get_text("pfm_render_preview"))
 	btRaytracying:AddCallback("OnPressed",function(btRaytracying)
 		btRaytracying:SetEnabled(false)
+
+		local settings = self.m_rtViewport:GetRenderSettings()
+		local samples = 40
+		-- Use a higher sample count if SSS is enabled
+		if(self.m_ctrlSSSMethod:GetSelectedOption() ~= 0) then samples = 120 end
+		settings:SetSamples(samples)
+
 		self.m_rtViewport:Refresh()
 	end)
 	self.m_btRaytracying = btRaytracying
@@ -671,6 +763,5 @@ function gui.PFMMaterialEditor:InitializeViewport()
 	settings:SetSky("skies/dusk379.hdr")
 	settings:SetWidth(width)
 	settings:SetHeight(height)
-	settings:SetSamples(40)
 end
 gui.register("WIPFMMaterialEditor",gui.PFMMaterialEditor)

@@ -99,19 +99,20 @@ function ents.PFMFilmClip:GetClipData() return self.m_filmClipData end
 function ents.PFMFilmClip:GetTrack() return self.m_track end
 
 function ents.PFMFilmClip:GetOffset() return self.m_offset end
-function ents.PFMFilmClip:SetOffset(offset)
+function ents.PFMFilmClip:SetOffset(offset,gameViewFlags)
+	gameViewFlags = gameViewFlags or ents.PFMProject.GAME_VIEW_FLAG_NONE
 	local timeFrame = self:GetTimeFrame()
 	local absOffset = offset
 	offset = timeFrame:LocalizeOffset(offset)
 	if(offset == self.m_offset) then return end
 	self.m_offset = offset
-	self:UpdateClip()
+	self:UpdateClip(gameViewFlags)
 
 	for _,actor in ipairs(self:GetActors()) do
 		if(actor:IsValid()) then
 			local actorC = actor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 			if(actorC ~= nil) then
-				actorC:OnOffsetChanged(offset)
+				actorC:OnOffsetChanged(offset,gameViewFlags)
 			end
 		end
 	end
@@ -119,11 +120,11 @@ function ents.PFMFilmClip:SetOffset(offset)
 	self:BroadcastEvent(ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED,{offset,absOffset})
 end
 
-function ents.PFMFilmClip:UpdateClip()
+function ents.PFMFilmClip:UpdateClip(gameViewFlags)
 	for _,trackGroup in ipairs(self:GetTrackGroups()) do
 		local trackGroupC = trackGroup:IsValid() and trackGroup:GetComponent(ents.COMPONENT_PFM_TRACK_GROUP) or nil
 		if(trackGroupC ~= nil) then
-			trackGroupC:OnOffsetChanged(self:GetOffset())
+			trackGroupC:OnOffsetChanged(self:GetOffset(),gameViewFlags)
 		end
 	end
 end
@@ -166,7 +167,7 @@ function ents.PFMFilmClip:CreateActor(actor)
 		"' at position (" .. util.round_string(pos.x,0) .. "," .. util.round_string(pos.y,0) .. "," .. util.round_string(pos.z,0) ..
 		") with rotation (" .. util.round_string(ang.p,0) .. "," .. util.round_string(ang.y,0) .. "," .. util.round_string(ang.r,0) ..
 		") with scale (" .. util.round_string(scale.x,2) .. "," .. util.round_string(scale.y,2) .. "," .. util.round_string(scale.z,2) .. ")...",pfm.LOG_CATEGORY_PFM_GAME)
-	actorC:OnOffsetChanged(self:GetOffset())
+	actorC:OnOffsetChanged(self:GetOffset(),ents.PFMProject.GAME_VIEW_FLAG_NONE)
 end
 
 function ents.PFMFilmClip:GetTimeFrame()

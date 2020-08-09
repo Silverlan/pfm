@@ -15,7 +15,6 @@ udm.register_element_property(udm.ELEMENT_TYPE_TRANSFORM,"overridePos",udm.Bool(
 udm.register_element_property(udm.ELEMENT_TYPE_TRANSFORM,"overrideRot",udm.Bool(false))
 
 function udm.Transform:__eq(other)
-	print(util.get_type_name(self),util.get_type_name(other))
 	return self:GetPosition() == other:GetPosition() and self:GetRotation() == other:GetRotation() and self:GetScale() == other:GetScale()
 end
 
@@ -122,7 +121,6 @@ local function apply_parent_pose(el,pose,filter)
 	end
 
 	if(parent ~= nil and parent.GetTransform ~= nil) then
-		print("PARENT: ",parent,parent:GetTransform():GetPose())
 		local t = parent:GetTransform()
 		pose:TransformGlobal(t:GetAbsolutePose(filter))
 	end
@@ -131,7 +129,6 @@ end
 function udm.Transform:GetAbsolutePose(filter)
 	local pose = self:GetPose()
 	local parent = self:FindParentElement(filter)
-	--print("PARENT: ",parent:FindParentElement(filter))
 	if(parent == nil) then return pose end
 	apply_parent_pose(parent,pose,filter)
 	return pose

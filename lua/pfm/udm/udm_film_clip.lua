@@ -64,11 +64,11 @@ function udm.PFMFilmClip:FindAnimationChannelTrack()
 	return (channelTrackGroup ~= nil) and channelTrackGroup:FindTrack("animSetEditorChannels") or nil
 end
 
-function udm.PFMFilmClip:SetPlaybackOffset(offset)
+function udm.PFMFilmClip:SetPlaybackOffset(offset,filter)
 	if(self:GetTimeFrame():IsInTimeFrame(offset) == false) then return end
 	local localOffset = self:LocalizeOffset(offset)
 	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do
-		trackGroup:SetPlaybackOffset(localOffset,offset)
+		trackGroup:SetPlaybackOffset(localOffset,offset,filter)
 	end
 end
 

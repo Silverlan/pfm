@@ -45,12 +45,13 @@ end
 
 function ents.PFMGhost:SetHoverMode(b) self.m_hoverMode = b end
 
-function ents.PFMGhost:OnTick()
-	local filmmaker = tool.get_filmmaker()
-	local viewport = filmmaker:GetViewport():GetViewport()
+function ents.PFMGhost:SetViewport(vp) self.m_viewport = vp end
 
-	local scene = game.get_render_scene()
-	local cam = scene:GetActiveCamera()
+function ents.PFMGhost:OnTick()
+	if(util.is_valid(self.m_viewport) == false) then return end
+	local viewport = self.m_viewport
+	local cam = viewport:GetCamera()
+
 	local res = Vector2(viewport:GetWidth(),viewport:GetHeight())
 	local cursorPos = viewport:GetCursorPos()
 
@@ -81,12 +82,13 @@ function ents.PFMGhost:OnTick()
 		rot = rot *EulerAngles(-20,0,0):ToQuaternion()
 		local planeUp = rot:GetUp()
 		local d = planeUp:DotProduct(pos)
-		local intersect,t = intersect.line_with_plane(pos,dir *2048.0,planeUp,-d +60.0)
-		-- debug.draw_plane(planeUp,-d +60.0,Color(255,0,0,128),0.1)
-		if(intersect) then
+		local t = intersect.line_with_plane(pos,dir *2048.0,planeUp,-d +60.0)
+		if(t ~= false) then
 			posDst = pos +dir *2048.0 *t
 		end
 	end
+	--debug.draw_line(Vector(),posDst,Color.Red,12)
+	--print(ray.entity)
 
 	if(renderC ~= nil) then
 		local min,max = renderC:GetRenderBounds()

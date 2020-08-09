@@ -64,14 +64,22 @@ function gui.PFMModelCatalog:OnInitialize()
 		if(icon:IsDirectory() == false) then
 			gui.enable_drag_and_drop(icon,"ModelCatalog",function(elGhost)
 				elGhost:SetAlpha(128)
-				elGhost:AddCallback("OnDragTargetHoverStart",function(elGhost)
+				elGhost:AddCallback("OnDragTargetHoverStart",function(elGhost,elTgt)
 					elGhost:SetAlpha(0)
 					elGhost:SetAlwaysUpdate(true)
 
 					if(util.is_valid(entGhost)) then entGhost:Remove() end
 					local path = util.Path(icon:GetAsset())
 					path:PopFront()
+					local mdlPath = path:GetString()
+					if(icon:IsValid() and asset.exists(mdlPath,asset.TYPE_MODEL) == false) then icon:Reload(true) end -- Import the asset and generate the icon
 					entGhost = ents.create("pfm_ghost")
+
+					local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
+					if(string.compare(elTgt:GetClass(),"WIViewport",false) and ghostC ~= nil) then
+						ghostC:SetViewport(elTgt)
+					end
+
 					entGhost:Spawn()
 					entGhost:SetModel(path:GetString())
 				end)

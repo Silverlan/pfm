@@ -439,7 +439,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		local path = file.get_file_path(skyOverride:GetValue())
 		if(#path == 0) then path = "skies" end
 		pFileDialog:SetPath(path)
-		pFileDialog:SetExtensions({"hdr"})
+		pFileDialog:SetExtensions({"hdr","png"})
 		pFileDialog:Update()
 	end)
 	skyOverride:SetTooltip(locale.get_text("pfm_sky_override_desc"))
@@ -652,7 +652,7 @@ function gui.PFMRenderPreview:GetFrameFilePath(frameIndex)
 	local filmClipName = filmClip:GetName()
 	if(#projectName == 0) then projectName = "unnamed" end
 	if(#filmClipName == 0) then filmClipName = "unnamed" end
-	return projectName .. "/" .. filmClipName .. "/frame" .. string.fill_zeroes(frameIndex +1,4)
+	return projectName .. "/" .. filmClipName .. "/frame" .. string.fill_zeroes(tostring(frameIndex +1),4)
 end
 function gui.PFMRenderPreview:GetCurrentFrameFilePath()
 	return self:GetFrameFilePath(tool.get_filmmaker():GetFrameOffset())
@@ -690,12 +690,6 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 		if(resolution[1] ~= nil) then width = tonumber(resolution[1]) or 0 end
 		if(resolution[2] ~= nil) then height = tonumber(resolution[2]) or 0 end
 	end
-
-	width = math.max(width,2)
-	height = math.max(height,2)
-	-- Resolution has to be dividable by 2
-	if((width %2) ~= 0) then width = width +1 end
-	if((height %2) ~= 0) then height = height +1 end
 
 	settings:SetRenderMode(renderMode)
 	settings:SetSamples(samples or self.m_ctrlSamplesPerPixel:GetValue())

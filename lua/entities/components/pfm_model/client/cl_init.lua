@@ -77,11 +77,6 @@ function ents.PFMModel:OnEntitySpawn()
 		end)]]
 	end
 
---[[
-bip_ponytail01  55
-bip_ponytail02  56
-bip_ponytail03  57
-]]
 	for _,bone in ipairs(bones) do
 		bone = bone:GetTarget()
 		local boneName = bone:GetName()

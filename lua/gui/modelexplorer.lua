@@ -18,7 +18,9 @@ function gui.ModelExplorer:OnInitialize()
 	self:SetAssetType(asset.TYPE_MODEL)
 	self:SetFileExtensions(asset.MODEL_FILE_EXTENSION,{"mdl","vmdl_c","nif"})
 end
-function gui.ModelExplorer:PopulateContextMenu(pContext,tSelectedFiles)
+function gui.ModelExplorer:PopulateContextMenu(pContext,tSelectedFiles,tExternalFiles)
+	local hasExternalFiles = (#tExternalFiles > 0)
+	if(hasExternalFiles == true) then return end
 	if(#tSelectedFiles == 1) then
 		local path = tSelectedFiles[1]:GetRelativeAsset()
 		pContext:AddItem(locale.get_text("pfm_show_in_model_viewer"),function()

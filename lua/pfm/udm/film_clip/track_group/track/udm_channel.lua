@@ -16,6 +16,27 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"toAttribute",udm.Str
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"toElement",udm.ELEMENT_TYPE_ANY)
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"graphCurve",udm.PFMGraphCurve())
 
+function udm.PFMChannel:IsBoneTransformChannel()
+	if(self.m_cacheIsBoneTransformChannel ~= nil) then return self.m_cacheIsBoneTransformChannel end
+	self.m_cacheIsBoneTransformChannel = false
+	local toElement = self:GetToElement()
+	if(toElement == nil) then return false end
+	local type = toElement:GetType()
+	if(type == udm.ELEMENT_TYPE_PFM_CONSTRAINT_SLAVE) then
+		self.m_cacheIsBoneTransformChannel = true
+		return true
+	end
+	if(toElement:GetType() ~= udm.ELEMENT_TYPE_TRANSFORM) then return false end
+	local parent = toElement:FindParentElement(function(el) return el:GetType() == udm.ELEMENT_TYPE_PFM_BONE end)
+	self.m_cacheIsBoneTransformChannel = (parent ~= nil)
+	return self.m_cacheIsBoneTransformChannel
+end
+
+function udm.PFMChannel:IsFlexControllerChannel()
+	local toElement = self:GetToElement()
+	return (toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR) -- TODO: Is this reliable?
+end
+
 function udm.PFMChannel:SetPlaybackOffset(offset)
 	-- Note: This function will grab the appropriate value from the log
 	-- and assign it to the 'toElement'. If no log values exist, the

@@ -12,9 +12,11 @@ function udm.PFMSceneElement:__init(...)
 end
 
 function udm.PFMSceneElement:GetSceneParent()
-	return self:GetProperty("sceneParent")
+	local el = self:GetProperty("sceneParent")
+	if(el ~= nil and el:GetType() == udm.ELEMENT_TYPE_REFERENCE) then el = el:GetTarget() end
+	return el
 end
-function udm.PFMSceneElement:SetSceneParent(parent) self:SetProperty("sceneParent",parent) end
+function udm.PFMSceneElement:SetSceneParent(parent) self:SetProperty("sceneParent",udm.create_reference(parent)) end
 
 function udm.PFMSceneElement:AddConstraint(constraint)
 	local prop = self:GetProperty("constraints")

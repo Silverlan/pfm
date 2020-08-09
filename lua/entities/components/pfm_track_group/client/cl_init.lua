@@ -21,11 +21,11 @@ function ents.PFMTrackGroup:OnRemove()
 	end
 end
 
-function ents.PFMTrackGroup:OnOffsetChanged(offset)
+function ents.PFMTrackGroup:OnOffsetChanged(offset,gameViewFlags)
 	for _,track in ipairs(self.m_tracks) do
 		local trackC = track:IsValid() and track:GetComponent(ents.COMPONENT_PFM_TRACK) or nil
 		if(trackC ~= nil) then
-			trackC:OnOffsetChanged(offset)
+			trackC:OnOffsetChanged(offset,gameViewFlags)
 		end
 	end
 end

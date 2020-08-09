@@ -47,7 +47,7 @@ end
 
 function udm.PFMActor:IsAbsoluteVisible()
 	if(self:IsVisible() == false) then return false end
-	local parent = self:FindParentElement()
+	local parent = self:GetSceneParent()
 	if(parent == nil or parent.IsAbsoluteVisible == nil) then return true end
 	return parent:IsAbsoluteVisible()
 end

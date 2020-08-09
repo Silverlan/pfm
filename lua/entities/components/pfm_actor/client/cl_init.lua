@@ -20,6 +20,8 @@ function ents.PFMActorComponent:Initialize()
 	end)
 	self.m_channels = {}
 	self.m_listeners = {}
+
+	self.m_cvAnimCache = console.get_convar("pfm_animation_cache_enabled")
 end
 
 function ents.PFMActorComponent:AddChannel(channel)
@@ -76,10 +78,10 @@ function ents.PFMActorComponent:UpdateRenderMode()
 	if(renderC ~= nil) then renderC:SetRenderMode(renderMode) end
 end
 
-function ents.PFMActorComponent:OnOffsetChanged(clipOffset)
+function ents.PFMActorComponent:OnOffsetChanged(clipOffset,gameViewFlags)
 	local ent = self:GetEntity()
 	self:UpdatePose()
-	self:UpdateOperators()
+	if(bit.band(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE) == ents.PFMProject.GAME_VIEW_FLAG_NONE) then self:UpdateOperators() end
 
 	self:UpdateRenderMode()
 	--print(ent,ent:GetPos())
@@ -146,7 +148,6 @@ function ents.PFMActorComponent:UpdateOperators()
 
 			local poseConstraint = phys.Transform()
 			op:ApplyConstraint(poseConstraint)
-			print(poseConstraint)
 			--local poseConstraint = slaveTarget:GetConstraintPose()
 
 			--local poseConstraint = slaveTarget:GetAbsoluteParentPose(nil,true)

@@ -34,6 +34,8 @@ function ents.PFMAnimationSet:Initialize()
 		self:ApplyBoneTransforms()
 	end)
 
+	self.m_cvAnimCache = console.get_convar("pfm_animation_cache_enabled")
+
 	self.m_currentBoneTransforms = {}
 	self.m_listeners = {}
 end
@@ -72,6 +74,7 @@ function ents.PFMAnimationSet:SetFlexController(fcId,value)
 end
 
 function ents.PFMAnimationSet:ApplyBoneTransforms()
+	if(self.m_cvAnimCache:GetBool()) then return end
 	local ent = self:GetEntity()
 	local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 	local transformC = ent:GetComponent(ents.COMPONENT_TRANSFORM)

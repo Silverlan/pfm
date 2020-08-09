@@ -56,10 +56,7 @@ console.register_command("pfm",function(pl,...)
 			-- Fast way of reloading the editor without having to reload the project as well.
 			-- Mainly used for developing and testing the interface.
 			local pfm = tool.get_filmmaker()
-			local project = pfm:GetProject()
-			pfm:Close()
-			pfm = tool.open_filmmaker()
-			pfm:InitializeProject(project)
+			pfm:ReloadInterface()
 			return
 		end
 		tool.close_filmmaker()

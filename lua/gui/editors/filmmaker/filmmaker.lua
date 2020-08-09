@@ -157,7 +157,7 @@ function gui.WIFilmmaker:OnInitialize()
 			end)
 			self.m_openDialogue:Update()
 		end)
-		pContext:AddItem(locale.get_text("pfm_export_blender_scene") .. "...",function(pItem)
+		--[[pContext:AddItem(locale.get_text("pfm_export_blender_scene") .. "...",function(pItem)
 			local dialoge = gui.create_file_save_dialog(function(pDialoge)
 				local fname = pDialoge:GetFilePath(true)
 				file.create_path(file.get_file_path(fname))
@@ -167,7 +167,7 @@ function gui.WIFilmmaker:OnInitialize()
 			dialoge:SetExtensions({"fbx"})
 			dialoge:SetRootPath(util.get_addon_path())
 			dialoge:Update()
-		end)
+		end)]]
 		pContext:AddItem(locale.get_text("pfm_pack_project") .. "...",function(pItem)
 			local dialoge = gui.create_file_save_dialog(function(pDialoge)
 				local fname = pDialoge:GetFilePath(true)
@@ -241,6 +241,18 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 		pContext:Update()
 	end)]]
+	pMenuBar:AddItem(locale.get_text("preferences"),function(pContext)
+		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("language"))
+		for lan,lanLoc in pairs(locale.get_languages()) do
+			pSubMenu:AddItem(lanLoc,function(pItem)
+				locale.change_language(lan)
+				self:ReloadInterface()
+			end)
+		end
+		pSubMenu:Update()
+
+		pContext:Update()
+	end)
 	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
 		pContext:AddItem(locale.get_text("pfm_getting_started"),function(pItem)
 			util.open_url_in_browser("https://wiki.pragma-engine.com/index.php?title=Pfm_firststeps")
@@ -366,6 +378,12 @@ function gui.WIFilmmaker:OnInitialize()
 		self.m_entLight = entLight
 	end
 	pfm.ProjectManager.OnInitialize(self)
+end
+function gui.WIFilmmaker:ReloadInterface()
+	local project = self:GetProject()
+	self:Close()
+	local interface = tool.open_filmmaker()
+	interface:InitializeProject(project)
 end
 function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
 function gui.WIFilmmaker:GetViewport() return self.m_viewport end
@@ -537,6 +555,13 @@ function gui.WIFilmmaker:InitializeProject(project)
 				self:AddFilmClipElement(newEl)
 				self:RefreshGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.
 			end)
+
+			-- TODO
+			--[[for _,filmClip in ipairs(filmTrack:GetFilmClips():GetTable()) do
+				local timeFrame = filmClip:GetTimeFrame()
+				local start = timeFrame:GetStart()
+				if(start > 0.0) then self.m_timeline:AddChapter(start) end
+			end]]
 		end
 	end
 
@@ -544,6 +569,10 @@ function gui.WIFilmmaker:InitializeProject(project)
 	self:SetTimeOffset(0)
 
 	return entScene
+end
+function gui.WIFilmmaker:OnFilmClipAdded(el)
+	if(util.is_valid(self.m_timeline) == false) then return end
+	self:AddFilmClipElement(newEl)
 end
 function gui.WIFilmmaker:AddFilmClipElement(filmClip)
 	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip,filmClip,function(elFilmClip)

@@ -64,8 +64,6 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"panoramaType",pfm
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderPreview",false,{
 	getter = "IsRenderPreview"
 })
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"width",512)
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"height",512)
 
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"cameraFrustumCullingEnabled",true,{
 	getter = "IsCameraFrustumCullingEnabled"
@@ -81,9 +79,25 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"stereoscopic",tru
 
 function pfm.RaytracingRenderJob.Settings:__init()
 	self:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
+	self:SetWidth(512)
+	self:SetHeight(512)
 end
 function pfm.RaytracingRenderJob.Settings:IsCubemapPanorama()
 	return self:GetCamType() == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA and self:GetPanoramaType() == pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP
+end
+function pfm.RaytracingRenderJob.Settings:GetWidth() return self.m_width end
+function pfm.RaytracingRenderJob.Settings:GetHeight() return self.m_height end
+function pfm.RaytracingRenderJob.Settings:SetWidth(w)
+	w = math.max(w,2)
+	-- Resolution has to be dividable by 2
+	if((w %2) ~= 0) then w = w +1 end
+	self.m_width = w
+end
+function pfm.RaytracingRenderJob.Settings:SetHeight(h)
+	h = math.max(h,2)
+	-- Resolution has to be dividable by 2
+	if((h %2) ~= 0) then h = h +1 end
+	self.m_height = h
 end
 function pfm.RaytracingRenderJob.Settings:Copy()
 	local cpy = pfm.RaytracingRenderJob.Settings()

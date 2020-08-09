@@ -163,7 +163,8 @@ function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
 				end
 			end
 
-			if(#tExternalFiles > 0) then
+			local hasExternalFiles = (#tExternalFiles > 0)
+			if(hasExternalFiles) then
 				pContext:AddItem(locale.get_text("pfm_asset_import"),function()
 					for _,el in ipairs(tExternalFiles) do
 						if(el:IsValid()) then
@@ -181,29 +182,38 @@ function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
 				end)
 			end
 
-			if(#tSelectedFiles > 0) then
-				pContext:AddItem(locale.get_text("pfm_asset_export"),function()
-					local exportSuccessful = false
-					for _,el in ipairs(tSelectedFiles) do
-						if(el:IsValid()) then
-							local path = el:GetRelativeAsset()
-							if(asset.exists(path,self:GetAssetType()) == false) then
-								el:Reload(true)
+			if(#tSelectedFiles > 0 and hasExternalFiles == false) then
+				local exportable = {}
+				for _,el in ipairs(tSelectedFiles) do
+					if(el:IsValid() and el:IsExportable()) then
+						table.insert(exportable,el)
+					end
+				end
+				if(#exportable > 0) then
+					pContext:AddItem(locale.get_text("pfm_asset_export"),function()
+						local exportSuccessful = false
+						for _,el in ipairs(exportable) do
+							if(el:IsValid()) then
+								local path = el:GetRelativeAsset()
+								if(asset.exists(path,self:GetAssetType()) == false) then
+									el:Reload(true)
+								end
+
+								local success,errMsg = el:Export(path)
+								if(success) then exportSuccessful = true
+								else console.print_warning("Unable to export asset: ",errMsg) end
 							end
-							local result,err = self:ExportAsset(path)
-							if(result) then exportSuccessful = true
-							else console.print_warning("Unable to export asset: ",err) end
 						end
-					end
-					if(exportSuccessful) then
-						if(#tSelectedFiles == 1) then
-							local path = tSelectedFiles[1]:GetRelativeAsset()
-							util.open_path_in_explorer("export/" .. file.remove_file_extension(path))
-						else
-							util.open_path_in_explorer("export/")
+						if(exportSuccessful) then
+							if(#exportable == 1) then
+								local path = exportable[1]:GetRelativeAsset()
+								util.open_path_in_explorer("export/" .. file.remove_file_extension(path))
+							else
+								util.open_path_in_explorer("export/")
+							end
 						end
-					end
-				end)
+					end)
+				end
 			end
 
 			if(numInFavorites == #tSelected) then
@@ -232,7 +242,8 @@ function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
 			if(#tSelectedFiles == 1) then
 				local assetPath = tSelectedFiles[1]:GetAsset()
 				pContext:AddItem(locale.get_text("pfm_copy_path"),function()
-					util.set_clipboard_string(assetPath .. "." .. self.m_extension)
+					local path = file.remove_file_extension(assetPath)
+					util.set_clipboard_string(path .. "." .. self.m_extension)
 				end)
 
 				local path = tSelectedFiles[1]:GetRelativeAsset()
@@ -242,12 +253,12 @@ function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
 					end)
 				end
 			end
-			self:PopulateContextMenu(pContext,tSelectedFiles)
+			self:PopulateContextMenu(pContext,tSelectedFiles,tExternalFiles)
 		end)
 	end
 	return el
 end
-function gui.AssetExplorer:PopulateContextMenu(pContext,tSelectedFiles) end
+function gui.AssetExplorer:PopulateContextMenu(pContext,tSelectedFiles,tExternalFiles) end
 function gui.AssetExplorer:AddAsset(assetName,isDirectory,fDirClickHandler)
 	return self:AddItem(assetName,isDirectory,fDirClickHandler)
 end

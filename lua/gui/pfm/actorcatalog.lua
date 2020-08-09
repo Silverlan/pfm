@@ -31,9 +31,12 @@ function gui.PFMActorCatalog:OnInitialize()
 
 	local explorer = gui.create("WIIconGridView",scrollContainer,0,0,self:GetWidth(),self:GetHeight())
 	explorer:AddCallback("OnIconAdded",function(explorer,icon)
+		icon:AddCallback("OnIconClicked",function(icon)
+			
+		end)
 		gui.enable_drag_and_drop(icon,"ModelCatalog",function(elGhost)
 			elGhost:SetAlpha(128)
-			elGhost:AddCallback("OnDragTargetHoverStart",function(elGhost)
+			elGhost:AddCallback("OnDragTargetHoverStart",function(elGhost,elTgt)
 				elGhost:SetAlpha(0)
 				elGhost:SetAlwaysUpdate(true)
 
@@ -52,6 +55,8 @@ function gui.PFMActorCatalog:OnInitialize()
 						if(ray == false) then return end
 						pos:Set(ray.position +ray.normal *100)
 					end)
+
+					if(string.compare(elTgt:GetClass(),"WIViewport",false)) then ghostC:SetViewport(elTgt) end
 				end
 
 				local lightPointC = entGhost:AddComponent(ents.COMPONENT_LIGHT_POINT)

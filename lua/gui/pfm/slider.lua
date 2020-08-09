@@ -131,6 +131,10 @@ function gui.PFMSlider:GetRightValue(value) local bar = self:GetRightSliderBar()
 function gui.PFMSlider:GetMin() return self:GetLeftMin() end
 function gui.PFMSlider:GetMax() return self:GetLeftMax() end
 function gui.PFMSlider:GetDefault() return self:GetLeftDefault() end
+function gui.PFMSlider:ResetToDefault()
+	self:SetLeftValue(self:GetLeftDefault())
+	self:SetRightValue(self:GetRightDefault())
+end
 function gui.PFMSlider:GetValue() return self:GetLeftValue() end
 function gui.PFMSlider:CreateSliderRangeEditWindow(min,max,default,fOnClose)
 	local p = gui.create("WIPFMWindow")

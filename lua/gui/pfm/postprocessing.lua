@@ -7,6 +7,7 @@
 ]]
 
 include("/shaders/pfm/pfm_tonemapping.lua")
+include("controls_menu.lua")
 
 util.register_class("gui.PFMPostProcessing",gui.Base)
 
@@ -20,8 +21,7 @@ function gui.PFMPostProcessing:OnInitialize()
 	local hViewport = 221
 	self:SetSize(128,hViewport +hBottom)
 
-	local p = gui.create("WIVBox",self)
-	p:SetAutoFillContentsToWidth(true)
+	local p = gui.create("WIPFMControlsMenu",self)
 	self.m_settingsBox = p
 
 	-- Tonemapping
@@ -84,27 +84,6 @@ function gui.PFMPostProcessing:ApplyDOFSettings()
 	dofSettings:SetVignettingInnerBorder(self.m_ctrlVignIn:GetValue())
 	dofSettings:SetVignettingOuterBorder(self.m_ctrlVignOut:GetValue())
 	dofSettings:SetPentagonShapeFeather(self.m_ctrlPentagonShapeFeather:GetValue())
-end
-function gui.PFMPostProcessing:AddToggleControl(name,identifier,checked,onChange)
-	local el = gui.create("WIToggleOption",self.m_settingsBox)
-	el:SetText(locale.get_text(name))
-	el:SetChecked(checked)
-	el:SetTooltip(locale.get_text(name .. "_desc"))
-	if(onChange ~= nil) then el:GetCheckbox():AddCallback("OnChange",onChange) end
-	if(identifier ~= nil) then self:AddControl(identifier,el) end
-	return el
-end
-function gui.PFMPostProcessing:AddSliderControl(name,identifier,default,min,max,onChange,stepSize,integer)
-	local slider = gui.create("WIPFMSlider",self.m_settingsBox)
-	slider:SetText(locale.get_text(name))
-	slider:SetRange(min,max)
-	slider:SetDefault(default)
-	slider:SetTooltip(locale.get_text(name .. "_desc"))
-	if(integer ~= nil) then slider:SetInteger(integer) end
-	if(stepSize ~= nil) then slider:SetStepSize(stepSize) end
-	if(onChange ~= nil) then slider:AddCallback("OnLeftValueChanged",onChange) end
-	if(identifier ~= nil) then self:AddControl(identifier,slider) end
-	return slider
 end
 function gui.PFMPostProcessing:UpdateDepthOfField()
 	self.m_rt:UpdateGameSceneTextures()

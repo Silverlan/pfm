@@ -49,6 +49,10 @@ function udm.PFMModel:CalcBonePose(track,boneName,t)
 	if(bone == nil) then return phys.ScaledTransform() end
 	bone = bone:GetTarget()
 	local transform = bone:GetTransform()
+	--[[local elSlave = transform:FindParent(function(el) return el:GetType() == udm.ELEMENT_TYPE_PFM_CONSTRAINT_SLAVE end)
+	if(elSlave ~= nil) then
+
+	end]]
 	return track:CalcBonePose(transform,t)
 end
 

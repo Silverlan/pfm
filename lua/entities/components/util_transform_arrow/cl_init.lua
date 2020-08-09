@@ -67,7 +67,7 @@ function ents.UtilTransformArrowComponent:SetUtilTransformComponent(c)
 		local attInfo = ents.AttachableComponent.AttachmentInfo()
 		attInfo.flags = ents.AttachableComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME
 		local parentBone = c:GetParentBone()
-		if(parentBone ~= nil) then attC:AttachToEntity(c:GetEntity(),attInfo)
+		if(parentBone == nil) then attC:AttachToEntity(c:GetEntity(),attInfo)
 		else attC:AttachToBone(c:GetEntity(),parentBone,attInfo) end
 	end
 end
@@ -144,8 +144,8 @@ function ents.UtilTransformArrowComponent:GetCursorIntersectionWithAxisPlane()
 
 	local pos,dir = ents.ClickComponent.get_ray_data()
 	local maxDist = 32768
-	local bIntersect,t = intersect.line_with_plane(pos,dir *maxDist,plane:GetNormal(),plane:GetDistance())
-	if(bIntersect == false) then return end
+	local t = intersect.line_with_plane(pos,dir *maxDist,plane:GetNormal(),plane:GetDistance())
+	if(t == false) then return end
 	return pos +dir *t *maxDist
 end
 function ents.UtilTransformArrowComponent:OnTick(dt)

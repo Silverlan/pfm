@@ -6,7 +6,15 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include_component("pfm_model")
+include_component("pfm_actor")
+
+local cvAnimCache = console.register_variable("pfm_animation_cache_enabled","1",bit.bor(console.FLAG_BIT_ARCHIVE),"Enables caching for actor animations to speed up performance.")
+
 util.register_class("ents.PFMProject",BaseEntityComponent)
+
+ents.PFMProject.GAME_VIEW_FLAG_NONE = 0
+ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE = 1
 
 function ents.PFMProject:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -51,13 +59,40 @@ end
 
 function ents.PFMProject:GetProject() return self.m_project end
 
-function ents.PFMProject:SetOffset(offset)
+function ents.PFMProject:SetOffset(offset,gameViewFlags)
 	if(offset == self.m_offset) then return end
 	-- pfm.log("Changing playback offset to " .. offset .. "...",pfm.LOG_CATEGORY_PFM_GAME)
 	self.m_offset = offset
+
 	if(util.is_valid(self.m_entRootTrack)) then
 		local trackC = self.m_entRootTrack:GetComponent(ents.COMPONENT_PFM_TRACK)
-		if(trackC ~= nil) then trackC:OnOffsetChanged(offset) end
+		if(trackC ~= nil) then trackC:OnOffsetChanged(offset,gameViewFlags) end
+	end
+	if(cvAnimCache:GetBool() == false) then return end
+	-- if(bit.band(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE) == ents.PFMProject.GAME_VIEW_FLAG_NONE) then return end
+
+	local filmmaker = tool.get_filmmaker()
+	local animCache = filmmaker:GetAnimationCache()
+	local frameIndex = filmmaker:TimeOffsetToFrameOffset(offset)
+	if(animCache == nil) then return end
+	animCache:UpdateCache(offset)
+	local filmClip = animCache:GetFilmClip(frameIndex)
+	if(filmClip == nil) then return end
+	-- TODO: Ensure that the entity actually belongs to this project
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_MODEL)}) do
+		local mdl = ent:GetModel()
+		local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
+		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+		if(mdl ~= nil and animC ~= nil and actorC ~= nil) then
+			local animName = animCache:GetAnimationName(filmClip,actorC:GetActorData())
+			animC:PlayAnimation(animName)
+			local anim = animC:GetAnimationObject()
+			if(anim ~= nil) then
+				local cycle = frameIndex /(anim:GetFrameCount() -1)
+				animC:SetCycle(cycle)
+			end
+			animC:SetPlaybackRate(0.0)
+		end
 	end
 end
 

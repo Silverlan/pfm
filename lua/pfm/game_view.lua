@@ -36,8 +36,9 @@ function pfm.GameView:RefreshGameView()
 	projectC:Start()
 	projectC:SetOffset(self:GetTimeOffset())
 end
-function pfm.GameView:SetGameViewOffset(offset)
+function pfm.GameView:SetGameViewOffset(offset,gameViewFlags)
+	gameViewFlags = gameViewFlags or ents.PFMProject.GAME_VIEW_FLAG_NONE
 	local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
-	if(projectC ~= nil) then projectC:SetOffset(offset) end
+	if(projectC ~= nil) then projectC:SetOffset(offset,gameViewFlags) end
 end
 function pfm.GameView:GetGameView() return self.m_gameView end

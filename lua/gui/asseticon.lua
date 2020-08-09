@@ -235,6 +235,8 @@ function gui.AssetIcon:MouseCallback(button,state,mods)
 	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.AssetIcon:IsDirectory() return false end
+function gui.AssetIcon:IsExportable() return false end
+function gui.AssetIcon:Export() return false,"Export for this asset type not supported!" end
 function gui.AssetIcon:GetAssetName() return self.m_assetName end
 function gui.AssetIcon:GetAssetPath() return self.m_assetPath end
 function gui.AssetIcon:GetAsset() return self.m_assetPath .. self.m_assetName end
@@ -249,7 +251,7 @@ function gui.AssetIcon:Reload(importAsset)
 	self:ReloadFromCache(importAsset)
 end
 function gui.AssetIcon:ReloadFromCache(importAsset)
-	self:SetAsset(self.m_assetPath,self.m_assetName,self:IsDirectory(),importAsset)
+	self:SetAsset(self.m_assetPath,self.m_assetName,importAsset)
 end
 function gui.AssetIcon:SetAsset(path,assetName,importAsset)
 	self.m_assetPath = path
@@ -316,6 +318,23 @@ util.register_class("gui.ModelAssetIcon",gui.AssetIcon)
 function gui.ModelAssetIcon:__init()
 	gui.AssetIcon.__init(self)
 end
+function gui.ModelAssetIcon:IsExportable() return true end
+function gui.ModelAssetIcon:Export()
+	local path = util.Path(self:GetAsset())
+	path:PopFront()
+	local mdl = game.load_model(path:GetString())
+	if(mdl == nil) then return false,"Unable to load model!" end
+	local exportInfo = game.Model.ExportInfo()
+	exportInfo.verbose = false
+	exportInfo.generateAo = true
+	exportInfo.exportAnimations = true
+	exportInfo.exportSkinnedMeshData = true
+	exportInfo.exportImages = true
+	exportInfo.exportMorphTargets = true
+	exportInfo.saveAsBinary = false
+	exportInfo.embedAnimations = true
+	return mdl:Export(exportInfo)
+end
 function gui.ModelAssetIcon:ApplyAsset(path,importAsset)
 	self:SetModelAsset(path,importAsset)
 end
@@ -348,6 +367,12 @@ gui.register("WIModelAssetIcon",gui.ModelAssetIcon)
 util.register_class("gui.MaterialAssetIcon",gui.AssetIcon)
 function gui.MaterialAssetIcon:__init()
 	gui.AssetIcon.__init(self)
+end
+function gui.MaterialAssetIcon:IsExportable() return true end
+function gui.MaterialAssetIcon:Export()
+	local path = util.Path(self:GetAsset())
+	path:PopFront()
+	return asset.export_material(path:GetString(),game.Model.ExportInfo.IMAGE_FORMAT_PNG,false)
 end
 function gui.MaterialAssetIcon:ApplyAsset(path,importAsset)
 	self:SetMaterialAsset(path,importAsset)
