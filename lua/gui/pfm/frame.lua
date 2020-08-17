@@ -38,6 +38,10 @@ function gui.PFMFrame:OnInitialize()
 	self:ScheduleUpdate()
 end
 function gui.PFMFrame:SetActiveTab(tabId)
+	if(type(tabId) == "string") then
+		tabId = self:GetTabId(tabId)
+		if(tabId == nil) then return end
+	end
 	if(type(tabId) ~= "number") then
 		local el = tabId
 		for tabId,tabData in ipairs(self.m_tabs) do
@@ -48,6 +52,7 @@ function gui.PFMFrame:SetActiveTab(tabId)
 		end
 		return
 	end
+	if(self.m_tabs[tabId] == nil) then return end
 	if(util.is_valid(self.m_activeTabButton)) then self.m_activeTabButton:SetActive(false) end
 
 	local bt = self.m_tabs[tabId].button
@@ -71,8 +76,9 @@ function gui.PFMFrame:RemoveTab(identifier)
 	if(tabData.panel:IsValid()) then tabData.panel:Remove() end
 	if(tabData.button:IsValid()) then tabData.button:Remove() end
 	table.remove(self.m_tabs,i)
-	if(self.m_activeTabIndex >= i) then
-		self:SetActiveTab(self.m_activeTabIndex -1)
+	if(self.m_activeTabIndex == i) then
+		if(self.m_tabs[self.m_activeTabIndex -1] ~= nil) then self:SetActiveTab(self.m_activeTabIndex -1)
+		elseif(self.m_tabs[self.m_activeTabIndex] ~= nil) then self:SetActiveTab(self.m_activeTabIndex) end
 	end
 end
 function gui.PFMFrame:FindTab(name)
@@ -90,6 +96,19 @@ function gui.PFMFrame:AddTab(identifier,name,panel)
 	bt:AddCallback("OnPressed",function()
 		local tabId = self:GetTabId(identifier)
 		self:SetActiveTab(tabId)
+	end)
+	bt:AddCallback("OnMouseEvent",function(bt,button,state,mods)
+		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+			local pContext = gui.open_context_menu()
+			if(util.is_valid(pContext) == false) then return end
+			pContext:SetPos(input.get_cursor_pos())
+			pContext:AddItem(locale.get_text("close"),function()
+				self:RemoveTab(identifier)
+			end)
+			pContext:Update()
+			return util.EVENT_REPLY_HANDLED
+		end
+		return util.EVENT_REPLY_UNHANDLED
 	end)
 	panel:SetParent(self.m_contents)
 	panel:SetPos(0,0)

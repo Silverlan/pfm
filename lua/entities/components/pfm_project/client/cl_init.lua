@@ -88,7 +88,8 @@ function ents.PFMProject:SetOffset(offset,gameViewFlags)
 			animC:PlayAnimation(animName)
 			local anim = animC:GetAnimationObject()
 			if(anim ~= nil) then
-				local cycle = frameIndex /(anim:GetFrameCount() -1)
+				local numFrames = anim:GetFrameCount()
+				local cycle = (numFrames >= 2) and (frameIndex /(numFrames -1)) or 0
 				animC:SetCycle(cycle)
 			end
 			animC:SetPlaybackRate(0.0)

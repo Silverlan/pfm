@@ -52,8 +52,8 @@ function udm.PFMLogList:CalcInterpolatedValue(targetTime)
 end
 
 function udm.PFMLogList:SetPlaybackOffset(offset)
-	local times = self:GetTimes():GetTable()
-	local values = self:GetValues():GetTable()
+	local times = self:GetTimes()
+	local values = self:GetValues()
 	local numItems = math.min(#times,#values)
 	if(numItems == 0) then return end
 	local type = self:GetValues():GetValueType()
@@ -67,7 +67,7 @@ function udm.PFMLogList:SetPlaybackOffset(offset)
 	-- close to the previous offset, which we can use to our advantage. Using this information we
 	-- can narrow the number of iterations down to 1 or 2 per controller for most cases.
 	local lastIndex = self.m_lastIndex
-	local lastOffset = times[lastIndex]
+	local lastOffset = times:Get(lastIndex)
 
 	local startIndex = lastIndex
 	local endIndex = numItems
@@ -79,8 +79,8 @@ function udm.PFMLogList:SetPlaybackOffset(offset)
 	end
 
 	for i=startIndex,endIndex,increment do
-		local t = {times[i],values[i]}
-		local tPrev = (values[i -1] ~= nil) and {times[i -1],values[i -1]} or t
+		local t = {times:Get(i),values:Get(i)}
+		local tPrev = (values:Get(i -1) ~= nil) and {times:Get(i -1),values:Get(i -1)} or t
 		if((offset >= tPrev[1] and offset < t[1]) or i == endIndex) then
 			local dt = t[1] -tPrev[1]
 			local relOffset = offset -tPrev[1]

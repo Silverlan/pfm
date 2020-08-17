@@ -78,8 +78,45 @@ function gui.PFMRenderPreview:OnInitialize()
 		ds:Seek(0)
 		f:Write(ds)
 		f:Close()
+
+		self.m_sceneFiles = self.m_sceneFiles or {}
+		table.insert(self.m_sceneFiles,outputPath:GetString() .. ".prt")
 	end)
 	self.m_rt:AddCallback("OnComplete",function(rt,state)
+		local renderSettings = self.m_rt:GetRenderSettings()
+		if(renderSettings:IsRenderPreview() == false and renderSettings:IsPreStageOnly() and self.m_sceneFiles ~= nil) then
+			local outputPath = self:GetOutputPath()
+			if(outputPath ~= nil) then
+				outputPath = util.Path(outputPath)
+				local shellFileName
+				local toolName
+				if(os.SYSTEM_WINDOWS) then
+					shellFileName = "render.bat"
+					toolName = "bin/render_raytracing.exe"
+				else
+					shellFileName = "render.sh"
+					toolName = "lib/render_raytracing"
+				end
+
+				local path = file.get_file_path(outputPath:GetString())
+				local f = file.open(path .. shellFileName,bit.bor(file.OPEN_MODE_BINARY,file.OPEN_MODE_WRITE))
+				if(f ~= nil) then
+					local workingPath = engine.get_working_directory()
+					local files = {}
+					local addonPath = util.get_addon_path()
+					for _,f in ipairs(self.m_sceneFiles) do
+						table.insert(files,workingPath .. addonPath .. f)
+					end
+					local cmd = workingPath .. toolName .. " " .. string.join(files,' ')
+					f:WriteString(cmd)
+					f:Close()
+
+					util.open_path_in_explorer(addonPath .. path,shellFileName)
+				end
+			end
+		end
+		self.m_sceneFiles = nil
+
 		self.m_renderBtContainer:SetVisible(true)
 		self.m_btCancel:SetVisible(false)
 	end)

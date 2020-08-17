@@ -134,6 +134,7 @@ function sfm.ProjectConverter:__init(sfmProject)
 	for _,session in ipairs(sfmProject:GetSessions()) do
 		self:ConvertSession(session)
 	end
+	collectgarbage()
 	self:ApplyPostProcessing()
 	pfm.log("Conversion of SFM project to PFM project has been completed!",pfm.LOG_CATEGORY_PFM_CONVERTER)
 end
@@ -340,8 +341,8 @@ local function apply_post_processing(project,filmClip,processedObjects)
 								local log = channelOther:GetLog()
 								for _,layer in ipairs(log:GetLayers():GetTable()) do
 									local values = layer:GetValues()
-									for i,value in ipairs(values:GetTable()) do
-										value = math.lerp(lo,hi,value)
+									for i=1,#values do
+										local value = math.lerp(lo,hi,values:Get(i))
 										values:Set(i,value)
 									end
 								end
@@ -428,17 +429,21 @@ local function apply_post_processing(project,filmClip,processedObjects)
 							for _,layer in ipairs(log:GetLayers():GetTable()) do
 								if(processedObjects[layer] == nil) then
 									processedObjects[layer] = true
-									for _,value in ipairs(layer:GetValues():GetTable()) do
+									local values = layer:GetValues()
+									for i=1,#values do
+										local value = values:Get(i)
 										if(isPosTransform) then
-											value:Set(sfm.convert_source_anim_set_position_to_pragma(value))
+											value = sfm.convert_source_anim_set_position_to_pragma(value)
 											if(isRootBone) then
 												convert_root_bone_pos(value,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
 											end
+											values:Set(i,value)
 										else
-											value:Set(sfm.convert_source_anim_set_rotation_to_pragma(value))
+											value = sfm.convert_source_anim_set_rotation_to_pragma(value)
 											if(isRootBone) then
 												convert_root_bone_rot(value,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
 											end
+											values:Set(i,value)
 										end
 									end
 								end
@@ -472,21 +477,23 @@ local function apply_post_processing(project,filmClip,processedObjects)
 							for _,layer in ipairs(log:GetLayers():GetTable()) do
 								if(processedObjects[layer] == nil) then
 									processedObjects[layer] = true
-									for _,value in ipairs(layer:GetValues():GetTable()) do
+									local values = layer:GetValues()
+									for i=1,#values do
+										local value = values:Get(i)
 										-- TODO: Note: These conversions have been confirmed to work with
 										-- the skydome test session, but it's unclear if they work
 										-- in all cases! Keep it under observation!
 										if(isCamera) then
 											if(isPosTransform) then
-												value:Set(sfm.convert_source_transform_position_to_pragma(value))
+												values:Set(i,sfm.convert_source_transform_position_to_pragma(value))
 											else
-												value:Set(sfm.convert_source_transform_rotation_to_pragma2(value))
+												values:Set(i,sfm.convert_source_transform_rotation_to_pragma2(value))
 											end
 										else
 											if(isPosTransform) then
-												value:Set(sfm.convert_source_transform_position_to_pragma(value))
+												values:Set(i,sfm.convert_source_transform_position_to_pragma(value))
 											else
-												value:Set(sfm.convert_source_transform_rotation_to_pragma_special(actor,value))
+												values:Set(i,sfm.convert_source_transform_rotation_to_pragma_special(actor,value))
 											end
 										end
 									end

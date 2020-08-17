@@ -35,7 +35,7 @@ function ents.PFMParticleSystem:OnTick(dt)
 	local ptSimRate = 1 /60.0
 	local dtAcc = 0.0
 	while(self.m_queuedSimOffset > ptSimRate) do
-		print(self:GetEntity())
+		-- print(self:GetEntity())
 		self.m_queuedSimOffset = self.m_queuedSimOffset -ptSimRate
 
 	--local cp0 = self:GetEntity():GetPose() *ptC:GetControlPointPose(0)

@@ -30,7 +30,11 @@ function udm.PFMModel:GetIconMaterial() return "gui/pfm/icon_model_item" end
 
 function udm.PFMModel:GetSceneChildren() return self:GetRootBones():GetTable() end
 
-function udm.PFMModel:GetModel() return game.load_model(self:GetModelName()) end
+function udm.PFMModel:GetModel()
+	local mdlName = self:GetModelName()
+	if(#mdlName == 0) then return end
+	return game.load_model(mdlName)
+end
 
 function udm.PFMModel:FindFlexControllerWeight(name)
 	for i,fcName in ipairs(self:GetFlexControllerNames():GetTable()) do

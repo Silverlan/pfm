@@ -35,18 +35,9 @@ function gui.PFMInfobar:OnInitialize()
 	patronTickerLabel:AddStyleClass("input_field_text")
 
 	local patronTicker = gui.create("WITicker",patronTickerContainer)
-	local text = ""
-	local patrons = engine.get_info().patrons
-	for i,patron in ipairs(patrons) do
-		if(i > 1) then text = text .. ", "
-		else text = text .. " " end
-		text = text .. patron
-	end
-	local numAnonymous = engine.get_info().totalPatronCount -#patrons
-	if(numAnonymous > 0) then text = text .. " and " .. numAnonymous .. " anonymous." end
-	patronTicker:SetText(text)
 	patronTicker:SetSize(64,self:GetHeight())
 	patronTicker:SetAnchor(0,0,1,1)
+	self.m_patronTicker = patronTicker
 
 	self.m_iconContainer = gui.create("WIHBox",self)
 
@@ -58,6 +49,35 @@ function gui.PFMInfobar:OnInitialize()
 	self.m_iconContainer:Update()
 	self.m_iconContainer:SetX(self:GetWidth() -self.m_iconContainer:GetWidth())
 	self.m_iconContainer:SetAnchor(1,0,1,0)
+
+	local r = engine.load_library("curl/pr_curl")
+	if(r ~= true) then
+		print("WARNING: An error occured trying to load the 'pr_curl' module: ",r)
+		return
+	end
+	self.m_patronRequest = curl.request("http://pragma-engine.com/patreon/request_patrons.php",{})
+	self.m_patronRequest:Start()
+	self:EnableThinking()
+end
+function gui.PFMInfobar:OnThink()
+	if(self.m_patronRequest == nil or self.m_patronRequest:IsComplete() == false) then return end
+	if(self.m_patronRequest:IsSuccessful()) then
+		local patrons = string.split(self.m_patronRequest:GetResult(),";")
+		local text = ""
+		for i,patron in ipairs(patrons) do
+			if(i > 1) then text = text .. ", "
+			else text = text .. " " end
+			text = text .. patron
+		end
+		patrons = table.randomize(patrons)
+--[[ -- TODO
+	local numAnonymous = engine.get_info().totalPatronCount -#patrons
+	if(numAnonymous > 0) then text = text .. " and " .. numAnonymous .. " anonymous." end
+]]
+		self.m_patronTicker:SetText(text)
+	end
+	self.m_patronRequest = nil
+	self:DisableThinking()
 end
 function gui.PFMInfobar:AddIcon(material,url,tooltip)
 	local icon = gui.create("WITexturedRect",self.m_iconContainer)

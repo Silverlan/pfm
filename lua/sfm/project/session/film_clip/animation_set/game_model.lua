@@ -37,8 +37,8 @@ sfm.BaseElement.RegisterAttribute(sfm.GameModel,"visible",false,{
 function sfm.GameModel:GetPragmaModelPath()
 	local mdlName = self:GetModelName()
 	if(#mdlName > 0) then
-		mdlName = mdlName:sub(7) -- Remove "models/"-prefix
-		mdlName = file.remove_file_extension(mdlName) .. ".wmd"
+		mdlName = file.remove_file_extension(mdlName:sub(7)) -- Remove "models/"-prefix
+		if(#mdlName > 0) then mdlName = mdlName .. ".wmd" end
 	end
 	return mdlName
 end

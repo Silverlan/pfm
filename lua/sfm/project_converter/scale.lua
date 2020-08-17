@@ -71,11 +71,11 @@ sfm.convert_scale_factors_to_vectors = function(project)
 		local log = channel:GetLog()
 		for _,layer in ipairs(log:GetLayers():GetTable()) do
 			local values = layer:GetValues()
-			local valueList = values:GetTable()
 			values:Clear()
 			values:SetValueType(util.VAR_TYPE_VECTOR)
 
-			for _,val in ipairs(valueList) do
+			for i=1,#values do
+				local val = values:Get(i)
 				values:PushBack(Vector(val,val,val))
 			end
 		end

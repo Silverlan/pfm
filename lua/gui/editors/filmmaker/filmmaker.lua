@@ -21,12 +21,14 @@ include("/gui/editors/wieditorwindow.lua")
 include("/gui/pfm/frame.lua")
 include("/gui/pfm/viewport.lua")
 include("/gui/pfm/postprocessing.lua")
+include("/gui/pfm/videoplayer.lua")
 include("/gui/pfm/timeline.lua")
 include("/gui/pfm/elementviewer.lua")
 include("/gui/pfm/actoreditor.lua")
 include("/gui/pfm/modelcatalog.lua")
 include("/gui/pfm/materialcatalog.lua")
 include("/gui/pfm/particlecatalog.lua")
+include("/gui/pfm/tutorialcatalog.lua")
 include("/gui/pfm/actorcatalog.lua")
 include("/gui/pfm/renderpreview.lua")
 include("/gui/pfm/infobar.lua")
@@ -253,6 +255,27 @@ function gui.WIFilmmaker:OnInitialize()
 
 		pContext:Update()
 	end)
+	pMenuBar:AddItem(locale.get_text("windows"),function(pContext)
+		local windows = {
+			"actor_editor",
+			"model_catalog",
+			"material_catalog",
+			"particle_catalog",
+			"tutorial_catalog",
+			"actor_catalog",
+			"element_viewer",
+			"primary_viewport",
+			"cycles_render",
+			"post_processing"
+		}
+		for _,window in ipairs(windows) do
+			pContext:AddItem(locale.get_text("pfm_" .. window),function(pItem)
+				self:OpenWindow(window)
+				self:GoToWindow(window)
+			end)
+		end
+		pContext:Update()
+	end)
 	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
 		pContext:AddItem(locale.get_text("pfm_getting_started"),function(pItem)
 			util.open_url_in_browser("https://wiki.pragma-engine.com/index.php?title=Pfm_firststeps")
@@ -386,22 +409,23 @@ function gui.WIFilmmaker:ReloadInterface()
 	interface:InitializeProject(project)
 end
 function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
-function gui.WIFilmmaker:GetViewport() return self.m_viewport end
-function gui.WIFilmmaker:GetRenderTab() return self.m_viewportFrame:FindTab("render") end
-function gui.WIFilmmaker:GetActorEditor() return self.m_actorEditor end
+function gui.WIFilmmaker:GetViewport() return util.is_valid(self.m_viewportFrame) and self.m_viewportFrame:FindTab("primary_viewport") or nil end
+function gui.WIFilmmaker:GetRenderTab() return util.is_valid(self.m_viewportFrame) and self.m_viewportFrame:FindTab("cycles_render") or nil end
+function gui.WIFilmmaker:GetActorEditor() return util.is_valid(self.m_actorDataFrame) and self.m_actorDataFrame:FindTab("actor_editor") or nil end
+function gui.WIFilmmaker:GetElementViewer() return util.is_valid(self.m_actorDataFrame) and self.m_actorDataFrame:FindTab("element_viewer") or nil end
 function gui.WIFilmmaker:CreateNewActor()
 	-- TODO: What if no actor editor is open?
-	return self.m_actorEditor:CreateNewActor()
+	return self:GetActorEditor():CreateNewActor()
 end
 function gui.WIFilmmaker:CreateNewActorComponent(actor,componentType)
 	-- TODO: What if no actor editor is open?
-	return self.m_actorEditor:CreateNewActorComponent(actor,componentType)
+	return self:GetActorEditor():CreateNewActorComponent(actor,componentType)
 end
 function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 	-- TODO: Implement a keybinding system for this! Keybindings should also appear in tooltips!
 	if(key == input.KEY_SPACE) then
-		if(state == input.STATE_PRESS and util.is_valid(self.m_viewport)) then
-			local playButton = self.m_viewport:GetPlayButton()
+		if(state == input.STATE_PRESS and util.is_valid(self:GetViewport())) then
+			local playButton = self:GetViewport():GetPlayButton()
 			playButton:TogglePlay()
 		end
 		return util.EVENT_REPLY_HANDLED
@@ -518,14 +542,14 @@ function gui.WIFilmmaker:SetGameViewOffset(offset)
 	local session = self:GetSession()
 	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
 	if(activeClip ~= nil) then
-		if(util.is_valid(self.m_viewport)) then
-			self.m_viewport:SetGlobalTime(offset)
+		if(util.is_valid(self:GetViewport())) then
+			self:GetViewport():SetGlobalTime(offset)
 
 			local childClip = activeClip:GetChildFilmClip(offset)
 			if(childClip ~= nil) then
-				self.m_viewport:SetLocalTime(childClip:GetTimeFrame():LocalizeOffset(offset))
-				self.m_viewport:SetFilmClipName(childClip:GetName())
-				self.m_viewport:SetFilmClipParentName(activeClip:GetName())
+				self:GetViewport():SetLocalTime(childClip:GetTimeFrame():LocalizeOffset(offset))
+				self:GetViewport():SetFilmClipName(childClip:GetName())
+				self:GetViewport():SetFilmClipParentName(activeClip:GetName())
 			end
 		end
 	end
@@ -577,8 +601,8 @@ end
 function gui.WIFilmmaker:AddFilmClipElement(filmClip)
 	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip,filmClip,function(elFilmClip)
 		local filmClipData = elFilmClip:GetFilmClipData()
-		if(util.is_valid(self.m_actorEditor)) then
-			self.m_actorEditor:Setup(filmClipData)
+		if(util.is_valid(self:GetActorEditor())) then
+			self:GetActorEditor():Setup(filmClipData)
 		end
 	end)
 	pFilmClip:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)
@@ -600,6 +624,49 @@ function gui.WIFilmmaker:ClearProjectUI()
 	if(util.is_valid(self.m_contents)) then self.m_contents:Remove() end
 	self.m_frames = {}
 end
+function gui.WIFilmmaker:GoToWindow(identifier)
+	self.m_actorDataFrame:SetActiveTab(identifier)
+	self.m_viewportFrame:SetActiveTab(identifier)
+end
+function gui.WIFilmmaker:OpenWindow(identifier)
+	if(util.is_valid(self.m_actorDataFrame)) then
+		local el = self.m_actorDataFrame:FindTab(identifier)
+		if(util.is_valid(el)) then return el end
+	end
+	if(util.is_valid(self.m_viewportFrame)) then
+		local el = self.m_viewportFrame:FindTab(identifier)
+		if(util.is_valid(el)) then return el end
+	end
+	if(identifier == "actor_editor") then
+		local actorEditor = gui.create("WIPFMActorEditor")
+		self.m_actorDataFrame:AddTab(identifier,locale.get_text("pfm_actor_editor"),actorEditor)
+		actorEditor:AddCallback("OnControlSelected",function(actorEditor,component,controlData,slider)
+			local filmClip = actorEditor:GetFilmClip()
+			if(filmClip == nil) then return end
+			if(controlData.type == "flexController" or controlData.type == "bone") then
+				local graphEditor = self:GetTimeline():GetGraphEditor()
+				local itemCtrl = graphEditor:AddControl(filmClip,controlData)
+
+				local fRemoveCtrl = function() if(util.is_valid(itemCtrl)) then itemCtrl:Remove() end end
+				slider:AddCallback("OnDeselected",fRemoveCtrl)
+				slider:AddCallback("OnRemove",fRemoveCtrl)
+			else
+				-- TODO: Allow generic properties?
+			end
+		end)
+	elseif(identifier == "model_catalog") then self.m_actorDataFrame:AddTab(identifier,locale.get_text("pfm_model_catalog"),gui.create("WIPFMModelCatalog"))
+	elseif(identifier == "material_catalog") then self.m_actorDataFrame:AddTab(identifier,locale.get_text("pfm_material_catalog"),gui.create("WIPFMMaterialCatalog"))
+	elseif(identifier == "particle_catalog") then self.m_actorDataFrame:AddTab(identifier,locale.get_text("pfm_particle_catalog"),gui.create("WIPFMParticleCatalog"))
+	elseif(identifier == "tutorial_catalog") then self.m_actorDataFrame:AddTab(identifier,locale.get_text("pfm_tutorial_catalog"),gui.create("WIPFMTutorialCatalog"))
+	elseif(identifier == "actor_catalog") then self.m_actorDataFrame:AddTab(identifier,locale.get_text("pfm_actor_catalog"),gui.create("WIPFMActorCatalog"))
+	elseif(identifier == "element_viewer") then self.m_actorDataFrame:AddTab(identifier,locale.get_text("pfm_element_viewer"),gui.create("WIPFMElementViewer"))
+
+	elseif(identifier == "primary_viewport") then self.m_viewportFrame:AddTab(identifier,locale.get_text("pfm_primary_viewport"),gui.create("WIPFMViewport"))
+	elseif(identifier == "cycles_render") then self.m_viewportFrame:AddTab(identifier,locale.get_text("pfm_cycles_renderer"),gui.create("WIPFMRenderPreview"))
+	elseif(identifier == "post_processing") then self.m_viewportFrame:AddTab(identifier,locale.get_text("pfm_post_processing"),gui.create("WIPFMPostProcessing"))
+	elseif(identifier == "video_player") then self.m_viewportFrame:AddTab(identifier,locale.get_text("pfm_video_player"),gui.create("WIPFMVideoPlayer")) end
+	return self.m_actorDataFrame:FindTab(identifier) or self.m_viewportFrame:FindTab(identifier)
+end
 function gui.WIFilmmaker:InitializeProjectUI()
 	self:ClearProjectUI()
 	if(util.is_valid(self.m_menuBar) == false or util.is_valid(self.m_infoBar) == false) then return end
@@ -607,44 +674,10 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self.m_contents:SetAutoFillContents(true)
 
 	local actorDataFrame = self:AddFrame(self.m_contents)
-	local actorEditor = gui.create("WIPFMActorEditor")
-	actorEditor:AddCallback("OnControlSelected",function(actorEditor,component,controlData,slider)
-		local filmClip = actorEditor:GetFilmClip()
-		if(filmClip == nil) then return end
-		if(controlData.type == "flexController" or controlData.type == "bone") then
-			local graphEditor = self:GetTimeline():GetGraphEditor()
-			local itemCtrl = graphEditor:AddControl(filmClip,controlData)
-
-			local fRemoveCtrl = function() if(util.is_valid(itemCtrl)) then itemCtrl:Remove() end end
-			slider:AddCallback("OnDeselected",fRemoveCtrl)
-			slider:AddCallback("OnRemove",fRemoveCtrl)
-		else
-			-- TODO: Allow generic properties?
-		end
-	end)
-	actorDataFrame:AddTab("actor_editor",locale.get_text("pfm_actor_editor"),actorEditor)
-	self.m_actorEditor = actorEditor -- TODO Determine dynamically
-
-	local modelCatalog = gui.create("WIPFMModelCatalog")
-	actorDataFrame:AddTab("model_catalog",locale.get_text("pfm_model_catalog"),modelCatalog)
-	self.m_modelCatalog = modelCatalog -- TODO Determine dynamically
-
-	local materialCatalog = gui.create("WIPFMMaterialCatalog")
-	actorDataFrame:AddTab("material_catalog",locale.get_text("pfm_material_catalog"),materialCatalog)
-	self.m_materialCatalog = materialCatalog -- TODO Determine dynamically
-
-	local particleCatalog = gui.create("WIPFMParticleCatalog")
-	actorDataFrame:AddTab("particle_catalog",locale.get_text("pfm_particle_catalog"),particleCatalog)
-	self.m_materialCatalog = particleCatalog -- TODO Determine dynamically
-
-	local actorCatalog = gui.create("WIPFMActorCatalog")
-	actorDataFrame:AddTab("actor_catalog",locale.get_text("pfm_actor_catalog"),actorCatalog)
-	self.m_actorCatalog = actorCatalog -- TODO Determine dynamically
-
-	local elementViewer = gui.create("WIPFMElementViewer")
-	actorDataFrame:AddTab("element_viewer",locale.get_text("pfm_element_viewer"),elementViewer)
-	self.m_elementViewer = elementViewer
 	self.m_actorDataFrame = actorDataFrame
+	self:OpenWindow("actor_editor")
+	self:OpenWindow("element_viewer")
+	self:OpenWindow("tutorial_catalog")
 	
 	gui.create("WIResizer",self.m_contents):SetFraction(0.25)
 
@@ -653,17 +686,11 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self.m_contentsRight:SetAutoFillContents(true)
 
 	local viewportFrame = self:AddFrame(self.m_contentsRight)
-	viewportFrame:SetHeight(self:GetHeight())
-	local viewport = gui.create("WIPFMViewport")
-	self.m_viewport = viewport
 	self.m_viewportFrame = viewportFrame
-	viewportFrame:AddTab("primary_viewport",locale.get_text("pfm_primary_viewport"),viewport)
+	viewportFrame:SetHeight(self:GetHeight())
 
-	local renderPreview = gui.create("WIPFMRenderPreview")
-	viewportFrame:AddTab("render",locale.get_text("pfm_cycles_renderer"),renderPreview)
-
-	local postProcessing = gui.create("WIPFMPostProcessing")
-	viewportFrame:AddTab("post_processing",locale.get_text("pfm_post_processing"),postProcessing)
+	self:OpenWindow("primary_viewport")
+	self:OpenWindow("cycles_render")
 
 	gui.create("WIResizer",self.m_contentsRight):SetFraction(0.75)
 
@@ -675,7 +702,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	-- Populate UI with project data
 	local project = self:GetProject()
 	local root = project:GetUDMRootNode()
-	elementViewer:Setup(root)
+	self:GetElementViewer():Setup(root)
 
 	local playhead = pfmTimeline:GetPlayhead()
 	self.m_playhead = playhead
@@ -684,7 +711,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 			self:SetTimeOffset(offset)
 		end
 	end)
-	local playButton = viewport:GetPlayButton()
+	local playButton = self:GetViewport():GetPlayButton()
 	playButton:AddCallback("OnTimeAdvance",function(el,dt)
 		if(playhead:IsValid()) then
 			playhead:SetTimeOffset(playhead:GetTimeOffset() +dt)
@@ -698,7 +725,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	end)
 
 	pfmTimeline:AddCallback("OnClipSelected",function(el,clip)
-		if(util.is_valid(self.m_actorEditor) and util.get_type_name(clip) == "PFMFilmClip") then self.m_actorEditor:Setup(clip) end
+		if(util.is_valid(self:GetActorEditor()) and util.get_type_name(clip) == "PFMFilmClip") then self:GetActorEditor():Setup(clip) end
 	end)
 
 	-- Film strip
@@ -796,8 +823,8 @@ function gui.WIFilmmaker:OpenParticleEditor(ptFile,ptName)
 	ptEd:LoadParticleSystem(ptFile,ptName)
 end
 function gui.WIFilmmaker:OnActorSelectionChanged(ent,selected)
-	if(util.is_valid(self.m_viewport) == false) then return end
-	self.m_viewport:OnActorSelectionChanged(ent,selected)
+	if(util.is_valid(self:GetViewport()) == false) then return end
+	self:GetViewport():OnActorSelectionChanged(ent,selected)
 end
 function gui.WIFilmmaker:GetActiveCamera()
 	return game.get_render_scene_camera()
@@ -808,19 +835,19 @@ function gui.WIFilmmaker:GetActiveFilmClip()
 	return (filmClip ~= nil) and filmClip:GetChildFilmClip(self:GetTimeOffset()) or nil
 end
 function gui.WIFilmmaker:ShowInElementViewer(el)
-	if(util.is_valid(self.m_elementViewer) == false) then return end
-	self.m_elementViewer:MakeElementRoot(el)
+	if(util.is_valid(self:GetElementViewer()) == false) then return end
+	self:GetElementViewer():MakeElementRoot(el)
 
 	if(util.is_valid(self.m_actorDataFrame)) then
-		self.m_actorDataFrame:SetActiveTab(self.m_elementViewer)
+		self.m_actorDataFrame:SetActiveTab(self:GetElementViewer())
 	end
 end
 function gui.WIFilmmaker:SelectActor(actor)
-	if(util.is_valid(self.m_actorEditor) == false) then return end
-	self.m_actorEditor:SelectActor(actor)
+	if(util.is_valid(self:GetActorEditor()) == false) then return end
+	self:GetActorEditor():SelectActor(actor)
 
 	if(util.is_valid(self.m_actorDataFrame)) then
-		self.m_actorDataFrame:SetActiveTab(self.m_actorEditor)
+		self.m_actorDataFrame:SetActiveTab(self:GetActorEditor())
 	end
 end
 function gui.WIFilmmaker:ExportAnimation(actor)

@@ -135,9 +135,7 @@ end
 function pfm.ProjectManager:CacheAnimations()
 	if(console.get_convar_bool("pfm_animation_cache_enabled") == false) then return end
 	local firstFrame,lastFrame = self:GetFrameIndexRange()
-	print("Frame range: ",firstFrame,lastFrame)
 	for i=firstFrame,lastFrame do
-		print("Frame: ",i)
 		if(self.m_animationCache:IsFrameDirty(i)) then self:GoToFrame(i) end
 	end
 end
@@ -154,7 +152,7 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 		local filter
 		if(isAnimCacheEnabled and self.m_animationCache:IsFrameDirty(math.floor(frameIndex)) == false and (isInterpFrame == false or self.m_animationCache:IsFrameDirty(math.ceil(frameIndex)) == false)) then
 			gameViewFlags = bit.bor(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE)
-			filter = function(channel) return channel:IsBoneTransformChannel() == false and channel:IsFlexControllerChannel() == false end
+			filter = function(channel) return channel:IsBoneTransformChannel() == false end --  and channel:IsFlexControllerChannel() == false end
 		end
 		activeClip:SetPlaybackOffset(offset,filter)
 	end

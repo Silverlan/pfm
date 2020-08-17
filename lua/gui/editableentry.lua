@@ -45,6 +45,7 @@ function gui.EditableEntry:OnInitialize()
 				if(util.is_valid(self.m_pText)) then
 					self.m_pText:SetColor(elChild:GetColor():GetContrastColor())
 				end
+				self:UpdateText()
 			end
 			elChild:GetColorProperty():AddCallback(update_text_color)
 			update_text_color()
