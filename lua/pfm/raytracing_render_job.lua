@@ -38,6 +38,10 @@ pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH = 6
 pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU = 0
 pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU = 1
 
+pfm.RaytracingRenderJob.Settings.DENOISE_MODE_NONE = 0
+pfm.RaytracingRenderJob.Settings.DENOISE_MODE_FAST = 1
+pfm.RaytracingRenderJob.Settings.DENOISE_MODE_DETAILED = 2
+
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderMode")
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"samples",80.0)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"sky","")
@@ -50,7 +54,7 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"frameCount",1)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"preStageOnly",false,{
 	getter = "IsPreStageOnly"
 })
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"denoise",true)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"denoiseMode",pfm.RaytracingRenderJob.Settings.DENOISE_MODE_DETAILED)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"hdrOutput",false,{
 	getter = "GetHDROutput",
 	setter = "SetHDROutput"
@@ -75,6 +79,12 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"pvsCullingEnabled
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"panoramaHorizontalRange",360.0)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"stereoscopic",true,{
 	getter = "IsStereoscopic"
+})
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"useProgressiveRefinement",false,{
+	getter = "ShouldUseProgressiveRefinement"
+})
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"progressive",false,{
+	getter = "IsProgressive"
 })
 
 function pfm.RaytracingRenderJob.Settings:__init()
@@ -111,7 +121,7 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetLightIntensityFactor(self:GetLightIntensityFactor())
 	cpy:SetFrameCount(self:GetFrameCount())
 	cpy:SetPreStageOnly(self:IsPreStageOnly())
-	cpy:SetDenoise(self:GetDenoise())
+	cpy:SetDenoiseMode(self:GetDenoiseMode())
 	cpy:SetHDROutput(self:GetHDROutput())
 	cpy:SetDeviceType(self:GetDeviceType())
 	cpy:SetRenderWorld(self:GetRenderWorld())
@@ -126,6 +136,8 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetPVSCullingEnabled(self:IsPVSCullingEnabled())
 	cpy:SetPanoramaHorizontalRange(self:GetPanoramaHorizontalRange())
 	cpy:SetStereoscopic(self:IsStereoscopic())
+	cpy:SetUseProgressiveRefinement(self:ShouldUseProgressiveRefinement())
+	cpy:SetProgressive(self:IsProgressive())
 	return cpy
 end
 
@@ -157,10 +169,13 @@ function pfm.RaytracingRenderJob:GetProgress()
 	return self.m_raytracingJob:GetProgress()
 end
 function pfm.RaytracingRenderJob:GetRenderTime() return self.m_tRender end
+function pfm.RaytracingRenderJob:IsProgressive() return self.m_progressiveRendering or false end
+function pfm.RaytracingRenderJob:GetProgressiveTexture() return self.m_progressiveRendering and self.m_prt:GetTexture() or nil end
 function pfm.RaytracingRenderJob:GetRenderResultTexture() return self.m_renderResult end
 function pfm.RaytracingRenderJob:GetRenderResult() return self.m_currentImageBuffer end
 function pfm.RaytracingRenderJob:GetRenderResultFrameIndex() return self.m_renderResultFrameIndex end
 function pfm.RaytracingRenderJob:GetRenderResultRemainingSubStages() return self.m_renderResultRemainingSubStages end
+function pfm.RaytracingRenderJob:SetFrameStartCallback(cb) self.m_frameStartCallback = cb end
 function pfm.RaytracingRenderJob:GenerateResult()
 	if(#self.m_imageBuffers == 0) then return end
 	local img
@@ -207,6 +222,7 @@ function pfm.RaytracingRenderJob:Update()
 
 			if(isFrameComplete) then self:GenerateResult() end
 		end
+		self.m_prt = nil
 		self.m_raytracingJob = nil
 	end
 	self.m_renderResultFrameIndex = self.m_currentFrame
@@ -239,6 +255,8 @@ function pfm.RaytracingRenderJob:Start()
 	self.m_endFrame = self.m_currentFrame +self:GetSettings():GetFrameCount()
 	self:RenderNextImage()
 end
+-- TODO: Implement this in a better way
+local g_staticGeometryCache
 function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	self.m_tRenderStart = nil
 	local cam = self.m_gameScene:GetActiveCamera()
@@ -247,9 +265,11 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	self.m_renderStartTime = time.time_since_epoch()
 	local renderSettings = self.m_settings
 	local createInfo = cycles.Scene.CreateInfo()
-	createInfo.denoise = renderSettings:GetDenoise()
+	createInfo.denoiseMode = renderSettings:GetDenoiseMode()
 	createInfo.hdrOutput = renderSettings:GetHDROutput()
 	createInfo.deviceType = renderSettings:GetDeviceType()
+	createInfo.progressiveRefine = renderSettings:ShouldUseProgressiveRefinement()
+	createInfo.progressive = renderSettings:IsProgressive()
 	createInfo:SetSamplesPerPixel(renderSettings:GetSamples())
 
 	local w = renderSettings:GetWidth()
@@ -329,7 +349,17 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	clCam:SetEquirectangularHorizontalRange(renderSettings:GetPanoramaHorizontalRange())
 	clCam:SetStereoscopic(renderSettings:IsStereoscopic())
 
+	local function is_static_cache_entity(ent)
+		return ent:IsMapEntity()
+	end
+
+	if(g_staticGeometryCache == nil) then
+		g_staticGeometryCache = cycles.create_cache()
+		g_staticGeometryCache:InitializeFromGameScene(self.m_gameScene,is_static_cache_entity)
+	end
+
 	scene:InitializeFromGameScene(self.m_gameScene,pos,rot,vp,nearZ,farZ,fov,sceneFlags,function(ent)
+		if(is_static_cache_entity(ent)) then return false end
 		if(ent:IsWorld()) then return renderSettings:GetRenderWorld() end
 		if(ent:IsPlayer()) then return renderSettings:GetRenderPlayer() end
 		if(ent:HasComponent(ents.COMPONENT_PARTICLE_SYSTEM) == true) then return false end -- TODO
@@ -337,6 +367,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	end,function(ent)
 		return true
 	end)
+	scene:AddCache(g_staticGeometryCache)
 	if(#renderSettings:GetSky() > 0) then scene:SetSky(renderSettings:GetSky()) end
 
 	-- We want particle effects with bloom to emit light, so we'll add a light source for each particle.
@@ -413,10 +444,16 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 
 	local job = scene:CreateRenderJob()
 	job:Start()
+	self.m_rtScene = scene
 
 	self.m_raytracingJob = job
+	self.m_progressiveRendering = createInfo.progressive
+	if(self.m_progressiveRendering) then
+		self.m_prt = scene:CreateProgressiveImageHandler()
+	end
 
 	self.m_lastProgress = 0.0
+	if(self.m_frameStartCallback ~= nil) then self.m_frameStartCallback() end
 end
 function pfm.RaytracingRenderJob:RenderNextImage()
 	if(self.m_remainingSubStages == 0) then
@@ -446,7 +483,13 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	return false
 end
 function pfm.RaytracingRenderJob:IsRendering() return (self.m_raytracingJob ~= nil and self.m_raytracingJob:IsComplete() == false) end
+function pfm.RaytracingRenderJob:GetRenderScene() return self.m_rtScene end
+function pfm.RaytracingRenderJob:RestartRendering()
+	if(self:IsRendering() == false) then return end
+	self.m_rtScene:Restart()
+end
 function pfm.RaytracingRenderJob:CancelRendering()
+	self.m_prt = nil
 	self.m_tRenderStart = nil
 	if(self:IsRendering() == false) then return end
 	self.m_raytracingJob:Cancel()

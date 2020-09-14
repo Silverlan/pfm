@@ -75,7 +75,7 @@ function ents.PFMProject:SetOffset(offset,gameViewFlags)
 	local animCache = filmmaker:GetAnimationCache()
 	local frameIndex = filmmaker:TimeOffsetToFrameOffset(offset)
 	if(animCache == nil) then return end
-	animCache:UpdateCache(offset)
+	-- animCache:UpdateCache(offset)
 	local filmClip = animCache:GetFilmClip(frameIndex)
 	if(filmClip == nil) then return end
 	-- TODO: Ensure that the entity actually belongs to this project

@@ -319,10 +319,13 @@ local function apply_post_processing(project,filmClip,processedObjects)
 	convert_bone_transforms(filmClip,processedObjects,mdlMsgCache)
 	
 	for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
+		pfm.log("Processing track group '" .. tostring(trackGroup) .. "'...",pfm.LOG_CATEGORY_PFM_CONVERTER)
 		for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
+			pfm.log("Processing track '" .. tostring(track) .. "'...",pfm.LOG_CATEGORY_PFM_CONVERTER)
 			for _,channelClip in ipairs(track:GetChannelClips():GetTable()) do
 				local channels = channelClip:GetChannels()
 				local numChannels = #channels
+				pfm.log("Processing channel clip '" .. tostring(channelClip) .. "' with " .. numChannels .. " channels...",pfm.LOG_CATEGORY_PFM_CONVERTER)
 
 				-- Note: This is commented because it causes issues with some channels that use expression operators (e.g. fov/dof/etc.)
 				-- I don't remember what this block was for in the first place, if any problems should occur by this being commented,
@@ -354,6 +357,7 @@ local function apply_post_processing(project,filmClip,processedObjects)
 				end
 
 				for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
+					-- pfm.log("Processing channel '" .. tostring(channel) .. "'...",pfm.LOG_CATEGORY_PFM_CONVERTER)
 					local toElement = channel:GetToElement()
 					local toAttr = channel:GetToAttribute()
 					if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_PFM_CAMERA) then
@@ -401,7 +405,7 @@ local function apply_post_processing(project,filmClip,processedObjects)
 						if(isBoneTransform) then
 							local boneName = pfmBone:GetName()
 							local mdlName = pfmModel:GetModelName()
-							local mdl = game.load_model(mdlName)
+							local mdl = pfmModel:GetModel()
 							local boneId = mdl and mdl:LookupBone(boneName) or -1
 							local isRootBone = (boneId ~= -1) and mdl:IsRootBone(boneId) or false
 							if(mdl == nil and mdlMsgCache[mdlName] == nil) then

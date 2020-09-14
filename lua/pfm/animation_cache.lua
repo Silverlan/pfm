@@ -62,6 +62,7 @@ function pfm.SceneAnimationCache:UpdateCache(frameIndex)
 	if(self:IsFrameDirty(frameIndex) == false) then return end
 	local filmClip,animChannelTrack = self:GetFilmClip(frameIndex)
 	if(animChannelTrack == nil) then return end
+	pfm.log("Updating animation cache for frame " .. frameIndex .. "...",pfm.LOG_CATEGORY_PFM_CACHE)
 	self.m_cachedFrames[frameIndex] = true
 	local actors = filmClip:GetActorList()
 	for _,actor in ipairs(actors) do

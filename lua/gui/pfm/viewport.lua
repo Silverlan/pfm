@@ -108,6 +108,7 @@ function gui.PFMViewport:OnInitialize()
 			if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK) end
 			filmmaker:TrapFocus(true)
 			filmmaker:RequestFocus()
+			filmmaker:TagRenderSceneAsDirty(false)
 			input.set_cursor_pos(self.m_oldCursorPos)
 			self.m_inCameraControlMode = false
 			return util.EVENT_REPLY_HANDLED
@@ -115,13 +116,13 @@ function gui.PFMViewport:OnInitialize()
 
 		local el = gui.get_element_under_cursor()
 		if(util.is_valid(el) and (el == self or el:IsDescendantOf(self))) then
-			local filmmaker = tool.get_filmmaker()
 			if(mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 				self.m_oldCursorPos = input.get_cursor_pos()
 				if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY) end
 				input.center_cursor()
 				filmmaker:TrapFocus(false)
 				filmmaker:KillFocus()
+				filmmaker:TagRenderSceneAsDirty(true)
 				self.m_inCameraControlMode = true
 			elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
 				local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS)

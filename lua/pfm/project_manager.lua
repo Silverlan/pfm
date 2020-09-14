@@ -177,9 +177,9 @@ function pfm.ProjectManager:GetTimeFrameFrameIndexRange(timeFrame)
 	return self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetStart())),self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetEnd()))
 end
 function pfm.ProjectManager:GetLastFrameIndex()
-	local firstFrame,lastFrame = self:GetSession():GetLastFrameIndex()
+	local lastFrame = self:GetSession():GetLastFrameIndex()
 	lastFrame = self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(lastFrame))
-	return firstFrame,lastFrame
+	return lastFrame
 end
 function pfm.ProjectManager:GetFrameIndexRange() return self:GetSession():GetFrameIndexRange() end
 function pfm.ProjectManager:TimeOffsetToFrameOffset(offset) return offset *self:GetFrameRate() end

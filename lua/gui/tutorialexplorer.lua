@@ -27,7 +27,11 @@ function gui.TutorialExplorer:OnInitialize()
 
 		local vp = el:GetVideoPlayer()
 		if(vp ~= nil) then
-			vp:LoadURL("http://pragma-engine.com/share/nsfw/pragma%202020-08-14%2011-06-09-903.mp4")
+			local projectData = elIcon:GetDataBlock()
+			local videoSettings = (projectData ~= nil) and gui.VRVideoPlayer.get_video_settings(projectData) or nil
+			if(videoSettings ~= nil) then
+				gui.VRVideoPlayer.apply_video_settings(el,videoSettings)
+			end
 		end
 
 		local playControls = window:GetPlayControls()

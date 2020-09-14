@@ -49,6 +49,11 @@ function gui.EditableEntry:OnInitialize()
 			end
 			elChild:GetColorProperty():AddCallback(update_text_color)
 			update_text_color()
+		elseif(elChild:GetClass() == "wipfmslider") then
+			elChild:AddCallback("OnLeftValueChanged",function()
+				self:UpdateText()
+			end)
+			elChild:SetVisible(false)
 		else
 			elChild:AddCallback("OnValueChanged",function()
 				self:UpdateText()
@@ -67,24 +72,52 @@ function gui.EditableEntry:OnInitialize()
 	self:SetMouseInputEnabled(true)
 	self:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)
 		if(state ~= input.STATE_PRESS or (button ~= input.MOUSE_BUTTON_LEFT and button ~= input.MOUSE_BUTTON_RIGHT)) then return util.EVENT_REPLY_UNHANDLED end
-		if(util.is_valid(self.m_target) and self.m_target:GetClass() == "widropdownmenu") then
-			local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
-				input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
-			if(self.m_target:IsEditable() and isAltDown) then
-				self:StartEditMode(true)
+		if(util.is_valid(self.m_target)) then
+			if(self.m_target:GetClass() == "wipfmslider") then
+				local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
+					input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
+				if(isAltDown) then
+					self:StartEditMode(true)
+					return util.EVENT_REPLY_HANDLED
+				end
+			end
+			if(self.m_presetValues ~= nil and #self.m_presetValues > 0) then
+				local numOptions = #self.m_presetValues
+				local option = self.m_curPresetOption or 0
+				if(button == input.MOUSE_BUTTON_LEFT) then
+					if(option == -1 or option == numOptions -1) then option = 0
+					else option = option +1 end
+				else
+					if(option == -1 or option == 0) then option = numOptions -1
+					else option = option -1 end
+				end
+				self.m_skipTextUpdate = true
+				self.m_target:SetValue(self.m_presetValues[option +1][1])
+				self.m_skipTextUpdate = nil
+
+				self:UpdateText(self.m_presetValues[option +1][2])
+				self.m_curPresetOption = option
 				return util.EVENT_REPLY_HANDLED
 			end
-			local numOptions = self.m_target:GetOptionCount()
-			local option = self.m_target:GetSelectedOption()
-			if(button == input.MOUSE_BUTTON_LEFT) then
-				if(option == -1 or option == numOptions -1) then option = 0
-				else option = option +1 end
-			else
-				if(option == -1 or option == 0) then option = numOptions -1
-				else option = option -1 end
+			if(self.m_target:GetClass() == "widropdownmenu") then
+				local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
+					input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
+				if(self.m_target:IsEditable() and isAltDown) then
+					self:StartEditMode(true)
+					return util.EVENT_REPLY_HANDLED
+				end
+				local numOptions = self.m_target:GetOptionCount()
+				local option = self.m_target:GetSelectedOption()
+				if(button == input.MOUSE_BUTTON_LEFT) then
+					if(option == -1 or option == numOptions -1) then option = 0
+					else option = option +1 end
+				else
+					if(option == -1 or option == 0) then option = numOptions -1
+					else option = option -1 end
+				end
+				self.m_target:SelectOption(option)
+				return util.EVENT_REPLY_HANDLED
 			end
-			self.m_target:SelectOption(option)
-			return util.EVENT_REPLY_HANDLED
 		end
 		if(button == input.MOUSE_BUTTON_LEFT and self.m_empty ~= true) then
 			if(util.is_valid(self.m_target) and self.m_activeTarget == true) then return util.EVENT_REPLY_UNHANDLED end
@@ -129,22 +162,28 @@ function gui.EditableEntry:SetText(text)
 	self.m_baseText = text
 	self:UpdateText()
 end
-function gui.EditableEntry:UpdateText()
-	if(util.is_valid(self.m_pText) == false) then return end
+function gui.EditableEntry:UpdateText(value)
+	if(self.m_skipTextUpdate or util.is_valid(self.m_pText) == false) then return end
 	local text = self.m_baseText
-	local value
-	if(util.is_valid(self.m_target)) then
-		text = text .. ": "
-		if(self.m_target:GetClass() == "widropdownmenu") then
-			local selectedOption = self.m_target:GetSelectedOption()
-			if(selectedOption ~= -1) then value = self.m_target:GetOptionText(selectedOption)
-			else value = self.m_target:GetText() end
-		else value = tostring(self.m_target:GetValue()) end
-		if(#value == 0) then value = "-" end
-	else value = "" end
+	if(value == nil) then
+		self.m_curPresetOption = nil
+		if(util.is_valid(self.m_target)) then
+			text = text .. ": "
+			if(self.m_target:GetClass() == "widropdownmenu") then
+				local selectedOption = self.m_target:GetSelectedOption()
+				if(selectedOption ~= -1) then value = self.m_target:GetOptionText(selectedOption)
+				else value = self.m_target:GetText() end
+			else value = tostring(self.m_target:GetValue()) end
+			if(#value == 0) then value = "-" end
+		else value = "" end
+	else text = text .. ": " end
+	
 	text = text .. value
 	self.m_pText:SetText(text)
 	self.m_pText:SizeToContents()
 	self.m_pText:CenterToParent(true)
+end
+function gui.EditableEntry:SetPresetValues(values)
+	self.m_presetValues = values
 end
 gui.register("WIEditableEntry",gui.EditableEntry)

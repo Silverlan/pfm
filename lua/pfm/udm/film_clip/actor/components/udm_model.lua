@@ -33,7 +33,10 @@ function udm.PFMModel:GetSceneChildren() return self:GetRootBones():GetTable() e
 function udm.PFMModel:GetModel()
 	local mdlName = self:GetModelName()
 	if(#mdlName == 0) then return end
-	return game.load_model(mdlName)
+	if(self.m_mdlCache ~= nil and self.m_mdlCache[1] == mdlName) then return self.m_mdlCache[2] end
+	local mdl = game.load_model(mdlName)
+	self.m_mdlCache = {mdlName,mdl}
+	return mdl
 end
 
 function udm.PFMModel:FindFlexControllerWeight(name)

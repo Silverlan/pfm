@@ -32,13 +32,14 @@ include("/gui/pfm/tutorialcatalog.lua")
 include("/gui/pfm/actorcatalog.lua")
 include("/gui/pfm/renderpreview.lua")
 include("/gui/pfm/infobar.lua")
-include("/gui/pfm/materialeditor.lua")
+include("/gui/pfm/material_editor/materialeditor.lua")
 include("/gui/pfm/particleeditor.lua")
 include("/pfm/util_particle_system.lua")
 include("project_packer.lua")
 
 gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
+locale.load("physics_materials.txt")
 
 include("windows")
 include("video_recorder.lua")
@@ -56,6 +57,15 @@ end
 function gui.WIFilmmaker:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
+
+	-- Disable default scene drawing for the lifetime of the Filmmaker; We'll only render the viewport(s) if something has actually changed, which
+	-- saves up a huge amount of rendering resources.
+	self.m_cbDisableDefaultSceneDraw = game.add_callback("DrawScene",function(drawSceneInfo)
+		if(self.m_renderSceneDirty == nil) then return true end
+		self.m_renderSceneDirty = self.m_renderSceneDirty -1
+		if(self.m_renderSceneDirty == 0) then self.m_renderSceneDirty = nil end
+		return not self.m_renderSceneDirty
+	end)
 
 	self:EnableThinking()
 	self:SetSize(1280,1024)
@@ -402,6 +412,13 @@ function gui.WIFilmmaker:OnInitialize()
 	end
 	pfm.ProjectManager.OnInitialize(self)
 end
+function gui.WIFilmmaker:TagRenderSceneAsDirty(dirty)
+	if(dirty == nil) then
+		self.m_renderSceneDirty = self.m_renderSceneDirty or 1
+		return
+	end
+	self.m_renderSceneDirty = dirty and math.huge or nil
+end
 function gui.WIFilmmaker:ReloadInterface()
 	local project = self:GetProject()
 	self:Close()
@@ -500,10 +517,11 @@ function gui.WIFilmmaker:OnThink()
 end
 function gui.WIFilmmaker:OnRemove()
 	self:CloseProject()
-	if(util.is_valid(self.m_cbDropped)) then self.m_cbDropped:Remove() end
-	if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
-	if(self.m_previewWindow ~= nil) then self.m_previewWindow:Remove() end
-	if(self.m_renderResultWindow ~= nil) then self.m_renderResultWindow:Remove() end
+	util.remove(self.m_cbDisableDefaultSceneDraw)
+	util.remove(self.m_cbDropped:Remove())
+	util.remove(self.m_openDialogue:Remove())
+	util.remove(self.m_previewWindow:Remove())
+	util.remove(self.m_renderResultWindow:Remove())
 	self.m_selectionManager:Remove()
 
 	if(self.m_animRecorder ~= nil) then
@@ -511,8 +529,8 @@ function gui.WIFilmmaker:OnRemove()
 		self.m_animRecorder = nil
 	end
 
-	if(util.is_valid(self.m_reflectionProbe)) then self.m_reflectionProbe:Remove() end
-	if(util.is_valid(self.m_entLight)) then self.m_entLight:Remove() end
+	util.remove(self.m_reflectionProbe:Remove())
+	util.remove(self.m_entLight:Remove())
 	collectgarbage()
 end
 function gui.WIFilmmaker:CaptureRaytracedImage()
@@ -534,6 +552,7 @@ function gui.WIFilmmaker:StopRecording()
 	self.m_videoRecorder:StopRecording()
 end
 function gui.WIFilmmaker:SetGameViewOffset(offset)
+	self:TagRenderSceneAsDirty()
 	self.m_updatingProjectTimeOffset = true
 	if(util.is_valid(self.m_playhead)) then self.m_playhead:SetTimeOffset(offset) end
 

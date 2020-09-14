@@ -79,6 +79,7 @@ end
 function gui.PFMSliderCursor:SetType(type)
 	self.m_type = type
 end
+function gui.PFMSliderCursor:IsActive() return self.m_cursorStartOffset ~= nil end
 function gui.PFMSliderCursor:SetCursorDragModeEnabled(enabled)
 	if(enabled) then
 		self:SetCursorMovementCheckEnabled(true)
@@ -101,7 +102,17 @@ end
 function gui.PFMSliderCursor:SetWeight(weight) self.m_weight = weight end
 function gui.PFMSliderCursor:GetWeight() return self.m_weight end
 function gui.PFMSliderCursor:OnCursorMoved(x,y)
-	if(self.m_cursorStartOffset == nil) then return end
+	--print(self,self:GetParent():GetCursorPos().x)
+
+	local p = self:GetParent()
+	local x = p:GetCursorPos().x
+	local w = p:GetWidth()
+	local fraction = (w > 0) and (x /w) or 0.0
+	local stepSize = self:GetStepSize()
+	if(stepSize > 0.0) then fraction = fraction -(fraction %stepSize) end
+	self:SetFraction(fraction)
+
+	--[[if(self.m_cursorStartOffset == nil) then return end
 	local v = self:IsHorizontal() and (self:GetX() +x) or (self:GetY() +y)
 	local vDelta = v -self.m_cursorStartOffset
 	vDelta = vDelta *self:GetWeight()
@@ -132,6 +143,6 @@ function gui.PFMSliderCursor:OnCursorMoved(x,y)
 		self:SetFraction(self:GetFraction() +self:GetStepSize() *sign)
 		self.m_cursorStartOffset = self.m_cursorStartOffset +cursorStepSize *sign
 		vDelta = vDelta -cursorStepSize
-	end
+	end]]
 end
 gui.register("WIPFMSliderCursor",gui.PFMSliderCursor)
