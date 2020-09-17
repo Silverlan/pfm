@@ -162,7 +162,6 @@ end
 function gui.RaytracedViewport:CancelRendering()
 	if(self.m_rtJob == nil) then return end
 	self.m_rtJob:CancelRendering()
-	console.run("cl_max_fps",-1) -- Unclamp game FPS
 end
 function gui.RaytracedViewport:IsRendering()
 	return (self.m_rtJob ~= nil) and self.m_rtJob:IsRendering() or false
@@ -204,7 +203,6 @@ function gui.RaytracedViewport:OnThink()
 		end
 	end
 	if(state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FAILED) then
-		console.run("cl_max_fps",-1) -- Unclamp game FPS
 		self.m_rendering = false
 		self:UpdateThinkState()
 
@@ -262,7 +260,6 @@ function gui.RaytracedViewport:Refresh(preview)
 	pfm.log("Rendering image with resolution " .. settings:GetWidth() .. "x" .. settings:GetHeight() .. " and " .. settings:GetSamples() .. " samples...",pfm.LOG_CATEGORY_PFM_INTERFACE)
 	self.m_rtJob:Start()
 
-	console.run("cl_max_fps",24) -- Clamp game FPS to 24 while rendering to make more GPU resources available
 	self.m_rendering = true
 	self:UpdateThinkState()
 end

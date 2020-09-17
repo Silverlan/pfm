@@ -42,7 +42,7 @@ cycles.NODE_ALBEDO_TEXTURE = cycles.register_node("albedo_texture",function(desc
 	finalAlpha = finalAlpha +isBlend *alpha
 	finalAlpha = finalAlpha +isMasked *alpha:GreaterThanOrEqualTo(inAlphaCutoff)
 
-	finalAlpha = finalAlpha *desc:AddNode(cycles.NODE_LIGHT_PATH):GetOutputSocket(cycles.Node.light_path.OUT_TRANSPARENT_DEPTH):LessThan(2)
+	-- finalAlpha = finalAlpha *desc:AddNode(cycles.NODE_LIGHT_PATH):GetOutputSocket(cycles.Node.light_path.OUT_TRANSPARENT_DEPTH):LessThan(2)
 
 	finalAlpha:Link(outAlpha)
 	albedoColor:Link(outColor)
@@ -78,9 +78,10 @@ cycles.Node.normal_texture = {
 cycles.NODE_NORMAL_TEXTURE = cycles.register_node("normal_texture",function(desc)
 	local inTexture = desc:RegisterProperty(cycles.Socket.TYPE_STRING,cycles.Node.normal_texture.IN_TEXTURE,"E:/projects/pragma/build_winx64/output/materials/errora.dds")
 
-	local outNormal = desc:RegisterOutput(cycles.Socket.TYPE_VECTOR,cycles.Node.normal_texture.OUT_NORMAL)
+	local outNormal = desc:RegisterOutput(cycles.Socket.TYPE_NORMAL,cycles.Node.normal_texture.OUT_NORMAL)
 	desc:SetPrimaryOutputSocket(outNormal)
 
-	local nodeNormal = desc:AddTextureNode(inTexture,cycles.Node.image_texture.TEXTURE_TYPE_NORMAL_MAP)
-	nodeNormal:GetOutputSocket(cycles.Node.normal_texture.OUT_NORMAL):Link(outNormal)
+	local normalStrength = 1.0
+	local normal = desc:AddNormalMapNode(inTexture,normalStrength)
+	normal:Link(outNormal)
 end)

@@ -101,7 +101,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 		pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
-			if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
+			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
 				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfm"
 				self:LoadProject(fileName)
@@ -112,7 +112,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 		pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
-			if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
+			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_save_dialog(function(pDialog,fileName)
 				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfm"
 				self:SaveProject(fileName)
@@ -123,7 +123,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 		pContext:AddItem(locale.get_text("import") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
-			if(util.is_valid(self.m_openDialogue)) then self.m_openDialogue:Remove() end
+			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
 				self:ImportSFMProject(fileName)
 			end)
@@ -225,6 +225,7 @@ function gui.WIFilmmaker:OnInitialize()
 	pMenuBar:AddItem(locale.get_text("render"),function(pContext)
 		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pbr"))
 		pSubMenu:AddItem(locale.get_text("pfm_generate_ambient_occlusion_maps"),function(pItem)
+			if(util.is_valid(self) == false) then return end
 			local entPbrConverter = ents.find_by_component("pbr_converter")[1]
 			if(util.is_valid(entPbrConverter) == false) then return end
 			local pbrC = entPbrConverter:GetComponent(ents.COMPONENT_PBR_CONVERTER)
@@ -257,11 +258,50 @@ function gui.WIFilmmaker:OnInitialize()
 		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("language"))
 		for lan,lanLoc in pairs(locale.get_languages()) do
 			pSubMenu:AddItem(lanLoc,function(pItem)
+				if(util.is_valid(self) == false) then return end
 				locale.change_language(lan)
 				self:ReloadInterface()
 			end)
 		end
 		pSubMenu:Update()
+
+		pContext:Update()
+	end)
+	pMenuBar:AddItem(locale.get_text("tools"),function(pContext)
+		pContext:AddItem(locale.get_text("pfm_export_map"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			local mapName = game.get_map_name()
+			local exportInfo = game.Model.ExportInfo()
+			exportInfo.exportAnimations = false
+			exportInfo.exportSkinnedMeshData = false
+			exportInfo.exportMorphTargets = false
+			exportInfo.exportImages = true
+			exportInfo.saveAsBinary = true
+			exportInfo.verbose = true
+			exportInfo.generateAo = false
+			exportInfo.mergeMeshesByMaterial = true
+			exportInfo.imageFormat = game.Model.ExportInfo.IMAGE_FORMAT_PNG
+			exportInfo.scale = util.units_to_metres(1)
+
+			local mapExportInfo = asset.MapExportInfo()
+			local vp = self:GetViewport()
+			if(util.is_valid(vp)) then
+				local cam = vp:GetCamera()
+				if(util.is_valid(cam)) then mapExportInfo:AddCamera(cam) end
+			end
+			mapExportInfo.includeMapLightSources = false
+			for light in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_LIGHT)}) do
+				local lightC = light:GetComponent(ents.COMPONENT_LIGHT)
+				mapExportInfo:AddLightSource(lightC)
+			end
+
+			local success,errMsg = asset.export_map(mapName,exportInfo,mapExportInfo)
+			if(success) then
+				util.open_path_in_explorer("export/maps/" .. mapName .. "/" .. mapName .. "/",mapName .. ".glb")
+				return
+			end
+			pfm.log("Unable to export map: " .. errMsg,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		end)
 
 		pContext:Update()
 	end)
@@ -384,6 +424,7 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:SetKeyboardInputEnabled(true)
 	self:ClearProjectUI()
+	console.run("cl_max_fps",24) -- Clamp game FPS to 24 while rendering to make more GPU resources available
 
 	if(ents.get_world() == nil) then
 		pfm.log("Empty map. Creating a default reflection probe and light source...",pfm.LOG_CATEGORY_PFM)
@@ -518,10 +559,10 @@ end
 function gui.WIFilmmaker:OnRemove()
 	self:CloseProject()
 	util.remove(self.m_cbDisableDefaultSceneDraw)
-	util.remove(self.m_cbDropped:Remove())
-	util.remove(self.m_openDialogue:Remove())
-	util.remove(self.m_previewWindow:Remove())
-	util.remove(self.m_renderResultWindow:Remove())
+	util.remove(self.m_cbDropped)
+	util.remove(self.m_openDialogue)
+	util.remove(self.m_previewWindow)
+	util.remove(self.m_renderResultWindow)
 	self.m_selectionManager:Remove()
 
 	if(self.m_animRecorder ~= nil) then
@@ -532,6 +573,8 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_reflectionProbe:Remove())
 	util.remove(self.m_entLight:Remove())
 	collectgarbage()
+
+	console.run("cl_max_fps",-1) -- Unclamp game FPS
 end
 function gui.WIFilmmaker:CaptureRaytracedImage()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end

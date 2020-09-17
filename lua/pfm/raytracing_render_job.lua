@@ -218,6 +218,8 @@ function pfm.RaytracingRenderJob:Update()
 		successful = self.m_raytracingJob:IsSuccessful()
 		if(successful) then
 			local imgBuffer = self.m_raytracingJob:GetResult()
+			--local result,err = cycles.apply_color_transform(imgBuffer)
+			--if(result == false) then console.print_warning(err) end
 			table.insert(self.m_imageBuffers,imgBuffer)
 
 			if(isFrameComplete) then self:GenerateResult() end
@@ -271,6 +273,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	createInfo.progressiveRefine = renderSettings:ShouldUseProgressiveRefinement()
 	createInfo.progressive = renderSettings:IsProgressive()
 	createInfo:SetSamplesPerPixel(renderSettings:GetSamples())
+	createInfo:SetColorTransform(cycles.Scene.COLOR_TRANSFORM_FILMIC_BLENDER)
 
 	local w = renderSettings:GetWidth()
 	local h = renderSettings:GetHeight()

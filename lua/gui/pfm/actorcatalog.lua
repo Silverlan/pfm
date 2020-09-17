@@ -44,6 +44,8 @@ function gui.PFMActorCatalog:OnInitialize()
 
 				entGhost = ents.create("pfm_ghost")
 				entGhost:Spawn()
+
+				tool.get_filmmaker():TagRenderSceneAsDirty(true)
 				--entGhost:SetModel(path:GetString())
 
 				--entGhost:SetPos(Vector(2751.68, 549.374, -26.2904))
@@ -91,6 +93,7 @@ function gui.PFMActorCatalog:OnInitialize()
 				elGhost:SetAlpha(128)
 				elGhost:SetAlwaysUpdate(false)
 				if(util.is_valid(entGhost)) then entGhost:Remove() end
+				tool.get_filmmaker():TagRenderSceneAsDirty(false)
 			end)
 		end)
 		icon:AddCallback("OnDragDropped",function(elIcon,elDrop)

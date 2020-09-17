@@ -137,6 +137,7 @@ end
 function gui.PFMRenderPreview:InitializeToneMapControls(p)
 	local toneMapping = p:AddDropDownMenu("tonemapping","tonemapping",{
 		-- {"-1",toneMapping:AddOption(locale.get_text("pfm_cycles_tone_mapping_none_hdr")},
+		{tostring(shader.TONE_MAPPING_NONE),locale.get_text("none")},
 		{tostring(shader.TONE_MAPPING_GAMMA_CORRECTION),locale.get_text("gamma_correction")},
 		{tostring(shader.TONE_MAPPING_REINHARD),"Reinhard"},
 		{tostring(shader.TONE_MAPPING_HEJIL_RICHARD),"Hejil-Richard"},
@@ -153,7 +154,8 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p)
 		{tostring(shader.PFMTonemapping.TONE_MAPPING_FILMLIC1),"Filmic 1"},
 		{tostring(shader.PFMTonemapping.TONE_MAPPING_FILMLIC2),"Filmic 2"},
 		{tostring(shader.PFMTonemapping.TONE_MAPPING_INSOMNIAC),"Insomniac"}
-	},4)
+	},0)
+	toneMapping:SetVisible(false)
 	toneMapping:SetTooltip(locale.get_text("pfm_cycles_tone_mapping_desc"))
 	toneMapping:AddCallback("OnOptionSelected",function(el,option)
 		self.m_ctrlExposure:SetVisible(false)
@@ -223,6 +225,7 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p)
 			self.m_ctrlCrossOverPoint:SetVisible(true)
 		end
 	end)
+	p:SetControlVisible("tonemapping",false) -- Tonemapping currently disabled, since Cycles now handles tonemapping internally. This may be re-enabled in the future to allow a wider variety of tonemapping algorithms to be used.
 	self.m_ctrlToneMapping = toneMapping
 
 	-- Exposure factor
@@ -675,12 +678,23 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	if(resolution[2] ~= nil) then height = tonumber(resolution[2]) or 0 end
 
 	if(preview) then
+		local aspectRatio = width /height
 		if(width > height) then
 			width = 512
-			height = width *(width /height)
+			height = width /aspectRatio
+			if((height %1.0) > 0.001) then
+				-- Round to the nearest value dividable by 2
+				if((math.floor(height) %2.0) <= 0.001) then height = math.floor(height)
+				else height = math.ceil(height) end
+			end
 		else
 			height = 512
-			width = height *(height /width)
+			width = height *aspectRatio
+			if((width %1.0) > 0.001) then
+				-- Round to the nearest value dividable by 2
+				if((math.floor(width) %2.0) <= 0.001) then width = math.floor(width)
+				else width = math.ceil(width) end
+			end
 		end
 	end
 

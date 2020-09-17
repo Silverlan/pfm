@@ -58,6 +58,7 @@ void main()
 	float avgLuminance = u_renderSettings.avgIntensity[3];
 	switch(u_renderSettings.toneMapping)
 	{
+		case TONE_MAPPING_NONE:
 		case -1:
 			break;
 		case TONE_MAPPING_WARD:

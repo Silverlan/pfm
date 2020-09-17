@@ -147,6 +147,7 @@ function gui.PFMViewport:OnRemove()
 		if(ent:IsValid()) then ent:Remove() end
 	end
 end
+function gui.PFMViewport:GetCamera() return self.m_viewport:GetCamera() end
 function gui.PFMViewport:GetAspectRatio()
 	return util.is_valid(self.m_aspectRatioWrapper) and self.m_aspectRatioWrapper:GetAspectRatio() or 1.0
 end
