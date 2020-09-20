@@ -19,6 +19,10 @@ include("/gui/pfm/raytracedanimationviewport.lua")
 
 util.register_class("gui.PFMRenderPreview",gui.Base)
 
+gui.PFMRenderPreview.IMAGE_TYPE_FLAT = 0
+gui.PFMRenderPreview.IMAGE_TYPE_MONO = 1
+gui.PFMRenderPreview.IMAGE_TYPE_STEREO = 2
+
 function gui.PFMRenderPreview:__init()
 	gui.Base.__init(self)
 end
@@ -120,6 +124,8 @@ function gui.PFMRenderPreview:OnInitialize()
 		self.m_renderBtContainer:SetVisible(true)
 		self.m_btCancel:SetVisible(false)
 		self.m_btStop:SetVisible(false)
+
+		self.m_rt:GetToneMappedImageElement():SetStereo(self.m_renderedImageType == gui.PFMRenderPreview.IMAGE_TYPE_STEREO)
 	end)
 
 	self.m_cbOnTimeOffsetChanged = tool.get_filmmaker():AddCallback("OnTimeOffsetChanged",function(fm,offset)
@@ -225,7 +231,7 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p)
 			self.m_ctrlCrossOverPoint:SetVisible(true)
 		end
 	end)
-	p:SetControlVisible("tonemapping",false) -- Tonemapping currently disabled, since Cycles now handles tonemapping internally. This may be re-enabled in the future to allow a wider variety of tonemapping algorithms to be used.
+	if(tool.get_filmmaker():IsDeveloperModeEnabled() == false) then p:SetControlVisible("tonemapping",false) end -- Tonemapping currently disabled, since Cycles now handles tonemapping internally. This may be re-enabled in the future to allow a wider variety of tonemapping algorithms to be used.
 	self.m_ctrlToneMapping = toneMapping
 
 	-- Exposure factor
@@ -317,6 +323,15 @@ function gui.PFMRenderPreview:ApplyToneMappingSettings(toneMapping)
 	end
 	self.m_rt:SetToneMappingArguments(args)
 end
+function gui.PFMRenderPreview:UpdateViewport(settings)
+	self.m_rt:GetToneMappedImageElement():SetHorizontalRange(settings:GetPanoramaHorizontalRange())
+	self.m_rt:GetToneMappedImageElement():SetStereo(false)
+	self:UpdateVRMode()
+end
+function gui.PFMRenderPreview:UpdateVRMode()
+	local enableVrView = (self.m_renderedImageType ~= gui.PFMRenderPreview.IMAGE_TYPE_FLAT and self.m_ctrlPreviewMode:GetOptionValue(self.m_ctrlPreviewMode:GetSelectedOption()) ~= "flat")
+	self.m_rt:GetToneMappedImageElement():SetVRView(enableVrView)
+end
 function gui.PFMRenderPreview:GetOutputPath()
 	local rtJob = self.m_rt:GetRTJob()
 
@@ -335,6 +350,13 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	local p = gui.create("WIPFMControlsMenu",parent)
 	p:SetAutoFillContentsToWidth(true)
 	self.m_settingsBox = p
+
+	-- Preset
+	self.m_ctrlPreset = p:AddDropDownMenu("preset","preset",{
+		{"standard",locale.get_text("pfm_rt_preset_standard")},
+		-- {"cinematic",locale.get_text("pfm_rt_preset_cinematic")},
+		{"vr",locale.get_text("pfm_rt_preset_vr")}
+	},0)
 	
 	-- Render Mode
 	self.m_ctrlRenderMode = p:AddDropDownMenu("pfm_render_mode","render_mode",{
@@ -343,6 +365,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		{"normals",locale.get_text("pfm_cycles_bake_type_normals")},
 		{"depth",locale.get_text("pfm_cycles_bake_type_depth")}
 	},0)
+	if(tool.get_filmmaker():IsDeveloperModeEnabled() == false) then p:SetControlVisible("render_mode",false) end
 
 	-- Device Type
 	self.m_ctrlDeviceType = p:AddDropDownMenu("pfm_cycles_device_type","device_type",{
@@ -358,7 +381,8 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	},0,function(camType,idx)
 		p:SetControlVisible("panorama_type",idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
 		p:SetControlVisible("panorama_range",idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
-		self.m_ctrlStereo:SetVisible(idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
+		p:SetControlVisible("equirect_mode",idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
+		self:UpdateVROptions()
 	end)
 
 	self.m_ctrlPanoramaType = p:AddDropDownMenu("pfm_cycles_cam_panorama","panorama_type",{
@@ -367,8 +391,21 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		{tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID),locale.get_text("pfm_cycles_cam_panorama_type_equisolid")},
 		{tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL),locale.get_text("pfm_cycles_cam_panorama_type_mirrorball")},
 		{tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP),locale.get_text("pfm_cycles_cam_panorama_type_cubemap")}
-	},0)
+	},0,function() self:UpdateVROptions() end)
 	p:SetControlVisible("panorama_type",false)
+
+	self.m_ctrlEquirectMode = p:AddDropDownMenu("pfm_cycles_cam_equirect_mode","equirect_mode",{
+		{"mono",locale.get_text("mono")},
+		{"stereo",locale.get_text("stereo")}
+	},1,function() self:UpdateVROptions() end)
+	p:SetControlVisible("equirect_mode",false)
+
+	self.m_ctrlPreviewMode = p:AddDropDownMenu("pfm_cycles_preview_mode","preview_mode",{
+		{"flat",locale.get_text("pfm_cycles_preview_mode_flat")},
+		{"360_left",locale.get_text("pfm_cycles_preview_mode_360_left")},
+		{"360_right",locale.get_text("pfm_cycles_preview_mode_360_right")}
+	},1,function() self:UpdateViewportMode() end)
+	p:SetControlVisible("preview_mode",false)
 
 	-- Horizontal panorama range
 	self.m_ctrlPanoramaRange = p:AddDropDownMenu("pfm_cycles_cam_panorama_range","panorama_range",{
@@ -478,8 +515,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		{tostring(util.IMAGE_FORMAT_BMP),"BMP (" .. locale.get_text("pfm_tone_mapped") .. ")"},
 		{tostring(util.IMAGE_FORMAT_TGA),"TGA (" .. locale.get_text("pfm_tone_mapped") .. ")"},
 		{tostring(util.IMAGE_FORMAT_JPG),"JPG (" .. locale.get_text("pfm_tone_mapped") .. ")"}
-	},1)
-	self.m_ctrlOutputFormat:AddCallback("OnOptionSelected",function(el,option)
+	},1,function(el,option)
 		local format = tonumber(self.m_ctrlOutputFormat:GetOptionValue(self.m_ctrlOutputFormat:GetSelectedOption()))
 		self.m_rt:SetImageSaveFormat(format)
 	end)
@@ -502,8 +538,6 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	outputDir:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_output_directory"))]]
 
-	self.m_ctrlStereo = p:AddToggleControl("pfm_stereo","stereo",true)
-	self.m_ctrlStereo:SetVisible(false)
 	self.m_ctrlDenoise = p:AddToggleControl("pfm_denoise_image","denoise",true)
 	-- self.m_ctrlPreStage = p:AddToggleControl("pfm_prestage_only","prestage",false)
 	self.m_ctrlRenderWorld = p:AddToggleControl("pfm_render_world","render_world",true)
@@ -524,15 +558,79 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	end)
 	qualityPreset:SelectOption(2)
 
+	self.m_ctrlPreset:AddCallback("OnOptionSelected",function(el,option)
+		local opt = self.m_ctrlPreset:GetOptionValue(option)
+		if(opt == "standard") then
+			self.m_ctrlCamType:SelectOption(tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE))
+		elseif(opt == "cinematic") then
+			self.m_ctrlCamType:SelectOption(tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE))
+		elseif(opt == "vr") then
+			self.m_ctrlCamType:SelectOption(tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA))
+			self.m_ctrlPanoramaType:SelectOption(tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR))
+			self.m_ctrlEquirectMode:SelectOption("stereo")
+		end
+		self:UpdateVROptions()
+	end)
+	self.m_ctrlPreset:SelectOption(0)
+
 	self:InitializeToneMapControls(p)
 	p:ResetControls()
+end
+function gui.PFMRenderPreview:IsInVRMode()
+	return tonumber(self.m_ctrlCamType:GetOptionValue(self.m_ctrlCamType:GetSelectedOption())) == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA and
+		tonumber(self.m_ctrlPanoramaType:GetOptionValue(self.m_ctrlPanoramaType:GetSelectedOption())) == pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR
+		--and self.m_ctrlEquirectMode:GetOptionValue(self.m_ctrlEquirectMode:GetSelectedOption()) == "stereo"
+end
+function gui.PFMRenderPreview:UpdateViewportMode()
+	self.m_rt:GetToneMappedImageElement():SetStereoImage((self.m_ctrlPreviewMode:GetOptionValue(self.m_ctrlPreviewMode:GetSelectedOption()) == "360_right") and gui.VRView.STEREO_IMAGE_RIGHT or gui.VRView.STEREO_IMAGE_LEFT)
+	self:UpdateVRMode()
+end
+function gui.PFMRenderPreview:UpdateVROptions()
+	local vrMode = self:IsInVRMode()
+	self:UpdateVRMode()
+	self.m_settingsBox:SetControlVisible("preview_mode",vrMode)
+
+	local newOptions
+	local selectedOption
+	if(vrMode == false) then
+		if(self.m_usesVrResolutions == true) then
+			self.m_usesVrResolutions = false
+			newOptions = {
+				{"1280x720",locale.get_text("pfm_resolution_hd_ready")},
+				{"1920x1080",locale.get_text("pfm_resolution_full_hd")},
+				{"2560x1440",locale.get_text("pfm_resolution_quad_hd")},
+				{"2048x1080",locale.get_text("pfm_resolution_2k")},
+				{"3840x2160",locale.get_text("pfm_resolution_4k")},
+				{"7680x4320",locale.get_text("pfm_resolution_8k")}
+			}
+			selectedOption = 1
+		end
+	else
+		if(self.m_usesVrResolutions ~= true) then
+			self.m_usesVrResolutions = true
+			newOptions = {
+				{"1080x1200",locale.get_text("pfm_resolution_vr_vive")},
+				{"1440x1600",locale.get_text("pfm_resolution_vr_vive_pro_and_index")},
+				{"1440x1700",locale.get_text("pfm_resolution_vr_vive_cosmo")},
+				{"1832x1920",locale.get_text("pfm_resolution_vr_oculus_quest")},
+				{"1280x1440",locale.get_text("pfm_resolution_vr_oculus_rift_s_and_go")}
+			}
+			selectedOption = 0
+		end
+	end
+	if(newOptions == nil) then return end
+	self.m_ctrlResolution:ClearOptions()
+	for _,option in pairs(newOptions) do
+		self.m_ctrlResolution:AddOption(option[2],option[1])
+	end
+	self.m_ctrlResolution:SelectOption(selectedOption)
 end
 function gui.PFMRenderPreview:InitializeControls()
 	local controls = gui.create("WIHBox",self.m_contents)
 	controls:SetHeight(self:GetHeight() -self.m_rt:GetBottom())
 
 	self.m_btCancel = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
-		if(self.m_rt:IsRendering()) then
+		if(self:IsRendering()) then
 			self.m_rt:CancelRendering()
 			return
 		end
@@ -646,8 +744,9 @@ end
 function gui.PFMRenderPreview:GetCurrentFrameFilePath()
 	return self:GetFrameFilePath(tool.get_filmmaker():GetFrameOffset())
 end
+function gui.PFMRenderPreview:IsRendering() return self.m_rt:IsRendering() end
 function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
-	if(self.m_rt:IsRendering()) then self.m_rt:CancelRendering() end
+	if(self:IsRendering()) then self.m_rt:CancelRendering() end
 	self.m_btCancel:SetVisible(true)
 	self.m_renderBtContainer:SetVisible(false)
 
@@ -680,16 +779,16 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	if(preview) then
 		local aspectRatio = width /height
 		if(width > height) then
-			width = 512
-			height = width /aspectRatio
+			height = 512
+			width = height *aspectRatio
 			if((height %1.0) > 0.001) then
 				-- Round to the nearest value dividable by 2
 				if((math.floor(height) %2.0) <= 0.001) then height = math.floor(height)
 				else height = math.ceil(height) end
 			end
 		else
-			height = 512
-			width = height *aspectRatio
+			width = 512
+			height = width /aspectRatio
 			if((width %1.0) > 0.001) then
 				-- Round to the nearest value dividable by 2
 				if((math.floor(width) %2.0) <= 0.001) then width = math.floor(width)
@@ -725,12 +824,19 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	settings:SetCamType(tonumber(self.m_ctrlCamType:GetValue()))
 	settings:SetPanoramaType(tonumber(self.m_ctrlPanoramaType:GetValue()))
 	settings:SetPanoramaHorizontalRange(tonumber(self.m_ctrlPanoramaRange:GetOptionValue(self.m_ctrlPanoramaRange:GetSelectedOption())))
-	settings:SetStereoscopic(self.m_ctrlStereo:IsChecked())
+	settings:SetStereoscopic(self.m_ctrlEquirectMode:GetOptionValue(self.m_ctrlEquirectMode:GetSelectedOption()) == "stereo")
 	settings:SetWidth(width)
 	settings:SetHeight(height)
 
 	if(progressiveRefinement) then self.m_btStop:SetVisible(true) end
 
+	self.m_renderedImageType = gui.PFMRenderPreview.IMAGE_TYPE_FLAT
+	if(self:IsInVRMode()) then
+		if(settings:IsStereoscopic()) then self.m_renderedImageType = gui.PFMRenderPreview.IMAGE_TYPE_STEREO
+		else self.m_renderedImageType = gui.PFMRenderPreview.IMAGE_TYPE_MONO end
+	end
+
 	self.m_rt:Refresh(preview)
+	self:UpdateViewport(settings)
 end
 gui.register("WIPFMRenderPreview",gui.PFMRenderPreview)

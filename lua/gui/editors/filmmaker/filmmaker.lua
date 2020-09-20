@@ -422,6 +422,7 @@ function gui.WIFilmmaker:OnInitialize()
 		self:SetCameraMode((self.m_cameraMode +1) %gui.WIFilmmaker.CAMERA_MODE_COUNT)
 	end)]]
 
+	self.m_tLastCursorMove = 0.0
 	self:SetKeyboardInputEnabled(true)
 	self:ClearProjectUI()
 	console.run("cl_max_fps",24) -- Clamp game FPS to 24 while rendering to make more GPU resources available
@@ -466,6 +467,8 @@ function gui.WIFilmmaker:ReloadInterface()
 	local interface = tool.open_filmmaker()
 	interface:InitializeProject(project)
 end
+function gui.WIFilmmaker:SetDeveloperModeEnabled(dev) self.m_devModeEnabled = dev or false end
+function gui.WIFilmmaker:IsDeveloperModeEnabled() return self.m_devModeEnabled or false end
 function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
 function gui.WIFilmmaker:GetViewport() return util.is_valid(self.m_viewportFrame) and self.m_viewportFrame:FindTab("primary_viewport") or nil end
 function gui.WIFilmmaker:GetRenderTab() return util.is_valid(self.m_viewportFrame) and self.m_viewportFrame:FindTab("cycles_render") or nil end
@@ -528,7 +531,29 @@ function gui.WIFilmmaker:AddFrame(parent)
 	return frame
 end
 function gui.WIFilmmaker:OnThink()
+	local cursorPos = input.get_cursor_pos()
+	if(cursorPos ~= self.m_lastCursorPos) then
+		self.m_lastCursorPos = cursorPos
+		self.m_tLastCursorMove = time.real_time()
+	end
+	if(self:IsRendering()) then
+		local dt = time.real_time() -self.m_tLastCursorMove
+		-- Clamp the game FPS to 4 if we're rendering and the mouse cursor hasn't been moved in a while. This will
+		-- free up more rendering resources for Cycles.
+		local fps = (dt > 5.0) and 4 or 24
+		if(fps ~= self.m_lastRenderFps) then
+			self.m_lastRenderFps = fps
+			console.run("cl_max_fps",fps)
+			self.m_resetFpsAfterRendering = true
+		end
+	elseif(self.m_resetFpsAfterRendering) then
+		self.m_lastRenderFps = nil
+		self.m_resetFpsAfterRendering = nil
+		console.run("cl_max_fps",24)
+	end
+
 	if(self.m_raytracingJob == nil) then return end
+
 	local progress = self.m_raytracingJob:GetProgress()
 	if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetProgress(progress) end
 	if(self.m_raytracingJob:IsComplete() == false) then return end
@@ -570,8 +595,8 @@ function gui.WIFilmmaker:OnRemove()
 		self.m_animRecorder = nil
 	end
 
-	util.remove(self.m_reflectionProbe:Remove())
-	util.remove(self.m_entLight:Remove())
+	util.remove(self.m_reflectionProbe)
+	util.remove(self.m_entLight)
 	collectgarbage()
 
 	console.run("cl_max_fps",-1) -- Unclamp game FPS
@@ -589,6 +614,10 @@ function gui.WIFilmmaker:StartRecording(fileName)
 	if(success == false) then return false end
 	self:CaptureRaytracedImage()
 	return success
+end
+function gui.WIFilmmaker:IsRendering()
+	local vp = self:GetRenderTab()
+	return util.is_valid(vp) and vp:IsRendering()
 end
 function gui.WIFilmmaker:IsRecording() return self.m_videoRecorder:IsRecording() end
 function gui.WIFilmmaker:StopRecording()

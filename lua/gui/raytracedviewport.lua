@@ -9,7 +9,7 @@
 include("/pfm/raytracing_render_job.lua")
 -- include("/shaders/pfm/pfm_composite.lua")
 include("/shaders/pfm/pfm_calc_image_luminance.lua")
-include("tonemappedimage.lua")
+include("renderimage.lua")
 
 util.register_class("gui.RaytracedViewport",gui.Base)
 function gui.RaytracedViewport:__init()
@@ -19,7 +19,7 @@ function gui.RaytracedViewport:OnInitialize()
 	gui.Base.OnInitialize(self)
 	self:SetSize(128,128)
 
-	self.m_tex = gui.create("WIToneMappedImage",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	self.m_tex = gui.create("WIRenderImage",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	self.m_renderSettings = pfm.RaytracingRenderJob.Settings()
 	self.m_renderSettings:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
 	self.m_renderSettings:SetSamples(40)

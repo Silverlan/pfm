@@ -8,11 +8,14 @@
 
 include("/shaders/pfm/pfm_tonemapping.lua")
 include("/shaders/pfm/pfm_depth_of_field.lua")
+include("/util/image_processor.lua")
+include("/gui/vr_view.lua")
 
-util.register_class("gui.ToneMappedImage",gui.Base)
+util.register_class("gui.ToneMappedImage",gui.Base,gui.VRView)
 
 function gui.ToneMappedImage:__init()
 	gui.Base.__init(self)
+	gui.VRView.__init(self)
 end
 function gui.ToneMappedImage:OnInitialize()
 	gui.Base.OnInitialize(self)
@@ -23,14 +26,27 @@ function gui.ToneMappedImage:OnInitialize()
 	self:SetToneMappingAlgorithm(shader.TONE_MAPPING_ACES)
 	self:SetToneMappingAlgorithmArgs({})
 	self:SetLuminance(util.Luminance())
+	self:SetVRCamera(game.get_scene():GetActiveCamera())
+	self:SetCursorInputMovementEnabled(true,tool.get_filmmaker())
+
+	--local test = gui.create("WITexturedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	--self.m_test = test
+	--test:SetColor(Color.Lime)
 
 	self.m_dofSettings = shader.PFMDepthOfField.DOFSettings()
 	self.m_dofEnabled = false
+	self.m_cbPreRenderScenes = game.add_callback("PreRenderScenes",function(drawSceneInfo)
+		self:PreRenderScenes(drawSceneInfo)
+	end)
 
 	self.m_dsTonemapping = self.m_shader:CreateDescriptorSet(shader.PFMTonemapping.DESCRIPTOR_SET_TEXTURE)
 	self:SetDOFEnabled(false)
 end
+function gui.ToneMappedImage:PreRenderScenes(drawSceneInfo)
+	--local tex = self.m_imgProcessor:Apply(drawSceneInfo.commandBuffer)
+end
 function gui.ToneMappedImage:OnRemove()
+	util.remove(self.m_cbPreRenderScenes)
 	self:SetDOFState(false)
 end
 function gui.ToneMappedImage:SetTexture(tex,depthTex)
@@ -38,8 +54,40 @@ function gui.ToneMappedImage:SetTexture(tex,depthTex)
 	self:SetVisible(tex ~= nil)
 
 	self:UpdateDescriptorSets()
+	self:InitializeImageProcessor()
 end
-function gui.ToneMappedImage:SetDepthTexture(depthTex) print("QEWRT") self.m_depthTex = depthTex end
+function gui.ToneMappedImage:InitializeImageProcessor()
+	local tex = self.m_texture
+	if(tex == nil) then
+		self.m_imgProcessor = nil
+		return
+	end
+	if(self.m_imgProcessor ~= nil and tex:GetWidth() == self.m_imgProcessor:GetWidth() and tex:GetHeight() == self.m_imgProcessor:GetHeight()) then return end
+	self.m_imgProcessor = util.ImageProcessor(tex:GetWidth(),tex:GetHeight())
+	self.m_imgProcessor:AddStage("tone_mapping",function(drawCmd,dsTex,rtDst)
+		-- TODO: Apply scissor
+		local tex = rtDst:GetTexture()
+		local img = tex:GetImage()
+		local exposure = self:GetExposure()
+		-- TODO
+		--toneMapping = toneMapping or self:GetToneMappingAlgorithm()
+		local toneMapping = 0 -- TODO
+		local isGammaCorrected = (img:GetFormat() ~= prosper.FORMAT_R16G16B16A16_SFLOAT) -- Assume the image is gamma corrected if it's not a HDR image
+		local args = self:GetToneMappingAlgorithmArgs()
+		local pose = Mat4(1.0) -- self.m_drawPose
+		self.m_shader:Draw(drawCmd,pose,dsTex,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
+	end)
+	self.m_imgProcessor:AddStage("vr",function(drawCmd,dsTex,rtDst)
+		self:ApplyVR(drawCmd,dsTex)
+	end)
+	self.m_imgProcessor:SetInputTexture(tex)
+	self.m_imgProcessor:AddStagingTexture(self.m_texture:GetImage():GetCreateInfo())
+	self.m_imgProcessor:AddStagingTexture(self.m_texture:GetImage():GetCreateInfo())
+end
+function gui.ToneMappedImage:ApplyVR(drawCmd,dsTex)
+	self:DrawVR(drawCmd,dsTex)
+end
+function gui.ToneMappedImage:SetDepthTexture(depthTex) self.m_depthTex = depthTex end
 function gui.ToneMappedImage:SetDepthBounds(zNear,zFar)
 	self.m_nearZ = zNear
 	self.m_farZ = zFar
@@ -94,7 +142,7 @@ function gui.ToneMappedImage:SetDOFState(b)
 end
 function gui.ToneMappedImage:RenderParticleSystems()
 	local drawCmd = game.get_draw_command_buffer()
-	_x:RenderPragmaParticleSystems(self.m_rtStaging:GetTexture(),drawCmd,self.m_rtStaging)
+	-- _x:RenderPragmaParticleSystems(self.m_rtStaging:GetTexture(),drawCmd,self.m_rtStaging)
 	--drawCmd:RecordClearImage(self.m_rtStaging:GetTexture():GetImage(),Color.Red)
 	
 	-- self.m_rtStaging
@@ -171,8 +219,12 @@ function gui.ToneMappedImage:Render(drawCmd,pose,toneMapping)
 	local img = self.m_texture:GetImage()
 	local isGammaCorrected = (img:GetFormat() ~= prosper.FORMAT_R16G16B16A16_SFLOAT) -- Assume the image is gamma corrected if it's not a HDR image
 	self.m_shader:Draw(drawCmd,pose,self.m_dsTonemapping,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
+
+	--self.m_imgProcessor:Apply(drawCmd)
 end
 function gui.ToneMappedImage:OnDraw(drawInfo,pose)
-	self:Render(game.get_draw_command_buffer(),pose)
+	--self:Render(game.get_draw_command_buffer(),pose)
+	--self.m_drawPose = pose
+	--if(self.m_imgProcessor ~= nil) then self.m_imgProcessor:Apply(game.get_draw_command_buffer(),self.m_texture) end
 end
 gui.register("WIToneMappedImage",gui.ToneMappedImage)

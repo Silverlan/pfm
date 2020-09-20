@@ -34,6 +34,7 @@ end
 console.register_command("pfm",function(pl,...)
 	local logCategories = 0
 	local reload = false
+	local dev = false
 	for cmd,args in pairs(console.parse_command_arguments({...})) do
 		if(cmd == "log") then
 			for _,catName in ipairs(args) do
@@ -47,7 +48,8 @@ console.register_command("pfm",function(pl,...)
 					console.print_warning("Unknown pfm log category '" .. catName .. "'! Ignoring...")
 				end
 			end
-		elseif(cmd == "reload") then reload = true end
+		elseif(cmd == "reload") then reload = true
+		elseif(cmd == "dev") then dev = true end
 	end
 	pfm.set_enabled_log_categories(logCategories)
 
@@ -56,6 +58,7 @@ console.register_command("pfm",function(pl,...)
 			-- Fast way of reloading the editor without having to reload the project as well.
 			-- Mainly used for developing and testing the interface.
 			local pfm = tool.get_filmmaker()
+			if(util.is_valid(pfm)) then pfm:SetDeveloperModeEnabled(dev) end
 			pfm:ReloadInterface()
 			return
 		end
@@ -87,5 +90,6 @@ console.register_command("pfm",function(pl,...)
 		if(toggleC ~= nil) then toggleC:TurnOn() end
 	end]]
 	--
-	tool.open_filmmaker()
+	local pfm = tool.open_filmmaker()
+	if(util.is_valid(pfm)) then pfm:SetDeveloperModeEnabled(dev) end
 end)
