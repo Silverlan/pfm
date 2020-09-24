@@ -79,6 +79,11 @@ function gui.PFMTextureSlot:OnMouseEvent(button,state,mods)
 			if(self.m_clearTex ~= nil) then self:SetTexture(self.m_clearTex)
 			else self:ClearTexture() end
 		end)
+		--[[if(self:IsValidTexture()) then
+			pContext:AddItem(locale.get_text("flip"),function()
+				self:Flip()
+			end)
+		end]]
 		self:CallCallbacks("PopulateContextMenu",pContext)
 		pContext:Update()
 		return util.EVENT_REPLY_HANDLED
@@ -90,6 +95,17 @@ function gui.PFMTextureSlot:SetNormalMap(normalMap) self.m_normalMap = normalMap
 function gui.PFMTextureSlot:SetTransparencyEnabled(enabled)
 	-- TODO
 end
+function gui.PFMTextureSlot:Flip()
+	local tex = self:GetTextureObject()
+	if(tex == nil) then return end
+	local imgBuffers = tex:GetImage():ToImageBuffer(true,true)
+	for _,layer in ipairs(imgBuffers) do
+		for _,imgMipmap in ipairs(layer) do
+			imgMipmap:Flip(true,true) -- Flip horizontally/vertically
+		end
+	end
+	-- TODO: Save the image in the original format
+end
 function gui.PFMTextureSlot:SetTexture(tex)
 	if(type(tex) ~= "string") then
 		self.m_texRect:SetTexture(tex)
@@ -98,7 +114,19 @@ function gui.PFMTextureSlot:SetTexture(tex)
 	self.m_texPath = tex
 	self:ReloadTexture()
 end
+function gui.PFMTextureSlot:SetAlphaMode(alphaMode)
+	self.m_texRect:SetAlphaMode(alphaMode)
+end
+function gui.PFMTextureSlot:SetAlphaCutoff(cutoff)
+	self.m_texRect:SetAlphaCutoff(cutoff)
+end
+function gui.PFMTextureSlot:SetAlphaFactor(factor)
+	local col = self.m_texRect:GetColor()
+	col.a = factor *255
+	self.m_texRect:SetColor(col)
+end
 function gui.PFMTextureSlot:GetTextureObject() return self.m_texRect:GetTexture() end
+function gui.PFMTextureSlot:IsValidTexture() return asset.exists(self.m_texPath,asset.TYPE_TEXTURE) end
 function gui.PFMTextureSlot:ClearTexture()
 	self.m_texPath = nil
 	self.m_texRect:ClearTexture()
@@ -106,7 +134,7 @@ function gui.PFMTextureSlot:ClearTexture()
 end
 function gui.PFMTextureSlot:GetTexture() return self.m_texPath end
 function gui.PFMTextureSlot:ReloadTexture(reloadCache)
-	if(asset.exists(self.m_texPath,asset.TYPE_TEXTURE) == false) then return end
+	if(self:IsValidTexture() == false) then return end
 	local texLoadFlags = game.TEXTURE_LOAD_FLAG_BIT_LOAD_INSTANTLY
 	if(reloadCache) then texLoadFlags = bit.bor(texLoadFlags,game.TEXTURE_LOAD_FLAG_BIT_RELOAD) end
 	local tex = game.load_texture(self.m_texPath,texLoadFlags)

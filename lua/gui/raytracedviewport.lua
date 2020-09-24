@@ -61,9 +61,11 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat)
 		imgBufFormat = util.ImageBuffer.FORMAT_RGBA_HDR
 	else
 		-- Apply Tonemapping
-		img = self:ApplyToneMapping()
-		if(img == nil) then return false end
-		imgBufFormat = util.ImageBuffer.FORMAT_RGBA_LDR
+		--[[img = self:ApplyToneMapping()
+		if(img == nil) then return false end]]
+		img = self.m_rtJob:GetRenderResultTexture():GetImage()
+		imgBufFormat = util.ImageBuffer.FORMAT_RGBA_HDR
+		--imgBufFormat = util.ImageBuffer.FORMAT_RGBA_LDR
 	end
 
 	local buf = prosper.util.allocate_temporary_buffer(img:GetWidth() *img:GetHeight() *prosper.get_byte_size(img:GetFormat()))
@@ -84,6 +86,7 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat)
 	game.flush_setup_command_buffer()
 	local imgData = buf:ReadMemory()
 	local imgBuf = util.ImageBuffer.Create(img:GetWidth(),img:GetHeight(),imgBufFormat,imgData)
+	imgBuf:ToLDR()
 
 	local result = util.save_image(imgBuf,path,imgFormat)
 	if(result == false) then
@@ -96,6 +99,7 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat)
 	return result
 end
 function gui.RaytracedViewport:ApplyToneMapping(toneMapping)
+	if(true) then return end -- Deprecated (for now)
 	local hdrTex = self.m_tex:GetTexture()
 	if(hdrTex == nil) then return end
 	local w = hdrTex:GetWidth()

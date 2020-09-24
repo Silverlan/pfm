@@ -185,7 +185,7 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 	local ent = self.m_viewport:GetEntity()
 	local mdlC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_MODEL) or nil
 	if(mdl ~= nil) then self.m_model = mdlC:GetModel() end
-	mdlC:SetMaterialOverride(0,mat)
+	-- mdlC:SetMaterialOverride(0,mat)
 	self.m_viewport:Render()
 
 	local material = game.load_material(mat)
@@ -245,6 +245,7 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 		local wrinkleStretchMap = data:GetString("wrinkle_stretch_map")
 		self:ApplyTexture("wrinkle_stretch_map",wrinkleStretchMap,true)
 	end
+	self:UpdateAlphaMode()
 end
 function gui.PFMMaterialEditor:ScheduleRTPreviewUpdate(fullUpdateRequired)
 	self.m_rtPreviewUpdateRequired = fullUpdateRequired and 2 or 1
@@ -252,6 +253,7 @@ function gui.PFMMaterialEditor:ScheduleRTPreviewUpdate(fullUpdateRequired)
 end
 function gui.PFMMaterialEditor:UpdateRTPreview()
 	if(self.m_rtPreviewUpdateRequired == nil) then return end
+	if(tonumber(self.m_renderMode:GetOptionValue(self.m_renderMode:GetSelectedOption())) ~= -1) then return end
 	local scene = self.m_rtViewport:GetRenderScene()
 	if(scene ~= nil and scene:HasRenderedSamplesForAllTiles() == false) then return end -- Wait for previous render to at least render 1 sample
 	local fullUpdate = (self.m_rtPreviewUpdateRequired == 2)
@@ -308,7 +310,7 @@ function gui.PFMMaterialEditor:Test()
 	scene:ReloadShaders()
 	local tt = time.time_since_epoch()
 	scene:Restart()
-	print((time.time_since_epoch() -tt) /1000000000.0)
+	-- print((time.time_since_epoch() -tt) /1000000000.0)
 
 	self.m_tLastRenderUpdate = time.real_time()
 end
@@ -316,6 +318,7 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 	local btRaytracying = gui.create("WIPFMButton",self.m_renderControlsVbox)
 	btRaytracying:SetText(locale.get_text("pfm_render_preview"))
 	btRaytracying:AddCallback("OnPressed",function(btRaytracying)
+		self.m_renderMode:SelectOption("-1")
 		self:ScheduleRTPreviewUpdate()
 	end)
 	self.m_btRaytracying = btRaytracying
@@ -448,6 +451,12 @@ function gui.PFMMaterialEditor:InitializeViewport()
 	self.m_viewport:SetClearColor(Color.Clear)
 	self.m_viewport:InitializeViewport(width,height)
 	self.m_viewport:SetFov(math.horizontal_fov_to_vertical_fov(45.0,width,height))
+	local cam = self.m_viewport:GetViewerCamera()
+	if(util.is_valid(cam)) then
+		cam:AddEventCallback(ents.ViewerCamera.EVENT_ON_CAMERA_UPDATED,function()
+			self:ScheduleRTPreviewUpdate()
+		end)
+	end
 
 	self.m_rtViewport = gui.create("WIRaytracedViewport",vpContainer,0,0,vpContainer:GetWidth(),vpContainer:GetHeight(),0,0,1,1)
 	self.m_rtViewport:SetGameScene(self.m_viewport:GetScene())
@@ -455,7 +464,7 @@ function gui.PFMMaterialEditor:InitializeViewport()
 	self.m_rtViewport:SetUseElementSizeAsRenderResolution(true)
 	self.m_rtViewport:AddCallback("OnComplete",function()
 		self.m_btRaytracying:SetEnabled(true)
-		self:SetRenderer(gui.PFMMaterialEditor.RENDERER_RAYTRACING)
+		-- self:SetRenderer(gui.PFMMaterialEditor.RENDERER_RAYTRACING)
 	end)
 
 	self.m_vpMouseCapture = gui.create("WIBase",vpContainer,0,0,vpContainer:GetWidth(),vpContainer:GetHeight(),0,0,1,1)
@@ -471,10 +480,8 @@ function gui.PFMMaterialEditor:InitializeViewport()
 				self.m_updateRTPreviewContinuously = nil
 				self:SetRenderer(gui.PFMMaterialEditor.RENDERER_RAYTRACING)
 			end
-			self.m_viewport:InjectMouseInput(self.m_viewport:GetCursorPos(),button,state,mods)
-			return util.EVENT_REPLY_HANDLED
 		end
-		return util.EVENT_REPLY_UNHANDLED
+		return self.m_viewport:InjectMouseInput(self.m_viewport:GetCursorPos(),button,state,mods)
 	end)
 
 	local settings = self.m_rtViewport:GetRenderSettings()

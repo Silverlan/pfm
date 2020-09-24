@@ -22,15 +22,20 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	-- Albedo map
 	local numMaps = 6
 	local fractionPerMap = 1.0 /numMaps
-	self.m_teAlbedoMap = self:AddTextureSlot(mapVbox,locale.get_text("albedo_map"),"albedo_map",false,true)
+	local teAlbedoMap,tsAlbedoMap = self:AddTextureSlot(mapVbox,locale.get_text("albedo_map"),"albedo_map",false,true)
+	self.m_teAlbedoMap = teAlbedoMap
+	self.m_tsAlbedoMap = tsAlbedoMap
 	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap)
 
 	-- Normal map
-	self.m_teNormalMap = self:AddTextureSlot(mapVbox,locale.get_text("normal_map"),"normal_map",true,false)
+	local teNormalMap,texSlotNormalMap = self:AddTextureSlot(mapVbox,locale.get_text("normal_map"),"normal_map",true,false)
+	self.m_teNormalMap = teNormalMap
+	texSlotNormalMap:SetAlphaMode(game.Material.ALPHA_MODE_OPAQUE)
 	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap *2)
 
 	-- RMA map
 	local teRMAMap,texSlotRMA = self:AddTextureSlot(mapVbox,locale.get_text("rma_map"),"rma_map",false,false)
+	texSlotRMA:SetAlphaMode(game.Material.ALPHA_MODE_OPAQUE)
 	self.m_teRMAMap = teRMAMap
 	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap *3)
 
@@ -90,14 +95,20 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	end)
 
 	-- Emission map
-	self.m_teEmissionMap = self:AddTextureSlot(mapVbox,locale.get_text("emission_map"),"emission_map",false,false)
+	local teEmission,tsEmission = self:AddTextureSlot(mapVbox,locale.get_text("emission_map"),"emission_map",false,false)
+	tsEmission:SetAlphaMode(game.Material.ALPHA_MODE_OPAQUE)
+	self.m_teEmissionMap = teEmission
 	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap *4)
 
 	-- Wrinkles
-	self.m_teWrinkleCompressMap = self:AddTextureSlot(mapVbox,locale.get_text("wrinkle_compress_map"),"wrinkle_compress_map",false,false)
+	local teWrinkles,tsWrinkles = self:AddTextureSlot(mapVbox,locale.get_text("wrinkle_compress_map"),"wrinkle_compress_map",false,false)
+	tsWrinkles:SetAlphaMode(game.Material.ALPHA_MODE_OPAQUE)
+	self.m_teWrinkleCompressMap = teWrinkles
 	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap *5)
 
-	self.m_teWrinkleStretchMap = self:AddTextureSlot(mapVbox,locale.get_text("wrinkle_stretch_map"),"wrinkle_stretch_map",false,false)
+	local teStretch,tsStretch = self:AddTextureSlot(mapVbox,locale.get_text("wrinkle_stretch_map"),"wrinkle_stretch_map",false,false)
+	tsStretch:SetAlphaMode(game.Material.ALPHA_MODE_OPAQUE)
+	self.m_teWrinkleStretchMap = teStretch
 
 	mapVbox:Update()
 	
@@ -187,21 +198,25 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		ctrlAlphaCutoff:SetVisible(alphaMode == 1)
 		ctrlAlphaFactor:SetVisible(alphaMode ~= 0)
 		self:SetMaterialParameter("int","alpha_mode",alphaMode)
+		self:UpdateAlphaMode()
 	end)
 	self:LinkControlToMaterialParameter("alpha_mode",ctrlAlphaMode,nil,function(block)
 		if(block:HasValue("alpha_mode") == false) then return end
 		local alphaMode = block:GetInt("alpha_mode")
 		ctrlAlphaMode:SelectOption(tostring(alphaMode))
 	end)
+	self.m_ctrlAlphaMode = ctrlAlphaMode
 
 	-- Alpha Cutoff
-	ctrlAlphaCutoff = ctrlVbox:AddSliderControl("alpha_cutoff","alpha_cutoff",0.5,0.0,1.0,function(el,value) self:SetMaterialParameter("float","alpha_cutoff",tostring(value)) end,0.01)
+	ctrlAlphaCutoff = ctrlVbox:AddSliderControl("alpha_cutoff","alpha_cutoff",0.5,0.0,1.0,function(el,value) self:SetMaterialParameter("float","alpha_cutoff",tostring(value)) self:UpdateAlphaMode() end,0.01)
+	self.m_ctrlAlphaCutoff = ctrlAlphaCutoff
 	-- ctrlAlphaCutoff:SetTooltip(locale.get_text("alpha_cutoff_desc"))
 	self:LinkControlToMaterialParameter("alpha_cutoff",ctrlAlphaCutoff)
 	ctrlAlphaCutoff:SetVisible(false)
 
 	-- Alpha Factor
-	ctrlAlphaFactor = ctrlVbox:AddSliderControl("alpha_factor","alpha_factor",1.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","alpha_factor",tostring(value)) end,0.01)
+	ctrlAlphaFactor = ctrlVbox:AddSliderControl("alpha_factor","alpha_factor",1.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","alpha_factor",tostring(value)) self:UpdateAlphaMode() end,0.01)
+	self.m_ctrlAlphaFactor = ctrlAlphaFactor
 	-- ctrlAlphaFactor:SetTooltip(locale.get_text("alpha_cutoff_desc"))
 	self:LinkControlToMaterialParameter("alpha_factor",ctrlAlphaFactor)
 	ctrlAlphaFactor:SetVisible(false)
@@ -270,4 +285,10 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	self.m_btSave = btSave
 
 	gui.create("WIBase",ctrlVbox)
+end
+
+function gui.PFMMaterialEditor:UpdateAlphaMode()
+	self.m_tsAlbedoMap:SetAlphaMode(tonumber(self.m_ctrlAlphaMode:GetValue()) or game.Material.ALPHA_MODE_OPAQUE)
+	self.m_tsAlbedoMap:SetAlphaCutoff(tonumber(self.m_ctrlAlphaCutoff:GetValue()) or 0.5)
+	self.m_tsAlbedoMap:SetAlphaFactor(tonumber(self.m_ctrlAlphaFactor:GetValue()) or 1.0)
 end

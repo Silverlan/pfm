@@ -57,7 +57,7 @@ function gui.PFMRaytracedAnimationViewport:SaveAs(format)
 		file.create_path(file.get_file_path(fname))
 
 		-- Make sure HDR image is loaded
-		if(self:LoadHighDefImage(true) == false) then return end
+		--if(self:LoadHighDefImage(true) == false) then return end
 		self:SaveImage(fname,format)
 	end)
 	dialoge:SetExtensions({util.get_image_format_file_extension(format)})

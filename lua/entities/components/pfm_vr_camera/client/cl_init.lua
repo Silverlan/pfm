@@ -71,8 +71,8 @@ function ents.PFMVRCamera:RenderVRView()
 		camEye:SetViewMatrix(mView)
 
 		-- TODO: Clean this up!
-		_vr_pos = camEye:GetEntity():GetPos()
-		_vr_rot = camEye:GetEntity():GetRotation()
+		local _vr_pos = camEye:GetEntity():GetPos()
+		local _vr_rot = camEye:GetEntity():GetRotation()
 
 		camEye:SetProjectionMatrix(mProjection)
 

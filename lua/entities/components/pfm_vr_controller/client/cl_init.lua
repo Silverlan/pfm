@@ -37,36 +37,6 @@ function ents.PFMVRController:OnRemove()
 	if(util.is_valid(self.m_guiEnt)) then self.m_guiEnt:Remove() end
 end
 
-function ents.PFMVRController:CreateGUIModel()
-	local mdl = game.create_model()
-	local meshGroup = mdl:GetMeshGroup(0)
-
-	local subMesh = game.Model.Mesh.Sub.Create()
-	local origin = Vector(0,0,0)
-	local p0 = origin +Vector(0,1,-1)
-	local p1 = origin +Vector(0,1,1)
-	local p2 = origin +Vector(0,-1,1)
-	local p3 = origin +Vector(0,-1,-1)
-
-	local v0 = game.Model.Vertex(p0,Vector2(0,0),Vector(-1,0,0))
-	local v1 = game.Model.Vertex(p1,Vector2(1,0),Vector(-1,0,0))
-	local v2 = game.Model.Vertex(p2,Vector2(1,1),Vector(-1,0,0))
-	local v3 = game.Model.Vertex(p3,Vector2(0,1),Vector(-1,0,0))
-	local idx0 = subMesh:AddVertex(v0)
-	local idx1 = subMesh:AddVertex(v1)
-	local idx2 = subMesh:AddVertex(v2)
-	local idx3 = subMesh:AddVertex(v3)
-	subMesh:AddTriangle(idx0,idx3,idx1)
-	subMesh:AddTriangle(idx1,idx3,idx2)
-
-	local mesh = game.Model.Mesh.Create()
-	mesh:AddSubMesh(subMesh)
-	meshGroup:AddMesh(mesh)
-	
-	mdl:Update(game.Model.FUPDATE_ALL)
-	return mdl,subMesh
-end
-
 function ents.PFMVRController:GetGUIElement() return self.m_guiInterface end
 
 function ents.PFMVRController:InitializeInterface()
@@ -79,11 +49,8 @@ function ents.PFMVRController:InitializeInterface()
 	self.m_guiEnt:AddComponent(ents.COMPONENT_RENDER)
 	self.m_guiEnt:AddComponent(ents.COMPONENT_TRANSFORM)
 
-	local mdl,subMesh = self:CreateGUIModel()
-	if(mdlC ~= nil) then mdlC:SetModel(mdl) end
-
 	local gui3dC = self.m_guiEnt:AddComponent("gui_3d")
-	if(gui3dC ~= nil) then gui3dC:Setup(self.m_guiInterface,subMesh) end
+	if(gui3dC ~= nil) then gui3dC:SetGUIElement(self.m_guiInterface) end
 	self.m_guiEnt:Spawn()
 
 	local ent = self:GetEntity()
@@ -97,13 +64,6 @@ function ents.PFMVRController:InitializeInterface()
 end
 
 function ents.PFMVRController:OnEntitySpawn()
-	local ent = self:GetEntity()
-	local ownableC = ent:GetComponent(ents.COMPONENT_OWNABLE)
-	local pl = ents.get_local_player()
-	if(ownableC ~= nil and pl ~= nil) then
-		ownableC:SetOwner(pl:GetEntity())
-	end
-
 	self:InitializeInterface()
 end
 ents.COMPONENT_PFM_VR_CONTROLLER = ents.register_component("pfm_vr_controller",ents.PFMVRController)

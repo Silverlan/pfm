@@ -63,7 +63,7 @@ function gui.PFMRenderPreview:OnInitialize()
 			print("Saving image as " .. outputPath .. "...")
 			local framePath = self:GetFrameFilePath(rtJob:GetRenderResultFrameIndex())
 			self.m_rt:ClearCachedPreview()
-			-- self.m_rt:SaveImage(outputPath,self.m_rt:GetImageSaveFormat())
+			self.m_rt:SaveImage(outputPath,self.m_rt:GetImageSaveFormat())
 			-- TODO
 			-- self.m_rt:GeneratePreviewImage("render/" .. framePath,self.m_rt:GetRenderResultRenderSettings())
 		end
@@ -472,7 +472,8 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	-- TODO: Add VR resolution options
 
 	-- Sky override
-	local skyOverride = p:AddFileEntry("pfm_sky_override","sky_override",function(resultHandler)
+	local skyOverride
+	skyOverride = p:AddFileEntry("pfm_sky_override","sky_override",function(resultHandler)
 		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 			if(fileName == nil) then return end
 			resultHandler(el:GetFilePath(true))
