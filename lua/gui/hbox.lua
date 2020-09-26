@@ -31,7 +31,10 @@ function gui.HBox:OnUpdate()
 
 	local curSize = size:Copy()
 	if(self.m_fixedWidth ~= true) then size.x = x
-	elseif(self.m_autoFillWidth == true and lastChild ~= nil and lastChild:HasAnchor() == false) then lastChild:SetWidth(size.x -lastChild:GetLeft()) end
+	elseif(self.m_autoFillWidth == true and lastChild ~= nil and lastChild:HasAnchor() == false) then
+		lastChild:SetWidth(size.x -lastChild:GetLeft())
+		lastChild:Update()
+	end
 	if(self.m_fixedHeight ~= true) then size.y = h end
 	if(size ~= curSize and self:HasAnchor() == false) then self:SetSize(size) end
 	self:CallCallbacks("OnContentsUpdated")

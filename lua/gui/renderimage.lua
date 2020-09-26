@@ -8,6 +8,7 @@
 
 include("/shaders/pfm/pfm_tonemapping.lua")
 include("/shaders/pfm/pfm_depth_of_field.lua")
+include("/shaders/pfm/pfm_calc_image_luminance.lua")
 include("/util/image_processor.lua")
 include("/gui/vr_view.lua")
 
@@ -22,6 +23,7 @@ function gui.RenderImage:OnInitialize()
 	self.m_shader = shader.get("pfm_tonemapping")
 	self.m_shaderDof = shader.get("pfm_dof")
 
+	self:SetAutoUpdate(true)
 	self:SetExposure(1.0)
 	self:SetToneMappingAlgorithm(shader.TONE_MAPPING_ACES)
 	self:SetToneMappingAlgorithmArgs({})
@@ -33,12 +35,20 @@ function gui.RenderImage:OnInitialize()
 
 	self.m_dofSettings = shader.PFMDepthOfField.DOFSettings()
 	self.m_dofEnabled = false
-	self.m_cbPreRenderScenes = game.add_callback("PreRenderScenes",function(drawSceneInfo) self:ApplyImageProcessing(drawSceneInfo) end)
 
 	self.m_dsTonemapping = self.m_shader:CreateDescriptorSet(shader.PFMTonemapping.DESCRIPTOR_SET_TEXTURE)
 	self:SetDOFEnabled(false)
 
 	self:SetVRView(false)
+end
+function gui.RenderImage:SetAutoUpdate(autoUpdate)
+	if(autoUpdate == self.m_autoUpdate) then return end
+	self.m_autoUpdate = autoUpdate
+	if(autoUpdate) then
+		if(util.is_valid(self.m_cbPreRenderScenes) == false) then self.m_cbPreRenderScenes = game.add_callback("PreRenderScenes",function(drawSceneInfo) self:ApplyImageProcessing(drawSceneInfo) end) end
+		return
+	end
+	util.remove(self.m_cbPreRenderScenes)
 end
 function gui.RenderImage:SetVRView(enabled)
 	self.m_vrViewEnabled = enabled
@@ -66,7 +76,7 @@ end
 function gui.RenderImage:SetTexture(tex,depthTex)
 	--self.m_elTex:SetTexture(tex)
 	-- TODO?
-	self:SetVisible(tex ~= nil)
+	-- self:SetVisible(tex ~= nil)
 
 	self:UpdateDescriptorSets()
 	self:InitializeImageProcessor(tex)
