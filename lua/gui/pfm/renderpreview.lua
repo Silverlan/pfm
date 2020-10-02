@@ -236,7 +236,7 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p)
 
 	-- Exposure factor
 	local fApplyToneMappingSettings = function() self:ApplyToneMappingSettings(self.m_rt:GetToneMapping()) end
-	self.m_ctrlExposure = p:AddSliderControl("pfm_exposure",nil,1.0,0,10,fApplyToneMappingSettings)
+	self.m_ctrlExposure = p:AddSliderControl("pfm_exposure",nil,50.0,0,100,fApplyToneMappingSettings)
 
 	-- Max luminance capability of the display
 	self.m_ctrlLdMax = p:AddSliderControl("pfm_tone_mapping_ldmax",nil,100,0,200,fApplyToneMappingSettings)
@@ -521,6 +521,13 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		self.m_rt:SetImageSaveFormat(format)
 	end)
 
+	-- Preview quality
+	self.m_ctrlPreviewQuality = p:AddDropDownMenu("pfm_cycles_preview_quality","preview_quality",{
+		{"0",locale.get_text("low")},
+		{"1",locale.get_text("medium")},
+		{"2",locale.get_text("high")}
+	},0)
+
 	-- Output directory
 	--[[local outputDir = gui.create("WIFileEntry",p)
 	outputDir:SetBrowseHandler(function(resultHandler)
@@ -766,7 +773,6 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	elseif(selectedDeviceType == "gpu") then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU end
 
 	preview = preview or false
-	local samples = preview and 4 or nil
 
 	local width,height
 	local selectedOption = self.m_ctrlResolution:GetSelectedOption()
@@ -777,10 +783,23 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	if(resolution[1] ~= nil) then width = tonumber(resolution[1]) or 0 end
 	if(resolution[2] ~= nil) then height = tonumber(resolution[2]) or 0 end
 
+	local previewQuality = tonumber(self.m_ctrlPreviewQuality:GetOptionValue(self.m_ctrlPreviewQuality:GetSelectedOption()))
+	local samples
 	if(preview) then
+		local qualityResolutions = {
+			[0] = 512,
+			[1] = 512,
+			[2] = 1024
+		}
+		local qualitySamples = {
+			[0] = 4,
+			[1] = 8,
+			[2] = 16
+		}
+		samples = qualitySamples[previewQuality]
 		local aspectRatio = width /height
 		if(width > height) then
-			height = 512
+			height = qualityResolutions[previewQuality]
 			width = height *aspectRatio
 			if((height %1.0) > 0.001) then
 				-- Round to the nearest value dividable by 2
@@ -788,7 +807,7 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 				else height = math.ceil(height) end
 			end
 		else
-			width = 512
+			width = qualityResolutions[previewQuality]
 			height = width /aspectRatio
 			if((width %1.0) > 0.001) then
 				-- Round to the nearest value dividable by 2
@@ -800,7 +819,7 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 
 	local denoiseMode
 	if(self.m_ctrlDenoise:IsChecked() == false) then denoiseMode = pfm.RaytracingRenderJob.Settings.DENOISE_MODE_NONE
-	else denoiseMode = preview and pfm.RaytracingRenderJob.Settings.DENOISE_MODE_FAST or pfm.RaytracingRenderJob.Settings.DENOISE_MODE_DETAILED end
+	else denoiseMode = (preview and previewQuality == 0) and pfm.RaytracingRenderJob.Settings.DENOISE_MODE_FAST or pfm.RaytracingRenderJob.Settings.DENOISE_MODE_DETAILED end
 
 	local progressiveRefinement = self.m_ctrlProgressiveRefinement:IsChecked()
 	settings:SetRenderMode(renderMode)
@@ -828,6 +847,7 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	settings:SetStereoscopic(self.m_ctrlEquirectMode:GetOptionValue(self.m_ctrlEquirectMode:GetSelectedOption()) == "stereo")
 	settings:SetWidth(width)
 	settings:SetHeight(height)
+	settings:SetExposure(self.m_ctrlExposure:GetValue())
 
 	if(progressiveRefinement) then self.m_btStop:SetVisible(true) end
 

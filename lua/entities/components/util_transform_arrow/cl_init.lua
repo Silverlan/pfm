@@ -43,7 +43,7 @@ end
 function ents.UtilTransformArrowComponent:SetUtilTransformComponent(c)
 	self.m_transformComponent = c
 	local axis = self:GetAxis()
-	local rot = c:GetEntity():GetRotation()
+	local rot = Quaternion() -- c:GetEntity():GetRotation()
 
 	if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then
 		if(axis == math.AXIS_X) then
@@ -159,12 +159,29 @@ end
 function ents.UtilTransformArrowComponent:ApplyTransform()
 	local transformC = self:GetBaseUtilTransformComponent()
 	local entTransform = transformC:GetEntity()
+
+	local cam = ents.ClickComponent.get_camera()
+	local v = Vector()
+	v:Set(self:GetReferenceAxis(),1.0)
+	local dir,z = cam:WorldSpaceToScreenSpaceDirection(v)
+	local z = cam:CalcScreenSpaceDistance(self:GetEntity():GetPos())
+
+	local mouseDelta = input.get_cursor_pos() -self.m_moveStartCursorPos
+	local dot = dir:DotProduct(mouseDelta)
+	local delta = dot *z /400
 	if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then
+		local axis = self:GetReferenceAxis()
+		local vAxis = Vector()
+		vAxis:Set(axis,1.0)
+		local newPos = self.m_moveStartTransformPos +vAxis *delta
+		transformC:SetAbsTransformPosition(newPos)
+
+		tool.get_filmmaker():TagRenderSceneAsDirty() -- TODO: This doesn't belong here
+
 		local intersectPos = self:GetCursorIntersectionWithAxisPlane()
 		if(intersectPos ~= nil) then
-			local axis = self:GetReferenceAxis()
-			local delta = Vector()
-			delta:Set(axis,(self:ToLocalSpace(intersectPos) -self:ToLocalSpace(self.m_moveStartPos)):Get(axis))
+			--self.m_moveStartCursorPos = input.get_cursor_pos()
+
 
 			--[[if(self:IsRelative() == false) then
 			local pos = transformC:GetAbsTransformPosition()
@@ -179,7 +196,7 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
 			self.m_moveStartPos = intersectPos
 			transformC:SetTransformPosition(pos)
 			end]]
-			local axis = self:GetReferenceAxis()
+			--[[local axis = self:GetReferenceAxis()
 			local delta = Vector()
 			delta:Set(axis,(self:ToLocalSpace(intersectPos) -self:ToLocalSpace(self.m_moveStartPos)):Get(axis))
 			print("Relative: ",self:IsRelative())
@@ -191,13 +208,27 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
 			end
 
 			local pos = transformC:GetAbsTransformPosition()
-			pos = pos +delta
+			pos:Set(axis,self:ToLocalSpace(intersectPos):Get(axis))
+			debug.draw_line(intersectPos,intersectPos +Vector(0,100,0),Color.Aqua,0.1)
+			print("INTERSECT: ",intersectPos)
+			tool.get_filmmaker():TagRenderSceneAsDirty()]]
+			--print("Test: ",intersectPos)
+			--pos = pos +delta
 
-			self.m_moveStartPos = intersectPos
-			transformC:SetAbsTransformPosition(pos)
+			--self.m_moveStartPos = intersectPos
+			--transformC:SetAbsTransformPosition(pos)
 		end
 	else
-		local intersectPos = self:GetCursorIntersectionWithAxisPlane()
+		local axis = self:GetReferenceAxis()
+		local vAxis = EulerAngles()
+		vAxis:Set(axis,1.0)
+		local newAng = self.m_moveStartTransformAng +vAxis *delta *10
+		transformC:GetEntity():SetAngles(newAng)
+
+		--transformC:SetAbsTransformPosition(newPos)
+
+		tool.get_filmmaker():TagRenderSceneAsDirty() -- TODO: This doesn't belong here
+		--[[local intersectPos = self:GetCursorIntersectionWithAxisPlane()
 		if(intersectPos ~= nil) then
 			local cursorAxisAngle = self:GetCursorAxisAngle()
 			if(cursorAxisAngle ~= nil) then
@@ -217,7 +248,7 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
 				self.m_rotStartAngle = cursorAxisAngle
 				transformC:SetTransformRotation(ang)
 			end
-		end
+		end]]
 	end
 end
 function ents.UtilTransformArrowComponent:ToLocalSpace(pos)
@@ -241,6 +272,9 @@ function ents.UtilTransformArrowComponent:StartTransform()
 	local intersectPos = self:GetCursorIntersectionWithAxisPlane()
 	if(intersectPos == nil) then return util.EVENT_REPLY_UNHANDLED end
 
+	self.m_moveStartCursorPos = input.get_cursor_pos()
+	self.m_moveStartTransformPos = self.m_transformComponent:GetAbsTransformPosition()
+	self.m_moveStartTransformAng = self.m_transformComponent:GetEntity():GetAngles()
 	if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then self.m_moveStartPos = intersectPos
 	else self.m_rotStartAngle = self:GetCursorAxisAngle() end
 	self:SetSelected(true)
@@ -277,7 +311,7 @@ function ents.UtilTransformArrowComponent:GetArrowModel()
 	meshGroup:AddMesh(mesh)
 
 	mdl:Update(game.Model.FUPDATE_ALL)
-	mdl:AddMaterial(0,"white")
+	mdl:AddMaterial(0,"white_unlit")
 
 	arrowModel = mdl
 	return mdl
@@ -301,7 +335,7 @@ function ents.UtilTransformArrowComponent:GetDiskModel()
 	meshGroup:AddMesh(mesh)
 
 	mdl:Update(game.Model.FUPDATE_ALL)
-	mdl:AddMaterial(0,"white")
+	mdl:AddMaterial(0,"white_unlit")
 
 	diskModel = mdl
 	return mdl

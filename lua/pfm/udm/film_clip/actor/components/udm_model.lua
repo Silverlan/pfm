@@ -192,7 +192,7 @@ function udm.PFMModel:SetupControls(actorEditor,itemComponent)
 
 	local itemBaseProps = itemComponent:AddItem(locale.get_text("pfm_base_properties"))
 	actorEditor:AddControl(self,itemBaseProps,{
-		name = locale.get_text("pfm_flex_controller_scale"),
+		name = "pfm_flex_controller_scale",
 		get = function(component)
 			return self:GetFlexControllerScale()
 		end,

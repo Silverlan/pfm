@@ -105,9 +105,16 @@ function gui.PFMSliderCursor:OnCursorMoved(x,y)
 	--print(self,self:GetParent():GetCursorPos().x)
 
 	local p = self:GetParent()
-	local x = p:GetCursorPos().x
-	local w = p:GetWidth()
-	local fraction = (w > 0) and (x /w) or 0.0
+	local value
+	local extent
+	if(self:IsHorizontal()) then
+		extent = p:GetWidth()
+		value = p:GetCursorPos().x
+	else
+		extent = p:GetHeight()
+		value = p:GetCursorPos().y
+	end
+	local fraction = (extent > 0) and (value /extent) or 0.0
 	local stepSize = self:GetStepSize()
 	if(stepSize > 0.0) then fraction = fraction -(fraction %stepSize) end
 	self:SetFraction(fraction)

@@ -182,6 +182,8 @@ function gui.EditableEntry:UpdateText(value)
 	self.m_pText:SetText(text)
 	self.m_pText:SizeToContents()
 	self.m_pText:CenterToParent(true)
+
+	self:CallCallbacks("OnValueChanged")
 end
 function gui.EditableEntry:SetPresetValues(values)
 	self.m_presetValues = values

@@ -12,7 +12,7 @@ udm.ELEMENT_TYPE_PFM_DIRECTIONAL_LIGHT = udm.register_type("PFMDirectionalLight"
 
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_DIRECTIONAL_LIGHT,"color",udm.Color(Color.White))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_DIRECTIONAL_LIGHT,"intensity",udm.Float(1000.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_DIRECTIONAL_LIGHT,"intensityType",udm.UInt8(ents.LightComponent.INTENSITY_TYPE_CANDELA))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_DIRECTIONAL_LIGHT,"intensityType",udm.UInt8(ents.LightComponent.INTENSITY_TYPE_LUX))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_DIRECTIONAL_LIGHT,"falloffExponent",udm.Float(1.0))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_DIRECTIONAL_LIGHT,"maxDistance",udm.Float(1000.0))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_DIRECTIONAL_LIGHT,"castShadows",udm.Bool(false),{
@@ -28,53 +28,21 @@ function udm.PFMDirectionalLight:GetIconMaterial() return "gui/pfm/icon_light_it
 
 function udm.PFMDirectionalLight:SetupControls(actorEditor,itemComponent)
 	actorEditor:AddControl(self,itemComponent,{
-		name = locale.get_text("intensity"),
+		name = "intensity",
 		property = "intensity",
 		min = 0.0,
 		max = 10000.0,
-		default = 2000.0
+		default = 2000.0,
+		unit = locale.get_text("symbol_lux")
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = locale.get_text("radius"),
-		property = "maxDistance",
-		min = 0.0,
-		max = 1000.0,
-		default = 100.0
-	})
-	actorEditor:AddControl(self,itemComponent,{
-		name = locale.get_text("red"),
-		get = function(light) return light:GetColor():ToVector4().x end,
-		set = function(light,red)
-			col = light:GetColor():ToVector4()
-			col.x = red
-			light:SetColor(Color(col))
-		end,
-		min = 0.0,
-		max = 1.0,
-		default = 1.0
-	})
-	actorEditor:AddControl(self,itemComponent,{
-		name = locale.get_text("green"),
-		get = function(light) return light:GetColor():ToVector4().y end,
-		set = function(light,green)
-			col = light:GetColor():ToVector4()
-			col.y = green
-			light:SetColor(Color(col))
-		end,
-		min = 0.0,
-		max = 1.0,
-		default = 1.0
-	})
-	actorEditor:AddControl(self,itemComponent,{
-		name = locale.get_text("blue"),
-		get = function(light) return light:GetColor():ToVector4().z end,
-		set = function(light,blue)
-			col = light:GetColor():ToVector4()
-			col.z = blue
-			light:SetColor(Color(col))
-		end,
-		min = 0.0,
-		max = 1.0,
-		default = 1.0
+		name = locale.get_text("color"),
+		addControl = function(ctrls)
+			local colField,wrapper = ctrls:AddColorField("color","color",self:GetColor(),function(oldCol,newCol)
+				self:SetColor(newCol)
+				actorEditor:TagRenderSceneAsDirty()
+			end)
+			return wrapper
+		end
 	})
 end

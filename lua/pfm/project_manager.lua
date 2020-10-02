@@ -31,6 +31,11 @@ function pfm.ProjectManager:LoadProject(fileName)
 		return self:CreateNewProject()
 	end
 	local session = project:GetSessions()[1]
+	if(session == nil) then
+		pfm.log("Unable to initialize project: Project has no session!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		self:CloseProject()
+		return self:CreateNewProject()
+	end
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
 	self:LoadAnimationCache(fileName)
 	return self:InitializeProject(project)

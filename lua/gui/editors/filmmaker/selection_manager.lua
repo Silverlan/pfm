@@ -29,14 +29,15 @@ function pfm.SelectionManager:GetSelectedActors() return self.m_selections end
 function pfm.SelectionManager:PrepareSelectionMeshesForRendering(renderer)
 	if(self.m_valid == false) then return end
 	for ent,selected in pairs(self.m_selections) do
-		local renderC = ent:IsValid() and ent:GetComponent(ents.COMPONENT_RENDER) or nil
-		if(renderC == nil) then
-			self.m_selections[ent] = nil
+		if(ent:IsValid() == false) then self.m_selections[ent] = nil
 		else
-			for _,mesh in ipairs(renderC:GetLODMeshes()) do
-				for _,subMesh in ipairs(mesh:GetSubMeshes()) do
-					renderer:ScheduleMeshForRendering(ents.RenderComponent.RENDERMODE_WORLD,self.m_shader,self.m_material,ent,subMesh)
-					renderer:ScheduleMeshForRendering(ents.RenderComponent.RENDERMODE_WORLD,self.m_shaderWireframe,self.m_material,ent,subMesh)
+			local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+			if(renderC ~= nil) then
+				for _,mesh in ipairs(renderC:GetLODMeshes()) do
+					for _,subMesh in ipairs(mesh:GetSubMeshes()) do
+						renderer:ScheduleMeshForRendering(ents.RenderComponent.RENDERMODE_WORLD,self.m_shader,self.m_material,ent,subMesh)
+						renderer:ScheduleMeshForRendering(ents.RenderComponent.RENDERMODE_WORLD,self.m_shaderWireframe,self.m_material,ent,subMesh)
+					end
 				end
 			end
 		end
@@ -49,7 +50,15 @@ function pfm.SelectionManager:Remove()
 end
 
 function pfm.SelectionManager:ClearSelections()
+	local selections = self.m_selections
 	self.m_selections = {}
+	for ent,selected in pairs(selections) do
+		if(ent:IsValid()) then
+			for _,listener in ipairs(self.m_listeners) do
+				listener(ent,false)
+			end
+		end
+	end
 end
 
 function pfm.SelectionManager:SetSelected(ent,selected)

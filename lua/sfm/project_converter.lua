@@ -1109,6 +1109,11 @@ sfm.register_element_type_conversion(sfm.ProjectedLight,udm.PFMSpotLight,functio
 	pfmLight:SetCastShadows(sfmLight:ShouldCastShadows())
 	pfmLight:SetVolumetric(sfmLight:IsVolumetric())
 	pfmLight:SetVolumetricIntensity(sfmLight:GetVolumetricIntensity() *0.05)
+
+	local fov = math.max(sfmLight:GetHorizontalFOV(),sfmLight:GetVerticalFOV())
+	fov = math.deg(fov) --  TODO: Confirm that the SFM values are in radian, they might be the same type as camera FOV values?
+	pfmLight:SetOuterConeAngle(fov)
+	pfmLight:SetInnerConeAngle(fov *0.8)
 end)
 
 sfm.register_element_type_conversion(sfm.GameParticleSystem,udm.PFMParticleSystem,function(converter,sfmParticle,pfmParticle)

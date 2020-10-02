@@ -11,19 +11,11 @@ util.register_class("ents.PFMLightPoint",BaseEntityComponent)
 function ents.PFMLightPoint:Initialize()
 	BaseEntityComponent.Initialize(self)
 
-	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
-	self:AddEntityComponent(ents.COMPONENT_LIGHT)
 	self:AddEntityComponent(ents.COMPONENT_LIGHT_POINT)
-	self:AddEntityComponent("pfm_actor")
-
-	self.m_listeners = {}
-end
-function ents.PFMLightPoint:OnRemove()
-	for _,cb in ipairs(self.m_listeners) do
-		if(cb:IsValid()) then cb:Remove() end
-	end
+	self:AddEntityComponent("pfm_light")
 end
 function ents.PFMLightPoint:Setup(actorData,lightData)
-	-- TODO
+	local lightC = self:GetEntity():GetComponent("pfm_light")
+	if(lightC ~= nil) then lightC:Setup(actorData,lightData) end
 end
 ents.COMPONENT_PFM_LIGHT_POINT = ents.register_component("pfm_light_point",ents.PFMLightPoint)

@@ -64,7 +64,7 @@ function gui.WIFilmmaker:OnInitialize()
 		if(self.m_renderSceneDirty == nil) then return true end
 		self.m_renderSceneDirty = self.m_renderSceneDirty -1
 		if(self.m_renderSceneDirty == 0) then self.m_renderSceneDirty = nil end
-		return not self.m_renderSceneDirty
+		return false
 	end)
 
 	self:EnableThinking()
@@ -914,6 +914,7 @@ function gui.WIFilmmaker:OpenParticleEditor(ptFile,ptName)
 	ptEd:LoadParticleSystem(ptFile,ptName)
 end
 function gui.WIFilmmaker:OnActorSelectionChanged(ent,selected)
+	self:TagRenderSceneAsDirty()
 	if(util.is_valid(self:GetViewport()) == false) then return end
 	self:GetViewport():OnActorSelectionChanged(ent,selected)
 end

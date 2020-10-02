@@ -219,22 +219,37 @@ function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
 	end
 end
 function gui.PFMViewport:UpdateActorManipulation(ent,selected)
+	local function add_transform_component()
+		local trC = ent:GetComponent("util_transform")
+		if(trC ~= nil) then return trC end
+		trC = ent:AddComponent("util_transform")
+		if(trC == nil) then return trC end
+		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function()
+			tool.get_filmmaker():TagRenderSceneAsDirty()
+		end)
+		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function()
+			tool.get_filmmaker():TagRenderSceneAsDirty()
+		end)
+		return trC
+	end
+	ent:RemoveComponent("util_transform")
 	local manipMode = self.m_manipulatorMode
 	if(selected == false or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SCREEN) then
 		ent:RemoveComponent("util_transform")
 	elseif(manipMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE) then
-		local tc = ent:AddComponent("util_transform")
+		local tc = add_transform_component()
 		if(tc ~= nil) then
 			tc:SetTranslationEnabled(true)
 			tc:SetRotationEnabled(false)
 		end
 	elseif(manipMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE) then
-		local tc = ent:AddComponent("util_transform")
+		local tc = add_transform_component()
 		if(tc ~= nil) then
 			tc:SetTranslationEnabled(false)
 			tc:SetRotationEnabled(true)
 		end
 	end
+	tool.get_filmmaker():TagRenderSceneAsDirty()
 end
 function gui.PFMViewport:OnActorSelectionChanged(ent,selected)
 	self:UpdateActorManipulation(ent,selected)

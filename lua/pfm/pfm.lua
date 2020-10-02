@@ -113,6 +113,9 @@ function pfm.Project:Load(fileName)
 	-- Read child information
 	for _,el in ipairs(elements) do
 		if(el:IsElement()) then
+			if(el:GetType() == udm.ELEMENT_TYPE_ROOT) then
+				self.m_udmRoot = el
+			end
 			if(el:GetType() == udm.ELEMENT_TYPE_PFM_SESSION) then
 				table.insert(self.m_sessions,el)
 			end

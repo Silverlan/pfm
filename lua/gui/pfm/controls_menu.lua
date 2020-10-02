@@ -25,6 +25,7 @@ function gui.PFMControlsMenu:AddControl(name,ctrl,wrapper,default)
 		wrapper = wrapper,
 		default = default
 	}
+	self:CallCallbacks("OnControlAdded",name,ctrl,wrapper)
 end
 function gui.PFMControlsMenu:GetControl(name) return (self.m_controls[name] ~= nil) and self.m_controls[name].element or nil end
 function gui.PFMControlsMenu:SetControlVisible(identifier,visible)
@@ -72,7 +73,7 @@ function gui.PFMControlsMenu:AddDropDownMenu(name,identifier,options,defaultOpti
 	wrapper:SetText(locale.get_text(name))
 	if(onChange ~= nil) then menu:AddCallback("OnOptionSelected",onChange) end
 	if(identifier ~= nil) then self:AddControl(identifier,menu,wrapper,defaultOption) end
-	return menu
+	return menu,wrapper
 end
 function gui.PFMControlsMenu:AddColorField(name,identifier,defaultOption,onChange)
 	local colorEntry = gui.create("WIPFMColorEntry",self)
@@ -81,7 +82,7 @@ function gui.PFMControlsMenu:AddColorField(name,identifier,defaultOption,onChang
 	colorEntryWrapper:SetText(locale.get_text(name))
 	if(identifier ~= nil) then self:AddControl(identifier,colorEntry,colorEntryWrapper,defaultOption) end
 	colorEntry:SetColor(defaultOption)
-	return colorEntry
+	return colorEntry,colorEntryWrapper
 end
 function gui.PFMControlsMenu:AddHeader(title)
 	local header = gui.create("WIEditableEntry",self)

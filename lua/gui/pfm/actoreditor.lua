@@ -9,6 +9,7 @@
 include("slider.lua")
 include("treeview.lua")
 include("weightslider.lua")
+include("controls_menu.lua")
 
 util.register_class("gui.PFMActorEditor",gui.Base)
 
@@ -141,9 +142,19 @@ function gui.PFMActorEditor:OnInitialize()
 
 	gui.create("WIResizer",dataVBox)
 
-	local animSetControlsVBox = gui.create("WIVBox",dataVBox)
-	animSetControlsVBox:SetAutoFillContentsToWidth(true)
-	self.m_animSetControlsVBox = animSetControlsVBox
+	local animSetControls = gui.create("WIPFMControlsMenu",dataVBox)
+	animSetControls:SetAutoFillContentsToWidth(true)
+	animSetControls:SetAutoFillContentsToHeight(false)
+	animSetControls:SetFixedHeight(false)
+	animSetControls:AddCallback("OnControlAdded",function(el,name,ctrl,wrapper)
+		if(wrapper ~= nil) then
+			wrapper:AddCallback("OnValueChanged",function()
+				local filmmaker = tool.get_filmmaker()
+				filmmaker:TagRenderSceneAsDirty()
+			end)
+		end
+	end)
+	self.m_animSetControls = animSetControls
 
 	self.m_sliderControls = {}
 
@@ -158,7 +169,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_data:SetRowHeight(self.m_tree:GetRowHeight())
 	self.m_data:SetSelectableMode(gui.Table.SELECTABLE_MODE_SINGLE)]]
 
-	self.m_leftRightWeightSlider = gui.create("WIPFMWeightSlider",self.m_animSetControlsVBox)
+	self.m_leftRightWeightSlider = gui.create("WIPFMWeightSlider",self.m_animSetControls)
 	return slider
 end
 function gui.PFMActorEditor:CreateNewActor()
@@ -210,50 +221,63 @@ function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType)
 	actorData.componentsEntry:Update()
 	return component
 end
+function gui.PFMActorEditor:TagRenderSceneAsDirty(dirty)
+	tool.get_filmmaker():TagRenderSceneAsDirty(dirty)
+end
 function gui.PFMActorEditor:AddSliderControl(component,controlData)
-	if(util.is_valid(self.m_animSetControlsVBox) == false) then return end
-	local slider = gui.create("WIPFMSlider",self.m_animSetControlsVBox)
-	slider:SetText(controlData.name)
-	slider:SetRange(controlData.min,controlData.max,controlData.default)
-	if(controlData.integer or controlData.boolean) then slider:SetInteger(true) end
+	if(util.is_valid(self.m_animSetControls) == false) then return end
+	local slider = self.m_animSetControls:AddSliderControl(controlData.name,controlData.name,controlData.default,controlData.min,controlData.max,nil,nil,controlData.integer or controlData.boolean)
 	local callbacks = {}
+	local skipCallbacks
 	if(controlData.type == "flexController") then
 		if(controlData.dualChannel == true) then
 			slider:GetLeftRightValueRatioProperty():Link(self.m_leftRightWeightSlider:GetFractionProperty())
 		end
 		if(controlData.property ~= nil) then
-			slider:SetValue(component:GetProperty(controlData.property):GetValue())
+			slider:SetValue(controlData.translateToInterface(component:GetProperty(controlData.property):GetValue()))
 		elseif(controlData.get ~= nil) then
-			slider:SetValue(controlData.get(component))
+			slider:SetValue(controlData.translateToInterface(controlData.get(component)))
 			if(controlData.getProperty ~= nil) then
 				local prop = controlData.getProperty(component)
 				if(prop ~= nil) then
 					local cb = prop:AddChangeListener(function(newValue)
-						slider:SetValue(newValue)
+						self:TagRenderSceneAsDirty()
+						if(skipCallbacks) then return end
+						skipCallbacks = true
+						slider:SetValue(controlData.translateToInterface(newValue))
+						skipCallbacks = nil
 					end)
 					table.insert(callbacks,cb)
 				end
 			end
 		elseif(controlData.dualChannel == true) then
 			if(controlData.getLeft ~= nil) then
-				slider:SetLeftValue(controlData.getLeft(component))
+				slider:SetLeftValue(controlData.translateToInterface(controlData.getLeft(component)))
 				if(controlData.getLeftProperty ~= nil) then
 					local prop = controlData.getLeftProperty(component)
 					if(prop ~= nil) then
 						local cb = prop:AddChangeListener(function(newValue)
-							slider:SetLeftValue(newValue)
+						self:TagRenderSceneAsDirty()
+							if(skipCallbacks) then return end
+							skipCallbacks = true
+							slider:SetLeftValue(controlData.translateToInterface(newValue))
+							skipCallbacks = nil
 						end)
 						table.insert(callbacks,cb)
 					end
 				end
 			end
 			if(controlData.getRight ~= nil) then
-				slider:SetRightValue(controlData.getRight(component))
+				slider:SetRightValue(controlData.translateToInterface(controlData.getRight(component)))
 				if(controlData.getRightProperty ~= nil) then
 					local prop = controlData.getRightProperty(component)
 					if(prop ~= nil) then
 						local cb = prop:AddChangeListener(function(newValue)
-							slider:SetRightValue(newValue)
+						self:TagRenderSceneAsDirty()
+							if(skipCallbacks) then return end
+							skipCallbacks = true
+							slider:SetRightValue(controlData.translateToInterface(newValue))
+							skipCallbacks = nil
 						end)
 						table.insert(callbacks,cb)
 					end
@@ -269,10 +293,14 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 				return val
 			end
 			local cb = prop:AddChangeListener(function(newValue)
-				slider:SetValue(get_numeric_value(newValue))
+				self:TagRenderSceneAsDirty()
+				if(skipCallbacks) then return end
+				skipCallbacks = true
+				slider:SetValue(controlData.translateToInterface(get_numeric_value(newValue)))
+				skipCallbacks = nil
 			end)
 			table.insert(callbacks,cb)
-			slider:SetValue(get_numeric_value(prop:GetValue()))
+			slider:SetValue(controlData.translateToInterface(get_numeric_value(prop:GetValue())))
 		end
 	end
 	if(#callbacks > 0) then
@@ -285,7 +313,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	slider:AddCallback("OnLeftValueChanged",function(el,value)
 		if(controlData.boolean) then value = toboolean(value) end
 		if(controlData.property ~= nil) then
-			component:GetProperty(controlData.property):SetValue(value)
+			component:GetProperty(controlData.property):SetValue(controlData.translateFromInterface(value))
 		elseif(controlData.set ~= nil) then
 			controlData.set(component,value)
 		elseif(controlData.setLeft ~= nil) then
@@ -458,22 +486,28 @@ function gui.PFMActorEditor:AddProperty(name,item,fInitPropertyEl)
 	end)
 end
 function gui.PFMActorEditor:AddControl(component,item,controlData)
+	controlData.translateToInterface = controlData.translateToInterface or function(val) return val end
+	controlData.translateFromInterface = controlData.translateFromInterface or function(val) return val end
 	local child = item:AddItem(controlData.name)
 
-	local sliderControl
+	local ctrl
 	local selectedCount = 0
 	local fOnSelected = function()
 		selectedCount = selectedCount +1
-		if(selectedCount > 1 or util.is_valid(sliderControl)) then return end
-		sliderControl = self:AddSliderControl(component,controlData)
-		self:CallCallbacks("OnControlSelected",component,controlData,sliderControl)
+		if(selectedCount > 1 or util.is_valid(ctrl)) then return end
+		if(controlData.addControl) then ctrl = controlData.addControl(self.m_animSetControls)
+		else
+			ctrl = self:AddSliderControl(component,controlData)
+			if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
+		end
+		self:CallCallbacks("OnControlSelected",component,controlData,ctrl)
 	end
 	local fOnDeselected = function()
 		selectedCount = selectedCount -1
 		if(selectedCount > 0) then return end
-		self:CallCallbacks("OnControlDeselected",component,controlData,sliderControl)
-		if(util.is_valid(sliderControl) == false) then return end
-		sliderControl:Remove()
+		self:CallCallbacks("OnControlDeselected",component,controlData,ctrl)
+		if(util.is_valid(ctrl) == false) then return end
+		ctrl:Remove()
 	end
 	if(controlData.type == "bone") then
 		local function add_item(parent,name)
@@ -496,6 +530,7 @@ function gui.PFMActorEditor:AddControl(component,item,controlData)
 		child:AddCallback("OnSelected",fOnSelected)
 		child:AddCallback("OnDeselected",fOnDeselected)
 	end
+	return ctrl
 end
 function gui.PFMActorEditor:InitializeNavigationBar()
 	--[[self.m_btHome = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_home","gui/pfm/icon_nav_home_activated",function()

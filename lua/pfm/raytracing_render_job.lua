@@ -86,6 +86,7 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"useProgressiveRef
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"progressive",false,{
 	getter = "IsProgressive"
 })
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"exposure",1.0)
 
 function pfm.RaytracingRenderJob.Settings:__init()
 	self:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
@@ -138,6 +139,7 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetStereoscopic(self:IsStereoscopic())
 	cpy:SetUseProgressiveRefinement(self:ShouldUseProgressiveRefinement())
 	cpy:SetProgressive(self:IsProgressive())
+	cpy:SetExposure(self:GetExposure())
 	return cpy
 end
 
@@ -272,6 +274,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	createInfo.deviceType = renderSettings:GetDeviceType()
 	createInfo.progressiveRefine = renderSettings:ShouldUseProgressiveRefinement()
 	createInfo.progressive = renderSettings:IsProgressive()
+	createInfo.exposure = renderSettings:GetExposure()
 	createInfo:SetSamplesPerPixel(renderSettings:GetSamples())
 	createInfo:SetColorTransform(cycles.Scene.COLOR_TRANSFORM_FILMIC_BLENDER)
 

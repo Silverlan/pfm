@@ -229,6 +229,10 @@ function gui.PFMSlider:SetText(text)
 	self.m_baseText = text
 	self:UpdateText()
 end
+function gui.PFMSlider:SetUnit(unit)
+	self.m_unit = unit
+	self:UpdateText()
+end
 function gui.PFMSlider:UpdateText()
 	if(self.m_baseText == nil) then return end
 	local text = self.m_baseText .. ": "
@@ -236,6 +240,7 @@ function gui.PFMSlider:UpdateText()
 	if(self:GetLeftRightValueRatio() ~= 0.5) then
 		text = text .. " / " .. util.round_string(self:GetRightValue(),self.m_numDecimalPlaces)
 	end
+	if(self.m_unit ~= nil) then text = text .. " " .. self.m_unit end
 	self.m_text:SetText(text)
 	self.m_text:SizeToContents()
 	self.m_text:CenterToParent(true)
