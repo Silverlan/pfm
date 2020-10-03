@@ -41,6 +41,13 @@ function udm.PFMFilmClip:GetActorList(list)
 	return list
 end
 
+function udm.PFMFilmClip:FindEntity()
+	for ent in ents.iterator({ents.IteratorFilterComponent("pfm_film_clip")}) do
+		local filmClipC = ent:GetComponent("pfm_film_clip")
+		if(util.is_same_object(filmClipC:GetClipData(),self)) then return ent end
+	end
+end
+
 function udm.PFMFilmClip:FindActor(name)
 	for _,actor in ipairs(self:GetActors():GetTable()) do
 		if(actor:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then

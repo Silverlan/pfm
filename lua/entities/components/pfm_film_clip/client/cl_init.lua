@@ -67,9 +67,7 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 		table.insert(self.m_actors,entActor)
 	end
 ]]
-	for _,actorData in ipairs(filmClip:GetActorList()) do
-		self:CreateActor(actorData)
-	end
+	self:InitializeActors()
 
 	for _,trackGroupData in ipairs(filmClip:GetTrackGroups():GetTable()) do
 		if(trackGroupData:IsMuted() == false) then
@@ -152,7 +150,21 @@ function ents.PFMFilmClip:GetActor(actorData)
 	end
 end
 
+function ents.PFMFilmClip:InitializeActors()
+	print("InitializeActors: ")
+	-- Only create actors that don't exist in the scene yet!
+	local actorDataToEnt = {}
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR)}) do
+		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+		actorDataToEnt[actorC:GetActorData()] = ent
+	end
+	for _,actorData in ipairs(self.m_filmClipData:GetActorList()) do
+		if(actorDataToEnt[actorData] == nil) then self:CreateActor(actorData) end
+	end
+end
+
 function ents.PFMFilmClip:CreateActor(actor)
+	print("CREATING")
 	local entActor = ents.create("pfm_actor")
 	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	actorC:Setup(actor)

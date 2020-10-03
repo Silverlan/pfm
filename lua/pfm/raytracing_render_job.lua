@@ -87,6 +87,8 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"progressive",fals
 	getter = "IsProgressive"
 })
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"exposure",1.0)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"colorTransform","filmic-blender")
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"colorTransformLook","")
 
 function pfm.RaytracingRenderJob.Settings:__init()
 	self:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
@@ -140,6 +142,8 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetUseProgressiveRefinement(self:ShouldUseProgressiveRefinement())
 	cpy:SetProgressive(self:IsProgressive())
 	cpy:SetExposure(self:GetExposure())
+	cpy:SetColorTransform(self:GetColorTransform())
+	cpy:SetColorTransformLook(self:GetColorTransformLook())
 	return cpy
 end
 
@@ -276,7 +280,11 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	createInfo.progressive = renderSettings:IsProgressive()
 	createInfo.exposure = renderSettings:GetExposure()
 	createInfo:SetSamplesPerPixel(renderSettings:GetSamples())
-	createInfo:SetColorTransform(cycles.Scene.COLOR_TRANSFORM_FILMIC_BLENDER)
+
+	local colorTransform = renderSettings:GetColorTransform()
+	local colorTransformLook = renderSettings:GetColorTransformLook()
+	if(colorTransformLook ~= nil) then createInfo:SetColorTransform(colorTransform,colorTransformLook)
+	else createInfo:SetColorTransform(colorTransform) end
 
 	local w = renderSettings:GetWidth()
 	local h = renderSettings:GetHeight()
@@ -343,7 +351,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	local pfmCam = cam:GetEntity():GetComponent(ents.COMPONENT_PFM_CAMERA)
 	if(pfmCam ~= nil) then
 		local camData = pfmCam:GetCameraData()
-		print("Using focal distance: ",camData:GetFocalDistance())
+		-- print("Using focal distance: ",camData:GetFocalDistance())
 		clCam:SetFocalDistance(camData:GetFocalDistance())
 		clCam:SetBokehRatio(camData:GetApertureBokehRatio())
 		clCam:SetBladeCount(camData:GetApertureBladeCount())
@@ -359,7 +367,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		return ent:IsMapEntity()
 	end
 
-	if(g_staticGeometryCache == nil) then
+	if(g_staticGeometryCache == nil and renderSettings:GetRenderWorld()) then
 		g_staticGeometryCache = cycles.create_cache()
 		g_staticGeometryCache:InitializeFromGameScene(self.m_gameScene,is_static_cache_entity)
 	end
@@ -368,12 +376,12 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		if(is_static_cache_entity(ent)) then return false end
 		if(ent:IsWorld()) then return renderSettings:GetRenderWorld() end
 		if(ent:IsPlayer()) then return renderSettings:GetRenderPlayer() end
-		if(ent:HasComponent(ents.COMPONENT_PARTICLE_SYSTEM) == true) then return false end -- TODO
+		if(ent:HasComponent(ents.COMPONENT_PARTICLE_SYSTEM) == true or ent:HasComponent("util_transform_arrow") == true) then return false end -- TODO
 		return renderSettings:GetRenderGameEntities() or ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
 	end,function(ent)
 		return true
 	end)
-	scene:AddCache(g_staticGeometryCache)
+	if(renderSettings:GetRenderWorld() and g_staticGeometryCache ~= nil) then scene:AddCache(g_staticGeometryCache) end
 	if(#renderSettings:GetSky() > 0) then scene:SetSky(renderSettings:GetSky()) end
 
 	-- We want particle effects with bloom to emit light, so we'll add a light source for each particle.

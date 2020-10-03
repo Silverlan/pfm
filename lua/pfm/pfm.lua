@@ -19,6 +19,7 @@ include("/udm/udm.lua")
 include("udm")
 include("math.lua")
 include("cycles.lua")
+include("message_popup.lua")
 include("tree/pfm_tree.lua")
 
 util.register_class("pfm.Project")

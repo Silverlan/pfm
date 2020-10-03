@@ -1,3 +1,5 @@
+include("/shaders/pfm/pfm_gizmo.lua")
+
 include_component("click")
 
 util.register_class("ents.UtilTransformArrowComponent",BaseEntityComponent)
@@ -23,6 +25,13 @@ function ents.UtilTransformArrowComponent:Initialize()
 
 	self:BindEvent(ents.ClickComponent.EVENT_ON_CLICK,"OnClick")
 	self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")
+	self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"UpdateScale")
+end
+function ents.UtilTransformArrowComponent:UpdateScale()
+	local cam = game.get_render_scene_camera()
+	local d = self:GetEntity():GetPos():Distance(cam:GetEntity():GetPos())
+	d = ((d *0.008) ^0.3) *2 -- Roughly try to keep the same size regardless of distance to the camera
+	self:GetEntity():SetScale(Vector(d,d,d))
 end
 function ents.UtilTransformArrowComponent:OnEntitySpawn()
 	self:UpdateAxis()
@@ -311,7 +320,7 @@ function ents.UtilTransformArrowComponent:GetArrowModel()
 	meshGroup:AddMesh(mesh)
 
 	mdl:Update(game.Model.FUPDATE_ALL)
-	mdl:AddMaterial(0,"white_unlit")
+	mdl:AddMaterial(0,"pfm/gizmo")
 
 	arrowModel = mdl
 	return mdl
@@ -335,7 +344,7 @@ function ents.UtilTransformArrowComponent:GetDiskModel()
 	meshGroup:AddMesh(mesh)
 
 	mdl:Update(game.Model.FUPDATE_ALL)
-	mdl:AddMaterial(0,"white_unlit")
+	mdl:AddMaterial(0,"pfm/gizmo")
 
 	diskModel = mdl
 	return mdl

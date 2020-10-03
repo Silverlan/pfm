@@ -509,6 +509,25 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	-- Number of frames
 	self.m_ctrlFrameCount = p:AddSliderControl("pfm_number_of_frames_to_render","frame_count",1,1,100,nil,1.0,true)
 
+	local _,colorTransforms = file.find("modules/open_color_io/configs/*")
+	local colorTransformOptions = {}
+	for _,ct in ipairs(colorTransforms) do
+		table.insert(colorTransformOptions,{ct,ct})
+	end
+	self.m_ctrlColorTransform = p:AddDropDownMenu("pfm_color_transform","color_transform",colorTransformOptions,0)
+
+	-- TODO: Allow custom looks for custom color transforms!
+	self.m_ctrlColorTransformLook = p:AddDropDownMenu("pfm_color_transform_look","color_transform_look",{
+		{"None",locale.get_text("none")},
+		{"Very High Contrast",locale.get_text("pfm_color_transform_filmic_blender_very_high_contrast")},
+		{"High Contrast",locale.get_text("pfm_color_transform_filmic_blender_high_contrast")},
+		{"Medium High Contrast",locale.get_text("pfm_color_transform_filmic_blender_medium_high_contrast")},
+		{"Medium Contrast",locale.get_text("pfm_color_transform_filmic_blender_medium_contrast")},
+		{"Medium Low Contrast",locale.get_text("pfm_color_transform_filmic_blender_medium_low_contrast")},
+		{"Low Contrast",locale.get_text("pfm_color_transform_filmic_blender_low_contrast")},
+		{"Very Low Contrast",locale.get_text("pfm_color_transform_filmic_blender_very_low_contrast")}
+	},0)
+
 	-- Output format
 	self.m_ctrlOutputFormat = p:AddDropDownMenu("pfm_cycles_output_format","output_format",{
 		{tostring(util.IMAGE_FORMAT_HDR),"HDR"},
@@ -848,6 +867,9 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	settings:SetWidth(width)
 	settings:SetHeight(height)
 	settings:SetExposure(self.m_ctrlExposure:GetValue())
+
+	settings:SetColorTransform(self.m_ctrlColorTransform:GetOptionValue(self.m_ctrlColorTransform:GetSelectedOption()))
+	settings:SetColorTransformLook(self.m_ctrlColorTransformLook:GetOptionValue(self.m_ctrlColorTransformLook:GetSelectedOption()))
 
 	if(progressiveRefinement) then self.m_btStop:SetVisible(true) end
 

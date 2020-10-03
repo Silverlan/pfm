@@ -39,6 +39,7 @@ include("project_packer.lua")
 
 gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
+locale.load("pfm_popup_messages.txt")
 locale.load("physics_materials.txt")
 
 include("windows")
@@ -114,6 +115,7 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_save_dialog(function(pDialog,fileName)
+				file.create_directory("projects")
 				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfm"
 				self:SaveProject(fileName)
 			end)
@@ -453,6 +455,25 @@ function gui.WIFilmmaker:OnInitialize()
 		self.m_entLight = entLight
 	end
 	pfm.ProjectManager.OnInitialize(self)
+end
+function gui.WIFilmmaker:AddActor(actor,filmClip)
+	filmClip:GetActors():PushBack(actor)
+	self:UpdateActor(actor,filmClip)
+end
+function gui.WIFilmmaker:UpdateActor(actor,filmClip,reload)
+	if(reload == true) then
+		for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR)}) do
+			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if(util.is_same_object(actorC:GetActorData(),actor)) then
+				ent:Remove()
+			end
+		end
+	end
+
+	local ent = filmClip:FindEntity()
+	local filmClipC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_PFM_FILM_CLIP) or nil
+	if(filmClipC ~= nil) then filmClipC:InitializeActors() end
+	self:TagRenderSceneAsDirty()
 end
 function gui.WIFilmmaker:TagRenderSceneAsDirty(dirty)
 	if(dirty == nil) then

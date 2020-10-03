@@ -47,6 +47,8 @@ function gui.PFMActorEditor:OnInitialize()
 				local mdlC = self:CreateNewActorComponent(actor,"PFMModel")
 				self:CreateNewActorComponent(actor,"PFMAnimationSet")
 				if(mdlC ~= nil) then mdlC:SetModelName(mdlName) end
+
+				self:AddActorToScene(actor)
 			end)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_prop"),function()
@@ -57,32 +59,44 @@ function gui.PFMActorEditor:OnInitialize()
 				if(actor == nil) then return end
 				local mdlC = self:CreateNewActorComponent(actor,"PFMModel")
 				if(mdlC ~= nil) then mdlC:SetModelName(mdlName) end
+
+				self:AddActorToScene(actor)
 			end)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_camera"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMCamera")
+
+			self:AddActorToScene(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_particle_system"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMParticleSystem")
+
+			self:AddActorToScene(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_spot_light"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMSpotLight")
+
+			self:AddActorToScene(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_point_light"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMPointLight")
+
+			self:AddActorToScene(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_directional_light"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMDirectionalLight")
+
+			self:AddActorToScene(actor)
 		end)
 		--[[local history = self:GetHistory()
 		local pos = history:GetCurrentPosition()
@@ -174,7 +188,10 @@ function gui.PFMActorEditor:OnInitialize()
 end
 function gui.PFMActorEditor:CreateNewActor()
 	local filmClip = self:GetFilmClip()
-	if(filmClip == nil) then return end
+	if(filmClip == nil) then
+		pfm.create_popup_message(locale.get_text("pfm_popup_create_actor_no_film_clip"))
+		return
+	end
 	local actor = udm.PFMActor()
 	local actorName = "actor"
 
@@ -194,11 +211,11 @@ function gui.PFMActorEditor:CreateNewActor()
 	t:SetPosition(pos)
 	t:SetRotation(rot)
 
-	filmClip:GetActors():PushBack(actor)
 	self:AddActor(actor)
 	return actor
 end
-function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType)
+function gui.PFMActorEditor:AddActorToScene(actor) tool.get_filmmaker():AddActor(actor,self:GetFilmClip()) end
+function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateActor)
 	local itemActor
 	for elTree,data in pairs(self.m_treeElementToActorData) do
 		if(util.is_same_object(actor,data.actor)) then
@@ -219,6 +236,8 @@ function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType)
 
 	self:AddActorComponent(itemActor,actorData.componentsEntry,component)
 	actorData.componentsEntry:Update()
+
+	if(updateActor == true) then tool.get_filmmaker():UpdateActor(actor,self:GetFilmClip(),true) end
 	return component
 end
 function gui.PFMActorEditor:TagRenderSceneAsDirty(dirty)
@@ -435,7 +454,7 @@ function gui.PFMActorEditor:AddActor(actor)
 			for _,componentType in ipairs(components) do
 				-- TODO: Only show in list if actor doesn't already have this component!
 				pComponentsMenu:AddItem(locale.get_text("pfm_add_component_type",{componentType}),function()
-					self:CreateNewActorComponent(actor,componentType)
+					self:CreateNewActorComponent(actor,componentType,true)
 				end)
 			end
 			pComponentsMenu:Update()

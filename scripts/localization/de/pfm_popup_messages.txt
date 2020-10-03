@@ -1,0 +1,1 @@
+pfm_popup_create_actor_no_film_clip = "Akteur kann nicht erzeugt werden: Es ist kein Filmausschnitt selektiert!"
