@@ -55,7 +55,7 @@ function gui.PFMInfobar:OnInitialize()
 		print("WARNING: An error occured trying to load the 'pr_curl' module: ",r)
 		return
 	end
-	self.m_patronRequest = curl.request("http://pragma-engine.com/patreon/request_patrons.php",{})
+	self.m_patronRequest = curl.request("https://pragma-engine.com/patreon/request_patrons.php",{})
 	self.m_patronRequest:Start()
 	self:EnableThinking()
 end

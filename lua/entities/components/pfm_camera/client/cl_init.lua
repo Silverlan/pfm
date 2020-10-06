@@ -24,6 +24,7 @@ ents.PFMCamera.set_camera_enabled = function(enabled)
 	ents.PFMCamera.set_active_camera(ents.PFMCamera.impl.activeCamera)
 end
 ents.PFMCamera.set_active_camera = function(cam)
+	pfm.tag_render_scene_as_dirty()
 	if(util.is_valid(ents.PFMCamera.impl.activeCamera)) then
 		local toggleC = ents.PFMCamera.impl.activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
 		if(toggleC ~= nil) then toggleC:TurnOff() end

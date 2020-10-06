@@ -185,7 +185,7 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
 		local newPos = self.m_moveStartTransformPos +vAxis *delta
 		transformC:SetAbsTransformPosition(newPos)
 
-		tool.get_filmmaker():TagRenderSceneAsDirty() -- TODO: This doesn't belong here
+		pfm.tag_render_scene_as_dirty()
 
 		local intersectPos = self:GetCursorIntersectionWithAxisPlane()
 		if(intersectPos ~= nil) then
@@ -220,7 +220,7 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
 			pos:Set(axis,self:ToLocalSpace(intersectPos):Get(axis))
 			debug.draw_line(intersectPos,intersectPos +Vector(0,100,0),Color.Aqua,0.1)
 			print("INTERSECT: ",intersectPos)
-			tool.get_filmmaker():TagRenderSceneAsDirty()]]
+			pfm.tag_render_scene_as_dirty()]]
 			--print("Test: ",intersectPos)
 			--pos = pos +delta
 
@@ -236,7 +236,7 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
 
 		--transformC:SetAbsTransformPosition(newPos)
 
-		tool.get_filmmaker():TagRenderSceneAsDirty() -- TODO: This doesn't belong here
+		pfm.tag_render_scene_as_dirty()
 		--[[local intersectPos = self:GetCursorIntersectionWithAxisPlane()
 		if(intersectPos ~= nil) then
 			local cursorAxisAngle = self:GetCursorAxisAngle()

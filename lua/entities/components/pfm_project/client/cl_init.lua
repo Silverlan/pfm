@@ -71,9 +71,9 @@ function ents.PFMProject:SetOffset(offset,gameViewFlags)
 	if(cvAnimCache:GetBool() == false) then return end
 	-- if(bit.band(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE) == ents.PFMProject.GAME_VIEW_FLAG_NONE) then return end
 
-	local filmmaker = tool.get_filmmaker()
-	local animCache = filmmaker:GetAnimationCache()
-	local frameIndex = filmmaker:TimeOffsetToFrameOffset(offset)
+	local pm = pfm.get_project_manager()
+	local animCache = pm:GetAnimationCache()
+	local frameIndex = pm:TimeOffsetToFrameOffset(offset)
 	if(animCache == nil) then return end
 	-- animCache:UpdateCache(offset)
 	local filmClip = animCache:GetFilmClip(frameIndex)

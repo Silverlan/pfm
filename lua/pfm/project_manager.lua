@@ -19,6 +19,28 @@ function pfm.ProjectManager:OnInitialize()
 	self.m_gameScene = game.get_scene()
 
 	self:CreateNewProject()
+	self.m_map = game.get_map_name()
+end
+function pfm.ProjectManager:LoadMap()
+	local session = self:GetSession()
+	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
+	if(activeClip == nil) then return end
+	local mapName = activeClip:GetMapName()
+	if(mapName:lower() == self.m_map:lower()) then return end
+	self:ClearMap()
+	self.m_map = mapName
+
+	local packet = net.Packet()
+	packet:WriteString(mapName)
+	net.send(net.PROTOCOL_SLOW_RELIABLE,"sv_pfm_load_map",packet)
+end
+function pfm.ProjectManager:ClearMap()
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_MAP)}) do
+		local mapC = ent:GetComponent(ents.COMPONENT_MAP)
+		if(mapC:GetMapIndex() ~= 0) then
+			ent:RemoveSafely()
+		end
+	end
 end
 function pfm.ProjectManager:SetGameScene(scene) self.m_gameScene = scene end
 function pfm.ProjectManager:GetGameScene() return self.m_gameScene end
@@ -183,7 +205,7 @@ function pfm.ProjectManager:GetTimeFrameFrameIndexRange(timeFrame)
 end
 function pfm.ProjectManager:GetLastFrameIndex()
 	local lastFrame = self:GetSession():GetLastFrameIndex()
-	lastFrame = self:GetClampedFrameOffset(self:TimeOffsetToFrameOffset(lastFrame))
+	lastFrame = self:GetClampedFrameOffset(lastFrame)
 	return lastFrame
 end
 function pfm.ProjectManager:GetFrameIndexRange() return self:GetSession():GetFrameIndexRange() end

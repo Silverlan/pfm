@@ -107,7 +107,8 @@ function gui.VideoAssetIcon:ApplyAsset(path,importAsset)
 	local block = select(2,pairs(childBlocks)(childBlocks))
 	if(block ~= nil) then
 		self.m_dataBlock = block
-		self:SetMaterial("third_party/source_engine",100,30)
+		local icon = block:GetString("icon")
+		self:SetMaterial(icon,100,30)
 	else
 		self:SetMaterial("error",self:GetWidth(),self:GetHeight())
 	end

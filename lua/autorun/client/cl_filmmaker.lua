@@ -17,13 +17,15 @@ tool.close_filmmaker = function()
 	if(tool.is_filmmaker_open() == false) then return end
 	tool.editor:Close()
 	tool.editor = nil
+	tool.filmmaker = nil
 end
-tool.get_filmmaker = function() return tool.editor end
+tool.get_filmmaker = function() return tool.filmmaker end
 tool.is_filmmaker_open = function() return util.is_valid(tool.editor) end
 tool.open_filmmaker = function()
 	include("/gui/editors/filmmaker/filmmaker.lua")
 	tool.close_filmmaker()
 	tool.editor = gui.create("WIFilmmaker")
+	tool.filmmaker = tool.editor
 	tool.editor:SetAutoAlignToParent(true)
 	-- tool.editor:SetZPos(1000)
 

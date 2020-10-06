@@ -24,6 +24,7 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"flexControllerNames",u
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"globalFlexControllers",udm.Array(udm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"materialOverrides",udm.Array(udm.ELEMENT_TYPE_PFM_MATERIAL))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"flexControllerScale",udm.Float(1.0))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"flexControllerLimitsEnabled",udm.Bool(true))
 
 function udm.PFMModel:GetComponentName() return "pfm_model" end
 function udm.PFMModel:GetIconMaterial() return "gui/pfm/icon_model_item" end
@@ -166,6 +167,14 @@ function udm.PFMModel:SetupFlexControllerControls(actorEditor,itemComponent)
 			})
 		end
 	end
+	actorEditor:AddControl(self,itemComponent,{
+		name = "flex_controller_limits",
+		addControl = function(ctrls)
+			return ctrls:AddToggleControl("pfm_enable_flex_controller_limits","flex_controller_limits",self:GetFlexControllerLimitsEnabled(),function(el,checked)
+				self:SetFlexControllerLimitsEnabled(checked)
+			end)
+		end
+	})
 end
 
 function udm.PFMModel:SetupBoneControls(actorEditor,itemComponent)

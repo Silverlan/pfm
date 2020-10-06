@@ -57,8 +57,8 @@ function ents.PFMParticleSystem:OnOffsetChanged(offset)
 	self.m_lastSimulationOffset = offset
 
 	if(ptC == nil) then return end
-	self.m_queuedSimOffset = self.m_queuedSimOffset +(1 /tool.get_filmmaker():GetFrameRate()) -- TODO: Use dt
-	self.m_ptSimTime = self.m_ptSimTime +(1 /tool.get_filmmaker():GetFrameRate())
+	self.m_queuedSimOffset = self.m_queuedSimOffset +(1 /pfm.get_project_manager():GetFrameRate()) -- TODO: Use dt
+	self.m_ptSimTime = self.m_ptSimTime +(1 /pfm.get_project_manager():GetFrameRate())
 end
 function ents.PFMParticleSystem:OnRemove()
 	for _,cb in ipairs(self.m_listeners) do
@@ -99,7 +99,7 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 		game.precache_particle_system("muzzle_flash",true)
 		game.precache_particle_system("bullet_tracers",true)
 		game.precache_particle_system("nailtrails",true)
-		game.precache_particle_system("sessions/" .. tool.get_filmmaker():GetProject():GetName() .. "_instanced",true)
+		game.precache_particle_system("sessions/" .. pfm.get_project_manager():GetProject():GetName() .. "_instanced",true)
 		ent:SetKeyValue("particle_file",ptSystemFileName)
 		ent:SetKeyValue("particle",ptSystemName)
 	else

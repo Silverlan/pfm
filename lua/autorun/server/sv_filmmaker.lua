@@ -7,6 +7,7 @@
 ]]
 
 net.register("sv_pfm_camera_mode")
+net.register("sv_pfm_load_map")
 
 local CAMERA_MODE_PLAYBACK = 0
 local CAMERA_MODE_FLY = 1
@@ -42,4 +43,9 @@ net.receive("sv_pfm_camera_mode",function(packet,pl)
 		if(charC ~= nil) then charC:SetViewAngles(ang)
 		else ent:SetAngles(ang) end
 	end]]
+end)
+
+net.receive("sv_pfm_load_map",function(packet,pl)
+	local mapName = packet:ReadString()
+	game.load_map(mapName,Vector(0,0,0),true)
 end)

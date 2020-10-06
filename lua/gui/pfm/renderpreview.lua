@@ -492,7 +492,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	if(#skies > 0) then skyOverride:SetValue("skies/" .. skies[1]) end
 
 	-- Sky strength
-	self.m_ctrlSkyStrength = p:AddSliderControl("pfm_sky_strength","sky_strength",30,0,100)
+	self.m_ctrlSkyStrength = p:AddSliderControl("pfm_sky_strength","sky_strength",0.3,0,2)
 
 	-- Sky yaw
 	self.m_ctrlSkyYaw = p:AddSliderControl("pfm_sky_yaw_angle","sky_yaw",0,0,360)

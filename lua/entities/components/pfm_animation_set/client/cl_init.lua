@@ -70,7 +70,7 @@ function ents.PFMAnimationSet:SetFlexController(fcId,value)
 	local fc = (mdl ~= nil) and mdl:GetFlexController(fcId) or nil -- TODO: Cache this
 	local flexC = ent:GetComponent(ents.COMPONENT_FLEX)
 	if(flexC == nil or fc == nil) then return false end
-	flexC:SetFlexController(fcId,translate_flex_controller_value(fc,value),0.0,false)
+	flexC:SetFlexController(fcId,translate_flex_controller_value(fc,value),0.0,self.m_flexControllerLimitsEnabled)
 end
 
 function ents.PFMAnimationSet:ApplyBoneTransforms()
@@ -99,6 +99,10 @@ end
 
 function ents.PFMAnimationSet:Setup(actorData,animSet)
 	self.m_actorData = actorData
-	self.m_animSetData = animSet
+	self.m_mdlComponent = actorData:FindComponent("pfm_model")
+	-- TODO: Update this value when it's changed, or if the model component is removed or added later
+	self.m_flexControllerLimitsEnabled = true
+	if(self.m_mdlComponent ~= nil) then self.m_flexControllerLimitsEnabled = self.m_mdlComponent:GetFlexControllerLimitsEnabled() end
+	-- self.m_animSetData = animSet
 end
 ents.COMPONENT_PFM_ANIMATION_SET = ents.register_component("pfm_animation_set",ents.PFMAnimationSet)

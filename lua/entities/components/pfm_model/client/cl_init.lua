@@ -37,6 +37,7 @@ function ents.PFMModel:OnEntitySpawn()
 	local bones = modelData:GetBoneList():GetTable()
 	local animSetC = (#bones > 0) and self:AddEntityComponent("pfm_animation_set") or nil
 	if(animSetC == nil) then return end -- TODO: What if flexes, but no bones? (Animation component shouldn't be needed in this case)
+	animSetC:Setup(self:GetActorData())
 
 	local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 	if(animC ~= nil) then
