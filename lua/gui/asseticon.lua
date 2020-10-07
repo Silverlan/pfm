@@ -250,6 +250,8 @@ function gui.AssetIcon:Reload(importAsset)
 	self:ClearIcon()
 	self:ReloadFromCache(importAsset)
 end
+function gui.AssetIcon:IsNativeAsset() return self.m_isNativeAsset or false end
+function gui.AssetIcon:SetNativeAsset(nativeAsset) self.m_isNativeAsset = nativeAsset end
 function gui.AssetIcon:ReloadFromCache(importAsset)
 	self:SetAsset(self.m_assetPath,self.m_assetName,importAsset)
 end
@@ -319,6 +321,7 @@ function gui.ModelAssetIcon:__init()
 	gui.AssetIcon.__init(self)
 end
 function gui.ModelAssetIcon:IsExportable() return true end
+function gui.ModelAssetIcon:IsExternalAsset() return false end
 function gui.ModelAssetIcon:Export()
 	local path = util.Path(self:GetAsset())
 	path:PopFront()
@@ -342,6 +345,7 @@ function gui.ModelAssetIcon:GetTypeIdentifier() return "model" end
 function gui.ModelAssetIcon:GetMaterialOverride() end
 function gui.ModelAssetIcon:SetModelAsset(mdl,importAsset)
 	self.m_assetType = asset.TYPE_MODEL
+	self:SetNativeAsset(asset.exists(mdl,asset.TYPE_MODEL))
 	local iconPath = self:GetIconLocation()
 	if(file.exists("materials/" .. iconPath .. ".wmi")) then
 		self:SetMaterial(iconPath)
@@ -351,7 +355,7 @@ function gui.ModelAssetIcon:SetModelAsset(mdl,importAsset)
 		print("Creating new icon generator...")
 		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128,128)
 	end
-	if(importAsset == true or asset.exists(mdl,asset.TYPE_MODEL)) then
+	if(importAsset == true or self:IsNativeAsset()) then
 		gui.AssetIcon.impl.iconGenerator:AddModelToQueue(mdl,function()
 			if(self:IsValid() == false) then return end
 			self:SetMaterial(iconPath)
@@ -381,6 +385,7 @@ function gui.MaterialAssetIcon:GetTypeIdentifier() return "material" end
 function gui.MaterialAssetIcon:GetPreviewModel() return "pfm/texture_sphere" end
 function gui.MaterialAssetIcon:SetMaterialAsset(mat,importAsset)
 	self.m_assetType = asset.TYPE_MATERIAL
+	self:SetNativeAsset(asset.exists(mat,asset.TYPE_MATERIAL))
 	local iconPath = self:GetIconLocation()
 	if(file.exists("materials/" .. iconPath .. ".wmi")) then
 		self:SetMaterial(iconPath)
@@ -390,7 +395,7 @@ function gui.MaterialAssetIcon:SetMaterialAsset(mat,importAsset)
 		print("Creating new icon generator...")
 		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128,128)
 	end
-	if(importAsset == true or asset.exists(mat,asset.TYPE_MATERIAL)) then
+	if(importAsset == true or self:IsNativeAsset()) then
 		local path = util.Path(mat)
 		path:RemoveFileExtension()
 		self:SetMaterial(path:GetString())
@@ -449,6 +454,10 @@ end
 function gui.ParticleAssetIcon:GetTypeIdentifier() return "particle" end
 function gui.ParticleAssetIcon:SetParticleAsset(pt,importAsset)
 	self.m_assetType = asset.TYPE_PARTICLE_SYSTEM
+
+	local ptFileName,ptName = self:GetParticleSystemFileName()
+	self:SetNativeAsset(asset.exists(ptFileName,asset.TYPE_PARTICLE_SYSTEM))
+
 	local iconPath = self:GetIconLocation()
 	if(file.exists("materials/" .. iconPath .. ".wmi")) then
 		self:SetMaterial(iconPath)
@@ -459,8 +468,7 @@ function gui.ParticleAssetIcon:SetParticleAsset(pt,importAsset)
 		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128,128)
 	end
 
-	local ptFileName,ptName = self:GetParticleSystemFileName()
-	if(ptFileName ~= nil and (importAsset == true or asset.exists(ptFileName,asset.TYPE_PARTICLE_SYSTEM))) then
+	if(ptFileName ~= nil and (importAsset == true or self:IsNativeAsset())) then
 		gui.AssetIcon.impl.iconGenerator:AddModelToQueue(pt,function()
 			if(self:IsValid() == false) then return end
 			self:SetMaterial(iconPath)

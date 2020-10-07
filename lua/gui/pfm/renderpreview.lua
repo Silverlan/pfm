@@ -471,9 +471,14 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlResolution:SelectOption(1)
 	-- TODO: Add VR resolution options
 
+	-- Choose a default sky
+	local defaultSky
+	local skies = file.find("materials/skies/*.hdr")
+	if(#skies > 0) then defaultSky = "skies/" .. skies[1] end
+
 	-- Sky override
 	local skyOverride
-	skyOverride = p:AddFileEntry("pfm_sky_override","sky_override",function(resultHandler)
+	skyOverride = p:AddFileEntry("pfm_sky_override","sky_override",defaultSky or "",function(resultHandler)
 		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 			if(fileName == nil) then return end
 			resultHandler(el:GetFilePath(true))
@@ -486,10 +491,6 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		pFileDialog:Update()
 	end)
 	self.m_ctrlSkyOverride = skyOverride
-
-	-- Choose a default sky
-	local skies = file.find("materials/skies/*.hdr")
-	if(#skies > 0) then skyOverride:SetValue("skies/" .. skies[1]) end
 
 	-- Sky strength
 	self.m_ctrlSkyStrength = p:AddSliderControl("pfm_sky_strength","sky_strength",0.3,0,2)
@@ -820,18 +821,18 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 		if(width > height) then
 			height = qualityResolutions[previewQuality]
 			width = height *aspectRatio
-			if((height %1.0) > 0.001) then
-				-- Round to the nearest value dividable by 2
-				if((math.floor(height) %2.0) <= 0.001) then height = math.floor(height)
-				else height = math.ceil(height) end
-			end
-		else
-			width = qualityResolutions[previewQuality]
-			height = width /aspectRatio
 			if((width %1.0) > 0.001) then
 				-- Round to the nearest value dividable by 2
 				if((math.floor(width) %2.0) <= 0.001) then width = math.floor(width)
 				else width = math.ceil(width) end
+			end
+		else
+			width = qualityResolutions[previewQuality]
+			height = width /aspectRatio
+			if((height %1.0) > 0.001) then
+				-- Round to the nearest value dividable by 2
+				if((math.floor(height) %2.0) <= 0.001) then height = math.floor(height)
+				else height = math.ceil(height) end
 			end
 		end
 	end

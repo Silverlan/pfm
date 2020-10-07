@@ -59,6 +59,9 @@ function gui.PFMInfobar:OnInitialize()
 	self.m_patronRequest:Start()
 	self:EnableThinking()
 end
+function gui.PFMInfobar:OnRemove()
+	self.m_patronRequest:Cancel()
+end
 function gui.PFMInfobar:OnThink()
 	if(self.m_patronRequest == nil or self.m_patronRequest:IsComplete() == false) then return end
 	if(self.m_patronRequest:IsSuccessful()) then

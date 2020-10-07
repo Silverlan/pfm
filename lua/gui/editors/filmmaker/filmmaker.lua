@@ -434,13 +434,9 @@ function gui.WIFilmmaker:PackProject(fileName)
 	local project = self:GetProject()
 	local session = self:GetSession()
 
-	local assetFileMap = project:CollectAssetFiles()
+	local assetFiles = project:CollectAssetFiles()
 	
 	fileName = file.remove_file_extension(fileName) .. ".zip"
-	local assetFiles = {}
-	for f,_ in pairs(assetFileMap) do
-		table.insert(assetFiles,f)
-	end
 	util.pack_zip_archive(fileName,assetFiles)
 	util.open_path_in_explorer(util.get_addon_path(),fileName)
 end
@@ -752,7 +748,123 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		end)
 		return actorEditor
 	end)
-	self:RegisterWindow(self.m_actorDataFrame,"model_catalog",locale.get_text("pfm_model_catalog"),function() return gui.create("WIPFMModelCatalog") end)
+	self:RegisterWindow(self.m_actorDataFrame,"model_catalog",locale.get_text("pfm_model_catalog"),function()
+		local mdlCatalog = gui.create("WIPFMModelCatalog")
+		local explorer = mdlCatalog:GetExplorer()
+		explorer:AddCallback("PopulateContextMenu",function(explorer,pContext,tSelectedFiles,tExternalFiles)
+			local hasExternalFiles = (#tExternalFiles > 0)
+			if(hasExternalFiles == true) then return end
+			if(#tSelectedFiles == 1) then
+				local path = tSelectedFiles[1]:GetRelativeAsset()
+				pContext:AddItem(locale.get_text("pfm_show_in_model_viewer"),function()
+					local pDialog,frame,el = gui.open_model_dialog()
+					el:SetModel(path)
+				end)
+
+				if(asset.is_loaded(path,asset.TYPE_MODEL) == false) then
+					pContext:AddItem(locale.get_text("pfm_load"),function()
+						game.load_model(path)
+					end)
+				else
+					local mdl = game.load_model(path)
+					local materials = mdl:GetMaterials()
+					if(#materials > 0) then
+						local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
+						for _,mat in pairs(materials) do
+							if(mat ~= nil and mat:IsError() == false) then
+								local name = file.remove_file_extension(file.get_file_name(mat:GetName()))
+								pSubMenu:AddItem(name,function(pItem)
+									tool.get_filmmaker():OpenMaterialEditor(mat:GetName(),path)
+								end)
+							end
+						end
+						pSubMenu:Update()
+					end
+				end
+			end
+		end)
+		explorer:AddCallback("OnIconAdded",function(explorer,icon)
+			if(icon:IsDirectory() == false) then
+				gui.enable_drag_and_drop(icon,"ModelCatalog",function(elGhost)
+					elGhost:SetAlpha(128)
+					elGhost:AddCallback("OnDragTargetHoverStart",function(elGhost,elTgt)
+						elGhost:SetAlpha(0)
+						elGhost:SetAlwaysUpdate(true)
+
+						if(util.is_valid(entGhost)) then entGhost:Remove() end
+						local path = util.Path(icon:GetAsset())
+						path:PopFront()
+						local mdlPath = path:GetString()
+						if(icon:IsValid() and asset.exists(mdlPath,asset.TYPE_MODEL) == false) then icon:Reload(true) end -- Import the asset and generate the icon
+						entGhost = ents.create("pfm_ghost")
+
+						local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
+						if(string.compare(elTgt:GetClass(),"WIViewport",false) and ghostC ~= nil) then
+							ghostC:SetViewport(elTgt)
+						end
+
+						entGhost:Spawn()
+						entGhost:SetModel(path:GetString())
+					end)
+					elGhost:AddCallback("OnDragTargetHoverStop",function(elGhost)
+						elGhost:SetAlpha(128)
+						elGhost:SetAlwaysUpdate(false)
+						if(util.is_valid(entGhost)) then entGhost:Remove() end
+					end)
+				end)
+				icon:AddCallback("OnDragDropped",function(elIcon,elDrop)
+					if(util.is_valid(entGhost) == false) then return end
+					local filmmaker = tool.get_filmmaker()
+					local actor = filmmaker:CreateNewActor()
+					if(actor == nil) then return end
+					local mdlC = filmmaker:CreateNewActorComponent(actor,"PFMModel")
+					if(mdlC == nil) then return end
+					local path = util.Path(elIcon:GetAsset())
+					path:PopFront()
+					mdlC:SetModelName(path:GetString())
+					local t = actor:GetTransform()
+					t:SetPosition(entGhost:GetPos())
+					t:SetRotation(entGhost:GetRotation())
+					filmmaker:RefreshGameView() -- TODO: No need to reload the entire game view
+
+					local mdl = game.load_model(path:GetString())
+					if(mdl ~= nil) then
+						for _,fc in ipairs(mdl:GetFlexControllers()) do
+							mdlC:GetFlexControllerNames():PushBack(udm.String(fc.name))
+						end
+					end
+
+					local entActor = actor:FindEntity()
+					if(util.is_valid(entActor)) then
+						local tc = entActor:AddComponent("util_transform")
+						if(tc ~= nil) then
+							tc:SetTranslationEnabled(false)
+							tc:SetRotationAxisEnabled(math.AXIS_X,false)
+							tc:SetRotationAxisEnabled(math.AXIS_Z,false)
+							local trUtil = tc:GetTransformUtility(ents.UtilTransformArrowComponent.TYPE_ROTATION,math.AXIS_Y)
+							local arrowC = util.is_valid(trUtil) and trUtil:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW) or nil
+							if(arrowC ~= nil) then
+								arrowC:StartTransform()
+								local cb
+								cb = input.add_callback("OnMouseInput",function(mouseButton,state,mods)
+									if(mouseButton == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
+										if(util.is_valid(entActor)) then
+											entActor:RemoveComponent("util_transform")
+											t:SetPosition(entActor:GetPos())
+											t:SetRotation(entActor:GetRotation())
+										end
+										cb:Remove()
+										return util.EVENT_REPLY_HANDLED
+									end
+								end)
+							end
+						end
+					end
+				end)
+			end
+		end)
+		return mdlCatalog
+	end)
 	self:RegisterWindow(self.m_actorDataFrame,"material_catalog",locale.get_text("pfm_material_catalog"),function() return gui.create("WIPFMMaterialCatalog") end)
 	self:RegisterWindow(self.m_actorDataFrame,"particle_catalog",locale.get_text("pfm_particle_catalog"),function() return gui.create("WIPFMParticleCatalog") end)
 	self:RegisterWindow(self.m_actorDataFrame,"tutorial_catalog",locale.get_text("pfm_tutorial_catalog"),function() return gui.create("WIPFMTutorialCatalog") end)

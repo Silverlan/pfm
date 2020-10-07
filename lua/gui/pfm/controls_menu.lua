@@ -35,13 +35,22 @@ function gui.PFMControlsMenu:SetControlVisible(identifier,visible)
 	if(util.is_valid(el) == false) then return end
 	el:SetVisible(visible)
 end
-function gui.PFMControlsMenu:AddFileEntry(name,identifier,callback)
+function gui.PFMControlsMenu:AddFileEntry(name,identifier,default,callback)
 	local el = gui.create("WIFileEntry",self)
 	if(callback ~= nil) then el:SetBrowseHandler(callback) end
 	el:SetTooltip(locale.get_text(name .. "_desc"))
 	local wrapper = el:Wrap("WIEditableEntry")
 	wrapper:SetText(locale.get_text(name))
-	if(identifier ~= nil) then self:AddControl(identifier,el,wrapper) end
+	if(identifier ~= nil) then self:AddControl(identifier,el,wrapper,default) end
+	return el
+end
+function gui.PFMControlsMenu:AddTextEntry(name,identifier,default,callback)
+	local el = gui.create("WITextEntry",self)
+	if(callback ~= nil) then callback = el:AddCallback("OnTextEntered",callback) end
+	el:SetTooltip(locale.get_text(name .. "_desc"))
+	local wrapper = el:Wrap("WIEditableEntry")
+	wrapper:SetText(locale.get_text(name))
+	if(identifier ~= nil) then self:AddControl(identifier,el,wrapper,default) end
 	return el
 end
 function gui.PFMControlsMenu:AddToggleControl(name,identifier,checked,onChange)
@@ -109,6 +118,7 @@ function gui.PFMControlsMenu:ResetControls()
 					ctrl.element:SetDefault(ctrl.default)
 					ctrl.element:ResetToDefault()
 				elseif(ctrl.element:GetClass() == "wipfmcolorentry") then ctrl.element:SetColor(ctrl.default)
+				elseif(ctrl.element:GetClass() == "witextentry") then ctrl.element:SetText(ctrl.default)
 				else ctrl.element:SetValue(ctrl.default) end
 			end
 		end

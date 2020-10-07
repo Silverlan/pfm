@@ -267,7 +267,7 @@ function gui.PFMMaterialEditor:UpdateRTPreview()
 		local settings = self.m_rtViewport:GetRenderSettings()
 		local samples = 40
 		-- Use a higher sample count if SSS is enabled
-		if(self.m_ctrlSSSMethod:GetSelectedOption() ~= 0) then samples = 120 end
+		if(self.m_ctrlSSSMethod:GetSelectedOption() ~= 0) then samples = 200 end
 		settings:SetSamples(samples)
 
 		self.m_rtViewport:Refresh()
@@ -369,6 +369,7 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 
 		-- self:SetRenderer(gui.PFMMaterialEditor.RENDERER_REALTIME)
 	end)
+	self.m_rtViewport:GetRenderSettings():SetLightIntensityFactor(4 *0.5)
 	self.m_ctrlLightIntensity = lightIntensity
 
 	-- Light color
@@ -426,6 +427,7 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 
 		-- self:SetRenderer(gui.PFMMaterialEditor.RENDERER_REALTIME)
 	end)
+	self.m_rtViewport:GetRenderSettings():SetLightIntensityFactor(util.is_valid(rpC) and rpC:GetIBLStrength() or 1.0)
 	self.m_ctrlIblStrength = iblStrength
 
 	gui.create("WIBase",self.m_renderControlsVbox)

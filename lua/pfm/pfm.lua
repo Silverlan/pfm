@@ -168,7 +168,7 @@ end
 
 function pfm.Project:CollectAssetFiles()
 	local assetFileMap = {}
-	local function add_file(f) assetFileMap[f] = true end -- Using a map allows us to get rid of duplicates more easily
+	local function add_file(f) assetFileMap[f] = f end
 	local function add_material(mat)
 		local matName = util.Path(mat:GetName())
 		add_file("materials/" .. matName:GetString())
@@ -232,9 +232,10 @@ function pfm.Project:CollectAssetFiles()
 			end
 		end
 	end
-	local session = self:GetSession()
-	for _,filmClip in ipairs(session:GetClips():GetTable()) do
-		add_film_clip(filmClip)
+	for _,session in ipairs(self:GetSessions()) do
+		for _,filmClip in ipairs(session:GetClips():GetTable()) do
+			add_film_clip(filmClip)
+		end
 	end
 	local mapName = game.get_map_name()
 	add_file("maps/" .. mapName .. ".wld")
