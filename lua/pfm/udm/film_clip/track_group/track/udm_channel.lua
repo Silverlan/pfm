@@ -41,7 +41,6 @@ function udm.PFMChannel:SetPlaybackOffset(offset)
 	-- Note: This function will grab the appropriate value from the log
 	-- and assign it to the 'toElement'. If no log values exist, the
 	-- 'fromAttribute' value of the 'fromElement' element will be used instead.
-
 	local toElement = self:GetToElement()
 	if(toElement == nil) then return end
 	local toAttribute = self:GetToAttribute()
@@ -51,8 +50,9 @@ function udm.PFMChannel:SetPlaybackOffset(offset)
 		local value = log:SetPlaybackOffset(offset)
 		local property = toElement:GetProperty(toAttribute)
 		if(property ~= nil) then
+			if(self:GetName() == "head_scale") then print(value,offset) end
 			if(value ~= nil) then
-				--print("Channel '" .. self:GetName() .. "': Changing value of attribute " .. toAttribute .. " of element " .. toElement:GetName() .. " (" .. toElement:GetTypeName() .. ") to " .. tostring(value))
+				if(self:GetName() == "head_scale") then print("Channel '" .. self:GetName() .. "': Changing value of attribute " .. toAttribute .. " of element " .. toElement:GetName() .. " (" .. toElement:GetTypeName() .. ") to " .. tostring(value)) end
 				property:SetValue(value)
 				-- TODO: Also set 'time' property of toElement if it exists? (e.g. for expression operator)
 			else

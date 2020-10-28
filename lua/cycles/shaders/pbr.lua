@@ -88,29 +88,31 @@ function cycles.PBRShader:InitializeCombinedPass(desc,outputNode)
 	if(sss ~= nil) then
 		local factor = sss:GetFloat("factor",0)
 		if(factor > 0) then
-			principled:SetProperty(cycles.Node.principled_bsdf.IN_SUBSURFACE,factor)
+			if(sss:HasValue("method") == false or sss:GetString("method") ~= "none") then
+				principled:SetProperty(cycles.Node.principled_bsdf.IN_SUBSURFACE,factor)
 
-			local colorFactor = sss:GetVector("color_factor",Vector(1,1,1))
-			local sssColor = albedoColor *colorFactor
-			sssColor:Link(principled,cycles.Node.principled_bsdf.IN_SUBSURFACE_COLOR)
+				local colorFactor = sss:GetVector("color_factor",Vector(1,1,1))
+				local sssColor = albedoColor *colorFactor
+				sssColor:Link(principled,cycles.Node.principled_bsdf.IN_SUBSURFACE_COLOR)
 
-			if(sss:HasValue("method")) then
-				local method = sss:GetString("method")
-				local methodToEnum = {
-					["cubic"] = cycles.SUBSURFACE_SCATTERING_METHOD_CUBIC,
-					["gaussian"] = cycles.SUBSURFACE_SCATTERING_METHOD_GAUSSIAN,
-					["principled"] = cycles.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED,
-					["burley"] = cycles.SUBSURFACE_SCATTERING_METHOD_BURLEY,
-					["random_walk"] = cycles.SUBSURFACE_SCATTERING_METHOD_RANDOM_WALK,
-					["principled_random_walk"] = cycles.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED_RANDOM_WALK
-				}
-				method = methodToEnum[method] or cycles.SUBSURFACE_SCATTERING_METHOD_BURLEY
-				principled:SetProperty(cycles.Node.principled_bsdf.IN_SUBSURFACE_METHOD,method)
-			end
+				if(sss:HasValue("method")) then
+					local method = sss:GetString("method")
+					local methodToEnum = {
+						["cubic"] = cycles.SUBSURFACE_SCATTERING_METHOD_CUBIC,
+						["gaussian"] = cycles.SUBSURFACE_SCATTERING_METHOD_GAUSSIAN,
+						["principled"] = cycles.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED,
+						["burley"] = cycles.SUBSURFACE_SCATTERING_METHOD_BURLEY,
+						["random_walk"] = cycles.SUBSURFACE_SCATTERING_METHOD_RANDOM_WALK,
+						["principled_random_walk"] = cycles.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED_RANDOM_WALK
+					}
+					method = methodToEnum[method] or cycles.SUBSURFACE_SCATTERING_METHOD_BURLEY
+					principled:SetProperty(cycles.Node.principled_bsdf.IN_SUBSURFACE_METHOD,method)
+				end
 
-			if(sss:HasValue("scatter_color")) then
-				local radius = sss:GetColor("scatter_color"):ToVector()
-				principled:SetProperty(cycles.Node.principled_bsdf.IN_SUBSURFACE_RADIUS,radius)
+				if(sss:HasValue("scatter_color")) then
+					local radius = sss:GetColor("scatter_color"):ToVector()
+					principled:SetProperty(cycles.Node.principled_bsdf.IN_SUBSURFACE_RADIUS,radius)
+				end
 			end
 		end
 	end

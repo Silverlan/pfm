@@ -63,12 +63,12 @@ function gui.PFMPlayButton:GetState() return self.m_state end
 function gui.PFMPlayButton:IsPlaying() return self.m_state == gui.PFMPlayButton.STATE_PLAYING end
 function gui.PFMPlayButton:Play()
 	local playButton = self.m_btPlay
-	if(util.is_valid(playButton)) then playButton:SetMaterial("gui/pfm/playback/pause") end
+	if(util.is_valid(playButton)) then playButton:SetMaterial("gui/pfm/icon_cp_pause") end
 	self:SetState(gui.PFMPlayButton.STATE_PLAYING)
 end
 function gui.PFMPlayButton:Pause()
 	local playButton = self.m_btPlay
-	if(util.is_valid(playButton)) then playButton:SetMaterial("gui/pfm/playback/play") end
+	if(util.is_valid(playButton)) then playButton:SetMaterial("gui/pfm/icon_cp_play") end
 	self:SetState(gui.PFMPlayButton.STATE_PAUSED)
 end
 function gui.PFMPlayButton:TogglePlay()

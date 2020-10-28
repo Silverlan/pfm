@@ -46,8 +46,11 @@ function gui.AssetExplorer:OnInitialize()
 
 		local tFilesExtUnique = {}
 		for _,f in ipairs(tFiles) do
-			f = file.remove_file_extension(f) .. "." .. self.m_extension
-			tFilesExtUnique[f] = true
+			local ext = file.get_file_extension(f)
+			if(ext == self.m_extension) then
+				-- f = file.remove_file_extension(f) .. "." .. self.m_extension
+				tFilesExtUnique[f] = true
+			end
 		end
 
 		local tFilesExt,tDirsExt = file.find_external_game_asset_files(path .. "*")

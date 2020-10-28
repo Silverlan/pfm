@@ -52,7 +52,7 @@ function shader.PFMParticleSpriteTrail:CalcVertexPosition(ptc,ptIdx,localVertIdx
 	if(localVertIdx == 2) then return (ptWorldPos +tangentY *rad *0.5) +dtPosWs end
 	return (ptWorldPos -tangentY *rad *0.5) +dtPosWs
 end
-function shader.PFMParticleSpriteTrail:Draw(drawCmd,ps,renderer,renderFlags,minLength,maxLength,lengthFadeInTime,animRate)
+function shader.PFMParticleSpriteTrail:Draw(drawCmd,ps,scene,renderer,renderFlags,minLength,maxLength,lengthFadeInTime,animRate)
 	if(self:RecordBeginDraw(drawCmd,ps,renderFlags) == false) then return end
 	local dsLightSources = renderer:GetLightSourceDescriptorSet()
 	local dsShadows = renderer:GetPSSMTextureDescriptorSet()

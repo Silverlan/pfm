@@ -111,7 +111,7 @@ function gui.PFMActorCatalog:OnInitialize()
 			local t = actor:GetTransform()
 			t:SetPosition(entGhost:GetPos())
 			t:SetRotation(entGhost:GetRotation())
-			filmmaker:RefreshGameView() -- TODO: No need to reload the entire game view
+			filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
 
 			local entActor = actor:FindEntity()
 			if(util.is_valid(entActor)) then

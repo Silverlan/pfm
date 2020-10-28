@@ -34,6 +34,7 @@ function gui.PFMPopup:SetText(text)
 	self.m_elText:SizeToContents()
 
 	self:SetHeight(self.m_elText:GetHeight() +20)
+	self:SetWidth(self.m_elText:GetWidth() +20)
 	self.m_lastVisTime = time.real_time()
 	self:SetVisible(true)
 end

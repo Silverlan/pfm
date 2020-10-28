@@ -21,11 +21,11 @@ function ents.ParticleSystemComponent.RenderAnimatedSprites:Initialize()
 	self:SetShader(shader.get("pfm_particle_animated_sprites"))
 end
 
-function ents.ParticleSystemComponent.RenderAnimatedSprites:Render(drawCmd,renderer,bloom)
+function ents.ParticleSystemComponent.RenderAnimatedSprites:Render(drawCmd,scene,renderer,bloom)
 	local shader = self:GetShader()
 	if(shader == nil) then return end
 	local camBias = 0.0
-	shader:Draw(drawCmd,self:GetParticleSystem(),renderer,bloom,camBias)
+	shader:Draw(drawCmd,self:GetParticleSystem(),scene,renderer,bloom,camBias)
 end
 function ents.ParticleSystemComponent.RenderAnimatedSprites:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

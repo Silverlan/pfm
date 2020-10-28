@@ -19,6 +19,7 @@ function gui.EditableEntry:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(128,32)
+	self.m_centerText = true
 
 	self.m_descContainer = gui.create("WIBase",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	local pText = gui.create("WIText",self.m_descContainer)
@@ -32,6 +33,9 @@ function gui.EditableEntry:OnInitialize()
 		if(elChild:GetClass() == "witextentry" or elChild:GetClass() == "widropdownmenu") then
 			elChild:AddCallback("OnTextChanged",function()
 				self:UpdateText()
+			end)
+			elChild:AddCallback("OnMenuClosed",function(el)
+				self.m_target:SetVisible(false)
 			end)
 			elChild:SetVisible(false)
 		elseif(elChild:GetClass() == "wipfmcolorentry") then
@@ -100,22 +104,27 @@ function gui.EditableEntry:OnInitialize()
 				return util.EVENT_REPLY_HANDLED
 			end
 			if(self.m_target:GetClass() == "widropdownmenu") then
-				local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
-					input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
-				if(self.m_target:IsEditable() and isAltDown) then
-					self:StartEditMode(true)
-					return util.EVENT_REPLY_HANDLED
-				end
-				local numOptions = self.m_target:GetOptionCount()
-				local option = self.m_target:GetSelectedOption()
-				if(button == input.MOUSE_BUTTON_LEFT) then
-					if(option == -1 or option == numOptions -1) then option = 0
-					else option = option +1 end
+				if(self.m_useAltMode) then
+					self.m_target:SetVisible(true)
+					self.m_target:OpenMenu()
 				else
-					if(option == -1 or option == 0) then option = numOptions -1
-					else option = option -1 end
+					local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
+						input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
+					if(self.m_target:IsEditable() and isAltDown) then
+						self:StartEditMode(true)
+						return util.EVENT_REPLY_HANDLED
+					end
+					local numOptions = self.m_target:GetOptionCount()
+					local option = self.m_target:GetSelectedOption()
+					if(button == input.MOUSE_BUTTON_LEFT) then
+						if(option == -1 or option == numOptions -1) then option = 0
+						else option = option +1 end
+					else
+						if(option == -1 or option == 0) then option = numOptions -1
+						else option = option -1 end
+					end
+					self.m_target:SelectOption(option)
 				end
-				self.m_target:SelectOption(option)
 				return util.EVENT_REPLY_HANDLED
 			end
 		end
@@ -130,6 +139,7 @@ function gui.EditableEntry:OnInitialize()
 	self:SetText("")
 	self:AddStyleClass("input_field")
 end
+function gui.EditableEntry:SetUseAltMode(altMode) self.m_useAltMode = altMode end
 function gui.EditableEntry:SetCategory(text)
 	self:SetEmpty()
 	self:SetText(text)
@@ -162,6 +172,10 @@ function gui.EditableEntry:SetText(text)
 	self.m_baseText = text
 	self:UpdateText()
 end
+function gui.EditableEntry:SetCenterText(center)
+	self.m_centerText = center or false
+	self:UpdateText()
+end
 function gui.EditableEntry:UpdateText(value)
 	if(self.m_skipTextUpdate or util.is_valid(self.m_pText) == false) then return end
 	local text = self.m_baseText
@@ -178,10 +192,18 @@ function gui.EditableEntry:UpdateText(value)
 		else value = "" end
 	else text = text .. ": " end
 	
+	local handled,newValueText = self:CallCallbacks("TranslateValueText",value)
+	if(handled == util.EVENT_REPLY_HANDLED) then value = newValueText end
+
 	text = text .. value
 	self.m_pText:SetText(text)
 	self.m_pText:SizeToContents()
-	self.m_pText:CenterToParent(true)
+	if(self.m_centerText) then self.m_pText:CenterToParent(true)
+	else
+		self.m_pText:ClearAnchor()
+		self.m_pText:SetX(5)
+		self.m_pText:CenterToParentY()
+	end
 
 	self:CallCallbacks("OnValueChanged")
 end

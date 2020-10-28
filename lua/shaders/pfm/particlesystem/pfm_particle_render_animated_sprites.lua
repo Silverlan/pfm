@@ -117,7 +117,7 @@ function shader.PFMParticleRenderAnimatedSprites:CalcVertexPosition(ptc,ptIdx,lo
 	vecCorner = vecCorner +y *camUp
 	return vecCorner
 end
-function shader.PFMParticleRenderAnimatedSprites:Draw(drawCmd,ps,renderer,renderFlags,camBias)
+function shader.PFMParticleRenderAnimatedSprites:Draw(drawCmd,ps,scene,renderer,renderFlags,camBias)
 	if(self:RecordBeginDraw(drawCmd,ps,renderFlags) == false) then return end
 	local dsLightSources = renderer:GetLightSourceDescriptorSet()
 	local dsShadows = renderer:GetPSSMTextureDescriptorSet()

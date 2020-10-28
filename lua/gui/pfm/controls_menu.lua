@@ -27,6 +27,13 @@ function gui.PFMControlsMenu:AddControl(name,ctrl,wrapper,default)
 	}
 	self:CallCallbacks("OnControlAdded",name,ctrl,wrapper)
 end
+function gui.PFMControlsMenu:ClearControls()
+	for identifier,data in pairs(self.m_controls) do
+		util.remove(data.wrapper)
+		util.remove(data.element)
+	end
+	self.m_controls = {}
+end
 function gui.PFMControlsMenu:GetControl(name) return (self.m_controls[name] ~= nil) and self.m_controls[name].element or nil end
 function gui.PFMControlsMenu:SetControlVisible(identifier,visible)
 	local elData = self.m_controls[identifier]
@@ -38,33 +45,33 @@ end
 function gui.PFMControlsMenu:AddFileEntry(name,identifier,default,callback)
 	local el = gui.create("WIFileEntry",self)
 	if(callback ~= nil) then el:SetBrowseHandler(callback) end
-	el:SetTooltip(locale.get_text(name .. "_desc"))
+	el:SetTooltip(name .. "_desc")
 	local wrapper = el:Wrap("WIEditableEntry")
-	wrapper:SetText(locale.get_text(name))
+	wrapper:SetText(name)
 	if(identifier ~= nil) then self:AddControl(identifier,el,wrapper,default) end
 	return el
 end
 function gui.PFMControlsMenu:AddTextEntry(name,identifier,default,callback)
 	local el = gui.create("WITextEntry",self)
 	if(callback ~= nil) then callback = el:AddCallback("OnTextEntered",callback) end
-	el:SetTooltip(locale.get_text(name .. "_desc"))
+	el:SetTooltip(name .. "_desc")
 	local wrapper = el:Wrap("WIEditableEntry")
-	wrapper:SetText(locale.get_text(name))
+	wrapper:SetText(name)
 	if(identifier ~= nil) then self:AddControl(identifier,el,wrapper,default) end
 	return el
 end
 function gui.PFMControlsMenu:AddToggleControl(name,identifier,checked,onChange)
 	local el = gui.create("WIToggleOption",self)
-	el:SetText(locale.get_text(name))
+	el:SetText(name)
 	el:SetChecked(checked)
-	el:SetTooltip(locale.get_text(name .. "_desc"))
+	el:SetTooltip(name .. "_desc")
 	if(onChange ~= nil) then el:GetCheckbox():AddCallback("OnChange",onChange) end
 	if(identifier ~= nil) then self:AddControl(identifier,el) end
 	return el
 end
 function gui.PFMControlsMenu:AddSliderControl(name,identifier,default,min,max,onChange,stepSize,integer)
 	local slider = gui.create("WIPFMSlider",self)
-	slider:SetText(locale.get_text(name))
+	slider:SetText(name)
 	slider:SetRange(min,max)
 	slider:SetDefault(default)
 	if(integer ~= nil) then slider:SetInteger(integer) end
@@ -79,7 +86,7 @@ function gui.PFMControlsMenu:AddDropDownMenu(name,identifier,options,defaultOpti
 		menu:AddOption(option[2],option[1])
 	end
 	local wrapper = menu:Wrap("WIEditableEntry")
-	wrapper:SetText(locale.get_text(name))
+	wrapper:SetText(name)
 	if(onChange ~= nil) then menu:AddCallback("OnOptionSelected",onChange) end
 	if(identifier ~= nil) then self:AddControl(identifier,menu,wrapper,defaultOption) end
 	return menu,wrapper
@@ -88,15 +95,22 @@ function gui.PFMControlsMenu:AddColorField(name,identifier,defaultOption,onChang
 	local colorEntry = gui.create("WIPFMColorEntry",self)
 	if(onChange ~= nil) then colorEntry:GetColorProperty():AddCallback(onChange) end
 	local colorEntryWrapper = colorEntry:Wrap("WIEditableEntry")
-	colorEntryWrapper:SetText(locale.get_text(name))
+	colorEntryWrapper:SetText(name)
 	if(identifier ~= nil) then self:AddControl(identifier,colorEntry,colorEntryWrapper,defaultOption) end
 	colorEntry:SetColor(defaultOption)
 	return colorEntry,colorEntryWrapper
 end
+function gui.PFMControlsMenu:AddButton(name,identifier,onPress)
+	local bt = gui.create("WIPFMButton",self)
+	bt:SetText(name)
+	if(onPress ~= nil) then bt:AddCallback("OnPressed",onPress) end
+	if(identifier ~= nil) then self:AddControl(identifier,bt) end
+	return bt
+end
 function gui.PFMControlsMenu:AddHeader(title)
 	local header = gui.create("WIEditableEntry",self)
 	header:SetEmpty()
-	header:SetCategory(locale.get_text(title))
+	header:SetCategory(title)
 	return header
 end
 function gui.PFMControlsMenu:AddSubMenu()

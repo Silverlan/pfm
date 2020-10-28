@@ -61,17 +61,17 @@ function gui.PFMSliderCursor:GetValue()
 	if(self.m_intType == true) then value = math.round(value) end
 	return value
 end
-function gui.PFMSliderCursor:SetFraction(fraction)
+function gui.PFMSliderCursor:SetFraction(fraction,inputOrigin)
 	local stepSize = self:GetStepSize()
 	if(stepSize > 0.0) then fraction = math.round(fraction,stepSize) end
 	self.m_fraction:Set(math.clamp(fraction,0.0,1.0))
-	self:UpdateFraction()
+	self:UpdateFraction(inputOrigin)
 end
-function gui.PFMSliderCursor:UpdateFraction()
+function gui.PFMSliderCursor:UpdateFraction(inputOrigin)
 	local v = self:GetFraction() *(self:GetBounds(self:GetParent()) -self:GetBounds())
 	if(self:IsHorizontal()) then self:SetX(v)
 	else self:SetY(v) end
-	self:CallCallbacks("OnFractionChanged",self:GetFraction())
+	self:CallCallbacks("OnFractionChanged",self:GetFraction(),inputOrigin)
 end
 function gui.PFMSliderCursor:OnSizeChanged(w,h)
 	self:UpdateFraction()
@@ -117,7 +117,7 @@ function gui.PFMSliderCursor:OnCursorMoved(x,y)
 	local fraction = (extent > 0) and (value /extent) or 0.0
 	local stepSize = self:GetStepSize()
 	if(stepSize > 0.0) then fraction = fraction -(fraction %stepSize) end
-	self:SetFraction(fraction)
+	self:SetFraction(fraction,"user")
 
 	--[[if(self.m_cursorStartOffset == nil) then return end
 	local v = self:IsHorizontal() and (self:GetX() +x) or (self:GetY() +y)

@@ -204,12 +204,12 @@ end
 function sfm.ProjectConverter:CachePFMActor(pfmComponent,pfmActor)
 	self.m_sfmObjectToPfmActor[pfmComponent] = pfmActor
 end
-function sfm.ProjectConverter:CreateActor(sfmComponent)
+function sfm.ProjectConverter:CreateActor(sfmComponent,pfmParentDag)
 	local pfmComponent = self:ConvertNewElement(sfmComponent)
 	local actor = self:GetPFMActor(pfmComponent) -- Check if this component has already been associated with an actor
 	if(actor ~= nil) then return actor,false end
 	actor = udm.create_element(udm.ELEMENT_TYPE_PFM_ACTOR)
-	actor:ChangeName(pfmComponent:GetName()) -- TODO: Remove suffix (e.g. _model)
+	actor:ChangeName(pfmParentDag:GetName()) -- pfmComponent:GetName()) -- TODO: Remove suffix (e.g. _model)
 	actor:SetVisible(sfmComponent:IsVisible())
 
 	local transformType = sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL
@@ -1062,7 +1062,7 @@ end,function(converter,sfmDag,pfmEl)
 			local type = child:GetType()
 
 			if(type == "DmeGameModel" or type == "DmeCamera" or type == "DmeProjectedLight" or type == "DmeGameParticleSystem") then
-				local actor = converter:CreateActor(child)
+				local actor = converter:CreateActor(child,pfmDag)
 				pfmDag:AddChild(udm.create_reference(actor))
 
 				apply_override_parent(converter,child,actor)

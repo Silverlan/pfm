@@ -28,7 +28,7 @@ function udm.PFMDirectionalLight:GetIconMaterial() return "gui/pfm/icon_light_it
 
 function udm.PFMDirectionalLight:SetupControls(actorEditor,itemComponent)
 	actorEditor:AddControl(self,itemComponent,{
-		name = "intensity",
+		name = locale.get_text("intensity"),
 		property = "intensity",
 		min = 0.0,
 		max = 10000.0,
@@ -38,7 +38,7 @@ function udm.PFMDirectionalLight:SetupControls(actorEditor,itemComponent)
 	actorEditor:AddControl(self,itemComponent,{
 		name = locale.get_text("color"),
 		addControl = function(ctrls)
-			local colField,wrapper = ctrls:AddColorField("color","color",self:GetColor(),function(oldCol,newCol)
+			local colField,wrapper = ctrls:AddColorField(locale.get_text("color"),"color",self:GetColor(),function(oldCol,newCol)
 				self:SetColor(newCol)
 				actorEditor:TagRenderSceneAsDirty()
 			end)

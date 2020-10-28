@@ -29,12 +29,15 @@ function gui.ImageIcon:OnInitialize()
 	self.m_text = elText
 
 	local outline = gui.create("WIOutlinedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	outline:SetColor(Color(38,38,38))
 	self.m_outline = outline
+
+	self:SetSelected(false)
 end
 function gui.ImageIcon:SetSelected(selected)
+	if(selected == self.m_selected) then return end
 	self.m_selected = selected
 	self.m_outline:SetColor(selected and Color(191,191,191) or Color(38,38,38))
+	self:CallCallbacks("OnSelectionChanged",selected)
 end
 function gui.ImageIcon:IsSelected() return self.m_selected or false end
 function gui.ImageIcon:GetText() return self.m_text:GetText() end
@@ -48,6 +51,14 @@ function gui.ImageIcon:GetTextureElement() return self.m_texture end
 function gui.ImageIcon:GetBackgroundElement() return self.m_bg end
 function gui.ImageIcon:SetMaterial(mat,w,h)
 	self.m_texture:SetMaterial(mat)
+	w = w or self:GetWidth()
+	h = h or self:GetHeight()
+
+	self.m_texture:SetSize(w,h)
+	self.m_texture:CenterToParent()
+end
+function gui.ImageIcon:SetTexture(tex,w,h)
+	self.m_texture:SetTexture(tex)
 	w = w or self:GetWidth()
 	h = h or self:GetHeight()
 

@@ -185,6 +185,7 @@ function gui.PFMViewport:SetLocalTime(time)
 end
 function gui.PFMViewport:SetFilmClipName(name)
 	if(util.is_valid(self.m_filmClip)) then
+		if(name == self.m_filmClip:GetText()) then return end
 		self.m_filmClip:SetText(name)
 		self.m_filmClip:SizeToContents()
 
@@ -193,6 +194,7 @@ function gui.PFMViewport:SetFilmClipName(name)
 end
 function gui.PFMViewport:SetFilmClipParentName(name)
 	if(util.is_valid(self.m_filmClipParent)) then
+		if(name == self.m_filmClipParent:GetText()) then return end
 		self.m_filmClipParent:SetText(name)
 		self.m_filmClipParent:SizeToContents()
 

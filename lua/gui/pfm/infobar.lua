@@ -23,64 +23,21 @@ function gui.PFMInfobar:OnInitialize()
 	local bg = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	bg:SetColor(Color(38,38,38))
 
-	local patronTickerContainer = gui.create("WIHBox",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	patronTickerContainer:SetAutoFillContents(true)
-
-	gui.create("WIBase",patronTickerContainer,0,0,10,1) -- Gap
-
-	local patronTickerLabel = gui.create("WIText",patronTickerContainer)
-	patronTickerLabel:SetText(locale.get_text("pfm_patrons") .. ":")
-	patronTickerLabel:SizeToContents()
-	patronTickerLabel:CenterToParentY()
-	patronTickerLabel:AddStyleClass("input_field_text")
-
-	local patronTicker = gui.create("WITicker",patronTickerContainer)
-	patronTicker:SetSize(64,self:GetHeight())
-	patronTicker:SetAnchor(0,0,1,1)
-	self.m_patronTicker = patronTicker
+	self.m_contents = gui.create("WIBase",self,0,0,self:GetWidth(),self:GetHeight())
 
 	self.m_iconContainer = gui.create("WIHBox",self)
-
-	local engineInfo = engine.get_info()
-	self:AddIcon("wgui/patreon_logo",engineInfo.patreonURL,"Patreon")
-	self:AddIcon("third_party/twitter_logo",engineInfo.twitterURL,"Twitter")
-	self:AddIcon("third_party/reddit_logo",engineInfo.redditURL,"Reddit")
-	self:AddIcon("third_party/discord_logo",engineInfo.discordURL,"Discord")
+end
+function gui.PFMInfobar:GetContents() return self.m_contents end
+function gui.PFMInfobar:OnUpdate()
 	self.m_iconContainer:Update()
 	self.m_iconContainer:SetX(self:GetWidth() -self.m_iconContainer:GetWidth())
 	self.m_iconContainer:SetAnchor(1,0,1,0)
 
-	local r = engine.load_library("curl/pr_curl")
-	if(r ~= true) then
-		print("WARNING: An error occured trying to load the 'pr_curl' module: ",r)
-		return
-	end
-	self.m_patronRequest = curl.request("https://pragma-engine.com/patreon/request_patrons.php",{})
-	self.m_patronRequest:Start()
-	self:EnableThinking()
+	self.m_contents:SetSize(self.m_iconContainer:GetX(),self:GetHeight())
+	self.m_contents:SetAnchor(0,0,1,1)
 end
-function gui.PFMInfobar:OnRemove()
-	self.m_patronRequest:Cancel()
-end
-function gui.PFMInfobar:OnThink()
-	if(self.m_patronRequest == nil or self.m_patronRequest:IsComplete() == false) then return end
-	if(self.m_patronRequest:IsSuccessful()) then
-		local patrons = string.split(self.m_patronRequest:GetResult(),";")
-		local text = ""
-		for i,patron in ipairs(patrons) do
-			if(i > 1) then text = text .. ", "
-			else text = text .. " " end
-			text = text .. patron
-		end
-		patrons = table.randomize(patrons)
---[[ -- TODO
-	local numAnonymous = engine.get_info().totalPatronCount -#patrons
-	if(numAnonymous > 0) then text = text .. " and " .. numAnonymous .. " anonymous." end
-]]
-		self.m_patronTicker:SetText(text)
-	end
-	self.m_patronRequest = nil
-	self:DisableThinking()
+function gui.PFMInfobar:AddRightElement(el)
+	el:SetParent(self.m_iconContainer)
 end
 function gui.PFMInfobar:AddIcon(material,url,tooltip)
 	local icon = gui.create("WITexturedRect",self.m_iconContainer)

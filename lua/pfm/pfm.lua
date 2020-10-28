@@ -229,6 +229,11 @@ function pfm.Project:CollectAssetFiles()
 				for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
 					add_film_clip(filmClip)
 				end
+				for _,audioClip in ipairs(track:GetAudioClips():GetTable()) do
+					local sound = audioClip:GetSound()
+					local soundName = sound:GetSoundName()
+					if(#soundName > 0) then add_file("sounds/" .. soundName) end
+				end
 			end
 		end
 	end

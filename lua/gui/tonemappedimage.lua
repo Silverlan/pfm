@@ -27,7 +27,6 @@ function gui.ToneMappedImage:OnInitialize()
 	self:SetToneMappingAlgorithmArgs({})
 	self:SetLuminance(util.Luminance())
 	self:SetVRCamera(game.get_scene():GetActiveCamera())
-	self:SetCursorInputMovementEnabled(true,tool.get_filmmaker())
 
 	--local test = gui.create("WITexturedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	--self.m_test = test
@@ -41,6 +40,9 @@ function gui.ToneMappedImage:OnInitialize()
 
 	self.m_dsTonemapping = self.m_shader:CreateDescriptorSet(shader.PFMTonemapping.DESCRIPTOR_SET_TEXTURE)
 	self:SetDOFEnabled(false)
+end
+function gui.ToneMappedImage:SetPrimaryInterface(interface)
+	self:SetCursorInputMovementEnabled(true,interface)
 end
 function gui.ToneMappedImage:PreRenderScenes(drawSceneInfo)
 	--local tex = self.m_imgProcessor:Apply(drawSceneInfo.commandBuffer)

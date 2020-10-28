@@ -28,7 +28,8 @@ function gui.VideoExplorer:OnInitialize()
 	end)
 	local vp = self.m_previewVideo:GetVideoPlayer()
 	if(vp ~= nil) then
-		vp:SetVolume(0.0)
+		vp:SetLooping(true)
+		vp:SetMuted(true)
 	end
 	self:AddCallback("OnIconAdded",function(self,el)
 		if(el.InitializeVideo == nil) then return end
@@ -108,7 +109,19 @@ function gui.VideoAssetIcon:ApplyAsset(path,importAsset)
 	if(block ~= nil) then
 		self.m_dataBlock = block
 		local icon = block:GetString("icon")
-		self:SetMaterial(icon,100,30)
+		if(file.exists("projects/" .. icon)) then
+			local imgBuf = util.load_image("projects/" .. icon) -- TODO: Load asynchronously
+			if(imgBuf ~= nil) then
+				local img = prosper.create_image(imgBuf)
+				local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),prosper.SamplerCreateInfo())
+				self:SetTexture(tex)
+			end
+		end
+		local title = block:GetString("title")
+		if(#title > 0) then
+			self:SetText(title)
+		end
+		-- self:SetMaterial(icon,100,30)
 	else
 		self:SetMaterial("error",self:GetWidth(),self:GetHeight())
 	end

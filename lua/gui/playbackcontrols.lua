@@ -78,6 +78,7 @@ function gui.PlaybackControls:OnInitialize()
 end
 function gui.PlaybackControls:GetPlayButton() return self.m_btPlay end
 function gui.PlaybackControls:HandleKeyboardInput(key,state,mods)
+	if(state ~= input.STATE_PRESS) then return end
 	local bt
 	if(key == input.KEY_SPACE) then bt = self.m_btPlay
 	elseif(key == input.KEY_LEFT) then bt = self.m_btPrevFrame
@@ -87,7 +88,7 @@ function gui.PlaybackControls:HandleKeyboardInput(key,state,mods)
 	elseif(key == input.KEY_HOME) then bt = self.m_btFirstFrame
 	elseif(key == input.KEY_END) then bt = self.m_btLastFrame end
 	if(util.is_valid(bt)) then
-		bt:InjectMouseInput(Vector2(0,0),input.MOUSE_BUTTON_LEFT,state)
+		bt:InjectMouseClick(Vector2(0,0),input.MOUSE_BUTTON_LEFT)
 		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED

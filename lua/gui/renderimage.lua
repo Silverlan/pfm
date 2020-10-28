@@ -50,14 +50,14 @@ function gui.RenderImage:SetAutoUpdate(autoUpdate)
 	end
 	util.remove(self.m_cbPreRenderScenes)
 end
-function gui.RenderImage:SetVRView(enabled)
+function gui.RenderImage:SetVRView(enabled,interface)
 	self.m_vrViewEnabled = enabled
 	if(self.m_imgProcessor ~= nil) then self.m_imgProcessor:SetStageEnabled("vr",enabled) end
 	if(enabled == false) then
 		self:SetCursorInputMovementEnabled(false)
 		return
 	end
-	self:SetCursorInputMovementEnabled(true,tool.get_filmmaker())
+	self:SetCursorInputMovementEnabled(true,interface)
 
 	self:SetRenderFlags(bit.bor(self:GetRenderFlags(),shader.VREquirectangular.RENDER_FLAG_EQUIRECTANGULAR_BIT))
 end

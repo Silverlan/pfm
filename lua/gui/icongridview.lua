@@ -115,7 +115,7 @@ function gui.IconGridView:CreateIcon(text,...)
 	return self:AddIcon(text,el,...)
 end
 function gui.IconGridView:AddIcon(text,el,...)
-	el:SetText(text)
+	if(#el:GetText() == 0) then el:SetText(text) end -- Assign text, but only if icon hasn't assigned any text iself yet
 	el:SetParent(self.m_iconContainer)
 	table.insert(self.m_icons,el)
 

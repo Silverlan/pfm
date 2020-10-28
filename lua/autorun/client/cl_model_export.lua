@@ -241,3 +241,31 @@ console.register_command("util_export_asset",function(pl,...)
 		return
 	end
 end)
+
+function util.generate_ambient_occlusion_maps(model,width,height,samples,rebuild)
+	if(rebuild == nil) then rebuild = false end
+	if(type(model) == "string") then model = game.load_model(model) end
+	if(model == nil) then return end
+	local ent = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PBR_CONVERTER)})()
+	if(ent == nil) then return end
+	local pbrC = ent:GetComponent(ents.COMPONENT_PBR_CONVERTER)
+	pbrC:GenerateAmbientOcclusionMaps(model,width or 512,height or 512,samples or 512,rebuild)
+end
+console.register_command("util_generate_ambient_occlusion",function(pl,...)
+	local cmdArgs = console.parse_command_arguments({...})
+	if(cmdArgs["model"] ~= nil and #cmdArgs["model"] > 0) then util.generate_ambient_occlusion_maps(cmdArgs["model"][1]) end
+
+	if(cmdArgs["entity"] ~= nil and #cmdArgs["entity"] > 0) then
+		local rebuild = toboolean(cmdArgs["rebuild"] and cmdArgs["rebuild"][1] or "0")
+		local entIndex = tonumber(cmdArgs["entity"] and cmdArgs["entity"][1] or "")
+		if(entIndex ~= nil) then
+			local ent = ents.get_by_local_index(entIndex)
+			if(ent ~= nil) then
+				local width = tonumber(cmdArgs["width"] and cmdArgs["width"][1] or "512")
+				local height = tonumber(cmdArgs["height"] and cmdArgs["height"][1] or "512")
+				local samples = tonumber(cmdArgs["samples"] and cmdArgs["samples"][1] or "512")
+				util.generate_ambient_occlusion_maps(ent,width,height,samples,rebuild)
+			end
+		end
+	end
+end)

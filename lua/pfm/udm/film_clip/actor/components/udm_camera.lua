@@ -32,7 +32,7 @@ function udm.PFMCamera:GetIconMaterial() return "gui/pfm/icon_camera_item" end
 
 function udm.PFMCamera:SetupControls(actorEditor,itemComponent)
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_component_camera_field_of_view",
+		name = locale.get_text("pfm_component_camera_field_of_view"),
 		property = "fov",
 		min = 10.0,
 		max = 120.0,
@@ -40,7 +40,7 @@ function udm.PFMCamera:SetupControls(actorEditor,itemComponent)
 	})
 
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_component_camera_enable_dof",
+		name = locale.get_text("pfm_component_camera_enable_dof"),
 		property = "depthOfFieldEnabled",
 		min = 0,
 		max = 1,
@@ -48,7 +48,7 @@ function udm.PFMCamera:SetupControls(actorEditor,itemComponent)
 		boolean = true
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_component_camera_focal_distance",
+		name = locale.get_text("pfm_component_camera_focal_distance"),
 		property = "focalDistance",
 		min = 1.0,
 		max = 200.0,
@@ -56,21 +56,21 @@ function udm.PFMCamera:SetupControls(actorEditor,itemComponent)
 	})
 	actorEditor:AddControl(self,itemComponent,{
 		-- F-Stop?
-		name = "pfm_component_camera_aperture_fstop",
+		name = locale.get_text("pfm_component_camera_aperture_fstop"),
 		property = "fstop",
 		min = 0.0,
 		max = 10.0,
 		default = 1.0
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_component_camera_aperture_bokeh_ratio",
+		name = locale.get_text("pfm_component_camera_aperture_bokeh_ratio"),
 		property = "apertureBokehRatio",
 		min = 1.0,
 		max = 2.0,
 		default = 1.0
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_component_camera_aperture_blade_count",
+		name = locale.get_text("pfm_component_camera_aperture_blade_count"),
 		property = "apertureBladeCount",
 		min = 0,
 		max = 16,
@@ -78,14 +78,14 @@ function udm.PFMCamera:SetupControls(actorEditor,itemComponent)
 		integer = true
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_component_camera_aperture_blades_rotation",
+		name = locale.get_text("pfm_component_camera_aperture_blades_rotation"),
 		property = "apertureBladesRotation",
 		min = -180,
 		max = 180,
 		default = 0
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_component_camera_sensor_size",
+		name = locale.get_text("pfm_component_camera_sensor_size"),
 		property = "sensorSize",
 		min = 1,
 		max = 100,
@@ -93,14 +93,14 @@ function udm.PFMCamera:SetupControls(actorEditor,itemComponent)
 	})
 
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_component_camera_near_z",
+		name = locale.get_text("pfm_component_camera_near_z"),
 		property = "zNear",
 		min = 0.0,
 		max = 1000.0,
 		default = ents.CameraComponent.DEFAULT_NEAR_Z
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_component_camera_far_z",
+		name = locale.get_text("pfm_component_camera_far_z"),
 		property = "zFar",
 		min = 0.0,
 		max = ents.CameraComponent.DEFAULT_FAR_Z,

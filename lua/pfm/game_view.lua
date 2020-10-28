@@ -26,14 +26,22 @@ function pfm.GameView:StartGameView(project)
 	projectC:SetProjectData(project)
 	entScene:Spawn()
 	self.m_gameView = entScene
+	self:OnGameViewCreated(projectC)
 	projectC:Start()
+	self:OnGameViewInitialized(projectC)
 	return entScene
+end
+function pfm.GameView:ReloadGameView()
+	if(util.is_valid(self.m_gameView) == false) then return end
+	local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
+	if(projectC == nil) then return end
+	projectC:Start()
+	projectC:SetOffset(self:GetTimeOffset())
 end
 function pfm.GameView:RefreshGameView()
 	if(util.is_valid(self.m_gameView) == false) then return end
 	local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
 	if(projectC == nil) then return end
-	projectC:Start()
 	projectC:SetOffset(self:GetTimeOffset())
 end
 function pfm.GameView:SetGameViewOffset(offset,gameViewFlags)
@@ -42,3 +50,7 @@ function pfm.GameView:SetGameViewOffset(offset,gameViewFlags)
 	if(projectC ~= nil) then projectC:SetOffset(offset,gameViewFlags) end
 end
 function pfm.GameView:GetGameView() return self.m_gameView end
+
+-- These can be overriden by derived classes
+function pfm.GameView:OnGameViewCreated(projectC) end
+function pfm.GameView:OnGameViewInitialized(projectC) end

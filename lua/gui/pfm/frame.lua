@@ -56,11 +56,12 @@ function gui.PFMFrame:SetActiveTab(tabId)
 	if(util.is_valid(self.m_activeTabButton)) then self.m_activeTabButton:SetActive(false) end
 
 	local bt = self.m_tabs[tabId].button
-	if(util.is_valid(bt)) then bt:SetActive(true) end
 
 	self.m_activeTabButton = bt
 	self.m_activeTabPanel = bt:GetContents()
 	self.m_activeTabIndex = tabId
+	
+	if(util.is_valid(bt)) then bt:SetActive(true) end
 end
 function gui.PFMFrame:GetTabId(identifier)
 	for i,tabData in ipairs(self.m_tabs) do

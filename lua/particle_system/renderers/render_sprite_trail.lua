@@ -27,10 +27,10 @@ function ents.ParticleSystemComponent.RendererSpriteTrail:GetMaxLength() return 
 function ents.ParticleSystemComponent.RendererSpriteTrail:GetLengthFadeInTime() return self.m_lengthFadeInTime end
 function ents.ParticleSystemComponent.RendererSpriteTrail:GetAnimationRate() return self.m_animationRate end
 
-function ents.ParticleSystemComponent.RendererSpriteTrail:Render(drawCmd,renderer,bloom)
+function ents.ParticleSystemComponent.RendererSpriteTrail:Render(drawCmd,scene,renderer,bloom)
 	local shader = self:GetShader()
 	if(shader == nil) then return end
-	shader:Draw(drawCmd,self:GetParticleSystem(),renderer,bloom,self.m_minLength,self.m_maxLength,self.m_lengthFadeInTime,self.m_animationRate)
+	shader:Draw(drawCmd,self:GetParticleSystem(),scene,renderer,bloom,self.m_minLength,self.m_maxLength,self.m_lengthFadeInTime,self.m_animationRate)
 end
 function ents.ParticleSystemComponent.RendererSpriteTrail:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

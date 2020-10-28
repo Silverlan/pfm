@@ -197,6 +197,7 @@ function gui.PFMParticleEditor:InitializeViewport()
 	self.m_viewport:SetAlwaysRender(true)
 
 	self.m_rtViewport = gui.create("WIRaytracedViewport",vpContainer,0,0,vpContainer:GetWidth(),vpContainer:GetHeight(),0,0,1,1)
+	self.m_rtViewport:SetProjectManager(tool.get_filmmaker())
 	self.m_rtViewport:SetGameScene(self.m_viewport:GetScene())
 	self.m_rtViewport:SetVisible(false)
 	self.m_rtViewport:SetUseElementSizeAsRenderResolution(true)

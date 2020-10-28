@@ -30,7 +30,8 @@ function udm.PFMSpotLight:GetIconMaterial() return "gui/pfm/icon_light_item" end
 
 function udm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 	actorEditor:AddControl(self,itemComponent,{
-		name = "intensity",
+		name = locale.get_text("intensity"),
+		identifier = "intensity",
 		property = "intensity",
 		min = 0.0,
 		max = 10000.0,
@@ -38,9 +39,9 @@ function udm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 		unit = (self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = "light_unit",
+		name = locale.get_text("light_unit"),
 		addControl = function(ctrls)
-			local menu,wrapper = ctrls:AddDropDownMenu("intensity_unit","intensity_type",{
+			local menu,wrapper = ctrls:AddDropDownMenu(locale.get_text("intensity_unit"),"intensity_type",{
 				{tostring(ents.LightComponent.INTENSITY_TYPE_CANDELA),locale.get_text("candela")},
 				{tostring(ents.LightComponent.INTENSITY_TYPE_LUMEN),locale.get_text("lumen")}
 			},0,function(menu,option)
@@ -63,7 +64,7 @@ function udm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 		end
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = "radius",
+		name = locale.get_text("radius"),
 		property = "maxDistance",
 		min = util.units_to_metres(0.0),
 		max = util.units_to_metres(1000.0),
@@ -73,7 +74,7 @@ function udm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 		translateFromInterface = function(val) return util.metres_to_units(val) end
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_inner_cone_angle",
+		name = locale.get_text("pfm_inner_cone_angle"),
 		property = "innerConeAngle",
 		min = 0.0,
 		max = 180.0,
@@ -81,7 +82,7 @@ function udm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 		unit = locale.get_text("symbol_degree")
 	})
 	actorEditor:AddControl(self,itemComponent,{
-		name = "pfm_outer_cone_angle",
+		name = locale.get_text("pfm_outer_cone_angle"),
 		property = "outerConeAngle",
 		min = 0.0,
 		max = 180.0,
@@ -91,7 +92,7 @@ function udm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 	actorEditor:AddControl(self,itemComponent,{
 		name = locale.get_text("color"),
 		addControl = function(ctrls)
-			local colField,wrapper = ctrls:AddColorField("color","color",self:GetColor(),function(oldCol,newCol)
+			local colField,wrapper = ctrls:AddColorField(locale.get_text("color"),"color",self:GetColor(),function(oldCol,newCol)
 				self:SetColor(newCol)
 				actorEditor:TagRenderSceneAsDirty()
 			end)

@@ -245,7 +245,7 @@ function gui.PFMActorEditor:TagRenderSceneAsDirty(dirty)
 end
 function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	if(util.is_valid(self.m_animSetControls) == false) then return end
-	local slider = self.m_animSetControls:AddSliderControl(controlData.name,controlData.name,controlData.default,controlData.min,controlData.max,nil,nil,controlData.integer or controlData.boolean)
+	local slider = self.m_animSetControls:AddSliderControl(controlData.name,controlData.identifier,controlData.default,controlData.min,controlData.max,nil,nil,controlData.integer or controlData.boolean)
 	local callbacks = {}
 	local skipCallbacks
 	if(controlData.type == "flexController") then

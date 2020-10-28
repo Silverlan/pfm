@@ -130,7 +130,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	end
 	local ctrlMetalness
 	local ctrlRoughness
-	ctrlVbox:AddDropDownMenu("preset","preset",pbrPresets,0,function(el,option)
+	ctrlVbox:AddDropDownMenu(locale.get_text("preset"),"preset",pbrPresets,0,function(el,option)
 		local surfMat = phys.get_surface_material(el:GetOptionValue(option))
 		if(surfMat == nil) then return end
 		ctrlMetalness:SetValue(surfMat:GetPBRMetalness())
@@ -143,19 +143,19 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	end)
 
 	-- Metalness
-	ctrlMetalness = ctrlVbox:AddSliderControl("metalness","metalness",0.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","metalness_factor",value) end,0.01)
+	ctrlMetalness = ctrlVbox:AddSliderControl(locale.get_text("metalness"),"metalness",0.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","metalness_factor",value) end,0.01)
 	ctrlMetalness:SetTooltip(locale.get_text("pfm_metalness_desc"))
 	self:LinkControlToMaterialParameter("metalness",ctrlMetalness)
 
 	-- Roughness
-	ctrlRoughness = ctrlVbox:AddSliderControl("roughness","roughness",0.5,0.0,1.0,function(el,value) self:SetMaterialParameter("float","roughness_factor",value) end,0.01)
+	ctrlRoughness = ctrlVbox:AddSliderControl(locale.get_text("roughness"),"roughness",0.5,0.0,1.0,function(el,value) self:SetMaterialParameter("float","roughness_factor",value) end,0.01)
 	ctrlRoughness:SetTooltip(locale.get_text("pfm_roughness_desc"))
 	self:LinkControlToMaterialParameter("roughness",ctrlRoughness)
 
 	-- Emission factor
 	-- TODO: RGB!
 	-- RGB Sliders?
-	local ctrlEmissionFactor = ctrlVbox:AddSliderControl("emission_factor","emission_factor",0.0,0.0,1.0,function(el,value) self:SetMaterialParameter("vector","emission_factor",tostring(value) .. " " .. tostring(value) .. " " .. tostring(value)) end,0.01)
+	local ctrlEmissionFactor = ctrlVbox:AddSliderControl(locale.get_text("emission_factor"),"emission_factor",0.0,0.0,1.0,function(el,value) self:SetMaterialParameter("vector","emission_factor",tostring(value) .. " " .. tostring(value) .. " " .. tostring(value)) end,0.01)
 	ctrlEmissionFactor:SetTooltip(locale.get_text("pfm_emission_factor_desc"))
 	self:LinkControlToMaterialParameter("emission_factor",ctrlEmissionFactor,nil,function(block)
 		if(block:HasValue("emission_factor") == false) then return end
@@ -165,12 +165,12 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	end)
 
 	-- Ao factor
-	local ctrlAoFactor = ctrlVbox:AddSliderControl("ao_factor","ao_factor",1.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","ao_factor",value) end,0.01)
+	local ctrlAoFactor = ctrlVbox:AddSliderControl(locale.get_text("ao_factor"),"ao_factor",1.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","ao_factor",value) end,0.01)
 	ctrlAoFactor:SetTooltip(locale.get_text("pfm_ao_factor_desc"))
 	self:LinkControlToMaterialParameter("ao_factor",ctrlAoFactor)
 
 	-- IOR
-	local ctrlIOR = ctrlVbox:AddSliderControl("pfm_mated_ior","ior",0.0,0.0,3.0,function(el,value) self:SetMaterialParameter("float","ior",value) end,0.01)
+	local ctrlIOR = ctrlVbox:AddSliderControl(locale.get_text("pfm_mated_ior"),"ior",0.0,0.0,3.0,function(el,value) self:SetMaterialParameter("float","ior",value) end,0.01)
 	self:LinkControlToMaterialParameter("ior",ctrlIOR)
 	local presetValues = {
 		{1.45,"default"}
@@ -189,7 +189,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	-- Alpha Mode
 	local ctrlAlphaCutoff
 	local ctrlAlphaFactor
-	local ctrlAlphaMode = ctrlVbox:AddDropDownMenu("alpha_mode","alpha_mode",{
+	local ctrlAlphaMode = ctrlVbox:AddDropDownMenu(locale.get_text("alpha_mode"),"alpha_mode",{
 		{tostring(game.Material.ALPHA_MODE_OPAQUE),locale.get_text("alpha_mode_opaque")},
 		{tostring(game.Material.ALPHA_MODE_MASK),locale.get_text("alpha_mode_mask")},
 		{tostring(game.Material.ALPHA_MODE_BLEND),locale.get_text("alpha_mode_blend")}
@@ -208,21 +208,21 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	self.m_ctrlAlphaMode = ctrlAlphaMode
 
 	-- Alpha Cutoff
-	ctrlAlphaCutoff = ctrlVbox:AddSliderControl("alpha_cutoff","alpha_cutoff",0.5,0.0,1.0,function(el,value) self:SetMaterialParameter("float","alpha_cutoff",tostring(value)) self:UpdateAlphaMode() end,0.01)
+	ctrlAlphaCutoff = ctrlVbox:AddSliderControl(locale.get_text("alpha_cutoff"),"alpha_cutoff",0.5,0.0,1.0,function(el,value) self:SetMaterialParameter("float","alpha_cutoff",tostring(value)) self:UpdateAlphaMode() end,0.01)
 	self.m_ctrlAlphaCutoff = ctrlAlphaCutoff
 	-- ctrlAlphaCutoff:SetTooltip(locale.get_text("alpha_cutoff_desc"))
 	self:LinkControlToMaterialParameter("alpha_cutoff",ctrlAlphaCutoff)
 	ctrlAlphaCutoff:SetVisible(false)
 
 	-- Alpha Factor
-	ctrlAlphaFactor = ctrlVbox:AddSliderControl("alpha_factor","alpha_factor",1.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","alpha_factor",tostring(value)) self:UpdateAlphaMode() end,0.01)
+	ctrlAlphaFactor = ctrlVbox:AddSliderControl(locale.get_text("alpha_factor"),"alpha_factor",1.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","alpha_factor",tostring(value)) self:UpdateAlphaMode() end,0.01)
 	self.m_ctrlAlphaFactor = ctrlAlphaFactor
 	-- ctrlAlphaFactor:SetTooltip(locale.get_text("alpha_cutoff_desc"))
 	self:LinkControlToMaterialParameter("alpha_factor",ctrlAlphaFactor)
 	ctrlAlphaFactor:SetVisible(false)
 
 	-- Color
-	local ctrlColorFactor = ctrlVbox:AddColorField("color_factor","color_factor",Color.White,function(oldCol,newCol)
+	local ctrlColorFactor = ctrlVbox:AddColorField(locale.get_text("color_factor"),"color_factor",Color.White,function(oldCol,newCol)
 		local vCol = newCol:ToVector4()
 		self:SetMaterialParameter("vector","color_factor",tostring(vCol))
 	end)
@@ -233,7 +233,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	end)
 
 	-- Cycles options
-	ctrlVbox:AddHeader("pfm_mated_cycles")
+	ctrlVbox:AddHeader(locale.get_text("pfm_mated_cycles"))
 
 	local cyclesShaderList = {
 		{
@@ -251,7 +251,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	}
 	local options = {}
 	for _,shaderData in ipairs(cyclesShaderList) do table.insert(options,{shaderData.identifier,shaderData.name}) end
-	local ctrlCyclesShader = ctrlVbox:AddDropDownMenu("pfm_mated_cycles_shader","cycles_shader",options,0,function(el,option)
+	local ctrlCyclesShader = ctrlVbox:AddDropDownMenu(locale.get_text("pfm_mated_cycles_shader"),"cycles_shader",options,0,function(el,option)
 		local shaderName = el:GetOptionValue(el:GetSelectedOption())
 		for id,el in pairs(self.m_cyclesShaderControls) do el:SetVisible(false) end
 		local el = self.m_cyclesShaderControls[shaderName]

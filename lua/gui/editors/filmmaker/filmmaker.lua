@@ -18,6 +18,7 @@ include("/gui/filmstrip.lua")
 include("/gui/genericclip.lua")
 include("/gui/witabbedpanel.lua")
 include("/gui/editors/wieditorwindow.lua")
+include("/gui/patreon_ticker.lua")
 include("/gui/pfm/viewport.lua")
 include("/gui/pfm/postprocessing.lua")
 include("/gui/pfm/videoplayer.lua")
@@ -58,6 +59,16 @@ function gui.WIFilmmaker:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 	tool.filmmaker = self
+
+	local infoBar = self:GetInfoBar()
+	local infoBarContents = infoBar:GetContents()
+	local patronTickerContainer = gui.create("PatreonTicker",infoBarContents,0,0,infoBarContents:GetWidth(),infoBarContents:GetHeight(),0,0,1,1)
+	local engineInfo = engine.get_info()
+	infoBar:AddIcon("wgui/patreon_logo",engineInfo.patreonURL,"Patreon")
+	infoBar:AddIcon("third_party/twitter_logo",engineInfo.twitterURL,"Twitter")
+	infoBar:AddIcon("third_party/reddit_logo",engineInfo.redditURL,"Reddit")
+	infoBar:AddIcon("third_party/discord_logo",engineInfo.discordURL,"Discord")
+	infoBar:Update()
 
 	-- Disable default scene drawing for the lifetime of the Filmmaker; We'll only render the viewport(s) if something has actually changed, which
 	-- saves up a huge amount of rendering resources.
@@ -429,6 +440,7 @@ function gui.WIFilmmaker:OnInitialize()
 		self.m_entLight = entLight
 	end
 	pfm.ProjectManager.OnInitialize(self)
+	self:SetCachedMode(false)
 end
 function gui.WIFilmmaker:PackProject(fileName)
 	local project = self:GetProject()
@@ -472,8 +484,6 @@ function gui.WIFilmmaker:ReloadInterface()
 	local interface = tool.open_filmmaker()
 	interface:InitializeProject(project)
 end
-function gui.WIFilmmaker:SetDeveloperModeEnabled(dev) self.m_devModeEnabled = dev or false end
-function gui.WIFilmmaker:IsDeveloperModeEnabled() return self.m_devModeEnabled or false end
 function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
 function gui.WIFilmmaker:GetViewport() return self:GetWindow("primary_viewport") or nil end
 function gui.WIFilmmaker:GetRenderTab() return self:GetWindow("cycles_render") or nil end
@@ -486,6 +496,13 @@ end
 function gui.WIFilmmaker:CreateNewActorComponent(actor,componentType)
 	-- TODO: What if no actor editor is open?
 	return self:GetActorEditor():CreateNewActorComponent(actor,componentType)
+end
+function gui.WIFilmmaker:OnGameViewCreated(projectC)
+	pfm.GameView.OnGameViewCreated(self,projectC)
+	projectC:AddEventCallback(ents.PFMProject.EVENT_ON_ENTITY_CREATED,function(ent)
+		local trackC = ent:GetComponent(ents.COMPONENT_PFM_TRACK)
+		if(trackC ~= nil) then trackC:SetKeepClipsAlive(false) end
+	end)
 end
 function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 	-- TODO: Implement a keybinding system for this! Keybindings should also appear in tooltips!
@@ -634,7 +651,7 @@ function gui.WIFilmmaker:SetGameViewOffset(offset)
 		if(util.is_valid(self:GetViewport())) then
 			self:GetViewport():SetGlobalTime(offset)
 
-			local childClip = activeClip:GetChildFilmClip(offset)
+			local childClip = self:GetActiveGameViewFilmClip()
 			if(childClip ~= nil) then
 				self:GetViewport():SetLocalTime(childClip:GetTimeFrame():LocalizeOffset(offset))
 				self:GetViewport():SetFilmClipName(childClip:GetName())
@@ -666,7 +683,7 @@ function gui.WIFilmmaker:InitializeProject(project)
 			filmTrack:GetFilmClipsAttr():AddChangeListener(function(newEl)
 				if(util.is_valid(self.m_timeline) == false) then return end
 				self:AddFilmClipElement(newEl)
-				self:RefreshGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.
+				self:ReloadGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.
 			end)
 
 			-- TODO
@@ -825,7 +842,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					local t = actor:GetTransform()
 					t:SetPosition(entGhost:GetPos())
 					t:SetRotation(entGhost:GetRotation())
-					filmmaker:RefreshGameView() -- TODO: No need to reload the entire game view
+					filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
 
 					local mdl = game.load_model(path:GetString())
 					if(mdl ~= nil) then
@@ -880,7 +897,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 	self:OpenWindow("actor_editor")
 	self:OpenWindow("element_viewer")
-	self:OpenWindow("tutorial_catalog")
+	-- self:OpenWindow("tutorial_catalog")
 
 	self:OpenWindow("primary_viewport")
 	self:OpenWindow("cycles_render")

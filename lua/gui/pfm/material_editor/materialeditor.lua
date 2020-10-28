@@ -13,7 +13,7 @@ include("/gui/pfm/colorslider.lua")
 include("rmacomposerdialog.lua")
 include("../controls_menu.lua")
 
-locale.load("pfm_material_editor.txt")
+locale.load("pfm_editors.txt")
 
 util.register_class("gui.PFMMaterialEditor",gui.Base)
 
@@ -354,8 +354,8 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 	-- Light intensity
 	local lightIntensity = gui.create("WIPFMSlider",self.m_renderControlsVbox)
 	lightIntensity:SetText(locale.get_text("pfm_mated_light_intensity"))
-	lightIntensity:SetRange(0,100)
-	lightIntensity:SetDefault(4)
+	lightIntensity:SetRange(0,50)
+	lightIntensity:SetDefault(10)
 	lightIntensity:SetStepSize(0.1)
 	lightIntensity:AddCallback("OnLeftValueChanged",function(el,val)
 		local ls = self.m_viewport:GetLightSource()
@@ -412,8 +412,8 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 	local rpC = util.is_valid(rp) and rp:GetComponent(ents.COMPONENT_REFLECTION_PROBE) or nil
 	local iblStrength = gui.create("WIPFMSlider",self.m_renderControlsVbox)
 	iblStrength:SetText(locale.get_text("pfm_mated_ibl_strength"))
-	iblStrength:SetRange(0.0,4.0)
-	iblStrength:SetDefault(util.is_valid(rpC) and rpC:GetIBLStrength() or 1.0)
+	iblStrength:SetRange(0.0,2.0)
+	iblStrength:SetDefault(0.4)--util.is_valid(rpC) and rpC:GetIBLStrength() or 0.4)
 	iblStrength:SetStepSize(0.01)
 	iblStrength:AddCallback("OnLeftValueChanged",function(el,val)
 		local rp = self.m_viewport:GetReflectionProbe()
@@ -461,6 +461,7 @@ function gui.PFMMaterialEditor:InitializeViewport()
 	end
 
 	self.m_rtViewport = gui.create("WIRaytracedViewport",vpContainer,0,0,vpContainer:GetWidth(),vpContainer:GetHeight(),0,0,1,1)
+	self.m_rtViewport:SetProjectManager(tool.get_filmmaker())
 	self.m_rtViewport:SetGameScene(self.m_viewport:GetScene())
 	self.m_rtViewport:SetVisible(false)
 	self.m_rtViewport:SetUseElementSizeAsRenderResolution(true)

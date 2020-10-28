@@ -18,15 +18,24 @@ function ents.PFMFilmClip:Initialize()
 	self.m_actors = {}
 	self.m_trackGroups = {}
 	self:AddEntityComponent(ents.COMPONENT_NAME)
+
+	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
+	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"OnTurnOff")
+end
+
+function ents.PFMFilmClip:OnTurnOn()
+	for _,actor in ipairs(self:GetActors()) do if(actor:IsValid()) then actor:TurnOn() end end
+	-- for _,ent in ipairs(self.m_trackGroups) do if(ent:IsValid()) then ent:TurnOn() end end
+end
+
+function ents.PFMFilmClip:OnTurnOff()
+	for _,actor in ipairs(self:GetActors()) do if(actor:IsValid()) then actor:TurnOff() end end
+	-- for _,ent in ipairs(self.m_trackGroups) do if(ent:IsValid()) then ent:TurnOff() end end
 end
 
 function ents.PFMFilmClip:OnRemove()
-	for _,actor in ipairs(self.m_actors) do
-		if(actor:IsValid()) then actor:Remove() end
-	end
-	for _,trackGroup in ipairs(self.m_trackGroups) do
-		if(trackGroup:IsValid()) then trackGroup:Remove() end
-	end
+	util.remove(self.m_actors)
+	util.remove(self.m_trackGroups)
 
 	game.clear_unused_materials() -- Clear unused materials that may have been created through material overrides of actor model components
 end
@@ -138,6 +147,9 @@ function ents.PFMFilmClip:CreateTrackGroup(trackGroup)
 		trackGroupC:Setup(trackGroup,self)
 		trackGroupC:OnOffsetChanged(self:GetOffset())
 	end
+
+	local projectC = self:GetProject()
+	if(util.is_valid(projectC)) then projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED,{ent}) end
 end
 
 function ents.PFMFilmClip:GetActor(actorData)
@@ -151,7 +163,6 @@ function ents.PFMFilmClip:GetActor(actorData)
 end
 
 function ents.PFMFilmClip:InitializeActors()
-	print("InitializeActors: ")
 	-- Only create actors that don't exist in the scene yet!
 	local actorDataToEnt = {}
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR)}) do
@@ -164,7 +175,6 @@ function ents.PFMFilmClip:InitializeActors()
 end
 
 function ents.PFMFilmClip:CreateActor(actor)
-	print("CREATING")
 	local entActor = ents.create("pfm_actor")
 	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	actorC:Setup(actor)
@@ -180,6 +190,24 @@ function ents.PFMFilmClip:CreateActor(actor)
 		") with rotation (" .. util.round_string(ang.p,0) .. "," .. util.round_string(ang.y,0) .. "," .. util.round_string(ang.r,0) ..
 		") with scale (" .. util.round_string(scale.x,2) .. "," .. util.round_string(scale.y,2) .. "," .. util.round_string(scale.z,2) .. ")...",pfm.LOG_CATEGORY_PFM_GAME)
 	actorC:OnOffsetChanged(self:GetOffset(),ents.PFMProject.GAME_VIEW_FLAG_NONE)
+
+	self:BroadcastEvent(ents.PFMFilmClip.EVENT_ON_ACTOR_CREATED,{actorC})
+
+	local projectC = self:GetProject()
+	if(util.is_valid(projectC)) then
+		projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ACTOR_CREATED,{actorC})
+		projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED,{actorC:GetEntity()})
+	end
+end
+
+function ents.PFMFilmClip:GetProject()
+	local trackC = self:GetTrack()
+	if(util.is_valid(trackC) == false) then return end
+	local projectC = trackC:GetProject()
+	if(util.is_valid(projectC)) then return projectC end
+	local trackGroupC = trackC:GetTrackGroup()
+	if(util.is_valid(trackGroupC) == false) then return end
+	return trackGroupC:GetProject()
 end
 
 function ents.PFMFilmClip:GetTimeFrame()
@@ -210,3 +238,4 @@ end
 
 ents.COMPONENT_PFM_FILM_CLIP = ents.register_component("pfm_film_clip",ents.PFMFilmClip)
 ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_FILM_CLIP,"on_offset_changed")
+ents.PFMFilmClip.EVENT_ON_ACTOR_CREATED = ents.register_component_event(ents.COMPONENT_PFM_FILM_CLIP,"on_actor_created")

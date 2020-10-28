@@ -8,6 +8,7 @@
 
 include("/util/class_property.lua")
 include("/shaders/pfm/pfm_calc_image_luminance.lua")
+include("cycles.lua")
 
 pfm = pfm or {}
 
@@ -59,7 +60,7 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"hdrOutput",false,
 	getter = "GetHDROutput",
 	setter = "SetHDROutput"
 })
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"deviceType","gpu")
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"deviceType",pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderWorld",true)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderGameEntities",true)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderPlayer",false)
@@ -153,11 +154,42 @@ pfm.RaytracingRenderJob.STATE_FAILED = 2
 pfm.RaytracingRenderJob.STATE_COMPLETE = 3
 pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE = 4
 pfm.RaytracingRenderJob.STATE_SUB_FRAME_COMPLETE = 5
-function pfm.RaytracingRenderJob:__init(settings)
+function pfm.RaytracingRenderJob:__init(projectManager,settings)
+	pfm.load_cycles()
 	self.m_settings = (settings and settings:Copy()) or pfm.RaytracingRenderJob.Settings()
 	self.m_startFrame = 0
+	self.m_projectManager = projectManager
 	self.m_gameScene = game.get_scene()
 	self:SetAutoAdvanceSequence(false)
+end
+pfm.RaytracingRenderJob.generate_job_batch_script = function(jobFiles,wd,addonPath)
+	if(#jobFiles == 0) then return end
+	addonPath = addonPath or util.get_addon_path()
+	local shellFileName
+	local toolName
+	if(os.SYSTEM_WINDOWS) then
+		shellFileName = "render.bat"
+		toolName = "bin/render_raytracing.exe"
+	else
+		shellFileName = "render.sh"
+		toolName = "lib/render_raytracing"
+	end
+
+	local path = file.get_file_path(jobFiles[1])
+	file.create_path(path)
+	local f = file.open(addonPath .. path .. shellFileName,bit.bor(file.OPEN_MODE_BINARY,file.OPEN_MODE_WRITE))
+	if(f ~= nil) then
+		local workingPath = wd or engine.get_working_directory()
+		local files = {}
+		for _,f in ipairs(jobFiles) do
+			table.insert(files,workingPath .. addonPath .. f)
+		end
+		local cmd = workingPath .. toolName .. " " .. string.join(files,' ')
+		f:WriteString(cmd)
+		f:Close()
+
+		util.open_path_in_explorer(addonPath .. path,shellFileName)
+	end
 end
 function pfm.RaytracingRenderJob:GetPreStageScene() return self.m_preStage end
 function pfm.RaytracingRenderJob:SetGameScene(scene) self.m_gameScene = scene end
@@ -486,9 +518,8 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 		return true
 	end]]
 
-	local filmmaker = tool.get_filmmaker()
 	-- Make sure we're at the right frame
-	filmmaker:GoToFrame(self.m_currentFrame)
+	self.m_projectManager:GoToFrame(self.m_currentFrame)
 	-- We want to wait for a bit before rendering, to make sure
 	-- everything for this frame has been set up properly.
 	-- If the scene contains particle systems, the frame must not be

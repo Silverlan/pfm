@@ -168,7 +168,7 @@ function udm.PFMModel:SetupFlexControllerControls(actorEditor,itemComponent)
 		end
 	end
 	actorEditor:AddControl(self,itemComponent,{
-		name = "flex_controller_limits",
+		name = locale.get_text("flex_controller_limits"),
 		addControl = function(ctrls)
 			return ctrls:AddToggleControl("pfm_enable_flex_controller_limits","flex_controller_limits",self:GetFlexControllerLimitsEnabled(),function(el,checked)
 				self:SetFlexControllerLimitsEnabled(checked)
@@ -201,7 +201,7 @@ function udm.PFMModel:SetupControls(actorEditor,itemComponent)
 
 	local itemBaseProps = itemComponent:AddItem(locale.get_text("pfm_base_properties"))
 	actorEditor:AddControl(self,itemBaseProps,{
-		name = "pfm_flex_controller_scale",
+		name = locale.get_text("pfm_flex_controller_scale"),
 		get = function(component)
 			return self:GetFlexControllerScale()
 		end,

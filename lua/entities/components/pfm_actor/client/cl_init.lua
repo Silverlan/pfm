@@ -22,6 +22,9 @@ function ents.PFMActorComponent:Initialize()
 	self.m_listeners = {}
 
 	self.m_cvAnimCache = console.get_convar("pfm_animation_cache_enabled")
+
+	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"UpdateRenderMode")
+	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"UpdateRenderMode")
 end
 
 function ents.PFMActorComponent:AddChannel(channel)
@@ -68,11 +71,17 @@ function ents.PFMActorComponent:SetDefaultRenderMode(renderMode)
 	self:UpdateRenderMode()
 end
 
+function ents.PFMActorComponent:GetDefaultRenderMode() return self.m_defaultRenderMode end
+
 function ents.PFMActorComponent:UpdateRenderMode()
 	local actorData = self:GetActorData()
-	local renderMode = self.m_defaultRenderMode or ents.RenderComponent.RENDERMODE_WORLD
-	if(actorData:IsAbsoluteVisible() == false) then
-		renderMode = ents.RenderComponent.RENDERMODE_NONE
+	local renderMode
+	if(self:GetEntity():IsTurnedOff()) then renderMode = ents.RenderComponent.RENDERMODE_NONE
+	else
+		renderMode = self.m_defaultRenderMode or ents.RenderComponent.RENDERMODE_WORLD
+		if(actorData:IsAbsoluteVisible() == false) then
+			renderMode = ents.RenderComponent.RENDERMODE_NONE
+		end
 	end
 	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 	if(renderC ~= nil) then renderC:SetRenderMode(renderMode) end

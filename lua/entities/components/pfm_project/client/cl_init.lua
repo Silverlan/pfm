@@ -48,13 +48,57 @@ function ents.PFMProject:SetProjectData(project)
 	end
 end
 
+local function collect_clips(trackC,clips)
+	for clipData,clip in pairs(trackC:GetActiveClips()) do
+		if(clip:IsValid()) then table.insert(clips,clip) end
+		local filmClipC = clip:IsValid() and clip:GetComponent(ents.COMPONENT_PFM_FILM_CLIP) or nil
+		if(filmClipC ~= nil) then
+			for _,trackGroup in ipairs(filmClipC:GetTrackGroups()) do
+				local trackGroupC = trackGroup:IsValid() and trackGroup:GetComponent(ents.COMPONENT_PFM_TRACK_GROUP) or nil
+				if(trackGroupC ~= nil) then
+					for _,track in ipairs(trackGroupC:GetTracks()) do
+						local trackC = track:IsValid() and track:GetComponent(ents.COMPONENT_PFM_TRACK) or nil
+						if(trackC ~= nil) then
+							collect_clips(trackC,clips)
+						end
+					end
+				end
+			end
+		end
+	end
+end
+function ents.PFMProject:GetClips()
+	local trackC = util.is_valid(self.m_entRootTrack) and self.m_entRootTrack:GetComponent(ents.COMPONENT_PFM_TRACK) or nil
+	if(trackC == nil) then return {} end
+	local clips = {}
+	collect_clips(trackC,clips)
+	return clips
+end
+
+function ents.PFMProject:GetActors()
+	local clips = self:GetClips()
+	local actors = {}
+	for _,clip in ipairs(clips) do
+		local filmClipC = clip:GetComponent(ents.COMPONENT_PFM_FILM_CLIP)
+		if(filmClipC ~= nil) then
+			for _,actor in ipairs(filmClipC:GetActors()) do
+				local actorC = actor:IsValid() and actor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
+				if(actorC ~= nil) then table.insert(actors,actorC) end
+			end
+		end
+	end
+	return actors
+end
+
 function ents.PFMProject:Start()
 	self:Reset()
 
 	local ent = ents.create("pfm_track")
-	ent:GetComponent(ents.COMPONENT_PFM_TRACK):Setup(self.m_rootTrack)
+	ent:GetComponent(ents.COMPONENT_PFM_TRACK):Setup(self.m_rootTrack,nil,self)
 	ent:Spawn()
 	self.m_entRootTrack = ent
+
+	self:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED,{ent})
 end
 
 function ents.PFMProject:GetProject() return self.m_project end
@@ -85,6 +129,7 @@ function ents.PFMProject:SetOffset(offset,gameViewFlags)
 		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 		if(mdl ~= nil and animC ~= nil and actorC ~= nil) then
 			local animName = animCache:GetAnimationName(filmClip,actorC:GetActorData())
+			
 			animC:PlayAnimation(animName)
 			local anim = animC:GetAnimationObject()
 			if(anim ~= nil) then
@@ -108,3 +153,5 @@ end
 
 function ents.PFMProject:GetTimeFrame() return self.m_timeFrame end
 ents.COMPONENT_PFM_PROJECT = ents.register_component("pfm_project",ents.PFMProject)
+ents.PFMProject.EVENT_ON_ACTOR_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT,"on_actor_created")
+ents.PFMProject.EVENT_ON_ENTITY_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT,"on_entity_created")

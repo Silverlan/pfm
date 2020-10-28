@@ -28,8 +28,8 @@ function gui.RaytracedViewport:OnInitialize()
 	self.m_renderSettings:SetEmissionStrength(1.0)
 	self.m_renderSettings:SetMaxTransparencyBounces(128)
 	self.m_renderSettings:SetDenoiseMode(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_DETAILED)
-	self.m_renderSettings:SetHDROutput(true)
-	self.m_renderSettings:SetDeviceType(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU)
+	self.m_renderSettings:SetHDROutput(false)
+	self.m_renderSettings:SetDeviceType(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU)
 	self.m_renderSettings:SetCamType(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE)
 	self.m_renderSettings:SetPanoramaType(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
 
@@ -158,6 +158,7 @@ function gui.RaytracedViewport:InitializeLDRRenderTarget(w,h)
 end
 function gui.RaytracedViewport:SetUseElementSizeAsRenderResolution(b) self.m_useElementSizeAsRenderResolution = b end
 function gui.RaytracedViewport:GetRenderSettings() return self.m_renderSettings end
+function gui.RaytracedViewport:SetRenderSettings(renderSettings) self.m_renderSettings = renderSettings end
 function gui.RaytracedViewport:SetGameScene(gameScene) self.m_gameScene = gameScene end
 function gui.RaytracedViewport:GetGameScene() return self.m_gameScene or game.get_scene() end
 function gui.RaytracedViewport:OnRemove()
@@ -220,6 +221,8 @@ function gui.RaytracedViewport:SetToneMapping(toneMapping)
 	if(toneMapping == self:GetToneMapping()) then return end
 	self.m_tex:SetToneMappingAlgorithm(toneMapping)
 end
+function gui.RaytracedViewport:SetProjectManager(pm) self.m_projectManager = pm end
+function gui.RaytracedViewport:GetProjectManager() return self.m_projectManager end
 function gui.RaytracedViewport:SetToneMappingArguments(toneMapArgs) self.m_tex:SetToneMappingAlgorithmArgs(toneMapArgs) end
 function gui.RaytracedViewport:GetToneMappingArguments() return self.m_tex:GetToneMappingAlgorithmArgs() end
 function gui.RaytracedViewport:GetToneMapping() return self.m_tex:GetToneMappingAlgorithm() end
@@ -242,6 +245,11 @@ function gui.RaytracedViewport:RestartRendering()
 	self.m_rtJob:RestartRendering()
 end
 function gui.RaytracedViewport:Refresh(preview)
+	preview = preview or false
+	if(self.m_projectManager == nil) then
+		console.print_warning("Unable to render raytraced viewport: No valid project manager specified!")
+		return
+	end
 	self:CancelRendering()
 	if(pfm.load_cycles() == false) then return end
 
@@ -252,8 +260,8 @@ function gui.RaytracedViewport:Refresh(preview)
 	end
 
 	settings:SetRenderPreview(preview)
-	self.m_rtJob = pfm.RaytracingRenderJob(settings)
-	self.m_rtJob:SetStartFrame(tool.get_filmmaker():GetClampedFrameOffset())
+	self.m_rtJob = pfm.RaytracingRenderJob(self.m_projectManager,settings)
+	self.m_rtJob:SetStartFrame(self.m_projectManager:GetClampedFrameOffset())
 	self.m_rtJob:SetFrameStartCallback(function()
 		if(self.m_rtJob:IsProgressive() == false) then return end
 		local tex = self.m_rtJob:GetProgressiveTexture()
