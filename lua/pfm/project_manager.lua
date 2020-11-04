@@ -24,11 +24,11 @@ function pfm.ProjectManager:OnInitialize()
 	self:CreateNewProject()
 	self.m_map = game.get_map_name()
 end
-function pfm.ProjectManager:LoadMap()
+function pfm.ProjectManager:LoadMap(mapName)
 	local session = self:GetSession()
 	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
 	if(activeClip == nil) then return end
-	local mapName = activeClip:GetMapName()
+	mapName = mapName or activeClip:GetMapName()
 	if(mapName:lower() == self.m_map:lower()) then return end
 	self:ClearMap()
 	self.m_map = mapName
@@ -36,6 +36,7 @@ function pfm.ProjectManager:LoadMap()
 	local packet = net.Packet()
 	packet:WriteString(mapName)
 	net.send(net.PROTOCOL_SLOW_RELIABLE,"sv_pfm_load_map",packet)
+	return mapName
 end
 function pfm.ProjectManager:ClearMap()
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_MAP)}) do
@@ -73,7 +74,7 @@ function pfm.ProjectManager:LoadProject(fileName)
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
 	self.m_projectFileName = fileName
 	self:LoadAnimationCache(fileName)
-	return self:InitializeProject(project)
+	return util.is_valid(self:InitializeProject(project))
 end
 function pfm.ProjectManager:SaveProject(fileName)
 	local project = self:GetProject()
@@ -83,6 +84,7 @@ function pfm.ProjectManager:SaveProject(fileName)
 	self:SaveAnimationCache(fileName)
 	return success
 end
+function pfm.ProjectManager:GetProjectFileName() return self.m_projectFileName end
 function pfm.ProjectManager:GetAnimationCacheFilePath(projectFileName)
 	return "cache/pfm/animation_cache/" .. util.get_string_hash(projectFileName or self.m_projectFileName) .. ".pfa"
 end
@@ -118,7 +120,7 @@ function pfm.ProjectManager:CreateNewProject()
 	local project = pfm.create_empty_project()
 	local session = project:GetSessions()[1]
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
-	return self:InitializeProject(project)
+	return util.is_valid(self:InitializeProject(project))
 end
 function pfm.ProjectManager:CloseProject()
 	pfm.log("Closing project...",pfm.LOG_CATEGORY_PFM)
@@ -140,7 +142,7 @@ function pfm.ProjectManager:ImportSFMProject(projectFilePath)
 	self:ClearAnimationCache()
 	local session = pfmScene:GetSessions()[1]
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
-	return self:InitializeProject(pfmScene)
+	return util.is_valid(self:InitializeProject(pfmScene))
 end
 function pfm.ProjectManager:SetTimeOffset(offset)
 	local session = self:GetSession()
@@ -254,6 +256,23 @@ function pfm.ProjectManager:SetFrameOffset(frame) self:SetTimeOffset(self:FrameO
 function pfm.ProjectManager:GetFrameOffset() return self:TimeOffsetToFrameOffset(self:GetTimeOffset()) end
 function pfm.ProjectManager:GetClampedFrameOffset(frame) return math.round(frame or self:GetFrameOffset()) end
 function pfm.ProjectManager:ClampTimeOffsetToFrame() self:SetFrameOffset(self:GetClampedFrameOffset()) end
+function pfm.ProjectManager:GetPlayheadClip()
+	local filmTrack = self:GetSession():GetFilmTrack()
+	local filmClips = filmTrack:GetFilmClips():GetTable()
+	local offset = self:GetTimeOffset()
+	if(#filmClips == 0) then return end
+	for i,filmClipData in ipairs(filmClips) do
+		local timeFrame = filmClipData:GetTimeFrame()
+		if(timeFrame:IsInTimeFrame(offset,0.001)) then
+			return filmClipData
+		end
+	end
+end
+function pfm.ProjectManager:GetPlayheadClipRange()
+	local clip = self:GetPlayheadClip()
+	if(clip == nil) then return end
+	return self:TimeOffsetToFrameOffset(clip:GetTimeFrame():GetStart()),self:TimeOffsetToFrameOffset(clip:GetTimeFrame():GetEnd())
+end
 function pfm.ProjectManager:GoToFrame(frame) self:SetFrameOffset(frame) end
 function pfm.ProjectManager:GoToNextFrame() self:SetFrameOffset(self:GetClampedFrameOffset() +1) end
 function pfm.ProjectManager:GoToPreviousFrame() self:SetFrameOffset(self:GetClampedFrameOffset() -1) end

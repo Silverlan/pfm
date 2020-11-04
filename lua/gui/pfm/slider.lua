@@ -130,6 +130,24 @@ function gui.PFMSlider:GetLeftValue(value) local bar = self:GetLeftSliderBar() r
 function gui.PFMSlider:GetRightValue(value) local bar = self:GetRightSliderBar() return util.is_valid(bar) and bar:GetValue() or 0.0 end
 function gui.PFMSlider:GetMin() return self:GetLeftMin() end
 function gui.PFMSlider:GetMax() return self:GetLeftMax() end
+function gui.PFMSlider:SetMin(min)
+	local bar = self:GetLeftSliderBar()
+	bar:SetMin(min)
+
+	bar = self:GetRightSliderBar()
+	bar:SetMin(min)
+end
+function gui.PFMSlider:SetMax(min)
+	local bar = self:GetLeftSliderBar()
+	bar:SetMax(min)
+	
+	bar = self:GetRightSliderBar()
+	bar:SetMax(min)
+end
+function gui.PFMSlider:GrowRangeToValue(value)
+	if(value < self:GetMin()) then self:SetMin(value) end
+	if(value > self:GetMax()) then self:SetMax(value) end
+end
 function gui.PFMSlider:GetDefault() return self:GetLeftDefault() end
 function gui.PFMSlider:ResetToDefault()
 	self:SetLeftValue(self:GetLeftDefault())
@@ -219,6 +237,7 @@ function gui.PFMSlider:MouseCallback(button,state,mods)
 				end
 			end)
 		end)
+		self:CallCallbacks("PopulateContextMenu",pContext)
 		pContext:Update()
 	end
 	return util.EVENT_REPLY_HANDLED

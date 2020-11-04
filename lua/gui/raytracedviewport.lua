@@ -244,7 +244,7 @@ function gui.RaytracedViewport:RestartRendering()
 	if(self.m_rtJob == nil) then return end
 	self.m_rtJob:RestartRendering()
 end
-function gui.RaytracedViewport:Refresh(preview)
+function gui.RaytracedViewport:Refresh(preview,rtJobCallback)
 	preview = preview or false
 	if(self.m_projectManager == nil) then
 		console.print_warning("Unable to render raytraced viewport: No valid project manager specified!")
@@ -262,11 +262,12 @@ function gui.RaytracedViewport:Refresh(preview)
 	settings:SetRenderPreview(preview)
 	self.m_rtJob = pfm.RaytracingRenderJob(self.m_projectManager,settings)
 	self.m_rtJob:SetStartFrame(self.m_projectManager:GetClampedFrameOffset())
-	self.m_rtJob:SetFrameStartCallback(function()
+	self.m_rtJob:AddCallback("OnFrameStart",function()
 		if(self.m_rtJob:IsProgressive() == false) then return end
 		local tex = self.m_rtJob:GetProgressiveTexture()
 		self.m_tex:SetTexture(tex)
 	end)
+	if(rtJobCallback ~= nil) then rtJobCallback(self.m_rtJob) end
 	if(self.m_gameScene ~= nil) then self.m_rtJob:SetGameScene(self.m_gameScene) end
 
 	pfm.log("Rendering image with resolution " .. settings:GetWidth() .. "x" .. settings:GetHeight() .. " and " .. settings:GetSamples() .. " samples...",pfm.LOG_CATEGORY_PFM_INTERFACE)

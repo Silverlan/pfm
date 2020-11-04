@@ -33,6 +33,8 @@ function gui.PFMSliderCursor:SetRange(min,max)
 end
 function gui.PFMSliderCursor:GetMin() return self.m_min end
 function gui.PFMSliderCursor:GetMax() return self.m_max end
+function gui.PFMSliderCursor:SetMin(min) self.m_min = min; self:Update() end
+function gui.PFMSliderCursor:SetMax(max) self.m_max = max; self:Update() end
 function gui.PFMSliderCursor:GetType() return self.m_type end
 function gui.PFMSliderCursor:IsHorizontal() return self:GetType() == gui.PFMSliderCursor.TYPE_HORIZONTAL end
 function gui.PFMSliderCursor:IsVertical() return self:GetType() == gui.PFMSliderCursor.TYPE_VERTICAL end

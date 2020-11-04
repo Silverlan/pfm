@@ -891,7 +891,27 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:RegisterWindow(self.m_actorDataFrame,"particle_editor",locale.get_text("pfm_particle_editor"),function() return gui.create("WIPFMParticleEditor") end)
 
 	self:RegisterWindow(self.m_viewportFrame,"primary_viewport",locale.get_text("pfm_primary_viewport"),function() return gui.create("WIPFMViewport") end)
-	self:RegisterWindow(self.m_viewportFrame,"cycles_render",locale.get_text("pfm_cycles_renderer"),function() return gui.create("WIPFMRenderPreview") end)
+	self:RegisterWindow(self.m_viewportFrame,"cycles_render",locale.get_text("pfm_cycles_renderer"),function()
+		local el = gui.create("WIPFMRenderPreview")
+		el:GetVisibilityProperty():AddCallback(function(wasVisible,isVisible)
+			if(self.m_renderWasSceneCameraEnabled == nil) then self.m_renderWasSceneCameraEnabled = ents.PFMCamera.is_camera_enabled() end
+			if(isVisible) then ents.PFMCamera.set_camera_enabled(false) -- Switch to game camera for VR renders
+			else
+				ents.PFMCamera.set_camera_enabled(self.m_renderWasSceneCameraEnabled)
+				self.m_renderWasSceneCameraEnabled = nil
+			end
+		end)
+		el:AddCallback("InitializeRender",function(el,rtJob,settings,preview)
+			rtJob:AddCallback("PrepareFrame",function()
+				if(self.m_renderWasSceneCameraEnabled == nil) then self.m_renderWasSceneCameraEnabled = ents.PFMCamera.is_camera_enabled() end
+				ents.PFMCamera.set_camera_enabled(self.m_renderWasSceneCameraEnabled)
+			end)
+			rtJob:AddCallback("OnFrameStart",function()
+				ents.PFMCamera.set_camera_enabled(false) -- Switch back to game cam for 360 preview
+			end)
+		end)
+		return el
+	end)
 	self:RegisterWindow(self.m_viewportFrame,"post_processing",locale.get_text("pfm_post_processing"),function() return gui.create("WIPFMPostProcessing") end)
 	self:RegisterWindow(self.m_viewportFrame,"video_player",locale.get_text("pfm_video_player"),function() return gui.create("WIPFMVideoPlayer") end)
 

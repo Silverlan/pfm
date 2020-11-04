@@ -37,6 +37,7 @@ console.register_command("pfm",function(pl,...)
 	local logCategories = 0
 	local reload = false
 	local dev = false
+	local project
 	for cmd,args in pairs(console.parse_command_arguments({...})) do
 		if(cmd == "log") then
 			for _,catName in ipairs(args) do
@@ -51,7 +52,8 @@ console.register_command("pfm",function(pl,...)
 				end
 			end
 		elseif(cmd == "reload") then reload = true
-		elseif(cmd == "dev") then dev = true end
+		elseif(cmd == "dev") then dev = true
+		elseif(cmd == "project") then project = args[1] end
 	end
 	pfm.set_enabled_log_categories(logCategories)
 
@@ -94,4 +96,5 @@ console.register_command("pfm",function(pl,...)
 	--
 	local pfm = tool.open_filmmaker()
 	if(util.is_valid(pfm)) then pfm:SetDeveloperModeEnabled(dev) end
+	if(project ~= nil) then pfm:LoadProject(project) end
 end)

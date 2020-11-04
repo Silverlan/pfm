@@ -7,6 +7,7 @@
 ]]
 
 include("/gui/vbox.lua")
+include("/gui/pfm/slider.lua")
 
 util.register_class("gui.PFMControlsMenu",gui.VBox)
 function gui.PFMControlsMenu:__init()

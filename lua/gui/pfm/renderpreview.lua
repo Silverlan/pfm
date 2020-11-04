@@ -47,6 +47,7 @@ function gui.PFMRenderPreview:OnInitialize()
 
 	self.m_rt = gui.create("WIPFMRaytracedAnimationViewport",self.m_aspectRatioWrapper)
 	self.m_rt:SetProjectManager(tool.get_filmmaker())
+	self.m_rt:GetToneMappedImageElement():SetVRCamera(game.get_primary_camera())
 	self.m_rt:AddCallback("OnProgressChanged",function(rt,progress)
 		self:CallCallbacks("OnProgressChanged",progress)
 	end)
@@ -388,7 +389,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlPanoramaRange = p:AddDropDownMenu(locale.get_text("pfm_cycles_cam_panorama_range"),"panorama_range",{
 		{tostring(360),locale.get_text("pfm_cycles_degrees",{360})},
 		{tostring(180),locale.get_text("pfm_cycles_degrees",{180})}
-	},0)
+	},1)
 	p:SetControlVisible("panorama_range",false)
 
 	-- Quality preset
@@ -486,6 +487,26 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	-- Number of frames
 	self.m_ctrlFrameCount = p:AddSliderControl(locale.get_text("pfm_number_of_frames_to_render"),"frame_count",1,1,100,nil,1.0,true)
+	self.m_ctrlFrameCount:AddCallback("PopulateContextMenu",function(p,pContext)
+		pContext:AddItem(locale.get_text("pfm_number_of_frames_set_to_end_of_clip"),function()
+			if(self:IsValid() == false) then return end
+			local pfm = tool.get_filmmaker()
+			local numFrames
+			local startFrame,endFrame = pfm:GetPlayheadClipRange()
+			startFrame = pfm:GetFrameOffset()
+			if(startFrame ~= nil) then numFrames = math.max(endFrame -startFrame +1,1)
+			else numFrames = 0 end
+			self.m_ctrlFrameCount:GrowRangeToValue(numFrames)
+			self.m_ctrlFrameCount:SetValue(numFrames)
+		end)
+		pContext:AddItem(locale.get_text("pfm_number_of_frames_set_to_end_of_session"),function()
+			if(self:IsValid() == false) then return end
+			local pfm = tool.get_filmmaker()
+			local numFrames = math.max(pfm:GetLastFrameIndex() -pfm:GetFrameOffset() +1,1)
+			self.m_ctrlFrameCount:GrowRangeToValue(numFrames)
+			self.m_ctrlFrameCount:SetValue(numFrames)
+		end)
+	end)
 
 	local _,colorTransforms = file.find("modules/open_color_io/configs/*")
 	local colorTransformOptions = {}
@@ -857,7 +878,9 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 		else self.m_renderedImageType = gui.PFMRenderPreview.IMAGE_TYPE_MONO end
 	end
 
-	self.m_rt:Refresh(preview)
+	self.m_rt:Refresh(preview,function(rtJob)
+		self:CallCallbacks("InitializeRender",rtJob,settings,preview)
+	end)
 	self:UpdateViewport(settings)
 end
 gui.register("WIPFMRenderPreview",gui.PFMRenderPreview)

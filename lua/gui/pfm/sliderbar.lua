@@ -42,6 +42,8 @@ function gui.PFMSliderBar:SetRange(min,max) self.m_cursor:SetRange(min,max) end
 function gui.PFMSliderBar:SetWeight(weight) self.m_cursor:SetWeight(weight) end
 function gui.PFMSliderBar:GetMin() return self.m_cursor:GetMin() end
 function gui.PFMSliderBar:GetMax() return self.m_cursor:GetMax() end
+function gui.PFMSliderBar:SetMin(min) return self.m_cursor:SetMin(min) end
+function gui.PFMSliderBar:SetMax(max) return self.m_cursor:SetMax(max) end
 function gui.PFMSliderBar:SetValue(value) self.m_cursor:SetValue(value) end
 function gui.PFMSliderBar:SetInteger(b) self.m_cursor:SetInteger(b) end
 function gui.PFMSliderBar:OnFractionChanged(fraction)

@@ -12,7 +12,7 @@ include("cycles.lua")
 
 pfm = pfm or {}
 
-util.register_class("pfm.RaytracingRenderJob")
+util.register_class("pfm.RaytracingRenderJob",util.CallbackHandler)
 
 util.register_class("pfm.RaytracingRenderJob.Settings")
 pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE = 0
@@ -155,6 +155,7 @@ pfm.RaytracingRenderJob.STATE_COMPLETE = 3
 pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE = 4
 pfm.RaytracingRenderJob.STATE_SUB_FRAME_COMPLETE = 5
 function pfm.RaytracingRenderJob:__init(projectManager,settings)
+	util.CallbackHandler.__init(self)
 	pfm.load_cycles()
 	self.m_settings = (settings and settings:Copy()) or pfm.RaytracingRenderJob.Settings()
 	self.m_startFrame = 0
@@ -213,7 +214,6 @@ function pfm.RaytracingRenderJob:GetRenderResultTexture() return self.m_renderRe
 function pfm.RaytracingRenderJob:GetRenderResult() return self.m_currentImageBuffer end
 function pfm.RaytracingRenderJob:GetRenderResultFrameIndex() return self.m_renderResultFrameIndex end
 function pfm.RaytracingRenderJob:GetRenderResultRemainingSubStages() return self.m_renderResultRemainingSubStages end
-function pfm.RaytracingRenderJob:SetFrameStartCallback(cb) self.m_frameStartCallback = cb end
 function pfm.RaytracingRenderJob:GenerateResult()
 	if(#self.m_imageBuffers == 0) then return end
 	local img
@@ -299,6 +299,9 @@ end
 local g_staticGeometryCache
 function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	self.m_tRenderStart = nil
+
+	self:CallCallbacks("PrepareFrame")
+
 	local cam = self.m_gameScene:GetActiveCamera()
 	if(cam == nil) then return end
 
@@ -479,7 +482,8 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		end
 	end
 	
-	pfm.log("Starting render job for frame " .. (self.m_currentFrame +1) .. "...",pfm.LOG_CATEGORY_PFM_RENDER)
+	local ang = rot:ToEulerAngles()
+	pfm.log("Starting render job for frame " .. (self.m_currentFrame +1) .. " with camera position (" .. pos.x .. "," .. pos.y .. "," .. pos.z .. ") and angles (" .. ang.p .. "," .. ang.y .. "," .. ang.r .. ").",pfm.LOG_CATEGORY_PFM_RENDER)
 
 	if(renderSettings:IsPreStageOnly()) then
 		self.m_preStage = scene
@@ -499,7 +503,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	end
 
 	self.m_lastProgress = 0.0
-	if(self.m_frameStartCallback ~= nil) then self.m_frameStartCallback() end
+	self:CallCallbacks("OnFrameStart")
 end
 function pfm.RaytracingRenderJob:RenderNextImage()
 	if(self.m_remainingSubStages == 0) then
