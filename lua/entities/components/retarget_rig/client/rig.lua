@@ -124,10 +124,14 @@ function ents.RetargetRig.Rig:ApplyPoseMatchingRotationCorrections()
 	self:SetBindPose(bindPose)
 end
 function ents.RetargetRig.Rig.get_rig_file_path(srcMdl,dstMdl)
-	local srcHash = string.hash(srcMdl:GetName())
-	local dstHash = string.hash(dstMdl:GetName())
-	local path = ents.RetargetRig.Rig.FILE_LOCATION .. srcHash .. "/" .. dstHash .. ".rig"
+	local dstHash = string.hash(type(dstMdl) == "string" and dstMdl or dstMdl:GetName())
+	local path = ents.RetargetRig.Rig.get_rig_location(srcMdl):GetString() .. dstHash .. ".rig"
 	return util.Path.CreateFilePath(path)
+end
+function ents.RetargetRig.Rig.get_rig_location(mdl)
+	local hash = string.hash(type(mdl) == "string" and mdl or mdl:GetName())
+	local path = ents.RetargetRig.Rig.FILE_LOCATION .. hash .. "/"
+	return util.Path.CreatePath(path)
 end
 function ents.RetargetRig.Rig.get_bone_cache_map_file_path()
 	return ents.RetargetRig.Rig.FILE_LOCATION .. "bone_cache.txt"
@@ -195,7 +199,7 @@ function ents.RetargetRig.Rig:Save()
 
 	ents.RetargetRig.Rig.add_bone_list_to_cache_map(translationNameTable)
 
-	local filePath = ents.RetargetRig.Rig.get_rig_file_path(srcMdl,dstMdl)
+	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
 	if(file.create_path(filePath:GetPath()) == false) then return end
 	local f = file.open(filePath:GetString(),bit.bor(file.OPEN_MODE_WRITE))
 	if(f == nil) then return end
@@ -206,7 +210,7 @@ function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
 	-- TODO: Flip these names
 	local srcMdl = pdstMdl
 	local dstMdl = psrcMdl
-	local filePath = ents.RetargetRig.Rig.get_rig_file_path(srcMdl,dstMdl)
+	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
 	local f = file.open(filePath:GetString(),bit.bor(file.OPEN_MODE_READ))
 	if(f == nil) then return end
 	local root = util.DataBlock.load(f)

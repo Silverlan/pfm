@@ -22,6 +22,7 @@ function gui.ImageIcon:OnInitialize()
 
 	local textBg = gui.create("WIRect",self,0,self:GetHeight() -18,self:GetWidth(),18,0,1,1,1)
 	textBg:SetColor(Color(16,16,16,240))
+	self.m_textBg = textBg
 
 	local elText = gui.create("WIText",self)
 	elText:SetColor(Color.White)
@@ -32,6 +33,11 @@ function gui.ImageIcon:OnInitialize()
 	self.m_outline = outline
 
 	self:SetSelected(false)
+end
+function gui.ImageIcon:SetImageOnly(imageOnly)
+	self.m_textBg:SetVisible(not imageOnly)
+	self.m_text:SetVisible(not imageOnly)
+	self.m_outline:SetVisible(not imageOnly)
 end
 function gui.ImageIcon:SetSelected(selected)
 	if(selected == self.m_selected) then return end

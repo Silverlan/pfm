@@ -289,7 +289,7 @@ function gui.PFMRaytracedAnimationViewport:RenderPragmaParticleSystems(tex,drawC
 	tex = tex or self:GetSceneTexture()
 
 	if(self.m_testRenderer == nil) then
-		local renderer = self:GetGameScene():CreateRenderer(game.Scene.RENDERER_TYPE_RASTERIZATION)
+		local renderer = self:GetGameScene():CreateRenderer(ents.SceneComponent.RENDERER_TYPE_RASTERIZATION)
 		renderer:InitializeRenderTarget(tex:GetWidth(),tex:GetHeight())
 		self.m_testRenderer = renderer
 	end
