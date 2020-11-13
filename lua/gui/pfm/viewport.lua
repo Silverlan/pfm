@@ -100,47 +100,51 @@ function gui.PFMViewport:OnInitialize()
 	-- This controls the behavior that allows controlling the camera while holding the right mouse button down
 	self.m_viewport:SetMouseInputEnabled(true)
 	self.m_cbClickMouseInput = self.m_viewport:AddCallback("OnMouseEvent",function(el,mouseButton,state,mods)
-		if(mouseButton ~= input.MOUSE_BUTTON_LEFT and mouseButton ~= input.MOUSE_BUTTON_RIGHT) then return util.EVENT_REPLY_UNHANDLED end
-		if(state ~= input.STATE_PRESS and state ~= input.STATE_RELEASE) then return util.EVENT_REPLY_UNHANDLED end
-
-		local filmmaker = tool.get_filmmaker()
-		if(self.m_inCameraControlMode and mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE and filmmaker:IsValid() and filmmaker:HasFocus() == false) then
-			if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK) end
-			filmmaker:TrapFocus(true)
-			filmmaker:RequestFocus()
-			filmmaker:TagRenderSceneAsDirty(false)
-			input.set_cursor_pos(self.m_oldCursorPos)
-			self.m_inCameraControlMode = false
-			return util.EVENT_REPLY_HANDLED
-		end
-
-		local el = gui.get_element_under_cursor()
-		if(util.is_valid(el) and (el == self or el:IsDescendantOf(self))) then
-			if(mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-				self.m_oldCursorPos = input.get_cursor_pos()
-				if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY) end
-				input.center_cursor()
-				filmmaker:TrapFocus(false)
-				filmmaker:KillFocus()
-				filmmaker:TagRenderSceneAsDirty(true)
-				self.m_inCameraControlMode = true
-			elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
-				local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS)
-				if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
-					local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-					local actor = (actorC ~= nil) and actorC:GetActorData() or nil
-					if(actor) then filmmaker:SelectActor(actor) end
-				end
-			end
-			return util.EVENT_REPLY_HANDLED
-		end
-		return util.EVENT_REPLY_UNHANDLED
+		return self:OnViewportMouseEvent(el,mouseButton,state,mods)
 	end)
 	self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK)
 
 	self.m_vrControllers = {}
 	self.m_manipulatorMode = gui.PFMViewport.MANIPULATOR_MODE_SELECT
 	gui.mark_as_drag_and_drop_target(self.m_viewport,"ModelCatalog")
+end
+function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
+	if(mouseButton ~= input.MOUSE_BUTTON_LEFT and mouseButton ~= input.MOUSE_BUTTON_RIGHT) then return util.EVENT_REPLY_UNHANDLED end
+	if(state ~= input.STATE_PRESS and state ~= input.STATE_RELEASE) then return util.EVENT_REPLY_UNHANDLED end
+
+	local filmmaker = tool.get_filmmaker()
+	if(self.m_inCameraControlMode and mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE and filmmaker:IsValid() and filmmaker:HasFocus() == false) then
+		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK) end
+		filmmaker:TrapFocus(true)
+		filmmaker:RequestFocus()
+		filmmaker:TagRenderSceneAsDirty(false)
+		input.set_cursor_pos(self.m_oldCursorPos)
+		self.m_inCameraControlMode = false
+		return util.EVENT_REPLY_HANDLED
+	end
+
+	local el = gui.get_element_under_cursor()
+	if(util.is_valid(el) and (el == self or el:IsDescendantOf(self))) then
+		if(mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+			self.m_oldCursorPos = input.get_cursor_pos()
+			if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY) end
+			input.center_cursor()
+
+			filmmaker:TrapFocus(false)
+			filmmaker:KillFocus()
+			filmmaker:TagRenderSceneAsDirty(true)
+			self.m_inCameraControlMode = true
+		elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
+			local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS)
+			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
+				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+				if(actor) then filmmaker:SelectActor(actor) end
+			end
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
+	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.PFMViewport:OnRemove()
 	for _,ent in ipairs(self.m_vrControllers) do

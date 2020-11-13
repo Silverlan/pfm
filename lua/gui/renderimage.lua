@@ -110,7 +110,7 @@ function gui.RenderImage:ApplyTonemapping(drawCmd,dsTex,rtDst)
 	local exposure = self:GetExposure()
 	-- TODO
 	--toneMapping = toneMapping or self:GetToneMappingAlgorithm()
-	local toneMapping = 0 -- TODO
+	local toneMapping = self.m_toneMapping
 	local isGammaCorrected = (img:GetFormat() ~= prosper.FORMAT_R16G16B16A16_SFLOAT) -- Assume the image is gamma corrected if it's not a HDR image
 	local args = self:GetToneMappingAlgorithmArgs()
 	local pose = Mat4(1.0) -- self.m_drawPose

@@ -14,6 +14,7 @@ cycles.Node.albedo_texture = {
 	IN_ALPHA_CUTOFF = "alpha_cutoff",
 	IN_COLOR_FACTOR = "color_factor",
 	IN_ALPHA_FACTOR = "alpha_factor",
+	IN_UV = "uv",
 	OUT_COLOR = "color",
 	OUT_ALPHA = "alpha"
 }
@@ -23,12 +24,17 @@ cycles.NODE_ALBEDO_TEXTURE = cycles.register_node("albedo_texture",function(desc
 	local inAlphaCutoff = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.albedo_texture.IN_ALPHA_CUTOFF,0.5)
 	local inColorFactor = desc:RegisterInput(cycles.Socket.TYPE_COLOR,cycles.Node.albedo_texture.IN_COLOR_FACTOR,Vector(1,1,1))
 	local inAlphaFactor = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.albedo_texture.IN_ALPHA_FACTOR,1.0)
+	local inUv = desc:RegisterInput(cycles.Socket.TYPE_VECTOR,cycles.Node.albedo_texture.IN_UV,Vector())
 
 	local outColor = desc:RegisterOutput(cycles.Socket.TYPE_COLOR,cycles.Node.albedo_texture.OUT_COLOR)
 	local outAlpha = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.albedo_texture.OUT_ALPHA)
 	desc:SetPrimaryOutputSocket(outColor)
 
 	local nodeAlbedo = desc:AddTextureNode(inTexture)
+	--local texCoord = desc:AddNode(cycles.NODE_TEXTURE_COORDINATE)
+	--local uv = texCoord:GetOutputSocket(cycles.Node.texture_coordinate.OUT_UV) *20.0
+	--uv:Link(nodeAlbedo,cycles.Node.image_texture.IN_VECTOR)
+	inUv:Link(nodeAlbedo,cycles.Node.image_texture.IN_VECTOR)
 	local albedoColor = nodeAlbedo:GetPrimaryOutputSocket() *inColorFactor
 
 	local alpha = nodeAlbedo:GetOutputSocket(cycles.Node.image_texture.OUT_ALPHA)

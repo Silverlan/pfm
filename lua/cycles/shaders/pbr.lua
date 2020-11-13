@@ -10,6 +10,11 @@ include("/cycles/nodes/textures/base.lua")
 include("/cycles/nodes/textures/pbr.lua")
 
 util.register_class("cycles.PBRShader",cycles.Shader)
+
+cycles.PBRShader.GLOBAL_EMISSION_STRENGTH = 1.0
+function cycles.PBRShader.set_global_emission_strength(strength) cycles.PBRShader.GLOBAL_EMISSION_STRENGTH = strength end
+function cycles.PBRShader.get_global_emission_strength() return cycles.PBRShader.GLOBAL_EMISSION_STRENGTH end
+
 function cycles.PBRShader:__init()
 	cycles.Shader.__init(self)
 end
@@ -24,6 +29,9 @@ function cycles.PBRShader:AddAlbedoNode(desc,mat)
 	local texPath = (albedoMap ~= nil) and self:PrepareTexture(albedoMap:GetName()) or self:PrepareTexture("white") or nil
 	if(texPath == nil) then return cycles.Socket(colorFactor),cycles.Socket(alphaFactor) end
 
+	local texCoord = desc:AddNode(cycles.NODE_TEXTURE_COORDINATE)
+	local uv = texCoord:GetOutputSocket(cycles.Node.texture_coordinate.OUT_UV)
+
 	-- Albedo
 	local nAlbedoMap = desc:AddNode(cycles.NODE_ALBEDO_TEXTURE)
 	nAlbedoMap:SetProperty(cycles.Node.albedo_texture.IN_TEXTURE,texPath)
@@ -31,8 +39,50 @@ function cycles.PBRShader:AddAlbedoNode(desc,mat)
 	nAlbedoMap:SetProperty(cycles.Node.albedo_texture.IN_ALPHA_MODE,alphaMode)
 	nAlbedoMap:SetProperty(cycles.Node.albedo_texture.IN_ALPHA_CUTOFF,alphaCutoff)
 	nAlbedoMap:SetProperty(cycles.Node.albedo_texture.IN_ALPHA_FACTOR,alphaFactor)
+	uv:Link(nAlbedoMap,cycles.Node.albedo_texture.IN_UV)
 
-	return nAlbedoMap:GetPrimaryOutputSocket(),nAlbedoMap:GetOutputSocket(cycles.Node.albedo_texture.OUT_ALPHA)
+	local col = nAlbedoMap:GetPrimaryOutputSocket()
+	local alpha = nAlbedoMap:GetOutputSocket(cycles.Node.albedo_texture.OUT_ALPHA)
+
+	local detailMap = mat:GetTextureInfo("detail_map")
+	local blendMode = game.Material.detail_blend_mode_to_enum(data:GetString("detail_blend_mode"))
+	if(detailMap ~= nil and blendMode ~= nil) then
+		local detailTexPath = self:PrepareTexture(detailMap:GetName())
+		if(detailTexPath ~= nil) then
+			local detailUvScale = data:GetVector2("detail_uv_scale",Vector2(4.0,4.0))
+			local nDetailMap = desc:AddNode(cycles.NODE_ALBEDO_TEXTURE)
+			nDetailMap:SetProperty(cycles.Node.albedo_texture.IN_TEXTURE,detailTexPath)
+			uv = uv *cycles.Socket(Vector(detailUvScale,0))
+			uv:Link(nDetailMap,cycles.Node.albedo_texture.IN_UV)
+			local blendFactor = cycles.Socket(data:GetVector("detail_factor",Vector(1.0,1.0,1.0)))
+			local detailColorFactor = cycles.Socket(data:GetVector("detail_color_factor",Vector(1,1,1)))
+
+			local detailColor = nDetailMap:GetPrimaryOutputSocket() *detailColorFactor
+			local detailAlpha = nDetailMap:GetOutputSocket(cycles.Node.albedo_texture.OUT_ALPHA)
+			if(blendMode == game.Material.DETAIL_BLEND_MODE_DECAL_MODULATE) then col = col *cycles.Socket(1.0):Lerp(detailColor *2.0,blendFactor)
+			elseif(blendMode == game.Material.DETAIL_BLEND_MODE_ADDITIVE) then col = col +blendFactor *detailColor
+			elseif(blendMode == game.Material.DETAIL_BLEND_MODE_TRANSLUCENT_DETAIL) then
+				local blend = blendFactor *detailAlpha
+				col = col:Lerp(detailColor,blend)
+			elseif(blendMode == game.Material.DETAIL_BLEND_MODE_BLEND_FACTOR_FADE) then col = col:Lerp(detailColor,blendFactor)
+			elseif(blendMode == game.Material.DETAIL_BLEND_MODE_TRANSLUCENT_BASE) then
+				local blend = blendFactor *(1.0 -alpha)
+				col = col:Lerp(detailColor,blend)
+				alpha = detailAlpha
+			elseif(blendMode == game.Material.DETAIL_BLEND_MODE_TWO_PATTERN_DECAL_MODULATE) then
+				local dc = detailColor:Lerp(detailAlpha,alpha)
+				col = col *cycles.Socket(1.0):Lerp(2.0 *dc,blendFactor)
+			elseif(blendMode == game.Material.DETAIL_BLEND_MODE_MULTIPLY) then
+				col = col:Lerp(col *detailColor,blendFactor)
+			elseif(blendMode == game.Material.DETAIL_BLEND_MODE_BASE_MASK_VIA_DETAIL_ALPHA) then
+				alpha = alpha:Lerp(alpha *detailAlpha,blendFactor)
+			elseif(blendMode == game.Material.DETAIL_BLEND_MODE_SSBUMP_ALBEDO) then
+				local v = 2.0 /3.0
+				col = col *detailColor:DotProduct(cycles.Socket(Vector(v,v,v)))
+			end
+		end
+	end
+	return col,alpha
 end
 function cycles.PBRShader:AddNormalNode(desc,mat) -- Result is in world space
 	local normalMap = mat:GetTextureInfo("normal_map")
@@ -126,13 +176,18 @@ function cycles.PBRShader:InitializeCombinedPass(desc,outputNode)
 	principled:SetProperty(cycles.Node.principled_bsdf.IN_SPECULAR,specular)
 
 	-- Emission map
-	--[[local emissionMap = mat:GetTextureInfo("emission_map")
-	local emissionTex = (emissionMap ~= nil) and self:PrepareTexture(emissionMap:GetName()) or nil
-	if(emissionTex ~= nil) then
-		local nEmissionMap = desc:AddNode(cycles.NODE_EMISSION_TEXTURE)
-		nEmissionMap:SetProperty(cycles.Node.emission_texture.IN_TEXTURE,emissionTex)
-		nEmissionMap:GetPrimaryOutputSocket():Link(principled,cycles.Node.principled_bsdf.IN_EMISSION)
-	end]]
+	local globalEmissionStrength = cycles.PBRShader.get_global_emission_strength()
+	if(globalEmissionStrength > 0.0) then
+		local emissionMap = mat:GetTextureInfo("emission_map")
+		local emissionTex = (emissionMap ~= nil) and self:PrepareTexture(emissionMap:GetName()) or nil
+		if(emissionTex ~= nil) then
+			local emissionFactor = data:GetVector("emission_factor",Vector(1,1,1)) *globalEmissionStrength
+			local nEmissionMap = desc:AddNode(cycles.NODE_EMISSION_TEXTURE)
+			nEmissionMap:SetProperty(cycles.Node.emission_texture.IN_TEXTURE,emissionTex)
+			cycles.Socket(emissionFactor):Link(nEmissionMap,cycles.Node.emission_texture.IN_COLOR_FACTOR)
+			nEmissionMap:GetPrimaryOutputSocket():Link(principled,cycles.Node.principled_bsdf.IN_EMISSION)
+		end
+	end
 	-- TODO: UV coordinates?
 
 	-- Normal map

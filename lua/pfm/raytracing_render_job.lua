@@ -183,9 +183,11 @@ pfm.RaytracingRenderJob.generate_job_batch_script = function(jobFiles,wd,addonPa
 		local workingPath = wd or engine.get_working_directory()
 		local files = {}
 		for _,f in ipairs(jobFiles) do
-			table.insert(files,workingPath .. addonPath .. f)
+			table.insert(files,file.get_file_name(f))
 		end
-		local cmd = workingPath .. toolName .. " " .. string.join(files,' ')
+		file.write(addonPath .. path .. "job_list.txt",string.join(files,'\n'))
+
+		local cmd = workingPath .. toolName .. " -job=\"" .. workingPath .. addonPath .. path .. "job_list.txt\""
 		f:WriteString(cmd)
 		f:Close()
 

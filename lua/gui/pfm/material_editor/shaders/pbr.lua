@@ -170,7 +170,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	self:LinkControlToMaterialParameter("ao_factor",ctrlAoFactor)
 
 	-- IOR
-	local ctrlIOR = ctrlVbox:AddSliderControl(locale.get_text("pfm_mated_ior"),"ior",0.0,0.0,3.0,function(el,value) self:SetMaterialParameter("float","ior",value) end,0.01)
+	local ctrlIOR = ctrlVbox:AddSliderControl(locale.get_text("pfm_mated_ior"),"ior",1.45,0.0,3.0,function(el,value) self:SetMaterialParameter("float","ior",value) end,0.01)
 	self:LinkControlToMaterialParameter("ior",ctrlIOR)
 	local presetValues = {
 		{1.45,"default"}
@@ -184,7 +184,6 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	local wrapper = ctrlIOR:Wrap("WIEditableEntry")
 	wrapper:SetText(locale.get_text("pfm_mated_ior"))
 	wrapper:SetPresetValues(presetValues)
-	ctrlIOR:SetValue(1.45)
 
 	-- Alpha Mode
 	local ctrlAlphaCutoff

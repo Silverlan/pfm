@@ -118,7 +118,7 @@ function gui.PFMRenderPreview:OnInitialize()
 	self:InitializeSettings(self.m_vpContents)
 	self:InitializeControls()
 end
-function gui.PFMRenderPreview:InitializeToneMapControls(p)
+function gui.PFMRenderPreview:InitializeToneMapControls(p,settings)
 	local toneMapping = p:AddDropDownMenu("tonemapping","tonemapping",{
 		-- {"-1",toneMapping:AddOption(locale.get_text("pfm_cycles_tone_mapping_none_hdr")},
 		{tostring(shader.TONE_MAPPING_NONE),locale.get_text("none")},
@@ -162,7 +162,7 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p)
 
 		option = tonumber(toneMapping:GetOptionValue(option))
 		self:ApplyToneMappingSettings(option)
-		self.m_rt:SetToneMapping(option)
+		-- self.m_rt:SetToneMapping(option)
 		if(option == -1) then return end
 
 		self.m_ctrlExposure:SetVisible(true)
@@ -214,7 +214,8 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p)
 
 	-- Exposure factor
 	local fApplyToneMappingSettings = function() self:ApplyToneMappingSettings(self.m_rt:GetToneMapping()) end
-	self.m_ctrlExposure = p:AddSliderControl(locale.get_text("pfm_exposure"),nil,50.0,0,100,fApplyToneMappingSettings)
+	self.m_ctrlExposure = p:AddSliderControl(locale.get_text("pfm_exposure"),"exposure",settings:GetExposure(),0,100,fApplyToneMappingSettings)
+	p:LinkToUDMProperty("exposure",settings,"exposure")
 
 	-- Max luminance capability of the display
 	self.m_ctrlLdMax = p:AddSliderControl(locale.get_text("pfm_tone_mapping_ldmax"),nil,100,0,200,fApplyToneMappingSettings)
@@ -267,7 +268,7 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p)
 	toneMapping:SelectOption(4)
 end
 function gui.PFMRenderPreview:ApplyToneMappingSettings(toneMapping)
-	self.m_rt:SetExposure(self.m_ctrlExposure:GetValue())
+	-- self.m_rt:SetExposure(self.m_ctrlExposure:GetValue())
 
 	local args = {}
 	if(toneMapping == shader.PFMTonemapping.TONE_MAPPING_WARD) then
@@ -304,10 +305,13 @@ end
 function gui.PFMRenderPreview:UpdateViewport(settings)
 	self.m_rt:GetToneMappedImageElement():SetHorizontalRange(settings:GetPanoramaHorizontalRange())
 	self.m_rt:GetToneMappedImageElement():SetStereo(false)
+	self.m_rt:GetToneMappedImageElement():SetToneMappingAlgorithm(settings:GetHDROutput() and shader.TONE_MAPPING_GAMMA_CORRECTION or shader.TONE_MAPPING_NONE)
+	self.m_rt:GetToneMappedImageElement():SetExposure(1.0) -- Exposure was already applied
+	self.m_rt:SetSaveAsHDR(settings:GetHDROutput())
 	self:UpdateVRMode()
 end
 function gui.PFMRenderPreview:UpdateVRMode()
-	local enableVrView = (self.m_renderedImageType ~= gui.PFMRenderPreview.IMAGE_TYPE_FLAT and self.m_ctrlPreviewMode:GetOptionValue(self.m_ctrlPreviewMode:GetSelectedOption()) ~= "flat")
+	local enableVrView = (self.m_renderedImageType ~= gui.PFMRenderPreview.IMAGE_TYPE_FLAT and tonumber(self.m_ctrlPreviewMode:GetOptionValue(self.m_ctrlPreviewMode:GetSelectedOption())) ~= udm.PFMRenderSettings.VIEWPORT_MODE_FLAT)
 	self.m_rt:GetToneMappedImageElement():SetVRView(enableVrView,tool.get_filmmaker())
 end
 function gui.PFMRenderPreview:GetOutputPath()
@@ -330,38 +334,43 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_settingsBox = p
 
 	-- Preset
+	local settings = tool.get_filmmaker():GetSettings()
+	settings = (settings ~= nil) and settings:GetRenderSettings() or udm.PFMRenderSettings()
 	self.m_ctrlPreset = p:AddDropDownMenu(locale.get_text("preset"),"preset",{
 		{"standard",locale.get_text("pfm_rt_preset_standard")},
 		-- {"cinematic",locale.get_text("pfm_rt_preset_cinematic")},
 		{"vr",locale.get_text("pfm_rt_preset_vr")}
-	},0)
+	},settings:GetPreset())
 	
 	-- Render Mode
 	self.m_ctrlRenderMode = p:AddDropDownMenu(locale.get_text("pfm_render_mode"),"render_mode",{
-		{"combined",locale.get_text("pfm_cycles_bake_type_combined")},
-		{"albedo",locale.get_text("pfm_cycles_bake_type_albedo")},
-		{"normals",locale.get_text("pfm_cycles_bake_type_normals")},
-		{"depth",locale.get_text("pfm_cycles_bake_type_depth")}
-	},0)
+		{tostring(udm.PFMRenderSettings.MODE_COMBINED),locale.get_text("pfm_cycles_bake_type_combined")},
+		{tostring(udm.PFMRenderSettings.MODE_ALBEDO),locale.get_text("pfm_cycles_bake_type_albedo")},
+		{tostring(udm.PFMRenderSettings.MODE_NORMALS),locale.get_text("pfm_cycles_bake_type_normals")},
+		{tostring(udm.PFMRenderSettings.MODE_DEPTH),locale.get_text("pfm_cycles_bake_type_depth")}
+	},tostring(settings:GetMode()))
+	p:LinkToUDMProperty("render_mode",settings,"mode")
 	if(tool.get_filmmaker():IsDeveloperModeEnabled() == false) then p:SetControlVisible("render_mode",false) end
 
 	-- Device Type
 	self.m_ctrlDeviceType = p:AddDropDownMenu(locale.get_text("pfm_cycles_device_type"),"device_type",{
-		{"gpu",locale.get_text("pfm_cycles_device_type_gpu")},
-		{"cpu",locale.get_text("pfm_cycles_device_type_cpu")}
-	},0)
+		{tostring(udm.PFMRenderSettings.DEVICE_TYPE_GPU),locale.get_text("pfm_cycles_device_type_gpu")},
+		{tostring(udm.PFMRenderSettings.DEVICE_TYPE_CPU),locale.get_text("pfm_cycles_device_type_cpu")}
+	},tostring(settings:GetDeviceType()))
+	p:LinkToUDMProperty("device_type",settings,"deviceType")
 
 	-- Camera type
 	self.m_ctrlCamType = p:AddDropDownMenu(locale.get_text("pfm_cycles_cam_type"),"cam_type",{
 		{tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE),locale.get_text("pfm_cycles_cam_type_perspective")},
 		{tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_ORTHOGRAPHIC),locale.get_text("pfm_cycles_cam_type_orthographic")},
 		{tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA),locale.get_text("pfm_cycles_cam_type_panorama")}
-	},0,function(camType,idx)
+	},tostring(settings:GetCameraType()),function(camType,idx)
 		p:SetControlVisible("panorama_type",idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
 		p:SetControlVisible("panorama_range",idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
 		p:SetControlVisible("equirect_mode",idx == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
 		self:UpdateVROptions()
 	end)
+	p:LinkToUDMProperty("cam_type",settings,"cameraType")
 
 	self.m_ctrlPanoramaType = p:AddDropDownMenu(locale.get_text("pfm_cycles_cam_panorama"),"panorama_type",{
 		{tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR),locale.get_text("pfm_cycles_cam_panorama_type_equirectangular")},
@@ -369,27 +378,31 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		{tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID),locale.get_text("pfm_cycles_cam_panorama_type_equisolid")},
 		{tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL),locale.get_text("pfm_cycles_cam_panorama_type_mirrorball")},
 		{tostring(pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP),locale.get_text("pfm_cycles_cam_panorama_type_cubemap")}
-	},0,function() self:UpdateVROptions() end)
+	},tostring(settings:GetPanoramaType()),function() self:UpdateVROptions() end)
+	p:LinkToUDMProperty("panorama_type",settings,"panoramaType")
 	p:SetControlVisible("panorama_type",false)
 
 	self.m_ctrlEquirectMode = p:AddDropDownMenu(locale.get_text("pfm_cycles_cam_equirect_mode"),"equirect_mode",{
 		{"mono",locale.get_text("mono")},
 		{"stereo",locale.get_text("stereo")}
-	},1,function() self:UpdateVROptions() end)
+	},settings:IsStereoscopic() and 1 or 0,function() self:UpdateVROptions() end)
+	p:LinkToUDMProperty("equirect_mode",settings,"stereoscopic",function(value) return value == "stereo" end,function(value) return value and "stereo" or "mono" end)
 	p:SetControlVisible("equirect_mode",false)
 
 	self.m_ctrlPreviewMode = p:AddDropDownMenu(locale.get_text("pfm_cycles_preview_mode"),"preview_mode",{
-		{"flat",locale.get_text("pfm_cycles_preview_mode_flat")},
-		{"360_left",locale.get_text("pfm_cycles_preview_mode_360_left")},
-		{"360_right",locale.get_text("pfm_cycles_preview_mode_360_right")}
-	},1,function() self:UpdateViewportMode() end)
+		{tostring(udm.PFMRenderSettings.VIEWPORT_MODE_FLAT),locale.get_text("pfm_cycles_preview_mode_flat")},
+		{tostring(udm.PFMRenderSettings.VIEWPORT_MODE_360_LEFT_EYE),locale.get_text("pfm_cycles_preview_mode_360_left")},
+		{tostring(udm.PFMRenderSettings.VIEWPORT_MODE_360_RIGHT_EYE),locale.get_text("pfm_cycles_preview_mode_360_right")}
+	},tostring(settings:GetViewportMode()),function() self:UpdateViewportMode() end)
+	p:LinkToUDMProperty("preview_mode",settings,"viewportMode")
 	p:SetControlVisible("preview_mode",false)
 
 	-- Horizontal panorama range
 	self.m_ctrlPanoramaRange = p:AddDropDownMenu(locale.get_text("pfm_cycles_cam_panorama_range"),"panorama_range",{
 		{tostring(360),locale.get_text("pfm_cycles_degrees",{360})},
 		{tostring(180),locale.get_text("pfm_cycles_degrees",{180})}
-	},1)
+	},tostring(settings:GetPanoramaRange()))
+	p:LinkToUDMProperty("panorama_range",settings,"panoramaRange")
 	p:SetControlVisible("panorama_range",false)
 
 	-- Quality preset
@@ -434,29 +447,47 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	-- Sample count
 	--function gui.PFMControlsMenu:AddSliderControl(name,identifier,default,min,max,onChange,stepSize,integer)
-	self.m_ctrlSamplesPerPixel = p:AddSliderControl(locale.get_text("pfm_samples_per_pixel"),"samples_per_pixel",40,1,500,nil,1.0,true)
+	self.m_ctrlSamplesPerPixel = p:AddSliderControl(locale.get_text("pfm_samples_per_pixel"),"samples_per_pixel",settings:GetSamples(),1,500,nil,1.0,true)
+	p:LinkToUDMProperty("samples_per_pixel",settings,"samples")
 
 	-- Resolution
-	self.m_ctrlResolution = p:AddDropDownMenu(locale.get_text("pfm_resolution"),"resolution",{
+	local skipResolutionAttrCallbacks = false
+	local ctrlResolution,ctrlResolutionWrapper = p:AddDropDownMenu(locale.get_text("pfm_resolution"),"resolution",{
 		{"1280x720",locale.get_text("pfm_resolution_hd_ready")},
 		{"1920x1080",locale.get_text("pfm_resolution_full_hd")},
 		{"2560x1440",locale.get_text("pfm_resolution_quad_hd")},
 		{"2048x1080",locale.get_text("pfm_resolution_2k")},
 		{"3840x2160",locale.get_text("pfm_resolution_4k")},
 		{"7680x4320",locale.get_text("pfm_resolution_8k")}
-	},0)
+	},0,function()
+		local width,height = self:GetResolution()
+		skipResolutionAttrCallbacks = true
+		settings:SetWidth(width)
+		settings:SetHeight(height)
+		skipResolutionAttrCallbacks = false
+	end)
+	self.m_ctrlResolution = ctrlResolution
+	local function update_resolution()
+		if(skipResolutionAttrCallbacks) then return end
+		self.m_ctrlResolution:ClearSelectedOption()
+		local text = tostring(settings:GetWidth()) .. "x" .. tostring(settings:GetHeight())
+		if(ctrlResolution:HasOption(text)) then ctrlResolution:SelectOption(text)
+		else self.m_ctrlResolution:SetText(text) end
+		ctrlResolutionWrapper:UpdateText()
+	end
+	settings:GetWidthAttr():AddChangeListener(update_resolution)
+	settings:GetHeightAttr():AddChangeListener(update_resolution)
+
+	local w = settings:GetWidth()
+	local h = settings:GetHeight()
 	self.m_ctrlResolution:SetEditable(true)
 	self.m_ctrlResolution:SelectOption(1)
 	-- TODO: Add VR resolution options
 
 	-- Choose a default sky
-	local defaultSky
-	local skies = file.find("materials/skies/*.hdr")
-	if(#skies > 0) then defaultSky = "skies/" .. skies[1] end
-
 	-- Sky override
 	local skyOverride
-	skyOverride = p:AddFileEntry(locale.get_text("pfm_sky_override"),"sky_override",defaultSky or "",function(resultHandler)
+	skyOverride = p:AddFileEntry(locale.get_text("pfm_sky_override"),"sky_override",settings:GetSky(),function(resultHandler)
 		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 			if(fileName == nil) then return end
 			resultHandler(el:GetFilePath(true))
@@ -468,25 +499,35 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		pFileDialog:SetExtensions({"hdr","png"})
 		pFileDialog:Update()
 	end)
+	p:LinkToUDMProperty("sky_override",settings,"sky")
 	self.m_ctrlSkyOverride = skyOverride
 
 	-- Sky strength
-	self.m_ctrlSkyStrength = p:AddSliderControl(locale.get_text("pfm_sky_strength"),"sky_strength",0.3,0,2)
+	self.m_ctrlSkyStrength = p:AddSliderControl(locale.get_text("pfm_sky_strength"),"sky_strength",settings:GetSkyStrength(),0,2)
+	p:LinkToUDMProperty("sky_strength",settings,"skyStrength")
 
 	-- Sky yaw
-	self.m_ctrlSkyYaw = p:AddSliderControl(locale.get_text("pfm_sky_yaw_angle"),"sky_yaw",0,0,360)
+	self.m_ctrlSkyYaw = p:AddSliderControl(locale.get_text("pfm_sky_yaw_angle"),"sky_yaw",settings:GetSkyYawAngle(),0,360)
+	p:LinkToUDMProperty("sky_yaw",settings,"skyYawAngle")
 
 	-- Max transparency bounces
-	self.m_ctrlMaxTransparencyBounces = p:AddSliderControl(locale.get_text("pfm_max_transparency_bounces"),"max_transparency_bounces",128,0,100)
+	self.m_ctrlMaxTransparencyBounces = p:AddSliderControl(locale.get_text("pfm_max_transparency_bounces"),"max_transparency_bounces",settings:GetMaxTransparencyBounces(),0,100)
+	p:LinkToUDMProperty("max_transparency_bounces",settings,"maxTransparencyBounces")
 
 	-- Light intensity factor
-	self.m_ctrlLightIntensityFactor = p:AddSliderControl(locale.get_text("pfm_light_intensity_factor"),"light_intensity_factor",1.0,0,20)
+	self.m_ctrlLightIntensityFactor = p:AddSliderControl(locale.get_text("pfm_light_intensity_factor"),"light_intensity_factor",settings:GetLightIntensityFactor(),0,20)
+	p:LinkToUDMProperty("light_intensity_factor",settings,"lightIntensityFactor")
 
 	-- Emission strength
-	self.m_ctrlEmissionStrength = p:AddSliderControl(locale.get_text("pfm_emission_strength"),"emission_strength",1.0,0,20)
+	self.m_ctrlEmissionStrength = p:AddSliderControl(locale.get_text("pfm_emission_strength"),"emission_strength",settings:GetEmissionStrength(),0,20,function()
+		pfm.load_cycles()
+		cycles.PBRShader.set_global_emission_strength(self.m_ctrlEmissionStrength:GetValue())
+	end)
+	p:LinkToUDMProperty("emission_strength",settings,"emissionStrength")
 
 	-- Number of frames
-	self.m_ctrlFrameCount = p:AddSliderControl(locale.get_text("pfm_number_of_frames_to_render"),"frame_count",1,1,100,nil,1.0,true)
+	self.m_ctrlFrameCount = p:AddSliderControl(locale.get_text("pfm_number_of_frames_to_render"),"frame_count",settings:GetNumberOfFrames(),1,100,nil,1.0,true)
+	p:LinkToUDMProperty("frame_count",settings,"numberOfFrames")
 	self.m_ctrlFrameCount:AddCallback("PopulateContextMenu",function(p,pContext)
 		pContext:AddItem(locale.get_text("pfm_number_of_frames_set_to_end_of_clip"),function()
 			if(self:IsValid() == false) then return end
@@ -513,7 +554,8 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	for _,ct in ipairs(colorTransforms) do
 		table.insert(colorTransformOptions,{ct,ct})
 	end
-	self.m_ctrlColorTransform = p:AddDropDownMenu(locale.get_text("pfm_color_transform"),"color_transform",colorTransformOptions,0)
+	self.m_ctrlColorTransform = p:AddDropDownMenu(locale.get_text("pfm_color_transform"),"color_transform",colorTransformOptions,settings:GetColorTransform())
+	p:LinkToUDMProperty("color_transform",settings,"colorTransform")
 
 	-- TODO: Allow custom looks for custom color transforms!
 	self.m_ctrlColorTransformLook = p:AddDropDownMenu(locale.get_text("pfm_color_transform_look"),"color_transform_look",{
@@ -525,26 +567,30 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		{"Medium Low Contrast",locale.get_text("pfm_color_transform_filmic_blender_medium_low_contrast")},
 		{"Low Contrast",locale.get_text("pfm_color_transform_filmic_blender_low_contrast")},
 		{"Very Low Contrast",locale.get_text("pfm_color_transform_filmic_blender_very_low_contrast")}
-	},0)
+	},settings:GetColorTransformLook())
+	p:LinkToUDMProperty("color_transform_look",settings,"colorTransformLook")
 
 	-- Output format
+	local gammaCorrection = 2.2
 	self.m_ctrlOutputFormat = p:AddDropDownMenu(locale.get_text("pfm_cycles_output_format"),"output_format",{
 		{tostring(util.IMAGE_FORMAT_HDR),"HDR"},
-		{tostring(util.IMAGE_FORMAT_PNG),"PNG (" .. locale.get_text("pfm_tone_mapped") .. ")"},
-		{tostring(util.IMAGE_FORMAT_BMP),"BMP (" .. locale.get_text("pfm_tone_mapped") .. ")"},
-		{tostring(util.IMAGE_FORMAT_TGA),"TGA (" .. locale.get_text("pfm_tone_mapped") .. ")"},
-		{tostring(util.IMAGE_FORMAT_JPG),"JPG (" .. locale.get_text("pfm_tone_mapped") .. ")"}
-	},1,function(el,option)
+		{tostring(util.IMAGE_FORMAT_PNG),"PNG (" .. locale.get_text("pfm_gamma_corrected",{gammaCorrection}) .. ")"},
+		{tostring(util.IMAGE_FORMAT_BMP),"BMP (" .. locale.get_text("pfm_gamma_corrected",{gammaCorrection}) .. ")"},
+		{tostring(util.IMAGE_FORMAT_TGA),"TGA (" .. locale.get_text("pfm_gamma_corrected",{gammaCorrection}) .. ")"},
+		{tostring(util.IMAGE_FORMAT_JPG),"JPG (" .. locale.get_text("pfm_gamma_corrected",{gammaCorrection}) .. ")"}
+	},tostring(settings:GetOutputFormat()),function(el,option)
 		local format = tonumber(self.m_ctrlOutputFormat:GetOptionValue(self.m_ctrlOutputFormat:GetSelectedOption()))
 		self.m_rt:SetImageSaveFormat(format)
 	end)
+	p:LinkToUDMProperty("output_format",settings,"outputFormat")
 
 	-- Preview quality
 	self.m_ctrlPreviewQuality = p:AddDropDownMenu(locale.get_text("pfm_cycles_preview_quality"),"preview_quality",{
-		{"0",locale.get_text("low")},
-		{"1",locale.get_text("medium")},
-		{"2",locale.get_text("high")}
-	},0)
+		{tostring(udm.PFMRenderSettings.PREVIEW_QUALITY_LOW),locale.get_text("low")},
+		{tostring(udm.PFMRenderSettings.PREVIEW_QUALITY_MEDIUM),locale.get_text("medium")},
+		{tostring(udm.PFMRenderSettings.PREVIEW_QUALITY_HIGH),locale.get_text("high")}
+	},tostring(udm.PFMRenderSettings.PREVIEW_QUALITY_LOW))
+	p:LinkToUDMProperty("preview_quality",settings,"previewQuality")
 
 	-- Output directory
 	--[[local outputDir = gui.create("WIFileEntry",p)
@@ -564,15 +610,24 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	outputDir:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_output_directory"))]]
 
-	self.m_ctrlDenoise = p:AddToggleControl(locale.get_text("pfm_denoise_image"),"denoise",true)
+	self.m_ctrlDenoise = p:AddToggleControl(locale.get_text("pfm_denoise_image"),"denoise",settings:ShouldDenoise())
 	-- self.m_ctrlPreStage = p:AddToggleControl(locale.get_text("pfm_prestage_only","prestage",false)
-	self.m_ctrlRenderWorld = p:AddToggleControl(locale.get_text("pfm_render_world"),"render_world",true)
-	self.m_ctrlRenderGameEntities = p:AddToggleControl(locale.get_text("pfm_render_game_objects"),"render_game_entities",true)
-	self.m_ctrlRenderPlayer = p:AddToggleControl(locale.get_text("pfm_render_player"),"render_player",false)
-	self.m_ctrlFrustumCulling = p:AddToggleControl(locale.get_text("pfm_render_frustum_culling"),"frustum_culling",true)
-	self.m_ctrlPVSCulling = p:AddToggleControl(locale.get_text("pfm_render_pvs_culling"),"pvs_culling",true)
-	self.m_ctrlProgressive = p:AddToggleControl(locale.get_text("pfm_render_progressive"),"progressive",true,function() self.m_ctrlProgressiveRefinement:SetVisible(self.m_ctrlProgressive:IsChecked()) end)
-	self.m_ctrlProgressiveRefinement = p:AddToggleControl(locale.get_text("pfm_render_progressive_refinement"),"progressive_refine",false)
+	self.m_ctrlRenderWorld = p:AddToggleControl(locale.get_text("pfm_render_world"),"render_world",settings:ShouldRenderWorld())
+	self.m_ctrlRenderGameEntities = p:AddToggleControl(locale.get_text("pfm_render_game_objects"),"render_game_entities",settings:ShouldRenderGameObjects())
+	self.m_ctrlRenderPlayer = p:AddToggleControl(locale.get_text("pfm_render_player"),"render_player",settings:ShouldRenderPlayer())
+	self.m_ctrlFrustumCulling = p:AddToggleControl(locale.get_text("pfm_render_frustum_culling"),"frustum_culling",settings:IsCameraFrustumCullingEnabled())
+	self.m_ctrlPVSCulling = p:AddToggleControl(locale.get_text("pfm_render_pvs_culling"),"pvs_culling",settings:IsPvsCullingEnabled())
+	self.m_ctrlProgressive = p:AddToggleControl(locale.get_text("pfm_render_progressive"),"progressive",settings:IsProgressive(),function() self.m_ctrlProgressiveRefinement:SetVisible(self.m_ctrlProgressive:IsChecked()) end)
+	self.m_ctrlProgressiveRefinement = p:AddToggleControl(locale.get_text("pfm_render_progressive_refinement"),"progressive_refine",settings:IsProgressiveRefinementEnabled())
+
+	p:LinkToUDMProperty("denoise",settings,"denoise")
+	p:LinkToUDMProperty("render_world",settings,"renderWorld")
+	p:LinkToUDMProperty("render_game_entities",settings,"renderGameObjects")
+	p:LinkToUDMProperty("render_player",settings,"renderPlayer")
+	p:LinkToUDMProperty("frustum_culling",settings,"cameraFrustumCullingEnabled")
+	p:LinkToUDMProperty("pvs_culling",settings,"pvsCullingEnabled")
+	p:LinkToUDMProperty("progressive",settings,"progressive")
+	p:LinkToUDMProperty("progressive_refine",settings,"progressiveRefinementEnabled")
 
 	-- Presets
 	qualityPreset:AddCallback("OnOptionSelected",function(el,option)
@@ -599,8 +654,22 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	end)
 	self.m_ctrlPreset:SelectOption(0)
 
-	self:InitializeToneMapControls(p)
+	self:InitializeToneMapControls(p,settings)
+
 	p:ResetControls()
+	settings:SetWidth(w)
+	settings:SetHeight(h)
+end
+function gui.PFMRenderPreview:GetResolution()
+	local width,height
+	local selectedOption = self.m_ctrlResolution:GetSelectedOption()
+	local resolution
+	if(selectedOption ~= -1) then resolution = self.m_ctrlResolution:GetOptionValue(selectedOption)
+	else resolution = self.m_ctrlResolution:GetValue() end
+	resolution = string.split(resolution,"x")
+	if(resolution[1] ~= nil) then width = tonumber(resolution[1]) or 0 end
+	if(resolution[2] ~= nil) then height = tonumber(resolution[2]) or 0 end
+	return width,height
 end
 function gui.PFMRenderPreview:IsInVRMode()
 	return tonumber(self.m_ctrlCamType:GetOptionValue(self.m_ctrlCamType:GetSelectedOption())) == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA and
@@ -608,7 +677,7 @@ function gui.PFMRenderPreview:IsInVRMode()
 		--and self.m_ctrlEquirectMode:GetOptionValue(self.m_ctrlEquirectMode:GetSelectedOption()) == "stereo"
 end
 function gui.PFMRenderPreview:UpdateViewportMode()
-	self.m_rt:GetToneMappedImageElement():SetStereoImage((self.m_ctrlPreviewMode:GetOptionValue(self.m_ctrlPreviewMode:GetSelectedOption()) == "360_right") and gui.VRView.STEREO_IMAGE_RIGHT or gui.VRView.STEREO_IMAGE_LEFT)
+	self.m_rt:GetToneMappedImageElement():SetStereoImage((tonumber(self.m_ctrlPreviewMode:GetOptionValue(self.m_ctrlPreviewMode:GetSelectedOption())) == udm.PFMRenderSettings.VIEWPORT_MODE_360_RIGHT_EYE) and gui.VRView.STEREO_IMAGE_RIGHT or gui.VRView.STEREO_IMAGE_LEFT)
 	self:UpdateVRMode()
 end
 function gui.PFMRenderPreview:UpdateVROptions()
@@ -779,11 +848,11 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	local settings = self.m_rt:GetRenderSettings()
 	local renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED
 
-	local selectedRenderMode = self.m_ctrlRenderMode:GetValue()
-	if(selectedRenderMode == "combined") then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED
-	elseif(selectedRenderMode == "albedo") then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALBEDO
-	elseif(selectedRenderMode == "normals") then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_NORMALS
-	elseif(selectedRenderMode == "depth") then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH end
+	local selectedRenderMode = tonumber(self.m_ctrlRenderMode:GetValue())
+	if(selectedRenderMode == udm.PFMRenderSettings.MODE_COMBINED) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_ALBEDO) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALBEDO
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_NORMALS) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_NORMALS
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_DEPTH) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH end
 
 	local deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU
 	local selectedDeviceType = self.m_ctrlDeviceType:GetValue()
@@ -792,14 +861,7 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 
 	preview = preview or false
 
-	local width,height
-	local selectedOption = self.m_ctrlResolution:GetSelectedOption()
-	local resolution
-	if(selectedOption ~= -1) then resolution = self.m_ctrlResolution:GetOptionValue(selectedOption)
-	else resolution = self.m_ctrlResolution:GetValue() end
-	resolution = string.split(resolution,"x")
-	if(resolution[1] ~= nil) then width = tonumber(resolution[1]) or 0 end
-	if(resolution[2] ~= nil) then height = tonumber(resolution[2]) or 0 end
+	local width,height = self:GetResolution()
 
 	local previewQuality = tonumber(self.m_ctrlPreviewQuality:GetOptionValue(self.m_ctrlPreviewQuality:GetSelectedOption()))
 	local samples
@@ -866,6 +928,7 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	settings:SetWidth(width)
 	settings:SetHeight(height)
 	settings:SetExposure(self.m_ctrlExposure:GetValue())
+	settings:SetHDROutput(tonumber(self.m_ctrlOutputFormat:GetOptionValue(self.m_ctrlOutputFormat:GetSelectedOption())) == util.IMAGE_FORMAT_HDR)
 
 	settings:SetColorTransform(self.m_ctrlColorTransform:GetOptionValue(self.m_ctrlColorTransform:GetSelectedOption()))
 	settings:SetColorTransformLook(self.m_ctrlColorTransformLook:GetOptionValue(self.m_ctrlColorTransformLook:GetSelectedOption()))

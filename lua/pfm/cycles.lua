@@ -21,7 +21,7 @@ function pfm.load_cycles()
 
 	loaded = true
 	pfm.log("Loading cycles shaders...",pfm.LOG_CATEGORY_PFM_RENDER)
-	include("cycles/shaders")
+	include("/cycles/shaders/")
 end
 
 

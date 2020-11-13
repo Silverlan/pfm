@@ -150,6 +150,11 @@ function pfm.ProjectManager:SetTimeOffset(offset)
 	local settings = session:GetSettings()
 	settings:SetPlayheadOffset(offset)
 end
+function pfm.ProjectManager:GetSettings()
+	local session = self:GetSession()
+	if(session == nil) then return end
+	return session:GetSettings()
+end
 function pfm.ProjectManager:GetProject() return self.m_project end
 function pfm.ProjectManager:OnFilmClipAdded(el) end
 function pfm.ProjectManager:GetAnimationCache() return self.m_animationCache end

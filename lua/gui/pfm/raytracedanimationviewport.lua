@@ -15,6 +15,7 @@ end
 function gui.PFMRaytracedAnimationViewport:OnInitialize()
 	gui.RaytracedViewport.OnInitialize(self)
 
+	self:SetSaveAsHDR(false)
 	local elImg = self:GetToneMappedImageElement()
 	elImg:SetMouseInputEnabled(true)
 	elImg:AddCallback("OnMouseEvent",function(el,button,state,mods)
@@ -26,10 +27,13 @@ function gui.PFMRaytracedAnimationViewport:OnInitialize()
 				pContext:SetPos(input.get_cursor_pos())
 
 				local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("save_as"))
+				local hdr = self.m_saveAsHdr
 				for i=0,(util.IMAGE_FORMAT_COUNT -1) do
-					pSubMenu:AddItem(util.get_image_format_file_extension(i),function(pItem)
-						self:SaveAs(i)
-					end)
+					if((hdr and (i == util.IMAGE_FORMAT_HDR--[[ or i == util.IMAGE_FORMAT_PNG]])) or (not hdr and i ~= util.IMAGE_FORMAT_HDR)) then
+						pSubMenu:AddItem(util.get_image_format_file_extension(i),function(pItem)
+							self:SaveAs(i,hdr)
+						end)
+					end
 				end
 				pSubMenu:Update()
 
@@ -50,7 +54,8 @@ function gui.PFMRaytracedAnimationViewport:OnInitialize()
 	self:SetParticleSystemColorFactor(Vector4(1,1,1,1))
 	self:SetImageSaveFormat(util.IMAGE_FORMAT_HDR)
 end
-function gui.PFMRaytracedAnimationViewport:SaveAs(format)
+function gui.PFMRaytracedAnimationViewport:SetSaveAsHDR(saveAsHdr) self.m_saveAsHdr = saveAsHdr end
+function gui.PFMRaytracedAnimationViewport:SaveAs(format,hdr)
 	format = format or self.m_imgSaveFormat
 	local dialoge = gui.create_file_save_dialog(function(pDialoge)
 		local fname = pDialoge:GetFilePath(true)
@@ -58,7 +63,7 @@ function gui.PFMRaytracedAnimationViewport:SaveAs(format)
 
 		-- Make sure HDR image is loaded
 		--if(self:LoadHighDefImage(true) == false) then return end
-		self:SaveImage(fname,format)
+		self:SaveImage(fname,format,hdr)
 	end)
 	dialoge:SetExtensions({util.get_image_format_file_extension(format)})
 	dialoge:SetRootPath(util.get_addon_path())

@@ -52,11 +52,13 @@ function gui.RaytracedViewport:SetTextureFromImageBuffer(imgBuf)
 	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	self.m_tex:SetTexture(prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,samplerCreateInfo))
 end
-function gui.RaytracedViewport:SaveImage(path,imgFormat)
+function gui.RaytracedViewport:SaveImage(path,imgFormat,hdr)
+	hdr = hdr or false
 	local img
 	local imgBufFormat
 	if(imgFormat == util.IMAGE_FORMAT_HDR) then
 		-- Image is not tonemapped, we'll save it with the original HDR colors
+		hdr = true
 		img = self.m_tex:GetTexture():GetImage()
 		imgBufFormat = util.ImageBuffer.FORMAT_RGBA_HDR
 	else
@@ -86,7 +88,7 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat)
 	game.flush_setup_command_buffer()
 	local imgData = buf:ReadMemory()
 	local imgBuf = util.ImageBuffer.Create(img:GetWidth(),img:GetHeight(),imgBufFormat,imgData)
-	imgBuf:ToLDR()
+	if(hdr == false) then imgBuf:ToLDR() end
 
 	local result = util.save_image(imgBuf,path,imgFormat)
 	if(result == false) then
