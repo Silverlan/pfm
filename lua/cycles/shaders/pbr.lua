@@ -15,6 +15,9 @@ cycles.PBRShader.GLOBAL_EMISSION_STRENGTH = 1.0
 function cycles.PBRShader.set_global_emission_strength(strength) cycles.PBRShader.GLOBAL_EMISSION_STRENGTH = strength end
 function cycles.PBRShader.get_global_emission_strength() return cycles.PBRShader.GLOBAL_EMISSION_STRENGTH end
 
+function cycles.PBRShader.set_global_albedo_override_color(col) cycles.PBRShader.GLOBAL_ALBEDO_OVERRIDE_COLOR = col end
+function cycles.PBRShader.get_global_albedo_override_color() return cycles.PBRShader.GLOBAL_ALBEDO_OVERRIDE_COLOR end
+
 function cycles.PBRShader:__init()
 	cycles.Shader.__init(self)
 end
@@ -124,7 +127,9 @@ function cycles.PBRShader:InitializeCombinedPass(desc,outputNode)
 	local albedoColor,alpha = self:AddAlbedoNode(desc,mat)
 
 	local principled = desc:AddNode(cycles.NODE_PRINCIPLED_BSDF)
-	albedoColor:Link(principled,cycles.Node.principled_bsdf.IN_BASE_COLOR)
+	local albedoColorOverride = util.get_class_value(cycles.PBRShader,"GLOBAL_ALBEDO_OVERRIDE_COLOR")
+	if(albedoColorOverride) then cycles.Socket(albedoColorOverride):Link(principled,cycles.Node.principled_bsdf.IN_BASE_COLOR)
+	else albedoColor:Link(principled,cycles.Node.principled_bsdf.IN_BASE_COLOR) end
 	alpha:Link(principled,cycles.Node.principled_bsdf.IN_ALPHA)
 
 	local ior = 1.45

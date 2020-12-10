@@ -61,7 +61,7 @@ function ents.PFMCamera:Initialize()
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"OnTurnOff")
 
-	self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"OnUpdateRenderData")
+	-- self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"OnUpdateRenderData")
 
 	self.m_listeners = {}
 end

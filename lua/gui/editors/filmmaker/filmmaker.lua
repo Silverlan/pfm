@@ -72,12 +72,16 @@ function gui.WIFilmmaker:OnInitialize()
 
 	-- Disable default scene drawing for the lifetime of the Filmmaker; We'll only render the viewport(s) if something has actually changed, which
 	-- saves up a huge amount of rendering resources.
-	self.m_cbDisableDefaultSceneDraw = game.add_callback("DrawScene",function(drawSceneInfo)
-		if(self.m_renderSceneDirty == nil) then return true end
+	self.m_cbDisableDefaultSceneDraw = game.add_callback("RenderScenes",function(drawSceneInfo)
+		if(self.m_renderSceneDirty == nil) then
+			game.set_default_game_render_enabled(false)
+			return
+		end
 		self.m_renderSceneDirty = self.m_renderSceneDirty -1
 		if(self.m_renderSceneDirty == 0) then self.m_renderSceneDirty = nil end
 		return false
 	end)
+	game.set_default_game_render_enabled(false)
 
 	self:EnableThinking()
 	self:SetSize(1280,1024)
@@ -412,7 +416,6 @@ function gui.WIFilmmaker:OnInitialize()
 	self.m_tLastCursorMove = 0.0
 	self:SetKeyboardInputEnabled(true)
 	self:ClearProjectUI()
-	console.run("cl_max_fps",24) -- Clamp game FPS to 24 while rendering to make more GPU resources available
 
 	if(ents.get_world() == nil) then
 		pfm.log("Empty map. Creating a default reflection probe and light source...",pfm.LOG_CATEGORY_PFM)
@@ -472,6 +475,7 @@ function gui.WIFilmmaker:UpdateActor(actor,filmClip,reload)
 	self:TagRenderSceneAsDirty()
 end
 function gui.WIFilmmaker:TagRenderSceneAsDirty(dirty)
+	game.set_default_game_render_enabled(true)
 	if(dirty == nil) then
 		self.m_renderSceneDirty = self.m_renderSceneDirty or 1
 		return
@@ -551,21 +555,6 @@ function gui.WIFilmmaker:OnThink()
 		self.m_lastCursorPos = cursorPos
 		self.m_tLastCursorMove = time.real_time()
 	end
-	if(self:IsRendering()) then
-		local dt = time.real_time() -self.m_tLastCursorMove
-		-- Clamp the game FPS to 4 if we're rendering and the mouse cursor hasn't been moved in a while. This will
-		-- free up more rendering resources for Cycles.
-		local fps = (dt > 5.0) and 4 or 24
-		if(fps ~= self.m_lastRenderFps) then
-			self.m_lastRenderFps = fps
-			console.run("cl_max_fps",fps)
-			self.m_resetFpsAfterRendering = true
-		end
-	elseif(self.m_resetFpsAfterRendering) then
-		self.m_lastRenderFps = nil
-		self.m_resetFpsAfterRendering = nil
-		console.run("cl_max_fps",24)
-	end
 
 	if(self.m_raytracingJob == nil) then return end
 
@@ -613,8 +602,6 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_reflectionProbe)
 	util.remove(self.m_entLight)
 	collectgarbage()
-
-	console.run("cl_max_fps",-1) -- Unclamp game FPS
 end
 function gui.WIFilmmaker:CaptureRaytracedImage()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end

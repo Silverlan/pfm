@@ -16,12 +16,11 @@ function pfm.load_cycles()
 	if(r ~= true) then
 		loaded = false
 		pfm.log("Unable to load cycles module: " .. r,pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_ERROR)
-		return
+		return loaded
 	end
 
 	loaded = true
 	pfm.log("Loading cycles shaders...",pfm.LOG_CATEGORY_PFM_RENDER)
 	include("/cycles/shaders/")
+	return loaded
 end
-
-

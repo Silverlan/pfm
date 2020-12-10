@@ -25,7 +25,7 @@ function ents.UtilTransformArrowComponent:Initialize()
 
 	self:BindEvent(ents.ClickComponent.EVENT_ON_CLICK,"OnClick")
 	self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")
-	self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"UpdateScale")
+	-- self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"UpdateScale")
 end
 function ents.UtilTransformArrowComponent:UpdateScale()
 	local cam = game.get_render_scene_camera()

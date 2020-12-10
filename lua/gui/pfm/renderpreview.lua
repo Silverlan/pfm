@@ -855,9 +855,9 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_DEPTH) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH end
 
 	local deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU
-	local selectedDeviceType = self.m_ctrlDeviceType:GetValue()
-	if(selectedDeviceType == "cpu") then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU
-	elseif(selectedDeviceType == "gpu") then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU end
+	local selectedDeviceType = tonumber(self.m_ctrlDeviceType:GetValue())
+	if(selectedDeviceType == udm.PFMRenderSettings.DEVICE_TYPE_CPU) then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU
+	elseif(selectedDeviceType == udm.PFMRenderSettings.DEVICE_TYPE_GPU) then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU end
 
 	preview = preview or false
 

@@ -494,14 +494,17 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	end
 	self.m_preStage = nil
 
-	local job = scene:CreateRenderJob()
+	scene:Finalize()
+	local renderer = cycles.create_renderer(scene,"cycles")
+	local job = renderer:StartRender()
 	job:Start()
 	self.m_rtScene = scene
+	self.m_rtRenderer = renderer
 
 	self.m_raytracingJob = job
 	self.m_progressiveRendering = createInfo.progressive
 	if(self.m_progressiveRendering) then
-		self.m_prt = scene:CreateProgressiveImageHandler()
+		self.m_prt = renderer:CreateProgressiveImageHandler()
 	end
 
 	self.m_lastProgress = 0.0
@@ -535,9 +538,10 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 end
 function pfm.RaytracingRenderJob:IsRendering() return (self.m_raytracingJob ~= nil and self.m_raytracingJob:IsComplete() == false) end
 function pfm.RaytracingRenderJob:GetRenderScene() return self.m_rtScene end
+function pfm.RaytracingRenderJob:GetRenderer() return self.m_rtRenderer end
 function pfm.RaytracingRenderJob:RestartRendering()
 	if(self:IsRendering() == false) then return end
-	self.m_rtScene:Restart()
+	self.m_rtRenderer:Restart()
 end
 function pfm.RaytracingRenderJob:CancelRendering()
 	self.m_prt = nil

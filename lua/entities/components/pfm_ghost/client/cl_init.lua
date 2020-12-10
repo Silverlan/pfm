@@ -55,7 +55,7 @@ function ents.PFMGhost:OnTick()
 	local res = Vector2(viewport:GetWidth(),viewport:GetHeight())
 	local cursorPos = viewport:GetCursorPos()
 
-	local dir = util.calc_world_direction_from_2d_coordinates(cam,res.x,res.y,Vector2(cursorPos.x /res.x,cursorPos.y /res.y))
+	local dir = util.calc_world_direction_from_2d_coordinates(cam,Vector2(cursorPos.x /res.x,cursorPos.y /res.y))
 	local entCam = cam:GetEntity()
 	local pos = entCam:GetPos() +entCam:GetForward() *cam:GetNearZ()
 
@@ -72,7 +72,7 @@ function ents.PFMGhost:OnTick()
 	if(ray ~= false) then posDst = ray.position
 	else
 		local min,max = Vector(),Vector()
-		if(renderC ~= nil) then min,max = renderC:GetRenderBounds() end
+		if(renderC ~= nil) then min,max = renderC:GetLocalRenderBounds() end
 		local maxAxisLength = math.max(max.x -min.x,max.y -min.y,max.z -min.z)
 		posDst = pos +dir *(maxAxisLength +20.0) -- Move position away from camera
 
@@ -91,7 +91,7 @@ function ents.PFMGhost:OnTick()
 	--print(ray.entity)
 
 	if(renderC ~= nil) then
-		local min,max = renderC:GetRenderBounds()
+		local min,max = renderC:GetLocalRenderBounds()
 		-- debug.draw_box(ent:GetPos() +min,ent:GetPos() +max,Color.Red,0.1)
 		max.y = 0
 		min.y = 0
@@ -111,7 +111,7 @@ function ents.PFMGhost:OnTick()
 		end
 	end
 	if(renderC ~= nil) then
-		local min,max = renderC:GetRenderBounds()
+		local min,max = renderC:GetLocalRenderBounds()
 		posDst.y = posDst.y -min.y
 	end
 	if(self.m_placementCallback ~= nil) then

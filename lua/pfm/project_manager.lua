@@ -85,6 +85,7 @@ function pfm.ProjectManager:SaveProject(fileName)
 	return success
 end
 function pfm.ProjectManager:GetProjectFileName() return self.m_projectFileName end
+function pfm.ProjectManager:GetProjectPath() return util.Path.CreatePath(self.m_projectFileName):GetPath() end
 function pfm.ProjectManager:GetAnimationCacheFilePath(projectFileName)
 	return "cache/pfm/animation_cache/" .. util.get_string_hash(projectFileName or self.m_projectFileName) .. ".pfa"
 end
