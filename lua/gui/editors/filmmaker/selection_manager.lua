@@ -35,8 +35,8 @@ function pfm.SelectionManager:PrepareSelectionMeshesForRendering(renderer)
 			if(renderC ~= nil) then
 				for _,mesh in ipairs(renderC:GetLODMeshes()) do
 					for _,subMesh in ipairs(mesh:GetSubMeshes()) do
-						renderer:ScheduleMeshForRendering(ents.RenderComponent.RENDERMODE_WORLD,self.m_shader,self.m_material,ent,subMesh)
-						renderer:ScheduleMeshForRendering(ents.RenderComponent.RENDERMODE_WORLD,self.m_shaderWireframe,self.m_material,ent,subMesh)
+						--renderer:ScheduleMeshForRendering(ents.RenderComponent.RENDERMODE_WORLD,self.m_shader,self.m_material,ent,subMesh)
+						--renderer:ScheduleMeshForRendering(ents.RenderComponent.RENDERMODE_WORLD,self.m_shaderWireframe,self.m_material,ent,subMesh)
 					end
 				end
 			end

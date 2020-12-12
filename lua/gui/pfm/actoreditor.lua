@@ -176,7 +176,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 	self.m_treeElementToActorData = {}
 	self.m_tree:AddCallback("OnItemSelectChanged",function(tree,el,selected)
-		self:UpdateSelectedEntities()
+		self:ScheduleUpdateSelectedEntities()
 	end)
 	--[[self.m_data = gui.create("WITable",dataVBox,0,0,dataVBox:GetWidth(),dataVBox:GetHeight(),0,0,1,1)
 
@@ -373,6 +373,11 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	end]]
 	return slider
 end
+function gui.PFMActorEditor:ScheduleUpdateSelectedEntities()
+	if(self.m_updateSelectedEntities) then return end
+	self:EnableThinking()
+	self.m_updateSelectedEntities = true
+end
 function gui.PFMActorEditor:UpdateSelectedEntities()
 	if(util.is_valid(self.m_tree) == false) then return end
 	local selectionManager = tool.get_filmmaker():GetSelectionManager()
@@ -398,6 +403,13 @@ function gui.PFMActorEditor:UpdateSelectedEntities()
 		return selected
 	end
 	iterate_tree(self.m_tree:GetRoot())
+end
+function gui.PFMActorEditor:OnThink()
+	if(self.m_updateSelectedEntities) then
+		self.m_updateSelectedEntities = nil
+		self:DisableThinking()
+		self:UpdateSelectedEntities()
+	end
 end
 function gui.PFMActorEditor:GetFilmClip() return self.m_filmClip end
 function gui.PFMActorEditor:SelectActor(actor)

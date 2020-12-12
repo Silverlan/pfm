@@ -58,6 +58,25 @@ function pfm.SceneAnimationCache:AddAnimation(filmClip,actor)
 	return anim
 end
 
+function pfm.SceneAnimationCache:AddFlexAnimation(filmClip,actor)
+	local modelC = actor:FindComponent("pfm_model")
+	local mdl = (modelC ~= nil) and modelC:GetModel() or nil
+	if(mdl == nil) then return end
+	local flexControllerList = {}
+	for _,name in ipairs(modelC:GetFlexControllerNames():GetTable()) do
+		local fcId = mdl:LookupFlexController(name:GetValue())
+		table.insert(flexControllerList,fcId)
+	end
+	local flexAnim = mdl:AddFlexAnimation(self:GetAnimationName(filmClip,actor))
+	flexAnim:SetFlexControllerIds(flexControllerList)
+
+	local settings = self.m_session:GetSettings()
+	local renderSettings = settings:GetRenderSettings()
+	local frameRate = renderSettings:GetFrameRate()
+	flexAnim:SetFps(frameRate)
+	return flexAnim
+end
+
 function pfm.SceneAnimationCache:UpdateCache(frameIndex)
 	if(self:IsFrameDirty(frameIndex) == false) then return end
 	local filmClip,animChannelTrack = self:GetFilmClip(frameIndex)
@@ -73,22 +92,25 @@ function pfm.SceneAnimationCache:UpdateCache(frameIndex)
 			self.m_mdlAnimCache[mdlName] = self.m_mdlAnimCache[mdlName] or {}
 			local cache = self.m_mdlAnimCache[mdlName]
 			local animName = self:GetAnimationName(filmClip,actor)
-			if(cache[animName] == nil) then
+			if(cache[animName] == nil or cache[animName].animation == nil) then
 				local anim = self:AddAnimation(filmClip,actor)
-				if(anim ~= nil) then cache[animName] = anim end
+				if(anim ~= nil) then
+					cache[animName] = cache[animName] or {}
+					cache[animName].animation = anim
+				end
 			end
 			local anim = cache[animName]
-			if(anim ~= nil) then
-				local numFrames = anim:GetFrameCount()
+			if(anim ~= nil and anim.animation ~= nil) then
+				local numFrames = anim.animation:GetFrameCount()
 				if(frameIndex >= numFrames) then
-					local numBones = anim:GetBoneCount()
+					local numBones = anim.animation:GetBoneCount()
 					for i=numFrames,frameIndex do
 						local frame = game.Model.Animation.Frame.Create(numBones)
-						anim:AddFrame(frame)
+						anim.animation:AddFrame(frame)
 					end
 				end
 
-				local frame = anim:GetFrame(frameIndex)
+				local frame = anim.animation:GetFrame(frameIndex)
 				for i,bone in ipairs(modelC:GetBoneList():GetTable()) do
 					bone = bone:GetTarget()
 					local pose = bone:GetTransform():GetPose()
@@ -96,13 +118,37 @@ function pfm.SceneAnimationCache:UpdateCache(frameIndex)
 					frame:SetBoneTransform(i -1,pose:GetOrigin(),pose:GetRotation(),pose:GetScale())
 				end
 			end
+
+			-- Flex animation
+			if(cache[animName] == nil or cache[animName].flexAnimation == nil) then
+				local anim = self:AddFlexAnimation(filmClip,actor)
+				if(anim ~= nil) then
+					cache[animName] = cache[animName] or {}
+					cache[animName].flexAnimation = anim
+				end
+			end
+			local flexAnim = cache[animName]
+			if(flexAnim ~= nil and flexAnim.flexAnimation ~= nil) then
+				local numFrames = flexAnim.flexAnimation:GetFrameCount()
+				if(frameIndex >= numFrames) then
+					for i=numFrames,frameIndex do
+						flexAnim.flexAnimation:AddFrame()
+					end
+				end
+
+				local frame = flexAnim.flexAnimation:GetFrame(frameIndex)
+				for i,weight in ipairs(modelC:GetFlexWeights():GetTable()) do
+					frame:SetFlexControllerValue(i -1,weight:GetValue())
+				end
+			end
+			--
 		end
 	end
 end
 
 function pfm.SceneAnimationCache:SaveToBinary(ds)
 	ds:WriteString("PFA",false)
-	ds:WriteUInt32(1) -- Version
+	ds:WriteUInt32(2) -- Version
 	local mdlAnims = self.m_mdlAnimCache
 	local numModels = 0
 	for mdlName,_ in pairs(mdlAnims) do numModels = numModels +1 end
@@ -113,9 +159,14 @@ function pfm.SceneAnimationCache:SaveToBinary(ds)
 		local numAnims = 0
 		for _ in pairs(animData) do numAnims = numAnims +1 end
 		ds:WriteUInt16(numAnims)
-		for animName,anim in pairs(animData) do
+		for animName,animData in pairs(animData) do
 			ds:WriteString(animName)
-			anim:Save(ds)
+
+			ds:WriteBool(animData.animation ~= nil)
+			if(animData.animation ~= nil) then animData.animation:Save(ds) end
+
+			ds:WriteBool(animData.flexAnimation ~= nil)
+			if(animData.flexAnimation ~= nil) then animData.flexAnimation:Save(ds) end
 		end
 	end
 
@@ -149,13 +200,31 @@ function pfm.SceneAnimationCache:LoadFromBinary(ds)
 		local numAnims = ds:ReadUInt16()
 		for j=1,numAnims do
 			local animName = ds:ReadString()
-			local anim = game.Model.Animation.Load(ds)
-			if(anim ~= nil) then
-				local mdl = game.load_model(mdlName)
-				if(mdl ~= nil) then
-					mdl:AddAnimation(animName,anim)
+
+			local hasAnim = (version == 1) or ds:ReadBool()
+			if(hasAnim) then
+				local anim = game.Model.Animation.Load(ds)
+				if(anim ~= nil) then
+					local mdl = game.load_model(mdlName)
+					if(mdl ~= nil) then
+						mdl:AddAnimation(animName,anim)
+					end
+					self.m_mdlAnimCache[mdlName][animName] = self.m_mdlAnimCache[mdlName][animName] or {}
+					self.m_mdlAnimCache[mdlName][animName].animation = anim
 				end
-				self.m_mdlAnimCache[mdlName][animName] = anim
+			end
+
+			local hasFlexAnim = (version > 1) and ds:ReadBool() or false
+			if(hasFlexAnim) then
+				local anim = game.Model.FlexAnimation.Load(ds)
+				if(anim ~= nil) then
+					local mdl = game.load_model(mdlName)
+					if(mdl ~= nil) then
+						mdl:AddFlexAnimation(animName,anim)
+					end
+					self.m_mdlAnimCache[mdlName][animName] = self.m_mdlAnimCache[mdlName][animName] or {}
+					self.m_mdlAnimCache[mdlName][animName].flexAnimation = anim
+				end
 			end
 		end
 	end

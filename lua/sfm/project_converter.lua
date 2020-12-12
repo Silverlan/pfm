@@ -209,7 +209,7 @@ function sfm.ProjectConverter:CreateActor(sfmComponent,pfmParentDag)
 	local actor = self:GetPFMActor(pfmComponent) -- Check if this component has already been associated with an actor
 	if(actor ~= nil) then return actor,false end
 	actor = udm.create_element(udm.ELEMENT_TYPE_PFM_ACTOR)
-	actor:ChangeName(pfmParentDag:GetName()) -- pfmComponent:GetName()) -- TODO: Remove suffix (e.g. _model)
+	if(pfmParentDag ~= nil) then actor:ChangeName(pfmParentDag:GetName()) end -- pfmComponent:GetName()) -- TODO: Remove suffix (e.g. _model)
 	actor:SetVisible(sfmComponent:IsVisible())
 
 	local transformType = sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL

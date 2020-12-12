@@ -50,16 +50,7 @@ function gui.PFMTreeView:AddItem(text,fPopulate,insertIndex)
 	return self.m_rootElement:AddItem(text,fPopulate,insertIndex)
 end
 function gui.PFMTreeView:OnElementSelectionChanged(elTgt,selected)
-	if(selected) then
-		table.insert(self.m_selectedElements,elTgt)
-	else
-		for i,el in ipairs(self.m_selectedElements) do
-			if(el == elTgt) then
-				table.remove(self.m_selectedElements,i)
-				break
-			end
-		end
-	end
+	self.m_selectedElements[elTgt] = selected or nil
 	self:CallCallbacks("OnItemSelectChanged",elTgt,selected)
 end
 function gui.PFMTreeView:SetAutoSelectChildren(autoSelected) self.m_autoSelectChildren = autoSelected end
@@ -70,7 +61,7 @@ function gui.PFMTreeView:SetSelectable(selectableMode)
 	if(selectableMode == gui.Table.SELECTABLE_MODE_NONE) then self:DeselectAll()
 	elseif(selectableMode == gui.Table.SELECTABLE_MODE_SINGLE) then
 		local elSelected
-		for _,el in ipairs(self.m_selectedElements) do
+		for el,_ in pairs(self.m_selectedElements) do
 			if(el:IsValid()) then
 				elSelected = el
 				break
@@ -85,7 +76,7 @@ function gui.PFMTreeView:GetSelectableMode() return self.m_selectableMode end
 function gui.PFMTreeView:DeselectAll()
 	local selectedElements = self.m_selectedElements
 	self.m_selectedElements = {}
-	for _,el in ipairs(selectedElements) do
+	for el,_ in pairs(selectedElements) do
 		if(el:IsValid()) then el:SetSelected(false) end
 	end
 end

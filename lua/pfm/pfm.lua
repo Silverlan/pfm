@@ -306,3 +306,73 @@ pfm.tag_render_scene_as_dirty = function(dirty)
 	if(util.is_valid(pm) == false or pm.TagRenderSceneAsDirty == nil) then return end
 	pm:TagRenderSceneAsDirty(dirty)
 end
+
+pfm.find_inanimate_actors = function(session)
+	local function get_film_clips(filmClip,filmClips)
+		filmClips[filmClip] = true
+		for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
+			for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
+				for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+					get_film_clips(filmClip,filmClips)
+				end
+			end
+		end
+	end
+	local filmClips = {}
+	for _,clip in ipairs(session:GetClips():GetTable()) do
+		get_film_clips(clip,filmClips)
+	end
+	local filmClipList = {}
+	for filmClip,_ in pairs(filmClips) do
+		table.insert(filmClipList,filmClip)
+	end
+
+	local iteratedChannels = {}
+	local function collect_actors(filmClip,actors)
+		for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
+			for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
+				for _,channelClip in ipairs(track:GetChannelClips():GetTable()) do
+					for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
+						if(iteratedChannels[channel] == nil) then
+							iteratedChannels[channel] = true
+							local el = channel:GetToElement()
+							if(el ~= nil) then
+								local iterated = {}
+								iterated[el] = true
+								local parent = el:FindParentElement()
+								while(parent ~= nil and parent:GetType() ~= udm.ELEMENT_TYPE_PFM_ACTOR) do
+									parent = el:FindParentElement()
+									if(parent ~= nil) then
+										if(iterated[parent]) then parent = nil
+										else iterated[parent] = true end
+									end
+								end
+								if(parent ~= nil) then
+									local numValues = 0
+									if(actors[parent] == nil) then
+										local log = channel:GetLog()
+										for _,layer in ipairs(log:GetLayers():GetTable()) do
+											local values = layer:GetValues()
+											numValues = numValues +#values
+										end
+									end
+									actors[parent] = math.max(actors[parent] or 0,numValues)
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	local actors = {}
+	for _,filmClip in ipairs(filmClipList) do
+		collect_actors(filmClip,actors)
+	end
+
+	local actorList = {}
+	for actor,numValues in pairs(actors) do
+		if(numValues > 1) then table.insert(actorList,actor) end
+	end
+	return actorList
+end

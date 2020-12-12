@@ -222,7 +222,7 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 		local filter
 		if(isAnimCacheEnabled and self.m_animationCache:IsFrameDirty(math.floor(frameIndex)) == false and (isInterpFrame == false or self.m_animationCache:IsFrameDirty(math.ceil(frameIndex)) == false)) then
 			gameViewFlags = bit.bor(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE)
-			filter = function(channel) return channel:IsBoneTransformChannel() == false end --  and channel:IsFlexControllerChannel() == false end
+			filter = function(channel) return channel:IsBoneTransformChannel() == false and channel:IsFlexControllerChannel() == false end
 		end
 		self.m_activeGameViewFilmClip = activeClip:GetChildFilmClip(offset)
 		if(self.m_cachedMode == false or updateCache) then activeClip:SetPlaybackOffset(offset,filter)

@@ -131,13 +131,17 @@ function ents.PFMProject:SetOffset(offset,gameViewFlags)
 			local animName = animCache:GetAnimationName(filmClip,actorC:GetActorData())
 			
 			animC:PlayAnimation(animName)
+			local flexC = ent:GetComponent(ents.COMPONENT_FLEX)
+			if(flexC ~= nil) then flexC:PlayFlexAnimation(animName) end
 			local anim = animC:GetAnimationObject()
 			if(anim ~= nil) then
 				local numFrames = anim:GetFrameCount()
 				local cycle = (numFrames >= 2) and (frameIndex /(numFrames -1)) or 0
 				animC:SetCycle(cycle)
+				if(flexC ~= nil) then flexC:SetFlexAnimationCycle(animName,cycle) end
 			end
 			animC:SetPlaybackRate(0.0)
+			if(flexC ~= nil) then flexC:SetFlexAnimationPlaybackRate(animName,0.0) end
 		end
 	end
 end
