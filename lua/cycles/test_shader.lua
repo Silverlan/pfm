@@ -4,7 +4,7 @@ function EmissionBSDF:Initialize()
 	self.outBsdf = self:AddOutputSocket("bsdf")
 end
 function EmissionBSDF:InitializeShader()
-	local e = self:AddNode(cycles.NODE_TYPE_EMISSION)
+	local e = self:AddNode(unirender.NODE_TYPE_EMISSION)
 	e:SetColor(self.m_color)
 	e:SetStrength(1.0)
 	self:Link(self.inColor,e.inColor)
@@ -13,8 +13,8 @@ function EmissionBSDF:InitializeShader()
 	--e.outBsdf
 end
 
-cycles.register_node("emission_test",function(inputData)
-	local e = self:AddNode(cycles.NODE_TYPE_EMISSION)
+unirender.register_node("emission_test",function(inputData)
+	local e = self:AddNode(unirender.NODE_TYPE_EMISSION)
 	e:SetColor(self.m_color)
 	e:SetStrength(1.0)
 end)
@@ -41,7 +41,7 @@ end
 local function shader_test()
 	-- ShaderDesc
 	-- ->Generate()
-	local e = self:AddNode(cycles.NODE_TYPE_EMISSION)
+	local e = self:AddNode(unirender.NODE_TYPE_EMISSION)
 	e:SetColor(self.m_color)
 	e:SetStrength(1.0)
 

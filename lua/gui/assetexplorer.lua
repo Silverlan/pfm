@@ -254,6 +254,17 @@ function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
 					pContext:AddItem(locale.get_text("pfm_open_in_explorer"),function()
 						util.open_path_in_explorer(file.get_file_path(assetPath),file.get_file_name(assetPath) .. "." .. self.m_extension)
 					end)
+
+					if(self:GetAssetType() == asset.TYPE_MODEL) then
+						pContext:AddItem(locale.get_text("pfm_open_in_model_editor"),function()
+							local dialog,frame,el = gui.open_model_dialog(function(dialogResult,mdlName) end)
+
+							if(util.is_valid(el) == false) then return end
+							local path = util.Path.CreatePath(assetPath)
+							path:PopFront()
+							el:SetModel(path:GetString())
+						end)
+					end
 				end
 			end
 			self:PopulateContextMenu(pContext,tSelectedFiles,tExternalFiles)

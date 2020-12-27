@@ -8,6 +8,8 @@
 
 util.register_class("ents.RetargetRig.Rig")
 
+include("rig_flex.lua")
+
 ents.RetargetRig.Rig.FILE_LOCATION = "retarget_rigs/"
 ents.RetargetRig.Rig.impl = {}
 
@@ -15,18 +17,27 @@ function ents.RetargetRig.Rig:__init(srcMdl,dstMdl)
 	self.m_srcMdl = srcMdl
 	self.m_dstMdl = dstMdl
 	self.m_bindPose = dstMdl:GetReferencePose():Copy()
+
+	-- Note: Bone translations are stored in reverse (i.e. [destination] = source),
+	-- since different destination bones can be mapped to the same source bones!
+	self.m_dstToSrcTranslationTable = {}
+
+	-- Flex translations are stored [source] = {destination0,destination1,...},
+	-- since we're also storing additional information per (source,destinationX) pair
+	self.m_flexTranslationTable = {}
 end
 function ents.RetargetRig.Rig:GetSourceModel() return self.m_srcMdl end
 function ents.RetargetRig.Rig:GetDestinationModel() return self.m_dstMdl end
-function ents.RetargetRig.Rig:SetTranslationTable(t)
-	self.m_translationTable = t
+function ents.RetargetRig.Rig:SetDstToSrcTranslationTable(t)
+	self.m_dstToSrcTranslationTable = t
 	self:ApplyPoseMatchingRotationCorrections()
 end
-function ents.RetargetRig.Rig:GetTranslationTable() return self.m_translationTable end
+function ents.RetargetRig.Rig:GetDstToSrcTranslationTable() return self.m_dstToSrcTranslationTable end
 function ents.RetargetRig.Rig:GetBindPoseTransforms() return self.m_bindPoseTransforms end
-function ents.RetargetRig.Rig:GetBoneTranslation(boneId) return self.m_translationTable[boneId] end
-function ents.RetargetRig.Rig:SetBoneTranslation(boneId0,boneId1)
-	self.m_translationTable[boneId0] = boneId1
+function ents.RetargetRig.Rig:GetBoneTranslation(boneId) return self.m_dstToSrcTranslationTable[boneId] end
+function ents.RetargetRig.Rig:SetBoneTranslation(boneIdSrc,boneIdDst)
+	if(boneIdSrc == -1 or boneIdDst == -1) then return end
+	self.m_dstToSrcTranslationTable[boneIdDst] = boneIdSrc
 	self:ApplyPoseMatchingRotationCorrections()
 end
 function ents.RetargetRig.Rig:GetBindPose() return self.m_bindPose end
@@ -61,7 +72,7 @@ function ents.RetargetRig.Rig:ApplyBonePoseMatchingRotationCorrections(bindPose,
 	-- very different from each other (e.g. if one bind pose has the arms stretched out to the side and the other has the arms pointing down)
 	parentPose = parentPose or phys.Transform()
 	local pose = bindPose:GetBonePose(bone:GetID())
-	local boneTranslationIds = self:GetTranslationTable()
+	local boneTranslationIds = self:GetDstToSrcTranslationTable()
 	local dstMdl = self.m_srcMdl
 	local skeleton1 = dstMdl:GetSkeleton()
 	local ref1 = dstMdl:GetReferencePose()
@@ -165,14 +176,28 @@ function ents.RetargetRig.Rig:DebugPrint()
 	print("Source model: ",dstMdl:GetName())
 	print("Target model: ",srcMdl:GetName())
 	print("Bone translations:")
-	for boneId0,boneId1 in pairs(self:GetTranslationTable()) do
+	for boneId0,boneId1 in pairs(self:GetDstToSrcTranslationTable()) do
 		local bone0 = skeleton0:GetBone(boneId0)
 		local bone1 = skeleton1:GetBone(boneId1)
 		print("[\"" .. bone0:GetName() .. "\"] = \"" .. bone1:GetName() .. "\",")
 	end
+	print("Flex controller translations:")
+	for fcIdSrc,mappings in pairs(self:GetFlexControllerTranslationTable()) do
+		local flexCSrc = dstMdl:GetFlexController(fcIdSrc)
+		print("[\"" .. (flexCSrc and flexCSrc.name or "invalid") .. "\"]:")
+		for fcIdDst,data in pairs(mappings) do
+			local flexCDst = srcMdl:GetFlexController(fcIdDst)
+			print("\t[\"" .. (flexCDst and flexCDst.name or "invalid") .. "\"]:")
+			print("\t\tmin_source: " .. data.min_source)
+			print("\t\tmax_source: " .. data.max_source)
+			print("\t\tmin_target: " .. data.min_target)
+			print("\t\tmax_target: " .. data.max_target)
+		end
+	end
 	print("")
 end
 function ents.RetargetRig.Rig:Save()
+	self:DebugPrint()
 	local srcMdl = self.m_dstMdl
 	local skeleton0 = srcMdl:GetSkeleton()
 
@@ -185,7 +210,7 @@ function ents.RetargetRig.Rig:Save()
 	db:SetValue("string","target",srcMdl:GetName())
 
 	local bm = db:AddBlock("bone_map")
-	local translationTable = self:GetTranslationTable()
+	local translationTable = self:GetDstToSrcTranslationTable()
 	local translationNameTable = {}
 	for boneId0,boneId1 in pairs(translationTable) do
 		local bone0 = skeleton0:GetBone(boneId0)
@@ -196,8 +221,8 @@ function ents.RetargetRig.Rig:Save()
 			translationNameTable[bone0:GetName()] = bone1:GetName()
 		end
 	end
-
 	ents.RetargetRig.Rig.add_bone_list_to_cache_map(translationNameTable)
+	ents.RetargetRig.Rig.save_flex_controller_map(db,dstMdl,srcMdl,self.m_flexTranslationTable)
 
 	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
 	if(file.create_path(filePath:GetPath()) == false) then return end
@@ -236,9 +261,10 @@ function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
 	end
 
 	local rig = ents.RetargetRig.Rig(dstMdl,srcMdl)
-	rig.m_translationTable = translationTable
+	rig.m_dstToSrcTranslationTable = translationTable
+	rig.m_flexTranslationTable = ents.RetargetRig.Rig.load_flex_controller_map(db,dstMdl,srcMdl)
 	rig:DebugPrint()
-	rig:SetTranslationTable(translationTable)
+	rig:SetDstToSrcTranslationTable(translationTable)
 	return rig
 end
 function ents.RetargetRig.Rig.is_bone_relation_in_cache(srcBone,dstBone)

@@ -856,8 +856,19 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 		pfmGameModel:GetGlobalFlexControllersAttr():PushBack(converter:ConvertNewElement(node))
 	end
 
-	for _,name in ipairs(sfmGameModel:GetFlexNames()) do
-		pfmGameModel:GetFlexControllerNamesAttr():PushBack(udm.String(name))
+	local mdl = game.load_model(mdlName)
+	if(mdl == nil) then
+		pfm.log("Unable to load model '" .. mdlName .. "'! Flex controller weights for this model will be incorrect!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+	else
+		local numFlexControllerWeights = #sfmGameModel:GetFlexWeights()
+		if(numFlexControllerWeights ~= mdl:GetFlexControllerCount()) then
+			pfm.log("Number of flex controller weights (" .. numFlexControllerWeights .. ") for model '" .. mdlName .. "' does not match flex controller count of model (" .. mdl:GetFlexControllerCount() .. ")! This may cause issues.",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+			numFlexControllerWeights = mdl:GetFlexControllerCount()
+		end
+		for i=0,numFlexControllerWeights -1 do
+			local fc = mdl:GetFlexController(i)
+			pfmGameModel:GetFlexControllerNamesAttr():PushBack(udm.String(fc and fc.name or ""))
+		end
 	end
 
 	for _,material in ipairs(sfmGameModel:GetMaterials()) do

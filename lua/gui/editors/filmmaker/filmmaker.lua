@@ -328,7 +328,7 @@ function gui.WIFilmmaker:OnInitialize()
 			util.open_url_in_browser("https://wiki.pragma-engine.com/index.php?title=Pfm_firststeps")
 		end)
 		pContext:AddItem(locale.get_text("pfm_report_a_bug"),function(pItem)
-			util.open_url_in_browser("https://gitlab.com/Silverlan/pfm/issues")
+			util.open_url_in_browser("https://github.com/Silverlan/pfm/issues")
 		end)
 		pContext:Update()
 	end)
@@ -490,7 +490,7 @@ function gui.WIFilmmaker:ReloadInterface()
 end
 function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
 function gui.WIFilmmaker:GetViewport() return self:GetWindow("primary_viewport") or nil end
-function gui.WIFilmmaker:GetRenderTab() return self:GetWindow("cycles_render") or nil end
+function gui.WIFilmmaker:GetRenderTab() return self:GetWindow("render") or nil end
 function gui.WIFilmmaker:GetActorEditor() return self:GetWindow("actor_editor") or nil end
 function gui.WIFilmmaker:GetElementViewer() return self:GetWindow("element_viewer") or nil end
 function gui.WIFilmmaker:CreateNewActor()
@@ -878,7 +878,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:RegisterWindow(self.m_actorDataFrame,"particle_editor",locale.get_text("pfm_particle_editor"),function() return gui.create("WIPFMParticleEditor") end)
 
 	self:RegisterWindow(self.m_viewportFrame,"primary_viewport",locale.get_text("pfm_primary_viewport"),function() return gui.create("WIPFMViewport") end)
-	self:RegisterWindow(self.m_viewportFrame,"cycles_render",locale.get_text("pfm_cycles_renderer"),function()
+	self:RegisterWindow(self.m_viewportFrame,"render",locale.get_text("pfm_render"),function()
 		local el = gui.create("WIPFMRenderPreview")
 		el:GetVisibilityProperty():AddCallback(function(wasVisible,isVisible)
 			if(self.m_renderWasSceneCameraEnabled == nil) then self.m_renderWasSceneCameraEnabled = ents.PFMCamera.is_camera_enabled() end
@@ -907,7 +907,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	-- self:OpenWindow("tutorial_catalog")
 
 	self:OpenWindow("primary_viewport")
-	self:OpenWindow("cycles_render")
+	self:OpenWindow("render")
 
 	gui.create("WIResizer",self.m_contentsRight):SetFraction(0.75)
 

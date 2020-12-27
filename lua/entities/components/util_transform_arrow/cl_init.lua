@@ -158,6 +158,7 @@ function ents.UtilTransformArrowComponent:GetCursorIntersectionWithAxisPlane()
 	return pos +dir *t *maxDist
 end
 function ents.UtilTransformArrowComponent:OnTick(dt)
+	self:UpdateScale() -- TODO: This doesn't belong here, move it to a render callback
 	if(self:IsSelected() ~= true) then return end
 	local ent = self:GetEntity()
 	local clickC = ent:GetComponent(ents.COMPONENT_CLICK)
@@ -183,6 +184,7 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
 		local vAxis = Vector()
 		vAxis:Set(axis,1.0)
 		local newPos = self.m_moveStartTransformPos +vAxis *delta
+		print(self.m_moveStartCursorPos)
 		transformC:SetAbsTransformPosition(newPos)
 
 		pfm.tag_render_scene_as_dirty()

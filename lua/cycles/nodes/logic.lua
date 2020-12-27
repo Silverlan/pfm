@@ -11,7 +11,7 @@ local function run_operator(self,op,sockets,addSockets)
 	local node = self:GetNode()
 	for i,socket in ipairs(sockets) do
 		if(util.get_type_name(socket) ~= "Socket") then
-			sockets[i] = cycles.Socket(socket)
+			sockets[i] = unirender.Socket(socket)
 			socket = sockets[i]
 		end
 		node = node or socket:GetNode()
@@ -33,15 +33,15 @@ local function run_operator(self,op,sockets,addSockets)
 end
 
 -- not
-cycles.Node.logic_not = {
+unirender.Node.logic_not = {
 	IN_VALUE1 = "value1",
 	IN_VALUE2 = "value2",
 	OUT_VALUE = "value"
 }
-cycles.NODE_NOT = cycles.register_node("not",function(desc)
-	local inValue1 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_not.IN_VALUE1,0)
-	local inValue2 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_not.IN_VALUE2,0)
-	local outValue = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_not.OUT_VALUE)
+unirender.NODE_NOT = unirender.register_node("not",function(desc)
+	local inValue1 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_not.IN_VALUE1,0)
+	local inValue2 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_not.IN_VALUE2,0)
+	local outValue = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_not.OUT_VALUE)
 	desc:SetPrimaryOutputSocket(outValue)
 
 	local gt = inValue1:GreaterThan(inValue2)
@@ -49,98 +49,98 @@ cycles.NODE_NOT = cycles.register_node("not",function(desc)
 
 	desc:Link(lt:GetPrimaryOutputSocket(),outValue)
 end)
-function cycles.Socket:Not() return run_operator(self,cycles.NODE_NOT) end
+function unirender.Socket:Not() return run_operator(self,unirender.NODE_NOT) end
 
 -- or
-cycles.Node.logic_or = {
+unirender.Node.logic_or = {
 	IN_VALUE1 = "value1",
 	IN_VALUE2 = "value2",
 	OUT_VALUE = "value"
 }
-cycles.NODE_OR = cycles.register_node("or",function(desc)
-	local inValue1 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_or.IN_VALUE1,0)
-	local inValue2 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_or.IN_VALUE2,0)
-	local outValue = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_or.OUT_VALUE)
+unirender.NODE_OR = unirender.register_node("or",function(desc)
+	local inValue1 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_or.IN_VALUE1,0)
+	local inValue2 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_or.IN_VALUE2,0)
+	local outValue = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_or.OUT_VALUE)
 	desc:SetPrimaryOutputSocket(outValue)
 
 	local gt1 = inValue1:GreaterThan(0.0)
 	local gt2 = inValue2:GreaterThan(0.0)
-	local add = desc:AddNode(cycles.NODE_MATH)
-	gt1:Link(add,cycles.Node.math.IN_VALUE1)
-	gt2:Link(add,cycles.Node.math.IN_VALUE2)
-	add:SetProperty(cycles.Node.math.IN_TYPE,cycles.Node.math.TYPE_ADD)
-	add:SetProperty(cycles.Node.math.IN_USE_CLAMP,true)
+	local add = desc:AddNode(unirender.NODE_MATH)
+	gt1:Link(add,unirender.Node.math.IN_VALUE1)
+	gt2:Link(add,unirender.Node.math.IN_VALUE2)
+	add:SetProperty(unirender.Node.math.IN_TYPE,unirender.Node.math.TYPE_ADD)
+	add:SetProperty(unirender.Node.math.IN_USE_CLAMP,true)
 
 	desc:Link(add:GetPrimaryOutputSocket(),outValue)
 end)
-function cycles.Socket:Or(socket) return run_operator(self,cycles.NODE_OR,{socket}) end
+function unirender.Socket:Or(socket) return run_operator(self,unirender.NODE_OR,{socket}) end
 
 -- and
-cycles.Node.logic_and = {
+unirender.Node.logic_and = {
 	IN_VALUE1 = "value1",
 	IN_VALUE2 = "value2",
 	OUT_VALUE = "value"
 }
-cycles.NODE_AND = cycles.register_node("and",function(desc)
-	local inValue1 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_and.IN_VALUE1,0)
-	local inValue2 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_and.IN_VALUE2,0)
-	local outValue = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_and.OUT_VALUE)
+unirender.NODE_AND = unirender.register_node("and",function(desc)
+	local inValue1 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_and.IN_VALUE1,0)
+	local inValue2 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_and.IN_VALUE2,0)
+	local outValue = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_and.OUT_VALUE)
 	desc:SetPrimaryOutputSocket(outValue)
 
 	local gt1 = inValue1:GreaterThan(0.0)
 	local gt2 = inValue2:GreaterThan(0.0)
-	local mul = desc:AddNode(cycles.NODE_MATH)
-	gt1:Link(mul,cycles.Node.math.IN_VALUE1)
-	gt2:Link(mul,cycles.Node.math.IN_VALUE2)
-	mul:SetProperty(cycles.Node.math.IN_TYPE,cycles.Node.math.TYPE_MULTIPLY)
-	mul:SetProperty(cycles.Node.math.IN_USE_CLAMP,true)
+	local mul = desc:AddNode(unirender.NODE_MATH)
+	gt1:Link(mul,unirender.Node.math.IN_VALUE1)
+	gt2:Link(mul,unirender.Node.math.IN_VALUE2)
+	mul:SetProperty(unirender.Node.math.IN_TYPE,unirender.Node.math.TYPE_MULTIPLY)
+	mul:SetProperty(unirender.Node.math.IN_USE_CLAMP,true)
 
 	desc:Link(mul:GetPrimaryOutputSocket(),outValue)
 end)
-function cycles.Socket:And(socket) return run_operator(self,cycles.NODE_AND,{socket}) end
+function unirender.Socket:And(socket) return run_operator(self,unirender.NODE_AND,{socket}) end
 
 -- nor
-cycles.Node.logic_nor = {
+unirender.Node.logic_nor = {
 	IN_VALUE1 = "value1",
 	IN_VALUE2 = "value2",
 	OUT_VALUE = "value"
 }
-cycles.NODE_NOR = cycles.register_node("nor",function(desc)
-	local inValue1 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_nor.IN_VALUE1,0)
-	local inValue2 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_nor.IN_VALUE2,0)
-	local outValue = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_nor.OUT_VALUE)
+unirender.NODE_NOR = unirender.register_node("nor",function(desc)
+	local inValue1 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_nor.IN_VALUE1,0)
+	local inValue2 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_nor.IN_VALUE2,0)
+	local outValue = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_nor.OUT_VALUE)
 	desc:SetPrimaryOutputSocket(outValue)
 
 	desc:Link(inValue1:Or(inValue2):Not(),outValue)
 end)
-function cycles.Socket:Nor(socket) return run_operator(self,cycles.NODE_NOR,{socket}) end
+function unirender.Socket:Nor(socket) return run_operator(self,unirender.NODE_NOR,{socket}) end
 
 -- nand
-cycles.Node.logic_nand = {
+unirender.Node.logic_nand = {
 	IN_VALUE1 = "value1",
 	IN_VALUE2 = "value2",
 	OUT_VALUE = "value"
 }
-cycles.NODE_NAND = cycles.register_node("nand",function(desc)
-	local inValue1 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_nand.IN_VALUE1,0)
-	local inValue2 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_nand.IN_VALUE2,0)
-	local outValue = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_nand.OUT_VALUE)
+unirender.NODE_NAND = unirender.register_node("nand",function(desc)
+	local inValue1 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_nand.IN_VALUE1,0)
+	local inValue2 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_nand.IN_VALUE2,0)
+	local outValue = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_nand.OUT_VALUE)
 	desc:SetPrimaryOutputSocket(outValue)
 
 	desc:Link(inValue1:And(inValue2):Not(),outValue)
 end)
-function cycles.Socket:Nand(socket) return run_operator(self,cycles.NODE_NAND,{socket}) end
+function unirender.Socket:Nand(socket) return run_operator(self,unirender.NODE_NAND,{socket}) end
 
 -- xor
-cycles.Node.logic_xor = {
+unirender.Node.logic_xor = {
 	IN_VALUE1 = "value1",
 	IN_VALUE2 = "value2",
 	OUT_VALUE = "value"
 }
-cycles.NODE_XOR = cycles.register_node("xor",function(desc)
-	local inValue1 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_xor.IN_VALUE1,0)
-	local inValue2 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_xor.IN_VALUE2,0)
-	local outValue = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_xor.OUT_VALUE)
+unirender.NODE_XOR = unirender.register_node("xor",function(desc)
+	local inValue1 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_xor.IN_VALUE1,0)
+	local inValue2 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_xor.IN_VALUE2,0)
+	local outValue = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_xor.OUT_VALUE)
 	desc:SetPrimaryOutputSocket(outValue)
 
 	local land1 = inValue1:Not():And(inValue2)
@@ -148,39 +148,39 @@ cycles.NODE_XOR = cycles.register_node("xor",function(desc)
 	local lor = land1:Or(land2)
 	desc:Link(lor,outValue)
 end)
-function cycles.Socket:Xor(socket) return run_operator(self,cycles.NODE_XOR,{socket}) end
+function unirender.Socket:Xor(socket) return run_operator(self,unirender.NODE_XOR,{socket}) end
 
 -- half-adder
-cycles.Node.logic_half_adder = {
+unirender.Node.logic_half_adder = {
 	IN_VALUE1 = "value1",
 	IN_VALUE2 = "value2",
 	OUT_VALUE1 = "value1",
 	OUT_VALUE2 = "value2"
 }
-cycles.NODE_HALF_ADDER = cycles.register_node("half_adder",function(desc)
-	local inValue1 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_half_adder.IN_VALUE1,0)
-	local inValue2 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_half_adder.IN_VALUE2,0)
-	local outValue1 = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_half_adder.OUT_VALUE1)
-	local outValue2 = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_half_adder.OUT_VALUE2)
+unirender.NODE_HALF_ADDER = unirender.register_node("half_adder",function(desc)
+	local inValue1 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_half_adder.IN_VALUE1,0)
+	local inValue2 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_half_adder.IN_VALUE2,0)
+	local outValue1 = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_half_adder.OUT_VALUE1)
+	local outValue2 = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_half_adder.OUT_VALUE2)
 
 	desc:Link(inValue1:Xor(inValue2),outValue1)
 	desc:Link(inValue1:And(inValue2),outValue2)
 end)
 
 -- full-adder
-cycles.Node.logic_full_adder = {
+unirender.Node.logic_full_adder = {
 	IN_VALUE1 = "value1",
 	IN_VALUE2 = "value2",
 	IN_VALUE3 = "value3",
 	OUT_VALUE1 = "value1",
 	OUT_VALUE2 = "value2"
 }
-cycles.NODE_FULL_ADDER = cycles.register_node("full_adder",function(desc)
-	local inValue1 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_full_adder.IN_VALUE1,0)
-	local inValue2 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_full_adder.IN_VALUE2,0)
-	local inValue3 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_full_adder.IN_VALUE3,0)
-	local outValue1 = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_full_adder.OUT_VALUE1)
-	local outValue2 = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.logic_full_adder.OUT_VALUE2)
+unirender.NODE_FULL_ADDER = unirender.register_node("full_adder",function(desc)
+	local inValue1 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_full_adder.IN_VALUE1,0)
+	local inValue2 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_full_adder.IN_VALUE2,0)
+	local inValue3 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_full_adder.IN_VALUE3,0)
+	local outValue1 = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_full_adder.OUT_VALUE1)
+	local outValue2 = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.logic_full_adder.OUT_VALUE2)
 
 	local lxor1 = inValue1:Xor(inValue2)
 	local lxor2 = lxor1:Xor(inValue3)
@@ -192,17 +192,17 @@ cycles.NODE_FULL_ADDER = cycles.register_node("full_adder",function(desc)
 	desc:Link(lor,outValue2)
 end)
 
-cycles.Node.equal = {
+unirender.Node.equal = {
 	IN_VALUE1 = "value1",
 	IN_VALUE2 = "value2",
 	IN_TOLERANCE = "tolerance",
 	OUT_VALUE = "value"
 }
-cycles.NODE_EQUAL = cycles.register_node("equal",function(desc)
-	local inValue1 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.equal.IN_VALUE1,0)
-	local inValue2 = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.equal.IN_VALUE2,0)
-	local inTolerance = desc:RegisterInput(cycles.Socket.TYPE_FLOAT,cycles.Node.equal.IN_TOLERANCE,0.001)
-	local outValue = desc:RegisterOutput(cycles.Socket.TYPE_FLOAT,cycles.Node.equal.OUT_VALUE)
+unirender.NODE_EQUAL = unirender.register_node("equal",function(desc)
+	local inValue1 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.equal.IN_VALUE1,0)
+	local inValue2 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.equal.IN_VALUE2,0)
+	local inTolerance = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.equal.IN_TOLERANCE,0.001)
+	local outValue = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.equal.OUT_VALUE)
 	desc:SetPrimaryOutputSocket(outValue)
 
 	local diff = inValue1 -inValue2
@@ -211,4 +211,4 @@ cycles.NODE_EQUAL = cycles.register_node("equal",function(desc)
 	local lt = diff:LessThan(inTolerance)
 	gt:And(lt):Link(outValue)
 end)
-function cycles.Socket:IsEqualTo(socket,tolerance) return run_operator(self,cycles.NODE_EQUAL,{socket},{[cycles.Node.equal.IN_TOLERANCE] = tolerance}) end
+function unirender.Socket:IsEqualTo(socket,tolerance) return run_operator(self,unirender.NODE_EQUAL,{socket},{[unirender.Node.equal.IN_TOLERANCE] = tolerance}) end

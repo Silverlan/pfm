@@ -29,6 +29,7 @@ udm.PFMRenderSettings.PREVIEW_QUALITY_HIGH = 2
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"frameRate",udm.Int(24))
 
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"mode",udm.Int(udm.PFMRenderSettings.MODE_COMBINED))
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"renderEngine",udm.String("cycles"))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"preset",udm.String("standard"))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"deviceType",udm.Int(udm.PFMRenderSettings.DEVICE_TYPE_GPU))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"samples",udm.Int(40))

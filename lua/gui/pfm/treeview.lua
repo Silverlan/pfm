@@ -350,6 +350,7 @@ function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex)
 		table.insert(self.m_items,item)
 	end
 	self:ScheduleUpdate()
+	self.m_treeView:GetRoot():ScheduleUpdate()
 	return item
 end
 gui.register("WIPFMTreeViewElement",gui.PFMTreeViewElement)

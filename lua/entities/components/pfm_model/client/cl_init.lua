@@ -101,11 +101,11 @@ function ents.PFMModel:OnEntitySpawn()
 	end
 
 	local flexWeights = modelData:GetFlexWeights():GetTable()
-	local globalFlexControllers = modelData:GetGlobalFlexControllers()
 	-- Flex controller names are only specified sometimes?
-	-- local flexNames = modelData:GetFlexControllerNames():GetTable()
-	for _,fc in ipairs(globalFlexControllers:GetTable()) do
-		local fcId = mdl:LookupFlexController(fc:GetName())
+	local globalFlexControllers = modelData:GetGlobalFlexControllers()
+	local flexNames = modelData:GetFlexControllerNames():GetTable()
+	for i,fc in ipairs(globalFlexControllers:GetTable()) do
+		local fcId = mdl:LookupFlexController(flexNames[i]:GetValue())
 		if(fcId ~= -1) then
 			local weight = fc:GetFlexWeightAttr()
 			animSetC:SetFlexController(fcId,weight:GetValue())

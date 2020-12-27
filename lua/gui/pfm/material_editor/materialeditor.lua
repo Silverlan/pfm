@@ -17,7 +17,7 @@ locale.load("pfm_editors.txt")
 
 util.register_class("gui.PFMMaterialEditor",gui.Base)
 
-include("cycles.lua")
+include("unirender.lua")
 include("shaders")
 
 gui.PFMMaterialEditor.RENDERER_REALTIME = 0

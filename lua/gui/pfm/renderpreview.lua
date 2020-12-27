@@ -78,7 +78,7 @@ function gui.PFMRenderPreview:OnInitialize()
 		local f = file.open(outputPath:GetString() .. ".prt",bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
 		if(f == nil) then return end
 		local ds = util.DataStream()
-		local serializationData = cycles.Scene.SerializationData()
+		local serializationData = unirender.Scene.SerializationData()
 		serializationData.outputFileName = outputPath:GetString()
 		scene:Save(ds,outputPath:GetPath(),serializationData)
 		ds:Seek(0)
@@ -341,6 +341,14 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		-- {"cinematic",locale.get_text("pfm_rt_preset_cinematic")},
 		{"vr",locale.get_text("pfm_rt_preset_vr")}
 	},settings:GetPreset())
+
+	-- Render Engine
+	self.m_ctrlRenderEngine = p:AddDropDownMenu(locale.get_text("pfm_render_engine"),"render_engine",{
+		{"cycles",locale.get_text("pfm_render_engine_cycles")},
+		{"luxcorerender",locale.get_text("pfm_render_engine_luxcorerender")}
+	},"cycles")
+	p:LinkToUDMProperty("render_engine",settings,"renderEngine")
+	if(tool.get_filmmaker():IsDeveloperModeEnabled() == false) then p:SetControlVisible("render_engine",false) end
 	
 	-- Render Mode
 	self.m_ctrlRenderMode = p:AddDropDownMenu(locale.get_text("pfm_render_mode"),"render_mode",{
@@ -521,7 +529,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	-- Emission strength
 	self.m_ctrlEmissionStrength = p:AddSliderControl(locale.get_text("pfm_emission_strength"),"emission_strength",settings:GetEmissionStrength(),0,20,function()
 		pfm.load_cycles()
-		cycles.PBRShader.set_global_emission_strength(self.m_ctrlEmissionStrength:GetValue())
+		unirender.PBRShader.set_global_emission_strength(self.m_ctrlEmissionStrength:GetValue())
 	end)
 	p:LinkToUDMProperty("emission_strength",settings,"emissionStrength")
 
@@ -903,6 +911,7 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 
 	local progressiveRefinement = self.m_ctrlProgressiveRefinement:IsChecked()
 	settings:SetRenderMode(renderMode)
+	settings:SetRenderEngine(self.m_ctrlRenderEngine:GetValue())
 	settings:SetSamples(samples or self.m_ctrlSamplesPerPixel:GetValue())
 	settings:SetSky(self.m_ctrlSkyOverride:GetValue())
 	settings:SetSkyStrength(self.m_ctrlSkyStrength:GetValue())

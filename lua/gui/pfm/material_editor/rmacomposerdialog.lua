@@ -110,7 +110,7 @@ function gui.RMAComposerDialog:OnInitialize()
 				end
 
 				local samples = 20
-				self.m_aoJob = cycles.bake_ambient_occlusion(self.m_model,self.m_materialIndex,width,height,samples)
+				self.m_aoJob = unirender.bake_ambient_occlusion(self.m_model,self.m_materialIndex,width,height,samples)
 				if(self.m_aoJob == nil) then return end
 				self.m_aoJob:Start()
 				self:EnableThinking()

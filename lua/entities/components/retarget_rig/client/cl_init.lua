@@ -11,6 +11,11 @@ util.register_class("ents.RetargetRig",BaseEntityComponent)
 include("rig.lua")
 include("bone_remapper.lua")
 
+function ents.RetargetRig.apply_rig(entSrc,entDst)
+	local rigC = entDst:AddComponent(ents.COMPONENT_RETARGET_RIG)
+	rigC:RigToActor(entSrc)
+end
+
 function ents.RetargetRig:Initialize()
 	BaseEntityComponent.Initialize(self)
 
@@ -39,7 +44,7 @@ function ents.RetargetRig:RigToActor(actor)
 
 		local boneRemapper = ents.RetargetRig.BoneRemapper(mdlSrc:GetSkeleton(),mdlSrc:GetReferencePose(),mdlDst:GetSkeleton(),mdlDst:GetReferencePose())
 		local translationTable = boneRemapper:AutoRemap()
-		rig:SetTranslationTable(translationTable)
+		rig:SetDstToSrcTranslationTable(translationTable)
 		newRig = true
 	end
 	self:SetRig(rig,animSrc)
@@ -92,13 +97,34 @@ function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,b
 	end
 end
 
+function ents.RetargetRig:ApplyFlexControllers()
+	local flexCDst = self:GetEntity():GetComponent(ents.COMPONENT_FLEX)
+	local flexCSrc = self.m_animSrc:GetEntity():GetComponent(ents.COMPONENT_FLEX)
+	if(flexCSrc == nil or flexCDst == nil) then return end
+	local rig = self:GetRig()
+	local translationTable = rig:GetFlexControllerTranslationTable()
+	local accTable = {}
+	for flexCIdSrc,mappings in pairs(translationTable) do
+		local val = flexCSrc:GetFlexController(flexCIdSrc)
+		for flexCIdDst,data in pairs(mappings) do
+			local srcVal = math.clamp(val,data.min_source,data.max_source)
+			local f = srcVal /(data.max_source -data.min_source)
+			local dstVal = data.min_target +f *(data.max_target -data.min_target)
+			dstVal = dstVal +(accTable[flexCIdDst] or 0.0)
+			flexCDst:SetFlexController(flexCIdDst,dstVal,0.0,false)
+			accTable[flexCIdDst] = dstVal
+		end
+	end
+end
+
 function ents.RetargetRig:ApplyRig()
 	local animSrc = self:GetEntity():GetAnimatedComponent() -- TODO: Flip these names
 	local animDst = self.m_animSrc
 	local rig = self:GetRig()
 	if(rig == nil or util.is_valid(animSrc) == false or util.is_valid(animDst) == false) then return end
 
-	local translationTable = rig:GetTranslationTable()
+	animDst:UpdateEffectiveBoneTransforms() -- Make sure the target entity's bone transforms have been updated
+	local translationTable = rig:GetDstToSrcTranslationTable()
 	--local rigPoseTransforms = rig:GetRigPoseTransforms()
 	local bindPoseTransforms = rig:GetBindPoseTransforms()
 	local origBindPose = self:GetEntity():GetModel():GetReferencePose()
@@ -122,6 +148,8 @@ function ents.RetargetRig:ApplyRig()
 		tmpPoses[boneId] = retargetPoses[boneId]:Copy()
 	end
 	self:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,bindPose,translationTable,bindPoseTransforms,tmpPoses,retargetPoses)
+
+	self:ApplyFlexControllers()
 
 	return util.EVENT_REPLY_HANDLED
 end

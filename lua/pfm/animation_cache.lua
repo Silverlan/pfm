@@ -7,6 +7,7 @@
 ]]
 
 util.register_class("pfm.SceneAnimationCache")
+pfm.SceneAnimationCache.FORMAT_VERSION = 2
 function pfm.SceneAnimationCache:__init(session)
 	self.m_session = session
 	self.m_track = session:GetFilmTrack()
@@ -62,14 +63,7 @@ function pfm.SceneAnimationCache:AddFlexAnimation(filmClip,actor)
 	local modelC = actor:FindComponent("pfm_model")
 	local mdl = (modelC ~= nil) and modelC:GetModel() or nil
 	if(mdl == nil) then return end
-	local flexControllerList = {}
-	for _,name in ipairs(modelC:GetFlexControllerNames():GetTable()) do
-		local fcId = mdl:LookupFlexController(name:GetValue())
-		table.insert(flexControllerList,fcId)
-	end
 	local flexAnim = mdl:AddFlexAnimation(self:GetAnimationName(filmClip,actor))
-	flexAnim:SetFlexControllerIds(flexControllerList)
-
 	local settings = self.m_session:GetSettings()
 	local renderSettings = settings:GetRenderSettings()
 	local frameRate = renderSettings:GetFrameRate()
@@ -129,16 +123,18 @@ function pfm.SceneAnimationCache:UpdateCache(frameIndex)
 			end
 			local flexAnim = cache[animName]
 			if(flexAnim ~= nil and flexAnim.flexAnimation ~= nil) then
-				local numFrames = flexAnim.flexAnimation:GetFrameCount()
-				if(frameIndex >= numFrames) then
-					for i=numFrames,frameIndex do
-						flexAnim.flexAnimation:AddFrame()
-					end
-				end
-
-				local frame = flexAnim.flexAnimation:GetFrame(frameIndex)
 				for i,weight in ipairs(modelC:GetFlexWeights():GetTable()) do
-					frame:SetFlexControllerValue(i -1,weight:GetValue())
+					weight = weight:GetValue()
+					if(weight > 0) then
+						local name = modelC:GetFlexControllerNames():Get(i)
+						if(name ~= nil) then
+							name = name:GetValue()
+							local flexControllerId = mdl:LookupFlexController(name)
+							if(flexControllerId ~= -1) then
+								flexAnim.flexAnimation:SetFlexControllerValue(frameIndex,flexControllerId,weight)
+							end
+						end
+					end
 				end
 			end
 			--
@@ -148,7 +144,7 @@ end
 
 function pfm.SceneAnimationCache:SaveToBinary(ds)
 	ds:WriteString("PFA",false)
-	ds:WriteUInt32(2) -- Version
+	ds:WriteUInt32(pfm.SceneAnimationCache.FORMAT_VERSION) -- Version
 	local mdlAnims = self.m_mdlAnimCache
 	local numModels = 0
 	for mdlName,_ in pairs(mdlAnims) do numModels = numModels +1 end
@@ -191,7 +187,7 @@ function pfm.SceneAnimationCache:LoadFromBinary(ds)
 	local header = ds:ReadString(3)
 	if(header ~= "PFA") then return end
 	local version = ds:ReadUInt32()
-	if(version < 0 or version > 1) then return end
+	if(version < 0 or version > pfm.SceneAnimationCache.FORMAT_VERSION) then return end
 	self.m_mdlAnimCache = {}
 	local numModels = ds:ReadUInt32()
 	for i=1,numModels do

@@ -84,10 +84,14 @@ function pfm.ProjectManager:SaveProject(fileName)
 	self:SaveAnimationCache(fileName)
 	return success
 end
-function pfm.ProjectManager:GetProjectFileName() return self.m_projectFileName end
+function pfm.ProjectManager:GetProjectFileName(projectFileName)
+	projectFileName = projectFileName or self.m_projectFileName
+	if(projectFileName == nil) then return end
+	return file.to_relative_path(projectFileName)
+end
 function pfm.ProjectManager:GetProjectPath() return util.Path.CreatePath(self.m_projectFileName):GetPath() end
 function pfm.ProjectManager:GetAnimationCacheFilePath(projectFileName)
-	return "cache/pfm/animation_cache/" .. util.get_string_hash(projectFileName or self.m_projectFileName) .. ".pfa"
+	return "cache/pfm/animation_cache/" .. util.get_string_hash(self:GetProjectFileName(projectFileName)) .. ".pfa"
 end
 function pfm.ProjectManager:IsAnimationCacheValid() return file.exists(self:GetAnimationCacheFilePath()) end
 function pfm.ProjectManager:SaveAnimationCache(projectFileName)
@@ -96,7 +100,7 @@ function pfm.ProjectManager:SaveAnimationCache(projectFileName)
 	file.create_path(file.get_file_path(cacheFileName))
 	local f = file.open(cacheFileName,bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
 	if(f == nil) then return end
-	pfm.log("Saving animation cache '" .. cacheFileName .. "'...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+	pfm.log("Saving animation cache '" .. cacheFileName .. "' (for project '" .. self:GetProjectFileName(projectFileName) .. "')...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 	self.m_animationCache:SaveToBinary(f)
 	f:Close()
 end
@@ -105,13 +109,15 @@ function pfm.ProjectManager:ClearAnimationCache(projectFileName)
 	file.delete(self:GetAnimationCacheFilePath())
 end
 function pfm.ProjectManager:LoadAnimationCache(projectFileName)
+	if(self.m_animationCacheLoaded) then return end
+	self.m_animationCacheLoaded = true
 	local cacheFileName = self:GetAnimationCacheFilePath(projectFileName)
 	local f = file.open(cacheFileName,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
 	if(f == nil) then
-		pfm.log("No animation cache file found for project '" .. projectFileName .. "'! Playback may be very slow!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		pfm.log("No animation cache file found for project '" .. self:GetProjectFileName(projectFileName) .. "'! Playback may be very slow!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
-	pfm.log("Loading animation cache '" .. cacheFileName .. "...",pfm.LOG_CATEGORY_PFM)
+	pfm.log("Loading animation cache '" .. cacheFileName .. "' (for project '" .. self:GetProjectFileName(projectFileName) .. "')...",pfm.LOG_CATEGORY_PFM)
 	self.m_animationCache:LoadFromBinary(f)
 	f:Close()
 end
@@ -129,6 +135,7 @@ function pfm.ProjectManager:CloseProject()
 	self.m_performanceCache:Clear()
 	if(util.is_valid(self.m_cbPlayOffset)) then self.m_cbPlayOffset:Remove() end
 	self.m_animationCache = nil
+	self.m_animationCacheLoaded = false
 	collectgarbage()
 end
 function pfm.ProjectManager:ImportSFMProject(projectFilePath)
@@ -139,7 +146,7 @@ function pfm.ProjectManager:ImportSFMProject(projectFilePath)
 		pfm.log("Unable to convert SFM project '" .. projectFilePath .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 		return false
 	end
-	self.m_projectFileName = file.remove_file_extension(projectFilePath) .. ".pfm"
+	self.m_projectFileName = "projects/" .. file.remove_file_extension(projectFilePath) .. ".pfm"
 	self:ClearAnimationCache()
 	local session = pfmScene:GetSessions()[1]
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end

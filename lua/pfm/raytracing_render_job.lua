@@ -8,7 +8,7 @@
 
 include("/util/class_property.lua")
 include("/shaders/pfm/pfm_calc_image_luminance.lua")
-include("cycles.lua")
+include("unirender.lua")
 
 pfm = pfm or {}
 
@@ -44,6 +44,7 @@ pfm.RaytracingRenderJob.Settings.DENOISE_MODE_FAST = 1
 pfm.RaytracingRenderJob.Settings.DENOISE_MODE_DETAILED = 2
 
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderMode")
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderEngine","cycles")
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"samples",80.0)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"sky","")
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"skyStrength",1.0)
@@ -116,6 +117,7 @@ end
 function pfm.RaytracingRenderJob.Settings:Copy()
 	local cpy = pfm.RaytracingRenderJob.Settings()
 	cpy:SetRenderMode(self:GetRenderMode())
+	cpy:SetRenderEngine(self:GetRenderEngine())
 	cpy:SetSamples(self:GetSamples())
 	cpy:SetSky(self:GetSky())
 	cpy:SetSkyStrength(self:GetSkyStrength())
@@ -258,7 +260,7 @@ function pfm.RaytracingRenderJob:Update()
 		successful = self.m_raytracingJob:IsSuccessful()
 		if(successful) then
 			local imgBuffer = self.m_raytracingJob:GetResult()
-			--local result,err = cycles.apply_color_transform(imgBuffer)
+			--local result,err = unirender.apply_color_transform(imgBuffer)
 			--if(result == false) then console.print_warning(err) end
 			table.insert(self.m_imageBuffers,imgBuffer)
 
@@ -309,7 +311,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 
 	self.m_renderStartTime = time.time_since_epoch()
 	local renderSettings = self.m_settings
-	local createInfo = cycles.Scene.CreateInfo()
+	local createInfo = unirender.Scene.CreateInfo()
 	createInfo.denoiseMode = renderSettings:GetDenoiseMode()
 	createInfo.hdrOutput = renderSettings:GetHDROutput()
 	createInfo.deviceType = renderSettings:GetDeviceType()
@@ -342,16 +344,16 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		h = w
 	end
 
-	local scene = cycles.create_scene(renderSettings:GetRenderMode(),createInfo)
+	local scene = unirender.create_scene(renderSettings:GetRenderMode(),createInfo)
 	local pos = cam:GetEntity():GetPos()
 	local rot = cam:GetEntity():GetRotation()
 	local nearZ = cam:GetNearZ()
 	local farZ = cam:GetFarZ()
 	local fov = cam:GetFOV()
 	local vp = cam:GetProjectionMatrix() *cam:GetViewMatrix()
-	local sceneFlags = cycles.Scene.SCENE_FLAG_NONE
-	if(renderSettings:IsCameraFrustumCullingEnabled()) then sceneFlags = bit.bor(sceneFlags,cycles.Scene.SCENE_FLAG_BIT_CULL_OBJECTS_OUTSIDE_CAMERA_FRUSTUM) end
-	if(renderSettings:IsPVSCullingEnabled()) then sceneFlags = bit.bor(sceneFlags,cycles.Scene.SCENE_FLAG_BIT_CULL_OBJECTS_OUTSIDE_PVS) end
+	local sceneFlags = unirender.Scene.SCENE_FLAG_NONE
+	if(renderSettings:IsCameraFrustumCullingEnabled()) then sceneFlags = bit.bor(sceneFlags,unirender.Scene.SCENE_FLAG_BIT_CULL_OBJECTS_OUTSIDE_CAMERA_FRUSTUM) end
+	if(renderSettings:IsPVSCullingEnabled()) then sceneFlags = bit.bor(sceneFlags,unirender.Scene.SCENE_FLAG_BIT_CULL_OBJECTS_OUTSIDE_PVS) end
 	
 	-- Note: Settings have to be initialized before setting up the game scene
 	scene:SetSkyAngles(EulerAngles(0,renderSettings:GetSkyYaw(),0))
@@ -366,20 +368,20 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 
 	local camType = renderSettings:GetCamType()
 	local panoramaTypeToClType = {
-		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR] = cycles.Camera.PANORAMA_TYPE_EQUIRECTANGULAR,
-		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUIDISTANT] = cycles.Camera.PANORAMA_TYPE_FISHEYE_EQUIDISTANT,
-		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID] = cycles.Camera.PANORAMA_TYPE_FISHEYE_EQUISOLID,
-		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL] = cycles.Camera.PANORAMA_TYPE_MIRRORBALL,
-		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP] = cycles.Camera.PANORAMA_TYPE_EQUIRECTANGULAR
+		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR] = unirender.Camera.PANORAMA_TYPE_EQUIRECTANGULAR,
+		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUIDISTANT] = unirender.Camera.PANORAMA_TYPE_FISHEYE_EQUIDISTANT,
+		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID] = unirender.Camera.PANORAMA_TYPE_FISHEYE_EQUISOLID,
+		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL] = unirender.Camera.PANORAMA_TYPE_MIRRORBALL,
+		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP] = unirender.Camera.PANORAMA_TYPE_EQUIRECTANGULAR
 	}
 	local camTypeToClType = {
-		[pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE] = cycles.Camera.TYPE_PERSPECTIVE,
-		[pfm.RaytracingRenderJob.Settings.CAM_TYPE_ORTHOGRAPHIC] = cycles.Camera.TYPE_ORTHOGRAPHIC,
-		[pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA] = cycles.Camera.TYPE_PANORAMA
+		[pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE] = unirender.Camera.TYPE_PERSPECTIVE,
+		[pfm.RaytracingRenderJob.Settings.CAM_TYPE_ORTHOGRAPHIC] = unirender.Camera.TYPE_ORTHOGRAPHIC,
+		[pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA] = unirender.Camera.TYPE_PANORAMA
 	}
 
 	local panoramaType = renderSettings:GetPanoramaType()
-	if(panoramaType == pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP) then camType = cycles.Camera.TYPE_PERSPECTIVE end
+	if(panoramaType == pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP) then camType = unirender.Camera.TYPE_PERSPECTIVE end
 
 	local clCam = scene:GetCamera()
 	clCam:SetCameraType(camTypeToClType[camType])
@@ -405,7 +407,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	end
 
 	if(g_staticGeometryCache == nil and renderSettings:GetRenderWorld()) then
-		g_staticGeometryCache = cycles.create_cache()
+		g_staticGeometryCache = unirender.create_cache()
 		g_staticGeometryCache:InitializeFromGameScene(self.m_gameScene,is_static_cache_entity)
 	end
 
@@ -473,7 +475,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 						col.a = 255
 						
 						local pos = pt:GetPosition()
-						local light = scene:AddLightSource(cycles.LightSource.TYPE_POINT,pos)
+						local light = scene:AddLightSource(unirender.LightSource.TYPE_POINT,pos)
 						light:SetColor(col)
 						local intensity = intensityFactor *math.pow(10.0 *(alpha ^2.0) *radius,1.0 /1.5) -- Decline growth for larger factors
 						-- print("Light: ",intensity,alpha,radius,intensityFactor)
@@ -495,7 +497,11 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	self.m_preStage = nil
 
 	scene:Finalize()
-	local renderer = cycles.create_renderer(scene,"cycles")
+	local renderer = unirender.create_renderer(scene,renderSettings:GetRenderEngine())
+	if(renderer == nil) then
+		pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
 	local job = renderer:StartRender()
 	job:Start()
 	self.m_rtScene = scene

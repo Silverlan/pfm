@@ -8,11 +8,11 @@
 
 include("pbr.lua")
 
-util.register_class("cycles.ToonShader",cycles.PBRShader)
-function cycles.ToonShader:__init()
-	cycles.PBRShader.__init(self)
+util.register_class("unirender.ToonShader",unirender.PBRShader)
+function unirender.ToonShader:__init()
+	unirender.PBRShader.__init(self)
 end
-function cycles.ToonShader:InitializeCombinedPass(desc,outputNode)
+function unirender.ToonShader:InitializeCombinedPass(desc,outputNode)
 	local mat = self:GetMaterial()
 	local albedoMap = mat:GetTextureInfo("albedo_map")
 	if(albedoMap == nil) then return end
@@ -28,26 +28,26 @@ function cycles.ToonShader:InitializeCombinedPass(desc,outputNode)
 
 
 	local albedoColor,alpha = self:AddAlbedoNode(desc,mat)
-	--[[local nAlbedoMap = desc:AddNode(cycles.NODE_ALBEDO_MAP)
-	nAlbedoMap:SetProperty(cycles.Node.albedo_map.IN_TEXTURE,texPath)--albedoMap:GetName())
-	nAlbedoMap:SetProperty(cycles.Node.albedo_map.IN_ALPHA_FACTOR,alphaFactor)
+	--[[local nAlbedoMap = desc:AddNode(unirender.NODE_ALBEDO_MAP)
+	nAlbedoMap:SetProperty(unirender.Node.albedo_map.IN_TEXTURE,texPath)--albedoMap:GetName())
+	nAlbedoMap:SetProperty(unirender.Node.albedo_map.IN_ALPHA_FACTOR,alphaFactor)
 	]]
-	--desc:Link(nAlbedoMap:GetOutputSocket(cycles.Node.albedo_map.OUT_COLOR) +Vector(0,0,0),outputNode:GetInputSocket(cycles.Node.output.IN_SURFACE))
-	--local rgb = desc:AddNode(cycles.NODE_COMBINE_RGB)
-	--desc:Link(cycles.Socket(0.0) +1.0,rgb:GetInputSocket(cycles.Node.combine_rgb.IN_R))
+	--desc:Link(nAlbedoMap:GetOutputSocket(unirender.Node.albedo_map.OUT_COLOR) +Vector(0,0,0),outputNode:GetInputSocket(unirender.Node.output.IN_SURFACE))
+	--local rgb = desc:AddNode(unirender.NODE_COMBINE_RGB)
+	--desc:Link(unirender.Socket(0.0) +1.0,rgb:GetInputSocket(unirender.Node.combine_rgb.IN_R))
 
-	--nAlbedoMap:GetPrimaryOutputSocket():Link(outputNode:GetInputSocket(cycles.Node.output.IN_SURFACE))
+	--nAlbedoMap:GetPrimaryOutputSocket():Link(outputNode:GetInputSocket(unirender.Node.output.IN_SURFACE))
 
-	--[[local nEqual = desc:AddNode(cycles.NODE_EQUAL)
-	nEqual:SetProperty(cycles.Node.equal.IN_VALUE1,0)
-	nEqual:SetProperty(cycles.Node.equal.IN_VALUE2,0)]]
+	--[[local nEqual = desc:AddNode(unirender.NODE_EQUAL)
+	nEqual:SetProperty(unirender.Node.equal.IN_VALUE1,0)
+	nEqual:SetProperty(unirender.Node.equal.IN_VALUE2,0)]]
 
-	--local test = desc:AddNode(cycles.NODE_GLASS_MATERIAL)
-	--test:GetPrimaryOutputSocket():Link(outputNode:GetInputSocket(cycles.Node.output.IN_SURFACE))
+	--local test = desc:AddNode(unirender.NODE_GLASS_MATERIAL)
+	--test:GetPrimaryOutputSocket():Link(outputNode:GetInputSocket(unirender.Node.output.IN_SURFACE))
 
-	local toon = desc:AddNode(cycles.NODE_TOON_BSDF)
-	albedoColor:Link(toon,cycles.Node.toon_bsdf.IN_COLOR)
-	toon:GetPrimaryOutputSocket():Link(outputNode,cycles.Node.output.IN_SURFACE)
+	local toon = desc:AddNode(unirender.NODE_TOON_BSDF)
+	albedoColor:Link(toon,unirender.Node.toon_bsdf.IN_COLOR)
+	toon:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_SURFACE)
 
 
 
@@ -61,13 +61,13 @@ function cycles.ToonShader:InitializeCombinedPass(desc,outputNode)
 	--n:SetProperty("value",1)
 	--desc:Link(c,"value",n,"value")
 
-	local rgb = desc:AddNode(cycles.NODE_COMBINE_RGB)
+	local rgb = desc:AddNode(unirender.NODE_COMBINE_RGB)
 	desc:Link(n,"value",rgb,"r")
 	desc:Link(n,"value",rgb,"g")
 
-	desc:Link(rgb,"image",outputNode,cycles.Node.output.IN_SURFACE)]]
+	desc:Link(rgb,"image",outputNode,unirender.Node.output.IN_SURFACE)]]
 
 	--local t = desc:AddNode("test")
 
 end
-cycles.register_shader("toon",cycles.ToonShader)
+unirender.register_shader("toon",unirender.ToonShader)
