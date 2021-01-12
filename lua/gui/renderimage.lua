@@ -164,6 +164,7 @@ function gui.RenderImage:SetDOFState(b)
 		samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 		local texStaging = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),samplerCreateInfo)
 		self.m_rtStaging = prosper.create_render_target(prosper.RenderTargetCreateInfo(),{texStaging},self.m_shaderDof:GetRenderPass())
+		self.m_rtStaging:SetDebugName("render_image_staging_rt")
 
 		self.m_dsTonemapping:SetBindingTexture(shader.PFMTonemapping.TEXTURE_BINDING_HDR_COLOR,texStaging)
 	end
@@ -181,27 +182,27 @@ function gui.RenderImage:RenderDOF(drawCmd)
 	local texStaging = self.m_rtStaging:GetTexture()
 	drawCmd:RecordImageBarrier(
 		self.m_texture:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier(
 		texStaging:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_WRITE_BIT
 	)
 	drawCmd:RecordBlitImage(self.m_texture:GetImage(),texStaging:GetImage(),prosper.BlitInfo())
 	drawCmd:RecordImageBarrier(
 		self.m_texture:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
 
 	drawCmd:RecordImageBarrier(
 		texStaging:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		prosper.ACCESS_TRANSFER_WRITE_BIT,bit.bor(prosper.ACCESS_COLOR_ATTACHMENT_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 	)
@@ -212,7 +213,7 @@ function gui.RenderImage:RenderDOF(drawCmd)
 	end
 	drawCmd:RecordImageBarrier(
 		texStaging:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		bit.bor(prosper.ACCESS_COLOR_ATTACHMENT_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT),prosper.ACCESS_SHADER_READ_BIT
 	)

@@ -90,7 +90,7 @@ function shader.PFMCalcImageLuminance:CalcImageLuminance(tex,useBlackAsTranspare
 	local bufResult = prosper.util.allocate_temporary_buffer(util.SIZEOF_FLOAT *4 +util.SIZEOF_VECTOR3)
 	drawCmd:RecordBufferBarrier(
 		bufResult,
-		prosper.SHADER_STAGE_COMPUTE_BIT,prosper.SHADER_STAGE_COMPUTE_BIT,
+		prosper.PIPELINE_STAGE_COMPUTE_SHADER_BIT,prosper.PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		bit.bor(prosper.ACCESS_SHADER_WRITE_BIT,prosper.ACCESS_HOST_READ_BIT),prosper.ACCESS_SHADER_WRITE_BIT
 	)
 	local dsData = self:CreateDescriptorSet(shader.PFMCalcImageLuminance.DESCRIPTOR_SET_DATA)
@@ -99,7 +99,7 @@ function shader.PFMCalcImageLuminance:CalcImageLuminance(tex,useBlackAsTranspare
 	self:Compute(drawCmd,dsData,tex:GetWidth(),tex:GetHeight(),useBlackAsTransparency)
 	drawCmd:RecordBufferBarrier(
 		bufResult,
-		prosper.SHADER_STAGE_COMPUTE_BIT,prosper.SHADER_STAGE_COMPUTE_BIT,
+		prosper.PIPELINE_STAGE_COMPUTE_SHADER_BIT,prosper.PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		prosper.ACCESS_SHADER_WRITE_BIT,prosper.ACCESS_HOST_READ_BIT
 	)
 	if(computeAndFlush) then

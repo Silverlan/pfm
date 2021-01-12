@@ -570,6 +570,7 @@ function gui.WIFilmmaker:OnThink()
 	local imgViewCreateInfo = prosper.ImageViewCreateInfo()
 	imgViewCreateInfo.swizzleAlpha = prosper.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
 	local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,prosper.SamplerCreateInfo())
+	tex:SetDebugName("pfm_render_result_tex")
 	if(self.m_renderResultWindow ~= nil) then self.m_renderResultWindow:SetTexture(tex) end
 	if(util.is_valid(self.m_raytracingProgressBar)) then self.m_raytracingProgressBar:SetVisible(false) end
 

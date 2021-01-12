@@ -105,17 +105,20 @@ function ents.PFMModel:OnEntitySpawn()
 	local globalFlexControllers = modelData:GetGlobalFlexControllers()
 	local flexNames = modelData:GetFlexControllerNames():GetTable()
 	for i,fc in ipairs(globalFlexControllers:GetTable()) do
-		local fcId = mdl:LookupFlexController(flexNames[i]:GetValue())
-		if(fcId ~= -1) then
-			local weight = fc:GetFlexWeightAttr()
-			animSetC:SetFlexController(fcId,weight:GetValue())
-			table.insert(self.m_listeners,weight:AddChangeListener(function(newValue)
-				if(animSetC:IsValid()) then
-					animSetC:SetFlexController(fcId,newValue)
-				end
-			end))
+		if(flexNames[i] == nil) then pfm.log("Missing flex controller name for clex controller " .. i .. " for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 		else
-			pfm.log("Unknown flex controller '" .. fc:GetName() .. "' for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+			local fcId = mdl:LookupFlexController(flexNames[i]:GetValue())
+			if(fcId ~= -1) then
+				local weight = fc:GetFlexWeightAttr()
+				animSetC:SetFlexController(fcId,weight:GetValue())
+				table.insert(self.m_listeners,weight:AddChangeListener(function(newValue)
+					if(animSetC:IsValid()) then
+						animSetC:SetFlexController(fcId,newValue)
+					end
+				end))
+			else
+				pfm.log("Unknown flex controller '" .. fc:GetName() .. "' for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+			end
 		end
 	end
 

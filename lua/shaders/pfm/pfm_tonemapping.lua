@@ -29,6 +29,14 @@ function shader.PFMTonemapping:__init()
 
 	self.m_dsPushConstants = util.DataStream(util.SIZEOF_MAT4 +util.SIZEOF_FLOAT *2 +util.SIZEOF_INT *2 +util.SIZEOF_VECTOR4 +util.SIZEOF_FLOAT *3 +util.SIZEOF_FLOAT *5)
 end
+function shader.PFMTonemapping:InitializeRenderPass(pipelineIdx)
+	local rpCreateInfo = prosper.RenderPassCreateInfo()
+	rpCreateInfo:AddAttachment(
+		prosper.FORMAT_R16G16B16A16_SFLOAT,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		prosper.ATTACHMENT_LOAD_OP_LOAD,prosper.ATTACHMENT_STORE_OP_STORE
+	)
+	return {prosper.create_render_pass(rpCreateInfo)}
+end
 function shader.PFMTonemapping:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
 	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX),{

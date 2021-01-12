@@ -114,6 +114,7 @@ function gui.VideoAssetIcon:ApplyAsset(path,importAsset)
 			if(imgBuf ~= nil) then
 				local img = prosper.create_image(imgBuf)
 				local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),prosper.SamplerCreateInfo())
+				tex:SetDebugName("video_asset_icon_tex")
 				self:SetTexture(tex)
 			end
 		end

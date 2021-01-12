@@ -41,6 +41,7 @@ function gui.RMAComposerDialog:OnThink()
 		local result = self.m_aoJob:GetResult()
 		local img = prosper.create_image(result)
 		local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),prosper.SamplerCreateInfo())
+		tex:SetDebugName("rma_composer_dialog_tex")
 		self.m_slotAo:SetTexture(tex)
 	end
 end

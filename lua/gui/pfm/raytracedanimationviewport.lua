@@ -149,24 +149,24 @@ function gui.PFMRaytracedAnimationViewport:InitializeHighDefImage()
 		local drawCmd = game.get_setup_command_buffer()
 		drawCmd:RecordImageBarrier(
 			texHdr:GetImage(),
-			prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 			prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_WRITE_BIT
 		)
 		drawCmd:RecordBufferBarrier(
 			buf,
-			prosper.SHADER_STAGE_ALL,prosper.SHADER_STAGE_ALL,
+			prosper.PIPELINE_STAGE_ALL_COMMANDS,prosper.PIPELINE_STAGE_ALL_COMMANDS,
 			prosper.ACCESS_MEMORY_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
 		)
 		drawCmd:RecordCopyBufferToImage(buf,texHdr:GetImage())
 		drawCmd:RecordBufferBarrier(
 			buf,
-			prosper.SHADER_STAGE_ALL,prosper.SHADER_STAGE_ALL,
+			prosper.PIPELINE_STAGE_ALL_COMMANDS,prosper.PIPELINE_STAGE_ALL_COMMANDS,
 			prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_MEMORY_WRITE_BIT
 		)
 		drawCmd:RecordImageBarrier(
 			texHdr:GetImage(),
-			prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 			prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			prosper.ACCESS_TRANSFER_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
 		)
@@ -179,14 +179,14 @@ function gui.PFMRaytracedAnimationViewport:InitializeHighDefImage()
 		local drawCmd = game.get_setup_command_buffer()
 		drawCmd:RecordImageBarrier(
 			texHdr:GetImage(),
-			prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 			prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_WRITE_BIT
 		)
 		drawCmd:RecordClearImage(texHdr:GetImage(),Color.Black)
 		drawCmd:RecordImageBarrier(
 			texHdr:GetImage(),
-			prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 			prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 			prosper.ACCESS_TRANSFER_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
 		)
@@ -333,26 +333,26 @@ function gui.PFMRaytracedAnimationViewport:RenderPragmaParticleSystems(tex,drawC
 	-- is effectively our background.
 	drawCmd:RecordImageBarrier(
 		tex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier( -- TODO: Confirm that this texture is in the transfer-src layout at this point in time
 		sceneTexHdr:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_TRANSFER_WRITE_BIT
 	)
 	drawCmd:RecordBlitImage(tex:GetImage(),sceneTexHdr:GetImage(),prosper.BlitInfo())
 	drawCmd:RecordImageBarrier(
 		sceneTexHdr:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		prosper.ACCESS_TRANSFER_WRITE_BIT,prosper.ACCESS_TRANSFER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier(
 		tex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
@@ -419,6 +419,7 @@ function gui.PFMRaytracedAnimationViewport:InitializeStagingTexture(w,h)
 	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),samplerCreateInfo)
+	tex:SetDebugName("raytraced_animation_viewport_staging_tex")
 	self.m_stagingTexture = tex
 
 	self.m_stagingRenderTarget = prosper.create_render_target(prosper.RenderTargetCreateInfo(),{tex},shader.Graphics.get_render_pass())

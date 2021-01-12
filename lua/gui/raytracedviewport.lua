@@ -51,6 +51,7 @@ function gui.RaytracedViewport:SetTextureFromImageBuffer(imgBuf)
 	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	self.m_tex:SetTexture(prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,samplerCreateInfo))
+	self.m_tex:SetDebugName("raytraced_viewport_tex")
 end
 function gui.RaytracedViewport:SaveImage(path,imgFormat,hdr)
 	hdr = hdr or false
@@ -74,14 +75,14 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat,hdr)
 	local drawCmd = game.get_setup_command_buffer()
 	drawCmd:RecordImageBarrier(
 		img,
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_READ_BIT
 	)
 	drawCmd:RecordCopyImageToBuffer(img,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,buf,prosper.BufferImageCopyInfo())
 	drawCmd:RecordImageBarrier(
 		img,
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
@@ -116,7 +117,7 @@ function gui.RaytracedViewport:ApplyToneMapping(toneMapping)
 	local exportImg = rt:GetTexture():GetImage()
 	drawCmd:RecordImageBarrier(
 		exportImg,
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,bit.bor(prosper.ACCESS_COLOR_ATTACHMENT_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 	)
@@ -129,7 +130,7 @@ function gui.RaytracedViewport:ApplyToneMapping(toneMapping)
 
 	drawCmd:RecordImageBarrier(
 		exportImg,
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		bit.bor(prosper.ACCESS_COLOR_ATTACHMENT_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT),prosper.ACCESS_SHADER_READ_BIT
 	)
@@ -156,6 +157,7 @@ function gui.RaytracedViewport:InitializeLDRRenderTarget(w,h)
 	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),samplerCreateInfo)
+	tex:SetDebugName("raytraced_viewport_ldr_tex")
 	return prosper.create_render_target(prosper.RenderTargetCreateInfo(),{tex},shader.Graphics.get_render_pass())
 end
 function gui.RaytracedViewport:SetUseElementSizeAsRenderResolution(b) self.m_useElementSizeAsRenderResolution = b end

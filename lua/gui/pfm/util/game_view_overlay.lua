@@ -35,6 +35,7 @@ function gui.RaytracedViewport:InitializeSceneTexture(w,h)
 	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	local texHdr = prosper.create_texture(imgHdr,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),samplerCreateInfo)
+	texHdr:SetDebugName("raytraced_viewport_scene_tex")
 	self.m_hdrTex = texHdr
 
 	self.m_tex:SetTexture(texHdr)
@@ -65,6 +66,7 @@ function gui.RaytracedViewport:InitializeDepthTexture(w,h,nearZ,farZ)
 	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	local texDepth = prosper.create_texture(imgDepth,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),samplerCreateInfo)
+	texDepth:SetDebugName("raytraced_viewport_depth_tex")
 	self.m_depthTex = texDepth
 	self.m_tex:SetDepthTexture(texDepth)
 end
@@ -79,14 +81,14 @@ function gui.RaytracedViewport:UpdateGameSceneTextures()
 	local depthTex = renderer:GetPostPrepassDepthTexture()
 	drawCmd:RecordImageBarrier(
 		depthTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		bit.bor(prosper.ACCESS_MEMORY_READ_BIT,prosper.ACCESS_MEMORY_WRITE_BIT),prosper.ACCESS_TRANSFER_READ_BIT
 	)
 	drawCmd:RecordBlitImage(depthTex:GetImage(),self.m_depthTex:GetImage(),prosper.BlitInfo())
 	drawCmd:RecordImageBarrier(
 		depthTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		prosper.ACCESS_TRANSFER_READ_BIT,bit.bor(prosper.ACCESS_MEMORY_READ_BIT,prosper.ACCESS_MEMORY_WRITE_BIT)
 	)
@@ -101,7 +103,7 @@ function gui.RaytracedViewport:RenderParticleSystemDepth(drawCmd)
 	-- particle depths here.
 	drawCmd:RecordImageBarrier(
 		self.m_depthTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,prosper.PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT,
 		prosper.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
 		bit.bor(prosper.ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,prosper.ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT),bit.bor(prosper.ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,prosper.ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT)
 	)
@@ -132,19 +134,19 @@ function util.ImagePostProcessor:ApplyDepthOfField()
 	-- Move them all to shader-read-only layout
 	drawCmd:RecordImageBarrier(
 		sceneHdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier(
 		sceneBloomTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier(
 		sceneGlowTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
@@ -153,7 +155,7 @@ function util.ImagePostProcessor:ApplyDepthOfField()
 	-- Move target image to color-attachment layout
 	drawCmd:RecordImageBarrier(
 		self.m_hdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT
 	)
@@ -170,7 +172,7 @@ function util.ImagePostProcessor:ApplyDepthOfField()
 	-- (Render pass has already moved target image to shader-read layout)
 	--[[drawCmd:RecordImageBarrier(
 		self.m_hdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)]]
@@ -179,19 +181,19 @@ function util.ImagePostProcessor:ApplyDepthOfField()
 	-- Move scene textures back to original layouts
 	drawCmd:RecordImageBarrier(
 		sceneHdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier(
 		sceneBloomTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier(
 		sceneGlowTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT
 	)
@@ -213,19 +215,19 @@ function util.ImagePostProcessor:ComposeSceneTextures(drawCmd,w,h,renderer,rtOut
 	-- Move them all to shader-read-only layout
 	drawCmd:RecordImageBarrier(
 		sceneHdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier(
 		sceneBloomTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier(
 		sceneGlowTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
@@ -234,7 +236,7 @@ function util.ImagePostProcessor:ComposeSceneTextures(drawCmd,w,h,renderer,rtOut
 	-- Move target image to color-attachment layout
 	drawCmd:RecordImageBarrier(
 		self.m_hdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT
 	)
@@ -251,7 +253,7 @@ function util.ImagePostProcessor:ComposeSceneTextures(drawCmd,w,h,renderer,rtOut
 	-- (Render pass has already moved target image to shader-read layout)
 	--[[drawCmd:RecordImageBarrier(
 		self.m_hdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)]]
@@ -260,19 +262,19 @@ function util.ImagePostProcessor:ComposeSceneTextures(drawCmd,w,h,renderer,rtOut
 	-- Move scene textures back to original layouts
 	drawCmd:RecordImageBarrier(
 		sceneHdrTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier(
 		sceneBloomTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
 	)
 	drawCmd:RecordImageBarrier(
 		sceneGlowTex:GetImage(),
-		prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_FRAGMENT_BIT,
+		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT
 	)

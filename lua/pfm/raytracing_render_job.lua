@@ -240,6 +240,7 @@ function pfm.RaytracingRenderJob:GenerateResult()
 	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 	self.m_renderResult = prosper.create_texture(img,prosper.TextureCreateInfo(),imgViewCreateInfo,samplerCreateInfo)
+	self.m_renderResult:SetDebugName("raytracing_render_job_result_tex")
 end
 function pfm.RaytracingRenderJob:Update()
 	if(self.m_tRenderStart ~= nil) then
@@ -260,6 +261,7 @@ function pfm.RaytracingRenderJob:Update()
 		successful = self.m_raytracingJob:IsSuccessful()
 		if(successful) then
 			local imgBuffer = self.m_raytracingJob:GetResult()
+			-- util.save_image(imgBuffer,"luxcorerender.hdr",util.IMAGE_FORMAT_HDR)
 			--local result,err = unirender.apply_color_transform(imgBuffer)
 			--if(result == false) then console.print_warning(err) end
 			table.insert(self.m_imageBuffers,imgBuffer)
