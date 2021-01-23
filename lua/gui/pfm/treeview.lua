@@ -176,6 +176,7 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 
 	if(self:IsCollapsed()) then self.m_childHBox:SetVisible(false) end
 end
+function gui.PFMTreeViewElement:GetChildContentsBox() return self.m_childHBox end
 function gui.PFMTreeViewElement:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_vBox)) then
 		self.m_vBox:SetWidth(w)
@@ -228,6 +229,7 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 		if(item.m_fPopulate) then item.m_fPopulate(item) end
 		if(util.is_valid(item.m_childHBox)) then item.m_childHBox:SetVisible(true) end
 		self:UpdateChildBoxBounds()
+		item:CallCallbacks("OnExpand")
 	end)
 	expandIcon:AddCallback("OnCollapse",function()
 		if(item:IsValid() == false) then return end
@@ -237,10 +239,11 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 			end
 		end
 		if(util.is_valid(item.m_childHBox)) then item.m_childHBox:SetVisible(false) end
+		item:CallCallbacks("OnCollapse")
 	end)
 	item:RemoveElementOnRemoval(expandIcon)
 	item.m_expandIcon = expandIcon
-	if(self.m_collapsed) then expandIcon:Collapse()
+	if(item.m_collapsed) then expandIcon:Collapse()
 	else expandIcon:Expand() end
 	return item.m_expandIcon
 end
@@ -286,6 +289,7 @@ function gui.PFMTreeViewElement:Expand()
 	self.m_collapsed = false
 	if(util.is_valid(self.m_expandIcon)) then self.m_expandIcon:Expand() end
 end
+function gui.PFMTreeViewElement:GetExpandIcon() return self.m_expandIcon end
 function gui.PFMTreeViewElement:Clear()
 	for _,item in ipairs(self.m_items) do
 		if(item:IsValid()) then item:Remove() end

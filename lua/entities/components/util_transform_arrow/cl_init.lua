@@ -102,13 +102,7 @@ function ents.UtilTransformArrowComponent:UpdateModel()
 	if(mdl == ent:GetModel()) then return end
 	ent:SetModel(mdl)
 end
-function ents.UtilTransformArrowComponent:GetReferenceAxis()
-	local axis = self:GetAxis()
-	if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then return axis end
-	if(axis == math.AXIS_X) then return math.AXIS_Z end
-	if(axis == math.AXIS_Z) then return math.AXIS_X end
-	return axis
-end
+function ents.UtilTransformArrowComponent:GetReferenceAxis() return self:GetAxis() end
 function ents.UtilTransformArrowComponent:GetCursorAxisAngle()
 	local transformC = self:GetBaseUtilTransformComponent()
 	if(transformC == nil) then return end
@@ -184,7 +178,7 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
 		local vAxis = Vector()
 		vAxis:Set(axis,1.0)
 		local newPos = self.m_moveStartTransformPos +vAxis *delta
-		print(self.m_moveStartCursorPos)
+		-- print(self.m_moveStartCursorPos)
 		transformC:SetAbsTransformPosition(newPos)
 
 		pfm.tag_render_scene_as_dirty()

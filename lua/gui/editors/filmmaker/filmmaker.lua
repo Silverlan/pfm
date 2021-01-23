@@ -456,7 +456,7 @@ function gui.WIFilmmaker:PackProject(fileName)
 	util.open_path_in_explorer(util.get_addon_path(),fileName)
 end
 function gui.WIFilmmaker:AddActor(actor,filmClip)
-	filmClip:GetActors():PushBack(actor)
+	filmClip:AddActor(actor)
 	self:UpdateActor(actor,filmClip)
 end
 function gui.WIFilmmaker:UpdateActor(actor,filmClip,reload)
@@ -819,11 +819,14 @@ function gui.WIFilmmaker:InitializeProjectUI()
 				end)
 				icon:AddCallback("OnDragDropped",function(elIcon,elDrop)
 					if(util.is_valid(entGhost) == false) then return end
+					local filmClip = self:GetActiveFilmClip()
+					if(filmClip == nil) then return end
 					local filmmaker = tool.get_filmmaker()
 					local actor = filmmaker:CreateNewActor()
 					if(actor == nil) then return end
 					local mdlC = filmmaker:CreateNewActorComponent(actor,"PFMModel")
 					if(mdlC == nil) then return end
+					self:AddActor(actor,filmClip)
 					local path = util.Path(elIcon:GetAsset())
 					path:PopFront()
 					mdlC:SetModelName(path:GetString())

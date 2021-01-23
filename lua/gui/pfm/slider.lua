@@ -106,6 +106,7 @@ function gui.PFMSlider:SetRange(min,max,optDefault)
 	self:SetRightRange(min,max,optDefault)
 	self:UpdateStepSize()
 end
+function gui.PFMSlider:GetRange() local bar = self:GetLeftSliderBar() if(util.is_valid(bar)) then return bar:GetMin(),bar:GetMax(),bar:GetDefault() end return 0.0,0.0,0.0 end
 function gui.PFMSlider:SetDefault(default)
 	self:GetLeftSliderBar():SetDefault(default)
 	self:GetRightSliderBar():SetDefault(default)

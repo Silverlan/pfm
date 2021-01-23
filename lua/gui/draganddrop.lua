@@ -55,8 +55,6 @@ function gui.DragGhost:SetTargetElement(el,cursorOffset,catName)
 	self.m_cursorOffset = cursorOffset
 	self.m_catName = catName
 
-	self.m_drawInfo = gui.Element.DrawInfo()
-
 	self:SetSize(el:GetSize())
 end
 function gui.DragGhost:GetTargetElement() return self.m_targetElement end
@@ -70,6 +68,7 @@ function gui.DragGhost:OnDraw()
 	if(util.is_valid(self.m_targetElement) == false) then return end
 	local resolution = engine.get_window_resolution()
 	local offset = self:GetAbsolutePos() -self.m_cursorOffset
+	self.m_drawInfo = gui.Element.DrawInfo()
 	self.m_drawInfo.offset = Vector2i(offset.x,offset.y)
 	self.m_drawInfo.size = resolution
 	self.m_drawInfo.color = self:GetColor()

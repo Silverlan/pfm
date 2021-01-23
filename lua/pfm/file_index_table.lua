@@ -23,10 +23,13 @@ function pfm.FileIndexTable.Indexer:__init(fit,extensions,externalExtensions)
 	for _,ext in ipairs(externalExtensions) do
 		self.m_externalExtensions[ext] = true
 	end
+
+	self.m_allExtensions = {}
+	for ext,_ in pairs(self.m_extensions) do self.m_allExtensions[ext] = true end
+	for ext,_ in pairs(self.m_externalExtensions) do self.m_allExtensions[ext] = true end
 end
 function pfm.FileIndexTable.Indexer:GetRootPath() return self.m_fit:GetRootPath() end
 function pfm.FileIndexTable.Indexer:Start()
-	self:CollectFiles(self.m_fit:GetRootPath())
 	self.m_cbThink = game.add_callback("Think",function()
 		if(self:RunBatch()) then
 			self:Stop()
@@ -47,14 +50,21 @@ function pfm.FileIndexTable.Indexer:RunBatch()
 	end
 	return #self.m_queue == 0
 end
-function pfm.FileIndexTable.Indexer:CollectSubFiles(path,tFiles,tDirs,extensions)
+function pfm.FileIndexTable.Indexer:CollectSubFiles(path,tFiles,tDirs,extensions,isAddonPath)
 	for _,f in ipairs(tFiles) do
 		local ext = file.get_file_extension(f)
 		if(ext ~= nil and extensions[ext] == true) then
 			f = file.remove_file_extension(f)
 			if(self.m_traversed[path .. f] == nil) then
 				self.m_traversed[path .. f] = true
-				self.m_fit:AddFile(path .. f)
+				local relPath = path
+				if(isAddonPath) then
+					relPath = util.Path.CreatePath(path)
+					relPath:PopFront()
+					relPath:PopFront()
+					relPath = relPath:GetString()
+				end
+				self.m_fit:AddFile(relPath .. f)
 			end
 		end
 	end
@@ -67,9 +77,14 @@ function pfm.FileIndexTable.Indexer:CollectFiles(path)
 	self.m_traversed[path] = true
 
 	local tFiles,tDirs = file.find(path .. "*")
-	self:CollectSubFiles(path,tFiles,tDirs,self.m_extensions)
+	local isAddonPath = (path:sub(0,7) == "addons/")
+	self:CollectSubFiles(path,tFiles,tDirs,isAddonPath and self.m_allExtensions or self.m_extensions,isAddonPath)
+	if(isAddonPath) then return end
 	tFiles,tDirs = file.find_external_game_asset_files(path .. "*")
 	self:CollectSubFiles(path,tFiles,tDirs,self.m_externalExtensions)
+end
+function pfm.FileIndexTable.Indexer:AddToQueue(path)
+	table.insert(self.m_queue,path)
 end
 
 
@@ -152,6 +167,16 @@ end
 function pfm.FileIndexTable:OnIndexerComplete()
 	self:SaveToCache()
 end
+function pfm.FileIndexTable:InitializeIndexer()
+	if(self.m_indexer ~= nil) then return self.m_indexer end
+	self.m_indexer = pfm.FileIndexTable.Indexer(self,self.m_extensions,self.m_externalExtensions)
+	return self.m_indexer
+end
+function pfm.FileIndexTable:ReloadPath(path)
+	local indexer = self:InitializeIndexer()
+	indexer:AddToQueue(path)
+	indexer:Start()
+end
 function pfm.FileIndexTable:LoadOrGenerate()
 	if(self.m_initialized) then return end
 	self.m_initialized = true
@@ -160,7 +185,5 @@ function pfm.FileIndexTable:LoadOrGenerate()
 	self:Generate()
 end
 function pfm.FileIndexTable:Generate()
-	if(self.m_indexer ~= nil) then return end
-	self.m_indexer = pfm.FileIndexTable.Indexer(self,self.m_extensions,self.m_externalExtensions)
-	self.m_indexer:Start()
+	self:ReloadPath(self:GetRootPath())
 end

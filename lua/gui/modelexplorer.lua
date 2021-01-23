@@ -16,7 +16,9 @@ function gui.ModelExplorer:OnInitialize()
 	gui.AssetExplorer.OnInitialize(self)
 
 	self:SetAssetType(asset.TYPE_MODEL)
-	self:SetFileExtensions(asset.MODEL_FILE_EXTENSION,{"mdl","vmdl_c","nif"})
+	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
+	table.insert(extensions,1,asset.MODEL_FILE_EXTENSION)
+	self:SetFileExtensions(extensions,asset.get_supported_import_file_extensions(asset.TYPE_MODEL))
 end
 function gui.ModelExplorer:PopulateContextMenu(pContext,tSelectedFiles,tExternalFiles)
 	self:CallCallbacks("PopulateContextMenu",pContext,tSelectedFiles,tExternalFiles)

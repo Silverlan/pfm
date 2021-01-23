@@ -28,7 +28,7 @@ function gui.PFMModelCatalog:OnInitialize()
 	self.m_contents:SetFixedSize(true)
 	self.m_contents:SetAutoFillContents(true)
 
-	local fit = pfm.FileIndexTable("models","models/",{"wmd"},{"mdl","vmdl_c","nif"})
+	local fit = pfm.FileIndexTable("models","models/",{asset.MODEL_FILE_EXTENSION},asset.get_supported_import_file_extensions(asset.TYPE_MODEL))
 	self.m_fit = fit
 
 	self.m_teLocation = gui.create("WITextEntry",self.m_contents,0,0,self:GetWidth(),24)
@@ -53,10 +53,12 @@ function gui.PFMModelCatalog:OnInitialize()
 	end)
 	self.m_teFilter:Wrap("WIEditableEntry"):SetText(locale.get_text("filter"))
 
+	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
+	table.insert(extensions,asset.MODEL_FILE_EXTENSION)
 	local explorer = gui.create("WIModelExplorer",scrollContainer,0,0,self:GetWidth(),self:GetHeight())
 	explorer:SetAutoAlignToParent(true,false)
 	explorer:SetRootPath("models")
-	explorer:SetExtensions({"wmd"})
+	explorer:SetExtensions(extensions)
 	explorer:AddCallback("OnPathChanged",function(explorer,path)
 		self.m_teLocation:SetText(path)
 	end)
@@ -107,6 +109,7 @@ function gui.PFMModelCatalog:GetExplorer() return self.m_explorer end
 function gui.PFMModelCatalog:OnThink()
 	-- Lazy initialization
 	self.m_fit:LoadOrGenerate()
+	self.m_fit:ReloadPath("addons/imported/models/")
 	self.m_explorer:Update()
 
 	self:DisableThinking()

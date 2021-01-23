@@ -47,7 +47,7 @@ function gui.AssetExplorer:OnInitialize()
 		local tFilesExtUnique = {}
 		for _,f in ipairs(tFiles) do
 			local ext = file.get_file_extension(f)
-			if(ext == self.m_extension) then
+			if(self.m_extensionMap[ext]) then
 				-- f = file.remove_file_extension(f) .. "." .. self.m_extension
 				tFilesExtUnique[f] = true
 			end
@@ -57,7 +57,7 @@ function gui.AssetExplorer:OnInitialize()
 
 		local function add_files(tFiles)
 			for _,f in ipairs(tFiles) do
-				f = file.remove_file_extension(f) .. "." .. self.m_extension
+				f = file.remove_file_extension(f) .. "." .. self.m_extensions[1]
 				tFilesExtUnique[f] = true
 			end
 		end
@@ -89,9 +89,13 @@ function gui.AssetExplorer:OnInitialize()
 end
 function gui.AssetExplorer:SetAssetType(type) self.m_assetType = type end
 function gui.AssetExplorer:GetAssetType() return self.m_assetType end
-function gui.AssetExplorer:SetFileExtensions(extension,extExtensions)
-	self.m_extension = extension
+function gui.AssetExplorer:SetFileExtensions(extensions,extExtensions)
+	if(type(extensions) ~= "table") then extensions = {extensions} end
+	self.m_extensions = extensions
 	self.m_extExtensions = extExtensions
+
+	self.m_extensionMap = {}
+	for _,ext in ipairs(extensions) do self.m_extensionMap[ext] = true end
 end
 function gui.AssetExplorer:AddToFavorites(mdl)
 	self.m_favorites[mdl] = true
@@ -246,13 +250,13 @@ function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
 				local assetPath = tSelectedFiles[1]:GetAsset()
 				pContext:AddItem(locale.get_text("pfm_copy_path"),function()
 					local path = file.remove_file_extension(assetPath)
-					util.set_clipboard_string(path .. "." .. self.m_extension)
+					util.set_clipboard_string(path .. "." .. self.m_extensions[1])
 				end)
 
 				local path = tSelectedFiles[1]:GetRelativeAsset()
 				if(asset.exists(path,self:GetAssetType())) then
 					pContext:AddItem(locale.get_text("pfm_open_in_explorer"),function()
-						util.open_path_in_explorer(file.get_file_path(assetPath),file.get_file_name(assetPath) .. "." .. self.m_extension)
+						util.open_path_in_explorer(file.get_file_path(assetPath),file.get_file_name(assetPath) .. "." .. self.m_extensions[1])
 					end)
 
 					if(self:GetAssetType() == asset.TYPE_MODEL) then
@@ -319,7 +323,7 @@ function gui.AssetExplorer:ListFiles()
 	for _,d in ipairs(tDirectories) do
 		self:AddAsset(d,true)
 	end
-	table.sort(tFiles)
+	table.sort(tFiles,function(a,b) return a:lower() < b:lower() end)
 	for _,f in ipairs(tFiles) do
 		self:AddAsset(f,false)
 	end

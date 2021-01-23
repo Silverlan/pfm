@@ -167,7 +167,9 @@ console.register_command("util_export_asset",function(pl,...)
 	end
 
 	if(mdlName ~= nil) then
-		local models = get_asset_list(mdlName,asset.TYPE_MODEL,{"wmd","mdl","vmdl_c","nif"},recursive)
+		local formats = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
+		table.insert(formats,"wmd")
+		local models = get_asset_list(mdlName,asset.TYPE_MODEL,formats,recursive)
 		for _,mdlName in ipairs(models) do
 			local mdl = game.load_model(mdlName)
 			if(mdl == nil) then

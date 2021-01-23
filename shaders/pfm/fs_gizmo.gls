@@ -5,6 +5,7 @@
 
 #define DEBUG_MODE DEBUG_MODE_NONE
 
+#include "/world/pbr/fs_config.gls"
 #include "/world/pbr/pbr.gls"
 
 void main()
@@ -15,5 +16,6 @@ void main()
 	fs_color.r *= colorMod.r;
 	fs_color.g *= colorMod.g;
 	fs_color.b *= colorMod.b;
-	extract_bright_color(fs_color);
+	if(CSPEC_BLOOM_OUTPUT_ENABLED == 1)
+		extract_bright_color(fs_color);
 }
