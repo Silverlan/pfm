@@ -28,6 +28,8 @@ function ents.PFMModel:OnRemove()
 		if(cb:IsValid()) then cb:Remove() end
 	end
 end
+function ents.PFMModel:SetAnimationFrozen(frozen) self.m_animFrozen = frozen end
+function ents.PFMModel:IsAnimationFrozen() return self.m_animFrozen or false end
 function ents.PFMModel:OnEntitySpawn()
 	local modelData = self:GetModelData()
 	local ent = self:GetEntity()

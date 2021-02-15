@@ -18,8 +18,7 @@ function ents.UtilTransformComponent:Initialize()
 		self.m_rotationAxisEnabled[math.AXIS_Z] = true
 
 		self.m_arrows = {}
-		self:AddEntityComponent(ents.COMPONENT_LOGIC)
-		self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")
+		self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 
 		self:GetTranslationEnabledProperty():AddCallback(function()
 			if(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_TRANSLATION] == nil) then return end

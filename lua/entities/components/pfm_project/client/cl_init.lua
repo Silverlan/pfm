@@ -124,10 +124,11 @@ function ents.PFMProject:SetOffset(offset,gameViewFlags)
 	if(filmClip == nil) then return end
 	-- TODO: Ensure that the entity actually belongs to this project
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_MODEL)}) do
+		local mdlC = ent:GetComponent(ents.COMPONENT_PFM_MODEL)
 		local mdl = ent:GetModel()
 		local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-		if(mdl ~= nil and animC ~= nil and actorC ~= nil) then
+		if(mdl ~= nil and animC ~= nil and actorC ~= nil and mdlC:IsAnimationFrozen() == false) then
 			local animName = animCache:GetAnimationName(filmClip,actorC:GetActorData())
 			
 			animC:PlayAnimation(animName)

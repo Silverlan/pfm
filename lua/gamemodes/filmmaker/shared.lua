@@ -6,13 +6,22 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("game.Filmmaker",game.Generic)
+util.register_class("ents.GmPfm",BaseEntityComponent)
+local Component = ents.GmPfm
 
-function game.Filmmaker:__init()
-	game.Generic.__init(self)
+function Component:__init()
+	BaseEntityComponent.__init(self)
 end
 
-function game.Filmmaker:InitializeDefaultPlayerDimensions(pl)
+function Component:Initialize()
+	BaseEntityComponent.Initialize(self)
+	
+	self:AddEntityComponent("gm_generic")
+	if(CLIENT) then self:BindEvent(ents.GamemodeComponent.EVENT_ON_GAME_READY,"OpenPfm") end
+end
+
+function Component:InitializeDefaultPlayerDimensions(pl)
+	-- TODO
 	pl:SetStandHeight(72.0)
 	pl:SetStandEyeLevel(64.0)
 	pl:SetCrouchHeight(36.0)
@@ -25,7 +34,8 @@ function game.Filmmaker:InitializeDefaultPlayerDimensions(pl)
 	if(charComponent ~= nil) then charComponent:SetJumpPower(240.0) end
 end
 
-function game.Filmmaker:InitializePlayerModel(pl)
+function Component:InitializePlayerModel(pl)
+	-- TODO
 	local ent = pl:GetEntity()
 	game.load_model("player/scout.wmd") -- Make sure the model is loaded so we can use the activity names here
 	local activityTranslation = {
@@ -66,3 +76,4 @@ function game.Filmmaker:InitializePlayerModel(pl)
 	if(mdlComponent ~= nil) then mdlComponent:SetModel("player/scout.wmd") end
 	pl:SetObserverMode(ents.PlayerComponent.OBSERVERMODE_THIRDPERSON)
 end
+ents.COMPONENT_GM_PFM = ents.register_component("gm_pfm",Component)

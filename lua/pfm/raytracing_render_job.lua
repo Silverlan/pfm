@@ -35,6 +35,30 @@ pfm.RaytracingRenderJob.Settings.RENDER_MODE_BAKE_DIFFUSE_LIGHTING = 3
 pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALBEDO = 4
 pfm.RaytracingRenderJob.Settings.RENDER_MODE_NORMALS = 5
 pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH = 6
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALPHA = 7
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_GEOMETRY_NORMAL = 8
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_SHADING_NORMAL = 9
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE = 10
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE_REFLECT = 11
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE_TRANSMIT = 12
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY = 13
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY_REFLECT = 14
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY_TRANSMIT = 15
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_EMISSION = 16
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE = 17
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE_REFLECT = 18
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE_TRANSMIT = 19
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY = 20
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY_REFLECT = 21
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY_TRANSMIT = 22
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR = 23
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR_REFLECT = 24
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR_TRANSMIT = 25
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_UV = 26
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_IRRADIANCE = 27
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_NOISE = 28
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_CAUSTIC = 29
+pfm.RaytracingRenderJob.Settings.RENDER_MODE_COUNT = 30
 
 pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU = 0
 pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU = 1
@@ -57,6 +81,9 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"preStageOnly",fal
 	getter = "IsPreStageOnly"
 })
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"denoiseMode",pfm.RaytracingRenderJob.Settings.DENOISE_MODE_DETAILED)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"transparentSky",false,{
+	getter = "IsSkyTransparent",
+})
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"hdrOutput",false,{
 	getter = "GetHDROutput",
 	setter = "SetHDROutput"
@@ -128,6 +155,7 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetFrameCount(self:GetFrameCount())
 	cpy:SetPreStageOnly(self:IsPreStageOnly())
 	cpy:SetDenoiseMode(self:GetDenoiseMode())
+	cpy:SetTransparentSky(self:IsSkyTransparent())
 	cpy:SetHDROutput(self:GetHDROutput())
 	cpy:SetDeviceType(self:GetDeviceType())
 	cpy:SetRenderWorld(self:GetRenderWorld())
@@ -270,6 +298,7 @@ function pfm.RaytracingRenderJob:Update()
 		end
 		self.m_prt = nil
 		self.m_raytracingJob = nil
+		collectgarbage()
 	end
 	self.m_renderResultFrameIndex = self.m_currentFrame
 	self.m_renderResultRemainingSubStages = self.m_remainingSubStages
@@ -287,6 +316,7 @@ function pfm.RaytracingRenderJob:Update()
 			if(renderSettings:IsRenderPreview()) then msg = "Preview rendering complete!"
 			else msg = "Rendering complete! " .. renderSettings:GetFrameCount() .. " frames have been rendered!" end
 			pfm.log(msg,pfm.LOG_CATEGORY_PFM_RENDER)
+			self:OnRenderEnd()
 			return pfm.RaytracingRenderJob.STATE_COMPLETE
 		end
 		if(self.m_autoAdvanceSequence) then self:RenderNextImage() end
@@ -299,7 +329,11 @@ function pfm.RaytracingRenderJob:Start()
 	self.m_imageBuffers = {}
 	self.m_currentFrame = self.m_startFrame -1
 	self.m_endFrame = self.m_currentFrame +self:GetSettings():GetFrameCount()
+	console.run("cl_max_fps","4") -- Clamp max fps to make more resources available for Cycles
 	self:RenderNextImage()
+end
+function pfm.RaytracingRenderJob:OnRenderEnd()
+	console.run("cl_max_fps","-1") -- Unclamp max fps
 end
 -- TODO: Implement this in a better way
 local g_staticGeometryCache
@@ -320,6 +354,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	createInfo.progressiveRefine = renderSettings:ShouldUseProgressiveRefinement()
 	createInfo.progressive = renderSettings:IsProgressive()
 	createInfo.exposure = renderSettings:GetExposure()
+	createInfo.renderer = renderSettings:GetRenderEngine()
 	createInfo:SetSamplesPerPixel(renderSettings:GetSamples())
 
 	local colorTransform = renderSettings:GetColorTransform()
@@ -359,6 +394,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	
 	-- Note: Settings have to be initialized before setting up the game scene
 	scene:SetSkyAngles(EulerAngles(0,renderSettings:GetSkyYaw(),0))
+	scene:SetSkyTransparent(renderSettings:IsSkyTransparent())
 	scene:SetSkyStrength(renderSettings:GetSkyStrength())
 	scene:SetEmissionStrength(renderSettings:GetEmissionStrength())
 	scene:SetMaxTransparencyBounces(renderSettings:GetMaxTransparencyBounces())
@@ -556,6 +592,7 @@ function pfm.RaytracingRenderJob:CancelRendering()
 	self.m_tRenderStart = nil
 	if(self:IsRendering() == false) then return end
 	self.m_raytracingJob:Cancel()
+	self:OnRenderEnd()
 end
 function pfm.RaytracingRenderJob:IsComplete()
 	if(self.m_raytracingJob == nil) then return true end

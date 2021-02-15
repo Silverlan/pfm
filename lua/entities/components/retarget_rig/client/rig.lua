@@ -34,10 +34,13 @@ function ents.RetargetRig.Rig:SetDstToSrcTranslationTable(t)
 end
 function ents.RetargetRig.Rig:GetDstToSrcTranslationTable() return self.m_dstToSrcTranslationTable end
 function ents.RetargetRig.Rig:GetBindPoseTransforms() return self.m_bindPoseTransforms end
-function ents.RetargetRig.Rig:GetBoneTranslation(boneId) return self.m_dstToSrcTranslationTable[boneId] end
+function ents.RetargetRig.Rig:GetBoneTranslation(boneId)
+	if(self.m_dstToSrcTranslationTable[boneId] == nil) then return end
+	return self.m_dstToSrcTranslationTable[boneId][1],self.m_dstToSrcTranslationTable[boneId][2]
+end
 function ents.RetargetRig.Rig:SetBoneTranslation(boneIdSrc,boneIdDst)
 	if(boneIdSrc == -1 or boneIdDst == -1) then return end
-	self.m_dstToSrcTranslationTable[boneIdDst] = boneIdSrc
+	self.m_dstToSrcTranslationTable[boneIdDst] = (boneIdSrc ~= nil) and {boneIdSrc,phys.Transform()} or nil
 	self:ApplyPoseMatchingRotationCorrections()
 end
 function ents.RetargetRig.Rig:GetBindPose() return self.m_bindPose end
@@ -84,7 +87,9 @@ function ents.RetargetRig.Rig:ApplyBonePoseMatchingRotationCorrections(bindPose,
 	for boneId,child in pairs(bone:GetChildren()) do
 		if(boneTranslationIds[boneId] ~= nil) then
 			local pose = poseThis *bindPose:GetBonePose(boneId)
-			local boneOther = skeleton1:GetBone(boneTranslationIds[boneId])
+			local dataOther = boneTranslationIds[boneId]
+			local boneIdOther = dataOther[1]
+			local boneOther = skeleton1:GetBone(boneIdOther)
 			local boneParentOther = boneOther:GetParent()
 			local poseOther = ref1:GetBonePose(boneOther:GetID())
 			local poseOtherParent = (boneParentOther ~= nil) and ref1:GetBonePose(boneParentOther:GetID()) or phys.Transform()
@@ -176,7 +181,8 @@ function ents.RetargetRig.Rig:DebugPrint()
 	print("Source model: ",dstMdl:GetName())
 	print("Target model: ",srcMdl:GetName())
 	print("Bone translations:")
-	for boneId0,boneId1 in pairs(self:GetDstToSrcTranslationTable()) do
+	for boneId0,data in pairs(self:GetDstToSrcTranslationTable()) do
+		local boneId1 = data[1]
 		local bone0 = skeleton0:GetBone(boneId0)
 		local bone1 = skeleton1:GetBone(boneId1)
 		print("[\"" .. bone0:GetName() .. "\"] = \"" .. bone1:GetName() .. "\",")
@@ -212,12 +218,21 @@ function ents.RetargetRig.Rig:Save()
 	local bm = db:AddBlock("bone_map")
 	local translationTable = self:GetDstToSrcTranslationTable()
 	local translationNameTable = {}
-	for boneId0,boneId1 in pairs(translationTable) do
+	for boneId0,boneData in pairs(translationTable) do
 		local bone0 = skeleton0:GetBone(boneId0)
-		local bone1 = skeleton1:GetBone(boneId1)
+		local bone1 = skeleton1:GetBone(boneData[1])
 		if(bone0 == nil or bone1 == nil) then console.print_warning("Retarget rig has invalid bone reference, not all bones will be saved!")
 		else
-			bm:SetValue("string",bone0:GetName(),bone1:GetName())
+			local pose = boneData[2]
+			if(pose:IsIdentity()) then bm:SetValue("string",bone0:GetName(),bone1:GetName())
+			else
+				local data = bm:AddBlock("bone0")
+				data:SetValue("string","target",bone1:GetName())
+				local translation = pose:GetOrigin()
+				local angles = pose:GetRotation():ToEulerAngles()
+				data:SetValue("vector","translation",tostring(translation))
+				data:SetValue("vector","rotation",tostring(angles))
+			end
 			translationNameTable[bone0:GetName()] = bone1:GetName()
 		end
 	end
@@ -231,11 +246,19 @@ function ents.RetargetRig.Rig:Save()
 	f:WriteString(db:ToString("rig"))
 	f:Close()
 end
+function ents.RetargetRig.Rig.exists(psrcMdl,pdstMdl)
+	-- TODO: Flip these names
+	local srcMdl = pdstMdl
+	local dstMdl = psrcMdl
+	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
+	return file.exists(filePath:GetString())
+end
 function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
 	-- TODO: Flip these names
 	local srcMdl = pdstMdl
 	local dstMdl = psrcMdl
 	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
+	print("Loading retarget rig '" .. filePath:GetString() .. "'...")
 	local f = file.open(filePath:GetString(),bit.bor(file.OPEN_MODE_READ))
 	if(f == nil) then return end
 	local root = util.DataBlock.load(f)
@@ -256,7 +279,16 @@ function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
 			local boneId0 = srcMdl:LookupBone(boneName0)
 			local boneId1 = dstMdl:LookupBone(boneName1)
 			if(boneId0 == -1 or boneId1 == -1) then console.print_warning("Retarget rig has invalid bone reference from bone '" .. boneName0 .. "' to bone '" .. boneName1 .. "'! Ignoring...")
-			else translationTable[boneId0] = boneId1 end
+			else translationTable[boneId0] = {boneId1,phys.Transform()} end
+		end
+		for boneName0,data in pairs(bm:GetChildBlocks()) do
+			local boneId0 = srcMdl:LookupBone(boneName0)
+			local boneName1 = data:GetString("target")
+			local translation = data:GetVector("translation",Vector())
+			local angles = data:GetVector("rotation",Vector())
+			local boneId1 = dstMdl:LookupBone(boneName1)
+			if(boneId0 == -1 or boneId1 == -1) then console.print_warning("Retarget rig has invalid bone reference from bone '" .. boneName0 .. "' to bone '" .. boneName1 .. "'! Ignoring...")
+			else translationTable[boneId0] = {boneId1,phys.Transform(translation,EulerAngles(angles.x,angles.y,angles.z):ToQuaternion())} end
 		end
 	end
 

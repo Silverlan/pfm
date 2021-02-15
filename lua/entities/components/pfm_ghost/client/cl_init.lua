@@ -14,9 +14,9 @@ function ents.PFMGhost:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
-	self:AddEntityComponent(ents.COMPONENT_LOGIC)
 	-- self:AddEntityComponent("pfm_grid") -- TODO: UNDO ME
-	self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")
+
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 
 function ents.PFMGhost:SetPlacementCallback(cb) self.m_placementCallback = cb end

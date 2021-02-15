@@ -18,6 +18,7 @@ function pfm.load_cycles()
 		pfm.log("Unable to load cycles module: " .. r,pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_ERROR)
 		return loaded
 	end
+	unirender.set_log_enabled(pfm.is_log_category_enabled(pfm.LOG_CATEGORY_PFM_UNIRENDER))
 
 	loaded = true
 	pfm.log("Loading cycles shaders...",pfm.LOG_CATEGORY_PFM_RENDER)

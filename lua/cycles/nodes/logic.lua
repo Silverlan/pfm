@@ -8,29 +8,48 @@
 
 local function run_operator(self,op,sockets,addSockets)
 	sockets = sockets or {}
-	local node = self:GetNode()
+	local node
 	for i,socket in ipairs(sockets) do
 		if(util.get_type_name(socket) ~= "Socket") then
 			sockets[i] = unirender.Socket(socket)
 			socket = sockets[i]
 		end
-		node = node or socket:GetNode()
+		if(socket:IsConcreteValue() == false and socket:IsOutputSocket() == false) then node = socket:GetNode() end -- Special case: This is an input socket of a group node
+		if(node == nil) then
+			node = socket:GetNode()
+			if(node ~= nil) then node = node:GetParent() end
+		end
 	end
+	if(node == nil) then
+		node = self:GetNode()
+		node = (node ~= nil) and node:GetParent() or nil
+	end
+	if(self:IsConcreteValue() == false and self:IsOutputSocket() == false) then node = self:GetNode() end -- Special case: This is an input socket of a group node
 	if(node == nil) then error("Currently not implemented for concrete types!") end
-	local parent = node:GetParent()
-	if(parent == nil) then return end
-	local node = parent:AddNode(op)
-	self:Link(node,"value1")
+	local child = node:AddNode(op)
+	self:Link(child,"value1")
 	for i,socket in ipairs(sockets) do
-		socket:Link(node,"value" .. (i +1))
+		socket:Link(child,"value" .. (i +1))
 	end
 	if(addSockets ~= nil) then
 		for identifier,socket in pairs(addSockets) do
-			socket:Link(node,identifier)
+			socket:Link(child,identifier)
 		end
 	end
-	return node:GetPrimaryOutputSocket()
+	return child:GetPrimaryOutputSocket()
 end
+
+-- const
+unirender.Node.const = {
+	IN_VALUE = "value1",
+	OUT_VALUE = "value"
+}
+unirender.NODE_CONST = unirender.register_node("const",function(desc)
+	local inValue1 = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.const.IN_VALUE,0)
+	local outValue = desc:RegisterOutput(unirender.Socket.TYPE_FLOAT,unirender.Node.const.OUT_VALUE)
+	desc:SetPrimaryOutputSocket(outValue)
+	desc:Link(inValue1,outValue)
+end)
 
 -- not
 unirender.Node.logic_not = {

@@ -348,14 +348,36 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		{"luxcorerender",locale.get_text("pfm_render_engine_luxcorerender")}
 	},"cycles")
 	p:LinkToUDMProperty("render_engine",settings,"renderEngine")
-	if(tool.get_filmmaker():IsDeveloperModeEnabled() == false) then p:SetControlVisible("render_engine",false) end
 	
 	-- Render Mode
 	self.m_ctrlRenderMode = p:AddDropDownMenu(locale.get_text("pfm_render_mode"),"render_mode",{
 		{tostring(udm.PFMRenderSettings.MODE_COMBINED),locale.get_text("pfm_cycles_bake_type_combined")},
 		{tostring(udm.PFMRenderSettings.MODE_ALBEDO),locale.get_text("pfm_cycles_bake_type_albedo")},
 		{tostring(udm.PFMRenderSettings.MODE_NORMALS),locale.get_text("pfm_cycles_bake_type_normals")},
-		{tostring(udm.PFMRenderSettings.MODE_DEPTH),locale.get_text("pfm_cycles_bake_type_depth")}
+		{tostring(udm.PFMRenderSettings.MODE_DEPTH),locale.get_text("pfm_cycles_bake_type_depth")},
+		{tostring(udm.PFMRenderSettings.MODE_ALPHA),"Alpha"},
+		{tostring(udm.PFMRenderSettings.MODE_GEOMETRY_NORMAL),"Geometry Normal"},
+		{tostring(udm.PFMRenderSettings.MODE_SHADING_NORMAL),"Shading Normal"},
+		{tostring(udm.PFMRenderSettings.MODE_DIRECT_DIFFUSE),"Direct Diffuse"},
+		{tostring(udm.PFMRenderSettings.MODE_DIRECT_DIFFUSE_REFLECT),"Direct Diffuse Reflect"},
+		{tostring(udm.PFMRenderSettings.MODE_DIRECT_DIFFUSE_TRANSMIT),"Direct Diffuse Transmit"},
+		{tostring(udm.PFMRenderSettings.MODE_DIRECT_GLOSSY),"Direct Glossy"},
+		{tostring(udm.PFMRenderSettings.MODE_DIRECT_GLOSSY_REFLECT),"Direct Glossy Reflect"},
+		{tostring(udm.PFMRenderSettings.MODE_DIRECT_GLOSSY_TRANSMIT),"Direct Glossy Transmit"},
+		{tostring(udm.PFMRenderSettings.MODE_EMISSION),"Emission"},
+		{tostring(udm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE),"Indirect Diffuse"},
+		{tostring(udm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE_REFLECT),"Indirect Diffuse Reflect"},
+		{tostring(udm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE_TRANSMIT),"Indirect Diffuse Transmit"},
+		{tostring(udm.PFMRenderSettings.MODE_INDIRECT_GLOSSY),"Indirect Glossy"},
+		{tostring(udm.PFMRenderSettings.MODE_INDIRECT_GLOSSY_REFLECT),"Indirect Glossy Reflect"},
+		{tostring(udm.PFMRenderSettings.MODE_INDIRECT_GLOSSY_TRANSMIT),"Indirect Glossy Transmit"},
+		{tostring(udm.PFMRenderSettings.MODE_INDIRECT_SPECULAR),"Indirect Specular"},
+		{tostring(udm.PFMRenderSettings.MODE_INDIRECT_SPECULAR_REFLECT),"Indirect Specular Reflect"},
+		{tostring(udm.PFMRenderSettings.MODE_INDIRECT_SPECULAR_TRANSMIT),"Indirect Specular Transmit"},
+		{tostring(udm.PFMRenderSettings.MODE_UV),"UV"},
+		{tostring(udm.PFMRenderSettings.MODE_IRRADIANCE),"Irradiance"},
+		{tostring(udm.PFMRenderSettings.MODE_NOISE),"Noise"},
+		{tostring(udm.PFMRenderSettings.MODE_CAUSTIC),"Caustic"}
 	},tostring(settings:GetMode()))
 	p:LinkToUDMProperty("render_mode",settings,"mode")
 	if(tool.get_filmmaker():IsDeveloperModeEnabled() == false) then p:SetControlVisible("render_mode",false) end
@@ -558,7 +580,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	end)
 
 	local _,colorTransforms = file.find("modules/open_color_io/configs/*")
-	local colorTransformOptions = {}
+	local colorTransformOptions = {{"none","none"}}
 	for _,ct in ipairs(colorTransforms) do
 		table.insert(colorTransformOptions,{ct,ct})
 	end
@@ -627,6 +649,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlPVSCulling = p:AddToggleControl(locale.get_text("pfm_render_pvs_culling"),"pvs_culling",settings:IsPvsCullingEnabled())
 	self.m_ctrlProgressive = p:AddToggleControl(locale.get_text("pfm_render_progressive"),"progressive",settings:IsProgressive(),function() self.m_ctrlProgressiveRefinement:SetVisible(self.m_ctrlProgressive:IsChecked()) end)
 	self.m_ctrlProgressiveRefinement = p:AddToggleControl(locale.get_text("pfm_render_progressive_refinement"),"progressive_refine",settings:IsProgressiveRefinementEnabled())
+	self.m_ctrlTransparentSky = p:AddToggleControl(locale.get_text("pfm_render_transparent_sky"),"transparent_sky",settings:ShouldMakeSkyTransparent())
 
 	p:LinkToUDMProperty("denoise",settings,"denoise")
 	p:LinkToUDMProperty("render_world",settings,"renderWorld")
@@ -636,6 +659,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:LinkToUDMProperty("pvs_culling",settings,"pvsCullingEnabled")
 	p:LinkToUDMProperty("progressive",settings,"progressive")
 	p:LinkToUDMProperty("progressive_refine",settings,"progressiveRefinementEnabled")
+	p:LinkToUDMProperty("transparent_sky",settings,"transparentSky")
 
 	-- Presets
 	qualityPreset:AddCallback("OnOptionSelected",function(el,option)
@@ -860,7 +884,30 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	if(selectedRenderMode == udm.PFMRenderSettings.MODE_COMBINED) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED
 	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_ALBEDO) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALBEDO
 	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_NORMALS) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_NORMALS
-	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_DEPTH) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH end
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_DEPTH) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_ALPHA) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALPHA
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_GEOMETRY_NORMAL) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_GEOMETRY_NORMAL
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_SHADING_NORMAL) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_SHADING_NORMAL
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_DIRECT_DIFFUSE) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_DIRECT_DIFFUSE_REFLECT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE_REFLECT
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_DIRECT_DIFFUSE_TRANSMIT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE_TRANSMIT
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_DIRECT_GLOSSY) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_DIRECT_GLOSSY_REFLECT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY_REFLECT
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_DIRECT_GLOSSY_TRANSMIT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY_TRANSMIT
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_EMISSION) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_EMISSION
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE_REFLECT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE_REFLECT
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE_TRANSMIT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE_TRANSMIT
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_INDIRECT_GLOSSY) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_INDIRECT_GLOSSY_REFLECT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY_REFLECT
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_INDIRECT_GLOSSY_TRANSMIT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY_TRANSMIT
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_INDIRECT_SPECULAR) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_INDIRECT_SPECULAR_REFLECT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR_REFLECT
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_INDIRECT_SPECULAR_TRANSMIT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR_TRANSMIT
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_UV) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_UV
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_IRRADIANCE) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_IRRADIANCE
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_NOISE) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_NOISE
+	elseif(selectedRenderMode == udm.PFMRenderSettings.MODE_CAUSTIC) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_CAUSTIC end
 
 	local deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU
 	local selectedDeviceType = tonumber(self.m_ctrlDeviceType:GetValue())
@@ -921,6 +968,7 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	settings:SetLightIntensityFactor(self.m_ctrlLightIntensityFactor:GetValue())
 	settings:SetFrameCount(preview and 1 or self.m_ctrlFrameCount:GetValue())
 	settings:SetPreStageOnly(prepareOnly == true)
+	settings:SetTransparentSky(self.m_ctrlTransparentSky:IsChecked())
 	settings:SetDenoiseMode(denoiseMode)
 	settings:SetDeviceType(deviceType)
 	settings:SetRenderWorld(self.m_ctrlRenderWorld:IsChecked())

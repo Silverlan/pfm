@@ -17,7 +17,7 @@ function unirender.ToonShader:InitializeCombinedPass(desc,outputNode)
 	local albedoMap = mat:GetTextureInfo("albedo_map")
 	if(albedoMap == nil) then return end
 
-	local texPath = self:PrepareTexture(albedoMap:GetName())
+	local texPath = unirender.get_texture_path(albedoMap:GetName())
 	if(texPath == nil) then return end
 
 	local data = mat:GetDataBlock()

@@ -21,7 +21,7 @@ function ents.RetargetRig:Initialize()
 
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
 	self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS,"ApplyRig")
-	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED,"OnModelChanged")
+	self:BindEvent(ents.AnimatedComponent.EVENT_ON_ANIMATION_RESET,"OnAnimationReset")
 end
 function ents.RetargetRig:SetRig(rig,animSrc)
 	self.m_rig = rig
@@ -32,10 +32,13 @@ function ents.RetargetRig:SetRig(rig,animSrc)
 end
 function ents.RetargetRig:GetRig() return self.m_rig end
 
-function ents.RetargetRig:RigToActor(actor)
-	local mdlDst = self:GetEntity():GetModel()
-	local mdlSrc = actor:GetModel()
+function ents.RetargetRig:RigToActor(actor,mdlSrc,mdlDst)
+	mdlDst = mdlDst or self:GetEntity():GetModel()
+	mdlSrc = mdlSrc or actor:GetModel()
 	local animSrc = actor:GetComponent(ents.COMPONENT_ANIMATED)
+	if(animSrc == nil) then
+		console.print_warning("Unable to apply retarget rig: Actor " .. tostring(actor) .. " has no animated component!")
+	end
 	if(mdlSrc == nil or mdlDst == nil or animSrc == nil) then return false end
 	local newRig = false
 	local rig = ents.RetargetRig.Rig.load(mdlSrc,mdlDst)
@@ -51,7 +54,7 @@ function ents.RetargetRig:RigToActor(actor)
 	return newRig
 end
 
-function ents.RetargetRig:OnModelChanged()
+function ents.RetargetRig:OnAnimationReset()
 	self:GetEntity():PlayAnimation("reference")
 end
 
@@ -73,7 +76,7 @@ function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,b
 			retargetPoses[boneId] = poseParent *bindPoseTransforms[boneId]
 		else
 			-- Clamp bone distances to original distance to parent to keep proportions intact
-			local origDist = bindPose:GetBonePose(parent:GetID()):GetOrigin():Distance(bindPose:GetBonePose(boneId):GetOrigin())
+			local origDist = bindPose:GetBonePose(parent:GetID()):GetOrigin():Distance(bindPose:GetBonePose(boneId):GetOrigin()) -- TODO: We don't need to re-calculate this every time
 
 			local origin = retargetPoses[parent:GetID()]:GetOrigin()
 			local dir = tmpPoses[boneId]:GetOrigin() -tmpPoses[parent:GetID()]:GetOrigin()
@@ -90,6 +93,7 @@ function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,b
 		end
 		finalPose = retargetPoses[parent:GetID()]:GetInverse() *retargetPoses[boneId] -- We want the pose to be relative to the parent
 	else finalPose = retargetPoses[boneId] end
+	if(parent ~= nil and translationTable[parent:GetID()] ~= nil) then finalPose = translationTable[parent:GetID()][2] *finalPose end
 	animSrc:SetBonePose(boneId,finalPose)
 
 	for boneId,child in pairs(bone:GetChildren()) do
@@ -97,24 +101,33 @@ function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,b
 	end
 end
 
-function ents.RetargetRig:ApplyFlexControllers()
-	local flexCDst = self:GetEntity():GetComponent(ents.COMPONENT_FLEX)
-	local flexCSrc = self.m_animSrc:GetEntity():GetComponent(ents.COMPONENT_FLEX)
-	if(flexCSrc == nil or flexCDst == nil) then return end
+function ents.RetargetRig:TranslateBoneToTarget(boneId)
 	local rig = self:GetRig()
-	local translationTable = rig:GetFlexControllerTranslationTable()
-	local accTable = {}
-	for flexCIdSrc,mappings in pairs(translationTable) do
-		local val = flexCSrc:GetFlexController(flexCIdSrc)
-		for flexCIdDst,data in pairs(mappings) do
-			local srcVal = math.clamp(val,data.min_source,data.max_source)
-			local f = srcVal /(data.max_source -data.min_source)
-			local dstVal = data.min_target +f *(data.max_target -data.min_target)
-			dstVal = dstVal +(accTable[flexCIdDst] or 0.0)
-			flexCDst:SetFlexController(flexCIdDst,dstVal,0.0,false)
-			accTable[flexCIdDst] = dstVal
+	if(rig == nil) then return end
+	return rig:GetBoneTranslation(boneId)
+end
+
+function ents.RetargetRig:TranslateBoneFromTarget(boneId)
+	local boneIds = {}
+	local rig = self:GetRig()
+	if(rig == nil) then return boneIds end
+	local t = rig:GetDstToSrcTranslationTable()
+	for boneIdSrc,data in pairs(t) do
+		local boneIdTgt = data[1]
+		if(boneIdTgt == boneId) then
+			table.insert(boneIds,boneIdSrc)
 		end
 	end
+	return boneIds
+end
+
+function ents.RetargetRig:GetTargetActor() return util.is_valid(self.m_animSrc) and self.m_animSrc:GetEntity() or nil end
+
+function ents.RetargetRig:SetEnabledBones(bones)
+	--[[self.m_enabledBones = {}
+	for _,boneId in ipairs(bones) do
+		self.m_enabledBones[boneId] = true
+	end]]
 end
 
 function ents.RetargetRig:ApplyRig()
@@ -127,29 +140,30 @@ function ents.RetargetRig:ApplyRig()
 	local translationTable = rig:GetDstToSrcTranslationTable()
 	--local rigPoseTransforms = rig:GetRigPoseTransforms()
 	local bindPoseTransforms = rig:GetBindPoseTransforms()
-	local origBindPose = self:GetEntity():GetModel():GetReferencePose()
+	local mdl = self:GetEntity():GetModel()
+	local origBindPose = mdl:GetReferencePose()
 	local bindPose = rig:GetBindPose()
-	local skeleton = self:GetEntity():GetModel():GetSkeleton()
+	local skeleton = mdl:GetSkeleton()
 	local retargetPoses = {}
 	local tmpPoses = {}
 	for boneId=0,skeleton:GetBoneCount() -1 do
 		if(translationTable[boneId] ~= nil) then
 			-- Grab the animation pose from the target entity
-			local boneIdOther = translationTable[boneId]
+			local data = translationTable[boneId]
+			local boneIdOther = data[1]
 			local pose = animDst:GetEffectiveBoneTransform(boneIdOther)
 			local tmpPose1 = pose *animDst:GetBoneBindPose(boneIdOther):GetInverse()
 
 			local curPose = origBindPose:GetBonePose(boneId)
 			curPose:SetRotation(tmpPose1:GetRotation()--[[*rigPoseTransforms[id0]] *curPose:GetRotation())
 			curPose:SetOrigin(pose:GetOrigin())
+			curPose:SetScale(pose:GetScale())
 			-- debug.draw_line(self:GetEntity():GetPos() +curPose:GetOrigin(),self:GetEntity():GetPos() +curPose:GetOrigin()+Vector(0,0,20),Color.Red,0.1)
 			retargetPoses[boneId] = curPose
 		else retargetPoses[boneId] = bindPose:GetBonePose(boneId):Copy() end
 		tmpPoses[boneId] = retargetPoses[boneId]:Copy()
 	end
 	self:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,bindPose,translationTable,bindPoseTransforms,tmpPoses,retargetPoses)
-
-	self:ApplyFlexControllers()
 
 	return util.EVENT_REPLY_HANDLED
 end

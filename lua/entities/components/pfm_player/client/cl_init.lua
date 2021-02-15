@@ -12,15 +12,14 @@ ents.PFMPlayer.TAUNT_SOUNDS = {"scout_cheers03"}
 function ents.PFMPlayer:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
-	self:AddEntityComponent(ents.COMPONENT_LOGIC)
 	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 
 	-- TODO: This is here because something seems to be off with the player render bounds. Remove this line once that's fixed
 	renderC:SetExemptFromOcclusionCulling(true)
 
-	self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")
 	self.m_precached = false
 	self.m_taunting = false
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 
 function ents.PFMPlayer:PrecacheSounds()

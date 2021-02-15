@@ -46,6 +46,7 @@ function gui.PFMTextureSlot:OnInitialize()
 		local texLoadFlags = bit.bor(game.TEXTURE_LOAD_FLAG_BIT_LOAD_INSTANTLY,game.TEXTURE_LOAD_FLAG_BIT_DONT_CACHE)
 		local tex = game.load_texture(f,texLoadFlags)
 		local texInfo = util.TextureInfo()
+		texInfo.flags = bit.bor(texInfo.flags,util.TextureInfo.FLAG_BIT_GENERATE_MIPMAPS)
 		texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
 		local result = util.save_image(tex:GetImage(),"materials/" .. texPath:GetString(),texInfo)
 

@@ -8,7 +8,8 @@
 
 include("/gamemodes/generic/client/cl_init.lua")
 include("../shared.lua")
+local Component = ents.GmPfm
 
-function game.Filmmaker:OnGameReady()
+function Component:OpenPfm()
 	console.run("pfm")
 end

@@ -18,6 +18,29 @@ udm.PFMRenderSettings.MODE_COMBINED = 0
 udm.PFMRenderSettings.MODE_ALBEDO = 1
 udm.PFMRenderSettings.MODE_NORMALS = 2
 udm.PFMRenderSettings.MODE_DEPTH = 3
+udm.PFMRenderSettings.MODE_ALPHA = 4
+udm.PFMRenderSettings.MODE_GEOMETRY_NORMAL = 5
+udm.PFMRenderSettings.MODE_SHADING_NORMAL = 6
+udm.PFMRenderSettings.MODE_DIRECT_DIFFUSE = 7
+udm.PFMRenderSettings.MODE_DIRECT_DIFFUSE_REFLECT = 8
+udm.PFMRenderSettings.MODE_DIRECT_DIFFUSE_TRANSMIT = 9
+udm.PFMRenderSettings.MODE_DIRECT_GLOSSY = 10
+udm.PFMRenderSettings.MODE_DIRECT_GLOSSY_REFLECT = 11
+udm.PFMRenderSettings.MODE_DIRECT_GLOSSY_TRANSMIT = 12
+udm.PFMRenderSettings.MODE_EMISSION = 13
+udm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE = 14
+udm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE_REFLECT = 15
+udm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE_TRANSMIT = 16
+udm.PFMRenderSettings.MODE_INDIRECT_GLOSSY = 17
+udm.PFMRenderSettings.MODE_INDIRECT_GLOSSY_REFLECT = 18
+udm.PFMRenderSettings.MODE_INDIRECT_GLOSSY_TRANSMIT = 19
+udm.PFMRenderSettings.MODE_INDIRECT_SPECULAR = 20
+udm.PFMRenderSettings.MODE_INDIRECT_SPECULAR_REFLECT = 21
+udm.PFMRenderSettings.MODE_INDIRECT_SPECULAR_TRANSMIT = 22
+udm.PFMRenderSettings.MODE_UV = 23
+udm.PFMRenderSettings.MODE_IRRADIANCE = 24
+udm.PFMRenderSettings.MODE_NOISE = 25
+udm.PFMRenderSettings.MODE_CAUSTIC = 26
 
 udm.PFMRenderSettings.DEVICE_TYPE_CPU = 0
 udm.PFMRenderSettings.DEVICE_TYPE_GPU = 1
@@ -68,6 +91,9 @@ udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"progressive"
 })
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"progressiveRefinementEnabled",udm.Bool(false),{
 	getter = "IsProgressiveRefinementEnabled"
+})
+udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"transparentSky",udm.Bool(false),{
+	getter = "ShouldMakeSkyTransparent"
 })
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"exposure",udm.Float(50))
 udm.register_element_property(udm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"previewQuality",udm.Int(udm.PFMRenderSettings.PREVIEW_QUALITY_LOW))

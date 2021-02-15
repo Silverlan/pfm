@@ -13,16 +13,15 @@ function ents.PFMParticleSystem:Initialize()
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_PARTICLE_SYSTEM)
-	self:AddEntityComponent(ents.COMPONENT_LOGIC)
 	self:AddEntityComponent("pfm_actor")
 
 	self:BindEvent(ents.PFMActorComponent.EVENT_ON_OFFSET_CHANGED,"OnOffsetChanged")
-	self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")
 
 	self.m_listeners = {}
 	self.m_lastSimulationOffset = 0.0
 	self.m_queuedSimOffset = 0
 	self.m_ptSimTime = 0
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 function ents.PFMParticleSystem:OnTick(dt)
 	local ptC = self:GetEntity():GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)

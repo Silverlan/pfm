@@ -414,6 +414,7 @@ function gui.WIFilmmaker:OnInitialize()
 	end)]]
 
 	self.m_tLastCursorMove = 0.0
+	if(unirender ~= nil) then unirender.set_log_enabled(pfm.is_log_category_enabled(pfm.LOG_CATEGORY_PFM_UNIRENDER)) end
 	self:SetKeyboardInputEnabled(true)
 	self:ClearProjectUI()
 

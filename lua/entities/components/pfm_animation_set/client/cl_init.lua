@@ -60,17 +60,13 @@ function ents.PFMAnimationSet:SetBoneRot(boneId,rot)
 	self.m_currentBoneTransforms[boneId][2] = rot
 end
 
-local function translate_flex_controller_value(fc,val)
-	return fc.min +val *(fc.max -fc.min)
-end
-
 function ents.PFMAnimationSet:SetFlexController(fcId,value)
 	local ent = self:GetEntity()
 	local mdl = ent:GetModel()
 	local fc = (mdl ~= nil) and mdl:GetFlexController(fcId) or nil -- TODO: Cache this
 	local flexC = ent:GetComponent(ents.COMPONENT_FLEX)
 	if(flexC == nil or fc == nil) then return false end
-	flexC:SetFlexController(fcId,translate_flex_controller_value(fc,value),0.0,self.m_flexControllerLimitsEnabled)
+	flexC:SetFlexController(fcId,pfm.translate_flex_controller_value(fc,value),0.0,self.m_flexControllerLimitsEnabled)
 end
 
 function ents.PFMAnimationSet:ApplyBoneTransforms()

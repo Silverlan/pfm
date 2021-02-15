@@ -14,14 +14,14 @@ function ents.PFMIKEffectorTarget:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
-	self:AddEntityComponent(ents.COMPONENT_LOGIC)
-	self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 
 function ents.PFMIKEffectorTarget:OnTick()
 	local ikC = util.is_valid(self.m_target) and self.m_target:GetComponent(ents.COMPONENT_IK) or nil
 	if(ikC == nil) then return end
 	local pos = self:GetEntity():GetPos()
+	debug.draw_line(pos,pos +Vector(0,10,0),Color.Red,0.1)
 	ikC:SetIKEffectorPos(self.m_ikControllerIdx,self.m_effectorIdx,pos)
 end
 

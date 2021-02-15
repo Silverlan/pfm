@@ -16,7 +16,7 @@ end
 function util.ImagePostProcessor:Remove()
 
 end
-function gui.RaytracedViewport:InitializeSceneTexture(w,h)
+function util.ImagePostProcessor:InitializeSceneTexture(w,h)
 	if(self.m_hdrTex ~= nil and self.m_hdrTex:GetWidth() == w and self.m_hdrTex:GetHeight() == h) then return self.m_hdrTex end
 	self.m_hdrTex = nil
 	collectgarbage() -- Make sure the old texture is cleared from cache
@@ -46,7 +46,7 @@ function gui.RaytracedViewport:InitializeSceneTexture(w,h)
 	self.m_dsSceneComposition = shaderComposition:CreateDescriptorSet(shader.PFMSceneComposition.DESCRIPTOR_SET_TEXTURE)
 	return texHdr
 end
-function gui.RaytracedViewport:InitializeDepthTexture(w,h,nearZ,farZ)
+function util.ImagePostProcessor:InitializeDepthTexture(w,h,nearZ,farZ)
 	self.m_tex:SetDepthBounds(nearZ,farZ)
 	if(self.m_depthTex ~= nil and self.m_depthTex:GetWidth() == w and self.m_depthTex:GetHeight() == h) then return end
 	self.m_depthTex = nil
@@ -70,7 +70,7 @@ function gui.RaytracedViewport:InitializeDepthTexture(w,h,nearZ,farZ)
 	self.m_depthTex = texDepth
 	self.m_tex:SetDepthTexture(texDepth)
 end
-function gui.RaytracedViewport:UpdateGameSceneTextures()
+function util.ImagePostProcessor:UpdateGameSceneTextures()
 	local gameScene = self:GetGameScene()
 	local cam = gameScene:GetActiveCamera()
 	local renderer = self.m_testRenderer--gameScene:GetRenderer()
@@ -95,7 +95,7 @@ function gui.RaytracedViewport:UpdateGameSceneTextures()
 	self:RenderParticleSystemDepth(drawCmd)
 	game.flush_setup_command_buffer()
 end
-function gui.RaytracedViewport:RenderParticleSystemDepth(drawCmd)
+function util.ImagePostProcessor:RenderParticleSystemDepth(drawCmd)
 	-- TODO: Skip this step if we're not using DOF
 	-- Particle systems are usually not written to the depth buffer,
 	-- however to properly calculate depth of field for particles, they

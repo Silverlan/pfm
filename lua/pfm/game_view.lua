@@ -13,6 +13,7 @@ function pfm.GameView:__init()
 end
 function pfm.GameView:ClearGameView()
 	if(util.is_valid(self.m_gameView)) then self.m_gameView:Remove() end
+	self:OnGameViewCleared()
 end
 function pfm.GameView:StartGameView(project)
 	self:ClearGameView()
@@ -54,3 +55,4 @@ function pfm.GameView:GetGameView() return self.m_gameView end
 -- These can be overriden by derived classes
 function pfm.GameView:OnGameViewCreated(projectC) end
 function pfm.GameView:OnGameViewInitialized(projectC) end
+function pfm.GameView:OnGameViewCleared() end

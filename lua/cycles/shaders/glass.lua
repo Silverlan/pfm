@@ -41,7 +41,7 @@ function unirender.GlassShader:InitializeCombinedPass(desc,outputNode)
 
 
 
-	local texPath = self:PrepareTexture(albedoMap:GetName())
+	local texPath = unirender.get_texture_path(albedoMap:GetName())
 	if(texPath == nil) then return end
 
 	local alphaMode = mat:GetAlphaMode()

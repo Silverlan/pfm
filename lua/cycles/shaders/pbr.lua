@@ -29,7 +29,7 @@ function unirender.PBRShader:AddAlbedoNode(desc,mat)
 	local colorFactor = data:GetVector("color_factor",Vector(1,1,1))
 
 	local albedoMap = mat:GetTextureInfo("albedo_map")
-	local texPath = (albedoMap ~= nil) and self:PrepareTexture(albedoMap:GetName()) or self:PrepareTexture("white") or nil
+	local texPath = (albedoMap ~= nil) and unirender.get_texture_path(albedoMap:GetName()) or unirender.get_texture_path("white") or nil
 	if(texPath == nil) then return unirender.Socket(colorFactor),unirender.Socket(alphaFactor) end
 
 	local texCoord = desc:AddNode(unirender.NODE_TEXTURE_COORDINATE)
@@ -50,7 +50,7 @@ function unirender.PBRShader:AddAlbedoNode(desc,mat)
 	local detailMap = mat:GetTextureInfo("detail_map")
 	local blendMode = game.Material.detail_blend_mode_to_enum(data:GetString("detail_blend_mode"))
 	if(detailMap ~= nil and blendMode ~= nil) then
-		local detailTexPath = self:PrepareTexture(detailMap:GetName())
+		local detailTexPath = unirender.get_texture_path(detailMap:GetName())
 		if(detailTexPath ~= nil) then
 			local detailUvScale = data:GetVector2("detail_uv_scale",Vector2(4.0,4.0))
 			local nDetailMap = desc:AddNode(unirender.NODE_ALBEDO_TEXTURE)
@@ -88,21 +88,22 @@ function unirender.PBRShader:AddAlbedoNode(desc,mat)
 	return col,alpha
 end
 function unirender.PBRShader:AddNormalNode(desc,mat) -- Result is in world space
+	local data = mat:GetDataBlock()
 	local normalMap = mat:GetTextureInfo("normal_map")
-	local normalTex = (normalMap ~= nil) and self:PrepareTexture(normalMap:GetName()) or nil
+	local normalStrength = data:GetFloat("normal_strength",1.0)
+	local normalTex = (normalMap ~= nil) and unirender.get_texture_path(normalMap:GetName()) or nil
 	if(normalTex ~= nil) then
 		local nNormalMap = desc:AddNode(unirender.NODE_NORMAL_TEXTURE)
-		nNormalMap:SetProperty(unirender.Node.normal_texture.IN_TEXTURE,normalTex)
+		nNormalMap:SetProperty(unirender.Node.normal_texture.IN_FILENAME,normalTex)
+		nNormalMap:SetProperty(unirender.Node.normal_texture.IN_STRENGTH,normalStrength)
 		return nNormalMap:GetPrimaryOutputSocket()
 	end
-	local geo = desc:AddNode(unirender.NODE_GEOMETRY)
-	return geo:GetOutputSocket(unirender.Node.geometry.OUT_NORMAL)
 end
 function unirender.PBRShader:AddMetalnessRoughnessNode(desc,mat)
 	local data = mat:GetDataBlock()
 	-- Metalness / Roughness
 	local rmaMap = mat:GetTextureInfo("rma_map")
-	local rmaTex = (rmaMap ~= nil) and self:PrepareTexture(rmaMap:GetName()) or nil
+	local rmaTex = (rmaMap ~= nil) and unirender.get_texture_path(rmaMap:GetName()) or nil
 	local nRMAMap = desc:AddNode(unirender.NODE_RMA_TEXTURE)
 	if(rmaTex ~= nil) then nRMAMap:SetProperty(unirender.Node.rma_texture.IN_TEXTURE,rmaTex) end
 
@@ -128,7 +129,20 @@ function unirender.PBRShader:Initialize()
 		self:SetHairConfig(hairConfig)
 	end
 end
+include("/cycles/nodes/test.lua")
 function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
+	--[[if(true) then
+		return unirender.Node.test.test_output(desc,outputNode,0)
+	end]]
+	--[[local mat = self:GetMaterial()
+	if(mat == nil) then return end
+	local principled = desc:AddNode(unirender.NODE_PRINCIPLED_BSDF)
+
+	local nAlbedoMap = desc:AddNode(unirender.NODE_ALBEDO_TEXTURE)
+	--nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_TEXTURE,unirender.get_texture_path("error"))
+
+	nAlbedoMap:GetPrimaryOutputSocket():Link(principled,unirender.Node.principled_bsdf.IN_BASE_COLOR)
+	principled:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_SURFACE)]]
 	local mat = self:GetMaterial()
 	if(mat == nil) then return end
 
@@ -198,7 +212,7 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 	local globalEmissionStrength = unirender.PBRShader.get_global_emission_strength()
 	if(globalEmissionStrength > 0.0) then
 		local emissionMap = mat:GetTextureInfo("emission_map")
-		local emissionTex = (emissionMap ~= nil) and self:PrepareTexture(emissionMap:GetName()) or nil
+		local emissionTex = (emissionMap ~= nil) and unirender.get_texture_path(emissionMap:GetName()) or nil
 		if(emissionTex ~= nil) then
 			local emissionFactor = data:GetVector("emission_factor",Vector(1,1,1)) *globalEmissionStrength
 			local nEmissionMap = desc:AddNode(unirender.NODE_EMISSION_TEXTURE)
@@ -211,7 +225,7 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 
 	-- Normal map
 	local normal = self:AddNormalNode(desc,mat)
-	normal:Link(principled,unirender.Node.principled_bsdf.IN_NORMAL)
+	if(normal ~= nil) then normal:Link(principled,unirender.Node.principled_bsdf.IN_NORMAL) end
 
 	-- Metalness / Roughness
 	local metalness,roughness = self:AddMetalnessRoughnessNode(desc,mat)
@@ -238,6 +252,10 @@ function unirender.PBRShader:InitializeNormalPass(desc,outputNode)
 	local mat = self:GetMaterial()
 	if(mat == nil) then return end
 	local normal = self:AddNormalNode(desc,mat)
+	if(normal == nil) then
+		local geo = desc:AddNode(unirender.NODE_GEOMETRY)
+		normal = geo:GetOutputSocket(unirender.Node.geometry.OUT_NORMAL)
+	end
 
 	local color,alpha = self:AddAlbedoNode(desc,mat)
 	local transparent = desc:AddNode(unirender.NODE_TRANSPARENT_BSDF)

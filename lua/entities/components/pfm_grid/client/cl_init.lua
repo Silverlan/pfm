@@ -43,10 +43,9 @@ function ents.PFMGrid:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
-	self:AddEntityComponent(ents.COMPONENT_LOGIC)
-	self:BindEvent(ents.LogicComponent.EVENT_ON_TICK,"OnTick")
 
 	self.m_shader = shader.get("pfm_grid_3d")
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 
 function ents.PFMGrid:OnEntitySpawn()

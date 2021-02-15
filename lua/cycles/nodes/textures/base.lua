@@ -19,7 +19,7 @@ unirender.Node.albedo_texture = {
 	OUT_ALPHA = "alpha"
 }
 unirender.NODE_ALBEDO_TEXTURE = unirender.register_node("albedo_texture",function(desc)
-	local inTexture = desc:RegisterProperty(unirender.Socket.TYPE_STRING,unirender.Node.albedo_texture.IN_TEXTURE,"E:/projects/pragma/build_winx64/output/materials/errora.dds")
+	local inTexture = desc:RegisterProperty(unirender.Socket.TYPE_STRING,unirender.Node.albedo_texture.IN_TEXTURE,unirender.get_texture_path("error"))
 	local inAlphaMode = desc:RegisterInput(unirender.Socket.TYPE_ENUM,unirender.Node.albedo_texture.IN_ALPHA_MODE,game.Material.ALPHA_MODE_OPAQUE)
 	local inAlphaCutoff = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.albedo_texture.IN_ALPHA_CUTOFF,0.5)
 	local inColorFactor = desc:RegisterInput(unirender.Socket.TYPE_COLOR,unirender.Node.albedo_texture.IN_COLOR_FACTOR,Vector(1,1,1))
@@ -61,7 +61,7 @@ unirender.Node.emission_texture = {
 	OUT_COLOR = "color"
 }
 unirender.NODE_EMISSION_TEXTURE = unirender.register_node("emission_texture",function(desc)
-	local inTexture = desc:RegisterProperty(unirender.Socket.TYPE_STRING,unirender.Node.emission_texture.IN_TEXTURE,"E:/projects/pragma/build_winx64/output/materials/errora.dds")
+	local inTexture = desc:RegisterProperty(unirender.Socket.TYPE_STRING,unirender.Node.emission_texture.IN_TEXTURE,unirender.get_texture_path("error"))
 	local inUseAlphaChannel = desc:RegisterInput(unirender.Socket.TYPE_BOOL,unirender.Node.emission_texture.IN_USE_ALPHA_CHANNEL,false)
 	local inColorFactor = desc:RegisterInput(unirender.Socket.TYPE_COLOR,unirender.Node.emission_texture.IN_COLOR_FACTOR,Vector(1,1,1))
 
@@ -75,19 +75,4 @@ unirender.NODE_EMISSION_TEXTURE = unirender.register_node("emission_texture",fun
 	color = color *inColorFactor
 
 	color:Link(outColor)
-end)
-
-unirender.Node.normal_texture = {
-	IN_TEXTURE = "texture",
-	OUT_NORMAL = "normal"
-}
-unirender.NODE_NORMAL_TEXTURE = unirender.register_node("normal_texture",function(desc)
-	local inTexture = desc:RegisterProperty(unirender.Socket.TYPE_STRING,unirender.Node.normal_texture.IN_TEXTURE,"E:/projects/pragma/build_winx64/output/materials/errora.dds")
-
-	local outNormal = desc:RegisterOutput(unirender.Socket.TYPE_NORMAL,unirender.Node.normal_texture.OUT_NORMAL)
-	desc:SetPrimaryOutputSocket(outNormal)
-
-	local normalStrength = 1.0
-	local normal = desc:AddNormalMapNode(inTexture,normalStrength)
-	normal:Link(outNormal)
 end)

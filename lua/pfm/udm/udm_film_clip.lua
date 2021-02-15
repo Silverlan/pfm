@@ -35,7 +35,6 @@ end
 function udm.PFMFilmClip:GetActorList(list)
 	list = list or {}
 	for _,actor in ipairs(self:GetActors():GetTable()) do
-		print("ACTOR: ",actor)
 		if(actor:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then actor:GetActorList(list)
 		else table.insert(list,actor) end
 	end

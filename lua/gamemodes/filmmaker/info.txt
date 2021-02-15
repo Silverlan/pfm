@@ -1,6 +1,6 @@
 "filmmaker"
 {
-	$string class "game.Filmmaker"
+	$string component_name "gm_pfm"
 	$string name "Filmmaker"
 	$string author "Silverlan"
 	$float version 0.1

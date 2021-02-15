@@ -123,16 +123,19 @@ function pfm.SceneAnimationCache:UpdateCache(frameIndex)
 			end
 			local flexAnim = cache[animName]
 			if(flexAnim ~= nil and flexAnim.flexAnimation ~= nil) then
-				for i,weight in ipairs(modelC:GetFlexWeights():GetTable()) do
-					weight = weight:GetValue()
-					if(weight > 0) then
-						local name = modelC:GetFlexControllerNames():Get(i)
-						if(name ~= nil) then
-							name = name:GetValue()
-							local flexControllerId = mdl:LookupFlexController(name)
-							if(flexControllerId ~= -1) then
-								flexAnim.flexAnimation:SetFlexControllerValue(frameIndex,flexControllerId,weight)
+				local globalFlexControllers = modelC:GetGlobalFlexControllers()
+				local flexNames = modelC:GetFlexControllerNames():GetTable()
+				for i,fc in ipairs(globalFlexControllers:GetTable()) do
+					if(flexNames[i] == nil) then pfm.log("Missing flex controller name for clex controller " .. i .. " for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+					else
+						local fcId = mdl:LookupFlexController(flexNames[i]:GetValue())
+						if(fcId ~= -1) then
+							local weight = fc:GetFlexWeight()
+							if(weight > 0) then
+								flexAnim.flexAnimation:SetFlexControllerValue(frameIndex,fcId,pfm.translate_flex_controller_value(mdl:GetFlexController(fcId),weight))
 							end
+						else
+							pfm.log("Unknown flex controller '" .. fc:GetName() .. "' for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 						end
 					end
 				end

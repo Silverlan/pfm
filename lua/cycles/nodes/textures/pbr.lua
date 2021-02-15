@@ -16,7 +16,7 @@ unirender.Node.rma_texture = {
 	OUT_ROUGHNESS = "roughness"
 }
 unirender.NODE_RMA_TEXTURE = unirender.register_node("rma_texture",function(desc)
-	local inTexture = desc:RegisterProperty(unirender.Socket.TYPE_STRING,unirender.Node.rma_texture.IN_TEXTURE,"E:/projects/pragma/build_winx64/output/materials/errora.dds")
+	local inTexture = desc:RegisterProperty(unirender.Socket.TYPE_STRING,unirender.Node.rma_texture.IN_TEXTURE,unirender.get_texture_path("error"))
 	local inMetalnessFactor = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.rma_texture.IN_METALNESS_FACTOR,1.0)
 	local inRoughnessFactor = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.rma_texture.IN_ROUGHNESS_FACTOR,1.0)
 

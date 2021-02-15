@@ -244,6 +244,7 @@ function pfm.Project:CollectAssetFiles()
 	end
 	local mapName = game.get_map_name()
 	add_file("maps/" .. mapName .. ".wld")
+	add_file("materials/" .. asset.find_file("maps/" .. mapName .. "/lightmap_atlas",asset.TYPE_TEXTURE))
 
 	for _,ent in ipairs(ents.get_all()) do
 		if(ent:IsMapEntity()) then
@@ -305,6 +306,10 @@ pfm.tag_render_scene_as_dirty = function(dirty)
 	local pm = pfm.get_project_manager()
 	if(util.is_valid(pm) == false or pm.TagRenderSceneAsDirty == nil) then return end
 	pm:TagRenderSceneAsDirty(dirty)
+end
+
+pfm.translate_flex_controller_value = function(fc,val)
+	return fc.min +val *(fc.max -fc.min)
 end
 
 pfm.find_inanimate_actors = function(session)
