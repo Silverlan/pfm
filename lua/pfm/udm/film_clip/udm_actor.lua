@@ -9,28 +9,28 @@
 include("/pfm/udm/udm_scene_element.lua")
 include("actor/components")
 
-udm.ELEMENT_TYPE_PFM_ACTOR = udm.register_type("PFMActor",{udm.PFMSceneElement},true)
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"transform",udm.Transform())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"components",udm.Array(udm.ELEMENT_TYPE_ANY))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"operators",udm.Array(udm.ELEMENT_TYPE_ANY))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_ACTOR,"visible",udm.Bool(true),{
+fudm.ELEMENT_TYPE_PFM_ACTOR = fudm.register_type("PFMActor",{fudm.PFMSceneElement},true)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ACTOR,"transform",fudm.Transform())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ACTOR,"components",fudm.Array(fudm.ELEMENT_TYPE_ANY))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ACTOR,"operators",fudm.Array(fudm.ELEMENT_TYPE_ANY))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ACTOR,"visible",fudm.Bool(true),{
 	getter = "IsVisible"
 })
 
-function udm.PFMActor:GetSceneChildren() return self:GetComponents():GetTable() end
+function fudm.PFMActor:GetSceneChildren() return self:GetComponents():GetTable() end
 
-function udm.PFMActor:AddComponent(pfmComponent)
+function fudm.PFMActor:AddComponent(pfmComponent)
 	self:GetComponentsAttr():PushBack(pfmComponent)
 	self:AddChild(pfmComponent)
 end
 
-function udm.PFMActor:FindComponent(name)
+function fudm.PFMActor:FindComponent(name)
 	for _,component in ipairs(self:GetComponents():GetTable()) do
 		if(component:GetComponentName() == name) then return component end
 	end
 end
 
-function udm.PFMActor:HasComponent(name)
+function fudm.PFMActor:HasComponent(name)
 	if(type(name) == "string") then return self:FindComponent(name) ~= nil end
 	for _,component in ipairs(self:GetComponents():GetTable()) do
 		if(util.is_same_object(name,component)) then return true end
@@ -38,14 +38,14 @@ function udm.PFMActor:HasComponent(name)
 	return false
 end
 
-function udm.PFMActor:FindEntity()
+function fudm.PFMActor:FindEntity()
 	for ent in ents.iterator({ents.IteratorFilterComponent("pfm_actor")}) do
 		local actorC = ent:GetComponent("pfm_actor")
 		if(util.is_same_object(actorC:GetActorData(),self)) then return ent end
 	end
 end
 
-function udm.PFMActor:IsAbsoluteVisible()
+function fudm.PFMActor:IsAbsoluteVisible()
 	if(self:IsVisible() == false) then return false end
 	local parent = self:GetSceneParent()
 	if(parent == nil or parent.IsAbsoluteVisible == nil) then return true end

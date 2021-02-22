@@ -38,7 +38,7 @@ end
 
 function ents.PFMOverlayClip:GetTimeFrame()
 	local clip = self:GetOverlayClipData()
-	if(clip == nil) then return udm.PFMTimeFrame() end
+	if(clip == nil) then return fudm.PFMTimeFrame() end
 	return clip:GetTimeFrame()
 end
 

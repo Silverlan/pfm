@@ -8,15 +8,15 @@
 
 include("/pfm/udm/udm_scene_element.lua")
 
-udm.ELEMENT_TYPE_PFM_BONE = udm.register_type("PFMBone",{udm.PFMSceneElement},true)
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_BONE,"transform",udm.Transform())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_BONE,"childBones",udm.Array(udm.ELEMENT_TYPE_PFM_BONE))
+fudm.ELEMENT_TYPE_PFM_BONE = fudm.register_type("PFMBone",{fudm.PFMSceneElement},true)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_BONE,"transform",fudm.Transform())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_BONE,"childBones",fudm.Array(fudm.ELEMENT_TYPE_PFM_BONE))
 
-function udm.PFMBone:GetSceneChildren() return self:GetChildBones():GetTable() end
+function fudm.PFMBone:GetSceneChildren() return self:GetChildBones():GetTable() end
 
-function udm.PFMBone:GetModelComponent()
-	local parent = self:FindParentElement(function(el) return el:GetType() == udm.ELEMENT_TYPE_PFM_BONE or el:GetType() == udm.ELEMENT_TYPE_PFM_MODEL end)
+function fudm.PFMBone:GetModelComponent()
+	local parent = self:FindParentElement(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_BONE or el:GetType() == fudm.ELEMENT_TYPE_PFM_MODEL end)
 	if(parent == nil) then return end
-	if(parent:GetType() == udm.ELEMENT_TYPE_PFM_BONE) then return parent:GetModelComponent() end
-	if(parent:GetType() == udm.ELEMENT_TYPE_PFM_MODEL) then return parent end
+	if(parent:GetType() == fudm.ELEMENT_TYPE_PFM_BONE) then return parent:GetModelComponent() end
+	if(parent:GetType() == fudm.ELEMENT_TYPE_PFM_MODEL) then return parent end
 end

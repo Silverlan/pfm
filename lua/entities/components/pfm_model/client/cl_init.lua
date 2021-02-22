@@ -183,7 +183,7 @@ function ents.PFMModel:Setup(actorData,mdlInfo)
 			local data = newMat:GetDataBlock()
 			for key,val in pairs(matOverride:GetOverrideValues():GetTable()) do
 				local type = data:GetValueType(key)
-				if(type ~= nil and val:GetType() == udm.ATTRIBUTE_TYPE_STRING) then
+				if(type ~= nil and val:GetType() == fudm.ATTRIBUTE_TYPE_STRING) then
 					if(type == "texture") then newMat:SetTexture(key,val:GetValue())
 					else data:SetValue(type,key,val:GetValue()) end
 				end

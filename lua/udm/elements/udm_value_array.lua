@@ -8,15 +8,15 @@
 
 include("../udm_listener.lua")
 
-udm.ELEMENT_TYPE_VALUE_ARRAY = udm.register_type("ValueArray",{udm.BaseElement,udm.Listener},true)
-function udm.ValueArray:Initialize(valType)
-	udm.BaseElement.Initialize(self)
+fudm.ELEMENT_TYPE_VALUE_ARRAY = fudm.register_type("ValueArray",{fudm.BaseElement,fudm.Listener},true)
+function fudm.ValueArray:Initialize(valType)
+	fudm.BaseElement.Initialize(self)
 	self:SetValueType(valType)
 end
 
-function udm.ValueArray:__len() return (self.m_array ~= nil) and #self.m_array or 0 end
+function fudm.ValueArray:__len() return (self.m_array ~= nil) and #self.m_array or 0 end
 
-function udm.ValueArray:Copy()
+function fudm.ValueArray:Copy()
 	local copy = self.m_class(self:GetValueType())
 	if(#self == 0) then return copy end
 	copy:InitializeArray(self:GetValueType())
@@ -48,7 +48,7 @@ local supportedTypes = {
 	[util.VAR_TYPE_VECTOR4] = true,
 	[util.VAR_TYPE_QUATERNION] = true
 }
-function udm.ValueArray:SetValueType(type)
+function fudm.ValueArray:SetValueType(type)
 	self.m_array = nil
 	self:InitializeArray(type)
 	if(type ~= nil and supportedTypes[type] ~= true) then
@@ -56,9 +56,9 @@ function udm.ValueArray:SetValueType(type)
 	end
 	self.m_valueType = type
 end
-function udm.ValueArray:GetValueType() return self.m_valueType end
+function fudm.ValueArray:GetValueType() return self.m_valueType end
 
-function udm.ValueArray:InitializeArray(type)
+function fudm.ValueArray:InitializeArray(type)
 	if(self.m_array ~= nil) then return end
 	type = type or self:GetValueType()
 	if(type == util.VAR_TYPE_BOOL) then self.m_array = util.BoolVector()
@@ -82,10 +82,10 @@ function udm.ValueArray:InitializeArray(type)
 	elseif(type == util.VAR_TYPE_QUATERNION) then self.m_array = util.QuaternionVector() end
 end
 
-function udm.ValueArray:GetValue() return self.m_array end
-function udm.ValueArray:GetTable() return self.m_array end
+function fudm.ValueArray:GetValue() return self.m_array end
+function fudm.ValueArray:GetTable() return self.m_array end
 
-function udm.ValueArray:WriteToBinary(ds)
+function fudm.ValueArray:WriteToBinary(ds)
 	local array = self:GetValue()
 	local numValues = (array ~= nil) and #array or 0
 	local type = self:GetValueType()
@@ -115,7 +115,7 @@ function udm.ValueArray:WriteToBinary(ds)
 	end
 end
 
-function udm.ValueArray:ReadFromBinary(ds)
+function fudm.ValueArray:ReadFromBinary(ds)
 	local type = ds:ReadUInt32()
 	self:SetValueType((type ~= math.MAX_UINT32) and type or nil)
 	local numElements = ds:ReadUInt32()
@@ -150,14 +150,14 @@ function udm.ValueArray:ReadFromBinary(ds)
 	return array
 end
 
-function udm.ValueArray:Get(i)
+function fudm.ValueArray:Get(i)
 	i = i -1
 	if(i < 0 or i >= #self) then return end
 	return self:GetTable():At(i)
 end
-function udm.ValueArray:Set(i,v) self:GetTable():Set(i -1,v) end
+function fudm.ValueArray:Set(i,v) self:GetTable():Set(i -1,v) end
 
-function udm.ValueArray:Insert(pos,value)
+function fudm.ValueArray:Insert(pos,value)
 	local t = self:GetValueType()
 	if(t == nil) then
 		local valueType = util.get_type_name(value)
@@ -183,27 +183,27 @@ function udm.ValueArray:Insert(pos,value)
 	self:InvokeChangeListeners(value,pos)
 end
 
-function udm.ValueArray:PushFront(value)
+function fudm.ValueArray:PushFront(value)
 	self:Insert(1,value)
 end
 
-function udm.ValueArray:PushBack(value)
+function fudm.ValueArray:PushBack(value)
 	self:Insert(#self +1,value)
 end
 
-function udm.ValueArray:PopBack()
+function fudm.ValueArray:PopBack()
 	local v = self:GetValue():At(#self -1)
 	self:GetValue():Erase(#self -1)
 	return v
 end
 
-function udm.ValueArray:PopFront()
+function fudm.ValueArray:PopFront()
 	local v = self:GetValue():At(0)
 	self:GetValue():Erase(0)
 	return v
 end
 
-function udm.ValueArray:Clear()
+function fudm.ValueArray:Clear()
 	self.m_array:Clear()
 end
 
@@ -211,16 +211,16 @@ end
 --[[
 include("../udm_listener.lua")
 
-udm.ELEMENT_TYPE_VALUE_ARRAY = udm.register_type("ValueArray",{udm.BaseElement,udm.Listener},true)
-function udm.ValueArray:Initialize(valType)
-	udm.BaseElement.Initialize(self)
+fudm.ELEMENT_TYPE_VALUE_ARRAY = fudm.register_type("ValueArray",{fudm.BaseElement,fudm.Listener},true)
+function fudm.ValueArray:Initialize(valType)
+	fudm.BaseElement.Initialize(self)
 	self.m_array = {}
 	self:SetValueType(valType)
 end
 
-function udm.ValueArray:__len() return #self.m_array end
+function fudm.ValueArray:__len() return #self.m_array end
 
-function udm.ValueArray:Copy()
+function fudm.ValueArray:Copy()
 	local copy = self.m_class(self:GetValueType())
 	for _,v in ipairs(self:GetTable()) do
 		copy:PushBack(v)
@@ -249,18 +249,18 @@ local supportedTypes = {
 	[util.VAR_TYPE_VECTOR4] = true,
 	[util.VAR_TYPE_QUATERNION] = true
 }
-function udm.ValueArray:SetValueType(type)
+function fudm.ValueArray:SetValueType(type)
 	if(type ~= nil and supportedTypes[type] ~= true) then
 		error("Attempted to use type " .. type .. " as type for value array, which is not supported!")
 	end
 	self.m_valueType = type
 end
-function udm.ValueArray:GetValueType() return self.m_valueType end
+function fudm.ValueArray:GetValueType() return self.m_valueType end
 
-function udm.ValueArray:GetValue() return self.m_array end
-function udm.ValueArray:GetTable() return self.m_array end
+function fudm.ValueArray:GetValue() return self.m_array end
+function fudm.ValueArray:GetTable() return self.m_array end
 
-function udm.ValueArray:WriteToBinary(ds)
+function fudm.ValueArray:WriteToBinary(ds)
 	local array = self:GetValue()
 	local type = self:GetValueType()
 	ds:WriteUInt32(type or math.MAX_UINT32)
@@ -288,7 +288,7 @@ function udm.ValueArray:WriteToBinary(ds)
 	end
 end
 
-function udm.ValueArray:ReadFromBinary(ds)
+function fudm.ValueArray:ReadFromBinary(ds)
 	self.m_array = {}
 	local array = self.m_array
 	local type = ds:ReadUInt32()
@@ -320,10 +320,10 @@ function udm.ValueArray:ReadFromBinary(ds)
 	return array
 end
 
-function udm.ValueArray:Get(i) return self:GetTable()[i] end
-function udm.ValueArray:Set(i,v) self:GetTable()[i] = v end
+function fudm.ValueArray:Get(i) return self:GetTable()[i] end
+function fudm.ValueArray:Set(i,v) self:GetTable()[i] = v end
 
-function udm.ValueArray:Insert(pos,value)
+function fudm.ValueArray:Insert(pos,value)
 	local t = self:GetValueType()
 	if(t == nil) then
 		local valueType = util.get_type_name(value)
@@ -344,23 +344,23 @@ function udm.ValueArray:Insert(pos,value)
 	self:InvokeChangeListeners(value,pos)
 end
 
-function udm.ValueArray:PushFront(value)
+function fudm.ValueArray:PushFront(value)
 	self:Insert(1,value)
 end
 
-function udm.ValueArray:PushBack(value)
+function fudm.ValueArray:PushBack(value)
 	self:Insert(#self +1,value)
 end
 
-function udm.ValueArray:PopBack()
+function fudm.ValueArray:PopBack()
 	return table.remove(self:GetValue(),#self)
 end
 
-function udm.ValueArray:PopFront()
+function fudm.ValueArray:PopFront()
 	return table.remove(self:GetValue(),1)
 end
 
-function udm.ValueArray:Clear()
+function fudm.ValueArray:Clear()
 	self.m_array = {}
 end
 ]]

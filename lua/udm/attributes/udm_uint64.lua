@@ -6,9 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ATTRIBUTE_TYPE_UINT64 = udm.register_attribute("UInt64",0)
-function udm.UInt64:WriteToBinary(ds) ds:WriteUInt64(self:GetValue()) end
-function udm.UInt64:ReadFromBinary(ds) return ds:ReadUInt64() end
+fudm.ATTRIBUTE_TYPE_UINT64 = fudm.register_attribute("UInt64",0)
+function fudm.UInt64:WriteToBinary(ds) ds:WriteUInt64(self:GetValue()) end
+function fudm.UInt64:ReadFromBinary(ds) return ds:ReadUInt64() end
 
-function udm.UInt64:ToASCIIString() return tostring(self:GetValue()) end
-function udm.UInt64:LoadFromASCIIString(str) self:SetValue(toint(str)) end
+function fudm.UInt64:ToASCIIString() return tostring(self:GetValue()) end
+function fudm.UInt64:LoadFromASCIIString(str) self:SetValue(toint(str)) end

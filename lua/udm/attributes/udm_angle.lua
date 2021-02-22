@@ -6,18 +6,18 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ATTRIBUTE_TYPE_ANGLE = udm.register_attribute("Angle",EulerAngles())
-function udm.Angle:WriteToBinary(ds) ds:WriteAngles(self:GetValue()) end
-function udm.Angle:ReadFromBinary(ds) return ds:ReadAngles() end
-function udm.Angle:Copy()
+fudm.ATTRIBUTE_TYPE_ANGLE = fudm.register_attribute("Angle",EulerAngles())
+function fudm.Angle:WriteToBinary(ds) ds:WriteAngles(self:GetValue()) end
+function fudm.Angle:ReadFromBinary(ds) return ds:ReadAngles() end
+function fudm.Angle:Copy()
 	return self.m_class(self:GetValue():Copy())
 end
 
-function udm.Angle:ToASCIIString()
+function fudm.Angle:ToASCIIString()
 	local v = self:GetValue()
 	return tostring(v.p) .. " " .. tostring(v.y) .. " " .. tostring(v.r)
 end
-function udm.Angle:LoadFromASCIIString(str)
+function fudm.Angle:LoadFromASCIIString(str)
 	local v = string.split(str," ")
 	self:SetValue(EulerAngles(tonumber(v[1]),tonumber(v[2]),tonumber(v[3])))
 end

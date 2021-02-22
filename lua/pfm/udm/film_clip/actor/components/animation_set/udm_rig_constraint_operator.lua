@@ -6,9 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("udm.PFMRigConstraintOperator",udm.BaseElement)
-function udm.PFMRigConstraintOperator:__init(...)
-	udm.BaseElement.__init(self,...)
+util.register_class("fudm.PFMRigConstraintOperator",fudm.BaseElement)
+function fudm.PFMRigConstraintOperator:__init(...)
+	fudm.BaseElement.__init(self,...)
 end
 
-function udm.PFMRigConstraintOperator:IsRigConstaintOperator() return true end
+function fudm.PFMRigConstraintOperator:IsRigConstaintOperator() return true end

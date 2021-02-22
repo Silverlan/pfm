@@ -6,4 +6,4 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_ROOT = udm.register_element("Root")
+fudm.ELEMENT_TYPE_ROOT = fudm.register_element("Root")

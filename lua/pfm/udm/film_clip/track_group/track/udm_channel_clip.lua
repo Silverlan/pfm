@@ -8,11 +8,11 @@
 
 include("udm_channel.lua")
 
-udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP = udm.register_element("PFMChannelClip")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,"timeFrame",udm.PFMTimeFrame())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,"channels",udm.Array(udm.ELEMENT_TYPE_PFM_CHANNEL))
+fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP = fudm.register_element("PFMChannelClip")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,"timeFrame",fudm.PFMTimeFrame())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,"channels",fudm.Array(fudm.ELEMENT_TYPE_PFM_CHANNEL))
 
-function udm.PFMChannelClip:SetPlaybackOffset(offset,filter)
+function fudm.PFMChannelClip:SetPlaybackOffset(offset,filter)
 	--if(self:GetTimeFrame():IsInTimeFrame(offset) == false) then return end
 	local timeFrame = self:GetTimeFrame()
 	local localOffset = timeFrame:LocalizeOffset(offset)

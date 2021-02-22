@@ -6,9 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ATTRIBUTE_TYPE_INT = udm.register_attribute("Int",0)
-function udm.Int:WriteToBinary(ds) ds:WriteInt32(self:GetValue()) end
-function udm.Int:ReadFromBinary(ds) return ds:ReadInt32() end
+fudm.ATTRIBUTE_TYPE_INT = fudm.register_attribute("Int",0)
+function fudm.Int:WriteToBinary(ds) ds:WriteInt32(self:GetValue()) end
+function fudm.Int:ReadFromBinary(ds) return ds:ReadInt32() end
 
-function udm.Int:ToASCIIString() return tostring(self:GetValue()) end
-function udm.Int:LoadFromASCIIString(str) self:SetValue(toint(str)) end
+function fudm.Int:ToASCIIString() return tostring(self:GetValue()) end
+function fudm.Int:LoadFromASCIIString(str) self:SetValue(toint(str)) end

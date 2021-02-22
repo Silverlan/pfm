@@ -8,8 +8,8 @@
 
 include("/pfm/udm/film_clip/track_group/track/udm_channel.lua")
 
-udm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL = udm.register_element("PFMTransformControl")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,"valuePosition",udm.Vector3())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,"valueRotation",udm.Quaternion())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,"positionChannel",udm.PFMChannel())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,"rotationChannel",udm.PFMChannel())
+fudm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL = fudm.register_element("PFMTransformControl")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,"valuePosition",fudm.Vector3())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,"valueRotation",fudm.Quaternion())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,"positionChannel",fudm.PFMChannel())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,"rotationChannel",fudm.PFMChannel())

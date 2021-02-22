@@ -8,21 +8,21 @@
 
 include("udm_log_list.lua")
 
-udm.ELEMENT_TYPE_PFM_LOG = udm.register_element("PFMLog")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"useDefaultValue",udm.Bool(true),{
+fudm.ELEMENT_TYPE_PFM_LOG = fudm.register_element("PFMLog")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_LOG,"useDefaultValue",fudm.Bool(true),{
 	getter = "ShouldUseDefaultValue"
 })
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"defaultValue",udm.ATTRIBUTE_TYPE_ANY)
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"layers",udm.Array(udm.ELEMENT_TYPE_PFM_LOG_LIST))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG,"bookmarks",udm.Array(udm.ATTRIBUTE_TYPE_FLOAT))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_LOG,"defaultValue",fudm.ATTRIBUTE_TYPE_ANY)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_LOG,"layers",fudm.Array(fudm.ELEMENT_TYPE_PFM_LOG_LIST))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_LOG,"bookmarks",fudm.Array(fudm.ATTRIBUTE_TYPE_FLOAT))
 
-function udm.PFMLog:AddLayer(layer)
-	local logLayer = (type(layer) == "string") and self:CreateChild(udm.ELEMENT_TYPE_PFM_LOG_LIST,layer) or layer
+function fudm.PFMLog:AddLayer(layer)
+	local logLayer = (type(layer) == "string") and self:CreateChild(fudm.ELEMENT_TYPE_PFM_LOG_LIST,layer) or layer
 	self:GetLayersAttr():PushBack(logLayer)
 	return logLayer
 end
 
-function udm.PFMLog:SetPlaybackOffset(offset)
+function fudm.PFMLog:SetPlaybackOffset(offset)
 	-- TODO: I'm not sure why logs can even have multiple layers, I've yet to see a case where this actually applies.
 	-- Maybe merge layers with the log?
 	for _,layer in ipairs(self:GetLayers():GetTable()) do

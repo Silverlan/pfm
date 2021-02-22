@@ -8,36 +8,36 @@
 
 include("/pfm/udm/film_clip/actor/components/animation_set/udm_log.lua")
 include("/pfm/udm/film_clip/actor/components/animation_set/udm_graph_curve.lua")
-udm.ELEMENT_TYPE_PFM_CHANNEL = udm.register_element("PFMChannel")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"log",udm.PFMLog())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"fromAttribute",udm.String())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"fromElement",udm.ELEMENT_TYPE_ANY)
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"toAttribute",udm.String())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"toElement",udm.ELEMENT_TYPE_ANY)
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"graphCurve",udm.PFMGraphCurve())
+fudm.ELEMENT_TYPE_PFM_CHANNEL = fudm.register_element("PFMChannel")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"log",fudm.PFMLog())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"fromAttribute",fudm.String())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"fromElement",fudm.ELEMENT_TYPE_ANY)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"toAttribute",fudm.String())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"toElement",fudm.ELEMENT_TYPE_ANY)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"graphCurve",fudm.PFMGraphCurve())
 
-function udm.PFMChannel:IsBoneTransformChannel()
+function fudm.PFMChannel:IsBoneTransformChannel()
 	if(self.m_cacheIsBoneTransformChannel ~= nil) then return self.m_cacheIsBoneTransformChannel end
 	self.m_cacheIsBoneTransformChannel = false
 	local toElement = self:GetToElement()
 	if(toElement == nil) then return false end
 	local type = toElement:GetType()
-	if(type == udm.ELEMENT_TYPE_PFM_CONSTRAINT_SLAVE) then
+	if(type == fudm.ELEMENT_TYPE_PFM_CONSTRAINT_SLAVE) then
 		self.m_cacheIsBoneTransformChannel = true
 		return true
 	end
-	if(toElement:GetType() ~= udm.ELEMENT_TYPE_TRANSFORM) then return false end
-	local parent = toElement:FindParentElement(function(el) return el:GetType() == udm.ELEMENT_TYPE_PFM_BONE end)
+	if(toElement:GetType() ~= fudm.ELEMENT_TYPE_TRANSFORM) then return false end
+	local parent = toElement:FindParentElement(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_BONE end)
 	self.m_cacheIsBoneTransformChannel = (parent ~= nil)
 	return self.m_cacheIsBoneTransformChannel
 end
 
-function udm.PFMChannel:IsFlexControllerChannel()
+function fudm.PFMChannel:IsFlexControllerChannel()
 	local toElement = self:GetToElement()
-	return (toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR) -- TODO: Is this reliable?
+	return (toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR) -- TODO: Is this reliable?
 end
 
-function udm.PFMChannel:SetPlaybackOffset(offset)
+function fudm.PFMChannel:SetPlaybackOffset(offset)
 	-- Note: This function will grab the appropriate value from the log
 	-- and assign it to the 'toElement'. If no log values exist, the
 	-- 'fromAttribute' value of the 'fromElement' element will be used instead.

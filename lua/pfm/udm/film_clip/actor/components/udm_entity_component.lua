@@ -8,9 +8,9 @@
 
 include("/pfm/udm/udm_scene_element.lua")
 
-util.register_class("udm.PFMEntityComponent",udm.PFMSceneElement)
-function udm.PFMEntityComponent:__init(...)
-	udm.PFMSceneElement.__init(self,...)
+util.register_class("fudm.PFMEntityComponent",fudm.PFMSceneElement)
+function fudm.PFMEntityComponent:__init(...)
+	fudm.PFMSceneElement.__init(self,...)
 end
 
-function udm.PFMEntityComponent:IsEntityComponent() return true end
+function fudm.PFMEntityComponent:IsEntityComponent() return true end

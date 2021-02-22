@@ -168,9 +168,9 @@ function gui.PFMControlsMenu:OnValueChanged(identifier,value)
 	if(self.m_controls[identifier] == nil or self.m_controls[identifier].property == nil) then return end
 	local prop = self.m_controls[identifier].property
 	local type = prop:GetType()
-	if(type == udm.ATTRIBUTE_TYPE_FLOAT or type == udm.ATTRIBUTE_TYPE_TIME) then value = tonumber(value) end
-	if(type == udm.ATTRIBUTE_TYPE_INT or type == udm.ATTRIBUTE_TYPE_UINT8 or type == udm.ATTRIBUTE_TYPE_UINT64) then value = math.round(tonumber(value)) end
-	if(type == udm.ATTRIBUTE_TYPE_BOOL) then value = toboolean(value) end
+	if(type == fudm.ATTRIBUTE_TYPE_FLOAT or type == fudm.ATTRIBUTE_TYPE_TIME) then value = tonumber(value) end
+	if(type == fudm.ATTRIBUTE_TYPE_INT or type == fudm.ATTRIBUTE_TYPE_UINT8 or type == fudm.ATTRIBUTE_TYPE_UINT64) then value = math.round(tonumber(value)) end
+	if(type == fudm.ATTRIBUTE_TYPE_BOOL) then value = toboolean(value) end
 	self.m_skipPropCallback = self.m_skipPropCallback or {}
 	self.m_skipPropCallback[identifier] = true
 	if(self.m_controls[identifier].controlValueToPropertyValue) then value = self.m_controls[identifier].controlValueToPropertyValue(value) end

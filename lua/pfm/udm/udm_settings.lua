@@ -8,11 +8,11 @@
 
 include("settings")
 
-udm.ELEMENT_TYPE_PFM_SETTINGS = udm.register_element("PFMSettings")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SETTINGS,"renderSettings",udm.PFMRenderSettings())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SETTINGS,"playheadOffset",udm.Float(0.0))
+fudm.ELEMENT_TYPE_PFM_SETTINGS = fudm.register_element("PFMSettings")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SETTINGS,"renderSettings",fudm.PFMRenderSettings())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SETTINGS,"playheadOffset",fudm.Float(0.0))
 
-function udm.PFMSettings:GetPlayheadFrameOffset() return self:TimeOffsetToFrameOffset(self:GetPlayheadOffset()) end
-function udm.PFMSettings:GetFrameRate() return self:GetRenderSettings():GetFrameRate() end
-function udm.PFMSettings:TimeOffsetToFrameOffset(offset) return offset *self:GetFrameRate() end
-function udm.PFMSettings:FrameOffsetToTimeOffset(offset) return offset /self:GetFrameRate() end
+function fudm.PFMSettings:GetPlayheadFrameOffset() return self:TimeOffsetToFrameOffset(self:GetPlayheadOffset()) end
+function fudm.PFMSettings:GetFrameRate() return self:GetRenderSettings():GetFrameRate() end
+function fudm.PFMSettings:TimeOffsetToFrameOffset(offset) return offset *self:GetFrameRate() end
+function fudm.PFMSettings:FrameOffsetToTimeOffset(offset) return offset /self:GetFrameRate() end

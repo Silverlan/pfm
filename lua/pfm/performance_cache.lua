@@ -27,8 +27,8 @@ function pfm.PerformanceCache:Initialize(filmClip)
 	for _,channelClip in ipairs(animChannelTrack:GetChannelClips():GetTable()) do
 		for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
 			local toElement = channel:GetToElement()
-			if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_TRANSFORM) then
-				local parent = toElement:FindParentElement(function(el) return el:GetType() == udm.ELEMENT_TYPE_PFM_ACTOR end)
+			if(toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_TRANSFORM) then
+				local parent = toElement:FindParentElement(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR end)
 				if(util.is_same_object(parent,cam)) then
 					local attr = channel:GetToAttribute()
 					if(attr == "position") then

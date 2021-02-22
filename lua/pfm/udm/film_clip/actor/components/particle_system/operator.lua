@@ -6,5 +6,5 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR = udm.register_element("PFMParticleSystemOperator")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR,"operatorName",udm.String())
+fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR = fudm.register_element("PFMParticleSystemOperator")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR,"operatorName",fudm.String())

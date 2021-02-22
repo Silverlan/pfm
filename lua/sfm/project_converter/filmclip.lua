@@ -17,7 +17,7 @@ local function iterate_film_clip_children(converter,parent,node,parentName)
 		local actorName = node:GetName()
 
 		local umdNode = converter:ConvertNewElement(node)
-		if(umdNode:GetType() ~= udm.ELEMENT_TYPE_PFM_GROUP) then umdNode = parent
+		if(umdNode:GetType() ~= fudm.ELEMENT_TYPE_PFM_GROUP) then umdNode = parent
 		else parent:AddGroup(umdNode) end
 
 		-- Get the parent transform which will be applied to the children
@@ -33,7 +33,7 @@ local function iterate_film_clip_children(converter,parent,node,parentName)
 	end
 end
 
-sfm.register_element_type_conversion(sfm.FilmClip,udm.PFMFilmClip,function(converter,sfmFilmClip,pfmFilmClip)
+sfm.register_element_type_conversion(sfm.FilmClip,fudm.PFMFilmClip,function(converter,sfmFilmClip,pfmFilmClip)
 	pfmFilmClip:SetTimeFrameAttr(converter:ConvertNewElement(sfmFilmClip:GetTimeFrame()))
 	pfmFilmClip:SetSceneAttr(converter:ConvertNewElement(sfmFilmClip:GetScene()))
 	pfmFilmClip:SetFadeIn(sfmFilmClip:GetFadeIn())
@@ -93,7 +93,7 @@ sfm.register_element_type_conversion(sfm.FilmClip,udm.PFMFilmClip,function(conve
 		-- In this case we'll just add the camera manually here.
 		-- pfm.log("Camera '" .. camName .. "' of clip '" .. pfmFilmClip:GetName() .. "' not found in list of actors! Adding manually...",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 		local actor = converter:CreateActor(cam)
-		pfmFilmClip:SetProperty("camera",udm.create_reference(actor))
+		pfmFilmClip:SetProperty("camera",fudm.create_reference(actor))
 		pfmFilmClip:AddActor(actor)
 	end
 

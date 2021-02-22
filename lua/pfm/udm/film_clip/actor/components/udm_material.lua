@@ -6,6 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_PFM_MATERIAL = udm.register_element("PFMMaterial")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MATERIAL,"materialName",udm.String(""))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MATERIAL,"overrideValues",udm.Map(udm.ATTRIBUTE_TYPE_STRING))
+fudm.ELEMENT_TYPE_PFM_MATERIAL = fudm.register_element("PFMMaterial")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MATERIAL,"materialName",fudm.String(""))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MATERIAL,"overrideValues",fudm.Map(fudm.ATTRIBUTE_TYPE_STRING))

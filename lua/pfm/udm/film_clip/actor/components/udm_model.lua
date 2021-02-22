@@ -13,25 +13,25 @@ include("udm_material.lua")
 include("/gui/fileentry.lua")
 include("/gui/wimodeldialog.lua")
 
-udm.ELEMENT_TYPE_PFM_MODEL = udm.register_type("PFMModel",{udm.PFMEntityComponent},true)
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"modelName",udm.String(""))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"skin",udm.Int(0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"bodyGroup",udm.Int(0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"rootBones",udm.Array(udm.ELEMENT_TYPE_PFM_BONE))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"boneList",udm.Array(udm.ELEMENT_TYPE_PFM_BONE))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"flexWeights",udm.Array(udm.ATTRIBUTE_TYPE_FLOAT))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"flexControllerNames",udm.Array(udm.ATTRIBUTE_TYPE_STRING))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"globalFlexControllers",udm.Array(udm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"materialOverrides",udm.Array(udm.ELEMENT_TYPE_PFM_MATERIAL))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"flexControllerScale",udm.Float(1.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_MODEL,"flexControllerLimitsEnabled",udm.Bool(true))
+fudm.ELEMENT_TYPE_PFM_MODEL = fudm.register_type("PFMModel",{fudm.PFMEntityComponent},true)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"modelName",fudm.String(""))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"skin",fudm.Int(0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"bodyGroup",fudm.Int(0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"rootBones",fudm.Array(fudm.ELEMENT_TYPE_PFM_BONE))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"boneList",fudm.Array(fudm.ELEMENT_TYPE_PFM_BONE))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"flexWeights",fudm.Array(fudm.ATTRIBUTE_TYPE_FLOAT))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"flexControllerNames",fudm.Array(fudm.ATTRIBUTE_TYPE_STRING))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"globalFlexControllers",fudm.Array(fudm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"materialOverrides",fudm.Array(fudm.ELEMENT_TYPE_PFM_MATERIAL))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"flexControllerScale",fudm.Float(1.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"flexControllerLimitsEnabled",fudm.Bool(true))
 
-function udm.PFMModel:GetComponentName() return "pfm_model" end
-function udm.PFMModel:GetIconMaterial() return "gui/pfm/icon_model_item" end
+function fudm.PFMModel:GetComponentName() return "pfm_model" end
+function fudm.PFMModel:GetIconMaterial() return "gui/pfm/icon_model_item" end
 
-function udm.PFMModel:GetSceneChildren() return self:GetRootBones():GetTable() end
+function fudm.PFMModel:GetSceneChildren() return self:GetRootBones():GetTable() end
 
-function udm.PFMModel:GetModel()
+function fudm.PFMModel:GetModel()
 	local mdlName = self:GetModelName()
 	if(#mdlName == 0) then return end
 	if(self.m_mdlCache ~= nil and self.m_mdlCache[1] == mdlName) then return self.m_mdlCache[2] end
@@ -40,31 +40,31 @@ function udm.PFMModel:GetModel()
 	return mdl
 end
 
-function udm.PFMModel:FindFlexControllerWeight(name)
+function fudm.PFMModel:FindFlexControllerWeight(name)
 	for i,fcName in ipairs(self:GetFlexControllerNames():GetTable()) do
 		if(fcName:GetValue() == name) then return self:GetFlexWeights():Get(i) end
 	end
 end
 
-function udm.PFMModel:FindBone(name)
+function fudm.PFMModel:FindBone(name)
 	for _,bone in ipairs(self:GetBoneList():GetTable()) do
 		if(bone:GetTarget():GetName() == name) then return bone end
 	end
 end
 
-function udm.PFMModel:CalcBonePose(track,boneName,t)
+function fudm.PFMModel:CalcBonePose(track,boneName,t)
 	local bone = (type(boneName) == "string") and self:FindBone(boneName) or self:GetBoneList():Get(boneName)
 	if(bone == nil) then return phys.ScaledTransform() end
 	bone = bone:GetTarget()
 	local transform = bone:GetTransform()
-	--[[local elSlave = transform:FindParent(function(el) return el:GetType() == udm.ELEMENT_TYPE_PFM_CONSTRAINT_SLAVE end)
+	--[[local elSlave = transform:FindParent(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_CONSTRAINT_SLAVE end)
 	if(elSlave ~= nil) then
 
 	end]]
 	return track:CalcBonePose(transform,t)
 end
 
-function udm.PFMModel:SetupFlexControllerControls(actorEditor,itemComponent)
+function fudm.PFMModel:SetupFlexControllerControls(actorEditor,itemComponent)
 	local filmClip = actorEditor:GetFilmClip()
 	local mdl = self:GetModel()
 	if(mdl == nil) then return end
@@ -177,7 +177,7 @@ function udm.PFMModel:SetupFlexControllerControls(actorEditor,itemComponent)
 	})
 end
 
-function udm.PFMModel:SetupBoneControls(actorEditor,itemComponent)
+function fudm.PFMModel:SetupBoneControls(actorEditor,itemComponent)
 	local itemBones = itemComponent:AddItem(locale.get_text("skeleton"))
 	for _,bone in ipairs(self:GetBoneList():GetTable()) do
 		bone = bone:GetTarget()
@@ -192,7 +192,7 @@ function udm.PFMModel:SetupBoneControls(actorEditor,itemComponent)
 	end
 end
 
-function udm.PFMModel:SetupControls(actorEditor,itemComponent)
+function fudm.PFMModel:SetupControls(actorEditor,itemComponent)
 	local itemFlexControllers = itemComponent:AddItem(locale.get_text("flex_controllers"))
 	self:SetupFlexControllerControls(actorEditor,itemFlexControllers)
 	

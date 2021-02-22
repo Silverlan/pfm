@@ -8,13 +8,13 @@
 
 include("udm_rig_handle.lua")
 
-udm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET = udm.register_element("PFMConstraintTarget")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET,"target",udm.PFMRigHandle())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET,"targetWeight",udm.Float(1.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET,"offset",udm.Vector3())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET,"rotationOffset",udm.Quaternion())
+fudm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET = fudm.register_element("PFMConstraintTarget")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET,"target",fudm.PFMRigHandle())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET,"targetWeight",fudm.Float(1.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET,"offset",fudm.Vector3())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET,"rotationOffset",fudm.Quaternion())
 
-function udm.PFMConstraintTarget:GetPose(applyTranslationOffset,applyRotationOffset)
+function fudm.PFMConstraintTarget:GetPose(applyTranslationOffset,applyRotationOffset)
 	local target = self:GetTarget()
 	local pose = (target ~= nil) and target:GetConstraintPose() or phys.Transform()
 	if(applyTranslationOffset) then

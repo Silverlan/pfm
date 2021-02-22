@@ -173,7 +173,7 @@ function gui.PFMElementViewer:AddUDMNode(node,name,elTreeParent,elTreePrevious)
 		if(insertIndex ~= nil) then insertIndex = insertIndex +1 end
 	end
 	local item = self.m_data:AddItem(text,nil,insertIndex)
-	--[[if(node:GetType() == udm.ATTRIBUTE_TYPE_BOOL) then
+	--[[if(node:GetType() == fudm.ATTRIBUTE_TYPE_BOOL) then
 		local el = gui.create("WICheckbox")
 		pRow:InsertElement(0,el)
 		el:SetChecked(node:GetValue())

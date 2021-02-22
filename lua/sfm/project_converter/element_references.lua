@@ -10,7 +10,7 @@ sfm.fix_element_references = function(project)
 	local root = project:GetUDMRootNode()
 
 	local actors = {}
-	root:FindElementsByType(udm.ELEMENT_TYPE_PFM_ACTOR,actors)
+	root:FindElementsByType(fudm.ELEMENT_TYPE_PFM_ACTOR,actors)
 
 	local componentToActor = {}
 	for _,actor in ipairs(actors) do
@@ -21,7 +21,7 @@ sfm.fix_element_references = function(project)
 
 	-- Constraint slaves point to entity model components, but they need to point to the entity instead, so we'll redirect them here
 	local constraintSlaves = {}
-	root:FindElementsByType(udm.ELEMENT_TYPE_PFM_CONSTRAINT_SLAVE,constraintSlaves)
+	root:FindElementsByType(fudm.ELEMENT_TYPE_PFM_CONSTRAINT_SLAVE,constraintSlaves)
 	for _,slave in ipairs(constraintSlaves) do
 		local target = slave:GetTarget()
 		if(target ~= nil and componentToActor[target] ~= nil) then

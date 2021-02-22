@@ -6,44 +6,44 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_PFM_TIME_FRAME = udm.register_element("PFMTimeFrame")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TIME_FRAME,"start",udm.Float(0.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TIME_FRAME,"duration",udm.Float(0.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TIME_FRAME,"offset",udm.Float(0.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TIME_FRAME,"scale",udm.Float(1.0))
+fudm.ELEMENT_TYPE_PFM_TIME_FRAME = fudm.register_element("PFMTimeFrame")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TIME_FRAME,"start",fudm.Float(0.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TIME_FRAME,"duration",fudm.Float(0.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TIME_FRAME,"offset",fudm.Float(0.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TIME_FRAME,"scale",fudm.Float(1.0))
 
-function udm.PFMTimeFrame:GetEnd() return self:GetStart() +self:GetDuration() end
-function udm.PFMTimeFrame:Max(timeFrameOther)
+function fudm.PFMTimeFrame:GetEnd() return self:GetStart() +self:GetDuration() end
+function fudm.PFMTimeFrame:Max(timeFrameOther)
 	local startTime = math.min(self:GetStart(),timeFrameOther:GetStart())
 	local endTime = math.max(self:GetEnd(),timeFrameOther:GetEnd())
 	local duration = endTime -startTime
-	local result = udm.PFMTimeFrame()
+	local result = fudm.PFMTimeFrame()
 	result:SetStart(startTime)
 	result:SetDuration(endTime)
 	return result
 end
-function udm.PFMTimeFrame:Min(timeFrameOther)
+function fudm.PFMTimeFrame:Min(timeFrameOther)
 	local startTime = math.max(self:GetStart(),timeFrameOther:GetStart())
 	local endTime = math.min(self:GetEnd(),timeFrameOther:GetEnd())
 	local duration = endTime -startTime
-	local result = udm.PFMTimeFrame()
+	local result = fudm.PFMTimeFrame()
 	result:SetStart(startTime)
 	result:SetDuration(endTime)
 	return result
 end
-function udm.PFMTimeFrame:LocalizeOffset(offset)
+function fudm.PFMTimeFrame:LocalizeOffset(offset)
 	return (offset -self:GetStart() +self:GetOffset()) *self:GetScale()
 end
-function udm.PFMTimeFrame:GlobalizeOffset(offset)
+function fudm.PFMTimeFrame:GlobalizeOffset(offset)
 	return (self:GetStart() +offset -self:GetOffset()) /self:GetScale()
 end
-function udm.PFMTimeFrame:LocalizeTimeOffset(offset)
+function fudm.PFMTimeFrame:LocalizeTimeOffset(offset)
 	return offset -self:GetStart()
 end
-function udm.PFMTimeFrame:GlobalizeTimeOffset(offset)
+function fudm.PFMTimeFrame:GlobalizeTimeOffset(offset)
 	return offset +self:GetStart()
 end
-function udm.PFMTimeFrame:IsInTimeFrame(t,e)
+function fudm.PFMTimeFrame:IsInTimeFrame(t,e)
 	e = e or 0.001
 	-- Note: -e for both start and end is on purpose
 	return t >= self:GetStart() -e and t < self:GetEnd() -e

@@ -6,17 +6,17 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ATTRIBUTE_TYPE_BINARY = udm.register_attribute("Binary",util.DataStream())
-function udm.Binary:WriteToBinary(ds) ds:WriteBinary(ds) end
-function udm.Binary:ReadFromBinary(ds) return ds:ReadBinary() end
-function udm.Binary:Copy()
+fudm.ATTRIBUTE_TYPE_BINARY = fudm.register_attribute("Binary",util.DataStream())
+function fudm.Binary:WriteToBinary(ds) ds:WriteBinary(ds) end
+function fudm.Binary:ReadFromBinary(ds) return ds:ReadBinary() end
+function fudm.Binary:Copy()
 	return self.m_class(self:GetValue():Copy())
 end
 
-function udm.Binary:ToASCIIString()
+function fudm.Binary:ToASCIIString()
 	return self:GetValue():ToBinaryString()
 end
-function udm.Binary:LoadFromASCIIString(str)
+function fudm.Binary:LoadFromASCIIString(str)
 	local v = self:GetValue()
 	v:Clear()
 	v:WriteBinaryString(str)

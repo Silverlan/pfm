@@ -82,11 +82,11 @@ end
 function sfm.is_udm_element_entity_component(el)
 	local type = el:GetType()
 	-- We only have to check the component types that have a corresponding type in SFM
-	return (type == udm.ELEMENT_TYPE_PFM_MODEL or type == udm.ELEMENT_TYPE_PFM_CAMERA or type == udm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM)
+	return (type == fudm.ELEMENT_TYPE_PFM_MODEL or type == fudm.ELEMENT_TYPE_PFM_CAMERA or type == fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM)
 end
 
 local sfm_attr_to_pragma_table = {
-	[udm.ELEMENT_TYPE_PFM_CAMERA] = {
+	[fudm.ELEMENT_TYPE_PFM_CAMERA] = {
 		["fieldofview"] = "fov"
 	}
 }
@@ -110,16 +110,16 @@ end
 sfm.assign_generic_attribute = function(name,attr,pfmObj)
 	local type = attr:GetType()
 	local v = attr:GetValue()
-	if(type == dmx.Attribute.TYPE_INT) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
-	elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_FLOAT,v))
-	elseif(type == dmx.Attribute.TYPE_BOOL) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_BOOL,v))
-	elseif(type == dmx.Attribute.TYPE_STRING) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_STRING,v))
-	elseif(type == dmx.Attribute.TYPE_COLOR) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_COLOR,v))
-	elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_VECTOR3,v))
-	elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_ANGLE,v))
-	elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_QUATERNION,v))
-	elseif(type == dmx.Attribute.TYPE_UINT64) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
-	elseif(type == dmx.Attribute.TYPE_UINT8) then pfmObj:SetProperty(name,udm.create_attribute(udm.ATTRIBUTE_TYPE_INT,v))
+	if(type == dmx.Attribute.TYPE_INT) then pfmObj:SetProperty(name,fudm.create_attribute(fudm.ATTRIBUTE_TYPE_INT,v))
+	elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmObj:SetProperty(name,fudm.create_attribute(fudm.ATTRIBUTE_TYPE_FLOAT,v))
+	elseif(type == dmx.Attribute.TYPE_BOOL) then pfmObj:SetProperty(name,fudm.create_attribute(fudm.ATTRIBUTE_TYPE_BOOL,v))
+	elseif(type == dmx.Attribute.TYPE_STRING) then pfmObj:SetProperty(name,fudm.create_attribute(fudm.ATTRIBUTE_TYPE_STRING,v))
+	elseif(type == dmx.Attribute.TYPE_COLOR) then pfmObj:SetProperty(name,fudm.create_attribute(fudm.ATTRIBUTE_TYPE_COLOR,v))
+	elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmObj:SetProperty(name,fudm.create_attribute(fudm.ATTRIBUTE_TYPE_VECTOR3,v))
+	elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmObj:SetProperty(name,fudm.create_attribute(fudm.ATTRIBUTE_TYPE_ANGLE,v))
+	elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmObj:SetProperty(name,fudm.create_attribute(fudm.ATTRIBUTE_TYPE_QUATERNION,v))
+	elseif(type == dmx.Attribute.TYPE_UINT64) then pfmObj:SetProperty(name,fudm.create_attribute(fudm.ATTRIBUTE_TYPE_INT,v))
+	elseif(type == dmx.Attribute.TYPE_UINT8) then pfmObj:SetProperty(name,fudm.create_attribute(fudm.ATTRIBUTE_TYPE_INT,v))
 	else
 		pfm.log("Unsupported attribute type '" .. dmx.type_to_string(type) .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 	end
@@ -208,7 +208,7 @@ function sfm.ProjectConverter:CreateActor(sfmComponent,pfmParentDag)
 	local pfmComponent = self:ConvertNewElement(sfmComponent)
 	local actor = self:GetPFMActor(pfmComponent) -- Check if this component has already been associated with an actor
 	if(actor ~= nil) then return actor,false end
-	actor = udm.create_element(udm.ELEMENT_TYPE_PFM_ACTOR)
+	actor = fudm.create_element(fudm.ELEMENT_TYPE_PFM_ACTOR)
 	if(pfmParentDag ~= nil) then actor:ChangeName(pfmParentDag:GetName()) end -- pfmComponent:GetName()) -- TODO: Remove suffix (e.g. _model)
 	actor:SetVisible(sfmComponent:IsVisible())
 
@@ -282,7 +282,7 @@ local function convert_bone_transforms(filmClip,processedObjects,mdlMsgCache)
 		if(processedObjects[actor] == nil) then
 			processedObjects[actor] = true
 			for _,component in ipairs(actor:GetComponents():GetTable()) do
-				if(component:GetType() == udm.ELEMENT_TYPE_PFM_MODEL) then
+				if(component:GetType() == fudm.ELEMENT_TYPE_PFM_MODEL) then
 					local mdlName = component:GetModelName()
 					local mdl = game.load_model(mdlName)
 					if(mdl == nil and mdlMsgCache[mdlName] == nil) then
@@ -360,7 +360,7 @@ local function apply_post_processing(project,filmClip,processedObjects)
 					-- pfm.log("Processing channel '" .. tostring(channel) .. "'...",pfm.LOG_CATEGORY_PFM_CONVERTER)
 					local toElement = channel:GetToElement()
 					local toAttr = channel:GetToAttribute()
-					if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_PFM_CAMERA) then
+					if(toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_PFM_CAMERA) then
 						if(string.compare(toAttr,"focalDistance",false)) then toElement:SetDepthOfFieldEnabled(true)
 						elseif(string.compare(toAttr,"fov",false)) then
 							local log = channel:GetLog()
@@ -381,7 +381,7 @@ local function apply_post_processing(project,filmClip,processedObjects)
 						-- Some attributes (like visibility) are stored in the SFM GameModel/Camera/etc. elements. In Pragma these are
 						-- components of an actor, and these attributes are stored in the actor, not the components, so we have to
 						-- redirect the reference to the actor.
-						local actor = toElement:FindParent(function(p) return p:GetType() == udm.ELEMENT_TYPE_PFM_ACTOR end) or nil
+						local actor = toElement:FindParent(function(p) return p:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR end) or nil
 						if(actor ~= nil) then
 							channel:SetToElement(actor)
 							toElement = actor
@@ -390,13 +390,13 @@ local function apply_post_processing(project,filmClip,processedObjects)
 
 					local isPosTransform = (toAttr == "position")
 					local isRotTransform = (toAttr == "rotation")
-					if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_TRANSFORM and (isPosTransform or isRotTransform)) then
+					if(toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_TRANSFORM and (isPosTransform or isRotTransform)) then
 						local isBoneTransform = false
 						local pfmModel
 						local pfmBone
-						if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_TRANSFORM) then
+						if(toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_TRANSFORM) then
 							local parent = toElement:FindParentElement()
-							if(parent ~= nil and parent:GetType() == udm.ELEMENT_TYPE_PFM_BONE) then
+							if(parent ~= nil and parent:GetType() == fudm.ELEMENT_TYPE_PFM_BONE) then
 								pfmBone = parent
 								pfmModel = parent:GetModelComponent()
 								isBoneTransform = (pfmModel ~= nil)
@@ -453,11 +453,11 @@ local function apply_post_processing(project,filmClip,processedObjects)
 								end
 							end
 						else
-							local actor = toElement and toElement:FindParent(function(p) return p:GetType() == udm.ELEMENT_TYPE_PFM_ACTOR end) or nil
+							local actor = toElement and toElement:FindParent(function(p) return p:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR end) or nil
 							local isCamera = false
 							if(actor ~= nil) then
 								for _,component in ipairs(actor:GetComponents():GetTable()) do
-									if(component:GetType() == udm.ELEMENT_TYPE_PFM_CAMERA) then
+									if(component:GetType() == fudm.ELEMENT_TYPE_PFM_CAMERA) then
 										isCamera = true
 										break
 									end
@@ -528,14 +528,14 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 
 	local project = self:GetPFMProject()
 	for _,session in ipairs(project:GetSessions()) do
-		iterate_session(session,udm.ELEMENT_TYPE_TRANSFORM,function(elTransform)
+		iterate_session(session,fudm.ELEMENT_TYPE_TRANSFORM,function(elTransform)
 			-- The "overrideParent" attribute of some transforms may be pointing to an actor component, but
 			-- we want it to point to the actor instead.
 			local overrideParent = elTransform:GetOverrideParent()
 			if(overrideParent ~= nil) then
 				if(sfm.is_udm_element_entity_component(overrideParent)) then
 					local overrideParentActor = overrideParent:FindParentElement()
-					elTransform:SetOverrideParent((overrideParentActor ~= nil) and udm.create_reference(overrideParentActor) or nil)
+					elTransform:SetOverrideParent((overrideParentActor ~= nil) and fudm.create_reference(overrideParentActor) or nil)
 				end
 			end
 		end)
@@ -556,9 +556,9 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 
 	-- Build scene graph
 	local groups = {}
-	project:GetUDMRootNode():FindElementsByType(udm.ELEMENT_TYPE_PFM_GROUP,groups)
+	project:GetUDMRootNode():FindElementsByType(fudm.ELEMENT_TYPE_PFM_GROUP,groups)
 	for _,group in ipairs(groups) do
-		local elParent = group:FindParentElement(function(el) return el:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP end)
+		local elParent = group:FindParentElement(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_FILM_CLIP end)
 		if(elParent ~= nil) then
 			-- We'll assume the 'group' element is a scene
 			for _,actor in ipairs(group:GetActors():GetTable()) do
@@ -624,7 +624,7 @@ end
 
 include("project_converter")
 
-sfm.register_element_type_conversion(sfm.Session,udm.PFMSession,function(converter,sfmSession,pfmSession)
+sfm.register_element_type_conversion(sfm.Session,fudm.PFMSession,function(converter,sfmSession,pfmSession)
 	local activeClip = sfmSession:GetActiveClip()
 	pfmSession:SetActiveClip(converter:ConvertNewElement(activeClip))
 	pfmSession:SetSettings(converter:ConvertNewElement(sfmSession:GetSettings()))
@@ -641,46 +641,46 @@ sfm.register_element_type_conversion(sfm.Session,udm.PFMSession,function(convert
 	end]]
 end)
 
-sfm.register_element_type_conversion(sfm.Settings,udm.PFMSettings,function(converter,sfmSettings,pfmSettings)
+sfm.register_element_type_conversion(sfm.Settings,fudm.PFMSettings,function(converter,sfmSettings,pfmSettings)
 	pfmSettings:SetRenderSettings(converter:ConvertNewElement(sfmSettings:GetRenderSettings()))
 end)
 
-sfm.register_element_type_conversion(sfm.RenderSettings,udm.PFMRenderSettings,function(converter,sfmRenderSettings,pfmRenderSettings)
+sfm.register_element_type_conversion(sfm.RenderSettings,fudm.PFMRenderSettings,function(converter,sfmRenderSettings,pfmRenderSettings)
 	pfmRenderSettings:SetFrameRate(sfmRenderSettings:GetFrameRate())
 end)
 
-sfm.register_element_type_conversion(sfm.BookmarkSet,udm.PFMBookmarkSet,function(converter,sfmBookmarkSet,pfmBookmarkSet)
+sfm.register_element_type_conversion(sfm.BookmarkSet,fudm.PFMBookmarkSet,function(converter,sfmBookmarkSet,pfmBookmarkSet)
 	for _,bookmark in ipairs(sfmBookmarkSet:GetBookmarks()) do
 		pfmBookmarkSet:GetBookmarks():PushBack(converter:ConvertNewElement(bookmark))
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.Bookmark,udm.PFMBookmark,function(converter,sfmBookmark,pfmBookmark)
+sfm.register_element_type_conversion(sfm.Bookmark,fudm.PFMBookmark,function(converter,sfmBookmark,pfmBookmark)
 	pfmBookmark:GetTimeRange():SetTime(sfmBookmark:GetTime())
 	pfmBookmark:GetTimeRange():SetDuration(sfmBookmark:GetDuration())
 	pfmBookmark:SetNote(sfmBookmark:GetNote())
 end)
 
-sfm.register_element_type_conversion(sfm.Material,udm.PFMMaterial,function(converter,sfmMaterial,pfmMaterial)
+sfm.register_element_type_conversion(sfm.Material,fudm.PFMMaterial,function(converter,sfmMaterial,pfmMaterial)
 	pfmMaterial:SetMaterialName(sfmMaterial:GetMtlName())
 	local baseTexture = sfmMaterial["Get$basetexture"](sfmMaterial)
 	if(baseTexture ~= nil and #baseTexture > 0) then
-		pfmMaterial:GetOverrideValuesAttr():Insert("albedo_map",udm.String(baseTexture))
+		pfmMaterial:GetOverrideValuesAttr():Insert("albedo_map",fudm.String(baseTexture))
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.Color,udm.Color,function(converter,sfmColor,pfmColor)
+sfm.register_element_type_conversion(sfm.Color,fudm.Color,function(converter,sfmColor,pfmColor)
 	pfmColor:SetValue(sfmColor:GetColor())
 end)
 
-sfm.register_element_type_conversion(sfm.TimeFrame,udm.PFMTimeFrame,function(converter,sfmTimeFrame,pfmTimeFrame)
+sfm.register_element_type_conversion(sfm.TimeFrame,fudm.PFMTimeFrame,function(converter,sfmTimeFrame,pfmTimeFrame)
 	pfmTimeFrame:SetStart(sfmTimeFrame:GetStart())
 	pfmTimeFrame:SetDuration(sfmTimeFrame:GetDuration())
 	pfmTimeFrame:SetOffset(sfmTimeFrame:GetOffset())
 	pfmTimeFrame:SetScale(sfmTimeFrame:GetScale())
 end)
 
-sfm.register_element_type_conversion(sfm.AnimationSet,udm.PFMAnimationSet,function(converter,sfmAnimSet,pfmAnimSet)
+sfm.register_element_type_conversion(sfm.AnimationSet,fudm.PFMAnimationSet,function(converter,sfmAnimSet,pfmAnimSet)
 	-- TODO: This is obsolete!
 	-- Flex controls
 	--[[for _,sfmControl in ipairs(sfmAnimSet:GetControls()) do
@@ -695,7 +695,7 @@ sfm.register_element_type_conversion(sfm.AnimationSet,udm.PFMAnimationSet,functi
 	end]]
 end)
 
-sfm.register_element_type_conversion(sfm.Track,udm.PFMTrack,function(converter,sfmTrack,pfmTrack)
+sfm.register_element_type_conversion(sfm.Track,fudm.PFMTrack,function(converter,sfmTrack,pfmTrack)
 	pfmTrack:SetMuted(sfmTrack:IsMuted())
 	pfmTrack:SetVolume(sfmTrack:GetVolume())
 
@@ -720,7 +720,7 @@ sfm.register_element_type_conversion(sfm.Track,udm.PFMTrack,function(converter,s
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.TrackGroup,udm.PFMTrackGroup,function(converter,sfmTrackGroup,pfmTrackGroup)
+sfm.register_element_type_conversion(sfm.TrackGroup,fudm.PFMTrackGroup,function(converter,sfmTrackGroup,pfmTrackGroup)
 	pfmTrackGroup:SetVisible(sfmTrackGroup:IsVisible())
 	pfmTrackGroup:SetMuted(sfmTrackGroup:IsMuted())
 	for _,track in ipairs(sfmTrackGroup:GetTracks()) do
@@ -729,7 +729,7 @@ sfm.register_element_type_conversion(sfm.TrackGroup,udm.PFMTrackGroup,function(c
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.Camera,udm.PFMCamera,function(converter,sfmCamera,pfmCamera)
+sfm.register_element_type_conversion(sfm.Camera,fudm.PFMCamera,function(converter,sfmCamera,pfmCamera)
 	pfmCamera:SetFov(sfm.convert_source_fov_to_pragma(sfmCamera:GetFieldOfView()))
 	pfmCamera:SetZNear(sfm.source_units_to_pragma_units(sfmCamera:GetZNear()))
 	pfmCamera:SetZFar(sfm.source_units_to_pragma_units(sfmCamera:GetZFar()))
@@ -744,7 +744,7 @@ sfm.register_element_type_conversion(sfm.Camera,udm.PFMCamera,function(converter
 	pfmCamera:SetApertureBladeCount(3)
 end)
 
-sfm.register_element_type_conversion(sfm.Control,udm.PFMFlexControl,function(converter,sfmControl,pfmControl)
+sfm.register_element_type_conversion(sfm.Control,fudm.PFMFlexControl,function(converter,sfmControl,pfmControl)
 	pfmControl:SetValue(sfmControl:GetValue())
 	pfmControl:SetLeftValue(sfmControl:GetLeftValue())
 	pfmControl:SetRightValue(sfmControl:GetRightValue())
@@ -768,7 +768,7 @@ sfm.register_element_type_conversion(sfm.Control,udm.PFMFlexControl,function(con
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.TransformControl,udm.PFMTransformControl,function(converter,sfmControl,pfmControl)
+sfm.register_element_type_conversion(sfm.TransformControl,fudm.PFMTransformControl,function(converter,sfmControl,pfmControl)
 	local pos = sfmControl:GetValuePosition()
 	local rot = sfmControl:GetValueOrientation()
 	-- TODO: The Source Engine uses different coordinate systems depending on what we're dealing with.
@@ -795,7 +795,7 @@ sfm.register_element_type_conversion(sfm.TransformControl,udm.PFMTransformContro
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(converter,sfmGameModel,pfmGameModel)
+sfm.register_element_type_conversion(sfm.GameModel,fudm.PFMModel,function(converter,sfmGameModel,pfmGameModel)
 	local mdlName = sfmGameModel:GetPragmaModelPath()
 	pfmGameModel:SetModelName(mdlName)
 	pfmGameModel:SetSkin(sfmGameModel:GetSkin())
@@ -819,7 +819,7 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 				bone:ChangeName(boneName)
 			else pfm.log("Invalid format for bone name '" .. name .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING) end
 
-			if(parent:GetType() == udm.ELEMENT_TYPE_PFM_MODEL) then parent:GetRootBonesAttr():PushBack(bone)
+			if(parent:GetType() == fudm.ELEMENT_TYPE_PFM_MODEL) then parent:GetRootBonesAttr():PushBack(bone)
 			else parent:AddChild(bone) end
 
 			transformToBone[child:GetTransform()] = bone
@@ -839,7 +839,7 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 			pfmBone = transformToBone[node:GetName()]
 		end
 		if(pfmBone ~= nil) then
-			pfmGameModel:GetBoneListAttr():PushBack(udm.create_reference(pfmBone))
+			pfmGameModel:GetBoneListAttr():PushBack(fudm.create_reference(pfmBone))
 			-- Note: The transform in the bone hierarchy is not necessarily the actual final transform for the bone,
 			-- we'll use the one from the bone list instead.
 			pfmBone:SetProperty("transform",converter:ConvertNewElement(node))
@@ -849,7 +849,7 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 	end
 
 	for _,weight in ipairs(sfmGameModel:GetFlexWeights()) do
-		pfmGameModel:GetFlexWeightsAttr():PushBack(udm.Float(weight))
+		pfmGameModel:GetFlexWeightsAttr():PushBack(fudm.Float(weight))
 	end
 
 	for _,node in ipairs(sfmGameModel:GetGlobalFlexControllers()) do
@@ -867,7 +867,7 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 		end
 		for i=0,numFlexControllerWeights -1 do
 			local fc = mdl:GetFlexController(i)
-			pfmGameModel:GetFlexControllerNamesAttr():PushBack(udm.String(fc and fc.name or ""))
+			pfmGameModel:GetFlexControllerNamesAttr():PushBack(fudm.String(fc and fc.name or ""))
 		end
 	end
 
@@ -876,12 +876,12 @@ sfm.register_element_type_conversion(sfm.GameModel,udm.PFMModel,function(convert
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.GlobalFlexControllerOperator,udm.PFMGlobalFlexControllerOperator,function(converter,sfmOp,pfmOp)
+sfm.register_element_type_conversion(sfm.GlobalFlexControllerOperator,fudm.PFMGlobalFlexControllerOperator,function(converter,sfmOp,pfmOp)
 	pfmOp:SetFlexWeight(sfmOp:GetFlexWeight())
-	pfmOp:SetGameModelAttr(udm.create_reference(converter:ConvertNewElement(sfmOp:GetGameModel())))
+	pfmOp:SetGameModelAttr(fudm.create_reference(converter:ConvertNewElement(sfmOp:GetGameModel())))
 end)
 
-sfm.register_element_type_conversion(sfm.Channel,udm.PFMChannel,function(converter,sfmChannel,pfmChannel)
+sfm.register_element_type_conversion(sfm.Channel,fudm.PFMChannel,function(converter,sfmChannel,pfmChannel)
 	local log = sfmChannel:GetLog()
 	local pfmLog = converter:ConvertNewElement(log)
 	pfmChannel:SetLogAttr(pfmLog)
@@ -896,7 +896,7 @@ sfm.register_element_type_conversion(sfm.Channel,udm.PFMChannel,function(convert
 		-- pfm.log("Unsupported 'to'-element for channel '" .. sfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 	else
 		local pfmElement = converter:ConvertNewElement(toElement)
-		pfmChannel:SetToElementAttr(udm.create_reference(pfmElement))
+		pfmChannel:SetToElementAttr(fudm.create_reference(pfmElement))
 
 		-- Translate attribute
 		if(pfmElement ~= nil and toAttr ~= nil) then
@@ -926,7 +926,7 @@ sfm.register_element_type_conversion(sfm.Channel,udm.PFMChannel,function(convert
 		-- pfm.log("Unsupported 'from'-element for channel '" .. sfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 	else
 		local pfmElement = converter:ConvertNewElement(fromElement)
-		pfmChannel:SetFromElementAttr(udm.create_reference(pfmElement))
+		pfmChannel:SetFromElementAttr(fudm.create_reference(pfmElement))
 
 		-- Translate attribute
 		if(pfmElement ~= nil and fromAttr ~= nil) then
@@ -951,7 +951,7 @@ sfm.register_element_type_conversion(sfm.Channel,udm.PFMChannel,function(convert
 	end]]
 end)
 
-sfm.register_element_type_conversion(sfm.ExpressionOperator,udm.PFMExpressionOperator,function(converter,sfmOperator,pfmOperator)
+sfm.register_element_type_conversion(sfm.ExpressionOperator,fudm.PFMExpressionOperator,function(converter,sfmOperator,pfmOperator)
 	local varNames = {}
 	for name,attr in pairs(sfmOperator:GetDMXElement():GetAttributes()) do
 		if(name ~= "name" and name ~= "spewresult" and name ~= "result" and name ~= "expr" and name ~= "value") then
@@ -965,16 +965,16 @@ sfm.register_element_type_conversion(sfm.ExpressionOperator,udm.PFMExpressionOpe
 end)
 
 -- TODO: Graph editor element is obsolete; Remove it!
-sfm.register_element_type_conversion(sfm.GraphEditorCurve,udm.PFMGraphCurve,function(converter,sfmGraphCurve,pfmGraphCurve)
+sfm.register_element_type_conversion(sfm.GraphEditorCurve,fudm.PFMGraphCurve,function(converter,sfmGraphCurve,pfmGraphCurve)
 	for _,t in ipairs(sfmGraphCurve:GetKeysTime_0()) do
-		pfmGraphCurve:GetKeyTimesAttr():PushBack(udm.Float(t))
+		pfmGraphCurve:GetKeyTimesAttr():PushBack(fudm.Float(t))
 	end
 	for _,v in ipairs(sfmGraphCurve:GetKeysValue_0()) do
-		pfmGraphCurve:GetKeyValuesAttr():PushBack(udm.Float(v))
+		pfmGraphCurve:GetKeyValuesAttr():PushBack(fudm.Float(v))
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.LogLayer,udm.PFMLogList,function(converter,sfmLogLayer,pfmLogLayer)
+sfm.register_element_type_conversion(sfm.LogLayer,fudm.PFMLogList,function(converter,sfmLogLayer,pfmLogLayer)
 	for _,t in ipairs(sfmLogLayer:GetTimes()) do
 		pfmLogLayer:GetTimesAttr():PushBack(t)
 	end
@@ -995,13 +995,13 @@ sfm.register_element_type_conversion(sfm.LogLayer,udm.PFMLogList,function(conver
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.Log,udm.PFMLog,function(converter,sfmLog,pfmLog)
+sfm.register_element_type_conversion(sfm.Log,fudm.PFMLog,function(converter,sfmLog,pfmLog)
 	for _,logLayer in ipairs(sfmLog:GetLayers()) do
 		local pfmLogLayer = converter:ConvertNewElement(logLayer)
 		pfmLog:AddLayer(pfmLogLayer)
 	end
 	for _,t in ipairs(sfmLog:GetBookmarks()) do
-		pfmLog:GetBookmarks():PushBack(udm.Float(t))
+		pfmLog:GetBookmarks():PushBack(fudm.Float(t))
 	end
 	pfmLog:SetUseDefaultValue(sfmLog:GetUsedefaultvalue())
 
@@ -1009,19 +1009,19 @@ sfm.register_element_type_conversion(sfm.Log,udm.PFMLog,function(converter,sfmLo
 	if(dmxLog ~= nil) then
 		local defaultValue = dmxLog:GetAttr("defaultvalue")
 		local type = defaultValue:GetType()
-		if(type == dmx.Attribute.TYPE_INT) then pfmLog:SetDefaultValueAttr(udm.Int(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmLog:SetDefaultValueAttr(udm.Float(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_BOOL) then pfmLog:SetDefaultValueAttr(udm.Bool(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_STRING) then pfmLog:SetDefaultValueAttr(udm.String(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_COLOR) then pfmLog:SetDefaultValueAttr(udm.Color(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmLog:SetDefaultValueAttr(udm.Vector3(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_VECTOR2) then pfmLog:SetDefaultValueAttr(udm.Vector2(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_VECTOR4) then pfmLog:SetDefaultValueAttr(udm.Vector4(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmLog:SetDefaultValueAttr(udm.Angle(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmLog:SetDefaultValueAttr(udm.Quaternion(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_UINT8) then pfmLog:SetDefaultValueAttr(udm.UInt8(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_UINT64) then pfmLog:SetDefaultValueAttr(udm.UInt64(defaultValue:GetValue()))
-		elseif(type == dmx.Attribute.TYPE_MATRIX) then pfmLog:SetDefaultValueAttr(udm.Matrix(defaultValue:GetValue()))
+		if(type == dmx.Attribute.TYPE_INT) then pfmLog:SetDefaultValueAttr(fudm.Int(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmLog:SetDefaultValueAttr(fudm.Float(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_BOOL) then pfmLog:SetDefaultValueAttr(fudm.Bool(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_STRING) then pfmLog:SetDefaultValueAttr(fudm.String(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_COLOR) then pfmLog:SetDefaultValueAttr(fudm.Color(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmLog:SetDefaultValueAttr(fudm.Vector3(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_VECTOR2) then pfmLog:SetDefaultValueAttr(fudm.Vector2(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_VECTOR4) then pfmLog:SetDefaultValueAttr(fudm.Vector4(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmLog:SetDefaultValueAttr(fudm.Angle(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmLog:SetDefaultValueAttr(fudm.Quaternion(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_UINT8) then pfmLog:SetDefaultValueAttr(fudm.UInt8(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_UINT64) then pfmLog:SetDefaultValueAttr(fudm.UInt64(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_MATRIX) then pfmLog:SetDefaultValueAttr(fudm.Matrix(defaultValue:GetValue()))
 		else
 			local msg = "Unsupported default value type '" .. dmx.type_to_string(type) .. "' for log '" .. pfmLog:GetName() .. "'!"
 			pfm.log(msg,pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_ERROR)
@@ -1054,15 +1054,15 @@ local function apply_override_parent(converter,sfmEl,pfmEl)
 	local pfmOverrideParent,isNewElement = converter:ConvertNewElement(overrideParent)
 	-- Override parent is probably a game model, we'll just turn it into a reference.
 	-- We'll turn it into a reference to the actor in post-processing.
-	pfmOverrideParent = udm.create_reference(pfmOverrideParent)
+	pfmOverrideParent = fudm.create_reference(pfmOverrideParent)
 	transform:SetOverrideParentAttr(pfmOverrideParent)
 end
 
 sfm.register_element_type_conversion(sfm.Dag,function(converter,sfmDag)
-	if(is_sfm_bone(sfmDag)) then return udm.PFMBone end
-	return udm.PFMGroup
+	if(is_sfm_bone(sfmDag)) then return fudm.PFMBone end
+	return fudm.PFMGroup
 end,function(converter,sfmDag,pfmEl)
-	if(pfmEl:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then
+	if(pfmEl:GetType() == fudm.ELEMENT_TYPE_PFM_GROUP) then
 		local pfmDag = pfmEl
 		-- TODO: Unsure about sfm.ProjectConverter.TRANSFORM_TYPE_ALT, but has been confirmed to work with groups that contain particle
 		-- systems! (e.g. session mtt_soldier_pyro_explosion_pos.dmx)
@@ -1074,12 +1074,12 @@ end,function(converter,sfmDag,pfmEl)
 
 			if(type == "DmeGameModel" or type == "DmeCamera" or type == "DmeProjectedLight" or type == "DmeGameParticleSystem") then
 				local actor = converter:CreateActor(child,pfmDag)
-				pfmDag:AddChild(udm.create_reference(actor))
+				pfmDag:AddChild(fudm.create_reference(actor))
 
 				apply_override_parent(converter,child,actor)
 			else
 				local pfmElement = converter:ConvertNewElement(child)
-				pfmDag:AddChild(udm.create_reference(pfmElement))
+				pfmDag:AddChild(fudm.create_reference(pfmElement))
 
 				apply_override_parent(converter,child,pfmElement)
 			end
@@ -1099,7 +1099,7 @@ end,function(converter,sfmDag,pfmEl)
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.MaterialOverlayFXClip,udm.PFMOverlayClip,function(converter,sfmMat,pfmMat)
+sfm.register_element_type_conversion(sfm.MaterialOverlayFXClip,fudm.PFMOverlayClip,function(converter,sfmMat,pfmMat)
 	pfmMat:SetTimeFrameAttr(converter:ConvertNewElement(sfmMat:GetTimeFrame()))
 	local matName = sfmMat:GetMaterial()
 	if(#matName > 0) then matName = file.remove_file_extension(matName) .. ".wmi" end
@@ -1111,7 +1111,7 @@ sfm.register_element_type_conversion(sfm.MaterialOverlayFXClip,udm.PFMOverlayCli
 	pfmMat:SetFullscreen(sfmMat:IsFullscreen())
 end)
 
-sfm.register_element_type_conversion(sfm.ProjectedLight,udm.PFMSpotLight,function(converter,sfmLight,pfmLight)
+sfm.register_element_type_conversion(sfm.ProjectedLight,fudm.PFMSpotLight,function(converter,sfmLight,pfmLight)
 	pfmLight:SetColor(sfmLight:GetColor())
 	pfmLight:SetIntensity(sfmLight:GetIntensity())
 	pfmLight:SetIntensityType(ents.LightComponent.INTENSITY_TYPE_CANDELA)
@@ -1126,7 +1126,7 @@ sfm.register_element_type_conversion(sfm.ProjectedLight,udm.PFMSpotLight,functio
 	pfmLight:SetInnerConeAngle(fov *0.7)
 end)
 
-sfm.register_element_type_conversion(sfm.GameParticleSystem,udm.PFMParticleSystem,function(converter,sfmParticle,pfmParticle)
+sfm.register_element_type_conversion(sfm.GameParticleSystem,fudm.PFMParticleSystem,function(converter,sfmParticle,pfmParticle)
 	pfmParticle:SetTimeScale(sfmParticle:GetSimulationTimeScale())
 	pfmParticle:SetSimulating(sfmParticle:IsSimulating())
 	pfmParticle:SetEmitting(sfmParticle:IsEmitting())
@@ -1146,7 +1146,7 @@ sfm.register_element_type_conversion(sfm.GameParticleSystem,udm.PFMParticleSyste
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.ParticleSystemDefinition,udm.PFMParticleSystemDefinition,function(converter,sfmParticleDef,pfmParticleDef)
+sfm.register_element_type_conversion(sfm.ParticleSystemDefinition,fudm.PFMParticleSystemDefinition,function(converter,sfmParticleDef,pfmParticleDef)
 	pfmParticleDef:SetMaxParticles(sfmParticleDef:GetMaxParticles())
 	pfmParticleDef:SetMaterial(sfmParticleDef:GetMaterial())
 	pfmParticleDef:SetRadius(sfmParticleDef:GetRadius())
@@ -1170,7 +1170,7 @@ sfm.register_element_type_conversion(sfm.ParticleSystemDefinition,udm.PFMParticl
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.ParticleSystemOperator,udm.PFMParticleSystemOperator,function(converter,sfmParticleOp,pfmParticleOp)
+sfm.register_element_type_conversion(sfm.ParticleSystemOperator,fudm.PFMParticleSystemOperator,function(converter,sfmParticleOp,pfmParticleOp)
 	pfmParticleOp:SetOperatorName(sfmParticleOp:GetFunctionName())
 
 	for name,attr in pairs(sfmParticleOp:GetDMXElement():GetAttributes()) do
@@ -1178,19 +1178,19 @@ sfm.register_element_type_conversion(sfm.ParticleSystemOperator,udm.PFMParticleS
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.ChannelClip,udm.PFMChannelClip,function(converter,sfmChannelClip,pfmChannelClip)
+sfm.register_element_type_conversion(sfm.ChannelClip,fudm.PFMChannelClip,function(converter,sfmChannelClip,pfmChannelClip)
 	pfmChannelClip:SetTimeFrameAttr(converter:ConvertNewElement(sfmChannelClip:GetTimeFrame()))
 	for _,channel in ipairs(sfmChannelClip:GetChannels()) do
 		pfmChannelClip:GetChannelsAttr():PushBack(converter:ConvertNewElement(channel))
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.SoundClip,udm.PFMAudioClip,function(converter,sfmSoundClip,pfmSoundClip)
+sfm.register_element_type_conversion(sfm.SoundClip,fudm.PFMAudioClip,function(converter,sfmSoundClip,pfmSoundClip)
 	pfmSoundClip:SetSoundAttr(converter:ConvertNewElement(sfmSoundClip:GetSound()))
 	pfmSoundClip:SetTimeFrameAttr(converter:ConvertNewElement(sfmSoundClip:GetTimeFrame()))
 end)
 
-sfm.register_element_type_conversion(sfm.Sound,udm.PFMSound,function(converter,sfmSound,pfmSound)
+sfm.register_element_type_conversion(sfm.Sound,fudm.PFMSound,function(converter,sfmSound,pfmSound)
 	pfmSound:SetSoundName(sfmSound:GetSoundName())
 	pfmSound:SetVolume(sfmSound:GetVolume())
 	pfmSound:SetPitch(sfmSound:GetPitch() /100.0)
@@ -1203,7 +1203,7 @@ sfm.ProjectConverter.TRANSFORM_TYPE_GENERIC = 0
 sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL = 1
 sfm.ProjectConverter.TRANSFORM_TYPE_BONE = 2
 sfm.ProjectConverter.TRANSFORM_TYPE_ALT = 3
-sfm.register_element_type_conversion(sfm.Transform,udm.Transform,function(converter,sfmTransform,pfmTransform,type)
+sfm.register_element_type_conversion(sfm.Transform,fudm.Transform,function(converter,sfmTransform,pfmTransform,type)
 	pfmTransform:ChangeName(sfmTransform:GetName())
 	type = type or sfm.ProjectConverter.TRANSFORM_TYPE_GENERIC
 	if(type == sfm.ProjectConverter.TRANSFORM_TYPE_GENERIC) then
@@ -1227,41 +1227,41 @@ sfm.register_element_type_conversion(sfm.Transform,udm.Transform,function(conver
 	pfmTransform:SetScale(Vector(scale,scale,scale))
 end)
 
-sfm.register_element_type_conversion(sfm.RigPointConstraintOperator,udm.PFMRigPointConstraintOperator,function(converter,sfmOp,pfmOp)
+sfm.register_element_type_conversion(sfm.RigPointConstraintOperator,fudm.PFMRigPointConstraintOperator,function(converter,sfmOp,pfmOp)
 	pfmOp:SetSlaveAttr(converter:ConvertNewElement(sfmOp:GetSlave()))
 	for _,target in ipairs(sfmOp:GetTargets()) do
 		pfmOp:GetTargetsAttr():PushBack(converter:ConvertNewElement(target))
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.RigOrientConstraintOperator,udm.PFMRigRotationConstraintOperator,function(converter,sfmOp,pfmOp)
+sfm.register_element_type_conversion(sfm.RigOrientConstraintOperator,fudm.PFMRigRotationConstraintOperator,function(converter,sfmOp,pfmOp)
 	pfmOp:SetSlaveAttr(converter:ConvertNewElement(sfmOp:GetSlave()))
 	for _,target in ipairs(sfmOp:GetTargets()) do
 		pfmOp:GetTargetsAttr():PushBack(converter:ConvertNewElement(target))
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.RigParentConstraintOperator,udm.PFMRigParentConstraintOperator,function(converter,sfmOp,pfmOp)
+sfm.register_element_type_conversion(sfm.RigParentConstraintOperator,fudm.PFMRigParentConstraintOperator,function(converter,sfmOp,pfmOp)
 	pfmOp:SetSlaveAttr(converter:ConvertNewElement(sfmOp:GetSlave()))
 	for _,target in ipairs(sfmOp:GetTargets()) do
 		pfmOp:GetTargetsAttr():PushBack(converter:ConvertNewElement(target))
 	end
 end)
 
-sfm.register_element_type_conversion(sfm.ConstraintTarget,udm.PFMConstraintTarget,function(converter,sfmTarget,pfmTarget)
+sfm.register_element_type_conversion(sfm.ConstraintTarget,fudm.PFMConstraintTarget,function(converter,sfmTarget,pfmTarget)
 	pfmTarget:SetTargetAttr(converter:ConvertNewElement(sfmTarget:GetTarget()))
 	pfmTarget:SetTargetWeight(sfmTarget:GetTargetWeight())
 	pfmTarget:SetOffset(sfm.convert_source_constraint_target_offset_to_pragma(sfmTarget:GetVecOffset()))
 	pfmTarget:SetRotationOffset(sfm.convert_source_constraint_target_rotation_offset_to_pragma(sfmTarget:GetOOffset()))
 end)
 
-sfm.register_element_type_conversion(sfm.ConstraintSlave,udm.PFMConstraintSlave,function(converter,sfmSlave,pfmSlave)
+sfm.register_element_type_conversion(sfm.ConstraintSlave,fudm.PFMConstraintSlave,function(converter,sfmSlave,pfmSlave)
 	pfmSlave:SetTargetAttr(converter:ConvertNewElement(sfmSlave:GetTarget()))
 	-- TODO: Transform coordinate system
 	pfmSlave:SetPosition(sfm.convert_source_anim_set_position_to_pragma(sfmSlave:GetPosition()))
 	pfmSlave:SetRotation(sfm.convert_source_anim_set_rotation_to_pragma(sfmSlave:GetOrientation()))
 end)
 
-sfm.register_element_type_conversion(sfm.RigHandle,udm.PFMRigHandle,function(converter,sfmHandle,pfmHandle)
+sfm.register_element_type_conversion(sfm.RigHandle,fudm.PFMRigHandle,function(converter,sfmHandle,pfmHandle)
 	pfmHandle:SetTransformAttr(converter:ConvertNewElement(sfmHandle:GetTransform()))
 end)

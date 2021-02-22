@@ -6,9 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_PFM_LOG_LIST = udm.register_element("PFMLogList")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG_LIST,"times",udm.ValueArray(util.VAR_TYPE_FLOAT))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_LOG_LIST,"values",udm.ValueArray())
+fudm.ELEMENT_TYPE_PFM_LOG_LIST = fudm.register_element("PFMLogList")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_LOG_LIST,"times",fudm.ValueArray(util.VAR_TYPE_FLOAT))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_LOG_LIST,"values",fudm.ValueArray())
 
 local interpolationFunctions = {
 	[util.VAR_TYPE_INT32] = function(value0,value1,interpAm) return (interpAm == 1.0) and value1 or value0 end, -- No interpolation, just return the lower value
@@ -21,11 +21,11 @@ local interpolationFunctions = {
 	[util.VAR_TYPE_QUATERNION] = function(value0,value1,interpAm) return value0:Slerp(value1,interpAm) end
 }
 
-function udm.PFMLogList:Initialize()
+function fudm.PFMLogList:Initialize()
 	self.m_lastIndex = 1
 end
 
-function udm.PFMLogList:CalcInterpolatedValue(targetTime)
+function fudm.PFMLogList:CalcInterpolatedValue(targetTime)
 	local times = self:GetTimes():GetTable()
 	local values = self:GetValues():GetTable()
 	local numItems = math.min(#times,#values)
@@ -51,7 +51,7 @@ function udm.PFMLogList:CalcInterpolatedValue(targetTime)
 	end
 end
 
-function udm.PFMLogList:SetPlaybackOffset(offset)
+function fudm.PFMLogList:SetPlaybackOffset(offset)
 	local times = self:GetTimes()
 	local values = self:GetValues()
 	local numItems = math.min(#times,#values)
@@ -59,7 +59,7 @@ function udm.PFMLogList:SetPlaybackOffset(offset)
 	local type = self:GetValues():GetValueType()
 	local interpolationFunction = interpolationFunctions[type]
 	if(interpolationFunction == nil) then
-		pfm.log("No interpolation function found for log attribute type '" .. udm.get_type_name(type) .. "'! Log layer '" .. self:GetName() .. "' will be ignored!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		pfm.log("No interpolation function found for log attribute type '" .. fudm.get_type_name(type) .. "'! Log layer '" .. self:GetName() .. "' will be ignored!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
 

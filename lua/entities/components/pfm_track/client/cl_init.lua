@@ -13,7 +13,7 @@ util.register_class("ents.PFMTrack",BaseEntityComponent)
 
 function ents.PFMTrack:Initialize()
 	BaseEntityComponent.Initialize(self)
-	self.m_timeFrame = udm.PFMTimeFrame()
+	self.m_timeFrame = fudm.PFMTimeFrame()
 
 	self.m_activeClips = {}
 	self.m_inactiveClips = {}
@@ -62,7 +62,7 @@ function ents.PFMTrack:Setup(trackData,trackGroup,projectC)
 		endTime = 0.0
 	end
 
-	self.m_timeFrame = udm.PFMTimeFrame()
+	self.m_timeFrame = fudm.PFMTimeFrame()
 	self.m_timeFrame:SetStart(startTime)
 	self.m_timeFrame:SetDuration(endTime -startTime)
 end
@@ -76,13 +76,13 @@ function ents.PFMTrack:OnOffsetChanged(offset,gameViewFlags)
 			local timeFrame = clip:GetTimeFrame()
 			if(timeFrame:IsInTimeFrame(offset)) then
 				if(util.is_valid(self.m_activeClips[clip]) == false) then
-					if(clip:GetType() == udm.ELEMENT_TYPE_PFM_FILM_CLIP) then
+					if(clip:GetType() == fudm.ELEMENT_TYPE_PFM_FILM_CLIP) then
 						self.m_activeClips[clip] = self:CreateFilmClip(clip)
-					elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP) then
+					elseif(clip:GetType() == fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP) then
 						-- self.m_activeClips[clip] = self:CreateChannelClip(clip) -- Obsolete?
-					elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_AUDIO_CLIP) then
+					elseif(clip:GetType() == fudm.ELEMENT_TYPE_PFM_AUDIO_CLIP) then
 						self.m_activeClips[clip] = self:CreateAudioClip(clip)
-					elseif(clip:GetType() == udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP) then
+					elseif(clip:GetType() == fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP) then
 						self.m_activeClips[clip] = self:CreateOverlayClip(clip)
 					else
 						pfm.log("Unsupported clip type '" .. clip:GetTypeName() .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME)

@@ -6,9 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ATTRIBUTE_TYPE_BOOL = udm.register_attribute("Bool",false)
-function udm.Bool:WriteToBinary(ds) ds:WriteBool(self:GetValue()) end
-function udm.Bool:ReadFromBinary(ds) return ds:ReadBool() end
+fudm.ATTRIBUTE_TYPE_BOOL = fudm.register_attribute("Bool",false)
+function fudm.Bool:WriteToBinary(ds) ds:WriteBool(self:GetValue()) end
+function fudm.Bool:ReadFromBinary(ds) return ds:ReadBool() end
 
-function udm.Bool:ToASCIIString() return self:GetValue() and "1" or "0" end
-function udm.Bool:LoadFromASCIIString(str) self:SetValue(toboolean(str)) end
+function fudm.Bool:ToASCIIString() return self:GetValue() and "1" or "0" end
+function fudm.Bool:LoadFromASCIIString(str) self:SetValue(toboolean(str)) end

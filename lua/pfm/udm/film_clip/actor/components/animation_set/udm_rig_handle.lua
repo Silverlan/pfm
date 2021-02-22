@@ -8,5 +8,5 @@
 
 include("../udm_bone.lua")
 
-udm.ELEMENT_TYPE_PFM_RIG_HANDLE = udm.register_type("PFMRigHandle",{udm.PFMBone},true)
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_RIG_HANDLE,"transform",udm.Transform())
+fudm.ELEMENT_TYPE_PFM_RIG_HANDLE = fudm.register_type("PFMRigHandle",{fudm.PFMBone},true)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RIG_HANDLE,"transform",fudm.Transform())

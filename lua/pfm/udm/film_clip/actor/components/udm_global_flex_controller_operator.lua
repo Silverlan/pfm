@@ -8,11 +8,11 @@
 
 include("udm_model.lua")
 
-udm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR = udm.register_element("PFMGlobalFlexControllerOperator")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR,"flexWeight",udm.Float())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR,"gameModel",udm.PFMModel())
+fudm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR = fudm.register_element("PFMGlobalFlexControllerOperator")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR,"flexWeight",fudm.Float())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR,"gameModel",fudm.PFMModel())
 
-function udm.PFMGlobalFlexControllerOperator:Initialize()
+function fudm.PFMGlobalFlexControllerOperator:Initialize()
 	local property = self:GetFlexWeightAttr()
 	property:AddChangeListener(function(newValue)
 		-- Inform the flex weight of the game model of the new value
@@ -22,7 +22,7 @@ function udm.PFMGlobalFlexControllerOperator:Initialize()
 	end)
 end
 
-function udm.PFMGlobalFlexControllerOperator:FindModelFlexWeight()
+function fudm.PFMGlobalFlexControllerOperator:FindModelFlexWeight()
 	local fcName = self:GetName()
 	if(#fcName == 0) then return end
 	local gameModel = self:GetGameModel()

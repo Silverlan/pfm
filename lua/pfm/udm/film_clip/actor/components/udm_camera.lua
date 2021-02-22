@@ -8,29 +8,29 @@
 
 include("udm_entity_component.lua")
 
-udm.ELEMENT_TYPE_PFM_CAMERA = udm.register_type("PFMCamera",{udm.PFMEntityComponent},true)
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"fov",udm.Float(ents.CameraComponent.DEFAULT_FOV))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"zNear",udm.Float(ents.CameraComponent.DEFAULT_NEAR_Z))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"zFar",udm.Float(ents.CameraComponent.DEFAULT_FAR_Z))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"aspectRatio",udm.Float(1.0))
+fudm.ELEMENT_TYPE_PFM_CAMERA = fudm.register_type("PFMCamera",{fudm.PFMEntityComponent},true)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"fov",fudm.Float(ents.CameraComponent.DEFAULT_FOV))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"zNear",fudm.Float(ents.CameraComponent.DEFAULT_NEAR_Z))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"zFar",fudm.Float(ents.CameraComponent.DEFAULT_FAR_Z))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"aspectRatio",fudm.Float(1.0))
 
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"focalDistance",udm.Float(72.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"fstop",udm.Float(2.8),{
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"focalDistance",fudm.Float(72.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"fstop",fudm.Float(2.8),{
 	getter = "GetFStop",
 	setter = "SetFStop"
 })
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"apertureBokehRatio",udm.Float(1.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"apertureBladeCount",udm.Int(0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"apertureBladesRotation",udm.Float(0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"sensorSize",udm.Float(36.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CAMERA,"depthOfFieldEnabled",udm.Bool(false),{
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"apertureBokehRatio",fudm.Float(1.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"apertureBladeCount",fudm.Int(0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"apertureBladesRotation",fudm.Float(0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"sensorSize",fudm.Float(36.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CAMERA,"depthOfFieldEnabled",fudm.Bool(false),{
 	getter = "IsDepthOfFieldEnabled"
 })
 
-function udm.PFMCamera:GetComponentName() return "pfm_camera" end
-function udm.PFMCamera:GetIconMaterial() return "gui/pfm/icon_camera_item" end
+function fudm.PFMCamera:GetComponentName() return "pfm_camera" end
+function fudm.PFMCamera:GetIconMaterial() return "gui/pfm/icon_camera_item" end
 
-function udm.PFMCamera:SetupControls(actorEditor,itemComponent)
+function fudm.PFMCamera:SetupControls(actorEditor,itemComponent)
 	actorEditor:AddControl(self,itemComponent,{
 		name = locale.get_text("pfm_component_camera_field_of_view"),
 		property = "fov",

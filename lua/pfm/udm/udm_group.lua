@@ -6,54 +6,54 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_PFM_GROUP = udm.register_type("PFMGroup",{udm.PFMSceneElement},true)
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_GROUP,"transform",udm.Transform())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_GROUP,"actors",udm.Array(udm.ELEMENT_TYPE_ANY)) -- Can contain actors or groups
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_GROUP,"visible",udm.Bool(false),{
+fudm.ELEMENT_TYPE_PFM_GROUP = fudm.register_type("PFMGroup",{fudm.PFMSceneElement},true)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_GROUP,"transform",fudm.Transform())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_GROUP,"actors",fudm.Array(fudm.ELEMENT_TYPE_ANY)) -- Can contain actors or groups
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_GROUP,"visible",fudm.Bool(false),{
 	getter = "IsVisible"
 })
 
-function udm.PFMGroup:Initialize()
-	udm.BaseElement.Initialize(self)
+function fudm.PFMGroup:Initialize()
+	fudm.BaseElement.Initialize(self)
 end
 
-function udm.PFMGroup:GetSceneChildren() return self:GetActors():GetTable() end
+function fudm.PFMGroup:GetSceneChildren() return self:GetActors():GetTable() end
 
-function udm.PFMGroup:IsScene()
+function fudm.PFMGroup:IsScene()
 	local parent = self:GetSceneParent()
 	return parent ~= nil and util.is_same_object(self,parent:GetScene())
 end
 
-function udm.PFMGroup:IsAbsoluteVisible()
+function fudm.PFMGroup:IsAbsoluteVisible()
 	if(self:IsVisible() == false) then return false end
 	local parent = self:GetSceneParent()
 	if(parent == nil or parent.IsAbsoluteVisible == nil) then return true end
 	return parent:IsAbsoluteVisible()
 end
 
-function udm.PFMGroup:AddActor(actor)
+function fudm.PFMGroup:AddActor(actor)
 	for _,actorOther in ipairs(self:GetActors():GetTable()) do
 		if(util.is_same_object(actor,actorOther)) then return end
 	end
 	self:GetActors():PushBack(actor)
 end
 
-function udm.PFMGroup:AddGroup(group)
+function fudm.PFMGroup:AddGroup(group)
 	self:AddActor(group)
 end
 
-function udm.PFMGroup:GetActorList(list)
+function fudm.PFMGroup:GetActorList(list)
 	list = list or {}
 	for _,actor in ipairs(self:GetActors():GetTable()) do
-		if(actor:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then actor:GetActorList(list)
+		if(actor:GetType() == fudm.ELEMENT_TYPE_PFM_GROUP) then actor:GetActorList(list)
 		else table.insert(list,actor) end
 	end
 	return list
 end
 
-function udm.PFMGroup:FindActor(name)
+function fudm.PFMGroup:FindActor(name)
 	for _,actor in ipairs(self:GetActors():GetTable()) do
-		if(actor:GetType() == udm.ELEMENT_TYPE_PFM_GROUP) then
+		if(actor:GetType() == fudm.ELEMENT_TYPE_PFM_GROUP) then
 			local el = actor:FindActor(name)
 			if(el ~= nil) then return el end
 		elseif(actor:GetName() == name) then return actor end

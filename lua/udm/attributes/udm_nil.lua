@@ -6,13 +6,13 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ATTRIBUTE_TYPE_NIL = udm.register_attribute("Nil",nil)
-function udm.Nil:WriteToBinary(ds) end
-function udm.Nil:ReadFromBinary(ds) return nil end
-function udm.Nil:Copy()
+fudm.ATTRIBUTE_TYPE_NIL = fudm.register_attribute("Nil",nil)
+function fudm.Nil:WriteToBinary(ds) end
+function fudm.Nil:ReadFromBinary(ds) return nil end
+function fudm.Nil:Copy()
 	return self.m_class(nil)
 end
-function udm.Nil:ToASCIIString()
+function fudm.Nil:ToASCIIString()
 	return "nil"
 end
-function udm.Nil:LoadFromASCIIString(str) end
+function fudm.Nil:LoadFromASCIIString(str) end

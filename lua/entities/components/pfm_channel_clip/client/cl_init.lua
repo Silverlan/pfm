@@ -35,7 +35,7 @@ function ents.PFMChannelClip:GetTrack() return self.m_track end
 
 function ents.PFMChannelClip:GetTimeFrame()
 	local clip = self:GetChannelClipData()
-	if(clip == nil) then return udm.PFMTimeFrame() end
+	if(clip == nil) then return fudm.PFMTimeFrame() end
 	return clip:GetTimeFrame()
 end
 
@@ -50,7 +50,7 @@ function ents.PFMChannelClip:SetOffset(offset)
 
 	--filmClip:GetActors():GetTable()[1]
 	-- Componentsn
-	--udm.ELEMENT_TYPE_PFM_MODEL
+	--fudm.ELEMENT_TYPE_PFM_MODEL
 	--local actorData = ents.find_by_class("pfm_actor")[1]
 	local clip = self:GetChannelClipData()
 	for _,channel in ipairs(clip:GetChannels():GetTable()) do
@@ -60,7 +60,7 @@ function ents.PFMChannelClip:SetOffset(offset)
 		end]]
 		if(channel:GetName() == "player/hwm/pyro_rootPos channel") then
 --[[
-function udm.BaseAttribute:AddChangeListener(listener)
+function fudm.BaseAttribute:AddChangeListener(listener)
 	local cb = util.Callback(listener)
 	table.insert(self.m_listeners,cb)
 	return cb
@@ -72,12 +72,12 @@ end
 			end)
 			toElement:SetPosition(Vector(1,2,3))]]
 		end
-		--if(toElement:GetType() ~= udm.ELEMENT_TYPE_NIL) then
+		--if(toElement:GetType() ~= fudm.ELEMENT_TYPE_NIL) then
 			--if(channel:GetName() == "player/hwm/pyro_bonePos 1") then
 				--local actorC = self.m_targetActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				--[[local actorData = _actor--actorC:GetActorData()
 				for _,component in ipairs(actorData:GetComponents():GetTable()) do
-					if(component:GetType() == udm.ELEMENT_TYPE_PFM_MODEL) then
+					if(component:GetType() == fudm.ELEMENT_TYPE_PFM_MODEL) then
 						local bones = component:GetBones()
 						for _,bone in ipairs(bones) do
 							if(bone:GetName() == "player/hwm/pyro_bonePos 1") then
@@ -96,9 +96,9 @@ end
 			--end
 		--end
 --[[
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"log",udm.PFMLog())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"toAttribute",udm.String())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_CHANNEL,"toElement",udm.Any())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"log",fudm.PFMLog())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"toAttribute",fudm.String())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"toElement",fudm.Any())
 ]]
 	end
 end

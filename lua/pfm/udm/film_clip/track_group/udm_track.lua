@@ -8,58 +8,58 @@
 
 include("track")
 
-udm.ELEMENT_TYPE_PFM_TRACK = udm.register_element("PFMTrack")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"audioClips",udm.Array(udm.ELEMENT_TYPE_PFM_AUDIO_CLIP))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"filmClips",udm.Array(udm.ELEMENT_TYPE_PFM_FILM_CLIP))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"overlayClips",udm.Array(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"channelClips",udm.Array(udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"muted",udm.Bool(false),{
+fudm.ELEMENT_TYPE_PFM_TRACK = fudm.register_element("PFMTrack")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TRACK,"audioClips",fudm.Array(fudm.ELEMENT_TYPE_PFM_AUDIO_CLIP))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TRACK,"filmClips",fudm.Array(fudm.ELEMENT_TYPE_PFM_FILM_CLIP))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TRACK,"overlayClips",fudm.Array(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TRACK,"channelClips",fudm.Array(fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TRACK,"muted",fudm.Bool(false),{
 	getter = "IsMuted"
 })
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_TRACK,"volume",udm.Float(1.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_TRACK,"volume",fudm.Float(1.0))
 
-function udm.PFMTrack:CalcTimeFrame()
-	local timeFrame = udm.PFMTimeFrame()
+function fudm.PFMTrack:CalcTimeFrame()
+	local timeFrame = fudm.PFMTimeFrame()
 	for _,filmClip in ipairs(self:GetFilmClips():GetTable()) do
 		timeFrame = timeFrame:Max(filmClip:GetTimeFrame())
 	end
 	return timeFrame
 end
 
-function udm.PFMTrack:AddAudioClip(clip)
+function fudm.PFMTrack:AddAudioClip(clip)
 	if(type(clip) == "string") then
 		local name = clip
-		clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_AUDIO_CLIP,name)
+		clip = self:CreateChild(fudm.ELEMENT_TYPE_PFM_AUDIO_CLIP,name)
 	end
 	self:GetAudioClipsAttr():PushBack(clip)
 	return clip
 end
-function udm.PFMTrack:AddFilmClip(clip)
+function fudm.PFMTrack:AddFilmClip(clip)
 	if(type(clip) == "string") then
 		local name = clip
-		clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_FILM_CLIP,name)
+		clip = self:CreateChild(fudm.ELEMENT_TYPE_PFM_FILM_CLIP,name)
 	end
 	self:GetFilmClipsAttr():PushBack(clip)
 	return clip
 end
-function udm.PFMTrack:AddOverlayClip(clip)
+function fudm.PFMTrack:AddOverlayClip(clip)
 	if(type(clip) == "string") then
 		local name = clip
-		clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,name)
+		clip = self:CreateChild(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,name)
 	end
 	self:GetOverlayClipsAttr():PushBack(clip)
 	return clip
 end
-function udm.PFMTrack:AddChannelClip(clip)
+function fudm.PFMTrack:AddChannelClip(clip)
 	if(type(clip) == "string") then
 		local name = clip
-		clip = self:CreateChild(udm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,name)
+		clip = self:CreateChild(fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,name)
 	end
 	self:GetChannelClipsAttr():PushBack(clip)
 	return clip
 end
 
-function udm.PFMTrack:CalcBonePose(transform,t)
+function fudm.PFMTrack:CalcBonePose(transform,t)
 	local posLayer,posChannel,posChannelClip
 	local rotLayer,rotChannel,rotChannelClip
 	self.m_cachedBoneLayer = self.m_cachedBoneLayer or {}
@@ -84,13 +84,13 @@ function udm.PFMTrack:CalcBonePose(transform,t)
 	return phys.ScaledTransform(pos,rot,Vector(1,1,1))
 end
 
-function udm.PFMTrack:FindBoneChannelLayer(transform,attribute)
+function fudm.PFMTrack:FindBoneChannelLayer(transform,attribute)
 	local channel,channelClip = self:FindBoneChannel(transform,attribute)
 	local log = (channel ~= nil) and channel:GetLog() or nil
 	if(log ~= nil) then return log:GetLayers():Get(1),channel,channelClip end
 end
 
-function udm.PFMTrack:SetPlaybackOffset(localOffset,absOffset,filter)
+function fudm.PFMTrack:SetPlaybackOffset(localOffset,absOffset,filter)
 	for _,filmClip in ipairs(self:GetFilmClips():GetTable()) do
 		filmClip:SetPlaybackOffset(absOffset,filter)
 	end
@@ -100,11 +100,11 @@ function udm.PFMTrack:SetPlaybackOffset(localOffset,absOffset,filter)
 	end
 end
 
-function udm.PFMTrack:FindFlexControllerChannel(flexWeight)
+function fudm.PFMTrack:FindFlexControllerChannel(flexWeight)
 	for _,channelClip in ipairs(self:GetChannelClips():GetTable()) do
 		for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
 			local toElement = channel:GetToElement()
-			if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR) then
+			if(toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR) then
 				local flexWeightTo = toElement:FindModelFlexWeight()
 				if(util.is_same_object(flexWeight,flexWeightTo)) then
 					return channel,channelClip
@@ -114,11 +114,11 @@ function udm.PFMTrack:FindFlexControllerChannel(flexWeight)
 	end
 end
 
-function udm.PFMTrack:FindBoneChannel(transform,attribute)
+function fudm.PFMTrack:FindBoneChannel(transform,attribute)
 	for _,channelClip in ipairs(self:GetChannelClips():GetTable()) do
 		for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
 			local toElement = channel:GetToElement()
-			if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_TRANSFORM) then
+			if(toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_TRANSFORM) then
 				if(util.is_same_object(toElement,transform)) then
 					if(attribute == nil or channel:GetToAttribute() == attribute) then
 						return channel,channelClip

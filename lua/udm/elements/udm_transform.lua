@@ -6,15 +6,15 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_TRANSFORM = udm.register_element("Transform")
-udm.register_element_property(udm.ELEMENT_TYPE_TRANSFORM,"position",udm.Vector3(Vector()))
-udm.register_element_property(udm.ELEMENT_TYPE_TRANSFORM,"rotation",udm.Quaternion(Quaternion()))
-udm.register_element_property(udm.ELEMENT_TYPE_TRANSFORM,"scale",udm.Vector3(Vector(1.0,1.0,1.0)))
-udm.register_element_property(udm.ELEMENT_TYPE_TRANSFORM,"overrideParent",udm.ELEMENT_TYPE_ANY)
-udm.register_element_property(udm.ELEMENT_TYPE_TRANSFORM,"overridePos",udm.Bool(false))
-udm.register_element_property(udm.ELEMENT_TYPE_TRANSFORM,"overrideRot",udm.Bool(false))
+fudm.ELEMENT_TYPE_TRANSFORM = fudm.register_element("Transform")
+fudm.register_element_property(fudm.ELEMENT_TYPE_TRANSFORM,"position",fudm.Vector3(Vector()))
+fudm.register_element_property(fudm.ELEMENT_TYPE_TRANSFORM,"rotation",fudm.Quaternion(Quaternion()))
+fudm.register_element_property(fudm.ELEMENT_TYPE_TRANSFORM,"scale",fudm.Vector3(Vector(1.0,1.0,1.0)))
+fudm.register_element_property(fudm.ELEMENT_TYPE_TRANSFORM,"overrideParent",fudm.ELEMENT_TYPE_ANY)
+fudm.register_element_property(fudm.ELEMENT_TYPE_TRANSFORM,"overridePos",fudm.Bool(false))
+fudm.register_element_property(fudm.ELEMENT_TYPE_TRANSFORM,"overrideRot",fudm.Bool(false))
 
-function udm.Transform:__eq(other)
+function fudm.Transform:__eq(other)
 	return self:GetPosition() == other:GetPosition() and self:GetRotation() == other:GetRotation() and self:GetScale() == other:GetScale()
 end
 
@@ -48,8 +48,8 @@ local function invoke_scale_change_listeners(el)
 	end
 end
 
-function udm.Transform:Initialize()
-	udm.BaseElement.Initialize(self)
+function fudm.Transform:Initialize()
+	fudm.BaseElement.Initialize(self)
 	-- Note: Whenever the position and rotation of this element changes, it will also affect the transforms that
 	-- lie below this transform in the hierarchy. That's why we'll make sure to invoke the change listeners for
 	-- all of those transforms as well.
@@ -76,7 +76,7 @@ function udm.Transform:Initialize()
 	end)
 end
 
-function udm.Transform:ApplyTransformGlobal(t)
+function fudm.Transform:ApplyTransformGlobal(t)
 	local tThis = self:GetPose()
 	tThis = t *tThis
 	local scale = tThis:GetScale()
@@ -86,7 +86,7 @@ function udm.Transform:ApplyTransformGlobal(t)
 	self:SetScale(scale)
 end
 
-function udm.Transform:ApplyTransformLocal(t)
+function fudm.Transform:ApplyTransformLocal(t)
 	local tThis = self:GetPose()
 	tThis = tThis *t
 	local scale = tThis:GetScale()
@@ -96,13 +96,13 @@ function udm.Transform:ApplyTransformLocal(t)
 	self:SetScale(scale)
 end
 
-function udm.Transform:GetPose()
+function fudm.Transform:GetPose()
 	local scale = self:GetScale()
 	if(type(scale) == "number") then scale = Vector(scale,scale,scale) end
 	return phys.ScaledTransform(self:GetPosition(),self:GetRotation(),scale)
 end
 
-function udm.Transform:SetPose(pose)
+function fudm.Transform:SetPose(pose)
 	self:SetPosition(pose:GetOrigin())
 	self:SetRotation(pose:GetRotation())
 	if(pose.GetScale) then self:SetScale(pose:GetScale()) end
@@ -115,7 +115,7 @@ local function apply_parent_pose(el,pose,filter)
 	local useOverrideParent = (parent ~= nil)
 	if(useOverrideParent == false) then
 		parent = el:FindParentElement(filter)
-		if(parent ~= nil and parent:GetType() == udm.ELEMENT_TYPE_PFM_MODEL) then
+		if(parent ~= nil and parent:GetType() == fudm.ELEMENT_TYPE_PFM_MODEL) then
 			parent = parent:FindParentElement(filter) -- If the element is a model component, we'll want to redirect to the parent actor instead.
 		end
 	end
@@ -126,7 +126,7 @@ local function apply_parent_pose(el,pose,filter)
 	end
 end
 
-function udm.Transform:GetAbsolutePose(filter)
+function fudm.Transform:GetAbsolutePose(filter)
 	local pose = self:GetPose()
 	local parent = self:FindParentElement(filter)
 	if(parent == nil) then return pose end

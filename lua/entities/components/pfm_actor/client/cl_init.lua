@@ -135,9 +135,9 @@ end
 	local poseOffset = phys.Transform(offset,rotOffset)
 	target = target:GetTarget()
 	local pose = (target ~= nil) and pfm.util.get_absolute_pose(target) or phys.Transform()
-	if(opType == udm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR or opType == udm.ELEMENT_TYPE_PFM_RIG_PARENT_CONSTRAINT_OPERATOR) then
+	if(opType == fudm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR or opType == fudm.ELEMENT_TYPE_PFM_RIG_PARENT_CONSTRAINT_OPERATOR) then
 		pose:TranslateGlobal(offset)
-	elseif(opType == udm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR or opType == udm.ELEMENT_TYPE_PFM_RIG_PARENT_CONSTRAINT_OPERATOR) then
+	elseif(opType == fudm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR or opType == fudm.ELEMENT_TYPE_PFM_RIG_PARENT_CONSTRAINT_OPERATOR) then
 		pose:RotateLocal(rotOffset)
 	end
 	-- pose = poseOffset *pose -- TODO: Not sure about this
@@ -164,9 +164,9 @@ function ents.PFMActorComponent:UpdateOperators()
 			--poseConstraint:SetRotation(Quaternion(0.70710504055023,-0.70710849761963,-2.9802382783828e-08,-3.427267074585e-06))
 			local pose = poseBase *poseConstraint
 			-- Should be unit quaternion for actor 32
-			if(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR) then
+			if(op:GetType() == fudm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR) then
 				slaveTargetTransform:SetPosition(pose:GetOrigin())
-			elseif(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR) then
+			elseif(op:GetType() == fudm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR) then
 				slaveTargetTransform:SetRotation(pose:GetRotation())
 			else
 				slaveTargetTransform:SetPose(pose)
@@ -191,9 +191,9 @@ function ents.PFMActorComponent:UpdateOperators()
 				local targetPose = get_target_value(op:GetTargets():Get(1),op:GetType())
 				pose = pose *targetPose
 
-				if(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR) then
+				if(op:GetType() == fudm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR) then
 					slaveTargetTransform:SetPosition(pose:GetOrigin())
-				elseif(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR) then
+				elseif(op:GetType() == fudm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR) then
 					slaveTargetTransform:SetRotation(pose:GetRotation())
 				else
 					slaveTargetTransform:SetPose(pose)
@@ -215,9 +215,9 @@ function ents.PFMActorComponent:UpdateOperators()
 				--[[for _,target in ipairs(op:GetTargets():GetTable()) do
 					-- TODO: Apply weight
 					local targetPose = get_target_value(target)
-					if(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR) then
+					if(op:GetType() == fudm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR) then
 						pose:TranslateGlobal(targetPose:GetOrigin())
-					elseif(op:GetType() == udm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR) then
+					elseif(op:GetType() == fudm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR) then
 						pose:RotateGlobal(targetPose:GetRotation())
 					else
 						pose:TransformGlobal(targetPose)

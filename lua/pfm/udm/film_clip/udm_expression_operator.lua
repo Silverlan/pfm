@@ -6,19 +6,19 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR = udm.register_element("PFMExpressionOperator")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"result",udm.Float(0.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"expression",udm.String(""))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"value",udm.Float(0.0)) -- TODO: Can by Vector as well!
+fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR = fudm.register_element("PFMExpressionOperator")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"result",fudm.Float(0.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"expression",fudm.String(""))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"value",fudm.Float(0.0)) -- TODO: Can by Vector as well!
 
-function udm.PFMExpressionOperator:Initialize()
+function fudm.PFMExpressionOperator:Initialize()
 	local propValue = self:GetProperty("value")
 	propValue:AddChangeListener(function(newValue)
 		self:UpdateResult()
 	end)
 end
 
-function udm.PFMExpressionOperator:CalcResult()
+function fudm.PFMExpressionOperator:CalcResult()
 	local expression = self:GetExpression()
 	local f,err = loadstring("return function(self) return " .. expression .. " end")
 	if(f == nil) then
@@ -46,7 +46,7 @@ function udm.PFMExpressionOperator:CalcResult()
 	return res
 end
 
-function udm.PFMExpressionOperator:UpdateResult()
+function fudm.PFMExpressionOperator:UpdateResult()
 	local res = self:CalcResult()
 	if(res == nil) then return end
 	self:SetResult(res)

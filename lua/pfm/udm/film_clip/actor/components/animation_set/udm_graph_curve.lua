@@ -6,6 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_PFM_GRAPH_CURVE = udm.register_element("PFMGraphCurve")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_GRAPH_CURVE,"keyTimes",udm.Array(udm.ATTRIBUTE_TYPE_FLOAT))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_GRAPH_CURVE,"keyValues",udm.Array(udm.ATTRIBUTE_TYPE_FLOAT))
+fudm.ELEMENT_TYPE_PFM_GRAPH_CURVE = fudm.register_element("PFMGraphCurve")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_GRAPH_CURVE,"keyTimes",fudm.Array(fudm.ATTRIBUTE_TYPE_FLOAT))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_GRAPH_CURVE,"keyValues",fudm.Array(fudm.ATTRIBUTE_TYPE_FLOAT))

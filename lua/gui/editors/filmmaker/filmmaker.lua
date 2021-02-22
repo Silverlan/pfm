@@ -839,7 +839,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					local mdl = game.load_model(path:GetString())
 					if(mdl ~= nil) then
 						for _,fc in ipairs(mdl:GetFlexControllers()) do
-							mdlC:GetFlexControllerNames():PushBack(udm.String(fc.name))
+							mdlC:GetFlexControllerNames():PushBack(fudm.String(fc.name))
 						end
 					end
 

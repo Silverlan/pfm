@@ -12,9 +12,9 @@ pfm.impl = pfm.impl or {}
 pfm.impl.projects = pfm.impl.projects or {}
 
 pfm.PROJECT_FILE_IDENTIFIER = "PFM"
-pfm.PROJECT_FILE_FORMAT_VERSION = 1
+pfm.PROJECT_FILE_FORMAT_VERSION = 2
 
-include("log.lua")
+include("/util/log.lua")
 include("/udm/udm.lua")
 include("udm")
 include("math.lua")
@@ -24,14 +24,16 @@ include("tree/pfm_tree.lua")
 
 util.register_class("pfm.Project")
 function pfm.Project:__init()
-	self.m_udmRoot = udm.create_element(udm.ELEMENT_TYPE_ROOT,"root")
+	self.m_udmRoot = fudm.create_element(fudm.ELEMENT_TYPE_ROOT,"root")
 	self.m_sessions = {}
+	self.m_uniqueId = util.generate_uuid_v4()
 
 	self:SetName("new_project") -- TODO
 end
 
 function pfm.Project:SetName(name) self.m_projectName = name end
 function pfm.Project:GetName() return self.m_projectName end
+function pfm.Project:GetUniqueId() return self.m_uniqueId end
 
 function pfm.Project:Save(fileName)
 	local f = file.open(fileName,bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
@@ -40,6 +42,7 @@ function pfm.Project:Save(fileName)
 	f:WriteString(pfm.PROJECT_FILE_IDENTIFIER,false)
 	f:WriteUInt32(pfm.PROJECT_FILE_FORMAT_VERSION)
 	f:WriteUInt64(0) -- Placeholder for flags
+	f:WriteString(self.m_uniqueId)
 
 	local elements = {}
 	local function collect_elements(el)
@@ -56,7 +59,7 @@ function pfm.Project:Save(fileName)
 	local elementList = {}
 	for el in pairs(elements) do
 		-- References need to be first in the list
-		if(el:GetType() == udm.ELEMENT_TYPE_REFERENCE) then table.insert(elementList,1,el)
+		if(el:GetType() == fudm.ELEMENT_TYPE_REFERENCE) then table.insert(elementList,1,el)
 		else table.insert(elementList,el) end
 	end
 
@@ -65,7 +68,7 @@ function pfm.Project:Save(fileName)
 	for idx,el in ipairs(elementList) do
 		elements[el] = idx -1
 
-		udm.save(f,el)
+		fudm.save(f,el)
 	end
 
 	-- Save child information
@@ -103,21 +106,23 @@ function pfm.Project:Load(fileName)
 	end
 
 	local flags = f:ReadUInt64() -- Currently unused
+	if(version > 1) then self.m_uniqueId = f:ReadString()
+	else self.m_uniqueId = util.get_string_hash(util.Path.CreateFilePath(fileName):GetString()) end
 
 	local numElements = f:ReadUInt32()
 	local elements = {}
 	for i=1,numElements do
-		local el = udm.load(f)
+		local el = fudm.load(f)
 		table.insert(elements,el)
 	end
 
 	-- Read child information
 	for _,el in ipairs(elements) do
 		if(el:IsElement()) then
-			if(el:GetType() == udm.ELEMENT_TYPE_ROOT) then
+			if(el:GetType() == fudm.ELEMENT_TYPE_ROOT) then
 				self.m_udmRoot = el
 			end
-			if(el:GetType() == udm.ELEMENT_TYPE_PFM_SESSION) then
+			if(el:GetType() == fudm.ELEMENT_TYPE_PFM_SESSION) then
 				table.insert(self.m_sessions,el)
 			end
 			local numChildren = f:ReadUInt16()
@@ -140,7 +145,7 @@ function pfm.Project:GetSessions() return self.m_sessions end
 function pfm.Project:AddSession(session)
 	if(type(session) == "string") then
 		local name = session
-		session = udm.create_element(udm.ELEMENT_TYPE_PFM_SESSION)
+		session = fudm.create_element(fudm.ELEMENT_TYPE_PFM_SESSION)
 		session:ChangeName(name)
 	end
 	self:GetUDMRootNode():AddChild(session)
@@ -201,13 +206,13 @@ function pfm.Project:CollectAssetFiles()
 		for _,actor in ipairs(filmClip:GetActorList()) do
 			for _,component in ipairs(actor:GetComponents():GetTable()) do
 				local type = component:GetType()
-				if(type == udm.ELEMENT_TYPE_PFM_MODEL) then
+				if(type == fudm.ELEMENT_TYPE_PFM_MODEL) then
 					local mdlName = component:GetModelName()
 					if(#mdlName > 0) then
 						local mdl = game.load_model(mdlName)
 						if(mdl ~= nil) then add_model(mdl) end
 					end
-				elseif(type == udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM) then
+				elseif(type == fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM) then
 					local ptSystemName = component:GetParticleSystemName()
 					local ptFileName = ents.ParticleSystemComponent.find_particle_system_file(ptSystemName)
 					if(ptFileName ~= nil) then
@@ -273,11 +278,11 @@ pfm.create_empty_project = function()
 	filmClip:ChangeName("new_project")
 	session:GetClips():PushBack(filmClip)
 
-	local subClipTrackGroup = udm.create_element(udm.ELEMENT_TYPE_PFM_TRACK_GROUP)
+	local subClipTrackGroup = fudm.create_element(fudm.ELEMENT_TYPE_PFM_TRACK_GROUP)
 	subClipTrackGroup:ChangeName("subClipTrackGroup")
 	filmClip:GetTrackGroupsAttr():PushBack(subClipTrackGroup)
 
-	local filmTrack = udm.create_element(udm.ELEMENT_TYPE_PFM_TRACK)
+	local filmTrack = fudm.create_element(fudm.ELEMENT_TYPE_PFM_TRACK)
 	filmTrack:ChangeName("Film")
 	subClipTrackGroup:GetTracksAttr():PushBack(filmTrack)
 
@@ -345,7 +350,7 @@ pfm.find_inanimate_actors = function(session)
 								local iterated = {}
 								iterated[el] = true
 								local parent = el:FindParentElement()
-								while(parent ~= nil and parent:GetType() ~= udm.ELEMENT_TYPE_PFM_ACTOR) do
+								while(parent ~= nil and parent:GetType() ~= fudm.ELEMENT_TYPE_PFM_ACTOR) do
 									parent = el:FindParentElement()
 									if(parent ~= nil) then
 										if(iterated[parent]) then parent = nil

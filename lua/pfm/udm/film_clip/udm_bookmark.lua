@@ -8,6 +8,6 @@
 
 include("udm_time_range.lua")
 
-udm.ELEMENT_TYPE_PFM_BOOKMARK = udm.register_element("PFMBookmark")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_BOOKMARK,"timeRange",udm.PFMTimeRange())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_BOOKMARK,"note",udm.String(""))
+fudm.ELEMENT_TYPE_PFM_BOOKMARK = fudm.register_element("PFMBookmark")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_BOOKMARK,"timeRange",fudm.PFMTimeRange())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_BOOKMARK,"note",fudm.String(""))

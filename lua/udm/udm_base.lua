@@ -6,30 +6,30 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("udm.BaseItem")
+util.register_class("fudm.BaseItem")
 
-function udm.BaseItem:__init(class,value)
+function fudm.BaseItem:__init(class,value)
 	self.m_parents = {}
 end
 
-function udm.BaseItem:Initialize() end
+function fudm.BaseItem:Initialize() end
 
-function udm.BaseItem:GetParents() return self.m_parents end
+function fudm.BaseItem:GetParents() return self.m_parents end
 
-function udm.BaseItem:FindParent(filter)
+function fudm.BaseItem:FindParent(filter)
 	for _,parent in ipairs(self.m_parents) do
 		if(filter(parent)) then return parent end
 	end
 end
 
-function udm.BaseItem:IsAttribute() return false end
-function udm.BaseItem:IsElement() return false end
+function fudm.BaseItem:IsAttribute() return false end
+function fudm.BaseItem:IsElement() return false end
 
-function udm.BaseItem:GetTypeName() return udm.get_type_name(self:GetType()) end
+function fudm.BaseItem:GetTypeName() return fudm.get_type_name(self:GetType()) end
 
-function udm.BaseItem:SaveToBinary(ds) self:WriteToBinary(ds) end
-function udm.BaseItem:LoadFromBinary(ds) end
+function fudm.BaseItem:SaveToBinary(ds) self:WriteToBinary(ds) end
+function fudm.BaseItem:LoadFromBinary(ds) end
 
 -- These should be overwritten by derived classes
-function udm.BaseItem:WriteToBinary(ds) end
-function udm.BaseItem:ReadFromBinary(ds) end
+function fudm.BaseItem:WriteToBinary(ds) end
+function fudm.BaseItem:ReadFromBinary(ds) end

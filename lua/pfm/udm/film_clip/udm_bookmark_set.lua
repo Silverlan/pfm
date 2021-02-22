@@ -8,5 +8,5 @@
 
 include("udm_bookmark.lua")
 
-udm.ELEMENT_TYPE_PFM_BOOKMARK_SET = udm.register_element("PFMBookmarkSet")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_BOOKMARK_SET,"bookmarks",udm.Array(udm.ELEMENT_TYPE_PFM_BOOKMARK))
+fudm.ELEMENT_TYPE_PFM_BOOKMARK_SET = fudm.register_element("PFMBookmarkSet")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_BOOKMARK_SET,"bookmarks",fudm.Array(fudm.ELEMENT_TYPE_PFM_BOOKMARK))

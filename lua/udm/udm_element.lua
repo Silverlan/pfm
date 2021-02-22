@@ -6,16 +6,16 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("udm.BaseElement",udm.BaseItem)
-function udm.BaseElement:__init(class)
-	udm.BaseItem.__init(self)
+util.register_class("fudm.BaseElement",fudm.BaseItem)
+function fudm.BaseElement:__init(class)
+	fudm.BaseItem.__init(self)
 	self.m_class = class
 	self.m_children = {}
 	self.m_attributes = {}
-	self:SetProperty("name",udm.String(""))
+	self:SetProperty("name",fudm.String(""))
 	
 	local type = self:GetType()
-	local elData = udm.impl.get_type_data(type)
+	local elData = fudm.impl.get_type_data(type)
 	if(elData == nil) then
 		console.print_warning("Attempted to use unregistered element type " .. type .. " for UDM element '" .. self:GetName() .. "'!")
 		return
@@ -28,7 +28,7 @@ function udm.BaseElement:__init(class)
 	end
 end
 
-function udm.BaseElement:DebugPrint(t,cache)
+function fudm.BaseElement:DebugPrint(t,cache)
 	cache = cache or {}
 	if(cache[self] ~= nil) then return end
 	cache[self] = true
@@ -52,7 +52,7 @@ function udm.BaseElement:DebugPrint(t,cache)
 	end
 end
 
-function udm.BaseElement:DebugDump(f,t,name)
+function fudm.BaseElement:DebugDump(f,t,name)
 	t = t or ""
 	f:WriteString(t)
 	if(name) then f:WriteString("[" .. name .. "] = ") end
@@ -62,7 +62,7 @@ function udm.BaseElement:DebugDump(f,t,name)
 	end
 end
 
-function udm.BaseElement:IterateTree(callback,iterated)
+function fudm.BaseElement:IterateTree(callback,iterated)
 	iterated = iterated or {}
 	for keyName,child in pairs(self:GetChildren()) do
 		if(iterated[child] == nil) then
@@ -75,7 +75,7 @@ function udm.BaseElement:IterateTree(callback,iterated)
 	end
 end
 
-function udm.BaseElement:FindElementsByFilter(filter,elements,iterated)
+function fudm.BaseElement:FindElementsByFilter(filter,elements,iterated)
 	elements = elements or {}
 	self:IterateTree(function(keyName,child)
 		if(filter(keyName,child)) then table.insert(elements,child) end
@@ -83,25 +83,25 @@ function udm.BaseElement:FindElementsByFilter(filter,elements,iterated)
 	return elements
 end
 
-function udm.BaseElement:FindElementsByKey(name,elements,iterated)
+function fudm.BaseElement:FindElementsByKey(name,elements,iterated)
 	return self:FindElementsByFilter(function(keyName,child) return keyName == name end,elements,iterated)
 end
 
-function udm.BaseElement:FindElementsByName(name,elements,iterated)
+function fudm.BaseElement:FindElementsByName(name,elements,iterated)
 	return self:FindElementsByFilter(function(keyName,child) return child:IsElement() and child:GetName() == name end,elements,iterated)
 end
 
-function udm.BaseElement:FindElementsByType(type,elements,iterated)
+function fudm.BaseElement:FindElementsByType(type,elements,iterated)
 	return self:FindElementsByFilter(function(keyName,child) return child:GetType() == type end,elements,iterated)
 end
 
 -- Returns the first parent element that isn't a reference. If the parent is an array, the parent
 -- of that array will be returned.
-function udm.BaseElement:FindParentElement(filter)
+function fudm.BaseElement:FindParentElement(filter)
 	for _,elParent in ipairs(self:GetParents()) do
 		local type = elParent:GetType()
-		if(type ~= udm.ELEMENT_TYPE_REFERENCE) then -- A reference means that this isn't our actual parent
-			if(type == udm.ELEMENT_TYPE_ARRAY) then
+		if(type ~= fudm.ELEMENT_TYPE_REFERENCE) then -- A reference means that this isn't our actual parent
+			if(type == fudm.ELEMENT_TYPE_ARRAY) then
 				-- We don't care about arrays, so we'll skip them and go for their parent instead.
 				elParent = elParent:FindParentElement(filter)
 			end
@@ -110,52 +110,52 @@ function udm.BaseElement:FindParentElement(filter)
 	end
 end
 
-function udm.BaseElement:SetProperty(name,prop)
+function fudm.BaseElement:SetProperty(name,prop)
 	-- if(prop:IsElement()) then prop:ChangeName(name) end
 	self:AddChild(prop,name)
 	return self:GetProperty(name)
 end
-function udm.BaseElement:GetProperty(name)
+function fudm.BaseElement:GetProperty(name)
 	local property = self:GetChild(name)
-	if(property ~= nil and property:GetType() == udm.ELEMENT_TYPE_REFERENCE) then
+	if(property ~= nil and property:GetType() == fudm.ELEMENT_TYPE_REFERENCE) then
 		return property:GetTarget()
 	end
 	return property
 end
 
-function udm.BaseElement:ChangeName(name) self:GetProperty("name"):SetValue(name) end
-function udm.BaseElement:GetName() return self:GetProperty("name"):GetValue() end
+function fudm.BaseElement:ChangeName(name) self:GetProperty("name"):SetValue(name) end
+function fudm.BaseElement:GetName() return self:GetProperty("name"):GetValue() end
 
-function udm.BaseElement:GetChild(name) return self.m_children[name] end
+function fudm.BaseElement:GetChild(name) return self.m_children[name] end
 
-function udm.BaseElement:GetChildren() return self.m_children end
-function udm.BaseElement:GetAttributes() return self.m_attributes end
+function fudm.BaseElement:GetChildren() return self.m_children end
+function fudm.BaseElement:GetAttributes() return self.m_attributes end
 
-function udm.BaseElement:CreateChild(type,name)
-	local el = udm.create_element(type,name)
+function fudm.BaseElement:CreateChild(type,name)
+	local el = fudm.create_element(type,name)
 	if(el == nil) then return end
 	self:AddChild(el,name)
 	return el
 end
 
-function udm.BaseElement:CreateAttribute(type,name)
-	local attr = udm.create_attribute(type,name)
+function fudm.BaseElement:CreateAttribute(type,name)
+	local attr = fudm.create_attribute(type,name)
 	if(attr == nil) then return end
 	self:AddAttribute(attr,name)
 	return attr
 end
 
-function udm.BaseElement:CreateAttributeArray(type,name)
-	local attr = udm.create_attribute_array(type,name)
+function fudm.BaseElement:CreateAttributeArray(type,name)
+	local attr = fudm.create_attribute_array(type,name)
 	if(attr == nil) then return end
 	self:AddAttribute(attr,name)
 	return attr
 end
 
-function udm.BaseElement:IsElement() return true end
-function udm.BaseElement:IsAttribute() return false end
+function fudm.BaseElement:IsElement() return true end
+function fudm.BaseElement:IsAttribute() return false end
 
-function udm.BaseElement:AddChild(element,name)
+function fudm.BaseElement:AddChild(element,name)
 	name = name or element:GetName()
 	self:RemoveChild(name)
 	self.m_children[name] = element
@@ -164,7 +164,7 @@ function udm.BaseElement:AddChild(element,name)
 	return element
 end
 
-function udm.BaseElement:RemoveChild(name)
+function fudm.BaseElement:RemoveChild(name)
 	if(type(name) ~= "string" and type(name) ~= "number") then name = name:GetName() end
 	local child = self.m_children[name]
 	if(child == nil) then return end
@@ -177,22 +177,22 @@ function udm.BaseElement:RemoveChild(name)
 	end
 end
 
-function udm.BaseElement:AddAttribute(attr,name)
+function fudm.BaseElement:AddAttribute(attr,name)
 	self.m_attributes[name] = attr
 	return attr
 end
 
-function udm.BaseElement:RemoveAttribute(name)
+function fudm.BaseElement:RemoveAttribute(name)
 	self.m_attributes[name] = nil
 end
 
-function udm.BaseElement:GetType() return -1 end
+function fudm.BaseElement:GetType() return -1 end
 
-function udm.BaseElement:Copy()
+function fudm.BaseElement:Copy()
 	local copy = self.m_class(self:GetName())
 	
 	local type = self:GetType()
-	local elData = udm.impl.get_type_data(type)
+	local elData = fudm.impl.get_type_data(type)
 	if(elData == nil) then return copy end
 	for name,prop in pairs(elData.properties) do
 		if(prop.getterAttribute(self) == nil) then
@@ -205,13 +205,13 @@ function udm.BaseElement:Copy()
 	return copy
 end
 
-function udm.BaseElement:SaveToBinary(ds)
+function fudm.BaseElement:SaveToBinary(ds)
 	self:WriteToBinary(ds)
 end
-function udm.BaseElement:LoadFromBinary(ds)
+function fudm.BaseElement:LoadFromBinary(ds)
 	self:ReadFromBinary(ds)
 end
 
-function udm.create_element(type,name)
-	return udm.create(type,name,true)
+function fudm.create_element(type,name)
+	return fudm.create(type,name,true)
 end

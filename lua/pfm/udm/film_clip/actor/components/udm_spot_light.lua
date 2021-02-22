@@ -8,27 +8,27 @@
 
 include("udm_entity_component.lua")
 
-udm.ELEMENT_TYPE_PFM_SPOT_LIGHT = udm.register_type("PFMSpotLight",{udm.PFMEntityComponent},true)
+fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT = fudm.register_type("PFMSpotLight",{fudm.PFMEntityComponent},true)
 
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"color",udm.Color(Color.White))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"intensity",udm.Float(1000.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"intensityType",udm.UInt8(ents.LightComponent.INTENSITY_TYPE_CANDELA))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"falloffExponent",udm.Float(1.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"innerConeAngle",udm.Float(40.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"outerConeAngle",udm.Float(50.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"maxDistance",udm.Float(1000.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"castShadows",udm.Bool(false),{
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"color",fudm.Color(Color.White))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"intensity",fudm.Float(1000.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"intensityType",fudm.UInt8(ents.LightComponent.INTENSITY_TYPE_CANDELA))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"falloffExponent",fudm.Float(1.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"innerConeAngle",fudm.Float(40.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"outerConeAngle",fudm.Float(50.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"maxDistance",fudm.Float(1000.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"castShadows",fudm.Bool(false),{
 	getter = "ShouldCastShadows"
 })
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"volumetric",udm.Bool(false),{
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"volumetric",fudm.Bool(false),{
 	getter = "IsVolumetric"
 })
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"volumetricIntensity",udm.Float(1.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT,"volumetricIntensity",fudm.Float(1.0))
 
-function udm.PFMSpotLight:GetComponentName() return "pfm_light_spot" end
-function udm.PFMSpotLight:GetIconMaterial() return "gui/pfm/icon_light_item" end
+function fudm.PFMSpotLight:GetComponentName() return "pfm_light_spot" end
+function fudm.PFMSpotLight:GetIconMaterial() return "gui/pfm/icon_light_item" end
 
-function udm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
+function fudm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 	actorEditor:AddControl(self,itemComponent,{
 		name = locale.get_text("intensity"),
 		identifier = "intensity",

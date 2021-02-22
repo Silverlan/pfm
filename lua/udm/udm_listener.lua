@@ -6,18 +6,18 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("udm.Listener")
-function udm.Listener:__init()
+util.register_class("fudm.Listener")
+function fudm.Listener:__init()
 end
 
-function udm.Listener:AddChangeListener(listener)
+function fudm.Listener:AddChangeListener(listener)
 	local cb = util.Callback.Create(listener)
 	self.m_listeners = self.m_listeners or {}
 	table.insert(self.m_listeners,cb)
 	return cb
 end
 
-function udm.Listener:InvokeChangeListeners(...)
+function fudm.Listener:InvokeChangeListeners(...)
 	if(self.m_listeners == nil) then return end
 	local val = self:GetValue()
 

@@ -48,7 +48,7 @@ end
 sfm.convert_scale_factors_to_vectors = function(project)
 	local root = project:GetUDMRootNode()
 	local channels = {}
-	root:FindElementsByType(udm.ELEMENT_TYPE_PFM_CHANNEL,channels)
+	root:FindElementsByType(fudm.ELEMENT_TYPE_PFM_CHANNEL,channels)
 
 	local scaleChannels = find_scale_channels(channels)
 	local modifiedElements = {}
@@ -62,7 +62,7 @@ sfm.convert_scale_factors_to_vectors = function(project)
 			local prop = op:GetProperty(attr)
 			if(prop ~= nil) then
 				local value = prop:GetValue()
-				local newProp = udm.Vector3(Vector(value,value,value))
+				local newProp = fudm.Vector3(Vector(value,value,value))
 				searchAndReplaceTable[prop] = newProp
 			end
 		end
@@ -81,15 +81,15 @@ sfm.convert_scale_factors_to_vectors = function(project)
 		end
 
 		local fromElement = channel:GetFromElement()
-		if(fromElement ~= nil and fromElement:GetType() == udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR) then sfm_to_pfm_scale_expression_operator(fromElement) end
+		if(fromElement ~= nil and fromElement:GetType() == fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR) then sfm_to_pfm_scale_expression_operator(fromElement) end
 
 		local toElement = channel:GetToElement()
-		if(toElement ~= nil and toElement:GetType() == udm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR) then sfm_to_pfm_scale_expression_operator(toElement) end
+		if(toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR) then sfm_to_pfm_scale_expression_operator(toElement) end
 
 		local defaultValueAttr = log:GetDefaultValueAttr()
 		if(defaultValueAttr ~= nil) then
 			local defaultValue = defaultValueAttr:GetValue()
-			local newDefaultValueAttr = udm.Vector3(Vector(defaultValue,defaultValue,defaultValue))
+			local newDefaultValueAttr = fudm.Vector3(Vector(defaultValue,defaultValue,defaultValue))
 			searchAndReplaceTable[defaultValueAttr] = newDefaultValueAttr
 		end
 	end

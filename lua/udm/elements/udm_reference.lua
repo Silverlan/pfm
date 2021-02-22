@@ -6,14 +6,14 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ELEMENT_TYPE_REFERENCE = udm.register_element("Reference")
-udm.register_element_property(udm.ELEMENT_TYPE_REFERENCE,"target",udm.ELEMENT_TYPE_ANY)
+fudm.ELEMENT_TYPE_REFERENCE = fudm.register_element("Reference")
+fudm.register_element_property(fudm.ELEMENT_TYPE_REFERENCE,"target",fudm.ELEMENT_TYPE_ANY)
 
-function udm.Reference:Initialize(name,target)
-	udm.BaseElement.Initialize(self,name,target)
+function fudm.Reference:Initialize(name,target)
+	fudm.BaseElement.Initialize(self,name,target)
 	self:SetTarget(target)
 end
 
-udm.create_reference = function(target)
-	return udm.Reference(target:GetName(),target)
+fudm.create_reference = function(target)
+	return fudm.Reference(target:GetName(),target)
 end

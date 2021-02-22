@@ -9,21 +9,21 @@
 include("udm_entity_component.lua")
 include("animation_set")
 
-udm.ELEMENT_TYPE_PFM_ANIMATION_SET = udm.register_type("PFMAnimationSet",{udm.PFMEntityComponent},true)
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_ANIMATION_SET,"flexControls",udm.Array(udm.ELEMENT_TYPE_PFM_FLEX_CONTROL))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_ANIMATION_SET,"transformControls",udm.Array(udm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL))
+fudm.ELEMENT_TYPE_PFM_ANIMATION_SET = fudm.register_type("PFMAnimationSet",{fudm.PFMEntityComponent},true)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ANIMATION_SET,"flexControls",fudm.Array(fudm.ELEMENT_TYPE_PFM_FLEX_CONTROL))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ANIMATION_SET,"transformControls",fudm.Array(fudm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL))
 
-function udm.PFMAnimationSet:AddFlexControl(flexControl)
-	if(type(flexControl) == "string") then flexControl = self:CreateChild(udm.ELEMENT_TYPE_PFM_FLEX_CONTROL,flexControl) end
+function fudm.PFMAnimationSet:AddFlexControl(flexControl)
+	if(type(flexControl) == "string") then flexControl = self:CreateChild(fudm.ELEMENT_TYPE_PFM_FLEX_CONTROL,flexControl) end
 	self:GetFlexControlsAttr():PushBack(flexControl)
 	return flexControl
 end
 
-function udm.PFMAnimationSet:AddTransformControl(transformControl)
-	if(type(transformControl) == "string") then transformControl = self:CreateChild(udm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,transformControl) end
+function fudm.PFMAnimationSet:AddTransformControl(transformControl)
+	if(type(transformControl) == "string") then transformControl = self:CreateChild(fudm.ELEMENT_TYPE_PFM_TRANSFORM_CONTROL,transformControl) end
 	self:GetTransformControlsAttr():PushBack(transformControl)
 	return transformControl
 end
 
-function udm.PFMAnimationSet:GetComponentName() return "pfm_animation_set" end
-function udm.PFMAnimationSet:GetIconMaterial() return "gui/pfm/icon_model_item" end
+function fudm.PFMAnimationSet:GetComponentName() return "pfm_animation_set" end
+function fudm.PFMAnimationSet:GetIconMaterial() return "gui/pfm/icon_model_item" end

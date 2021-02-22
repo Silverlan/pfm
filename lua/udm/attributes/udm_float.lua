@@ -6,9 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-udm.ATTRIBUTE_TYPE_FLOAT = udm.register_attribute("Float",0.0)
-function udm.Float:WriteToBinary(ds) ds:WriteFloat(self:GetValue()) end
-function udm.Float:ReadFromBinary(ds) return ds:ReadFloat() end
+fudm.ATTRIBUTE_TYPE_FLOAT = fudm.register_attribute("Float",0.0)
+function fudm.Float:WriteToBinary(ds) ds:WriteFloat(self:GetValue()) end
+function fudm.Float:ReadFromBinary(ds) return ds:ReadFloat() end
 
-function udm.Float:ToASCIIString() return tostring(self:GetValue()) end
-function udm.Float:LoadFromASCIIString(str) self:SetValue(tonumber(str)) end
+function fudm.Float:ToASCIIString() return tostring(self:GetValue()) end
+function fudm.Float:LoadFromASCIIString(str) self:SetValue(tonumber(str)) end

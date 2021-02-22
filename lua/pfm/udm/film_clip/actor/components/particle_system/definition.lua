@@ -8,16 +8,16 @@
 
 include("operator.lua")
 
-udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION = udm.register_element("PFMParticleSystemDefinition")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"renderers",udm.Array(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"operators",udm.Array(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"initializers",udm.Array(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"emitters",udm.Array(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"maxParticles",udm.Int(0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"material",udm.String())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"radius",udm.Float(0.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"lifetime",udm.Float(0.0))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"color",udm.Color(Color.White))
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"sortParticles",udm.Bool(false),{
+fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION = fudm.register_element("PFMParticleSystemDefinition")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"renderers",fudm.Array(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"operators",fudm.Array(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"initializers",fudm.Array(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"emitters",fudm.Array(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_OPERATOR))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"maxParticles",fudm.Int(0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"material",fudm.String())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"radius",fudm.Float(0.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"lifetime",fudm.Float(0.0))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"color",fudm.Color(Color.White))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM_DEFINITION,"sortParticles",fudm.Bool(false),{
 	getter = "ShouldSortParticles"
 })

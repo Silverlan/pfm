@@ -20,7 +20,7 @@ function ents.PFMProject:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
 	self.m_offset = math.huge -- Current playback offset in seconds
-	self.m_timeFrame = udm.PFMTimeFrame()
+	self.m_timeFrame = fudm.PFMTimeFrame()
 end
 
 function ents.PFMProject:OnRemove()
@@ -38,9 +38,9 @@ function ents.PFMProject:SetProjectData(project)
 			timeFrame = timeFrame and timeFrame:Max(timeFrameClip) or timeFrameClip
 		end
 	end
-	self.m_timeFrame = timeFrame or udm.PFMTimeFrame()
+	self.m_timeFrame = timeFrame or fudm.PFMTimeFrame()
 
-	self.m_rootTrack = udm.PFMTrack()
+	self.m_rootTrack = fudm.PFMTrack()
 	if(session ~= nil) then
 		for _,filmClip in ipairs(session:GetClips():GetTable()) do
 			self.m_rootTrack:GetFilmClipsAttr():PushBack(filmClip)

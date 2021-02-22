@@ -25,20 +25,31 @@ function pfm.ProjectManager:OnInitialize()
 	self.m_map = game.get_map_name()
 end
 function pfm.ProjectManager:LoadMap(mapName)
+	pfm.log("Loading map '" .. mapName .. "'...",pfm.LOG_CATEGORY_PFM)
+	if(mapName ~= nil) then
+		if(mapName:lower() == self.m_map:lower()) then
+			pfm.log("Map has already been loaded!",pfm.LOG_CATEGORY_PFM)
+			return
+		end
+		self:ClearMap()
+		self.m_map = mapName
+		pfm.log("Changing map to '" .. mapName .. "'...",pfm.LOG_CATEGORY_PFM)
+		local packet = net.Packet()
+		packet:WriteString(mapName)
+		net.send(net.PROTOCOL_SLOW_RELIABLE,"sv_pfm_load_map",packet)
+		return mapName
+	end
+
 	local session = self:GetSession()
 	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
-	if(activeClip == nil) then return end
-	mapName = mapName or activeClip:GetMapName()
-	if(mapName:lower() == self.m_map:lower()) then return end
-	self:ClearMap()
-	self.m_map = mapName
-
-	local packet = net.Packet()
-	packet:WriteString(mapName)
-	net.send(net.PROTOCOL_SLOW_RELIABLE,"sv_pfm_load_map",packet)
-	return mapName
+	if(activeClip == nil) then
+		pfm.log("Unable to load session map: Session has no active clip!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+	return self:LoadMap(activeClip:GetMapName())
 end
 function pfm.ProjectManager:ClearMap()
+	pfm.log("Clearing current map...",pfm.LOG_CATEGORY_PFM)
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_MAP)}) do
 		local mapC = ent:GetComponent(ents.COMPONENT_MAP)
 		if(mapC:GetMapIndex() ~= 0) then
@@ -89,9 +100,12 @@ function pfm.ProjectManager:GetProjectFileName(projectFileName)
 	if(projectFileName == nil) then return end
 	return file.to_relative_path(projectFileName)
 end
+function pfm.ProjectManager:GetProjectUniqueId()
+	return self:GetProject():GetUniqueId()
+end
 function pfm.ProjectManager:GetProjectPath() return util.Path.CreatePath(self.m_projectFileName):GetPath() end
 function pfm.ProjectManager:GetAnimationCacheFilePath(projectFileName)
-	return "cache/pfm/animation_cache/" .. util.get_string_hash(self:GetProjectFileName(projectFileName)) .. ".pfa"
+	return "cache/pfm/" .. self:GetProjectUniqueId() .. "/animation.pfa"
 end
 function pfm.ProjectManager:IsAnimationCacheValid() return file.exists(self:GetAnimationCacheFilePath()) end
 function pfm.ProjectManager:SaveAnimationCache(projectFileName)

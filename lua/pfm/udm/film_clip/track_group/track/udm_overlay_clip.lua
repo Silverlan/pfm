@@ -8,13 +8,13 @@
 
 include("../../udm_time_frame.lua")
 
-udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP = udm.register_element("PFMOverlayClip")
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"timeFrame",udm.PFMTimeFrame())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"material",udm.String())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"left",udm.Int())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"top",udm.Int())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"width",udm.Int())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"height",udm.Int())
-udm.register_element_property(udm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"fullscreen",udm.Bool(),{
+fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP = fudm.register_element("PFMOverlayClip")
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"timeFrame",fudm.PFMTimeFrame())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"material",fudm.String())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"left",fudm.Int())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"top",fudm.Int())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"width",fudm.Int())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"height",fudm.Int())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,"fullscreen",fudm.Bool(),{
 	getter = "IsFullscreen"
 })

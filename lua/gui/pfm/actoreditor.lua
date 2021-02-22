@@ -192,7 +192,7 @@ function gui.PFMActorEditor:CreateNewActor()
 		pfm.create_popup_message(locale.get_text("pfm_popup_create_actor_no_film_clip"))
 		return
 	end
-	local actor = udm.PFMActor()
+	local actor = fudm.PFMActor()
 	local actorName = "actor"
 
 	local actorIndex = 1
@@ -224,7 +224,7 @@ function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateAc
 		end
 	end
 
-	local component = udm[componentType]()
+	local component = fudm[componentType]()
 	if(itemActor == nil or component == nil) then return end
 	local actorData = self.m_treeElementToActorData[itemActor]
 	local componentName = component:GetComponentName() .. "_component"

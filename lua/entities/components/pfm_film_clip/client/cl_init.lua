@@ -66,7 +66,7 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 	local fadeIn = filmClip:GetFadeIn()
 	local fadeOut = filmClip:GetFadeOut()
 	if(fadeIn > 0.0 or fadeOut > 0.0) then
-		local matOverlayData = udm.PFMMaterialOverlayFXClip()
+		local matOverlayData = fudm.PFMMaterialOverlayFXClip()
 		matOverlayData:SetTimeFrame(filmClip:GetTimeFrame())
 		matOverlayData:SetMaterial("black")
 		matOverlayData:SetFullscreen(true)
@@ -212,7 +212,7 @@ end
 
 function ents.PFMFilmClip:GetTimeFrame()
 	local clip = self:GetClipData()
-	if(clip == nil) then return udm.PFMTimeFrame() end
+	if(clip == nil) then return fudm.PFMTimeFrame() end
 	return clip:GetTimeFrame()
 end
 
