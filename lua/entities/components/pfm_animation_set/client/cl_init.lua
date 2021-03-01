@@ -33,6 +33,7 @@ function ents.PFMAnimationSet:Initialize()
 		-- We have to apply our bone transforms every time the entity's skeleton/animations have been updated
 		self:ApplyBoneTransforms()
 	end)
+	animC:SetAnimatedRootPoseTransformEnabled(true)
 
 	self.m_cvAnimCache = console.get_convar("pfm_animation_cache_enabled")
 

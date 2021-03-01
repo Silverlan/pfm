@@ -25,6 +25,8 @@ function ents.PFMActorComponent:Initialize()
 
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"UpdateRenderMode")
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"UpdateRenderMode")
+
+	self:SetShouldAutoUpdatePose(true)
 end
 
 function ents.PFMActorComponent:AddChannel(channel)
@@ -34,6 +36,8 @@ end
 
 function ents.PFMActorComponent:GetChannels() return self.m_channels end
 function ents.PFMActorComponent:GetActorData() return self.m_actorData end
+
+function ents.PFMActorComponent:SetShouldAutoUpdatePose(autoUpdate) self.m_autoUpdatePose = autoUpdate end
 
 function ents.PFMActorComponent:OnRemove()
 	for _,listener in ipairs(self.m_listeners) do
@@ -56,6 +60,7 @@ function ents.PFMActorComponent:OnEntitySpawn()
 end
 
 function ents.PFMActorComponent:UpdatePose()
+	if(self.m_autoUpdatePose ~= true) then return end
 	local actorData = self:GetActorData()
 	local pose = actorData:GetAbsolutePose()
 
@@ -89,8 +94,10 @@ end
 
 function ents.PFMActorComponent:OnOffsetChanged(clipOffset,gameViewFlags)
 	local ent = self:GetEntity()
-	self:UpdatePose()
-	if(bit.band(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE) == ents.PFMProject.GAME_VIEW_FLAG_NONE) then self:UpdateOperators() end
+	if(bit.band(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE) == ents.PFMProject.GAME_VIEW_FLAG_NONE) then
+		self:UpdatePose()
+		self:UpdateOperators()
+	end
 
 	self:UpdateRenderMode()
 	--print(ent,ent:GetPos())

@@ -10,12 +10,20 @@ include("/pfm/udm/udm_scene_element.lua")
 include("actor/components")
 
 fudm.ELEMENT_TYPE_PFM_ACTOR = fudm.register_type("PFMActor",{fudm.PFMSceneElement},true)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ACTOR,"uniqueId",fudm.String(""))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ACTOR,"transform",fudm.Transform())
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ACTOR,"components",fudm.Array(fudm.ELEMENT_TYPE_ANY))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ACTOR,"operators",fudm.Array(fudm.ELEMENT_TYPE_ANY))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ACTOR,"visible",fudm.Bool(true),{
 	getter = "IsVisible"
 })
+
+function fudm.PFMActor:Initialize() self:SetUniqueId(util.generate_uuid_v4()) end
+
+function fudm.PFMActor:OnLoaded()
+	local uniqueId = self:GetUniqueId()
+	if(#uniqueId == 0) then self:SetUniqueId(util.generate_uuid_v4()) end -- TODO: This shouldn't be necessary
+end
 
 function fudm.PFMActor:GetSceneChildren() return self:GetComponents():GetTable() end
 

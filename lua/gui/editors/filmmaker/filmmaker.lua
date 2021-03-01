@@ -418,15 +418,16 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetKeyboardInputEnabled(true)
 	self:ClearProjectUI()
 
-	if(ents.get_world() == nil) then
-		pfm.log("Empty map. Creating a default reflection probe and light source...",pfm.LOG_CATEGORY_PFM)
+	local entProbe = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_REFLECTION_PROBE)})()
+	if(entProbe == nil) then
+		pfm.log("No reflection probe found, creating default probe...",pfm.LOG_CATEGORY_PFM)
 		local entReflectionProbe = ents.create("env_reflection_probe")
 		entReflectionProbe:SetKeyValue("ibl_material","pbr/ibl/venice_sunset")
 		entReflectionProbe:SetKeyValue("ibl_strength","1.4")
 		entReflectionProbe:Spawn()
 		self.m_reflectionProbe = entReflectionProbe
 
-		local entLight = ents.create("env_light_environment")
+		--[[local entLight = ents.create("env_light_environment")
 		entLight:SetKeyValue("spawnflags",tostring(1024))
 		entLight:SetAngles(EulerAngles(65,45,0))
 		entLight:Spawn()
@@ -441,7 +442,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end
 		local toggleC = entLight:GetComponent(ents.COMPONENT_TOGGLE)
 		if(toggleC ~= nil) then toggleC:TurnOn() end
-		self.m_entLight = entLight
+		self.m_entLight = entLight]]
 	end
 	pfm.ProjectManager.OnInitialize(self)
 	self:SetCachedMode(false)
@@ -602,7 +603,7 @@ function gui.WIFilmmaker:OnRemove()
 	end
 
 	util.remove(self.m_reflectionProbe)
-	util.remove(self.m_entLight)
+	-- util.remove(self.m_entLight)
 	collectgarbage()
 end
 function gui.WIFilmmaker:CaptureRaytracedImage()

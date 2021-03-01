@@ -129,6 +129,14 @@ function ents.PFMModel:OnEntitySpawn()
 		local flexC = self:GetEntity():GetComponent(ents.COMPONENT_FLEX)
 		if(flexC ~= nil) then flexC:SetFlexControllerScale(newScale) end
 	end))
+
+	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED,"OnModelChanged")
+	local mdl = self:GetEntity():GetModel()
+	if(mdl ~= nil) then self:OnModelChanged() end
+end
+function ents.PFMModel:OnModelChanged()
+	local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
+	if(animC ~= nil) then animC:AddRootPoseBone() end
 end
 function ents.PFMModel:GetModelData() return self.m_mdlInfo end
 function ents.PFMModel:GetActorData() return self.m_actorData end

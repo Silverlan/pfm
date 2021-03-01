@@ -84,6 +84,7 @@ function pfm.ProjectManager:LoadProject(fileName)
 	end
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
 	self.m_projectFileName = fileName
+	self.m_project = project
 	self:LoadAnimationCache(fileName)
 	return util.is_valid(self:InitializeProject(project))
 end
@@ -105,18 +106,14 @@ function pfm.ProjectManager:GetProjectUniqueId()
 end
 function pfm.ProjectManager:GetProjectPath() return util.Path.CreatePath(self.m_projectFileName):GetPath() end
 function pfm.ProjectManager:GetAnimationCacheFilePath(projectFileName)
-	return "cache/pfm/" .. self:GetProjectUniqueId() .. "/animation.pfa"
+	return "cache/pfm/" .. self:GetProjectUniqueId() .. "/animation.pfacb"
 end
 function pfm.ProjectManager:IsAnimationCacheValid() return file.exists(self:GetAnimationCacheFilePath()) end
 function pfm.ProjectManager:SaveAnimationCache(projectFileName)
 	if(self.m_animationCache == nil) then return end
 	local cacheFileName = self:GetAnimationCacheFilePath(projectFileName)
 	file.create_path(file.get_file_path(cacheFileName))
-	local f = file.open(cacheFileName,bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
-	if(f == nil) then return end
-	pfm.log("Saving animation cache '" .. cacheFileName .. "' (for project '" .. self:GetProjectFileName(projectFileName) .. "')...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-	self.m_animationCache:SaveToBinary(f)
-	f:Close()
+	self.m_animationCache:SaveToBinary(cacheFileName)
 end
 function pfm.ProjectManager:ClearAnimationCache(projectFileName)
 	if(self:IsAnimationCacheValid() == false) then return end
@@ -126,14 +123,7 @@ function pfm.ProjectManager:LoadAnimationCache(projectFileName)
 	if(self.m_animationCacheLoaded) then return end
 	self.m_animationCacheLoaded = true
 	local cacheFileName = self:GetAnimationCacheFilePath(projectFileName)
-	local f = file.open(cacheFileName,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
-	if(f == nil) then
-		pfm.log("No animation cache file found for project '" .. self:GetProjectFileName(projectFileName) .. "'! Playback may be very slow!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-		return
-	end
-	pfm.log("Loading animation cache '" .. cacheFileName .. "' (for project '" .. self:GetProjectFileName(projectFileName) .. "')...",pfm.LOG_CATEGORY_PFM)
-	self.m_animationCache:LoadFromBinary(f)
-	f:Close()
+	self.m_animationCache:LoadFromBinary(cacheFileName)
 end
 function pfm.ProjectManager:CreateNewProject()
 	self:CloseProject()
@@ -229,6 +219,9 @@ function pfm.ProjectManager:SetCachedMode(useCache) self.m_cachedMode = useCache
 function pfm.ProjectManager:IsCachedMode() return self.m_cachedMode end
 function pfm.ProjectManager:GetActiveGameViewFilmClip() return self.m_activeGameViewFilmClip end
 function pfm.ProjectManager:SetGameViewOffset(offset)
+	local tOffset = self:TranslateGameViewOffset(offset)
+	if(tOffset == false) then return end
+	offset = tOffset or offset
 	local isAnimCacheEnabled = console.get_convar_bool("pfm_animation_cache_enabled")
 	local frameIndex = self:TimeOffsetToFrameOffset(offset)
 	local isInterpFrame = (math.round(frameIndex) -frameIndex >= 0.001) -- If we're not exactly at a frame, we'll have to interpolate (and can't save to the cache)
@@ -245,7 +238,12 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 			gameViewFlags = bit.bor(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE)
 			filter = function(channel) return channel:IsBoneTransformChannel() == false and channel:IsFlexControllerChannel() == false end
 		end
-		self.m_activeGameViewFilmClip = activeClip:GetChildFilmClip(offset)
+		local curFilmClip = activeClip:GetChildFilmClip(offset)
+		if(util.is_same_object(curFilmClip,self.m_activeGameViewFilmClip) == false) then
+			print(curFilmClip,self.m_activeGameViewFilmClip)
+			self.m_activeGameViewFilmClip = curFilmClip
+			self:OnGameViewFilmClipChanged(curFilmClip)
+		end
 		if(self.m_cachedMode == false or updateCache) then activeClip:SetPlaybackOffset(offset,filter)
 		elseif(self.m_activeGameViewFilmClip ~= nil) then self.m_performanceCache:SetOffset(self.m_activeGameViewFilmClip,offset) end
 	else self.m_activeGameViewFilmClip = nil end
@@ -371,3 +369,5 @@ end
 
 -- These can be overriden by derived classes
 function pfm.ProjectManager:OnProjectInitialized(project) end
+function pfm.ProjectManager:OnGameViewFilmClipChanged(filmClip) end
+function pfm.ProjectManager:TranslateGameViewOffset(offset) return offset end

@@ -198,6 +198,7 @@ function gui.PFMActorEditor:CreateNewActor()
 	local actorIndex = 1
 	while(filmClip:FindActor(actorName .. actorIndex) ~= nil) do actorIndex = actorIndex +1 end
 	actor:ChangeName(actorName .. actorIndex)
+	actor:SetUniqueId(util.generate_uuid_v4())
 
 	local pos = Vector()
 	local rot = Quaternion()

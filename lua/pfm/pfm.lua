@@ -132,6 +132,7 @@ function pfm.Project:Load(fileName)
 				local child = elements[childIdx +1]
 				el:SetProperty(name,child)
 			end
+			el:OnLoaded()
 		end
 	end
 
@@ -249,7 +250,16 @@ function pfm.Project:CollectAssetFiles()
 	end
 	local mapName = game.get_map_name()
 	add_file("maps/" .. mapName .. ".wld")
-	add_file("materials/" .. asset.find_file("maps/" .. mapName .. "/lightmap_atlas",asset.TYPE_TEXTURE))
+	local pathLightmapAtlas = asset.find_file("maps/" .. mapName .. "/lightmap_atlas",asset.TYPE_TEXTURE)
+	if(pathLightmapAtlas ~= nil) then add_file("materials/" .. pathLightmapAtlas) end
+
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_REFLECTION_PROBE)}) do
+		local probeC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
+		local path = util.Path.CreateFilePath(probeC:GetIBLMaterialFilePath())
+		path:PopFront()
+		local mat = game.load_material(path:GetString())
+		if(mat ~= nil) then add_material(mat) end
+	end
 
 	for _,ent in ipairs(ents.get_all()) do
 		if(ent:IsMapEntity()) then

@@ -212,6 +212,8 @@ function fudm.BaseElement:LoadFromBinary(ds)
 	self:ReadFromBinary(ds)
 end
 
+function fudm.BaseElement:OnLoaded() end
+
 function fudm.create_element(type,name)
 	return fudm.create(type,name,true)
 end
