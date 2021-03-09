@@ -1,5 +1,5 @@
 --[[
-    Copyright (C) 2019  Florian Weischer
+    Copyright (C) 2021 Silverlan
 
     This Source Code Form is subject to the terms of the Mozilla Public
     License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,6 +98,8 @@ console.register_command("util_export_asset",function(pl,...)
 		["cpu"] = game.Model.ExportInfo.DEVICE_CPU,
 		["gpu"] = game.Model.ExportInfo.DEVICE_GPU
 	}
+	local format = "glTF"
+	local game = ""
 	for cmd,args in pairs(cmdArgs) do
 		if(cmd == "export_animations") then
 			if(args[1] ~= nil) then exportInfo.exportAnimations = toboolean(args[1])
@@ -163,13 +165,20 @@ console.register_command("util_export_asset",function(pl,...)
 		elseif(cmd == "normalize_texture_names") then
 			if(args[1] ~= nil) then exportInfo.normalizeTextureNames = toboolean(args[1])
 			else exportInfo.normalizeTextureNames = true end
-		end
+		elseif(cmd == "format") then format = args[1]
+		elseif(cmd == "game") then game = args[1] end
 	end
 
 	if(mdlName ~= nil) then
 		local formats = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
 		table.insert(formats,"wmd")
 		local models = get_asset_list(mdlName,asset.TYPE_MODEL,formats,recursive)
+		if(format == "mdl") then
+			include("/util/source_model_exporter.lua")
+			local result,err = util.export_source_engine_models(models,game)
+			if(result == false) then console.print_warning("Export failed: " .. err) end
+			return
+		end
 		for _,mdlName in ipairs(models) do
 			local mdl = game.load_model(mdlName)
 			if(mdl == nil) then
@@ -239,7 +248,7 @@ console.register_command("util_export_asset",function(pl,...)
 		cmdArgs = nil
 	end
 	if(cmdArgs == nil) then
-		print("Usage: util_export_asset ((-model <modelName> [-animation <animName>] [-list_animations]) | -map <mapName> | -material <matName> | -texture <texName>) [-verbose 1/0] [-binary 1/0] [-export_animations 1/0] [-export_skinned_mesh_data 1/0] [-export_images 1/0] [-image_format png/bmp/tga/jpg/hdr/dds/ktx] [-enable_extended_dds 1/0] [-generate_ao 1/0] [-ao_samples 32/64/128/256/512] [-ao_resolution 512/1024/2084/4096] [-scale <scale>] [-embed_animations 1/0]")
+		print("Usage: util_export_asset ((-model <modelName> [-animation <animName>] [-list_animations]) | -map <mapName> | -material <matName> | -texture <texName>) [-format glTF/mdl] [-game <gameName>] [-verbose 1/0] [-binary 1/0] [-export_animations 1/0] [-export_skinned_mesh_data 1/0] [-export_images 1/0] [-image_format png/bmp/tga/jpg/hdr/dds/ktx] [-enable_extended_dds 1/0] [-generate_ao 1/0] [-ao_samples 32/64/128/256/512] [-ao_resolution 512/1024/2084/4096] [-scale <scale>] [-embed_animations 1/0]")
 		return
 	end
 end)
