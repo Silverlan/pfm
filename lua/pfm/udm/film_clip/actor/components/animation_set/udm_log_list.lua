@@ -25,6 +25,27 @@ function fudm.PFMLogList:Initialize()
 	self.m_lastIndex = 1
 end
 
+function fudm.PFMLogList:InsertValue(time,value)
+	local times = self:GetTimes():GetTable()
+	local values = self:GetValues():GetTable()
+	local iInsert = #times
+	for i=0,#times -1 do
+		local t = times:At(i)
+		if(math.abs(time -t) < 0.01) then
+			-- Replace existing value
+			values:Set(i,value)
+			return i
+		end
+		if(time < t) then
+			iInsert = i
+			break
+		end
+	end
+	times:Insert(iInsert,time)
+	values:Insert(iInsert,value)
+	return iInsert
+end
+
 function fudm.PFMLogList:CalcInterpolatedValue(targetTime)
 	local times = self:GetTimes():GetTable()
 	local values = self:GetValues():GetTable()

@@ -17,6 +17,7 @@ function ents.PFMFilmClip:Initialize()
 	
 	self.m_actors = {}
 	self.m_trackGroups = {}
+	self.m_actorChannels = {}
 	self:AddEntityComponent(ents.COMPONENT_NAME)
 
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
@@ -76,6 +77,30 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 		table.insert(self.m_actors,entActor)
 	end
 ]]
+	local track = filmClip:FindAnimationChannelTrack()
+	if(track ~= nil) then
+		for _,channelClip in ipairs(track:GetChannelClips():GetTable()) do
+			for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
+				local toAttribute = channel:GetToAttribute()
+				local toElement = channel:GetToElement()
+				toElement = (toElement ~= nil) and toElement:FindParentElement() or nil
+				if(toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_PFM_BONE) then
+					local mdlC = toElement:GetModelComponent()
+					if(mdlC ~= nil) then
+						local actorC = mdlC:FindParentElement()
+						if(actorC ~= nil and actorC:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR) then
+							self.m_actorChannels[actorC] = self.m_actorChannels[actorC] or {}
+							local toElementName = toElement:GetName()
+							self.m_actorChannels[actorC][toElementName] = self.m_actorChannels[actorC][toElementName] or {}
+							self.m_actorChannels[actorC][toElementName][channel:GetToAttribute()] = channel
+						end
+					end
+				end
+			end
+		end
+	end
+
+
 	self:InitializeActors()
 
 	for _,trackGroupData in ipairs(filmClip:GetTrackGroups():GetTable()) do
@@ -178,6 +203,14 @@ function ents.PFMFilmClip:CreateActor(actor)
 	local entActor = ents.create("pfm_actor")
 	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	actorC:Setup(actor)
+	local channels = self.m_actorChannels[actor]
+	if(channels ~= nil) then
+		for boneName,boneChannels in pairs(channels) do
+			for attr,channel in pairs(boneChannels) do
+				actorC:SetBoneChannel(boneName,attr,channel)
+			end
+		end
+	end
 	entActor:Spawn()
 	table.insert(self.m_actors,entActor)
 

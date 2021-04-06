@@ -10,6 +10,7 @@ include("slider.lua")
 include("treeview.lua")
 include("weightslider.lua")
 include("controls_menu.lua")
+include("/pfm/component_manager.lua")
 
 util.register_class("gui.PFMActorEditor",gui.Base)
 
@@ -183,8 +184,24 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_data:SetRowHeight(self.m_tree:GetRowHeight())
 	self.m_data:SetSelectableMode(gui.Table.SELECTABLE_MODE_SINGLE)]]
 
+	self.m_componentManager = pfm.ComponentManager()
+
 	self.m_leftRightWeightSlider = gui.create("WIPFMWeightSlider",self.m_animSetControls)
 	return slider
+end
+function gui.PFMActorEditor:GetTree() return self.m_tree end
+function gui.PFMActorEditor:GetActorItem(actor)
+	for item,actorData in pairs(self.m_treeElementToActorData) do
+		if(util.is_same_object(actorData.actor,actor)) then return item end
+	end
+end
+function gui.PFMActorEditor:GetActorComponentItem(actor,componentName)
+	local item = self:GetActorItem(actor)
+	if(item == nil) then return end
+	if(self.m_treeElementToActorData == nil or self.m_treeElementToActorData[item] == nil) then return end
+	local item = self.m_treeElementToActorData[item].componentsEntry
+	if(util.is_valid(item) == false) then return end
+	return item:GetItemByIdentifier(componentName)
 end
 function gui.PFMActorEditor:CreateNewActor()
 	local filmClip = self:GetFilmClip()
@@ -423,7 +440,7 @@ function gui.PFMActorEditor:SelectActor(actor)
 	end
 end
 function gui.PFMActorEditor:AddActorComponent(itemActor,itemComponents,component)
-	local itemComponent = itemComponents:AddItem(component:GetName())
+	local itemComponent = itemComponents:AddItem(component:GetName(),nil,nil,component:GetComponentName())
 	if(component.GetIconMaterial) then
 		itemComponent:AddIcon(component:GetIconMaterial())
 		itemActor:AddIcon(component:GetIconMaterial())
@@ -431,6 +448,85 @@ function gui.PFMActorEditor:AddActorComponent(itemActor,itemComponents,component
 	if(component.SetupControls) then
 		component:SetupControls(self,itemComponent)
 	end
+
+	-- TODO: Use the code below once the system has been fully transitioned to UDM
+	--[[local itemComponent = itemComponents:AddItem(component:GetName())
+	if(component.GetIconMaterial) then
+		itemComponent:AddIcon(component:GetIconMaterial())
+		itemActor:AddIcon(component:GetIconMaterial())
+	end
+	local function stringToFunction(str)
+		if(str == nil) then return end
+		local f = loadstring("return " .. str)
+		if(f == nil or type(f) ~= "function") then return end
+		return f()
+	end
+	local function getText(udm,key,localizedKey)
+		local text = udm:GetValue(localizedKey)
+		if(text ~= nil) then text = locale.get_text(text)
+		else text = udm:GetValue(key) end
+		return text or ""
+	end
+	local udmComponent = self.m_componentManager:GetComponents():Get(component:GetComponentName())
+	if(udmComponent:IsValid()) then
+
+		for _,udmControl in ipairs(udmComponent:GetArrayValues("controls")) do
+			local type = udmControl:GetValue("type")
+			local name = getText(udmControl,"label","localizedLabel")
+
+			local udmLua = udmControl:Get("lua")
+			local identifier = udmControl:GetValue("identifier")
+
+			if(type == "slider") then
+				local ctrlSettings = {
+					name = name,
+					property = udmControl:GetValue("keyValue"),
+					min = udmControl:GetValue("min"),
+					max = udmControl:GetValue("max"),
+					default = udmControl:GetValue("default")
+				}
+
+				ctrlSettings.translateToInterface = stringToFunction(udmLua:GetValue("translateToInterface"))
+				ctrlSettings.translateFromInterface = stringToFunction(udmLua:GetValue("translateFromInterface"))
+
+				local unit = getText(udmControl,"unit","localizedUnit")
+				if(#unit > 0) then ctrlSettings["unit"] = unit end
+				self:AddControl(component,itemComponent,ctrlSettings)
+			elseif(type == "color") then
+				local ctrlSettings = {
+					name = name,
+					addControl = function(ctrls)
+						local colField,wrapper = ctrls:AddColorField(locale.get_text("color"),"color",self:GetColor(),function(oldCol,newCol)
+							self:SetColor(newCol)
+							self:TagRenderSceneAsDirty()
+						end)
+						return wrapper
+					end
+				}
+				self:AddControl(component,itemComponent,ctrlSettings)
+			elseif(type == "drop_down_menu") then
+				local options = {}
+				for _,udmOption in ipairs(udmControl:GetArrayValues("options")) do
+					local value = udmOption:GetValue("value")
+					local name = locale.get_text(udmOption:GetValue("localizedDisplayText"))
+					table.insert(options,{value,name})
+				end
+				local onChange = stringToFunction(udmLua:GetValue("onChange"))
+				local ctrlSettings = {
+					name = name,
+					addControl = function(ctrls)
+						local fOnChange = onChange
+						if(fOnChange ~= nil) then
+							fOnChange = function(menu,option) onChange(ctrls,menu,option) end
+						end
+						local menu,wrapper = ctrls:AddDropDownMenu(name,identifier,options,udmControl:GetValue("default") or 0,fOnChange)
+						return wrapper
+					end
+				}
+				self:AddControl(component,itemComponent,ctrlSettings)
+			end
+		end
+	end]]
 end
 function gui.PFMActorEditor:AddActor(actor)
 	local itemActor = self.m_tree:AddItem(actor:GetName())
@@ -463,11 +559,29 @@ function gui.PFMActorEditor:AddActor(actor)
 			if(util.is_valid(pContext) == false) then return end
 			pContext:SetPos(input.get_cursor_pos())
 			local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
-			local components = {"PFMModel","PFMSpotLight","PFMParticleSystem","PFMCamera","PFMAnimationSet"} -- TODO: Retrieve these automatically
-			for _,componentType in ipairs(components) do
-				-- TODO: Only show in list if actor doesn't already have this component!
+
+			local componentManager = self.m_componentManager
+			local components = {}
+			for componentType,udmComponent in pairs(componentManager:GetComponents():GetChildren()) do
+				local name = udmComponent:GetValue("name")
+				if(name == nil) then
+					local valid,n = locale.get_text("component_" .. componentType,nil,true)
+					if(valid) then name = n
+					else name = componentType end
+				end
+				locale.get_text("pfm_add_component_type",{name})
 				pComponentsMenu:AddItem(locale.get_text("pfm_add_component_type",{componentType}),function()
-					self:CreateNewActorComponent(actor,componentType,true)
+					local tTranslation = {
+						["pfm_model"] = "PFMModel",
+						["pfm_particle_system"] = "PFMParticleSystem",
+						["pfm_camera"] = "PFMCamera",
+						["pfm_animation_set"] = "PFMAnimationSet",
+						["pfm_light_spot"] = "PFMSpotLight",
+						["pfm_light_directional"] = "PFMDirectionalLight",
+						["pfm_light_point"] = "PFMPointLight",
+						["pfm_impersonatee"] = "PFMImpersonatee"
+					}
+					self:CreateNewActorComponent(actor,tTranslation[componentType],true)
 				end)
 			end
 			pComponentsMenu:Update()
@@ -517,10 +631,10 @@ function gui.PFMActorEditor:AddProperty(name,item,fInitPropertyEl)
 		if(util.is_valid(elProperty)) then elProperty:Remove() end
 	end)
 end
-function gui.PFMActorEditor:AddControl(component,item,controlData)
+function gui.PFMActorEditor:AddControl(component,item,controlData,identifier)
 	controlData.translateToInterface = controlData.translateToInterface or function(val) return val end
 	controlData.translateFromInterface = controlData.translateFromInterface or function(val) return val end
-	local child = item:AddItem(controlData.name)
+	local child = item:AddItem(controlData.name,nil,nil,identifier)
 
 	local ctrl
 	local selectedCount = 0

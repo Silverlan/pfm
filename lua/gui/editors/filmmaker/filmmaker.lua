@@ -19,6 +19,7 @@ include("/gui/genericclip.lua")
 include("/gui/witabbedpanel.lua")
 include("/gui/editors/wieditorwindow.lua")
 include("/gui/patreon_ticker.lua")
+include("/gui/bone_retargeting.lua")
 include("/gui/pfm/viewport.lua")
 include("/gui/pfm/postprocessing.lua")
 include("/gui/pfm/videoplayer.lua")
@@ -479,7 +480,7 @@ end
 function gui.WIFilmmaker:TagRenderSceneAsDirty(dirty)
 	game.set_default_game_render_enabled(true)
 	if(dirty == nil) then
-		self.m_renderSceneDirty = self.m_renderSceneDirty or 1
+		self.m_renderSceneDirty = self.m_renderSceneDirty or 24
 		return
 	end
 	self.m_renderSceneDirty = dirty and math.huge or nil
@@ -755,6 +756,44 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		end)
 		return actorEditor
 	end)
+	self:RegisterWindow(self.m_actorDataFrame,"bone_retargeting",locale.get_text("pfm_bone_retargeting"),function() return gui.create("WIBoneRetargeting") end)
+	self:RegisterWindow(viewportFrame,"model_viewer",locale.get_text("vrp_model_viewer"),function()
+		local playerBox = gui.create("WIVBox")
+		playerBox:SetAutoFillContents(true)
+
+		local vrBox = gui.create("WIBase",playerBox)
+		vrBox:SetSize(128,128)
+		local aspectRatioWrapper = gui.create("WIAspectRatio",vrBox)
+		aspectRatioWrapper:AddCallback("OnAspectRatioChanged",function(el,aspectRatio)
+			if(util.is_valid(self.m_viewport)) then
+				local scene = self.m_viewport:GetScene()
+				if(scene ~= nil) then
+					local cam = scene:GetActiveCamera()
+					if(cam ~= nil) then
+						cam:SetAspectRatio(aspectRatio)
+						cam:UpdateMatrices()
+					end
+				end
+			end
+		end)
+		local vpWrapper = gui.create("WIBase",aspectRatioWrapper)
+		vpWrapper:SetSize(10,10)
+
+		local width = self:GetWidth()
+		local height = self:GetHeight()
+		local modelView = gui.create("WIModelView",vpWrapper,0,0,vpWrapper:GetWidth(),vpWrapper:GetHeight(),0,0,1,1)
+		modelView:SetClearColor(Color.Black)
+		modelView:InitializeViewport(width,height)
+		modelView:SetFov(math.horizontal_fov_to_vertical_fov(45.0,width,height))
+		modelView:RequestFocus()
+
+		aspectRatioWrapper:SetWidth(vrBox:GetWidth())
+		aspectRatioWrapper:SetHeight(vrBox:GetHeight())
+		aspectRatioWrapper:SetAnchor(0,0,1,1)
+
+		self.m_mdlView = modelView
+		return playerBox
+	end)
 	self:RegisterWindow(self.m_actorDataFrame,"model_catalog",locale.get_text("pfm_model_catalog"),function()
 		local mdlCatalog = gui.create("WIPFMModelCatalog")
 		local explorer = mdlCatalog:GetExplorer()
@@ -872,6 +911,17 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					end
 				end)
 			end
+		end)
+		explorer:AddCallback("PopulateContextMenu",function(explorer,pContext,tSelectedFiles,tExternalFiles)
+			if(#tSelectedFiles ~= 1) then return end
+			local path = tSelectedFiles[1]:GetRelativeAsset()
+			if(asset.exists(path,asset.TYPE_MODEL) == false) then return end
+			pContext:AddItem(locale.get_text("pfm_edit_retarget_rig"),function()
+				gui.open_model_dialog(function(result,mdlName)
+					if(result ~= gui.DIALOG_RESULT_OK) then return end
+					self:OpenBoneRetargetWindow(path,mdlName)
+				end)
+			end)
 		end)
 		return mdlCatalog
 	end)
@@ -1076,4 +1126,51 @@ end
 function gui.WIFilmmaker:GetSelectedClip() return self:GetTimeline():GetSelectedClip() end
 function gui.WIFilmmaker:GetTimeline() return self.m_timeline end
 function gui.WIFilmmaker:GetFilmStrip() return self.m_filmStrip end
+function gui.WIFilmmaker:OpenModelView(mdl,animName)
+	self:OpenWindow("model_viewer",true)
+	if(util.is_valid(self.m_mdlView) == false) then return end
+	self.m_mdlView:SetModel(mdl)
+
+	if(animName ~= nil) then self.m_mdlView:PlayAnimation(animName)
+	else self.m_mdlView:PlayIdleAnimation() end
+	self.m_mdlView:Update()
+end
+function gui.WIFilmmaker:OpenBoneRetargetWindow(mdlSrc,mdlDst)
+	local tab,el = self:OpenWindow("bone_retargeting",true)
+	if(util.is_valid(el) == false) then return end
+	el:SetImpostee(mdlSrc)
+	el:SetImposter(mdlDst)
+	--[[local mdlSrcPath = mdlSrc
+	mdlSrc = game.load_model(mdlSrc)
+	mdlDst = game.load_model(mdlDst)
+	if(mdlSrc == nil or mdlDst == nil) then return end
+	local rig = ents.RetargetRig.Rig.load(mdlSrc,mdlDst)
+	if(rig == false) then
+		rig = ents.RetargetRig.Rig(mdlSrc,mdlDst)
+
+		-- local boneRemapper = ents.RetargetRig.BoneRemapper(mdlSrc:GetSkeleton(),mdlSrc:GetReferencePose(),mdlDst:GetSkeleton(),mdlDst:GetReferencePose())
+		-- local translationTable = boneRemapper:AutoRemap()
+		-- rig:SetTranslationTable(translationTable)
+		rig:SetDstToSrcTranslationTable({})
+	end
+	local tab,el = self:OpenWindow("bone_retargeting",true)
+	if(util.is_valid(el)) then el:SetRig(rig) end
+
+	self:OpenModelView(mdlSrcPath)
+	if(util.is_valid(self.m_mdlView)) then
+		el:LinkToModelView(self.m_mdlView)
+		el:InitializeModelView()
+		local entSrc = self.m_mdlView:GetEntity(1)
+		local entDst = self.m_mdlView:GetEntity(2)
+		if(util.is_valid(entSrc) and util.is_valid(entDst)) then
+			local retargetC = entDst:AddComponent("retarget_rig")
+			local animSrc = entSrc:GetComponent(ents.COMPONENT_ANIMATED)
+			if(retargetC ~= nil and animSrc ~= nil) then retargetC:SetRig(rig,animSrc) end
+
+			local retargetMorphC = entDst:AddComponent("retarget_morph")
+			local flexC = entSrc:GetComponent(ents.COMPONENT_FLEX)
+			if(retargetMorphC ~= nil and flexC ~= nil) then retargetMorphC:SetRig(rig,flexC) end
+		end
+	end]]
+end
 gui.register("WIFilmmaker",gui.WIFilmmaker)

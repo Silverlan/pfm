@@ -50,9 +50,7 @@ function fudm.PFMChannel:SetPlaybackOffset(offset)
 		local value = log:SetPlaybackOffset(offset)
 		local property = toElement:GetProperty(toAttribute)
 		if(property ~= nil) then
-			if(self:GetName() == "head_scale") then print(value,offset) end
 			if(value ~= nil) then
-				if(self:GetName() == "head_scale") then print("Channel '" .. self:GetName() .. "': Changing value of attribute " .. toAttribute .. " of element " .. toElement:GetName() .. " (" .. toElement:GetTypeName() .. ") to " .. tostring(value)) end
 				property:SetValue(value)
 				-- TODO: Also set 'time' property of toElement if it exists? (e.g. for expression operator)
 			else

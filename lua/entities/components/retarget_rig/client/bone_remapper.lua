@@ -62,43 +62,47 @@ function ents.RetargetRig.BoneRemapper:CollectRelationData(boneData0,boneData1)
 	local ref1 = self.m_referenceDst
 	for boneId0,data0 in pairs(boneData0) do
 		local pose0 = ref0:GetBonePose(boneId0)
-		local origin0 = pose0:GetOrigin()
-		data0.targetBones = {}
-		local maxDist = 0
-		local maxBranchLengthDistance = 0
-		for boneId1,data1 in pairs(boneData1) do
-			local sim = string.calc_levenshtein_similarity(data0.bone:GetName():lower(),data1.bone:GetName():lower())
-			local pose1 = ref1:GetBonePose(boneId1)
-			local distance = origin0:Distance(pose1:GetOrigin())
-			local branchLengthDistance = math.abs(data1.branchLength -data0.branchLength)
-			local depthDistance = math.abs(data1.depth -data0.depth)
-			table.insert(data0.targetBones,{
-				bone = data1.bone,
-				similarity = sim,
-				distance = distance,
-				branchLengthDistance = branchLengthDistance,
-				depthDistance = depthDistance
-			})
-			maxDist = math.max(maxDist,distance)
-			maxBranchLengthDistance = math.max(maxBranchLengthDistance,branchLengthDistance)
+		if(pose0 ~= nil) then
+			local origin0 = pose0:GetOrigin()
+			data0.targetBones = {}
+			local maxDist = 0
+			local maxBranchLengthDistance = 0
+			for boneId1,data1 in pairs(boneData1) do
+				local sim = string.calc_levenshtein_similarity(data0.bone:GetName():lower(),data1.bone:GetName():lower())
+				local pose1 = ref1:GetBonePose(boneId1)
+				if(pose1 ~= nil) then
+					local distance = origin0:Distance(pose1:GetOrigin())
+					local branchLengthDistance = math.abs(data1.branchLength -data0.branchLength)
+					local depthDistance = math.abs(data1.depth -data0.depth)
+					table.insert(data0.targetBones,{
+						bone = data1.bone,
+						similarity = sim,
+						distance = distance,
+						branchLengthDistance = branchLengthDistance,
+						depthDistance = depthDistance
+					})
+					maxDist = math.max(maxDist,distance)
+					maxBranchLengthDistance = math.max(maxBranchLengthDistance,branchLengthDistance)
+				end
+			end
+			for _,data in ipairs(data0.targetBones) do
+				data.distanceFactor = 1.0 -data.distance /maxDist
+				data.branchLengthFactor = 1.0 -data.branchLengthDistance /maxBranchLengthDistance
+				data.depthDistanceFactor = 1.0 -data.depthDistance
+
+				local sim = data.similarity
+				-- Increase the chance if this bone pair has been tagged as a match in the past
+				if(ents.RetargetRig.Rig.is_bone_relation_in_cache(data0.bone:GetName(),data.bone:GetName())) then sim = 1.0 end
+
+				local weight = sim *self.m_nameWeight +
+					data.branchLengthFactor *self.m_branchLengthWeight +
+					data.distanceFactor *self.m_distWeight +
+					data.depthDistanceFactor *self.m_depthWeight
+
+				data.weight = weight
+			end
+			table.sort(data0.targetBones,function(a,b) return a.weight > b.weight end)
 		end
-		for _,data in ipairs(data0.targetBones) do
-			data.distanceFactor = 1.0 -data.distance /maxDist
-			data.branchLengthFactor = 1.0 -data.branchLengthDistance /maxBranchLengthDistance
-			data.depthDistanceFactor = 1.0 -data.depthDistance
-
-			local sim = data.similarity
-			-- Increase the chance if this bone pair has been tagged as a match in the past
-			if(ents.RetargetRig.Rig.is_bone_relation_in_cache(data0.bone:GetName(),data.bone:GetName())) then sim = 1.0 end
-
-			local weight = sim *self.m_nameWeight +
-				data.branchLengthFactor *self.m_branchLengthWeight +
-				data.distanceFactor *self.m_distWeight +
-				data.depthDistanceFactor *self.m_depthWeight
-
-			data.weight = weight
-		end
-		table.sort(data0.targetBones,function(a,b) return a.weight > b.weight end)
 	end
 end
 function ents.RetargetRig.BoneRemapper:AutoRemap()

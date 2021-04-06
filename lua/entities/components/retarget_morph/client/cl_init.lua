@@ -34,7 +34,7 @@ function Component:RigToActor(actor,mdlSrc,mdlDst)
 	end
 	if(mdlSrc == nil or mdlDst == nil or flexC == nil) then return end
 	local rig = ents.RetargetRig.Rig.load(mdlSrc,mdlDst)
-	if(rig == nil) then
+	if(rig == false) then
 		console.print_warning("Unable to apply retarget morph: No rig found!")
 		return
 	end
@@ -46,6 +46,7 @@ function Component:ApplyFlexControllers()
 	local flexCSrc = self.m_flexC
 	if(util.is_valid(flexCSrc) == false or flexCDst == nil) then return end
 	local rig = self:GetRig()
+	if(rig == nil) then return end
 	local translationTable = rig:GetFlexControllerTranslationTable()
 	local accTable = {}
 	for flexCIdSrc,mappings in pairs(translationTable) do

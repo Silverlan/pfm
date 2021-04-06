@@ -1,0 +1,78 @@
+"components"
+{
+	"pfm_light_spot"
+	{
+		$array controls [element][
+			{
+				$string identifier "intensity"
+				$string localizedLabel "intensity"
+				$string type "slider"
+				$float min 0.0
+				$float max 1000.0
+				$float default 200.0
+				$string keyValue "intensity"
+				$string targetComponent "light"
+				$string localizedUnit "symbol_candela" // TODO: Depends on intensity type
+			},
+			{
+				$string identifier "light_unit"
+				$string localizedLabel "light_unit"
+				$string type "drop_down_menu"
+				$string keyValue "color"
+				$string targetComponent "color"
+				$uint32 default 0
+				$array options [element][
+					{
+						$string value "0"
+						$string localizedDisplayText "candela"
+					},
+					{
+						$string value "1"
+						$string localizedDisplayText "lumen"
+					}
+				]
+
+				lua
+				{
+					$string onChange "function(ctrls,editor,ctrl)
+						local type = tonumber(ctrl:GetOptionValue(ctrl:GetSelectedOption()))
+						if(type == self:GetIntensityType()) then return end
+						local ctrlIntensity = ctrls:GetControl('intensity')
+						local intensity = 0.0
+						if(util.is_valid(ctrlIntensity)) then
+							intensity = light.convert_light_intensity(ctrlIntensity:GetValue(),self:GetIntensityType(),type,self:GetOuterConeAngle() *0.5)
+						end
+						self:SetIntensityType(type)
+						if(util.is_valid(ctrlIntensity)) then
+							ctrlIntensity:SetValue(intensity)
+							ctrlIntensity:SetUnit((type == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text('symbol_candela') or locale.get_text('symbol_lumen'))
+						end
+						actorEditor:TagRenderSceneAsDirty()
+					end"
+				}
+			},
+			{
+				$string identifier "radius"
+				$string localizedLabel "radius"
+				$string type "slider"
+				$float min 0.0
+				$float max 25.0
+				$float default 5.0
+				$string keyValue "radius"
+				$string localizedUnit "symbol_meters"
+
+				lua
+				{
+					$string translateToInterface "function(val) return util.units_to_metres(val) end"
+					$string translateFromInterface "function(val) return util.metres_to_units(val) end"
+				}
+			}
+		]
+	}
+	"pfm_light_directional"
+	{
+	}
+	"pfm_light_point"
+	{
+	}
+}

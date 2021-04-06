@@ -39,8 +39,14 @@ function gui.PFMMaterialEditor:OnInitialize()
 	self.m_contents = gui.create("WIHBox",self.m_bg,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	self.m_contents:SetAutoFillContents(true)
 
-	self.m_controlBox = gui.create("WIVBox",self.m_contents)
-	self.m_controlBox:SetAutoFillContents(true)
+	local controllBoxContainer = gui.create("WIScrollContainer",self.m_contents,0,0,self.m_contents:GetWidth(),self.m_contents:GetHeight())
+	controllBoxContainer:AddCallback("SetSize",function(el)
+		if(self:IsValid() and util.is_valid(self.m_controlBox)) then
+			self.m_controlBox:SetWidth(el:GetWidth())
+		end
+	end)
+	self.m_controlBox = gui.create("WIVBox",controllBoxContainer,0,0,controllBoxContainer:GetWidth(),controllBoxContainer:GetHeight())
+	self.m_controlBox:SetAutoFillContentsToWidth(true)
 
 	self:InitializeControls()
 	gui.create("WIResizer",self.m_contents):SetFraction(0.5)

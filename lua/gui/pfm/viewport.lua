@@ -18,9 +18,13 @@ include("/pfm/fonts.lua")
 util.register_class("gui.PFMViewport",gui.Base)
 
 gui.PFMViewport.MANIPULATOR_MODE_SELECT = 0
-gui.PFMViewport.MANIPULATOR_MODE_MOVE = 1
-gui.PFMViewport.MANIPULATOR_MODE_ROTATE = 2
-gui.PFMViewport.MANIPULATOR_MODE_SCREEN = 3
+gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL = 1
+gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL = 2
+gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW = 3
+gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL = 4
+gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL = 5
+gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW = 6
+gui.PFMViewport.MANIPULATOR_MODE_SCREEN = 7
 
 gui.PFMViewport.CAMERA_MODE_PLAYBACK = 0
 gui.PFMViewport.CAMERA_MODE_FLY = 1
@@ -135,7 +139,14 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 			filmmaker:TagRenderSceneAsDirty(true)
 			self.m_inCameraControlMode = true
 		elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
-			local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS)
+			self.m_viewport:RequestFocus()
+			local filter
+			if(self.m_manipulatorMode ~= gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
+				filter = function(ent,mdlC)
+					return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
+				end
+			end
+			local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS,filter)
 			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
 				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
@@ -213,52 +224,198 @@ function gui.PFMViewport:UpdateFilmLabelPositions()
 		self.m_filmClip:SetX(self:GetWidth() *0.5 -self.m_filmClip:GetWidth() *0.5)
 	end
 end
+function gui.PFMViewport:IsMoveManipulatorMode(mode)
+	return mode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL or
+		mode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL or
+		mode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW
+end
+function gui.PFMViewport:IsRotationManipulatorMode(mode)
+	return mode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL or
+		mode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL or
+		mode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW
+end
+function gui.PFMViewport:GetManipulatorMode() return self.m_manipulatorMode end
 function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
 	self.m_manipulatorMode = manipulatorMode
 	self.m_btSelect:SetActivated(manipulatorMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT)
-	self.m_btMove:SetActivated(manipulatorMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE)
-	self.m_btRotate:SetActivated(manipulatorMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE)
+	self.m_btMove:SetActivated(self:IsMoveManipulatorMode(manipulatorMode))
+	self.m_btRotate:SetActivated(self:IsRotationManipulatorMode(manipulatorMode))
 	self.m_btScreen:SetActivated(manipulatorMode == gui.PFMViewport.MANIPULATOR_MODE_SCREEN)
 
-	for ent,b in pairs(tool.get_filmmaker():GetSelectionManager():GetSelectedActors()) do
-		if(ent:IsValid()) then self:UpdateActorManipulation(ent,true) end
+	local pfm = tool.get_filmmaker()
+	local selectionManager = pfm:GetSelectionManager()
+	local selectedActors = selectionManager:GetSelectedActors()
+	local selectedActorList = {}
+	for ent,b in pairs(selectedActors) do table.insert(selectedActorList,ent) end
+
+	for _,ent in ipairs(selectedActorList) do
+		if(ent:IsValid()) then
+			ent:RemoveComponent("util_bone_transform")
+			self:UpdateActorManipulation(ent,true)
+		end
+	end
+	self:UpdateManipulationMode()
+end
+function gui.PFMViewport:InitializeTransformWidget(tc,ent)
+	local manipMode = self:GetManipulatorMode()
+	if(selected == false or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SCREEN) then
+		-- ent:RemoveComponent("util_transform")
+	elseif(self:IsMoveManipulatorMode(manipMode)) then
+		if(tc ~= nil) then
+			tc:SetTranslationEnabled(true)
+			tc:SetRotationEnabled(false)
+		end
+	elseif(self:IsRotationManipulatorMode(manipMode)) then
+		tc:SetTranslationEnabled(false)
+		tc:SetRotationEnabled(true)
+	end
+
+	if(util.is_valid(tc)) then
+		if(manipMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL or manipMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL) then
+			tc:SetSpace(ents.UtilTransformComponent.SPACE_WORLD)
+			tc:SetReferenceEntity()
+		elseif(manipMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL or manipMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL) then
+			tc:SetSpace(ents.UtilTransformComponent.SPACE_LOCAL)
+			tc:SetReferenceEntity(ent)
+		elseif(manipMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW or manipMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW) then
+			tc:SetSpace(ents.UtilTransformComponent.SPACE_VIEW)
+			local camC = self:GetActiveCamera()
+			if(util.is_valid(camC)) then tc:SetReferenceEntity(camC:GetEntity()) end
+		end
 	end
 end
+function gui.PFMViewport:UpdateManipulationMode()
+	local manipMode = self:GetManipulatorMode()
+	if(self:IsMoveManipulatorMode(manipMode) == false and self:IsRotationManipulatorMode(manipMode) == false) then return end
+	local pfm = tool.get_filmmaker()
+	local selectionManager = pfm:GetSelectionManager()
+	local selectedActors = selectionManager:GetSelectedActors()
+	local selectedActorList = {}
+	for ent,b in pairs(selectedActors) do table.insert(selectedActorList,ent) end
+	if(#selectedActorList ~= 1 or util.is_valid(selectedActorList[1]) == false) then return end
+
+	local boneName
+	-- Check if a bone is selected
+	local actorEditor = pfm:GetActorEditor()
+	if(util.is_valid(actorEditor) == false) then return end
+	local actor = selectedActorList[1]
+	local actorC = util.is_valid(actor) and actor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
+	local actorData = util.is_valid(actorC) and actorC:GetActorData() or nil
+	if(actorData ~= nil) then
+		local item = actorEditor:GetActorComponentItem(actorData,"pfm_model")
+		local itemSkeleton = util.is_valid(item) and item:GetItemByIdentifier("skeleton") or nil
+		if(util.is_valid(itemSkeleton) == false) then return end
+		for _,item in ipairs(itemSkeleton:GetItems()) do
+			if(item:IsValid() and item:IsSelected()) then
+				if(boneName ~= nil) then
+					boneName = nil -- Only enable if exactly one bone is selected
+					break
+				end
+				boneName = item:GetIdentifier()
+			end
+		end
+	end
+
+	if(boneName == nil) then return end
+	local ent = selectedActorList[1]
+	local boneId = boneName
+	if(type(boneId) == "string") then
+		local mdl = ent:GetModel()
+		if(mdl == nil) then return end
+		boneId = mdl:LookupBone(boneId)
+		if(boneId == -1) then return end
+	end
+	ent:RemoveComponent("util_transform")
+	local trBone = ent:AddComponent("util_bone_transform")
+	if(trBone == nil) then return end
+	local trC = trBone:SetTransformEnabled(boneId)
+	if(trC == nil) then return end
+	self:InitializeTransformWidget(trC,ent)
+
+	local function update_channel_value(boneId,value,channelName)
+		local channel = actorC:GetBoneChannel(boneId,channelName)
+		local log = (channel ~= nil) and channel:GetLog() or nil
+		local layer = (log ~= nil) and log:GetLayers():GetTable()[1] or nil
+		if(layer ~= nil) then
+			local channelClip = channel:FindParentElement(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP end)
+			if(channelClip ~= nil) then
+				local projectManager = pfm
+				-- TODO: Do we have to take the film clip offset into account?
+				local timeFrame = channelClip:GetTimeFrame()
+				local t = timeFrame:LocalizeOffset(projectManager:GetTimeOffset())
+				local i = layer:InsertValue(t,value)
+
+				-- Mark frames as dirty
+				local times = layer:GetTimes():GetTable()
+				local tPrev = timeFrame:GlobalizeOffset((i > 0) and times:At(i -1) or t)
+				local tNext = timeFrame:GlobalizeOffset((i < (#times -1)) and times:At(i +1) or t)
+				local minFrame = math.floor(projectManager:TimeOffsetToFrameOffset(tPrev))
+				local maxFrame = math.ceil(projectManager:TimeOffsetToFrameOffset(tNext))
+				local animCache = projectManager:GetAnimationCache()
+				local fc = projectManager:GetActiveGameViewFilmClip()
+				for frameIdx=minFrame,maxFrame do
+					animCache:MarkFrameAsDirty(frameIdx)
+				end
+			end
+		end
+	end
+	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_POSITION_CHANGED,function(boneId,pos,localPos)
+		update_channel_value(boneId,localPos,"position")
+		tool.get_filmmaker():TagRenderSceneAsDirty()
+	end)
+	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_ROTATION_CHANGED,function(boneId,rot,localRot)
+		update_channel_value(boneId,localRot,"rotation")
+		tool.get_filmmaker():TagRenderSceneAsDirty()
+	end)
+end
 function gui.PFMViewport:UpdateActorManipulation(ent,selected)
+	ent:RemoveComponent("util_bone_transform")
+	ent:RemoveComponent("util_transform")
+
 	local function add_transform_component()
 		local trC = ent:GetComponent("util_transform")
 		if(trC ~= nil) then return trC end
 		trC = ent:AddComponent("util_transform")
 		if(trC == nil) then return trC end
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function()
+			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if(actorC ~= nil) then
+				local actorData = actorC:GetActorData()
+				if(actorData ~= nil) then
+					local transform = actorData:GetTransform()
+					transform:SetPosition(ent:GetPos())
+				end
+			end
 			tool.get_filmmaker():TagRenderSceneAsDirty()
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function()
+			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if(actorC ~= nil) then
+				local actorData = actorC:GetActorData()
+				if(actorData ~= nil) then
+					local transform = actorData:GetTransform()
+					transform:SetRotation(ent:GetRotation())
+				end
+			end
 			tool.get_filmmaker():TagRenderSceneAsDirty()
 		end)
 		return trC
 	end
 	ent:RemoveComponent("util_transform")
 	local manipMode = self.m_manipulatorMode
-	if(selected == false or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SCREEN) then
-		ent:RemoveComponent("util_transform")
-	elseif(manipMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE) then
+	if(selected and (self:IsMoveManipulatorMode(manipMode) or self:IsRotationManipulatorMode(manipMode))) then
 		local tc = add_transform_component()
-		if(tc ~= nil) then
-			tc:SetTranslationEnabled(true)
-			tc:SetRotationEnabled(false)
-		end
-	elseif(manipMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE) then
-		local tc = add_transform_component()
-		if(tc ~= nil) then
-			tc:SetTranslationEnabled(false)
-			tc:SetRotationEnabled(true)
-		end
+		self:InitializeTransformWidget(tc,ent)
 	end
 	tool.get_filmmaker():TagRenderSceneAsDirty()
 end
+function gui.PFMViewport:GetActiveCamera()
+	local scene = util.is_valid(self.m_viewport) and self.m_viewport:GetScene()
+	return (scene ~= nil) and scene:GetActiveCamera() or nil
+end
 function gui.PFMViewport:OnActorSelectionChanged(ent,selected)
 	self:UpdateActorManipulation(ent,selected)
+	self:UpdateManipulationMode()
 end
 function gui.PFMViewport:InitializeManipulatorControls()
 	local controls = gui.create("WIHBox",self,0,self.m_vpBg:GetBottom() +4)
@@ -267,11 +424,25 @@ function gui.PFMViewport:InitializeManipulatorControls()
 		return true
 	end)
 	self.m_btMove = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_move","gui/pfm/icon_manipulator_move_activated",function()
-		self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_MOVE)
+		local mode = self:GetManipulatorMode()
+		local nextMode = {
+			[gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL,
+			[gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW,
+			[gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL
+		}
+		mode = nextMode[mode] or gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL
+		self:SetManipulatorMode(mode)
 		return true
 	end)
 	self.m_btRotate = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_rotate","gui/pfm/icon_manipulator_rotate_activated",function()
-		self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_ROTATE)
+		local mode = self:GetManipulatorMode()
+		local nextMode = {
+			[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL,
+			[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW,
+			[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL
+		}
+		mode = nextMode[mode] or gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL
+		self:SetManipulatorMode(mode)
 		return true
 	end)
 	self.m_btScreen = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_screen","gui/pfm/icon_manipulator_screen_activated",function()

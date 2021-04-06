@@ -8,7 +8,7 @@
 
 function gui.PFMMaterialEditor:InitializePBRControls()
 	local mapVbox = gui.create("WIVBox",self.m_controlBox)
-	mapVbox:SetAutoFillContents(true)
+	mapVbox:SetAutoFillContentsToWidth(true)
 
 	-- Shader
 	--[[ctrlVbox:AddDropDownMenu("shader","shader",{
@@ -111,10 +111,15 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	self.m_teWrinkleStretchMap = teStretch
 
 	mapVbox:Update()
+	mapVbox:SetFixedHeight(true)
 	
-	gui.create("WIResizer",self.m_controlBox):SetFraction(0.6)
+	--[[local resizer = gui.create("WIResizer",self.m_controlBox)
+	resizer:SetFraction(0.6)
+	resizer:SetMoverMode(true)]]
 
 	local ctrlVbox = gui.create("WIPFMControlsMenu",self.m_controlBox)
+	ctrlVbox:SetAutoFillContentsToHeight(true)
+	ctrlVbox:SetFixedHeight(false)
 	self.m_ctrlVBox = ctrlVbox
 
 	-- Presets
@@ -274,16 +279,56 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		subMenu:SetVisible(false)
 	end
 
+	-- Fur
+	local hairBlock = {"hair"}
+	ctrlVbox:AddHeader(locale.get_text("pfm_mated_hair"))
+	local hairMenu
+	local ctrlHairEnabled = ctrlVbox:AddDropDownMenu(locale.get_text("enabled"),"hair_enabled",{
+		{"0",locale.get_text("no")},
+		{"1",locale.get_text("yes")}
+	},0,function(menu,option)
+		local enabled = tostring(menu:GetOptionValue(option))
+		self:SetMaterialParameter("bool","enabled",enabled,hairBlock)
+		hairMenu:SetVisible(toboolean(enabled))
+	end)
+	self:LinkControlToMaterialParameter("hair_enabled",ctrlHairEnabled,hairBlock,function(block)
+		block = block:GetBlock("hair")
+		if(block == nil) then return end
+		local enabled = true
+		if(block:HasValue("enabled")) then enabled = block:GetBool("enabled") end
+		ctrlHairEnabled:SelectOption(enabled and 1 or 0)
+		hairMenu:SetVisible(enabled)
+	end)
+	hairMenu = ctrlVbox:AddSubMenu()
+	hairMenu:SetVisible((ctrlHairEnabled:GetOptionValue(ctrlHairEnabled:GetSelectedOption()) == 1) and true or false)
+	local ctrlHairPerSquareMeter = hairMenu:AddSliderControl(locale.get_text("pfm_mated_hair_per_square_meter"),"hair_per_square_meter",1000000,0.0,50000000.0,function(el,value) self:SetMaterialParameter("float","hair_per_square_meter",value,hairBlock) end,1)
+	local ctrlHairSegmentCount = hairMenu:AddSliderControl(locale.get_text("pfm_mated_hair_segment_count"),"hair_segment_count",2,0,6,function(el,value) self:SetMaterialParameter("float","segment_count",value,hairBlock) end,1)
+	local ctrlHairThickness = hairMenu:AddSliderControl(locale.get_text("pfm_mated_hair_thickness"),"hair_thickness",0.005,0,0.1,function(el,value) self:SetMaterialParameter("float","thickness",value,hairBlock) end,0.001)
+	local ctrlHairLength = hairMenu:AddSliderControl(locale.get_text("pfm_mated_hair_length"),"hair_length",0.6,0,10,function(el,value) self:SetMaterialParameter("float","length",value,hairBlock) end,0.01)
+	local ctrlHairStrength = hairMenu:AddSliderControl(locale.get_text("pfm_mated_hair_strength"),"hair_strength",0.4,0,1,function(el,value) self:SetMaterialParameter("float","strength",value,hairBlock) end,0.01)
+	local ctrlHairRandomLengthFactor = hairMenu:AddSliderControl(locale.get_text("pfm_mated_hair_random_hair_length_factor"),"hair_random_hair_length_factor",0.3,0,1,function(el,value) self:SetMaterialParameter("float","random_hair_length_factor",value,hairBlock) end,0.01)
+	local ctrlHairCurvature = hairMenu:AddSliderControl(locale.get_text("pfm_mated_hair_curvature"),"hair_curvature",0.6,0,1,function(el,value) self:SetMaterialParameter("float","curvature",value,hairBlock) end,0.01)
+	ctrlHairPerSquareMeter:SetTooltip(locale.get_text("pfm_mated_hair_per_square_meter_desc"))
+	ctrlHairRandomLengthFactor:SetTooltip(locale.get_text("pfm_mated_hair_random_hair_length_factor_desc"))
+	ctrlHairSegmentCount:SetTooltip(locale.get_text("pfm_mated_hair_segment_count_desc"))
+	ctrlHairStrength:SetTooltip(locale.get_text("pfm_mated_hair_strength_desc"))
+	self:LinkControlToMaterialParameter("hair_per_square_meter",ctrlHairPerSquareMeter,hairBlock)
+	self:LinkControlToMaterialParameter("hair_segment_count",ctrlHairSegmentCount,hairBlock)
+	self:LinkControlToMaterialParameter("hair_thickness",ctrlHairThickness,hairBlock)
+	self:LinkControlToMaterialParameter("hair_length",ctrlHairLength,hairBlock)
+	self:LinkControlToMaterialParameter("hair_strength",ctrlHairStrength,hairBlock)
+	self:LinkControlToMaterialParameter("hair_random_hair_length_factor",ctrlHairRandomLengthFactor,hairBlock)
+	self:LinkControlToMaterialParameter("hair_curvature",ctrlHairCurvature,hairBlock)
+
 	-- Save
 	local btSave = gui.create("WIPFMButton",ctrlVbox)
 	btSave:SetText(locale.get_text("save"))
+	btSave:SetHeight(32)
 	btSave:AddCallback("OnPressed",function(btRaytracying)
 		if(util.is_valid(self.m_material) == false or self.m_material:IsError()) then return end
 		self.m_material:Save()
 	end)
 	self.m_btSave = btSave
-
-	gui.create("WIBase",ctrlVbox)
 end
 
 function gui.PFMMaterialEditor:UpdateAlphaMode()

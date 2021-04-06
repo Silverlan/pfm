@@ -22,13 +22,6 @@ function ents.PFMAnimationSet:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_FLEX)
 	self:AddEntityComponent(ents.COMPONENT_VERTEX_ANIMATED)
 	
-	local actorC = self:AddEntityComponent("pfm_actor")
-	self.m_translationChannel = actorC:AddChannel(ents.PFMActorComponent.TranslationChannel())
-	self.m_rotationChannel = actorC:AddChannel(ents.PFMActorComponent.RotationChannel())
-	self.m_boneTranslationChannel = actorC:AddChannel(ents.PFMAnimationSet.BoneTranslationChannel(self))
-	self.m_boneRotationChannel = actorC:AddChannel(ents.PFMAnimationSet.BoneRotationChannel(self))
-	self.m_flexControllerChannel = actorC:AddChannel(ents.PFMAnimationSet.FlexControllerChannel())
-
 	self.m_cbUpdateSkeleton = animC:AddEventCallback(ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED,function()
 		-- We have to apply our bone transforms every time the entity's skeleton/animations have been updated
 		self:ApplyBoneTransforms()

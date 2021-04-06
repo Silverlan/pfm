@@ -55,7 +55,31 @@ $surfaceprop	combine_metal
 ]]
 end
 
+local rotToSmd = EulerAngles(90,0,0):ToQuaternion()
 util.register_class("util.SMDBuilder")
+function util.SMDBuilder.transform_pose(pose)
+	pose:RotateGlobal(rotToSmd)
+	return pose
+end
+function util.SMDBuilder.transform_pos(pos)
+	pos:Rotate(rotToSmd)
+	return pos
+end
+function util.SMDBuilder.transform_rot(rot)
+	rot:Set(rotToSmd *rot)
+	return rot
+end
+function util.SMDBuilder.quat_to_euler_angles(q)
+	-- This creates incorrect results for some reason?
+	--[[local ang = q:ToEulerAngles()
+	return EulerAngles(math.rad(ang.p),math.rad(ang.y),math.rad(ang.r))]]
+
+	return EulerAngles(
+		math.atan2(2 *(q.w *q.x +q.y *q.z),1 -2 *(q.x *q.x +q.y *q.y)),
+		math.asin(2 *(q.w *q.y -q.z *q.x)),
+		math.atan2(2 *(q.w *q.z +q.x *q.y),1 -2 *(q.y *q.y +q.z *q.z))
+	)
+end
 function util.SMDBuilder:__init()
 	self.m_contents = {}
 end
@@ -70,10 +94,11 @@ function util.SMDBuilder:AddLine(line)
 end
 function util.SMDBuilder:AddVertex(v,vw)
 	local parentBone = 0
+	local pos = util.SMDBuilder.transform_pos(v.position)
 	local c = {
 		parentBone,
-		v.position.x,-v.position.z,v.position.y,
-		v.normal.x,v.normal.y,v.normal.z,
+		pos.x,pos.y,pos.z,
+		v.normal.x,-v.normal.z,v.normal.y,
 		v.uv.x,1.0 -v.uv.y
 	}
 	if(vw ~= nil) then
@@ -112,7 +137,7 @@ function util.SMDBuilder:AddAnimation(skeleton,anim)
 	self:AddLine("skeleton")
 	for i,frame in ipairs(anim:GetFrames()) do
 		self:AddLine("time " .. i -1)
-		self:AddFrame(frame)
+		self:AddFrame(skeleton,frame,anim)
 	end
 	self:AddLine("end")
 end
@@ -121,18 +146,22 @@ function util.SMDBuilder:AddReferencePose(skeleton,ref)
 	self:AddLine("time 0")
 	local cpy = ref:Copy()
 	cpy:Localize(skeleton)
-	self:AddFrame(cpy)
+	self:AddFrame(skeleton,cpy)
 	self:AddLine("end")
 end
-function util.SMDBuilder:AddFrame(frame)
+function util.SMDBuilder:AddFrame(skeleton,frame,anim)
 	for i=0,frame:GetBoneCount() -1 do
-		local pose = frame:GetBonePose(i)
+		local boneId = i
+		if(anim ~= nil) then boneId = anim:GetBoneId(i) end
+
+		local pose = frame:GetBonePose(boneId)
+		if(skeleton:IsRootBone(boneId)) then pose = util.SMDBuilder.transform_pose(pose) end
 		local pos = pose:GetOrigin()
-		local ang = pose:GetRotation():ToEulerAngles()
+		local ang = util.SMDBuilder.quat_to_euler_angles(pose:GetRotation())
 		local c = {
 			i,
-			pos.x,-pos.z,pos.y,
-			math.rad(ang.p),-math.rad(ang.r),math.rad(ang.y)
+			pos.x,pos.y,pos.z,
+			util.round_string(ang.p,6),util.round_string(ang.y,6),util.round_string(ang.r,6)
 		}
 		self:AddLine(table.concat(c," "))
 	end
@@ -221,7 +250,24 @@ function util.SourceEngineModelBuilder:Generate()
 	local outputDir = "export/"
 
 	local mdl = self.m_model
-	local convertToFakePbr = true -- TODO
+
+	local convertToFakePbr = false
+	for _,mat in ipairs(mdl:GetMaterials()) do
+		local rmaMap = mat:GetTextureInfo("rma_map")
+		if(rmaMap ~= nil) then
+			local name = asset.get_normalized_path(rmaMap:GetName(),asset.TYPE_TEXTURE)
+			if(name ~= "pbr/rma_neutral") then
+				log.msg("Found non-standard RMA map '" .. name .. "' in model '" .. mdl:GetName() .. "'! Enabling fake-pbr conversion...",pfm.LOG_CATEGORY_SE_MODEL_EXPORT,pfm.LOG_SEVERITY_WARNING)
+				convertToFakePbr = true
+				break
+			end
+		end
+	end
+
+	if(convertToFakePbr == false) then
+		log.msg("No non-standard RMA map found in model '" .. mdl:GetName() .. "' found! Disabling fake-pbr conversion...",pfm.LOG_CATEGORY_SE_MODEL_EXPORT,pfm.LOG_SEVERITY_WARNING)
+	end
+
 	local mdlPath = file.remove_file_extension(mdl:GetName())
 	outputDir = outputDir .. file.get_file_name(mdlPath) .. "/"
 

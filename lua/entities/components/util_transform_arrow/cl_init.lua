@@ -4,16 +4,18 @@ include_component("click")
 
 util.register_class("ents.UtilTransformArrowComponent",BaseEntityComponent)
 
-ents.UtilTransformArrowComponent.TYPE_TRANSLATION = 0
-ents.UtilTransformArrowComponent.TYPE_ROTATION = 1
+local Component = ents.UtilTransformArrowComponent
+Component.TYPE_TRANSLATION = 0
+Component.TYPE_ROTATION = 1
 
 local defaultMemberFlags = bit.band(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,bit.bnot(bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_BIT_KEY_VALUE,ents.BaseEntityComponent.MEMBER_FLAG_BIT_INPUT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_OUTPUT)))
-ents.UtilTransformArrowComponent:RegisterMember("Axis",util.VAR_TYPE_UINT8,math.AXIS_X,ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,1)
-ents.UtilTransformArrowComponent:RegisterMember("Selected",util.VAR_TYPE_BOOL,false,bit.bor(defaultMemberFlags,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER),1)
-ents.UtilTransformArrowComponent:RegisterMember("Relative",util.VAR_TYPE_BOOL,false,bit.bor(defaultMemberFlags,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER),1)
-ents.UtilTransformArrowComponent:RegisterMember("Type",util.VAR_TYPE_UINT8,ents.UtilTransformArrowComponent.TYPE_TRANSLATION,ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,1)
+Component:RegisterMember("Axis",util.VAR_TYPE_UINT8,math.AXIS_X,ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,1)
+Component:RegisterMember("Selected",util.VAR_TYPE_BOOL,false,bit.bor(defaultMemberFlags,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER),1)
+Component:RegisterMember("Relative",util.VAR_TYPE_BOOL,false,bit.bor(defaultMemberFlags,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER),1)
+Component:RegisterMember("Type",util.VAR_TYPE_UINT8,Component.TYPE_TRANSLATION,ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,1)
+Component:RegisterMember("Space",util.VAR_TYPE_UINT8,ents.UtilTransformComponent.SPACE_WORLD,defaultMemberFlags,1)
 
-function ents.UtilTransformArrowComponent:Initialize()
+function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
@@ -26,34 +28,53 @@ function ents.UtilTransformArrowComponent:Initialize()
 	-- self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"UpdateScale")
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
-function ents.UtilTransformArrowComponent:UpdateScale()
+function Component:UpdateScale()
 	local cam = game.get_render_scene_camera()
 	local d = self:GetEntity():GetPos():Distance(cam:GetEntity():GetPos())
 	d = ((d *0.008) ^0.3) *2 -- Roughly try to keep the same size regardless of distance to the camera
 	self:GetEntity():SetScale(Vector(d,d,d))
 end
-function ents.UtilTransformArrowComponent:OnEntitySpawn()
+function Component:OnEntitySpawn()
 	self:UpdateAxis()
 end
 
-local setAxis = ents.UtilTransformArrowComponent.SetAxis
-function ents.UtilTransformArrowComponent:SetAxis(axis)
-	setAxis(self,axis)
+function Component:OnRemove()
+	util.remove(self.m_elLine)
+end
+
+if(util.get_class_value(Component,"SetAxisBase") == nil) then Component.SetAxisBase = Component.SetAxis end
+function Component:SetAxis(axis)
+	Component.SetAxisBase(self,axis)
 	self:UpdateAxis()
 end
 
-local setType = ents.UtilTransformArrowComponent.SetType
-function ents.UtilTransformArrowComponent:SetType(type)
-	setType(self,type)
+if(util.get_class_value(Component,"SetTypeBase") == nil) then Component.SetTypeBase = Component.SetType end
+function Component:SetType(type)
+	Component.SetTypeBase(self,type)
 	self:UpdateModel()
 end
 
-function ents.UtilTransformArrowComponent:SetUtilTransformComponent(c)
-	self.m_transformComponent = c
+if(util.get_class_value(Component,"SetSpaceBase") == nil) then Component.SetSpaceBase = Component.SetSpace end
+function Component:SetSpace(space)
+	Component.SetSpaceBase(self,space)
+	self:UpdatePose()
+end
+
+function Component:GetTargetEntity()
+	local entParent = self.m_transformComponent:GetEntity()
+	if(entParent == nil) then
+		local attC = self:GetEntity():GetComponent(ents.COMPONENT_ATTACHABLE)
+		entParent = (attC ~= nil) and attC:GetParent() or nil
+	end
+	return entParent
+end
+
+function Component:UpdatePose()
+	if(util.is_valid(self.m_transformComponent) == false) then return end
 	local axis = self:GetAxis()
 	local rot = Quaternion() -- c:GetEntity():GetRotation()
 
-	if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then
+	if(self:GetType() == Component.TYPE_TRANSLATION) then
 		if(axis == math.AXIS_X) then
 			rot = rot *EulerAngles(0,90,0):ToQuaternion()
 		elseif(axis == math.AXIS_Y) then
@@ -66,21 +87,43 @@ function ents.UtilTransformArrowComponent:SetUtilTransformComponent(c)
 			rot = rot *EulerAngles(90,0,0):ToQuaternion()
 		end
 	end
+
+	local entParent = self:GetTargetEntity()
+	if(util.is_valid(entParent) == false) then return end
+	local entRef = self:GetReferenceEntity()
+	if(util.is_valid(entRef) == false) then entRef = entParent end
+
+	local pose = phys.Transform()
+	local space = self:GetSpace()
+	if(space == ents.UtilTransformComponent.SPACE_WORLD) then
+		pose:SetOrigin(entParent:GetPos())
+	elseif(space == ents.UtilTransformComponent.SPACE_LOCAL) then
+		pose = entParent:GetPose()
+	elseif(space == ents.UtilTransformComponent.SPACE_VIEW) then
+		pose = entParent:GetPose()
+		pose:SetRotation(entRef:GetRotation())
+	end
+
+	pose:RotateLocal(rot)
+
 	local ent = self:GetEntity()
-	ent:SetRotation(rot)
+	ent:SetPose(pose)
 	local attC = ent:AddComponent(ents.COMPONENT_ATTACHABLE)
 	if(attC ~= nil) then
-		ent:SetPos(c:GetEntity():GetPos())
-
 		local attInfo = ents.AttachableComponent.AttachmentInfo()
-		attInfo.flags = ents.AttachableComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME
-		local parentBone = c:GetParentBone()
-		if(parentBone == nil) then attC:AttachToEntity(c:GetEntity(),attInfo)
-		else attC:AttachToBone(c:GetEntity(),parentBone,attInfo) end
+		attInfo.flags = bit.bor(ents.AttachableComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME,ents.AttachableComponent.FATTACHMENT_MODE_POSITION_ONLY)
+		local parentBone = self.m_transformComponent:GetParentBone()
+		if(parentBone == nil) then attC:AttachToEntity(entParent,attInfo)
+		else attC:AttachToBone(entParent,parentBone,attInfo) end
 	end
 end
-function ents.UtilTransformArrowComponent:GetBaseUtilTransformComponent() return util.is_valid(self.m_transformComponent) and self.m_transformComponent or nil end
-function ents.UtilTransformArrowComponent:UpdateAxis()
+
+function Component:SetUtilTransformComponent(c)
+	self.m_transformComponent = c
+	self:UpdatePose()
+end
+function Component:GetBaseUtilTransformComponent() return util.is_valid(self.m_transformComponent) and self.m_transformComponent or nil end
+function Component:UpdateAxis()
 	local ent = self:GetEntity()
 	if(ent:IsSpawned() == false) then return end
 	local axis = self:GetAxis()
@@ -92,17 +135,17 @@ function ents.UtilTransformArrowComponent:UpdateAxis()
 	end
 	self:UpdateModel()
 end
-function ents.UtilTransformArrowComponent:UpdateModel()
+function Component:UpdateModel()
 	local ent = self:GetEntity()
 	if(ent:IsSpawned() == false) then return end
 	local mdl
-	if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then mdl = self:GetArrowModel()
+	if(self:GetType() == Component.TYPE_TRANSLATION) then mdl = self:GetArrowModel()
 	else mdl = self:GetDiskModel() end
 	if(mdl == ent:GetModel()) then return end
 	ent:SetModel(mdl)
 end
-function ents.UtilTransformArrowComponent:GetReferenceAxis() return self:GetAxis() end
-function ents.UtilTransformArrowComponent:GetCursorAxisAngle()
+function Component:GetReferenceAxis() return self:GetAxis() end
+function Component:GetCursorAxisAngle()
 	local transformC = self:GetBaseUtilTransformComponent()
 	if(transformC == nil) then return end
 	local entTransform = transformC:GetEntity()
@@ -118,7 +161,7 @@ function ents.UtilTransformArrowComponent:GetCursorAxisAngle()
 	else axisAngle = math.atan2(pos.y,pos.x) end
 	return math.deg(axisAngle)
 end
-function ents.UtilTransformArrowComponent:GetCursorIntersectionWithAxisPlane()
+function Component:GetCursorIntersectionWithAxisPlane()
 	local transformC = self:GetBaseUtilTransformComponent()
 	local ent = self:GetEntity()
 	local clickC = ent:GetComponent(ents.COMPONENT_CLICK)
@@ -126,7 +169,7 @@ function ents.UtilTransformArrowComponent:GetCursorIntersectionWithAxisPlane()
 	local axis = self:GetAxis()
 
 	local plane
-	if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then
+	if(self:GetType() == Component.TYPE_TRANSLATION) then
 		if(axis == math.AXIS_X) then
 			plane = math.Plane(transformC:GetEntity():GetUp(),ent:GetPos())
 		elseif(axis == math.AXIS_Y) then
@@ -150,7 +193,7 @@ function ents.UtilTransformArrowComponent:GetCursorIntersectionWithAxisPlane()
 	if(t == false) then return end
 	return pos +dir *t *maxDist
 end
-function ents.UtilTransformArrowComponent:OnTick(dt)
+function Component:OnTick(dt)
 	self:UpdateScale() -- TODO: This doesn't belong here, move it to a render callback
 	if(self:IsSelected() ~= true) then return end
 	local ent = self:GetEntity()
@@ -159,24 +202,41 @@ function ents.UtilTransformArrowComponent:OnTick(dt)
 	if(util.is_valid(transformC) == false or util.is_valid(clickC) == false) then return end
 	self:ApplyTransform()
 end
-function ents.UtilTransformArrowComponent:ApplyTransform()
+function Component:ApplyTransform()
 	local transformC = self:GetBaseUtilTransformComponent()
 	local entTransform = transformC:GetEntity()
 
 	local cam = ents.ClickComponent.get_camera()
-	local v = Vector()
-	v:Set(self:GetReferenceAxis(),1.0)
-	local dir,z = cam:WorldSpaceToScreenSpaceDirection(v)
-	local z = cam:CalcScreenSpaceDistance(self:GetEntity():GetPos())
 
-	local mouseDelta = input.get_cursor_pos() -self.m_moveStartCursorPos
-	local dot = dir:DotProduct(mouseDelta)
-	local delta = dot *z /400
-	if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then
+	local t = self:GetEntity():GetUp()
+	if(self:GetAxis() == math.AXIS_Y) then t = self:GetEntity():GetUp() end
+
+	--local sign = math.sign(cam:GetEntity():GetForward():DotProduct(self:GetEntity():GetUp()))
+	local sign = math.sign(cam:GetEntity():GetForward():DotProduct(t))
+	-- print(debug.draw_line(self:GetEntity():GetPos(),self:GetEntity():GetPos() +t *100,Color.Red,12))
+
+	if(self:GetType() == Component.TYPE_TRANSLATION) then
+		local v = Vector()
+		v:Set(self:GetReferenceAxis(),1.0)
+		v:Rotate(self.m_moveReferenceRot)
+
+		local dir,z = cam:WorldSpaceToScreenSpaceDirection(v)
+		local z = cam:CalcScreenSpaceDistance(self:GetEntity():GetPos())
+
+		local mouseDelta = input.get_cursor_pos() -self.m_moveStartCursorPos
+
+		local dot = dir:DotProduct(mouseDelta)
+		local delta = dot *z /400
+
 		local axis = self:GetReferenceAxis()
 		local vAxis = Vector()
 		vAxis:Set(axis,1.0)
-		local newPos = self.m_moveStartTransformPos +vAxis *delta
+		local offset = vAxis *delta
+		if(self:GetSpace() ~= ents.UtilTransformComponent.SPACE_WORLD) then offset:Rotate(self.m_moveReferenceRot) end
+		--offset = offset *sign
+		--if(axis == math.AXIS_X or axis == math.AXIS_Z) then offset = -offset end
+
+		local newPos = self.m_moveStartTransformPos +offset
 		-- print(self.m_moveStartCursorPos)
 		transformC:SetAbsTransformPosition(newPos)
 
@@ -223,11 +283,69 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
 			--transformC:SetAbsTransformPosition(pos)
 		end
 	else
+
+
+		local rotationPivot = cam:WorldSpaceToScreenSpace(self:GetEntity():GetPos())
+		--print("rotationPivot: ",rotationPivot)
+
+		local posCursor = input.get_cursor_pos()
+		local vpData = ents.ClickComponent.get_viewport_data()
+		--function  return get_viewport_data() end
+
+		rotationPivot = Vector2(vpData.x +rotationPivot.x *vpData.width,vpData.y +rotationPivot.y *vpData.height)
+
+		if(util.is_valid(self.m_elLine)) then
+			self.m_elLine:SetStartPos(Vector2(posCursor.x,posCursor.y))
+			self.m_elLine:SetEndPos(rotationPivot)
+		end
+
+		posCursor.x = posCursor.x -vpData.x
+		posCursor.y = posCursor.y -vpData.y
+		rotationPivot.x = rotationPivot.x -vpData.x
+		rotationPivot.y = rotationPivot.y -vpData.y
+
+		local startPos = self.m_moveStartCursorPos -Vector2(vpData.x,vpData.y)
+		self.m_moveStartCursorPos = input.get_cursor_pos()
+
+		local v0 = (posCursor -rotationPivot):GetNormal()
+		local v1 = (startPos -rotationPivot):GetNormal()
+		local axis = Vector2(0,1)
+		local dcur = v0:DotProduct(axis)
+		local dstart = v1:DotProduct(axis)
+
+		local curAng = math.deg(math.atan2(v0.y,v0.x))
+		local startAng = math.deg(math.atan2(v1.y,v1.x))
+		local diff = math.normalize_angle(curAng -startAng,-180) /180.0
+		local cam = game.get_primary_camera()
+		diff = diff *sign
+		if(self:GetAxis() == math.AXIS_X) then diff = -diff end
+		--print()--math.deg(math.acos(dcur)))
+		--[[delta = dcur -dstart
+		delta = delta *10]]
+		local delta = diff
+
+
+		--local mouseDelta = input.get_cursor_pos() -self.m_moveStartCursorPos
+		--print(rotationPivot,mouseDelta)
+
+
+
+
 		local axis = self:GetReferenceAxis()
-		local vAxis = EulerAngles()
-		vAxis:Set(axis,1.0)
-		local newAng = self.m_moveStartTransformAng +vAxis *delta *10
-		transformC:GetEntity():SetAngles(newAng)
+		local vAxis = Vector()
+		if(self:GetSpace() == ents.UtilTransformComponent.SPACE_WORLD) then
+			vAxis:Set(axis,1.0)
+		else
+			vAxis:Set(axis,1.0)
+			vAxis:Rotate(self.m_moveReferenceRot)
+		end
+		local rAxis = Quaternion(vAxis,delta *math.rad(180.0))
+		local newRot
+		if(self:GetSpace() == ents.UtilTransformComponent.SPACE_WORLD) then newRot = rAxis *self.m_moveStartTransformRot
+		else newRot = rAxis *self.m_moveStartTransformRot end
+		local newAng = newRot:ToEulerAngles()
+		self.m_moveStartTransformRot = newRot
+		transformC:SetTransformRotation(newAng)
 
 		--transformC:SetAbsTransformPosition(newPos)
 
@@ -255,54 +373,80 @@ function ents.UtilTransformArrowComponent:ApplyTransform()
 		end]]
 	end
 end
-function ents.UtilTransformArrowComponent:ToLocalSpace(pos)
+function Component:ToLocalSpace(pos)
 	local transformC = self:GetBaseUtilTransformComponent()
 	if(transformC == nil) then return pos end
 	return transformC:GetEntity():GetPose():GetInverse() *pos
 end
-function ents.UtilTransformArrowComponent:ToGlobalSpace(pos)
+function Component:ToGlobalSpace(pos)
 	local transformC = self:GetBaseUtilTransformComponent()
 	if(transformC == nil) then return pos end
 	return transformC:GetEntity():GetPose() *pos
 end
-function ents.UtilTransformArrowComponent:OnClick(action,pressed,hitPos)
+function Component:OnClick(action,pressed,hitPos)
 	if(action ~= input.ACTION_ATTACK) then return util.EVENT_REPLY_UNHANDLED end
 	if(pressed) then self:StartTransform()
 	else self:StopTransform() end
 	return util.EVENT_REPLY_HANDLED
 end
 
-function ents.UtilTransformArrowComponent:StartTransform()
+function Component:StartTransform()
 	local intersectPos = self:GetCursorIntersectionWithAxisPlane()
 	if(intersectPos == nil) then return util.EVENT_REPLY_UNHANDLED end
 
 	self.m_moveStartCursorPos = input.get_cursor_pos()
+	local refRot
+	if(util.is_valid(self.m_refEnt)) then
+		local attC = self:GetEntity():AddComponent(ents.COMPONENT_ATTACHABLE)
+		local animC = self.m_refEnt:GetComponent(ents.COMPONENT_ANIMATED)
+		if(attC ~= nil and animC ~= nil) then
+			local boneId = attC:GetBone()
+			if(boneId ~= nil and boneId ~= -1) then
+				refRot = animC:GetGlobalBonePose(boneId):GetRotation()
+			end
+		end
+		refRot = refRot or self.m_refEnt:GetRotation()
+	end
+	self.m_moveReferenceRot = refRot or Quaternion()
 	self.m_moveStartTransformPos = self.m_transformComponent:GetAbsTransformPosition()
-	self.m_moveStartTransformAng = self.m_transformComponent:GetEntity():GetAngles()
-	if(self:GetType() == ents.UtilTransformArrowComponent.TYPE_TRANSLATION) then self.m_moveStartPos = intersectPos
+	self.m_moveStartTransformRot = self.m_transformComponent:GetEntity():GetRotation()
+	if(self:GetType() == Component.TYPE_TRANSLATION) then self.m_moveStartPos = intersectPos
 	else self.m_rotStartAngle = self:GetCursorAxisAngle() end
 	self:SetSelected(true)
+	self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_START)
+
+	util.remove(self.m_elLine)
+	local elLine = gui.create("WILine")
+	self.m_elLine = elLine
+
+	pfm.tag_render_scene_as_dirty()
 end
 
-function ents.UtilTransformArrowComponent:StopTransform() self:SetSelected(false) end
+function Component:StopTransform()
+	util.remove(self.m_elLine)
+	self:SetSelected(false)
+	self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_END)
+
+	pfm.tag_render_scene_as_dirty()
+end
 
 local arrowModel
-function ents.UtilTransformArrowComponent:GetArrowModel()
+function Component:GetArrowModel()
 	if(arrowModel ~= nil) then return arrowModel end
 	local mdl = game.create_model()
 	local meshGroup = mdl:GetMeshGroup(0)
 
-	local scale = 1.5
+	local scale = 1.0
 	scale = Vector(scale,scale,scale)
 	local mesh = game.Model.Mesh.Create()
-	local meshBase = game.Model.Mesh.Sub.CreateCylinder(1.0,16.0,12)
+	local meshBase = game.Model.Mesh.Sub.CreateCylinder(0.4,16.0,12)
 	meshBase:SetSkinTextureIndex(0)
 	meshBase:Scale(scale)
 	mesh:AddSubMesh(meshBase)
 
 	local meshTip = game.Model.Mesh.Sub.CreateCone(
-		2.0, -- startRadius
-		4.0, -- length
+		1.0, -- startRadius
+		5.0, -- length
 		0.0, -- endRadius
 		12 -- segmentCount
 	)
@@ -321,8 +465,15 @@ function ents.UtilTransformArrowComponent:GetArrowModel()
 	return mdl
 end
 
+function Component:SetReferenceEntity(ent,boneId)
+	self.m_refEnt = ent
+	self:UpdatePose()
+end
+
+function Component:GetReferenceEntity() return self.m_refEnt end
+
 local diskModel
-function ents.UtilTransformArrowComponent:GetDiskModel()
+function Component:GetDiskModel()
 	if(diskModel ~= nil) then return diskModel end
 	local mdl = game.create_model()
 	local meshGroup = mdl:GetMeshGroup(0)
@@ -331,7 +482,7 @@ function ents.UtilTransformArrowComponent:GetDiskModel()
 	scale = Vector(scale,scale,scale)
 	local mesh = game.Model.Mesh.Create()
 
-	local meshDisk = game.Model.Mesh.Sub.CreateRing(12.0,16.0,true)
+	local meshDisk = game.Model.Mesh.Sub.CreateRing(7.5,8,true)
 	meshDisk:SetSkinTextureIndex(0)
 	meshDisk:Scale(scale)
 	mesh:AddSubMesh(meshDisk)
@@ -344,4 +495,6 @@ function ents.UtilTransformArrowComponent:GetDiskModel()
 	diskModel = mdl
 	return mdl
 end
-ents.COMPONENT_UTIL_TRANSFORM_ARROW = ents.register_component("util_transform_arrow",ents.UtilTransformArrowComponent)
+ents.COMPONENT_UTIL_TRANSFORM_ARROW = ents.register_component("util_transform_arrow",Component)
+Component.EVENT_ON_TRANSFORM_START = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM_ARROW,"on_transform_start")
+Component.EVENT_ON_TRANSFORM_END = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM_ARROW,"on_transform_end")

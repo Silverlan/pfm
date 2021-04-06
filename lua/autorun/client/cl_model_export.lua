@@ -99,7 +99,7 @@ console.register_command("util_export_asset",function(pl,...)
 		["gpu"] = game.Model.ExportInfo.DEVICE_GPU
 	}
 	local format = "glTF"
-	local game = ""
+	local gameIdentifier = ""
 	for cmd,args in pairs(cmdArgs) do
 		if(cmd == "export_animations") then
 			if(args[1] ~= nil) then exportInfo.exportAnimations = toboolean(args[1])
@@ -166,7 +166,7 @@ console.register_command("util_export_asset",function(pl,...)
 			if(args[1] ~= nil) then exportInfo.normalizeTextureNames = toboolean(args[1])
 			else exportInfo.normalizeTextureNames = true end
 		elseif(cmd == "format") then format = args[1]
-		elseif(cmd == "game") then game = args[1] end
+		elseif(cmd == "game") then gameIdentifier = args[1] end
 	end
 
 	if(mdlName ~= nil) then
@@ -175,7 +175,7 @@ console.register_command("util_export_asset",function(pl,...)
 		local models = get_asset_list(mdlName,asset.TYPE_MODEL,formats,recursive)
 		if(format == "mdl") then
 			include("/util/source_model_exporter.lua")
-			local result,err = util.export_source_engine_models(models,game)
+			local result,err = util.export_source_engine_models(models,gameIdentifier)
 			if(result == false) then console.print_warning("Export failed: " .. err) end
 			return
 		end

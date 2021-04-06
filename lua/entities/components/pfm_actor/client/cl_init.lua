@@ -18,7 +18,6 @@ function ents.PFMActorComponent:Initialize()
 	self:BindComponentInitEvent(ents.COMPONENT_RENDER,function(renderC)
 		renderC:SetExemptFromOcclusionCulling(true)
 	end)
-	self.m_channels = {}
 	self.m_listeners = {}
 
 	self.m_cvAnimCache = console.get_convar("pfm_animation_cache_enabled")
@@ -27,14 +26,31 @@ function ents.PFMActorComponent:Initialize()
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"UpdateRenderMode")
 
 	self:SetShouldAutoUpdatePose(true)
+
+	self.m_boneChannels = {}
+	self.m_flexControllerChannels = {}
 end
 
-function ents.PFMActorComponent:AddChannel(channel)
-	table.insert(self.m_channels,channel)
-	return channel
+function ents.PFMActorComponent:SetBoneChannel(boneId,attr,channel)
+	if(type(boneId) == "string") then
+		local mdl = self:GetEntity():GetModel()
+		if(mdl == nil) then return end
+		boneId = mdl:LookupBone(boneId)
+		if(boneId == -1) then return end
+	end
+	self.m_boneChannels[boneId] = self.m_boneChannels[boneId] or {}
+	self.m_boneChannels[boneId][attr] = channel
+end
+function ents.PFMActorComponent:GetBoneChannel(boneId,attr)
+	return self.m_boneChannels[boneId] and self.m_boneChannels[boneId][attr] or nil
+end
+function ents.PFMActorComponent:SetFlexControllerChannel(flexControllerId,channel)
+	self.m_flexControllerChannels[flexControllerId] = channel
+end
+function ents.PFMActorComponent:GetFlexControllerChannel(flexControllerId)
+	return self.m_flexControllerChannels[flexControllerId]
 end
 
-function ents.PFMActorComponent:GetChannels() return self.m_channels end
 function ents.PFMActorComponent:GetActorData() return self.m_actorData end
 
 function ents.PFMActorComponent:SetShouldAutoUpdatePose(autoUpdate) self.m_autoUpdatePose = autoUpdate end
@@ -250,7 +266,8 @@ function ents.PFMActorComponent:Setup(actorData)
 		if(err ~= nil) then
 			pfm.log("Attempted to add malformed component '" .. componentData:GetTypeName() .. "' to actor '" .. self:GetEntity():GetName() .. "': " .. err .. "!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_ERROR)
 		else
-			local c = self:AddEntityComponent(componentData:GetComponentName())
+			local componentName = componentData:GetComponentName()
+			local c = self:AddEntityComponent(componentName)
 			if(c == nil) then pfm.log("Attempted to add unknown component '" .. componentData:GetComponentName() .. "' to actor '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 			else c:Setup(actorData,componentData) end
 		end

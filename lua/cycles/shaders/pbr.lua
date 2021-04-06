@@ -119,14 +119,19 @@ function unirender.PBRShader:Initialize()
 	local mat = self:GetMaterial()
 	local dbHair = mat and mat:GetDataBlock():FindBlock("hair")
 	if(dbHair ~= nil) then
-		local hairConfig = unirender.Shader.HairConfig()
-		hairConfig.hairPerSquareMeter = dbHair:GetFloat("hair_per_square_meter",100)
-		hairConfig.numSegments = dbHair:GetFloat("segment_count",1)
-		hairConfig.defaultThickness = dbHair:GetFloat("thickness",0.1)
-		hairConfig.defaultLength = dbHair:GetFloat("length",0.1)
-		hairConfig.defaultHairStrength = dbHair:GetFloat("strength",0.2)
-		hairConfig.randomHairLengthFactor = dbHair:GetFloat("random_hair_length_factor",0.5)
-		self:SetHairConfig(hairConfig)
+		local enabled = true
+		if(dbHair:HasValue("enabled")) then enabled = dbHair:GetBool("enabled") end
+		if(enabled) then
+			local hairConfig = unirender.Shader.HairConfig()
+			hairConfig.hairPerSquareMeter = dbHair:GetFloat("hair_per_square_meter",100)
+			hairConfig.numSegments = dbHair:GetFloat("segment_count",1)
+			hairConfig.defaultThickness = util.units_to_metres(dbHair:GetFloat("thickness",0.1))
+			hairConfig.defaultLength = util.units_to_metres(dbHair:GetFloat("length",0.1))
+			hairConfig.defaultHairStrength = dbHair:GetFloat("strength",0.2)
+			hairConfig.randomHairLengthFactor = dbHair:GetFloat("random_hair_length_factor",0.5)
+			hairConfig.curvature = dbHair:GetFloat("curvature",1.0)
+			self:SetHairConfig(hairConfig)
+		end
 	end
 end
 include("/cycles/nodes/test.lua")

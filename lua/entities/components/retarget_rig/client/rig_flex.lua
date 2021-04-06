@@ -6,25 +6,25 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function ents.RetargetRig.Rig.load_flex_controller_map(db,srcMdl,dstMdl)
-	local fcm = db:FindBlock("flex_controller_map")
+function ents.RetargetRig.Rig.load_flex_controller_map(assetData,srcMdl,dstMdl)
+	local udmFcm = assetData:GetValue("flex_controller_map")
 	local translationTable = {}
-	if(fcm ~= nil) then
-		for fcNameSrc,mappings in pairs(fcm:GetChildBlocks()) do
+	if(udmFcm ~= nil) then
+		for fcNameSrc,udmMappings in pairs(udmFcm:GetChildren()) do
 			local fcIdSrc = srcMdl:LookupFlexController(fcNameSrc)
 			if(fcIdSrc == -1) then console.print_warning("Retarget rig has invalid flex controller reference '" .. fcNameSrc .. "' for model '" .. srcMdl:GetName() .. "'! Ignoring...")
 			else
 				translationTable[fcIdSrc] = {}
-				for fcNameDst,mappingData in pairs(mappings:GetChildBlocks()) do
+				for fcNameDst,udmMappingData in pairs(udmMappings:GetChildren()) do
 					local fcIdDst = dstMdl:LookupFlexController(fcNameDst)
 					if(fcIdDst == -1) then console.print_warning("Retarget rig has invalid flex controller reference '" .. fcNameDst .. "' for model '" .. dstMdl:GetName() .. "'! Ignoring...")
 					else
 						translationTable[fcIdSrc][fcIdDst] = {
-							min_source = mappingData:GetFloat("min_source"),
-							max_source = mappingData:GetFloat("max_source"),
+							min_source = udmMappingData:GetValue("min_source"),
+							max_source = udmMappingData:GetValue("max_source"),
 
-							min_target = mappingData:GetFloat("min_target"),
-							max_target = mappingData:GetFloat("max_target")
+							min_target = udmMappingData:GetValue("min_target"),
+							max_target = udmMappingData:GetValue("max_target")
 						}
 					end
 				end
@@ -34,20 +34,20 @@ function ents.RetargetRig.Rig.load_flex_controller_map(db,srcMdl,dstMdl)
 	return translationTable
 end
 
-function ents.RetargetRig.Rig.save_flex_controller_map(db,srcMdl,dstMdl,flexControllerTranslationTable)
-	local fcm = db:AddBlock("flex_controller_map")
+function ents.RetargetRig.Rig.save_flex_controller_map(assetData,srcMdl,dstMdl,flexControllerTranslationTable)
+	local udmFcm = assetData:Add("flex_controller_map")
 	for flexCId0,mappings in pairs(flexControllerTranslationTable) do
 		local flexC0 = srcMdl:GetFlexController(flexCId0)
 		if(flexC0 ~= nil) then
-			local blockSrc = fcm:AddBlock(flexC0.name)
+			local udmSrc = udmFcm:Add(flexC0.name)
 			for flexCId1,data in pairs(mappings) do
 				local flexC1 = dstMdl:GetFlexController(flexCId1)
 				if(flexC1 ~= nil) then
-					local blockDst = blockSrc:AddBlock(flexC1.name)
-					blockDst:SetValue("float","min_source",tostring(data.min_source))
-					blockDst:SetValue("float","max_source",tostring(data.max_source))
-					blockDst:SetValue("float","min_target",tostring(data.min_target))
-					blockDst:SetValue("float","max_target",tostring(data.max_target))
+					local udmDst = udmSrc:Add(flexC1.name)
+					udmDst:SetValue("min_source",udm.TYPE_FLOAT,data.min_source)
+					udmDst:SetValue("max_source",udm.TYPE_FLOAT,data.max_source)
+					udmDst:SetValue("min_target",udm.TYPE_FLOAT,data.min_target)
+					udmDst:SetValue("max_target",udm.TYPE_FLOAT,data.max_target)
 				end
 			end
 		end

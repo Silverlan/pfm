@@ -45,9 +45,9 @@ function gui.PFMTreeView:Clear()
 	if(util.is_valid(self.m_rootElement) == false) then return end
 	self.m_rootElement:Clear()
 end
-function gui.PFMTreeView:AddItem(text,fPopulate,insertIndex)
+function gui.PFMTreeView:AddItem(text,fPopulate,insertIndex,identifier)
 	if(util.is_valid(self.m_rootElement) == false) then return end
-	return self.m_rootElement:AddItem(text,fPopulate,insertIndex)
+	return self.m_rootElement:AddItem(text,fPopulate,insertIndex,identifier)
 end
 function gui.PFMTreeView:OnElementSelectionChanged(elTgt,selected)
 	self.m_selectedElements[elTgt] = selected or nil
@@ -100,6 +100,7 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self.m_collapsed = true
 	self.m_items = {}
 	self.m_itemElements = {}
+	self.m_identifierToItem = {}
 	self:SetSize(64,19)
 
 	self.m_vBox = gui.create("WIVBox",self,0,0,self:GetWidth(),self:GetHeight())
@@ -331,7 +332,10 @@ function gui.PFMTreeViewElement:SetSelected(selected)
 		if(item:IsValid()) then item:Select() end
 	end
 end
-function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex)
+function gui.PFMTreeViewElement:GetItemByIdentifier(identifier) return self.m_identifierToItem[identifier] end
+function gui.PFMTreeViewElement:SetIdentifier(identifier) self.m_identifier = identifier end
+function gui.PFMTreeViewElement:GetIdentifier() return self.m_identifier end
+function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex,identifier)
 	self:InitializeChildBox()
 	local item = gui.create("WIPFMTreeViewElement")
 	if(insertIndex == nil) then item:SetParent(self.m_vBoxChildren)
@@ -352,6 +356,10 @@ function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex)
 	else
 		table.insert(self.m_itemElements,{item,hLine})
 		table.insert(self.m_items,item)
+	end
+	if(identifier ~= nil) then
+		self.m_identifierToItem[identifier] = item
+		item:SetIdentifier(identifier)
 	end
 	self:ScheduleUpdate()
 	self.m_treeView:GetRoot():ScheduleUpdate()

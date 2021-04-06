@@ -1,5 +1,9 @@
 util.register_class("ents.UtilTransformComponent",BaseEntityComponent)
 
+ents.UtilTransformComponent.SPACE_WORLD = 0
+ents.UtilTransformComponent.SPACE_LOCAL = 1
+ents.UtilTransformComponent.SPACE_VIEW = 2
+
 function ents.UtilTransformComponent:Initialize()
 	BaseEntityComponent.Initialize(self)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)

@@ -178,7 +178,6 @@ function fudm.PFMModel:SetupFlexControllerControls(actorEditor,itemComponent)
 end
 
 function fudm.PFMModel:SetupBoneControls(actorEditor,itemComponent)
-	local itemBones = itemComponent:AddItem(locale.get_text("skeleton"))
 	for _,bone in ipairs(self:GetBoneList():GetTable()) do
 		bone = bone:GetTarget()
 		actorEditor:AddControl(self,itemComponent,{
@@ -188,7 +187,7 @@ function fudm.PFMModel:SetupBoneControls(actorEditor,itemComponent)
 			min = 0.0,
 			max = 1.0,
 			default = 0.0
-		})
+		},bone:GetName())
 	end
 end
 
@@ -196,7 +195,7 @@ function fudm.PFMModel:SetupControls(actorEditor,itemComponent)
 	local itemFlexControllers = itemComponent:AddItem(locale.get_text("flex_controllers"))
 	self:SetupFlexControllerControls(actorEditor,itemFlexControllers)
 	
-	local itemBones = itemComponent:AddItem(locale.get_text("skeleton"))
+	local itemBones = itemComponent:AddItem(locale.get_text("skeleton"),nil,nil,"skeleton")
 	self:SetupBoneControls(actorEditor,itemBones)
 
 	local itemBaseProps = itemComponent:AddItem(locale.get_text("pfm_base_properties"))

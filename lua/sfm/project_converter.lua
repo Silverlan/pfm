@@ -1101,8 +1101,7 @@ end)
 
 sfm.register_element_type_conversion(sfm.MaterialOverlayFXClip,fudm.PFMOverlayClip,function(converter,sfmMat,pfmMat)
 	pfmMat:SetTimeFrameAttr(converter:ConvertNewElement(sfmMat:GetTimeFrame()))
-	local matName = sfmMat:GetMaterial()
-	if(#matName > 0) then matName = file.remove_file_extension(matName) .. ".wmi" end
+	local matName = asset.get_normalized_path(sfmMat:GetMaterial(),asset.TYPE_MATERIAL)
 	pfmMat:SetMaterial(matName)
 	pfmMat:SetLeft(sfmMat:GetLeft())
 	pfmMat:SetTop(sfmMat:GetTop())

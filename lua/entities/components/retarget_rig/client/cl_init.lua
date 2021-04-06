@@ -42,14 +42,16 @@ function ents.RetargetRig:RigToActor(actor,mdlSrc,mdlDst)
 	if(mdlSrc == nil or mdlDst == nil or animSrc == nil) then return false end
 	local newRig = false
 	local rig = ents.RetargetRig.Rig.load(mdlSrc,mdlDst)
-	if(rig == nil) then
+	--[[if(rig == false) then
 		rig = ents.RetargetRig.Rig(mdlSrc,mdlDst)
 
 		local boneRemapper = ents.RetargetRig.BoneRemapper(mdlSrc:GetSkeleton(),mdlSrc:GetReferencePose(),mdlDst:GetSkeleton(),mdlDst:GetReferencePose())
 		local translationTable = boneRemapper:AutoRemap()
 		rig:SetDstToSrcTranslationTable(translationTable)
 		newRig = true
-	end
+	end]]
+	if(rig == false) then return false end
+	
 	self:SetRig(rig,animSrc)
 	return newRig
 end

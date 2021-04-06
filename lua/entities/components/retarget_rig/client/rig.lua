@@ -10,6 +10,8 @@ util.register_class("ents.RetargetRig.Rig")
 
 include("rig_flex.lua")
 
+pfm.register_log_category("retarget")
+
 ents.RetargetRig.Rig.FILE_LOCATION = "retarget_rigs/"
 ents.RetargetRig.Rig.impl = {}
 
@@ -139,15 +141,17 @@ function ents.RetargetRig.Rig:ApplyPoseMatchingRotationCorrections()
 
 	self:SetBindPose(bindPose)
 end
+local function model_path_to_rig_identifier(mdlPath)
+	if(type(mdlPath) ~= "string") then mdlPath = mdlPath:GetName() end
+	mdlPath = asset.get_normalized_path(mdlPath,asset.TYPE_MODEL)
+	return mdlPath:replace("/","_")
+end
 function ents.RetargetRig.Rig.get_rig_file_path(srcMdl,dstMdl)
-	local dstHash = string.hash(type(dstMdl) == "string" and dstMdl or dstMdl:GetName())
-	local path = ents.RetargetRig.Rig.get_rig_location(srcMdl):GetString() .. dstHash .. ".rig"
-	return util.Path.CreateFilePath(path)
+	dstMdl = model_path_to_rig_identifier(dstMdl)
+	return util.Path.CreatePath(ents.RetargetRig.Rig.FILE_LOCATION) +ents.RetargetRig.Rig.get_rig_location(srcMdl) +util.Path.CreateFilePath(dstMdl .. ".udm")
 end
 function ents.RetargetRig.Rig.get_rig_location(mdl)
-	local hash = string.hash(type(mdl) == "string" and mdl or mdl:GetName())
-	local path = ents.RetargetRig.Rig.FILE_LOCATION .. hash .. "/"
-	return util.Path.CreatePath(path)
+	return util.Path.CreatePath(model_path_to_rig_identifier(mdl))
 end
 function ents.RetargetRig.Rig.get_bone_cache_map_file_path()
 	return ents.RetargetRig.Rig.FILE_LOCATION .. "bone_cache.txt"
@@ -202,6 +206,8 @@ function ents.RetargetRig.Rig:DebugPrint()
 	end
 	print("")
 end
+ents.RetargetRig.Rig.FORMAT_VERSION = 1
+ents.RetargetRig.Rig.FORMAT_IDENTIFIER = "PRERIG"
 function ents.RetargetRig.Rig:Save()
 	self:DebugPrint()
 	local srcMdl = self.m_dstMdl
@@ -210,41 +216,56 @@ function ents.RetargetRig.Rig:Save()
 	local dstMdl = self.m_srcMdl
 	local skeleton1 = dstMdl:GetSkeleton()
 
-	local db = util.DataBlock.create()
+	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
+	pfm.log("Saving retarget rig '" .. filePath:GetString() .. "'...",pfm.LOG_CATEGORY_RETARGET)
+	local udmData,err = udm.create(ents.RetargetRig.Rig.FORMAT_IDENTIFIER,ents.RetargetRig.Rig.FORMAT_VERSION)
+	if(udmData == false) then
+		pfm.log("Unable to save retarget rig '" .. filePath:GetString() .. "': " .. err,pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
 
-	db:SetValue("string","source",dstMdl:GetName())
-	db:SetValue("string","target",srcMdl:GetName())
-
-	local bm = db:AddBlock("bone_map")
+	local assetData = udmData:GetAssetData():GetData()
+	local udmRig = assetData:Add("rig")
+	udmRig:SetValue("source",dstMdl:GetName())
+	udmRig:SetValue("target",srcMdl:GetName())
+	local udmBoneMap = udmRig:Add("bone_map")
 	local translationTable = self:GetDstToSrcTranslationTable()
 	local translationNameTable = {}
 	for boneId0,boneData in pairs(translationTable) do
 		local bone0 = skeleton0:GetBone(boneId0)
 		local bone1 = skeleton1:GetBone(boneData[1])
-		if(bone0 == nil or bone1 == nil) then console.print_warning("Retarget rig has invalid bone reference, not all bones will be saved!")
+		if(bone0 == nil or bone1 == nil) then
+			pfm.log("Retarget rig has invalid bone reference, not all bones will be saved!",pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
 		else
 			local pose = boneData[2]
-			if(pose:IsIdentity()) then bm:SetValue("string",bone0:GetName(),bone1:GetName())
+			if(pose:IsIdentity()) then udmBoneMap:SetValue(bone0:GetName(),bone1:GetName())
 			else
-				local data = bm:AddBlock("bone0")
-				data:SetValue("string","target",bone1:GetName())
+				local udmBone = udmRig:Add(bone0:GetName())
+				udmBone:SetValue("target",bone1:GetName())
 				local translation = pose:GetOrigin()
 				local angles = pose:GetRotation():ToEulerAngles()
-				data:SetValue("vector","translation",tostring(translation))
-				data:SetValue("vector","rotation",tostring(angles))
+				udmBone:SetValue("translation",translation)
+				udmBone:SetValue("rotation",angles)
 			end
 			translationNameTable[bone0:GetName()] = bone1:GetName()
 		end
 	end
 	ents.RetargetRig.Rig.add_bone_list_to_cache_map(translationNameTable)
-	ents.RetargetRig.Rig.save_flex_controller_map(db,dstMdl,srcMdl,self.m_flexTranslationTable)
+	ents.RetargetRig.Rig.save_flex_controller_map(udmRig,dstMdl,srcMdl,self.m_flexTranslationTable)
 
-	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
 	if(file.create_path(filePath:GetPath()) == false) then return end
-	local f = file.open(filePath:GetString(),bit.bor(file.OPEN_MODE_WRITE))
-	if(f == nil) then return end
-	f:WriteString(db:ToString("rig"))
+	local f = file.open(filePath:GetString(),file.OPEN_MODE_WRITE)
+	if(f == nil) then
+		pfm.log("Unable to open file '" .. filePath:GetString() .. "' for writing!",pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+	local res,err = udmData:SaveAscii(f,udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER)
 	f:Close()
+	if(res == false) then
+		pfm.log("Failed to save retarget rig as '" .. filePath:GetString() .. "': " .. err,pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+	return true
 end
 function ents.RetargetRig.Rig.exists(psrcMdl,pdstMdl)
 	-- TODO: Flip these names
@@ -258,43 +279,70 @@ function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
 	local srcMdl = pdstMdl
 	local dstMdl = psrcMdl
 	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
-	print("Loading retarget rig '" .. filePath:GetString() .. "'...")
-	local f = file.open(filePath:GetString(),bit.bor(file.OPEN_MODE_READ))
-	if(f == nil) then return end
-	local root = util.DataBlock.load(f)
+	pfm.log("Loading retarget rig '" .. filePath:GetString() .. "'...",pfm.LOG_CATEGORY_RETARGET)
+
+	local fileName = filePath:GetString()
+	local f = file.open(fileName,file.OPEN_MODE_READ)
+	if(f == nil) then
+		pfm.log("Unable to load retarget rig: File '" .. fileName .. "' not found!",pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+
+	local udmData,err = udm.load(f)
 	f:Close()
-	if(root == nil) then return end
-	local db = root:FindBlock("rig")
-	if(db == nil) then return end
-	local source = db:GetString("source")
-	local target = db:GetString("target")
+	if(udmData == false) then
+		pfm.log("Failed to load retarget rig: " .. err,pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+
+	local assetData = udmData:GetAssetData()
+	--[[if(assetData:GetAssetType() ~= ents.RetargetRig.Rig.FORMAT_IDENTIFIER) then
+		pfm.log("Invalid retarget rig format for '" .. fileName .. "'!",pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+	local version = assetData:GetAssetVersion()
+	if(version < 1) then
+		pfm.log("Invalid retarget rig version for '" .. fileName .. "'!",pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end]]
+
+	assetData = assetData:GetData()
+	local udmRig = assetData:Get("rig")
+	if(udmRig == nil) then return false end
+	local source = udmRig:GetValue("source")
+	local target = udmRig:GetValue("target")
 
 	local skeleton0 = srcMdl:GetSkeleton()
 	local skeleton1 = dstMdl:GetSkeleton()
-	local bm = db:FindBlock("bone_map")
+	local udmBoneMap = udmRig:Get("bone_map")
 	local translationTable = {}
-	if(bm ~= nil) then
-		for _,boneName0 in ipairs(bm:GetKeys()) do
-			local boneName1 = bm:GetString(boneName0)
-			local boneId0 = srcMdl:LookupBone(boneName0)
-			local boneId1 = dstMdl:LookupBone(boneName1)
-			if(boneId0 == -1 or boneId1 == -1) then console.print_warning("Retarget rig has invalid bone reference from bone '" .. boneName0 .. "' to bone '" .. boneName1 .. "'! Ignoring...")
-			else translationTable[boneId0] = {boneId1,phys.Transform()} end
-		end
-		for boneName0,data in pairs(bm:GetChildBlocks()) do
-			local boneId0 = srcMdl:LookupBone(boneName0)
-			local boneName1 = data:GetString("target")
-			local translation = data:GetVector("translation",Vector())
-			local angles = data:GetVector("rotation",Vector())
-			local boneId1 = dstMdl:LookupBone(boneName1)
-			if(boneId0 == -1 or boneId1 == -1) then console.print_warning("Retarget rig has invalid bone reference from bone '" .. boneName0 .. "' to bone '" .. boneName1 .. "'! Ignoring...")
-			else translationTable[boneId0] = {boneId1,phys.Transform(translation,EulerAngles(angles.x,angles.y,angles.z):ToQuaternion())} end
+	if(udmBoneMap ~= nil) then
+		for key,child in pairs(udmBoneMap:GetChildren()) do
+			if(child:GetType() == udm.TYPE_ELEMENT) then
+				local boneName0 = key
+				local boneId0 = srcMdl:LookupBone(boneName0)
+				local boneName1 = child:GetValue("target","")
+				local translation = child:GetValue("translation",Vector())
+				local angles = child:GetValue("rotation",EulerAngles())
+				local boneId1 = dstMdl:LookupBone(boneName1)
+				if(boneId0 == -1 or boneId1 == -1) then
+					pfm.log("Retarget rig has invalid bone reference from bone '" .. boneName0 .. "' to bone '" .. boneName1 .. "'! Ignoring...",pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
+				else translationTable[boneId0] = {boneId1,phys.Transform(translation,EulerAngles(angles.x,angles.y,angles.z):ToQuaternion())} end
+			else
+				local boneName0 = key
+				local boneName1 = child:GetValue()
+				local boneId0 = srcMdl:LookupBone(boneName0)
+				local boneId1 = dstMdl:LookupBone(boneName1)
+				if(boneId0 == -1 or boneId1 == -1) then
+					pfm.log("Retarget rig has invalid bone reference from bone '" .. boneName0 .. "' to bone '" .. boneName1 .. "'! Ignoring...",pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
+				else translationTable[boneId0] = {boneId1,phys.Transform()} end
+			end
 		end
 	end
 
 	local rig = ents.RetargetRig.Rig(dstMdl,srcMdl)
 	rig.m_dstToSrcTranslationTable = translationTable
-	rig.m_flexTranslationTable = ents.RetargetRig.Rig.load_flex_controller_map(db,dstMdl,srcMdl)
+	rig.m_flexTranslationTable = ents.RetargetRig.Rig.load_flex_controller_map(assetData,dstMdl,srcMdl)
 	rig:DebugPrint()
 	rig:SetDstToSrcTranslationTable(translationTable)
 	return rig

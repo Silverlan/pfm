@@ -1,0 +1,129 @@
+"components"
+{
+	"pfm_model"
+	{
+		$array controls [element][
+			{
+				$string identifier "flex_controller_scale"
+				$string localizedLabel "pfm_flex_controller_scale"
+				$string type "slider"
+				$float min 0.0
+				$float max 8.0
+				$float default 1.0
+				$string keyValue "flexControllerScale"
+			},
+			{
+				$string type "model"
+				$string localizedLabel "model"
+				$string keyValue "modelName"
+			},
+			{
+				$string identifier "skin"
+				$string localizedLabel "skin"
+				$string type "slider"
+				$float min 0
+				$float max 10
+				$float default 0
+				$string keyValue "skin"
+			}
+		]
+	}
+	"pfm_particle_system"
+	{
+	}
+	"pfm_camera"
+	{
+		$array controls [element][
+			{
+				$string identifier "field_of_view"
+				$string localizedLabel "pfm_component_camera_field_of_view"
+				$string type "slider"
+				$float min 10.0
+				$float max 120.0
+				$float default 30.0
+				$string keyValue "fov"
+			},
+			{
+				$string identifier "dof"
+				$string localizedLabel "pfm_component_camera_enable_dof"
+				$string type "checkbox"
+				$bool default 1
+				$string keyValue "depthOfFieldEnabled"
+			},
+			{
+				$string identifier "focal_distance"
+				$string localizedLabel "pfm_component_camera_focal_distance"
+				$string type "slider"
+				$float min 1.0
+				$float max 200.0
+				$float default 72.0
+				$string keyValue "focalDistance"
+			},
+			{
+				$string identifier "fstop"
+				$string localizedLabel "pfm_component_camera_aperture_fstop"
+				$string type "slider"
+				$float min 0.0
+				$float max 10.0
+				$float default 1.0
+				$string keyValue "fstop"
+			},
+			{
+				$string identifier "aperture_bokeh_ratio"
+				$string localizedLabel "pfm_component_camera_aperture_bokeh_ratio"
+				$string type "slider"
+				$float min 1.0
+				$float max 2.0
+				$float default 1.0
+				$string keyValue "apertureBokehRatio"
+			},
+			{
+				$string identifier "aperture_blade_count"
+				$string localizedLabel "pfm_component_camera_aperture_blade_count"
+				$string type "slider"
+				$float min 0
+				$float max 16
+				$float default 0
+				$string type "integer"
+				$string keyValue "apertureBladeCount"
+			},
+			{
+				$string identifier "aperture_blades_rotation"
+				$string localizedLabel "pfm_component_camera_aperture_blades_rotation"
+				$string type "slider"
+				$float min -180
+				$float max 180
+				$float default 0
+				$string keyValue "apertureBladesRotation"
+			},
+			{
+				$string identifier "sensor_size"
+				$string localizedLabel "pfm_component_camera_sensor_size"
+				$string type "slider"
+				$float min 1
+				$float max 100
+				$float default 36
+				$string keyValue "sensorSize"
+			},
+			{
+				$string identifier "near_z"
+				$string localizedLabel "pfm_component_camera_near_z"
+				$string type "slider"
+				$float min 0
+				$float max 1000.0
+				$string keyValue "zNear"
+			},
+			{
+				$string identifier "near_z"
+				$string localizedLabel "pfm_component_camera_far_z"
+				$string type "slider"
+				$float min 0
+				$float max 32768
+				$string keyValue "zFar"
+			}
+		]
+	}
+	"pfm_animation_set"
+	{
+	}
+}
