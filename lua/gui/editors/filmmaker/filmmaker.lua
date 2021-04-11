@@ -500,9 +500,9 @@ function gui.WIFilmmaker:CreateNewActor()
 	-- TODO: What if no actor editor is open?
 	return self:GetActorEditor():CreateNewActor()
 end
-function gui.WIFilmmaker:CreateNewActorComponent(actor,componentType)
+function gui.WIFilmmaker:CreateNewActorComponent(actor,componentType,updateActor,initComponent)
 	-- TODO: What if no actor editor is open?
-	return self:GetActorEditor():CreateNewActorComponent(actor,componentType)
+	return self:GetActorEditor():CreateNewActorComponent(actor,componentType,updateActor,initComponent)
 end
 function gui.WIFilmmaker:OnGameViewCreated(projectC)
 	pfm.GameView.OnGameViewCreated(self,projectC)
@@ -865,12 +865,11 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					local filmmaker = tool.get_filmmaker()
 					local actor = filmmaker:CreateNewActor()
 					if(actor == nil) then return end
-					local mdlC = filmmaker:CreateNewActorComponent(actor,"PFMModel")
-					if(mdlC == nil) then return end
-					self:AddActor(actor,filmClip)
 					local path = util.Path(elIcon:GetAsset())
 					path:PopFront()
-					mdlC:SetModelName(path:GetString())
+					local mdlC = filmmaker:CreateNewActorComponent(actor,"PFMModel",nil,function(mdlC) mdlC:ChangeModel(path:GetString()) end)
+					if(mdlC == nil) then return end
+					self:AddActor(actor,filmClip)
 					local t = actor:GetTransform()
 					t:SetPosition(entGhost:GetPos())
 					t:SetRotation(entGhost:GetRotation())
@@ -962,8 +961,10 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:OpenWindow("element_viewer")
 	-- self:OpenWindow("tutorial_catalog")
 
-	self:OpenWindow("primary_viewport")
+	local tab,elVp = self:OpenWindow("primary_viewport")
 	self:OpenWindow("render")
+
+	if(util.is_valid(elVp)) then elVp:UpdateRenderSettings() end
 
 	gui.create("WIResizer",self.m_contentsRight):SetFraction(0.75)
 

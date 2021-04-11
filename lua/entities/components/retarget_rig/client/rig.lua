@@ -259,7 +259,7 @@ function ents.RetargetRig.Rig:Save()
 		pfm.log("Unable to open file '" .. filePath:GetString() .. "' for writing!",pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
 		return false
 	end
-	local res,err = udmData:SaveAscii(f,udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER)
+	local res,err = udmData:SaveAscii(f) -- ,udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER)
 	f:Close()
 	if(res == false) then
 		pfm.log("Failed to save retarget rig as '" .. filePath:GetString() .. "': " .. err,pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)

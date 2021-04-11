@@ -240,7 +240,6 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 		end
 		local curFilmClip = activeClip:GetChildFilmClip(offset)
 		if(util.is_same_object(curFilmClip,self.m_activeGameViewFilmClip) == false) then
-			print(curFilmClip,self.m_activeGameViewFilmClip)
 			self.m_activeGameViewFilmClip = curFilmClip
 			self:OnGameViewFilmClipChanged(curFilmClip)
 		end

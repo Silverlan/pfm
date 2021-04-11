@@ -18,23 +18,35 @@ function gui.VBox:OnUpdate()
 	local y = 0
 	local w = 0
 	local lastChild
-	for _,child in ipairs(self:GetChildren()) do
+	local autoFillChild
+	local children = self:GetChildren()
+	for i,child in ipairs(children) do
 		if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
 			child:SetY(y)
 			if(self.m_autoFillWidth == true and child:HasAnchor() == false) then child:SetWidth(size.x) end
 			y = y +child:GetHeight()
 			w = math.max(w,child:GetRight())
 
-			lastChild = child
+			lastChild = i
+			if(child == self.m_autoFillTarget) then autoFillChild = i end
 		end
 	end
+	autoFillChild = autoFillChild or lastChild
 
 	local curSize = size:Copy()
 	if(self.m_fixedWidth ~= true) then size.x = w end
 	if(self.m_fixedHeight ~= true) then size.y = y
-	elseif(self.m_autoFillHeight == true and lastChild ~= nil and lastChild:HasAnchor() == false) then
-		lastChild:SetHeight(size.y -lastChild:GetTop())
-		lastChild:Update()
+	elseif(self.m_autoFillHeight == true and children[autoFillChild] ~= nil and children[autoFillChild]:HasAnchor() == false) then
+		local sizeAdd = (size.y -children[lastChild]:GetBottom())
+		children[autoFillChild]:SetHeight(children[autoFillChild]:GetHeight() +sizeAdd)
+		children[autoFillChild]:Update()
+
+		for i=autoFillChild +1,#children do
+			local child = children[i]
+			if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
+				child:SetY(child:GetY() +sizeAdd)
+			end
+		end
 	end
 	if(size ~= curSize and self:HasAnchor() == false) then self:SetSize(size) end
 	self:CallCallbacks("OnContentsUpdated")

@@ -31,6 +31,39 @@ function fudm.PFMModel:GetIconMaterial() return "gui/pfm/icon_model_item" end
 
 function fudm.PFMModel:GetSceneChildren() return self:GetRootBones():GetTable() end
 
+function fudm.PFMModel:ChangeModel(mdlName)
+	print("ChangeModel: ",mdlName)
+	self:SetModelName(mdlName)
+	self:GetRootBones():Clear()
+	local boneList = self:GetBoneListAttr()
+	boneList:Clear()
+	-- TODO: Clear animation data for this actor?
+	local mdl = game.load_model(mdlName)
+	if(mdl == nil) then return end
+	local skeleton = mdl:GetSkeleton()
+	local ref = mdl:GetReferencePose()
+	local function addBone(bone,t,poseParent)
+		local refPose = ref:GetBonePose(bone:GetID())
+		if(refPose == nil) then return end
+		local pose = poseParent:GetInverse() *refPose
+		local udmBone = fudm.create_element(fudm.ELEMENT_TYPE_PFM_BONE)
+		udmBone:ChangeName(bone:GetName())
+		t:PushBack(udmBone)
+		boneList:PushBack(fudm.create_reference(udmBone))
+
+		local transform = udmBone:GetTransform()
+		transform:SetPosition(pose:GetOrigin())
+		transform:SetRotation(pose:GetRotation())
+
+		for boneId,child in pairs(bone:GetChildren()) do
+			addBone(child,udmBone:GetChildBones(),pose)
+		end
+	end
+	for boneId,bone in pairs(skeleton:GetRootBones()) do
+		addBone(bone,self:GetRootBones(),phys.Transform())
+	end
+end
+
 function fudm.PFMModel:GetModel()
 	local mdlName = self:GetModelName()
 	if(#mdlName == 0) then return end
@@ -192,6 +225,7 @@ function fudm.PFMModel:SetupBoneControls(actorEditor,itemComponent)
 end
 
 function fudm.PFMModel:SetupControls(actorEditor,itemComponent)
+	print("SetupControls: ",SetupControls)
 	local itemFlexControllers = itemComponent:AddItem(locale.get_text("flex_controllers"))
 	self:SetupFlexControllerControls(actorEditor,itemFlexControllers)
 	
@@ -223,7 +257,7 @@ function fudm.PFMModel:SetupControls(actorEditor,itemComponent)
 			end)
 		end)
 		el:AddCallback("OnValueChanged",function(el,value)
-			self:SetModelName(value)
+			self:ChangeModel(value)
 		end)
 		return el
 	end)

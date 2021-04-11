@@ -135,6 +135,7 @@ function gui.PFMTimelineGraph:OnVisibilityChanged(visible)
 end
 function gui.PFMTimelineGraph:AddControl(filmClip,controlData)
 	local track = filmClip:FindAnimationChannelTrack()
+	if(track == nil) then return end
 	local itemCtrl = self.m_transformList:AddItem(controlData.name)
 	local function addChannel(channel,item,fValueTranslator)
 		local log = channel:GetLog()

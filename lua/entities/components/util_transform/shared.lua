@@ -12,6 +12,7 @@ function ents.UtilTransformComponent:Initialize()
 	if(CLIENT) then
 		self.m_translationAxisEnabled = {}
 		self.m_rotationAxisEnabled = {}
+		self.m_scaleAxisEnabled = {}
 
 		self.m_translationAxisEnabled[math.AXIS_X] = true
 		self.m_translationAxisEnabled[math.AXIS_Y] = true
@@ -20,6 +21,10 @@ function ents.UtilTransformComponent:Initialize()
 		self.m_rotationAxisEnabled[math.AXIS_X] = true
 		self.m_rotationAxisEnabled[math.AXIS_Y] = true
 		self.m_rotationAxisEnabled[math.AXIS_Z] = true
+
+		self.m_scaleAxisEnabled[math.AXIS_X] = true
+		self.m_scaleAxisEnabled[math.AXIS_Y] = true
+		self.m_scaleAxisEnabled[math.AXIS_Z] = true
 
 		self.m_arrows = {}
 		self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
@@ -37,6 +42,13 @@ function ents.UtilTransformComponent:Initialize()
 				if(ent:IsValid()) then ent:RemoveSafely() end
 			end
 			self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION] = nil
+		end)
+		self:GetScaleEnabledProperty():AddCallback(function()
+			if(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_SCALE] == nil) then return end
+			for axis,ent in pairs(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_SCALE]) do
+				if(ent:IsValid()) then ent:RemoveSafely() end
+			end
+			self.m_arrows[ents.UtilTransformArrowComponent.TYPE_SCALE] = nil
 		end)
 	end
 end

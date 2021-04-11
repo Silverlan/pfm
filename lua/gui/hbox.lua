@@ -18,22 +18,34 @@ function gui.HBox:OnUpdate()
 	local x = 0
 	local h = 0
 	local lastChild
-	for _,child in ipairs(self:GetChildren()) do
+	local autoFillChild
+	local children = self:GetChildren()
+	for i,child in ipairs(children) do
 		if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
 			child:SetX(x)
 			if(self.m_autoFillHeight == true and child:HasAnchor() == false) then child:SetHeight(size.y) end
 			x = x +child:GetWidth()
 			h = math.max(h,child:GetBottom())
 
-			lastChild = child
+			lastChild = i
+			if(child == self.m_autoFillTarget) then autoFillChild = i end
 		end
 	end
+	autoFillChild = autoFillChild or lastChild
 
 	local curSize = size:Copy()
 	if(self.m_fixedWidth ~= true) then size.x = x
-	elseif(self.m_autoFillWidth == true and lastChild ~= nil and lastChild:HasAnchor() == false) then
-		lastChild:SetWidth(size.x -lastChild:GetLeft())
-		lastChild:Update()
+	elseif(self.m_autoFillWidth == true and children[autoFillChild] ~= nil and children[autoFillChild]:HasAnchor() == false) then
+		local sizeAdd = (size.x -children[lastChild]:GetRight())
+		children[autoFillChild]:SetWidth(children[autoFillChild]:GetWidth() +sizeAdd)
+		children[autoFillChild]:Update()
+
+		for i=autoFillChild +1,#children do
+			local child = children[i]
+			if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
+				child:SetX(child:GetX() +sizeAdd)
+			end
+		end
 	end
 	if(self.m_fixedHeight ~= true) then size.y = h end
 	if(size ~= curSize and self:HasAnchor() == false) then self:SetSize(size) end

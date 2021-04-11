@@ -96,5 +96,6 @@ function gui.BaseBox:SetAutoFillContents(autoFill)
 	self:SetAutoFillContentsToWidth(autoFill)
 	self:SetAutoFillContentsToHeight(autoFill)
 end
+function gui.BaseBox:SetAutoFillTarget(el) self.m_autoFillTarget = el end
 function gui.BaseBox:IsHorizontalBox() return false end
 function gui.BaseBox:IsVerticalBox() return false end

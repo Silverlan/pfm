@@ -12,40 +12,36 @@ include("/gui/resizer.lua")
 include("/gui/pfm/slider.lua")
 include("/gui/pfm/button.lua")
 include("/gui/pfm/controls_menu.lua")
+include("/gui/pfm/base_viewport.lua")
 include("/gui/editableentry.lua")
 include("/gui/wifiledialog.lua")
 include("/gui/toggleoption.lua")
 include("/gui/pfm/raytracedanimationviewport.lua")
 
-util.register_class("gui.PFMRenderPreview",gui.Base)
+util.register_class("gui.PFMRenderPreview",gui.PFMBaseViewport)
 
 gui.PFMRenderPreview.IMAGE_TYPE_FLAT = 0
 gui.PFMRenderPreview.IMAGE_TYPE_MONO = 1
 gui.PFMRenderPreview.IMAGE_TYPE_STEREO = 2
 
 function gui.PFMRenderPreview:__init()
-	gui.Base.__init(self)
+	gui.PFMBaseViewport.__init(self)
 end
 function gui.PFMRenderPreview:OnInitialize()
-	gui.Base.OnInitialize(self)
+	gui.PFMBaseViewport.OnInitialize(self)
 
-	local hBottom = 42
-	local hViewport = 221
-	self:SetSize(128,hViewport +hBottom)
-
-	self.m_contents = gui.create("WIVBox",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	self.m_contents:SetAutoFillContents(true)
-
-	self.m_vpContents = gui.create("WIHBox",self.m_contents,0,0,self:GetWidth(),hViewport,0,0,1,1)
-	self.m_vpContents:SetAutoFillContents(true)
-
-	self.m_rtBox = gui.create("WIRect",self.m_vpContents,0,0,128,128)
-	self.m_rtBox:SetColor(Color.Black)
-	self.m_aspectRatioWrapper = gui.create("WIAspectRatio",self.m_rtBox,0,0,self.m_rtBox:GetWidth(),self.m_rtBox:GetHeight(),0,0,1,1)
-
-	gui.create("WIResizer",self.m_vpContents):SetFraction(0.85)
-
-	self.m_rt = gui.create("WIPFMRaytracedAnimationViewport",self.m_aspectRatioWrapper)
+	self.m_cbOnTimeOffsetChanged = tool.get_filmmaker():AddCallback("OnTimeOffsetChanged",function(fm,offset)
+		local imgFilePath = self:GetCurrentFrameFilePath()
+		if(imgFilePath == nil) then return end
+		self.m_rt:LoadPreviewImage("render/" .. imgFilePath)
+		--self:UpdateDepthOfField()
+		-- self.m_test = true
+		self:EnableThinking()
+	end)
+end
+function gui.PFMRenderPreview:InitializeViewport(parent)
+	gui.PFMBaseViewport.InitializeViewport(self,parent)
+	self.m_rt = gui.create("WIPFMRaytracedAnimationViewport",parent)
 	self.m_rt:SetProjectManager(tool.get_filmmaker())
 	self.m_rt:GetToneMappedImageElement():SetVRCamera(game.get_primary_camera())
 	self.m_rt:AddCallback("OnProgressChanged",function(rt,progress)
@@ -102,21 +98,10 @@ function gui.PFMRenderPreview:OnInitialize()
 		self.m_renderBtContainer:SetVisible(true)
 		self.m_btCancel:SetVisible(false)
 		self.m_btStop:SetVisible(false)
+		console.run("cl_max_fps","-1") -- Unclamp FPS
 
 		self.m_rt:GetToneMappedImageElement():SetStereo(self.m_renderedImageType == gui.PFMRenderPreview.IMAGE_TYPE_STEREO)
 	end)
-
-	self.m_cbOnTimeOffsetChanged = tool.get_filmmaker():AddCallback("OnTimeOffsetChanged",function(fm,offset)
-		local imgFilePath = self:GetCurrentFrameFilePath()
-		if(imgFilePath == nil) then return end
-		self.m_rt:LoadPreviewImage("render/" .. imgFilePath)
-		--self:UpdateDepthOfField()
-		-- self.m_test = true
-		self:EnableThinking()
-	end)
-
-	self:InitializeSettings(self.m_vpContents)
-	self:InitializeControls()
 end
 function gui.PFMRenderPreview:InitializeToneMapControls(p,settings)
 	local toneMapping = p:AddDropDownMenu("tonemapping","tonemapping",{
@@ -326,12 +311,12 @@ function gui.PFMRenderPreview:GetOutputPath()
 	return outputPath
 end
 function gui.PFMRenderPreview:OnRemove()
+	self:CancelRendering()
 	if(util.is_valid(self.m_cbOnTimeOffsetChanged)) then self.m_cbOnTimeOffsetChanged:Remove() end
 end
 function gui.PFMRenderPreview:InitializeSettings(parent)
-	local p = gui.create("WIPFMControlsMenu",parent)
-	p:SetAutoFillContentsToWidth(true)
-	self.m_settingsBox = p
+	gui.PFMBaseViewport.InitializeSettings(self,parent)
+	local p = self.m_settingsBox
 
 	-- Preset
 	local settings = tool.get_filmmaker():GetSettings()
@@ -753,12 +738,15 @@ function gui.PFMRenderPreview:UpdateVROptions()
 	self.m_ctrlResolution:SelectOption(selectedOption)
 end
 function gui.PFMRenderPreview:InitializeControls()
-	local controls = gui.create("WIHBox",self.m_contents)
-	controls:SetHeight(self:GetHeight() -self.m_rt:GetBottom())
+	gui.PFMBaseViewport.InitializeControls(self)
+
+	local controls = gui.create("WIHBox",self.m_vpContents)
+	--controls:SetHeight(self:GetHeight() -self.m_aspectRatioWrapper:GetBottom())
+	self.m_controls = controls
 
 	self.m_btCancel = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
 		if(self:IsRendering()) then
-			self.m_rt:CancelRendering()
+			self:CancelRendering()
 			return
 		end
 		self.m_btCancel:SetVisible(false)
@@ -826,12 +814,10 @@ function gui.PFMRenderPreview:InitializeControls()
 	end)
 	self.m_btApplyPostProcessing:SetText(locale.get_text("pfm_apply_post_processing"))]]
 
-	controls:SetHeight(self.m_btRefreshPreview:GetHeight())
 	controls:Update()
-	controls:SetAnchor(0,1,0,1)
 end
 function gui.PFMRenderPreview:OnThink()
-	gui.Base.OnThink(self)
+	gui.PFMBaseViewport.OnThink(self)
 
 	if(self.m_applyPostProcessing == nil) then return end
 
@@ -872,11 +858,8 @@ function gui.PFMRenderPreview:GetCurrentFrameFilePath()
 	return self:GetFrameFilePath(tool.get_filmmaker():GetFrameOffset())
 end
 function gui.PFMRenderPreview:IsRendering() return self.m_rt:IsRendering() end
-function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
-	if(self:IsRendering()) then self.m_rt:CancelRendering() end
-	self.m_btCancel:SetVisible(true)
-	self.m_renderBtContainer:SetVisible(false)
-
+function gui.PFMRenderPreview:GetRenderSettings(preview,prepareOnly)
+	preview = preview or false
 	local settings = self.m_rt:GetRenderSettings()
 	local renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED
 
@@ -913,8 +896,6 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	local selectedDeviceType = tonumber(self.m_ctrlDeviceType:GetValue())
 	if(selectedDeviceType == fudm.PFMRenderSettings.DEVICE_TYPE_CPU) then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU
 	elseif(selectedDeviceType == fudm.PFMRenderSettings.DEVICE_TYPE_GPU) then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU end
-
-	preview = preview or false
 
 	local width,height = self:GetResolution()
 
@@ -989,6 +970,19 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 
 	settings:SetColorTransform(self.m_ctrlColorTransform:GetOptionValue(self.m_ctrlColorTransform:GetSelectedOption()))
 	settings:SetColorTransformLook(self.m_ctrlColorTransformLook:GetOptionValue(self.m_ctrlColorTransformLook:GetSelectedOption()))
+	return settings
+end
+function gui.PFMRenderPreview:CancelRendering()
+	if(self:IsRendering()) then self.m_rt:CancelRendering() end
+	console.run("cl_max_fps","-1") -- Unclamp FPS
+end
+function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
+	self:CancelRendering()
+	self.m_btCancel:SetVisible(true)
+	self.m_renderBtContainer:SetVisible(false)
+
+	preview = preview or false
+	local settings = self:GetRenderSettings(preview,prepareOnly)
 
 	if(progressiveRefinement) then self.m_btStop:SetVisible(true) end
 
@@ -998,6 +992,7 @@ function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 		else self.m_renderedImageType = gui.PFMRenderPreview.IMAGE_TYPE_MONO end
 	end
 
+	console.run("cl_max_fps","4") -- Clamp max fps to make more resources available for the renderer
 	self.m_rt:Refresh(preview,function(rtJob)
 		self:CallCallbacks("InitializeRender",rtJob,settings,preview)
 	end)

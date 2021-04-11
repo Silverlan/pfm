@@ -30,6 +30,7 @@ function pfm.FileIndexTable.Indexer:__init(fit,extensions,externalExtensions)
 end
 function pfm.FileIndexTable.Indexer:GetRootPath() return self.m_fit:GetRootPath() end
 function pfm.FileIndexTable.Indexer:Start()
+	if(util.is_valid(self.m_cbThink)) then return end
 	self.m_cbThink = game.add_callback("Think",function()
 		if(self:RunBatch()) then
 			self:Stop()

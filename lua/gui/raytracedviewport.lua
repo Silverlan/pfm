@@ -226,7 +226,6 @@ function gui.RaytracedViewport:SetToneMapping(toneMapping)
 	self.m_tex:SetToneMappingAlgorithm(toneMapping)
 end
 function gui.RaytracedViewport:SetProjectManager(pm) self.m_projectManager = pm end
-function gui.RaytracedViewport:GetProjectManager() return self.m_projectManager end
 function gui.RaytracedViewport:SetToneMappingArguments(toneMapArgs) self.m_tex:SetToneMappingAlgorithmArgs(toneMapArgs) end
 function gui.RaytracedViewport:GetToneMappingArguments() return self.m_tex:GetToneMappingAlgorithmArgs() end
 function gui.RaytracedViewport:GetToneMapping() return self.m_tex:GetToneMappingAlgorithm() end
@@ -248,24 +247,26 @@ function gui.RaytracedViewport:RestartRendering()
 	if(self.m_rtJob == nil) then return end
 	self.m_rtJob:RestartRendering()
 end
-function gui.RaytracedViewport:Refresh(preview,rtJobCallback)
+function gui.RaytracedViewport:Refresh(preview,rtJobCallback,startFrame,frameHandler)
 	preview = preview or false
-	if(self.m_projectManager == nil) then
-		console.print_warning("Unable to render raytraced viewport: No valid project manager specified!")
-		return
-	end
 	self:CancelRendering()
 	if(pfm.load_cycles() == false) then return end
+
+	if(self.m_projectManager ~= nil) then
+		startFrame = self.m_projectManager:GetClampedFrameOffset()
+		frameHandler = function(frameIdx) self.m_projectManager:GoToFrame(frameIdx) end
+	end
 
 	local settings = self.m_renderSettings
 	if(self.m_useElementSizeAsRenderResolution) then
 		settings:SetWidth(self:GetWidth())
 		settings:SetHeight(self:GetHeight())
 	end
+	settings = self:InitializeRenderSettings(settings)
 
 	settings:SetRenderPreview(preview)
-	self.m_rtJob = pfm.RaytracingRenderJob(self.m_projectManager,settings)
-	self.m_rtJob:SetStartFrame(self.m_projectManager:GetClampedFrameOffset())
+	self.m_rtJob = pfm.RaytracingRenderJob(settings,frameHandler)
+	self.m_rtJob:SetStartFrame(startFrame or 0)
 	self.m_rtJob:AddCallback("OnFrameStart",function()
 		if(self.m_rtJob:IsProgressive() == false) then return end
 		local tex = self.m_rtJob:GetProgressiveTexture()
@@ -278,6 +279,74 @@ function gui.RaytracedViewport:Refresh(preview,rtJobCallback)
 	self.m_rtJob:Start()
 
 	self.m_rendering = true
+	self:OnRenderStart()
 	self:UpdateThinkState()
+	return self.m_rtJob
 end
+function gui.RaytracedViewport:InitializeRenderSettings(settings) return settings end
+function gui.RaytracedViewport:OnRenderStart() end
 gui.register("WIRaytracedViewport",gui.RaytracedViewport)
+
+
+util.register_class("gui.RealtimeRaytracedViewport",gui.RaytracedViewport)
+function gui.RealtimeRaytracedViewport:__init()
+	gui.RaytracedViewport.__init(self)
+end
+function gui.RealtimeRaytracedViewport:OnInitialize()
+	gui.RaytracedViewport.OnInitialize(self)
+end
+function gui.RealtimeRaytracedViewport:InitializeRenderSettings(settings)
+	settings = settings:Copy()
+	settings:SetRenderEngine("luxcorerender")
+	settings:SetProgressive(true)
+	settings:SetSamples(100000)
+	settings:SetLiveEditingEnabled(true)
+	settings:SetWidth(self:GetWidth())
+	settings:SetHeight(self:GetHeight())
+	-- settings:SetColorTransform("filmic-blender")
+	-- settings:SetColorTransformLook("Medium Contrast")
+	return settings
+end
+function gui.RealtimeRaytracedViewport:OnRenderStart()
+	gui.RaytracedViewport.OnRenderStart(self)
+
+	local pos = Vector()
+	local rot = Quaternion()
+	local scene = self:GetGameScene()
+	local cam = util.is_valid(scene) and scene:GetActiveCamera() or nil
+	if(util.is_valid(cam)) then
+		local ent = cam:GetEntity()
+		pos = ent:GetPos()
+		rot = ent:GetRotation()
+	end
+	self.m_camStartPose = phys.Transform(pos,rot)
+	self.m_tLastUpdate = time.real_time()
+end
+function gui.RealtimeRaytracedViewport:OnThink()
+	gui.RaytracedViewport.OnThink(self)
+
+	if(self.m_tLastUpdate == nil) then return end
+	local scene = self:GetGameScene()
+	local cam = util.is_valid(scene) and scene:GetActiveCamera() or nil
+	if(util.is_valid(cam) == false) then return end
+
+	local t = time.real_time()
+	local dt = t -self.m_tLastUpdate
+	if(dt < 0.1) then return end
+	self.m_tLastUpdate = t
+	local pose = cam:GetEntity():GetPose()
+	if(pose:GetOrigin():DistanceSqr(self.m_camStartPose:GetOrigin()) < 0.01 and pose:GetRotation():Distance(self.m_camStartPose:GetRotation()) < 0.01) then return end
+
+	local renderer = self.m_rtJob:GetRenderer()
+	if(renderer:BeginSceneEdit()) then
+		local scene = renderer:GetScene()
+		local cam = scene:GetCamera()
+		cam:SetPos(pose:GetOrigin())
+		cam:SetRotation(pose:GetRotation())
+
+		renderer:EndSceneEdit()
+	end
+
+	self.m_camStartPose = pose:Copy()
+end
+gui.register("WIRealtimeRaytracedViewport",gui.RealtimeRaytracedViewport)

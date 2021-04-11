@@ -46,8 +46,7 @@ function gui.PFMActorEditor:OnInitialize()
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
 				local mdlC = self:CreateNewActorComponent(actor,"PFMModel")
-				self:CreateNewActorComponent(actor,"PFMAnimationSet")
-				if(mdlC ~= nil) then mdlC:SetModelName(mdlName) end
+				self:CreateNewActorComponent(actor,"PFMAnimationSet",nil,function(mdlC) mdlC:ChangeModel(mdlName) end)
 
 				self:AddActorToScene(actor)
 			end)
@@ -58,8 +57,7 @@ function gui.PFMActorEditor:OnInitialize()
 				if(self:IsValid() == false) then return end
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"PFMModel")
-				if(mdlC ~= nil) then mdlC:SetModelName(mdlName) end
+				local mdlC = self:CreateNewActorComponent(actor,"PFMModel",nil,function(mdlC) mdlC:ChangeModel(mdlName) end)
 
 				self:AddActorToScene(actor)
 			end)
@@ -233,7 +231,7 @@ function gui.PFMActorEditor:CreateNewActor()
 	return actor
 end
 function gui.PFMActorEditor:AddActorToScene(actor) tool.get_filmmaker():AddActor(actor,self:GetFilmClip()) end
-function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateActor)
+function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateActor,initComponent)
 	local itemActor
 	for elTree,data in pairs(self.m_treeElementToActorData) do
 		if(util.is_same_object(actor,data.actor)) then
@@ -249,6 +247,7 @@ function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateAc
 	local componentIndex = 1
 	while(actor:FindComponent(componentName .. componentIndex) ~= nil) do componentIndex = componentIndex +1 end
 	component:ChangeName((componentIndex == 1) and componentName or (componentName .. componentIndex))
+	if(initComponent ~= nil) then initComponent(component) end
 
 	actor:AddComponent(component)
 

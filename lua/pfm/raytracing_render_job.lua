@@ -118,6 +118,9 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"progressive",fals
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"exposure",1.0)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"colorTransform","filmic-blender")
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"colorTransformLook","")
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"liveEditingEnabled",false,{
+	getter = "IsLiveEditingEnabled"
+})
 
 function pfm.RaytracingRenderJob.Settings:__init()
 	self:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
@@ -175,6 +178,7 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetExposure(self:GetExposure())
 	cpy:SetColorTransform(self:GetColorTransform())
 	cpy:SetColorTransformLook(self:GetColorTransformLook())
+	cpy:SetLiveEditingEnabled(self:IsLiveEditingEnabled())
 	return cpy
 end
 
@@ -184,12 +188,12 @@ pfm.RaytracingRenderJob.STATE_FAILED = 2
 pfm.RaytracingRenderJob.STATE_COMPLETE = 3
 pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE = 4
 pfm.RaytracingRenderJob.STATE_SUB_FRAME_COMPLETE = 5
-function pfm.RaytracingRenderJob:__init(projectManager,settings)
+function pfm.RaytracingRenderJob:__init(settings,frameHandler)
 	util.CallbackHandler.__init(self)
 	pfm.load_cycles()
 	self.m_settings = (settings and settings:Copy()) or pfm.RaytracingRenderJob.Settings()
 	self.m_startFrame = 0
-	self.m_projectManager = projectManager
+	self.m_frameHandler = frameHandler
 	self.m_gameScene = game.get_scene()
 	self:SetAutoAdvanceSequence(false)
 end
@@ -329,11 +333,9 @@ function pfm.RaytracingRenderJob:Start()
 	self.m_imageBuffers = {}
 	self.m_currentFrame = self.m_startFrame -1
 	self.m_endFrame = self.m_currentFrame +self:GetSettings():GetFrameCount()
-	console.run("cl_max_fps","4") -- Clamp max fps to make more resources available for Cycles
 	self:RenderNextImage()
 end
 function pfm.RaytracingRenderJob:OnRenderEnd()
-	console.run("cl_max_fps","-1") -- Unclamp max fps
 end
 -- TODO: Implement this in a better way
 local g_staticGeometryCache
@@ -425,7 +427,8 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	clCam:SetCameraType(camTypeToClType[camType])
 	clCam:SetPanoramaType(panoramaTypeToClType[panoramaType])
 
-	local pfmCam = cam:GetEntity():GetComponent(ents.COMPONENT_PFM_CAMERA)
+	-- TODO: This doesn't belong here!
+	local pfmCam = cam:GetEntity():GetComponent("pfm_camera")
 	if(pfmCam ~= nil) then
 		local camData = pfmCam:GetCameraData()
 		-- print("Using focal distance: ",camData:GetFocalDistance())
@@ -535,7 +538,9 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	self.m_preStage = nil
 
 	scene:Finalize()
-	local renderer = unirender.create_renderer(scene,renderSettings:GetRenderEngine())
+	local flags = unirender.Renderer.FLAG_NONE
+	if(renderSettings:IsLiveEditingEnabled()) then flags = bit.bor(flags,unirender.Renderer.FLAG_ENABLE_LIVE_EDITING_BIT) end
+	local renderer = unirender.create_renderer(scene,renderSettings:GetRenderEngine(),flags)
 	if(renderer == nil) then
 		pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
 		return
@@ -572,7 +577,7 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	end]]
 
 	-- Make sure we're at the right frame
-	self.m_projectManager:GoToFrame(self.m_currentFrame)
+	if(self.m_frameHandler ~= nil) then self.m_frameHandler(self.m_currentFrame) end
 	-- We want to wait for a bit before rendering, to make sure
 	-- everything for this frame has been set up properly.
 	-- If the scene contains particle systems, the frame must not be

@@ -5,6 +5,7 @@ local Component = ents.UtilTransformComponent
 local flags = bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER,ents.BaseEntityComponent.MEMBER_FLAG_BIT_PROPERTY)
 Component:RegisterMember("TranslationEnabled",util.VAR_TYPE_BOOL,true,flags,1)
 Component:RegisterMember("RotationEnabled",util.VAR_TYPE_BOOL,true,flags,1)
+Component:RegisterMember("ScaleEnabled",util.VAR_TYPE_BOOL,false,flags,1)
 Component:RegisterMember("Space",util.VAR_TYPE_UINT8,Component.SPACE_WORLD,bit.band(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,bit.bnot(bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_BIT_KEY_VALUE,ents.BaseEntityComponent.MEMBER_FLAG_BIT_INPUT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_OUTPUT))),1)
 
 function Component:OnEntitySpawn()
@@ -23,8 +24,13 @@ function Component:SetRotationAxisEnabled(axis,enabled)
 	self.m_rotationAxisEnabled[axis] = enabled
 	self:UpdateAxes()
 end
+function Component:SetScaleAxisEnabled(axis,enabled)
+	self.m_scaleAxisEnabled[axis] = enabled
+	self:UpdateAxes()
+end
 function Component:IsTranslationAxisEnabled(axis) return self:IsTranslationEnabled() and self.m_translationAxisEnabled[axis] end
 function Component:IsRotationAxisEnabled(axis) return self:IsRotationEnabled() and self.m_rotationAxisEnabled[axis] end
+function Component:IsScaleAxisEnabled(axis) return self:IsScaleEnabled() and self.m_scaleAxisEnabled[axis] end
 
 if(util.get_class_value(Component,"SetSpaceBase") == nil) then Component.SetSpaceBase = Component.SetSpace end
 function Component:SetSpace(space)
@@ -51,6 +57,9 @@ function Component:UpdateAxes()
 
 		if(self:IsRotationAxisEnabled(i)) then self:CreateTransformUtility(i,ents.UtilTransformArrowComponent.TYPE_ROTATION)
 		elseif(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION] ~= nil and util.is_valid(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION][i])) then self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION][i]:Remove() end
+
+		if(self:IsScaleAxisEnabled(i)) then self:CreateTransformUtility(i,ents.UtilTransformArrowComponent.TYPE_SCALE)
+		elseif(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_SCALE] ~= nil and util.is_valid(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_SCALE][i])) then self.m_arrows[ents.UtilTransformArrowComponent.TYPE_SCALE][i]:Remove() end
 	end
 	self:UpdateSpace()
 end
@@ -95,6 +104,26 @@ function Component:SetTransformPosition(pos)
 	self:SetAbsTransformPosition(pos)
 end
 
+function Component:SetTransformScale(scale)
+	local bone = self:GetParentBone()
+	if(bone ~= nil) then
+		local mdl = self:GetEntity():GetModel()
+		local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
+		if(mdl ~= nil and animC ~= nil) then
+			local boneId = mdl:LookupBone(bone)
+			if(boneId ~= -1) then
+				-- animC:SetBonePos(boneId,Vector(123,123,123))
+			end
+		end
+	end
+	if(scale:Equals(self:GetEntity():GetScale())) then return end
+	--[[self:GetEntity():SetPos(pos)
+	if(self.m_relativeToParent == true) then
+		pos = self:GetParentPose():GetInverse() *pos
+	end]]
+	self:BroadcastEvent(Component.EVENT_ON_SCALE_CHANGED,{scale})
+end
+
 function Component:SetAbsTransformPosition(pos)
 	local bone = self:GetParentBone()
 	if(bone ~= nil) then
@@ -103,7 +132,7 @@ function Component:SetAbsTransformPosition(pos)
 		if(mdl ~= nil and animC ~= nil) then
 			local boneId = mdl:LookupBone(bone)
 			if(boneId ~= -1) then
-				animC:SetBonePos(boneId,Vector(123,123,123))
+				-- animC:SetBonePos(boneId,Vector(123,123,123))
 			end
 		end
 	end
@@ -198,5 +227,6 @@ end
 
 Component.EVENT_ON_POSITION_CHANGED = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_pos_changed")
 Component.EVENT_ON_ROTATION_CHANGED = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_rot_changed")
+Component.EVENT_ON_SCALE_CHANGED = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_scale_changed")
 Component.EVENT_ON_TRANSFORM_START = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_transform_start")
 Component.EVENT_ON_TRANSFORM_END = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_transform_end")

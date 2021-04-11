@@ -7,6 +7,7 @@ util.register_class("ents.UtilTransformArrowComponent",BaseEntityComponent)
 local Component = ents.UtilTransformArrowComponent
 Component.TYPE_TRANSLATION = 0
 Component.TYPE_ROTATION = 1
+Component.TYPE_SCALE = 2
 
 local defaultMemberFlags = bit.band(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,bit.bnot(bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_BIT_KEY_VALUE,ents.BaseEntityComponent.MEMBER_FLAG_BIT_INPUT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_OUTPUT)))
 Component:RegisterMember("Axis",util.VAR_TYPE_UINT8,math.AXIS_X,ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,1)
@@ -74,7 +75,7 @@ function Component:UpdatePose()
 	local axis = self:GetAxis()
 	local rot = Quaternion() -- c:GetEntity():GetRotation()
 
-	if(self:GetType() == Component.TYPE_TRANSLATION) then
+	if(self:GetType() == Component.TYPE_TRANSLATION or self:GetType() == Component.TYPE_SCALE) then
 		if(axis == math.AXIS_X) then
 			rot = rot *EulerAngles(0,90,0):ToQuaternion()
 		elseif(axis == math.AXIS_Y) then
@@ -95,10 +96,10 @@ function Component:UpdatePose()
 
 	local pose = phys.Transform()
 	local space = self:GetSpace()
-	if(space == ents.UtilTransformComponent.SPACE_WORLD) then
-		pose:SetOrigin(entParent:GetPos())
-	elseif(space == ents.UtilTransformComponent.SPACE_LOCAL) then
+	if(space == ents.UtilTransformComponent.SPACE_LOCAL or self:GetType() == Component.TYPE_SCALE) then
 		pose = entParent:GetPose()
+	elseif(space == ents.UtilTransformComponent.SPACE_WORLD) then
+		pose:SetOrigin(entParent:GetPos())
 	elseif(space == ents.UtilTransformComponent.SPACE_VIEW) then
 		pose = entParent:GetPose()
 		pose:SetRotation(entRef:GetRotation())
@@ -139,7 +140,7 @@ function Component:UpdateModel()
 	local ent = self:GetEntity()
 	if(ent:IsSpawned() == false) then return end
 	local mdl
-	if(self:GetType() == Component.TYPE_TRANSLATION) then mdl = self:GetArrowModel()
+	if(self:GetType() == Component.TYPE_TRANSLATION or self:GetType() == Component.TYPE_SCALE) then mdl = self:GetArrowModel()
 	else mdl = self:GetDiskModel() end
 	if(mdl == ent:GetModel()) then return end
 	ent:SetModel(mdl)
@@ -215,7 +216,7 @@ function Component:ApplyTransform()
 	local sign = math.sign(cam:GetEntity():GetForward():DotProduct(t))
 	-- print(debug.draw_line(self:GetEntity():GetPos(),self:GetEntity():GetPos() +t *100,Color.Red,12))
 
-	if(self:GetType() == Component.TYPE_TRANSLATION) then
+	if(self:GetType() == Component.TYPE_TRANSLATION or self:GetType() == Component.TYPE_SCALE) then
 		local v = Vector()
 		v:Set(self:GetReferenceAxis(),1.0)
 		v:Rotate(self.m_moveReferenceRot)
@@ -236,9 +237,15 @@ function Component:ApplyTransform()
 		--offset = offset *sign
 		--if(axis == math.AXIS_X or axis == math.AXIS_Z) then offset = -offset end
 
-		local newPos = self.m_moveStartTransformPos +offset
 		-- print(self.m_moveStartCursorPos)
-		transformC:SetAbsTransformPosition(newPos)
+		if(self:GetType() == Component.TYPE_TRANSLATION) then
+			local newPos = self.m_moveStartTransformPos +offset
+			transformC:SetAbsTransformPosition(newPos)
+		else
+			if(self:GetType() == Component.TYPE_SCALE) then offset = -offset end
+			local newScale = self.m_moveStartScale +offset
+			transformC:SetTransformScale(newScale)
+		end
 
 		pfm.tag_render_scene_as_dirty()
 
@@ -402,13 +409,15 @@ function Component:StartTransform()
 		if(attC ~= nil and animC ~= nil) then
 			local boneId = attC:GetBone()
 			if(boneId ~= nil and boneId ~= -1) then
-				refRot = animC:GetGlobalBonePose(boneId):GetRotation()
+				local pose = animC:GetGlobalBonePose(boneId)
+				refRot = pose:GetRotation()
 			end
 		end
 		refRot = refRot or self.m_refEnt:GetRotation()
 	end
 	self.m_moveReferenceRot = refRot or Quaternion()
 	self.m_moveStartTransformPos = self.m_transformComponent:GetAbsTransformPosition()
+	self.m_moveStartScale = self.m_transformComponent:GetEntity():GetScale()
 	self.m_moveStartTransformRot = self.m_transformComponent:GetEntity():GetRotation()
 	if(self:GetType() == Component.TYPE_TRANSLATION) then self.m_moveStartPos = intersectPos
 	else self.m_rotStartAngle = self:GetCursorAxisAngle() end
