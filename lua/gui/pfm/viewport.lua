@@ -185,6 +185,9 @@ function gui.PFMViewport:SetRtViewportEnabled(enabled)
 
 	self:UpdateRenderSettings()
 end
+function gui.PFMViewport:StopLiveRaytracing()
+	self.m_ctrlRt:SelectOption(0)
+end
 function gui.PFMViewport:InitializeControls()
 	gui.PFMBaseViewport.InitializeControls(self)
 

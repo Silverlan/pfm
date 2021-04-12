@@ -477,6 +477,11 @@ function gui.WIFilmmaker:UpdateActor(actor,filmClip,reload)
 	if(filmClipC ~= nil) then filmClipC:InitializeActors() end
 	self:TagRenderSceneAsDirty()
 end
+function gui.WIFilmmaker:StopLiveRaytracing()
+	local vp = self:GetViewport()
+	if(util.is_valid(vp) == false) then return end
+	vp:StopLiveRaytracing()
+end
 function gui.WIFilmmaker:TagRenderSceneAsDirty(dirty)
 	game.set_default_game_render_enabled(true)
 	if(dirty == nil) then

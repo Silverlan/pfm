@@ -12,6 +12,7 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 #include "sh_selection.gls"
+#include "../../world/pbr/vs_config.gls"
 #include "../../modules/vs_world.gls"
 
 void main()

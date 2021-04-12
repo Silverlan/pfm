@@ -20,6 +20,7 @@ function gui.RaytracedViewport:OnInitialize()
 	self:SetSize(128,128)
 
 	self.m_tex = gui.create("WIRenderImage",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	self.m_tex:SetShouldGammaCorrect(true)
 	self.m_renderSettings = pfm.RaytracingRenderJob.Settings()
 	self.m_renderSettings:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
 	self.m_renderSettings:SetSamples(40)

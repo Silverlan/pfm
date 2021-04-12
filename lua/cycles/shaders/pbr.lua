@@ -57,7 +57,7 @@ function unirender.PBRShader:AddAlbedoNode(desc,mat)
 			nDetailMap:SetProperty(unirender.Node.albedo_texture.IN_TEXTURE,detailTexPath)
 			uv = uv *unirender.Socket(Vector(detailUvScale,0))
 			uv:Link(nDetailMap,unirender.Node.albedo_texture.IN_UV)
-			local blendFactor = unirender.Socket(data:GetVector("detail_factor",Vector(1.0,1.0,1.0)))
+			local blendFactor = unirender.Socket(data:GetFloat("detail_factor",1.0))
 			local detailColorFactor = unirender.Socket(data:GetVector("detail_color_factor",Vector(1,1,1)))
 
 			local detailColor = nDetailMap:GetPrimaryOutputSocket() *detailColorFactor

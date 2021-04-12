@@ -978,6 +978,7 @@ function gui.PFMRenderPreview:CancelRendering()
 end
 function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	self:CancelRendering()
+	tool.get_filmmaker():StopLiveRaytracing()
 	self.m_btCancel:SetVisible(true)
 	self.m_renderBtContainer:SetVisible(false)
 
