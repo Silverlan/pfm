@@ -88,6 +88,29 @@ function gui.PFMViewport:OnInitialize()
 	self.m_filmClip:CenterToParentX()
 	self.m_filmClip:SetAnchor(0.5,0,0.5,0)
 end
+function gui.PFMViewport:InitializeCustomScene()
+	local sceneCreateInfo = ents.SceneComponent.CreateInfo()
+	sceneCreateInfo.sampleCount = prosper.SAMPLE_COUNT_1_BIT
+	local gameScene = game.get_scene()
+	local gameRenderer = gameScene:GetRenderer()
+	local scene = ents.create_scene(sceneCreateInfo,gameScene)
+	self.m_scene = scene
+
+	local entRenderer = ents.create("rasterization_renderer")
+	local renderer = entRenderer:GetComponent(ents.COMPONENT_RENDERER)
+	self.m_renderer = renderer
+	local rasterizer = entRenderer:GetComponent(ents.COMPONENT_RASTERIZATION_RENDERER)
+	rasterizer:SetSSAOEnabled(true)
+	renderer:InitializeRenderTarget(scene,gameRenderer:GetWidth(),gameRenderer:GetHeight())
+	scene:SetRenderer(renderer)
+
+	local gameCam = gameScene:GetActiveCamera()
+	local cam = ents.create_camera(gameCam:GetAspectRatio(),gameCam:GetFOV(),gameCam:GetNearZ(),gameCam:GetFarZ())
+	self.m_camera = cam
+	scene:SetActiveCamera(cam)
+
+	self.m_viewport:SetScene(scene)
+end
 function gui.PFMViewport:InitializeViewport(parent)
 	gui.PFMBaseViewport.InitializeViewport(self,parent)
 	local vpContainer = gui.create("WIBase",parent)
@@ -226,7 +249,8 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 		return util.EVENT_REPLY_HANDLED
 	end
 
-	local el = gui.get_element_under_cursor()
+	local window = self:GetRootWindow()
+	local el = gui.get_element_under_cursor(window)
 	if(util.is_valid(el) and (el == self or el:IsDescendantOf(self))) then
 		if(mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 			self.m_oldCursorPos = input.get_cursor_pos()
@@ -257,6 +281,9 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.PFMViewport:OnRemove()
+	if(util.is_valid(self.m_scene)) then self.m_scene:GetEntity():Remove() end
+	if(util.is_valid(self.m_renderer)) then self.m_renderer:GetEntity():Remove() end
+	if(util.is_valid(self.m_camera)) then self.m_camera:GetEntity():Remove() end
 	for _,ent in ipairs(self.m_vrControllers) do
 		if(ent:IsValid()) then ent:Remove() end
 	end

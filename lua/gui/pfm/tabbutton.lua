@@ -75,6 +75,9 @@ function gui.PFMTabButton:SetActive(active)
 	else self:SetColor(Color(200,200,200)) end
 	if(util.is_valid(self.m_contentsPanel)) then self.m_contentsPanel:SetVisible(active) end
 end
+function gui.PFMTabButton:GetText()
+	return util.is_valid(self.m_text) and self.m_text:GetText() or ""
+end
 function gui.PFMTabButton:SetText(text)
 	if(util.is_valid(self.m_text)) then
 		self.m_text:SetText(text)

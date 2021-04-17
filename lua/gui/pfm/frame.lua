@@ -35,7 +35,13 @@ function gui.PFMFrame:OnInitialize()
 	self.m_tabButtonContainer = gui.create("WIHBox",self)
 	self.m_tabButtonContainer:SetHeight(28)
 
+	self.m_detachedWindows = {}
 	self:ScheduleUpdate()
+end
+function gui.PFMFrame:OnRemove()
+	for identifier,windowHandle in pairs(self.m_detachedWindows) do
+		windowHandle:Close()
+	end
 end
 function gui.PFMFrame:SetActiveTab(tabId)
 	if(type(tabId) == "string") then
@@ -77,15 +83,41 @@ function gui.PFMFrame:RemoveTab(identifier)
 	if(tabData.panel:IsValid()) then tabData.panel:Remove() end
 	if(tabData.button:IsValid()) then tabData.button:Remove() end
 	table.remove(self.m_tabs,i)
-	if(self.m_activeTabIndex == i) then
-		if(self.m_tabs[self.m_activeTabIndex -1] ~= nil) then self:SetActiveTab(self.m_activeTabIndex -1)
-		elseif(self.m_tabs[self.m_activeTabIndex] ~= nil) then self:SetActiveTab(self.m_activeTabIndex) end
+	if(self.m_activeTabIndex == i) then self:SelectFreeTab() end
+end
+function gui.PFMFrame:SelectFreeTab()
+	local function selectTab(i)
+		local tab = self.m_tabs[i]
+		if(tab == nil or util.is_valid(tab.window)) then return false end
+		self:SetActiveTab(i)
+		return true
+	end
+	if(selectTab(self.m_activeTabIndex)) then return end
+	if(selectTab(self.m_activeTabIndex -1)) then return end
+	if(selectTab(self.m_activeTabIndex +1)) then return end
+	for i=1,#self.m_tabs do
+		if(selectTab(self.m_tabs[i])) then return end
+	end
+end
+function gui.PFMFrame:FindTabData(name)
+	for _,tab in ipairs(self.m_tabs) do
+		if(name == tab.identifier) then return tab end
 	end
 end
 function gui.PFMFrame:FindTab(name)
-	for _,tab in ipairs(self.m_tabs) do
-		if(name == tab.identifier) then return tab.panel end
-	end
+	local tabData = self:FindTabData(name)
+	if(tabData == nil) then return end
+	return tabData.panel
+end
+function gui.PFMFrame:FindTabButton(name)
+	local tabData = self:FindTabData(name)
+	if(tabData == nil) then return end
+	return tabData.button
+end
+function gui.PFMFrame:IsTabDetached(name)
+	local tabData = self:FindTabData(name)
+	if(tabData == nil) then return false end
+	return util.is_valid(tabData.window)
 end
 function gui.PFMFrame:AddTab(identifier,name,panel)
 	if(util.is_valid(self.m_contents) == false or util.is_valid(self.m_tabButtonContainer) == false) then
@@ -103,6 +135,9 @@ function gui.PFMFrame:AddTab(identifier,name,panel)
 			local pContext = gui.open_context_menu()
 			if(util.is_valid(pContext) == false) then return end
 			pContext:SetPos(input.get_cursor_pos())
+			pContext:AddItem(locale.get_text("detach"),function()
+				self:DetachTab(identifier)
+			end)
 			pContext:AddItem(locale.get_text("close"),function()
 				self:RemoveTab(identifier)
 			end)
@@ -127,5 +162,56 @@ function gui.PFMFrame:AddTab(identifier,name,panel)
 end
 function gui.PFMFrame:OnUpdate()
 	if(self.m_activeTabButton == nil) then self:SetActiveTab(1) end
+end
+function gui.PFMFrame:DetachTab(identifier)
+	local tabData = self:FindTabData(identifier)
+	if(tabData == nil or util.is_valid(tabData.panel) == false or util.is_valid(tabData.window)) then return end
+	local panel = tabData.panel
+	local createInfo = prosper.WindowCreateInfo()
+	createInfo.width = panel:GetWidth()
+	createInfo.height = panel:GetHeight()
+	if(util.is_valid(tabData.button)) then createInfo.title = tabData.button:GetText() end
+	local windowHandle = prosper.create_window(createInfo)
+	if(windowHandle == nil) then return end
+	local el = gui.add_base_element(windowHandle)
+	if(util.is_valid(el) == false) then return end
+
+	local elBg = gui.create("WIRect",el,0,0,el:GetWidth(),el:GetHeight(),0,0,1,1)
+	elBg:SetColor(Color(38,38,38,255))
+
+	panel:SetParent(elBg)
+	panel:SetAnchor(0,0,1,1)
+	panel:TrapFocus(true)
+	panel:RequestFocus()
+	windowHandle:SetCloseCallback(function()
+		self:AttachTab(identifier)
+	end)
+	tabData.window = windowHandle
+
+	if(util.is_valid(tabData.button)) then tabData.button:SetVisible(false) end
+
+	local i = self:GetTabId(identifier)
+	if(i ~= nil and self.m_activeTabIndex == i) then self:SelectFreeTab() end
+	panel:SetVisible(true)
+end
+
+function gui.PFMFrame:AttachTab(identifier)
+	local tabData = self:FindTabData(identifier)
+	if(tabData == nil or util.is_valid(tabData.panel) == false or tabData.window == nil) then return end
+	local windowHandle = tabData.window
+
+	local panel = tabData.panel
+	panel:TrapFocus(false)
+	panel:KillFocus()
+	panel:SetParent(self.m_contents)
+	panel:SetPos(0,0)
+	panel:SetSize(self.m_contents:GetWidth(),self.m_contents:GetHeight())
+	panel:SetAnchor(0,0,1,1)
+
+	if(windowHandle:IsValid()) then windowHandle:Close() end
+	tabData.window = nil
+
+	if(util.is_valid(tabData.button)) then tabData.button:SetVisible(true) end
+	self:SetActiveTab(identifier)
 end
 gui.register("WIPFMFrame",gui.PFMFrame)

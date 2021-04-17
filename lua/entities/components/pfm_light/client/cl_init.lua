@@ -75,7 +75,8 @@ function ents.PFMLight:Setup(actorData,lightData)
 	end
 
 	if(lightData:IsVolumetric()) then
-		local spotVolC = ent:AddComponent(ents.COMPONENT_LIGHT_SPOT_VOLUME)
+		-- TODO
+		--[[local spotVolC = ent:AddComponent(ents.COMPONENT_LIGHT_SPOT_VOLUME)
 		ent:SetKeyValue("cone_angle","20") -- TODO: Half of inner cutoff angle
 		local color = lightData:GetColor():Copy()
 		color.a = lightData:GetVolumetricIntensity() *255.0
@@ -83,7 +84,7 @@ function ents.PFMLight:Setup(actorData,lightData)
 		ent:SetKeyValue("cone_height",tostring(lightData:GetMaxDistance()))
 		ent:SetKeyValue("spawnflags","1024")
 		ent:SetKeyValue("cone_start_offset","0.0")
-		ent:SetKeyValue("spotlight_target",ent:GetName())
+		ent:SetKeyValue("spotlight_target",ent:GetName())]]
 
 		--[[local entVol = ents.create("env_light_spot_vol")
 		entVol:SetKeyValue("cone_angle","15")

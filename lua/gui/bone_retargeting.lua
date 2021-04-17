@@ -75,8 +75,32 @@ function gui.BoneRetargeting:OnInitialize()
 	self.m_feImpostee = feImpostee
 	self.m_feImposter = feImposter
 
+	controls:AddButton(locale.get_text("pfm_retarget_auto"),"retarget_auto",function()
+		self:AutoRetarget()
+	end)
+
 	self.m_boneControls = {}
 	self.m_flexControls = {}
+end
+function gui.BoneRetargeting:AutoRetarget()
+	if(self.m_srcMdl == nil or self.m_dstMdl == nil) then return end
+	local boneMatches = {}
+	local translationTable = {}
+	local skeletonSrc = self.m_srcMdl:GetSkeleton()
+	local skeletonDst = self.m_dstMdl:GetSkeleton()
+	for _,bone in ipairs(skeletonSrc:GetBones()) do
+		local idDst = skeletonDst:LookupBone(bone:GetName())
+		if(idDst ~= -1) then
+			self:MapBone(bone:GetID(),idDst)
+		end
+	end
+
+	for i,fc in ipairs(self.m_srcMdl:GetFlexControllers()) do
+		local iDst = self.m_dstMdl:LookupFlexController(fc.name)
+		if(iDst ~= -1) then
+			self:MapFlexController(i -1,iDst,0,1,0,1)
+		end
+	end
 end
 function gui.BoneRetargeting:SetImpostee(impostee)
 	if(util.is_valid(self.m_feImpostee)) then self.m_feImpostee:SetValue(impostee) end
@@ -201,16 +225,16 @@ function gui.BoneRetargeting:ResetBoneControls()
 	end
 	self.m_skipCallbacks = nil
 end
-function gui.BoneRetargeting:MapBone(boneSrc,boneDst)
+function gui.BoneRetargeting:MapBone(boneSrc,boneDst,skipCallbacks)
 	if(type(boneSrc) == "string") then boneSrc = self.m_srcMdl:GetSkeleton():LookupBone(boneSrc) end
 	if(type(boneDst) == "string") then boneDst = self.m_dstMdl:GetSkeleton():LookupBone(boneDst) end
 
-	self.m_skipCallbacks = true
+	if(skipCallbacks) then self.m_skipCallbacks = true end
 	local ctrl = self.m_boneControls[boneDst]
 	if(util.is_valid(ctrl)) then
 		ctrl:SelectOption(tostring(boneSrc))
 	end
-	self.m_skipCallbacks = nil
+	if(skipCallbacks) then self.m_skipCallbacks = nil end
 end
 function gui.BoneRetargeting:InitializeBoneControls(mdlSrc,mdlDst)
 	local options = {}
@@ -317,6 +341,6 @@ function gui.BoneRetargeting:GetBoneNames(mdl)
 end
 function gui.BoneRetargeting:SetSelectedOptions(options)
 	self:ResetBoneControls()
-	for boneIdDst,boneSrcData in pairs(options) do self:MapBone(boneSrcData[1],boneIdDst) end
+	for boneIdDst,boneSrcData in pairs(options) do self:MapBone(boneSrcData[1],boneIdDst,true) end
 end
 gui.register("WIBoneRetargeting",gui.BoneRetargeting)

@@ -498,6 +498,7 @@ function gui.WIFilmmaker:ReloadInterface()
 end
 function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
 function gui.WIFilmmaker:GetViewport() return self:GetWindow("primary_viewport") or nil end
+function gui.WIFilmmaker:GetSecondaryViewport() return self:GetWindow("secondary_viewport") or nil end
 function gui.WIFilmmaker:GetRenderTab() return self:GetWindow("render") or nil end
 function gui.WIFilmmaker:GetActorEditor() return self:GetWindow("actor_editor") or nil end
 function gui.WIFilmmaker:GetElementViewer() return self:GetWindow("element_viewer") or nil end
@@ -595,6 +596,7 @@ function gui.WIFilmmaker:OnThink()
 	end
 end
 function gui.WIFilmmaker:OnRemove()
+	gui.WIBaseEditor.OnRemove(self)
 	self:CloseProject()
 	util.remove(self.m_cbDisableDefaultSceneDraw)
 	util.remove(self.m_cbDropped)
@@ -938,6 +940,11 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:RegisterWindow(self.m_actorDataFrame,"particle_editor",locale.get_text("pfm_particle_editor"),function() return gui.create("WIPFMParticleEditor") end)
 
 	self:RegisterWindow(self.m_viewportFrame,"primary_viewport",locale.get_text("pfm_primary_viewport"),function() return gui.create("WIPFMViewport") end)
+	self:RegisterWindow(self.m_viewportFrame,"secondary_viewport",locale.get_text("pfm_secondary_viewport"),function()
+		local el = gui.create("WIPFMViewport")
+		el:InitializeCustomScene()
+		return el
+	end)
 	self:RegisterWindow(self.m_viewportFrame,"render",locale.get_text("pfm_render"),function()
 		local el = gui.create("WIPFMRenderPreview")
 		el:GetVisibilityProperty():AddCallback(function(wasVisible,isVisible)
