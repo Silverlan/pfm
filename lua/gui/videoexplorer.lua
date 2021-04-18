@@ -79,9 +79,9 @@ end
 function gui.VideoAssetIcon:OnInitialize()
 	gui.AssetIcon.OnInitialize(self)
 end
-function gui.VideoAssetIcon:GetDataBlock() return self.m_dataBlock end
+function gui.VideoAssetIcon:GetUdmData() return self.m_udmData end
 function gui.VideoAssetIcon:InitializeVideo(video)
-	local projectData = self:GetDataBlock()
+	local projectData = self:GetUdmData()
 	if(projectData == nil) then return false end
 	local videoSettings = gui.VRVideoPlayer.get_video_settings(projectData)
 	if(videoSettings == false) then return false end
@@ -103,12 +103,13 @@ function gui.VideoAssetIcon:InitializeVideo(video)
 	return true
 end
 function gui.VideoAssetIcon:ApplyAsset(path,importAsset)
-	local data = util.DataBlock.load(self:GetAsset())
-	local childBlocks = (data ~= nil) and data:GetChildBlocks() or {}
-	local block = select(2,pairs(childBlocks)(childBlocks))
-	if(block ~= nil) then
-		self.m_dataBlock = block
-		local icon = block:GetString("icon")
+	local udmData,err = udm.load(self:GetAsset())
+	if(udmData ~= false) then
+		udmData = udmData:GetAssetData():GetData()
+		udmData = udmData:GetChildren()
+		udmData = select(2,pairs(udmData)(udmData))
+		self.m_udmData = udmData:ClaimOwnership()
+		local icon = udmData:GetValue("icon",udm.TYPE_STRING) or ""
 		if(file.exists("projects/" .. icon)) then
 			local imgBuf = util.load_image("projects/" .. icon) -- TODO: Load asynchronously
 			if(imgBuf ~= nil) then
@@ -118,11 +119,10 @@ function gui.VideoAssetIcon:ApplyAsset(path,importAsset)
 				self:SetTexture(tex)
 			end
 		end
-		local title = block:GetString("title")
+		local title = udmData:GetValue("title",udm.TYPE_STRING) or ""
 		if(#title > 0) then
 			self:SetText(title)
 		end
-		-- self:SetMaterial(icon,100,30)
 	else
 		self:SetMaterial("error",self:GetWidth(),self:GetHeight())
 	end

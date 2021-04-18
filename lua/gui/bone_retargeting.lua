@@ -88,17 +88,31 @@ function gui.BoneRetargeting:AutoRetarget()
 	local translationTable = {}
 	local skeletonSrc = self.m_srcMdl:GetSkeleton()
 	local skeletonDst = self.m_dstMdl:GetSkeleton()
-	for _,bone in ipairs(skeletonSrc:GetBones()) do
-		local idDst = skeletonDst:LookupBone(bone:GetName())
-		if(idDst ~= -1) then
-			self:MapBone(bone:GetID(),idDst)
+	local map = ents.RetargetRig.autoretarget_skeleton(skeletonSrc,skeletonDst)
+	for nameSrc,nameDst in pairs(map) do
+		local idSrc = skeletonSrc:LookupBone(nameSrc)
+		local idDst = skeletonDst:LookupBone(nameDst)
+		print(nameSrc,idSrc,nameDst,idDst)
+		if(idSrc ~= -1 and idDst ~= -1) then
+			self:MapBone(idSrc,idDst)
 		end
 	end
 
+	local flexControllerNamesSrc = {}
 	for i,fc in ipairs(self.m_srcMdl:GetFlexControllers()) do
-		local iDst = self.m_dstMdl:LookupFlexController(fc.name)
-		if(iDst ~= -1) then
-			self:MapFlexController(i -1,iDst,0,1,0,1)
+		table.insert(flexControllerNamesSrc,fc.name)
+	end
+
+	local flexControllerNamesDst = {}
+	for i,fc in ipairs(self.m_dstMdl:GetFlexControllers()) do
+		table.insert(flexControllerNamesDst,fc.name)
+	end
+	map = ents.RetargetRig.autoretarget(flexControllerNamesSrc,flexControllerNamesDst)
+	for nameSrc,nameDst in pairs(map) do
+		local idSrc = self.m_srcMdl:LookupFlexController(nameSrc)
+		local idDst = self.m_dstMdl:LookupFlexController(nameDst)
+		if(idSrc ~= -1 and idDst ~= -1) then
+			self:MapFlexController(idSrc,idDst,0,1,0,1)
 		end
 	end
 end

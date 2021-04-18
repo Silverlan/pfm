@@ -10,6 +10,7 @@ util.register_class("ents.RetargetRig",BaseEntityComponent)
 
 include("rig.lua")
 include("bone_remapper.lua")
+include("auto_retarget.lua")
 
 function ents.RetargetRig.apply_rig(entSrc,entDst)
 	local rigC = entDst:AddComponent(ents.COMPONENT_RETARGET_RIG)
