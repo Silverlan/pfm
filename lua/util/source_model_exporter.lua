@@ -306,9 +306,9 @@ function util.SourceEngineModelBuilder:Generate()
 							local baseTexName = asset.get_normalized_path(texInfo:GetName(),asset.TYPE_TEXTURE)
 
 							local matName = file.remove_file_extension(mat:GetName())
-							local matNameBase = matName .. "_base.wmi"
-							local matNameCh = matName .. "_ch.wmi"
-							local matNameSpec = matName .. "_spec.wmi"
+							local matNameBase = matName .. "_base"
+							local matNameCh = matName .. "_ch"
+							local matNameSpec = matName .. "_spec"
 							local matBase = game.get_material(matNameBase)
 							local matCh = game.get_material(matNameCh)
 							local matSpec = game.get_material(matNameSpec)

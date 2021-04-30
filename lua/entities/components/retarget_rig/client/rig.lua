@@ -226,8 +226,8 @@ function ents.RetargetRig.Rig:Save()
 
 	local assetData = udmData:GetAssetData():GetData()
 	local udmRig = assetData:Add("rig")
-	udmRig:SetValue("source",dstMdl:GetName())
-	udmRig:SetValue("target",srcMdl:GetName())
+	udmRig:SetValue("source",asset.get_normalized_path(dstMdl:GetName(),asset.TYPE_MODEL))
+	udmRig:SetValue("target",asset.get_normalized_path(srcMdl:GetName(),asset.TYPE_MODEL))
 	local udmBoneMap = udmRig:Add("bone_map")
 	local translationTable = self:GetDstToSrcTranslationTable()
 	local translationNameTable = {}
@@ -342,7 +342,7 @@ function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
 
 	local rig = ents.RetargetRig.Rig(dstMdl,srcMdl)
 	rig.m_dstToSrcTranslationTable = translationTable
-	rig.m_flexTranslationTable = ents.RetargetRig.Rig.load_flex_controller_map(assetData,dstMdl,srcMdl)
+	rig.m_flexTranslationTable = ents.RetargetRig.Rig.load_flex_controller_map(udmRig,dstMdl,srcMdl)
 	rig:DebugPrint()
 	rig:SetDstToSrcTranslationTable(translationTable)
 	return rig

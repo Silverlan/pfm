@@ -170,9 +170,11 @@ console.register_command("util_export_asset",function(pl,...)
 	end
 
 	if(mdlName ~= nil) then
-		local formats = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
-		table.insert(formats,"wmd")
-		local models = get_asset_list(mdlName,asset.TYPE_MODEL,formats,recursive)
+		local exts = asset.get_supported_extensions(asset.TYPE_MODEL)
+		for _,ext in ipairs(asset.get_supported_import_file_extensions(asset.TYPE_MODEL)) do
+			table.insert(exts,ext)
+		end
+		local models = get_asset_list(mdlName,asset.TYPE_MODEL,exts,recursive)
 		if(format == "mdl") then
 			include("/util/source_model_exporter.lua")
 			local result,err = util.export_source_engine_models(models,gameIdentifier)
@@ -228,7 +230,10 @@ console.register_command("util_export_asset",function(pl,...)
 		if(result) then print("Map exported successfully!")
 		else console.print_warning("Unable to export map: ",err) end
 	elseif(matName ~= nil) then
-		local materials = get_asset_list(matName,asset.TYPE_MATERIAL,{"wmi","vmt","vmat_c"},recursive)
+		local exts = asset.get_supported_extensions(asset.TYPE_MATERIAL)
+		table.insert(exts,"vmt")
+		table.insert(exts,"vmat_c")
+		local materials = get_asset_list(matName,asset.TYPE_MATERIAL,exts,recursive)
 		if(#materials == 0) then console.print_warning("No materials found!") end
 		for _,matName in ipairs(materials) do
 			local result,err = asset.export_material(matName,exportInfo.imageFormat,exportInfo.normalizeTextureNames)
@@ -236,7 +241,8 @@ console.register_command("util_export_asset",function(pl,...)
 			else console.print_warning("Unable to export material: ",err) end
 		end
 	elseif(texName ~= nil) then
-		local textures = get_asset_list(texName,asset.TYPE_TEXTURE,{"dds","png","tga","ktx","vtf","vtex_c"},recursive)
+		local exts = asset.get_supported_extensions(asset.TYPE_TEXTURE)
+		local textures = get_asset_list(texName,asset.TYPE_TEXTURE,exts,recursive)
 		if(#textures == 0) then console.print_warning("No textures found!") end
 		for _,texName in ipairs(textures) do
 			local result,err = asset.export_texture(texName,exportInfo.imageFormat)

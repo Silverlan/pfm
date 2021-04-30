@@ -37,7 +37,7 @@ end
 function Component:InitializePlayerModel(pl)
 	-- TODO
 	local ent = pl:GetEntity()
-	game.load_model("player/scout.wmd") -- Make sure the model is loaded so we can use the activity names here
+	game.load_model("player/scout") -- Make sure the model is loaded so we can use the activity names here
 	local activityTranslation = {
 		[game.Model.Animation.ACT_IDLE] = game.Model.Animation.FindActivityId("ACT_MP_STAND_PRIMARY"),
 		[game.Model.Animation.ACT_RUN] = game.Model.Animation.FindActivityId("ACT_MP_RUN_PRIMARY"),
@@ -67,13 +67,13 @@ function Component:InitializePlayerModel(pl)
 		if(vb ~= nil) then
 			local mdlComponent = vb:GetModelComponent()
 			if(mdlComponent ~= nil) then
-				mdlComponent:SetModel("player/soldier_legs.wmd")
+				mdlComponent:SetModel("player/soldier_legs")
 			end
 		end
 		ent:AddComponent("pfm_player")
 		return
 	end
-	if(mdlComponent ~= nil) then mdlComponent:SetModel("player/scout.wmd") end
+	if(mdlComponent ~= nil) then mdlComponent:SetModel("player/scout") end
 	pl:SetObserverMode(ents.PlayerComponent.OBSERVERMODE_THIRDPERSON)
 end
 ents.COMPONENT_GM_PFM = ents.register_component("gm_pfm",Component)

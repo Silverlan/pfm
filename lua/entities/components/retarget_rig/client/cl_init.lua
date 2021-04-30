@@ -78,21 +78,32 @@ function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,b
 			local poseParent = retargetPoses[parent:GetID()]
 			retargetPoses[boneId] = poseParent *bindPoseTransforms[boneId]
 		else
-			-- Clamp bone distances to original distance to parent to keep proportions intact
-			local origDist = bindPose:GetBonePose(parent:GetID()):GetOrigin():Distance(bindPose:GetBonePose(boneId):GetOrigin()) -- TODO: We don't need to re-calculate this every time
+			local method = 1
+			if(method == 1) then
+				local bindPoseParent = bindPose:GetBonePose(parent:GetID())
+				local bindPose = bindPose:GetBonePose(boneId)
+				local poseParent = retargetPoses[parent:GetID()]
+				local poseWithBindOffset = poseParent *(bindPoseParent:GetInverse() *bindPose)
+				local pose = retargetPoses[boneId]
+				pose:SetOrigin(poseWithBindOffset:GetOrigin())
+			else
+				-- Old version; Obsolete?
+				-- Clamp bone distances to original distance to parent to keep proportions intact
+				local origDist = bindPose:GetBonePose(parent:GetID()):GetOrigin():Distance(bindPose:GetBonePose(boneId):GetOrigin()) -- TODO: We don't need to re-calculate this every time
 
-			local origin = retargetPoses[parent:GetID()]:GetOrigin()
-			local dir = tmpPoses[boneId]:GetOrigin() -tmpPoses[parent:GetID()]:GetOrigin()
-			local l = dir:Length()
-			if(l > 0.001) then dir:Normalize()
-			else dir = Vector() end
+				local origin = retargetPoses[parent:GetID()]:GetOrigin()
+				local dir = tmpPoses[boneId]:GetOrigin() -tmpPoses[parent:GetID()]:GetOrigin()
+				local l = dir:Length()
+				if(l > 0.001) then dir:Normalize()
+				else dir = Vector() end
 
-			local bonePos = origin +dir *origDist
-			local pose = retargetPoses[boneId]
-			pose:SetOrigin(bonePos)
+				local bonePos = origin +dir *origDist
+				local pose = retargetPoses[boneId]
+				pose:SetOrigin(bonePos)
 
-			-- TODO: We should still take into account if the animation has any actual bone translations, i.e.
-			-- Multiply our distance by (targetBoneAnimDistance /targetBoneBindPoseDistance)
+				-- TODO: We should still take into account if the animation has any actual bone translations, i.e.
+				-- Multiply our distance by (targetBoneAnimDistance /targetBoneBindPoseDistance)
+			end
 		end
 		finalPose = retargetPoses[parent:GetID()]:GetInverse() *retargetPoses[boneId] -- We want the pose to be relative to the parent
 	else finalPose = retargetPoses[boneId] end

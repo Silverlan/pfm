@@ -27,7 +27,7 @@ function gui.PFMMaterialCatalog:OnInitialize()
 	self.m_contents:SetFixedSize(true)
 	self.m_contents:SetAutoFillContents(true)
 
-	local fit = pfm.FileIndexTable("materials","materials/",{"wmi"},{"vmt","vmat_c"})
+	local fit = pfm.FileIndexTable("materials","materials/",asset.get_supported_extensions(asset.TYPE_MATERIAL),{"vmt","vmat_c"})
 	self.m_fit = fit
 
 	self.m_teLocation = gui.create("WITextEntry",self.m_contents,0,0,self:GetWidth(),24)
@@ -55,7 +55,7 @@ function gui.PFMMaterialCatalog:OnInitialize()
 	local explorer = gui.create("WIMaterialExplorer",scrollContainer,0,0,self:GetWidth(),self:GetHeight())
 	explorer:SetAutoAlignToParent(true,false)
 	explorer:SetRootPath("materials")
-	explorer:SetExtensions({"wmi"})
+	explorer:SetExtensions(asset.get_supported_extensions(asset.TYPE_MATERIAL))
 	explorer:AddCallback("OnPathChanged",function(explorer,path)
 		self.m_teLocation:SetText(path)
 	end)

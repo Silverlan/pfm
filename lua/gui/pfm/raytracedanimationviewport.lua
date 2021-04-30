@@ -75,8 +75,8 @@ function gui.PFMRaytracedAnimationViewport:GetRTJob() return self.m_rtJob end
 function gui.PFMRaytracedAnimationViewport:LoadPreviewMaterial(reload)
 	if(self.m_curImagePath == nil) then return end
 	local thumbnailLocation = "render_previews/" .. util.get_string_hash(self.m_curImagePath)
-	local matPath = "materials/" .. thumbnailLocation .. ".wmi"
-	if(file.exists(matPath) == false) then return end
+	local matPath = thumbnailLocation
+	if(asset.exists(matPath,asset.TYPE_MATERIAL) == false) then return end
 	return game.load_material(thumbnailLocation,reload or false,true)
 end
 function gui.PFMRaytracedAnimationViewport:LoadPreviewImage(filePath,reload,dontGenerate)
@@ -90,8 +90,8 @@ function gui.PFMRaytracedAnimationViewport:LoadPreviewImage(filePath,reload,dont
 	self.m_highDefImageLoaded = false
 
 	local thumbnailLocation = "render_previews/" .. util.get_string_hash(filePath)
-	local matPath = "materials/" .. thumbnailLocation .. ".wmi"
-	if(file.exists(matPath) == false) then
+	local matPath = thumbnailLocation
+	if(asset.exists(matPath,asset.TYPE_MATERIAL) == false) then
 		if(dontGenerate == true) then return false end
 		if(self:GeneratePreviewImage(filePath) == false) then return false end
 	end
@@ -272,8 +272,8 @@ end
 function gui.PFMRaytracedAnimationViewport:ClearCachedPreview()
 	if(self.m_curImagePath == nil) then return end
 	local thumbnailLocation = "render_previews/" .. util.get_string_hash(self.m_curImagePath)
-	file.delete("materials/" .. thumbnailLocation .. ".wmi")
-	file.delete("materials/" .. thumbnailLocation .. ".dds")
+	asset.delete(thumbnailLocation,asset.TYPE_MATERIAL)
+	asset.delete(thumbnailLocation,asset.TYPE_TEXTURE)
 end
 function gui.PFMRaytracedAnimationViewport:ApplyPostProcessing(tex)
 	-- TODO

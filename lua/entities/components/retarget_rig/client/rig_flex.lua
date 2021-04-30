@@ -6,8 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function ents.RetargetRig.Rig.load_flex_controller_map(assetData,srcMdl,dstMdl)
-	local udmFcm = assetData:GetValue("flex_controller_map")
+function ents.RetargetRig.Rig.load_flex_controller_map(udmRig,srcMdl,dstMdl)
+	local udmFcm = udmRig:Get("flex_controller_map")
 	local translationTable = {}
 	if(udmFcm ~= nil) then
 		for fcNameSrc,udmMappings in pairs(udmFcm:GetChildren()) do
@@ -34,8 +34,8 @@ function ents.RetargetRig.Rig.load_flex_controller_map(assetData,srcMdl,dstMdl)
 	return translationTable
 end
 
-function ents.RetargetRig.Rig.save_flex_controller_map(assetData,srcMdl,dstMdl,flexControllerTranslationTable)
-	local udmFcm = assetData:Add("flex_controller_map")
+function ents.RetargetRig.Rig.save_flex_controller_map(udmRig,srcMdl,dstMdl,flexControllerTranslationTable)
+	local udmFcm = udmRig:Add("flex_controller_map")
 	for flexCId0,mappings in pairs(flexControllerTranslationTable) do
 		local flexC0 = srcMdl:GetFlexController(flexCId0)
 		if(flexC0 ~= nil) then

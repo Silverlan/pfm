@@ -276,8 +276,8 @@ function gui.AssetIcon:ClearIcon()
 	path = path:GetString()
 
 	local iconPath = get_icon_location(path)
-	file.delete("materials/" .. iconPath .. ".wmi")
-	file.delete("materials/" .. iconPath .. ".dds")
+	asset.delete(iconPath,asset.TYPE_MATERIAL)
+	asset.delete(iconPath,asset.TYPE_TEXTURE)
 end
 function gui.AssetIcon:SetMaterialSphere(matSphere)
 	self.m_useMaterialSphere = matSphere
@@ -347,7 +347,7 @@ function gui.ModelAssetIcon:SetModelAsset(mdl,importAsset)
 	self.m_assetType = asset.TYPE_MODEL
 	self:SetNativeAsset(asset.exists(mdl,asset.TYPE_MODEL))
 	local iconPath = self:GetIconLocation()
-	if(file.exists("materials/" .. iconPath .. ".wmi")) then
+	if(asset.exists(iconPath,asset.TYPE_MATERIAL)) then
 		self:SetMaterial(iconPath)
 		return
 	end
@@ -387,7 +387,7 @@ function gui.MaterialAssetIcon:SetMaterialAsset(mat,importAsset)
 	self.m_assetType = asset.TYPE_MATERIAL
 	self:SetNativeAsset(asset.exists(mat,asset.TYPE_MATERIAL))
 	local iconPath = self:GetIconLocation()
-	if(file.exists("materials/" .. iconPath .. ".wmi")) then
+	if(asset.exists(iconPath,asset.TYPE_MATERIAL)) then
 		self:SetMaterial(iconPath)
 		return
 	end
@@ -459,7 +459,7 @@ function gui.ParticleAssetIcon:SetParticleAsset(pt,importAsset)
 	self:SetNativeAsset(asset.exists(ptFileName,asset.TYPE_PARTICLE_SYSTEM))
 
 	local iconPath = self:GetIconLocation()
-	if(file.exists("materials/" .. iconPath .. ".wmi")) then
+	if(asset.exists(iconPath,asset.TYPE_MATERIAL)) then
 		self:SetMaterial(iconPath)
 		return
 	end

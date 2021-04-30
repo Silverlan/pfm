@@ -103,15 +103,17 @@ function gui.VideoAssetIcon:InitializeVideo(video)
 	return true
 end
 function gui.VideoAssetIcon:ApplyAsset(path,importAsset)
-	local udmData,err = udm.load(self:GetAsset())
+	local assetPath = self:GetAsset()
+	local udmData,err = udm.load(assetPath)
 	if(udmData ~= false) then
 		udmData = udmData:GetAssetData():GetData()
 		udmData = udmData:GetChildren()
 		udmData = select(2,pairs(udmData)(udmData))
 		self.m_udmData = udmData:ClaimOwnership()
 		local icon = udmData:GetValue("icon",udm.TYPE_STRING) or ""
-		if(file.exists("projects/" .. icon)) then
-			local imgBuf = util.load_image("projects/" .. icon) -- TODO: Load asynchronously
+		if(#icon > 0) then icon = file.get_file_path(assetPath) .. icon end
+		if(file.exists(icon)) then
+			local imgBuf = util.load_image(icon) -- TODO: Load asynchronously
 			if(imgBuf ~= nil) then
 				local img = prosper.create_image(imgBuf)
 				local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),prosper.SamplerCreateInfo())
@@ -129,7 +131,7 @@ function gui.VideoAssetIcon:ApplyAsset(path,importAsset)
 
 	--[[self.m_assetType = asset.TYPE_MATERIAL
 	local iconPath = self:GetIconLocation()
-	if(file.exists("materials/" .. iconPath .. ".wmi")) then
+	if(asset.exists(iconPath,asset.TYPE_MATERIAL)) then
 		self:SetMaterial(iconPath)
 		return
 	end

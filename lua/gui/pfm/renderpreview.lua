@@ -98,7 +98,7 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 		self.m_renderBtContainer:SetVisible(true)
 		self.m_btCancel:SetVisible(false)
 		self.m_btStop:SetVisible(false)
-		console.run("cl_max_fps","-1") -- Unclamp FPS
+		console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps"))) -- Unclamp FPS
 
 		self.m_rt:GetToneMappedImageElement():SetStereo(self.m_renderedImageType == gui.PFMRenderPreview.IMAGE_TYPE_STEREO)
 	end)
@@ -974,7 +974,7 @@ function gui.PFMRenderPreview:GetRenderSettings(preview,prepareOnly)
 end
 function gui.PFMRenderPreview:CancelRendering()
 	if(self:IsRendering()) then self.m_rt:CancelRendering() end
-	console.run("cl_max_fps","-1") -- Unclamp FPS
+	console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps"))) -- Unclamp FPS
 end
 function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
 	self:CancelRendering()

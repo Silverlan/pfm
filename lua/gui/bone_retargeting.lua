@@ -78,9 +78,23 @@ function gui.BoneRetargeting:OnInitialize()
 	controls:AddButton(locale.get_text("pfm_retarget_auto"),"retarget_auto",function()
 		self:AutoRetarget()
 	end)
+	controls:AddButton(locale.get_text("clear"),"clear",function()
+		self:Clear()
+	end)
 
 	self.m_boneControls = {}
 	self.m_flexControls = {}
+end
+function gui.BoneRetargeting:Clear()
+	if(self.m_dstMdl == nil) then return end
+	local skeleton = self.m_dstMdl:GetSkeleton()
+	local numBones = skeleton:GetBoneCount()
+	for boneId,el in pairs(self.m_boneControls) do
+		if(el:IsValid()) then
+			self:ApplyBoneTranslation(el)
+		end
+	end
+	self:ResetFlexControllerControls()
 end
 function gui.BoneRetargeting:AutoRetarget()
 	if(self.m_srcMdl == nil or self.m_dstMdl == nil) then return end
@@ -92,7 +106,6 @@ function gui.BoneRetargeting:AutoRetarget()
 	for nameSrc,nameDst in pairs(map) do
 		local idSrc = skeletonSrc:LookupBone(nameSrc)
 		local idDst = skeletonDst:LookupBone(nameDst)
-		print(nameSrc,idSrc,nameDst,idDst)
 		if(idSrc ~= -1 and idDst ~= -1) then
 			self:MapBone(idSrc,idDst)
 		end

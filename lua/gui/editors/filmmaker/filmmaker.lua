@@ -335,6 +335,8 @@ function gui.WIFilmmaker:OnInitialize()
 	end)
 	pMenuBar:Update()
 
+	console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps")))
+
 	--[[local framePlaybackControls = gui.create("WIFrame",self)
 	framePlaybackControls:SetCloseButtonEnabled(false)
 	local playbackControls = gui.create("PlaybackControls",framePlaybackControls)

@@ -21,6 +21,7 @@ include("math.lua")
 include("unirender.lua")
 include("message_popup.lua")
 include("tree/pfm_tree.lua")
+include("project_packer.lua")
 
 util.register_class("pfm.Project")
 function pfm.Project:__init()
@@ -173,105 +174,14 @@ function pfm.Project:DebugDump(f,node,t,name)
 end
 
 function pfm.Project:CollectAssetFiles()
-	local assetFileMap = {}
-	local function add_file(f) assetFileMap[f] = f end
-	local function add_material(mat)
-		local matName = util.Path(mat:GetName())
-		add_file("materials/" .. matName:GetString())
-		local db = mat:GetDataBlock()
-		for _,key in ipairs(db:GetKeys()) do
-			if(db:GetValueType(key) == "texture") then
-				local texInfo = mat:GetTextureInfo(key)
-				if(texInfo ~= nil) then
-					add_file("materials/" .. util.Path(texInfo:GetName()):GetString())
-				end
-			end
-		end
-
-		if(db:HasValue("animation")) then
-			add_file("materials/" .. file.remove_file_extension(db:GetString("animation")) .. ".psd")
-		end
-	end
-	local function add_model(mdl)
-		for _,mat in ipairs(mdl:GetMaterials()) do
-			add_material(mat)
-		end
-		add_file("models/" .. util.Path(mdl:GetName()):GetString())
-
-		for _,mdlName in ipairs(mdl:GetIncludeModels()) do
-			local mdlInclude = game.load_model(mdlName)
-			if(mdlInclude ~= nil) then add_model(mdlInclude) end
-		end
-	end
-	local function add_film_clip(filmClip)
-		for _,actor in ipairs(filmClip:GetActorList()) do
-			for _,component in ipairs(actor:GetComponents():GetTable()) do
-				local type = component:GetType()
-				if(type == fudm.ELEMENT_TYPE_PFM_MODEL) then
-					local mdlName = component:GetModelName()
-					if(#mdlName > 0) then
-						local mdl = game.load_model(mdlName)
-						if(mdl ~= nil) then add_model(mdl) end
-					end
-				elseif(type == fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM) then
-					local ptSystemName = component:GetParticleSystemName()
-					local ptFileName = ents.ParticleSystemComponent.find_particle_system_file(ptSystemName)
-					if(ptFileName ~= nil) then
-						add_file(ptFileName)
-						local ptSystemDef= ents.ParticleSystemComponent.get_particle_system_definition(ptSystemName)
-						if(ptSystemDef ~= nil) then
-							local mat = ptSystemDef["material"]
-							mat = (mat ~= nil) and game.load_material(mat) or nil
-							if(mat ~= nil) then
-								add_material(mat)
-							end
-						end
-					end
-				end
-			end
-		end
-		for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
-			for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
-				for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
-					add_film_clip(filmClip)
-				end
-				for _,audioClip in ipairs(track:GetAudioClips():GetTable()) do
-					local sound = audioClip:GetSound()
-					local soundName = sound:GetSoundName()
-					if(#soundName > 0) then add_file("sounds/" .. soundName) end
-				end
-			end
-		end
-	end
+	local packer = pfm.ProjectPacker()
 	for _,session in ipairs(self:GetSessions()) do
-		for _,filmClip in ipairs(session:GetClips():GetTable()) do
-			add_film_clip(filmClip)
-		end
+		packer:AddSession(session)
 	end
-	local mapName = game.get_map_name()
-	add_file("maps/" .. mapName .. ".wld")
-	local pathLightmapAtlas = asset.find_file("maps/" .. mapName .. "/lightmap_atlas",asset.TYPE_TEXTURE)
-	if(pathLightmapAtlas ~= nil) then add_file("materials/" .. pathLightmapAtlas) end
-
-	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_REFLECTION_PROBE)}) do
-		local probeC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
-		local path = util.Path.CreateFilePath(probeC:GetIBLMaterialFilePath())
-		path:PopFront()
-		local mat = game.load_material(path:GetString())
-		if(mat ~= nil) then add_material(mat) end
-	end
-
-	for _,ent in ipairs(ents.get_all()) do
-		if(ent:IsMapEntity()) then
-			local mdl = ent:GetModel()
-			if(mdl ~= nil) then
-				add_model(mdl)
-			end
-		end
-	end
+	packer:AddMap(game.get_map_name())
 	-- TODO: Pack project file
 	-- TODO: Pack audio files
-	return assetFileMap
+	return packer:GetFiles()
 end
 
 pfm.create_project = function()

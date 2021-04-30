@@ -136,7 +136,7 @@ end
 function gui.BoneRetargeting:ResetFlexControllerControls()
 	self.m_skipCallbacks = true
 	for flexCId0,data in pairs(self.m_flexControls) do
-		data.item:Clear()
+		data.treeItem:Clear()
 		data.mappings = {}
 	end
 	self.m_skipCallbacks = nil

@@ -44,7 +44,7 @@ function ents.PFMBone:InitializeModel()
 	subMesh:AddTriangle(v4,v5,v3)
 	subMesh:AddTriangle(v1,v5,v4)
 
-	local matIdx = mdl:AddMaterial(0,game.load_material("pfm/skeleton_bone.wmi"))
+	local matIdx = mdl:AddMaterial(0,game.load_material("pfm/skeleton_bone"))
 	subMesh:SetSkinTextureIndex(matIdx)
 
 	local mesh = game.Model.Mesh.Create()
@@ -53,7 +53,7 @@ function ents.PFMBone:InitializeModel()
 
 	mdl:Update(game.Model.FUPDATE_ALL)]]
 	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
-	if(mdlC ~= nil) then mdlC:SetModel("pfm/bone.wmd") end
+	if(mdlC ~= nil) then mdlC:SetModel("pfm/bone") end
 end
 
 function ents.PFMBone:OnEntitySpawn()

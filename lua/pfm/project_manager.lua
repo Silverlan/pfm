@@ -106,7 +106,7 @@ function pfm.ProjectManager:GetProjectUniqueId()
 end
 function pfm.ProjectManager:GetProjectPath() return util.Path.CreatePath(self.m_projectFileName):GetPath() end
 function pfm.ProjectManager:GetAnimationCacheFilePath(projectFileName)
-	return "cache/pfm/" .. self:GetProjectUniqueId() .. "/animation.pfacb"
+	return "cache/pfm/" .. self:GetProjectUniqueId() .. "/animation.pfac_b"
 end
 function pfm.ProjectManager:IsAnimationCacheValid() return file.exists(self:GetAnimationCacheFilePath()) end
 function pfm.ProjectManager:SaveAnimationCache(projectFileName)
@@ -220,7 +220,7 @@ function pfm.ProjectManager:IsCachedMode() return self.m_cachedMode end
 function pfm.ProjectManager:GetActiveGameViewFilmClip() return self.m_activeGameViewFilmClip end
 function pfm.ProjectManager:SetGameViewOffset(offset)
 	local tOffset = self:TranslateGameViewOffset(offset)
-	if(tOffset == false) then return end
+	if(tOffset == false or util.is_valid(self:GetGameView()) == false) then return end
 	offset = tOffset or offset
 	local isAnimCacheEnabled = console.get_convar_bool("pfm_animation_cache_enabled")
 	local frameIndex = self:TimeOffsetToFrameOffset(offset)

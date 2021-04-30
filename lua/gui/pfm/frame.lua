@@ -39,8 +39,8 @@ function gui.PFMFrame:OnInitialize()
 	self:ScheduleUpdate()
 end
 function gui.PFMFrame:OnRemove()
-	for identifier,windowHandle in pairs(self.m_detachedWindows) do
-		windowHandle:Close()
+	for _,tab in ipairs(self.m_tabs) do
+		if(util.is_valid(tab.window)) then tab.window:Close() end
 	end
 end
 function gui.PFMFrame:SetActiveTab(tabId)
@@ -136,9 +136,11 @@ function gui.PFMFrame:AddTab(identifier,name,panel)
 			if(util.is_valid(pContext) == false) then return end
 			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem(locale.get_text("detach"),function()
+				if(not self:IsValid()) then return end
 				self:DetachTab(identifier)
 			end)
 			pContext:AddItem(locale.get_text("close"),function()
+				if(not self:IsValid()) then return end
 				self:RemoveTab(identifier)
 			end)
 			pContext:Update()
@@ -184,6 +186,7 @@ function gui.PFMFrame:DetachTab(identifier)
 	panel:TrapFocus(true)
 	panel:RequestFocus()
 	windowHandle:SetCloseCallback(function()
+		if(not self:IsValid()) then return end
 		self:AttachTab(identifier)
 	end)
 	tabData.window = windowHandle
@@ -192,7 +195,7 @@ function gui.PFMFrame:DetachTab(identifier)
 
 	local i = self:GetTabId(identifier)
 	if(i ~= nil and self.m_activeTabIndex == i) then self:SelectFreeTab() end
-	panel:SetVisible(true)
+	if(panel:IsValid()) then panel:SetVisible(true) end
 end
 
 function gui.PFMFrame:AttachTab(identifier)
@@ -203,12 +206,19 @@ function gui.PFMFrame:AttachTab(identifier)
 	local panel = tabData.panel
 	panel:TrapFocus(false)
 	panel:KillFocus()
-	panel:SetParent(self.m_contents)
-	panel:SetPos(0,0)
-	panel:SetSize(self.m_contents:GetWidth(),self.m_contents:GetHeight())
-	panel:SetAnchor(0,0,1,1)
+	if(panel:IsValid()) then
+		if(util.is_valid(self.m_contents)) then
+			panel:SetParent(self.m_contents)
+			panel:SetPos(0,0)
+			panel:SetSize(self.m_contents:GetWidth(),self.m_contents:GetHeight())
+			panel:SetAnchor(0,0,1,1)
+		else panel:Remove() end
+	end
 
-	if(windowHandle:IsValid()) then windowHandle:Close() end
+	if(windowHandle:IsValid()) then
+		util.remove(gui.get_base_element(windowHandle))
+		windowHandle:Close()
+	end
 	tabData.window = nil
 
 	if(util.is_valid(tabData.button)) then tabData.button:SetVisible(true) end

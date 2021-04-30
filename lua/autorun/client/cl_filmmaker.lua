@@ -10,6 +10,8 @@ include("/sfm/project_converter.lua")
 
 pfm.register_log_category("sfm")
 
+console.register_variable("pfm_max_fps","-1",bit.bor(console.FLAG_BIT_ARCHIVE),"Clamp the max game fps to this value while the filmmaker is running.")
+
 tool = tool or {}
 tool.close_filmmaker = function()
 	local entScene = ents.find_by_class("pfm_scene")[1]

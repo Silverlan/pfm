@@ -200,7 +200,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 	p:ResetControls()
 end
 function gui.PFMViewport:SetRtViewportEnabled(enabled)
-	console.run("cl_max_fps",enabled and "24" or "-1") -- Clamp max fps to make more resources available for the renderer
+	console.run("cl_max_fps",enabled and "24" or tostring(console.get_convar_int("pfm_max_fps"))) -- Clamp max fps to make more resources available for the renderer
 	util.remove(self.m_rtViewport)
 	if(enabled ~= true) then return end
 	local rtViewport = gui.create("WIRealtimeRaytracedViewport",self.m_vpContainer,0,0,self.m_vpContainer:GetWidth(),self.m_vpContainer:GetHeight(),0,0,1,1)
