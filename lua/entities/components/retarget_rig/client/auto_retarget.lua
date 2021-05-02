@@ -64,7 +64,10 @@ local function strip_common_generic_substrings(names,threshold)
 	for _,sub in ipairs(sortedCommonSubstrings) do
 		remove_substring(names,sub)
 	end
-	remove_substring(names,"ValveBiped.")
+	local commonGenericSubstrings = {"ValveBiped."}
+	for _,str in ipairs(commonGenericSubstrings) do
+		remove_substring(names,str:lower())
+	end
 end
 
 local function get_skeleton_bone_names(skeleton)
@@ -72,10 +75,10 @@ local function get_skeleton_bone_names(skeleton)
 	for _,bone in ipairs(skeleton:GetBones()) do
 		table.insert(boneNames,bone:GetName())
 	end
-	local strippedNames = {}
-	for i,name in ipairs(boneNames) do strippedNames[i] = name end
-	strip_common_generic_substrings(strippedNames,0.2)
-	return strippedNames,boneNames
+	local normalizedNames = {}
+	for i,name in ipairs(boneNames) do normalizedNames[i] = name:lower() end
+	strip_common_generic_substrings(normalizedNames,0.2)
+	return normalizedNames,boneNames
 end
 
 local function calc_character_diff(str0,str1)

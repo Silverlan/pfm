@@ -28,13 +28,21 @@ function ents.PFMImpersonatee:ChangeModel(mdlName)
 	local impersonateeC = self:GetEntity():AddComponent("impersonatee")
 	if(impersonateeC == nil) then return end
 	impersonateeC:SetImpostorModel(mdlName)
-	local actorC = ent:GetComponent("pfm_actor")
-	if(actorC ~= nil) then
-		actorC:SetDefaultRenderMode((#mdlName > 0) and ents.RenderComponent.RENDERMODE_NONE or ents.RenderComponent.RENDERMODE_WORLD)
-		local impostorC = impersonateeC:GetImpostor()
-		if(util.is_valid(impostorC)) then
-			local renderC = impostorC:GetEntity():GetComponent(ents.COMPONENT_RENDER)
-			if(renderC ~= nil) then renderC:SetExemptFromOcclusionCulling(true) end -- TODO: This shouldn't be necessary
+
+	local tEnts = {}
+	local c = ent:GetComponent(ents.COMPONENT_COMPOSITE)
+	if(c ~= nil) then tEnts = c:GetEntities() end
+	table.insert(tEnts,ent)
+
+	for _,ent in ipairs(tEnts) do
+		local actorC = ent:GetComponent("pfm_actor")
+		if(actorC ~= nil) then
+			actorC:SetDefaultRenderMode((#mdlName > 0) and ents.RenderComponent.RENDERMODE_NONE or ents.RenderComponent.RENDERMODE_WORLD)
+			local impostorC = impersonateeC:GetImpostor()
+			if(util.is_valid(impostorC)) then
+				local renderC = impostorC:GetEntity():GetComponent(ents.COMPONENT_RENDER)
+				if(renderC ~= nil) then renderC:SetExemptFromOcclusionCulling(true) end -- TODO: This shouldn't be necessary
+			end
 		end
 	end
 end

@@ -52,6 +52,19 @@ function ents.RetargetRig:RigToActor(actor,mdlSrc,mdlDst)
 		newRig = true
 	end]]
 	if(rig == false) then return false end
+
+	self.m_untranslatedBones = {} -- List of untranslated bones where all parents are also untranslated
+	local translationTable = rig:GetDstToSrcTranslationTable()
+	local function findUntranslatedBones(bone)
+		if(translationTable[bone:GetID()] ~= nil) then return end
+		self.m_untranslatedBones[bone:GetID()] = true
+		for boneId,child in pairs(bone:GetChildren()) do
+			findUntranslatedBones(child)
+		end
+	end
+	for boneId,bone in pairs(mdlDst:GetSkeleton():GetRootBones()) do
+		findUntranslatedBones(bone)
+	end
 	
 	self:SetRig(rig,animSrc)
 	return newRig
@@ -85,7 +98,9 @@ function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,b
 				local poseParent = retargetPoses[parent:GetID()]
 				local poseWithBindOffset = poseParent *(bindPoseParent:GetInverse() *bindPose)
 				local pose = retargetPoses[boneId]
-				pose:SetOrigin(poseWithBindOffset:GetOrigin())
+				if(self.m_untranslatedBones[parent:GetID()] ~= true) then
+					pose:SetOrigin(poseWithBindOffset:GetOrigin())
+				end
 			else
 				-- Old version; Obsolete?
 				-- Clamp bone distances to original distance to parent to keep proportions intact

@@ -64,14 +64,23 @@ function ents.Impostor:UpdateModel(mdl)
 	local impersonateeC = self:GetImpersonatee()
 	if(util.is_valid(impersonateeC) == false) then return end
 
-	local renderCImpersonatee = impersonateeC:GetEntity():GetComponent(ents.COMPONENT_RENDER)
-	if(renderCImpersonatee ~= nil) then renderCImpersonatee:SetRenderMode((mdl ~= nil) and ents.RenderComponent.RENDERMODE_NONE or ents.RenderComponent.RENDERMODE_WORLD) end
+	local entImpersonatee = impersonateeC:GetEntity()
+	local tEnts = {}
+	local c = entImpersonatee:GetComponent(ents.COMPONENT_COMPOSITE)
+	if(c ~= nil) then tEnts = c:GetEntities() end
+	table.insert(tEnts,entImpersonatee)
+	for _,ent in ipairs(tEnts) do
+		local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+		if(renderC ~= nil) then
+			renderC:SetRenderMode((mdl ~= nil) and ents.RenderComponent.RENDERMODE_NONE or ents.RenderComponent.RENDERMODE_WORLD)
+		end
+	end
 
 	local ent = self:GetEntity()
 	local retargetC = ent:AddComponent("retarget_rig")
-	if(retargetC ~= nil) then retargetC:RigToActor(impersonateeC:GetEntity()) end
+	if(retargetC ~= nil) then retargetC:RigToActor(entImpersonatee) end
 
-	local headTarget = impersonateeC:GetEntity()
+	local headTarget = entImpersonatee
 	local headhackC = headTarget:GetComponent("headhack")
 	if(headhackC ~= nil) then
 		local headhackHead = headhackC:GetHeadTarget()
