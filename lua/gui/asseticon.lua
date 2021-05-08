@@ -133,6 +133,9 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 	save_model_icon(data.model,self.m_modelView,data.iconPath)
 	if(data.callback ~= nil) then data.callback() end
 
+	data = nil
+	console.run("asset_clear_unused")
+
 	self:GenerateNextIcon()
 end
 

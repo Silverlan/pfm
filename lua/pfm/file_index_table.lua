@@ -108,7 +108,7 @@ function pfm.FileIndexTable:Remove()
 end
 function pfm.FileIndexTable:GetRootPath() return self.m_rootPath end
 function pfm.FileIndexTable:GetName() return self.m_name end
-function pfm.FileIndexTable:GetCacheFileName() return "cache/pfm/file_index_table_" .. self:GetName() .. ".bin" end
+function pfm.FileIndexTable:GetCacheFileName() return "cache/pfm/file_index_table_" .. self:GetName() .. ".fit_b" end
 function pfm.FileIndexTable:GetFileNames() return self.m_tFileNames end
 function pfm.FileIndexTable:GetFilePaths() return self.m_tFilePaths end
 function pfm.FileIndexTable:GetFileName(i) return self.m_tFileNames[i] end
@@ -124,45 +124,87 @@ function pfm.FileIndexTable:AddFile(fileName)
 	end
 	table.insert(self.m_tFilePaths,self.m_tPathToIndex[path])
 end
+local FORMAT_IDENTIFIER = "PFIT"
+local FORMAT_VERSION = 1
 function pfm.FileIndexTable:LoadFromCache()
 	local f = file.open(self:GetCacheFileName(),bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
-	if(f == nil) then return false end
-	print("Loading file index table '" .. self:GetName() .. "' from cache...")
-	local id = f:ReadString(6)
-	if(id ~= "PFMFIT") then return false end
-	local version = f:ReadUInt32()
-	if(version < 0 or version > 0) then return false end
-	local numFileNames = f:ReadUInt32()
-	for i=1,numFileNames do
-		table.insert(self.m_tFileNames,f:ReadString())
-		table.insert(self.m_tFilePaths,f:ReadUInt32())
+	if(f == nil) then
+		pfm.log("Unable to load file index table: File '" .. self:GetCacheFileName() .. "' not found!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return false
 	end
 
-	local numPaths = f:ReadUInt32()
-	for i=1,numPaths do
-		table.insert(self.m_tPaths,f:ReadString())
-	end
+	local udmData,err = udm.load(f)
 	f:Close()
+	if(udmData == false) then
+		pfm.log("Failed to load file index table: " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+
+	local assetData = udmData:GetAssetData()
+	assetData = assetData:GetData()
+
+	self.m_tPaths = assetData:GetArrayValues("pathTable",udm.TYPE_STRING)
+	self.m_tFileNames = assetData:GetArrayValues("fileTable",udm.TYPE_STRING)
+	self.m_tFilePaths = assetData:GetArrayValues("filePathIndices",udm.TYPE_UINT32)
 	return true
 end
 function pfm.FileIndexTable:SaveToCache()
 	file.create_path(file.get_file_path(self:GetCacheFileName()))
-	local f = file.open(self:GetCacheFileName(),bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
-	if(f == nil) then return false end
-	print("Saving file index table '" .. self:GetName() .. "' to cache...")
-	f:WriteString("PFMFIT",false)
-	f:WriteUInt32(0)
-	f:WriteUInt32(#self.m_tFileNames)
-	for i=1,#self.m_tFileNames do
-		f:WriteString(self.m_tFileNames[i])
-		f:WriteUInt32(self.m_tFilePaths[i])
+
+	local udmData,err = udm.create(FORMAT_IDENTIFIER,FORMAT_VERSION)
+	if(udmData == false) then
+		pfm.log("Unable to save file index table '" .. self:GetCacheFileName() .. "': " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return false
 	end
 
-	f:WriteUInt32(#self.m_tPaths)
-	for _,path in ipairs(self.m_tPaths) do
-		f:WriteString(path)
+	local assetData = udmData:GetAssetData():GetData()
+	assetData:SetArrayValues("pathTable",udm.TYPE_STRING,self.m_tPaths,udm.TYPE_ARRAY_LZ4)
+	assetData:SetArrayValues("fileTable",udm.TYPE_STRING,self.m_tFileNames,udm.TYPE_ARRAY_LZ4)
+	assetData:SetArrayValues("filePathIndices",udm.TYPE_UINT32,self.m_tFilePaths,udm.TYPE_ARRAY_LZ4)
+
+	--[[
+	-- TODO: Use a file map once Array:Reserve and compressed elements have been implemented for UDM
+	local testFileMap = {}
+	for i,n in ipairs(self.m_tFileNames) do
+		local p = self.m_tPaths[self.m_tFilePaths[i] ]
+		p = p:sub(1,-2)
+		local components = string.split(p,"/")
+		local t = testFileMap
+		for _,c in ipairs(components) do
+			t[c] = t[c] or {}
+			if(type(t[c]) == "string") then t[c] = {} end -- There's a file and a directory with the same name; Prioritize the directory
+			t = t[c]
+		end
+		table.insert(t,n)
 	end
+
+	-- TODO: Compress?
+	local function addDir(udmParent,dirData)
+		for name,sub in pairs(dirData) do
+			if(type(sub) == "string") then
+				print(udmParent,name,sub)
+				udmParent:SetValue(name,sub)
+			else
+				local udmChild = udmParent:Get(name)
+				print("udmChild: ",udmChild,udmChild:IsValid())
+				if(udmChild:IsValid() == false) then udmChild = udmParent:Add(name) end
+				addDir(udmChild,sub)
+			end
+		end
+	end
+	addDir(assetData,testFileMap)]]
+
+	local f = file.open(self:GetCacheFileName(),bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
+	if(f == nil) then
+		pfm.log("Unable to open file '" .. self:GetCacheFileName() .. "' for writing!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+	local res,err = udmData:Save(f)
 	f:Close()
+	if(res == false) then
+		pfm.log("Failed to save file index table as '" .. self:GetCacheFileName() .. "': " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
 	return true
 end
 function pfm.FileIndexTable:OnIndexerComplete()

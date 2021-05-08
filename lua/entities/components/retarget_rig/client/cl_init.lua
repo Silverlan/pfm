@@ -20,6 +20,7 @@ end
 function ents.RetargetRig:Initialize()
 	BaseEntityComponent.Initialize(self)
 
+	self.m_untranslatedBones = {}
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
 	self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS,"ApplyRig")
 	self:BindEvent(ents.AnimatedComponent.EVENT_ON_ANIMATION_RESET,"OnAnimationReset")
@@ -28,8 +29,10 @@ function ents.RetargetRig:SetRig(rig,animSrc)
 	self.m_rig = rig
 	self.m_animSrc = animSrc
 
-	local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
-	if(animC ~= nil) then animC:SetBindPose(rig:GetBindPose()) end
+	--local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
+	--if(animC ~= nil) then animC:SetBindPose(rig:GetBindPose()) end
+	self.m_absBonePoses = {}
+	self:InitializeRemapTables()
 end
 function ents.RetargetRig:GetRig() return self.m_rig end
 
@@ -104,7 +107,7 @@ function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,b
 			else
 				-- Old version; Obsolete?
 				-- Clamp bone distances to original distance to parent to keep proportions intact
-				local origDist = bindPose:GetBonePose(parent:GetID()):GetOrigin():Distance(bindPose:GetBonePose(boneId):GetOrigin()) -- TODO: We don't need to re-calculate this every time
+				local origDist = self.m_origBindPoseBoneDistances[boneId]
 
 				local origin = retargetPoses[parent:GetID()]:GetOrigin()
 				local dir = tmpPoses[boneId]:GetOrigin() -tmpPoses[parent:GetID()]:GetOrigin()
@@ -120,10 +123,13 @@ function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,b
 				-- Multiply our distance by (targetBoneAnimDistance /targetBoneBindPoseDistance)
 			end
 		end
-		finalPose = retargetPoses[parent:GetID()]:GetInverse() *retargetPoses[boneId] -- We want the pose to be relative to the parent
-	else finalPose = retargetPoses[boneId] end
+		finalPose = phys.ScaledTransform(retargetPoses[boneId],Vector(1,1,1))
+	else finalPose = phys.ScaledTransform(retargetPoses[boneId],Vector(1,1,1)) end
 	if(parent ~= nil and translationTable[parent:GetID()] ~= nil) then finalPose = translationTable[parent:GetID()][2] *finalPose end
-	animSrc:SetBonePose(boneId,finalPose)
+
+	self.m_absBonePoses[boneId] = finalPose
+	--animSrc:SetBonePose(boneId,finalPose)
+	--animSrc:SetBoneScale(boneId,Vector(1,1,1))
 
 	for boneId,child in pairs(bone:GetChildren()) do
 		self:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,bindPose,translationTable,bindPoseTransforms,tmpPoses,retargetPoses,child,bone)
@@ -159,7 +165,32 @@ function ents.RetargetRig:SetEnabledBones(bones)
 	end]]
 end
 
-function ents.RetargetRig:ApplyRig()
+function ents.RetargetRig:InitializeRemapTables()
+	local ent = self:GetEntity()
+	local mdl = ent:GetModel()
+	local skeleton = mdl:GetSkeleton()
+
+	local origBindPose = mdl:GetReferencePose()
+	local newBindPose = self:GetRig():GetBindPose()
+	local origBindPoseToRetargetBindPose = {}
+	local origBindPoseBoneDistances = {}
+	for boneId=0,skeleton:GetBoneCount() -1 do
+		local diff = origBindPose:GetBonePose(boneId):GetInverse() *newBindPose:GetBonePose(boneId)
+		origBindPoseToRetargetBindPose[boneId] = diff:GetInverse()
+
+		local bone = skeleton:GetBone(boneId)
+		local parent = bone:GetParent()
+		local distFromParent = 0.0
+		if(parent ~= nil) then
+			distFromParent = origBindPose:GetBonePose(parent:GetID()):GetOrigin():Distance(origBindPose:GetBonePose(boneId):GetOrigin())
+		end
+		origBindPoseBoneDistances[boneId] = distFromParent
+	end
+	self.m_origBindPoseToRetargetBindPose = origBindPoseToRetargetBindPose
+	self.m_origBindPoseBoneDistances = origBindPoseBoneDistances
+end
+
+function ents.RetargetRig:ApplyRig(dt)
 	local animSrc = self:GetEntity():GetAnimatedComponent() -- TODO: Flip these names
 	local animDst = self.m_animSrc
 	local rig = self:GetRig()
@@ -193,6 +224,37 @@ function ents.RetargetRig:ApplyRig()
 		tmpPoses[boneId] = retargetPoses[boneId]:Copy()
 	end
 	self:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,bindPose,translationTable,bindPoseTransforms,tmpPoses,retargetPoses)
+
+	local function applyPose(bone,parentPose)
+		-- We need to bring all bone poses into relative space (relative to the respective parent), as well as
+		-- apply the bind pose conversion transform.
+		local boneId = bone:GetID()
+		local pose = self.m_absBonePoses[boneId] *self.m_origBindPoseToRetargetBindPose[boneId]
+		animSrc:SetBonePose(boneId,parentPose:GetInverse() *pose)
+		animSrc:SetBoneScale(boneId,Vector(1,1,1)) -- TODO: There are currently a few issues with scaling (e.g. broken eyes), so we'll disable it for now. This should be re-enabled once the issues have been resolved!
+		for boneId,child in pairs(bone:GetChildren()) do
+			applyPose(child,pose)
+		end
+	end
+	for boneId,bone in pairs(skeleton:GetRootBones()) do
+		applyPose(bone,phys.ScaledTransform())
+	end
+
+	-- TODO: Remove this once new animation system is fully implemented
+	local mdl = self:GetEntity():GetModel()
+	for slot,animIdx in pairs(animSrc:GetLayeredAnimations()) do
+		local anim = mdl:GetAnimation(animIdx)
+		if(anim ~= nil) then
+			local frame = anim:GetFrame(0)
+			local n = anim:GetBoneCount()
+			for i=0,n -1 do
+				local boneId = anim:GetBoneId(i)
+				local pose = animSrc:GetBonePose(boneId)
+				pose = pose *frame:GetBonePose(i)
+				animSrc:SetBonePose(boneId,pose)
+			end
+		end
+	end
 
 	return util.EVENT_REPLY_HANDLED
 end
