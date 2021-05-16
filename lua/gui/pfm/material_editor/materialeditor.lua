@@ -54,12 +54,12 @@ function gui.PFMMaterialEditor:OnInitialize()
 	-- Viewport
 	local vpContents = gui.create("WIBase",self.m_contents,0,0,self:GetWidth(),self:GetHeight())
 
-	self.m_contents:Update()
-
 	self.m_vpBox = gui.create("WIVBox",vpContents,0,0,vpContents:GetWidth(),vpContents:GetHeight(),0,0,1,1)
+	self.m_vpBox:SetFixedSize(true)
 	self.m_vpBox:SetAutoFillContents(true)
 	self:InitializeViewport()
 	self.m_vpBox:AddCallback("SetSize",function() self:ScheduleRTPreviewUpdate() end)
+	self.m_contents:Update()
 
 	gui.create("WIResizer",self.m_vpBox):SetFraction(0.75)
 

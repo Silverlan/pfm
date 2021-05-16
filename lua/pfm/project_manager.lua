@@ -138,6 +138,7 @@ function pfm.ProjectManager:CloseProject()
 	self:ClearGameView()
 	self.m_performanceCache:Clear()
 	if(util.is_valid(self.m_cbPlayOffset)) then self.m_cbPlayOffset:Remove() end
+	self.m_activeGameViewFilmClip = nil
 	self.m_animationCache = nil
 	self.m_animationCacheLoaded = false
 	collectgarbage()
@@ -176,6 +177,10 @@ function pfm.ProjectManager:InitializeProject(project)
 	local entScene = self:StartGameView(project)
 	if(entScene == nil) then return false end
 	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
+	projectC:AddEventCallback(ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED,function(filmClipC)
+		self.m_activeGameViewFilmClip = filmClipC:GetClipData()
+		self:OnGameViewFilmClipChanged(filmClipC:GetClipData())
+	end)
 	self.m_project = project
 
 	-- We want the frame offset to start at 0, but the default value is already 0, which means the
@@ -228,7 +233,6 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 	if(isInterpFrame == false) then frameIndex = math.round(frameIndex) end
 
 	local updateCache = isAnimCacheEnabled and isInterpFrame == false and self.m_animationCache:IsFrameDirty(frameIndex)
-
 	local session = self:GetSession()
 	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
 	local gameViewFlags = ents.PFMProject.GAME_VIEW_FLAG_NONE
@@ -240,8 +244,8 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 		end
 		local curFilmClip = activeClip:GetChildFilmClip(offset)
 		if(util.is_same_object(curFilmClip,self.m_activeGameViewFilmClip) == false) then
-			self.m_activeGameViewFilmClip = curFilmClip
-			self:OnGameViewFilmClipChanged(curFilmClip)
+			--self.m_activeGameViewFilmClip = curFilmClip
+			--self:OnGameViewFilmClipChanged(curFilmClip)
 		end
 		if(self.m_cachedMode == false or updateCache) then activeClip:SetPlaybackOffset(offset,filter)
 		elseif(self.m_activeGameViewFilmClip ~= nil) then self.m_performanceCache:SetOffset(self.m_activeGameViewFilmClip,offset) end

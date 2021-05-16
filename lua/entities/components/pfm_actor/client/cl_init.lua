@@ -54,6 +54,7 @@ end
 function ents.PFMActorComponent:GetActorData() return self.m_actorData end
 
 function ents.PFMActorComponent:SetShouldAutoUpdatePose(autoUpdate) self.m_autoUpdatePose = autoUpdate end
+function ents.PFMActorComponent:SetShouldAutoUpdateRenderMode(autoUpdate) self.m_autoUpdateRenderMode = autoUpdate end
 
 function ents.PFMActorComponent:OnRemove()
 	for _,listener in ipairs(self.m_listeners) do
@@ -63,7 +64,7 @@ end
 
 function ents.PFMActorComponent:OnEntitySpawn()
 	local actorData = self:GetActorData()
-
+	if(actorData == nil) then return end
 	local ent = self:GetEntity()
 	ent:SetPose(actorData:GetAbsolutePose())
 	local t = actorData:GetTransform()
@@ -78,6 +79,7 @@ end
 function ents.PFMActorComponent:UpdatePose()
 	if(self.m_autoUpdatePose ~= true) then return end
 	local actorData = self:GetActorData()
+	if(actorData == nil) then return end
 	local pose = actorData:GetAbsolutePose()
 
 	--print("Pose: ",pose:GetOrigin())
@@ -95,7 +97,9 @@ end
 function ents.PFMActorComponent:GetDefaultRenderMode() return self.m_defaultRenderMode end
 
 function ents.PFMActorComponent:UpdateRenderMode()
+	if(self.m_autoUpdateRenderMode == false) then return end
 	local actorData = self:GetActorData()
+	if(actorData == nil) then return end
 	local renderMode
 	if(self:GetEntity():IsTurnedOff()) then renderMode = ents.RenderComponent.RENDERMODE_NONE
 	else
@@ -255,6 +259,7 @@ end
 function ents.PFMActorComponent:Setup(actorData)
 	self.m_actorData = actorData
 	self:GetEntity():SetName(actorData:GetName())
+	self:GetEntity():SetUuid(actorData:GetUniqueId())
 
 	pfm.log("Initializing " .. #actorData:GetComponents() .. " components for actor '" .. self:GetEntity():GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
 	for _,value in ipairs(actorData:GetComponents():GetTable()) do

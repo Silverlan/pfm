@@ -331,7 +331,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlRenderEngine = p:AddDropDownMenu(locale.get_text("pfm_render_engine"),"render_engine",{
 		{"cycles",locale.get_text("pfm_render_engine_cycles")},
 		{"luxcorerender",locale.get_text("pfm_render_engine_luxcorerender")}
-	},"cycles")
+	},"luxcorerender")
 	p:LinkToUDMProperty("render_engine",settings,"renderEngine")
 	
 	-- Render Mode
@@ -848,6 +848,7 @@ function gui.PFMRenderPreview:GetFrameFilePath(frameIndex)
 
 	local project = filmmaker:GetProject()
 	local filmClip = filmmaker:GetActiveFilmClip()
+	if(filmClip == nil) then return end
 	local projectName = project:GetName()
 	local filmClipName = filmClip:GetName()
 	if(#projectName == 0) then projectName = "unnamed" end

@@ -24,7 +24,13 @@ end
 
 function Component:GetRig() return self.m_rig end
 
+function Component:Unrig()
+	self.m_rig = nil
+	self.m_flexC = nil
+end
+
 function Component:RigToActor(actor,mdlSrc,mdlDst)
+	self:Unrig()
 	mdlDst = mdlDst or self:GetEntity():GetModel()
 	mdlSrc = mdlSrc or actor:GetModel()
 	local flexC = actor:GetComponent(ents.COMPONENT_FLEX)

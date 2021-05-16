@@ -65,7 +65,7 @@ end
 function ents.PFMTrackGroup:CreateTrack(trackData)
 	pfm.log("Creating track '" .. trackData:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
 	local ent = ents.create("pfm_track")
-	ent:GetComponent(ents.COMPONENT_PFM_TRACK):Setup(trackData,self)
+	ent:GetComponent(ents.COMPONENT_PFM_TRACK):Setup(trackData,self,self:GetProject())
 	ent:Spawn()
 	table.insert(self.m_tracks,ent)
 

@@ -8,6 +8,7 @@
 
 include_component("pfm_model")
 include_component("pfm_actor")
+include_component("pfm_film_clip")
 
 local cvAnimCache = console.register_variable("pfm_animation_cache_enabled","1",bit.bor(console.FLAG_BIT_ARCHIVE),"Enables caching for actor animations to speed up performance.")
 
@@ -21,6 +22,17 @@ function ents.PFMProject:Initialize()
 	
 	self.m_offset = math.huge -- Current playback offset in seconds
 	self.m_timeFrame = fudm.PFMTimeFrame()
+
+	self:AddEventCallback(ents.PFMProject.EVENT_ON_ENTITY_CREATED,function(ent) self:OnEntityCreated(ent) end)
+end
+
+function ents.PFMProject:OnEntityCreated(ent)
+	local filmClipC = ent:GetComponent(ents.COMPONENT_PFM_FILM_CLIP)
+	if(filmClipC == nil) then return end
+	local clipData = filmClipC:GetClipData()
+	local parent = (clipData ~= nil) and clipData:FindAncestor(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_SESSION or el:GetType() == fudm.ELEMENT_TYPE_PFM_FILM_CLIP end) or nil
+	if(parent == nil or parent:GetType() == fudm.ELEMENT_TYPE_PFM_SESSION) then return end
+	self:BroadcastEvent(ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED,{filmClipC})
 end
 
 function ents.PFMProject:OnRemove()
@@ -94,10 +106,10 @@ function ents.PFMProject:Start()
 	self:Reset()
 
 	local ent = ents.create("pfm_track")
-	ent:GetComponent(ents.COMPONENT_PFM_TRACK):Setup(self.m_rootTrack,nil,self)
+	local trackC = ent:GetComponent(ents.COMPONENT_PFM_TRACK)
+	trackC:Setup(self.m_rootTrack,nil,self)
 	ent:Spawn()
 	self.m_entRootTrack = ent
-
 	self:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED,{ent})
 end
 
@@ -152,7 +164,7 @@ function ents.PFMProject:GetOffset()
 end
 
 function ents.PFMProject:Reset()
-	if(util.is_valid(self.m_entRootTrack)) then self.m_entRootTrack:Remove() end
+	util.remove(self.m_entRootTrack)
 	self.m_offset = math.huge
 end
 
@@ -160,3 +172,4 @@ function ents.PFMProject:GetTimeFrame() return self.m_timeFrame end
 ents.COMPONENT_PFM_PROJECT = ents.register_component("pfm_project",ents.PFMProject)
 ents.PFMProject.EVENT_ON_ACTOR_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT,"on_actor_created")
 ents.PFMProject.EVENT_ON_ENTITY_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT,"on_entity_created")
+ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT,"on_film_clip_created")

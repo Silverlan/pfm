@@ -64,6 +64,11 @@ function ents.Impostor:UpdateModel(mdl)
 	local impersonateeC = self:GetImpersonatee()
 	if(util.is_valid(impersonateeC) == false) then return end
 
+	if(mdl == impersonateeC:GetEntity():GetModel()) then mdl = nil end
+
+	local renderModeImpostor = (mdl ~= nil) and ents.RenderComponent.RENDERMODE_WORLD or ents.RenderComponent.RENDERMODE_NONE
+	local renderModeImpostee = (renderModeImpostor == ents.RenderComponent.RENDERMODE_WORLD) and ents.RenderComponent.RENDERMODE_NONE or ents.RenderComponent.RENDERMODE_WORLD
+
 	local entImpersonatee = impersonateeC:GetEntity()
 	local tEnts = {}
 	local c = entImpersonatee:GetComponent(ents.COMPONENT_COMPOSITE)
@@ -72,21 +77,31 @@ function ents.Impostor:UpdateModel(mdl)
 	for _,ent in ipairs(tEnts) do
 		local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
 		if(renderC ~= nil) then
-			renderC:SetRenderMode((mdl ~= nil) and ents.RenderComponent.RENDERMODE_NONE or ents.RenderComponent.RENDERMODE_WORLD)
+			renderC:SetRenderMode(renderModeImpostee)
 		end
 	end
 
+	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
+	if(renderC ~= nil) then renderC:SetRenderMode(renderModeImpostor) end
+
+	local shouldRig = (mdl ~= nil)
 	local ent = self:GetEntity()
 	local retargetC = ent:AddComponent("retarget_rig")
-	if(retargetC ~= nil) then retargetC:RigToActor(entImpersonatee) end
+	if(retargetC ~= nil) then
+		if(shouldRig) then retargetC:RigToActor(entImpersonatee)
+		else retargetC:Unrig() end
+	end
 
 	local headTarget = entImpersonatee
-	local headhackC = headTarget:GetComponent("headhack")
+	local headhackC = headTarget:GetComponent("head_controller")
 	if(headhackC ~= nil) then
 		local headhackHead = headhackC:GetHeadTarget()
 		if(util.is_valid(headhackHead)) then headTarget = headhackHead end
 	end
 	local retargetMorphC = ent:AddComponent("retarget_morph")
-	if(retargetMorphC ~= nil) then retargetMorphC:RigToActor(headTarget) end
+	if(retargetMorphC ~= nil) then
+		if(shouldRig) then retargetMorphC:RigToActor(headTarget)
+		else retargetMorphC:Unrig() end
+	end
 end
 ents.COMPONENT_IMPOSTOR = ents.register_component("impostor",ents.Impostor)

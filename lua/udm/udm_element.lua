@@ -34,7 +34,7 @@ function fudm.BaseElement:DebugPrint(t,cache)
 	cache[self] = true
 	t = t or ""
 	for name,child in pairs(self:GetChildren()) do
-		if(name:sub(1,1) == '[' and name:sub(-1) == ']') then
+		if(type(name) == "string" and name:sub(1,1) == '[' and name:sub(-1) == ']') then
 			local val = tonumber(name:sub(2,#name -2))
 			if(val ~= nil) then
 				if(val > 5) then return end
@@ -47,18 +47,21 @@ function fudm.BaseElement:DebugPrint(t,cache)
 			print(t .. "[" .. name .. "]: " .. tostring(child:GetValue()) .. " of type " .. child:GetTypeName())
 		end
 		if(child:IsElement()) then
-			child:DebugPrint(t .. "\t")
+			child:DebugPrint(t .. "\t",cache)
 		end
 	end
 end
 
-function fudm.BaseElement:DebugDump(f,t,name)
+function fudm.BaseElement:DebugDump(f,t,name,cache)
+	cache = cache or {}
+	if(cache[self] ~= nil) then return end
+	cache[self] = true
 	t = t or ""
 	f:WriteString(t)
 	if(name) then f:WriteString("[" .. name .. "] = ") end
 	f:WriteString(tostring(self) .. "\n")
 	for name,child in pairs(self:GetChildren()) do
-		child:DebugDump(f,t .. "\t",name)
+		child:DebugDump(f,t .. "\t",name,cache)
 	end
 end
 
@@ -106,6 +109,17 @@ function fudm.BaseElement:FindParentElement(filter)
 				elParent = elParent:FindParentElement(filter)
 			end
 			if(elParent ~= nil and (filter == nil or filter(elParent) == true)) then return elParent end
+		end
+	end
+end
+
+function fudm.BaseElement:FindAncestor(filter)
+	local parent = self:FindParentElement(filter)
+	if(parent ~= nil) then return parent end
+	for _,elParent in ipairs(self:GetParents()) do
+		local type = elParent:GetType()
+		if(type ~= fudm.ELEMENT_TYPE_REFERENCE) then -- A reference means that this isn't our actual parent
+			return elParent:FindAncestor(filter)
 		end
 	end
 end

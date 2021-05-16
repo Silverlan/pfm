@@ -57,7 +57,7 @@ function gui.AssetExplorer:OnInitialize()
 
 		local function add_files(tFiles)
 			for _,f in ipairs(tFiles) do
-				f = file.remove_file_extension(f) .. "." .. self.m_extensions[1]
+				if(self.m_extensions[1] ~= nil) then f = file.remove_file_extension(f) .. "." .. self.m_extensions[1] end
 				tFilesExtUnique[f] = true
 			end
 		end

@@ -22,6 +22,12 @@ end
 
 function ents.Impersonatee:GetImpostor() return self.m_impostorC end
 
+function ents.Impersonatee:IsImpersonated()
+	if(util.is_valid(self.m_impostorC) == false) then return false end
+	local renderC = self.m_impostorC:GetEntity():GetComponent(ents.COMPONENT_RENDER)
+	return (renderC ~= nil) and (renderC:GetRenderMode() ~= ents.RenderComponent.RENDERMODE_NONE) or false
+end
+
 function ents.Impersonatee:InitializeImpostor()
 	if(util.is_valid(self.m_impostorC)) then return self.m_impostorC end
 	local entThis = self:GetEntity()

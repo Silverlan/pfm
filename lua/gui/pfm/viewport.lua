@@ -17,6 +17,8 @@ include("/gui/playbackcontrols.lua")
 include("/gui/raytracedviewport.lua")
 include("/pfm/fonts.lua")
 
+include_component("click")
+
 util.register_class("gui.PFMViewport",gui.PFMBaseViewport)
 
 gui.PFMViewport.MANIPULATOR_MODE_SELECT = 0

@@ -36,14 +36,24 @@ function ents.RetargetRig:SetRig(rig,animSrc)
 end
 function ents.RetargetRig:GetRig() return self.m_rig end
 
+function ents.RetargetRig:Unrig()
+	self.m_rig = nil
+	self.m_animSrc = nil
+	self.m_absBonePoses = nil
+	self.m_untranslatedBones = {}
+	self.m_origBindPoseToRetargetBindPose = nil
+	self.m_origBindPoseBoneDistances = nil
+end
+
 function ents.RetargetRig:RigToActor(actor,mdlSrc,mdlDst)
+	self:Unrig()
 	mdlDst = mdlDst or self:GetEntity():GetModel()
 	mdlSrc = mdlSrc or actor:GetModel()
 	local animSrc = actor:GetComponent(ents.COMPONENT_ANIMATED)
 	if(animSrc == nil) then
 		console.print_warning("Unable to apply retarget rig: Actor " .. tostring(actor) .. " has no animated component!")
 	end
-	if(mdlSrc == nil or mdlDst == nil or animSrc == nil) then return false end
+	if(mdlSrc == nil or mdlDst == nil or animSrc == nil or (mdlSrc == mdlDst)) then return false end
 	local newRig = false
 	local rig = ents.RetargetRig.Rig.load(mdlSrc,mdlDst)
 	--[[if(rig == false) then
@@ -123,8 +133,8 @@ function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,b
 				-- Multiply our distance by (targetBoneAnimDistance /targetBoneBindPoseDistance)
 			end
 		end
-		finalPose = phys.ScaledTransform(retargetPoses[boneId],Vector(1,1,1))
-	else finalPose = phys.ScaledTransform(retargetPoses[boneId],Vector(1,1,1)) end
+		finalPose = retargetPoses[boneId]
+	else finalPose = retargetPoses[boneId] end
 	if(parent ~= nil and translationTable[parent:GetID()] ~= nil) then finalPose = translationTable[parent:GetID()][2] *finalPose end
 
 	self.m_absBonePoses[boneId] = finalPose

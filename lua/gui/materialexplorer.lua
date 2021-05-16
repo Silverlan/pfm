@@ -16,7 +16,9 @@ function gui.MaterialExplorer:OnInitialize()
 	gui.AssetExplorer.OnInitialize(self)
 
 	self:SetAssetType(asset.TYPE_MATERIAL)
-	self:SetFileExtensions(asset.MATERIAL_FILE_EXTENSION,{"vmt","vmat_c"})
+	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_MATERIAL)
+	table.insert(extensions,1,asset.FORMAT_MATERIAL_ASCII)
+	self:SetFileExtensions(extensions,asset.get_supported_import_file_extensions(asset.TYPE_MATERIAL))
 end
 function gui.MaterialExplorer:PopulateContextMenu(pContext,tSelectedFiles)
 	if(#tSelectedFiles == 1) then
