@@ -14,10 +14,16 @@ end
 
 function ents.Impostor:OnRemove()
 	self:UpdateModel() -- Make sure to reset the impersonatee
+	local impersonateeC = self:GetImpersonatee()
+	if(util.is_valid(impersonateeC)) then impersonateeC:SetImpostor() end
 end
+
+function ents.Impostor:SetRelativePose(pose) self.m_relPose = pose end
+function ents.Impostor:GetRelativePose() return self.m_relPose end
 
 function ents.Impostor:Initialize()
 	BaseEntityComponent.Initialize(self)
+	self:SetRelativePose(phys.Transform())
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
@@ -53,6 +59,7 @@ function ents.Impostor:Impersonate(ent)
 		attC:AttachToEntity(entImpersonatee)
 	end
 	impersonateeC:SetImpostor(self)
+	self:OnAnimationReset()
 	return entThis
 end
 

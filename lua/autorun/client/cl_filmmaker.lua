@@ -11,6 +11,7 @@ include("/sfm/project_converter.lua")
 pfm.register_log_category("sfm")
 
 console.register_variable("pfm_max_fps","-1",bit.bor(console.FLAG_BIT_ARCHIVE),"Clamp the max game fps to this value while the filmmaker is running.")
+console.register_variable("pfm_asset_icon_size","128",bit.bor(console.FLAG_BIT_ARCHIVE),"The resolution to use for generated asset icons.")
 
 tool = tool or {}
 tool.close_filmmaker = function()

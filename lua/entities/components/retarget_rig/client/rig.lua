@@ -141,17 +141,17 @@ function ents.RetargetRig.Rig:ApplyPoseMatchingRotationCorrections()
 
 	self:SetBindPose(bindPose)
 end
-local function model_path_to_rig_identifier(mdlPath)
+function ents.RetargetRig.Rig.model_path_to_rig_identifier(mdlPath)
 	if(type(mdlPath) ~= "string") then mdlPath = mdlPath:GetName() end
 	mdlPath = asset.get_normalized_path(mdlPath,asset.TYPE_MODEL)
 	return mdlPath:replace("/","_")
 end
 function ents.RetargetRig.Rig.get_rig_file_path(srcMdl,dstMdl)
-	dstMdl = model_path_to_rig_identifier(dstMdl)
+	dstMdl = ents.RetargetRig.Rig.model_path_to_rig_identifier(dstMdl)
 	return util.Path.CreatePath(ents.RetargetRig.Rig.FILE_LOCATION) +ents.RetargetRig.Rig.get_rig_location(srcMdl) +util.Path.CreateFilePath(dstMdl .. ".udm")
 end
 function ents.RetargetRig.Rig.get_rig_location(mdl)
-	return util.Path.CreatePath(model_path_to_rig_identifier(mdl))
+	return util.Path.CreatePath(ents.RetargetRig.Rig.model_path_to_rig_identifier(mdl))
 end
 function ents.RetargetRig.Rig.get_bone_cache_map_file_path()
 	return ents.RetargetRig.Rig.FILE_LOCATION .. "bone_cache.txt"

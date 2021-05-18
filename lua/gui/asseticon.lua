@@ -355,8 +355,9 @@ function gui.ModelAssetIcon:SetModelAsset(mdl,importAsset)
 		return
 	end
 	if(gui.AssetIcon.impl.iconGenerator == nil) then
-		print("Creating new icon generator...")
-		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128,128)
+		local size = console.get_convar_int("pfm_asset_icon_size")
+		print("Creating new icon generator (Resolution: " .. size .. "x" .. size .. ")...")
+		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(size,size)
 	end
 	if(importAsset == true or self:IsNativeAsset()) then
 		gui.AssetIcon.impl.iconGenerator:AddModelToQueue(mdl,function()

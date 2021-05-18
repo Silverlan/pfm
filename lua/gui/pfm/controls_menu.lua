@@ -35,6 +35,8 @@ function gui.PFMControlsMenu:ClearControls()
 		util.remove(data.element)
 	end
 	self.m_controls = {}
+	util.remove(self.m_subMenus)
+	self.m_subMenus = {}
 end
 function gui.PFMControlsMenu:GetControl(name) return (self.m_controls[name] ~= nil) and self.m_controls[name].element or nil end
 function gui.PFMControlsMenu:SetControlVisible(identifier,visible)

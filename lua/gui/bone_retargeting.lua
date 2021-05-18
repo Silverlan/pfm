@@ -91,7 +91,7 @@ function gui.BoneRetargeting:Clear()
 	local numBones = skeleton:GetBoneCount()
 	for boneId,el in pairs(self.m_boneControls) do
 		if(el:IsValid()) then
-			self:ApplyBoneTranslation(el)
+			el:ClearSelectedOption()
 		end
 	end
 	self:ResetFlexControllerControls()
