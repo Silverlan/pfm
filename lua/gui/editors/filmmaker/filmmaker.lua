@@ -765,7 +765,12 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		end)
 		return actorEditor
 	end)
-	self:RegisterWindow(self.m_actorDataFrame,"bone_retargeting",locale.get_text("pfm_bone_retargeting"),function() return gui.create("WIBoneRetargeting") end)
+	self:RegisterWindow(self.m_actorDataFrame,"bone_retargeting",locale.get_text("pfm_bone_retargeting"),function()
+		local p = gui.create("WIBoneRetargeting")
+		self:OpenModelView()
+		p:SetModelView(self.m_mdlView)
+		return p
+	end)
 	self:RegisterWindow(viewportFrame,"model_viewer",locale.get_text("vrp_model_viewer"),function()
 		local playerBox = gui.create("WIVBox")
 		playerBox:SetAutoFillContents(true)
@@ -801,6 +806,8 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		aspectRatioWrapper:SetAnchor(0,0,1,1)
 
 		self.m_mdlView = modelView
+		local pRetarget = self:GetWindow("bone_retargeting")
+		if(util.is_valid(pRetarget)) then pRetarget:SetModelView(modelView) end
 		return playerBox
 	end)
 	self:RegisterWindow(self.m_actorDataFrame,"model_catalog",locale.get_text("pfm_model_catalog"),function()
@@ -1144,7 +1151,7 @@ function gui.WIFilmmaker:GetFilmStrip() return self.m_filmStrip end
 function gui.WIFilmmaker:OpenModelView(mdl,animName)
 	self:OpenWindow("model_viewer",true)
 	if(util.is_valid(self.m_mdlView) == false) then return end
-	self.m_mdlView:SetModel(mdl)
+	if(mdl ~= nil) then self.m_mdlView:SetModel(mdl) end
 
 	if(animName ~= nil) then self.m_mdlView:PlayAnimation(animName)
 	else self.m_mdlView:PlayIdleAnimation() end

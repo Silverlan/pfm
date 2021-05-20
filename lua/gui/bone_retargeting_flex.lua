@@ -151,7 +151,7 @@ function gui.BoneRetargeting:InitializeFlexControls(mdlDst,mdlSrc)
 
 	local flexControllersSrc = mdlSrc:GetFlexControllers()
 
-	local tree = gui.create("WIPFMTreeView",self.m_rigControls,0,0,self.m_rigControls:GetWidth(),20)
+	local tree = gui.create("WIPFMTreeView",self.m_flexControlMenu,0,0,self.m_flexControlMenu:GetWidth(),20)
 	tree:SetSelectable(gui.Table.SELECTABLE_MODE_SINGLE)
 
 	local itemToFlexController = {}
@@ -197,7 +197,7 @@ function gui.BoneRetargeting:InitializeFlexControls(mdlDst,mdlSrc)
 		
 		itemToFlexController[item] = i -1
 
-		--[[local el,wrapper = self.m_rigControls:AddDropDownMenu(flexC.name,i -1,options,0,function(el)
+		--[[local el,wrapper = self.m_flexControlMenu:AddDropDownMenu(flexC.name,i -1,options,0,function(el)
 
 		end)
 		el:AddCallback("OnMenuOpened",function()

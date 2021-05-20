@@ -29,7 +29,7 @@ function ents.RetargetRig:SetRig(rig,animSrc)
 	self.m_rig = rig
 	self.m_animSrc = animSrc
 
-	--local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
+	local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
 	--if(animC ~= nil) then animC:SetBindPose(rig:GetBindPose()) end
 	self.m_absBonePoses = {}
 	self:InitializeRemapTables()

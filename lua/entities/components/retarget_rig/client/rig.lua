@@ -66,7 +66,10 @@ function ents.RetargetRig.Rig:UpdateBindPoses()
 		end
 	end
 	self.m_bindPoseTransforms = bindPoseTransforms
+
+	if(self.m_onBindPoseUpdated ~= nil) then self.m_onBindPoseUpdated() end
 end
+function ents.RetargetRig.Rig:SetOnBindPoseUpdatedCallback(f) self.m_onBindPoseUpdated = f end
 function ents.RetargetRig.Rig:CalcDeltaRotationBetweenParentChildPoses(pose,poseParent,poseOther,poseOtherParent)
 	local dir0 = poseParent:GetOrigin() -pose:GetOrigin()
 	local dir1 = poseOtherParent:GetOrigin() -poseOther:GetOrigin()
