@@ -10,6 +10,8 @@ include("pfm/controls_menu.lua")
 include("/util/rig.lua")
 include_component("retarget_rig")
 
+locale.load("pfm_retarget.txt")
+
 local function get_bones_in_hierarchical_order(mdl)
 	local bones = {}
 	local function add_bones(bone,depth)

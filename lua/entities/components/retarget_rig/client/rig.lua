@@ -9,6 +9,7 @@
 util.register_class("ents.RetargetRig.Rig")
 
 include("rig_flex.lua")
+include("import.lua")
 
 pfm.register_log_category("retarget")
 
@@ -278,10 +279,12 @@ function ents.RetargetRig.Rig.exists(psrcMdl,pdstMdl)
 	return file.exists(filePath:GetString())
 end
 function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
-	-- TODO: Flip these names
-	local srcMdl = pdstMdl
-	local dstMdl = psrcMdl
-	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
+	local filePath = psrcMdl
+	if(pdstMdl ~= nil) then
+		-- TODO: Flip these names
+		filePath = ents.RetargetRig.Rig.get_rig_file_path(psrcMdl,pdstMdl)
+	else filePath = util.Path.CreateFilePath(filePath) end
+
 	pfm.log("Loading retarget rig '" .. filePath:GetString() .. "'...",pfm.LOG_CATEGORY_RETARGET)
 
 	local fileName = filePath:GetString()
@@ -314,6 +317,9 @@ function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
 	if(udmRig == nil) then return false end
 	local source = udmRig:GetValue("source")
 	local target = udmRig:GetValue("target")
+
+	local srcMdl = game.load_model(target)
+	local dstMdl = game.load_model(source)
 
 	local skeleton0 = srcMdl:GetSkeleton()
 	local skeleton1 = dstMdl:GetSkeleton()

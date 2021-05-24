@@ -245,7 +245,7 @@ function pfm.RaytracingRenderJob:GetProgress()
 end
 function pfm.RaytracingRenderJob:GetRenderTime() return self.m_tRender end
 function pfm.RaytracingRenderJob:IsProgressive() return self.m_progressiveRendering or false end
-function pfm.RaytracingRenderJob:GetProgressiveTexture() return self.m_progressiveRendering and self.m_prt:GetTexture() or nil end
+function pfm.RaytracingRenderJob:GetProgressiveTexture() return self.m_progressiveRendering and self.m_prt ~= nil and self.m_prt:GetTexture() or nil end
 function pfm.RaytracingRenderJob:GetRenderResultTexture() return self.m_renderResult end
 function pfm.RaytracingRenderJob:GetRenderResult() return self.m_currentImageBuffer end
 function pfm.RaytracingRenderJob:GetRenderResultFrameIndex() return self.m_renderResultFrameIndex end

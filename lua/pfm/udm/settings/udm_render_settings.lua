@@ -52,7 +52,7 @@ fudm.PFMRenderSettings.PREVIEW_QUALITY_HIGH = 2
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"frameRate",fudm.Int(24))
 
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"mode",fudm.Int(fudm.PFMRenderSettings.MODE_COMBINED))
-fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"renderEngine",fudm.String("cycles"))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"renderEngine",fudm.String("luxcorerender"))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"preset",fudm.String("standard"))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"deviceType",fudm.Int(fudm.PFMRenderSettings.DEVICE_TYPE_GPU))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"samples",fudm.Int(40))

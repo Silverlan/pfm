@@ -1,0 +1,5 @@
+pfm_bone_retargeting = "Animation Retargeting"
+pfm_edit_retarget_rig = "Edit Retarget Rig"
+pfm_impostee_model = "Impostee Model"
+pfm_imposter_model = "Imposter Model"
+pfm_retarget_auto = "Auto-Retarget"

@@ -484,8 +484,8 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlResolution = ctrlResolution
 	local function update_resolution()
 		if(skipResolutionAttrCallbacks) then return end
-		self.m_ctrlResolution:ClearSelectedOption()
 		local text = tostring(settings:GetWidth()) .. "x" .. tostring(settings:GetHeight())
+		self.m_ctrlResolution:ClearSelectedOption()
 		if(ctrlResolution:HasOption(text)) then ctrlResolution:SelectOption(text)
 		else self.m_ctrlResolution:SetText(text) end
 		ctrlResolutionWrapper:UpdateText()
@@ -674,8 +674,11 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self:InitializeToneMapControls(p,settings)
 
 	p:ResetControls()
+	skipResolutionAttrCallbacks = true
 	settings:SetWidth(w)
 	settings:SetHeight(h)
+	skipResolutionAttrCallbacks = false
+	update_resolution()
 end
 function gui.PFMRenderPreview:GetResolution()
 	local width,height
