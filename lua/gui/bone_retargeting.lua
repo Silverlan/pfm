@@ -119,7 +119,7 @@ function gui.BoneRetargeting:UpdateMode()
 		self.m_modelView:PlayAnimation("reference",2)
 		local function get_bounds(mdl)
 			local head = rig.determine_head_bones(mdl)
-			if(head == nil) then return mdl:GetRenderBounds() end
+			if(head == nil) then return Vector(),mdl:GetRenderBounds() end
 			local ref = mdl:GetReferencePose()
 			local pose = ref:GetBonePose(head.headBoneId)
 			return pose:GetOrigin(),head.headBounds[1],head.headBounds[2]
@@ -144,6 +144,8 @@ function gui.BoneRetargeting:UpdateMode()
 	if(util.is_valid(self.m_boneControlMenu)) then self.m_boneControlMenu:SetVisible(option == "skeleton") end
 	if(util.is_valid(self.m_flexControlMenu)) then self.m_flexControlMenu:SetVisible(option == "flex_controller") end
 	self.m_modelView:Render()
+
+	self:UpdateBoneVisibility()
 end
 function gui.BoneRetargeting:Clear(clearSkeleton,clearFlex)
 	if(self.m_dstMdl == nil) then return end
@@ -263,6 +265,30 @@ function gui.BoneRetargeting:UnlinkFromModelView()
 	if(util.is_valid(ent)) then ent:SetPos(Vector()) end
 	self.m_modelView = nil
 end
+function gui.BoneRetargeting:UpdateBoneVisibility()
+	local enabled = toboolean(self.m_elShowBones:GetOptionValue(self.m_elShowBones:GetSelectedOption()))
+	local option = self.m_ctrlMode:GetOptionValue(self.m_ctrlMode:GetSelectedOption())
+	if(option ~= "skeleton") then enabled = false end
+	if(util.is_valid(self.m_mdlView) == false) then return end
+	local tEnts = {}
+
+	local ent0 = self.m_mdlView:GetEntity(1)
+	if(util.is_valid(ent0)) then table.insert(tEnts,ent0) end
+	
+	local ent1 = self.m_mdlView:GetEntity(2)
+	if(util.is_valid(ent1)) then table.insert(tEnts,ent1) end
+
+	for i,ent in ipairs(tEnts) do
+		if(enabled) then
+			local debugC = ent:AddComponent("debug_skeleton_draw")
+			if(debugC ~= nil) then
+				if(i == 1) then debugC:SetColor(Color.Orange)
+				else debugC:SetColor(Color.Aqua) end
+			end
+		else ent:RemoveComponent("debug_skeleton_draw") end
+	end
+	self.m_mdlView:Render()
+end
 function gui.BoneRetargeting:InitializeModelView()
 	if(util.is_valid(self.m_modelView) == false) then return end
 	local ent0 = self.m_modelView:GetEntity(1)
@@ -271,6 +297,8 @@ function gui.BoneRetargeting:InitializeModelView()
 	if(util.is_valid(ent0) == false or util.is_valid(ent1) == false) then return end
 	self.m_modelView:SetModel(self.m_srcMdl)
 	self.m_modelView:SetModel(self.m_dstMdl,2)
+	self.m_modelView:PlayAnimation("reference",1)
+	self.m_modelView:PlayAnimation("reference",2)
 	self:UpdateMode()
 	return ent
 end
@@ -330,6 +358,32 @@ function gui.BoneRetargeting:SetBoneTranslation(boneIdSrc,boneIdDst)
 	self.m_rig:SetBoneTranslation(boneIdSrc,boneIdDst)
 	self:UpdateRetargetComponent()
 end
+function gui.BoneRetargeting:SetBoneColor(actorId,boneId,col)
+	if(boneId == nil) then
+		if(self.m_origBoneColor == nil or self.m_origBoneColor[actorId] == nil) then return end
+		for boneId,_ in pairs(self.m_origBoneColor) do
+			self:SetBoneColor(actorId,boneId,col)
+		end
+		return
+	end
+
+	local ent = util.is_valid(self.m_mdlView) and self.m_mdlView:GetEntity(actorId) or nil
+	local debugC = util.is_valid(ent) and ent:AddComponent("debug_skeleton_draw") or nil
+	if(debugC == nil) then return end
+	local entBone = debugC:GetBoneEntity(boneId)
+	if(util.is_valid(entBone) == false) then return end
+	if(col == nil) then
+		if(self.m_origBoneColor == nil or self.m_origBoneColor[actorId] == nil or self.m_origBoneColor[actorId][boneId] == nil) then return end
+		col = self.m_origBoneColor[actorId][boneId]
+		self.m_origBoneColor[actorId][boneId] = nil
+	else
+		self.m_origBoneColor = self.m_origBoneColor or {}
+		self.m_origBoneColor[actorId] = self.m_origBoneColor[actorId] or {}
+		self.m_origBoneColor[actorId][boneId] = self.m_origBoneColor[actorId][boneId] or entBone:GetColor()
+	end
+	entBone:SetColor(col)
+	self.m_mdlView:Render()
+end
 function gui.BoneRetargeting:InitializeBoneControls(mdlSrc,mdlDst)
 	local options = {}
 	local bonesSrc = get_bones_in_hierarchical_order(mdlSrc)
@@ -340,6 +394,12 @@ function gui.BoneRetargeting:InitializeBoneControls(mdlSrc,mdlDst)
 		table.insert(options,{tostring(bone:GetID()),name})
 	end
 	table.insert(options,1,{"-1","-"})
+
+	local el,wrapper = self.m_boneControlMenu:AddDropDownMenu(locale.get_text("pfm_show_bones"),"show_bones",{{"0",locale.get_text("disabled")},{"1",locale.get_text("enabled")}},"0",function(el)
+		self:UpdateBoneVisibility()
+	end)
+	self.m_elShowBones = el
+	self.m_boneControlMenu:ResetControls()
 
 	local bones = get_bones_in_hierarchical_order(mdlDst)
 	for _,boneInfo in ipairs(bones) do
@@ -353,6 +413,11 @@ function gui.BoneRetargeting:InitializeBoneControls(mdlSrc,mdlDst)
 		end)
 		el:AddCallback("OnMenuOpened",function(el)
 			if(self.m_lastSelectedBoneOption ~= nil) then el:ScrollToOption(self.m_lastSelectedBoneOption) end
+			self:SetBoneColor(2,boneDst:GetID(),Color.Red)
+		end)
+		el:AddCallback("OnMenuClosed",function(el)
+			self:SetBoneColor(2,boneDst:GetID())
+			self:SetBoneColor(1)
 		end)
 		wrapper:AddCallback("TranslateValueText",function(wrapper,text)
 			return util.EVENT_REPLY_HANDLED,string.remove_whitespace(text)
@@ -370,11 +435,12 @@ function gui.BoneRetargeting:InitializeBoneControls(mdlSrc,mdlDst)
 		wrapper:SetCenterText(false)
 		for i=0,el:GetOptionCount() -1 do
 			el:GetOptionElement(i):AddCallback("OnSelectionChanged",function(pItem,selected)
-				if(selected) then
-					local boneIdSrc = tonumber(el:GetOptionValue(i))
-					if(boneIdSrc ~= nil) then
+				local boneIdSrc = tonumber(el:GetOptionValue(i))
+				if(boneIdSrc ~= nil) then
+					if(selected) then
 						self:SetBoneTranslation(boneIdSrc,boneDst:GetID())
-					end
+						self:SetBoneColor(1,boneIdSrc,Color.Red)
+					else self:SetBoneColor(1,boneIdSrc) end
 				end
 				self:UpdateModelView()
 			end)

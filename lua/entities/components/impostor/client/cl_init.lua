@@ -18,7 +18,15 @@ function ents.Impostor:OnRemove()
 	if(util.is_valid(impersonateeC)) then impersonateeC:SetImpostor() end
 end
 
-function ents.Impostor:SetRelativePose(pose) self.m_relPose = pose end
+function ents.Impostor:SetRelativePose(pose)
+	self.m_relPose = pose
+	local impersonateeC = self:GetImpersonatee()
+	if(util.is_valid(impersonateeC)) then
+		local absPose = impersonateeC:GetEntity():GetPose()
+		absPose:SetScale(self:GetEntity():GetScale())
+		self:GetEntity():SetPose(absPose *pose)
+	end
+end
 function ents.Impostor:GetRelativePose() return self.m_relPose end
 
 function ents.Impostor:Initialize()
@@ -40,7 +48,10 @@ function ents.Impostor:Impersonate(ent)
 	if(util.is_valid(self.m_entImpostor)) then return self.m_entImpostor end
 	local entImpersonatee = impersonateeC:GetEntity()
 	local entThis = self:GetEntity()
-	entThis:SetPose(entImpersonatee:GetPose())
+	local pose = entImpersonatee:GetPose()
+	pose:SetScale(entThis:GetScale())
+	pose = pose *self.m_relPose
+	entThis:SetPose(pose)
 	entThis:SetName(entImpersonatee:GetName() .. "_impostor")
 
 	local renderCImpersonatee = entImpersonatee:GetComponent(ents.COMPONENT_RENDER)
