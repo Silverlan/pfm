@@ -6,6 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include_component("gm_generic")
 util.register_class("ents.GmPfm",BaseEntityComponent)
 local Component = ents.GmPfm
 

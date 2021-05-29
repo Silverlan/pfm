@@ -6,6 +6,5 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/gamemodes/generic/server/init.lua")
 include("../shared.lua")
 local Component = ents.GmPfm
