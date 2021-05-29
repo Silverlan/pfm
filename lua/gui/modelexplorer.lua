@@ -21,6 +21,6 @@ function gui.ModelExplorer:OnInitialize()
 	self:SetFileExtensions(extensions,asset.get_supported_import_file_extensions(asset.TYPE_MODEL))
 end
 function gui.ModelExplorer:PopulateContextMenu(pContext,tSelectedFiles,tExternalFiles)
-	self:CallCallbacks("PopulateContextMenu",pContext,tSelectedFiles,tExternalFiles)
+	self:CallCallbacks("PopulateIconContextMenu",pContext,tSelectedFiles,tExternalFiles)
 end
 gui.register("WIModelExplorer",gui.ModelExplorer)

@@ -291,9 +291,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		self:SetMaterialParameter("bool","enabled",enabled,hairBlock)
 		hairMenu:SetVisible(toboolean(enabled))
 	end)
-	self:LinkControlToMaterialParameter("hair_enabled",ctrlHairEnabled,hairBlock,function(block)
-		block = block:GetBlock("hair")
-		if(block == nil) then return end
+	self:LinkControlToMaterialParameter("enabled",ctrlHairEnabled,hairBlock,function(block)
 		local enabled = true
 		if(block:HasValue("enabled")) then enabled = block:GetBool("enabled") end
 		ctrlHairEnabled:SelectOption(enabled and 1 or 0)

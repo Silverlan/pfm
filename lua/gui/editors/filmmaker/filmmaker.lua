@@ -813,7 +813,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:RegisterWindow(self.m_actorDataFrame,"model_catalog",locale.get_text("pfm_model_catalog"),function()
 		local mdlCatalog = gui.create("WIPFMModelCatalog")
 		local explorer = mdlCatalog:GetExplorer()
-		explorer:AddCallback("PopulateContextMenu",function(explorer,pContext,tSelectedFiles,tExternalFiles)
+		explorer:AddCallback("PopulateIconContextMenu",function(explorer,pContext,tSelectedFiles,tExternalFiles)
 			local hasExternalFiles = (#tExternalFiles > 0)
 			if(hasExternalFiles == true) then return end
 			if(#tSelectedFiles == 1) then
@@ -927,7 +927,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 				end)
 			end
 		end)
-		explorer:AddCallback("PopulateContextMenu",function(explorer,pContext,tSelectedFiles,tExternalFiles)
+		explorer:AddCallback("PopulateIconContextMenu",function(explorer,pContext,tSelectedFiles,tExternalFiles)
 			if(#tSelectedFiles ~= 1) then return end
 			local path = tSelectedFiles[1]:GetRelativeAsset()
 			if(asset.exists(path,asset.TYPE_MODEL) == false) then return end
