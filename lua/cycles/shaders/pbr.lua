@@ -123,13 +123,13 @@ function unirender.PBRShader:Initialize()
 		if(dbHair:HasValue("enabled")) then enabled = dbHair:GetBool("enabled") end
 		if(enabled) then
 			local hairConfig = unirender.Shader.HairConfig()
-			hairConfig.hairPerSquareMeter = dbHair:GetFloat("hair_per_square_meter",100)
-			hairConfig.numSegments = dbHair:GetFloat("segment_count",1)
-			hairConfig.defaultThickness = util.units_to_metres(dbHair:GetFloat("thickness",0.1))
-			hairConfig.defaultLength = util.units_to_metres(dbHair:GetFloat("length",0.1))
-			hairConfig.defaultHairStrength = dbHair:GetFloat("strength",0.2)
-			hairConfig.randomHairLengthFactor = dbHair:GetFloat("random_hair_length_factor",0.5)
-			hairConfig.curvature = dbHair:GetFloat("curvature",1.0)
+			hairConfig.hairPerSquareMeter = dbHair:GetFloat("hair_per_square_meter",1000000)
+			hairConfig.numSegments = dbHair:GetFloat("segment_count",2)
+			hairConfig.defaultThickness = util.units_to_metres(dbHair:GetFloat("thickness",0.005))
+			hairConfig.defaultLength = util.units_to_metres(dbHair:GetFloat("length",0.6))
+			hairConfig.defaultHairStrength = dbHair:GetFloat("strength",0.4)
+			hairConfig.randomHairLengthFactor = dbHair:GetFloat("random_hair_length_factor",0.3)
+			hairConfig.curvature = dbHair:GetFloat("curvature",0.6)
 			self:SetHairConfig(hairConfig)
 		end
 	end
