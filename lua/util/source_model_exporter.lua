@@ -154,7 +154,7 @@ function util.SMDBuilder:AddFrame(skeleton,frame,anim)
 		local boneId = i
 		if(anim ~= nil) then boneId = anim:GetBoneId(i) end
 
-		local pose = frame:GetBonePose(boneId)
+		local pose = frame:GetBonePose(i)
 		if(skeleton:IsRootBone(boneId)) then pose = util.SMDBuilder.transform_pose(pose) end
 		local pos = pose:GetOrigin()
 		local ang = util.SMDBuilder.quat_to_euler_angles(pose:GetRotation())
@@ -359,12 +359,19 @@ function util.SourceEngineModelBuilder:Generate()
 		end
 	end
 
-	for i,anim in ipairs(mdl:GetAnimations()) do
-		local name = mdl:GetAnimationName(i -1)
-		local fileName = "animations/" .. name .. ".smd"
-		file.write(outputDir .. fileName,util.SMDBuilder.create_from_animation(anim,skeleton):Generate())
+	if(mdl:GetBoneCount() > 0) then
+		for i,anim in ipairs(mdl:GetAnimations()) do
+			local name = mdl:GetAnimationName(i -1)
+			local fileName = "animations/" .. name .. ".smd"
+			file.write(outputDir .. fileName,util.SMDBuilder.create_from_animation(anim,skeleton):Generate())
 
-		qc:AddSequence(name,fileName)
+			qc:AddSequence(name,fileName)
+		end
+	else
+		log.msg("Model has no bones, exporting as static prop.",pfm.LOG_CATEGORY_SE_MODEL_EXPORT)
+		qc:AddParameter("$staticprop")
+		file.write(outputDir .. "animations/reference.smd","nodes\nend\nskeleton\ntime 0\nend")
+		qc:AddSequence("reference","animations/reference")
 	end
 
 	local materialList = {}
@@ -530,9 +537,15 @@ function util.export_source_engine_models(models,gameIdentifier)
 		end
 	end
 	log.msg("Packing zip-archive...",pfm.LOG_CATEGORY_SE_MODEL_EXPORT)
-	local result = util.pack_zip_archive(zipFileName,zipFiles)
+	local result,notFound = util.pack_zip_archive(zipFileName,zipFiles)
 	zipFileName = util.get_addon_path() .. zipFileName
-	if(result) then util.open_path_in_explorer(file.get_file_path(zipFileName),file.get_file_name(zipFileName)) end
+	if(result) then
+		util.open_path_in_explorer(file.get_file_path(zipFileName),file.get_file_name(zipFileName))
+		if(#notFound > 0) then
+			print("The following files could not be packed because they couldn't be found:")
+			console.print_table(notFound)
+		end
+	end
 	log.msg("Done!",pfm.LOG_CATEGORY_SE_MODEL_EXPORT)
 	return true
 end

@@ -56,19 +56,57 @@ function gui.WIFilmmaker:__init()
 
 	pfm.set_project_manager(self)
 end
+function gui.WIFilmmaker:CheckForUpdates(verbose)
+	if(self.m_updateChecker ~= nil) then return end
+	-- TODO: Locale, etc
+	local url = "http://wiki.pragma-engine.com/queries/query_version.php"
+	self.m_updateChecker = util.UpdateChecker(url,function(version)
+		if(version > pfm.VERSION) then
+			-- New version available!
+			local updateUrl = vrp.is_patreon_version() and pfm.PATREON_SETTINGS_URL or ("https://pragma-engine.com/pragma_v" .. tostring(version) .. ".zip")
+			local el = pfm.create_popup_message(locale.get_text("vrp_new_version_available",{version:ToString(),updateUrl}))
+			el:SetMouseInputEnabled(true)
+			el:SetCursor(gui.CURSOR_SHAPE_HAND)
+			el:AddCallback("OnMouseEvent",function(el,button,state,mods)
+				if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
+					util.open_url_in_browser(updateUrl)
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+		elseif(verbose) then
+			pfm.create_popup_message(locale.get_text("vrp_up_to_date",{pfm.VERSION:ToString()}))
+		end
+	end)
+end
 function gui.WIFilmmaker:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 	tool.filmmaker = self
 
 	local infoBar = self:GetInfoBar()
+
 	local infoBarContents = infoBar:GetContents()
 	local patronTickerContainer = gui.create("PatreonTicker",infoBarContents,0,0,infoBarContents:GetWidth(),infoBarContents:GetHeight(),0,0,1,1)
+	patronTickerContainer:SetQueryUrl("http://pragma-engine.com/patreon/request_patrons.php")
 	local engineInfo = engine.get_info()
-	infoBar:AddIcon("wgui/patreon_logo",engineInfo.patreonURL,"Patreon")
+	infoBar:AddIcon("wgui/patreon_logo",pfm.PATREON_JOIN_URL,"Patreon")
 	infoBar:AddIcon("third_party/twitter_logo",engineInfo.twitterURL,"Twitter")
 	infoBar:AddIcon("third_party/reddit_logo",engineInfo.redditURL,"Reddit")
 	infoBar:AddIcon("third_party/discord_logo",engineInfo.discordURL,"Discord")
+
+	local elVersion = gui.create("WIText")
+	elVersion:SetColor(Color.White)
+	elVersion:SetText("v" .. pfm.VERSION:ToString())
+	elVersion:SetFont("pfm_medium")
+	elVersion:SetColor(Color(200,200,200))
+	elVersion:SetY(5)
+	elVersion:SizeToContents()
+
+	infoBar:AddRightElement(elVersion)
+	local gap = gui.create("WIBase")
+	gap:SetSize(10,1)
+	infoBar:AddRightElement(gap)
+	
 	infoBar:Update()
 
 	-- Disable default scene drawing for the lifetime of the Filmmaker; We'll only render the viewport(s) if something has actually changed, which

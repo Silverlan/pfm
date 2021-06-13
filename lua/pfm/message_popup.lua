@@ -17,4 +17,5 @@ function pfm.create_popup_message(msg)
 	local el = pfm.impl.popup
 	el:SetText(msg)
 	el:SetX(editor:GetWidth() -el:GetWidth())
+	return el
 end

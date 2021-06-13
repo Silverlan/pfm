@@ -140,7 +140,6 @@ pfm_output_directory_desc = "Das Ausgabeverzeichnis für die gerenderten Bilder. 
 pfm_pack_project = "Project packen"
 pfm_particle_catalog = "Partikelkatalog"
 pfm_particle_editor = "Partikeleditor"
-pfm_patrons = "Patrone"
 pfm_pp_particle_intensity = "Partikelintensität"
 pfm_prestage_only = "Nur Vorstufe"
 pfm_prestage_only_desc = "Falls aktiviert, wird ein präparierter render-Job erzeugt, anstatt die Szene tatsächlich zu rendern. Die Job-Datei kann anschließend genutzt werden, um die Frame mithilfe des externen raytracing render-Programm zu rendern."

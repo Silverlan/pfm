@@ -141,7 +141,6 @@ pfm_output_directory_desc = "The output directory for the rendered images. If no
 pfm_pack_project = "Pack project"
 pfm_particle_catalog = "Particle Catalog"
 pfm_particle_editor = "Particle Editor"
-pfm_patrons = "Patrons"
 pfm_pp_particle_intensity = "Particle intensity"
 pfm_prestage_only = "Prestage only"
 pfm_prestage_only_desc = "If enabled, a prepared render job will be created instead of rendering the actual scene. The job-file can be used to render the frame using the external raytracing render tool."
