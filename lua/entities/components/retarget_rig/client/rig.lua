@@ -71,10 +71,35 @@ function ents.RetargetRig.Rig:UpdateBindPoses()
 	if(self.m_onBindPoseUpdated ~= nil) then self.m_onBindPoseUpdated() end
 end
 function ents.RetargetRig.Rig:SetOnBindPoseUpdatedCallback(f) self.m_onBindPoseUpdated = f end
-function ents.RetargetRig.Rig:CalcDeltaRotationBetweenParentChildPoses(pose,poseParent,poseOther,poseOtherParent)
-	local dir0 = poseParent:GetOrigin() -pose:GetOrigin()
-	local dir1 = poseOtherParent:GetOrigin() -poseOther:GetOrigin()
-	return dir0:GetRotation(dir1)
+function ents.RetargetRig.Rig:CalcDeltaRotationBetweenParentChildPoses(pos,posParent,posOther,posOtherParent)
+	local dir0 = posParent -pos
+	local dir1 = posOtherParent -posOther
+
+	local forward = vector.FORWARD
+	local epsilon = 0.001
+	local q0 = Quaternion()
+	if(dir0:LengthSqr() > epsilon and forward:DotProduct(dir0:GetNormal()) < (1 -epsilon)) then
+		local c0 = forward:Cross(dir0)
+		c0:Normalize()
+		q0 = Quaternion(forward,c0)
+	else
+		-- This case occurs if the child bone occupies the exact same position as the parent
+		-- TODO: Not sure if this is the best way to handle this case, maybe use the direction of the parent to its parent?
+		return
+	end
+
+	local q1 = Quaternion()
+	if(dir1:LengthSqr() > epsilon and forward:DotProduct(dir1:GetNormal()) < (1 -epsilon)) then
+		local c1 = forward:Cross(dir1)
+		c1:Normalize()
+		q1 = Quaternion(forward,c1)
+	else
+		-- TODO: How to handle this case?
+	end
+
+	return q1 *q0:GetInverse()
+
+	--return dir0:GetRotation(dir1) -- Obsolete; Not accurate enough, causes flipped transforms in some cases
 end
 function ents.RetargetRig.Rig:ApplyBonePoseMatchingRotationCorrections(bindPose,bone,parentPose)
 	-- We need to apply some rotational corrections to try and match the two skeletons in cases where their bind pose is
@@ -88,20 +113,20 @@ function ents.RetargetRig.Rig:ApplyBonePoseMatchingRotationCorrections(bindPose,
 
 	local rotations = {}
 	local poseThis = parentPose *pose
+	local posThis = poseThis:GetOrigin()
 	local rot = Quaternion()
 	-- We'll try to roughly match the rotations of our skeletons
 	for boneId,child in pairs(bone:GetChildren()) do
 		if(boneTranslationIds[boneId] ~= nil) then
-			local pose = poseThis *bindPose:GetBonePose(boneId)
+			local pos = (poseThis *bindPose:GetBonePose(boneId)):GetOrigin()
 			local dataOther = boneTranslationIds[boneId]
 			local boneIdOther = dataOther[1]
 			local boneOther = skeleton1:GetBone(boneIdOther)
 			local boneParentOther = boneOther:GetParent()
-			local poseOther = ref1:GetBonePose(boneOther:GetID())
-			local poseOtherParent = (boneParentOther ~= nil) and ref1:GetBonePose(boneParentOther:GetID()) or phys.Transform()
-
-			rot = self:CalcDeltaRotationBetweenParentChildPoses(pose,poseThis,poseOther,poseOtherParent)
-			table.insert(rotations,rot)
+			local posOther = ref1:GetBonePose(boneOther:GetID()):GetOrigin()
+			local posOtherParent = (boneParentOther ~= nil) and ref1:GetBonePose(boneParentOther:GetID()):GetOrigin() or Vector()
+			local rotChild = self:CalcDeltaRotationBetweenParentChildPoses(pos,posThis,posOther,posOtherParent)
+			if(rotChild ~= nil) then table.insert(rotations,rotChild) end
 		end
 	end
 	rot = math.calc_average_rotation(rotations)
