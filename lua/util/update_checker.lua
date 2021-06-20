@@ -26,9 +26,12 @@ function Class:__init(url,callback)
 		self:Update()
 	end)
 	self.m_callback = callback
+	self.m_valid = true
 end
 
 function Class:__finalize() self:Clear() end
+
+function Class:IsValid() return self.m_valid or false end
 
 function Class:Update()
 	if(self.m_checkForUpdatesQuery == nil or self.m_checkForUpdatesQuery:IsComplete() == false) then return end
@@ -48,4 +51,5 @@ function Class:Clear()
 	util.remove(self.m_cbTick)
 	self.m_checkForUpdatesQuery = nil
 	self.m_checkForUpdatesVerbose = nil
+	self.m_valid = false
 end

@@ -57,13 +57,13 @@ function gui.WIFilmmaker:__init()
 	pfm.set_project_manager(self)
 end
 function gui.WIFilmmaker:CheckForUpdates(verbose)
-	if(self.m_updateChecker ~= nil) then return end
+	if(util.is_valid(self.m_updateChecker)) then return end
 	-- TODO: Locale, etc
 	local url = "http://wiki.pragma-engine.com/queries/query_version.php"
 	self.m_updateChecker = util.UpdateChecker(url,function(version)
 		if(version > pfm.VERSION) then
 			-- New version available!
-			local updateUrl = vrp.is_patreon_version() and pfm.PATREON_SETTINGS_URL or ("https://pragma-engine.com/pragma_v" .. tostring(version) .. ".zip")
+			local updateUrl = "https://wiki.pragma-engine.com/download_pfm.php"
 			local el = pfm.create_popup_message(locale.get_text("vrp_new_version_available",{version:ToString(),updateUrl}))
 			el:SetMouseInputEnabled(true)
 			el:SetCursor(gui.CURSOR_SHAPE_HAND)
@@ -317,6 +317,7 @@ function gui.WIFilmmaker:OnInitialize()
 				if(util.is_valid(self) == false) then return end
 				locale.change_language(lan)
 				self:ReloadInterface()
+				self:Start()
 			end)
 		end
 		pSubMenu:Update()
