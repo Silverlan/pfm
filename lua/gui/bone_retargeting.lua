@@ -104,6 +104,10 @@ function gui.BoneRetargeting:UpdateMode()
 	if(mdl0 == nil or mdl1 == nil) then return end
 	local option = self.m_ctrlMode:GetOptionValue(self.m_ctrlMode:GetSelectedOption())
 	if(option == "skeleton") then
+		if(self.m_lastSkeletalAnim ~= nil) then
+			ent0:PlayAnimation(self.m_lastSkeletalAnim)
+			self.m_lastSkeletalAnim = nil
+		end
 		local min0,max0 = mdl0:GetRenderBounds()
 		ent0:SetPos(Vector(-(max0.x -min0.x) *0.5,0,0))
 
@@ -115,6 +119,7 @@ function gui.BoneRetargeting:UpdateMode()
 			vc:FitViewToScene()
 		end
 	else
+		self.m_lastSkeletalAnim = self.m_lastSkeletalAnim or ent0:GetAnimation()
 		self.m_modelView:PlayAnimation("reference",1)
 		self.m_modelView:PlayAnimation("reference",2)
 		local function get_bounds(mdl)
