@@ -20,6 +20,7 @@ function ents.RetargetRig.Rig:__init(srcMdl,dstMdl)
 	self.m_srcMdl = srcMdl
 	self.m_dstMdl = dstMdl
 	self.m_bindPose = dstMdl:GetReferencePose():Copy()
+	self.m_rootPose = phys.Transform()
 
 	-- Note: Bone translations are stored in reverse (i.e. [destination] = source),
 	-- since different destination bones can be mapped to the same source bones!
@@ -29,6 +30,8 @@ function ents.RetargetRig.Rig:__init(srcMdl,dstMdl)
 	-- since we're also storing additional information per (source,destinationX) pair
 	self.m_flexTranslationTable = {}
 end
+function ents.RetargetRig.Rig:GetRootPose() return self.m_rootPose end
+function ents.RetargetRig.Rig:SetRootPose(pose) self.m_rootPose = pose end
 function ents.RetargetRig.Rig:GetSourceModel() return self.m_srcMdl end
 function ents.RetargetRig.Rig:GetDestinationModel() return self.m_dstMdl end
 function ents.RetargetRig.Rig:SetDstToSrcTranslationTable(t)
@@ -104,7 +107,7 @@ end
 function ents.RetargetRig.Rig:ApplyBonePoseMatchingRotationCorrections(bindPose,bone,parentPose)
 	-- We need to apply some rotational corrections to try and match the two skeletons in cases where their bind pose is
 	-- very different from each other (e.g. if one bind pose has the arms stretched out to the side and the other has the arms pointing down)
-	parentPose = parentPose or phys.Transform()
+	parentPose = parentPose or self:GetRootPose()
 	local pose = bindPose:GetBonePose(bone:GetID())
 	local boneTranslationIds = self:GetDstToSrcTranslationTable()
 	local dstMdl = self.m_srcMdl
@@ -257,6 +260,7 @@ function ents.RetargetRig.Rig:Save()
 	local udmRig = assetData:Add("rig")
 	udmRig:SetValue("source",asset.get_normalized_path(dstMdl:GetName(),asset.TYPE_MODEL))
 	udmRig:SetValue("target",asset.get_normalized_path(srcMdl:GetName(),asset.TYPE_MODEL))
+	udmRig:SetValue("root_pose",self.m_rootPose)
 	local udmBoneMap = udmRig:Add("bone_map")
 	local translationTable = self:GetDstToSrcTranslationTable()
 	local translationNameTable = {}
@@ -375,6 +379,7 @@ function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
 	end
 
 	local rig = ents.RetargetRig.Rig(dstMdl,srcMdl)
+	rig.m_rootPose = udmRig:GetValue("root_pose",udm.TYPE_TRANSFORM) or phys.Transform()
 	rig.m_dstToSrcTranslationTable = translationTable
 	rig.m_flexTranslationTable = ents.RetargetRig.Rig.load_flex_controller_map(udmRig,dstMdl,srcMdl)
 	rig:DebugPrint()

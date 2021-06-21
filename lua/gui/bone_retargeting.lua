@@ -470,6 +470,7 @@ function gui.BoneRetargeting:UpdateRetargetComponent()
 	local retargetC = util.is_valid(entDst) and entDst:AddComponent("retarget_rig") or nil
 	if(retargetC == nil) then return end
 	retargetC:InitializeRemapTables()
+	retargetC:UpdatePoseData()
 end
 function gui.BoneRetargeting:ApplyBoneTranslation(el,bone)
 	if(self.m_rig == nil) then return end

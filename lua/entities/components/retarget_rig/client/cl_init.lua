@@ -204,20 +204,21 @@ function ents.RetargetRig:UpdatePoseData()
 	local animDst = self.m_animSrc
 	local mdl = self:GetEntity():GetModel()
 	local skeleton = mdl:GetSkeleton()
+	local rig = self:GetRig()
 	self.m_curPoseData = {
 		retargetPoses = {},
 		tmpPoses = {},
 		origBindPoses = {},
 		relBindPoses = {},
 		bindPosesOther = {},
-		boneHierarchy = skeleton:GetBoneHierarchy()
+		boneHierarchy = skeleton:GetBoneHierarchy(),
+		invRootPose = rig:GetRootPose():GetInverse()
 	}
 	local retargetPoses = self.m_curPoseData.retargetPoses
 	local tmpPoses = self.m_curPoseData.tmpPoses
 	local relBindPoses = self.m_curPoseData.relBindPoses
 	local bindPosesOther = self.m_curPoseData.bindPosesOther
 	local origBindPoses = self.m_curPoseData.origBindPoses
-	local rig = self:GetRig()
 	local bindPose = rig:GetBindPose()
 	local translationTable = rig:GetDstToSrcTranslationTable()
 	local origBindPose = mdl:GetReferencePose()
@@ -281,16 +282,19 @@ function ents.RetargetRig:ApplyRig(dt)
 		-- We need to bring all bone poses into relative space (relative to the respective parent), as well as
 		-- apply the bind pose conversion transform.
 		local pose = self.m_absBonePoses[boneId] *self.m_origBindPoseToRetargetBindPose[boneId]
-		animSrc:SetBonePose(boneId,parentPose:GetInverse() *pose)
+		local relPose = parentPose:GetInverse() *pose
+		relPose:SetScale(animSrc:GetBoneScale(boneId))
+		animSrc:SetBonePose(boneId,relPose)
 		-- TODO: There are currently a few issues with scaling (e.g. broken eyes), so we'll disable it for now. This should be re-enabled once the issues have been resolved!
 		-- UPDATE: Broken eyes should now be fixed with scaling, so it should work properly now? (TODO: TESTME and remove the line below if all is in order)
-		animSrc:SetBoneScale(boneId,Vector(1,1,1))
+		-- animSrc:SetBoneScale(boneId,Vector(1,1,1))
 		for boneId,subChildren in pairs(children) do
 			applyPose(boneId,subChildren,pose)
 		end
 	end
+	local invRootPose = self.m_curPoseData.invRootPose
 	for boneId,children in pairs(self.m_curPoseData.boneHierarchy) do
-		applyPose(boneId,children,phys.ScaledTransform.IDENTITY)
+		applyPose(boneId,children,invRootPose)
 	end
 
 	-- TODO: Remove this once new animation system is fully implemented
