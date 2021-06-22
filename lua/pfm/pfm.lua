@@ -17,8 +17,8 @@ pfm.PROJECT_FILE_FORMAT_VERSION = 2
 pfm.PATREON_JOIN_URL = "https://www.patreon.com/silverlan/join"
 pfm.PATREON_SETTINGS_URL = "https://wiki.pragma-engine.com/supporter/login.php"
 
-pfm.VERSION = util.Version(0,4,0)
-pfm.VERSION_DATE = "21-05-30"
+pfm.VERSION = util.Version(0,4,2)
+pfm.VERSION_DATE = "21-06-22"
 pfm.PROJECT_TITLE = "PFM"
 
 include("/util/log.lua")
