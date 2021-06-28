@@ -23,10 +23,7 @@ function ents.PFMModel:Initialize()
 	self.m_listeners = {}
 end
 function ents.PFMModel:OnRemove()
-	if(util.is_valid(self.m_cbOnSkeletonUpdated)) then self.m_cbOnSkeletonUpdated:Remove() end
-	for _,cb in ipairs(self.m_listeners) do
-		if(cb:IsValid()) then cb:Remove() end
-	end
+	util.remove(self.m_listeners)
 end
 function ents.PFMModel:SetAnimationFrozen(frozen) self.m_animFrozen = frozen end
 function ents.PFMModel:IsAnimationFrozen() return self.m_animFrozen or false end
@@ -168,21 +165,18 @@ function ents.PFMModel:GetBodyGroups(bgIdx)
 	return localBgIndices
 end
 
-function ents.PFMModel:Setup(actorData,mdlInfo)
-	self.m_mdlInfo = mdlInfo
-	self.m_actorData = actorData
-	local ent = self:GetEntity()
-	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
+function ents.PFMModel:UpdateModel()
+	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil) then return end
-	table.insert(self.m_listeners,mdlInfo:GetModelNameAttr():AddChangeListener(function(newModel) ent:SetModel(newModel) end))
-	table.insert(self.m_listeners,mdlInfo:GetSkinAttr():AddChangeListener(function(newSkin) ent:SetSkin(newSkin) end))
-	local mdlName = mdlInfo:GetModelName()
-	mdlC:SetModel(mdlName)
+	local mdlInfo = self.m_mdlInfo
 	mdlC:SetSkin(mdlInfo:GetSkin())
 
 	local mdl = mdlC:GetModel()
 	if(mdl == nil) then return end
 	local materials = mdl:GetMaterials()
+	for matSrc,matDst in pairs(mdlInfo:GetMaterialMappings():GetTable()) do
+		mdlC:SetMaterialOverride(matSrc,matDst:GetValue())
+	end
 	for _,matOverride in ipairs(mdlInfo:GetMaterialOverrides():GetTable()) do
 		local matName = matOverride:GetMaterialName()
 		local origMat = game.load_material(matName)
@@ -211,5 +205,21 @@ function ents.PFMModel:Setup(actorData,mdlInfo)
 	for bgIdx,bgMdlIdx in ipairs(self:GetBodyGroups(globalBgIdx)) do
 		mdlC:SetBodyGroup(bgIdx -1,bgMdlIdx)
 	end
+end
+
+function ents.PFMModel:Setup(actorData,mdlInfo)
+	self.m_mdlInfo = mdlInfo
+	self.m_actorData = actorData
+	local ent = self:GetEntity()
+	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
+	if(mdlC == nil) then return end
+	table.insert(self.m_listeners,mdlInfo:GetModelNameAttr():AddChangeListener(function(newModel)
+		local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
+		if(mdlC ~= nil) then mdlC:SetModel(mdlName) end
+	end))
+	table.insert(self.m_listeners,mdlInfo:GetSkinAttr():AddChangeListener(function(newSkin) ent:SetSkin(newSkin) end))
+
+	mdlC:SetModel(mdlInfo:GetModelName())
+	self:UpdateModel()
 end
 ents.COMPONENT_PFM_MODEL = ents.register_component("pfm_model",ents.PFMModel)

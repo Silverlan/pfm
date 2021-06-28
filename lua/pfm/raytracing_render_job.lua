@@ -115,6 +115,9 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"useProgressiveRef
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"progressive",false,{
 	getter = "IsProgressive"
 })
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"preCalculateLight",false,{
+	getter = "ShouldPreCalculateLight"
+})
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"exposure",1.0)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"colorTransform","filmic-blender")
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"colorTransformLook","")
@@ -174,6 +177,7 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetPanoramaHorizontalRange(self:GetPanoramaHorizontalRange())
 	cpy:SetStereoscopic(self:IsStereoscopic())
 	cpy:SetUseProgressiveRefinement(self:ShouldUseProgressiveRefinement())
+	cpy:SetPreCalculateLight(self:ShouldPreCalculateLight())
 	cpy:SetProgressive(self:IsProgressive())
 	cpy:SetExposure(self:GetExposure())
 	cpy:SetColorTransform(self:GetColorTransform())
@@ -354,6 +358,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	createInfo.hdrOutput = renderSettings:GetHDROutput()
 	createInfo.deviceType = renderSettings:GetDeviceType()
 	createInfo.progressiveRefine = renderSettings:ShouldUseProgressiveRefinement()
+	createInfo.preCalculateLight = renderSettings:ShouldPreCalculateLight()
 	createInfo.progressive = renderSettings:IsProgressive()
 	createInfo.exposure = renderSettings:GetExposure()
 	createInfo.renderer = renderSettings:GetRenderEngine()
@@ -461,6 +466,11 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	end,function(ent)
 		return true
 	end)
+	local o = scene:FindObjectByName("")
+	if(o ~= nil) then
+		debug.print("Found object!")
+		o:SetSubdivisionEnabled(true)
+	end
 	if(renderSettings:GetRenderWorld() and g_staticGeometryCache ~= nil) then scene:AddCache(g_staticGeometryCache) end
 	if(#renderSettings:GetSky() > 0) then scene:SetSky(renderSettings:GetSky()) end
 

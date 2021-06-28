@@ -37,7 +37,12 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_btTools:SetX(self:GetWidth() -self.m_btTools:GetWidth())
 	self.m_btTools:SetupContextMenu(function(pContext)
 		pContext:AddItem(locale.get_text("pfm_create_new_actor"),function()
-			self:AddNewActor()
+			if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
+			if(self:IsValid() == false) then return end
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+
+			self:AddActorToScene(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_articulated_actor"),function()
 			gui.open_model_dialog(function(dialogResult,mdlName)
@@ -46,7 +51,7 @@ function gui.PFMActorEditor:OnInitialize()
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
 				local mdlC = self:CreateNewActorComponent(actor,"PFMModel")
-				self:CreateNewActorComponent(actor,"PFMAnimationSet",nil,function(mdlC) mdlC:ChangeModel(mdlName) end)
+				self:CreateNewActorComponent(actor,"PFMAnimationSet",nil,function(animC) mdlC:ChangeModel(mdlName) end)
 
 				self:AddActorToScene(actor)
 			end)
@@ -57,7 +62,7 @@ function gui.PFMActorEditor:OnInitialize()
 				if(self:IsValid() == false) then return end
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"PFMModel",nil,function(mdlC) mdlC:ChangeModel(mdlName) end)
+				local mdlC = self:CreateNewActorComponent(actor,"PFMModel",nil,function(animC) mdlC:ChangeModel(mdlName) end)
 
 				self:AddActorToScene(actor)
 			end)
@@ -94,6 +99,40 @@ function gui.PFMActorEditor:OnInitialize()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMDirectionalLight")
+
+			self:AddActorToScene(actor)
+		end)
+		pContext:AddItem(locale.get_text("pfm_create_new_volume"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			local mdlData = self:CreateNewActorComponent(actor,"PFMModel")
+			self:CreateNewActorComponent(actor,"PFMVolumetric")
+			mdlData:SetModelName("cube")
+
+			-- Calc scene extents
+			local min = Vector(math.huge,math.huge,math.huge)
+			local max = Vector(-math.huge,-math.huge,-math.huge)
+			for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_RENDER)}) do
+				local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+				local rMin,rMax = renderC:GetAbsoluteRenderBounds()
+				for i=0,2 do
+					min:Set(i,math.min(min:Get(i),rMin:Get(i)))
+					max:Set(i,math.max(max:Get(i),rMax:Get(i)))
+				end
+			end
+			if(min.x == math.huge) then
+				min = Vector()
+				max = Vector()
+			end
+			local center = (min +max) /2.0
+			min = min -center
+			max = max -center
+			local extents = (max -min) /2.0
+
+			local transform = actor:GetTransform()
+			transform:SetPosition(center)
+			transform:SetRotation(Quaternion())
+			transform:SetScale(extents)
 
 			self:AddActorToScene(actor)
 		end)
@@ -578,7 +617,8 @@ function gui.PFMActorEditor:AddActor(actor)
 						["pfm_light_spot"] = "PFMSpotLight",
 						["pfm_light_directional"] = "PFMDirectionalLight",
 						["pfm_light_point"] = "PFMPointLight",
-						["pfm_impersonatee"] = "PFMImpersonatee"
+						["pfm_impersonatee"] = "PFMImpersonatee",
+						["pfm_volumetric"] = "PFMVolumetric"
 					}
 					self:CreateNewActorComponent(actor,tTranslation[componentType],true)
 				end)

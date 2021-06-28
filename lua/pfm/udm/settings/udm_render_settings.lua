@@ -86,6 +86,9 @@ fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"cameraFrus
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"pvsCullingEnabled",fudm.Bool(true),{
 	getter = "IsPvsCullingEnabled"
 })
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"preCalculateLight",fudm.Bool(false),{
+	getter = "ShouldPreCalculateLight"
+})
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"progressive",fudm.Bool(true),{
 	getter = "IsProgressive"
 })

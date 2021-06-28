@@ -6,10 +6,11 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("generic.lua")
 include("/cycles/nodes/textures/base.lua")
 include("/cycles/nodes/textures/pbr.lua")
 
-util.register_class("unirender.PBRShader",unirender.Shader)
+util.register_class("unirender.PBRShader",unirender.GenericShader)
 
 unirender.PBRShader.GLOBAL_EMISSION_STRENGTH = 1.0
 function unirender.PBRShader.set_global_emission_strength(strength) unirender.PBRShader.GLOBAL_EMISSION_STRENGTH = strength end
@@ -19,7 +20,7 @@ function unirender.PBRShader.set_global_albedo_override_color(col) unirender.PBR
 function unirender.PBRShader.get_global_albedo_override_color() return unirender.PBRShader.GLOBAL_ALBEDO_OVERRIDE_COLOR end
 
 function unirender.PBRShader:__init()
-	unirender.Shader.__init(self)
+	unirender.GenericShader.__init(self)
 end
 function unirender.PBRShader:AddAlbedoNode(desc,mat)
 	local data = mat:GetDataBlock()
@@ -117,6 +118,7 @@ function unirender.PBRShader:AddMetalnessRoughnessNode(desc,mat)
 end
 function unirender.PBRShader:Initialize()
 	local mat = self:GetMaterial()
+
 	local dbHair = mat and mat:GetDataBlock():FindBlock("hair")
 	if(dbHair ~= nil) then
 		local enabled = true
@@ -131,6 +133,18 @@ function unirender.PBRShader:Initialize()
 			hairConfig.randomHairLengthFactor = dbHair:GetFloat("random_hair_length_factor",0.3)
 			hairConfig.curvature = dbHair:GetFloat("curvature",0.6)
 			self:SetHairConfig(hairConfig)
+		end
+	end
+
+	local dbSubdiv = mat and mat:GetDataBlock():FindBlock("subdivision")
+	if(dbSubdiv ~= nil) then
+		local enabled = true
+		if(dbSubdiv:HasValue("enabled")) then enabled = dbSubdiv:GetBool("enabled") end
+		if(enabled) then
+			local subdivSettings = unirender.Shader.SubdivisionSettings()
+			subdivSettings.maxLevel = dbSubdiv:GetInt("max_level",2)
+			subdivSettings.maxEdgeScreenSize = dbSubdiv:GetFloat("max_edge_screen_size",0.0)
+			self:SetSubdivisionSettings(subdivSettings)
 		end
 	end
 end
@@ -206,7 +220,7 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 	end
 
 	local specular
-	local cyclesBlock = data:FindBlock("cycles")
+	local cyclesBlock = data:FindBlock("unirender")
 	if(cyclesBlock ~= nil and cyclesBlock:HasValue("specular")) then
 		specular = cyclesBlock:GetFloat("specular",0.0)
 	end
@@ -238,6 +252,15 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 	roughness:Link(principled,unirender.Node.principled_bsdf.IN_ROUGHNESS)
 
 	principled:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_SURFACE)
+	self:LinkDefaultVolume(desc,outputNode)
+
+	--[[if(cyclesBlock ~= nil) then
+		local interiorVolume = cyclesBlock:FindBlock("interior_volume")
+		if(interiorVolume ~= nil) then
+			local clear = desc:AddNode(unirender.NODE_VOLUME_CLEAR)
+			clear:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_VOLUME)
+		end
+	end]]
 end
 function unirender.PBRShader:InitializeAlbedoPass(desc,outputNode)
 	local mat = self:GetMaterial()

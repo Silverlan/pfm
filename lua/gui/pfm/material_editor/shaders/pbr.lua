@@ -251,6 +251,10 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		{
 			name = locale.get_text("pfm_mated_cycles_shader_toon"),
 			identifier = "toon"
+		},
+		{
+			name = locale.get_text("pfm_mated_cycles_shader_volume"),
+			identifier = "volume"
 		}
 	}
 	local options = {}
@@ -317,6 +321,31 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	self:LinkControlToMaterialParameter("hair_strength",ctrlHairStrength,hairBlock)
 	self:LinkControlToMaterialParameter("hair_random_hair_length_factor",ctrlHairRandomLengthFactor,hairBlock)
 	self:LinkControlToMaterialParameter("hair_curvature",ctrlHairCurvature,hairBlock)
+
+	-- Subdivision
+	local subdivBlock = {"subdivision"}
+	ctrlVbox:AddHeader(locale.get_text("pfm_mated_subdiv"))
+	local subdivMenu
+	local ctrlSubdivEnabled = ctrlVbox:AddDropDownMenu(locale.get_text("enabled"),"subdiv_enabled",{
+		{"0",locale.get_text("no")},
+		{"1",locale.get_text("yes")}
+	},0,function(menu,option)
+		local enabled = tostring(menu:GetOptionValue(option))
+		self:SetMaterialParameter("bool","enabled",enabled,subdivBlock)
+		subdivMenu:SetVisible(toboolean(enabled))
+	end)
+	self:LinkControlToMaterialParameter("enabled",ctrlSubdivEnabled,subdivBlock,function(block)
+		local enabled = true
+		if(block:HasValue("enabled")) then enabled = block:GetBool("enabled") end
+		ctrlSubdivEnabled:SelectOption(enabled and 1 or 0)
+		subdivMenu:SetVisible(enabled)
+	end)
+	subdivMenu = ctrlVbox:AddSubMenu()
+	subdivMenu:SetVisible((ctrlSubdivEnabled:GetOptionValue(ctrlSubdivEnabled:GetSelectedOption()) == 1) and true or false)
+	local ctrlSubdivSegCount = subdivMenu:AddSliderControl(locale.get_text("pfm_mated_subdiv_max_level"),"max_level",2,0,6,function(el,value) self:SetMaterialParameter("int","max_level",value,subdivBlock) end,1)
+	local ctrlSubdivMaxEdgeScreenSize = subdivMenu:AddSliderControl(locale.get_text("pfm_mated_subdiv_max_edge_screen_size"),"max_edge_screen_size",0,0,1,function(el,value) self:SetMaterialParameter("float","max_edge_screen_size",value,subdivBlock) end,0.001)
+	self:LinkControlToMaterialParameter("max_level",ctrlSubdivSegCount,subdivBlock)
+	self:LinkControlToMaterialParameter("max_edge_screen_size",ctrlSubdivMaxEdgeScreenSize,subdivBlock)
 
 	-- Save
 	local btSave = gui.create("WIPFMButton",ctrlVbox)

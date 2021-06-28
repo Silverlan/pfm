@@ -23,6 +23,7 @@ fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"flexWeights",fudm.Ar
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"flexControllerNames",fudm.Array(fudm.ATTRIBUTE_TYPE_STRING))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"globalFlexControllers",fudm.Array(fudm.ELEMENT_TYPE_PFM_GLOBAL_FLEX_CONTROLLER_OPERATOR))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"materialOverrides",fudm.Array(fudm.ELEMENT_TYPE_PFM_MATERIAL))
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"materialMappings",fudm.Map(fudm.ATTRIBUTE_TYPE_STRING))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"flexControllerScale",fudm.Float(1.0))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_MODEL,"flexControllerLimitsEnabled",fudm.Bool(true))
 
