@@ -7,8 +7,8 @@
 ]]
 
 include("generic.lua")
-include("/cycles/nodes/textures/base.lua")
-include("/cycles/nodes/textures/pbr.lua")
+include("/unirender/nodes/textures/base.lua")
+include("/unirender/nodes/textures/pbr.lua")
 
 util.register_class("unirender.PBRShader",unirender.GenericShader)
 
@@ -148,7 +148,7 @@ function unirender.PBRShader:Initialize()
 		end
 	end
 end
-include("/cycles/nodes/test.lua")
+include("/unirender/nodes/test.lua")
 function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 	--[[if(true) then
 		return unirender.Node.test.test_output(desc,outputNode,0)
@@ -220,9 +220,9 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 	end
 
 	local specular
-	local cyclesBlock = data:FindBlock("unirender")
-	if(cyclesBlock ~= nil and cyclesBlock:HasValue("specular")) then
-		specular = cyclesBlock:GetFloat("specular",0.0)
+	local unirenderBlock = data:FindBlock("unirender")
+	if(unirenderBlock ~= nil and unirenderBlock:HasValue("specular")) then
+		specular = unirenderBlock:GetFloat("specular",0.0)
 	end
 	specular = specular or math.calc_dielectric_specular_reflection(ior) -- See https://docs.blender.org/manual/en/latest/render/shader_nodes/shader/principled.html#inputs
 	principled:SetProperty(unirender.Node.principled_bsdf.IN_SPECULAR,specular)

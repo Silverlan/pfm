@@ -236,7 +236,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		ctrlColorFactor:SetColor(Color(colorFactor))
 	end)
 
-	-- Cycles options
+	-- Unirender options
 	ctrlVbox:AddHeader(locale.get_text("pfm_mated_cycles"))
 
 	local cyclesShaderList = {
@@ -259,7 +259,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	}
 	local options = {}
 	for _,shaderData in ipairs(cyclesShaderList) do table.insert(options,{shaderData.identifier,shaderData.name}) end
-	local ctrlCyclesShader = ctrlVbox:AddDropDownMenu(locale.get_text("pfm_mated_cycles_shader"),"cycles_shader",options,0,function(el,option)
+	local ctrlUnirenderShader = ctrlVbox:AddDropDownMenu(locale.get_text("pfm_mated_cycles_shader"),"cycles_shader",options,0,function(el,option)
 		local shaderName = el:GetOptionValue(el:GetSelectedOption())
 		for id,el in pairs(self.m_cyclesShaderControls) do el:SetVisible(false) end
 		local el = self.m_cyclesShaderControls[shaderName]
@@ -267,12 +267,12 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 
 		local data = self:GetMaterialDataBlock()
 		if(data == nil) then return end
-		local cyclesBlock = data:AddBlock("cycles")
-		cyclesBlock:SetValue("string","shader",shaderName)
+		local unirenderBlock = data:AddBlock("unirender")
+		unirenderBlock:SetValue("string","shader",shaderName)
 	end)
-	self:LinkControlToMaterialParameter("shader",ctrlCyclesShader,{"cycles"},function(block)
+	self:LinkControlToMaterialParameter("shader",ctrlUnirenderShader,{"unirender"},function(block)
 		if(block:HasValue("shader") == false) then return end
-		ctrlCyclesShader:SelectOption(block:GetString("shader"))
+		ctrlUnirenderShader:SelectOption(block:GetString("shader"))
 	end)
 
 	self.m_cyclesShaderControls = {}

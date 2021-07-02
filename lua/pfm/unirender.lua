@@ -7,21 +7,21 @@
 ]]
 
 local loaded
-function pfm.load_cycles()
+function pfm.load_unirender()
 	if(loaded ~= nil) then return loaded end
 
-	pfm.log("Loading cycles module...",pfm.LOG_CATEGORY_PFM_RENDER)
+	pfm.log("Loading unirender module...",pfm.LOG_CATEGORY_PFM_RENDER)
 
-	local r = engine.load_library("cycles/pr_cycles")
+	local r = engine.load_library("unirender/pr_unirender")
 	if(r ~= true) then
 		loaded = false
-		pfm.log("Unable to load cycles module: " .. r,pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_ERROR)
+		pfm.log("Unable to load unirender module: " .. r,pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_ERROR)
 		return loaded
 	end
 	unirender.set_log_enabled(pfm.is_log_category_enabled(pfm.LOG_CATEGORY_PFM_UNIRENDER))
 
 	loaded = true
-	pfm.log("Loading cycles shaders...",pfm.LOG_CATEGORY_PFM_RENDER)
-	include("/cycles/shaders/")
+	pfm.log("Loading unirender shaders...",pfm.LOG_CATEGORY_PFM_RENDER)
+	include("/unirender/shaders/")
 	return loaded
 end

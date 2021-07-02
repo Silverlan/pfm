@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/cycles/nodes/materials/glass.lua")
+include("/unirender/nodes/materials/glass.lua")
 
 util.register_class("unirender.GlassShader",unirender.Shader)
 function unirender.GlassShader:__init()

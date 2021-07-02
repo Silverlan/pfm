@@ -535,7 +535,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	-- Emission strength
 	self.m_ctrlEmissionStrength = p:AddSliderControl(locale.get_text("pfm_emission_strength"),"emission_strength",settings:GetEmissionStrength(),0,20,function()
-		pfm.load_cycles()
+		pfm.load_unirender()
 		unirender.PBRShader.set_global_emission_strength(self.m_ctrlEmissionStrength:GetValue())
 	end)
 	p:LinkToUDMProperty("emission_strength",settings,"emissionStrength")

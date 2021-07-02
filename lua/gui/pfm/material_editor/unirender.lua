@@ -94,7 +94,7 @@ function gui.PFMMaterialEditor:InitializeCyclesOptions(ctrlVbox,shader)
 	elseif(shader == "glass") then
 
 	elseif(shader == "toon") then
-		local propBlock = {"cycles","shader_properties"}
+		local propBlock = {"unirender","shader_properties"}
 		local shadeColor = ctrlVbox:AddColorField(locale.get_text("pfm_mated_toon_shade_color"),"toon_shade_color",Color(179,81,54),function(oldCol,newCol) self:SetMaterialParameter("color","shade_color",newCol.r .. " " .. newCol.g .. " " .. newCol.b,propBlock) end)
 		self:LinkControlToMaterialParameter("shade_color",shadeColor,propBlock,function(block)
 			if(block:HasValue("shade_color") == false) then return end

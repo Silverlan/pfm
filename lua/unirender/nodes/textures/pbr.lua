@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/cycles/nodes/logic.lua")
+include("/unirender/nodes/logic.lua")
 
 unirender.Node.rma_texture = {
 	IN_TEXTURE = "texture",

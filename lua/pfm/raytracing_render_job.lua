@@ -194,7 +194,7 @@ pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE = 4
 pfm.RaytracingRenderJob.STATE_SUB_FRAME_COMPLETE = 5
 function pfm.RaytracingRenderJob:__init(settings,frameHandler)
 	util.CallbackHandler.__init(self)
-	pfm.load_cycles()
+	pfm.load_unirender()
 	self.m_settings = (settings and settings:Copy()) or pfm.RaytracingRenderJob.Settings()
 	self.m_startFrame = 0
 	self.m_frameHandler = frameHandler

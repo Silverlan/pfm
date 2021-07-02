@@ -97,7 +97,7 @@ function gui.RMAComposerDialog:OnInitialize()
 	texSlotAo:AddCallback("PopulateContextMenu",function(texSlotAo,pContext)
 		if(util.is_valid(self.m_model) and self.m_materialIndex ~= nil) then
 			pContext:AddItem(locale.get_text("pfm_generate_ambient_occlusion"),function()
-				if(util.is_valid(self.m_model) == false or pfm.load_cycles() == false) then return end
+				if(util.is_valid(self.m_model) == false or pfm.load_unirender() == false) then return end
 
 				local width = 512
 				local height = 512

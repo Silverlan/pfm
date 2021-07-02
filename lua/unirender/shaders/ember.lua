@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/cycles/nodes/materials/ember.lua")
+include("/unirender/nodes/materials/ember.lua")
 
 util.register_class("unirender.EmberShader",unirender.Shader)
 function unirender.EmberShader:__init()

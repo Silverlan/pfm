@@ -251,7 +251,7 @@ end
 function gui.RaytracedViewport:Refresh(preview,rtJobCallback,startFrame,frameHandler)
 	preview = preview or false
 	self:CancelRendering()
-	if(pfm.load_cycles() == false) then return end
+	if(pfm.load_unirender() == false) then return end
 
 	if(self.m_projectManager ~= nil) then
 		startFrame = self.m_projectManager:GetClampedFrameOffset()
