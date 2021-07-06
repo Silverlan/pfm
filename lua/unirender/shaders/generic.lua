@@ -59,6 +59,7 @@ function unirender.GenericShader:LinkDefaultVolume(desc,outputNode)
 
 				node:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_VOLUME)
 			end
+			return node
 		end
 	end
 end

@@ -173,16 +173,50 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 	-- Albedo
 	local albedoColor,alpha = self:AddAlbedoNode(desc,mat)
 
-	local principled = desc:AddNode(unirender.NODE_PRINCIPLED_BSDF)
+	local sss = data:FindBlock("subsurface_scattering")
+	local sssEnabled = false
+	if(sss ~= nil) then
+		local factor = sss:GetFloat("factor",0)
+		if(factor > 0) then
+			sssEnabled = true
+		end
+	end
+
+	local useGlossyBsdf = false
+	local bsdf
+	if(sssEnabled) then
+		bsdf = desc:AddNode(unirender.NODE_GLOSSY_BSDF)
+		useGlossyBsdf = true
+	else bsdf = desc:AddNode(unirender.NODE_PRINCIPLED_BSDF) end
+
+	local sssVolume
 	local albedoColorOverride = util.get_class_value(unirender.PBRShader,"GLOBAL_ALBEDO_OVERRIDE_COLOR")
-	if(albedoColorOverride) then unirender.Socket(albedoColorOverride):Link(principled,unirender.Node.principled_bsdf.IN_BASE_COLOR)
-	else albedoColor:Link(principled,unirender.Node.principled_bsdf.IN_BASE_COLOR) end
-	alpha:Link(principled,unirender.Node.principled_bsdf.IN_ALPHA)
+	if(sssEnabled == false) then
+		if(albedoColorOverride) then unirender.Socket(albedoColorOverride):Link(bsdf,unirender.Node.principled_bsdf.IN_BASE_COLOR)
+		else albedoColor:Link(bsdf,unirender.Node.principled_bsdf.IN_BASE_COLOR) end
+		alpha:Link(bsdf,unirender.Node.principled_bsdf.IN_ALPHA)
+	else
+		if(albedoColorOverride) then unirender.Socket(albedoColorOverride):Link(bsdf,unirender.Node.glossy_bsdf.IN_COLOR)
+		else albedoColor:Link(bsdf,unirender.Node.glossy_bsdf.IN_COLOR) end
+
+		sssVolume = desc:AddNode(unirender.NODE_VOLUME_HOMOGENEOUS)
+
+		-- Default properties
+		sssVolume:SetProperty(unirender.Node.volume_homogeneous.IN_PRIORITY,0)
+		local ior = 1.5
+		sssVolume:SetProperty(unirender.Node.volume_homogeneous.IN_IOR,Vector(ior,ior,ior))
+		sssVolume:SetProperty(unirender.Node.volume_homogeneous.IN_ABSORPTION,Vector(0,0,0))
+		sssVolume:SetProperty(unirender.Node.volume_homogeneous.IN_EMISSION,Vector(0,0,0))
+		sssVolume:SetProperty(unirender.Node.volume_homogeneous.IN_SCATTERING,Vector(1,1,1))
+		sssVolume:SetProperty(unirender.Node.volume_homogeneous.IN_ASYMMETRY,Vector(0,0,0))
+		sssVolume:SetProperty(unirender.Node.volume_homogeneous.IN_ABSORPTION_DEPTH,0.01)
+		sssVolume:SetProperty(unirender.Node.volume_homogeneous.IN_MULTI_SCATTERING,1)
+	end
 
 	local ior = 1.45
 	if(data:HasValue("ior")) then
 		ior = data:GetFloat("ior",ior)
-		principled:SetProperty(unirender.Node.principled_bsdf.IN_IOR,ior)
+		bsdf:SetProperty(unirender.Node.principled_bsdf.IN_IOR,ior)
 	end
 
 	-- Subsurface scattering
@@ -191,13 +225,17 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 		local factor = sss:GetFloat("factor",0)
 		if(factor > 0) then
 			if(sss:HasValue("method") == false or sss:GetString("method") ~= "none") then
-				principled:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE,factor)
+				if(sssVolume == nil) then bsdf:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE,factor) end
 
 				local colorFactor = sss:GetVector("color_factor",Vector(1,1,1))
 				local sssColor = albedoColor *colorFactor
-				sssColor:Link(principled,unirender.Node.principled_bsdf.IN_SUBSURFACE_COLOR)
+				if(sssVolume ~= nil) then
+					--sssColor = sssColor *(1.0 -factor)
+					unirender.Socket(factor):Link(bsdf,unirender.Node.principled_bsdf.IN_ALPHA)
+					sssColor:Link(sssVolume,unirender.Node.volume_homogeneous.IN_ABSORPTION)
+				else sssColor:Link(bsdf,unirender.Node.principled_bsdf.IN_SUBSURFACE_COLOR) end
 
-				if(sss:HasValue("method")) then
+				if(sss:HasValue("method") and sssVolume == nil) then
 					local method = sss:GetString("method")
 					local methodToEnum = {
 						["cubic"] = unirender.SUBSURFACE_SCATTERING_METHOD_CUBIC,
@@ -208,24 +246,27 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 						["principled_random_walk"] = unirender.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED_RANDOM_WALK
 					}
 					method = methodToEnum[method] or unirender.SUBSURFACE_SCATTERING_METHOD_BURLEY
-					principled:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE_METHOD,method)
+					bsdf:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE_METHOD,method)
 				end
 
 				if(sss:HasValue("scatter_color")) then
 					local radius = sss:GetColor("scatter_color"):ToVector()
-					principled:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE_RADIUS,radius)
+					if(sssVolume ~= nil) then sssVolume:SetProperty(unirender.Node.volume_homogeneous.IN_SCATTERING,radius)
+					else bsdf:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE_RADIUS,radius) end
 				end
 			end
 		end
 	end
 
-	local specular
-	local unirenderBlock = data:FindBlock("unirender")
-	if(unirenderBlock ~= nil and unirenderBlock:HasValue("specular")) then
-		specular = unirenderBlock:GetFloat("specular",0.0)
+	if(useGlossyBsdf == false) then
+		local specular
+		local unirenderBlock = data:FindBlock("unirender")
+		if(unirenderBlock ~= nil and unirenderBlock:HasValue("specular")) then
+			specular = unirenderBlock:GetFloat("specular",0.0)
+		end
+		specular = specular or math.calc_dielectric_specular_reflection(ior) -- See https://docs.blender.org/manual/en/latest/render/shader_nodes/shader/principled.html#inputs
+		bsdf:SetProperty(unirender.Node.principled_bsdf.IN_SPECULAR,specular)
 	end
-	specular = specular or math.calc_dielectric_specular_reflection(ior) -- See https://docs.blender.org/manual/en/latest/render/shader_nodes/shader/principled.html#inputs
-	principled:SetProperty(unirender.Node.principled_bsdf.IN_SPECULAR,specular)
 
 	-- Emission map
 	local globalEmissionStrength = unirender.PBRShader.get_global_emission_strength()
@@ -237,30 +278,23 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 			local nEmissionMap = desc:AddNode(unirender.NODE_EMISSION_TEXTURE)
 			nEmissionMap:SetProperty(unirender.Node.emission_texture.IN_TEXTURE,emissionTex)
 			unirender.Socket(emissionFactor):Link(nEmissionMap,unirender.Node.emission_texture.IN_COLOR_FACTOR)
-			nEmissionMap:GetPrimaryOutputSocket():Link(principled,unirender.Node.principled_bsdf.IN_EMISSION)
+			nEmissionMap:GetPrimaryOutputSocket():Link(bsdf,unirender.Node.principled_bsdf.IN_EMISSION)
 		end
 	end
 	-- TODO: UV coordinates?
 
 	-- Normal map
 	local normal = self:AddNormalNode(desc,mat)
-	if(normal ~= nil) then normal:Link(principled,unirender.Node.principled_bsdf.IN_NORMAL) end
+	if(normal ~= nil) then normal:Link(bsdf,unirender.Node.principled_bsdf.IN_NORMAL) end
 
 	-- Metalness / Roughness
 	local metalness,roughness = self:AddMetalnessRoughnessNode(desc,mat)
-	metalness:Link(principled,unirender.Node.principled_bsdf.IN_METALLIC)
-	roughness:Link(principled,unirender.Node.principled_bsdf.IN_ROUGHNESS)
+	if(useGlossyBsdf == false) then metalness:Link(bsdf,unirender.Node.principled_bsdf.IN_METALLIC) end
+	roughness:Link(bsdf,unirender.Node.principled_bsdf.IN_ROUGHNESS)
 
-	principled:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_SURFACE)
-	self:LinkDefaultVolume(desc,outputNode)
-
-	--[[if(cyclesBlock ~= nil) then
-		local interiorVolume = cyclesBlock:FindBlock("interior_volume")
-		if(interiorVolume ~= nil) then
-			local clear = desc:AddNode(unirender.NODE_VOLUME_CLEAR)
-			clear:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_VOLUME)
-		end
-	end]]
+	bsdf:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_SURFACE)
+	if(sssVolume ~= nil) then sssVolume:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_VOLUME)
+	else self:LinkDefaultVolume(desc,outputNode) end
 end
 function unirender.PBRShader:InitializeAlbedoPass(desc,outputNode)
 	local mat = self:GetMaterial()

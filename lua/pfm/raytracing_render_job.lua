@@ -466,11 +466,6 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	end,function(ent)
 		return true
 	end)
-	local o = scene:FindObjectByName("")
-	if(o ~= nil) then
-		debug.print("Found object!")
-		o:SetSubdivisionEnabled(true)
-	end
 	if(renderSettings:GetRenderWorld() and g_staticGeometryCache ~= nil) then scene:AddCache(g_staticGeometryCache) end
 	if(#renderSettings:GetSky() > 0) then scene:SetSky(renderSettings:GetSky()) end
 
