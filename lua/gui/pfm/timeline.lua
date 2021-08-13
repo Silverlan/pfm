@@ -279,7 +279,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btTimeSelectionMode = gui.PFMButton.create(self.m_motionControls,"gui/pfm/icon_timeselectionmode","gui/pfm/icon_timeselectionmode_activated",function()
 		print("TODO")
 	end)
-	gui.create("WIBase",m_motionControls):SetSize(18,1) -- Gap
+	gui.create("WIBase",self.m_motionControls):SetSize(18,1) -- Gap
 	self.m_keyMode = gui.PFMButton.create(self.m_motionControls,"gui/pfm/icon_cp_keymode","gui/pfm/icon_cp_keymode_activated",function()
 		print("TODO")
 	end)
