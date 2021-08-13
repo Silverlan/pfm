@@ -17,6 +17,8 @@ util.register_class("ents.PFMProject",BaseEntityComponent)
 ents.PFMProject.GAME_VIEW_FLAG_NONE = 0
 ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE = 1
 
+function ents.PFMProject:__init(ent) BaseEntityComponent.__init(self,ent) end
+
 function ents.PFMProject:Initialize()
 	BaseEntityComponent.Initialize(self)
 	

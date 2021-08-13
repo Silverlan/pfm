@@ -63,3 +63,49 @@ function unirender.GenericShader:LinkDefaultVolume(desc,outputNode)
 		end
 	end
 end
+
+function unirender.apply_image_view_swizzling(desc,texMapNode,texInfo)
+	local outRgb = texMapNode:GetPrimaryOutputSocket()
+	local outAlpha = texMapNode:GetOutputSocket("alpha")
+
+	local tex = texInfo:GetTexture()
+	local vkTex = (tex ~= nil) and tex:GetVkTexture() or nil
+	local imgView = (vkTex ~= nil) and vkTex:GetImageView() or nil
+	if(imgView == nil) then return outRgb,outAlpha end
+	local swizzleArray = imgView:GetSwizzleArray()
+	if(swizzleArray[1] == prosper.COMPONENT_SWIZZLE_R and swizzleArray[2] == prosper.COMPONENT_SWIZZLE_G and swizzleArray[3] == prosper.COMPONENT_SWIZZLE_B and swizzleArray[4] == prosper.COMPONENT_SWIZZLE_A) then return outRgb,outAlpha end
+	local components = {
+		[prosper.COMPONENT_SWIZZLE_R] = outRgb.r,
+		[prosper.COMPONENT_SWIZZLE_G] = outRgb.g,
+		[prosper.COMPONENT_SWIZZLE_B] = outRgb.b,
+		[prosper.COMPONENT_SWIZZLE_A] = outAlpha
+	}
+	debug.print("Valid: ",outAlpha ~= nil and "1" or "0")
+	debug.print(util.get_type_name(outRgb.r) .. " " .. util.get_type_name(outAlpha))
+	console.print_table(components)
+	return desc:CombineRGB(components[swizzleArray[1]],components[swizzleArray[2]],components[swizzleArray[3]]),components[swizzleArray[4]]
+end
+
+function unirender.get_swizzle_channels(texInfo)
+	local tex = texInfo:GetTexture()
+	local vkTex = (tex ~= nil) and tex:GetVkTexture() or nil
+	local imgView = (vkTex ~= nil) and vkTex:GetImageView() or nil
+	local channels = {prosper.COMPONENT_SWIZZLE_R,prosper.COMPONENT_SWIZZLE_G,prosper.COMPONENT_SWIZZLE_B,prosper.COMPONENT_SWIZZLE_A}
+	if(imgView == nil) then return unpack(channels) end
+	local swizzleArray = imgView:GetSwizzleArray()
+	return unpack(swizzleArray)
+end
+
+function unirender.translate_swizzle_channels(texInfo,...)
+	if(texInfo == nil) then return ... end
+	local tex = texInfo:GetTexture()
+	local vkTex = (tex ~= nil) and tex:GetVkTexture() or nil
+	local imgView = (vkTex ~= nil) and vkTex:GetImageView() or nil
+	if(imgView == nil) then return ... end
+	local swizzleArray = imgView:GetSwizzleArray()
+	local channels = {...}
+	for i,channel in ipairs(channels) do
+		channels[i] = swizzleArray[channel]
+	end
+	return unpack(channels)
+end

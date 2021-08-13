@@ -45,8 +45,7 @@ function unirender.PBRShader:AddAlbedoNode(desc,mat)
 	nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_ALPHA_FACTOR,alphaFactor)
 	uv:Link(nAlbedoMap,unirender.Node.albedo_texture.IN_UV)
 
-	local col = nAlbedoMap:GetPrimaryOutputSocket()
-	local alpha = nAlbedoMap:GetOutputSocket(unirender.Node.albedo_texture.OUT_ALPHA)
+	local col,alpha = unirender.apply_image_view_swizzling(desc,nAlbedoMap,albedoMap)
 
 	local detailMap = mat:GetTextureInfo("detail_map")
 	local blendMode = game.Material.detail_blend_mode_to_enum(data:GetString("detail_blend_mode"))
@@ -61,8 +60,8 @@ function unirender.PBRShader:AddAlbedoNode(desc,mat)
 			local blendFactor = unirender.Socket(data:GetFloat("detail_factor",1.0))
 			local detailColorFactor = unirender.Socket(data:GetVector("detail_color_factor",Vector(1,1,1)))
 
-			local detailColor = nDetailMap:GetPrimaryOutputSocket() *detailColorFactor
-			local detailAlpha = nDetailMap:GetOutputSocket(unirender.Node.albedo_texture.OUT_ALPHA)
+			local detailColor,detailAlpha = unirender.apply_image_view_swizzling(desc,nDetailMap,detailMap)
+			detailColor = detailColor *detailColorFactor
 			if(blendMode == game.Material.DETAIL_BLEND_MODE_DECAL_MODULATE) then col = col *unirender.Socket(1.0):Lerp(detailColor *2.0,blendFactor)
 			elseif(blendMode == game.Material.DETAIL_BLEND_MODE_ADDITIVE) then col = col +blendFactor *detailColor
 			elseif(blendMode == game.Material.DETAIL_BLEND_MODE_TRANSLUCENT_DETAIL) then
@@ -97,7 +96,7 @@ function unirender.PBRShader:AddNormalNode(desc,mat) -- Result is in world space
 		local nNormalMap = desc:AddNode(unirender.NODE_NORMAL_TEXTURE)
 		nNormalMap:SetProperty(unirender.Node.normal_texture.IN_FILENAME,normalTex)
 		nNormalMap:SetProperty(unirender.Node.normal_texture.IN_STRENGTH,normalStrength)
-		return nNormalMap:GetPrimaryOutputSocket()
+		return unirender.apply_image_view_swizzling(desc,nNormalMap,normalMap)
 	end
 end
 function unirender.PBRShader:AddMetalnessRoughnessNode(desc,mat)
@@ -113,6 +112,10 @@ function unirender.PBRShader:AddMetalnessRoughnessNode(desc,mat)
 	local roughnessFactor = data:GetFloat("roughness_factor",1.0)
 	unirender.Socket(metalnessFactor):Link(nRMAMap,unirender.Node.rma_texture.IN_METALNESS_FACTOR)
 	unirender.Socket(roughnessFactor):Link(nRMAMap,unirender.Node.rma_texture.IN_ROUGHNESS_FACTOR)
+
+	local metalnessChannel,roughnessChannel = unirender.translate_swizzle_channels(rmaMap,unirender.Node.rma_texture.DEFAULT_METALNESS_CHANNEL,unirender.Node.rma_texture.DEFAULT_ROUGHNESS_CHANNEL)
+	nRMAMap:SetProperty(unirender.Node.rma_texture.IN_METALNESS_CHANNEL,metalnessChannel)
+	nRMAMap:SetProperty(unirender.Node.rma_texture.IN_ROUGHNESS_CHANNEL,roughnessChannel)
 
 	return nRMAMap:GetOutputSocket(unirender.Node.rma_texture.OUT_METALNESS),nRMAMap:GetOutputSocket(unirender.Node.rma_texture.OUT_ROUGHNESS)
 end
@@ -278,7 +281,8 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 			local nEmissionMap = desc:AddNode(unirender.NODE_EMISSION_TEXTURE)
 			nEmissionMap:SetProperty(unirender.Node.emission_texture.IN_TEXTURE,emissionTex)
 			unirender.Socket(emissionFactor):Link(nEmissionMap,unirender.Node.emission_texture.IN_COLOR_FACTOR)
-			nEmissionMap:GetPrimaryOutputSocket():Link(bsdf,unirender.Node.principled_bsdf.IN_EMISSION)
+			local col,alpha = unirender.apply_image_view_swizzling(desc,nEmissionMap,emissionMap)
+			col:Link(bsdf,unirender.Node.principled_bsdf.IN_EMISSION)
 		end
 	end
 	-- TODO: UV coordinates?
