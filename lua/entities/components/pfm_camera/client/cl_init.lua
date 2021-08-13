@@ -225,21 +225,21 @@ function ents.PFMCamera:Setup(actorData,cameraData)
 	self.m_cameraData = cameraData
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
 	if(camC ~= nil) then
-		camC:SetNearZ(cameraData:GetZNear())
-		camC:SetFarZ(cameraData:GetZFar())
+		camC:SetNearZ(math.max(cameraData:GetZNear(),1))
+		camC:SetFarZ(math.max(cameraData:GetZFar(),1))
 		camC:SetFOV(cameraData:GetFov())
 		camC:UpdateProjectionMatrix()
 
 		table.insert(self.m_listeners,cameraData:GetZNearAttr():AddChangeListener(function(newZNear)
 			if(camC:IsValid()) then
-				camC:SetNearZ(newZNear)
+				camC:SetNearZ(math.max(newZNear,1))
 				camC:UpdateProjectionMatrix()
 			end
 			self:SetFrustumModelDirty()
 		end))
 		table.insert(self.m_listeners,cameraData:GetZFarAttr():AddChangeListener(function(newZFar)
 			if(camC:IsValid()) then
-				camC:SetFarZ(newZFar)
+				camC:SetFarZ(math.max(newZFar,1))
 				camC:UpdateProjectionMatrix()
 			end
 			self:SetFrustumModelDirty()
