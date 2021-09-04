@@ -9,6 +9,7 @@
 include("game_view.lua")
 include("/pfm/animation_cache.lua")
 include("/pfm/performance_cache.lua")
+include("/pfm/animation2.lua")
 
 pfm = pfm or {}
 
@@ -20,6 +21,7 @@ end
 function pfm.ProjectManager:OnInitialize()
 	self.m_gameScene = game.get_scene()
 	self.m_performanceCache = pfm.PerformanceCache()
+	self.m_animManager = pfm.AnimationManager()
 
 	self:CreateNewProject()
 	self.m_map = game.get_map_name()
@@ -162,6 +164,7 @@ function pfm.ProjectManager:SetTimeOffset(offset)
 	if(session == nil) then return end
 	local settings = session:GetSettings()
 	settings:SetPlayheadOffset(offset)
+	self.m_animManager:SetTime(offset)
 end
 function pfm.ProjectManager:GetSettings()
 	local session = self:GetSession()
@@ -174,11 +177,16 @@ function pfm.ProjectManager:GetAnimationCache() return self.m_animationCache end
 function pfm.ProjectManager:InitializeProject(project)
 	pfm.log("Initializing PFM project...",pfm.LOG_CATEGORY_PFM)
 
+	self.m_animManager:Reset()
+	local session = self:GetSession()
+	local filmTrack = (session ~= nil) and session:GetFilmTrack() or nil
+
 	local entScene = self:StartGameView(project)
 	if(entScene == nil) then return false end
 	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
 	projectC:AddEventCallback(ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED,function(filmClipC)
 		self.m_activeGameViewFilmClip = filmClipC:GetClipData()
+		self.m_animManager:SetFilmClip(self.m_activeGameViewFilmClip)
 		self:OnGameViewFilmClipChanged(filmClipC:GetClipData())
 	end)
 	self.m_project = project
@@ -191,6 +199,7 @@ function pfm.ProjectManager:InitializeProject(project)
 	if(session ~= nil) then
 		local filmTrack = session:GetFilmTrack()
 		if(filmTrack ~= nil) then
+			self.m_animManager:Initialize(filmTrack)
 			filmTrack:GetFilmClipsAttr():AddChangeListener(function(newEl)
 				self:OnFilmClipAdded(newEl)
 				self:ReloadGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.

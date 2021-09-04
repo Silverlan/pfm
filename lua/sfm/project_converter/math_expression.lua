@@ -7,7 +7,7 @@
 ]]
 
 -- Converts a SFM math expression to Lua
-sfm.convert_math_expression_to_pragma = function(expr,varNames)
+sfm.convert_math_expression_to_pragma = function(exprFull,variables)
 	local fns = {
 		-- List of functions available in SFM
 		{"dtor",1},
@@ -42,38 +42,55 @@ sfm.convert_math_expression_to_pragma = function(expr,varNames)
 	}
 	local fnToPragma = {
 		-- Translation to Pragma equivalents (Lua)
-		["dtor"] = "math.rad",
-		["rtod"] = "math.deg",
-		["abs"] = "math.abs",
-		["floor"] = "math.floor",
-		["ceiling"] = "math.ceil",
-		["round"] = "math.round",
-		["sgn"] = "math.sign",
-		["sqr"] = "pfm.math.sqr",
-		["sqrt"] = "math.sqrt",
-		["sin"] = "pfm.math.sin_deg",
-		["asin"] = "pfm.math.asin_deg",
-		["cos"] = "pfm.math.cos_deg",
-		["acos"] = "pfm.math.acos_deg",
-		["tan"] = "pfm.math.tan_deg",
-		["exp"] = "math.exp",
-		["log"] = "math.log",
-		["min"] = "math.min",
-		["max"] = "math.max",
-		["atan2"] = "math.atan2", -- TODO: Confirm if this is correct
-		["pow"] = "math.pow",
-		["inrange"] = "pfm.math.in_range",
-		["clamp"] = "math.clamp",
-		["ramp"] = "pfm.math.ramp",
-		["lerp"] = "pfm.math.lerp",
-		["cramp"] = "pfm.math.cramp",
-		["clerp"] = "pfm.math.clerp",
-		["elerp"] = "pfm.math.elerp",
-		["noise"] = "pfm.math.noise",
-		["rescale"] = "pfm.math.rescale",
-		["crescale"] = "pfm.math.crescale"
+		["dtor"] = "deg2rad",
+		["rtod"] = "rad2deg",
+		["abs"] = "abs",
+		["floor"] = "floor",
+		["ceiling"] = "ceil",
+		["round"] = "round",
+		["sgn"] = "sgn",
+		["sqr"] = "sqr",
+		["sqrt"] = "sqrt",
+		["sin"] = "sin",
+		["asin"] = "asin",
+		["cos"] = "cos",
+		["acos"] = "acos",
+		["tan"] = "tan",
+		["exp"] = "exp",
+		["log"] = "log",
+		["min"] = "min",
+		["max"] = "max",
+		["atan2"] = "atan2", -- TODO: Confirm if this is correct
+		["pow"] = "pow",
+		["inrange"] = "inrange",
+		["clamp"] = "clamp",
+		["ramp"] = "ramp",
+		["lerp"] = "lerp",
+		["cramp"] = "cramp",
+		["clerp"] = "clerp",
+		["elerp"] = "elerp",
+		["noise"] = "noise",
+		["rescale"] = "rescale",
+		["crescale"] = "crescale"
 	}
-	local res,errMsg = math.parse_expression(expr,fns,varNames)
+	local fnTrig = {
+		["sin"] = true,
+		["asin"] = true,
+		["cos"] = true,
+		["acos"] = true,
+		["tan"] = true -- These expect degree as argument in SFM, but radian in exprtk, so they'll have to be wrapped
+		-- For some reason atan2 in SFM appears to be an exception to this rule and does *not* expect degree (needs to be confirmed!)
+	}
+	local varNames = {}
+	for varName,_ in pairs(variables) do
+		table.insert(varNames,varName)
+	end
+	local builtInVariables = {
+		["time"] = true,
+		["timeIndex"] = true,
+		["value"] = true
+	}
+	local res,errMsg = math.parse_expression(exprFull,fns,varNames)
 
 	local fnMap = {}
 	for _,fnData in ipairs(fns) do
@@ -89,10 +106,13 @@ sfm.convert_math_expression_to_pragma = function(expr,varNames)
 		local expr = res[i]
 		if(expr.code == math.EXPRESSION_CODE_VALUE) then
 			local identifier = expr.identifier
-			if(identifier:sub(1,1) == "+") then identifier = identifier:sub(2) end -- Lua doesn't support unary +
-			if(string.is_number(identifier) == false) then
-				-- Variable name; We'll look it up in the expression operator object, which is passed as 'self'
-				identifier = "self:GetProperty([[" .. identifier .. "]]):GetValue()"
+			if(identifier:sub(1,1) == "+") then identifier = identifier:sub(2) end -- Remove unary +
+			if(string.is_number(identifier) == false and builtInVariables[identifier] ~= true) then
+				if(variables[identifier] ~= nil) then
+					identifier = variables[identifier]
+				else
+					console.print_warning("Expression operator '" .. exprFull .. "' uses unknown variable '" .. identifier .. "' (or unsupported variable type)! This expression will not work.")
+				end
 			end
 			return identifier,i
 		end
@@ -109,7 +129,7 @@ sfm.convert_math_expression_to_pragma = function(expr,varNames)
 			l,i = parse_op(i -1)
 
 			local identifier = expr.identifier
-			if(identifier == "!=") then identifier = "~="
+			if(identifier == "!=") then identifier = "!="
 			elseif(identifier == "&&") then identifier = "and"
 			elseif(identifier == "||") then identifier = "or" end
 			return "(" .. l .. identifier .. r .. ")",i
@@ -134,6 +154,9 @@ sfm.convert_math_expression_to_pragma = function(expr,varNames)
 				if(first == false) then arg = arg .. ","
 				else first = false end
 				args = arg .. args
+			end
+			if(fnTrig[identifier] == true) then
+				args = "deg2rad(" .. args .. ")"
 			end
 			return identifier .. "(" .. args .. ")",i
 		end

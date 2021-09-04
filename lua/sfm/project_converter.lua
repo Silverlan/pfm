@@ -315,13 +315,17 @@ local function convert_bone_transforms(filmClip,processedObjects,mdlMsgCache)
 		end
 	end
 end
-local function apply_post_processing(project,filmClip,processedObjects)
+local function apply_post_processing(converter,project,filmClip,processedObjects)
 	-- Root bones in the source engine use a different coordinate system for whatever reason, so we
 	-- have to do some additional conversion in post-processing.
 	processedObjects = processedObjects or {}
 	local mdlMsgCache = {}
 	convert_bone_transforms(filmClip,processedObjects,mdlMsgCache)
 	
+	local pfmElToSfm = {}
+	for sfm,pfm in pairs(converter.m_sfmElementToPfmElement) do
+		pfmElToSfm[pfm] = sfm
+	end
 	for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
 		pfm.log("Processing track group '" .. tostring(trackGroup) .. "'...",pfm.LOG_CATEGORY_PFM_CONVERTER)
 		for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
@@ -331,10 +335,31 @@ local function apply_post_processing(project,filmClip,processedObjects)
 				local numChannels = #channels
 				pfm.log("Processing channel clip '" .. tostring(channelClip) .. "' with " .. numChannels .. " channels...",pfm.LOG_CATEGORY_PFM_CONVERTER)
 
+				local channelsRemove = {}
+				for i,channel in ipairs(channels:GetTable()) do
+					local sfmFromElement = pfmElToSfm[channel]:GetFromElement()
+					if(sfmFromElement ~= nil and sfmFromElement:GetType() == "DmePackColorOperator") then
+						for _,channelOther in ipairs(channels:GetTable()) do
+							local sfmToElement = pfmElToSfm[channelOther]:GetToElement()
+							if(util.is_same_object(sfmToElement,sfmFromElement)) then
+								local toAttr = channelOther:GetToAttribute()
+								channelOther:SetTargetPath("color/color/" .. toAttr)
+								channelOther:SetToElement(channel:GetToElement())
+								channelOther:SetToAttribute("color")
+							end
+						end
+						table.insert(channelsRemove,i)
+					end
+				end
+				table.sort(channelsRemove,function(a,b) return b < a end)
+				for _,i in ipairs(channelsRemove) do
+					channels:Remove(i)
+				end
+
 				-- Note: This is commented because it causes issues with some channels that use expression operators (e.g. fov/dof/etc.)
 				-- I don't remember what this block was for in the first place, if any problems should occur by this being commented,
 				-- uncomment it, but also make sure it works properly with expression operators!
-				local i = 1
+				--[[local i = 1
 				while(i < numChannels) do
 					local channel = channels:Get(i)
 					local name = channel:GetName()
@@ -358,7 +383,7 @@ local function apply_post_processing(project,filmClip,processedObjects)
 						channels:Remove(i)
 						numChannels = numChannels -1
 					else i = i +1 end
-				end
+				end]]
 
 				for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
 					-- pfm.log("Processing channel '" .. tostring(channel) .. "'...",pfm.LOG_CATEGORY_PFM_CONVERTER)
@@ -369,15 +394,17 @@ local function apply_post_processing(project,filmClip,processedObjects)
 						elseif(string.compare(toAttr,"fov",false)) then
 							local log = channel:GetLog()
 							log:SetDefaultValue(sfm.convert_source_fov_to_pragma(log:GetDefaultValue()))
-							for _,layer in ipairs(log:GetLayers():GetTable()) do
+							--[[for _,layer in ipairs(log:GetLayers():GetTable()) do
 								if(processedObjects[layer] == nil) then
 									processedObjects[layer] = true
 									local values = layer:GetValues()
-									for i,value in ipairs(values:GetTable()) do
+									local t = values:GetTable()
+									for i=1,#t do
+										local value = values:Get(i)
 										values:Set(i,sfm.convert_source_fov_to_pragma(value))
 									end
 								end
-							end
+							end]]
 						end
 					end
 
@@ -512,7 +539,7 @@ local function apply_post_processing(project,filmClip,processedObjects)
 				end
 			end
 			for _,childFilmClip in ipairs(track:GetFilmClips():GetTable()) do
-				apply_post_processing(project,childFilmClip,processedObjects)
+				apply_post_processing(converter,project,childFilmClip,processedObjects)
 			end
 		end
 	end
@@ -545,7 +572,7 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 		end)
 
 		for _,filmClip in ipairs(session:GetClips():GetTable()) do
-			apply_post_processing(project,filmClip)
+			apply_post_processing(self,project,filmClip)
 		end
 	end
 	pfm.log("Generating particle system files for embedded particle systems...",pfm.LOG_CATEGORY_PFM_CONVERTER)
@@ -891,14 +918,43 @@ sfm.register_element_type_conversion(sfm.Channel,fudm.PFMChannel,function(conver
 	pfmChannel:SetLogAttr(pfmLog)
 
 	local toAttr = sfmChannel:GetToAttribute()
-	if(toAttr == "orientation") then toAttr = "rotation" end
-	pfmChannel:SetToAttribute(toAttr)
 
 	-- To
 	local toElement = sfmChannel:GetToElement()
 	if(toElement == nil) then
 		-- pfm.log("Unsupported 'to'-element for channel '" .. sfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
-	else
+	elseif(toElement:GetType() ~= "DmePackColorOperator") then
+		if(toElement:GetType() == "DmeExpressionOperator") then
+			local sfmOperator = toElement
+
+			-- Translate toElement/toAttribute to that of the expression operator
+			for _,p in ipairs(sfmChannel:GetParents()) do
+				if(p:GetType() == "DmeChannelsClip") then
+					for _,channel in ipairs(p:GetChannels()) do
+						if(util.is_same_object(channel:GetFromElement(),toElement) and channel:GetFromAttribute() == "result") then
+							toElement = channel:GetToElement()
+							toAttr = channel:GetToAttribute()
+							break
+						end
+					end
+					break
+				end
+			end
+
+			local variables = {}
+			for name,attr in pairs(sfmOperator:GetDMXElement():GetAttributes()) do
+				if(name ~= "name" and name ~= "spewresult" and name ~= "result" and name ~= "expr" and name ~= "value") then
+					local val = attr:GetValue()
+					if(toElement ~= nil and toElement:GetType() == "DmeCamera" and toAttr == "fieldOfView") then
+						val = sfm.convert_source_fov_to_pragma(val)
+					end
+					variables[name] = val
+				end
+			end
+			local expr = sfm.convert_math_expression_to_pragma(sfmOperator:GetExpr(),variables)
+			pfmChannel:SetExpression(expr)
+		end
+		--debug.print("toElement type: " .. tostring(toElement:GetType()))
 		local pfmElement = converter:ConvertNewElement(toElement)
 		pfmChannel:SetToElementAttr(fudm.create_reference(pfmElement))
 
@@ -918,6 +974,8 @@ sfm.register_element_type_conversion(sfm.Channel,fudm.PFMChannel,function(conver
 			pfm.log("Invalid to-attribute '" .. toAttr .. "' of element '" .. pfmElement:GetName() .. "' used for channel '" .. pfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 		end
 	end
+	if(toAttr == "orientation") then toAttr = "rotation" end
+	pfmChannel:SetToAttribute(toAttr)
 
 	-- From
 	local fromAttr = sfmChannel:GetFromAttribute()
@@ -928,7 +986,7 @@ sfm.register_element_type_conversion(sfm.Channel,fudm.PFMChannel,function(conver
 	local fromElement = sfmChannel:GetFromElement()
 	if(fromElement == nil) then
 		-- pfm.log("Unsupported 'from'-element for channel '" .. sfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
-	else
+	elseif(fromElement:GetType() ~= "DmePackColorOperator") then -- color operators are handled separately
 		local pfmElement = converter:ConvertNewElement(fromElement)
 		pfmChannel:SetFromElementAttr(fudm.create_reference(pfmElement))
 
@@ -955,8 +1013,8 @@ sfm.register_element_type_conversion(sfm.Channel,fudm.PFMChannel,function(conver
 	end]]
 end)
 
-sfm.register_element_type_conversion(sfm.ExpressionOperator,fudm.PFMExpressionOperator,function(converter,sfmOperator,pfmOperator)
-	local varNames = {}
+sfm.register_element_type_conversion(sfm.ExpressionOperator,fudm.PFMExpressionOperator,function(converter,sfmOperator,pfmOperator) -- Obsolete; Remove me
+	--[[local varNames = {}
 	for name,attr in pairs(sfmOperator:GetDMXElement():GetAttributes()) do
 		if(name ~= "name" and name ~= "spewresult" and name ~= "result" and name ~= "expr" and name ~= "value") then
 			table.insert(varNames,name)
@@ -965,7 +1023,7 @@ sfm.register_element_type_conversion(sfm.ExpressionOperator,fudm.PFMExpressionOp
 	end
 	pfmOperator:SetExpression(sfm.convert_math_expression_to_pragma(sfmOperator:GetExpr(),varNames))
 	pfmOperator:SetResult(sfmOperator:GetResult())
-	pfmOperator:SetValue(sfmOperator:GetValue())
+	pfmOperator:SetValue(sfmOperator:GetValue())]]
 end)
 
 -- TODO: Graph editor element is obsolete; Remove it!
@@ -1184,7 +1242,10 @@ end)
 sfm.register_element_type_conversion(sfm.ChannelClip,fudm.PFMChannelClip,function(converter,sfmChannelClip,pfmChannelClip)
 	pfmChannelClip:SetTimeFrameAttr(converter:ConvertNewElement(sfmChannelClip:GetTimeFrame()))
 	for _,channel in ipairs(sfmChannelClip:GetChannels()) do
-		pfmChannelClip:GetChannelsAttr():PushBack(converter:ConvertNewElement(channel))
+		local fromElement = channel:GetFromElement()
+		if(fromElement == nil or fromElement:GetType() ~= "DmeExpressionOperator") then
+			pfmChannelClip:GetChannelsAttr():PushBack(converter:ConvertNewElement(channel))
+		end
 	end
 end)
 

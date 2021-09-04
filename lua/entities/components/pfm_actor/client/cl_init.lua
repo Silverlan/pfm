@@ -82,7 +82,7 @@ function ents.PFMActorComponent:UpdatePose()
 	if(actorData == nil) then return end
 	local pose = actorData:GetAbsolutePose()
 
-	--print("Pose: ",pose:GetOrigin())
+	--print("Pose: ",self:GetEntity(),pose:GetOrigin())
 	--print(actorData:GetParents()[1]:GetParents()[1]:GetTransform():GetPosition())
 	--print(actorData:FindParentElement())
 	--print(actorData:GetTransform():GetPosition())

@@ -80,9 +80,6 @@ function unirender.apply_image_view_swizzling(desc,texMapNode,texInfo)
 		[prosper.COMPONENT_SWIZZLE_B] = outRgb.b,
 		[prosper.COMPONENT_SWIZZLE_A] = outAlpha
 	}
-	debug.print("Valid: ",outAlpha ~= nil and "1" or "0")
-	debug.print(util.get_type_name(outRgb.r) .. " " .. util.get_type_name(outAlpha))
-	console.print_table(components)
 	return desc:CombineRGB(components[swizzleArray[1]],components[swizzleArray[2]],components[swizzleArray[3]]),components[swizzleArray[4]]
 end
 

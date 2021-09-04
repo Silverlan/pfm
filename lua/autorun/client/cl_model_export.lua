@@ -7,6 +7,7 @@
 ]]
 
 include("/gui/wimodelview.lua")
+include("/util/model_retarget.lua")
 
 local function add_files(path,tFiles,assets)
 	for _,f in ipairs(tFiles) do
@@ -84,6 +85,7 @@ console.register_command("util_export_asset",function(pl,...)
 	local recursive = false
 	local listAnimations = false
 	local enablePreview = true
+	local retargetSource
 	local cmdArgs = console.parse_command_arguments({...})
 	local imageFormatToEnum = {
 		["png"] = game.Model.ExportInfo.IMAGE_FORMAT_PNG,
@@ -166,7 +168,8 @@ console.register_command("util_export_asset",function(pl,...)
 			if(args[1] ~= nil) then exportInfo.normalizeTextureNames = toboolean(args[1])
 			else exportInfo.normalizeTextureNames = true end
 		elseif(cmd == "format") then format = args[1]
-		elseif(cmd == "game") then gameIdentifier = args[1] end
+		elseif(cmd == "game") then gameIdentifier = args[1]
+		elseif(cmd == "retarget_source") then retargetSource = args[1] end
 	end
 
 	if(mdlName ~= nil) then
@@ -180,6 +183,17 @@ console.register_command("util_export_asset",function(pl,...)
 			local result,err = util.export_source_engine_models(models,gameIdentifier)
 			if(result == false) then console.print_warning("Export failed: " .. err) end
 			return
+		end
+		if(retargetSource ~= nil and #models == 1) then
+			print("Retargeting model '" .. retargetSource .. "' to '" .. mdlName .. "'...")
+			local mdl = util.retarget_model(retargetSource,mdlName)
+			if(mdl == nil) then
+				console.print_warning("No model of name '" .. mdlName .. "' found!")
+				return
+			end
+			local result,err = mdl:Export(exportInfo)
+			if(result) then print("Model exported successfully!")
+			else console.print_warning("Unable to export model: ",err) end
 		end
 		for _,mdlName in ipairs(models) do
 			local mdl = game.load_model(mdlName)

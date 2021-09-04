@@ -9,7 +9,7 @@
 fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR = fudm.register_element("PFMExpressionOperator")
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"result",fudm.Float(0.0))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"expression",fudm.String(""))
-fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"value",fudm.Float(0.0)) -- TODO: Can by Vector as well!
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR,"value",fudm.Float(0.0)) -- TODO: Can be Vector as well!
 
 function fudm.PFMExpressionOperator:Initialize()
 	local propValue = self:GetProperty("value")

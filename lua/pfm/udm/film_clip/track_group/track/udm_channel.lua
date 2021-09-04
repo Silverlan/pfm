@@ -15,6 +15,8 @@ fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"fromElement",fudm.
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"toAttribute",fudm.String())
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"toElement",fudm.ELEMENT_TYPE_ANY)
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"graphCurve",fudm.PFMGraphCurve())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"expression",fudm.String())
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"targetPath",fudm.String())
 
 function fudm.PFMChannel:IsBoneTransformChannel()
 	if(self.m_cacheIsBoneTransformChannel ~= nil) then return self.m_cacheIsBoneTransformChannel end
@@ -41,7 +43,7 @@ function fudm.PFMChannel:SetPlaybackOffset(offset)
 	-- Note: This function will grab the appropriate value from the log
 	-- and assign it to the 'toElement'. If no log values exist, the
 	-- 'fromAttribute' value of the 'fromElement' element will be used instead.
-	local toElement = self:GetToElement()
+	--[[local toElement = self:GetToElement()
 	if(toElement == nil) then return end
 	local toAttribute = self:GetToAttribute()
 	local el = toElement:GetChild(toAttribute)
@@ -63,5 +65,5 @@ function fudm.PFMChannel:SetPlaybackOffset(offset)
 		end
 	else
 		-- pfm.log("Invalid to-attribute '" .. toAttribute .. "' of element '" .. toElement:GetName() .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-	end
+	end]]
 end
