@@ -26,6 +26,7 @@ function pfm.ProjectManager:OnInitialize()
 	self:CreateNewProject()
 	self.m_map = game.get_map_name()
 end
+function pfm.ProjectManager:GetAnimationManager() return self.m_animManager end
 function pfm.ProjectManager:LoadMap(mapName)
 	pfm.log("Loading map '" .. mapName .. "'...",pfm.LOG_CATEGORY_PFM)
 	if(mapName ~= nil) then

@@ -36,7 +36,8 @@ function fudm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 		min = 0.0,
 		max = 10000.0,
 		default = 2000.0,
-		unit = (self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
+		unit = (self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen"),
+		path = "light/intensity"
 	})
 	actorEditor:AddControl(self,itemComponent,{
 		name = locale.get_text("light_unit"),
@@ -70,6 +71,7 @@ function fudm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 		max = util.units_to_metres(1000.0),
 		default = util.units_to_metres(100.0),
 		unit = locale.get_text("symbol_meters"),
+		path = "radius/radius",
 		translateToInterface = function(val) return util.units_to_metres(val) end,
 		translateFromInterface = function(val) return util.metres_to_units(val) end
 	})
@@ -79,6 +81,7 @@ function fudm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 		min = 0.0,
 		max = 180.0,
 		default = 40.0,
+		path = "light_spot/innerConeAngle",
 		unit = locale.get_text("symbol_degree")
 	})
 	actorEditor:AddControl(self,itemComponent,{
@@ -87,14 +90,17 @@ function fudm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 		min = 0.0,
 		max = 180.0,
 		default = 50.0,
+		path = "light_spot/outerConeAngle",
 		unit = locale.get_text("symbol_degree")
 	})
 	actorEditor:AddControl(self,itemComponent,{
 		name = locale.get_text("color"),
-		addControl = function(ctrls)
+		path = "color/color",
+		addControl = function(ctrls,onChange)
 			local colField,wrapper = ctrls:AddColorField(locale.get_text("color"),"color",self:GetColor(),function(oldCol,newCol)
 				self:SetColor(newCol)
 				actorEditor:TagRenderSceneAsDirty()
+				onChange(newCol)
 			end)
 			return wrapper
 		end

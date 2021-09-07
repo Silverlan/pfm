@@ -349,7 +349,25 @@ local function apply_post_processing(converter,project,filmClip,processedObjects
 							end
 						end
 						table.insert(channelsRemove,i)
+					else
+						local toElement = channel:GetToElement()
+						if(toElement ~= nil) then
+							local toAttr = channel:GetToAttribute()
+							if(toElement:GetType() == fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT) then
+								if(toAttr == "radius") then channel:SetTargetPath("radius/radius")
+								elseif(toAttr == "intensity") then channel:SetTargetPath("light/intensity")
+								elseif(toAttr == "color") then channel:SetTargetPath("color/color") end
+							end
+						end
 					end
+					local toElement = channel:GetToElement()
+					if(toElement ~= nil and #channelClip:GetActor() == 0) then
+						local actor = toElement:FindParent(function(p) return p:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR end) or nil
+						if(actor ~= nil) then
+							channelClip:SetActor(actor:GetUniqueId())
+						end
+					end
+					-- TODO: If channel clip has no channels, determine actor by name?
 				end
 				table.sort(channelsRemove,function(a,b) return b < a end)
 				for _,i in ipairs(channelsRemove) do

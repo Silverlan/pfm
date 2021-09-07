@@ -26,6 +26,21 @@ function fudm.PFMTrack:CalcTimeFrame()
 	return timeFrame
 end
 
+function fudm.PFMTrack:FindActorChannelClip(actor)
+	if(type(actor) ~= "string") then actor = actor:GetUniqueId() end
+	for _,channelClip in ipairs(self:GetChannelClips():GetTable()) do
+		if(channelClip:GetActor() == actor) then return channelClip end
+	end
+end
+
+function fudm.PFMTrack:GetOrAddActorChannelClip(actor)
+	local channelClip = self:FindActorChannelClip(actor)
+	if(channelClip ~= nil) then return channelClip end
+	channelClip = self:AddChannelClip(actor:GetName())
+	channelClip:SetUniqueId(actor:GetUniqueId())
+	return channelClip
+end
+
 function fudm.PFMTrack:AddAudioClip(clip)
 	if(type(clip) == "string") then
 		local name = clip

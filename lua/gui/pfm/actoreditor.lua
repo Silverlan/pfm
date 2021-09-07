@@ -299,8 +299,22 @@ end
 function gui.PFMActorEditor:TagRenderSceneAsDirty(dirty)
 	tool.get_filmmaker():TagRenderSceneAsDirty(dirty)
 end
+local function applyComponentChannelValue(actorEditor,component,controlData,value)
+	local parent = component:GetSceneParent()
+	if(parent ~= nil and controlData.path ~= nil and parent:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR) then
+		actorEditor:SetAnimationChannelValue(parent,controlData.path,value)
+	end
+end
 function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	if(util.is_valid(self.m_animSetControls) == false) then return end
+
+	local function applyValue(value)
+		local parent = component:GetSceneParent()
+		if(parent ~= nil and controlData.path ~= nil and parent:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR) then
+			self:SetAnimationChannelValue(parent,controlData.path,value)
+		end
+	end
+
 	local slider = self.m_animSetControls:AddSliderControl(controlData.name,controlData.identifier,controlData.default,controlData.min,controlData.max,nil,nil,controlData.integer or controlData.boolean)
 	local callbacks = {}
 	local skipCallbacks
@@ -394,6 +408,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 		elseif(controlData.setLeft ~= nil) then
 			controlData.setLeft(component,value)
 		end
+		applyComponentChannelValue(self,component,controlData,value)
 	end)
 	slider:AddCallback("OnRightValueChanged",function(el,value)
 		if(controlData.boolean) then value = toboolean(value) end
@@ -402,32 +417,43 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 		end
 	end)
 	table.insert(self.m_sliderControls,slider)
-
-	--[[
-
-	local channelTrackGroup = (filmClip ~= nil) and filmClip:GetChannelTrackGroup() or nil
-	local track = (channelTrackGroup ~= nil) and channelTrackGroup:GetTracks():Get(1) or nil
-	if(track ~= nil) then
-		local channelClips = track:GetChannelClips()
-		for _,channelClip in ipairs(track:GetChannelClips():GetTable()) do
-			for _,channel in ipairs(channelClip:GetClips():GetTable()) do
-				local toElement = channel:GetToElement()
-
-			end
-		end
-		-- TODO: Get channel clip? How?
-		-- TODO: Get actor? How?
-		-- Iterate channel clips
-		-- Iterate channels
-		-- ToElement
-		-- -> Flex?
-
-		local actorData = self.m_treeElementToActor[el]
-		local ent = actorData:FindEntity()
-		local graphEditor = tool.get_filmmaker():GetViewport():GetGraphEditor()
-		graphEditor:Setup(actor,channelClip)
-	end]]
 	return slider
+end
+function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
+	local fm = tool.get_filmmaker()
+	local timeline = fm:GetTimeline()
+	if(util.is_valid(timeline) and timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH) then
+		local filmClip = self:GetFilmClip()
+		local track = filmClip:FindAnimationChannelTrack()
+		
+		local animManager = fm:GetAnimationManager()
+		local channelClip = track:GetOrAddActorChannelClip(actor)
+		local path = animation.Channel.Path(path)
+		local componentName,memberName = ents.Animated2Component.parse_component_channel_path(path)
+		local componentId = componentName and ents.get_component_id(componentName)
+		local componentInfo = componentId and ents.get_component_info(componentId)
+		local memberInfo = memberName and componentInfo and componentInfo:GetMemberInfo(memberName)
+		if(memberInfo ~= nil) then
+			local type = memberInfo.type
+			path = path:ToUri(false)
+			local channel = channelClip:GetOrAddChannel(path,type)
+			local log = channel:GetLog()
+			local layer = log:GetLayers():Get(1)
+
+			local time = fm:GetTimeOffset()
+			pfm.log("Adding channel value " .. tostring(value) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
+			local localTime = channelClip:GetTimeFrame():LocalizeTimeOffset(time)
+			layer:InsertValue(localTime,value)
+			animManager:SetChannelValue(actor,path,localTime,value,channelClip,type)
+			animManager:SetAnimationsDirty()
+			fm:TagRenderSceneAsDirty()
+		else
+			local baseMsg = "Unable to apply animation channel value with channel path '" .. path .. "': "
+			if(componentName == nil) then pfm.log(baseMsg .. "Unable to determine component type from animation channel path '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+			elseif(componentId == nil) then pfm.log(baseMsg .. "Component '" .. componentName .. "' is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+			else pfm.log(baseMsg .. "Component '" .. componentName .. "' has no known member '" .. memberName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
+		end
+	end
 end
 function gui.PFMActorEditor:ScheduleUpdateSelectedEntities()
 	if(self.m_updateSelectedEntities) then return end
@@ -598,6 +624,21 @@ function gui.PFMActorEditor:AddActor(actor)
 			pContext:SetPos(input.get_cursor_pos())
 			local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
 
+			--[[local componentTypeNames = {}
+			for _,componentId in ipairs(ents.get_registered_component_types()) do
+				local info = ents.get_component_info(componentId)
+				local name = info.name
+				table.insert(componentTypeNames,name)
+			end
+			table.sort(componentTypeNames)
+			for _,name in ipairs(componentTypeNames) do
+				local displayName = name
+				local valid,n = locale.get_text("component_" .. name,nil,true)
+				if(valid) then displayName = n end
+				pComponentsMenu:AddItem(displayName,function()
+					self:CreateNewActorComponent(actor,name,true)
+				end)
+			end]]
 			local componentManager = self.m_componentManager
 			local components = {}
 			for componentType,udmComponent in pairs(componentManager:GetComponents():GetChildren()) do
@@ -680,7 +721,10 @@ function gui.PFMActorEditor:AddControl(component,item,controlData,identifier)
 	local fOnSelected = function()
 		selectedCount = selectedCount +1
 		if(selectedCount > 1 or util.is_valid(ctrl)) then return end
-		if(controlData.addControl) then ctrl = controlData.addControl(self.m_animSetControls)
+		if(controlData.addControl) then
+			ctrl = controlData.addControl(self.m_animSetControls,function(value)
+				applyComponentChannelValue(self,component,controlData,value)
+			end)
 		else
 			ctrl = self:AddSliderControl(component,controlData)
 			if(controlData.unit) then ctrl:SetUnit(controlData.unit) end

@@ -82,7 +82,8 @@ function fudm.get_type_name(typeId)
 end
 
 function fudm.get_type_id(typeName)
-	return fudm.impl.class_to_type_id[typeName]
+	if(fudm[typeName] == nil) then return end
+	return fudm.impl.class_to_type_id[fudm[typeName]]
 end
 
 function fudm.register_attribute(className,defaultValue)

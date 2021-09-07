@@ -20,7 +20,8 @@ local staticChannelPaths = {
 		["intensity"] = "light/intensity"
 	},
 	["PFMSpotLight"] = {
-		["intensity"] = "light/intensity"
+		["intensity"] = "light/intensity",
+		["maxDistance"] = "radius/radius"
 	},
 	["PFMDirectionalLight"] = {
 		["intensity"] = "light/intensity"
@@ -51,33 +52,59 @@ end
 
 function pfm.AnimationManager:SetFilmClip(filmClip)
 	self.m_filmClip = filmClip
-	if(self.m_filmClipAnims[self.m_filmClip] == nil) then return end
-	local anims = self.m_filmClipAnims[self.m_filmClip]
+	if(self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)] == nil) then return end
+	local anims = self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)]
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR)}) do
 		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 		local actorData = actorC:GetActorData()
-		if(anims[actorData] ~= nil) then
+		if(anims[util.get_object_hash(actorData)] ~= nil) then
 			local animC = ent:AddComponent(ents.COMPONENT_ANIMATED2)
 			if(animC:GetAnimationManager(0) == nil) then animC:AddAnimationManager() end
 			local animManager = animC:GetAnimationManager(0)
 			local player = animManager:GetPlayer()
 			player:SetPlaybackRate(0.0)
-			animC:PlayAnimation(animManager,anims[actorData])
+			animC:PlayAnimation(animManager,anims[util.get_object_hash(actorData)])
 		end
 	end
 end
 
 function pfm.AnimationManager:SetTime(t)
-	if(self.m_filmClip == nil or self.m_filmClipAnims[self.m_filmClip] == nil) then return end
+	if(self.m_filmClip == nil or self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)] == nil) then return end
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_ANIMATED2)}) do
 		local animC = ent:GetComponent(ents.COMPONENT_ANIMATED2)
 		local manager = animC:GetAnimationManager(0)
-		if(manager ~= nil) then manager:GetPlayer():SetCurrentTime(t) end
+		if(manager ~= nil) then
+			local player = manager:GetPlayer()
+			player:SetCurrentTime(t or player:GetCurrentTime())
+		end
 	end
 end
 
+function pfm.AnimationManager:SetAnimationsDirty()
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_ANIMATED2)}) do
+		local animC = ent:GetComponent(ents.COMPONENT_ANIMATED2)
+		local animManager = (animC ~= nil) and animC:GetAnimationManager(0) or nil
+		if(animManager ~= nil) then
+			local player = animManager:GetPlayer()
+			player:SetAnimationDirty()
+		end
+	end
+	game.update_animations(0.0)
+end
+
 function pfm.AnimationManager:InitializeFilmClip(filmClip)
-	self.m_filmClipAnims[filmClip] = self:GenerateAnimations(filmClip)
+	self.m_filmClipAnims[util.get_object_hash(filmClip)] = self:GenerateAnimations(filmClip)
+end
+
+function pfm.AnimationManager:AddChannel(anim,channelClip,channelPath,type)
+	pfm.log("Adding animation channel of type '" .. udm.enum_type_to_ascii(type) .. "' with path '" .. channelPath .. "' to animation '" .. tostring(anim) .. "'...",pfm.LOG_CATEGORY_PFM)
+	local animChannel = anim:AddChannel(channelPath,type)
+	local udmChannelTf = channelClip:GetTimeFrame()
+	local channelTf = animChannel:GetTimeFrame()
+	channelTf.startOffset = udmChannelTf:GetStart()
+	channelTf.scale = udmChannelTf:GetScale()
+	animChannel:SetTimeFrame(channelTf)
+	return animChannel
 end
 
 function pfm.AnimationManager:GenerateAnimations(filmClip)
@@ -94,10 +121,10 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 				if(#channelPath == 0) then channelPath = nil end
 				channelPath = channelPath or get_channel_path(channel:GetToElement(),attr)
 				if(channelPath ~= nil) then
-					actorChannels[parent] = actorChannels[parent] or {}
-					actorChannels[parent][channelPath] = {channel,channelClip}
+					actorChannels[util.get_object_hash(parent)] = actorChannels[util.get_object_hash(parent)] or {}
+					actorChannels[util.get_object_hash(parent)][channelPath] = {channel,channelClip}
 				else
-					console.print_warning("Unable to determine channel path for channel animating attribute '" .. attr .. "' of element '" .. tostring(toElement) .. "'!")
+					pfm.log("Unable to determine channel path for channel animating attribute '" .. attr .. "' of element '" .. tostring(toElement) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 				end
 			end
 		end
@@ -124,7 +151,7 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 		[util.VAR_TYPE_QUATERNION] = udm.TYPE_QUATERNION
 	}
 	local animations = {}
-	for actorData,channels in pairs(actorChannels) do
+	for actorDataHash,channels in pairs(actorChannels) do
 		local anim = animation.Animation2.create()
 		for channelPath,channelData in pairs(channels) do
 			local channel = channelData[1]
@@ -133,22 +160,52 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 			local layer = log:GetLayers():Get(1)
 			local times = layer:GetTimes():GetTable()
 			for i=0,#times -1 do
-				times:Set(i,channelClip:GetTimeFrame():GlobalizeOffset(times:At(i)))
+				times:Set(i,times:At(i))
 			end
 			local values = layer:GetValues():GetTable()
 
-			console.print_table(times:ToTable())
-			console.print_table(values:ToTable())
-			local animChannel = anim:AddChannel(channelPath,varTypeToUdmType[layer:GetValues():GetValueType()])
+			local animChannel = self:AddChannel(anim,channelClip,channelPath,varTypeToUdmType[layer:GetValues():GetValueType()])
 			local expr = channel:GetExpression()
 			if(#expr > 0) then
 				local r = animChannel:SetValueExpression(expr)
-				if(r ~= true) then console.print_warning("Unable to translate SFM expression operator expression '" .. expr .. "': " .. r) end
+				if(r ~= true) then pfm.log("Unable to translate SFM expression operator expression '" .. expr .. "': " .. r,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
 			end
 			animChannel:SetValues(times:ToTable(),values:ToTable())
 		end
 		anim:UpdateDuration()
-		animations[actorData] = anim
+		animations[actorDataHash] = anim
 	end
 	return animations
+end
+
+function pfm.AnimationManager:SetChannelValue(actor,path,time,value,channelClip,type)
+	if(self.m_filmClip == nil or self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)] == nil) then
+		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+	local anims = self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)]
+	if(anims[util.get_object_hash(actor)] == nil) then
+		pfm.log("Unable to apply channel value for actor '" .. tostring(actor) .. "': No animation exists for this actor for the currently active film clip '" .. tostring(self.m_filmClip) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+	local anim = anims[util.get_object_hash(actor)]
+	local channel = anim:FindChannel(path)
+	local reloadRequired = false;
+	if(channel == nil and channelClip ~= nil and type ~= nil) then
+		channel = self:AddChannel(anim,channelClip,path,type)
+		reloadRequired = true
+	end
+	assert(channel ~= nil)
+	if(channel == nil) then return end
+	channel:AddValue(time,value)
+	anim:UpdateDuration()
+
+	if(reloadRequired) then
+		for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_ANIMATED2)}) do
+			local animC = ent:GetComponent(ents.COMPONENT_ANIMATED2)
+			local animManager = animC:GetAnimationManager(0)
+			local entAnim = animManager and animManager:GetCurrentAnimation() or nil
+			if(entAnim == anim) then animC:ReloadAnimation(animManager) end
+		end
+	end
 end
