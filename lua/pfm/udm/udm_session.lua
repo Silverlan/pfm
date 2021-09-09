@@ -79,7 +79,9 @@ function fudm.PFMSession:AddFilmClip()
 	end
 	local i = 1
 	while(filmClipNames[name .. i] ~= nil) do i = i +1 end
+	name = name .. i
 	local filmClip = fudm.create_element(fudm.ELEMENT_TYPE_PFM_FILM_CLIP,name)
+	filmClip:ChangeName(name)
 	filmClip:GetTimeFrame():SetDuration(10.0)
 	filmClip:GetTimeFrame():SetStart(endTime)
 	filmTrack:AddFilmClip(filmClip)

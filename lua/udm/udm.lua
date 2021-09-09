@@ -185,6 +185,32 @@ function fudm.save(ds,el)
 	el:SaveToBinary(ds)
 end
 
+local varTypeToUdmType = {
+	[util.VAR_TYPE_BOOL] = udm.TYPE_BOOLEAN,
+	[util.VAR_TYPE_DOUBLE] = udm.TYPE_DOUBLE,
+	[util.VAR_TYPE_FLOAT] = udm.TYPE_FLOAT,
+	[util.VAR_TYPE_INT8] = udm.TYPE_INT8,
+	[util.VAR_TYPE_INT16] = udm.TYPE_INT16,
+	[util.VAR_TYPE_INT32] = udm.TYPE_INT32,
+	[util.VAR_TYPE_INT64] = udm.TYPE_INT64,
+	[util.VAR_TYPE_LONG_DOUBLE] = udm.TYPE_DOUBLE,
+	[util.VAR_TYPE_STRING] = udm.TYPE_STRING,
+	[util.VAR_TYPE_UINT8] = udm.TYPE_UINT8,
+	[util.VAR_TYPE_UINT16] = udm.TYPE_UINT16,
+	[util.VAR_TYPE_UINT32] = udm.TYPE_UINT32,
+	[util.VAR_TYPE_UINT64] = udm.TYPE_UINT64,
+	[util.VAR_TYPE_EULER_ANGLES] = udm.TYPE_EULER_ANGLES,
+	[util.VAR_TYPE_COLOR] = udm.TYPE_SRGBA,
+	[util.VAR_TYPE_VECTOR] = udm.TYPE_VECTOR3,
+	[util.VAR_TYPE_VECTOR2] = udm.TYPE_VECTOR2,
+	[util.VAR_TYPE_VECTOR4] = udm.TYPE_VECTOR4,
+	[util.VAR_TYPE_QUATERNION] = udm.TYPE_QUATERNION
+}
+local udmTypeToVarType = {}
+for k,v in pairs(varTypeToUdmType) do udmTypeToVarType[v] = k end
+function fudm.var_type_to_udm_type(type) return varTypeToUdmType[type] end
+function fudm.udm_type_to_var_type(type) return udmTypeToVarType[type] end
+
 include("udm_attribute.lua")
 include("udm_element.lua")
 

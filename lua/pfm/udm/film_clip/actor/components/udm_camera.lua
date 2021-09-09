@@ -36,7 +36,8 @@ function fudm.PFMCamera:SetupControls(actorEditor,itemComponent)
 		property = "fov",
 		min = 10.0,
 		max = 120.0,
-		default = 30.0
+		default = 30.0,
+		path = "ec/camera/fov"
 	})
 
 	actorEditor:AddControl(self,itemComponent,{
@@ -97,13 +98,15 @@ function fudm.PFMCamera:SetupControls(actorEditor,itemComponent)
 		property = "zNear",
 		min = 0.0,
 		max = 1000.0,
-		default = ents.CameraComponent.DEFAULT_NEAR_Z
+		default = ents.CameraComponent.DEFAULT_NEAR_Z,
+		path = "ec/camera/nearz"
 	})
 	actorEditor:AddControl(self,itemComponent,{
 		name = locale.get_text("pfm_component_camera_far_z"),
 		property = "zFar",
 		min = 0.0,
 		max = ents.CameraComponent.DEFAULT_FAR_Z,
-		default = ents.CameraComponent.DEFAULT_FAR_Z
+		default = ents.CameraComponent.DEFAULT_FAR_Z,
+		path = "ec/camera/farz"
 	})
 end

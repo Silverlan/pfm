@@ -33,10 +33,12 @@ function fudm.PFMDirectionalLight:SetupControls(actorEditor,itemComponent)
 		min = 0.0,
 		max = 10000.0,
 		default = 2000.0,
-		unit = locale.get_text("symbol_lux")
+		unit = locale.get_text("symbol_lux"),
+		path = "ec/light/intensity"
 	})
 	actorEditor:AddControl(self,itemComponent,{
 		name = locale.get_text("color"),
+		path = "ec/color/color",
 		addControl = function(ctrls)
 			local colField,wrapper = ctrls:AddColorField(locale.get_text("color"),"color",self:GetColor(),function(oldCol,newCol)
 				self:SetColor(newCol)

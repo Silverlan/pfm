@@ -419,6 +419,11 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	table.insert(self.m_sliderControls,slider)
 	return slider
 end
+function gui.PFMActorEditor:GetTimelineMode()
+	local timeline = tool.get_filmmaker():GetTimeline()
+	if(util.is_valid(timeline) == false) then return gui.PFMTimeline.EDITOR_CLIP end
+	return timeline:GetEditor()
+end
 function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 	local fm = tool.get_filmmaker()
 	local timeline = fm:GetTimeline()
@@ -432,11 +437,13 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 		local componentName,memberName = ents.Animated2Component.parse_component_channel_path(path)
 		local componentId = componentName and ents.get_component_id(componentName)
 		local componentInfo = componentId and ents.get_component_info(componentId)
-		local memberInfo = memberName and componentInfo and componentInfo:GetMemberInfo(memberName)
+		local memberInfo = memberName and componentInfo and componentInfo:GetMemberInfo(memberName:GetString())
 		if(memberInfo ~= nil) then
 			local type = memberInfo.type
 			path = path:ToUri(false)
-			local channel = channelClip:GetOrAddChannel(path,type)
+			local varType = fudm.udm_type_to_var_type(type)
+			if(memberName:GetString() == "color") then varType = util.VAR_TYPE_COLOR end -- TODO: How to handle this properly?
+			local channel = channelClip:GetOrAddChannel(path,varType)
 			local log = channel:GetLog()
 			local layer = log:GetLayers():Get(1)
 
@@ -444,11 +451,13 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 			pfm.log("Adding channel value " .. tostring(value) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 			local localTime = channelClip:GetTimeFrame():LocalizeTimeOffset(time)
 			layer:InsertValue(localTime,value)
-			animManager:SetChannelValue(actor,path,localTime,value,channelClip,type)
+			local channelValue = value
+			if(util.get_type_name(channelValue) == "Color") then channelValue = channelValue:ToVector() end
+			animManager:SetChannelValue(actor,path,localTime,channelValue,channelClip,type)
 			animManager:SetAnimationsDirty()
 			fm:TagRenderSceneAsDirty()
 		else
-			local baseMsg = "Unable to apply animation channel value with channel path '" .. path .. "': "
+			local baseMsg = "Unable to apply animation channel value with channel path '" .. path.path:GetString() .. "': "
 			if(componentName == nil) then pfm.log(baseMsg .. "Unable to determine component type from animation channel path '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 			elseif(componentId == nil) then pfm.log(baseMsg .. "Component '" .. componentName .. "' is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 			else pfm.log(baseMsg .. "Component '" .. componentName .. "' has no known member '" .. memberName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end

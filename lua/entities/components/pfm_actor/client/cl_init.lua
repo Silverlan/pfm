@@ -115,7 +115,7 @@ end
 function ents.PFMActorComponent:OnOffsetChanged(clipOffset,gameViewFlags)
 	local ent = self:GetEntity()
 	if(bit.band(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE) == ents.PFMProject.GAME_VIEW_FLAG_NONE) then
-		self:UpdatePose()
+		--self:UpdatePose()
 		self:UpdateOperators()
 	end
 
@@ -171,6 +171,7 @@ end
 	return pose
 end]]
 function ents.PFMActorComponent:UpdateOperators()
+	-- TODO: Operators should be deprecated
 	local actorData = self:GetActorData()
 	if(actorData == nil) then return end
 	local operators = actorData:GetOperators():GetTable()

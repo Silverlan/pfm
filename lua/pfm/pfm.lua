@@ -213,8 +213,17 @@ pfm.create_empty_project = function()
 	filmTrack:ChangeName("Film")
 	subClipTrackGroup:GetTracksAttr():PushBack(filmTrack)
 
-	local shot1 = session:AddFilmClip()
+	local shot1 = filmTrack:AddFilmClip("shot1")
 	shot1:GetTimeFrame():SetDuration(60.0)
+	filmClip:GetTimeFrame():SetDuration(60.0)
+
+	local channelTrackGroup = fudm.create_element(fudm.ELEMENT_TYPE_PFM_TRACK_GROUP)
+	channelTrackGroup:ChangeName("channelTrackGroup")
+	shot1:GetTrackGroupsAttr():PushBack(channelTrackGroup)
+
+	local animSetEditorChannelsTrack = fudm.create_element(fudm.ELEMENT_TYPE_PFM_TRACK)
+	animSetEditorChannelsTrack:ChangeName("animSetEditorChannels")
+	channelTrackGroup:GetTracksAttr():PushBack(animSetEditorChannelsTrack)
 
 	return project
 end

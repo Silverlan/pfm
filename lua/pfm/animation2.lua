@@ -53,19 +53,22 @@ end
 function pfm.AnimationManager:SetFilmClip(filmClip)
 	self.m_filmClip = filmClip
 	if(self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)] == nil) then return end
-	local anims = self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)]
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR)}) do
-		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-		local actorData = actorC:GetActorData()
-		if(anims[util.get_object_hash(actorData)] ~= nil) then
-			local animC = ent:AddComponent(ents.COMPONENT_ANIMATED2)
-			if(animC:GetAnimationManager(0) == nil) then animC:AddAnimationManager() end
-			local animManager = animC:GetAnimationManager(0)
-			local player = animManager:GetPlayer()
-			player:SetPlaybackRate(0.0)
-			animC:PlayAnimation(animManager,anims[util.get_object_hash(actorData)])
-		end
+		self:PlayActorAnimation(ent)
 	end
+end
+
+function pfm.AnimationManager:PlayActorAnimation(ent)
+	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+	local actorData = actorC:GetActorData()
+	local anims = self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)]
+	if(anims[util.get_object_hash(actorData)] == nil) then return end
+	local animC = ent:AddComponent(ents.COMPONENT_ANIMATED2)
+	if(animC:GetAnimationManager(0) == nil) then animC:AddAnimationManager() end
+	local animManager = animC:GetAnimationManager(0)
+	local player = animManager:GetPlayer()
+	player:SetPlaybackRate(0.0)
+	animC:PlayAnimation(animManager,anims[util.get_object_hash(actorData)])
 end
 
 function pfm.AnimationManager:SetTime(t)
@@ -129,27 +132,6 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 			end
 		end
 	end
-	local varTypeToUdmType = {
-		[util.VAR_TYPE_BOOL] = udm.TYPE_BOOLEAN,
-		[util.VAR_TYPE_DOUBLE] = udm.TYPE_DOUBLE,
-		[util.VAR_TYPE_FLOAT] = udm.TYPE_FLOAT,
-		[util.VAR_TYPE_INT8] = udm.TYPE_INT8,
-		[util.VAR_TYPE_INT16] = udm.TYPE_INT16,
-		[util.VAR_TYPE_INT32] = udm.TYPE_INT32,
-		[util.VAR_TYPE_INT64] = udm.TYPE_INT64,
-		[util.VAR_TYPE_LONG_DOUBLE] = udm.TYPE_DOUBLE,
-		[util.VAR_TYPE_STRING] = udm.TYPE_STRING,
-		[util.VAR_TYPE_UINT8] = udm.TYPE_UINT8,
-		[util.VAR_TYPE_UINT16] = udm.TYPE_UINT16,
-		[util.VAR_TYPE_UINT32] = udm.TYPE_UINT32,
-		[util.VAR_TYPE_UINT64] = udm.TYPE_UINT64,
-		[util.VAR_TYPE_EULER_ANGLES] = udm.TYPE_EULER_ANGLES,
-		[util.VAR_TYPE_COLOR] = udm.TYPE_SRGBA,
-		[util.VAR_TYPE_VECTOR] = udm.TYPE_VECTOR3,
-		[util.VAR_TYPE_VECTOR2] = udm.TYPE_VECTOR2,
-		[util.VAR_TYPE_VECTOR4] = udm.TYPE_VECTOR4,
-		[util.VAR_TYPE_QUATERNION] = udm.TYPE_QUATERNION
-	}
 	local animations = {}
 	for actorDataHash,channels in pairs(actorChannels) do
 		local anim = animation.Animation2.create()
@@ -164,7 +146,7 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 			end
 			local values = layer:GetValues():GetTable()
 
-			local animChannel = self:AddChannel(anim,channelClip,channelPath,varTypeToUdmType[layer:GetValues():GetValueType()])
+			local animChannel = self:AddChannel(anim,channelClip,channelPath,fudm.var_type_to_udm_type(layer:GetValues():GetValueType()))
 			local expr = channel:GetExpression()
 			if(#expr > 0) then
 				local r = animChannel:SetValueExpression(expr)
@@ -185,12 +167,15 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,channelClip,
 	end
 	local anims = self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)]
 	if(anims[util.get_object_hash(actor)] == nil) then
-		pfm.log("Unable to apply channel value for actor '" .. tostring(actor) .. "': No animation exists for this actor for the currently active film clip '" .. tostring(self.m_filmClip) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-		return
+		anims[util.get_object_hash(actor)] = animation.Animation2.create()
+		local ent = actor:FindEntity()
+		if(ent ~= nil) then self:PlayActorAnimation(ent) end
+		-- pfm.log("Unable to apply channel value for actor '" .. tostring(actor) .. "': No animation exists for this actor for the currently active film clip '" .. tostring(self.m_filmClip) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		-- return
 	end
 	local anim = anims[util.get_object_hash(actor)]
 	local channel = anim:FindChannel(path)
-	local reloadRequired = false;
+	local reloadRequired = false
 	if(channel == nil and channelClip ~= nil and type ~= nil) then
 		channel = self:AddChannel(anim,channelClip,path,type)
 		reloadRequired = true

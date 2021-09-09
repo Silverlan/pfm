@@ -522,24 +522,20 @@ function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function()
 			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 			if(actorC ~= nil) then
-				local actorData = actorC:GetActorData()
-				if(actorData ~= nil) then
-					local transform = actorData:GetTransform()
-					transform:SetPosition(ent:GetPos())
-				end
+				tool.get_filmmaker():SetActorTransformProperty(actorC,"position",ent:GetPos())
 			end
-			tool.get_filmmaker():TagRenderSceneAsDirty()
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function()
 			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 			if(actorC ~= nil) then
-				local actorData = actorC:GetActorData()
-				if(actorData ~= nil) then
-					local transform = actorData:GetTransform()
-					transform:SetRotation(ent:GetRotation())
-				end
+				tool.get_filmmaker():SetActorTransformProperty(actorC,"rotation",ent:GetRotation())
 			end
-			tool.get_filmmaker():TagRenderSceneAsDirty()
+		end)
+		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED,function()
+			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if(actorC ~= nil) then
+				tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",ent:GetScale())
+			end
 		end)
 		return trC
 	end

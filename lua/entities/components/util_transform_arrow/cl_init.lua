@@ -10,11 +10,11 @@ Component.TYPE_ROTATION = 1
 Component.TYPE_SCALE = 2
 
 local defaultMemberFlags = bit.band(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,bit.bnot(bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_BIT_KEY_VALUE,ents.BaseEntityComponent.MEMBER_FLAG_BIT_INPUT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_OUTPUT)))
-Component:RegisterMember("Axis",util.VAR_TYPE_UINT8,math.AXIS_X,ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,1)
-Component:RegisterMember("Selected",util.VAR_TYPE_BOOL,false,bit.bor(defaultMemberFlags,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER),1)
-Component:RegisterMember("Relative",util.VAR_TYPE_BOOL,false,bit.bor(defaultMemberFlags,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER),1)
-Component:RegisterMember("Type",util.VAR_TYPE_UINT8,Component.TYPE_TRANSLATION,ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,1)
-Component:RegisterMember("Space",util.VAR_TYPE_UINT8,ents.UtilTransformComponent.SPACE_WORLD,defaultMemberFlags,1)
+Component:RegisterMember("Axis",util.VAR_TYPE_UINT8,math.AXIS_X,ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT)
+Component:RegisterMember("Selected",util.VAR_TYPE_BOOL,false,bit.bor(defaultMemberFlags,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
+Component:RegisterMember("Relative",util.VAR_TYPE_BOOL,false,bit.bor(defaultMemberFlags,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
+Component:RegisterMember("Type",util.VAR_TYPE_UINT8,Component.TYPE_TRANSLATION,ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT)
+Component:RegisterMember("Space",util.VAR_TYPE_UINT8,ents.UtilTransformComponent.SPACE_WORLD,defaultMemberFlags)
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)

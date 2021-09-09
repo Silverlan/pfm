@@ -343,20 +343,40 @@ local function apply_post_processing(converter,project,filmClip,processedObjects
 							local sfmToElement = pfmElToSfm[channelOther]:GetToElement()
 							if(util.is_same_object(sfmToElement,sfmFromElement)) then
 								local toAttr = channelOther:GetToAttribute()
-								channelOther:SetTargetPath("color/color/" .. toAttr)
+								channelOther:SetTargetPath("ec/color/color?components=" .. toAttr)
 								channelOther:SetToElement(channel:GetToElement())
 								channelOther:SetToAttribute("color")
 							end
 						end
 						table.insert(channelsRemove,i)
-					else
+					elseif(#channel:GetTargetPath() == 0) then
 						local toElement = channel:GetToElement()
 						if(toElement ~= nil) then
 							local toAttr = channel:GetToAttribute()
-							if(toElement:GetType() == fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT) then
-								if(toAttr == "radius") then channel:SetTargetPath("radius/radius")
-								elseif(toAttr == "intensity") then channel:SetTargetPath("light/intensity")
-								elseif(toAttr == "color") then channel:SetTargetPath("color/color") end
+							local type = toElement:GetType()
+							local handled = true
+							if(toAttr == "position") then channel:SetTargetPath("ec/transform/position")
+							elseif(toAttr == "rotation") then channel:SetTargetPath("ec/transform/rotation")
+							elseif(toAttr == "scale") then channel:SetTargetPath("ec/transform/scale")
+							else
+								if(type == fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == fudm.ELEMENT_TYPE_PFM_POINT_LIGHT) then
+									if(toAttr == "radius") then channel:SetTargetPath("ec/radius/radius")
+									elseif(toAttr == "intensity") then channel:SetTargetPath("ec/light/intensity")
+									elseif(toAttr == "color") then channel:SetTargetPath("ec/color/color")
+									else handled = false end
+								elseif(type == fudm.ELEMENT_TYPE_PFM_DIRECTIONAL_LIGHT) then
+									if(toAttr == "intensity") then channel:SetTargetPath("ec/light/intensity")
+									elseif(toAttr == "color") then channel:SetTargetPath("ec/color/color")
+									else handled = false end
+								elseif(type == fudm.ELEMENT_TYPE_PFM_CAMERA) then
+									if(toAttr == "fov") then channel:SetTargetPath("ec/camera/fov")
+									elseif(toAttr == "zNear") then channel:SetTargetPath("ec/camera/nearz")
+									elseif(toAttr == "zFar") then channel:SetTargetPath("ec/camera/farz")
+									else handled = false end
+								end
+							end
+							if(handled == false) then
+								pfm.log("Animation channel '" .. tostring(channel) .. "' has to-attribute '" .. toAttr .. "', which is currently not supported!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 							end
 						end
 					end

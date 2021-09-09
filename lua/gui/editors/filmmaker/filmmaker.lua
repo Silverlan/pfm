@@ -768,6 +768,21 @@ end
 function gui.WIFilmmaker:ClearProjectUI()
 	self:ClearLayout()
 end
+function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value)
+	local actorData = actor:GetActorData()
+	if(actorData == nil) then return end
+	local actorEditor = self:GetActorEditor()
+	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
+		actorEditor:SetAnimationChannelValue(actorData,"ec/transform/" .. propType,value)
+		self:TagRenderSceneAsDirty()
+		return
+	end
+	local transform = actorData:GetTransform()
+	if(propType == "position") then transform:SetPosition(value)
+	elseif(propType == "rotation") then transform:SetRotation(value)
+	elseif(propType == "scale") then transform:SetScale(value) end
+	self:TagRenderSceneAsDirty()
+end
 function gui.WIFilmmaker:InitializeProjectUI()
 	self:ClearProjectUI()
 	if(util.is_valid(self.m_menuBar) == false or util.is_valid(self.m_infoBar) == false) then return end
