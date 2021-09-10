@@ -437,7 +437,19 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 		local componentName,memberName = ents.Animated2Component.parse_component_channel_path(path)
 		local componentId = componentName and ents.get_component_id(componentName)
 		local componentInfo = componentId and ents.get_component_info(componentId)
-		local memberInfo = memberName and componentInfo and componentInfo:GetMemberInfo(memberName:GetString())
+
+		local entActor = actor:FindEntity()
+		local memberInfo
+		if(memberName ~= nil and componentInfo ~= nil) then
+			if(util.is_valid(entActor)) then
+				local c = entActor:GetComponent(componentId)
+				if(c ~= nil) then
+					local memberId = c:GetMemberIndex(memberName:GetString())
+					if(memberId ~= nil) then memberInfo = c:GetMemberInfo(memberId) end
+				end
+			end
+			memberInfo = memberInfo or componentInfo:GetMemberInfo(memberName:GetString())
+		end
 		if(memberInfo ~= nil) then
 			local type = memberInfo.type
 			path = path:ToUri(false)
@@ -460,7 +472,7 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 			local baseMsg = "Unable to apply animation channel value with channel path '" .. path.path:GetString() .. "': "
 			if(componentName == nil) then pfm.log(baseMsg .. "Unable to determine component type from animation channel path '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 			elseif(componentId == nil) then pfm.log(baseMsg .. "Component '" .. componentName .. "' is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-			else pfm.log(baseMsg .. "Component '" .. componentName .. "' has no known member '" .. memberName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
+			else pfm.log(baseMsg .. "Component '" .. componentName .. "' has no known member '" .. memberName:GetString() .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
 		end
 	end
 end

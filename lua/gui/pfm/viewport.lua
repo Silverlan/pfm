@@ -498,17 +498,31 @@ function gui.PFMViewport:UpdateManipulationMode()
 		end
 	end
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_POSITION_CHANGED,function(boneId,pos,localPos)
-		update_channel_value(boneId,localPos,"position")
-		tool.get_filmmaker():TagRenderSceneAsDirty()
+		self:SetBoneTransformProperty(ent,boneId,"position",localPos)
+		--update_channel_value(boneId,localPos,"position")
+		--tool.get_filmmaker():TagRenderSceneAsDirty()
 	end)
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_ROTATION_CHANGED,function(boneId,rot,localRot)
-		update_channel_value(boneId,localRot,"rotation")
-		tool.get_filmmaker():TagRenderSceneAsDirty()
+		self:SetBoneTransformProperty(ent,boneId,"rotation",localRot)
+		--update_channel_value(boneId,localRot,"rotation")
+		--tool.get_filmmaker():TagRenderSceneAsDirty()
 	end)
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_SCALE_CHANGED,function(boneId,scale,localScale)
-		update_channel_value(boneId,localScale,"scale")
-		tool.get_filmmaker():TagRenderSceneAsDirty()
+		self:SetBoneTransformProperty(ent,boneId,"scale",localScale)
+		--update_channel_value(boneId,localScale,"scale")
+		--tool.get_filmmaker():TagRenderSceneAsDirty()
 	end)
+end
+function gui.PFMViewport:SetBoneTransformProperty(ent,boneId,propName,value)
+	if(util.is_valid(ent) == false) then return end
+	local mdl = ent:GetModel()
+	local skeleton = mdl:GetSkeleton()
+	local bone = skeleton:GetBone(boneId)
+	if(bone == nil) then return end
+	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+	if(actorC ~= nil) then
+		tool.get_filmmaker():SetActorBoneTransformProperty(actorC,bone:GetName() .. "/" .. propName,value)
+	end
 end
 function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 	ent:RemoveComponent("util_bone_transform")

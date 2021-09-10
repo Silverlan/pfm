@@ -33,7 +33,6 @@ function fudm.PFMModel:GetIconMaterial() return "gui/pfm/icon_model_item" end
 function fudm.PFMModel:GetSceneChildren() return self:GetRootBones():GetTable() end
 
 function fudm.PFMModel:ChangeModel(mdlName)
-	print("ChangeModel: ",mdlName)
 	self:SetModelName(mdlName)
 	self:GetRootBones():Clear()
 	local boneList = self:GetBoneListAttr()
@@ -177,7 +176,8 @@ function fudm.PFMModel:SetupFlexControllerControls(actorEditor,itemComponent)
 				end,
 				min = 0.0,
 				max = 1.0,
-				default = 0.0
+				default = 0.0,
+				path = "ec/flex/flex/" .. name
 			})
 		else
 			actorEditor:AddControl(self,itemComponent,{
@@ -197,7 +197,8 @@ function fudm.PFMModel:SetupFlexControllerControls(actorEditor,itemComponent)
 				end,
 				min = 0.0,
 				max = 1.0,
-				default = 0.0
+				default = 0.0,
+				path = "ec/flex/flex/" .. name
 			})
 		end
 	end
