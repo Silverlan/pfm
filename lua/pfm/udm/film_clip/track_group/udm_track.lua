@@ -33,9 +33,10 @@ function fudm.PFMTrack:FindActorChannelClip(actor)
 	end
 end
 
-function fudm.PFMTrack:GetOrAddActorChannelClip(actor)
+function fudm.PFMTrack:GetActorChannelClip(actor,addIfNotExists)
 	local channelClip = self:FindActorChannelClip(actor)
 	if(channelClip ~= nil) then return channelClip end
+	if(addIfNotExists ~= true) then return end
 	channelClip = self:AddChannelClip(actor:GetName())
 	channelClip:SetActor(actor:GetUniqueId())
 	return channelClip

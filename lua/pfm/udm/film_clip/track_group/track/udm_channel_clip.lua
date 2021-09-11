@@ -30,9 +30,10 @@ function fudm.PFMChannelClip:FindChannel(path)
 	end
 end
 
-function fudm.PFMChannelClip:GetOrAddChannel(path,type)
+function fudm.PFMChannelClip:GetChannel(path,type,addIfNotExists)
 	local channel = self:FindChannel(path)
 	if(channel ~= nil) then return channel end
+	if(addIfNotExists ~= true) then return end
 	channel = self:AddChannel(type)
 	channel:SetTargetPath(path)
 	return channel

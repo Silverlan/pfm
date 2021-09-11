@@ -416,13 +416,69 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 			controlData.setRight(component,value)
 		end
 	end)
-	table.insert(self.m_sliderControls,slider)
+	--[[slider:AddCallback("PopulateContextMenu",function(el,pContext)
+		pContext:AddItem("LOC: Set Math Expression",function()
+			local parent = component:GetSceneParent()
+			if(parent ~= nil and controlData.path ~= nil and parent:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR) then
+				local channel = self:GetAnimationChannel(parent,controlData.path,true)
+				if(channel ~= nil) then
+					local expr = "abs(sin(time)) *20"
+					debug.print("Set exprewssion: ",expr)
+					channel:SetExpression(expr)
+					tool.get_filmmaker():GetAnimationManager():SetValueExpression(parent,controlData.path,expr)
+				end
+			end
+		end)
+		pContext:AddItem("LOC: Set Animation driver",function()
+			local parent = component:GetSceneParent()
+			if(parent ~= nil and controlData.path ~= nil and parent:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR) then
+				local channel = self:GetAnimationChannel(parent,controlData.path,true)
+				if(channel ~= nil) then
+					--debug.print("Set exprewssion!")
+					--channel:SetExpression("sin(value)")
+				end
+			end
+		end)
+	end)]]
+	table.insrt(self.m_sliderControls,slider)
 	return slider
 end
 function gui.PFMActorEditor:GetTimelineMode()
 	local timeline = tool.get_filmmaker():GetTimeline()
 	if(util.is_valid(timeline) == false) then return gui.PFMTimeline.EDITOR_CLIP end
 	return timeline:GetEditor()
+end
+function gui.PFMActorEditor:GetAnimationChannel(actor,path,addIfNotExists)
+	local filmClip = self:GetFilmClip()
+	local track = filmClip:FindAnimationChannelTrack()
+	
+	local channelClip = track:GetActorChannelClip(actor,addIfNotExists)
+	if(channelClip == nil) then return end
+	local path = panima.Channel.Path(path)
+	local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(path)
+	local componentId = componentName and ents.get_component_id(componentName)
+	local componentInfo = componentId and ents.get_component_info(componentId)
+
+	local entActor = actor:FindEntity()
+	local memberInfo
+	if(memberName ~= nil and componentInfo ~= nil) then
+		if(util.is_valid(entActor)) then
+			local c = entActor:GetComponent(componentId)
+			if(c ~= nil) then
+				local memberId = c:GetMemberIndex(memberName:GetString())
+				if(memberId ~= nil) then memberInfo = c:GetMemberInfo(memberId) end
+			end
+		end
+		memberInfo = memberInfo or componentInfo:GetMemberInfo(memberName:GetString())
+	end
+	if(memberInfo == nil) then return end
+
+	local type = memberInfo.type
+	path = path:ToUri(false)
+	local varType = fudm.udm_type_to_var_type(type)
+	if(memberName:GetString() == "color") then varType = util.VAR_TYPE_COLOR end -- TODO: How to handle this properly?
+	local channel = channelClip:GetChannel(path,varType,addIfNotExists)
+	return channel,channelClip
 end
 function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 	local fm = tool.get_filmmaker()
@@ -432,9 +488,9 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 		local track = filmClip:FindAnimationChannelTrack()
 		
 		local animManager = fm:GetAnimationManager()
-		local channelClip = track:GetOrAddActorChannelClip(actor)
-		local path = animation.Channel.Path(path)
-		local componentName,memberName = ents.Animated2Component.parse_component_channel_path(path)
+		local channelClip = track:GetActorChannelClip(actor,true)
+		local path = panima.Channel.Path(path)
+		local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(path)
 		local componentId = componentName and ents.get_component_id(componentName)
 		local componentInfo = componentId and ents.get_component_info(componentId)
 
@@ -455,7 +511,7 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 			path = path:ToUri(false)
 			local varType = fudm.udm_type_to_var_type(type)
 			if(memberName:GetString() == "color") then varType = util.VAR_TYPE_COLOR end -- TODO: How to handle this properly?
-			local channel = channelClip:GetOrAddChannel(path,varType)
+			local channel = channelClip:GetChannel(path,varType,true)
 			local log = channel:GetLog()
 			local layer = log:GetLayers():Get(1)
 
