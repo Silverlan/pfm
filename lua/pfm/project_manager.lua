@@ -9,7 +9,7 @@
 include("game_view.lua")
 include("/pfm/animation_cache.lua")
 include("/pfm/performance_cache.lua")
-include("/pfm/animation2.lua")
+include("/pfm/panima.lua")
 
 pfm = pfm or {}
 
