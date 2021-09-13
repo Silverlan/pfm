@@ -64,8 +64,7 @@ function pfm.AnimationManager:PlayActorAnimation(ent)
 	local anims = self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)]
 	if(anims[util.get_object_hash(actorData)] == nil) then return end
 	local animC = ent:AddComponent(ents.COMPONENT_PANIMA)
-	if(animC:GetAnimationManager(0) == nil) then animC:AddAnimationManager() end
-	local animManager = animC:GetAnimationManager(0)
+	local animManager = animC:AddAnimationManager("pfm")
 	local player = animManager:GetPlayer()
 	player:SetPlaybackRate(0.0)
 	animC:PlayAnimation(animManager,anims[util.get_object_hash(actorData)])
@@ -75,7 +74,7 @@ function pfm.AnimationManager:SetTime(t)
 	if(self.m_filmClip == nil or self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)] == nil) then return end
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_PANIMA)}) do
 		local animC = ent:GetComponent(ents.COMPONENT_PANIMA)
-		local manager = animC:GetAnimationManager(0)
+		local manager = animC:GetAnimationManager("pfm")
 		if(manager ~= nil) then
 			local player = manager:GetPlayer()
 			player:SetCurrentTime(t or player:GetCurrentTime())
@@ -86,7 +85,7 @@ end
 function pfm.AnimationManager:SetAnimationsDirty()
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_PANIMA)}) do
 		local animC = ent:GetComponent(ents.COMPONENT_PANIMA)
-		local animManager = (animC ~= nil) and animC:GetAnimationManager(0) or nil
+		local animManager = (animC ~= nil) and animC:GetAnimationManager("pfm") or nil
 		if(animManager ~= nil) then
 			local player = animManager:GetPlayer()
 			player:SetAnimationDirty()
@@ -134,7 +133,7 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 	end
 	local animations = {}
 	for actorDataHash,channels in pairs(actorChannels) do
-		local anim = animation.Animation.create()
+		local anim = panima.Animation.create()
 		for channelPath,channelData in pairs(channels) do
 			local channel = channelData[1]
 			local channelClip = channelData[2]
@@ -165,7 +164,7 @@ function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists)
 	local anims = self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)]
 	if(anims[util.get_object_hash(actor)] == nil) then
 		if(addIfNotExists ~= true) then return end
-		anims[util.get_object_hash(actor)] = animation.Animation.create()
+		anims[util.get_object_hash(actor)] = panima.Animation.create()
 		local ent = actor:FindEntity()
 		if(ent ~= nil) then self:PlayActorAnimation(ent) end
 		-- pfm.log("Unable to apply channel value for actor '" .. tostring(actor) .. "': No animation exists for this actor for the currently active film clip '" .. tostring(self.m_filmClip) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
@@ -201,7 +200,7 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,channelClip,
 	if(reloadRequired) then
 		for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PANIMA)}) do
 			local animC = ent:GetComponent(ents.COMPONENT_PANIMA)
-			local animManager = animC:GetAnimationManager(0)
+			local animManager = animC:GetAnimationManager("pfm")
 			local entAnim = animManager and animManager:GetCurrentAnimation() or nil
 			if(entAnim == anim) then animC:ReloadAnimation(animManager) end
 		end

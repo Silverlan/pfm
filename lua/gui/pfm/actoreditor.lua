@@ -440,7 +440,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 			end
 		end)
 	end)]]
-	table.insrt(self.m_sliderControls,slider)
+	table.insert(self.m_sliderControls,slider)
 	return slider
 end
 function gui.PFMActorEditor:GetTimelineMode()

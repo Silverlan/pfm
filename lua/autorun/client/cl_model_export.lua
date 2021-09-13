@@ -194,30 +194,31 @@ console.register_command("util_export_asset",function(pl,...)
 			local result,err = mdl:Export(exportInfo)
 			if(result) then print("Model exported successfully!")
 			else console.print_warning("Unable to export model: ",err) end
+		else
+			for _,mdlName in ipairs(models) do
+				local mdl = game.load_model(mdlName)
+				if(mdl == nil) then
+					console.print_warning("No model of name '" .. mdlName .. "' found!")
+					return
+				end
+				if(listAnimations) then
+					local animNames = mdl:GetAnimationNames()
+					print("Model has " .. #animNames .. " animations:")
+					console.print_table(animNames)
+					return
+				end
+				if(animName == nil) then
+					local result,err = mdl:Export(exportInfo)
+					if(result) then print("Model exported successfully!")
+					else console.print_warning("Unable to export model: ",err) end
+				else
+					local result,err = mdl:ExportAnimation(animName,exportInfo)
+					if(result) then print("Animation exported successfully!")
+					else console.print_warning("Unable to export animation: ",err) end
+				end
+			end
+			if(#models == 0) then console.print_warning("No models found!") end
 		end
-		for _,mdlName in ipairs(models) do
-			local mdl = game.load_model(mdlName)
-			if(mdl == nil) then
-				console.print_warning("No model of name '" .. mdlName .. "' found!")
-				return
-			end
-			if(listAnimations) then
-				local animNames = mdl:GetAnimationNames()
-				print("Model has " .. #animNames .. " animations:")
-				console.print_table(animNames)
-				return
-			end
-			if(animName == nil) then
-				local result,err = mdl:Export(exportInfo)
-				if(result) then print("Model exported successfully!")
-				else console.print_warning("Unable to export model: ",err) end
-			else
-				local result,err = mdl:ExportAnimation(animName,exportInfo)
-				if(result) then print("Animation exported successfully!")
-				else console.print_warning("Unable to export animation: ",err) end
-			end
-		end
-		if(#models == 0) then console.print_warning("No models found!") end
 		if(enablePreview and #models == 1) then
 			local mdl = game.load_model(models[1])
 			if(mdl ~= nil) then
