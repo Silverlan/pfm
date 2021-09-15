@@ -175,7 +175,8 @@ end
 
 function fudm.load(ds)
 	local typeName = ds:ReadString()
-	local el = fudm.create(fudm.get_type_id(fudm[typeName]))
+	local typeId = fudm.impl.name_to_type_id[typeName]
+	local el = fudm.create(typeId)
 	el:LoadFromBinary(ds)
 	return el
 end
