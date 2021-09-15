@@ -40,10 +40,16 @@ function fudm.PFMChannel:IsFlexControllerChannel()
 end
 
 function fudm.PFMChannel:SetPlaybackOffset(offset)
+	-- TODO: Remove this function once skeletal animations have been transitioned to new animation system
+
 	-- Note: This function will grab the appropriate value from the log
 	-- and assign it to the 'toElement'. If no log values exist, the
 	-- 'fromAttribute' value of the 'fromElement' element will be used instead.
-	--[[local toElement = self:GetToElement()
+	if(self.m_bnChannel == nil) then
+		self.m_bnChannel = self:IsBoneTransformChannel() or self:IsFlexControllerChannel()
+	end
+	if(self.m_bnChannel ~= true) then return end
+	local toElement = self:GetToElement()
 	if(toElement == nil) then return end
 	local toAttribute = self:GetToAttribute()
 	local el = toElement:GetChild(toAttribute)
@@ -65,5 +71,5 @@ function fudm.PFMChannel:SetPlaybackOffset(offset)
 		end
 	else
 		-- pfm.log("Invalid to-attribute '" .. toAttribute .. "' of element '" .. toElement:GetName() .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-	end]]
+	end
 end

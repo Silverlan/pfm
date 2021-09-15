@@ -144,7 +144,6 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 				times:Set(i,times:At(i))
 			end
 			local values = layer:GetValues():GetTable()
-
 			local animChannel = self:AddChannel(anim,channelClip,channelPath,fudm.var_type_to_udm_type(layer:GetValues():GetValueType()))
 			local expr = channel:GetExpression()
 			if(#expr > 0) then
