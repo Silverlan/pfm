@@ -69,7 +69,7 @@ sfm.convert_scale_factors_to_vectors = function(project)
 	end
 	for _,channel in ipairs(scaleChannels) do
 		local log = channel:GetLog()
-		for _,layer in ipairs(log:GetLayers():GetTable()) do
+		--[[for _,layer in ipairs(log:GetLayers():GetTable()) do
 			local values = layer:GetValues()
 			values:Clear()
 			values:SetValueType(util.VAR_TYPE_VECTOR)
@@ -78,7 +78,7 @@ sfm.convert_scale_factors_to_vectors = function(project)
 				local val = values:Get(i)
 				values:PushBack(Vector(val,val,val))
 			end
-		end
+		end]]
 
 		local fromElement = channel:GetFromElement()
 		if(fromElement ~= nil and fromElement:GetType() == fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR) then sfm_to_pfm_scale_expression_operator(fromElement) end

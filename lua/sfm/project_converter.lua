@@ -357,7 +357,21 @@ local function apply_post_processing(converter,project,filmClip,processedObjects
 							local handled = true
 							if(toAttr == "position") then channel:SetTargetPath("ec/transform/position")
 							elseif(toAttr == "rotation") then channel:SetTargetPath("ec/transform/rotation")
-							elseif(toAttr == "scale") then channel:SetTargetPath("ec/transform/scale")
+							elseif(toAttr == "scale") then
+								channel:SetTargetPath("ec/transform/scale")
+
+								-- SFM uses floats for scale, PFM uses Vector3, so we'll have to translate the values
+								local log = channel:GetLog()
+								local layer = log:GetLayers():Get(1)
+								local newValues = {}
+								local layerValues = layer:GetValues()
+								local oldValues = layerValues:GetTable():ToTable()
+								layerValues:SetValueType(util.VAR_TYPE_VECTOR)
+								layerValues:GetTable():Reserve(#oldValues)
+								for _,v in ipairs(oldValues) do
+									v = Vector(v,v,v)
+									layerValues:PushBack(v)
+								end
 							else
 								if(type == fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == fudm.ELEMENT_TYPE_PFM_POINT_LIGHT) then
 									if(toAttr == "radius") then channel:SetTargetPath("ec/radius/radius")
@@ -580,7 +594,7 @@ local function apply_post_processing(converter,project,filmClip,processedObjects
 				apply_post_processing(converter,project,childFilmClip,processedObjects)
 			end
 		end
-	end
+	end						
 end
 function sfm.ProjectConverter:ApplyPostProcessing()
 	pfm.log("Applying post-processing...",pfm.LOG_CATEGORY_PFM_CONVERTER)
