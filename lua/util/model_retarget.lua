@@ -27,7 +27,7 @@ function util.retarget_model(impostee,impostor)
 	for i=0,numBones -1 do
 		local retargetBindPose = retargetC.m_origBindPoseToRetargetBindPose[i]
 		local pose = ref:GetBonePose(i)
-		pose = pose *retargetBindPose
+		-- pose = pose *retargetBindPose
 		ref:SetBonePose(i,pose)
 	end
 
@@ -51,11 +51,14 @@ function util.retarget_model(impostee,impostor)
 			local numFrames = anim:GetFrameCount()
 			for frameId=0,numFrames -1 do
 				--animC:SetCycle(frameId /(numFrames -1))
+				local c = animCSrc:GetCycle()
+				local dt = (1 /(numFrames -1)) /(anim:GetFPS() /numFrames)
+				if(c +dt > 1) then dt = (1.0 -c) end
 				animCSrc:ClearPreviousAnimation()
-				animCSrc:AdvanceAnimations(1 /(numFrames -1))
+				animCSrc:AdvanceAnimations(dt)
 				animCSrc:UpdateEffectiveBoneTransforms()
 				animC:ClearPreviousAnimation()
-				animC:AdvanceAnimations(1 /(numFrames -1))
+				animC:AdvanceAnimations(dt)
 				local frame = game.Model.Animation.Frame.Create(numBones)
 				for i=0,numBones -1 do
 					frame:SetBonePose(i,animC:GetBonePose(i))
@@ -65,6 +68,7 @@ function util.retarget_model(impostee,impostor)
 			mdl:AddAnimation(animName,animCpy)
 		end
 	end
+
 	util.remove(ent)
 	return mdl
 end
