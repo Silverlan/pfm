@@ -8,9 +8,16 @@
 
 include("/pfm/udm/udm_scene_element.lua")
 
-util.register_class("fudm.PFMEntityComponent",fudm.PFMSceneElement)
-function fudm.PFMEntityComponent:__init(...)
-	fudm.PFMSceneElement.__init(self,...)
-end
+fudm.ELEMENT_TYPE_PFM_ENTITY_COMPONENT_PROPERTIES = fudm.register_element("PFMEntityComponentProperties")
+
+fudm.ELEMENT_TYPE_PFM_ENTITY_COMPONENT = fudm.register_type("PFMEntityComponent",{fudm.PFMSceneElement},true)
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ENTITY_COMPONENT,"properties",fudm.PFMEntityComponentProperties())
+
+function fudm.PFMEntityComponent:Initialize() end
 
 function fudm.PFMEntityComponent:IsEntityComponent() return true end
+function fudm.PFMEntityComponent:GetComponentName()
+    local prop = self:GetProperty("component_type")
+    if(prop == nil) then return "" end
+    return prop:GetValue()
+end

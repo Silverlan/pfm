@@ -14,6 +14,18 @@ include("/pfm/component_manager.lua")
 
 util.register_class("gui.PFMActorEditor",gui.Base)
 
+gui.PFMActorEditor.actor_presets = {
+	["pfm_model"] = {"PFMModel"},
+	["pfm_particle_system"] = {"PFMParticleSystem"},
+	["pfm_camera"] = {"PFMCamera"},
+	["pfm_animation_set"] = {"PFMAnimationSet"},
+	["pfm_light_spot"] = {"PFMSpotLight","light","light_spot","radius","color","transform"},
+	["pfm_light_directional"] = {"PFMDirectionalLight"},
+	["pfm_light_point"] = {"PFMPointLight"},
+	["pfm_impersonatee"] = {"PFMImpersonatee"},
+	["pfm_volumetric"] = {"PFMVolumetric"}
+}
+
 function gui.PFMActorEditor:__init()
 	gui.Base.__init(self)
 end
@@ -37,7 +49,6 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_btTools:SetX(self:GetWidth() -self.m_btTools:GetWidth())
 	self.m_btTools:SetupContextMenu(function(pContext)
 		pContext:AddItem(locale.get_text("pfm_create_new_actor"),function()
-			if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
 			if(self:IsValid() == false) then return end
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
@@ -85,6 +96,10 @@ function gui.PFMActorEditor:OnInitialize()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMSpotLight")
+			self:CreateNewActorComponent(actor,"light")
+			self:CreateNewActorComponent(actor,"radius")
+			self:CreateNewActorComponent(actor,"color")
+			self:CreateNewActorComponent(actor,"transform")
 
 			self:AddActorToScene(actor)
 		end)
@@ -213,7 +228,15 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_tree = gui.create("WIPFMTreeView",treeScrollContainer,0,0,treeScrollContainer:GetWidth(),treeScrollContainer:GetHeight())
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 	self.m_treeElementToActorData = {}
+	self.m_actorUniqueIdToTreeElement = {}
 	self.m_tree:AddCallback("OnItemSelectChanged",function(tree,el,selected)
+		local queue = {}
+		for uniqueId,_ in pairs(self.m_dirtyActorEntries) do
+			table.insert(queue,uniqueId)
+		end
+		for _,uniqueId in ipairs(queue) do
+			self:InitializeDirtyActorComponents(uniqueId)
+		end
 		self:ScheduleUpdateSelectedEntities()
 	end)
 	--[[self.m_data = gui.create("WITable",dataVBox,0,0,dataVBox:GetWidth(),dataVBox:GetHeight(),0,0,1,1)
@@ -279,7 +302,13 @@ function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateAc
 		end
 	end
 
-	local component = fudm[componentType]()
+	local component
+	if(fudm[componentType] ~= nil) then component = fudm[componentType]()
+	else
+		component = fudm["PFMEntityComponent"]()
+		component:SetProperty("component_type",fudm.String(componentType))
+	end
+
 	if(itemActor == nil or component == nil) then return end
 	local actorData = self.m_treeElementToActorData[itemActor]
 	local componentName = component:GetComponentName() .. "_component"
@@ -289,11 +318,10 @@ function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateAc
 	if(initComponent ~= nil) then initComponent(component) end
 
 	actor:AddComponent(component)
-
-	self:AddActorComponent(itemActor,actorData.componentsEntry,component)
-	actorData.componentsEntry:Update()
-
 	if(updateActor == true) then tool.get_filmmaker():UpdateActor(actor,self:GetFilmClip(),true) end
+
+	self:UpdateActorComponentEntries(actorData)
+
 	return component
 end
 function gui.PFMActorEditor:TagRenderSceneAsDirty(dirty)
@@ -315,7 +343,8 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 		end
 	end
 
-	local slider = self.m_animSetControls:AddSliderControl(controlData.name,controlData.identifier,controlData.default,controlData.min,controlData.max,nil,nil,controlData.integer or controlData.boolean)
+	local slider = self.m_animSetControls:AddSliderControl(controlData.name,controlData.identifier,controlData.value or controlData.default or 0.0,controlData.min or 0.0,controlData.max or 100,nil,nil,controlData.integer or controlData.boolean)
+	if(controlData.default ~= nil) then slider:SetDefault(controlData.default) end
 	local callbacks = {}
 	local skipCallbacks
 	if(controlData.type == "flexController") then
@@ -480,6 +509,23 @@ function gui.PFMActorEditor:GetAnimationChannel(actor,path,addIfNotExists)
 	local channel = channelClip:GetChannel(path,varType,addIfNotExists)
 	return channel,channelClip
 end
+function gui.PFMActorEditor:GetMemberInfo(actor,path)
+	local path = panima.Channel.Path(path)
+	local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(path)
+	local componentId = componentName and ents.get_component_id(componentName)
+	local componentInfo = componentId and ents.get_component_info(componentId)
+	if(memberName == nil or componentInfo == nil) then return end
+
+	local entActor = actor:FindEntity()
+	if(util.is_valid(entActor)) then
+		local c = entActor:GetComponent(componentId)
+		if(c ~= nil) then
+			local memberId = c:GetMemberIndex(memberName:GetString())
+			if(memberId ~= nil) then return c:GetMemberInfo(memberId) end
+		end
+	end
+	return componentInfo:GetMemberInfo(memberName:GetString())
+end
 function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 	local fm = tool.get_filmmaker()
 	local timeline = fm:GetTimeline()
@@ -580,15 +626,158 @@ function gui.PFMActorEditor:SelectActor(actor)
 		end
 	end
 end
-function gui.PFMActorEditor:AddActorComponent(itemActor,itemComponents,component)
-	local itemComponent = itemComponents:AddItem(component:GetName(),nil,nil,component:GetComponentName())
+function gui.PFMActorEditor:UpdateActorComponentEntries(actorData)
+	self.m_dirtyActorEntries = self.m_dirtyActorEntries or {}
+	self.m_dirtyActorEntries[actorData.actor:GetUniqueId()] = true
+	local entActor = actorData.actor:FindEntity()
+	if(entActor ~= nil) then self:InitializeDirtyActorComponents(actorData.actor:GetUniqueId(),entActor) end
+end
+function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId,entActor)
+	if(self.m_dirtyActorEntries == nil or self.m_dirtyActorEntries[uniqueId] == nil) then return end
+	entActor = entActor or ents.find_by_unique_index(uniqueId)
+	if(util.is_valid(entActor) == false) then return end
+	self.m_dirtyActorEntries[uniqueId] = nil
+
+	local itemActor = self.m_actorUniqueIdToTreeElement[uniqueId]
+	if(util.is_valid(itemActor) == false) then return end
+	local actorData = self.m_treeElementToActorData[itemActor]
+	for _,component in ipairs(actorData.actor:GetComponents():GetTable()) do
+		local componentName = component:GetComponentName()
+		local componentId = ents.find_component_id(componentName)
+		if(componentId == nil) then
+			include_component(componentName)
+			componentId = ents.find_component_id(componentName)
+		end
+		if(componentId ~= nil) then
+			if(actorData.componentData[componentId] == nil) then
+				self:AddActorComponent(entActor,actorData.itemActor,actorData,component)
+			end
+		else
+			debug.print("Unknown component " .. componentName)
+		end
+	end
+	actorData.componentsEntry:Update()
+end
+function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,component)
+	local componentId = ents.find_component_id(component:GetComponentName())
+	if(componentId == nil) then return end
+	actorData.componentData[componentId] = actorData.componentData[componentId] or {
+		items = {}
+	}
+	local componentData = actorData.componentData[componentId]
+	local itemComponent = actorData.componentsEntry:AddItem(component:GetName(),nil,nil,component:GetComponentName())
 	if(component.GetIconMaterial) then
 		itemComponent:AddIcon(component:GetIconMaterial())
 		itemActor:AddIcon(component:GetIconMaterial())
 	end
-	if(component.SetupControls) then
-		component:SetupControls(self,itemComponent)
+
+	if(util.is_valid(componentData.itemBaseProps) == false) then
+		componentData.itemBaseProps = itemComponent:AddItem(locale.get_text("pfm_base_properties"))
 	end
+
+	local componentInfo = (componentId ~= nil) and ents.get_component_info(componentId) or nil
+	if(componentInfo ~= nil) then
+		local c = entActor:GetComponent(componentId)
+		local memberIdx = 0
+		local memberInfo = (c ~= nil) and c:GetMemberInfo(memberIdx) or nil
+		local props = component:GetProperty("properties")
+		while(memberInfo ~= nil) do
+			local valid = true
+			local controlData = {}
+			local info = memberInfo
+			if(info.type == udm.TYPE_STRING) then props:SetProperty(info.name,fudm.String(info.default))
+			elseif(info.type == udm.TYPE_UINT8) then
+				props:SetProperty(info.name,fudm.UInt8(info.default))
+				controlData.integer = true
+			elseif(info.type == udm.TYPE_INT32) then
+				props:SetProperty(info.name,fudm.Int(info.default))
+				controlData.integer = true
+			elseif(info.type == udm.TYPE_UINT32) then
+				props:SetProperty(info.name,fudm.UInt32(info.default))
+				controlData.integer = true
+			elseif(info.type == udm.TYPE_UINT64) then
+				props:SetProperty(info.name,fudm.UInt64(info.default))
+				controlData.integer = true
+			elseif(info.type == udm.TYPE_FLOAT) then props:SetProperty(info.name,fudm.Float(info.default))
+			elseif(info.type == udm.TYPE_BOOLEAN) then
+				props:SetProperty(info.name,fudm.Bool(info.default))
+				controlData.boolean = true
+			elseif(info.type == udm.TYPE_VECTOR2) then
+				props:SetProperty(info.name,fudm.Vector2(info.default))
+				valid = false
+			elseif(info.type == udm.TYPE_VECTOR3) then
+				props:SetProperty(info.name,fudm.Vector3(info.default))
+				if(info.specializationType ~= ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
+					valid = false
+				end
+			elseif(info.type == udm.TYPE_VECTOR4) then
+				props:SetProperty(info.name,fudm.Vector4(info.default))
+				valid = false
+			elseif(info.type == udm.TYPE_QUATERNION) then
+				props:SetProperty(info.name,fudm.Quaternion(info.default))
+				valid = false
+			elseif(info.type == udm.TYPE_EULER_ANGLES) then
+				props:SetProperty(info.name,fudm.Angle(info.default))
+				valid = false
+			--elseif(info.type == udm.TYPE_INT8) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_INT16) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_UINT16) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_INT64) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_DOUBLE) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_VECTOR2I) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_VECTOR3I) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_VECTOR4I) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_SRGBA) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_HDR_COLOR) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_TRANSFORM) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_SCALED_TRANSFORM) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_MAT4) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_MAT3X4) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_BLOB) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_BLOB_LZ4) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_ELEMENT) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_ARRAY) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_ARRAY_LZ4) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_REFERENCE) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_STRUCT) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_HALF) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_UTF8_STRING) then props:SetProperty(info.name,udm.(info.default))
+			--elseif(info.type == udm.TYPE_NIL) then props:SetProperty(info.name,udm.(info.default))
+			else
+				pfm.log("Unsupported component member type " .. info.type .. "!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+				valid = false
+			end
+			if(valid) then
+				controlData.name = info.name
+				controlData.min = info.min
+				controlData.max = info.max
+				controlData.default = info.default
+				controlData.path = "ec/" .. componentInfo.name .. "/" .. info.name
+				controlData.value = c:GetMemberValue(info.name)
+				controlData.set = function(component,value)
+					local memberValue = value
+					if(util.get_type_name(memberValue) == "Color") then memberValue = memberValue:ToVector() end
+					component:GetProperty("properties"):GetProperty(info.name):SetValue(memberValue)
+					
+					local entActor = actorData.actor:FindEntity()
+					if(entActor ~= nil) then
+						local c = entActor:GetComponent(componentId)
+						if(c ~= nil) then
+							c:SetMemberValue(info.name,memberValue)
+						end
+					end
+					applyComponentChannelValue(self,component,controlData,value)
+					self:TagRenderSceneAsDirty()
+				end
+				actorData.componentData[componentId].items[memberIdx] = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData)
+			end
+			memberIdx = memberIdx +1
+			memberInfo = c:GetMemberInfo(memberIdx)
+		end
+	end
+	--[[if(component.SetupControls) then
+		-- component:SetupControls(self,itemComponent)
+	end]]
 
 	-- TODO: Use the code below once the system has been fully transitioned to UDM
 	--[[local itemComponent = itemComponents:AddItem(component:GetName())
@@ -692,8 +881,11 @@ function gui.PFMActorEditor:AddActor(actor)
 	local itemComponents = itemActor:AddItem(locale.get_text("components"))
 	self.m_treeElementToActorData[itemActor] = {
 		actor = actor,
-		componentsEntry = itemComponents
+		itemActor = itemActor,
+		componentsEntry = itemComponents,
+		componentData = {}
 	}
+	self.m_actorUniqueIdToTreeElement[actor:GetUniqueId()] = itemActor
 	itemComponents:AddCallback("OnMouseEvent",function(tex,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 			local pContext = gui.open_context_menu()
@@ -701,7 +893,7 @@ function gui.PFMActorEditor:AddActor(actor)
 			pContext:SetPos(input.get_cursor_pos())
 			local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
 
-			--[[local componentTypeNames = {}
+			local componentTypeNames = {}
 			for _,componentId in ipairs(ents.get_registered_component_types()) do
 				local info = ents.get_component_info(componentId)
 				local name = info.name
@@ -715,8 +907,8 @@ function gui.PFMActorEditor:AddActor(actor)
 				pComponentsMenu:AddItem(displayName,function()
 					self:CreateNewActorComponent(actor,name,true)
 				end)
-			end]]
-			local componentManager = self.m_componentManager
+			end
+			--[[local componentManager = self.m_componentManager
 			local components = {}
 			for componentType,udmComponent in pairs(componentManager:GetComponents():GetChildren()) do
 				local name = udmComponent:GetValue("name")
@@ -728,45 +920,45 @@ function gui.PFMActorEditor:AddActor(actor)
 				locale.get_text("pfm_add_component_type",{name})
 				pComponentsMenu:AddItem(locale.get_text("pfm_add_component_type",{componentType}),function()
 					local tTranslation = {
-						["pfm_model"] = "PFMModel",
-						["pfm_particle_system"] = "PFMParticleSystem",
-						["pfm_camera"] = "PFMCamera",
-						["pfm_animation_set"] = "PFMAnimationSet",
-						["pfm_light_spot"] = "PFMSpotLight",
-						["pfm_light_directional"] = "PFMDirectionalLight",
-						["pfm_light_point"] = "PFMPointLight",
-						["pfm_impersonatee"] = "PFMImpersonatee",
-						["pfm_volumetric"] = "PFMVolumetric"
+						["pfm_model"] = {"PFMModel"},
+						["pfm_particle_system"] = {"PFMParticleSystem"},
+						["pfm_camera"] = {"PFMCamera"},
+						["pfm_animation_set"] = {"PFMAnimationSet"},
+						["pfm_light_spot"] = {"PFMSpotLight","light","light_spot","radius","color","transform"},
+						["pfm_light_directional"] = {"PFMDirectionalLight"},
+						["pfm_light_point"] = {"PFMPointLight"},
+						["pfm_impersonatee"] = {"PFMImpersonatee"},
+						["pfm_volumetric"] = {"PFMVolumetric"}
 					}
-					self:CreateNewActorComponent(actor,tTranslation[componentType],true)
+					for _,componentName in pairs(tTranslation[componentType]) do
+						self:CreateNewActorComponent(actor,componentName,true)
+					end
 				end)
-			end
+			end]]
 			pComponentsMenu:Update()
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
 		end
 	end)
-	for _,component in ipairs(actor:GetComponents():GetTable()) do
-		self:AddActorComponent(itemActor,itemComponents,component)
-	end
+	self:UpdateActorComponentEntries(self.m_treeElementToActorData[itemActor])
 end
 function gui.PFMActorEditor:Setup(filmClip)
 	if(util.is_same_object(filmClip,self.m_filmClip)) then return end
 	self.m_filmClip = filmClip
 	self.m_tree:Clear()
 	self.m_treeElementToActorData = {}
+	self.m_actorUniqueIdToTreeElement = {}
 	-- TODO: Include groups the actors belong to!
 	for _,actor in ipairs(filmClip:GetActorList()) do
 		self:AddActor(actor)
 	end
 end
-function gui.PFMActorEditor:AddProperty(name,item,fInitPropertyEl)
-	local child = item:AddItem(name)
-
-	local elLabelContainer
+function gui.PFMActorEditor:AddProperty(name,child,fInitPropertyEl)
+	--[[local elLabelContainer
 	local elProperty
 	local elHeight = 24
 	child:AddCallback("OnSelected",function()
+		print("OnSelected")
 		elLabelContainer = gui.create("WIBase",self.m_propertiesLabelsVBox)
 		elLabelContainer:SetHeight(elHeight)
 
@@ -781,37 +973,137 @@ function gui.PFMActorEditor:AddProperty(name,item,fInitPropertyEl)
 		elProperty = fInitPropertyEl(self.m_propertiesElementsVBox)
 		if(util.is_valid(elProperty)) then
 			elProperty:SetHeight(elHeight)
+			elProperty:AddCallback("OnRemove",function() util.remove(elLabelContainer) end)
 		end
 	end)
-	child:AddCallback("OnDeselected",function()
-		if(util.is_valid(elLabelContainer)) then elLabelContainer:Remove() end
-		if(util.is_valid(elProperty)) then elProperty:Remove() end
-	end)
+	local function cleanUp()
+		util.remove(elLabelContainer,true)
+		util.remove(elProperty,true)
+	end
+	child:AddCallback("OnDeselected",cleanUp)
+	child:AddCallback("OnRemove",cleanUp)]]
+
+	local elHeight = 24
+	local elLabelContainer = gui.create("WIBase",self.m_propertiesLabelsVBox)
+	elLabelContainer:SetHeight(elHeight)
+
+	local elLabel = gui.create("WIText",elLabelContainer)
+	elLabel:SetText(name)
+	elLabel:SetColor(Color(200,200,200))
+	elLabel:SetFont("pfm_medium")
+	elLabel:SizeToContents()
+	elLabel:CenterToParentY()
+	elLabel:SetX(5)
+
+	local elProperty = fInitPropertyEl(self.m_propertiesElementsVBox)
+	if(util.is_valid(elProperty)) then
+		elProperty:SetHeight(elHeight)
+		elProperty:AddCallback("OnRemove",function() util.remove(elLabelContainer) end)
+	end
+	return elProperty
 end
-function gui.PFMActorEditor:AddControl(component,item,controlData,identifier)
+function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentData,udmComponent,item,controlData,identifier)
+	local actor = udmComponent:GetSceneParent()
+	local memberInfo = (actor ~= nil) and self:GetMemberInfo(actor,controlData.path) or nil
+	if(memberInfo == nil) then return end
 	controlData.translateToInterface = controlData.translateToInterface or function(val) return val end
 	controlData.translateFromInterface = controlData.translateFromInterface or function(val) return val end
-	local child = item:AddItem(controlData.name,nil,nil,identifier)
+
+	local isBaseProperty = (memberInfo.type == udm.TYPE_STRING)
+	local baseItem = isBaseProperty and componentData.itemBaseProps or item
+	local child = baseItem:AddItem(controlData.name,nil,nil,identifier)
 
 	local ctrl
 	local selectedCount = 0
 	local fOnSelected = function()
 		selectedCount = selectedCount +1
 		if(selectedCount > 1 or util.is_valid(ctrl)) then return end
-		if(controlData.addControl) then
-			ctrl = controlData.addControl(self.m_animSetControls,function(value)
-				applyComponentChannelValue(self,component,controlData,value)
-			end)
-		else
-			ctrl = self:AddSliderControl(component,controlData)
-			if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
+		if(controlData.path ~= nil) then
+			if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
+				local colField,wrapper = self.m_animSetControls:AddColorField(locale.get_text("color"),"color",(controlData.value and Color(controlData.value)) or (controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
+					if(controlData.set ~= nil) then controlData.set(udmComponent,newCol) end
+				end)
+				ctrl = wrapper
+			elseif(memberInfo.type == udm.TYPE_STRING) then
+				if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE) then
+					local meta = memberInfo.metaData or udm.create_element()
+					if(meta ~= nil) then
+						if(meta:GetValue("assetType") == "model") then
+							ctrl = self:AddProperty(memberInfo.name,child,function(parent)
+								local el = gui.create("WIFileEntry",parent)
+								if(controlData.value ~= nil) then el:SetValue(controlData.value) end
+								el:SetBrowseHandler(function(resultHandler)
+									gui.open_model_dialog(function(dialogResult,mdlName)
+										if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
+										resultHandler(mdlName)
+									end)
+								end)
+								el:AddCallback("OnValueChanged",function(el,value)
+									if(controlData.set ~= nil) then controlData.set(udmComponent,value) end
+								end)
+								return el
+							end)
+						end
+					end
+					if(util.is_valid(ctrl) == false) then
+						ctrl = self:AddProperty(memberInfo.name,child,function(parent)
+							local el = gui.create("WIFileEntry",parent)
+							if(controlData.value ~= nil) then el:SetValue(controlData.value) end
+							el:SetBrowseHandler(function(resultHandler)
+								local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
+									if(fileName == nil) then return end
+									local basePath = meta:GetValue("basePath") or ""
+									resultHandler(basePath .. el:GetFilePath(true))
+								end)
+								local rootPath = meta:GetValue("rootPath")
+								if(rootPath ~= nil) then pFileDialog:SetRootPath(rootPath) end
+								local extensions = meta:Get("extensions"):ToTable()
+								if(#extensions > 0) then pFileDialog:SetExtensions(extensions) end
+								pFileDialog:Update()
+							end)
+							el:AddCallback("OnValueChanged",function(el,value)
+								if(controlData.set ~= nil) then controlData.set(udmComponent,value) end
+							end)
+							return el
+						end)
+					end
+				end
+				return
+			else
+				if(memberInfo.min ~= nil) then controlData.min = memberInfo.min end
+				if(memberInfo.max ~= nil) then controlData.max = memberInfo.max end
+				if(memberInfo.default ~= nil) then controlData.default = memberInfo.default end
+
+				if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_DISTANCE) then
+					controlData.unit = locale.get_text("symbol_meters")
+					controlData.translateToInterface = function(val) return util.units_to_metres(val) end
+					controlData.translateFromInterface = function(val) return util.metres_to_units(val) end
+				elseif(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_LIGHT_INTENSITY) then
+					-- TODO
+					controlData.unit = locale.get_text("symbol_lumen")--(self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
+				end
+				ctrl = self:AddSliderControl(udmComponent,controlData)
+				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
+
+				-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+			end
 		end
-		self:CallCallbacks("OnControlSelected",component,controlData,ctrl)
+		if(util.is_valid(ctrl) == false) then
+			if(controlData.addControl) then
+				ctrl = controlData.addControl(self.m_animSetControls,function(value)
+					applyComponentChannelValue(self,udmComponent,controlData,value)
+				end)
+			else
+				ctrl = self:AddSliderControl(udmComponent,controlData)
+				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
+			end
+		end
+		self:CallCallbacks("OnControlSelected",udmComponent,controlData,ctrl)
 	end
 	local fOnDeselected = function()
 		selectedCount = selectedCount -1
 		if(selectedCount > 0) then return end
-		self:CallCallbacks("OnControlDeselected",component,controlData,ctrl)
+		self:CallCallbacks("OnControlDeselected",udmComponent,controlData,ctrl)
 		if(util.is_valid(ctrl) == false) then return end
 		ctrl:Remove()
 	end

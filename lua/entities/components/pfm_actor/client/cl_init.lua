@@ -275,7 +275,7 @@ function ents.PFMActorComponent:Setup(actorData)
 			local componentName = componentData:GetComponentName()
 			local c = self:AddEntityComponent(componentName)
 			if(c == nil) then pfm.log("Attempted to add unknown component '" .. componentData:GetComponentName() .. "' to actor '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
-			else c:Setup(actorData,componentData) end
+			elseif(c.Setup ~= nil) then c:Setup(actorData,componentData) end
 		end
 	end
 end

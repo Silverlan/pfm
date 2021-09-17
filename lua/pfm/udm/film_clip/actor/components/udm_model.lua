@@ -227,7 +227,6 @@ function fudm.PFMModel:SetupBoneControls(actorEditor,itemComponent)
 end
 
 function fudm.PFMModel:SetupControls(actorEditor,itemComponent)
-	print("SetupControls: ",SetupControls)
 	local itemFlexControllers = itemComponent:AddItem(locale.get_text("flex_controllers"))
 	self:SetupFlexControllerControls(actorEditor,itemFlexControllers)
 	

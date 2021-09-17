@@ -3,10 +3,10 @@ include_component("util_transform_arrow")
 
 local Component = ents.UtilTransformComponent
 local flags = bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER,ents.BaseEntityComponent.MEMBER_FLAG_BIT_PROPERTY)
-Component:RegisterMember("TranslationEnabled",util.VAR_TYPE_BOOL,true,flags)
-Component:RegisterMember("RotationEnabled",util.VAR_TYPE_BOOL,true,flags)
-Component:RegisterMember("ScaleEnabled",util.VAR_TYPE_BOOL,false,flags)
-Component:RegisterMember("Space",util.VAR_TYPE_UINT8,Component.SPACE_WORLD,bit.band(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,bit.bnot(bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_BIT_KEY_VALUE,ents.BaseEntityComponent.MEMBER_FLAG_BIT_INPUT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_OUTPUT))))
+Component:RegisterMember("TranslationEnabled",udm.TYPE_BOOLEAN,true,flags)
+Component:RegisterMember("RotationEnabled",udm.TYPE_BOOLEAN,true,flags)
+Component:RegisterMember("ScaleEnabled",udm.TYPE_BOOLEAN,false,flags)
+Component:RegisterMember("Space",udm.TYPE_UINT8,Component.SPACE_WORLD,bit.band(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,bit.bnot(bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_BIT_KEY_VALUE,ents.BaseEntityComponent.MEMBER_FLAG_BIT_INPUT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_OUTPUT))))
 
 function Component:OnEntitySpawn()
 	self:UpdateAxes()
