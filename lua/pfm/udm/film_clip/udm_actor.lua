@@ -30,7 +30,6 @@ function fudm.PFMActor:GetSceneChildren() return self:GetComponents():GetTable()
 function fudm.PFMActor:AddComponent(pfmComponent)
 	pfmComponent:SetSceneParent(self)
 	self:GetComponentsAttr():PushBack(pfmComponent)
-	self:AddChild(pfmComponent)
 end
 
 function fudm.PFMActor:FindComponent(name)

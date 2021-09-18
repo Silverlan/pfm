@@ -238,6 +238,9 @@ function gui.PFMSlider:MouseCallback(button,state,mods)
 				end
 			end)
 		end)
+		pContext:AddItem(locale.get_text("copy_to_clipboard"),function()
+			util.set_clipboard_string(tostring(self:GetValue()))
+		end)
 		self:CallCallbacks("PopulateContextMenu",pContext)
 		pContext:Update()
 	end

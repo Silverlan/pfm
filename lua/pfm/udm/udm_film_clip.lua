@@ -57,6 +57,15 @@ function fudm.PFMFilmClip:FindActor(name)
 	end
 end
 
+function fudm.PFMFilmClip:FindActorByUniqueId(uniqueId)
+	for _,actor in ipairs(self:GetActors():GetTable()) do
+		if(actor:GetType() == fudm.ELEMENT_TYPE_PFM_GROUP) then
+			local el = actor:FindActor(name)
+			if(el ~= nil) then return el end
+		elseif(actor:GetUniqueId() == uniqueId) then return actor end
+	end
+end
+
 function fudm.PFMFilmClip:FindTrackGroup(name)
 	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do
 		if(trackGroup:GetName() == name) then return trackGroup end

@@ -14,18 +14,6 @@ include("/pfm/component_manager.lua")
 
 util.register_class("gui.PFMActorEditor",gui.Base)
 
-gui.PFMActorEditor.actor_presets = {
-	["pfm_model"] = {"PFMModel"},
-	["pfm_particle_system"] = {"PFMParticleSystem"},
-	["pfm_camera"] = {"PFMCamera"},
-	["pfm_animation_set"] = {"PFMAnimationSet"},
-	["pfm_light_spot"] = {"PFMSpotLight","light","light_spot","radius","color","transform"},
-	["pfm_light_directional"] = {"PFMDirectionalLight"},
-	["pfm_light_point"] = {"PFMPointLight"},
-	["pfm_impersonatee"] = {"PFMImpersonatee"},
-	["pfm_volumetric"] = {"PFMVolumetric"}
-}
-
 function gui.PFMActorEditor:__init()
 	gui.Base.__init(self)
 end
@@ -61,8 +49,13 @@ function gui.PFMActorEditor:OnInitialize()
 				if(self:IsValid() == false) then return end
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"PFMModel")
-				self:CreateNewActorComponent(actor,"PFMAnimationSet",nil,function(animC) mdlC:ChangeModel(mdlName) end)
+				local mdlC = self:CreateNewActorComponent(actor,"PFMModel",nil,function(mdlC) mdlC:ChangeModel(mdlName) end)
+				self:CreateNewActorComponent(actor,"PFMAnimationSet")
+				self:CreateNewActorComponent(actor,"model")
+				self:CreateNewActorComponent(actor,"render")
+				self:CreateNewActorComponent(actor,"animated")
+				self:CreateNewActorComponent(actor,"flex")
+				-- self:CreateNewActorComponent(actor,"transform")
 
 				self:AddActorToScene(actor)
 			end)
@@ -73,7 +66,10 @@ function gui.PFMActorEditor:OnInitialize()
 				if(self:IsValid() == false) then return end
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"PFMModel",nil,function(animC) mdlC:ChangeModel(mdlName) end)
+				local mdlC = self:CreateNewActorComponent(actor,"PFMModel",nil,function(mdlC) mdlC:ChangeModel(mdlName) end)
+				self:CreateNewActorComponent(actor,"model")
+				self:CreateNewActorComponent(actor,"render")
+				-- self:CreateNewActorComponent(actor,"transform")
 
 				self:AddActorToScene(actor)
 			end)
@@ -82,6 +78,9 @@ function gui.PFMActorEditor:OnInitialize()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMCamera")
+			self:CreateNewActorComponent(actor,"toggle")
+			self:CreateNewActorComponent(actor,"camera")
+			-- self:CreateNewActorComponent(actor,"transform")
 
 			self:AddActorToScene(actor)
 		end)
@@ -97,9 +96,10 @@ function gui.PFMActorEditor:OnInitialize()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMSpotLight")
 			self:CreateNewActorComponent(actor,"light")
+			self:CreateNewActorComponent(actor,"light_spot")
 			self:CreateNewActorComponent(actor,"radius")
 			self:CreateNewActorComponent(actor,"color")
-			self:CreateNewActorComponent(actor,"transform")
+			-- self:CreateNewActorComponent(actor,"transform")
 
 			self:AddActorToScene(actor)
 		end)
@@ -107,6 +107,11 @@ function gui.PFMActorEditor:OnInitialize()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMPointLight")
+			self:CreateNewActorComponent(actor,"light")
+			self:CreateNewActorComponent(actor,"light_point")
+			self:CreateNewActorComponent(actor,"radius")
+			self:CreateNewActorComponent(actor,"color")
+			-- self:CreateNewActorComponent(actor,"transform")
 
 			self:AddActorToScene(actor)
 		end)
@@ -114,6 +119,10 @@ function gui.PFMActorEditor:OnInitialize()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMDirectionalLight")
+			self:CreateNewActorComponent(actor,"light")
+			self:CreateNewActorComponent(actor,"light_directional")
+			self:CreateNewActorComponent(actor,"color")
+			-- self:CreateNewActorComponent(actor,"transform")
 
 			self:AddActorToScene(actor)
 		end)
@@ -343,8 +352,9 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 		end
 	end
 
-	local slider = self.m_animSetControls:AddSliderControl(controlData.name,controlData.identifier,controlData.value or controlData.default or 0.0,controlData.min or 0.0,controlData.max or 100,nil,nil,controlData.integer or controlData.boolean)
-	if(controlData.default ~= nil) then slider:SetDefault(controlData.default) end
+	local slider = self.m_animSetControls:AddSliderControl(controlData.name,controlData.identifier,controlData.translateToInterface(controlData.default or 0.0),controlData.translateToInterface(controlData.min or 0.0),controlData.translateToInterface(controlData.max or 100),nil,nil,controlData.integer or controlData.boolean)
+	if(controlData.default ~= nil) then slider:SetDefault(controlData.translateToInterface(controlData.default)) end
+	if(controlData.value ~= nil) then slider:SetValue(controlData.translateToInterface(controlData.value)) end
 	local callbacks = {}
 	local skipCallbacks
 	if(controlData.type == "flexController") then
@@ -430,14 +440,17 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	end
 	slider:AddCallback("OnLeftValueChanged",function(el,value)
 		if(controlData.boolean) then value = toboolean(value) end
-		if(controlData.property ~= nil) then
+		if(controlData.set ~= nil) then
+			controlData.set(component,value)
+		end
+		--[[if(controlData.property ~= nil) then
 			component:GetProperty(controlData.property):SetValue(controlData.translateFromInterface(value))
 		elseif(controlData.set ~= nil) then
 			controlData.set(component,value)
 		elseif(controlData.setLeft ~= nil) then
 			controlData.setLeft(component,value)
 		end
-		applyComponentChannelValue(self,component,controlData,value)
+		applyComponentChannelValue(self,component,controlData,value)]]
 	end)
 	slider:AddCallback("OnRightValueChanged",function(el,value)
 		if(controlData.boolean) then value = toboolean(value) end
@@ -556,13 +569,12 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 			local type = memberInfo.type
 			path = path:ToUri(false)
 			local varType = fudm.udm_type_to_var_type(type)
-			if(memberName:GetString() == "color") then varType = util.VAR_TYPE_COLOR end -- TODO: How to handle this properly?
 			local channel = channelClip:GetChannel(path,varType,true)
 			local log = channel:GetLog()
 			local layer = log:GetLayers():Get(1)
 
 			local time = fm:GetTimeOffset()
-			pfm.log("Adding channel value " .. tostring(value) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
+			pfm.log("Adding channel value " .. tostring(value) .. " of type " .. udm.type_to_string(type) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 			local localTime = channelClip:GetTimeFrame():LocalizeTimeOffset(time)
 			layer:InsertValue(localTime,value)
 			local channelValue = value
@@ -678,13 +690,14 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 	local componentInfo = (componentId ~= nil) and ents.get_component_info(componentId) or nil
 	if(componentInfo ~= nil) then
 		local c = entActor:GetComponent(componentId)
-		local memberIdx = 0
-		local memberInfo = (c ~= nil) and c:GetMemberInfo(memberIdx) or nil
 		local props = component:GetProperty("properties")
-		while(memberInfo ~= nil) do
+		local function initializeProperty(info,controlData)
+			local prop = props:GetProperty(info.name)
+			if(prop ~= nil) then
+				c:SetMemberValue(info.name,prop:GetValue())
+				return true
+			end
 			local valid = true
-			local controlData = {}
-			local info = memberInfo
 			if(info.type == udm.TYPE_STRING) then props:SetProperty(info.name,fudm.String(info.default))
 			elseif(info.type == udm.TYPE_UINT8) then
 				props:SetProperty(info.name,fudm.UInt8(info.default))
@@ -747,14 +760,32 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				pfm.log("Unsupported component member type " .. info.type .. "!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 				valid = false
 			end
+			return valid
+		end
+
+		local memberIdx = 0
+		local memberInfo = (c ~= nil) and c:GetMemberInfo(memberIdx) or nil
+		while(memberInfo ~= nil) do
+			local controlData = {}
+			local info = memberInfo
+			local valid = initializeProperty(info,controlData)
 			if(valid) then
 				controlData.name = info.name
-				controlData.min = info.min
-				controlData.max = info.max
 				controlData.default = info.default
 				controlData.path = "ec/" .. componentInfo.name .. "/" .. info.name
 				controlData.value = c:GetMemberValue(info.name)
-				controlData.set = function(component,value)
+				if(udm.is_numeric_type(info.type)) then
+					local min = info.min or 0
+					local max = info.max or 100
+					min = math.min(min,controlData.default or min,controlData.value or min)
+					max = math.max(max,controlData.default or max,controlData.value or max)
+					if(min == max) then max = max +100 end
+					controlData.min = min
+					controlData.max = max
+				end
+				pfm.log("Adding control for member '" .. controlData.path .. "' with min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(controlData.value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
+				controlData.set = function(component,value,dontTranslateValue)
+					if(dontTranslateValue ~= true) then value = controlData.translateFromInterface(value) end
 					local memberValue = value
 					if(util.get_type_name(memberValue) == "Color") then memberValue = memberValue:ToVector() end
 					component:GetProperty("properties"):GetProperty(info.name):SetValue(memberValue)
@@ -766,9 +797,10 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 							c:SetMemberValue(info.name,memberValue)
 						end
 					end
-					applyComponentChannelValue(self,component,controlData,value)
+					applyComponentChannelValue(self,component,controlData,memberValue)
 					self:TagRenderSceneAsDirty()
 				end
+				controlData.set(component,controlData.value,true)
 				actorData.componentData[componentId].items[memberIdx] = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData)
 			end
 			memberIdx = memberIdx +1
@@ -891,22 +923,45 @@ function gui.PFMActorEditor:AddActor(actor)
 			local pContext = gui.open_context_menu()
 			if(util.is_valid(pContext) == false) then return end
 			pContext:SetPos(input.get_cursor_pos())
-			local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
 
-			local componentTypeNames = {}
-			for _,componentId in ipairs(ents.get_registered_component_types()) do
-				local info = ents.get_component_info(componentId)
-				local name = info.name
-				table.insert(componentTypeNames,name)
-			end
-			table.sort(componentTypeNames)
-			for _,name in ipairs(componentTypeNames) do
-				local displayName = name
-				local valid,n = locale.get_text("component_" .. name,nil,true)
-				if(valid) then displayName = n end
-				pComponentsMenu:AddItem(displayName,function()
-					self:CreateNewActorComponent(actor,name,true)
-				end)
+			local entActor = actor:FindEntity()
+			if(util.is_valid(entActor)) then
+				local existingComponents = {}
+				local newComponents = {}
+				for _,componentId in ipairs(ents.get_registered_component_types()) do
+					local info = ents.get_component_info(componentId)
+					local name = info.name
+					if(actor:HasComponent(name) == false) then
+						if(entActor:HasComponent(name)) then table.insert(existingComponents,name)
+						else table.insert(newComponents,name) end
+					end
+				end
+				if(#existingComponents > 0) then
+					local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
+					table.sort(existingComponents)
+					for _,name in ipairs(existingComponents) do
+						local displayName = name
+						local valid,n = locale.get_text("component_" .. name,nil,true)
+						if(valid) then displayName = n end
+						pComponentsMenu:AddItem(displayName,function()
+							self:CreateNewActorComponent(actor,name,true)
+						end)
+					end
+					pComponentsMenu:Update()
+				end
+				if(#newComponents > 0) then
+					local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_new_component"))
+					table.sort(newComponents)
+					for _,name in ipairs(newComponents) do
+						local displayName = name
+						local valid,n = locale.get_text("component_" .. name,nil,true)
+						if(valid) then displayName = n end
+						pComponentsMenu:AddItem(displayName,function()
+							self:CreateNewActorComponent(actor,name,true)
+						end)
+					end
+					pComponentsMenu:Update()
+				end
 			end
 			--[[local componentManager = self.m_componentManager
 			local components = {}
@@ -935,7 +990,6 @@ function gui.PFMActorEditor:AddActor(actor)
 					end
 				end)
 			end]]
-			pComponentsMenu:Update()
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
 		end
@@ -1069,10 +1123,18 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 					end
 				end
 				return
-			else
-				if(memberInfo.min ~= nil) then controlData.min = memberInfo.min end
-				if(memberInfo.max ~= nil) then controlData.max = memberInfo.max end
+			elseif(udm.is_numeric_type(memberInfo.type)) then
+				if(memberInfo.minValue ~= nil) then controlData.min = memberInfo.minValue end
+				if(memberInfo.maxValue ~= nil) then controlData.max = memberInfo.maxValue end
 				if(memberInfo.default ~= nil) then controlData.default = memberInfo.default end
+				if(memberInfo.value ~= nil) then controlData.value = memberInfo.value end
+
+				if(memberInfo.type == udm.TYPE_BOOLEAN) then
+					controlData.min = controlData.min and 1 or 0
+					controlData.max = controlData.max and 1 or 0
+					controlData.default = controlData.default and 1 or 0
+					controlData.value = controlData.value and 1 or 0
+				end
 
 				if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_DISTANCE) then
 					controlData.unit = locale.get_text("symbol_meters")
@@ -1086,7 +1148,7 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
 
 				-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-			end
+			else return end
 		end
 		if(util.is_valid(ctrl) == false) then
 			if(controlData.addControl) then

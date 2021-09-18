@@ -114,21 +114,23 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 	if(animChannelTrack == nil) then return end
 	local actorChannels = {}
 	for _,channelClip in ipairs(animChannelTrack:GetChannelClips():GetTable()) do
-		for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
-			local toElement = channel:GetToElement()
-			local attr = channel:GetToAttribute()
-			local parent = (toElement ~= nil) and toElement:FindParentElement(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR end) or nil
-			if(parent ~= nil) then
+		local uuid = channelClip:GetActor()
+		local actor = filmClip:FindActorByUniqueId(uuid)
+		if(actor ~= nil) then
+			for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
+				local attr = channel:GetToAttribute()
 				local channelPath = channel:GetTargetPath()
 				if(#channelPath == 0) then channelPath = nil end
 				channelPath = channelPath or get_channel_path(channel:GetToElement(),attr)
 				if(channelPath ~= nil) then
-					actorChannels[util.get_object_hash(parent)] = actorChannels[util.get_object_hash(parent)] or {}
-					actorChannels[util.get_object_hash(parent)][channelPath] = {channel,channelClip}
+					actorChannels[util.get_object_hash(actor)] = actorChannels[util.get_object_hash(actor)] or {}
+					actorChannels[util.get_object_hash(actor)][channelPath] = {channel,channelClip}
 				else
 					pfm.log("Unable to determine channel path for channel animating attribute '" .. attr .. "' of element '" .. tostring(toElement) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 				end
 			end
+		else
+			pfm.log("Unable to find actor with uuid '" .. uuid .. "' for channel clip '" .. tostring(channelClip) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		end
 	end
 	local animations = {}
@@ -148,7 +150,7 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 			local expr = channel:GetExpression()
 			if(#expr > 0) then
 				local r = animChannel:SetValueExpression(expr)
-				if(r ~= true) then pfm.log("Unable to translate SFM expression operator expression '" .. expr .. "': " .. r,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
+				if(r ~= true) then pfm.log("Unable to initialize channel math expression '" .. expr .. "': " .. r,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
 			end
 			animChannel:SetValues(times:ToTable(),values:ToTable())
 		end
