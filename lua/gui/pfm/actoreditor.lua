@@ -160,6 +160,21 @@ function gui.PFMActorEditor:OnInitialize()
 
 			self:AddActorToScene(actor)
 		end)
+
+		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
+		local types = ents.get_registered_entity_types()
+		table.sort(types)
+		for _,typeName in ipairs(types) do
+			pEntsMenu:AddItem(typeName,function()
+				local actor = self:CreateNewActor()
+				if(actor == nil) then return end
+				-- TODO: Add entity core components
+
+				self:AddActorToScene(actor)
+			end)
+		end
+		pEntsMenu:Update()]]
+
 		--[[local history = self:GetHistory()
 		local pos = history:GetCurrentPosition()
 		local numItems = #history
@@ -927,14 +942,21 @@ function gui.PFMActorEditor:AddActor(actor)
 			local entActor = actor:FindEntity()
 			if(util.is_valid(entActor)) then
 				local existingComponents = {}
-				local newComponents = {}
+				local newComponentMap = {}
 				for _,componentId in ipairs(ents.get_registered_component_types()) do
 					local info = ents.get_component_info(componentId)
 					local name = info.name
 					if(actor:HasComponent(name) == false) then
 						if(entActor:HasComponent(name)) then table.insert(existingComponents,name)
-						else table.insert(newComponents,name) end
+						else newComponentMap[name] = true end
 					end
+				end
+				for _,name in ipairs(ents.find_installed_custom_components()) do
+					newComponentMap[name] = true
+				end
+				local newComponents = {}
+				for name,_ in pairs(newComponentMap) do
+					table.insert(newComponents,name)
 				end
 				if(#existingComponents > 0) then
 					local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))

@@ -29,6 +29,7 @@ function fudm.register_type(className,baseClass,elementType,defaultArg,...)
 		function class:__init(...)
 			if(type(baseClass) == "table") then for _,p in ipairs(baseClass) do p.__init(self,class) end
 			else baseClass.__init(self,class) end
+			self.m_class = class
 
 			local initArgs = {}
 			local userArgs = {...}
