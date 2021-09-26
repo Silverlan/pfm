@@ -359,6 +359,21 @@ function gui.WIFilmmaker:OnInitialize()
 			end
 			pfm.log("Unable to export map: " .. errMsg,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		end)
+		if(self:IsDeveloperModeEnabled()) then
+			local recorder
+			pContext:AddItem("Record animation as image sequence",function(pItem)
+				if(recorder == nil or recorder:IsRecording() == false) then
+					include("/gui/editors/filmmaker/image_recorder.lua")
+
+					recorder = pfm.ImageRecorder(self)
+					file.create_path("render/recording/recording")
+					recorder:StartRecording("render/recording/recording")
+				else
+					recorder:StopRecording()
+					recorder = nil
+				end
+			end)
+		end
 
 		pContext:Update()
 	end)
@@ -539,6 +554,10 @@ function gui.WIFilmmaker:ReloadInterface()
 end
 function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
 function gui.WIFilmmaker:GetViewport() return self:GetWindow("primary_viewport") or nil end
+function gui.WIFilmmaker:GetViewportElement()
+	local vp = self:GetWindow("primary_viewport")
+	return util.is_valid(vp) and vp:GetViewport() or nil
+end
 function gui.WIFilmmaker:GetSecondaryViewport() return self:GetWindow("secondary_viewport") or nil end
 function gui.WIFilmmaker:GetRenderTab() return self:GetWindow("render") or nil end
 function gui.WIFilmmaker:GetActorEditor() return self:GetWindow("actor_editor") or nil end
