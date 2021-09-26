@@ -388,6 +388,10 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		h = w
 	end
 
+	local ent = ents.create("unirender")
+	util.remove(ent,true)
+	local unirenderC = ent:AddComponent("unirender")
+
 	local scene = unirender.create_scene(renderSettings:GetRenderMode(),createInfo)
 	local pos = cam:GetEntity():GetPos()
 	local rot = cam:GetEntity():GetRotation()
@@ -447,6 +451,9 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 
 	clCam:SetEquirectangularHorizontalRange(renderSettings:GetPanoramaHorizontalRange())
 	clCam:SetStereoscopic(renderSettings:IsStereoscopic())
+	if(#renderSettings:GetSky() > 0) then scene:SetSky(renderSettings:GetSky()) end
+
+	unirenderC:InvokeEventCallbacks(ents.UnirenderComponent.EVENT_INITIALIZE_SCENE,{scene,renderSettings})
 
 	local function is_static_cache_entity(ent)
 		return ent:IsMapEntity()
@@ -467,7 +474,6 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		return true
 	end)
 	if(renderSettings:GetRenderWorld() and g_staticGeometryCache ~= nil) then scene:AddCache(g_staticGeometryCache) end
-	if(#renderSettings:GetSky() > 0) then scene:SetSky(renderSettings:GetSky()) end
 
 	-- We want particle effects with bloom to emit light, so we'll add a light source for each particle.
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PARTICLE_SYSTEM)}) do

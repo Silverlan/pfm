@@ -704,6 +704,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 
 	local componentInfo = (componentId ~= nil) and ents.get_component_info(componentId) or nil
 	if(componentInfo ~= nil) then
+		local uniqueId = entActor:GetUuid()
 		local c = entActor:GetComponent(componentId)
 		local props = component:GetProperty("properties")
 		local function initializeProperty(info,controlData)
@@ -746,7 +747,6 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				valid = false
 			elseif(info.type == udm.TYPE_EULER_ANGLES) then
 				props:SetProperty(info.name,fudm.Angle(info.default))
-				valid = false
 			--elseif(info.type == udm.TYPE_INT8) then props:SetProperty(info.name,udm.(info.default))
 			--elseif(info.type == udm.TYPE_INT16) then props:SetProperty(info.name,udm.(info.default))
 			--elseif(info.type == udm.TYPE_UINT16) then props:SetProperty(info.name,udm.(info.default))
@@ -800,10 +800,20 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				end
 				pfm.log("Adding control for member '" .. controlData.path .. "' with min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(controlData.value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
 				controlData.set = function(component,value,dontTranslateValue)
+					local entActor = ents.find_by_unique_index(uniqueId)
+					local c = (entActor ~= nil) and entActor:GetComponent(componentId) or nil
+					local memberIdx = (c ~= nil) and c:GetMemberIndex(controlData.name) or nil
+					local info = (memberIdx ~= nil) and c:GetMemberInfo(memberIdx) or nil
+					if(info == nil) then return end
 					if(dontTranslateValue ~= true) then value = controlData.translateFromInterface(value) end
 					local memberValue = value
 					if(util.get_type_name(memberValue) == "Color") then memberValue = memberValue:ToVector() end
-					component:GetProperty("properties"):GetProperty(info.name):SetValue(memberValue)
+
+					if(controlData.name == "angles") then
+						actorData.actor:GetProperty("transform"):GetProperty("rotation"):SetValue(memberValue:ToQuaternion())
+					else
+						component:GetProperty("properties"):GetProperty(info.name):SetValue(memberValue)
+					end
 					
 					local entActor = actorData.actor:FindEntity()
 					if(entActor ~= nil) then
@@ -1096,7 +1106,7 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 		if(selectedCount > 1 or util.is_valid(ctrl)) then return end
 		if(controlData.path ~= nil) then
 			if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
-				local colField,wrapper = self.m_animSetControls:AddColorField(locale.get_text("color"),"color",(controlData.value and Color(controlData.value)) or (controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
+				local colField,wrapper = self.m_animSetControls:AddColorField(memberInfo.name,"color",(controlData.value and Color(controlData.value)) or (controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
 					if(controlData.set ~= nil) then controlData.set(udmComponent,newCol) end
 				end)
 				ctrl = wrapper
@@ -1170,6 +1180,11 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
 
 				-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+			elseif(memberInfo.type == udm.TYPE_EULER_ANGLES) then
+				local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(memberInfo.value),function(el)
+					if(controlData.set ~= nil) then controlData.set(udmComponent,EulerAngles(el:GetText())) end
+				end)
+				ctrl = wrapper
 			else return end
 		end
 		if(util.is_valid(ctrl) == false) then
