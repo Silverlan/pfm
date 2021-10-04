@@ -49,9 +49,37 @@ local function set_model_view_model(mdlView,model,settings,iconPath)
 		mdlView:FitCameraToScene()
 	else
 		mdlView:SetModel(model)
-		mdlView:PlayIdleAnimation()
+
+		local playIdleAnim = true
 		local ent = mdlView:GetEntity()
 		if(util.is_valid(ent)) then
+			local mdl = game.load_model(model)
+			local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
+			if(mdl ~= nil and animC ~= nil) then
+				-- If the model is a character, we'll zoom in on the head
+				local headData = rig.determine_head_bones(mdl)
+				if(headData ~= nil) then
+					local pose = animC:GetGlobalBonePose(headData.headBoneId)
+					local poseParent = animC:GetGlobalBonePose(headData.headParentBoneId)
+					if(pose ~= nil and poseParent ~= nil) then
+						playIdleAnim = false
+						pose:SetOrigin(pose:GetOrigin() +(poseParent:GetOrigin() -pose:GetOrigin()) *0.7)
+						local min = pose *(headData.headBounds[1] *1.2)
+						local max = pose *(headData.headBounds[2] *1.2)
+						mdlView:FitCameraToScene(min,max)
+
+						local vc = mdlView:GetViewerCamera()
+						if(util.is_valid(vc)) then
+							vc:SetRotation(0.0,0.0)
+							vc:Rotate(-25,10)
+							vc:FitZoomToExtents(min,max)
+						end
+					end
+				end
+			end
+			if(playIdleAnim) then
+				mdlView:PlayIdleAnimation()
+			end
 			local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 			if(mdlC ~= nil) then
 				if(settings.materialOverride) then mdlC:SetMaterialOverride(0,settings.materialOverride)
@@ -70,9 +98,9 @@ local function set_model_view_model(mdlView,model,settings,iconPath)
 	local lookAtTarget = mv:GetVector("look_at_target")
 	local rotation = mv:GetVector("rotation")
 	local zoom = mv:GetFloat("zoom")
-	if(pos ~= nil) then mdlView:SetLookAtTarget(lookAtTarget) end
+	--[[if(pos ~= nil) then mdlView:SetLookAtTarget(lookAtTarget) end
 	if(rotation ~= nil) then mdlView:SetRotation(rotation.x,rotation.y) end
-	if(zoom ~= nil) then mdlView:SetZoom(zoom) end
+	if(zoom ~= nil) then mdlView:SetZoom(zoom) end]]
 end
 
 local function save_model_icon(mdl,mdlView,iconPath)

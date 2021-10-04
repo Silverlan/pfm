@@ -96,10 +96,10 @@ function gui.PatreonTicker:OnThink()
 		if(queryCount ~= nil and queryCount:IsSuccessful()) then
 			local count = toint(queryCount:GetResult())
 			count = math.max(count -numPatrons,0)
-			if(count > 0) then
+			--[[if(count > 0) then
 				local numAnonymous = count
 				if(numAnonymous > 0) then text = text .. " and " .. numAnonymous .. " anonymous." end
-			end
+			end]]
 		end
 		self.m_patronTicker:SetText(text)
 	end

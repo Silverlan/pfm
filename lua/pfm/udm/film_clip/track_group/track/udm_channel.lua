@@ -18,6 +18,8 @@ fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"graphCurve",fudm.P
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"expression",fudm.String())
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"targetPath",fudm.String())
 
+fudm.PFMChannel.ENABLE_ALL_CHANNELS = false
+fudm.PFMChannel.set_all_channels_enabled = function(b) fudm.PFMChannel.ENABLE_ALL_CHANNELS = b end
 function fudm.PFMChannel:IsBoneTransformChannel()
 	if(self.m_cacheIsBoneTransformChannel ~= nil) then return self.m_cacheIsBoneTransformChannel end
 	self.m_cacheIsBoneTransformChannel = false
@@ -48,7 +50,7 @@ function fudm.PFMChannel:SetPlaybackOffset(offset)
 	if(self.m_bnChannel == nil) then
 		self.m_bnChannel = self:IsBoneTransformChannel() or self:IsFlexControllerChannel()
 	end
-	if(self.m_bnChannel ~= true) then return end
+	if(fudm.PFMChannel.ENABLE_ALL_CHANNELS == false and self.m_bnChannel ~= true) then return end
 	local toElement = self:GetToElement()
 	if(toElement == nil) then return end
 	local toAttribute = self:GetToAttribute()

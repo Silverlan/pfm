@@ -82,6 +82,7 @@ function gui.WIFilmmaker:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 	tool.filmmaker = self
+	fudm.PFMChannel.set_all_channels_enabled(false)
 
 	local infoBar = self:GetInfoBar()
 
