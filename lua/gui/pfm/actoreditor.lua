@@ -1168,13 +1168,17 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 					controlData.value = controlData.value and 1 or 0
 				end
 
-				if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_DISTANCE) then
-					controlData.unit = locale.get_text("symbol_meters")
-					controlData.translateToInterface = function(val) return util.units_to_metres(val) end
-					controlData.translateFromInterface = function(val) return util.metres_to_units(val) end
-				elseif(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_LIGHT_INTENSITY) then
-					-- TODO
-					controlData.unit = locale.get_text("symbol_lumen")--(self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
+				local channel = self:GetAnimationChannel(actorData.actor,controlData.path,false)
+				local hasExpression = (channel ~= nil and #channel:GetExpression() > 0)
+				if(hasExpression == false) then
+					if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_DISTANCE) then
+						controlData.unit = locale.get_text("symbol_meters")
+						controlData.translateToInterface = function(val) return util.units_to_metres(val) end
+						controlData.translateFromInterface = function(val) return util.metres_to_units(val) end
+					elseif(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_LIGHT_INTENSITY) then
+						-- TODO
+						controlData.unit = locale.get_text("symbol_lumen")--(self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
+					end
 				end
 				ctrl = self:AddSliderControl(udmComponent,controlData)
 				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
