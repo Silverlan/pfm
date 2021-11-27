@@ -58,7 +58,7 @@ function shader.PFMParticleSpriteTrail:Draw(drawCmd,ps,scene,renderer,renderFlag
 	local dsShadows = renderer:GetPSSMTextureDescriptorSet()
 	self:RecordBindLights(dsShadows,dsLightSources)
 	self:RecordBindRenderSettings(game.get_render_settings_descriptor_set())
-	self:RecordBindSceneCamera(renderer,ps:GetRenderMode() == ents.RenderComponent.RENDERMODE_VIEW)
+	self:RecordBindSceneCamera(renderer,ps:GetSceneRenderPass() == game.SCENE_RENDER_PASS_VIEW)
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteFloat(minLength)

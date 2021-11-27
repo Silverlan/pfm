@@ -99,7 +99,7 @@ end
 function fudm.Transform:GetPose()
 	local scale = self:GetScale()
 	if(type(scale) == "number") then scale = Vector(scale,scale,scale) end
-	return phys.ScaledTransform(self:GetPosition(),self:GetRotation(),scale)
+	return math.ScaledTransform(self:GetPosition(),self:GetRotation(),scale)
 end
 
 function fudm.Transform:SetPose(pose)

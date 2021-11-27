@@ -76,8 +76,7 @@ function gui.ToneMappedImage:InitializeImageProcessor()
 		local toneMapping = 0 -- TODO
 		local isGammaCorrected = (img:GetFormat() ~= prosper.FORMAT_R16G16B16A16_SFLOAT) -- Assume the image is gamma corrected if it's not a HDR image
 		local args = self:GetToneMappingAlgorithmArgs()
-		local pose = Mat4(1.0) -- self.m_drawPose
-		self.m_shader:Draw(drawCmd,pose,dsTex,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
+		self.m_shader:Draw(drawCmd,dsTex,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
 	end)
 	self.m_imgProcessor:AddStage("vr",function(drawCmd,dsTex,rtDst)
 		self:ApplyVR(drawCmd,dsTex)

@@ -263,7 +263,7 @@ end
 function GetControlPointTransformAtTime(self,nControlPoint,flTime)
 	local pose = self:GetParticleSystem():GetEntity():GetPose()
 	-- TODO: Entity pose is confirmed to be required for ExplosionCore_MidAir, but NOT for flamethrower?
-	return pose *(self:GetParticleSystem():GetControlPointPose(nControlPoint or 0,flTime) or phys.Transform())
+	return pose *(self:GetParticleSystem():GetControlPointPose(nControlPoint or 0,flTime) or math.Transform())
 end
 
 function GetControlPointAtTime(self,nControlPoint,flTime)
@@ -273,7 +273,7 @@ end
 function GetControlPointPose(self,nControlPoint)
 	local pose = self:GetParticleSystem():GetEntity():GetPose()
 	--return self:GetParticleSystem():GetEntity():GetPose()
-	return pose *(self:GetParticleSystem():GetControlPointPose(nControlPoint or 0) or phys.Transform())
+	return pose *(self:GetParticleSystem():GetControlPointPose(nControlPoint or 0) or math.Transform())
 end
 
 function TransformAxis(self,srcAxis,localSpace,nControlPoint)

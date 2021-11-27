@@ -175,7 +175,7 @@ function gui.PFMFrame:DetachTab(identifier)
 	if(util.is_valid(tabData.button)) then createInfo.title = tabData.button:GetText() end
 	local windowHandle = prosper.create_window(createInfo)
 	if(windowHandle == nil) then return end
-	local el = gui.add_base_element(windowHandle)
+	local el = gui.get_base_element(windowHandle)
 	if(util.is_valid(el) == false) then return end
 
 	local elBg = gui.create("WIRect",el,0,0,el:GetWidth(),el:GetHeight(),0,0,1,1)
@@ -185,7 +185,7 @@ function gui.PFMFrame:DetachTab(identifier)
 	panel:SetAnchor(0,0,1,1)
 	panel:TrapFocus(true)
 	panel:RequestFocus()
-	windowHandle:SetCloseCallback(function()
+	windowHandle:AddCloseListener(function()
 		if(not self:IsValid()) then return end
 		self:AttachTab(identifier)
 	end)

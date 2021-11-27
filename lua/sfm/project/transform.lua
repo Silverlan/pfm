@@ -15,5 +15,5 @@ sfm.BaseElement.RegisterAttribute(sfm.Transform,"scale",1.0)
 
 function sfm.Transform:GetPose()
 	local scale = 1.0
-	return phys.ScaledTransform(self:GetPosition(),self:GetOrientation(),Vector(scale,scale,scale))
+	return math.ScaledTransform(self:GetPosition(),self:GetOrientation(),Vector(scale,scale,scale))
 end

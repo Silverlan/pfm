@@ -320,7 +320,7 @@ function gui.RealtimeRaytracedViewport:OnRenderStart()
 		pos = ent:GetPos()
 		rot = ent:GetRotation()
 	end
-	self.m_camStartPose = phys.Transform(pos,rot)
+	self.m_camStartPose = math.Transform(pos,rot)
 	self.m_tLastUpdate = time.real_time()
 end
 function gui.RealtimeRaytracedViewport:OnThink()

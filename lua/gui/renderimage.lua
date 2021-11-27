@@ -74,7 +74,8 @@ function gui.RenderImage:OnRemove()
 	self:SetDOFState(false)
 end
 function gui.RenderImage:SetTexture(tex,depthTex)
-	--self.m_elTex:SetTexture(tex)
+	-- if(tex == nil) then self.m_elTex:ClearTexture()
+	-- else self.m_elTex:SetTexture(tex) end
 	-- TODO?
 	-- self:SetVisible(tex ~= nil)
 
@@ -115,8 +116,7 @@ function gui.RenderImage:ApplyTonemapping(drawCmd,dsTex,rtDst)
 	if(self.m_shouldGammaCorrect ~= nil) then isGammaCorrected = not self.m_shouldGammaCorrect
 	else isGammaCorrected = (img:GetFormat() ~= prosper.FORMAT_R16G16B16A16_SFLOAT) end -- Assume the image is gamma corrected if it's not a HDR image
 	local args = self:GetToneMappingAlgorithmArgs()
-	local pose = Mat4(1.0) -- self.m_drawPose
-	self.m_shader:Draw(drawCmd,pose,dsTex,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
+	self.m_shader:Draw(drawCmd,dsTex,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
 end
 function gui.RenderImage:SetShouldGammaCorrect(gammaCorrect) self.m_shouldGammaCorrect = gammaCorrect end
 function gui.RenderImage:SetDepthTexture(depthTex) self.m_depthTex = depthTex end

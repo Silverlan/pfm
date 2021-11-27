@@ -94,7 +94,7 @@ function Component:UpdatePose()
 	local entRef = self:GetReferenceEntity()
 	if(util.is_valid(entRef) == false) then entRef = entParent end
 
-	local pose = phys.Transform()
+	local pose = math.Transform()
 	local space = self:GetSpace()
 	if(space == ents.UtilTransformComponent.SPACE_LOCAL or self:GetType() == Component.TYPE_SCALE) then
 		pose = entParent:GetPose()

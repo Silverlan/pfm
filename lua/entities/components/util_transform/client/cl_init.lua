@@ -80,7 +80,7 @@ function Component:SetParent(parent,relative)
 end
 function Component:GetParent() return self.m_parent end
 function Component:GetParentPose()
-	if(util.is_valid(self.m_parent) == false) then return phys.Transform() end
+	if(util.is_valid(self.m_parent) == false) then return math.Transform() end
 	return self.m_parent:GetPose()
 end
 
@@ -195,7 +195,7 @@ function Component:CreateTransformUtility(axis,type)
 				if(ent ~= entArrow) then
 					local renderC = ent:IsValid() and ent:GetComponent(ents.COMPONENT_RENDER) or nil
 					if(renderC ~= nil) then
-						renderC:SetRenderMode(ents.RenderComponent.RENDERMODE_NONE)
+						renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_NONE)
 					end
 				end
 			end
@@ -207,7 +207,7 @@ function Component:CreateTransformUtility(axis,type)
 			for axis,ent in pairs(tEnts) do
 				local renderC = ent:IsValid() and ent:GetComponent(ents.COMPONENT_RENDER) or nil
 				if(renderC ~= nil) then
-					renderC:SetRenderMode(ents.RenderComponent.RENDERMODE_WORLD)
+					renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_WORLD)
 				end
 			end
 		end

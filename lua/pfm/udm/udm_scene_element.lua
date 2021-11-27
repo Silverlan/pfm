@@ -49,7 +49,7 @@ end
 function fudm.PFMSceneElement:GetPose()
 	local transform = self:GetProperty("transform")
 	if(transform) then return transform:GetPose() end
-	return phys.ScaledTransform()
+	return math.ScaledTransform()
 end
 
 function fudm.PFMSceneElement:GetAbsolutePose(filter)
@@ -61,7 +61,7 @@ end
 
 function fudm.PFMSceneElement:GetAbsoluteParentPose(filter)
 	local sceneParent = self:GetSceneParent()
-	if(sceneParent == nil or (filter ~= nil and filter(sceneParent) ~= true)) then return phys.ScaledTransform() end
+	if(sceneParent == nil or (filter ~= nil and filter(sceneParent) ~= true)) then return math.ScaledTransform() end
 	return sceneParent:GetAbsolutePose(filter)
 end
 
@@ -80,7 +80,7 @@ function fudm.PFMSceneElement:GetParentConstraintPose()
 	local parentPose
 	local sceneParent = self:GetSceneParent()
 	if(sceneParent ~= nil) then parentPose = sceneParent:GetParentConstraintPose() *sceneParent:GetPose()
-	else parentPose = phys.Transform() end
+	else parentPose = math.Transform() end
 
 	--[[local constraints = self:GetConstraints()
 	if(constraints ~= nil) then

@@ -18,7 +18,7 @@ function fudm.PFMRigRotationConstraintOperator:ApplyConstraint(pose)
 	-- TODO: Include all targets and take weights into account!!
 	local targets = self:GetTargets()
 	local target = targets:Get(1)
-	local targetPose = (target ~= nil) and target:GetPose(false,true) or phys.Transform()
+	local targetPose = (target ~= nil) and target:GetPose(false,true) or math.Transform()
 	pose:SetRotation(targetPose:GetRotation())
 end
 

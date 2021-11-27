@@ -31,7 +31,7 @@ function ents.Impostor:GetRelativePose() return self.m_relPose end
 
 function ents.Impostor:Initialize()
 	BaseEntityComponent.Initialize(self)
-	self:SetRelativePose(phys.Transform())
+	self:SetRelativePose(math.Transform())
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
@@ -84,8 +84,8 @@ function ents.Impostor:UpdateModel(mdl)
 
 	if(mdl == impersonateeC:GetEntity():GetModel()) then mdl = nil end
 
-	local renderModeImpostor = (mdl ~= nil) and ents.RenderComponent.RENDERMODE_WORLD or ents.RenderComponent.RENDERMODE_NONE
-	local renderModeImpostee = (renderModeImpostor == ents.RenderComponent.RENDERMODE_WORLD) and ents.RenderComponent.RENDERMODE_NONE or ents.RenderComponent.RENDERMODE_WORLD
+	local renderModeImpostor = (mdl ~= nil) and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE
+	local renderModeImpostee = (renderModeImpostor == game.SCENE_RENDER_PASS_WORLD) and game.SCENE_RENDER_PASS_NONE or game.SCENE_RENDER_PASS_WORLD
 
 	local entImpersonatee = impersonateeC:GetEntity()
 	local tEnts = {}
@@ -95,12 +95,12 @@ function ents.Impostor:UpdateModel(mdl)
 	for _,ent in ipairs(tEnts) do
 		local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
 		if(renderC ~= nil) then
-			renderC:SetRenderMode(renderModeImpostee)
+			renderC:SetSceneRenderPass(renderModeImpostee)
 		end
 	end
 
 	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
-	if(renderC ~= nil) then renderC:SetRenderMode(renderModeImpostor) end
+	if(renderC ~= nil) then renderC:SetSceneRenderPass(renderModeImpostor) end
 
 	local shouldRig = (mdl ~= nil)
 	local ent = self:GetEntity()

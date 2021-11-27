@@ -37,7 +37,7 @@ function ents.PFMImpersonatee:ChangeModel(mdlName)
 	for _,ent in ipairs(tEnts) do
 		local actorC = ent:GetComponent("pfm_actor")
 		if(actorC ~= nil) then
-			actorC:SetDefaultRenderMode((#mdlName > 0) and ents.RenderComponent.RENDERMODE_NONE or ents.RenderComponent.RENDERMODE_WORLD)
+			actorC:SetDefaultRenderMode((#mdlName > 0) and game.SCENE_RENDER_PASS_NONE or game.SCENE_RENDER_PASS_WORLD)
 			local impostorC = impersonateeC:GetImpostor()
 			if(util.is_valid(impostorC)) then
 				local renderC = impostorC:GetEntity():GetComponent(ents.COMPONENT_RENDER)

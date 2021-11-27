@@ -117,7 +117,7 @@ function pfm.SceneAnimationCache:UpdateCache(frameIndex)
 					local localId = anim:LookupBone(boneIdRoot)
 					if(localId ~= nil) then
 						local pose = actor:GetPose()
-						frame:SetBonePose(localId,phys.Transform(pose:GetOrigin(),pose:GetRotation()))
+						frame:SetBonePose(localId,math.Transform(pose:GetOrigin(),pose:GetRotation()))
 					end
 				end
 			end

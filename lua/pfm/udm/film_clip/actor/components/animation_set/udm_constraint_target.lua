@@ -16,7 +16,7 @@ fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CONSTRAINT_TARGET,"rotation
 
 function fudm.PFMConstraintTarget:GetPose(applyTranslationOffset,applyRotationOffset)
 	local target = self:GetTarget()
-	local pose = (target ~= nil) and target:GetConstraintPose() or phys.Transform()
+	local pose = (target ~= nil) and target:GetConstraintPose() or math.Transform()
 	if(applyTranslationOffset) then
 		pose:TranslateGlobal(self:GetOffset())
 	elseif(applyRotationOffset) then

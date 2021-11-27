@@ -204,7 +204,7 @@ function ents.PFMCamera:SetFrustumModelVisible(visible)
 	if(visible) then self:GetEntity():AddComponent(ents.COMPONENT_RENDER) end
 
 	local actorC = self:GetEntity():GetComponent("pfm_actor")
-	if(actorC ~= nil) then actorC:SetDefaultRenderMode(visible and ents.RenderComponent.RENDERMODE_WORLD or ents.RenderComponent.RENDERMODE_NONE) end
+	if(actorC ~= nil) then actorC:SetDefaultRenderMode(visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE) end
 
 	if(visible == false) then return end
 	local mdlC = self:GetEntity():AddComponent(ents.COMPONENT_MODEL)

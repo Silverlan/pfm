@@ -61,7 +61,7 @@ function ents.PFMModel:OnEntitySpawn()
 			end
 		end)]]
 		--[[self.m_cbOnSkeletonUpdated = animC:AddEventCallback(ents.AnimatedComponent.EVENT_ON_SKELETON_UPDATED,function()
-			local testPose = phys.Transform()
+			local testPose = math.Transform()
 			local function iterate_skeleton(bone,parentPose)
 				local boneName = bone:GetName()
 				local boneId = mdl:LookupBone(boneName) -- TODO: Cache bone id
@@ -70,7 +70,7 @@ function ents.PFMModel:OnEntitySpawn()
 					iterate_skeleton(child,pose)
 				end
 			end
-			local pose = phys.ScaledTransform()
+			local pose = math.ScaledTransform()
 			for _,bone in ipairs(modelData:GetRootBones():GetTable()) do
 				iterate_skeleton(bone,pose)
 			end
@@ -103,12 +103,14 @@ function ents.PFMModel:OnEntitySpawn()
 	-- Flex controller names are only specified sometimes?
 	local globalFlexControllers = modelData:GetGlobalFlexControllers()
 	local flexNames = modelData:GetFlexControllerNames():GetTable()
+	_flexNames = flexNames
 	for i,fc in ipairs(globalFlexControllers:GetTable()) do
 		if(flexNames[i] == nil) then pfm.log("Missing flex controller name for clex controller " .. i .. " for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 		else
 			local fcId = mdl:LookupFlexController(flexNames[i]:GetValue())
 			if(fcId ~= -1) then
 				local weight = fc:GetFlexWeightAttr()
+				--debug.print("FLEX CON: ",fcId,flexNames[i],weight:GetValue())
 				animSetC:SetFlexController(fcId,weight:GetValue())
 				table.insert(self.m_listeners,weight:AddChangeListener(function(newValue)
 					if(animSetC:IsValid()) then

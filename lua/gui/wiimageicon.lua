@@ -55,12 +55,24 @@ function gui.ImageIcon:SetText(text)
 end
 function gui.ImageIcon:GetTextureElement() return self.m_texture end
 function gui.ImageIcon:GetBackgroundElement() return self.m_bg end
+function gui.ImageIcon:GetMaterial() return self.m_texture:GetMaterial() end
 function gui.ImageIcon:SetMaterial(mat,w,h)
 	self.m_texture:SetMaterial(mat)
 	w = w or self:GetWidth()
 	h = h or self:GetHeight()
-
 	self.m_texture:SetSize(w,h)
+
+	mat = self.m_texture:GetMaterial()
+	if(mat ~= nil) then
+		local db = mat:GetDataBlock()
+		local mv = (db ~= nil) and db:AddBlock("pfm_model_view") or nil
+		if(mv ~= nil) then
+			local aspectRatio = mv:GetFloat("aspect_ratio",1.0)
+			if(aspectRatio ~= 1.0) then
+				self.m_texture:SetSize(w,h /aspectRatio)
+			end
+		end
+	end
 	self.m_texture:CenterToParent()
 end
 function gui.ImageIcon:SetTexture(tex,w,h)

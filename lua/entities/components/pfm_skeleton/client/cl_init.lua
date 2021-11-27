@@ -41,7 +41,7 @@ function ents.PFMSkeleton:ClearBones()
 end
 
 function ents.PFMSkeleton:InitializeSkeletonBones(animC,bones,parentPose,parentBone)
-	parentPose = parentPose or phys.ScaledTransform()
+	parentPose = parentPose or math.ScaledTransform()
 	local avgLen = 0.0
 	local numBones = 0
 	for boneId,bone in pairs(bones) do

@@ -25,6 +25,34 @@ function ents.RetargetRig:Initialize()
 	self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS,"ApplyRig")
 	self:BindEvent(ents.AnimatedComponent.EVENT_ON_ANIMATION_RESET,"OnAnimationReset")
 end
+function ents.RetargetRig:OnRemove()
+	self:ClearRigFileListener()
+end
+local function add_file_listener(path,callback)
+	local absPath = file.find_absolute_path(path)
+	if(absPath == nil) then return false end
+	local fname = file.get_file_name(path)
+	return util.DirectoryChangeListener.create(file.get_file_path(absPath),function(f)
+		if(f == fname) then
+			callback()
+		end
+	end,util.DirectoryChangeListener.LISTENER_FLAG_BIT_WATCH_SUB_DIRECTORIES)
+end
+function ents.RetargetRig:InitializeRigFileListener()
+	self:ClearRigFileListener()
+
+	local listener,err = add_file_listener(self.m_rigFilePath,function() if(util.is_valid(self.m_rigTargetEntity)) then self:RigToActor(self.m_rigTargetEntity) end end)
+	if(listener ~= false) then
+		self.m_rigFileListener = listener
+		self.m_rigFileListenerCb = game.add_callback("Think",function() listener:Poll() end)
+	end
+end
+function ents.RetargetRig:ClearRigFileListener()
+	if(self.m_rigFileListener == nil) then return end
+	self.m_rigFileListener:SetEnabled(false)
+	self.m_rigFileListener = nil
+	util.remove(self.m_rigFileListenerCb)
+end
 function ents.RetargetRig:SetRig(rig,animSrc)
 	self.m_rig = rig
 	self.m_animSrc = animSrc
@@ -34,6 +62,7 @@ function ents.RetargetRig:SetRig(rig,animSrc)
 	self.m_absBonePoses = {}
 	self:InitializeRemapTables()
 	self:UpdatePoseData()
+	self:InitializeRigFileListener()
 end
 function ents.RetargetRig:GetRig() return self.m_rig end
 
@@ -45,6 +74,9 @@ function ents.RetargetRig:Unrig()
 	self.m_origBindPoseToRetargetBindPose = nil
 	self.m_origBindPoseBoneDistances = nil
 	self.m_curPoseData = nil
+	self.m_rigFilePath = nil
+	self.m_rigTargetEntity = nil
+	self:ClearRigFileListener()
 end
 
 function ents.RetargetRig:RigToActor(actor,mdlSrc,mdlDst)
@@ -58,6 +90,8 @@ function ents.RetargetRig:RigToActor(actor,mdlSrc,mdlDst)
 	if(mdlSrc == nil or mdlDst == nil or animSrc == nil or (mdlSrc == mdlDst)) then return false end
 	local newRig = false
 	local rig = ents.RetargetRig.Rig.load(mdlSrc,mdlDst)
+	self.m_rigFilePath = ents.RetargetRig.Rig.get_rig_file_path(mdlSrc,mdlDst):GetString()
+	self.m_rigTargetEntity = animSrc:GetEntity()
 	--[[if(rig == false) then
 		rig = ents.RetargetRig.Rig(mdlSrc,mdlDst)
 
@@ -66,7 +100,10 @@ function ents.RetargetRig:RigToActor(actor,mdlSrc,mdlDst)
 		rig:SetDstToSrcTranslationTable(translationTable)
 		newRig = true
 	end]]
-	if(rig == false) then return false end
+	if(rig == false) then
+		self:InitializeRigFileListener()
+		return false
+	end
 
 	self.m_untranslatedBones = {} -- List of untranslated bones where all parents are also untranslated
 	local translationTable = rig:GetDstToSrcTranslationTable()

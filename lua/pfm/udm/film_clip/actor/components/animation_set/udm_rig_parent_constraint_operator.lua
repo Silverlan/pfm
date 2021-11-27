@@ -18,6 +18,6 @@ function fudm.PFMRigParentConstraintOperator:ApplyConstraint(pose)
 	-- TODO: Include all targets and take weights into account!!
 	local targets = self:GetTargets()
 	local target = targets:Get(1)
-	local targetPose = (target ~= nil) and target:GetPose(true,true) or phys.Transform()
+	local targetPose = (target ~= nil) and target:GetPose(true,true) or math.Transform()
 	pose:Set(targetPose)
 end

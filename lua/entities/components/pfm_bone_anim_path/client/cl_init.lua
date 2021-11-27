@@ -60,7 +60,7 @@ function ents.PFMBoneAnimPath:Setup(boneName,session,filmClip)
 	self.m_filmClip = filmClip
 	for frame=startFrame,endFrame do
 		local t = session:FrameOffsetToTimeOffset(frame)
-		local pose = phys.ScaledTransform()
+		local pose = math.ScaledTransform()
 		local bone = skeleton:GetBone(boneId)
 		while(bone ~= nil) do
 			local bonePose = mdlCData:CalcBonePose(animChannelTrack,bone:GetName(),t)

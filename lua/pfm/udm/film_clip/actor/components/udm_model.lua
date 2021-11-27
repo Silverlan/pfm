@@ -60,7 +60,7 @@ function fudm.PFMModel:ChangeModel(mdlName)
 		end
 	end
 	for boneId,bone in pairs(skeleton:GetRootBones()) do
-		addBone(bone,self:GetRootBones(),phys.Transform())
+		addBone(bone,self:GetRootBones(),math.Transform())
 	end
 end
 
@@ -87,7 +87,7 @@ end
 
 function fudm.PFMModel:CalcBonePose(track,boneName,t)
 	local bone = (type(boneName) == "string") and self:FindBone(boneName) or self:GetBoneList():Get(boneName)
-	if(bone == nil) then return phys.ScaledTransform() end
+	if(bone == nil) then return math.ScaledTransform() end
 	bone = bone:GetTarget()
 	local transform = bone:GetTransform()
 	--[[local elSlave = transform:FindParent(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_CONSTRAINT_SLAVE end)

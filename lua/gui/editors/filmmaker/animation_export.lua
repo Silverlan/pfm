@@ -41,6 +41,7 @@ function pfm.AnimationRecorder:ExportAnimation()
 	exportInfo.enableExtendedDDS = false
 	exportInfo.saveAsBinary = false
 	exportInfo.verbose = true
+	exportInfo.mergeMeshesByMaterial = false
 	exportInfo.imageFormat = game.Model.ExportInfo.IMAGE_FORMAT_PNG
 	exportInfo.embedAnimations = true
 	exportInfo.fullExport = false

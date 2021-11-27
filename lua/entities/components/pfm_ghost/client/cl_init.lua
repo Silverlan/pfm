@@ -31,7 +31,7 @@ local function find_actor_under_cursor(pos,dir)
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_MODEL),ents.IteratorFilterComponent(ents.COMPONENT_RENDER)}) do
 		local mdl = ent:GetModel()
 		local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
-		if(mdl ~= nil and ent ~= entPl and renderC ~= nil and renderC:GetRenderMode() ~= ents.RenderComponent.RENDERMODE_VIEW) then
+		if(mdl ~= nil and ent ~= entPl and renderC ~= nil and renderC:GetSceneRenderPass() ~= game.SCENE_RENDER_PASS_VIEW) then
 			local r,hitData = renderC:CalcRayIntersection(pos,dir *32768)
 			if(r == intersect.RESULT_INTERSECT and hitData.distance < distClosest) then
 				distClosest = hitData.distance

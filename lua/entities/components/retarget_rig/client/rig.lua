@@ -20,7 +20,7 @@ function ents.RetargetRig.Rig:__init(srcMdl,dstMdl)
 	self.m_srcMdl = srcMdl
 	self.m_dstMdl = dstMdl
 	self.m_bindPose = dstMdl:GetReferencePose():Copy()
-	self.m_rootPose = phys.Transform()
+	self.m_rootPose = math.Transform()
 
 	-- Note: Bone translations are stored in reverse (i.e. [destination] = source),
 	-- since different destination bones can be mapped to the same source bones!
@@ -46,7 +46,7 @@ function ents.RetargetRig.Rig:GetBoneTranslation(boneId)
 end
 function ents.RetargetRig.Rig:SetBoneTranslation(boneIdSrc,boneIdDst)
 	if(boneIdSrc == -1 or boneIdDst == -1) then return end
-	self.m_dstToSrcTranslationTable[boneIdDst] = (boneIdSrc ~= nil) and {boneIdSrc,phys.Transform()} or nil
+	self.m_dstToSrcTranslationTable[boneIdDst] = (boneIdSrc ~= nil) and {boneIdSrc,math.Transform()} or nil
 	self:ApplyPoseMatchingRotationCorrections()
 end
 function ents.RetargetRig.Rig:GetBindPose() return self.m_bindPose end
@@ -60,12 +60,12 @@ function ents.RetargetRig.Rig:UpdateBindPoses()
 	local bindPoseTransforms = {}
 	for i=0,skeleton0:GetBoneCount() -1 do
 		local parent = skeleton0:GetBone(i):GetParent()
-		if(parent == nil) then bindPoseTransforms[i] = phys.Transform()
+		if(parent == nil) then bindPoseTransforms[i] = math.Transform()
 		else
 			local posP,rotP,scaleP = self.m_bindPose:GetBoneTransform(parent:GetID())
 			local posC,rotC,scaleC = self.m_bindPose:GetBoneTransform(i)
-			local poseP = phys.Transform(posP,rotP)
-			local poseC = phys.Transform(posC,rotC)
+			local poseP = math.Transform(posP,rotP)
+			local poseC = math.Transform(posC,rotC)
 			bindPoseTransforms[i] = poseP:GetInverse() *poseC
 		end
 	end
@@ -147,6 +147,12 @@ function ents.RetargetRig.Rig:ApplyBonePoseMatchingRotationCorrections(bindPose,
 	for boneId,child in pairs(bone:GetChildren()) do
 		self:ApplyBonePoseMatchingRotationCorrections(bindPose,child,pose)
 	end
+end
+function ents.RetargetRig.Rig:GetFilePath()
+	local srcMdl = self.m_dstMdl
+	local dstMdl = self.m_srcMdl
+	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
+	return filePath:GetString()
 end
 function ents.RetargetRig.Rig:ApplyPoseMatchingRotationCorrections()
 	local srcMdl = self.m_dstMdl
@@ -248,7 +254,7 @@ function ents.RetargetRig.Rig:Save()
 	local dstMdl = self.m_srcMdl
 	local skeleton1 = dstMdl:GetSkeleton()
 
-	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
+	local filePath = self:GetFilePath()
 	pfm.log("Saving retarget rig '" .. filePath:GetString() .. "'...",pfm.LOG_CATEGORY_RETARGET)
 	local udmData,err = udm.create(ents.RetargetRig.Rig.FORMAT_IDENTIFIER,ents.RetargetRig.Rig.FORMAT_VERSION)
 	if(udmData == false) then
@@ -359,13 +365,13 @@ function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
 			if(child:GetType() == udm.TYPE_ELEMENT) then
 				local boneName0 = key
 				local boneId0 = srcMdl:LookupBone(boneName0)
-				local boneName1 = child:GetValue("target","")
-				local translation = child:GetValue("translation",Vector())
-				local angles = child:GetValue("rotation",EulerAngles())
+				local boneName1 = child:GetValue("target") or ""
+				local translation = child:GetValue("translation") or Vector()
+				local angles = child:GetValue("rotation",udm.TYPE_EULER_ANGLES) or EulerAngles()
 				local boneId1 = dstMdl:LookupBone(boneName1)
 				if(boneId0 == -1 or boneId1 == -1) then
 					pfm.log("Retarget rig has invalid bone reference from bone '" .. boneName0 .. "' to bone '" .. boneName1 .. "'! Ignoring...",pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
-				else translationTable[boneId0] = {boneId1,phys.Transform(translation,EulerAngles(angles.x,angles.y,angles.z):ToQuaternion())} end
+				else translationTable[boneId0] = {boneId1,math.Transform(translation,angles)} end
 			else
 				local boneName0 = key
 				local boneName1 = child:GetValue()
@@ -373,13 +379,13 @@ function ents.RetargetRig.Rig.load(psrcMdl,pdstMdl)
 				local boneId1 = dstMdl:LookupBone(boneName1)
 				if(boneId0 == -1 or boneId1 == -1) then
 					pfm.log("Retarget rig has invalid bone reference from bone '" .. boneName0 .. "' to bone '" .. boneName1 .. "'! Ignoring...",pfm.LOG_CATEGORY_RETARGET,pfm.LOG_SEVERITY_WARNING)
-				else translationTable[boneId0] = {boneId1,phys.Transform()} end
+				else translationTable[boneId0] = {boneId1,math.Transform()} end
 			end
 		end
 	end
 
 	local rig = ents.RetargetRig.Rig(dstMdl,srcMdl)
-	rig.m_rootPose = udmRig:GetValue("root_pose",udm.TYPE_TRANSFORM) or phys.Transform()
+	rig.m_rootPose = udmRig:GetValue("root_pose",udm.TYPE_TRANSFORM) or math.Transform()
 	rig.m_dstToSrcTranslationTable = translationTable
 	rig.m_flexTranslationTable = ents.RetargetRig.Rig.load_flex_controller_map(udmRig,dstMdl,srcMdl)
 	rig:DebugPrint()
@@ -411,4 +417,27 @@ function ents.RetargetRig.Rig.add_bone_list_to_cache_map(boneList)
 		end
 	end
 	file.write(ents.RetargetRig.Rig.get_bone_cache_map_file_path(),contents)
+end
+
+function ents.RetargetRig.Rig.find_available_retarget_impostor_models(mdl)
+	if(type(mdl) ~= "string") then mdl = mdl:GetName() end
+	local rigLocation = util.Path.CreatePath(ents.RetargetRig.Rig.FILE_LOCATION) +ents.RetargetRig.Rig.get_rig_location(mdl)
+	local tFiles,tDirs = file.find(rigLocation:GetString() .. "*.udm")
+	local models = {}
+	table.insert(models,util.Path.CreateFilePath(mdl))
+	for _,rigName in ipairs(tFiles) do
+		local filePath = rigLocation:GetString() .. rigName
+		local f = file.open(filePath,bit.bor(file.OPEN_MODE_READ))
+		if(f ~= nil) then
+			local root = util.DataBlock.load(f)
+			local db = (root ~= nil) and root:FindBlock("rig") or nil
+			f:Close()
+			if(db ~= nil) then
+				local mdlPath = util.Path.CreateFilePath(db:GetString("target"))
+				-- print("Rig: ",filePath,mdlPath:GetString())
+				table.insert(models,mdlPath)
+			end
+		end
+	end
+	return models
 end

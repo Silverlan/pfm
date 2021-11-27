@@ -101,15 +101,15 @@ function ents.PFMActorComponent:UpdateRenderMode()
 	local actorData = self:GetActorData()
 	if(actorData == nil) then return end
 	local renderMode
-	if(self:GetEntity():IsTurnedOff()) then renderMode = ents.RenderComponent.RENDERMODE_NONE
+	if(self:GetEntity():IsTurnedOff()) then renderMode = game.SCENE_RENDER_PASS_NONE
 	else
-		renderMode = self.m_defaultRenderMode or ents.RenderComponent.RENDERMODE_WORLD
+		renderMode = self.m_defaultRenderMode or game.SCENE_RENDER_PASS_WORLD
 		if(actorData:IsAbsoluteVisible() == false) then
-			renderMode = ents.RenderComponent.RENDERMODE_NONE
+			renderMode = game.SCENE_RENDER_PASS_NONE
 		end
 	end
 	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
-	if(renderC ~= nil) then renderC:SetRenderMode(renderMode) end
+	if(renderC ~= nil) then renderC:SetSceneRenderPass(renderMode) end
 end
 
 function ents.PFMActorComponent:OnOffsetChanged(clipOffset,gameViewFlags)
@@ -159,9 +159,9 @@ end
 	local rotOffset = target:GetRotationOffset()
 
 	--sfm.convert_source_anim_set_position_to_pragma(sfmTarget:GetVecOffset())
-	local poseOffset = phys.Transform(offset,rotOffset)
+	local poseOffset = math.Transform(offset,rotOffset)
 	target = target:GetTarget()
-	local pose = (target ~= nil) and pfm.util.get_absolute_pose(target) or phys.Transform()
+	local pose = (target ~= nil) and pfm.util.get_absolute_pose(target) or math.Transform()
 	if(opType == fudm.ELEMENT_TYPE_PFM_RIG_POINT_CONSTRAINT_OPERATOR or opType == fudm.ELEMENT_TYPE_PFM_RIG_PARENT_CONSTRAINT_OPERATOR) then
 		pose:TranslateGlobal(offset)
 	elseif(opType == fudm.ELEMENT_TYPE_PFM_RIG_ROTATION_CONSTRAINT_OPERATOR or opType == fudm.ELEMENT_TYPE_PFM_RIG_PARENT_CONSTRAINT_OPERATOR) then
@@ -183,7 +183,7 @@ function ents.PFMActorComponent:UpdateOperators()
 			-- debug.draw_pose(slaveTarget:GetAbsoluteParentPose(),12)
 			local poseBase = slaveTarget:GetAbsoluteParentPose():GetInverse()
 
-			local poseConstraint = phys.Transform()
+			local poseConstraint = math.Transform()
 			op:ApplyConstraint(poseConstraint)
 			--local poseConstraint = slaveTarget:GetConstraintPose()
 
@@ -230,7 +230,7 @@ function ents.PFMActorComponent:UpdateOperators()
 				--slaveTargetTransform:SetPose(pose *targetPose)
 
 				--[[local slaveTargetTransform = slaveTarget:GetTransform()
-				local pose = slaveTargetTransform:GetPose() *phys.Transform(slave:GetPosition(),slave:GetRotation())
+				local pose = slaveTargetTransform:GetPose() *math.Transform(slave:GetPosition(),slave:GetRotation())
 				--local absPose = slave:GetAbsoluteBonePose()
 				--absPose:TransformGlobal(pose:GetInverse()) -- TODO
 				--absPose = absPose:TransformGlobal() -- Inverse parent pose

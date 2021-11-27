@@ -101,7 +101,7 @@ function fudm.PFMTrack:CalcBonePose(transform,t)
 
 	local pos = (posLayer ~= nil) and posLayer:CalcInterpolatedValue(tPos) or Vector()
 	local rot = (rotLayer ~= nil) and rotLayer:CalcInterpolatedValue(tRot) or Quaternion()
-	return phys.ScaledTransform(pos,rot,Vector(1,1,1))
+	return math.ScaledTransform(pos,rot,Vector(1,1,1))
 end
 
 function fudm.PFMTrack:FindBoneChannelLayer(transform,attribute)

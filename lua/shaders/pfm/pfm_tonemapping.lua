@@ -9,7 +9,7 @@
 util.register_class("shader.PFMTonemapping",shader.BaseGraphics)
 
 shader.PFMTonemapping.FragmentShader = "pfm/post_processing/fs_tonemapping"
-shader.PFMTonemapping.VertexShader = "wgui/vs_wgui_textured_cheap"
+shader.PFMTonemapping.VertexShader = "screen/vs_screen_uv"
 
 shader.PFMTonemapping.DESCRIPTOR_SET_TEXTURE = 0
 shader.PFMTonemapping.TEXTURE_BINDING_HDR_COLOR = 0
@@ -52,14 +52,13 @@ function shader.PFMTonemapping:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
-function shader.PFMTonemapping:Draw(drawCmd,mvp,dsTex,exposure,toneMapping,isInputImageGammaCorrected,luminance,args)
+function shader.PFMTonemapping:Draw(drawCmd,dsTex,exposure,toneMapping,isInputImageGammaCorrected,luminance,args)
 	if(self:IsValid() == false or self:RecordBeginDraw(drawCmd) == false) then return end
 	local buf,numVerts = prosper.util.get_square_vertex_uv_buffer()
 	self:RecordBindVertexBuffers({buf})
 	self:RecordBindDescriptorSet(dsTex)
 
 	self.m_dsPushConstants:Seek(0)
-	self.m_dsPushConstants:WriteMat4(mvp)
 	self.m_dsPushConstants:WriteFloat(exposure)
 	self.m_dsPushConstants:WriteInt32(toneMapping)
 
