@@ -117,6 +117,7 @@ function gui.WIFilmmaker:OnInitialize()
 			game.set_default_game_render_enabled(false)
 			return
 		end
+		drawSceneInfo.renderFlags = bit.band(drawSceneInfo.renderFlags,bit.bnot(game.RENDER_FLAG_BIT_VIEW))
 		self.m_renderSceneDirty = self.m_renderSceneDirty -1
 		if(self.m_renderSceneDirty == 0) then self.m_renderSceneDirty = nil end
 		return false
