@@ -18,11 +18,11 @@ fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_ACTOR,"visible",fudm.Bool(t
 	getter = "IsVisible"
 })
 
-function fudm.PFMActor:Initialize() self:SetUniqueId(util.generate_uuid_v4()) end
+function fudm.PFMActor:Initialize() self:SetUniqueId(tostring(util.generate_uuid_v4())) end
 
 function fudm.PFMActor:OnLoaded()
 	local uniqueId = self:GetUniqueId()
-	if(#uniqueId == 0) then self:SetUniqueId(util.generate_uuid_v4()) end -- TODO: This shouldn't be necessary
+	if(#uniqueId == 0) then self:SetUniqueId(tostring(util.generate_uuid_v4())) end -- TODO: This shouldn't be necessary
 end
 
 function fudm.PFMActor:GetSceneChildren() return self:GetComponents():GetTable() end

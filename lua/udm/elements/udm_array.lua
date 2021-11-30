@@ -23,7 +23,9 @@ function fudm.Array:Copy()
 	end
 	return copy
 end
-function fudm.Array:SetElementType(type) self.m_elementType = type end
+function fudm.Array:SetElementType(type)
+	self.m_elementType = type
+end
 function fudm.Array:GetElementType() return self.m_elementType end
 
 function fudm.Array:GetValue() return self:GetChildren() end
@@ -63,8 +65,19 @@ function fudm.Array:Insert(pos,attr)
 	if(self:GetElementType() == nil) then self:SetElementType(attrType) end
 	local t = self:GetElementType()
 	if(t ~= fudm.ELEMENT_TYPE_ANY and t ~= fudm.ATTRIBUTE_TYPE_ANY and attrType ~= t) then
-		pfm.error("Attempted to push attribute " .. tostring(attr) .. " of type " .. (fudm.get_type_name(attrType) or "") .. " into array " .. tostring(self) .. " of type " .. (fudm.get_type_name(t) or "") .. " (" .. t .. ")!")
-		return
+		local b = true
+		-- Awful workaround; Won't matter when transition to new UDM system is complete
+		for _,child in ipairs(self:GetTable()) do
+			if(child:GetType() ~= attrType) then
+				b = false
+				break
+			end
+		end
+		if(b) then self:SetElementType(attrType)
+		else
+			pfm.error("Attempted to push attribute " .. tostring(attr) .. " of type " .. (fudm.get_type_name(attrType) or "") .. " into array " .. tostring(self) .. " of type " .. (fudm.get_type_name(t) or "") .. " (" .. t .. ")!")
+			return
+		end
 	end
 	table.insert(self:GetValue(),pos,attr)
 	table.insert(attr.m_parents,self)

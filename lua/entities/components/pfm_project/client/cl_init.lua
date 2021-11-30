@@ -12,7 +12,9 @@ include_component("pfm_film_clip")
 
 local cvAnimCache = console.register_variable("pfm_animation_cache_enabled","1",bit.bor(console.FLAG_BIT_ARCHIVE),"Enables caching for actor animations to speed up performance.")
 
-util.register_class("ents.PFMProject",BaseEntityComponent)
+local Component = util.register_class("ents.PFMProject",BaseEntityComponent)
+
+Component:RegisterMember("PlaybackOffset",ents.MEMBER_TYPE_FLOAT,math.huge,{onChange = function(self) self:OnOffsetChanged() end},"def")
 
 ents.PFMProject.GAME_VIEW_FLAG_NONE = 0
 ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE = 1
@@ -22,9 +24,7 @@ function ents.PFMProject:__init(ent) BaseEntityComponent.__init(self,ent) end
 function ents.PFMProject:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
-	self.m_offset = math.huge -- Current playback offset in seconds
 	self.m_timeFrame = fudm.PFMTimeFrame()
-
 	self:AddEventCallback(ents.PFMProject.EVENT_ON_ENTITY_CREATED,function(ent) self:OnEntityCreated(ent) end)
 end
 
@@ -117,10 +117,15 @@ end
 
 function ents.PFMProject:GetProject() return self.m_project end
 
-function ents.PFMProject:SetOffset(offset,gameViewFlags)
-	if(offset == self.m_offset) then return end
-	-- pfm.log("Changing playback offset to " .. offset .. "...",pfm.LOG_CATEGORY_PFM_GAME)
-	self.m_offset = offset
+function ents.PFMProject:OnOffsetChanged()
+	if(self.m_skipOffsetOnChangeCallback) then return end
+	self.m_skipOffsetOnChangeCallback = true
+	self:ChangePlaybackOffset(self:GetPlaybackOffset())
+	self.m_skipOffsetOnChangeCallback = nil
+end
+
+function ents.PFMProject:ChangePlaybackOffset(offset,gameViewFlags)
+	self:SetPlaybackOffset(offset)
 
 	if(util.is_valid(self.m_entRootTrack)) then
 		local trackC = self.m_entRootTrack:GetComponent(ents.COMPONENT_PFM_TRACK)
@@ -161,13 +166,9 @@ function ents.PFMProject:SetOffset(offset,gameViewFlags)
 	end
 end
 
-function ents.PFMProject:GetOffset()
-	return self.m_offset
-end
-
 function ents.PFMProject:Reset()
 	util.remove(self.m_entRootTrack)
-	self.m_offset = math.huge
+	self:SetPlaybackOffset(math.huge)
 end
 
 function ents.PFMProject:GetTimeFrame() return self.m_timeFrame end

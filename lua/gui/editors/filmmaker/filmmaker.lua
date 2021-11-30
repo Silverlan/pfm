@@ -653,7 +653,7 @@ function gui.WIFilmmaker:OnThink()
 	local gameView = self:GetGameView()
 	local projectC = util.is_valid(gameView) and gameView:GetComponent(ents.COMPONENT_PFM_PROJECT) or nil
 	if(projectC ~= nil) then
-		projectC:SetOffset(projectC:GetOffset() +self.m_videoRecorder:GetFrameDeltaTime())
+		projectC:SetPlaybackOffset(projectC:GetPlaybackOffset() +self.m_videoRecorder:GetFrameDeltaTime())
 		self:CaptureRaytracedImage()
 	end
 end

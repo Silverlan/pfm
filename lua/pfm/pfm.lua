@@ -34,7 +34,7 @@ util.register_class("pfm.Project")
 function pfm.Project:__init()
 	self.m_udmRoot = fudm.create_element(fudm.ELEMENT_TYPE_ROOT,"root")
 	self.m_sessions = {}
-	self.m_uniqueId = util.generate_uuid_v4()
+	self.m_uniqueId = tostring(util.generate_uuid_v4())
 
 	self:SetName("new_project") -- TODO
 end

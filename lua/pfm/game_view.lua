@@ -37,18 +37,18 @@ function pfm.GameView:ReloadGameView()
 	local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
 	if(projectC == nil) then return end
 	projectC:Start()
-	projectC:SetOffset(self:GetTimeOffset())
+	projectC:SetPlaybackOffset(self:GetTimeOffset())
 end
 function pfm.GameView:RefreshGameView()
 	if(util.is_valid(self.m_gameView) == false) then return end
 	local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
 	if(projectC == nil) then return end
-	projectC:SetOffset(self:GetTimeOffset())
+	projectC:SetPlaybackOffset(self:GetTimeOffset())
 end
 function pfm.GameView:SetGameViewOffset(offset,gameViewFlags)
 	gameViewFlags = gameViewFlags or ents.PFMProject.GAME_VIEW_FLAG_NONE
 	local projectC = self.m_gameView:GetComponent(ents.COMPONENT_PFM_PROJECT)
-	if(projectC ~= nil) then projectC:SetOffset(offset,gameViewFlags) end
+	if(projectC ~= nil) then projectC:ChangePlaybackOffset(offset,gameViewFlags) end
 end
 function pfm.GameView:GetGameView() return self.m_gameView end
 
