@@ -152,7 +152,7 @@ function ents.RetargetRig.Rig:GetFilePath()
 	local srcMdl = self.m_dstMdl
 	local dstMdl = self.m_srcMdl
 	local filePath = ents.RetargetRig.Rig.get_rig_file_path(dstMdl,srcMdl)
-	return filePath:GetString()
+	return filePath
 end
 function ents.RetargetRig.Rig:ApplyPoseMatchingRotationCorrections()
 	local srcMdl = self.m_dstMdl
