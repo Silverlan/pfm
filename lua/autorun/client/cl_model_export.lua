@@ -6,9 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/gui/wimodelview.lua")
-include("/util/model_retarget.lua")
-
 local function add_files(path,tFiles,assets)
 	for _,f in ipairs(tFiles) do
 		local filePath = util.Path(path .. f)
@@ -74,6 +71,9 @@ end
 
 local modelView
 console.register_command("util_export_asset",function(pl,...)
+	include("/gui/wimodelview.lua")
+	include("/util/model_retarget.lua")
+	
 	local exportInfo = game.Model.ExportInfo()
 	exportInfo.verbose = false
 	exportInfo.generateAo = true

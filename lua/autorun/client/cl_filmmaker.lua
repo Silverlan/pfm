@@ -6,10 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/sfm/project_converter.lua")
-
-pfm.register_log_category("sfm")
-
 console.register_variable("pfm_max_fps","-1",bit.bor(console.FLAG_BIT_ARCHIVE),"Clamp the max game fps to this value while the filmmaker is running.")
 console.register_variable("pfm_asset_icon_size","128",bit.bor(console.FLAG_BIT_ARCHIVE),"The resolution to use for generated asset icons.")
 console.register_variable("pfm_asset_icon_size_character","256x512",bit.bor(console.FLAG_BIT_ARCHIVE),"The resolution to use for generated asset icons of character models.")
@@ -26,6 +22,8 @@ end
 tool.get_filmmaker = function() return tool.filmmaker end
 tool.is_filmmaker_open = function() return util.is_valid(tool.editor) end
 tool.open_filmmaker = function()
+	include("/sfm/project_converter.lua")
+	pfm.register_log_category("sfm")
 	include("/gui/editors/filmmaker/filmmaker.lua")
 	tool.close_filmmaker()
 	tool.editor = gui.create("WIFilmmaker")
@@ -38,6 +36,9 @@ tool.open_filmmaker = function()
 end
 
 console.register_command("pfm",function(pl,...)
+	include("/sfm/project_converter.lua")
+	pfm.register_log_category("sfm")
+	include("/gui/editors/filmmaker/filmmaker.lua")
 	local logCategories = 0
 	local reload = false
 	local dev = false
