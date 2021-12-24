@@ -85,6 +85,7 @@ function pfm.ProjectManager:LoadProject(fileName)
 		self:CloseProject()
 		return self:CreateNewProject()
 	end
+	self:PrecacheSessionAssets(session)
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
 	self.m_projectFileName = fileName
 	self.m_project = project
@@ -121,6 +122,25 @@ end
 function pfm.ProjectManager:ClearAnimationCache(projectFileName)
 	if(self:IsAnimationCacheValid() == false) then return end
 	file.delete(self:GetAnimationCacheFilePath())
+end
+function pfm.ProjectManager:PrecacheSessionAssets(session)
+	pfm.log("Precaching session assets...",pfm.LOG_CATEGORY_PFM)
+	local track = session:GetFilmTrack()
+	if(track == nil) then return end
+	for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+		pfm.log("Precaching assets for film clip '" .. tostring(filmClip) .. "'...",pfm.LOG_CATEGORY_PFM)
+		local actors = filmClip:GetActorList()
+		for _,actor in ipairs(actors) do
+			local component = actor:FindComponent("pfm_model")
+			if(component ~= nil) then
+				local mdlName = component:GetModelName()
+				if(#mdlName > 0) then
+					pfm.log("Precaching model '" .. mdlName .. "' for actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
+					game.load_model(mdlName)
+				end
+			end
+		end
+	end
 end
 function pfm.ProjectManager:LoadAnimationCache(projectFileName)
 	if(self.m_animationCacheLoaded) then return end
