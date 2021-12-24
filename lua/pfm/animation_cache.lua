@@ -132,7 +132,7 @@ function pfm.SceneAnimationCache:UpdateCache(frameIndex)
 				local globalFlexControllers = modelC:GetGlobalFlexControllers()
 				local flexNames = modelC:GetFlexControllerNames():GetTable()
 				for i,fc in ipairs(globalFlexControllers:GetTable()) do
-					if(flexNames[i] == nil) then pfm.log("Missing flex controller name for clex controller " .. i .. " for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+					if(flexNames[i] == nil) then pfm.log("Missing flex controller name for flex controller " .. i .. " for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 					else
 						local fcId = mdl:LookupFlexController(flexNames[i]:GetValue())
 						if(fcId ~= -1) then
@@ -269,7 +269,7 @@ function pfm.SceneAnimationCache:LoadFromBinary(fileName)
 
 	assetData = assetData:GetData()
 	for uniqueId,udmActor in pairs(assetData:Get("actors"):GetChildren()) do
-		local modelName = udmActor:GetValue("model")
+		local modelName = asset.normalize_asset_name(udmActor:GetValue("model"),asset.TYPE_MODEL)
 		self.m_actorAnimationCache[uniqueId] = {model = modelName,animations = {},flexAnimations = {}}
 		local cache = self.m_actorAnimationCache[uniqueId]
 		for animName,udmAnim in pairs(udmActor:Get("animations"):GetChildren()) do

@@ -75,8 +75,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 						return
 					end
 					-- Force texture reload
-					local texLoadFlags = bit.bor(game.TEXTURE_LOAD_FLAG_BIT_LOAD_INSTANTLY,game.TEXTURE_LOAD_FLAG_BIT_RELOAD)
-					game.load_texture(matPath:GetString(),texLoadFlags)
+					asset.reload(matPath:GetString(),asset.TYPE_TEXTURE)
 
 					texSlotRMA:SetTexture(matPath:GetString())
 

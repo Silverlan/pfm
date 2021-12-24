@@ -26,8 +26,8 @@ function gui.PFMTextureSlot:OnInitialize()
 		local f = game.open_dropped_file(tFiles[1],true)
 		if(f == nil) then return util.EVENT_REPLY_UNHANDLED end
 		if(self.m_matPath == nil) then
-			local texLoadFlags = bit.bor(game.TEXTURE_LOAD_FLAG_BIT_LOAD_INSTANTLY,game.TEXTURE_LOAD_FLAG_BIT_DONT_CACHE)
-			local tex = game.load_texture(f,texLoadFlags)
+			local tex = asset.load(f,asset.TYPE_TEXTURE)
+			tex = (tex ~= nil) and tex:GetVkTexture() or nil
 			if(tex ~= nil) then self.m_texRect:SetTexture(tex)
 			else self.m_texRect:ClearTexture() end
 			return util.EVENT_REPLY_HANDLED
@@ -43,8 +43,8 @@ function gui.PFMTextureSlot:OnInitialize()
 		-- so we'll lock them temporarily
 		asset.lock_asset_watchers()
 
-		local texLoadFlags = bit.bor(game.TEXTURE_LOAD_FLAG_BIT_LOAD_INSTANTLY,game.TEXTURE_LOAD_FLAG_BIT_DONT_CACHE)
-		local tex = game.load_texture(f,texLoadFlags)
+		local tex = asset.load(f,asset.TYPE_TEXTURE)
+		tex = (tex ~= nil) and tex:GetVkTexture() or nil
 		local texInfo = util.TextureInfo()
 		texInfo.flags = bit.bor(texInfo.flags,util.TextureInfo.FLAG_BIT_GENERATE_MIPMAPS)
 		texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
@@ -56,8 +56,7 @@ function gui.PFMTextureSlot:OnInitialize()
 		asset.unlock_asset_watchers()
 
 		-- Force texture reload
-		texLoadFlags = bit.bor(game.TEXTURE_LOAD_FLAG_BIT_LOAD_INSTANTLY,game.TEXTURE_LOAD_FLAG_BIT_RELOAD)
-		game.load_texture(texPath:GetString(),texLoadFlags)
+		asset.reload(texPath:GetString(),asset.TYPE_TEXTURE)
 
 		if(result == false) then
 			console.print_warning("Unable to load texture '" .. tFiles[1] .. "': " .. errMsg)
@@ -138,7 +137,10 @@ function gui.PFMTextureSlot:ReloadTexture(reloadCache)
 	if(self:IsValidTexture() == false) then return end
 	local texLoadFlags = game.TEXTURE_LOAD_FLAG_BIT_LOAD_INSTANTLY
 	if(reloadCache) then texLoadFlags = bit.bor(texLoadFlags,game.TEXTURE_LOAD_FLAG_BIT_RELOAD) end
-	local tex = game.load_texture(self.m_texPath,texLoadFlags)
+	local tex
+	if(reloadCache) then tex = asset.reload(self.m_texPath,asset.TYPE_TEXTURE)
+	else tex = asset.load(self.m_texPath,asset.TYPE_TEXTURE) end
+	tex = (tex ~= nil) and tex:GetVkTexture() or nil
 	if(tex == nil) then return end
 	self.m_texRect:SetTexture(tex)
 end

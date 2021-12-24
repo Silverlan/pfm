@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
--- Converts a SFM math expression to Lua
+-- Converts a SFM math expression to exprtk
 sfm.convert_math_expression_to_pragma = function(exprFull,variables)
 	local fns = {
 		-- List of functions available in SFM
@@ -41,7 +41,7 @@ sfm.convert_math_expression_to_pragma = function(exprFull,variables)
 		{"crescale",5}
 	}
 	local fnToPragma = {
-		-- Translation to Pragma equivalents (Lua)
+		-- Translation to Pragma equivalents (exprtk)
 		["dtor"] = "deg2rad",
 		["rtod"] = "rad2deg",
 		["abs"] = "abs",

@@ -20,6 +20,7 @@ function ents.PFMModel:Initialize()
 		renderC:SetCastShadows(true)
 	end
 
+	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED,"UpdateModel")
 	self.m_listeners = {}
 end
 function ents.PFMModel:OnRemove()
@@ -103,9 +104,8 @@ function ents.PFMModel:OnEntitySpawn()
 	-- Flex controller names are only specified sometimes?
 	local globalFlexControllers = modelData:GetGlobalFlexControllers()
 	local flexNames = modelData:GetFlexControllerNames():GetTable()
-	_flexNames = flexNames
 	for i,fc in ipairs(globalFlexControllers:GetTable()) do
-		if(flexNames[i] == nil) then pfm.log("Missing flex controller name for clex controller " .. i .. " for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+		if(flexNames[i] == nil) then pfm.log("Missing flex controller name for flex controller " .. i .. " for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 		else
 			local fcId = mdl:LookupFlexController(flexNames[i]:GetValue())
 			if(fcId ~= -1) then
@@ -168,7 +168,9 @@ function ents.PFMModel:UpdateModel()
 	local mdl = mdlC:GetModel()
 	if(mdl == nil) then return end
 	local materials = mdl:GetMaterials()
-	for matSrc,matDst in pairs(mdlInfo:GetMaterialMappings():GetTable()) do
+	-- debug.print("Override")
+	-- console.print_table(mdlInfo:GetMaterialMappings():GetTable())
+	--[[for matSrc,matDst in pairs(mdlInfo:GetMaterialMappings():GetTable()) do
 		mdlC:SetMaterialOverride(matSrc,matDst:GetValue())
 	end
 	for _,matOverride in ipairs(mdlInfo:GetMaterialOverrides():GetTable()) do
@@ -193,7 +195,7 @@ function ents.PFMModel:UpdateModel()
 				end
 			end
 		end
-	end
+	end]]
 
 	local globalBgIdx = mdlInfo:GetBodyGroup()
 	for bgIdx,bgMdlIdx in ipairs(self:GetBodyGroups(globalBgIdx)) do
@@ -214,6 +216,5 @@ function ents.PFMModel:Setup(actorData,mdlInfo)
 	table.insert(self.m_listeners,mdlInfo:GetSkinAttr():AddChangeListener(function(newSkin) ent:SetSkin(newSkin) end))
 
 	mdlC:SetModel(mdlInfo:GetModelName())
-	self:UpdateModel()
 end
 ents.COMPONENT_PFM_MODEL = ents.register_component("pfm_model",ents.PFMModel)

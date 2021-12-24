@@ -33,6 +33,7 @@ function fudm.PFMModel:GetIconMaterial() return "gui/pfm/icon_model_item" end
 function fudm.PFMModel:GetSceneChildren() return self:GetRootBones():GetTable() end
 
 function fudm.PFMModel:ChangeModel(mdlName)
+	mdlName = asset.normalize_asset_name(mdlName,asset.TYPE_MODEL)
 	self:SetModelName(mdlName)
 	self:GetRootBones():Clear()
 	local boneList = self:GetBoneListAttr()
@@ -66,6 +67,7 @@ end
 
 function fudm.PFMModel:GetModel()
 	local mdlName = self:GetModelName()
+	mdlName = asset.normalize_asset_name(mdlName,asset.TYPE_MODEL)
 	if(#mdlName == 0) then return end
 	if(self.m_mdlCache ~= nil and self.m_mdlCache[1] == mdlName) then return self.m_mdlCache[2] end
 	local mdl = game.load_model(mdlName)

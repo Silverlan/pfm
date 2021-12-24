@@ -150,9 +150,9 @@ function ents.PFMProject:ChangePlaybackOffset(offset,gameViewFlags)
 		if(mdl ~= nil and animC ~= nil and actorC ~= nil and mdlC:IsAnimationFrozen() == false) then
 			local animName = animCache:GetAnimationName(filmClip,actorC:GetActorData())
 			
-			animC:PlayAnimation(animName)
+			-- animC:PlayAnimation(animName)
 			local flexC = ent:GetComponent(ents.COMPONENT_FLEX)
-			if(flexC ~= nil) then flexC:PlayFlexAnimation(animName) end
+			-- if(flexC ~= nil) then flexC:PlayFlexAnimation(animName) end
 			local anim = animC:GetAnimationObject()
 			if(anim ~= nil) then
 				local numFrames = anim:GetFrameCount()

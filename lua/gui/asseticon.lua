@@ -144,7 +144,7 @@ local function save_model_icon(mdl,mdlView,iconPath)
 	texInfo.outputFormat = util.TextureInfo.OUTPUT_FORMAT_DXT5
 	texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
 	util.save_image(img,"materials/" .. iconLocation,texInfo)
-	game.load_texture(iconLocation,bit.bor(game.TEXTURE_LOAD_FLAG_BIT_LOAD_INSTANTLY,game.TEXTURE_LOAD_FLAG_BIT_RELOAD))
+	asset.reload(iconLocation,asset.TYPE_TEXTURE)
 
 	local mat = game.create_material(iconLocation,"wguitextured")
 	mat:SetTexture("albedo_map",iconLocation)
