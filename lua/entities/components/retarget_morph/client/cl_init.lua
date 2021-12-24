@@ -54,6 +54,15 @@ function Component:ApplyFlexControllers()
 	local rig = self:GetRig()
 	if(rig == nil) then return end
 	local translationTable = rig:GetFlexControllerTranslationTable()
+
+	local enableCppAcceleration = true
+	if(enableCppAcceleration) then
+		-- Same algorithm as the Lua variant, but significantly faster (since the garbage collector will not get overloaded)
+		self.m_cppCacheData = self.m_cppCacheData or util.retarget.initialize_retarget_flex_data(translationTable)
+		util.retarget.apply_retarget_flex(self.m_cppCacheData,flexCSrc,flexCDst)
+		return util.EVENT_REPLY_HANDLED
+	end
+
 	local accTable = {}
 	for flexCIdSrc,mappings in pairs(translationTable) do
 		local val = flexCSrc:GetFlexController(flexCIdSrc)

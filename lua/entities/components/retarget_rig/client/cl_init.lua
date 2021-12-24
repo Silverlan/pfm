@@ -41,6 +41,7 @@ end
 function ents.RetargetRig:InitializeRigFileListener()
 	self:ClearRigFileListener()
 
+	if(self.m_rigFilePath == nil) then return end
 	local listener,err = add_file_listener(self.m_rigFilePath,function() if(util.is_valid(self.m_rigTargetEntity)) then self:RigToActor(self.m_rigTargetEntity) end end)
 	if(listener ~= false) then
 		self.m_rigFileListener = listener
@@ -76,6 +77,7 @@ function ents.RetargetRig:Unrig()
 	self.m_curPoseData = nil
 	self.m_rigFilePath = nil
 	self.m_rigTargetEntity = nil
+	self.m_cppCacheData = nil
 	self:ClearRigFileListener()
 end
 
@@ -281,6 +283,30 @@ function ents.RetargetRig:ApplyRig(dt)
 	local animDst = self.m_animSrc
 	local rig = self:GetRig()
 	if(rig == nil or util.is_valid(animSrc) == false or util.is_valid(animDst) == false) then return end
+
+	local enableCppAcceleration = true
+	if(enableCppAcceleration) then
+		-- Same algorithm as the Lua variant, but significantly faster (since the garbage collector will not get overloaded)
+		self.m_cppCacheData = self.m_cppCacheData or util.retarget.initialize_retarget_data(
+			self.m_absBonePoses,
+			self.m_origBindPoseToRetargetBindPose,
+			self.m_origBindPoseBoneDistances,
+
+			self.m_curPoseData.bindPosesOther,
+			self.m_curPoseData.origBindPoses,
+			self.m_curPoseData.tmpPoses,
+			self.m_curPoseData.retargetPoses,
+			self.m_curPoseData.invRootPose,
+
+			rig:GetBindPoseTransforms(),
+			self.m_curPoseData.relBindPoses,
+
+			self.m_untranslatedBones,
+			rig:GetDstToSrcTranslationTable()
+		)
+		util.retarget.apply_retarget_rig(self.m_cppCacheData,self:GetEntity():GetModel(),animSrc,animDst,self:GetEntity():GetModel():GetSkeleton())
+		return util.EVENT_REPLY_HANDLED
+	end
 
 	animDst:UpdateEffectiveBoneTransforms() -- Make sure the target entity's bone transforms have been updated
 	local translationTable = rig:GetDstToSrcTranslationTable()
