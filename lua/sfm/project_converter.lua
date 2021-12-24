@@ -287,7 +287,7 @@ local function convert_bone_transforms(filmClip,processedObjects,mdlMsgCache)
 			processedObjects[actor] = true
 			for _,component in ipairs(actor:GetComponents():GetTable()) do
 				if(component:GetType() == fudm.ELEMENT_TYPE_PFM_MODEL) then
-					local mdlName = component:GetModelName()
+					local mdlName = asset.normalize_asset_name(component:GetModelName(),asset.TYPE_MODEL)
 					local mdl = game.load_model(mdlName)
 					if(mdl == nil and mdlMsgCache[mdlName] == nil) then
 						mdlMsgCache[mdlName] = true
@@ -355,10 +355,36 @@ local function apply_post_processing(converter,project,filmClip,processedObjects
 							local toAttr = channel:GetToAttribute()
 							local type = toElement:GetType()
 							local handled = true
-							if(toAttr == "position") then channel:SetTargetPath("ec/transform/position")
-							elseif(toAttr == "rotation") then channel:SetTargetPath("ec/transform/rotation")
+							local function isTransformAttr()
+								local p = toElement:FindParent(function(p) return p:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR end) or nil
+								if(p ~= nil and util.is_same_object(p:GetTransform(),toElement)) then return true end
+								return false
+							end
+							local function getBoneEl()
+								return toElement:FindParent(function(p) return p:GetType() == fudm.ELEMENT_TYPE_PFM_BONE end)
+							end
+							if(toAttr == "position") then
+								-- debug.print(toElement:GetName(),toAttr)
+								if(isTransformAttr()) then
+									channel:SetTargetPath("ec/transform/position")
+								else
+									local elBone = getBoneEl()
+									if(elBone ~= nil) then channel:SetTargetPath("ec/animated/bone/" .. elBone:GetName() .. "/position") end
+								end
+							elseif(toAttr == "rotation") then
+								if(isTransformAttr()) then
+									channel:SetTargetPath("ec/transform/rotation")
+								else
+									local elBone = getBoneEl()
+									if(elBone ~= nil) then channel:SetTargetPath("ec/animated/bone/" .. elBone:GetName() .. "/rotation") end
+								end
 							elseif(toAttr == "scale") then
-								channel:SetTargetPath("ec/transform/scale")
+								if(isTransformAttr()) then
+									channel:SetTargetPath("ec/transform/scale")
+								else
+									local elBone = getBoneEl()
+									if(elBone ~= nil) then channel:SetTargetPath("ec/animated/bone/" .. elBone:GetName() .. "/scale") end
+								end
 
 								-- SFM uses floats for scale, PFM uses Vector3, so we'll have to translate the values
 								local log = channel:GetLog()
@@ -373,6 +399,9 @@ local function apply_post_processing(converter,project,filmClip,processedObjects
 									layerValues:PushBack(v)
 								end
 							else
+								if(toAttr == "flexWeight") then
+									channel:SetTargetPath("ec/flex/" .. toElement:GetName())
+								end
 								if(type == fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == fudm.ELEMENT_TYPE_PFM_POINT_LIGHT) then
 									if(toAttr == "radius") then channel:SetTargetPath("ec/radius/radius")
 									elseif(toAttr == "intensity") then channel:SetTargetPath("ec/light/intensity")
@@ -879,7 +908,7 @@ sfm.register_element_type_conversion(sfm.TransformControl,fudm.PFMTransformContr
 end)
 
 sfm.register_element_type_conversion(sfm.GameModel,fudm.PFMModel,function(converter,sfmGameModel,pfmGameModel)
-	local mdlName = sfmGameModel:GetPragmaModelPath()
+	local mdlName = asset.normalize_asset_name(sfmGameModel:GetPragmaModelPath(),asset.TYPE_MODEL)
 	pfmGameModel:SetModelName(mdlName)
 	pfmGameModel:SetSkin(sfmGameModel:GetSkin())
 	pfmGameModel:SetBodyGroup(sfmGameModel:GetBody())
