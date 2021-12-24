@@ -60,7 +60,7 @@ end
 function fudm.PFMFilmClip:FindActorByUniqueId(uniqueId)
 	for _,actor in ipairs(self:GetActors():GetTable()) do
 		if(actor:GetType() == fudm.ELEMENT_TYPE_PFM_GROUP) then
-			local el = actor:FindActor(name)
+			local el = actor:FindActorByUniqueId(uniqueId)
 			if(el ~= nil) then return el end
 		elseif(actor:GetUniqueId() == uniqueId) then return actor end
 	end
