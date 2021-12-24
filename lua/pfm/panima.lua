@@ -101,6 +101,10 @@ end
 function pfm.AnimationManager:AddChannel(anim,channelClip,channelPath,type)
 	pfm.log("Adding animation channel of type '" .. udm.enum_type_to_ascii(type) .. "' with path '" .. channelPath .. "' to animation '" .. tostring(anim) .. "'...",pfm.LOG_CATEGORY_PFM)
 	local animChannel = anim:AddChannel(channelPath,type)
+	if(animChannel == nil) then
+		pfm.log("Failed to add animation channel of type '" .. udm.enum_type_to_ascii(type) .. "' with path '" .. channelPath .. "' to animation '" .. tostring(anim) .. "'...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
 	local udmChannelTf = channelClip:GetTimeFrame()
 	local channelTf = animChannel:GetTimeFrame()
 	channelTf.startOffset = udmChannelTf:GetStart()
@@ -147,12 +151,14 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 			end
 			local values = layer:GetValues():GetTable()
 			local animChannel = self:AddChannel(anim,channelClip,channelPath,fudm.var_type_to_udm_type(layer:GetValues():GetValueType()))
-			local expr = channel:GetExpression()
-			if(#expr > 0) then
-				local r = animChannel:SetValueExpression(expr)
-				if(r ~= true) then pfm.log("Unable to initialize channel math expression '" .. expr .. "': " .. r,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
+			if(animChannel ~= nil) then
+				local expr = channel:GetExpression()
+				if(#expr > 0) then
+					local r = animChannel:SetValueExpression(expr)
+					if(r ~= true) then pfm.log("Unable to initialize channel math expression '" .. expr .. "': " .. r,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
+				end
+				animChannel:SetValues(times:ToTable(),values:ToTable())
 			end
-			animChannel:SetValues(times:ToTable(),values:ToTable())
 		end
 		anim:UpdateDuration()
 		animations[actorDataHash] = anim
@@ -191,6 +197,7 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,channelClip,
 	local reloadRequired = false
 	if(channel == nil and channelClip ~= nil and type ~= nil) then
 		channel = self:AddChannel(anim,channelClip,path,type)
+		if(channel == nil) then return end
 		reloadRequired = true
 	end
 	assert(channel ~= nil)
