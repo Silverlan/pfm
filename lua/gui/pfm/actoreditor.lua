@@ -737,14 +737,14 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			elseif(info.type == udm.TYPE_VECTOR3) then
 				props:SetProperty(info.name,fudm.Vector3(info.default))
 				if(info.specializationType ~= ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
-					valid = false
+					-- valid = false
 				end
 			elseif(info.type == udm.TYPE_VECTOR4) then
 				props:SetProperty(info.name,fudm.Vector4(info.default))
 				valid = false
 			elseif(info.type == udm.TYPE_QUATERNION) then
 				props:SetProperty(info.name,fudm.Quaternion(info.default))
-				valid = false
+				-- valid = false
 			elseif(info.type == udm.TYPE_EULER_ANGLES) then
 				props:SetProperty(info.name,fudm.Angle(info.default))
 			--elseif(info.type == udm.TYPE_INT8) then props:SetProperty(info.name,udm.(info.default))
@@ -783,11 +783,12 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 		while(memberInfo ~= nil) do
 			local controlData = {}
 			local info = memberInfo
+			local path = "ec/" .. componentInfo.name .. "/" .. info.name
 			local valid = initializeProperty(info,controlData)
 			if(valid) then
 				controlData.name = info.name
 				controlData.default = info.default
-				controlData.path = "ec/" .. componentInfo.name .. "/" .. info.name
+				controlData.path = path
 				controlData.value = c:GetMemberValue(info.name)
 				if(udm.is_numeric_type(info.type)) then
 					local min = info.min or 0
@@ -826,7 +827,9 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 					self:TagRenderSceneAsDirty()
 				end
 				controlData.set(component,controlData.value,true)
-				actorData.componentData[componentId].items[memberIdx] = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData)
+				actorData.componentData[componentId].items[memberIdx] = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData,path)
+			else
+				pfm.log("Unable to add control for member '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 			end
 			memberIdx = memberIdx +1
 			memberInfo = c:GetMemberInfo(memberIdx)

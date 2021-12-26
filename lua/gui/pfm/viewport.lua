@@ -440,16 +440,19 @@ function gui.PFMViewport:UpdateManipulationMode()
 	local actorC = util.is_valid(actor) and actor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
 	local actorData = util.is_valid(actorC) and actorC:GetActorData() or nil
 	if(actorData ~= nil) then
-		local item = actorEditor:GetActorComponentItem(actorData,"pfm_model")
-		local itemSkeleton = util.is_valid(item) and item:GetItemByIdentifier("skeleton") or nil
-		if(util.is_valid(itemSkeleton) == false) then return end
+		local itemSkeleton = actorEditor:GetActorComponentItem(actorData,"animated")
 		for _,item in ipairs(itemSkeleton:GetItems()) do
 			if(item:IsValid() and item:IsSelected()) then
-				if(boneName ~= nil) then
-					boneName = nil -- Only enable if exactly one bone is selected
-					break
+				local identifier = panima.Channel.Path(item:GetIdentifier())
+				local cname,path = ents.PanimaComponent.parse_component_channel_path(identifier)
+				if(cname ~= nil) then
+					local c0,offset = path:GetComponent(0)
+					if(c0 == "bone") then
+						local name = path:GetComponent(offset)
+						if(#name > 0) then boneName = name end
+					end
 				end
-				boneName = item:GetIdentifier()
+
 			end
 		end
 	end
