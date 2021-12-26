@@ -10,7 +10,7 @@ include_component("pfm_model")
 include_component("pfm_actor")
 include_component("pfm_film_clip")
 
-local cvAnimCache = console.register_variable("pfm_animation_cache_enabled","1",bit.bor(console.FLAG_BIT_ARCHIVE),"Enables caching for actor animations to speed up performance.")
+local cvAnimCache = console.register_variable("pfm_animation_cache_enabled",udm.TYPE_BOOLEAN,true,bit.bor(console.FLAG_BIT_ARCHIVE),"Enables caching for actor animations to speed up performance.")
 
 local Component = util.register_class("ents.PFMProject",BaseEntityComponent)
 
