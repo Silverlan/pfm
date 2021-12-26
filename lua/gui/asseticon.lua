@@ -263,7 +263,8 @@ function gui.AssetIcon:MouseCallback(button,state,mods)
 		local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
 			input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
 		if(isAltDown) then
-			local pBg = gui.create("WIRect",nil,0,0,512,512)
+			local pBg = gui.create("WIRect")
+			pBg:SetSize(512,512)
 			pBg:SetColor(Color.Black)
 			self.m_modelViewerPanel = pBg
 
