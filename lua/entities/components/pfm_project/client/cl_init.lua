@@ -124,6 +124,7 @@ function ents.PFMProject:OnOffsetChanged()
 	self.m_skipOffsetOnChangeCallback = nil
 end
 
+local cvPanima = console.get_convar("pfm_experimental_enable_panima_for_flex_and_skeletal_animations")
 function ents.PFMProject:ChangePlaybackOffset(offset,gameViewFlags)
 	self:SetPlaybackOffset(offset)
 
@@ -141,6 +142,7 @@ function ents.PFMProject:ChangePlaybackOffset(offset,gameViewFlags)
 	-- animCache:UpdateCache(offset)
 	local filmClip = animCache:GetFilmClip(frameIndex)
 	if(filmClip == nil) then return end
+	local usePanima = cvPanima:GetBool()
 	-- TODO: Ensure that the entity actually belongs to this project
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_MODEL)}) do
 		local mdlC = ent:GetComponent(ents.COMPONENT_PFM_MODEL)
@@ -150,9 +152,11 @@ function ents.PFMProject:ChangePlaybackOffset(offset,gameViewFlags)
 		if(mdl ~= nil and animC ~= nil and actorC ~= nil and mdlC:IsAnimationFrozen() == false) then
 			local animName = animCache:GetAnimationName(filmClip,actorC:GetActorData())
 			
-			-- animC:PlayAnimation(animName)
 			local flexC = ent:GetComponent(ents.COMPONENT_FLEX)
-			-- if(flexC ~= nil) then flexC:PlayFlexAnimation(animName) end
+			if(usePanima == false) then
+				animC:PlayAnimation(animName)
+				if(flexC ~= nil) then flexC:PlayFlexAnimation(animName) end
+			end
 			local anim = animC:GetAnimationObject()
 			if(anim ~= nil) then
 				local numFrames = anim:GetFrameCount()

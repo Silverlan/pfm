@@ -8,6 +8,7 @@
 
 util.register_class("ents.PFMModel",BaseEntityComponent)
 
+local cvPanima = console.get_convar("pfm_experimental_enable_panima_for_flex_and_skeletal_animations")
 function ents.PFMModel:Initialize()
 	BaseEntityComponent.Initialize(self)
 
@@ -21,6 +22,7 @@ function ents.PFMModel:Initialize()
 	end
 
 	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED,"UpdateModel")
+	if(cvPanima:GetBool()) then self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS,"MaintainAnimations") end
 	self.m_listeners = {}
 end
 function ents.PFMModel:OnRemove()
@@ -28,6 +30,10 @@ function ents.PFMModel:OnRemove()
 end
 function ents.PFMModel:SetAnimationFrozen(frozen) self.m_animFrozen = frozen end
 function ents.PFMModel:IsAnimationFrozen() return self.m_animFrozen or false end
+function ents.PFMModel:MaintainAnimations()
+	-- Disable default skeletal animation playback
+	return util.EVENT_REPLY_HANDLED
+end
 function ents.PFMModel:OnEntitySpawn()
 	local modelData = self:GetModelData()
 	local ent = self:GetEntity()
