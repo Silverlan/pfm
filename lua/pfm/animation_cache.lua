@@ -15,6 +15,10 @@ function pfm.SceneAnimationCache:__init(session)
 	self.m_actorAnimationCache = {}
 end
 
+function pfm.SceneAnimationCache:Clear()
+	util.remove(self.m_cbOnModelLoaded)
+end
+
 function pfm.SceneAnimationCache:MarkFrameAsDirty(frameIndex) self.m_cachedFrames[frameIndex] = nil end
 function pfm.SceneAnimationCache:IsFrameDirty(frameIndex) return not self.m_cachedFrames[frameIndex] end
 
@@ -268,6 +272,7 @@ function pfm.SceneAnimationCache:LoadFromBinary(fileName)
 	end
 
 	assetData = assetData:GetData()
+	local animations = {}
 	for uniqueId,udmActor in pairs(assetData:Get("actors"):GetChildren()) do
 		local modelName = asset.normalize_asset_name(udmActor:GetValue("model"),asset.TYPE_MODEL)
 		self.m_actorAnimationCache[uniqueId] = {model = modelName,animations = {},flexAnimations = {}}
@@ -275,23 +280,52 @@ function pfm.SceneAnimationCache:LoadFromBinary(fileName)
 		for animName,udmAnim in pairs(udmActor:Get("animations"):GetChildren()) do
 			local anim = game.Model.Animation.Load(udmAnim:GetAssetData())
 			if(anim ~= nil) then
-				local mdl = game.load_model(modelName)
-				if(mdl ~= nil) then mdl:AddAnimation(animName,anim) end
-				cache.animations = cache.animations or {}
-				cache.animations[animName] = anim
+				animations[modelName] = animations[modelName] or {}
+				animations[modelName].animation = anim
+				animations[modelName].animationName = animName
 			end
 		end
 
 		for animName,udmAnim in pairs(udmActor:Get("flexAnimations"):GetChildren()) do
 			local flexAnim = game.Model.FlexAnimation.Load(udmAnim:GetAssetData())
 			if(flexAnim ~= nil) then
-				local mdl = game.load_model(modelName)
-				if(mdl ~= nil) then
-					mdl:AddFlexAnimation(animName,flexAnim)
-				end
-				cache.flexAnimations = cache.flexAnimations or {}
-				cache.flexAnimations[animName] = flexAnim
+				animations[modelName] = animations[modelName] or {}
+				animations[modelName].flexAnimation = flexAnim
+				animations[modelName].flexAnimationName = animName
 			end
+		end
+	end
+
+	-- The animations need to be assigned to the models, but they may not be loaded yet.
+	local cb
+	local initModelAnimations
+	cb = game.add_callback("OnModelLoaded",function(mdl)
+		initModelAnimations(mdl)
+	end)
+	self.m_cbOnModelLoaded = cb
+	initModelAnimations = function(mdl) -- Init model animations once the models are ready
+		local mdlName = asset.normalize_asset_name(mdl:GetName(),asset.TYPE_MODEL)
+		if(animations[mdlName] ~= nil) then
+			local animData = animations[mdlName]
+			if(animData.animation ~= nil) then
+				mdl:AddAnimation(animData.animationName,animData.animation)
+				animData.animation = nil
+			end
+			if(animData.flexAnimation ~= nil) then
+				mdl:AddFlexAnimation(animData.flexAnimationName,animData.flexAnimation)
+				animData.flexAnimation = nil
+			end
+			animations[mdlName] = nil
+		end
+		if(table.is_empty(animations)) then util.remove(cb) end
+	end
+	local mdlNames = {}
+	for mdlName,animData in pairs(animations) do table.insert(mdlNames,mdlName) end
+	console.print_table(mdlNames)
+	for _,mdlName in ipairs(mdlNames) do
+		if(asset.is_loaded(mdlName,asset.TYPE_MODEL)) then
+			local mdl = game.load_model(mdlName)
+			if(mdl ~= nil) then initModelAnimations(mdl) end
 		end
 	end
 
