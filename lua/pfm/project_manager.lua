@@ -124,23 +124,48 @@ function pfm.ProjectManager:ClearAnimationCache(projectFileName)
 	file.delete(self:GetAnimationCacheFilePath())
 end
 function pfm.ProjectManager:PrecacheSessionAssets(session)
+	debug.start_profiling_task("pfm_precache_session_assets")
 	pfm.log("Precaching session assets...",pfm.LOG_CATEGORY_PFM)
 	local track = session:GetFilmTrack()
-	if(track == nil) then return end
-	for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
-		pfm.log("Precaching assets for film clip '" .. tostring(filmClip) .. "'...",pfm.LOG_CATEGORY_PFM)
-		local actors = filmClip:GetActorList()
-		for _,actor in ipairs(actors) do
-			local component = actor:FindComponent("pfm_model")
-			if(component ~= nil) then
-				local mdlName = component:GetModelName()
-				if(#mdlName > 0) then
-					pfm.log("Precaching model '" .. mdlName .. "' for actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
-					game.load_model(mdlName)
+	if(track ~= nil) then
+		for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+			pfm.log("Precaching assets for film clip '" .. tostring(filmClip) .. "'...",pfm.LOG_CATEGORY_PFM)
+			local actors = filmClip:GetActorList()
+			for _,actor in ipairs(actors) do
+				local component = actor:FindComponent("pfm_model")
+				if(component ~= nil) then
+					local mdlName = asset.normalize_asset_name(component:GetModelName(),asset.TYPE_MODEL)
+					if(#mdlName > 0) then
+						pfm.log("Precaching model '" .. mdlName .. "' for actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
+						if(game.precache_model(mdlName) == false) then
+							pfm.log("Unable to precache model '" .. mdlName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+						end
+					end
 				end
 			end
 		end
 	end
+	debug.stop_profiling_task()
+end
+function pfm.ProjectManager:WaitForSessionAssets(session)
+	debug.start_profiling_task("pfm_wait_for_session_assets")
+	pfm.log("Waiting for session assets...",pfm.LOG_CATEGORY_PFM)
+	local track = session:GetFilmTrack()
+	if(track ~= nil) then
+		for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+			local actors = filmClip:GetActorList()
+			for _,actor in ipairs(actors) do
+				local component = actor:FindComponent("pfm_model")
+				if(component ~= nil) then
+					local mdlName = asset.normalize_asset_name(component:GetModelName(),asset.TYPE_MODEL)
+					if(#mdlName > 0) then
+						asset.wait_until_loaded(mdlName,asset.TYPE_MODEL)
+					end
+				end
+			end
+		end
+	end
+	debug.stop_profiling_task()
 end
 function pfm.ProjectManager:LoadAnimationCache(projectFileName)
 	if(self.m_animationCacheLoaded) then return end
@@ -162,6 +187,7 @@ function pfm.ProjectManager:CloseProject()
 	self.m_performanceCache:Clear()
 	if(util.is_valid(self.m_cbPlayOffset)) then self.m_cbPlayOffset:Remove() end
 	self.m_activeGameViewFilmClip = nil
+	if(self.m_animationCache ~= nil) then self.m_animationCache:Clear() end
 	self.m_animationCache = nil
 	self.m_animationCacheLoaded = false
 	collectgarbage()
@@ -197,13 +223,18 @@ function pfm.ProjectManager:OnFilmClipAdded(el) end
 function pfm.ProjectManager:GetAnimationCache() return self.m_animationCache end
 function pfm.ProjectManager:InitializeProject(project)
 	pfm.log("Initializing PFM project...",pfm.LOG_CATEGORY_PFM)
+	debug.start_profiling_task("pfm_initialize_project")
 
 	self.m_animManager:Reset()
 	local session = self:GetSession()
 	local filmTrack = (session ~= nil) and session:GetFilmTrack() or nil
 
+	if(session ~= nil) then self:WaitForSessionAssets(session) end
 	local entScene = self:StartGameView(project)
-	if(entScene == nil) then return false end
+	if(entScene == nil) then
+		debug.stop_profiling_task()
+		return false
+	end
 	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
 	projectC:AddEventCallback(ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED,function(filmClipC)
 		self.m_activeGameViewFilmClip = filmClipC:GetClipData()
@@ -233,6 +264,7 @@ function pfm.ProjectManager:InitializeProject(project)
 	end
 	self:CacheAnimations()
 	self:OnProjectInitialized(project)
+	debug.stop_profiling_task()
 	return entScene
 end
 function pfm.ProjectManager:CacheAnimations()
