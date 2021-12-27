@@ -106,13 +106,15 @@ end
 
 function ents.PFMProject:Start()
 	self:Reset()
-
+	
+	debug.start_profiling_task("pfm_start_game_view")
 	local ent = ents.create("pfm_track")
 	local trackC = ent:GetComponent(ents.COMPONENT_PFM_TRACK)
 	trackC:Setup(self.m_rootTrack,nil,self)
 	ent:Spawn()
 	self.m_entRootTrack = ent
 	self:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED,{ent})
+	debug.stop_profiling_task()
 end
 
 function ents.PFMProject:GetProject() return self.m_project end

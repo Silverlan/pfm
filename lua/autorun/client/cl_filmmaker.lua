@@ -27,12 +27,15 @@ tool.open_filmmaker = function()
 	pfm.register_log_category("sfm")
 	include("/gui/editors/filmmaker/filmmaker.lua")
 	tool.close_filmmaker()
+
+	debug.start_profiling_task("pfm_launch")
 	tool.editor = gui.create("WIFilmmaker")
 	tool.filmmaker = tool.editor
 	tool.editor:SetAutoAlignToParent(true)
 	-- tool.editor:SetZPos(1000)
 
 	tool.editor:Open()
+	debug.stop_profiling_task()
 	return tool.editor
 end
 

@@ -39,7 +39,9 @@ function fudm.PFMModel:ChangeModel(mdlName)
 	local boneList = self:GetBoneListAttr()
 	boneList:Clear()
 	-- TODO: Clear animation data for this actor?
+	debug.start_profiling_task("pfm_load_model")
 	local mdl = game.load_model(mdlName)
+	debug.stop_profiling_task()
 	if(mdl == nil) then return end
 	local skeleton = mdl:GetSkeleton()
 	local ref = mdl:GetReferencePose()
@@ -70,7 +72,9 @@ function fudm.PFMModel:GetModel()
 	mdlName = asset.normalize_asset_name(mdlName,asset.TYPE_MODEL)
 	if(#mdlName == 0) then return end
 	if(self.m_mdlCache ~= nil and self.m_mdlCache[1] == mdlName) then return self.m_mdlCache[2] end
+	debug.start_profiling_task("pfm_load_model")
 	local mdl = game.load_model(mdlName)
+	debug.stop_profiling_task()
 	self.m_mdlCache = {mdlName,mdl}
 	return mdl
 end

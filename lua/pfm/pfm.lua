@@ -117,6 +117,7 @@ function pfm.Project:Load(fileName)
 	if(version > 1) then self.m_uniqueId = f:ReadString()
 	else self.m_uniqueId = util.get_string_hash(util.Path.CreateFilePath(fileName):GetString()) end
 
+	debug.start_profiling_task("pfm_load")
 	local numElements = f:ReadUInt32()
 	local elements = {}
 	for i=1,numElements do
@@ -146,6 +147,7 @@ function pfm.Project:Load(fileName)
 
 	self.m_udmRoot:LoadFromBinary(f)
 	f:Close()
+	debug.stop_profiling_task()
 	return true
 end
 

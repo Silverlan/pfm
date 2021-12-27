@@ -93,8 +93,12 @@ local sfm_attr_to_pragma_table = {
 
 util.register_class("sfm.ProjectConverter")
 sfm.ProjectConverter.convert_project = function(projectFilePath)
+	debug.start_profiling_task("pfm_import_sfm_project")
 	local sfmProject = sfm.import_scene(projectFilePath)
-	if(sfmProject == nil) then return false end
+	if(sfmProject == nil) then
+		debug.stop_profiling_task()
+		return false
+	end
 	log_sfm_project_debug_info(sfmProject)
 
 	local converter = sfm.ProjectConverter(sfmProject)
@@ -105,6 +109,7 @@ sfm.ProjectConverter.convert_project = function(projectFilePath)
 	converter = nil
 	collectgarbage()
 
+	debug.stop_profiling_task()
 	return pfmProject
 end
 sfm.assign_generic_attribute = function(name,attr,pfmObj)
