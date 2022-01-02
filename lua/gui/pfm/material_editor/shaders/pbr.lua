@@ -351,8 +351,10 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	btSave:SetText(locale.get_text("save"))
 	btSave:SetHeight(32)
 	btSave:AddCallback("OnPressed",function(btRaytracying)
-		if(util.is_valid(self.m_material) == false or self.m_material:IsError()) then return end
-		self.m_material:Save()
+		local success = false
+		if(util.is_valid(self.m_material) and self.m_material:IsError() == false) then success = self.m_material:Save() end
+		if(success) then pfm.log("Successfully saved material '" .. self.m_material:GetName() .. "'!",pfm.LOG_CATEGORY_PFM)
+		else pfm.log("Failed to save material '" .. self.m_material:GetName() .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR) end
 	end)
 	self.m_btSave = btSave
 end

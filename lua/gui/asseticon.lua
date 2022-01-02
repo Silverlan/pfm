@@ -33,7 +33,8 @@ local function create_model_view(width,height,parent)
 end
 
 local function is_character_model(model)
-	local mdl = game.load_model(model)
+	local mdl = model
+	if(type(mdl) == "string") then mdl = game.load_model(mdl) end
 	if(mdl == nil) then return false end
 	-- If the model is a character, we'll zoom in on the head
 	local headData = rig.determine_head_bones(mdl)
@@ -119,19 +120,33 @@ local function set_model_view_model(mdlView,model,settings,iconPath)
 		end
 	end
 
+	local lookAtTarget
+	local rotation
+	local zoom
+
 	iconLocation = iconPath or get_icon_location(model,asset.TYPE_MODEL)
-	if(asset.is_loaded(iconLocation,asset.TYPE_MATERIAL) == false) then return end
-	local mat = game.load_material(iconLocation)
-	if(mat == nil) then return end
-	local db = mat:GetDataBlock()
-	local mv = db:FindBlock("pfm_model_view")
-	if(mv == nil) then return end
-	local lookAtTarget = mv:GetVector("look_at_target")
-	local rotation = mv:GetVector("rotation")
-	local zoom = mv:GetFloat("zoom")
-	--[[if(pos ~= nil) then mdlView:SetLookAtTarget(lookAtTarget) end
+	if(asset.is_loaded(iconLocation,asset.TYPE_MATERIAL)) then
+		local mat = game.load_material(iconLocation)
+		if(mat ~= nil) then
+			local db = mat:GetDataBlock()
+			local mv = db:FindBlock("pfm_model_view")
+			if(mv ~= nil) then
+				lookAtTarget = mv:GetVector("look_at_target")
+				rotation = mv:GetVector("rotation")
+				zoom = mv:GetFloat("zoom")
+			end
+		end
+	end
+
+	if(settings.modelView ~= nil) then
+		lookAtTarget = lookAtTarget or settings.modelView.lookAtTarget
+		rotation = rotation or settings.modelView.rotation
+		zoom = zoom or settings.modelView.zoom
+	end
+
+	if(lookAtTarget ~= nil) then mdlView:SetLookAtTarget(lookAtTarget) end
 	if(rotation ~= nil) then mdlView:SetRotation(rotation.x,rotation.y) end
-	if(zoom ~= nil) then mdlView:SetZoom(zoom) end]]
+	if(zoom ~= nil) then mdlView:SetZoom(zoom) end
 end
 
 local function save_model_icon(mdl,mdlView,iconPath)
@@ -215,12 +230,24 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 	self:GenerateNextIcon()
 end
 
+local texSpherePath = asset.get_normalized_path("pfm/texture_sphere",asset.TYPE_MODEL)
 function gui.AssetIcon.IconGenerator:AddModelToQueue(mdl,callback,iconPath,settings)
+	settings = settings or {}
+	mdl = asset.get_normalized_path(mdl,asset.TYPE_MODEL)
+	if(mdl == texSpherePath) then
+		-- Bit of a hack; pfm/texture_sphere is used for material icons, we'll use some default settings
+		-- for the camera to make it look nice.
+		settings.modelView = {
+			lookAtTarget = Vector(),
+			rotation = Vector(-0.6284,0.4189,0),
+			zoom = 120
+		}
+	end
 	table.insert(self.m_mdlQueue,{
 		model = mdl,
 		callback = callback,
 		iconPath = iconPath,
-		settings = settings or {}
+		settings = settings
 	})
 	if(#self.m_mdlQueue == 1) then self:GenerateNextIcon() end
 end
@@ -280,7 +307,8 @@ function gui.AssetIcon:MouseCallback(button,state,mods)
 				settings.particleFileName = ptFileName
 				settings.particleName = ptName
 			end
-			set_model_view_model(p,self:GetPreviewModel(),settings)
+
+			set_model_view_model(p,self:GetPreviewModel(),settings,self:GetIconLocation())
 
 			local pos = input.get_cursor_pos()
 			pos.x = math.max(pos.x -pBg:GetWidth() /2,0)

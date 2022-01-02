@@ -191,7 +191,8 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 	local ent = self.m_viewport:GetEntity()
 	local mdlC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_MODEL) or nil
 	if(mdl ~= nil) then self.m_model = mdlC:GetModel() end
-	-- mdlC:SetMaterialOverride(0,mat)
+	mdlC:SetMaterialOverride(0,mat)
+	mdlC:UpdateRenderMeshes()
 	self.m_viewport:Render()
 
 	local material = game.load_material(mat)
