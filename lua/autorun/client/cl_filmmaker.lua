@@ -22,10 +22,13 @@ tool.close_filmmaker = function()
 end
 tool.get_filmmaker = function() return tool.filmmaker end
 tool.is_filmmaker_open = function() return util.is_valid(tool.editor) end
-tool.open_filmmaker = function()
+tool.load_filmmaker_scripts = function()
 	include("/sfm/project_converter.lua")
 	pfm.register_log_category("sfm")
 	include("/gui/editors/filmmaker/filmmaker.lua")
+end
+tool.open_filmmaker = function()
+	tool.load_filmmaker_scripts()
 	tool.close_filmmaker()
 
 	debug.start_profiling_task("pfm_launch")
@@ -40,9 +43,7 @@ tool.open_filmmaker = function()
 end
 
 console.register_command("pfm",function(pl,...)
-	include("/sfm/project_converter.lua")
-	pfm.register_log_category("sfm")
-	include("/gui/editors/filmmaker/filmmaker.lua")
+	tool.load_filmmaker_scripts()
 	local logCategories = 0
 	local reload = false
 	local dev = false
