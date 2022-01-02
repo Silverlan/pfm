@@ -1,5 +1,6 @@
 pfm_asset_export = "Export asset"
 pfm_asset_icon_add_to_favorites = "Add to favorites"
+pfm_asset_icon_copy_path_to_clipboard = "Copy icon path to clipboard"
 pfm_asset_icon_reload = "Reload icon"
 pfm_asset_icon_remove_from_favorites = "Remove from favorites"
 pfm_asset_import = "Import asset"

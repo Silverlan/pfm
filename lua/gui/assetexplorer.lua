@@ -187,6 +187,11 @@ function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
 						end
 					end
 				end)
+				if(#tSelected == 1) then
+					pContext:AddItem(locale.get_text("pfm_asset_icon_copy_path_to_clipboard"),function()
+						util.set_clipboard_string(tSelectedFiles[1]:GetIconLocation())
+					end)
+				end
 			end
 
 			if(#tSelectedFiles > 0 and hasExternalFiles == false) then
