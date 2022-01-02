@@ -23,7 +23,9 @@ function ents.PFMVRCamera:Initialize()
 			return
 		end
 
+		debug.start_profiling_task("vr_initialize_openvr")
 		local result = openvr.initialize()
+		debug.stop_profiling_task()
 		if(result ~= openvr.INIT_ERROR_NONE) then
 			console.print_warning("Unable to initialize openvr library: " .. openvr.init_error_to_string(result))
 			return
