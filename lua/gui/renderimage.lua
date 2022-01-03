@@ -66,7 +66,13 @@ function gui.RenderImage:ApplyImageProcessing(drawSceneInfo)
 	local tex = self.m_imgProcessor:Apply(drawSceneInfo.commandBuffer)
 	if(tex ~= self.m_outputTexture) then
 		self.m_outputTexture = tex
-		self.m_elTex:SetTexture(tex)
+
+		-- We can't update the GUI element's texture immediately here, because
+		-- we're in a render callback, so we'll have to delay it instead.
+		time.create_simple_timer(0.0,function()
+			if(self.m_elTex:IsValid() == false) then return end
+			self.m_elTex:SetTexture(tex)
+		end)
 	end
 end
 function gui.RenderImage:OnRemove()
