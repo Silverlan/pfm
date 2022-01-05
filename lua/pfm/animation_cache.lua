@@ -165,6 +165,7 @@ function pfm.SceneAnimationCache:SaveToBinary(fileName)
 
 	local assetData = udmData:GetAssetData():GetData()
 	local udmActors = assetData:Add("actors")
+	local numAnimations = 0
 	for uniqueId,actorAnimations in pairs(self.m_actorAnimationCache) do
 		local udmActor = udmActors:Add(uniqueId)
 
@@ -173,13 +174,20 @@ function pfm.SceneAnimationCache:SaveToBinary(fileName)
 		for animName,anim in pairs(actorAnimations.animations) do
 			local udmAnimation = udmAnimations:AddAssetData(animName)
 			anim:Save(udmAnimation)
+			numAnimations = numAnimations +1
 		end
 
 		local udmFlexAnimations = udmActor:Add("flexAnimations")
 		for animName,anim in pairs(actorAnimations.flexAnimations) do
 			local udmFlexAnimation = udmFlexAnimations:AddAssetData(animName)
 			anim:Save(udmFlexAnimation)
+			numAnimations = numAnimations +1
 		end
+	end
+
+	if(numAnimations == 0) then
+		pfm.log("Nothing to save...",pfm.LOG_CATEGORY_PFM)
+		return
 	end
 
 	local cachedFrames = {}
