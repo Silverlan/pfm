@@ -34,6 +34,7 @@ include("/gui/pfm/actorcatalog.lua")
 include("/gui/pfm/renderpreview.lua")
 include("/gui/pfm/material_editor/materialeditor.lua")
 include("/gui/pfm/particleeditor.lua")
+include("/gui/pfm/webbrowser.lua")
 include("/pfm/util_particle_system.lua")
 
 gui.load_skin("pfm")
@@ -1033,6 +1034,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:RegisterWindow(self.m_actorDataFrame,"element_viewer",locale.get_text("pfm_element_viewer"),function() return gui.create("WIPFMElementViewer") end)
 	self:RegisterWindow(self.m_actorDataFrame,"material_editor",locale.get_text("pfm_material_editor"),function() return gui.create("WIPFMMaterialEditor") end)
 	self:RegisterWindow(self.m_actorDataFrame,"particle_editor",locale.get_text("pfm_particle_editor"),function() return gui.create("WIPFMParticleEditor") end)
+	self:RegisterWindow(self.m_actorDataFrame,"web_browser",locale.get_text("pfm_web_browser"),function() return gui.create("WIPFMWebBrowser") end)
 
 	self:RegisterWindow(self.m_viewportFrame,"primary_viewport",locale.get_text("pfm_primary_viewport"),function() return gui.create("WIPFMViewport") end)
 	self:RegisterWindow(self.m_viewportFrame,"secondary_viewport",locale.get_text("pfm_secondary_viewport"),function()
@@ -1070,6 +1072,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 	local tab,elVp = self:OpenWindow("primary_viewport")
 	self:OpenWindow("render")
+	self:OpenWindow("web_browser")
 
 	if(util.is_valid(elVp)) then elVp:UpdateRenderSettings() end
 
