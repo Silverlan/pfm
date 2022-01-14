@@ -53,10 +53,11 @@ function shader.PFMSprite:Draw(drawCmd,origin,size,color,mvp)
 		end
 	end
 
-	if(self:IsValid() == false or self.m_dsTex == nil or self:RecordBeginDraw(drawCmd) == false) then return end
+	local bindState = shader.BindState(drawCmd)
+	if(self:IsValid() == false or self.m_dsTex == nil or self:RecordBeginDraw(bindState) == false) then return end
 	local buf,numVerts = prosper.util.get_square_vertex_uv_buffer()
-	self:RecordBindVertexBuffers({buf})
-	self:RecordBindDescriptorSet(self.m_dsTex)
+	self:RecordBindVertexBuffers(bindState,{buf})
+	self:RecordBindDescriptorSet(bindState,self.m_dsTex)
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteMat4(mvp)
@@ -64,8 +65,8 @@ function shader.PFMSprite:Draw(drawCmd,origin,size,color,mvp)
 	self.m_dsPushConstants:WriteVector4(color:ToVector4())
 	self.m_dsPushConstants:WriteVector2(size)
 
-	self:RecordPushConstants(self.m_dsPushConstants)
-	self:RecordDraw(prosper.util.get_square_vertex_count())
-	self:RecordEndDraw()
+	self:RecordPushConstants(bindState,self.m_dsPushConstants)
+	self:RecordDraw(bindState,prosper.util.get_square_vertex_count())
+	self:RecordEndDraw(bindState)
 end
 shader.register("pfm_sprite",shader.PFMSprite)

@@ -36,13 +36,14 @@ function shader.PFMGrid:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
 function shader.PFMGrid:Draw(drawCmd,transformMatrix,x,y,w,h,lineCount,strideX,color,yMultiplier,lineWidth,horizontal)
-	if(self:IsValid() == false or self:RecordBeginDraw(drawCmd) == false) then return end
+	local bindState = shader.BindState(drawCmd)
+	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
 	yMultiplier = yMultiplier or 1.0
 	
 	local vertexBuffer = prosper.util.get_line_vertex_buffer()
-	self:RecordBindVertexBuffers({vertexBuffer})
-	drawCmd:RecordSetScissor(w,h,x,y)
-	drawCmd:RecordSetLineWidth(lineWidth or 1)
+	self:RecordBindVertexBuffers(bindState,{vertexBuffer})
+	drawCmd:RecordSetScissor(bindState,w,h,x,y)
+	drawCmd:RecordSetLineWidth(bindState,lineWidth or 1)
 
 	self.m_dsTransformMatrix:Seek(0)
 	self.m_dsTransformMatrix:WriteMat4(transformMatrix)
@@ -51,9 +52,9 @@ function shader.PFMGrid:Draw(drawCmd,transformMatrix,x,y,w,h,lineCount,strideX,c
 	self.m_dsTransformMatrix:WriteFloat(strideX *2.0)
 	self.m_dsTransformMatrix:WriteFloat(yMultiplier)
 	self.m_dsTransformMatrix:WriteUInt32(horizontal and 1 or 0)
-	self:RecordPushConstants(self.m_dsTransformMatrix)
+	self:RecordPushConstants(bindState,self.m_dsTransformMatrix)
 
-	self:RecordDraw(2,lineCount)
-	self:RecordEndDraw()
+	self:RecordDraw(bindState,2,lineCount)
+	self:RecordEndDraw(bindState)
 end
 shader.register("pfm_grid",shader.PFMGrid)

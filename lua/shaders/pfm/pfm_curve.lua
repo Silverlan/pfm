@@ -34,18 +34,19 @@ function shader.PFMCurve:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
 function shader.PFMCurve:Draw(drawCmd,vertexBuffer,vertexCount,xRange,yRange,color,x,y,w,h)
-	if(self:IsValid() == false or self:RecordBeginDraw(drawCmd) == false) then return end
-	self:RecordBindVertexBuffers({vertexBuffer})
-	drawCmd:RecordSetScissor(w,h,x,y)
-	drawCmd:RecordSetViewport(w,h,x,y)
+	local bindState = shader.BindState(drawCmd)
+	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
+	self:RecordBindVertexBuffers(bindState,{vertexBuffer})
+	drawCmd:RecordSetScissor(bindState,w,h,x,y)
+	drawCmd:RecordSetViewport(bindState,w,h,x,y)
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteVector4(color:ToVector4())
 	self.m_dsPushConstants:WriteVector2(xRange)
 	self.m_dsPushConstants:WriteVector2(yRange)
-	self:RecordPushConstants(self.m_dsPushConstants)
+	self:RecordPushConstants(bindState,self.m_dsPushConstants)
 
-	self:RecordDraw(vertexCount)
-	self:RecordEndDraw()
+	self:RecordDraw(bindState,vertexCount)
+	self:RecordEndDraw(bindState)
 end
 shader.register("pfm_curve",shader.PFMCurve)

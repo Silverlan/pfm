@@ -36,15 +36,16 @@ function shader.PFMLines:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetLineWidth(2)
 end
 function shader.PFMLines:Draw(drawCmd,vertexBuffer,numVerts,mvp)
-	if(self:IsValid() == false or self:RecordBeginDraw(drawCmd) == false) then return end
-	self:RecordBindVertexBuffers({vertexBuffer})
+	local bindState = shader.BindState(drawCmd)
+	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
+	self:RecordBindVertexBuffers(bindState,{vertexBuffer})
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteMat4(mvp)
 	self.m_dsPushConstants:WriteVector4(Color(95,95,95):ToVector4())
 
-	self:RecordPushConstants(self.m_dsPushConstants)
-	self:RecordDraw(numVerts)
-	self:RecordEndDraw()
+	self:RecordPushConstants(bindState,self.m_dsPushConstants)
+	self:RecordDraw(bindState,numVerts)
+	self:RecordEndDraw(bindState)
 end
 shader.register("pfm_lines",shader.PFMLines)

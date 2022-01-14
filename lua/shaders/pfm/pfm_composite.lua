@@ -43,12 +43,13 @@ function shader.PFMComposite:InitializeRenderPass(pipelineIdx)
 	return {prosper.create_render_pass(rpCreateInfo)}
 end
 function shader.PFMComposite:Draw(drawCmd,dsTex)
-	if(self:IsValid() == false or self:RecordBeginDraw(drawCmd) == false) then return end
+	local bindState = shader.BindState(drawCmd)
+	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
 	local buf,numVerts = prosper.util.get_square_vertex_uv_buffer()
-	self:RecordBindVertexBuffers({buf})
-	self:RecordBindDescriptorSet(dsTex)
+	self:RecordBindVertexBuffers(bindState,{buf})
+	self:RecordBindDescriptorSet(bindState,dsTex)
 
-	self:RecordDraw(prosper.util.get_square_vertex_count())
-	self:RecordEndDraw()
+	self:RecordDraw(bindState,prosper.util.get_square_vertex_count())
+	self:RecordEndDraw(bindState)
 end
 shader.register("pfm_composite",shader.PFMComposite)

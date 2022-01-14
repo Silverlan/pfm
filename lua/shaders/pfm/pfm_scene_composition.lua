@@ -47,17 +47,18 @@ function shader.PFMSceneComposition:InitializeRenderPass(pipelineIdx)
 	return {prosper.create_render_pass(rpCreateInfo)}
 end
 function shader.PFMSceneComposition:Draw(drawCmd,dsTex,bloomScale,glowScale)
-	if(self:IsValid() == false or self:RecordBeginDraw(drawCmd) == false) then return end
+	local bindState = shader.BindState(drawCmd)
+	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
 	local buf,numVerts = prosper.util.get_square_vertex_uv_buffer()
-	self:RecordBindVertexBuffers({buf})
-	self:RecordBindDescriptorSet(dsTex)
+	self:RecordBindVertexBuffers(bindState,{buf})
+	self:RecordBindDescriptorSet(bindState,dsTex)
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteFloat(bloomScale)
 	self.m_dsPushConstants:WriteFloat(glowScale)
-	self:RecordPushConstants(self.m_dsPushConstants)
+	self:RecordPushConstants(bindState,self.m_dsPushConstants)
 
-	self:RecordDraw(prosper.util.get_square_vertex_count())
-	self:RecordEndDraw()
+	self:RecordDraw(bindState,prosper.util.get_square_vertex_count())
+	self:RecordEndDraw(bindState)
 end
 shader.register("pfm_scene_composition",shader.PFMSceneComposition)

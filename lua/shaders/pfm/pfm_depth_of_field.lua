@@ -92,10 +92,11 @@ function shader.PFMDepthOfField:InitializeRenderPass(pipelineIdx)
 	return {prosper.create_render_pass(rpCreateInfo)}
 end
 function shader.PFMDepthOfField:Draw(drawCmd,mvp,dsColDepth,dofSettings,width,height,zNear,zFar)
-	if(self:IsValid() == false or self:RecordBeginDraw(drawCmd) == false) then return end
+	local bindState = shader.BindState(drawCmd)
+	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
 	local buf,numVerts = prosper.util.get_square_vertex_uv_buffer()
-	self:RecordBindVertexBuffers({buf})
-	self:RecordBindDescriptorSet(dsColDepth)
+	self:RecordBindVertexBuffers(bindState,{buf})
+	self:RecordBindDescriptorSet(bindState,dsColDepth)
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteMat4(mvp)
@@ -118,9 +119,9 @@ function shader.PFMDepthOfField:Draw(drawCmd,mvp,dsColDepth,dofSettings,width,he
 	self.m_dsPushConstants:WriteFloat(dofSettings:GetVignettingInnerBorder())
 	self.m_dsPushConstants:WriteFloat(dofSettings:GetVignettingOuterBorder())
 	self.m_dsPushConstants:WriteFloat(dofSettings:GetPentagonShapeFeather())
-	self:RecordPushConstants(self.m_dsPushConstants)
+	self:RecordPushConstants(bindState,self.m_dsPushConstants)
 
-	self:RecordDraw(prosper.util.get_square_vertex_count())
-	self:RecordEndDraw()
+	self:RecordDraw(bindState,prosper.util.get_square_vertex_count())
+	self:RecordEndDraw(bindState)
 end
 shader.register("pfm_dof",shader.PFMDepthOfField)

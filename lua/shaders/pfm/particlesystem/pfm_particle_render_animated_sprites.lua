@@ -118,18 +118,19 @@ function shader.PFMParticleRenderAnimatedSprites:CalcVertexPosition(ptc,ptIdx,lo
 	return vecCorner
 end
 function shader.PFMParticleRenderAnimatedSprites:Draw(drawCmd,ps,scene,renderer,renderFlags,camBias)
-	if(self:RecordBeginDraw(drawCmd,ps,renderFlags) == false) then return end
+	local bindState = shader.BindState(drawCmd)
+	if(self:RecordBeginDraw(bindState,ps,renderFlags) == false) then return end
 	local dsLightSources = renderer:GetLightSourceDescriptorSet()
 	local dsShadows = renderer:GetPSSMTextureDescriptorSet()
-	self:RecordBindLights(dsShadows,dsLightSources)
-	self:RecordBindRenderSettings(game.get_render_settings_descriptor_set())
-	self:RecordBindSceneCamera(renderer,ps:GetSceneRenderPass() == game.SCENE_RENDER_PASS_VIEW)
+	self:RecordBindLights(bindState,dsShadows,dsLightSources)
+	self:RecordBindRenderSettings(bindState,game.get_render_settings_descriptor_set())
+	self:RecordBindSceneCamera(bindState,renderer,ps:GetSceneRenderPass() == game.SCENE_RENDER_PASS_VIEW)
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteFloat(camBias)
-	self:RecordPushConstants(self.m_dsPushConstants,shader.BaseParticle2D.PUSH_CONSTANTS_USER_DATA_OFFSET)
+	self:RecordPushConstants(bindState,self.m_dsPushConstants,shader.BaseParticle2D.PUSH_CONSTANTS_USER_DATA_OFFSET)
 
-	self:RecordDraw(renderer,ps,renderFlags)
-	self:RecordEndDraw()
+	self:RecordDraw(bindState,renderer,ps,renderFlags)
+	self:RecordEndDraw(bindState)
 end
 shader.register("pfm_particle_animated_sprites",shader.PFMParticleRenderAnimatedSprites)

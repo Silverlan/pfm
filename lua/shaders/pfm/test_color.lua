@@ -30,15 +30,16 @@ function shader.TestColor:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
 function shader.TestColor:Draw(drawCmd,color)
-	if(self:IsValid() == false or self:RecordBeginDraw(drawCmd) == false) then return end
+	local bindState = shader.BindState(drawCmd)
+	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
 	local buf,numVerts = prosper.util.get_square_vertex_buffer()
-	self:RecordBindVertexBuffers({buf})
+	self:RecordBindVertexBuffers(bindState,{buf})
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteVector4((color or Color.Red):ToVector4())
-	self:RecordPushConstants(self.m_dsPushConstants)
+	self:RecordPushConstants(bindState,self.m_dsPushConstants)
 
-	self:RecordDraw(prosper.util.get_square_vertex_count())
-	self:RecordEndDraw()
+	self:RecordDraw(bindState,prosper.util.get_square_vertex_count())
+	self:RecordEndDraw(bindState)
 end
 shader.register("test_color",shader.TestColor)

@@ -35,12 +35,13 @@ function shader.PFMTimeline:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
 function shader.PFMTimeline:Draw(drawCmd,transformMatrix,x,y,w,h,lineCount,strideX,color,yMultiplier)
-	if(self:IsValid() == false or self:RecordBeginDraw(drawCmd) == false) then return end
+	local bindState = shader.BindState(drawCmd)
+	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
 	yMultiplier = yMultiplier or 1.0
 	
 	local vertexBuffer = prosper.util.get_line_vertex_buffer()
-	self:RecordBindVertexBuffers({vertexBuffer})
-	drawCmd:RecordSetScissor(w,h,x,y)
+	self:RecordBindVertexBuffers(bindState,{vertexBuffer})
+	drawCmd:RecordSetScissor(bindState,w,h,x,y)
 
 	self.m_dsTransformMatrix:Seek(0)
 	self.m_dsTransformMatrix:WriteMat4(transformMatrix)
@@ -48,9 +49,9 @@ function shader.PFMTimeline:Draw(drawCmd,transformMatrix,x,y,w,h,lineCount,strid
 	self.m_dsTransformMatrix:WriteUInt32(lineCount)
 	self.m_dsTransformMatrix:WriteFloat(strideX *2.0)
 	self.m_dsTransformMatrix:WriteFloat(yMultiplier)
-	self:RecordPushConstants(self.m_dsTransformMatrix)
+	self:RecordPushConstants(bindState,self.m_dsTransformMatrix)
 
-	self:RecordDraw(2,lineCount)
-	self:RecordEndDraw()
+	self:RecordDraw(bindState,2,lineCount)
+	self:RecordEndDraw(bindState)
 end
 shader.register("pfm_timeline",shader.PFMTimeline)
