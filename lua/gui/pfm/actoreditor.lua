@@ -10,6 +10,7 @@ include("slider.lua")
 include("treeview.lua")
 include("weightslider.lua")
 include("controls_menu.lua")
+include("entry_edit_window.lua")
 include("/pfm/component_manager.lua")
 
 util.register_class("gui.PFMActorEditor",gui.Base)
@@ -1032,7 +1033,7 @@ function gui.PFMActorEditor:AddActor(actor)
 	self:UpdateActorComponentEntries(self.m_treeElementToActorData[itemActor])
 end
 function gui.PFMActorEditor:Setup(filmClip)
-	if(util.is_same_object(filmClip,self.m_filmClip)) then return end
+	-- if(util.is_same_object(filmClip,self.m_filmClip)) then return end
 	self.m_filmClip = filmClip
 	self.m_tree:Clear()
 	self.m_treeElementToActorData = {}
@@ -1184,6 +1185,43 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 					end
 				end
 				ctrl = self:AddSliderControl(udmComponent,controlData)
+				ctrl:AddCallback("PopulateContextMenu",function(ctrl,context)
+					local pm = pfm.get_project_manager()
+					local animManager = pm:GetAnimationManager()
+					if(animManager ~= nil) then
+						local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
+						if(expr ~= nil) then
+							context:AddItem(locale.get_text("pfm_clear_expression"),function()
+								animManager:SetValueExpression(actorData.actor,controlData.path)
+							end)
+							context:AddItem(locale.get_text("pfm_copy_expression"),function() util.set_clipboard_string(expr) end)
+						end
+						context:AddItem(locale.get_text("pfm_set_expression"),function()
+							local te
+							local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"),function(ok)
+								if(ok) then
+									animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText())
+								end
+							end)
+							te = p:AddTextField(locale.get_text("pfm_expression") .. ":",expr or "")
+							te:GetTextElement():SetFont("pfm_medium")
+
+							p:SetWindowSize(Vector2i(800,120))
+							p:Update()
+						end)
+						local anim,channel = animManager:FindAnimationChannel(actorData.actor,controlData.path,false)
+						if(channel ~= nil) then
+							context:AddItem(locale.get_text("pfm_clear_animation"),function()
+								animManager:RemoveChannel(actorData.actor,controlData.path)
+								local entActor = actorData.actor:FindEntity()
+								local actorC = util.is_valid(entActor) and entActor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
+								if(actorC ~= nil) then
+									actorC:ApplyComponentMemberValue(controlData.path)
+								end
+							end)
+						end
+					end
+				end)
 				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
 
 				-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
