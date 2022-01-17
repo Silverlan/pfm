@@ -58,7 +58,9 @@ function pfm.AnimationManager:SetFilmClip(filmClip)
 	end
 end
 
+local cvPanima = console.get_convar("pfm_experimental_enable_panima_for_flex_and_skeletal_animations")
 function pfm.AnimationManager:PlayActorAnimation(ent)
+	if(self.m_filmClip == nil or cvPanima:GetBool() == false) then return end
 	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	local actorData = actorC:GetActorData()
 	local anims = self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)]
@@ -184,8 +186,25 @@ end
 function pfm.AnimationManager:SetValueExpression(actor,path,expr)
 	local anim,channel = self:FindAnimationChannel(actor,path)
 	if(channel == nil) then return end
+	if(expr == nil) then
+		channel:ClearValueExpression()
+		return
+	end
 	local r = channel:SetValueExpression(expr)
 	if(r ~= true) then pfm.log("Unable to apply channel value expression '" .. expr .. "' for channel with path '" .. path .. "': " .. r,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
+end
+
+function pfm.AnimationManager:GetValueExpression(actor,path)
+	local anim,channel = self:FindAnimationChannel(actor,path)
+	if(channel == nil) then return end
+	return channel:GetValueExpression()
+end
+
+function pfm.AnimationManager:RemoveChannel(actor,path)
+	if(self.m_filmClip == nil or self.m_filmClipAnims[util.get_object_hash(self.m_filmClip)] == nil) then return end
+	local anim,channel = self:FindAnimationChannel(actor,path,true)
+	if(channel == nil) then return end
+	anim:RemoveChannel(path)
 end
 
 function pfm.AnimationManager:SetChannelValue(actor,path,time,value,channelClip,type)

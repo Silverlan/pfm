@@ -181,7 +181,7 @@ function gui.PFMFrame:DetachTab(identifier)
 	local elBg = gui.create("WIRect",el,0,0,el:GetWidth(),el:GetHeight(),0,0,1,1)
 	elBg:SetColor(Color(38,38,38,255))
 
-	panel:SetParent(elBg)
+	panel:SetParentAndUpdateWindow(elBg)
 	panel:SetAnchor(0,0,1,1)
 	panel:TrapFocus(true)
 	panel:RequestFocus()
@@ -204,11 +204,9 @@ function gui.PFMFrame:AttachTab(identifier)
 	local windowHandle = tabData.window
 
 	local panel = tabData.panel
-	panel:TrapFocus(false)
-	panel:KillFocus()
 	if(panel:IsValid()) then
 		if(util.is_valid(self.m_contents)) then
-			panel:SetParent(self.m_contents)
+			panel:SetParentAndUpdateWindow(self.m_contents)
 			panel:SetPos(0,0)
 			panel:SetSize(self.m_contents:GetWidth(),self.m_contents:GetHeight())
 			panel:SetAnchor(0,0,1,1)

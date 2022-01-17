@@ -27,7 +27,7 @@ function gui.FilmClip:OnInitialize()
 
 	self:SetMouseInputEnabled(true)
 	self:AddCallback("OnMousePressed",function()
-		self:SetSelected(true)
+		self:SetSelected(not self:IsSelected())
 		return util.EVENT_REPLY_HANDLED
 	end)
 

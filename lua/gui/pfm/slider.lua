@@ -8,8 +8,8 @@
 
 include("/pfm/fonts.lua")
 include("/gui/wicontextmenu.lua")
+include("/gui/pfm/entry_edit_window.lua")
 include("sliderbar.lua")
-include("window.lua")
 
 util.register_class("gui.PFMSlider",gui.Base)
 
@@ -156,65 +156,24 @@ function gui.PFMSlider:ResetToDefault()
 end
 function gui.PFMSlider:GetValue() return self:GetLeftValue() end
 function gui.PFMSlider:CreateSliderRangeEditWindow(min,max,default,fOnClose)
-	local p = gui.create("WIPFMWindow")
+	local teMin
+	local teMax
+	local teDefault
+	local p = pfm.open_entry_edit_window(locale.get_text("pfm_slider_range_edit_window_title"),function(ok)
+		if(ok) then
+			local min = util.is_valid(teMin) and tonumber(teMin:GetText()) or 0.0
+			local max = util.is_valid(teMax) and tonumber(teMax:GetText()) or 0.0
+			local default = util.is_valid(teDefault) and tonumber(teDefault:GetText()) or 0.0
+			fOnClose(true,min,max,default)
+		else fOnClose(false) end
+	end)
+
+	teMin = p:AddNumericEntryField(locale.get_text("min") .. ":",tostring(min))
+	teMax = p:AddNumericEntryField(locale.get_text("max") .. ":",tostring(max))
+	teDefault = p:AddNumericEntryField(locale.get_text("default") .. ":",tostring(default))
 
 	p:SetWindowSize(Vector2i(202,160))
-	p:SetTitle(locale.get_text("pfm_slider_range_edit_window_title"))
-
-	local contents = p:GetContents()
-
-	gui.create("WIBase",contents,0,0,1,12) -- Gap
-
-	local t = gui.create("WITable",contents)
-	t:RemoveStyleClass("WITable")
-	t:SetWidth(p:GetWidth() -13)
-	t:SetRowHeight(28)
-
-	local function add_text_field(name,value)
-		local row = t:AddRow()
-		row:SetValue(0,name)
-
-		local textEntry = gui.create("WINumericEntry")
-		textEntry:SetWidth(133)
-		textEntry:SetText(value)
-		row:InsertElement(1,textEntry)
-		return textEntry
-	end
-	local teMin = add_text_field(locale.get_text("min") .. ":",tostring(min))
-	local teMax = add_text_field(locale.get_text("max") .. ":",tostring(max))
-	local teDefault = add_text_field(locale.get_text("default") .. ":",tostring(default))
-
-	t:Update()
-	t:SizeToContents()
-
-	gui.create("WIBase",contents,0,0,1,3) -- Gap
-
-	local boxButtons = gui.create("WIHBox",contents)
-
-	local btOk = gui.create("WIButton",boxButtons)
-	btOk:SetSize(73,21)
-	btOk:SetText(locale.get_text("ok"))
-	btOk:AddCallback("OnMousePressed",function()
-		local min = util.is_valid(teMin) and tonumber(teMin:GetText()) or 0.0
-		local max = util.is_valid(teMax) and tonumber(teMax:GetText()) or 0.0
-		local default = util.is_valid(teDefault) and tonumber(teDefault:GetText()) or 0.0
-		p:GetFrame():Remove()
-		fOnClose(true,min,max,default)
-	end)
-
-	gui.create("WIBase",boxButtons,0,0,8,1) -- Gap
-
-	local btCancel = gui.create("WIButton",boxButtons)
-	btCancel:SetSize(73,21)
-	btCancel:SetText(locale.get_text("cancel"))
-	btCancel:AddCallback("OnMousePressed",function()
-		p:GetFrame():Remove()
-		fOnClose(false)
-	end)
-
-	boxButtons:Update()
-	boxButtons:SetX(contents:GetWidth() -boxButtons:GetWidth())
-	return p
+	p:Update()
 end
 function gui.PFMSlider:MouseCallback(button,state,mods)
 	if(button == input.MOUSE_BUTTON_LEFT) then

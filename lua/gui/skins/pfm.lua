@@ -109,4 +109,13 @@ skin["input_field_text"] = {
 		pElement:SetFont("pfm_medium")
 	end
 }
+skin["infobox"] = {
+	children = {
+		["witext"] = {
+			Initialize = function(GUI,pElement)
+				pElement:SetFont("pfm_medium")
+			end
+		}
+	}
+}
 gui.register_skin("pfm",t,skin,"default")

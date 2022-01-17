@@ -134,6 +134,7 @@ function ents.PFMProject:ChangePlaybackOffset(offset,gameViewFlags)
 		local trackC = self.m_entRootTrack:GetComponent(ents.COMPONENT_PFM_TRACK)
 		if(trackC ~= nil) then trackC:OnOffsetChanged(offset,gameViewFlags) end
 	end
+	
 	if(cvAnimCache:GetBool() == false) then return end
 	-- if(bit.band(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE) == ents.PFMProject.GAME_VIEW_FLAG_NONE) then return end
 

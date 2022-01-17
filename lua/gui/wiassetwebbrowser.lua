@@ -7,6 +7,7 @@
 ]]
 
 include("/gui/vbox.lua")
+include("/util/util_asset_import.lua")
 
 local Element = util.register_class("gui.AssetWebBrowser",gui.Base)
 
@@ -50,15 +51,27 @@ function Element:OnInitialize()
 	menu:SetWidth(self:GetWidth())
 	menu:SetAnchor(0,0,1,0)
 
+	local urlEntry = gui.create("WITextEntry",self)
+	urlEntry:AddCallback("OnTextEntered",function()
+		if(util.is_valid(self.m_webBrowser) == false) then return end
+		self.m_webBrowser:LoadUrl(urlEntry:GetText())
+	end)
+	urlEntry:SetWidth(self:GetWidth())
+	urlEntry:SetAnchor(0,0,1,0)
+	urlEntry:SetY(menu:GetBottom())
+
 	self.m_webBrowser = self:InitializeBrowser(self,self:GetWidth(),self:GetHeight())
 	if(util.is_valid(self.m_webBrowser)) then
-		self.m_webBrowser:SetY(menu:GetBottom())
+		self.m_webBrowser:SetY(urlEntry:GetBottom())
 
 		self.m_webBrowser:AddCallback("SetSize",function()
 			-- We don't want to reload the texture constantly if the element is being resized by a user,
 			-- so we'll only update after the element hasn't been resized for at least 0.25 seconds
 			self.m_tNextBrowserResize = time.real_time() +0.25
 			self:SetThinkingEnabled(true)
+		end)
+		self.m_webBrowser:AddCallback("OnAddressChanged",function(el,addr)
+			urlEntry:SetText(addr)
 		end)
 		self.m_webBrowser:SetSize(self:GetWidth(),400)
 		self.m_webBrowser:SetAnchor(0,0,1,1)
@@ -93,6 +106,10 @@ function Element:InitializeBrowser(parent,w,h)
 	el:SetInitialUrl("https://sfmlab.com/")
 
 	self.m_downloads = {}
+	el:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
+		if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then el:RequestFocus() end
+		return util.EVENT_REPLY_UNHANDLED
+	end)
 	el:AddCallback("OnDownloadUpdate",function(el,id,state,percentage)
 		if(util.is_valid(self.m_log) == false or self.m_downloads[id] == nil) then return end
 		local path = self.m_downloads[id]
@@ -118,98 +135,9 @@ function Element:InitializeBrowser(parent,w,h)
 	return el
 end
 function Element:ImportDownloadAssets(path)
-	local zipFile = util.ZipFile.open(path:GetString(),util.ZipFile.OPEN_MODE_READ)
-	if(zipFile == nil) then
-		self.m_log:AppendText("\nUnable to open zip-archive '" .. path:GetString() .. "': Unsupported archive format?")
-		return
-	end
-	local files = zipFile:GetFileList()
-	local tMaterials = {}
-	local tModels = {}
-	local tMaps = {}
-	for _,f in ipairs(files) do
-		local path = util.Path.CreateFilePath(f)
-		if(path:IsFile()) then
-			local nCur = 0
-			local c,n = path:GetComponent(nCur)
-			while(c ~= nil) do
-				local t
-				c = c:lower()
-				if(c == "models") then t = tModels
-				elseif(c == "materials") then t = tMaterials
-				elseif(c == "maps") then t = tMaps end
-				if(t ~= nil) then
-					table.insert(t,{path:GetString():sub(nCur +1),f})
-					break
-				end
-				nCur = n
-				c,n = path:GetComponent(nCur)
-			end
-		end
-	end
-
-	local extractedFiles = {}
-	for _,t in ipairs({tMaterials,tModels,tMaps}) do
-		for _,f in ipairs(t) do
-			local outPath = "addons/imported/" .. f[1]
-			self.m_log:AppendText("\nExtracing file '" .. f[2] .. "' to '" .. outPath .. "'...")
-			local result,msg = zipFile:ExtractFile(f[2],outPath)
-			if(result == false) then
-				self.m_log:AppendText("\n{[c:ff0000]}Failed to extract file: " .. msg .. "{[/c]}")
-			else table.insert(extractedFiles,outPath) end
-		end
-	end
-
-	local function find_assets(t,assetExt,type)
-		local assets = {}
-		for _,f in ipairs(t) do
-			local ext = file.get_file_extension(f[1])
-			if(ext ~= nil and ext:lower() == assetExt) then
-				local path = util.Path.CreateFilePath(f[1])
-				path:PopFront()
-				path:RemoveFileExtension()
-				self.m_log:AppendText("\nDetected " .. type .. ": '" .. path:GetString() .. "'")
-				table.insert(assets,path:GetString())
-			end
-		end
-		return assets
-	end
-	find_assets(tMaterials,"vmt","material")
-	local mdlAssets = find_assets(tModels,"mdl","model")
-	find_assets(tMaps,"bsp","map")
-
-	zipFile = nil
-	collectgarbage()
-
-	local function import_next_model()
-		if(#mdlAssets == 0) then
-			self.m_log:AppendText("\nAll models have been imported successfully!")
-			self.m_log:AppendText("\nRemoving temporary files...")
-			-- We don't need to keep the materials or models around, because they have been
-			-- converted to native formats. We do, however, need to keep the textures.
-			for _,f in ipairs(extractedFiles) do
-				local ext = file.get_file_extension(f)
-				if(ext == nil or ext:lower() ~= "vtf") then
-					file.delete(f)
-				end
-			end
-			file.delete(path:GetString())
-			return
-		end
-		local mdl = mdlAssets[1]
-		table.remove(mdlAssets,1)
-		time.create_simple_timer(0.25,function()
-			self.m_log:AppendText("\nImporting model '" .. mdl .. "'...")
-			local mdl = game.load_model(mdl)
-			if(mdl ~= nil) then self.m_log:AppendText("\nModel has been imported successfully!")
-			else self.m_log:AppendText("\n{[c:ff0000]}Failed to import model!{[/c]}") end
-			asset.clear_unused(asset.TYPE_MODEL)
-			asset.clear_unused(asset.TYPE_MATERIAL)
-			asset.clear_unused(asset.TYPE_TEXTURE)
-			import_next_model()
-		end)
-	end
-	import_next_model()
+	util.import_assets(path,function(msg)
+		self.m_log:AppendText("\n" .. msg)
+	end)
 end
 function Element:InitializeLog(parent)
 	local elBg = gui.create("WIRect",parent)

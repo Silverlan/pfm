@@ -227,7 +227,7 @@ function ents.PFMCamera:Setup(actorData,cameraData)
 	if(camC ~= nil) then
 		camC:SetNearZ(math.max(cameraData:GetZNear(),1))
 		camC:SetFarZ(math.max(cameraData:GetZFar(),1))
-		camC:SetFOV(cameraData:GetFov())
+		--camC:SetFOV(cameraData:GetFov())
 		camC:UpdateProjectionMatrix()
 
 		table.insert(self.m_listeners,cameraData:GetZNearAttr():AddChangeListener(function(newZNear)
@@ -244,13 +244,13 @@ function ents.PFMCamera:Setup(actorData,cameraData)
 			end
 			self:SetFrustumModelDirty()
 		end))
-		table.insert(self.m_listeners,cameraData:GetFovAttr():AddChangeListener(function(newFov)
+		--[[table.insert(self.m_listeners,cameraData:GetFovAttr():AddChangeListener(function(newFov)
 			if(camC:IsValid()) then
 				camC:SetFOV(newFov)
 				camC:UpdateProjectionMatrix()
 			end
 			self:SetFrustumModelDirty()
-		end))
+		end))]]
 		table.insert(self.m_listeners,cameraData:GetAspectRatioAttr():AddChangeListener(function(newAspectRatio)
 			self:UpdateAspectRatio()
 			self:SetFrustumModelDirty()

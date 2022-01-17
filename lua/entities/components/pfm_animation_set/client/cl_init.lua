@@ -21,6 +21,7 @@ function ents.PFMAnimationSet:Initialize()
 	-- TODO: Only add these if this is an articulated actor
 	self:AddEntityComponent(ents.COMPONENT_FLEX)
 	self:AddEntityComponent(ents.COMPONENT_VERTEX_ANIMATED)
+	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED,"OnModelChanged")
 	
 	self.m_cbUpdateSkeleton = animC:AddEventCallback(ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED,function()
 		-- We have to apply our bone transforms every time the entity's skeleton/animations have been updated
@@ -79,7 +80,7 @@ function ents.PFMAnimationSet:ApplyBoneTransforms()
 	end
 end
 
-function ents.PFMAnimationSet:OnEntitySpawn()
+function ents.PFMAnimationSet:OnModelChanged()
 	local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
 	if(animC ~= nil) then
 		animC:PlayAnimation("reference") -- Play reference animation to make sure animation callbacks are being called

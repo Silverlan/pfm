@@ -109,7 +109,10 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 		end
 	end
 	self:GetEntity():SetName(filmClip:GetName())
+	self:UpdateCamera()
+end
 
+function ents.PFMFilmClip:UpdateCamera()
 	local cam = self:GetClipData():GetProperty("camera")
 	if(cam ~= nil) then
 		local entCam = self:GetActor(cam)
@@ -223,6 +226,10 @@ function ents.PFMFilmClip:CreateActor(actor)
 		") with rotation (" .. util.round_string(ang.p,0) .. "," .. util.round_string(ang.y,0) .. "," .. util.round_string(ang.r,0) ..
 		") with scale (" .. util.round_string(scale.x,2) .. "," .. util.round_string(scale.y,2) .. "," .. util.round_string(scale.z,2) .. ")...",pfm.LOG_CATEGORY_PFM_GAME)
 	actorC:OnOffsetChanged(self:GetOffset(),ents.PFMProject.GAME_VIEW_FLAG_NONE)
+
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+	if(animManager ~= nil) then animManager:PlayActorAnimation(entActor) end
 
 	self:BroadcastEvent(ents.PFMFilmClip.EVENT_ON_ACTOR_CREATED,{actorC})
 

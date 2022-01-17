@@ -533,8 +533,12 @@ function gui.WIFilmmaker:UpdateActor(actor,filmClip,reload)
 
 	local ent = filmClip:FindEntity()
 	local filmClipC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_PFM_FILM_CLIP) or nil
-	if(filmClipC ~= nil) then filmClipC:InitializeActors() end
+	if(filmClipC ~= nil) then
+		filmClipC:InitializeActors()
+		filmClipC:UpdateCamera()
+	end
 	self:TagRenderSceneAsDirty()
+	self:SetTimeOffset(self:GetTimeOffset()) -- Refresh animation
 end
 function gui.WIFilmmaker:StopLiveRaytracing()
 	local vp = self:GetViewport()

@@ -34,7 +34,7 @@ function ents.PFMModel:MaintainAnimations()
 	-- Disable default skeletal animation playback
 	return util.EVENT_REPLY_HANDLED
 end
-function ents.PFMModel:OnEntitySpawn()
+function ents.PFMModel:InitModel()
 	local modelData = self:GetModelData()
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
@@ -166,6 +166,8 @@ function ents.PFMModel:GetBodyGroups(bgIdx)
 end
 
 function ents.PFMModel:UpdateModel()
+	self:InitModel()
+	
 	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil) then return end
 	local mdlInfo = self.m_mdlInfo

@@ -257,6 +257,18 @@ function ents.PFMActorComponent:UpdateOperators()
 	--end
 end
 
+function ents.PFMActorComponent:ApplyComponentMemberValue(path)
+	local componentName,componentPath = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+	if(componentName == nil) then return end
+	local actorData = self:GetActorData()
+	local componentData = actorData:FindComponent(componentName)
+	if(componentData == nil) then return end
+	local props = componentData:GetProperty("properties")
+	local prop = props:GetProperty(componentPath:GetString())
+	if(prop == nil) then return end
+	self:GetEntity():SetMemberValue(path,prop:GetValue())
+end
+
 function ents.PFMActorComponent:Setup(actorData)
 	self.m_actorData = actorData
 	self:GetEntity():SetName(actorData:GetName())
@@ -276,6 +288,19 @@ function ents.PFMActorComponent:Setup(actorData)
 			local c = self:AddEntityComponent(componentName)
 			if(c == nil) then pfm.log("Attempted to add unknown component '" .. componentData:GetComponentName() .. "' to actor '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 			elseif(c.Setup ~= nil) then c:Setup(actorData,componentData) end
+
+			-- Initialize component member values
+			local props = componentData:GetProperty("properties")
+			local memberIdx = 0
+			local memberInfo = (c ~= nil) and c:GetMemberInfo(memberIdx) or nil
+			while(memberInfo ~= nil) do
+				local prop = props:GetProperty(memberInfo.name)
+				if(prop ~= nil) then
+					c:SetMemberValue(memberInfo.name,prop:GetValue())
+				end
+				memberIdx = memberIdx +1
+				memberInfo = c:GetMemberInfo(memberIdx)
+			end
 		end
 	end
 end
