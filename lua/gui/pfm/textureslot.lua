@@ -45,13 +45,29 @@ function gui.PFMTextureSlot:OnInitialize()
 
 		local tex = asset.load(f,asset.TYPE_TEXTURE)
 		tex = (tex ~= nil) and tex:GetVkTexture() or nil
+		if(tex == nil) then
+			pfm.log("Failed to import texture!",pfm.LOG_CATEGORY_PFM)
+			asset.unlock_asset_watchers()
+			return util.EVENT_REPLY_HANDLED
+		end
 		local texInfo = util.TextureInfo()
 		texInfo.flags = bit.bor(texInfo.flags,util.TextureInfo.FLAG_BIT_GENERATE_MIPMAPS)
 		texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
-		local result = util.save_image(tex:GetImage(),"materials/" .. texPath:GetString(),texInfo)
 
-		-- TODO: This doesn't work properly?
-		--local result,errMsg = asset.import_texture(f,texImportInfo,texPath:GetString())
+		if(asset.exists(texPath:GetString(),asset.TYPE_TEXTURE)) then
+			-- A texture with the target name already exists, we'll add a postfix to make it unique
+			local tmpPath
+			local i = 2
+			repeat
+				tmpPath = texPath:GetString() .. "_" .. tostring(i)
+				i = i +1
+			until(not asset.exists(tmpPath,asset.TYPE_TEXTURE))
+			texPath = util.Path.CreateFilePath(tmpPath)
+		end
+
+		pfm.log("Saving texture as '" .. "materials/" .. texPath:GetString() .. "'...",pfm.LOG_CATEGORY_PFM)
+		local result = util.save_image(tex:GetImage(),"materials/" .. texPath:GetString(),texInfo)
+		if(result == false) then pfm.log("Saving failed!",pfm.LOG_CATEGORY_PFM) end
 
 		asset.unlock_asset_watchers()
 
@@ -135,8 +151,6 @@ end
 function gui.PFMTextureSlot:GetTexture() return self.m_texPath end
 function gui.PFMTextureSlot:ReloadTexture(reloadCache)
 	if(self:IsValidTexture() == false) then return end
-	local texLoadFlags = game.TEXTURE_LOAD_FLAG_BIT_LOAD_INSTANTLY
-	if(reloadCache) then texLoadFlags = bit.bor(texLoadFlags,game.TEXTURE_LOAD_FLAG_BIT_RELOAD) end
 	local tex
 	if(reloadCache) then tex = asset.reload(self.m_texPath,asset.TYPE_TEXTURE)
 	else tex = asset.load(self.m_texPath,asset.TYPE_TEXTURE) end

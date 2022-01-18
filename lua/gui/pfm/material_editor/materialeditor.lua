@@ -180,8 +180,8 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 	self.m_material = nil
 	self.m_model = nil
 
-	local matPath = util.Path(mat)
-	matPath:PopBack()
+	local matPath = util.Path.CreateFilePath(mat)
+	matPath:PopBack() -- Pop filename
 	for identifier,texSlotData in pairs(self.m_texSlots) do
 		if(texSlotData.textureSlot:IsValid()) then
 			texSlotData.textureSlot:SetImportPath(matPath:GetString())
