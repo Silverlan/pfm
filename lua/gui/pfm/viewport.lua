@@ -441,18 +441,22 @@ function gui.PFMViewport:UpdateManipulationMode()
 	local actorData = util.is_valid(actorC) and actorC:GetActorData() or nil
 	if(actorData ~= nil) then
 		local itemSkeleton = actorEditor:GetActorComponentItem(actorData,"animated")
-		for _,item in ipairs(itemSkeleton:GetItems()) do
-			if(item:IsValid() and item:IsSelected()) then
-				local identifier = panima.Channel.Path(item:GetIdentifier())
-				local cname,path = ents.PanimaComponent.parse_component_channel_path(identifier)
-				if(cname ~= nil) then
-					local c0,offset = path:GetComponent(0)
-					if(c0 == "bone") then
-						local name = path:GetComponent(offset)
-						if(#name > 0) then boneName = name end
+		if(itemSkeleton ~= nil) then
+			for _,item in ipairs(itemSkeleton:GetItems()) do
+				if(item:IsValid() and item:IsSelected()) then
+					local itemIdent = item:GetIdentifier()
+					if(itemIdent ~= nil) then
+						local identifier = panima.Channel.Path(itemIdent)
+						local cname,path = ents.PanimaComponent.parse_component_channel_path(identifier)
+						if(cname ~= nil) then
+							local c0,offset = path:GetComponent(0)
+							if(c0 == "bone") then
+								local name = path:GetComponent(offset)
+								if(#name > 0) then boneName = name end
+							end
+						end
 					end
 				end
-
 			end
 		end
 	end
@@ -629,7 +633,25 @@ function gui.PFMViewport:InitializeCameraControls()
 		pContext:AddLine()
 
 		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_change_scene_camera"))
-		pSubMenu:AddItem(locale.get_text("pfm_new_camera"),function() end) -- TODO
+		local pm = pfm.get_project_manager()
+		local session = (pm ~= nil) and pm:GetSession() or nil
+		local filmClip = (session ~= nil) and session:GetFilmClip(pm:GetTimeOffset()) or nil
+		if(filmClip ~= nil) then
+			local actorList = filmClip:GetActorList()
+			for _,actor in ipairs(actorList) do
+				local camC = actor:FindComponent("camera")
+				if(camC ~= nil) then
+					pSubMenu:AddItem(actor:GetName(),function()
+						filmClip:SetProperty("camera",actor)
+						local entFilmClip = filmClip:FindEntity()
+						local filmClipC = util.is_valid(entFilmClip) and entFilmClip:GetComponent(ents.COMPONENT_PFM_FILM_CLIP)
+						if(filmClipC ~= nil) then filmClipC:UpdateCamera() end
+					end)
+				end
+			end
+		end
+
+		-- pSubMenu:AddItem(locale.get_text("pfm_new_camera"),function() end) -- TODO
 		pSubMenu:AddLine()
 		-- TODO: Add all available cameras
 		pSubMenu:Update()
