@@ -7,6 +7,7 @@
 ]]
 
 include("assetexplorer.lua")
+include("/util/util_asset_import.lua")
 
 util.register_class("gui.MaterialExplorer",gui.AssetExplorer)
 function gui.MaterialExplorer:__init()
