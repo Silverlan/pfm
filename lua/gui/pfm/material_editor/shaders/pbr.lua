@@ -157,15 +157,15 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	self:LinkControlToMaterialParameter("roughness",ctrlRoughness)
 
 	-- Emission factor
-	-- TODO: RGB!
-	-- RGB Sliders?
-	local ctrlEmissionFactor = ctrlVbox:AddSliderControl(locale.get_text("emission_factor"),"emission_factor",0.0,0.0,1.0,function(el,value) self:SetMaterialParameter("vector","emission_factor",tostring(value) .. " " .. tostring(value) .. " " .. tostring(value)) end,0.01)
+	local ctrlEmissionFactor = ctrlVbox:AddColorField(locale.get_text("emission_factor"),"emission_factor",Color.White,function(oldCol,newCol)
+		local vCol = newCol:ToVector4()
+		self:SetMaterialParameter("vector","emission_factor",tostring(vCol))
+	end)
 	ctrlEmissionFactor:SetTooltip(locale.get_text("pfm_emission_factor_desc"))
 	self:LinkControlToMaterialParameter("emission_factor",ctrlEmissionFactor,nil,function(block)
 		if(block:HasValue("emission_factor") == false) then return end
-		local emissionFactor = block:GetVector("emission_factor")
-		ctrlEmissionFactor:SetValue(emissionFactor.x)
-		ctrlEmissionFactor:SetDefault(emissionFactor.x)
+		local colorFactor = block:GetVector("emission_factor")
+		ctrlEmissionFactor:SetColor(Color(colorFactor))
 	end)
 
 	-- Ao factor
