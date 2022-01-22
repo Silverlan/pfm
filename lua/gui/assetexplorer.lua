@@ -19,7 +19,10 @@ end
 function gui.AssetExplorer:OnInitialize()
 	gui.IconGridView.OnInitialize(self)
 
-	self.m_favorites = {} -- TODO: Load/Save from/to file
+	self.m_special = {
+		["fav"] = {},
+		["new"] = {}
+	} -- TODO: Load/Save from/to file
 	self:AddCallback("OnIconSelected",function(self,icon)
 		self:CallCallbacks("OnFileClicked",icon:GetText())
 	end)
@@ -97,16 +100,26 @@ function gui.AssetExplorer:SetFileExtensions(extensions,extExtensions)
 	self.m_extensionMap = {}
 	for _,ext in ipairs(extensions) do self.m_extensionMap[ext] = true end
 end
-function gui.AssetExplorer:AddToFavorites(mdl)
-	self.m_favorites[mdl] = true
+function gui.AssetExplorer:AddToSpecial(id,mdl)
+	local v = self.m_special[id]
+	if(v == nil) then return end
+	v[mdl] = true
 end
-function gui.AssetExplorer:IsInFavorites(mdl)
-	return self.m_favorites[mdl] == true
+function gui.AssetExplorer:IsInSpecial(id,mdl)
+	local v = self.m_special[id]
+	if(v == nil) then return false end
+	return v[mdl] == true
 end
-function gui.AssetExplorer:RemoveFromFavorites(mdl)
-	self.m_favorites[mdl] = nil
+function gui.AssetExplorer:RemoveFromSpecial(id,mdl)
+	local v = self.m_special[id]
+	if(v == nil) then return end
+	v[mdl] = nil
 end
-function gui.AssetExplorer:GetFavorites() return self.m_favorites end
+function gui.AssetExplorer:GetSpecial(id) return self.m_special[id] end
+function gui.AssetExplorer:AddToFavorites(mdl) self:AddToSpecial("fav",mdl) end
+function gui.AssetExplorer:IsInFavorites(mdl) return self:IsInSpecial("fav",mdl) end
+function gui.AssetExplorer:RemoveFromFavorites(mdl) self:RemoveFromSpecial("fav",mdl) end
+function gui.AssetExplorer:GetFavorites() return self:GetSpecial("fav") end
 function gui.AssetExplorer:OnUpdate()
 	self:ListFiles()
 end
@@ -234,7 +247,7 @@ function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
 						if(el:IsValid()) then
 							local path = el:GetRelativeAsset()
 							self:RemoveFromFavorites(path)
-							if(self.m_inFavorites) then
+							if(self.m_inSpecial == "fav") then
 								self:ReloadPath()
 								self:ScheduleUpdate()
 							end
@@ -291,12 +304,12 @@ function gui.AssetExplorer:ListFiles()
 	end
 	self.m_icons = {}
 
-	if(self.m_inFavorites) then
+	if(self.m_inSpecial ~= nil) then
 		self:AddAsset("..",true,function()
-			self.m_inFavorites = nil
+			self.m_inSpecial = nil
 			self:Update()
 		end)
-		for f,b in pairs(self:GetFavorites()) do
+		for f,b in pairs(self:GetSpecial(self.m_inSpecial)) do
 			self:AddAsset(f,false)
 		end
 		self.m_iconContainer:Update()
@@ -321,7 +334,11 @@ function gui.AssetExplorer:ListFiles()
 	if(tFiles == nil) then tFiles,tDirectories = self:FindFiles() end
 	if(self:IsAtRoot()) then
 		self:AddAsset(locale.get_text("favorites"),true,function()
-			self.m_inFavorites = true
+			self.m_inSpecial = "fav"
+			self:Update()
+		end)
+		self:AddAsset(locale.get_text("new"),true,function()
+			self.m_inSpecial = "new"
 			self:Update()
 		end)
 	end
