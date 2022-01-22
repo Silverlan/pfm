@@ -79,7 +79,7 @@ function gui.PFMActorEditor:OnInitialize()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"PFMCamera")
-			self:CreateNewActorComponent(actor,"toggle")
+			-- self:CreateNewActorComponent(actor,"toggle")
 			self:CreateNewActorComponent(actor,"camera")
 			-- self:CreateNewActorComponent(actor,"transform")
 
