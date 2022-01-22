@@ -54,14 +54,16 @@ function ents.PFMCamera:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
-	self:AddEntityComponent(ents.COMPONENT_CAMERA)
+	local camC = self:AddEntityComponent(ents.COMPONENT_CAMERA)
 	local toggleC = self:AddEntityComponent(ents.COMPONENT_TOGGLE)
 	self:AddEntityComponent("pfm_actor")
 
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"OnTurnOff")
 
-	-- self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"OnUpdateRenderData")
+	camC:GetFOVProperty():AddCallback(function() self:SetFrustumModelDirty() end)
+	camC:GetNearZProperty():AddCallback(function() self:SetFrustumModelDirty() end)
+	camC:GetFarZProperty():AddCallback(function() self:SetFrustumModelDirty() end)
 
 	self.m_listeners = {}
 end
@@ -116,6 +118,9 @@ function ents.PFMCamera:InitializeModel()
 
 	local mat = game.create_material("pfm_wireframe_line")
 	mat:SetTexture("albedo_map","white")
+	mat:UpdateTextures()
+	mat:InitializeShaderDescriptorSet()
+	mat:SetLoaded(true)
 	local matIdx = mdl:AddMaterial(0,mat)
 	subMesh:SetSkinTextureIndex(matIdx)
 
@@ -123,13 +128,14 @@ function ents.PFMCamera:InitializeModel()
 	mesh:AddSubMesh(subMesh)
 	meshGroup:AddMesh(mesh)
 	
-	mdl:Update(game.Model.FUPDATE_ALL)
 	self.m_frustumModel = mdl
 	self:UpdateModel()
+	mdl:Update(game.Model.FUPDATE_ALL)
 	self:SetFrustumModelDirty()
 	return mdl
 end
-function ents.PFMCamera:UpdateModel()
+function ents.PFMCamera:UpdateModel(updateBuffers)
+	if(updateBuffers == nil) then updateBuffers = true end
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
 	if(camC == nil or self.m_frustumModel == nil) then return end
 	local meshGroup = self.m_frustumModel:GetMeshGroup(0) or nil
@@ -198,13 +204,13 @@ function ents.PFMCamera:UpdateModel()
 	subMesh:SetVertexPosition(vertIdx,focalPlaneBoundaries[4]) vertIdx = vertIdx +1
 	subMesh:SetVertexPosition(vertIdx,focalPlaneBoundaries[1]) vertIdx = vertIdx +1
 
-	subMesh:Update(game.Model.FUPDATE_VERTEX_BUFFER)
+	if(updateBuffers) then subMesh:Update(game.Model.FUPDATE_VERTEX_BUFFER) end
 end
 function ents.PFMCamera:SetFrustumModelVisible(visible)
 	if(visible) then self:GetEntity():AddComponent(ents.COMPONENT_RENDER) end
 
 	local actorC = self:GetEntity():GetComponent("pfm_actor")
-	if(actorC ~= nil) then actorC:SetDefaultRenderMode(visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE) end
+	if(actorC ~= nil) then actorC:SetDefaultRenderMode(visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE,true) end
 
 	if(visible == false) then return end
 	local mdlC = self:GetEntity():AddComponent(ents.COMPONENT_MODEL)
@@ -213,13 +219,21 @@ function ents.PFMCamera:SetFrustumModelVisible(visible)
 	if(model == nil) then return end
 	mdlC:SetModel(model)
 end
-function ents.PFMCamera:OnUpdateRenderData()
+function ents.PFMCamera:UpdateRenderData()
 	if(self.m_updateFrustumModel ~= true) then return end
 	self.m_updateFrustumModel = nil
 	self:UpdateModel()
+	local mdl = self:GetEntity():GetModel()
+	if(mdl ~= nil) then mdl:Update(game.Model.FUPDATE_BOUNDS) end
 end
 function ents.PFMCamera:SetFrustumModelDirty()
 	self.m_updateFrustumModel = true
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
+end
+function ents.PFMCamera:OnTick(dt)
+	self:SetTickPolicy(ents.TICK_POLICY_NEVER)
+	self:UpdateRenderData()
+	pfm.tag_render_scene_as_dirty()
 end
 function ents.PFMCamera:Setup(actorData,cameraData)
 	self.m_cameraData = cameraData
@@ -230,7 +244,7 @@ function ents.PFMCamera:Setup(actorData,cameraData)
 		--camC:SetFOV(cameraData:GetFov())
 		camC:UpdateProjectionMatrix()
 
-		table.insert(self.m_listeners,cameraData:GetZNearAttr():AddChangeListener(function(newZNear)
+		--[[table.insert(self.m_listeners,cameraData:GetZNearAttr():AddChangeListener(function(newZNear)
 			if(camC:IsValid()) then
 				camC:SetNearZ(math.max(newZNear,1))
 				camC:UpdateProjectionMatrix()
@@ -244,7 +258,7 @@ function ents.PFMCamera:Setup(actorData,cameraData)
 			end
 			self:SetFrustumModelDirty()
 		end))
-		--[[table.insert(self.m_listeners,cameraData:GetFovAttr():AddChangeListener(function(newFov)
+		table.insert(self.m_listeners,cameraData:GetFovAttr():AddChangeListener(function(newFov)
 			if(camC:IsValid()) then
 				camC:SetFOV(newFov)
 				camC:UpdateProjectionMatrix()

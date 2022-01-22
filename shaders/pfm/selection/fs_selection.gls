@@ -18,6 +18,6 @@
 
 void main()
 {
-	fs_color = u_pushConstants.selectionColor;
+	fs_color = vec4(0,128,255,255) /255.0;//u_pushConstants.selectionColor;
 	extract_bright_color(fs_color);
 }

@@ -89,8 +89,9 @@ function ents.PFMActorComponent:UpdatePose()
 	self:GetEntity():SetPose(pose)
 end
 
-function ents.PFMActorComponent:SetDefaultRenderMode(renderMode)
+function ents.PFMActorComponent:SetDefaultRenderMode(renderMode,useIfTurnedOff)
 	self.m_defaultRenderMode = renderMode
+	self.m_useDefaultRenderModeIfTurnedOff = useIfTurnedOff
 	self:UpdateRenderMode()
 end
 
@@ -101,7 +102,7 @@ function ents.PFMActorComponent:UpdateRenderMode()
 	local actorData = self:GetActorData()
 	if(actorData == nil) then return end
 	local renderMode
-	if(self:GetEntity():IsTurnedOff()) then renderMode = game.SCENE_RENDER_PASS_NONE
+	if(self.m_useDefaultRenderModeIfTurnedOff ~= true and self:GetEntity():IsTurnedOff()) then renderMode = game.SCENE_RENDER_PASS_NONE
 	else
 		renderMode = self.m_defaultRenderMode or game.SCENE_RENDER_PASS_WORLD
 		if(actorData:IsAbsoluteVisible() == false) then
