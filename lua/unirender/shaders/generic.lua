@@ -67,6 +67,7 @@ end
 function unirender.apply_image_view_swizzling(desc,texMapNode,texInfo)
 	local outRgb = texMapNode:GetPrimaryOutputSocket()
 	local outAlpha = texMapNode:GetOutputSocket("alpha")
+	if(texInfo == nil) then return outRgb,outAlpha end
 
 	local tex = texInfo:GetTexture()
 	local vkTex = (tex ~= nil) and tex:GetVkTexture() or nil
