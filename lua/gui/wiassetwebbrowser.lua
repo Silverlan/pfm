@@ -7,6 +7,7 @@
 ]]
 
 include("/gui/vbox.lua")
+include("/gui/info_box.lua")
 include("/util/util_asset_import.lua")
 
 local Element = util.register_class("gui.AssetWebBrowser",gui.Base)
@@ -22,8 +23,68 @@ function Element:OnInitialize()
 		return
 	end
 
-	local r = gui.create("WIBase",self,0,0,512,512,0,0,1,1)
+	self.m_contents = gui.create("WIVBox",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	self.m_contents:SetFixedSize(true)
+	self.m_contents:SetAutoFillContents(true)
 
+	local p = gui.create("WIPFMControlsMenu",self.m_contents)
+	p:SetAutoFillContentsToWidth(true)
+	p:SetAutoFillContentsToHeight(false)
+	self.m_settingsBox = p
+
+	local elNsfw,wrapper = p:AddDropDownMenu("Enable NSFW Content","enable_nsfw_content",{
+		{"0","No"},
+		{"1","Yes"}
+	},"0",function() self:UpdateBookmarks() end)
+	self.m_enableNsfwMenu = elNsfw
+	local elBookmarks,wrapper = p:AddDropDownMenu("Bookmarks","bookmark",{},"pfm_wiki",function(menu,option)
+		local id = menu:GetOptionValue(option)
+		local i = self.m_linkMap[id]
+		if(i == nil) then return end
+		local linkData = self.m_links[i]
+		if(util.is_valid(self.m_webBrowser)) then self.m_webBrowser:LoadUrl(linkData.url) end
+
+		if(id == "sfm_lab") then
+			self.m_infoBox:SetText("To see NSFW content on SFMLab, you need to register and enable adult content in your profile settings.")
+		end
+		self.m_infoBox:SizeToContents()
+	end)
+	self.m_bookmarkMenu = elBookmarks
+	wrapper:SetUseAltMode(true)
+	local elUrl,wrapper = p:AddTextEntry("URL","url","",function(el)
+		if(util.is_valid(self.m_webBrowser) == false) then return end
+		self.m_webBrowser:LoadUrl(el:GetText())
+	end)
+	p:Update()
+	p:SizeToContents()
+
+	self.m_infoBox = gui.create_info_box(self.m_contents,"",gui.InfoBox.TYPE_WARNING)
+
+	self.m_webBrowser = self:InitializeBrowser(self.m_contents,self:GetWidth(),self:GetHeight())
+	if(util.is_valid(self.m_webBrowser)) then
+		self.m_webBrowser:AddCallback("SetSize",function()
+			-- We don't want to reload the texture constantly if the element is being resized by a user,
+			-- so we'll only update after the element hasn't been resized for at least 0.25 seconds
+			self.m_tNextBrowserResize = time.real_time() +0.25
+			self:SetThinkingEnabled(true)
+		end)
+		self.m_webBrowser:AddCallback("OnAddressChanged",function(el,addr)
+			elUrl:SetText(addr)
+		end)
+		self.m_webBrowser:SetSize(self:GetWidth(),400)
+
+		local log = self:InitializeLog(self.m_contents)
+		log:SetSize(self:GetWidth(),80)
+		self.m_contents:SetAutoFillTarget(self.m_webBrowser)
+	end
+
+	self:UpdateBookmarks()
+	p:ResetControls()
+end
+function Element:UpdateBookmarks()
+	local enableNsfw = toboolean(self.m_enableNsfwMenu:GetOptionValue(self.m_enableNsfwMenu:GetSelectedOption()))
+
+	local p = self.m_settingsBox
 	local links = {}
 	local linkMap = {}
 	local function addLink(id,name,url)
@@ -32,54 +93,20 @@ function Element:OnInitialize()
 	end
 	addLink("pfm_wiki","PFM Wiki","https://wiki.pragma-engine.com/books/pragma-filmmaker")
 	addLink("supporter_hub","Supporter Hub","https://supporter.pragma-engine.com")
-	addLink("sfm_lab","SFM Lab","https://sfmlab.com/")
-	addLink("open3d_lab","Open3DLab","https://open3dlab.com/")
-	addLink("sfm_workshop","SFM Workshop","https://steamcommunity.com/workshop/browse/?appid=1840sour")
-	addLink("pragma_workshop","Pragma Workshop","https://steamcommunity.com/app/947100/workshop/")
-
-	local menu = gui.create("WIDropDownMenu",self)
-	for _,link in ipairs(links) do
-		menu:AddOption(link.name,link.id)
+	if(enableNsfw) then
+		addLink("sfm_lab","SFM Lab","https://sfmlab.com/")
+		addLink("open3d_lab","Open3DLab","https://open3dlab.com/")
+		addLink("smut_base","SmutBase","https://smutba.se/")
+		addLink("lord_aardvark","Lord Aardvark","https://lordaardvark.com/html/assets.html?cat=Models&sect=Characters")
 	end
-	
-	menu:AddCallback("OnOptionSelected",function()
-		local i = linkMap[menu:GetOptionValue(menu:GetSelectedOption())]
-		if(i == nil) then return end
-		local linkData = links[i]
-		if(util.is_valid(self.m_webBrowser)) then self.m_webBrowser:LoadUrl(linkData.url) end
-	end)
-	menu:SetWidth(self:GetWidth())
-	menu:SetAnchor(0,0,1,0)
+	-- addLink("sfm_workshop","SFM Workshop","https://steamcommunity.com/workshop/browse/?appid=1840sour")
+	-- addLink("pragma_workshop","Pragma Workshop","https://steamcommunity.com/app/947100/workshop/")
 
-	local urlEntry = gui.create("WITextEntry",self)
-	urlEntry:AddCallback("OnTextEntered",function()
-		if(util.is_valid(self.m_webBrowser) == false) then return end
-		self.m_webBrowser:LoadUrl(urlEntry:GetText())
-	end)
-	urlEntry:SetWidth(self:GetWidth())
-	urlEntry:SetAnchor(0,0,1,0)
-	urlEntry:SetY(menu:GetBottom())
-
-	self.m_webBrowser = self:InitializeBrowser(self,self:GetWidth(),self:GetHeight())
-	if(util.is_valid(self.m_webBrowser)) then
-		self.m_webBrowser:SetY(urlEntry:GetBottom())
-
-		self.m_webBrowser:AddCallback("SetSize",function()
-			-- We don't want to reload the texture constantly if the element is being resized by a user,
-			-- so we'll only update after the element hasn't been resized for at least 0.25 seconds
-			self.m_tNextBrowserResize = time.real_time() +0.25
-			self:SetThinkingEnabled(true)
-		end)
-		self.m_webBrowser:AddCallback("OnAddressChanged",function(el,addr)
-			urlEntry:SetText(addr)
-		end)
-		self.m_webBrowser:SetSize(self:GetWidth(),400)
-		self.m_webBrowser:SetAnchor(0,0,1,1)
-
-		local log = self:InitializeLog(self)
-		log:SetSize(self:GetWidth(),self:GetHeight() -self.m_webBrowser:GetBottom())
-		log:SetY(self.m_webBrowser:GetBottom())
-		log:SetAnchor(0,1,1,1)
+	self.m_links = links
+	self.m_linkMap = linkMap
+	self.m_bookmarkMenu:ClearOptions()
+	for _,linkData in ipairs(links) do
+		self.m_bookmarkMenu:AddOption(linkData.name,linkData.id)
 	end
 end
 function Element:OnFocusGained()
@@ -103,7 +130,7 @@ function Element:InitializeBrowser(parent,w,h)
 	local el = gui.create("WIWeb",parent)
 	el:SetBrowserViewSize(Vector2i(w,h))
 	el:SetSize(w,h)
-	el:SetInitialUrl("https://sfmlab.com/")
+	el:SetInitialUrl("https://wiki.pragma-engine.com/books/pragma-filmmaker")
 
 	self.m_downloads = {}
 	el:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
@@ -119,6 +146,7 @@ function Element:InitializeBrowser(parent,w,h)
 		elseif(state == chromium.DOWNLOAD_STATE_COMPLETE) then
 			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been completed!")
 			self:ImportDownloadAssets(path)
+			file.delete(path)
 			self.m_downloads[id] = nil
 		elseif(state == chromium.DOWNLOAD_STATE_INVALIDATED) then
 			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been invalidated!")
@@ -135,8 +163,10 @@ function Element:InitializeBrowser(parent,w,h)
 	return el
 end
 function Element:ImportDownloadAssets(path)
-	util.import_assets(path,function(msg)
-		self.m_log:AppendText("\n" .. msg)
+	util.import_assets(path:GetString(),function(msg,severity)
+		if(severity ~= log.SEVERITY_INFO) then msg = "\n{[c:ff0000]}" .. msg .. "{[/c]}"
+		else msg = "\n" .. msg end
+		self.m_log:AppendText(msg)
 	end)
 end
 function Element:InitializeLog(parent)

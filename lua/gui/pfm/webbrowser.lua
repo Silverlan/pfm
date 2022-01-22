@@ -7,7 +7,6 @@
 ]]
 
 include("/gui/wiassetwebbrowser.lua")
-include("/gui/info_box.lua")
 
 local Element = util.register_class("gui.PFMWebBrowser",gui.Base)
 
@@ -29,13 +28,7 @@ function Element:OnInitialize()
 	self.m_contents:SetFixedSize(true)
 	self.m_contents:SetAutoFillContents(true)
 
-	local infoBox = gui.create("InfoBox",self.m_contents)
-	infoBox:SetType(gui.InfoBox.TYPE_INFO)
-	infoBox:SetText("Download assets from SFM Lab!")
-	infoBox:SizeToContents()
-	self.m_contents:AddCallback("SetSize",function()
-		infoBox:SizeToContents()
-	end)
+	gui.create_info_box(self.m_contents,"This is a placeholder!")
 
 	self.m_browser = gui.create("WIAssetWebBrowser",self.m_contents)
 	self.m_contents:Update()
