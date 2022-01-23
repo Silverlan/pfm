@@ -72,12 +72,16 @@ function gui.PFMMaterialEditor:OnInitialize()
 	self:ResetOptions()
 	self:SetRenderer(gui.PFMMaterialEditor.RENDERER_REALTIME)
 end
+function gui.PFMMaterialEditor:UpdateViewport()
+	self.m_viewport:Render()
+	pfm.tag_render_scene_as_dirty()
+end
 function gui.PFMMaterialEditor:ApplyTexture(texIdentifier,texPath,updateTextureSlot)
 	if(util.is_valid(self.m_material) == false) then return end
 	self.m_material:SetTexture(texIdentifier,texPath)
 	self.m_material:UpdateTextures()
 	self:ReloadMaterialDescriptor()
-	self.m_viewport:Render()
+	self:UpdateViewport()
 
 	if(updateTextureSlot) then
 		local texSlot = self.m_texSlots[texIdentifier].textureSlot
@@ -104,7 +108,7 @@ function gui.PFMMaterialEditor:AddTextureSlot(parent,text,texIdentifier,normalMa
 			self.m_material:UpdateTextures()
 			self:ReloadMaterialDescriptor()
 		end
-		self.m_viewport:Render()
+		self:UpdateViewport()
 
 		te:SetText("")
 	end)
@@ -162,7 +166,7 @@ function gui.PFMMaterialEditor:SetMaterialParameter(type,key,val,subBlocks)
 end
 function gui.PFMMaterialEditor:ReloadMaterialDescriptor()
 	self.m_material:InitializeShaderDescriptorSet(true)
-	self.m_viewport:Render()
+	self:UpdateViewport()
 end
 function gui.PFMMaterialEditor:ResetOptions()
 	self.m_ctrlVBox:ResetControls()
@@ -190,10 +194,10 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 
 	local ent = self.m_viewport:GetEntity()
 	local mdlC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_MODEL) or nil
-	if(mdl ~= nil) then self.m_model = mdlC:GetModel() end
-	mdlC:SetMaterialOverride(0,mat)
+	if(mdl ~= nil) then self.m_model = mdlC:GetModel()
+	else mdlC:SetMaterialOverride(0,mat) end
 	mdlC:UpdateRenderMeshes()
-	self.m_viewport:Render()
+	self:UpdateViewport()
 
 	local material = game.load_material(mat)
 	local data = material:GetDataBlock()
@@ -351,7 +355,7 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 		else
 			self:SetRenderer(gui.PFMMaterialEditor.RENDERER_REALTIME)
 			scene:SetDebugMode(val)
-			self.m_viewport:Render()
+			self:UpdateViewport()
 		end
 	end)
 	self.m_renderMode = renderMode
@@ -369,7 +373,7 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 		local lightC = util.is_valid(ls) and ls:GetComponent(ents.COMPONENT_LIGHT) or nil
 		if(lightC == nil) then return end
 		lightC:SetLightIntensity(val)
-		self.m_viewport:Render()
+		self:UpdateViewport()
 
 		local settings = self.m_rtViewport:GetRenderSettings()
 		settings:SetLightIntensityFactor(val *0.5)
@@ -388,7 +392,7 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 		if(colC == nil) then return end
 		local col = hsv:ToRGBColor()
 		colC:SetColor(col)
-		self.m_viewport:Render()
+		self:UpdateViewport()
 
 		-- self:SetRenderer(gui.PFMMaterialEditor.RENDERER_REALTIME)
 	end)
@@ -408,7 +412,7 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 		local ang = ls:GetAngles()
 		ang.y = val
 		ls:SetAngles(ang)
-		self.m_viewport:Render()
+		self:UpdateViewport()
 
 		-- self:SetRenderer(gui.PFMMaterialEditor.RENDERER_REALTIME)
 	end)
@@ -427,7 +431,7 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 		local rpC = util.is_valid(rp) and rp:GetComponent(ents.COMPONENT_REFLECTION_PROBE) or nil
 		if(rpC == nil) then return end
 		rpC:SetIBLStrength(val)
-		self.m_viewport:Render()
+		self:UpdateViewport()
 
 		local settings = self.m_rtViewport:GetRenderSettings()
 		settings:SetSkyStrength(val)
