@@ -192,7 +192,7 @@ function Component:CreateTransformUtility(axis,type)
 	arrowC:AddEventCallback(ents.UtilTransformArrowComponent.EVENT_ON_TRANSFORM_START,function()
 		for type,tEnts in pairs(self.m_arrows) do
 			for axis,ent in pairs(tEnts) do
-				if(ent ~= entArrow) then
+				if(util.is_same_object(ent,entArrow) == false) then
 					local renderC = ent:IsValid() and ent:GetComponent(ents.COMPONENT_RENDER) or nil
 					if(renderC ~= nil) then
 						renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_NONE)

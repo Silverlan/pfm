@@ -504,6 +504,6 @@ function gui.PFMMaterialEditor:InitializeViewport()
 	settings:SetHeight(height)
 	settings:SetProgressive(true)
 	settings:SetDeviceType(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU)
-	settings:SetDenoiseMode(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_FAST)
+	settings:SetDenoiseMode(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_FAST)
 end
 gui.register("WIPFMMaterialEditor",gui.PFMMaterialEditor)

@@ -15,6 +15,7 @@ pfm = pfm or {}
 util.register_class("pfm.RaytracingRenderJob",util.CallbackHandler)
 
 util.register_class("pfm.RaytracingRenderJob.Settings")
+-- Note: These have to match the enums defined in the unirender binary module!
 pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE = 0
 pfm.RaytracingRenderJob.Settings.CAM_TYPE_ORTHOGRAPHIC = 1
 pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA = 2
@@ -25,9 +26,6 @@ pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID = 2
 pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL = 3
 pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP = 4
 
--- Note: These map to cycles enums and are redundant, but at this
--- point in time it cannot be guaranteed that the Cycles module has
--- been loaded.
 pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED = 0
 pfm.RaytracingRenderJob.Settings.RENDER_MODE_BAKE_AMBIENT_OCCLUSION = 1
 pfm.RaytracingRenderJob.Settings.RENDER_MODE_BAKE_NORMALS = 2
@@ -64,8 +62,10 @@ pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU = 0
 pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU = 1
 
 pfm.RaytracingRenderJob.Settings.DENOISE_MODE_NONE = 0
-pfm.RaytracingRenderJob.Settings.DENOISE_MODE_FAST = 1
-pfm.RaytracingRenderJob.Settings.DENOISE_MODE_DETAILED = 2
+pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_FAST = 1
+pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_DETAILED = 2
+pfm.RaytracingRenderJob.Settings.DENOISE_MODE_OPTIX = 3
+pfm.RaytracingRenderJob.Settings.DENOISE_MODE_OPEN_IMAGE = 4
 
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderMode")
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"renderEngine","cycles")
@@ -80,7 +80,7 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"frameCount",1)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"preStageOnly",false,{
 	getter = "IsPreStageOnly"
 })
-util.register_class_property(pfm.RaytracingRenderJob.Settings,"denoiseMode",pfm.RaytracingRenderJob.Settings.DENOISE_MODE_DETAILED)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"denoiseMode",pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_DETAILED)
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"transparentSky",false,{
 	getter = "IsSkyTransparent",
 })
@@ -556,6 +556,32 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
+
+	local apiData = renderer:GetApiData()
+	--[[
+	-- Some Cycles debugging options:
+	apiData:GetFromPath("cycles/debug"):SetValue("dump_shader_graphs",udm.TYPE_BOOLEAN,true)
+	apiData:GetFromPath("cycles/debug"):SetValue("use_debug_mesh_shader",udm.TYPE_BOOLEAN,true)
+	apiData:GetFromPath("cycles/shader"):SetValue("dontSimplifyGraphs",udm.TYPE_BOOLEAN,true)
+
+	local udmDebugScene = apiData:GetFromPath("cycles/debug/debugScene")
+	udmDebugScene:SetValue("enabled",udm.TYPE_BOOLEAN,true)
+	udmDebugScene:SetValue("outputFileName",udm.TYPE_STRING,"E:/projects/cycles/examples/scene_monkey.png")
+	udmDebugScene:AddArray("xmlFiles",1,udm.TYPE_STRING):Set(0,"E:/projects/cycles/examples/scene_monkey.xml")
+
+	local udmDebugStandalone = apiData:GetFromPath("cycles/debug/debugStandalone")
+	udmDebugStandalone:SetValue("xmlFile",udm.TYPE_STRING,"E:\\projects\\cycles\\examples\\scene_monkey.xml")
+	udmDebugStandalone:SetValue("outputFile",udm.TYPE_STRING,"E:\\projects\\cycles\\build_winx64\\bin\\RelWithDebInfo\\output.png")
+	udmDebugStandalone:SetValue("samples",udm.TYPE_STRING,"20")
+	udmDebugStandalone:SetValue("device",udm.TYPE_STRING,"OPTIX")
+
+	local udmDebugStandalone = apiData:GetFromPath("cycles/debug/debugStandalone")
+	udmDebugStandalone:SetValue("xmlFile",udm.TYPE_STRING,"E:\\projects\\cycles\\examples\\scene_monkey.xml")
+	udmDebugStandalone:SetValue("outputFile",udm.TYPE_STRING,"E:\\projects\\cycles\\build_winx64\\bin\\RelWithDebInfo\\output.png")
+	udmDebugStandalone:SetValue("samples",udm.TYPE_STRING,"20")
+	udmDebugStandalone:SetValue("device",udm.TYPE_STRING,"OPTIX")
+	]]
+
 	local job = renderer:StartRender()
 	job:Start()
 	self.m_rtScene = scene

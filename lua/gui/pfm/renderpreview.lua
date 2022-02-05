@@ -374,6 +374,16 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	},tostring(settings:GetDeviceType()))
 	p:LinkToUDMProperty("device_type",settings,"deviceType")
 
+	-- Denoise Mode
+	self.m_ctrlDenoiseMode = p:AddDropDownMenu(locale.get_text("pfm_denoise_mode"),"denoise_mode",{
+		{tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_NONE),locale.get_text("disabled")},
+		{tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_FAST),locale.get_text("fast")},
+		{tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_DETAILED),locale.get_text("detailed")},
+		{tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_OPTIX),"Optix"},
+		{tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_OPEN_IMAGE),"Intel Open Image Denoise"}
+	},tostring(settings:GetDenoiseMode()))
+	p:LinkToUDMProperty("denoise_mode",settings,"denoiseMode")
+
 	-- Camera type
 	self.m_ctrlCamType = p:AddDropDownMenu(locale.get_text("pfm_cycles_cam_type"),"cam_type",{
 		{tostring(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE),locale.get_text("pfm_cycles_cam_type_perspective")},
@@ -625,7 +635,6 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	outputDir:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_output_directory"))]]
 
-	self.m_ctrlDenoise = p:AddToggleControl(locale.get_text("pfm_denoise_image"),"denoise",settings:ShouldDenoise())
 	-- self.m_ctrlPreStage = p:AddToggleControl(locale.get_text("pfm_prestage_only","prestage",false)
 	self.m_ctrlRenderWorld = p:AddToggleControl(locale.get_text("pfm_render_world"),"render_world",settings:ShouldRenderWorld())
 	self.m_ctrlRenderGameEntities = p:AddToggleControl(locale.get_text("pfm_render_game_objects"),"render_game_entities",settings:ShouldRenderGameObjects())
@@ -637,7 +646,6 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlProgressiveRefinement = p:AddToggleControl(locale.get_text("pfm_render_progressive_refinement"),"progressive_refine",settings:IsProgressiveRefinementEnabled())
 	self.m_ctrlTransparentSky = p:AddToggleControl(locale.get_text("pfm_render_transparent_sky"),"transparent_sky",settings:ShouldMakeSkyTransparent())
 
-	p:LinkToUDMProperty("denoise",settings,"denoise")
 	p:LinkToUDMProperty("render_world",settings,"renderWorld")
 	p:LinkToUDMProperty("render_game_entities",settings,"renderGameObjects")
 	p:LinkToUDMProperty("render_player",settings,"renderPlayer")
@@ -938,10 +946,6 @@ function gui.PFMRenderPreview:GetRenderSettings(preview,prepareOnly)
 		end
 	end
 
-	local denoiseMode
-	if(self.m_ctrlDenoise:IsChecked() == false) then denoiseMode = pfm.RaytracingRenderJob.Settings.DENOISE_MODE_NONE
-	else denoiseMode = (preview and previewQuality == 0) and pfm.RaytracingRenderJob.Settings.DENOISE_MODE_FAST or pfm.RaytracingRenderJob.Settings.DENOISE_MODE_DETAILED end
-
 	local progressiveRefinement = self.m_ctrlProgressiveRefinement:IsChecked()
 	settings:SetRenderMode(renderMode)
 	settings:SetRenderEngine(self.m_ctrlRenderEngine:GetValue())
@@ -955,7 +959,7 @@ function gui.PFMRenderPreview:GetRenderSettings(preview,prepareOnly)
 	settings:SetFrameCount(preview and 1 or self.m_ctrlFrameCount:GetValue())
 	settings:SetPreStageOnly(prepareOnly == true)
 	settings:SetTransparentSky(self.m_ctrlTransparentSky:IsChecked())
-	settings:SetDenoiseMode(denoiseMode)
+	settings:SetDenoiseMode(tonumber(self.m_ctrlDenoiseMode:GetValue()))
 	settings:SetDeviceType(deviceType)
 	settings:SetRenderWorld(self.m_ctrlRenderWorld:IsChecked())
 	settings:SetRenderGameEntities(self.m_ctrlRenderGameEntities:IsChecked())

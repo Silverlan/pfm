@@ -28,7 +28,15 @@ function Element:OnInitialize()
 	self.m_contents:SetFixedSize(true)
 	self.m_contents:SetAutoFillContents(true)
 
-	gui.create_info_box(self.m_contents,"This is a placeholder!")
+	local infoBox = gui.create_info_box(self.m_contents,locale.get_text("pfm_web_browser_info",{"{[l:model_catalog]}","{[/l]}"}))
+	infoBox:GetTextElement():AddCallback("HandleLinkTagAction",function(el,arg)
+		local pm = pfm.get_project_manager()
+		if(util.is_valid(pm)) then
+			pm:OpenWindow("model_catalog")
+			pm:GoToWindow("model_catalog")
+		end
+		return util.EVENT_REPLY_HANDLED
+	end)
 
 	self.m_browser = gui.create("WIAssetWebBrowser",self.m_contents)
 	self.m_contents:Update()

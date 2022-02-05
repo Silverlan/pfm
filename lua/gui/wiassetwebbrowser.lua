@@ -33,8 +33,8 @@ function Element:OnInitialize()
 	self.m_settingsBox = p
 
 	local elNsfw,wrapper = p:AddDropDownMenu("Enable NSFW Content","enable_nsfw_content",{
-		{"0","No"},
-		{"1","Yes"}
+		{"0",locale.get_text("no")},
+		{"1",locale.get_text("yes")}
 	},"0",function() self:UpdateBookmarks() end)
 	self.m_enableNsfwMenu = elNsfw
 	local elBookmarks,wrapper = p:AddDropDownMenu("Bookmarks","bookmark",{},"pfm_wiki",function(menu,option)
@@ -43,11 +43,6 @@ function Element:OnInitialize()
 		if(i == nil) then return end
 		local linkData = self.m_links[i]
 		if(util.is_valid(self.m_webBrowser)) then self.m_webBrowser:LoadUrl(linkData.url) end
-
-		if(id == "sfm_lab") then
-			self.m_infoBox:SetText("To see NSFW content on SFMLab, you need to register and enable adult content in your profile settings.")
-		end
-		self.m_infoBox:SizeToContents()
 	end)
 	self.m_bookmarkMenu = elBookmarks
 	wrapper:SetUseAltMode(true)
@@ -81,6 +76,30 @@ function Element:OnInitialize()
 	self:UpdateBookmarks()
 	p:ResetControls()
 end
+function Element:UpdateInfoBox()
+	if(util.is_valid(self.m_webBrowser) == false) then return end
+	local url = self.m_webBrowser:GetUrl()
+	local parts = chromium.parse_url(url)
+	if(parts == nil) then return end
+	self.m_infoBox:SetVisible(true)
+	if(parts.host == "sfmlab.com") then
+		self.m_infoBox:SetText(locale.get_text("pfm_web_browser_bookmark_info",{"SFM Lab","{[l:url \"https://patreon.com/sfmlab/\"]}https://patreon.com/sfmlab/{[/l]}"}))
+	elseif(parts.host == "open3dlab.com") then
+		self.m_infoBox:SetText(locale.get_text("pfm_web_browser_bookmark_info",{"Open3DLab","{[l:url \"https://patreon.com/sfmlab/\"]}https://patreon.com/sfmlab/{[/l]}"}))
+	elseif(parts.host == "smutba.se") then
+		self.m_infoBox:SetText(locale.get_text("pfm_web_browser_bookmark_info",{"SmutBase","{[l:url \"https://patreon.com/sfmlab/\"]}https://patreon.com/sfmlab/{[/l]}"}))
+	elseif(parts.host == "lordaardvark.com") then
+		self.m_infoBox:SetText(locale.get_text("pfm_web_browser_bookmark_info",{"This Website","{[l:url \"https://www.patreon.com/lordaardvarksfm\"]}https://www.patreon.com/lordaardvarksfm{[/l]}"}))
+	elseif(parts.host == "wiki.pragma-engine.com") then
+		self.m_infoBox:SetText(
+			"Placeholder"
+		)
+	else
+		self.m_infoBox:SetVisible(false)
+	end
+	self.m_infoBox:SizeToContents()
+end
+function Element:SetNsfwContentEnabled(enabled) self.m_enableNsfwMenu:SelectOption(enabled and "1" or "0") end
 function Element:UpdateBookmarks()
 	local enableNsfw = toboolean(self.m_enableNsfwMenu:GetOptionValue(self.m_enableNsfwMenu:GetSelectedOption()))
 
@@ -137,6 +156,22 @@ function Element:InitializeBrowser(parent,w,h)
 		if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then el:RequestFocus() end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
+	el:AddCallback("OnLoadingStateChange",function(el,isLoading,canGoBack,canGoForward)
+		self:UpdateInfoBox()
+		if(isLoading == true) then return end
+		local url = el:GetUrl()
+		local parts = chromium.parse_url(url)
+		if(parts == nil or parts.host ~= "sfmlab.com") then return end
+		-- Enable "18+" and "Furry" content
+		for _,button in ipairs({"nsfw","furry"}) do
+			el:ExecuteJavaScript(
+				"var el = document.querySelector('[adultcontent=\"False\"]').shadowRoot.querySelector('[identifier=\"" .. button .. "\"]');" ..
+				"var event = new MouseEvent('click', {});" ..
+				"if(!el.checked)" ..
+				"	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
+			)
+		end
+	end)
 	el:AddCallback("OnDownloadUpdate",function(el,id,state,percentage)
 		if(util.is_valid(self.m_log) == false or self.m_downloads[id] == nil) then return end
 		local path = self.m_downloads[id]
@@ -146,7 +181,7 @@ function Element:InitializeBrowser(parent,w,h)
 		elseif(state == chromium.DOWNLOAD_STATE_COMPLETE) then
 			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been completed!")
 			self:ImportDownloadAssets(path)
-			file.delete(path)
+			file.delete(path:GetString())
 			self.m_downloads[id] = nil
 		elseif(state == chromium.DOWNLOAD_STATE_INVALIDATED) then
 			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been invalidated!")
@@ -184,6 +219,7 @@ function Element:InitializeLog(parent)
 	engine.create_font("chromium_log","vera/VeraMono",12)
 
 	local elText = log:GetTextElement()
+	elText:SetMaxLineCount(100)
 	elText:SetFont("chromium_log")
 	elText:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
 	elText:SetTagsEnabled(true)

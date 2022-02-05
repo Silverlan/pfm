@@ -99,6 +99,11 @@ function gui.PFMFrame:SelectFreeTab()
 		if(selectTab(self.m_tabs[i])) then return end
 	end
 end
+function gui.PFMFrame:FindTabIdentifier(el)
+	for _,tab in ipairs(self.m_tabs) do
+		if(util.is_same_object(el,tab.panel) or util.is_same_object(el,tab.button)) then return tab.identifier end
+	end
+end
 function gui.PFMFrame:FindTabData(name)
 	for _,tab in ipairs(self.m_tabs) do
 		if(name == tab.identifier) then return tab end
@@ -126,6 +131,7 @@ function gui.PFMFrame:AddTab(identifier,name,panel)
 	end
 	local bt = gui.create("WIPFMTabButton",self.m_tabButtonContainer)
 	bt:SetText(name)
+	bt:SetFrame(self)
 	bt:AddCallback("OnPressed",function()
 		local tabId = self:GetTabId(identifier)
 		self:SetActiveTab(tabId)
@@ -166,6 +172,10 @@ function gui.PFMFrame:OnUpdate()
 	if(self.m_activeTabButton == nil) then self:SetActiveTab(1) end
 end
 function gui.PFMFrame:DetachTab(identifier)
+	if(type(identifier) ~= "string") then
+		identifier = self:FindTabIdentifier(identifier)
+		if(identifier == nil) then return end
+	end
 	local tabData = self:FindTabData(identifier)
 	if(tabData == nil or util.is_valid(tabData.panel) == false or util.is_valid(tabData.window)) then return end
 	local panel = tabData.panel
@@ -195,10 +205,17 @@ function gui.PFMFrame:DetachTab(identifier)
 
 	local i = self:GetTabId(identifier)
 	if(i ~= nil and self.m_activeTabIndex == i) then self:SelectFreeTab() end
-	if(panel:IsValid()) then panel:SetVisible(true) end
+	if(panel:IsValid()) then
+		panel:SetVisible(true)
+		panel:CallCallbacks("OnDetached",windowHandle)
+	end
 end
 
 function gui.PFMFrame:AttachTab(identifier)
+	if(type(identifier) ~= "string") then
+		identifier = self:FindTabIdentifier(identifier)
+		if(identifier == nil) then return end
+	end
 	local tabData = self:FindTabData(identifier)
 	if(tabData == nil or util.is_valid(tabData.panel) == false or tabData.window == nil) then return end
 	local windowHandle = tabData.window
@@ -221,5 +238,7 @@ function gui.PFMFrame:AttachTab(identifier)
 
 	if(util.is_valid(tabData.button)) then tabData.button:SetVisible(true) end
 	self:SetActiveTab(identifier)
+
+	if(panel:IsValid()) then panel:CallCallbacks("OnReattached") end
 end
 gui.register("WIPFMFrame",gui.PFMFrame)

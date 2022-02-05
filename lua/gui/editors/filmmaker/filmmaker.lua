@@ -80,6 +80,8 @@ function gui.WIFilmmaker:CheckForUpdates(verbose)
 	end)
 end
 function gui.WIFilmmaker:OnInitialize()
+	self:SetDeveloperModeEnabled(tool.is_developer_mode_enabled())
+
 	gui.WIBaseEditor.OnInitialize(self)
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 	tool.filmmaker = self
@@ -161,11 +163,11 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
-				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfm"
+				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfmp_b"
 				self:LoadProject(fileName)
 			end)
 			self.m_openDialogue:SetRootPath("projects")
-			self.m_openDialogue:SetExtensions({"pfm"})
+			self.m_openDialogue:SetExtensions({"pfmp_b","pfmp","pfm"})
 			self.m_openDialogue:Update()
 		end)
 		pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
@@ -173,11 +175,11 @@ function gui.WIFilmmaker:OnInitialize()
 			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_save_dialog(function(pDialog,fileName)
 				file.create_directory("projects")
-				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfm"
+				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfmp_b"
 				self:SaveProject(fileName)
 			end)
 			self.m_openDialogue:SetRootPath("projects")
-			self.m_openDialogue:SetExtensions({"pfm"})
+			self.m_openDialogue:SetExtensions({"pfmp_b","pfmp","pfm"})
 			self.m_openDialogue:Update()
 		end)
 		pContext:AddItem(locale.get_text("import") .. "...",function(pItem)
@@ -1038,7 +1040,11 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:RegisterWindow(self.m_actorDataFrame,"element_viewer",locale.get_text("pfm_element_viewer"),function() return gui.create("WIPFMElementViewer") end)
 	self:RegisterWindow(self.m_actorDataFrame,"material_editor",locale.get_text("pfm_material_editor"),function() return gui.create("WIPFMMaterialEditor") end)
 	self:RegisterWindow(self.m_actorDataFrame,"particle_editor",locale.get_text("pfm_particle_editor"),function() return gui.create("WIPFMParticleEditor") end)
-	self:RegisterWindow(self.m_actorDataFrame,"web_browser",locale.get_text("pfm_web_browser"),function() return gui.create("WIPFMWebBrowser") end)
+	self:RegisterWindow(self.m_actorDataFrame,"web_browser",locale.get_text("pfm_web_browser"),function()
+		local el = gui.create("WIPFMWebBrowser")
+		el:AddCallback("OnDetached",function(el,window) window:Maximize() end)
+		return el
+	end)
 
 	self:RegisterWindow(self.m_viewportFrame,"primary_viewport",locale.get_text("pfm_primary_viewport"),function() return gui.create("WIPFMViewport") end)
 	self:RegisterWindow(self.m_viewportFrame,"secondary_viewport",locale.get_text("pfm_secondary_viewport"),function()

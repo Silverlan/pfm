@@ -743,10 +743,11 @@ include("project_converter")
 
 sfm.register_element_type_conversion(sfm.Session,fudm.PFMSession,function(converter,sfmSession,pfmSession)
 	local activeClip = sfmSession:GetActiveClip()
-	pfmSession:SetActiveClip(converter:ConvertNewElement(activeClip))
+	local pfmActiveClip = converter:ConvertNewElement(activeClip)
+	pfmSession:SetActiveClip(fudm.create_reference(pfmActiveClip))
 	pfmSession:SetSettings(converter:ConvertNewElement(sfmSession:GetSettings()))
 
-	pfmSession:GetClipsAttr():PushBack(pfmSession:GetActiveClip())
+	pfmSession:GetClipsAttr():PushBack(pfmActiveClip)
 	--[[for _,clipSet in ipairs({sfmSession:GetClipBin(),sfmSession:GetMiscBin()}) do
 		for _,clip in ipairs(clipSet) do
 			if(clip:GetType() == "DmeFilmClip") then

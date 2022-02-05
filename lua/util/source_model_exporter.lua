@@ -170,7 +170,7 @@ function util.SMDBuilder:AddMesh(mdl,subMesh,mat)
 	local matName = file.get_file_name(file.remove_file_extension(mat:GetName()))
 	self:AddLine("triangles")
 
-	local tris = subMesh:GetTriangles()
+	local tris = subMesh:GetIndices()
 	local vweights = subMesh:GetVertexWeights()
 	local numTris = #tris
 	if(numTris > 0) then

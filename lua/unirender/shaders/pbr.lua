@@ -165,6 +165,16 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 
 	nAlbedoMap:GetPrimaryOutputSocket():Link(principled,unirender.Node.principled_bsdf.IN_BASE_COLOR)
 	principled:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_SURFACE)]]
+
+	--[[if(true) then
+		-- Simple textured node
+		local texNode = desc:AddTextureNode(unirender.get_texture_path("models/player/soldier/soldier_d"))
+		local bsdf = desc:AddNode(unirender.NODE_GLOSSY_BSDF)
+		texNode:GetPrimaryOutputSocket():Link(bsdf,unirender.Node.glossy_bsdf.IN_COLOR)
+		bsdf:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_SURFACE)
+		return
+	end]]
+
 	local mat = self:GetMaterial()
 	if(mat == nil) then return end
 
@@ -238,7 +248,7 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 					sssColor:Link(sssVolume,unirender.Node.volume_homogeneous.IN_ABSORPTION)
 				else sssColor:Link(bsdf,unirender.Node.principled_bsdf.IN_SUBSURFACE_COLOR) end
 
-				if(sss:HasValue("method") and sssVolume == nil) then
+				--[[if(sss:HasValue("method") and sssVolume == nil) then
 					local method = sss:GetString("method")
 					local methodToEnum = {
 						["cubic"] = unirender.SUBSURFACE_SCATTERING_METHOD_CUBIC,
@@ -250,7 +260,7 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 					}
 					method = methodToEnum[method] or unirender.SUBSURFACE_SCATTERING_METHOD_BURLEY
 					bsdf:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE_METHOD,method)
-				end
+				end]]
 
 				if(sss:HasValue("scatter_color")) then
 					local radius = sss:GetColor("scatter_color"):ToVector()

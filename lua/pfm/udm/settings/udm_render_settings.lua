@@ -68,9 +68,7 @@ fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"numberOfFr
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"colorTransform",fudm.String("filmic-blender"))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"colorTransformLook",fudm.String("Medium Contrast"))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"outputFormat",fudm.Int(util.IMAGE_FORMAT_PNG))
-fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"denoise",fudm.Bool(true),{
-	getter = "ShouldDenoise"
-})
+fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"denoiseMode",fudm.Int(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_DETAILED))
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_RENDER_SETTINGS,"renderWorld",fudm.Bool(true),{
 	getter = "ShouldRenderWorld"
 })

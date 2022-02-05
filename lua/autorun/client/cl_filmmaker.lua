@@ -22,16 +22,19 @@ tool.close_filmmaker = function()
 end
 tool.get_filmmaker = function() return tool.filmmaker end
 tool.is_filmmaker_open = function() return util.is_valid(tool.editor) end
+tool.is_developer_mode_enabled = function() return tool.developerMode or false end
 tool.load_filmmaker_scripts = function()
 	include("/sfm/project_converter.lua")
 	pfm.register_log_category("sfm")
 	include("/gui/editors/filmmaker/filmmaker.lua")
 end
-tool.open_filmmaker = function()
+tool.open_filmmaker = function(devMode)
 	tool.load_filmmaker_scripts()
 	tool.close_filmmaker()
 
 	debug.start_profiling_task("pfm_launch")
+
+	tool.developerMode = devMode or false
 	tool.editor = gui.create("WIFilmmaker")
 	tool.filmmaker = tool.editor
 	tool.editor:SetAutoAlignToParent(true)
@@ -104,7 +107,6 @@ console.register_command("pfm",function(pl,...)
 		if(toggleC ~= nil) then toggleC:TurnOn() end
 	end]]
 	--
-	local pfm = tool.open_filmmaker()
-	if(util.is_valid(pfm)) then pfm:SetDeveloperModeEnabled(dev) end
+	local pfm = tool.open_filmmaker(dev)
 	if(project ~= nil) then pfm:LoadProject(project) end
 end)

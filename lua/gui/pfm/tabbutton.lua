@@ -28,6 +28,32 @@ function gui.PFMTabButton:OnInitialize()
 	self.m_progressBar = gui.create("WIPFMProgressBar",self,0,self:GetHeight() -5,self:GetWidth(),5,0,1,1,1)
 	self.m_progressBar:SetVisible(false)
 
+	local elDetach = gui.create("WITexturedRect",self)
+	elDetach:SetMaterial("gui/pfm/icon_detach")
+	elDetach:SizeToTexture()
+	elDetach:SetSize(8,8)
+	elDetach:SetPos(self:GetWidth() -elDetach:GetWidth() -3,3)
+	elDetach:SetAnchor(1,0,1,0)
+	elDetach:SetColor(Color(200,200,200,255))
+	elDetach:AddCallback("OnCursorEntered",function() elDetach:SetColor(Color.Aqua) end)
+	elDetach:AddCallback("OnCursorExited",function() elDetach:SetColor(Color(200,200,200,255)) end)
+	elDetach:SetMouseInputEnabled(true)
+	elDetach:AddCallback("OnMouseEvent",function(elDetach,button,state,mods)
+		local frame = self:GetFrame()
+		if(util.is_valid(frame) == false) then return util.EVENT_REPLY_UNHANDLED end
+		if(button == input.MOUSE_BUTTON_LEFT) then
+			if(state == input.STATE_PRESS) then
+				time.create_simple_timer(0.0,function()
+					local frame = self:IsValid() and self:GetFrame() or nil
+					if(util.is_valid(frame) == false) then return end
+					frame:DetachTab(self)
+				end)
+			end
+			return util.EVENT_REPLY_HANDLED
+		end
+		return util.EVENT_REPLY_UNHANDLED
+	end)
+
 	self:SetMouseInputEnabled(true)
 
 	self:SetActive(false)
@@ -39,6 +65,8 @@ function gui.PFMTabButton:OnInitialize()
 	if(texInfo == nil) then return end
 	self:SetSize(texInfo:GetWidth(),texInfo:GetHeight())
 end
+function gui.PFMTabButton:SetFrame(frame) self.m_frame = frame end
+function gui.PFMTabButton:GetFrame() return self.m_frame end
 function gui.PFMTabButton:GetContents() return self.m_contentsPanel end
 function gui.PFMTabButton:SetContents(panel)
 	self.m_contentsPanel = panel

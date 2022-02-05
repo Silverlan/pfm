@@ -135,12 +135,17 @@ function gui.PFMViewport:InitializeSettings(parent)
 	gui.PFMBaseViewport.InitializeSettings(self,parent)
 	local p = self.m_settingsBox
 
-	self.m_ctrlRt = p:AddDropDownMenu(locale.get_text("pfm_viewport_rt_enabled"),"rt_enabled",{
-		{"0",locale.get_text("disabled")},
-		{"1",locale.get_text("enabled")}
+	local ctrlRt,wrapper = p:AddDropDownMenu(locale.get_text("pfm_viewport_rt_enabled"),"rt_enabled",{
+		{"disabled",locale.get_text("disabled")},
+		{"cycles",locale.get_text("pfm_render_engine_cycles")},
+		{"luxcorerender",locale.get_text("pfm_render_engine_luxcorerender")}
 	},0)
+	self.m_ctrlRt = ctrlRt
+	wrapper:SetUseAltMode(true)
 	self.m_ctrlRt:AddCallback("OnOptionSelected",function(el,idx)
-		self:SetRtViewportEnabled(idx == 1)
+		local val = el:GetOptionValue(idx)
+		if(val == "disabled") then val = nil end
+		self:SetRtViewportRenderer(val)
 	end)
 
 	self.m_ctrlVr = p:AddDropDownMenu(locale.get_text("pfm_viewport_vr_enabled"),"vr_enabled",{
@@ -201,11 +206,13 @@ function gui.PFMViewport:InitializeSettings(parent)
 	end)
 	p:ResetControls()
 end
-function gui.PFMViewport:SetRtViewportEnabled(enabled)
+function gui.PFMViewport:SetRtViewportRenderer(renderer)
+	local enabled = (renderer ~= nil)
 	console.run("cl_max_fps",enabled and "24" or tostring(console.get_convar_int("pfm_max_fps"))) -- Clamp max fps to make more resources available for the renderer
 	util.remove(self.m_rtViewport)
 	if(enabled ~= true) then return end
 	local rtViewport = gui.create("WIRealtimeRaytracedViewport",self.m_vpContainer,0,0,self.m_vpContainer:GetWidth(),self.m_vpContainer:GetHeight(),0,0,1,1)
+	rtViewport:SetRenderer(renderer)
 	self.m_rtViewport = rtViewport
 
 	self:UpdateRenderSettings()

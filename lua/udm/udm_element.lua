@@ -129,6 +129,10 @@ function fudm.BaseElement:SetProperty(name,prop)
 	self:AddChild(prop,name)
 	return self:GetProperty(name)
 end
+function fudm.BaseElement:IsPropertyReference(name)
+	local property = self:GetChild(name)
+	return property ~= nil and property:GetType() == fudm.ELEMENT_TYPE_REFERENCE
+end
 function fudm.BaseElement:GetProperty(name)
 	local property = self:GetChild(name)
 	if(property ~= nil and property:GetType() == fudm.ELEMENT_TYPE_REFERENCE) then

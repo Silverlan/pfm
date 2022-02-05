@@ -29,6 +29,7 @@ include("unirender.lua")
 include("message_popup.lua")
 include("tree/pfm_tree.lua")
 include("project_packer.lua")
+include("udm_converter.lua")
 
 util.register_class("pfm.Project")
 function pfm.Project:__init()
@@ -43,7 +44,7 @@ function pfm.Project:SetName(name) self.m_projectName = name end
 function pfm.Project:GetName() return self.m_projectName end
 function pfm.Project:GetUniqueId() return self.m_uniqueId end
 
-function pfm.Project:Save(fileName)
+function pfm.Project:SaveLegacy(fileName)
 	local f = file.open(fileName,bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
 	if(f == nil) then return false end
 
@@ -97,10 +98,21 @@ function pfm.Project:Save(fileName)
 	return true
 end
 
-function pfm.Project:Load(fileName)
-	local f = file.open(fileName,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
-	if(f == nil) then return false end
+function pfm.Project:Save(fileName,legacy)
+	if(legacy) then return self:SaveLegacy(fileName) end
 
+	local udmData,msg = pfm.fudm_to_udm(self)
+	if(udmData == false) then return false end
+
+	local f = file.open(fileName,bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
+	if(f == nil) then return false end
+	udmData:Save(f)
+	f:Close()
+
+	return true
+end
+
+function pfm.Project:LoadLegacy(f,fileName)
 	local ident = f:ReadString(#pfm.PROJECT_FILE_IDENTIFIER)
 	if(ident ~= pfm.PROJECT_FILE_IDENTIFIER) then
 		f:Close()
@@ -128,10 +140,11 @@ function pfm.Project:Load(fileName)
 	-- Read child information
 	for _,el in ipairs(elements) do
 		if(el:IsElement()) then
-			if(el:GetType() == fudm.ELEMENT_TYPE_ROOT) then
+			local type = el:GetType()
+			if(type == fudm.ELEMENT_TYPE_ROOT) then
 				self.m_udmRoot = el
 			end
-			if(el:GetType() == fudm.ELEMENT_TYPE_PFM_SESSION) then
+			if(type == fudm.ELEMENT_TYPE_PFM_SESSION) then
 				table.insert(self.m_sessions,el)
 			end
 			local numChildren = f:ReadUInt16()
@@ -139,6 +152,7 @@ function pfm.Project:Load(fileName)
 				local name = f:ReadString()
 				local childIdx = f:ReadUInt32()
 				local child = elements[childIdx +1]
+				if(type == fudm.ELEMENT_TYPE_PFM_SESSION and name == "activeClip") then child = fudm.create_reference(child) end
 				el:SetProperty(name,child)
 			end
 			el:OnLoaded()
@@ -148,6 +162,25 @@ function pfm.Project:Load(fileName)
 	self.m_udmRoot:LoadFromBinary(f)
 	f:Close()
 	debug.stop_profiling_task()
+	return true
+end
+
+function pfm.Project:Load(fileName)
+	local f = file.open(fileName,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
+	if(f == nil) then return false end
+
+	local ident = f:ReadString(#pfm.PROJECT_FILE_IDENTIFIER)
+	f:Seek(0)
+	if(ident == pfm.PROJECT_FILE_IDENTIFIER) then
+		return self:LoadLegacy(f,fileName)
+	end
+	debug.start_profiling_task("pfm_load")
+	local fudmRoot,sessions = pfm.udm_to_fudm(f)
+	f:Close()
+	debug.stop_profiling_task()
+	if(fudmRoot == false) then return false end
+	self.m_udmRoot = fudmRoot
+	self.m_sessions = sessions
 	return true
 end
 
@@ -203,9 +236,10 @@ pfm.create_empty_project = function()
 	local project = pfm.create_project()
 
 	local session = project:AddSession("session")
-	local filmClip = session:GetActiveClip()
+	local filmClip = fudm.create_element(fudm.ELEMENT_TYPE_PFM_FILM_CLIP)
 	filmClip:ChangeName("new_project")
 	session:GetClips():PushBack(filmClip)
+	session:SetProperty("activeClip",fudm.create_reference(filmClip))
 
 	local subClipTrackGroup = fudm.create_element(fudm.ELEMENT_TYPE_PFM_TRACK_GROUP)
 	subClipTrackGroup:ChangeName("subClipTrackGroup")
