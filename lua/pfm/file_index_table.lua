@@ -95,6 +95,7 @@ function pfm.FileIndexTable:__init(name,rootPath,extensions,externalExtensions)
 	self.m_rootPath = rootPath
 	self.m_extensions = extensions
 	self.m_externalExtensions = externalExtensions
+	self.m_traversedFiles = {}
 
 	self.m_tFileNames = {}
 	self.m_tFilePaths = {}
@@ -114,6 +115,9 @@ function pfm.FileIndexTable:GetFilePaths() return self.m_tFilePaths end
 function pfm.FileIndexTable:GetFileName(i) return self.m_tFileNames[i] end
 function pfm.FileIndexTable:GetFilePath(i) return self.m_tPaths[self.m_tFilePaths[i]] end
 function pfm.FileIndexTable:AddFile(fileName)
+	if(self.m_traversedFiles[fileName] ~= nil) then return end
+	self.m_traversedFiles[fileName] = true
+	
 	local path = file.get_file_path(fileName)
 	fileName = file.get_file_name(fileName)
 	table.insert(self.m_tFileNames,fileName)

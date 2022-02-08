@@ -168,10 +168,17 @@ function gui.RaytracedViewport:SetGameScene(gameScene) self.m_gameScene = gameSc
 function gui.RaytracedViewport:GetGameScene() return self.m_gameScene or game.get_scene() end
 function gui.RaytracedViewport:OnRemove()
 	self:CancelRendering()
+	self:ClearJob()
+end
+function gui.RaytracedViewport:ClearJob()
+	self.m_rendering = false
+	self.m_rtJob = nil
+	collectgarbage()
 end
 function gui.RaytracedViewport:CancelRendering()
 	if(self.m_rtJob == nil) then return end
 	self.m_rtJob:CancelRendering()
+	-- self.m_rtJob = nil
 end
 function gui.RaytracedViewport:IsRendering()
 	return (self.m_rtJob ~= nil) and self.m_rtJob:IsRendering() or false
@@ -213,7 +220,7 @@ function gui.RaytracedViewport:OnThink()
 		end
 	end
 	if(state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FAILED) then
-		self.m_rendering = false
+		self:ClearJob()
 		self:UpdateThinkState()
 
 		self:CallCallbacks("OnComplete",state,self.m_rtJob)
@@ -264,6 +271,7 @@ function gui.RaytracedViewport:Refresh(preview,rtJobCallback,startFrame,frameHan
 		settings:SetHeight(self:GetHeight())
 	end
 	settings = self:InitializeRenderSettings(settings)
+	self:SetToneMapping(settings:GetHDROutput() and shader.TONE_MAPPING_GAMMA_CORRECTION or shader.TONE_MAPPING_NONE)
 
 	settings:SetRenderPreview(preview)
 	self.m_rtJob = pfm.RaytracingRenderJob(settings,frameHandler)
@@ -290,24 +298,23 @@ gui.register("WIRaytracedViewport",gui.RaytracedViewport)
 
 
 util.register_class("gui.RealtimeRaytracedViewport",gui.RaytracedViewport)
-function gui.RealtimeRaytracedViewport:__init()
-	gui.RaytracedViewport.__init(self)
-end
 function gui.RealtimeRaytracedViewport:OnInitialize()
 	gui.RaytracedViewport.OnInitialize(self)
 	self:SetRenderer("cycles")
+	self.m_dirtyActors = {}
+	self.m_hasDirtyActors = false
 end
 function gui.RealtimeRaytracedViewport:SetRenderer(renderer) self.m_renderer = renderer end
 function gui.RealtimeRaytracedViewport:InitializeRenderSettings(settings)
 	settings = settings:Copy()
 	settings:SetRenderEngine(self.m_renderer)
-	settings:SetProgressive(true)
+	-- settings:SetProgressive(true)
 	settings:SetSamples(100000)
 	settings:SetLiveEditingEnabled(true)
 	settings:SetWidth(self:GetWidth())
 	settings:SetHeight(self:GetHeight())
-	-- settings:SetColorTransform("filmic-blender")
-	-- settings:SetColorTransformLook("Medium Contrast")
+	settings:SetColorTransform("filmic-blender")
+	settings:SetColorTransformLook("Medium Contrast")
 	return settings
 end
 function gui.RealtimeRaytracedViewport:OnRenderStart()
@@ -322,8 +329,11 @@ function gui.RealtimeRaytracedViewport:OnRenderStart()
 		pos = ent:GetPos()
 		rot = ent:GetRotation()
 	end
-	self.m_camStartPose = math.Transform(pos,rot)
 	self.m_tLastUpdate = time.real_time()
+end
+function gui.RealtimeRaytracedViewport:MarkActorAsDirty(ent)
+	self.m_dirtyActors[ent] = true
+	self.m_hasDirtyActors = true
 end
 function gui.RealtimeRaytracedViewport:OnThink()
 	gui.RaytracedViewport.OnThink(self)
@@ -335,21 +345,28 @@ function gui.RealtimeRaytracedViewport:OnThink()
 
 	local t = time.real_time()
 	local dt = t -self.m_tLastUpdate
-	if(dt < 0.1) then return end
+	if(dt < (1.0 /24.0)) then return end -- Update at roughly 24 FPS
 	self.m_tLastUpdate = t
-	local pose = cam:GetEntity():GetPose()
-	if(pose:GetOrigin():DistanceSqr(self.m_camStartPose:GetOrigin()) < 0.01 and pose:GetRotation():Distance(self.m_camStartPose:GetRotation()) < 0.01) then return end
 
-	local renderer = self.m_rtJob:GetRenderer()
-	if(renderer:BeginSceneEdit()) then
-		local scene = renderer:GetScene()
-		local cam = scene:GetCamera()
-		cam:SetPos(pose:GetOrigin())
-		cam:SetRotation(pose:GetRotation())
+	if(self.m_hasDirtyActors ~= true) then return end
 
-		renderer:EndSceneEdit()
+	if(self.m_hasDirtyActors) then
+		self.m_hasDirtyActors = false
+
+		local renderer = self.m_rtJob:GetRenderer()
+		if(renderer:BeginSceneEdit()) then
+			local scene = renderer:GetScene()
+			local sceneCam = scene:GetCamera()
+
+			for ent,_ in pairs(self.m_dirtyActors) do
+				if(ent:IsValid()) then
+					renderer:SyncActor(ent)
+				end
+			end
+			self.m_dirtyActors = {}
+
+			renderer:EndSceneEdit()
+		end
 	end
-
-	self.m_camStartPose = pose:Copy()
 end
 gui.register("WIRealtimeRaytracedViewport",gui.RealtimeRaytracedViewport)

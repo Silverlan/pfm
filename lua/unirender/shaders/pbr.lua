@@ -248,8 +248,8 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 					sssColor:Link(sssVolume,unirender.Node.volume_homogeneous.IN_ABSORPTION)
 				else sssColor:Link(bsdf,unirender.Node.principled_bsdf.IN_SUBSURFACE_COLOR) end
 
-				--[[if(sss:HasValue("method") and sssVolume == nil) then
-					local method = sss:GetString("method")
+				if(sss:HasValue("method") and sssVolume == nil) then
+					--[[local method = sss:GetString("method")
 					local methodToEnum = {
 						["cubic"] = unirender.SUBSURFACE_SCATTERING_METHOD_CUBIC,
 						["gaussian"] = unirender.SUBSURFACE_SCATTERING_METHOD_GAUSSIAN,
@@ -259,8 +259,9 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 						["principled_random_walk"] = unirender.SUBSURFACE_SCATTERING_METHOD_PRINCIPLED_RANDOM_WALK
 					}
 					method = methodToEnum[method] or unirender.SUBSURFACE_SCATTERING_METHOD_BURLEY
-					bsdf:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE_METHOD,method)
-				end]]
+					bsdf:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE_METHOD,method)]]
+					bsdf:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE_METHOD,unirender.SUBSURFACE_SCATTERING_METHOD_RANDOM_WALK)
+				end
 
 				if(sss:HasValue("scatter_color")) then
 					local radius = sss:GetColor("scatter_color"):ToVector()

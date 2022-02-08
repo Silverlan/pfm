@@ -686,6 +686,13 @@ function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId,entActor)
 	end
 	actorData.componentsEntry:Update()
 end
+function gui.PFMActorEditor:OnActorPropertyChanged(entActor)
+	local pm = pfm.get_project_manager()
+	local vp = util.is_valid(pm) and pm:GetViewport() or nil
+	local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+	if(rt == nil) then return end
+	rt:MarkActorAsDirty(entActor)
+end
 function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,component)
 	local componentId = ents.find_component_id(component:GetComponentName())
 	if(componentId == nil) then return end
@@ -822,6 +829,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 						local c = entActor:GetComponent(componentId)
 						if(c ~= nil) then
 							c:SetMemberValue(info.name,memberValue)
+							self:OnActorPropertyChanged(entActor)
 						end
 					end
 					applyComponentChannelValue(self,component,controlData,memberValue)

@@ -120,7 +120,11 @@ function gui.RenderImage:ApplyTonemapping(drawCmd,dsTex,rtDst)
 	local toneMapping = self.m_toneMapping
 	local isGammaCorrected
 	if(self.m_shouldGammaCorrect ~= nil) then isGammaCorrected = not self.m_shouldGammaCorrect
-	else isGammaCorrected = (img:GetFormat() ~= prosper.FORMAT_R16G16B16A16_SFLOAT) end -- Assume the image is gamma corrected if it's not a HDR image
+	else
+		local format = img:GetFormat()
+		local isHdrFormat = (format == prosper.FORMAT_R16G16B16A16_SFLOAT or format == prosper.FORMAT_R32G32B32A32_SFLOAT or format == prosper.FORMAT_R32G32B32_SFLOAT)
+		isGammaCorrected = not isHdrFormat
+	end -- Assume the image is gamma corrected if it's not a HDR image
 	local args = self:GetToneMappingAlgorithmArgs()
 	self.m_shader:Draw(drawCmd,dsTex,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
 end

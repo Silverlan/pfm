@@ -124,6 +124,7 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"colorTransformLoo
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"liveEditingEnabled",false,{
 	getter = "IsLiveEditingEnabled"
 })
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"useOptix",false)
 
 function pfm.RaytracingRenderJob.Settings:__init()
 	self:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
@@ -183,6 +184,7 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetColorTransform(self:GetColorTransform())
 	cpy:SetColorTransformLook(self:GetColorTransformLook())
 	cpy:SetLiveEditingEnabled(self:IsLiveEditingEnabled())
+	cpy:SetUseOptix(self:GetUseOptix())
 	return cpy
 end
 
@@ -292,9 +294,11 @@ function pfm.RaytracingRenderJob:Update()
 	local progress = (self.m_raytracingJob ~= nil) and self.m_raytracingJob:GetProgress() or 1.0
 	self.m_lastProgress = progress
 	local successful = true
+	local resultCode
 	if(self.m_raytracingJob ~= nil) then
 		if(self:IsComplete() == false) then return pfm.RaytracingRenderJob.STATE_RENDERING end
 		successful = self.m_raytracingJob:IsSuccessful()
+		resultCode = self.m_raytracingJob:GetResultCode()
 		if(successful) then
 			local imgBuffer = self.m_raytracingJob:GetResult()
 			-- util.save_image(imgBuffer,"luxcorerender.hdr",util.IMAGE_FORMAT_HDR)
@@ -551,13 +555,17 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	scene:Finalize()
 	local flags = unirender.Renderer.FLAG_NONE
 	if(renderSettings:IsLiveEditingEnabled()) then flags = bit.bor(flags,unirender.Renderer.FLAG_ENABLE_LIVE_EDITING_BIT) end
-	local renderer = unirender.create_renderer(scene,renderSettings:GetRenderEngine(),flags)
+	self.m_renderEngine = renderSettings:GetRenderEngine()
+	local renderer = unirender.create_renderer(scene,self.m_renderEngine,flags)
 	if(renderer == nil) then
 		pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
 
 	local apiData = renderer:GetApiData()
+	if(renderSettings:GetDeviceType() == pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU and self.m_renderEngine == "cycles") then
+		apiData:GetFromPath("cycles"):SetValue("enableOptix",udm.TYPE_BOOLEAN,renderSettings:GetUseOptix())
+	end
 	--[[
 	-- Some Cycles debugging options:
 	apiData:GetFromPath("cycles/debug"):SetValue("dump_shader_graphs",udm.TYPE_BOOLEAN,true)

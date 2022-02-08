@@ -217,6 +217,7 @@ function gui.PFMViewport:SetRtViewportRenderer(renderer)
 
 	self:UpdateRenderSettings()
 end
+function gui.PFMViewport:GetRealtimeRaytracedViewport() return self.m_rtViewport end
 function gui.PFMViewport:StopLiveRaytracing()
 	self.m_ctrlRt:SelectOption(0)
 end
@@ -309,6 +310,17 @@ function gui.PFMViewport:SetCameraMode(camMode)
 	self.m_cameraMode = camMode
 
 	-- ents.PFMCamera.set_camera_enabled(camMode == gui.PFMViewport.CAMERA_MODE_PLAYBACK)
+	local rtUpdateEnabled = (camMode ~= gui.PFMViewport.CAMERA_MODE_PLAYBACK)
+	self:SetThinkingEnabled(rtUpdateEnabled)
+	if(rtUpdateEnabled) then
+		self.m_camStartPose = math.Transform()
+		local cam = game.get_render_scene_camera()
+		if(util.is_valid(cam)) then
+			local entCam = cam:GetEntity()
+			self.m_camStartPose:SetOrigin(entCam:GetPos())
+			self.m_camStartPose:SetRotation(entCam:GetRotation())
+		end
+	else self.m_camStartPose = nil end
 
 	-- We need to notify the server to change the player's movement mode (i.e. noclip/walk)
 	local packet = net.Packet()
@@ -551,18 +563,24 @@ function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 			if(actorC ~= nil) then
 				tool.get_filmmaker():SetActorTransformProperty(actorC,"position",ent:GetPos())
+				local rt = self:GetRealtimeRaytracedViewport()
+				if(util.is_valid(rt)) then rt:MarkActorAsDirty(ent) end
 			end
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function()
 			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 			if(actorC ~= nil) then
 				tool.get_filmmaker():SetActorTransformProperty(actorC,"rotation",ent:GetRotation())
+				local rt = self:GetRealtimeRaytracedViewport()
+				if(util.is_valid(rt)) then rt:MarkActorAsDirty(ent) end
 			end
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED,function()
 			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 			if(actorC ~= nil) then
 				tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",ent:GetScale())
+				local rt = self:GetRealtimeRaytracedViewport()
+				if(util.is_valid(rt)) then rt:MarkActorAsDirty(ent) end
 			end
 		end)
 		return trC
@@ -695,6 +713,14 @@ function gui.PFMViewport:InitializeCameraControls()
 	self.manipulatorControls = controls
 end
 function gui.PFMViewport:IsGameplayEnabled() return self.m_gameplayEnabled end
+function gui.PFMViewport:OnThink()
+	local cam = game.get_render_scene_camera()
+	if(util.is_valid(cam) == false) then return end
+	local pose = cam:GetEntity():GetPose()
+	if(pose:GetOrigin():DistanceSqr(self.m_camStartPose:GetOrigin()) < 0.01 and pose:GetRotation():Distance(self.m_camStartPose:GetRotation()) < 0.01) then return end
+	if(util.is_valid(self.m_rtViewport)) then self.m_rtViewport:MarkActorAsDirty(cam:GetEntity()) end
+	self.m_camStartPose = pose:Copy()
+end
 function gui.PFMViewport:SwitchToGameplay(enabled)
 	if(enabled == nil) then enabled = true end
 	if(enabled == self.m_gameplayEnabled) then return end
