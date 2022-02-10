@@ -135,16 +135,26 @@ function gui.PFMViewport:InitializeSettings(parent)
 	gui.PFMBaseViewport.InitializeSettings(self,parent)
 	local p = self.m_settingsBox
 
-	local ctrlRt,wrapper = p:AddDropDownMenu(locale.get_text("pfm_viewport_rt_enabled"),"rt_enabled",{
+	--[[local ctrlRt,wrapper = p:AddDropDownMenu(locale.get_text("pfm_viewport_rt_enabled"),"rt_enabled",{
 		{"disabled",locale.get_text("disabled")},
 		{"cycles",locale.get_text("pfm_render_engine_cycles")},
 		{"luxcorerender",locale.get_text("pfm_render_engine_luxcorerender")}
+	},0)]]
+	local ctrlRt = p:AddDropDownMenu(locale.get_text("pfm_viewport_rt_enabled"),"rt_enabled",{
+		{"0",locale.get_text("disabled")},
+		{"1",locale.get_text("enabled")}
 	},0)
 	self.m_ctrlRt = ctrlRt
-	wrapper:SetUseAltMode(true)
+	-- wrapper:SetUseAltMode(true)
 	self.m_ctrlRt:AddCallback("OnOptionSelected",function(el,idx)
 		local val = el:GetOptionValue(idx)
-		if(val == "disabled") then val = nil end
+		if(val == "0") then val = nil
+		else
+			val = "cycles"
+			local pfm = tool.get_filmmaker()
+			local renderTab = pfm:GetRenderTab()
+			if(util.is_valid(renderTab)) then val = renderTab:GetRenderSettings():GetRenderEngine() end
+		end
 		self:SetRtViewportRenderer(val)
 	end)
 
