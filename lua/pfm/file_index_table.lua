@@ -35,6 +35,8 @@ function pfm.FileIndexTable.Indexer:Start()
 		if(self:RunBatch()) then
 			self:Stop()
 			self.m_fit:OnIndexerComplete()
+
+			print("File index table for '" .. self.m_fit:GetName() .. "' has been generated!")
 		end
 	end)
 end
@@ -42,7 +44,7 @@ function pfm.FileIndexTable.Indexer:Stop()
 	if(util.is_valid(self.m_cbThink)) then self.m_cbThink:Remove() end
 end
 function pfm.FileIndexTable.Indexer:RunBatch()
-	local numBatches = 5
+	local numBatches = 50
 	while(#self.m_queue > 0 and numBatches > 0) do
 		local path = self.m_queue[1]
 		self:CollectFiles(path)
@@ -95,10 +97,10 @@ function pfm.FileIndexTable:__init(name,rootPath,extensions,externalExtensions)
 	self.m_rootPath = rootPath
 	self.m_extensions = extensions
 	self.m_externalExtensions = externalExtensions
-	self.m_traversedFiles = {}
 
 	self.m_tFileNames = {}
 	self.m_tFilePaths = {}
+	self.m_tFileHashes = {}
 
 	self.m_tPaths = {}
 	self.m_tPathToIndex = {}
@@ -112,14 +114,18 @@ function pfm.FileIndexTable:GetName() return self.m_name end
 function pfm.FileIndexTable:GetCacheFileName() return "cache/pfm/file_index_table_" .. self:GetName() .. ".fit_b" end
 function pfm.FileIndexTable:GetFileNames() return self.m_tFileNames end
 function pfm.FileIndexTable:GetFilePaths() return self.m_tFilePaths end
+function pfm.FileIndexTable:GetFileHashes() return self.m_tFileHashes end
 function pfm.FileIndexTable:GetFileName(i) return self.m_tFileNames[i] end
 function pfm.FileIndexTable:GetFilePath(i) return self.m_tPaths[self.m_tFilePaths[i]] end
 function pfm.FileIndexTable:AddFile(fileName)
-	if(self.m_traversedFiles[fileName] ~= nil) then return end
-	self.m_traversedFiles[fileName] = true
-	
-	local path = file.get_file_path(fileName)
-	fileName = file.get_file_name(fileName)
+	local npath = util.Path.CreateFilePath(fileName)
+	local hash = tonumber(util.get_string_hash(npath:GetString()))
+	if(self.m_tFileHashes[hash] ~= nil) then return end -- Duplicate file
+	self.m_tFileHashes[hash] = #self.m_tFileNames +1
+
+	local path = npath:GetPath()
+	fileName = npath:GetFileName()
+
 	table.insert(self.m_tFileNames,fileName)
 
 	if(self.m_tPathToIndex[path] == nil) then
@@ -150,6 +156,11 @@ function pfm.FileIndexTable:LoadFromCache()
 	self.m_tPaths = assetData:GetArrayValues("pathTable",udm.TYPE_STRING)
 	self.m_tFileNames = assetData:GetArrayValues("fileTable",udm.TYPE_STRING)
 	self.m_tFilePaths = assetData:GetArrayValues("filePathIndices",udm.TYPE_UINT32)
+	local tHashes = assetData:GetArrayValues("fileHashes",udm.TYPE_UINT64)
+	self.m_tFileHashes = {}
+	for i,hash in ipairs(tHashes) do
+		self.m_tFileHashes[hash] = i
+	end
 	return true
 end
 function pfm.FileIndexTable:SaveToCache()
@@ -165,6 +176,12 @@ function pfm.FileIndexTable:SaveToCache()
 	assetData:SetArrayValues("pathTable",udm.TYPE_STRING,self.m_tPaths,udm.TYPE_ARRAY_LZ4)
 	assetData:SetArrayValues("fileTable",udm.TYPE_STRING,self.m_tFileNames,udm.TYPE_ARRAY_LZ4)
 	assetData:SetArrayValues("filePathIndices",udm.TYPE_UINT32,self.m_tFilePaths,udm.TYPE_ARRAY_LZ4)
+
+	local tHashes = {}
+	for hash,i in pairs(self.m_tFileHashes) do
+		tHashes[i] = hash
+	end
+	assetData:SetArrayValues("fileHashes",udm.TYPE_UINT64,tHashes,udm.TYPE_ARRAY_LZ4)
 
 	--[[
 	-- TODO: Use a file map once Array:Reserve and compressed elements have been implemented for UDM
