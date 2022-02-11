@@ -320,7 +320,7 @@ function gui.AssetExplorer:ListFiles()
 		self.m_iconContainer:Update()
 		return
 	end
-	local tFiles,tDirectories
+	local tFiles,tDirectories,preSorted
 	if(self:GetAssetType() == asset.TYPE_PARTICLE_SYSTEM) then
 		local path = util.Path(self:GetPath())
 		local back = path:GetBack()
@@ -336,7 +336,7 @@ function gui.AssetExplorer:ListFiles()
 			end
 		end
 	end
-	if(tFiles == nil) then tFiles,tDirectories = self:FindFiles() end
+	if(tFiles == nil) then tFiles,tDirectories,preSorted = self:FindFiles() end
 	if(self:IsAtRoot()) then
 		self:AddAsset(locale.get_text("favorites"),true,function()
 			self.m_inSpecial = "fav"
@@ -350,7 +350,7 @@ function gui.AssetExplorer:ListFiles()
 	for _,d in ipairs(tDirectories) do
 		self:AddAsset(d,true)
 	end
-	table.sort(tFiles,function(a,b) return a:lower() < b:lower() end)
+	if(preSorted ~= true) then table.sort(tFiles,function(a,b) return a:lower() < b:lower() end) end
 	for _,f in ipairs(tFiles) do
 		self:AddAsset(f,false)
 	end

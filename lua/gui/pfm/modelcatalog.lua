@@ -89,11 +89,11 @@ function gui.PFMModelCatalog:OnInitialize()
 		tDirs = {}
 		for i,idx in ipairs(tMatches) do
 			local sim = similarities[i]
-			if(i < 10 or sim < -60) then
+			if(sim < -60) then
 				table.insert(tFiles,"/" .. self.m_fit:GetFilePath(idx) .. self.m_fit:GetFileName(idx))
 			end
 		end
-		return tFiles,tDirs
+		return tFiles,tDirs,true --[[ preSorted ]]
 	end)
 	self.m_explorer = explorer
 
@@ -109,6 +109,7 @@ function gui.PFMModelCatalog:OnThink()
 	-- Lazy initialization
 	self.m_fit:LoadOrGenerate()
 	self.m_fit:ReloadPath("addons/imported/models/")
+	self.m_fit:ReloadPath("addons/converted/models/")
 	self.m_explorer:Update()
 
 	self:DisableThinking()
