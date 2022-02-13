@@ -1,0 +1,53 @@
+"schema"
+{
+	"types"
+	{
+		"Bone"
+		{
+			"children"
+			{
+				"transform" {$transform default [[0,0,0][1,0,0,0]]}
+				"values"
+				{
+					$string type "array"
+					$string valueType "Bone"
+				}
+			}
+		}
+		"EntityComponent"
+		{
+			"children"
+			{
+				"properties"
+				{
+					$string type "array"
+					$string valueType "element"
+				}
+			}
+		}
+		"Uuid"
+		{
+			"children"
+			{
+				"value" {$string default ""}
+			}
+		}
+		"Actor"
+		{
+			"children"
+			{
+				"uniqueId" {$string type "Uuid"}
+				"transform" {$stransform default [[0,0,0][1,0,0,0][1,1,1]]}
+				"components"
+				{
+					$string type "array"
+					$string valueType "EntityComponent"
+				}
+				"visible" {
+					$bool default true
+					$string getterName "IsVisible"
+				}
+			}
+		}
+	}
+}

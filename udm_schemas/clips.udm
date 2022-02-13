@@ -1,0 +1,108 @@
+"schema"
+{
+	"types"
+	{
+		"Sound"
+		{
+			"children"
+			{
+				"soundName" {$string default ""}
+				"volume" {$float default 1.0}
+				"pitch" {$float default 1.0}
+			}
+		}
+		"TrackGroup"
+		{
+			"children"
+			{
+				"visible" {
+					$bool default true
+					$string getterName "IsVisible"
+				}
+				"muted" {
+					$bool default false
+					$string getterName "IsMuted"
+				}
+				"tracks"
+				{
+					$string type "array"
+					$string valueType "Track"
+				}
+			}
+		}
+		"FilmClip"
+		{
+			"children"
+			{
+				"timeFrame" {$string type "TimeFrame"}
+				"fadeIn" {$float default 0.0}
+				"fadeOut" {$float default 0.0}
+				"bookmarkSets"
+				{
+					$string type "array"
+					$string valueType "Actor"
+				}
+				"activeBookmarkSet" {$int32 default 0}
+				"mapName" {$string default ""}
+				"trackGroups"
+				{
+					$string type "array"
+					$string valueType "TrackGroup"
+				}
+				"scene" {$string type "Group"}
+			}
+		}
+		"AudioClip"
+		{
+			"children"
+			{
+				"timeFrame" {$string type "TimeFrame"}
+				"sound" {$string type "Sound"}
+				"fadeInTime" {$float default 0.0}
+				"fadeOutTime" {$float default 0.0}
+			}
+		}
+		"OverlayClip"
+		{
+			"children"
+			{
+				"timeFrame" {$string type "TimeFrame"}
+				"material" {$string default ""}
+				"left" {$int32 default 0}
+				"top" {$int32 default 0}
+				"width" {$int32 default 0}
+				"height" {$int32 default 0}
+				"fullscreen" {
+					$bool default false
+					$string getterName "IsFullscreen"
+				}
+			}
+		}
+		"Channel"
+		{
+			"children"
+			{
+				"log" {$string type "Log"}
+				"expression" {$string default ""}
+				"targetPath" {$string default ""}
+			}
+		}
+		"ChannelClip"
+		{
+			"children"
+			{
+				"timeFrame" {$string type "TimeFrame"}
+				"actor"
+				{
+					$string type "reference"
+					$string referenceType "Actor"
+				}
+				"channels"
+				{
+					$string type "array"
+					$string valueType "Channel"
+				}
+			}
+		}
+	}
+}

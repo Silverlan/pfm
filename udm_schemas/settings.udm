@@ -1,0 +1,129 @@
+"schema"
+{
+	"types"
+	{
+		"ViewportMode"
+		{
+			$string type "enum"
+			$array values [string]["flat","360_left_eye","360_right_eye"]
+		}
+
+		"RenderMode"
+		{
+			$string type "enum"
+			$array values [string][
+				"combined","albedo","normals","depth","alpha",
+				"geometry_normal","shading_normal","direct_diffuse",
+				"direct_diffuse_reflect","direct_diffuse_transmit",
+				"direct_glossy","direct_glossy_reflect","direct_glossy_transmit",
+				"emission","indirect_diffuse","indirect_diffuse_reflect",
+				"indirect_diffuse_transmit","indirect_glossy","indirect_glossy_reflect",
+				"indirect_glossy_transmit","indirect_specular","indirect_specular_reflect",
+				"indirect_specular_transmit","uv","irradiance","noise","caustic"
+			]
+		}
+
+		"DeviceType"
+		{
+			$string type "enum"
+			$array values [string]["cpu","gpu"]
+		}
+
+		"PreviewQuality"
+		{
+			$string type "enum"
+			$array values [string]["low","medium","high"]
+		}
+
+		"RenderSettings"
+		{
+			"children"
+			{
+				"frameRate" {$uint32 default 24}
+				"mode"
+				{
+					$string type "RenderMode"
+					$string default "combined"
+				}
+				"renderEngine" {$string default "cycles"}
+				"preset" {$string default "standard"}
+				"deviceType"
+				{
+					$string type "DeviceType"
+					$string default "gpu"
+				}
+				"samples" {$uint32 default 40}
+				"width" {$uint32 default 1920}
+				"height" {$uint32 default 1080}
+				"sky" {$string default "skies/dusk379.hdr"}
+				"skyStrength" {$float default 0.3}
+				"skyYawAngle" {$float default 0.0}
+				"maxTransparencyBounces" {$uint32 default 128}
+				"lightIntensityFactor" {$float default 1.0}
+				"emissionStrength" {$float default 1.0}
+				"numberOfFrames" {$uint32 default 1}
+				"colorTransform" {$string default "filmic-blender"}
+				"colorTransformLook" {$string default "Medium Contrast"}
+				"outputFormat" {$string default "png"}
+				"denoiseMode" {$string default "detailed"}
+				"renderWorld" {
+					$bool default true
+					$string getterName "ShouldRenderWorld"
+				}
+				"renderGameObjects" {
+					$bool default true
+					$string getterName "ShouldRenderGameObjects"
+				}
+				"renderPlayer" {
+					$bool default false
+					$string getterName "ShouldRenderPlayer"
+				}
+				"cameraFrustumCullingEnabled" {
+					$bool default true
+					$string getterName "IsCameraFrustumCullingEnabled"
+				}
+				"pvsCullingEnabled" {
+					$bool default true
+					$string getterName "IsPvsCullingEnabled"
+				}
+				"preCalculateLight" {
+					$bool default false
+					$string getterName "ShouldPreCalculateLight"
+				}
+				"progressive" {
+					$bool default true
+					$string getterName "IsProgressive"
+				}
+				"progressiveRefinementEnabled" {
+					$bool default false
+					$string getterName "IsProgressiveRefinementEnabled"
+				}
+				"transparentSky" {
+					$bool default false
+					$string getterName "ShouldMakeSkyTransparent"
+				}
+				"exposure" {$float default 50}
+				"previewQuality" {
+					$string type "PreviewQuality"
+					$string default "low"
+				}
+				"cameraType" {$string default "perspective"}
+				"panoramaType" {$string default "equirectangular"}
+				"stereoscopic" {
+					$bool default true
+					$string getterName "IsStereoscopic"
+				}
+				"viewportMode" {$string default "360_left_eye"}
+				"panoramaRange" {$float default 180}
+			}
+		}
+		"Settings"
+		{
+			"children"
+			{
+				"playheadOffset" {$float default 0.0}
+				"renderSettings" {$string type "RenderSettings"}
+			}
+		}
+	}
+}

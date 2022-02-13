@@ -1,0 +1,142 @@
+"schema"
+{
+	$array includes [string]["settings.udm","clips.udm","actor.udm"]
+	"types"
+	{
+		"TimeRange"
+		{
+			"children"
+			{
+				"time" {$float default 0.0}
+				"duration" {$float default 0.0}
+			}
+		}
+		"TimeFrame"
+		{
+			"children"
+			{
+				"start" {$float default 0.0}
+				"duration" {$float default 0.0}
+				"offset" {$float default 0.0}
+				"scale" {$float default 1.0}
+			}
+		}
+		"Bookmark"
+		{
+			"children"
+			{
+				"timeRange" {$string type "TimeRange"}
+				"note" {$string default ""}
+			}
+		}
+		"BookmarkSet"
+		{
+			"children"
+			{
+				"bookmarks" {
+					$string type "array"
+					$string valueType "Bookmark"
+				}
+			}
+		}
+		"Log"
+		{
+			"children"
+			{
+				"useDefaultValue" {
+					$bool default true
+					$string getterName "ShouldUseDefaultValue"
+				}
+				"defaultValue" {$string type "any" $nil default}
+				"layers"
+				{
+					$string type "array"
+					$string valueType "LogLayer"
+				}
+				"bookmarks"
+				{
+					$string type "array"
+					$string valueType "float"
+				}
+			}
+		}
+		"LogLayer"
+		{
+			"children"
+			{
+				"times"
+				{
+					$string type "array"
+					$string valueType "float"
+				}
+				"values"
+				{
+					$string type "array"
+					$string valueType "any"
+				}
+			}
+		}
+		"Group"
+		{
+			"children"
+			{
+				"transform" {$transform default [[0,0,0][1,0,0,0]]}
+				"groups"
+				{
+					$string type "array"
+					$string valueType "Group"
+				}
+				"actors"
+				{
+					$string type "array"
+					$string valueType "Actor"
+				}
+				"visible" {
+					$bool default true
+					$string getterName "IsVisible"
+				}
+			}
+		}
+		"Track"
+		{
+			"children"
+			{
+				"audioClips"
+				{
+					$string type "array"
+					$string valueType "AudioClip"
+				}
+				"filmClips"
+				{
+					$string type "array"
+					$string valueType "FilmClip"
+				}
+				"overlayClips"
+				{
+					$string type "array"
+					$string valueType "OverlayClip"
+				}
+				"muted" {
+					$bool default false
+					$string getterName "IsMuted"
+				}
+				"volume" {$float default 1.0}
+			}
+		}
+		"Session"
+		{
+			"children"
+			{
+				"activeClip" {$int32 default 0}
+				"clips"
+				{
+					$string type "array"
+					$string valueType "FilmClip"
+
+					$string baseName "Clip"
+				}
+				"settings" {$string type "Settings"}
+			}
+		}
+	}
+}
