@@ -1,11 +1,13 @@
 "schema"
 {
+	$array includes [string]["panima.udm"]
 	"types"
 	{
 		"Sound"
 		{
 			"children"
 			{
+				"uniqueId" {$string type "Uuid"}
 				"soundName" {$string default ""}
 				"volume" {$float default 1.0}
 				"pitch" {$float default 1.0}
@@ -15,6 +17,7 @@
 		{
 			"children"
 			{
+				"uniqueId" {$string type "Uuid"}
 				"visible" {
 					$bool default true
 					$string getterName "IsVisible"
@@ -34,6 +37,7 @@
 		{
 			"children"
 			{
+				"uniqueId" {$string type "Uuid"}
 				"timeFrame" {$string type "TimeFrame"}
 				"fadeIn" {$float default 0.0}
 				"fadeOut" {$float default 0.0}
@@ -56,6 +60,7 @@
 		{
 			"children"
 			{
+				"uniqueId" {$string type "Uuid"}
 				"timeFrame" {$string type "TimeFrame"}
 				"sound" {$string type "Sound"}
 				"fadeInTime" {$float default 0.0}
@@ -66,6 +71,7 @@
 		{
 			"children"
 			{
+				"uniqueId" {$string type "Uuid"}
 				"timeFrame" {$string type "TimeFrame"}
 				"material" {$string default ""}
 				"left" {$int32 default 0}
@@ -78,30 +84,17 @@
 				}
 			}
 		}
-		"Channel"
+		"AnimationClip"
 		{
 			"children"
 			{
-				"log" {$string type "Log"}
-				"expression" {$string default ""}
-				"targetPath" {$string default ""}
-			}
-		}
-		"ChannelClip"
-		{
-			"children"
-			{
+				"uniqueId" {$string type "Uuid"}
 				"timeFrame" {$string type "TimeFrame"}
-				"actor"
-				{
-					$string type "reference"
+				"actor" {
+					$string type "Reference"
 					$string referenceType "Actor"
 				}
-				"channels"
-				{
-					$string type "array"
-					$string valueType "Channel"
-				}
+				"animation" {$string type "Animation"}
 			}
 		}
 	}

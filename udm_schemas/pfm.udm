@@ -33,46 +33,10 @@
 		{
 			"children"
 			{
+				"uniqueId" {$string type "Uuid"}
 				"bookmarks" {
 					$string type "array"
 					$string valueType "Bookmark"
-				}
-			}
-		}
-		"Log"
-		{
-			"children"
-			{
-				"useDefaultValue" {
-					$bool default true
-					$string getterName "ShouldUseDefaultValue"
-				}
-				"defaultValue" {$string type "any" $nil default}
-				"layers"
-				{
-					$string type "array"
-					$string valueType "LogLayer"
-				}
-				"bookmarks"
-				{
-					$string type "array"
-					$string valueType "float"
-				}
-			}
-		}
-		"LogLayer"
-		{
-			"children"
-			{
-				"times"
-				{
-					$string type "array"
-					$string valueType "float"
-				}
-				"values"
-				{
-					$string type "array"
-					$string valueType "any"
 				}
 			}
 		}
@@ -80,6 +44,7 @@
 		{
 			"children"
 			{
+				"uniqueId" {$string type "Uuid"}
 				"transform" {$transform default [[0,0,0][1,0,0,0]]}
 				"groups"
 				{
@@ -101,6 +66,7 @@
 		{
 			"children"
 			{
+				"uniqueId" {$string type "Uuid"}
 				"audioClips"
 				{
 					$string type "array"
@@ -116,6 +82,11 @@
 					$string type "array"
 					$string valueType "OverlayClip"
 				}
+				"animationClips"
+				{
+					$string type "array"
+					$string valueType "AnimationClip"
+				}
 				"muted" {
 					$bool default false
 					$string getterName "IsMuted"
@@ -127,13 +98,15 @@
 		{
 			"children"
 			{
-				"activeClip" {$int32 default 0}
+				"uniqueId" {$string type "Uuid"}
+				"activeClip" {
+					$string type "Reference"
+					$string referenceType "FilmClip"
+				}
 				"clips"
 				{
 					$string type "array"
 					$string valueType "FilmClip"
-
-					$string baseName "Clip"
 				}
 				"settings" {$string type "Settings"}
 			}

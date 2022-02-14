@@ -113,7 +113,10 @@
 					$bool default true
 					$string getterName "IsStereoscopic"
 				}
-				"viewportMode" {$string default "360_left_eye"}
+				"viewportMode" {
+					$string type "ViewportMode"
+					$string default "360_left_eye"
+				}
 				"panoramaRange" {$float default 180}
 			}
 		}
