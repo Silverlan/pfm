@@ -6,10 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local function register_type()
-
-end
-
 pfm = pfm or {}
 pfm.udm = pfm.udm or {}
 
@@ -37,6 +33,15 @@ end
 
 local function is_enum_type(schemaType) return schemaType == "enum" or schemaType == "enum_flags" end
 local function initialize_udm_data_from_schema_object(udmData,udmSchemaType,udmSchema)
+	local udmAsset = udmSchemaType:Get("format")
+	if(udmAsset:IsValid()) then
+		local version = udmAsset:GetValue("version",udm.TYPE_UINT32)
+		local type = udmAsset:GetValue("type",udm.TYPE_STRING)
+		udmData:SetValue("assetType",udm.TYPE_STRING,type)
+		udmData:SetValue("assetVersion",udm.TYPE_UINT32,version)
+		udmData = udmData:Add("assetData")
+	end
+
 	local udmSchemaTypes = udmSchema:GetUdmData():Get("types")
 	for name,udmSchemaChild in pairs(udmSchemaType:Get("children"):GetChildren()) do
 		local type = udmSchemaChild:GetValue("type",udm.TYPE_STRING)
@@ -169,12 +174,14 @@ function udm.BaseSchemaType:Initialize(schema,udmData,parent)
 	self.m_changeListeners = {}
 
 	local typeData = schema:FindTypeData(self.TypeName)
+	if(typeData:Get("format"):IsValid()) then self.m_udmAssetData = udmData:Get("assetData") end
+
 	for name,child in pairs(typeData:Get("children"):GetChildren()) do
 		local childType = child:GetValue("type",udm.TYPE_STRING)
 		if(childType ~= nil) then
 			local schemaType = schema:FindTypeData(childType)
 			if(schemaType ~= nil and is_enum_type(schemaType:GetValue("type",udm.TYPE_STRING)) == false) then
-				self.m_typedChildren[name] = udm.create_property_from_schema(schema,childType,self,udmData:Get(name))
+				self.m_typedChildren[name] = udm.create_property_from_schema(schema,childType,self,self:GetUdmData():Get(name))
 			elseif(udm.ascii_type_to_enum(childType) == udm.TYPE_ARRAY) then
 				local childValueType = child:GetValue("valueType",udm.TYPE_STRING)
 				local schemaValueType = schema:FindTypeData(childValueType)
@@ -198,7 +205,8 @@ function udm.BaseSchemaType:OnRemove()
 		else child:OnRemove() end
 	end
 end
-function udm.BaseSchemaType:GetUdmData() return self.m_udmData end
+function udm.BaseSchemaType:GetRootUdmData() return self.m_udmData end
+function udm.BaseSchemaType:GetUdmData() return self.m_udmAssetData or self.m_udmData end
 function udm.BaseSchemaType:GetTypedChildren() return self.m_typedChildren end
 function udm.BaseSchemaType:GetParent() return self.m_parent end
 function udm.BaseSchemaType:AddChangeListener(keyName,listener)
@@ -222,10 +230,12 @@ function udm.BaseSchemaType:CallChangeListeners(keyName,newValue)
 	end
 end
 
-function udm.create_property_from_schema(schema,type,parent,el)
-	el = el or udm.create_element()
-	local res,err = schema:InitializeType(el,type)
-	if(res ~= true) then return false,err end
+function udm.create_property_from_schema(schema,type,parent,el,populate)
+	if(util.is_valid(el) == false or populate == true) then
+		el = el or udm.create_element()
+		local res,err = schema:InitializeType(el,type)
+		if(res ~= true) then return false,err end
+	end
 	local obj = schema:GetLibrary()[type]()
 	obj:Initialize(schema,el,parent)
 	if(obj.GetUniqueId) then schema:GetLibrary().detail.referenceables[tostring(obj:GetUniqueId())] = obj end
@@ -436,7 +446,7 @@ function udm.generate_lua_api_from_schema(schema)
 								el:Resize(el:GetSize() +1)
 								if(schemaValueType ~= nil) then
 									local child = el:Get(el:GetSize() -1)
-									local prop,err = udm.create_property_from_schema(schema,valueType,self,child)
+									local prop,err = udm.create_property_from_schema(schema,valueType,self,child,true)
 									table.insert(self:GetTypedChildren()[name],prop)
 									return prop
 								end
@@ -492,6 +502,7 @@ print("Preview quality: ",session:GetSettings():GetRenderSettings():GetPreviewQu
 local clip = session:AddClip()
 local trackGroup = clip:AddTrackGroup()
 local track = trackGroup:AddTrack()
+
 local animClip = track:AddAnimationClip()
 session:SetActiveClip(clip)
 
@@ -528,7 +539,7 @@ session:RemoveClip(0)]]
 --print(session:GetClip(session:GetActiveClip()):GetTimeFrame():GetScale())
 
 local x = udm.create()
-x:GetAssetData():GetData():SetValue("session",session:GetUdmData())--Merge(session:GetUdmData())
+x:GetAssetData():GetData():SetValue("session",session:GetRootUdmData())--Merge(session:GetUdmData())
 x:SaveAscii("test.udm")
 
 session:Remove()
