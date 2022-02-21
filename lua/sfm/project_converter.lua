@@ -66,7 +66,7 @@ local function log_pfm_project_debug_info(project)
 		end
 	end
 	for _,session in ipairs(project:GetSessions()) do
-		for _,clip in ipairs(session:GetClips():GetTable()) do
+		for _,clip in ipairs(session:GetClips()) do
 			iterate_film_clip(clip)
 		end
 	end
@@ -657,7 +657,7 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 			end
 		end)
 
-		for _,filmClip in ipairs(session:GetClips():GetTable()) do
+		for _,filmClip in ipairs(session:GetClips()) do
 			apply_post_processing(self,project,filmClip)
 		end
 	end

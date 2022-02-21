@@ -79,7 +79,7 @@ function pfm.ProjectManager:LoadProject(fileName)
 		pfm.log("Unable to load project '" .. fileName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return self:CreateNewProject()
 	end
-	local session = project:GetSessions()[1]
+	local session = project:GetSession()
 	if(session == nil) then
 		pfm.log("Unable to initialize project: Project has no session!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		self:CloseProject()
@@ -89,15 +89,21 @@ function pfm.ProjectManager:LoadProject(fileName)
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
 	self.m_projectFileName = fileName
 	self.m_project = project
-	self:LoadAnimationCache(fileName)
+	-- self:LoadAnimationCache(fileName)
 	return util.is_valid(self:InitializeProject(project))
 end
 function pfm.ProjectManager:SaveProject(fileName)
 	local project = self:GetProject()
-	if(project == nil) then return false end
+	if(project == nil) then
+		pfm.log("Failed to save project as '" .. fileName .. "': No project to save!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
 	local success = project:Save(fileName)
-	if(success == false) then return success end
-	self:SaveAnimationCache(fileName)
+	if(success == false) then
+		pfm.log("Failed to save project as '" .. fileName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return success
+	end
+	-- self:SaveAnimationCache(fileName)
 	return success
 end
 function pfm.ProjectManager:GetProjectFileName(projectFileName)
@@ -128,7 +134,7 @@ function pfm.ProjectManager:PrecacheSessionAssets(session)
 	pfm.log("Precaching session assets...",pfm.LOG_CATEGORY_PFM)
 	local track = session:GetFilmTrack()
 	if(track ~= nil) then
-		for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+		for _,filmClip in ipairs(track:GetFilmClips()) do
 			pfm.log("Precaching assets for film clip '" .. tostring(filmClip) .. "'...",pfm.LOG_CATEGORY_PFM)
 			local actors = filmClip:GetActorList()
 			for _,actor in ipairs(actors) do
@@ -152,7 +158,7 @@ function pfm.ProjectManager:WaitForSessionAssets(session)
 	pfm.log("Waiting for session assets...",pfm.LOG_CATEGORY_PFM)
 	local track = session:GetFilmTrack()
 	if(track ~= nil) then
-		for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+		for _,filmClip in ipairs(track:GetFilmClips()) do
 			local actors = filmClip:GetActorList()
 			for _,actor in ipairs(actors) do
 				local component = actor:FindComponent("pfm_model")
@@ -177,7 +183,7 @@ function pfm.ProjectManager:CreateNewProject()
 	self:CloseProject()
 	pfm.log("Creating new project...",pfm.LOG_CATEGORY_PFM)
 	local project = pfm.create_empty_project()
-	local session = project:GetSessions()[1]
+	local session = project:GetSession()
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
 	return util.is_valid(self:InitializeProject(project))
 end
@@ -190,6 +196,10 @@ function pfm.ProjectManager:CloseProject()
 	if(self.m_animationCache ~= nil) then self.m_animationCache:Clear() end
 	self.m_animationCache = nil
 	self.m_animationCacheLoaded = false
+	if(self.m_project) then
+		self.m_project:Close()
+		self.m_project = nil
+	end
 	collectgarbage()
 end
 function pfm.ProjectManager:ImportSFMProject(projectFilePath)
@@ -202,7 +212,7 @@ function pfm.ProjectManager:ImportSFMProject(projectFilePath)
 	end
 	self.m_projectFileName = "projects/" .. file.remove_file_extension(projectFilePath) .. ".pfm"
 	self:ClearAnimationCache()
-	local session = pfmScene:GetSessions()[1]
+	local session = pfmScene:GetSession()
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
 	return util.is_valid(self:InitializeProject(pfmScene))
 end
@@ -252,17 +262,17 @@ function pfm.ProjectManager:InitializeProject(project)
 		local filmTrack = session:GetFilmTrack()
 		if(filmTrack ~= nil) then
 			self.m_animManager:Initialize(filmTrack)
-			filmTrack:GetFilmClipsAttr():AddChangeListener(function(newEl)
+			--[[filmTrack:GetFilmClipsAttr():AddChangeListener(function(newEl)
 				self:OnFilmClipAdded(newEl)
 				self:ReloadGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.
-			end)
+			end)]]
 		end
-		self.m_cbPlayOffset = session:GetSettings():GetPlayheadOffsetAttr():AddChangeListener(function(newOffset)
+		--[[self.m_cbPlayOffset = session:GetSettings():GetPlayheadOffsetAttr():AddChangeListener(function(newOffset)
 			self:SetGameViewOffset(newOffset)
 			self:OnTimeOffsetChanged(newOffset)
-		end)
+		end)]]
 	end
-	self:CacheAnimations()
+	-- self:CacheAnimations()
 	self:OnProjectInitialized(project)
 	debug.stop_profiling_task()
 	return entScene
@@ -319,7 +329,7 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 end
 function pfm.ProjectManager:GetSession()
 	local project = self:GetProject()
-	return (project ~= nil) and project:GetSessions()[1] or nil
+	return (project ~= nil) and project:GetSession() or nil
 end
 function pfm.ProjectManager:GetFrameRate()
 	local session = self:GetSession()

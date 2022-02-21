@@ -60,7 +60,7 @@ function pfm.ProjectPacker:AddSound(snd)
 end
 function pfm.ProjectPacker:AddFilmClip(filmClip)
 	for _,actor in ipairs(filmClip:GetActorList()) do
-		for _,component in ipairs(actor:GetComponents():GetTable()) do
+		for _,component in ipairs(actor:GetComponents()) do
 			local type = component:GetType()
 			if(type == fudm.ELEMENT_TYPE_PFM_MODEL) then
 				local mdlName = component:GetModelName()
@@ -85,12 +85,12 @@ function pfm.ProjectPacker:AddFilmClip(filmClip)
 			end
 		end
 	end
-	for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
-		for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
-			for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+	for _,trackGroup in ipairs(filmClip:GetTrackGroups()) do
+		for _,track in ipairs(trackGroup:GetTracks()) do
+			for _,filmClip in ipairs(track:GetFilmClips()) do
 				self:AddFilmClip(filmClip)
 			end
-			for _,audioClip in ipairs(track:GetAudioClips():GetTable()) do
+			for _,audioClip in ipairs(track:GetAudioClips()) do
 				local sound = audioClip:GetSound()
 				local soundName = sound:GetSoundName()
 				if(#soundName > 0) then self:AddSound(soundName) end
@@ -99,7 +99,7 @@ function pfm.ProjectPacker:AddFilmClip(filmClip)
 	end
 end
 function pfm.ProjectPacker:AddSession(session)
-	for _,filmClip in ipairs(session:GetClips():GetTable()) do
+	for _,filmClip in ipairs(session:GetClips()) do
 		self:AddFilmClip(filmClip)
 	end
 end

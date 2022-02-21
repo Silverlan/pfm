@@ -19,11 +19,9 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
-				"properties"
-				{
-					$string type "array"
-					$string valueType "element"
-				}
+				"name" {$string default ""}
+				"type" {$string default ""}
+				"properties" {$string type "element"}
 			}
 		}
 		"Actor"
@@ -31,6 +29,7 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
+				"name" {$string default ""}
 				"transform" {$stransform default [[0,0,0][1,0,0,0][1,1,1]]}
 				"components"
 				{

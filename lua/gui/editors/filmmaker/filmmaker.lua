@@ -519,9 +519,10 @@ function gui.WIFilmmaker:PackProject(fileName)
 	util.pack_zip_archive(fileName,assetFiles)
 	util.open_path_in_explorer(util.get_addon_path(),fileName)
 end
-function gui.WIFilmmaker:AddActor(actor,filmClip)
-	filmClip:AddActor(actor)
+function gui.WIFilmmaker:AddActor(filmClip)
+	local actor = filmClip:GetScene():AddActor()
 	self:UpdateActor(actor,filmClip)
+	return actor
 end
 function gui.WIFilmmaker:UpdateActor(actor,filmClip,reload)
 	if(reload == true) then
@@ -747,11 +748,11 @@ function gui.WIFilmmaker:InitializeProject(project)
 	if(session ~= nil) then
 		local filmTrack = session:GetFilmTrack()
 		if(filmTrack ~= nil) then
-			filmTrack:GetFilmClipsAttr():AddChangeListener(function(newEl)
+			--[[filmTrack:GetFilmClipsAttr():AddChangeListener(function(newEl)
 				if(util.is_valid(self.m_timeline) == false) then return end
 				self:AddFilmClipElement(newEl)
 				self:ReloadGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.
-			end)
+			end)]]
 
 			-- TODO
 			--[[for _,filmClip in ipairs(filmTrack:GetFilmClips():GetTable()) do
@@ -806,9 +807,10 @@ function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value)
 		return
 	end
 	local transform = actorData:GetTransform()
-	if(propType == "position") then transform:SetPosition(value)
+	if(propType == "position") then transform:SetOrigin(value)
 	elseif(propType == "rotation") then transform:SetRotation(value)
 	elseif(propType == "scale") then transform:SetScale(value) end
+	actorData:SetTransform(transform)
 	self:TagRenderSceneAsDirty()
 end
 function gui.WIFilmmaker:SetActorBoneTransformProperty(actor,propType,value)
@@ -976,11 +978,12 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					if(actor == nil) then return end
 					local path = util.Path(elIcon:GetAsset())
 					path:PopFront()
-					local mdlC = filmmaker:CreateNewActorComponent(actor,"PFMModel",nil,function(mdlC) mdlC:ChangeModel(path:GetString()) end)
+					local mdlC = filmmaker:CreateNewActorComponent(actor,"pfm_model",nil,function(mdlC) actor:ChangeModel(path:GetString()) end)
 					if(mdlC == nil) then return end
-					self:AddActor(actor,filmClip)
+
+					self:UpdateActor(actor,filmClip)
 					local t = actor:GetTransform()
-					t:SetPosition(entGhost:GetPos())
+					t:SetOrigin(entGhost:GetPos())
 					t:SetRotation(entGhost:GetRotation())
 					filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
 
@@ -1007,7 +1010,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 									if(mouseButton == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
 										if(util.is_valid(entActor)) then
 											entActor:RemoveComponent("util_transform")
-											t:SetPosition(entActor:GetPos())
+											t:SetOrigin(entActor:GetPos())
 											t:SetRotation(entActor:GetRotation())
 										end
 										cb:Remove()
@@ -1123,7 +1126,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	end)
 
 	-- Film strip
-	local session = project:GetSessions()[1]
+	local session = project:GetSession()
 	local filmClip = (session ~= nil) and session:GetActiveClip() or nil
 	local filmStrip
 	if(filmClip ~= nil) then
@@ -1144,7 +1147,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 		local trackFilm = session:GetFilmTrack()
 		if(trackFilm ~= nil) then
-			for _,filmClip in ipairs(trackFilm:GetFilmClips():GetTable()) do
+			for _,filmClip in ipairs(trackFilm:GetFilmClips()) do
 				self:AddFilmClipElement(filmClip)
 			end
 		end
@@ -1162,14 +1165,14 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 		local timeFrame = filmClip:GetTimeFrame()
 		local groupSound = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_sound"))
-		local trackGroupSound = filmClip:GetTrackGroups():FindElementsByName("Sound")[1]
+		local trackGroupSound = filmClip:FindTrackGroup("Sound")
 		if(trackGroupSound ~= nil) then
-			for _,track in ipairs(trackGroupSound:GetTracks():GetTable()) do
+			for _,track in ipairs(trackGroupSound:GetTracks()) do
 				--if(track:GetName() == "Music") then
 					local subGroup = groupSound:AddGroup(track:GetName())
 					timeline:AddTimelineItem(subGroup,timeFrame)
 
-					for _,audioClip in ipairs(track:GetAudioClips():GetTable()) do
+					for _,audioClip in ipairs(track:GetAudioClips()) do
 						pfmTimeline:AddAudioClip(subGroup,audioClip)
 					end
 				--end
@@ -1177,22 +1180,22 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		end
 
 		local groupOverlay = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_overlay"))
-		local trackGroupOverlay = filmClip:GetTrackGroups():FindElementsByName("Overlay")[1]
+		local trackGroupOverlay = filmClip:FindTrackGroup("Overlay")
 		if(trackGroupOverlay ~= nil) then
-			for _,track in ipairs(trackGroupOverlay:GetTracks():GetTable()) do
+			for _,track in ipairs(trackGroupOverlay:GetTracks()) do
 				local subGroup = groupOverlay:AddGroup(track:GetName())
 				timeline:AddTimelineItem(subGroup,timeFrame)
 
-				for _,overlayClip in ipairs(track:GetOverlayClips():GetTable()) do
+				for _,overlayClip in ipairs(track:GetOverlayClips()) do
 					pfmTimeline:AddOverlayClip(subGroup,overlayClip)
 				end
 			end
 		end
 
 		local activeBookmarkSet = filmClip:GetActiveBookmarkSet()
-		local bookmarkSet = filmClip:GetBookmarkSets():Get(activeBookmarkSet +1)
+		local bookmarkSet = filmClip:GetBookmarkSet(activeBookmarkSet)
 		if(bookmarkSet ~= nil) then
-			for _,bookmark in ipairs(bookmarkSet:GetBookmarks():GetTable()) do
+			for _,bookmark in ipairs(bookmarkSet:GetBookmarks()) do
 				timeline:AddBookmark(bookmark:GetTimeRange():GetTimeAttr())
 			end
 		end

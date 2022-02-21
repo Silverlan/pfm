@@ -40,9 +40,6 @@ function gui.PFMActorEditor:OnInitialize()
 		pContext:AddItem(locale.get_text("pfm_create_new_actor"),function()
 			if(self:IsValid() == false) then return end
 			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-
-			self:AddActorToScene(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_articulated_actor"),function()
 			gui.open_model_dialog(function(dialogResult,mdlName)
@@ -50,15 +47,13 @@ function gui.PFMActorEditor:OnInitialize()
 				if(self:IsValid() == false) then return end
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"PFMModel",nil,function(mdlC) mdlC:ChangeModel(mdlName) end)
-				self:CreateNewActorComponent(actor,"PFMAnimationSet")
+				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",nil,function(mdlC) actor:ChangeModel(mdlName) end)
+				self:CreateNewActorComponent(actor,"pfm_animation_set")
 				self:CreateNewActorComponent(actor,"model")
 				self:CreateNewActorComponent(actor,"render")
 				self:CreateNewActorComponent(actor,"animated")
 				self:CreateNewActorComponent(actor,"flex")
 				-- self:CreateNewActorComponent(actor,"transform")
-
-				self:AddActorToScene(actor)
 			end)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_prop"),function()
@@ -67,71 +62,59 @@ function gui.PFMActorEditor:OnInitialize()
 				if(self:IsValid() == false) then return end
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"PFMModel",nil,function(mdlC) mdlC:ChangeModel(mdlName) end)
+				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",nil,function(mdlC) actor:ChangeModel(mdlName) end)
 				self:CreateNewActorComponent(actor,"model")
 				self:CreateNewActorComponent(actor,"render")
 				-- self:CreateNewActorComponent(actor,"transform")
-
-				self:AddActorToScene(actor)
 			end)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_camera"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"PFMCamera")
+			self:CreateNewActorComponent(actor,"pfm_camera")
 			-- self:CreateNewActorComponent(actor,"toggle")
 			self:CreateNewActorComponent(actor,"camera")
 			-- self:CreateNewActorComponent(actor,"transform")
-
-			self:AddActorToScene(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_particle_system"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"PFMParticleSystem")
-
-			self:AddActorToScene(actor)
+			self:CreateNewActorComponent(actor,"pfm_particle_system")
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_spot_light"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"PFMSpotLight")
+			self:CreateNewActorComponent(actor,"pfm_light_spot")
 			self:CreateNewActorComponent(actor,"light")
 			self:CreateNewActorComponent(actor,"light_spot")
 			self:CreateNewActorComponent(actor,"radius")
 			self:CreateNewActorComponent(actor,"color")
 			-- self:CreateNewActorComponent(actor,"transform")
-
-			self:AddActorToScene(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_point_light"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"PFMPointLight")
+			self:CreateNewActorComponent(actor,"pfm_light_point")
 			self:CreateNewActorComponent(actor,"light")
 			self:CreateNewActorComponent(actor,"light_point")
 			self:CreateNewActorComponent(actor,"radius")
 			self:CreateNewActorComponent(actor,"color")
 			-- self:CreateNewActorComponent(actor,"transform")
-
-			self:AddActorToScene(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_directional_light"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"PFMDirectionalLight")
+			self:CreateNewActorComponent(actor,"pfm_light_directional")
 			self:CreateNewActorComponent(actor,"light")
 			self:CreateNewActorComponent(actor,"light_directional")
 			self:CreateNewActorComponent(actor,"color")
 			-- self:CreateNewActorComponent(actor,"transform")
-
-			self:AddActorToScene(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_volume"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			local mdlData = self:CreateNewActorComponent(actor,"PFMModel")
-			self:CreateNewActorComponent(actor,"PFMVolumetric")
+			local mdlData = self:CreateNewActorComponent(actor,"pfm_model")
+			self:CreateNewActorComponent(actor,"pfm_volumetric")
 			mdlData:SetModelName("cube")
 
 			-- Calc scene extents
@@ -155,11 +138,9 @@ function gui.PFMActorEditor:OnInitialize()
 			local extents = (max -min) /2.0
 
 			local transform = actor:GetTransform()
-			transform:SetPosition(center)
+			transform:SetOrigin(center)
 			transform:SetRotation(Quaternion())
 			transform:SetScale(extents)
-
-			self:AddActorToScene(actor)
 		end)
 
 		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
@@ -256,8 +237,10 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_actorUniqueIdToTreeElement = {}
 	self.m_tree:AddCallback("OnItemSelectChanged",function(tree,el,selected)
 		local queue = {}
-		for uniqueId,_ in pairs(self.m_dirtyActorEntries) do
-			table.insert(queue,uniqueId)
+		if(self.m_dirtyActorEntries ~= nil) then
+			for uniqueId,_ in pairs(self.m_dirtyActorEntries) do
+				table.insert(queue,uniqueId)
+			end
 		end
 		for _,uniqueId in ipairs(queue) do
 			self:InitializeDirtyActorComponents(uniqueId)
@@ -294,13 +277,12 @@ function gui.PFMActorEditor:CreateNewActor()
 		pfm.create_popup_message(locale.get_text("pfm_popup_create_actor_no_film_clip"))
 		return
 	end
-	local actor = fudm.PFMActor()
+	local actor = pfm.get_project_manager():AddActor(self:GetFilmClip())
 	local actorName = "actor"
 
 	local actorIndex = 1
 	while(filmClip:FindActor(actorName .. actorIndex) ~= nil) do actorIndex = actorIndex +1 end
-	actor:ChangeName(actorName .. actorIndex)
-	actor:SetUniqueId(tostring(util.generate_uuid_v4()))
+	actor:SetName(actorName .. actorIndex)
 
 	local pos = Vector()
 	local rot = Quaternion()
@@ -311,13 +293,12 @@ function gui.PFMActorEditor:CreateNewActor()
 		rot = EulerAngles(0,entCam:GetAngles().y,0):ToQuaternion()
 	end
 	local t = actor:GetTransform()
-	t:SetPosition(pos)
+	t:SetOrigin(pos)
 	t:SetRotation(rot)
 
 	self:AddActor(actor)
 	return actor
 end
-function gui.PFMActorEditor:AddActorToScene(actor) tool.get_filmmaker():AddActor(actor,self:GetFilmClip()) end
 function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateActor,initComponent)
 	local itemActor
 	for elTree,data in pairs(self.m_treeElementToActorData) do
@@ -327,24 +308,18 @@ function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateAc
 		end
 	end
 
-	local component
-	if(fudm[componentType] ~= nil) then component = fudm[componentType]()
-	else
-		component = fudm["PFMEntityComponent"]()
-		component:SetProperty("component_type",fudm.String(componentType))
-	end
+	if(itemActor == nil) then return end
 
-	if(itemActor == nil or component == nil) then return end
-	local actorData = self.m_treeElementToActorData[itemActor]
-	local componentName = component:GetComponentName() .. "_component"
-	local componentIndex = 1
-	while(actor:FindComponent(componentName .. componentIndex) ~= nil) do componentIndex = componentIndex +1 end
-	component:ChangeName((componentIndex == 1) and componentName or (componentName .. componentIndex))
+	include_component(componentType)
+	local componentId = ents.find_component_id(componentType)
+	if(componentId == nil) then pfm.log("Attempted to add unknown entity component '" .. componentType .. "' to actor '" .. tostring(actor) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) return end
+
+	local component = actor:AddComponentType(componentType)
 	if(initComponent ~= nil) then initComponent(component) end
 
-	actor:AddComponent(component)
 	if(updateActor == true) then tool.get_filmmaker():UpdateActor(actor,self:GetFilmClip(),true) end
 
+	local actorData = self.m_treeElementToActorData[itemActor]
 	self:UpdateActorComponentEntries(actorData)
 
 	return component
@@ -510,7 +485,7 @@ function gui.PFMActorEditor:GetAnimationChannel(actor,path,addIfNotExists)
 	local filmClip = self:GetFilmClip()
 	local track = filmClip:FindAnimationChannelTrack()
 	
-	local channelClip = track:GetActorChannelClip(actor,addIfNotExists)
+	local channelClip = track:FindActorAnimationClip(actor,addIfNotExists)
 	if(channelClip == nil) then return end
 	local path = panima.Channel.Path(path)
 	local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(path)
@@ -563,7 +538,7 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 		local track = filmClip:FindAnimationChannelTrack()
 		
 		local animManager = fm:GetAnimationManager()
-		local channelClip = track:GetActorChannelClip(actor,true)
+		local channelClip = track:FindActorAnimationClip(actor,true)
 		local path = panima.Channel.Path(path)
 		local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(path)
 		local componentId = componentName and ents.get_component_id(componentName)
@@ -584,17 +559,15 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 		if(memberInfo ~= nil) then
 			local type = memberInfo.type
 			path = path:ToUri(false)
-			local varType = fudm.udm_type_to_var_type(type)
-			local channel = channelClip:GetChannel(path,varType,true)
-			local log = channel:GetLog()
-			local layer = log:GetLayers():Get(1)
+			local channel = channelClip:GetChannel(path,type,true)
 
 			local time = fm:GetTimeOffset()
 			pfm.log("Adding channel value " .. tostring(value) .. " of type " .. udm.type_to_string(type) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 			local localTime = channelClip:GetTimeFrame():LocalizeTimeOffset(time)
-			layer:InsertValue(localTime,value)
+			local anim = channelClip:GetPanimaAnimation()
 			local channelValue = value
 			if(util.get_type_name(channelValue) == "Color") then channelValue = channelValue:ToVector() end
+			anim:FindChannel(path):AddValue(localTime,channelValue)
 			animManager:SetChannelValue(actor,path,localTime,channelValue,channelClip,type)
 			animManager:SetAnimationsDirty()
 			fm:TagRenderSceneAsDirty()
@@ -661,6 +634,7 @@ function gui.PFMActorEditor:UpdateActorComponentEntries(actorData)
 	if(entActor ~= nil) then self:InitializeDirtyActorComponents(actorData.actor:GetUniqueId(),entActor) end
 end
 function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId,entActor)
+	if(type(uniqueId) ~= "string") then uniqueId = tostring(uniqueId) end
 	if(self.m_dirtyActorEntries == nil or self.m_dirtyActorEntries[uniqueId] == nil) then return end
 	entActor = entActor or ents.find_by_unique_index(uniqueId)
 	if(util.is_valid(entActor) == false) then return end
@@ -669,8 +643,8 @@ function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId,entActor)
 	local itemActor = self.m_actorUniqueIdToTreeElement[uniqueId]
 	if(util.is_valid(itemActor) == false) then return end
 	local actorData = self.m_treeElementToActorData[itemActor]
-	for _,component in ipairs(actorData.actor:GetComponents():GetTable()) do
-		local componentName = component:GetComponentName()
+	for _,component in ipairs(actorData.actor:GetComponents()) do
+		local componentName = component:GetType()
 		local componentId = ents.find_component_id(componentName)
 		if(componentId == nil) then
 			include_component(componentName)
@@ -694,13 +668,13 @@ function gui.PFMActorEditor:OnActorPropertyChanged(entActor)
 	rt:MarkActorAsDirty(entActor)
 end
 function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,component)
-	local componentId = ents.find_component_id(component:GetComponentName())
+	local componentId = ents.find_component_id(component:GetType())
 	if(componentId == nil) then return end
 	actorData.componentData[componentId] = actorData.componentData[componentId] or {
 		items = {}
 	}
 	local componentData = actorData.componentData[componentId]
-	local itemComponent = actorData.componentsEntry:AddItem(component:GetName(),nil,nil,component:GetComponentName())
+	local itemComponent = actorData.componentsEntry:AddItem(component:GetName(),nil,nil,component:GetType())
 	if(component.GetIconMaterial) then
 		itemComponent:AddIcon(component:GetIconMaterial())
 		itemActor:AddIcon(component:GetIconMaterial())

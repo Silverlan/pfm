@@ -23,6 +23,7 @@ pfm.PROJECT_TITLE = "PFM"
 
 include("/util/log.lua")
 include("/udm/udm.lua")
+include("/udm/schema_api.lua")
 include("udm")
 include("math.lua")
 include("unirender.lua")
@@ -31,18 +32,38 @@ include("tree/pfm_tree.lua")
 include("project_packer.lua")
 include("udm_converter.lua")
 
+-- Load and initialize schema
+pfm.udm = pfm.udm or {}
+local schema,err = udm.Schema.load("pfm.udms")
+if(schema == false) then
+	console.print_warning("Failed to load PFM UDM schemas: " .. err)
+	return
+end
+pfm.udm.SCHEMA = schema
+pfm.udm.SCHEMA:SetLibrary(pfm.udm)
+
+local res,err = udm.generate_lua_api_from_schema(pfm.udm.SCHEMA,pfm.udm)
+if(res ~= true) then
+	console.print_warning("Failed to generate PFM UDM API: " .. err)
+	return
+end
+--
+
+include("/udm/pfm_util.lua")
+
 util.register_class("pfm.Project")
 function pfm.Project:__init()
-	self.m_udmRoot = fudm.create_element(fudm.ELEMENT_TYPE_ROOT,"root")
-	self.m_sessions = {}
-	self.m_uniqueId = tostring(util.generate_uuid_v4())
-
 	self:SetName("new_project") -- TODO
 end
 
 function pfm.Project:SetName(name) self.m_projectName = name end
 function pfm.Project:GetName() return self.m_projectName end
-function pfm.Project:GetUniqueId() return self.m_uniqueId end
+
+function pfm.Project:Close()
+	if(self.m_closed) then return end
+	self.m_closed = true
+	self:GetSession():Remove()
+end
 
 function pfm.Project:SaveLegacy(fileName)
 	local f = file.open(fileName,bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
@@ -101,12 +122,13 @@ end
 function pfm.Project:Save(fileName,legacy)
 	if(legacy) then return self:SaveLegacy(fileName) end
 
-	local udmData,msg = pfm.fudm_to_udm(self)
-	if(udmData == false) then return false end
-
+	file.create_path(file.get_file_path(fileName))
 	local f = file.open(fileName,bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
 	if(f == nil) then return false end
-	udmData:Save(f)
+	local udmData = udm.create()
+	udmData:GetAssetData():GetData():SetValue("session",self:GetSession():GetRootUdmData())
+	udmData:SaveAscii(f,udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER)
+	--udmData:Save(f)
 	f:Close()
 
 	return true
@@ -175,27 +197,27 @@ function pfm.Project:Load(fileName)
 		return self:LoadLegacy(f,fileName)
 	end
 	debug.start_profiling_task("pfm_load")
-	local fudmRoot,sessions = pfm.udm_to_fudm(f)
+
+	local udmFile,err = udm.load(f)
 	f:Close()
+	if(udmFile == false) then
+		debug.stop_profiling_task()
+		return false,err
+	end
+	local udmData = udmFile:GetAssetData():GetData()
+	if(udmData:Get("session"):IsValid() == false) then
+		debug.stop_profiling_task()
+		return false,"Project file contains no session!"
+	end
+	local session = udm.create_property_from_schema(pfm.udm.SCHEMA,"Session",nil,udmData:Get("session"):ClaimOwnership())
 	debug.stop_profiling_task()
-	if(fudmRoot == false) then return false end
-	self.m_udmRoot = fudmRoot
-	self.m_sessions = sessions
+
+	self.m_session = session
 	return true
 end
 
-function pfm.Project:GetSessions() return self.m_sessions end
-
-function pfm.Project:AddSession(session)
-	if(type(session) == "string") then
-		local name = session
-		session = fudm.create_element(fudm.ELEMENT_TYPE_PFM_SESSION)
-		session:ChangeName(name)
-	end
-	self:GetUDMRootNode():AddChild(session)
-	table.insert(self.m_sessions,session)
-	return session
-end
+function pfm.Project:SetSession(session) self.m_session = session end
+function pfm.Project:GetSession() return self.m_session end
 
 function pfm.Project:GetUDMRootNode() return self.m_udmRoot end
 
@@ -217,9 +239,7 @@ end
 
 function pfm.Project:CollectAssetFiles()
 	local packer = pfm.ProjectPacker()
-	for _,session in ipairs(self:GetSessions()) do
-		packer:AddSession(session)
-	end
+	packer:AddSession(self:GetSession())
 	packer:AddMap(game.get_map_name())
 	-- TODO: Pack project file
 	-- TODO: Pack audio files
@@ -234,33 +254,28 @@ end
 
 pfm.create_empty_project = function()
 	local project = pfm.create_project()
+	local session = udm.create_property_from_schema(pfm.udm.SCHEMA,"Session")
+	project:SetSession(session)
+	
+	local filmClip = session:AddClip()
+	filmClip:SetName("new_project")
+	session:SetActiveClip(filmClip)
 
-	local session = project:AddSession("session")
-	local filmClip = fudm.create_element(fudm.ELEMENT_TYPE_PFM_FILM_CLIP)
-	filmClip:ChangeName("new_project")
-	session:GetClips():PushBack(filmClip)
-	session:SetProperty("activeClip",fudm.create_reference(filmClip))
+	local trackGroup = filmClip:AddTrackGroup()
+	trackGroup:SetName("subClipTrackGroup")
 
-	local subClipTrackGroup = fudm.create_element(fudm.ELEMENT_TYPE_PFM_TRACK_GROUP)
-	subClipTrackGroup:ChangeName("subClipTrackGroup")
-	filmClip:GetTrackGroupsAttr():PushBack(subClipTrackGroup)
+	local track = trackGroup:AddTrack()
+	track:SetName("Film")
 
-	local filmTrack = fudm.create_element(fudm.ELEMENT_TYPE_PFM_TRACK)
-	filmTrack:ChangeName("Film")
-	subClipTrackGroup:GetTracksAttr():PushBack(filmTrack)
-
-	local shot1 = filmTrack:AddFilmClip("shot1")
+	local shot1 = track:AddFilmClip("shot1")
 	shot1:GetTimeFrame():SetDuration(60.0)
 	filmClip:GetTimeFrame():SetDuration(60.0)
 
-	local channelTrackGroup = fudm.create_element(fudm.ELEMENT_TYPE_PFM_TRACK_GROUP)
-	channelTrackGroup:ChangeName("channelTrackGroup")
-	shot1:GetTrackGroupsAttr():PushBack(channelTrackGroup)
+	local channelTrackGroup = shot1:AddTrackGroup()
+	channelTrackGroup:SetName("channelTrackGroup")
 
-	local animSetEditorChannelsTrack = fudm.create_element(fudm.ELEMENT_TYPE_PFM_TRACK)
-	animSetEditorChannelsTrack:ChangeName("animSetEditorChannels")
-	channelTrackGroup:GetTracksAttr():PushBack(animSetEditorChannelsTrack)
-
+	local animSetEditorChannelsTrack = channelTrackGroup:AddTrack()
+	animSetEditorChannelsTrack:SetName("animSetEditorChannels")
 	return project
 end
 
@@ -292,16 +307,16 @@ end
 pfm.find_inanimate_actors = function(session)
 	local function get_film_clips(filmClip,filmClips)
 		filmClips[filmClip] = true
-		for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
-			for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
-				for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+		for _,trackGroup in ipairs(filmClip:GetTrackGroups()) do
+			for _,track in ipairs(trackGroup:GetTracks()) do
+				for _,filmClip in ipairs(track:GetFilmClips()) do
 					get_film_clips(filmClip,filmClips)
 				end
 			end
 		end
 	end
 	local filmClips = {}
-	for _,clip in ipairs(session:GetClips():GetTable()) do
+	for _,clip in ipairs(session:GetClips()) do
 		get_film_clips(clip,filmClips)
 	end
 	local filmClipList = {}
@@ -311,10 +326,10 @@ pfm.find_inanimate_actors = function(session)
 
 	local iteratedChannels = {}
 	local function collect_actors(filmClip,actors)
-		for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
-			for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
-				for _,channelClip in ipairs(track:GetChannelClips():GetTable()) do
-					for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
+		for _,trackGroup in ipairs(filmClip:GetTrackGroups()) do
+			for _,track in ipairs(trackGroup:GetTracks()) do
+				for _,channelClip in ipairs(track:GetChannelClips()) do
+					for _,channel in ipairs(channelClip:GetChannels()) do
 						if(iteratedChannels[channel] == nil) then
 							iteratedChannels[channel] = true
 							local el = channel:GetToElement()

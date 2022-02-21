@@ -49,7 +49,7 @@ function fudm.PFMFilmClip:FindEntity()
 end
 
 function fudm.PFMFilmClip:FindActor(name)
-	for _,actor in ipairs(self:GetActors():GetTable()) do
+	for _,actor in ipairs(self:GetActors()) do
 		if(actor:GetType() == fudm.ELEMENT_TYPE_PFM_GROUP) then
 			local el = actor:FindActor(name)
 			if(el ~= nil) then return el end
@@ -58,7 +58,7 @@ function fudm.PFMFilmClip:FindActor(name)
 end
 
 function fudm.PFMFilmClip:FindActorByUniqueId(uniqueId)
-	for _,actor in ipairs(self:GetActors():GetTable()) do
+	for _,actor in ipairs(self:GetActors()) do
 		if(actor:GetType() == fudm.ELEMENT_TYPE_PFM_GROUP) then
 			local el = actor:FindActorByUniqueId(uniqueId)
 			if(el ~= nil) then return el end
@@ -67,7 +67,7 @@ function fudm.PFMFilmClip:FindActorByUniqueId(uniqueId)
 end
 
 function fudm.PFMFilmClip:FindTrackGroup(name)
-	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do
+	for _,trackGroup in ipairs(self:GetTrackGroups()) do
 		if(trackGroup:GetName() == name) then return trackGroup end
 	end
 end
@@ -83,7 +83,7 @@ end
 function fudm.PFMFilmClip:SetPlaybackOffset(offset,filter)
 	if(self:GetTimeFrame():IsInTimeFrame(offset) == false) then return end
 	local localOffset = self:LocalizeOffset(offset)
-	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do
+	for _,trackGroup in ipairs(self:GetTrackGroups()) do
 		trackGroup:SetPlaybackOffset(localOffset,offset,filter)
 	end
 end
@@ -92,9 +92,9 @@ function fudm.PFMFilmClip:LocalizeOffset(offset) return self:GetTimeFrame():Loca
 function fudm.PFMFilmClip:LocalizeTimeOffset(offset) return self:GetTimeFrame():LocalizeTimeOffset(offset) end
 
 function fudm.PFMFilmClip:GetChildFilmClip(offset)
-	for _,trackGroup in ipairs(self:GetTrackGroups():GetTable()) do
-		for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
-			for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+	for _,trackGroup in ipairs(self:GetTrackGroups()) do
+		for _,track in ipairs(trackGroup:GetTracks()) do
+			for _,filmClip in ipairs(track:GetFilmClips()) do
 				if(filmClip:GetTimeFrame():IsInTimeFrame(offset)) then return filmClip end
 			end
 		end

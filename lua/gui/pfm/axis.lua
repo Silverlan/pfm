@@ -35,7 +35,8 @@ function gui.Axis:GetAxis() return self.m_axis end
 function gui.Axis:IsHorizontal() return self.m_horizontal end
 function gui.Axis:IsVertical() return self:IsHorizontal() == false end
 function gui.Axis:AttachElementToValue(el,value)
-	local itemData = {}
+	-- TODO
+	--[[local itemData = {}
 	itemData.element = el
 	itemData.value = value
 	itemData.callbacks = {
@@ -44,18 +45,20 @@ function gui.Axis:AttachElementToValue(el,value)
 		end)
 	}
 	table.insert(self.m_items,itemData)
-	self:ScheduleUpdate()
+	self:ScheduleUpdate()]]
 end
-function gui.Axis:AttachElementToRange(el,startValue,lengthValue)
+function gui.Axis:AttachElementToRange(el,timeFrame)
 	local itemData = {}
 	itemData.element = el
-	itemData.value = startValue
-	itemData.lengthValue = lengthValue
+	itemData.value = timeFrame:GetStart()
+	itemData.lengthValue = timeFrame:GetDuration()
 	itemData.callbacks = {
-		startValue:AddChangeListener(function(newValue)
+		timeFrame:AddChangeListener("start",function(newValue)
+			itemData.value = newValue
 			self:UpdateItem(itemData)
 		end),
-		lengthValue:AddChangeListener(function(newValue)
+		timeFrame:AddChangeListener("duration",function(newValue)
+			itemData.lengthValue = newValue
 			self:UpdateItem(itemData)
 		end)
 	}
@@ -75,7 +78,7 @@ end
 function gui.Axis:UpdateItem(itemData)
 	local axis = self:GetAxis()
 	if(itemData.lengthValue == nil) then
-		local v = itemData.value:GetValue()
+		local v = itemData.value
 		local x = axis:ValueToXOffset(v)
 		local extents = self:IsHorizontal() and itemData.element:GetWidth() or itemData.element:GetHeight()
 		x = x -extents /2
@@ -85,8 +88,8 @@ function gui.Axis:UpdateItem(itemData)
 		else pos.y = self:GetAbsolutePos().y +x end
 		itemData.element:SetAbsolutePos(pos)
 	else
-		local startOffset = itemData.value:GetValue()
-		local endOffset = startOffset +itemData.lengthValue:GetValue()
+		local startOffset = itemData.value
+		local endOffset = startOffset +itemData.lengthValue
 		local xStart = axis:ValueToXOffset(startOffset)
 		local xEnd = axis:ValueToXOffset(endOffset)
 

@@ -43,19 +43,22 @@ function ents.PFMTrack:Setup(trackData,trackGroup,projectC)
 
 	local startTime = math.huge
 	local endTime = -math.huge
-	for _,filmClip in ipairs(trackData:GetFilmClips():GetTable()) do
+
+	for _,filmClip in ipairs((trackData.TypeName == "Session") and trackData:GetClips() or trackData:GetFilmClips()) do
 		local timeFrame = filmClip:GetTimeFrame()
 		local clipStart = timeFrame:GetStart()
 		local clipEnd = timeFrame:GetEnd()
 		startTime = math.min(startTime,clipStart)
 		endTime = math.max(endTime,clipEnd)
 	end
-	for _,audioClip in ipairs(trackData:GetAudioClips():GetTable()) do
-		local timeFrame = audioClip:GetTimeFrame()
-		local clipStart = timeFrame:GetStart()
-		local clipEnd = timeFrame:GetEnd()
-		startTime = math.min(startTime,clipStart)
-		endTime = math.max(endTime,clipEnd)
+	if(trackData.TypeName ~= "Session") then
+		for _,audioClip in ipairs(trackData:GetAudioClips()) do
+			local timeFrame = audioClip:GetTimeFrame()
+			local clipStart = timeFrame:GetStart()
+			local clipEnd = timeFrame:GetEnd()
+			startTime = math.min(startTime,clipStart)
+			endTime = math.max(endTime,clipEnd)
+		end
 	end
 	if(startTime == math.huge or endTime == -math.huge) then
 		startTime = 0.0
@@ -71,21 +74,29 @@ function ents.PFMTrack:SetKeepClipsAlive(keepAlive) self.m_keepClipsAlive = keep
 
 function ents.PFMTrack:OnOffsetChanged(offset,gameViewFlags)
 	-- Update film and channel clips
-	for _,clipSet in ipairs({self:GetTrackData():GetFilmClips():GetTable(),self:GetTrackData():GetChannelClips():GetTable(),self:GetTrackData():GetAudioClips():GetTable()}) do
+	local trackData = self:GetTrackData()
+	local clipSets = {}
+	if(trackData.TypeName == "Session") then table.insert(clipSets,trackData:GetClips())
+	else
+		table.insert(clipSets,trackData:GetFilmClips())
+		table.insert(clipSets,trackData:GetAnimationClips())
+		table.insert(clipSets,trackData:GetAudioClips())
+	end
+	for _,clipSet in ipairs(clipSets) do
 		for _,clip in ipairs(clipSet) do
 			local timeFrame = clip:GetTimeFrame()
 			if(timeFrame:IsInTimeFrame(offset)) then
 				if(util.is_valid(self.m_activeClips[clip]) == false) then
-					if(clip:GetType() == fudm.ELEMENT_TYPE_PFM_FILM_CLIP) then
+					if(clip.TypeName == "FilmClip") then
 						self.m_activeClips[clip] = self:CreateFilmClip(clip)
-					elseif(clip:GetType() == fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP) then
+					elseif(clip.TypeName == "AnimationClip") then
 						-- self.m_activeClips[clip] = self:CreateChannelClip(clip) -- Obsolete?
-					elseif(clip:GetType() == fudm.ELEMENT_TYPE_PFM_AUDIO_CLIP) then
+					elseif(clip.TypeName == "AudioClip") then
 						self.m_activeClips[clip] = self:CreateAudioClip(clip)
-					elseif(clip:GetType() == fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP) then
+					elseif(clip.TypeName == "OverlayClip") then
 						self.m_activeClips[clip] = self:CreateOverlayClip(clip)
 					else
-						pfm.log("Unsupported clip type '" .. clip:GetTypeName() .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME)
+						pfm.log("Unsupported clip type '" .. clip.TypeName .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME)
 					end
 				end
 			elseif(util.is_valid(self.m_activeClips[clip])) then

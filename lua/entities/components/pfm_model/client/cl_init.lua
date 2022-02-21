@@ -6,7 +6,13 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.PFMModel",BaseEntityComponent)
+local Component = util.register_class("ents.PFMModel",BaseEntityComponent)
+
+Component:RegisterMember("flexControllerScale",udm.TYPE_FLOAT,1.0,{
+	min = 0.0,
+	max = 100.0
+})
+Component:RegisterMember("flexControllerLimitsEnabled",udm.TYPE_BOOLEAN,true)
 
 local cvPanima = console.get_convar("pfm_experimental_enable_panima_for_flex_and_skeletal_animations")
 function ents.PFMModel:Initialize()
@@ -40,8 +46,7 @@ function ents.PFMModel:InitModel()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	local mdl = (mdlC ~= nil) and mdlC:GetModel() or nil
 	if(mdl == nil) then return end
-	local bones = modelData:GetBoneList():GetTable()
-	local animSetC = (#bones > 0) and self:AddEntityComponent("pfm_animation_set") or nil
+	local animSetC = (not mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE)) and self:AddEntityComponent("pfm_animation_set") or nil
 	if(animSetC == nil) then return end -- TODO: What if flexes, but no bones? (Animation component shouldn't be needed in this case)
 	animSetC:Setup(self:GetActorData())
 
@@ -84,7 +89,7 @@ function ents.PFMModel:InitModel()
 		end)]]
 	end
 
-	for _,bone in ipairs(bones) do
+	--[[for _,bone in ipairs(bones) do
 		bone = bone:GetTarget()
 		local boneName = bone:GetName()
 		local boneId = mdl:LookupBone(boneName)
@@ -133,7 +138,7 @@ function ents.PFMModel:InitModel()
 	table.insert(self.m_listeners,modelData:GetFlexControllerScaleAttr():AddChangeListener(function(newScale)
 		local flexC = self:GetEntity():GetComponent(ents.COMPONENT_FLEX)
 		if(flexC ~= nil) then flexC:SetFlexControllerScale(newScale) end
-	end))
+	end))]]
 end
 function ents.PFMModel:GetModelData() return self.m_mdlInfo end
 function ents.PFMModel:GetActorData() return self.m_actorData end
@@ -171,7 +176,7 @@ function ents.PFMModel:UpdateModel()
 	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil) then return end
 	local mdlInfo = self.m_mdlInfo
-	mdlC:SetSkin(mdlInfo:GetSkin())
+	mdlC:SetSkin(mdlInfo:GetMemberValue("skin") or 0)
 
 	local mdl = mdlC:GetModel()
 	if(mdl == nil) then return end
@@ -203,12 +208,12 @@ function ents.PFMModel:UpdateModel()
 				end
 			end
 		end
-	end]]
+	end
 
 	local globalBgIdx = mdlInfo:GetBodyGroup()
 	for bgIdx,bgMdlIdx in ipairs(self:GetBodyGroups(globalBgIdx)) do
 		mdlC:SetBodyGroup(bgIdx -1,bgMdlIdx)
-	end
+	end]]
 end
 
 function ents.PFMModel:Setup(actorData,mdlInfo)
@@ -217,12 +222,11 @@ function ents.PFMModel:Setup(actorData,mdlInfo)
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil) then return end
-	table.insert(self.m_listeners,mdlInfo:GetModelNameAttr():AddChangeListener(function(newModel)
+	table.insert(self.m_listeners,mdlInfo:AddChangeListener("model",function(newModel)
 		local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 		if(mdlC ~= nil) then mdlC:SetModel(mdlName) end
 	end))
-	table.insert(self.m_listeners,mdlInfo:GetSkinAttr():AddChangeListener(function(newSkin) ent:SetSkin(newSkin) end))
-
-	mdlC:SetModel(mdlInfo:GetModelName())
+	table.insert(self.m_listeners,mdlInfo:AddChangeListener("skin",function(newSkin) ent:SetSkin(newSkin) end))
+	mdlC:SetModel(mdlInfo:GetMemberValue("model") or "")
 end
 ents.COMPONENT_PFM_MODEL = ents.register_component("pfm_model",ents.PFMModel)

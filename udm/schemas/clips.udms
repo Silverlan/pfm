@@ -1,6 +1,6 @@
 "schema"
 {
-	$array includes [string]["panima.udm"]
+	$array includes [string]["panima"]
 	"types"
 	{
 		"Sound"
@@ -18,6 +18,7 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
+				"name" {$string default ""}
 				"visible" {
 					$bool default true
 					$string getterName "IsVisible"
@@ -38,7 +39,12 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
+				"name" {$string default ""}
 				"timeFrame" {$string type "TimeFrame"}
+				"camera" {
+					$string type "Reference"
+					$string referenceType "EntityComponent"
+				}
 				"fadeIn" {$float default 0.0}
 				"fadeOut" {$float default 0.0}
 				"bookmarkSets"
@@ -61,6 +67,7 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
+				"name" {$string default ""}
 				"timeFrame" {$string type "TimeFrame"}
 				"sound" {$string type "Sound"}
 				"fadeInTime" {$float default 0.0}
@@ -72,6 +79,7 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
+				"name" {$string default ""}
 				"timeFrame" {$string type "TimeFrame"}
 				"material" {$string default ""}
 				"left" {$int32 default 0}
@@ -89,6 +97,7 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
+				"name" {$string default ""}
 				"timeFrame" {$string type "TimeFrame"}
 				"actor" {
 					$string type "Reference"

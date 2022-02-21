@@ -79,8 +79,8 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 ]]
 	local track = filmClip:FindAnimationChannelTrack()
 	if(track ~= nil) then
-		for _,channelClip in ipairs(track:GetChannelClips():GetTable()) do
-			for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
+		for _,channelClip in ipairs(track:GetAnimationClips()) do
+			for _,channel in ipairs(channelClip:GetChannels()) do
 				local toAttribute = channel:GetToAttribute()
 				local toElement = channel:GetToElement()
 				toElement = (toElement ~= nil) and toElement:FindParentElement() or nil
@@ -103,7 +103,7 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 
 	self:InitializeActors()
 
-	for _,trackGroupData in ipairs(filmClip:GetTrackGroups():GetTable()) do
+	for _,trackGroupData in ipairs(filmClip:GetTrackGroups()) do
 		if(trackGroupData:IsMuted() == false) then
 			self:CreateTrackGroup(trackGroupData)
 		end
@@ -113,7 +113,7 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 end
 
 function ents.PFMFilmClip:UpdateCamera()
-	local cam = self:GetClipData():GetProperty("camera")
+	local cam = self:GetClipData():GetCamera()
 	if(cam ~= nil) then
 		local entCam = self:GetActor(cam)
 		self.m_camera = entCam and entCam:GetComponent("pfm_camera") or entCam

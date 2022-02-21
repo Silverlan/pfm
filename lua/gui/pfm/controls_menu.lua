@@ -145,17 +145,13 @@ function gui.PFMControlsMenu:SetValue(identifier,value)
 	else ctrl.element:SetValue(value) end
 end
 function gui.PFMControlsMenu:LinkToUDMProperty(identifier,o,propName,translateControlValue,translatePropertyValue)
-	local prop = o:GetProperty(propName)
-	if(prop == nil) then
-		error(propName .. " is not a valid property of " .. tostring(o))
-	end
-	local default = prop:GetValue()
+	local default = o:GetPropertyValue(propName)
 
 	local el = self.m_controls[identifier].element
 	local isDropDownMenu = (util.is_valid(el) and el:GetClass() == "widropdownmenu")
 	if(isDropDownMenu) then default = tostring(default) end
 
-	prop:AddChangeListener(function(newValue)
+	o:AddChangeListener(propName,function(newValue)
 		if(self.m_skipPropCallback ~= nil and self.m_skipPropCallback[identifier] == true) then return end
 		if(isDropDownMenu) then newValue = tostring(newValue) end
 		if(translatePropertyValue) then newValue = translatePropertyValue(newValue) end
@@ -163,20 +159,27 @@ function gui.PFMControlsMenu:LinkToUDMProperty(identifier,o,propName,translateCo
 	end)
 
 	self:SetDefault(identifier,default)
-	self.m_controls[identifier].property = prop
+	self.m_controls[identifier].parentProperty = o
+	self.m_controls[identifier].propertyName = propName
 	self.m_controls[identifier].controlValueToPropertyValue = translateControlValue
 end
 function gui.PFMControlsMenu:OnValueChanged(identifier,value)
-	if(self.m_controls[identifier] == nil or self.m_controls[identifier].property == nil) then return end
-	local prop = self.m_controls[identifier].property
-	local type = prop:GetType()
-	if(type == fudm.ATTRIBUTE_TYPE_FLOAT or type == fudm.ATTRIBUTE_TYPE_TIME) then value = tonumber(value) end
-	if(type == fudm.ATTRIBUTE_TYPE_INT or type == fudm.ATTRIBUTE_TYPE_UINT8 or type == fudm.ATTRIBUTE_TYPE_UINT64) then value = math.round(tonumber(value)) end
-	if(type == fudm.ATTRIBUTE_TYPE_BOOL) then value = toboolean(value) end
+	if(self.m_controls[identifier] == nil or self.m_controls[identifier].propertyName == nil) then return end
+
+	local parent = self.m_controls[identifier].parentProperty
+	local propName = self.m_controls[identifier].propertyName
+	local udmType = parent:GetPropertyUdmType(propName)
+	if(udmType == udm.TYPE_INVALID and udm.Schema.is_enum_type(parent:GetPropertyType(propName))) then udmType = udm.TYPE_INT32 end
+	if(udmType ~= udm.TYPE_INVALID) then
+		if(udmType == udm.TYPE_BOOLEAN) then value = toboolean(value)
+		elseif(udm.is_integral_type(udmType)) then value = toint(value)
+		elseif(udm.is_floating_point_type(udmType)) then value = tonumber(value) end
+	end
+
 	self.m_skipPropCallback = self.m_skipPropCallback or {}
 	self.m_skipPropCallback[identifier] = true
 	if(self.m_controls[identifier].controlValueToPropertyValue) then value = self.m_controls[identifier].controlValueToPropertyValue(value) end
-	prop:SetValue(value)
+	parent:SetPropertyValue(propName,value)
 	self.m_skipPropCallback[identifier] = nil
 end
 function gui.PFMControlsMenu:AddHeader(title)

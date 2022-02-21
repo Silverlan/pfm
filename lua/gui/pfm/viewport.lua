@@ -670,7 +670,7 @@ function gui.PFMViewport:InitializeCameraControls()
 		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_change_scene_camera"))
 		local pm = pfm.get_project_manager()
 		local session = (pm ~= nil) and pm:GetSession() or nil
-		local filmClip = (session ~= nil) and session:GetFilmClip(pm:GetTimeOffset()) or nil
+		local filmClip = (session ~= nil) and session:FindClipAtTimeOffset(pm:GetTimeOffset()) or nil
 		if(filmClip ~= nil) then
 			local actorList = filmClip:GetActorList()
 			for _,actor in ipairs(actorList) do

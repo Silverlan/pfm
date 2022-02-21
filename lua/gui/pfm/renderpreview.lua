@@ -500,8 +500,8 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		else self.m_ctrlResolution:SetText(text) end
 		ctrlResolutionWrapper:UpdateText()
 	end
-	settings:GetWidthAttr():AddChangeListener(update_resolution)
-	settings:GetHeightAttr():AddChangeListener(update_resolution)
+	--settings:GetWidthAttr():AddChangeListener(update_resolution)
+	--settings:GetHeightAttr():AddChangeListener(update_resolution)
 
 	local w = settings:GetWidth()
 	local h = settings:GetHeight()

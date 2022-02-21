@@ -1,5 +1,6 @@
 "schema"
 {
+	$array includes [string]["pragma"]
 	"types"
 	{
 		"ViewportMode"
@@ -27,6 +28,12 @@
 		{
 			$string type "enum"
 			$array values [string]["cpu","gpu"]
+		}
+
+		"DenoiseMode"
+		{
+			$string type "enum"
+			$array values [string]["none","fast","detailed","optix","oidn"]
 		}
 
 		"PreviewQuality"
@@ -64,8 +71,16 @@
 				"numberOfFrames" {$uint32 default 1}
 				"colorTransform" {$string default "filmic-blender"}
 				"colorTransformLook" {$string default "Medium Contrast"}
-				"outputFormat" {$string default "png"}
-				"denoiseMode" {$string default "detailed"}
+				"outputFormat"
+				{
+					$string type "ImageFormat"
+					$string default "png"
+				}
+				"denoiseMode"
+				{
+					$string type "DenoiseMode"
+					$string default "detailed"
+				}
 				"renderWorld" {
 					$bool default true
 					$string getterName "ShouldRenderWorld"

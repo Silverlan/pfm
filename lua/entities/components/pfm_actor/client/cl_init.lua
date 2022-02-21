@@ -67,13 +67,9 @@ function ents.PFMActorComponent:OnEntitySpawn()
 	if(actorData == nil) then return end
 	local ent = self:GetEntity()
 	ent:SetPose(actorData:GetAbsolutePose())
-	local t = actorData:GetTransform()
 	local update_pose = function() self:UpdatePose() end
-	table.insert(self.m_listeners,t:GetPositionAttr():AddChangeListener(update_pose))
-	table.insert(self.m_listeners,t:GetRotationAttr():AddChangeListener(update_pose))
-	table.insert(self.m_listeners,t:GetScaleAttr():AddChangeListener(update_pose))
-
-	table.insert(self.m_listeners,actorData:GetVisibleAttr():AddChangeListener(function(visible) self:UpdateRenderMode() end))
+	table.insert(self.m_listeners,actorData:AddChangeListener("transform",update_pose))
+	table.insert(self.m_listeners,actorData:AddChangeListener("visible",function(visible) self:UpdateRenderMode() end))
 end
 
 function ents.PFMActorComponent:UpdatePose()
@@ -175,7 +171,7 @@ function ents.PFMActorComponent:UpdateOperators()
 	-- TODO: Operators should be deprecated
 	local actorData = self:GetActorData()
 	if(actorData == nil) then return end
-	local operators = actorData:GetOperators():GetTable()
+	--[[local operators = actorData:GetOperators():GetTable()
 	for _,op in ipairs(operators) do
 		local slave = op:GetSlave()
 		local slaveTarget = (slave ~= nil) and slave:GetTarget() or nil
@@ -201,7 +197,7 @@ function ents.PFMActorComponent:UpdateOperators()
 				slaveTargetTransform:SetPose(pose)
 			end
 		end
-	end
+	end]]
 	--[[local actorData = self:GetActorData()
 	if(actorData == nil) then return end
 	local operators = actorData:GetOperators()
@@ -264,10 +260,9 @@ function ents.PFMActorComponent:ApplyComponentMemberValue(path)
 	local actorData = self:GetActorData()
 	local componentData = actorData:FindComponent(componentName)
 	if(componentData == nil) then return end
-	local props = componentData:GetProperty("properties")
-	local prop = props:GetProperty(componentPath:GetString())
-	if(prop == nil) then return end
-	self:GetEntity():SetMemberValue(path,prop:GetValue())
+	local val = componentData:GetMemberValue(componentPath:GetString())
+	if(val == nil) then return end
+	self:GetEntity():SetMemberValue(path,val)
 end
 
 function ents.PFMActorComponent:Setup(actorData)
@@ -276,32 +271,23 @@ function ents.PFMActorComponent:Setup(actorData)
 	self:GetEntity():SetUuid(actorData:GetUniqueId())
 
 	pfm.log("Initializing " .. #actorData:GetComponents() .. " components for actor '" .. self:GetEntity():GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
-	for _,value in ipairs(actorData:GetComponents():GetTable()) do
+	for _,value in ipairs(actorData:GetComponents()) do
 		local componentData = value
-		local err
-		if(componentData.GetComponentName == nil) then
-			err = "Component is missing method 'GetComponentName'"
-		end
-		if(err ~= nil) then
-			pfm.log("Attempted to add malformed component '" .. componentData:GetTypeName() .. "' to actor '" .. self:GetEntity():GetName() .. "': " .. err .. "!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_ERROR)
-		else
-			local componentName = componentData:GetComponentName()
-			local c = self:AddEntityComponent(componentName)
-			if(c == nil) then pfm.log("Attempted to add unknown component '" .. componentData:GetComponentName() .. "' to actor '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
-			elseif(c.Setup ~= nil) then c:Setup(actorData,componentData) end
+		local componentName = componentData:GetType()
+		local c = self:AddEntityComponent(componentName)
+		if(c == nil) then pfm.log("Attempted to add unknown component '" .. componentData:GetComponentName() .. "' to actor '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+		elseif(c.Setup ~= nil) then c:Setup(actorData,componentData) end
 
-			-- Initialize component member values
-			local props = componentData:GetProperty("properties")
-			local memberIdx = 0
-			local memberInfo = (c ~= nil) and c:GetMemberInfo(memberIdx) or nil
-			while(memberInfo ~= nil) do
-				local prop = props:GetProperty(memberInfo.name)
-				if(prop ~= nil) then
-					c:SetMemberValue(memberInfo.name,prop:GetValue())
-				end
-				memberIdx = memberIdx +1
-				memberInfo = c:GetMemberInfo(memberIdx)
+		-- Initialize component member values
+		local memberIdx = 0
+		local memberInfo = (c ~= nil) and c:GetMemberInfo(memberIdx) or nil
+		while(memberInfo ~= nil) do
+			local val = componentData:GetMemberValue(memberInfo.name)
+			if(val ~= nil) then
+				c:SetMemberValue(memberInfo.name,val)
 			end
+			memberIdx = memberIdx +1
+			memberInfo = c:GetMemberInfo(memberIdx)
 		end
 	end
 end

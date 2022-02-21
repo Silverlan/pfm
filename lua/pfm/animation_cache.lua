@@ -32,7 +32,7 @@ function pfm.SceneAnimationCache:FrameOffsetToTimeOffset(frameIndex)
 end
 
 function pfm.SceneAnimationCache:GetFilmClip(frameIndex)
-	local filmClip = self.m_session:GetFilmClip(self:FrameOffsetToTimeOffset(frameIndex))
+	local filmClip = self.m_session:FindClipAtTimeOffset(self:FrameOffsetToTimeOffset(frameIndex))
 	local animChannelTrack = (filmClip ~= nil) and filmClip:FindAnimationChannelTrack() or nil
 	return filmClip,animChannelTrack
 end

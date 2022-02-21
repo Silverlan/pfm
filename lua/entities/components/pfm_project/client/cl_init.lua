@@ -32,8 +32,8 @@ function ents.PFMProject:OnEntityCreated(ent)
 	local filmClipC = ent:GetComponent(ents.COMPONENT_PFM_FILM_CLIP)
 	if(filmClipC == nil) then return end
 	local clipData = filmClipC:GetClipData()
-	local parent = (clipData ~= nil) and clipData:FindAncestor(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_SESSION or el:GetType() == fudm.ELEMENT_TYPE_PFM_FILM_CLIP end) or nil
-	if(parent == nil or parent:GetType() == fudm.ELEMENT_TYPE_PFM_SESSION) then return end
+	local parent = (clipData ~= nil) and clipData:FindAncestor(function(el) return el.TypeName == "Session" or el.TypeName == "FilmClip" end) or nil
+	if(parent == nil or parent.TypeName == "Session") then return end
 	self:BroadcastEvent(ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED,{filmClipC})
 end
 
@@ -45,21 +45,14 @@ function ents.PFMProject:SetProjectData(project)
 	self.m_project = project
 
 	local timeFrame
-	local session = project:GetSessions()[1] -- TODO: How to handle multiple sessions?
+	local session = project:GetSession()
 	if(session ~= nil) then
-		for _,filmClip in ipairs(session:GetClips():GetTable()) do
+		for _,filmClip in ipairs(session:GetClips()) do
 			local timeFrameClip = filmClip:GetTimeFrame()
 			timeFrame = timeFrame and timeFrame:Max(timeFrameClip) or timeFrameClip
 		end
 	end
 	self.m_timeFrame = timeFrame or fudm.PFMTimeFrame()
-
-	self.m_rootTrack = fudm.PFMTrack()
-	if(session ~= nil) then
-		for _,filmClip in ipairs(session:GetClips():GetTable()) do
-			self.m_rootTrack:GetFilmClipsAttr():PushBack(filmClip)
-		end
-	end
 end
 
 local function collect_clips(trackC,clips)
@@ -110,7 +103,7 @@ function ents.PFMProject:Start()
 	debug.start_profiling_task("pfm_start_game_view")
 	local ent = ents.create("pfm_track")
 	local trackC = ent:GetComponent(ents.COMPONENT_PFM_TRACK)
-	trackC:Setup(self.m_rootTrack,nil,self)
+	trackC:Setup(self.m_project:GetSession(),nil,self)
 	ent:Spawn()
 	self.m_entRootTrack = ent
 	self:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED,{ent})

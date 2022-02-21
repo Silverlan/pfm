@@ -54,7 +54,7 @@ function ents.PFMTrackGroup:GetTracks() return self.m_tracks end
 function ents.PFMTrackGroup:Setup(trackGroupData,filmClipC)
 	self.m_trackGroupData = trackGroupData
 	self.m_filmClip = filmClipC
-	for _,track in ipairs(trackGroupData:GetTracks():GetTable()) do
+	for _,track in ipairs(trackGroupData:GetTracks()) do
 		if(track:IsMuted() == false) then
 			self:CreateTrack(track)
 		end

@@ -90,7 +90,7 @@ function gui.Timeline:SetDataAxis(axis) self.m_dataAxis:SetAxis(axis,false) end
 function gui.Timeline:GetTimeAxis() return self.m_timeAxis end
 function gui.Timeline:GetDataAxis() return self.m_dataAxis end
 function gui.Timeline:AddTimelineItem(el,timeFrame)
-	self.m_timeAxis:AttachElementToRange(el,timeFrame:GetStartAttr(),timeFrame:GetDurationAttr())
+	self.m_timeAxis:AttachElementToRange(el,timeFrame)
 end
 function gui.Timeline:MouseCallback(mouseButton,state,mods)
 	if(mouseButton == input.MOUSE_BUTTON_LEFT) then

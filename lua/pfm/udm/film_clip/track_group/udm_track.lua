@@ -45,7 +45,7 @@ end
 function fudm.PFMTrack:AddAudioClip(clip)
 	if(type(clip) == "string") then
 		local name = clip
-		clip = self:CreateChild(fudm.ELEMENT_TYPE_PFM_AUDIO_CLIP,name)
+		clip = fudm.create_element(fudm.ELEMENT_TYPE_PFM_AUDIO_CLIP,name)
 		clip:ChangeName(name)
 	end
 	self:GetAudioClipsAttr():PushBack(clip)
@@ -54,7 +54,7 @@ end
 function fudm.PFMTrack:AddFilmClip(clip)
 	if(type(clip) == "string") then
 		local name = clip
-		clip = self:CreateChild(fudm.ELEMENT_TYPE_PFM_FILM_CLIP,name)
+		clip = fudm.create_element(fudm.ELEMENT_TYPE_PFM_FILM_CLIP,name)
 		clip:ChangeName(name)
 	end
 	self:GetFilmClipsAttr():PushBack(clip)
@@ -63,7 +63,7 @@ end
 function fudm.PFMTrack:AddOverlayClip(clip)
 	if(type(clip) == "string") then
 		local name = clip
-		clip = self:CreateChild(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,name)
+		clip = fudm.create_element(fudm.ELEMENT_TYPE_PFM_OVERLAY_CLIP,name)
 		clip:ChangeName(name)
 	end
 	self:GetOverlayClipsAttr():PushBack(clip)
@@ -72,7 +72,7 @@ end
 function fudm.PFMTrack:AddChannelClip(clip)
 	if(type(clip) == "string") then
 		local name = clip
-		clip = self:CreateChild(fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,name)
+		clip = fudm.create_element(fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP,name)
 		clip:ChangeName(name)
 	end
 	self:GetChannelClipsAttr():PushBack(clip)

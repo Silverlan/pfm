@@ -40,7 +40,7 @@ end
 
 function pfm.AnimationManager:Initialize(track)
 	self.m_filmClipAnims = {}
-	for _,filmClip in ipairs(track:GetFilmClips():GetTable()) do
+	for _,filmClip in ipairs(track:GetFilmClips()) do
 		self:InitializeFilmClip(filmClip)
 	end
 end
@@ -119,11 +119,11 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 	local animChannelTrack = filmClip:FindAnimationChannelTrack()
 	if(animChannelTrack == nil) then return end
 	local actorChannels = {}
-	for _,channelClip in ipairs(animChannelTrack:GetChannelClips():GetTable()) do
+	--[[for _,channelClip in ipairs(animChannelTrack:GetChannelClips()) do
 		local uuid = channelClip:GetActor()
 		local actor = filmClip:FindActorByUniqueId(uuid)
 		if(actor ~= nil) then
-			for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
+			for _,channel in ipairs(channelClip:GetChannels()) do
 				local attr = channel:GetToAttribute()
 				local channelPath = channel:GetTargetPath()
 				if(#channelPath == 0) then channelPath = nil end
@@ -138,9 +138,9 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 		else
 			pfm.log("Unable to find actor with uuid '" .. uuid .. "' for channel clip '" .. tostring(channelClip) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		end
-	end
+	end]]
 	local animations = {}
-	for actorDataHash,channels in pairs(actorChannels) do
+	--[[for actorDataHash,channels in pairs(actorChannels) do
 		local anim = panima.Animation.create()
 		for channelPath,channelData in pairs(channels) do
 			local channel = channelData[1]
@@ -164,7 +164,7 @@ function pfm.AnimationManager:GenerateAnimations(filmClip)
 		end
 		anim:UpdateDuration()
 		animations[actorDataHash] = anim
-	end
+	end]]
 	return animations
 end
 

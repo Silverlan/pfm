@@ -92,7 +92,7 @@ function ents.PFMAnimationSet:Setup(actorData,animSet)
 	self.m_mdlComponent = actorData:FindComponent("pfm_model")
 	-- TODO: Update this value when it's changed, or if the model component is removed or added later
 	self.m_flexControllerLimitsEnabled = true
-	if(self.m_mdlComponent ~= nil) then self.m_flexControllerLimitsEnabled = self.m_mdlComponent:GetFlexControllerLimitsEnabled() end
+	if(self.m_mdlComponent ~= nil) then self.m_flexControllerLimitsEnabled = self.m_mdlComponent:GetMemberValue("flexControllerLimitsEnabled") or false end
 	-- self.m_animSetData = animSet
 end
 ents.COMPONENT_PFM_ANIMATION_SET = ents.register_component("pfm_animation_set",ents.PFMAnimationSet)

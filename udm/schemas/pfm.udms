@@ -1,6 +1,6 @@
 "schema"
 {
-	$array includes [string]["settings.udm","clips.udm","actor.udm"]
+	$array includes [string]["settings","clips","actor"]
 	"types"
 	{
 		"TimeRange"
@@ -67,6 +67,7 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
+				"name" {$string default ""}
 				"audioClips"
 				{
 					$string type "array"
@@ -99,6 +100,7 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
+				"name" {$string default ""}
 				"activeClip" {
 					$string type "Reference"
 					$string referenceType "FilmClip"
