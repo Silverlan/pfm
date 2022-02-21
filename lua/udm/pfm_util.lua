@@ -11,6 +11,7 @@ function pfm.udm.Session:GetFilmTrack()
 	local filmClip = self:GetActiveClip()
 	if(filmClip == nil) then return end
 	local trackGroup = filmClip:FindSubClipTrackGroup()
+	if(trackGroup == nil) then return end
 	for _,track in ipairs(trackGroup:GetTracks()) do
 		if(track:GetName() == "Film") then
 			self.m_cachedFilmTrack = track
@@ -22,6 +23,7 @@ end
 function pfm.udm.Session:FindClipAtTimeOffset(t)
 	t = t or self:GetTimeOffset()
 	local filmTrack = self:GetFilmTrack()
+	if(filmTrack == nil) then return end
 	for _,filmClip in ipairs(filmTrack:GetFilmClips()) do
 		local timeFrame = filmClip:GetTimeFrame()
 		if(timeFrame:IsInTimeFrame(t)) then

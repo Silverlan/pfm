@@ -55,17 +55,17 @@ local function log_pfm_project_debug_info(project)
 	local function iterate_film_clip(filmClip)
 		numFilmClips = numFilmClips +1
 		numActors = numActors +#filmClip:GetActorList()
-		for _,trackGroup in ipairs(filmClip:GetTrackGroups():GetTable()) do
-			for _,track in ipairs(trackGroup:GetTracks():GetTable()) do
-				for _,filmClipOther in ipairs(track:GetFilmClips():GetTable()) do
+		for _,trackGroup in ipairs(filmClip:GetTrackGroups()) do
+			for _,track in ipairs(trackGroup:GetTracks()) do
+				for _,filmClipOther in ipairs(track:GetFilmClips()) do
 					iterate_film_clip(filmClipOther)
 				end
 				numAudioClips = numAudioClips +#track:GetAudioClips()
-				numChannelClips = numChannelClips +#track:GetChannelClips()
+				numChannelClips = numChannelClips +#track:GetAnimationClips()
 			end
 		end
 	end
-	for _,session in ipairs(project:GetSessions()) do
+	for _,session in ipairs({project:GetSession()}) do
 		for _,clip in ipairs(session:GetClips()) do
 			iterate_film_clip(clip)
 		end
@@ -199,10 +199,304 @@ function sfm.ProjectConverter:GenerateEmbeddedParticleSystemFile()
 		pfm.log("Unable to save particle system file '" .. fileName:GetString() .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
 	end
 end
-function sfm.ProjectConverter:ConvertSession(sfmSession)
-	local pfmSession = self:ConvertNewElement(sfmSession)
-	self.m_pfmProject:AddSession(pfmSession)
+
+local g_sfmToPfmConversion = {}
+sfm.register_element_type_conversion = function(sfmType,conversionFunction)
+	if(sfmType == nil) then
+		error("Invalid SFM type '" .. util.get_type_name(sfmType) .. "' specified for conversion to PFM!")
+	end
+	g_sfmToPfmConversion[util.get_type_name(sfmType)] = conversionFunction
 end
+
+function sfm.ProjectConverter:ConvertElementToPfm(sfmElement,pfmElement)
+	local data = g_sfmToPfmConversion[util.get_type_name(sfmElement)]
+	if(data == nil) then
+		pfm.error("No PFM conversion function exists for SFM element of type '" .. util.get_type_name(sfmElement) .. "'!")
+	end
+	data(self,sfmElement,pfmElement)
+end
+
+sfm.register_element_type_conversion(sfm.RenderSettings,function(converter,sfmRenderSettings,pfmRenderSettings)
+	pfmRenderSettings:SetFrameRate(sfmRenderSettings:GetFrameRate())
+end)
+
+local function apply_base_actor_properties(sfmActor,pfmActor)
+	pfmActor:SetVisible(sfmActor:IsVisible())
+	--"transform" {$stransform default [[0,0,0][1,0,0,0][1,1,1]]}
+	-- TODO
+end
+
+sfm.register_element_type_conversion(sfm.ProjectedLight,function(converter,sfmPl,pfmActor)
+	apply_base_actor_properties(sfmPl,pfmActor)
+
+	local cPls = pfmActor:AddComponentType("pfm_light_spot")
+
+	local cC = pfmActor:AddComponentType("color")
+	cC:SetMemberValue("color",udm.TYPE_VECTOR3,sfmLight:GetColor():ToVector())
+	
+	local cL = pfmActor:AddComponentType("light")
+	cL:SetMemberValue("intensity",udm.TYPE_FLOAT,sfmLight:GetIntensity())
+	cL:SetMemberValue("intensityType",udm.TYPE_STRING,"candela")
+	cL:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,sfmLight:ShouldCastShadows())
+
+	local cLs = pfmActor:AddComponentType("light_spot")
+	local fov = math.max(sfmLight:GetHorizontalFOV(),sfmLight:GetVerticalFOV())
+	cLs:SetMemberValue("innerConeAngle",udm.TYPE_FLOAT,fov)
+	cLs:SetMemberValue("outerConeAngle",udm.TYPE_FLOAT,fov *0.7)
+
+	local cR = pfmActor:AddComponentType("radius")
+	cR:SetMemberValue("radius",udm.TYPE_FLOAT,sfmLight:GetMaxDistance())
+
+	-- pfmLight:SetFalloffExponent(1.0)
+	-- pfmLight:SetVolumetric(sfmLight:IsVolumetric())
+	-- pfmLight:SetVolumetricIntensity(sfmLight:GetVolumetricIntensity() *0.05)
+end)
+
+sfm.register_element_type_conversion(sfm.GameModel,function(converter,sfmGm,pfmActor)
+	apply_base_actor_properties(sfmGm,pfmActor)
+
+	local cM = pfmActor:AddComponentType("model")
+	local mdlName = asset.normalize_asset_name(sfmGm:GetPragmaModelPath(),asset.TYPE_MODEL)
+	cM:SetMemberValue("model",udm.TYPE_STRING,mdlName)
+	cM:SetMemberValue("skin",udm.TYPE_UINT32,sfmGm:GetSkin())
+
+	-- local body = sfmGm:GetBody() -- TODO
+	-- TODO: flexhWeights
+end)
+
+sfm.register_element_type_conversion(sfm.Camera,function(converter,sfmC,pfmActor)
+	apply_base_actor_properties(sfmC,pfmActor)
+
+	local cC = pfmActor:AddComponentType("camera")
+	cC:SetMemberValue("fov",udm.TYPE_FLOAT,sfm.convert_source_fov_to_pragma(sfmCamera:GetFieldOfView()))
+	cC:SetMemberValue("nearz",udm.TYPE_FLOAT,sfm.source_units_to_pragma_units(sfmCamera:GetZNear()))
+	cC:SetMemberValue("farz",udm.TYPE_FLOAT,sfm.source_units_to_pragma_units(sfmCamera:GetZFar()))
+	-- cC:SetMemberValue("aspectRatio",udm.TYPE_FLOAT,sfm.ASPECT_RATIO)
+
+--[[
+	local aperture = sfmCamera:GetAperture()
+	if(aperture > 0.0) then
+		pfmCamera:SetDepthOfFieldEnabled(true)
+		pfmCamera:SetFStop(sfm.convert_source_aperture_to_fstop(aperture))
+	end
+	pfmCamera:SetFocalDistance(sfm.source_units_to_pragma_units(sfmCamera:GetFocalDistance()))
+	pfmCamera:SetSensorSize(36.0)
+	pfmCamera:SetApertureBladeCount(3)
+]]
+end)
+
+sfm.register_element_type_conversion(sfm.GameParticleSystem,function(converter,sfmPs,pfmActor)
+	apply_base_actor_properties(sfmPs,pfmActor)
+
+--[[
+	pfmParticle:SetTimeScale(sfmParticle:GetSimulationTimeScale())
+	pfmParticle:SetSimulating(sfmParticle:IsSimulating())
+	pfmParticle:SetEmitting(sfmParticle:IsEmitting())
+	local ptSystemName = sfmParticle:GetParticleSystemType()
+	pfmParticle:SetParticleSystemName(ptSystemName)
+	if(#ptSystemName == 0) then
+		local ptSystemDef = sfmParticle:GetParticleSystemDefinition()
+		local dmxEl = ptSystemDef:GetDMXElement()
+		if(dmxEl ~= nil) then
+			converter:AddParticleSystemDefinitionForConversion(pfmParticle,ptSystemDef)
+		end
+	end
+	-- pfmParticle:SetDefinition(converter:ConvertNewElement())
+	for _,cp in ipairs(sfmParticle:GetControlPoints()) do
+		local pfmCp = converter:ConvertNewElement(cp)
+		pfmParticle:GetControlPointsAttr():PushBack(pfmCp)
+	end
+]]
+end)
+
+sfm.register_element_type_conversion(sfm.Dag,function(converter,sfmDag,pfmGroup)
+	-- TODO: Transform
+
+	for _,child in ipairs(sfmDag:GetChildren()) do
+		if(child:GetType() == "DmeProjectedLight" or child:GetType() == "DmeGameModel" or child:GetType() == "DmeCamera" or child:GetType() == "DmeGameParticleSystem") then
+			local pfmActor = pfmGroup:AddActor()
+			converter:ConvertElementToPfm(child,pfmActor)
+		elseif(child:GetType() == "DmeDag") then
+			local childGroup = pfmGroup:AddGroup()
+			converter:ConvertElementToPfm(child,childGroup)
+		end
+		iterate_film_clip_children(converter,umdNode,child)
+	end
+end)
+
+
+sfm.register_element_type_conversion(sfm.FilmClip,function(converter,sfmClip,pfmClip)
+	converter:ConvertElementToPfm(sfmClip:GetTimeFrame(),pfmClip:GetTimeFrame())
+	pfmClip:SetMapName(sfmClip:GetMapname())
+	pfmClip:SetFadeIn(sfmClip:GetFadeIn())
+	pfmClip:SetFadeOut(sfmClip:GetFadeOut())
+
+	-- Bookmark sets
+	for _,sfmBs in ipairs(sfmClip:GetBookmarkSets()) do
+		local pfmBs = pfmClip:AddBookmarkSet()
+		converter:ConvertElementToPfm(sfmBs,pfmBs)
+	end
+	pfmClip:SetActiveBookmarkSet(sfmClip:GetActiveBookmarkSet())
+	--
+
+	-- Scene
+	converter:ConvertElementToPfm(sfmClip:GetScene(),pfmClip:GetScene())
+	--
+
+	-- Track groups
+	for _,sfmTg in ipairs(sfmClip:GetTrackGroups()) do
+		local pfmTg = pfmClip:AddTrackGroup()
+		converter:ConvertElementToPfm(sfmTg,pfmTg)
+	end
+	-- TODO: subClipTrackGroup
+	--
+
+	-- Animation sets
+	--
+
+	-- pfmClip:SetCamera() -- TODO
+end)
+sfm.register_element_type_conversion(sfm.TimeFrame,function(converter,sfmTimeFrame,pfmTimeFrame)
+	pfmTimeFrame:SetStart(sfmTimeFrame:GetStart())
+	pfmTimeFrame:SetDuration(sfmTimeFrame:GetDuration())
+	pfmTimeFrame:SetOffset(sfmTimeFrame:GetOffset())
+	pfmTimeFrame:SetScale(sfmTimeFrame:GetScale())
+end)
+sfm.register_element_type_conversion(sfm.Bookmark,function(converter,sfmB,pfmB)
+	pfmB:SetNote(sfmB:GetNote())
+	pfmB:GetTimeRange():SetTime(sfmB:GetTime())
+	pfmB:GetTimeRange():SetDuration(sfmB:GetDuration())
+end)
+sfm.register_element_type_conversion(sfm.BookmarkSet,function(converter,sfmBs,pfmBs)
+	for _,sfmB in ipairs(sfmBs:GetBookmarks()) do
+		local pfmB = pfmBs:AddBookmark()
+		converter:ConvertElementToPfm(sfmB,pfmB)
+	end
+end)
+sfm.register_element_type_conversion(sfm.TrackGroup,function(converter,sfmTg,pfmTg)
+	pfmTg:SetVisible(sfmTg:IsVisible())
+	pfmTg:SetMuted(sfmTg:IsMuted())
+	for _,sfmT in ipairs(sfmTg:GetTracks()) do
+		local pfmT = pfmTg:AddTrack()
+		converter:ConvertElementToPfm(sfmT,pfmT)
+	end
+end)
+sfm.register_element_type_conversion(sfm.Track,function(converter,sfmT,pfmT)
+	pfmT:SetVolume(sfmT:GetVolume())
+	pfmT:SetMuted(sfmT:IsMuted())
+
+	for _,sfmCc in ipairs(sfmT:GetChannelClips()) do
+		local pfmAc = pfmT:AddAnimationClip()
+		converter:ConvertElementToPfm(sfmCc,pfmAc)
+	end
+	for _,sfmSc in ipairs(sfmT:GetSoundClips()) do
+		local pfmAc = pfmT:AddAudioClip()
+		converter:ConvertElementToPfm(sfmSc,pfmAc)
+	end
+	for _,sfmFc in ipairs(sfmT:GetFilmClips()) do
+		local pfmFc = pfmT:AddFilmClip()
+		converter:ConvertElementToPfm(sfmFc,pfmFc)
+	end
+	for _,sfmOc in ipairs(sfmT:GetOverlayClips()) do
+		local pfmOc = pfmT:AddOverlayClip()
+		converter:ConvertElementToPfm(sfmOc,pfmOc)
+	end
+end)
+sfm.register_element_type_conversion(sfm.SoundClip,function(converter,sfmSc,pfmSc)
+	converter:ConvertElementToPfm(sfmSc:GetTimeFrame(),pfmSc:GetTimeFrame())
+	converter:ConvertElementToPfm(sfmSc:GetSound(),pfmSc:GetSound())
+end)
+sfm.register_element_type_conversion(sfm.Sound,function(converter,sfmS,pfmS)
+	pfmS:SetSoundName(sfmS:GetSoundName())
+	pfmS:SetVolume(sfmS:GetVolume())
+	pfmS:SetPitch(sfmS:GetPitch())
+end)
+sfm.register_element_type_conversion(sfm.MaterialOverlayFXClip,function(converter,sfmOc,pfmOc)
+	converter:ConvertElementToPfm(sfmOc:GetTimeFrame(),pfmOc:GetTimeFrame())
+	pfmOc:SetMaterial(sfmOc:GetMaterial())
+	pfmOc:SetTop(sfmOc:GetTop())
+	pfmOc:SetLeft(sfmOc:GetLeft())
+	pfmOc:SetWidth(sfmOc:GetWidth())
+	pfmOc:SetHeight(sfmOc:GetHeight())
+	pfmOc:SetFullscreen(sfmOc:IsFullscreen())
+end)
+sfm.register_element_type_conversion(sfm.ChannelClip,function(converter,sfmCc,pfmCc)
+	converter:ConvertElementToPfm(sfmCc:GetTimeFrame(),pfmCc:GetTimeFrame())
+
+	local pfmAnim = pfmCc:GetAnimation()
+	for _,sfmChannel in ipairs(sfmCc:GetChannels()) do
+		local pfmChannel = pfmAnim:AddChannel()
+		converter:ConvertElementToPfm(sfmChannel,pfmChannel)
+	end
+end)
+sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
+	-- TODO
+--[[
+sfm.BaseElement.RegisterProperty(sfm.Channel,"log",sfm.Log)
+sfm.BaseElement.RegisterProperty(sfm.Channel,"fromElement")
+sfm.BaseElement.RegisterAttribute(sfm.Channel,"fromAttribute","")
+sfm.BaseElement.RegisterProperty(sfm.Channel,"toElement")
+sfm.BaseElement.RegisterAttribute(sfm.Channel,"toAttribute","")
+sfm.BaseElement.RegisterProperty(sfm.Channel,"graphCurve",sfm.GraphEditorCurve)
+
+		"Channel"
+		{
+			"children"
+			{
+				"interpolation" {
+					$string type "ChannelInterpolation"
+					$string default "Linear"
+				}
+				"targetPath" {$string default ""}
+				"expression" {
+					$nil default
+					$bool optional true
+					$string type "string"
+				}
+				"times"
+				{
+					$string type "array"
+					$string valueType "float"
+				}
+				"values"
+				{
+					$string type "array"
+					$string valueType "Any"
+				}
+			}
+		}
+]]
+end)
+
+function sfm.ProjectConverter:ConvertSession(sfmSession)
+	local pfmSession = udm.create_property_from_schema(pfm.udm.SCHEMA,"Session")
+	self.m_pfmProject:SetSession(pfmSession)
+
+	-- Settings
+	local sfmSettings = sfmSession:GetSettings():GetRenderSettings()
+	local pfmSettings = pfmSession:GetSettings():GetRenderSettings()
+	self:ConvertElementToPfm(sfmSettings,pfmSettings)
+
+	-- Active clip
+	local sfmClip = sfmSession:GetActiveClip()
+	local pfmClip = pfmSession:AddClip()
+	pfmSession:SetActiveClip(pfmClip)
+	self:ConvertElementToPfm(sfmClip,pfmClip)
+
+	local subClipTrackGroup = pfmClip:AddTrackGroup()
+	subClipTrackGroup:SetName("subClipTrackGroup")
+
+	local channelTrackGroup = pfmClip:AddTrackGroup()
+	channelTrackGroup:SetName("channelTrackGroup")
+end
+
+
+
+
+
+
+
+
 function sfm.ProjectConverter:GetPFMActor(pfmComponent)
 	return self.m_sfmObjectToPfmActor[pfmComponent]
 end
@@ -632,6 +926,7 @@ local function apply_post_processing(converter,project,filmClip,processedObjects
 end
 function sfm.ProjectConverter:ApplyPostProcessing()
 	pfm.log("Applying post-processing...",pfm.LOG_CATEGORY_PFM_CONVERTER)
+	if(true) then return end
 	local function iterate_session(el,type,callback,iterated)
 		iterated = iterated or {}
 		for name,child in pairs(el:GetChildren()) do
@@ -644,7 +939,7 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 	end
 
 	local project = self:GetPFMProject()
-	for _,session in ipairs(project:GetSessions()) do
+	for _,session in ipairs({project:GetSession()}) do
 		iterate_session(session,fudm.ELEMENT_TYPE_TRANSFORM,function(elTransform)
 			-- The "overrideParent" attribute of some transforms may be pointing to an actor component, but
 			-- we want it to point to the actor instead.
@@ -683,17 +978,6 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 			end
 		end
 	end
-end
-
-local g_sfmToPfmConversion = {}
-sfm.register_element_type_conversion = function(sfmType,pfmType,conversionFunction)
-	if(sfmType == nil) then
-		error("Invalid SFM type specified for conversion to PFM type '" .. util.get_type_name(pfmType) .. "'!")
-	end
-	if(pfmType == nil) then
-		error("Invalid PFM type specified for conversion of SFM type '" .. util.get_type_name(sfmType) .. "'!")
-	end
-	g_sfmToPfmConversion[util.get_type_name(sfmType)] = {conversionFunction,pfmType}
 end
 
 sfm.get_pfm_conversion_data = function(sfmType)
@@ -739,6 +1023,9 @@ end
 
 ----------------------
 
+if(true) then return end
+
+-- Obsolete
 include("project_converter")
 
 sfm.register_element_type_conversion(sfm.Session,fudm.PFMSession,function(converter,sfmSession,pfmSession)

@@ -50,7 +50,7 @@
 				"bookmarkSets"
 				{
 					$string type "array"
-					$string valueType "Actor"
+					$string valueType "BookmarkSet"
 				}
 				"activeBookmarkSet" {$int32 default 0}
 				"mapName" {$string default ""}

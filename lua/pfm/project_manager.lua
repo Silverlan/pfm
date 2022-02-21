@@ -211,9 +211,9 @@ function pfm.ProjectManager:ImportSFMProject(projectFilePath)
 		return false
 	end
 	self.m_projectFileName = "projects/" .. file.remove_file_extension(projectFilePath) .. ".pfm"
-	self:ClearAnimationCache()
-	local session = pfmScene:GetSession()
-	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
+	-- self:ClearAnimationCache()
+	-- local session = pfmScene:GetSession()
+	-- if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
 	return util.is_valid(self:InitializeProject(pfmScene))
 end
 function pfm.ProjectManager:SetTimeOffset(offset)
