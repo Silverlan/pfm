@@ -8,6 +8,7 @@
 
 include("/sfm.lua")
 include("/pfm/pfm.lua")
+include("/sfm/project_converter/math_expression.lua")
 
 pfm.register_log_category("sfm_converter")
 
@@ -248,15 +249,17 @@ local function convert_transform(sfmTransform,pfmTransform,type)
 	if(util.get_type_name(pfmTransform) == "ScaledTransform") then pfmTransform:SetScale(Vector(scale,scale,scale)) end
 end
 
-local function apply_base_actor_properties(sfmActor,pfmActor,transformType)
+local function apply_base_actor_properties(converter,sfmActor,pfmActor,transformType)
 	pfmActor:SetVisible(sfmActor:IsVisible())
 	local pfmTransform = pfmActor:GetTransform()
 	convert_transform(sfmActor:GetTransform(),pfmTransform,transformType)
 	pfmActor:SetTransform(pfmTransform)
+
+	converter.m_sfmObjectToPfmActor[sfmActor] = tostring(pfmActor:GetUniqueId())
 end
 
 sfm.register_element_type_conversion(sfm.ProjectedLight,function(converter,sfmPl,pfmActor)
-	apply_base_actor_properties(sfmPl,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
+	apply_base_actor_properties(converter,sfmPl,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
 
 	local cPls = pfmActor:AddComponentType("pfm_light_spot")
 
@@ -282,7 +285,7 @@ sfm.register_element_type_conversion(sfm.ProjectedLight,function(converter,sfmPl
 end)
 
 sfm.register_element_type_conversion(sfm.GameModel,function(converter,sfmGm,pfmActor)
-	apply_base_actor_properties(sfmGm,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL)
+	apply_base_actor_properties(converter,sfmGm,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL)
 
 	pfmActor:AddComponentType("pfm_model")
 	local cM = pfmActor:AddComponentType("model")
@@ -295,7 +298,7 @@ sfm.register_element_type_conversion(sfm.GameModel,function(converter,sfmGm,pfmA
 end)
 
 sfm.register_element_type_conversion(sfm.Camera,function(converter,sfmC,pfmActor)
-	apply_base_actor_properties(sfmC,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
+	apply_base_actor_properties(converter,sfmC,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
 
 	pfmActor:AddComponentType("pfm_camera")
 	local cC = pfmActor:AddComponentType("camera")
@@ -303,7 +306,6 @@ sfm.register_element_type_conversion(sfm.Camera,function(converter,sfmC,pfmActor
 	cC:SetMemberValue("nearz",udm.TYPE_FLOAT,sfm.source_units_to_pragma_units(sfmC:GetZNear()))
 	cC:SetMemberValue("farz",udm.TYPE_FLOAT,sfm.source_units_to_pragma_units(sfmC:GetZFar()))
 	cC:SetMemberValue("aspectRatio",udm.TYPE_FLOAT,sfm.ASPECT_RATIO)
-	converter.m_sfmObjectToPfmActor[sfmC] = tostring(pfmActor:GetUniqueId())
 
 --[[
 	local aperture = sfmC:GetAperture()
@@ -318,7 +320,7 @@ sfm.register_element_type_conversion(sfm.Camera,function(converter,sfmC,pfmActor
 end)
 
 sfm.register_element_type_conversion(sfm.GameParticleSystem,function(converter,sfmPs,pfmActor)
-	apply_base_actor_properties(sfmPs,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
+	apply_base_actor_properties(converter,sfmPs,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
 
 	pfmActor:AddComponentType("pfm_particle_system")
 --[[
@@ -473,6 +475,209 @@ sfm.register_element_type_conversion(sfm.ChannelClip,function(converter,sfmCc,pf
 	end
 end)
 sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
+	local sfmLog = sfmC:GetLog()
+	local sfmLayer = sfmLog:GetLayers()[1]
+	local type = sfmLayer:GetType()
+	if(type == "DmeFloatLogLayer") then type = udm.TYPE_FLOAT
+	elseif(type == "DmeVector3LogLayer") then type = udm.TYPE_VECTOR3
+	elseif(type == "DmeQuaternionLogLayer") then type = udm.TYPE_QUATERNION
+	elseif(type == "DmeIntLogLayer") then type = udm.TYPE_INT32
+	elseif(type == "DmeBoolLogLayer") then type = udm.TYPE_BOOLEAN
+	else
+		console.print_warning("Unsupported log layer type: ",type)
+		return
+	end
+
+	pfmC:GetUdmData():SetArrayValues("times",udm.TYPE_FLOAT,sfmLayer:GetTimes())
+	pfmC:GetUdmData():SetArrayValues("values",type,sfmLayer:GetValues())
+
+--[[
+	for _,t in ipairs(sfmLog:GetBookmarks()) do
+		pfmLog:GetBookmarks():PushBack(fudm.Float(t))
+	end
+	pfmLog:SetUseDefaultValue(sfmLog:GetUsedefaultvalue())
+
+	local dmxLog = sfmLog:GetDMXElement()
+	if(dmxLog ~= nil) then
+		local defaultValue = dmxLog:GetAttr("defaultvalue")
+		local type = defaultValue:GetType()
+		if(type == dmx.Attribute.TYPE_INT) then pfmLog:SetDefaultValueAttr(fudm.Int(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_FLOAT) then pfmLog:SetDefaultValueAttr(fudm.Float(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_BOOL) then pfmLog:SetDefaultValueAttr(fudm.Bool(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_STRING) then pfmLog:SetDefaultValueAttr(fudm.String(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_COLOR) then pfmLog:SetDefaultValueAttr(fudm.Color(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_VECTOR3) then pfmLog:SetDefaultValueAttr(fudm.Vector3(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_VECTOR2) then pfmLog:SetDefaultValueAttr(fudm.Vector2(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_VECTOR4) then pfmLog:SetDefaultValueAttr(fudm.Vector4(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_ANGLE) then pfmLog:SetDefaultValueAttr(fudm.Angle(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_QUATERNION) then pfmLog:SetDefaultValueAttr(fudm.Quaternion(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_UINT8) then pfmLog:SetDefaultValueAttr(fudm.UInt8(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_UINT64) then pfmLog:SetDefaultValueAttr(fudm.UInt64(defaultValue:GetValue()))
+		elseif(type == dmx.Attribute.TYPE_MATRIX) then pfmLog:SetDefaultValueAttr(fudm.Matrix(defaultValue:GetValue()))
+		else
+			local msg = "Unsupported default value type '" .. dmx.type_to_string(type) .. "' for log '" .. pfmLog:GetName() .. "'!"
+			pfm.log(msg,pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_ERROR)
+			error(msg)
+		end
+	else
+		pfm.log("Log " .. tostring(sfmLog:GetName()) .. " does not have valid DMX element associated! Default value will be incorrect.",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+	end
+]]
+
+	local toAttr = sfmC:GetToAttribute()
+
+	-- To
+	local toElement = sfmC:GetToElement()
+	if(toElement == nil) then
+		-- pfm.log("Unsupported 'to'-element for channel '" .. sfmC:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+	elseif(toElement:GetType() ~= "DmePackColorOperator") then
+		if(toElement:GetType() == "DmeExpressionOperator") then
+			local sfmOperator = toElement
+
+			-- Translate toElement/toAttribute to that of the expression operator
+			for _,p in ipairs(sfmC:GetParents()) do
+				if(p:GetType() == "DmeChannelsClip") then
+					for _,channel in ipairs(p:GetChannels()) do
+						if(util.is_same_object(channel:GetFromElement(),toElement) and channel:GetFromAttribute() == "result") then
+							toElement = channel:GetToElement()
+							toAttr = channel:GetToAttribute()
+							break
+						end
+					end
+					break
+				end
+			end
+
+			local variables = {}
+			for name,attr in pairs(sfmOperator:GetDMXElement():GetAttributes()) do
+				if(name ~= "name" and name ~= "spewresult" and name ~= "result" and name ~= "expr" and name ~= "value") then
+					local val = attr:GetValue()
+					if(toElement ~= nil and toElement:GetType() == "DmeCamera" and toAttr:lower() == "fieldofview") then
+						val = sfm.convert_source_fov_to_pragma(val)
+					end
+					variables[name] = val
+				end
+			end
+			local expr = sfm.convert_math_expression_to_pragma(sfmOperator:GetExpr(),variables)
+			pfmC:SetExpression(expr)
+		end
+
+		local gm = toElement:FindParent("DmeGameModel") or false
+		local c = not gm and toElement:FindParent("DmeCamera")
+		local pj = not c and toElement:FindParent("DmeProjectedLight")
+		local ps = not pj and toElement:FindParent("DmeGameParticleSystem")
+		local validAttr = true
+		if(gm ~= false) then
+			if(toElement:GetType() == "DmeTransform") then
+				local origToAttr = toAttr
+				toAttr = "ec/transform/"
+				for _,sfmBone in ipairs(gm:GetBones()) do
+					if(util.is_same_object(toElement,sfmBone)) then
+						local name = string.remove_whitespace(sfmBone:GetName()) -- Format: "name (boneName)"
+						local boneNameStart = name:find("%(")
+						local boneNameEnd = name:match('.*()' .. "%)") -- Reverse find
+						if(boneNameStart ~= nil and boneNameEnd ~= nil) then
+							local boneName = name:sub(boneNameStart +1,boneNameEnd -1)
+							toAttr = "ec/animated/bone/" .. boneName .. "/"
+						else
+							pfm.log("Invalid format for bone name '" .. name .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+							validAttr = false
+						end
+						break
+					end
+				end
+				
+				if(origToAttr == "position") then toAttr = toAttr .. "position"
+				elseif(origToAttr == "orientation") then toAttr = toAttr .. "rotation"
+				elseif(origToAttr == "scale") then toAttr = toAttr .. "scale"
+				else validAttr = false end
+			else validAttr = false end
+		elseif(c ~= false) then
+			if(toAttr:lower() == "fieldofview") then toAttr = "fov" end
+			toAttr = "ec/camera/" .. toAttr
+		elseif(pj ~= false) then
+			toAttr = "ec/light_spot/" .. toAttr
+		elseif(ps ~= false) then
+			toAttr = "ec/particle_system/" .. toAttr
+		else validAttr = false end
+
+		local actor = gm or c or pj or ps
+		if(actor == false) then error("Invalid actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!") end
+
+		local pfmActorId = converter.m_sfmObjectToPfmActor[actor]
+		if(pfmActorId == nil) then error("No PFM actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!") end
+
+		if(validAttr == false) then error("Invalid attribute for element " .. tostring(toElement) .. ": " .. toAttr) end
+
+		local anim = pfmC:GetAnimation()
+		local clip = anim:GetAnimationClip()
+		local actor = tostring(clip:GetActorId())
+		if(actor == tostring(util.Uuid(""))) then
+			-- No actor assigned yet
+			clip:SetActor(pfmActorId)
+		elseif(actor ~= pfmActorId) then
+			error("Actor mismatch for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!")
+		end
+		local c = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(toAttr))
+		if(c == nil) then
+			error("Invalid channel path for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!")
+		end
+		pfmC:SetTargetPath(toAttr)
+
+		--print("toElement: ",toElement)
+		--[[local pfmActorId = converter.m_sfmObjectToPfmActor[toElement]
+		if(pfmActorId ~= nil) then
+			local anim = pfmC:GetAnimation()
+			local animClip = anim:GetAnimationClip()
+			if(toElement:GetType() == "DmeCamera") then
+				if(toAttr:lower() == "fieldofview") then toAttr = "fov" end
+				toAttr = "ec/camera/" .. toAttr
+			elseif(toElement:GetType() == "DmeProjectedLight") then
+				toAttr = "ec/light_spot/" .. toAttr
+			elseif(toElement:GetType() == "DmeGameModel") then
+				toAttr = "ec/model/" .. toAttr
+			elseif(toElement:GetType() == "DmeGameParticleSystem") then
+				toAttr = "ec/particle_system/" .. toAttr
+			end
+
+			--if(curActor ~= pfmActorId) then error("Animation channels refer to different actors, this is not allowed!") end
+			--animClip:SetActor(pfmActorId)
+		else
+			print("ToElement: ",toElement:GetType(),toElement:FindParent("DmeGameModel"))
+		end]]
+		--print("TO: ",toElement,toAttr,converter.m_sfmObjectToPfmActor[toElement])
+		-- TODO: Translate toElement to actor
+		-- Translate toAttr to path
+
+
+		--debug.print("toElement type: " .. tostring(toElement:GetType()))
+
+		--[[local pfmElement = converter:ConvertNewElement(toElement)
+		pfmChannel:SetToElementAttr(fudm.create_reference(pfmElement))
+
+		-- Translate attribute
+		if(pfmElement ~= nil and toAttr ~= nil) then
+			local attrTranslationTable = sfm_attr_to_pragma_table[pfmElement:GetType()]
+			if(attrTranslationTable ~= nil) then
+				local toAttrL = toAttr:lower()
+				if(attrTranslationTable[toAttrL] ~= nil) then
+					toAttr = attrTranslationTable[toAttrL]
+					pfmChannel:SetToAttribute(toAttr)
+				end
+			end
+		end
+
+		if(pfmElement:GetChild(toAttr) == nil) then
+			pfm.log("Invalid to-attribute '" .. toAttr .. "' of element '" .. pfmElement:GetName() .. "' used for channel '" .. pfmChannel:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+		end]]
+	end
+	--if(toAttr == "orientation") then toAttr = "rotation" end
+	--pfmChannel:SetToAttribute(toAttr)
+
+	--[[local graphCurve = sfmChannel:GetGraphCurve()
+	if(graphCurve ~= nil) then
+		pfmChannel:SetGraphCurveAttr(converter:ConvertNewElement(graphCurve))
+	end]]
 	-- TODO
 --[[
 sfm.BaseElement.RegisterProperty(sfm.Channel,"log",sfm.Log)

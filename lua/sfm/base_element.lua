@@ -44,6 +44,20 @@ end
 function sfm.BaseElement:AddParent(parent) table.insert(self.m_parents,parent) end
 function sfm.BaseElement:GetParents() return self.m_parents end
 
+function sfm.BaseElement:FindParent(type,traversed)
+	if(self:GetType() == type) then return self end
+	traversed = traversed or {}
+	if(traversed[self]) then return end
+	traversed[self] = true
+	for _,p in ipairs(self:GetParents()) do
+		if(p:GetType() == type) then return p end
+	end
+	for _,p in ipairs(self:GetParents()) do
+		local pp = p:FindParent(type,traversed)
+		if(pp ~= nil) then return pp end
+	end
+end
+
 function sfm.BaseElement:GetDMXElement()
 	return self:GetProject():GetDMXElement(self)
 end

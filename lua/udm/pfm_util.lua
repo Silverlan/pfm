@@ -280,3 +280,6 @@ function pfm.udm.AnimationClip:GetPanimaAnimation()
 	end
 	return self.m_panimaAnim
 end
+
+function pfm.udm.Channel:GetAnimation() return self:GetParent() end
+function pfm.udm.Animation:GetAnimationClip() return self:GetParent() end

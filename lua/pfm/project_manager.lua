@@ -138,9 +138,9 @@ function pfm.ProjectManager:PrecacheSessionAssets(session)
 			pfm.log("Precaching assets for film clip '" .. tostring(filmClip) .. "'...",pfm.LOG_CATEGORY_PFM)
 			local actors = filmClip:GetActorList()
 			for _,actor in ipairs(actors) do
-				local component = actor:FindComponent("pfm_model")
+				local component = actor:FindComponent("model")
 				if(component ~= nil) then
-					local mdlName = asset.normalize_asset_name(component:GetModelName(),asset.TYPE_MODEL)
+					local mdlName = asset.normalize_asset_name(component:GetMemberValue("model") or "",asset.TYPE_MODEL)
 					if(#mdlName > 0) then
 						pfm.log("Precaching model '" .. mdlName .. "' for actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 						if(game.precache_model(mdlName) == false) then
@@ -161,9 +161,9 @@ function pfm.ProjectManager:WaitForSessionAssets(session)
 		for _,filmClip in ipairs(track:GetFilmClips()) do
 			local actors = filmClip:GetActorList()
 			for _,actor in ipairs(actors) do
-				local component = actor:FindComponent("pfm_model")
+				local component = actor:FindComponent("model")
 				if(component ~= nil) then
-					local mdlName = asset.normalize_asset_name(component:GetModelName(),asset.TYPE_MODEL)
+					local mdlName = asset.normalize_asset_name(component:GetMemberValue("model") or "",asset.TYPE_MODEL)
 					if(#mdlName > 0) then
 						asset.wait_until_loaded(mdlName,asset.TYPE_MODEL)
 					end

@@ -77,10 +77,10 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 		table.insert(self.m_actors,entActor)
 	end
 ]]
-	local track = filmClip:FindAnimationChannelTrack()
+	--[[local track = filmClip:FindAnimationChannelTrack()
 	if(track ~= nil) then
 		for _,channelClip in ipairs(track:GetAnimationClips()) do
-			for _,channel in ipairs(channelClip:GetChannels()) do
+			for _,channel in ipairs(channelClip:GetAniation():GetChannels()) do
 				local toAttribute = channel:GetToAttribute()
 				local toElement = channel:GetToElement()
 				toElement = (toElement ~= nil) and toElement:FindParentElement() or nil
@@ -98,7 +98,7 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 				end
 			end
 		end
-	end
+	end]]
 
 
 	self:InitializeActors()
