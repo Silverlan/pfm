@@ -267,10 +267,10 @@ function pfm.ProjectManager:InitializeProject(project)
 				self:ReloadGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.
 			end)]]
 		end
-		--[[self.m_cbPlayOffset = session:GetSettings():GetPlayheadOffsetAttr():AddChangeListener(function(newOffset)
+		self.m_cbPlayOffset = session:GetSettings():AddChangeListener("playheadOffset",function(settings,newOffset)
 			self:SetGameViewOffset(newOffset)
 			self:OnTimeOffsetChanged(newOffset)
-		end)]]
+		end)
 	end
 	-- self:CacheAnimations()
 	self:OnProjectInitialized(project)
@@ -299,7 +299,7 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 	local tOffset = self:TranslateGameViewOffset(offset)
 	if(tOffset == false or util.is_valid(self:GetGameView()) == false) then return end
 	offset = tOffset or offset
-	local isAnimCacheEnabled = console.get_convar_bool("pfm_animation_cache_enabled")
+	local isAnimCacheEnabled = false--console.get_convar_bool("pfm_animation_cache_enabled")
 	local frameIndex = self:TimeOffsetToFrameOffset(offset)
 	local isInterpFrame = (math.round(frameIndex) -frameIndex >= 0.001) -- If we're not exactly at a frame, we'll have to interpolate (and can't save to the cache)
 	if(isInterpFrame == false) then frameIndex = math.round(frameIndex) end
@@ -319,8 +319,8 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 			--self.m_activeGameViewFilmClip = curFilmClip
 			--self:OnGameViewFilmClipChanged(curFilmClip)
 		end
-		if(self.m_cachedMode == false or updateCache) then activeClip:SetPlaybackOffset(offset,filter)
-		elseif(self.m_activeGameViewFilmClip ~= nil) then self.m_performanceCache:SetOffset(self.m_activeGameViewFilmClip,offset) end
+		-- if(self.m_cachedMode == false or updateCache) then activeClip:SetPlaybackOffset(offset,filter)
+		-- elseif(self.m_activeGameViewFilmClip ~= nil) then self.m_performanceCache:SetOffset(self.m_activeGameViewFilmClip,offset) end
 	else self.m_activeGameViewFilmClip = nil end
 
 	pfm.GameView.SetGameViewOffset(self,offset,gameViewFlags)

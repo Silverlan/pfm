@@ -89,6 +89,9 @@ function pfm.udm.FilmClip:FindAnimationChannelTrack()
 	return (channelTrackGroup ~= nil) and channelTrackGroup:FindTrack("animSetEditorChannels") or nil
 end
 
+function pfm.udm.FilmClip:LocalizeOffset(offset) return self:GetTimeFrame():LocalizeOffset(offset) end
+function pfm.udm.FilmClip:LocalizeTimeOffset(offset) return self:GetTimeFrame():LocalizeTimeOffset(offset) end
+
 function pfm.udm.TrackGroup:FindTrack(name)
 	for _,track in ipairs(self:GetTracks()) do
 		if(track:GetName() == name) then return track end
@@ -164,6 +167,8 @@ end
 function pfm.udm.EntityComponent:GetMemberValue(memberName)
 	return self:GetProperties():Get(memberName):GetValue()
 end
+
+function pfm.udm.EntityComponent:GetActor() return self:GetParent() end
 
 function pfm.udm.FilmClip:FindEntity()
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_FILM_CLIP)}) do

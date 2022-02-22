@@ -220,14 +220,43 @@ sfm.register_element_type_conversion(sfm.RenderSettings,function(converter,sfmRe
 	pfmRenderSettings:SetFrameRate(sfmRenderSettings:GetFrameRate())
 end)
 
-local function apply_base_actor_properties(sfmActor,pfmActor)
+sfm.ProjectConverter.TRANSFORM_TYPE_NONE = -1
+sfm.ProjectConverter.TRANSFORM_TYPE_GENERIC = 0
+sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL = 1
+sfm.ProjectConverter.TRANSFORM_TYPE_BONE = 2
+sfm.ProjectConverter.TRANSFORM_TYPE_ALT = 3
+local function convert_transform(sfmTransform,pfmTransform,type)
+	type = type or sfm.ProjectConverter.TRANSFORM_TYPE_GENERIC
+	if(type == sfm.ProjectConverter.TRANSFORM_TYPE_GENERIC) then
+		pfmTransform:SetOrigin(sfm.convert_source_position_to_pragma(sfmTransform:GetPosition()))
+		pfmTransform:SetRotation(sfm.convert_source_rotation_to_pragma(sfmTransform:GetOrientation()))
+	elseif(type == sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL) then
+		pfmTransform:SetOrigin(sfm.convert_source_position_to_pragma(sfmTransform:GetPosition()))
+		pfmTransform:SetRotation(sfm.convert_source_global_rotation_to_pragma(sfmTransform:GetOrientation()))
+	elseif(type == sfm.ProjectConverter.TRANSFORM_TYPE_BONE) then
+		pfmTransform:SetOrigin(sfm.convert_source_anim_set_position_to_pragma(sfmTransform:GetPosition()))
+		pfmTransform:SetRotation(sfm.convert_source_anim_set_rotation_to_pragma(sfmTransform:GetOrientation()))
+	elseif(type == sfm.ProjectConverter.TRANSFORM_TYPE_ALT) then
+		pfmTransform:SetOrigin(sfm.convert_source_transform_position_to_pragma(sfmTransform:GetPosition()))
+		pfmTransform:SetRotation(sfm.convert_source_transform_rotation_to_pragma2(sfmTransform:GetOrientation()))
+	else
+		pfmTransform:SetOrigin(sfmTransform:GetPosition())
+		pfmTransform:SetRotation(sfmTransform:GetOrientation())
+	end
+
+	local scale = sfmTransform:GetScale()
+	if(util.get_type_name(pfmTransform) == "ScaledTransform") then pfmTransform:SetScale(Vector(scale,scale,scale)) end
+end
+
+local function apply_base_actor_properties(sfmActor,pfmActor,transformType)
 	pfmActor:SetVisible(sfmActor:IsVisible())
-	--"transform" {$stransform default [[0,0,0][1,0,0,0][1,1,1]]}
-	-- TODO
+	local pfmTransform = pfmActor:GetTransform()
+	convert_transform(sfmActor:GetTransform(),pfmTransform,transformType)
+	pfmActor:SetTransform(pfmTransform)
 end
 
 sfm.register_element_type_conversion(sfm.ProjectedLight,function(converter,sfmPl,pfmActor)
-	apply_base_actor_properties(sfmPl,pfmActor)
+	apply_base_actor_properties(sfmPl,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
 
 	local cPls = pfmActor:AddComponentType("pfm_light_spot")
 
@@ -253,8 +282,9 @@ sfm.register_element_type_conversion(sfm.ProjectedLight,function(converter,sfmPl
 end)
 
 sfm.register_element_type_conversion(sfm.GameModel,function(converter,sfmGm,pfmActor)
-	apply_base_actor_properties(sfmGm,pfmActor)
+	apply_base_actor_properties(sfmGm,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL)
 
+	pfmActor:AddComponentType("pfm_model")
 	local cM = pfmActor:AddComponentType("model")
 	local mdlName = asset.normalize_asset_name(sfmGm:GetPragmaModelPath(),asset.TYPE_MODEL)
 	cM:SetMemberValue("model",udm.TYPE_STRING,mdlName)
@@ -265,29 +295,32 @@ sfm.register_element_type_conversion(sfm.GameModel,function(converter,sfmGm,pfmA
 end)
 
 sfm.register_element_type_conversion(sfm.Camera,function(converter,sfmC,pfmActor)
-	apply_base_actor_properties(sfmC,pfmActor)
+	apply_base_actor_properties(sfmC,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
 
+	pfmActor:AddComponentType("pfm_camera")
 	local cC = pfmActor:AddComponentType("camera")
-	cC:SetMemberValue("fov",udm.TYPE_FLOAT,sfm.convert_source_fov_to_pragma(sfmCamera:GetFieldOfView()))
-	cC:SetMemberValue("nearz",udm.TYPE_FLOAT,sfm.source_units_to_pragma_units(sfmCamera:GetZNear()))
-	cC:SetMemberValue("farz",udm.TYPE_FLOAT,sfm.source_units_to_pragma_units(sfmCamera:GetZFar()))
-	-- cC:SetMemberValue("aspectRatio",udm.TYPE_FLOAT,sfm.ASPECT_RATIO)
+	cC:SetMemberValue("fov",udm.TYPE_FLOAT,sfm.convert_source_fov_to_pragma(sfmC:GetFieldOfView()))
+	cC:SetMemberValue("nearz",udm.TYPE_FLOAT,sfm.source_units_to_pragma_units(sfmC:GetZNear()))
+	cC:SetMemberValue("farz",udm.TYPE_FLOAT,sfm.source_units_to_pragma_units(sfmC:GetZFar()))
+	cC:SetMemberValue("aspectRatio",udm.TYPE_FLOAT,sfm.ASPECT_RATIO)
+	converter.m_sfmObjectToPfmActor[sfmC] = tostring(pfmActor:GetUniqueId())
 
 --[[
-	local aperture = sfmCamera:GetAperture()
+	local aperture = sfmC:GetAperture()
 	if(aperture > 0.0) then
 		pfmCamera:SetDepthOfFieldEnabled(true)
 		pfmCamera:SetFStop(sfm.convert_source_aperture_to_fstop(aperture))
 	end
-	pfmCamera:SetFocalDistance(sfm.source_units_to_pragma_units(sfmCamera:GetFocalDistance()))
+	pfmCamera:SetFocalDistance(sfm.source_units_to_pragma_units(sfmC:GetFocalDistance()))
 	pfmCamera:SetSensorSize(36.0)
 	pfmCamera:SetApertureBladeCount(3)
 ]]
 end)
 
 sfm.register_element_type_conversion(sfm.GameParticleSystem,function(converter,sfmPs,pfmActor)
-	apply_base_actor_properties(sfmPs,pfmActor)
+	apply_base_actor_properties(sfmPs,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
 
+	pfmActor:AddComponentType("pfm_particle_system")
 --[[
 	pfmParticle:SetTimeScale(sfmParticle:GetSimulationTimeScale())
 	pfmParticle:SetSimulating(sfmParticle:IsSimulating())
@@ -318,18 +351,23 @@ sfm.register_element_type_conversion(sfm.Dag,function(converter,sfmDag,pfmGroup)
 			converter:ConvertElementToPfm(child,pfmActor)
 		elseif(child:GetType() == "DmeDag") then
 			local childGroup = pfmGroup:AddGroup()
+
+			local pfmTransform = childGroup:GetTransform()
+			convert_transform(child:GetTransform(),pfmTransform,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
+			childGroup:SetTransform(pfmTransform)
+
 			converter:ConvertElementToPfm(child,childGroup)
 		end
-		iterate_film_clip_children(converter,umdNode,child)
 	end
 end)
 
 
 sfm.register_element_type_conversion(sfm.FilmClip,function(converter,sfmClip,pfmClip)
 	converter:ConvertElementToPfm(sfmClip:GetTimeFrame(),pfmClip:GetTimeFrame())
-	pfmClip:SetMapName(sfmClip:GetMapname())
+	pfmClip:SetMapName(file.remove_file_extension(sfmClip:GetMapname(),{"bsp"}))
 	pfmClip:SetFadeIn(sfmClip:GetFadeIn())
 	pfmClip:SetFadeOut(sfmClip:GetFadeOut())
+	pfmClip:SetName(sfmClip:GetName())
 
 	-- Bookmark sets
 	for _,sfmBs in ipairs(sfmClip:GetBookmarkSets()) do
@@ -354,7 +392,11 @@ sfm.register_element_type_conversion(sfm.FilmClip,function(converter,sfmClip,pfm
 	-- Animation sets
 	--
 
-	-- pfmClip:SetCamera() -- TODO
+	local sfmCam = sfmClip:GetCamera()
+	if(sfmCam ~= nil) then
+		local pfmCam = converter.m_sfmObjectToPfmActor[sfmCam]
+		if(pfmCam ~= nil) then pfmClip:SetCamera(pfmCam) end
+	end
 end)
 sfm.register_element_type_conversion(sfm.TimeFrame,function(converter,sfmTimeFrame,pfmTimeFrame)
 	pfmTimeFrame:SetStart(sfmTimeFrame:GetStart())
@@ -384,6 +426,7 @@ end)
 sfm.register_element_type_conversion(sfm.Track,function(converter,sfmT,pfmT)
 	pfmT:SetVolume(sfmT:GetVolume())
 	pfmT:SetMuted(sfmT:IsMuted())
+	pfmT:SetName(sfmT:GetName())
 
 	for _,sfmCc in ipairs(sfmT:GetChannelClips()) do
 		local pfmAc = pfmT:AddAnimationClip()
@@ -485,17 +528,11 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 
 	local subClipTrackGroup = pfmClip:AddTrackGroup()
 	subClipTrackGroup:SetName("subClipTrackGroup")
+	self:ConvertElementToPfm(sfmClip:GetSubClipTrackGroup(),subClipTrackGroup)
 
 	local channelTrackGroup = pfmClip:AddTrackGroup()
 	channelTrackGroup:SetName("channelTrackGroup")
 end
-
-
-
-
-
-
-
 
 function sfm.ProjectConverter:GetPFMActor(pfmComponent)
 	return self.m_sfmObjectToPfmActor[pfmComponent]

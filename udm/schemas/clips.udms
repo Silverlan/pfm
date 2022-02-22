@@ -43,7 +43,7 @@
 				"timeFrame" {$string type "TimeFrame"}
 				"camera" {
 					$string type "Reference"
-					$string referenceType "EntityComponent"
+					$string referenceType "Actor"
 				}
 				"fadeIn" {$float default 0.0}
 				"fadeOut" {$float default 0.0}

@@ -91,7 +91,7 @@ function ents.PFMCamera:UpdateAspectRatio()
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
 	if(camC == nil) then return end
 	local camData = self:GetCameraData()
-	camC:SetAspectRatio(camData:GetAspectRatio())
+	camC:SetAspectRatio(camData:GetActor():FindComponent("camera"):GetMemberValue("aspectRatio"))
 	camC:UpdateProjectionMatrix()
 end
 function ents.PFMCamera:GetCameraData() return self.m_cameraData end
@@ -238,9 +238,10 @@ end
 function ents.PFMCamera:Setup(actorData,cameraData)
 	self.m_cameraData = cameraData
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
-	if(camC ~= nil) then
-		camC:SetNearZ(math.max(cameraData:GetZNear(),1))
-		camC:SetFarZ(math.max(cameraData:GetZFar(),1))
+	local camComponentData = actorData:FindComponent("camera")
+	if(camComponentData ~= nil and camC ~= nil) then
+		camC:SetNearZ(math.max(camComponentData:GetMemberValue("nearz"),1))
+		camC:SetFarZ(math.max(camComponentData:GetMemberValue("farz"),1))
 		--camC:SetFOV(cameraData:GetFov())
 		camC:UpdateProjectionMatrix()
 
@@ -265,14 +266,14 @@ function ents.PFMCamera:Setup(actorData,cameraData)
 			end
 			self:SetFrustumModelDirty()
 		end))]]
-		table.insert(self.m_listeners,cameraData:GetAspectRatioAttr():AddChangeListener(function(newAspectRatio)
+		--[[table.insert(self.m_listeners,camComponentData:GetAspectRatioAttr():AddChangeListener(function(newAspectRatio)
 			self:UpdateAspectRatio()
 			self:SetFrustumModelDirty()
 		end))
-		table.insert(self.m_listeners,cameraData:GetFocalDistanceAttr():AddChangeListener(function(newFocalDistance)
+		table.insert(self.m_listeners,camComponentData:GetFocalDistanceAttr():AddChangeListener(function(newFocalDistance)
 			print("New focal distance: ",newFocalDistance)
 			self:SetFrustumModelDirty()
-		end))
+		end))]]
 		self:UpdateAspectRatio()
 	end
 end

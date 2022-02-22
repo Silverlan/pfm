@@ -125,7 +125,7 @@ function pfm.Project:Save(fileName,legacy)
 	file.create_path(file.get_file_path(fileName))
 	local f = file.open(fileName,bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
 	if(f == nil) then return false end
-	local udmData = udm.create()
+	local udmData = udm.create("PFMP",1)
 	udmData:GetAssetData():GetData():SetValue("session",self:GetSession():GetRootUdmData())
 	udmData:SaveAscii(f,udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER)
 	--udmData:Save(f)
