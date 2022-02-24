@@ -92,7 +92,7 @@ function pfm.AnimationManager:AddChannel(anim,channelClip,channelPath,type)
 	return animChannel
 end
 
-function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists)
+function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists,type)
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then return end
 	local animClip,newAnim = self.m_filmClip:FindActorAnimationClip(actor,addIfNotExists)
 	if(animClip == nil) then return end
@@ -103,6 +103,15 @@ function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists)
 	end
 	local anim = animClip:GetPanimaAnimation()
 	if(anim == nil) then return end
+	local channel = anim:FindChannel(path)
+	if(channel == nil and addIfNotExists) then
+		channel = animClip:GetChannel(path,type,true)
+		animClip:SetPanimaAnimationDirty()
+
+		-- New channel added; Reload animation
+		local ent = actor:FindEntity()
+		if(util.is_valid(ent)) then self:PlayActorAnimation(ent) end
+	end
 	return anim,anim:FindChannel(path),animClip
 end
 
@@ -125,7 +134,7 @@ end
 
 function pfm.AnimationManager:RemoveChannel(actor,path)
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then return end
-	local anim,channel = self:FindAnimationChannel(actor,path,true)
+	local anim,channel = self:FindAnimationChannel(actor,path)
 	if(channel == nil) then return end
 	anim:RemoveChannel(path)
 end
@@ -135,13 +144,9 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,channelClip,
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
-	local anim,channel,animClip = self:FindAnimationChannel(actor,path,true)
+	local anim,channel,animClip = self:FindAnimationChannel(actor,path,true,type)
 	assert(channel ~= nil)
 	if(channel == nil) then return end
 	channel:AddValue(time,value)
 	anim:UpdateDuration()
-
-	animClip:SetPanimaAnimationDirty()
-	local ent = actor:FindEntity()
-	if(util.is_valid(ent)) then self:PlayActorAnimation(ent) end
 end

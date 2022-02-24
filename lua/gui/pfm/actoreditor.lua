@@ -559,7 +559,6 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 		if(memberInfo ~= nil) then
 			local type = memberInfo.type
 			path = path:ToUri(false)
-			local channel = channelClip:GetChannel(path,type,true)
 
 			local time = fm:GetTimeOffset()
 			pfm.log("Adding channel value " .. tostring(value) .. " of type " .. udm.type_to_string(type) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
