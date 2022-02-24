@@ -192,6 +192,12 @@ function pfm.udm.FilmClip:FindActor(name)
 		if(actor:GetName() == name) then return name end
 	end
 end
+function pfm.udm.FilmClip:FindActorAnimationClip(actor,addIfNotExists)
+	if(type(actor) ~= "string") then actor = tostring(actor:GetUniqueId()) end
+	local track = self:FindAnimationChannelTrack()
+	if(track == nil) then return end
+	return track:FindActorAnimationClip(actor,addIfNotExists)
+end
 function pfm.udm.FilmClip:GetChildFilmClip(offset)
 	for _,trackGroup in ipairs(self:GetTrackGroups()) do
 		for _,track in ipairs(trackGroup:GetTracks()) do
@@ -236,7 +242,7 @@ end
 function pfm.udm.Track:FindActorAnimationClip(actor,addIfNotExists)
 	if(type(actor) ~= "string") then actor = tostring(actor:GetUniqueId()) end
 	for _,channelClip in ipairs(self:GetAnimationClips()) do
-		if(tostring(channelClip:GetActorId()) == actor) then return channelClip end
+		if(tostring(channelClip:GetActorId()) == actor) then return channelClip,false end
 	end
 	if(addIfNotExists ~= true) then return end
 	actor = udm.dereference(self:GetSchema(),actor)
@@ -244,7 +250,7 @@ function pfm.udm.Track:FindActorAnimationClip(actor,addIfNotExists)
 	channelClip = self:AddAnimationClip()
 	channelClip:SetName(actor:GetName())
 	channelClip:SetActor(actor:GetUniqueId())
-	return channelClip
+	return channelClip,true
 end
 
 function pfm.udm.AnimationClip:OnInitialize()
@@ -271,6 +277,10 @@ function pfm.udm.AnimationClip:AddChannel(type)
 	channel:SetValuesValueType(type)
 	self.m_panimaAnim = nil
 	return channel
+end
+
+function pfm.udm.AnimationClip:SetPanimaAnimationDirty()
+	self.m_panimaAnim = nil
 end
 
 function pfm.udm.AnimationClip:GetPanimaAnimation()

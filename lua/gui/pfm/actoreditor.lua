@@ -567,9 +567,7 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 			local anim = channelClip:GetPanimaAnimation()
 			local channelValue = value
 			if(util.get_type_name(channelValue) == "Color") then channelValue = channelValue:ToVector() end
-			anim:FindChannel(path):AddValue(localTime,channelValue)
 			animManager:SetChannelValue(actor,path,localTime,channelValue,channelClip,type)
-			animManager:SetAnimationsDirty()
 			fm:TagRenderSceneAsDirty()
 		else
 			local baseMsg = "Unable to apply animation channel value with channel path '" .. path.path:GetString() .. "': "
