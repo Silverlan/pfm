@@ -49,7 +49,7 @@ if(res ~= true) then
 end
 --
 
-include("/udm/pfm_util.lua")
+include("/udm/pfm_util")
 
 util.register_class("pfm.Project")
 function pfm.Project:__init()
