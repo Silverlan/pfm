@@ -436,19 +436,19 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 			name = "very_low",
 			emission_strength = 0.0,
 			samples = 20.0,
-			max_transparency_bounces = 1
+			max_transparency_bounces = 32
 		},
 		{
 			name = "low",
 			emission_strength = 0.0,
 			samples = 40.0,
-			max_transparency_bounces = 4
+			max_transparency_bounces = 32
 		},
 		{
 			name = "medium",
 			emission_strength = 0.0,
 			samples = 80.0,
-			max_transparency_bounces = 8
+			max_transparency_bounces = 32
 		},
 		{
 			name = "high",
@@ -536,7 +536,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:LinkToUDMProperty("sky_yaw",settings,"skyYawAngle")
 
 	-- Max transparency bounces
-	self.m_ctrlMaxTransparencyBounces = p:AddSliderControl(locale.get_text("pfm_max_transparency_bounces"),"max_transparency_bounces",settings:GetMaxTransparencyBounces(),0,100)
+	self.m_ctrlMaxTransparencyBounces = p:AddSliderControl(locale.get_text("pfm_max_transparency_bounces"),"max_transparency_bounces",settings:GetMaxTransparencyBounces(),0,200,nil,1.0,true)
 	p:LinkToUDMProperty("max_transparency_bounces",settings,"maxTransparencyBounces")
 
 	-- Light intensity factor
@@ -664,7 +664,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		if(preset.max_transparency_bounces ~= nil) then self.m_ctrlMaxTransparencyBounces:SetValue(preset.max_transparency_bounces) end
 		if(preset.emission_strength ~= nil) then self.m_ctrlEmissionStrength:SetValue(preset.emission_strength) end
 	end)
-	qualityPreset:SelectOption(2)
+	-- qualityPreset:SelectOption(2)
 
 	self.m_ctrlPreset:AddCallback("OnOptionSelected",function(el,option)
 		local opt = self.m_ctrlPreset:GetOptionValue(option)

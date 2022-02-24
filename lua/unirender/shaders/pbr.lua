@@ -30,7 +30,8 @@ function unirender.PBRShader:AddAlbedoNode(desc,mat)
 	local colorFactor = data:GetVector("color_factor",Vector(1,1,1))
 
 	local albedoMap = mat:GetTextureInfo("albedo_map")
-	local texPath = (albedoMap ~= nil) and unirender.get_texture_path(albedoMap:GetName()) or unirender.get_texture_path("white") or nil
+	local translucent = (alphaMode ~= game.Material.ALPHA_MODE_OPAQUE)
+	local texPath = (albedoMap ~= nil) and unirender.get_texture_path(albedoMap:GetName(),translucent) or unirender.get_texture_path("white") or nil
 	if(texPath == nil) then return unirender.Socket(colorFactor),unirender.Socket(alphaFactor) end
 
 	local texCoord = desc:AddNode(unirender.NODE_TEXTURE_COORDINATE)
