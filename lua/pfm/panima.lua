@@ -50,7 +50,16 @@ function pfm.AnimationManager:SetTime(t)
 		local manager = animC:GetAnimationManager("pfm")
 		if(manager ~= nil) then
 			local player = manager:GetPlayer()
-			player:SetCurrentTime(t or player:GetCurrentTime())
+			local lt = t
+			if(lt) then
+				local pfmActorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+				local animClip = (pfmActorC ~= nil) and self.m_filmClip:FindActorAnimationClip(pfmActorC:GetActorData()) or nil
+				if(animClip ~= nil) then
+					local start = animClip:GetTimeFrame():GetStart()
+					lt = lt -start
+				end
+			end
+			player:SetCurrentTime(lt or player:GetCurrentTime())
 		end
 	end
 end

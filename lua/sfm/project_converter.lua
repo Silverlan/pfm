@@ -418,6 +418,7 @@ sfm.register_element_type_conversion(sfm.BookmarkSet,function(converter,sfmBs,pf
 	end
 end)
 sfm.register_element_type_conversion(sfm.TrackGroup,function(converter,sfmTg,pfmTg)
+	pfmTg:SetName(sfmTg:GetName())
 	pfmTg:SetVisible(sfmTg:IsVisible())
 	pfmTg:SetMuted(sfmTg:IsMuted())
 	for _,sfmT in ipairs(sfmTg:GetTracks()) do
@@ -488,8 +489,8 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 		return
 	end
 
-	pfmC:GetUdmData():SetArrayValues("times",udm.TYPE_FLOAT,sfmLayer:GetTimes())
-	pfmC:GetUdmData():SetArrayValues("values",type,sfmLayer:GetValues())
+	pfmC:GetUdmData():SetArrayValues("times",udm.TYPE_FLOAT,sfmLayer:GetTimes(),udm.TYPE_ARRAY_LZ4)
+	pfmC:GetUdmData():SetArrayValues("values",type,sfmLayer:GetValues(),udm.TYPE_ARRAY_LZ4)
 
 --[[
 	for _,t in ipairs(sfmLog:GetBookmarks()) do
@@ -605,7 +606,7 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 		if(actor == false) then error("Invalid actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!") end
 
 		local pfmActorId = converter.m_sfmObjectToPfmActor[actor]
-		if(pfmActorId == nil) then error("No PFM actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!") end
+		if(pfmActorId == nil) then if(_asdf) then return end error("No PFM actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!") end
 
 		if(validAttr == false) then error("Invalid attribute for element " .. tostring(toElement) .. ": " .. toAttr) end
 
@@ -716,6 +717,26 @@ sfm.BaseElement.RegisterProperty(sfm.Channel,"graphCurve",sfm.GraphEditorCurve)
 ]]
 end)
 
+local rotN90Yaw = EulerAngles(0,-90,0):ToQuaternion()
+local function convert_root_bone_pos(pos,isStaticModel)
+	-- Root bones seem to be in a different coordinate system than everything else in the source engine?
+	-- I don't know why that is the case, but we have to take it into account here.
+	pos:Set(pos.x,-pos.y,-pos.z)
+
+	if(isStaticModel == true) then return end
+	-- Dynamic models and static models require different rotations, I am not sure why that is the case though.
+	pos:Rotate(rotN90Yaw)
+end
+local rot180Pitch = EulerAngles(180,0,0):ToQuaternion()
+local function convert_root_bone_rot(rot,isStaticModel)
+	local newRot = rot180Pitch *rot
+	rot:Set(newRot.w,newRot.x,newRot.y,newRot.z)
+
+	if(isStaticModel == true) then return end
+	-- Dynamic models and static models require different rotations, I am not sure why that is the case though.
+	rot:Set(rotN90Yaw *rot)
+end
+
 function sfm.ProjectConverter:ConvertSession(sfmSession)
 	local pfmSession = udm.create_property_from_schema(pfm.udm.SCHEMA,"Session")
 	self.m_pfmProject:SetSession(pfmSession)
@@ -732,11 +753,88 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 	self:ConvertElementToPfm(sfmClip,pfmClip)
 
 	local subClipTrackGroup = pfmClip:AddTrackGroup()
-	subClipTrackGroup:SetName("subClipTrackGroup")
 	self:ConvertElementToPfm(sfmClip:GetSubClipTrackGroup(),subClipTrackGroup)
 
-	local channelTrackGroup = pfmClip:AddTrackGroup()
-	channelTrackGroup:SetName("channelTrackGroup")
+	-- Convert animation transforms
+	local function iterate_track_groups(pfmClip)
+		for _,trackGroup in ipairs(pfmClip:GetTrackGroups()) do
+			for _,track in ipairs(trackGroup:GetTracks()) do
+				for _,clip in ipairs(track:GetFilmClips()) do
+					iterate_track_groups(clip)
+				end
+			end
+		end
+
+		local animTrack = pfmClip:FindAnimationChannelTrack()
+		if(animTrack ~= nil) then
+			local function transformChannelValues(channel,transformFunc,udmType)
+				local values = channel:GetValues()
+				for i,val in ipairs(values) do
+					values[i] = transformFunc(val)
+				end
+				channel:GetUdmData():SetArrayValues("values",udmType,values,udm.TYPE_ARRAY_LZ4)
+			end
+			for _,animClip in ipairs(animTrack:GetAnimationClips()) do
+				local anim = animClip:GetAnimation()
+				local actor = animClip:GetActor()
+				local mdl
+				local mdlC = actor:FindComponent("model")
+				if(mdlC ~= nil) then
+					local mdlName = mdlC:GetMemberValue("model")
+					if(mdlName ~= nil) then mdl = game.load_model(mdlName) end
+				end
+				for _,channel in ipairs(anim:GetChannels()) do
+					local targetPath = channel:GetTargetPath()
+					local componentName,componentPath = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
+					if(componentName == "animated") then
+						local pathComponents = string.split(componentPath:GetString(),"/")
+						if(#pathComponents == 3 and pathComponents[1] == "bone") then
+							local boneName = pathComponents[2]
+							local boneId = mdl and mdl:LookupBone(boneName) or -1
+							local isRootBone = (boneId ~= -1) and mdl:IsRootBone(boneId) or false
+
+							local type = pathComponents[3]
+							if(type == "position") then
+								transformChannelValues(channel,function(val)
+									val = sfm.convert_source_anim_set_position_to_pragma(val)
+									if(isRootBone) then
+										convert_root_bone_pos(val,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
+									end
+									return val
+								end,udm.TYPE_VECTOR3)
+							elseif(type == "rotation") then
+								transformChannelValues(channel,function(val)
+									val = sfm.convert_source_anim_set_rotation_to_pragma(val)
+									if(isRootBone) then
+										convert_root_bone_rot(val,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
+									end
+									return val
+								end,udm.TYPE_QUATERNION)
+							elseif(type == "scale") then
+								transformChannelValues(channel,function(val)
+									return Vector(val,val,val)
+								end,udm.TYPE_VECTOR3)
+							end
+						end
+					elseif(componentName == "transform") then
+						local pathComponents = string.split(componentPath:GetString(),"/")
+						if(#pathComponents == 1) then
+							if(pathComponents[1] == "position") then
+								transformChannelValues(channel,function(val)
+									return sfm.convert_source_transform_position_to_pragma(val)
+								end,udm.TYPE_VECTOR3)
+							elseif(pathComponents[1] == "rotation") then
+								transformChannelValues(channel,function(val)
+									return sfm.convert_source_transform_rotation_to_pragma_special(nil,val)
+								end,udm.TYPE_QUATERNION)
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	iterate_track_groups(pfmClip)
 end
 
 function sfm.ProjectConverter:GetPFMActor(pfmComponent)
@@ -802,25 +900,6 @@ function sfm.ProjectConverter:CreateActor(sfmComponent,pfmParentDag)
 end
 function sfm.ProjectConverter:GetPFMElement(element)
 	return self.m_sfmElementToPfmElement[element]
-end
-local rotN90Yaw = EulerAngles(0,-90,0):ToQuaternion()
-local function convert_root_bone_pos(pos)
-	-- Root bones seem to be in a different coordinate system than everything else in the source engine?
-	-- I don't know why that is the case, but we have to take it into account here.
-	pos:Set(pos.x,-pos.y,-pos.z)
-
-	if(isStaticModel == true) then return end
-	-- Dynamic models and static models require different rotations, I am not sure why that is the case though.
-	pos:Rotate(rotN90Yaw)
-end
-local rot180Pitch = EulerAngles(180,0,0):ToQuaternion()
-local function convert_root_bone_rot(rot,isStaticModel)
-	local newRot = rot180Pitch *rot
-	rot:Set(newRot.w,newRot.x,newRot.y,newRot.z)
-
-	if(isStaticModel == true) then return end
-	-- Dynamic models and static models require different rotations, I am not sure why that is the case though.
-	rot:Set(rotN90Yaw *rot)
 end
 local function convert_bone_transforms(filmClip,processedObjects,mdlMsgCache)
 	for _,actor in ipairs(filmClip:GetActorList()) do
