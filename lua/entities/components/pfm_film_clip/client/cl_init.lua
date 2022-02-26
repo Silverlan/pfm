@@ -115,7 +115,7 @@ end
 function ents.PFMFilmClip:UpdateCamera()
 	local cam = self:GetClipData():GetCamera()
 	if(cam ~= nil) then
-		local entCam = self:GetActor(cam)
+		local entCam = cam:FindEntity()
 		self.m_camera = entCam and entCam:GetComponent("pfm_camera") or entCam
 		if(util.is_valid(self.m_camera)) then
 			self.m_camera:SetFrustumModelVisible(true)
@@ -178,16 +178,6 @@ function ents.PFMFilmClip:CreateTrackGroup(trackGroup)
 
 	local projectC = self:GetProject()
 	if(util.is_valid(projectC)) then projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED,{ent}) end
-end
-
-function ents.PFMFilmClip:GetActor(actorData)
-	for _,actor in ipairs(self:GetActors()) do
-		if(actor:IsValid() and actor:HasComponent(ents.COMPONENT_PFM_ACTOR)) then
-			if(util.is_same_object(actor:GetComponent(ents.COMPONENT_PFM_ACTOR):GetActorData(),actorData)) then
-				return actor
-			end
-		end
-	end
 end
 
 function ents.PFMFilmClip:InitializeActors()

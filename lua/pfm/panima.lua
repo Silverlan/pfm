@@ -40,6 +40,7 @@ function pfm.AnimationManager:PlayActorAnimation(ent)
 	local player = animManager:GetPlayer()
 	player:SetPlaybackRate(0.0)
 	local anim = clip:GetPanimaAnimation()
+	pfm.log("Playing actor animation '" .. tostring(anim) .. "' for actor '" .. tostring(ent) .. "'...",pfm.LOG_CATEGORY_PFM)
 	animC:PlayAnimation(animManager,anim)
 end
 

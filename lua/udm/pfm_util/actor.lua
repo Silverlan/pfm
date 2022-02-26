@@ -30,11 +30,6 @@ end
 function pfm.udm.Actor:AddComponentType(componentType)
     local component = self:AddComponent()
     component:SetType(componentType)
-
-    local componentName = component:GetType() .. "_component"
-    local componentIndex = 1
-    while(self:FindComponent(componentName .. componentIndex) ~= nil) do componentIndex = componentIndex +1 end
-    component:SetName((componentIndex == 1) and componentName or (componentName .. componentIndex))
     return component
 end
 

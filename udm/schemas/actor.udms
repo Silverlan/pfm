@@ -19,7 +19,6 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
-				"name" {$string default ""}
 				"type" {$string default ""}
 				"properties" {$string type "element"}
 			}

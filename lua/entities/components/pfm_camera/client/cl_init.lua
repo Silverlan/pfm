@@ -8,49 +8,49 @@
 
 include("/shaders/pfm/pfm_wireframe_line.lua")
 
-util.register_class("ents.PFMCamera",BaseEntityComponent)
+local Component = util.register_class("ents.PFMCamera",BaseEntityComponent)
 
-ents.PFMCamera.impl = util.get_class_value(ents.PFMCamera,"impl") or {
+Component.impl = util.get_class_value(Component,"impl") or {
 	activeCamera = nil,
 	cameraEnabled = false,
 	vrEnabled = false
 }
-ents.PFMCamera.get_active_camera = function() return ents.PFMCamera.impl.activeCamera end
-ents.PFMCamera.is_camera_enabled = function() return ents.PFMCamera.impl.cameraEnabled end
-ents.PFMCamera.set_camera_enabled = function(enabled)
+Component.get_active_camera = function() return Component.impl.activeCamera end
+Component.is_camera_enabled = function() return Component.impl.cameraEnabled end
+Component.set_camera_enabled = function(enabled)
 	if(enabled) then pfm.log("Enabling camera...",pfm.LOG_CATEGORY_PFM_GAME)
 	else pfm.log("Disabling camera...",pfm.LOG_CATEGORY_PFM_GAME) end
-	ents.PFMCamera.impl.cameraEnabled = enabled
-	ents.PFMCamera.set_active_camera(ents.PFMCamera.impl.activeCamera)
+	Component.impl.cameraEnabled = enabled
+	Component.set_active_camera(Component.impl.activeCamera)
 end
-ents.PFMCamera.set_active_camera = function(cam)
+Component.set_active_camera = function(cam)
 	pfm.tag_render_scene_as_dirty()
-	if(util.is_valid(ents.PFMCamera.impl.activeCamera)) then
-		local toggleC = ents.PFMCamera.impl.activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
+	if(util.is_valid(Component.impl.activeCamera)) then
+		local toggleC = Component.impl.activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
 		if(toggleC ~= nil) then toggleC:TurnOff() end
-		ents.PFMCamera.impl.activeCamera = nil
+		Component.impl.activeCamera = nil
 	end
 	if(util.is_valid(cam) == false) then
 		pfm.log("Setting active camera to: None",pfm.LOG_CATEGORY_PFM_GAME)
 		return
 	end
 	pfm.log("Setting active camera to: " .. cam:GetEntity():GetName(),pfm.LOG_CATEGORY_PFM_GAME)
-	ents.PFMCamera.impl.activeCamera = cam
-	local toggleC = ents.PFMCamera.impl.activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
-	if(toggleC ~= nil) then toggleC:SetTurnedOn(ents.PFMCamera.impl.cameraEnabled) end
-	ents.PFMCamera.impl.activeCamera:UpdateVRView()
+	Component.impl.activeCamera = cam
+	local toggleC = Component.impl.activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
+	if(toggleC ~= nil) then toggleC:SetTurnedOn(Component.impl.cameraEnabled) end
+	Component.impl.activeCamera:UpdateVRView()
 end
-ents.PFMCamera.set_vr_view_enabled = function(enabled)
+Component.set_vr_view_enabled = function(enabled)
 	if(enabled) then pfm.log("Enabling VR view...",pfm.LOG_CATEGORY_PFM_GAME)
 	else pfm.log("Disabling VR view...",pfm.LOG_CATEGORY_PFM_GAME) end
-	ents.PFMCamera.impl.vrEnabled = enabled
-	if(util.is_valid(ents.PFMCamera.impl.activeCamera)) then
-		ents.PFMCamera.impl.activeCamera:UpdateVRView()
+	Component.impl.vrEnabled = enabled
+	if(util.is_valid(Component.impl.activeCamera)) then
+		Component.impl.activeCamera:UpdateVRView()
 	end
 end
-ents.PFMCamera.is_vr_view_enabled = function() return ents.PFMCamera.impl.vrEnabled end
+Component.is_vr_view_enabled = function() return Component.impl.vrEnabled end
 
-function ents.PFMCamera:Initialize()
+function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
@@ -67,36 +67,36 @@ function ents.PFMCamera:Initialize()
 
 	self.m_listeners = {}
 end
-function ents.PFMCamera:OnTurnOn()
+function Component:OnTurnOn()
 	if(self.m_frustumModel == nil) then return end
 	self:SetFrustumModelVisible(false)
 end
-function ents.PFMCamera:OnTurnOff()
+function Component:OnTurnOff()
 	if(self.m_frustumModel == nil) then return end
 	self:SetFrustumModelVisible(true)
 end
-function ents.PFMCamera:OnRemove()
+function Component:OnRemove()
 	for _,cb in ipairs(self.m_listeners) do
 		if(cb:IsValid()) then cb:Remove() end
 	end
 end
-function ents.PFMCamera:UpdateVRView()
-	if(ents.PFMCamera.is_vr_view_enabled()) then
+function Component:UpdateVRView()
+	if(Component.is_vr_view_enabled()) then
 		self:GetEntity():AddComponent("pfm_vr_camera")
 	else
 		self:GetEntity():RemoveComponent("pfm_vr_camera")
 	end
 end
-function ents.PFMCamera:UpdateAspectRatio()
+function Component:UpdateAspectRatio()
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
 	if(camC == nil) then return end
 	local camData = self:GetCameraData()
 	camC:SetAspectRatio(camData:GetActor():FindComponent("camera"):GetMemberValue("aspectRatio"))
 	camC:UpdateProjectionMatrix()
 end
-function ents.PFMCamera:GetCameraData() return self.m_cameraData end
+function Component:GetCameraData() return self.m_cameraData end
 local MODEL_VERTEX_COUNT = 32
-function ents.PFMCamera:InitializeModel()
+function Component:InitializeModel()
 	if(self.m_frustumModel ~= nil) then return self.m_frustumModel end
 	-- Generate model
 	local mdl = game.create_model()
@@ -134,7 +134,7 @@ function ents.PFMCamera:InitializeModel()
 	self:SetFrustumModelDirty()
 	return mdl
 end
-function ents.PFMCamera:UpdateModel(updateBuffers)
+function Component:UpdateModel(updateBuffers)
 	if(updateBuffers == nil) then updateBuffers = true end
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
 	if(camC == nil or self.m_frustumModel == nil) then return end
@@ -189,7 +189,7 @@ function ents.PFMCamera:UpdateModel(updateBuffers)
 	subMesh:SetVertexPosition(vertIdx,farPlaneBoundaries[4]) vertIdx = vertIdx +1
 
 	-- Focal distance plane
-	local focalDistance = self:GetCameraData():GetFocalDistance()
+	local focalDistance = 0 -- self:GetCameraData():GetFocalDistance() -- TODO
 	local focalPlaneBoundaries = math.get_frustum_plane_boundaries(pos,vector.FORWARD,vector.UP,fov,camC:GetAspectRatio(),focalDistance)
 
 	subMesh:SetVertexPosition(vertIdx,focalPlaneBoundaries[1]) vertIdx = vertIdx +1
@@ -206,7 +206,7 @@ function ents.PFMCamera:UpdateModel(updateBuffers)
 
 	if(updateBuffers) then subMesh:Update(game.Model.FUPDATE_VERTEX_BUFFER) end
 end
-function ents.PFMCamera:SetFrustumModelVisible(visible)
+function Component:SetFrustumModelVisible(visible)
 	if(visible) then self:GetEntity():AddComponent(ents.COMPONENT_RENDER) end
 
 	local actorC = self:GetEntity():GetComponent("pfm_actor")
@@ -219,66 +219,66 @@ function ents.PFMCamera:SetFrustumModelVisible(visible)
 	if(model == nil) then return end
 	mdlC:SetModel(model)
 end
-function ents.PFMCamera:UpdateRenderData()
+function Component:UpdateRenderData()
 	if(self.m_updateFrustumModel ~= true) then return end
 	self.m_updateFrustumModel = nil
 	self:UpdateModel()
 	local mdl = self:GetEntity():GetModel()
 	if(mdl ~= nil) then mdl:Update(game.Model.FUPDATE_BOUNDS) end
 end
-function ents.PFMCamera:SetFrustumModelDirty()
+function Component:SetFrustumModelDirty()
 	self.m_updateFrustumModel = true
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
-function ents.PFMCamera:OnTick(dt)
+function Component:OnTick(dt)
 	self:SetTickPolicy(ents.TICK_POLICY_NEVER)
 	self:UpdateRenderData()
 	pfm.tag_render_scene_as_dirty()
 end
-function ents.PFMCamera:Setup(actorData,cameraData)
+function Component:Setup(actorData,cameraData)
 	self.m_cameraData = cameraData
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
 	local camComponentData = actorData:FindComponent("camera")
 	if(camComponentData ~= nil and camC ~= nil) then
 		camC:SetNearZ(math.max(camComponentData:GetMemberValue("nearz"),1))
 		camC:SetFarZ(math.max(camComponentData:GetMemberValue("farz"),1))
-		--camC:SetFOV(cameraData:GetFov())
+		camC:SetFOV(camComponentData:GetMemberValue("fov"))
+		camC:SetAspectRatio(camComponentData:GetMemberValue("aspectRatio"))
+		camC:SetFocalDistance(camComponentData:GetMemberValue("focalDistance"))
 		camC:UpdateProjectionMatrix()
 
-		--[[table.insert(self.m_listeners,cameraData:GetZNearAttr():AddChangeListener(function(newZNear)
+		table.insert(self.m_listeners,camComponentData:AddChangeListener("nearz",function(c,newZNear)
 			if(camC:IsValid()) then
 				camC:SetNearZ(math.max(newZNear,1))
 				camC:UpdateProjectionMatrix()
 			end
 			self:SetFrustumModelDirty()
 		end))
-		table.insert(self.m_listeners,cameraData:GetZFarAttr():AddChangeListener(function(newZFar)
+		table.insert(self.m_listeners,camComponentData:AddChangeListener("farz",function(c,newZFar)
 			if(camC:IsValid()) then
 				camC:SetFarZ(math.max(newZFar,1))
 				camC:UpdateProjectionMatrix()
 			end
 			self:SetFrustumModelDirty()
 		end))
-		table.insert(self.m_listeners,cameraData:GetFovAttr():AddChangeListener(function(newFov)
+		table.insert(self.m_listeners,camComponentData:AddChangeListener("fov",function(c,newFov)
 			if(camC:IsValid()) then
 				camC:SetFOV(newFov)
 				camC:UpdateProjectionMatrix()
 			end
 			self:SetFrustumModelDirty()
-		end))]]
-		--[[table.insert(self.m_listeners,camComponentData:GetAspectRatioAttr():AddChangeListener(function(newAspectRatio)
-			self:UpdateAspectRatio()
-			self:SetFrustumModelDirty()
 		end))
-		table.insert(self.m_listeners,camComponentData:GetFocalDistanceAttr():AddChangeListener(function(newFocalDistance)
-			print("New focal distance: ",newFocalDistance)
-			self:SetFrustumModelDirty()
-		end))]]
+		table.insert(self.m_listeners,camComponentData:AddChangeListener("aspectRatio",function(c,newAspectRatio)
+			if(camC:IsValid()) then camC:SetAspectRatio(newAspectRatio) end
+		end))
+		table.insert(self.m_listeners,camComponentData:AddChangeListener("focalDistance",function(c,newFocalDistance)
+			if(camC:IsValid()) then camC:SetFocalDistance(newFocalDistance) end
+		end))
 		self:UpdateAspectRatio()
 	end
 end
-function ents.PFMCamera:OnEntitySpawn()
+function Component:OnEntitySpawn()
 	local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
 	if(toggleC ~= nil) then toggleC:TurnOff() end
 end
-ents.COMPONENT_PFM_CAMERA = ents.register_component("pfm_camera",ents.PFMCamera)
+ents.COMPONENT_PFM_CAMERA = ents.register_component("pfm_camera",Component)

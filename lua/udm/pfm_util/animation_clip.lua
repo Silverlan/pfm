@@ -39,7 +39,7 @@ end
 function pfm.udm.AnimationClip:GetPanimaAnimation()
     if(self.m_panimaAnim == nil) then
         self.m_panimaAnim = panima.Animation.load(self:GetAnimation():GetUdmData())
-        -- TODO: Re-create panima animation when properties have changed or new channel has been added
+        self.m_panimaAnim:UpdateDuration()
     end
     return self.m_panimaAnim
 end

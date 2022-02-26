@@ -752,7 +752,7 @@ function gui.PFMViewport:SwitchToSceneCamera()
 	local camName = ""
 	if(util.is_valid(camScene)) then
 		local camData = camScene:GetCameraData()
-		if(util.is_valid(self.m_btCamera)) then camName = camData:GetName() end
+		if(util.is_valid(self.m_btCamera)) then camName = camData:GetActor():GetName() end
 	end
 	if(#camName == 0) then camName = locale.get_text("pfm_scene_camera") end
 	self.m_btCamera:SetText(camName)
