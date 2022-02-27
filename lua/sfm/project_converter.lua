@@ -259,8 +259,8 @@ local function apply_base_actor_properties(converter,sfmActor,pfmActor,transform
 	converter.m_sfmObjectToPfmActor[sfmActor] = tostring(pfmActor:GetUniqueId())
 end
 
-sfm.register_element_type_conversion(sfm.ProjectedLight,function(converter,sfmPl,pfmActor)
-	apply_base_actor_properties(converter,sfmPl,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
+sfm.register_element_type_conversion(sfm.ProjectedLight,function(converter,sfmLight,pfmActor)
+	apply_base_actor_properties(converter,sfmLight,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
 
 	local cPls = pfmActor:AddComponentType("pfm_light_spot")
 
@@ -269,13 +269,14 @@ sfm.register_element_type_conversion(sfm.ProjectedLight,function(converter,sfmPl
 	
 	local cL = pfmActor:AddComponentType("light")
 	cL:SetMemberValue("intensity",udm.TYPE_FLOAT,sfmLight:GetIntensity())
-	cL:SetMemberValue("intensityType",udm.TYPE_STRING,"candela")
+	cL:SetMemberValue("intensityType",udm.TYPE_STRING,"Candela")
 	cL:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,sfmLight:ShouldCastShadows())
 
 	local cLs = pfmActor:AddComponentType("light_spot")
 	local fov = math.max(sfmLight:GetHorizontalFOV(),sfmLight:GetVerticalFOV())
-	cLs:SetMemberValue("innerConeAngle",udm.TYPE_FLOAT,fov)
-	cLs:SetMemberValue("outerConeAngle",udm.TYPE_FLOAT,fov *0.7)
+	fov = fov *0.5
+	cLs:SetMemberValue("innerConeAngle",udm.TYPE_FLOAT,fov *0.7)
+	cLs:SetMemberValue("outerConeAngle",udm.TYPE_FLOAT,fov)
 
 	local cR = pfmActor:AddComponentType("radius")
 	cR:SetMemberValue("radius",udm.TYPE_FLOAT,sfmLight:GetMaxDistance())
@@ -504,7 +505,7 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 	local toElement = sfmC:GetToElement()
 	if(toElement == nil) then
 		-- pfm.log("Unsupported 'to'-element for channel '" .. sfmC:GetName() .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
-	elseif(toElement:GetType() ~= "DmePackColorOperator") then
+	else
 		if(toElement:GetType() == "DmeExpressionOperator") then
 			local sfmOperator = toElement
 
@@ -534,13 +535,27 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 			end
 			local expr = sfm.convert_math_expression_to_pragma(sfmOperator:GetExpr(),variables)
 			pfmC:SetExpression(expr)
+		elseif(toElement:GetType() == "DmePackColorOperator") then
+			for _,p in ipairs(sfmC:GetParents()) do
+				if(p:GetType() == "DmeChannelsClip") then
+					for _,channel in ipairs(p:GetChannels()) do
+						if(util.is_same_object(channel:GetFromElement(),sfmC:GetToElement()) and channel:GetFromAttribute() == "color") then
+							toElement = channel:GetToElement()
+							break
+						end
+					end
+					break
+				end
+			end
 		end
 
+		local origToElement = sfmC:GetToElement()
 		local gm = toElement:FindParent("DmeGameModel") or false
 		local c = not gm and toElement:FindParent("DmeCamera") or false
 		local pj = not c and toElement:FindParent("DmeProjectedLight") or false
 		local ps = not pj and toElement:FindParent("DmeGameParticleSystem") or false
 		local validAttr = true
+
 		if(gm ~= false) then
 			if(toElement:GetType() == "DmeTransform") then
 				local origToAttr = toAttr
@@ -570,7 +585,17 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 			if(toAttr:lower() == "fieldofview") then toAttr = "fov" end
 			toAttr = "ec/camera/" .. toAttr
 		elseif(pj ~= false) then
-			toAttr = "ec/light_spot/" .. toAttr
+			toAttr = toAttr:lower()
+			if(origToElement:GetType() == "DmePackColorOperator") then
+				if(toAttr ~= "red" and toAttr ~= "green" and toAttr ~= "blue" and toAttr ~= "alpha") then
+					pfm.log("Unsupported pack color operator for to-attribute '" .. toAttr .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+					return false
+				end
+				toAttr = "ec/color/color?components=" .. toAttr
+			else
+				if(toAttr == "horizontalfov" or toAttr == "verticalfov") then toAttr = "outerConeAngle" end
+				toAttr = "ec/light_spot/" .. toAttr
+			end
 		elseif(ps ~= false) then
 			toAttr = "ec/particle_system/" .. toAttr
 		else validAttr = false end
@@ -710,6 +735,15 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 								transformChannelValues(channel,function(val)
 									return sfm.convert_source_transform_rotation_to_pragma_special(nil,val)
 								end,udm.TYPE_QUATERNION)
+							end
+						end
+					elseif(componentName == "light_spot") then
+						local pathComponents = string.split(componentPath:GetString(),"/")
+						if(#pathComponents == 1) then
+							if(pathComponents[1] == "outerConeAngle" or pathComponents[1] == "innerConeAngle") then
+								transformChannelValues(channel,function(val)
+									return val *0.5
+								end,udm.TYPE_FLOAT)
 							end
 						end
 					end

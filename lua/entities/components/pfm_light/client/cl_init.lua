@@ -22,49 +22,54 @@ function ents.PFMLight:OnRemove()
 		if(cb:IsValid()) then cb:Remove() end
 	end
 end
-function ents.PFMLight:Setup(actorData,lightData)
+function ents.PFMLight:Setup(actorData,pfmLightData)
 	local ent = self:GetEntity()
-	local colorC = ent:GetComponent(ents.COMPONENT_COLOR)
-	if(colorC ~= nil) then
-		colorC:SetColor(lightData:GetColor())
 
-		table.insert(self.m_listeners,lightData:GetColorAttr():AddChangeListener(function(newColor)
+	local colorC = ent:GetComponent(ents.COMPONENT_COLOR)
+	local colorData = actorData:FindComponent("color")
+	if(colorC ~= nil and colorData ~= nil) then
+		colorC:SetColor(colorData:GetMemberValue("color"))
+
+		table.insert(self.m_listeners,colorData:AddChangeListener("color",function(c,newColor)
 			if(colorC:IsValid()) then colorC:SetColor(newColor) end
 		end))
 	end
 
 	local lightC = ent:GetComponent(ents.COMPONENT_LIGHT)
+	local lightData = actorData:FindComponent("light")
 	if(lightC ~= nil) then
-		lightC:SetLightIntensity(lightData:GetIntensity(),lightData:GetIntensityType())
-		lightC:SetFalloffExponent(lightData:GetFalloffExponent())
-		lightC:SetShadowType(lightData:ShouldCastShadows() and ents.LightComponent.SHADOW_TYPE_FULL or ents.LightComponent.SHADOW_TYPE_NONE)
+		lightC:SetLightIntensity(lightData:GetMemberValue("intensity"),lightData:GetMemberValue("intensityType"))
+		-- lightC:SetFalloffExponent(lightData:GetMemberValue("falloffExponent"))
+		lightC:SetShadowType(lightData:GetMemberValue("castShadows") and ents.LightComponent.SHADOW_TYPE_FULL or ents.LightComponent.SHADOW_TYPE_NONE)
 
-		table.insert(self.m_listeners,lightData:GetIntensityAttr():AddChangeListener(function(newIntensity)
+		table.insert(self.m_listeners,lightData:AddChangeListener("intensity",function(c,newIntensity)
 			if(lightC:IsValid()) then lightC:SetLightIntensity(newIntensity) end
 		end))
-		table.insert(self.m_listeners,lightData:GetIntensityTypeAttr():AddChangeListener(function(newIntensityType)
+		table.insert(self.m_listeners,lightData:AddChangeListener("intensityType",function(c,newIntensityType)
 			if(lightC:IsValid()) then lightC:SetLightIntensityType(newIntensityType) end
 		end))
 	end
 
 	local spotLightC = ent:GetComponent(ents.COMPONENT_LIGHT_SPOT)
-	if(spotLightC ~= nil) then
+	local spotLightData = actorData:FindComponent("light_spot")
+	if(spotLightC ~= nil and spotLightData ~= nil) then
 		-- TODO (Also see volumetric light below)
-		spotLightC:SetInnerCutoffAngle(lightData:GetInnerConeAngle() *0.5)
-		spotLightC:SetOuterCutoffAngle(lightData:GetOuterConeAngle() *0.5)
-		table.insert(self.m_listeners,lightData:GetInnerConeAngleAttr():AddChangeListener(function(newConeAngle)
-			if(spotLightC:IsValid()) then spotLightC:SetInnerCutoffAngle(newConeAngle *0.5) end
+		spotLightC:SetInnerCutoffAngle(spotLightData:GetMemberValue("innerConeAngle"))
+		spotLightC:SetOuterCutoffAngle(spotLightData:GetMemberValue("outerConeAngle"))
+		table.insert(self.m_listeners,spotLightData:AddChangeListener("innerConeAngle",function(c,newConeAngle)
+			if(spotLightC:IsValid()) then spotLightC:SetInnerCutoffAngle(newConeAngle) end
 		end))
-		table.insert(self.m_listeners,lightData:GetOuterConeAngleAttr():AddChangeListener(function(newConeAngle)
-			if(spotLightC:IsValid()) then spotLightC:SetOuterCutoffAngle(newConeAngle *0.5) end
+		table.insert(self.m_listeners,spotLightData:AddChangeListener("outerConeAngle",function(c,newConeAngle)
+			if(spotLightC:IsValid()) then spotLightC:SetOuterCutoffAngle(newConeAngle) end
 		end))
 	end
 
 	local radiusC = ent:GetComponent(ents.COMPONENT_RADIUS)
-	if(radiusC ~= nil) then
-		radiusC:SetRadius(lightData:GetMaxDistance())
+	local radiusData = actorData:FindComponent("radius")
+	if(radiusC ~= nil and radiusData ~= nil) then
+		radiusC:SetRadius(radiusData:GetMemberValue("radius"))
 
-		table.insert(self.m_listeners,lightData:GetMaxDistanceAttr():AddChangeListener(function(newRadius)
+		table.insert(self.m_listeners,radiusData:AddChangeListener("radius",function(c,newRadius)
 			if(radiusC:IsValid()) then radiusC:SetRadius(newRadius) end
 		end))
 	end
@@ -74,7 +79,7 @@ function ents.PFMLight:Setup(actorData,lightData)
 		toggleC:TurnOn()
 	end
 
-	if(lightData:IsVolumetric()) then
+	-- if(pfmLightData:IsVolumetric()) then
 		-- TODO
 		--[[local spotVolC = ent:AddComponent(ents.COMPONENT_LIGHT_SPOT_VOLUME)
 		ent:SetKeyValue("cone_angle","20") -- TODO: Half of inner cutoff angle
@@ -100,6 +105,6 @@ function ents.PFMLight:Setup(actorData,lightData)
 		local attInfo = ents.AttachableComponent.AttachmentInfo()
 		attInfo.flags =  ents.AttachableComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME
 		entVol:AddComponent(ents.COMPONENT_ATTACHABLE):AttachToEntity(ent,attInfo)]]
-	end
+	-- end
 end
 ents.COMPONENT_PFM_LIGHT = ents.register_component("pfm_light",ents.PFMLight)
