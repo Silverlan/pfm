@@ -6,11 +6,32 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.PFMActorComponent",BaseEntityComponent)
+local Component = util.register_class("ents.PFMActorComponent",BaseEntityComponent)
 
 include("channel.lua") -- TODO: This is obsolete; Remove the channels!
 
-function ents.PFMActorComponent:Initialize()
+Component:RegisterMember("Position",udm.TYPE_VECTOR3,Vector(0,0,0),{
+	onChange = function(self)
+		local pose = self:GetActorData():GetAbsoluteParentPose()
+		pose:TranslateLocal(self:GetPosition())
+		self:GetEntity():SetPos(pose:GetOrigin())
+	end
+})
+Component:RegisterMember("Rotation",udm.TYPE_QUATERNION,Quaternion(),{
+	onChange = function(self)
+		local pose = self:GetActorData():GetAbsoluteParentPose()
+		pose:RotateLocal(self:GetRotation())
+		self:GetEntity():SetRotation(pose:GetRotation())
+	end
+})
+Component:RegisterMember("Scale",udm.TYPE_VECTOR3,Vector(1,1,1),{
+	onChange = function(self)
+		local pose = self:GetActorData():GetAbsoluteParentPose()
+		self:GetEntity():SetScale(pose:GetScale() *self:GetScale())
+	end
+})
+
+function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
 	self:AddEntityComponent(ents.COMPONENT_NAME)
@@ -31,7 +52,7 @@ function ents.PFMActorComponent:Initialize()
 	self.m_flexControllerChannels = {}
 end
 
-function ents.PFMActorComponent:SetBoneChannel(boneId,attr,channel)
+function Component:SetBoneChannel(boneId,attr,channel)
 	if(type(boneId) == "string") then
 		local mdl = self:GetEntity():GetModel()
 		if(mdl == nil) then return end
@@ -41,28 +62,28 @@ function ents.PFMActorComponent:SetBoneChannel(boneId,attr,channel)
 	self.m_boneChannels[boneId] = self.m_boneChannels[boneId] or {}
 	self.m_boneChannels[boneId][attr] = channel
 end
-function ents.PFMActorComponent:GetBoneChannel(boneId,attr)
+function Component:GetBoneChannel(boneId,attr)
 	return self.m_boneChannels[boneId] and self.m_boneChannels[boneId][attr] or nil
 end
-function ents.PFMActorComponent:SetFlexControllerChannel(flexControllerId,channel)
+function Component:SetFlexControllerChannel(flexControllerId,channel)
 	self.m_flexControllerChannels[flexControllerId] = channel
 end
-function ents.PFMActorComponent:GetFlexControllerChannel(flexControllerId)
+function Component:GetFlexControllerChannel(flexControllerId)
 	return self.m_flexControllerChannels[flexControllerId]
 end
 
-function ents.PFMActorComponent:GetActorData() return self.m_actorData end
+function Component:GetActorData() return self.m_actorData end
 
-function ents.PFMActorComponent:SetShouldAutoUpdatePose(autoUpdate) self.m_autoUpdatePose = autoUpdate end
-function ents.PFMActorComponent:SetShouldAutoUpdateRenderMode(autoUpdate) self.m_autoUpdateRenderMode = autoUpdate end
+function Component:SetShouldAutoUpdatePose(autoUpdate) self.m_autoUpdatePose = autoUpdate end
+function Component:SetShouldAutoUpdateRenderMode(autoUpdate) self.m_autoUpdateRenderMode = autoUpdate end
 
-function ents.PFMActorComponent:OnRemove()
+function Component:OnRemove()
 	for _,listener in ipairs(self.m_listeners) do
 		if(listener:IsValid()) then listener:Remove() end
 	end
 end
 
-function ents.PFMActorComponent:OnEntitySpawn()
+function Component:OnEntitySpawn()
 	local actorData = self:GetActorData()
 	if(actorData == nil) then return end
 	local ent = self:GetEntity()
@@ -70,9 +91,11 @@ function ents.PFMActorComponent:OnEntitySpawn()
 	local update_pose = function() self:UpdatePose() end
 	table.insert(self.m_listeners,actorData:AddChangeListener("transform",update_pose))
 	table.insert(self.m_listeners,actorData:AddChangeListener("visible",function(visible) self:UpdateRenderMode() end))
+
+	self:InitializeComponentProperties()
 end
 
-function ents.PFMActorComponent:UpdatePose()
+function Component:UpdatePose()
 	if(self.m_autoUpdatePose ~= true) then return end
 	local actorData = self:GetActorData()
 	if(actorData == nil) then return end
@@ -85,15 +108,15 @@ function ents.PFMActorComponent:UpdatePose()
 	self:GetEntity():SetPose(pose)
 end
 
-function ents.PFMActorComponent:SetDefaultRenderMode(renderMode,useIfTurnedOff)
+function Component:SetDefaultRenderMode(renderMode,useIfTurnedOff)
 	self.m_defaultRenderMode = renderMode
 	self.m_useDefaultRenderModeIfTurnedOff = useIfTurnedOff
 	self:UpdateRenderMode()
 end
 
-function ents.PFMActorComponent:GetDefaultRenderMode() return self.m_defaultRenderMode end
+function Component:GetDefaultRenderMode() return self.m_defaultRenderMode end
 
-function ents.PFMActorComponent:UpdateRenderMode()
+function Component:UpdateRenderMode()
 	if(self.m_autoUpdateRenderMode == false) then return end
 	local actorData = self:GetActorData()
 	if(actorData == nil) then return end
@@ -109,7 +132,7 @@ function ents.PFMActorComponent:UpdateRenderMode()
 	if(renderC ~= nil) then renderC:SetSceneRenderPass(renderMode) end
 end
 
-function ents.PFMActorComponent:OnOffsetChanged(clipOffset,gameViewFlags)
+function Component:OnOffsetChanged(clipOffset,gameViewFlags)
 	local ent = self:GetEntity()
 	if(bit.band(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE) == ents.PFMProject.GAME_VIEW_FLAG_NONE) then
 		--self:UpdatePose()
@@ -129,7 +152,7 @@ function ents.PFMActorComponent:OnOffsetChanged(clipOffset,gameViewFlags)
 	for _,channel in ipairs(self:GetChannels()) do
 		channel:Apply(ent,newOffset)
 	end]]
-	self:BroadcastEvent(ents.PFMActorComponent.EVENT_ON_OFFSET_CHANGED,{clipOffset})
+	self:BroadcastEvent(Component.EVENT_ON_OFFSET_CHANGED,{clipOffset})
 
 	--[[local actorData = self:GetActorData()
 	if(actorData == nil) then return end
@@ -167,7 +190,7 @@ end
 	-- pose = poseOffset *pose -- TODO: Not sure about this
 	return pose
 end]]
-function ents.PFMActorComponent:UpdateOperators()
+function Component:UpdateOperators()
 	-- TODO: Operators should be deprecated
 	local actorData = self:GetActorData()
 	if(actorData == nil) then return end
@@ -254,7 +277,7 @@ function ents.PFMActorComponent:UpdateOperators()
 	--end
 end
 
-function ents.PFMActorComponent:ApplyComponentMemberValue(path)
+function Component:ApplyComponentMemberValue(path)
 	local componentName,componentPath = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
 	if(componentName == nil) then return end
 	local actorData = self:GetActorData()
@@ -265,31 +288,58 @@ function ents.PFMActorComponent:ApplyComponentMemberValue(path)
 	self:GetEntity():SetMemberValue(path,val)
 end
 
-function ents.PFMActorComponent:Setup(actorData)
-	self.m_actorData = actorData
-	self:GetEntity():SetName(actorData:GetName())
-	self:GetEntity():SetUuid(actorData:GetUniqueId())
-
+function Component:InitializeComponentProperties()
+	local actorData = self:GetActorData()
 	pfm.log("Initializing " .. #actorData:GetComponents() .. " components for actor '" .. self:GetEntity():GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
 	for _,value in ipairs(actorData:GetComponents()) do
 		local componentData = value
 		local componentName = componentData:GetType()
-		local c = self:AddEntityComponent(componentName)
-		if(c == nil) then pfm.log("Attempted to add unknown component '" .. componentData:GetComponentName() .. "' to actor '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
-		elseif(c.Setup ~= nil) then c:Setup(actorData,componentData) end
+		local c
+		if(componentName ~= "pfm_actor") then
+			c = self:AddEntityComponent(componentName)
+			if(c == nil) then pfm.log("Attempted to add unknown component '" .. componentData:GetComponentName() .. "' to actor '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+			elseif(c.Setup ~= nil) then c:Setup(actorData,componentData) end
+		else c = self end
+
+		local isModelComponent = (componentName == "model")
 
 		-- Initialize component member values
-		local memberIdx = 0
-		local memberInfo = (c ~= nil) and c:GetMemberInfo(memberIdx) or nil
-		while(memberInfo ~= nil) do
-			local val = componentData:GetMemberValue(memberInfo.name)
-			if(val ~= nil) then
-				c:SetMemberValue(memberInfo.name,val)
+		local function applyProperties(el,path)
+			if(isModelComponent and path == nil) then
+				-- HACK: For the model component, the model has to be applied *before* other properties (like the skin or bodygroups).
+				-- Since the UDM properties are unordered, we'll have to handle it as a special case.
+				-- TODO: Find a better way to handle this
+				local mdl = el:GetValue("model",udm.TYPE_STRING)
+				if(mdl ~= nil) then self:GetEntity():SetModel(mdl) end
 			end
-			memberIdx = memberIdx +1
-			memberInfo = c:GetMemberInfo(memberIdx)
+			path = path or ""
+			for name,udmVal in pairs(el:GetChildren()) do
+				if(not isModelComponent or name ~= "model") then
+					local childPath = path
+					if(#childPath > 0) then childPath = childPath .. "/" end
+					childPath = childPath .. name
+					if(udmVal:GetType() == udm.TYPE_ELEMENT) then
+						applyProperties(udmVal,childPath)
+					else
+						local val = udmVal:GetValue()
+						if(val == nil) then pfm.log("Attempted to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+						else
+							if(c:SetMemberValue(childPath,val) == false) then
+								pfm.log("Failed to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+							end
+						end
+					end
+				end
+			end
 		end
+		applyProperties(componentData:GetProperties())
 	end
 end
-ents.COMPONENT_PFM_ACTOR = ents.register_component("pfm_actor",ents.PFMActorComponent)
-ents.PFMActorComponent.EVENT_ON_OFFSET_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR,"on_offset_changed")
+
+function Component:Setup(actorData)
+	self.m_actorData = actorData
+	self:GetEntity():SetName(actorData:GetName())
+	self:GetEntity():SetUuid(actorData:GetUniqueId())
+end
+ents.COMPONENT_PFM_ACTOR = ents.register_component("pfm_actor",Component)
+Component.EVENT_ON_OFFSET_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR,"on_offset_changed")

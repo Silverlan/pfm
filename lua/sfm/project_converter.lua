@@ -252,9 +252,11 @@ end
 local function apply_base_actor_properties(converter,sfmActor,pfmActor,transformType)
 	pfmActor:SetVisible(sfmActor:IsVisible())
 	pfmActor:SetName(sfmActor:GetName())
-	local pfmTransform = pfmActor:GetTransform()
+	local pfmTransform = math.ScaledTransform()
 	convert_transform(sfmActor:GetTransform(),pfmTransform,transformType)
-	pfmActor:SetTransform(pfmTransform)
+
+	local ct = pfmActor:AddComponentType("pfm_actor")
+	ct:SetMemberValue("transform",udm.TYPE_SCALED_TRANSFORM,pfmTransform)
 
 	converter.m_sfmObjectToPfmActor[sfmActor] = tostring(pfmActor:GetUniqueId())
 end
@@ -286,6 +288,33 @@ sfm.register_element_type_conversion(sfm.ProjectedLight,function(converter,sfmLi
 	-- pfmLight:SetVolumetricIntensity(sfmLight:GetVolumetricIntensity() *0.05)
 end)
 
+-- Calculates local bodygroup indices from a global bodygroup index
+local function global_bodygroup_to_local_indices(bgIdx,mdl)
+	mdl = game.load_model(mdl)
+	if(mdl == nil) then return {} end
+	local bodyGroups = mdl:GetBodyGroups()
+
+	-- Calculate total number of bodygroup combinations
+	local numCombinations = 1
+	for _,bg in ipairs(bodyGroups) do
+		numCombinations = numCombinations *#bg.meshGroups
+	end
+
+	local localBgIndices = {}
+	for i=#bodyGroups,1,-1 do
+		local bg = bodyGroups[i]
+		numCombinations = numCombinations /#bg.meshGroups
+		local localBgIdx = math.floor(bgIdx /numCombinations)
+		bgIdx = bgIdx %numCombinations
+
+		-- TODO: This is in reverse order because that's how it's done in the SFM,
+		-- but there's really no reason to. Instead the global index should be inversed
+		-- in the SFM->PFM conversion script!
+		table.insert(localBgIndices,1,localBgIdx)
+	end
+	return localBgIndices
+end
+
 sfm.register_element_type_conversion(sfm.GameModel,function(converter,sfmGm,pfmActor)
 	apply_base_actor_properties(converter,sfmGm,pfmActor,sfm.ProjectConverter.TRANSFORM_TYPE_GLOBAL)
 
@@ -295,8 +324,23 @@ sfm.register_element_type_conversion(sfm.GameModel,function(converter,sfmGm,pfmA
 	cM:SetMemberValue("model",udm.TYPE_STRING,mdlName)
 	cM:SetMemberValue("skin",udm.TYPE_UINT32,sfmGm:GetSkin())
 
-	-- local body = sfmGm:GetBody() -- TODO
-	-- TODO: flexhWeights
+	local mdl = game.load_model(mdlName)
+	if(mdl ~= nil) then
+		local bodyGroups = global_bodygroup_to_local_indices(sfmGm:GetBody(),mdlName)
+		local namedBodyGroups = {}
+		for bgId,val in pairs(bodyGroups) do
+			local bg = mdl:GetBodyGroup(bgId -1)
+			if(bg ~= nil) then
+				namedBodyGroups[bg.name] = val
+			else
+				pfm.log("Bodygroup " .. bgId .. " of model '" .. mdlName .. "' refers to unknown bodygroup! Ignoring...",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+			end
+		end
+		pfmActor:SetBodyGroups(namedBodyGroups)
+	else
+		pfm.log("Unable to load model '" .. mdlName .. "'! Bodygroups will not be correct!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+	end
+	-- TODO: flexWeights
 end)
 
 sfm.register_element_type_conversion(sfm.Camera,function(converter,sfmC,pfmActor)
@@ -559,27 +603,42 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 		if(gm ~= false) then
 			if(toElement:GetType() == "DmeTransform") then
 				local origToAttr = toAttr
-				toAttr = "ec/transform/"
-				for _,sfmBone in ipairs(gm:GetBones()) do
-					if(util.is_same_object(toElement,sfmBone)) then
-						local name = string.remove_whitespace(sfmBone:GetName()) -- Format: "name (boneName)"
-						local boneNameStart = name:find("%(")
-						local boneNameEnd = name:match('.*()' .. "%)") -- Reverse find
-						if(boneNameStart ~= nil and boneNameEnd ~= nil) then
-							local boneName = name:sub(boneNameStart +1,boneNameEnd -1)
-							toAttr = "ec/animated/bone/" .. boneName .. "/"
-						else
-							pfm.log("Invalid format for bone name '" .. name .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
-							validAttr = false
+
+				local found = false
+				if(util.is_same_object(gm:GetTransform(),toElement)) then
+					toAttr = "ec/pfm_actor/"
+					found = true
+				else
+					for _,sfmBone in ipairs(gm:GetBones()) do
+						if(util.is_same_object(toElement,sfmBone)) then
+							local name = string.remove_whitespace(sfmBone:GetName()) -- Format: "name (boneName)"
+							local boneNameStart = name:find("%(")
+							local boneNameEnd = name:match('.*()' .. "%)") -- Reverse find
+							if(boneNameStart ~= nil and boneNameEnd ~= nil) then
+								local boneName = name:sub(boneNameStart +1,boneNameEnd -1)
+								toAttr = "ec/animated/bone/" .. boneName .. "/"
+								found = true
+							else
+								pfm.log("Invalid format for bone name '" .. name .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+								validAttr = false
+							end
+							break
 						end
-						break
 					end
 				end
-				
-				if(origToAttr == "position") then toAttr = toAttr .. "position"
-				elseif(origToAttr == "orientation") then toAttr = toAttr .. "rotation"
-				elseif(origToAttr == "scale") then toAttr = toAttr .. "scale"
-				else validAttr = false end
+
+				if(found == false) then
+					pfm.log("Channel clip '" .. sfmC:GetName() .. "' refers to unknown property '" .. origToAttr .. "' of to-element '" .. tostring(toElement) .. "'! Ignoring...",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+					validAttr = false
+				else
+					if(origToAttr == "position") then toAttr = toAttr .. "position"
+					elseif(origToAttr == "orientation") then toAttr = toAttr .. "rotation"
+					elseif(origToAttr == "scale") then toAttr = toAttr .. "scale"
+					else validAttr = false end
+				end
+			elseif(toElement:GetType() == "DmeGlobalFlexControllerOperator") then
+				local name = toElement:GetName()
+				toAttr = "ec/flex/" .. name
 			else validAttr = false end
 		elseif(c ~= false) then
 			if(toAttr:lower() == "fieldofview") then toAttr = "fov" end
@@ -600,10 +659,10 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 			toAttr = "ec/particle_system/" .. toAttr
 		else validAttr = false end
 
-		if(validAttr == false) then console.print_warning("Invalid attribute for element " .. tostring(toElement) .. ": " .. toAttr) return false end
+		if(validAttr == false) then console.print_warning("Invalid attribute for element " .. tostring(toElement) .. ": " .. toAttr .. " (of channel clip '" .. sfmC:GetName() .. "'") return false end
 
 		local actor = gm or c or pj or ps
-		if(actor == false) then error("Invalid actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. " or channel clip '" .. sfmC:GetName() .. "'!") end
+		if(actor == false) then error("Invalid actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. " of channel clip '" .. sfmC:GetName() .. "'!") end
 
 		local pfmActorId = converter.m_sfmObjectToPfmActor[actor]
 		if(pfmActorId == nil) then error("No PFM actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!") end
@@ -724,7 +783,7 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 								end,udm.TYPE_VECTOR3)
 							end
 						end
-					elseif(componentName == "transform") then
+					elseif(componentName == "pfm_actor" or componentName == "transform") then
 						local pathComponents = string.split(componentPath:GetString(),"/")
 						if(#pathComponents == 1) then
 							if(pathComponents[1] == "position") then

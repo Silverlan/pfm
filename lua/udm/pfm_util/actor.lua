@@ -1,58 +1,117 @@
 --[[
-    Copyright (C) 2021 Silverlan
+	Copyright (C) 2021 Silverlan
 
-    This Source Code Form is subject to the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with this
-    file, You can obtain one at http://mozilla.org/MPL/2.0/.
+	This Source Code Form is subject to the terms of the Mozilla Public
+	License, v. 2.0. If a copy of the MPL was not distributed with this
+	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
 function pfm.udm.Actor:FindEntity()
-    for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR)}) do
-        local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-        if(util.is_same_object(actorC:GetActorData(),self)) then return ent end
-    end
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR)}) do
+		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+		if(util.is_same_object(actorC:GetActorData(),self)) then return ent end
+	end
 end
 
 function pfm.udm.Actor:FindComponent(name)
-    for _,component in ipairs(self:GetComponents()) do
-        if(component:GetType() == name) then return component end
-    end
+	for _,component in ipairs(self:GetComponents()) do
+		if(component:GetType() == name) then return component end
+	end
 end
 
 function pfm.udm.Actor:HasComponent(name)
-    if(type(name) == "string") then return self:FindComponent(name) ~= nil end
-    for _,component in ipairs(self:GetComponents()) do
-        if(util.is_same_object(name,component)) then return true end
-    end
-    return false
+	if(type(name) == "string") then return self:FindComponent(name) ~= nil end
+	for _,component in ipairs(self:GetComponents()) do
+		if(util.is_same_object(name,component)) then return true end
+	end
+	return false
 end
 
 function pfm.udm.Actor:AddComponentType(componentType)
-    local component = self:AddComponent()
-    component:SetType(componentType)
-    return component
+	local component = self:FindComponent(componentType)
+	if(component ~= nil) then return component end
+	component = self:AddComponent()
+	component:SetType(componentType)
+	return component
 end
 
 function pfm.udm.Actor:ChangeModel(mdlName)
-    mdlName = asset.normalize_asset_name(mdlName,asset.TYPE_MODEL)
-    local mdlC = self:FindComponent("model") or self:AddComponentType("model")
-    -- TODO: Clear animation data for this actor?
-    debug.start_profiling_task("pfm_load_model")
-    local mdl = game.load_model(mdlName)
-    debug.stop_profiling_task()
-    mdlC:SetMemberValue("model",udm.TYPE_STRING,mdlName)
+	mdlName = asset.normalize_asset_name(mdlName,asset.TYPE_MODEL)
+	local mdlC = self:FindComponent("model") or self:AddComponentType("model")
+	-- TODO: Clear animation data for this actor?
+	debug.start_profiling_task("pfm_load_model")
+	local mdl = game.load_model(mdlName)
+	debug.stop_profiling_task()
+	mdlC:SetMemberValue("model",udm.TYPE_STRING,mdlName)
 end
 
 function pfm.udm.Actor:GetAbsolutePose(filter)
-    local pose = self:GetTransform()
-    local parent = self:GetParent()
-    if(parent.TypeName ~= "Group") then return pose end
-    return parent:GetAbsolutePose() *pose
+	return self:GetAbsoluteParentPose(filter) *self:GetTransform()
+end
+
+function pfm.udm.Actor:OnComponentTypeChanged(c,type)
+	if(type == "pfm_actor") then self.m_pfmActorC = c
+	elseif(util.is_same_object(c,self.m_pfmActorC)) then self.m_pfmActorC = nil end
+end
+
+function pfm.udm.Actor:GetTransform()
+	return (self.m_pfmActorC ~= nil) and self.m_pfmActorC:GetMemberValue("transform") or math.ScaledTransform()
+end
+
+function pfm.udm.Actor:GetAbsoluteParentPose(filter)
+	local parent = self:GetParent()
+	if(parent.TypeName ~= "Group") then return math.ScaledTransform() end
+	return parent:GetAbsolutePose()
 end
 
 function pfm.udm.Actor:IsAbsoluteVisible()
-    if(self:IsVisible() == false) then return false end
-    local parent = self:GetParent()
-    if(parent.TypeName ~= "Group") then return true end
-    return parent:IsAbsoluteVisible()
+	if(self:IsVisible() == false) then return false end
+	local parent = self:GetParent()
+	if(parent.TypeName ~= "Group") then return true end
+	return parent:IsAbsoluteVisible()
+end
+
+function pfm.udm.Actor:SetBodyGroup(bgName,val)
+	local mdlC = self:FindComponent("model") or self:AddComponentType("model")
+	local udmData = mdlC:GetUdmData():Get("properties")
+
+	local udmBg = udmData:Get("bodyGroup")
+	if(udmBg:IsValid() == false) then udmBg = udmData:Add("bodyGroup") end
+
+	udmBg:SetValue(bgName,udm.TYPE_UINT32,val)
+end
+
+function pfm.udm.Actor:GetBodyGroup(bgName)
+	local mdlC = self:FindComponent("model")
+	if(mdlC == nil) then return 0 end
+	local udmData = mdlC:GetUdmData():Get("properties")
+	local udmBg = udmData:Get("bodyGroup")
+	if(udmBg:IsValid() == false) then return 0 end
+	return udmBg:GetValue(bgName,udm.TYPE_UINT32) or 0
+end
+
+function pfm.udm.Actor:SetBodyGroups(bodyGroups)
+	local mdlC = self:FindComponent("model") or self:AddComponentType("model")
+	local udmData = mdlC:GetUdmData():Get("properties")
+
+	local udmBg = udmData:Get("bodyGroup")
+	if(udmBg:IsValid() == false) then udmBg = udmData:Add("bodyGroup") end
+
+	for name,val in pairs(bodyGroups) do
+		udmBg:SetValue(name,udm.TYPE_UINT32,val)
+	end
+end
+
+function pfm.udm.Actor:GetBodyGroups()
+	local mdlC = self:FindComponent("model")
+	if(mdlC == nil) then return {} end
+	local udmData = mdlC:GetUdmData():Get("properties")
+	local udmBg = udmData:Get("bodyGroup")
+	if(udmBg:IsValid() == false) then return {} end
+
+	local bgs = {}
+	for name,_ in pairs(udmBg:GetChildren()) do
+		bgs[name] = udmBg:GetValue(name,udm.TYPE_UINT32)
+	end
+	return bgs
 end

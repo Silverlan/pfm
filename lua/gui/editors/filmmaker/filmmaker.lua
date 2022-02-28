@@ -1196,7 +1196,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		local bookmarkSet = filmClip:GetBookmarkSet(activeBookmarkSet)
 		if(bookmarkSet ~= nil) then
 			for _,bookmark in ipairs(bookmarkSet:GetBookmarks()) do
-				timeline:AddBookmark(bookmark:GetTimeRange():GetTimeAttr())
+				-- timeline:AddBookmark(bookmark:GetTimeRange():GetTimeAttr()) -- TODO: Re-implement
 			end
 		end
 	end

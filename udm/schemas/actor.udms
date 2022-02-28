@@ -29,7 +29,6 @@
 			{
 				"uniqueId" {$string type "Uuid"}
 				"name" {$string default ""}
-				"transform" {$stransform default [[0,0,0][1,0,0,0][1,1,1]]}
 				"components"
 				{
 					$string type "array"
