@@ -127,8 +127,8 @@ function pfm.Project:Save(fileName,legacy)
 	if(f == nil) then return false end
 	local udmData = udm.create("PFMP",1)
 	udmData:GetAssetData():GetData():SetValue("session",self:GetSession():GetRootUdmData())
-	udmData:SaveAscii(f,bit.bor(udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER,udm.ASCII_SAVE_FLAG_BIT_DONT_COMPRESS_LZ4_ARRAYS))
-	--udmData:Save(f)
+	-- udmData:SaveAscii(f,bit.bor(udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER,udm.ASCII_SAVE_FLAG_BIT_DONT_COMPRESS_LZ4_ARRAYS))
+	udmData:Save(f)
 	f:Close()
 
 	return true
