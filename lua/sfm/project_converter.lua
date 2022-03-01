@@ -605,9 +605,18 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 				local origToAttr = toAttr
 
 				local found = false
+				local final = false
 				if(util.is_same_object(gm:GetTransform(),toElement)) then
 					toAttr = "ec/pfm_actor/"
 					found = true
+				elseif(toElement:GetName() == "viewTarget") then
+					if(toAttr == "position") then
+						toAttr = "ec/eye/viewTarget"
+						final = true
+						found = true
+					elseif(toAttr == "rotation") then
+						-- TODO: Does this actually serve a purpose?
+					end
 				else
 					for _,sfmBone in ipairs(gm:GetBones()) do
 						if(util.is_same_object(toElement,sfmBone)) then
@@ -630,7 +639,7 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 				if(found == false) then
 					pfm.log("Channel clip '" .. sfmC:GetName() .. "' refers to unknown property '" .. origToAttr .. "' of to-element '" .. tostring(toElement) .. "'! Ignoring...",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 					validAttr = false
-				else
+				elseif(final ~= true) then
 					if(origToAttr == "position") then toAttr = toAttr .. "position"
 					elseif(origToAttr == "orientation") then toAttr = toAttr .. "rotation"
 					elseif(origToAttr == "scale") then toAttr = toAttr .. "scale"
@@ -639,6 +648,8 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 			elseif(toElement:GetType() == "DmeGlobalFlexControllerOperator") then
 				local name = toElement:GetName()
 				toAttr = "ec/flex/" .. name
+			elseif(toAttr == "localViewTargetFactor") then
+				toAttr = "ec/eye/localViewTargetFactor"
 			else validAttr = false end
 		elseif(c ~= false) then
 			if(toAttr:lower() == "fieldofview") then toAttr = "fov" end
@@ -659,7 +670,7 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 			toAttr = "ec/particle_system/" .. toAttr
 		else validAttr = false end
 
-		if(validAttr == false) then console.print_warning("Invalid attribute for element " .. tostring(toElement) .. ": " .. toAttr .. " (of channel clip '" .. sfmC:GetName() .. "'") return false end
+		if(validAttr == false) then console.print_warning("Invalid attribute for element " .. tostring(toElement) .. ": " .. toAttr .. " (of channel clip '" .. sfmC:GetName() .. "')") return false end
 
 		local actor = gm or c or pj or ps
 		if(actor == false) then error("Invalid actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. " of channel clip '" .. sfmC:GetName() .. "'!") end
@@ -783,26 +794,51 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 								end,udm.TYPE_VECTOR3)
 							end
 						end
-					elseif(componentName == "pfm_actor" or componentName == "transform") then
+					else
 						local pathComponents = string.split(componentPath:GetString(),"/")
 						if(#pathComponents == 1) then
-							if(pathComponents[1] == "position") then
+							if(componentName == "eye" and pathComponents[1] == "viewTarget") then
 								transformChannelValues(channel,function(val)
 									return sfm.convert_source_transform_position_to_pragma(val)
 								end,udm.TYPE_VECTOR3)
-							elseif(pathComponents[1] == "rotation") then
-								transformChannelValues(channel,function(val)
-									return sfm.convert_source_transform_rotation_to_pragma_special(nil,val)
-								end,udm.TYPE_QUATERNION)
-							end
-						end
-					elseif(componentName == "light_spot") then
-						local pathComponents = string.split(componentPath:GetString(),"/")
-						if(#pathComponents == 1) then
-							if(pathComponents[1] == "outerConeAngle" or pathComponents[1] == "innerConeAngle") then
-								transformChannelValues(channel,function(val)
-									return val *0.5
-								end,udm.TYPE_FLOAT)
+							elseif(componentName == "pfm_actor" or componentName == "transform") then
+								if(pathComponents[1] == "position") then
+									transformChannelValues(channel,function(val)
+										return sfm.convert_source_transform_position_to_pragma(val)
+									end,udm.TYPE_VECTOR3)
+								elseif(pathComponents[1] == "rotation") then
+									transformChannelValues(channel,function(val)
+										return sfm.convert_source_transform_rotation_to_pragma_special(nil,val)
+									end,udm.TYPE_QUATERNION)
+								end
+							elseif(componentName == "light_spot") then
+								if(pathComponents[1] == "outerConeAngle" or pathComponents[1] == "innerConeAngle") then
+									transformChannelValues(channel,function(val)
+										return val *0.5
+									end,udm.TYPE_FLOAT)
+								end
+							elseif(componentName == "flex") then
+								local flexName = pathComponents[1]
+								if(mdl ~= nil) then
+									local flexId = mdl:LookupFlexController(flexName)
+									if(flexId ~= -1) then
+										local flexData = mdl:GetFlexController(flexId)
+										local range = flexData.max -flexData.min
+										local function remap_value(val)
+											-- Remap range [0,1] to [min,max]
+											val = val *range
+											val = val +flexData.min
+											return val
+										end
+										transformChannelValues(channel,function(val)
+											return remap_value(val)
+										end,udm.TYPE_FLOAT)
+									else
+										pfm.log("Flex '" .. flexName .. "' of model '" .. mdl:GetName() .. "' does not exist! Ignoring...",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+									end
+								else
+									pfm.log("Model of actor '" .. actor:GetName() .. "' could not be loaded! Flex controller values will be incorrect!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+								end
 							end
 						end
 					end
