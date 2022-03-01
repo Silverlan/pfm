@@ -442,7 +442,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 
 	-- TODO: This doesn't belong here!
 	local pfmCam = cam:GetEntity():GetComponent("pfm_camera")
-	if(pfmCam ~= nil) then
+	--[[if(pfmCam ~= nil) then
 		local camData = pfmCam:GetCameraData()
 		-- print("Using focal distance: ",camData:GetFocalDistance())
 		clCam:SetFocalDistance(camData:GetFocalDistance())
@@ -451,7 +451,8 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		clCam:SetBladesRotation(camData:GetApertureBladesRotation())
 		clCam:SetDepthOfFieldEnabled(false)--camData:IsDepthOfFieldEnabled())
 		clCam:SetApertureSizeFromFStop(camData:GetFStop(),math.calc_focal_length_from_fov(fov,camData:GetSensorSize()))
-	else clCam:SetDepthOfFieldEnabled(false) end
+	else clCam:SetDepthOfFieldEnabled(false) end]]
+	clCam:SetDepthOfFieldEnabled(false)
 
 	clCam:SetEquirectangularHorizontalRange(renderSettings:GetPanoramaHorizontalRange())
 	clCam:SetStereoscopic(renderSettings:IsStereoscopic())

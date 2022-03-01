@@ -65,7 +65,6 @@ function pfm.udm.Actor:GetAbsoluteParentPose(filter)
 end
 
 function pfm.udm.Actor:IsAbsoluteVisible()
-	if(self:IsVisible() == false) then return false end
 	local parent = self:GetParent()
 	if(parent.TypeName ~= "Group") then return true end
 	return parent:IsAbsoluteVisible()

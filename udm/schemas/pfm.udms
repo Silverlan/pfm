@@ -45,6 +45,7 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
+				"name" {$string default ""}
 				"transform" {$transform default [[0,0,0][1,0,0,0]]}
 				"groups"
 				{

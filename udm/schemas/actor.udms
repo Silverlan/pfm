@@ -34,10 +34,6 @@
 					$string type "array"
 					$string valueType "EntityComponent"
 				}
-				"visible" {
-					$bool default true
-					$string getterName "IsVisible"
-				}
 			}
 		}
 	}

@@ -46,9 +46,9 @@ function ents.PFMModel:InitModel()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	local mdl = (mdlC ~= nil) and mdlC:GetModel() or nil
 	if(mdl == nil) then return end
-	local animSetC = (not mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE)) and self:AddEntityComponent("pfm_animation_set") or nil
-	if(animSetC == nil) then return end -- TODO: What if flexes, but no bones? (Animation component shouldn't be needed in this case)
-	animSetC:Setup(self:GetActorData())
+	--local animSetC = (not mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE)) and self:AddEntityComponent("pfm_animation_set") or nil
+	--if(animSetC == nil) then return end -- TODO: What if flexes, but no bones? (Animation component shouldn't be needed in this case)
+	--animSetC:Setup(self:GetActorData())
 
 	local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 	if(animC ~= nil) then

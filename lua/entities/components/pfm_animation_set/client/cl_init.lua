@@ -8,7 +8,7 @@
 
 util.register_class("ents.PFMAnimationSet",BaseEntityComponent)
 
-include("channel")
+-- include("channel")
 
 ents.PFMAnimationSet.ROOT_TRANSFORM_ID = -2
 function ents.PFMAnimationSet:Initialize()

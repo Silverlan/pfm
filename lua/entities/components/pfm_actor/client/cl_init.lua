@@ -8,7 +8,7 @@
 
 local Component = util.register_class("ents.PFMActorComponent",BaseEntityComponent)
 
-include("channel.lua") -- TODO: This is obsolete; Remove the channels!
+-- include("channel.lua") -- TODO: This is obsolete; Remove the channels!
 
 Component:RegisterMember("Position",udm.TYPE_VECTOR3,Vector(0,0,0),{
 	onChange = function(self)
@@ -30,6 +30,11 @@ Component:RegisterMember("Scale",udm.TYPE_VECTOR3,Vector(1,1,1),{
 		self:GetEntity():SetScale(pose:GetScale() *self:GetScale())
 	end
 })
+Component:RegisterMember("Visible",udm.TYPE_BOOLEAN,true,{
+	onChange = function(self)
+		self:UpdateVisibility()
+	end
+},bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -43,15 +48,15 @@ function Component:Initialize()
 
 	self.m_cvAnimCache = console.get_convar("pfm_animation_cache_enabled")
 
-	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"UpdateRenderMode")
-	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"UpdateRenderMode")
-
-	self:SetShouldAutoUpdatePose(true)
-
 	self.m_boneChannels = {}
 	self.m_flexControllerChannels = {}
 end
-
+function Component:UpdateVisibility()
+	local visible = self:IsVisible() and self:GetActorData():IsAbsoluteVisible() or false
+	local renderMode = visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE
+	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
+	if(renderC ~= nil) then renderC:SetSceneRenderPass(renderMode) end
+end
 function Component:SetBoneChannel(boneId,attr,channel)
 	if(type(boneId) == "string") then
 		local mdl = self:GetEntity():GetModel()
@@ -74,9 +79,6 @@ end
 
 function Component:GetActorData() return self.m_actorData end
 
-function Component:SetShouldAutoUpdatePose(autoUpdate) self.m_autoUpdatePose = autoUpdate end
-function Component:SetShouldAutoUpdateRenderMode(autoUpdate) self.m_autoUpdateRenderMode = autoUpdate end
-
 function Component:OnRemove()
 	for _,listener in ipairs(self.m_listeners) do
 		if(listener:IsValid()) then listener:Remove() end
@@ -88,49 +90,16 @@ function Component:OnEntitySpawn()
 	if(actorData == nil) then return end
 	local ent = self:GetEntity()
 	ent:SetPose(actorData:GetAbsolutePose())
-	local update_pose = function() self:UpdatePose() end
-	table.insert(self.m_listeners,actorData:AddChangeListener("transform",update_pose))
-	table.insert(self.m_listeners,actorData:AddChangeListener("visible",function(visible) self:UpdateRenderMode() end))
 
 	self:InitializeComponentProperties()
-end
-
-function Component:UpdatePose()
-	if(self.m_autoUpdatePose ~= true) then return end
-	local actorData = self:GetActorData()
-	if(actorData == nil) then return end
-	local pose = actorData:GetAbsolutePose()
-
-	--print("Pose: ",self:GetEntity(),pose:GetOrigin())
-	--print(actorData:GetParents()[1]:GetParents()[1]:GetTransform():GetPosition())
-	--print(actorData:FindParentElement())
-	--print(actorData:GetTransform():GetPosition())
-	self:GetEntity():SetPose(pose)
 end
 
 function Component:SetDefaultRenderMode(renderMode,useIfTurnedOff)
 	self.m_defaultRenderMode = renderMode
 	self.m_useDefaultRenderModeIfTurnedOff = useIfTurnedOff
-	self:UpdateRenderMode()
 end
 
 function Component:GetDefaultRenderMode() return self.m_defaultRenderMode end
-
-function Component:UpdateRenderMode()
-	if(self.m_autoUpdateRenderMode == false) then return end
-	local actorData = self:GetActorData()
-	if(actorData == nil) then return end
-	local renderMode
-	if(self.m_useDefaultRenderModeIfTurnedOff ~= true and self:GetEntity():IsTurnedOff()) then renderMode = game.SCENE_RENDER_PASS_NONE
-	else
-		renderMode = self.m_defaultRenderMode or game.SCENE_RENDER_PASS_WORLD
-		if(actorData:IsAbsoluteVisible() == false) then
-			renderMode = game.SCENE_RENDER_PASS_NONE
-		end
-	end
-	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
-	if(renderC ~= nil) then renderC:SetSceneRenderPass(renderMode) end
-end
 
 function Component:OnOffsetChanged(clipOffset,gameViewFlags)
 	local ent = self:GetEntity()
@@ -139,7 +108,6 @@ function Component:OnOffsetChanged(clipOffset,gameViewFlags)
 		self:UpdateOperators()
 	end
 
-	self:UpdateRenderMode()
 	--print(ent,ent:GetPos())
 	--[[self.m_oldOffset = self.m_oldOffset or clipOffset
 	local newOffset = clipOffset
@@ -334,6 +302,7 @@ function Component:InitializeComponentProperties()
 		end
 		applyProperties(componentData:GetProperties())
 	end
+	self:UpdateVisibility()
 end
 
 function Component:Setup(actorData)

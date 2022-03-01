@@ -250,12 +250,13 @@ local function convert_transform(sfmTransform,pfmTransform,type)
 end
 
 local function apply_base_actor_properties(converter,sfmActor,pfmActor,transformType)
-	pfmActor:SetVisible(sfmActor:IsVisible())
+	local ct = pfmActor:AddComponentType("pfm_actor")
+	ct:SetMemberValue("visible",udm.TYPE_BOOLEAN,sfmActor:IsVisible())
+
 	pfmActor:SetName(sfmActor:GetName())
 	local pfmTransform = math.ScaledTransform()
 	convert_transform(sfmActor:GetTransform(),pfmTransform,transformType)
 
-	local ct = pfmActor:AddComponentType("pfm_actor")
 	ct:SetMemberValue("transform",udm.TYPE_SCALED_TRANSFORM,pfmTransform)
 
 	converter.m_sfmObjectToPfmActor[sfmActor] = tostring(pfmActor:GetUniqueId())
@@ -402,7 +403,9 @@ sfm.register_element_type_conversion(sfm.Dag,function(converter,sfmDag,pfmGroup)
 
 			local pfmTransform = childGroup:GetTransform()
 			convert_transform(child:GetTransform(),pfmTransform,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
+			childGroup:SetName(child:GetName())
 			childGroup:SetTransform(pfmTransform)
+			childGroup:SetVisible(child:IsVisible())
 
 			converter:ConvertElementToPfm(child,childGroup)
 		end
@@ -416,6 +419,8 @@ sfm.register_element_type_conversion(sfm.FilmClip,function(converter,sfmClip,pfm
 	pfmClip:SetFadeIn(sfmClip:GetFadeIn())
 	pfmClip:SetFadeOut(sfmClip:GetFadeOut())
 	pfmClip:SetName(sfmClip:GetName())
+
+	-- local animSets = sfmClip:GetAnimationSets()
 
 	-- Bookmark sets
 	for _,sfmBs in ipairs(sfmClip:GetBookmarkSets()) do
@@ -598,81 +603,89 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 		local c = not gm and toElement:FindParent("DmeCamera") or false
 		local pj = not c and toElement:FindParent("DmeProjectedLight") or false
 		local ps = not pj and toElement:FindParent("DmeGameParticleSystem") or false
-		local validAttr = true
+		local actor = gm or c or pj or ps
 
-		if(gm ~= false) then
-			if(toElement:GetType() == "DmeTransform") then
-				local origToAttr = toAttr
+		local pfmPropPath
+		if(actor ~= nil and toElement:GetType() == "DmeTransform") then
+			if(util.is_same_object(actor:GetTransform(),toElement)) then
+				local cpath = "ec/pfm_actor/"
+				if(toAttr == "position") then pfmPropPath = cpath .. "position"
+				elseif(toAttr == "orientation") then pfmPropPath = cpath .. "rotation"
+				elseif(toAttr == "scale") then pfmPropPath = cpath .. "scale" end
+			end
+		end
+		
+		if(pfmPropPath == nil) then
+			if(gm ~= false) then
+				if(toElement:GetType() == "DmeTransform") then
+					local final = false
+					if(toElement:GetName() == "viewTarget") then
+						if(toAttr == "position") then
+							pfmPropPath = "ec/eye/viewTarget"
+						elseif(toAttr == "rotation") then
+							-- TODO: Does this actually serve a purpose?
+							return false
+						end
+					else
+						for _,sfmBone in ipairs(gm:GetBones()) do
+							if(util.is_same_object(toElement,sfmBone)) then
+								local name = string.remove_whitespace(sfmBone:GetName()) -- Format: "name (boneName)"
+								local boneNameStart = name:find("%(")
+								local boneNameEnd = name:match('.*()' .. "%)") -- Reverse find
+								if(boneNameStart ~= nil and boneNameEnd ~= nil) then
+									local boneName = name:sub(boneNameStart +1,boneNameEnd -1)
+									local cpath = "ec/animated/bone/" .. boneName .. "/"
 
-				local found = false
-				local final = false
-				if(util.is_same_object(gm:GetTransform(),toElement)) then
-					toAttr = "ec/pfm_actor/"
-					found = true
-				elseif(toElement:GetName() == "viewTarget") then
-					if(toAttr == "position") then
-						toAttr = "ec/eye/viewTarget"
-						final = true
-						found = true
-					elseif(toAttr == "rotation") then
-						-- TODO: Does this actually serve a purpose?
-					end
-				else
-					for _,sfmBone in ipairs(gm:GetBones()) do
-						if(util.is_same_object(toElement,sfmBone)) then
-							local name = string.remove_whitespace(sfmBone:GetName()) -- Format: "name (boneName)"
-							local boneNameStart = name:find("%(")
-							local boneNameEnd = name:match('.*()' .. "%)") -- Reverse find
-							if(boneNameStart ~= nil and boneNameEnd ~= nil) then
-								local boneName = name:sub(boneNameStart +1,boneNameEnd -1)
-								toAttr = "ec/animated/bone/" .. boneName .. "/"
-								found = true
-							else
-								pfm.log("Invalid format for bone name '" .. name .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
-								validAttr = false
+									if(toAttr == "position") then pfmPropPath = cpath .. "position"
+									elseif(toAttr == "orientation") then pfmPropPath = cpath .. "rotation"
+									elseif(toAttr == "scale") then pfmPropPath = cpath .. "scale" end
+								else
+									pfm.log("Invalid format for bone name '" .. name .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+									return false
+								end
+								break
 							end
-							break
 						end
 					end
+				elseif(toElement:GetType() == "DmeGlobalFlexControllerOperator") then
+					local name = toElement:GetName()
+					pfmPropPath = "ec/flex/" .. name
+				elseif(toAttr == "localViewTargetFactor") then
+					pfmPropPath = "ec/eye/localViewTargetFactor"
 				end
-
-				if(found == false) then
-					pfm.log("Channel clip '" .. sfmC:GetName() .. "' refers to unknown property '" .. origToAttr .. "' of to-element '" .. tostring(toElement) .. "'! Ignoring...",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
-					validAttr = false
-				elseif(final ~= true) then
-					if(origToAttr == "position") then toAttr = toAttr .. "position"
-					elseif(origToAttr == "orientation") then toAttr = toAttr .. "rotation"
-					elseif(origToAttr == "scale") then toAttr = toAttr .. "scale"
-					else validAttr = false end
+			elseif(c ~= false) then
+				local sfmAttrToPfm = {
+					["fieldofview"] = "fov",
+					["znear"] = "nearZ",
+					["zfar"] = "farZ",
+					["focaldistance"] = "focalDistance"
+				}
+				local translatedAttr = sfmAttrToPfm[toAttr:lower()]
+				if(translatedAttr ~= nil) then pfmPropPath = "ec/camera/" .. translatedAttr end
+			elseif(pj ~= false) then
+				if(origToElement:GetType() == "DmePackColorOperator") then
+					if(toAttr ~= "red" and toAttr ~= "green" and toAttr ~= "blue" and toAttr ~= "alpha") then
+						pfm.log("Unsupported pack color operator for to-attribute '" .. toAttr .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+						return false
+					end
+					pfmPropPath = "ec/color/color?components=" .. toAttr
+				else
+					local lToAttr = toAttr:lower()
+					if(lToAttr == "intensity") then
+						pfmPropPath = "ec/light/intensity"
+					elseif(lToAttr == "maxdistance") then
+						pfmPropPath = "ec/radius/radius"
+					elseif(lToAttr == "horizontalfov" or lToAttr == "verticalfov") then
+						pfmPropPath = "ec/light_spot/outerConeAngle"
+					end
 				end
-			elseif(toElement:GetType() == "DmeGlobalFlexControllerOperator") then
-				local name = toElement:GetName()
-				toAttr = "ec/flex/" .. name
-			elseif(toAttr == "localViewTargetFactor") then
-				toAttr = "ec/eye/localViewTargetFactor"
-			else validAttr = false end
-		elseif(c ~= false) then
-			if(toAttr:lower() == "fieldofview") then toAttr = "fov" end
-			toAttr = "ec/camera/" .. toAttr
-		elseif(pj ~= false) then
-			toAttr = toAttr:lower()
-			if(origToElement:GetType() == "DmePackColorOperator") then
-				if(toAttr ~= "red" and toAttr ~= "green" and toAttr ~= "blue" and toAttr ~= "alpha") then
-					pfm.log("Unsupported pack color operator for to-attribute '" .. toAttr .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
-					return false
-				end
-				toAttr = "ec/color/color?components=" .. toAttr
-			else
-				if(toAttr == "horizontalfov" or toAttr == "verticalfov") then toAttr = "outerConeAngle" end
-				toAttr = "ec/light_spot/" .. toAttr
+			elseif(ps ~= false) then
+				-- TODO
 			end
-		elseif(ps ~= false) then
-			toAttr = "ec/particle_system/" .. toAttr
-		else validAttr = false end
+		end
 
-		if(validAttr == false) then console.print_warning("Invalid attribute for element " .. tostring(toElement) .. ": " .. toAttr .. " (of channel clip '" .. sfmC:GetName() .. "')") return false end
+		if(pfmPropPath == nil) then console.print_warning("Unsupported attribute for element " .. tostring(toElement) .. ": " .. toAttr .. " (of channel clip '" .. sfmC:GetName() .. "')") return false end
 
-		local actor = gm or c or pj or ps
 		if(actor == false) then error("Invalid actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. " of channel clip '" .. sfmC:GetName() .. "'!") end
 
 		local pfmActorId = converter.m_sfmObjectToPfmActor[actor]
@@ -687,11 +700,11 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 		elseif(actor ~= pfmActorId) then
 			error("Actor mismatch for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!")
 		end
-		local c = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(toAttr))
+		local c = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(pfmPropPath))
 		if(c == nil) then
-			error("Invalid channel path for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!")
+			error("Invalid channel path '" .. pfmPropPath .. "' for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!")
 		end
-		pfmC:SetTargetPath(toAttr)
+		pfmC:SetTargetPath(pfmPropPath)
 	end
 end)
 
@@ -815,6 +828,12 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 								if(pathComponents[1] == "outerConeAngle" or pathComponents[1] == "innerConeAngle") then
 									transformChannelValues(channel,function(val)
 										return val *0.5
+									end,udm.TYPE_FLOAT)
+								end
+							elseif(componentName == "camera") then
+								if(pathComponents[1] == "fov") then
+									transformChannelValues(channel,function(val)
+										return sfm.convert_source_fov_to_pragma(val)
 									end,udm.TYPE_FLOAT)
 								end
 							elseif(componentName == "flex") then
