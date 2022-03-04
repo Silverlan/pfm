@@ -606,7 +606,7 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 		local actor = gm or c or pj or ps
 
 		local pfmPropPath
-		if(actor ~= nil and toElement:GetType() == "DmeTransform") then
+		if(actor ~= false and toElement:GetType() == "DmeTransform") then
 			if(util.is_same_object(actor:GetTransform(),toElement)) then
 				local cpath = "ec/pfm_actor/"
 				if(toAttr == "position") then pfmPropPath = cpath .. "position"
@@ -768,95 +768,97 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 			for _,animClip in ipairs(animTrack:GetAnimationClips()) do
 				local anim = animClip:GetAnimation()
 				local actor = animClip:GetActor()
-				local mdl
-				local mdlC = actor:FindComponent("model")
-				if(mdlC ~= nil) then
-					local mdlName = mdlC:GetMemberValue("model")
-					if(mdlName ~= nil) then mdl = game.load_model(mdlName) end
-				end
-				for _,channel in ipairs(anim:GetChannels()) do
-					local targetPath = channel:GetTargetPath()
-					local componentName,componentPath = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
-					if(componentName == "animated") then
-						local pathComponents = string.split(componentPath:GetString(),"/")
-						if(#pathComponents == 3 and pathComponents[1] == "bone") then
-							local boneName = pathComponents[2]
-							local boneId = mdl and mdl:LookupBone(boneName) or -1
-							local isRootBone = (boneId ~= -1) and mdl:IsRootBone(boneId) or false
+				if(actor ~= nil) then
+					local mdl
+					local mdlC = actor:FindComponent("model")
+					if(mdlC ~= nil) then
+						local mdlName = mdlC:GetMemberValue("model")
+						if(mdlName ~= nil) then mdl = game.load_model(mdlName) end
+					end
+					for _,channel in ipairs(anim:GetChannels()) do
+						local targetPath = channel:GetTargetPath()
+						local componentName,componentPath = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
+						if(componentName == "animated") then
+							local pathComponents = string.split(componentPath:GetString(),"/")
+							if(#pathComponents == 3 and pathComponents[1] == "bone") then
+								local boneName = pathComponents[2]
+								local boneId = mdl and mdl:LookupBone(boneName) or -1
+								local isRootBone = (boneId ~= -1) and mdl:IsRootBone(boneId) or false
 
-							local type = pathComponents[3]
-							if(type == "position") then
-								transformChannelValues(channel,function(val)
-									val = sfm.convert_source_anim_set_position_to_pragma(val)
-									if(isRootBone) then
-										convert_root_bone_pos(val,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
-									end
-									return val
-								end,udm.TYPE_VECTOR3)
-							elseif(type == "rotation") then
-								transformChannelValues(channel,function(val)
-									val = sfm.convert_source_anim_set_rotation_to_pragma(val)
-									if(isRootBone) then
-										convert_root_bone_rot(val,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
-									end
-									return val
-								end,udm.TYPE_QUATERNION)
-							elseif(type == "scale") then
-								transformChannelValues(channel,function(val)
-									return Vector(val,val,val)
-								end,udm.TYPE_VECTOR3)
+								local type = pathComponents[3]
+								if(type == "position") then
+									transformChannelValues(channel,function(val)
+										val = sfm.convert_source_anim_set_position_to_pragma(val)
+										if(isRootBone) then
+											convert_root_bone_pos(val,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
+										end
+										return val
+									end,udm.TYPE_VECTOR3)
+								elseif(type == "rotation") then
+									transformChannelValues(channel,function(val)
+										val = sfm.convert_source_anim_set_rotation_to_pragma(val)
+										if(isRootBone) then
+											convert_root_bone_rot(val,mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE))
+										end
+										return val
+									end,udm.TYPE_QUATERNION)
+								elseif(type == "scale") then
+									transformChannelValues(channel,function(val)
+										return Vector(val,val,val)
+									end,udm.TYPE_VECTOR3)
+								end
 							end
-						end
-					else
-						local pathComponents = string.split(componentPath:GetString(),"/")
-						if(#pathComponents == 1) then
-							if(componentName == "eye" and pathComponents[1] == "viewTarget") then
-								transformChannelValues(channel,function(val)
-									return sfm.convert_source_transform_position_to_pragma(val)
-								end,udm.TYPE_VECTOR3)
-							elseif(componentName == "pfm_actor" or componentName == "transform") then
-								if(pathComponents[1] == "position") then
+						else
+							local pathComponents = string.split(componentPath:GetString(),"/")
+							if(#pathComponents == 1) then
+								if(componentName == "eye" and pathComponents[1] == "viewTarget") then
 									transformChannelValues(channel,function(val)
 										return sfm.convert_source_transform_position_to_pragma(val)
 									end,udm.TYPE_VECTOR3)
-								elseif(pathComponents[1] == "rotation") then
-									transformChannelValues(channel,function(val)
-										return sfm.convert_source_transform_rotation_to_pragma_special(nil,val)
-									end,udm.TYPE_QUATERNION)
-								end
-							elseif(componentName == "light_spot") then
-								if(pathComponents[1] == "outerConeAngle" or pathComponents[1] == "innerConeAngle") then
-									transformChannelValues(channel,function(val)
-										return val *0.5
-									end,udm.TYPE_FLOAT)
-								end
-							elseif(componentName == "camera") then
-								if(pathComponents[1] == "fov") then
-									transformChannelValues(channel,function(val)
-										return sfm.convert_source_fov_to_pragma(val)
-									end,udm.TYPE_FLOAT)
-								end
-							elseif(componentName == "flex") then
-								local flexName = pathComponents[1]
-								if(mdl ~= nil) then
-									local flexId = mdl:LookupFlexController(flexName)
-									if(flexId ~= -1) then
-										local flexData = mdl:GetFlexController(flexId)
-										local range = flexData.max -flexData.min
-										local function remap_value(val)
-											-- Remap range [0,1] to [min,max]
-											val = val *range
-											val = val +flexData.min
-											return val
-										end
+								elseif(componentName == "pfm_actor" or componentName == "transform") then
+									if(pathComponents[1] == "position") then
 										transformChannelValues(channel,function(val)
-											return remap_value(val)
-										end,udm.TYPE_FLOAT)
-									else
-										pfm.log("Flex '" .. flexName .. "' of model '" .. mdl:GetName() .. "' does not exist! Ignoring...",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+											return sfm.convert_source_transform_position_to_pragma(val)
+										end,udm.TYPE_VECTOR3)
+									elseif(pathComponents[1] == "rotation") then
+										transformChannelValues(channel,function(val)
+											return sfm.convert_source_transform_rotation_to_pragma_special(nil,val)
+										end,udm.TYPE_QUATERNION)
 									end
-								else
-									pfm.log("Model of actor '" .. actor:GetName() .. "' could not be loaded! Flex controller values will be incorrect!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+								elseif(componentName == "light_spot") then
+									if(pathComponents[1] == "outerConeAngle" or pathComponents[1] == "innerConeAngle") then
+										transformChannelValues(channel,function(val)
+											return val *0.5
+										end,udm.TYPE_FLOAT)
+									end
+								elseif(componentName == "camera") then
+									if(pathComponents[1] == "fov") then
+										transformChannelValues(channel,function(val)
+											return sfm.convert_source_fov_to_pragma(val)
+										end,udm.TYPE_FLOAT)
+									end
+								elseif(componentName == "flex") then
+									local flexName = pathComponents[1]
+									if(mdl ~= nil) then
+										local flexId = mdl:LookupFlexController(flexName)
+										if(flexId ~= -1) then
+											local flexData = mdl:GetFlexController(flexId)
+											local range = flexData.max -flexData.min
+											local function remap_value(val)
+												-- Remap range [0,1] to [min,max]
+												val = val *range
+												val = val +flexData.min
+												return val
+											end
+											transformChannelValues(channel,function(val)
+												return remap_value(val)
+											end,udm.TYPE_FLOAT)
+										else
+											pfm.log("Flex '" .. flexName .. "' of model '" .. mdl:GetName() .. "' does not exist! Ignoring...",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+										end
+									else
+										pfm.log("Model of actor '" .. actor:GetName() .. "' could not be loaded! Flex controller values will be incorrect!",pfm.LOG_CATEGORY_PFM_CONVERTER,pfm.LOG_SEVERITY_WARNING)
+									end
 								end
 							end
 						end

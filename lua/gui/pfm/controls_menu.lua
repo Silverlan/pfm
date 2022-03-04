@@ -75,12 +75,15 @@ function gui.PFMControlsMenu:AddToggleControl(name,identifier,checked,onChange)
 	el:SetText(name)
 	el:SetChecked(checked)
 	el:SetTooltip(name .. "_desc")
+
+	local wrapper = el:Wrap("WIEditableEntry")
+	wrapper:SetText(name)
 	el:GetCheckbox():AddCallback("OnChange",function(...)
 		self:OnValueChanged(identifier,el:IsChecked())
 		if(onChange ~= nil) then onChange(...) end
 	end)
-	if(identifier ~= nil) then self:AddControl(identifier,el) end
-	return el
+	if(identifier ~= nil) then self:AddControl(identifier,el,wrapper,checked) end
+	return el,wrapper
 end
 function gui.PFMControlsMenu:AddSliderControl(name,identifier,default,min,max,onChange,stepSize,integer)
 	local slider = gui.create("WIPFMSlider",self)

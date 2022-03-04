@@ -53,6 +53,8 @@ function gui.EditableEntry:OnInitialize()
 			end
 			elChild:GetColorProperty():AddCallback(update_text_color)
 			update_text_color()
+		elseif(elChild:GetClass() == "witoggleoption") then
+			self.m_pText:SetVisible(false)
 		elseif(elChild:GetClass() == "wipfmslider") then
 			elChild:AddCallback("OnLeftValueChanged",function()
 				self:UpdateText()
@@ -162,7 +164,7 @@ function gui.EditableEntry:StartEditMode(enabled)
 	self:SetThinkingEnabled(enabled)
 	self.m_descContainer:SetVisible(not enabled)
 	if(util.is_valid(self.m_target)) then
-		self.m_target:SetVisible(enabled)
+		if(self.m_target:GetClass() ~= "witoggleoption") then self.m_target:SetVisible(enabled) end
 		if(enabled) then
 			self.m_target:RequestFocus()
 		end
@@ -187,6 +189,7 @@ function gui.EditableEntry:UpdateText(value)
 				local selectedOption = self.m_target:GetSelectedOption()
 				if(selectedOption ~= -1) then value = self.m_target:GetOptionText(selectedOption)
 				else value = self.m_target:GetText() end
+			elseif(self.m_target:GetClass() == "witoggleoption") then value = self.m_target:IsChecked() and "1" or "0"
 			else value = tostring(self.m_target:GetValue()) end
 			if(#value == 0) then value = "-" end
 		else value = "" end

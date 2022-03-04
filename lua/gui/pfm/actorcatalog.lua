@@ -103,7 +103,7 @@ function gui.PFMActorCatalog:OnInitialize()
 			entGhost = nil
 			--[[local actor = filmmaker:CreateNewActor()
 			if(actor == nil) then return end
-			local mdlC = filmmaker:CreateNewActorComponent(actor,"PFMModel")
+			local mdlC = filmmaker:CreateNewActorComponent(actor,"PFMModel",true)
 			if(mdlC == nil) then return end
 			local path = util.Path(elIcon:GetAsset())
 			path:PopFront()

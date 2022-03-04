@@ -42,7 +42,7 @@ function pfm.udm.FilmClip:GetActorList(list)
 end
 function pfm.udm.FilmClip:FindActor(name)
     for _,actor in ipairs(self:GetActorList()) do
-        if(actor:GetName() == name) then return name end
+        if(actor:GetName() == name) then return actor end
     end
 end
 function pfm.udm.FilmClip:FindActorAnimationClip(actor,addIfNotExists)

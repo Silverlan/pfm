@@ -55,7 +55,15 @@ function pfm.udm.Actor:OnComponentTypeChanged(c,type)
 end
 
 function pfm.udm.Actor:GetTransform()
-	return (self.m_pfmActorC ~= nil) and self.m_pfmActorC:GetMemberValue("transform") or math.ScaledTransform()
+	local transform = math.ScaledTransform()
+	if(self.m_pfmActorC == nil) then return transform end
+	local pos = self.m_pfmActorC:GetMemberValue("position")
+	local rot = self.m_pfmActorC:GetMemberValue("rotation")
+	local scale = self.m_pfmActorC:GetMemberValue("scale")
+	if(pos ~= nil) then transform:SetOrigin(pos) end
+	if(rot ~= nil) then transform:SetRotation(rot) end
+	if(scale ~= nil) then transform:SetScale(scale) end
+	return transform
 end
 
 function pfm.udm.Actor:GetAbsoluteParentPose(filter)

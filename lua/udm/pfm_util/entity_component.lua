@@ -12,16 +12,38 @@ function pfm.udm.EntityComponent:SetMemberValue(memberName,type,value)
 end
 
 function pfm.udm.EntityComponent:GetMemberValue(memberName)
-	return self:GetProperties():Get(memberName):GetValue()
+	local val = self:GetProperties():Get(memberName):GetValue()
+	if(val ~= nil) then return val end
+	-- TODO: Copy this value if it is a non-trivial type (e.g. vec3, mat4, etc.)
+	return self.m_defaultMemberValues[memberName]
+end
+
+function pfm.udm.EntityComponent:OnTypeChanged()
+	self.m_defaultMemberValues = {}
+	local type = self:GetType()
+	local id = ents.get_component_id(type)
+	if(id ~= nil) then
+		local componentInfo = ents.get_component_info(id)
+		if(componentInfo ~= nil) then
+			local numMembers = componentInfo:GetMemberCount()
+			for i=1,numMembers do
+				local memberInfo = componentInfo:GetMemberInfo(i -1)
+				assert(memberInfo ~= nil)
+				self.m_defaultMemberValues[memberInfo.name] = memberInfo.default
+			end
+		end
+	end
+
+	self:GetParent():OnComponentTypeChanged(self,type)
 end
 
 function pfm.udm.EntityComponent:OnInitialize()
 	udm.BaseSchemaType.OnInitialize(self)
+	self.m_defaultMemberValues = {}
 	self:AddChangeListener("type",function(c,type)
-		self:GetParent():OnComponentTypeChanged(c,type)
+		self:OnTypeChanged()
 	end)
-	local type = self:GetType()
-	if(#type > 0) then self:GetParent():OnComponentTypeChanged(self,type) end
+	if(#self:GetType() > 0) then self:OnTypeChanged() end
 end
 
 function pfm.udm.EntityComponent:GetActor() return self:GetParent() end

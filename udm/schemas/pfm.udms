@@ -46,7 +46,7 @@
 			{
 				"uniqueId" {$string type "Uuid"}
 				"name" {$string default ""}
-				"transform" {$transform default [[0,0,0][1,0,0,0]]}
+				"transform" {$stransform default [[0,0,0][1,0,0,0][1,1,1]]}
 				"groups"
 				{
 					$string type "array"

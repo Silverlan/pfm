@@ -47,13 +47,14 @@ function gui.PFMActorEditor:OnInitialize()
 				if(self:IsValid() == false) then return end
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",nil,function(mdlC) actor:ChangeModel(mdlName) end)
-				self:CreateNewActorComponent(actor,"pfm_animation_set")
-				self:CreateNewActorComponent(actor,"model")
-				self:CreateNewActorComponent(actor,"render")
-				self:CreateNewActorComponent(actor,"animated")
-				self:CreateNewActorComponent(actor,"flex")
-				-- self:CreateNewActorComponent(actor,"transform")
+				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
+				self:CreateNewActorComponent(actor,"pfm_animation_set",false)
+				self:CreateNewActorComponent(actor,"model",false)
+				self:CreateNewActorComponent(actor,"render",false)
+				self:CreateNewActorComponent(actor,"animated",false)
+				self:CreateNewActorComponent(actor,"flex",false)
+				-- self:CreateNewActorComponent(actor,"transform",false)
+				self:UpdateActorComponents(actor)
 			end)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_prop"),function()
@@ -62,59 +63,70 @@ function gui.PFMActorEditor:OnInitialize()
 				if(self:IsValid() == false) then return end
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",nil,function(mdlC) actor:ChangeModel(mdlName) end)
-				self:CreateNewActorComponent(actor,"model")
-				self:CreateNewActorComponent(actor,"render")
-				-- self:CreateNewActorComponent(actor,"transform")
+				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
+				self:CreateNewActorComponent(actor,"model",false)
+				self:CreateNewActorComponent(actor,"render",false)
+				-- self:CreateNewActorComponent(actor,"transform",false)
+				self:UpdateActorComponents(actor)
 			end)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_camera"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_camera")
-			-- self:CreateNewActorComponent(actor,"toggle")
-			self:CreateNewActorComponent(actor,"camera")
-			-- self:CreateNewActorComponent(actor,"transform")
+			self:CreateNewActorComponent(actor,"pfm_camera",false)
+			-- self:CreateNewActorComponent(actor,"toggle",false)
+			self:CreateNewActorComponent(actor,"camera",false)
+			-- self:CreateNewActorComponent(actor,"transform",false)
+			self:UpdateActorComponents(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_particle_system"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_particle_system")
+			self:CreateNewActorComponent(actor,"pfm_particle_system",false)
+			self:UpdateActorComponents(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_spot_light"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_light_spot")
-			self:CreateNewActorComponent(actor,"light")
-			self:CreateNewActorComponent(actor,"light_spot")
-			self:CreateNewActorComponent(actor,"radius")
-			self:CreateNewActorComponent(actor,"color")
-			-- self:CreateNewActorComponent(actor,"transform")
+			self:CreateNewActorComponent(actor,"pfm_light_spot",false)
+			local lightC = self:CreateNewActorComponent(actor,"light",false)
+			local lightSpotC = self:CreateNewActorComponent(actor,"light_spot",false)
+			local radiusC = self:CreateNewActorComponent(actor,"radius",false)
+			self:CreateNewActorComponent(actor,"color",false)
+			-- self:CreateNewActorComponent(actor,"transform",false)
+			lightSpotC:SetMemberValue("innerConeAngle",udm.TYPE_FLOAT,35)
+			lightSpotC:SetMemberValue("outerConeAngle",udm.TYPE_FLOAT,45)
+			lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,1000)
+			radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
+			self:UpdateActorComponents(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_point_light"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_light_point")
-			self:CreateNewActorComponent(actor,"light")
-			self:CreateNewActorComponent(actor,"light_point")
-			self:CreateNewActorComponent(actor,"radius")
-			self:CreateNewActorComponent(actor,"color")
-			-- self:CreateNewActorComponent(actor,"transform")
+			self:CreateNewActorComponent(actor,"pfm_light_point",false)
+			self:CreateNewActorComponent(actor,"light",false)
+			self:CreateNewActorComponent(actor,"light_point",false)
+			self:CreateNewActorComponent(actor,"radius",false)
+			self:CreateNewActorComponent(actor,"color",false)
+			-- self:CreateNewActorComponent(actor,"transform",false)
+			self:UpdateActorComponents(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_directional_light"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_light_directional")
-			self:CreateNewActorComponent(actor,"light")
-			self:CreateNewActorComponent(actor,"light_directional")
-			self:CreateNewActorComponent(actor,"color")
-			-- self:CreateNewActorComponent(actor,"transform")
+			self:CreateNewActorComponent(actor,"pfm_light_directional",false)
+			self:CreateNewActorComponent(actor,"light",false)
+			self:CreateNewActorComponent(actor,"light_directional",false)
+			self:CreateNewActorComponent(actor,"color",false)
+			-- self:CreateNewActorComponent(actor,"transform",false)
+			self:UpdateActorComponents(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_volume"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			local mdlData = self:CreateNewActorComponent(actor,"pfm_model")
-			self:CreateNewActorComponent(actor,"pfm_volumetric")
+			local mdlData = self:CreateNewActorComponent(actor,"pfm_model",false)
+			self:CreateNewActorComponent(actor,"pfm_volumetric",false)
+			self:UpdateActorComponents(actor)
 			mdlData:SetModelName("cube")
 
 			-- Calc scene extents
@@ -292,14 +304,17 @@ function gui.PFMActorEditor:CreateNewActor()
 		pos = entCam:GetPos() +entCam:GetForward() *100.0
 		rot = EulerAngles(0,entCam:GetAngles().y,0):ToQuaternion()
 	end
-	local t = actor:GetTransform()
-	t:SetOrigin(pos)
-	t:SetRotation(rot)
 
 	self:AddActor(actor)
+
+	local pfmActorC = self:CreateNewActorComponent(actor,"pfm_actor",false)
+	pfmActorC:SetMemberValue("position",udm.TYPE_VECTOR3,pos)
+	pfmActorC:SetMemberValue("rotation",udm.TYPE_QUATERNION,rot)
+
 	return actor
 end
-function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateActor,initComponent)
+function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateActorAndUi,initComponent)
+	if(updateActorAndUi == nil) then updateActorAndUi = true end
 	local itemActor
 	for elTree,data in pairs(self.m_treeElementToActorData) do
 		if(util.is_same_object(actor,data.actor)) then
@@ -317,35 +332,53 @@ function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateAc
 	local component = actor:AddComponentType(componentType)
 	if(initComponent ~= nil) then initComponent(component) end
 
-	if(updateActor == true) then tool.get_filmmaker():UpdateActor(actor,self:GetFilmClip(),true) end
+	if(updateActorAndUi == true) then self:UpdateActorComponents(actor) end
+
+	return component
+end
+function gui.PFMActorEditor:UpdateActorComponents(actor)
+	tool.get_filmmaker():UpdateActor(actor,self:GetFilmClip(),true)
+
+	local itemActor
+	for elTree,data in pairs(self.m_treeElementToActorData) do
+		if(util.is_same_object(actor,data.actor)) then
+			itemActor = elTree
+			break
+		end
+	end
+
+	if(itemActor == nil) then return end
 
 	local actorData = self.m_treeElementToActorData[itemActor]
 	self:UpdateActorComponentEntries(actorData)
-
-	return component
 end
 function gui.PFMActorEditor:TagRenderSceneAsDirty(dirty)
 	tool.get_filmmaker():TagRenderSceneAsDirty(dirty)
 end
 local function applyComponentChannelValue(actorEditor,component,controlData,value)
-	local parent = component:GetSceneParent()
-	if(parent ~= nil and controlData.path ~= nil and parent:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR) then
-		actorEditor:SetAnimationChannelValue(parent,controlData.path,value)
+	local actor = component:GetActor()
+	if(actor ~= nil and controlData.path ~= nil) then
+		actorEditor:SetAnimationChannelValue(actor,controlData.path,value)
 	end
 end
 function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	if(util.is_valid(self.m_animSetControls) == false) then return end
 
 	local function applyValue(value)
-		local parent = component:GetSceneParent()
-		if(parent ~= nil and controlData.path ~= nil and parent:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR) then
-			self:SetAnimationChannelValue(parent,controlData.path,value)
+		local actor = component:GetActor()
+		if(actor ~= nil and controlData.path ~= nil) then
+			self:SetAnimationChannelValue(actor,controlData.path,value)
 		end
 	end
 
 	local slider = self.m_animSetControls:AddSliderControl(controlData.name,controlData.identifier,controlData.translateToInterface(controlData.default or 0.0),controlData.translateToInterface(controlData.min or 0.0),controlData.translateToInterface(controlData.max or 100),nil,nil,controlData.integer or controlData.boolean)
 	if(controlData.default ~= nil) then slider:SetDefault(controlData.translateToInterface(controlData.default)) end
-	if(controlData.value ~= nil) then slider:SetValue(controlData.translateToInterface(controlData.value)) end
+
+	if(controlData.getValue ~= nil) then
+		local val = controlData.getValue()
+		if(val ~= nil) then slider:SetValue(controlData.translateToInterface(val)) end
+	end
+
 	local callbacks = {}
 	local skipCallbacks
 	if(controlData.type == "flexController") then
@@ -626,9 +659,9 @@ function gui.PFMActorEditor:SelectActor(actor)
 end
 function gui.PFMActorEditor:UpdateActorComponentEntries(actorData)
 	self.m_dirtyActorEntries = self.m_dirtyActorEntries or {}
-	self.m_dirtyActorEntries[actorData.actor:GetUniqueId()] = true
+	self.m_dirtyActorEntries[tostring(actorData.actor:GetUniqueId())] = true
 	local entActor = actorData.actor:FindEntity()
-	if(entActor ~= nil) then self:InitializeDirtyActorComponents(actorData.actor:GetUniqueId(),entActor) end
+	if(entActor ~= nil) then self:InitializeDirtyActorComponents(tostring(actorData.actor:GetUniqueId()),entActor) end
 end
 function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId,entActor)
 	if(type(uniqueId) ~= "string") then uniqueId = tostring(uniqueId) end
@@ -671,7 +704,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 		items = {}
 	}
 	local componentData = actorData.componentData[componentId]
-	local itemComponent = actorData.componentsEntry:AddItem(component:GetName(),nil,nil,component:GetType())
+	local itemComponent = actorData.componentsEntry:AddItem(component:GetType(),nil,nil,component:GetType())
 	if(component.GetIconMaterial) then
 		itemComponent:AddIcon(component:GetIconMaterial())
 		itemActor:AddIcon(component:GetIconMaterial())
@@ -680,52 +713,40 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 	if(util.is_valid(componentData.itemBaseProps) == false) then
 		componentData.itemBaseProps = itemComponent:AddItem(locale.get_text("pfm_base_properties"))
 	end
-
 	local componentInfo = (componentId ~= nil) and ents.get_component_info(componentId) or nil
 	if(componentInfo ~= nil) then
 		local uniqueId = entActor:GetUuid()
 		local c = entActor:GetComponent(componentId)
-		local props = component:GetProperty("properties")
 		local function initializeProperty(info,controlData)
-			local prop = props:GetProperty(info.name)
-			if(prop ~= nil) then
-				c:SetMemberValue(info.name,prop:GetValue())
+			local val = component:GetMemberValue(info.name)
+			if(val ~= nil) then
+				c:SetMemberValue(info.name,val)
 				return true
 			end
 			local valid = true
 			if(info.type == udm.TYPE_STRING) then props:SetProperty(info.name,fudm.String(info.default))
 			elseif(info.type == udm.TYPE_UINT8) then
-				props:SetProperty(info.name,fudm.UInt8(info.default))
 				controlData.integer = true
 			elseif(info.type == udm.TYPE_INT32) then
-				props:SetProperty(info.name,fudm.Int(info.default))
 				controlData.integer = true
 			elseif(info.type == udm.TYPE_UINT32) then
-				props:SetProperty(info.name,fudm.UInt32(info.default))
 				controlData.integer = true
 			elseif(info.type == udm.TYPE_UINT64) then
-				props:SetProperty(info.name,fudm.UInt64(info.default))
 				controlData.integer = true
-			elseif(info.type == udm.TYPE_FLOAT) then props:SetProperty(info.name,fudm.Float(info.default))
+			elseif(info.type == udm.TYPE_FLOAT) then
 			elseif(info.type == udm.TYPE_BOOLEAN) then
-				props:SetProperty(info.name,fudm.Bool(info.default))
 				controlData.boolean = true
 			elseif(info.type == udm.TYPE_VECTOR2) then
-				props:SetProperty(info.name,fudm.Vector2(info.default))
 				valid = false
 			elseif(info.type == udm.TYPE_VECTOR3) then
-				props:SetProperty(info.name,fudm.Vector3(info.default))
 				if(info.specializationType ~= ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
 					-- valid = false
 				end
 			elseif(info.type == udm.TYPE_VECTOR4) then
-				props:SetProperty(info.name,fudm.Vector4(info.default))
 				valid = false
 			elseif(info.type == udm.TYPE_QUATERNION) then
-				props:SetProperty(info.name,fudm.Quaternion(info.default))
 				-- valid = false
 			elseif(info.type == udm.TYPE_EULER_ANGLES) then
-				props:SetProperty(info.name,fudm.Angle(info.default))
 			--elseif(info.type == udm.TYPE_INT8) then props:SetProperty(info.name,udm.(info.default))
 			--elseif(info.type == udm.TYPE_INT16) then props:SetProperty(info.name,udm.(info.default))
 			--elseif(info.type == udm.TYPE_UINT16) then props:SetProperty(info.name,udm.(info.default))
@@ -768,17 +789,18 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				controlData.name = info.name
 				controlData.default = info.default
 				controlData.path = path
-				controlData.value = c:GetMemberValue(info.name)
-				if(udm.is_numeric_type(info.type)) then
+				controlData.getValue = function() if(util.is_valid(c) == false) then return end return c:GetMemberValue(info.name) end
+				local value = controlData.getValue()
+				if(udm.is_numeric_type(info.type) and info.type ~= udm.TYPE_BOOLEAN) then
 					local min = info.min or 0
 					local max = info.max or 100
-					min = math.min(min,controlData.default or min,controlData.value or min)
-					max = math.max(max,controlData.default or max,controlData.value or max)
+					min = math.min(min,controlData.default or min,value or min)
+					max = math.max(max,controlData.default or max,value or max)
 					if(min == max) then max = max +100 end
 					controlData.min = min
 					controlData.max = max
 				end
-				pfm.log("Adding control for member '" .. controlData.path .. "' with min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(controlData.value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
+				pfm.log("Adding control for member '" .. controlData.path .. "' with min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
 				controlData.set = function(component,value,dontTranslateValue)
 					local entActor = ents.find_by_unique_index(uniqueId)
 					local c = (entActor ~= nil) and entActor:GetComponent(componentId) or nil
@@ -789,11 +811,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 					local memberValue = value
 					if(util.get_type_name(memberValue) == "Color") then memberValue = memberValue:ToVector() end
 
-					if(controlData.name == "angles") then
-						actorData.actor:GetProperty("transform"):GetProperty("rotation"):SetValue(memberValue:ToQuaternion())
-					else
-						component:GetProperty("properties"):GetProperty(info.name):SetValue(memberValue)
-					end
+					component:SetMemberValue(info.name,info.type,memberValue)
 					
 					local entActor = actorData.actor:FindEntity()
 					if(entActor ~= nil) then
@@ -806,7 +824,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 					applyComponentChannelValue(self,component,controlData,memberValue)
 					self:TagRenderSceneAsDirty()
 				end
-				controlData.set(component,controlData.value,true)
+				controlData.set(component,value,true)
 				actorData.componentData[componentId].items[memberIdx] = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData,path)
 			else
 				pfm.log("Unable to add control for member '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
@@ -925,7 +943,7 @@ function gui.PFMActorEditor:AddActor(actor)
 		componentsEntry = itemComponents,
 		componentData = {}
 	}
-	self.m_actorUniqueIdToTreeElement[actor:GetUniqueId()] = itemActor
+	self.m_actorUniqueIdToTreeElement[tostring(actor:GetUniqueId())] = itemActor
 	itemComponents:AddCallback("OnMouseEvent",function(tex,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 			local pContext = gui.open_context_menu()
@@ -1072,7 +1090,7 @@ function gui.PFMActorEditor:AddProperty(name,child,fInitPropertyEl)
 	return elProperty
 end
 function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentData,udmComponent,item,controlData,identifier)
-	local actor = udmComponent:GetSceneParent()
+	local actor = udmComponent:GetActor()
 	local memberInfo = (actor ~= nil) and self:GetMemberInfo(actor,controlData.path) or nil
 	if(memberInfo == nil) then return end
 	controlData.translateToInterface = controlData.translateToInterface or function(val) return val end
@@ -1089,9 +1107,12 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 		if(selectedCount > 1 or util.is_valid(ctrl)) then return end
 		if(controlData.path ~= nil) then
 			if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
-				local colField,wrapper = self.m_animSetControls:AddColorField(memberInfo.name,"color",(controlData.value and Color(controlData.value)) or (controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
+				local colField,wrapper = self.m_animSetControls:AddColorField(memberInfo.name,memberInfo.name,(controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
 					if(controlData.set ~= nil) then controlData.set(udmComponent,newCol) end
 				end)
+				local val
+				if(controlData.getValue) then val = controlData.getValue() end
+				if(val ~= nil) then colField:SetColor(Color(val)) end
 				ctrl = wrapper
 			elseif(memberInfo.type == udm.TYPE_STRING) then
 				if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE) then
@@ -1100,7 +1121,10 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 						if(meta:GetValue("assetType") == "model") then
 							ctrl = self:AddProperty(memberInfo.name,child,function(parent)
 								local el = gui.create("WIFileEntry",parent)
-								if(controlData.value ~= nil) then el:SetValue(controlData.value) end
+								if(controlData.getValue ~= nil) then
+									local val = controlData.getValue()
+									if(val ~= nil) then el:SetValue(val) end
+								end
 								el:SetBrowseHandler(function(resultHandler)
 									gui.open_model_dialog(function(dialogResult,mdlName)
 										if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
@@ -1117,7 +1141,10 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 					if(util.is_valid(ctrl) == false) then
 						ctrl = self:AddProperty(memberInfo.name,child,function(parent)
 							local el = gui.create("WIFileEntry",parent)
-							if(controlData.value ~= nil) then el:SetValue(controlData.value) end
+							if(controlData.getValue ~= nil) then
+								local val = controlData.getValue()
+								if(val ~= nil) then el:SetValue(val) end
+							end
 							el:SetBrowseHandler(function(resultHandler)
 								local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 									if(fileName == nil) then return end
@@ -1138,17 +1165,23 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 					end
 				end
 				return
+			elseif(memberInfo.type == udm.TYPE_BOOLEAN) then
+				local elToggle,wrapper = self.m_animSetControls:AddToggleControl(memberInfo.name,memberInfo.name,controlData.default or false,function(oldChecked,checked)
+					if(controlData.set ~= nil) then controlData.set(udmComponent,checked) end
+				end)
+				local val = false
+				if(controlData.getValue) then val = controlData.getValue() or val end
+				elToggle:SetChecked(val)
+				ctrl = wrapper
 			elseif(udm.is_numeric_type(memberInfo.type)) then
 				if(memberInfo.minValue ~= nil) then controlData.min = memberInfo.minValue end
 				if(memberInfo.maxValue ~= nil) then controlData.max = memberInfo.maxValue end
 				if(memberInfo.default ~= nil) then controlData.default = memberInfo.default end
-				if(memberInfo.value ~= nil) then controlData.value = memberInfo.value end
 
 				if(memberInfo.type == udm.TYPE_BOOLEAN) then
 					controlData.min = controlData.min and 1 or 0
 					controlData.max = controlData.max and 1 or 0
 					controlData.default = controlData.default and 1 or 0
-					controlData.value = controlData.value and 1 or 0
 				end
 
 				local channel = self:GetAnimationChannel(actorData.actor,controlData.path,false)
@@ -1205,7 +1238,9 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 
 				-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 			elseif(memberInfo.type == udm.TYPE_EULER_ANGLES) then
-				local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(memberInfo.value),function(el)
+				local val = EulerAngles()
+				if(controlData.getValue ~= nil) then val = controlData.getValue() or val end
+				local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)
 					if(controlData.set ~= nil) then controlData.set(udmComponent,EulerAngles(el:GetText())) end
 				end)
 				ctrl = wrapper

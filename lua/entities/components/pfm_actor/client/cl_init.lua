@@ -12,22 +12,17 @@ local Component = util.register_class("ents.PFMActorComponent",BaseEntityCompone
 
 Component:RegisterMember("Position",udm.TYPE_VECTOR3,Vector(0,0,0),{
 	onChange = function(self)
-		local pose = self:GetActorData():GetAbsoluteParentPose()
-		pose:TranslateLocal(self:GetPosition())
-		self:GetEntity():SetPos(pose:GetOrigin())
+		self:UpdatePosition()
 	end
 })
 Component:RegisterMember("Rotation",udm.TYPE_QUATERNION,Quaternion(),{
 	onChange = function(self)
-		local pose = self:GetActorData():GetAbsoluteParentPose()
-		pose:RotateLocal(self:GetRotation())
-		self:GetEntity():SetRotation(pose:GetRotation())
+		self:UpdateRotation()
 	end
 })
 Component:RegisterMember("Scale",udm.TYPE_VECTOR3,Vector(1,1,1),{
 	onChange = function(self)
-		local pose = self:GetActorData():GetAbsoluteParentPose()
-		self:GetEntity():SetScale(pose:GetScale() *self:GetScale())
+		self:UpdateScale()
 	end
 })
 Component:RegisterMember("Visible",udm.TYPE_BOOLEAN,true,{
@@ -56,6 +51,20 @@ function Component:UpdateVisibility()
 	local renderMode = visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE
 	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 	if(renderC ~= nil) then renderC:SetSceneRenderPass(renderMode) end
+end
+function Component:UpdatePosition()
+	local pose = self:GetActorData():GetAbsoluteParentPose()
+	pose:TranslateLocal(self:GetPosition())
+	self:GetEntity():SetPos(pose:GetOrigin())
+end
+function Component:UpdateRotation()
+	local pose = self:GetActorData():GetAbsoluteParentPose()
+	pose:RotateLocal(self:GetRotation())
+	self:GetEntity():SetRotation(pose:GetRotation())
+end
+function Component:UpdateScale()
+	local pose = self:GetActorData():GetAbsoluteParentPose()
+	self:GetEntity():SetScale(pose:GetScale() *self:GetScale())
 end
 function Component:SetBoneChannel(boneId,attr,channel)
 	if(type(boneId) == "string") then
