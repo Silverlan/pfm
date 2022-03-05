@@ -49,48 +49,47 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 				end
 			end
 		end
-		pContext:AddItem(locale.get_text("pfm_mated_compose_rma"),function()
-			local dialog,frame,fileDialog = gui.create_dialog(function()
-				local el = gui.create("WIRMAComposerDialog")
-				if(matIdx ~= nil) then el:SetModel(self.m_model,matIdx) end
-				local rmaTex = texSlotRMA:GetTexture()
-				if(rmaTex ~= nil) then el:SetRMAMap(rmaTex) end
-				el:AddCallback("OnRMAComposed",function(el,rmaMap)
-					if(util.is_valid(self.m_model) == false) then return end
-					local matPath = self.m_model:GetMaterialPaths()[1]
-					if(matPath == nil) then return end
-					local mdlName = file.remove_file_extension(file.get_file_name(self.m_model:GetName()))
-					matPath = util.Path(matPath) +(mdlName .. "_rma")
-					asset.lock_asset_watchers()
+		if(matIdx ~= nil) then
+			pContext:AddItem(locale.get_text("pfm_mated_compose_rma"),function()
+				local dialog,frame,fileDialog = gui.create_dialog(function()
+					local el = gui.create("WIRMAComposerDialog")
+					if(matIdx ~= nil) then el:SetModel(self.m_model,matIdx) end
+					local rmaTex = texSlotRMA:GetTexture()
+					if(rmaTex ~= nil) then el:SetRMAMap(rmaTex) end
+					el:AddCallback("OnRMAComposed",function(el,rmaMap)
+						if(util.is_valid(self.m_model) == false) then return end
+						local matPath = self.m_model:GetMaterialPaths()[1]
+						if(matPath == nil) then return end
+						local mdlName = file.remove_file_extension(file.get_file_name(self.m_model:GetName()))
+						matPath = util.Path(matPath) +(mdlName .. "_rma")
+						asset.lock_asset_watchers()
+						local texInfo = util.TextureInfo()
+						texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
+						local result = util.save_image(rmaMap,"materials/" .. matPath:GetString(),texInfo)
+						-- TODO: Doesn't work properly?
+						-- local result,errMsg = asset.import_texture(rmaMap,asset.TextureImportInfo(),matPath:GetString())
+						asset.unlock_asset_watchers()
+						if(result == false) then
+							console.print_warning("Unable to save RMA texture: ",errMsg)
+							return
+						end
+						-- Force texture reload
+						asset.reload(matPath:GetString(),asset.TYPE_TEXTURE)
+						texSlotRMA:SetTexture(matPath:GetString())
 
-					local texInfo = util.TextureInfo()
-					texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
-					local result = util.save_image(rmaMap,"materials/" .. matPath:GetString(),texInfo)
-					-- TODO: Doesn't work properly?
-					-- local result,errMsg = asset.import_texture(rmaMap,asset.TextureImportInfo(),matPath:GetString())
+						if(util.is_valid(self.m_material) == false) then return end
+						self.m_material:SetTexture("rma_map",matPath:GetString())
+						self.m_material:UpdateTextures()
+						self:ReloadMaterialDescriptor()
+						self.m_viewport:Render()
 
-					asset.unlock_asset_watchers()
-					if(result == false) then
-						console.print_warning("Unable to save RMA texture: ",errMsg)
-						return
-					end
-					-- Force texture reload
-					asset.reload(matPath:GetString(),asset.TYPE_TEXTURE)
-
-					texSlotRMA:SetTexture(matPath:GetString())
-
-					if(util.is_valid(self.m_material) == false) then return end
-					self.m_material:SetTexture("rma_map",matPath:GetString())
-					self.m_material:UpdateTextures()
-					self:ReloadMaterialDescriptor()
-					self.m_viewport:Render()
-
-					teRMAMap:SetText(texPath)
+						teRMAMap:SetText(matPath:GetString())
+					end)
+					return el
 				end)
-				return el
+				dialog:SetParent(tool.get_filmmaker())
 			end)
-			dialog:SetParent(tool.get_filmmaker())
-		end)
+		end
 	end)
 
 	-- Emission map
