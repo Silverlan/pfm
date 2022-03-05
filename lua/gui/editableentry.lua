@@ -76,20 +76,63 @@ function gui.EditableEntry:OnInitialize()
 		end
 	end)
 	self:SetMouseInputEnabled(true)
-	self:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)
-		if(state ~= input.STATE_PRESS or (button ~= input.MOUSE_BUTTON_LEFT and button ~= input.MOUSE_BUTTON_RIGHT)) then return util.EVENT_REPLY_UNHANDLED end
-		if(util.is_valid(self.m_target)) then
-			if(self.m_target:GetClass() == "wipfmslider") then
+
+	self:SetText("")
+	self:AddStyleClass("input_field")
+end
+function gui.EditableEntry:MouseCallback(button,state,mods)
+	if(button ~= input.MOUSE_BUTTON_LEFT and button ~= input.MOUSE_BUTTON_RIGHT) then return util.EVENT_REPLY_UNHANDLED end
+	if(button == input.MOUSE_BUTTON_RIGHT) then
+		if(state == input.STATE_RELEASE) then
+			local pContext = gui.open_context_menu()
+			if(util.is_valid(pContext) == false) then return end
+			pContext:SetPos(input.get_cursor_pos())
+			self:CallCallbacks("PopulateContextMenu",pContext)
+			pContext:Update()
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
+	if(state ~= input.STATE_PRESS) then return util.EVENT_REPLY_UNHANDLED end
+	if(util.is_valid(self.m_target)) then
+		if(self.m_target:GetClass() == "wipfmslider") then
+			local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
+				input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
+			if(isAltDown) then
+				self:StartEditMode(true)
+				return util.EVENT_REPLY_HANDLED
+			end
+		end
+		if(self.m_presetValues ~= nil and #self.m_presetValues > 0) then
+			local numOptions = #self.m_presetValues
+			local option = self.m_curPresetOption or 0
+			if(button == input.MOUSE_BUTTON_LEFT) then
+				if(option == -1 or option == numOptions -1) then option = 0
+				else option = option +1 end
+			else
+				if(option == -1 or option == 0) then option = numOptions -1
+				else option = option -1 end
+			end
+			self.m_skipTextUpdate = true
+			self.m_target:SetValue(self.m_presetValues[option +1][1])
+			self.m_skipTextUpdate = nil
+
+			self:UpdateText(self.m_presetValues[option +1][2])
+			self.m_curPresetOption = option
+			return util.EVENT_REPLY_HANDLED
+		end
+		if(self.m_target:GetClass() == "widropdownmenu") then
+			if(self.m_useAltMode) then
+				self.m_target:SetVisible(true)
+				self.m_target:OpenMenu()
+			else
 				local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
 					input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
-				if(isAltDown) then
+				if(self.m_target:IsEditable() and isAltDown) then
 					self:StartEditMode(true)
 					return util.EVENT_REPLY_HANDLED
 				end
-			end
-			if(self.m_presetValues ~= nil and #self.m_presetValues > 0) then
-				local numOptions = #self.m_presetValues
-				local option = self.m_curPresetOption or 0
+				local numOptions = self.m_target:GetOptionCount()
+				local option = self.m_target:GetSelectedOption()
 				if(button == input.MOUSE_BUTTON_LEFT) then
 					if(option == -1 or option == numOptions -1) then option = 0
 					else option = option +1 end
@@ -97,49 +140,17 @@ function gui.EditableEntry:OnInitialize()
 					if(option == -1 or option == 0) then option = numOptions -1
 					else option = option -1 end
 				end
-				self.m_skipTextUpdate = true
-				self.m_target:SetValue(self.m_presetValues[option +1][1])
-				self.m_skipTextUpdate = nil
-
-				self:UpdateText(self.m_presetValues[option +1][2])
-				self.m_curPresetOption = option
-				return util.EVENT_REPLY_HANDLED
+				self.m_target:SelectOption(option)
 			end
-			if(self.m_target:GetClass() == "widropdownmenu") then
-				if(self.m_useAltMode) then
-					self.m_target:SetVisible(true)
-					self.m_target:OpenMenu()
-				else
-					local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
-						input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
-					if(self.m_target:IsEditable() and isAltDown) then
-						self:StartEditMode(true)
-						return util.EVENT_REPLY_HANDLED
-					end
-					local numOptions = self.m_target:GetOptionCount()
-					local option = self.m_target:GetSelectedOption()
-					if(button == input.MOUSE_BUTTON_LEFT) then
-						if(option == -1 or option == numOptions -1) then option = 0
-						else option = option +1 end
-					else
-						if(option == -1 or option == 0) then option = numOptions -1
-						else option = option -1 end
-					end
-					self.m_target:SelectOption(option)
-				end
-				return util.EVENT_REPLY_HANDLED
-			end
-		end
-		if(button == input.MOUSE_BUTTON_LEFT and self.m_empty ~= true) then
-			if(util.is_valid(self.m_target) and self.m_activeTarget == true) then return util.EVENT_REPLY_UNHANDLED end
-			self:StartEditMode(true)
 			return util.EVENT_REPLY_HANDLED
 		end
-		return util.EVENT_REPLY_UNHANDLED
-	end)
-
-	self:SetText("")
-	self:AddStyleClass("input_field")
+	end
+	if(button == input.MOUSE_BUTTON_LEFT and self.m_empty ~= true) then
+		if(util.is_valid(self.m_target) and self.m_activeTarget == true) then return util.EVENT_REPLY_UNHANDLED end
+		self:StartEditMode(true)
+		return util.EVENT_REPLY_HANDLED
+	end
+	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.EditableEntry:SetUseAltMode(altMode) self.m_useAltMode = altMode end
 function gui.EditableEntry:SetCategory(text)
