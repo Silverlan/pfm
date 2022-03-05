@@ -89,6 +89,7 @@ function gui.EditableEntry:MouseCallback(button,state,mods)
 			pContext:SetPos(input.get_cursor_pos())
 			self:CallCallbacks("PopulateContextMenu",pContext)
 			pContext:Update()
+			if(pContext:IsPopulated() == false) then return util.EVENT_REPLY_UNHANDLED end
 		end
 		return util.EVENT_REPLY_HANDLED
 	end
@@ -130,6 +131,8 @@ function gui.EditableEntry:MouseCallback(button,state,mods)
 				if(self.m_target:IsEditable() and isAltDown) then
 					self:StartEditMode(true)
 					return util.EVENT_REPLY_HANDLED
+				elseif(isAltDown) then
+					button = input.MOUSE_BUTTON_RIGHT
 				end
 				local numOptions = self.m_target:GetOptionCount()
 				local option = self.m_target:GetSelectedOption()

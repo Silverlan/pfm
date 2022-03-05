@@ -987,13 +987,6 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					t:SetRotation(entGhost:GetRotation())
 					filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
 
-					local mdl = game.load_model(path:GetString())
-					if(mdl ~= nil) then
-						for _,fc in ipairs(mdl:GetFlexControllers()) do
-							mdlC:GetFlexControllerNames():PushBack(fudm.String(fc.name))
-						end
-					end
-
 					local entActor = actor:FindEntity()
 					if(util.is_valid(entActor)) then
 						local tc = entActor:AddComponent("util_transform")

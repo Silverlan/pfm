@@ -408,8 +408,8 @@ function gui.PFMTreeExpandIcon:Toggle()
 	else self:Collapse() end
 end
 function gui.PFMTreeExpandIcon:MouseCallback(button,state,mods)
-	if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_RELEASE) then
-		self:Toggle()
+	if(button == input.MOUSE_BUTTON_LEFT) then
+		if(state == input.STATE_RELEASE) then self:Toggle() end
 		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED

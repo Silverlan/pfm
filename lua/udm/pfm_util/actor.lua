@@ -66,6 +66,13 @@ function pfm.udm.Actor:GetTransform()
 	return transform
 end
 
+function pfm.udm.Actor:SetTransform(t)
+	if(self.m_pfmActorC == nil) then return end
+	self.m_pfmActorC:SetMemberValue("position",udm.TYPE_VECTOR3,t:GetOrigin())
+	self.m_pfmActorC:SetMemberValue("rotation",udm.TYPE_QUATERNION,t:GetRotation())
+	self.m_pfmActorC:SetMemberValue("scale",udm.TYPE_VECTOR3,t:GetScale())
+end
+
 function pfm.udm.Actor:GetAbsoluteParentPose(filter)
 	local parent = self:GetParent()
 	if(parent.TypeName ~= "Group") then return math.ScaledTransform() end
