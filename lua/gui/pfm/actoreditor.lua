@@ -216,6 +216,7 @@ function gui.PFMActorEditor:OnInitialize()
 	local dataVBox = gui.create("WIVBox",self.m_contents)
 	dataVBox:SetFixedSize(true)
 	dataVBox:SetAutoFillContentsToWidth(true)
+	dataVBox:SetAutoFillContentsToHeight(true)
 
 	local propertiesHBox = gui.create("WIHBox",dataVBox)
 	propertiesHBox:SetAutoFillContents(true)
@@ -233,7 +234,15 @@ function gui.PFMActorEditor:OnInitialize()
 
 	gui.create("WIResizer",dataVBox)
 
-	local animSetControls = gui.create("WIPFMControlsMenu",dataVBox)
+	local animSetControls
+		local scrollContainer = gui.create("WIScrollContainer",dataVBox)
+		scrollContainer:AddCallback("SetSize",function(el)
+			if(self:IsValid() and util.is_valid(animSetControls)) then
+				animSetControls:SetWidth(el:GetWidth())
+			end
+		end)
+
+	animSetControls = gui.create("WIPFMControlsMenu",scrollContainer,0,0,scrollContainer:GetWidth(),scrollContainer:GetHeight())
 	animSetControls:SetAutoFillContentsToWidth(true)
 	animSetControls:SetAutoFillContentsToHeight(false)
 	animSetControls:SetFixedHeight(false)
@@ -934,38 +943,15 @@ function gui.PFMActorEditor:AddActor(actor)
 					pComponentsMenu:Update()
 				end
 			end
-			--[[local componentManager = self.m_componentManager
-			local components = {}
-			for componentType,udmComponent in pairs(componentManager:GetComponents():GetChildren()) do
-				local name = udmComponent:GetValue("name")
-				if(name == nil) then
-					local valid,n = locale.get_text("component_" .. componentType,nil,true)
-					if(valid) then name = n
-					else name = componentType end
-				end
-				locale.get_text("pfm_add_component_type",{name})
-				pComponentsMenu:AddItem(locale.get_text("pfm_add_component_type",{componentType}),function()
-					local tTranslation = {
-						["pfm_model"] = {"PFMModel"},
-						["pfm_particle_system"] = {"PFMParticleSystem"},
-						["pfm_camera"] = {"PFMCamera"},
-						["pfm_animation_set"] = {"PFMAnimationSet"},
-						["pfm_light_spot"] = {"PFMSpotLight","light","light_spot","radius","color","transform"},
-						["pfm_light_directional"] = {"PFMDirectionalLight"},
-						["pfm_light_point"] = {"PFMPointLight"},
-						["pfm_impersonatee"] = {"PFMImpersonatee"},
-						["pfm_volumetric"] = {"PFMVolumetric"}
-					}
-					for _,componentName in pairs(tTranslation[componentType]) do
-						self:CreateNewActorComponent(actor,componentName,true)
-					end
-				end)
-			end]]
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
 		end
 	end)
 	self:UpdateActorComponentEntries(self.m_treeElementToActorData[itemActor])
+end
+function gui.PFMActorEditor:Reload()
+	if(self.m_filmClip == nil) then return end
+	self:Setup(self.m_filmClip)
 end
 function gui.PFMActorEditor:Setup(filmClip)
 	-- if(util.is_same_object(filmClip,self.m_filmClip)) then return end
@@ -1201,7 +1187,16 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 
 	local isBaseProperty = (memberInfo.type == udm.TYPE_STRING)
 	local baseItem = isBaseProperty and componentData.itemBaseProps or item
-	local child = baseItem:AddItem(controlData.name,nil,nil,identifier)
+
+	local propertyPathComponents = string.split(controlData.name,"/")
+	for i=1,#propertyPathComponents -1 do
+		local cname = propertyPathComponents[i]
+		local cnameItem = baseItem:GetItemByIdentifier(cname)
+		if(util.is_valid(cnameItem)) then baseItem = cnameItem
+		else baseItem = baseItem:AddItem(cname,nil,nil,cname) end
+	end
+
+	local child = baseItem:AddItem(propertyPathComponents[#propertyPathComponents],nil,nil,identifier)
 
 	local ctrl
 	local selectedCount = 0
