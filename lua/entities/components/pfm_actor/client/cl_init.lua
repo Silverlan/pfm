@@ -51,6 +51,9 @@ function Component:UpdateVisibility()
 	local renderMode = visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE
 	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 	if(renderC ~= nil) then renderC:SetSceneRenderPass(renderMode) end
+
+	local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
+	if(toggleC ~= nil) then toggleC:SetTurnedOn(visible) end
 end
 function Component:UpdatePosition()
 	local pose = self:GetActorData():GetAbsoluteParentPose()
