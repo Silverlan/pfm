@@ -24,6 +24,12 @@ function pfm.udm.AnimationClip:GetChannel(path,type,addIfNotExists)
     return channel
 end
 
+function pfm.udm.AnimationClip:RemoveChannel(path)
+    local channel = self:FindChannel(path)
+    if(channel == nil) then return end
+    self:GetAnimation():RemoveChannel(channel)
+end
+
 function pfm.udm.AnimationClip:AddChannel(type)
     local anim = self:GetAnimation()
     local channel = anim:AddChannel()
