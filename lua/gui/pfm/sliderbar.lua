@@ -18,11 +18,12 @@ function gui.PFMSliderBar:OnInitialize()
 
 	self:SetSize(128,7)
 
-	self.m_offsetFromDefaultIndicator = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight())
+	self.m_offsetFromDefaultIndicator = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	self.m_offsetFromDefaultIndicator:SetColor(Color(61,61,61))
 
 	local cursorRect = gui.create("WIRect",self,0,0,1,self:GetHeight())
 	cursorRect:SetColor(Color(131,131,131))
+	self.m_cursorRect = cursorRect
 
 	self.m_cursor = cursorRect:Wrap("WIPFMSliderCursor")
 	self.m_cursor:AddCallback("OnFractionChanged",function(el,fraction)
@@ -69,6 +70,8 @@ function gui.PFMSliderBar:OffsetToValue(x)
 	return self:GetMin() +(self:GetMax() -self:GetMin()) *x
 end
 function gui.PFMSliderBar:OnSizeChanged()
+	if(util.is_valid(self.m_cursorRect)) then self.m_cursorRect:SetHeight(self:GetHeight()) end
+	if(util.is_valid(self.m_cursor)) then self.m_cursor:SetHeight(self:GetHeight()) end
 	self:ScheduleUpdate()
 end
 function gui.PFMSliderBar:OnUpdate()
