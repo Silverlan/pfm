@@ -217,16 +217,16 @@ function ents.PFMModel:UpdateModel()
 end
 
 function ents.PFMModel:Setup(actorData,mdlInfo)
-	self.m_mdlInfo = mdlInfo
+	self.m_mdlInfo = actorData:FindComponent("model")
 	self.m_actorData = actorData
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
-	if(mdlC == nil) then return end
-	table.insert(self.m_listeners,mdlInfo:AddChangeListener("model",function(newModel)
+	if(mdlC == nil or self.m_mdlInfo == nil) then return end
+	table.insert(self.m_listeners,self.m_mdlInfo:AddChangeListener("model",function(c,newModel)
 		local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 		if(mdlC ~= nil) then mdlC:SetModel(mdlName) end
 	end))
-	table.insert(self.m_listeners,mdlInfo:AddChangeListener("skin",function(newSkin) ent:SetSkin(newSkin) end))
-	mdlC:SetModel(mdlInfo:GetMemberValue("model") or "")
+	table.insert(self.m_listeners,self.m_mdlInfo:AddChangeListener("skin",function(c,newSkin) ent:SetSkin(newSkin) end))
+	mdlC:SetModel(self.m_mdlInfo:GetMemberValue("model") or "")
 end
 ents.COMPONENT_PFM_MODEL = ents.register_component("pfm_model",ents.PFMModel)

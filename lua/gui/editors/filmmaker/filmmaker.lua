@@ -978,8 +978,11 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					if(actor == nil) then return end
 					local path = util.Path(elIcon:GetAsset())
 					path:PopFront()
-					local mdlC = filmmaker:CreateNewActorComponent(actor,"pfm_model",nil,function(mdlC) actor:ChangeModel(path:GetString()) end)
+					local mdlC = filmmaker:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(path:GetString()) end)
 					if(mdlC == nil) then return end
+					filmmaker:CreateNewActorComponent(actor,"flex",false)
+					filmmaker:CreateNewActorComponent(actor,"render",false)
+					filmmaker:CreateNewActorComponent(actor,"animated")
 
 					self:UpdateActor(actor,filmClip)
 					local t = actor:GetTransform()

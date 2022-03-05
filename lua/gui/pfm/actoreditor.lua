@@ -48,7 +48,7 @@ function gui.PFMActorEditor:OnInitialize()
 				local actor = self:CreateNewActor()
 				if(actor == nil) then return end
 				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
-				self:CreateNewActorComponent(actor,"pfm_animation_set",false)
+				-- self:CreateNewActorComponent(actor,"pfm_animation_set",false)
 				self:CreateNewActorComponent(actor,"model",false)
 				self:CreateNewActorComponent(actor,"render",false)
 				self:CreateNewActorComponent(actor,"animated",false)
@@ -672,7 +672,7 @@ end
 function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId,entActor)
 	if(type(uniqueId) ~= "string") then uniqueId = tostring(uniqueId) end
 	if(self.m_dirtyActorEntries == nil or self.m_dirtyActorEntries[uniqueId] == nil) then return end
-	entActor = entActor or ents.find_by_unique_index(uniqueId)
+	entActor = entActor or ents.find_by_uuid(uniqueId)
 	if(util.is_valid(entActor) == false) then return end
 	self.m_dirtyActorEntries[uniqueId] = nil
 
@@ -795,7 +795,21 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				controlData.name = info.name
 				controlData.default = info.default
 				controlData.path = path
-				controlData.getValue = function() if(util.is_valid(c) == false) then return end return c:GetMemberValue(info.name) end
+				controlData.getValue = function()
+					if(util.is_valid(c) == false) then
+						if(util.is_valid(entActor) == false) then entActor = ents.find_by_uuid(uniqueId) end
+						if(util.is_valid(entActor) == false) then
+							console.print_warning("No actor with UUID '" .. uniqueId .. "' found!")
+							return
+						end
+						c = entActor:GetComponent(componentId)
+						if(util.is_valid(c) == false) then
+							console.print_warning("No component " .. componentId .. " found in actor with UUID '" .. uniqueId .. "'!")
+							return
+						end
+					end
+					return c:GetMemberValue(info.name)
+				end
 				local value = controlData.getValue()
 				if(udm.is_numeric_type(info.type) and info.type ~= udm.TYPE_BOOLEAN) then
 					local min = info.min or 0
@@ -808,7 +822,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				end
 				pfm.log("Adding control for member '" .. controlData.path .. "' with min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
 				controlData.set = function(component,value,dontTranslateValue)
-					local entActor = ents.find_by_unique_index(uniqueId)
+					local entActor = ents.find_by_uuid(uniqueId)
 					local c = (entActor ~= nil) and entActor:GetComponent(componentId) or nil
 					local memberIdx = (c ~= nil) and c:GetMemberIndex(controlData.name) or nil
 					local info = (memberIdx ~= nil) and c:GetMemberInfo(memberIdx) or nil
@@ -839,88 +853,6 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			memberInfo = c:GetMemberInfo(memberIdx)
 		end
 	end
-	--[[if(component.SetupControls) then
-		-- component:SetupControls(self,itemComponent)
-	end]]
-
-	-- TODO: Use the code below once the system has been fully transitioned to UDM
-	--[[local itemComponent = itemComponents:AddItem(component:GetName())
-	if(component.GetIconMaterial) then
-		itemComponent:AddIcon(component:GetIconMaterial())
-		itemActor:AddIcon(component:GetIconMaterial())
-	end
-	local function stringToFunction(str)
-		if(str == nil) then return end
-		local f = loadstring("return " .. str)
-		if(f == nil or type(f) ~= "function") then return end
-		return f()
-	end
-	local function getText(udm,key,localizedKey)
-		local text = udm:GetValue(localizedKey)
-		if(text ~= nil) then text = locale.get_text(text)
-		else text = udm:GetValue(key) end
-		return text or ""
-	end
-	local udmComponent = self.m_componentManager:GetComponents():Get(component:GetComponentName())
-	if(udmComponent:IsValid()) then
-
-		for _,udmControl in ipairs(udmComponent:GetArrayValues("controls")) do
-			local type = udmControl:GetValue("type")
-			local name = getText(udmControl,"label","localizedLabel")
-
-			local udmLua = udmControl:Get("lua")
-			local identifier = udmControl:GetValue("identifier")
-
-			if(type == "slider") then
-				local ctrlSettings = {
-					name = name,
-					property = udmControl:GetValue("keyValue"),
-					min = udmControl:GetValue("min"),
-					max = udmControl:GetValue("max"),
-					default = udmControl:GetValue("default")
-				}
-
-				ctrlSettings.translateToInterface = stringToFunction(udmLua:GetValue("translateToInterface"))
-				ctrlSettings.translateFromInterface = stringToFunction(udmLua:GetValue("translateFromInterface"))
-
-				local unit = getText(udmControl,"unit","localizedUnit")
-				if(#unit > 0) then ctrlSettings["unit"] = unit end
-				self:AddControl(component,itemComponent,ctrlSettings)
-			elseif(type == "color") then
-				local ctrlSettings = {
-					name = name,
-					addControl = function(ctrls)
-						local colField,wrapper = ctrls:AddColorField(locale.get_text("color"),"color",self:GetColor(),function(oldCol,newCol)
-							self:SetColor(newCol)
-							self:TagRenderSceneAsDirty()
-						end)
-						return wrapper
-					end
-				}
-				self:AddControl(component,itemComponent,ctrlSettings)
-			elseif(type == "drop_down_menu") then
-				local options = {}
-				for _,udmOption in ipairs(udmControl:GetArrayValues("options")) do
-					local value = udmOption:GetValue("value")
-					local name = locale.get_text(udmOption:GetValue("localizedDisplayText"))
-					table.insert(options,{value,name})
-				end
-				local onChange = stringToFunction(udmLua:GetValue("onChange"))
-				local ctrlSettings = {
-					name = name,
-					addControl = function(ctrls)
-						local fOnChange = onChange
-						if(fOnChange ~= nil) then
-							fOnChange = function(menu,option) onChange(ctrls,menu,option) end
-						end
-						local menu,wrapper = ctrls:AddDropDownMenu(name,identifier,options,udmControl:GetValue("default") or 0,fOnChange)
-						return wrapper
-					end
-				}
-				self:AddControl(component,itemComponent,ctrlSettings)
-			end
-		end
-	end]]
 end
 function gui.PFMActorEditor:AddActor(actor)
 	local itemActor = self.m_tree:AddItem(actor:GetName())
@@ -1095,6 +1027,171 @@ function gui.PFMActorEditor:AddProperty(name,child,fInitPropertyEl)
 	end
 	return elProperty
 end
+function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,controlData)
+	local memberInfo = self:GetMemberInfo(actor,controlData.path)
+	if(memberInfo == nil) then
+		-- TODO: Members can become invalid if, for example, an actor's model has changed. In this case, the entire tree in the actor editor should be reloaded!
+		console.print_warning("Attempted to access member info for property '" .. controlData.path .. "' for actor '" .. tostring(actor) .. "', but member is no longer valid!")
+		return
+	end
+
+	local ctrl
+	if(controlData.path ~= nil) then
+		if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
+			local colField,wrapper = self.m_animSetControls:AddColorField(memberInfo.name,memberInfo.name,(controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
+				if(controlData.set ~= nil) then controlData.set(udmComponent,newCol) end
+			end)
+			local val
+			if(controlData.getValue) then val = controlData.getValue() end
+			if(val ~= nil) then colField:SetColor(Color(val)) end
+			ctrl = wrapper
+		elseif(memberInfo.type == udm.TYPE_STRING) then
+			if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE) then
+				local meta = memberInfo.metaData or udm.create_element()
+				if(meta ~= nil) then
+					if(meta:GetValue("assetType") == "model") then
+						ctrl = self:AddProperty(memberInfo.name,child,function(parent)
+							local el = gui.create("WIFileEntry",parent)
+							if(controlData.getValue ~= nil) then
+								local val = controlData.getValue()
+								if(val ~= nil) then el:SetValue(val) end
+							end
+							el:SetBrowseHandler(function(resultHandler)
+								gui.open_model_dialog(function(dialogResult,mdlName)
+									if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
+									resultHandler(mdlName)
+								end)
+							end)
+							el:AddCallback("OnValueChanged",function(el,value)
+								if(controlData.set ~= nil) then controlData.set(udmComponent,value) end
+							end)
+							return el
+						end)
+					end
+				end
+				if(util.is_valid(ctrl) == false) then
+					ctrl = self:AddProperty(memberInfo.name,child,function(parent)
+						local el = gui.create("WIFileEntry",parent)
+						if(controlData.getValue ~= nil) then
+							local val = controlData.getValue()
+							if(val ~= nil) then el:SetValue(val) end
+						end
+						el:SetBrowseHandler(function(resultHandler)
+							local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
+								if(fileName == nil) then return end
+								local basePath = meta:GetValue("basePath") or ""
+								resultHandler(basePath .. el:GetFilePath(true))
+							end)
+							local rootPath = meta:GetValue("rootPath")
+							if(rootPath ~= nil) then pFileDialog:SetRootPath(rootPath) end
+							local extensions = meta:Get("extensions"):ToTable()
+							if(#extensions > 0) then pFileDialog:SetExtensions(extensions) end
+							pFileDialog:Update()
+						end)
+						el:AddCallback("OnValueChanged",function(el,value)
+							if(controlData.set ~= nil) then controlData.set(udmComponent,value) end
+						end)
+						return el
+					end)
+				end
+			end
+			return ctrl
+		elseif(memberInfo.type == udm.TYPE_BOOLEAN) then
+			local elToggle,wrapper = self.m_animSetControls:AddToggleControl(memberInfo.name,memberInfo.name,controlData.default or false,function(oldChecked,checked)
+				if(controlData.set ~= nil) then controlData.set(udmComponent,checked) end
+			end)
+			local val = false
+			if(controlData.getValue) then val = controlData.getValue() or val end
+			elToggle:SetChecked(val)
+			ctrl = wrapper
+		elseif(udm.is_numeric_type(memberInfo.type)) then
+			if(memberInfo.minValue ~= nil) then controlData.min = memberInfo.minValue end
+			if(memberInfo.maxValue ~= nil) then controlData.max = memberInfo.maxValue end
+			if(memberInfo.default ~= nil) then controlData.default = memberInfo.default end
+
+			if(memberInfo.type == udm.TYPE_BOOLEAN) then
+				controlData.min = controlData.min and 1 or 0
+				controlData.max = controlData.max and 1 or 0
+				controlData.default = controlData.default and 1 or 0
+			end
+
+			local channel = self:GetAnimationChannel(actorData.actor,controlData.path,false)
+			local hasExpression = (channel ~= nil and channel:GetExpression() ~= nil)
+			if(hasExpression == false) then
+				if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_DISTANCE) then
+					controlData.unit = locale.get_text("symbol_meters")
+					controlData.translateToInterface = function(val) return util.units_to_metres(val) end
+					controlData.translateFromInterface = function(val) return util.metres_to_units(val) end
+				elseif(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_LIGHT_INTENSITY) then
+					-- TODO
+					controlData.unit = locale.get_text("symbol_lumen")--(self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
+				end
+			end
+			ctrl = self:AddSliderControl(udmComponent,controlData)
+			if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
+
+			-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		elseif(memberInfo.type == udm.TYPE_EULER_ANGLES) then
+			local val = EulerAngles()
+			if(controlData.getValue ~= nil) then val = controlData.getValue() or val end
+			local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)
+				if(controlData.set ~= nil) then controlData.set(udmComponent,EulerAngles(el:GetText())) end
+			end)
+			ctrl = wrapper
+		else return ctrl end
+	end
+	if(util.is_valid(ctrl) == false) then
+		if(controlData.addControl) then
+			ctrl = controlData.addControl(self.m_animSetControls,function(value)
+				applyComponentChannelValue(self,udmComponent,controlData,value)
+			end)
+		else
+			ctrl = self:AddSliderControl(udmComponent,controlData)
+			if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
+		end
+	end
+	if(ctrl ~= nil) then
+		ctrl:AddCallback("PopulateContextMenu",function(ctrl,context)
+			local pm = pfm.get_project_manager()
+			local animManager = pm:GetAnimationManager()
+			if(animManager ~= nil) then
+				local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
+				if(expr ~= nil) then
+					context:AddItem(locale.get_text("pfm_clear_expression"),function()
+						animManager:SetValueExpression(actorData.actor,controlData.path)
+					end)
+					context:AddItem(locale.get_text("pfm_copy_expression"),function() util.set_clipboard_string(expr) end)
+				end
+				context:AddItem(locale.get_text("pfm_set_expression"),function()
+					local te
+					local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"),function(ok)
+						if(ok) then
+							animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText())
+						end
+					end)
+					te = p:AddTextField(locale.get_text("pfm_expression") .. ":",expr or "")
+					te:GetTextElement():SetFont("pfm_medium")
+
+					p:SetWindowSize(Vector2i(800,120))
+					p:Update()
+				end)
+				local anim,channel = animManager:FindAnimationChannel(actorData.actor,controlData.path,false)
+				if(channel ~= nil) then
+					context:AddItem(locale.get_text("pfm_clear_animation"),function()
+						animManager:RemoveChannel(actorData.actor,controlData.path)
+						local entActor = actorData.actor:FindEntity()
+						local actorC = util.is_valid(entActor) and entActor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
+						if(actorC ~= nil) then
+							actorC:ApplyComponentMemberValue(controlData.path)
+						end
+					end)
+				end
+			end
+		end)
+	end
+	self:CallCallbacks("OnControlSelected",udmComponent,controlData,ctrl)
+	return ctrl
+end
 function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentData,udmComponent,item,controlData,identifier)
 	local actor = udmComponent:GetActor()
 	local memberInfo = (actor ~= nil) and self:GetMemberInfo(actor,controlData.path) or nil
@@ -1111,160 +1208,7 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 	local fOnSelected = function()
 		selectedCount = selectedCount +1
 		if(selectedCount > 1 or util.is_valid(ctrl)) then return end
-		if(controlData.path ~= nil) then
-			if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
-				local colField,wrapper = self.m_animSetControls:AddColorField(memberInfo.name,memberInfo.name,(controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
-					if(controlData.set ~= nil) then controlData.set(udmComponent,newCol) end
-				end)
-				local val
-				if(controlData.getValue) then val = controlData.getValue() end
-				if(val ~= nil) then colField:SetColor(Color(val)) end
-				ctrl = wrapper
-			elseif(memberInfo.type == udm.TYPE_STRING) then
-				if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE) then
-					local meta = memberInfo.metaData or udm.create_element()
-					if(meta ~= nil) then
-						if(meta:GetValue("assetType") == "model") then
-							ctrl = self:AddProperty(memberInfo.name,child,function(parent)
-								local el = gui.create("WIFileEntry",parent)
-								if(controlData.getValue ~= nil) then
-									local val = controlData.getValue()
-									if(val ~= nil) then el:SetValue(val) end
-								end
-								el:SetBrowseHandler(function(resultHandler)
-									gui.open_model_dialog(function(dialogResult,mdlName)
-										if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
-										resultHandler(mdlName)
-									end)
-								end)
-								el:AddCallback("OnValueChanged",function(el,value)
-									if(controlData.set ~= nil) then controlData.set(udmComponent,value) end
-								end)
-								return el
-							end)
-						end
-					end
-					if(util.is_valid(ctrl) == false) then
-						ctrl = self:AddProperty(memberInfo.name,child,function(parent)
-							local el = gui.create("WIFileEntry",parent)
-							if(controlData.getValue ~= nil) then
-								local val = controlData.getValue()
-								if(val ~= nil) then el:SetValue(val) end
-							end
-							el:SetBrowseHandler(function(resultHandler)
-								local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
-									if(fileName == nil) then return end
-									local basePath = meta:GetValue("basePath") or ""
-									resultHandler(basePath .. el:GetFilePath(true))
-								end)
-								local rootPath = meta:GetValue("rootPath")
-								if(rootPath ~= nil) then pFileDialog:SetRootPath(rootPath) end
-								local extensions = meta:Get("extensions"):ToTable()
-								if(#extensions > 0) then pFileDialog:SetExtensions(extensions) end
-								pFileDialog:Update()
-							end)
-							el:AddCallback("OnValueChanged",function(el,value)
-								if(controlData.set ~= nil) then controlData.set(udmComponent,value) end
-							end)
-							return el
-						end)
-					end
-				end
-				return
-			elseif(memberInfo.type == udm.TYPE_BOOLEAN) then
-				local elToggle,wrapper = self.m_animSetControls:AddToggleControl(memberInfo.name,memberInfo.name,controlData.default or false,function(oldChecked,checked)
-					if(controlData.set ~= nil) then controlData.set(udmComponent,checked) end
-				end)
-				local val = false
-				if(controlData.getValue) then val = controlData.getValue() or val end
-				elToggle:SetChecked(val)
-				ctrl = wrapper
-			elseif(udm.is_numeric_type(memberInfo.type)) then
-				if(memberInfo.minValue ~= nil) then controlData.min = memberInfo.minValue end
-				if(memberInfo.maxValue ~= nil) then controlData.max = memberInfo.maxValue end
-				if(memberInfo.default ~= nil) then controlData.default = memberInfo.default end
-
-				if(memberInfo.type == udm.TYPE_BOOLEAN) then
-					controlData.min = controlData.min and 1 or 0
-					controlData.max = controlData.max and 1 or 0
-					controlData.default = controlData.default and 1 or 0
-				end
-
-				local channel = self:GetAnimationChannel(actorData.actor,controlData.path,false)
-				local hasExpression = (channel ~= nil and channel:GetExpression() ~= nil)
-				if(hasExpression == false) then
-					if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_DISTANCE) then
-						controlData.unit = locale.get_text("symbol_meters")
-						controlData.translateToInterface = function(val) return util.units_to_metres(val) end
-						controlData.translateFromInterface = function(val) return util.metres_to_units(val) end
-					elseif(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_LIGHT_INTENSITY) then
-						-- TODO
-						controlData.unit = locale.get_text("symbol_lumen")--(self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
-					end
-				end
-				ctrl = self:AddSliderControl(udmComponent,controlData)
-				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
-
-				-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-			elseif(memberInfo.type == udm.TYPE_EULER_ANGLES) then
-				local val = EulerAngles()
-				if(controlData.getValue ~= nil) then val = controlData.getValue() or val end
-				local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)
-					if(controlData.set ~= nil) then controlData.set(udmComponent,EulerAngles(el:GetText())) end
-				end)
-				ctrl = wrapper
-			else return end
-		end
-		if(util.is_valid(ctrl) == false) then
-			if(controlData.addControl) then
-				ctrl = controlData.addControl(self.m_animSetControls,function(value)
-					applyComponentChannelValue(self,udmComponent,controlData,value)
-				end)
-			else
-				ctrl = self:AddSliderControl(udmComponent,controlData)
-				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
-			end
-		end
-		if(ctrl ~= nil) then
-			ctrl:AddCallback("PopulateContextMenu",function(ctrl,context)
-				local pm = pfm.get_project_manager()
-				local animManager = pm:GetAnimationManager()
-				if(animManager ~= nil) then
-					local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
-					if(expr ~= nil) then
-						context:AddItem(locale.get_text("pfm_clear_expression"),function()
-							animManager:SetValueExpression(actorData.actor,controlData.path)
-						end)
-						context:AddItem(locale.get_text("pfm_copy_expression"),function() util.set_clipboard_string(expr) end)
-					end
-					context:AddItem(locale.get_text("pfm_set_expression"),function()
-						local te
-						local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"),function(ok)
-							if(ok) then
-								animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText())
-							end
-						end)
-						te = p:AddTextField(locale.get_text("pfm_expression") .. ":",expr or "")
-						te:GetTextElement():SetFont("pfm_medium")
-
-						p:SetWindowSize(Vector2i(800,120))
-						p:Update()
-					end)
-					local anim,channel = animManager:FindAnimationChannel(actorData.actor,controlData.path,false)
-					if(channel ~= nil) then
-						context:AddItem(locale.get_text("pfm_clear_animation"),function()
-							animManager:RemoveChannel(actorData.actor,controlData.path)
-							local entActor = actorData.actor:FindEntity()
-							local actorC = util.is_valid(entActor) and entActor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
-							if(actorC ~= nil) then
-								actorC:ApplyComponentMemberValue(controlData.path)
-							end
-						end)
-					end
-				end
-			end)
-		end
-		self:CallCallbacks("OnControlSelected",udmComponent,controlData,ctrl)
+		ctrl = self:OnControlSelected(actor,actorData,udmComponent,controlData)
 	end
 	local fOnDeselected = function()
 		selectedCount = selectedCount -1
