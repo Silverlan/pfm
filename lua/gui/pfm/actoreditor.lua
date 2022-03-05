@@ -94,9 +94,10 @@ function gui.PFMActorEditor:OnInitialize()
 			local radiusC = self:CreateNewActorComponent(actor,"radius",false)
 			self:CreateNewActorComponent(actor,"color",false)
 			-- self:CreateNewActorComponent(actor,"transform",false)
-			lightSpotC:SetMemberValue("innerConeAngle",udm.TYPE_FLOAT,35)
-			lightSpotC:SetMemberValue("outerConeAngle",udm.TYPE_FLOAT,45)
+			lightSpotC:SetMemberValue("blendFraction",udm.TYPE_FLOAT,0.1)
+			lightSpotC:SetMemberValue("outerConeAngle",udm.TYPE_FLOAT,60.0)
 			lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,1000)
+			lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
 			radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
 			self:UpdateActorComponents(actor)
 		end)
@@ -104,21 +105,26 @@ function gui.PFMActorEditor:OnInitialize()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"pfm_light_point",false)
-			self:CreateNewActorComponent(actor,"light",false)
+			local lightC = self:CreateNewActorComponent(actor,"light",false)
 			self:CreateNewActorComponent(actor,"light_point",false)
-			self:CreateNewActorComponent(actor,"radius",false)
+			local radiusC = self:CreateNewActorComponent(actor,"radius",false)
 			self:CreateNewActorComponent(actor,"color",false)
 			-- self:CreateNewActorComponent(actor,"transform",false)
+			lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,1000)
+			lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
+			radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
 			self:UpdateActorComponents(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_directional_light"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"pfm_light_directional",false)
-			self:CreateNewActorComponent(actor,"light",false)
+			local lightC = self:CreateNewActorComponent(actor,"light",false)
 			self:CreateNewActorComponent(actor,"light_directional",false)
 			self:CreateNewActorComponent(actor,"color",false)
 			-- self:CreateNewActorComponent(actor,"transform",false)
+			lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,1000)
+			lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
 			self:UpdateActorComponents(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_volume"),function()
@@ -1185,7 +1191,7 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 				end
 
 				local channel = self:GetAnimationChannel(actorData.actor,controlData.path,false)
-				local hasExpression = (channel ~= nil and #channel:GetExpression() > 0)
+				local hasExpression = (channel ~= nil and channel:GetExpression() ~= nil)
 				if(hasExpression == false) then
 					if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_DISTANCE) then
 						controlData.unit = locale.get_text("symbol_meters")
@@ -1197,43 +1203,6 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 					end
 				end
 				ctrl = self:AddSliderControl(udmComponent,controlData)
-				ctrl:AddCallback("PopulateContextMenu",function(ctrl,context)
-					local pm = pfm.get_project_manager()
-					local animManager = pm:GetAnimationManager()
-					if(animManager ~= nil) then
-						local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
-						if(expr ~= nil) then
-							context:AddItem(locale.get_text("pfm_clear_expression"),function()
-								animManager:SetValueExpression(actorData.actor,controlData.path)
-							end)
-							context:AddItem(locale.get_text("pfm_copy_expression"),function() util.set_clipboard_string(expr) end)
-						end
-						context:AddItem(locale.get_text("pfm_set_expression"),function()
-							local te
-							local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"),function(ok)
-								if(ok) then
-									animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText())
-								end
-							end)
-							te = p:AddTextField(locale.get_text("pfm_expression") .. ":",expr or "")
-							te:GetTextElement():SetFont("pfm_medium")
-
-							p:SetWindowSize(Vector2i(800,120))
-							p:Update()
-						end)
-						local anim,channel = animManager:FindAnimationChannel(actorData.actor,controlData.path,false)
-						if(channel ~= nil) then
-							context:AddItem(locale.get_text("pfm_clear_animation"),function()
-								animManager:RemoveChannel(actorData.actor,controlData.path)
-								local entActor = actorData.actor:FindEntity()
-								local actorC = util.is_valid(entActor) and entActor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
-								if(actorC ~= nil) then
-									actorC:ApplyComponentMemberValue(controlData.path)
-								end
-							end)
-						end
-					end
-				end)
 				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
 
 				-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
@@ -1255,6 +1224,45 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 				ctrl = self:AddSliderControl(udmComponent,controlData)
 				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
 			end
+		end
+		if(ctrl ~= nil) then
+			ctrl:AddCallback("PopulateContextMenu",function(ctrl,context)
+				local pm = pfm.get_project_manager()
+				local animManager = pm:GetAnimationManager()
+				if(animManager ~= nil) then
+					local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
+					if(expr ~= nil) then
+						context:AddItem(locale.get_text("pfm_clear_expression"),function()
+							animManager:SetValueExpression(actorData.actor,controlData.path)
+						end)
+						context:AddItem(locale.get_text("pfm_copy_expression"),function() util.set_clipboard_string(expr) end)
+					end
+					context:AddItem(locale.get_text("pfm_set_expression"),function()
+						local te
+						local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"),function(ok)
+							if(ok) then
+								animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText())
+							end
+						end)
+						te = p:AddTextField(locale.get_text("pfm_expression") .. ":",expr or "")
+						te:GetTextElement():SetFont("pfm_medium")
+
+						p:SetWindowSize(Vector2i(800,120))
+						p:Update()
+					end)
+					local anim,channel = animManager:FindAnimationChannel(actorData.actor,controlData.path,false)
+					if(channel ~= nil) then
+						context:AddItem(locale.get_text("pfm_clear_animation"),function()
+							animManager:RemoveChannel(actorData.actor,controlData.path)
+							local entActor = actorData.actor:FindEntity()
+							local actorC = util.is_valid(entActor) and entActor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
+							if(actorC ~= nil) then
+								actorC:ApplyComponentMemberValue(controlData.path)
+							end
+						end)
+					end
+				end
+			end)
 		end
 		self:CallCallbacks("OnControlSelected",udmComponent,controlData,ctrl)
 	end

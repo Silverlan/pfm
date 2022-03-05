@@ -29,7 +29,7 @@ function ents.PFMVolumetricSpot:GenerateModel()
 	local maxDist = (radiusC ~= nil) and radiusC:GetRadius() or 100.0
 
 	local spotC = ent:GetComponent(ents.COMPONENT_LIGHT_SPOT)
-	local coneAngle = spotC:GetOuterCutoffAngle()
+	local coneAngle = spotC:GetOuterConeAngle()
 	local endRadius = maxDist *math.tan(math.rad(coneAngle))
 
 	--[[auto *mat = static_cast<CMaterial*>(client->CreateMaterial("lightcone","light_cone"));

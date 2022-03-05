@@ -54,13 +54,13 @@ function ents.PFMLight:Setup(actorData,pfmLightData)
 	local spotLightData = actorData:FindComponent("light_spot")
 	if(spotLightC ~= nil and spotLightData ~= nil) then
 		-- TODO (Also see volumetric light below)
-		spotLightC:SetInnerCutoffAngle(spotLightData:GetMemberValue("innerConeAngle"))
-		spotLightC:SetOuterCutoffAngle(spotLightData:GetMemberValue("outerConeAngle"))
-		table.insert(self.m_listeners,spotLightData:AddChangeListener("innerConeAngle",function(c,newConeAngle)
-			if(spotLightC:IsValid()) then spotLightC:SetInnerCutoffAngle(newConeAngle) end
+		spotLightC:SetBlendFraction(spotLightData:GetMemberValue("blendFraction"))
+		spotLightC:SetOuterConeAngle(spotLightData:GetMemberValue("outerConeAngle"))
+		table.insert(self.m_listeners,spotLightData:AddChangeListener("blendFraction",function(c,newConeAngle)
+			if(spotLightC:IsValid()) then spotLightC:SetBlendFraction(newConeAngle) end
 		end))
 		table.insert(self.m_listeners,spotLightData:AddChangeListener("outerConeAngle",function(c,newConeAngle)
-			if(spotLightC:IsValid()) then spotLightC:SetOuterCutoffAngle(newConeAngle) end
+			if(spotLightC:IsValid()) then spotLightC:SetOuterConeAngle(newConeAngle) end
 		end))
 	end
 

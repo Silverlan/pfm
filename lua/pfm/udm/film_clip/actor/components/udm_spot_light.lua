@@ -51,7 +51,7 @@ function fudm.PFMSpotLight:SetupControls(actorEditor,itemComponent)
 				local ctrlIntensity = ctrls:GetControl("intensity")
 				local intensity = 0.0
 				if(util.is_valid(ctrlIntensity)) then
-					intensity = light.convert_light_intensity(ctrlIntensity:GetValue(),self:GetIntensityType(),type,self:GetOuterConeAngle() *0.5)
+					intensity = light.convert_light_intensity(ctrlIntensity:GetValue(),self:GetIntensityType(),type,self:GetOuterConeAngle())
 				end
 				self:SetIntensityType(type)
 				if(util.is_valid(ctrlIntensity)) then
