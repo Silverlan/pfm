@@ -257,7 +257,9 @@ local function apply_base_actor_properties(converter,sfmActor,pfmActor,transform
 	local pfmTransform = math.ScaledTransform()
 	convert_transform(sfmActor:GetTransform(),pfmTransform,transformType)
 
-	ct:SetMemberValue("transform",udm.TYPE_SCALED_TRANSFORM,pfmTransform)
+	ct:SetMemberValue("position",udm.TYPE_VECTOR3,pfmTransform:GetOrigin())
+	ct:SetMemberValue("rotation",udm.TYPE_QUATERNION,pfmTransform:GetRotation())
+	ct:SetMemberValue("scale",udm.TYPE_VECTOR3,pfmTransform:GetScale())
 
 	converter.m_sfmObjectToPfmActor[sfmActor] = tostring(pfmActor:GetUniqueId())
 end
@@ -403,6 +405,7 @@ sfm.register_element_type_conversion(sfm.Dag,function(converter,sfmDag,pfmGroup)
 
 			local pfmTransform = childGroup:GetTransform()
 			convert_transform(child:GetTransform(),pfmTransform,sfm.ProjectConverter.TRANSFORM_TYPE_ALT)
+
 			childGroup:SetName(child:GetName())
 			childGroup:SetTransform(pfmTransform)
 			childGroup:SetVisible(child:IsVisible())
@@ -649,7 +652,7 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 					end
 				elseif(toElement:GetType() == "DmeGlobalFlexControllerOperator") then
 					local name = toElement:GetName()
-					pfmPropPath = "ec/flex/" .. name
+					pfmPropPath = "ec/flex/flexController/" .. name
 				elseif(toAttr == "localViewTargetFactor") then
 					pfmPropPath = "ec/eye/localViewTargetFactor"
 				end
@@ -1053,7 +1056,7 @@ local function apply_post_processing(converter,project,filmClip,processedObjects
 								end
 							else
 								if(toAttr == "flexWeight") then
-									channel:SetTargetPath("ec/flex/" .. toElement:GetName())
+									channel:SetTargetPath("ec/flex/flexController/" .. toElement:GetName())
 								end
 								if(type == fudm.ELEMENT_TYPE_PFM_SPOT_LIGHT or type == fudm.ELEMENT_TYPE_PFM_POINT_LIGHT) then
 									if(toAttr == "radius") then channel:SetTargetPath("ec/radius/radius")
