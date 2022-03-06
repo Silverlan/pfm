@@ -35,6 +35,14 @@ function pfm.udm.Actor:AddComponentType(componentType)
 	return component
 end
 
+function pfm.udm.Actor:RemoveComponentType(componentType)
+	local component = self:FindComponent(componentType)
+	if(component == nil) then return end
+	self:RemoveComponent(component)
+	_actor = self
+	_componentType = componentType
+end
+
 function pfm.udm.Actor:ChangeModel(mdlName)
 	mdlName = asset.normalize_asset_name(mdlName,asset.TYPE_MODEL)
 	local mdlC = self:FindComponent("model") or self:AddComponentType("model")

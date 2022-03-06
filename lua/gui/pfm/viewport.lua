@@ -281,6 +281,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 			filmmaker:KillFocus()
 			filmmaker:TagRenderSceneAsDirty(true)
 			self.m_inCameraControlMode = true
+			return util.EVENT_REPLY_HANDLED
 		elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
 			self.m_viewport:RequestFocus()
 			local filter

@@ -713,13 +713,45 @@ function gui.PFMActorEditor:OnActorPropertyChanged(entActor)
 	rt:MarkActorAsDirty(entActor)
 end
 function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,component)
-	local componentId = ents.find_component_id(component:GetType())
+	local componentType = component:GetType()
+	local componentId = ents.find_component_id(componentType)
 	if(componentId == nil) then return end
 	actorData.componentData[componentId] = actorData.componentData[componentId] or {
 		items = {}
 	}
 	local componentData = actorData.componentData[componentId]
-	local itemComponent = actorData.componentsEntry:AddItem(component:GetType(),nil,nil,component:GetType())
+	local itemComponent = actorData.componentsEntry:AddItem(componentType,nil,nil,componentType)
+	actorData.componentData[componentId].itemComponent = itemComponent
+	local uniqueId = entActor:GetUuid()
+	itemComponent:AddCallback("OnMouseEvent",function(tex,button,state,mods)
+		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+			local pContext = gui.open_context_menu()
+			if(util.is_valid(pContext) == false) then return end
+			pContext:SetPos(input.get_cursor_pos())
+
+			pContext:AddItem(locale.get_text("remove"),function()
+				local filmmaker = tool.get_filmmaker()
+				local filmClip = filmmaker:GetActiveFilmClip()
+				if(filmClip == nil) then return end
+				local actor = filmClip:FindActorByUniqueId(uniqueId)
+				if(actor == nil) then return end
+				filmClip:RemoveActorComponent(actor,componentType)
+				if(util.is_valid(itemComponent)) then
+					local itemParent = itemComponent:GetParentItem()
+					if(util.is_valid(itemParent)) then itemParent:RemoveItem(itemComponent) end
+				end
+				self:UpdateActorComponentEntries(actorData)
+				local entActor = ents.find_by_uuid(uniqueId)
+				if(util.is_valid(entActor)) then
+					entActor:RemoveComponent(componentType)
+					self:OnActorPropertyChanged(entActor)
+				end
+				self:TagRenderSceneAsDirty()
+			end)
+			pContext:Update()
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
 	if(component.GetIconMaterial) then
 		itemComponent:AddIcon(component:GetIconMaterial())
 		itemActor:AddIcon(component:GetIconMaterial())
@@ -866,6 +898,7 @@ end
 function gui.PFMActorEditor:AddActor(actor)
 	local itemActor = self.m_tree:AddItem(actor:GetName())
 
+	local uniqueId = tostring(actor:GetUniqueId())
 	itemActor:AddCallback("OnMouseEvent",function(tex,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 			local pContext = gui.open_context_menu()
@@ -877,6 +910,18 @@ function gui.PFMActorEditor:AddActor(actor)
 				if(util.is_valid(entActor) == false) then return end
 				local filmmaker = tool.get_filmmaker()
 				filmmaker:ExportAnimation(entActor)
+			end)
+			pContext:AddItem(locale.get_text("remove"),function()
+				local filmmaker = tool.get_filmmaker()
+				local filmClip = filmmaker:GetActiveFilmClip()
+				if(filmClip == nil) then return end
+				local actor = filmClip:FindActorByUniqueId(uniqueId)
+				if(actor == nil) then return end
+				filmClip:RemoveActor(actor)
+				self.m_tree:RemoveItem(itemActor)
+
+				util.remove(ents.find_by_uuid(uniqueId))
+				self:TagRenderSceneAsDirty()
 			end)
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
