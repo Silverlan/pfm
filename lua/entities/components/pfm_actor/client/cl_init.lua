@@ -52,8 +52,7 @@ function Component:UpdateVisibility()
 	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 	if(renderC ~= nil) then renderC:SetSceneRenderPass(renderMode) end
 
-	local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
-	if(toggleC ~= nil) then toggleC:SetTurnedOn(visible) end
+	self:BroadcastEvent(Component.EVENT_ON_VISIBILITY_CHANGED,{visible})
 end
 function Component:UpdatePosition()
 	local pose = self:GetActorData():GetAbsoluteParentPose()
@@ -324,3 +323,4 @@ function Component:Setup(actorData)
 end
 ents.COMPONENT_PFM_ACTOR = ents.register_component("pfm_actor",Component)
 Component.EVENT_ON_OFFSET_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR,"on_offset_changed")
+Component.EVENT_ON_VISIBILITY_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR,"on_visibility_changed")

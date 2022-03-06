@@ -14,8 +14,13 @@ function ents.PFMLight:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_LIGHT)
 	self:AddEntityComponent("pfm_actor")
+	self:BindEvent(ents.PFMActorComponent.EVENT_ON_VISIBILITY_CHANGED,"OnVisibilityChanged")
 
 	self.m_listeners = {}
+end
+function ents.PFMLight:OnVisibilityChanged(visible)
+	local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
+	if(toggleC ~= nil) then toggleC:SetTurnedOn(visible) end
 end
 function ents.PFMLight:OnRemove()
 	for _,cb in ipairs(self.m_listeners) do
