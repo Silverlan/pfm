@@ -45,6 +45,16 @@ function gui.PFMTreeView:Clear()
 	if(util.is_valid(self.m_rootElement) == false) then return end
 	self.m_rootElement:Clear()
 end
+function gui.PFMTreeView:RemoveItem(item)
+	if(util.is_valid(item) == false) then return end
+	local parentItem = item:GetParentItem()
+	if(util.is_valid(parentItem)) then
+		parentItem:RemoveItem(item)
+		return
+	end
+	item:Remove()
+	self:ScheduleUpdate()
+end
 function gui.PFMTreeView:AddItem(text,fPopulate,insertIndex,identifier)
 	if(util.is_valid(self.m_rootElement) == false) then return end
 	return self.m_rootElement:AddItem(text,fPopulate,insertIndex,identifier)
@@ -147,7 +157,27 @@ function gui.PFMTreeViewElement:MouseCallback(button,state,mods)
 	return util.EVENT_REPLY_HANDLED
 end
 function gui.PFMTreeViewElement:IsRoot() return self:GetParentItem() == nil end
-function gui.PFMTreeViewElement:RemoveItem(item) if(item:IsValid()) then item:Remove() end end
+function gui.PFMTreeViewElement:RemoveItem(item)
+	if(util.is_valid(item) == false) then return end
+	for i,itemOther in ipairs(self.m_items) do
+		if(util.is_same_object(itemOther,item)) then
+			table.remove(self.m_items,i)
+			break
+		end
+	end
+	for i,itemElements in ipairs(self.m_itemElements) do
+		if(util.is_same_object(itemElements[1],item)) then
+			util.remove(itemElements)
+			table.remove(self.m_itemElements,i)
+			break
+		end
+	end
+	self.m_childHBox:Update()
+	self.m_vBoxChildren:Update()
+	
+	self:ScheduleUpdate()
+	self.m_treeView:GetRoot():ScheduleUpdate()
+end
 function gui.PFMTreeViewElement:AddIcon(material)
 	local icon = gui.create("WITexturedRect",self.m_iconBox)
 	icon:SetSize(14,14)
