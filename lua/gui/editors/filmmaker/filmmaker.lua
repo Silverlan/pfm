@@ -157,7 +157,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end)]]
 		pContext:AddItem(locale.get_text("new"),function(pItem)
 			if(util.is_valid(self) == false) then return end
-			self:CreateNewProject()
+			self:CreateBasicProject()
 		end)
 		pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
@@ -509,6 +509,20 @@ function gui.WIFilmmaker:OnInitialize()
 	pfm.ProjectManager.OnInitialize(self)
 	self:SetCachedMode(false)
 end
+function gui.WIFilmmaker:CreateInitialProject() self:CreateBasicProject() end
+function gui.WIFilmmaker:CreateBasicProject()
+	self:CreateNewProject()
+
+	local filmClip = self:GetActiveFilmClip()
+	if(filmClip == nil) then return end
+
+	self:SelectFilmClip(filmClip)
+
+	local actorEditor = self:GetActorEditor()
+	if(util.is_valid(actorEditor) == false) then return end
+
+	actorEditor:AddSkyActor()
+end
 function gui.WIFilmmaker:PackProject(fileName)
 	local project = self:GetProject()
 	local session = self:GetSession()
@@ -772,11 +786,16 @@ function gui.WIFilmmaker:OnFilmClipAdded(el)
 	if(util.is_valid(self.m_timeline) == false) then return end
 	self:AddFilmClipElement(newEl)
 end
+function gui.WIFilmmaker:SelectFilmClip(filmClip)
+	local actorEditor = self:GetActorEditor()
+	if(util.is_valid(actorEditor) == false) then return end
+	actorEditor:Setup(filmClip)
+end
 function gui.WIFilmmaker:AddFilmClipElement(filmClip)
 	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip,filmClip,function(elFilmClip)
 		local filmClipData = elFilmClip:GetFilmClipData()
 		if(util.is_valid(self:GetActorEditor())) then
-			self:GetActorEditor():Setup(filmClipData)
+			self:SelectFilmClip(filmClipData)
 		end
 	end)
 	pFilmClip:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)

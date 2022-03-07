@@ -23,9 +23,10 @@ function pfm.ProjectManager:OnInitialize()
 	self.m_performanceCache = pfm.PerformanceCache()
 	self.m_animManager = pfm.AnimationManager()
 
-	self:CreateNewProject()
+	self:CreateInitialProject()
 	self.m_map = game.get_map_name()
 end
+function pfm.ProjectManager:CreateInitialProject() self:CreateNewProject() end
 function pfm.ProjectManager:GetAnimationManager() return self.m_animManager end
 function pfm.ProjectManager:LoadMap(mapName)
 	pfm.log("Loading map '" .. mapName .. "'...",pfm.LOG_CATEGORY_PFM)

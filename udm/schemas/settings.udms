@@ -62,9 +62,6 @@
 				"samples" {$uint32 default 40}
 				"width" {$uint32 default 1920}
 				"height" {$uint32 default 1080}
-				"sky" {$string default "skies/dusk379.hdr"}
-				"skyStrength" {$float default 0.3}
-				"skyYawAngle" {$float default 0.0}
 				"maxTransparencyBounces" {$uint32 default 128}
 				"lightIntensityFactor" {$float default 1.0}
 				"emissionStrength" {$float default 1.0}

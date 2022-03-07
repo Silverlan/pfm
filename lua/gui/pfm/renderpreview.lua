@@ -509,32 +509,6 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlResolution:SelectOption(1)
 	-- TODO: Add VR resolution options
 
-	-- Choose a default sky
-	-- Sky override
-	local skyOverride
-	skyOverride = p:AddFileEntry(locale.get_text("pfm_sky_override"),"sky_override",settings:GetSky(),function(resultHandler)
-		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
-			if(fileName == nil) then return end
-			resultHandler(el:GetFilePath(true))
-		end)
-		pFileDialog:SetRootPath("materials")
-		local path = file.get_file_path(skyOverride:GetValue())
-		if(#path == 0) then path = "skies" end
-		pFileDialog:SetPath(path)
-		pFileDialog:SetExtensions({"hdr","png"})
-		pFileDialog:Update()
-	end)
-	p:LinkToUDMProperty("sky_override",settings,"sky")
-	self.m_ctrlSkyOverride = skyOverride
-
-	-- Sky strength
-	self.m_ctrlSkyStrength = p:AddSliderControl(locale.get_text("pfm_sky_strength"),"sky_strength",settings:GetSkyStrength(),0,2)
-	p:LinkToUDMProperty("sky_strength",settings,"skyStrength")
-
-	-- Sky yaw
-	self.m_ctrlSkyYaw = p:AddSliderControl(locale.get_text("pfm_sky_yaw_angle"),"sky_yaw",settings:GetSkyYawAngle(),0,360)
-	p:LinkToUDMProperty("sky_yaw",settings,"skyYawAngle")
-
 	-- Max transparency bounces
 	self.m_ctrlMaxTransparencyBounces = p:AddSliderControl(locale.get_text("pfm_max_transparency_bounces"),"max_transparency_bounces",settings:GetMaxTransparencyBounces(),0,200,nil,1.0,true)
 	p:LinkToUDMProperty("max_transparency_bounces",settings,"maxTransparencyBounces")
@@ -644,7 +618,6 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlProgressive = p:AddToggleControl(locale.get_text("pfm_render_progressive"),"progressive",settings:IsProgressive(),function() self.m_ctrlProgressiveRefinement:SetVisible(self.m_ctrlProgressive:IsChecked()) end)
 	self.m_ctrlPreCalcLight = p:AddToggleControl(locale.get_text("pfm_render_precalc_light"),"precalc_light",settings:ShouldPreCalculateLight())
 	self.m_ctrlProgressiveRefinement = p:AddToggleControl(locale.get_text("pfm_render_progressive_refinement"),"progressive_refine",settings:IsProgressiveRefinementEnabled())
-	self.m_ctrlTransparentSky = p:AddToggleControl(locale.get_text("pfm_render_transparent_sky"),"transparent_sky",settings:ShouldMakeSkyTransparent())
 	self.m_ctrlOptix = p:AddToggleControl(locale.get_text("pfm_use_optix"),"use_optix",true)
 
 	p:LinkToUDMProperty("render_world",settings,"renderWorld")
@@ -654,7 +627,6 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:LinkToUDMProperty("pvs_culling",settings,"pvsCullingEnabled")
 	p:LinkToUDMProperty("progressive",settings,"progressive")
 	p:LinkToUDMProperty("progressive_refine",settings,"progressiveRefinementEnabled")
-	p:LinkToUDMProperty("transparent_sky",settings,"transparentSky")
 
 	-- Presets
 	qualityPreset:AddCallback("OnOptionSelected",function(el,option)
@@ -951,15 +923,11 @@ function gui.PFMRenderPreview:GetRenderSettings(preview,prepareOnly)
 	settings:SetRenderMode(renderMode)
 	settings:SetRenderEngine(self.m_ctrlRenderEngine:GetValue())
 	settings:SetSamples(samples or self.m_ctrlSamplesPerPixel:GetValue())
-	settings:SetSky(self.m_ctrlSkyOverride:GetValue())
-	settings:SetSkyStrength(self.m_ctrlSkyStrength:GetValue())
 	settings:SetEmissionStrength(self.m_ctrlEmissionStrength:GetValue())
-	settings:SetSkyYaw(self.m_ctrlSkyYaw:GetValue())
 	settings:SetMaxTransparencyBounces(self.m_ctrlMaxTransparencyBounces:GetValue())
 	settings:SetLightIntensityFactor(self.m_ctrlLightIntensityFactor:GetValue())
 	settings:SetFrameCount(preview and 1 or self.m_ctrlFrameCount:GetValue())
 	settings:SetPreStageOnly(prepareOnly == true)
-	settings:SetTransparentSky(self.m_ctrlTransparentSky:IsChecked())
 	settings:SetDenoiseMode(tonumber(self.m_ctrlDenoiseMode:GetValue()))
 	settings:SetDeviceType(deviceType)
 	settings:SetRenderWorld(self.m_ctrlRenderWorld:IsChecked())

@@ -130,10 +130,9 @@ function gui.PFMActorEditor:OnInitialize()
 		pContext:AddItem(locale.get_text("pfm_create_new_volume"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
-			local mdlData = self:CreateNewActorComponent(actor,"pfm_model",false)
+			local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube") end)
 			self:CreateNewActorComponent(actor,"pfm_volumetric",false)
 			self:UpdateActorComponents(actor)
-			mdlData:SetModelName("cube")
 
 			-- Calc scene extents
 			local min = Vector(math.huge,math.huge,math.huge)
@@ -155,11 +154,27 @@ function gui.PFMActorEditor:OnInitialize()
 			max = max -center
 			local extents = (max -min) /2.0
 
-			local transform = actor:GetTransform()
+			local transform = math.ScaledTransform()
 			transform:SetOrigin(center)
 			transform:SetRotation(Quaternion())
 			transform:SetScale(extents)
+			actor:SetTransform(transform)
 		end)
+		
+		local filmClip = self:GetFilmClip()
+		local hasSkyComponent = false
+		if(filmClip ~= nil) then
+			for _,actor in ipairs(filmClip:GetActorList()) do
+				local c = actor:FindComponent("pfm_sky")
+				if(c ~= nil) then
+					hasSkyComponent = true
+					break
+				end
+			end
+		end
+		if(hasSkyComponent == false) then
+			pContext:AddItem(locale.get_text("pfm_add_sky"),function() self:AddSkyActor() end)
+		end
 
 		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
 		local types = ents.get_registered_entity_types()
@@ -284,6 +299,13 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_leftRightWeightSlider = gui.create("WIPFMWeightSlider",self.m_animSetControls)
 	return slider
 end
+function gui.PFMActorEditor:AddSkyActor()
+	local actor = self:CreateNewActor("sky")
+	if(actor == nil) then return end
+	local pfmActorC = self:CreateNewActorComponent(actor,"pfm_actor",false)
+	local pfmSkyC = self:CreateNewActorComponent(actor,"pfm_sky")
+	self:UpdateActorComponents(actor)
+end
 function gui.PFMActorEditor:GetTree() return self.m_tree end
 function gui.PFMActorEditor:GetActorItem(actor)
 	for item,actorData in pairs(self.m_treeElementToActorData) do
@@ -298,18 +320,21 @@ function gui.PFMActorEditor:GetActorComponentItem(actor,componentName)
 	if(util.is_valid(item) == false) then return end
 	return item:GetItemByIdentifier(componentName)
 end
-function gui.PFMActorEditor:CreateNewActor()
+function gui.PFMActorEditor:CreateNewActor(actorName)
 	local filmClip = self:GetFilmClip()
 	if(filmClip == nil) then
 		pfm.create_popup_message(locale.get_text("pfm_popup_create_actor_no_film_clip"))
 		return
 	end
 	local actor = pfm.get_project_manager():AddActor(self:GetFilmClip())
-	local actorName = "actor"
+	if(actorName == nil) then
+		actorName = "actor"
 
-	local actorIndex = 1
-	while(filmClip:FindActor(actorName .. actorIndex) ~= nil) do actorIndex = actorIndex +1 end
-	actor:SetName(actorName .. actorIndex)
+		local actorIndex = 1
+		while(filmClip:FindActor(actorName .. actorIndex) ~= nil) do actorIndex = actorIndex +1 end
+		actorName = actorName .. actorIndex
+	end
+	actor:SetName(actorName)
 
 	local pos = Vector()
 	local rot = Quaternion()
@@ -504,7 +529,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 				local channel = self:GetAnimationChannel(parent,controlData.path,true)
 				if(channel ~= nil) then
 					local expr = "abs(sin(time)) *20"
-					debug.print("Set exprewssion: ",expr)
+					debug.print("Set expression: ",expr)
 					channel:SetExpression(expr)
 					tool.get_filmmaker():GetAnimationManager():SetValueExpression(parent,controlData.path,expr)
 				end
@@ -515,7 +540,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 			if(parent ~= nil and controlData.path ~= nil and parent:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR) then
 				local channel = self:GetAnimationChannel(parent,controlData.path,true)
 				if(channel ~= nil) then
-					--debug.print("Set exprewssion!")
+					--debug.print("Set expression!")
 					--channel:SetExpression("sin(value)")
 				end
 			end
@@ -771,7 +796,8 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				return true
 			end
 			local valid = true
-			if(info.type == udm.TYPE_STRING) then props:SetProperty(info.name,fudm.String(info.default))
+			if(info.type == udm.TYPE_STRING) then
+
 			elseif(info.type == udm.TYPE_UINT8) then
 				controlData.integer = true
 			elseif(info.type == udm.TYPE_INT32) then

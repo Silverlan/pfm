@@ -9,17 +9,17 @@
 util.register_class("ents.PFMSky",BaseEntityComponent)
 
 local Component = ents.PFMSky
-Component:RegisterMember("Strength",udm.TYPE_FLOAT,1.0,{
+Component:RegisterMember("Strength",udm.TYPE_FLOAT,0.3,{
 	min = 0.0,
 	max = 10.0
 })
 Component:RegisterMember("Transparent",udm.TYPE_BOOLEAN,false)
-Component:RegisterMember("SkyTexture",udm.TYPE_STRING,"",{
+Component:RegisterMember("SkyTexture",udm.TYPE_STRING,"skies/dusk379.hdr",{
 	specializationType = ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE,
 	metaData = {
 		rootPath = "materials/skies/",
 		basePath = "skies/",
-		extensions = {"hdr"},
+		extensions = {"hdr","png"},
 		stripExtension = true
 	}
 })
@@ -35,6 +35,7 @@ function Component:Initialize()
 			local tex = self:GetSkyTexture()
 			if(#tex > 0) then scene:SetSky(tex) end
 			scene:SetSkyTransparent(self:GetTransparent())
+			-- settings:SetSkyYaw(self.m_ctrlSkyYaw:GetValue())
 		end))
 	end))
 end
