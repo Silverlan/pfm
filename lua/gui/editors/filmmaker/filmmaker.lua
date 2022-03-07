@@ -378,6 +378,10 @@ function gui.WIFilmmaker:OnInitialize()
 					recorder = nil
 				end
 			end)
+		else
+			pContext:AddItem(locale.get_text("pfm_reload_in_dev_mode"),function(pItem)
+				console.run("pfm -log all -dev -reload")
+			end)
 		end
 
 		pContext:Update()
@@ -571,10 +575,11 @@ function gui.WIFilmmaker:TagRenderSceneAsDirty(dirty)
 	self.m_renderSceneDirty = dirty and math.huge or nil
 end
 function gui.WIFilmmaker:ReloadInterface()
-	local project = self:GetProject()
+	local projectData = self:MakeProjectPersistent()
 	self:Close()
+
 	local interface = tool.open_filmmaker()
-	interface:InitializeProject(project)
+	interface:RestorePersistentProject(projectData)
 end
 function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
 function gui.WIFilmmaker:GetViewport() return self:GetWindow("primary_viewport") or nil end

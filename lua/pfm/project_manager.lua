@@ -72,6 +72,18 @@ end
 function pfm.ProjectManager:GetPerformanceCache() return self.m_performanceCache end
 function pfm.ProjectManager:SetGameScene(scene) self.m_gameScene = scene end
 function pfm.ProjectManager:GetGameScene() return self.m_gameScene end
+function pfm.ProjectManager:MakeProjectPersistent()
+	self.m_persistentProject = true
+	return {
+		fileName = self.m_projectFileName,
+		project = self.m_project
+	}
+end
+function pfm.ProjectManager:RestorePersistentProject(data)
+	self.m_projectFileName = data.fileName
+	self.m_project = data.project
+	return util.is_valid(self:InitializeProject(self.m_project))
+end
 function pfm.ProjectManager:LoadProject(fileName)
 	self:CloseProject()
 	pfm.log("Loading project '" .. fileName .. "'...",pfm.LOG_CATEGORY_PFM)
@@ -198,7 +210,7 @@ function pfm.ProjectManager:CloseProject()
 	self.m_animationCache = nil
 	self.m_animationCacheLoaded = false
 	if(self.m_project) then
-		self.m_project:Close()
+		if(self.m_persistentProject ~= true) then self.m_project:Close() end
 		self.m_project = nil
 	end
 	collectgarbage()
