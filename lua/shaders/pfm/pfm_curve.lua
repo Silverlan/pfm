@@ -6,26 +6,20 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("shader.PFMCurve",shader.BaseGraphics)
+util.register_class("shader.PFMCurve",shader.BaseGUI)
 
 shader.PFMCurve.FragmentShader = "pfm/fs_curve"
 shader.PFMCurve.VertexShader = "pfm/vs_curve"
 
-function shader.PFMCurve:__init()
-	shader.BaseGraphics.__init(self)
+local PUSH_CONSTANT_SIZE = util.SIZEOF_MAT4 +util.SIZEOF_VECTOR4 +util.SIZEOF_VECTOR2 *2 +util.SIZEOF_INT
 
-	self.m_dsPushConstants = util.DataStream(util.SIZEOF_VECTOR4 +util.SIZEOF_VECTOR2 *2)
-end
-function shader.PFMCurve:InitializeRenderPass(pipelineIdx)
-	return {shader.Graphics.get_render_pass()}
-end
 function shader.PFMCurve:InitializePipeline(pipelineInfo,pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
+	shader.BaseGUI.InitializePipeline(self,pipelineInfo,pipelineIdx)
 	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX),{
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 	})
 
-	pipelineInfo:AttachPushConstantRange(0,self.m_dsPushConstants:GetSize(),prosper.SHADER_STAGE_VERTEX_BIT)
+	pipelineInfo:AttachPushConstantRange(0,PUSH_CONSTANT_SIZE,prosper.SHADER_STAGE_VERTEX_BIT)
 	
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_STRIP)
@@ -33,20 +27,23 @@ function shader.PFMCurve:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetDepthWritesEnabled(false)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
-function shader.PFMCurve:Draw(drawCmd,vertexBuffer,vertexCount,xRange,yRange,color,x,y,w,h)
-	local bindState = shader.BindState(drawCmd)
-	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
-	self:RecordBindVertexBuffers(bindState,{vertexBuffer})
-	drawCmd:RecordSetScissor(bindState,w,h,x,y)
-	drawCmd:RecordSetViewport(bindState,w,h,x,y)
+function shader.PFMCurve:Record(pcb,vertexBuffer,vertexCount,xRange,yRange,color)
+	if(self:IsValid() == false) then return false end
 
-	self.m_dsPushConstants:Seek(0)
-	self.m_dsPushConstants:WriteVector4(color:ToVector4())
-	self.m_dsPushConstants:WriteVector2(xRange)
-	self.m_dsPushConstants:WriteVector2(yRange)
-	self:RecordPushConstants(bindState,self.m_dsPushConstants)
+	local dsPushConstants = util.DataStream(PUSH_CONSTANT_SIZE -util.SIZEOF_MAT4 -util.SIZEOF_INT)
+	dsPushConstants:Seek(0)
+	dsPushConstants:WriteVector4(color:ToVector4())
+	dsPushConstants:WriteVector2(xRange)
+	dsPushConstants:WriteVector2(yRange)
 
-	self:RecordDraw(bindState,vertexCount)
-	self:RecordEndDraw(bindState)
+	local DynArg = prosper.PreparedCommandBuffer.DynArg
+	self:RecordBeginDraw(pcb)
+		self:RecordBindVertexBuffers(pcb,{vertexBuffer})
+		self:RecordPushConstants(pcb,udm.TYPE_MAT4,DynArg("matDraw"))
+		self:RecordPushConstants(pcb,dsPushConstants,util.SIZEOF_MAT4)
+		self:RecordPushConstants(pcb,udm.TYPE_UINT32,DynArg("viewportSize"),util.SIZEOF_MAT4 +dsPushConstants:GetSize())
+		self:RecordDraw(pcb,vertexCount)
+	self:RecordEndDraw(pcb)
+	return true
 end
 shader.register("pfm_curve",shader.PFMCurve)

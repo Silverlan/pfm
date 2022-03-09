@@ -868,19 +868,17 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 	self:RegisterWindow(self.m_actorDataFrame,"actor_editor",locale.get_text("pfm_actor_editor"),function()
 		local actorEditor = gui.create("WIPFMActorEditor")
-		actorEditor:AddCallback("OnControlSelected",function(actorEditor,component,controlData,slider)
+		actorEditor:AddCallback("OnControlSelected",function(actorEditor,actor,component,controlData,slider)
+			local memberInfo = controlData.getMemberInfo(controlData.name)
+			if(memberInfo == nil) then return end
 			local filmClip = actorEditor:GetFilmClip()
 			if(filmClip == nil) then return end
-			if(controlData.type == "flexController" or controlData.type == "bone") then
-				local graphEditor = self:GetTimeline():GetGraphEditor()
-				local itemCtrl = graphEditor:AddControl(filmClip,controlData)
+			local graphEditor = self:GetTimeline():GetGraphEditor()
+			local itemCtrl = graphEditor:AddControl(filmClip,actor,controlData,memberInfo)
 
-				local fRemoveCtrl = function() if(util.is_valid(itemCtrl)) then itemCtrl:Remove() end end
-				slider:AddCallback("OnDeselected",fRemoveCtrl)
-				slider:AddCallback("OnRemove",fRemoveCtrl)
-			else
-				-- TODO: Allow generic properties?
-			end
+			local fRemoveCtrl = function() if(util.is_valid(itemCtrl)) then itemCtrl:Remove() end end
+			slider:AddCallback("OnDeselected",fRemoveCtrl)
+			slider:AddCallback("OnRemove",fRemoveCtrl)
 		end)
 		return actorEditor
 	end)

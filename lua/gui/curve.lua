@@ -21,37 +21,27 @@ function gui.Curve:OnInitialize()
 
 	self:SetHorizontalRange(0,0)
 	self:SetVerticalRange(0,0)
-	self:EnableThinking()
+	-- self:EnableThinking()
+end
+function gui.Curve:RebuildRenderCommandBuffer()
+	local pcb = prosper.PreparedCommandBuffer()
+	if(self.m_shader:Record(pcb,self.m_lineBuffer,self.m_vertexCount,self.m_xRange,self.m_yRange,self:GetColor()) == false) then pcb = nil end
+
+	self:SetRenderCommandBuffer(pcb)
 end
 function gui.Curve:GetHorizontalRange() return self.m_xRange end
 function gui.Curve:GetVerticalRange() return self.m_yRange end
 function gui.Curve:SetHorizontalRange(min,max)
 	self.m_xRange = Vector2(min,max)
+	if(self.m_lineBuffer ~= nil) then self:RebuildRenderCommandBuffer() end
 end
 function gui.Curve:SetVerticalRange(min,max)
 	self.m_yRange = Vector2(min,max)
-end
-function gui.Curve:OnThink()
-	local range = self:GetHorizontalRange()
-	--range.x = range.x +0.004
-	--range.y = range.y +0.004
-	self:SetHorizontalRange(range.x,range.y)
+	if(self.m_lineBuffer ~= nil) then self:RebuildRenderCommandBuffer() end
 end
 function gui.Curve:BuildCurve(curveValues)
 	if(#curveValues == 0) then return end
-	--[[local verts = {}
-	for _,v in ipairs(curveValues) do
-		local x = (v[1] -self.m_xRange[1]) /(self.m_xRange[2] -self.m_xRange[1])
-		local y = (v[2] -self.m_yRange[2]) /(self.m_yRange[1] -self.m_yRange[2])
-		table.insert(verts,Vector2(x,y))
-	end
 
-	local ds = util.DataStream(util.SIZEOF_VECTOR2 *#verts)
-	for _,v in ipairs(verts) do
-		ds:WriteVector2(v *2 -Vector2(1,1))
-	end
-	local buf = prosper.util.allocate_temporary_buffer(ds)
-	self:SetLineBuffer(buf,#verts)]]
 	local verts = {}
 	for _,v in ipairs(curveValues) do
 		table.insert(verts,Vector2(v[1],v[2]))
@@ -61,19 +51,12 @@ function gui.Curve:BuildCurve(curveValues)
 	for _,v in ipairs(verts) do
 		ds:WriteVector2(v)
 	end
-	local buf = prosper.util.allocate_temporary_buffer(ds)
+	local buf = prosper.util.allocate_temporary_buffer(ds) -- TODO: Manage our own buffer
 	self:SetLineBuffer(buf,#verts)
 end
 function gui.Curve:SetLineBuffer(buffer,vertexCount)
 	self.m_lineBuffer = buffer
 	self.m_vertexCount = vertexCount
-end
-function gui.Curve:OnDraw(drawInfo,pose)
-	if(self.m_shader == nil or self.m_lineBuffer == nil) then return end
-	local parent = self:GetParent()
-	local drawCmd = game.get_draw_command_buffer()
-	local x,y,w,h = gui.get_render_scissor_rect()
-	local color = self:GetColor()
-	self.m_shader:Draw(drawCmd,self.m_lineBuffer,self.m_vertexCount,self.m_xRange,self.m_yRange,color,x,y,w,h)
+	self:RebuildRenderCommandBuffer()
 end
 gui.register("WICurve",gui.Curve)

@@ -160,7 +160,7 @@ function gui.PFMActorEditor:OnInitialize()
 			transform:SetScale(extents)
 			actor:SetTransform(transform)
 		end)
-		
+
 		local filmClip = self:GetFilmClip()
 		local hasSkyComponent = false
 		if(filmClip ~= nil) then
@@ -877,6 +877,23 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 					end
 					return c:GetMemberValue(info.name)
 				end
+				controlData.getMemberInfo = function()
+					if(util.is_valid(c) == false) then
+						if(util.is_valid(entActor) == false) then entActor = ents.find_by_uuid(uniqueId) end
+						if(util.is_valid(entActor) == false) then
+							console.print_warning("No actor with UUID '" .. uniqueId .. "' found!")
+							return
+						end
+						c = entActor:GetComponent(componentId)
+						if(util.is_valid(c) == false) then
+							console.print_warning("No component " .. componentId .. " found in actor with UUID '" .. uniqueId .. "'!")
+							return
+						end
+					end
+					local idx = c:GetMemberIndex(info.name)
+					if(idx == nil) then return end
+					return c:GetMemberInfo(idx)
+				end
 				local value = controlData.getValue()
 				if(udm.is_numeric_type(info.type) and info.type ~= udm.TYPE_BOOLEAN) then
 					local min = info.min or 0
@@ -1246,7 +1263,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			end
 		end)
 	end
-	self:CallCallbacks("OnControlSelected",udmComponent,controlData,ctrl)
+	self:CallCallbacks("OnControlSelected",actor,udmComponent,controlData,ctrl)
 	return ctrl
 end
 function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentData,udmComponent,item,controlData,identifier)

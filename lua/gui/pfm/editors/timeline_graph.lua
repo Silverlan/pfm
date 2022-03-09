@@ -58,17 +58,17 @@ function gui.PFMTimelineGraph:SetTimeAxis(timeAxis) self.m_timeAxis = timeAxis e
 function gui.PFMTimelineGraph:SetDataAxis(dataAxis) self.m_dataAxis = dataAxis end
 function gui.PFMTimelineGraph:GetTimeAxis() return self.m_timeAxis end
 function gui.PFMTimelineGraph:GetDataAxis() return self.m_dataAxis end
-function gui.PFMTimelineGraph:AddGraph(layer,colorCurve,fValueTranslator)
+function gui.PFMTimelineGraph:AddGraph(channel,colorCurve,fValueTranslator)
 	if(util.is_valid(self.m_graphContainer) == false) then return end
-	local times = layer:GetTimes()
-	local values = layer:GetValues()
+	local times = channel:GetTimes()
+	local values = channel:GetValues()
 
 	local curveValues = {}
 	local minVal = math.huge
 	local maxVal = -math.huge
 	for i=1,#times do
-		local t = times:Get(i)
-		local v = values:Get(i)
+		local t = times[i]
+		local v = values[i]
 		v = (fValueTranslator ~= nil) and fValueTranslator(v) or v
 		minVal = math.min(minVal,v)
 		maxVal = math.max(maxVal,v)
@@ -108,11 +108,11 @@ function gui.PFMTimelineGraph:SetTimeRange(startTime,endTime,startOffset,zoomLev
 		end
 	end
 end
-function gui.PFMTimelineGraph:SetupControl(layer,item,color,fValueTranslator)
+function gui.PFMTimelineGraph:SetupControl(channel,item,color,fValueTranslator)
 	local graph
 	item:AddCallback("OnSelected",function()
 		if(util.is_valid(graph)) then graph:Remove() end
-		graph = self:AddGraph(layer,color,fValueTranslator)
+		graph = self:AddGraph(channel,color,fValueTranslator)
 	end)
 	item:AddCallback("OnDeselected",function()
 		if(util.is_valid(graph)) then graph:Remove() end
@@ -133,7 +133,7 @@ function gui.PFMTimelineGraph:OnVisibilityChanged(visible)
 	local timeline = self.m_timeline:GetTimeline()
 	timeline:ClearBookmarks()
 end
-function gui.PFMTimelineGraph:AddControl(filmClip,controlData)
+function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo)
 	local track = filmClip:FindAnimationChannelTrack()
 	if(track == nil) then return end
 	local itemCtrl = self.m_transformList:AddItem(controlData.name)
@@ -142,16 +142,36 @@ function gui.PFMTimelineGraph:AddControl(filmClip,controlData)
 		local layers = log:GetLayers():GetTable()
 		for _,layer in ipairs(layers) do
 			local type = layer:GetValues():GetValueType()
-			if(type == util.VAR_TYPE_INT32) then
+			if(type == udm.TYPE_INT32) then
 				-- TODO
-			elseif(type == util.VAR_TYPE_FLOAT) then
+			elseif(type == udm.TYPE_FLOAT) then
 				self:SetupControl(layer,item,Color.Red,fValueTranslator)
-			elseif(type == util.VAR_TYPE_VECTOR) then
+			elseif(type == udm.TYPE_VECTOR3) then
 				self:SetupControl(layer,item,Color.Red,fValueTranslator)
-			elseif(type == util.VAR_TYPE_QUATERNION) then
+			elseif(type == udm.TYPE_QUATERNION) then
 				self:SetupControl(layer,item,Color.Red,fValueTranslator)
 			end
 		end
+	end
+	if(udm.is_numeric_type(memberInfo.type)) then
+		local animClip = track:FindActorAnimationClip(actor)
+		if(animClip ~= nil) then
+			local channel = animClip:FindChannel(controlData.path)
+			if(channel ~= nil) then
+				self:SetupControl(channel,itemCtrl,Color.Red)
+			end
+		end
+
+		--[[local log = channel:GetLog()
+		local layers = log:GetLayers()
+		local layer = layers:Get(1) -- TODO: Which layer(s) are the bookmarks refering to?
+		if(layer ~= nil) then
+			local bookmarks = log:GetBookmarks()
+			for _,bookmark in ipairs(bookmarks:GetTable()) do
+				self:AddKey(bookmark)
+				-- Get from layer
+			end
+		end]]
 	end
 	if(controlData.type == "flexController") then
 		if(controlData.dualChannel ~= true) then

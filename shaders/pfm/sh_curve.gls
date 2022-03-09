@@ -11,9 +11,11 @@
 
 layout(LAYOUT_PUSH_CONSTANTS()) uniform PushConstants
 {
+    mat4 modelMatrix;
 	vec4 color;
 	vec2 xRange;
 	vec2 yRange;
+    uint viewportSize;
 } u_pushConstants;
 
 #endif
