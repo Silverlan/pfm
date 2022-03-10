@@ -20,9 +20,6 @@ gui.PFMTimelineGraph.CURSOR_MODE_MOVE = 1
 gui.PFMTimelineGraph.CURSOR_MODE_PAN = 2
 gui.PFMTimelineGraph.CURSOR_MODE_SCALE = 3
 gui.PFMTimelineGraph.CURSOR_MODE_ZOOM = 4
-function gui.PFMTimelineGraph:__init()
-	gui.Base.__init(self)
-end
 function gui.PFMTimelineGraph:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -45,11 +42,34 @@ function gui.PFMTimelineGraph:OnInitialize()
 	self.m_keys = {}
 
 	self.m_graphs = {}
+	self.m_channelPathToGraphIndex = {}
 	self.m_timeAxis = util.GraphAxis()
 	self.m_dataAxis = util.GraphAxis()
 
 	self:SetCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_SELECT)
 	gui.set_mouse_selection_enabled(self,true)
+
+	local animManager = pfm.get_project_manager():GetAnimationManager()
+	self.m_cbOnChannelValueChanged = animManager:AddCallback("OnChannelValueChanged",function(actor,anim,channel,udmChannel,idx)
+		local i = self.m_channelPathToGraphIndex[udmChannel:GetTargetPath()]
+		if(i == nil) then return end
+		local graphData = self.m_graphs[i]
+		if(graphData.curve:IsValid()) then
+			if(udmChannel:GetValueCount() == graphData.numValues) then
+				local t = udmChannel:GetTime(idx)
+				local v = udmChannel:GetValue(idx)
+
+				if(graphData.valueTranslator ~= nil) then v = graphData.valueTranslator(v) end
+				graphData.curve:UpdateCurveValue(idx,t,v)
+			else
+				-- Value has been added or removed; Complete graph update is required
+				self:RebuildGraphCurve(i,udmChannel)
+			end
+		end
+	end)
+end
+function gui.PFMTimelineGraph:OnRemove()
+	util.remove(self.m_cbOnChannelValueChanged)
 end
 function gui.PFMTimelineGraph:SetCursorMode(cursorMode) self.m_cursorMode = cursorMode end
 function gui.PFMTimelineGraph:GetCursorMode() return self.m_cursorMode end
@@ -58,31 +78,10 @@ function gui.PFMTimelineGraph:SetTimeAxis(timeAxis) self.m_timeAxis = timeAxis e
 function gui.PFMTimelineGraph:SetDataAxis(dataAxis) self.m_dataAxis = dataAxis end
 function gui.PFMTimelineGraph:GetTimeAxis() return self.m_timeAxis end
 function gui.PFMTimelineGraph:GetDataAxis() return self.m_dataAxis end
-function gui.PFMTimelineGraph:AddGraph(channel,colorCurve,fValueTranslator)
-	if(util.is_valid(self.m_graphContainer) == false) then return end
-	local times = channel:GetTimes()
-	local values = channel:GetValues()
-
-	local curveValues = {}
-	local minVal = math.huge
-	local maxVal = -math.huge
-	for i=1,#times do
-		local t = times[i]
-		local v = values[i]
-		v = (fValueTranslator ~= nil) and fValueTranslator(v) or v
-		minVal = math.min(minVal,v)
-		maxVal = math.max(maxVal,v)
-		table.insert(curveValues,{t,v})
-	end
-
-	if(minVal == math.huge) then
-		minVal = 0.0
-		maxVal = 0.0
-	end
-	local yRange = {minVal,maxVal}
-
-	local graph = gui.create("WICurve",self.m_graphContainer,0,0,self.m_graphContainer:GetWidth(),self.m_graphContainer:GetHeight(),0,0,1,1)
-	
+function gui.PFMTimelineGraph:UpdateGraphCurveAxisRanges(i)
+	local graphData = self.m_graphs[i]
+	local graph = graphData.curve
+	if(graph:IsValid() == false) then return end
 	local timeAxis = self:GetTimeAxis():GetAxis()
 	local timeRange = {timeAxis:GetStartOffset(),timeAxis:XOffsetToValue(self:GetRight())}
 	graph:SetHorizontalRange(timeRange[1],timeRange[2])
@@ -90,11 +89,47 @@ function gui.PFMTimelineGraph:AddGraph(channel,colorCurve,fValueTranslator)
 	local dataAxis = self:GetDataAxis():GetAxis()
 	local dataRange = {dataAxis:GetStartOffset(),dataAxis:XOffsetToValue(self:GetRight())}
 	graph:SetVerticalRange(dataRange[1],dataRange[2])
+end
+function gui.PFMTimelineGraph:RebuildGraphCurve(i,channel)
+	local times = channel:GetTimes()
+	local values = channel:GetValues()
 
-	graph:BuildCurve(curveValues)
+	local graphData = self.m_graphs[i]
+	local curveValues = {}
+	for i=1,#times do
+		local t = times[i]
+		local v = values[i]
+		v = (graphData.valueTranslator ~= nil) and graphData.valueTranslator(v) or v
+		table.insert(curveValues,{t,v})
+	end
+	graphData.curve:BuildCurve(curveValues)
+end
+function gui.PFMTimelineGraph:RemoveGraphCurve(i)
+	local graphData = self.m_graphs[i]
+	util.remove(graphData.curve)
+	self.m_channelPathToGraphIndex[graphData.targetPath] = nil
+	while(#self.m_graphs > 0 and util.is_valid(self.m_graphs[#self.m_graphs].curve)) do
+		table.remove(self.m_graphs,#self.m_graphs)
+	end
+end
+function gui.PFMTimelineGraph:AddGraph(channel,colorCurve,fValueTranslator)
+	if(util.is_valid(self.m_graphContainer) == false) then return end
+
+	local graph = gui.create("WICurve",self.m_graphContainer,0,0,self.m_graphContainer:GetWidth(),self.m_graphContainer:GetHeight(),0,0,1,1)
 	graph:SetColor(colorCurve)
-	table.insert(self.m_graphs,graph)
-	return graph
+	local targetPath = channel:GetTargetPath()
+	table.insert(self.m_graphs,{
+		curve = graph,
+		valueTranslator = fValueTranslator,
+		numValues = channel:GetValueCount(),
+		targetPath = targetPath
+	})
+	self.m_channelPathToGraphIndex[targetPath] = #self.m_graphs
+
+	local idx = #self.m_graphs
+	self:UpdateGraphCurveAxisRanges(idx)
+	self:RebuildGraphCurve(idx,channel)
+	return graph,idx
 end
 function gui.PFMTimelineGraph:SetTimeRange(startTime,endTime,startOffset,zoomLevel)
 	if(util.is_valid(self.m_grid)) then
@@ -102,20 +137,21 @@ function gui.PFMTimelineGraph:SetTimeRange(startTime,endTime,startOffset,zoomLev
 		self.m_grid:SetZoomLevel(zoomLevel)
 	end
 	self.m_timeRange = {startTime,endTime}
-	for _,graph in ipairs(self.m_graphs) do
+	for _,graphData in ipairs(self.m_graphs) do
+		local graph = graphData.curve
 		if(graph:IsValid()) then
 			graph:SetHorizontalRange(startTime,endTime)
 		end
 	end
 end
 function gui.PFMTimelineGraph:SetupControl(channel,item,color,fValueTranslator)
-	local graph
+	local graph,graphIndex
 	item:AddCallback("OnSelected",function()
-		if(util.is_valid(graph)) then graph:Remove() end
-		graph = self:AddGraph(channel,color,fValueTranslator)
+		if(util.is_valid(graph)) then self:RemoveGraphCurve(graphIndex) end
+		graph,graphIndex = self:AddGraph(channel,color,fValueTranslator)
 	end)
 	item:AddCallback("OnDeselected",function()
-		if(util.is_valid(graph)) then graph:Remove() end
+		if(util.is_valid(graph)) then self:RemoveGraphCurve(graphIndex) end
 	end)
 end
 function gui.PFMTimelineGraph:AddKey(time,value)

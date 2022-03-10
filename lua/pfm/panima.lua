@@ -8,10 +8,7 @@
 
 pfm = pfm or {}
 
-util.register_class("pfm.AnimationManager")
-function pfm.AnimationManager.__init()
-end
-
+util.register_class("pfm.AnimationManager",util.CallbackHandler)
 function pfm.AnimationManager:Initialize(track)
 end
 
@@ -159,6 +156,9 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,channelClip,
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path,true,type)
 	assert(channel ~= nil)
 	if(channel == nil) then return end
-	channel:AddValue(time,value)
+	local idx = channel:AddValue(time,value)
 	anim:UpdateDuration()
+
+	local udmChannel = animClip:GetChannel(path,type)
+	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,idx)
 end

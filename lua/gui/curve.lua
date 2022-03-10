@@ -10,8 +10,18 @@ include("/shaders/pfm/pfm_curve.lua")
 
 util.register_class("gui.Curve",gui.Base)
 
+local g_updateBufCmd
+local g_curveCount = 0
 function gui.Curve:__init()
 	gui.Base.__init(self)
+	g_curveCount = g_curveCount +1
+end
+function gui.Curve:__finalize()
+	g_curveCount = g_curveCount -1
+	if(g_curveCount == 0) then
+		-- Don't need the command buffer anymore
+		g_updateBufCmd = nil
+	end
 end
 function gui.Curve:OnInitialize()
 	gui.Base.OnInitialize(self)
@@ -38,6 +48,27 @@ end
 function gui.Curve:SetVerticalRange(min,max)
 	self.m_yRange = Vector2(min,max)
 	if(self.m_lineBuffer ~= nil) then self:RebuildRenderCommandBuffer() end
+end
+function gui.Curve:UpdateCurveValue(i,xVal,yVal)
+	if(self.m_lineBuffer == nil) then return end
+	local offset = util.SIZEOF_VECTOR2 *i
+
+	local buf = self.m_lineBuffer
+	g_updateBufCmd = g_updateBufCmd or prosper.create_primary_command_buffer()
+	local cmd = g_updateBufCmd
+	cmd:StartRecording(false,false)
+		cmd:RecordBufferBarrier(
+			buf,
+			prosper.PIPELINE_STAGE_HOST_BIT,prosper.PIPELINE_STAGE_VERTEX_INPUT_BIT,
+			prosper.ACCESS_HOST_WRITE_BIT,prosper.ACCESS_VERTEX_ATTRIBUTE_READ_BIT
+		)
+		cmd:RecordUpdateBuffer(buf,offset,udm.TYPE_VECTOR2,Vector2(xVal,yVal))
+		cmd:RecordBufferBarrier(
+			buf,
+			prosper.PIPELINE_STAGE_VERTEX_INPUT_BIT,prosper.PIPELINE_STAGE_HOST_BIT,
+			prosper.ACCESS_VERTEX_ATTRIBUTE_READ_BIT,prosper.ACCESS_HOST_WRITE_BIT
+		)
+	cmd:Flush()
 end
 function gui.Curve:BuildCurve(curveValues)
 	if(#curveValues == 0) then return end
