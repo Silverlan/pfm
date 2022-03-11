@@ -11,12 +11,13 @@
 
 layout(LAYOUT_PUSH_CONSTANTS()) uniform PushConstants
 {
-	mat4 transformMatrix;
+	mat4 modelMatrix;
 	vec4 color;
 	uint instanceCount;
 	float strideV;
 	float vMultiplier;
 	uint horizontal;
+    uint viewportSize;
 } u_pushConstants;
 
 #endif

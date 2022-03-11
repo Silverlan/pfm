@@ -31,10 +31,9 @@ function gui.BaseTimelineGrid:OnInitialize()
 	self:SetLineWidth(1)
 	self:SetHorizontal(false)
 	self:SetSize(128,6)
-	self.m_timeFrame = fudm.PFMTimeFrame()
 	self.m_axis:SetZoomLevel(1)
 	self.m_axis:SetStartOffset(0.0)
-	self:Update()
+	self:ScheduleUpdate()
 end
 function gui.BaseTimelineGrid:GetAxis() return self.m_axis end
 function gui.BaseTimelineGrid:SetYMultiplier(multiplier) self.m_yMultiplier = multiplier end
@@ -44,16 +43,16 @@ function gui.BaseTimelineGrid:IsVertical() return self:IsHorizontal() == false e
 function gui.BaseTimelineGrid:SetShader(shaderName) self.m_shader = shader.get(shaderName) end
 function gui.BaseTimelineGrid:SetLineWidth(lineWidth) self.m_lineWidth = lineWidth end
 function gui.BaseTimelineGrid:GetLineWidth() return self.m_lineWidth end
-function gui.BaseTimelineGrid:OnDraw(drawInfo,pose)
-	if(self.m_shader == nil) then return end
-	local parent = self:GetParent()
-	local drawCmd = game.get_draw_command_buffer()
-	local x,y,w,h = gui.get_render_scissor_rect()
-	self.m_shader:Draw(drawCmd,pose,x,y,w,h,self:GetLineCount(),self:GetAxis():GetStrideX(self:GetWidth()),self:GetColor(),self.m_yMultiplier,self:GetLineWidth(),self:IsHorizontal())
-end
+function gui.BaseTimelineGrid:OnUpdate() self:RebuildRenderCommandBuffer() end
 function gui.BaseTimelineGrid:GetLineCount()
 	local w = self:GetWidth()
 	local stridePerSecond = self:GetAxis():GetStridePerUnit()
 	local strideX = stridePerSecond /10.0
 	return math.ceil(w /strideX)
+end
+function gui.BaseTimelineGrid:RebuildRenderCommandBuffer()
+	if(self.m_shader == nil) then return end
+	local pcb = prosper.PreparedCommandBuffer()
+	if(self.m_shader:Record(pcb,self:GetLineCount(),self:GetAxis():GetStrideX(self:GetWidth()),self:GetColor(),4,self:GetLineWidth(),self:IsHorizontal()) == false) then pcb = nil end
+	self:SetRenderCommandBuffer(pcb)
 end

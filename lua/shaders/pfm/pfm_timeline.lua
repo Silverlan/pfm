@@ -6,26 +6,20 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("shader.PFMTimeline",shader.BaseGraphics)
+util.register_class("shader.PFMTimeline",shader.BaseGUI)
 
 shader.PFMTimeline.FragmentShader = "pfm/fs_timeline"
 shader.PFMTimeline.VertexShader = "pfm/vs_timeline"
 
-function shader.PFMTimeline:__init()
-	shader.BaseGraphics.__init(self)
+local PUSH_CONSTANT_SIZE = util.SIZEOF_MAT4 +util.SIZEOF_VECTOR4 +util.SIZEOF_INT +util.SIZEOF_FLOAT +util.SIZEOF_FLOAT +util.SIZEOF_INT
 
-	self.m_dsTransformMatrix = util.DataStream(util.SIZEOF_MAT4 +util.SIZEOF_VECTOR4 +util.SIZEOF_INT +util.SIZEOF_FLOAT +util.SIZEOF_FLOAT)
-end
-function shader.PFMTimeline:InitializeRenderPass(pipelineIdx)
-	return {shader.Graphics.get_render_pass()}
-end
 function shader.PFMTimeline:InitializePipeline(pipelineInfo,pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
+	shader.BaseGUI.InitializePipeline(self,pipelineInfo,pipelineIdx)
 	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX),{
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 	})
 
-	pipelineInfo:AttachPushConstantRange(0,self.m_dsTransformMatrix:GetSize(),prosper.SHADER_STAGE_VERTEX_BIT)
+	pipelineInfo:AttachPushConstantRange(0,PUSH_CONSTANT_SIZE,prosper.SHADER_STAGE_VERTEX_BIT)
 	
 	pipelineInfo:SetDynamicStateEnabled(prosper.DYNAMIC_STATE_SCISSOR_BIT,true)
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
@@ -34,24 +28,25 @@ function shader.PFMTimeline:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetDepthWritesEnabled(false)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
-function shader.PFMTimeline:Draw(drawCmd,transformMatrix,x,y,w,h,lineCount,strideX,color,yMultiplier)
-	local bindState = shader.BindState(drawCmd)
-	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
-	yMultiplier = yMultiplier or 1.0
-	
+function shader.PFMTimeline:Record(pcb,lineCount,strideX,color,yMultiplier)
+	if(self:IsValid() == false) then return false end
+
+	local dsPushConstants = util.DataStream(PUSH_CONSTANT_SIZE -util.SIZEOF_MAT4 -util.SIZEOF_INT)
+	dsPushConstants:Seek(0)
+	dsPushConstants:WriteVector4(color:ToVector4())
+	dsPushConstants:WriteUInt32(lineCount)
+	dsPushConstants:WriteFloat(strideX *2.0)
+	dsPushConstants:WriteFloat(yMultiplier)
+
 	local vertexBuffer = prosper.util.get_line_vertex_buffer()
-	self:RecordBindVertexBuffers(bindState,{vertexBuffer})
-	drawCmd:RecordSetScissor(bindState,w,h,x,y)
-
-	self.m_dsTransformMatrix:Seek(0)
-	self.m_dsTransformMatrix:WriteMat4(transformMatrix)
-	self.m_dsTransformMatrix:WriteVector4(color:ToVector4())
-	self.m_dsTransformMatrix:WriteUInt32(lineCount)
-	self.m_dsTransformMatrix:WriteFloat(strideX *2.0)
-	self.m_dsTransformMatrix:WriteFloat(yMultiplier)
-	self:RecordPushConstants(bindState,self.m_dsTransformMatrix)
-
-	self:RecordDraw(bindState,2,lineCount)
-	self:RecordEndDraw(bindState)
+	local DynArg = prosper.PreparedCommandBuffer.DynArg
+	self:RecordBeginDraw(pcb)
+		self:RecordBindVertexBuffers(pcb,{vertexBuffer})
+		self:RecordPushConstants(pcb,udm.TYPE_MAT4,DynArg("matDraw"))
+		self:RecordPushConstants(pcb,dsPushConstants,util.SIZEOF_MAT4)
+		self:RecordPushConstants(pcb,udm.TYPE_UINT32,DynArg("viewportSize"),util.SIZEOF_MAT4 +dsPushConstants:GetSize())
+		self:RecordDraw(pcb,2,lineCount)
+	self:RecordEndDraw(pcb)
+	return true
 end
 shader.register("pfm_timeline",shader.PFMTimeline)

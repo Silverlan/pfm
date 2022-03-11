@@ -14,27 +14,17 @@
 layout(location = 0) in vec2 in_vert_pos;
 
 #include "sh_grid.gls"
+#include "/wgui/vs_wgui_shared.gls"
 
 void main()
 {
+	vec2 basePos = in_vert_pos;
+	basePos *= u_pushConstants.vMultiplier;
+	float stride = u_pushConstants.strideV;
 	if(u_pushConstants.horizontal == 1)
-	{
-		float x = in_vert_pos.x;
-		x *= u_pushConstants.vMultiplier;
-		gl_Position = u_pushConstants.transformMatrix *vec4(
-			x,
-			-1.0 +SH_INSTANCE_INDEX *u_pushConstants.strideV,
-			0.0,1.0
-		);
-	}
+		basePos.y = -1.0 +SH_INSTANCE_INDEX *stride;
 	else
-	{
-		float y = in_vert_pos.y;
-		y *= u_pushConstants.vMultiplier;
-		gl_Position = u_pushConstants.transformMatrix *vec4(
-			-1.0 +SH_INSTANCE_INDEX *u_pushConstants.strideV,
-			y,
-			0.0,1.0
-		);
-	}
+		basePos.x = -1.0 +SH_INSTANCE_INDEX *stride;
+	vec2 vertPos = get_vertex_position(basePos).xy;
+	gl_Position = vec4(vertPos,0,1);
 }

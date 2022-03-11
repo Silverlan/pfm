@@ -49,43 +49,11 @@ end
 function gui.Grid:Setup()
 
 end
-function gui.Grid:BuildGrid(curveValues)
-	--[[local verts = {}
-	self.m_xRange = Vector2(0,1)
-	self.m_yRange = Vector2(0,20)
-
-	for i=0,300 do
-		table.insert(verts,Vector2(0,i))
-		table.insert(verts,Vector2(1,i))
+function gui.Grid:OnUpdate()
+	for _,layer in ipairs(self.m_layers) do
+		layer:Update()
 	end
-
-	local ds = util.DataStream(util.SIZEOF_VECTOR2 *#verts)
-	local dsColors = util.DataStream(util.SIZEOF_VECTOR4 *#verts)
-	for _,v in ipairs(verts) do
-		ds:WriteVector2(v)
-		if(_ %10 == 0) then
-			dsColors:WriteVector4(Color.Yellow:ToVector4())
-		else
-			dsColors:WriteVector4(Color.Red:ToVector4())
-		end
-	end
-	local buf = prosper.util.allocate_temporary_buffer(ds)
-	local colorBuffer = prosper.util.allocate_temporary_buffer(dsColors)
-	self:SetLineBuffer(buf,colorBuffer,#verts)]]
 end
-function gui.Grid:SetLineBuffer(buffer,colorBuffer,vertexCount)
-	--[[self.m_lineBuffer = buffer
-	self.m_colorBuffer = colorBuffer
-	self.m_vertexCount = vertexCount]]
-end
---function gui.Grid:OnDraw(drawInfo,pose)
-	--[[if(self.m_shader == nil or self.m_lineBuffer == nil) then return end
-	local parent = self:GetParent()
-	local drawCmd = game.get_draw_command_buffer()
-	local x,y,w,h = gui.get_render_scissor_rect()
-	local color = self:GetColor()
-	self.m_shader:Draw(drawCmd,self.m_lineBuffer,self.m_colorBuffer,self.m_vertexCount,self.m_xRange,self.m_yRange,color,x,y,w,h)]]
---end
 gui.register("WIGrid",gui.Grid)
 
 -----------
@@ -99,14 +67,12 @@ function gui.GridLayer:OnInitialize()
 	gui.BaseTimelineGrid.OnInitialize(self)
 
 	self:SetShader("pfm_grid")
-	--self:SetSize(128,128)
-	--self.m_shader = shader.get("pfm_grid")
 end
 function gui.GridLayer:Setup()
 
 end
 function gui.GridLayer:BuildGrid(curveValues)
-	--[[local verts = {}
+	local verts = {}
 	self.m_xRange = Vector2(0,1)
 	self.m_yRange = Vector2(0,20)
 
@@ -127,19 +93,6 @@ function gui.GridLayer:BuildGrid(curveValues)
 	end
 	local buf = prosper.util.allocate_temporary_buffer(ds)
 	local colorBuffer = prosper.util.allocate_temporary_buffer(dsColors)
-	self:SetLineBuffer(buf,colorBuffer,#verts)]]
+	self:SetLineBuffer(buf,colorBuffer,#verts)
 end
-function gui.GridLayer:SetLineBuffer(buffer,colorBuffer,vertexCount)
-	--[[self.m_lineBuffer = buffer
-	self.m_colorBuffer = colorBuffer
-	self.m_vertexCount = vertexCount]]
-end
---function gui.GridLayer:OnDraw(drawInfo,pose)
-	--[[if(self.m_shader == nil or self.m_lineBuffer == nil) then return end
-	local parent = self:GetParent()
-	local drawCmd = game.get_draw_command_buffer()
-	local x,y,w,h = gui.get_render_scissor_rect()
-	local color = self:GetColor()
-	self.m_shader:Draw(drawCmd,self.m_lineBuffer,self.m_colorBuffer,self.m_vertexCount,self.m_xRange,self.m_yRange,color,x,y,w,h)]]
---end
 gui.register("WIGridLayer",gui.GridLayer)
