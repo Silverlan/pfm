@@ -148,7 +148,53 @@ function pfm.AnimationManager:RemoveChannel(actor,path)
 	anim:RemoveChannel(path)
 end
 
-function pfm.AnimationManager:SetChannelValue(actor,path,time,value,channelClip,type)
+function pfm.AnimationManager:UpdateChannelValueByIndex(actor,path,idx,time,value)
+	if(self.m_filmClip == nil or self.m_filmClip == nil) then
+		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
+	if(channel == nil) then return end
+	channel:SetTime(idx,time)
+	channel:SetValue(idx,value)
+
+	-- Since we changed the time value, we may have to re-order
+	local function swapValue(idx0,idx1)
+		local t0 = channel:GetTime(idx0)
+		local v0 = channel:GetValue(idx0)
+		local t1 = channel:GetTime(idx1)
+		local v1 = channel:GetValue(idx1)
+		channel:SetTime(idx0,t1)
+		channel:SetValue(idx0,v1)
+		channel:SetTime(idx1,t0)
+		channel:SetValue(idx1,v0)
+	end
+
+	local oldIdx = idx
+	local tNext = channel:GetTime(idx +1)
+	while(tNext ~= nil and tNext < time) do
+		-- Value needs to be moved up
+		swapValue(idx,idx +1)
+		idx = idx +1
+		tNext = channel:GetTime(idx +1)
+	end
+
+	local tPrev = (idx > 0) and channel:GetTime(idx -1) or nil
+	while(tPrev ~= nil and tPrev > time) do
+		-- Value needs to be moved down
+		swapValue(idx,idx -1)
+		idx = idx -1
+		tPrev = (idx > 0) and channel:GetTime(idx -1) or nil
+	end
+	--
+
+	anim:UpdateDuration()
+
+	local udmChannel = animClip:GetChannel(path,type)
+	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,idx,oldIdx)
+end
+
+function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type)
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
@@ -160,5 +206,5 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,channelClip,
 	anim:UpdateDuration()
 
 	local udmChannel = animClip:GetChannel(path,type)
-	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,idx)
+	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,idx,idx)
 end

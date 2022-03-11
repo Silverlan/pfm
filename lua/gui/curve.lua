@@ -45,6 +45,28 @@ function gui.Curve:SetHorizontalRange(min,max)
 	self.m_xRange = Vector2(min,max)
 	if(self.m_lineBuffer ~= nil) then self:RebuildRenderCommandBuffer() end
 end
+function gui.Curve:CoordinatesToValues(x,y)
+	x = x /self:GetWidth()
+	y = y /self:GetHeight()
+	local xRange = self.m_xRange
+	local yRange = self.m_yRange
+	local xVal = x *(xRange.y -xRange.x) +xRange.x
+	local yVal = y *(yRange.x -yRange.y) +yRange.y
+	return Vector2(xVal,yVal)
+end
+function gui.Curve:ValueToNormalizedCoordinates(xVal,yVal)
+	local xRange = self.m_xRange
+	local yRange = self.m_yRange
+	local x = (xVal -xRange.x) /(xRange.y -xRange.x)
+	local y = (yVal -yRange.y) /(yRange.x -yRange.y)
+	return Vector2(x,y)
+end
+function gui.Curve:ValueToUiCoordinates(xVal,yVal)
+	local c = self:ValueToNormalizedCoordinates(xVal,yVal)
+	c.x = c.x *self:GetWidth()
+	c.y = c.y *self:GetHeight()
+	return c
+end
 function gui.Curve:SetVerticalRange(min,max)
 	self.m_yRange = Vector2(min,max)
 	if(self.m_lineBuffer ~= nil) then self:RebuildRenderCommandBuffer() end

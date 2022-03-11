@@ -182,6 +182,7 @@ function gui.PFMTimeline:SetGraphCursorMode(cursorMode)
 			bt:SetActivated(btCursorMode == cursorMode)
 		end
 	end
+	self.m_timelineGraph:SetCursorMode(cursorMode)
 end
 function gui.PFMTimeline:InitializeToolbar()
 	local toolbar = gui.create("WIBase",self.m_contents,0,0,self:GetWidth(),0)
