@@ -11,22 +11,57 @@ include("/shaders/pfm/pfm_selection_wireframe.lua")
 
 util.register_class("pfm.SelectionManager")
 function pfm.SelectionManager:__init()
-	self.m_callback = game.add_callback("PrepareRendering",function(renderer)
-		self:PrepareSelectionMeshesForRendering(renderer)
-	end)
-	self.m_material = game.load_material("white") -- game.get_error_material() -- We don't need any materials for the selection shaders, so we'll just use the error material
 	self.m_selections = {}
-	self.m_shader = shader.get("pfm_selection")
-	self.m_shaderWireframe = shader.get("pfm_selection_wireframe")
-	self.m_valid = (self.m_material ~= nil and self.m_shader ~= nil and self.m_shaderWireframe ~= nil)
 	self.m_listeners = {}
 end
 
 function pfm.SelectionManager:AddChangeListener(listener) table.insert(self.m_listeners,listener) end
 
-function pfm.SelectionManager:GetSelectedActors() return self.m_selections end
+function pfm.SelectionManager:GetSelectedObjects() return self.m_selections end
 
-function pfm.SelectionManager:PrepareSelectionMeshesForRendering(renderer)
+function pfm.SelectionManager:Remove()
+	self:ClearSelections()
+end
+
+function pfm.SelectionManager:ClearSelections()
+	local selections = self.m_selections
+	self.m_selections = {}
+	for object,selected in pairs(selections) do
+		if(object:IsValid()) then
+			for _,listener in ipairs(self.m_listeners) do
+				listener(object,false)
+			end
+		end
+	end
+end
+
+function pfm.SelectionManager:SetSelected(obj,selected)
+	self.m_selections[obj] = selected or nil
+	for _,listener in ipairs(self.m_listeners) do
+		listener(obj,selected)
+	end
+end
+
+function pfm.SelectionManager:Select(obj) self:SetSelected(obj,true) end
+function pfm.SelectionManager:Deselect(obj) self:SetSelected(obj,false) end
+
+-----------------
+
+util.register_class("pfm.ActorSelectionManager",pfm.SelectionManager)
+function pfm.ActorSelectionManager:__init()
+	pfm.SelectionManager.__init(self)
+	self.m_callback = game.add_callback("PrepareRendering",function(renderer)
+		self:PrepareSelectionMeshesForRendering(renderer)
+	end)
+	self.m_material = game.load_material("white") -- game.get_error_material() -- We don't need any materials for the selection shaders, so we'll just use the error material
+	self.m_shader = shader.get("pfm_selection")
+	self.m_shaderWireframe = shader.get("pfm_selection_wireframe")
+	self.m_valid = (self.m_material ~= nil and self.m_shader ~= nil and self.m_shaderWireframe ~= nil)
+end
+
+function pfm.ActorSelectionManager:GetSelectedActors() return self:GetSelectedObjects() end
+
+function pfm.ActorSelectionManager:PrepareSelectionMeshesForRendering(renderer)
 	if(self.m_valid == false) then return end
 	for ent,selected in pairs(self.m_selections) do
 		if(ent:IsValid() == false) then self.m_selections[ent] = nil
@@ -44,29 +79,7 @@ function pfm.SelectionManager:PrepareSelectionMeshesForRendering(renderer)
 	end
 end
 
-function pfm.SelectionManager:Remove()
-	self:ClearSelections()
+function pfm.ActorSelectionManager:Remove()
+	pfm.SelectionManager.Remove(self)
 	if(util.is_valid(self.m_callback)) then self.m_callback:Remove() end
 end
-
-function pfm.SelectionManager:ClearSelections()
-	local selections = self.m_selections
-	self.m_selections = {}
-	for ent,selected in pairs(selections) do
-		if(ent:IsValid()) then
-			for _,listener in ipairs(self.m_listeners) do
-				listener(ent,false)
-			end
-		end
-	end
-end
-
-function pfm.SelectionManager:SetSelected(ent,selected)
-	self.m_selections[ent] = selected or nil
-	for _,listener in ipairs(self.m_listeners) do
-		listener(ent,selected)
-	end
-end
-
-function pfm.SelectionManager:Select(ent) self:SetSelected(ent,true) end
-function pfm.SelectionManager:Deselect(ent) self:SetSelected(ent,false) end

@@ -10,6 +10,7 @@ include("/gui/curve.lua")
 include("/gui/pfm/treeview.lua")
 include("/gui/pfm/grid.lua")
 include("/gui/pfm/selection.lua")
+include("/gui/selectionrect.lua")
 include("/graph_axis.lua")
 include("key.lua")
 
@@ -264,16 +265,85 @@ function gui.PFMTimelineGraph:OnMouseEvent(button,state,mods)
 				if(graphData.curve:IsValid()) then
 					local dps = graphData.curve:GetDataPoints()
 					for _,dp in ipairs(dps) do
-						if(dp:IsValid()) then
+						if(dp:IsValid() and dp:IsSelected()) then
 							dp:SetMoveModeEnabled(moveEnabled)
 						end
 					end
 				end
 			end
+		elseif(state == input.STATE_PRESS) then
+			local timeAxis = self.m_timeline:GetTimeline():GetTimeAxis():GetAxis()
+			local dataAxis = self.m_timeline:GetTimeline():GetDataAxis():GetAxis()
+			self.m_cursorTracker = {
+				tracker = gui.CursorTracker(),
+				timeAxisStartOffset = timeAxis:GetStartOffset(),
+				timeAxisZoomLevel = timeAxis:GetZoomLevel(),
+				dataAxisStartOffset = dataAxis:GetStartOffset(),
+				dataAxisZoomLevel = dataAxis:GetZoomLevel()
+			}
+			self:EnableThinking()
+
+			if(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then
+				if(util.is_valid(self.m_selectionRect) == false) then
+					self.m_selectionRect = gui.create("WISelectionRect",self.m_graphContainer)
+					self.m_selectionRect:SetPos(self.m_graphContainer:GetCursorPos())
+				end
+			end
+		else
+			if(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then
+				if(util.is_valid(self.m_selectionRect)) then
+					local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE or
+						input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
+					local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
+						input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
+					for _,graphData in ipairs(self.m_graphs) do
+						if(graphData.curve:IsValid()) then
+							local dps = graphData.curve:GetDataPoints()
+							for _,dp in ipairs(dps) do
+								if(self.m_selectionRect:IsElementInBounds(dp)) then
+									if(isAltDown) then dp:SetSelected(false)
+									else dp:SetSelected(true) end
+								elseif(isCtrlDown == false and isAltDown == false) then dp:SetSelected(false) end
+							end
+						end
+					end
+					-- TODO: Select or deselect all points on curve if no individual points are within the select bounds, but the curve is
+				end
+			end
+
+			self.m_cursorTracker = nil
+			util.remove(self.m_selectionRect)
+			self:DisableThinking()
 		end
 		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED
+end
+function gui.PFMTimelineGraph:OnThink()
+	if(self.m_cursorTracker == nil) then return end
+	local trackerData = self.m_cursorTracker
+	local tracker = trackerData.tracker
+	local dt = tracker:Update()
+	if(dt.x == 0 and dt.y == 0) then return end
+
+	local dtPos = tracker:GetTotalDeltaPosition()
+	local timeLine = self.m_timeline:GetTimeline()
+
+	local cursorMode = self:GetCursorMode()
+	if(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then
+
+	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_MOVE) then
+
+	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_PAN) then
+		timeLine:GetTimeAxis():GetAxis():SetStartOffset(trackerData.timeAxisStartOffset -timeLine:GetTimeAxis():GetAxis():XDeltaToValue(dtPos).x)
+		timeLine:GetDataAxis():GetAxis():SetStartOffset(trackerData.dataAxisStartOffset +timeLine:GetDataAxis():GetAxis():XDeltaToValue(dtPos).y)
+		timeLine:Update()
+	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SCALE) then
+	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_ZOOM) then
+		timeLine:GetTimeAxis():GetAxis():SetZoomLevel(trackerData.timeAxisZoomLevel +dtPos.x /10.0)
+		timeLine:GetDataAxis():GetAxis():SetZoomLevel(trackerData.dataAxisZoomLevel +dtPos.y /10.0)
+		timeLine:Update()
+	end
 end
 function gui.PFMTimelineGraph:SetCursorMode(cursorMode) self.m_cursorMode = cursorMode end
 function gui.PFMTimelineGraph:GetCursorMode() return self.m_cursorMode end
@@ -348,6 +418,15 @@ function gui.PFMTimelineGraph:SetTimeRange(startTime,endTime,startOffset,zoomLev
 		local graph = graphData.curve
 		if(graph:IsValid()) then
 			graph:SetHorizontalRange(startTime,endTime)
+		end
+	end
+end
+function gui.PFMTimelineGraph:SetDataRange(startValue,endValue,startOffset,zoomLevel)
+	self.m_dataRange = {startValue,endValue}
+	for _,graphData in ipairs(self.m_graphs) do
+		local graph = graphData.curve
+		if(graph:IsValid()) then
+			graph:SetVerticalRange(startValue,endValue)
 		end
 	end
 end

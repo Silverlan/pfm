@@ -213,6 +213,7 @@ function gui.Timeline:SetStartOffset(offset)
 	end
 	axis:SetStartOffset(offset)
 end
+function gui.Timeline:GetStartOffset() return self:GetTimeAxis():GetAxis():GetStartOffset() end
 function gui.Timeline:OnUpdate()
 	if(util.is_valid(self.m_timelineStripUpper)) then self.m_timelineStripUpper:Update() end
 	if(util.is_valid(self.m_timelineStripLower)) then self.m_timelineStripLower:Update() end

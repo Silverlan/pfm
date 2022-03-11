@@ -127,6 +127,11 @@ function gui.PFMTimeline:OnTimelineUpdate()
 		local startTime = axis:XOffsetToValue(posGraph.x -posTimeline.x)
 		local endTime = axis:XOffsetToValue(posGraph.x +self.m_timelineGraph:GetWidth() -posTimeline.x)
 		self.m_timelineGraph:SetTimeRange(startTime,endTime,axis:GetStartOffset(),axis:GetZoomLevel())
+
+		axis = self.m_timeline:GetDataAxis():GetAxis()
+		local startValue = axis:XOffsetToValue(posGraph.y -posTimeline.y)
+		local endValue = axis:XOffsetToValue(posGraph.y +self.m_timelineGraph:GetHeight() -posTimeline.y)
+		self.m_timelineGraph:SetDataRange(startValue,endValue,axis:GetStartOffset(),axis:GetZoomLevel())
 	end
 end
 function gui.PFMTimeline:GetEditor() return self.m_editorType end
