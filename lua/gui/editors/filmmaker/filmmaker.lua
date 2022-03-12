@@ -826,7 +826,7 @@ function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value)
 	if(actorData == nil) then return end
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
-		actorEditor:SetAnimationChannelValue(actorData,"ec/transform/" .. propType,value)
+		actorEditor:SetAnimationChannelValue(actorData,"ec/pfm_actor/" .. propType,value)
 		self:TagRenderSceneAsDirty()
 		return
 	end
