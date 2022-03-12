@@ -76,8 +76,10 @@ function gui.PFMTimelineDataPoint:OnThink()
 	local targetPath = curveData.targetPath
 
 	local newValue = timelineCurve:GetCurve():CoordinatesToValues(newPos.x +self:GetWidth() /2.0,newPos.y +self:GetHeight() /2.0)
-	newValue.x = math.snap_to_grid(newValue.x,1.0 /pm:GetFrameRate())
-	animManager:UpdateChannelValueByIndex(actor,targetPath,graphData.valueIndex,newValue.x,newValue.y)
+	newValue = {newValue.x,newValue.y}
+	newValue[1] = math.snap_to_grid(newValue[1],1.0 /pm:GetFrameRate())
+	if(curveData.valueTranslator ~= nil) then newValue[2] = curveData.valueTranslator[2](newValue[2]) end
+	animManager:UpdateChannelValueByIndex(actor,targetPath,graphData.valueIndex,newValue[1],newValue[2])
 end
 function gui.PFMTimelineDataPoint:IsMoveModeEnabled() return self.m_cursorTracker ~= nil end
 function gui.PFMTimelineDataPoint:SetMoveModeEnabled(enabled)
@@ -148,6 +150,8 @@ function gui.PFMTimelineCurve:UpdateDataPoint(i)
 	-- TODO: Apply value translator function if it was defined
 	local t = self.m_channel:GetTime(i -1)
 	local v = self.m_channel:GetValue(i -1)
+	local valueTranslator = self:GetTimelineGraph():GetGraphCurve(self:GetCurveIndex()).valueTranslator
+	if(valueTranslator ~= nil) then v = valueTranslator[1](v) end
 	local pos = self.m_curve:ValueToUiCoordinates(t,v)
 	el:SetPos(pos -el:GetSize() /2.0)
 end
@@ -235,7 +239,7 @@ function gui.PFMTimelineGraph:OnInitialize()
 					local t = udmChannel:GetTime(idx)
 					local v = udmChannel:GetValue(idx)
 
-					if(graphData.valueTranslator ~= nil) then v = graphData.valueTranslator(v) end
+					if(graphData.valueTranslator ~= nil) then v = graphData.valueTranslator[1](v) end
 					graphData.curve:UpdateCurveValue(idx,t,v)
 				end
 				updateCurveValue(idx)
@@ -373,7 +377,7 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,channel)
 	for i=1,#times do
 		local t = times[i]
 		local v = values[i]
-		v = (graphData.valueTranslator ~= nil) and graphData.valueTranslator(v) or v
+		v = (graphData.valueTranslator ~= nil) and graphData.valueTranslator[1](v) or v
 		table.insert(curveValues,{t,v})
 	end
 	graphData.curve:BuildCurve(curveValues,channel,i)
@@ -480,7 +484,14 @@ function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo)
 		if(animClip ~= nil) then
 			local channel = animClip:FindChannel(controlData.path)
 			if(channel ~= nil) then
-				self:SetupControl(animClip,channel,itemCtrl,Color.Red)
+				local valueTranslator
+				if(memberInfo.type == udm.TYPE_BOOLEAN) then
+					valueTranslator = {
+						function(v) return v and 1.0 or 0.0 end,
+						function(v) return (v >= 0.5) and true or false end
+					}
+				end
+				self:SetupControl(animClip,channel,itemCtrl,Color.Red,valueTranslator)
 			end
 		end
 
