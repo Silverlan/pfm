@@ -25,8 +25,16 @@ void main()
 	else if((SH_INSTANCE_INDEX %10) != 0)
 		y = (y *0.8) -0.2;
 	y *= u_pushConstants.yMultiplier;
-	basePos.x = -1.0 +SH_INSTANCE_INDEX *u_pushConstants.strideX;
-	basePos.y = y;
+	if(u_pushConstants.horizontal == 1)
+	{
+		basePos.x = -1.0 +SH_INSTANCE_INDEX *u_pushConstants.strideX;
+		basePos.y = y;
+	}
+	else
+	{
+		basePos.y = -1.0 +SH_INSTANCE_INDEX *u_pushConstants.strideX;
+		basePos.x = y;
+	}
 	vec2 vertPos = get_vertex_position(basePos).xy;
 	gl_Position = vec4(vertPos,0,1);
 }

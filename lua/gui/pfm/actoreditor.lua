@@ -1212,6 +1212,13 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 				if(controlData.set ~= nil) then controlData.set(udmComponent,EulerAngles(el:GetText())) end
 			end)
 			ctrl = wrapper
+		elseif(memberInfo.type == udm.TYPE_VECTOR3) then
+			local val = Vector()
+			if(controlData.getValue ~= nil) then val = controlData.getValue() or val end
+			local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)
+				if(controlData.set ~= nil) then controlData.set(udmComponent,vector.create_from_string(el:GetText())) end
+			end)
+			ctrl = wrapper
 		else return ctrl end
 	end
 	if(util.is_valid(ctrl) == false) then

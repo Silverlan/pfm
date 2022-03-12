@@ -11,7 +11,7 @@ util.register_class("shader.PFMTimeline",shader.BaseGUI)
 shader.PFMTimeline.FragmentShader = "pfm/fs_timeline"
 shader.PFMTimeline.VertexShader = "pfm/vs_timeline"
 
-local PUSH_CONSTANT_SIZE = util.SIZEOF_MAT4 +util.SIZEOF_VECTOR4 +util.SIZEOF_INT +util.SIZEOF_FLOAT +util.SIZEOF_FLOAT +util.SIZEOF_INT
+local PUSH_CONSTANT_SIZE = util.SIZEOF_MAT4 +util.SIZEOF_VECTOR4 +util.SIZEOF_INT +util.SIZEOF_FLOAT +util.SIZEOF_FLOAT +util.SIZEOF_INT +util.SIZEOF_INT
 
 function shader.PFMTimeline:InitializePipeline(pipelineInfo,pipelineIdx)
 	shader.BaseGUI.InitializePipeline(self,pipelineInfo,pipelineIdx)
@@ -28,7 +28,7 @@ function shader.PFMTimeline:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetDepthWritesEnabled(false)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
-function shader.PFMTimeline:Record(pcb,lineCount,strideX,color,yMultiplier)
+function shader.PFMTimeline:Record(pcb,lineCount,strideX,color,yMultiplier,horizontal)
 	if(self:IsValid() == false) then return false end
 
 	local dsPushConstants = util.DataStream(PUSH_CONSTANT_SIZE -util.SIZEOF_MAT4 -util.SIZEOF_INT)
@@ -37,6 +37,7 @@ function shader.PFMTimeline:Record(pcb,lineCount,strideX,color,yMultiplier)
 	dsPushConstants:WriteUInt32(lineCount)
 	dsPushConstants:WriteFloat(strideX *2.0)
 	dsPushConstants:WriteFloat(yMultiplier)
+	dsPushConstants:WriteUInt32(horizontal and 1 or 0)
 
 	local vertexBuffer = prosper.util.get_line_vertex_buffer()
 	local DynArg = prosper.PreparedCommandBuffer.DynArg

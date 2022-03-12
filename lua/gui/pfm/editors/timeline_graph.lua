@@ -11,6 +11,7 @@ include("/gui/pfm/treeview.lua")
 include("/gui/pfm/grid.lua")
 include("/gui/pfm/selection.lua")
 include("/gui/selectionrect.lua")
+include("/gui/timelinestrip.lua")
 include("/graph_axis.lua")
 include("key.lua")
 
@@ -205,12 +206,21 @@ function gui.PFMTimelineGraph:OnInitialize()
 	self.m_transformList = gui.create("WIPFMTreeView",self.m_scrollContainer,0,0,self.m_scrollContainer:GetWidth(),self.m_scrollContainer:GetHeight())
 	self.m_transformList:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 
+	local dataAxisStrip = gui.create("WILabelledTimelineStrip",self,listContainer:GetRight(),0,20,self:GetHeight(),0,0,0,1)
+	dataAxisStrip:SetHorizontal(false)
+	dataAxisStrip:SetDataAxisInverted(true)
+	dataAxisStrip:AddDebugMarkers()
+	-- dataAxisStrip:SetFlipped(true)
+	self.m_dataAxisStrip = dataAxisStrip
+
 	self.m_keys = {}
 
 	self.m_graphs = {}
 	self.m_channelPathToGraphIndex = {}
 	self.m_timeAxis = util.GraphAxis()
 	self.m_dataAxis = util.GraphAxis()
+
+	dataAxisStrip:SetAxis(self.m_dataAxis)
 
 	self:SetCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_SELECT)
 	gui.set_mouse_selection_enabled(self,true)
@@ -257,8 +267,11 @@ function gui.PFMTimelineGraph:OnInitialize()
 		end
 	end)
 end
+function gui.PFMTimelineGraph:GetTimeAxisExtents() return self:GetWidth() end
+function gui.PFMTimelineGraph:GetDataAxisExtents() return self.m_dataAxisStrip:GetHeight() end
 function gui.PFMTimelineGraph:OnRemove()
 	util.remove(self.m_cbOnChannelValueChanged)
+	util.remove(self.m_cbDataAxisPropertiesChanged)
 end
 function gui.PFMTimelineGraph:OnMouseEvent(button,state,mods)
 	local cursorMode = self:GetCursorMode()
@@ -353,7 +366,15 @@ function gui.PFMTimelineGraph:SetCursorMode(cursorMode) self.m_cursorMode = curs
 function gui.PFMTimelineGraph:GetCursorMode() return self.m_cursorMode end
 function gui.PFMTimelineGraph:SetTimeline(timeline) self.m_timeline = timeline end
 function gui.PFMTimelineGraph:SetTimeAxis(timeAxis) self.m_timeAxis = timeAxis end
-function gui.PFMTimelineGraph:SetDataAxis(dataAxis) self.m_dataAxis = dataAxis end
+function gui.PFMTimelineGraph:SetDataAxis(dataAxis)
+	self.m_dataAxis = dataAxis
+	self.m_dataAxisStrip:SetAxis(dataAxis:GetAxis())
+
+	util.remove(self.m_cbDataAxisPropertiesChanged)
+	self.m_cbDataAxisPropertiesChanged = dataAxis:GetAxis():AddCallback("OnPropertiesChanged",function()
+		self.m_dataAxisStrip:Update()
+	end)
+end
 function gui.PFMTimelineGraph:GetTimeAxis() return self.m_timeAxis end
 function gui.PFMTimelineGraph:GetDataAxis() return self.m_dataAxis end
 function gui.PFMTimelineGraph:UpdateGraphCurveAxisRanges(i)
@@ -365,7 +386,7 @@ function gui.PFMTimelineGraph:UpdateGraphCurveAxisRanges(i)
 	graph:SetHorizontalRange(timeRange[1],timeRange[2])
 
 	local dataAxis = self:GetDataAxis():GetAxis()
-	local dataRange = {dataAxis:GetStartOffset(),dataAxis:XOffsetToValue(self:GetRight())}
+	local dataRange = {dataAxis:GetStartOffset(),dataAxis:XOffsetToValue(self:GetBottom())}
 	graph:SetVerticalRange(dataRange[1],dataRange[2])
 end
 function gui.PFMTimelineGraph:RebuildGraphCurve(i,channel)
@@ -386,7 +407,7 @@ function gui.PFMTimelineGraph:RemoveGraphCurve(i)
 	local graphData = self.m_graphs[i]
 	util.remove(graphData.curve)
 	self.m_channelPathToGraphIndex[graphData.targetPath] = nil
-	while(#self.m_graphs > 0 and util.is_valid(self.m_graphs[#self.m_graphs].curve)) do
+	while(#self.m_graphs > 0 and not util.is_valid(self.m_graphs[#self.m_graphs].curve)) do
 		table.remove(self.m_graphs,#self.m_graphs)
 	end
 end
@@ -412,26 +433,13 @@ function gui.PFMTimelineGraph:AddGraph(animClip,channel,colorCurve,fValueTransla
 	self:RebuildGraphCurve(idx,channel)
 	return graph,idx
 end
-function gui.PFMTimelineGraph:SetTimeRange(startTime,endTime,startOffset,zoomLevel)
+function gui.PFMTimelineGraph:UpdateAxisRanges(startOffset,zoomLevel)
 	if(util.is_valid(self.m_grid)) then
 		self.m_grid:SetStartOffset(startOffset)
 		self.m_grid:SetZoomLevel(zoomLevel)
 	end
-	self.m_timeRange = {startTime,endTime}
-	for _,graphData in ipairs(self.m_graphs) do
-		local graph = graphData.curve
-		if(graph:IsValid()) then
-			graph:SetHorizontalRange(startTime,endTime)
-		end
-	end
-end
-function gui.PFMTimelineGraph:SetDataRange(startValue,endValue,startOffset,zoomLevel)
-	self.m_dataRange = {startValue,endValue}
-	for _,graphData in ipairs(self.m_graphs) do
-		local graph = graphData.curve
-		if(graph:IsValid()) then
-			graph:SetVerticalRange(startValue,endValue)
-		end
+	for i=1,#self.m_graphs do
+		self:UpdateGraphCurveAxisRanges(i)
 	end
 end
 function gui.PFMTimelineGraph:SetupControl(animClip,channel,item,color,fValueTranslator)
@@ -459,41 +467,28 @@ function gui.PFMTimelineGraph:OnVisibilityChanged(visible)
 	local timeline = self.m_timeline:GetTimeline()
 	timeline:ClearBookmarks()
 end
-function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo)
+function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo,valueTranslator)
 	local track = filmClip:FindAnimationChannelTrack()
 	if(track == nil) then return end
 	local itemCtrl = self.m_transformList:AddItem(controlData.name)
-	local function addChannel(channel,item,fValueTranslator)
-		local log = channel:GetLog()
-		local layers = log:GetLayers():GetTable()
-		for _,layer in ipairs(layers) do
-			local type = layer:GetValues():GetValueType()
-			if(type == udm.TYPE_INT32) then
-				-- TODO
-			elseif(type == udm.TYPE_FLOAT) then
-				self:SetupControl(layer,item,Color.Red,fValueTranslator)
-			elseif(type == udm.TYPE_VECTOR3) then
-				self:SetupControl(layer,item,Color.Red,fValueTranslator)
-			elseif(type == udm.TYPE_QUATERNION) then
-				self:SetupControl(layer,item,Color.Red,fValueTranslator)
-			end
-		end
-	end
-	if(udm.is_numeric_type(memberInfo.type)) then
+	local function addChannel(item,fValueTranslator,color)
 		local animClip = track:FindActorAnimationClip(actor)
 		if(animClip ~= nil) then
 			local channel = animClip:FindChannel(controlData.path)
 			if(channel ~= nil) then
-				local valueTranslator
-				if(memberInfo.type == udm.TYPE_BOOLEAN) then
-					valueTranslator = {
-						function(v) return v and 1.0 or 0.0 end,
-						function(v) return (v >= 0.5) and true or false end
-					}
-				end
-				self:SetupControl(animClip,channel,itemCtrl,Color.Red,valueTranslator)
+				self:SetupControl(animClip,channel,item,color or Color.Red,fValueTranslator)
 			end
 		end
+	end
+	if(udm.is_numeric_type(memberInfo.type)) then
+		local valueTranslator
+		if(memberInfo.type == udm.TYPE_BOOLEAN) then
+			valueTranslator = {
+				function(v) return v and 1.0 or 0.0 end,
+				function(v) return (v >= 0.5) and true or false end
+			}
+		end
+		addChannel(itemCtrl,valueTranslator)
 
 		--[[local log = channel:GetLog()
 		local layers = log:GetLayers()
@@ -505,6 +500,19 @@ function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo)
 				-- Get from layer
 			end
 		end]]
+	elseif(memberInfo.type == udm.TYPE_VECTOR3) then
+		addChannel(itemCtrl:AddItem("X"),{
+			function(v) return v.x end,
+			function(v) return Vector() end -- TODO
+		},Color.Red)
+		addChannel(itemCtrl:AddItem("Y"),{
+			function(v) return v.y end,
+			function(v) return Vector() end -- TODO
+		},Color.Lime)
+		addChannel(itemCtrl:AddItem("Z"),{
+			function(v) return v.z end,
+			function(v) return Vector() end -- TODO
+		},Color.Aqua)
 	end
 	if(controlData.type == "flexController") then
 		if(controlData.dualChannel ~= true) then

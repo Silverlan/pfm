@@ -39,11 +39,14 @@ function gui.Timeline:OnInitialize()
 
 	self.m_timelineStripUpper = gui.create("WILabelledTimelineStrip",self,0,self.m_bookmarkBar:GetBottom(),self:GetWidth(),16,0,0,1,0)
 	self.m_timelineStripUpper:SetMouseInputEnabled(true)
+	self.m_timelineStripUpper:SetHorizontal(true)
+	self.m_timelineStripUpper:SetFlipped(false)
 	self.m_timelineStripUpper:AddCallback("OnMouseEvent",onTimelineMouseEvent)
 
 	self.m_timelineStripLower = gui.create("WILabelledTimelineStrip",self,0,self:GetBottom() -16,self:GetWidth(),16,0,1,1,1)
-	self.m_timelineStripLower:SetFlipped(true)
 	self.m_timelineStripLower:SetMouseInputEnabled(true)
+	self.m_timelineStripLower:SetHorizontal(true)
+	self.m_timelineStripLower:SetFlipped(true)
 	self.m_timelineStripLower:AddCallback("OnMouseEvent",onTimelineMouseEvent)
 
 	self.m_contents = gui.create("WIBase",self,

@@ -16,7 +16,8 @@ layout(LAYOUT_PUSH_CONSTANTS()) uniform PushConstants
 	uint instanceCount;
 	float strideX;
 	float yMultiplier;
-    uint viewportSize;
+	uint horizontal;
+	uint viewportSize;
 } u_pushConstants;
 
 #endif
