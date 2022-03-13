@@ -19,10 +19,8 @@ function gui.Playhead:OnInitialize()
 	self.m_timeOffset = util.FloatProperty(0.0)
 
 	self:SetSize(11,128)
-	local color = Color(132,112,94)
-	self.m_line = gui.create("WILine",self) -- TODO: WIRect?
-	self.m_line:SetStartPos(Vector2(6,8))
-	self.m_line:SetEndPos(Vector2(6,self:GetHeight() -8 *2))
+	local color = Color(94,112,132)
+	self.m_line = gui.create("WIRect",self,5,8,1,self:GetHeight() -8 *2)
 	self.m_top = gui.create("WITexturedRect",self,0,0,11,16)
 	self.m_top:SetMaterial("gui/pfm/timeline_upper_playhead")
 	self.m_bottom = gui.create("WITexturedRect",self,0,self:GetBottom() -16,11,16,0,1,0,1)
@@ -67,9 +65,7 @@ function gui.Playhead:SetPlayOffset(x)
 end
 function gui.Playhead:UpdateLineEndPos()
 	if(util.is_valid(self.m_line) == false) then return end
-	local endPos = self.m_line:GetEndPos()
-	self.m_line:SetEndPos(Vector2(endPos.x,self:GetHeight() -8 *2))
-	self.m_line:SizeToContents()
+	self.m_line:SetHeight(self:GetHeight() -8 *2)
 end
 function gui.Playhead:OnSizeChanged(w,h)
 	self:UpdateLineEndPos()
