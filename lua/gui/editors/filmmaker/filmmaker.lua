@@ -1219,6 +1219,12 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		end
 	end
 end
+function gui.WIFilmmaker:SetTimeOffset(offset)
+	pfm.ProjectManager.SetTimeOffset(self,offset)
+	local actorEditor = self:GetActorEditor()
+	if(util.is_valid(actorEditor) == false) then return end
+	actorEditor:UpdateControlValues()
+end
 function gui.WIFilmmaker:OpenMaterialEditor(mat,optMdl)
 	self:CloseWindow("material_editor")
 	local tab,matEd = self:OpenWindow("material_editor",true)

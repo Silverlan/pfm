@@ -59,6 +59,7 @@ function gui.PFMTimelineDataPoint:SetSelected(selected)
 	if(selected == self.m_selected) then return end
 	self.m_selected = selected
 	self:SetColor(selected and Color.Red or Color.White)
+	if(selected) then self:UpdateTextFields() end
 	self:CallCallbacks("OnSelectionChanged",selected)
 end
 function gui.PFMTimelineDataPoint:ChangeDataValue(t,v)
@@ -70,8 +71,19 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t,v)
 		v = curveData.valueTranslator[2](v,curVal)
 	end
 	animManager:UpdateChannelValueByIndex(actor,targetPath,valueIndex,t,v)
-	animManager:SetAnimationDirty(actor)
 	pfm.tag_render_scene_as_dirty()
+end
+function gui.PFMTimelineDataPoint:UpdateTextFields()
+	local graphData = self.m_graphData
+	local timelineCurve = graphData.timelineCurve
+	local pm = pfm.get_project_manager()
+	local curValue = timelineCurve:GetCurve():CoordinatesToValues(self:GetX() +self:GetWidth() /2.0,self:GetY() +self:GetHeight() /2.0)
+	curValue = {curValue.x,curValue.y}
+	curValue[2] = math.round(curValue[2] *100.0) /100.0 -- TODO: Make round precision dependent on animation property
+	timelineCurve:GetTimelineGraph():GetTimeline():SetDataValue(
+		util.round_string(pm:TimeOffsetToFrameOffset(curValue[1]),2),
+		util.round_string(curValue[2],2)
+	)
 end
 function gui.PFMTimelineDataPoint:OnThink()
 	if(self.m_cursorTracker == nil) then return end
@@ -85,23 +97,31 @@ function gui.PFMTimelineDataPoint:OnThink()
 	local animManager = pm:GetAnimationManager()
 
 	local actor,targetPath,valueIndex,curveData = self:GetChannelValueData()
+	-- TODO: Merge this with PFMTimelineDataPoint:UpdateTextFields()
 	local newValue = timelineCurve:GetCurve():CoordinatesToValues(newPos.x +self:GetWidth() /2.0,newPos.y +self:GetHeight() /2.0)
 	newValue = {newValue.x,newValue.y}
-	newValue[1] = math.snap_to_gridf(newValue[1],1.0 /pm:GetFrameRate())
+	newValue[1] = math.snap_to_gridf(newValue[1],1.0 /pm:GetFrameRate()) -- TODO: Only if snap-to-grid is enabled
 	newValue[2] = math.round(newValue[2] *100.0) /100.0 -- TODO: Make round precision dependent on animation property
 
-	timelineCurve:GetTimelineGraph():GetTimeline():SetDataValue(
-		util.round_string(pm:TimeOffsetToFrameOffset(newValue[1]),2),
-		util.round_string(newValue[2],2)
-	)
-
+	local displayValue = newValue[2]
 	if(curveData.valueTranslator ~= nil) then
 		local curTime,curVal = animManager:GetChannelValueByIndex(actor,targetPath,valueIndex)
 		newValue[2] = curveData.valueTranslator[2](newValue[2],curVal)
+		displayValue = curveData.valueTranslator[1](newValue[2])
 	end
+
+	timelineCurve:GetTimelineGraph():GetTimeline():SetDataValue(
+		util.round_string(pm:TimeOffsetToFrameOffset(newValue[1]),2),
+		util.round_string(displayValue,2)
+	)
+
 	animManager:UpdateChannelValueByIndex(actor,targetPath,valueIndex,newValue[1],newValue[2])
 	animManager:SetAnimationDirty(actor)
 	pfm.tag_render_scene_as_dirty()
+
+	-- TODO: This doesn't really belong here
+	local actorEditor = pm:GetActorEditor()
+	if(util.is_valid(actorEditor)) then actorEditor:UpdateActorProperty(actor,targetPath) end
 end
 function gui.PFMTimelineDataPoint:GetChannelValueData()
 	local graphData = self.m_graphData

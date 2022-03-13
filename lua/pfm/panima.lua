@@ -143,6 +143,7 @@ end
 
 function pfm.AnimationManager:RemoveChannel(actor,path)
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then return end
+	self:SetAnimationDirty(actor)
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
 	if(animClip ~= nil) then animClip:RemoveChannel(path) end
 	if(channel == nil) then return end
@@ -158,6 +159,8 @@ function pfm.AnimationManager:RemoveChannelValueByIndex(actor,path,idx)
 	if(channel == nil) then return end
 	channel:RemoveValue(idx)
 	anim:UpdateDuration()
+	self:SetAnimationDirty(actor)
+
 	local udmChannel = animClip:GetChannel(path,type)
 	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,nil,idx)
 end
@@ -212,6 +215,7 @@ function pfm.AnimationManager:UpdateChannelValueByIndex(actor,path,idx,time,valu
 
 		anim:UpdateDuration()
 	end
+	self:SetAnimationDirty(actor)
 
 	local udmChannel = animClip:GetChannel(path,type)
 	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,idx,oldIdx)

@@ -31,6 +31,7 @@ function gui.PFMActorEditor:OnInitialize()
 
 	self.navBar:SetHeight(32)
 	self.navBar:SetAnchor(0,0,1,0)
+	self.m_activeControls = {}
 
 	self.m_btTools = gui.PFMButton.create(self,"gui/pfm/icon_gear","gui/pfm/icon_gear_activated",function()
 		print("TODO")
@@ -449,7 +450,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 					local prop = controlData.getLeftProperty(component)
 					if(prop ~= nil) then
 						local cb = prop:AddChangeListener(function(newValue)
-						self:TagRenderSceneAsDirty()
+							self:TagRenderSceneAsDirty()
 							if(skipCallbacks) then return end
 							skipCallbacks = true
 							slider:SetLeftValue(controlData.translateToInterface(newValue))
@@ -465,7 +466,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 					local prop = controlData.getRightProperty(component)
 					if(prop ~= nil) then
 						local cb = prop:AddChangeListener(function(newValue)
-						self:TagRenderSceneAsDirty()
+							self:TagRenderSceneAsDirty()
 							if(skipCallbacks) then return end
 							skipCallbacks = true
 							slider:SetRightValue(controlData.translateToInterface(newValue))
@@ -503,6 +504,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 		end)
 	end
 	slider:AddCallback("OnLeftValueChanged",function(el,value)
+		if(self.m_skipUpdateCallback) then return end
 		if(controlData.boolean) then value = toboolean(value) end
 		if(controlData.set ~= nil) then
 			controlData.set(component,value)
@@ -517,6 +519,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 		applyComponentChannelValue(self,component,controlData,value)]]
 	end)
 	slider:AddCallback("OnRightValueChanged",function(el,value)
+		if(self.m_skipUpdateCallback) then return end
 		if(controlData.boolean) then value = toboolean(value) end
 		if(controlData.setRight ~= nil) then
 			controlData.setRight(component,value)
@@ -1101,6 +1104,27 @@ function gui.PFMActorEditor:AddProperty(name,child,fInitPropertyEl)
 	end
 	return elProperty
 end
+function gui.PFMActorEditor:UpdateActorProperty(actor,path)
+	local uid = tostring(actor:GetUniqueId())
+	if(self.m_activeControls[uid] == nil) then return end
+	local t = self.m_activeControls[uid]
+	if(t[path] == nil) then return end
+	local ac = t[path]
+	self:UpdateControlValue(ac.controlData)
+end
+function gui.PFMActorEditor:UpdateControlValue(controlData)
+	if(controlData.updateControlValue == nil) then return end
+	self.m_skipUpdateCallback = true
+	controlData.updateControlValue()
+	self.m_skipUpdateCallback = nil
+end
+function gui.PFMActorEditor:UpdateControlValues()
+	for uid,t in pairs(self.m_activeControls) do
+		for path,ac in pairs(t) do
+			self:UpdateControlValue(ac.controlData)
+		end
+	end
+end
 function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,controlData)
 	local memberInfo = self:GetMemberInfo(actor,controlData.path)
 	if(memberInfo == nil) then
@@ -1113,11 +1137,16 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 	if(controlData.path ~= nil) then
 		if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
 			local colField,wrapper = self.m_animSetControls:AddColorField(memberInfo.name,memberInfo.name,(controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
+				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,newCol) end
 			end)
-			local val
-			if(controlData.getValue) then val = controlData.getValue() end
-			if(val ~= nil) then colField:SetColor(Color(val)) end
+			if(controlData.getValue ~= nil) then
+				controlData.updateControlValue = function()
+					if(colField:IsValid() == false) then return end
+					local val = controlData.getValue()
+					if(val ~= nil) then colField:SetColor(Color(val)) end
+				end
+			end
 			ctrl = wrapper
 		elseif(memberInfo.type == udm.TYPE_STRING) then
 			if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE) then
@@ -1127,8 +1156,11 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 						ctrl = self:AddProperty(memberInfo.name,child,function(parent)
 							local el = gui.create("WIFileEntry",parent)
 							if(controlData.getValue ~= nil) then
-								local val = controlData.getValue()
-								if(val ~= nil) then el:SetValue(val) end
+								controlData.updateControlValue = function()
+									if(el:IsValid() == false) then return end
+									local val = controlData.getValue()
+									if(val ~= nil) then el:SetValue(val) end
+								end
 							end
 							el:SetBrowseHandler(function(resultHandler)
 								gui.open_model_dialog(function(dialogResult,mdlName)
@@ -1137,6 +1169,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 								end)
 							end)
 							el:AddCallback("OnValueChanged",function(el,value)
+								if(self.m_skipUpdateCallback) then return end
 								if(controlData.set ~= nil) then controlData.set(udmComponent,value) end
 							end)
 							return el
@@ -1147,8 +1180,11 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 					ctrl = self:AddProperty(memberInfo.name,child,function(parent)
 						local el = gui.create("WIFileEntry",parent)
 						if(controlData.getValue ~= nil) then
-							local val = controlData.getValue()
-							if(val ~= nil) then el:SetValue(val) end
+							controlData.updateControlValue = function()
+								if(el:IsValid() == false) then return end
+								local val = controlData.getValue()
+								if(val ~= nil) then el:SetValue(val) end
+							end
 						end
 						el:SetBrowseHandler(function(resultHandler)
 							local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
@@ -1163,6 +1199,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 							pFileDialog:Update()
 						end)
 						el:AddCallback("OnValueChanged",function(el,value)
+							if(self.m_skipUpdateCallback) then return end
 							if(controlData.set ~= nil) then controlData.set(udmComponent,value) end
 						end)
 						return el
@@ -1172,11 +1209,16 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			return ctrl
 		elseif(memberInfo.type == udm.TYPE_BOOLEAN) then
 			local elToggle,wrapper = self.m_animSetControls:AddToggleControl(memberInfo.name,memberInfo.name,controlData.default or false,function(oldChecked,checked)
+				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,checked) end
 			end)
-			local val = false
-			if(controlData.getValue) then val = controlData.getValue() or val end
-			elToggle:SetChecked(val)
+			if(controlData.getValue ~= nil) then
+				controlData.updateControlValue = function()
+					if(elToggle:IsValid() == false) then return end
+					local val = controlData.getValue()
+					if(val ~= nil) then elToggle:SetChecked(val) end
+				end
+			else elToggle:SetChecked(false) end
 			ctrl = wrapper
 		elseif(udm.is_numeric_type(memberInfo.type)) then
 			if(memberInfo.minValue ~= nil) then controlData.min = memberInfo.minValue end
@@ -1204,28 +1246,56 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			ctrl = self:AddSliderControl(udmComponent,controlData)
 			if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
 
+			controlData.updateControlValue = function()
+				if(ctrl:IsValid() == false) then return end
+				local val = controlData.getValue()
+				if(val ~= nil) then ctrl:SetValue(val) end
+			end
+
 			-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		elseif(memberInfo.type == udm.TYPE_EULER_ANGLES) then
 			local val = EulerAngles()
-			if(controlData.getValue ~= nil) then val = controlData.getValue() or val end
 			local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)
+				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,EulerAngles(el:GetText())) end
 			end)
+			if(controlData.getValue ~= nil) then
+				controlData.updateControlValue = function()
+					if(el:IsValid() == false) then return end
+					local val = controlData.getValue() or EulerAngles()
+					if(val ~= nil) then el:SetText(tostring(val)) end
+				end
+			end
 			ctrl = wrapper
 		elseif(memberInfo.type == udm.TYPE_QUATERNION) then
-			local val = Quaternion()
-			if(controlData.getValue ~= nil) then val = controlData.getValue() or val end
+			local val = EulerAngles()
 			local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)
+				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,EulerAngles(el:GetText()):ToQuaternion()) end
 			end)
+			if(controlData.getValue ~= nil) then
+				controlData.updateControlValue = function()
+					if(el:IsValid() == false) then return end
+					local val = controlData.getValue() or Quaternion()
+					if(val ~= nil) then el:SetText(tostring(val:ToEulerAngles())) end
+				end
+			end
 			ctrl = wrapper
 		elseif(udm.is_vector_type(memberInfo.type) or udm.is_matrix_type(memberInfo.type)) then
 			local type = udm.get_class_type(memberInfo.type)
 			local val = type()
 			if(controlData.getValue ~= nil) then val = controlData.getValue() or val end
 			local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)
+				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,type(el:GetText())) end
 			end)
+			if(controlData.getValue ~= nil) then
+				controlData.updateControlValue = function()
+					if(el:IsValid() == false) then return end
+					local val = controlData.getValue() or type()
+					if(val ~= nil) then el:SetText(tostring(val)) end
+				end
+			end
 			ctrl = wrapper
 		else return ctrl end
 	end
@@ -1278,6 +1348,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			end
 		end)
 	end
+	self:UpdateControlValue(controlData)
 	self:CallCallbacks("OnControlSelected",actor,udmComponent,controlData,ctrl)
 	return ctrl
 end
@@ -1307,11 +1378,26 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 		selectedCount = selectedCount +1
 		if(selectedCount > 1 or util.is_valid(ctrl)) then return end
 		ctrl = self:OnControlSelected(actor,actorData,udmComponent,controlData)
+		if(ctrl ~= nil) then
+			local uid = tostring(actor:GetUniqueId())
+			self.m_activeControls[uid] = self.m_activeControls[uid] or {}
+			self.m_activeControls[uid][controlData.path] = {
+				actor = actor,
+				control = ctrl,
+				controlData = controlData
+			}
+		end
 	end
 	local fOnDeselected = function()
 		selectedCount = selectedCount -1
 		if(selectedCount > 0) then return end
 		self:CallCallbacks("OnControlDeselected",udmComponent,controlData,ctrl)
+
+		local uid = tostring(actor:GetUniqueId())
+		if(self.m_activeControls[uid] ~= nil) then
+			self.m_activeControls[uid][controlData.path] = nil
+			if(table.is_empty(self.m_activeControls[uid])) then self.m_activeControls[uid] = nil end
+		end
 		if(util.is_valid(ctrl) == false) then return end
 		ctrl:Remove()
 	end
