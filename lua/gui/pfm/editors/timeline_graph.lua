@@ -550,18 +550,80 @@ function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo,v
 				-- Get from layer
 			end
 		end]]
-	elseif(memberInfo.type == udm.TYPE_VECTOR3) then
-		addChannel(itemCtrl:AddItem("X"),{
-			function(v) return v.x end,
-			function(v,curVal) return Vector(v,curVal.y,curVal.z) end
+	elseif(udm.is_vector_type(memberInfo.type)) then
+		local n = udm.get_numeric_component_count(memberInfo.type)
+		assert(n < 5)
+		local type = udm.get_class_type(memberInfo.type)
+		local vectorComponents = {
+			{"X",Color.Red},
+			{"Y",Color.Lime},
+			{"Z",Color.Aqua},
+			{"W",Color.Magenta},
+		}
+		for i=0,n -1 do
+			local vc = vectorComponents[i +1]
+			addChannel(itemCtrl:AddItem(vc[1]),{
+				function(v) return v:Get(i) end,
+				function(v,curVal)
+					local r = curVal:Copy()
+					r:Set(i,v)
+					return r
+				end
+			},vc[2])
+		end
+	elseif(udm.is_matrix_type(memberInfo.type)) then
+		local nRows = udm.get_matrix_row_count(memberInfo.type)
+		local nCols = udm.get_matrix_column_count(memberInfo.type)
+		local type = udm.get_class_type(memberInfo.type)
+		for i=0,nRows -1 do
+			for j=0,nCols -1 do
+				addChannel(itemCtrl:AddItem("M[" .. i .. "][" .. j .. "]"),{
+					function(v) return v:Get(i,j) end,
+					function(v,curVal)
+						local r = curVal:Copy()
+						r:Set(i,j,v)
+						return r
+					end
+				})
+			end
+		end
+	elseif(memberInfo.type == udm.TYPE_EULER_ANGLES) then
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_pitch")),{
+			function(v) return v.p end,
+			function(v,curVal) return EulerAngles(v,curVal.y,curVal.r) end
 		},Color.Red)
-		addChannel(itemCtrl:AddItem("Y"),{
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_yaw")),{
 			function(v) return v.y end,
-			function(v,curVal) return Vector(curVal.x,v,curVal.z) end
+			function(v,curVal) return EulerAngles(curVal.p,v,curVal.r) end
 		},Color.Lime)
-		addChannel(itemCtrl:AddItem("Z"),{
-			function(v) return v.z end,
-			function(v,curVal) return Vector(curVal.x,curVal.y,v) end
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_roll")),{
+			function(v) return v.r end,
+			function(v,curVal) return EulerAngles(curVal.p,curVal.y,v) end
+		},Color.Aqua)
+	elseif(memberInfo.type == udm.TYPE_QUATERNION) then
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_pitch")),{
+			function(v) return v:ToEulerAngles().p end,
+			function(v,curVal)
+				local ang = curVal:ToEulerAngles()
+				ang.p = v
+				return ang:ToQuaternion()
+			end
+		},Color.Red)
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_yaw")),{
+			function(v) return v:ToEulerAngles().y end,
+			function(v,curVal)
+				local ang = curVal:ToEulerAngles()
+				ang.y = v
+				return ang:ToQuaternion()
+			end
+		},Color.Lime)
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_roll")),{
+			function(v) return v:ToEulerAngles().r end,
+			function(v,curVal)
+				local ang = curVal:ToEulerAngles()
+				ang.r = v
+				return ang:ToQuaternion()
+			end
 		},Color.Aqua)
 	end
 	if(controlData.type == "flexController") then
