@@ -213,6 +213,21 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_entryFrame = gui.create("WITextEntry",self.m_entryFields,0,6,60,20)
 	self.m_entryValue = gui.create("WITextEntry",self.m_entryFields,0,6,60,20)
 
+	self.m_entryFrame:AddCallback("OnTextEntered",function(el)
+		local dps = self.m_timelineGraph:GetSelectedDataPoints()
+		if(#dps ~= 1) then return end
+		local pm = pfm.get_project_manager()
+		local t = pm:FrameOffsetToTimeOffset(el:GetText())
+		dps[1]:ChangeDataValue(t,nil)
+	end)
+	self.m_entryValue:AddCallback("OnTextEntered",function(el)
+		local dps = self.m_timelineGraph:GetSelectedDataPoints()
+		if(#dps ~= 1) then return end
+		local pm = pfm.get_project_manager()
+		local v = tonumber(el:GetText())
+		dps[1]:ChangeDataValue(nil,v)
+	end)
+
 	self.m_controls = gui.create("WIHBox",toolbarLeft)
 	self.m_controls:SetName("timeline_controls")
 	self.m_btCtrlSelect = gui.PFMButton.create(self.m_controls,"gui/pfm/icon_grapheditor_select","gui/pfm/icon_grapheditor_select_activated",function()
@@ -332,5 +347,9 @@ function gui.PFMTimeline:InitializeToolbar()
 	toolbarRight:SetAnchor(1,0,1,0)
 	toolbar:SetHeight(toolbarLeft:GetHeight())
 	toolbar:SetAnchor(0,0,1,0)
+end
+function gui.PFMTimeline:SetDataValue(t,v)
+	self.m_entryFrame:SetText(tostring(t))
+	self.m_entryValue:SetText(tostring(v))
 end
 gui.register("WIPFMTimeline",gui.PFMTimeline)

@@ -43,6 +43,7 @@ end
 
 function pfm.AnimationManager:SetTime(t)
 	if(self.m_filmClip == nil) then return end
+	self.m_time = t
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_PANIMA)}) do
 		local animC = ent:GetComponent(ents.COMPONENT_PANIMA)
 		local manager = animC:GetAnimationManager("pfm")
@@ -175,40 +176,42 @@ function pfm.AnimationManager:UpdateChannelValueByIndex(actor,path,idx,time,valu
 	end
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
 	if(channel == nil) then return end
-	channel:SetTime(idx,time)
-	channel:SetValue(idx,value)
-
-	-- Since we changed the time value, we may have to re-order
-	local function swapValue(idx0,idx1)
-		local t0 = channel:GetTime(idx0)
-		local v0 = channel:GetValue(idx0)
-		local t1 = channel:GetTime(idx1)
-		local v1 = channel:GetValue(idx1)
-		channel:SetTime(idx0,t1)
-		channel:SetValue(idx0,v1)
-		channel:SetTime(idx1,t0)
-		channel:SetValue(idx1,v0)
-	end
+	if(value ~= nil) then channel:SetValue(idx,value) end
 
 	local oldIdx = idx
-	local tNext = channel:GetTime(idx +1)
-	while(tNext ~= nil and tNext < time) do
-		-- Value needs to be moved up
-		swapValue(idx,idx +1)
-		idx = idx +1
-		tNext = channel:GetTime(idx +1)
-	end
+	if(time ~= nil) then
+		channel:SetTime(idx,time)
+		-- Since we changed the time value, we may have to re-order
+		local function swapValue(idx0,idx1)
+			local t0 = channel:GetTime(idx0)
+			local v0 = channel:GetValue(idx0)
+			local t1 = channel:GetTime(idx1)
+			local v1 = channel:GetValue(idx1)
+			channel:SetTime(idx0,t1)
+			channel:SetValue(idx0,v1)
+			channel:SetTime(idx1,t0)
+			channel:SetValue(idx1,v0)
+		end
 
-	local tPrev = (idx > 0) and channel:GetTime(idx -1) or nil
-	while(tPrev ~= nil and tPrev > time) do
-		-- Value needs to be moved down
-		swapValue(idx,idx -1)
-		idx = idx -1
-		tPrev = (idx > 0) and channel:GetTime(idx -1) or nil
-	end
-	--
+		local tNext = channel:GetTime(idx +1)
+		while(tNext ~= nil and tNext < time) do
+			-- Value needs to be moved up
+			swapValue(idx,idx +1)
+			idx = idx +1
+			tNext = channel:GetTime(idx +1)
+		end
 
-	anim:UpdateDuration()
+		local tPrev = (idx > 0) and channel:GetTime(idx -1) or nil
+		while(tPrev ~= nil and tPrev > time) do
+			-- Value needs to be moved down
+			swapValue(idx,idx -1)
+			idx = idx -1
+			tPrev = (idx > 0) and channel:GetTime(idx -1) or nil
+		end
+		--
+
+		anim:UpdateDuration()
+	end
 
 	local udmChannel = animClip:GetChannel(path,type)
 	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,idx,oldIdx)

@@ -61,6 +61,18 @@ function gui.PFMTimelineDataPoint:SetSelected(selected)
 	self:SetColor(selected and Color.Red or Color.White)
 	self:CallCallbacks("OnSelectionChanged",selected)
 end
+function gui.PFMTimelineDataPoint:ChangeDataValue(t,v)
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+	local actor,targetPath,valueIndex,curveData = self:GetChannelValueData()
+	if(v ~= nil and curveData.valueTranslator ~= nil) then
+		local curTime,curVal = animManager:GetChannelValueByIndex(actor,targetPath,valueIndex)
+		v = curveData.valueTranslator[2](v,curVal)
+	end
+	animManager:UpdateChannelValueByIndex(actor,targetPath,valueIndex,t,v)
+	animManager:SetAnimationDirty(actor)
+	pfm.tag_render_scene_as_dirty()
+end
 function gui.PFMTimelineDataPoint:OnThink()
 	if(self.m_cursorTracker == nil) then return end
 	local dt = self.m_cursorTracker:Update()
@@ -76,11 +88,20 @@ function gui.PFMTimelineDataPoint:OnThink()
 	local newValue = timelineCurve:GetCurve():CoordinatesToValues(newPos.x +self:GetWidth() /2.0,newPos.y +self:GetHeight() /2.0)
 	newValue = {newValue.x,newValue.y}
 	newValue[1] = math.snap_to_gridf(newValue[1],1.0 /pm:GetFrameRate())
+	newValue[2] = math.round(newValue[2] *100.0) /100.0 -- TODO: Make round precision dependent on animation property
+
+	timelineCurve:GetTimelineGraph():GetTimeline():SetDataValue(
+		util.round_string(pm:TimeOffsetToFrameOffset(newValue[1]),2),
+		util.round_string(newValue[2],2)
+	)
+
 	if(curveData.valueTranslator ~= nil) then
 		local curTime,curVal = animManager:GetChannelValueByIndex(actor,targetPath,valueIndex)
 		newValue[2] = curveData.valueTranslator[2](newValue[2],curVal)
 	end
 	animManager:UpdateChannelValueByIndex(actor,targetPath,valueIndex,newValue[1],newValue[2])
+	animManager:SetAnimationDirty(actor)
+	pfm.tag_render_scene_as_dirty()
 end
 function gui.PFMTimelineDataPoint:GetChannelValueData()
 	local graphData = self.m_graphData
@@ -241,45 +262,48 @@ function gui.PFMTimelineGraph:OnInitialize()
 	local animManager = pfm.get_project_manager():GetAnimationManager()
 	self.m_cbOnChannelValueChanged = animManager:AddCallback("OnChannelValueChanged",function(actor,anim,channel,udmChannel,idx,oldIdx)
 		if(self.m_skipOnChannelValueChangedCallback == true) then return end
-		local i = self.m_channelPathToGraphIndex[udmChannel:GetTargetPath()]
-		if(i == nil) then return end
-		local graphData = self.m_graphs[i]
-		if(graphData.curve:IsValid()) then
-			if(idx ~= nil and udmChannel:GetValueCount() == graphData.numValues) then
-				if(idx ~= oldIdx) then
-					-- If the index has changed, we have to do a bunch of reshuffling
-					local dp0 = graphData.curve.m_dataPoints[oldIdx +1]
-					local dp1 = graphData.curve.m_dataPoints[idx +1]
-					graphData.curve.m_dataPoints[oldIdx +1] = dp1
-					graphData.curve.m_dataPoints[idx +1] = dp0
-
-					local graphData0 = dp0.m_graphData
-					local graphData1 = dp1.m_graphData
-					dp0.m_graphData = graphData1
-					dp1.m_graphData = graphData0
-				end
-
-				local function updateCurveValue(idx)
-					local t = udmChannel:GetTime(idx)
-					local v = udmChannel:GetValue(idx)
-
-					if(graphData.valueTranslator ~= nil) then v = graphData.valueTranslator[1](v) end
-					graphData.curve:UpdateCurveValue(idx,t,v)
-				end
-				updateCurveValue(idx)
-
-				if(idx ~= oldIdx) then
-					updateCurveValue(oldIdx)
-					for i=1,#graphData.curve.m_dataPoints do
-						graphData.curve:UpdateDataPoint(i)
-					end
-				end
-			else
-				-- Value has been added or removed; Complete graph update is required
-				self:RebuildGraphCurve(i,udmChannel)
-			end
-		end
+		self:UpdateChannelValue(actor,anim,channel,udmChannel,idx,oldIdx)
 	end)
+end
+function gui.PFMTimelineGraph:UpdateChannelValue(actor,anim,channel,udmChannel,idx,oldIdx)
+	local i = self.m_channelPathToGraphIndex[udmChannel:GetTargetPath()]
+	if(i == nil) then return end
+	local graphData = self.m_graphs[i]
+	if(graphData.curve:IsValid()) then
+		if(idx ~= nil and udmChannel:GetValueCount() == graphData.numValues) then
+			if(idx ~= oldIdx) then
+				-- If the index has changed, we have to do a bunch of reshuffling
+				local dp0 = graphData.curve.m_dataPoints[oldIdx +1]
+				local dp1 = graphData.curve.m_dataPoints[idx +1]
+				graphData.curve.m_dataPoints[oldIdx +1] = dp1
+				graphData.curve.m_dataPoints[idx +1] = dp0
+
+				local graphData0 = dp0.m_graphData
+				local graphData1 = dp1.m_graphData
+				dp0.m_graphData = graphData1
+				dp1.m_graphData = graphData0
+			end
+
+			local function updateCurveValue(idx)
+				local t = udmChannel:GetTime(idx)
+				local v = udmChannel:GetValue(idx)
+
+				if(graphData.valueTranslator ~= nil) then v = graphData.valueTranslator[1](v) end
+				graphData.curve:UpdateCurveValue(idx,t,v)
+			end
+			updateCurveValue(idx)
+
+			if(idx ~= oldIdx) then
+				updateCurveValue(oldIdx)
+				for i=1,#graphData.curve.m_dataPoints do
+					graphData.curve:UpdateDataPoint(i)
+				end
+			end
+		else
+			-- Value has been added or removed; Complete graph update is required
+			self:RebuildGraphCurve(i,udmChannel)
+		end
+	end
 end
 function gui.PFMTimelineGraph:GetTimeAxisExtents() return self:GetWidth() end
 function gui.PFMTimelineGraph:GetDataAxisExtents() return self.m_dataAxisStrip:GetHeight() end
@@ -407,6 +431,7 @@ end
 function gui.PFMTimelineGraph:SetCursorMode(cursorMode) self.m_cursorMode = cursorMode end
 function gui.PFMTimelineGraph:GetCursorMode() return self.m_cursorMode end
 function gui.PFMTimelineGraph:SetTimeline(timeline) self.m_timeline = timeline end
+function gui.PFMTimelineGraph:GetTimeline() return self.m_timeline end
 function gui.PFMTimelineGraph:SetTimeAxis(timeAxis) self.m_timeAxis = timeAxis end
 function gui.PFMTimelineGraph:SetDataAxis(dataAxis)
 	self.m_dataAxis = dataAxis
@@ -444,6 +469,7 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,channel)
 	local values = channel:GetValues()
 
 	local graphData = self.m_graphs[i]
+	graphData.numValues = channel:GetValueCount()
 	local curveValues = {}
 	for i=1,#times do
 		local t = times[i]
