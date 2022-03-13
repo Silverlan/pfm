@@ -96,10 +96,10 @@ function gui.Timeline:AddTimelineItem(el,timeFrame)
 	self.m_timeAxis:AttachElementToRange(el,timeFrame)
 end
 function gui.Timeline:MouseCallback(mouseButton,state,mods)
-	if(mouseButton == input.MOUSE_BUTTON_LEFT) then
+	--[[if(mouseButton == input.MOUSE_BUTTON_LEFT) then
 		self:SetCursorMoveModeEnabled(state == input.STATE_PRESS)
 		return util.EVENT_REPLY_HANDLED
-	end
+	end]]
 	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.Timeline:SetCursorMoveModeEnabled(enabled)

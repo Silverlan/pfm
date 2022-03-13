@@ -98,8 +98,8 @@ function ents.PFMGhost:OnTick()
 		posDst = posDst -(max +min) /2.0
 	end
 	if(input.get_key_state(input.KEY_LEFT_SHIFT) == input.STATE_RELEASE and input.get_key_state(input.KEY_RIGHT_SHIFT) == input.STATE_RELEASE) then
-		posDst.x = math.snap_to_grid(posDst.x,ents.PFMGrid.get_unit_size())
-		posDst.z = math.snap_to_grid(posDst.z,ents.PFMGrid.get_unit_size())
+		posDst.x = math.snap_to_gridf(posDst.x,ents.PFMGrid.get_unit_size())
+		posDst.z = math.snap_to_gridf(posDst.z,ents.PFMGrid.get_unit_size())
 
 		if(ray ~= false) then
 			rayData:SetSource(posDst +Vector(0,10,0))

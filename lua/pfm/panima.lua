@@ -148,6 +148,26 @@ function pfm.AnimationManager:RemoveChannel(actor,path)
 	anim:RemoveChannel(path)
 end
 
+function pfm.AnimationManager:RemoveChannelValueByIndex(actor,path,idx)
+	if(self.m_filmClip == nil or self.m_filmClip == nil) then
+		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
+	if(channel == nil) then return end
+	channel:RemoveValue(idx)
+	anim:UpdateDuration()
+	local udmChannel = animClip:GetChannel(path,type)
+	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,nil,idx)
+end
+
+function pfm.AnimationManager:GetChannelValueByIndex(actor,path,idx)
+	if(self.m_filmClip == nil or self.m_filmClip == nil) then return end
+	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
+	if(channel == nil) then return end
+	return channel:GetTime(idx),channel:GetValue(idx)
+end
+
 function pfm.AnimationManager:UpdateChannelValueByIndex(actor,path,idx,time,value)
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
