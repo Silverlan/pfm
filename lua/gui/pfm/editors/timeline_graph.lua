@@ -70,8 +70,7 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t,v)
 		local curTime,curVal = animManager:GetChannelValueByIndex(actor,targetPath,valueIndex)
 		v = curveData.valueTranslator[2](v,curVal)
 	end
-	animManager:UpdateChannelValueByIndex(actor,targetPath,valueIndex,t,v)
-	pfm.tag_render_scene_as_dirty()
+	pfm.get_project_manager():SetActorAnimationComponentProperty(actor,targetPath,t,v,nil,valueIndex)
 end
 function gui.PFMTimelineDataPoint:UpdateTextFields()
 	local graphData = self.m_graphData
@@ -103,14 +102,14 @@ function gui.PFMTimelineDataPoint:OnThink()
 	newValue[1] = math.snap_to_gridf(newValue[1],1.0 /pm:GetFrameRate()) -- TODO: Only if snap-to-grid is enabled
 	newValue[2] = math.round(newValue[2] *100.0) /100.0 -- TODO: Make round precision dependent on animation property
 
-	local displayValue = newValue[2]
 	if(curveData.valueTranslator ~= nil) then
 		local curTime,curVal = animManager:GetChannelValueByIndex(actor,targetPath,valueIndex)
 		newValue[2] = curveData.valueTranslator[2](newValue[2],curVal)
-		displayValue = curveData.valueTranslator[1](newValue[2])
 	end
 
-	timelineCurve:GetTimelineGraph():GetTimeline():SetDataValue(
+	pm:SetActorAnimationComponentProperty(actor,targetPath,newValue[1],newValue[2],nil,valueIndex)
+
+	--[[timelineCurve:GetTimelineGraph():GetTimeline():SetDataValue(
 		util.round_string(pm:TimeOffsetToFrameOffset(newValue[1]),2),
 		util.round_string(displayValue,2)
 	)
@@ -121,14 +120,14 @@ function gui.PFMTimelineDataPoint:OnThink()
 
 	-- TODO: This doesn't really belong here
 	local actorEditor = pm:GetActorEditor()
-	if(util.is_valid(actorEditor)) then actorEditor:UpdateActorProperty(actor,targetPath) end
+	if(util.is_valid(actorEditor)) then actorEditor:UpdateActorProperty(actor,targetPath) end]]
 end
 function gui.PFMTimelineDataPoint:GetChannelValueData()
 	local graphData = self.m_graphData
 	local timelineCurve = graphData.timelineCurve
 	local timelineGraph = timelineCurve:GetTimelineGraph()
 	local curveData = timelineGraph:GetGraphCurve(timelineCurve:GetCurveIndex())
-	local animClip = curveData.animClip
+	local animClip = curveData.animClip()
 	local actor = animClip:GetActor()
 	local targetPath = curveData.targetPath
 	return actor,targetPath,graphData.valueIndex,curveData
@@ -207,6 +206,8 @@ function gui.PFMTimelineCurve:UpdateDataPoint(i)
 	if(valueTranslator ~= nil) then v = valueTranslator[1](v) end
 	local pos = self.m_curve:ValueToUiCoordinates(t,v)
 	el:SetPos(pos -el:GetSize() /2.0)
+
+	if(el:IsSelected()) then el:UpdateTextFields() end
 end
 function gui.PFMTimelineCurve:UpdateDataPoints()
 	if(self.m_channel == nil) then return end
@@ -268,7 +269,7 @@ function gui.PFMTimelineGraph:OnInitialize()
 	self.m_keys = {}
 
 	self.m_graphs = {}
-	self.m_channelPathToGraphIndex = {}
+	self.m_channelPathToGraphIndices = {}
 	self.m_timeAxis = util.GraphAxis()
 	self.m_dataAxis = util.GraphAxis()
 
@@ -286,42 +287,44 @@ function gui.PFMTimelineGraph:OnInitialize()
 	end)
 end
 function gui.PFMTimelineGraph:UpdateChannelValue(actor,anim,channel,udmChannel,idx,oldIdx)
-	local i = self.m_channelPathToGraphIndex[udmChannel:GetTargetPath()]
-	if(i == nil) then return end
-	local graphData = self.m_graphs[i]
-	if(graphData.curve:IsValid()) then
-		if(idx ~= nil and udmChannel:GetValueCount() == graphData.numValues) then
-			if(idx ~= oldIdx) then
-				-- If the index has changed, we have to do a bunch of reshuffling
-				local dp0 = graphData.curve.m_dataPoints[oldIdx +1]
-				local dp1 = graphData.curve.m_dataPoints[idx +1]
-				graphData.curve.m_dataPoints[oldIdx +1] = dp1
-				graphData.curve.m_dataPoints[idx +1] = dp0
+	local indices = self.m_channelPathToGraphIndices[udmChannel:GetTargetPath()]
+	if(indices == nil) then return end
+	for _,i in ipairs(indices) do
+		local graphData = self.m_graphs[i]
+		if(graphData.curve:IsValid()) then
+			if(idx ~= nil and udmChannel:GetValueCount() == graphData.numValues) then
+				if(idx ~= oldIdx) then
+					-- If the index has changed, we have to do a bunch of reshuffling
+					local dp0 = graphData.curve.m_dataPoints[oldIdx +1]
+					local dp1 = graphData.curve.m_dataPoints[idx +1]
+					graphData.curve.m_dataPoints[oldIdx +1] = dp1
+					graphData.curve.m_dataPoints[idx +1] = dp0
 
-				local graphData0 = dp0.m_graphData
-				local graphData1 = dp1.m_graphData
-				dp0.m_graphData = graphData1
-				dp1.m_graphData = graphData0
-			end
-
-			local function updateCurveValue(idx)
-				local t = udmChannel:GetTime(idx)
-				local v = udmChannel:GetValue(idx)
-
-				if(graphData.valueTranslator ~= nil) then v = graphData.valueTranslator[1](v) end
-				graphData.curve:UpdateCurveValue(idx,t,v)
-			end
-			updateCurveValue(idx)
-
-			if(idx ~= oldIdx) then
-				updateCurveValue(oldIdx)
-				for i=1,#graphData.curve.m_dataPoints do
-					graphData.curve:UpdateDataPoint(i)
+					local graphData0 = dp0.m_graphData
+					local graphData1 = dp1.m_graphData
+					dp0.m_graphData = graphData1
+					dp1.m_graphData = graphData0
 				end
+
+				local function updateCurveValue(idx)
+					local t = udmChannel:GetTime(idx)
+					local v = udmChannel:GetValue(idx)
+
+					if(graphData.valueTranslator ~= nil) then v = graphData.valueTranslator[1](v) end
+					graphData.curve:UpdateCurveValue(idx,t,v)
+				end
+				updateCurveValue(idx)
+
+				if(idx ~= oldIdx) then
+					updateCurveValue(oldIdx)
+					for i=1,#graphData.curve.m_dataPoints do
+						graphData.curve:UpdateDataPoint(i)
+					end
+				end
+			else
+				-- Value has been added or removed; Complete graph update is required
+				self:RebuildGraphCurve(i,udmChannel)
 			end
-		else
-			-- Value has been added or removed; Complete graph update is required
-			self:RebuildGraphCurve(i,udmChannel)
 		end
 	end
 end
@@ -348,6 +351,30 @@ function gui.PFMTimelineGraph:KeyboardCallback(key,scanCode,state,mods)
 			self:RebuildGraphCurves()
 		end
 		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_1) then
+		print("Not yet implemented!")
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_2) then
+		print("Not yet implemented!")
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_3) then
+		print("Not yet implemented!")
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_4) then
+		print("Not yet implemented!")
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_5) then
+		print("Not yet implemented!")
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_6) then
+		print("Not yet implemented!")
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_7) then
+		print("Not yet implemented!")
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_8) then
+		print("Not yet implemented!")
+		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
@@ -367,6 +394,11 @@ function gui.PFMTimelineGraph:GetSelectedDataPoints()
 end
 function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 	self:RequestFocus()
+
+	local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE or
+		input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
+	local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
+		input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
 	local cursorMode = self:GetCursorMode()
 	if(button == input.MOUSE_BUTTON_LEFT) then
 		if(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_MOVE) then
@@ -419,6 +451,24 @@ function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 			self:DisableThinking()
 		end
 		return util.EVENT_REPLY_HANDLED
+	elseif(button == input.MOUSE_BUTTON_RIGHT) then
+		local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE or
+			input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
+		local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
+			input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
+		if(isCtrlDown) then
+			print("Not yet implemented!")
+		elseif(isAltDown) then
+			print("Not yet implemented!")
+		end
+	elseif(button == input.MOUSE_BUTTON_MIDDLE) then
+		local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
+			input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
+		if(isAltDown) then
+			print("Not yet implemented!")
+		else
+			print("Not yet implemented!")
+		end
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
@@ -502,31 +552,47 @@ end
 function gui.PFMTimelineGraph:RemoveGraphCurve(i)
 	local graphData = self.m_graphs[i]
 	util.remove(graphData.curve)
-	self.m_channelPathToGraphIndex[graphData.targetPath] = nil
+
+	local graphIndices = self.m_channelPathToGraphIndices[graphData.targetPath]
+	for j,ci in ipairs(graphIndices) do
+		if(ci == i) then
+			table.remove(graphIndices,j)
+			break
+		end
+	end
+	if(#graphIndices == 0) then self.m_channelPathToGraphIndices[graphData.targetPath] = nil end
+
 	while(#self.m_graphs > 0 and not util.is_valid(self.m_graphs[#self.m_graphs].curve)) do
 		table.remove(self.m_graphs,#self.m_graphs)
 	end
 end
 function gui.PFMTimelineGraph:GetGraphCurve(i) return self.m_graphs[i] end
-function gui.PFMTimelineGraph:AddGraph(animClip,channel,colorCurve,fValueTranslator)
+function gui.PFMTimelineGraph:AddGraph(track,actor,targetPath,colorCurve,fValueTranslator)
 	if(util.is_valid(self.m_graphContainer) == false) then return end
 
 	local graph = gui.create("WIPFMTimelineCurve",self.m_graphContainer,0,0,self.m_graphContainer:GetWidth(),self.m_graphContainer:GetHeight(),0,0,1,1)
 	graph:SetTimelineGraph(self)
 	graph:SetColor(colorCurve)
-	local targetPath = channel:GetTargetPath()
+	local animClip
+	local function getAnimClip()
+		animClip = animClip or track:FindActorAnimationClip(actor)
+		return animClip
+	end
+	getAnimClip()
+	local channel = (animClip ~= nil) and animClip:FindChannel(targetPath) or nil
 	table.insert(self.m_graphs,{
-		animClip = animClip,
+		animClip = getAnimClip,
 		curve = graph,
 		valueTranslator = fValueTranslator,
-		numValues = channel:GetValueCount(),
+		numValues = (channel ~= nil) and channel:GetValueCount() or 0,
 		targetPath = targetPath
 	})
-	self.m_channelPathToGraphIndex[targetPath] = #self.m_graphs
+	self.m_channelPathToGraphIndices[targetPath] = self.m_channelPathToGraphIndices[targetPath] or {}
+	table.insert(self.m_channelPathToGraphIndices[targetPath],#self.m_graphs)
 
 	local idx = #self.m_graphs
 	self:UpdateGraphCurveAxisRanges(idx)
-	self:RebuildGraphCurve(idx,channel)
+	if(channel ~= nil) then self:RebuildGraphCurve(idx,channel) end
 	return graph,idx
 end
 function gui.PFMTimelineGraph:UpdateAxisRanges(startOffset,zoomLevel)
@@ -538,11 +604,14 @@ function gui.PFMTimelineGraph:UpdateAxisRanges(startOffset,zoomLevel)
 		self:UpdateGraphCurveAxisRanges(i)
 	end
 end
-function gui.PFMTimelineGraph:SetupControl(animClip,channel,item,color,fValueTranslator)
+function gui.PFMTimelineGraph:SetupControl(filmClip,actor,targetPath,item,color,fValueTranslator)
 	local graph,graphIndex
 	item:AddCallback("OnSelected",function()
 		if(util.is_valid(graph)) then self:RemoveGraphCurve(graphIndex) end
-		graph,graphIndex = self:AddGraph(animClip,channel,color,fValueTranslator)
+
+		local track = filmClip:FindAnimationChannelTrack()
+		if(track == nil) then return end
+		graph,graphIndex = self:AddGraph(track,actor,targetPath,color,fValueTranslator)
 	end)
 	item:AddCallback("OnDeselected",function()
 		if(util.is_valid(graph)) then self:RemoveGraphCurve(graphIndex) end
@@ -564,17 +633,9 @@ function gui.PFMTimelineGraph:OnVisibilityChanged(visible)
 	timeline:ClearBookmarks()
 end
 function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo,valueTranslator)
-	local track = filmClip:FindAnimationChannelTrack()
-	if(track == nil) then return end
 	local itemCtrl = self.m_transformList:AddItem(controlData.name)
 	local function addChannel(item,fValueTranslator,color)
-		local animClip = track:FindActorAnimationClip(actor)
-		if(animClip ~= nil) then
-			local channel = animClip:FindChannel(controlData.path)
-			if(channel ~= nil) then
-				self:SetupControl(animClip,channel,item,color or Color.Red,fValueTranslator)
-			end
-		end
+		self:SetupControl(filmClip,actor,controlData.path,item,color or Color.Red,fValueTranslator)
 	end
 	if(udm.is_numeric_type(memberInfo.type)) then
 		local valueTranslator

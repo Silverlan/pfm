@@ -570,26 +570,26 @@ function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 		if(trC ~= nil) then return trC end
 		trC = ent:AddComponent("util_transform")
 		if(trC == nil) then return trC end
-		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function()
+		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
 			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 			if(actorC ~= nil) then
-				tool.get_filmmaker():SetActorTransformProperty(actorC,"position",ent:GetPos())
+				tool.get_filmmaker():SetActorTransformProperty(actorC,"position",pos)
 				local rt = self:GetRealtimeRaytracedViewport()
 				if(util.is_valid(rt)) then rt:MarkActorAsDirty(ent) end
 			end
 		end)
-		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function()
+		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function(rot)
 			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 			if(actorC ~= nil) then
-				tool.get_filmmaker():SetActorTransformProperty(actorC,"rotation",ent:GetRotation())
+				tool.get_filmmaker():SetActorTransformProperty(actorC,"rotation",rot)
 				local rt = self:GetRealtimeRaytracedViewport()
 				if(util.is_valid(rt)) then rt:MarkActorAsDirty(ent) end
 			end
 		end)
-		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED,function()
+		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED,function(scale)
 			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 			if(actorC ~= nil) then
-				tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",ent:GetScale())
+				tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",scale)
 				local rt = self:GetRealtimeRaytracedViewport()
 				if(util.is_valid(rt)) then rt:MarkActorAsDirty(ent) end
 			end

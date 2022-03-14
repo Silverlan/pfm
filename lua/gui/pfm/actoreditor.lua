@@ -637,13 +637,11 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 			path = path:ToUri(false)
 
 			local time = fm:GetTimeOffset()
-			pfm.log("Adding channel value " .. tostring(value) .. " of type " .. udm.type_to_string(type) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 			local localTime = channelClip:GetTimeFrame():LocalizeTimeOffset(time)
 			local anim = channelClip:GetPanimaAnimation()
 			local channelValue = value
 			if(util.get_type_name(channelValue) == "Color") then channelValue = channelValue:ToVector() end
-			animManager:SetChannelValue(actor,path,localTime,channelValue,type)
-			fm:TagRenderSceneAsDirty()
+			fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type)
 		else
 			local baseMsg = "Unable to apply animation channel value with channel path '" .. path.path:GetString() .. "': "
 			if(componentName == nil) then pfm.log(baseMsg .. "Unable to determine component type from animation channel path '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)

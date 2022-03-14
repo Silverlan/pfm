@@ -150,7 +150,7 @@ function Component:SetTransformRotation(ang)
 	if(ang:Equals(self.m_angles)) then return end
 	self:GetEntity():SetAngles(ang)
 	self.m_angles = ang
-	self:BroadcastEvent(Component.EVENT_ON_ROTATION_CHANGED,{ang})
+	self:BroadcastEvent(Component.EVENT_ON_ROTATION_CHANGED,{ang:ToQuaternion()})
 end
 
 function Component:SetReferenceEntity(entRef)

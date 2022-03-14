@@ -94,8 +94,8 @@ function gui.WIFilmmaker:OnInitialize()
 	patronTickerContainer:SetQueryUrl("http://pragma-engine.com/patreon/request_patrons.php")
 	local engineInfo = engine.get_info()
 	infoBar:AddIcon("wgui/patreon_logo",pfm.PATREON_JOIN_URL,"Patreon")
-	infoBar:AddIcon("third_party/twitter_logo",engineInfo.twitterURL,"Twitter")
-	infoBar:AddIcon("third_party/reddit_logo",engineInfo.redditURL,"Reddit")
+	-- infoBar:AddIcon("third_party/twitter_logo",engineInfo.twitterURL,"Twitter")
+	-- infoBar:AddIcon("third_party/reddit_logo",engineInfo.redditURL,"Reddit")
 	infoBar:AddIcon("third_party/discord_logo",engineInfo.discordURL,"Discord")
 
 	local elVersion = gui.create("WIText")
@@ -821,13 +821,27 @@ end
 function gui.WIFilmmaker:ClearProjectUI()
 	self:ClearLayout()
 end
+function gui.WIFilmmaker:SetActorAnimationComponentProperty(actor,targetPath,time,value,valueType,valueIndex)
+	local animManager = self:GetAnimationManager()
+	if(valueType ~= nil) then
+		animManager:SetChannelValue(actor,targetPath,time,value,valueType)
+	else
+		animManager:UpdateChannelValueByIndex(actor,targetPath,valueIndex,time,value)
+	end
+	
+	animManager:SetAnimationDirty(actor)
+	pfm.tag_render_scene_as_dirty()
+
+	local actorEditor = self:GetActorEditor()
+	if(util.is_valid(actorEditor)) then actorEditor:UpdateActorProperty(actor,targetPath) end
+end
 function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value)
 	local actorData = actor:GetActorData()
 	if(actorData == nil) then return end
 	local actorEditor = self:GetActorEditor()
+	local targetPath = "ec/pfm_actor/" .. propType
 	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
-		actorEditor:SetAnimationChannelValue(actorData,"ec/pfm_actor/" .. propType,value)
-		self:TagRenderSceneAsDirty()
+		actorEditor:SetAnimationChannelValue(actorData,targetPath,value)
 		return
 	end
 	local transform = actorData:GetTransform()
@@ -836,6 +850,10 @@ function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value)
 	elseif(propType == "scale") then transform:SetScale(value) end
 	actorData:SetTransform(transform)
 	self:TagRenderSceneAsDirty()
+
+	self:GetAnimationManager():SetAnimationDirty(actorData)
+	actor:GetEntity():SetMemberValue(targetPath,value)
+	self:GetActorEditor():UpdateActorProperty(actorData,targetPath)
 end
 function gui.WIFilmmaker:SetActorBoneTransformProperty(actor,propType,value)
 	local actorData = actor:GetActorData()
@@ -843,7 +861,6 @@ function gui.WIFilmmaker:SetActorBoneTransformProperty(actor,propType,value)
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
 		actorEditor:SetAnimationChannelValue(actorData,"ec/animated/bone/" .. propType,value)
-		self:TagRenderSceneAsDirty()
 		return
 	end
 	self:TagRenderSceneAsDirty()
@@ -1223,7 +1240,7 @@ function gui.WIFilmmaker:SetTimeOffset(offset)
 	pfm.ProjectManager.SetTimeOffset(self,offset)
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor) == false) then return end
-	actorEditor:UpdateControlValues()
+	actorEditor:UpdateControlValues() -- TODO: Panima animations don't update right away, we need to call this *after* they have been updated
 end
 function gui.WIFilmmaker:OpenMaterialEditor(mat,optMdl)
 	self:CloseWindow("material_editor")

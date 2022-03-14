@@ -157,6 +157,8 @@ function pfm.AnimationManager:RemoveChannelValueByIndex(actor,path,idx)
 	end
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
 	if(channel == nil) then return end
+	pfm.log("Removing channel value at index " .. idx .. " with channel path '" .. path .. "' of actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
+
 	channel:RemoveValue(idx)
 	anim:UpdateDuration()
 	self:SetAnimationDirty(actor)
@@ -179,6 +181,7 @@ function pfm.AnimationManager:UpdateChannelValueByIndex(actor,path,idx,time,valu
 	end
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
 	if(channel == nil) then return end
+	pfm.log("Updating channel value at index " .. idx .. " with value " .. (value and tostring(value) or "n/a") .. " at timestamp " .. (time and tostring(time) or "n/a") .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 	if(value ~= nil) then channel:SetValue(idx,value) end
 
 	local oldIdx = idx
@@ -226,6 +229,7 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type)
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
+	pfm.log("Setting channel value " .. tostring(value) .. " of type " .. udm.type_to_string(type) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path,true,type)
 	assert(channel ~= nil)
 	if(channel == nil) then return end
