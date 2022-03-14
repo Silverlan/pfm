@@ -47,7 +47,7 @@ function util.GraphAxis:XOffsetToValue(x)
 	return self:XDeltaToValue(x) +self:GetStartOffset()
 end
 function util.GraphAxis:ValueToXOffset(value)
-	value = value -self:GetStartOffset() /self:GetZoomLevelMultiplier() -- TODO: Maybe remove multiplier
+	value = (value -self:GetStartOffset()) /self:GetZoomLevelMultiplier() -- TODO: Maybe remove multiplier
 	return value *self:GetStridePerUnit()
 end
 --[[
