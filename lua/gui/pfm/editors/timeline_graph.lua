@@ -493,8 +493,8 @@ function gui.PFMTimelineGraph:OnThink()
 		timeLine:Update()
 	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SCALE) then
 	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_ZOOM) then
-		timeLine:GetTimeAxis():GetAxis():SetZoomLevel(trackerData.timeAxisZoomLevel +dtPos.x /10.0)
-		timeLine:GetDataAxis():GetAxis():SetZoomLevel(trackerData.dataAxisZoomLevel +dtPos.y /10.0)
+		timeLine:GetTimeAxis():GetAxis():SetZoomLevel(trackerData.timeAxisZoomLevel +dtPos.x /100.0)
+		timeLine:GetDataAxis():GetAxis():SetZoomLevel(trackerData.dataAxisZoomLevel +dtPos.y /100.0)
 		timeLine:Update()
 	end
 end

@@ -38,14 +38,15 @@ function gui.Playhead:GetAxis() return self.m_axis end
 function gui.Playhead:SetTimeOffset(offset) self.m_timeOffset:Set(offset) end
 function gui.Playhead:GetTimeOffset() return self.m_timeOffset:Get() end
 function gui.Playhead:GetTimeOffsetProperty() return self.m_timeOffset end
+function gui.Playhead:UpdateTimeOffset()
+	local pos = self:GetParent():GetCursorPos()
+	self:SetTimeOffset(self:GetAxis():XOffsetToValueTest(pos.x))
+end
 function gui.Playhead:SetCursorMoveModeEnabled(enabled)
 	if(enabled) then
 		self:SetCursorMovementCheckEnabled(true)
 		if(util.is_valid(self.m_cbMove) == false) then
-			self.m_cbMove = self:AddCallback("OnCursorMoved",function(el,x,y)
-				local pos = self:GetParent():GetCursorPos()
-				self:SetTimeOffset(self:GetAxis():XOffsetToValue(pos.x))
-			end)
+			self.m_cbMove = self:AddCallback("OnCursorMoved",function(el,x,y) self:UpdateTimeOffset() end)
 		end
 	else
 		self:SetCursorMovementCheckEnabled(false)

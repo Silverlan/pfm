@@ -26,7 +26,7 @@ function gui.Timeline:OnInitialize()
 		if(mouseButton == input.MOUSE_BUTTON_LEFT) then
 			if(keyState == input.STATE_PRESS) then
 				local pos = self:GetCursorPos()
-				local timeOffset = self:GetTimeAxis():GetAxis():XOffsetToValue(pos.x)
+				local timeOffset = self:GetTimeAxis():GetAxis():XOffsetToValueTest(pos.x)
 				self.m_playhead:SetTimeOffset(timeOffset)
 			end
 			self.m_playhead:SetCursorMoveModeEnabled(keyState == input.STATE_PRESS)
@@ -58,7 +58,7 @@ function gui.Timeline:OnInitialize()
 	self.m_playhead = gui.create("WIPlayhead",self,0,self.m_bookmarkBar:GetBottom())
 	self.m_playhead:SetHeight(self:GetHeight())
 	self.m_playhead:GetTimeOffsetProperty():AddCallback(function()
-		self:OnTimelinePropertiesChanged()
+		self:OnTimelinePropertiesChanged(true,true)
 	end)
 
 	self.m_timeAxis = gui.create("WIAxis",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
@@ -86,7 +86,7 @@ function gui.Timeline:SetTimeAxis(axis)
 
 	if(util.is_valid(self.m_cbTimeAxisPropertiesChanged)) then self.m_cbTimeAxisPropertiesChanged:Remove() end
 	self.m_cbTimeAxisPropertiesChanged = axis:AddCallback("OnPropertiesChanged",function()
-		self:OnTimelinePropertiesChanged()
+		self:OnTimelinePropertiesChanged(true,false)
 	end)
 end
 function gui.Timeline:SetDataAxis(axis) self.m_dataAxis:SetAxis(axis,false) end
@@ -136,22 +136,22 @@ function gui.Timeline:GetPlayhead() return self.m_playhead end
 function gui.Timeline:GetUpperTimelineStrip() return self.m_timelineStripUpper end
 function gui.Timeline:GetLowerTimelineStrip() return self.m_timelineStripLower end
 function gui.Timeline:GetEndOffset() return self:GetTimeAxis():GetAxis():XOffsetToValue(self:GetRight()) end
-function gui.Timeline:OnTimelinePropertiesChanged()
+function gui.Timeline:OnTimelinePropertiesChanged(updatePlayhead,updateAxis)
 	if(self.m_skipPlayheadUpdate) then return end
 	if(util.is_valid(self.m_playhead)) then
 		if(self.m_skipUpdatePlayOffset ~= true) then
 			self.m_skipUpdatePlayOffset = true
 			local timeOffset = self.m_playhead:GetTimeOffset()
 			local axis = self:GetTimeAxis():GetAxis()
-			local x = axis:ValueToXOffset(timeOffset)
-			self.m_playhead:SetPlayOffset(x)
+			local x = axis:ValueToXOffsetTest(timeOffset)
+			if(updatePlayhead) then self.m_playhead:SetPlayOffset(x) end
 			self.m_skipUpdatePlayOffset = nil
 
 			if(timeOffset < axis:GetStartOffset()) then
-				axis:SetStartOffset(timeOffset)
+				if(updateAxis) then axis:SetStartOffset(timeOffset) end
 				self:Update()
 			elseif(timeOffset > self:GetEndOffset()) then
-				axis:SetStartOffset(axis:GetStartOffset() +(timeOffset -self:GetEndOffset()))
+				if(updateAxis) then axis:SetStartOffset(axis:GetStartOffset() +(timeOffset -self:GetEndOffset())) end
 				self:Update()
 			end
 		end
@@ -185,15 +185,17 @@ function gui.Timeline:SetZoomLevel(zoomLevel)
 	local timeOffset
 	local axis = self:GetTimeAxis():GetAxis()
 	if(util.is_valid(self.m_playhead)) then
-		xOffsetPlayhead = axis:ValueToXOffset(self.m_playhead:GetTimeOffset())
+		xOffsetPlayhead = axis:ValueToXOffsetTest2(self.m_playhead:GetTimeOffset())
 		timeOffset = self.m_playhead:GetTimeOffset()
 	end
 	axis:SetZoomLevel(zoomLevel)
 
 	if(util.is_valid(self.m_playhead)) then
 		-- We want the playhead to stay in place, so we have to change the start offset accordingly
-		local startOffset = timeOffset -axis:XDeltaToValue(xOffsetPlayhead)
-		axis:SetStartOffset(startOffset)
+		local newXOffsetPlayhead = axis:ValueToXOffsetTest2(self.m_playhead:GetTimeOffset())
+		local startOffset = axis:GetStartOffset() -axis:XDeltaToValueTest(xOffsetPlayhead -newXOffsetPlayhead)
+		--local startOffset = timeOffset -axis:XDeltaToValueTest(axis:ValueToXOffsetTest(timeOffset) -xOffsetPlayhead)
+		axis:SetStartOffset(startOffset)--startOffset)
 
 		-- Changing the start offset can change the playhead offset if it's out of range,
 		-- so we'll reset its position here.
@@ -201,7 +203,7 @@ function gui.Timeline:SetZoomLevel(zoomLevel)
 		self.m_playhead:SetTimeOffset(timeOffset)
 		self.m_skipPlayheadUpdate = nil
 
-		self.m_playhead:SetPlayOffset(axis:ValueToXOffset(timeOffset))
+		self.m_playhead:SetPlayOffset(axis:ValueToXOffsetTest(timeOffset))
 	end
 end
 function gui.Timeline:SetStartOffset(offset)

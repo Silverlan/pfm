@@ -371,7 +371,7 @@ function pfm.ProjectManager:GetClampedFrameOffset(frame) return math.round(frame
 function pfm.ProjectManager:ClampTimeOffsetToFrame() self:SetFrameOffset(self:GetClampedFrameOffset()) end
 function pfm.ProjectManager:GetPlayheadClip()
 	local filmTrack = self:GetSession():GetFilmTrack()
-	local filmClips = filmTrack:GetFilmClips():GetTable()
+	local filmClips = filmTrack:GetFilmClips()
 	local offset = self:GetTimeOffset()
 	if(#filmClips == 0) then return end
 	for i,filmClipData in ipairs(filmClips) do
@@ -398,7 +398,7 @@ function pfm.ProjectManager:GoToFirstFrame()
 end
 function pfm.ProjectManager:GoToPreviousClip()
 	local filmTrack = self:GetSession():GetFilmTrack()
-	local filmClips = filmTrack:GetFilmClips():GetTable()
+	local filmClips = filmTrack:GetFilmClips()
 	local offset = self:GetTimeOffset()
 	if(#filmClips == 0) then return end
 	for i,filmClipData in ipairs(filmClips) do
@@ -423,7 +423,7 @@ function pfm.ProjectManager:GoToPreviousClip()
 end
 function pfm.ProjectManager:GoToNextClip()
 	local filmTrack = self:GetSession():GetFilmTrack()
-	local filmClips = filmTrack:GetFilmClips():GetTable()
+	local filmClips = filmTrack:GetFilmClips()
 	local offset = self:GetTimeOffset()
 	if(#filmClips == 0) then return end
 	for i=#filmClips,1,-1 do
