@@ -145,14 +145,14 @@ function gui.LabelledTimelineStrip:OnUpdate()
 	end
 	-- We have to move the strip around if the start offset isn't a whole number, so we
 	-- just add a stride to its width
-	self:SetPrimAxisExtents(self.m_strip,self:GetPrimAxisExtents(self) +stridePerUnit *2)
-
 	local multiplierTest = axis:GetZoomLevelMultiplierTest()
+	self:SetPrimAxisExtents(self.m_strip,self:GetPrimAxisExtents(self) +(stridePerUnit *multiplierTest) *2)
+
 	local numTextElements = math.ceil(self:GetPrimAxisExtents(self) /stridePerUnit /multiplierTest) +1
 	local startOffset = axis:GetStartOffset()
 	local startIndex = math.floor(startOffset /multiplierTest)
 	local xStartOffset = (startIndex *multiplierTest -startOffset) *stridePerUnit
-	self:SetPrimAxisOffset(self.m_strip,-((startOffset *stridePerUnit) %stridePerUnit))
+	self:SetPrimAxisOffset(self.m_strip,-((startOffset *stridePerUnit) %(stridePerUnit *multiplierTest)))
 	self.m_strip:Update()
 
 	if(numTextElements > 0) then
