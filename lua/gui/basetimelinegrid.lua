@@ -50,7 +50,7 @@ function gui.BaseTimelineGrid:GetLineWidth() return self.m_lineWidth end
 function gui.BaseTimelineGrid:OnUpdate() self:RebuildRenderCommandBuffer() end
 function gui.BaseTimelineGrid:GetLineCount()
 	local w = self:GetPrimAxisExtents(self)
-	local stridePerSecond = self:GetAxis():GetStridePerUnitTest() *self:GetAxis():GetZoomLevelMultiplierTest()
+	local stridePerSecond = self:GetAxis():GetStridePerUnit() *self:GetAxis():GetZoomLevelMultiplier()
 	local strideX = stridePerSecond /10.0
 	return math.ceil(w /strideX)
 end

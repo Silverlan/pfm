@@ -30,7 +30,7 @@ end
 function gui.TimelineStrip:RebuildRenderCommandBuffer()
 	if(self.m_shader == nil) then return end
 	local pcb = prosper.PreparedCommandBuffer()
-	if(self.m_shader:Record(pcb,self:GetLineCount(),self:GetAxis():GetStrideXTest(self:GetPrimAxisExtents(self)) *self:GetAxis():GetZoomLevelMultiplierTest(),self:GetColor(),self.m_yMultiplier,self:IsHorizontal()) == false) then pcb = nil end
+	if(self.m_shader:Record(pcb,self:GetLineCount(),self:GetAxis():GetStrideXTest(self:GetPrimAxisExtents(self)) *self:GetAxis():GetZoomLevelMultiplier(),self:GetColor(),self.m_yMultiplier,self:IsHorizontal()) == false) then pcb = nil end
 	self:SetRenderCommandBuffer(pcb)
 end
 function gui.TimelineStrip:SetAxis(axis) self.m_axis = axis end
@@ -139,20 +139,20 @@ function gui.LabelledTimelineStrip:IsDataAxisInverted() return self.m_dataAxisIn
 function gui.LabelledTimelineStrip:OnUpdate()
 	if(util.is_valid(self.m_strip) == false) then return end
 	local axis = self:GetAxis()
-	local stridePerUnit = axis:GetStridePerUnitTest()
+	local stridePerUnit = axis:GetStridePerUnit()
 	if(stridePerUnit == 0.0) then
 		error("Illegal timeline stride: ",stridePerUnit)
 	end
 	-- We have to move the strip around if the start offset isn't a whole number, so we
 	-- just add a stride to its width
-	local multiplierTest = axis:GetZoomLevelMultiplierTest()
-	self:SetPrimAxisExtents(self.m_strip,self:GetPrimAxisExtents(self) +(stridePerUnit *multiplierTest) *2)
+	local multiplier = axis:GetZoomLevelMultiplier()
+	self:SetPrimAxisExtents(self.m_strip,self:GetPrimAxisExtents(self) +(stridePerUnit *multiplier) *2)
 
-	local numTextElements = math.ceil(self:GetPrimAxisExtents(self) /stridePerUnit /multiplierTest) +1
+	local numTextElements = math.ceil(self:GetPrimAxisExtents(self) /stridePerUnit /multiplier) +1
 	local startOffset = axis:GetStartOffset()
-	local startIndex = math.floor(startOffset /multiplierTest)
-	local xStartOffset = (startIndex *multiplierTest -startOffset) *stridePerUnit
-	self:SetPrimAxisOffset(self.m_strip,-((startOffset *stridePerUnit) %(stridePerUnit *multiplierTest)))
+	local startIndex = math.floor(startOffset /multiplier)
+	local xStartOffset = (startIndex *multiplier -startOffset) *stridePerUnit
+	self:SetPrimAxisOffset(self.m_strip,-((startOffset *stridePerUnit) %(stridePerUnit *multiplier)))
 	self.m_strip:Update()
 
 	if(numTextElements > 0) then
@@ -166,9 +166,9 @@ function gui.LabelledTimelineStrip:OnUpdate()
 				self.m_textElements[i +1] = pText
 			end
 			pText:SetVisible(true)
-			pText:SetText(tostring((startIndex +i) *multiplierTest))
+			pText:SetText(tostring((startIndex +i) *multiplier))
 			pText:SizeToContents()
-			local offset = xStartOffset +i *stridePerUnit *multiplierTest
+			local offset = xStartOffset +i *stridePerUnit *multiplier
 			local textOffset = self:GetPrimAxisExtents(pText) *0.5
 			if(self:IsDataAxisInverted()) then
 				offset = offset +textOffset

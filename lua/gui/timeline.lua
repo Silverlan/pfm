@@ -26,7 +26,7 @@ function gui.Timeline:OnInitialize()
 		if(mouseButton == input.MOUSE_BUTTON_LEFT) then
 			if(keyState == input.STATE_PRESS) then
 				local pos = self:GetCursorPos()
-				local timeOffset = self:GetTimeAxis():GetAxis():XOffsetToValueTest(pos.x)
+				local timeOffset = self:GetTimeAxis():GetAxis():XOffsetToValue(pos.x)
 				self.m_playhead:SetTimeOffset(timeOffset)
 			end
 			self.m_playhead:SetCursorMoveModeEnabled(keyState == input.STATE_PRESS)
@@ -143,7 +143,7 @@ function gui.Timeline:OnTimelinePropertiesChanged(updatePlayhead,updateAxis)
 			self.m_skipUpdatePlayOffset = true
 			local timeOffset = self.m_playhead:GetTimeOffset()
 			local axis = self:GetTimeAxis():GetAxis()
-			local x = axis:ValueToXOffsetTest(timeOffset)
+			local x = axis:ValueToXOffset(timeOffset)
 			if(updatePlayhead) then self.m_playhead:SetPlayOffset(x) end
 			self.m_skipUpdatePlayOffset = nil
 
@@ -185,16 +185,16 @@ function gui.Timeline:SetZoomLevel(zoomLevel)
 	local timeOffset
 	local axis = self:GetTimeAxis():GetAxis()
 	if(util.is_valid(self.m_playhead)) then
-		xOffsetPlayhead = axis:ValueToXOffsetTest2(self.m_playhead:GetTimeOffset())
+		xOffsetPlayhead = axis:ValueToXOffset2(self.m_playhead:GetTimeOffset())
 		timeOffset = self.m_playhead:GetTimeOffset()
 	end
 	axis:SetZoomLevel(zoomLevel)
 
 	if(util.is_valid(self.m_playhead)) then
 		-- We want the playhead to stay in place, so we have to change the start offset accordingly
-		local newXOffsetPlayhead = axis:ValueToXOffsetTest2(self.m_playhead:GetTimeOffset())
-		local startOffset = axis:GetStartOffset() -axis:XDeltaToValueTest(xOffsetPlayhead -newXOffsetPlayhead)
-		--local startOffset = timeOffset -axis:XDeltaToValueTest(axis:ValueToXOffsetTest(timeOffset) -xOffsetPlayhead)
+		local newXOffsetPlayhead = axis:ValueToXOffset2(self.m_playhead:GetTimeOffset())
+		local startOffset = axis:GetStartOffset() -axis:XDeltaToValue(xOffsetPlayhead -newXOffsetPlayhead)
+		--local startOffset = timeOffset -axis:XDeltaToValue(axis:ValueToXOffset(timeOffset) -xOffsetPlayhead)
 		axis:SetStartOffset(startOffset)--startOffset)
 
 		-- Changing the start offset can change the playhead offset if it's out of range,
@@ -203,7 +203,7 @@ function gui.Timeline:SetZoomLevel(zoomLevel)
 		self.m_playhead:SetTimeOffset(timeOffset)
 		self.m_skipPlayheadUpdate = nil
 
-		self.m_playhead:SetPlayOffset(axis:ValueToXOffsetTest(timeOffset))
+		self.m_playhead:SetPlayOffset(axis:ValueToXOffset(timeOffset))
 	end
 end
 function gui.Timeline:SetStartOffset(offset)
