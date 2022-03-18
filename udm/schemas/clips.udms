@@ -92,6 +92,23 @@
 				}
 			}
 		}
+		"EditorGraphCurve"
+		{
+			
+		}
+		"EditorChannelData"
+		{
+			"bookmarkSet" {$string type "BookmarkSet"}
+			"targetPath" {$string default ""}
+		}
+		"EditorAnimationData"
+		{
+			"channels"
+			{
+				$string type "array"
+				$string valueType "EditorChannelData"
+			}
+		}
 		"AnimationClip"
 		{
 			"children"
@@ -104,6 +121,7 @@
 					$string referenceType "Actor"
 				}
 				"animation" {$string type "Animation"}
+				"editorData" {$string type "EditorAnimationData"}
 			}
 		}
 	}

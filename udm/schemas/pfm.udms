@@ -25,7 +25,7 @@
 		{
 			"children"
 			{
-				"timeRange" {$string type "TimeRange"}
+				"time" {$float default 0.0}
 				"note" {$string default ""}
 			}
 		}

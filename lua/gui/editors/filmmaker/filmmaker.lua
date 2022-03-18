@@ -1231,10 +1231,33 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		local bookmarkSet = filmClip:GetBookmarkSet(activeBookmarkSet)
 		if(bookmarkSet ~= nil) then
 			for _,bookmark in ipairs(bookmarkSet:GetBookmarks()) do
-				-- timeline:AddBookmark(bookmark:GetTimeRange():GetTimeAttr()) -- TODO: Re-implement
+				-- timeline:AddBookmark(bookmark:GetTimeRange():GetTimeAttr())
 			end
 		end
 	end
+end
+function gui.WIFilmmaker:AddBookmark()
+	local filmClip = self:GetActiveFilmClip()
+	if(filmClip == nil) then return end
+	local t = self:GetTimeOffset() -filmClip:GetTimeFrame():GetStart()
+	local bmSetId = filmClip:GetActiveBookmarkSet()
+	local bmSet = filmClip:GetBookmarkSet(bmSetId)
+	if(bmSet == nil and bmSetId == 0) then bmSet = filmClip:AddBookmarkSet() end
+	if(bmSet == nil) then return end
+	for _,bm in ipairs(bmSet:GetBookmarks()) do
+		local tBm = bm:GetTime()
+		if(math.abs(tBm -t) < 0.0001) then
+			-- Bookmark already exists at this timestamp
+			return bm
+		end
+	end
+
+	pfm.log("Adding bookmark at timestamp " .. t,pfm.LOG_CATEGORY_PFM)
+
+	local bm = bmSet:AddBookmark()
+	bm:SetTime(t)
+
+	self.m_timeline:AddBookmark(bm)
 end
 function gui.WIFilmmaker:SetTimeOffset(offset)
 	pfm.ProjectManager.SetTimeOffset(self,offset)

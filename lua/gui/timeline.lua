@@ -165,12 +165,11 @@ end
 function gui.Timeline:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_playhead)) then self.m_playhead:SetHeight(h -self.m_bookmarkBar:GetBottom()) end
 end
-function gui.Timeline:AddBookmark(time)
+function gui.Timeline:AddBookmark(bm)
 	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
 	local p = gui.create("WIPFMBookmark",self,0,5)
-	self.m_timeAxis:AttachElementToValue(p,time)
+	self.m_timeAxis:AttachElementToValueWithUdmProperty(p,bm,"time")
 	table.insert(self.m_bookmarks,p)
-	print("Placing bookmark at time offset " .. time:GetValue() .. "...")
 	return p
 end
 function gui.Timeline:ClearBookmarks()

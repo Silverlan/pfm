@@ -184,6 +184,7 @@ function gui.PFMTimeline:SetGraphCursorMode(cursorMode)
 	end
 	self.m_timelineGraph:SetCursorMode(cursorMode)
 end
+function gui.PFMTimeline:AddBookmark(bm) self.m_timeline:AddBookmark(bm) end
 function gui.PFMTimeline:InitializeToolbar()
 	local toolbar = gui.create("WIBase",self.m_contents,0,0,self:GetWidth(),0)
 	toolbar:SetName("timeline_toolbar")
@@ -206,7 +207,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btGraphEditor:SetTooltip(locale.get_text("pfm_graph_editor",{pfm.get_key_binding("graph_editor")}))
 	gui.create("WIBase",toolbarLeft):SetSize(32,1) -- Gap
 	self.m_btBookmarkKey = gui.PFMButton.create(toolbarLeft,"gui/pfm/icon_bookmark","gui/pfm/icon_bookmark_activated",function()
-		print("TODO")
+		tool.get_filmmaker():AddBookmark()
 	end)
 
 	self.m_entryFields = gui.create("WIHBox",toolbarLeft)

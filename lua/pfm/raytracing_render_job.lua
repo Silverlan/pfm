@@ -589,6 +589,9 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	udmDebugStandalone:SetValue("outputFile",udm.TYPE_STRING,"E:\\projects\\cycles\\build_winx64\\bin\\RelWithDebInfo\\output.png")
 	udmDebugStandalone:SetValue("samples",udm.TYPE_STRING,"20")
 	udmDebugStandalone:SetValue("device",udm.TYPE_STRING,"OPTIX")
+
+	-- LuxCoreRender:
+	apiData:GetFromPath("luxCoreRender/debug"):SetValue("rawOutputFileName",udm.TYPE_STRING,"debug_render_output.hdr")
 	]]
 
 	local job = renderer:StartRender()
