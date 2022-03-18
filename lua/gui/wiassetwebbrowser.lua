@@ -216,7 +216,7 @@ function Element:InitializeLog(parent)
 	log:SetEditable(false)
 	log:SetSelectable(true)
 
-	engine.create_font("chromium_log","vera/VeraMono",12)
+	engine.create_font("chromium_log",engine.get_default_font_set_name(),bit.bor(engine.FONT_FEATURE_FLAG_SANS_BIT,engine.FONT_FEATURE_FLAG_MONO_BIT),12)
 
 	local elText = log:GetTextElement()
 	elText:SetMaxLineCount(100)

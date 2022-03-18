@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-engine.create_font("pfm_small","vera/VeraMono",10)
-engine.create_font("pfm_medium","vera/VeraMono",12)
-engine.create_font("pfm_large","vera/VeraMono",20)
+local fontSet = engine.get_default_font_set_name()
+local fontFeatures = bit.bor(engine.FONT_FEATURE_FLAG_SANS_BIT,engine.FONT_FEATURE_FLAG_MONO_BIT)
+engine.create_font("pfm_small",fontSet,fontFeatures,10)
+engine.create_font("pfm_medium",fontSet,fontFeatures,12)
+engine.create_font("pfm_large",fontSet,fontFeatures,20)
