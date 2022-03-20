@@ -36,6 +36,7 @@ include("/gui/pfm/material_editor/materialeditor.lua")
 include("/gui/pfm/particleeditor.lua")
 include("/gui/pfm/webbrowser.lua")
 include("/pfm/util_particle_system.lua")
+include("/util/table_bininsert.lua")
 
 gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
@@ -1236,27 +1237,33 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		end
 	end
 end
+function gui.WIFilmmaker:UpdateBookmarks()
+	self.m_timeline:ClearBookmarks()
+
+	local filmClip = self:GetActiveFilmClip()
+	if(filmClip == nil) then return end
+	local tbms = {}
+	if(self.m_timeline:GetEditor() ~= gui.PFMTimeline.EDITOR_GRAPH) then
+		local bms = filmClip:GetBookmarkSet(filmClip:GetActiveBookmarkSet())
+		if(bms ~= nil) then self.m_timeline:AddBookmarkSet(bms) end
+	end
+end
 function gui.WIFilmmaker:AddBookmark()
 	local filmClip = self:GetActiveFilmClip()
 	if(filmClip == nil) then return end
 	local t = self:GetTimeOffset() -filmClip:GetTimeFrame():GetStart()
+	if(self.m_timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH) then
+		self.m_timeline:GetGraphEditor():AddBookmarkDataPoint(t)
+		-- TODO: Update bookmarks
+		return
+	end
 	local bmSetId = filmClip:GetActiveBookmarkSet()
 	local bmSet = filmClip:GetBookmarkSet(bmSetId)
 	if(bmSet == nil and bmSetId == 0) then bmSet = filmClip:AddBookmarkSet() end
 	if(bmSet == nil) then return end
-	for _,bm in ipairs(bmSet:GetBookmarks()) do
-		local tBm = bm:GetTime()
-		if(math.abs(tBm -t) < 0.0001) then
-			-- Bookmark already exists at this timestamp
-			return bm
-		end
-	end
-
 	pfm.log("Adding bookmark at timestamp " .. t,pfm.LOG_CATEGORY_PFM)
-
-	local bm = bmSet:AddBookmark()
-	bm:SetTime(t)
-
+	local bm,newBookmark = bmSet:AddBookmarkAtTimestamp(t)
+	if(newBookmark == false) then return end
 	self.m_timeline:AddBookmark(bm)
 end
 function gui.WIFilmmaker:SetTimeOffset(offset)

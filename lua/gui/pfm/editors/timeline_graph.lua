@@ -35,8 +35,22 @@ end
 
 ----------------
 
-util.register_class("gui.PFMTimelineDataPoint",gui.Base)
-function gui.PFMTimelineDataPoint:OnInitialize()
+util.register_class("gui.PFMTimelineTangentControl",gui.Base)
+function gui.PFMTimelineTangentControl:OnInitialize()
+	gui.Base.OnInitialize(self)
+
+	self:SetSize(4,4)
+	local el = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	el:GetColorProperty():Link(self:GetColorProperty())
+
+	self.m_selected = false
+	self:SetMouseInputEnabled(true)
+end
+
+----------------
+
+util.register_class("gui.PFMDataPointControl",gui.Base)
+function gui.PFMDataPointControl:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(4,4)
@@ -47,6 +61,133 @@ function gui.PFMTimelineDataPoint:OnInitialize()
 	self.m_selected = false
 	self:SetMouseInputEnabled(true)
 end
+function gui.PFMDataPointControl:IsSelected() return self.m_selected end
+function gui.PFMDataPointControl:SetSelected(selected)
+	if(selected == self.m_selected) then return end
+	self.m_selected = selected
+	self:SetColor(selected and Color.Red or Color.White)
+	self:OnSelectionChanged(selected)
+	self:CallCallbacks("OnSelectionChanged",selected)
+end
+function gui.PFMDataPointControl:OnSelectionChanged(selected) end
+function gui.PFMDataPointControl:OnThink()
+	if(self.m_cursorTracker == nil) then return end
+	local dt = self.m_cursorTracker:Update()
+	if(dt.x == 0 and dt.y == 0) then return end
+	local newPos = self.m_moveModeStartPos +self.m_cursorTracker:GetTotalDeltaPosition()
+	self:OnMoved(newPos)
+	self:CallCallbacks("OnMoved",newPos)
+end
+function gui.PFMDataPointControl:OnMoved(newPos) end
+function gui.PFMDataPointControl:IsMoveModeEnabled() return self.m_cursorTracker ~= nil end
+function gui.PFMDataPointControl:SetMoveModeEnabled(enabled)
+	if(enabled) then
+		self.m_cursorTracker = gui.CursorTracker()
+		self.m_moveModeStartPos = self:GetPos()
+		self:EnableThinking()
+	else
+		self.m_cursorTracker = nil
+		self.m_moveModeStartPos = nil
+		self:DisableThinking()
+	end
+end
+gui.register("WIPFMDataPointControl",gui.PFMDataPointControl)
+
+----------------
+
+util.register_class("gui.PFMTimelineTangentControl",gui.Base)
+function gui.PFMTimelineTangentControl:OnInitialize()
+	gui.Base.OnInitialize(self)
+
+	local lineIn = gui.create("WILine",self:GetParent())
+	lineIn:SetColor(Color.Red)
+	self.m_inLine = lineIn
+
+	local ctrlIn = gui.create("WIPFMDataPointControl",self:GetParent())
+	ctrlIn:SetColor(Color.Gray)
+	self.m_inCtrl = ctrlIn
+
+	local lineOut = gui.create("WILine",self:GetParent())
+	lineOut:SetColor(Color.Aqua)
+	self.m_outLine = lineOut
+
+	local ctrlOut = gui.create("WIPFMDataPointControl",self:GetParent())
+	ctrlOut:SetColor(Color.Gray)
+	self.m_outCtrl = ctrlOut
+
+	self.m_inCtrl:AddCallback("OnMoved",function(ctrl,newPos) self:UpdateInControl(newPos) end)
+	self.m_outCtrl:AddCallback("OnMoved",function(ctrl,newPos) self:UpdateOutControl(newPos) end)
+
+	self.m_inLine:GetVisibilityProperty():Link(self:GetVisibilityProperty())
+	self.m_inCtrl:GetVisibilityProperty():Link(self:GetVisibilityProperty())
+	self.m_outLine:GetVisibilityProperty():Link(self:GetVisibilityProperty())
+	self.m_outCtrl:GetVisibilityProperty():Link(self:GetVisibilityProperty())
+end
+function gui.PFMTimelineTangentControl:GetInControl() return self.m_inCtrl end
+function gui.PFMTimelineTangentControl:GetOutControl() return self.m_outCtrl end
+function gui.PFMTimelineTangentControl:UpdateInControl(newPos)
+	self:CallCallbacks("OnInControlMoved",newPos)
+end
+function gui.PFMTimelineTangentControl:UpdateOutControl(newPos)
+	self:CallCallbacks("OnOutControlMoved",newPos)
+end
+function gui.PFMTimelineTangentControl:OnUpdate()
+	self:UpdateInOutLines()
+end
+function gui.PFMTimelineTangentControl:SetDataPoint(dp) self.m_dataPoint = dp end
+function gui.PFMTimelineTangentControl:UpdateInOutLines()
+	if(util.is_valid(self.m_dataPoint) == false) then return end
+	local pos = self:GetCenter()
+
+	local basePos = self.m_dataPoint:GetCenter()
+	local inPos = basePos -Vector2(20,20)
+	local outPos = basePos +Vector2(40,40)
+
+	self.m_inCtrl:SetPos(inPos)
+	self.m_outCtrl:SetPos(outPos)
+
+	self.m_inLine:SetStartPos(inPos)
+	self.m_inLine:SetEndPos(Vector2(pos.x,pos.y))
+	self.m_inLine:SizeToContents()
+
+	self.m_outLine:SetStartPos(outPos)
+	self.m_outLine:SetEndPos(Vector2(pos.x,pos.y))
+	self.m_outLine:SizeToContents()
+end
+function gui.PFMTimelineTangentControl:OnRemove()
+	util.remove({self.m_inLine,self.m_outLine,self.m_inCtrl,self.m_outCtrl})
+end
+gui.register("WIPFMTimelineTangentControl",gui.PFMTimelineTangentControl)
+
+----------------
+
+util.register_class("gui.PFMTimelineDataPoint",gui.PFMDataPointControl)
+function gui.PFMTimelineDataPoint:OnInitialize()
+	gui.PFMDataPointControl.OnInitialize(self)
+end
+function gui.PFMTimelineDataPoint:OnSelectionChanged(selected)
+	self:UpdateTextFields()
+end
+function gui.PFMTimelineDataPoint:GetTangentControl() return self.m_tangentControl end
+function gui.PFMTimelineDataPoint:InitializeTangentControl()
+	if(util.is_valid(self.m_tangentControl)) then return end
+	local el = gui.create("WIPFMTimelineTangentControl",self:GetParent())
+	el:SetDataPoint(self)
+	el:SetPos(self:GetCenter())
+	el:Update()
+
+	el:AddCallback("OnInControlMoved",function(el,newPos)
+		print("IN")
+	end)
+	el:AddCallback("OnOutControlMoved",function(el,newPos)
+		print("OUT")
+	end)
+
+	self.m_tangentControl = el
+end
+function gui.PFMTimelineDataPoint:OnRemove()
+	util.remove(self.m_tangentControl)
+end
 function gui.PFMTimelineDataPoint:SetGraphData(timelineCurve,valueIndex)
 	self.m_graphData = {
 		timelineCurve = timelineCurve,
@@ -54,14 +195,7 @@ function gui.PFMTimelineDataPoint:SetGraphData(timelineCurve,valueIndex)
 	}
 end
 function gui.PFMTimelineDataPoint:GetValueIndex() return self.m_graphData.valueIndex end
-function gui.PFMTimelineDataPoint:IsSelected() return self.m_selected end
-function gui.PFMTimelineDataPoint:SetSelected(selected)
-	if(selected == self.m_selected) then return end
-	self.m_selected = selected
-	self:SetColor(selected and Color.Red or Color.White)
-	if(selected) then self:UpdateTextFields() end
-	self:CallCallbacks("OnSelectionChanged",selected)
-end
+function gui.PFMTimelineDataPoint:SetValueIndex(index) self.m_graphData.valueIndex = index end
 function gui.PFMTimelineDataPoint:ChangeDataValue(t,v)
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
@@ -84,12 +218,7 @@ function gui.PFMTimelineDataPoint:UpdateTextFields()
 		util.round_string(curValue[2],2)
 	)
 end
-function gui.PFMTimelineDataPoint:OnThink()
-	if(self.m_cursorTracker == nil) then return end
-	local dt = self.m_cursorTracker:Update()
-	if(dt.x == 0 and dt.y == 0) then return end
-	local newPos = self.m_moveModeStartPos +self.m_cursorTracker:GetTotalDeltaPosition()
-
+function gui.PFMTimelineDataPoint:OnMoved(newPos)
 	local graphData = self.m_graphData
 	local timelineCurve = graphData.timelineCurve
 	local pm = pfm.get_project_manager()
@@ -108,19 +237,6 @@ function gui.PFMTimelineDataPoint:OnThink()
 	end
 
 	pm:SetActorAnimationComponentProperty(actor,targetPath,newValue[1],newValue[2],nil,valueIndex)
-
-	--[[timelineCurve:GetTimelineGraph():GetTimeline():SetDataValue(
-		util.round_string(pm:TimeOffsetToFrameOffset(newValue[1]),2),
-		util.round_string(displayValue,2)
-	)
-
-	animManager:UpdateChannelValueByIndex(actor,targetPath,valueIndex,newValue[1],newValue[2])
-	animManager:SetAnimationDirty(actor)
-	pfm.tag_render_scene_as_dirty()
-
-	-- TODO: This doesn't really belong here
-	local actorEditor = pm:GetActorEditor()
-	if(util.is_valid(actorEditor)) then actorEditor:UpdateActorProperty(actor,targetPath) end]]
 end
 function gui.PFMTimelineDataPoint:GetChannelValueData()
 	local graphData = self.m_graphData
@@ -132,17 +248,37 @@ function gui.PFMTimelineDataPoint:GetChannelValueData()
 	local targetPath = curveData.targetPath
 	return actor,targetPath,graphData.valueIndex,curveData
 end
-function gui.PFMTimelineDataPoint:IsMoveModeEnabled() return self.m_cursorTracker ~= nil end
-function gui.PFMTimelineDataPoint:SetMoveModeEnabled(enabled)
-	if(enabled) then
-		self.m_cursorTracker = gui.CursorTracker()
-		self.m_moveModeStartPos = self:GetPos()
-		self:EnableThinking()
-	else
-		self.m_cursorTracker = nil
-		self.m_moveModeStartPos = nil
-		self:DisableThinking()
+function gui.PFMTimelineDataPoint:SetSelected(selected,keepTangentControlSelection)
+	keepTangentControlSelection = keepTangentControlSelection or false
+	if(selected == false and keepTangentControlSelection == false) then util.remove(self.m_tangentControl) end
+	gui.PFMDataPointControl.SetSelected(self,selected)
+end
+function gui.PFMTimelineDataPoint:UpdateSelection(elSelectionRect)
+	if(elSelectionRect:IsElementInBounds(self)) then
+		if(util.is_valid(self.m_tangentControl)) then
+			self.m_tangentControl:GetInControl():SetSelected(false)
+			self.m_tangentControl:GetOutControl():SetSelected(false)
+		end
+		self:SetSelected(not input.is_alt_key_down(),true)
+		if(self:IsSelected()) then self:InitializeTangentControl() end
+		return true
 	end
+	if(util.is_valid(self.m_tangentControl) == false) then return false end
+	local inCtrl = self.m_tangentControl:GetInControl()
+	local hasSelection = false
+	if(elSelectionRect:IsElementInBounds(inCtrl)) then
+		self:SetSelected(false,true)
+		inCtrl:SetSelected(not input.is_alt_key_down())
+		hasSelection = true
+	end
+
+	local outCtrl = self.m_tangentControl:GetOutControl()
+	if(elSelectionRect:IsElementInBounds(outCtrl)) then
+		self:SetSelected(false,true)
+		outCtrl:SetSelected(not input.is_alt_key_down())
+		hasSelection = true
+	end
+	return hasSelection
 end
 gui.register("WIPFMTimelineDataPoint",gui.PFMTimelineDataPoint)
 
@@ -165,43 +301,63 @@ function gui.PFMTimelineCurve:SetTimelineGraph(graph) self.m_timelineGraph = gra
 function gui.PFMTimelineCurve:GetCurveIndex() return self.m_curveIndex end
 function gui.PFMTimelineCurve:GetCurve() return self.m_curve end
 function gui.PFMTimelineCurve:GetChannel() return self.m_channel end
-function gui.PFMTimelineCurve:BuildCurve(curveValues,channel,curveIndex)
+function gui.PFMTimelineCurve:BuildCurve(curveValues,channel,curveIndex,bms)
 	self.m_channel = channel
 	self.m_curveIndex = curveIndex
 	self.m_curve:BuildCurve(curveValues)
 
 	util.remove(self.m_dataPoints)
 	self.m_dataPoints = {}
-	for i,tp in ipairs(curveValues) do
-		local el = gui.create("WIPFMTimelineDataPoint",self)
-		el:SetGraphData(self,i -1)
-		el:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
-			if(self.m_timelineGraph:GetCursorMode() ~= gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then return util.EVENT_REPLY_UNHANDLED end
-			if(button == input.MOUSE_BUTTON_LEFT) then
-				if(state == input.STATE_PRESS) then
-					if(util.is_valid(self.m_selectedDataPoint)) then self.m_selectedDataPoint:SetSelected(false) end
-					el:SetSelected(true)
-					self.m_selectedDataPoint = el
-				end
-				return util.EVENT_REPLY_HANDLED
+	local dataValueIndex = 1
+	for _,bm in ipairs(bms:GetBookmarks()) do
+		local t = bm:GetTime()
+
+		local i
+		local oldDataValueIndex = dataValueIndex
+		while(dataValueIndex <= #curveValues) do
+			local tDv = curveValues[dataValueIndex][1]
+			if(math.abs(tDv -t) < 0.001) then
+				i = dataValueIndex
+				break
 			end
-			wrapper:StartEditMode(false)
-		end)
-		--[[el:AddCallback("OnSelectionChanged",function(el,selected)
+			dataValueIndex = dataValueIndex +1
+		end
+		if(i == nil) then
+			-- Error: No value was found for this bookmark.
+			-- This shouldn't happen, but in case it does, we'll ignore this point.
+			debug.print("bookmark without associated data value!")
+			dataValueIndex = oldDataValueIndex
+		else
+			local el = gui.create("WIPFMTimelineDataPoint",self)
+			el:SetGraphData(self,i -1)
+			el:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
+				if(self.m_timelineGraph:GetCursorMode() ~= gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then return util.EVENT_REPLY_UNHANDLED end
+				if(button == input.MOUSE_BUTTON_LEFT) then
+					if(state == input.STATE_PRESS) then
+						if(util.is_valid(self.m_selectedDataPoint)) then self.m_selectedDataPoint:SetSelected(false) end
+						el:SetSelected(true)
+						self.m_selectedDataPoint = el
+					end
+					return util.EVENT_REPLY_HANDLED
+				end
+				wrapper:StartEditMode(false)
+			end)
+			--[[el:AddCallback("OnSelectionChanged",function(el,selected)
 
-		end)]]
-		self.m_selectedDataPoint = el
+			end)]]
+			self.m_selectedDataPoint = el
 
-		table.insert(self.m_dataPoints,el)
+			table.insert(self.m_dataPoints,el)
+		end
 	end
 	self:UpdateDataPoints()
 end
 function gui.PFMTimelineCurve:UpdateDataPoint(i)
 	local el = self.m_dataPoints[i]
 	if(el:IsValid() == false) then return end
-	-- TODO: Apply value translator function if it was defined
-	local t = self.m_channel:GetTime(i -1)
-	local v = self.m_channel:GetValue(i -1)
+	local valueIndex = el:GetValueIndex()
+	local t = self.m_channel:GetTime(valueIndex)
+	local v = self.m_channel:GetValue(valueIndex)
 	local valueTranslator = self:GetTimelineGraph():GetGraphCurve(self:GetCurveIndex()).valueTranslator
 	if(valueTranslator ~= nil) then v = valueTranslator[1](v) end
 	local pos = self.m_curve:ValueToUiCoordinates(t,v)
@@ -278,6 +434,7 @@ function gui.PFMTimelineGraph:OnInitialize()
 	self:SetCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_SELECT)
 	self:SetKeyboardInputEnabled(true)
 	self:SetMouseInputEnabled(true)
+	self:SetScrollInputEnabled(true)
 	-- gui.set_mouse_selection_enabled(self,true)
 
 	local animManager = pfm.get_project_manager():GetAnimationManager()
@@ -321,9 +478,23 @@ function gui.PFMTimelineGraph:UpdateChannelValue(actor,anim,channel,udmChannel,i
 						graphData.curve:UpdateDataPoint(i)
 					end
 				end
+
+				-- Update curve
+				-- TODO
+				local dp0 = graphData.curve.m_dataPoints[1] -- idx +1]
+				local dp1 = graphData.curve.m_dataPoints[2] -- idx +2] -- TODO: Get for next bookmark in timeline
+				self:InitializeCurveDataValues(dp0,dp1,24) -- TODO: Num values
+				local valueIndex0 = dp0:GetValueIndex()
+				local valueIndex1 = dp1:GetValueIndex()
+				for idx=valueIndex0 +1,valueIndex1 -1 do
+					local t = udmChannel:GetTime(idx)
+					local v = udmChannel:GetValue(idx)
+					if(graphData.valueTranslator ~= nil) then v = graphData.valueTranslator[1](v) end
+					graphData.curve:UpdateCurveValue(idx,t,v)
+				end
 			else
 				-- Value has been added or removed; Complete graph update is required
-				self:RebuildGraphCurve(i,udmChannel)
+				self:RebuildGraphCurve(i,graphData)
 			end
 		end
 	end
@@ -384,8 +555,16 @@ function gui.PFMTimelineGraph:GetSelectedDataPoints()
 		if(graphData.curve:IsValid()) then
 			local cdps = graphData.curve:GetDataPoints()
 			for _,dp in ipairs(cdps) do
-				if(dp:IsValid() and dp:IsSelected()) then
-					table.insert(dps,dp)
+				if(dp:IsValid()) then
+					if(dp:IsSelected()) then table.insert(dps,dp) end
+					local tc = dp:GetTangentControl()
+					if(util.is_valid(tc)) then
+						local inC = tc:GetInControl()
+						if(inC:IsSelected()) then table.insert(dps,inC) end
+
+						local outC = tc:GetOutControl()
+						if(outC:IsSelected()) then table.insert(dps,outC) end
+					end
 				end
 			end
 		end
@@ -395,10 +574,8 @@ end
 function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 	self:RequestFocus()
 
-	local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE or
-		input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
-	local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
-		input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
+	local isCtrlDown = input.is_ctrl_key_down()
+	local isAltDown = input.is_alt_key_down()
 	local cursorMode = self:GetCursorMode()
 	if(button == input.MOUSE_BUTTON_LEFT) then
 		if(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_MOVE) then
@@ -427,18 +604,13 @@ function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 		else
 			if(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then
 				if(util.is_valid(self.m_selectionRect)) then
-					local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE or
-						input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
-					local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
-						input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
 					for _,graphData in ipairs(self.m_graphs) do
 						if(graphData.curve:IsValid()) then
 							local dps = graphData.curve:GetDataPoints()
 							for _,dp in ipairs(dps) do
-								if(self.m_selectionRect:IsElementInBounds(dp)) then
-									if(isAltDown) then dp:SetSelected(false)
-									else dp:SetSelected(true) end
-								elseif(isCtrlDown == false and isAltDown == false) then dp:SetSelected(false) end
+								if(dp:UpdateSelection(self.m_selectionRect) == false and isCtrlDown == false and isAltDown == false) then
+									dp:SetSelected(false)
+								end
 							end
 						end
 					end
@@ -498,6 +670,20 @@ function gui.PFMTimelineGraph:OnThink()
 		timeLine:Update()
 	end
 end
+function gui.PFMTimelineGraph:ScrollCallback(x,y)
+	local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE or
+		input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
+	if(isCtrlDown) then
+		local timeLine = self.m_timeline:GetTimeline()
+		local axis = timeLine:GetDataAxis():GetAxis()
+		axis:SetZoomLevel(axis:GetZoomLevel() -(y /20.0))
+		timeLine:Update()
+
+		self:UpdateAxisRanges(axis:GetStartOffset(),axis:GetZoomLevel())
+		return util.EVENT_REPLY_HANDLED
+	end
+	return util.EVENT_REPLY_UNHANDLED
+end
 function gui.PFMTimelineGraph:SetCursorMode(cursorMode) self.m_cursorMode = cursorMode end
 function gui.PFMTimelineGraph:GetCursorMode() return self.m_cursorMode end
 function gui.PFMTimelineGraph:SetTimeline(timeline) self.m_timeline = timeline end
@@ -530,11 +716,70 @@ function gui.PFMTimelineGraph:RebuildGraphCurves()
 	for i=1,#self.m_graphs do
 		local graphData = self.m_graphs[i]
 		if(graphData.curve:IsValid()) then
-			self:RebuildGraphCurve(i,graphData.curve:GetChannel())
+			self:RebuildGraphCurve(i,graphData)
 		end
 	end
 end
-function gui.PFMTimelineGraph:RebuildGraphCurve(i,channel)
+
+local function cube(v) return v *v *v end
+local function square(v) return v *v end
+local function bezier(p0,p1,p2,p3,t)
+	return cube(1 - t) * p0 + 3 * square(1 - t) * t * p1 + 3 * (1 - t) * square(t) * p2 + cube(t) * p3;
+end
+function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1,numValues)
+	if(dp0 == nil or dp1 == nil) then return end
+	local actor0,targetPath0,valueIndex0,curveData0 = dp0:GetChannelValueData()
+	local actor1,targetPath1,valueIndex1,curveData1 = dp1:GetChannelValueData()
+	assert(actor0 == actor1 and targetPath0 == targetPath1 and curveData0 == curveData1)
+
+	if(numValues == nil) then
+		numValues = valueIndex1 -valueIndex0 -1
+	end
+
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+
+	local INTERPOLATION_CONSTANT = 0
+	local INTERPOLATION_LINEAR = 1
+	local INTERPOLATION_BEZIER = 2
+	local interpMethod = INTERPOLATION_BEZIER
+	local result
+	if(interpMethod == INTERPOLATION_CONSTANT) then
+		result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,1)
+		if(result) then
+			dp1:SetValueIndex(valueIndex1)
+			local anim,channel,animClip = animManager:FindAnimationChannel(actor0,targetPath0)
+			channel:SetValue(valueIndex0 +1,channel:GetValue(valueIndex0))
+			channel:SetTime(valueIndex0 +1,channel:GetTime(valueIndex1) -0.001)
+		end
+	elseif(interpMethod == INTERPOLATION_LINEAR) then
+		result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,0)
+	else
+		result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,numValues)
+		if(result) then
+			dp1:SetValueIndex(valueIndex1)
+			local anim,channel,animClip = animManager:FindAnimationChannel(actor0,targetPath0)
+			local p1 = channel:GetValue(valueIndex0)
+			local p0 = (valueIndex0 > 0) and channel:GetValue(valueIndex0 -1) or p1
+			local p2 = channel:GetValue(valueIndex1)
+			local p3 = channel:GetValue(valueIndex1 +1) or p2
+			local endVal = valueIndex0 +numValues
+			for i=valueIndex0 +1,endVal do
+				local val = channel:GetValue(i)
+				local time = channel:GetTime(i)
+
+				local f = (i -valueIndex0) /(numValues +1)
+				channel:SetValue(i,bezier(p0,p1,p2,p3,f))
+			end
+		end
+	end
+	if(result) then
+		dp1:SetValueIndex(valueIndex1)
+	end
+end
+function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData)
+	local channel = graphData.channel()
+	if(channel == nil) then return end
 	local times = channel:GetTimes()
 	local values = channel:GetValues()
 
@@ -547,10 +792,25 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,channel)
 		v = (graphData.valueTranslator ~= nil) and graphData.valueTranslator[1](v) or v
 		table.insert(curveValues,{t,v})
 	end
-	graphData.curve:BuildCurve(curveValues,channel,i)
+
+	local targetPath = channel:GetTargetPath()
+	local animClip = graphData.animClip()
+	if(animClip ~= nil) then
+		local editorData = animClip:GetEditorData()
+		local channel = editorData:FindChannel(targetPath)
+		if(channel ~= nil) then
+			local bms = channel:GetBookmarkSet()
+			graphData.bookmarkSet = bms
+			self.m_timeline:AddBookmarkSet(bms)
+		end
+	end
+	graphData.curve:BuildCurve(curveValues,channel,i,graphData.bookmarkSet)
 end
 function gui.PFMTimelineGraph:RemoveGraphCurve(i)
 	local graphData = self.m_graphs[i]
+	debug.print("RemoveGraphCurve")
+	if(graphData.bookmarkSet ~= nil) then self.m_timeline:RemoveBookmarkSet(graphData.bookmarkSet) end
+	util.remove(graphData.bookmarks)
 	util.remove(graphData.curve)
 
 	local graphIndices = self.m_channelPathToGraphIndices[graphData.targetPath]
@@ -582,23 +842,31 @@ function gui.PFMTimelineGraph:AddGraph(track,actor,targetPath,colorCurve,fValueT
 	local channel = (animClip ~= nil) and animClip:FindChannel(targetPath) or nil
 	table.insert(self.m_graphs,{
 		animClip = getAnimClip,
+		channel = function()
+			getAnimClip()
+			channel = channel or ((animClip ~= nil) and animClip:FindChannel(targetPath) or nil)
+			return channel
+		end,
 		curve = graph,
 		valueTranslator = fValueTranslator,
 		numValues = (channel ~= nil) and channel:GetValueCount() or 0,
-		targetPath = targetPath
+		targetPath = targetPath,
+		bookmarks = {}
 	})
 	self.m_channelPathToGraphIndices[targetPath] = self.m_channelPathToGraphIndices[targetPath] or {}
 	table.insert(self.m_channelPathToGraphIndices[targetPath],#self.m_graphs)
 
 	local idx = #self.m_graphs
 	self:UpdateGraphCurveAxisRanges(idx)
-	if(channel ~= nil) then self:RebuildGraphCurve(idx,channel) end
+	if(channel ~= nil) then self:RebuildGraphCurve(idx,self.m_graphs[idx]) end
 	return graph,idx
 end
+function gui.PFMTimelineGraph:GetGraphs() return self.m_graphs end
 function gui.PFMTimelineGraph:UpdateAxisRanges(startOffset,zoomLevel)
 	if(util.is_valid(self.m_grid)) then
 		self.m_grid:SetStartOffset(startOffset)
 		self.m_grid:SetZoomLevel(zoomLevel)
+		self.m_grid:Update()
 	end
 	for i=1,#self.m_graphs do
 		self:UpdateGraphCurveAxisRanges(i)
@@ -617,15 +885,15 @@ function gui.PFMTimelineGraph:SetupControl(filmClip,actor,targetPath,item,color,
 		if(util.is_valid(graph)) then self:RemoveGraphCurve(graphIndex) end
 	end)
 end
-function gui.PFMTimelineGraph:AddKey(time,value)
+function gui.PFMTimelineGraph:AddBookmarkDataPoint(time)
 	if(util.is_valid(self.m_timeline) == false) then return end
-	local timeline = self.m_timeline:GetTimeline()
-	timeline:AddBookmark(time)
-	-- TODO: Add actual key!!
-	--[[local key = gui.create("WIPFMGraphKey",self)
-	self:GetTimeAxis():AttachElementToValue(key,time)
-	self:GetDataAxis():AttachElementToValue(key,value)
-	table.insert(self.m_keys,key)]]
+
+	for _,graph in ipairs(self.m_graphs) do
+		local animClip = graph.animClip()
+		if(animClip ~= nil) then
+			animClip:AddEditorDataPoint(graph.targetPath,time)
+		end
+	end
 end
 function gui.PFMTimelineGraph:OnVisibilityChanged(visible)
 	if(visible == false or util.is_valid(self.m_timeline) == false) then return end

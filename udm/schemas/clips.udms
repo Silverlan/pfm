@@ -94,19 +94,25 @@
 		}
 		"EditorGraphCurve"
 		{
-			
+
 		}
 		"EditorChannelData"
 		{
-			"bookmarkSet" {$string type "BookmarkSet"}
-			"targetPath" {$string default ""}
+			"children"
+			{
+				"bookmarkSet" {$string type "BookmarkSet"}
+				"targetPath" {$string default ""}
+			}
 		}
 		"EditorAnimationData"
 		{
-			"channels"
+			"children"
 			{
-				$string type "array"
-				$string valueType "EditorChannelData"
+				"channels"
+				{
+					$string type "array"
+					$string valueType "EditorChannelData"
+				}
 			}
 		}
 		"AnimationClip"

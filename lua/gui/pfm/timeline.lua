@@ -184,7 +184,10 @@ function gui.PFMTimeline:SetGraphCursorMode(cursorMode)
 	end
 	self.m_timelineGraph:SetCursorMode(cursorMode)
 end
-function gui.PFMTimeline:AddBookmark(bm) self.m_timeline:AddBookmark(bm) end
+function gui.PFMTimeline:AddBookmark(bm) return self.m_timeline:AddBookmark(bm) end
+function gui.PFMTimeline:AddBookmarkSet(bms) return self.m_timeline:AddBookmarkSet(bms) end
+function gui.PFMTimeline:RemoveBookmarkSet(bms) return self.m_timeline:RemoveBookmarkSet(bms) end
+function gui.PFMTimeline:ClearBookmarks() self.m_timeline:ClearBookmarks() end
 function gui.PFMTimeline:InitializeToolbar()
 	local toolbar = gui.create("WIBase",self.m_contents,0,0,self:GetWidth(),0)
 	toolbar:SetName("timeline_toolbar")

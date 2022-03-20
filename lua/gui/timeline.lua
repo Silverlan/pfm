@@ -36,6 +36,7 @@ function gui.Timeline:OnInitialize()
 
 	self.m_bookmarkBar = gui.create("WIBase",self,0,0,self:GetWidth(),16,0,0,1,0)
 	self.m_bookmarks = {}
+	self.m_bookmarkSets = {}
 
 	self.m_timelineStripUpper = gui.create("WILabelledTimelineStrip",self,0,self.m_bookmarkBar:GetBottom(),self:GetWidth(),16,0,0,1,0)
 	self.m_timelineStripUpper:SetMouseInputEnabled(true)
@@ -165,6 +166,42 @@ end
 function gui.Timeline:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_playhead)) then self.m_playhead:SetHeight(h -self.m_bookmarkBar:GetBottom()) end
 end
+function gui.Timeline:RemoveBookmarkSet(bms)
+	for i,d in ipairs(self.m_bookmarkSets) do
+		if(util.is_same_object(d.bookmarkSet,bms)) then
+			util.remove(d.elements)
+			util.remove(d.listener)
+			table.remove(self.m_bookmarkSets,i)
+			break
+		end
+	end
+end
+function gui.Timeline:AddBookmarkSet(bms)
+	local t = {
+		elements = {},
+		bookmarkSet = bms
+	}
+	table.insert(self.m_bookmarkSets,t)
+	local listener = bms:AddChangeListener("bookmarks",function(c,i,ev,oldVal)
+		if(ev == udm.BaseSchemaType.ARRAY_EVENT_ADD) then
+			local el = self:AddBookmark(c:GetBookmark(i))
+			table.insert(t.elements,el)
+		elseif(ev == udm.BaseSchemaType.ARRAY_EVENT_REMOVE) then
+			for _,bmOther in ipairs(self.m_bookmarks) do
+				if(bmOther:IsValid() and util.is_same_object(bmOther.m_bookmark,oldVal)) then
+					bmOther:Remove()
+				end
+			end
+		end
+	end)
+	t.listener = listener
+
+	for _,bm in ipairs(bms:GetBookmarks()) do
+		local el = self:AddBookmark(bm)
+		el.m_bookmark = bm
+		table.insert(t.elements,el)
+	end
+end
 function gui.Timeline:AddBookmark(bm)
 	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
 	local p = gui.create("WIPFMBookmark",self,0,5)
@@ -173,9 +210,14 @@ function gui.Timeline:AddBookmark(bm)
 	return p
 end
 function gui.Timeline:ClearBookmarks()
-	for _,bookmark in ipairs(self.m_bookmarks) do
-		if(bookmark:IsValid()) then bookmark:Remove() end
+	util.remove(self.m_bookmarks)
+	for _,d in ipairs(self.m_bookmarkSets) do
+		util.remove(d.elements)
+		util.remove(d.listener)
 	end
+
+	self.m_bookmarks = {}
+	self.m_bookmarkSets = {}
 end
 function gui.Timeline:SetZoomLevel(zoomLevel)
 	-- TODO: Use SetZoomLevel from GraphAxis class
