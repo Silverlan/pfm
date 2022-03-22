@@ -52,6 +52,10 @@ function util.GraphAxis:XDeltaToValue(x)
 	-- Correct confirmed
 	return x /self:GetStridePerUnit()
 end
+function util.GraphAxis:ValueToXDelta(v)
+	-- Correct confirmed
+	return v *self:GetStridePerUnit()
+end
 function util.GraphAxis:XOffsetToValue(x)
 	-- Correct confirmed
 	return self:XDeltaToValue(x) +self:GetStartOffset()

@@ -92,15 +92,77 @@
 				}
 			}
 		}
+		"EditorGraphCurveKeyData"
+		{
+			"children"
+			{
+				// Time values for every movable data point
+				"times"
+				{
+					$string type "array"
+					$string valueType "float"
+				}
+				// Data values for every movable data point
+				"values"
+				{
+					$string type "array"
+					$string valueType "float"
+				}
+
+				// Bezier interpolation in-control data (relative to data point)
+				"inTimes"
+				{
+					$string type "array"
+					$string valueType "float"
+				}
+				"inDeltas"
+				{
+					$string type "array"
+					$string valueType "float"
+				}
+				"inModes"
+				{
+					$string type "array"
+					$string valueType "uint32"
+				}
+
+				// Bezier interpolation out-control data (relative to data point)
+				"outTimes"
+				{
+					$string type "array"
+					$string valueType "float"
+				}
+				"outDeltas"
+				{
+					$string type "array"
+					$string valueType "float"
+				}
+				"outModes"
+				{
+					$string type "array"
+					$string valueType "uint32"
+				}
+			}
+		}
 		"EditorGraphCurve"
 		{
-
+			"children"
+			{
+				// For float types, "keys" will contain one value. For vec3, three values, etc.
+				// Quaternion types will be treated as euler angles (i.e. three values).
+				"keys"
+				{
+					$string type "array"
+					$string valueType "EditorGraphCurveKeyData"
+				}
+			}
 		}
 		"EditorChannelData"
 		{
 			"children"
 			{
 				"bookmarkSet" {$string type "BookmarkSet"}
+				"graphCurve" {$string type "EditorGraphCurve"}
 				"targetPath" {$string default ""}
 			}
 		}

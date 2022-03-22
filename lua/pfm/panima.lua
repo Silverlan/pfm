@@ -150,8 +150,8 @@ function pfm.AnimationManager:RemoveChannel(actor,path)
 	anim:RemoveChannel(path)
 end
 
-function pfm.AnimationManager:RemoveChannelValueByIndex(actor,path,idx,updateBookmark)
-	if(updateBookmark == nil) then updateBookmark = true end
+function pfm.AnimationManager:RemoveChannelValueByIndex(actor,path,idx,updateKey)
+	if(updateKey == nil) then updateKey = true end
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
@@ -168,13 +168,20 @@ function pfm.AnimationManager:RemoveChannelValueByIndex(actor,path,idx,updateBoo
 	-- Remove bookmark
 	local editorData = animClip:GetEditorData()
 	local editorChannel = editorData:FindChannel(path)
-	if(editorChannel ~= nil and t ~= nil) then
-		local bms = editorChannel:GetBookmarkSet()
-		bms:RemoveBookmarkAtTimestamp(t)
+	local keyIndex
+	if(updateKey == true and editorChannel ~= nil and t ~= nil) then
+		keyIndex = editorChannel:RemoveKey(t)
 	end
 
 	local udmChannel = animClip:GetChannel(path,type)
-	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,nil,idx)
+	self:CallCallbacks("OnChannelValueChanged",{
+		actor = actor,
+		animation = anim,
+		channel = channel,
+		udmChannel = udmChannel,
+		oldIndex = idx,
+		keyIndex = keyIndex
+	})
 end
 
 function pfm.AnimationManager:GetChannelValueByIndex(actor,path,idx)
@@ -184,8 +191,8 @@ function pfm.AnimationManager:GetChannelValueByIndex(actor,path,idx)
 	return channel:GetTime(idx),channel:GetValue(idx)
 end
 
-function pfm.AnimationManager:UpdateChannelValueByIndex(actor,path,idx,time,value,updateBookmark)
-	if(updateBookmark == nil) then updateBookmark = true end
+function pfm.AnimationManager:UpdateChannelValueByIndex(actor,path,idx,time,value,updateKey)
+	if(updateKey == nil) then updateKey = true end
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
@@ -196,6 +203,8 @@ function pfm.AnimationManager:UpdateChannelValueByIndex(actor,path,idx,time,valu
 	if(value ~= nil) then channel:SetValue(idx,value) end
 
 	local oldIdx = idx
+	local oldKeyIdx
+	local keyIdx
 	if(time ~= nil) then
 		local oldTime = channel:GetTime(idx)
 		channel:SetTime(idx,time)
@@ -230,24 +239,31 @@ function pfm.AnimationManager:UpdateChannelValueByIndex(actor,path,idx,time,valu
 
 		anim:UpdateDuration()
 
-		if(updateBookmark) then
+		if(updateKey) then
 			local editorData = animClip:GetEditorData()
 			local editorChannel = editorData:FindChannel(path)
 			if(editorChannel ~= nil) then
-				local bms = editorChannel:GetBookmarkSet()
-				local bm = bms:FindBookmark(oldTime)
-				if(bm ~= nil) then bm:SetTime(time) end
+				oldKeyIdx,keyIdx = editorChannel:SetKeyTime(oldTime,time)
 			end
 		end
 	end
 	self:SetAnimationDirty(actor)
 
 	local udmChannel = animClip:GetChannel(path,type)
-	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,idx,oldIdx)
+	self:CallCallbacks("OnChannelValueChanged",{
+		actor = actor,
+		animation = anim,
+		channel = channel,
+		udmChannel = udmChannel,
+		index = idx,
+		oldIndex = oldIdx,
+		oldKeyIndex = oldKeyIdx,
+		keyIndex = keyIdx
+	})
 end
 
-function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type,addBookmark)
-	if(addBookmark == nil) then addBookmark = true end
+function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type,addKey)
+	if(addKey == nil) then addKey = true end
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
@@ -259,15 +275,26 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type,addBook
 	local idx = channel:AddValue(time,value)
 	anim:UpdateDuration()
 
-	if(addBookmark) then
+	local keyIdx
+	if(addKey) then
 		local editorData = animClip:GetEditorData()
 		local editorChannel = editorData:FindChannel(path,true)
-		local bms = editorChannel:GetBookmarkSet()
-		bms:AddBookmarkAtTimestamp(time)
+		-- TODO: Vec3, etc. -> Split into components!
+		local keyData
+		keyData,keyIndex = editorChannel:AddKey(time)
+		keyData:SetValue(keyIndex,value)
 	end
 
 	local udmChannel = animClip:GetChannel(path,type)
-	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel,idx,idx)
+	self:CallCallbacks("OnChannelValueChanged",{
+		actor = actor,
+		animation = anim,
+		channel = channel,
+		udmChannel = udmChannel,
+		index = idx,
+		oldIndex = idx,
+		keyIndex = keyIndex
+	})
 end
 
 function pfm.AnimationManager:SetCurveChannelValueCount(actor,path,startIndex,endIndex,numValues)
