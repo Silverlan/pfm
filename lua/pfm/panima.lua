@@ -283,6 +283,11 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type,addKey)
 		local keyData
 		keyData,keyIndex = editorChannel:AddKey(time)
 		keyData:SetValue(keyIndex,value)
+
+		keyData:SetInTime(keyIndex,-0.5)
+		keyData:SetInDelta(keyIndex,0.0)
+		keyData:SetOutTime(keyIndex,0.5)
+		keyData:SetOutDelta(keyIndex,0.0)
 	end
 
 	local udmChannel = animClip:GetChannel(path,type)

@@ -14,6 +14,7 @@ include("/gui/selectionrect.lua")
 include("/gui/timelinestrip.lua")
 include("/graph_axis.lua")
 include("key.lua")
+include("easing.lua")
 
 util.register_class("gui.CursorTracker",util.CallbackHandler)
 function gui.CursorTracker:__init()
@@ -213,6 +214,7 @@ function gui.PFMTimelineDataPoint:InitializeTangentControl()
 
 	el:AddCallback("OnInControlMoved",function(el,newPos)
 		local editorKeys,keyIndex,time,delta = get_key_time_delta(newPos)
+		time = math.min(time,-0.0001)
 		editorKeys:SetInTime(keyIndex,time)
 		editorKeys:SetInDelta(keyIndex,delta)
 		if(util.is_valid(self.m_tangentControl)) then self.m_tangentControl:UpdateInOutLines(true,false) end
@@ -223,6 +225,7 @@ function gui.PFMTimelineDataPoint:InitializeTangentControl()
 	end)
 	el:AddCallback("OnOutControlMoved",function(el,newPos)
 		local editorKeys,keyIndex,time,delta = get_key_time_delta(newPos)
+		time = math.max(time,0.0001)
 		editorKeys:SetOutTime(keyIndex,time)
 		editorKeys:SetOutDelta(keyIndex,delta)
 		if(util.is_valid(self.m_tangentControl)) then self.m_tangentControl:UpdateInOutLines(false,true) end
@@ -794,16 +797,6 @@ function gui.PFMTimelineGraph:RebuildGraphCurves()
 	end
 end
 
-local function cube(v) return v *v *v end
-local function square(v) return v *v end
-local function bezier(p0,p1,p2,p3,t,cp0,cp1)
-	local cp0 = 1.0
-	local cp1 = 0.0
-	--float x = powf(1 - t, 3) * origin.x + 3.0f * powf(1 - t, 2) * t * control1.x + 3.0f * (1 - t) * t * t * control2.x + t * t * t * destination.x;
-	--float y = powf(1 - t, 3) * origin.y + 3.0f * powf(1 - t, 2) * t * control1.y + 3.0f * (1 - t) * t * t * control2.y + t * t * t * destination.y;
-	-- return cube(1 - t) * p0 + 3 * square(1 - t) * t * p1 + 3 * (1 - t) * square(t) * p2 + cube(t) * p3;
-	return cube(1 - t) * p0 + 3 * square(1 - t) * t * cp0 + 3 * (1 - t) * square(t) * cp1 + cube(t) * p3;
-end
 function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1)
 	if(dp0 == nil or dp1 == nil) then return end
 	local actor0,targetPath0,keyIndex0,curveData0 = dp0:GetChannelValueData()
@@ -813,12 +806,6 @@ function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1)
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
 
-	local INTERPOLATION_CONSTANT = 0
-	local INTERPOLATION_LINEAR = 1
-	local INTERPOLATION_BEZIER = 2
-	local interpMethod = INTERPOLATION_BEZIER
-	local result
-
 	local curve = dp0:GetGraphCurve()
 	local editorChannel = curve:GetEditorChannel()
 	if(editorChannel == nil) then return end
@@ -826,53 +813,108 @@ function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1)
 	local editorGraphCurve = editorChannel:GetGraphCurve()
 	local editorKeys = editorGraphCurve:GetKey(0) -- TODO: vec3 component index
 
+	local interpMethod = editorKeys:GetInterpolationMode(keyIndex0)
+	local easingMode = editorKeys:GetEasingMode(keyIndex0)
+
 	local panimaChannel = curve:GetPanimaChannel()
 	local valueIndex0 = panimaChannel:FindIndex(editorKeys:GetTime(keyIndex0),pfm.udm.EditorChannelData.TIME_EPSILON)
 	local valueIndex1 = panimaChannel:FindIndex(editorKeys:GetTime(keyIndex1),pfm.udm.EditorChannelData.TIME_EPSILON)
-	if(valueIndex0 == nil or valueIndex1 == nil) then return end
-
-	if(interpMethod == INTERPOLATION_CONSTANT) then
+	if(valueIndex0 == nil or valueIndex1 == nil) then
+		local key = (valueIndex0 == nil) and keyIndex0 or keyIndex1
+		pfm.log("Animation graph key " .. key .. " at timestamp " .. editorKeys:GetTime(key) .. " has no associated animation data value!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+	if(interpMethod == pfm.udm.INTERPOLATION_CONSTANT) then
 		local result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,1)
 		if(result) then
 			local anim,channel,animClip = animManager:FindAnimationChannel(actor0,targetPath0)
 			channel:SetValue(valueIndex0 +1,channel:GetValue(valueIndex0))
 			channel:SetTime(valueIndex0 +1,channel:GetTime(valueIndex1) -0.001)
 		end
-	elseif(interpMethod == INTERPOLATION_LINEAR) then
+	elseif(interpMethod == pfm.udm.INTERPOLATION_LINEAR) then
 		local result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,0)
 	else
-		local numValues = 20 -- TODO: Determine number of points automatically and spread them out according to curvature weight
+		local begin
+		local duration = 1
+		local change
+
+		local calcPointOnCurve
+		if(interpMethod == pfm.udm.INTERPOLATION_BEZIER) then
+			calcPointOnCurve = function(t,normalizedTime,dt,cp0Time,cp0Val,cp0OutTime,cp0OutVal,cp1InTime,cp1InVal,cp1Time,cp1Val) return math.calc_bezier_point(t,cp0Time,cp0Val,cp0OutTime,cp0OutVal,cp1InTime,cp1InVal,cp1Time,cp1Val) end
+		else
+			local easingMethod = pfm.util.get_easing_method(interpMethod,easingMode)
+			calcPointOnCurve = function(t,normalizedTime,dt,cp0Time,cp0Val,cp0OutTime,cp0OutVal,cp1InTime,cp1InVal,cp1Time,cp1Val) return easingMethod(normalizedTime,begin,change,duration) end
+		end
+
+		local anim,channel,animClip = animManager:FindAnimationChannel(actor0,targetPath0)
+
+		local cp0Time = editorKeys:GetTime(keyIndex0)
+		local cp0Val = editorKeys:GetValue(keyIndex0)
+
+		local cp1Time = editorKeys:GetTime(keyIndex1)
+		local cp1Val = editorKeys:GetValue(keyIndex1)
+
+		local cp0OutTime = editorKeys:GetOutTime(keyIndex0)
+		local cp0OutVal = editorKeys:GetOutDelta(keyIndex0)
+		cp0OutTime = math.min(cp0Time +cp0OutTime,cp1Time -0.0001)
+		cp0OutVal = cp0Val +cp0OutVal
+
+		local cp1InTime = editorKeys:GetInTime(keyIndex1)
+		local cp1InVal = editorKeys:GetInDelta(keyIndex1)
+
+		cp1InTime = math.max(cp1Time +cp1InTime,cp0Time +0.0001)
+		cp1InVal = cp1Val +cp1InVal
+
+		begin = cp0Val
+		change = cp1Val -cp0Val
+
+		local function denormalize_time(normalizedTime) return cp0Time +(cp1Time -cp0Time) *normalizedTime end
+		local function calc_point(normalizedTime,dt)
+			local t = denormalize_time(normalizedTime)
+			return Vector2(normalizedTime,calcPointOnCurve(
+				t,normalizedTime,dt,
+				cp0Time,cp0Val,
+				cp0OutTime,cp0OutVal,
+				cp1InTime,cp1InVal,
+				cp1Time,cp1Val
+			))
+			--return Vector2(normalizedTime,math.lerp(cp0Val,cp1Val,normalizedTime))
+		end
+
+		--
+		-- We want to take a bunch of data samples on the bezier curve
+		-- to fill our animation channel with. The more samples we use, the more accurately it will match
+		-- the path of the original curve, but at the cost of memory. To reduce the number of samples we need, we create
+		-- a sparse distribution at straight curve segments, and a tight distribution at segments with steep angles.
+		local maxStepCount = 100 -- Number of samples will never exceed this value
+		local dt = 1.0 /(maxStepCount -1)
+		local timeValues = {calc_point(0.0,dt)}
+		local startPoint = calc_point(0.0,dt)
+		local endPoint = calc_point(1.0,dt)
+		local prevPoint = startPoint
+		local n = (endPoint -startPoint):GetNormal()
+		for i=1,maxStepCount -2 do
+			local t = i *dt
+			local point = calc_point(t,dt)
+			local nToPoint = (point -prevPoint):GetNormal()
+			local dot = n:DotProduct(nToPoint)
+			if(dot < 0.995) then -- Only create a sample for this point if it deviates from a straight line to the previous sample (i.e. if linear interpolation would be insufficient)
+				table.insert(timeValues,point)
+				n = nToPoint
+			end
+
+			prevPoint = point
+		end
+		table.insert(timeValues,calc_point(1.0,dt))
+		--	
+
+		local numValues = #timeValues
 		local result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,numValues)
 		if(result) then
-			local anim,channel,animClip = animManager:FindAnimationChannel(actor0,targetPath0)
-
-			local cp0Time = editorKeys:GetTime(keyIndex0)
-			local cp0Val = editorKeys:GetValue(keyIndex0)
-
-			local cp0OutTime = editorKeys:GetOutTime(keyIndex0)
-			local cp0OutVal = editorKeys:GetOutDelta(keyIndex0)
-			cp0OutTime = cp0Time +cp0OutTime
-			cp0OutVal = cp0Val +cp0OutVal
-
-			local cp1InTime = editorKeys:GetInTime(keyIndex1)
-			local cp1InVal = editorKeys:GetInDelta(keyIndex1)
-
-			local cp1Time = editorKeys:GetTime(keyIndex1)
-			local cp1Val = editorKeys:GetValue(keyIndex1)
-			cp1InTime = cp1Time +cp1InTime
-			cp1InVal = cp1Val +cp1InVal
-
-			local endVal = valueIndex0 +numValues
-			for i=valueIndex0 +1,endVal do
-				local time = channel:GetTime(i)
-				local point = math.calc_bezier_point(
-					time,
-					cp0Time,cp0Val,
-					cp0OutTime,cp0OutVal,
-					cp1InTime,cp1InVal,
-					cp1Time,cp1Val
-				)
-				channel:SetValue(i,point)
+			for i,tv in ipairs(timeValues) do
+				assert((i == 1 or tv.x > 0.0) and (i == #timeValues or tv.x < 1.0))
+				channel:SetTime(i -1,denormalize_time(tv.x))
+				channel:SetValue(i -1,tv.y)
 			end
 		end
 	end

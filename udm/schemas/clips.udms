@@ -92,6 +92,30 @@
 				}
 			}
 		}
+		"EasingMode"
+		{
+			$string type "enum"
+			$array values [string]["auto","in","out","inOut"]
+		}
+		"Interpolation"
+		{
+			$string type "enum"
+			$array values [string][
+				"constant",
+				"linear",
+				"bezier",
+				"bounce",
+				"circ",
+				"cubic",
+				"expo",
+				"quad",
+				"quart",
+				"quint",
+				"sine"
+				// "back",
+				// "elastic",
+			]
+		}
 		"EditorGraphCurveKeyData"
 		{
 			"children"
@@ -99,47 +123,59 @@
 				// Time values for every movable data point
 				"times"
 				{
-					$string type "array"
+					$string type "arrayLz4"
 					$string valueType "float"
 				}
 				// Data values for every movable data point
 				"values"
 				{
-					$string type "array"
+					$string type "arrayLz4"
 					$string valueType "float"
+				}
+				"interpolation"
+				{
+					$string type "arrayLz4"
+					$string valueType "Interpolation"
+					$string baseName "InterpolationMode"
+				}
+				"easing"
+				{
+					$string type "arrayLz4"
+					$string valueType "EasingMode"
+					$string baseName "EasingMode"
 				}
 
 				// Bezier interpolation in-control data (relative to data point)
 				"inTimes"
 				{
-					$string type "array"
+					$string type "arrayLz4"
 					$string valueType "float"
 				}
 				"inDeltas"
 				{
-					$string type "array"
+					$string type "arrayLz4"
 					$string valueType "float"
 				}
 				"inModes"
 				{
-					$string type "array"
+					$string type "arrayLz4"
 					$string valueType "uint32"
 				}
 
 				// Bezier interpolation out-control data (relative to data point)
 				"outTimes"
 				{
-					$string type "array"
+					$string type "arrayLz4"
 					$string valueType "float"
 				}
 				"outDeltas"
 				{
-					$string type "array"
+					$string type "arrayLz4"
 					$string valueType "float"
 				}
 				"outModes"
 				{
-					$string type "array"
+					$string type "arrayLz4"
 					$string valueType "uint32"
 				}
 			}

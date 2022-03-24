@@ -221,6 +221,8 @@ function pfm.udm.EditorChannelData:AddKey(t,baseIndex,addBaseKeyIfNotExists)
 
 	keyData:InsertTimeRange(i,1) keyData:SetTime(i,t)
 	keyData:InsertValueRange(i,1) keyData:SetValue(i,0.0)
+	keyData:InsertEasingModeRange(i,1) keyData:SetEasingMode(i,pfm.udm.EASING_MODE_AUTO)
+	keyData:InsertInterpolationModeRange(i,1) keyData:SetInterpolationMode(i,pfm.udm.INTERPOLATION_LINEAR)
 
 	keyData:InsertInTimeRange(i,1) keyData:SetInTime(i,0.0)
 	keyData:InsertInDeltaRange(i,1) keyData:SetInDelta(i,0.0)
