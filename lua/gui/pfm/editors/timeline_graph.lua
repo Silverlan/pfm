@@ -598,6 +598,10 @@ function gui.PFMTimelineGraph:UpdateChannelValue(data)
 					graphData.curve:SwapDataPoints(data.oldKeyIndex,data.keyIndex)
 					graphData.curve:UpdateDataPoints()
 				else graphData.curve:UpdateDataPoint(data.keyIndex +1) end
+			elseif(data.oldKeyIndex ~= nil) then
+				-- Key was deleted; Perform full update
+				-- TODO: If multiple keys are deleted at once, only do this once instead of for every single key
+				self:RebuildGraphCurve(i,graphData)
 			end
 		end
 	end
@@ -614,13 +618,18 @@ function gui.PFMTimelineGraph:KeyboardCallback(key,scanCode,state,mods)
 		if(state == input.STATE_PRESS) then
 			local dps = self:GetSelectedDataPoints()
 			-- Need to sort by value index, otherwise the value indices could change while we're deleting
-			table.sort(dps,function(a,b) return a:GetValueIndex() > b:GetValueIndex() end)
+			table.sort(dps,function(a,b) return a:GetKeyIndex() > b:GetKeyIndex() end)
 			self.m_skipOnChannelValueChangedCallback = true
 			for _,dp in ipairs(dps) do
-				local actor,targetPath,valueIndex,curveData = dp:GetChannelValueData()
+				local actor,targetPath,keyIndex,curveData = dp:GetChannelValueData()
 				local pm = pfm.get_project_manager()
 				local animManager = pm:GetAnimationManager()
-				animManager:RemoveChannelValueByIndex(actor,targetPath,valueIndex)
+
+				local curve = dp:GetGraphCurve()
+				local graphIdx = curve:GetCurveIndex()
+
+				animManager:RemoveKeyframe(actor,targetPath,keyIndex,dp:GetTypeComponentIndex())
+				self:ReloadGraphCurveSegment(graphIdx,keyIndex)
 			end
 			self.m_skipOnChannelValueChangedCallback = nil
 			self:RebuildGraphCurves()

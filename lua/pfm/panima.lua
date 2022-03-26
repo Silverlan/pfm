@@ -150,37 +150,29 @@ function pfm.AnimationManager:RemoveChannel(actor,path)
 	anim:RemoveChannel(path)
 end
 
-function pfm.AnimationManager:RemoveChannelValueByIndex(actor,path,idx,updateKey)
-	if(updateKey == nil) then updateKey = true end
+function pfm.AnimationManager:RemoveKeyframe(actor,path,keyIdx,baseIndex)
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
-	if(channel == nil) then return end
-	pfm.log("Removing channel value at index " .. idx .. " with channel path '" .. path .. "' of actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
+	local udmChannel = animClip:GetChannel(path,type)
+	if(channel == nil or udmChannel == nil) then return end
+	pfm.log("Removing keyframe " .. keyIdx .. " with channel path '" .. path .. "' of actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 
-	local t = channel:GetTime(idx)
-	channel:RemoveValue(idx)
-	anim:UpdateDuration()
-	self:SetAnimationDirty(actor)
 
-	-- Remove bookmark
 	local editorData = animClip:GetEditorData()
 	local editorChannel = editorData:FindChannel(path)
-	local keyIndex
-	if(updateKey == true and editorChannel ~= nil and t ~= nil) then
-		keyIndex = editorChannel:RemoveKey(t)
-	end
+	local graphCurve = editorChannel:GetGraphCurve()
+	local keyData = graphCurve:GetKey(baseIndex)
+	editorChannel:RemoveKey(keyData:GetTime(keyIdx),baseIndex)
 
-	local udmChannel = animClip:GetChannel(path,type)
-	self:CallCallbacks("OnChannelValueChanged",{
+	self:CallCallbacks("OnKeyframeUpdated",{
 		actor = actor,
 		animation = anim,
 		channel = channel,
 		udmChannel = udmChannel,
-		oldIndex = idx,
-		keyIndex = keyIndex
+		oldKeyIndex = keyIdx
 	})
 end
 
