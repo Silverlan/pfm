@@ -206,12 +206,15 @@ function gui.PFMTimelineDataPoint:IsHandleSelected()
 	if(util.is_valid(self.m_tangentControl) == false) then return false end
 	return self.m_tangentControl:GetInControl():IsSelected() or self.m_tangentControl:GetOutControl():IsSelected()
 end
-function gui.PFMTimelineDataPoint:InitializeTangentControl()
+function gui.PFMTimelineDataPoint:OnUpdate()
+	if(util.is_valid(self.m_tangentControl) == false) then return end
+	self.m_tangentControl:SetPos(self:GetCenter())
+	self.m_tangentControl:Update()
+end
+function gui.PFMTimelineDataPoint:InitializeHandleControl()
 	if(util.is_valid(self.m_tangentControl)) then return end
 	local el = gui.create("WIPFMTimelineTangentControl",self:GetParent())
 	el:SetDataPoint(self)
-	el:SetPos(self:GetCenter())
-	el:Update()
 
 	local function get_key_time_delta(newPos)
 		local curve = self:GetGraphCurve()
@@ -250,6 +253,8 @@ function gui.PFMTimelineDataPoint:InitializeTangentControl()
 	end)
 
 	self.m_tangentControl = el
+
+	self:Update()
 end
 function gui.PFMTimelineDataPoint:OnRemove()
 	util.remove(self.m_tangentControl)
@@ -262,16 +267,36 @@ function gui.PFMTimelineDataPoint:SetGraphData(timelineCurve,keyIndex)
 end
 function gui.PFMTimelineDataPoint:GetKeyIndex() return self.m_graphData.keyIndex end
 function gui.PFMTimelineDataPoint:SetKeyIndex(index) self.m_graphData.keyIndex = index end
+function gui.PFMTimelineDataPoint:GetTime()
+	local graphData = self.m_graphData
+	local timelineCurve = graphData.timelineCurve
+	local actor,targetPath,keyIndex,curveData = self:GetChannelValueData()
+	local editorKeys = timelineCurve:GetEditorKeys()
+	return editorKeys:GetTime(keyIndex)
+end
+function gui.PFMTimelineDataPoint:GetValue()
+	local graphData = self.m_graphData
+	local timelineCurve = graphData.timelineCurve
+	local actor,targetPath,keyIndex,curveData = self:GetChannelValueData()
+	local editorKeys = timelineCurve:GetEditorKeys()
+	return editorKeys:GetValue(keyIndex)
+end
 function gui.PFMTimelineDataPoint:ChangeDataValue(t,v)
+	local graphData = self.m_graphData
+	local timelineCurve = graphData.timelineCurve
+
 	local pm = pfm.get_project_manager()
-	local animManager = pm:GetAnimationManager()
-	-- TODO
-	--[[local actor,targetPath,valueIndex,curveData = self:GetChannelValueData()
+	local actor,targetPath,keyIndex,curveData = self:GetChannelValueData()
 	if(v ~= nil and curveData.valueTranslator ~= nil) then
 		local curTime,curVal = animManager:GetChannelValueByIndex(actor,targetPath,valueIndex)
 		v = curveData.valueTranslator[2](v,curVal)
 	end
-	pfm.get_project_manager():SetActorAnimationComponentProperty(actor,targetPath,t,v,nil,valueIndex)]]
+
+	local baseIndex = 0 -- TODO: vec3 component index
+	local panimaChannel = timelineCurve:GetPanimaChannel()
+	t = t or self:GetTime()
+	v = v or self:GetValue()
+	pm:UpdateKeyframe(actor,targetPath,panimaChannel,keyIndex,t,v,baseIndex)
 end
 function gui.PFMTimelineDataPoint:UpdateTextFields()
 	local graphData = self.m_graphData
@@ -330,7 +355,7 @@ function gui.PFMTimelineDataPoint:UpdateSelection(elSelectionRect)
 			self.m_tangentControl:GetOutControl():SetSelected(false)
 		end
 		self:SetSelected(not input.is_alt_key_down(),true)
-		if(self:IsSelected()) then self:InitializeTangentControl() end
+		if(self:IsSelected()) then self:InitializeHandleControl() end
 		return true
 	end
 	if(util.is_valid(self.m_tangentControl) == false) then return false end
@@ -435,6 +460,7 @@ function gui.PFMTimelineCurve:UpdateDataPoint(i)
 	if(valueTranslator ~= nil) then v = valueTranslator[1](v) end
 	local pos = self.m_curve:ValueToUiCoordinates(t,v)
 	el:SetPos(pos -el:GetSize() /2.0)
+	el:Update()
 
 	if(el:IsSelected()) then el:UpdateTextFields() end
 end
