@@ -191,75 +191,66 @@ function pfm.AnimationManager:GetChannelValueByIndex(actor,path,idx)
 	return channel:GetTime(idx),channel:GetValue(idx)
 end
 
-function pfm.AnimationManager:UpdateChannelValueByIndex(actor,path,idx,time,value,updateKey)
-	if(updateKey == nil) then updateKey = true end
-	if(self.m_filmClip == nil or self.m_filmClip == nil) then
-		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-		return
-	end
+function pfm.AnimationManager:UpdateKeyframe(actor,path,panimaChannel,keyIdx,time,value,baseIndex)
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
 	if(channel == nil) then return end
-	pfm.log("Updating channel value at index " .. idx .. " with value " .. (value and tostring(value) or "n/a") .. " at timestamp " .. (time and tostring(time) or "n/a") .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
-	if(value ~= nil) then channel:SetValue(idx,value) end
+	pfm.log("Updating keyframe index " .. keyIdx .. " with value " .. (value and tostring(value) or "n/a") .. " at timestamp " .. (time and tostring(time) or "n/a") .. " with channel path '" .. path .. "' of actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 
-	local oldIdx = idx
-	local oldKeyIdx
-	local keyIdx
-	if(time ~= nil) then
-		local oldTime = channel:GetTime(idx)
-		channel:SetTime(idx,time)
-		-- Since we changed the time value, we may have to re-order
-		local function swapValue(idx0,idx1)
-			local t0 = channel:GetTime(idx0)
-			local v0 = channel:GetValue(idx0)
-			local t1 = channel:GetTime(idx1)
-			local v1 = channel:GetValue(idx1)
-			channel:SetTime(idx0,t1)
-			channel:SetValue(idx0,v1)
-			channel:SetTime(idx1,t0)
-			channel:SetValue(idx1,v0)
-		end
+	local editorData = animClip:GetEditorData()
+	local editorChannel = editorData:FindChannel(path)
+	local udmChannel = animClip:GetChannel(path,type)
+	if(editorChannel == nil or udmChannel == nil) then return end
 
-		local tNext = channel:GetTime(idx +1)
-		while(tNext ~= nil and tNext < time) do
-			-- Value needs to be moved up
-			swapValue(idx,idx +1)
-			idx = idx +1
-			tNext = channel:GetTime(idx +1)
-		end
+	local graphCurve = editorChannel:GetGraphCurve()
+	local keyData = graphCurve:GetKey(baseIndex)
+	if(keyData ~= nil) then
+		-- Update animation value
 
-		local tPrev = (idx > 0) and channel:GetTime(idx -1) or nil
-		while(tPrev ~= nil and tPrev > time) do
-			-- Value needs to be moved down
-			swapValue(idx,idx -1)
-			idx = idx -1
-			tPrev = (idx > 0) and channel:GetTime(idx -1) or nil
-		end
-		--
+		local fullUpdateRequired = false
+		if(time ~= keyData:GetTime(keyIdx)) then
+			if(editorChannel:FindKeyIndexByTime(time,baseIndex) ~= nil) then
+				-- Two keyframes must not occupy the same timestamp, so we'll keep the old timestamp
+				time = keyData:GetTime(keyIdx)
+			else
+				-- The keyframes timestamp has changed, which affects the curves to the next and the previous keyframes.
+				-- We'll temporarily delete all animation values for those curves to avoid potential collisions.
+				-- The curve animation data will have to be re-generated anyway.
+				local tPrev = (keyIdx > 0) and keyData:GetTime(keyIdx -1) or nil
+				local t = keyData:GetTime(keyIdx)
+				local tNext = keyData:GetTime(keyIdx +1)
 
-		anim:UpdateDuration()
+				local valueIndexPrev = (tPrev ~= nil) and panimaChannel:FindIndex(tPrev,pfm.udm.EditorChannelData.TIME_EPSILON) or nil
+				local valueIndex = (t ~= nil) and panimaChannel:FindIndex(t,pfm.udm.EditorChannelData.TIME_EPSILON) or nil
+				local valueIndexNext = (tNext ~= nil) and panimaChannel:FindIndex(tNext,pfm.udm.EditorChannelData.TIME_EPSILON) or nil
+				if(valueIndex ~= nil) then
+					if(valueIndexNext ~= nil) then self:SetCurveChannelValueCount(actor,path,valueIndex,valueIndexNext,0,true) end
+					if(valueIndexPrev ~= nil) then self:SetCurveChannelValueCount(actor,path,valueIndexPrev,valueIndex,0,true) end
 
-		if(updateKey) then
-			local editorData = animClip:GetEditorData()
-			local editorChannel = editorData:FindChannel(path)
-			if(editorChannel ~= nil) then
-				oldKeyIdx,keyIdx = editorChannel:SetKeyTime(oldTime,time)
+					-- Value index may have changed; Re-query
+					valueIndex = panimaChannel:FindIndex(t,pfm.udm.EditorChannelData.TIME_EPSILON)
+					panimaChannel:SetTime(valueIndex,time,true)
+				end
 			end
 		end
-	end
-	self:SetAnimationDirty(actor)
 
-	local udmChannel = animClip:GetChannel(path,type)
-	self:CallCallbacks("OnChannelValueChanged",{
-		actor = actor,
-		animation = anim,
-		channel = channel,
-		udmChannel = udmChannel,
-		index = idx,
-		oldIndex = oldIdx,
-		oldKeyIndex = oldKeyIdx,
-		keyIndex = keyIdx
-	})
+		-- Update keyframe
+		keyData:SetValue(keyIdx,value)
+		local oldKeyIndex = keyIdx
+		local newKeyIdx = editorChannel:SetKeyTime(keyIdx,time,baseIndex)
+
+		if(newKeyIdx ~= nil) then -- Key has been swapped
+		else oldKeyIndex = nil end
+
+		self:CallCallbacks("OnKeyframeUpdated",{
+			actor = actor,
+			animation = anim,
+			channel = channel,
+			udmChannel = udmChannel,
+			keyIndex = newKeyIdx or keyIdx,
+			oldKeyIndex = oldKeyIndex
+		})
+		--
+	end
 end
 
 function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type,addKey)
@@ -302,7 +293,7 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type,addKey)
 	})
 end
 
-function pfm.AnimationManager:SetCurveChannelValueCount(actor,path,startIndex,endIndex,numValues)
+function pfm.AnimationManager:SetCurveChannelValueCount(actor,path,startIndex,endIndex,numValues,suppressCallback)
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return false
@@ -346,6 +337,6 @@ function pfm.AnimationManager:SetCurveChannelValueCount(actor,path,startIndex,en
 	end
 
 	local udmChannel = animClip:GetChannel(path,type)
-	self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel)
+	if(suppressCallback ~= true) then self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel) end
 	return true,endIndex
 end

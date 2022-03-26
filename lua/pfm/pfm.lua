@@ -49,6 +49,8 @@ if(res ~= true) then
 end
 --
 
+pfm.udm.get_schema = function() return pfm.udm.SCHEMA end
+
 include("/udm/pfm_util")
 
 util.register_class("pfm.Project")

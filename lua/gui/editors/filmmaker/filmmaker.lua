@@ -822,14 +822,20 @@ end
 function gui.WIFilmmaker:ClearProjectUI()
 	self:ClearLayout()
 end
-function gui.WIFilmmaker:SetActorAnimationComponentProperty(actor,targetPath,time,value,valueType,valueIndex)
+function gui.WIFilmmaker:UpdateKeyframe(actor,targetPath,panimaChannel,keyIdx,time,value,baseIndex)
 	local animManager = self:GetAnimationManager()
-	if(valueType ~= nil) then
-		animManager:SetChannelValue(actor,targetPath,time,value,valueType)
-	else
-		animManager:UpdateChannelValueByIndex(actor,targetPath,valueIndex,time,value)
-	end
-	
+	animManager:UpdateKeyframe(actor,targetPath,panimaChannel,keyIdx,time,value,baseIndex)
+
+	animManager:SetAnimationDirty(actor)
+	pfm.tag_render_scene_as_dirty()
+
+	local actorEditor = self:GetActorEditor()
+	if(util.is_valid(actorEditor)) then actorEditor:UpdateActorProperty(actor,targetPath) end
+end
+function gui.WIFilmmaker:SetActorAnimationComponentProperty(actor,targetPath,time,value,valueType)
+	local animManager = self:GetAnimationManager()
+	animManager:SetChannelValue(actor,targetPath,time,value,valueType)
+
 	animManager:SetAnimationDirty(actor)
 	pfm.tag_render_scene_as_dirty()
 

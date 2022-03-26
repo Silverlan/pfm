@@ -157,49 +157,51 @@ local function swap_property(keyData,i0,i1,get,set)
 	set(keyData,i1,tmp)
 end
 local function swap(keyData,i0,i1)
+	-- Also update 'AddKey' function below when adding new key properties
 	swap_property(keyData,i0,i1,keyData.GetTime,keyData.SetTime)
 	swap_property(keyData,i0,i1,keyData.GetValue,keyData.SetValue)
+	swap_property(keyData,i0,i1,keyData.GetEasingMode,keyData.SetEasingMode)
+	swap_property(keyData,i0,i1,keyData.GetInterpolationMode,keyData.SetInterpolationMode)
+
 	swap_property(keyData,i0,i1,keyData.GetInTime,keyData.SetInTime)
 	swap_property(keyData,i0,i1,keyData.GetInDelta,keyData.SetInDelta)
 	swap_property(keyData,i0,i1,keyData.GetInMode,keyData.SetInMode)
+
 	swap_property(keyData,i0,i1,keyData.GetOutTime,keyData.SetOutTime)
 	swap_property(keyData,i0,i1,keyData.GetOutDelta,keyData.SetOutDelta)
 	swap_property(keyData,i0,i1,keyData.GetOutMode,keyData.SetOutMode)
 end
-function pfm.udm.EditorChannelData:SetKeyTime(oldTime,newTime,baseIndex)
+function pfm.udm.EditorChannelData:SetKeyTime(keyIndex,newTime,baseIndex)
 	baseIndex = baseIndex or 0
-
-	local i = self:FindKeyIndexByTime(oldTime,baseIndex)
-	if(i == nil) then return end
 
 	local graphCurve = self:GetGraphCurve()
 	local keyData = graphCurve:GetKey(baseIndex)
 
 	local bms = self:GetBookmarkSet()
-	local bm = bms:FindBookmark(oldTime)
+	local bm = bms:FindBookmark(keyData:GetTime(keyIndex))
 	if(bm ~= nil) then bm:SetTime(newTime) end
 
 	local numTimes = keyData:GetTimeCount()
 	local iTarget = findInsertIndex(keyData,keyData.GetTime,numTimes,newTime) -1
-	if(iTarget == i or (i == 0 and iTarget < 0) or (i == numTimes -1 and iTarget > (numTimes -1))) then
+	if(iTarget == keyIndex or (keyIndex == 0 and iTarget < 0) or (keyIndex == numTimes -1 and iTarget > (numTimes -1))) then
 		-- Changing the time will not change the value order in the array, so we can just apply it directly
-		keyData:SetTime(i,newTime)
+		keyData:SetTime(keyIndex,newTime)
 		return
 	end
 
 	-- Key will have to be shuffled around
-	if(iTarget < i) then
+	if(iTarget < keyIndex) then
 		iTarget = iTarget +1
-		for j=i,iTarget +1,-1 do
+		for j=keyIndex,iTarget +1,-1 do
 			swap(keyData,j,j -1)
 		end
 	else
-		for i=i,iTarget -1 do
-			swap(keyData,i,i +1)
+		for j=keyIndex,iTarget -1 do
+			swap(keyData,j,j +1)
 		end
 	end
 	keyData:SetTime(iTarget,newTime)
-	return i,iTarget
+	return (iTarget ~= keyIndex) and iTarget or nil
 end
 
 function pfm.udm.EditorChannelData:AddKey(t,baseIndex,addBaseKeyIfNotExists)
@@ -219,10 +221,11 @@ function pfm.udm.EditorChannelData:AddKey(t,baseIndex,addBaseKeyIfNotExists)
 	local num = keyData:GetTimeCount()
 	i = findInsertIndex(keyData,keyData.GetTime,num,t)
 
+	-- Also update 'swap' function above when adding new key properties
 	keyData:InsertTimeRange(i,1) keyData:SetTime(i,t)
 	keyData:InsertValueRange(i,1) keyData:SetValue(i,0.0)
 	keyData:InsertEasingModeRange(i,1) keyData:SetEasingMode(i,pfm.udm.EASING_MODE_AUTO)
-	keyData:InsertInterpolationModeRange(i,1) keyData:SetInterpolationMode(i,pfm.udm.INTERPOLATION_LINEAR)
+	keyData:InsertInterpolationModeRange(i,1) keyData:SetInterpolationMode(i,pfm.udm.INTERPOLATION_BEZIER)
 
 	keyData:InsertInTimeRange(i,1) keyData:SetInTime(i,0.0)
 	keyData:InsertInDeltaRange(i,1) keyData:SetInDelta(i,0.0)
