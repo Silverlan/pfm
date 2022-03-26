@@ -169,6 +169,7 @@ function gui.PFMTimeline:GetMotionEditor() return self.m_timelineMotion end
 function gui.PFMTimeline:GetGraphEditor() return self.m_timelineGraph end
 function gui.PFMTimeline:GetTimeline() return self.m_timeline end
 function gui.PFMTimeline:GetPlayhead() return util.is_valid(self.m_timeline) and self.m_timeline:GetPlayhead() or nil end
+function gui.PFMTimeline:GetTimeOffset() return self.m_timeline:GetPlayhead():GetTimeOffset() end
 function gui.PFMTimeline:SetGraphCursorMode(cursorMode)
 	local buttons = {
 		[gui.PFMTimelineGraph.CURSOR_MODE_SELECT] = self.m_btCtrlSelect,

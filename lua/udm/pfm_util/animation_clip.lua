@@ -15,26 +15,6 @@ function pfm.udm.AnimationClip:FindChannel(path)
 	end
 end
 
-function pfm.udm.AnimationClip:AddEditorDataPoint(targetPath,time)
-	local editorData = self:GetEditorData()
-	local channel = editorData:FindChannel(targetPath,true)
-	local bms = channel:GetBookmarkSet()
-	local bm,newBookmark = bms:AddBookmarkAtTimestamp(time)
-	if(newBookmark == false) then return end
-	-- TODO: Add animation data value?
-end
-
-function pfm.udm.AnimationClip:RemoveEditorDataPoint(path,time)
-	-- Remove bookmark
-	-- Remove editor data
-
-	local editorData = self:GetEditorData()
-	local channel = editorData:FindChannel(targetPath)
-	if(channel == nil) then return end
-	local bms = channel:GetBookmarkSet()
-	bms:RemoveBookmarkAtTimestamp(time)
-end
-
 function pfm.udm.AnimationClip:GetChannel(path,type,addIfNotExists)
 	local channel = self:FindChannel(path)
 	if(channel ~= nil) then return channel end

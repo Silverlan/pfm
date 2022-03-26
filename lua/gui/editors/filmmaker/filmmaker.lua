@@ -1260,7 +1260,6 @@ function gui.WIFilmmaker:AddBookmark()
 	local t = self:GetTimeOffset() -filmClip:GetTimeFrame():GetStart()
 	if(self.m_timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH) then
 		self.m_timeline:GetGraphEditor():AddBookmarkDataPoint(t)
-		-- TODO: Update bookmarks
 		return
 	end
 	local bmSetId = filmClip:GetActiveBookmarkSet()
