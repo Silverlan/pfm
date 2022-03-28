@@ -130,6 +130,16 @@ function pfm.udm.EditorChannelData:FindKeyIndexByTime(t,baseIndex)
 	if(keyData == nil) then return end
 	return findTimeIndex(keyData,keyData.GetTime,keyData:GetTimeCount(),t)
 end
+function pfm.udm.EditorChannelData:FindLowerKeyIndex(t,baseIndex)
+	baseIndex = baseIndex or 0
+
+	local graphCurve = self:GetGraphCurve()
+	local keyData = graphCurve:GetKey(baseIndex)
+	if(keyData == nil) then return end
+	local idx = findInsertIndex(keyData,keyData.GetTime,keyData:GetTimeCount(),t)
+	if(idx ~= nil) then idx = idx -1 end
+	return idx
+end
 
 local function swap_property(keyData,i0,i1,get,set)
 	local tmp = get(keyData,i0)

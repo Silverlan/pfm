@@ -832,9 +832,9 @@ function gui.WIFilmmaker:UpdateKeyframe(actor,targetPath,panimaChannel,keyIdx,ti
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor)) then actorEditor:UpdateActorProperty(actor,targetPath) end
 end
-function gui.WIFilmmaker:SetActorAnimationComponentProperty(actor,targetPath,time,value,valueType)
+function gui.WIFilmmaker:SetActorAnimationComponentProperty(actor,targetPath,time,value,valueType,baseIndex)
 	local animManager = self:GetAnimationManager()
-	animManager:SetChannelValue(actor,targetPath,time,value,valueType)
+	animManager:SetChannelValue(actor,targetPath,time,value,valueType,nil,baseIndex)
 
 	animManager:SetAnimationDirty(actor)
 	pfm.tag_render_scene_as_dirty()
@@ -1259,7 +1259,7 @@ function gui.WIFilmmaker:AddBookmark()
 	if(filmClip == nil) then return end
 	local t = self:GetTimeOffset() -filmClip:GetTimeFrame():GetStart()
 	if(self.m_timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH) then
-		self.m_timeline:GetGraphEditor():AddBookmarkDataPoint(t)
+		self.m_timeline:GetGraphEditor():AddKeyframe(t)
 		return
 	end
 	local bmSetId = filmClip:GetActiveBookmarkSet()

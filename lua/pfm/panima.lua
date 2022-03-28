@@ -245,14 +245,14 @@ function pfm.AnimationManager:UpdateKeyframe(actor,path,panimaChannel,keyIdx,tim
 	end
 end
 
-function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type,addKey)
+function pfm.AnimationManager:SetChannelValue(actor,path,time,value,udmType,addKey,baseIndex)
 	if(addKey == nil) then addKey = true end
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
-	pfm.log("Setting channel value " .. tostring(value) .. " of type " .. udm.type_to_string(type) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
-	local anim,channel,animClip = self:FindAnimationChannel(actor,path,true,type)
+	pfm.log("Setting channel value " .. tostring(value) .. " of type " .. udm.type_to_string(udmType) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
+	local anim,channel,animClip = self:FindAnimationChannel(actor,path,true,udmType)
 	assert(channel ~= nil)
 	if(channel == nil) then return end
 	local idx = channel:AddValue(time,value)
@@ -264,8 +264,8 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type,addKey)
 		local editorChannel = editorData:FindChannel(path,true)
 		-- TODO: Vec3, etc. -> Split into components!
 		local keyData
-		keyData,keyIndex = editorChannel:AddKey(time)
-		keyData:SetValue(keyIndex,value)
+		keyData,keyIndex = editorChannel:AddKey(time,baseIndex)
+		keyData:SetValue(keyIndex,udm.get_numeric_component(value,baseIndex))
 
 		keyData:SetInTime(keyIndex,-0.5)
 		keyData:SetInDelta(keyIndex,0.0)
@@ -273,7 +273,7 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,type,addKey)
 		keyData:SetOutDelta(keyIndex,0.0)
 	end
 
-	local udmChannel = animClip:GetChannel(path,type)
+	local udmChannel = animClip:GetChannel(path,udmType)
 	self:CallCallbacks("OnChannelValueChanged",{
 		actor = actor,
 		animation = anim,
@@ -304,6 +304,11 @@ function pfm.AnimationManager:SetCurveChannelValueCount(actor,path,startIndex,en
 	local endVal = channel:GetValue(endIndex)
 
 	local numCurValues = endIndex -startIndex -1
+	local times
+	if(type(numValues) == "table") then
+		times = numValues
+		numValues = #times
+	end
 	if(numCurValues > numValues) then
 		local nRemove = numCurValues -numValues
 		channel:RemoveValueRange(startIndex +1,nRemove)
@@ -320,9 +325,9 @@ function pfm.AnimationManager:SetCurveChannelValueCount(actor,path,startIndex,en
 	local curTime = startTime +dtPerValue
 	local curIndex = startIndex +1
 	for i=0,numValues -1 do
-		channel:SetTime(curIndex,curTime)
+		channel:SetTime(curIndex,(times ~= nil and times[i +1]) or curTime)
 		local f = (i +1) /(numValuesIncludingEndpoints -1)
-		channel:SetValue(curIndex,math.lerp(startVal,endVal,f))
+		channel:SetValue(curIndex,udm.lerp(startVal,endVal,f,channel:GetValueType()))
 
 		curTime = curTime +dtPerValue
 		curIndex = curIndex +1

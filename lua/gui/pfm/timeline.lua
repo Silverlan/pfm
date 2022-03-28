@@ -221,14 +221,14 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_entryValue:SetTooltip(locale.get_text("pfm_graph_editor_frame_value"))
 
 	self.m_entryFrame:AddCallback("OnTextEntered",function(el)
-		local dps = self.m_timelineGraph:GetSelectedDataPoints()
+		local dps = self.m_timelineGraph:GetSelectedDataPoints(false,true)
 		if(#dps ~= 1) then return end
 		local pm = pfm.get_project_manager()
 		local t = pm:FrameOffsetToTimeOffset(el:GetText())
 		dps[1]:ChangeDataValue(t,nil)
 	end)
 	self.m_entryValue:AddCallback("OnTextEntered",function(el)
-		local dps = self.m_timelineGraph:GetSelectedDataPoints()
+		local dps = self.m_timelineGraph:GetSelectedDataPoints(false,true)
 		if(#dps ~= 1) then return end
 		local pm = pfm.get_project_manager()
 		local v = tonumber(el:GetText())

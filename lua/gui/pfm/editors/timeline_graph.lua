@@ -421,7 +421,7 @@ function gui.PFMTimelineCurve:BuildCurve(curveValues,channel,curveIndex,editorCh
 
 	local editorGraphCurve = editorChannel:GetGraphCurve()
 	local editorKeys = editorGraphCurve:GetKey(typeComponentIndex)
-	local numKeys = editorKeys:GetValueCount()
+	local numKeys = (editorKeys ~= nil) and editorKeys:GetValueCount() or 0
 	for i=0,numKeys -1 do
 		local t = editorKeys:GetTime(i)
 
@@ -555,7 +555,8 @@ function gui.PFMTimelineGraph:OnInitialize()
 		self:UpdateChannelValue(data)
 	end)
 end
-function gui.PFMTimelineGraph:ReloadGraphCurveSegment(i,keyIndex)
+function gui.PFMTimelineGraph:ReloadGraphCurveSegment(i,keyIndex,rebuildCurve)
+	if(rebuildCurve == nil) then rebuildCurve = true end
 	local graphData = self.m_graphs[i]
 
 	local function updateSegment(keyIndex)
@@ -569,7 +570,7 @@ function gui.PFMTimelineGraph:ReloadGraphCurveSegment(i,keyIndex)
 	updateSegment(keyIndex -1)
 	updateSegment(keyIndex)
 
-	self:RebuildGraphCurve(i,graphData,true) -- TODO: Only when needed
+	if(rebuildCurve) then self:RebuildGraphCurve(i,graphData,true) end
 end
 function gui.PFMTimelineGraph:UpdateChannelValue(data)
 	if(self.m_skipUpdateChannelValue) then return end
@@ -583,18 +584,17 @@ function gui.PFMTimelineGraph:UpdateChannelValue(data)
 			if(editorKeys == nil or graphData.numValues ~= editorKeys:GetTimeCount()) then
 				-- Number of keyframe keys has changed, we'll have to rebuild the entire curve
 				self:RebuildGraphCurve(i,graphData)
-
-				editorKeys = graphData.curve:GetEditorKeys()
-				graphData.numValues = (editorKeys ~= nil) and editorKeys:GetTimeCount() or 0
 			elseif(data.fullUpdateRequired) then
 				self:RebuildGraphCurve(i,graphData,true)
 			elseif(data.keyIndex ~= nil) then
 				-- We only have to rebuild the two curve segments connected to the key
 				self:ReloadGraphCurveSegment(i,data.keyIndex)
+				self:RebuildGraphCurve(i,self.m_graphs[i],true)
 
 				-- Also update key data point position
 				if(data.oldKeyIndex ~= nil) then
 					self:ReloadGraphCurveSegment(i,data.oldKeyIndex)
+					self:RebuildGraphCurve(i,self.m_graphs[i],true)
 					graphData.curve:SwapDataPoints(data.oldKeyIndex,data.keyIndex)
 					graphData.curve:UpdateDataPoints()
 				else graphData.curve:UpdateDataPoint(data.keyIndex +1) end
@@ -882,56 +882,64 @@ function gui.PFMTimelineGraph:RebuildGraphCurves()
 	end
 end
 
-function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1)
-	if(dp0 == nil or dp1 == nil) then return end
-	local actor0,targetPath0,keyIndex0,curveData0 = dp0:GetChannelValueData()
-	local actor1,targetPath1,keyIndex1,curveData1 = dp1:GetChannelValueData()
-	assert(actor0 == actor1 and targetPath0 == targetPath1 and curveData0 == curveData1)
+local function calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex0,keyIndex1,time)
+	assert(keyIndex1 == keyIndex0 +1)
 
-	local pm = pfm.get_project_manager()
-	local animManager = pm:GetAnimationManager()
+	local cp0Time = pathKeys:GetTime(keyIndex0)
+	local cp0Val = pathKeys:GetValue(keyIndex0)
 
-	local curve = dp0:GetGraphCurve()
-	local editorChannel = curve:GetEditorChannel()
-	if(editorChannel == nil) then return end
+	local cp1Time = pathKeys:GetTime(keyIndex1)
+	local cp1Val = pathKeys:GetValue(keyIndex1)
 
-	local editorGraphCurve = editorChannel:GetGraphCurve()
-	local editorKeys = editorGraphCurve:GetKey(dp0:GetTypeComponentIndex())
+	local cp0OutTime = pathKeys:GetOutTime(keyIndex0)
+	local cp0OutVal = pathKeys:GetOutDelta(keyIndex0)
+	cp0OutTime = math.min(cp0Time +cp0OutTime,cp1Time -0.0001)
+	cp0OutVal = cp0Val +cp0OutVal
 
-	local interpMethod = editorKeys:GetInterpolationMode(keyIndex0)
-	local easingMode = editorKeys:GetEasingMode(keyIndex0)
+	local cp1InTime = pathKeys:GetInTime(keyIndex1)
+	local cp1InVal = pathKeys:GetInDelta(keyIndex1)
 
-	local panimaChannel = curve:GetPanimaChannel()
-	local anim,channel,animClip = animManager:FindAnimationChannel(actor0,targetPath0)
-	local valueIndex0 = panimaChannel:FindIndex(editorKeys:GetTime(keyIndex0),pfm.udm.EditorChannelData.TIME_EPSILON)
-	local valueIndex1 = panimaChannel:FindIndex(editorKeys:GetTime(keyIndex1),pfm.udm.EditorChannelData.TIME_EPSILON)
-	if(valueIndex0 == nil) then
-		valueIndex0 = panimaChannel:AddValue(editorKeys:GetTime(keyIndex0),editorKeys:GetValue(keyIndex0))
-	end
-	if(valueIndex1 == nil) then
-		valueIndex1 = panimaChannel:AddValue(editorKeys:GetTime(keyIndex1),editorKeys:GetValue(keyIndex1))
-	end
-	if(valueIndex0 == nil or valueIndex1 == nil) then
-		local key = (valueIndex0 == nil) and keyIndex0 or keyIndex1
-		pfm.log("Animation graph key " .. key .. " at timestamp " .. editorKeys:GetTime(key) .. " has no associated animation data value!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-		-- return
-	end
+	cp1InTime = math.max(cp1Time +cp1InTime,cp0Time +0.0001)
+	cp1InVal = cp1Val +cp1InVal
 
-	-- Ensure that animation values at keyframe timestamps match the keyframe values
-	channel:SetValue(valueIndex0,editorKeys:GetValue(keyIndex0))
-	channel:SetValue(valueIndex1,editorKeys:GetValue(keyIndex1))
-	--
+	local begin = cp0Val
+	local change = cp1Val -cp0Val
 
 	if(interpMethod == pfm.udm.INTERPOLATION_CONSTANT) then
-		local result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,1)
-		if(result) then
-			local anim,channel,animClip = animManager:FindAnimationChannel(actor0,targetPath0)
-			channel:SetValue(valueIndex0 +1,channel:GetValue(valueIndex0))
-			channel:SetTime(valueIndex0 +1,channel:GetTime(valueIndex1) -0.001)
-		end
+		if(time -cp1Time >= -pfm.udm.EditorChannelData.TIME_EPSILON) then return cp1Val end
+		return cp0Val
+	end
+
+	local normalizedTime = (time -cp0Time) /(cp1Time -cp0Time)
+	if(interpMethod == pfm.udm.INTERPOLATION_BEZIER) then return math.calc_bezier_point(time,cp0Time,cp0Val,cp0OutTime,cp0OutVal,cp1InTime,cp1InVal,cp1Time,cp1Val)
+	elseif(interpMethod ~= pfm.udm.INTERPOLATION_LINEAR) then
+		local easingMethod = pfm.util.get_easing_method(interpMethod,easingMode)
+		local duration = 1
+		return easingMethod(normalizedTime,begin,change,duration)
+	end
+
+	-- Default: Linear interpolation
+	return math.lerp(cp0Val,cp1Val,normalizedTime)
+end
+
+local function calc_graph_curve_data_points(interpMethod,easingMode,pathKeys,keyIndex0,keyIndex1)
+	assert(keyIndex1 == keyIndex0 +1)
+	local timestamps = {}
+	local dataValues = {}
+	local t0 = pathKeys:GetTime(keyIndex0)
+	local v0 = pathKeys:GetValue(keyIndex0)
+	local t1 = pathKeys:GetTime(keyIndex1)
+	local v1 = pathKeys:GetValue(keyIndex1)
+
+	table.insert(timestamps,t0)
+	table.insert(timestamps,t1)
+
+	if(interpMethod == pfm.udm.INTERPOLATION_CONSTANT) then
+		table.insert(timestamps,t1 -0.001)
 	elseif(interpMethod == pfm.udm.INTERPOLATION_LINEAR) then
-		local result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,0)
+		-- Linear interpolation is the default method; Do nothing
 	else
+		-- Spline interpolation
 		local begin
 		local duration = 1
 		local change
@@ -944,21 +952,19 @@ function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1)
 			calcPointOnCurve = function(t,normalizedTime,dt,cp0Time,cp0Val,cp0OutTime,cp0OutVal,cp1InTime,cp1InVal,cp1Time,cp1Val) return easingMethod(normalizedTime,begin,change,duration) end
 		end
 
-		local anim,channel,animClip = animManager:FindAnimationChannel(actor0,targetPath0)
+		local cp0Time = pathKeys:GetTime(keyIndex0)
+		local cp0Val = pathKeys:GetValue(keyIndex0)
 
-		local cp0Time = editorKeys:GetTime(keyIndex0)
-		local cp0Val = editorKeys:GetValue(keyIndex0)
+		local cp1Time = pathKeys:GetTime(keyIndex1)
+		local cp1Val = pathKeys:GetValue(keyIndex1)
 
-		local cp1Time = editorKeys:GetTime(keyIndex1)
-		local cp1Val = editorKeys:GetValue(keyIndex1)
-
-		local cp0OutTime = editorKeys:GetOutTime(keyIndex0)
-		local cp0OutVal = editorKeys:GetOutDelta(keyIndex0)
+		local cp0OutTime = pathKeys:GetOutTime(keyIndex0)
+		local cp0OutVal = pathKeys:GetOutDelta(keyIndex0)
 		cp0OutTime = math.min(cp0Time +cp0OutTime,cp1Time -0.0001)
 		cp0OutVal = cp0Val +cp0OutVal
 
-		local cp1InTime = editorKeys:GetInTime(keyIndex1)
-		local cp1InVal = editorKeys:GetInDelta(keyIndex1)
+		local cp1InTime = pathKeys:GetInTime(keyIndex1)
+		local cp1InVal = pathKeys:GetInDelta(keyIndex1)
 
 		cp1InTime = math.max(cp1Time +cp1InTime,cp0Time +0.0001)
 		cp1InVal = cp1Val +cp1InVal
@@ -978,7 +984,6 @@ function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1)
 				cp1InTime,cp1InVal,
 				cp1Time,cp1Val
 			))
-			--return Vector2(normalizedTime,math.lerp(cp0Val,cp1Val,normalizedTime))
 		end
 
 		--
@@ -1006,20 +1011,231 @@ function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1)
 			prevPoint = point
 		end
 
-		-- First and last values are already defined by keyframes
-		table.remove(timeValues,1)
-		-- table.insert(timeValues,calc_point(1.0,dt))
-		--
+		for i,tv in ipairs(timeValues) do
+			table.insert(timestamps,denormalize_time(tv.x))
+		end
+	end
 
-		local numValues = #timeValues
-		local result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,numValues)
-		if(result) then
-			for i,tv in ipairs(timeValues) do
-				assert((i == 1 or tv.x > 0.0) and (i == #timeValues or tv.x < 1.0))
-				channel:SetTime(valueIndex0 +i,denormalize_time(tv.x))
-				channel:SetValue(valueIndex0 +i,tv.y)
+	if(#dataValues == 0) then
+		for i=1,#timestamps do
+			dataValues[i] = calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex0,keyIndex1,timestamps[i])
+		end
+	end
+
+	return timestamps,dataValues
+end
+
+function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1)
+	if(dp0 == nil or dp1 == nil) then return end
+	local actor0,targetPath0,keyIndex0,curveData0 = dp0:GetChannelValueData()
+	local actor1,targetPath1,keyIndex1,curveData1 = dp1:GetChannelValueData()
+	assert(actor0 == actor1 and targetPath0 == targetPath1 and curveData0 == curveData1)
+
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+
+	local curve = dp0:GetGraphCurve()
+	local editorChannel = curve:GetEditorChannel()
+	if(editorChannel == nil) then return end
+
+	local editorGraphCurve = editorChannel:GetGraphCurve()
+	local typeComponentIndex = dp0:GetTypeComponentIndex()
+	local editorKeys = editorGraphCurve:GetKey(typeComponentIndex)
+
+	local interpMethod = editorKeys:GetInterpolationMode(keyIndex0)
+	local easingMode = editorKeys:GetEasingMode(keyIndex0)
+
+	local panimaChannel = curve:GetPanimaChannel()
+	local anim,channel,animClip = animManager:FindAnimationChannel(actor0,targetPath0)
+	local startTime = editorKeys:GetTime(keyIndex0)
+	local endTime = editorKeys:GetTime(keyIndex1)
+	local valueIndex0 = panimaChannel:FindIndex(startTime,pfm.udm.EditorChannelData.TIME_EPSILON)
+	local valueIndex1 = panimaChannel:FindIndex(endTime,pfm.udm.EditorChannelData.TIME_EPSILON)
+	local valueType = channel:GetValueType()
+	local isNumericChannelType = udm.is_numeric_type(valueType)
+	local function keyframeValueToChannelValue(keyIndex,valueIndex)
+		local v
+		if(isNumericChannelType) then v = editorKeys:GetValue(keyIndex)
+		else
+			v = ((valueIndex ~= nil) and channel:GetValue(valueIndex)) or udm.get_class_type(valueType)()
+			v:Set(typeComponentIndex,editorKeys:GetValue(keyIndex))
+		end
+		return v
+	end
+	if(valueIndex0 == nil) then
+		-- Value doesn't matter and will get overwritten further below
+		valueIndex0 = panimaChannel:AddValue(editorKeys:GetTime(keyIndex0),keyframeValueToChannelValue(keyIndex0))
+	end
+	if(valueIndex1 == nil) then
+		-- Value doesn't matter and will get overwritten further below
+		valueIndex1 = panimaChannel:AddValue(editorKeys:GetTime(keyIndex1),keyframeValueToChannelValue(keyIndex1))
+	end
+
+	if(valueIndex0 == nil or valueIndex1 == nil) then
+		local key = (valueIndex0 == nil) and keyIndex0 or keyIndex1
+		pfm.log("Animation graph key " .. key .. " at timestamp " .. editorKeys:GetTime(key) .. " has no associated animation data value!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		-- return
+	end
+
+	-- Ensure that animation values at keyframe timestamps match the keyframe values
+	--channel:SetValue(valueIndex0,keyframeValueToChannelValue(keyIndex0,valueIndex0))
+	--channel:SetValue(valueIndex1,keyframeValueToChannelValue(keyIndex1,valueIndex1))
+	--
+
+	-- We have to delete all of the animation values for this curve segment, which may also
+	-- affect other paths if this is a composite type (e.g. vec3).
+	-- Each path may have its own set of timestamps for which we need to update the data, so
+	-- we'll collect all of them.
+	local numPaths = editorGraphCurve:GetKeyCount()
+	local timestampData = {}
+	local keyframesInTimeframePerKey = {}
+	for i=0,numPaths -1 do
+		local pathKeys = editorGraphCurve:GetKey(i)
+		local idx = editorChannel:FindLowerKeyIndex(startTime)
+		if(idx ~= nil) then
+			local t0 = pathKeys:GetTime(idx)
+			local t1 = pathKeys:GetTime(idx +1)
+			while(t1 ~= nil) do
+				if(t0 +pfm.udm.EditorChannelData.TIME_EPSILON >= endTime) then break end
+				if(t1 > startTime and (t1 -startTime) > pfm.udm.EditorChannelData.TIME_EPSILON) then
+					-- Segment is in range
+					keyframesInTimeframePerKey[i] = keyframesInTimeframePerKey[i] or {}
+					table.insert(keyframesInTimeframePerKey[i],idx)
+
+					-- for path -> may have multiple segments
+					-- Iterate all keyframe sets that intersect our time range; generate timestamps
+					-- local segTimestamps = calcTimestampsForCurveSegment()
+					local segTimestamps,segDataValues = calc_graph_curve_data_points(interpMethod,easingMode,pathKeys,idx,idx +1)
+					for _,t in ipairs(segTimestamps) do
+						if(t -pfm.udm.EditorChannelData.TIME_EPSILON >= t1) then break end
+						if(t +pfm.udm.EditorChannelData.TIME_EPSILON >= startTime and t -pfm.udm.EditorChannelData.TIME_EPSILON <= endTime) then
+							table.insert(timestampData,{
+								time = t,
+								pathData = {
+									{
+										typeComponentIndex = i,
+										keyIndex = idx
+									}
+								}
+							})
+						end
+					end
+				end
+				idx = idx +1
+				t0 = t1
+				t1 = pathKeys:GetTime(idx +1)
 			end
 		end
+	end
+	table.sort(timestampData,function(a,b) return a.time < b.time end)
+
+	-- Merge duplicate timestamps
+	local i = 1
+	while(i < #timestampData) do
+		local t0 = timestampData[i]
+		local t1 = timestampData[i +1]
+		if(math.abs(t1.time -t0.time) <= pfm.udm.EditorChannelData.TIME_EPSILON) then
+			for _,d in ipairs(timestampData[i +1].pathData) do table.insert(timestampData[i].pathData,d) end
+			table.remove(timestampData,i +1)
+		else i = i +1 end
+	end
+
+	-- Don't include the timestamps for the keyframes!
+	if(#timestampData > 0 and math.abs(timestampData[1].time -startTime) <= pfm.udm.EditorChannelData.TIME_EPSILON) then table.remove(timestampData,1) end
+	if(#timestampData > 0 and math.abs(timestampData[#timestampData].time -endTime) <= pfm.udm.EditorChannelData.TIME_EPSILON) then table.remove(timestampData,#timestampData) end
+
+	-- Actually do include them (TODO: Remove above code)
+	table.insert(timestampData,1,{
+		time = startTime
+	})
+	table.insert(timestampData,{
+		time = endTime
+	})
+
+	-- Create the space for all of the data values (this will also clear any previous values in this time range)
+	local numValues = #timestampData -2 -- -2 to exclude the start/end keyframes
+
+	local t = channel:GetTime(valueIndex0)
+	while(valueIndex0 > 0 and (math.abs(channel:GetTime(valueIndex0 -1) -t) <= pfm.udm.EditorChannelData.TIME_EPSILON)) do
+		valueIndex0 = valueIndex0 -1
+	end
+	while(valueIndex1 < (channel:GetValueCount() -1) and (math.abs(channel:GetTime(valueIndex1 +1) -t) <= pfm.udm.EditorChannelData.TIME_EPSILON)) do
+		valueIndex1 = valueIndex1 +1
+	end
+
+	local result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,numValues)
+	if(result) then
+		-- Go through each timestamp and calculate actual time and data values
+		for i,td in ipairs(timestampData) do
+			channel:SetTime(valueIndex0 +i -1,td.time)
+			local v = udm.get_class_type(valueType)()
+			for typeComponentIndex,keyframeIndices in pairs(keyframesInTimeframePerKey) do
+				local pathKeys = editorGraphCurve:GetKey(typeComponentIndex)
+				local foundCurveInRange = false
+				for _,keyIndex in ipairs(keyframeIndices) do
+					if(td.time >= pathKeys:GetTime(keyIndex) -pfm.udm.EditorChannelData.TIME_EPSILON and td.time <= pathKeys:GetTime(keyIndex +1) +pfm.udm.EditorChannelData.TIME_EPSILON) then
+						v:Set(typeComponentIndex,calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex,keyIndex +1,td.time))
+						foundCurveInRange = true
+						break
+					end
+				end
+				if(foundCurveInRange == false) then
+					-- TODO: Is this still needed if we're clamping out-of-bounds values below anyway?
+					local val = udm.get_numeric_component(panimaChannel:GetInterpolatedValue(td.time),typeComponentIndex)
+					v:Set(typeComponentIndex,val or 0.0)
+				end
+			end
+			channel:SetValue(valueIndex0 +i -1,v)
+		end
+
+
+		-- If either of the keyframes for this curve segment is the very first
+		-- or final keyframe of the curve, we have to clamp all of the sample values beyond
+		-- the boundary (up to the highest or lowest keyframe timestamp) to the value of the keyframe.
+
+		-- Clamp postfix samples
+		if(keyIndex1 == editorKeys:GetTimeCount() -1) then
+			local lastKeyframeTime
+			for i=0,editorGraphCurve:GetKeyCount() -1 do
+				local keys = editorGraphCurve:GetKey(i)
+				local t = keys:GetTime(keys:GetTimeCount() -1)
+				if(t ~= nil) then
+					lastKeyframeTime = lastKeyframeTime and math.max(lastKeyframeTime,t) or t
+				end
+			end
+
+			if(lastKeyframeTime ~= nil) then
+				local lastValue = udm.get_numeric_component(channel:GetValue(valueIndex1),typeComponentIndex)
+				for i=valueIndex1 +1,channel:GetValueCount() -1 do
+					local val = channel:GetValue(i)
+					val:Set(typeComponentIndex,lastValue)
+					channel:SetValue(i,val)
+				end
+			end
+		end
+		--
+
+		-- Clamp prefix samples
+		if(keyIndex0 == 0) then
+			local firstKeyframeTime
+			for i=0,editorGraphCurve:GetKeyCount() -1 do
+				local keys = editorGraphCurve:GetKey(i)
+				local t = keys:GetTime(0)
+				if(t ~= nil) then
+					firstKeyframeTime = firstKeyframeTime and math.min(firstKeyframeTime,t) or t
+				end
+			end
+
+			if(firstKeyframeTime ~= nil) then
+				local firstValue = udm.get_numeric_component(channel:GetValue(valueIndex0),typeComponentIndex)
+				for i=0,valueIndex0 -1 do
+					local val = channel:GetValue(i)
+					val:Set(typeComponentIndex,firstValue)
+					channel:SetValue(i,val)
+				end
+			end
+		end
+		--
 	end
 end
 function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
@@ -1034,6 +1250,7 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 		local t = times[i]
 		local v = values[i]
 		v = (graphData.valueTranslator ~= nil) and graphData.valueTranslator[1](v) or v
+		v = udm.get_numeric_component(v,graphData.typeComponentIndex)
 		table.insert(curveValues,{t,v})
 	end
 
@@ -1055,6 +1272,8 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 		end
 	end
 	graphData.curve:BuildCurve(curveValues,channel,i,graphData.editorChannel,graphData.typeComponentIndex)
+	local editorKeys = graphData.curve:GetEditorKeys()
+	graphData.numValues = (editorKeys ~= nil) and editorKeys:GetTimeCount() or 0
 end
 function gui.PFMTimelineGraph:RemoveGraphCurve(i)
 	local graphData = self.m_graphs[i]
@@ -1136,13 +1355,13 @@ function gui.PFMTimelineGraph:SetupControl(filmClip,actor,targetPath,item,color,
 		if(util.is_valid(graph)) then self:RemoveGraphCurve(graphIndex) end
 	end)
 end
-function gui.PFMTimelineGraph:AddBookmarkDataPoint(time)
+function gui.PFMTimelineGraph:AddKeyframe(time)
 	if(util.is_valid(self.m_timeline) == false) then return end
 
 	for _,graph in ipairs(self.m_graphs) do
 		if(graph.curve:IsValid()) then
 			local time = self.m_timeline:GetTimeOffset()
-			local value = 0.0
+			local value = udm.get_class_type(graph.valueType)()
 			local valueType = graph.valueType
 			local channel = graph.curve:GetPanimaChannel()
 			if(channel ~= nil) then
@@ -1150,10 +1369,11 @@ function gui.PFMTimelineGraph:AddBookmarkDataPoint(time)
 				if(idx0 ~= nil) then
 					local v0 = channel:GetValue(idx0)
 					local v1 = channel:GetValue(idx1)
-					value = math.lerp(v0,v1,factor)
+					value = udm.lerp(v0,v1,factor)
 				end
 			end
-			pfm.get_project_manager():SetActorAnimationComponentProperty(graph.actor,graph.targetPath,time,value,valueType)
+
+			pfm.get_project_manager():SetActorAnimationComponentProperty(graph.actor,graph.targetPath,time,value,valueType,graph.typeComponentIndex)
 		end
 	end
 end
@@ -1199,14 +1419,7 @@ function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo,v
 		}
 		for i=0,n -1 do
 			local vc = vectorComponents[i +1]
-			addChannel(itemCtrl:AddItem(vc[1]),{
-				function(v) return v:Get(i) end,
-				function(v,curVal)
-					local r = curVal:Copy()
-					r:Set(i,v)
-					return r
-				end
-			},vc[2],i)
+			addChannel(itemCtrl:AddItem(vc[1]),nil,vc[2],i)
 		end
 	elseif(udm.is_matrix_type(memberInfo.type)) then
 		local nRows = udm.get_matrix_row_count(memberInfo.type)
