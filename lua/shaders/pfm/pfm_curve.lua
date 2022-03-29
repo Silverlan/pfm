@@ -25,9 +25,10 @@ function shader.PFMCurve:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_STRIP)
 	pipelineInfo:SetDepthTestEnabled(false)
 	pipelineInfo:SetDepthWritesEnabled(false)
+	pipelineInfo:SetDynamicStateEnabled(prosper.DYNAMIC_STATE_LINE_WIDTH_BIT,true)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
-function shader.PFMCurve:Record(pcb,vertexBuffer,vertexCount,xRange,yRange,color)
+function shader.PFMCurve:Record(pcb,vertexBuffer,vertexCount,lineWidth,xRange,yRange,color)
 	if(self:IsValid() == false) then return false end
 
 	local dsPushConstants = util.DataStream(PUSH_CONSTANT_SIZE -util.SIZEOF_MAT4 -util.SIZEOF_INT)
@@ -38,6 +39,7 @@ function shader.PFMCurve:Record(pcb,vertexBuffer,vertexCount,xRange,yRange,color
 
 	local DynArg = prosper.PreparedCommandBuffer.DynArg
 	self:RecordBeginDraw(pcb)
+		pcb:RecordSetLineWidth(lineWidth)
 		self:RecordBindVertexBuffers(pcb,{vertexBuffer})
 		self:RecordPushConstants(pcb,udm.TYPE_MAT4,DynArg("matDraw"))
 		self:RecordPushConstants(pcb,dsPushConstants,util.SIZEOF_MAT4)

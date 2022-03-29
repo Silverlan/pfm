@@ -137,7 +137,10 @@ function pfm.udm.EditorChannelData:FindLowerKeyIndex(t,baseIndex)
 	local keyData = graphCurve:GetKey(baseIndex)
 	if(keyData == nil) then return end
 	local idx = findInsertIndex(keyData,keyData.GetTime,keyData:GetTimeCount(),t)
-	if(idx ~= nil) then idx = idx -1 end
+	if(idx ~= nil) then
+		if(idx == 0) then return nil end
+		idx = idx -1
+	end
 	return idx
 end
 

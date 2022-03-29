@@ -31,14 +31,17 @@ function gui.Curve:OnInitialize()
 
 	self:SetHorizontalRange(0,0)
 	self:SetVerticalRange(0,0)
+	self:SetLineWidth(2.2)
 	-- self:EnableThinking()
 end
 function gui.Curve:RebuildRenderCommandBuffer()
 	local pcb = prosper.PreparedCommandBuffer()
-	if(self.m_shader:Record(pcb,self.m_lineBuffer,self.m_vertexCount,self.m_xRange,self.m_yRange,self:GetColor()) == false) then pcb = nil end
+	if(self.m_shader:Record(pcb,self.m_lineBuffer,self.m_vertexCount,self.m_lineWidth,self.m_xRange,self.m_yRange,self:GetColor()) == false) then pcb = nil end
 
 	self:SetRenderCommandBuffer(pcb)
 end
+function gui.Curve:SetLineWidth(lineWidth) self.m_lineWidth = lineWidth end
+function gui.Curve:GetLineWidth() return self.m_lineWidth end
 function gui.Curve:GetHorizontalRange() return self.m_xRange end
 function gui.Curve:GetVerticalRange() return self.m_yRange end
 function gui.Curve:SetHorizontalRange(min,max)

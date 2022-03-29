@@ -22,6 +22,7 @@ pfm.VERSION_DATE = "21-06-22"
 pfm.PROJECT_TITLE = "PFM"
 
 include("/util/log.lua")
+include("/util/color_scheme.lua")
 include("/udm/udm.lua")
 include("/udm/schema_api.lua")
 include("udm")
@@ -374,4 +375,18 @@ pfm.find_inanimate_actors = function(session)
 		if(numValues > 1) then table.insert(actorList,actor) end
 	end
 	return actorList
+end
+
+local colScheme = util.ColorScheme()
+colScheme:SetColor("red",Color.CreateFromHexColor("ff3352"))
+colScheme:SetColor("green",Color.CreateFromHexColor("8bdc00"))
+colScheme:SetColor("blue",Color.CreateFromHexColor("2890ff"))
+colScheme:SetColor("pink",Color.CreateFromHexColor("fcb8cb"))
+
+pfm.get_color_scheme = function()
+	return colScheme
+end
+
+pfm.get_color_scheme_color = function(name)
+	return colScheme:GetColor(name)
 end

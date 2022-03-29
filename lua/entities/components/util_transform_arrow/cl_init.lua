@@ -130,9 +130,9 @@ function Component:UpdateAxis()
 	local axis = self:GetAxis()
 	local colC = ent:GetComponent(ents.COMPONENT_COLOR)
 	if(colC ~= nil) then
-		if(axis == math.AXIS_X) then colC:SetColor(Color.Red)
-		elseif(axis == math.AXIS_Y) then colC:SetColor(Color.Lime)
-		elseif(axis == math.AXIS_Z) then colC:SetColor(Color.Aqua) end
+		if(axis == math.AXIS_X) then colC:SetColor(pfm.get_color_scheme_color("red"))
+		elseif(axis == math.AXIS_Y) then colC:SetColor(pfm.get_color_scheme_color("green"))
+		elseif(axis == math.AXIS_Z) then colC:SetColor(pfm.get_color_scheme_color("blue")) end
 	end
 	self:UpdateModel()
 end

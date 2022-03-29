@@ -172,7 +172,8 @@ function pfm.AnimationManager:RemoveKeyframe(actor,path,keyIdx,baseIndex)
 		animation = anim,
 		channel = channel,
 		udmChannel = udmChannel,
-		oldKeyIndex = keyIdx
+		oldKeyIndex = keyIdx,
+		typeComponentIndex = baseIndex
 	})
 end
 
@@ -239,7 +240,8 @@ function pfm.AnimationManager:UpdateKeyframe(actor,path,panimaChannel,keyIdx,tim
 			channel = channel,
 			udmChannel = udmChannel,
 			keyIndex = newKeyIdx or keyIdx,
-			oldKeyIndex = oldKeyIndex
+			oldKeyIndex = oldKeyIndex,
+			typeComponentIndex = baseIndex
 		})
 		--
 	end
@@ -281,11 +283,12 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,udmType,addK
 		udmChannel = udmChannel,
 		index = idx,
 		oldIndex = idx,
-		keyIndex = keyIndex
+		keyIndex = keyIndex,
+		typeComponentIndex = baseIndex
 	})
 end
 
-function pfm.AnimationManager:SetCurveChannelValueCount(actor,path,startIndex,endIndex,numValues,suppressCallback)
+function pfm.AnimationManager:SetCurveChannelValueCount(actor,path,startIndex,endIndex,numValues,suppressCallback,removeBoundaryPoints)
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return false
@@ -302,6 +305,11 @@ function pfm.AnimationManager:SetCurveChannelValueCount(actor,path,startIndex,en
 
 	local startVal = channel:GetValue(startIndex)
 	local endVal = channel:GetValue(endIndex)
+
+	if(removeBoundaryPoints) then
+		startIndex = startIndex -1
+		endIndex = endIndex +1
+	end
 
 	local numCurValues = endIndex -startIndex -1
 	local times
@@ -336,4 +344,31 @@ function pfm.AnimationManager:SetCurveChannelValueCount(actor,path,startIndex,en
 	local udmChannel = animClip:GetChannel(path,type)
 	if(suppressCallback ~= true) then self:CallCallbacks("OnChannelValueChanged",actor,anim,channel,udmChannel) end
 	return true,endIndex
+end
+
+function pfm.AnimationManager:SetCurveRangeChannelValueCount(actor,path,startTime,endTime,numValues,suppressCallback)
+	if(self.m_filmClip == nil or self.m_filmClip == nil) then
+		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+
+	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
+	local editorData = animClip:GetEditorData()
+	local editorChannel = editorData:FindChannel(path,true)
+	if(channel == nil) then return false end
+
+	local startIndex
+	local i0,i1,f = channel:FindInterpolationIndices(startTime)
+	if(i0 == nil) then startIndex = 0
+	else
+		if(f <= pfm.udm.EditorChannelData.TIME_EPSILON) then startIndex = i0
+		else startIndex = i1 end
+	end
+
+	local endIndex
+	i0,i1,f = channel:FindInterpolationIndices(endTime)
+	if(i0 == nil) then endIndex = channel:GetValueCount() -1
+	else endIndex = i0 end
+
+	return self:SetCurveChannelValueCount(actor,path,startIndex,endIndex,numValues,suppressCallback,true)
 end
