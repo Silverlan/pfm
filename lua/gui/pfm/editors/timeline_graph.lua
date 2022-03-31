@@ -1095,7 +1095,7 @@ local function calc_component_value_at_timestamp(editorChannel,t,typeComponentIn
 	local easingMode = pathKeys:GetEasingMode(typeComponentIndex)
 
 	local keyIndex0 = editorChannel:FindLowerKeyIndex(t,typeComponentIndex)
-	if(keyIndex0 == nil) then return pathKeys:GetValue(typeComponentIndex) end
+	if(keyIndex0 == nil) then return pathKeys:GetValue(0) end
 	if(keyIndex0 == pathKeys:GetTimeCount() -1) then return pathKeys:GetValue(pathKeys:GetTimeCount() -1) end
 	local keyIndex1 = keyIndex0 +1
 	return calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex0,keyIndex1,t)
@@ -1126,6 +1126,7 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 	local valueIndex0 = panimaChannel:FindIndex(startTime,pfm.udm.EditorChannelData.TIME_EPSILON)
 	local valueIndex1 = panimaChannel:FindIndex(endTime,pfm.udm.EditorChannelData.TIME_EPSILON)
 	local valueType = channel:GetValueType()
+	local isQuatType = (valueType == udm.TYPE_QUATERNION) -- Some special considerations are required for quaternions
 	if(valueIndex0 == nil) then
 		-- Value doesn't matter and will get overwritten further below
 		valueIndex0 = panimaChannel:AddValue(startTime,udm.get_class_type(valueType)())
@@ -1240,7 +1241,7 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 	local result,valueIndex1 = animManager:SetCurveRangeChannelValueCount(actor,targetPath,startTime,endTime,numValues,true)
 	if(result) then
 		-- Go through each timestamp and calculate actual time and data values
-		local xval = {}
+		local tmpVals = {}
 		for i,td in ipairs(timestampData) do
 			channel:SetTime(valueIndex0 +i -1,td.time)
 			local v = channel_value_to_editor_value(udm.get_class_type(valueType)(),valueType)
@@ -1276,17 +1277,31 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 					end
 				end
 			end
-			xval[valueIndex0 +i -1] = v
+			if(isQuatType) then tmpVals[valueIndex0 +i -1] = v end
 			channel:SetValue(valueIndex0 +i -1,editor_value_to_channel_value(v,valueType))
 		end
 
+		local getChannelValue
+		if(isQuatType) then
+			getChannelValue = function(channel,j)
+				local val = tmpVals[j]
+				if(val == nil) then
+					val = calc_value_at_timestamp(editorChannel,channel:GetTime(j),valueType)
+					tmpVals[j] = val
+				end
+				return val
+			end
+		else
+			getChannelValue = function(channel,j)
+				return channel_value_to_editor_value(channel:GetValue(j),valueType)
+			end
+		end
 
 		-- If either of the keyframes for this curve segment is the very first
 		-- or final keyframe of the curve, we have to clamp all of the sample values beyond
 		-- the boundary (up to the highest or lowest keyframe timestamp) to the value of the keyframe.
 
 		-- Clamp postfix samples
-		-- TODO: Don't GET value, use calculated values above instead (due to euler angle -> quat conversion issues)
 		for i=0,editorGraphCurve:GetKeyCount() -1 do
 			local pathKeys = editorGraphCurve:GetKey(i)
 			local keyIndex = editorChannel:FindLowerKeyIndex(endTime,i)
@@ -1294,14 +1309,10 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 			if(keyIndex == pathKeys:GetTimeCount() -1) then
 				local valueIndex = panimaChannel:FindIndex(pathKeys:GetTime(keyIndex))
 				if(valueIndex ~= nil) then
-					local lastValue = udm.get_numeric_component(xval[valueIndex],i)
+					local lastValue = udm.get_numeric_component(getChannelValue(channel,valueIndex),i)
 					local n = channel:GetValueCount()
 					for j=valueIndex +1,n -1 do
-						local val = xval[j]
-						if(val == nil) then
-							val = calc_value_at_timestamp(editorChannel,channel:GetTime(j),valueType)
-							xval[j] = val
-						end
+						local val = getChannelValue(channel,j)
 						val:Set(i,lastValue)
 						channel:SetValue(j,editor_value_to_channel_value(val,valueType))
 					end
@@ -1317,280 +1328,18 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 			if(keyIndex == 0) then
 				local valueIndex = panimaChannel:FindIndex(pathKeys:GetTime(keyIndex))
 				if(valueIndex ~= nil) then
-					local firstValue = udm.get_numeric_component(xval[valueIndex],i)
+					local firstValue = udm.get_numeric_component(getChannelValue(channel,valueIndex),i)
 					for j=0,valueIndex -1 do
-						local val = xval[j]
-						if(val == nil) then
-							val = calc_value_at_timestamp(editorChannel,channel:GetTime(j),valueType)
-							xval[j] = val
-						end
+						local val = getChannelValue(channel,j)
 						val:Set(i,firstValue)
 						channel:SetValue(j,editor_value_to_channel_value(val,valueType))
 					end
 				end
 			end
 		end
-		--[[if(keyIndex1 == editorKeys:GetTimeCount() -1) then
-			local lastKeyframeTime
-			for i=0,editorGraphCurve:GetKeyCount() -1 do
-				local keys = editorGraphCurve:GetKey(i)
-				local t = keys:GetTime(keys:GetTimeCount() -1)
-				if(t ~= nil) then
-					lastKeyframeTime = lastKeyframeTime and math.max(lastKeyframeTime,t) or t
-				end
-			end
-
-			if(lastKeyframeTime ~= nil) then
-				local lastValue = udm.get_numeric_component(channel:GetValue(valueIndex1),typeComponentIndex)
-				for i=valueIndex1 +1,channel:GetValueCount() -1 do
-					local val = channel:GetValue(i)
-					val:Set(typeComponentIndex,lastValue)
-					channel:SetValue(i,val)
-				end
-			end
-		end
-		--
-
-		-- Clamp prefix samples
-		if(keyIndex0 == 0) then
-			local firstKeyframeTime
-			for i=0,editorGraphCurve:GetKeyCount() -1 do
-				local keys = editorGraphCurve:GetKey(i)
-				local t = keys:GetTime(0)
-				if(t ~= nil) then
-					firstKeyframeTime = firstKeyframeTime and math.min(firstKeyframeTime,t) or t
-				end
-			end
-
-			if(firstKeyframeTime ~= nil) then
-				local firstValue = udm.get_numeric_component(channel:GetValue(valueIndex0),typeComponentIndex)
-				for i=0,valueIndex0 -1 do
-					local val = channel:GetValue(i)
-					val:Set(typeComponentIndex,firstValue)
-					channel:SetValue(i,val)
-				end
-			end
-		end]]
-		--
-	end
-
-	local values = channel:GetValues()
-	local times = channel:GetTimes()
-	for _,v in ipairs(values) do
-		print(times[_],v:ToEulerAngles())
 	end
 end
 
-function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1)
-	if(dp0 == nil or dp1 == nil) then return end
-	local actor0,targetPath0,keyIndex0,curveData0 = dp0:GetChannelValueData()
-	local actor1,targetPath1,keyIndex1,curveData1 = dp1:GetChannelValueData()
-	assert(actor0 == actor1 and targetPath0 == targetPath1 and curveData0 == curveData1)
-
-	local pm = pfm.get_project_manager()
-	local animManager = pm:GetAnimationManager()
-
-	local curve = dp0:GetGraphCurve()
-	local editorChannel = curve:GetEditorChannel()
-	if(editorChannel == nil) then return end
-
-	local editorGraphCurve = editorChannel:GetGraphCurve()
-	local typeComponentIndex = dp0:GetTypeComponentIndex()
-	local editorKeys = editorGraphCurve:GetKey(typeComponentIndex)
-
-	local interpMethod = editorKeys:GetInterpolationMode(keyIndex0)
-	local easingMode = editorKeys:GetEasingMode(keyIndex0)
-
-	local panimaChannel = curve:GetPanimaChannel()
-	local anim,channel,animClip = animManager:FindAnimationChannel(actor0,targetPath0)
-	local startTime = editorKeys:GetTime(keyIndex0)
-	local endTime = editorKeys:GetTime(keyIndex1)
-	local valueIndex0 = panimaChannel:FindIndex(startTime,pfm.udm.EditorChannelData.TIME_EPSILON)
-	local valueIndex1 = panimaChannel:FindIndex(endTime,pfm.udm.EditorChannelData.TIME_EPSILON)
-	local valueType = channel:GetValueType()
-	local isNumericChannelType = udm.is_numeric_type(valueType)
-	local function keyframeValueToChannelValue(keyIndex,valueIndex)
-		local v
-		if(isNumericChannelType) then v = editorKeys:GetValue(keyIndex)
-		else
-			v = ((valueIndex ~= nil) and channel:GetValue(valueIndex)) or udm.get_class_type(valueType)()
-			v:Set(typeComponentIndex,editorKeys:GetValue(keyIndex))
-		end
-		return v
-	end
-	if(valueIndex0 == nil) then
-		-- Value doesn't matter and will get overwritten further below
-		valueIndex0 = panimaChannel:AddValue(editorKeys:GetTime(keyIndex0),keyframeValueToChannelValue(keyIndex0))
-	end
-	if(valueIndex1 == nil) then
-		-- Value doesn't matter and will get overwritten further below
-		valueIndex1 = panimaChannel:AddValue(editorKeys:GetTime(keyIndex1),keyframeValueToChannelValue(keyIndex1))
-	end
-
-	if(valueIndex0 == nil or valueIndex1 == nil) then
-		local key = (valueIndex0 == nil) and keyIndex0 or keyIndex1
-		pfm.log("Animation graph key " .. key .. " at timestamp " .. editorKeys:GetTime(key) .. " has no associated animation data value!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-		-- return
-	end
-
-	-- Ensure that animation values at keyframe timestamps match the keyframe values
-	--channel:SetValue(valueIndex0,keyframeValueToChannelValue(keyIndex0,valueIndex0))
-	--channel:SetValue(valueIndex1,keyframeValueToChannelValue(keyIndex1,valueIndex1))
-	--
-
-	-- We have to delete all of the animation values for this curve segment, which may also
-	-- affect other paths if this is a composite type (e.g. vec3).
-	-- Each path may have its own set of timestamps for which we need to update the data, so
-	-- we'll collect all of them.
-	local numPaths = editorGraphCurve:GetKeyCount()
-	local timestampData = {}
-	local keyframesInTimeframePerKey = {}
-	for i=0,numPaths -1 do
-		local pathKeys = editorGraphCurve:GetKey(i)
-		local idx = editorChannel:FindLowerKeyIndex(startTime,i) or 0
-		-- Collect timestamps for all keyframe sets that intersect our time range
-		if(idx ~= nil) then
-			local t0 = pathKeys:GetTime(idx)
-			local t1 = pathKeys:GetTime(idx +1)
-			while(t1 ~= nil) do
-				if(t0 +pfm.udm.EditorChannelData.TIME_EPSILON >= endTime) then break end
-				if(t1 > startTime and (t1 -startTime) > pfm.udm.EditorChannelData.TIME_EPSILON) then
-					-- Segment is in range
-					keyframesInTimeframePerKey[i] = keyframesInTimeframePerKey[i] or {}
-					table.insert(keyframesInTimeframePerKey[i],idx)
-
-					local segTimestamps,segDataValues = calc_graph_curve_data_points(interpMethod,easingMode,pathKeys,idx,idx +1)
-					for _,t in ipairs(segTimestamps) do
-						if(t -pfm.udm.EditorChannelData.TIME_EPSILON >= t1) then break end
-						if(t +pfm.udm.EditorChannelData.TIME_EPSILON >= startTime and t -pfm.udm.EditorChannelData.TIME_EPSILON <= endTime) then
-							table.insert(timestampData,{
-								time = t,
-								pathData = {
-									{
-										typeComponentIndex = i,
-										keyIndex = idx
-									}
-								}
-							})
-						end
-					end
-				end
-				idx = idx +1
-				t0 = t1
-				t1 = pathKeys:GetTime(idx +1)
-			end
-		end
-	end
-
-	-- Make sure our start and endpoints are included
-	table.insert(timestampData,{
-		time = startTime,
-		pathData = {}
-	})
-	table.insert(timestampData,{
-		time = endTime,
-		pathData = {}
-	})
-
-	table.sort(timestampData,function(a,b) return a.time < b.time end)
-
-	-- Merge duplicate timestamps
-	local i = 1
-	while(i < #timestampData) do
-		local t0 = timestampData[i]
-		local t1 = timestampData[i +1]
-		if(math.abs(t1.time -t0.time) <= pfm.udm.EditorChannelData.TIME_EPSILON) then
-			for _,d in ipairs(timestampData[i +1].pathData) do table.insert(timestampData[i].pathData,d) end
-			table.remove(timestampData,i +1)
-		else i = i +1 end
-	end
-
-	-- Create the space for all of the data values (this will also clear any previous values in this time range)
-	local numValues = #timestampData -2 -- -2 to exclude the start/end keyframes
-
-	local t = channel:GetTime(valueIndex0)
-	while(valueIndex0 > 0 and (math.abs(channel:GetTime(valueIndex0 -1) -t) <= pfm.udm.EditorChannelData.TIME_EPSILON)) do
-		valueIndex0 = valueIndex0 -1
-	end
-	while(valueIndex1 < (channel:GetValueCount() -1) and (math.abs(channel:GetTime(valueIndex1 +1) -t) <= pfm.udm.EditorChannelData.TIME_EPSILON)) do
-		valueIndex1 = valueIndex1 +1
-	end
-
-	local result,valueIndex1 = animManager:SetCurveChannelValueCount(actor0,targetPath0,valueIndex0,valueIndex1,numValues)
-	if(result) then
-		-- Go through each timestamp and calculate actual time and data values
-		for i,td in ipairs(timestampData) do
-			channel:SetTime(valueIndex0 +i -1,td.time)
-			local v = udm.get_class_type(valueType)()
-			for typeComponentIndex,keyframeIndices in pairs(keyframesInTimeframePerKey) do
-				local pathKeys = editorGraphCurve:GetKey(typeComponentIndex)
-				local foundCurveInRange = false
-				for _,keyIndex in ipairs(keyframeIndices) do
-					if(td.time >= pathKeys:GetTime(keyIndex) -pfm.udm.EditorChannelData.TIME_EPSILON and td.time <= pathKeys:GetTime(keyIndex +1) +pfm.udm.EditorChannelData.TIME_EPSILON) then
-						v:Set(typeComponentIndex,calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex,keyIndex +1,td.time))
-						foundCurveInRange = true
-						break
-					end
-				end
-				if(foundCurveInRange == false) then
-					-- TODO: Is this still needed if we're clamping out-of-bounds values below anyway?
-					local val = udm.get_numeric_component(panimaChannel:GetInterpolatedValue(td.time),typeComponentIndex)
-					v:Set(typeComponentIndex,val or 0.0)
-				end
-			end
-			channel:SetValue(valueIndex0 +i -1,v)
-		end
-
-
-		-- If either of the keyframes for this curve segment is the very first
-		-- or final keyframe of the curve, we have to clamp all of the sample values beyond
-		-- the boundary (up to the highest or lowest keyframe timestamp) to the value of the keyframe.
-
-		-- Clamp postfix samples
-		if(keyIndex1 == editorKeys:GetTimeCount() -1) then
-			local lastKeyframeTime
-			for i=0,editorGraphCurve:GetKeyCount() -1 do
-				local keys = editorGraphCurve:GetKey(i)
-				local t = keys:GetTime(keys:GetTimeCount() -1)
-				if(t ~= nil) then
-					lastKeyframeTime = lastKeyframeTime and math.max(lastKeyframeTime,t) or t
-				end
-			end
-
-			if(lastKeyframeTime ~= nil) then
-				local lastValue = udm.get_numeric_component(channel:GetValue(valueIndex1),typeComponentIndex)
-				for i=valueIndex1 +1,channel:GetValueCount() -1 do
-					local val = channel:GetValue(i)
-					val:Set(typeComponentIndex,lastValue)
-					channel:SetValue(i,val)
-				end
-			end
-		end
-		--
-
-		-- Clamp prefix samples
-		if(keyIndex0 == 0) then
-			local firstKeyframeTime
-			for i=0,editorGraphCurve:GetKeyCount() -1 do
-				local keys = editorGraphCurve:GetKey(i)
-				local t = keys:GetTime(0)
-				if(t ~= nil) then
-					firstKeyframeTime = firstKeyframeTime and math.min(firstKeyframeTime,t) or t
-				end
-			end
-
-			if(firstKeyframeTime ~= nil) then
-				local firstValue = udm.get_numeric_component(channel:GetValue(valueIndex0),typeComponentIndex)
-				for i=0,valueIndex0 -1 do
-					local val = channel:GetValue(i)
-					val:Set(typeComponentIndex,firstValue)
-					channel:SetValue(i,val)
-				end
-			end
-		end
-		--
-	end
-end
 local function calc_equivalence_euler_angles(ang)
 	ang = ang:Copy()
 	ang.p = math.rad(ang.p)
@@ -1609,7 +1358,6 @@ local function calc_equivalence_euler_angles(ang)
 end
 
 local function find_closest_equivalence_euler_angles(ang,angRef)
-	print("find_closest_equivalence_euler_angles: ",ang)
 	ang = ang:Copy()
 	ang:Normalize()
 	if(angRef ~= nil) then
@@ -1667,8 +1415,6 @@ local function find_closest_equivalence_euler_angles(ang,angRef)
 			bestCandidate = i
 		end
 	end
-	print("Candidates")
-	console.print_table(candidates)
 	return candidates[bestCandidate]
 end
 function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
@@ -1694,31 +1440,51 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 	-- However, since euler angles are not unique and converting a quaternion to euler angles can have multiple results, we have to do some additional considerations
 	-- to prevent unnatural rotation paths.
 	local prevVal
+	local minKeyframeTime
+	local maxKeyframeTime
 	if(graphData.valueType == udm.TYPE_QUATERNION and #times > 0 and graphData.editorChannel ~= nil) then
 		prevVal = calc_value_at_timestamp(graphData.editorChannel,times[1],graphData.valueType)
 		if(prevVal ~= nil) then prevVal = find_closest_equivalence_euler_angles(prevVal)
 		else prevVal = channel_value_to_editor_value(udm.get_class_type(valueType)(),valueType) end
+
+		local editorGraphCurve = graphData.editorChannel:GetGraphCurve()
+		local n = udm.get_numeric_component_count(channel_value_type_to_editor_value_type(graphData.valueType))
+		for i=0,n -1 do
+			local pathKeys = editorGraphCurve:GetKey(i)
+			if(pathKeys ~= nil and pathKeys:GetTimeCount() > 0) then
+				local t0 = pathKeys:GetTime(0)
+				local t1 = pathKeys:GetTime(pathKeys:GetTimeCount() -1)
+
+				if(minKeyframeTime == nil) then minKeyframeTime = t0
+				else minKeyframeTime = math.min(minKeyframeTime,t0) end
+				
+				if(maxKeyframeTime == nil) then maxKeyframeTime = t1
+				else maxKeyframeTime = math.max(maxKeyframeTime,t1) end
+			end
+		end
 	end
+
 	for i=1,#times do
 		local t = times[i]
-		print("")
-		print("Time: ",t)
 		local v = values[i]
 		v = (graphData.valueTranslator ~= nil) and graphData.valueTranslator[1](v) or v
 		v = channel_value_to_editor_value(v,graphData.valueType)
 		if(graphData.valueType == udm.TYPE_QUATERNION) then
-			v = find_closest_equivalence_euler_angles(v,prevVal)
-			print("Chosen Val: ",v)
-			print("Actual Val: ",calc_value_at_timestamp(graphData.editorChannel,t,graphData.valueType))
+			-- If we're dealing with quaternion values:
+			-- If the timestamp lies within two keyframes, we can calculate the correct euler angles directly.
+			-- If the timestamp does *not* lie within two keyframes, we have to take the quaternion value and convert it to euler angles instead. This is not ideal,
+			-- as the same quaternion orientation can be represented by multiple different euler angle configurations. In this case some assumptions have to be made
+			-- about which euler angle configuration is the desired one. There is no objective solution and this may result in unexpected curve paths in some cases.
+			if(t +pfm.udm.EditorChannelData.TIME_EPSILON >= minKeyframeTime and t -pfm.udm.EditorChannelData.TIME_EPSILON <= maxKeyframeTime) then
+				v = calc_value_at_timestamp(graphData.editorChannel,t,graphData.valueType)
+			else
+				v = find_closest_equivalence_euler_angles(v,prevVal)
+			end
 			prevVal = v
-
-			--v = calc_value_at_timestamp(graphData.editorChannel,t,graphData.valueType)
 		end
 		v = udm.get_numeric_component(v,graphData.typeComponentIndex)
 		table.insert(curveValues,{t,v})
 	end
-	print("curveValues:")
-	console.print_table(curveValues)
 
 	if(updateCurveOnly) then
 		graphData.curve:UpdateCurveData(curveValues)
