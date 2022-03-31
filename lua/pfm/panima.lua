@@ -248,6 +248,7 @@ function pfm.AnimationManager:UpdateKeyframe(actor,path,panimaChannel,keyIdx,tim
 end
 
 function pfm.AnimationManager:SetChannelValue(actor,path,time,value,udmType,addKey,baseIndex)
+	baseIndex = baseIndex or 0
 	if(addKey == nil) then addKey = true end
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)

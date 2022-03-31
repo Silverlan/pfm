@@ -36,6 +36,23 @@ end
 
 ----------------
 
+-- Quaternions are represented as euler angles in the interface and have to be
+-- converted accordingly
+local function channel_value_to_editor_value(val,channelValueType)
+	if(channelValueType ~= udm.TYPE_QUATERNION) then return val end
+	return val:ToEulerAngles()
+end
+local function channel_value_type_to_editor_value_type(channelValueType)
+	if(channelValueType ~= udm.TYPE_QUATERNION) then return udm.TYPE_EULER_ANGLES end
+	return channelValueType
+end
+local function editor_value_to_channel_value(val,channelValueType)
+	if(channelValueType ~= udm.TYPE_QUATERNION) then return val end
+	return val:ToQuaternion()
+end
+
+----------------
+
 util.register_class("gui.PFMDataPointControl",gui.Base)
 function gui.PFMDataPointControl:OnInitialize()
 	gui.Base.OnInitialize(self)
@@ -1069,13 +1086,35 @@ local function calc_graph_curve_data_points(interpMethod,easingMode,pathKeys,key
 	return timestamps,dataValues
 end
 
+local function calc_component_value_at_timestamp(editorChannel,t,typeComponentIndex)
+	local editorGraphCurve = editorChannel:GetGraphCurve()
+	local pathKeys = editorGraphCurve:GetKey(typeComponentIndex)
+	if(pathKeys == nil or pathKeys:GetTimeCount() == 0) then return end
+
+	local interpMethod = pathKeys:GetInterpolationMode(typeComponentIndex)
+	local easingMode = pathKeys:GetEasingMode(typeComponentIndex)
+
+	local keyIndex0 = editorChannel:FindLowerKeyIndex(t,typeComponentIndex)
+	if(keyIndex0 == nil) then return pathKeys:GetValue(typeComponentIndex) end
+	if(keyIndex0 == pathKeys:GetTimeCount() -1) then return pathKeys:GetValue(pathKeys:GetTimeCount() -1) end
+	local keyIndex1 = keyIndex0 +1
+	return calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex0,keyIndex1,t)
+end
+local function calc_value_at_timestamp(editorChannel,t,valueType)
+	local v = channel_value_to_editor_value(udm.get_class_type(valueType)(),valueType)
+	local n = udm.get_numeric_component_count(channel_value_type_to_editor_value_type(valueType))
+	for i=0,n -1 do
+		local vc = calc_component_value_at_timestamp(editorChannel,t,i)
+		if(vc ~= nil) then v:Set(i,vc) end
+	end
+	return v
+end
+
 function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPath,graphData,startTime,endTime)
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
 
 	local curve = graphData.curve
-	local editorChannel = curve:GetEditorChannel()
-
 	local editorChannel = curve:GetEditorChannel()
 	if(editorChannel == nil) then return end
 
@@ -1116,10 +1155,12 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 	local keyframesInTimeframePerKey = {}
 	for i=0,numPaths -1 do
 		local pathKeys = editorGraphCurve:GetKey(i)
-		local idx = editorChannel:FindLowerKeyIndex(startTime,i) or 0
+		local idx = editorChannel:FindLowerKeyIndex(startTime,i)
+		if(idx == nil and pathKeys:GetTimeCount() > 0) then idx = 0 end
 		-- Collect timestamps for all keyframe sets that intersect our time range
 		if(idx ~= nil) then
 			local t0 = pathKeys:GetTime(idx)
+			assert(t0 ~= nil)
 			local t1 = pathKeys:GetTime(idx +1)
 			if(t1 ~= nil) then
 				while(t1 ~= nil) do
@@ -1199,9 +1240,10 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 	local result,valueIndex1 = animManager:SetCurveRangeChannelValueCount(actor,targetPath,startTime,endTime,numValues,true)
 	if(result) then
 		-- Go through each timestamp and calculate actual time and data values
+		local xval = {}
 		for i,td in ipairs(timestampData) do
 			channel:SetTime(valueIndex0 +i -1,td.time)
-			local v = udm.get_class_type(valueType)()
+			local v = channel_value_to_editor_value(udm.get_class_type(valueType)(),valueType)
 			for typeComponentIndex,keyframeIndices in pairs(keyframesInTimeframePerKey) do
 				local pathKeys = editorGraphCurve:GetKey(typeComponentIndex)
 				local foundCurveInRange = false
@@ -1234,7 +1276,8 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 					end
 				end
 			end
-			channel:SetValue(valueIndex0 +i -1,v)
+			xval[valueIndex0 +i -1] = v
+			channel:SetValue(valueIndex0 +i -1,editor_value_to_channel_value(v,valueType))
 		end
 
 
@@ -1243,18 +1286,24 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 		-- the boundary (up to the highest or lowest keyframe timestamp) to the value of the keyframe.
 
 		-- Clamp postfix samples
+		-- TODO: Don't GET value, use calculated values above instead (due to euler angle -> quat conversion issues)
 		for i=0,editorGraphCurve:GetKeyCount() -1 do
 			local pathKeys = editorGraphCurve:GetKey(i)
 			local keyIndex = editorChannel:FindLowerKeyIndex(endTime,i)
+			if(keyIndex == nil and pathKeys:GetTimeCount() > 0) then keyIndex = 0 end
 			if(keyIndex == pathKeys:GetTimeCount() -1) then
 				local valueIndex = panimaChannel:FindIndex(pathKeys:GetTime(keyIndex))
 				if(valueIndex ~= nil) then
-					local lastValue = udm.get_numeric_component(channel:GetValue(valueIndex),i)
+					local lastValue = udm.get_numeric_component(xval[valueIndex],i)
 					local n = channel:GetValueCount()
 					for j=valueIndex +1,n -1 do
-						local val = channel:GetValue(j)
+						local val = xval[j]
+						if(val == nil) then
+							val = calc_value_at_timestamp(editorChannel,channel:GetTime(j),valueType)
+							xval[j] = val
+						end
 						val:Set(i,lastValue)
-						channel:SetValue(j,val)
+						channel:SetValue(j,editor_value_to_channel_value(val,valueType))
 					end
 				end
 			end
@@ -1263,15 +1312,20 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 		-- Clamp prefix samples
 		for i=0,editorGraphCurve:GetKeyCount() -1 do
 			local pathKeys = editorGraphCurve:GetKey(i)
-			local keyIndex = editorChannel:FindLowerKeyIndex(startTime,i) or 0
+			local keyIndex = editorChannel:FindLowerKeyIndex(startTime,i)
+			if(keyIndex == nil and pathKeys:GetTimeCount() > 0) then keyIndex = 0 end
 			if(keyIndex == 0) then
 				local valueIndex = panimaChannel:FindIndex(pathKeys:GetTime(keyIndex))
 				if(valueIndex ~= nil) then
-					local firstValue = udm.get_numeric_component(channel:GetValue(valueIndex),i)
+					local firstValue = udm.get_numeric_component(xval[valueIndex],i)
 					for j=0,valueIndex -1 do
-						local val = channel:GetValue(j)
+						local val = xval[j]
+						if(val == nil) then
+							val = calc_value_at_timestamp(editorChannel,channel:GetTime(j),valueType)
+							xval[j] = val
+						end
 						val:Set(i,firstValue)
-						channel:SetValue(j,val)
+						channel:SetValue(j,editor_value_to_channel_value(val,valueType))
 					end
 				end
 			end
@@ -1318,6 +1372,12 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 			end
 		end]]
 		--
+	end
+
+	local values = channel:GetValues()
+	local times = channel:GetTimes()
+	for _,v in ipairs(values) do
+		print(times[_],v:ToEulerAngles())
 	end
 end
 
@@ -1531,6 +1591,86 @@ function gui.PFMTimelineGraph:InitializeCurveDataValues(dp0,dp1)
 		--
 	end
 end
+local function calc_equivalence_euler_angles(ang)
+	ang = ang:Copy()
+	ang.p = math.rad(ang.p)
+	ang.y = math.rad(ang.y)
+	ang.r = math.rad(ang.r)
+
+	ang.p = math.pi -ang.p
+	ang.y = ang.y +math.pi
+	ang.r = ang.r +math.pi
+
+	ang.p = math.deg(ang.p)
+	ang.y = math.deg(ang.y)
+	ang.r = math.deg(ang.r)
+	ang:Normalize()
+	return ang
+end
+
+local function find_closest_equivalence_euler_angles(ang,angRef)
+	print("find_closest_equivalence_euler_angles: ",ang)
+	ang = ang:Copy()
+	ang:Normalize()
+	if(angRef ~= nil) then
+		angRef = angRef:Copy()
+		angRef:Normalize()
+	end
+	local candidates = {ang}
+	table.insert(candidates,calc_equivalence_euler_angles(ang))
+
+	if(angRef == nil) then
+		-- Pick the candidate with the lowest roll and/or pitch (if multiple candidates have the same roll).
+		-- This is subjective, but should result with the candidate that is probably the desired one.
+		local bestCandidates = {}
+		local bestCandidateVal
+		for i,c in ipairs(candidates) do
+			local r = math.abs(c.r)
+			if(bestCandidateVal == nil or r <= bestCandidateVal) then
+				bestCandidateVal = r
+				table.insert(bestCandidates,c)
+			end
+		end
+
+		local bestCandidate
+		bestCandidateVal = nil
+		for i,c in ipairs(bestCandidates) do
+			local p = math.abs(c.p)
+			if(bestCandidateVal == nil or p < bestCandidateVal) then
+				bestCandidateVal = p
+				bestCandidate = i
+			end
+		end
+		return bestCandidates[bestCandidate]
+	end
+
+	-- Find the candidate with the shortest path to the reference angles
+
+	if(math.abs(math.rad(angRef.p) -math.pi /2.0) < 0.001 and math.abs(math.rad(ang.p) -math.pi /2.0) < 0.001) then
+		-- A third equivalence is possible: https://math.stackexchange.com/a/4356879/161967
+		-- TODO: This case is untested
+		local equi = ang:Copy()
+		local diff = angRef.y -equi.y
+		equi.y = angRef.y
+		equi.r = equi.r -diff
+		equi:Normalize()
+
+		table.insert(candidates,equi)
+	end
+
+	local bestCandidate
+	local bestCandidateDiff
+	for i,c in ipairs(candidates) do
+		local d = math.abs(math.get_angle_difference(c.p,angRef.p)) +math.abs(math.get_angle_difference(c.y,angRef.y)) +math.abs(math.get_angle_difference(c.r,angRef.r))
+		if(bestCandidateDiff == nil or d < bestCandidateDiff) then
+			bestCandidateDiff = d
+			bestCandidate = i
+		end
+	end
+	print("Candidates")
+	console.print_table(candidates)
+	return candidates[bestCandidate]
+end
 function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 	local channel = graphData.channel()
 	if(channel == nil) then return end
@@ -1539,13 +1679,46 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 
 	local graphData = self.m_graphs[i]
 	local curveValues = {}
+
+	if(graphData.editorChannel == nil) then
+		local targetPath = channel:GetTargetPath()
+		local animClip = graphData.animClip()
+		if(animClip ~= nil) then
+			local editorData = animClip:GetEditorData()
+			local channel = editorData:FindChannel(targetPath)
+			graphData.editorChannel = channel
+		end
+	end
+
+	-- Quaternions are not very user friendly, so when working with quaternions, we'll want to display them as euler angles in the interface instead.
+	-- However, since euler angles are not unique and converting a quaternion to euler angles can have multiple results, we have to do some additional considerations
+	-- to prevent unnatural rotation paths.
+	local prevVal
+	if(graphData.valueType == udm.TYPE_QUATERNION and #times > 0 and graphData.editorChannel ~= nil) then
+		prevVal = calc_value_at_timestamp(graphData.editorChannel,times[1],graphData.valueType)
+		if(prevVal ~= nil) then prevVal = find_closest_equivalence_euler_angles(prevVal)
+		else prevVal = channel_value_to_editor_value(udm.get_class_type(valueType)(),valueType) end
+	end
 	for i=1,#times do
 		local t = times[i]
+		print("")
+		print("Time: ",t)
 		local v = values[i]
 		v = (graphData.valueTranslator ~= nil) and graphData.valueTranslator[1](v) or v
+		v = channel_value_to_editor_value(v,graphData.valueType)
+		if(graphData.valueType == udm.TYPE_QUATERNION) then
+			v = find_closest_equivalence_euler_angles(v,prevVal)
+			print("Chosen Val: ",v)
+			print("Actual Val: ",calc_value_at_timestamp(graphData.editorChannel,t,graphData.valueType))
+			prevVal = v
+
+			--v = calc_value_at_timestamp(graphData.editorChannel,t,graphData.valueType)
+		end
 		v = udm.get_numeric_component(v,graphData.typeComponentIndex)
 		table.insert(curveValues,{t,v})
 	end
+	print("curveValues:")
+	console.print_table(curveValues)
 
 	if(updateCurveOnly) then
 		graphData.curve:UpdateCurveData(curveValues)
@@ -1731,43 +1904,13 @@ function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo,v
 			end
 		end
 	elseif(memberInfo.type == udm.TYPE_EULER_ANGLES) then
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_pitch")),{
-			function(v) return v.p end,
-			function(v,curVal) return EulerAngles(v,curVal.y,curVal.r) end
-		},pfm.get_color_scheme_color("red"),0)
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_yaw")),{
-			function(v) return v.y end,
-			function(v,curVal) return EulerAngles(curVal.p,v,curVal.r) end
-		},pfm.get_color_scheme_color("green"),1)
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_roll")),{
-			function(v) return v.r end,
-			function(v,curVal) return EulerAngles(curVal.p,curVal.y,v) end
-		},pfm.get_color_scheme_color("blue"),2)
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_pitch")),nil,pfm.get_color_scheme_color("red"),0)
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_yaw")),nil,pfm.get_color_scheme_color("green"),1)
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_roll")),nil,pfm.get_color_scheme_color("blue"),2)
 	elseif(memberInfo.type == udm.TYPE_QUATERNION) then
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_pitch")),{
-			function(v) return v:ToEulerAngles().p end,
-			function(v,curVal)
-				local ang = curVal:ToEulerAngles()
-				ang.p = v
-				return ang:ToQuaternion()
-			end
-		},pfm.get_color_scheme_color("red"),0)
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_yaw")),{
-			function(v) return v:ToEulerAngles().y end,
-			function(v,curVal)
-				local ang = curVal:ToEulerAngles()
-				ang.y = v
-				return ang:ToQuaternion()
-			end
-		},pfm.get_color_scheme_color("green"),1)
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_roll")),{
-			function(v) return v:ToEulerAngles().r end,
-			function(v,curVal)
-				local ang = curVal:ToEulerAngles()
-				ang.r = v
-				return ang:ToQuaternion()
-			end
-		},pfm.get_color_scheme_color("blue"),2)
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_pitch")),nil,pfm.get_color_scheme_color("red"),0)
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_yaw")),nil,pfm.get_color_scheme_color("green"),1)
+		addChannel(itemCtrl:AddItem(locale.get_text("euler_roll")),nil,pfm.get_color_scheme_color("blue"),2)
 	end
 	if(controlData.type == "flexController") then
 		if(controlData.dualChannel ~= true) then
