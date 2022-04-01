@@ -178,10 +178,26 @@ function pfm.AnimationManager:RemoveKeyframe(actor,path,keyIdx,baseIndex)
 end
 
 function pfm.AnimationManager:GetChannelValueByIndex(actor,path,idx)
-	if(self.m_filmClip == nil or self.m_filmClip == nil) then return end
+	if(self.m_filmClip == nil) then return end
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
 	if(channel == nil) then return end
 	return channel:GetTime(idx),channel:GetValue(idx)
+end
+
+function pfm.AnimationManager:GetChannelValueByKeyframeIndex(actor,path,panimaChannel,keyIdx,baseIndex)
+	if(self.m_filmClip == nil) then return end
+	local anim,channel,animClip = self:FindAnimationChannel(actor,path)
+	if(channel == nil) then return end
+	local editorData = animClip:GetEditorData()
+	local editorChannel = editorData:FindChannel(path)
+	local udmChannel = animClip:GetChannel(path,type)
+	if(editorChannel == nil or udmChannel == nil) then return end
+	local graphCurve = editorChannel:GetGraphCurve()
+	local keyData = graphCurve:GetKey(baseIndex)
+	if(keyData == nil) then return end
+	local valueIdx = panimaChannel:FindIndex(keyData:GetTime(keyIdx),pfm.udm.EditorChannelData.TIME_EPSILON)
+	if(valueIdx == nil) then return end
+	return channel:GetTime(valueIdx),channel:GetValue(valueIdx)
 end
 
 function pfm.AnimationManager:UpdateKeyframe(actor,path,panimaChannel,keyIdx,time,value,baseIndex)
@@ -228,6 +244,7 @@ function pfm.AnimationManager:UpdateKeyframe(actor,path,panimaChannel,keyIdx,tim
 
 		-- Update keyframe
 		keyData:SetValue(keyIdx,value)
+
 		local oldKeyIndex = keyIdx
 		local newKeyIdx = editorChannel:SetKeyTime(keyIdx,time,baseIndex)
 

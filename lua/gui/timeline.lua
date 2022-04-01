@@ -177,6 +177,11 @@ function gui.Timeline:RemoveBookmarkSet(bms)
 	end
 end
 function gui.Timeline:AddBookmarkSet(bms)
+	for _,d in ipairs(self.m_bookmarkSets) do
+		if(util.is_same_object(d.bookmarkSet,bms)) then
+			return -- Bookmark set was already added
+		end
+	end
 	local t = {
 		elements = {},
 		bookmarkSet = bms
@@ -187,10 +192,15 @@ function gui.Timeline:AddBookmarkSet(bms)
 			local el = self:AddBookmark(c:GetBookmark(i))
 			table.insert(t.elements,el)
 		elseif(ev == udm.BaseSchemaType.ARRAY_EVENT_REMOVE) then
-			for _,bmOther in ipairs(self.m_bookmarks) do
+			local i = 1
+			while(i <= #self.m_bookmarks) do
+				local bmOther = self.m_bookmarks[i]
 				if(bmOther:IsValid() and util.is_same_object(bmOther.m_bookmark,oldVal)) then
 					bmOther:Remove()
 				end
+
+				if(bmOther:IsValid() == false) then table.remove(self.m_bookmarks,i)
+				else i = i +1 end
 			end
 		end
 	end)
@@ -198,13 +208,13 @@ function gui.Timeline:AddBookmarkSet(bms)
 
 	for _,bm in ipairs(bms:GetBookmarks()) do
 		local el = self:AddBookmark(bm)
-		el.m_bookmark = bm
 		table.insert(t.elements,el)
 	end
 end
 function gui.Timeline:AddBookmark(bm)
 	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
 	local p = gui.create("WIPFMBookmark",self,0,5)
+	p.m_bookmark = bm
 	self.m_timeAxis:AttachElementToValueWithUdmProperty(p,bm,"time")
 	table.insert(self.m_bookmarks,p)
 	return p
