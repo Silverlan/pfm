@@ -11,10 +11,68 @@ include("/shaders/pfm/pfm_timeline.lua")
 include("/pfm/fonts.lua")
 include("/graph_axis.lua")
 
-util.register_class("gui.TimelineStrip",gui.BaseTimelineGrid)
+util.register_class("gui.BaseAxis")
+function gui.BaseAxis:__init()
+	self:SetStepSize(1.0)
+end
+function gui.BaseAxis:SetStepSize(stepSize) self.m_stepSize = stepSize end
+function gui.BaseAxis:GetStepSize() return self.m_stepSize end
+function gui.BaseAxis:CalcUnitPixelStride()
+	local stepSize = self:GetStepSize()
+	local stride
+
+	-- If the stride between grid lines is below this value (in pixels) the step size will be increased by the specified factor
+	local MAX_PIXEL_STRIDE = 30.0
+	local STEP_SIZE_INC_FACTOR = 10.0
+
+	while(stride == nil or stride < MAX_PIXEL_STRIDE) do
+		stride = self:GetAxis():GetPixelStrideX(stepSize) *self:GetAxis():GetZoomLevelMultiplier()
+
+		stepSize = stepSize *STEP_SIZE_INC_FACTOR
+	end
+	return stride,stepSize
+end
+function gui.BaseAxis:GetUnitPixelStride() return self.m_gridStride end
+function gui.BaseAxis:GetUnitStepSize() return self.m_gridStepSize end
+function gui.BaseAxis:UpdateAxisStride()
+	local stride,stepSize = self:CalcUnitPixelStride()
+	self.m_gridStride = stride
+	self.m_gridStepSize = stepSize
+end
+function gui.BaseAxis:CalcAxisBounds(horizontal,w,h)
+	local axis = self:GetAxis()
+	local stridePerUnit = axis:GetStridePerUnit()
+	if(stridePerUnit == 0.0) then
+		error("Illegal timeline stride: ",stridePerUnit)
+	end
+
+	-- We have to move the strip around if the start offset isn't a whole number, so we
+	-- just add a stride to its width
+	local multiplier = axis:GetZoomLevelMultiplier()
+	if(horizontal) then w = w +(stridePerUnit *multiplier) *2
+	else h = h +(stridePerUnit *multiplier) *2 end
+
+	local startOffset = axis:GetStartOffset()
+
+	self:UpdateAxisStride()
+	local stepSize = self:GetUnitStepSize()
+	local stride = self:GetUnitPixelStride()
+	local strideX = self:GetUnitPixelStride() /multiplier
+	local pxOffset = (startOffset *stridePerUnit) %(strideX *multiplier)
+
+	if(horizontal) then pxOffset = -pxOffset
+	else pxOffset = pxOffset +(h %stride) -stridePerUnit *multiplier *2.0 end
+
+	return w,h,pxOffset
+end
+
+-------------
+
+util.register_class("gui.TimelineStrip",gui.BaseTimelineGrid,gui.BaseAxis)
 
 function gui.TimelineStrip:__init()
 	gui.BaseTimelineGrid.__init(self)
+	gui.BaseAxis.__init(self)
 end
 function gui.TimelineStrip:OnInitialize()
 	gui.BaseTimelineGrid.OnInitialize(self)
@@ -30,7 +88,7 @@ end
 function gui.TimelineStrip:RebuildRenderCommandBuffer()
 	if(self.m_shader == nil) then return end
 	local pcb = prosper.PreparedCommandBuffer()
-	if(self.m_shader:Record(pcb,self:GetLineCount(),self:GetAxis():GetStrideXTest(self:GetPrimAxisExtents(self)) *self:GetAxis():GetZoomLevelMultiplier(),self:GetColor(),self.m_yMultiplier,self:IsHorizontal()) == false) then pcb = nil end
+	if(self.m_shader:Record(pcb,self:GetLineCount(),self:GetAxis():GetStrideX(self:GetPrimAxisExtents(self)) *self:GetAxis():GetZoomLevelMultiplier(),self:GetColor(),self.m_yMultiplier,self:IsHorizontal()) == false) then pcb = nil end
 	self:SetRenderCommandBuffer(pcb)
 end
 function gui.TimelineStrip:SetAxis(axis) self.m_axis = axis end
@@ -124,7 +182,9 @@ function gui.LabelledTimelineStrip:SetFlipped(flipped)
 end
 function gui.LabelledTimelineStrip:GetLabelYPos(el)
 	if(self.m_flipped == true) then return 5 end
-	return self:GetSecAxisExtents(self) -self:GetSecAxisExtents(el) -7
+	local offset = self:GetSecAxisExtents(self) -self:GetSecAxisExtents(el)
+	offset = offset -7
+	return offset
 end
 function gui.LabelledTimelineStrip:SetAxis(axis)
 	if(util.is_valid(self.m_strip) == false) then return end
@@ -137,24 +197,18 @@ end
 function gui.LabelledTimelineStrip:SetDataAxisInverted(inverted) self.m_dataAxisInverted = inverted end
 function gui.LabelledTimelineStrip:IsDataAxisInverted() return self.m_dataAxisInverted or false end
 function gui.LabelledTimelineStrip:OnUpdate()
-	if(util.is_valid(self.m_strip) == false) then return end
+	local w,h,offset = self.m_strip:CalcAxisBounds(self:IsHorizontal(),self:GetWidth(),self:GetHeight())
+	self:SetPrimAxisExtents(self.m_strip,self:IsHorizontal() and w or h)
+	self:SetPrimAxisOffset(self.m_strip,offset)
+	self.m_strip:Update()
+
 	local axis = self:GetAxis()
 	local stridePerUnit = axis:GetStridePerUnit()
-	if(stridePerUnit == 0.0) then
-		error("Illegal timeline stride: ",stridePerUnit)
-	end
-	-- We have to move the strip around if the start offset isn't a whole number, so we
-	-- just add a stride to its width
 	local multiplier = axis:GetZoomLevelMultiplier()
-	self:SetPrimAxisExtents(self.m_strip,self:GetPrimAxisExtents(self) +(stridePerUnit *multiplier) *2)
-
-	local numTextElements = math.ceil(self:GetPrimAxisExtents(self) /stridePerUnit /multiplier) +1
 	local startOffset = axis:GetStartOffset()
 	local startIndex = math.floor(startOffset /multiplier)
 	local xStartOffset = (startIndex *multiplier -startOffset) *stridePerUnit
-	self:SetPrimAxisOffset(self.m_strip,-((startOffset *stridePerUnit) %(stridePerUnit *multiplier)))
-	self.m_strip:Update()
-
+	local numTextElements = math.ceil(self:GetPrimAxisExtents(self) /stridePerUnit /multiplier) +1
 	if(numTextElements > 0) then
 		for i=0,(numTextElements -1) do
 			local pText = self.m_textElements[i +1]

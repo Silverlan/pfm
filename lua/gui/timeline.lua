@@ -236,14 +236,14 @@ function gui.Timeline:SetZoomLevel(zoomLevel)
 	local timeOffset
 	local axis = self:GetTimeAxis():GetAxis()
 	if(util.is_valid(self.m_playhead)) then
-		xOffsetPlayhead = axis:ValueToXOffset2(self.m_playhead:GetTimeOffset())
+		xOffsetPlayhead = axis:ValueToXOffset(self.m_playhead:GetTimeOffset())
 		timeOffset = self.m_playhead:GetTimeOffset()
 	end
 	axis:SetZoomLevel(zoomLevel)
 
 	if(util.is_valid(self.m_playhead)) then
 		-- We want the playhead to stay in place, so we have to change the start offset accordingly
-		local newXOffsetPlayhead = axis:ValueToXOffset2(self.m_playhead:GetTimeOffset())
+		local newXOffsetPlayhead = axis:ValueToXOffset(self.m_playhead:GetTimeOffset())
 		local startOffset = axis:GetStartOffset() -axis:XDeltaToValue(xOffsetPlayhead -newXOffsetPlayhead)
 		--local startOffset = timeOffset -axis:XDeltaToValue(axis:ValueToXOffset(timeOffset) -xOffsetPlayhead)
 		axis:SetStartOffset(startOffset)--startOffset)

@@ -530,6 +530,18 @@ function gui.PFMTimelineGraph:OnInitialize()
 	self.m_bg:SetColor(Color(128,128,128))
 
 	self.m_grid = gui.create("WIGrid",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	local session = tool.get_filmmaker():GetSession()
+	local settings = session:GetSettings()
+	local renderSettings = settings:GetRenderSettings()
+
+	local function updateTimeLayer()
+		local frameRate = renderSettings:GetFrameRate()
+		if(frameRate <= 0) then frameRate = 24 end
+		self.m_grid:GetTimeLayer():SetStepSize(1.0 /frameRate)
+		self.m_grid:Update()
+	end
+	self.m_cbUpdateFrameRate = renderSettings:AddChangeListener("frameRate",updateTimeLayer)
+	updateTimeLayer()
 
 	self.m_graphContainer = gui.create("WIBase",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	
@@ -541,10 +553,10 @@ function gui.PFMTimelineGraph:OnInitialize()
 	self.m_transformList = gui.create("WIPFMTreeView",self.m_scrollContainer,0,0,self.m_scrollContainer:GetWidth(),self.m_scrollContainer:GetHeight())
 	self.m_transformList:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 
-	local dataAxisStrip = gui.create("WILabelledTimelineStrip",self,listContainer:GetRight(),0,20,self:GetHeight(),0,0,0,1)
+	local dataAxisStrip = gui.create("WILabelledTimelineStrip",self,listContainer:GetRight(),0,30,self:GetHeight(),0,0,0,1)
 	dataAxisStrip:SetHorizontal(false)
 	dataAxisStrip:SetDataAxisInverted(true)
-	dataAxisStrip:AddDebugMarkers()
+	-- dataAxisStrip:AddDebugMarkers()
 	-- dataAxisStrip:SetFlipped(true)
 	self.m_dataAxisStrip = dataAxisStrip
 
@@ -556,6 +568,8 @@ function gui.PFMTimelineGraph:OnInitialize()
 	self.m_dataAxis = util.GraphAxis()
 
 	dataAxisStrip:SetAxis(self.m_dataAxis)
+	self.m_grid:SetXAxis(self.m_timeAxis)
+	self.m_grid:SetYAxis(self.m_dataAxis)
 
 	self:SetCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_SELECT)
 	self:SetKeyboardInputEnabled(true)
@@ -670,6 +684,7 @@ end
 function gui.PFMTimelineGraph:GetTimeAxisExtents() return self:GetWidth() end
 function gui.PFMTimelineGraph:GetDataAxisExtents() return self.m_dataAxisStrip:GetHeight() end
 function gui.PFMTimelineGraph:OnRemove()
+	util.remove(self.m_cbUpdateFrameRate)
 	util.remove(self.m_cbOnChannelValueChanged)
 	util.remove(self.m_cbOnKeyframeUpdated)
 	util.remove(self.m_cbDataAxisPropertiesChanged)
@@ -944,11 +959,12 @@ function gui.PFMTimelineGraph:ScrollCallback(x,y)
 		input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
 	if(isCtrlDown) then
 		local timeLine = self.m_timeline:GetTimeline()
-		local axis = timeLine:GetDataAxis():GetAxis()
-		axis:SetZoomLevel(axis:GetZoomLevel() -(y /20.0))
+		local dataAxis = timeLine:GetDataAxis():GetAxis()
+		dataAxis:SetZoomLevel(dataAxis:GetZoomLevel() -(y /20.0))
 		timeLine:Update()
 
-		self:UpdateAxisRanges(axis:GetStartOffset(),axis:GetZoomLevel())
+		local timeAxis = timeLine:GetTimeAxis():GetAxis()
+		self:UpdateAxisRanges(timeAxis:GetStartOffset(),timeAxis:GetZoomLevel(),dataAxis:GetStartOffset(),dataAxis:GetZoomLevel())
 		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED
@@ -1637,10 +1653,12 @@ function gui.PFMTimelineGraph:AddGraph(track,actor,targetPath,colorCurve,fValueT
 	return graph,idx
 end
 function gui.PFMTimelineGraph:GetGraphs() return self.m_graphs end
-function gui.PFMTimelineGraph:UpdateAxisRanges(startOffset,zoomLevel)
+function gui.PFMTimelineGraph:UpdateAxisRanges(startOffset,zoomLevel,timeStartOffset,timeZoomLevel)
 	if(util.is_valid(self.m_grid)) then
-		self.m_grid:SetStartOffset(startOffset)
-		self.m_grid:SetZoomLevel(zoomLevel)
+		self.m_grid:SetStartOffsetX(startOffset)
+		self.m_grid:SetZoomLevelX(zoomLevel)
+		self.m_grid:SetStartOffsetY(timeStartOffset)
+		self.m_grid:SetZoomLevelY(timeZoomLevel)
 		self.m_grid:Update()
 	end
 	for i=1,#self.m_graphs do

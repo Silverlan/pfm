@@ -113,7 +113,7 @@ function gui.Axis:UpdateItem(itemData)
 		local xStart = axis:ValueToXOffset(startOffset)
 		local xEnd = axis:ValueToXOffset(endOffset)
 
-		local w = axis:ValueToXOffset2(endOffset) -axis:ValueToXOffset2(startOffset)
+		local w = axis:ValueToXOffset(endOffset) -axis:ValueToXOffset(startOffset)
 		local xStartAbs = (self:IsHorizontal() and self:GetAbsolutePos().x or self:GetAbsolutePos().y) +xStart
 		local pos = itemData.element:GetAbsolutePos()
 		if(self:IsHorizontal()) then pos.x = xStartAbs

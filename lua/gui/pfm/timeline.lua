@@ -123,10 +123,9 @@ function gui.PFMTimeline:OnTimelineUpdate()
 	if(util.is_valid(self.m_timelineGraph)) then
 		local posTimeline = self.m_timeline:GetAbsolutePos()
 		local posGraph = self.m_timelineGraph:GetAbsolutePos()
-		local axis = self.m_timeline:GetTimeAxis():GetAxis()
-		local startTime = axis:XOffsetToValue(posGraph.x -posTimeline.x)
-		local endTime = axis:XOffsetToValue(posGraph.x +self.m_timelineGraph:GetTimeAxisExtents() -posTimeline.x)
-		self.m_timelineGraph:UpdateAxisRanges(axis:GetStartOffset(),axis:GetZoomLevel())
+		local timeAxis = self.m_timeline:GetTimeAxis():GetAxis()
+		local dataAxis = self.m_timeline:GetDataAxis():GetAxis()
+		self.m_timelineGraph:UpdateAxisRanges(timeAxis:GetStartOffset(),timeAxis:GetZoomLevel(),dataAxis:GetStartOffset(),dataAxis:GetZoomLevel())
 	end
 end
 function gui.PFMTimeline:GetEditor() return self.m_editorType end
