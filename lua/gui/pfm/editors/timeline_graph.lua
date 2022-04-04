@@ -203,6 +203,10 @@ function gui.PFMTimelineDataPoint:OnSelectionChanged(selected)
 	self:UpdateTextFields()
 end
 function gui.PFMTimelineDataPoint:GetTangentControl() return self.m_tangentControl end
+function gui.PFMTimelineDataPoint:UpdateHandles()
+	if(util.is_valid(self.m_tangentControl) == false) then return end
+	self.m_tangentControl:UpdateInOutLines(true,true)
+end
 function gui.PFMTimelineDataPoint:GetEditorKeys()
 	local curve = self:GetGraphCurve()
 	local graph = curve:GetTimelineGraph()
@@ -233,45 +237,44 @@ function gui.PFMTimelineDataPoint:InitializeHandleControl()
 	local el = gui.create("WIPFMTimelineTangentControl",self:GetParent())
 	el:SetDataPoint(self)
 
-	local function get_key_time_delta(newPos)
-		local curve = self:GetGraphCurve()
-		local graph = curve:GetTimelineGraph()
-		local timeAxis = graph:GetTimeAxis()
-		local dataAxis = graph:GetDataAxis()
-
-		local editorChannel = curve:GetEditorChannel()
-		if(editorChannel == nil) then return end
-
-		local editorGraphCurve = editorChannel:GetGraphCurve()
-		local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
-
-		local keyIndex = self:GetKeyIndex()
-		local val = newPos -self:GetCenter()
-		local time = timeAxis:GetAxis():XDeltaToValue(val.x)
-		local delta = -dataAxis:GetAxis():XDeltaToValue(val.y)
-		return editorKeys,keyIndex,time,delta
-	end
-
-	el:AddCallback("OnInControlMoved",function(el,newPos)
-		local editorKeys,keyIndex,time,delta = get_key_time_delta(newPos)
-		time = math.min(time,-0.0001)
-		editorKeys:SetInTime(keyIndex,time)
-		editorKeys:SetInDelta(keyIndex,delta)
-		if(util.is_valid(self.m_tangentControl)) then self.m_tangentControl:UpdateInOutLines(true,false) end
-		self:ReloadGraphCurveSegment()
-	end)
-	el:AddCallback("OnOutControlMoved",function(el,newPos)
-		local editorKeys,keyIndex,time,delta = get_key_time_delta(newPos)
-		time = math.max(time,0.0001)
-		editorKeys:SetOutTime(keyIndex,time)
-		editorKeys:SetOutDelta(keyIndex,delta)
-		if(util.is_valid(self.m_tangentControl)) then self.m_tangentControl:UpdateInOutLines(false,true) end
-		self:ReloadGraphCurveSegment()
-	end)
+	el:AddCallback("OnInControlMoved",function(el,newPos) self:OnHandleMoved(newPos,true) end)
+	el:AddCallback("OnOutControlMoved",function(el,newPos) self:OnHandleMoved(newPos,false) end)
 
 	self.m_tangentControl = el
 
 	self:Update()
+end
+function gui.PFMTimelineDataPoint:GetKeyTimeDelta(pos)
+	local curve = self:GetGraphCurve()
+	local graph = curve:GetTimelineGraph()
+	local timeAxis = graph:GetTimeAxis()
+	local dataAxis = graph:GetDataAxis()
+
+	local editorChannel = curve:GetEditorChannel()
+	if(editorChannel == nil) then return end
+
+	local editorGraphCurve = editorChannel:GetGraphCurve()
+	local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
+
+	local keyIndex = self:GetKeyIndex()
+	local val = pos -self:GetCenter()
+	local time = timeAxis:GetAxis():XDeltaToValue(val.x)
+	local delta = -dataAxis:GetAxis():XDeltaToValue(val.y)
+	return editorKeys,keyIndex,time,delta
+end
+function gui.PFMTimelineDataPoint:OnHandleMoved(newPos,inHandle)
+	local editorKeys,keyIndex,time,delta = self:GetKeyTimeDelta(newPos)
+	local handle = inHandle and pfm.udm.EditorGraphCurveKeyData.HANDLE_IN or pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT
+	editorKeys:SetHandleType(keyIndex,handle,pfm.udm.KEYFRAME_HANDLE_TYPE_FREE)
+	local affectedKeys = editorKeys:SetHandleData(keyIndex,handle,time,delta)
+
+	local curve = self:GetGraphCurve()
+	local timelineGraph = curve:GetTimelineGraph()
+	for _,af in ipairs(affectedKeys) do
+		timelineGraph:ReloadGraphCurveSegment(curve:GetCurveIndex(),af[1])
+	end
+
+	curve:GetTimelineGraph():UpdateSelectedDataPointHandles()
 end
 function gui.PFMTimelineDataPoint:OnRemove()
 	util.remove(self.m_tangentControl)
@@ -809,6 +812,12 @@ function gui.PFMTimelineGraph:GetSelectedDataPoints(includeHandles,includePoints
 	end
 	return dps
 end
+function gui.PFMTimelineGraph:UpdateSelectedDataPointHandles()
+	local dps = self:GetSelectedDataPoints(false,true)
+	for _,dp in ipairs(dps) do
+		dp:UpdateHandles()
+	end
+end
 function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 	self:RequestFocus()
 
@@ -913,6 +922,17 @@ function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 				end)
 			end
 			pSubMenuInterp:Update()
+
+			local pItem,pSubMenuHandleMode = pContext:AddSubMenu("Test_HandleType")
+			local esHandleMode = get_enum_set("KeyframeHandleType")
+			for val,name in ipairs(esHandleMode) do
+				val = val -1
+				pSubMenuHandleMode:AddItem("HM_" .. name,function()
+					local timeline = self:GetTimeline()
+					timeline:SetHandleType(val)
+				end)
+			end
+			pSubMenuHandleMode:Update()
 
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED

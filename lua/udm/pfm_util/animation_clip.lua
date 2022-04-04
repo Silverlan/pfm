@@ -150,7 +150,7 @@ local function swap_property(keyData,i0,i1,get,set)
 	set(keyData,i1,tmp)
 end
 local function swap(keyData,i0,i1)
-	-- Also update 'AddKey' function below when adding new key properties
+	-- Also update 'AddKey' and 'RemoveKey' functions below when adding new key properties
 	swap_property(keyData,i0,i1,keyData.GetTime,keyData.SetTime)
 	swap_property(keyData,i0,i1,keyData.GetValue,keyData.SetValue)
 	swap_property(keyData,i0,i1,keyData.GetEasingMode,keyData.SetEasingMode)
@@ -158,11 +158,11 @@ local function swap(keyData,i0,i1)
 
 	swap_property(keyData,i0,i1,keyData.GetInTime,keyData.SetInTime)
 	swap_property(keyData,i0,i1,keyData.GetInDelta,keyData.SetInDelta)
-	swap_property(keyData,i0,i1,keyData.GetInMode,keyData.SetInMode)
+	swap_property(keyData,i0,i1,keyData.GetInHandleType,keyData.SetInHandleType)
 
 	swap_property(keyData,i0,i1,keyData.GetOutTime,keyData.SetOutTime)
 	swap_property(keyData,i0,i1,keyData.GetOutDelta,keyData.SetOutDelta)
-	swap_property(keyData,i0,i1,keyData.GetOutMode,keyData.SetOutMode)
+	swap_property(keyData,i0,i1,keyData.GetOutHandleType,keyData.SetOutHandleType)
 end
 function pfm.udm.EditorChannelData:SetKeyTime(keyIndex,newTime,baseIndex)
 	baseIndex = baseIndex or 0
@@ -214,7 +214,7 @@ function pfm.udm.EditorChannelData:AddKey(t,baseIndex,addBaseKeyIfNotExists)
 	local num = keyData:GetTimeCount()
 	i = findInsertIndex(keyData,keyData.GetTime,num,t)
 
-	-- Also update 'swap' function above when adding new key properties
+	-- Also update 'swap' function above and 'RemoveKey' function below when adding new key properties
 	keyData:InsertTimeRange(i,1) keyData:SetTime(i,t)
 	keyData:InsertValueRange(i,1) keyData:SetValue(i,0.0)
 	keyData:InsertEasingModeRange(i,1) keyData:SetEasingMode(i,pfm.udm.EASING_MODE_AUTO)
@@ -222,11 +222,11 @@ function pfm.udm.EditorChannelData:AddKey(t,baseIndex,addBaseKeyIfNotExists)
 
 	keyData:InsertInTimeRange(i,1) keyData:SetInTime(i,0.0)
 	keyData:InsertInDeltaRange(i,1) keyData:SetInDelta(i,0.0)
-	keyData:InsertInModeRange(i,1) keyData:SetInMode(i,0)
+	keyData:InsertInHandleTypeRange(i,1) keyData:SetInHandleType(i,pfm.udm.KEYFRAME_HANDLE_TYPE_ALIGNED)
 
 	keyData:InsertOutTimeRange(i,1) keyData:SetOutTime(i,0.0)
 	keyData:InsertOutDeltaRange(i,1) keyData:SetOutDelta(i,0.0)
-	keyData:InsertOutModeRange(i,1) keyData:SetOutMode(i,0)
+	keyData:InsertOutHandleTypeRange(i,1) keyData:SetOutHandleType(i,pfm.udm.KEYFRAME_HANDLE_TYPE_ALIGNED)
 
 	self:GetBookmarkSet():AddBookmarkAtTimestamp(t)
 	return keyData,i
@@ -243,13 +243,15 @@ function pfm.udm.EditorChannelData:RemoveKey(t,baseIndex)
 	local keyData = graphCurve:GetKey(baseIndex)
 	keyData:RemoveTimeRange(i,1)
 	keyData:RemoveValueRange(i,1)
+	keyData:RemoveEasingModeRange(i,1)
+	keyData:RemoveInterpolationModeRange(i,1)
 
 	keyData:RemoveInTimeRange(i,1)
 	keyData:RemoveInDeltaRange(i,1)
-	keyData:RemoveInModeRange(i,1)
+	keyData:RemoveInHandleTypeRange(i,1)
 
 	keyData:RemoveOutTimeRange(i,1)
 	keyData:RemoveOutDeltaRange(i,1)
-	keyData:RemoveOutModeRange(i,1)
+	keyData:RemoveOutHandleTypeRange(i,1)
 	return i
 end

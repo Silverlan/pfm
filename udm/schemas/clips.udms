@@ -97,6 +97,11 @@
 			$string type "enum"
 			$array values [string]["auto","in","out","inOut"]
 		}
+		"KeyframeHandleType"
+		{
+			$string type "enum"
+			$array values [string]["free","aligned","vector"]
+		}
 		"Interpolation"
 		{
 			$string type "enum"
@@ -156,10 +161,10 @@
 					$string type "arrayLz4"
 					$string valueType "float"
 				}
-				"inModes"
+				"inHandleTypes"
 				{
 					$string type "arrayLz4"
-					$string valueType "uint32"
+					$string valueType "KeyframeHandleType"
 				}
 
 				// Bezier interpolation out-control data (relative to data point)
@@ -173,10 +178,10 @@
 					$string type "arrayLz4"
 					$string valueType "float"
 				}
-				"outModes"
+				"outHandleTypes"
 				{
 					$string type "arrayLz4"
-					$string valueType "uint32"
+					$string valueType "KeyframeHandleType"
 				}
 			}
 		}
