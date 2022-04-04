@@ -105,6 +105,7 @@ function gui.PFMTimelineTangentControl:OnInitialize()
 
 	local lineIn = gui.create("WILine",self:GetParent())
 	lineIn:SetColor(Color.Red)
+	lineIn:SetLineWidth(2)
 	self.m_inLine = lineIn
 
 	local ctrlIn = gui.create("WIPFMDataPointControl",self:GetParent())
@@ -113,6 +114,7 @@ function gui.PFMTimelineTangentControl:OnInitialize()
 
 	local lineOut = gui.create("WILine",self:GetParent())
 	lineOut:SetColor(Color.Aqua)
+	lineOut:SetLineWidth(2)
 	self.m_outLine = lineOut
 
 	local ctrlOut = gui.create("WIPFMDataPointControl",self:GetParent())
@@ -126,6 +128,31 @@ function gui.PFMTimelineTangentControl:OnInitialize()
 	self.m_inCtrl:GetVisibilityProperty():Link(self:GetVisibilityProperty())
 	self.m_outLine:GetVisibilityProperty():Link(self:GetVisibilityProperty())
 	self.m_outCtrl:GetVisibilityProperty():Link(self:GetVisibilityProperty())
+end
+function gui.PFMTimelineTangentControl:UpdateHandleType(handle,type)
+	local colorScheme = pfm.get_color_scheme()
+	local cpColor = colorScheme:GetColor("orange")
+
+	local elLine
+	local elCtrl
+	local lineColor
+	if(handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_IN) then
+		elLine = self.m_inLine
+		elCtrl = self.m_inCtrl
+	else
+		elLine = self.m_outLine
+		elCtrl = self.m_outCtrl
+	end
+
+	if(type == pfm.udm.KEYFRAME_HANDLE_TYPE_ALIGNED) then
+		lineColor = colorScheme:GetColor("lightRed")
+	elseif(type == pfm.udm.KEYFRAME_HANDLE_TYPE_VECTOR) then
+		lineColor = colorScheme:GetColor("lightGreen")
+	else
+		lineColor = colorScheme:GetColor("black")
+	end
+	elLine:SetColor(lineColor)
+	elCtrl:SetColor(cpColor)
 end
 function gui.PFMTimelineTangentControl:GetInControl() return self.m_inCtrl end
 function gui.PFMTimelineTangentControl:GetOutControl() return self.m_outCtrl end
@@ -206,6 +233,17 @@ function gui.PFMTimelineDataPoint:GetTangentControl() return self.m_tangentContr
 function gui.PFMTimelineDataPoint:UpdateHandles()
 	if(util.is_valid(self.m_tangentControl) == false) then return end
 	self.m_tangentControl:UpdateInOutLines(true,true)
+	self:UpdateHandleType(pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
+	self:UpdateHandleType(pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
+end
+function gui.PFMTimelineDataPoint:UpdateHandleType(handle)
+	if(util.is_valid(self.m_tangentControl) == false) then return end
+	local editorKeys = self:GetEditorKeys()
+	if(handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_IN) then
+		self.m_tangentControl:UpdateHandleType(handle,editorKeys:GetInHandleType(self:GetKeyIndex()))
+	else
+		self.m_tangentControl:UpdateHandleType(handle,editorKeys:GetOutHandleType(self:GetKeyIndex()))
+	end
 end
 function gui.PFMTimelineDataPoint:GetEditorKeys()
 	local curve = self:GetGraphCurve()
@@ -242,6 +280,9 @@ function gui.PFMTimelineDataPoint:InitializeHandleControl()
 
 	self.m_tangentControl = el
 
+	self:UpdateHandleType(pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
+	self:UpdateHandleType(pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
+
 	self:Update()
 end
 function gui.PFMTimelineDataPoint:GetKeyTimeDelta(pos)
@@ -265,7 +306,7 @@ end
 function gui.PFMTimelineDataPoint:OnHandleMoved(newPos,inHandle)
 	local editorKeys,keyIndex,time,delta = self:GetKeyTimeDelta(newPos)
 	local handle = inHandle and pfm.udm.EditorGraphCurveKeyData.HANDLE_IN or pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT
-	editorKeys:SetHandleType(keyIndex,handle,pfm.udm.KEYFRAME_HANDLE_TYPE_FREE)
+	if(editorKeys:GetHandleType(keyIndex) == pfm.udm.KEYFRAME_HANDLE_TYPE_VECTOR) then editorKeys:SetHandleType(keyIndex,handle,pfm.udm.KEYFRAME_HANDLE_TYPE_FREE) end
 	local affectedKeys = editorKeys:SetHandleData(keyIndex,handle,time,delta)
 
 	local curve = self:GetGraphCurve()
@@ -923,11 +964,11 @@ function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 			end
 			pSubMenuInterp:Update()
 
-			local pItem,pSubMenuHandleMode = pContext:AddSubMenu("Test_HandleType")
+			local pItem,pSubMenuHandleMode = pContext:AddSubMenu(locale.get_text("pfm_graph_editor_handle_type"))
 			local esHandleMode = get_enum_set("KeyframeHandleType")
 			for val,name in ipairs(esHandleMode) do
 				val = val -1
-				pSubMenuHandleMode:AddItem("HM_" .. name,function()
+				pSubMenuHandleMode:AddItem(locale.get_text("pfm_graph_editor_handle_type_" .. name),function()
 					local timeline = self:GetTimeline()
 					timeline:SetHandleType(val)
 				end)

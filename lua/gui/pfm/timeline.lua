@@ -372,7 +372,6 @@ function gui.PFMTimeline:InitializeToolbar()
 end
 function gui.PFMTimeline:SetInterpolationMode(mode)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false,true)
-	if(#dps == 0) then return end
 	for _,dp in ipairs(dps) do
 		local editorKey,keyIndex = dp:GetEditorKeys()
 		if(editorKey == nil) then return end
@@ -382,23 +381,23 @@ function gui.PFMTimeline:SetInterpolationMode(mode)
 end
 function gui.PFMTimeline:SetEasingMode(mode)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false,true)
-	if(#dps == 0) then return end
-	local dp = dps[1]
-	local editorKey,keyIndex = dp:GetEditorKeys()
-	if(editorKey == nil) then return end
-	editorKey:SetEasingMode(keyIndex,mode)
-	dp:ReloadGraphCurveSegment()
+	for _,dp in ipairs(dps) do
+		local editorKey,keyIndex = dp:GetEditorKeys()
+		if(editorKey == nil) then return end
+		editorKey:SetEasingMode(keyIndex,mode)
+		dp:ReloadGraphCurveSegment()
+	end
 end
 function gui.PFMTimeline:SetHandleType(type)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false,true)
-	if(#dps == 0) then return end
-	local dp = dps[1]
-	local editorKey,keyIndex = dp:GetEditorKeys()
-	if(editorKey == nil) then return end
-	editorKey:SetHandleType(keyIndex,pfm.udm.EditorGraphCurveKeyData.HANDLE_IN,type)
-	editorKey:SetHandleType(keyIndex,pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT,type)
-	self.m_timelineGraph:UpdateSelectedDataPointHandles()
-	dp:ReloadGraphCurveSegment()
+	for _,dp in ipairs(dps) do
+		local editorKey,keyIndex = dp:GetEditorKeys()
+		if(editorKey == nil) then return end
+		editorKey:SetHandleType(keyIndex,pfm.udm.EditorGraphCurveKeyData.HANDLE_IN,type)
+		editorKey:SetHandleType(keyIndex,pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT,type)
+		self.m_timelineGraph:UpdateSelectedDataPointHandles()
+		dp:ReloadGraphCurveSegment()
+	end
 end
 function gui.PFMTimeline:SetDataValue(t,v)
 	self.m_entryFrame:SetText(tostring(t))

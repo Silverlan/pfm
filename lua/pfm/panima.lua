@@ -244,7 +244,11 @@ function pfm.AnimationManager:UpdateKeyframe(actor,path,panimaChannel,keyIdx,tim
 
 		-- Update keyframe
 		keyData:SetValue(keyIdx,value)
-		keyData:UpdateKeyframeDependencies(keyIdx) -- Update dependent handles
+		
+		-- Update dependent handles
+		keyData:UpdateKeyframeDependencies(keyIdx)
+		keyData:UpdateKeyframeDependencies(keyIdx +1,true,false)
+		keyData:UpdateKeyframeDependencies(keyIdx -1,false,true)
 
 		local oldKeyIndex = keyIdx
 		local newKeyIdx = editorChannel:SetKeyTime(keyIdx,time,baseIndex)

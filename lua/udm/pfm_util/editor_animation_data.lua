@@ -77,7 +77,7 @@ function pfm.udm.EditorGraphCurveKeyData:SetHandleData(keyIndex,handle,time,delt
 
 	local handleType = self:GetHandleType(keyIndex,handle)
 	if(handleType == pfm.udm.KEYFRAME_HANDLE_TYPE_ALIGNED) then
-		self:UpdateAlignedHandle(keyIndex,get_other_handle(handle))
+		self:UpdateAlignedHandle(keyIndex,handle)
 		table.insert(affectedKeyframeHandles,{keyIndex,get_other_handle(handle)})
 	end
 
@@ -105,6 +105,6 @@ function pfm.udm.EditorGraphCurveKeyData:UpdateAlignedHandle(keyIndex,handle)
 	local delta = self:GetHandleDelta(keyIndex,handle)
 	local otherHandle = get_other_handle(handle)
 	-- TODO: Re-calculate length?
-	self:SetHandleTimeOffset(keyIndex,handle,time)
-	self:SetHandleDelta(keyIndex,handle,delta)
+	self:SetHandleTimeOffset(keyIndex,otherHandle,-time)
+	self:SetHandleDelta(keyIndex,otherHandle,-delta)
 end

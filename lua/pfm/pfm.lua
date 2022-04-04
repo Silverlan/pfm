@@ -378,10 +378,17 @@ pfm.find_inanimate_actors = function(session)
 end
 
 local colScheme = util.ColorScheme()
+colScheme:SetColor("black",Color.CreateFromHexColor("000000"))
+colScheme:SetColor("white",Color.CreateFromHexColor("ffffff"))
 colScheme:SetColor("red",Color.CreateFromHexColor("ff3352"))
 colScheme:SetColor("green",Color.CreateFromHexColor("8bdc00"))
 colScheme:SetColor("blue",Color.CreateFromHexColor("2890ff"))
 colScheme:SetColor("pink",Color.CreateFromHexColor("fcb8cb"))
+
+colScheme:SetColor("lightRed",Color.CreateFromHexColor("fca3b0"))
+colScheme:SetColor("lightGreen",Color.CreateFromHexColor("badf7b"))
+colScheme:SetColor("lightBlue",Color.CreateFromHexColor("8bc3ff"))
+colScheme:SetColor("orange",Color.CreateFromHexColor("ffc343"))
 
 pfm.get_color_scheme = function()
 	return colScheme
