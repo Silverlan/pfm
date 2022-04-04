@@ -1042,14 +1042,27 @@ function gui.PFMTimelineGraph:ScrollCallback(x,y)
 		local timeLine = self.m_timeline:GetTimeline()
 		local dataAxis = timeLine:GetDataAxis():GetAxis()
 		local timeAxis = timeLine:GetTimeAxis():GetAxis()
+		local useCenterAsPivot = (isAltDown == false)
 
+		local pm = pfm.get_project_manager()
 		if(updateDataAxis) then
-			local pivot = dataAxis:GetStartOffset() +dataAxis:XDeltaToValue(timeLine:GetHeight()) /2.0
+			local elRef = self.m_dataAxisStrip
+			local relCursorPos = input.get_cursor_pos() -elRef:GetAbsolutePos()
+
+			local pivot
+			if(useCenterAsPivot == false) then pivot = dataAxis:GetStartOffset() +dataAxis:XDeltaToValue(elRef:GetHeight()) -dataAxis:XDeltaToValue(relCursorPos.y)
+			else pivot = dataAxis:GetStartOffset() +dataAxis:XDeltaToValue(elRef:GetHeight() /2.0) end
 			dataAxis:SetZoomLevel(dataAxis:GetZoomLevel() -(y /20.0),pivot)
 			timeLine:Update()
 		end
 		if(updateTimeAxis) then
-			local pivot = timeAxis:GetStartOffset() +timeAxis:XDeltaToValue(timeLine:GetWidth()) /2.0
+			local elRef = self.m_timeline
+			local relCursorPos = input.get_cursor_pos() -elRef:GetAbsolutePos()
+
+			local pivot
+			if(useCenterAsPivot == false) then pivot = timeAxis:GetStartOffset() +timeAxis:XDeltaToValue(relCursorPos.x)
+			else pivot = timeAxis:GetStartOffset() +timeAxis:XDeltaToValue(elRef:GetWidth() /2.0) end
+
 			timeAxis:SetZoomLevel(timeAxis:GetZoomLevel() -(y /20.0),pivot)
 			timeLine:Update()
 		end
