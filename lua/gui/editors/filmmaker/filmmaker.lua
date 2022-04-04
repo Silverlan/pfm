@@ -1252,7 +1252,7 @@ function gui.WIFilmmaker:UpdateBookmarks()
 	if(self.m_timeline:GetEditor() ~= gui.PFMTimeline.EDITOR_GRAPH) then
 		local bms = filmClip:GetBookmarkSet(filmClip:GetActiveBookmarkSet())
 		if(bms ~= nil) then self.m_timeline:AddBookmarkSet(bms) end
-	end
+	else self.m_timeline:GetActiveEditor():InitializeBookmarks() end
 end
 function gui.WIFilmmaker:AddBookmark()
 	local filmClip = self:GetActiveFilmClip()

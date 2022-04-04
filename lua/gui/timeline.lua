@@ -121,10 +121,6 @@ function gui.Timeline:SetCursorMoveModeEnabled(enabled)
 				axis:SetStartOffset(offset -x)
 				dataAxis:SetStartOffset(dataOffset -y)
 				self:Update()
-				--local pos = self:GetParent():GetCursorPos()
-				--self:SetTimeOffset(self.m_timeline:XOffsetToValue(pos.x))
-
-				--self.m_timelineGraph
 			end)
 		end
 	else

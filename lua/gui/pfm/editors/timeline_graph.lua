@@ -1686,6 +1686,20 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 		return
 	end
 
+	self:InitializeBookmarks()
+	graphData.curve:BuildCurve(curveValues,channel,i,graphData.editorChannel,graphData.typeComponentIndex)
+	local editorKeys = graphData.curve:GetEditorKeys()
+	graphData.numValues = (editorKeys ~= nil) and editorKeys:GetTimeCount() or 0
+end
+function gui.PFMTimelineGraph:InitializeBookmarks(graphData)
+	if(graphData == nil) then
+		for _,graphData in ipairs(self.m_graphs) do
+			self:InitializeBookmarks(graphData)
+		end
+		return
+	end
+	local channel = graphData.channel()
+	if(channel == nil) then return end
 	local targetPath = channel:GetTargetPath()
 	local animClip = graphData.animClip()
 	if(animClip ~= nil) then
@@ -1698,9 +1712,6 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 			self.m_timeline:AddBookmarkSet(bms)
 		end
 	end
-	graphData.curve:BuildCurve(curveValues,channel,i,graphData.editorChannel,graphData.typeComponentIndex)
-	local editorKeys = graphData.curve:GetEditorKeys()
-	graphData.numValues = (editorKeys ~= nil) and editorKeys:GetTimeCount() or 0
 end
 function gui.PFMTimelineGraph:RemoveGraphCurve(i)
 	local graphData = self.m_graphs[i]

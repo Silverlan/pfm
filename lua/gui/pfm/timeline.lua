@@ -155,6 +155,8 @@ function gui.PFMTimeline:SetEditor(type)
 	self:UpdateEditorButtonInactiveMaterial(gui.PFMTimeline.EDITOR_CLIP,"gui/pfm/icon_mode_timeline","gui/pfm/icon_mode_timeline_preselected")
 	self:UpdateEditorButtonInactiveMaterial(gui.PFMTimeline.EDITOR_MOTION,"gui/pfm/icon_mode_motioneditor","gui/pfm/icon_mode_motioneditor_preselected")
 	self:UpdateEditorButtonInactiveMaterial(gui.PFMTimeline.EDITOR_GRAPH,"gui/pfm/icon_mode_grapheditor","gui/pfm/icon_mode_grapheditor_preselected")
+
+	tool.get_filmmaker():UpdateBookmarks()
 end
 function gui.PFMTimeline:UpdateEditorButtonInactiveMaterial(editorType,matRegular,matPreselected)
 	local bt = ((editorType == gui.PFMTimeline.EDITOR_CLIP) and self.m_btClipEditor) or
@@ -166,6 +168,12 @@ end
 function gui.PFMTimeline:GetClipEditor() return self.m_timelineClip end
 function gui.PFMTimeline:GetMotionEditor() return self.m_timelineMotion end
 function gui.PFMTimeline:GetGraphEditor() return self.m_timelineGraph end
+function gui.PFMTimeline:GetActiveEditor()
+	local type = self:GetEditor()
+	if(type == gui.PFMTimeline.EDITOR_CLIP) then return self:GetClipEditor() end
+	if(type == gui.PFMTimeline.EDITOR_MOTION) then return self:GetMotionEditor() end
+	if(type == gui.PFMTimeline.EDITOR_GRAPH) then return self:GetGraphEditor() end
+end
 function gui.PFMTimeline:GetTimeline() return self.m_timeline end
 function gui.PFMTimeline:GetPlayhead() return util.is_valid(self.m_timeline) and self.m_timeline:GetPlayhead() or nil end
 function gui.PFMTimeline:GetTimeOffset() return self.m_timeline:GetPlayhead():GetTimeOffset() end
