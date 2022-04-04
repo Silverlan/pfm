@@ -70,6 +70,7 @@ function gui.PFMDataPointControl:SetSelected(selected)
 	if(selected == self.m_selected) then return end
 	self.m_selected = selected
 	self:SetColor(selected and Color.Red or Color.White)
+	self:SetMoveModeEnabled(false)
 	self:OnSelectionChanged(selected)
 	self:CallCallbacks("OnSelectionChanged",selected)
 end
@@ -78,20 +79,27 @@ function gui.PFMDataPointControl:OnThink()
 	if(self.m_cursorTracker == nil) then return end
 	local dt = self.m_cursorTracker:Update()
 	if(dt.x == 0 and dt.y == 0) then return end
+	if(self.m_moveThreshold ~= nil) then
+		local dtAbs = self.m_cursorTracker:GetTotalDeltaPosition()
+		if(math.abs(dtAbs.x) < self.m_moveThreshold and math.abs(dtAbs.y) < self.m_moveThreshold) then return end
+		self.m_moveThreshold = nil
+	end
 	local newPos = self.m_moveModeStartPos +self.m_cursorTracker:GetTotalDeltaPosition()
 	self:OnMoved(newPos)
 	self:CallCallbacks("OnMoved",newPos)
 end
 function gui.PFMDataPointControl:OnMoved(newPos) end
 function gui.PFMDataPointControl:IsMoveModeEnabled() return self.m_cursorTracker ~= nil end
-function gui.PFMDataPointControl:SetMoveModeEnabled(enabled)
+function gui.PFMDataPointControl:SetMoveModeEnabled(enabled,moveThreshold)
 	if(enabled) then
 		self.m_cursorTracker = gui.CursorTracker()
 		self.m_moveModeStartPos = self:GetPos()
+		self.m_moveThreshold = moveThreshold
 		self:EnableThinking()
 	else
 		self.m_cursorTracker = nil
 		self.m_moveModeStartPos = nil
+		self.m_moveThreshold = nil
 		self:DisableThinking()
 	end
 end
@@ -227,6 +235,7 @@ function gui.PFMTimelineDataPoint:OnInitialize()
 	gui.PFMDataPointControl.OnInitialize(self)
 end
 function gui.PFMTimelineDataPoint:OnSelectionChanged(selected)
+	if(selected) then self:InitializeHandleControl() end
 	self:UpdateTextFields()
 end
 function gui.PFMTimelineDataPoint:GetTangentControl() return self.m_tangentControl end
@@ -277,6 +286,18 @@ function gui.PFMTimelineDataPoint:InitializeHandleControl()
 
 	el:AddCallback("OnInControlMoved",function(el,newPos) self:OnHandleMoved(newPos,true) end)
 	el:AddCallback("OnOutControlMoved",function(el,newPos) self:OnHandleMoved(newPos,false) end)
+
+	local onMouseEvent = function(el,button,state,mods)
+		if(button == input.MOUSE_BUTTON_LEFT) then
+			if(state == input.STATE_PRESS) then
+				el:SetSelected(true)
+			end
+			el:SetMoveModeEnabled(state == input.STATE_PRESS,5)
+			return util.EVENT_REPLY_HANDLED
+		end
+	end
+	el:GetInControl():AddCallback("OnMouseEvent",onMouseEvent)
+	el:GetOutControl():AddCallback("OnMouseEvent",onMouseEvent)
 
 	self.m_tangentControl = el
 
@@ -416,7 +437,6 @@ function gui.PFMTimelineDataPoint:UpdateSelection(elSelectionRect)
 			self.m_tangentControl:GetOutControl():SetSelected(false)
 		end
 		self:SetSelected(not input.is_alt_key_down(),true)
-		if(self:IsSelected()) then self:InitializeHandleControl() end
 		return true
 	end
 	if(util.is_valid(self.m_tangentControl) == false) then return false end
@@ -497,13 +517,11 @@ function gui.PFMTimelineCurve:BuildCurve(curveValues,channel,curveIndex,editorCh
 					el:SetSelected(true)
 					self.m_selectedDataPoint = el
 				end
+				el:SetMoveModeEnabled(state == input.STATE_PRESS,5)
 				return util.EVENT_REPLY_HANDLED
 			end
 			wrapper:StartEditMode(false)
 		end)
-		--[[el:AddCallback("OnSelectionChanged",function(el,selected)
-
-		end)]]
 		self.m_selectedDataPoint = el
 
 		table.insert(self.m_dataPoints,el)
@@ -859,6 +877,23 @@ function gui.PFMTimelineGraph:UpdateSelectedDataPointHandles()
 		dp:UpdateHandles()
 	end
 end
+function gui.PFMTimelineGraph:SetCursorTrackerEnabled(enabled)
+	if(enabled) then
+		local timeAxis = self.m_timeline:GetTimeline():GetTimeAxis():GetAxis()
+		local dataAxis = self.m_timeline:GetTimeline():GetDataAxis():GetAxis()
+		self.m_cursorTracker = {
+			tracker = gui.CursorTracker(),
+			timeAxisStartOffset = timeAxis:GetStartOffset(),
+			timeAxisZoomLevel = timeAxis:GetZoomLevel(),
+			dataAxisStartOffset = dataAxis:GetStartOffset(),
+			dataAxisZoomLevel = dataAxis:GetZoomLevel()
+		}
+		self:EnableThinking()
+	else
+		self.m_cursorTracker = nil
+		self:DisableThinking()
+	end
+end
 function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 	self:RequestFocus()
 
@@ -872,17 +907,7 @@ function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 				dp:SetMoveModeEnabled(moveEnabled)
 			end
 		elseif(state == input.STATE_PRESS) then
-			local timeAxis = self.m_timeline:GetTimeline():GetTimeAxis():GetAxis()
-			local dataAxis = self.m_timeline:GetTimeline():GetDataAxis():GetAxis()
-			self.m_cursorTracker = {
-				tracker = gui.CursorTracker(),
-				timeAxisStartOffset = timeAxis:GetStartOffset(),
-				timeAxisZoomLevel = timeAxis:GetZoomLevel(),
-				dataAxisStartOffset = dataAxis:GetStartOffset(),
-				dataAxisZoomLevel = dataAxis:GetZoomLevel()
-			}
-			self:EnableThinking()
-
+			self:SetCursorTrackerEnabled(true)
 			if(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then
 				if(util.is_valid(self.m_selectionRect) == false) then
 					self.m_selectionRect = gui.create("WISelectionRect",self.m_graphContainer)
@@ -906,16 +931,13 @@ function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 				end
 			end
 
-			self.m_cursorTracker = nil
+			self:SetCursorTrackerEnabled(false)
 			util.remove(self.m_selectionRect)
-			self:DisableThinking()
 		end
 		return util.EVENT_REPLY_HANDLED
 	elseif(button == input.MOUSE_BUTTON_RIGHT) then
-		local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE or
-			input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
-		local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
-			input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
+		local isCtrlDown = input.is_ctrl_key_down()
+		local isAltDown = input.is_alt_key_down()
 		if(isCtrlDown) then
 			print("Not yet implemented!")
 		elseif(isAltDown) then
@@ -979,13 +1001,9 @@ function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 			return util.EVENT_REPLY_HANDLED
 		end
 	elseif(button == input.MOUSE_BUTTON_MIDDLE) then
-		local isAltDown = input.get_key_state(input.KEY_LEFT_ALT) ~= input.STATE_RELEASE or
-			input.get_key_state(input.KEY_RIGHT_ALT) ~= input.STATE_RELEASE
-		if(isAltDown) then
-			print("Not yet implemented!")
-		else
-			print("Not yet implemented!")
-		end
+		self.m_middleMouseDrag = (state == input.STATE_PRESS)
+		self:SetCursorTrackerEnabled(self.m_middleMouseDrag)
+		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
@@ -1000,14 +1018,14 @@ function gui.PFMTimelineGraph:OnThink()
 	local timeLine = self.m_timeline:GetTimeline()
 
 	local cursorMode = self:GetCursorMode()
-	if(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then
-
-	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_MOVE) then
-
-	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_PAN) then
+	if(self.m_middleMouseDrag or cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_PAN) then
 		timeLine:GetTimeAxis():GetAxis():SetStartOffset(trackerData.timeAxisStartOffset -timeLine:GetTimeAxis():GetAxis():XDeltaToValue(dtPos).x)
 		timeLine:GetDataAxis():GetAxis():SetStartOffset(trackerData.dataAxisStartOffset +timeLine:GetDataAxis():GetAxis():XDeltaToValue(dtPos).y)
 		timeLine:Update()
+	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then
+
+	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_MOVE) then
+
 	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SCALE) then
 	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_ZOOM) then
 		timeLine:GetTimeAxis():GetAxis():SetZoomLevel(trackerData.timeAxisZoomLevel +dtPos.x /100.0)
@@ -1016,15 +1034,26 @@ function gui.PFMTimelineGraph:OnThink()
 	end
 end
 function gui.PFMTimelineGraph:ScrollCallback(x,y)
-	local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE or
-		input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
-	if(isCtrlDown) then
+	local isCtrlDown = input.is_ctrl_key_down()
+	local isAltDown = input.is_alt_key_down()
+	local updateDataAxis = isCtrlDown or isAltDown
+	local updateTimeAxis = isAltDown
+	if(updateDataAxis or updateTimeAxis) then
 		local timeLine = self.m_timeline:GetTimeline()
 		local dataAxis = timeLine:GetDataAxis():GetAxis()
-		dataAxis:SetZoomLevel(dataAxis:GetZoomLevel() -(y /20.0))
-		timeLine:Update()
-
 		local timeAxis = timeLine:GetTimeAxis():GetAxis()
+
+		if(updateDataAxis) then
+			local pivot = dataAxis:GetStartOffset() +dataAxis:XDeltaToValue(timeLine:GetHeight()) /2.0
+			dataAxis:SetZoomLevel(dataAxis:GetZoomLevel() -(y /20.0),pivot)
+			timeLine:Update()
+		end
+		if(updateTimeAxis) then
+			local pivot = timeAxis:GetStartOffset() +timeAxis:XDeltaToValue(timeLine:GetWidth()) /2.0
+			timeAxis:SetZoomLevel(timeAxis:GetZoomLevel() -(y /20.0),pivot)
+			timeLine:Update()
+		end
+
 		self:UpdateAxisRanges(timeAxis:GetStartOffset(),timeAxis:GetZoomLevel(),dataAxis:GetStartOffset(),dataAxis:GetZoomLevel())
 		return util.EVENT_REPLY_HANDLED
 	end

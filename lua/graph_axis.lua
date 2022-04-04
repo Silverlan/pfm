@@ -30,7 +30,16 @@ function util.GraphAxis:GetStrideX(w,stepSize)
 end
 function util.GraphAxis:SetZoomLevelLimits(min,max) self.m_zoomLevelLimits = {min,max} end
 function util.GraphAxis:GetZoomLevelLimits() return self.m_zoomLevelLimits end
-function util.GraphAxis:SetZoomLevel(zoomLevel)
+function util.GraphAxis:SetZoomLevel(zoomLevel,pivot)
+	if(pivot ~= nil) then
+		local xOffsetPlayhead = self:ValueToXOffset(pivot)
+		self:SetZoomLevel(zoomLevel)
+
+		local newXOffsetPlayhead = self:ValueToXOffset(pivot)
+		local startOffset = self:GetStartOffset() -self:XDeltaToValue(xOffsetPlayhead -newXOffsetPlayhead)
+		self:SetStartOffset(startOffset)
+		return self:ValueToXOffset(pivot)
+	end
 	zoomLevel = math.clamp(zoomLevel,-3,3)
 	self.m_zoomLevel:Set(zoomLevel)
 end

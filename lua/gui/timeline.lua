@@ -230,32 +230,19 @@ function gui.Timeline:ClearBookmarks()
 	self.m_bookmarkSets = {}
 end
 function gui.Timeline:SetZoomLevel(zoomLevel)
-	-- TODO: Use SetZoomLevel from GraphAxis class
 	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
-	local xOffsetPlayhead
-	local timeOffset
+
 	local axis = self:GetTimeAxis():GetAxis()
-	if(util.is_valid(self.m_playhead)) then
-		xOffsetPlayhead = axis:ValueToXOffset(self.m_playhead:GetTimeOffset())
-		timeOffset = self.m_playhead:GetTimeOffset()
-	end
-	axis:SetZoomLevel(zoomLevel)
+	local timeOffset = self.m_playhead:GetTimeOffset()
+	local newXOffset = axis:SetZoomLevel(zoomLevel,timeOffset)
 
-	if(util.is_valid(self.m_playhead)) then
-		-- We want the playhead to stay in place, so we have to change the start offset accordingly
-		local newXOffsetPlayhead = axis:ValueToXOffset(self.m_playhead:GetTimeOffset())
-		local startOffset = axis:GetStartOffset() -axis:XDeltaToValue(xOffsetPlayhead -newXOffsetPlayhead)
-		--local startOffset = timeOffset -axis:XDeltaToValue(axis:ValueToXOffset(timeOffset) -xOffsetPlayhead)
-		axis:SetStartOffset(startOffset)--startOffset)
+	-- Changing the start offset can change the playhead offset if it's out of range,
+	-- so we'll reset its position here.
+	self.m_skipPlayheadUpdate = true
+	self.m_playhead:SetTimeOffset(timeOffset)
+	self.m_skipPlayheadUpdate = nil
 
-		-- Changing the start offset can change the playhead offset if it's out of range,
-		-- so we'll reset its position here.
-		self.m_skipPlayheadUpdate = true
-		self.m_playhead:SetTimeOffset(timeOffset)
-		self.m_skipPlayheadUpdate = nil
-
-		self.m_playhead:SetPlayOffset(axis:ValueToXOffset(timeOffset))
-	end
+	self.m_playhead:SetPlayOffset(newXOffset)
 end
 function gui.Timeline:SetStartOffset(offset)
 	local axis = self:GetTimeAxis():GetAxis()
