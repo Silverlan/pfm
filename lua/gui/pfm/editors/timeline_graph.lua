@@ -24,6 +24,8 @@ function gui.CursorTracker:__init()
 end
 
 function gui.CursorTracker:GetTotalDeltaPosition() return self.m_curPos -self.m_startPos end
+function gui.CursorTracker:GetStartPos() return self.m_startPos end
+function gui.CursorTracker:ResetCurPos() self.m_curPos = self.m_startPos:Copy() end
 
 function gui.CursorTracker:Update()
 	local pos = input.get_cursor_pos()
@@ -913,6 +915,8 @@ function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 					self.m_selectionRect = gui.create("WISelectionRect",self.m_graphContainer)
 					self.m_selectionRect:SetPos(self.m_graphContainer:GetCursorPos())
 				end
+			elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_ZOOM) then
+				gui.set_cursor_input_mode(gui.CURSOR_MODE_HIDDEN)
 			end
 		else
 			if(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then
@@ -929,6 +933,8 @@ function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 					end
 					-- TODO: Select or deselect all points on curve if no individual points are within the select bounds, but the curve is
 				end
+			elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_ZOOM) then
+				gui.set_cursor_input_mode(gui.CURSOR_MODE_NORMAL)
 			end
 
 			self:SetCursorTrackerEnabled(false)
@@ -1007,6 +1013,39 @@ function gui.PFMTimelineGraph:MouseCallback(button,state,mods)
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
+function gui.PFMTimelineGraph:ZoomAxes(am,updateDataAxis,updateTimeAxis,useCenterAsPivot,cursorPos)
+	useCenterAsPivot = useCenterAsPivot or false
+	local timeLine = self.m_timeline:GetTimeline()
+	local dataAxis = timeLine:GetDataAxis():GetAxis()
+	local timeAxis = timeLine:GetTimeAxis():GetAxis()
+	local useCenterAsPivot = (isAltDown == false)
+
+	cursorPos = cursorPos or input.get_cursor_pos()
+	local pm = pfm.get_project_manager()
+	if(updateDataAxis) then
+		local elRef = self.m_dataAxisStrip
+		local relCursorPos = cursorPos -elRef:GetAbsolutePos()
+
+		local pivot
+		if(useCenterAsPivot == false) then pivot = dataAxis:GetStartOffset() +dataAxis:XDeltaToValue(elRef:GetHeight()) -dataAxis:XDeltaToValue(relCursorPos.y)
+		else pivot = dataAxis:GetStartOffset() +dataAxis:XDeltaToValue(elRef:GetHeight() /2.0) end
+		dataAxis:SetZoomLevel(dataAxis:GetZoomLevel() -(am /20.0),pivot)
+		timeLine:Update()
+	end
+	if(updateTimeAxis) then
+		local elRef = self.m_timeline
+		local relCursorPos = cursorPos -elRef:GetAbsolutePos()
+
+		local pivot
+		if(useCenterAsPivot == false) then pivot = timeAxis:GetStartOffset() +timeAxis:XDeltaToValue(relCursorPos.x)
+		else pivot = timeAxis:GetStartOffset() +timeAxis:XDeltaToValue(elRef:GetWidth() /2.0) end
+
+		timeAxis:SetZoomLevel(timeAxis:GetZoomLevel() -(am /20.0),pivot)
+		timeLine:Update()
+	end
+
+	self:UpdateAxisRanges(timeAxis:GetStartOffset(),timeAxis:GetZoomLevel(),dataAxis:GetStartOffset(),dataAxis:GetZoomLevel())
+end
 function gui.PFMTimelineGraph:OnThink()
 	if(self.m_cursorTracker == nil) then return end
 	local trackerData = self.m_cursorTracker
@@ -1028,9 +1067,10 @@ function gui.PFMTimelineGraph:OnThink()
 
 	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SCALE) then
 	elseif(cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_ZOOM) then
-		timeLine:GetTimeAxis():GetAxis():SetZoomLevel(trackerData.timeAxisZoomLevel +dtPos.x /100.0)
-		timeLine:GetDataAxis():GetAxis():SetZoomLevel(trackerData.dataAxisZoomLevel +dtPos.y /100.0)
-		timeLine:Update()
+		local dt = (dtPos.x +dtPos.y) /20.0
+		self:ZoomAxes(dt,true,true,true,tracker:GetStartPos())
+		input.set_cursor_pos(tracker:GetStartPos())
+		tracker:ResetCurPos()
 	end
 end
 function gui.PFMTimelineGraph:ScrollCallback(x,y)
@@ -1039,35 +1079,7 @@ function gui.PFMTimelineGraph:ScrollCallback(x,y)
 	local updateDataAxis = isCtrlDown or isAltDown
 	local updateTimeAxis = isAltDown
 	if(updateDataAxis or updateTimeAxis) then
-		local timeLine = self.m_timeline:GetTimeline()
-		local dataAxis = timeLine:GetDataAxis():GetAxis()
-		local timeAxis = timeLine:GetTimeAxis():GetAxis()
-		local useCenterAsPivot = (isAltDown == false)
-
-		local pm = pfm.get_project_manager()
-		if(updateDataAxis) then
-			local elRef = self.m_dataAxisStrip
-			local relCursorPos = input.get_cursor_pos() -elRef:GetAbsolutePos()
-
-			local pivot
-			if(useCenterAsPivot == false) then pivot = dataAxis:GetStartOffset() +dataAxis:XDeltaToValue(elRef:GetHeight()) -dataAxis:XDeltaToValue(relCursorPos.y)
-			else pivot = dataAxis:GetStartOffset() +dataAxis:XDeltaToValue(elRef:GetHeight() /2.0) end
-			dataAxis:SetZoomLevel(dataAxis:GetZoomLevel() -(y /20.0),pivot)
-			timeLine:Update()
-		end
-		if(updateTimeAxis) then
-			local elRef = self.m_timeline
-			local relCursorPos = input.get_cursor_pos() -elRef:GetAbsolutePos()
-
-			local pivot
-			if(useCenterAsPivot == false) then pivot = timeAxis:GetStartOffset() +timeAxis:XDeltaToValue(relCursorPos.x)
-			else pivot = timeAxis:GetStartOffset() +timeAxis:XDeltaToValue(elRef:GetWidth() /2.0) end
-
-			timeAxis:SetZoomLevel(timeAxis:GetZoomLevel() -(y /20.0),pivot)
-			timeLine:Update()
-		end
-
-		self:UpdateAxisRanges(timeAxis:GetStartOffset(),timeAxis:GetZoomLevel(),dataAxis:GetStartOffset(),dataAxis:GetZoomLevel())
+		self:ZoomAxes(y,updateDataAxis,updateTimeAxis,isAltDown == false)
 		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED
