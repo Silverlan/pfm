@@ -304,6 +304,7 @@ function Component:ApplyTransform()
 		if(util.is_valid(self.m_elLine)) then
 			self.m_elLine:SetStartPos(Vector2(posCursor.x,posCursor.y))
 			self.m_elLine:SetEndPos(rotationPivot)
+			self.m_elLine:SizeToContents()
 		end
 
 		posCursor.x = posCursor.x -vpData.x
