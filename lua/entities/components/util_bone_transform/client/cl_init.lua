@@ -48,8 +48,7 @@ function ents.UtilBoneTransformComponent:SetTransformEnabled(boneId)
 			end
 			self:BroadcastEvent(ents.UtilBoneTransformComponent.EVENT_ON_POSITION_CHANGED,{boneId,pos,localPos})
 		end)
-		utilTransformC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function(ang)
-			local rot = ang:ToQuaternion()
+		utilTransformC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function(rot)
 			local localRot = rot:Copy()
 			if(animC ~= nil) then
 				local pose = animC:GetGlobalBonePose(boneId)
