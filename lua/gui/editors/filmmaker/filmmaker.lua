@@ -920,6 +920,18 @@ function gui.WIFilmmaker:SetActorBoneTransformProperty(actor,propType,value)
 	end
 	self:TagRenderSceneAsDirty()
 end
+function gui.WIFilmmaker:OnActorControlSelected(actorEditor,actor,component,controlData,slider)
+	local memberInfo = controlData.getMemberInfo(controlData.name)
+	if(memberInfo == nil) then return end
+	local filmClip = actorEditor:GetFilmClip()
+	if(filmClip == nil) then return end
+	local graphEditor = self:GetTimeline():GetGraphEditor()
+	local itemCtrl = graphEditor:AddControl(filmClip,actor,controlData,memberInfo)
+
+	local fRemoveCtrl = function() if(util.is_valid(itemCtrl)) then itemCtrl:Remove() end end
+	slider:AddCallback("OnDeselected",fRemoveCtrl)
+	slider:AddCallback("OnRemove",fRemoveCtrl)
+end
 function gui.WIFilmmaker:InitializeProjectUI()
 	self:ClearProjectUI()
 	if(util.is_valid(self.m_menuBar) == false or util.is_valid(self.m_infoBar) == false) then return end
@@ -941,16 +953,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:RegisterWindow(self.m_actorDataFrame,"actor_editor",locale.get_text("pfm_actor_editor"),function()
 		local actorEditor = gui.create("WIPFMActorEditor")
 		actorEditor:AddCallback("OnControlSelected",function(actorEditor,actor,component,controlData,slider)
-			local memberInfo = controlData.getMemberInfo(controlData.name)
-			if(memberInfo == nil) then return end
-			local filmClip = actorEditor:GetFilmClip()
-			if(filmClip == nil) then return end
-			local graphEditor = self:GetTimeline():GetGraphEditor()
-			local itemCtrl = graphEditor:AddControl(filmClip,actor,controlData,memberInfo)
-
-			local fRemoveCtrl = function() if(util.is_valid(itemCtrl)) then itemCtrl:Remove() end end
-			slider:AddCallback("OnDeselected",fRemoveCtrl)
-			slider:AddCallback("OnRemove",fRemoveCtrl)
+			self:OnActorControlSelected(actorEditor,actor,component,controlData,slider)
 		end)
 		return actorEditor
 	end)

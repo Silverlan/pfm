@@ -862,9 +862,15 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 
 		local memberIdx = 0
 		local memberInfo = (c ~= nil) and c:GetMemberInfo(memberIdx) or nil
+		local function getMemberInfo(c,name)
+			local idx = c:GetMemberIndex(name)
+			if(idx == nil) then return end
+			return c:GetMemberInfo(idx)
+		end
 		while(memberInfo ~= nil) do
 			local controlData = {}
 			local info = memberInfo
+			local memberName = info.name
 			local path = "ec/" .. componentInfo.name .. "/" .. info.name
 			local valid = initializeProperty(info,controlData)
 			if(valid) then
@@ -884,7 +890,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 							return
 						end
 					end
-					return c:GetMemberValue(info.name)
+					return c:GetMemberValue(memberName)
 				end
 				controlData.getMemberInfo = function()
 					if(util.is_valid(c) == false) then
@@ -899,7 +905,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 							return
 						end
 					end
-					local idx = c:GetMemberIndex(info.name)
+					local idx = c:GetMemberIndex(memberName)
 					if(idx == nil) then return end
 					return c:GetMemberInfo(idx)
 				end
@@ -925,13 +931,13 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 					local memberValue = value
 					if(util.get_type_name(memberValue) == "Color") then memberValue = memberValue:ToVector() end
 
-					component:SetMemberValue(info.name,info.type,memberValue)
+					component:SetMemberValue(memberName,info.type,memberValue)
 					
 					local entActor = actorData.actor:FindEntity()
 					if(entActor ~= nil) then
 						local c = entActor:GetComponent(componentId)
 						if(c ~= nil) then
-							c:SetMemberValue(info.name,memberValue)
+							c:SetMemberValue(memberName,memberValue)
 							self:OnActorPropertyChanged(entActor)
 						end
 					end
