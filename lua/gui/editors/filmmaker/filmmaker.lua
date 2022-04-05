@@ -1244,6 +1244,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	end
 end
 function gui.WIFilmmaker:UpdateBookmarks()
+	if(util.is_valid(self.m_timeline) == false) then return end
 	self.m_timeline:ClearBookmarks()
 
 	local filmClip = self:GetActiveFilmClip()

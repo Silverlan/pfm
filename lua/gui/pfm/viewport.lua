@@ -473,19 +473,30 @@ function gui.PFMViewport:UpdateManipulationMode()
 		local itemSkeleton = actorEditor:GetActorComponentItem(actorData,"animated")
 		if(itemSkeleton ~= nil) then
 			for _,item in ipairs(itemSkeleton:GetItems()) do
-				if(item:IsValid() and item:IsSelected()) then
-					local itemIdent = item:GetIdentifier()
-					if(itemIdent ~= nil) then
-						local identifier = panima.Channel.Path(itemIdent)
-						local cname,path = ents.PanimaComponent.parse_component_channel_path(identifier)
-						if(cname ~= nil) then
-							local c0,offset = path:GetComponent(0)
-							if(c0 == "bone") then
-								local name = path:GetComponent(offset)
-								if(#name > 0) then boneName = name end
+				if(item:IsValid() and item:GetIdentifier() == "bone") then
+					for _,boneItem in ipairs(item:GetItems()) do
+						if(boneItem:IsValid()) then
+							for _,boneSubItem in ipairs(boneItem:GetItems()) do
+								if(boneSubItem:IsValid() and boneSubItem:IsSelected()) then
+									local itemIdent = boneSubItem:GetIdentifier()
+									if(itemIdent ~= nil) then
+										local identifier = panima.Channel.Path(itemIdent)
+										local cname,path = ents.PanimaComponent.parse_component_channel_path(identifier)
+										if(cname ~= nil) then
+											local c0,offset = path:GetComponent(0)
+											if(c0 == "bone") then
+												local name = path:GetComponent(offset)
+												if(#name > 0) then boneName = name end
+												break
+											end
+										end
+									end
+								end
 							end
+							if(boneName ~= nil) then break end
 						end
 					end
+					break
 				end
 			end
 		end

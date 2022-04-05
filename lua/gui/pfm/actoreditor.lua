@@ -366,8 +366,9 @@ function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateAc
 
 	if(itemActor == nil) then return end
 
-	include_component(componentType)
 	local componentId = ents.find_component_id(componentType)
+	if(componentId == nil) then include_component(componentType) end
+	componentId = ents.find_component_id(componentType)
 	if(componentId == nil) then pfm.log("Attempted to add unknown entity component '" .. componentType .. "' to actor '" .. tostring(actor) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) return end
 
 	local component = actor:AddComponentType(componentType)
