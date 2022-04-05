@@ -703,6 +703,7 @@ function gui.PFMTimelineGraph:ReloadGraphCurveSegment(i,keyIndex,rebuildCurve)
 		local editorGraphCurve = editorChannel:GetGraphCurve()
 		local numKeys = editorGraphCurve:GetKeyCount()
 		local startTimeBoundary,endTimeBoundary = get_editor_channel_keyframe_time_boundaries(editorChannel,startTime,endTime)
+
 		self:InitializeCurveSegmentAnimationData(actor0,targetPath0,graphData,startTimeBoundary,endTimeBoundary)
 	end
 
@@ -1276,10 +1277,9 @@ local function set_value_component_value(value,valueType,typeComponentIndex,vc)
 	return value
 end
 
-local function get_interpolation_mode(pathKeys,typeComponentIndex,valueType)
-	local interpMethod = pathKeys:GetInterpolationMode(typeComponentIndex)
+local function get_interpolation_mode(pathKeys,keyIndex,valueType)
 	if(valueType == udm.TYPE_BOOLEAN) then return pfm.udm.INTERPOLATION_CONSTANT end
-	return pathKeys:GetInterpolationMode(typeComponentIndex)
+	return pathKeys:GetInterpolationMode(keyIndex)
 end
 
 local function calc_component_value_at_timestamp(editorChannel,t,typeComponentIndex,valueType)
@@ -1287,11 +1287,12 @@ local function calc_component_value_at_timestamp(editorChannel,t,typeComponentIn
 	local pathKeys = editorGraphCurve:GetKey(typeComponentIndex)
 	if(pathKeys == nil or pathKeys:GetTimeCount() == 0) then return end
 
-	local interpMethod = get_interpolation_mode(pathKeys,typeComponentIndex,valueType)
-	local easingMode = pathKeys:GetEasingMode(typeComponentIndex)
-
 	local keyIndex0 = editorChannel:FindLowerKeyIndex(t,typeComponentIndex)
 	if(keyIndex0 == nil) then return pathKeys:GetValue(0) end
+
+	local interpMethod = get_interpolation_mode(pathKeys,keyIndex0,valueType)
+	local easingMode = pathKeys:GetEasingMode(typeComponentIndex)
+
 	if(keyIndex0 == pathKeys:GetTimeCount() -1) then return pathKeys:GetValue(pathKeys:GetTimeCount() -1) end
 	local keyIndex1 = keyIndex0 +1
 	return calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex0,keyIndex1,t)
@@ -1307,12 +1308,16 @@ local function calc_value_at_timestamp(editorChannel,t,valueType)
 end
 
 function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPath,graphData,startTime,endTime)
+	debug.start_profiling_task("pfm_animation_curve_update")
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
 
 	local curve = graphData.curve
 	local editorChannel = curve:GetEditorChannel()
-	if(editorChannel == nil) then return end
+	if(editorChannel == nil) then
+		debug.stop_profiling_task()
+		return
+	end
 
 	local editorGraphCurve = editorChannel:GetGraphCurve()
 
@@ -1373,15 +1378,7 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 						for _,t in ipairs(segTimestamps) do
 							if(t -pfm.udm.EditorChannelData.TIME_EPSILON >= t1) then break end
 							if(t +pfm.udm.EditorChannelData.TIME_EPSILON >= startTime and t -pfm.udm.EditorChannelData.TIME_EPSILON <= endTime) then
-								table.insert(timestampData,{
-									time = t,
-									pathData = {
-										{
-											typeComponentIndex = i,
-											keyIndex = idx
-										}
-									}
-								})
+								table.insert(timestampData,t)
 							end
 						end
 					end
@@ -1392,34 +1389,23 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 			else
 				keyframesInTimeframePerKey[i] = keyframesInTimeframePerKey[i] or {}
 				table.insert(keyframesInTimeframePerKey[i],idx)
-				table.insert(timestampData,{
-					time = t0,
-					pathData = {}
-				})
+				table.insert(timestampData,t0)
 			end
 		end
 	end
 
 	-- Make sure our start and endpoints are included
-	table.insert(timestampData,{
-		time = startTime,
-		pathData = {}
-	})
-	table.insert(timestampData,{
-		time = endTime,
-		pathData = {}
-	})
+	table.insert(timestampData,startTime)
+	table.insert(timestampData,endTime)
 
-	table.sort(timestampData,function(a,b) return a.time < b.time end)
+	table.sort(timestampData)
 
 	-- Merge duplicate timestamps
 	local i = 1
 	while(i < #timestampData) do
 		local t0 = timestampData[i]
 		local t1 = timestampData[i +1]
-		if(math.abs(t1.time -t0.time) <= pfm.udm.EditorChannelData.TIME_EPSILON) then
-			for _,d in ipairs(timestampData[i +1].pathData) do table.insert(timestampData[i].pathData,d) end
-			table.remove(timestampData,i +1)
+		if(math.abs(t1 -t0) <= pfm.udm.EditorChannelData.TIME_EPSILON) then table.remove(timestampData,i +1)
 		else i = i +1 end
 	end
 
@@ -1439,7 +1425,7 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 		-- Go through each timestamp and calculate actual time and data values
 		local tmpVals = {}
 		for i,td in ipairs(timestampData) do
-			channel:SetTime(valueIndex0 +i -1,td.time)
+			channel:SetTime(valueIndex0 +i -1,td)
 			local v = channel_value_to_editor_value(get_default_value(valueType),valueType)
 			for typeComponentIndex,keyframeIndices in pairs(keyframesInTimeframePerKey) do
 				local pathKeys = editorGraphCurve:GetKey(typeComponentIndex)
@@ -1447,10 +1433,10 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 				for _,keyIndex in ipairs(keyframeIndices) do
 					local tEnd = pathKeys:GetTime(keyIndex +1)
 					if(tEnd ~= nil) then
-						if(td.time >= pathKeys:GetTime(keyIndex) -pfm.udm.EditorChannelData.TIME_EPSILON and td.time <= pathKeys:GetTime(keyIndex +1) +pfm.udm.EditorChannelData.TIME_EPSILON) then
+						if(td >= pathKeys:GetTime(keyIndex) -pfm.udm.EditorChannelData.TIME_EPSILON and td <= pathKeys:GetTime(keyIndex +1) +pfm.udm.EditorChannelData.TIME_EPSILON) then
 							local interpMethod = get_interpolation_mode(pathKeys,keyIndex,valueType)
 							local easingMode = pathKeys:GetEasingMode(keyIndex)
-							v = set_value_component_value(v,valueType,typeComponentIndex,calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex,keyIndex +1,td.time))
+							v = set_value_component_value(v,valueType,typeComponentIndex,calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex,keyIndex +1,td))
 							foundCurveInRange = true
 							break
 						end
@@ -1467,7 +1453,7 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 						if(numKeyframes == 1) then v = set_value_component_value(v,valueType,typeComponentIndex,pathKeys:GetValue(0))
 						else
 							local lastKfTime = pathKeys:GetTime(pathKeys:GetTimeCount() -1)
-							if(td.time >= lastKfTime -pfm.udm.EditorChannelData.TIME_EPSILON) then v = set_value_component_value(v,valueType,typeComponentIndex,pathKeys:GetValue(numKeyframes -1))
+							if(td >= lastKfTime -pfm.udm.EditorChannelData.TIME_EPSILON) then v = set_value_component_value(v,valueType,typeComponentIndex,pathKeys:GetValue(numKeyframes -1))
 							else v = set_value_component_value(v,valueType,typeComponentIndex,pathKeys:GetValue(0)) end
 						end
 					end
@@ -1534,6 +1520,7 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 			end
 		end
 	end
+	debug.stop_profiling_task()
 end
 
 local function calc_equivalence_euler_angles(ang)
