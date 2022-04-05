@@ -191,7 +191,7 @@ function gui.Timeline:AddBookmarkSet(bms)
 			local i = 1
 			while(i <= #self.m_bookmarks) do
 				local bmOther = self.m_bookmarks[i]
-				if(bmOther:IsValid() and util.is_same_object(bmOther.m_bookmark,oldVal)) then
+				if(bmOther:IsValid() and util.is_same_object(bmOther:GetBookmark(),oldVal)) then
 					bmOther:Remove()
 				end
 
@@ -207,10 +207,11 @@ function gui.Timeline:AddBookmarkSet(bms)
 		table.insert(t.elements,el)
 	end
 end
+function gui.Timeline:GetBookmarks() return self.m_bookmarks end
 function gui.Timeline:AddBookmark(bm)
 	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
 	local p = gui.create("WIPFMBookmark",self,0,5)
-	p.m_bookmark = bm
+	p:SetBookmark(bm)
 	self.m_timeAxis:AttachElementToValueWithUdmProperty(p,bm,"time")
 	table.insert(self.m_bookmarks,p)
 	return p

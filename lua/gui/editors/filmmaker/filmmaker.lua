@@ -607,6 +607,48 @@ function gui.WIFilmmaker:OnGameViewCreated(projectC)
 		if(trackC ~= nil) then trackC:SetKeepClipsAlive(false) end
 	end)
 end
+function gui.WIFilmmaker:GoToNeighborBookmark(next)
+	local timeline = self:GetTimeline()
+	local bookmarkTimes = {}
+	for _,bm in ipairs(timeline:GetBookmarks()) do
+		table.insert(bookmarkTimes,bm:GetBookmark():GetTime())
+	end
+	table.sort(bookmarkTimes)
+
+	if(#bookmarkTimes == 0) then return end
+
+	local t = self:GetTimeOffset()
+	if(next and t < bookmarkTimes[1]) then
+		self:SetTimeOffset(bookmarkTimes[1])
+		return
+	end
+	if(not next and t > bookmarkTimes[#bookmarkTimes]) then
+		self:SetTimeOffset(bookmarkTimes[#bookmarkTimes])
+		return
+	end
+
+	if(next) then
+		for i=1,#bookmarkTimes -1 do
+			local bm0 = bookmarkTimes[i]
+			local bm1 = bookmarkTimes[i +1]
+			if(t >= bm0 and t < bm1) then
+				self:SetTimeOffset(bm1)
+				break
+			end
+		end
+	else
+		for i=#bookmarkTimes,2,-1 do
+			local bm0 = bookmarkTimes[i -1]
+			local bm1 = bookmarkTimes[i]
+			if(t > bm0 and t <= bm1) then
+				self:SetTimeOffset(bm0)
+				break
+			end
+		end
+	end
+end
+function gui.WIFilmmaker:GoToNextBookmark() self:GoToNeighborBookmark(true) end
+function gui.WIFilmmaker:GoToPreviousBookmark() self:GoToNeighborBookmark(false) end
 function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 	-- TODO: Implement a keybinding system for this! Keybindings should also appear in tooltips!
 	if(key == input.KEY_SPACE) then
@@ -617,6 +659,12 @@ function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 		return util.EVENT_REPLY_HANDLED
 	elseif(key == input.KEY_COMMA) then
 		if(state == input.STATE_PRESS) then self:GoToPreviousFrame() end
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_LEFT_BRACKET) then
+		if(state == input.STATE_PRESS) then self:GoToPreviousBookmark() end
+		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_RIGHT_BRACKET) then
+		if(state == input.STATE_PRESS) then self:GoToNextBookmark() end
 		return util.EVENT_REPLY_HANDLED
 	elseif(key == input.KEY_PERIOD) then
 		if(state == input.STATE_PRESS) then self:GoToNextFrame() end

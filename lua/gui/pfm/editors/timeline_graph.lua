@@ -712,6 +712,7 @@ function gui.PFMTimelineGraph:UpdateChannelValue(data)
 	if(self.m_skipUpdateChannelValue) then return end
 	local udmChannel = data.udmChannel
 	local graphData,graphIdx = self:FindGraphData(data.actor,udmChannel:GetTargetPath(),data.typeComponentIndex)
+	if(graphData == nil) then return end
 	local rebuildGraphCurves = false
 	if(graphData.curve:IsValid()) then
 		local editorKeys = graphData.curve:GetEditorKeys()
