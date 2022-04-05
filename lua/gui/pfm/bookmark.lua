@@ -22,6 +22,8 @@ function gui.PFMBookmark:OnInitialize()
 
 	self:SetMouseInputEnabled(true)
 end
+function gui.PFMBookmark:SetBookmark(bm) self.m_bookmark = bm end
+function gui.PFMBookmark:GetBookmark() return self.m_bookmark end
 function gui.PFMBookmark:MouseCallback(button,state,mods)
 	if(button == input.MOUSE_BUTTON_LEFT) then
 		if(state == input.STATE_PRESS) then

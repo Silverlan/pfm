@@ -607,7 +607,7 @@ function gui.PFMActorEditor:GetMemberInfo(actor,path)
 	end
 	return componentInfo:GetMemberInfo(memberName:GetString())
 end
-function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
+function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value,baseIndex)
 	local fm = tool.get_filmmaker()
 	local timeline = fm:GetTimeline()
 	if(util.is_valid(timeline) and timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH) then
@@ -642,7 +642,14 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value)
 			local anim = channelClip:GetPanimaAnimation()
 			local channelValue = value
 			if(util.get_type_name(channelValue) == "Color") then channelValue = channelValue:ToVector() end
-			fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type)
+			if(baseIndex ~= nil) then
+				fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type,baseIndex)
+			else
+				local n = (type < udm.TYPE_COUNT) and udm.get_numeric_component_count(type) or 1
+				for i=0,n -1 do
+					fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type,i)
+				end
+			end
 		else
 			local baseMsg = "Unable to apply animation channel value with channel path '" .. path.path:GetString() .. "': "
 			if(componentName == nil) then pfm.log(baseMsg .. "Unable to determine component type from animation channel path '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
@@ -907,7 +914,8 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 					controlData.max = max
 				end
 				pfm.log("Adding control for member '" .. controlData.path .. "' with min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
-				controlData.set = function(component,value,dontTranslateValue)
+				controlData.set = function(component,value,dontTranslateValue,updateAnimationValue)
+					if(updateAnimationValue == nil) then updateAnimationValue = true end
 					local entActor = ents.find_by_uuid(uniqueId)
 					local c = (entActor ~= nil) and entActor:GetComponent(componentId) or nil
 					local memberIdx = (c ~= nil) and c:GetMemberIndex(controlData.name) or nil
@@ -927,10 +935,10 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 							self:OnActorPropertyChanged(entActor)
 						end
 					end
-					applyComponentChannelValue(self,component,controlData,memberValue)
+					if(updateAnimationValue) then applyComponentChannelValue(self,component,controlData,memberValue) end
 					self:TagRenderSceneAsDirty()
 				end
-				controlData.set(component,value,true)
+				controlData.set(component,value,true,false)
 				actorData.componentData[componentId].items[memberIdx] = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData,path)
 			else
 				pfm.log("Unable to add control for member '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
