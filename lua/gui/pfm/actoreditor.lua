@@ -1216,7 +1216,6 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 					end)
 				end
 			end
-			return ctrl
 		elseif(memberInfo.type == udm.TYPE_BOOLEAN) then
 			local elToggle,wrapper = self.m_animSetControls:AddToggleControl(memberInfo.name,memberInfo.name,controlData.default or false,function(oldChecked,checked)
 				if(self.m_skipUpdateCallback) then return end
