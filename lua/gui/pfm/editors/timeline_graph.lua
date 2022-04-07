@@ -10,33 +10,12 @@ include("/gui/curve.lua")
 include("/gui/pfm/treeview.lua")
 include("/gui/pfm/grid.lua")
 include("/gui/pfm/selection.lua")
+include("/gui/pfm/cursor_tracker.lua")
 include("/gui/selectionrect.lua")
 include("/gui/timelinestrip.lua")
 include("/graph_axis.lua")
 include("key.lua")
 include("easing.lua")
-
-util.register_class("gui.CursorTracker",util.CallbackHandler)
-function gui.CursorTracker:__init()
-	util.CallbackHandler.__init(self)
-	self.m_startPos = input.get_cursor_pos()
-	self.m_curPos = self.m_startPos:Copy()
-end
-
-function gui.CursorTracker:GetTotalDeltaPosition() return self.m_curPos -self.m_startPos end
-function gui.CursorTracker:GetStartPos() return self.m_startPos end
-function gui.CursorTracker:ResetCurPos() self.m_curPos = self.m_startPos:Copy() end
-
-function gui.CursorTracker:Update()
-	local pos = input.get_cursor_pos()
-	local dt = pos -self.m_curPos
-	if(dt.x == 0 and dt.y == 0) then return dt end
-	self.m_curPos = pos
-	self:CallCallbacks("OnCursorMoved",dt)
-	return dt
-end
-
-----------------
 
 -- Quaternions are represented as euler angles in the interface and have to be
 -- converted accordingly
@@ -82,8 +61,7 @@ function gui.PFMDataPointControl:OnThink()
 	local dt = self.m_cursorTracker:Update()
 	if(dt.x == 0 and dt.y == 0) then return end
 	if(self.m_moveThreshold ~= nil) then
-		local dtAbs = self.m_cursorTracker:GetTotalDeltaPosition()
-		if(math.abs(dtAbs.x) < self.m_moveThreshold and math.abs(dtAbs.y) < self.m_moveThreshold) then return end
+		if(not self.m_cursorTracker:HasExceededMoveThreshold(self.m_moveThreshold)) then return end
 		self.m_moveThreshold = nil
 	end
 	local newPos = self.m_moveModeStartPos +self.m_cursorTracker:GetTotalDeltaPosition()

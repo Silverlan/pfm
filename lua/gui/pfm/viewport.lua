@@ -12,6 +12,7 @@ include("/gui/aspectratio.lua")
 include("/gui/pfm/button.lua")
 include("/gui/pfm/playbutton.lua")
 include("/gui/pfm/base_viewport.lua")
+include("/gui/pfm/cursor_tracker.lua")
 include("/gui/draganddrop.lua")
 include("/gui/playbackcontrols.lua")
 include("/gui/raytracedviewport.lua")
@@ -258,6 +259,28 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 	if(mouseButton ~= input.MOUSE_BUTTON_LEFT and mouseButton ~= input.MOUSE_BUTTON_RIGHT) then return util.EVENT_REPLY_UNHANDLED end
 	if(state ~= input.STATE_PRESS and state ~= input.STATE_RELEASE) then return util.EVENT_REPLY_UNHANDLED end
 
+	local function findActor(pressed)
+		if(pressed == nil) then pressed = state == input.STATE_PRESS end
+		local filter
+		if(self.m_manipulatorMode ~= gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
+			filter = function(ent,mdlC)
+				return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
+			end
+		end
+		return ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,pressed,filter)
+	end
+
+	--[[if(mouseButton == input.MOUSE_BUTTON_RIGHT) then
+		self.m_viewport:RequestFocus()
+		if(state == input.STATE_PRESS) then
+			self.m_cursorTracker = gui.CursorTracker()
+			self:EnableThinking()
+		elseif(state == input.STATE_RELEASE) then
+
+		end
+		return util.EVENT_REPLY_HANDLED
+	end]]
+
 	local filmmaker = tool.get_filmmaker()
 	if(self.m_inCameraControlMode and mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE and filmmaker:IsValid() and filmmaker:HasFocus() == false) then
 		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK) end
@@ -272,25 +295,49 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 	local window = self:GetRootWindow()
 	local el = gui.get_element_under_cursor(window)
 	if(util.is_valid(el) and (el == self or el:IsDescendantOf(self))) then
-		if(mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-			self.m_oldCursorPos = input.get_cursor_pos()
-			if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY) end
-			input.center_cursor()
+		if(mouseButton == input.MOUSE_BUTTON_RIGHT) then
+			if(state == input.STATE_PRESS) then
+				self.m_cursorTracker = gui.CursorTracker()
+				self:EnableThinking()
+				return util.EVENT_REPLY_HANDLED
+			else
+				if(self.m_cursorTracker ~= nil) then
+					self.m_cursorTracker = nil
+					self:DisableThinking()
 
-			filmmaker:TrapFocus(false)
-			filmmaker:KillFocus()
-			filmmaker:TagRenderSceneAsDirty(true)
-			self.m_inCameraControlMode = true
-			return util.EVENT_REPLY_HANDLED
-		elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
-			self.m_viewport:RequestFocus()
-			local filter
-			if(self.m_manipulatorMode ~= gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
-				filter = function(ent,mdlC)
-					return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
+					local handled,entActor = findActor(true)
+					if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
+						local renderC = entActor:GetComponent(ents.COMPONENT_RENDER)
+						local mdl = entActor:GetModel()
+						if(renderC ~= nil and mdl ~= nil) then
+							local materials = {}
+							for _,mesh in ipairs(renderC:GetRenderMeshes()) do
+								local mat = mdl:GetMaterial(mesh:GetSkinTextureIndex())
+								if(util.is_valid(mat)) then
+									materials[mat:GetName()] = true
+								end
+							end
+							if(not table.is_empty(materials)) then
+								local pContext = gui.open_context_menu()
+								if(util.is_valid(pContext) == false) then return end
+								pContext:SetPos(input.get_cursor_pos())
+
+								local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
+								for mat,_ in pairs(materials) do
+									pSubMenu:AddItem(mat,function()
+										tool.get_filmmaker():OpenMaterialEditor(mat,mdl:GetName())
+									end)
+								end
+								pSubMenu:Update()
+
+								pContext:Update()
+							end
+						end
+					end
 				end
 			end
-			local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,state == input.STATE_PRESS,filter)
+		elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
+			local handled,entActor = findActor()
 			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
 				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
@@ -736,8 +783,26 @@ function gui.PFMViewport:InitializeCameraControls()
 end
 function gui.PFMViewport:IsGameplayEnabled() return self.m_gameplayEnabled end
 function gui.PFMViewport:OnThink()
+	if(self.m_cursorTracker ~= nil) then
+		self.m_cursorTracker:Update()
+		if(not self.m_cursorTracker:HasExceededMoveThreshold(2)) then return end
+		self.m_cursorTracker = nil
+		self:DisableThinking()
+
+		self.m_oldCursorPos = input.get_cursor_pos()
+		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY) end
+		input.center_cursor()
+
+		local filmmaker = tool.get_filmmaker()
+		filmmaker:TrapFocus(false)
+		filmmaker:KillFocus()
+		filmmaker:TagRenderSceneAsDirty(true)
+		self.m_inCameraControlMode = true
+
+		return
+	end
 	local cam = game.get_render_scene_camera()
-	if(util.is_valid(cam) == false) then return end
+	if(util.is_valid(cam) == false or self.m_camStartPose == nil) then return end
 	local pose = cam:GetEntity():GetPose()
 	if(pose:GetOrigin():DistanceSqr(self.m_camStartPose:GetOrigin()) < 0.01 and pose:GetRotation():Distance(self.m_camStartPose:GetRotation()) < 0.01) then return end
 	if(util.is_valid(self.m_rtViewport)) then self.m_rtViewport:MarkActorAsDirty(cam:GetEntity()) end
