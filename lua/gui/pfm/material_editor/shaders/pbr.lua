@@ -148,12 +148,12 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	-- Metalness
 	ctrlMetalness = ctrlVbox:AddSliderControl(locale.get_text("metalness"),"metalness",0.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","metalness_factor",value) end,0.01)
 	ctrlMetalness:SetTooltip(locale.get_text("pfm_metalness_desc"))
-	self:LinkControlToMaterialParameter("metalness",ctrlMetalness)
+	self:LinkControlToMaterialParameter("metalness_factor",ctrlMetalness)
 
 	-- Roughness
 	ctrlRoughness = ctrlVbox:AddSliderControl(locale.get_text("roughness"),"roughness",0.5,0.0,1.0,function(el,value) self:SetMaterialParameter("float","roughness_factor",value) end,0.01)
 	ctrlRoughness:SetTooltip(locale.get_text("pfm_roughness_desc"))
-	self:LinkControlToMaterialParameter("roughness",ctrlRoughness)
+	self:LinkControlToMaterialParameter("roughness_factor",ctrlRoughness)
 
 	-- Emission factor
 	local ctrlEmissionFactor = ctrlVbox:AddColorField(locale.get_text("emission_factor"),"emission_factor",Color.White,function(oldCol,newCol)
@@ -346,16 +346,30 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	self:LinkControlToMaterialParameter("max_edge_screen_size",ctrlSubdivMaxEdgeScreenSize,subdivBlock)
 
 	-- Save
-	local btSave = gui.create("WIPFMButton",ctrlVbox)
+	local btSave = gui.create("WIPFMButton",self.m_bg)
+	local pBg = gui.create("WIRect",btSave,0,0,btSave:GetWidth(),btSave:GetHeight(),0,0,1,1)
+	pBg:SetVisible(false)
+	self.m_saveBg = pBg
 	btSave:SetText(locale.get_text("save"))
 	btSave:SetHeight(32)
 	btSave:AddCallback("OnPressed",function(btRaytracying)
 		local success = false
 		if(util.is_valid(self.m_material) and self.m_material:IsError() == false) then success = self.m_material:Save() end
-		if(success) then pfm.log("Successfully saved material '" .. self.m_material:GetName() .. "'!",pfm.LOG_CATEGORY_PFM)
+		if(success) then
+			pfm.log("Successfully saved material '" .. self.m_material:GetName() .. "'!",pfm.LOG_CATEGORY_PFM)
+			self:UpdateSaveButton(true)
 		else pfm.log("Failed to save material '" .. self.m_material:GetName() .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR) end
 	end)
+	btSave:SetWidth(self.m_bg:GetWidth())
+	btSave:SetY(self.m_bg:GetBottom() -btSave:GetHeight())
+	btSave:SetAnchor(0,1,1,1)
 	self.m_btSave = btSave
+end
+
+function gui.PFMMaterialEditor:UpdateSaveButton(saved)
+	self.m_saveBg:SetVisible(true)
+	if(saved) then self.m_saveBg:SetColor(Color(20,100,20))
+	else self.m_saveBg:SetColor(Color(100,20,20)) end
 end
 
 function gui.PFMMaterialEditor:UpdateAlphaMode()

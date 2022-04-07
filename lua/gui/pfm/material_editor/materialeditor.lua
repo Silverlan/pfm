@@ -36,7 +36,7 @@ function gui.PFMMaterialEditor:OnInitialize()
 	self.m_bg = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	self.m_bg:SetColor(Color(54,54,54))
 
-	self.m_contents = gui.create("WIHBox",self.m_bg,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	self.m_contents = gui.create("WIHBox",self.m_bg,0,0,self:GetWidth(),self:GetHeight() -32,0,0,1,1) -- -32 for the save button
 	self.m_contents:SetAutoFillContents(true)
 
 	local controllBoxContainer = gui.create("WIScrollContainer",self.m_contents,0,0,self.m_contents:GetWidth(),self.m_contents:GetHeight())
@@ -163,6 +163,7 @@ function gui.PFMMaterialEditor:SetMaterialParameter(type,key,val,subBlocks)
 	self:ReloadMaterialDescriptor()
 
 	self:ScheduleRTPreviewUpdate()
+	self:UpdateSaveButton(false)
 end
 function gui.PFMMaterialEditor:ReloadMaterialDescriptor()
 	self.m_material:InitializeShaderDescriptorSet(true)
@@ -213,7 +214,9 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 				if(block == nil) then break end
 			end
 		end
+		local validProperty = false
 		if(block ~= nil and block:HasValue(identifier) and util.is_valid(pdata.element)) then
+			validProperty = true
 			if(pdata.load ~= nil) then
 				pdata.load(block)
 			else
@@ -221,6 +224,9 @@ function gui.PFMMaterialEditor:SetMaterial(mat,mdl)
 				pdata.element:SetValue(value)
 				pdata.element:SetDefault(value)
 			end
+		end
+		if(validProperty == false) then
+			pfm.log("Material property '" .. identifier .. "' not found in material '" .. mat .. "'!",pfm.LOG_CATEGORY_PFM)
 		end
 	end
 
