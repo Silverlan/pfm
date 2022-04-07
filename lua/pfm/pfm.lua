@@ -55,6 +55,13 @@ pfm.udm.get_schema = function() return pfm.udm.SCHEMA end
 include("/udm/pfm_util")
 
 util.register_class("pfm.Project")
+pfm.Project.FORMAT_EXTENSION_BINARY = "pfmp_b"
+pfm.Project.FORMAT_EXTENSION_ASCII = "pfmp"
+pfm.Project.get_format_extensions = function() return {pfm.Project.FORMAT_EXTENSION_ASCII,pfm.Project.FORMAT_EXTENSION_BINARY} end
+pfm.Project.get_full_project_file_name = function(baseName)
+	baseName = file.remove_file_extension(baseName,pfm.Project.get_format_extensions())
+	return "projects/" .. baseName .. "." .. pfm.Project.FORMAT_EXTENSION_BINARY
+end
 function pfm.Project:__init()
 	self:SetName("new_project")
 end

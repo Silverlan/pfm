@@ -105,18 +105,23 @@ function pfm.ProjectManager:LoadProject(fileName)
 	-- self:LoadAnimationCache(fileName)
 	return util.is_valid(self:InitializeProject(project))
 end
-function pfm.ProjectManager:SaveProject(fileName)
+function pfm.ProjectManager:SaveProject(fileName,newInternalName)
 	local project = self:GetProject()
 	if(project == nil) then
 		pfm.log("Failed to save project as '" .. fileName .. "': No project to save!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return false
 	end
+	pfm.log("Saving project as '" .. fileName .. "'...",pfm.LOG_CATEGORY_PFM)
+	local t = time.time_since_epoch()
 	local success = project:Save(fileName)
 	if(success == false) then
 		pfm.log("Failed to save project as '" .. fileName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return success
 	end
+	if(newInternalName ~= nil) then self.m_projectFileName = newInternalName end
 	-- self:SaveAnimationCache(fileName)
+	local dt = time.time_since_epoch() -t
+	pfm.log("Saving successful! Saving took " .. util.get_pretty_time(dt /1000000000.0),pfm.LOG_CATEGORY_PFM)
 	return success
 end
 function pfm.ProjectManager:GetProjectFileName(projectFileName)
@@ -209,12 +214,15 @@ function pfm.ProjectManager:CloseProject()
 	if(self.m_animationCache ~= nil) then self.m_animationCache:Clear() end
 	self.m_animationCache = nil
 	self.m_animationCacheLoaded = false
+	self.m_projectFileName = nil
 	if(self.m_project) then
 		if(self.m_persistentProject ~= true) then self.m_project:Close() end
 		self.m_project = nil
 	end
 	collectgarbage()
+	self:OnProjectClosed()
 end
+function pfm.ProjectManager:OnProjectClosed() end
 function pfm.ProjectManager:ImportSFMProject(projectFilePath)
 	self:CloseProject()
 	pfm.log("Converting SFM project '" .. projectFilePath .. "' to PFM...",pfm.LOG_CATEGORY_SFM)
@@ -223,7 +231,7 @@ function pfm.ProjectManager:ImportSFMProject(projectFilePath)
 		pfm.log("Unable to convert SFM project '" .. projectFilePath .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 		return false
 	end
-	self.m_projectFileName = "projects/" .. file.remove_file_extension(projectFilePath) .. ".pfm"
+	-- self.m_projectFileName = "projects/" .. file.remove_file_extension(projectFilePath) .. ".pfm"
 	-- self:ClearAnimationCache()
 	-- local session = pfmScene:GetSession()
 	-- if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end

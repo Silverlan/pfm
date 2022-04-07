@@ -36,6 +36,7 @@ include("/gui/pfm/material_editor/materialeditor.lua")
 include("/gui/pfm/particleeditor.lua")
 include("/gui/pfm/webbrowser.lua")
 include("/pfm/util_particle_system.lua")
+include("/pfm/auto_save.lua")
 include("/util/table_bininsert.lua")
 
 gui.load_skin("pfm")
@@ -51,6 +52,13 @@ include("animation_export.lua")
 include_component("pfm_camera")
 include_component("pfm_sound_source")
 include_component("pfm_grid")
+
+local function updateAutosave()
+	local fm = tool.get_filmmaker()
+	if(util.is_valid(fm)) then fm:UpdateAutosave() end
+end
+console.add_change_callback("pfm_autosave_enabled",updateAutosave)
+console.add_change_callback("pfm_autosave_time_interval",updateAutosave)
 
 function gui.WIFilmmaker:__init()
 	gui.WIBaseEditor.__init(self)
@@ -164,24 +172,16 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
-				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfmp_b"
+				fileName = "projects/" .. file.remove_file_extension(fileName,pfm.Project.get_format_extensions()) .. "." .. pfm.Project.FORMAT_EXTENSION_BINARY
 				self:LoadProject(fileName)
 			end)
 			self.m_openDialogue:SetRootPath("projects")
-			self.m_openDialogue:SetExtensions({"pfmp_b","pfmp","pfm"})
+			self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
 			self.m_openDialogue:Update()
 		end)
 		pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
-			util.remove(self.m_openDialogue)
-			self.m_openDialogue = gui.create_file_save_dialog(function(pDialog,fileName)
-				file.create_directory("projects")
-				fileName = "projects/" .. file.remove_file_extension(fileName) .. ".pfmp_b"
-				self:SaveProject(fileName)
-			end)
-			self.m_openDialogue:SetRootPath("projects")
-			self.m_openDialogue:SetExtensions({"pfmp_b","pfmp","pfm"})
-			self.m_openDialogue:Update()
+			self:Save()
 		end)
 		pContext:AddItem(locale.get_text("import") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
@@ -514,6 +514,27 @@ function gui.WIFilmmaker:OnInitialize()
 	pfm.ProjectManager.OnInitialize(self)
 	self:SetCachedMode(false)
 end
+function gui.WIFilmmaker:Save(fileName,setAsProjectName)
+	if(setAsProjectName == nil) then setAsProjectName = true end
+	local project = self:GetProject()
+	if(project == nil) then return end
+	local function saveProject(fileName)
+		file.create_directory("projects")
+		fileName = file.remove_file_extension(fileName,pfm.Project.get_format_extensions())
+		self:SaveProject(pfm.Project.get_full_project_file_name(fileName),setAsProjectName and fileName or nil)
+	end
+	local fileName = fileName or self:GetProjectFileName()
+	if(fileName ~= nil) then saveProject(fileName)
+	else
+		util.remove(self.m_openDialogue)
+		self.m_openDialogue = gui.create_file_save_dialog(function(pDialog,fileName)
+			saveProject(fileName)
+		end)
+		self.m_openDialogue:SetRootPath("projects")
+		self.m_openDialogue:SetExtensions(file.remove_file_extension(fileName,pfm.Project.get_format_extensions()))
+		self.m_openDialogue:Update()
+	end
+end
 function gui.WIFilmmaker:CreateInitialProject() self:CreateBasicProject() end
 function gui.WIFilmmaker:CreateBasicProject()
 	self:CreateNewProject()
@@ -574,6 +595,10 @@ function gui.WIFilmmaker:TagRenderSceneAsDirty(dirty)
 		return
 	end
 	self.m_renderSceneDirty = dirty and math.huge or nil
+end
+function gui.WIFilmmaker:OnProjectClosed()
+	pfm.ProjectManager.OnProjectClosed(self)
+	self:UpdateAutosave(true)
 end
 function gui.WIFilmmaker:ReloadInterface()
 	local projectData = self:MakeProjectPersistent()
@@ -669,6 +694,11 @@ function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 	elseif(key == input.KEY_PERIOD) then
 		if(state == input.STATE_PRESS) then self:GoToNextFrame() end
 		return util.EVENT_REPLY_HANDLED
+	elseif(input.is_ctrl_key_down()) then
+		if(key == input.KEY_S) then
+			if(state == input.STATE_PRESS) then self:Save() end
+			return util.EVENT_REPLY_HANDLED
+		end
 	else
 		-- TODO: UNDO ME
 		--[[local entGhost = ents.find_by_class("pfm_ghost")[1]
@@ -799,7 +829,17 @@ function gui.WIFilmmaker:SetGameViewOffset(offset)
 
 	self:CallCallbacks("OnTimeOffsetChanged",self:GetTimeOffset())
 end
+function gui.WIFilmmaker:UpdateAutosave(clear)
+	if(self.m_autoSave ~= nil) then
+		self.m_autoSave:Clear()
+		self.m_autoSave = nil
+	end
+	if(clear or console.get_convar_bool("pfm_autosave_enabled") == false) then return end
+	self.m_autoSave = pfm.AutoSave()
+end
+function gui.WIFilmmaker:IsAutosaveEnabled() return self.m_autoSave ~= nil end
 function gui.WIFilmmaker:InitializeProject(project)
+	self:UpdateAutosave()
 	if(util.is_valid(self.m_playbackControls)) then
 		local timeFrame = projectC:GetTimeFrame()
 		self.m_playbackControls:SetDuration(timeFrame:GetDuration())
