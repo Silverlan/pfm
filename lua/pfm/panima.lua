@@ -244,7 +244,7 @@ function pfm.AnimationManager:UpdateKeyframe(actor,path,panimaChannel,keyIdx,tim
 
 		-- Update keyframe
 		keyData:SetValue(keyIdx,value)
-		
+
 		-- Update dependent handles
 		keyData:UpdateKeyframeDependencies(keyIdx)
 		keyData:UpdateKeyframeDependencies(keyIdx +1,true,false)
@@ -269,14 +269,30 @@ function pfm.AnimationManager:UpdateKeyframe(actor,path,panimaChannel,keyIdx,tim
 	end
 end
 
-function pfm.AnimationManager:SetChannelValue(actor,path,time,value,udmType,addKey,baseIndex)
-	baseIndex = baseIndex or 0
+function pfm.AnimationManager:SetChannelValue(actor,path,time,value,udmType,addKey,baseIndex,keyframeValue)
 	if(addKey == nil) then addKey = true end
+
+	if(addKey == true and baseIndex == nil and keyframeValue == nil) then
+		local keyframeValue = value
+		local numComponents = 1
+		if(udmType < udm.TYPE_COUNT) then
+			numComponents = udm.get_numeric_component_count(udmType)
+			if(udmType == udm.TYPE_QUATERNION) then
+				keyframeValue = keyframeValue:ToEulerAngles()
+				numComponents = udm.get_numeric_component_count(udm.TYPE_EULER_ANGLES)
+			end
+		end
+		for i=0,numComponents -1 do
+			self:SetChannelValue(actor,path,time,value,udmType,addKey,i,keyframeValue)
+		end
+		return
+	end
+
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then
 		pfm.log("Unable to apply channel value: No active film clip selected, or film clip has no animations!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
-	pfm.log("Setting channel value " .. tostring(value) .. " of type " .. udm.type_to_string(udmType) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
+	pfm.log("Setting channel value " .. tostring(value) .. " (base index " .. (baseIndex and baseIndex or "n/a") .. ") of type " .. udm.type_to_string(udmType) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path,true,udmType)
 	assert(channel ~= nil)
 	if(channel == nil) then return end
@@ -287,10 +303,10 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,udmType,addK
 	if(addKey) then
 		local editorData = animClip:GetEditorData()
 		local editorChannel = editorData:FindChannel(path,true)
-		-- TODO: Vec3, etc. -> Split into components!
+
 		local keyData
 		keyData,keyIndex = editorChannel:AddKey(time,baseIndex)
-		keyData:SetValue(keyIndex,udm.get_numeric_component(value,baseIndex))
+		keyData:SetValue(keyIndex,udm.get_numeric_component(keyframeValue or value,baseIndex))
 
 		keyData:SetInTime(keyIndex,-0.5)
 		keyData:SetInDelta(keyIndex,0.0)

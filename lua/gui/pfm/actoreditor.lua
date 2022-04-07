@@ -645,10 +645,7 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value,baseIndex)
 			if(baseIndex ~= nil) then
 				fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type,baseIndex)
 			else
-				local n = (type < udm.TYPE_COUNT) and udm.get_numeric_component_count(type) or 1
-				for i=0,n -1 do
-					fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type,i)
-				end
+				fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type)
 			end
 		else
 			local baseMsg = "Unable to apply animation channel value with channel path '" .. path.path:GetString() .. "': "
