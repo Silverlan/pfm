@@ -39,8 +39,6 @@ function pfm.udm.Actor:RemoveComponentType(componentType)
 	local component = self:FindComponent(componentType)
 	if(component == nil) then return end
 	self:RemoveComponent(component)
-	_actor = self
-	_componentType = componentType
 end
 
 function pfm.udm.Actor:ChangeModel(mdlName)
@@ -51,6 +49,12 @@ function pfm.udm.Actor:ChangeModel(mdlName)
 	local mdl = game.load_model(mdlName)
 	debug.stop_profiling_task()
 	mdlC:SetMemberValue("model",udm.TYPE_STRING,mdlName)
+end
+
+function pfm.udm.Actor:GetModel()
+	local mdlC = self:FindComponent("model")
+	if(mdlC == nil) then return end
+	return mdlC:GetMemberValue("model")
 end
 
 function pfm.udm.Actor:GetAbsolutePose(filter)

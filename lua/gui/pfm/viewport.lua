@@ -349,6 +349,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.PFMViewport:OnRemove()
+	util.remove(self.m_entTransform)
 	if(util.is_valid(self.m_scene)) then self.m_scene:GetEntity():Remove() end
 	if(util.is_valid(self.m_renderer)) then self.m_renderer:GetEntity():Remove() end
 	if(util.is_valid(self.m_camera)) then self.m_camera:GetEntity():Remove() end
@@ -444,6 +445,7 @@ function gui.PFMViewport:IsScaleManipulatorMode(mode)
 end
 function gui.PFMViewport:GetManipulatorMode() return self.m_manipulatorMode end
 function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
+	util.remove(self.m_entTransform)
 	self.m_manipulatorMode = manipulatorMode
 	self.m_btSelect:SetActivated(manipulatorMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT)
 	self.m_btMove:SetActivated(self:IsMoveManipulatorMode(manipulatorMode))
@@ -559,6 +561,7 @@ function gui.PFMViewport:UpdateManipulationMode()
 		if(boneId == -1) then return end
 	end
 	ent:RemoveComponent("util_transform")
+	util.remove(self.m_entTransform)
 	local trBone = ent:AddComponent("util_bone_transform")
 	if(trBone == nil) then return end
 	local trC = trBone:SetTransformEnabled(boneId)
@@ -622,6 +625,7 @@ end
 function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 	ent:RemoveComponent("util_bone_transform")
 	ent:RemoveComponent("util_transform")
+	util.remove(self.m_entTransform)
 
 	local function add_transform_component()
 		local trC = ent:GetComponent("util_transform")
@@ -654,11 +658,87 @@ function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 		end)
 		return trC
 	end
+	util.remove(self.m_entTransform)
 	ent:RemoveComponent("util_transform")
 	local manipMode = self.m_manipulatorMode
 	if(selected and (self:IsMoveManipulatorMode(manipMode) or self:IsRotationManipulatorMode(manipMode))) then
-		local tc = add_transform_component()
-		self:InitializeTransformWidget(tc,ent)
+		local pm = tool.get_filmmaker()
+		local actorEditor = pm:GetActorEditor()
+		local activeControls = actorEditor:GetActiveControls()
+		local uuid = tostring(ent:GetUuid())
+		if(activeControls[uuid] ~= nil) then
+			local targetPath
+			local i = 0
+			for path,data in pairs(activeControls[uuid]) do
+				i = i +1
+				if(i == 2) then
+					targetPath = nil
+					break
+				end
+				targetPath = path
+			end
+			if(targetPath ~= nil) then
+				local memberInfo = ent:FindMemberInfo(targetPath)
+				if(memberInfo ~= nil) then
+					if(
+						(memberInfo.type == udm.TYPE_VECTOR3 and self:IsMoveManipulatorMode(manipMode)) or
+						(memberInfo.type == udm.TYPE_QUATERNION and self:IsRotationManipulatorMode(manipMode))
+					) then
+						local val = ent:GetMemberValue(targetPath)
+						if(val ~= nil) then
+							local entTransform = ents.create("util_transform")
+							entTransform:Spawn()
+
+							local pose = ent:GetPose()
+							local propPath = util.Path.CreateFilePath(targetPath)
+							local basePropName = propPath:GetBack()
+							if(memberInfo.type == udm.TYPE_VECTOR3) then
+								pose:SetOrigin(val)
+								if(basePropName == "position") then
+									propPath:PopBack()
+									local rot = ent:GetMemberValue(propPath:GetString() .. "rotation")
+									pose:SetRotation(rot)
+								end
+							elseif(memberInfo.type == udm.TYPE_QUATERNION) then
+								pose:SetRotation(val)
+								if(basePropName == "rotation") then
+									propPath:PopBack()
+									local pos = ent:GetMemberValue(propPath:GetString() .. "position")
+									pose:SetOrigin(pos)
+								end
+							end
+							entTransform:SetPose(pose)
+							self.m_entTransform = entTransform
+
+							local trC = entTransform:GetComponent("util_transform")
+							trC:SetScaleEnabled(false)
+							if(memberInfo.type == udm.TYPE_VECTOR3) then
+								trC:SetRotationEnabled(false)
+								trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
+									local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+									if(actorC ~= nil) then
+										tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,pos)
+									end
+								end)
+							elseif(memberInfo.type == udm.TYPE_QUATERNION) then
+								trC:SetTranslationEnabled(false)
+								trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function(rot)
+									local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+									if(actorC ~= nil) then
+										tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,rot)
+									end
+								end)
+							end
+						end
+					end
+				end
+			end
+		end
+
+		if(util.is_valid(self.m_entTransform) == false) then
+			local tc = add_transform_component()
+			self:InitializeTransformWidget(tc,ent)
+		end
 	end
 	tool.get_filmmaker():TagRenderSceneAsDirty()
 end

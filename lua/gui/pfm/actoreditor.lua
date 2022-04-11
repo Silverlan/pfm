@@ -703,11 +703,25 @@ function gui.PFMActorEditor:SelectActor(actor)
 		end
 	end
 end
-function gui.PFMActorEditor:UpdateActorComponentEntries(actorData)
+function gui.PFMActorEditor:SetActorDirty(uniqueId)
+	if(type(uniqueId) ~= "string") then uniqueId = tostring(uniqueId) end
 	self.m_dirtyActorEntries = self.m_dirtyActorEntries or {}
-	self.m_dirtyActorEntries[tostring(actorData.actor:GetUniqueId())] = true
+	self.m_dirtyActorEntries[uniqueId] = true
+end
+function gui.PFMActorEditor:UpdateActorComponentEntries(actorData)
+	self:SetActorDirty(tostring(actorData.actor:GetUniqueId()))
 	local entActor = actorData.actor:FindEntity()
 	if(entActor ~= nil) then self:InitializeDirtyActorComponents(tostring(actorData.actor:GetUniqueId()),entActor) end
+end
+function gui.PFMActorEditor:RemoveActorComponentEntry(uniqueId,componentId)
+	if(type(uniqueId) ~= "string") then uniqueId = tostring(uniqueId) end
+	local itemActor = self.m_actorUniqueIdToTreeElement[uniqueId]
+	if(util.is_valid(itemActor) == false) then return end
+	local actorData = self.m_treeElementToActorData[itemActor]
+	if(actorData.componentData[componentId] == nil) then return end
+	util.remove(actorData.componentData[componentId].items)
+	util.remove(actorData.componentData[componentId].itemComponent)
+	actorData.componentData[componentId] = nil
 end
 function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId,entActor)
 	if(type(uniqueId) ~= "string") then uniqueId = tostring(uniqueId) end
@@ -1114,6 +1128,7 @@ function gui.PFMActorEditor:AddProperty(name,child,fInitPropertyEl)
 	end
 	return elProperty
 end
+function gui.PFMActorEditor:GetActiveControls() return self.m_activeControls end
 function gui.PFMActorEditor:UpdateActorProperty(actor,path)
 	local uid = tostring(actor:GetUniqueId())
 	if(self.m_activeControls[uid] == nil) then return end
@@ -1361,6 +1376,54 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 	self:CallCallbacks("OnControlSelected",actor,udmComponent,controlData,ctrl)
 	return ctrl
 end
+function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
+	if(chainLength <= 1) then return false end
+
+	local c = self:CreateNewActorComponent(actor,"pfm_ik",false)
+	if(c == nil) then return false end
+
+	local ent = actor:FindEntity()
+	if(util.is_valid(ent) == false) then return false end
+	local mdl = ent:GetModel()
+	local skeleton = mdl:GetSkeleton()
+	local boneId = mdl:LookupBone(boneName)
+	if(boneId == -1) then return false end
+
+	local pfmIk = util.is_valid(ent) and ent:AddComponent("pfm_ik") or nil
+	if(pfmIk == nil) then return false end
+	local bone = skeleton:GetBone(boneId)
+	ikName = ikName or bone:GetName()
+	local chain = {}
+	for i=1,chainLength do
+		if(bone == nil) then return false end
+		table.insert(chain,1,bone:GetID())
+		bone = bone:GetParent()
+	end
+
+	local ref = mdl:GetReferencePose()
+	local pose = ent:GetPose() *ref:GetBonePose(boneId)
+
+	self:UpdateActorComponents(actor)
+
+	ent = actor:FindEntity()
+	pfmIk = util.is_valid(ent) and ent:GetComponent("pfm_ik") or nil
+	if(pfmIk ~= nil) then
+		pfmIk:AddIkController(ikName,chain,math.Transform())
+
+		pfmIk:SetMemberValue("effector/" .. ikName .. "/position",pose:GetOrigin())
+		pfmIk:SetMemberValue("effector/" .. ikName .. "/rotation",pose:GetRotation())
+		pfmIk:UpdateIkTrees()
+	end
+
+	local componentId = ents.find_component_id("pfm_ik")
+	if(componentId ~= nil) then
+		self:RemoveActorComponentEntry(tostring(actor:GetUniqueId()),componentId)
+		self:SetActorDirty(tostring(actor:GetUniqueId()))
+		self:InitializeDirtyActorComponents(tostring(actor:GetUniqueId()))
+	end
+
+	return true
+end
 function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentData,udmComponent,item,controlData,identifier)
 	local actor = udmComponent:GetActor()
 	local memberInfo = (actor ~= nil) and self:GetMemberInfo(actor,controlData.path) or nil
@@ -1371,15 +1434,71 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 	local isBaseProperty = (memberInfo.type == udm.TYPE_STRING)
 	local baseItem = isBaseProperty and componentData.itemBaseProps or item
 
+	local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(controlData.path))
+	local isAnimatedComponent = (componentName == "animated")
+
+	local memberComponents = string.split(memberName:GetString(),"/")
+	local isBone = (#memberComponents >= 2 and memberComponents[1] == "bone")
+
 	local propertyPathComponents = string.split(controlData.name,"/")
 	for i=1,#propertyPathComponents -1 do
 		local cname = propertyPathComponents[i]
 		local cnameItem = baseItem:GetItemByIdentifier(cname)
-		if(util.is_valid(cnameItem)) then baseItem = cnameItem
-		else baseItem = baseItem:AddItem(cname,nil,nil,cname) end
+		local childItem
+		if(util.is_valid(cnameItem)) then childItem = cnameItem
+		else childItem = baseItem:AddItem(cname,nil,nil,cname) end
+		baseItem = childItem
+
+		if(isBone and i == 2) then
+			childItem.__boneMouseEvent = childItem.__boneMouseEvent or childItem:AddCallback("OnMouseEvent",function(tex,button,state,mods)
+				if(button == input.MOUSE_BUTTON_RIGHT) then
+					if(state == input.STATE_PRESS) then
+						local boneName = memberComponents[2]
+						local mdlName = actor:GetModel()
+						local mdl = (mdlName ~= nil) and game.load_model(mdlName) or nil
+						local boneId = (mdl ~= nil) and mdl:LookupBone(boneName) or -1
+						if(boneId ~= -1) then
+							local skeleton = mdl:GetSkeleton()
+							local bone = skeleton:GetBone(boneId)
+							local numParents = 0
+							local parent = bone:GetParent()
+
+							while(parent ~= nil) do
+								numParents = numParents +1
+								parent = parent:GetParent()
+							end
+
+							if(numParents > 0) then
+								local pContext = gui.open_context_menu()
+								if(util.is_valid(pContext) == false) then return end
+								pContext:SetPos(input.get_cursor_pos())
+
+								local ikItem,ikMenu = pContext:AddSubMenu(locale.get_text("pfm_actor_editor_add_ik_control"))
+								parent = bone:GetParent()
+								for i=1,numParents do
+									ikMenu:AddItem(locale.get_text("pfm_actor_editor_add_ik_control_chain",{i +1,parent:GetName()}),function()
+										self:AddIkController(actor,boneName,i +1)
+									end)
+									parent = parent:GetParent()
+								end
+								ikMenu:Update()
+
+								pContext:Update()
+							end
+						end
+					end
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+		end
 	end
 
 	local child = baseItem:AddItem(propertyPathComponents[#propertyPathComponents],nil,nil,identifier)
+	child:AddCallback("OnMouseEvent",function(tex,button,state,mods)
+		if(button == input.MOUSE_BUTTON_RIGHT) then
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
 
 	local ctrl
 	local selectedCount = 0

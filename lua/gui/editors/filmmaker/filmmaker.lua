@@ -531,7 +531,7 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName)
 			saveProject(fileName)
 		end)
 		self.m_openDialogue:SetRootPath("projects")
-		self.m_openDialogue:SetExtensions(file.remove_file_extension(fileName,pfm.Project.get_format_extensions()))
+		self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
 		self.m_openDialogue:Update()
 	end
 end
@@ -929,6 +929,20 @@ function gui.WIFilmmaker:SetActorAnimationComponentProperty(actor,targetPath,tim
 
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor)) then actorEditor:UpdateActorProperty(actor,targetPath) end
+end
+function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value)
+	local actorData = actor:GetActorData()
+	if(actorData == nil) then return end
+	local actorEditor = self:GetActorEditor()
+	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
+		actorEditor:SetAnimationChannelValue(actorData,targetPath,value)
+		return
+	end
+
+	self:GetAnimationManager():SetAnimationDirty(actorData)
+	actor:GetEntity():SetMemberValue(targetPath,value)
+	self:GetActorEditor():UpdateActorProperty(actorData,targetPath)
+	self:TagRenderSceneAsDirty()
 end
 function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value)
 	local actorData = actor:GetActorData()
