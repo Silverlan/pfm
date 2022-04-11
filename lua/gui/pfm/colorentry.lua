@@ -74,7 +74,7 @@ function gui.PFMColorEntry:OpenColorSelector()
 	return fileDialog
 end
 function gui.PFMColorEntry:GetValue() return self:GetColor() end
-function gui.PFMColorEntry:OnMouseEvent(button,state,mods)
+function gui.PFMColorEntry:MouseCallback(button,state,mods)
 	if(button == input.MOUSE_BUTTON_LEFT) then
 		if(state == input.STATE_PRESS) then self:OpenColorSelector()
 		elseif(util.is_valid(self.m_colorSelector)) then
