@@ -1393,26 +1393,15 @@ function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
 	if(pfmIk == nil) then return false end
 	local bone = skeleton:GetBone(boneId)
 	ikName = ikName or bone:GetName()
-	local chain = {}
-	for i=1,chainLength do
-		if(bone == nil) then return false end
-		table.insert(chain,1,bone:GetID())
-		bone = bone:GetParent()
-	end
-
-	local ref = mdl:GetReferencePose()
-	local pose = ent:GetPose() *ref:GetBonePose(boneId)
 
 	self:UpdateActorComponents(actor)
 
 	ent = actor:FindEntity()
 	pfmIk = util.is_valid(ent) and ent:GetComponent("pfm_ik") or nil
 	if(pfmIk ~= nil) then
-		pfmIk:AddIkController(ikName,chain,math.Transform())
-
-		pfmIk:SetMemberValue("effector/" .. ikName .. "/position",pose:GetOrigin())
-		pfmIk:SetMemberValue("effector/" .. ikName .. "/rotation",pose:GetRotation())
-		pfmIk:UpdateIkTrees()
+		pfmIk:AddIkControllerByChain(boneName,chainLength,ikName)
+		pfmIk:SaveConfig()
+		pfmIk:InitializeFromConfiguration()
 	end
 
 	local componentId = ents.find_component_id("pfm_ik")

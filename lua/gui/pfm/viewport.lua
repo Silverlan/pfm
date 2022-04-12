@@ -713,7 +713,6 @@ function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 							local trC = entTransform:GetComponent("util_transform")
 							trC:SetScaleEnabled(false)
 							if(memberInfo.type == udm.TYPE_VECTOR3) then
-								trC:SetRotationEnabled(false)
 								trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
 									local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 									if(actorC ~= nil) then
@@ -721,7 +720,6 @@ function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 									end
 								end)
 							elseif(memberInfo.type == udm.TYPE_QUATERNION) then
-								trC:SetTranslationEnabled(false)
 								trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function(rot)
 									local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 									if(actorC ~= nil) then
@@ -729,6 +727,7 @@ function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 									end
 								end)
 							end
+							self:InitializeTransformWidget(trC,ent)
 						end
 					end
 				end
