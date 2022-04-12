@@ -16,6 +16,7 @@ Component:RegisterMember("Strength",udm.TYPE_FLOAT,0.3,{
 Component:RegisterMember("Transparent",udm.TYPE_BOOLEAN,false)
 Component:RegisterMember("SkyTexture",udm.TYPE_STRING,"skies/dusk379.hdr",{
 	specializationType = ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE,
+	onChange = function(c) c:UpdateSkyTexture() end,
 	metaData = {
 		rootPath = "materials/skies/",
 		basePath = "skies/",
@@ -26,6 +27,8 @@ Component:RegisterMember("SkyTexture",udm.TYPE_STRING,"skies/dusk379.hdr",{
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
+
+	self:BindEvent(ents.TransformComponent.EVENT_ON_POSE_CHANGED,"OnPoseChanged")
 
 	self.m_callbacks = {}
 	table.insert(self.m_callbacks,ents.add_component_creation_listener("unirender",function(c)
@@ -39,7 +42,30 @@ function Component:Initialize()
 		end))
 	end))
 end
+function Component:OnPoseChanged()
+	local ang = self:GetEntity():GetAngles()
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_SKYBOX)}) do
+		ent:GetComponent(ents.COMPONENT_SKYBOX):SetSkyAngles(ang)
+	end
+end
+function Component:UpdateSkyTexture(clear)
+	local mat
+	if(clear ~= true) then
+		local skyTex = self:GetSkyTexture()
+
+		mat = game.create_material("skybox")
+		mat:SetTexture("skybox",skyTex)
+		mat:UpdateTextures()
+		mat:InitializeShaderDescriptorSet()
+		mat:SetLoaded(true)
+	end
+
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_SKYBOX)}) do
+		ent:GetComponent(ents.COMPONENT_SKYBOX):SetSkyMaterial(mat)
+	end
+end
 function Component:OnRemove()
 	util.remove(self.m_callbacks)
+	self:UpdateSkyTexture(true)
 end
 ents.COMPONENT_PFM_SKY = ents.register_component("pfm_sky",Component)
