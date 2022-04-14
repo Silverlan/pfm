@@ -18,6 +18,7 @@ function ents.PFMFilmClip:Initialize()
 	self.m_actors = {}
 	self.m_trackGroups = {}
 	self.m_actorChannels = {}
+	self.m_listeners = {}
 	self:AddEntityComponent(ents.COMPONENT_NAME)
 
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
@@ -37,6 +38,7 @@ end
 function ents.PFMFilmClip:OnRemove()
 	util.remove(self.m_actors)
 	util.remove(self.m_trackGroups)
+	util.remove(self.m_listeners)
 
 	game.clear_unused_materials() -- Clear unused materials that may have been created through material overrides of actor model components
 end
@@ -55,6 +57,7 @@ function ents.PFMFilmClip:Setup(filmClip,trackC)
 	self.m_filmClipData = filmClip
 	self.m_track = trackC
 
+	table.insert(self.m_listeners,filmClip:AddChangeListener("camera",function(c,newCamera) self:UpdateCamera() end))
 	-- TODO
 	--[[local matOverlay = filmClip:GetMaterialOverlay()
 	if(matOverlay ~= nil and #matOverlay:GetMaterial() > 0) then

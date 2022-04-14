@@ -301,11 +301,16 @@ function gui.PFMActorEditor:OnInitialize()
 	return slider
 end
 function gui.PFMActorEditor:AddSkyActor()
-	local actor = self:CreateNewActor("sky")
+	self:CreateNewActorWithComponents("sky",{"pfm_actor","pfm_sky"})
+end
+function gui.PFMActorEditor:CreateNewActorWithComponents(name,components)
+	local actor = self:CreateNewActor(name)
 	if(actor == nil) then return end
-	local pfmActorC = self:CreateNewActorComponent(actor,"pfm_actor",false)
-	local pfmSkyC = self:CreateNewActorComponent(actor,"pfm_sky")
+	for i,componentName in ipairs(components) do
+		self:CreateNewActorComponent(actor,componentName,i == #components)
+	end
 	self:UpdateActorComponents(actor)
+	return actor
 end
 function gui.PFMActorEditor:GetTree() return self.m_tree end
 function gui.PFMActorEditor:GetActorItem(actor)
@@ -507,9 +512,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	slider:AddCallback("OnLeftValueChanged",function(el,value)
 		if(self.m_skipUpdateCallback) then return end
 		if(controlData.boolean) then value = toboolean(value) end
-		if(controlData.set ~= nil) then
-			controlData.set(component,value)
-		end
+		if(controlData.set ~= nil) then controlData.set(component,value) end
 		--[[if(controlData.property ~= nil) then
 			component:GetProperty(controlData.property):SetValue(controlData.translateFromInterface(value))
 		elseif(controlData.set ~= nil) then

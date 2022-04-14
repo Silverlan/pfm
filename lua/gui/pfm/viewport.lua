@@ -815,10 +815,7 @@ function gui.PFMViewport:InitializeCameraControls()
 				local camC = actor:FindComponent("camera")
 				if(camC ~= nil) then
 					pSubMenu:AddItem(actor:GetName(),function()
-						filmClip:SetProperty("camera",actor)
-						local entFilmClip = filmClip:FindEntity()
-						local filmClipC = util.is_valid(entFilmClip) and entFilmClip:GetComponent(ents.COMPONENT_PFM_FILM_CLIP)
-						if(filmClipC ~= nil) then filmClipC:UpdateCamera() end
+						filmClip:SetCamera(actor)
 					end)
 				end
 			end

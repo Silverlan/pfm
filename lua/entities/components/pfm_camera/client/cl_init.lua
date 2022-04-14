@@ -239,7 +239,7 @@ function Component:Setup(actorData,cameraData)
 	self.m_cameraData = cameraData
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
 	local camComponentData = actorData:FindComponent("camera")
-	if(camComponentData ~= nil and camC ~= nil) then
+	--[[if(camComponentData ~= nil and camC ~= nil) then
 		camC:SetNearZ(math.max(camComponentData:GetMemberValue("nearz"),1))
 		camC:SetFarZ(math.max(camComponentData:GetMemberValue("farz"),1))
 		camC:SetFOV(camComponentData:GetMemberValue("fov"))
@@ -275,7 +275,7 @@ function Component:Setup(actorData,cameraData)
 			if(camC:IsValid()) then camC:SetFocalDistance(newFocalDistance) end
 		end))
 		self:UpdateAspectRatio()
-	end
+	end]]
 end
 function Component:OnEntitySpawn()
 	local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)

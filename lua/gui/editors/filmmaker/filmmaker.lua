@@ -164,10 +164,18 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 
 		end)]]
-		pContext:AddItem(locale.get_text("new"),function(pItem)
+
+		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("new"))
+		pSubMenu:AddItem(locale.get_text("pfm_simple_project"),function(pItem)
 			if(util.is_valid(self) == false) then return end
-			self:CreateBasicProject()
+			self:CreateSimpleProject()
 		end)
+		pSubMenu:AddItem(locale.get_text("pfm_empty_project"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			self:CreateEmptyProject()
+		end)
+		pSubMenu:Update()
+
 		pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
 			util.remove(self.m_openDialogue)
@@ -535,19 +543,25 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName)
 		self.m_openDialogue:Update()
 	end
 end
-function gui.WIFilmmaker:CreateInitialProject() self:CreateBasicProject() end
-function gui.WIFilmmaker:CreateBasicProject()
+function gui.WIFilmmaker:CreateInitialProject() self:CreateSimpleProject(true) end
+function gui.WIFilmmaker:CreateSimpleProject()
+	self:CreateEmptyProject()
+
+	local actorEditor = self:GetActorEditor()
+	if(util.is_valid(actorEditor) == false) then return end
+
+	actorEditor:AddSkyActor()
+	local cam = actorEditor:CreateNewActorWithComponents("camera",{"pfm_actor","pfm_camera","camera"})
+	local filmClip = self:GetActiveGameViewFilmClip()
+	if(filmClip ~= nil) then filmClip:SetCamera(cam) end
+end
+function gui.WIFilmmaker:CreateEmptyProject()
 	self:CreateNewProject()
 
 	local filmClip = self:GetActiveFilmClip()
 	if(filmClip == nil) then return end
 
 	self:SelectFilmClip(filmClip)
-
-	local actorEditor = self:GetActorEditor()
-	if(util.is_valid(actorEditor) == false) then return end
-
-	actorEditor:AddSkyActor()
 end
 function gui.WIFilmmaker:PackProject(fileName)
 	local project = self:GetProject()
