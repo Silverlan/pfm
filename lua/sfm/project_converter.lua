@@ -549,9 +549,7 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 		return
 	end
 
-	pfmC:GetUdmData():SetArrayValues("times",udm.TYPE_FLOAT,sfmLayer:GetTimes(),udm.TYPE_ARRAY_LZ4)
-	pfmC:GetUdmData():SetArrayValues("values",type,sfmLayer:GetValues(),udm.TYPE_ARRAY_LZ4)
-
+	local values = sfmLayer:GetValues()
 	local toAttr = sfmC:GetToAttribute()
 
 	local toElement = sfmC:GetToElement()
@@ -709,6 +707,8 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 		end
 		pfmC:SetTargetPath(pfmPropPath)
 	end
+	pfmC:GetUdmData():SetArrayValues("times",udm.TYPE_FLOAT,sfmLayer:GetTimes(),udm.TYPE_ARRAY_LZ4)
+	pfmC:GetUdmData():SetArrayValues("values",type,values,udm.TYPE_ARRAY_LZ4)
 end)
 
 local rotN90Yaw = EulerAngles(0,-90,0):ToQuaternion()
@@ -813,7 +813,7 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 							end
 						else
 							local pathComponents = string.split(componentPath:GetString(),"/")
-							if(#pathComponents == 1) then
+							if(#pathComponents >= 1) then
 								if(componentName == "eye" and pathComponents[1] == "viewTarget") then
 									transformChannelValues(channel,function(val)
 										return sfm.convert_source_transform_position_to_pragma(val)
@@ -841,7 +841,7 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 										end,udm.TYPE_FLOAT)
 									end
 								elseif(componentName == "flex") then
-									local flexName = pathComponents[1]
+									local flexName = pathComponents[2]
 									if(mdl ~= nil) then
 										local flexId = mdl:LookupFlexController(flexName)
 										if(flexId ~= -1) then
