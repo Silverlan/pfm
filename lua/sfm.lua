@@ -85,6 +85,7 @@ sfm.convert_source_constraint_target_rotation_offset_to_pragma = function(rot)
 end
 
 sfm.convert_source_fov_to_pragma = function(fov)
+	if(true) then return math.horizontal_fov_to_vertical_fov(math.rad(fov),4.0 /3.0) end
 	-- The fov values specified in SFM sessions do not match expected
 	-- horizontal/vertical/diagonal fov values or focus lengths.
 	-- After some experimentation it has been determined that they can
