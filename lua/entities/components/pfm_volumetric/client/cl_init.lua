@@ -6,42 +6,39 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.PFMVolumetric",BaseEntityComponent)
+local Component = util.register_class("ents.PFMVolumetric",BaseEntityComponent)
 
-function ents.PFMVolumetric:Initialize()
+Component:RegisterMember("MaterialName",udm.TYPE_STRING,"volumes/generic_volume",{
+	specializationType = ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE,
+	onChange = function(c) c:UpdateMaterial() end,
+	metaData = {
+		rootPath = "materials/",
+		initialPath = "volumes",
+		extensions = asset.get_supported_extensions(asset.TYPE_MATERIAL),
+		stripExtension = true
+	}
+})
+
+function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
-	self.m_listeners = {}
 end
 
-function ents.PFMVolumetric:OnRemove()
-	util.remove(self.m_listeners)
-end
-
-function ents.PFMVolumetric:OnEntitySpawn()
+function Component:OnEntitySpawn()
 	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED,"OnModelChanged")
 end
 
-function ents.PFMVolumetric:OnModelChanged()
+function Component:OnModelChanged()
 	self:UpdateMaterial()
 end
 
-function ents.PFMVolumetric:UpdateMaterial()
-	local matName = self.m_volData:GetMaterialName()
-	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_PFM_MODEL)
-	if(mdlC ~= nil) then
-		local matMappings = mdlC:GetModelData():GetMaterialMappings()
-		matMappings:Insert(asset.get_normalized_path("white",asset.TYPE_MATERIAL),fudm.String(asset.get_normalized_path(matName,asset.TYPE_MATERIAL)))
-		mdlC:UpdateModel()
-	end
+function Component:UpdateMaterial()
+	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
+	if(mdlC == nil) then return end
+	mdlC:SetMaterialOverride(0,self:GetMaterialName())
+	mdlC:UpdateRenderMeshes()
 end
-
-function ents.PFMVolumetric:Setup(actorData,volData)
-	self.m_volData = volData
-	self:UpdateMaterial()
-	table.insert(self.m_listeners,volData:GetMaterialNameAttr():AddChangeListener(function(newMat) self:UpdateMaterial() end))
-end
-ents.COMPONENT_PFM_VOLUMETRIC = ents.register_component("pfm_volumetric",ents.PFMVolumetric)
+ents.COMPONENT_PFM_VOLUMETRIC = ents.register_component("pfm_volumetric",Component)

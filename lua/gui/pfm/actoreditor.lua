@@ -128,12 +128,22 @@ function gui.PFMActorEditor:OnInitialize()
 			lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
 			self:UpdateActorComponents(actor)
 		end)
+		--[[pContext:AddItem(locale.get_text("pfm_create_new_volume_simple"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube_volumetric") end)
+			self:CreateNewActorComponent(actor,"pfm_volumetric",false)
+
+			local transform = actor:GetTransform()
+			transform:SetScale(Vector(10,10,10))
+			actor:SetTransform(transform)
+			self:UpdateActorComponents(actor)
+		end)]]
 		pContext:AddItem(locale.get_text("pfm_create_new_volume"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube") end)
 			self:CreateNewActorComponent(actor,"pfm_volumetric",false)
-			self:UpdateActorComponents(actor)
 
 			-- Calc scene extents
 			local min = Vector(math.huge,math.huge,math.huge)
@@ -154,12 +164,14 @@ function gui.PFMActorEditor:OnInitialize()
 			min = min -center
 			max = max -center
 			local extents = (max -min) /2.0
+			pfm.log("Setting volume extents to " .. tostring(extents) .. ".",pfm.LOG_CATEGORY_PFM)
 
 			local transform = math.ScaledTransform()
 			transform:SetOrigin(center)
 			transform:SetRotation(Quaternion())
 			transform:SetScale(extents)
 			actor:SetTransform(transform)
+			self:UpdateActorComponents(actor)
 		end)
 
 		local filmClip = self:GetFilmClip()

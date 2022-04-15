@@ -14,6 +14,6 @@ function unirender.VolumeShader:__init()
 end
 function unirender.VolumeShader:InitializeCombinedPass(desc,outputNode)
 	local node = self:LinkDefaultVolume(desc,outputNode)
-    node:SetProperty(unirender.Node.volume_homogeneous.IN_DEFAULT_WORLD_VOLUME,1)
+    node:SetProperty(unirender.Node.volume_homogeneous.IN_DEFAULT_WORLD_VOLUME,true)
 end
 unirender.register_shader("volume",unirender.VolumeShader)
