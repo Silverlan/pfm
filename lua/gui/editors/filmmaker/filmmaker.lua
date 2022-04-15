@@ -888,6 +888,15 @@ function gui.WIFilmmaker:InitializeProject(project)
 	self:InitializeProjectUI()
 	self:SetTimeOffset(0)
 
+	local cam = self:GetActiveCamera()
+	if(util.is_valid(cam)) then
+		local pos = cam:GetEntity():GetPos()
+		console.run("setpos",tostring(pos.x),tostring(pos.y),tostring(pos.z))
+
+		local ang = cam:GetEntity():GetAngles()
+		console.run("setang",tostring(ang.p),tostring(ang.y),0)
+	end
+
 	return entScene
 end
 function gui.WIFilmmaker:OnFilmClipAdded(el)
