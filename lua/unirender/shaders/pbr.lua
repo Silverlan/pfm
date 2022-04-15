@@ -13,8 +13,12 @@ include("/unirender/nodes/textures/pbr.lua")
 util.register_class("unirender.PBRShader",unirender.GenericShader)
 
 unirender.PBRShader.GLOBAL_EMISSION_STRENGTH = 1.0
+unirender.PBRShader.GLOBAL_RENDERER_IDENTIFIER = ""
 function unirender.PBRShader.set_global_emission_strength(strength) unirender.PBRShader.GLOBAL_EMISSION_STRENGTH = strength end
 function unirender.PBRShader.get_global_emission_strength() return unirender.PBRShader.GLOBAL_EMISSION_STRENGTH end
+
+function unirender.PBRShader.set_global_renderer_identifier(identifier) unirender.PBRShader.GLOBAL_RENDERER_IDENTIFIER = identifier end
+function unirender.PBRShader.get_global_renderer_identifier() return unirender.PBRShader.GLOBAL_RENDERER_IDENTIFIER end
 
 function unirender.PBRShader.set_global_albedo_override_color(col) unirender.PBRShader.GLOBAL_ALBEDO_OVERRIDE_COLOR = col end
 function unirender.PBRShader.get_global_albedo_override_color() return unirender.PBRShader.GLOBAL_ALBEDO_OVERRIDE_COLOR end
@@ -197,15 +201,19 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 	end
 
 	local useGlossyBsdf = false
+	-- TODO: Shaders should be the same regardless of which render engine is used, this is not a good way of handling it!
+	-- The reason for it is that SSS is handled via the principled bsdf in Cycles, but via volumes in LuxCoreRender.
+	local cyclesRenderer = (unirender.PBRShader.get_global_renderer_identifier() == "cycles")
+
 	local bsdf
-	if(sssEnabled) then
+	if(sssEnabled and cyclesRenderer == false) then
 		bsdf = desc:AddNode(unirender.NODE_GLOSSY_BSDF)
 		useGlossyBsdf = true
 	else bsdf = desc:AddNode(unirender.NODE_PRINCIPLED_BSDF) end
 
 	local sssVolume
 	local albedoColorOverride = util.get_class_value(unirender.PBRShader,"GLOBAL_ALBEDO_OVERRIDE_COLOR")
-	if(sssEnabled == false) then
+	if(sssEnabled == false or cyclesRenderer) then
 		if(albedoColorOverride) then unirender.Socket(albedoColorOverride):Link(bsdf,unirender.Node.principled_bsdf.IN_BASE_COLOR)
 		else albedoColor:Link(bsdf,unirender.Node.principled_bsdf.IN_BASE_COLOR) end
 		alpha:Link(bsdf,unirender.Node.principled_bsdf.IN_ALPHA)

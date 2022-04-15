@@ -396,6 +396,8 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	util.remove(ent,true)
 	local unirenderC = ent:AddComponent("unirender")
 
+	unirender.PBRShader.set_global_renderer_identifier(renderSettings:GetRenderEngine())
+
 	local scene = unirender.create_scene(renderSettings:GetRenderMode(),createInfo)
 	local pos = cam:GetEntity():GetPos()
 	local rot = cam:GetEntity():GetRotation()
@@ -592,6 +594,9 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 
 	-- LuxCoreRender:
 	apiData:GetFromPath("luxCoreRender/debug"):SetValue("rawOutputFileName",udm.TYPE_STRING,"debug_render_output.hdr")
+
+	-- General:
+	apiData:GetFromPath("debug"):SetValue("dumpRenderStageImages",udm.TYPE_BOOLEAN,true)
 	]]
 
 	local job = renderer:StartRender()
