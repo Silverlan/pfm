@@ -708,6 +708,8 @@ function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 	elseif(key == input.KEY_PERIOD) then
 		if(state == input.STATE_PRESS) then self:GoToNextFrame() end
 		return util.EVENT_REPLY_HANDLED
+	elseif(key == input.KEY_M) then
+		self:AddBookmark()
 	elseif(input.is_ctrl_key_down()) then
 		if(key == input.KEY_S) then
 			if(state == input.STATE_PRESS) then self:Save() end
