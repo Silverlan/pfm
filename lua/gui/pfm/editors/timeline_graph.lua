@@ -65,6 +65,8 @@ function gui.PFMDataPointControl:OnThink()
 		self.m_moveThreshold = nil
 	end
 	local newPos = self.m_moveModeStartPos +self.m_cursorTracker:GetTotalDeltaPosition()
+	if(input.is_shift_key_down()) then newPos.x = self.m_moveModeStartPos.x end
+	if(input.is_alt_key_down()) then newPos.y = self.m_moveModeStartPos.y end
 	self:OnMoved(newPos)
 	self:CallCallbacks("OnMoved",newPos)
 end
