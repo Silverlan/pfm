@@ -49,6 +49,10 @@ function gui.Timeline:OnInitialize()
 	self.m_timelineStripLower:SetHorizontal(true)
 	self.m_timelineStripLower:SetFlipped(true)
 	self.m_timelineStripLower:AddCallback("OnMouseEvent",onTimelineMouseEvent)
+	--[[self.m_timelineStripLower:SetValueTextTranslationFunction(function(elText,t)
+		elText:SetTooltip("Test")
+		return t -- tool.get_filmmaker():TimeOffsetToFrameOffset(t) -tool.get_filmmaker():TimeOffsetToFrameOffset(math.floor(t))
+	end)]]
 
 	self.m_contents = gui.create("WIBase",self,
 		0,self.m_timelineStripUpper:GetBottom(),

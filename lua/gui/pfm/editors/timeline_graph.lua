@@ -483,8 +483,8 @@ function gui.PFMTimelineCurve:BuildCurve(curveValues,channel,curveIndex,editorCh
 	util.remove(self.m_dataPoints)
 	self.m_dataPoints = {}
 
-	local editorGraphCurve = editorChannel:GetGraphCurve()
-	local editorKeys = editorGraphCurve:GetKey(typeComponentIndex)
+	local editorGraphCurve = (editorChannel ~= nil) and editorChannel:GetGraphCurve() or nil
+	local editorKeys = (editorGraphCurve ~= nil) and editorGraphCurve:GetKey(typeComponentIndex) or nil
 	local numKeys = (editorKeys ~= nil) and editorKeys:GetValueCount() or 0
 	for i=0,numKeys -1 do
 		local t = editorKeys:GetTime(i)

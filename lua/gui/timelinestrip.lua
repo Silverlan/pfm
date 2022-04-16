@@ -196,6 +196,7 @@ function gui.LabelledTimelineStrip:GetAxis()
 end
 function gui.LabelledTimelineStrip:SetDataAxisInverted(inverted) self.m_dataAxisInverted = inverted end
 function gui.LabelledTimelineStrip:IsDataAxisInverted() return self.m_dataAxisInverted or false end
+function gui.LabelledTimelineStrip:SetValueTextTranslationFunction(f) self.m_translateValueText = f end
 function gui.LabelledTimelineStrip:OnUpdate()
 	local w,h,offset = self.m_strip:CalcAxisBounds(self:IsHorizontal(),self:GetWidth(),self:GetHeight())
 	self:SetPrimAxisExtents(self.m_strip,self:IsHorizontal() and w or h)
@@ -220,7 +221,9 @@ function gui.LabelledTimelineStrip:OnUpdate()
 				self.m_textElements[i +1] = pText
 			end
 			pText:SetVisible(true)
-			pText:SetText(tostring((startIndex +i) *multiplier))
+			local t = (startIndex +i) *multiplier
+			if(self.m_translateValueText ~= nil) then t = self.m_translateValueText(pText,t) end
+			pText:SetText(tostring(t))
 			pText:SizeToContents()
 			local offset = xStartOffset +i *stridePerUnit *multiplier
 			local textOffset = self:GetPrimAxisExtents(pText) *0.5
