@@ -72,24 +72,7 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat,hdr)
 		--imgBufFormat = util.ImageBuffer.FORMAT_RGBA_LDR
 	end
 
-	local buf = prosper.util.allocate_temporary_buffer(img:GetWidth() *img:GetHeight() *prosper.get_byte_size(img:GetFormat()))
-	local drawCmd = game.get_setup_command_buffer()
-	drawCmd:RecordImageBarrier(
-		img,
-		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		prosper.ACCESS_SHADER_READ_BIT,prosper.ACCESS_TRANSFER_READ_BIT
-	)
-	drawCmd:RecordCopyImageToBuffer(img,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,buf,prosper.BufferImageCopyInfo())
-	drawCmd:RecordImageBarrier(
-		img,
-		prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-		prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		prosper.ACCESS_TRANSFER_READ_BIT,prosper.ACCESS_SHADER_READ_BIT
-	)
-	game.flush_setup_command_buffer()
-	local imgData = buf:ReadMemory()
-	local imgBuf = util.ImageBuffer.Create(img:GetWidth(),img:GetHeight(),imgBufFormat,imgData)
+	local imgBuf = img:ToImageBuffer(false,false)
 	if(hdr == false) then imgBuf:ToLDR() end
 
 	local result = util.save_image(imgBuf,path,imgFormat)
@@ -220,7 +203,7 @@ function gui.RaytracedViewport:OnThink()
 		end
 	end
 	if(state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FAILED) then
-		self:ClearJob()
+		-- self:ClearJob()
 		self:UpdateThinkState()
 
 		self:CallCallbacks("OnComplete",state,self.m_rtJob)
