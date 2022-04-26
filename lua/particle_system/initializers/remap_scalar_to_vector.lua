@@ -12,15 +12,15 @@ function ents.ParticleSystemComponent.InitializerRemapScalarToVector:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerRemapScalarToVector:Initialize()
-	self.m_startTime = tonumber(self:GetKeyValue("emitter_lifetime_start_time")) or -1
-	self.m_endTime = tonumber(self:GetKeyValue("emitter_lifetime_end_time")) or -1
+	self.m_startTime = tonumber(self:GetKeyValue("emitter_lifetime_start_time") or "") or -1
+	self.m_endTime = tonumber(self:GetKeyValue("emitter_lifetime_end_time") or "") or -1
 	self.m_inputField = self:GetKeyValue("input_field") or "creation_time"
-	self.m_inputMinimum = tonumber(self:GetKeyValue("input_minimum")) or 0
-	self.m_inputMaximum = tonumber(self:GetKeyValue("input_maximum")) or 1
+	self.m_inputMinimum = tonumber(self:GetKeyValue("input_minimum") or "") or 0
+	self.m_inputMaximum = tonumber(self:GetKeyValue("input_maximum") or "") or 1
 	self.m_outputField = self:GetKeyValue("output_field") or "radius"
 	self.m_outputMinimum = vector.create_from_string(self:GetKeyValue("output_minimum") or "0 0 0")
 	self.m_outputMaximum = vector.create_from_string(self:GetKeyValue("output_maximum") or "1 1 1")
-	self.m_scaleInitialRange = toboolean(self:GetKeyValue("output_scalar_of_initial_random_range")) or false
+	self.m_scaleInitialRange = toboolean(self:GetKeyValue("output_scalar_of_initial_random_range") or "") or false
 	self.m_useLocalSystem = toboolean(self:GetKeyValue("use_local_system") or "1")
 	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id") or "0")
 

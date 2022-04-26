@@ -12,9 +12,9 @@ function ents.ParticleSystemComponent.OperatorTwistAroundAxis:__init()
 	ents.ParticleSystemComponent.BaseOperator.__init(self)
 end
 function ents.ParticleSystemComponent.OperatorTwistAroundAxis:Initialize()
-	self.m_force = tonumber(self:GetKeyValue("amount_of_force")) or 0.0
+	self.m_force = tonumber(self:GetKeyValue("amount_of_force") or "") or 0.0
 	self.m_twistAxis = vector.create_from_string(self:GetKeyValue("twist_axis") or "0 1 0")
-	self.m_localSpace = toboolean(self:GetKeyValue("local_space_axis")) or false
+	self.m_localSpace = toboolean(self:GetKeyValue("local_space_axis") or "") or false
 	self._isForce = true
 end
 function ents.ParticleSystemComponent.OperatorTwistAroundAxis:AddForces(force,pt,dt,strength)

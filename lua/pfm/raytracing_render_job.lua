@@ -290,7 +290,7 @@ function pfm.RaytracingRenderJob:Update()
 
 	local isFrameComplete = (self.m_remainingSubStages == 0) -- No sub-stages remaining
 
-	if(self.m_raytracingJob == nil and self.m_preStage == nil) then return pfm.RaytracingRenderJob.STATE_IDLE end
+	if((self.m_raytracingJob == nil and self.m_preStage == nil) or self.m_frameComplete) then return pfm.RaytracingRenderJob.STATE_IDLE end
 	local progress = (self.m_raytracingJob ~= nil) and self.m_raytracingJob:GetProgress() or 1.0
 	self.m_lastProgress = progress
 	local successful = true
@@ -328,7 +328,9 @@ function pfm.RaytracingRenderJob:Update()
 			if(renderSettings:IsRenderPreview()) then msg = "Preview rendering complete!"
 			else msg = "Rendering complete! " .. renderSettings:GetFrameCount() .. " frames have been rendered!" end
 			pfm.log(msg,pfm.LOG_CATEGORY_PFM_RENDER)
+			
 			self:OnRenderEnd()
+			self.m_frameComplete = isFrameComplete
 			return pfm.RaytracingRenderJob.STATE_COMPLETE
 		end
 		if(self.m_autoAdvanceSequence) then self:RenderNextImage() end
@@ -475,7 +477,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		if(is_static_cache_entity(ent)) then return false end
 		if(ent:IsWorld()) then return renderSettings:GetRenderWorld() end
 		if(ent:IsPlayer()) then return renderSettings:GetRenderPlayer() end
-		if(ent:HasComponent(ents.COMPONENT_PARTICLE_SYSTEM) or ent:HasComponent("util_transform_arrow") or ent:HasComponent("pfm_light") or ent:HasComponent("pfm_camera")) then return false end
+		if(ent:HasComponent(ents.COMPONENT_PARTICLE_SYSTEM) or ent:HasComponent("util_transform_arrow") --[[or ent:HasComponent("pfm_light")]] or ent:HasComponent("pfm_camera")) then return false end
 		return renderSettings:GetRenderGameEntities() or ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
 	end,function(ent)
 		return true
@@ -548,6 +550,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	local ang = rot:ToEulerAngles()
 	pfm.log("Starting render job for frame " .. (self.m_currentFrame +1) .. " with camera position (" .. pos.x .. "," .. pos.y .. "," .. pos.z .. ") and angles (" .. ang.p .. "," .. ang.y .. "," .. ang.r .. ").",pfm.LOG_CATEGORY_PFM_RENDER)
 
+	self.m_frameComplete = false
 	if(renderSettings:IsPreStageOnly()) then
 		self.m_preStage = scene
 		self.m_lastProgress = 0.0
@@ -569,6 +572,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	if(renderSettings:GetDeviceType() == pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU and self.m_renderEngine == "cycles") then
 		apiData:GetFromPath("cycles"):SetValue("enableOptix",udm.TYPE_BOOLEAN,renderSettings:GetUseOptix())
 	end
+
 	--[[
 	-- Some Cycles debugging options:
 	apiData:GetFromPath("cycles/debug"):SetValue("dump_shader_graphs",udm.TYPE_BOOLEAN,true)
@@ -597,6 +601,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 
 	-- General:
 	apiData:GetFromPath("debug"):SetValue("dumpRenderStageImages",udm.TYPE_BOOLEAN,true)
+	apiData:GetFromPath("cycles/scene/actors/27707b26-1f7f-4829-a979-bb0df9a22450"):SetValue("maxBounces",udm.TYPE_UINT32,1)
 	]]
 
 	local job = renderer:StartRender()

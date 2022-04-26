@@ -12,9 +12,9 @@ function ents.ParticleSystemComponent.OperatorAnimation:__init()
 	ents.ParticleSystemComponent.BaseOperator.__init(self)
 end
 function ents.ParticleSystemComponent.OperatorAnimation:Initialize()
-	self.m_animationRate = tonumber(self:GetKeyValue("animation_rate")) or 0.1
-	self.m_animationFitLifetime = toboolean(self:GetKeyValue("animation_fit_lifetime")) or false
-	self.m_animateInFps = toboolean(self:GetKeyValue("use_animation_rate_as_fps")) or false
+	self.m_animationRate = tonumber(self:GetKeyValue("animation_rate") or "") or 0.1
+	self.m_animationFitLifetime = toboolean(self:GetKeyValue("animation_fit_lifetime") or "") or false
+	self.m_animateInFps = toboolean(self:GetKeyValue("use_animation_rate_as_fps") or "") or false
 end
 function ents.ParticleSystemComponent.OperatorAnimation:Simulate(pt,dt)
 	-- TODO: Unsure about these

@@ -242,6 +242,9 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType)
 			if(key == "soft_particles") then return ptC:GetSoftParticles() and "1" or "0" end
 		end
 		local function set_key_value(key,val)
+			local pt = self.m_particleSystem
+			if(util.is_valid(pt) == false) then return end
+			local ptC = pt:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
 			if(propertyType ~= "base") then
 				if(util.is_valid(ptC) == false or property == nil) then return end
 				local keyValues = property:GetKeyValues()
@@ -283,7 +286,7 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType)
 				if(type == "int" or type == "bool") then sliderCtrl:SetInteger() end
 				sliderCtrl:AddCallback("OnLeftValueChanged",function(el,value)
 					set_key_value(name,tostring(value))
-					-- self:ReloadParticle()
+					self:ReloadParticle()
 				end)
 				ctrl = sliderCtrl
 			elseif(type == "string" or type == "vector") then
@@ -291,7 +294,7 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType)
 				local teCtrl = gui.create("WITextEntry",self.m_propertiesBox)
 				teCtrl:AddCallback("OnTextEntered",function(pEntry)
 					set_key_value(name,pEntry:GetText())
-					-- self:ReloadParticle()
+					self:ReloadParticle()
 				end)
 				local wrapper = teCtrl:Wrap("WIEditableEntry")
 				wrapper:SetText(locName)
@@ -306,7 +309,7 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType)
 				local colorCtrl = gui.create("WIPFMColorEntry",self.m_propertiesBox)
 				colorCtrl:GetColorProperty():AddCallback(function(oldCol,newCol)
 					set_key_value(name,tostring(newCol))
-					-- self:ReloadParticle()
+					self:ReloadParticle()
 				end)
 				local wrapper = colorCtrl:Wrap("WIEditableEntry")
 				wrapper:SetText(locName)

@@ -194,7 +194,7 @@ function gui.PFMTimeline:SetGraphCursorMode(cursorMode)
 end
 function gui.PFMTimeline:GetBookmarks() return self.m_timeline:GetBookmarks() end
 function gui.PFMTimeline:AddBookmark(bm) return self.m_timeline:AddBookmark(bm) end
-function gui.PFMTimeline:AddBookmarkSet(bms) return self.m_timeline:AddBookmarkSet(bms) end
+function gui.PFMTimeline:AddBookmarkSet(bms,timeFrame) return self.m_timeline:AddBookmarkSet(bms,timeFrame) end
 function gui.PFMTimeline:RemoveBookmarkSet(bms) return self.m_timeline:RemoveBookmarkSet(bms) end
 function gui.PFMTimeline:ClearBookmarks() self.m_timeline:ClearBookmarks() end
 function gui.PFMTimeline:InitializeToolbar()

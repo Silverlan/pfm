@@ -12,9 +12,9 @@ function ents.ParticleSystemComponent.OperatorAttractToControlPoint:__init()
 	ents.ParticleSystemComponent.BaseOperator.__init(self)
 end
 function ents.ParticleSystemComponent.OperatorAttractToControlPoint:Initialize()
-	self.m_force = tonumber(self:GetKeyValue("amount_of_force")) or 0.0
-	self.m_falloffPower = tonumber(self:GetKeyValue("falloff_power")) or 2.0
-	self.m_controlPoint = tonumber(self:GetKeyValue("control_point_id")) or 0
+	self.m_force = tonumber(self:GetKeyValue("amount_of_force") or "") or 0.0
+	self.m_falloffPower = tonumber(self:GetKeyValue("falloff_power") or "") or 2.0
+	self.m_controlPoint = tonumber(self:GetKeyValue("control_point_id") or "") or 0
 	self._isForce = true
 end
 function ents.ParticleSystemComponent.OperatorAttractToControlPoint:AddForces(force,pt,dt,strength)

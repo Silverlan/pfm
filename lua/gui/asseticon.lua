@@ -9,6 +9,7 @@
 include("/gui/wiviewport.lua")
 include("/gui/wimodelview.lua")
 include("/gui/wiimageicon.lua")
+include("/sfm/project_converter/particle_systems.lua")
 include("/util/rig.lua")
 
 util.register_class("gui.AssetIcon",gui.ImageIcon)
@@ -574,7 +575,7 @@ function gui.ParticleAssetIcon:OnInitialize()
 	self:AddCallback("OnDoubleClick",function(el)
 		if(util.is_valid(self) == false) then return end
 		local ptFileName,ptName = el:GetParticleSystemFileName()
-		if(ptFileName ~= nil) then
+		if(ptName ~= nil) then
 			tool.get_filmmaker():OpenParticleEditor(ptFileName,ptName)
 			return
 		end
@@ -590,10 +591,7 @@ function gui.ParticleAssetIcon:OnInitialize()
 		end
 		game.precache_particle_system(ptPath:GetString())
 
-		local relPath = util.Path(path)
-		relPath:MakeRelative(self:GetRootPath())
-		self:SetPath(relPath:GetString() .. assetName)
-		self:Update()
+		self:CallCallbacks("OnParticleSelected",ptPath:GetString())
 	end)
 end
 function gui.ParticleAssetIcon:ApplyAsset(path,importAsset)
@@ -604,13 +602,14 @@ function gui.ParticleAssetIcon:SetParticleAsset(pt,importAsset)
 	self.m_assetType = asset.TYPE_PARTICLE_SYSTEM
 
 	local ptFileName,ptName = self:GetParticleSystemFileName()
-	self:SetNativeAsset(asset.exists(ptFileName,asset.TYPE_PARTICLE_SYSTEM))
+	if(ptFileName ~= nil) then self:SetNativeAsset(asset.exists(ptFileName,asset.TYPE_PARTICLE_SYSTEM)) end
 
 	local iconPath = self:GetIconLocation()
 	if(asset.exists(iconPath,asset.TYPE_MATERIAL)) then
 		self:SetMaterial(iconPath)
 		return
 	end
+
 	if(gui.AssetIcon.impl.iconGenerator == nil) then
 		print("Creating new icon generator...")
 		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128,128)
@@ -635,7 +634,7 @@ function gui.ParticleAssetIcon:GetParticleSystemFileName()
 	local ptPath = path:GetString()
 	ptPath = ptPath:sub(0,#ptPath -1)
 	local ext = file.get_file_extension(ptPath)
-	if(ext == nil or string.compare(ext,"wpt",false) == false) then return end
+	if(ext == nil or asset.is_supported_extension(ext,asset.TYPE_PARTICLE_SYSTEM) == false) then return self:GetAssetName() end
 
 	path:PopFront()
 	path = util.Path(path:GetString() .. self:GetAssetName())

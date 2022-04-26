@@ -22,6 +22,8 @@ end
 
 function pfm.udm.FilmClip:LocalizeOffset(offset) return self:GetTimeFrame():LocalizeOffset(offset) end
 function pfm.udm.FilmClip:LocalizeTimeOffset(offset) return self:GetTimeFrame():LocalizeTimeOffset(offset) end
+function pfm.udm.FilmClip:GlobalizeOffset(offset) return self:GetTimeFrame():GlobalizeOffset(offset) end
+function pfm.udm.FilmClip:GlobalizeTimeOffset(offset) return self:GetTimeFrame():GlobalizeTimeOffset(offset) end
 
 function pfm.udm.FilmClip:FindEntity()
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_FILM_CLIP)}) do

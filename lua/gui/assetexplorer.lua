@@ -133,8 +133,10 @@ function gui.AssetExplorer:CreateAssetIcon(path,assetName,isDirectory,importAsse
 	elseif(string.compare(front,"particles",false)) then el = gui.create("WIParticleAssetIcon") end
 	if(el == nil) then return end
 	el:SetAsset(path,assetName,importAsset)
+	self:OnAssetIconCreated(path,assetName,el)
 	return el
 end
+function gui.AssetExplorer:OnAssetIconCreated(path,assetName,el) end
 function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
 	if(#assetName == 0) then return end
 	local path
@@ -177,7 +179,20 @@ function gui.AssetExplorer:AddItem(assetName,isDirectory,fDirClickHandler)
 				if(el:IsDirectory()) then table.insert(tSelectedDirs,el)
 				else
 					table.insert(tSelectedFiles,el)
-					if(asset.exists(path,self:GetAssetType()) == false) then
+					local exists = asset.exists(path,self:GetAssetType())
+					if(exists == false and self:GetAssetType() == asset.TYPE_PARTICLE_SYSTEM) then
+						local ptPath = util.Path(path)
+						local ptName = ptPath:GetBack()
+						ptPath:PopBack()
+						local ptFileName = ptPath:GetBack()
+						ptFileName = ptFileName:sub(1,#ptFileName -1)
+						local ext = file.get_file_extension(ptFileName)
+						if(ext ~= nil and asset.is_supported_extension(ext,asset.TYPE_PARTICLE_SYSTEM)) then
+							ptFileName = file.remove_file_extension(ptFileName)
+							exists = asset.exists(ptFileName,self:GetAssetType())
+						end
+					end
+					if(exists == false) then
 						table.insert(tExternalFiles,el)
 					end
 				end
@@ -326,7 +341,7 @@ function gui.AssetExplorer:ListFiles()
 		local back = path:GetBack()
 		back = back:sub(0,#back -1)
 		local ext = file.get_file_extension(back)
-		if(ext ~= nil and string.compare(ext,"wpt")) then
+		if(ext ~= nil and asset.is_supported_extension(ext,asset.TYPE_PARTICLE_SYSTEM)) then
 			local ptPath = path:GetString()
 			ptPath = ptPath:sub(0,#ptPath -1)
 			local headerData = ents.ParticleSystemComponent.read_header_data(ptPath)

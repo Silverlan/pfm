@@ -12,16 +12,16 @@ function ents.ParticleSystemComponent.InitializerVelocityNoise:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerVelocityNoise:Initialize()
-	self.m_controlPoint = tonumber(self:GetKeyValue("control_point_id")) or 0
-	self.m_noiseScale = tonumber(self:GetKeyValue("time_noise_coordinate_scale")) or 1.0
-	self.m_noiseScaleLoc = tonumber(self:GetKeyValue("spatial_noise_coordinate_scale")) or 0.01
-	self.m_offset = tonumber(self:GetKeyValue("time_coordinate_offset")) or 0.0
+	self.m_controlPoint = tonumber(self:GetKeyValue("control_point_id") or "") or 0
+	self.m_noiseScale = tonumber(self:GetKeyValue("time_noise_coordinate_scale") or "") or 1.0
+	self.m_noiseScaleLoc = tonumber(self:GetKeyValue("spatial_noise_coordinate_scale") or "") or 0.01
+	self.m_offset = tonumber(self:GetKeyValue("time_coordinate_offset") or "") or 0.0
 	self.m_vecOffsetLoc = vector.create_from_string(self:GetKeyValue("spatial_coordinate_offset") or "0 0 0")
 	self.m_vecAbsVal = vector.create_from_string(self:GetKeyValue("absolute_value") or "0 0 0")
 	self.m_absValInv = vector.create_from_string(self:GetKeyValue("invert_abs_value") or "0 0 0")
 	self.m_vecOutputMin = vector.create_from_string(self:GetKeyValue("output_minimum") or "0 0 0")
 	self.m_vecOutputMax = vector.create_from_string(self:GetKeyValue("output_maximum") or "1 1 1")
-	self.m_localSpace = toboolean(self:GetKeyValue("apply_velocity_in_local_space")) or false
+	self.m_localSpace = toboolean(self:GetKeyValue("apply_velocity_in_local_space") or "") or false
 
 	self:SetPriority(-5)
 end

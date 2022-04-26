@@ -16,7 +16,18 @@ function gui.ParticleExplorer:OnInitialize()
 	gui.AssetExplorer.OnInitialize(self)
 
 	self:SetAssetType(asset.TYPE_PARTICLE_SYSTEM)
-	self:SetFileExtensions(asset.PARTICLE_SYSTEM_FILE_EXTENSION,{})
+	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_PARTICLE_SYSTEM)
+	table.insert(extensions,1,asset.FORMAT_PARTICLE_SYSTEM_BINARY)
+	table.insert(extensions,1,asset.FORMAT_PARTICLE_SYSTEM_ASCII)
+	self:SetFileExtensions(extensions,asset.get_supported_import_file_extensions(asset.TYPE_PARTICLE_SYSTEM))
+end
+function gui.ParticleExplorer:OnAssetIconCreated(path,assetName,el)
+	el:AddCallback("OnParticleSelected",function(el,ptPath)
+		local relPath = util.Path(ptPath)
+		relPath:MakeRelative(self:GetRootPath())
+		self:SetPath(relPath:GetString())
+		self:Update()
+	end)
 end
 function gui.ParticleExplorer:PopulateContextMenu(pContext,tSelectedFiles)
 	if(#tSelectedFiles == 1) then

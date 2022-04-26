@@ -12,10 +12,10 @@ function ents.ParticleSystemComponent.InitializerRotationRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerRotationRandom:Initialize()
-	self.m_rotationInitial = tonumber(self:GetKeyValue("rotation_initial")) or 0.0
-	self.m_rotationOffsetMin = tonumber(self:GetKeyValue("rotation_offset_min")) or 0.0
-	self.m_rotationOffsetMax = tonumber(self:GetKeyValue("rotation_offset_max")) or 360.0
-	self.m_rotationRandomExponent = tonumber(self:GetKeyValue("rotation_random_exponent")) or 1.0
+	self.m_rotationInitial = tonumber(self:GetKeyValue("rotation_initial") or "") or 0.0
+	self.m_rotationOffsetMin = tonumber(self:GetKeyValue("rotation_offset_min") or "") or 0.0
+	self.m_rotationOffsetMax = tonumber(self:GetKeyValue("rotation_offset_max") or "") or 360.0
+	self.m_rotationRandomExponent = tonumber(self:GetKeyValue("rotation_random_exponent") or "") or 1.0
 end
 function ents.ParticleSystemComponent.InitializerRotationRandom:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

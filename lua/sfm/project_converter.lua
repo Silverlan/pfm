@@ -811,6 +811,7 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 									end,udm.TYPE_VECTOR3)
 								end
 							end
+						elseif(componentName == nil or componentPath == nil) then console.print_error("Unable to parse component channel path for '" .. targetPath .. "'!")
 						else
 							local pathComponents = string.split(componentPath:GetString(),"/")
 							if(#pathComponents >= 1) then

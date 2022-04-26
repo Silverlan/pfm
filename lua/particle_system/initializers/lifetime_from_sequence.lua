@@ -13,7 +13,7 @@ function ents.ParticleSystemComponent.InitializerLifetimeFromSequence:__init()
 end
 function ents.ParticleSystemComponent.InitializerLifetimeFromSequence:Initialize()
 	console.print_table(self:GetKeyValues())
-	self.m_fps = tonumber(self:GetKeyValue("frames_per_second")) or 30
+	self.m_fps = tonumber(self:GetKeyValue("frames_per_second") or "") or 30
 
 	-- Priority has to be lower than that of initializers like "sequence random", because
 	-- we need to ensure that the particle's sequence is set before this initializer is executed!

@@ -350,6 +350,7 @@ local function parse_particle_system_definition(el)
 end
 
 local function load_particle_systems(fileName)
+	if(not file.exists(fileName)) then import.import_file(fileName) end
 	local f = file.open(fileName,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
 	if(f == nil) then return false end
 	local dmxData = dmx.load(f)

@@ -12,8 +12,8 @@ function ents.ParticleSystemComponent.SequenceRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.SequenceRandom:Initialize()
-	self.m_sequenceMin = tonumber(self:GetKeyValue("sequence_min")) or 0
-	self.m_sequenceMax = tonumber(self:GetKeyValue("sequence_max")) or 0
+	self.m_sequenceMin = tonumber(self:GetKeyValue("sequence_min") or "") or 0
+	self.m_sequenceMax = tonumber(self:GetKeyValue("sequence_max") or "") or 0
 end
 function ents.ParticleSystemComponent.SequenceRandom:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

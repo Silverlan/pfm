@@ -205,7 +205,7 @@ function gui.RaytracedViewport:OnThink()
 	if(state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FAILED) then
 		-- self:ClearJob()
 		self:UpdateThinkState()
-
+		
 		self:CallCallbacks("OnComplete",state,self.m_rtJob)
 	elseif(state == pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE or state == pfm.RaytracingRenderJob.STATE_SUB_FRAME_COMPLETE) then self.m_rtJob:RenderNextImage() end
 end

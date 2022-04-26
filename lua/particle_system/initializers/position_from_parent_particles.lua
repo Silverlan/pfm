@@ -12,8 +12,8 @@ function ents.ParticleSystemComponent.InitializerPositionFromParentParticles:__i
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerPositionFromParentParticles:Initialize()
-	self.m_velocityScale = tonumber(self:GetKeyValue("inherited_velocity_scale")) or 0.0
-	self.m_randomDistribution = toboolean(self:GetKeyValue("random_parent_particle_distribution")) or false
+	self.m_velocityScale = tonumber(self:GetKeyValue("inherited_velocity_scale") or "") or 0.0
+	self.m_randomDistribution = toboolean(self:GetKeyValue("random_parent_particle_distribution") or "") or false
 end
 function ents.ParticleSystemComponent.InitializerPositionFromParentParticles:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

@@ -205,6 +205,8 @@ function pfm.AnimationManager:UpdateKeyframe(actor,path,panimaChannel,keyIdx,tim
 	if(channel == nil) then return end
 	pfm.log("Updating keyframe index " .. keyIdx .. " with value " .. (value and tostring(value) or "n/a") .. " at timestamp " .. (time and tostring(time) or "n/a") .. " with channel path '" .. path .. "' of actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 
+	time = animClip:LocalizeTimeOffset(time)
+
 	local editorData = animClip:GetEditorData()
 	local editorChannel = editorData:FindChannel(path)
 	local udmChannel = animClip:GetChannel(path,type)
@@ -296,6 +298,9 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,udmType,addK
 	local anim,channel,animClip = self:FindAnimationChannel(actor,path,true,udmType)
 	assert(channel ~= nil)
 	if(channel == nil) then return end
+
+	time = animClip:LocalizeTimeOffset(time)
+
 	local idx = channel:AddValue(time,value)
 	anim:UpdateDuration()
 

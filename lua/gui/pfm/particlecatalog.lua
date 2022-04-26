@@ -27,7 +27,7 @@ function gui.PFMParticleCatalog:OnInitialize()
 	self.m_contents:SetFixedSize(true)
 	self.m_contents:SetAutoFillContents(true)
 
-	local fit = pfm.FileIndexTable("particles","particles/",{"wpt"},{})
+	local fit = pfm.FileIndexTable("particles","particles/",{asset.FORMAT_PARTICLE_SYSTEM_BINARY,asset.FORMAT_PARTICLE_SYSTEM_ASCII},asset.get_supported_import_file_extensions(asset.TYPE_PARTICLE_SYSTEM))
 	self.m_fit = fit
 
 	self.m_teLocation = gui.create("WITextEntry",self.m_contents,0,0,self:GetWidth(),24)
@@ -52,10 +52,13 @@ function gui.PFMParticleCatalog:OnInitialize()
 	end)
 	self.m_teFilter:Wrap("WIEditableEntry"):SetText(locale.get_text("filter"))
 
+	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_PARTICLE_SYSTEM)
+	table.insert(extensions,asset.FORMAT_PARTICLE_SYSTEM_ASCII)
+	table.insert(extensions,asset.FORMAT_PARTICLE_SYSTEM_BINARY)
 	local explorer = gui.create("WIParticleExplorer",scrollContainer,0,0,self:GetWidth(),self:GetHeight())
 	explorer:SetAutoAlignToParent(true,false)
 	explorer:SetRootPath("particles")
-	explorer:SetExtensions({"wpt"})
+	explorer:SetExtensions(extensions)
 	explorer:AddCallback("OnPathChanged",function(explorer,path)
 		self.m_teLocation:SetText(path)
 	end)

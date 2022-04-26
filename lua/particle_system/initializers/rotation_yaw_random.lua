@@ -12,7 +12,7 @@ function ents.ParticleSystemComponent.InitializerYawFlipRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerYawFlipRandom:Initialize()
-	self.m_percent = tonumber(self:GetKeyValue("flip_percentage")) or 0.5
+	self.m_percent = tonumber(self:GetKeyValue("flip_percentage") or "") or 0.5
 end
 function ents.ParticleSystemComponent.InitializerYawFlipRandom:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

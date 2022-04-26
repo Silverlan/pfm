@@ -12,9 +12,9 @@ function ents.ParticleSystemComponent.TrailLengthRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.TrailLengthRandom:Initialize()
-	self.m_lengthMin = tonumber(self:GetKeyValue("length_min")) or 0.1
-	self.m_lengthMax = tonumber(self:GetKeyValue("length_max")) or 0.1
-	self.m_lengthRandomExponent = tonumber(self:GetKeyValue("length_random_exponent")) or 1.0
+	self.m_lengthMin = tonumber(self:GetKeyValue("length_min") or "") or 0.1
+	self.m_lengthMax = tonumber(self:GetKeyValue("length_max") or "") or 0.1
+	self.m_lengthRandomExponent = tonumber(self:GetKeyValue("length_random_exponent") or "") or 1.0
 end
 function ents.ParticleSystemComponent.TrailLengthRandom:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

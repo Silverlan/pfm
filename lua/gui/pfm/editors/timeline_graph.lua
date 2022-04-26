@@ -461,6 +461,7 @@ function gui.PFMTimelineCurve:GetCurveIndex() return self.m_curveIndex end
 function gui.PFMTimelineCurve:GetCurve() return self.m_curve end
 function gui.PFMTimelineCurve:GetChannel() return self.m_channel end
 function gui.PFMTimelineCurve:GetPanimaChannel() return self.m_panimaChannel end
+function gui.PFMTimelineCurve:GetAnimationClip() return self.m_animClip end
 function gui.PFMTimelineCurve:GetEditorChannel() return self.m_editorChannel end
 function gui.PFMTimelineCurve:GetEditorKeys()
 	local editorChannel = self:GetEditorChannel()
@@ -472,8 +473,9 @@ end
 function gui.PFMTimelineCurve:UpdateCurveData(curveValues)
 	self.m_curve:BuildCurve(curveValues)
 end
-function gui.PFMTimelineCurve:BuildCurve(curveValues,channel,curveIndex,editorChannel,typeComponentIndex)
+function gui.PFMTimelineCurve:BuildCurve(curveValues,animClip,channel,curveIndex,editorChannel,typeComponentIndex)
 	self.m_channel = channel
+	self.m_animClip = animClip
 	self.m_panimaChannel = panima.Channel(channel:GetUdmData():Get("times"),channel:GetUdmData():Get("values"))
 	self.m_editorChannel = editorChannel
 	self.m_curveIndex = curveIndex
@@ -487,8 +489,6 @@ function gui.PFMTimelineCurve:BuildCurve(curveValues,channel,curveIndex,editorCh
 	local editorKeys = (editorGraphCurve ~= nil) and editorGraphCurve:GetKey(typeComponentIndex) or nil
 	local numKeys = (editorKeys ~= nil) and editorKeys:GetValueCount() or 0
 	for i=0,numKeys -1 do
-		local t = editorKeys:GetTime(i)
-
 		local el = gui.create("WIPFMTimelineDataPoint",self)
 		el:SetGraphData(self,i)
 		el:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
@@ -517,7 +517,7 @@ function gui.PFMTimelineCurve:UpdateDataPoint(i)
 	local editorGraphCurve = self.m_editorChannel:GetGraphCurve()
 	local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
 
-	local t = editorKeys:GetTime(keyIndex)
+	local t = self:GetAnimationClip():GlobalizeTimeOffset(editorKeys:GetTime(keyIndex))
 	local v = editorKeys:GetValue(keyIndex)
 	local valueTranslator = self:GetTimelineGraph():GetGraphCurve(self:GetCurveIndex()).valueTranslator
 	if(valueTranslator ~= nil) then v = valueTranslator[1](v) end
@@ -1301,20 +1301,24 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 
 	local editorGraphCurve = editorChannel:GetGraphCurve()
 
+	local animClip = curve:GetAnimationClip()
+	local localStartTime = animClip:LocalizeTimeOffset(startTime)
+	local localEndTime = animClip:LocalizeTimeOffset(endTime)
+
 	local panimaChannel = curve:GetPanimaChannel()
 	local anim,channel,animClip = animManager:FindAnimationChannel(actor,targetPath)
 
-	local valueIndex0 = panimaChannel:FindIndex(startTime,pfm.udm.EditorChannelData.TIME_EPSILON)
-	local valueIndex1 = panimaChannel:FindIndex(endTime,pfm.udm.EditorChannelData.TIME_EPSILON)
+	local valueIndex0 = panimaChannel:FindIndex(localStartTime,pfm.udm.EditorChannelData.TIME_EPSILON)
+	local valueIndex1 = panimaChannel:FindIndex(localEndTime,pfm.udm.EditorChannelData.TIME_EPSILON)
 	local valueType = channel:GetValueType()
 	local isQuatType = (valueType == udm.TYPE_QUATERNION) -- Some special considerations are required for quaternions
 	if(valueIndex0 == nil) then
 		-- Value doesn't matter and will get overwritten further below
-		valueIndex0 = panimaChannel:AddValue(startTime,get_default_value(valueType))
+		valueIndex0 = panimaChannel:AddValue(localStartTime,get_default_value(valueType))
 	end
 	if(valueIndex1 == nil) then
 		-- Value doesn't matter and will get overwritten further below
-		valueIndex1 = panimaChannel:AddValue(endTime,get_default_value(valueType))
+		valueIndex1 = panimaChannel:AddValue(localEndTime,get_default_value(valueType))
 	end
 
 	if(valueIndex0 == nil or valueIndex1 == nil) then
@@ -1337,7 +1341,7 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 	local keyframesInTimeframePerKey = {}
 	for i=0,numPaths -1 do
 		local pathKeys = editorGraphCurve:GetKey(i)
-		local idx = editorChannel:FindLowerKeyIndex(startTime,i)
+		local idx = editorChannel:FindLowerKeyIndex(localStartTime,i)
 		if(idx == nil and pathKeys:GetTimeCount() > 0) then idx = 0 end
 		-- Collect timestamps for all keyframe sets that intersect our time range
 		if(idx ~= nil) then
@@ -1346,8 +1350,8 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 			local t1 = pathKeys:GetTime(idx +1)
 			if(t1 ~= nil) then
 				while(t1 ~= nil) do
-					if(t0 +pfm.udm.EditorChannelData.TIME_EPSILON >= endTime) then break end
-					if(t1 > startTime and (t1 -startTime) > pfm.udm.EditorChannelData.TIME_EPSILON) then
+					if(t0 +pfm.udm.EditorChannelData.TIME_EPSILON >= localEndTime) then break end
+					if(t1 > localStartTime and (t1 -localStartTime) > pfm.udm.EditorChannelData.TIME_EPSILON) then
 						-- Segment is in range
 						keyframesInTimeframePerKey[i] = keyframesInTimeframePerKey[i] or {}
 						table.insert(keyframesInTimeframePerKey[i],idx)
@@ -1357,7 +1361,7 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 						local segTimestamps,segDataValues = calc_graph_curve_data_points(interpMethod,easingMode,pathKeys,idx,idx +1)
 						for _,t in ipairs(segTimestamps) do
 							if(t -pfm.udm.EditorChannelData.TIME_EPSILON >= t1) then break end
-							if(t +pfm.udm.EditorChannelData.TIME_EPSILON >= startTime and t -pfm.udm.EditorChannelData.TIME_EPSILON <= endTime) then
+							if(t +pfm.udm.EditorChannelData.TIME_EPSILON >= localStartTime and t -pfm.udm.EditorChannelData.TIME_EPSILON <= localEndTime) then
 								table.insert(timestampData,t)
 							end
 						end
@@ -1375,8 +1379,8 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 	end
 
 	-- Make sure our start and endpoints are included
-	table.insert(timestampData,startTime)
-	table.insert(timestampData,endTime)
+	table.insert(timestampData,localStartTime)
+	table.insert(timestampData,localEndTime)
 
 	table.sort(timestampData)
 
@@ -1466,7 +1470,7 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 		-- Clamp postfix samples
 		for i=0,editorGraphCurve:GetKeyCount() -1 do
 			local pathKeys = editorGraphCurve:GetKey(i)
-			local keyIndex = editorChannel:FindLowerKeyIndex(endTime,i)
+			local keyIndex = editorChannel:FindLowerKeyIndex(localEndTime,i)
 			if(keyIndex == nil and pathKeys:GetTimeCount() > 0) then keyIndex = 0 end
 			if(keyIndex == pathKeys:GetTimeCount() -1) then
 				local valueIndex = panimaChannel:FindIndex(pathKeys:GetTime(keyIndex))
@@ -1485,7 +1489,7 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 		-- Clamp prefix samples
 		for i=0,editorGraphCurve:GetKeyCount() -1 do
 			local pathKeys = editorGraphCurve:GetKey(i)
-			local keyIndex = editorChannel:FindLowerKeyIndex(startTime,i)
+			local keyIndex = editorChannel:FindLowerKeyIndex(localStartTime,i)
 			if(keyIndex == nil and pathKeys:GetTimeCount() > 0) then keyIndex = 0 end
 			if(keyIndex == 0) then
 				local valueIndex = panimaChannel:FindIndex(pathKeys:GetTime(keyIndex))
@@ -1581,8 +1585,9 @@ local function find_closest_equivalence_euler_angles(ang,angRef)
 	return candidates[bestCandidate]
 end
 function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
+	local animClip = graphData.animClip()
 	local channel = graphData.channel()
-	if(channel == nil) then return end
+	if(animClip == nil or channel == nil) then return end
 	local times = channel:GetTimes()
 	local values = channel:GetValues()
 
@@ -1606,7 +1611,7 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 	local minKeyframeTime
 	local maxKeyframeTime
 	if(graphData.valueType == udm.TYPE_QUATERNION and #times > 0 and graphData.editorChannel ~= nil) then
-		prevVal = calc_value_at_timestamp(graphData.editorChannel,times[1],graphData.valueType)
+		prevVal = calc_value_at_timestamp(graphData.editorChannel,animClip:GlobalizeTimeOffset(times[1]),graphData.valueType)
 		if(prevVal ~= nil) then prevVal = find_closest_equivalence_euler_angles(prevVal)
 		else prevVal = channel_value_to_editor_value(get_default_value(valueType),valueType) end
 
@@ -1628,7 +1633,7 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 	end
 
 	for i=1,#times do
-		local t = times[i]
+		local t = animClip:GlobalizeTimeOffset(times[i])
 		local v = values[i]
 		v = (graphData.valueTranslator ~= nil) and graphData.valueTranslator[1](v) or v
 		v = channel_value_to_editor_value(v,graphData.valueType)
@@ -1655,7 +1660,7 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 	end
 
 	self:InitializeBookmarks()
-	graphData.curve:BuildCurve(curveValues,channel,i,graphData.editorChannel,graphData.typeComponentIndex)
+	graphData.curve:BuildCurve(curveValues,animClip,channel,i,graphData.editorChannel,graphData.typeComponentIndex)
 	local editorKeys = graphData.curve:GetEditorKeys()
 	graphData.numValues = (editorKeys ~= nil) and editorKeys:GetTimeCount() or 0
 end
@@ -1677,7 +1682,7 @@ function gui.PFMTimelineGraph:InitializeBookmarks(graphData)
 		if(channel ~= nil) then
 			local bms = channel:GetBookmarkSet()
 			graphData.bookmarkSet = bms
-			self.m_timeline:AddBookmarkSet(bms)
+			self.m_timeline:AddBookmarkSet(bms,animClip:GetTimeFrame())
 		end
 	end
 end

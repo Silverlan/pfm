@@ -35,7 +35,7 @@ end
 function gui.Axis:GetAxis() return self.m_axis end
 function gui.Axis:IsHorizontal() return self.m_horizontal end
 function gui.Axis:IsVertical() return self:IsHorizontal() == false end
-function gui.Axis:UpdateAttachment(i,start,duration)
+function gui.Axis:UpdateAttachment(i,start,duration,timeFrame)
 	local itemData = self.m_items[i]
 	if(itemData == nil) then return end
 	if(itemData.element:IsValid() == false) then
@@ -58,10 +58,10 @@ function gui.Axis:AttachElementToValue(el,value)
 	self:ScheduleUpdate()
 	return index
 end
-function gui.Axis:AttachElementToValueWithUdmProperty(el,udmEl,propName)
+function gui.Axis:AttachElementToValueWithUdmProperty(el,udmEl,propName,timeFrame)
 	local val = udmEl:GetPropertyValue(propName)
-	local i = self:AttachElementToValue(el,val)
-	table.insert(self.m_items[i].callbacks,udmEl:AddChangeListener(propName,function(c,newTime) self:UpdateAttachment(i,newTime) end))
+	local i = self:AttachElementToValue(el,(timeFrame ~= nil) and timeFrame:GlobalizeTimeOffset(val) or val)
+	table.insert(self.m_items[i].callbacks,udmEl:AddChangeListener(propName,function(c,newTime) self:UpdateAttachment(i,(timeFrame ~= nil) and timeFrame:GlobalizeTimeOffset(newTime) or newTime) end))
 end
 function gui.Axis:AttachElementToRange(el,timeFrame)
 	local index = self.m_itemIndex

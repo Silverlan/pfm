@@ -54,7 +54,7 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 
 		-- Save the image if it's not a preview render
 		local renderSettings = self.m_rt:GetRenderSettings()
-		if(renderSettings:IsRenderPreview() == false) then
+		if(renderSettings:IsRenderPreview() == false and renderSettings:IsPreStageOnly() == false) then
 			local outputPath = self:GetOutputPath()
 
 			file.create_path(util.Path(outputPath):GetPath())

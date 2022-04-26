@@ -41,18 +41,18 @@ function ents.ParticleSystemComponent.OperatorOscillateScalar:__init()
 end
 function ents.ParticleSystemComponent.OperatorOscillateScalar:Initialize()
 	self.m_oscillationField = self:GetKeyValue("oscillation_field") or ""
-	self.m_oscillationRateMin = tonumber(self:GetKeyValue("oscillation_rate_min")) or 0.0
-	self.m_oscillationRateMax = tonumber(self:GetKeyValue("oscillation_rate_max")) or 0.0
-	self.m_oscillationFrequencyMin = tonumber(self:GetKeyValue("oscillation_frequency_min")) or 1.0
-	self.m_oscillationFrequencyMax = tonumber(self:GetKeyValue("oscillation_frequency_max")) or 1.0
-	self.m_proportional = toboolean(self:GetKeyValue("proportional"))
-	self.m_startTimeMin = tonumber(self:GetKeyValue("start_time_min")) or 0.0
-	self.m_startTimeMax = tonumber(self:GetKeyValue("start_time_max")) or 0.0
-	self.m_endTimeMin = tonumber(self:GetKeyValue("end_time_min")) or 1.0
-	self.m_endTimeMax = tonumber(self:GetKeyValue("end_time_max")) or 1.0
-	self.m_startEndProportional = toboolean(self:GetKeyValue("start_end_proportional"))
-	self.m_oscillationMultiplier = tonumber(self:GetKeyValue("oscillation_multiplier")) or 2.0
-	self.m_oscillationStartPhase = tonumber(self:GetKeyValue("oscillation_start_phase")) or 0.5
+	self.m_oscillationRateMin = tonumber(self:GetKeyValue("oscillation_rate_min") or "") or 0.0
+	self.m_oscillationRateMax = tonumber(self:GetKeyValue("oscillation_rate_max") or "") or 0.0
+	self.m_oscillationFrequencyMin = tonumber(self:GetKeyValue("oscillation_frequency_min") or "") or 1.0
+	self.m_oscillationFrequencyMax = tonumber(self:GetKeyValue("oscillation_frequency_max") or "") or 1.0
+	self.m_proportional = toboolean(self:GetKeyValue("proportional") or "")
+	self.m_startTimeMin = tonumber(self:GetKeyValue("start_time_min") or "") or 0.0
+	self.m_startTimeMax = tonumber(self:GetKeyValue("start_time_max") or "") or 0.0
+	self.m_endTimeMin = tonumber(self:GetKeyValue("end_time_min") or "") or 1.0
+	self.m_endTimeMax = tonumber(self:GetKeyValue("end_time_max") or "") or 1.0
+	self.m_startEndProportional = toboolean(self:GetKeyValue("start_end_proportional") or "")
+	self.m_oscillationMultiplier = tonumber(self:GetKeyValue("oscillation_multiplier") or "") or 2.0
+	self.m_oscillationStartPhase = tonumber(self:GetKeyValue("oscillation_start_phase") or "") or 0.5
 
 	self.m_fieldId = ents.ParticleSystemComponent.Particle.name_to_field_id(self.m_oscillationField)
 end
