@@ -96,6 +96,63 @@ function gui.WIFilmmaker:OnInitialize()
 	tool.filmmaker = self
 	fudm.PFMChannel.set_all_channels_enabled(false)
 
+	local udmData,err = udm.load("cfg/pfm/keybindings.udm")
+	local layers = {}
+	if(udmData ~= false) then
+		local loadedLayers = input.InputBindingLayer.load(udmData:GetAssetData())
+		if(loadedLayers ~= false) then
+			for _,layer in ipairs(loadedLayers) do layers[layer.identifier] = layer end
+		end
+	end
+	if(layers["pfm"] == nil) then
+		local bindingLayer = input.InputBindingLayer("pfm")
+		bindingLayer:BindKey("space","pfm_action toggle_play")
+		bindingLayer:BindKey(",","pfm_action previous_frame")
+		bindingLayer:BindKey(".","pfm_action next_frame")
+		bindingLayer:BindKey("[","pfm_action previous_bookmark")
+		bindingLayer:BindKey("]","pfm_action next_bookmark")
+		bindingLayer:BindKey("m","pfm_action create_bookmark")
+
+		bindingLayer:BindKey("f2","pfm_action select_editor clip")
+		bindingLayer:BindKey("f3","pfm_action select_editor motion")
+		bindingLayer:BindKey("f4","pfm_action select_editor graph")
+		layers["pfm"] = bindingLayer
+	end
+	if(layers["pfm_graph_editor"] == nil) then
+		local bindingLayer = input.InputBindingLayer("pfm_graph_editor")
+		bindingLayer:BindKey("m","pfm_graph_editor_action bookmark")
+
+		bindingLayer:BindKey("q","pfm_graph_editor_action select select")
+		bindingLayer:BindKey("w","pfm_graph_editor_action select move")
+		bindingLayer:BindKey("e","pfm_graph_editor_action select pan")
+		bindingLayer:BindKey("r","pfm_graph_editor_action select scale")
+		bindingLayer:BindKey("t","pfm_graph_editor_action select zoom")
+
+		bindingLayer:BindKey("1","pfm_graph_editor_action select tangent_linear")
+		bindingLayer:BindKey("2","pfm_graph_editor_action select tangent_flat")
+		bindingLayer:BindKey("3","pfm_graph_editor_action select tangent_spline")
+		bindingLayer:BindKey("4","pfm_graph_editor_action select tangent_step")
+		bindingLayer:BindKey("5","pfm_graph_editor_action select tangent_unify")
+		bindingLayer:BindKey("6","pfm_graph_editor_action select tangent_equalize")
+		bindingLayer:BindKey("7","pfm_graph_editor_action select tangent_weighted")
+		bindingLayer:BindKey("8","pfm_graph_editor_action select tangent_unweighted")
+
+		-- TODO: Enable these when modifier keybinds are implemented
+		-- bindingLayer:BindKey("n","pfm_graph_editor_action select snap")
+		-- bindingLayer:BindKey("r","pfm_graph_editor_action select snap_frame")
+
+		-- bindingLayer:BindKey("m","pfm_graph_editor_action select mute")
+		layers["pfm_graph_editor"] = bindingLayer
+	end
+	layers["pfm"].priority = 1000
+	layers["pfm_graph_editor"].priority = 2000
+	for _,layer in pairs(layers) do
+		input.add_input_binding_layer(layer)
+		input.set_binding_layer_enabled(layer.identifier,(layer.identifier == "pfm"))
+	end
+	self.m_inputBindingLayers = layers
+	self:UpdateInputBindings()
+
 	local infoBar = self:GetInfoBar()
 
 	local infoBarContents = infoBar:GetContents()
@@ -689,28 +746,7 @@ end
 function gui.WIFilmmaker:GoToNextBookmark() self:GoToNeighborBookmark(true) end
 function gui.WIFilmmaker:GoToPreviousBookmark() self:GoToNeighborBookmark(false) end
 function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
-	-- TODO: Implement a keybinding system for this! Keybindings should also appear in tooltips!
-	if(key == input.KEY_SPACE) then
-		if(state == input.STATE_PRESS and util.is_valid(self:GetViewport())) then
-			local playButton = self:GetViewport():GetPlayButton()
-			playButton:TogglePlay()
-		end
-		return util.EVENT_REPLY_HANDLED
-	elseif(key == input.KEY_COMMA) then
-		if(state == input.STATE_PRESS) then self:GoToPreviousFrame() end
-		return util.EVENT_REPLY_HANDLED
-	elseif(key == input.KEY_LEFT_BRACKET) then
-		if(state == input.STATE_PRESS) then self:GoToPreviousBookmark() end
-		return util.EVENT_REPLY_HANDLED
-	elseif(key == input.KEY_RIGHT_BRACKET) then
-		if(state == input.STATE_PRESS) then self:GoToNextBookmark() end
-		return util.EVENT_REPLY_HANDLED
-	elseif(key == input.KEY_PERIOD) then
-		if(state == input.STATE_PRESS) then self:GoToNextFrame() end
-		return util.EVENT_REPLY_HANDLED
-	elseif(key == input.KEY_M) then
-		self:AddBookmark()
-	elseif(input.is_ctrl_key_down()) then
+	if(input.is_ctrl_key_down()) then
 		if(key == input.KEY_S) then
 			if(state == input.STATE_PRESS) then self:Save() end
 			return util.EVENT_REPLY_HANDLED
@@ -796,8 +832,25 @@ function gui.WIFilmmaker:OnRemove()
 
 	util.remove(self.m_reflectionProbe)
 	-- util.remove(self.m_entLight)
+
+	local layers = {}
+	for _,layer in pairs(self.m_inputBindingLayers) do table.insert(layers,layer) end
+	local udmData,err = udm.create("PFMKB",1)
+	local assetData = udmData:GetAssetData()
+	input.InputBindingLayer.save(assetData,layers)
+	file.create_path("cfg/pfm")
+	local f = file.open("cfg/pfm/keybindings.udm",file.OPEN_MODE_WRITE)
+	if(f ~= nil) then
+		udmData:SaveAscii(f)
+		f:Close()
+	end
+	for _,layer in ipairs(self.m_inputBindingLayers) do input.remove_input_binding_layer(layer.identifier) end
+	self:UpdateInputBindings()
+
 	collectgarbage()
 end
+function gui.WIFilmmaker:GetInputBindingLayer(id) return self.m_inputBindingLayers[id or "pfm"] end
+function gui.WIFilmmaker:UpdateInputBindings() input.update_effective_input_bindings() end
 function gui.WIFilmmaker:CaptureRaytracedImage()
 	if(self.m_raytracingJob ~= nil) then self.m_raytracingJob:Cancel() end
 	local job = util.capture_raytraced_screenshot(1024,1024,512)--2048,2048,1024)
@@ -1505,3 +1558,29 @@ function gui.WIFilmmaker:OpenBoneRetargetWindow(mdlSrc,mdlDst)
 	end]]
 end
 gui.register("WIFilmmaker",gui.WIFilmmaker)
+
+console.register_command("pfm_action",function(pl,...)
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm) == false) then return end
+
+	local args = {...}
+	if(args[1] == "toggle_play") then
+		local vp = pm:GetViewport()
+		if(util.is_valid(vp)) then vp:GetPlayButton():TogglePlay() end
+	elseif(args[1] == "previous_frame") then
+		pm:GoToPreviousFrame()
+	elseif(args[1] == "next_frame") then
+		pm:GoToNextFrame()
+	elseif(args[1] == "previous_bookmark") then
+		pm:GoToPreviousBookmark()
+	elseif(args[1] == "next_bookmark") then
+		pm:GoToNextBookmark()
+	elseif(args[1] == "create_bookmark") then
+		pm:AddBookmark()
+	elseif(args[1] == "select_editor") then
+		local timeline = pm:GetTimeline()
+		if(args[2] == "clip") then timeline:SetEditor(gui.PFMTimeline.EDITOR_CLIP)
+		elseif(args[2] == "motion") then timeline:SetEditor(gui.PFMTimeline.EDITOR_MOTION)
+		elseif(args[2] == "graph") then timeline:SetEditor(gui.PFMTimeline.EDITOR_GRAPH) end
+	end
+end)

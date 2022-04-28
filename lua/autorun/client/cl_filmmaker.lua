@@ -11,6 +11,19 @@ console.register_variable("pfm_asset_icon_size",udm.TYPE_UINT32,128,bit.bor(cons
 console.register_variable("pfm_asset_icon_size_character",udm.TYPE_STRING,"256x512",bit.bor(console.FLAG_BIT_ARCHIVE),"The resolution to use for generated asset icons of character models.")
 console.register_variable("pfm_experimental_enable_panima_for_flex_and_skeletal_animations",udm.TYPE_BOOLEAN,true,bit.bor(console.FLAG_BIT_ARCHIVE),"If enabled, the new panima animation system will be used for flex and skeletal animations.")
 
+console.register_command("pfm_bind",function(pl,key,cmd)
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm) == false or key == nil or cmd == nil) then return end
+	pm:GetInputBindingLayer():BindKey(key,cmd)
+	pm:UpdateInputBindings()
+end)
+console.register_command("pfm_unbind",function(pl,key)
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm) == false or key == nil) then return end
+	pm:GetInputBindingLayer():UnbindKey(key)
+	pm:UpdateInputBindings()
+end)
+
 tool = tool or {}
 tool.close_filmmaker = function()
 	local entScene = ents.find_by_class("pfm_scene")[1]

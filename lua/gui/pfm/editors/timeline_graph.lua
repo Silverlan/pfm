@@ -1800,10 +1800,14 @@ function gui.PFMTimelineGraph:AddKeyframe(time)
 	end
 end
 function gui.PFMTimelineGraph:OnVisibilityChanged(visible)
+	input.set_binding_layer_enabled("pfm_graph_editor",visible)
+	input.update_effective_input_bindings()
+
 	if(visible == false or util.is_valid(self.m_timeline) == false) then return end
 	local timeline = self.m_timeline:GetTimeline()
 	timeline:ClearBookmarks()
 end
+
 function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo,valueTranslator)
 	local itemCtrl = self.m_transformList:AddItem(controlData.name)
 	local function addChannel(item,fValueTranslator,color,typeComponentIndex)
