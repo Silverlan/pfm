@@ -1524,11 +1524,12 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 		selectedCount = selectedCount -1
 		if(selectedCount > 0) then return end
 		self:CallCallbacks("OnControlDeselected",udmComponent,controlData,ctrl)
-
-		local uid = tostring(actor:GetUniqueId())
-		if(self.m_activeControls[uid] ~= nil) then
-			self.m_activeControls[uid][controlData.path] = nil
-			if(table.is_empty(self.m_activeControls[uid])) then self.m_activeControls[uid] = nil end
+		if(actor:IsValid()) then
+			local uid = tostring(actor:GetUniqueId())
+			if(self.m_activeControls[uid] ~= nil) then
+				self.m_activeControls[uid][controlData.path] = nil
+				if(table.is_empty(self.m_activeControls[uid])) then self.m_activeControls[uid] = nil end
+			end
 		end
 		if(util.is_valid(ctrl) == false) then return end
 		ctrl:Remove()
