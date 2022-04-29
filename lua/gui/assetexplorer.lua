@@ -47,12 +47,17 @@ function gui.AssetExplorer:OnInitialize()
 	self:SetFileFinder(function(path)
 		local tFiles,tDirs = file.find(path)
 
+		-- If assets were imported and converted to a native format, there may be more than one version of it.
+		-- We don't want to clutter the explorer to much, so we'll only list it if the import-file lie somewhere other
+		-- than "addons/imported/", if no native version of the asset exists or if it's a native type to begin with.
 		local tFilesExtUnique = {}
 		for _,f in ipairs(tFiles) do
 			local ext = file.get_file_extension(f)
 			if(self.m_extensionMap[ext]) then
 				-- f = file.remove_file_extension(f) .. "." .. self.m_extension
-				tFilesExtUnique[f] = true
+				if(file.exists("addons/imported/" .. path:sub(1,#path -1) .. f) == false or asset.exists(file.remove_file_extension(f),self:GetAssetType()) == false) then
+					tFilesExtUnique[f] = true
+				end
 			end
 		end
 
