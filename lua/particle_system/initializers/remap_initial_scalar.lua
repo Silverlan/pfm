@@ -54,6 +54,7 @@ function ents.ParticleSystemComponent.InitializerRemapInitialScalar:OnParticleCr
 
 	local creationTime = pt:GetTimeCreated()
 	local input = pt:GetField(self.m_inputFieldId)
+	if(input == nil) then return end
 	-- only use within start/end time frame and, if set, active input range
 	if((((creationTime < self.m_startTime) or (creationTime >= self.m_endTime)) and ((self.m_startTime ~= -1.0) and (self.m_endTime ~= -1.0))) or (self.m_activeRange and (input < self.m_inputMinimum or input > self.m_inputMaximum))) then
 		--
