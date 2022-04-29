@@ -477,6 +477,10 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		if(is_static_cache_entity(ent)) then return false end
 		if(ent:IsWorld()) then return renderSettings:GetRenderWorld() end
 		if(ent:IsPlayer()) then return renderSettings:GetRenderPlayer() end
+		
+		local owner = ent:GetOwner()
+		if(owner ~= nil and owner:IsPlayer() and renderSettings:GetRenderPlayer() == false) then return false end
+
 		if(ent:HasComponent(ents.COMPONENT_PARTICLE_SYSTEM) or ent:HasComponent("util_transform_arrow") --[[or ent:HasComponent("pfm_light")]] or ent:HasComponent("pfm_camera")) then return false end
 		return renderSettings:GetRenderGameEntities() or ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
 	end,function(ent)
