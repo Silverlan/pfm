@@ -38,6 +38,22 @@ function gui.PFMModelCatalog:OnInitialize()
 	end)
 	self.m_teLocation:Wrap("WIEditableEntry"):SetText(locale.get_text("explorer_location"))
 
+	local p = gui.create("WIPFMControlsMenu",self.m_contents)
+	p:SetAutoFillContentsToWidth(true)
+	p:SetAutoFillContentsToHeight(false)
+	self.m_settingsBox = p
+
+	local elShowExternalAssets,wrapper = p:AddDropDownMenu(locale.get_text("pfm_show_external_assets"),"show_external_assets",{
+		{"0",locale.get_text("no")},
+		{"1",locale.get_text("yes")}
+	},"1",function()
+		local b = toboolean(self.m_showExternalAssets:GetOptionValue(self.m_showExternalAssets:GetSelectedOption()))
+		self.m_explorer:SetShowExternalAssets(b)
+	end)
+	self.m_showExternalAssets = elShowExternalAssets
+	p:Update()
+	p:SizeToContents()
+
 	local scrollContainer = gui.create("WIScrollContainer",self.m_contents,0,0,self:GetWidth(),self:GetHeight() -48)
 	scrollContainer:SetContentsWidthFixed(true)
 	--[[scrollContainer:AddCallback("SetSize",function(el)
@@ -103,6 +119,7 @@ function gui.PFMModelCatalog:OnInitialize()
 	self.m_teFilter:SetAnchor(0,0,1,1)
 
 	self:EnableThinking()
+	p:ResetControls()
 end
 function gui.PFMModelCatalog:GetExplorer() return self.m_explorer end
 function gui.PFMModelCatalog:OnThink()

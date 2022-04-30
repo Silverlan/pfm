@@ -46,6 +46,7 @@ function gui.AssetExplorer:OnInitialize()
 	end)
 	self:SetFileFinder(function(path)
 		local tFiles,tDirs = file.find(path)
+		local rootPath = path:sub(1,#path -1)
 
 		-- If assets were imported and converted to a native format, there may be more than one version of it.
 		-- We don't want to clutter the explorer to much, so we'll only list it if the import-file lie somewhere other
@@ -55,28 +56,30 @@ function gui.AssetExplorer:OnInitialize()
 			local ext = file.get_file_extension(f)
 			if(self.m_extensionMap[ext]) then
 				-- f = file.remove_file_extension(f) .. "." .. self.m_extension
-				if(file.exists("addons/imported/" .. path:sub(1,#path -1) .. f) == false or asset.exists(file.remove_file_extension(f),self:GetAssetType()) == false) then
+				if(file.exists("addons/imported/" .. rootPath .. f) == false or asset.exists(file.remove_file_extension(f),self:GetAssetType()) == false) then
 					tFilesExtUnique[f] = true
 				end
 			end
 		end
 
-		local tFilesExt,tDirsExt = file.find_external_game_asset_files(path .. "*")
+		local tDirsExtUnique = {}
+		if(self.m_showExternalAssets) then
+			local tFilesExt,tDirsExt = file.find_external_game_asset_files(path .. "*")
 
-		local function add_files(tFiles)
-			for _,f in ipairs(tFiles) do
-				if(self.m_extensions[1] ~= nil) then f = file.remove_file_extension(f) .. "." .. self.m_extensions[1] end
-				tFilesExtUnique[f] = true
+			local function add_files(tFiles)
+				for _,f in ipairs(tFiles) do
+					if(self.m_extensions[1] ~= nil) then f = file.remove_file_extension(f) .. "." .. self.m_extensions[1] end
+					tFilesExtUnique[f] = true
+				end
+			end
+			for _,ext in ipairs(self.m_extExtensions) do
+				add_files(file.find_external_game_asset_files(path .. "." .. ext))
+			end
+			for _,f in ipairs(tDirsExt) do
+				tDirsExtUnique[f] = true
 			end
 		end
-		for _,ext in ipairs(self.m_extExtensions) do
-			add_files(file.find_external_game_asset_files(path .. "." .. ext))
-		end
 		
-		local tDirsExtUnique = {}
-		for _,f in ipairs(tDirsExt) do
-			tDirsExtUnique[f] = true
-		end
 		for _,f in ipairs(tDirs) do
 			tDirsExtUnique[f] = true
 		end
@@ -89,11 +92,18 @@ function gui.AssetExplorer:OnInitialize()
 		table.sort(tFiles)
 		
 		for d,_ in pairs(tDirsExtUnique) do
-			table.insert(tDirs,d)
+			if(self.m_showExternalAssets or file.is_empty(rootPath .. d) == false) then
+				table.insert(tDirs,d)
+			end
 		end
 		table.sort(tDirs)
 		return tFiles,tDirs
 	end)
+	self:SetShowExternalAssets(true)
+end
+function gui.AssetExplorer:SetShowExternalAssets(show)
+	self.m_showExternalAssets = show
+	self:ScheduleUpdate()
 end
 function gui.AssetExplorer:SetAssetType(type) self.m_assetType = type end
 function gui.AssetExplorer:GetAssetType() return self.m_assetType end
