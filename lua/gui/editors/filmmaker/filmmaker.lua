@@ -849,6 +849,7 @@ function gui.WIFilmmaker:OnRemove()
 
 	collectgarbage()
 end
+function gui.WIFilmmaker:GetInputBindingLayers() return self.m_inputBindingLayers end
 function gui.WIFilmmaker:GetInputBindingLayer(id) return self.m_inputBindingLayers[id or "pfm"] end
 function gui.WIFilmmaker:UpdateInputBindings() input.update_effective_input_bindings() end
 function gui.WIFilmmaker:CaptureRaytracedImage()

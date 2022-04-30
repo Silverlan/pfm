@@ -283,12 +283,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 
 	local filmmaker = tool.get_filmmaker()
 	if(self.m_inCameraControlMode and mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE and filmmaker:IsValid() and filmmaker:HasFocus() == false) then
-		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK) end
-		filmmaker:TrapFocus(true)
-		filmmaker:RequestFocus()
-		filmmaker:TagRenderSceneAsDirty(false)
-		input.set_cursor_pos(self.m_oldCursorPos)
-		self.m_inCameraControlMode = false
+		self:SetGameplayMode(false)
 		return util.EVENT_REPLY_HANDLED
 	end
 
@@ -858,13 +853,8 @@ function gui.PFMViewport:InitializeCameraControls()
 	self.manipulatorControls = controls
 end
 function gui.PFMViewport:IsGameplayEnabled() return self.m_gameplayEnabled end
-function gui.PFMViewport:OnThink()
-	if(self.m_cursorTracker ~= nil) then
-		self.m_cursorTracker:Update()
-		if(not self.m_cursorTracker:HasExceededMoveThreshold(2)) then return end
-		self.m_cursorTracker = nil
-		self:DisableThinking()
-
+function gui.PFMViewport:SetGameplayMode(enabled)
+	if(enabled) then
 		self.m_oldCursorPos = input.get_cursor_pos()
 		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY) end
 		input.center_cursor()
@@ -873,8 +863,43 @@ function gui.PFMViewport:OnThink()
 		filmmaker:TrapFocus(false)
 		filmmaker:KillFocus()
 		filmmaker:TagRenderSceneAsDirty(true)
-		self.m_inCameraControlMode = true
 
+		self.m_oldInputLayerStates = {}
+		local inputLayers = filmmaker:GetInputBindingLayers()
+		for id,layer in pairs(inputLayers) do
+			self.m_oldInputLayerStates[id] = input.is_binding_layer_enabled(id)
+			input.set_binding_layer_enabled(id,false)
+		end
+		input.update_effective_input_bindings()
+
+		self.m_inCameraControlMode = true
+	else
+		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK) end
+		local filmmaker = tool.get_filmmaker()
+		filmmaker:TrapFocus(true)
+		filmmaker:RequestFocus()
+		filmmaker:TagRenderSceneAsDirty(false)
+		input.set_cursor_pos(self.m_oldCursorPos)
+
+		if(self.m_oldInputLayerStates ~= nil) then
+			for id,state in pairs(self.m_oldInputLayerStates) do
+				input.set_binding_layer_enabled(id,state)
+			end
+			self.m_oldInputLayerStates = nil
+			input.update_effective_input_bindings()
+		end
+
+		self.m_inCameraControlMode = false
+	end
+end
+function gui.PFMViewport:OnThink()
+	if(self.m_cursorTracker ~= nil) then
+		self.m_cursorTracker:Update()
+		if(not self.m_cursorTracker:HasExceededMoveThreshold(2)) then return end
+		self.m_cursorTracker = nil
+		self:DisableThinking()
+
+		self:SetGameplayMode(true)
 		return
 	end
 	local cam = game.get_render_scene_camera()
