@@ -297,8 +297,15 @@ end
 
 pfm.get_projects = function() return pfm.impl.projects end
 
-pfm.get_key_binding = function(identifier)
-	return "TODO"
+pfm.get_key_binding = function(cmd)
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm)) then
+		for id,layer in pairs(pm:GetInputBindingLayers()) do
+			local boundKeys = layer:FindBoundKeys(cmd)
+			if(#boundKeys > 0) then return boundKeys[1]:upper() end
+		end
+	end
+	return locale.get_text("unbound")
 end
 
 pfm.get_project_manager = function() return pfm.impl.projectManager end

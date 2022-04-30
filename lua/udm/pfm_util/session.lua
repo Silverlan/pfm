@@ -37,3 +37,20 @@ function pfm.udm.Session:GetPlayheadOffset() return self:GetSettings():GetPlayhe
 function pfm.udm.Session:GetFrameRate() return self:GetSettings():GetFrameRate() end
 function pfm.udm.Session:TimeOffsetToFrameOffset(offset) return self:GetSettings():TimeOffsetToFrameOffset(offset) end
 function pfm.udm.Session:FrameOffsetToTimeOffset(offset) return self:GetSettings():FrameOffsetToTimeOffset(offset) end
+
+function pfm.udm.Session:GetLastFrameIndex()
+	local filmTrack = self:GetFilmTrack()
+	local filmClipLast
+	local tLast = -math.huge
+	for _,filmClip in ipairs(filmTrack:GetFilmClips()) do
+		local timeFrame = filmClip:GetTimeFrame()
+		if(timeFrame:GetEnd() > tLast) then
+			filmClipLast = filmClip
+			tLast = timeFrame:GetEnd()
+		end
+	end
+	return self:TimeOffsetToFrameOffset(tLast)
+end
+function pfm.udm.Session:GetFrameIndexRange()
+	return 0,self:GetLastFrameIndex()
+end

@@ -206,17 +206,17 @@ function gui.PFMTimeline:InitializeToolbar()
 		self:SetEditor(gui.PFMTimeline.EDITOR_CLIP)
 		return true
 	end)
-	self.m_btClipEditor:SetTooltip(locale.get_text("pfm_clip_editor",{pfm.get_key_binding("clip_editor")}))
+	self.m_btClipEditor:SetTooltip(locale.get_text("pfm_clip_editor",{pfm.get_key_binding("pfm_action select_editor clip")}))
 	self.m_btMotionEditor = gui.PFMButton.create(toolbarLeft,"gui/pfm/icon_mode_motioneditor","gui/pfm/icon_mode_motioneditor_activated",function()
 		self:SetEditor(gui.PFMTimeline.EDITOR_MOTION)
 		return true
 	end)
-	self.m_btMotionEditor:SetTooltip(locale.get_text("pfm_motion_editor",{pfm.get_key_binding("motion_editor")}))
+	self.m_btMotionEditor:SetTooltip(locale.get_text("pfm_motion_editor",{pfm.get_key_binding("pfm_action select_editor motion")}))
 	self.m_btGraphEditor = gui.PFMButton.create(toolbarLeft,"gui/pfm/icon_mode_grapheditor","gui/pfm/icon_mode_grapheditor_activated",function()
 		self:SetEditor(gui.PFMTimeline.EDITOR_GRAPH)
 		return true
 	end)
-	self.m_btGraphEditor:SetTooltip(locale.get_text("pfm_graph_editor",{pfm.get_key_binding("graph_editor")}))
+	self.m_btGraphEditor:SetTooltip(locale.get_text("pfm_graph_editor",{pfm.get_key_binding("pfm_action select_editor graph")}))
 	gui.create("WIBase",toolbarLeft):SetSize(32,1) -- Gap
 
 	self.m_controlButtons = {}
@@ -253,35 +253,35 @@ function gui.PFMTimeline:InitializeToolbar()
 		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_SELECT)
 		return true
 	end)
-	self.m_btCtrlSelect:SetTooltip(locale.get_text("pfm_graph_editor_tool_select",{pfm.get_key_binding("graph_editor_select")}))
+	self.m_btCtrlSelect:SetTooltip(locale.get_text("pfm_graph_editor_tool_select",{pfm.get_key_binding("pfm_graph_editor_action select select")}))
 	self.m_controlButtons["select"] = self.m_btCtrlSelect
 
 	self.m_btCtrlMove = gui.PFMButton.create(self.m_controls,"gui/pfm/icon_manipulator_move","gui/pfm/icon_manipulator_move_activated",function()
 		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_MOVE)
 		return true
 	end)
-	self.m_btCtrlMove:SetTooltip(locale.get_text("pfm_graph_editor_tool_move",{pfm.get_key_binding("graph_editor_move"),locale.get_text("mouse_middle")}))
+	self.m_btCtrlMove:SetTooltip(locale.get_text("pfm_graph_editor_tool_move",{pfm.get_key_binding("pfm_graph_editor_action select move"),locale.get_text("mouse_middle")}))
 	self.m_controlButtons["move"] = self.m_btCtrlMove
 
 	self.m_btCtrlPan = gui.PFMButton.create(self.m_controls,"gui/pfm/icon_grapheditor_pan","gui/pfm/icon_grapheditor_pan_activated",function()
 		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_PAN)
 		return true
 	end)
-	self.m_btCtrlPan:SetTooltip(locale.get_text("pfm_graph_editor_tool_pan",{pfm.get_key_binding("graph_editor_pan"),locale.get_text("key_alt") .. " + " .. locale.get_text("mouse_middle")}))
+	self.m_btCtrlPan:SetTooltip(locale.get_text("pfm_graph_editor_tool_pan",{pfm.get_key_binding("pfm_graph_editor_action select pan"),locale.get_text("key_alt") .. " + " .. locale.get_text("mouse_middle")}))
 	self.m_controlButtons["pan"] = self.m_btCtrlPan
 
 	self.m_btCtrlScale = gui.PFMButton.create(self.m_controls,"gui/pfm/icon_grapheditor_scale","gui/pfm/icon_grapheditor_scale_activated",function()
 		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_SCALE)
 		return true
 	end)
-	self.m_btCtrlScale:SetTooltip(locale.get_text("pfm_graph_editor_tool_scale",{pfm.get_key_binding("graph_editor_scale"),locale.get_text("key_ctrl") .. " + " .. locale.get_text("mouse_right")}))
+	self.m_btCtrlScale:SetTooltip(locale.get_text("pfm_graph_editor_tool_scale",{pfm.get_key_binding("pfm_graph_editor_action select scale"),locale.get_text("key_ctrl") .. " + " .. locale.get_text("mouse_right")}))
 	self.m_controlButtons["scale"] = self.m_btCtrlScale
 
 	self.m_btCtrlZoom = gui.PFMButton.create(self.m_controls,"gui/pfm/icon_grapheditor_zoom","gui/pfm/icon_grapheditor_zoom_activated",function()
 		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_ZOOM)
 		return true
 	end)
-	self.m_btCtrlZoom:SetTooltip(locale.get_text("pfm_graph_editor_tool_zoom",{pfm.get_key_binding("graph_editor_zoom"),locale.get_text("key_alt") .. " + " .. locale.get_text("mouse_right")}))
+	self.m_btCtrlZoom:SetTooltip(locale.get_text("pfm_graph_editor_tool_zoom",{pfm.get_key_binding("pfm_graph_editor_action select zoom"),locale.get_text("key_alt") .. " + " .. locale.get_text("mouse_right")}))
 	self.m_controlButtons["zoom"] = self.m_btCtrlZoom
 
 	gui.create("WIBase",self.m_controls):SetSize(18,1) -- Gap
@@ -292,49 +292,49 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btTangentLinear = gui.PFMButton.create(self.m_tangentControls,"gui/pfm/icon_grapheditor_linear","gui/pfm/icon_grapheditor_linear_activated",function()
 		self:SetInterpolationMode(pfm.udm.INTERPOLATION_LINEAR)
 	end)
-	self.m_btTangentLinear:SetTooltip(locale.get_text("pfm_graph_editor_tangent_linear",{"1"}))
+	self.m_btTangentLinear:SetTooltip(locale.get_text("pfm_graph_editor_tangent_linear",{pfm.get_key_binding("pfm_graph_editor_action select tangent_linear")}))
 	self.m_controlButtons["tangent_linear"] = self.m_btTangentLinear
 
 	self.m_btTangentFlat = gui.PFMButton.create(self.m_tangentControls,"gui/pfm/icon_grapheditor_flat","gui/pfm/icon_grapheditor_flat_activated",function()
 		self:SetInterpolationMode(pfm.udm.INTERPOLATION_CONSTANT)
 	end)
-	self.m_btTangentFlat:SetTooltip(locale.get_text("pfm_graph_editor_tangent_flat",{"2"}))
+	self.m_btTangentFlat:SetTooltip(locale.get_text("pfm_graph_editor_tangent_flat",{pfm.get_key_binding("pfm_graph_editor_action select tangent_flat")}))
 	self.m_controlButtons["tangent_flat"] = self.m_btTangentFlat
 
 	self.m_btTangentSpline = gui.PFMButton.create(self.m_tangentControls,"gui/pfm/icon_grapheditor_spline","gui/pfm/icon_grapheditor_spline_activated",function()
 		self:SetInterpolationMode(pfm.udm.INTERPOLATION_BEZIER)
 	end)
-	self.m_btTangentSpline:SetTooltip(locale.get_text("pfm_graph_editor_tangent_spline",{"3"}))
+	self.m_btTangentSpline:SetTooltip(locale.get_text("pfm_graph_editor_tangent_spline",{pfm.get_key_binding("pfm_graph_editor_action select tangent_spline")}))
 	self.m_controlButtons["tangent_spline"] = self.m_btTangentSpline
 
 	self.m_btTangentStep = gui.PFMButton.create(self.m_tangentControls,"gui/pfm/icon_grapheditor_step","gui/pfm/icon_grapheditor_step_activated",function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btTangentStep:SetTooltip(locale.get_text("pfm_graph_editor_tangent_step",{"4"}))
+	self.m_btTangentStep:SetTooltip(locale.get_text("pfm_graph_editor_tangent_step",{pfm.get_key_binding("pfm_graph_editor_action select tangent_step")}))
 	self.m_controlButtons["tangent_step"] = self.m_btTangentStep
 
 	self.m_btTangentUnified = gui.PFMButton.create(self.m_tangentControls,"gui/pfm/icon_grapheditor_unified","gui/pfm/icon_grapheditor_unified_activated",function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btTangentUnified:SetTooltip(locale.get_text("pfm_graph_editor_tangent_unified",{"5"}))
+	self.m_btTangentUnified:SetTooltip(locale.get_text("pfm_graph_editor_tangent_unified",{pfm.get_key_binding("pfm_graph_editor_action select tangent_unify")}))
 	self.m_controlButtons["tangent_unify"] = self.m_btTangentUnified
 
 	self.m_btTangentEqualize = gui.PFMButton.create(self.m_tangentControls,"gui/pfm/icon_grapheditor_isometric","gui/pfm/icon_grapheditor_isometric_activated",function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btTangentEqualize:SetTooltip(locale.get_text("pfm_graph_editor_tangent_isometric",{"6"}))
+	self.m_btTangentEqualize:SetTooltip(locale.get_text("pfm_graph_editor_tangent_isometric",{pfm.get_key_binding("pfm_graph_editor_action select tangent_equalize")}))
 	self.m_controlButtons["tangent_equalize"] = self.m_btTangentEqualize
 
 	self.m_btTangentWeighted = gui.PFMButton.create(self.m_tangentControls,"gui/pfm/icon_grapheditor_weighted","gui/pfm/icon_grapheditor_weighted_activated",function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btTangentWeighted:SetTooltip(locale.get_text("pfm_graph_editor_tangent_weighted",{"7"}))
+	self.m_btTangentWeighted:SetTooltip(locale.get_text("pfm_graph_editor_tangent_weighted",{pfm.get_key_binding("pfm_graph_editor_action select tangent_weighted")}))
 	self.m_controlButtons["tangent_weighted"] = self.m_btTangentWeighted
 
 	self.m_btTangentUnweighted = gui.PFMButton.create(self.m_tangentControls,"gui/pfm/icon_grapheditor_unweighted","gui/pfm/icon_grapheditor_unweighted_activated",function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btTangentUnweighted:SetTooltip(locale.get_text("pfm_graph_editor_tangent_unweighted",{"8"}))
+	self.m_btTangentUnweighted:SetTooltip(locale.get_text("pfm_graph_editor_tangent_unweighted",{pfm.get_key_binding("pfm_graph_editor_action select tangent_unweighted")}))
 	self.m_controlButtons["tangent_unweighted"] = self.m_btTangentUnweighted
 
 	gui.create("WIBase",self.m_tangentControls):SetSize(18,1) -- Gap
