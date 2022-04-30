@@ -1212,21 +1212,26 @@ local function calc_graph_curve_data_points(interpMethod,easingMode,pathKeys,key
 		-- to fill our animation channel with. The more samples we use, the more accurately it will match
 		-- the path of the original curve, but at the cost of memory. To reduce the number of samples we need, we create
 		-- a sparse distribution at straight curve segments, and a tight distribution at segments with steep angles.
-		local maxStepCount = 100 -- Number of samples will never exceed this value
+		local minDevAngle = console.get_convar_float("pfm_animation_min_curve_sample_deviation_angle")
+		local maxStepCount = console.get_convar_int("pfm_animation_max_curve_sample_count") -- Number of samples will never exceed this value
 		local dt = 1.0 /(maxStepCount -1)
 		local timeValues = {calc_point(0.0,dt)}
 		local startPoint = calc_point(0.0,dt)
 		local endPoint = calc_point(1.0,dt)
 		local prevPoint = startPoint
 		local n = (endPoint -startPoint):GetNormal()
+		local deviation = 0.0
 		for i=1,maxStepCount -2 do
 			local t = i *dt
 			local point = calc_point(t,dt)
 			local nToPoint = (point -prevPoint):GetNormal()
-			local dot = n:DotProduct(nToPoint)
-			if(dot < 0.995) then -- Only create a sample for this point if it deviates from a straight line to the previous sample (i.e. if linear interpolation would be insufficient)
+			local ang = math.deg(n:GetAngle(nToPoint))
+			deviation = deviation +ang
+			if(deviation >= minDevAngle) then -- Only create a sample for this point if it deviates from a straight line to the previous sample (i.e. if linear interpolation would be insufficient)
 				table.insert(timeValues,point)
 				n = nToPoint
+
+				deviation = 0
 			end
 
 			prevPoint = point
@@ -1242,7 +1247,6 @@ local function calc_graph_curve_data_points(interpMethod,easingMode,pathKeys,key
 			dataValues[i] = calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex0,keyIndex1,timestamps[i])
 		end
 	end
-
 	return timestamps,dataValues
 end
 
