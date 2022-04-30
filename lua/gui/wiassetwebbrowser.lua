@@ -32,7 +32,7 @@ function Element:OnInitialize()
 	p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
 
-	local elNsfw,wrapper = p:AddDropDownMenu("Enable NSFW Content","enable_nsfw_content",{
+	local elNsfw,wrapper = p:AddDropDownMenu(locale.get_text("pfm_web_browser_enable_nsfw_content"),"enable_nsfw_content",{
 		{"0",locale.get_text("no")},
 		{"1",locale.get_text("yes")}
 	},"0",function() self:UpdateBookmarks() end)
@@ -165,10 +165,18 @@ function Element:InitializeBrowser(parent,w,h)
 		-- Enable "18+" and "Furry" content
 		for _,button in ipairs({"nsfw","furry"}) do
 			el:ExecuteJavaScript(
-				"var el = document.querySelector('[adultcontent=\"False\"]').shadowRoot.querySelector('[identifier=\"" .. button .. "\"]');" ..
+				"var el = document.querySelector('[adultcontent=\"0\"]').shadowRoot.querySelector('[identifier=\"" .. button .. "\"]');" ..
 				"var event = new MouseEvent('click', {});" ..
-				"if(!el.checked)" ..
-				"	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
+				"var toggleState = el.getAttribute('togglestate');" ..
+				"if(toggleState == '0')" ..
+				"{" ..
+				"	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);" ..
+				"}" ..
+				"else if(toggleState == '2')" ..
+				"{" ..
+				"	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);" ..
+				"	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);" ..
+				"}"
 			)
 		end
 	end)
