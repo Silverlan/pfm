@@ -31,7 +31,6 @@ include("unirender.lua")
 include("message_popup.lua")
 include("tree/pfm_tree.lua")
 include("project_packer.lua")
-include("udm_converter.lua")
 
 -- Load and initialize schema
 pfm.udm = pfm.udm or {}
