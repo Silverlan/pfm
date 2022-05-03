@@ -227,6 +227,8 @@ function gui.PFMFrame:AttachTab(identifier)
 			panel:SetPos(0,0)
 			panel:SetSize(self.m_contents:GetWidth(),self.m_contents:GetHeight())
 			panel:SetAnchor(0,0,1,1)
+			panel:TrapFocus(false)
+			panel:KillFocus()
 		else panel:Remove() end
 	end
 

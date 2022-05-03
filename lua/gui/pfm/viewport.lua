@@ -282,7 +282,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 	end]]
 
 	local filmmaker = tool.get_filmmaker()
-	if(self.m_inCameraControlMode and mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE and filmmaker:IsValid() and filmmaker:HasFocus() == false) then
+	if(self.m_inCameraControlMode and mouseButton == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE and filmmaker:IsValid()) then
 		self:SetGameplayMode(false)
 		return util.EVENT_REPLY_HANDLED
 	end
@@ -859,9 +859,12 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY) end
 		input.center_cursor()
 
+		local window = self:GetRootWindow()
+		gui.set_focus_enabled(window,false)
+
 		local filmmaker = tool.get_filmmaker()
-		filmmaker:TrapFocus(false)
-		filmmaker:KillFocus()
+		-- filmmaker:TrapFocus(false)
+		-- filmmaker:KillFocus()
 		filmmaker:TagRenderSceneAsDirty(true)
 
 		self.m_oldInputLayerStates = {}
@@ -875,9 +878,13 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 		self.m_inCameraControlMode = true
 	else
 		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK) end
+
+		local window = self:GetRootWindow()
+		gui.set_focus_enabled(window,true)
+
 		local filmmaker = tool.get_filmmaker()
-		filmmaker:TrapFocus(true)
-		filmmaker:RequestFocus()
+		-- filmmaker:TrapFocus(true)
+		-- filmmaker:RequestFocus()
 		filmmaker:TagRenderSceneAsDirty(false)
 		input.set_cursor_pos(self.m_oldCursorPos)
 

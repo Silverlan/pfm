@@ -154,8 +154,8 @@ function gui.RenderImage:SetDOFState(b)
 	end
 	if(self.m_dsDof ~= nil or self.m_texture == nil or self.m_depthTex == nil) then return end
 	if(util.is_valid(self.m_cbPreGUIDraw)) then self.m_cbPreGUIDraw:Remove() end
-	self.m_cbPreGUIDraw = game.add_callback("PreGUIDraw",function(drawCmd)
-		self:RenderDOF(drawCmd)
+	self.m_cbPreGUIDraw = game.add_callback("PreGUIDraw",function()
+		self:RenderDOF()
 		-- _x:RenderPragmaParticleSystems(self.m_rtStaging:GetTexture(),drawCmd)
 	end)
 	if(util.is_valid(self.m_test)) then self.m_test:Remove() end
@@ -191,6 +191,7 @@ function gui.RenderImage:RenderParticleSystems()
 	-- self.m_rtStaging
 end
 function gui.RenderImage:RenderDOF(drawCmd)
+	if(true) then return end
 	if(self.m_nearZ == nil or self.m_texture == nil) then return end
 	local texStaging = self.m_rtStaging:GetTexture()
 	drawCmd:RecordImageBarrier(

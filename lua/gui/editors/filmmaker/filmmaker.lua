@@ -1275,9 +1275,14 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		return el
 	end)
 
-	self:RegisterWindow(self.m_viewportFrame,"primary_viewport",locale.get_text("pfm_primary_viewport"),function() return gui.create("WIPFMViewport") end)
+	self:RegisterWindow(self.m_viewportFrame,"primary_viewport",locale.get_text("pfm_primary_viewport"),function()
+		local el = gui.create("WIPFMViewport")
+		el:AddCallback("OnReattached",function(el,window) self:RequestFocus() end)
+		return el
+	end)
 	self:RegisterWindow(self.m_viewportFrame,"secondary_viewport",locale.get_text("pfm_secondary_viewport"),function()
 		local el = gui.create("WIPFMViewport")
+		el:AddCallback("OnReattached",function(el,window) self:RequestFocus() end)
 		el:InitializeCustomScene()
 		return el
 	end)
