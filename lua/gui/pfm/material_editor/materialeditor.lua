@@ -447,7 +447,49 @@ function gui.PFMMaterialEditor:InitializePreviewControls()
 	self.m_rtViewport:GetRenderSettings():SetLightIntensityFactor(util.is_valid(rpC) and rpC:GetIBLStrength() or 1.0)
 	self.m_ctrlIblStrength = iblStrength
 
+	local btUpdateHair = gui.create("WIPFMButton",self.m_renderControlsVbox)
+	btUpdateHair:SetText("Update hair")
+	btUpdateHair:AddCallback("OnPressed",function(btRaytracying) self:UpdateHair() end)
+	self.m_btUpdateHair = btUpdateHair
+
 	gui.create("WIBase",self.m_renderControlsVbox)
+end
+function gui.PFMMaterialEditor:UpdateHair()
+	local ent = self.m_viewport:GetEntity()
+	local mdl = util.is_valid(ent) and ent:GetModel() or nil
+	if(mdl == nil) then return end
+	local matData = self:GetMaterialDataBlock()
+	local dbHair = matData:FindBlock("hair")
+	local hairConfig
+	if(dbHair ~= nil) then
+		local enabled = true
+		if(dbHair:HasValue("enabled")) then enabled = dbHair:GetBool("enabled") end
+		if(enabled) then
+			hairConfig = util.HairConfig()
+			hairConfig.hairPerSquareMeter = dbHair:GetFloat("hair_per_square_meter",1000000)
+			hairConfig.numSegments = dbHair:GetFloat("segment_count",2)
+			hairConfig.defaultThickness = util.units_to_metres(dbHair:GetFloat("thickness",0.005))
+			hairConfig.defaultLength = util.units_to_metres(dbHair:GetFloat("length",0.6))
+			hairConfig.defaultHairStrength = dbHair:GetFloat("strength",0.4)
+			hairConfig.randomHairLengthFactor = dbHair:GetFloat("random_hair_length_factor",0.3)
+			hairConfig.curvature = dbHair:GetFloat("curvature",0.6)
+		end
+	end
+
+	for _,meshGroup in ipairs(mdl:GetMeshGroups()) do
+		for _,mesh in ipairs(meshGroup:GetMeshes()) do
+			for _,subMesh in ipairs(mesh:GetSubMeshes()) do
+				local extData = subMesh:GetExtensionData()
+				if(hairConfig ~= nil) then
+					local hairData = util.generate_hair_data(hairConfig.hairPerSquareMeter,subMesh)
+					local hairFile = util.generate_hair_file(hairConfig,hairData)
+
+					local udmData = extData:GetFromPath("hair/strandData")
+					hairFile:Save(udm.AssetData(udmData,"PHD",1))
+				else extData:RemoveValue("hair") end
+			end
+		end
+	end
 end
 function gui.PFMMaterialEditor:SetRenderer(renderer)
 	self.m_vpType = renderer
