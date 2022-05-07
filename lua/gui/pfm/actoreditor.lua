@@ -886,14 +886,13 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			return valid
 		end
 
-		local memberIdx = 0
-		local memberInfo = (c ~= nil) and c:GetMemberInfo(memberIdx) or nil
 		local function getMemberInfo(c,name)
 			local idx = c:GetMemberIndex(name)
 			if(idx == nil) then return end
 			return c:GetMemberInfo(idx)
 		end
-		while(memberInfo ~= nil) do
+		for _,memberIdx in ipairs(c:GetMemberIndices()) do
+			local memberInfo = c:GetMemberInfo(memberIdx)
 			local controlData = {}
 			local info = memberInfo
 			local memberName = info.name
@@ -975,8 +974,6 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			else
 				pfm.log("Unable to add control for member '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 			end
-			memberIdx = memberIdx +1
-			memberInfo = c:GetMemberInfo(memberIdx)
 		end
 	end
 end
