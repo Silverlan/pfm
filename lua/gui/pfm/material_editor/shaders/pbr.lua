@@ -133,11 +133,13 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	end
 	local ctrlMetalness
 	local ctrlRoughness
+	local ctrlWetness
 	ctrlVbox:AddDropDownMenu(locale.get_text("preset"),"preset",pbrPresets,0,function(el,option)
 		local surfMat = phys.get_surface_material(el:GetOptionValue(option))
 		if(surfMat == nil) then return end
 		ctrlMetalness:SetValue(surfMat:GetPBRMetalness())
 		ctrlRoughness:SetValue(surfMat:GetPBRRoughness())
+		ctrlWetness:SetValue(0.0)
 		--[[local preset = presets[option +1]
 		if(preset == nil) then return end
 		if(preset.samples ~= nil) then samplesPerPixel:SetValue(preset.samples) end
@@ -154,6 +156,11 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	ctrlRoughness = ctrlVbox:AddSliderControl(locale.get_text("roughness"),"roughness",0.5,0.0,1.0,function(el,value) self:SetMaterialParameter("float","roughness_factor",value) end,0.01)
 	ctrlRoughness:SetTooltip(locale.get_text("pfm_roughness_desc"))
 	self:LinkControlToMaterialParameter("roughness_factor",ctrlRoughness)
+
+	-- Wetness
+	ctrlWetness = ctrlVbox:AddSliderControl(locale.get_text("wetness"),"wetness",0.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","wetness_factor",value) end,0.01)
+	ctrlWetness:SetTooltip(locale.get_text("pfm_wetness_desc"))
+	self:LinkControlToMaterialParameter("wetness_factor",ctrlWetness)
 
 	-- Emission factor
 	local ctrlEmissionFactor = ctrlVbox:AddColorField(locale.get_text("emission_factor"),"emission_factor",Color.White,function(oldCol,newCol)

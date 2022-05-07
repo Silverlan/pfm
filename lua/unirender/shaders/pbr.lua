@@ -127,7 +127,7 @@ end
 function unirender.PBRShader:Initialize()
 	local mat = self:GetMaterial()
 
-	local dbHair = mat and mat:GetDataBlock():FindBlock("hair")
+	--[[local dbHair = mat and mat:GetDataBlock():FindBlock("hair")
 	if(dbHair ~= nil) then
 		local enabled = true
 		if(dbHair:HasValue("enabled")) then enabled = dbHair:GetBool("enabled") end
@@ -142,7 +142,7 @@ function unirender.PBRShader:Initialize()
 			hairConfig.curvature = dbHair:GetFloat("curvature",0.6)
 			self:SetHairConfig(hairConfig)
 		end
-	end
+	end]]
 
 	local dbSubdiv = mat and mat:GetDataBlock():FindBlock("subdivision")
 	if(dbSubdiv ~= nil) then
@@ -271,7 +271,6 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 					bsdf:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE_METHOD,method)]]
 					bsdf:SetProperty(unirender.Node.principled_bsdf.IN_SUBSURFACE_METHOD,unirender.SUBSURFACE_SCATTERING_METHOD_RANDOM_WALK)
 				end
-
 				if(sss:HasValue("scatter_color")) then
 					local radius = sss:GetColor("scatter_color"):ToVector()
 					if(sssVolume ~= nil) then sssVolume:SetProperty(unirender.Node.volume_homogeneous.IN_SCATTERING,radius)
@@ -315,6 +314,42 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 	local metalness,roughness = self:AddMetalnessRoughnessNode(desc,mat)
 	if(useGlossyBsdf == false) then metalness:Link(bsdf,unirender.Node.principled_bsdf.IN_METALLIC) end
 	roughness:Link(bsdf,unirender.Node.principled_bsdf.IN_ROUGHNESS)
+
+	-- Wetness
+	local wetnessFactor = data:GetFloat("wetness_factor",0.0)
+	if(wetnessFactor > 0.0) then
+		local wetnessMapTex = unirender.get_texture_path("pbr/wetnessmap_default")
+		if(wetnessMapTex ~= nil) then
+			local texCoord = desc:AddNode(unirender.NODE_TEXTURE_COORDINATE)
+			local noiseTex = desc:AddNode(unirender.NODE_NOISE_TEXTURE)
+			noiseTex:SetProperty(unirender.Node.noise_texture.IN_SCALE,750.0)
+			noiseTex:SetProperty(unirender.Node.noise_texture.IN_DETAIL,13.0)
+			noiseTex:SetProperty(unirender.Node.noise_texture.IN_ROUGHNESS,0.0)
+			noiseTex:SetProperty(unirender.Node.noise_texture.IN_DISTORTION,0.9)
+
+			local wetnessMap = desc:AddTextureNode(wetnessMapTex)
+
+			texCoord:GetOutputSocket(unirender.Node.texture_coordinate.OUT_OBJECT):Link(noiseTex,unirender.Node.noise_texture.IN_VECTOR)
+			texCoord:GetOutputSocket(unirender.Node.texture_coordinate.OUT_OBJECT):Link(wetnessMap,unirender.Node.image_texture.IN_VECTOR)
+
+			local rgbRamp = desc:AddNode(unirender.NODE_RGB_RAMP)
+			rgbRamp:SetProperty(unirender.Node.rgb_ramp.IN_RAMP,{Vector(0.0,0.0,0.0),Vector(0.5,0.5,0.5)})
+			rgbRamp:SetProperty(unirender.Node.rgb_ramp.IN_RAMP_ALPHA,{1.0,1.0})
+
+			local fac = noiseTex:GetOutputSocket(unirender.Node.noise_texture.OUT_FAC)
+			fac:Link(rgbRamp,unirender.Node.rgb_ramp.IN_FAC)
+
+			local rgbToBw = desc:AddNode(unirender.NODE_RGB_TO_BW)
+			rgbRamp:GetOutputSocket(unirender.Node.rgb_ramp.OUT_COLOR):Link(rgbToBw,unirender.Node.rgb_to_bw.IN_COLOR)
+
+			local finalRoughness = rgbToBw:GetOutputSocket(unirender.Node.rgb_to_bw.OUT_VAL)
+			finalRoughness = finalRoughness *(unirender.Socket(1.0) -wetnessMap:GetPrimaryOutputSocket().r):Max(unirender.Socket(0.5))
+			if(wetnessFactor < 1.0) then
+				finalRoughness = roughness:Lerp(finalRoughness,unirender.Socket(wetnessFactor))
+			end
+			finalRoughness:Link(bsdf,unirender.Node.principled_bsdf.IN_ROUGHNESS)
+		end
+	end
 
 	bsdf:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_SURFACE)
 	if(sssVolume ~= nil) then sssVolume:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_VOLUME)
