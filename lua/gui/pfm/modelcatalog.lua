@@ -54,7 +54,7 @@ function gui.PFMModelCatalog:OnInitialize()
 	p:Update()
 	p:SizeToContents()
 
-	local scrollContainer = gui.create("WIScrollContainer",self.m_contents,0,0,self:GetWidth(),self:GetHeight() -48)
+	local scrollContainer = gui.create("WIScrollContainer",self.m_contents,0,0,self:GetWidth(),self:GetHeight() -72)
 	scrollContainer:SetContentsWidthFixed(true)
 	--[[scrollContainer:AddCallback("SetSize",function(el)
 		if(self:IsValid() and util.is_valid(self.m_explorer)) then
