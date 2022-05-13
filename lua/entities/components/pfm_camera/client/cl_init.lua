@@ -27,7 +27,7 @@ Component.set_active_camera = function(cam)
 	pfm.tag_render_scene_as_dirty()
 	if(util.is_valid(Component.impl.activeCamera)) then
 		local toggleC = Component.impl.activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
-		if(toggleC ~= nil) then toggleC:TurnOff() end
+		-- if(toggleC ~= nil) then toggleC:TurnOff() end
 		Component.impl.activeCamera = nil
 	end
 	if(util.is_valid(cam) == false) then
@@ -37,7 +37,7 @@ Component.set_active_camera = function(cam)
 	pfm.log("Setting active camera to: " .. cam:GetEntity():GetName(),pfm.LOG_CATEGORY_PFM_GAME)
 	Component.impl.activeCamera = cam
 	local toggleC = Component.impl.activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
-	if(toggleC ~= nil) then toggleC:SetTurnedOn(Component.impl.cameraEnabled) end
+	-- if(toggleC ~= nil) then toggleC:SetTurnedOn(Component.impl.cameraEnabled) end
 	Component.impl.activeCamera:UpdateVRView()
 end
 Component.set_vr_view_enabled = function(enabled)

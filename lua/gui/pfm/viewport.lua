@@ -35,6 +35,9 @@ gui.PFMViewport.CAMERA_MODE_PLAYBACK = 0
 gui.PFMViewport.CAMERA_MODE_FLY = 1
 gui.PFMViewport.CAMERA_MODE_WALK = 2
 gui.PFMViewport.CAMERA_MODE_COUNT = 3
+
+gui.PFMViewport.CAMERA_VIEW_GAME = 0
+gui.PFMViewport.CAMERA_VIEW_SCENE = 1
 function gui.PFMViewport:__init()
 	gui.PFMBaseViewport.__init(self)
 end
@@ -47,6 +50,7 @@ function gui.PFMViewport:OnInitialize()
 	self.m_titleBar:SetHeight(37)
 
 	self.m_gameplayEnabled = false
+	self.m_cameraView = gui.PFMViewport.CAMERA_VIEW_SCENE
 	self.m_aspectRatioWrapper:AddCallback("OnAspectRatioChanged",function(el,aspectRatio)
 		if(util.is_valid(self.m_viewport)) then
 			local scene = self.m_viewport:GetScene()
@@ -112,7 +116,7 @@ function gui.PFMViewport:InitializeCustomScene()
 	self.m_camera = cam
 	scene:SetActiveCamera(cam)
 
-	self.m_viewport:SetScene(scene)
+	self.m_viewport:SetScene(scene,nil,function() return game.is_default_game_render_enabled() end)
 end
 function gui.PFMViewport:InitializeViewport(parent)
 	gui.PFMBaseViewport.InitializeViewport(self,parent)
@@ -224,6 +228,8 @@ function gui.PFMViewport:SetRtViewportRenderer(renderer)
 	if(enabled ~= true) then return end
 	local rtViewport = gui.create("WIRealtimeRaytracedViewport",self.m_vpContainer,0,0,self.m_vpContainer:GetWidth(),self.m_vpContainer:GetHeight(),0,0,1,1)
 	rtViewport:SetRenderer(renderer)
+	local scene = self.m_viewport:GetScene()
+	if(util.is_valid(scene)) then rtViewport:SetGameScene(scene) end
 	self.m_rtViewport = rtViewport
 
 	self:UpdateRenderSettings()
@@ -876,6 +882,7 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 		input.update_effective_input_bindings()
 
 		self.m_inCameraControlMode = true
+		self:UpdateWorkCamera()
 	else
 		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK) end
 
@@ -909,7 +916,8 @@ function gui.PFMViewport:OnThink()
 		self:SetGameplayMode(true)
 		return
 	end
-	local cam = game.get_render_scene_camera()
+	local scene = self.m_viewport:GetScene()
+	local cam = util.is_valid(scene) and scene:GetActiveCamera() or nil
 	if(util.is_valid(cam) == false or self.m_camStartPose == nil) then return end
 	local pose = cam:GetEntity():GetPose()
 	if(pose:GetOrigin():DistanceSqr(self.m_camStartPose:GetOrigin()) < 0.01 and pose:GetRotation():Distance(self.m_camStartPose:GetRotation()) < 0.01) then return end
@@ -931,8 +939,36 @@ function gui.PFMViewport:SwitchToGameplay(enabled)
 		if(pl ~= nil) then pl:SetObserverMode(ents.PlayerComponent.OBSERVERMODE_FIRSTPERSON) end
 	end
 end
+function gui.PFMViewport:GetWorkCamera()
+	return self.m_viewport:GetSceneCamera()
+end
+function gui.PFMViewport:GetSceneCamera()
+	local filmClip = pfm.get_project_manager():GetActiveGameViewFilmClip()
+	local actor = (filmClip ~= nil) and filmClip:GetCamera() or nil
+	local ent = (actor ~= nil) and actor:FindEntity() or nil
+	if(util.is_valid(ent) == false) then return end
+	return ent:GetComponent(ents.COMPONENT_CAMERA)
+end
+function gui.PFMViewport:SwitchToCamera(cam)
+	local scene = self.m_viewport:GetScene()
+	if(util.is_valid(scene)) then
+		scene:SetActiveCamera(cam)
+	end
+	pfm.tag_render_scene_as_dirty()
+end
 function gui.PFMViewport:SwitchToSceneCamera()
 	self:SwitchToGameplay(false)
+	local cam = self:GetSceneCamera()
+	if(util.is_valid(cam)) then
+		self:SwitchToCamera(cam)
+		local name = cam:GetEntity():GetName()
+		if(#name == 0) then name = locale.get_text("pfm_scene_camera") end
+		self.m_btCamera:SetText(name)
+
+		self.m_cameraView = gui.PFMViewport.CAMERA_VIEW_SCENE
+		game.clear_gameplay_control_camera()
+	end
+	--[[self:SwitchToGameplay(false)
 	local camScene = ents.PFMCamera.get_active_camera()
 	local camName = ""
 	if(util.is_valid(camScene)) then
@@ -942,16 +978,50 @@ function gui.PFMViewport:SwitchToSceneCamera()
 	if(#camName == 0) then camName = locale.get_text("pfm_scene_camera") end
 	self.m_btCamera:SetText(camName)
 	ents.PFMCamera.set_camera_enabled(true)
+
+	local scene = self.m_viewport:GetScene()
+	if(util.is_valid(scene)) then
+		local c = ents.get_by_local_index(31):GetComponent(ents.COMPONENT_CAMERA)
+		scene:SetActiveCamera(c)
+	end]]
+end
+function gui.PFMViewport:UpdateWorkCamera()
+	local cam = self:GetWorkCamera()
+	if(util.is_valid(cam) == false) then return end
+	local pose = cam:GetEntity():GetPose()
+	local pos = pose:GetOrigin()
+	local ang = pose:GetRotation():ToEulerAngles()
+	local pl = ents.get_local_player()
+	if(util.is_valid(pl)) then pos = pos -pl:GetViewOffset() end
+	console.run("setpos",tostring(pos.x),tostring(pos.y),tostring(pos.z))
+	console.run("setang",tostring(ang.p),tostring(ang.y),0.0)
+	game.set_gameplay_control_camera(cam)
 end
 function gui.PFMViewport:SwitchToWorkCamera(ignoreGameplay)
 	if(ignoreGameplay ~= true) then self:SwitchToGameplay(false) end
+	local cam = self:GetWorkCamera()
+	if(util.is_valid(cam)) then self:SwitchToCamera(cam) end
 	if(util.is_valid(self.m_btCamera)) then self.m_btCamera:SetText(locale.get_text("pfm_work_camera")) end
-	ents.PFMCamera.set_camera_enabled(false)
+
+	self.m_cameraView = gui.PFMViewport.CAMERA_VIEW_GAME
+	self:UpdateWorkCamera()
+
+	--[[if(ignoreGameplay ~= true) then self:SwitchToGameplay(false) end
+	if(util.is_valid(self.m_btCamera)) then self.m_btCamera:SetText(locale.get_text("pfm_work_camera")) end
+	-- ents.PFMCamera.set_camera_enabled(false)
+
+	local scene = self.m_viewport:GetScene()
+	if(util.is_valid(scene)) then
+		local cam = game.get_primary_camera()
+		if(util.is_valid(cam)) then
+			scene:SetActiveCamera(cam)
+		end
+	end]]
 end
 function gui.PFMViewport:CopyToCamera(camSrc,camDst)
 
 end
-function gui.PFMViewport:IsSceneCamera() return ents.PFMCamera.is_camera_enabled() end
+function gui.PFMViewport:IsSceneCamera() return self.m_cameraView == gui.PFMViewport.CAMERA_VIEW_SCENE end
 function gui.PFMViewport:IsWorkCamera() return not self:IsSceneCamera() end
 function gui.PFMViewport:ToggleCamera()
 	if(self:IsSceneCamera()) then self:SwitchToWorkCamera()

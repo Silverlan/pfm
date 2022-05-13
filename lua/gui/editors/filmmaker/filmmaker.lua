@@ -685,6 +685,7 @@ function gui.WIFilmmaker:GetViewportElement()
 	return util.is_valid(vp) and vp:GetViewport() or nil
 end
 function gui.WIFilmmaker:GetSecondaryViewport() return self:GetWindow("secondary_viewport") or nil end
+function gui.WIFilmmaker:GetTertiaryViewport() return self:GetWindow("tertiary_viewport") or nil end
 function gui.WIFilmmaker:GetRenderTab() return self:GetWindow("render") or nil end
 function gui.WIFilmmaker:GetActorEditor() return self:GetWindow("actor_editor") or nil end
 function gui.WIFilmmaker:GetElementViewer() return self:GetWindow("element_viewer") or nil end
@@ -1281,6 +1282,12 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		return el
 	end)
 	self:RegisterWindow(self.m_viewportFrame,"secondary_viewport",locale.get_text("pfm_secondary_viewport"),function()
+		local el = gui.create("WIPFMViewport")
+		el:AddCallback("OnReattached",function(el,window) self:RequestFocus() end)
+		el:InitializeCustomScene()
+		return el
+	end)
+	self:RegisterWindow(self.m_viewportFrame,"tertiary_viewport",locale.get_text("pfm_tertiary_viewport"),function()
 		local el = gui.create("WIPFMViewport")
 		el:AddCallback("OnReattached",function(el,window) self:RequestFocus() end)
 		el:InitializeCustomScene()
