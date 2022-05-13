@@ -479,14 +479,17 @@ function gui.PFMMaterialEditor:UpdateHair()
 	for _,meshGroup in ipairs(mdl:GetMeshGroups()) do
 		for _,mesh in ipairs(meshGroup:GetMeshes()) do
 			for _,subMesh in ipairs(mesh:GetSubMeshes()) do
-				local extData = subMesh:GetExtensionData()
-				if(hairConfig ~= nil) then
-					local hairData = util.generate_hair_data(hairConfig.hairPerSquareMeter,subMesh)
-					local hairFile = util.generate_hair_file(hairConfig,hairData)
+				local meshMat = mdl:GetMaterial(subMesh:GetSkinTextureIndex())
+				if(meshMat:GetName() == self.m_material:GetName()) then
+					local extData = subMesh:GetExtensionData()
+					if(hairConfig ~= nil) then
+						local hairData = util.generate_hair_data(hairConfig.hairPerSquareMeter,subMesh)
+						local hairFile = util.generate_hair_file(hairConfig,hairData)
 
-					local udmData = extData:GetFromPath("hair/strandData")
-					hairFile:Save(udm.AssetData(udmData,"PHD",1))
-				else extData:RemoveValue("hair") end
+						local udmData = extData:GetFromPath("hair/strandData")
+						hairFile:Save(udm.AssetData(udmData,"PHD",1))
+					else extData:RemoveValue("hair") end
+				end
 			end
 		end
 	end
