@@ -1284,7 +1284,38 @@ local function apply_post_processing(converter,project,filmClip,processedObjects
 end
 function sfm.ProjectConverter:ApplyPostProcessing()
 	pfm.log("Applying post-processing...",pfm.LOG_CATEGORY_PFM_CONVERTER)
+
+	local session = self.m_pfmProject:GetSession()
+	for _,filmClip in ipairs(session:GetClips()) do
+		local trackGroup = filmClip:FindTrackGroup("subClipTrackGroup")
+		if(trackGroup == nil) then
+			trackGroup = filmClip:AddTrackGroup()
+			trackGroup:SetName("subClipTrackGroup")
+		end
+
+		local track = trackGroup:FindTrack("Film")
+		if(track == nil) then
+			track = trackGroup:AddTrack()
+			track:SetName("Film")
+		end
+
+		for _,subFilmClip in ipairs(track:GetFilmClips()) do
+			local channelTrackGroup = subFilmClip:FindTrackGroup("channelTrackGroup")
+			if(channelTrackGroup == nil) then
+				channelTrackGroup = subFilmClip:AddTrackGroup()
+				channelTrackGroup:SetName("channelTrackGroup")
+			end
+
+			local track = channelTrackGroup:FindTrack("animSetEditorChannels")
+			if(track == nil) then
+				track = channelTrackGroup:AddTrack()
+				track:SetName("animSetEditorChannels")
+			end
+		end
+	end
+
 	if(true) then return end
+	-- Obsolete
 	local function iterate_session(el,type,callback,iterated)
 		iterated = iterated or {}
 		for name,child in pairs(el:GetChildren()) do
