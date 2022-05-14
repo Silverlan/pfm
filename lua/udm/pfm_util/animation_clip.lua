@@ -54,6 +54,8 @@ function pfm.udm.AnimationClip:LocalizeOffset(offset) return self:GetTimeFrame()
 function pfm.udm.AnimationClip:LocalizeTimeOffset(offset) return self:GetTimeFrame():LocalizeTimeOffset(offset) end
 function pfm.udm.AnimationClip:GlobalizeOffset(offset) return self:GetTimeFrame():GlobalizeOffset(offset) end
 function pfm.udm.AnimationClip:GlobalizeTimeOffset(offset) return self:GetTimeFrame():GlobalizeTimeOffset(offset) end
+function pfm.udm.AnimationClip:LocalizeOffsetAbs(offset) return self:GetTimeFrame():LocalizeOffsetAbs(offset) end
+function pfm.udm.AnimationClip:GlobalizeOffsetAbs(offset) return self:GetTimeFrame():GlobalizeOffsetAbs(offset) end
 
 
 -- See http://lua-users.org/files/wiki_insecure/users/chill/table.binsearch-0.3.lua

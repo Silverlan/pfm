@@ -31,3 +31,29 @@ function pfm.udm.BookmarkSet:RemoveBookmarkAtTimestamp(t)
 	if(bm == nil) then return end
 	self:RemoveBookmark(bm)
 end
+
+function pfm.udm.Bookmark:GetInterfaceTime()
+	local t = self:GetTime()
+	local parent = self:GetParent()
+	while(parent ~= nil) do
+		if(parent.GetTimeFrame) then
+			local tf = parent:GetTimeFrame()
+			t = tf:GlobalizeOffset(t)
+		end
+		parent = parent:GetParent()
+	end
+	return t
+end
+
+function pfm.udm.Bookmark:GetDataTime()
+	local t = self:GetTime()
+	local parent = self:GetParent()
+	while(parent ~= nil) do
+		if(parent.GetTimeFrame) then
+			local tf = parent:GetTimeFrame()
+			t = tf:LocalizeOffset(t)
+		end
+		parent = parent:GetParent()
+	end
+	return t
+end

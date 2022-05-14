@@ -58,10 +58,10 @@ function gui.Axis:AttachElementToValue(el,value)
 	self:ScheduleUpdate()
 	return index
 end
-function gui.Axis:AttachElementToValueWithUdmProperty(el,udmEl,propName,timeFrame)
+function gui.Axis:AttachElementToValueWithUdmProperty(el,udmEl,propName,translateTime)
 	local val = udmEl:GetPropertyValue(propName)
-	local i = self:AttachElementToValue(el,(timeFrame ~= nil) and timeFrame:GlobalizeTimeOffset(val) or val)
-	table.insert(self.m_items[i].callbacks,udmEl:AddChangeListener(propName,function(c,newTime) self:UpdateAttachment(i,(timeFrame ~= nil) and timeFrame:GlobalizeTimeOffset(newTime) or newTime) end))
+	local i = self:AttachElementToValue(el,(translateTime ~= nil) and translateTime(val) or val)
+	table.insert(self.m_items[i].callbacks,udmEl:AddChangeListener(propName,function(c,newTime) self:UpdateAttachment(i,(translateTime ~= nil) and translateTime(newTime) or newTime) end))
 end
 function gui.Axis:AttachElementToRange(el,timeFrame)
 	local index = self.m_itemIndex

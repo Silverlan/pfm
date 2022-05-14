@@ -42,3 +42,33 @@ end
 function pfm.udm.TimeFrame:GlobalizeTimeOffset(offset)
     return offset +self:GetStart()
 end
+
+function pfm.udm.TimeFrame:LocalizeOffsetAbs(t)
+	t = self:LocalizeOffset(t)
+	local parent = self:GetParent()
+	while(parent ~= nil) do
+		if(parent.GetTimeFrame) then
+			local tf = parent:GetTimeFrame()
+			if(util.is_same_object(tf,self) == false) then
+				t = tf:LocalizeOffset(t)
+			end
+		end
+		parent = parent:GetParent()
+	end
+	return t
+end
+
+function pfm.udm.TimeFrame:GlobalizeOffsetAbs(t)
+	t = self:GlobalizeOffset(t)
+	local parent = self:GetParent()
+	while(parent ~= nil) do
+		if(parent.GetTimeFrame) then
+			local tf = parent:GetTimeFrame()
+			if(util.is_same_object(tf,self) == false) then
+				t = tf:GlobalizeOffset(t)
+			end
+		end
+		parent = parent:GetParent()
+	end
+	return t
+end

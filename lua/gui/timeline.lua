@@ -217,7 +217,9 @@ function gui.Timeline:AddBookmark(bm,timeFrame)
 	if(util.is_valid(self.m_timelineStripUpper) == false) then return end
 	local p = gui.create("WIPFMBookmark",self,0,5)
 	p:SetBookmark(bm)
-	self.m_timeAxis:AttachElementToValueWithUdmProperty(p,bm,"time",timeFrame)
+	self.m_timeAxis:AttachElementToValueWithUdmProperty(p,bm,"time",function(t)
+		return bm:GetInterfaceTime()
+	end)
 	table.insert(self.m_bookmarks,p)
 	return p
 end

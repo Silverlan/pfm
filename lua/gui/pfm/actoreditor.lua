@@ -653,7 +653,7 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value,baseIndex)
 			path = path:ToUri(false)
 
 			local time = fm:GetTimeOffset()
-			local localTime = channelClip:GetTimeFrame():LocalizeTimeOffset(time)
+			local localTime = channelClip:LocalizeOffsetAbs(time)
 			local anim = channelClip:GetPanimaAnimation()
 			local channelValue = value
 			if(util.get_type_name(channelValue) == "Color") then channelValue = channelValue:ToVector() end

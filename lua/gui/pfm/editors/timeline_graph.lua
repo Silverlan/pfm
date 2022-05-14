@@ -517,7 +517,7 @@ function gui.PFMTimelineCurve:UpdateDataPoint(i)
 	local editorGraphCurve = self.m_editorChannel:GetGraphCurve()
 	local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
 
-	local t = self:GetAnimationClip():GlobalizeTimeOffset(editorKeys:GetTime(keyIndex))
+	local t = self:DataTimeToInterfaceTime(editorKeys:GetTime(keyIndex))
 	local v = editorKeys:GetValue(keyIndex)
 	local valueTranslator = self:GetTimelineGraph():GetGraphCurve(self:GetCurveIndex()).valueTranslator
 	if(valueTranslator ~= nil) then v = valueTranslator[1](v) end
@@ -554,6 +554,16 @@ end
 function gui.PFMTimelineCurve:SetVerticalRange(...)
 	self.m_curve:SetVerticalRange(...)
 	self:UpdateDataPoints()
+end
+function gui.PFMTimelineCurve:InterfaceTimeToDataTime(t)
+	local tg = self:GetTimelineGraph()
+	local graphData = tg:GetGraphCurve(self:GetCurveIndex())
+	return tg:InterfaceTimeToDataTime(graphData,t)
+end
+function gui.PFMTimelineCurve:DataTimeToInterfaceTime(t)
+	local tg = self:GetTimelineGraph()
+	local graphData = tg:GetGraphCurve(self:GetCurveIndex())
+	return tg:DataTimeToInterfaceTime(graphData,t)
 end
 gui.register("WIPFMTimelineCurve",gui.PFMTimelineCurve)
 
@@ -1102,6 +1112,20 @@ function gui.PFMTimelineGraph:RebuildGraphCurves()
 		end
 	end
 end
+function gui.PFMTimelineGraph:InterfaceTimeToDataTime(graphData,t)
+	local animClip = graphData.animClip()
+	if(animClip == nil) then return t end
+	t = animClip:LocalizeOffset(t)
+	t = graphData.filmClip:LocalizeOffset(t)
+	return t
+end
+function gui.PFMTimelineGraph:DataTimeToInterfaceTime(graphData,t)
+	local animClip = graphData.animClip()
+	if(animClip == nil) then return t end
+	t = animClip:GlobalizeOffset(t)
+	t = graphData.filmClip:GlobalizeOffset(t)
+	return t
+end
 
 local function calc_graph_curve_data_point_value(interpMethod,easingMode,pathKeys,keyIndex0,keyIndex1,time)
 	assert(keyIndex1 == keyIndex0 +1)
@@ -1306,8 +1330,8 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 	local editorGraphCurve = editorChannel:GetGraphCurve()
 
 	local animClip = curve:GetAnimationClip()
-	local localStartTime = animClip:LocalizeTimeOffset(startTime)
-	local localEndTime = animClip:LocalizeTimeOffset(endTime)
+	local localStartTime = startTime
+	local localEndTime = endTime
 
 	local panimaChannel = curve:GetPanimaChannel()
 	local anim,channel,animClip = animManager:FindAnimationChannel(actor,targetPath)
@@ -1636,8 +1660,10 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 		end
 	end
 
+	minKeyframeTime = (minKeyframeTime ~= nil) and self:DataTimeToInterfaceTime(graphData,minKeyframeTime) or nil
+	maxKeyframeTime = (maxKeyframeTime ~= nil) and self:DataTimeToInterfaceTime(graphData,maxKeyframeTime) or nil
 	for i=1,#times do
-		local t = animClip:GlobalizeTimeOffset(times[i])
+		local t = self:DataTimeToInterfaceTime(graphData,times[i])
 		local v = values[i]
 		v = (graphData.valueTranslator ~= nil) and graphData.valueTranslator[1](v) or v
 		v = channel_value_to_editor_value(v,graphData.valueType)
@@ -1715,7 +1741,7 @@ function gui.PFMTimelineGraph:RemoveGraphCurve(i)
 	end
 end
 function gui.PFMTimelineGraph:GetGraphCurve(i) return self.m_graphs[i] end
-function gui.PFMTimelineGraph:AddGraph(track,actor,targetPath,colorCurve,fValueTranslator,valueType,typeComponentIndex)
+function gui.PFMTimelineGraph:AddGraph(filmClip,track,actor,targetPath,colorCurve,fValueTranslator,valueType,typeComponentIndex)
 	if(util.is_valid(self.m_graphContainer) == false) then return end
 
 	local graph = gui.create("WIPFMTimelineCurve",self.m_graphContainer,0,0,self.m_graphContainer:GetWidth(),self.m_graphContainer:GetHeight(),0,0,1,1)
@@ -1729,6 +1755,7 @@ function gui.PFMTimelineGraph:AddGraph(track,actor,targetPath,colorCurve,fValueT
 	getAnimClip()
 	local channel = (animClip ~= nil) and animClip:FindChannel(targetPath) or nil
 	table.insert(self.m_graphs,{
+		filmClip = filmClip,
 		actor = actor,
 		animClip = getAnimClip,
 		channel = function()
@@ -1775,7 +1802,7 @@ function gui.PFMTimelineGraph:SetupControl(filmClip,actor,targetPath,item,color,
 
 		local track = filmClip:FindAnimationChannelTrack()
 		if(track == nil) then return end
-		graph,graphIndex = self:AddGraph(track,actor,targetPath,color,fValueTranslator,valueType,typeComponentIndex)
+		graph,graphIndex = self:AddGraph(filmClip,track,actor,targetPath,color,fValueTranslator,valueType,typeComponentIndex)
 	end)
 	item:AddCallback("OnDeselected",function()
 		if(util.is_valid(graph)) then self:RemoveGraphCurve(graphIndex) end
@@ -1786,12 +1813,11 @@ function gui.PFMTimelineGraph:AddKeyframe(time)
 
 	for _,graph in ipairs(self.m_graphs) do
 		if(graph.curve:IsValid()) then
-			local time = self.m_timeline:GetTimeOffset()
 			local value = get_default_value(graph.valueType)
 			local valueType = graph.valueType
 			local channel = graph.curve:GetPanimaChannel()
 			if(channel ~= nil) then
-				local idx0,idx1,factor = channel:FindInterpolationIndices(time)
+				local idx0,idx1,factor = channel:FindInterpolationIndices(self:InterfaceTimeToDataTime(graph,time))
 				if(idx0 ~= nil) then
 					local v0 = channel:GetValue(idx0)
 					local v1 = channel:GetValue(idx1)
@@ -1799,7 +1825,7 @@ function gui.PFMTimelineGraph:AddKeyframe(time)
 				end
 			end
 
-			pfm.get_project_manager():SetActorAnimationComponentProperty(graph.actor,graph.targetPath,time,value,valueType,graph.typeComponentIndex)
+			pfm.get_project_manager():SetActorAnimationComponentProperty(graph.actor,graph.targetPath,self:InterfaceTimeToDataTime(graph,time),value,valueType,graph.typeComponentIndex)
 		end
 	end
 end
