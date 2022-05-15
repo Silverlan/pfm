@@ -523,12 +523,59 @@ end)
 sfm.register_element_type_conversion(sfm.ChannelClip,function(converter,sfmCc,pfmCc)
 	converter:ConvertElementToPfm(sfmCc:GetTimeFrame(),pfmCc:GetTimeFrame())
 
+	local editorData = pfmCc:GetEditorData()
 	local pfmAnim = pfmCc:GetAnimation()
 	for _,sfmChannel in ipairs(sfmCc:GetChannels()) do
 		local pfmChannel = pfmAnim:AddChannel()
 		if(converter:ConvertElementToPfm(sfmChannel,pfmChannel) == false) then
 			-- Invalid channel; Just remove it again
 			pfmAnim:RemoveChannel(pfmAnim:GetChannelCount() -1)
+		else
+			-- Keyframes
+			local targetPath = pfmChannel:GetTargetPath()
+			if(targetPath ~= nil) then
+				local editorChannel = editorData:FindChannel(targetPath,true)
+
+				local SFM_HANDLE_MODE_LINEAR_TANGENTS = 1
+				local SFM_HANDLE_MODE_FLAT_TANGENTS = 0
+				local SFM_HANDLE_MODE_SPLINE_TANGENTS = 2
+				local toPragmaHandleMode = {
+					[SFM_HANDLE_MODE_LINEAR_TANGENTS] = pfm.udm.KEYFRAME_HANDLE_TYPE_VECTOR,
+					[SFM_HANDLE_MODE_FLAT_TANGENTS] = pfm.udm.KEYFRAME_HANDLE_TYPE_FREE,
+					[SFM_HANDLE_MODE_SPLINE_TANGENTS] = pfm.udm.KEYFRAME_HANDLE_TYPE_ALIGNED
+				}
+
+				local graphCurve = sfmChannel:GetGraphCurve()
+				local panimaChannel = panima.Channel(pfmChannel:GetUdmData():Get("times"),pfmChannel:GetUdmData():Get("values"))
+				for keyIdx=0,3 do
+					local keysTime = graphCurve["GetKeysTime_" .. keyIdx](graphCurve)
+					local keysValue = graphCurve["GetKeysValue_" .. keyIdx](graphCurve)
+					local keysInTime = graphCurve["GetKeysInTime_" .. keyIdx](graphCurve)
+					local keysInDelta = graphCurve["GetKeysInDelta_" .. keyIdx](graphCurve)
+					local keysInMode = graphCurve["GetKeysInMode_" .. keyIdx](graphCurve)
+					local keysOutTime = graphCurve["GetKeysOutTime_" .. keyIdx](graphCurve)
+					local keysOutDelta = graphCurve["GetKeysOutDelta_" .. keyIdx](graphCurve)
+					local keysOutMode = graphCurve["GetKeysOutMode_" .. keyIdx](graphCurve)
+					for i=1,#keysTime do
+						local t = keysTime[i]
+						local v = keysValue[i]
+						local keyData,ikey = editorChannel:AddKey(t,keyIdx)
+						keyData:SetTime(ikey,t)
+						-- KeyFrame value doesn't get saved in SFM session (probably to save space), so we have to get it from the animation data instead
+						keyData:SetValue(ikey,panimaChannel:GetInterpolatedValue(t))
+						keyData:SetEasingMode(ikey,pfm.udm.EASING_MODE_AUTO)
+						keyData:SetInterpolationMode(ikey,pfm.udm.INTERPOLATION_BEZIER)
+
+						keyData:SetInTime(ikey,-keysInTime[i])
+						keyData:SetInDelta(ikey,keysInDelta[i])
+						keyData:SetInHandleType(ikey,toPragmaHandleMode[keysInMode[i]] or pfm.udm.KEYFRAME_HANDLE_TYPE_ALIGNED)
+
+						keyData:SetOutTime(ikey,keysOutTime[i])
+						keyData:SetOutDelta(ikey,keysOutDelta[i])
+						keyData:SetOutHandleType(ikey,toPragmaHandleMode[keysOutMode[i]] or pfm.udm.KEYFRAME_HANDLE_TYPE_ALIGNED)
+					end
+				end
+			end
 		end
 	end
 end)
@@ -767,6 +814,14 @@ function sfm.ProjectConverter:ConvertSession(sfmSession)
 					values[i] = transformFunc(val)
 				end
 				channel:GetUdmData():SetArrayValues("values",udmType,values,udm.TYPE_ARRAY_LZ4)
+
+				-- TODO: We also have to translate the handle delta values
+				--[[local editorChannel
+				if(editorChannel ~= nil) then
+					for keyIdx=0,3 do
+
+					end
+				end]]
 			end
 			for _,animClip in ipairs(animTrack:GetAnimationClips()) do
 				local anim = animClip:GetAnimation()
