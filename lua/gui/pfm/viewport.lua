@@ -49,7 +49,7 @@ function gui.PFMViewport:OnInitialize()
 
 	self.m_titleBar:SetHeight(37)
 
-	self.m_gameplayEnabled = false
+	self.m_gameplayEnabled = true
 	self.m_cameraView = gui.PFMViewport.CAMERA_VIEW_SCENE
 	self.m_aspectRatioWrapper:AddCallback("OnAspectRatioChanged",function(el,aspectRatio)
 		if(util.is_valid(self.m_viewport)) then
@@ -94,6 +94,8 @@ function gui.PFMViewport:OnInitialize()
 	self.m_filmClip = create_text_element("pfm_medium",Vector2(0,16),textColor)
 	self.m_filmClip:CenterToParentX()
 	self.m_filmClip:SetAnchor(0.5,0,0.5,0)
+
+	self:SwitchToGameplay(false)
 end
 function gui.PFMViewport:InitializeCustomScene()
 	local sceneCreateInfo = ents.SceneComponent.CreateInfo()
@@ -970,6 +972,7 @@ function gui.PFMViewport:SwitchToGameplay(enabled)
 	end
 end
 function gui.PFMViewport:GetWorkCamera()
+	if(self.m_viewport:IsPrimaryGameSceneViewport()) then return game.get_primary_camera() end
 	return self.m_viewport:GetSceneCamera()
 end
 function gui.PFMViewport:GetSceneCamera()

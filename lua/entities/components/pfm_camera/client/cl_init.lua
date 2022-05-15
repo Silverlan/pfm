@@ -278,7 +278,10 @@ function Component:Setup(actorData,cameraData)
 	end]]
 end
 function Component:OnEntitySpawn()
-	local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
-	if(toggleC ~= nil) then toggleC:TurnOff() end
+	--local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
+	--if(toggleC ~= nil) then toggleC:TurnOff() end
+
+	local pl = ents.get_local_player()
+	if(pl ~= nil) then pl:SetObserverMode(ents.PlayerComponent.OBSERVERMODE_FIRSTPERSON) end
 end
 ents.COMPONENT_PFM_CAMERA = ents.register_component("pfm_camera",Component)
