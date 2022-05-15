@@ -430,7 +430,11 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 		end
 	end
 
-	local slider = self.m_animSetControls:AddSliderControl(controlData.name,controlData.identifier,controlData.translateToInterface(controlData.default or 0.0),controlData.translateToInterface(controlData.min or 0.0),controlData.translateToInterface(controlData.max or 100),nil,nil,controlData.integer or controlData.boolean)
+	local slider = self.m_animSetControls:AddSliderControl(
+		controlData.name,controlData.identifier,controlData.translateToInterface(controlData.default or 0.0),
+		controlData.translateToInterface(controlData.min or 0.0),controlData.translateToInterface(controlData.max or 100),nil,nil,
+		controlData.integer or controlData.boolean
+	)
 	if(controlData.default ~= nil) then slider:SetDefault(controlData.translateToInterface(controlData.default)) end
 
 	if(controlData.getValue ~= nil) then
@@ -825,6 +829,14 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 		local uniqueId = entActor:GetUuid()
 		local c = entActor:GetComponent(componentId)
 		local function initializeProperty(info,controlData)
+			controlData.integer = udm.is_integral_type(info.type)
+			if(info:IsEnum()) then
+				controlData.enum = true
+				controlData.enumValues = {}
+				for _,v in ipairs(info:GetEnumValues()) do
+					table.insert(controlData.enumValues,{v,info:ValueToEnumName(v)})
+				end
+			end
 			local val = component:GetMemberValue(info.name)
 			if(val ~= nil) then
 				c:SetMemberValue(info.name,val)
@@ -944,7 +956,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 					controlData.min = min
 					controlData.max = max
 				end
-				pfm.log("Adding control for member '" .. controlData.path .. "' with min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
+				pfm.log("Adding control for member '" .. controlData.path .. "' with type = " .. memberInfo.type .. ", min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
 				controlData.set = function(component,value,dontTranslateValue,updateAnimationValue)
 					if(updateAnimationValue == nil) then updateAnimationValue = true end
 					local entActor = ents.find_by_uuid(uniqueId)
@@ -1257,38 +1269,63 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			else elToggle:SetChecked(false) end
 			ctrl = wrapper
 		elseif(udm.is_numeric_type(memberInfo.type)) then
-			if(memberInfo.minValue ~= nil) then controlData.min = memberInfo.minValue end
-			if(memberInfo.maxValue ~= nil) then controlData.max = memberInfo.maxValue end
-			if(memberInfo.default ~= nil) then controlData.default = memberInfo.default end
-
-			if(memberInfo.type == udm.TYPE_BOOLEAN) then
-				controlData.min = controlData.min and 1 or 0
-				controlData.max = controlData.max and 1 or 0
-				controlData.default = controlData.default and 1 or 0
-			end
-
-			local channel = self:GetAnimationChannel(actorData.actor,controlData.path,false)
-			local hasExpression = (channel ~= nil and channel:GetExpression() ~= nil)
-			if(hasExpression == false) then
-				if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_DISTANCE) then
-					controlData.unit = locale.get_text("symbol_meters")
-					controlData.translateToInterface = function(val) return util.units_to_metres(val) end
-					controlData.translateFromInterface = function(val) return util.metres_to_units(val) end
-				elseif(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_LIGHT_INTENSITY) then
-					-- TODO
-					controlData.unit = locale.get_text("symbol_lumen")--(self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
+			if(memberInfo:IsEnum()) then
+				local enumValues = {}
+				local defaultValueIndex
+				for i,v in ipairs(memberInfo:GetEnumValues()) do
+					table.insert(enumValues,{tostring(v),memberInfo:ValueToEnumName(v)})
+					if(v == memberInfo.default) then
+						defaultValueIndex = i -1
+					end
 				end
-			end
-			ctrl = self:AddSliderControl(udmComponent,controlData)
-			if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
+				local el,wrapper = self.m_animSetControls:AddDropDownMenu(memberInfo.name,memberInfo.name,enumValues,tostring(defaultValueIndex),function(el)
+					if(self.m_skipUpdateCallback) then return end
+					if(controlData.set ~= nil) then controlData.set(udmComponent,tonumber(el:GetOptionValue(el:GetSelectedOption()))) end
+				end)
+				ctrl = wrapper
+				controlData.updateControlValue = function()
+					if(ctrl:IsValid() == false) then return end
+					local val = controlData.getValue()
+					if(val ~= nil) then
+						local idx = el:FindOptionIndex(tostring(val))
+						if(idx ~= nil) then el:SelectOption(idx)
+						else el:SetText(tostring(val)) end
+					end
+				end
+			else
+				if(memberInfo.minValue ~= nil) then controlData.min = memberInfo.minValue end
+				if(memberInfo.maxValue ~= nil) then controlData.max = memberInfo.maxValue end
+				if(memberInfo.default ~= nil) then controlData.default = memberInfo.default end
 
-			controlData.updateControlValue = function()
-				if(ctrl:IsValid() == false) then return end
-				local val = controlData.getValue()
-				if(val ~= nil) then ctrl:SetValue(val) end
-			end
+				if(memberInfo.type == udm.TYPE_BOOLEAN) then
+					controlData.min = controlData.min and 1 or 0
+					controlData.max = controlData.max and 1 or 0
+					controlData.default = controlData.default and 1 or 0
+				end
 
-			-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+				local channel = self:GetAnimationChannel(actorData.actor,controlData.path,false)
+				local hasExpression = (channel ~= nil and channel:GetExpression() ~= nil)
+				if(hasExpression == false) then
+					if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_DISTANCE) then
+						controlData.unit = locale.get_text("symbol_meters")
+						controlData.translateToInterface = function(val) return util.units_to_metres(val) end
+						controlData.translateFromInterface = function(val) return util.metres_to_units(val) end
+					elseif(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_LIGHT_INTENSITY) then
+						-- TODO
+						controlData.unit = locale.get_text("symbol_lumen")--(self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
+					end
+				end
+				ctrl = self:AddSliderControl(udmComponent,controlData)
+				if(controlData.unit) then ctrl:SetUnit(controlData.unit) end
+
+				controlData.updateControlValue = function()
+					if(ctrl:IsValid() == false) then return end
+					local val = controlData.getValue()
+					if(val ~= nil) then ctrl:SetValue(val) end
+				end
+
+				-- pfm.log("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+			end
 		elseif(memberInfo.type == udm.TYPE_EULER_ANGLES) then
 			local val = EulerAngles()
 			local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)

@@ -203,9 +203,8 @@ function pfm.udm.EditorChannelData:SetKeyTime(keyIndex,newTime,baseIndex)
 	return (iTarget ~= keyIndex) and iTarget or nil
 end
 
-function pfm.udm.EditorChannelData:AddKey(t,baseIndex,addBaseKeyIfNotExists)
+function pfm.udm.EditorChannelData:AddKey(t,baseIndex)
 	baseIndex = baseIndex or 0
-	if(addBaseKeyIfNotExists == nil) then addBaseKeyIfNotExists = true end
 
 	local graphCurve = self:GetGraphCurve()
 	local keyData = graphCurve:GetKey(baseIndex)
