@@ -717,6 +717,36 @@ function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 								trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
 									local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 									if(actorC ~= nil) then
+										local cname,path = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
+										if(cname == "pfm_ik") then
+											-- If this is an ik property, we'll want to update the animation data for the position and rotation of
+											-- all of the involved bones
+											path:PopFront() -- Pop "effector/" prefix
+											local boneName = path:GetFront()
+											local ikC = ent:GetComponent("pfm_ik")
+											if(ikC ~= nil) then
+												local chain = ikC:GetIkControllerBoneChain(boneName)
+												local mdl = ent:GetModel()
+												if(chain ~= nil and mdl ~= nil) then
+													local skeleton = mdl:GetSkeleton()
+													local function applyBonePoseValue(targetPath)
+														local val = ent:GetMemberValue(targetPath)
+														if(val ~= nil) then tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,val) end
+													end
+													local function applyBonePose(basePropPath)
+														applyBonePoseValue(basePropPath .. "position")
+														applyBonePoseValue(basePropPath .. "rotation")
+													end
+													for _,boneId in ipairs(chain) do
+														local bone = skeleton:GetBone(boneId)
+														if(bone ~= nil) then
+															applyBonePose("ec/animated/bone/" .. bone:GetName() .. "/")
+														end
+													end
+												end
+											end
+										end
+
 										tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,pos)
 									end
 								end)
