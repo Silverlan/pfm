@@ -15,6 +15,7 @@ function ents.PFMLightDirectional:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_LIGHT)
 	self:AddEntityComponent(ents.COMPONENT_LIGHT_DIRECTIONAL)
 	self:AddEntityComponent("pfm_actor")
+	self:AddEntityComponent("pfm_light")
 
 	self.m_listeners = {}
 end
