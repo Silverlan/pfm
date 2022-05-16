@@ -462,8 +462,9 @@ sfm.register_element_type_conversion(sfm.TimeFrame,function(converter,sfmTimeFra
 end)
 sfm.register_element_type_conversion(sfm.Bookmark,function(converter,sfmB,pfmB)
 	pfmB:SetNote(sfmB:GetNote())
-	pfmB:GetTimeRange():SetTime(sfmB:GetTime())
-	pfmB:GetTimeRange():SetDuration(sfmB:GetDuration())
+	pfmB:SetTime(sfmB:GetTime())
+	-- pfmB:GetTimeRange():SetTime(sfmB:GetTime())
+	-- pfmB:GetTimeRange():SetDuration(sfmB:GetDuration())
 end)
 sfm.register_element_type_conversion(sfm.BookmarkSet,function(converter,sfmBs,pfmBs)
 	for _,sfmB in ipairs(sfmBs:GetBookmarks()) do
@@ -562,7 +563,9 @@ sfm.register_element_type_conversion(sfm.ChannelClip,function(converter,sfmCc,pf
 						local keyData,ikey = editorChannel:AddKey(t,keyIdx)
 						keyData:SetTime(ikey,t)
 						-- KeyFrame value doesn't get saved in SFM session (probably to save space), so we have to get it from the animation data instead
-						keyData:SetValue(ikey,panimaChannel:GetInterpolatedValue(t))
+						local val = panimaChannel:GetInterpolatedValue(t,false) or 0.0
+						if(type(val) ~= "number") then val = val:Get(keyIdx) end
+						keyData:SetValue(ikey,val)
 						keyData:SetEasingMode(ikey,pfm.udm.EASING_MODE_AUTO)
 						keyData:SetInterpolationMode(ikey,pfm.udm.INTERPOLATION_BEZIER)
 
