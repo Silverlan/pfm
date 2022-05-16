@@ -96,6 +96,9 @@ function gui.PFMViewport:OnInitialize()
 	self.m_filmClip:SetAnchor(0.5,0,0.5,0)
 
 	self:SwitchToGameplay(false)
+	time.create_simple_timer(0.0,function()
+		if(self:IsValid()) then self:SwitchToWorkCamera() end
+	end)
 end
 function gui.PFMViewport:InitializeCustomScene()
 	local sceneCreateInfo = ents.SceneComponent.CreateInfo()
