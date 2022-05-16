@@ -588,7 +588,14 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName)
 		fileName = file.remove_file_extension(fileName,pfm.Project.get_format_extensions())
 		self:SaveProject(pfm.Project.get_full_project_file_name(fileName),setAsProjectName and fileName or nil)
 	end
-	local fileName = fileName or self:GetProjectFileName()
+	if(fileName == nil) then
+		local projectFileName = self:GetProjectFileName()
+		if(projectFileName ~= nil) then
+			fileName = util.Path.CreateFilePath(projectFileName)
+			fileName:PopFront() -- Pop "projects/"
+			fileName = fileName:GetString()
+		end
+	end
 	if(fileName ~= nil) then saveProject(fileName)
 	else
 		util.remove(self.m_openDialogue)
