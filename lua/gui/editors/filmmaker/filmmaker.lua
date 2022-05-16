@@ -625,6 +625,8 @@ function gui.WIFilmmaker:PackProject(fileName)
 	local session = self:GetSession()
 
 	local assetFiles = project:CollectAssetFiles()
+	local projectFileName = self:GetProjectFileName()
+	if(projectFileName ~= nil) then table.insert(assetFiles,projectFileName) end
 	
 	fileName = file.remove_file_extension(fileName) .. ".zip"
 	util.pack_zip_archive(fileName,assetFiles)

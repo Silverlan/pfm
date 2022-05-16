@@ -73,6 +73,7 @@ local function convert_vector(v)
 end
 function ents.PFMParticleSystem:InitializeParticleSystem()
 	local particleData = self.m_particleData
+	if(true) then return end
 	local def = particleData:GetDefinition()
 	local numParticles = def:GetMaxParticles()
 	local ptSystemName = particleData:GetParticleSystemName()

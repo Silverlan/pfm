@@ -62,18 +62,23 @@ function pfm.ProjectPacker:AddFilmClip(filmClip)
 	for _,actor in ipairs(filmClip:GetActorList()) do
 		for _,component in ipairs(actor:GetComponents()) do
 			local type = component:GetType()
-			if(type == fudm.ELEMENT_TYPE_PFM_MODEL) then
-				local mdlName = component:GetModelName()
-				if(#mdlName > 0) then
+			if(type == "model") then
+				local mdlName = component:GetMemberValue("model")
+				if(mdlName ~= nil and #mdlName > 0) then
 					local mdl = game.load_model(mdlName)
 					if(mdl ~= nil) then self:AddModel(mdl) end
 				end
-			elseif(type == fudm.ELEMENT_TYPE_PFM_PARTICLE_SYSTEM) then
-				local ptSystemName = component:GetParticleSystemName()
-				local ptFileName = ents.ParticleSystemComponent.find_particle_system_file(ptSystemName)
-				if(ptFileName ~= nil) then
-					self:AddFile(ptFileName)
-					local ptSystemDef = ents.ParticleSystemComponent.get_particle_system_definition(ptSystemName)
+			elseif(type == "pfm_sky") then
+				local skyTex = component:GetMemberValue("skyTexture")
+				if(skyTex ~= nil and #skyTex > 0) then
+					self:AddAsset(skyTex,asset.TYPE_TEXTURE)
+				end
+			elseif(type == "pfm_particle_system") then
+				local ptName = component:GetMemberValue("particleSystem")
+				local ptFileName = component:GetMemberValue("particleSystemFile")
+				if(ptName ~= nil and #ptName > 0 and ptFileName ~= nil and #ptFileName > 0) then
+					self:AddAsset(ptFileName,asset.TYPE_PARTICLE_SYSTEM)
+					local ptSystemDef = ents.ParticleSystemComponent.get_particle_system_definition(ptName)
 					if(ptSystemDef ~= nil) then
 						local mat = ptSystemDef["material"]
 						mat = (mat ~= nil) and game.load_material(mat) or nil
