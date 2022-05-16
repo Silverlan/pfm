@@ -124,8 +124,20 @@ function gui.PFMActorEditor:OnInitialize()
 			self:CreateNewActorComponent(actor,"light_directional",false)
 			self:CreateNewActorComponent(actor,"color",false)
 			-- self:CreateNewActorComponent(actor,"transform",false)
-			lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,1000)
+			lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,30.0)
+			lightC:SetMemberValue("intensityType",udm.TYPE_UINT8,ents.LightComponent.INTENSITY_TYPE_LUX)
 			lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
+
+			local cActor = actor:FindComponent("pfm_actor")
+			if(cActor ~= nil) then
+				local rot = cActor:GetMemberValue("rotation")
+				if(rot ~= nil) then
+					rot = rot:ToEulerAngles()
+					rot.p = 45.0
+					cActor:SetMemberValue("rotation",udm.TYPE_QUATERNION,rot:ToQuaternion())
+				end
+			end
+			
 			self:UpdateActorComponents(actor)
 		end)
 		--[[pContext:AddItem(locale.get_text("pfm_create_new_volume_simple"),function()
