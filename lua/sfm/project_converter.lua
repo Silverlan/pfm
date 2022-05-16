@@ -310,9 +310,6 @@ local function global_bodygroup_to_local_indices(bgIdx,mdl)
 		local localBgIdx = math.floor(bgIdx /numCombinations)
 		bgIdx = bgIdx %numCombinations
 
-		-- TODO: This is in reverse order because that's how it's done in the SFM,
-		-- but there's really no reason to. Instead the global index should be inversed
-		-- in the SFM->PFM conversion script!
 		table.insert(localBgIndices,1,localBgIdx)
 	end
 	return localBgIndices

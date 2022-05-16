@@ -287,7 +287,7 @@ function Component:InitializeComponentProperties()
 			if(isModelComponent and path == nil) then
 				-- HACK: For the model component, the model has to be applied *before* other properties (like the skin or bodygroups).
 				-- Since the UDM properties are unordered, we'll have to handle it as a special case.
-				-- TODO: Find a better way to handle this
+				-- TODO: Find a better way to handle this (via schema properties?)
 				local mdl = el:GetValue("model",udm.TYPE_STRING)
 				if(mdl ~= nil) then self:GetEntity():SetModel(mdl) end
 			end

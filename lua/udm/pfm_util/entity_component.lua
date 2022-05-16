@@ -7,12 +7,19 @@
 ]]
 
 function pfm.udm.EntityComponent:SetMemberValue(memberName,type,value)
-	self:GetProperties():SetValue(memberName,type,value)
+	local path = util.Path.CreateFilePath(memberName)
+	local props = self:GetProperties()
+	if(path:GetComponentCount() > 1) then
+		memberName = path:GetBack()
+		path:PopBack()
+		props = props:GetFromPath(path:GetString():sub(0,-2))
+	end
+	props:SetValue(memberName,type,value)
 	self:CallChangeListeners(memberName,value)
 end
 
 function pfm.udm.EntityComponent:GetMemberValue(memberName)
-	local val = self:GetProperties():Get(memberName):GetValue()
+	local val = self:GetProperties():GetFromPath(memberName):GetValue()
 	if(val ~= nil) then return val end
 	-- TODO: Copy this value if it is a non-trivial type (e.g. vec3, mat4, etc.)
 	return self.m_defaultMemberValues[memberName]
