@@ -325,6 +325,7 @@ sfm.register_element_type_conversion(sfm.GameModel,function(converter,sfmGm,pfmA
 	cM:SetMemberValue("skin",udm.TYPE_UINT32,sfmGm:GetSkin())
 
 	local mdl = game.load_model(mdlName)
+	asset.poll_all() -- Flush out pending finalized assets to prevent buffer congestion
 	if(mdl ~= nil) then
 		local bodyGroups = global_bodygroup_to_local_indices(sfmGm:GetBody(),mdlName)
 		local namedBodyGroups = {}
@@ -645,6 +646,8 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 				end
 			end
 		end
+
+		if(toElement == nil) then return end -- TODO: When does this happen exactly?
 
 		local origToElement = sfmC:GetToElement()
 		local gm = toElement:FindParent("DmeGameModel") or false
