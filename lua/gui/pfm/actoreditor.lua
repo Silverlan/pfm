@@ -137,7 +137,7 @@ function gui.PFMActorEditor:OnInitialize()
 					cActor:SetMemberValue("rotation",udm.TYPE_QUATERNION,rot:ToQuaternion())
 				end
 			end
-			
+
 			self:UpdateActorComponents(actor)
 		end)
 		--[[pContext:AddItem(locale.get_text("pfm_create_new_volume_simple"),function()
@@ -915,90 +915,103 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			if(idx == nil) then return end
 			return c:GetMemberInfo(idx)
 		end
-		for _,memberIdx in ipairs(c:GetMemberIndices()) do
-			local memberInfo = c:GetMemberInfo(memberIdx)
-			local controlData = {}
-			local info = memberInfo
-			local memberName = info.name
-			local path = "ec/" .. componentInfo.name .. "/" .. info.name
-			local valid = initializeProperty(info,controlData)
-			if(valid) then
-				controlData.name = info.name
-				controlData.default = info.default
-				controlData.path = path
-				controlData.getValue = function()
-					if(util.is_valid(c) == false) then
-						if(util.is_valid(entActor) == false) then entActor = ents.find_by_uuid(uniqueId) end
-						if(util.is_valid(entActor) == false) then
-							console.print_warning("No actor with UUID '" .. uniqueId .. "' found!")
-							return
-						end
-						c = entActor:GetComponent(componentId)
-						if(util.is_valid(c) == false) then
-							console.print_warning("No component " .. componentId .. " found in actor with UUID '" .. uniqueId .. "'!")
-							return
-						end
-					end
-					return c:GetMemberValue(memberName)
-				end
-				controlData.getMemberInfo = function()
-					if(util.is_valid(c) == false) then
-						if(util.is_valid(entActor) == false) then entActor = ents.find_by_uuid(uniqueId) end
-						if(util.is_valid(entActor) == false) then
-							console.print_warning("No actor with UUID '" .. uniqueId .. "' found!")
-							return
-						end
-						c = entActor:GetComponent(componentId)
-						if(util.is_valid(c) == false) then
-							console.print_warning("No component " .. componentId .. " found in actor with UUID '" .. uniqueId .. "'!")
-							return
-						end
-					end
-					local idx = c:GetMemberIndex(memberName)
-					if(idx == nil) then return end
-					return c:GetMemberInfo(idx)
-				end
-				local value = controlData.getValue()
-				if(udm.is_numeric_type(info.type) and info.type ~= udm.TYPE_BOOLEAN) then
-					local min = info.min or 0
-					local max = info.max or 100
-					min = math.min(min,controlData.default or min,value or min)
-					max = math.max(max,controlData.default or max,value or max)
-					if(min == max) then max = max +100 end
-					controlData.min = min
-					controlData.max = max
-				end
-				pfm.log("Adding control for member '" .. controlData.path .. "' with type = " .. memberInfo.type .. ", min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
-				controlData.set = function(component,value,dontTranslateValue,updateAnimationValue)
-					if(updateAnimationValue == nil) then updateAnimationValue = true end
-					local entActor = ents.find_by_uuid(uniqueId)
-					local c = (entActor ~= nil) and entActor:GetComponent(componentId) or nil
-					local memberIdx = (c ~= nil) and c:GetMemberIndex(controlData.name) or nil
-					local info = (memberIdx ~= nil) and c:GetMemberInfo(memberIdx) or nil
-					if(info == nil) then return end
-					if(dontTranslateValue ~= true) then value = controlData.translateFromInterface(value) end
-					local memberValue = value
-					if(util.get_type_name(memberValue) == "Color") then memberValue = memberValue:ToVector() end
 
-					component:SetMemberValue(memberName,info.type,memberValue)
-					
-					local entActor = actorData.actor:FindEntity()
-					if(entActor ~= nil) then
-						local c = entActor:GetComponent(componentId)
-						if(c ~= nil) then
-							c:SetMemberValue(memberName,memberValue)
-							self:OnActorPropertyChanged(entActor)
+		local function initializeMembers(memberIndices)
+			for _,memberIdx in ipairs(memberIndices) do
+				local memberInfo = c:GetMemberInfo(memberIdx)
+				assert(memberInfo ~= nil)
+				local controlData = {}
+				local info = memberInfo
+				local memberName = info.name
+				local path = "ec/" .. componentInfo.name .. "/" .. info.name
+				local valid = initializeProperty(info,controlData)
+				if(valid) then
+					controlData.name = info.name
+					controlData.default = info.default
+					controlData.path = path
+					controlData.getValue = function()
+						if(util.is_valid(c) == false) then
+							if(util.is_valid(entActor) == false) then entActor = ents.find_by_uuid(uniqueId) end
+							if(util.is_valid(entActor) == false) then
+								console.print_warning("No actor with UUID '" .. uniqueId .. "' found!")
+								return
+							end
+							c = entActor:GetComponent(componentId)
+							if(util.is_valid(c) == false) then
+								console.print_warning("No component " .. componentId .. " found in actor with UUID '" .. uniqueId .. "'!")
+								return
+							end
 						end
+						return c:GetMemberValue(memberName)
 					end
-					if(updateAnimationValue) then applyComponentChannelValue(self,component,controlData,memberValue) end
-					self:TagRenderSceneAsDirty()
+					controlData.getMemberInfo = function()
+						if(util.is_valid(c) == false) then
+							if(util.is_valid(entActor) == false) then entActor = ents.find_by_uuid(uniqueId) end
+							if(util.is_valid(entActor) == false) then
+								console.print_warning("No actor with UUID '" .. uniqueId .. "' found!")
+								return
+							end
+							c = entActor:GetComponent(componentId)
+							if(util.is_valid(c) == false) then
+								console.print_warning("No component " .. componentId .. " found in actor with UUID '" .. uniqueId .. "'!")
+								return
+							end
+						end
+						local idx = c:GetMemberIndex(memberName)
+						if(idx == nil) then return end
+						return c:GetMemberInfo(idx)
+					end
+					local value = controlData.getValue()
+					if(udm.is_numeric_type(info.type) and info.type ~= udm.TYPE_BOOLEAN) then
+						local min = info.min or 0
+						local max = info.max or 100
+						min = math.min(min,controlData.default or min,value or min)
+						max = math.max(max,controlData.default or max,value or max)
+						if(min == max) then max = max +100 end
+						controlData.min = min
+						controlData.max = max
+					end
+					pfm.log("Adding control for member '" .. controlData.path .. "' with type = " .. memberInfo.type .. ", min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
+					controlData.set = function(component,value,dontTranslateValue,updateAnimationValue)
+						if(updateAnimationValue == nil) then updateAnimationValue = true end
+						local entActor = ents.find_by_uuid(uniqueId)
+						local c = (entActor ~= nil) and entActor:GetComponent(componentId) or nil
+						local memberIdx = (c ~= nil) and c:GetMemberIndex(controlData.name) or nil
+						local info = (memberIdx ~= nil) and c:GetMemberInfo(memberIdx) or nil
+						if(info == nil) then return end
+						if(dontTranslateValue ~= true) then value = controlData.translateFromInterface(value) end
+						local memberValue = value
+						if(util.get_type_name(memberValue) == "Color") then memberValue = memberValue:ToVector() end
+
+						component:SetMemberValue(memberName,info.type,memberValue)
+						
+						local entActor = actorData.actor:FindEntity()
+						if(entActor ~= nil) then
+							local c = entActor:GetComponent(componentId)
+							if(c ~= nil) then
+								c:SetMemberValue(memberName,memberValue)
+								self:OnActorPropertyChanged(entActor)
+							end
+						end
+						if(updateAnimationValue) then applyComponentChannelValue(self,component,controlData,memberValue) end
+						self:TagRenderSceneAsDirty()
+					end
+					controlData.set(component,value,true,false)
+					actorData.componentData[componentId].items[memberIdx] = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData,path)
+				else
+					pfm.log("Unable to add control for member '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 				end
-				controlData.set(component,value,true,false)
-				actorData.componentData[componentId].items[memberIdx] = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData,path)
-			else
-				pfm.log("Unable to add control for member '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 			end
 		end
+		-- Static members have to be initialized first, because dynamic members may be dependent on static members
+		local staticMemberIndices = {}
+		for i=0,c:GetStaticMemberCount() -1 do
+			table.insert(staticMemberIndices,i)
+		end
+		initializeMembers(staticMemberIndices)
+
+		-- Initialize dynamic members next. Dynamic members must not have any dependencies to other dynamic members
+		initializeMembers(c:GetDynamicMemberIndices())
 	end
 end
 function gui.PFMActorEditor:AddActor(actor)
