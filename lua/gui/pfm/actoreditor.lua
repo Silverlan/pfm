@@ -1030,6 +1030,30 @@ function gui.PFMActorEditor:AddActor(actor)
 				local filmmaker = tool.get_filmmaker()
 				filmmaker:ExportAnimation(entActor)
 			end)
+			pContext:AddItem(locale.get_text("copy"),function()
+				local el = udm.create_element()
+				local pfmCopy = el:Add("pfm_copy")
+				pfmCopy:Add("data"):Merge(actor:GetUdmData())
+				util.set_clipboard_string(el:ToAscii())
+			end)
+			pContext:AddItem(locale.get_text("paste"),function()
+				local res,err = udm.parse(util.get_clipboard_string())
+				if(res == false) then
+					console.print_warning("Failed to parse UDM: ",err)
+					return
+				end
+				local data = res:GetAssetData():GetData()
+				local pfmCopy = data:Get("pfm_copy")
+				local data = pfmCopy:Get("data")
+				if(data:IsValid() == false) then
+					console.print_warning("No copy data found in clipboard UDM string!")
+					return
+				end
+
+				actor:Reinitialize(data)
+				tool.get_filmmaker():ReloadGameView()
+				self:Reload()
+			end)
 			pContext:AddItem(locale.get_text("remove"),function()
 				local filmmaker = tool.get_filmmaker()
 				local filmClip = filmmaker:GetActiveFilmClip()
