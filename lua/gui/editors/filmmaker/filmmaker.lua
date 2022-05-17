@@ -237,7 +237,7 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
-				fileName = "projects/" .. file.remove_file_extension(fileName,pfm.Project.get_format_extensions()) .. "." .. pfm.Project.FORMAT_EXTENSION_BINARY
+				fileName = "projects/" .. fileName
 				self:LoadProject(fileName)
 			end)
 			self.m_openDialogue:SetRootPath("projects")

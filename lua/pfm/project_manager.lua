@@ -85,6 +85,10 @@ function pfm.ProjectManager:RestorePersistentProject(data)
 	return util.is_valid(self:InitializeProject(self.m_project))
 end
 function pfm.ProjectManager:LoadProject(fileName)
+	fileName = file.remove_file_extension(fileName,pfm.Project.get_format_extensions())
+	local binFileName = fileName .. "." .. pfm.Project.FORMAT_EXTENSION_BINARY
+	if(file.exists(binFileName)) then fileName = binFileName
+	else fileName = fileName .. "." .. pfm.Project.FORMAT_EXTENSION_ASCII end
 	self:CloseProject()
 	pfm.log("Loading project '" .. fileName .. "'...",pfm.LOG_CATEGORY_PFM)
 	local project = pfm.load_project(fileName)
