@@ -9,13 +9,14 @@
 function pfm.udm.EntityComponent:SetMemberValue(memberName,type,value)
 	local path = util.Path.CreateFilePath(memberName)
 	local props = self:GetProperties()
+	local fullMemberPath = memberName
 	if(path:GetComponentCount() > 1) then
 		memberName = path:GetBack()
 		path:PopBack()
 		props = props:GetFromPath(path:GetString():sub(0,-2))
 	end
 	props:SetValue(memberName,type,value)
-	self:CallChangeListeners(memberName,value)
+	self:CallChangeListeners(fullMemberPath,value)
 end
 
 function pfm.udm.EntityComponent:GetMemberValue(memberName)
