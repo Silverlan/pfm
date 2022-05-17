@@ -1033,8 +1033,21 @@ function gui.PFMActorEditor:AddActor(actor)
 			pContext:AddItem(locale.get_text("copy"),function()
 				local el = udm.create_element()
 				local pfmCopy = el:Add("pfm_copy")
+				pfmCopy:SetValue("type",udm.TYPE_STRING,"actor")
 				pfmCopy:Add("data"):Merge(actor:GetUdmData())
 				util.set_clipboard_string(el:ToAscii())
+			end)
+			pContext:AddItem(locale.get_text("pfm_copy_animation"),function()
+				local filmClip = self:GetFilmClip()
+				local track = filmClip:FindAnimationChannelTrack()
+				
+				local channelClip = track:FindActorAnimationClip(actor)
+				if(channelClip == nil) then return end
+				local el = udm.create_element()
+				local pfmCopy = el:Add("pfm_copy")
+				pfmCopy:SetValue("type",udm.TYPE_STRING,"animation")
+				pfmCopy:Add("data"):Merge(channelClip:GetUdmData())
+				util.set_clipboard_string(el:ToAscii(udm.ASCII_SAVE_FLAG_NONE))
 			end)
 			pContext:AddItem(locale.get_text("paste"),function()
 				local res,err = udm.parse(util.get_clipboard_string())
@@ -1044,6 +1057,12 @@ function gui.PFMActorEditor:AddActor(actor)
 				end
 				local data = res:GetAssetData():GetData()
 				local pfmCopy = data:Get("pfm_copy")
+				local type = pfmCopy:GetValue("type",udm.TYPE_STRING)
+				if(type ~= "actor") then
+					type = type or "nil"
+					console.print_warning("Copy type " .. type .. " is not compatible!")
+					return
+				end
 				local data = pfmCopy:Get("data")
 				if(data:IsValid() == false) then
 					console.print_warning("No copy data found in clipboard UDM string!")
@@ -1051,6 +1070,34 @@ function gui.PFMActorEditor:AddActor(actor)
 				end
 
 				actor:Reinitialize(data)
+				tool.get_filmmaker():ReloadGameView()
+				self:Reload()
+			end)
+			pContext:AddItem(locale.get_text("pfm_paste_animation"),function()
+				local res,err = udm.parse(util.get_clipboard_string())
+				if(res == false) then
+					console.print_warning("Failed to parse UDM: ",err)
+					return
+				end
+				local data = res:GetAssetData():GetData()
+				local pfmCopy = data:Get("pfm_copy")
+				local type = pfmCopy:GetValue("type",udm.TYPE_STRING)
+				if(type ~= "animation") then
+					type = type or "nil"
+					console.print_warning("Copy type " .. type .. " is not compatible!")
+					return
+				end
+				local data = pfmCopy:Get("data")
+				if(data:IsValid() == false) then
+					console.print_warning("No copy data found in clipboard UDM string!")
+					return
+				end
+
+				local filmClip = self:GetFilmClip()
+				local track = filmClip:FindAnimationChannelTrack()
+				
+				local channelClip = track:FindActorAnimationClip(actor,true)
+				channelClip:Reinitialize(data)
 				tool.get_filmmaker():ReloadGameView()
 				self:Reload()
 			end)
