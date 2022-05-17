@@ -586,7 +586,7 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName)
 	local function saveProject(fileName)
 		file.create_directory("projects")
 		fileName = file.remove_file_extension(fileName,pfm.Project.get_format_extensions())
-		self:SaveProject(pfm.Project.get_full_project_file_name(fileName),setAsProjectName and fileName or nil)
+		self:SaveProject(pfm.Project.get_full_project_file_name(fileName),setAsProjectName and ("projects/" .. fileName) or nil)
 	end
 	if(fileName == nil) then
 		local projectFileName = self:GetProjectFileName()
