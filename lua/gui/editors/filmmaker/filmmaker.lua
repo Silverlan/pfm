@@ -760,6 +760,22 @@ function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 		if(key == input.KEY_S) then
 			if(state == input.STATE_PRESS) then self:Save() end
 			return util.EVENT_REPLY_HANDLED
+		elseif(key == input.KEY_C) then
+			if(state == input.STATE_PRESS) then
+				local actorEditor = self:GetActorEditor()
+				if(util.is_valid(actorEditor)) then
+					actorEditor:CopyToClipboard()
+				end
+			end
+			return util.EVENT_REPLY_HANDLED
+		elseif(key == input.KEY_V) then
+			if(state == input.STATE_PRESS) then
+				local actorEditor = self:GetActorEditor()
+				if(util.is_valid(actorEditor)) then
+					actorEditor:PasteFromClipboard()
+				end
+			end
+			return util.EVENT_REPLY_HANDLED
 		end
 	else
 		-- TODO: UNDO ME
