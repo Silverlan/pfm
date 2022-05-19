@@ -1148,7 +1148,16 @@ function gui.PFMActorEditor:AddActor(actor)
 	local itemActor = self.m_tree:AddItem(actor:GetName())
 
 	local uniqueId = tostring(actor:GetUniqueId())
-	itemActor:AddCallback("OnMouseEvent",function(tex,button,state,mods)
+	itemActor:AddCallback("OnSelectionChanged",function(el,selected)
+		local entActor = actor:FindEntity()
+		if(util.is_valid(entActor)) then
+			local pfmActorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if(pfmActorC ~= nil) then
+				pfmActorC:SetSelected(selected)
+			end
+		end
+	end)	
+	itemActor:AddCallback("OnMouseEvent",function(el,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 			local pContext = gui.open_context_menu()
 			if(util.is_valid(pContext) == false) then return end

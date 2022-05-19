@@ -45,6 +45,13 @@ function Component:Initialize()
 
 	self.m_boneChannels = {}
 	self.m_flexControllerChannels = {}
+	self.m_selected = false
+end
+function Component:IsSelected() return self.m_selected end
+function Component:SetSelected(selected)
+	if(selected == self.m_selected) then return end
+	self.m_selected = selected
+	self:BroadcastEvent(Component.EVENT_ON_SELECTION_CHANGED,{selected})
 end
 function Component:UpdateVisibility()
 	local visible = self:IsVisible() and self:GetActorData():IsAbsoluteVisible() or false
@@ -324,3 +331,4 @@ end
 ents.COMPONENT_PFM_ACTOR = ents.register_component("pfm_actor",Component)
 Component.EVENT_ON_OFFSET_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR,"on_offset_changed")
 Component.EVENT_ON_VISIBILITY_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR,"on_visibility_changed")
+Component.EVENT_ON_SELECTION_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR,"on_selection_changed")
