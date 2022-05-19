@@ -46,16 +46,7 @@ function gui.PFMActorEditor:OnInitialize()
 			gui.open_model_dialog(function(dialogResult,mdlName)
 				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
 				if(self:IsValid() == false) then return end
-				local actor = self:CreateNewActor()
-				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
-				-- self:CreateNewActorComponent(actor,"pfm_animation_set",false)
-				self:CreateNewActorComponent(actor,"model",false)
-				self:CreateNewActorComponent(actor,"render",false)
-				self:CreateNewActorComponent(actor,"animated",false)
-				self:CreateNewActorComponent(actor,"flex",false)
-				-- self:CreateNewActorComponent(actor,"transform",false)
-				self:UpdateActorComponents(actor)
+				self:CreateNewPropActor(mdlName)
 			end)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_prop"),function()
@@ -328,6 +319,23 @@ end
 function gui.PFMActorEditor:AddSkyActor()
 	self:CreateNewActorWithComponents("sky",{"pfm_actor","pfm_sky"})
 end
+function gui.PFMActorEditor:CreateNewPropActor(mdlName,origin,rotation,actorName)
+	local pose
+	if(origin ~= nil or rotation ~= nil) then
+		pose = math.Transform()
+		if(origin ~= nil) then pose:SetOrigin(origin) end
+		if(rotation ~= nil) then pose:SetRotation(rotation) end
+	end
+	local actor = self:CreateNewActor(actorName,pose)
+	if(actor == nil) then return end
+	local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
+	self:CreateNewActorComponent(actor,"model",false)
+	self:CreateNewActorComponent(actor,"render",false)
+	-- self:CreateNewActorComponent(actor,"transform",false)
+
+	self:UpdateActorComponents(actor)
+	return actor
+end
 function gui.PFMActorEditor:CreateNewActorWithComponents(name,components)
 	local actor = self:CreateNewActor(name)
 	if(actor == nil) then return end
@@ -351,7 +359,7 @@ function gui.PFMActorEditor:GetActorComponentItem(actor,componentName)
 	if(util.is_valid(item) == false) then return end
 	return item:GetItemByIdentifier(componentName)
 end
-function gui.PFMActorEditor:CreateNewActor(actorName)
+function gui.PFMActorEditor:CreateNewActor(actorName,pose)
 	local filmClip = self:GetFilmClip()
 	if(filmClip == nil) then
 		pfm.create_popup_message(locale.get_text("pfm_popup_create_actor_no_film_clip"))
@@ -367,13 +375,19 @@ function gui.PFMActorEditor:CreateNewActor(actorName)
 	end
 	actor:SetName(actorName)
 
-	local pos = Vector()
-	local rot = Quaternion()
-	local cam = tool.get_filmmaker():GetActiveCamera()
-	if(util.is_valid(cam)) then
-		local entCam = cam:GetEntity()
-		pos = entCam:GetPos() +entCam:GetForward() *100.0
-		rot = EulerAngles(0,entCam:GetAngles().y,0):ToQuaternion()
+	local pos,rot
+	if(pose ~= nil) then
+		pos = pose:GetOrigin()
+		rot = pose:GetRotation()
+	else
+		pos = Vector()
+		rot = Quaternion()
+		local cam = tool.get_filmmaker():GetActiveCamera()
+		if(util.is_valid(cam)) then
+			local entCam = cam:GetEntity()
+			pos = entCam:GetPos() +entCam:GetForward() *100.0
+			rot = EulerAngles(0,entCam:GetAngles().y,0):ToQuaternion()
+		end
 	end
 
 	self:AddActor(actor)

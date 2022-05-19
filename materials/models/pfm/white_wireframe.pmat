@@ -1,0 +1,7 @@
+"pfm_wireframe_line"
+{
+	"textures"
+	{
+		$string albedo_map "white"
+	}
+}

@@ -1,0 +1,152 @@
+$string assetType "PMDL"
+"assetData"
+{
+	$array objectAttachments [element;0][]
+	$array materialPaths [string;1]["models/pfm/"]
+	$array attachments [element;0][]
+	$float mass 1
+	$array skins [element;1][
+		{
+			$array materials [uint32;1][0]
+		}
+	]
+	$array materials [string;1]["white_wireframe"]
+	$vec3 eyeOffset [0,0,0]
+	$float maxEyeDeflection 30
+	"render"
+	{
+		"bounds"
+		{
+			$vec3 min [-1,-1,-1]
+			$vec3 max [1,1,1]
+		}
+	}
+	$array baseMeshGroups [uint32;1][0]
+	$array includeModels [string;0][]
+	"skeleton"
+	{
+		$string assetType "PSKEL"
+		"assetData"
+		{
+			"bones"
+			{
+				"root"
+				{
+					$uint32 index 0
+					$stransform pose [[0,0,0][1,0,0,0][1,1,1]]
+				}
+			}
+		}
+		$uint32 assetVersion 1
+	}
+	$array hitboxes [element;0][]
+	$array collisionMeshes [element;2][
+		{
+			$string assetType "PCOL"
+			"assetData"
+			{
+				$int32 bone -1
+				$double volume 0
+				$transform pose [[0,0,0][1,0,0,0]]
+				$string surfaceMaterial "generic"
+				"bounds"
+				{
+					$vec3 min [-1,-1,-1]
+					$vec3 max [1,1,1]
+				}
+				$arrayLz4 vertices [vec3;8][[-1,-1,-1],[1,-1,-1],[1,-1,1],[1,1,-1],[1,1,1],[-1,1,-1],[-1,-1,1],[-1,1,1]]
+				$arrayLz4 triangles [uint16;0][]
+				$float mass 0
+				$vec3 centerOfMass [0,0,0]
+				"flags"
+				{
+					$bool convex 1
+				}
+			}
+			$uint32 assetVersion 1
+		}
+	]
+	"animations"
+	{
+		"reference"
+		{
+			$uint32 index 0
+			$string assetType "PANI"
+			"assetData"
+			{
+				$string activity "ACT_INVALID"
+				$uint8 activityWeight 1
+				$string flags ""
+				$array events [element;0][]
+				$nil fadeOutTime 
+				$uint8 fps 24
+				"renderBounds"
+				{
+					$vec3 min [0,0,0]
+					$vec3 max [0,0,0]
+				}
+				$float duration 0.0417
+				$nil fadeInTime 
+				$array nodes [element;1][
+					{
+						$string type "bone"
+						$array set [uint16;0][]
+					}
+				]
+				$arrayLz4 channels [element;0][]
+			}
+			$uint32 assetVersion 1
+		}
+	}
+	"meshGroups"
+	{
+		"reference"
+		{
+			$uint32 index 0
+			$array meshes [element;1][
+				{
+					$uint32 referenceId 4294967295
+					$array subMeshes [element;1][
+						{
+							$string assetType "PMESH"
+							"assetData"
+							{
+								$uint32 referenceId 4294967295
+								$uint32 skinMaterialIndex 0
+								$stransform pose [[0,0,0][1,0,0,0][1,1,1]]
+								$string geometryType "Lines"
+								$arrayLz4 vertices [vec3;8][
+									[1,1,1],
+									[1,1,-1],
+									[1,-1,1],
+									[1,-1,-1],
+									[-1,1,1],
+									[-1,1,-1],
+									[-1,-1,1],
+									[-1,-1,-1]
+								]
+								$arrayLz4 indices [uint16;20][
+									0,1,
+									0,2,
+									0,4,
+									1,3,
+									4,6,
+									5,1,
+									5,4,
+									5,7
+									2,3,
+									2,6,
+									7,3,
+									7,6
+								]
+								$uint8 alphaCount 0
+							}
+							$uint32 assetVersion 1
+						}
+					]
+				}
+			]
+		}
+	}
+}
+$uint32 assetVersion 1

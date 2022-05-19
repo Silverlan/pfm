@@ -21,7 +21,7 @@ function Component:OnRemove()
 	util.remove(self.m_listeners)
 end
 function Component:InitializeModel()
-	if(self.m_frustumModel ~= nil) then return self.m_frustumModel end
+	if(self.m_coneModel ~= nil) then return self.m_coneModel end
 	-- Generate model
 	local mdl = game.create_model()
 	local meshGroup = mdl:GetMeshGroup(0)
@@ -41,7 +41,7 @@ function Component:InitializeModel()
 	mesh:AddSubMesh(subMesh)
 	meshGroup:AddMesh(mesh)
 	
-	self.m_frustumModel = mdl
+	self.m_coneModel = mdl
 	self:UpdateModel()
 	mdl:Update(game.Model.FUPDATE_ALL)
 	self:SetConeModelDirty()
@@ -49,7 +49,7 @@ function Component:InitializeModel()
 end
 function Component:UpdateModel(updateBuffers)
 	if(updateBuffers == nil) then updateBuffers = true end
-	local meshGroup = self.m_frustumModel:GetMeshGroup(0) or nil
+	local meshGroup = self.m_coneModel:GetMeshGroup(0) or nil
 	local mesh = (meshGroup ~= nil) and meshGroup:GetMesh(0) or nil
 	local subMesh = (mesh ~= nil) and mesh:GetSubMesh(0) or nil
 	if(subMesh == nil) then return end

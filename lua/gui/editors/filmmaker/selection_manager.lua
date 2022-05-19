@@ -11,22 +11,23 @@ include("/shaders/pfm/pfm_selection_wireframe.lua")
 
 util.register_class("pfm.SelectionManager")
 function pfm.SelectionManager:__init()
-	self.m_selections = {}
+	self.m_selectionData = {}
 	self.m_listeners = {}
 end
 
 function pfm.SelectionManager:AddChangeListener(listener) table.insert(self.m_listeners,listener) end
 
-function pfm.SelectionManager:GetSelectedObjects() return self.m_selections end
+function pfm.SelectionManager:GetSelectedObjects() return self.m_selectionData end
 
 function pfm.SelectionManager:Remove()
 	self:ClearSelections()
 end
 
 function pfm.SelectionManager:ClearSelections()
-	local selections = self.m_selections
-	self.m_selections = {}
+	local selections = self.m_selectionData
+	self.m_selectionData = {}
 	for object,selected in pairs(selections) do
+		util.remove(selected.selectionEntity)
 		if(object:IsValid()) then
 			for _,listener in ipairs(self.m_listeners) do
 				listener(object,false)
@@ -36,7 +37,27 @@ function pfm.SelectionManager:ClearSelections()
 end
 
 function pfm.SelectionManager:SetSelected(obj,selected)
-	self.m_selections[obj] = selected or nil
+	if(selected == false) then
+		if(self.m_selectionData[obj] ~= nil) then
+			util.remove(self.m_selectionData[obj].selectionEntity)
+		end
+		self.m_selectionData[obj] = nil
+	else
+		self.m_selectionData[obj] = {
+			selected = true
+		}
+		if(obj:HasComponent(ents.COMPONENT_RENDER)) then
+			local ent = ents.create("pfm_selection")
+			if(ent ~= nil) then
+				self.m_selectionData[obj].selectionEntity = ent
+				local wfC = ent:GetComponent(ents.COMPONENT_PFM_SELECTION_WIREFRAME)
+				if(wfC ~= nil) then
+					wfC:SetTarget(obj)
+				end
+				ent:Spawn()
+			end
+		end
+	end
 	for _,listener in ipairs(self.m_listeners) do
 		listener(obj,selected)
 	end
@@ -63,20 +84,7 @@ function pfm.ActorSelectionManager:GetSelectedActors() return self:GetSelectedOb
 
 function pfm.ActorSelectionManager:PrepareSelectionMeshesForRendering(renderer)
 	if(self.m_valid == false) then return end
-	for ent,selected in pairs(self.m_selections) do
-		if(ent:IsValid() == false) then self.m_selections[ent] = nil
-		else
-			local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
-			if(renderC ~= nil) then
-				for _,mesh in ipairs(renderC:GetLODMeshes()) do
-					for _,subMesh in ipairs(mesh:GetSubMeshes()) do
-						--renderer:ScheduleMeshForRendering(game.SCENE_RENDER_PASS_WORLD,self.m_shader,self.m_material,ent,subMesh)
-						--renderer:ScheduleMeshForRendering(game.SCENE_RENDER_PASS_WORLD,self.m_shaderWireframe,self.m_material,ent,subMesh)
-					end
-				end
-			end
-		end
-	end
+	
 end
 
 function pfm.ActorSelectionManager:Remove()
