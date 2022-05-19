@@ -92,6 +92,7 @@ function Component:SetConeModelVisible(visible)
 	if(renderC ~= nil) then renderC:SetSceneRenderPass(visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE) end
 
 	if(visible == false) then return end
+	self:SetConeModelDirty()
 
 	local mdlC = self:GetEntity():AddComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil or mdlC:GetModel() ~= nil) then return end

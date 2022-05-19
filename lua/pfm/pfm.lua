@@ -344,36 +344,14 @@ pfm.find_inanimate_actors = function(session)
 	local function collect_actors(filmClip,actors)
 		for _,trackGroup in ipairs(filmClip:GetTrackGroups()) do
 			for _,track in ipairs(trackGroup:GetTracks()) do
-				for _,channelClip in ipairs(track:GetChannelClips()) do
-					for _,channel in ipairs(channelClip:GetChannels()) do
-						if(iteratedChannels[channel] == nil) then
-							iteratedChannels[channel] = true
-							local el = channel:GetToElement()
-							if(el ~= nil) then
-								local iterated = {}
-								iterated[el] = true
-								local parent = el:FindParentElement()
-								while(parent ~= nil and parent:GetType() ~= fudm.ELEMENT_TYPE_PFM_ACTOR) do
-									parent = el:FindParentElement()
-									if(parent ~= nil) then
-										if(iterated[parent]) then parent = nil
-										else iterated[parent] = true end
-									end
-								end
-								if(parent ~= nil) then
-									local numValues = 0
-									if(actors[parent] == nil) then
-										local log = channel:GetLog()
-										for _,layer in ipairs(log:GetLayers():GetTable()) do
-											local values = layer:GetValues()
-											numValues = numValues +#values
-										end
-									end
-									actors[parent] = math.max(actors[parent] or 0,numValues)
-								end
-							end
-						end
+				for _,channelClip in ipairs(track:GetAnimationClips()) do
+					local anim = channelClip:GetAnimation()
+					local actor = channelClip:GetActor()
+					local numValues = 0
+					for _,channel in ipairs(anim:GetChannels()) do
+						numValues = numValues +channel:GetValueCount()
 					end
+					actors[actor] = numValues
 				end
 			end
 		end
