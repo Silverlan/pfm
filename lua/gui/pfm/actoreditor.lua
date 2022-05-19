@@ -1185,6 +1185,17 @@ function gui.PFMActorEditor:AddActor(actor)
 			end)
 			pContext:AddItem(locale.get_text("pfm_copy_actors"),function() self:CopyToClipboard() end)
 			pContext:AddItem(locale.get_text("pfm_paste_actors"),function() self:PasteFromClipboard() end)
+			pContext:AddItem(locale.get_text("pfm_move_work_camera_to_actor"),function()
+				local filmmaker = tool.get_filmmaker()
+				local filmClip = filmmaker:GetActiveFilmClip()
+				if(filmClip == nil) then return end
+				local actor = filmClip:FindActorByUniqueId(uniqueId)
+				if(actor == nil) then return end
+				local pm = pfm.get_project_manager()
+				local vp = util.is_valid(pm) and pm:GetViewport() or nil
+				if(util.is_valid(vp) == false) then return end
+				vp:SetWorkCameraPose(actor:GetAbsolutePose())
+			end)
 			pContext:AddItem(locale.get_text("remove"),function()
 				local filmmaker = tool.get_filmmaker()
 				local filmClip = filmmaker:GetActiveFilmClip()

@@ -1025,13 +1025,18 @@ function gui.PFMViewport:UpdateWorkCamera()
 	local cam = self:GetWorkCamera()
 	if(util.is_valid(cam) == false) then return end
 	local pose = cam:GetEntity():GetPose()
+	self:SetWorkCameraPose(pose)
+	game.set_gameplay_control_camera(cam)
+end
+function gui.PFMViewport:SetWorkCameraPose(pose)
+	local cam = self:GetWorkCamera()
+	if(util.is_valid(cam) == false) then return end
 	local pos = pose:GetOrigin()
 	local ang = pose:GetRotation():ToEulerAngles()
 	local pl = ents.get_local_player()
 	if(util.is_valid(pl)) then pos = pos -pl:GetViewOffset() end
 	console.run("setpos",tostring(pos.x),tostring(pos.y),tostring(pos.z))
 	console.run("setang",tostring(ang.p),tostring(ang.y),0.0)
-	game.set_gameplay_control_camera(cam)
 end
 function gui.PFMViewport:SwitchToWorkCamera(ignoreGameplay)
 	if(ignoreGameplay ~= true) then self:SwitchToGameplay(false) end
