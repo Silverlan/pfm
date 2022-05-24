@@ -86,7 +86,7 @@ function gui.PFMTextureSlot:OnInitialize()
 	self:SetNormalMap(false)
 end
 function gui.PFMTextureSlot:SetClearTexture(clearTex) self.m_clearTex = clearTex end
-function gui.PFMTextureSlot:OnMouseEvent(button,state,mods)
+function gui.PFMTextureSlot:MouseCallback(button,state,mods)
 	if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 		local pContext = gui.open_context_menu()
 		if(util.is_valid(pContext) == false) then return end
