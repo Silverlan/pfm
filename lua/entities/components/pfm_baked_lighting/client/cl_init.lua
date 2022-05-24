@@ -26,6 +26,8 @@ Component:RegisterMember("LightmapAtlas",udm.TYPE_STRING,"",{
 		stripExtension = true
 	}
 })
+Component:RegisterMember("Resolution",udm.TYPE_STRING,"2048x2048")
+Component:RegisterMember("SampleCount",udm.TYPE_UINT32,200)
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -119,6 +121,17 @@ function Component:FindLightmapEntities()
 	local it = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_MODEL),ents.IteratorFilterComponent(ents.COMPONENT_LIGHT_MAP_RECEIVER)})
 	return ents.get_all(it)
 end
+function Component:FindLightSourceEntities()
+	local it = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_LIGHT)})
+	local t = {}
+	for ent in it do
+		local lightC = ent:GetComponent(ents.COMPONENT_LIGHT)
+		if(lightC:IsBaked()) then
+			table.insert(t,ent)
+		end
+	end
+	return t
+end
 function Component:LoadBakedLightmapUvs(lightmapCachePath,tEnts)
 	local models = self:LoadLightmapUvCache(lightmapCachePath)
 	if(models == false) then
@@ -136,6 +149,20 @@ function Component:SetLightmapAtlasDirty()
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 function Component:OnTick(dt)
+	if(self.m_lightmapJob ~= nil) then
+		self.m_lightmapJob:Poll()
+		if(self.m_lightmapJob:IsComplete() == false) then return end
+		if(self.m_lightmapJob:IsSuccessful()) then
+			local result = self.m_lightmapJob:GetResult()
+			local r = util.save_image(result,"materials/test_lm.hdr",util.IMAGE_FORMAT_HDR)
+			if(r) then
+				print("Lightmap baking complete")
+				self:SetLightmapAtlas("test_lm.hdr")
+			end
+		else
+			print("Lightmap baking error: ",self.m_lightmapJob:GetResultMessage())
+		end
+	end
 	self:SetTickPolicy(ents.TICK_POLICY_NEVER)
 	if(self.m_lightmapUvCacheDirty) then
 		self.m_lightmapUvCacheDirty = nil
@@ -160,13 +187,70 @@ function Component:UpdateLightmapUvCache()
 	end
 end
 function Component:UpdateLightmapAtlas()
-	local lightmapReceivers = self:FindLightmapEntities()
 	local lightmapC = self:GetEntity():AddComponent(ents.COMPONENT_LIGHT_MAP)
 	if(lightmapC ~= nil) then
-		local tex = asset.load(self:GetLightmapAtlas(),asset.TYPE_TEXTURE)
+		local tex = asset.reload(self:GetLightmapAtlas(),asset.TYPE_TEXTURE)
+		print("Lightmap Atlas texture: ",self:GetLightmapAtlas())
 		tex = (tex ~= nil) and tex:GetVkTexture() or nil
 		if(tex ~= nil) then lightmapC:SetLightmapAtlas(tex) end
 		lightmapC:ReloadLightmapData()
 	end
+end
+
+include("/util/lightmap_bake.lua")
+include("/pfm/bake/lightmaps.lua")
+function Component:GenerateLightmapUvs()
+	local lightmapReceivers = self:FindLightmapEntities()
+	util.bake_lightmap_uvs(lightmapReceivers,"test")
+end
+
+function Component:GenerateLightmaps(preview,lightIntensityFactor)
+	if(preview == nil) then preview = true end
+	-- util.bake_lightmaps(preview,lightIntensityFactor)
+	local resolution = string.split(self:GetResolution(),"x")
+	if(#resolution < 2) then return end
+	local width = tonumber(resolution[1])
+	local height = tonumber(resolution[2])
+	if(width == nil or height == nil) then return end
+	self.m_lightmapJob = pfm.bake.lightmaps(self:FindLightmapEntities(),self:FindLightSourceEntities(),width,height,self:GetSampleCount())
+	self.m_lightmapJob:Start()
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
+
+--Component:RegisterMember("Resolution",udm.TYPE_STRING,"2048x2048")
+--Component:RegisterMember("SampleCount",udm.TYPE_UINT32,200)
+
+	--[[if(pfm.load_unirender() == false) then
+		log.msg("Cannot bake lightmaps: Unable to load unirender library!",pfm.LOG_CATEGORY_VRP_PROJECT_EDITOR,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+	local tEnts = {}
+	for _,ent in ipairs(ents.get_all()) do
+		local includeEntityForLightmaps = false
+		if(ent:IsWorld()) then includeEntityForLightmaps = true
+		elseif(ent:IsMapEntity() and ent:HasComponent(ents.COMPONENT_PROP)) then includeEntityForLightmaps = true end
+		if(includeEntityForLightmaps) then table.insert(tEnts,ent) end
+	end
+	if(#tEnts == 0) then
+		log.msg("Cannot bake lightmaps: No entities to bake lightmaps for!",pfm.LOG_CATEGORY_VRP_PROJECT_EDITOR,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+	local path = util.Path.CreatePath(file.remove_file_extension(self:GetProjectFileName()))
+	local uvCachePath = path +"lightmap_uv_cache"
+	vrp.bake_lightmap_uvs(tEnts,uvCachePath:GetString())
+	local lightMapPath = path +"lightmap_atlas"
+	vrp.bake_lightmaps(lightMapPath:GetString())
+	-- self:ReloadLightmapData(tEnts) -- TODO: Reload lightmap data when lightmap has changed!
+	return true]]
+end
+function Component:ReloadLightmapData(tEnts)
+	--[[local entWorld = tEnts[1]
+	local lightmapC = entWorld:AddComponent(ents.COMPONENT_LIGHT_MAP)
+	if(lightmapC ~= nil) then
+		local tex = asset.load(lightmap,asset.TYPE_TEXTURE)
+		tex = (tex ~= nil) and tex:GetVkTexture() or nil
+		if(tex ~= nil) then lightmapC:SetLightmapAtlas(tex) end
+		lightmapC:ReloadLightmapData()
+	end
+	vrp.load_baked_lightmap_uvs("lm_cache",tEnts)]]
 end
 ents.PFM_BAKED_LIGHTING = ents.register_component("pfm_baked_lighting",Component)
