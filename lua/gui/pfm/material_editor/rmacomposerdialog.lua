@@ -7,6 +7,7 @@
 ]]
 
 include("../textureslot.lua")
+include("/pfm/bake/ambient_occlusion.lua")
 
 util.register_class("gui.RMAComposerDialog",gui.Base)
 function gui.RMAComposerDialog:__init()
@@ -37,13 +38,15 @@ function gui.RMAComposerDialog:OnThink()
 		return
 	end
 	if(self.m_aoJob:IsComplete() == false) then return end
-	if(self.m_aoJob:GetStatus() == util.ParallelJob.JOB_STATUS_SUCCESSFUL) then
+	local status = self.m_aoJob:GetStatus()
+	if(status == util.ParallelJob.JOB_STATUS_SUCCESSFUL) then
 		local result = self.m_aoJob:GetResult()
 		local img = prosper.create_image(result)
 		local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),prosper.SamplerCreateInfo())
 		tex:SetDebugName("rma_composer_dialog_tex")
 		self.m_slotAo:SetTexture(tex)
-	end
+	else console.print_warning("Failed to generate ambient occlusion: ",self.m_aoJob:GetResultMessage()) end
+	self.m_aoJob = nil
 end
 function gui.RMAComposerDialog:GetRMAMap() return self.m_rmaMap end
 function gui.RMAComposerDialog:SetRMAMap(rmaMap)
@@ -111,7 +114,7 @@ function gui.RMAComposerDialog:OnInitialize()
 				end
 
 				local samples = 20
-				self.m_aoJob = unirender.bake_ambient_occlusion(self.m_model,self.m_materialIndex,width,height,samples)
+				self.m_aoJob = pfm.bake.ambient_occlusion(self.m_model,self.m_materialIndex,width,height,samples)
 				if(self.m_aoJob == nil) then return end
 				self.m_aoJob:Start()
 				self:EnableThinking()
