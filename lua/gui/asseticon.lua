@@ -447,7 +447,7 @@ function gui.ModelAssetIcon:Export()
 	if(mdl == nil) then return false,"Unable to load model!" end
 	local exportInfo = game.Model.ExportInfo()
 	exportInfo.verbose = false
-	exportInfo.generateAo = true
+	exportInfo.generateAo = false -- true
 	exportInfo.exportAnimations = true
 	exportInfo.exportSkinnedMeshData = true
 	exportInfo.exportImages = true
