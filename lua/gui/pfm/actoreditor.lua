@@ -1445,6 +1445,19 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 						return el
 					end)
 				end
+			else
+				local elText,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,controlData.default or "",function(el)
+					if(self.m_skipUpdateCallback) then return end
+					if(controlData.set ~= nil) then controlData.set(udmComponent,el:GetText()) end
+				end)
+				if(controlData.getValue ~= nil) then
+					controlData.updateControlValue = function()
+						if(elText:IsValid() == false) then return end
+						local val = controlData.getValue()
+						if(val ~= nil) then elText:SetText(val) end
+					end
+				end
+				ctrl = wrapper
 			end
 		elseif(memberInfo.type == udm.TYPE_BOOLEAN) then
 			local elToggle,wrapper = self.m_animSetControls:AddToggleControl(memberInfo.name,memberInfo.name,controlData.default or false,function(oldChecked,checked)
