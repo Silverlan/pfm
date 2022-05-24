@@ -444,7 +444,46 @@ function gui.WIFilmmaker:OnInitialize()
 					recorder = nil
 				end
 			end)
-		else
+			pContext:AddItem("Generate lightmap uvs",function(pItem)
+				local actorEditor = self:GetActorEditor()
+				if(util.is_valid(actorEditor) == false) then return end
+				for _,actor in ipairs(actorEditor:GetSelectedActors()) do
+					local ent = actor:FindEntity()
+					if(util.is_valid(ent)) then
+						ent:AddComponent(ents.COMPONENT_LIGHT_MAP_RECEIVER)
+						ent:AddComponent(ents.COMPONENT_LIGHT_MAP)
+						local bakedC = ent:AddComponent("pfm_baked_lighting")
+						bakedC:GenerateLightmapUvs()
+					end
+				end
+			end)
+			pContext:AddItem("Test build lightmaps Low",function(pItem)
+				local actorEditor = self:GetActorEditor()
+				if(util.is_valid(actorEditor) == false) then return end
+				for _,actor in ipairs(actorEditor:GetSelectedActors()) do
+					local ent = actor:FindEntity()
+					if(util.is_valid(ent)) then
+						ent:AddComponent(ents.COMPONENT_LIGHT_MAP_RECEIVER)
+						ent:AddComponent(ents.COMPONENT_LIGHT_MAP)
+						local bakedC = ent:AddComponent("pfm_baked_lighting")
+						bakedC:GenerateLightmaps(false,10)
+					end
+				end
+			end)
+			pContext:AddItem("Test build lightmaps High",function(pItem)
+				local actorEditor = self:GetActorEditor()
+				if(util.is_valid(actorEditor) == false) then return end
+				for _,actor in ipairs(actorEditor:GetSelectedActors()) do
+					local ent = actor:FindEntity()
+					if(util.is_valid(ent)) then
+						ent:AddComponent(ents.COMPONENT_LIGHT_MAP_RECEIVER)
+						ent:AddComponent(ents.COMPONENT_LIGHT_MAP)
+						local bakedC = ent:AddComponent("pfm_baked_lighting")
+						bakedC:GenerateLightmaps(false,10)
+					end
+				end
+			end)
+
 			pContext:AddItem(locale.get_text("pfm_reload_in_dev_mode"),function(pItem)
 				console.run("pfm -log all -dev -reload")
 			end)
