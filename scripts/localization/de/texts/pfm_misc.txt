@@ -1,1 +1,3 @@
+pfm_bake_reflection_probe = "Reflektionen rendern"
+pfm_baking = "Baking"
 pfm_patrons = "Unterstützer"

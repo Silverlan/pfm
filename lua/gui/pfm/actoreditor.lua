@@ -12,6 +12,7 @@ include("weightslider.lua")
 include("controls_menu.lua")
 include("entry_edit_window.lua")
 include("/pfm/component_manager.lua")
+include("/pfm/component_actions.lua")
 
 util.register_class("gui.PFMActorEditor",gui.Base)
 
@@ -177,6 +178,23 @@ function gui.PFMActorEditor:OnInitialize()
 			self:UpdateActorComponents(actor)
 		end)
 
+		local pBakingItem,pBakingMenu = pContext:AddSubMenu(locale.get_text("pfm_baking"))
+		pBakingMenu:AddItem(locale.get_text("pfm_create_lightmapper"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			self:CreateNewActorComponent(actor,"pfm_baked_lighting")
+			self:UpdateActorComponents(actor)
+		end)
+		pBakingMenu:AddItem(locale.get_text("pfm_create_reflection_probe"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			local c = self:CreateNewActorComponent(actor,"reflection_probe",false)
+			c:SetMemberValue("iblStrength",udm.TYPE_FLOAT,1.4)
+			c:SetMemberValue("iblMaterial",udm.TYPE_STRING,"pbr/ibl/venice_sunset")
+			self:UpdateActorComponents(actor)
+		end)
+		pBakingMenu:Update()
+
 		local filmClip = self:GetFilmClip()
 		local hasSkyComponent = false
 		if(filmClip ~= nil) then
@@ -340,7 +358,11 @@ function gui.PFMActorEditor:CreateNewActorWithComponents(name,components)
 	local actor = self:CreateNewActor(name)
 	if(actor == nil) then return end
 	for i,componentName in ipairs(components) do
-		self:CreateNewActorComponent(actor,componentName,i == #components)
+		if(type(componentName) == "table") then
+			self:CreateNewActorComponent(actor,componentName[1],i == #components,componentName[2])
+		else
+			self:CreateNewActorComponent(actor,componentName,i == #components)
+		end
 	end
 	self:UpdateActorComponents(actor)
 	return actor
@@ -778,6 +800,7 @@ function gui.PFMActorEditor:RemoveActorComponentEntry(uniqueId,componentId)
 	local actorData = self.m_treeElementToActorData[itemActor]
 	if(actorData.componentData[componentId] == nil) then return end
 	util.remove(actorData.componentData[componentId].items)
+	util.remove(actorData.componentData[componentId].actionItems)
 	util.remove(actorData.componentData[componentId].itemComponent)
 	actorData.componentData[componentId] = nil
 end
@@ -820,7 +843,9 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 	local componentId = ents.find_component_id(componentType)
 	if(componentId == nil) then return end
 	actorData.componentData[componentId] = actorData.componentData[componentId] or {
-		items = {}
+		items = {},
+		actionItems = {},
+		actionData = {}
 	}
 	local componentData = actorData.componentData[componentId]
 	local itemComponent = actorData.componentsEntry:AddItem(componentType,nil,nil,componentType)
@@ -854,6 +879,23 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
 		end
+	end)
+	itemComponent:AddCallback("OnSelectionChanged",function(el,selected)
+		if(selected) then
+			local actions = pfm.get_component_actions(componentType)
+			if(actions ~= nil) then
+				for id,action in pairs(actions) do
+					actorData.componentData[componentId].actionData[id] = {}
+					local entActor = ents.find_by_uuid(uniqueId)
+					if(util.is_valid(entActor)) then
+						local el = action.initialize(self.m_animSetControls,actorData.actor,entActor,actorData.componentData[componentId].actionData[id])
+						if(util.is_valid(el)) then
+							table.insert(actorData.componentData[componentId].actionItems,el)
+						end
+					end
+				end
+			end
+		else util.remove(actorData.componentData[componentId].actionItems) end
 	end)
 	if(component.GetIconMaterial) then
 		itemComponent:AddIcon(component:GetIconMaterial())

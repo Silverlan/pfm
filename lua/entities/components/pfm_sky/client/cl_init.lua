@@ -33,14 +33,17 @@ function Component:Initialize()
 	self.m_callbacks = {}
 	table.insert(self.m_callbacks,ents.add_component_creation_listener("unirender",function(c)
 		table.insert(self.m_callbacks,c:AddEventCallback(ents.UnirenderComponent.EVENT_INITIALIZE_SCENE,function(scene,renderSettings)
-			scene:SetSkyAngles(self:GetEntity():GetAngles())
-			scene:SetSkyStrength(self:GetStrength())
-			local tex = self:GetSkyTexture()
-			if(#tex > 0) then scene:SetSky(tex) end
-			scene:SetSkyTransparent(self:GetTransparent())
-			-- settings:SetSkyYaw(self.m_ctrlSkyYaw:GetValue())
+			self:ApplySceneSkySettings(scene)
 		end))
 	end))
+end
+function Component:ApplySceneSkySettings(scene)
+	scene:SetSkyAngles(self:GetEntity():GetAngles())
+	scene:SetSkyStrength(self:GetStrength())
+	local tex = self:GetSkyTexture()
+	if(#tex > 0) then scene:SetSky(tex) end
+	scene:SetSkyTransparent(self:GetTransparent())
+	-- settings:SetSkyYaw(self.m_ctrlSkyYaw:GetValue())
 end
 function Component:OnPoseChanged()
 	local ang = self:GetEntity():GetAngles()

@@ -9,7 +9,7 @@
 pfm = pfm or {}
 pfm.bake = pfm.bake or {}
 
-pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCount)
+pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCount,initScene)
 	local createInfo = unirender.Scene.CreateInfo()
 	createInfo.renderer = "cycles"
 	createInfo.width = width
@@ -46,6 +46,7 @@ pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCo
 	for _,ent in ipairs(lightSources) do
 		scene:AddLightSource(ent)
 	end
+	if(initScene ~= nil) then initScene(scene) end
 
 	scene:Finalize()
 	local flags = unirender.Renderer.FLAG_NONE

@@ -107,13 +107,14 @@ function gui.PFMButton:OpenContextMenu()
 		if(self:IsValid()) then self:SetActivated(false) end
 	end)
 end
+function gui.PFMButton:OnPressed() end
 function gui.PFMButton:MouseCallback(button,state,mods)
 	if(self:IsEnabled() == false) then return util.EVENT_REPLY_UNHANDLED end
 	if(button == input.MOUSE_BUTTON_LEFT) then
 		if(state == input.STATE_PRESS) then
 			self:SetActivated(true)
 		elseif(state == input.STATE_RELEASE) then
-			if(self:CallCallbacks("OnPressed") ~= true) then
+			if(self:OnPressed() ~= true and self:CallCallbacks("OnPressed") ~= true) then
 				self:SetActivated(false)
 			end
 		end

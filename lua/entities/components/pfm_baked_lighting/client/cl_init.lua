@@ -125,9 +125,11 @@ function Component:FindLightSourceEntities()
 	local it = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_LIGHT)})
 	local t = {}
 	for ent in it do
-		local lightC = ent:GetComponent(ents.COMPONENT_LIGHT)
-		if(lightC:IsBaked()) then
-			table.insert(t,ent)
+		if(ent:IsTurnedOn()) then
+			local lightC = ent:GetComponent(ents.COMPONENT_LIGHT)
+			if(lightC:IsBaked()) then
+				table.insert(t,ent)
+			end
 		end
 	end
 	return t
@@ -212,7 +214,13 @@ function Component:GenerateLightmaps(preview,lightIntensityFactor)
 	local width = tonumber(resolution[1])
 	local height = tonumber(resolution[2])
 	if(width == nil or height == nil) then return end
-	self.m_lightmapJob = pfm.bake.lightmaps(self:FindLightmapEntities(),self:FindLightSourceEntities(),width,height,self:GetSampleCount())
+	self.m_lightmapJob = pfm.bake.lightmaps(self:FindLightmapEntities(),self:FindLightSourceEntities(),width,height,self:GetSampleCount(),function(scene)
+		local ent = ents.iterator({ents.IteratorFilterComponent("pfm_sky")})()
+		if(ent ~= nil) then
+			local skyC = ent:GetComponent(ents.COMPONENT_PFM_SKY)
+			skyC:ApplySceneSkySettings(scene)
+		end
+	end)
 	self.m_lightmapJob:Start()
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 

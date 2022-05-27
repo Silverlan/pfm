@@ -66,6 +66,7 @@ function gui.WIFilmmaker:__init()
 
 	pfm.set_project_manager(self)
 end
+include("/pfm/bake/ibl.lua")
 function gui.WIFilmmaker:CheckForUpdates(verbose)
 	if(util.is_valid(self.m_updateChecker)) then return end
 	-- TODO: Locale, etc
@@ -589,7 +590,7 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetKeyboardInputEnabled(true)
 	self:ClearProjectUI()
 
-	local entProbe = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_REFLECTION_PROBE)})()
+	--[[local entProbe = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_REFLECTION_PROBE)})()
 	if(entProbe == nil) then
 		pfm.log("No reflection probe found, creating default probe...",pfm.LOG_CATEGORY_PFM)
 		local entReflectionProbe = ents.create("env_reflection_probe")
@@ -597,24 +598,7 @@ function gui.WIFilmmaker:OnInitialize()
 		entReflectionProbe:SetKeyValue("ibl_strength","1.4")
 		entReflectionProbe:Spawn()
 		self.m_reflectionProbe = entReflectionProbe
-
-		--[[local entLight = ents.create("env_light_environment")
-		entLight:SetKeyValue("spawnflags",tostring(1024))
-		entLight:SetAngles(EulerAngles(65,45,0))
-		entLight:Spawn()
-
-		local colorC = entLight:GetComponent(ents.COMPONENT_COLOR)
-		if(colorC ~= nil) then colorC:SetColor(light.color_temperature_to_color(light.get_average_color_temperature(light.NATURAL_LIGHT_TYPE_CLEAR_BLUESKY))) end
-
-		local lightC = entLight:GetComponent(ents.COMPONENT_LIGHT)
-		if(lightC ~= nil) then
-			lightC:SetShadowType(ents.LightComponent.SHADOW_TYPE_FULL)
-			lightC:SetLightIntensity(4)
-		end
-		local toggleC = entLight:GetComponent(ents.COMPONENT_TOGGLE)
-		if(toggleC ~= nil) then toggleC:TurnOn() end
-		self.m_entLight = entLight]]
-	end
+	end]]
 	pfm.ProjectManager.OnInitialize(self)
 	self:SetCachedMode(false)
 end
@@ -655,6 +639,18 @@ function gui.WIFilmmaker:CreateSimpleProject()
 
 	actorEditor:AddSkyActor()
 	local cam = actorEditor:CreateNewActorWithComponents("camera",{"pfm_actor","pfm_camera","camera"})
+
+	local entProbe = actorEditor:CreateNewActorWithComponents("reflection_probe",{
+		"pfm_actor",
+		{
+			"reflection_probe",
+			function(c)
+				c:SetMemberValue("iblStrength",udm.TYPE_FLOAT,1.4)
+				c:SetMemberValue("iblMaterial",udm.TYPE_STRING,"pbr/ibl/venice_sunset")
+			end
+		}
+	})
+
 	local filmClip = self:GetActiveGameViewFilmClip()
 	if(filmClip ~= nil) then filmClip:SetCamera(cam) end
 end
@@ -895,7 +891,7 @@ function gui.WIFilmmaker:OnRemove()
 		self.m_animRecorder = nil
 	end
 
-	util.remove(self.m_reflectionProbe)
+	-- util.remove(self.m_reflectionProbe)
 	-- util.remove(self.m_entLight)
 
 	local layers = {}

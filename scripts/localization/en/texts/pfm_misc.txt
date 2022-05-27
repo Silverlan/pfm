@@ -1,1 +1,3 @@
+pfm_bake_reflection_probe = "Bake reflection probe"
+pfm_baking = "Baking"
 pfm_patrons = "Supporters"

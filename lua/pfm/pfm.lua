@@ -370,6 +370,8 @@ end
 
 local colScheme = util.ColorScheme()
 colScheme:SetColor("black",Color.CreateFromHexColor("000000"))
+colScheme:SetColor("grey",Color.CreateFromHexColor("363636"))
+colScheme:SetColor("darkGrey",Color.CreateFromHexColor("262626"))
 colScheme:SetColor("white",Color.CreateFromHexColor("ffffff"))
 colScheme:SetColor("red",Color.CreateFromHexColor("ff3352"))
 colScheme:SetColor("green",Color.CreateFromHexColor("8bdc00"))
