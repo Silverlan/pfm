@@ -1089,7 +1089,7 @@ function gui.WIFilmmaker:SetActorAnimationComponentProperty(actor,targetPath,tim
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor)) then actorEditor:UpdateActorProperty(actor,targetPath) end
 end
-function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value)
+function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 	local actorData = actor:GetActorData()
 	if(actorData == nil) then return end
 	local actorEditor = self:GetActorEditor()
@@ -1100,16 +1100,29 @@ function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value)
 
 	self:GetAnimationManager():SetAnimationDirty(actorData)
 	actor:GetEntity():SetMemberValue(targetPath,value)
+	if(udmType ~= nil) then
+		local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
+		if(componentName ~= nil) then
+			local c = actorData:AddComponentType(componentName)
+			c:SetMemberValue(memberName:GetString(),udmType,value)
+		end
+	end
 	self:GetActorEditor():UpdateActorProperty(actorData,targetPath)
 	self:TagRenderSceneAsDirty()
 end
-function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value)
+function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value,applyUdmValue)
 	local actorData = actor:GetActorData()
 	if(actorData == nil) then return end
 	local actorEditor = self:GetActorEditor()
 	local targetPath = "ec/pfm_actor/" .. propType
 	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
 		actorEditor:SetAnimationChannelValue(actorData,targetPath,value)
+		if(applyUdmValue) then
+			local actorC = actorData:AddComponentType("pfm_actor")
+			if(propType == "position") then actorC:SetMemberValue(propType,udm.TYPE_VECTOR3,value)
+			elseif(propType == "rotation") then actorC:SetMemberValue(propType,udm.TYPE_QUATERNION,value)
+			elseif(propType == "scale") then actorC:SetMemberValue(propType,udm.TYPE_VECTOR3,value) end
+		end
 		return
 	end
 	local transform = actorData:GetTransform()
@@ -1681,6 +1694,15 @@ console.register_command("pfm_action",function(pl,...)
 				cam:SetFOV(cam:GetFOV() +1.0)
 			elseif(args[2] == "out") then
 				cam:SetFOV(cam:GetFOV() -1.0)
+			end
+		end
+
+		local vp = pm:GetGameplayViewport()
+		if(vp ~= nil and vp:IsSceneCamera()) then
+			local cam = vp:GetSceneCamera()
+			local pfmActorC = cam:GetEntity():GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if(pfmActorC ~= nil) then
+				pm:SetActorGenericProperty(pfmActorC,"ec/camera/fov",cam:GetFOV(),udm.TYPE_FLOAT)
 			end
 		end
 	end

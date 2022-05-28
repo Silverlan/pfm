@@ -29,14 +29,19 @@ function Component:OnPoseChanged()
 	if(actorC == nil) then return end
 	local pose = self:GetEntity():GetPose()
 	self.m_targetActor:SetPose(pose)
-	pm:SetActorTransformProperty(actorC,"position",pose:GetOrigin())
-	pm:SetActorTransformProperty(actorC,"rotation",pose:GetRotation())
+	pm:SetActorTransformProperty(actorC,"position",pose:GetOrigin(),true)
+	pm:SetActorTransformProperty(actorC,"rotation",pose:GetRotation(),true)
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
 	if(camC == nil) then return end
 	local lightC = self.m_targetActor:GetComponent(ents.COMPONENT_LIGHT_SPOT)
 	if(lightC ~= nil) then
 		lightC:SetOuterConeAngle(camC:GetFOV())
-		pm:SetActorGenericProperty(actorC,"ec/light_spot/outerConeAngle",camC:GetFOV())
+		pm:SetActorGenericProperty(actorC,"ec/light_spot/outerConeAngle",camC:GetFOV(),udm.TYPE_FLOAT)
+	end
+	local camTargetC = self.m_targetActor:GetComponent(ents.COMPONENT_CAMERA)
+	if(camTargetC ~= nil) then
+		camTargetC:SetFOV(camC:GetFOV())
+		pm:SetActorGenericProperty(actorC,"ec/camera/fov",camC:GetFOV(),udm.TYPE_FLOAT)
 	end
 end
 ents.COMPONENT_PFM_CAMERA_ACTOR_LINK = ents.register_component("pfm_camera_actor_link",Component)
