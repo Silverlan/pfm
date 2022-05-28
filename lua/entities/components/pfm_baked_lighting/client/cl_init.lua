@@ -150,6 +150,7 @@ function Component:SetLightmapAtlasDirty()
 	self.m_lightmapAtlasDirty = true
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
+function Component:GetLightmapJob() return self.m_lightmapJob end
 function Component:OnTick(dt)
 	if(self.m_lightmapJob ~= nil) then
 		self.m_lightmapJob:Poll()
@@ -223,9 +224,7 @@ function Component:GenerateLightmaps(preview,lightIntensityFactor)
 	end)
 	self.m_lightmapJob:Start()
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
-
---Component:RegisterMember("Resolution",udm.TYPE_STRING,"2048x2048")
---Component:RegisterMember("SampleCount",udm.TYPE_UINT32,200)
+	return self:GetLightmapJob()
 
 	--[[if(pfm.load_unirender() == false) then
 		log.msg("Cannot bake lightmaps: Unable to load unirender library!",pfm.LOG_CATEGORY_VRP_PROJECT_EDITOR,pfm.LOG_SEVERITY_WARNING)

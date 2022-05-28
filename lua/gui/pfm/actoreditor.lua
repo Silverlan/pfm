@@ -1238,6 +1238,40 @@ function gui.PFMActorEditor:AddActor(actor)
 				if(util.is_valid(vp) == false) then return end
 				vp:SetWorkCameraPose(actor:GetAbsolutePose())
 			end)
+			pContext:AddItem(locale.get_text("pfm_toggle_camera_link"),function()
+				local filmmaker = tool.get_filmmaker()
+				local entActor = actor:FindEntity()
+				local vp = filmmaker:GetViewport()
+				if(util.is_valid(vp) == false or util.is_valid(entActor) == false) then return end
+				local cam = vp:GetCamera()
+				if(util.is_valid(cam) == false) then return end
+				local ent = cam:GetEntity()
+				if(ent:HasComponent("pfm_camera_actor_link")) then
+					ent:RemoveComponent("pfm_camera_actor_link")
+					if(self.m_camLinkOrigFov ~= nil) then
+						cam:SetFOV(self.m_camLinkOrigFov)
+						self.m_camLinkOrigFov = nil
+					end
+					if(self.m_camLinkOrigPose ~= nil) then
+						vp:SetWorkCameraPose(self.m_camLinkOrigPose)
+						self.m_camLinkOrigPose = nil
+					end
+					self:TagRenderSceneAsDirty()
+				else
+					local c = cam:GetEntity():AddComponent("pfm_camera_actor_link")
+					if(c ~= nil) then
+						c:SetTargetActor(entActor)
+						local lightSpotC = entActor:GetComponent(ents.COMPONENT_LIGHT_SPOT)
+						if(lightSpotC ~= nil) then
+							self.m_camLinkOrigFov = cam:GetFOV()
+							self.m_camLinkOrigPose = cam:GetEntity():GetPose()
+							cam:SetFOV(lightSpotC:GetOuterConeAngle())
+							vp:SetWorkCameraPose(entActor:GetPose())
+						end
+						self:TagRenderSceneAsDirty()
+					end
+				end
+			end)
 			pContext:AddItem(locale.get_text("remove"),function()
 				local filmmaker = tool.get_filmmaker()
 				local filmClip = filmmaker:GetActiveFilmClip()

@@ -894,7 +894,11 @@ function gui.PFMViewport:InitializeCameraControls()
 	self.manipulatorControls = controls
 end
 function gui.PFMViewport:IsGameplayEnabled() return self.m_gameplayEnabled end
+function gui.PFMViewport:IsInCameraControlMode() return self.m_inCameraControlMode end
 function gui.PFMViewport:SetGameplayMode(enabled)
+	input.set_binding_layer_enabled("pfm_viewport",enabled)
+	input.update_effective_input_bindings()
+
 	if(enabled) then
 		self.m_oldCursorPos = input.get_cursor_pos()
 		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_FLY) end
@@ -911,8 +915,10 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 		self.m_oldInputLayerStates = {}
 		local inputLayers = filmmaker:GetInputBindingLayers()
 		for id,layer in pairs(inputLayers) do
-			self.m_oldInputLayerStates[id] = input.is_binding_layer_enabled(id)
-			input.set_binding_layer_enabled(id,false)
+			if(id ~= "pfm_viewport") then
+				self.m_oldInputLayerStates[id] = input.is_binding_layer_enabled(id)
+				input.set_binding_layer_enabled(id,false)
+			end
 		end
 		input.update_effective_input_bindings()
 

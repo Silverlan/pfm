@@ -1,3 +1,5 @@
+pfm_bake_lightmap_uvs = "Bake lightmap UVs"
+pfm_bake_lightmaps = "Bake lightmaps"
 pfm_bake_reflection_probe = "Reflektionen rendern"
 pfm_baking = "Baking"
 pfm_patrons = "Unterstützer"

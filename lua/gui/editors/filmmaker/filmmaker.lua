@@ -145,6 +145,13 @@ function gui.WIFilmmaker:OnInitialize()
 		-- bindingLayer:BindKey("m","pfm_graph_editor_action select mute")
 		layers["pfm_graph_editor"] = bindingLayer
 	end
+	if(layers["pfm_viewport"] == nil) then
+		local bindingLayer = input.InputBindingLayer("pfm_viewport")
+		bindingLayer:BindKey("scrlup","pfm_action zoom in")
+		bindingLayer:BindKey("scrldn","pfm_action zoom out")
+
+		layers["pfm_viewport"] = bindingLayer
+	end
 	layers["pfm"].priority = 1000
 	layers["pfm_graph_editor"].priority = 2000
 	for _,layer in pairs(layers) do
@@ -723,6 +730,18 @@ function gui.WIFilmmaker:ReloadInterface()
 	interface:RestorePersistentProject(projectData)
 end
 function gui.WIFilmmaker:GetGameScene() return self:GetRenderTab():GetGameScene() end
+function gui.WIFilmmaker:GetGameplayViewport()
+	for _,vp in ipairs({self:GetViewport(),self:GetSecondaryViewport(),self:GetTertiaryViewport()}) do
+		if(vp:IsValid()) then
+			if(vp:IsInCameraControlMode()) then return vp end
+		end
+	end
+end
+function gui.WIFilmmaker:GetGameplayCamera()
+	local vp = self:GetGameplayViewport()
+	if(vp == nil) then return end
+	return vp:GetCamera()
+end
 function gui.WIFilmmaker:GetViewport() return self:GetWindow("primary_viewport") or nil end
 function gui.WIFilmmaker:GetViewportElement()
 	local vp = self:GetWindow("primary_viewport")
@@ -1655,5 +1674,14 @@ console.register_command("pfm_action",function(pl,...)
 		if(args[2] == "clip") then timeline:SetEditor(gui.PFMTimeline.EDITOR_CLIP)
 		elseif(args[2] == "motion") then timeline:SetEditor(gui.PFMTimeline.EDITOR_MOTION)
 		elseif(args[2] == "graph") then timeline:SetEditor(gui.PFMTimeline.EDITOR_GRAPH) end
+	elseif(args[1] == "zoom") then
+		local cam = pm:GetGameplayCamera()
+		if(util.is_valid(cam)) then
+			if(args[2] == "in") then
+				cam:SetFOV(cam:GetFOV() +1.0)
+			elseif(args[2] == "out") then
+				cam:SetFOV(cam:GetFOV() -1.0)
+			end
+		end
 	end
 end)
