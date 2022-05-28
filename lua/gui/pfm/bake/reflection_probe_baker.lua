@@ -6,56 +6,33 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/gui/pfm/button.lua")
+include("base_baker.lua")
 
-util.register_class("WIReflectionProbeBaker",gui.PFMButton)
+util.register_class("WIReflectionProbeBaker",WIBaseBaker)
 function WIReflectionProbeBaker:OnInitialize()
-	gui.PFMButton(self)
-
-	self:SetSize(64,64)
-	self:InitializeProgressBar()
-	self:SetMouseInputEnabled(true)
+	WIBaseBaker.OnInitialize(self)
 
 	self:SetText(locale.get_text("pfm_bake_reflection_probe"))
 end
 function WIReflectionProbeBaker:SetActor(actorData,entActor)
+	WIBaseBaker.SetActor(self,actorData,entActor)
 	self.m_baker = pfm.bake.ReflectionProbeBaker(actorData,entActor)
 end
-function WIReflectionProbeBaker:OnPressed()
-	if(self.m_baking == true) then
-		self:Cancel()
-		return
-	end
-	self:StartBake()
+function WIBaseBaker:Reset()
+	self:SetText(locale.get_text("pfm_bake_reflection_probe"))
 end
-function WIReflectionProbeBaker:Cancel()
-	if(self.m_baking == true) then
-		self.m_baker:Clear()
-		self:SetText(locale.get_text("pfm_bake_reflection_probe"))
-		self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
-	end
-	self.m_baking = false
+function WIReflectionProbeBaker:StartBaker() self.m_baker:Start() end
+function WIReflectionProbeBaker:CancelBaker() self.m_baker:Clear() end
+function WIReflectionProbeBaker:PollBaker() self.m_baker:Poll() end
+function WIReflectionProbeBaker:IsBakerComplete() return self.m_baker:IsComplete() end
+function WIReflectionProbeBaker:IsBakerSuccessful() return self.m_baker:IsSuccessful() end
+function WIReflectionProbeBaker:GetBakerProgress() return self.m_baker:GetProgress() end
+function WIReflectionProbeBaker:FinalizeBaker()
+	local ent = self:GetActorEntity()
+	local reflC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
+	return reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult())
 end
-function WIReflectionProbeBaker:OnRemove()
-	self:Cancel()
-end
-function WIReflectionProbeBaker:StartBake()
-	self.m_progressBar:SetColor(pfm.get_color_scheme_color("darkGrey"))
-	self.m_baker:Start()
-	self.m_baking = true
-	self:SetText(locale.get_text("cancel"))
 
-	self:SetThinkingEnabled(true)
-end
-function WIReflectionProbeBaker:OnThink()
-	if(self.m_baking ~= true) then return end
-	self.m_baker:Poll()
-	self.m_progressBar:SetProgress(self.m_baker:GetProgress())
-
-	if(self.m_baker:IsComplete()) then
-		self:OnComplete()
-	end
-end
 function WIReflectionProbeBaker:OnComplete()
 	if(self.m_baker:IsSuccessful()) then
 		local ent = self.m_baker:GetActorEntity()
@@ -69,18 +46,6 @@ function WIReflectionProbeBaker:OnComplete()
 	else
 		self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
 	end
-	self.m_baking = false
-	self:SetThinkingEnabled(false)
 	self:SetText(locale.get_text("pfm_bake_reflection_probe"))
-end
-function WIReflectionProbeBaker:InitializeProgressBar()
-	local progressBar = gui.create("WIProgressBar",self)
-	progressBar:SetSize(self:GetWidth(),self:GetHeight())
-	progressBar:SetPos(0,0)
-	progressBar:SetColor(Color.Gray)
-	progressBar:SetAnchor(0,0,1,1)
-	progressBar:SetZPos(-2)
-	progressBar:SetLabelVisible(false)
-	self.m_progressBar = progressBar
 end
 gui.register("WIReflectionProbeBaker",WIReflectionProbeBaker)
