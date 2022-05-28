@@ -1266,11 +1266,25 @@ function gui.PFMActorEditor:AddActor(actor)
 							self.m_camLinkOrigFov = cam:GetFOV()
 							self.m_camLinkOrigPose = cam:GetEntity():GetPose()
 							cam:SetFOV(lightSpotC:GetOuterConeAngle())
-							vp:SetWorkCameraPose(entActor:GetPose())
 						end
+						local camC = entActor:GetComponent(ents.COMPONENT_CAMERA)
+						if(camC ~= nil) then
+							cam:SetFOV(camC:GetFOV())
+						end
+						vp:SetWorkCameraPose(entActor:GetPose())
 						self:TagRenderSceneAsDirty()
 					end
 				end
+			end)
+			pContext:AddItem(locale.get_text("rename"),function()
+				local te = gui.create("WITextEntry",itemActor,0,0,itemActor:GetWidth(),itemActor:GetHeight(),0,0,1,1)
+				te:SetText(actor:GetName())
+				te:RequestFocus()
+				te:AddCallback("OnFocusKilled",function()
+					actor:SetName(te:GetText())
+					itemActor:SetText(te:GetText())
+					te:RemoveSafely()
+				end)
 			end)
 			pContext:AddItem(locale.get_text("remove"),function()
 				local filmmaker = tool.get_filmmaker()
@@ -1687,6 +1701,11 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 					p:SetWindowSize(Vector2i(800,120))
 					p:Update()
 				end)
+				if(controlData.path ~= nil) then
+					context:AddItem(locale.get_text("pfm_copy_property_path"),function()
+						util.set_clipboard_string(controlData.path)
+					end)
+				end
 				local anim,channel = animManager:FindAnimationChannel(actorData.actor,controlData.path,false)
 				if(channel ~= nil) then
 					context:AddItem(locale.get_text("pfm_clear_animation"),function()
