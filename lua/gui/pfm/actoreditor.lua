@@ -1677,6 +1677,82 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 		end
 	end
 	if(ctrl ~= nil) then
+		local type = memberInfo.type
+		local exprIcon
+		local enable_expr_icon
+		local function clear_expression()
+			local pm = pfm.get_project_manager()
+			local animManager = pm:GetAnimationManager()
+			if(animManager == nil) then return end
+			animManager:SetValueExpression(actorData.actor,controlData.path)
+
+			local anim,channel,animClip = animManager:FindAnimationChannel(actorData.actor,controlData.path)
+			if(animClip ~= nil) then
+				local channel = animClip:GetChannel(controlData.path)
+				if(channel ~= nil) then
+					channel:SetExpression()
+				end
+			end
+			enable_expr_icon(false)
+		end
+		local function set_expression()
+			local pm = pfm.get_project_manager()
+			local animManager = pm:GetAnimationManager()
+			if(animManager == nil) then return end
+			local te
+			local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"),function(ok)
+				if(ok) then
+					local res = animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText(),type)
+					if(res) then
+						local anim,channel,animClip = animManager:FindAnimationChannel(actorData.actor,controlData.path,true,type)
+						if(animClip ~= nil) then
+							local channel = animClip:GetChannel(controlData.path)
+							if(channel ~= nil) then
+								channel:SetExpression(te:GetText())
+							end
+						end
+					else
+						clear_expression()
+					end
+					enable_expr_icon(res)
+				end
+			end)
+			local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
+			te = p:AddTextField(locale.get_text("pfm_expression") .. ":",expr or "")
+			te:GetTextElement():SetFont("pfm_medium")
+
+			p:SetWindowSize(Vector2i(800,120))
+			p:Update()
+		end
+		enable_expr_icon = function(enabled)
+			if(enabled == false) then
+				util.remove(exprIcon)
+				return
+			end
+			if(util.is_valid(exprIcon)) then return end
+			local el = gui.create("WIRect",ctrl)
+			el:SetSize(5,5)
+			el:SetPos(ctrl:GetWidth() -7,2)
+			el:SetColor(pfm.get_color_scheme_color("red"))
+			el:SetAnchor(1,0,1,0)
+			el:SetCursor(gui.CURSOR_SHAPE_HAND)
+			el:SetMouseInputEnabled(true)
+			el:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
+				if(button == input.MOUSE_BUTTON_LEFT) then
+					if(state == input.STATE_PRESS) then
+						set_expression()
+					end
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+			exprIcon = el
+		end
+		local pm = pfm.get_project_manager()
+		local animManager = pm:GetAnimationManager()
+		if(animManager ~= nil and animManager:GetValueExpression(actorData.actor,controlData.path) ~= nil) then
+			enable_expr_icon(true)
+		end
+
 		ctrl:AddCallback("PopulateContextMenu",function(ctrl,context)
 			local pm = pfm.get_project_manager()
 			local animManager = pm:GetAnimationManager()
@@ -1684,23 +1760,11 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 				local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
 				if(expr ~= nil) then
 					context:AddItem(locale.get_text("pfm_clear_expression"),function()
-						animManager:SetValueExpression(actorData.actor,controlData.path)
+						clear_expression()
 					end)
 					context:AddItem(locale.get_text("pfm_copy_expression"),function() util.set_clipboard_string(expr) end)
 				end
-				context:AddItem(locale.get_text("pfm_set_expression"),function()
-					local te
-					local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"),function(ok)
-						if(ok) then
-							animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText())
-						end
-					end)
-					te = p:AddTextField(locale.get_text("pfm_expression") .. ":",expr or "")
-					te:GetTextElement():SetFont("pfm_medium")
-
-					p:SetWindowSize(Vector2i(800,120))
-					p:Update()
-				end)
+				context:AddItem(locale.get_text("pfm_set_expression"),set_expression)
 				if(controlData.path ~= nil) then
 					context:AddItem(locale.get_text("pfm_copy_property_path"),function()
 						util.set_clipboard_string(controlData.path)

@@ -124,15 +124,16 @@ function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists,typ
 	return anim,anim:FindChannel(path),animClip
 end
 
-function pfm.AnimationManager:SetValueExpression(actor,path,expr)
-	local anim,channel = self:FindAnimationChannel(actor,path)
-	if(channel == nil) then return end
+function pfm.AnimationManager:SetValueExpression(actor,path,expr,type)
+	local anim,channel = self:FindAnimationChannel(actor,path,(type ~= nil),type)
+	if(channel == nil) then return false end
 	if(expr == nil) then
 		channel:ClearValueExpression()
-		return
+		return false
 	end
 	local r = channel:SetValueExpression(expr)
 	if(r ~= true) then pfm.log("Unable to apply channel value expression '" .. expr .. "' for channel with path '" .. path .. "': " .. r,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
+	return r == true
 end
 
 function pfm.AnimationManager:GetValueExpression(actor,path)
