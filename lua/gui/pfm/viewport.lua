@@ -130,7 +130,6 @@ function gui.PFMViewport:InitializeViewport(parent)
 
 	self.m_viewport = gui.create("WIViewport",vpContainer,0,0,vpContainer:GetWidth(),vpContainer:GetHeight(),0,0,1,1)
 	self.m_viewport:SetMovementControlsEnabled(false)
-	self.m_viewport:SetZPos(6)
 
 	self.m_viewport:SetType(gui.WIViewport.VIEWPORT_TYPE_3D)
 
@@ -241,7 +240,6 @@ function gui.PFMViewport:SetRtViewportRenderer(renderer)
 	if(util.is_valid(scene)) then rtViewport:SetGameScene(scene) end
 	self.m_rtViewport = rtViewport
 	tool.get_filmmaker():SetOverlaySceneEnabled(true)
-	rtViewport:SetZPos(-2)
 
 	self:UpdateRenderSettings()
 end

@@ -72,6 +72,7 @@ function gui.RenderImage:ApplyImageProcessing(drawSceneInfo)
 		time.create_simple_timer(0.0,function()
 			if(self.m_elTex:IsValid() == false) then return end
 			self.m_elTex:SetTexture(tex)
+			self:CallCallbacks("OnTextureApplied",tex)
 		end)
 	end
 end

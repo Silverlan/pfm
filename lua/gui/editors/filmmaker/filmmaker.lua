@@ -627,7 +627,7 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetCachedMode(false)
 end
 function gui.WIFilmmaker:PreRenderScenes(drawSceneInfo)
-	if(self.m_overlaySceneEnabled ~= true) then return end
+	if(self.m_overlaySceneEnabled ~= true or self.m_nonOverlayRtTexture == nil) then return end
 	local gameScene = game.get_scene()
 	local gameRenderer = gameScene:GetRenderer()
 	local vp = self:GetViewport()
@@ -636,7 +636,7 @@ function gui.WIFilmmaker:PreRenderScenes(drawSceneInfo)
 		local el = rt:GetToneMappedImageElement()
 		if(util.is_valid(el)) then
 			local tex = gameRenderer:GetSceneTexture()
-			local texRt = el:GetTexture()
+			local texRt = self.m_nonOverlayRtTexture
 			if(texRt ~= nil) then
 				local drawCmd = drawSceneInfo.commandBuffer
 				drawCmd:RecordImageBarrier(texRt:GetImage(),prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
@@ -659,7 +659,7 @@ function gui.WIFilmmaker:PreRenderScenes(drawSceneInfo)
 	local drawSceneInfo = game.DrawSceneInfo()
 	drawSceneInfo.toneMapping = shader.TONE_MAPPING_NONE
 	drawSceneInfo.scene = self.m_overlayScene
-	drawSceneInfo.renderFlags = bit.band(drawSceneInfo.renderFlags,bit.bnot(game.RENDER_FLAG_BIT_VIEW)) -- Don't render view models
+	drawSceneInfo.renderFlags = bit.bor(bit.band(drawSceneInfo.renderFlags,bit.bnot(game.RENDER_FLAG_BIT_VIEW)),game.RENDER_FLAG_HDR_BIT) -- Don't render view models
 
 	-- Does not work for some reason?
 	-- drawSceneInfo.flags = bit.bor(drawSceneInfo.flags,game.DrawSceneInfo.FLAG_DISABLE_PREPASS_BIT)
@@ -670,9 +670,27 @@ function gui.WIFilmmaker:PreRenderScenes(drawSceneInfo)
 end
 function gui.WIFilmmaker:GetOverlayScene() return self.m_overlayScene end
 function gui.WIFilmmaker:SetOverlaySceneEnabled(enabled)
+	if(self.m_overlaySceneEnabled == enabled) then return end
+	util.remove(self.m_overlaySceneCallback)
 	console.run("render_clear_scene " .. (enabled and "0" or "1"))
 	self.m_overlaySceneEnabled = enabled
 	game.set_default_game_render_enabled(enabled == false)
+
+	local vp = self:GetViewport()
+	local rtVp = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+	local te = util.is_valid(rtVp) and rtVp:GetToneMappedImageElement() or nil
+	if(te ~= nil) then
+		self.m_overlaySceneCallback = te:AddCallback("OnTextureApplied",function(te,tex)
+			if(enabled) then
+				self.m_nonOverlayRtTexture = te.m_elTex:GetTexture()
+				te.m_elTex:SetTexture(game.get_scene():GetRenderer():GetHDRPresentationTexture())
+			elseif(self.m_nonOverlayRtTexture ~= nil) then
+				te.m_elTex:SetTexture(self.m_nonOverlayRtTexture)
+				self.m_nonOverlayRtTexture = nil
+			end
+		end)
+	end
+
 	self:TagRenderSceneAsDirty()
 end
 function gui.WIFilmmaker:Save(fileName,setAsProjectName)
@@ -966,6 +984,7 @@ function gui.WIFilmmaker:OnRemove()
 	self:CloseProject()
 	util.remove(self.m_cbDisableDefaultSceneDraw)
 	util.remove(self.m_cbPreRenderScenes)
+	util.remove(self.m_overlaySceneCallback)
 	if(util.is_valid(self.m_overlayScene)) then self.m_overlayScene:GetEntity():Remove() end
 	if(util.is_valid(self.m_sceneDepth)) then self.m_sceneDepth:GetEntity():Remove() end
 	util.remove(self.m_cbDropped)
