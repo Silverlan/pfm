@@ -14,6 +14,7 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
+	self:AddEntityComponent("pfm_overlay_object")
 
 	self.m_listeners = {}
 end

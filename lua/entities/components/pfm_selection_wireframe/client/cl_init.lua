@@ -16,6 +16,7 @@ function Component:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
+	self:AddEntityComponent("pfm_overlay_object")
 
 	self.m_listeners = {}
 end

@@ -24,6 +24,7 @@ function Component:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_COLOR)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_CLICK)
+	self:AddEntityComponent("pfm_overlay_object")
 
 	self:BindEvent(ents.ClickComponent.EVENT_ON_CLICK,"OnClick")
 	-- self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"UpdateScale")

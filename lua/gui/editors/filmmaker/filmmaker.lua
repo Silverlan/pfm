@@ -187,8 +187,25 @@ function gui.WIFilmmaker:OnInitialize()
 	
 	infoBar:Update()
 
+	local sceneCreateInfo = ents.SceneComponent.CreateInfo()
+	sceneCreateInfo.sampleCount = prosper.SAMPLE_COUNT_1_BIT
+	local gameScene = game.get_scene()
+	local gameRenderer = gameScene:GetRenderer()
+	local scene = ents.create_scene(sceneCreateInfo) -- ,gameScene)
+	scene:SetRenderer(gameRenderer)
+	scene:SetActiveCamera(gameScene:GetActiveCamera())
+	self.m_overlayScene = scene
+
+	local sceneDepth = ents.create_scene(sceneCreateInfo,gameScene)
+	sceneDepth:SetRenderer(gameRenderer)
+	sceneDepth:SetActiveCamera(gameScene:GetActiveCamera())
+	self.m_sceneDepth = sceneDepth
+
 	-- Disable default scene drawing for the lifetime of the Filmmaker; We'll only render the viewport(s) if something has actually changed, which
 	-- saves up a huge amount of rendering resources.
+	self.m_cbPreRenderScenes = game.add_callback("PreRenderScenes",function(drawSceneInfo)
+		self:PreRenderScenes(drawSceneInfo)
+	end)
 	self.m_cbDisableDefaultSceneDraw = game.add_callback("RenderScenes",function(drawSceneInfo)
 		if(self.m_renderSceneDirty == nil) then
 			game.set_default_game_render_enabled(false)
@@ -609,6 +626,55 @@ function gui.WIFilmmaker:OnInitialize()
 	pfm.ProjectManager.OnInitialize(self)
 	self:SetCachedMode(false)
 end
+function gui.WIFilmmaker:PreRenderScenes(drawSceneInfo)
+	if(self.m_overlaySceneEnabled ~= true) then return end
+	local gameScene = game.get_scene()
+	local gameRenderer = gameScene:GetRenderer()
+	local vp = self:GetViewport()
+	local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+	if(util.is_valid(rt)) then
+		local el = rt:GetToneMappedImageElement()
+		if(util.is_valid(el)) then
+			local tex = gameRenderer:GetSceneTexture()
+			local texRt = el:GetTexture()
+			if(texRt ~= nil) then
+				local drawCmd = drawSceneInfo.commandBuffer
+				drawCmd:RecordImageBarrier(texRt:GetImage(),prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+				drawCmd:RecordImageBarrier(tex:GetImage(),prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+				drawCmd:RecordBlitImage(texRt:GetImage(),tex:GetImage(),prosper.BlitInfo())
+				drawCmd:RecordImageBarrier(texRt:GetImage(),prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+				drawCmd:RecordImageBarrier(tex:GetImage(),prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+			end
+		end
+	end
+
+	-- Render depth only
+	local drawSceneInfoDepth = game.DrawSceneInfo()
+	drawSceneInfoDepth.toneMapping = shader.TONE_MAPPING_NONE
+	drawSceneInfoDepth.scene = self.m_sceneDepth
+	drawSceneInfoDepth.flags = bit.bor(drawSceneInfoDepth.flags,game.DrawSceneInfo.FLAG_DISABLE_LIGHTING_PASS_BIT)
+	drawSceneInfoDepth.clearColor = Color.Lime
+
+	-- Render overlay objects (e.g. object wireframes)
+	local drawSceneInfo = game.DrawSceneInfo()
+	drawSceneInfo.toneMapping = shader.TONE_MAPPING_NONE
+	drawSceneInfo.scene = self.m_overlayScene
+	drawSceneInfo.renderFlags = bit.band(drawSceneInfo.renderFlags,bit.bnot(game.RENDER_FLAG_BIT_VIEW)) -- Don't render view models
+
+	-- Does not work for some reason?
+	-- drawSceneInfo.flags = bit.bor(drawSceneInfo.flags,game.DrawSceneInfo.FLAG_DISABLE_PREPASS_BIT)
+	-- drawSceneInfo:AddSubPass(drawSceneInfoDepth)
+
+	game.queue_scene_for_rendering(drawSceneInfo)
+	--
+end
+function gui.WIFilmmaker:GetOverlayScene() return self.m_overlayScene end
+function gui.WIFilmmaker:SetOverlaySceneEnabled(enabled)
+	console.run("render_clear_scene " .. (enabled and "0" or "1"))
+	self.m_overlaySceneEnabled = enabled
+	game.set_default_game_render_enabled(enabled == false)
+	self:TagRenderSceneAsDirty()
+end
 function gui.WIFilmmaker:Save(fileName,setAsProjectName)
 	if(setAsProjectName == nil) then setAsProjectName = true end
 	local project = self:GetProject()
@@ -711,7 +777,7 @@ function gui.WIFilmmaker:StopLiveRaytracing()
 	vp:StopLiveRaytracing()
 end
 function gui.WIFilmmaker:TagRenderSceneAsDirty(dirty)
-	game.set_default_game_render_enabled(true)
+	if(self.m_overlaySceneEnabled ~= true) then game.set_default_game_render_enabled(true) end
 	if(dirty == nil) then
 		self.m_renderSceneDirty = self.m_renderSceneDirty or 24
 		return
@@ -899,6 +965,9 @@ function gui.WIFilmmaker:OnRemove()
 	gui.WIBaseEditor.OnRemove(self)
 	self:CloseProject()
 	util.remove(self.m_cbDisableDefaultSceneDraw)
+	util.remove(self.m_cbPreRenderScenes)
+	if(util.is_valid(self.m_overlayScene)) then self.m_overlayScene:GetEntity():Remove() end
+	if(util.is_valid(self.m_sceneDepth)) then self.m_sceneDepth:GetEntity():Remove() end
 	util.remove(self.m_cbDropped)
 	util.remove(self.m_openDialogue)
 	util.remove(self.m_previewWindow)

@@ -57,6 +57,7 @@ function Component:Initialize()
 	local camC = self:AddEntityComponent(ents.COMPONENT_CAMERA)
 	local toggleC = self:AddEntityComponent(ents.COMPONENT_TOGGLE)
 	self:AddEntityComponent("pfm_actor")
+	self:AddEntityComponent("pfm_overlay_object")
 
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"OnTurnOff")

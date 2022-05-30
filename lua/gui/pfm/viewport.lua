@@ -127,8 +127,10 @@ function gui.PFMViewport:InitializeViewport(parent)
 	gui.PFMBaseViewport.InitializeViewport(self,parent)
 	local vpContainer = gui.create("WIBase",parent)
 	self.m_vpContainer = vpContainer
+
 	self.m_viewport = gui.create("WIViewport",vpContainer,0,0,vpContainer:GetWidth(),vpContainer:GetHeight(),0,0,1,1)
 	self.m_viewport:SetMovementControlsEnabled(false)
+	self.m_viewport:SetZPos(6)
 
 	self.m_viewport:SetType(gui.WIViewport.VIEWPORT_TYPE_3D)
 
@@ -150,6 +152,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 		{"cycles",locale.get_text("pfm_render_engine_cycles")},
 		{"luxcorerender",locale.get_text("pfm_render_engine_luxcorerender")}
 	},0)]]
+	-- Live raytracing
 	local ctrlRt = p:AddDropDownMenu(locale.get_text("pfm_viewport_rt_enabled"),"rt_enabled",{
 		{"0",locale.get_text("disabled")},
 		{"1",locale.get_text("enabled")}
@@ -230,12 +233,15 @@ function gui.PFMViewport:SetRtViewportRenderer(renderer)
 	local enabled = (renderer ~= nil)
 	console.run("cl_max_fps",enabled and "24" or tostring(console.get_convar_int("pfm_max_fps"))) -- Clamp max fps to make more resources available for the renderer
 	util.remove(self.m_rtViewport)
+	tool.get_filmmaker():SetOverlaySceneEnabled(false)
 	if(enabled ~= true) then return end
 	local rtViewport = gui.create("WIRealtimeRaytracedViewport",self.m_vpContainer,0,0,self.m_vpContainer:GetWidth(),self.m_vpContainer:GetHeight(),0,0,1,1)
 	rtViewport:SetRenderer(renderer)
 	local scene = self.m_viewport:GetScene()
 	if(util.is_valid(scene)) then rtViewport:SetGameScene(scene) end
 	self.m_rtViewport = rtViewport
+	tool.get_filmmaker():SetOverlaySceneEnabled(true)
+	rtViewport:SetZPos(-2)
 
 	self:UpdateRenderSettings()
 end
