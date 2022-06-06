@@ -1180,6 +1180,13 @@ end
 function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 	local actorData = actor:GetActorData()
 	if(actorData == nil) then return end
+
+	local vp = self:GetViewport()
+	local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+	if(util.is_valid(rt)) then
+		rt:MarkActorAsDirty(actor:GetEntity())
+	end
+
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
 		actorEditor:SetAnimationChannelValue(actorData,targetPath,value)
@@ -1201,6 +1208,13 @@ end
 function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value,applyUdmValue)
 	local actorData = actor:GetActorData()
 	if(actorData == nil) then return end
+
+	local vp = self:GetViewport()
+	local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+	if(util.is_valid(rt)) then
+		rt:MarkActorAsDirty(actor:GetEntity())
+	end
+
 	local actorEditor = self:GetActorEditor()
 	local targetPath = "ec/pfm_actor/" .. propType
 	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
@@ -1227,6 +1241,14 @@ end
 function gui.WIFilmmaker:SetActorBoneTransformProperty(actor,propType,value)
 	local actorData = actor:GetActorData()
 	if(actorData == nil) then return end
+
+	-- TODO: Live animation editing for RT is not supported yet
+	--[[local vp = self:GetViewport()
+	local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+	if(util.is_valid(rt)) then
+		rt:MarkActorAsDirty(actor:GetEntity())
+	end]]
+
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
 		actorEditor:SetAnimationChannelValue(actorData,"ec/animated/bone/" .. propType,value)
