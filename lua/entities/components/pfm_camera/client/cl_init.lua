@@ -208,7 +208,10 @@ function Component:UpdateModel(updateBuffers)
 	if(updateBuffers) then subMesh:Update(game.Model.FUPDATE_VERTEX_BUFFER) end
 end
 function Component:SetFrustumModelVisible(visible)
-	if(visible) then self:GetEntity():AddComponent(ents.COMPONENT_RENDER) end
+	if(visible) then
+		local renderC = self:GetEntity():AddComponent(ents.COMPONENT_RENDER)
+		renderC:SetCastShadows(false)
+	end
 
 	local actorC = self:GetEntity():GetComponent("pfm_actor")
 	if(actorC ~= nil) then actorC:SetDefaultRenderMode(visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE,true) end

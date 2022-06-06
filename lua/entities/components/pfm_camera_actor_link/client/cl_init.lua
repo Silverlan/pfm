@@ -21,7 +21,10 @@ end
 function Component:OnRemove()
 	util.remove(self.m_listeners)
 end
-function Component:SetTargetActor(actor) self.m_targetActor = actor end
+function Component:SetTargetActor(actor)
+	if(util.is_valid(actor) and actor == self:GetEntity()) then return end
+	self.m_targetActor = actor
+end
 function Component:OnPoseChanged()
 	if(util.is_valid(self.m_targetActor) == false) then return end
 	local pm = tool.get_filmmaker()
