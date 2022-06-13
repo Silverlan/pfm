@@ -10,14 +10,58 @@ include("base_baker.lua")
 include("/gui/pfm/controls_menu.lua")
 include("/gui/cubemap_view.lua")
 
+pfm = pfm or {}
+pfm.util = pfm.util or {}
+
+pfm.util.open_reflection_probe_view_window = function(ent,onInit)
+	pfm.util.open_simple_window("Reflection Probe View",function(windowHandle,contents,controls)
+		if(ent:IsValid() == false) then return end
+		local reflC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
+		if(reflC == nil) then return end
+		local matPath = util.Path.CreateFilePath(reflC:GetIBLMaterialFilePath())
+		matPath:PopFront()
+
+		local el = gui.create("WICubemapView",contents)
+		local mat = game.load_material(matPath:GetString())
+		if(util.is_valid(mat)) then
+			local texIn = mat:GetTextureInfo("prefilter"):GetTexture():GetVkTexture()
+			local elCubemap
+			local wrapper
+			elCubemap,wrapper = controls:AddDropDownMenu("Texture","show_external_assets",{
+				{"0","Prefilter"},
+				{"1","Irradiance"}
+			},"0",function()
+				local val = toint(elCubemap:GetOptionValue(elCubemap:GetSelectedOption()))
+				if(val == 0) then
+					local prefilter = mat:GetTextureInfo("prefilter")
+					prefilter = (prefilter ~= nil) and prefilter:GetTexture()
+					prefilter = (prefilter ~= nil) and prefilter:GetVkTexture()
+					if(prefilter ~= nil) then el:SetInputTexture(prefilter) end
+				elseif(val == 1) then
+					local irradiance = mat:GetTextureInfo("irradiance")
+					irradiance = (irradiance ~= nil) and irradiance:GetTexture()
+					irradiance = (irradiance ~= nil) and irradiance:GetVkTexture()
+					if(irradiance ~= nil) then el:SetInputTexture(irradiance) end
+				end
+			end)
+			elCubemap:SelectOption(0)
+		end
+
+		local w = contents:GetWidth()
+		local h = contents:GetHeight()
+		el:SetViewResolution(w,h)
+		el:SetSize(w,h)
+		el:InitializeViewTexture()
+
+		if(onInit ~= nil) then onInit(windowHandle,contents,controls) end
+	end)
+end
+
 util.register_class("WIReflectionProbeBaker",WIBaseBaker)
 function WIReflectionProbeBaker:OnInitialize()
 	WIBaseBaker.OnInitialize(self)
 
 	self:SetText(locale.get_text("pfm_bake_reflection_probe"))
-end
-function WIReflectionProbeBaker:OnRemove()
-	self:CloseWindow()
 end
 function WIReflectionProbeBaker:SetActor(actorData,entActor)
 	WIBaseBaker.SetActor(self,actorData,entActor)
@@ -37,11 +81,14 @@ function WIReflectionProbeBaker:FinalizeBaker()
 	local reflC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
 	return reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult())
 end
-function WIReflectionProbeBaker:CloseWindow()
-	if(util.is_valid(self.m_viewWindow) == false) then return end
-	util.remove(gui.get_base_element(self.m_viewWindow))
-	self.m_viewWindow:Close()
-	self.m_viewWindow = nil
+function WIReflectionProbeBaker:OpenWindow(title)
+	WIBaseBaker.OpenWindow(self,title)
+	local ent = self:GetActorEntity()
+	if(util.is_valid(ent) == false) then return end
+	pfm.util.open_reflection_probe_view_window(ent,function(windowHandle,contents,controls)
+		if(self:IsValid() == false) then return end
+		self.m_viewWindow = windowHandle
+	end)
 end
 function WIReflectionProbeBaker:OnComplete()
 	if(self.m_baker:IsSuccessful()) then
@@ -53,75 +100,7 @@ function WIReflectionProbeBaker:OnComplete()
 		else
 			self.m_progressBar:SetColor(pfm.get_color_scheme_color("green"))
 
-			self:CloseWindow()
-			time.create_simple_timer(0.0,function()
-				local w = 512
-				local h = 512
-				local createInfo = prosper.WindowCreateInfo()
-				createInfo.width = w
-				createInfo.height = h
-				createInfo.title = "Reflection Probe View"
-
-				local windowHandle = prosper.create_window(createInfo)
-				if(windowHandle ~= nil) then
-					local elBase = gui.get_base_element(windowHandle)
-					if(util.is_valid(elBase)) then
-						local bg = gui.create("WIRect")
-						bg:SetColor(Color.White)
-						bg:SetSize(512,512)
-
-						local contents = gui.create("WIVBox",bg,0,0,bg:GetWidth(),bg:GetHeight(),0,0,1,1)
-						contents:SetAutoFillContents(true)
-
-						local p = gui.create("WIPFMControlsMenu",contents)
-						p:SetAutoFillContentsToWidth(true)
-						p:SetAutoFillContentsToHeight(false)
-
-						local matPath = util.Path.CreateFilePath(reflC:GetIBLMaterialFilePath())
-						matPath:PopFront()
-
-						local el = gui.create("WICubemapView",contents)
-						local mat = game.load_material(matPath:GetString())
-						if(util.is_valid(mat)) then
-							local texIn = mat:GetTextureInfo("prefilter"):GetTexture():GetVkTexture()
-							local elCubemap
-							local wrapper
-							elCubemap,wrapper = p:AddDropDownMenu("Texture","show_external_assets",{
-								{"0","Prefilter"},
-								{"1","Irradiance"}
-							},"0",function()
-								local val = toint(elCubemap:GetOptionValue(elCubemap:GetSelectedOption()))
-								if(val == 0) then
-									local prefilter = mat:GetTextureInfo("prefilter")
-									prefilter = (prefilter ~= nil) and prefilter:GetTexture()
-									prefilter = (prefilter ~= nil) and prefilter:GetVkTexture()
-									if(prefilter ~= nil) then el:SetInputTexture(prefilter) end
-								elseif(val == 1) then
-									local irradiance = mat:GetTextureInfo("irradiance")
-									irradiance = (irradiance ~= nil) and irradiance:GetTexture()
-									irradiance = (irradiance ~= nil) and irradiance:GetVkTexture()
-									if(irradiance ~= nil) then el:SetInputTexture(irradiance) end
-								end
-							end)
-							elCubemap:SelectOption(0)
-						end
-
-						p:Update()
-						p:SizeToContents()
-
-						el:SetViewResolution(w,h)
-						el:SetSize(w,h)
-						el:InitializeViewTexture()
-
-						bg:SetParentAndUpdateWindow(elBase)
-						bg:SetAnchor(0,0,1,1)
-						bg:TrapFocus(true)
-						bg:RequestFocus()
-					end
-				end
-
-				self.m_viewWindow = windowHandle
-			end)
+			self:OpenWindow("Reflection Probe View")
 		end
 	else
 		self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))

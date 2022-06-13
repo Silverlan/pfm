@@ -14,6 +14,7 @@ util.register_class("unirender.PBRShader",unirender.GenericShader)
 
 unirender.PBRShader.GLOBAL_EMISSION_STRENGTH = 1.0
 unirender.PBRShader.GLOBAL_RENDERER_IDENTIFIER = ""
+unirender.PBRShader.GLOBAL_BAKE_DIFFUSE_LIGHTING = false
 function unirender.PBRShader.set_global_emission_strength(strength) unirender.PBRShader.GLOBAL_EMISSION_STRENGTH = strength end
 function unirender.PBRShader.get_global_emission_strength() return unirender.PBRShader.GLOBAL_EMISSION_STRENGTH end
 
@@ -22,6 +23,9 @@ function unirender.PBRShader.get_global_renderer_identifier() return unirender.P
 
 function unirender.PBRShader.set_global_albedo_override_color(col) unirender.PBRShader.GLOBAL_ALBEDO_OVERRIDE_COLOR = col end
 function unirender.PBRShader.get_global_albedo_override_color() return unirender.PBRShader.GLOBAL_ALBEDO_OVERRIDE_COLOR end
+
+function unirender.PBRShader.set_global_bake_diffuse_lighting(b) unirender.PBRShader.GLOBAL_BAKE_DIFFUSE_LIGHTING = b end
+function unirender.PBRShader.get_global_bake_diffuse_lighting() return unirender.PBRShader.GLOBAL_BAKE_DIFFUSE_LIGHTING end
 
 function unirender.PBRShader:__init()
 	unirender.GenericShader.__init(self)
@@ -109,20 +113,30 @@ function unirender.PBRShader:AddMetalnessRoughnessNode(desc,mat)
 	-- Metalness / Roughness
 	local rmaMap = mat:GetTextureInfo("rma_map")
 	local rmaTex = (rmaMap ~= nil) and unirender.get_texture_path(rmaMap:GetName()) or nil
-	local nRMAMap = desc:AddNode(unirender.NODE_RMA_TEXTURE)
-	if(rmaTex ~= nil) then nRMAMap:SetProperty(unirender.Node.rma_texture.IN_TEXTURE,rmaTex) end
-
-	-- TODO: Default metalness/roughness if no texture defined!
 	local metalnessFactor = data:GetFloat("metalness_factor",1.0)
 	local roughnessFactor = data:GetFloat("roughness_factor",1.0)
-	unirender.Socket(metalnessFactor):Link(nRMAMap,unirender.Node.rma_texture.IN_METALNESS_FACTOR)
-	unirender.Socket(roughnessFactor):Link(nRMAMap,unirender.Node.rma_texture.IN_ROUGHNESS_FACTOR)
+	if(rmaTex ~= nil) then
+		local nRMAMap = desc:AddNode(unirender.NODE_RMA_TEXTURE)
+		if(rmaTex ~= nil) then nRMAMap:SetProperty(unirender.Node.rma_texture.IN_TEXTURE,rmaTex) end
 
-	local metalnessChannel,roughnessChannel = unirender.translate_swizzle_channels(rmaMap,unirender.Node.rma_texture.DEFAULT_METALNESS_CHANNEL,unirender.Node.rma_texture.DEFAULT_ROUGHNESS_CHANNEL)
-	nRMAMap:SetProperty(unirender.Node.rma_texture.IN_METALNESS_CHANNEL,metalnessChannel)
-	nRMAMap:SetProperty(unirender.Node.rma_texture.IN_ROUGHNESS_CHANNEL,roughnessChannel)
+		unirender.Socket(metalnessFactor):Link(nRMAMap,unirender.Node.rma_texture.IN_METALNESS_FACTOR)
+		unirender.Socket(roughnessFactor):Link(nRMAMap,unirender.Node.rma_texture.IN_ROUGHNESS_FACTOR)
 
-	return nRMAMap:GetOutputSocket(unirender.Node.rma_texture.OUT_METALNESS),nRMAMap:GetOutputSocket(unirender.Node.rma_texture.OUT_ROUGHNESS)
+		local metalnessChannel,roughnessChannel = unirender.translate_swizzle_channels(rmaMap,unirender.Node.rma_texture.DEFAULT_METALNESS_CHANNEL,unirender.Node.rma_texture.DEFAULT_ROUGHNESS_CHANNEL)
+		nRMAMap:SetProperty(unirender.Node.rma_texture.IN_METALNESS_CHANNEL,metalnessChannel)
+		nRMAMap:SetProperty(unirender.Node.rma_texture.IN_ROUGHNESS_CHANNEL,roughnessChannel)
+
+		return nRMAMap:GetOutputSocket(unirender.Node.rma_texture.OUT_METALNESS),nRMAMap:GetOutputSocket(unirender.Node.rma_texture.OUT_ROUGHNESS)
+	end
+	local mtNode = desc:AddNode(unirender.NODE_MATH)
+	mtNode:SetProperty(unirender.Node.math.IN_TYPE,unirender.Node.math.TYPE_ADD)
+	mtNode:SetProperty(unirender.Node.math.IN_VALUE1,metalnessFactor)
+
+	local rgNode = desc:AddNode(unirender.NODE_MATH)
+	rgNode:SetProperty(unirender.Node.math.IN_TYPE,unirender.Node.math.TYPE_ADD)
+	rgNode:SetProperty(unirender.Node.math.IN_VALUE1,roughnessFactor)
+
+	return mtNode:GetPrimaryOutputSocket(),rgNode:GetPrimaryOutputSocket()
 end
 function unirender.PBRShader:Initialize()
 	local mat = self:GetMaterial()
@@ -280,7 +294,11 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 		end
 	end
 
-	if(useGlossyBsdf == false) then
+	-- Baking diffuse lighting with Cycles can cause weird indirect lighting reflection artifacts
+	-- where objects seemingly get projected onto other surfaces. To prevent this from happening, IN_SPECULAR
+	-- and IN_METALLIC must not be used when baking.
+	local bakeDiffuseLighting = unirender.PBRShader.GLOBAL_BAKE_DIFFUSE_LIGHTING
+	if(bakeDiffuseLighting == false and useGlossyBsdf == false) then
 		local specular
 		local unirenderBlock = data:FindBlock("unirender")
 		if(unirenderBlock ~= nil and unirenderBlock:HasValue("specular")) then
@@ -312,7 +330,7 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 
 	-- Metalness / Roughness
 	local metalness,roughness = self:AddMetalnessRoughnessNode(desc,mat)
-	if(useGlossyBsdf == false) then metalness:Link(bsdf,unirender.Node.principled_bsdf.IN_METALLIC) end
+	if(bakeDiffuseLighting == false and useGlossyBsdf == false) then metalness:Link(bsdf,unirender.Node.principled_bsdf.IN_METALLIC) end
 	roughness:Link(bsdf,unirender.Node.principled_bsdf.IN_ROUGHNESS)
 
 	-- Wetness

@@ -9,6 +9,28 @@
 pfm = pfm or {}
 pfm.bake = pfm.bake or {}
 
+local function find_bake_entities()
+	local session = tool.get_filmmaker():GetSession()
+	if(session == nil) then return {} end
+
+	-- We want all inanimate actors
+	local entities = ents.get_all(ents.citerator(ents.COMPONENT_PFM_ACTOR,{ents.IteratorFilterComponent(ents.COMPONENT_LIGHT_MAP_RECEIVER),ents.IteratorFilterComponent(ents.COMPONENT_MODEL),ents.IteratorFilterFunction(function(ent,c)
+		local actorData = c:GetActorData()
+		return actorData ~= nil
+	end)}))
+
+	-- Also include all inanimate map entities
+	for ent,c in ents.citerator(ents.COMPONENT_MAP,{ents.IteratorFilterComponent(ents.COMPONENT_MODEL)}) do
+		if(ent:HasComponent(ents.COMPONENT_PFM_ACTOR) == false and ent:IsInert()) then
+			local physC = ent:GetComponent(ents.COMPONENT_PHYSICS)
+			if(physC == nil or physC:GetPhysicsType() == phys.TYPE_STATIC) then
+				table.insert(entities,ent)
+			end
+		end
+	end
+	return entities
+end
+
 pfm.bake.ibl = function(pose,gameScene,lightSources,width,height,sampleCount,initScene)
 	local createInfo = unirender.Scene.CreateInfo()
 	createInfo.renderer = "cycles"
@@ -40,13 +62,19 @@ pfm.bake.ibl = function(pose,gameScene,lightSources,width,height,sampleCount,ini
 	scene:SetLightIntensityFactor(1)
 	scene:SetResolution(width,height)
 
+	local tEnts = find_bake_entities()
+	-- print("Bake entities:")
+	-- console.print_table(tEnts)
+	-- print("Light sources:")
+	-- console.print_table(lightSources)
+	local entityMap = table.table_to_map(tEnts,true)
+
 	local nearZ = 1.0
 	local farZ = 32768.0
 	local fov = 90.0
 	local sceneFlags = unirender.Scene.SCENE_FLAG_NONE
 	scene:InitializeFromGameScene(gameScene,pose:GetOrigin(),pose:GetRotation(),Mat4(1.0),nearZ,farZ,fov,sceneFlags,function(ent)
-		if(ent:IsPlayer()) then return false end
-		return true
+		return entityMap[ent] ~= nil
 	end,function(ent)
 		return false
 	end)
@@ -71,62 +99,6 @@ pfm.bake.ibl = function(pose,gameScene,lightSources,width,height,sampleCount,ini
 	local apiData = renderer:GetApiData()
 
 	return renderer:StartRender()
-
---[[
-	rendering::cycles::SceneInfo sceneInfo {};
-	sceneInfo.width = width;
-	sceneInfo.height = height;
-	sceneInfo.exposure = exposure;
-	sceneInfo.device = pragma::rendering::cycles::SceneInfo::DeviceType::GPU;
-	sceneInfo.colorTransform = pragma::rendering::cycles::SceneInfo::ColorTransform {};
-	sceneInfo.colorTransform->config = "filmic-blender";
-	sceneInfo.colorTransform->look = "Medium Contrast";
-	sceneInfo.renderJob = renderJob;
-
-	rendering::cycles::RenderImageInfo renderImgInfo {};
-	renderImgInfo.camPose.SetOrigin(camPos);
-	renderImgInfo.camPose.SetRotation(camRot);
-	renderImgInfo.nearZ = nearZ;
-	renderImgInfo.farZ = farZ;
-	renderImgInfo.fov = fov;
-	renderImgInfo.equirectPanorama = true;
-
-	sceneInfo.sky = g_renderSettings.sky;
-	sceneInfo.skyAngles = g_renderSettings.skyAngles;
-	sceneInfo.skyStrength = g_renderSettings.skyStrength;
-	sceneInfo.renderer = g_renderSettings.renderer;
-	static auto useCycles = true;
-	if(useCycles)
-		sceneInfo.renderer = "cycles";
-	else
-		sceneInfo.renderer = "luxcorerender";
-
-	sceneInfo.samples = RAYTRACING_SAMPLE_COUNT;
-	sceneInfo.denoise = true;
-	sceneInfo.hdrOutput = true;
-	umath::set_flag(sceneInfo.sceneFlags,rendering::cycles::SceneInfo::SceneFlags::CullObjectsOutsideCameraFrustum,false);
-
-	std::shared_ptr<uimg::ImageBuffer> imgBuffer = nullptr;
-	if(optEntityList)
-		renderImgInfo.entityList = optEntityList;
-	else
-	{
-		renderImgInfo.entityFilter = [](BaseEntity &ent) -> bool {
-			return ent.IsMapEntity();
-		};
-	}
-	auto job = rendering::cycles::render_image(*client,sceneInfo,renderImgInfo);
-	if(job.IsValid() == false)
-		return {};
-	job.SetCompletionHandler([](util::ParallelWorker<std::shared_ptr<uimg::ImageBuffer>> &worker) {
-		if(worker.IsSuccessful() == false)
-		{
-			Con::cwar<<"WARNING: Raytracing scene for IBL reflections has failed: "<<worker.GetResultMessage()<<Con::endl;
-			return;
-		}
-	});
-	return job;
-]]
 end
 
 local ReflectionProbeBaker = util.register_class("pfm.bake.ReflectionProbeBaker",util.CallbackHandler)
@@ -167,12 +139,14 @@ function ReflectionProbeBaker:Start()
 		c:SetMemberValue("iblMaterial",udm.TYPE_STRING,matPath)
 	end
 
-	local sampleCount = 20
+	local sampleCount = 40
 	local width = 512
 	local height = 512
 	local pose = self.m_actorEntity:GetPose()
-	local entities = ents.get_all(ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR)}))
-	local lightSources = ents.get_all(ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_LIGHT)}))
+
+	-- Only include baked light sources
+	local lightSources = ents.get_all(ents.citerator(ents.COMPONENT_LIGHT,{ents.IteratorFilterFunction(function(ent,c) return c:IsBaked() end)}))
+
 	local job = pfm.bake.ibl(pose,game.get_scene(),lightSources,width,height,sampleCount)
 	job:Start()
 	self.m_job = job

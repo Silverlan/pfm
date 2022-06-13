@@ -120,6 +120,7 @@ function gui.CubemapView:InitializeViewTexture()
 	self.m_elTex:SetTexture(rt:GetTexture())
 end
 function gui.CubemapView:UpdateView(drawCmd)
+	if(self.m_renderTarget == nil or self.m_ds == nil) then return end
 	local cam = game.get_render_scene_camera()
 	local vp = self.m_viewMatrix
 

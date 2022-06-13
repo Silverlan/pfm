@@ -342,6 +342,10 @@ pfm.find_inanimate_actors = function(session)
 
 	local iteratedChannels = {}
 	local function collect_actors(filmClip,actors)
+		local scene = filmClip:GetScene()
+		for _,actor in ipairs(scene:GetActors()) do
+			actors[actor] = 0
+		end
 		for _,trackGroup in ipairs(filmClip:GetTrackGroups()) do
 			for _,track in ipairs(trackGroup:GetTracks()) do
 				for _,channelClip in ipairs(track:GetAnimationClips()) do
@@ -363,7 +367,7 @@ pfm.find_inanimate_actors = function(session)
 
 	local actorList = {}
 	for actor,numValues in pairs(actors) do
-		if(numValues > 1) then table.insert(actorList,actor) end
+		if(numValues <= 1) then table.insert(actorList,actor) end
 	end
 	return actorList
 end

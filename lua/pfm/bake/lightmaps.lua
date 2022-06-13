@@ -9,7 +9,36 @@
 pfm = pfm or {}
 pfm.bake = pfm.bake or {}
 
-pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCount,initScene)
+pfm.bake.find_bake_entities = function()
+	local session = tool.get_filmmaker():GetSession()
+	if(session == nil) then return {} end
+	local actorMap = {}
+	for _,actor in ipairs(session:GetActiveClip():GetActorList()) do
+		if(actor:HasComponent("model") and actor:HasComponent("light_map_receiver")) then
+			actorMap[actor] = true
+		end
+	end
+
+	-- We want all inanimate actors
+	local entities = ents.get_all(ents.citerator(ents.COMPONENT_PFM_ACTOR,{ents.IteratorFilterFunction(function(ent,c)
+		local actorData = c:GetActorData()
+		return actorData ~= nil and actorMap[actorData] ~= nil
+	end)}))
+
+	-- Also include all inanimate map entities
+	-- TODO: Include static props that are not lightmapped by default?
+	for ent,c in ents.citerator(ents.COMPONENT_MAP,{ents.IteratorFilterComponent(ents.COMPONENT_MODEL)}) do
+		if((ent:HasComponent(ents.COMPONENT_LIGHT_MAP_RECEIVER) or ent:HasComponent(ents.COMPONENT_LIGHT_MAP)) and ent:HasComponent(ents.COMPONENT_PFM_ACTOR) == false and ent:IsInert()) then
+			local physC = ent:GetComponent(ents.COMPONENT_PHYSICS)
+			if(physC == nil or physC:GetPhysicsType() == phys.TYPE_STATIC) then
+				table.insert(entities,ent)
+			end
+		end
+	end
+	return entities
+end
+
+pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCount,lightmapDataCache,initScene)
 	local createInfo = unirender.Scene.CreateInfo()
 	createInfo.renderer = "cycles"
 	createInfo.width = width
@@ -28,6 +57,7 @@ pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCo
 	createInfo:SetSamplesPerPixel(sampleCount)
 
 	unirender.PBRShader.set_global_renderer_identifier(createInfo.renderer)
+	unirender.PBRShader.set_global_bake_diffuse_lighting(true)
 
 	local scene = unirender.create_scene(unirender.Scene.RENDER_MODE_BAKE_DIFFUSE_LIGHTING,createInfo)
 	scene:SetSkyAngles(EulerAngles(0,0,0))
@@ -39,6 +69,7 @@ pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCo
 	scene:SetMaxGlossyBounces(4)
 	scene:SetLightIntensityFactor(1)
 	scene:SetResolution(width,height)
+	if(lightmapDataCache ~= nil) then scene:SetLightmapDataCache(lightmapDataCache) end -- Has to be set before adding any bake targets!
 
 	for _,ent in ipairs(lightmapTargets) do
 		scene:AddLightmapBakeTarget(ent)
@@ -49,6 +80,7 @@ pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCo
 	if(initScene ~= nil) then initScene(scene) end
 
 	scene:Finalize()
+	unirender.PBRShader.set_global_bake_diffuse_lighting(false)
 	local flags = unirender.Renderer.FLAG_NONE
 	local renderer = unirender.create_renderer(scene,createInfo.renderer,flags)
 	if(renderer == nil) then
@@ -57,6 +89,41 @@ pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCo
 	end
 
 	local apiData = renderer:GetApiData()
-
+	apiData:GetFromPath("cycles"):SetValue("adaptiveSamplingThreshold",udm.TYPE_FLOAT,0.001)
 	return renderer:StartRender()
+end
+
+local LightmapBaker = util.register_class("pfm.bake.LightmapBaker",util.CallbackHandler)
+function LightmapBaker:__init()
+	util.CallbackHandler.__init(self)
+end
+function LightmapBaker:BakeUvs(lmEntity,cachePath)
+	local lightmapReceivers = pfm.bake.find_bake_entities()
+	if(util.bake_lightmap_uvs(lmEntity,lightmapReceivers,cachePath) == false) then return false end
+	return true
+end
+function LightmapBaker:Start(width,height,sampleCount,lightmapDataCache,initScene)
+	local lightmapReceivers = pfm.bake.find_bake_entities()
+
+	-- Only include baked light sources
+	local lightSources = ents.get_all(ents.citerator(ents.COMPONENT_LIGHT,{ents.IteratorFilterFunction(function(ent,c) return c:IsBaked() end)}))
+
+	local job = pfm.bake.lightmaps(lightmapReceivers,lightSources,width,height,sampleCount,lightmapDataCache,initScene)
+	if(job == nil) then return false end
+	job:Start()
+	self.m_job = job
+	return true
+end
+function LightmapBaker:Poll()
+	self.m_job:Poll()
+end
+function LightmapBaker:IsComplete() return self.m_job:IsComplete() end
+function LightmapBaker:IsSuccessful() return self.m_job:IsSuccessful() end
+function LightmapBaker:GetProgress() return self.m_job:GetProgress() end
+function LightmapBaker:GetResult() return self.m_job:GetResult() end
+function LightmapBaker:Clear()
+	if(self.m_job ~= nil) then
+		self.m_job:Cancel()
+		self.m_job = nil
+	end
 end

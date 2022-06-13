@@ -35,3 +35,45 @@ pfm.register_component_action("reflection_probe","pfm_bake_reflection_probe","ba
 	actionData.baker = el
 	return el
 end)
+pfm.register_component_action("reflection_probe","pfm_view_reflection_probe","view_reflection_probe",function(controls,actorData,entActor,actionData)
+	if(util.is_valid(actionData.windowHandle)) then actionData.windowHandle:Close() end
+	util.remove(actionData.windowHandle)
+	local bt = gui.create("WIPFMButton",controls)
+	bt:SetText("View Reflection Probe")
+	bt:AddCallback("OnPressed",function()
+		pfm.util.open_reflection_probe_view_window(entActor,function(windowHandle,contents,controls)
+			actionData.windowHandle = windowHandle
+		end)
+	end)
+	return bt
+end)
+
+-------------------
+
+include("/gui/pfm/bake/lightmap_baker.lua")
+pfm.register_component_action("pfm_baked_lighting","pfm_bake_lightmap_uvs","bake_lightmap_uvs",function(controls,actorData,entActor,actionData)
+	util.remove(actionData.baker)
+	local el = gui.create("WILightmapUvBaker",controls)
+	el:SetActor(actorData,entActor)
+	actionData.baker = el
+	return el
+end)
+pfm.register_component_action("pfm_baked_lighting","pfm_bake_lightmap","bake_lightmap",function(controls,actorData,entActor,actionData)
+	util.remove(actionData.baker)
+	local el = gui.create("WILightmapBaker",controls)
+	el:SetActor(actorData,entActor)
+	actionData.baker = el
+	return el
+end)
+pfm.register_component_action("pfm_baked_lighting","pfm_view_lightmap_atlas","view_lightmap_atlas",function(controls,actorData,entActor,actionData)
+	if(util.is_valid(actionData.windowHandle)) then actionData.windowHandle:Close() end
+	util.remove(actionData.windowHandle)
+	local bt = gui.create("WIPFMButton",controls)
+	bt:SetText("View Lightmap Atlas")
+	bt:AddCallback("OnPressed",function()
+		pfm.util.open_lightmap_atlas_view_window(entActor,function(windowHandle,contents,controls)
+			actionData.windowHandle = windowHandle
+		end)
+	end)
+	return bt
+end)

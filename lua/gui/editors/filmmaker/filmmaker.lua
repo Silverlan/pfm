@@ -321,6 +321,10 @@ function gui.WIFilmmaker:OnInitialize()
 			end)
 			self.m_openDialogue:Update()
 		end)
+		--[[pContext:AddItem("Change Map",function(pItem)
+			if(util.is_valid(self) == false) then return end
+			console.run("map","stage")
+		end)]]
 		--[[pContext:AddItem(locale.get_text("pfm_export_blender_scene") .. "...",function(pItem)
 			local dialoge = gui.create_file_save_dialog(function(pDialoge)
 				local fname = pDialoge:GetFilePath(true)
@@ -738,6 +742,15 @@ function gui.WIFilmmaker:CreateSimpleProject()
 			function(c)
 				c:SetMemberValue("iblStrength",udm.TYPE_FLOAT,1.4)
 				c:SetMemberValue("iblMaterial",udm.TYPE_STRING,"pbr/ibl/venice_sunset")
+			end
+		}
+	})
+	local entLightmap = actorEditor:CreateNewActorWithComponents("lightmapper",{
+		"pfm_actor",
+		{
+			"pfm_baked_lighting",
+			function(c)
+				
 			end
 		}
 	})

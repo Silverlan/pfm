@@ -183,6 +183,7 @@ function gui.PFMActorEditor:OnInitialize()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			self:CreateNewActorComponent(actor,"pfm_baked_lighting")
+			self:CreateNewActorComponent(actor,"light_map_data_cache")
 			self:UpdateActorComponents(actor)
 		end)
 		pBakingMenu:AddItem(locale.get_text("pfm_create_reflection_probe"),function()

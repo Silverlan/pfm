@@ -6,8 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/pfm/bake/lightmaps.lua")
+
 local Component = util.register_class("ents.PFMBakedLighting",BaseEntityComponent)
-Component:RegisterMember("LightmapUvCache",udm.TYPE_STRING,"",{
+--[[Component:RegisterMember("LightmapDataCache",udm.TYPE_STRING,"",{
 	specializationType = ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE,
 	onChange = function(c) c:SetLightmapUvCacheDirty() end,
 	metaData = {
@@ -15,7 +17,7 @@ Component:RegisterMember("LightmapUvCache",udm.TYPE_STRING,"",{
 		extensions = {"lmc"},
 		stripExtension = true
 	}
-})
+})]]
 Component:RegisterMember("LightmapAtlas",udm.TYPE_STRING,"",{
 	specializationType = ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE,
 	onChange = function(c) c:SetLightmapAtlasDirty() end,
@@ -31,79 +33,16 @@ Component:RegisterMember("SampleCount",udm.TYPE_UINT32,200)
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
+	self.m_baker = pfm.bake.LightmapBaker()
+
+	self:AddEntityComponent(ents.COMPONENT_LIGHT_MAP_DATA_CACHE)
 end
-local LIGHTMAP_CACHE_VERSION = 1
-function Component:LoadLightmapUvCache(fileName)
-	fileName = file.remove_file_extension(fileName,{"lmc"}) .. ".lmc"
-	local f = file.open(fileName,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
-	if(f == nil) then return false end
-	local size = f:Size()
-	local ds = f:Read(size)
-	f:Close()
-
-	local header = ds:ReadString(5)
-	if(header ~= "PRLMC") then return false end
-	local version = ds:ReadUInt32()
-	if(version < 1 or version > LIGHTMAP_CACHE_VERSION) then return false end
-
-	local dictionary = {}
-	local numModels = ds:ReadUInt32()
-	for i=1,numModels do
-		local mdlName = ds:ReadString()
-		local dataOffset = ds:ReadUInt64()
-		dictionary[i] = {mdlName,dataOffset}
-	end
-	local tModels = {}
-	for i,data in ipairs(dictionary) do
-		local mdl = game.load_model(data[1])
-		if(mdl ~= nil) then
-			table.insert(tModels,mdl)
-			ds:Seek(data[2])
-			local numGroups = ds:ReadUInt32()
-			for j=1,numGroups do
-				local meshGroup = (mdl ~= nil) and mdl:GetMeshGroup(j -1) or nil
-				local numMeshes = ds:ReadUInt32()
-				for k=1,numMeshes do
-					local mesh = (meshGroup ~= nil) and meshGroup:GetMesh(k -1) or nil
-					local numSubMeshes = ds:ReadUInt32()
-					for l=1,numSubMeshes do
-						local subMesh = (mesh ~= nil) and mesh:GetSubMesh(l -1) or nil
-						local hasLightmapSet = ds:ReadBool()
-						if(hasLightmapSet) then
-							subMesh:AddUVSet("lightmap")
-							local numVerts = ds:ReadUInt32()
-							subMesh:SetVertexCount(numVerts)
-							for m=1,numVerts do
-								local pos = ds:ReadVector()
-								local uv = ds:ReadVector2()
-								local normal = ds:ReadVector()
-								local tangent = ds:ReadVector4()
-								local uvLightmap = ds:ReadVector2()
-
-								subMesh:SetVertexPosition(m -1,pos)
-								subMesh:SetVertexNormal(m -1,normal)
-								subMesh:SetVertexUV(m -1,uv)
-								subMesh:SetVertexTangent(m -1,tangent)
-
-								subMesh:SetVertexUV("lightmap",m -1,uvLightmap)
-							end
-
-							subMesh:ClearIndices()
-							local numIndices = ds:ReadUInt32()
-							for i=1,numIndices,3 do
-								local idx0 = ds:ReadUInt32()
-								local idx1 = ds:ReadUInt32()
-								local idx2 = ds:ReadUInt32()
-								subMesh:AddTriangle(idx0,idx1,idx2)
-							end
-						end
-						subMesh:Update(game.Model.FUPDATE_ALL)
-					end
-				end
-			end
-		end
-	end
-	return tModels
+function Component:OnRemove()
+	self.m_baker:Clear()
+end
+function Component:OnEntitySpawn()
+	self.m_lightmapUvCacheDirty = true
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 function Component:UpdateLightmapData(tEnts)
 	for _,ent in ipairs(tEnts) do
@@ -134,14 +73,6 @@ function Component:FindLightSourceEntities()
 	end
 	return t
 end
-function Component:LoadBakedLightmapUvs(lightmapCachePath,tEnts)
-	local models = self:LoadLightmapUvCache(lightmapCachePath)
-	if(models == false) then
-		return false
-	end
-	self:UpdateLightmapData(tEnts)
-	return true
-end
 function Component:SetLightmapUvCacheDirty()
 	self.m_lightmapUvCacheDirty = true
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
@@ -156,11 +87,28 @@ function Component:OnTick(dt)
 		self.m_lightmapJob:Poll()
 		if(self.m_lightmapJob:IsComplete() == false) then return end
 		if(self.m_lightmapJob:IsSuccessful()) then
+
+			local pm = pfm.get_project_manager()
+			local session = pm:GetProject():GetSession()
+			local uuid = tostring(session:GetUniqueId())
+			local path = "projects/" .. uuid .. "/"
+			file.create_path("materials/" .. path)
+			local atlasPath = path .. "lightmap_atlas.hdr"
+
 			local result = self.m_lightmapJob:GetResult()
-			local r = util.save_image(result,"materials/test_lm.hdr",util.IMAGE_FORMAT_HDR)
+			local r = util.save_image(result,"materials/" .. atlasPath,util.IMAGE_FORMAT_HDR)
 			if(r) then
 				print("Lightmap baking complete")
-				self:SetLightmapAtlas("test_lm.hdr")
+				self:SetLightmapAtlas(atlasPath)
+
+				local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
+				if(actorC == nil) then return end
+
+				pm:SetActorGenericProperty(actorC,"ec/pfm_baked_lighting/lightmapAtlas",atlasPath)
+				local c = actorC:GetActorData():FindComponent("pfm_baked_lighting")
+				if(c ~= nil) then
+					c:SetMemberValue("lightmapAtlas",udm.TYPE_STRING,atlasPath)
+				end
 			end
 		else
 			print("Lightmap baking error: ",self.m_lightmapJob:GetResultMessage())
@@ -169,7 +117,8 @@ function Component:OnTick(dt)
 	self:SetTickPolicy(ents.TICK_POLICY_NEVER)
 	if(self.m_lightmapUvCacheDirty) then
 		self.m_lightmapUvCacheDirty = nil
-		self:UpdateLightmapUvCache()
+		self:TestReloadUvs()
+		--self:UpdateLightmapUvCache()
 	end
 	if(self.m_lightmapAtlasDirty) then
 		self.m_lightmapAtlasDirty = nil
@@ -179,15 +128,7 @@ function Component:OnTick(dt)
 end
 function Component:UpdateLightmapUvCache()
 	local lightmapReceivers = self:FindLightmapEntities()
-	local cacheFileName = file.remove_file_extension(self:GetLightmapUvCache(),{"lmc"}) .. ".lmc"
-	self:LoadBakedLightmapUvs(cacheFileName,lightmapReceivers)
-	for _,ent in ipairs(lightmapReceivers) do
-		local lightMapReceiver = ent:GetComponent(ents.COMPONENT_LIGHT_MAP_RECEIVER)
-		if(lightMapReceiver ~= nil) then lightMapReceiver:UpdateLightmapUvData() end
-
-		-- local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
-		-- if(renderC ~= nil) then renderC:SetCastShadows(false) end -- For performance reasons we only want the actors to cast shadows
-	end
+	util.load_baked_lightmap_uvs(self:GetLightmapDataCache(),pfm.bake.find_bake_entities())
 end
 function Component:UpdateLightmapAtlas()
 	local lightmapC = self:GetEntity():AddComponent(ents.COMPONENT_LIGHT_MAP)
@@ -203,11 +144,38 @@ end
 include("/util/lightmap_bake.lua")
 include("/pfm/bake/lightmaps.lua")
 function Component:GenerateLightmapUvs()
-	local lightmapReceivers = self:FindLightmapEntities()
-	util.bake_lightmap_uvs(lightmapReceivers,"test")
+	local lmC = self:GetEntityComponent(ents.COMPONENT_LIGHT_MAP)
+	if(lmC == nil) then return end
+
+	local pm = pfm.get_project_manager()
+	local session = pm:GetProject():GetSession()
+	local uuid = tostring(session:GetUniqueId())
+	local path = "data/projects/" .. uuid .. "/"
+	file.create_path(path)
+	local cachePath = path .. "lightmap_data_cache"
+
+	if(self.m_baker:BakeUvs(lmC:GetEntity(),util.get_addon_path() .. cachePath) == false) then return end
+
+	local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
+	if(actorC == nil) then return end
+
+	pm:SetActorGenericProperty(actorC,"ec/light_map_data_cache/lightmapDataCache",cachePath)
+	local c = actorC:GetActorData():FindComponent("light_map_data_cache")
+	if(c ~= nil) then
+		c:SetMemberValue("lightmapDataCache",udm.TYPE_STRING,cachePath)
+	end
+	self:TestReloadUvs()
+end
+
+function Component:TestReloadUvs()
+	local cCache = self:GetEntityComponent(ents.COMPONENT_LIGHT_MAP_DATA_CACHE)
+	if(cCache == nil) then return end
+	cCache:ReloadCache()
 end
 
 function Component:GenerateLightmaps(preview,lightIntensityFactor)
+	local cCache = self:GetEntityComponent(ents.COMPONENT_LIGHT_MAP_DATA_CACHE)
+	if(cCache == nil) then return end
 	if(preview == nil) then preview = true end
 	-- util.bake_lightmaps(preview,lightIntensityFactor)
 	local resolution = string.split(self:GetResolution(),"x")
@@ -215,14 +183,21 @@ function Component:GenerateLightmaps(preview,lightIntensityFactor)
 	local width = tonumber(resolution[1])
 	local height = tonumber(resolution[2])
 	if(width == nil or height == nil) then return end
-	self.m_lightmapJob = pfm.bake.lightmaps(self:FindLightmapEntities(),self:FindLightSourceEntities(),width,height,self:GetSampleCount(),function(scene)
+
+	-- TODO
+	
+
+	self.m_baker:Start(width,height,self:GetSampleCount(),cCache:GetLightMapDataCache())
+	self.m_lightmapJob = self.m_baker.m_job
+
+	--[[self.m_lightmapJob = pfm.bake.lightmaps(self:FindLightmapEntities(),self:FindLightSourceEntities(),width,height,self:GetSampleCount(),function(scene)
 		local ent = ents.iterator({ents.IteratorFilterComponent("pfm_sky")})()
 		if(ent ~= nil) then
 			local skyC = ent:GetComponent(ents.COMPONENT_PFM_SKY)
 			skyC:ApplySceneSkySettings(scene)
 		end
 	end)
-	self.m_lightmapJob:Start()
+	self.m_lightmapJob:Start()]]
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 	return self:GetLightmapJob()
 
