@@ -38,9 +38,29 @@ pfm.bake.find_bake_entities = function()
 	return entities
 end
 
-pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCount,lightmapDataCache,initScene)
+pfm.bake.find_bake_light_sources = function()
+	return ents.get_all(ents.citerator(ents.COMPONENT_LIGHT,{ents.IteratorFilterFunction(function(ent,c) return c:IsBaked() end)}))
+end
+
+pfm.bake.directional_lightmaps = function(lightmapTargets,lightSources,width,height,lightmapDataCache)
+	local meshes = {}
+	local entUuids = {}
+	for _,ent in ipairs(lightmapTargets) do
+		local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+		if(renderC ~= nil) then
+			for _,subMesh in ipairs(renderC:GetRenderMeshes()) do
+				table.insert(meshes,subMesh)
+				table.insert(entUuids,ent:GetUuid())
+			end
+		end
+	end
+
+	return util.bake_directional_lightmap_atlas(lightSources,meshes,entUuids,width,height,lightmapDataCache)
+end
+
+pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
+	if(bakeCombined == nil) then bakeCombined = true end
 	local createInfo = unirender.Scene.CreateInfo()
-	createInfo.renderer = "cycles"
 	createInfo.width = width
 	createInfo.height = height
 	createInfo.denoise = true
@@ -59,7 +79,7 @@ pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCo
 	unirender.PBRShader.set_global_renderer_identifier(createInfo.renderer)
 	unirender.PBRShader.set_global_bake_diffuse_lighting(true)
 
-	local scene = unirender.create_scene(unirender.Scene.RENDER_MODE_BAKE_DIFFUSE_LIGHTING,createInfo)
+	local scene = unirender.create_scene(bakeCombined and unirender.Scene.RENDER_MODE_BAKE_DIFFUSE_LIGHTING or unirender.Scene.RENDER_MODE_BAKE_DIFFUSE_LIGHTING_SEPARATE,createInfo)
 	scene:SetSkyAngles(EulerAngles(0,0,0))
 	scene:SetSkyTransparent(false)
 	scene:SetSkyStrength(1)
@@ -78,7 +98,6 @@ pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCo
 		scene:AddLightSource(ent)
 	end
 	if(initScene ~= nil) then initScene(scene) end
-
 	scene:Finalize()
 	unirender.PBRShader.set_global_bake_diffuse_lighting(false)
 	local flags = unirender.Renderer.FLAG_NONE
@@ -102,13 +121,13 @@ function LightmapBaker:BakeUvs(lmEntity,cachePath)
 	if(util.bake_lightmap_uvs(lmEntity,lightmapReceivers,cachePath) == false) then return false end
 	return true
 end
-function LightmapBaker:Start(width,height,sampleCount,lightmapDataCache,initScene)
+function LightmapBaker:Start(width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
 	local lightmapReceivers = pfm.bake.find_bake_entities()
 
 	-- Only include baked light sources
-	local lightSources = ents.get_all(ents.citerator(ents.COMPONENT_LIGHT,{ents.IteratorFilterFunction(function(ent,c) return c:IsBaked() end)}))
+	local lightSources = pfm.bake.find_bake_light_sources()
 
-	local job = pfm.bake.lightmaps(lightmapReceivers,lightSources,width,height,sampleCount,lightmapDataCache,initScene)
+	local job = pfm.bake.lightmaps(lightmapReceivers,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
 	if(job == nil) then return false end
 	job:Start()
 	self.m_job = job

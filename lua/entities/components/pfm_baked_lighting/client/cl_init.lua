@@ -9,23 +9,10 @@
 include("/pfm/bake/lightmaps.lua")
 
 local Component = util.register_class("ents.PFMBakedLighting",BaseEntityComponent)
---[[Component:RegisterMember("LightmapDataCache",udm.TYPE_STRING,"",{
-	specializationType = ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE,
-	onChange = function(c) c:SetLightmapUvCacheDirty() end,
-	metaData = {
-		rootPath = "/",
-		extensions = {"lmc"},
-		stripExtension = true
-	}
-})]]
-Component:RegisterMember("LightmapAtlas",udm.TYPE_STRING,"",{
-	specializationType = ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE,
-	onChange = function(c) c:SetLightmapAtlasDirty() end,
-	metaData = {
-		assetType = "texture",
-		rootPath = "/",
-		extensions = asset.get_supported_extensions(asset.TYPE_TEXTURE,asset.FORMAT_TYPE_ALL),
-		stripExtension = true
+Component:RegisterMember("LightmapMode",udm.TYPE_UINT32,1,{
+	enumValues = {
+		["NonDirectional"] = 0,
+		["Directional"] = 1
 	}
 })
 Component:RegisterMember("Resolution",udm.TYPE_STRING,"2048x2048")
@@ -82,39 +69,123 @@ function Component:SetLightmapAtlasDirty()
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 function Component:GetLightmapJob() return self.m_lightmapJob end
+function Component:SaveLightmapTexture(jobResult,mat,resultIdentifier,matIdentifier,texName,normalMap)
+	local lightmapC = self:GetEntity():AddComponent(ents.COMPONENT_LIGHT_MAP)
+	if(lightmapC == nil) then return end
+	local matName = lightmapC:GetMemberValue("lightmapMaterial")
+	if(#matName == 0) then
+		local pm = pfm.get_project_manager()
+		local session = pm:GetProject():GetSession()
+		local uuid = tostring(session:GetUniqueId())
+		local path = "projects/" .. uuid .. "/"
+		file.create_path("materials/" .. path)
+		matName = path .. "lightmap"
+	end
+
+	matName = asset.get_normalized_path(matName,asset.TYPE_MATERIAL)
+	local mat = game.load_material(matName)
+	if(mat == nil) then
+		mat = game.create_material(matName,"lightmap")
+	end
+
+	local texInfo = util.TextureInfo()
+	texInfo.inputFormat = util.TextureInfo.INPUT_FORMAT_R32G32B32A32_FLOAT
+	texInfo.outputFormat = normalMap and util.TextureInfo.OUTPUT_FORMAT_BC3 or util.TextureInfo.OUTPUT_FORMAT_BC6
+	texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
+
+	local img
+	if(type(resultIdentifier) == "string") then img = jobResult:GetImage(resultIdentifier)
+	else img = resultIdentifier end
+	if(img == nil) then
+		pfm.log("Baked texture '" .. matIdentifier .. "' not found, ignoring...",pfm.LOG_CATEGORY_PFM_BAKE)
+		return
+	end
+	img:Convert(util.ImageBuffer.FORMAT_RGBA32)
+	local path = asset.get_asset_root_directory(asset.TYPE_MATERIAL) .. "/" .. file.get_file_path(matName)
+	local texPath = path .. texName
+	local r = util.save_image(img,"materials/" .. texPath .. ".dds",texInfo)
+	if(r) then
+		pfm.log("Baked texture '" .. matIdentifier .. "' saved as '" .. texPath .. "'!",pfm.LOG_CATEGORY_PFM_BAKE)
+		asset.reload(texPath,asset.TYPE_TEXTURE)
+		mat:SetTexture(matIdentifier,texPath)
+	else
+		pfm.log("Failed to save baked texture '" .. matIdentifier .. "' as '" .. texPath .. "'!",pfm.LOG_CATEGORY_PFM_BAKE,pfm.LOG_SEVERITY_WARNING)
+	end
+	return mat
+end
 function Component:OnTick(dt)
 	if(self.m_lightmapJob ~= nil) then
 		self.m_lightmapJob:Poll()
-		if(self.m_lightmapJob:IsComplete() == false) then return end
-		if(self.m_lightmapJob:IsSuccessful()) then
-
-			local pm = pfm.get_project_manager()
-			local session = pm:GetProject():GetSession()
-			local uuid = tostring(session:GetUniqueId())
-			local path = "projects/" .. uuid .. "/"
-			file.create_path("materials/" .. path)
-			local atlasPath = path .. "lightmap_atlas.hdr"
-
-			local result = self.m_lightmapJob:GetResult()
-			local r = util.save_image(result,"materials/" .. atlasPath,util.IMAGE_FORMAT_HDR)
-			if(r) then
-				print("Lightmap baking complete")
-				self:SetLightmapAtlas(atlasPath)
-
-				local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
-				if(actorC == nil) then return end
-
-				pm:SetActorGenericProperty(actorC,"ec/pfm_baked_lighting/lightmapAtlas",atlasPath)
-				local c = actorC:GetActorData():FindComponent("pfm_baked_lighting")
-				if(c ~= nil) then
-					c:SetMemberValue("lightmapAtlas",udm.TYPE_STRING,atlasPath)
+		if(self.m_lightmapJob:IsComplete()) then
+			if(self.m_lightmapJob:IsSuccessful()) then
+				local mat = game.create_material("lightmap")
+				local result = self.m_lightmapJob:GetResult()
+				local mat = self:SaveLightmapTexture(result,mat,"DIFFUSE","diffuse_map","lightmap_diffuse")
+				if(mat == nil) then
+					mat = self:SaveLightmapTexture(result,mat,"DIFFUSE_DIRECT","diffuse_direct_map","lightmap_diffuse_direct")
+					self:SaveLightmapTexture(result,mat,"DIFFUSE_INDIRECT","diffuse_indirect_map","lightmap_diffuse_indirect")
+					mat:GetDataBlock():RemoveValue("diffuse_map")
+				else
+					mat:GetDataBlock():RemoveValue("diffuse_direct_map")
+					mat:GetDataBlock():RemoveValue("diffuse_indirect_map")
 				end
+
+				if(mat ~= nil) then
+					mat:UpdateTextures()
+					mat:InitializeShaderDescriptorSet()
+					mat:SetLoaded(true)
+					if(mat:Save() == false) then
+						pfm.log("Failed to save lightmap atlas material as '" .. mat:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_BAKE,pfm.LOG_SEVERITY_WARNING)
+					else
+						local lightmapC = self:GetEntity():AddComponent(ents.COMPONENT_LIGHT_MAP)
+						if(lightmapC ~= nil) then
+							lightmapC:SetMemberValue("lightmapMaterial",mat:GetName())
+						end
+
+						local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
+						if(actorC ~= nil) then
+							local pm = pfm.get_project_manager()
+							pm:SetActorGenericProperty(actorC,"ec/light_map/lightmapMaterial",mat:GetName(),udm.TYPE_STRING)
+						end
+					end
+				end
+			else
+				print("Lightmap baking error: ",self.m_lightmapJob:GetResultMessage())
 			end
-		else
-			print("Lightmap baking error: ",self.m_lightmapJob:GetResultMessage())
+			self.m_lightmapJob = nil
 		end
 	end
-	self:SetTickPolicy(ents.TICK_POLICY_NEVER)
+	if(self.m_dirLightmapJob ~= nil) then
+		self.m_dirLightmapJob:Poll()
+		if(self.m_dirLightmapJob:IsComplete()) then
+			if(self.m_dirLightmapJob:IsSuccessful()) then
+				local image = self.m_dirLightmapJob:GetResult()
+				local mat = self:SaveLightmapTexture(image,mat,image,"dominant_direction_map","lightmap_normal",true)
+				if(mat ~= nil) then
+					mat:UpdateTextures()
+					mat:InitializeShaderDescriptorSet()
+					mat:SetLoaded(true)
+					if(mat:Save() == false) then
+						pfm.log("Failed to save lightmap atlas material as '" .. mat:GetName() .. "'!",pfm.LOG_CATEGORY_PFM_BAKE,pfm.LOG_SEVERITY_WARNING)
+					else
+						local lightmapC = self:GetEntity():AddComponent(ents.COMPONENT_LIGHT_MAP)
+						if(lightmapC ~= nil) then
+							lightmapC:SetMemberValue("lightmapMaterial",mat:GetName())
+						end
+
+						local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
+						if(actorC ~= nil) then
+							local pm = pfm.get_project_manager()
+							pm:SetActorGenericProperty(actorC,"ec/light_map/lightmapMaterial",mat:GetName(),udm.TYPE_STRING)
+						end
+					end
+				end
+			else
+				print("Lightmap baking error: ",self.m_dirLightmapJob:GetResultMessage())
+			end
+			self.m_dirLightmapJob = nil
+		end
+	end
 	if(self.m_lightmapUvCacheDirty) then
 		self.m_lightmapUvCacheDirty = nil
 		self:TestReloadUvs()
@@ -125,6 +196,8 @@ function Component:OnTick(dt)
 		self:UpdateLightmapAtlas()
 	end
 	pfm.tag_render_scene_as_dirty()
+
+	if(self.m_lightmapJob == nil and self.m_dirLightmapJob == nil) then self:SetTickPolicy(ents.TICK_POLICY_NEVER) end
 end
 function Component:UpdateLightmapUvCache()
 	local lightmapReceivers = self:FindLightmapEntities()
@@ -133,10 +206,14 @@ end
 function Component:UpdateLightmapAtlas()
 	local lightmapC = self:GetEntity():AddComponent(ents.COMPONENT_LIGHT_MAP)
 	if(lightmapC ~= nil) then
-		local tex = asset.reload(self:GetLightmapAtlas(),asset.TYPE_TEXTURE)
-		print("Lightmap Atlas texture: ",self:GetLightmapAtlas())
+		--[[local tex = asset.reload(self:GetLightmapAtlas(),asset.TYPE_TEXTURE)
 		tex = (tex ~= nil) and tex:GetVkTexture() or nil
 		if(tex ~= nil) then lightmapC:SetLightmapAtlas(tex) end
+
+		local texDir = asset.reload(self:GetDirectionalLightmapAtlas(),asset.TYPE_TEXTURE)
+		texDir = (texDir ~= nil) and texDir:GetVkTexture() or nil
+		if(texDir ~= nil) then lightmapC:SetDirectionalLightmapAtlas(texDir) end]]
+
 		lightmapC:ReloadLightmapData()
 	end
 end
@@ -159,7 +236,7 @@ function Component:GenerateLightmapUvs()
 	local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
 	if(actorC == nil) then return end
 
-	pm:SetActorGenericProperty(actorC,"ec/light_map_data_cache/lightmapDataCache",cachePath)
+	pm:SetActorGenericProperty(actorC,"ec/light_map_data_cache/lightmapDataCache",cachePath,udm.TYPE_STRING)
 	local c = actorC:GetActorData():FindComponent("light_map_data_cache")
 	if(c ~= nil) then
 		c:SetMemberValue("lightmapDataCache",udm.TYPE_STRING,cachePath)
@@ -171,6 +248,27 @@ function Component:TestReloadUvs()
 	local cCache = self:GetEntityComponent(ents.COMPONENT_LIGHT_MAP_DATA_CACHE)
 	if(cCache == nil) then return end
 	cCache:ReloadCache()
+end
+
+function Component:GenerateDirectionalLightmaps(preview,lightIntensityFactor)
+	local cCache = self:GetEntityComponent(ents.COMPONENT_LIGHT_MAP_DATA_CACHE)
+	if(cCache == nil) then return end
+	local cache = cCache:GetLightMapDataCache()
+	if(cache == nil) then return end
+	local resolution = string.split(self:GetResolution(),"x")
+	if(#resolution < 2) then return end
+	local width = tonumber(resolution[1])
+	local height = tonumber(resolution[2])
+	if(width == nil or height == nil) then return end
+	local bakeEntities = pfm.bake.find_bake_entities()
+	local lightSourceEntities = pfm.bake.find_bake_light_sources()
+	local lightSources = {}
+	for _,ent in ipairs(lightSourceEntities) do table.insert(lightSources,ent:GetComponent(ents.COMPONENT_LIGHT)) end
+	local job = pfm.bake.directional_lightmaps(bakeEntities,lightSources,width,height,cache)
+	job:Start()
+	self.m_dirLightmapJob = job
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
+	return job
 end
 
 function Component:GenerateLightmaps(preview,lightIntensityFactor)
@@ -187,7 +285,9 @@ function Component:GenerateLightmaps(preview,lightIntensityFactor)
 	-- TODO
 	
 
-	self.m_baker:Start(width,height,self:GetSampleCount(),cCache:GetLightMapDataCache())
+	local mode = self:GetLightmapMode()
+	local bakeCombined = (mode == Component.LIGHTMAP_MODE_NON_DIRECTIONAL)
+	self.m_baker:Start(width,height,self:GetSampleCount(),cCache:GetLightMapDataCache(),nil,bakeCombined)
 	self.m_lightmapJob = self.m_baker.m_job
 
 	--[[self.m_lightmapJob = pfm.bake.lightmaps(self:FindLightmapEntities(),self:FindLightSourceEntities(),width,height,self:GetSampleCount(),function(scene)

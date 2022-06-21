@@ -77,3 +77,22 @@ pfm.register_component_action("pfm_baked_lighting","pfm_view_lightmap_atlas","vi
 	end)
 	return bt
 end)
+pfm.register_component_action("pfm_baked_lighting","pfm_bake_directional_lightmap","bake_directional_lightmap",function(controls,actorData,entActor,actionData)
+	util.remove(actionData.baker)
+	local el = gui.create("WIDirectionalLightmapBaker",controls)
+	el:SetActor(actorData,entActor)
+	actionData.baker = el
+	return el
+end)
+pfm.register_component_action("pfm_baked_lighting","pfm_view_directional_lightmap_atlas","view_directional_lightmap_atlas",function(controls,actorData,entActor,actionData)
+	if(util.is_valid(actionData.windowHandle)) then actionData.windowHandle:Close() end
+	util.remove(actionData.windowHandle)
+	local bt = gui.create("WIPFMButton",controls)
+	bt:SetText("View Directional Lightmap Atlas")
+	bt:AddCallback("OnPressed",function()
+		pfm.util.open_directional_lightmap_atlas_view_window(entActor,function(windowHandle,contents,controls)
+			actionData.windowHandle = windowHandle
+		end)
+	end)
+	return bt
+end)

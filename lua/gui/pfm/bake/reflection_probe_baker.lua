@@ -24,10 +24,9 @@ pfm.util.open_reflection_probe_view_window = function(ent,onInit)
 		local el = gui.create("WICubemapView",contents)
 		local mat = game.load_material(matPath:GetString())
 		if(util.is_valid(mat)) then
-			local texIn = mat:GetTextureInfo("prefilter"):GetTexture():GetVkTexture()
 			local elCubemap
 			local wrapper
-			elCubemap,wrapper = controls:AddDropDownMenu("Texture","show_external_assets",{
+			elCubemap,wrapper = controls:AddDropDownMenu("Texture","view_reflection_probe",{
 				{"0","Prefilter"},
 				{"1","Irradiance"}
 			},"0",function()

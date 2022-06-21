@@ -1207,7 +1207,7 @@ function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 	end
 
 	self:GetAnimationManager():SetAnimationDirty(actorData)
-	actor:GetEntity():SetMemberValue(targetPath,value)
+	local res = actor:GetEntity():SetMemberValue(targetPath,value)
 	if(udmType ~= nil) then
 		local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
 		if(componentName ~= nil) then
@@ -1217,6 +1217,7 @@ function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 	end
 	self:GetActorEditor():UpdateActorProperty(actorData,targetPath)
 	self:TagRenderSceneAsDirty()
+	return res
 end
 function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value,applyUdmValue)
 	local actorData = actor:GetActorData()

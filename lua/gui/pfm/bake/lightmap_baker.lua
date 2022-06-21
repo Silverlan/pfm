@@ -45,14 +45,50 @@ pfm.util = pfm.util or {}
 pfm.util.open_lightmap_atlas_view_window = function(ent,onInit)
 	pfm.util.open_simple_window("Lightmap Atlas View",function(windowHandle,contents,controls)
 		if(ent:IsValid() == false) then return end
-
-		local el = gui.create("WITexturedRect",contents,0,0,contents:GetWidth(),contents:GetHeight(),0,0,1,1)
-		if(util.is_valid(ent) == false) then return end
-		local lightmapC = ent:AddComponent(ents.COMPONENT_LIGHT_MAP)
+		local lightmapC = ent:GetComponent(ents.COMPONENT_LIGHT_MAP)
 		if(lightmapC == nil) then return end
-		local tex = lightmapC:GetLightmapAtlas()
-		if(tex == nil) then return end
-		el:SetTexture(tex)
+
+		--local matPath = util.Path.CreateFilePath(reflC:GetIBLMaterialFilePath())
+		--matPath:PopFront()
+
+		local el = gui.create("WITexturedRect",contents)
+		--local mat = game.load_material(matPath:GetString())
+		--if(util.is_valid(mat)) then
+			local elTexSelection
+			local wrapper
+			local options = {
+				{tostring(ents.LightMapComponent.TEXTURE_DIFFUSE),"Diffuse Lightmap"},
+				{tostring(ents.LightMapComponent.TEXTURE_DIFFUSE_DIRECT),"Diffuse Direct Lightmap"},
+				{tostring(ents.LightMapComponent.TEXTURE_DIFFUSE_INDIRECT),"Diffuse Indirect Lightmap"},
+				{tostring(ents.LightMapComponent.TEXTURE_DOMINANT_DIRECTION),"Dominant Direction Lightmap"}
+			}
+			local selectedOption
+			for i=#options,1,-1 do
+				local option = options[i]
+				local id = option[1]
+				local tex = lightmapC:GetLightmapTexture(tonumber(id))
+				if(tex == nil) then table.remove(options,i)
+				else
+					selectedOption = id
+					option[2] = option[2] .. " (" .. tex:GetWidth() .. "x" .. tex:GetHeight() .. ")"
+				end
+			end
+			elTexSelection,wrapper = controls:AddDropDownMenu("Lightmap Atlas","view_lightmap",options,selectedOption or "0",function()
+				if(lightmapC:IsValid() == false) then return end
+				local val = toint(elTexSelection:GetOptionValue(elTexSelection:GetSelectedOption()))
+				local tex = lightmapC:GetLightmapTexture(val)
+				if(tex == nil) then
+					el:ClearTexture()
+					return
+				end
+				el:SetTexture(tex)
+			end)
+			elTexSelection:SelectOption(tonumber(selectedOption))
+		--end
+
+		local w = contents:GetWidth()
+		local h = contents:GetHeight()
+		el:SetSize(w,h)
 
 		if(onInit ~= nil) then onInit(windowHandle,contents,controls) end
 	end)
@@ -64,7 +100,7 @@ function WILightmapBaker:OnInitialize()
 
 	self:SetText(locale.get_text("pfm_bake_lightmaps"))
 end
-function WIBaseBaker:Reset()
+function WILightmapBaker:Reset()
 	self:SetText(locale.get_text("pfm_bake_lightmaps"))
 end
 function WILightmapBaker:StartBaker()
@@ -102,3 +138,66 @@ function WILightmapBaker:OnComplete()
 	self:SetText(locale.get_text("pfm_bake_lightmaps"))
 end
 gui.register("WILightmapBaker",WILightmapBaker)
+
+--------------------------------
+
+pfm.util.open_directional_lightmap_atlas_view_window = function(ent,onInit)
+	pfm.util.open_simple_window("Directional Lightmap Atlas View",function(windowHandle,contents,controls)
+		if(ent:IsValid() == false) then return end
+
+		local el = gui.create("WITexturedRect",contents,0,0,contents:GetWidth(),contents:GetHeight(),0,0,1,1)
+		if(util.is_valid(ent) == false) then return end
+		local lightmapC = ent:AddComponent(ents.COMPONENT_LIGHT_MAP)
+		if(lightmapC == nil) then return end
+		local tex = lightmapC:GetDirectionalLightmapAtlas()
+		if(tex == nil) then return end
+		el:SetTexture(tex)
+
+		if(onInit ~= nil) then onInit(windowHandle,contents,controls) end
+	end)
+end
+
+util.register_class("WIDirectionalLightmapBaker",WIBaseBaker)
+function WIDirectionalLightmapBaker:OnInitialize()
+	WIBaseBaker.OnInitialize(self)
+
+	self:SetText(locale.get_text("pfm_bake_directional_lightmaps"))
+end
+function WIDirectionalLightmapBaker:Reset()
+	self:SetText(locale.get_text("pfm_bake_directional_lightmaps"))
+end
+function WIDirectionalLightmapBaker:StartBaker()
+	local ent = self:GetActorEntity()
+	if(util.is_valid(ent) == false) then return end
+	local bakedLightingC = ent:GetComponent("pfm_baked_lighting")
+	if(bakedLightingC == nil) then return end
+	self.m_lightmapJob = bakedLightingC:GenerateDirectionalLightmaps()
+end
+function WIDirectionalLightmapBaker:CancelBaker()
+	self:SetText(locale.get_text("pfm_baked_directional_lighting"))
+end
+function WIDirectionalLightmapBaker:OpenWindow(windowHandle,contents,controls)
+	WIBaseBaker.OpenWindow(self,title)
+	local ent = self:GetActorEntity()
+	if(util.is_valid(ent) == false) then return end
+	pfm.util.open_directional_lightmap_atlas_view_window(ent,function(windowHandle,contents,controls)
+		if(self:IsValid() == false) then return end
+		self.m_viewWindow = windowHandle
+	end)
+end
+function WIDirectionalLightmapBaker:PollBaker() self.m_lightmapJob:Poll() end
+function WIDirectionalLightmapBaker:IsBakerComplete() return self.m_lightmapJob:IsComplete() end
+function WIDirectionalLightmapBaker:IsBakerSuccessful() return self.m_lightmapJob:IsSuccessful() end
+function WIDirectionalLightmapBaker:GetBakerProgress() return self.m_lightmapJob:GetProgress() end
+function WIDirectionalLightmapBaker:FinalizeBaker() return true end
+
+function WIDirectionalLightmapBaker:OnComplete()
+	if(self.m_lightmapJob:IsSuccessful()) then
+		self.m_progressBar:SetColor(pfm.get_color_scheme_color("green"))
+		self:OpenWindow("Directional lightmap Atlas View")
+	else
+		self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
+	end
+	self:SetText(locale.get_text("pfm_bake_directional_lightmaps"))
+end
+gui.register("WIDirectionalLightmapBaker",WIDirectionalLightmapBaker)

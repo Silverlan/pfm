@@ -222,11 +222,11 @@ function ents.PFMModel:Setup(actorData,mdlInfo)
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil or self.m_mdlInfo == nil) then return end
-	table.insert(self.m_listeners,self.m_mdlInfo:AddChangeListener("model",function(c,newModel)
+	--[[table.insert(self.m_listeners,self.m_mdlInfo:AddChangeListener("model",function(c,newModel)
 		local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
-		if(mdlC ~= nil) then mdlC:SetModel(mdlName) end
+		if(mdlC ~= nil) then mdlC:SetModel(newModel) end
 	end))
 	table.insert(self.m_listeners,self.m_mdlInfo:AddChangeListener("skin",function(c,newSkin) ent:SetSkin(newSkin) end))
-	mdlC:SetModel(self.m_mdlInfo:GetMemberValue("model") or "")
+	mdlC:SetModel(self.m_mdlInfo:GetMemberValue("model") or "")]]
 end
 ents.COMPONENT_PFM_MODEL = ents.register_component("pfm_model",ents.PFMModel)

@@ -300,7 +300,7 @@ function pfm.RaytracingRenderJob:Update()
 		successful = self.m_raytracingJob:IsSuccessful()
 		resultCode = self.m_raytracingJob:GetResultCode()
 		if(successful) then
-			local imgBuffer = self.m_raytracingJob:GetResult()
+			local imgBuffer = self.m_raytracingJob:GetImage()
 			-- util.save_image(imgBuffer,"luxcorerender.hdr",util.IMAGE_FORMAT_HDR)
 			--local result,err = unirender.apply_color_transform(imgBuffer)
 			--if(result == false) then console.print_warning(err) end
