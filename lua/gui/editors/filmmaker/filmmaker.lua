@@ -275,7 +275,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 
 		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("import"))
-		pSubMenu:AddItem("Map",function(pItem)
+		pSubMenu:AddItem(locale.get_text("map"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 				if(fileName == nil) then return end
@@ -285,7 +285,7 @@ function gui.WIFilmmaker:OnInitialize()
 			pFileDialog:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP))
 			pFileDialog:Update()
 		end)
-		pSubMenu:AddItem("SFM Project...",function(pItem)
+		pSubMenu:AddItem(locale.get_text("pfm_sfm_project"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)

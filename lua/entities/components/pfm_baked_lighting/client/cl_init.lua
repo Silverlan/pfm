@@ -124,7 +124,7 @@ function Component:OnTick(dt)
 				if(mat == nil) then
 					mat = self:SaveLightmapTexture(result,mat,"DIFFUSE_DIRECT","diffuse_direct_map","lightmap_diffuse_direct")
 					self:SaveLightmapTexture(result,mat,"DIFFUSE_INDIRECT","diffuse_indirect_map","lightmap_diffuse_indirect")
-					mat:GetDataBlock():RemoveValue("diffuse_map")
+					if(mat ~= nil) then mat:GetDataBlock():RemoveValue("diffuse_map") end
 				else
 					mat:GetDataBlock():RemoveValue("diffuse_direct_map")
 					mat:GetDataBlock():RemoveValue("diffuse_indirect_map")
@@ -218,11 +218,42 @@ function Component:UpdateLightmapAtlas()
 	end
 end
 
+function Component:IsLightmapUvRebuildRequired()
+	local lmC = self:GetEntityComponent(ents.COMPONENT_LIGHT_MAP)
+	if(lmC == nil) then return true end
+
+	local c = self:GetEntity():GetComponent("light_map_data_cache")
+	if(c == nil) then return true end
+	local cachePath = c:GetMemberValue("lightmapDataCache")
+	local cache,err = ents.LightMapComponent.DataCache.load(cachePath)
+	if(cache == false) then return true end
+	if(cache:GetLightmapEntity() ~= lmC:GetEntity():GetUuid()) then return true end
+
+	local instances = cache:GetInstanceIds()
+	local bakeEntities = pfm.bake.find_bake_entities()
+	local curUuids = {}
+	for _,ent in ipairs(bakeEntities) do
+		local uuid = ent:GetUuid()
+		curUuids[uuid] = true
+		local pose = ent:GetPose()
+		local cachePose = cache:GetInstancePose(uuid)
+		if(cachePose == nil or cachePose ~= pose) then return true end
+	end
+
+	for _,uuid in ipairs(cache:GetInstanceIds()) do
+		if(curUuids[uuid] ~= true) then return true end
+	end
+	return false
+end
+
 include("/util/lightmap_bake.lua")
 include("/pfm/bake/lightmaps.lua")
 function Component:GenerateLightmapUvs()
 	local lmC = self:GetEntityComponent(ents.COMPONENT_LIGHT_MAP)
-	if(lmC == nil) then return end
+	if(lmC == nil) then
+		pfm.log("Failed to generate lightmap uvs: No light map component!",pfm.LOG_CATEGORY_PFM_BAKE,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
 
 	local pm = pfm.get_project_manager()
 	local session = pm:GetProject():GetSession()
@@ -231,10 +262,16 @@ function Component:GenerateLightmapUvs()
 	file.create_path(path)
 	local cachePath = path .. "lightmap_data_cache"
 
-	if(self.m_baker:BakeUvs(lmC:GetEntity(),util.get_addon_path() .. cachePath) == false) then return end
+	if(self.m_baker:BakeUvs(lmC:GetEntity(),util.get_addon_path() .. cachePath) == false) then
+		pfm.log("Failed to bake lightmap uvs!",pfm.LOG_CATEGORY_PFM_BAKE,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
 
 	local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
-	if(actorC == nil) then return end
+	if(actorC == nil) then
+		pfm.log("Failed to generate lightmap uvs: No pfm actor component!",pfm.LOG_CATEGORY_PFM_BAKE,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
 
 	pm:SetActorGenericProperty(actorC,"ec/light_map_data_cache/lightmapDataCache",cachePath,udm.TYPE_STRING)
 	local c = actorC:GetActorData():FindComponent("light_map_data_cache")
@@ -335,4 +372,4 @@ function Component:ReloadLightmapData(tEnts)
 	end
 	vrp.load_baked_lightmap_uvs("lm_cache",tEnts)]]
 end
-ents.PFM_BAKED_LIGHTING = ents.register_component("pfm_baked_lighting",Component)
+ents.COMPONENT_PFM_BAKED_LIGHTING = ents.register_component("pfm_baked_lighting",Component)

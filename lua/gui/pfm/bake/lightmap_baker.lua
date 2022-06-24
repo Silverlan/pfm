@@ -99,6 +99,7 @@ function WILightmapBaker:OnInitialize()
 	WIBaseBaker.OnInitialize(self)
 
 	self:SetText(locale.get_text("pfm_bake_lightmaps"))
+	self.m_jobs = {}
 end
 function WILightmapBaker:Reset()
 	self:SetText(locale.get_text("pfm_bake_lightmaps"))
@@ -108,7 +109,19 @@ function WILightmapBaker:StartBaker()
 	if(util.is_valid(ent) == false) then return end
 	local bakedLightingC = ent:GetComponent("pfm_baked_lighting")
 	if(bakedLightingC == nil) then return end
-	self.m_lightmapJob = bakedLightingC:GenerateLightmaps()
+	if(bakedLightingC:IsLightmapUvRebuildRequired()) then
+		pfm.log("Lightmap UV data cache is out of date, rebuilding...",pfm.LOG_CATEGORY_PFM_BAKE)
+		bakedLightingC:GenerateLightmapUvs()
+	end
+	local lmMode = bakedLightingC:GetLightmapMode()
+	if(lmMode == ents.PFMBakedLighting.LIGHTMAP_MODE_DIRECTIONAL) then
+		pfm.log("Directional lightmap atlas is out of date, rebuilding...",pfm.LOG_CATEGORY_PFM_BAKE)
+		local job = bakedLightingC:GenerateDirectionalLightmaps()
+		if(job == nil) then return end
+		table.insert(self.m_jobs,job)
+	end
+	local job = bakedLightingC:GenerateLightmaps()
+	table.insert(self.m_jobs,job)
 end
 function WILightmapBaker:CancelBaker()
 	self:SetText(locale.get_text("pfm_baked_lighting"))
@@ -122,14 +135,33 @@ function WILightmapBaker:OpenWindow(windowHandle,contents,controls)
 		self.m_viewWindow = windowHandle
 	end)
 end
-function WILightmapBaker:PollBaker() self.m_lightmapJob:Poll() end
-function WILightmapBaker:IsBakerComplete() return self.m_lightmapJob:IsComplete() end
-function WILightmapBaker:IsBakerSuccessful() return self.m_lightmapJob:IsSuccessful() end
-function WILightmapBaker:GetBakerProgress() return self.m_lightmapJob:GetProgress() end
+function WILightmapBaker:PollBaker()
+	for _,job in ipairs(self.m_jobs) do job:Poll() end
+end
+function WILightmapBaker:IsBakerComplete()
+	for _,job in ipairs(self.m_jobs) do
+		if(job:IsComplete() == false) then return false end
+	end
+	return true
+end
+function WILightmapBaker:IsBakerSuccessful()
+	for _,job in ipairs(self.m_jobs) do
+		if(job:IsSuccessful() == false) then return false end
+	end
+	return true
+end
+function WILightmapBaker:GetBakerProgress()
+	local progress = 0.0
+	for _,job in ipairs(self.m_jobs) do
+		progress = progress +job:GetProgress()
+	end
+	progress = progress /#self.m_jobs
+	return progress
+end
 function WILightmapBaker:FinalizeBaker() return true end
 
 function WILightmapBaker:OnComplete()
-	if(self.m_lightmapJob:IsSuccessful()) then
+	if(self:IsBakerSuccessful()) then
 		self.m_progressBar:SetColor(pfm.get_color_scheme_color("green"))
 		self:OpenWindow("Lightmap Atlas View")
 	else

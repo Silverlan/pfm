@@ -44,18 +44,18 @@ end
 
 pfm.bake.directional_lightmaps = function(lightmapTargets,lightSources,width,height,lightmapDataCache)
 	local meshes = {}
-	local entUuids = {}
+	local entities = {}
 	for _,ent in ipairs(lightmapTargets) do
 		local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
 		if(renderC ~= nil) then
 			for _,subMesh in ipairs(renderC:GetRenderMeshes()) do
 				table.insert(meshes,subMesh)
-				table.insert(entUuids,ent:GetUuid())
+				table.insert(entities,ent)
 			end
 		end
 	end
 
-	return util.bake_directional_lightmap_atlas(lightSources,meshes,entUuids,width,height,lightmapDataCache)
+	return util.bake_directional_lightmap_atlas(lightSources,meshes,entities,width,height,lightmapDataCache)
 end
 
 pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)

@@ -77,7 +77,7 @@ pfm.register_component_action("pfm_baked_lighting","pfm_view_lightmap_atlas","vi
 	end)
 	return bt
 end)
-pfm.register_component_action("pfm_baked_lighting","pfm_bake_directional_lightmap","bake_directional_lightmap",function(controls,actorData,entActor,actionData)
+--[[pfm.register_component_action("pfm_baked_lighting","pfm_bake_directional_lightmap","bake_directional_lightmap",function(controls,actorData,entActor,actionData)
 	util.remove(actionData.baker)
 	local el = gui.create("WIDirectionalLightmapBaker",controls)
 	el:SetActor(actorData,entActor)
@@ -95,4 +95,4 @@ pfm.register_component_action("pfm_baked_lighting","pfm_view_directional_lightma
 		end)
 	end)
 	return bt
-end)
+end)]]

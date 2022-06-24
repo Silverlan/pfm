@@ -55,9 +55,15 @@ function Component:SetSelected(selected)
 end
 function Component:UpdateVisibility()
 	local visible = self:IsVisible() and self:GetActorData():IsAbsoluteVisible() or false
-	local renderMode = visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE
 	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
-	if(renderC ~= nil) then renderC:SetSceneRenderPass(renderMode) end
+	if(renderC ~= nil) then
+		if(visible == false) then
+			self.m_origSceneRenderPass = self.m_origSceneRenderPass or renderC:GetSceneRenderPass()
+			renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_NONE)
+		elseif(renderC:GetSceneRenderPass() == game.SCENE_RENDER_PASS_NONE or self.m_origSceneRenderPass ~= nil) then
+			renderC:SetSceneRenderPass(self.m_origSceneRenderPass or game.SCENE_RENDER_PASS_WORLD)
+		end
+	end
 
 	self:BroadcastEvent(Component.EVENT_ON_VISIBILITY_CHANGED,{visible})
 end
