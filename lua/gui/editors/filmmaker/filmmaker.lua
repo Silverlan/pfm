@@ -273,7 +273,19 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 			self:Save()
 		end)
-		pContext:AddItem(locale.get_text("import") .. "...",function(pItem)
+
+		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("import"))
+		pSubMenu:AddItem("Map",function(pItem)
+			if(util.is_valid(self) == false) then return end
+			local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
+				if(fileName == nil) then return end
+				self:ImportMap(el:GetFilePath(true))
+			end)
+			pFileDialog:SetRootPath("maps")
+			pFileDialog:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP))
+			pFileDialog:Update()
+		end)
+		pSubMenu:AddItem("SFM Project...",function(pItem)
 			if(util.is_valid(self) == false) then return end
 			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
@@ -321,6 +333,7 @@ function gui.WIFilmmaker:OnInitialize()
 			end)
 			self.m_openDialogue:Update()
 		end)
+		pSubMenu:Update()
 		--[[pContext:AddItem("Change Map",function(pItem)
 			if(util.is_valid(self) == false) then return end
 			console.run("map","stage")
@@ -629,6 +642,79 @@ function gui.WIFilmmaker:OnInitialize()
 	end]]
 	pfm.ProjectManager.OnInitialize(self)
 	self:SetCachedMode(false)
+end
+function gui.WIFilmmaker:ImportMap(map)
+	local actorEditor = self:GetActorEditor()
+	local data,msg = udm.load("maps/" .. map)
+	if(data == false) then
+		pfm.log("Failed to import map '" .. map .. "': " .. msg,pfm.LOG_CATEGORY_PFM)
+		return
+	end
+
+	local indexCounters = {}
+
+	local entityData = data:GetAssetData():GetData():Get("entities")
+	for _,entData in ipairs(entityData:GetArrayValues()) do
+		local keyValues = entData:Get("keyValues")
+		local className = entData:GetValue("className",udm.TYPE_STRING)
+		local pose = entData:GetValue("pose",udm.TYPE_TRANSFORM) or math.Transform()
+		local model = keyValues:GetValue("model",udm.TYPE_STRING)
+		local uuid = keyValues:GetValue("uuid",udm.TYPE_STRING)
+		local skin = keyValues:GetValue("skin",udm.TYPE_STRING) or 0
+		local index
+		if(indexCounters[className] == nil) then
+			indexCounters[className] = 1
+			index = 0
+		else
+			index = indexCounters[className]
+			indexCounters[className] = index +1
+		end
+		local name = keyValues:GetValue("targetname",udm.TYPE_STRING) or (className .. index)
+		if(className == "prop_physics" or className == "world") then
+			if(model ~= nil) then
+				local actor = actorEditor:CreateNewActor(name,pose)
+				if(uuid ~= nil) then actor:ChangeUniqueId(uuid) end
+
+				local mdlC = actorEditor:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(model) end)
+				actorEditor:CreateNewActorComponent(actor,"model",false)
+					actorEditor:CreateNewActorComponent(actor,"render",false)
+					actorEditor:CreateNewActorComponent(actor,"light_map_receiver",false)
+
+				actorEditor:UpdateActorComponents(actor)
+			end
+		elseif(className == "skybox") then
+			local actor = actorEditor:CreateNewActor(name,pose)
+			if(uuid ~= nil) then actor:ChangeUniqueId(uuid) end
+
+			local mdlC = actorEditor:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(model) end)
+			actorEditor:CreateNewActorComponent(actor,"skybox",false)
+
+			actorEditor:UpdateActorComponents(actor)
+		elseif(className == "env_light_environment") then
+
+		elseif(className == "env_light_point") then
+			local actor = actorEditor:CreateNewActor(name,pose)
+			if(uuid ~= nil) then actor:ChangeUniqueId(uuid) end
+
+			local radius = keyValues:GetValue("radius",udm.TYPE_FLOAT) or 1000.0
+			local intensity = keyValues:GetValue("light_intensity",udm.TYPE_FLOAT) or 1000.0
+			local intensityType = keyValues:GetValue("light_intensity_type",udm.TYPE_UINT32) or ents.LightComponent.INTENSITY_TYPE_CANDELA
+			local color = Color(keyValues:GetValue("lightcolor",udm.TYPE_STRING) or "")
+
+			actorEditor:CreateNewActorComponent(actor,"pfm_light_point",false)
+			local lightC = actorEditor:CreateNewActorComponent(actor,"light",false)
+			actorEditor:CreateNewActorComponent(actor,"light_point",false)
+			local radiusC = actorEditor:CreateNewActorComponent(actor,"radius",false)
+			local colorC = actorEditor:CreateNewActorComponent(actor,"color",false)
+			lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,intensity)
+			lightC:SetMemberValue("intensityType",udm.TYPE_UINT32,intensityType)
+			lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
+			lightC:SetMemberValue("baked",udm.TYPE_BOOLEAN,true)
+			radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,radius)
+			colorC:SetMemberValue("color",udm.TYPE_VECTOR3,color:ToVector())
+			actorEditor:UpdateActorComponents(actor)
+		end
+	end
 end
 function gui.WIFilmmaker:PreRenderScenes(drawSceneInfo)
 	if(self.m_overlaySceneEnabled ~= true or self.m_nonOverlayRtTexture == nil) then return end
