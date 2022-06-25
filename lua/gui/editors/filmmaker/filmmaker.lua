@@ -845,6 +845,12 @@ function gui.WIFilmmaker:CreateSimpleProject()
 			function(c)
 				
 			end
+		},
+		{
+			"light_map",
+			function(c)
+				
+			end
 		}
 	})
 
