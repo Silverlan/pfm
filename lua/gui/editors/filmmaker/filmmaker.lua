@@ -479,6 +479,14 @@ function gui.WIFilmmaker:OnInitialize()
 			end
 			pfm.log("Unable to export map: " .. errMsg,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		end)
+		pContext:AddItem(locale.get_text("pfm_convert_map_to_actors"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			local mapName = game.get_map_name()
+			local mapFile = asset.find_file(mapName,asset.TYPE_MAP)
+			if(mapFile == nil) then return end
+			util.remove(ents.get_all(ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_MAP)})))
+			self:ImportMap(mapFile)
+		end)
 		if(self:IsDeveloperModeEnabled()) then
 			local recorder
 			pContext:AddItem("Record animation as image sequence",function(pItem)
@@ -651,6 +659,9 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetCachedMode(false)
 end
 function gui.WIFilmmaker:ImportMap(map)
+	map = file.remove_file_extension(map,asset.get_supported_extensions(asset.TYPE_MAP))
+	map = asset.find_file(map,asset.TYPE_MAP)
+	if(map == nil) then return end
 	local actorEditor = self:GetActorEditor()
 	local data,msg = udm.load("maps/" .. map)
 	if(data == false) then
