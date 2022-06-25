@@ -632,7 +632,9 @@ function gui.PFMViewport:SetBoneTransformProperty(ent,boneId,propName,value)
 		tool.get_filmmaker():SetActorBoneTransformProperty(actorC,bone:GetName() .. "/" .. propName,value)
 	end
 end
-function gui.PFMViewport:UpdateActorManipulation(ent,selected)
+function gui.PFMViewport:GetTransformWidgetComponent() return self.m_transformComponent end
+function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
+	if(enabled == nil) then enabled = true end
 	ent:RemoveComponent("util_bone_transform")
 	ent:RemoveComponent("util_transform")
 	util.remove(self.m_entTransform)
@@ -662,10 +664,8 @@ function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 		end)
 		return trC
 	end
-	util.remove(self.m_entTransform)
-	ent:RemoveComponent("util_transform")
-	local manipMode = self.m_manipulatorMode
-	if(selected and (self:IsMoveManipulatorMode(manipMode) or self:IsRotationManipulatorMode(manipMode))) then
+	local manipMode = manipMode or self.m_manipulatorMode
+	if(enabled and (self:IsMoveManipulatorMode(manipMode) or self:IsRotationManipulatorMode(manipMode))) then
 		local pm = tool.get_filmmaker()
 		local actorEditor = pm:GetActorEditor()
 		local activeControls = actorEditor:GetActiveControls()
@@ -770,10 +770,14 @@ function gui.PFMViewport:UpdateActorManipulation(ent,selected)
 
 		if(util.is_valid(self.m_entTransform) == false) then
 			local tc = add_transform_component()
+			self.m_transformComponent = tc
 			self:InitializeTransformWidget(tc,ent)
 		end
 	end
 	tool.get_filmmaker():TagRenderSceneAsDirty()
+end
+function gui.PFMViewport:UpdateActorManipulation(ent,selected)
+	self:CreateActorTransformWidget(ent,self.m_manipulatorMode,selected)
 end
 function gui.PFMViewport:GetActiveCamera()
 	local scene = util.is_valid(self.m_viewport) and self.m_viewport:GetScene()

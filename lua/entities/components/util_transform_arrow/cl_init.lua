@@ -71,8 +71,29 @@ function Component:GetTargetEntity()
 	return entParent
 end
 
-function Component:UpdatePose()
+function Component:GetBasePose()
 	if(util.is_valid(self.m_transformComponent) == false) then return end
+	local entParent = self:GetTargetEntity()
+	if(util.is_valid(entParent) == false) then return end
+	local entRef = self:GetReferenceEntity()
+	if(util.is_valid(entRef) == false) then entRef = entParent end
+
+	local pose = math.Transform()
+	local space = self:GetSpace()
+	if(space == ents.UtilTransformComponent.SPACE_LOCAL or self:GetType() == Component.TYPE_SCALE) then
+		pose = entParent:GetPose()
+	elseif(space == ents.UtilTransformComponent.SPACE_WORLD) then
+		pose:SetOrigin(entParent:GetPos())
+	elseif(space == ents.UtilTransformComponent.SPACE_VIEW) then
+		pose = entParent:GetPose()
+		pose:SetRotation(entRef:GetRotation())
+	end
+	return pose
+end
+
+function Component:UpdatePose()
+	local pose = self:GetBasePose()
+	if(pose == nil) then return end
 	local axis = self:GetAxis()
 	local rot = Quaternion() -- c:GetEntity():GetRotation()
 
@@ -89,23 +110,6 @@ function Component:UpdatePose()
 			rot = rot *EulerAngles(90,0,0):ToQuaternion()
 		end
 	end
-
-	local entParent = self:GetTargetEntity()
-	if(util.is_valid(entParent) == false) then return end
-	local entRef = self:GetReferenceEntity()
-	if(util.is_valid(entRef) == false) then entRef = entParent end
-
-	local pose = math.Transform()
-	local space = self:GetSpace()
-	if(space == ents.UtilTransformComponent.SPACE_LOCAL or self:GetType() == Component.TYPE_SCALE) then
-		pose = entParent:GetPose()
-	elseif(space == ents.UtilTransformComponent.SPACE_WORLD) then
-		pose:SetOrigin(entParent:GetPos())
-	elseif(space == ents.UtilTransformComponent.SPACE_VIEW) then
-		pose = entParent:GetPose()
-		pose:SetRotation(entRef:GetRotation())
-	end
-
 	pose:RotateLocal(rot)
 
 	local ent = self:GetEntity()
@@ -241,7 +245,22 @@ function Component:ApplyTransform()
 		-- print(self.m_moveStartCursorPos)
 		if(self:GetType() == Component.TYPE_TRANSLATION) then
 			local newPos = self.m_moveStartTransformPos +offset
+			local curPos = transformC:GetAbsTransformPosition()
+			local basePose = self:GetBasePose()
+			local basePoseInv = basePose:GetInverse()
+			newPos = basePoseInv *newPos
+			curPos = basePoseInv *curPos
+
+			local axis = self:GetAxis()
+			for i=0,2 do
+				if(i ~= axis) then
+					newPos:Set(i,curPos:Get(i))
+				end
+			end
+
+			newPos = basePose *newPos
 			transformC:SetAbsTransformPosition(newPos)
+			self:GetEntity():SetPos(newPos)
 		else
 			if(self:GetType() == Component.TYPE_SCALE) then offset = -offset end
 			local newScale = self.m_moveStartScale +offset

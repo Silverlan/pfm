@@ -105,6 +105,8 @@ function gui.WIFilmmaker:OnInitialize()
 			for _,layer in ipairs(loadedLayers) do layers[layer.identifier] = layer end
 		end
 	end
+
+	-- Note: cfg/pfm/keybindings.udm has to be deleted or edited when these are changed
 	if(layers["pfm"] == nil) then
 		local bindingLayer = input.InputBindingLayer("pfm")
 		bindingLayer:BindKey("space","pfm_action toggle_play")
@@ -117,6 +119,11 @@ function gui.WIFilmmaker:OnInitialize()
 		bindingLayer:BindKey("f2","pfm_action select_editor clip")
 		bindingLayer:BindKey("f3","pfm_action select_editor motion")
 		bindingLayer:BindKey("f4","pfm_action select_editor graph")
+
+		bindingLayer:BindKey("x","pfm_action transform move x")
+		bindingLayer:BindKey("y","pfm_action transform move y")
+		bindingLayer:BindKey("z","pfm_action transform move z")
+
 		layers["pfm"] = bindingLayer
 	end
 	if(layers["pfm_graph_editor"] == nil) then
@@ -1834,6 +1841,27 @@ function gui.WIFilmmaker:OpenModelView(mdl,animName)
 	else self.m_mdlView:PlayIdleAnimation() end
 	self.m_mdlView:Update()
 end
+function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
+	local vp = self:GetViewport()
+	if(util.is_valid(vp) == false) then return end
+	if(self.m_quickAxisTransformModeEnabled) then
+		self.m_quickAxisTransformModeEnabled = nil
+		vp:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_SELECT)
+		return
+	end
+	vp:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL)
+	local c = vp:GetTransformWidgetComponent()
+	if(util.is_valid(c)) then
+		self.m_quickAxisTransformModeEnabled = true
+		for _,axis in ipairs(axes) do
+			local v = c:GetTransformUtility(ents.UtilTransformArrowComponent.TYPE_TRANSLATION,axis)
+			if(v ~= nil) then
+				v = v:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
+				v:StartTransform()
+			end
+		end
+	end
+end
 function gui.WIFilmmaker:OpenBoneRetargetWindow(mdlSrc,mdlDst)
 	local tab,el = self:OpenWindow("bone_retargeting",true)
 	if(util.is_valid(el) == false) then return end
@@ -1913,6 +1941,20 @@ console.register_command("pfm_action",function(pl,...)
 			local pfmActorC = cam:GetEntity():GetComponent(ents.COMPONENT_PFM_ACTOR)
 			if(pfmActorC ~= nil) then
 				pm:SetActorGenericProperty(pfmActorC,"ec/camera/fov",cam:GetFOV(),udm.TYPE_FLOAT)
+			end
+		end
+	elseif(args[1] == "transform") then
+		if(args[2] == "move") then
+			local shift = input.is_shift_key_down()
+			if(args[3] == "x") then
+				if(shift) then pm:SetQuickAxisTransformMode({math.AXIS_Y,math.AXIS_Z})
+				else pm:SetQuickAxisTransformMode({math.AXIS_X}) end
+			elseif(args[3] == "y") then
+				if(shift) then pm:SetQuickAxisTransformMode({math.AXIS_X,math.AXIS_Z})
+				else pm:SetQuickAxisTransformMode({math.AXIS_Y}) end
+			elseif(args[3] == "z") then
+				if(shift) then pm:SetQuickAxisTransformMode({math.AXIS_X,math.AXIS_Y})
+				else pm:SetQuickAxisTransformMode({math.AXIS_Z}) end
 			end
 		end
 	end
