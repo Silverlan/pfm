@@ -20,7 +20,6 @@ function ents.PFMModel:Initialize()
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
-	self:AddEntityComponent(ents.COMPONENT_EYE)
 	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent("pfm_actor")
 	if(renderC ~= nil) then
@@ -180,6 +179,9 @@ function ents.PFMModel:UpdateModel()
 
 	local mdl = mdlC:GetModel()
 	if(mdl == nil) then return end
+	if(mdl:GetEyeballCount() > 0) then
+		self:AddEntityComponent(ents.COMPONENT_EYE)
+	end
 	local materials = mdl:GetMaterials()
 	-- debug.print("Override")
 	-- console.print_table(mdlInfo:GetMaterialMappings():GetTable())
