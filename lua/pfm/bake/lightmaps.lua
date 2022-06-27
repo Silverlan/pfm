@@ -79,6 +79,10 @@ pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCo
 	unirender.PBRShader.set_global_renderer_identifier(createInfo.renderer)
 	unirender.PBRShader.set_global_bake_diffuse_lighting(true)
 
+	local ent = ents.create("unirender")
+	util.remove(ent,true)
+	local unirenderC = ent:AddComponent("unirender")
+
 	local scene = unirender.create_scene(bakeCombined and unirender.Scene.RENDER_MODE_BAKE_DIFFUSE_LIGHTING or unirender.Scene.RENDER_MODE_BAKE_DIFFUSE_LIGHTING_SEPARATE,createInfo)
 	scene:SetSkyAngles(EulerAngles(0,0,0))
 	scene:SetSkyTransparent(false)
@@ -98,12 +102,15 @@ pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCo
 		scene:AddLightSource(ent)
 	end
 	if(initScene ~= nil) then initScene(scene) end
+
+	unirenderC:InvokeEventCallbacks(ents.UnirenderComponent.EVENT_INITIALIZE_SCENE,{scene})
+
 	scene:Finalize()
 	unirender.PBRShader.set_global_bake_diffuse_lighting(false)
 	local flags = unirender.Renderer.FLAG_NONE
 	local renderer = unirender.create_renderer(scene,createInfo.renderer,flags)
 	if(renderer == nil) then
-		pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
+		pfm.log("Unable to create renderer for render engine '" .. createInfo.renderer .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
 
