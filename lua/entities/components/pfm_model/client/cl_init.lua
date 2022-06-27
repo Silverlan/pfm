@@ -20,6 +20,7 @@ function ents.PFMModel:Initialize()
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
+	self:AddEntityComponent(ents.COMPONENT_BVH)
 	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent("pfm_actor")
 	if(renderC ~= nil) then
