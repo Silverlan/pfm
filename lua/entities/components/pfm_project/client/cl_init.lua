@@ -26,9 +26,16 @@ function ents.PFMProject:Initialize()
 	
 	self.m_timeFrame = fudm.PFMTimeFrame()
 	self:AddEventCallback(ents.PFMProject.EVENT_ON_ENTITY_CREATED,function(ent) self:OnEntityCreated(ent) end)
+
+	self:AddEntityComponent(ents.COMPONENT_STATIC_BVH_CACHE)
 end
 
 function ents.PFMProject:OnEntityCreated(ent)
+	local bvhCache = self:GetEntityComponent(ents.COMPONENT_STATIC_BVH_CACHE)
+	if(bvhCache ~= nil) then
+		bvhCache:AddEntity(ent)
+	end
+
 	local filmClipC = ent:GetComponent(ents.COMPONENT_PFM_FILM_CLIP)
 	if(filmClipC == nil) then return end
 	local clipData = filmClipC:GetClipData()
