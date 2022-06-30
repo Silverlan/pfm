@@ -347,16 +347,29 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 				end
 			end
 		elseif(mouseButton == input.MOUSE_BUTTON_LEFT) then
+			if(util.is_valid(self.m_rtMoverActor)) then
+				self.m_rtMoverActor:RemoveComponent("pfm_rt_mover")
+				tool.get_filmmaker():TagRenderSceneAsDirty()
+				if(state == input.STATE_RELEASE) then return util.EVENT_REPLY_HANDLED end
+			end
 			local handled,entActor = findActor()
 			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
 				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
 				if(actor) then
-					if(input.is_alt_key_down()) then
-						filmmaker:DeselectActor(actor)
+					if(self:IsMoveManipulatorMode(self:GetManipulatorMode())) then
+						if(state == input.STATE_PRESS) then
+							self.m_rtMoverActor = entActor
+							entActor:AddComponent("pfm_rt_mover")
+							tool.get_filmmaker():TagRenderSceneAsDirty(true)
+						end
 					else
-						local deselectCurrent = not input.is_ctrl_key_down()
-						filmmaker:SelectActor(actor,deselectCurrent)
+						if(input.is_alt_key_down()) then
+							filmmaker:DeselectActor(actor)
+						else
+							local deselectCurrent = not input.is_ctrl_key_down()
+							filmmaker:SelectActor(actor,deselectCurrent)
+						end
 					end
 				end
 			end
