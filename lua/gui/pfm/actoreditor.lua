@@ -1292,6 +1292,14 @@ function gui.PFMActorEditor:AddActor(actor)
 					end
 				end
 			end)
+			if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
+				pContext:AddItem("Assign entity to x",function()
+					x = actor:FindEntity()
+				end)
+				pContext:AddItem("Assign entity to y",function()
+					y = actor:FindEntity()
+				end)
+			end
 			pContext:AddItem(locale.get_text("rename"),function()
 				local te = gui.create("WITextEntry",itemActor,0,0,itemActor:GetWidth(),itemActor:GetHeight(),0,0,1,1)
 				te:SetText(actor:GetName())
