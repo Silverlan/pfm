@@ -83,7 +83,23 @@ function gui.PFMTreeView:SetSelectable(selectableMode)
 end
 function gui.PFMTreeView:IsSelectable() return self:GetSelectableMode() ~= gui.Table.SELECTABLE_MODE_NONE end
 function gui.PFMTreeView:GetSelectableMode() return self.m_selectableMode end
-function gui.PFMTreeView:DeselectAll()
+function gui.PFMTreeView:GetSelectedElements() return self.m_selectedElements end
+function gui.PFMTreeView:DeselectAll(el)
+	if(el ~= nil) then
+		local elsDeselect = {}
+		local function getChildren(el)
+			table.insert(elsDeselect,el)
+			self.m_selectedElements[el] = nil
+			for _,item in ipairs(el:GetItems()) do
+				if(item:IsValid()) then getChildren(item) end
+			end
+		end
+		getChildren(el)
+		for _,el in ipairs(elsDeselect) do
+			if(el:IsValid()) then el:SetSelected(false) end
+		end
+		return
+	end
 	local selectedElements = self.m_selectedElements
 	self.m_selectedElements = {}
 	for el,_ in pairs(selectedElements) do

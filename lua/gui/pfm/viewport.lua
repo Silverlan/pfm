@@ -351,7 +351,14 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
 				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
-				if(actor) then filmmaker:SelectActor(actor) end
+				if(actor) then
+					if(input.is_alt_key_down()) then
+						filmmaker:DeselectActor(actor)
+					else
+						local deselectCurrent = not input.is_ctrl_key_down()
+						filmmaker:SelectActor(actor,deselectCurrent)
+					end
+				end
 			end
 		end
 		return util.EVENT_REPLY_HANDLED

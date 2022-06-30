@@ -776,14 +776,28 @@ function gui.PFMActorEditor:OnThink()
 	end
 end
 function gui.PFMActorEditor:GetFilmClip() return self.m_filmClip end
-function gui.PFMActorEditor:SelectActor(actor)
-	if(util.is_valid(self.m_tree)) then self.m_tree:DeselectAll() end
+function gui.PFMActorEditor:SelectActor(actor,deselectCurrent)
+	if(deselectCurrent == nil) then deselectCurrent = true end
+	if(deselectCurrent and util.is_valid(self.m_tree)) then self.m_tree:DeselectAll() end
 	for itemActor,actorData in pairs(self.m_treeElementToActorData) do
 		if(util.is_same_object(actor,actorData.actor)) then
 			if(itemActor:IsValid()) then itemActor:Select() end
 			break
 		end
 	end
+end
+function gui.PFMActorEditor:DeselectActor(actor)
+	local elTgt = self.m_actorUniqueIdToTreeElement[tostring(actor:GetUniqueId())]
+	for el,_ in pairs(self.m_tree:GetSelectedElements()) do
+		if(el:IsValid()) then
+			local actorData = self.m_treeElementToActorData[el]
+			if(actorData ~= nil and util.is_same_object(actor,actorData.actor)) then
+				self.m_tree:DeselectAll(el)
+				break
+			end
+		end
+	end
+	self:ScheduleUpdateSelectedEntities()
 end
 function gui.PFMActorEditor:SetActorDirty(uniqueId)
 	if(type(uniqueId) ~= "string") then uniqueId = tostring(uniqueId) end
@@ -1042,7 +1056,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 						controlData.min = min
 						controlData.max = max
 					end
-					pfm.log("Adding control for member '" .. controlData.path .. "' with type = " .. memberInfo.type .. ", min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
+					-- pfm.log("Adding control for member '" .. controlData.path .. "' with type = " .. memberInfo.type .. ", min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
 					controlData.set = function(component,value,dontTranslateValue,updateAnimationValue)
 						if(updateAnimationValue == nil) then updateAnimationValue = true end
 						local entActor = ents.find_by_uuid(uniqueId)
@@ -1377,6 +1391,8 @@ function gui.PFMActorEditor:Reload()
 end
 function gui.PFMActorEditor:Setup(filmClip)
 	-- if(util.is_same_object(filmClip,self.m_filmClip)) then return end
+
+	debug.start_profiling_task("pfm_populate_actor_editor")
 	self.m_filmClip = filmClip
 	self.m_tree:Clear()
 	self.m_treeElementToActorData = {}
@@ -1385,6 +1401,7 @@ function gui.PFMActorEditor:Setup(filmClip)
 	for _,actor in ipairs(filmClip:GetActorList()) do
 		self:AddActor(actor)
 	end
+	debug.stop_profiling_task()
 end
 function gui.PFMActorEditor:AddProperty(name,child,fInitPropertyEl)
 	--[[local elLabelContainer
