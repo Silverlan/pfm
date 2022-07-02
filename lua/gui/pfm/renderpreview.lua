@@ -330,7 +330,8 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	-- Render Engine
 	self.m_ctrlRenderEngine = p:AddDropDownMenu(locale.get_text("pfm_render_engine"),"render_engine",{
 		{"cycles",locale.get_text("pfm_render_engine_cycles")},
-		{"luxcorerender",locale.get_text("pfm_render_engine_luxcorerender")}
+		{"luxcorerender",locale.get_text("pfm_render_engine_luxcorerender")},
+		{"pragma","Pragma"}
 	},"cycles")
 	p:LinkToUDMProperty("render_engine",settings,"renderEngine")
 	

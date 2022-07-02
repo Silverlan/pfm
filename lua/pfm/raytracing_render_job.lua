@@ -9,6 +9,7 @@
 include("/util/class_property.lua")
 include("/shaders/pfm/pfm_calc_image_luminance.lua")
 include("unirender.lua")
+include("pragma_render_job.lua")
 
 pfm = pfm or {}
 
@@ -289,7 +290,6 @@ function pfm.RaytracingRenderJob:Update()
 	end
 
 	local isFrameComplete = (self.m_remainingSubStages == 0) -- No sub-stages remaining
-
 	if((self.m_raytracingJob == nil and self.m_preStage == nil) or self.m_frameComplete) then return pfm.RaytracingRenderJob.STATE_IDLE end
 	local progress = (self.m_raytracingJob ~= nil) and self.m_raytracingJob:GetProgress() or 1.0
 	self.m_lastProgress = progress
@@ -358,265 +358,272 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	if(cam == nil) then return end
 
 	self.m_renderStartTime = time.time_since_epoch()
+
 	local renderSettings = self.m_settings
-	local createInfo = unirender.Scene.CreateInfo()
-	createInfo.denoiseMode = renderSettings:GetDenoiseMode()
-	createInfo.hdrOutput = renderSettings:GetHDROutput()
-	createInfo.deviceType = renderSettings:GetDeviceType()
-	createInfo.progressiveRefine = renderSettings:ShouldUseProgressiveRefinement()
-	createInfo.preCalculateLight = renderSettings:ShouldPreCalculateLight()
-	createInfo.progressive = renderSettings:IsProgressive()
-	createInfo.exposure = renderSettings:GetExposure()
-	createInfo.renderer = renderSettings:GetRenderEngine()
-	createInfo:SetSamplesPerPixel(renderSettings:GetSamples())
+	if(renderSettings:GetRenderEngine() ~= "pragma") then
+		local createInfo = unirender.Scene.CreateInfo()
+		createInfo.denoiseMode = renderSettings:GetDenoiseMode()
+		createInfo.hdrOutput = renderSettings:GetHDROutput()
+		createInfo.deviceType = renderSettings:GetDeviceType()
+		createInfo.progressiveRefine = renderSettings:ShouldUseProgressiveRefinement()
+		createInfo.preCalculateLight = renderSettings:ShouldPreCalculateLight()
+		createInfo.progressive = renderSettings:IsProgressive()
+		createInfo.exposure = renderSettings:GetExposure()
+		createInfo.renderer = renderSettings:GetRenderEngine()
+		createInfo:SetSamplesPerPixel(renderSettings:GetSamples())
 
-	local colorTransform = renderSettings:GetColorTransform()
-	local colorTransformLook = renderSettings:GetColorTransformLook()
-	if(colorTransformLook ~= nil) then createInfo:SetColorTransform(colorTransform,colorTransformLook)
-	else createInfo:SetColorTransform(colorTransform) end
+		local colorTransform = renderSettings:GetColorTransform()
+		local colorTransformLook = renderSettings:GetColorTransformLook()
+		if(colorTransformLook ~= nil) then createInfo:SetColorTransform(colorTransform,colorTransformLook)
+		else createInfo:SetColorTransform(colorTransform) end
 
-	local w = renderSettings:GetWidth()
-	local h = renderSettings:GetHeight()
-	if(renderSettings:IsCubemapPanorama()) then
-		local subStageAngles = {
-			EulerAngles(0,-90,0), -- Right
-			EulerAngles(0,90,0), -- Left
-			EulerAngles(-90,0,0), -- Up
-			EulerAngles(90,0,0), -- Down
-			EulerAngles(0,0,0), -- Forward
-			EulerAngles(0,180,0) -- Backward
-		}
-		local ang = subStageAngles[6 -subStageIdx]
-		cam:GetEntity():SetAngles(ang)
-		cam:SetFOV(90.0)
-		cam:UpdateMatrices()
+		local w = renderSettings:GetWidth()
+		local h = renderSettings:GetHeight()
+		if(renderSettings:IsCubemapPanorama()) then
+			local subStageAngles = {
+				EulerAngles(0,-90,0), -- Right
+				EulerAngles(0,90,0), -- Left
+				EulerAngles(-90,0,0), -- Up
+				EulerAngles(90,0,0), -- Down
+				EulerAngles(0,0,0), -- Forward
+				EulerAngles(0,180,0) -- Backward
+			}
+			local ang = subStageAngles[6 -subStageIdx]
+			cam:GetEntity():SetAngles(ang)
+			cam:SetFOV(90.0)
+			cam:UpdateMatrices()
 
-		h = w
-	end
+			h = w
+		end
 
-	local ent = ents.create("unirender")
-	util.remove(ent,true)
-	local unirenderC = ent:AddComponent("unirender")
+		local ent = ents.create("unirender")
+		util.remove(ent,true)
+		local unirenderC = ent:AddComponent("unirender")
 
-	unirender.PBRShader.set_global_renderer_identifier(renderSettings:GetRenderEngine())
+		unirender.PBRShader.set_global_renderer_identifier(renderSettings:GetRenderEngine())
 
-	local scene = unirender.create_scene(renderSettings:GetRenderMode(),createInfo)
-	local pos = cam:GetEntity():GetPos()
-	local rot = cam:GetEntity():GetRotation()
-	local nearZ = cam:GetNearZ()
-	local farZ = cam:GetFarZ()
-	local fov = cam:GetFOV()
-	local vp = cam:GetProjectionMatrix() *cam:GetViewMatrix()
-	local sceneFlags = unirender.Scene.SCENE_FLAG_NONE
-	if(renderSettings:IsCameraFrustumCullingEnabled()) then sceneFlags = bit.bor(sceneFlags,unirender.Scene.SCENE_FLAG_BIT_CULL_OBJECTS_OUTSIDE_CAMERA_FRUSTUM) end
-	if(renderSettings:IsPVSCullingEnabled()) then sceneFlags = bit.bor(sceneFlags,unirender.Scene.SCENE_FLAG_BIT_CULL_OBJECTS_OUTSIDE_PVS) end
-	
-	-- Note: Settings have to be initialized before setting up the game scene
-	scene:SetSkyAngles(EulerAngles(0,renderSettings:GetSkyYaw(),0))
-	scene:SetSkyTransparent(renderSettings:IsSkyTransparent())
-	scene:SetSkyStrength(renderSettings:GetSkyStrength())
-	scene:SetEmissionStrength(renderSettings:GetEmissionStrength())
-	scene:SetMaxTransparencyBounces(renderSettings:GetMaxTransparencyBounces())
-	-- TODO: Add user options for these
-	scene:SetMaxDiffuseBounces(4)
-	scene:SetMaxGlossyBounces(4)
-	scene:SetLightIntensityFactor(renderSettings:GetLightIntensityFactor())
-	scene:SetResolution(w,h)
-
-	local camType = renderSettings:GetCamType()
-	local panoramaTypeToClType = {
-		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR] = unirender.Camera.PANORAMA_TYPE_EQUIRECTANGULAR,
-		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUIDISTANT] = unirender.Camera.PANORAMA_TYPE_FISHEYE_EQUIDISTANT,
-		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID] = unirender.Camera.PANORAMA_TYPE_FISHEYE_EQUISOLID,
-		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL] = unirender.Camera.PANORAMA_TYPE_MIRRORBALL,
-		[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP] = unirender.Camera.PANORAMA_TYPE_EQUIRECTANGULAR
-	}
-	local camTypeToClType = {
-		[pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE] = unirender.Camera.TYPE_PERSPECTIVE,
-		[pfm.RaytracingRenderJob.Settings.CAM_TYPE_ORTHOGRAPHIC] = unirender.Camera.TYPE_ORTHOGRAPHIC,
-		[pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA] = unirender.Camera.TYPE_PANORAMA
-	}
-
-	local panoramaType = renderSettings:GetPanoramaType()
-	if(panoramaType == pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP) then camType = unirender.Camera.TYPE_PERSPECTIVE end
-
-	local clCam = scene:GetCamera()
-	clCam:SetCameraType(camTypeToClType[camType])
-	clCam:SetPanoramaType(panoramaTypeToClType[panoramaType])
-
-	-- TODO: This doesn't belong here!
-	local pfmCam = cam:GetEntity():GetComponent("pfm_camera")
-	--[[if(pfmCam ~= nil) then
-		local camData = pfmCam:GetCameraData()
-		-- print("Using focal distance: ",camData:GetFocalDistance())
-		clCam:SetFocalDistance(camData:GetFocalDistance())
-		clCam:SetBokehRatio(camData:GetApertureBokehRatio())
-		clCam:SetBladeCount(camData:GetApertureBladeCount())
-		clCam:SetBladesRotation(camData:GetApertureBladesRotation())
-		clCam:SetDepthOfFieldEnabled(false)--camData:IsDepthOfFieldEnabled())
-		clCam:SetApertureSizeFromFStop(camData:GetFStop(),math.calc_focal_length_from_fov(fov,camData:GetSensorSize()))
-	else clCam:SetDepthOfFieldEnabled(false) end]]
-	clCam:SetDepthOfFieldEnabled(false)
-
-	clCam:SetEquirectangularHorizontalRange(renderSettings:GetPanoramaHorizontalRange())
-	clCam:SetStereoscopic(renderSettings:IsStereoscopic())
-	if(#renderSettings:GetSky() > 0) then scene:SetSky(renderSettings:GetSky()) end
-
-	unirenderC:InvokeEventCallbacks(ents.UnirenderComponent.EVENT_INITIALIZE_SCENE,{scene,renderSettings})
-
-	local function is_static_cache_entity(ent)
-		return ent:IsMapEntity()
-	end
-
-	if(g_staticGeometryCache == nil and renderSettings:GetRenderWorld()) then
-		g_staticGeometryCache = unirender.create_cache()
-		g_staticGeometryCache:InitializeFromGameScene(self.m_gameScene,is_static_cache_entity)
-	end
-
-	scene:InitializeFromGameScene(self.m_gameScene,pos,rot,vp,nearZ,farZ,fov,sceneFlags,function(ent)
-		if(is_static_cache_entity(ent)) then return false end
-		if(ent:IsWorld()) then return renderSettings:GetRenderWorld() end
-		if(ent:IsPlayer()) then return renderSettings:GetRenderPlayer() end
+		local scene = unirender.create_scene(renderSettings:GetRenderMode(),createInfo)
+		local pos = cam:GetEntity():GetPos()
+		local rot = cam:GetEntity():GetRotation()
+		local nearZ = cam:GetNearZ()
+		local farZ = cam:GetFarZ()
+		local fov = cam:GetFOV()
+		local vp = cam:GetProjectionMatrix() *cam:GetViewMatrix()
+		local sceneFlags = unirender.Scene.SCENE_FLAG_NONE
+		if(renderSettings:IsCameraFrustumCullingEnabled()) then sceneFlags = bit.bor(sceneFlags,unirender.Scene.SCENE_FLAG_BIT_CULL_OBJECTS_OUTSIDE_CAMERA_FRUSTUM) end
+		if(renderSettings:IsPVSCullingEnabled()) then sceneFlags = bit.bor(sceneFlags,unirender.Scene.SCENE_FLAG_BIT_CULL_OBJECTS_OUTSIDE_PVS) end
 		
-		local owner = ent:GetOwner()
-		if(owner ~= nil and owner:IsPlayer() and renderSettings:GetRenderPlayer() == false) then return false end
+		-- Note: Settings have to be initialized before setting up the game scene
+		scene:SetSkyAngles(EulerAngles(0,renderSettings:GetSkyYaw(),0))
+		scene:SetSkyTransparent(renderSettings:IsSkyTransparent())
+		scene:SetSkyStrength(renderSettings:GetSkyStrength())
+		scene:SetEmissionStrength(renderSettings:GetEmissionStrength())
+		scene:SetMaxTransparencyBounces(renderSettings:GetMaxTransparencyBounces())
+		-- TODO: Add user options for these
+		scene:SetMaxDiffuseBounces(4)
+		scene:SetMaxGlossyBounces(4)
+		scene:SetLightIntensityFactor(renderSettings:GetLightIntensityFactor())
+		scene:SetResolution(w,h)
 
-		if(ent:HasComponent(ents.COMPONENT_PARTICLE_SYSTEM) or ent:HasComponent("util_transform_arrow") --[[or ent:HasComponent("pfm_light")]] or ent:HasComponent("pfm_camera")) then return false end
-		return renderSettings:GetRenderGameEntities() or ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
-	end,function(ent)
-		return true
-	end)
-	if(renderSettings:GetRenderWorld() and g_staticGeometryCache ~= nil) then scene:AddCache(g_staticGeometryCache) end
+		local camType = renderSettings:GetCamType()
+		local panoramaTypeToClType = {
+			[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR] = unirender.Camera.PANORAMA_TYPE_EQUIRECTANGULAR,
+			[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUIDISTANT] = unirender.Camera.PANORAMA_TYPE_FISHEYE_EQUIDISTANT,
+			[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_FISHEYE_EQUISOLID] = unirender.Camera.PANORAMA_TYPE_FISHEYE_EQUISOLID,
+			[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_MIRRORBALL] = unirender.Camera.PANORAMA_TYPE_MIRRORBALL,
+			[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP] = unirender.Camera.PANORAMA_TYPE_EQUIRECTANGULAR
+		}
+		local camTypeToClType = {
+			[pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE] = unirender.Camera.TYPE_PERSPECTIVE,
+			[pfm.RaytracingRenderJob.Settings.CAM_TYPE_ORTHOGRAPHIC] = unirender.Camera.TYPE_ORTHOGRAPHIC,
+			[pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA] = unirender.Camera.TYPE_PANORAMA
+		}
 
-	-- We want particle effects with bloom to emit light, so we'll add a light source for each particle.
-	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PARTICLE_SYSTEM)}) do
-		local ptC = ent:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
-		if(ptC:IsBloomEnabled()) then
-			local mat = ptC:GetMaterial()
-			if(mat ~= nil) then
-				-- print("Adding light source for particles of particle system " .. tostring(ent) .. ", which uses material '" .. mat:GetName() .. "'...")
-				-- print("Particle system uses " .. util.get_type_name(ptC:GetRenderers()[1]) .. " renderer!")
-				-- To get the correct color for the particles, we need to know the color of the texture.
-				-- If we don't know the color, we'll compute it using the luminance shader (and store it
-				-- in the material for future use).
-				local luminance = util.Luminance.get_material_luminance(mat)
-				if(luminance == nil) then
-					pfm.log("Particle system " .. tostring(ent) .. " uses material '" .. mat:GetName() .. "', but material has no luminance information, which is required to determine emission color! Computing...",pfm.LOG_CATEGORY_PFM_RENDER)
-					local texInfo = (mat ~= nil) and mat:GetTextureInfo("albedo_map") or nil
-					local tex = (texInfo ~= nil) and texInfo:GetTexture() or nil
-					local vkTex = (tex ~= nil) and tex:GetVkTexture() or nil
-					if(vkTex ~= nil) then
-						-- No luminance information available; Calculate it now
-						local alphaMode = ptC:GetEffectiveAlphaMode()
-						local useBlackAsTransparency = (alphaMode == ents.ParticleSystemComponent.ALPHA_MODE_ADDITIVE_BY_COLOR)
-						luminance = shader.get("pfm_calc_image_luminance"):CalcImageLuminance(vkTex,useBlackAsTransparency)
-						-- TODO: What about animated textures?
+		local panoramaType = renderSettings:GetPanoramaType()
+		if(panoramaType == pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_CUBEMAP) then camType = unirender.Camera.TYPE_PERSPECTIVE end
 
-						local msg = "Computed luminance: " .. tostring(luminance)
-						if(useBlackAsTransparency) then msg = msg .. " (Black was interpreted as transparency)" end
-						msg = msg .. "! Applying to material..."
-						pfm.log(msg,pfm.LOG_CATEGORY_PFM_RENDER)
+		local clCam = scene:GetCamera()
+		clCam:SetCameraType(camTypeToClType[camType])
+		clCam:SetPanoramaType(panoramaTypeToClType[panoramaType])
 
-						util.Luminance.set_material_luminance(mat,luminance)
-						mat:Save()
+		-- TODO: This doesn't belong here!
+		local pfmCam = cam:GetEntity():GetComponent("pfm_camera")
+		--[[if(pfmCam ~= nil) then
+			local camData = pfmCam:GetCameraData()
+			-- print("Using focal distance: ",camData:GetFocalDistance())
+			clCam:SetFocalDistance(camData:GetFocalDistance())
+			clCam:SetBokehRatio(camData:GetApertureBokehRatio())
+			clCam:SetBladeCount(camData:GetApertureBladeCount())
+			clCam:SetBladesRotation(camData:GetApertureBladesRotation())
+			clCam:SetDepthOfFieldEnabled(false)--camData:IsDepthOfFieldEnabled())
+			clCam:SetApertureSizeFromFStop(camData:GetFStop(),math.calc_focal_length_from_fov(fov,camData:GetSensorSize()))
+		else clCam:SetDepthOfFieldEnabled(false) end]]
+		clCam:SetDepthOfFieldEnabled(false)
+
+		clCam:SetEquirectangularHorizontalRange(renderSettings:GetPanoramaHorizontalRange())
+		clCam:SetStereoscopic(renderSettings:IsStereoscopic())
+		if(#renderSettings:GetSky() > 0) then scene:SetSky(renderSettings:GetSky()) end
+
+		unirenderC:InvokeEventCallbacks(ents.UnirenderComponent.EVENT_INITIALIZE_SCENE,{scene,renderSettings})
+
+		local function is_static_cache_entity(ent)
+			return ent:IsMapEntity()
+		end
+
+		if(g_staticGeometryCache == nil and renderSettings:GetRenderWorld()) then
+			g_staticGeometryCache = unirender.create_cache()
+			g_staticGeometryCache:InitializeFromGameScene(self.m_gameScene,is_static_cache_entity)
+		end
+
+		scene:InitializeFromGameScene(self.m_gameScene,pos,rot,vp,nearZ,farZ,fov,sceneFlags,function(ent)
+			if(is_static_cache_entity(ent)) then return false end
+			if(ent:IsWorld()) then return renderSettings:GetRenderWorld() end
+			if(ent:IsPlayer()) then return renderSettings:GetRenderPlayer() end
+			
+			local owner = ent:GetOwner()
+			if(owner ~= nil and owner:IsPlayer() and renderSettings:GetRenderPlayer() == false) then return false end
+
+			if(ent:HasComponent(ents.COMPONENT_PARTICLE_SYSTEM) or ent:HasComponent("util_transform_arrow") --[[or ent:HasComponent("pfm_light")]] or ent:HasComponent("pfm_camera")) then return false end
+			return renderSettings:GetRenderGameEntities() or ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
+		end,function(ent)
+			return true
+		end)
+		if(renderSettings:GetRenderWorld() and g_staticGeometryCache ~= nil) then scene:AddCache(g_staticGeometryCache) end
+
+		-- We want particle effects with bloom to emit light, so we'll add a light source for each particle.
+		for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PARTICLE_SYSTEM)}) do
+			local ptC = ent:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
+			if(ptC:IsBloomEnabled()) then
+				local mat = ptC:GetMaterial()
+				if(mat ~= nil) then
+					-- print("Adding light source for particles of particle system " .. tostring(ent) .. ", which uses material '" .. mat:GetName() .. "'...")
+					-- print("Particle system uses " .. util.get_type_name(ptC:GetRenderers()[1]) .. " renderer!")
+					-- To get the correct color for the particles, we need to know the color of the texture.
+					-- If we don't know the color, we'll compute it using the luminance shader (and store it
+					-- in the material for future use).
+					local luminance = util.Luminance.get_material_luminance(mat)
+					if(luminance == nil) then
+						pfm.log("Particle system " .. tostring(ent) .. " uses material '" .. mat:GetName() .. "', but material has no luminance information, which is required to determine emission color! Computing...",pfm.LOG_CATEGORY_PFM_RENDER)
+						local texInfo = (mat ~= nil) and mat:GetTextureInfo("albedo_map") or nil
+						local tex = (texInfo ~= nil) and texInfo:GetTexture() or nil
+						local vkTex = (tex ~= nil) and tex:GetVkTexture() or nil
+						if(vkTex ~= nil) then
+							-- No luminance information available; Calculate it now
+							local alphaMode = ptC:GetEffectiveAlphaMode()
+							local useBlackAsTransparency = (alphaMode == ents.ParticleSystemComponent.ALPHA_MODE_ADDITIVE_BY_COLOR)
+							luminance = shader.get("pfm_calc_image_luminance"):CalcImageLuminance(vkTex,useBlackAsTransparency)
+							-- TODO: What about animated textures?
+
+							local msg = "Computed luminance: " .. tostring(luminance)
+							if(useBlackAsTransparency) then msg = msg .. " (Black was interpreted as transparency)" end
+							msg = msg .. "! Applying to material..."
+							pfm.log(msg,pfm.LOG_CATEGORY_PFM_RENDER)
+
+							util.Luminance.set_material_luminance(mat,luminance)
+							mat:Save()
+						end
 					end
-				end
-				if(luminance ~= nil) then
-					local avgIntensity = luminance:GetAvgIntensity()
-					local bloomCol = ptC:GetEffectiveBloomColorFactor()
-					local numRenderParticles = ptC:GetRenderParticleCount()
-					-- print("Adding light source(s) for " .. numRenderParticles .. " particles...")
-					local intensityFactor = 1.0
-					-- TODO: Handle this differently
-					if(util.get_type_name(ptC:GetRenderers()[1]) == "RendererSpriteTrail") then intensityFactor = 0.05 end
-					for i=1,numRenderParticles do
-						local ptIdx = ptC:GetParticleIndexFromParticleBufferIndex(i -1)
-						local pt = ptC:GetParticle(ptIdx)
-						local radius = pt:GetRadius()
-						-- TODO: Take length into account, as well as the particle shader?
-						local alpha = pt:GetAlpha()
-						local col = pt:GetColor() *bloomCol
-						col = Color(col *Vector4(avgIntensity,1.0))
-						col.a = 255
-						
-						local pos = pt:GetPosition()
-						local light = scene:AddLightSource(unirender.LightSource.TYPE_POINT,pos)
-						light:SetColor(col)
-						local intensity = intensityFactor *math.pow(10.0 *(alpha ^2.0) *radius,1.0 /1.5) -- Decline growth for larger factors
-						-- print("Light: ",intensity,alpha,radius,intensityFactor)
-						light:SetIntensity(intensity) -- TODO: This may require some tweaking
+					if(luminance ~= nil) then
+						local avgIntensity = luminance:GetAvgIntensity()
+						local bloomCol = ptC:GetEffectiveBloomColorFactor()
+						local numRenderParticles = ptC:GetRenderParticleCount()
+						-- print("Adding light source(s) for " .. numRenderParticles .. " particles...")
+						local intensityFactor = 1.0
+						-- TODO: Handle this differently
+						if(util.get_type_name(ptC:GetRenderers()[1]) == "RendererSpriteTrail") then intensityFactor = 0.05 end
+						for i=1,numRenderParticles do
+							local ptIdx = ptC:GetParticleIndexFromParticleBufferIndex(i -1)
+							local pt = ptC:GetParticle(ptIdx)
+							local radius = pt:GetRadius()
+							-- TODO: Take length into account, as well as the particle shader?
+							local alpha = pt:GetAlpha()
+							local col = pt:GetColor() *bloomCol
+							col = Color(col *Vector4(avgIntensity,1.0))
+							col.a = 255
+							
+							local pos = pt:GetPosition()
+							local light = scene:AddLightSource(unirender.LightSource.TYPE_POINT,pos)
+							light:SetColor(col)
+							local intensity = intensityFactor *math.pow(10.0 *(alpha ^2.0) *radius,1.0 /1.5) -- Decline growth for larger factors
+							-- print("Light: ",intensity,alpha,radius,intensityFactor)
+							light:SetIntensity(intensity) -- TODO: This may require some tweaking
+						end
 					end
 				end
 			end
 		end
-	end
-	
-	local ang = rot:ToEulerAngles()
-	pfm.log("Starting render job for frame " .. (self.m_currentFrame +1) .. " with camera position (" .. pos.x .. "," .. pos.y .. "," .. pos.z .. ") and angles (" .. ang.p .. "," .. ang.y .. "," .. ang.r .. ").",pfm.LOG_CATEGORY_PFM_RENDER)
+		
+		local ang = rot:ToEulerAngles()
+		pfm.log("Starting render job for frame " .. (self.m_currentFrame +1) .. " with camera position (" .. pos.x .. "," .. pos.y .. "," .. pos.z .. ") and angles (" .. ang.p .. "," .. ang.y .. "," .. ang.r .. ").",pfm.LOG_CATEGORY_PFM_RENDER)
 
-	self.m_frameComplete = false
-	if(renderSettings:IsPreStageOnly()) then
-		self.m_preStage = scene
-		self.m_lastProgress = 0.0
-		return
-	end
-	self.m_preStage = nil
+		self.m_frameComplete = false
+		if(renderSettings:IsPreStageOnly()) then
+			self.m_preStage = scene
+			self.m_lastProgress = 0.0
+			return
+		end
+		self.m_preStage = nil
 
-	scene:Finalize()
-	local flags = unirender.Renderer.FLAG_NONE
-	if(renderSettings:IsLiveEditingEnabled()) then flags = bit.bor(flags,unirender.Renderer.FLAG_ENABLE_LIVE_EDITING_BIT) end
-	self.m_renderEngine = renderSettings:GetRenderEngine()
-	local renderer = unirender.create_renderer(scene,self.m_renderEngine,flags)
-	if(renderer == nil) then
-		pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
-		return
-	end
+		scene:Finalize()
+		local flags = unirender.Renderer.FLAG_NONE
+		if(renderSettings:IsLiveEditingEnabled()) then flags = bit.bor(flags,unirender.Renderer.FLAG_ENABLE_LIVE_EDITING_BIT) end
+		self.m_renderEngine = renderSettings:GetRenderEngine()
+		local renderer = unirender.create_renderer(scene,self.m_renderEngine,flags)
+		if(renderer == nil) then
+			pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
+			return
+		end
 
-	local apiData = renderer:GetApiData()
-	if(renderSettings:GetDeviceType() == pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU and self.m_renderEngine == "cycles") then
-		apiData:GetFromPath("cycles"):SetValue("enableOptix",udm.TYPE_BOOLEAN,renderSettings:GetUseOptix())
-	end
+		local apiData = renderer:GetApiData()
+		if(renderSettings:GetDeviceType() == pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU and self.m_renderEngine == "cycles") then
+			apiData:GetFromPath("cycles"):SetValue("enableOptix",udm.TYPE_BOOLEAN,renderSettings:GetUseOptix())
+		end
 
-	--[[
-	-- Some Cycles debugging options:
-	apiData:GetFromPath("cycles/debug"):SetValue("dump_shader_graphs",udm.TYPE_BOOLEAN,true)
-	apiData:GetFromPath("cycles/debug"):SetValue("use_debug_mesh_shader",udm.TYPE_BOOLEAN,true)
-	apiData:GetFromPath("cycles/shader"):SetValue("dontSimplifyGraphs",udm.TYPE_BOOLEAN,true)
+		--[[
+		-- Some Cycles debugging options:
+		apiData:GetFromPath("cycles/debug"):SetValue("dump_shader_graphs",udm.TYPE_BOOLEAN,true)
+		apiData:GetFromPath("cycles/debug"):SetValue("use_debug_mesh_shader",udm.TYPE_BOOLEAN,true)
+		apiData:GetFromPath("cycles/shader"):SetValue("dontSimplifyGraphs",udm.TYPE_BOOLEAN,true)
 
-	local udmDebugScene = apiData:GetFromPath("cycles/debug/debugScene")
-	udmDebugScene:SetValue("enabled",udm.TYPE_BOOLEAN,true)
-	udmDebugScene:SetValue("outputFileName",udm.TYPE_STRING,"E:/projects/cycles/examples/scene_monkey.png")
-	udmDebugScene:AddArray("xmlFiles",1,udm.TYPE_STRING):Set(0,"E:/projects/cycles/examples/scene_monkey.xml")
+		local udmDebugScene = apiData:GetFromPath("cycles/debug/debugScene")
+		udmDebugScene:SetValue("enabled",udm.TYPE_BOOLEAN,true)
+		udmDebugScene:SetValue("outputFileName",udm.TYPE_STRING,"E:/projects/cycles/examples/scene_monkey.png")
+		udmDebugScene:AddArray("xmlFiles",1,udm.TYPE_STRING):Set(0,"E:/projects/cycles/examples/scene_monkey.xml")
 
-	local udmDebugStandalone = apiData:GetFromPath("cycles/debug/debugStandalone")
-	udmDebugStandalone:SetValue("xmlFile",udm.TYPE_STRING,"E:\\projects\\cycles\\examples\\scene_monkey.xml")
-	udmDebugStandalone:SetValue("outputFile",udm.TYPE_STRING,"E:\\projects\\cycles\\build_winx64\\bin\\RelWithDebInfo\\output.png")
-	udmDebugStandalone:SetValue("samples",udm.TYPE_STRING,"20")
-	udmDebugStandalone:SetValue("device",udm.TYPE_STRING,"OPTIX")
+		local udmDebugStandalone = apiData:GetFromPath("cycles/debug/debugStandalone")
+		udmDebugStandalone:SetValue("xmlFile",udm.TYPE_STRING,"E:\\projects\\cycles\\examples\\scene_monkey.xml")
+		udmDebugStandalone:SetValue("outputFile",udm.TYPE_STRING,"E:\\projects\\cycles\\build_winx64\\bin\\RelWithDebInfo\\output.png")
+		udmDebugStandalone:SetValue("samples",udm.TYPE_STRING,"20")
+		udmDebugStandalone:SetValue("device",udm.TYPE_STRING,"OPTIX")
 
-	local udmDebugStandalone = apiData:GetFromPath("cycles/debug/debugStandalone")
-	udmDebugStandalone:SetValue("xmlFile",udm.TYPE_STRING,"E:\\projects\\cycles\\examples\\scene_monkey.xml")
-	udmDebugStandalone:SetValue("outputFile",udm.TYPE_STRING,"E:\\projects\\cycles\\build_winx64\\bin\\RelWithDebInfo\\output.png")
-	udmDebugStandalone:SetValue("samples",udm.TYPE_STRING,"20")
-	udmDebugStandalone:SetValue("device",udm.TYPE_STRING,"OPTIX")
+		local udmDebugStandalone = apiData:GetFromPath("cycles/debug/debugStandalone")
+		udmDebugStandalone:SetValue("xmlFile",udm.TYPE_STRING,"E:\\projects\\cycles\\examples\\scene_monkey.xml")
+		udmDebugStandalone:SetValue("outputFile",udm.TYPE_STRING,"E:\\projects\\cycles\\build_winx64\\bin\\RelWithDebInfo\\output.png")
+		udmDebugStandalone:SetValue("samples",udm.TYPE_STRING,"20")
+		udmDebugStandalone:SetValue("device",udm.TYPE_STRING,"OPTIX")
 
-	-- LuxCoreRender:
-	apiData:GetFromPath("luxCoreRender/debug"):SetValue("rawOutputFileName",udm.TYPE_STRING,"debug_render_output.hdr")
+		-- LuxCoreRender:
+		apiData:GetFromPath("luxCoreRender/debug"):SetValue("rawOutputFileName",udm.TYPE_STRING,"debug_render_output.hdr")
 
-	-- General:
-	apiData:GetFromPath("debug"):SetValue("dumpRenderStageImages",udm.TYPE_BOOLEAN,true)
-	apiData:GetFromPath("cycles/scene/actors/27707b26-1f7f-4829-a979-bb0df9a22450"):SetValue("maxBounces",udm.TYPE_UINT32,1)
-	]]
+		-- General:
+		apiData:GetFromPath("debug"):SetValue("dumpRenderStageImages",udm.TYPE_BOOLEAN,true)
+		apiData:GetFromPath("cycles/scene/actors/27707b26-1f7f-4829-a979-bb0df9a22450"):SetValue("maxBounces",udm.TYPE_UINT32,1)
+		]]
 
-	local job = renderer:StartRender()
-	job:Start()
-	self.m_rtScene = scene
-	self.m_rtRenderer = renderer
+		local job = renderer:StartRender()
+		job:Start()
+		self.m_rtScene = scene
+		self.m_rtRenderer = renderer
 
-	self.m_raytracingJob = job
-	self.m_progressiveRendering = createInfo.progressive
-	if(self.m_progressiveRendering) then
-		self.m_prt = renderer:CreateProgressiveImageHandler()
+		self.m_raytracingJob = job
+		self.m_progressiveRendering = createInfo.progressive
+		if(self.m_progressiveRendering) then
+			self.m_prt = renderer:CreateProgressiveImageHandler()
+		end
+	else
+		local job = pfm.PragmaRenderJob(renderSettings)
+		job:Start()
+		self.m_raytracingJob = job
 	end
 
 	self.m_lastProgress = 0.0
