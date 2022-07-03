@@ -6,6 +6,51 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+util.register_class("pfm.PragmaRenderScene")
+function pfm.PragmaRenderScene:__init(width,height)
+	local sceneCreateInfo = ents.SceneComponent.CreateInfo()
+	sceneCreateInfo.sampleCount = prosper.SAMPLE_COUNT_1_BIT
+
+	-- Create temporary scene
+	local gameScene = game.get_scene()
+	local gameRenderer = gameScene:GetRenderer()
+	local scene = ents.create_scene(sceneCreateInfo,gameScene)
+	self.m_scene = scene
+
+	-- Create temporary renderer
+	local entRenderer = ents.create("rasterization_renderer")
+	local renderer = entRenderer:GetComponent(ents.COMPONENT_RENDERER)
+	local rasterizer = entRenderer:GetComponent(ents.COMPONENT_RASTERIZATION_RENDERER)
+	rasterizer:SetSSAOEnabled(true)
+	renderer:InitializeRenderTarget(gameScene,width,height)
+	scene:SetRenderer(renderer)
+	self.m_renderer = renderer
+
+	self.m_width = width
+	self.m_height = height
+end
+function pfm.PragmaRenderScene:GetResolution() return self.m_width,self.m_height end
+function pfm.PragmaRenderScene:ChangeResolution(width,height)
+	if(util.is_valid(self.m_renderer) == false or util.is_valid(self.m_scene) == false) then return end
+	self.m_renderer:InitializeRenderTarget(self.m_scene,width,height)
+end
+function pfm.PragmaRenderScene:Clear()
+	if(util.is_valid(self.m_scene)) then self.m_scene:GetEntity():Remove() end
+	if(util.is_valid(self.m_renderer)) then self.m_renderer:GetEntity():Remove() end
+end
+function pfm.PragmaRenderScene:GetScene() return self.m_scene end
+function pfm.PragmaRenderScene:GetRenderer() return self.m_renderer end
+
+local g_renderScene
+
+function pfm.clear_pragma_renderer_scene()
+	if(g_renderScene == nil) then return end
+	g_renderScene:Clear()
+	g_renderScene = nil
+end
+
+------------------
+
 util.register_class("pfm.PragmaRenderJob")
 function pfm.PragmaRenderJob:__init(renderSettings)
 	self.m_progress = 0.0
@@ -14,8 +59,6 @@ end
 function pfm.PragmaRenderJob:Clear()
 	util.remove(self.m_cbPreRenderScenes)
 	util.remove(self.m_cbPostRenderScenes)
-	if(util.is_valid(self.m_scene)) then self.m_scene:GetEntity():Remove() end
-	if(util.is_valid(self.m_renderer)) then self.m_renderer:GetEntity():Remove() end
 end
 function pfm.PragmaRenderJob:RestoreCamera()
 	if(self.m_camRestoreData == nil) then return end
@@ -185,31 +228,24 @@ function pfm.PragmaRenderJob:Start()
 	local cam = game.get_scene():GetActiveCamera()
 	if(cam == nil) then return end
 
-	local sceneCreateInfo = ents.SceneComponent.CreateInfo()
-	sceneCreateInfo.sampleCount = prosper.SAMPLE_COUNT_1_BIT
-
-	-- Create temporary scene
-	local gameScene = game.get_scene()
-	local gameRenderer = gameScene:GetRenderer()
-	local scene = ents.create_scene(sceneCreateInfo,gameScene)
-	scene:SetActiveCamera(cam)
-	self.m_scene = scene
-
 	self.m_renderPanorama = self.m_renderSettings:GetCamType() == pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA and self.m_renderSettings:GetPanoramaType() == pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR
 	self.m_stereoscopic = self.m_renderPanorama and self.m_renderSettings:IsStereoscopic()
 
-	-- Create temporary renderer
-	local entRenderer = ents.create("rasterization_renderer")
-	local renderer = entRenderer:GetComponent(ents.COMPONENT_RENDERER)
-	local rasterizer = entRenderer:GetComponent(ents.COMPONENT_RASTERIZATION_RENDERER)
-	rasterizer:SetSSAOEnabled(true)
+	local width = self.m_renderSettings:GetWidth()
+	local height = self.m_renderSettings:GetHeight()
 	if(self.m_renderPanorama) then
 		-- TODO: This is somewhat arbitrary. How can we calculate an appropriate size for the individual cubemap faces?
 		local size = self.m_renderSettings:GetHeight() *2
-		renderer:InitializeRenderTarget(gameScene,size,size)
-	else renderer:InitializeRenderTarget(gameScene,self.m_renderSettings:GetWidth(),self.m_renderSettings:GetHeight()) end
-	scene:SetRenderer(renderer)
-	self.m_renderer = renderer
+		width = size
+		height = size
+	end
+	if(g_renderScene == nil) then g_renderScene = pfm.PragmaRenderScene(width,height)
+	else g_renderScene:ChangeResolution(width,height) end
+
+	self.m_scene = g_renderScene:GetScene()
+	self.m_scene:SetActiveCamera(cam)
+
+	self.m_renderer = g_renderScene:GetRenderer()
 
 	-- Create temporary command buffer
 	local drawCmd = prosper.create_primary_command_buffer()

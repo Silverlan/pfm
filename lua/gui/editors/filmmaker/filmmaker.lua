@@ -1105,6 +1105,7 @@ end
 function gui.WIFilmmaker:OnRemove()
 	gui.WIBaseEditor.OnRemove(self)
 	self:CloseProject()
+	pfm.clear_pragma_renderer_scene()
 	util.remove(self.m_cbDisableDefaultSceneDraw)
 	util.remove(self.m_cbPreRenderScenes)
 	util.remove(self.m_overlaySceneCallback)
