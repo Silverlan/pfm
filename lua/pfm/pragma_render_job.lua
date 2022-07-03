@@ -40,13 +40,10 @@ function pfm.PragmaRenderScene:Clear()
 end
 function pfm.PragmaRenderScene:GetScene() return self.m_scene end
 function pfm.PragmaRenderScene:GetRenderer() return self.m_renderer end
-
-local g_renderScene
-
 function pfm.clear_pragma_renderer_scene()
-	if(g_renderScene == nil) then return end
-	g_renderScene:Clear()
-	g_renderScene = nil
+	if(pfm.g_pragmaRendererRenderScene == nil) then return end
+	pfm.g_pragmaRendererRenderScene:Clear()
+	pfm.g_pragmaRendererRenderScene = nil
 end
 
 ------------------
@@ -125,9 +122,11 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
 	drawSceneInfo.exclusionMask = excMask
 	drawSceneInfo.commandBuffer = self.m_drawCommandBuffer
 	if(immediate) then
+		debug.start_profiling_task("pfm_render_pragma_frame")
 		game.render_scenes({drawSceneInfo})
 		if(finalize == nil) then finalize = true end
 		if(finalize) then self:FinalizeFrame() end
+		debug.stop_profiling_task()
 	else
 		game.queue_scene_for_rendering(drawSceneInfo)
 		self.m_cbPreRenderScenes = game.add_callback("PreRenderScenes",function(drawSceneInfo)
@@ -204,12 +203,11 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 				drawCmd:RecordBlitImage(texEqui2:GetImage(),img,blitInfo)
 				game.flush_setup_command_buffer()
 			end
-			
-			self.m_imageBuffer = img:ToImageBuffer(false,false,util.ImageBuffer.FORMAT_RGBA32,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+			self.m_imageBuffer = img:ToImageBuffer(false,false,util.ImageBuffer.FORMAT_RGBA16,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 			local res = unirender.apply_color_transform(self.m_imageBuffer,nil,nil,self.m_renderSettings:GetColorTransform(),self.m_renderSettings:GetColorTransformLook())
 		end
 	else
-		local imgBuf = imgOutput:ToImageBuffer(false,false,util.ImageBuffer.FORMAT_RGBA32,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+		local imgBuf = imgOutput:ToImageBuffer(false,false,util.ImageBuffer.FORMAT_RGBA16,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
 		self.m_imageBuffer = imgBuf
 		local res = unirender.apply_color_transform(self.m_imageBuffer,nil,nil,self.m_renderSettings:GetColorTransform(),self.m_renderSettings:GetColorTransformLook())
 	end
@@ -239,13 +237,13 @@ function pfm.PragmaRenderJob:Start()
 		width = size
 		height = size
 	end
-	if(g_renderScene == nil) then g_renderScene = pfm.PragmaRenderScene(width,height)
-	else g_renderScene:ChangeResolution(width,height) end
+	if(pfm.g_pragmaRendererRenderScene == nil) then pfm.g_pragmaRendererRenderScene = pfm.PragmaRenderScene(width,height)
+	else pfm.g_pragmaRendererRenderScene:ChangeResolution(width,height) end
 
-	self.m_scene = g_renderScene:GetScene()
+	self.m_scene = pfm.g_pragmaRendererRenderScene:GetScene()
 	self.m_scene:SetActiveCamera(cam)
 
-	self.m_renderer = g_renderScene:GetRenderer()
+	self.m_renderer = pfm.g_pragmaRendererRenderScene:GetRenderer()
 
 	-- Create temporary command buffer
 	local drawCmd = prosper.create_primary_command_buffer()
