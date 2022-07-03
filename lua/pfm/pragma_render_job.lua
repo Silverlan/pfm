@@ -17,11 +17,27 @@ function pfm.PragmaRenderJob:Clear()
 	if(util.is_valid(self.m_scene)) then self.m_scene:GetEntity():Remove() end
 	if(util.is_valid(self.m_renderer)) then self.m_renderer:GetEntity():Remove() end
 end
+function pfm.PragmaRenderJob:RestoreCamera()
+	if(self.m_camRestoreData == nil) then return end
+	local restoreData = self.m_camRestoreData
+	self.m_camRestoreData = nil
+	if(util.is_valid(self.m_scene) == false) then return end
+	local cam = self.m_scene:GetActiveCamera()
+	if(util.is_valid(cam) == false) then return end
+	cam:SetFOV(restoreData.fov)
+	cam:SetAspectRatio(restoreData.aspectRatio)
+	cam:GetEntity():SetPose(restoreData.pose)
+end
 function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
 	if(self.m_renderPanorama) then
 		if(util.is_valid(self.m_scene)) then
 			local cam = self.m_scene:GetActiveCamera()
 			if(util.is_valid(cam)) then
+				self.m_camRestoreData = {
+					fov = cam:GetFOV(),
+					aspectRatio = cam:GetAspectRatio(),
+					pose = cam:GetEntity():GetPose()
+				}
 				cam:SetFOV(90.0)
 				cam:SetAspectRatio(1.0)
 				local interocularDistance = 0.065 -- Meters
@@ -115,13 +131,14 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 
 	if(self.m_renderPanorama) then
 		if(self.m_curFrame == (self.m_numFrames -1)) then
+			local horizontalRange = self.m_renderSettings:GetPanoramaHorizontalRange()
 			local tex = prosper.create_texture(self.m_outputImages[1],prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),prosper.SamplerCreateInfo())
-			local texEqui = shader.cubemap_to_equirectangular_texture(tex,width,height)
+			local texEqui = shader.cubemap_to_equirectangular_texture(tex,width,height,horizontalRange)
 			local img = texEqui:GetImage()
 
 			if(self.m_stereoscopic) then
 				local tex2 = prosper.create_texture(self.m_outputImages[2],prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),prosper.SamplerCreateInfo())
-				local texEqui2 = shader.cubemap_to_equirectangular_texture(tex2,width,height)
+				local texEqui2 = shader.cubemap_to_equirectangular_texture(tex2,width,height,horizontalRange)
 
 				local createInfo = texEqui:GetImage():GetCreateInfo()
 				createInfo.width = width
@@ -153,6 +170,8 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 		self.m_imageBuffer = imgBuf
 		local res = unirender.apply_color_transform(self.m_imageBuffer,nil,nil,self.m_renderSettings:GetColorTransform(),self.m_renderSettings:GetColorTransformLook())
 	end
+
+	self:RestoreCamera()
 
 	self.m_progress = (self.m_numFrames > 1) and (self.m_curFrame /(self.m_numFrames -1)) or 1.0
 	if(self.m_curFrame < (self.m_numFrames -1)) then
