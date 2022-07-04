@@ -35,6 +35,8 @@ function gui.RaytracedViewport:OnInitialize()
 	self.m_renderSettings:SetPanoramaType(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
 
 	self:SetToneMapping(shader.TONE_MAPPING_GAMMA_CORRECTION)
+
+	self.m_threadPool = util.ThreadPool(4,"rendered_image_saver")
 end
 function gui.RaytracedViewport:SetTextureFromImageBuffer(imgBuf)
 	-- Test:
@@ -72,14 +74,22 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat,hdr)
 		--imgBufFormat = util.ImageBuffer.FORMAT_RGBA_LDR
 	end
 
-	local imgBuf = img:ToImageBuffer(false,false)
-	if(hdr == false) then imgBuf:ToLDR() end
+	local ent = ents.create("entity")
+	local c = ent:AddComponent("pfm_optical_camera")
+	c:ApplyDof(img)
+	ent:RemoveSafely()
 
-	local result = util.save_image(imgBuf,path,imgFormat)
+	self.m_threadPool:WaitForPendingCount(15)
+	local imgBuf = img:ToImageBuffer(false,false)
+	local task = util.ThreadPool.ThreadTask()
+	if(hdr == false) then imgBuf:ToLDR(task) end
+
+	local result = util.save_image(imgBuf,path,imgFormat,1.0,task)
+	self.m_threadPool:AddTask(task)
 	if(result == false) then
 		pfm.log("Unable to save image as '" .. path .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
 	else
-		pfm.log("Successfully saved image as '" .. path .. "'!",pfm.LOG_CATEGORY_PFM_RENDER)
+		pfm.log("Saving image as '" .. path .. "'...!",pfm.LOG_CATEGORY_PFM_RENDER)
 	end
 	buf = nil
 	collectgarbage()
