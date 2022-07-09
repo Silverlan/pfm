@@ -28,8 +28,14 @@ function ents.PFMModel:Initialize()
 	end
 
 	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED,"UpdateModel")
+	self:BindEvent(ents.BaseStaticBvhUserComponent.EVENT_ON_ACTIVATION_STATE_CHANGED,"OnStaticBvhStatusChanged")
 	if(cvPanima:GetBool()) then self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS,"MaintainAnimations") end
 	self.m_listeners = {}
+end
+function ents.PFMModel:OnStaticBvhStatusChanged()
+	local c = self:GetEntityComponent(ents.COMPONENT_STATIC_BVH_USER)
+	if(c:IsActive()) then c:GetEntity():RemoveComponent(ents.COMPONENT_BVH)
+	else c:GetEntity():AddComponent(ents.COMPONENT_BVH) end
 end
 function ents.PFMModel:OnRemove()
 	util.remove(self.m_listeners)
