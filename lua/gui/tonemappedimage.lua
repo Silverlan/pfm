@@ -7,7 +7,6 @@
 ]]
 
 include("/shaders/pfm/pfm_tonemapping.lua")
-include("/shaders/pfm/pfm_depth_of_field.lua")
 include("/util/image_processor.lua")
 include("/gui/vr_view.lua")
 
@@ -32,7 +31,7 @@ function gui.ToneMappedImage:OnInitialize()
 	--self.m_test = test
 	--test:SetColor(Color.Lime)
 
-	self.m_dofSettings = shader.PFMDepthOfField.DOFSettings()
+	--self.m_dofSettings = shader.PFMDepthOfField.DOFSettings()
 	self.m_dofEnabled = false
 	self.m_cbPreRenderScenes = game.add_callback("PreRenderScenes",function(drawSceneInfo)
 		self:PreRenderScenes(drawSceneInfo)

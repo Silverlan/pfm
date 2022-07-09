@@ -75,8 +75,6 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat,hdr)
 	end
 
 	local ent = ents.create("entity")
-	local c = ent:AddComponent("pfm_optical_camera")
-	c:ApplyDof(img)
 	ent:RemoveSafely()
 
 	self.m_threadPool:WaitForPendingCount(15)

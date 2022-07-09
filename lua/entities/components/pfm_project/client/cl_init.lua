@@ -128,6 +128,8 @@ end
 
 local cvPanima = console.get_convar("pfm_experimental_enable_panima_for_flex_and_skeletal_animations")
 function ents.PFMProject:ChangePlaybackOffset(offset,gameViewFlags)
+	if(offset == self.m_prevPlaybackOffset) then return end
+	self.m_prevPlaybackOffset = offset
 	self:SetPlaybackOffset(offset)
 
 	if(util.is_valid(self.m_entRootTrack)) then
@@ -171,6 +173,8 @@ function ents.PFMProject:ChangePlaybackOffset(offset,gameViewFlags)
 			if(flexC ~= nil) then flexC:SetFlexAnimationPlaybackRate(animName,0.0) end
 		end
 	end
+
+	self:InvokeEventCallbacks(ents.PFMProject.EVENT_ON_PLAYBACK_OFFSET_CHANGED,{offset})
 end
 
 function ents.PFMProject:Reset()
@@ -183,3 +187,4 @@ ents.COMPONENT_PFM_PROJECT = ents.register_component("pfm_project",ents.PFMProje
 ents.PFMProject.EVENT_ON_ACTOR_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT,"on_actor_created")
 ents.PFMProject.EVENT_ON_ENTITY_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT,"on_entity_created")
 ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT,"on_film_clip_created")
+ents.PFMProject.EVENT_ON_PLAYBACK_OFFSET_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT,"on_playback_offset_changed")

@@ -21,6 +21,7 @@ function pfm.PragmaRenderScene:__init(width,height)
 	local entRenderer = ents.create("rasterization_renderer")
 	local renderer = entRenderer:GetComponent(ents.COMPONENT_RENDERER)
 	local rasterizer = entRenderer:GetComponent(ents.COMPONENT_RASTERIZATION_RENDERER)
+	entRenderer:AddComponent("pfm_pragma_renderer")
 	rasterizer:SetSSAOEnabled(true)
 	renderer:InitializeRenderTarget(gameScene,width,height)
 	scene:SetRenderer(renderer)
@@ -69,6 +70,10 @@ function pfm.PragmaRenderJob:RestoreCamera()
 	cam:GetEntity():SetPose(restoreData.pose)
 end
 function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
+	local pragmaRendererC = self.m_renderer:GetEntity():GetComponent("pfm_pragma_renderer")
+	if(pragmaRendererC ~= nil) then
+		pragmaRendererC:OnRender()
+	end
 	if(self.m_renderPanorama) then
 		if(util.is_valid(self.m_scene)) then
 			local cam = self.m_scene:GetActiveCamera()

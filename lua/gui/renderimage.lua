@@ -7,7 +7,6 @@
 ]]
 
 include("/shaders/pfm/pfm_tonemapping.lua")
-include("/shaders/pfm/pfm_depth_of_field.lua")
 include("/shaders/pfm/pfm_calc_image_luminance.lua")
 include("/util/image_processor.lua")
 include("/gui/vr_view.lua")
@@ -33,7 +32,7 @@ function gui.RenderImage:OnInitialize()
 	local elTex = gui.create("WITexturedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	self.m_elTex = elTex
 
-	self.m_dofSettings = shader.PFMDepthOfField.DOFSettings()
+	--self.m_dofSettings = shader.PFMDepthOfField.DOFSettings()
 	self.m_dofEnabled = false
 
 	self.m_dsTonemapping = self.m_shader:CreateDescriptorSet(shader.PFMTonemapping.DESCRIPTOR_SET_TEXTURE)

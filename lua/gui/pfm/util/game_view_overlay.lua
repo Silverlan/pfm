@@ -6,7 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/shaders/pfm/pfm_depth_of_field.lua")
 include("/shaders/pfm/pfm_scene_composition.lua")
 
 util.register_class("util.ImagePostProcessor")
