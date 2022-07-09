@@ -10,7 +10,9 @@ local Component = util.register_class("ents.PFMPragmaRenderer",BaseEntityCompone
 function Component:Initialize()
 end
 function Component:OnRender()
-	local e,c = ents.citerator("pfm_motion_blur")()
+	local motionBlurId = ents.get_component_id("pfm_motion_blur")
+	if(motionBlurId == nil) then return end
+	local e,c = ents.citerator(motionBlurId)()
 	if(c ~= nil) then
 		local rendererC = self:GetEntity():GetComponent(ents.COMPONENT_RENDERER)
 		if(rendererC ~= nil) then
