@@ -24,6 +24,7 @@ function Component:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_COLOR)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_CLICK)
+	self:AddEntityComponent(ents.COMPONENT_BVH)
 	self:AddEntityComponent("pfm_overlay_object")
 
 	self:BindEvent(ents.ClickComponent.EVENT_ON_CLICK,"OnClick")
@@ -33,7 +34,7 @@ end
 function Component:UpdateScale()
 	local cam = game.get_render_scene_camera()
 	local d = self:GetEntity():GetPos():Distance(cam:GetEntity():GetPos())
-	d = ((d *0.008) ^0.3) *2 -- Roughly try to keep the same size regardless of distance to the camera
+	d = ((d *0.008) ^0.9) *2 -- Roughly try to keep the same size regardless of distance to the camera
 	self:GetEntity():SetScale(Vector(d,d,d))
 end
 function Component:OnEntitySpawn()
