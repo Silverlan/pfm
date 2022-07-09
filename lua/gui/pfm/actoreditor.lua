@@ -47,7 +47,14 @@ function gui.PFMActorEditor:OnInitialize()
 			gui.open_model_dialog(function(dialogResult,mdlName)
 				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
 				if(self:IsValid() == false) then return end
-				self:CreateNewPropActor(mdlName)
+				local actor = self:CreateNewActor()
+				if(actor == nil) then return end
+				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
+				self:CreateNewActorComponent(actor,"model",false)
+				self:CreateNewActorComponent(actor,"render",false)
+				self:CreateNewActorComponent(actor,"animated",false)
+				-- self:CreateNewActorComponent(actor,"transform",false)
+				self:UpdateActorComponents(actor)
 			end)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_prop"),function()
