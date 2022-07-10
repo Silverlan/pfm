@@ -1520,11 +1520,14 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 						entGhost:Spawn()
 						entGhost:SetModel(path:GetString())
+
+						self:TagRenderSceneAsDirty(true)
 					end)
 					elGhost:AddCallback("OnDragTargetHoverStop",function(elGhost)
 						elGhost:SetAlpha(128)
 						elGhost:SetAlwaysUpdate(false)
-						if(util.is_valid(entGhost)) then entGhost:Remove() end
+						util.remove(entGhost)
+						self:TagRenderSceneAsDirty()
 					end)
 				end)
 				icon:AddCallback("OnDragDropped",function(elIcon,elDrop)
@@ -1543,13 +1546,17 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					filmmaker:CreateNewActorComponent(actor,"animated")
 
 					self:UpdateActor(actor,filmClip)
-					local t = actor:GetTransform()
-					t:SetOrigin(entGhost:GetPos())
-					t:SetRotation(entGhost:GetRotation())
+
+
 					filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
 
 					local entActor = actor:FindEntity()
 					if(util.is_valid(entActor)) then
+						local actorC = entActor:AddComponent("pfm_actor")
+						if(actorC ~= nil) then
+							self:SetActorTransformProperty(actorC,"position",entGhost:GetPos(),true)
+							self:SetActorTransformProperty(actorC,"rotation",entGhost:GetRotation(),true)
+						end
 						local tc = entActor:AddComponent("util_transform")
 						if(tc ~= nil) then
 							tc:SetTranslationEnabled(false)
@@ -1564,8 +1571,11 @@ function gui.WIFilmmaker:InitializeProjectUI()
 									if(mouseButton == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
 										if(util.is_valid(entActor)) then
 											entActor:RemoveComponent("util_transform")
-											t:SetOrigin(entActor:GetPos())
-											t:SetRotation(entActor:GetRotation())
+
+											if(actorC:IsValid()) then
+												self:SetActorTransformProperty(actorC,"position",entActor:GetPos(),true)
+												self:SetActorTransformProperty(actorC,"rotation",entActor:GetRotation(),true)
+											end
 										end
 										cb:Remove()
 										return util.EVENT_REPLY_HANDLED
@@ -1651,6 +1661,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	local tab,elVp = self:OpenWindow("primary_viewport")
 	self:OpenWindow("render")
 	self:OpenWindow("web_browser")
+	self:OpenWindow("model_catalog")
 
 	if(util.is_valid(elVp)) then elVp:UpdateRenderSettings() end
 
@@ -1765,6 +1776,15 @@ function gui.WIFilmmaker:InitializeProjectUI()
 			end
 		end
 	end
+end
+function gui.WIFilmmaker:OnGameViewReloaded()
+	local function apply_viewport(vp)
+		if(util.is_valid(vp) == false) then return end
+		vp:RefreshCamera()
+	end
+	apply_viewport(self:GetViewport())
+	apply_viewport(self:GetSecondaryViewport())
+	apply_viewport(self:GetTertiaryViewport())
 end
 function gui.WIFilmmaker:UpdateBookmarks()
 	if(util.is_valid(self.m_timeline) == false) then return end

@@ -277,11 +277,11 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 	local function findActor(pressed)
 		if(pressed == nil) then pressed = state == input.STATE_PRESS end
 		local filter
-		if(self.m_manipulatorMode ~= gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
+		--[[if(self.m_manipulatorMode ~= gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
 			filter = function(ent,mdlC)
 				return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
 			end
-		end
+		end]]
 		return ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,pressed,filter)
 	end
 
@@ -1019,6 +1019,10 @@ function gui.PFMViewport:SwitchToCamera(cam)
 		scene:SetActiveCamera(cam)
 	end
 	pfm.tag_render_scene_as_dirty()
+end
+function gui.PFMViewport:RefreshCamera()
+	if(self:IsSceneCamera()) then self:SwitchToSceneCamera()
+	else self:SwitchToWorkCamera() end
 end
 function gui.PFMViewport:SwitchToSceneCamera()
 	self:SwitchToGameplay(false)

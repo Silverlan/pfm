@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/pfm/raycast.lua")
+
 util.register_class("ents.PFMGhost",BaseEntityComponent)
 
 function ents.PFMGhost:Initialize()
@@ -50,43 +52,31 @@ function ents.PFMGhost:SetViewport(vp) self.m_viewport = vp end
 function ents.PFMGhost:OnTick()
 	if(util.is_valid(self.m_viewport) == false) then return end
 	local viewport = self.m_viewport
-	local cam = viewport:GetCamera()
 
-	local res = Vector2(viewport:GetWidth(),viewport:GetHeight())
-	local cursorPos = viewport:GetCursorPos()
-
-	local dir = util.calc_world_direction_from_2d_coordinates(cam,Vector2(cursorPos.x /res.x,cursorPos.y /res.y))
-	local entCam = cam:GetEntity()
-	local pos = entCam:GetPos() +entCam:GetForward() *cam:GetNearZ()
-
-	local pl = ents.get_local_player()
-	local charComponent = (pl ~= nil) and pl:GetEntity():GetComponent(ents.COMPONENT_CHARACTER) or nil
-	if(charComponent == nil) then return end
-	local posDst = pos +dir *2048.0
-	local rayData = charComponent:GetAimRayData(1200.0)
-	rayData:SetSource(pos)
-	rayData:SetTarget(posDst)
-	local ent = self:GetEntity()
-	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
-	local ray = phys.raycast(rayData)
-	if(ray ~= false) then posDst = ray.position
-	else
+	local startPos,dir = ents.ClickComponent.get_ray_data()
+	if(startPos == nil) then return end
+	local maxDist = 2048.0
+	local actor,hitPos,pos,hitData = pfm.raycast(startPos,dir,maxDist)
+	local hasHit = (hitPos ~= nil)
+	local posDst = hitPos
+	if(posDst == nil) then
 		local min,max = Vector(),Vector()
 		if(renderC ~= nil) then min,max = renderC:GetLocalRenderBounds() end
 		local maxAxisLength = math.max(max.x -min.x,max.y -min.y,max.z -min.z)
-		posDst = pos +dir *(maxAxisLength +20.0) -- Move position away from camera
+		posDst = startPos +dir *(maxAxisLength +20.0) -- Move position away from camera
 
 		-- Since we have no level as reference, we'll try to find a good position for placing the object
 		-- by creating an implicit plane relative to the camera (angled by 20 degrees)
 		local rot = entCam:GetRotation()
 		rot = rot *EulerAngles(-20,0,0):ToQuaternion()
 		local planeUp = rot:GetUp()
-		local d = planeUp:DotProduct(pos)
-		local t = intersect.line_with_plane(pos,dir *2048.0,planeUp,-d +60.0)
+		local d = planeUp:DotProduct(startPos)
+		local t = intersect.line_with_plane(startPos,dir *maxDist,planeUp,-d +60.0)
 		if(t ~= false) then
-			posDst = pos +dir *2048.0 *t
+			posDst = startPos +dir *maxDist *t
 		end
 	end
+
 	--debug.draw_line(Vector(),posDst,Color.Red,12)
 	--print(ray.entity)
 
@@ -101,12 +91,16 @@ function ents.PFMGhost:OnTick()
 		posDst.x = math.snap_to_gridf(posDst.x,ents.PFMGrid.get_unit_size())
 		posDst.z = math.snap_to_gridf(posDst.z,ents.PFMGrid.get_unit_size())
 
-		if(ray ~= false) then
-			rayData:SetSource(posDst +Vector(0,10,0))
-			rayData:SetTarget(posDst -Vector(0,50,0))
-			ray = phys.raycast(rayData)
-			if(ray ~= false) then
-				posDst = ray.position
+		if(hasHit) then
+			startPos = posDst +Vector(0,10,0)
+			local dstPos = posDst -Vector(0,50,0)
+			local dir = (dstPos -startPos)
+			maxDist = dir:Length()
+			if(maxDist > 0.0) then dir = dir /maxDist end
+
+			actor,hitPos,pos = pfm.raycast(startPos,dir,maxDist)
+			if(hitPos ~= nil) then
+				posDst = hitPos
 			end
 		end
 	end
@@ -114,10 +108,11 @@ function ents.PFMGhost:OnTick()
 		local min,max = renderC:GetLocalRenderBounds()
 		posDst.y = posDst.y -min.y
 	end
-	if(self.m_placementCallback ~= nil) then
-		self.m_placementCallback(posDst,ray)
+	if(self.m_placementCallback ~= nil and hasHit) then
+		self.m_placementCallback(posDst,startPos,dir)
 	end
-	ent:SetPos(posDst)
+	local ent = self:GetEntity()
+	if(posDst ~= nil) then ent:SetPos(posDst) end
 
 	if(self.m_hoverMode) then
 		local actorClosest,hitPos = find_actor_under_cursor(pos,dir)
@@ -126,13 +121,16 @@ function ents.PFMGhost:OnTick()
 		end
 	end
 
-	if(ray ~= false) then
+	if(hasHit) then
 		local forward = vector.FORWARD
-		if(math.abs(ray.normal:DotProduct(forward)) > 0.99) then
-			forward = vector.RIGHT
+		local dir = hitData:CalcHitNormal()
+		if(dir ~= nil) then
+			if(math.abs(dir:DotProduct(forward)) > 0.99) then
+				forward = vector.RIGHT
+			end
+			local rot = Quaternion(forward,dir)
+			ent:SetRotation(rot)
 		end
-		local rot = Quaternion(forward,ray.normal)
-		ent:SetRotation(rot)
 	end
 end
 ents.COMPONENT_PFM_GHOST = ents.register_component("pfm_ghost",ents.PFMGhost)

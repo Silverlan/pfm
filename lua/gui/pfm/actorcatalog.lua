@@ -53,9 +53,9 @@ function gui.PFMActorCatalog:OnInitialize()
 				local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
 				if(ghostC ~= nil) then
 					ghostC:SetHoverMode(true)
-					ghostC:SetPlacementCallback(function(pos,ray)
+					ghostC:SetPlacementCallback(function(pos,startPos,dir)
 						if(ray == false) then return end
-						pos:Set(ray.position +ray.normal *100)
+						pos:Set(startPos +dir *100)
 					end)
 
 					if(string.compare(elTgt:GetClass(),"WIViewport",false)) then ghostC:SetViewport(elTgt) end

@@ -15,6 +15,11 @@ function gui.DragGhost:__init()
 end
 function gui.DragGhost:OnInitialize()
 	self:EnableThinking()
+
+	self:SetSize(128,128)
+	local el = gui.create("WIRect",self,0,0,128,128,0,0,1,1)
+	el:SetColor(Color.Gray)
+
 	self.m_cbOnMouseRelease = input.add_callback("OnMouseInput",function(mouseButton,state,mods)
 		if(self.m_complete == true) then return util.EVENT_REPLY_UNHANDLED end
 		self.m_complete = true
@@ -65,6 +70,9 @@ function gui.DragGhost:ClearHover()
 	self.m_hoverElement = nil
 end
 function gui.DragGhost:OnDraw()
+	-- TODO: This is no longer functional.
+	-- The new way of doing it would be to render the target element into an image
+	-- and use a WITexturedRect to display it
 	if(util.is_valid(self.m_targetElement) == false) then return end
 	local resolution = engine.get_window_resolution()
 	local offset = self:GetAbsolutePos() -self.m_cursorOffset
