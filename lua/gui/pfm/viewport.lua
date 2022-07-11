@@ -703,7 +703,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 				end
 				targetPath = path
 			end
-			if(targetPath ~= nil) then
+			if(targetPath ~= nil and targetPath ~= "ec/pfm_actor/position" and targetPath ~= "ec/pfm_actor/rotation") then -- Actor translation and rotation are handled differently (see bottom of this function)
 				local memberInfo = ent:FindMemberInfo(targetPath)
 				if(memberInfo ~= nil) then
 					if(
