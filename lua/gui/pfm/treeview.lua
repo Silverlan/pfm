@@ -84,10 +84,11 @@ end
 function gui.PFMTreeView:IsSelectable() return self:GetSelectableMode() ~= gui.Table.SELECTABLE_MODE_NONE end
 function gui.PFMTreeView:GetSelectableMode() return self.m_selectableMode end
 function gui.PFMTreeView:GetSelectedElements() return self.m_selectedElements end
-function gui.PFMTreeView:DeselectAll(el)
+function gui.PFMTreeView:DeselectAll(el,filter)
 	if(el ~= nil) then
 		local elsDeselect = {}
 		local function getChildren(el)
+			if(filter ~= nil and filter(el) == false) then return end
 			table.insert(elsDeselect,el)
 			self.m_selectedElements[el] = nil
 			for _,item in ipairs(el:GetItems()) do
@@ -102,8 +103,11 @@ function gui.PFMTreeView:DeselectAll(el)
 	end
 	local selectedElements = self.m_selectedElements
 	self.m_selectedElements = {}
-	for el,_ in pairs(selectedElements) do
-		if(el:IsValid()) then el:SetSelected(false) end
+	for el,data in pairs(selectedElements) do
+		if(el:IsValid()) then
+			if(filter == nil or filter(el) == true) then el:SetSelected(false)
+			else self.m_selectedElements[el] = data end
+		end
 	end
 end
 function gui.PFMTreeView:OnSizeChanged(w,h)
@@ -359,9 +363,9 @@ function gui.PFMTreeViewElement:SetText(text)
 	self:SetName(text)
 end
 function gui.PFMTreeViewElement:IsSelected() return self.m_selected end
-function gui.PFMTreeViewElement:Select() self:SetSelected(true) end
+function gui.PFMTreeViewElement:Select(selectChildren) self:SetSelected(true,selectChildren) end
 function gui.PFMTreeViewElement:Deselect() self:SetSelected(false) end
-function gui.PFMTreeViewElement:SetSelected(selected)
+function gui.PFMTreeViewElement:SetSelected(selected,selectChildren)
 	if(selected == self:IsSelected()) then return end
 	self.m_selected = selected
 	local treeView = self:GetTreeView()
@@ -375,6 +379,7 @@ function gui.PFMTreeViewElement:SetSelected(selected)
 
 	local treeView = self:GetTreeView()
 	if(selected == false or util.is_valid(treeView) == false or treeView:ShouldAutoSelectChildren() == false) then return end
+	if(selectChildren == false) then return end
 	for _,item in ipairs(self:GetItems()) do
 		if(item:IsValid()) then item:Select() end
 	end

@@ -785,10 +785,13 @@ end
 function gui.PFMActorEditor:GetFilmClip() return self.m_filmClip end
 function gui.PFMActorEditor:SelectActor(actor,deselectCurrent)
 	if(deselectCurrent == nil) then deselectCurrent = true end
-	if(deselectCurrent and util.is_valid(self.m_tree)) then self.m_tree:DeselectAll() end
+	if(deselectCurrent and util.is_valid(self.m_tree)) then self.m_tree:DeselectAll(nil,function(el) return self.m_treeElementToActorData[el] == nil or util.is_same_object(self.m_treeElementToActorData[el].actor,actor) == false end) end
 	for itemActor,actorData in pairs(self.m_treeElementToActorData) do
 		if(util.is_same_object(actor,actorData.actor)) then
-			if(itemActor:IsValid()) then itemActor:Select() end
+			if(itemActor:IsValid() and itemActor:IsSelected() == false) then
+				itemActor:Select(false)
+				itemActor:Expand()
+			end
 			break
 		end
 	end
