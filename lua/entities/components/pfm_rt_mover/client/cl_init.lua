@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/pfm/raycast.lua")
+
 local Component = util.register_class("ents.PFMRtMover",BaseEntityComponent)
 
 function Component:Initialize()
@@ -27,7 +29,7 @@ function Component:OnEntitySpawn()
 
 	local ent = self:GetEntity()
 	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
-	local centerPos = renderC:GetAbsoluteRenderSphereBounds()
+	local centerPos,radius = renderC:GetAbsoluteRenderSphereBounds()
 	local initPos = self:Raycast(centerPos,-ent:GetUp(),128)
 	if(initPos == nil) then
 		self.m_valid = false
@@ -35,10 +37,10 @@ function Component:OnEntitySpawn()
 	end
 	local min,max = ent:GetComponent(ents.COMPONENT_RENDER):GetAbsoluteRenderBounds()
 
-	local drawInfo = debug.DrawInfo()
+	--[[local drawInfo = debug.DrawInfo()
 	drawInfo:SetDuration(12)
 	drawInfo:SetColor(Color.Lime)
-	debug.draw_line(ent:GetPos(),refPoint,drawInfo)
+	debug.draw_line(ent:GetPos(),refPoint,drawInfo)]]
 
 	self.m_initialOffset = initPos.y -min.y
 	print("Initial values: ",centerPos,initPos,min)
@@ -52,7 +54,11 @@ function Component:OnEntitySpawn()
 	end
 
 	-- Test
-	local initPos = self:Raycast(refPoint,-ent:GetUp(),128)
+	local initPos = self:Raycast(refPoint,-ent:GetUp(),radius +280)
+	if(initPos == nil) then
+		self.m_valid = false
+		return
+	end
 	self.m_refDist = refPoint:Distance(initPos)
 	self.m_refOffset = refPoint -ent:GetPos()
 	print("Offset: ",self.m_refOffset)
@@ -61,29 +67,11 @@ function Component:OnRemove()
 	local ent,c = ents.citerator(ents.COMPONENT_STATIC_BVH_CACHE)()
 	c:AddEntity(self:GetEntity())
 end
-function Component:Raycast(pos,dir,maxDist)
-	for ent,c in ents.citerator(ents.COMPONENT_STATIC_BVH_CACHE) do
-		local hitData = c:IntersectionTest(pos,dir,0.0,32768.0)
-		if(hitData ~= nil) then
-			local hitPos = pos +dir *hitData.distance
-
-			return hitPos
-
-
-			--[[
-			local drawInfo = debug.DrawInfo()
-			drawInfo:SetDuration(12)
-			drawInfo:SetColor(Color.Aqua)
-			debug.draw_line(hitPos,hitPos +Vector(0,100,0),drawInfo)
-			]]
-			--[[if(hitData.distance < distClosest) then -- and hitData.distance > 0.0) then
-				--debug.print("Clicked actor: ",hitData.entity)
-				distClosest = hitData.distance
-				hitPos = pos +dir *hitData.distance
-				actorClosest = hitData.entity
-			end]]
-		end
-	end
+function Component:Raycast(startPos,dir,maxDist)
+	local actor,hitPos,pos = pfm.raycast(startPos,dir,maxDist,function(ent,renderC)
+		return ent ~= self:GetEntity()
+	end)
+	return hitPos
 end
 function Component:OnTick(dt)
 	if(self.m_valid == false) then
@@ -159,7 +147,6 @@ function Component:OnTick(dt)
 			end
 			if(iNearest == nil) then return end
 			if(depth == 1) then
-				print(distances[iNearest])
 				-- TODO: If final distance > 0.1 then adjust (will not match cursor pos anymore)
 				return fvals[iNearest]
 			else

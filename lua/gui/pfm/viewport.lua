@@ -350,6 +350,8 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 			if(util.is_valid(self.m_rtMoverActor)) then
 				self.m_rtMoverActor:RemoveComponent("pfm_rt_mover")
 				tool.get_filmmaker():TagRenderSceneAsDirty()
+				local actorC = util.is_valid(self.m_rtMoverActor) and self.m_rtMoverActor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
+				if(actorC ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"position",self.m_rtMoverActor:GetPos()) end
 				if(state == input.STATE_RELEASE) then return util.EVENT_REPLY_HANDLED end
 			end
 			local handled,entActor = findActor()
