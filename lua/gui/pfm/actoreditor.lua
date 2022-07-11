@@ -1245,71 +1245,7 @@ function gui.PFMActorEditor:AddActor(actor)
 			if(util.is_valid(pContext) == false) then return end
 			pContext:SetPos(input.get_cursor_pos())
 
-			pContext:AddItem(locale.get_text("pfm_export_animation"),function()
-				local entActor = actor:FindEntity()
-				if(util.is_valid(entActor) == false) then return end
-				local filmmaker = tool.get_filmmaker()
-				filmmaker:ExportAnimation(entActor)
-			end)
-			pContext:AddItem(locale.get_text("pfm_copy_actors"),function() self:CopyToClipboard() end)
-			pContext:AddItem(locale.get_text("pfm_paste_actors"),function() self:PasteFromClipboard() end)
-			pContext:AddItem(locale.get_text("pfm_move_work_camera_to_actor"),function()
-				local filmmaker = tool.get_filmmaker()
-				local filmClip = filmmaker:GetActiveFilmClip()
-				if(filmClip == nil) then return end
-				local actor = filmClip:FindActorByUniqueId(uniqueId)
-				if(actor == nil) then return end
-				local pm = pfm.get_project_manager()
-				local vp = util.is_valid(pm) and pm:GetViewport() or nil
-				if(util.is_valid(vp) == false) then return end
-				vp:SetWorkCameraPose(actor:GetAbsolutePose())
-			end)
-			pContext:AddItem(locale.get_text("pfm_toggle_camera_link"),function()
-				local filmmaker = tool.get_filmmaker()
-				local entActor = actor:FindEntity()
-				local vp = filmmaker:GetViewport()
-				if(util.is_valid(vp) == false or util.is_valid(entActor) == false) then return end
-				local cam = vp:GetCamera()
-				if(util.is_valid(cam) == false) then return end
-				local ent = cam:GetEntity()
-				if(ent:HasComponent("pfm_camera_actor_link")) then
-					ent:RemoveComponent("pfm_camera_actor_link")
-					if(self.m_camLinkOrigFov ~= nil) then
-						cam:SetFOV(self.m_camLinkOrigFov)
-						self.m_camLinkOrigFov = nil
-					end
-					if(self.m_camLinkOrigPose ~= nil) then
-						vp:SetWorkCameraPose(self.m_camLinkOrigPose)
-						self.m_camLinkOrigPose = nil
-					end
-					self:TagRenderSceneAsDirty()
-				else
-					local c = cam:GetEntity():AddComponent("pfm_camera_actor_link")
-					if(c ~= nil) then
-						c:SetTargetActor(entActor)
-						local lightSpotC = entActor:GetComponent(ents.COMPONENT_LIGHT_SPOT)
-						if(lightSpotC ~= nil) then
-							self.m_camLinkOrigFov = cam:GetFOV()
-							self.m_camLinkOrigPose = cam:GetEntity():GetPose()
-							cam:SetFOV(lightSpotC:GetOuterConeAngle())
-						end
-						local camC = entActor:GetComponent(ents.COMPONENT_CAMERA)
-						if(camC ~= nil) then
-							cam:SetFOV(camC:GetFOV())
-						end
-						vp:SetWorkCameraPose(entActor:GetPose())
-						self:TagRenderSceneAsDirty()
-					end
-				end
-			end)
-			if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
-				pContext:AddItem("Assign entity to x",function()
-					x = actor:FindEntity()
-				end)
-				pContext:AddItem("Assign entity to y",function()
-					y = actor:FindEntity()
-				end)
-			end
+			pfm.populate_actor_context_menu(pContext,actor,true)
 			pContext:AddItem(locale.get_text("rename"),function()
 				local te = gui.create("WITextEntry",itemActor,0,0,itemActor:GetWidth(),itemActor:GetHeight(),0,0,1,1)
 				te:SetText(actor:GetName())
@@ -1995,6 +1931,59 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 	end
 	return ctrl
 end
+function gui.PFMActorEditor:ToggleCameraLink(actor)
+	util.remove(self.m_cbCamLinkGameplayCb)
+
+	local filmmaker = tool.get_filmmaker()
+	local entActor = actor:FindEntity()
+	local vp = filmmaker:GetViewport()
+	if(util.is_valid(vp) == false or util.is_valid(entActor) == false) then return end
+	local cam = vp:GetCamera()
+	if(util.is_valid(cam) == false) then return end
+	local ent = cam:GetEntity()
+	if(ent:HasComponent("pfm_camera_actor_link")) then
+		ent:RemoveComponent("pfm_camera_actor_link")
+		if(self.m_camLinkOrigFov ~= nil) then
+			cam:SetFOV(self.m_camLinkOrigFov)
+			self.m_camLinkOrigFov = nil
+		end
+		if(self.m_camLinkOrigPose ~= nil) then
+			vp:SetWorkCameraPose(self.m_camLinkOrigPose)
+			self.m_camLinkOrigPose = nil
+		end
+		self:TagRenderSceneAsDirty()
+	else
+		local c = cam:GetEntity():AddComponent("pfm_camera_actor_link")
+		if(c ~= nil) then
+			c:SetTargetActor(entActor)
+			local lightSpotC = entActor:GetComponent(ents.COMPONENT_LIGHT_SPOT)
+			if(lightSpotC ~= nil) then
+				self.m_camLinkOrigFov = cam:GetFOV()
+				self.m_camLinkOrigPose = cam:GetEntity():GetPose()
+				cam:SetFOV(lightSpotC:GetOuterConeAngle())
+			end
+			local camC = entActor:GetComponent(ents.COMPONENT_CAMERA)
+			if(camC ~= nil) then
+				cam:SetFOV(camC:GetFOV())
+			end
+			vp:SetWorkCameraPose(entActor:GetPose())
+			self:TagRenderSceneAsDirty()
+		end
+		local vp = tool.get_filmmaker():GetViewport()
+		if(util.is_valid(vp)) then
+			vp:SetGameplayMode(true)
+			self.m_cbCamLinkGameplayCb = input.add_callback("OnMouseInput",function(button,action,mods)
+				if(action == input.STATE_PRESS) then
+					self:ToggleCameraLink(actor)
+					if(vp:IsValid()) then vp:SetGameplayMode(false) end
+				end
+			end)
+		end
+	end
+end
+function gui.PFMActorEditor:OnRemove()
+	util.remove(self.m_cbCamLinkGameplayCb)
+end
 function gui.PFMActorEditor:InitializeNavigationBar()
 	--[[self.m_btHome = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_home","gui/pfm/icon_nav_home_activated",function()
 		if(self.m_rootNode == nil) then return end
@@ -2056,3 +2045,76 @@ function gui.PFMActorEditor:InitializeNavigationBar()
 	end)]]
 end
 gui.register("WIPFMActorEditor",gui.PFMActorEditor)
+
+
+pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected)
+	local uniqueId = tostring(actor:GetUniqueId())
+	pContext:AddItem(locale.get_text("pfm_export_animation"),function()
+		local entActor = actor:FindEntity()
+		if(util.is_valid(entActor) == false) then return end
+		local filmmaker = tool.get_filmmaker()
+		filmmaker:ExportAnimation(entActor)
+	end)
+
+	local entActor = actor:FindEntity()
+	local renderC = util.is_valid(entActor) and entActor:GetComponent(ents.COMPONENT_RENDER) or nil
+	local mdl = util.is_valid(entActor) and entActor:GetModel() or nil
+	if(renderC ~= nil and mdl ~= nil) then
+		local materials = {}
+		for _,mesh in ipairs(renderC:GetRenderMeshes()) do
+			local mat = mdl:GetMaterial(mesh:GetSkinTextureIndex())
+			if(util.is_valid(mat)) then
+				materials[mat:GetName()] = mat
+			end
+		end
+
+		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
+		for matPath,_ in pairs(materials) do
+			local matName = file.get_file_name(matPath)
+			pSubMenu:AddItem(matName,function()
+				tool.get_filmmaker():OpenMaterialEditor(matPath,mdl:GetName())
+			end)
+		end
+		pSubMenu:Update()
+	end
+	local actors
+	if(copyPasteSelected == nil) then actors = {actor} end
+	pContext:AddItem(locale.get_text("pfm_copy_actors"),function()
+		local filmmaker = tool.get_filmmaker()
+		local actorEditor = filmmaker:GetActorEditor()
+		if(util.is_valid(actorEditor) == false) then return end
+		actorEditor:CopyToClipboard(actors)
+	end)
+	pContext:AddItem(locale.get_text("pfm_paste_actors"),function()
+		local filmmaker = tool.get_filmmaker()
+		local actorEditor = filmmaker:GetActorEditor()
+		if(util.is_valid(actorEditor) == false) then return end
+		actorEditor:PasteFromClipboard(actors)
+	end)
+	pContext:AddItem(locale.get_text("pfm_move_work_camera_to_actor"),function()
+		local filmmaker = tool.get_filmmaker()
+		local filmClip = filmmaker:GetActiveFilmClip()
+		if(filmClip == nil) then return end
+		local actor = filmClip:FindActorByUniqueId(uniqueId)
+		if(actor == nil) then return end
+		local pm = pfm.get_project_manager()
+		local vp = util.is_valid(pm) and pm:GetViewport() or nil
+		if(util.is_valid(vp) == false) then return end
+		vp:SetWorkCameraPose(actor:GetAbsolutePose())
+		tool.get_filmmaker():TagRenderSceneAsDirty()
+	end)
+	pContext:AddItem(locale.get_text("pfm_toggle_camera_link"),function()
+		local filmmaker = tool.get_filmmaker()
+		local actorEditor = filmmaker:GetActorEditor()
+		if(util.is_valid(actorEditor) == false) then return end
+		actorEditor:ToggleCameraLink(actor)
+	end)
+	if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
+		pContext:AddItem("Assign entity to x",function()
+			x = actor:FindEntity()
+		end)
+		pContext:AddItem("Assign entity to y",function()
+			y = actor:FindEntity()
+		end)
+	end
+end
