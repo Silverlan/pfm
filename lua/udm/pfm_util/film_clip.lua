@@ -102,5 +102,5 @@ function pfm.udm.FilmClip:RemoveActorComponent(actor,component)
 		end
 	end
 	for _,idx in ipairs(removeChannelIndices) do anim:RemoveChannel(idx) end
-	anim:SetPanimaAnimationDirty()
+	animClip:SetPanimaAnimationDirty()
 end
