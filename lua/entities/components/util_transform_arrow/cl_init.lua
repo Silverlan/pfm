@@ -43,6 +43,7 @@ end
 
 function Component:OnRemove()
 	util.remove(self.m_elLine)
+	util.remove(self.m_cbOnMouseRelease)
 end
 
 if(util.get_class_value(Component,"SetAxisBase") == nil) then Component.SetAxisBase = Component.SetAxis end
@@ -414,7 +415,14 @@ function Component:ToGlobalSpace(pos)
 end
 function Component:OnClick(action,pressed,hitPos)
 	if(action ~= input.ACTION_ATTACK) then return util.EVENT_REPLY_UNHANDLED end
-	if(pressed) then self:StartTransform()
+	if(pressed) then
+		self:StartTransform()
+		util.remove(self.m_cbOnMouseRelease)
+		self.m_cbOnMouseRelease = input.add_callback("OnMouseInput",function(mouseButton,state,mods)
+			if(mouseButton == input.MOUSE_BUTTON_LEFT and state == input.STATE_RELEASE) then
+				self:StopTransform()
+			end
+		end)
 	else self:StopTransform() end
 	return util.EVENT_REPLY_HANDLED
 end
@@ -455,6 +463,7 @@ end
 
 function Component:StopTransform()
 	util.remove(self.m_elLine)
+	util.remove(self.m_cbOnMouseRelease)
 	self:SetSelected(false)
 	self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_END)
 
