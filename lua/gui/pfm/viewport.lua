@@ -317,32 +317,47 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 
 					local handled,entActor = findActor(true)
 					if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
-						local renderC = entActor:GetComponent(ents.COMPONENT_RENDER)
-						local mdl = entActor:GetModel()
-						if(renderC ~= nil and mdl ~= nil) then
-							local materials = {}
-							for _,mesh in ipairs(renderC:GetRenderMeshes()) do
-								local mat = mdl:GetMaterial(mesh:GetSkinTextureIndex())
-								if(util.is_valid(mat)) then
-									materials[mat:GetName()] = true
-								end
-							end
-							if(not table.is_empty(materials)) then
-								local pContext = gui.open_context_menu()
-								if(util.is_valid(pContext) == false) then return end
-								pContext:SetPos(input.get_cursor_pos())
+						local pContext = gui.open_context_menu()
+						if(util.is_valid(pContext) == false) then return end
+						pContext:SetPos(input.get_cursor_pos())
 
-								local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
-								for mat,_ in pairs(materials) do
-									pSubMenu:AddItem(mat,function()
-										tool.get_filmmaker():OpenMaterialEditor(mat,mdl:GetName())
-									end)
-								end
-								pSubMenu:Update()
+						local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+						local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+						if(actor ~= nil) then pfm.populate_actor_context_menu(pContext,actor) end
 
-								pContext:Update()
+						--[[local pItem,pSubMenu = pContext:AddSubMenu("materials")
+						for matPath,mat in pairs(materials) do
+							local matName = file.get_file_name(matPath)
+							local pItem,pMatSubMenu = pSubMenu:AddSubMenu(matName)
+							pMatSubMenu:AddItem("Open in material editor",function()
+								tool.get_filmmaker():OpenMaterialEditor(matPath,mdl:GetName())
+							end)
+							local contents = pMatSubMenu:GetContents()
+							local controls = gui.create("WIPFMControlsMenu",contents,0,0,contents:GetWidth(),20)
+							local dataBlock = mat:GetDataBlock()
+
+							local function add_material_slider(name,identifier,prop,default)
+								local ctrl = controls:AddSliderControl(name,identifier,dataBlock:GetFloat(prop,default),0.0,1.0,function(el,value)
+									dataBlock:SetValue("float",prop,tostring(value))
+									mat:InitializeShaderDescriptorSet(true)
+									tool.get_filmmaker():TagRenderSceneAsDirty()
+								end,0.01)
 							end
+							add_material_slider(locale.get_text("metalness"),"metalness","metalness_factor",0.0)
+							add_material_slider(locale.get_text("roughness"),"roughness","roughness_factor",0.5)
+							add_material_slider(locale.get_text("wetness"),"wetness","wetness_factor",0.0)
+
+							-- generate ao if not available
+
+							controls:SetAutoSizeToContents(false,true)
+							controls:SetAutoFillContentsToHeight(false)
+							controls:SetAnchor(0,0,1,0)
+							controls:ResetControls()
+							pMatSubMenu:Update()
 						end
+						pSubMenu:Update()]]
+
+						pContext:Update()
 					end
 				end
 			end
@@ -949,6 +964,21 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 		self.m_inCameraControlMode = true
 		self:UpdateWorkCamera()
 	else
+		if(self.m_inCameraLinkMode) then
+			self.m_inCameraLinkMode = nil
+			local workPose = self.m_cameraLinkModeWorkPose
+			self.m_cameraLinkModeWorkPose = nil
+
+			local filmmaker = tool.get_filmmaker()
+			local actorEditor = filmmaker:GetActorEditor()
+			local actor = self:GetSceneCameraActorData()
+			if(actor ~= nil and util.is_valid(actorEditor)) then
+				actorEditor:ToggleCameraLink(actor)
+				self:SwitchToSceneCamera()
+			end
+
+			if(workPose ~= nil) then self:SetWorkCameraPose(workPose) end
+		end
 		if(self:IsGameplayEnabled() == false) then self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK) end
 
 		local window = self:GetRootWindow()
@@ -970,6 +1000,7 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 
 		self.m_inCameraControlMode = false
 	end
+	self:CallCallbacks("OnGameplayModeChanged",enabled)
 end
 function gui.PFMViewport:OnThink()
 	if(self.m_cursorTracker ~= nil) then
@@ -978,7 +1009,25 @@ function gui.PFMViewport:OnThink()
 		self.m_cursorTracker = nil
 		self:DisableThinking()
 
+		local targetPose
+		if(self:IsSceneCamera()) then
+			local filmmaker = tool.get_filmmaker()
+			local actorEditor = filmmaker:GetActorEditor()
+			if(util.is_valid(actorEditor)) then
+				local actor = self:GetSceneCameraActorData()
+				if(actor ~= nil) then
+					self.m_inCameraLinkMode = true
+					local workCam = self:GetWorkCamera()
+					if(util.is_valid(workCam)) then self.m_cameraLinkModeWorkPose = workCam:GetEntity():GetPose() end
+					local cam = self:GetSceneCamera()
+					targetPose = cam:GetEntity():GetPose()
+					self:SwitchToWorkCamera()
+					actorEditor:ToggleCameraLink(actor)
+				end
+			end
+		end
 		self:SetGameplayMode(true)
+		if(targetPose ~= nil) then self:SetWorkCameraPose(targetPose) end
 		return
 	end
 	local scene = self.m_viewport:GetScene()
@@ -1014,6 +1063,11 @@ function gui.PFMViewport:GetSceneCamera()
 	local ent = (actor ~= nil) and actor:FindEntity() or nil
 	if(util.is_valid(ent) == false) then return end
 	return ent:GetComponent(ents.COMPONENT_CAMERA)
+end
+function gui.PFMViewport:GetSceneCameraActorData()
+	local cam = self:GetSceneCamera()
+	local actorC = util.is_valid(cam) and cam:GetEntity():GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
+	return (actorC ~= nil) and actorC:GetActorData() or nil
 end
 function gui.PFMViewport:SwitchToCamera(cam)
 	local scene = self.m_viewport:GetScene()
