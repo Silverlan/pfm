@@ -1932,6 +1932,7 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 	return ctrl
 end
 function gui.PFMActorEditor:ToggleCameraLink(actor)
+	util.remove(self.m_cameraLinkOutlineElement)
 	util.remove(self.m_cbCamLinkGameplayCb)
 
 	local filmmaker = tool.get_filmmaker()
@@ -1954,6 +1955,12 @@ function gui.PFMActorEditor:ToggleCameraLink(actor)
 		self:TagRenderSceneAsDirty()
 	else
 		local c = cam:GetEntity():AddComponent("pfm_camera_actor_link")
+
+		local vpInner = vp:GetViewport()
+		local el = gui.create("WIOutlinedRect",vpInner,0,0,vpInner:GetWidth(),vpInner:GetHeight(),0,0,1,1)
+		el:SetColor(Color.Red)
+		self.m_cameraLinkOutlineElement = el
+
 		if(c ~= nil) then
 			c:SetTargetActor(entActor)
 			local lightSpotC = entActor:GetComponent(ents.COMPONENT_LIGHT_SPOT)
@@ -1983,6 +1990,7 @@ function gui.PFMActorEditor:ToggleCameraLink(actor)
 end
 function gui.PFMActorEditor:OnRemove()
 	util.remove(self.m_cbCamLinkGameplayCb)
+	util.remove(self.m_cameraLinkOutlineElement)
 end
 function gui.PFMActorEditor:InitializeNavigationBar()
 	--[[self.m_btHome = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_home","gui/pfm/icon_nav_home_activated",function()
