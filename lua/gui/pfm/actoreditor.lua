@@ -13,6 +13,7 @@ include("controls_menu.lua")
 include("entry_edit_window.lua")
 include("/pfm/component_manager.lua")
 include("/pfm/component_actions.lua")
+include("/pfm/util.lua")
 
 util.register_class("gui.PFMActorEditor",gui.Base)
 
@@ -2099,6 +2100,20 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected)
 		if(util.is_valid(actorEditor) == false) then return end
 		actorEditor:PasteFromClipboard(actors)
 	end)
+	local mdl = actor:GetModel()
+	if(mdl ~= nil) then
+		pContext:AddItem(locale.get_text("pfm_pack_model"),function()
+			pfm.pack_models({mdl})
+		end)
+		pContext:AddItem(locale.get_text("pfm_copy_model_path_to_clipboard"),function()
+			util.set_clipboard_string(mdl)
+		end)
+		pContext:AddItem(locale.get_text("pfm_show_in_explorer"),function()
+			local filePath = asset.find_file(mdl,asset.TYPE_MODEL)
+			if(filePath == nil) then return end
+			util.open_path_in_explorer(asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. file.get_file_path(filePath),file.get_file_name(filePath))
+		end)
+	end
 	pContext:AddItem(locale.get_text("pfm_move_work_camera_to_actor"),function()
 		local filmmaker = tool.get_filmmaker()
 		local filmClip = filmmaker:GetActiveFilmClip()

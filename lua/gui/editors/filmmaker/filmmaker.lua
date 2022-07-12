@@ -37,6 +37,7 @@ include("/gui/pfm/particleeditor.lua")
 include("/gui/pfm/webbrowser.lua")
 include("/pfm/util_particle_system.lua")
 include("/pfm/auto_save.lua")
+include("/pfm/util.lua")
 include("/util/table_bininsert.lua")
 
 gui.load_skin("pfm")
@@ -884,9 +885,7 @@ function gui.WIFilmmaker:PackProject(fileName)
 	local projectFileName = self:GetProjectFileName()
 	if(projectFileName ~= nil) then table.insert(assetFiles,projectFileName) end
 	
-	fileName = file.remove_file_extension(fileName) .. ".zip"
-	util.pack_zip_archive(fileName,assetFiles)
-	util.open_path_in_explorer(util.get_addon_path(),fileName)
+	pfm.save_asset_files_as_archive(assetFiles,fileName)
 end
 function gui.WIFilmmaker:AddActor(filmClip)
 	local actor = filmClip:GetScene():AddActor()
@@ -1496,6 +1495,16 @@ function gui.WIFilmmaker:InitializeProjectUI()
 						pSubMenu:Update()
 					end
 				end
+			end
+
+			if(#tSelectedFiles > 0) then
+				pContext:AddItem(locale.get_text("pfm_pack_model"),function()
+					local mdls = {}
+					for _,f in ipairs(tSelectedFiles) do
+						table.insert(mdls,f:GetRelativeAsset())
+					end
+					pfm.pack_models(mdls)
+				end)
 			end
 		end)
 		explorer:AddCallback("OnIconAdded",function(explorer,icon)
