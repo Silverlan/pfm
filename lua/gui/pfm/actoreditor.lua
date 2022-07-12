@@ -1229,6 +1229,7 @@ function gui.PFMActorEditor:MouseCallback(button,state,mods)
 end
 function gui.PFMActorEditor:AddActor(actor)
 	local itemActor = self.m_tree:AddItem(actor:GetName())
+	itemActor:SetAutoSelectChildren(false)
 
 	local uniqueId = tostring(actor:GetUniqueId())
 	itemActor:AddCallback("OnSelectionChanged",function(el,selected)

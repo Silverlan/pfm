@@ -131,6 +131,7 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self.m_items = {}
 	self.m_itemElements = {}
 	self.m_identifierToItem = {}
+	self.m_autoSelectChildren = true
 	self:SetSize(64,19)
 
 	self.m_vBox = gui.create("WIVBox",self,0,0,self:GetWidth(),self:GetHeight())
@@ -159,6 +160,8 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self:SetAutoSizeToContents(false,true)
 	self:SetSelected(false)
 end
+function gui.PFMTreeViewElement:SetAutoSelectChildren(autoSelected) self.m_autoSelectChildren = autoSelected end
+function gui.PFMTreeViewElement:ShouldAutoSelectChildren() return self.m_autoSelectChildren or false end
 function gui.PFMTreeViewElement:OnRemove()
 	if(self:IsSelected()) then self:Deselect() end
 end
@@ -173,7 +176,7 @@ function gui.PFMTreeViewElement:MouseCallback(button,state,mods)
 	local select = true
 	if(isCtrlDown) then select = not self:IsSelected() end
 
-	self:SetSelected(select)
+	self:SetSelected(select,self:ShouldAutoSelectChildren())
 	return util.EVENT_REPLY_HANDLED
 end
 function gui.PFMTreeViewElement:IsRoot() return self:GetParentItem() == nil end
