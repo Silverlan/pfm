@@ -121,8 +121,11 @@ function Component:UpdatePose()
 		local attInfo = ents.AttachableComponent.AttachmentInfo()
 		attInfo.flags = bit.bor(ents.AttachableComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME,ents.AttachableComponent.FATTACHMENT_MODE_POSITION_ONLY)
 		local parentBone = self.m_transformComponent:GetParentBone()
-		if(parentBone == nil) then attC:AttachToEntity(entParent,attInfo)
-		else attC:AttachToBone(entParent,parentBone,attInfo) end
+		local entParent = self:GetTargetEntity()
+		if(util.is_valid(entParent)) then
+			if(parentBone == nil) then attC:AttachToEntity(entParent,attInfo)
+			else attC:AttachToBone(entParent,parentBone,attInfo) end
+		end
 	end
 end
 
