@@ -15,6 +15,22 @@ Component:RegisterMember("LightmapMode",udm.TYPE_UINT32,1,{
 		["Directional"] = 1
 	}
 })
+Component:RegisterMember("MinBounds",udm.TYPE_VECTOR3,Vector(0,0,0),{
+	onChange = function(self)
+		self:UpdateDebugBounds()
+	end
+})
+Component:RegisterMember("MaxBounds",udm.TYPE_VECTOR3,Vector(0,0,0),{
+	onChange = function(self)
+		self:UpdateDebugBounds()
+	end
+})
+Component:RegisterMember("ShowDebugBounds",udm.TYPE_BOOLEAN,false,{
+	onChange = function(self)
+		self:UpdateDebugBounds()
+	end
+})
+-- Debug mode
 Component:RegisterMember("Resolution",udm.TYPE_STRING,"2048x2048")
 Component:RegisterMember("SampleCount",udm.TYPE_UINT32,200)
 
@@ -26,6 +42,7 @@ function Component:Initialize()
 end
 function Component:OnRemove()
 	self.m_baker:Clear()
+	util.remove(self.m_dbgBox)
 end
 function Component:OnEntitySpawn()
 	self.m_lightmapUvCacheDirty = true
@@ -248,6 +265,21 @@ end
 
 include("/util/lightmap_bake.lua")
 include("/pfm/bake/lightmaps.lua")
+function Component:UpdateDebugBounds()
+	util.remove(self.m_dbgBox)
+	if(self:GetShowDebugBounds() == false) then return end
+	local min,max = self:GetBounds()
+	local drawInfo = debug.DrawInfo()
+	drawInfo:SetColor(Color(0,0,255,64))
+	drawInfo:SetOutlineColor(Color.Red)
+	self.m_dbgBox = debug.draw_box(min,max,drawInfo)
+end
+function Component:GetBounds()
+	local minArea = self:GetMinBounds()
+	local maxArea = self:GetMaxBounds()
+	vector.to_min_max(minArea,maxArea)
+	return minArea,maxArea
+end
 function Component:GenerateLightmapUvs()
 	local lmC = self:GetEntityComponent(ents.COMPONENT_LIGHT_MAP)
 	if(lmC == nil) then
@@ -262,7 +294,20 @@ function Component:GenerateLightmapUvs()
 	file.create_path(path)
 	local cachePath = path .. "lightmap_data_cache"
 
-	if(self.m_baker:BakeUvs(lmC:GetEntity(),util.get_addon_path() .. cachePath) == false) then
+	local meshFilter
+	local minArea,maxArea = self:GetBounds()
+	local l = minArea:DistanceSqr(maxArea)
+	if(l > 0.0001) then
+		meshFilter = function(ent,mesh,subMesh)
+			local min,max = subMesh:GetBounds()
+			local pose = ent:GetPose()
+			min = pose *min
+			max = pose *max
+			local res = intersect.aabb_with_aabb(min,max,minArea,maxArea)
+			return res ~= intersect.RESULT_OUTSIDE
+		end
+	end
+	if(self.m_baker:BakeUvs(lmC:GetEntity(),util.get_addon_path() .. cachePath,meshFilter) == false) then
 		pfm.log("Failed to bake lightmap uvs!",pfm.LOG_CATEGORY_PFM_BAKE,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
