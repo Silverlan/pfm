@@ -624,6 +624,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		local job = pfm.PragmaRenderJob(renderSettings)
 		job:Start()
 		self.m_raytracingJob = job
+		self.m_rtRenderer = pfm.PragmaRenderer(job,self)
 	end
 
 	self.m_lastProgress = 0.0

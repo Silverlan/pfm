@@ -261,9 +261,58 @@ function pfm.PragmaRenderJob:Start()
 
 	self:RenderNextFrame(true)
 end
+function pfm.PragmaRenderJob:GetCommandBuffer() return self.m_drawCommandBuffer end
 function pfm.PragmaRenderJob:IsComplete() return self:GetProgress() == 1.0 end
 function pfm.PragmaRenderJob:GetProgress() return self.m_progress end
 function pfm.PragmaRenderJob:IsSuccessful() return self:GetProgress() == 1.0 end
 function pfm.PragmaRenderJob:GetResultCode() return -1 end
 function pfm.PragmaRenderJob:GetImage() return self.m_imageBuffer end
 function pfm.PragmaRenderJob:Cancel() self:Clear() end
+
+--------------------
+
+util.register_class("pfm.PragmaRenderer")
+function pfm.PragmaRenderer:__init(pragmaRenderJob,rtJob)
+	self.m_pragmaRenderJob = pragmaRenderJob
+	self.m_rtJob = rtJob
+end
+function pfm.PragmaRenderer:BeginSceneEdit()
+	return true
+end
+function pfm.PragmaRenderer:InitializeStagingImage()
+	if(self.m_stagingImg ~= nil) then return end
+	local result = self.m_rtJob:GetRenderResultTexture()
+	local createInfo = result:GetImage():GetCreateInfo()
+	createInfo.usageFlags = bit.bor(prosper.IMAGE_USAGE_TRANSFER_SRC_BIT)
+	createInfo.tiling = prosper.IMAGE_TILING_LINEAR
+	createInfo.postCreateLayout = prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+	createInfo.memoryFeatures = prosper.MEMORY_FEATURE_CPU_TO_GPU
+
+	self.m_stagingImg = prosper.create_image(createInfo)
+end
+function pfm.PragmaRenderer:EndSceneEdit()
+	self.m_pragmaRenderJob:RenderNextFrame(true)
+	local result = self.m_rtJob:GetRenderResultTexture()
+	local imgBuf = self.m_pragmaRenderJob:GetImage()
+	if(result ~= nil and imgBuf ~= nil) then
+		self:InitializeStagingImage()
+
+		-- TODO: We need some barriers here
+		self.m_stagingImg:WriteMemory(0,0,imgBuf)
+
+		local imgResult = result:GetImage()
+
+		local drawCmd = self.m_pragmaRenderJob:GetCommandBuffer()
+		drawCmd:StartRecording(false,false)
+
+			drawCmd:RecordImageBarrier(imgResult,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+			drawCmd:RecordBlitImage(self.m_stagingImg,imgResult,prosper.BlitInfo())
+			drawCmd:RecordImageBarrier(imgResult,prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+
+		drawCmd:Flush()
+	end
+end
+function pfm.PragmaRenderer:SyncActor(ent)
+end
+function pfm.PragmaRenderer:Restart()
+end

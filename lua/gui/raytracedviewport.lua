@@ -346,9 +346,6 @@ function gui.RealtimeRaytracedViewport:OnThink()
 
 		local renderer = self.m_rtJob:GetRenderer()
 		if(renderer:BeginSceneEdit()) then
-			local scene = renderer:GetScene()
-			local sceneCam = scene:GetCamera()
-
 			for ent,_ in pairs(self.m_dirtyActors) do
 				if(ent:IsValid()) then
 					renderer:SyncActor(ent)
