@@ -824,38 +824,56 @@ function gui.PFMViewport:OnActorSelectionChanged(ent,selected)
 	self:UpdateActorManipulation(ent,selected)
 	self:UpdateManipulationMode()
 end
+function gui.PFMViewport:SetTranslationManipulatorMode()
+	local mode = self:GetManipulatorMode()
+	local nextMode = {
+		[gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL,
+		[gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW,
+		[gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL
+	}
+	mode = nextMode[mode] or gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL
+	self:SetManipulatorMode(mode)
+end
+function gui.PFMViewport:SetRotationManipulatorMode()
+	local mode = self:GetManipulatorMode()
+	local nextMode = {
+		[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL,
+		[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW,
+		[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL
+	}
+	mode = nextMode[mode] or gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL
+	self:SetManipulatorMode(mode)
+end
+function gui.PFMViewport:SetScaleManipulatorMode()
+	self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_SCALE)
+end
 function gui.PFMViewport:InitializeManipulatorControls()
 	local controls = gui.create("WIHBox",self.m_controls)
+
 	self.m_btSelect = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_select","gui/pfm/icon_manipulator_select_activated",function()
 		self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_SELECT)
 		return true
 	end)
+	self.m_btSelect:SetTooltip(locale.get_text("pfm_viewport_tool_select",{pfm.get_key_binding("pfm_action transform select")}))
+
 	self.m_btMove = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_move","gui/pfm/icon_manipulator_move_activated",function()
-		local mode = self:GetManipulatorMode()
-		local nextMode = {
-			[gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL,
-			[gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW,
-			[gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL
-		}
-		mode = nextMode[mode] or gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL
-		self:SetManipulatorMode(mode)
+		self:SetTranslationManipulatorMode()
 		return true
 	end)
+	self.m_btMove:SetTooltip(locale.get_text("pfm_viewport_tool_move",{pfm.get_key_binding("pfm_action transform translate")}))
+
 	self.m_btRotate = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_rotate","gui/pfm/icon_manipulator_rotate_activated",function()
-		local mode = self:GetManipulatorMode()
-		local nextMode = {
-			[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL,
-			[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW,
-			[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL
-		}
-		mode = nextMode[mode] or gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL
-		self:SetManipulatorMode(mode)
+		self:SetRotationManipulatorMode()
 		return true
 	end)
+	self.m_btRotate:SetTooltip(locale.get_text("pfm_viewport_tool_rotate",{pfm.get_key_binding("pfm_action transform rotate")}))
+
 	self.m_btScreen = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_screen","gui/pfm/icon_manipulator_screen_activated",function()
-		self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_SCALE)
+		self:SetScaleManipulatorMode()
 		return true
 	end)
+	self.m_btScreen:SetTooltip(locale.get_text("pfm_viewport_tool_scale",{pfm.get_key_binding("pfm_action transform scale")}))
+
 	controls:SetHeight(self.m_btSelect:GetHeight())
 	controls:Update()
 	controls:SetX(3)

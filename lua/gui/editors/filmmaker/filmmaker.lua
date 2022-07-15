@@ -125,6 +125,11 @@ function gui.WIFilmmaker:OnInitialize()
 		bindingLayer:BindKey("y","pfm_action transform move y")
 		bindingLayer:BindKey("z","pfm_action transform move z")
 
+		bindingLayer:BindKey("q","pfm_action transform select")
+		bindingLayer:BindKey("t","pfm_action transform translate")
+		bindingLayer:BindKey("r","pfm_action transform rotate")
+		bindingLayer:BindKey("s","pfm_action transform scale")
+
 		layers["pfm"] = bindingLayer
 	end
 	if(layers["pfm_graph_editor"] == nil) then
@@ -2008,6 +2013,19 @@ console.register_command("pfm_action",function(pl,...)
 			elseif(args[3] == "z") then
 				if(shift) then pm:SetQuickAxisTransformMode({math.AXIS_X,math.AXIS_Y})
 				else pm:SetQuickAxisTransformMode({math.AXIS_Z}) end
+			end
+		else
+			local vp = pm:GetViewport()
+			if(util.is_valid(vp)) then
+				if(args[2] == "select") then
+					vp:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_SELECT)
+				elseif(args[2] == "translate") then
+					vp:SetTranslationManipulatorMode()
+				elseif(args[2] == "rotate") then
+					vp:SetRotationManipulatorMode()
+				elseif(args[2] == "scale") then
+					vp:SetScaleManipulatorMode()
+				end
 			end
 		end
 	end
