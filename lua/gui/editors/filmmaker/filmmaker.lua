@@ -206,12 +206,13 @@ function gui.WIFilmmaker:OnInitialize()
 	local gameRenderer = gameScene:GetRenderer()
 	local scene = ents.create_scene(sceneCreateInfo) -- ,gameScene)
 	scene:SetRenderer(gameRenderer)
-	scene:SetActiveCamera(gameScene:GetActiveCamera())
+	local cam = gameScene:GetActiveCamera()
+	if(cam ~= nil) then scene:SetActiveCamera(cam) end
 	self.m_overlayScene = scene
 
 	local sceneDepth = ents.create_scene(sceneCreateInfo,gameScene)
 	sceneDepth:SetRenderer(gameRenderer)
-	sceneDepth:SetActiveCamera(gameScene:GetActiveCamera())
+	if(cam ~= nil) then sceneDepth:SetActiveCamera(cam) end
 	self.m_sceneDepth = sceneDepth
 
 	-- Disable default scene drawing for the lifetime of the Filmmaker; We'll only render the viewport(s) if something has actually changed, which

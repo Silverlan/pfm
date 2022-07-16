@@ -59,6 +59,13 @@ function Component:Initialize()
 	self:AddEntityComponent("pfm_actor")
 	self:AddEntityComponent("pfm_overlay_object")
 
+	local gameScene = game.get_scene()
+	local gameRenderer = util.is_valid(gameScene) and gameScene:GetRenderer() or nil
+	if(gameRenderer ~= nil) then
+		camC:SetAspectRatio(gameRenderer:GetWidth() /gameRenderer:GetHeight())
+		camC:UpdateProjectionMatrix()
+	end
+
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"OnTurnOn")
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"OnTurnOff")
 
