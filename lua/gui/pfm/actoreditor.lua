@@ -849,7 +849,7 @@ function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId,entActor)
 			componentId = ents.find_component_id(componentName)
 		end
 		if(componentId ~= nil) then
-			if(actorData.componentData[componentId] == nil) then
+			if(actorData.componentData[componentId] == nil or util.is_valid(actorData.componentData[componentId].itemComponent) == false) then
 				self:AddActorComponent(entActor,actorData.itemActor,actorData,component)
 			end
 		else
