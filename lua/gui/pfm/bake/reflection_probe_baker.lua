@@ -78,7 +78,7 @@ function WIReflectionProbeBaker:GetBakerProgress() return self.m_baker:GetProgre
 function WIReflectionProbeBaker:FinalizeBaker()
 	local ent = self:GetActorEntity()
 	local reflC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
-	return reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult())
+	return reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult():GetImage("COLOR"))
 end
 function WIReflectionProbeBaker:OpenWindow(title)
 	WIBaseBaker.OpenWindow(self,title)
@@ -93,7 +93,7 @@ function WIReflectionProbeBaker:OnComplete()
 	if(self.m_baker:IsSuccessful()) then
 		local ent = self.m_baker:GetActorEntity()
 		local reflC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
-		local res = reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult())
+		local res = reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult():GetImage("COLOR"))
 		if(res == false) then
 			self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
 		else
