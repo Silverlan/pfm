@@ -2129,6 +2129,19 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected)
 		vp:SetWorkCameraPose(actor:GetAbsolutePose())
 		tool.get_filmmaker():TagRenderSceneAsDirty()
 	end)
+	pContext:AddItem(locale.get_text("pfm_move_actor_to_work_camera"),function()
+		local filmmaker = tool.get_filmmaker()
+		local pm = pfm.get_project_manager()
+		local vp = util.is_valid(pm) and pm:GetViewport() or nil
+		if(util.is_valid(vp) == false) then return end
+		local ent = actor:FindEntity()
+		if(ent == nil) then return end
+		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+		if(actorC == nil) then return end
+		local pose = vp:GetWorkCameraPose()
+		if(pose == nil) then return end
+		filmmaker:SetActorTransformProperty(actorC,"position",pose:GetOrigin(),true)
+	end)
 	pContext:AddItem(locale.get_text("pfm_toggle_camera_link"),function()
 		local filmmaker = tool.get_filmmaker()
 		local actorEditor = filmmaker:GetActorEditor()

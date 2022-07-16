@@ -1144,6 +1144,11 @@ function gui.PFMViewport:SetWorkCameraPose(pose)
 	console.run("setpos",tostring(pos.x),tostring(pos.y),tostring(pos.z))
 	console.run("setang",tostring(ang.p),tostring(ang.y),0.0)
 end
+function gui.PFMViewport:GetWorkCameraPose()
+	local cam = self:GetWorkCamera()
+	if(util.is_valid(cam) == false) then return end
+	return cam:GetEntity():GetPose()
+end
 function gui.PFMViewport:SwitchToWorkCamera(ignoreGameplay)
 	if(ignoreGameplay ~= true) then self:SwitchToGameplay(false) end
 	local cam = self:GetWorkCamera()
