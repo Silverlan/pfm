@@ -84,7 +84,7 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat,hdr)
 
 	local result = util.save_image(imgBuf,path,imgFormat,1.0,task)
 	self.m_threadPool:AddTask(task)
-	if(result == false) then
+	if(result == nil) then
 		pfm.log("Unable to save image as '" .. path .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
 	else
 		pfm.log("Saving image as '" .. path .. "'...!",pfm.LOG_CATEGORY_PFM_RENDER)

@@ -150,7 +150,12 @@ local function set_model_view_model(mdlView,model,settings,iconPath)
 	if(zoom ~= nil) then mdlView:SetZoom(zoom) end
 end
 
-local function save_model_icon(mdl,mdlView,iconPath)
+pfm = pfm or {}
+pfm.detail = pfm.detail or {}
+pfm.detail.asset_icon = pfm.detail.asset_icon or {}
+pfm.detail.asset_icon.threadPool = pfm.detail.asset_icon.threadPool or util.ThreadPool(4,"asset_icon_image_saver")
+pfm.detail.asset_icon.finalizers = {}
+local function save_model_icon(mdl,mdlView,iconPath,callback)
 	local img = mdlView:GetPresentationTexture():GetImage()
 	local iconLocation = iconPath or get_icon_location(mdl,asset.TYPE_MODEL)
 	print("Saving icon as " .. iconLocation)
@@ -159,36 +164,54 @@ local function save_model_icon(mdl,mdlView,iconPath)
 	texInfo.inputFormat = util.TextureInfo.INPUT_FORMAT_R8G8B8A8_UINT
 	texInfo.outputFormat = util.TextureInfo.OUTPUT_FORMAT_DXT5
 	texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
-	util.save_image(img,"materials/" .. iconLocation,texInfo)
-	asset.reload(iconLocation,asset.TYPE_TEXTURE)
-
-	local mat = game.create_material(iconLocation,"wguitextured")
-	mat:SetTexture("albedo_map",iconLocation)
-
-	local isCharModel = is_character_model(mdl)
-	if(isCharModel) then
-		local db = mat:GetDataBlock()
-		local mv = db:AddBlock("pfm_model_view")
-		mv:SetValue("bool","character_model","1")
-		mv:SetValue("float","aspect_ratio",tostring(img:GetWidth() /img:GetHeight()))
-	end
 
 	mdlView:SetModel() -- Clear model
 
-	local cam = mdlView:GetCamera()
-	if(util.is_valid(cam)) then
-		local ent = cam:GetEntity()
-		local lookAtTarget = mdlView:GetLookAtTarget()
-		local xRot,yRot = mdlView:GetRotation()
-		local zoom = mdlView:GetZoom()
-		local db = mat:GetDataBlock()
-		local mv = db:AddBlock("pfm_model_view")
-		mv:SetValue("vector","look_at_target",tostring(lookAtTarget))
-		mv:SetValue("vector","rotation",tostring(xRot) .. " " .. tostring(yRot) .. " 0")
-		mv:SetValue("float","zoom",tostring(zoom))
-	end
+	local lookAtTarget = mdlView:GetLookAtTarget()
+	local xRot,yRot = mdlView:GetRotation()
+	local zoom = mdlView:GetZoom()
 
-	mat:Save(iconLocation)
+	local imgBuf = img:ToImageBuffer(false,false) -- TODO: We should only allocate the image buffer once (since the size is always the same anyway)
+	local task = util.ThreadPool.ThreadTask()
+	imgBuf:SwapChannels(util.ImageBuffer.CHANNEL_RED,util.ImageBuffer.CHANNEL_BLUE,task)
+	util.save_image(imgBuf,"materials/" .. iconLocation,texInfo,task)
+	local taskId = pfm.detail.asset_icon.threadPool:AddTask(task)
+	local aspectRatio = img:GetWidth() /img:GetHeight()
+	pfm.detail.asset_icon.finalizers[taskId] = function()
+		local res = asset.reload(iconLocation,asset.TYPE_TEXTURE)
+
+		local mat = game.create_material(iconLocation,"wguitextured")
+		mat:SetTexture("albedo_map",iconLocation)
+
+		local isCharModel = is_character_model(mdl)
+		if(isCharModel) then
+			local db = mat:GetDataBlock()
+			local mv = db:AddBlock("pfm_model_view")
+			mv:SetValue("bool","character_model","1")
+			mv:SetValue("float","aspect_ratio",tostring(aspectRatio))
+		end
+
+		if(camData ~= nil) then
+			local db = mat:GetDataBlock()
+			local mv = db:AddBlock("pfm_model_view")
+			mv:SetValue("vector","look_at_target",tostring(lookAtTarget))
+			mv:SetValue("vector","rotation",tostring(xRot) .. " " .. tostring(yRot) .. " 0")
+			mv:SetValue("float","zoom",tostring(zoom))
+		end
+
+		mat:Save(iconLocation)
+		asset.reload(iconLocation,asset.TYPE_MATERIAL)
+
+		if(callback ~= nil) then callback() end
+	end
+end
+local function update_finalizers()
+	for taskId,finalizer in pairs(pfm.detail.asset_icon.finalizers) do
+		if(pfm.detail.asset_icon.threadPool:IsComplete(taskId)) then
+			finalizer()
+			pfm.detail.asset_icon.finalizers[taskId] = nil
+		end
+	end
 end
 
 util.register_class("gui.AssetIcon.IconGenerator")
@@ -197,6 +220,7 @@ function gui.AssetIcon.IconGenerator:__init(width,height,widthChar,heightChar)
 
 	self.m_cbTick = game.add_callback("Tick",function()
 		self:ProcessIcon()
+		update_finalizers()
 	end)
 
 	self.m_modelView = create_model_view(width,height)
@@ -213,6 +237,14 @@ end
 
 function gui.AssetIcon.IconGenerator:ProcessIcon()
 	if(self.m_saveImage ~= true or util.is_valid(self.m_modelView) == false or util.is_valid(self.m_modelViewCharacter) == false) then return end
+	if(self.m_waitForAsset ~= nil) then
+		local data = self.m_waitForAsset
+		local model = data.model
+		local state = asset.get_asset_state(data.model,asset.TYPE_MODEL)
+		if(state == asset.ASSET_STATE_LOADING) then return end -- Wait until the asset has been loaded
+		data.func()
+		self.m_waitForAsset = nil
+	end
 	local data = self.m_mdlQueue[1]
 	local mdlView = is_character_model(data.model) and self.m_modelViewCharacter or self.m_modelView
 	local dtFrameIndex = mdlView:GetFrameIndex() -self.m_tStartFrameIndex
@@ -221,9 +253,8 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 	table.remove(self.m_mdlQueue,1) -- Remove from queue
 
 	self.m_saveImage = false
-	save_model_icon(data.model,mdlView,data.iconPath)
+	save_model_icon(data.model,mdlView,data.iconPath,data.callback)
 	mdlView:SetVisible(false)
-	if(data.callback ~= nil) then data.callback() end
 
 	data = nil
 	console.run("asset_clear_unused")
@@ -259,9 +290,23 @@ function gui.AssetIcon.IconGenerator:GenerateNextIcon()
 	local data = self.m_mdlQueue[1]
 	print("Generating next icon for model " .. data.model .. "...")
 	local mdlView = is_character_model(data.model) and self.m_modelViewCharacter or self.m_modelView
-	self.m_tStartFrameIndex = mdlView:GetFrameIndex()
 	mdlView:SetVisible(true)
-	set_model_view_model(mdlView,data.model,data.settings,data.iconPath)
+
+	local f = function()
+		set_model_view_model(mdlView,data.model,data.settings,data.iconPath)
+		self.m_tStartFrameIndex = mdlView:GetFrameIndex()
+	end
+	local state = asset.get_asset_state(data.model,asset.TYPE_MODEL)
+	if(state == asset.ASSET_STATE_NOT_LOADED or state == asset.ASSET_STATE_LOADING) then
+		asset.precache(data.model,asset.TYPE_MODEL)
+		self.m_waitForAsset = {
+			model = data.model,
+			func = f
+		}
+		return
+	end
+
+	f()
 end
 
 ------------
