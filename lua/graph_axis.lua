@@ -61,3 +61,14 @@ function util.GraphAxis:ValueToXOffset(value)
 	value = value -self:GetStartOffset()
 	return value *self:GetStridePerUnit()
 end
+function util.GraphAxis:ValueRangeToZoomFactor(dt,w)
+	local strideInPixels = self:GetStrideInPixels()
+	local stridePerUnit = w /dt
+	stridePerUnit = stridePerUnit /strideInPixels
+	local zoomLevelMultiplierFraction = 1.0 /stridePerUnit
+	return math.log10(zoomLevelMultiplierFraction)
+end
+function util.GraphAxis:SetRange(startValue,endValue,w)
+	self:SetStartOffset(startValue)
+	self:SetZoomLevel(self:ValueRangeToZoomFactor(endValue -startValue,w))
+end

@@ -14,6 +14,7 @@ include("/gui/pfm/cursor_tracker.lua")
 include("/gui/selectionrect.lua")
 include("/gui/timelinestrip.lua")
 include("/graph_axis.lua")
+include("graph_editor")
 include("key.lua")
 include("easing.lua")
 
@@ -31,541 +32,6 @@ local function editor_value_to_channel_value(val,channelValueType)
 	if(channelValueType ~= udm.TYPE_QUATERNION) then return val end
 	return val:ToQuaternion()
 end
-
-----------------
-
-util.register_class("gui.PFMDataPointControl",gui.Base)
-function gui.PFMDataPointControl:OnInitialize()
-	gui.Base.OnInitialize(self)
-
-	self:SetSize(4,4)
-	local el = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	self.m_elPoint = el
-	el:GetColorProperty():Link(self:GetColorProperty())
-
-	self.m_selected = false
-	self:SetMouseInputEnabled(true)
-end
-function gui.PFMDataPointControl:IsSelected() return self.m_selected end
-function gui.PFMDataPointControl:SetSelected(selected)
-	if(selected == self.m_selected) then return end
-	self.m_selected = selected
-	self:SetColor(selected and Color.Red or Color.White)
-	self:SetMoveModeEnabled(false)
-	self:OnSelectionChanged(selected)
-	self:CallCallbacks("OnSelectionChanged",selected)
-end
-function gui.PFMDataPointControl:OnSelectionChanged(selected) end
-function gui.PFMDataPointControl:OnThink()
-	if(self.m_cursorTracker == nil) then return end
-	local dt = self.m_cursorTracker:Update()
-	if(dt.x == 0 and dt.y == 0) then return end
-	if(self.m_moveThreshold ~= nil) then
-		if(not self.m_cursorTracker:HasExceededMoveThreshold(self.m_moveThreshold)) then return end
-		self.m_moveThreshold = nil
-	end
-	local newPos = self.m_moveModeStartPos +self.m_cursorTracker:GetTotalDeltaPosition()
-	if(input.is_shift_key_down()) then newPos.x = self.m_moveModeStartPos.x end
-	if(input.is_alt_key_down()) then newPos.y = self.m_moveModeStartPos.y end
-	self:OnMoved(newPos)
-	self:CallCallbacks("OnMoved",newPos)
-end
-function gui.PFMDataPointControl:OnMoved(newPos) end
-function gui.PFMDataPointControl:IsMoveModeEnabled() return self.m_cursorTracker ~= nil end
-function gui.PFMDataPointControl:SetMoveModeEnabled(enabled,moveThreshold)
-	if(enabled) then
-		self.m_cursorTracker = gui.CursorTracker()
-		self.m_moveModeStartPos = self:GetPos()
-		self.m_moveThreshold = moveThreshold
-		self:EnableThinking()
-	else
-		self.m_cursorTracker = nil
-		self.m_moveModeStartPos = nil
-		self.m_moveThreshold = nil
-		self:DisableThinking()
-	end
-end
-gui.register("WIPFMDataPointControl",gui.PFMDataPointControl)
-
-----------------
-
-util.register_class("gui.PFMTimelineTangentControl",gui.Base)
-function gui.PFMTimelineTangentControl:OnInitialize()
-	gui.Base.OnInitialize(self)
-
-	local lineIn = gui.create("WILine",self:GetParent())
-	lineIn:SetColor(Color.Red)
-	lineIn:SetLineWidth(2)
-	self.m_inLine = lineIn
-
-	local ctrlIn = gui.create("WIPFMDataPointControl",self:GetParent())
-	ctrlIn:SetColor(Color.Black)
-	self.m_inCtrl = ctrlIn
-
-	local lineOut = gui.create("WILine",self:GetParent())
-	lineOut:SetColor(Color.Aqua)
-	lineOut:SetLineWidth(2)
-	self.m_outLine = lineOut
-
-	local ctrlOut = gui.create("WIPFMDataPointControl",self:GetParent())
-	ctrlOut:SetColor(Color.Black)
-	self.m_outCtrl = ctrlOut
-
-	self.m_inCtrl:AddCallback("OnMoved",function(ctrl,newPos) self:UpdateInControl(newPos) end)
-	self.m_outCtrl:AddCallback("OnMoved",function(ctrl,newPos) self:UpdateOutControl(newPos) end)
-
-	self.m_inLine:GetVisibilityProperty():Link(self:GetVisibilityProperty())
-	self.m_inCtrl:GetVisibilityProperty():Link(self:GetVisibilityProperty())
-	self.m_outLine:GetVisibilityProperty():Link(self:GetVisibilityProperty())
-	self.m_outCtrl:GetVisibilityProperty():Link(self:GetVisibilityProperty())
-end
-function gui.PFMTimelineTangentControl:UpdateHandleType(handle,type)
-	local colorScheme = pfm.get_color_scheme()
-	local cpColor = colorScheme:GetColor("orange")
-
-	local elLine
-	local elCtrl
-	local lineColor
-	if(handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_IN) then
-		elLine = self.m_inLine
-		elCtrl = self.m_inCtrl
-	else
-		elLine = self.m_outLine
-		elCtrl = self.m_outCtrl
-	end
-
-	if(type == pfm.udm.KEYFRAME_HANDLE_TYPE_ALIGNED) then
-		lineColor = colorScheme:GetColor("lightRed")
-	elseif(type == pfm.udm.KEYFRAME_HANDLE_TYPE_VECTOR) then
-		lineColor = colorScheme:GetColor("lightGreen")
-	else
-		lineColor = colorScheme:GetColor("black")
-	end
-	elLine:SetColor(lineColor)
-	elCtrl:SetColor(cpColor)
-end
-function gui.PFMTimelineTangentControl:GetInControl() return self.m_inCtrl end
-function gui.PFMTimelineTangentControl:GetOutControl() return self.m_outCtrl end
-function gui.PFMTimelineTangentControl:UpdateInControl(newPos)
-	self:CallCallbacks("OnInControlMoved",newPos)
-end
-function gui.PFMTimelineTangentControl:UpdateOutControl(newPos)
-	self:CallCallbacks("OnOutControlMoved",newPos)
-end
-function gui.PFMTimelineTangentControl:OnUpdate()
-	self:UpdateInOutLines(true,true)
-end
-function gui.PFMTimelineTangentControl:SetDataPoint(dp) self.m_dataPoint = dp end
-function gui.PFMTimelineTangentControl:UpdateInOutLines(updateIn,updateOut)
-	if(util.is_valid(self.m_dataPoint) == false) then return end
-	local pos = self:GetCenter()
-
-	local curve = self.m_dataPoint:GetGraphCurve()
-
-	local editorChannel = curve:GetEditorChannel()
-	if(editorChannel == nil) then return end
-
-	local editorGraphCurve = editorChannel:GetGraphCurve()
-	local editorKeys = editorGraphCurve:GetKey(self.m_dataPoint:GetTypeComponentIndex())
-
-	local keyIndex = self.m_dataPoint:GetKeyIndex()
-
-	local graph = curve:GetTimelineGraph()
-	local timeAxis = graph:GetTimeAxis()
-	local dataAxis = graph:GetDataAxis()
-
-	local basePos = self.m_dataPoint:GetCenter()
-	if(updateIn) then
-		local inTime = editorKeys:GetInTime(keyIndex)
-		local inDelta = editorKeys:GetInDelta(keyIndex)
-
-		inTime = timeAxis:GetAxis():ValueToXDelta(inTime)
-		inDelta = -dataAxis:GetAxis():ValueToXDelta(inDelta)
-
-		local inPos = basePos +Vector2(inTime,inDelta)
-		self.m_inCtrl:SetPos(inPos)
-
-		self.m_inLine:SetStartPos(inPos)
-		self.m_inLine:SetEndPos(Vector2(pos.x,pos.y))
-		self.m_inLine:SizeToContents()
-	end
-
-	if(updateOut) then
-		local outTime = editorKeys:GetOutTime(keyIndex)
-		local outDelta = editorKeys:GetOutDelta(keyIndex)
-		
-		outTime = timeAxis:GetAxis():ValueToXDelta(outTime)
-		outDelta = -dataAxis:GetAxis():ValueToXDelta(outDelta)
-
-		local outPos = basePos +Vector2(outTime,outDelta)
-		self.m_outCtrl:SetPos(outPos)
-
-		self.m_outLine:SetStartPos(outPos)
-		self.m_outLine:SetEndPos(Vector2(pos.x,pos.y))
-		self.m_outLine:SizeToContents()
-	end
-end
-function gui.PFMTimelineTangentControl:OnRemove()
-	util.remove({self.m_inLine,self.m_outLine,self.m_inCtrl,self.m_outCtrl})
-end
-gui.register("WIPFMTimelineTangentControl",gui.PFMTimelineTangentControl)
-
-----------------
-
-util.register_class("gui.PFMTimelineDataPoint",gui.PFMDataPointControl)
-function gui.PFMTimelineDataPoint:OnInitialize()
-	gui.PFMDataPointControl.OnInitialize(self)
-end
-function gui.PFMTimelineDataPoint:OnSelectionChanged(selected)
-	if(selected) then self:InitializeHandleControl() end
-	self:UpdateTextFields()
-end
-function gui.PFMTimelineDataPoint:GetTangentControl() return self.m_tangentControl end
-function gui.PFMTimelineDataPoint:UpdateHandles()
-	if(util.is_valid(self.m_tangentControl) == false) then return end
-	self.m_tangentControl:UpdateInOutLines(true,true)
-	self:UpdateHandleType(pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
-	self:UpdateHandleType(pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
-end
-function gui.PFMTimelineDataPoint:UpdateHandleType(handle)
-	if(util.is_valid(self.m_tangentControl) == false) then return end
-	local editorKeys = self:GetEditorKeys()
-	if(handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_IN) then
-		self.m_tangentControl:UpdateHandleType(handle,editorKeys:GetInHandleType(self:GetKeyIndex()))
-	else
-		self.m_tangentControl:UpdateHandleType(handle,editorKeys:GetOutHandleType(self:GetKeyIndex()))
-	end
-end
-function gui.PFMTimelineDataPoint:GetEditorKeys()
-	local curve = self:GetGraphCurve()
-	local graph = curve:GetTimelineGraph()
-
-	local editorChannel = curve:GetEditorChannel()
-	if(editorChannel == nil) then return end
-
-	local editorGraphCurve = editorChannel:GetGraphCurve()
-	local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
-	return editorKeys,self:GetKeyIndex()
-end
-function gui.PFMTimelineDataPoint:ReloadGraphCurveSegment()
-	local curve = self:GetGraphCurve()
-	local timelineGraph = curve:GetTimelineGraph()
-	timelineGraph:ReloadGraphCurveSegment(curve:GetCurveIndex(),self:GetKeyIndex())
-end
-function gui.PFMTimelineDataPoint:IsHandleSelected()
-	if(util.is_valid(self.m_tangentControl) == false) then return false end
-	return self.m_tangentControl:GetInControl():IsSelected() or self.m_tangentControl:GetOutControl():IsSelected()
-end
-function gui.PFMTimelineDataPoint:OnUpdate()
-	if(util.is_valid(self.m_tangentControl) == false) then return end
-	self.m_tangentControl:SetPos(self:GetCenter())
-	self.m_tangentControl:Update()
-end
-function gui.PFMTimelineDataPoint:InitializeHandleControl()
-	if(util.is_valid(self.m_tangentControl)) then return end
-	local el = gui.create("WIPFMTimelineTangentControl",self:GetParent())
-	el:SetDataPoint(self)
-
-	el:AddCallback("OnInControlMoved",function(el,newPos) self:OnHandleMoved(newPos,true) end)
-	el:AddCallback("OnOutControlMoved",function(el,newPos) self:OnHandleMoved(newPos,false) end)
-
-	local onMouseEvent = function(el,button,state,mods)
-		if(button == input.MOUSE_BUTTON_LEFT) then
-			if(state == input.STATE_PRESS) then
-				el:SetSelected(true)
-			end
-			el:SetMoveModeEnabled(state == input.STATE_PRESS,5)
-			return util.EVENT_REPLY_HANDLED
-		end
-	end
-	el:GetInControl():AddCallback("OnMouseEvent",onMouseEvent)
-	el:GetOutControl():AddCallback("OnMouseEvent",onMouseEvent)
-
-	self.m_tangentControl = el
-
-	self:UpdateHandleType(pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
-	self:UpdateHandleType(pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
-
-	self:Update()
-end
-function gui.PFMTimelineDataPoint:GetKeyTimeDelta(pos)
-	local curve = self:GetGraphCurve()
-	local graph = curve:GetTimelineGraph()
-	local timeAxis = graph:GetTimeAxis()
-	local dataAxis = graph:GetDataAxis()
-
-	local editorChannel = curve:GetEditorChannel()
-	if(editorChannel == nil) then return end
-
-	local editorGraphCurve = editorChannel:GetGraphCurve()
-	local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
-
-	local keyIndex = self:GetKeyIndex()
-	local val = pos -self:GetCenter()
-	local time = timeAxis:GetAxis():XDeltaToValue(val.x)
-	local delta = -dataAxis:GetAxis():XDeltaToValue(val.y)
-	return editorKeys,keyIndex,time,delta
-end
-function gui.PFMTimelineDataPoint:OnHandleMoved(newPos,inHandle)
-	local editorKeys,keyIndex,time,delta = self:GetKeyTimeDelta(newPos)
-	local handle = inHandle and pfm.udm.EditorGraphCurveKeyData.HANDLE_IN or pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT
-	if(editorKeys:GetHandleType(keyIndex) == pfm.udm.KEYFRAME_HANDLE_TYPE_VECTOR) then editorKeys:SetHandleType(keyIndex,handle,pfm.udm.KEYFRAME_HANDLE_TYPE_FREE) end
-	local affectedKeys = editorKeys:SetHandleData(keyIndex,handle,time,delta)
-
-	local curve = self:GetGraphCurve()
-	local timelineGraph = curve:GetTimelineGraph()
-	for _,af in ipairs(affectedKeys) do
-		timelineGraph:ReloadGraphCurveSegment(curve:GetCurveIndex(),af[1])
-	end
-
-	curve:GetTimelineGraph():UpdateSelectedDataPointHandles()
-end
-function gui.PFMTimelineDataPoint:OnRemove()
-	util.remove(self.m_tangentControl)
-end
-function gui.PFMTimelineDataPoint:SetGraphData(timelineCurve,keyIndex)
-	self.m_graphData = {
-		timelineCurve = timelineCurve,
-		keyIndex = keyIndex
-	}
-end
-function gui.PFMTimelineDataPoint:GetKeyIndex() return self.m_graphData.keyIndex end
-function gui.PFMTimelineDataPoint:SetKeyIndex(index) self.m_graphData.keyIndex = index end
-function gui.PFMTimelineDataPoint:GetTime()
-	local graphData = self.m_graphData
-	local timelineCurve = graphData.timelineCurve
-	local actor,targetPath,keyIndex,curveData = self:GetChannelValueData()
-	local editorKeys = timelineCurve:GetEditorKeys()
-	return editorKeys:GetTime(keyIndex)
-end
-function gui.PFMTimelineDataPoint:GetValue()
-	local graphData = self.m_graphData
-	local timelineCurve = graphData.timelineCurve
-	local actor,targetPath,keyIndex,curveData = self:GetChannelValueData()
-	local editorKeys = timelineCurve:GetEditorKeys()
-	return editorKeys:GetValue(keyIndex)
-end
-function gui.PFMTimelineDataPoint:ChangeDataValue(t,v)
-	local graphData = self.m_graphData
-	local timelineCurve = graphData.timelineCurve
-
-	local pm = pfm.get_project_manager()
-	local animManager = pm:GetAnimationManager()
-	local actor,targetPath,keyIndex,curveData = self:GetChannelValueData()
-	local panimaChannel = timelineCurve:GetPanimaChannel()
-	if(v ~= nil and curveData.valueTranslator ~= nil) then
-		local curTime,curVal = animManager:GetChannelValueByKeyframeIndex(actor,targetPath,panimaChannel,keyIndex,self:GetTypeComponentIndex())
-		v = curveData.valueTranslator[2](v,curVal)
-	end
-
-	t = t or self:GetTime()
-	v = v or self:GetValue()
-	pm:UpdateKeyframe(actor,targetPath,panimaChannel,keyIndex,t,v,self:GetTypeComponentIndex())
-end
-function gui.PFMTimelineDataPoint:UpdateTextFields()
-	local graphData = self.m_graphData
-	local timelineCurve = graphData.timelineCurve
-	local pm = pfm.get_project_manager()
-	local curValue = timelineCurve:GetCurve():CoordinatesToValues(self:GetX() +self:GetWidth() /2.0,self:GetY() +self:GetHeight() /2.0)
-	curValue = {curValue.x,curValue.y}
-	curValue[2] = math.round(curValue[2] *100.0) /100.0 -- TODO: Make round precision dependent on animation property
-	timelineCurve:GetTimelineGraph():GetTimeline():SetDataValue(
-		util.round_string(pm:TimeOffsetToFrameOffset(curValue[1]),2),
-		util.round_string(curValue[2],2)
-	)
-end
-function gui.PFMTimelineDataPoint:GetGraphCurve() return self.m_graphData.timelineCurve end
-function gui.PFMTimelineDataPoint:OnMoved(newPos)
-	local graphData = self.m_graphData
-	local timelineCurve = graphData.timelineCurve
-	local pm = pfm.get_project_manager()
-	local animManager = pm:GetAnimationManager()
-
-	local actor,targetPath,keyIndex,curveData = self:GetChannelValueData()
-	-- TODO: Merge this with PFMTimelineDataPoint:UpdateTextFields()
-	local newValue = timelineCurve:GetCurve():CoordinatesToValues(newPos.x +self:GetWidth() /2.0,newPos.y +self:GetHeight() /2.0)
-	newValue = {newValue.x,newValue.y}
-	newValue[1] = math.snap_to_gridf(newValue[1],1.0 /pm:GetFrameRate()) -- TODO: Only if snap-to-grid is enabled
-	newValue[2] = math.round(newValue[2] *100.0) /100.0 -- TODO: Make round precision dependent on animation property
-
-	local panimaChannel = timelineCurve:GetPanimaChannel()
-	if(curveData.valueTranslator ~= nil) then
-		local curTime,curVal = animManager:GetChannelValueByKeyframeIndex(actor,targetPath,panimaChannel,keyIndex,self:GetTypeComponentIndex())
-		newValue[2] = curveData.valueTranslator[2](newValue[2],curVal)
-	end
-
-	pm:UpdateKeyframe(actor,targetPath,panimaChannel,keyIndex,newValue[1],newValue[2],self:GetTypeComponentIndex())
-end
-function gui.PFMTimelineDataPoint:GetChannelValueData()
-	local graphData = self.m_graphData
-	local timelineCurve = graphData.timelineCurve
-	local timelineGraph = timelineCurve:GetTimelineGraph()
-	local curveData = timelineGraph:GetGraphCurve(timelineCurve:GetCurveIndex())
-	local animClip = curveData.animClip()
-	local actor = animClip:GetActor()
-	local targetPath = curveData.targetPath
-	return actor,targetPath,graphData.keyIndex,curveData
-end
-function gui.PFMTimelineDataPoint:SetSelected(selected,keepTangentControlSelection)
-	keepTangentControlSelection = keepTangentControlSelection or false
-	if(selected == false and keepTangentControlSelection == false) then util.remove(self.m_tangentControl) end
-	gui.PFMDataPointControl.SetSelected(self,selected)
-end
-function gui.PFMTimelineDataPoint:GetTypeComponentIndex() return self.m_graphData.timelineCurve:GetTypeComponentIndex() end
-function gui.PFMTimelineDataPoint:UpdateSelection(elSelectionRect)
-	if(elSelectionRect:IsElementInBounds(self)) then
-		if(util.is_valid(self.m_tangentControl)) then
-			self.m_tangentControl:GetInControl():SetSelected(false)
-			self.m_tangentControl:GetOutControl():SetSelected(false)
-		end
-		self:SetSelected(not input.is_alt_key_down(),true)
-		return true
-	end
-	if(util.is_valid(self.m_tangentControl) == false) then return false end
-	local inCtrl = self.m_tangentControl:GetInControl()
-	local hasSelection = false
-	if(elSelectionRect:IsElementInBounds(inCtrl)) then
-		self:SetSelected(false,true)
-		inCtrl:SetSelected(not input.is_alt_key_down())
-		hasSelection = true
-	end
-
-	local outCtrl = self.m_tangentControl:GetOutControl()
-	if(elSelectionRect:IsElementInBounds(outCtrl)) then
-		self:SetSelected(false,true)
-		outCtrl:SetSelected(not input.is_alt_key_down())
-		hasSelection = true
-	end
-	return hasSelection
-end
-gui.register("WIPFMTimelineDataPoint",gui.PFMTimelineDataPoint)
-
-----------------
-
-util.register_class("gui.PFMTimelineCurve",gui.Base)
-function gui.PFMTimelineCurve:OnInitialize()
-	gui.Base.OnInitialize(self)
-
-	self:SetSize(64,64)
-	local curve = gui.create("WICurve",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	self.m_curve = curve
-
-	self.m_dataPoints = {}
-
-	curve:GetColorProperty():Link(self:GetColorProperty())
-end
-function gui.PFMTimelineCurve:GetTimelineGraph() return self.m_timelineGraph end
-function gui.PFMTimelineCurve:SetTimelineGraph(graph) self.m_timelineGraph = graph end
-function gui.PFMTimelineCurve:GetTypeComponentIndex() return self.m_typeComponentIndex end
-function gui.PFMTimelineCurve:GetCurveIndex() return self.m_curveIndex end
-function gui.PFMTimelineCurve:GetCurve() return self.m_curve end
-function gui.PFMTimelineCurve:GetChannel() return self.m_channel end
-function gui.PFMTimelineCurve:GetPanimaChannel() return self.m_panimaChannel end
-function gui.PFMTimelineCurve:GetAnimationClip() return self.m_animClip end
-function gui.PFMTimelineCurve:GetEditorChannel() return self.m_editorChannel end
-function gui.PFMTimelineCurve:GetEditorKeys()
-	local editorChannel = self:GetEditorChannel()
-	if(editorChannel == nil) then return end
-
-	local editorGraphCurve = editorChannel:GetGraphCurve()
-	return editorGraphCurve:GetKey(self:GetTypeComponentIndex())
-end
-function gui.PFMTimelineCurve:UpdateCurveData(curveValues)
-	self.m_curve:BuildCurve(curveValues)
-end
-function gui.PFMTimelineCurve:BuildCurve(curveValues,animClip,channel,curveIndex,editorChannel,typeComponentIndex)
-	self.m_channel = channel
-	self.m_animClip = animClip
-	self.m_panimaChannel = panima.Channel(channel:GetUdmData():Get("times"),channel:GetUdmData():Get("values"))
-	self.m_editorChannel = editorChannel
-	self.m_curveIndex = curveIndex
-	self.m_typeComponentIndex = typeComponentIndex
-	self:UpdateCurveData(curveValues)
-
-	util.remove(self.m_dataPoints)
-	self.m_dataPoints = {}
-
-	local editorGraphCurve = (editorChannel ~= nil) and editorChannel:GetGraphCurve() or nil
-	local editorKeys = (editorGraphCurve ~= nil) and editorGraphCurve:GetKey(typeComponentIndex) or nil
-	local numKeys = (editorKeys ~= nil) and editorKeys:GetValueCount() or 0
-	for i=0,numKeys -1 do
-		local el = gui.create("WIPFMTimelineDataPoint",self)
-		el:SetGraphData(self,i)
-		el:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
-			if(self.m_timelineGraph:GetCursorMode() ~= gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then return util.EVENT_REPLY_UNHANDLED end
-			if(button == input.MOUSE_BUTTON_LEFT) then
-				if(state == input.STATE_PRESS) then
-					if(util.is_valid(self.m_selectedDataPoint)) then self.m_selectedDataPoint:SetSelected(false) end
-					el:SetSelected(true)
-					self.m_selectedDataPoint = el
-				end
-				el:SetMoveModeEnabled(state == input.STATE_PRESS,5)
-				return util.EVENT_REPLY_HANDLED
-			end
-			wrapper:StartEditMode(false)
-		end)
-		self.m_selectedDataPoint = el
-
-		table.insert(self.m_dataPoints,el)
-	end
-	self:UpdateDataPoints()
-end
-function gui.PFMTimelineCurve:UpdateDataPoint(i)
-	local el = self.m_dataPoints[i]
-	if(util.is_valid(el) == false) then return end
-	local keyIndex = el:GetKeyIndex()
-	local editorGraphCurve = self.m_editorChannel:GetGraphCurve()
-	local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
-
-	local t = self:DataTimeToInterfaceTime(editorKeys:GetTime(keyIndex))
-	local v = editorKeys:GetValue(keyIndex)
-	local valueTranslator = self:GetTimelineGraph():GetGraphCurve(self:GetCurveIndex()).valueTranslator
-	if(valueTranslator ~= nil) then v = valueTranslator[1](v) end
-	local pos = self.m_curve:ValueToUiCoordinates(t,v)
-	el:SetPos(pos -el:GetSize() /2.0)
-	el:Update()
-
-	if(el:IsSelected()) then el:UpdateTextFields() end
-end
-function gui.PFMTimelineCurve:UpdateDataPoints()
-	if(self.m_editorChannel == nil) then return end
-	for i=1,#self.m_dataPoints do
-		self:UpdateDataPoint(i)
-	end
-end
-function gui.PFMTimelineCurve:SwapDataPoints(idx0,idx1)
-	local dp0 = self.m_dataPoints[idx0 +1]
-	local dp1 = self.m_dataPoints[idx1 +1]
-	dp0:SetKeyIndex(idx1)
-	dp1:SetKeyIndex(idx0)
-	self.m_dataPoints[idx0 +1] = dp1
-	self.m_dataPoints[idx1 +1] = dp0
-end
-function gui.PFMTimelineCurve:GetDataPoint(idx) return self.m_dataPoints[idx +1] end
-function gui.PFMTimelineCurve:GetDataPoints() return self.m_dataPoints end
-function gui.PFMTimelineCurve:UpdateCurveValue(i,xVal,yVal)
-	self.m_curve:UpdateCurveValue(i,xVal,yVal)
-	self:UpdateDataPoints(i +1)
-end
-function gui.PFMTimelineCurve:SetHorizontalRange(...)
-	self.m_curve:SetHorizontalRange(...)
-	self:UpdateDataPoints()
-end
-function gui.PFMTimelineCurve:SetVerticalRange(...)
-	self.m_curve:SetVerticalRange(...)
-	self:UpdateDataPoints()
-end
-function gui.PFMTimelineCurve:InterfaceTimeToDataTime(t)
-	local tg = self:GetTimelineGraph()
-	local graphData = tg:GetGraphCurve(self:GetCurveIndex())
-	return tg:InterfaceTimeToDataTime(graphData,t)
-end
-function gui.PFMTimelineCurve:DataTimeToInterfaceTime(t)
-	local tg = self:GetTimelineGraph()
-	local graphData = tg:GetGraphCurve(self:GetCurveIndex())
-	return tg:DataTimeToInterfaceTime(graphData,t)
-end
-gui.register("WIPFMTimelineCurve",gui.PFMTimelineCurve)
 
 ----------------
 
@@ -601,6 +67,7 @@ function gui.PFMTimelineGraph:OnInitialize()
 	
 	local listContainer = gui.create("WIRect",self,0,0,204,self:GetHeight(),0,0,0,1)
 	listContainer:SetColor(Color(38,38,38))
+	self.m_listContainer = listContainer
 
 	self.m_scrollContainer = gui.create("WIScrollContainer",listContainer,0,0,listContainer:GetWidth(),listContainer:GetHeight(),0,0,1,1)
 
@@ -1794,6 +1261,76 @@ function gui.PFMTimelineGraph:UpdateAxisRanges(startOffset,zoomLevel,timeStartOf
 	for i=1,#self.m_graphs do
 		self:UpdateGraphCurveAxisRanges(i)
 	end
+end
+function gui.PFMTimelineGraph:GetTimeRange()
+	local minTime = math.huge
+	local maxTime = -math.huge
+	for _,graph in ipairs(self.m_graphs) do
+		if(graph.curve:IsValid()) then
+			local editorKeys = graph.curve:GetEditorKeys()
+			if(editorKeys:GetTimeCount() > 0) then
+				local t0 = editorKeys:GetTime(0)
+				local t1 = editorKeys:GetTime(editorKeys:GetTimeCount() -1)
+				minTime = math.min(minTime,t0)
+				maxTime = math.max(maxTime,t1)
+			end
+		end
+	end
+	if(minTime == math.huge) then return 0,0 end
+	return minTime,maxTime
+end
+function gui.PFMTimelineGraph:GetDataRange()
+	local minTime = math.huge
+	local maxTime = -math.huge
+	local minValue = math.huge
+	local maxValue = -math.huge
+	for _,graph in ipairs(self.m_graphs) do
+		if(graph.curve:IsValid()) then
+			local dataPoints = graph.curve:GetDataPoints()
+			if(#dataPoints > 0) then
+				local dp0 = dataPoints[1]
+				local t0 = dp0:GetTime()
+				local v0 = dp0:GetValue()
+
+				local dp1 = dataPoints[#dataPoints]
+				local t1 = dp1:GetTime()
+				local v1 = dp1:GetValue()
+
+				minTime = math.min(minTime,t0)
+				maxTime = math.max(maxTime,t1)
+
+				minValue = math.min(minValue,v0)
+				maxValue = math.max(maxValue,v1)
+			end
+		end
+	end
+	if(minTime == math.huge) then return 0,0,0,0 end
+	return minTime,maxTime,minValue,maxValue
+end
+function gui.PFMTimelineGraph:FitViewToDataRange()
+	local minTime,maxTime,minVal,maxVal = self:GetDataRange()
+	if(minTime == maxTime) then return end
+	local timeLine = self.m_timeline:GetTimeline()
+	local w = self.m_graphContainer:GetWidth()
+	local h = self.m_graphContainer:GetHeight()
+	local xOffset = self.m_dataAxisStrip:GetRight()
+	w = w -xOffset
+
+	local axisTime = timeLine:GetTimeAxis():GetAxis()
+	local axisData = timeLine:GetDataAxis():GetAxis()
+
+	local margin = 20.0
+	local marginT = axisTime:XDeltaToValue(margin)
+	local marginV = axisData:XDeltaToValue(margin)
+	minTime = minTime -marginT
+	maxTime = maxTime +marginT
+	minVal = minVal -marginV
+	maxVal = maxVal +marginV
+
+	axisTime:SetRange(minTime,maxTime,w)
+	axisData:SetRange(minVal,maxVal,h)
+	axisTime:SetStartOffset(axisTime:GetStartOffset() -axisTime:XDeltaToValue(xOffset))
+	timeLine:Update()
 end
 function gui.PFMTimelineGraph:SetupControl(filmClip,actor,targetPath,item,color,fValueTranslator,valueType,typeComponentIndex)
 	local graph,graphIndex
