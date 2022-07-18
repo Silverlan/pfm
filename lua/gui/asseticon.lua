@@ -257,7 +257,9 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 	mdlView:SetVisible(false)
 
 	data = nil
-	console.run("asset_clear_unused")
+	asset.clear_unused(asset.TYPE_MODEL)
+	asset.clear_unused(asset.TYPE_MATERIAL)
+	asset.clear_unused(asset.TYPE_TEXTURE)
 
 	self:GenerateNextIcon()
 end
@@ -289,10 +291,10 @@ function gui.AssetIcon.IconGenerator:GenerateNextIcon()
 	self.m_saveImage = true
 	local data = self.m_mdlQueue[1]
 	print("Generating next icon for model " .. data.model .. "...")
-	local mdlView = is_character_model(data.model) and self.m_modelViewCharacter or self.m_modelView
-	mdlView:SetVisible(true)
 
 	local f = function()
+		local mdlView = is_character_model(data.model) and self.m_modelViewCharacter or self.m_modelView
+		mdlView:SetVisible(true)
 		set_model_view_model(mdlView,data.model,data.settings,data.iconPath)
 		self.m_tStartFrameIndex = mdlView:GetFrameIndex()
 	end

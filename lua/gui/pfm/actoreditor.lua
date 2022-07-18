@@ -40,7 +40,21 @@ function gui.PFMActorEditor:OnInitialize()
 	end)
 	self.m_btTools:SetX(self:GetWidth() -self.m_btTools:GetWidth())
 	self.m_btTools:SetupContextMenu(function(pContext)
-		pContext:AddItem(locale.get_text("pfm_create_new_prop"),function()
+		pContext:AddItem(locale.get_text("pfm_create_new_static_prop"),function()
+			gui.open_model_dialog(function(dialogResult,mdlName)
+				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
+				if(self:IsValid() == false) then return end
+				local actor = self:CreateNewActor()
+				if(actor == nil) then return end
+				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
+				self:CreateNewActorComponent(actor,"model",false)
+				self:CreateNewActorComponent(actor,"render",false)
+				self:CreateNewActorComponent(actor,"pfm_baked_lighting",false)
+				-- self:CreateNewActorComponent(actor,"transform",false)
+				self:UpdateActorComponents(actor)
+			end)
+		end)
+		pContext:AddItem(locale.get_text("pfm_create_new_dynamic_prop"),function()
 			gui.open_model_dialog(function(dialogResult,mdlName)
 				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
 				if(self:IsValid() == false) then return end
@@ -63,6 +77,7 @@ function gui.PFMActorEditor:OnInitialize()
 				self:CreateNewActorComponent(actor,"model",false)
 				self:CreateNewActorComponent(actor,"render",false)
 				self:CreateNewActorComponent(actor,"animated",false)
+				self:CreateNewActorComponent(actor,"eye",false)
 				-- self:CreateNewActorComponent(actor,"transform",false)
 				self:UpdateActorComponents(actor)
 			end)
@@ -136,10 +151,6 @@ function gui.PFMActorEditor:OnInitialize()
 
 			self:UpdateActorComponents(actor)
 		end)
-		pContext:AddItem(locale.get_text("pfm_create_new_actor"),function()
-			if(self:IsValid() == false) then return end
-			local actor = self:CreateNewActor()
-		end)
 		--[[pContext:AddItem(locale.get_text("pfm_create_new_volume_simple"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
@@ -184,6 +195,10 @@ function gui.PFMActorEditor:OnInitialize()
 			transform:SetScale(extents)
 			actor:SetTransform(transform)
 			self:UpdateActorComponents(actor)
+		end)
+		pContext:AddItem(locale.get_text("pfm_create_new_actor"),function()
+			if(self:IsValid() == false) then return end
+			local actor = self:CreateNewActor()
 		end)
 
 		local pBakingItem,pBakingMenu = pContext:AddSubMenu(locale.get_text("pfm_baking"))
