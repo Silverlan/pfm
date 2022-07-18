@@ -1319,6 +1319,9 @@ function gui.PFMTimelineGraph:FitViewToDataRange()
 	local axisTime = timeLine:GetTimeAxis():GetAxis()
 	local axisData = timeLine:GetDataAxis():GetAxis()
 
+	axisTime:SetRange(minTime,maxTime,w)
+	axisData:SetRange(minVal,maxVal,h)
+
 	local margin = 20.0
 	local marginT = axisTime:XDeltaToValue(margin)
 	local marginV = axisData:XDeltaToValue(margin)
@@ -1327,8 +1330,10 @@ function gui.PFMTimelineGraph:FitViewToDataRange()
 	minVal = minVal -marginV
 	maxVal = maxVal +marginV
 
+	-- Need to update a second time to account for the margin
 	axisTime:SetRange(minTime,maxTime,w)
 	axisData:SetRange(minVal,maxVal,h)
+
 	axisTime:SetStartOffset(axisTime:GetStartOffset() -axisTime:XDeltaToValue(xOffset))
 	timeLine:Update()
 end
@@ -1374,9 +1379,9 @@ function gui.PFMTimelineGraph:OnVisibilityChanged(visible)
 	local timeline = self.m_timeline:GetTimeline()
 	timeline:ClearBookmarks()
 end
-
+function gui.PFMTimelineGraph:GetPropertyList() return self.m_transformList end
 function gui.PFMTimelineGraph:AddControl(filmClip,actor,controlData,memberInfo,valueTranslator)
-	local itemCtrl = self.m_transformList:AddItem(controlData.name)
+	local itemCtrl = self.m_transformList:AddItem(controlData.name,nil,nil,controlData.name)
 	local function addChannel(item,fValueTranslator,color,typeComponentIndex)
 		self:SetupControl(filmClip,actor,controlData.path,item,color or Color.Red,fValueTranslator,memberInfo.type,typeComponentIndex or 0)
 	end

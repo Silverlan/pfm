@@ -779,9 +779,13 @@ end
 function gui.PFMActorEditor:OnThink()
 	if(self.m_updateSelectedEntities) then
 		self.m_updateSelectedEntities = nil
-		self:DisableThinking()
 		self:UpdateSelectedEntities()
 	end
+	if(self.m_controlOverlayUpdateRequired) then
+		self.m_controlOverlayUpdateRequired = nil
+		self:UpdateAnimatedPropertyOverlays()
+	end
+	self:DisableThinking()
 end
 function gui.PFMActorEditor:GetFilmClip() return self.m_filmClip end
 function gui.PFMActorEditor:SelectActor(actor,deselectCurrent)
@@ -1432,6 +1436,69 @@ function gui.PFMActorEditor:UpdateControlValues()
 		end
 	end
 end
+function gui.PFMActorEditor:UpdateAnimatedPropertyOverlay(uuid,controlData)
+	local pm = tool.get_filmmaker()
+	local timeline = pm:GetTimeline()
+	local inGraphEditor = (timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH)
+
+	local filmClip = self:GetFilmClip()
+	local actor = (filmClip ~= nil) and filmClip:FindActorByUniqueId(uuid) or nil
+	local animManager = pm:GetAnimationManager()
+	local anim,channel,animClip
+	if(actor ~= nil and animManager ~= nil) then
+		anim,channel,animClip = animManager:FindAnimationChannel(actor,controlData.controlData.path)
+	end
+	util.remove(controlData.animatedPropertyOverlay)
+	if(channel == nil) then
+		-- Property is not animated
+		return
+	end
+
+	local ctrl = controlData.control
+	if(util.is_valid(ctrl) == false) then return end
+	controlData.animatedPropertyOverlay = nil
+	local outlineParent = ctrl
+	if(inGraphEditor == false) then
+		local elDisabled = gui.create("WIRect",ctrl,0,0,ctrl:GetWidth(),ctrl:GetHeight(),0,0,1,1)
+		elDisabled:SetColor(Color(0,0,0,200))
+		elDisabled:SetZPos(10)
+		elDisabled:SetMouseInputEnabled(true)
+		elDisabled:SetCursor(gui.CURSOR_SHAPE_HAND)
+		elDisabled:SetTooltip(locale.get_text("pfm_animated_property_tooltip"))
+		elDisabled:AddCallback("OnMouseEvent",function(el,button,state,mods)
+			if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
+				local timeline = tool.get_filmmaker():GetTimeline()
+				if(util.is_valid(timeline)) then
+					timeline:SetEditor(gui.PFMTimeline.EDITOR_GRAPH)
+					local graphEditor = timeline:GetGraphEditor()
+					if(util.is_valid(graphEditor)) then
+						local tree = graphEditor:GetPropertyList()
+						if(util.is_valid(tree)) then
+							tree:DeselectAll()
+							local item = tree:GetRoot():GetItemByIdentifier(controlData.controlData.name)
+							if(util.is_valid(item)) then item:Select() end
+							graphEditor:FitViewToDataRange()
+						end
+					end
+				end
+				return util.EVENT_REPLY_HANDLED
+			end
+		end)
+		controlData.animatedPropertyOverlay = elDisabled
+		outlineParent = elDisabled
+	end
+
+	local elOutline = gui.create("WIOutlinedRect",outlineParent,0,0,outlineParent:GetWidth(),outlineParent:GetHeight(),0,0,1,1)
+	elOutline:SetColor(pfm.get_color_scheme_color("orange"))
+	controlData.animatedPropertyOverlay = controlData.animatedPropertyOverlay or elDisabled
+end
+function gui.PFMActorEditor:UpdateAnimatedPropertyOverlays()
+	for uuid,controls in pairs(self.m_activeControls) do
+		for path,ctrlData in pairs(controls) do
+			self:UpdateAnimatedPropertyOverlay(uuid,ctrlData)
+		end
+	end
+end
 function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,controlData)
 	local memberInfo = self:GetMemberInfo(actor,controlData.path)
 	if(memberInfo == nil) then
@@ -1765,9 +1832,14 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			end
 		end)
 	end
+	self:SetPropertyAnimationOverlaysDirty()
 	self:UpdateControlValue(controlData)
 	self:CallCallbacks("OnControlSelected",actor,udmComponent,controlData,ctrl)
 	return ctrl
+end
+function gui.PFMActorEditor:SetPropertyAnimationOverlaysDirty()
+	self.m_controlOverlayUpdateRequired = true
+	self:EnableThinking()
 end
 function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
 	if(chainLength <= 1) then return false end

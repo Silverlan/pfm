@@ -1,5 +1,6 @@
 pfm_actor_editor_add_ik_control = "IK-Control hinzufügen"
 pfm_actor_editor_add_ik_control_chain = "Ketten-Länge: {0} ({1})"
+pfm_animated_property_tooltip = "Eigenschaft ist animiert. Hier klicken um zum Graph Editor zu wechseln."
 pfm_asset_export = "Asset exportieren"
 pfm_asset_icon_add_to_favorites = "Zu Favoriten hinzufügen"
 pfm_asset_icon_copy_path_to_clipboard = "Icon-Pfad in Zwischenablage speichern"

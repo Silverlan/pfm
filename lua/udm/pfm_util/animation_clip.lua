@@ -17,11 +17,11 @@ end
 
 function pfm.udm.AnimationClip:GetChannel(path,type,addIfNotExists)
 	local channel = self:FindChannel(path)
-	if(channel ~= nil) then return channel end
+	if(channel ~= nil) then return channel,false end
 	if(addIfNotExists ~= true) then return end
 	channel = self:AddChannel(type)
 	channel:SetTargetPath(path)
-	return channel
+	return channel,true
 end
 
 function pfm.udm.AnimationClip:RemoveChannel(path)

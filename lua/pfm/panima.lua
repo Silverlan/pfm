@@ -112,8 +112,9 @@ function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists,typ
 	local anim = animClip:GetPanimaAnimation()
 	if(anim == nil) then return end
 	local channel = anim:FindChannel(path)
+	local newChannel = false
 	if(channel == nil and addIfNotExists) then
-		channel = animClip:GetChannel(path,type,true)
+		channel,newChannel = animClip:GetChannel(path,type,true)
 		animClip:SetPanimaAnimationDirty()
 
 		-- New channel added; Reload animation
@@ -121,7 +122,7 @@ function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists,typ
 		if(util.is_valid(ent)) then self:PlayActorAnimation(ent) end
 		anim = animClip:GetPanimaAnimation()
 	end
-	return anim,anim:FindChannel(path),animClip
+	return anim,anim:FindChannel(path),animClip,newChannel
 end
 
 function pfm.AnimationManager:SetValueExpression(actor,path,expr,type)
@@ -296,7 +297,16 @@ function pfm.AnimationManager:SetChannelValue(actor,path,time,value,udmType,addK
 		return
 	end
 	pfm.log("Setting channel value " .. tostring(value) .. " (base index " .. (baseIndex and baseIndex or "n/a") .. ") of type " .. udm.type_to_string(udmType) .. " at timestamp " .. time .. " with channel path '" .. path .. "' to actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
-	local anim,channel,animClip = self:FindAnimationChannel(actor,path,true,udmType)
+	local anim,channel,animClip,isNewChannel = self:FindAnimationChannel(actor,path,true,udmType)
+
+	if(isNewChannel) then
+		self:CallCallbacks("OnAnimationChannelAdded",{
+			actor = actor,
+			animation = anim,
+			channel = channel
+		})
+	end
+
 	assert(channel ~= nil)
 	if(channel == nil) then return end
 

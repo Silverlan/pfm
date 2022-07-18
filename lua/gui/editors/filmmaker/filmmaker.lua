@@ -664,6 +664,11 @@ function gui.WIFilmmaker:OnInitialize()
 	end]]
 	pfm.ProjectManager.OnInitialize(self)
 	self:SetCachedMode(false)
+
+	self:GetAnimationManager():AddCallback("OnAnimationChannelAdded",function()
+		local actorEditor = self:GetActorEditor()
+		if(util.is_valid(actorEditor)) then actorEditor:SetPropertyAnimationOverlaysDirty() end
+	end)
 end
 function gui.WIFilmmaker:ImportMap(map)
 	map = file.remove_file_extension(map,asset.get_supported_extensions(asset.TYPE_MAP))

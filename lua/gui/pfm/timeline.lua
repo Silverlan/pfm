@@ -156,7 +156,11 @@ function gui.PFMTimeline:SetEditor(type)
 	self:UpdateEditorButtonInactiveMaterial(gui.PFMTimeline.EDITOR_MOTION,"gui/pfm/icon_mode_motioneditor","gui/pfm/icon_mode_motioneditor_preselected")
 	self:UpdateEditorButtonInactiveMaterial(gui.PFMTimeline.EDITOR_GRAPH,"gui/pfm/icon_mode_grapheditor","gui/pfm/icon_mode_grapheditor_preselected")
 
-	tool.get_filmmaker():UpdateBookmarks()
+	local pm = tool.get_filmmaker()
+	pm:UpdateBookmarks()
+
+	local actorEditor = pm:GetActorEditor()
+	if(util.is_valid(actorEditor)) then actorEditor:UpdateAnimatedPropertyOverlays() end
 end
 function gui.PFMTimeline:UpdateEditorButtonInactiveMaterial(editorType,matRegular,matPreselected)
 	local bt = ((editorType == gui.PFMTimeline.EDITOR_CLIP) and self.m_btClipEditor) or
