@@ -119,7 +119,7 @@ function ents.PFMFilmClip:UpdateCamera()
 	local cam = self:GetClipData():GetCamera()
 	if(cam ~= nil) then
 		local entCam = cam:FindEntity()
-		self.m_camera = entCam and entCam:GetComponent("pfm_camera") or entCam
+		self.m_camera = entCam and entCam:GetComponent("pfm_camera") or nil
 		if(util.is_valid(self.m_camera)) then
 			self.m_camera:SetFrustumModelVisible(true)
 		end
