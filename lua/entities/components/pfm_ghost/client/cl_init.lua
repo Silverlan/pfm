@@ -53,13 +53,13 @@ function ents.PFMGhost:OnTick()
 	if(util.is_valid(self.m_viewport) == false) then return end
 	local viewport = self.m_viewport
 
-	local startPos,dir = ents.ClickComponent.get_ray_data()
+	local startPos,dir,vpData = ents.ClickComponent.get_ray_data()
 	if(startPos == nil) then return end
 	local maxDist = 2048.0
 	local actor,hitPos,pos,hitData = pfm.raycast(startPos,dir,maxDist)
 	local hasHit = (hitPos ~= nil)
 	local posDst = hitPos
-	if(posDst == nil) then
+	if(posDst == nil and util.is_valid(vpData.camera)) then
 		local min,max = Vector(),Vector()
 		if(renderC ~= nil) then min,max = renderC:GetLocalRenderBounds() end
 		local maxAxisLength = math.max(max.x -min.x,max.y -min.y,max.z -min.z)
@@ -67,7 +67,7 @@ function ents.PFMGhost:OnTick()
 
 		-- Since we have no level as reference, we'll try to find a good position for placing the object
 		-- by creating an implicit plane relative to the camera (angled by 20 degrees)
-		local rot = entCam:GetRotation()
+		local rot = vpData.camera:GetEntity():GetRotation()
 		rot = rot *EulerAngles(-20,0,0):ToQuaternion()
 		local planeUp = rot:GetUp()
 		local d = planeUp:DotProduct(startPos)
@@ -123,7 +123,7 @@ function ents.PFMGhost:OnTick()
 
 	if(hasHit) then
 		local forward = vector.FORWARD
-		local dir = hitData:CalcHitNormal()
+		local dir = Vector(0,1,0) -- hitData:CalcHitNormal()
 		if(dir ~= nil) then
 			if(math.abs(dir:DotProduct(forward)) > 0.99) then
 				forward = vector.RIGHT
