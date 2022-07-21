@@ -162,6 +162,13 @@ function gui.PFMActorEditor:OnInitialize()
 			actor:SetTransform(transform)
 			self:UpdateActorComponents(actor)
 		end)]]
+		pContext:AddItem(locale.get_text("pfm_create_new_fog_controller"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			self:CreateNewActorComponent(actor,"fog_controller")
+			self:CreateNewActorComponent(actor,"color")
+			self:UpdateActorComponents(actor)
+		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_volume"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
