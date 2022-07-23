@@ -162,13 +162,6 @@ function gui.PFMActorEditor:OnInitialize()
 			actor:SetTransform(transform)
 			self:UpdateActorComponents(actor)
 		end)]]
-		pContext:AddItem(locale.get_text("pfm_create_new_fog_controller"),function()
-			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"fog_controller")
-			self:CreateNewActorComponent(actor,"color")
-			self:UpdateActorComponents(actor)
-		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_volume"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
@@ -229,17 +222,30 @@ function gui.PFMActorEditor:OnInitialize()
 
 		local filmClip = self:GetFilmClip()
 		local hasSkyComponent = false
+		local hasFogComponent = false
 		if(filmClip ~= nil) then
 			for _,actor in ipairs(filmClip:GetActorList()) do
 				local c = actor:FindComponent("pfm_sky")
 				if(c ~= nil) then
 					hasSkyComponent = true
-					break
+				end
+				local c = actor:FindComponent("fog_controller")
+				if(c ~= nil) then
+					hasFogComponent = true
 				end
 			end
 		end
 		if(hasSkyComponent == false) then
 			pContext:AddItem(locale.get_text("pfm_add_sky"),function() self:AddSkyActor() end)
+		end
+		if(hasFogComponent == false) then
+			pContext:AddItem(locale.get_text("pfm_create_new_fog_controller"),function()
+				local actor = self:CreateNewActor()
+				if(actor == nil) then return end
+				self:CreateNewActorComponent(actor,"fog_controller")
+				self:CreateNewActorComponent(actor,"color")
+				self:UpdateActorComponents(actor)
+			end)
 		end
 
 		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
