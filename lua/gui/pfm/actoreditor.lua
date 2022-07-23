@@ -1495,20 +1495,25 @@ function gui.PFMActorEditor:UpdateAnimatedPropertyOverlay(uuid,controlData)
 		elDisabled:SetTooltip(locale.get_text("pfm_animated_property_tooltip"))
 		elDisabled:AddCallback("OnMouseEvent",function(el,button,state,mods)
 			if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
-				local timeline = tool.get_filmmaker():GetTimeline()
-				if(util.is_valid(timeline)) then
-					timeline:SetEditor(gui.PFMTimeline.EDITOR_GRAPH)
-					local graphEditor = timeline:GetGraphEditor()
-					if(util.is_valid(graphEditor)) then
-						local tree = graphEditor:GetPropertyList()
-						if(util.is_valid(tree)) then
-							tree:DeselectAll()
-							local item = tree:GetRoot():GetItemByIdentifier(controlData.controlData.name)
-							if(util.is_valid(item)) then item:Select() end
-							graphEditor:FitViewToDataRange()
+				-- We have to switch to the graph editor, but that changes the overlay state (which invalidates this callback),
+				-- so we have to delay it
+				local propertyName = controlData.controlData.name
+				time.create_simple_timer(0.0,function()
+					local timeline = tool.get_filmmaker():GetTimeline()
+					if(util.is_valid(timeline)) then
+						timeline:SetEditor(gui.PFMTimeline.EDITOR_GRAPH)
+						local graphEditor = timeline:GetGraphEditor()
+						if(util.is_valid(graphEditor)) then
+							local tree = graphEditor:GetPropertyList()
+							if(util.is_valid(tree)) then
+								tree:DeselectAll()
+								local item = tree:GetRoot():GetItemByIdentifier(propertyName)
+								if(util.is_valid(item)) then item:Select() end
+								graphEditor:FitViewToDataRange()
+							end
 						end
 					end
-				end
+				end)
 				return util.EVENT_REPLY_HANDLED
 			end
 		end)
