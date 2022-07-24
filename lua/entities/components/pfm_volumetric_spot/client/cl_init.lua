@@ -30,7 +30,7 @@ function ents.PFMVolumetricSpot:GenerateModel()
 
 	local spotC = ent:GetComponent(ents.COMPONENT_LIGHT_SPOT)
 	local coneAngle = spotC:GetOuterConeAngle()
-	local endRadius = maxDist *math.tan(math.rad(coneAngle))
+	local endRadius = maxDist *math.tan(math.rad(coneAngle)) /2.0
 
 	--[[auto *mat = static_cast<CMaterial*>(client->CreateMaterial("lightcone","light_cone"));
 	auto &data = mat->GetDataBlock();
@@ -72,7 +72,7 @@ function ents.PFMVolumetricSpot:GenerateModel()
 		end
 	end
 	group:AddMesh(mesh)
-	mdl:AddMaterial(0,game.load_material("volumes/generic_volume"))--mat);
+	mdl:AddMaterial(0,game.load_material("volumes/generic_volume"))
 	mdl:Update(game.Model.FUPDATE_ALL)
 
 	ent:SetModel(mdl)
