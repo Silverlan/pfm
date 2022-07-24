@@ -20,7 +20,7 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
-	self:AddEntityComponent(ents.COMPONENT_RENDER)
+	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_COLOR)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_CLICK)
@@ -30,6 +30,8 @@ function Component:Initialize()
 	self:BindEvent(ents.ClickComponent.EVENT_ON_CLICK,"OnClick")
 	-- self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"UpdateScale")
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
+
+	renderC:SetExemptFromOcclusionCulling(true)
 end
 function Component:UpdateScale()
 	local cam = game.get_render_scene_camera()
