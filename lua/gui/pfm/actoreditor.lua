@@ -166,34 +166,29 @@ function gui.PFMActorEditor:OnInitialize()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube") end)
-			self:CreateNewActorComponent(actor,"pfm_volumetric",false)
+			local volC = self:CreateNewActorComponent(actor,"pfm_volumetric",false)
+			local boundsC = self:CreateNewActorComponent(actor,"pfm_cuboid_bounds",false)
+			self:CreateNewActorComponent(actor,"color",false)
 
 			-- Calc scene extents
 			local min = Vector(math.huge,math.huge,math.huge)
 			local max = Vector(-math.huge,-math.huge,-math.huge)
 			for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_RENDER)}) do
-				local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
-				local rMin,rMax = renderC:GetAbsoluteRenderBounds()
-				for i=0,2 do
-					min:Set(i,math.min(min:Get(i),rMin:Get(i)))
-					max:Set(i,math.max(max:Get(i),rMax:Get(i)))
+				if(ent:HasComponent(ents.COMPONENT_CAMERA) == false) then
+					local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+					local rMin,rMax = renderC:GetAbsoluteRenderBounds()
+					for i=0,2 do
+						min:Set(i,math.min(min:Get(i),rMin:Get(i)))
+						max:Set(i,math.max(max:Get(i),rMax:Get(i)))
+					end
 				end
 			end
 			if(min.x == math.huge) then
 				min = Vector()
 				max = Vector()
 			end
-			local center = (min +max) /2.0
-			min = min -center
-			max = max -center
-			local extents = (max -min) /2.0
-			pfm.log("Setting volume extents to " .. tostring(extents) .. ".",pfm.LOG_CATEGORY_PFM)
-
-			local transform = math.ScaledTransform()
-			transform:SetOrigin(center)
-			transform:SetRotation(Quaternion())
-			transform:SetScale(extents)
-			actor:SetTransform(transform)
+			boundsC:SetMemberValue("minBounds",udm.TYPE_VECTOR3,min)
+			boundsC:SetMemberValue("maxBounds",udm.TYPE_VECTOR3,max)
 			self:UpdateActorComponents(actor)
 		end)
 		pContext:AddItem(locale.get_text("pfm_create_new_actor"),function()
@@ -208,6 +203,7 @@ function gui.PFMActorEditor:OnInitialize()
 			self:CreateNewActorComponent(actor,"pfm_baked_lighting")
 			self:CreateNewActorComponent(actor,"light_map_data_cache")
 			self:CreateNewActorComponent(actor,"light_map")
+			self:CreateNewActorComponent(actor,"pfm_cuboid_bounds")
 			self:UpdateActorComponents(actor)
 		end)
 		pBakingMenu:AddItem(locale.get_text("pfm_create_reflection_probe"),function()
@@ -1860,6 +1856,8 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 
 						local animC = entActor:GetComponent(ents.COMPONENT_PANIMA)
 						if(animC ~= nil) then animC:ReloadAnimation() end
+
+						self:SetPropertyAnimationOverlaysDirty()
 					end)
 				end
 			end

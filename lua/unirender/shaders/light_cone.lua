@@ -15,7 +15,7 @@ end
 function unirender.LightCone:InitializeCombinedPass(desc,outputNode)
 	local vol = desc:AddNode(unirender.NODE_PRINCIPLED_VOLUME)
 	vol:SetProperty(unirender.Node.principled_volume.IN_COLOR,Vector(0.5,0.5,0.5))
-	vol:SetProperty(unirender.Node.principled_volume.IN_DENSITY,0.05)
+	vol:SetProperty(unirender.Node.principled_volume.IN_DENSITY,0.1)
 	vol:SetProperty(unirender.Node.principled_volume.IN_ANISOTROPY,0.0)
 	vol:SetProperty(unirender.Node.principled_volume.IN_ABSORPTION_COLOR,Vector(0,0,0))
 	vol:SetProperty(unirender.Node.principled_volume.IN_EMISSION_STRENGTH,0.0)
