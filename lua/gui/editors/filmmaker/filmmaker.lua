@@ -204,6 +204,7 @@ function gui.WIFilmmaker:OnInitialize()
 	sceneCreateInfo.sampleCount = prosper.SAMPLE_COUNT_1_BIT
 	local gameScene = game.get_scene()
 	local gameRenderer = gameScene:GetRenderer()
+	gameRenderer:GetEntity():AddComponent(ents.COMPONENT_RENDERER_PP_VOLUMETRIC)
 	local scene = ents.create_scene(sceneCreateInfo) -- ,gameScene)
 	scene:SetRenderer(gameRenderer)
 	local cam = gameScene:GetActiveCamera()
