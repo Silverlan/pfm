@@ -25,6 +25,7 @@ function pfm.PragmaRenderScene:__init(width,height)
 	rasterizer:SetSSAOEnabled(true)
 	renderer:InitializeRenderTarget(gameScene,width,height)
 	scene:SetRenderer(renderer)
+	scene:SetWorldEnvironment(gameScene:GetWorldEnvironment())
 	self.m_renderer = renderer
 
 	self.m_width = width
@@ -147,6 +148,31 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 	self.m_drawCommandBuffer:Flush()
 	local imgOutput = self.m_renderer:GetHDRPresentationTexture():GetImage()
 
+	local function finalize()
+		self:RestoreCamera()
+
+		self.m_progress = (self.m_numFrames > 1) and (self.m_curFrame /(self.m_numFrames -1)) or 1.0
+		if(self.m_curFrame < (self.m_numFrames -1)) then
+			self.m_curFrame = self.m_curFrame +1
+			self:RenderNextFrame(true)
+		else
+			self:Clear()
+		end
+	end
+
+	local baseSettings = tool.get_filmmaker():GetSettings():GetRenderSettings()
+	local mode = baseSettings:GetMode()
+	if(mode == fudm.PFMRenderSettings.MODE_DEPTH) then
+		local rasterC = self.m_renderer:GetEntity():GetComponent(ents.COMPONENT_RASTERIZATION_RENDERER)
+		if(rasterC ~= nil) then
+			imgOutput = rasterC:GetPostPrepassDepthTexture():GetImage()
+			local imgBuf = imgOutput:ToImageBuffer(false,false,util.ImageBuffer.FORMAT_RGBA16,prosper.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+			self.m_imageBuffer = imgBuf
+			finalize()
+			return
+		end
+	end
+
 	if(self.m_renderPanorama) then
 		if(self.m_curFrame == 0) then
 			local width = imgOutput:GetWidth()
@@ -217,15 +243,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 		local res = unirender.apply_color_transform(self.m_imageBuffer,nil,nil,self.m_renderSettings:GetColorTransform(),self.m_renderSettings:GetColorTransformLook())
 	end
 
-	self:RestoreCamera()
-
-	self.m_progress = (self.m_numFrames > 1) and (self.m_curFrame /(self.m_numFrames -1)) or 1.0
-	if(self.m_curFrame < (self.m_numFrames -1)) then
-		self.m_curFrame = self.m_curFrame +1
-		self:RenderNextFrame(true)
-	else
-		self:Clear()
-	end
+	finalize()
 end
 function pfm.PragmaRenderJob:Start()
 	local cam = game.get_scene():GetActiveCamera()
