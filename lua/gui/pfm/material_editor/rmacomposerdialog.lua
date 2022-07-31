@@ -40,7 +40,7 @@ function gui.RMAComposerDialog:OnThink()
 	if(self.m_aoJob:IsComplete() == false) then return end
 	local status = self.m_aoJob:GetStatus()
 	if(status == util.ParallelJob.JOB_STATUS_SUCCESSFUL) then
-		local result = self.m_aoJob:GetResult()
+		local result = self.m_aoJob:GetResult():GetImage("COLOR")
 		local img = prosper.create_image(result)
 		local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),prosper.SamplerCreateInfo())
 		tex:SetDebugName("rma_composer_dialog_tex")
