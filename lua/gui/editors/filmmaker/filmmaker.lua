@@ -406,29 +406,31 @@ function gui.WIFilmmaker:OnInitialize()
 	pMenuBar:AddItem(locale.get_text("view"),function(pContext)
 
 	end)]]
-	pMenuBar:AddItem(locale.get_text("render"),function(pContext)
-		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pbr"))
-		pSubMenu:AddItem(locale.get_text("pfm_generate_ambient_occlusion_maps"),function(pItem)
-			if(util.is_valid(self) == false) then return end
-			local entPbrConverter = ents.find_by_component("pbr_converter")[1]
-			if(util.is_valid(entPbrConverter) == false) then return end
-			local pbrC = entPbrConverter:GetComponent(ents.COMPONENT_PBR_CONVERTER)
-			for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_MODEL)}) do
-				if(ent:IsWorld() == false) then
-					local mdl = ent:GetModel()
-					if(mdl == nil or ent:IsWorld()) then return end
-					pbrC:GenerateAmbientOcclusionMaps(mdl)
-					-- TODO: Also include all models for entire project which haven't been loaded yet
+	if(self:IsDeveloperModeEnabled()) then
+		pMenuBar:AddItem(locale.get_text("render"),function(pContext)
+			local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pbr"))
+			pSubMenu:AddItem(locale.get_text("pfm_generate_ambient_occlusion_maps"),function(pItem)
+				if(util.is_valid(self) == false) then return end
+				local entPbrConverter = ents.find_by_component("pbr_converter")[1]
+				if(util.is_valid(entPbrConverter) == false) then return end
+				local pbrC = entPbrConverter:GetComponent(ents.COMPONENT_PBR_CONVERTER)
+				for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_MODEL)}) do
+					if(ent:IsWorld() == false) then
+						local mdl = ent:GetModel()
+						if(mdl == nil or ent:IsWorld()) then return end
+						pbrC:GenerateAmbientOcclusionMaps(mdl)
+						-- TODO: Also include all models for entire project which haven't been loaded yet
+					end
 				end
-			end
-		end)
-		pSubMenu:AddItem(locale.get_text("pfm_rebuild_reflection_probes"),function(pItem)
-			
-		end)
-		pSubMenu:Update()
+			end)
+			pSubMenu:AddItem(locale.get_text("pfm_rebuild_reflection_probes"),function(pItem)
+				
+			end)
+			pSubMenu:Update()
 
-		pContext:Update()
-	end)
+			pContext:Update()
+		end)
+	end
 	--[[pMenuBar:AddItem(locale.get_text("map"),function(pContext)
 		pContext:AddItem(locale.get_text("pfm_generate_lightmaps"),function(pItem)
 			
@@ -453,40 +455,42 @@ function gui.WIFilmmaker:OnInitialize()
 		pContext:Update()
 	end)
 	pMenuBar:AddItem(locale.get_text("tools"),function(pContext)
-		pContext:AddItem(locale.get_text("pfm_export_map"),function(pItem)
-			if(util.is_valid(self) == false) then return end
-			local mapName = game.get_map_name()
-			local exportInfo = game.Model.ExportInfo()
-			exportInfo.exportAnimations = false
-			exportInfo.exportSkinnedMeshData = false
-			exportInfo.exportMorphTargets = false
-			exportInfo.exportImages = true
-			exportInfo.saveAsBinary = true
-			exportInfo.verbose = true
-			exportInfo.generateAo = false
-			exportInfo.mergeMeshesByMaterial = true
-			exportInfo.imageFormat = game.Model.ExportInfo.IMAGE_FORMAT_PNG
-			exportInfo.scale = util.units_to_metres(1)
+		if(self:IsDeveloperModeEnabled()) then
+			pContext:AddItem(locale.get_text("pfm_export_map"),function(pItem)
+				if(util.is_valid(self) == false) then return end
+				local mapName = game.get_map_name()
+				local exportInfo = game.Model.ExportInfo()
+				exportInfo.exportAnimations = false
+				exportInfo.exportSkinnedMeshData = false
+				exportInfo.exportMorphTargets = false
+				exportInfo.exportImages = true
+				exportInfo.saveAsBinary = true
+				exportInfo.verbose = true
+				exportInfo.generateAo = false
+				exportInfo.mergeMeshesByMaterial = true
+				exportInfo.imageFormat = game.Model.ExportInfo.IMAGE_FORMAT_PNG
+				exportInfo.scale = util.units_to_metres(1)
 
-			local mapExportInfo = asset.MapExportInfo()
-			local vp = self:GetViewport()
-			if(util.is_valid(vp)) then
-				local cam = vp:GetCamera()
-				if(util.is_valid(cam)) then mapExportInfo:AddCamera(cam) end
-			end
-			mapExportInfo.includeMapLightSources = false
-			for light in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_LIGHT)}) do
-				local lightC = light:GetComponent(ents.COMPONENT_LIGHT)
-				mapExportInfo:AddLightSource(lightC)
-			end
+				local mapExportInfo = asset.MapExportInfo()
+				local vp = self:GetViewport()
+				if(util.is_valid(vp)) then
+					local cam = vp:GetCamera()
+					if(util.is_valid(cam)) then mapExportInfo:AddCamera(cam) end
+				end
+				mapExportInfo.includeMapLightSources = false
+				for light in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_LIGHT)}) do
+					local lightC = light:GetComponent(ents.COMPONENT_LIGHT)
+					mapExportInfo:AddLightSource(lightC)
+				end
 
-			local success,errMsg = asset.export_map(mapName,exportInfo,mapExportInfo)
-			if(success) then
-				util.open_path_in_explorer("export/maps/" .. mapName .. "/" .. mapName .. "/",mapName .. ".glb")
-				return
-			end
-			pfm.log("Unable to export map: " .. errMsg,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-		end)
+				local success,errMsg = asset.export_map(mapName,exportInfo,mapExportInfo)
+				if(success) then
+					util.open_path_in_explorer("export/maps/" .. mapName .. "/" .. mapName .. "/",mapName .. ".glb")
+					return
+				end
+				pfm.log("Unable to export map: " .. errMsg,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+			end)
+		end
 		pContext:AddItem(locale.get_text("pfm_convert_map_to_actors"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			local mapName = game.get_map_name()
