@@ -510,6 +510,14 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlResolution:SelectOption(1)
 	-- TODO: Add VR resolution options
 
+	self.m_ctrlSsFactor = p:AddDropDownMenu(locale.get_text("pfm_supersampling_factor"),"super_sampling_factor",{
+		{"1",locale.get_text("disabled")},
+		{"2","x2"},
+		{"4","x4"},
+	},1,function()
+		settings:SetSupersamplingFactor(tonumber(self.m_ctrlSsFactor:GetOptionValue(self.m_ctrlSsFactor:GetSelectedOption())))
+	end)
+
 	-- Max transparency bounces
 	self.m_ctrlMaxTransparencyBounces = p:AddSliderControl(locale.get_text("pfm_max_transparency_bounces"),"max_transparency_bounces",settings:GetMaxTransparencyBounces(),0,200,nil,1.0,true)
 	p:LinkToUDMProperty("max_transparency_bounces",settings,"maxTransparencyBounces")
@@ -926,6 +934,7 @@ function gui.PFMRenderPreview:GetRenderSettings(preview,prepareOnly)
 	settings:SetSamples(samples or self.m_ctrlSamplesPerPixel:GetValue())
 	settings:SetEmissionStrength(self.m_ctrlEmissionStrength:GetValue())
 	settings:SetMaxTransparencyBounces(self.m_ctrlMaxTransparencyBounces:GetValue())
+	settings:SetSupersamplingFactor(tonumber(self.m_ctrlSsFactor:GetOptionValue(self.m_ctrlSsFactor:GetSelectedOption())))
 	settings:SetLightIntensityFactor(self.m_ctrlLightIntensityFactor:GetValue())
 	settings:SetFrameCount(preview and 1 or self.m_ctrlFrameCount:GetValue())
 	settings:SetPreStageOnly(prepareOnly == true)

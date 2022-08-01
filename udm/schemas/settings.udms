@@ -62,6 +62,7 @@
 				"samples" {$uint32 default 40}
 				"width" {$uint32 default 1920}
 				"height" {$uint32 default 1080}
+				"supersamplingFactor" {$uint32 default 2}
 				"maxTransparencyBounces" {$uint32 default 128}
 				"lightIntensityFactor" {$float default 1.0}
 				"emissionStrength" {$float default 1.0}

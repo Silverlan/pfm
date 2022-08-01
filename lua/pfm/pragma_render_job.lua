@@ -7,7 +7,8 @@
 ]]
 
 util.register_class("pfm.PragmaRenderScene")
-function pfm.PragmaRenderScene:__init(width,height)
+function pfm.PragmaRenderScene:__init(width,height,ssFactor)
+	ssFactor = ssFactor or 1.0
 	local sceneCreateInfo = ents.SceneComponent.CreateInfo()
 	sceneCreateInfo.sampleCount = prosper.SAMPLE_COUNT_1_BIT
 
@@ -22,19 +23,50 @@ function pfm.PragmaRenderScene:__init(width,height)
 	local renderer = entRenderer:GetComponent(ents.COMPONENT_RENDERER)
 	local rasterizer = entRenderer:GetComponent(ents.COMPONENT_RASTERIZATION_RENDERER)
 	entRenderer:AddComponent("pfm_pragma_renderer")
+	local toneMappingC = entRenderer:AddComponent("renderer_pp_tone_mapping")
+	toneMappingC:SetApplyToHdrImage(true)
 	rasterizer:SetSSAOEnabled(true)
-	renderer:InitializeRenderTarget(gameScene,width,height)
+	renderer:InitializeRenderTarget(gameScene,width *ssFactor,height *ssFactor)
 	scene:SetRenderer(renderer)
 	scene:SetWorldEnvironment(gameScene:GetWorldEnvironment())
 	self.m_renderer = renderer
 
 	self.m_width = width
 	self.m_height = height
+	self.m_ssFactor = ssFactor
+	self:UpdateDownSampledRenderTexture()
+end
+function pfm.PragmaRenderScene:GetDownSampleTexture() return self.m_downSampleTex end
+function pfm.PragmaRenderScene:GetDownSampleRenderTarget() return self.m_downSampleRt end
+function pfm.PragmaRenderScene:GetDownSampleDescriptorSet() return self.m_downSampleDs end
+function pfm.PragmaRenderScene:UpdateDownSampledRenderTexture()
+	--[[if(self.m_ssFactor == 1.0) then
+		self.m_downSampleTex = nil
+		return
+	end]]
+	local imgCreateInfo = prosper.ImageCreateInfo()
+	imgCreateInfo.width = self.m_width
+	imgCreateInfo.height = self.m_height
+	imgCreateInfo.format = prosper.FORMAT_R16G16B16A16_UNORM
+	imgCreateInfo.usageFlags = bit.bor(prosper.IMAGE_USAGE_TRANSFER_SRC_BIT,prosper.IMAGE_USAGE_TRANSFER_DST_BIT)
+	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
+	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
+	imgCreateInfo.postCreateLayout = prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+	local img = prosper.create_image(imgCreateInfo)
+	local tex = prosper.create_texture(img,prosper.TextureCreateInfo(),prosper.ImageViewCreateInfo(),prosper.SamplerCreateInfo())
+	self.m_downSampleTex = tex
+	self.m_downSampleRt = prosper.create_render_target(prosper.RenderTargetCreateInfo(),{tex},shader.Graphics.get_render_pass())
+	self.m_downSampleDs = prosper.util.create_generic_image_descriptor_set(self.m_renderer:GetHDRPresentationTexture())
 end
 function pfm.PragmaRenderScene:GetResolution() return self.m_width,self.m_height end
-function pfm.PragmaRenderScene:ChangeResolution(width,height)
+function pfm.PragmaRenderScene:ChangeResolution(width,height,ssFactor)
 	if(util.is_valid(self.m_renderer) == false or util.is_valid(self.m_scene) == false) then return end
-	self.m_renderer:InitializeRenderTarget(self.m_scene,width,height)
+	if(width == self.m_width and height == self.m_height and self.m_ssFactor == ssFactor) then return end
+	self.m_ssFactor = ssFactor
+	self.m_width = width
+	self.m_height = height
+	self.m_renderer:InitializeRenderTarget(self.m_scene,width *self.m_ssFactor,height *self.m_ssFactor)
+	self:UpdateDownSampledRenderTexture()
 end
 function pfm.PragmaRenderScene:Clear()
 	if(util.is_valid(self.m_scene)) then self.m_scene:GetEntity():Remove() end
@@ -121,7 +153,7 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
 	self.m_drawCommandBuffer:StartRecording(false,false)
 	local incMask,excMask = game.get_primary_camera_render_mask()
 	local drawSceneInfo = game.DrawSceneInfo()
-	drawSceneInfo.toneMapping = shader.TONE_MAPPING_NONE
+	drawSceneInfo.toneMapping = shader.TONE_MAPPING_HDR
 	drawSceneInfo.scene = self.m_scene
 	drawSceneInfo.renderFlags = bit.bor(bit.band(drawSceneInfo.renderFlags,bit.bnot(game.RENDER_FLAG_BIT_VIEW)),game.RENDER_FLAG_HDR_BIT) -- Don't render view models
 	drawSceneInfo.inclusionMask = incMask
@@ -146,7 +178,7 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
 end
 function pfm.PragmaRenderJob:FinalizeFrame()
 	self.m_drawCommandBuffer:Flush()
-	local imgOutput = self.m_renderer:GetHDRPresentationTexture():GetImage()
+	local texOutput = self.m_renderer:GetHDRPresentationTexture()
 
 	local function finalize()
 		self:RestoreCamera()
@@ -165,12 +197,35 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 	if(mode == fudm.PFMRenderSettings.MODE_DEPTH) then
 		local rasterC = self.m_renderer:GetEntity():GetComponent(ents.COMPONENT_RASTERIZATION_RENDERER)
 		if(rasterC ~= nil) then
-			imgOutput = rasterC:GetPostPrepassDepthTexture():GetImage()
-			local imgBuf = imgOutput:ToImageBuffer(false,false,util.ImageBuffer.FORMAT_RGBA16,prosper.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+			texOutput = rasterC:GetPostPrepassDepthTexture()
+			local imgBuf = texOutput:GetImage():ToImageBuffer(false,false,util.ImageBuffer.FORMAT_RGBA16,prosper.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 			self.m_imageBuffer = imgBuf
 			finalize()
 			return
 		end
+	end
+
+	local imgOutput = texOutput:GetImage()
+	local downSampleRt = pfm.g_pragmaRendererRenderScene:GetDownSampleRenderTarget()
+	if(downSampleRt ~= nil) then
+		local drawCmd = game.get_setup_command_buffer()
+
+		local wDownSampled = downSampleRt:GetTexture():GetImage():GetWidth()
+		if(wDownSampled == imgOutput:GetWidth()) then
+			-- Same image size, just blit
+			local blitInfo = prosper.BlitInfo()
+			blitInfo.srcSubresourceLayer.baseArrayLayer = 0
+			blitInfo.srcSubresourceLayer.layerCount = 1
+			blitInfo.dstSubresourceLayer.baseArrayLayer = 0
+			blitInfo.dstSubresourceLayer.layerCount = 1
+			drawCmd:RecordBlitImage(imgOutput,downSampleRt:GetTexture():GetImage(),blitInfo)
+		else
+			-- Downsample with Lanczos or Bicubic filtering
+			prosper.util.record_resize_image(drawCmd,pfm.g_pragmaRendererRenderScene:GetDownSampleDescriptorSet(),downSampleRt)
+		end
+
+		game.flush_setup_command_buffer()
+		imgOutput = downSampleRt:GetTexture():GetImage()
 	end
 
 	if(self.m_renderPanorama) then
@@ -254,14 +309,15 @@ function pfm.PragmaRenderJob:Start()
 
 	local width = self.m_renderSettings:GetWidth()
 	local height = self.m_renderSettings:GetHeight()
+	local ssFactor = self.m_renderSettings:GetSupersamplingFactor()
 	if(self.m_renderPanorama) then
 		-- TODO: This is somewhat arbitrary. How can we calculate an appropriate size for the individual cubemap faces?
 		local size = self.m_renderSettings:GetHeight() *2
 		width = size
 		height = size
 	end
-	if(pfm.g_pragmaRendererRenderScene == nil) then pfm.g_pragmaRendererRenderScene = pfm.PragmaRenderScene(width,height)
-	else pfm.g_pragmaRendererRenderScene:ChangeResolution(width,height) end
+	if(pfm.g_pragmaRendererRenderScene == nil) then pfm.g_pragmaRendererRenderScene = pfm.PragmaRenderScene(width,height,ssFactor)
+	else pfm.g_pragmaRendererRenderScene:ChangeResolution(width,height,ssFactor) end
 
 	self.m_scene = pfm.g_pragmaRendererRenderScene:GetScene()
 	self.m_scene:SetActiveCamera(cam)
