@@ -437,31 +437,36 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 			name = "very_low",
 			emission_strength = 0.0,
 			samples = 20.0,
-			max_transparency_bounces = 32
+			max_transparency_bounces = 32,
+			supersampling = 1
 		},
 		{
 			name = "low",
 			emission_strength = 0.0,
 			samples = 40.0,
-			max_transparency_bounces = 32
+			max_transparency_bounces = 32,
+			supersampling = 2
 		},
 		{
 			name = "medium",
 			emission_strength = 0.0,
 			samples = 80.0,
-			max_transparency_bounces = 32
+			max_transparency_bounces = 32,
+			supersampling = 2
 		},
 		{
 			name = "high",
 			emission_strength = 1.0,
 			samples = 120.0,
-			max_transparency_bounces = 64
+			max_transparency_bounces = 64,
+			supersampling = 4
 		},
 		{
 			name = "very_high",
 			emission_strength = 1.0,
 			samples = 200.0,
-			max_transparency_bounces = 128
+			max_transparency_bounces = 128,
+			supersampling = 4
 		}
 	}
 	local options = {}
@@ -644,6 +649,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		if(preset.samples ~= nil) then self.m_ctrlSamplesPerPixel:SetValue(preset.samples) end
 		if(preset.max_transparency_bounces ~= nil) then self.m_ctrlMaxTransparencyBounces:SetValue(preset.max_transparency_bounces) end
 		if(preset.emission_strength ~= nil) then self.m_ctrlEmissionStrength:SetValue(preset.emission_strength) end
+		if(preset.supersampling ~= nil) then self.m_ctrlSsFactor:SelectOption(tostring(preset.supersampling)) end
 	end)
 	-- qualityPreset:SelectOption(2)
 
