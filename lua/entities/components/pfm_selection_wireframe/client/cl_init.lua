@@ -18,6 +18,7 @@ function Component:Initialize()
 	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent("pfm_overlay_object")
 	renderC:SetCastShadows(false)
+	renderC:AddToRenderGroup("pfm_editor_overlay")
 
 	self.m_listeners = {}
 end

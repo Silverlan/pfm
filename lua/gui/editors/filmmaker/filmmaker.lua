@@ -98,6 +98,8 @@ function gui.WIFilmmaker:OnInitialize()
 	tool.filmmaker = self
 	fudm.PFMChannel.set_all_channels_enabled(false)
 
+	self.m_editorOverlayRenderMask = game.register_render_mask("pfm_editor_overlay",false)
+
 	local udmData,err = udm.load("cfg/pfm/keybindings.udm")
 	local layers = {}
 	if(udmData ~= false) then
@@ -215,6 +217,10 @@ function gui.WIFilmmaker:OnInitialize()
 	sceneDepth:SetRenderer(gameRenderer)
 	if(cam ~= nil) then sceneDepth:SetActiveCamera(cam) end
 	self.m_sceneDepth = sceneDepth
+
+	gameScene:SetInclusionRenderMask(bit.bor(gameScene:GetInclusionRenderMask(),self.m_editorOverlayRenderMask))
+	scene:SetInclusionRenderMask(bit.bor(gameScene:GetInclusionRenderMask(),self.m_editorOverlayRenderMask))
+	sceneDepth:SetInclusionRenderMask(bit.bor(gameScene:GetInclusionRenderMask(),self.m_editorOverlayRenderMask))
 
 	-- Disable default scene drawing for the lifetime of the Filmmaker; We'll only render the viewport(s) if something has actually changed, which
 	-- saves up a huge amount of rendering resources.

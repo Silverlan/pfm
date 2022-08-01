@@ -218,6 +218,7 @@ function Component:SetFrustumModelVisible(visible)
 	if(visible) then
 		local renderC = self:GetEntity():AddComponent(ents.COMPONENT_RENDER)
 		renderC:SetCastShadows(false)
+		renderC:AddToRenderGroup("pfm_editor_overlay")
 	end
 
 	local actorC = self:GetEntity():GetComponent("pfm_actor")
