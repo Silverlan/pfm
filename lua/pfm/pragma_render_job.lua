@@ -62,6 +62,12 @@ function pfm.PragmaRenderScene:GetResolution() return self.m_width,self.m_height
 function pfm.PragmaRenderScene:ChangeResolution(width,height,ssFactor)
 	if(util.is_valid(self.m_renderer) == false or util.is_valid(self.m_scene) == false) then return end
 	if(width == self.m_width and height == self.m_height and self.m_ssFactor == ssFactor) then return end
+	self.m_downSampleTex = nil
+	self.m_downSampleRt = nil
+	self.m_downSampleDs = nil
+	collectgarbage()
+	collectgarbage()
+
 	self.m_ssFactor = ssFactor
 	self.m_width = width
 	self.m_height = height
@@ -71,6 +77,10 @@ end
 function pfm.PragmaRenderScene:Clear()
 	if(util.is_valid(self.m_scene)) then self.m_scene:GetEntity():Remove() end
 	if(util.is_valid(self.m_renderer)) then self.m_renderer:GetEntity():Remove() end
+	self.m_downSampleRt = nil
+	self.m_downSampleDs = nil
+	collectgarbage()
+	collectgarbage()
 end
 function pfm.PragmaRenderScene:GetScene() return self.m_scene end
 function pfm.PragmaRenderScene:GetRenderer() return self.m_renderer end
@@ -315,6 +325,7 @@ function pfm.PragmaRenderJob:Start()
 		local size = self.m_renderSettings:GetHeight() *2
 		width = size
 		height = size
+		-- ssFactor = 1.0
 	end
 	if(pfm.g_pragmaRendererRenderScene == nil) then pfm.g_pragmaRendererRenderScene = pfm.PragmaRenderScene(width,height,ssFactor)
 	else pfm.g_pragmaRendererRenderScene:ChangeResolution(width,height,ssFactor) end
