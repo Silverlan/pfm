@@ -21,6 +21,8 @@ function Component:Initialize()
 
 	self.m_renderers = {}
 	self:AddRenderer(game.get_scene():GetRenderer())
+
+	self.m_motionBlurDataC = self:AddEntityComponent(ents.COMPONENT_MOTION_BLUR_DATA)
 end
 function Component:AddRenderer(c)
 	if(c:GetEntity():HasComponent(ents.COMPONENT_RENDERER_PP_MOTION_BLUR)) then return end
@@ -31,12 +33,8 @@ function Component:AddRenderer(c)
 	motionBlurC:SetMotionBlurQuality(ents.RendererPpMotionBlurComponent.MOTION_BLUR_QUALITY_HIGH)
 end
 function Component:UpdateMotionBlurData()
-	for _,renderer in ipairs(self.m_renderers) do
-		if(renderer:IsValid()) then
-			local component = renderer:GetEntity():GetComponent(ents.COMPONENT_RENDERER_PP_MOTION_BLUR)
-			if(component ~= nil) then component:UpdatePoses() end
-		end
-	end
+	if(util.is_valid(self.m_motionBlurDataC) == false) then return end
+	self.m_motionBlurDataC:UpdatePoses()
 end
 function Component:OnRemove()
 	util.remove(self.m_cbOnPlaybackOffsetChanged)
@@ -45,6 +43,8 @@ function Component:OnRemove()
 			c:GetEntity():RemoveComponent(ents.COMPONENT_RENDERER_PP_MOTION_BLUR)
 		end
 	end
+
+	self:GetEntity():RemoveComponent(ents.COMPONENT_MOTION_BLUR_DATA)
 end
 function Component:OnEntitySpawn()
 	self:UpdateMotionBlurFactor()
