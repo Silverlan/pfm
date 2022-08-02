@@ -100,6 +100,18 @@ function gui.PFMViewport:OnInitialize()
 		if(self:IsValid()) then self:SwitchToWorkCamera() end
 	end)
 end
+function gui.PFMViewport:ShowAnimationOutline(show)
+	if(show == false) then
+		util.remove(self.m_animOutline)
+		return
+	end
+	if(util.is_valid(self.m_animOutline)) then return end
+	local vpInner = self:GetViewport()
+	local el = gui.create("WIOutlinedRect",vpInner,0,0,vpInner:GetWidth(),vpInner:GetHeight(),0,0,1,1)
+	el:SetColor(pfm.get_color_scheme_color("red"))
+	el:SetZPos(10)
+	self.m_animOutline = el
+end
 function gui.PFMViewport:InitializeCustomScene()
 	local sceneCreateInfo = ents.SceneComponent.CreateInfo()
 	sceneCreateInfo.sampleCount = prosper.SAMPLE_COUNT_1_BIT

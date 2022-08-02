@@ -2065,7 +2065,8 @@ function gui.PFMActorEditor:ToggleCameraLink(actor)
 
 		local vpInner = vp:GetViewport()
 		local el = gui.create("WIOutlinedRect",vpInner,0,0,vpInner:GetWidth(),vpInner:GetHeight(),0,0,1,1)
-		el:SetColor(Color.Red)
+		el:SetColor(pfm.get_color_scheme_color("green"))
+		el:SetZPos(10)
 		self.m_cameraLinkOutlineElement = el
 
 		if(c ~= nil) then
