@@ -1140,7 +1140,7 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i,graphData,updateCurveOnly)
 			-- If the timestamp does *not* lie within two keyframes, we have to take the quaternion value and convert it to euler angles instead. This is not ideal,
 			-- as the same quaternion orientation can be represented by multiple different euler angle configurations. In this case some assumptions have to be made
 			-- about which euler angle configuration is the desired one. There is no objective solution and this may result in unexpected curve paths in some cases.
-			if(t +pfm.udm.EditorChannelData.TIME_EPSILON >= minKeyframeTime and t -pfm.udm.EditorChannelData.TIME_EPSILON <= maxKeyframeTime) then
+			if(minKeyframeTime ~= nil and maxKeyframeTime ~= nil and t +pfm.udm.EditorChannelData.TIME_EPSILON >= minKeyframeTime and t -pfm.udm.EditorChannelData.TIME_EPSILON <= maxKeyframeTime) then
 				v = calc_value_at_timestamp(graphData.editorChannel,t,graphData.valueType)
 			else
 				v = find_closest_equivalence_euler_angles(v,prevVal)
