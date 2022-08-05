@@ -310,8 +310,13 @@ void main()
 	
 	// getting blur x and y step factor
 	
-	float w = (1.0/width)*blur*u_renderSettings.maxBlur+noise.x;
-	float h = (1.0/height)*blur*u_renderSettings.maxBlur+noise.y;
+	// The original code was using fw = width and fh = height, however that doesn't seem to be correct and would cause
+	// the intensity of the effect to drastically change depending on the resolution. The reference width of 1920 below is
+	// subjectively chosen and creates a consistent effect independent of the resolution.
+	float fw = 1920;
+	float fh = fw *(height /width);
+	float w = (1.0/fw)*blur*u_renderSettings.maxBlur+noise.x;
+	float h = (1.0/fh)*blur*u_renderSettings.maxBlur+noise.y;
 	
 	// calculation of final color
 	
