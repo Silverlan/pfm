@@ -2192,6 +2192,16 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected)
 			end)
 		end
 		pSubMenu:Update()
+
+		pContext:AddItem(locale.get_text("pfm_export_model"),function()
+			local exportInfo = game.Model.ExportInfo()
+			local result,err = mdl:Export(exportInfo)
+			if(result) then
+				print("Model exported successfully!")
+				local filePath = err
+				util.open_path_in_explorer(file.get_file_path(filePath),file.get_file_name(filePath))
+			else console.print_warning("Unable to export model: ",err) end
+		end)
 	end
 	local actors
 	if(copyPasteSelected == nil) then actors = {actor} end
