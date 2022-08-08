@@ -19,23 +19,41 @@ pfm.bake.find_bake_entities = function()
 		end
 	end
 
-	-- We want all inanimate actors
+	-- We want all lightmap receiver actors
 	local entities = ents.get_all(ents.citerator(ents.COMPONENT_PFM_ACTOR,{ents.IteratorFilterFunction(function(ent,c)
 		local actorData = c:GetActorData()
 		return actorData ~= nil and actorMap[actorData] ~= nil
 	end)}))
+	local entMap = {}
+	for _,ent in ipairs(entities) do entMap[ent] = true end
+
+	-- Add other static actors as influencers
+	local influencerMap = {}
+	local actors = pfm.find_inanimate_actors(session)
+	for _,actor in ipairs(actors) do
+		local ent = actor:FindEntity()
+		if(util.is_valid(ent) and entMap[ent] == nil and ent:IsInert() == false and ent:HasComponent(ents.COMPONENT_PFM_MODEL) and ent:HasComponent(ents.COMPONENT_RENDER)) then influencerMap[ent] = true end
+	end
 
 	-- Also include all inanimate map entities
-	-- TODO: Include static props that are not lightmapped by default?
 	for ent,c in ents.citerator(ents.COMPONENT_MAP,{ents.IteratorFilterComponent(ents.COMPONENT_MODEL)}) do
-		if((ent:HasComponent(ents.COMPONENT_LIGHT_MAP_RECEIVER) or ent:HasComponent(ents.COMPONENT_LIGHT_MAP)) and ent:HasComponent(ents.COMPONENT_PFM_ACTOR) == false and ent:IsInert()) then
+		if(ent:HasComponent(ents.COMPONENT_PFM_ACTOR) == false and ent:IsInert()) then
 			local physC = ent:GetComponent(ents.COMPONENT_PHYSICS)
 			if(physC == nil or physC:GetPhysicsType() == phys.TYPE_STATIC) then
-				table.insert(entities,ent)
+				if(ent:HasComponent(ents.COMPONENT_LIGHT_MAP_RECEIVER) or ent:HasComponent(ents.COMPONENT_LIGHT_MAP)) then
+					entMap[ent] = true
+				else
+					influencerMap[ent] = true
+				end
 			end
 		end
 	end
-	return entities
+
+	entities = {}
+	for ent,_ in pairs(entMap) do table.insert(entities,ent) end
+	local influencers = {}
+	for ent,_ in pairs(influencerMap) do table.insert(influencers,ent) end
+	return entities,influencers
 end
 
 pfm.bake.find_bake_light_sources = function()
@@ -58,7 +76,7 @@ pfm.bake.directional_lightmaps = function(lightmapTargets,lightSources,width,hei
 	return util.bake_directional_lightmap_atlas(lightSources,meshes,entities,width,height,lightmapDataCache)
 end
 
-pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
+pfm.bake.lightmaps = function(gameScene,lightmapTargets,influencers,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
 	if(bakeCombined == nil) then bakeCombined = true end
 	local createInfo = unirender.Scene.CreateInfo()
 	createInfo.width = width
@@ -95,6 +113,12 @@ pfm.bake.lightmaps = function(lightmapTargets,lightSources,width,height,sampleCo
 	scene:SetResolution(width,height)
 	if(lightmapDataCache ~= nil) then scene:SetLightmapDataCache(lightmapDataCache) end -- Has to be set before adding any bake targets!
 
+	local sceneFlags = unirender.Scene.SCENE_FLAG_NONE
+	local influencerMap = {}
+	for _,ent in ipairs(influencers) do influencerMap[ent] = true end
+	scene:PopulateFromGameScene(gameScene,sceneFlags,function(ent)
+		return influencerMap[ent] ~= nil
+	end)
 	for _,ent in ipairs(lightmapTargets) do
 		scene:AddLightmapBakeTarget(ent)
 	end
@@ -129,12 +153,12 @@ function LightmapBaker:BakeUvs(lmEntity,cachePath,meshFilter)
 	return true
 end
 function LightmapBaker:Start(width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
-	local lightmapReceivers = pfm.bake.find_bake_entities()
+	local lightmapReceivers,influencers = pfm.bake.find_bake_entities()
 
 	-- Only include baked light sources
 	local lightSources = pfm.bake.find_bake_light_sources()
 
-	local job = pfm.bake.lightmaps(lightmapReceivers,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
+	local job = pfm.bake.lightmaps(game.get_scene(),lightmapReceivers,influencers,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
 	if(job == nil) then return false end
 	job:Start()
 	self.m_job = job
