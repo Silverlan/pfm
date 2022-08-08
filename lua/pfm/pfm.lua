@@ -320,6 +320,32 @@ pfm.translate_flex_controller_value = function(fc,val)
 	return fc.min +val *(fc.max -fc.min)
 end
 
+pfm.is_articulated_model = function(mdl)
+	local isArticulatedActor = (mdl:GetFlexCount() > 0)
+	if(isArticulatedActor) then return true end
+	for _,meshGroup in ipairs(mdl:GetMeshGroups()) do
+		for _,mesh in ipairs(meshGroup:GetMeshes()) do
+			for _,subMesh in ipairs(mesh:GetSubMeshes()) do
+				if(subMesh:HasVertexWeights()) then
+					-- Check if any vertices are weighted to more than one bone. If there aren't any,
+					-- we'll assume it's a static actor.
+					for _,vw in ipairs(subMesh:GetVertexWeights()) do
+						local n = 0
+						for i=1,4 do
+							if(boneIds:Get(i -1) ~= -1) then n = n +1 end
+						end
+						if(n > 1) then isArticulatedActor = true; break end
+					end
+				end
+				if(isArticulatedActor) then break end
+			end
+			if(isArticulatedActor) then break end
+		end
+		if(isArticulatedActor) then break end
+	end
+	return isArticulatedActor
+end
+
 pfm.find_inanimate_actors = function(session)
 	local function get_film_clips(filmClip,filmClips)
 		filmClips[filmClip] = true

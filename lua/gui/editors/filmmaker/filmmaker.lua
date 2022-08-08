@@ -1567,18 +1567,19 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					local filmClip = self:GetActiveFilmClip()
 					if(filmClip == nil) then return end
 					local filmmaker = tool.get_filmmaker()
-					local actor = filmmaker:CreateNewActor()
-					if(actor == nil) then return end
+					local actorEditor = self:GetActorEditor()
+
 					local path = util.Path(elIcon:GetAsset())
 					path:PopFront()
-					local mdlC = filmmaker:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(path:GetString()) end)
-					if(mdlC == nil) then return end
-					filmmaker:CreateNewActorComponent(actor,"flex",false)
-					filmmaker:CreateNewActorComponent(actor,"render",false)
-					filmmaker:CreateNewActorComponent(actor,"animated")
-
+					local mdl = game.load_model(path:GetString())
+					if(mdl == nil) then return end
+					local actor
+					if(pfm.is_articulated_model(mdl)) then
+						actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR,nil,path:GetString())
+					else
+						actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,nil,path:GetString())
+					end
 					self:UpdateActor(actor,filmClip)
-
 
 					filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
 

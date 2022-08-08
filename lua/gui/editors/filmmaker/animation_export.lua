@@ -53,7 +53,8 @@ function pfm.AnimationRecorder:ExportAnimation()
 	else console.print_warning("Unable to export animation: ",err) end
 
 	local path = mdl:GetName()
-	util.open_path_in_explorer("export/" .. file.remove_file_extension(path))
+	local outputFilePath = err
+	if(result == true) then util.open_path_in_explorer(file.get_file_path(outputFilePath),file.get_file_name(outputFilePath)) end
 end
 
 function pfm.AnimationRecorder:RecordFrame()

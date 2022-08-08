@@ -17,6 +17,21 @@ include("/pfm/util.lua")
 
 util.register_class("gui.PFMActorEditor",gui.Base)
 
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP = 0
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP = 1
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR = 2
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA = 3
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_PARTICLE_SYSTEM = 4
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT = 5
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT = 6
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_DIRECTIONAL_LIGHT = 7
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME = 8
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR = 9
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER = 10
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE = 11
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY = 12
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG = 13
+
 function gui.PFMActorEditor:__init()
 	gui.Base.__init(self)
 end
@@ -39,118 +54,30 @@ function gui.PFMActorEditor:OnInitialize()
 		print("TODO")
 	end)
 	self.m_btTools:SetX(self:GetWidth() -self.m_btTools:GetWidth())
+	local function addPresetActorOption(subMenu,type,locId)
+		subMenu:AddItem(locale.get_text(locId),function()
+			self:CreatePresetActor(type)
+		end)
+	end
+	local function addPresetModelActorOption(subMenu,type,locId)
+		subMenu:AddItem(locale.get_text(locId),function()
+			gui.open_model_dialog(function(dialogResult,mdlName)
+				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
+				if(self:IsValid() == false) then return end
+				local actor = self:CreatePresetActor(type,nil,mdlName)
+			end)
+		end)
+	end
 	self.m_btTools:SetupContextMenu(function(pContext)
-		pContext:AddItem(locale.get_text("pfm_create_new_static_prop"),function()
-			gui.open_model_dialog(function(dialogResult,mdlName)
-				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
-				if(self:IsValid() == false) then return end
-				local actor = self:CreateNewActor()
-				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
-				self:CreateNewActorComponent(actor,"model",false)
-				self:CreateNewActorComponent(actor,"render",false)
-				self:CreateNewActorComponent(actor,"pfm_baked_lighting",false)
-				-- self:CreateNewActorComponent(actor,"transform",false)
-				self:UpdateActorComponents(actor)
-			end)
-		end)
-		pContext:AddItem(locale.get_text("pfm_create_new_dynamic_prop"),function()
-			gui.open_model_dialog(function(dialogResult,mdlName)
-				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
-				if(self:IsValid() == false) then return end
-				local actor = self:CreateNewActor()
-				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
-				self:CreateNewActorComponent(actor,"model",false)
-				self:CreateNewActorComponent(actor,"render",false)
-				-- self:CreateNewActorComponent(actor,"transform",false)
-				self:UpdateActorComponents(actor)
-			end)
-		end)
-		pContext:AddItem(locale.get_text("pfm_create_new_articulated_actor"),function()
-			gui.open_model_dialog(function(dialogResult,mdlName)
-				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
-				if(self:IsValid() == false) then return end
-				local actor = self:CreateNewActor()
-				if(actor == nil) then return end
-				local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
-				self:CreateNewActorComponent(actor,"model",false)
-				self:CreateNewActorComponent(actor,"render",false)
-				self:CreateNewActorComponent(actor,"animated",false)
-				self:CreateNewActorComponent(actor,"eye",false)
-				-- self:CreateNewActorComponent(actor,"transform",false)
-				self:UpdateActorComponents(actor)
-			end)
-		end)
-		pContext:AddItem(locale.get_text("pfm_create_new_camera"),function()
-			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_camera",false)
-			-- self:CreateNewActorComponent(actor,"toggle",false)
-			self:CreateNewActorComponent(actor,"camera",false)
-			-- self:CreateNewActorComponent(actor,"transform",false)
-			self:UpdateActorComponents(actor)
-		end)
-		pContext:AddItem(locale.get_text("pfm_create_new_particle_system"),function()
-			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_particle_system",false)
-			self:UpdateActorComponents(actor)
-		end)
-		pContext:AddItem(locale.get_text("pfm_create_new_spot_light"),function()
-			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_light_spot",false)
-			local lightC = self:CreateNewActorComponent(actor,"light",false)
-			local lightSpotC = self:CreateNewActorComponent(actor,"light_spot",false)
-			local radiusC = self:CreateNewActorComponent(actor,"radius",false)
-			self:CreateNewActorComponent(actor,"color",false)
-			-- self:CreateNewActorComponent(actor,"transform",false)
-			lightSpotC:SetMemberValue("blendFraction",udm.TYPE_FLOAT,0.1)
-			lightSpotC:SetMemberValue("outerConeAngle",udm.TYPE_FLOAT,60.0)
-			lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,1000)
-			lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
-			radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
-			self:UpdateActorComponents(actor)
-		end)
-		pContext:AddItem(locale.get_text("pfm_create_new_point_light"),function()
-			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_light_point",false)
-			local lightC = self:CreateNewActorComponent(actor,"light",false)
-			self:CreateNewActorComponent(actor,"light_point",false)
-			local radiusC = self:CreateNewActorComponent(actor,"radius",false)
-			self:CreateNewActorComponent(actor,"color",false)
-			-- self:CreateNewActorComponent(actor,"transform",false)
-			lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,1000)
-			lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
-			radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
-			self:UpdateActorComponents(actor)
-		end)
-		pContext:AddItem(locale.get_text("pfm_create_new_directional_light"),function()
-			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_light_directional",false)
-			local lightC = self:CreateNewActorComponent(actor,"light",false)
-			self:CreateNewActorComponent(actor,"light_directional",false)
-			self:CreateNewActorComponent(actor,"color",false)
-			-- self:CreateNewActorComponent(actor,"transform",false)
-			lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,30.0)
-			lightC:SetMemberValue("intensityType",udm.TYPE_UINT8,ents.LightComponent.INTENSITY_TYPE_LUX)
-			lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
+		addPresetModelActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,"pfm_create_new_static_prop")
+		addPresetModelActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP,"pfm_create_new_dynamic_prop")
+		addPresetModelActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR,"pfm_create_new_articulated_actor")
 
-			local cActor = actor:FindComponent("pfm_actor")
-			if(cActor ~= nil) then
-				local rot = cActor:GetMemberValue("rotation")
-				if(rot ~= nil) then
-					rot = rot:ToEulerAngles()
-					rot.p = 45.0
-					cActor:SetMemberValue("rotation",udm.TYPE_QUATERNION,rot:ToQuaternion())
-				end
-			end
-
-			self:UpdateActorComponents(actor)
-		end)
+		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA,"pfm_create_new_camera")
+		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_PARTICLE_SYSTEM,"pfm_create_new_particle_system")
+		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT,"pfm_create_new_spot_light")
+		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT,"pfm_create_new_point_light")
+		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_DIRECTIONAL_LIGHT,"pfm_create_new_directional_light")
 		--[[pContext:AddItem(locale.get_text("pfm_create_new_volume_simple"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
@@ -162,58 +89,12 @@ function gui.PFMActorEditor:OnInitialize()
 			actor:SetTransform(transform)
 			self:UpdateActorComponents(actor)
 		end)]]
-		pContext:AddItem(locale.get_text("pfm_create_new_volume"),function()
-			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-			local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube") end)
-			local volC = self:CreateNewActorComponent(actor,"pfm_volumetric",false)
-			local boundsC = self:CreateNewActorComponent(actor,"pfm_cuboid_bounds",false)
-			self:CreateNewActorComponent(actor,"color",false)
-
-			-- Calc scene extents
-			local min = Vector(math.huge,math.huge,math.huge)
-			local max = Vector(-math.huge,-math.huge,-math.huge)
-			for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_RENDER)}) do
-				if(ent:HasComponent(ents.COMPONENT_CAMERA) == false) then
-					local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
-					local rMin,rMax = renderC:GetAbsoluteRenderBounds()
-					for i=0,2 do
-						min:Set(i,math.min(min:Get(i),rMin:Get(i)))
-						max:Set(i,math.max(max:Get(i),rMax:Get(i)))
-					end
-				end
-			end
-			if(min.x == math.huge) then
-				min = Vector()
-				max = Vector()
-			end
-			boundsC:SetMemberValue("minBounds",udm.TYPE_VECTOR3,min)
-			boundsC:SetMemberValue("maxBounds",udm.TYPE_VECTOR3,max)
-			self:UpdateActorComponents(actor)
-		end)
-		pContext:AddItem(locale.get_text("pfm_create_new_actor"),function()
-			if(self:IsValid() == false) then return end
-			local actor = self:CreateNewActor()
-		end)
+		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME,"pfm_create_new_volume")
+		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR,"pfm_create_new_actor")
 
 		local pBakingItem,pBakingMenu = pContext:AddSubMenu(locale.get_text("pfm_baking"))
-		pBakingMenu:AddItem(locale.get_text("pfm_create_lightmapper"),function()
-			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-			self:CreateNewActorComponent(actor,"pfm_baked_lighting")
-			self:CreateNewActorComponent(actor,"light_map_data_cache")
-			self:CreateNewActorComponent(actor,"light_map")
-			self:CreateNewActorComponent(actor,"pfm_cuboid_bounds")
-			self:UpdateActorComponents(actor)
-		end)
-		pBakingMenu:AddItem(locale.get_text("pfm_create_reflection_probe"),function()
-			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-			local c = self:CreateNewActorComponent(actor,"reflection_probe",false)
-			c:SetMemberValue("iblStrength",udm.TYPE_FLOAT,1.4)
-			c:SetMemberValue("iblMaterial",udm.TYPE_STRING,"pbr/ibl/venice_sunset")
-			self:UpdateActorComponents(actor)
-		end)
+		addPresetActorOption(pBakingMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER,"pfm_create_lightmapper",pBakingMenu)
+		addPresetActorOption(pBakingMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE,"pfm_create_reflection_probe",pBakingMenu)
 		pBakingMenu:Update()
 
 		local filmClip = self:GetFilmClip()
@@ -232,16 +113,10 @@ function gui.PFMActorEditor:OnInitialize()
 			end
 		end
 		if(hasSkyComponent == false) then
-			pContext:AddItem(locale.get_text("pfm_add_sky"),function() self:AddSkyActor() end)
+			addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY,"pfm_add_sky")
 		end
 		if(hasFogComponent == false) then
-			pContext:AddItem(locale.get_text("pfm_create_new_fog_controller"),function()
-				local actor = self:CreateNewActor()
-				if(actor == nil) then return end
-				self:CreateNewActorComponent(actor,"fog_controller")
-				self:CreateNewActorComponent(actor,"color")
-				self:UpdateActorComponents(actor)
-			end)
+			addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG,"pfm_create_new_fog_controller")
 		end
 
 		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
@@ -368,6 +243,145 @@ function gui.PFMActorEditor:OnInitialize()
 
 	self:SetMouseInputEnabled(true)
 end
+function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
+	local actor
+	local newActor = (actor == nil)
+	if(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP) then
+		actor = actor or self:CreateNewActor("static_prop")
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
+		self:CreateNewActorComponent(actor,"model",false)
+		self:CreateNewActorComponent(actor,"render",false)
+		self:CreateNewActorComponent(actor,"light_map_receiver",false)
+		-- self:CreateNewActorComponent(actor,"transform",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP) then
+		actor = actor or self:CreateNewActor("dynamic_prop")
+		if(actor == nil) then return end
+		local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
+		self:CreateNewActorComponent(actor,"model",false)
+		self:CreateNewActorComponent(actor,"render",false)
+		-- self:CreateNewActorComponent(actor,"transform",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR) then
+		actor = actor or self:CreateNewActor("articulated_actor")
+		if(actor == nil) then return end
+		local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
+		self:CreateNewActorComponent(actor,"model",false)
+		self:CreateNewActorComponent(actor,"render",false)
+		self:CreateNewActorComponent(actor,"animated",false)
+		self:CreateNewActorComponent(actor,"eye",false)
+		-- self:CreateNewActorComponent(actor,"transform",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA) then
+		actor = actor or self:CreateNewActor("camera")
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"pfm_camera",false)
+		-- self:CreateNewActorComponent(actor,"toggle",false)
+		self:CreateNewActorComponent(actor,"camera",false)
+		-- self:CreateNewActorComponent(actor,"transform",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_PARTICLE_SYSTEM) then
+		actor = actor or self:CreateNewActor("particle_system")
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"pfm_particle_system",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT) then
+		actor = actor or self:CreateNewActor("spot_light")
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"pfm_light_spot",false)
+		local lightC = self:CreateNewActorComponent(actor,"light",false)
+		local lightSpotC = self:CreateNewActorComponent(actor,"light_spot",false)
+		local radiusC = self:CreateNewActorComponent(actor,"radius",false)
+		self:CreateNewActorComponent(actor,"color",false)
+		-- self:CreateNewActorComponent(actor,"transform",false)
+		lightSpotC:SetMemberValue("blendFraction",udm.TYPE_FLOAT,0.1)
+		lightSpotC:SetMemberValue("outerConeAngle",udm.TYPE_FLOAT,60.0)
+		lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,1000)
+		lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
+		radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT) then
+		actor = actor or self:CreateNewActor("point_light")
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"pfm_light_point",false)
+		local lightC = self:CreateNewActorComponent(actor,"light",false)
+		self:CreateNewActorComponent(actor,"light_point",false)
+		local radiusC = self:CreateNewActorComponent(actor,"radius",false)
+		self:CreateNewActorComponent(actor,"color",false)
+		-- self:CreateNewActorComponent(actor,"transform",false)
+		lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,1000)
+		lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
+		radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DIRECTIONAL_LIGHT) then
+		actor = actor or self:CreateNewActor("dir_light")
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"pfm_light_directional",false)
+		local lightC = self:CreateNewActorComponent(actor,"light",false)
+		self:CreateNewActorComponent(actor,"light_directional",false)
+		self:CreateNewActorComponent(actor,"color",false)
+		-- self:CreateNewActorComponent(actor,"transform",false)
+		lightC:SetMemberValue("intensity",udm.TYPE_FLOAT,30.0)
+		lightC:SetMemberValue("intensityType",udm.TYPE_UINT8,ents.LightComponent.INTENSITY_TYPE_LUX)
+		lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
+
+		local cActor = actor:FindComponent("pfm_actor")
+		if(cActor ~= nil) then
+			local rot = cActor:GetMemberValue("rotation")
+			if(rot ~= nil) then
+				rot = rot:ToEulerAngles()
+				rot.p = 45.0
+				cActor:SetMemberValue("rotation",udm.TYPE_QUATERNION,rot:ToQuaternion())
+			end
+		end
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME) then
+		actor = actor or self:CreateNewActor("volume")
+		if(actor == nil) then return end
+		local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube") end)
+		local volC = self:CreateNewActorComponent(actor,"pfm_volumetric",false)
+		local boundsC = self:CreateNewActorComponent(actor,"pfm_cuboid_bounds",false)
+		self:CreateNewActorComponent(actor,"color",false)
+
+		-- Calc scene extents
+		local min = Vector(math.huge,math.huge,math.huge)
+		local max = Vector(-math.huge,-math.huge,-math.huge)
+		for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_RENDER)}) do
+			if(ent:HasComponent(ents.COMPONENT_CAMERA) == false) then
+				local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+				local rMin,rMax = renderC:GetAbsoluteRenderBounds()
+				for i=0,2 do
+					min:Set(i,math.min(min:Get(i),rMin:Get(i)))
+					max:Set(i,math.max(max:Get(i),rMax:Get(i)))
+				end
+			end
+		end
+		if(min.x == math.huge) then
+			min = Vector()
+			max = Vector()
+		end
+		boundsC:SetMemberValue("minBounds",udm.TYPE_VECTOR3,min)
+		boundsC:SetMemberValue("maxBounds",udm.TYPE_VECTOR3,max)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR) then
+		if(self:IsValid() == false) then return end
+		actor = actor or self:CreateNewActor("actor")
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER) then
+		actor = actor or self:CreateNewActor("lightmapper")
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"pfm_baked_lighting",false)
+		self:CreateNewActorComponent(actor,"light_map_data_cache",false)
+		self:CreateNewActorComponent(actor,"light_map",false)
+		self:CreateNewActorComponent(actor,"pfm_cuboid_bounds",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE) then
+		actor = actor or self:CreateNewActor("reflection_probe")
+		if(actor == nil) then return end
+		local c = self:CreateNewActorComponent(actor,"reflection_probe",false)
+		c:SetMemberValue("iblStrength",udm.TYPE_FLOAT,1.4)
+		c:SetMemberValue("iblMaterial",udm.TYPE_STRING,"pbr/ibl/venice_sunset")
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY) then
+		return self:AddSkyActor()
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG) then
+		actor = actor or self:CreateNewActor("fog")
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"fog_controller",false)
+		self:CreateNewActorComponent(actor,"color",false)
+	end
+	if(newActor) then self:UpdateActorComponents(actor) end
+	return actor
+end
 function gui.PFMActorEditor:AddSkyActor()
 	self:CreateNewActorWithComponents("sky",{"pfm_actor","pfm_sky"})
 end
@@ -422,13 +436,13 @@ function gui.PFMActorEditor:CreateNewActor(actorName,pose)
 		return
 	end
 	local actor = pfm.get_project_manager():AddActor(self:GetFilmClip())
+	local actorIndex
 	if(actorName == nil) then
 		actorName = "actor"
-
-		local actorIndex = 1
-		while(filmClip:FindActor(actorName .. actorIndex) ~= nil) do actorIndex = actorIndex +1 end
-		actorName = actorName .. actorIndex
+		actorIndex = 1
 	end
+	while(filmClip:FindActor(actorName .. (actorIndex or "")) ~= nil) do actorIndex = (actorIndex or 1) +1 end
+	actorName = actorName .. (actorIndex or "")
 	actor:SetName(actorName)
 
 	local pos,rot
