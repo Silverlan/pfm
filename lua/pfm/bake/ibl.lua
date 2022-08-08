@@ -81,6 +81,7 @@ pfm.bake.ibl = function(pose,gameScene,lightSources,width,height,sampleCount,ini
 	local cam = scene:GetCamera()
 	cam:SetEquirectangularHorizontalRange(360.0)
 	cam:SetEquirectangularVerticalRange(180.0)
+	cam:SetRotation(Quaternion())
 	cam:SetCameraType(unirender.Camera.TYPE_PANORAMA)
 	cam:SetPanoramaType(unirender.Camera.PANORAMA_TYPE_EQUIRECTANGULAR)
 	for _,ent in ipairs(lightSources) do
