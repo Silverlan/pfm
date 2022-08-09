@@ -92,14 +92,10 @@ function gui.PFMActorEditor:OnInitialize()
 		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME,"pfm_create_new_volume")
 		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR,"pfm_create_new_actor")
 
-		local pBakingItem,pBakingMenu = pContext:AddSubMenu(locale.get_text("pfm_baking"))
-		addPresetActorOption(pBakingMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER,"pfm_create_lightmapper",pBakingMenu)
-		addPresetActorOption(pBakingMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE,"pfm_create_reflection_probe",pBakingMenu)
-		pBakingMenu:Update()
-
 		local filmClip = self:GetFilmClip()
 		local hasSkyComponent = false
 		local hasFogComponent = false
+		local hasLightmapperComponent = false
 		if(filmClip ~= nil) then
 			for _,actor in ipairs(filmClip:GetActorList()) do
 				local c = actor:FindComponent("pfm_sky")
@@ -110,8 +106,17 @@ function gui.PFMActorEditor:OnInitialize()
 				if(c ~= nil) then
 					hasFogComponent = true
 				end
+				local c = actor:FindComponent("pfm_baked_lighting")
+				if(c ~= nil) then
+					hasLightmapperComponent = true
+				end
 			end
 		end
+
+		local pBakingItem,pBakingMenu = pContext:AddSubMenu(locale.get_text("pfm_baking"))
+		if(hasLightmapperComponent == false) then addPresetActorOption(pBakingMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER,"pfm_create_lightmapper",pBakingMenu) end
+		addPresetActorOption(pBakingMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE,"pfm_create_reflection_probe",pBakingMenu)
+		pBakingMenu:Update()
 		if(hasSkyComponent == false) then
 			addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY,"pfm_add_sky")
 		end
