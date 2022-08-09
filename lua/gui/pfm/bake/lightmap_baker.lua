@@ -7,6 +7,7 @@
 ]]
 
 include("base_baker.lua")
+include("uv_atlas_mesh_overlay.lua")
 
 util.register_class("WILightmapUvBaker",WIBaseBaker)
 function WILightmapUvBaker:OnInitialize()
@@ -84,6 +85,31 @@ pfm.util.open_lightmap_atlas_view_window = function(ent,onInit)
 				el:SetTexture(tex)
 			end)
 			elTexSelection:SelectOption(tonumber(selectedOption))
+
+			options = {}
+			for ent,c in ents.citerator(ents.COMPONENT_LIGHT_MAP_RECEIVER) do
+				table.insert(options,{
+					tostring(ent:GetUuid()),ent:GetName()
+				})
+			end
+			local elActorSelection
+			local elOverlay
+			elActorSelection,wrapper = controls:AddDropDownMenu("Actor","actor",options,"",function()
+				local uuid = elActorSelection:GetOptionValue(elActorSelection:GetSelectedOption())
+				local ent = ents.find_by_uuid(uuid)
+				if(util.is_valid(ent) == false) then return end
+				if(util.is_valid(elOverlay) == false) then
+					elOverlay = gui.create("WIUVAtlasMeshOverlay",el,0,0,el:GetWidth(),el:GetHeight(),0,0,1,1)
+				end
+				elOverlay:SetEntity(ent)
+
+				local c = lightmapC:GetEntity():GetComponent(ents.COMPONENT_LIGHT_MAP_DATA_CACHE)
+				if(c ~= nil) then
+					elOverlay:SetLightmapCache(c:GetLightMapDataCache())
+					elOverlay:Update()
+				end
+			end)
+			wrapper:SetUseAltMode(true)
 		--end
 
 		local w = contents:GetWidth()
