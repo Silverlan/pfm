@@ -15,7 +15,6 @@ function pfm.create_popup_message(msg)
 	if(util.is_valid(pfm.impl.popup) == false) then pfm.impl.popup = gui.create("WIPFMPopup",editor) end
 	if(util.is_valid(pfm.impl.popup) == false) then return end
 	local el = pfm.impl.popup
-	el:SetText(msg)
-	el:SetX(editor:GetWidth() -el:GetWidth())
+	el:AddToQueue(msg)
 	return el
 end

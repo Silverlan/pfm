@@ -1,1 +1,3 @@
 pfm_popup_create_actor_no_film_clip = "Akteur kann nicht erzeugt werden: Es ist kein Filmausschnitt selektiert!"
+pfm_popup_no_lightmap = "Keine Lightmap gefunden! Beleuchtung wird unvollst„ndig sein"
+pfm_popup_no_reflection_probe = "No reflection probe found! Reflektionen werden nicht korrekt sein."
