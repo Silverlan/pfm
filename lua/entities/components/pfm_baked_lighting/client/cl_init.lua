@@ -17,7 +17,7 @@ Component:RegisterMember("LightmapMode",udm.TYPE_UINT32,1,{
 })
 -- Debug mode
 Component:RegisterMember("Resolution",udm.TYPE_STRING,"2048x2048")
-Component:RegisterMember("SampleCount",udm.TYPE_UINT32,200)
+Component:RegisterMember("SampleCount",udm.TYPE_UINT32,20000)
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
