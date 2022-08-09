@@ -973,6 +973,26 @@ function gui.PFMRenderPreview:CancelRendering()
 	console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps"))) -- Unclamp FPS
 end
 function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
+	if(self.m_ctrlRenderEngine:GetValue() == "pragma") then
+		local probe = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_REFLECTION_PROBE)})()
+		local entLightmapper = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)})()
+		local hasProbe = (probe ~= nil)
+		local hasBakedLighting = (entLightmapper ~= nil)
+		if(hasBakedLighting) then
+			local lightmapC = entLightmapper:GetComponent(ents.COMPONENT_LIGHT_MAP)
+			if(lightmapC == nil or #lightmapC:GetMemberValue("lightmapMaterial") == 0) then hasBakedLighting = false end
+		end
+
+		if(hasProbe == false) then
+			local url = "https://wiki.pragma-engine.com/books/pragma-filmmaker/page/rendering-animations#bkmrk-reflection-probe"
+			pfm.create_popup_message("{[l:url \"" .. url .. "\"]}" .. locale.get_text("pfm_popup_no_reflection_probe") .. "{[/l]}")
+		end
+		if(hasBakedLighting == false) then
+			local url = "https://wiki.pragma-engine.com/books/pragma-filmmaker/page/rendering-animations#bkmrk-lightmaps"
+			pfm.create_popup_message("{[l:url \"" .. url .. "\"]}" .. locale.get_text("pfm_popup_no_lightmap") .. "{[/l]}")
+		end
+	end
+
 	self:CancelRendering()
 	tool.get_filmmaker():StopLiveRaytracing()
 	self.m_btCancel:SetVisible(true)
