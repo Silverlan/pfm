@@ -43,6 +43,53 @@ gui.register("WILightmapUvBaker",WILightmapUvBaker)
 pfm = pfm or {}
 pfm.util = pfm.util or {}
 
+local function sign (p1, p2, p3)
+    return (p1.x - p3.x) * (p2.y - p3.y) - (p2.x - p3.x) * (p1.y - p3.y);
+end
+local function is_point_in_triangle(pt,v1,v2,v3)
+	if(v1:DistanceSqr(v2) < 0.0001 or v2:DistanceSqr(v3) < 0.0001 or v3:DistanceSqr(v1) < 0.0001) then return false end
+    local d1, d2, d3;
+    local has_neg, has_pos;
+
+    d1 = sign(pt, v1, v2);
+    d2 = sign(pt, v2, v3);
+    d3 = sign(pt, v3, v1);
+
+    has_neg = (d1 < 0) or (d2 < 0) or (d3 < 0);
+    has_pos = (d1 > 0) or (d2 > 0) or (d3 > 0);
+
+    return not (has_neg and has_pos);
+end
+local function is_point_in_uv_mesh(ent,lmCache,x,y)
+	if(util.is_valid(ent) == false or lmCache == nil) then return end
+	local mdl = ent:GetModel()
+	if(mdl == nil) then return end
+	local p = Vector2(x,y)
+	for _,mg in ipairs(mdl:GetMeshGroups()) do
+		for _,m in ipairs(mg:GetMeshes()) do
+			for _,sm in ipairs(m:GetSubMeshes()) do
+				local lightmapUvs = lmCache:FindLightmapUvs(ent:GetUuid(),sm:GetUuid())
+				if(lightmapUvs ~= nil) then
+					local indices = sm:GetIndices()
+					for i=1,#indices,3 do
+						local idx0 = indices[i]
+						local idx1 = indices[i +1]
+						local idx2 = indices[i +2]
+						local uv0 = lightmapUvs[idx0 +1]
+						local uv1 = lightmapUvs[idx1 +1]
+						local uv2 = lightmapUvs[idx2 +1]
+						if(is_point_in_triangle(p,uv0,uv1,uv2)) then
+							print(p,uv0,uv1,uv2)
+							return true
+						end
+					end
+				end
+			end
+		end
+	end
+	return false
+end
+
 pfm.util.open_lightmap_atlas_view_window = function(ent,onInit)
 	pfm.util.open_simple_window("Lightmap Atlas View",function(windowHandle,contents,controls)
 		if(ent:IsValid() == false) then return end
@@ -95,6 +142,7 @@ pfm.util.open_lightmap_atlas_view_window = function(ent,onInit)
 			local elActorSelection
 			local elOverlay
 			elActorSelection,wrapper = controls:AddDropDownMenu("Actor","actor",options,"",function()
+				if(lightmapC:IsValid() == false) then return end
 				local uuid = elActorSelection:GetOptionValue(elActorSelection:GetSelectedOption())
 				local ent = ents.find_by_uuid(uuid)
 				if(util.is_valid(ent) == false) then return end
@@ -115,6 +163,29 @@ pfm.util.open_lightmap_atlas_view_window = function(ent,onInit)
 		local w = contents:GetWidth()
 		local h = contents:GetHeight()
 		el:SetSize(w,h)
+		el:SetMouseInputEnabled(true)
+		el:AddCallback("OnMousePressed",function()
+			if(lightmapC:IsValid() == false) then return end
+			local c = lightmapC:GetEntity():GetComponent(ents.COMPONENT_LIGHT_MAP_DATA_CACHE)
+			if(c == nil) then return end
+			local lmCache = c:GetLightMapDataCache()
+			local pos = el:GetCursorPos()
+			local x = pos.x
+			local y = pos.y
+			local w = el:GetWidth()
+			local h = el:GetHeight()
+			if(w == 0 or h == 0) then return end
+			x = x /w
+			y = y /h
+			if(x > 1.0 or y > 1.0) then return end
+
+			for ent,c in ents.citerator(ents.COMPONENT_LIGHT_MAP_RECEIVER) do
+				if(is_point_in_uv_mesh(ent,lmCache,x,y)) then
+					elActorSelection:SelectOption(tostring(ent:GetUuid()))
+					break
+				end
+			end
+		end)
 
 		if(onInit ~= nil) then onInit(windowHandle,contents,controls) end
 	end)
