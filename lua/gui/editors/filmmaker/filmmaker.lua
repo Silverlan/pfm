@@ -754,6 +754,26 @@ function gui.WIFilmmaker:ImportMap(map)
 			radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,radius)
 			colorC:SetMemberValue("color",udm.TYPE_VECTOR3,color:ToVector())
 			actorEditor:UpdateActorComponents(actor)
+		elseif(className == "env_fog_controller") then
+			local actor = actorEditor:CreateNewActor(name,pose)
+			if(uuid ~= nil) then actor:ChangeUniqueId(uuid) end
+
+			local fogColor = keyValues:GetValue("fogcolor",udm.TYPE_VECTOR3)
+			fogColor = (fogColor ~= nil) and (fogColor /255.0) or Vector(1,1,1)
+			local fogStart = keyValues:GetValue("fogstart",udm.TYPE_FLOAT) or 500.0
+			local fogEnd = keyValues:GetValue("fogend",udm.TYPE_FLOAT) or 2000.0
+			local maxDensity = keyValues:GetValue("fogmaxdensity",udm.TYPE_FLOAT) or 1.0
+			local fogType = keyValues:GetValue("fogtype",udm.TYPE_UINT32) or game.WorldEnvironment.FOG_TYPE_LINEAR
+
+			local colorC = actorEditor:CreateNewActorComponent(actor,"color",false)
+			colorC:SetMemberValue("color",udm.TYPE_VECTOR3,fogColor)
+
+			local fogC = actorEditor:CreateNewActorComponent(actor,"fog_controller",false)
+			fogC:SetMemberValue("start",udm.TYPE_FLOAT,fogStart)
+			fogC:SetMemberValue("end",udm.TYPE_FLOAT,fogEnd)
+			fogC:SetMemberValue("density",udm.TYPE_FLOAT,maxDensity)
+			fogC:SetMemberValue("type",udm.TYPE_UINT32,fogType)
+			actorEditor:UpdateActorComponents(actor)
 		end
 	end
 end
