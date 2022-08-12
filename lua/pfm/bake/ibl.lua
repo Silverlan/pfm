@@ -69,6 +69,14 @@ pfm.bake.ibl = function(pose,gameScene,lightSources,width,height,sampleCount,ini
 	-- console.print_table(lightSources)
 	local entityMap = table.table_to_map(tEnts,true)
 
+	local ent = ents.create("unirender")
+	util.remove(ent,true)
+	local unirenderC = ent:AddComponent("unirender")
+
+	unirenderC:InvokeEventCallbacks(ents.UnirenderComponent.EVENT_INITIALIZE_SCENE,{scene,renderSettings})
+	local entSky,skyC = ents.citerator(ents.COMPONENT_PFM_SKY)()
+	if(skyC ~= nil) then skyC:ApplySceneSkySettings(scene) end
+
 	local nearZ = 1.0
 	local farZ = 32768.0
 	local fov = 90.0

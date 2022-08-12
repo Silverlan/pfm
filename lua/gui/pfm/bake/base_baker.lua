@@ -73,7 +73,7 @@ end
 function WIBaseBaker:Cancel()
 	if(self.m_baking == true) then
 		self:CancelBaker()
-		self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
+		if(util.is_valid(self.m_progressBar)) then self.m_progressBar:SetColor(pfm.get_color_scheme_color("red")) end
 	end
 	self.m_baking = false
 end
@@ -94,6 +94,7 @@ function WIBaseBaker:StartBake()
 	self.m_progressBar:SetColor(pfm.get_color_scheme_color("darkGrey"))
 	self:StartBaker()
 	self.m_baking = true
+	self.m_startBakeTime = time.time_since_epoch()
 	self:SetText(locale.get_text("cancel"))
 
 	self:SetThinkingEnabled(true)
@@ -112,6 +113,8 @@ end
 function WIBaseBaker:OnComplete()
 	if(self:IsBakerSuccessful()) then
 		local res = self:FinalizeBaker()
+		local dt = time.time_since_epoch() -self.m_startBakeTime
+		print("Baking complete. Baking took " .. util.get_pretty_time(dt /1000000000.0) .. "!")
 		if(res == false) then
 			self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
 		else
