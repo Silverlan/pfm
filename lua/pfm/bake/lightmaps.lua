@@ -128,6 +128,8 @@ pfm.bake.lightmaps = function(gameScene,lightmapTargets,influencers,lightSources
 	if(initScene ~= nil) then initScene(scene) end
 
 	unirenderC:InvokeEventCallbacks(ents.UnirenderComponent.EVENT_INITIALIZE_SCENE,{scene})
+	local entSky,skyC = ents.citerator(ents.COMPONENT_PFM_SKY)()
+	if(skyC ~= nil) then skyC:ApplySceneSkySettings(scene) end
 
 	scene:Finalize()
 	unirender.PBRShader.set_global_bake_diffuse_lighting(false)
@@ -161,6 +163,8 @@ function LightmapBaker:Start(width,height,sampleCount,lightmapDataCache,initScen
 	local job = pfm.bake.lightmaps(game.get_scene(),lightmapReceivers,influencers,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
 	if(job == nil) then return false end
 	job:Start()
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm)) then pm:StopLiveRaytracing() end
 	self.m_job = job
 	return true
 end
