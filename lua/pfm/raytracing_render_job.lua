@@ -467,6 +467,8 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		if(#renderSettings:GetSky() > 0) then scene:SetSky(renderSettings:GetSky()) end
 
 		unirenderC:InvokeEventCallbacks(ents.UnirenderComponent.EVENT_INITIALIZE_SCENE,{scene,renderSettings})
+		local entSky,skyC = ents.citerator(ents.COMPONENT_PFM_SKY)()
+		if(skyC ~= nil) then skyC:ApplySceneSkySettings(scene) end
 
 		local function is_static_cache_entity(ent)
 			return ent:IsMapEntity()
