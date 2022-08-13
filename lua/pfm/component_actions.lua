@@ -18,7 +18,13 @@ pfm.register_component_action = function(componentName,localeId,id,onInit)
 	}
 	local actions = pfm.detail.component_actions
 	actions[componentName] = actions[componentName] or {}
-	actions[componentName][id] = action
+	for i,curAction in ipairs(actions[componentName]) do
+		if(curAction.identifier == id) then
+			actions[componentName][i] = action
+			return
+		end
+	end
+	table.insert(actions[componentName],action)
 end
 
 pfm.get_component_actions = function(componentName)
@@ -28,18 +34,38 @@ end
 -------------------
 
 include("/gui/pfm/bake/reflection_probe_baker.lua")
+pfm.detail.active_bakers = pfm.detail.active_bakers or {}
+local function add_baker(identifier,class,actorData,entActor)
+	local uuid = tostring(entActor:GetUuid())
+	pfm.detail.active_bakers[identifier] = pfm.detail.active_bakers[identifier] or {}
+	local activeBakers = pfm.detail.active_bakers[identifier]
+	local baker = activeBakers[uuid]
+	if(baker ~= nil and baker:IsBaking() == false) then
+		baker:Clear()
+		baker = nil
+	end
+	if(baker == nil) then
+		baker = class()
+		activeBakers[uuid] = baker
+		baker:SetActor(actorData,entActor)
+	end
+	return baker
+end
 pfm.register_component_action("reflection_probe","pfm_bake_reflection_probe","bake_reflection_probe",function(controls,actorData,entActor,actionData)
 	util.remove(actionData.baker)
-	local el = gui.create("WIReflectionProbeBaker",controls)
-	el:SetActor(actorData,entActor)
+
+	local baker = add_baker("reflection_probe",pfm.ReflectionProbeBaker,actorData,entActor)
+	local el = gui.create("WIBakeButton",controls)
+	el:SetBakeText(locale.get_text("pfm_bake_reflection_probe"))
+	el:SetBaker(baker)
 	actionData.baker = el
 	return el
 end)
 pfm.register_component_action("reflection_probe","pfm_view_reflection_probe","view_reflection_probe",function(controls,actorData,entActor,actionData)
 	if(util.is_valid(actionData.windowHandle)) then actionData.windowHandle:Close() end
 	util.remove(actionData.windowHandle)
-	local bt = gui.create("WIPFMButton",controls)
-	bt:SetText("View Reflection Probe")
+	local bt = gui.create("WIPFMActionButton",controls)
+	bt:SetText(locale.get_text("pfm_view_reflection_probe"))
 	bt:AddCallback("OnPressed",function()
 		pfm.util.open_reflection_probe_view_window(entActor,function(windowHandle,contents,controls)
 			actionData.windowHandle = windowHandle
@@ -51,26 +77,90 @@ end)
 -------------------
 
 include("/gui/pfm/bake/lightmap_baker.lua")
+
+-- Bake Lightmap UV coordinates (developer mode only)
 pfm.register_component_action("pfm_baked_lighting","pfm_bake_lightmap_uvs","bake_lightmap_uvs",function(controls,actorData,entActor,actionData)
 	if(tool.get_filmmaker():IsDeveloperModeEnabled() == false) then return end
 	util.remove(actionData.baker)
-	local el = gui.create("WILightmapUvBaker",controls)
-	el:SetActor(actorData,entActor)
+
+	local baker = add_baker("uv",pfm.UvBaker,actorData,entActor)
+	local el = gui.create("WIBakeButton",controls)
+	el:SetBakeText(locale.get_text("pfm_bake_uvs"))
+	el:SetBaker(baker)
 	actionData.baker = el
 	return el
 end)
+
+-- Bake lightmaps
 pfm.register_component_action("pfm_baked_lighting","pfm_bake_lightmap","bake_lightmap",function(controls,actorData,entActor,actionData)
 	util.remove(actionData.baker)
-	local el = gui.create("WILightmapBaker",controls)
-	el:SetActor(actorData,entActor)
+
+	local baker = add_baker("lightmap",pfm.LightmapBaker,actorData,entActor)
+	local el = gui.create("WIBakeButton",controls)
+	el:SetBakeText(locale.get_text("pfm_bake_lightmaps"))
+	el:SetBaker(baker)
 	actionData.baker = el
 	return el
 end)
+
+-- Generate render job
+pfm.register_component_action("pfm_baked_lighting","pfm_bake_lightmap_job","bake_lightmap_job",function(controls,actorData,entActor,actionData)
+	util.remove(actionData.baker)
+
+	local baker = add_baker("lightmap_render_job",pfm.LightmapBaker,actorData,entActor)
+	baker:SetGenerateRenderJob(true)
+
+	local el = gui.create("WIBakeButton",controls)
+	el:SetBakeText(locale.get_text("pfm_generate_render_job"))
+	el:SetBaker(baker)
+	actionData.baker = el
+	return el
+end)
+
+-- Import direct lightmap
+pfm.register_component_action("pfm_baked_lighting","pfm_import_direct","import_direct_lightmap",function(controls,actorData,entActor,actionData)
+	local bt = gui.create("WIPFMActionButton",controls)
+	bt:SetText(locale.get_text("pfm_import_direct_lightmap"))
+	bt:AddCallback("OnPressed",function()
+		local c = entActor:GetComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)
+		if(c ~= nil) then
+			local dialogue = gui.create_file_open_dialog(function(pDialog,fileName)
+				if(c:IsValid() == false) then return end
+				c:ImportLightmapTexture("diffuse_direct_map","lightmap_diffuse_direct",fileName)
+			end)
+			dialogue:SetRootPath("")
+			dialogue:SetExtensions(asset.get_supported_extensions(asset.TYPE_TEXTURE))
+			dialogue:Update()
+		end
+	end)
+	return bt
+end)
+
+-- Import indirect lightmap
+pfm.register_component_action("pfm_baked_lighting","pfm_import_indirect","import_indirect_lightmap",function(controls,actorData,entActor,actionData)
+	local bt = gui.create("WIPFMActionButton",controls)
+	bt:SetText(locale.get_text("pfm_import_indirect_lightmap"))
+	bt:AddCallback("OnPressed",function()
+		local c = entActor:GetComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)
+		if(c ~= nil) then
+			local dialogue = gui.create_file_open_dialog(function(pDialog,fileName)
+				if(c:IsValid() == false) then return end
+				c:ImportLightmapTexture("diffuse_indirect_map","lightmap_diffuse_indirect",fileName)
+			end)
+			dialogue:SetRootPath("")
+			dialogue:SetExtensions(asset.get_supported_extensions(asset.TYPE_TEXTURE))
+			dialogue:Update()
+		end
+	end)
+	return bt
+end)
+
+-- View lightmap atlas
 pfm.register_component_action("pfm_baked_lighting","pfm_view_lightmap_atlas","view_lightmap_atlas",function(controls,actorData,entActor,actionData)
 	if(util.is_valid(actionData.windowHandle)) then actionData.windowHandle:Close() end
 	util.remove(actionData.windowHandle)
-	local bt = gui.create("WIPFMButton",controls)
-	bt:SetText("View Lightmap Atlas")
+	local bt = gui.create("WIPFMActionButton",controls)
+	bt:SetText(locale.get_text("pfm_view_lightmap_atlas"))
 	bt:AddCallback("OnPressed",function()
 		pfm.util.open_lightmap_atlas_view_window(entActor,function(windowHandle,contents,controls)
 			actionData.windowHandle = windowHandle
@@ -78,11 +168,80 @@ pfm.register_component_action("pfm_baked_lighting","pfm_view_lightmap_atlas","vi
 	end)
 	return bt
 end)
+
+-- Bake directional lightmaps (developer mode only)
 pfm.register_component_action("pfm_baked_lighting","pfm_bake_directional_lightmap","bake_directional_lightmap",function(controls,actorData,entActor,actionData)
-	if(tool.get_filmmaker():IsDeveloperModeEnabled() == false) then return end
+	--[[if(tool.get_filmmaker():IsDeveloperModeEnabled() == false) then return end
 	util.remove(actionData.baker)
 	local el = gui.create("WIDirectionalLightmapBaker",controls)
 	el:SetActor(actorData,entActor)
-	actionData.baker = el
+	actionData.baker = el]]
 	return el
+end)
+
+-- Quality presets
+pfm.register_component_action("pfm_baked_lighting","pfm_bake_quality_preset","bake_quality_preset",function(controls,actorData,entActor,actionData)
+	local presets = {
+		{
+			name = locale.get_text("low"),
+			sampleCount = 200,
+			resolution = "1024x1024",
+			lightmapMode = "Directional"
+		},
+		{
+			name = locale.get_text("medium"),
+			sampleCount = 2000,
+			resolution = "2048x2048",
+			lightmapMode = "Directional"
+		},
+		{
+			name = locale.get_text("pfm_preset_production_4k"),
+			sampleCount = 20000,
+			resolution = "4096x4096",
+			lightmapMode = "Directional"
+		},
+		{
+			name = locale.get_text("pfm_preset_production_8k"),
+			sampleCount = 20000,
+			resolution = "8192x8192",
+			lightmapMode = "Directional"
+		},
+		{
+			name = locale.get_text("pfm_preset_production_16k"),
+			sampleCount = 20000,
+			resolution = "16384x16384",
+			lightmapMode = "Directional"
+		},
+		{
+			name = locale.get_text("pfm_preset_production_32k"),
+			sampleCount = 20000,
+			resolution = "32768x32768",
+			lightmapMode = "Directional"
+		}
+	}
+
+	local el,wrapper
+	local options = {}
+	for i,preset in ipairs(presets) do
+		table.insert(options,{tostring(i -1),preset.name})
+	end
+	el,wrapper = controls:AddDropDownMenu(locale.get_text("pfm_cycles_quality_preset"),"bake_preset_quality",options,0,function(el,option)
+		local mode = toint(el:GetOptionValue(el:GetSelectedOption()))
+		local preset = presets[mode +1]
+		if(preset == nil) then return end
+		local c = entActor:GetComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)
+		if(c ~= nil) then
+			c:SetMemberValue("sampleCount",preset.sampleCount)
+			c:SetMemberValue("resolution",preset.resolution)
+			c:SetMemberValue("lightmapMode",preset.lightmapMode)
+
+			local actorEditor = tool.get_filmmaker():GetActorEditor()
+			if(util.is_valid(actorEditor)) then
+				actorEditor:UpdateActorProperty(actorData,"ec/pfm_baked_lighting/sampleCount")
+				actorEditor:UpdateActorProperty(actorData,"ec/pfm_baked_lighting/resolution")
+				actorEditor:UpdateActorProperty(actorData,"ec/pfm_baked_lighting/lightmapMode")
+			end
+		end
+	end)
+	return wrapper
 end)

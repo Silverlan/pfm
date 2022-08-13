@@ -49,84 +49,163 @@ pfm.util.open_simple_window = function(title,onOpen)
 	end)
 end
 
-util.register_class("WIBaseBaker",gui.PFMButton)
-function WIBaseBaker:OnInitialize()
-	gui.PFMButton.OnInitialize(self)
-
-	self:SetSize(64,64)
-	self:InitializeProgressBar()
-	self:SetMouseInputEnabled(true)
+local BaseBaker = util.register_class("pfm.BaseBaker",util.CallbackHandler)
+function BaseBaker:__init()
+	util.CallbackHandler.__init(self)
 end
-function WIBaseBaker:SetActor(actorData,entActor)
+function BaseBaker:__finalize()
+	self:Clear()
+end
+function BaseBaker:SetActor(actorData,entActor)
 	self.m_actorData = actorData
 	self.m_entActor = entActor
 end
-function WIBaseBaker:GetActorData() return self.m_actorData end
-function WIBaseBaker:GetActorEntity() return self.m_entActor end
-function WIBaseBaker:OnPressed()
-	if(self.m_baking == true) then
-		self:Cancel()
-		return
-	end
-	self:StartBake()
-end
-function WIBaseBaker:Cancel()
+function BaseBaker:GetActorData() return self.m_actorData end
+function BaseBaker:GetActorEntity() return self.m_entActor end
+function BaseBaker:Cancel()
 	if(self.m_baking == true) then
 		self:CancelBaker()
-		if(util.is_valid(self.m_progressBar)) then self.m_progressBar:SetColor(pfm.get_color_scheme_color("red")) end
+		util.remove(self.m_cbTick)
+		self:Reset()
+		self:CallCallbacks("OnCancel")
 	end
 	self.m_baking = false
 end
-function WIBaseBaker:OnRemove()
+function BaseBaker:Clear()
 	self:Cancel()
 	self:CloseWindow()
+	util.remove(self.m_cbTick)
 end
-function WIBaseBaker:CloseWindow()
+function BaseBaker:CloseWindow()
 	if(util.is_valid(self.m_viewWindow) == false) then return end
 	util.remove(gui.get_base_element(self.m_viewWindow))
 	self.m_viewWindow:Close()
 	self.m_viewWindow = nil
 end
-function WIBaseBaker:OpenWindow(title)
+function BaseBaker:OpenWindow(title)
 	self:CloseWindow()
 end
-function WIBaseBaker:StartBake()
-	self.m_progressBar:SetColor(pfm.get_color_scheme_color("darkGrey"))
+function BaseBaker:StartBake()
 	self:StartBaker()
 	self.m_baking = true
 	self.m_startBakeTime = time.time_since_epoch()
-	self:SetText(locale.get_text("cancel"))
+	self:CallCallbacks("OnBakingStarted")
 
-	self:SetThinkingEnabled(true)
+	util.remove(self.m_cbTick)
+	self.m_cbTick = game.add_callback("Tick",function() self:Poll() end)
 end
-function WIBaseBaker:OnThink()
+function BaseBaker:Poll()
 	if(self.m_baking ~= true) then return end
 	self:PollBaker()
-	self.m_progressBar:SetProgress(self:GetBakerProgress())
 
 	if(self:IsBakerComplete()) then
 		self.m_baking = false
-		self:SetThinkingEnabled(false)
-		self:OnComplete()
+		util.remove(self.m_cbTick)
+		local res = self:OnComplete()
+		self:CallCallbacks("OnBakingCompleted",res)
 	end
 end
-function WIBaseBaker:OnComplete()
-	if(self:IsBakerSuccessful()) then
-		local res = self:FinalizeBaker()
-		local dt = time.time_since_epoch() -self.m_startBakeTime
-		print("Baking complete. Baking took " .. util.get_pretty_time(dt /1000000000.0) .. "!")
-		if(res == false) then
-			self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
-		else
-			self.m_progressBar:SetColor(pfm.get_color_scheme_color("green"))
-		end
-	else
-		self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
-	end
+function BaseBaker:OnComplete()
 	self.m_baking = false
-	self:SetThinkingEnabled(false)
+	if(self:IsBakerSuccessful() == false) then return false end
+	local res = self:FinalizeBaker()
+	local dt = time.time_since_epoch() -self.m_startBakeTime
+	print("Baking complete. Baking took " .. util.get_pretty_time(dt /1000000000.0) .. "!")
+	return res
 end
-function WIBaseBaker:InitializeProgressBar()
+function BaseBaker:IsBaking() return self.m_baking or false end
+function BaseBaker:FinalizeBaker() return false end
+function BaseBaker:Reset() self:CallCallbacks("OnReset") end
+function BaseBaker:StartBaker() end
+function BaseBaker:CancelBaker() end
+function BaseBaker:PollBaker() end
+function BaseBaker:IsBakerComplete() return false end
+function BaseBaker:IsBakerSuccessful() return false end
+function BaseBaker:GetBakerProgress() return 1.0 end
+
+-----------
+
+local WIPFMActionButton = util.register_class("WIPFMActionButton",gui.PFMButton)
+function WIPFMActionButton:OnInitialize()
+	gui.PFMButton.OnInitialize(self)
+
+	self:SetSize(64,24)
+	self:SetMouseInputEnabled(true)
+	self:SetCursor(gui.CURSOR_SHAPE_HAND)
+end
+gui.register("WIPFMActionButton",WIPFMActionButton)
+
+-----------
+
+local WIBakeButton = util.register_class("WIBakeButton",WIPFMActionButton)
+function WIBakeButton:OnInitialize()
+	WIPFMActionButton.OnInitialize(self)
+
+	self:SetSize(64,24)
+	self:InitializeProgressBar()
+	self:SetMouseInputEnabled(true)
+	self:SetCursor(gui.CURSOR_SHAPE_HAND)
+	self.m_bakerCallbacks = {}
+
+	self:SetBakeText("Bake")
+end
+function WIBakeButton:SetBakeText(text)
+	self.m_bakeText = text
+	self:SetText(text)
+end
+function WIBakeButton:OnPressed()
+	if(self.m_baker:IsBaking() == true) then
+		self.m_baker:Cancel()
+		return
+	end
+	self.m_baker:StartBake()
+end
+function WIBakeButton:OnRemove()
+	self:ClearBaker()
+end
+function WIBakeButton:ClearBaker()
+	self.m_baker = nil
+	util.remove(self.m_bakerCallbacks)
+	self.m_bakerCallbacks = {}
+end
+function WIBakeButton:SetBaker(baker)
+	self:ClearBaker()
+	self.m_baker = baker
+	table.insert(self.m_bakerCallbacks,baker:AddCallback("OnCancel",function()
+		if(util.is_valid(self.m_progressBar)) then self.m_progressBar:SetColor(pfm.get_color_scheme_color("red")) end
+	end))
+	table.insert(self.m_bakerCallbacks,baker:AddCallback("OnBakingStarted",function()
+		self:SetBakingState()
+	end))
+	table.insert(self.m_bakerCallbacks,baker:AddCallback("OnBakingCompleted",function(result)
+		if(self.m_baker:IsBakerSuccessful()) then
+			if(result == false) then
+				self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
+			else
+				self.m_baker:Reset()
+				self.m_progressBar:SetColor(pfm.get_color_scheme_color("green"))
+			end
+		else
+			self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
+		end
+		self:SetThinkingEnabled(false)
+	end))
+	table.insert(self.m_bakerCallbacks,baker:AddCallback("OnReset",function(baker,result)
+		self:SetText(self.m_bakeText)
+	end))
+
+	if(baker:IsBaking()) then self:SetBakingState() end
+end
+function WIBakeButton:SetBakingState()
+	self.m_progressBar:SetColor(pfm.get_color_scheme_color("darkGrey"))
+	self:SetText(locale.get_text("cancel"))
+	self:SetThinkingEnabled(true)
+end
+function WIBakeButton:OnThink()
+	if(self.m_baker:IsBaking() ~= true) then return end
+	self.m_progressBar:SetProgress(self.m_baker:GetBakerProgress())
+end
+function WIBakeButton:InitializeProgressBar()
 	local progressBar = gui.create("WIProgressBar",self)
 	progressBar:SetSize(self:GetWidth(),self:GetHeight())
 	progressBar:SetPos(0,0)
@@ -136,11 +215,4 @@ function WIBaseBaker:InitializeProgressBar()
 	progressBar:SetLabelVisible(false)
 	self.m_progressBar = progressBar
 end
-function WIBaseBaker:FinalizeBaker() return false end
-function WIBaseBaker:Reset() end
-function WIBaseBaker:StartBaker() end
-function WIBaseBaker:CancelBaker() end
-function WIBaseBaker:PollBaker() end
-function WIBaseBaker:IsBakerComplete() return false end
-function WIBaseBaker:IsBakerSuccessful() return false end
-function WIBaseBaker:GetBakerProgress() return 1.0 end
+gui.register("WIBakeButton",WIBakeButton)

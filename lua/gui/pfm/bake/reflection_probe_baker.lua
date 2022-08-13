@@ -14,7 +14,7 @@ pfm = pfm or {}
 pfm.util = pfm.util or {}
 
 pfm.util.open_reflection_probe_view_window = function(ent,onInit)
-	pfm.util.open_simple_window("Reflection Probe View",function(windowHandle,contents,controls)
+	pfm.util.open_simple_window(locale.get_text("pfm_reflection_probe_view"),function(windowHandle,contents,controls)
 		if(ent:IsValid() == false) then return end
 		local reflC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
 		if(reflC == nil) then return end
@@ -26,9 +26,9 @@ pfm.util.open_reflection_probe_view_window = function(ent,onInit)
 		if(util.is_valid(mat)) then
 			local elCubemap
 			local wrapper
-			elCubemap,wrapper = controls:AddDropDownMenu("Texture","view_reflection_probe",{
-				{"0","Prefilter"},
-				{"1","Irradiance"}
+			elCubemap,wrapper = controls:AddDropDownMenu(locale.get_text("texture"),"view_reflection_probe",{
+				{"0",locale.get_text("pfm_reflection_probe_view_prefilter")},
+				{"1",locale.get_text("pfm_reflection_probe_view_irradiance")}
 			},"0",function()
 				local val = toint(elCubemap:GetOptionValue(elCubemap:GetSelectedOption()))
 				if(val == 0) then
@@ -56,54 +56,40 @@ pfm.util.open_reflection_probe_view_window = function(ent,onInit)
 	end)
 end
 
-util.register_class("WIReflectionProbeBaker",WIBaseBaker)
-function WIReflectionProbeBaker:OnInitialize()
-	WIBaseBaker.OnInitialize(self)
-
-	self:SetText(locale.get_text("pfm_bake_reflection_probe"))
+local ReflectionProbeBaker = util.register_class("pfm.ReflectionProbeBaker",pfm.BaseBaker)
+function ReflectionProbeBaker:__init()
+	pfm.BaseBaker.__init(self)
 end
-function WIReflectionProbeBaker:SetActor(actorData,entActor)
-	WIBaseBaker.SetActor(self,actorData,entActor)
+function ReflectionProbeBaker:SetActor(actorData,entActor)
+	pfm.BaseBaker.SetActor(self,actorData,entActor)
 	self.m_baker = pfm.bake.ReflectionProbeBaker(actorData,entActor)
 end
-function WIBaseBaker:Reset()
-	self:SetText(locale.get_text("pfm_bake_reflection_probe"))
-end
-function WIReflectionProbeBaker:StartBaker() self.m_baker:Start() end
-function WIReflectionProbeBaker:CancelBaker() self.m_baker:Clear() end
-function WIReflectionProbeBaker:PollBaker() self.m_baker:Poll() end
-function WIReflectionProbeBaker:IsBakerComplete() return self.m_baker:IsComplete() end
-function WIReflectionProbeBaker:IsBakerSuccessful() return self.m_baker:IsSuccessful() end
-function WIReflectionProbeBaker:GetBakerProgress() return self.m_baker:GetProgress() end
-function WIReflectionProbeBaker:FinalizeBaker()
+function ReflectionProbeBaker:StartBaker() self.m_baker:Start() end
+function ReflectionProbeBaker:CancelBaker() self.m_baker:Clear() end
+function ReflectionProbeBaker:PollBaker() self.m_baker:Poll() end
+function ReflectionProbeBaker:IsBakerComplete() return self.m_baker:IsComplete() end
+function ReflectionProbeBaker:IsBakerSuccessful() return self.m_baker:IsSuccessful() end
+function ReflectionProbeBaker:GetBakerProgress() return self.m_baker:GetProgress() end
+function ReflectionProbeBaker:FinalizeBaker()
 	local ent = self:GetActorEntity()
 	local reflC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
 	return reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult():GetImage("COLOR"))
 end
-function WIReflectionProbeBaker:OpenWindow(title)
-	WIBaseBaker.OpenWindow(self,title)
+function ReflectionProbeBaker:OpenWindow(title)
+	pfm.BaseBaker.OpenWindow(self,title)
 	local ent = self:GetActorEntity()
 	if(util.is_valid(ent) == false) then return end
 	pfm.util.open_reflection_probe_view_window(ent,function(windowHandle,contents,controls)
-		if(self:IsValid() == false) then return end
 		self.m_viewWindow = windowHandle
 	end)
 end
-function WIReflectionProbeBaker:OnComplete()
+function ReflectionProbeBaker:OnComplete()
 	if(self.m_baker:IsSuccessful()) then
 		local ent = self.m_baker:GetActorEntity()
 		local reflC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
 		local res = reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult():GetImage("COLOR"))
-		if(res == false) then
-			self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
-		else
-			self.m_progressBar:SetColor(pfm.get_color_scheme_color("green"))
-
-			self:OpenWindow("Reflection Probe View")
+		if(res == true) then
+			self:OpenWindow(locale.get_text("pfm_reflection_probe_view"))
 		end
-	else
-		self.m_progressBar:SetColor(pfm.get_color_scheme_color("red"))
 	end
-	self:SetText(locale.get_text("pfm_bake_reflection_probe"))
 end
-gui.register("WIReflectionProbeBaker",WIReflectionProbeBaker)

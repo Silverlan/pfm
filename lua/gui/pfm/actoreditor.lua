@@ -958,11 +958,11 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 		if(selected) then
 			local actions = pfm.get_component_actions(componentType)
 			if(actions ~= nil) then
-				for id,action in pairs(actions) do
-					actorData.componentData[componentId].actionData[id] = {}
+				for _,action in ipairs(actions) do
+					actorData.componentData[componentId].actionData[action.identifier] = {}
 					local entActor = ents.find_by_uuid(uniqueId)
 					if(util.is_valid(entActor)) then
-						local el = action.initialize(self.m_animSetControls,actorData.actor,entActor,actorData.componentData[componentId].actionData[id])
+						local el = action.initialize(self.m_animSetControls,actorData.actor,entActor,actorData.componentData[componentId].actionData[action.identifier])
 						if(util.is_valid(el)) then
 							table.insert(actorData.componentData[componentId].actionItems,el)
 						end

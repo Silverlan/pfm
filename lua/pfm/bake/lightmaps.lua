@@ -76,7 +76,7 @@ pfm.bake.directional_lightmaps = function(lightmapTargets,lightSources,width,hei
 	return util.bake_directional_lightmap_atlas(lightSources,meshes,entities,width,height,lightmapDataCache)
 end
 
-pfm.bake.lightmaps = function(gameScene,lightmapTargets,influencers,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
+pfm.bake.lightmaps = function(gameScene,lightmapTargets,influencers,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined,asJob)
 	if(bakeCombined == nil) then bakeCombined = true end
 	local createInfo = unirender.Scene.CreateInfo()
 	createInfo.width = width
@@ -134,10 +134,17 @@ pfm.bake.lightmaps = function(gameScene,lightmapTargets,influencers,lightSources
 	scene:Finalize()
 	unirender.PBRShader.set_global_bake_diffuse_lighting(false)
 	local flags = unirender.Renderer.FLAG_NONE
+	if(asJob) then
+		local res,path = unirender.create_render_job(scene)
+		if(res == true) then
+			pfm.RaytracingRenderJob.generate_job_batch_script({path})
+		end
+		return res
+	end
 	local renderer = unirender.create_renderer(scene,createInfo.renderer,flags)
 	if(renderer == nil) then
 		pfm.log("Unable to create renderer for render engine '" .. createInfo.renderer .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
-		return
+		return false
 	end
 
 	local apiData = renderer:GetApiData()
@@ -154,13 +161,14 @@ function LightmapBaker:BakeUvs(lmEntity,cachePath,meshFilter)
 	if(util.bake_lightmap_uvs(lmEntity,lightmapReceivers,cachePath,nil,meshFilter) == false) then return false end
 	return true
 end
-function LightmapBaker:Start(width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
+function LightmapBaker:Start(width,height,sampleCount,lightmapDataCache,initScene,bakeCombined,asJob)
 	local lightmapReceivers,influencers = pfm.bake.find_bake_entities()
 
 	-- Only include baked light sources
 	local lightSources = pfm.bake.find_bake_light_sources()
 
-	local job = pfm.bake.lightmaps(game.get_scene(),lightmapReceivers,influencers,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined)
+	local job = pfm.bake.lightmaps(game.get_scene(),lightmapReceivers,influencers,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined,asJob)
+	if(asJob) then return job end
 	if(job == nil) then return false end
 	job:Start()
 	local pm = tool.get_filmmaker()
