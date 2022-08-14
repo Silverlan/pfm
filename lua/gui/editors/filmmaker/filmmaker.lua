@@ -1942,10 +1942,15 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 	local vp = self:GetViewport()
 	if(util.is_valid(vp) == false) then return end
 	if(self.m_quickAxisTransformModeEnabled) then
+		local entTransform = vp:GetTransformEntity()
 		self.m_quickAxisTransformModeEnabled = nil
-		vp:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_SELECT)
+		vp:SetManipulatorMode(self.m_preAxisManipulatorMode or gui.PFMViewport.MANIPULATOR_MODE_SELECT)
+		self.m_preAxisManipulatorMode = nil
+
+		if(util.is_valid(entTransform)) then vp:OnActorTransformChanged(entTransform) end
 		return
 	end
+	self.m_preAxisManipulatorMode = vp:GetManipulatorMode()
 	vp:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL)
 	local c = vp:GetTransformWidgetComponent()
 	if(util.is_valid(c)) then
