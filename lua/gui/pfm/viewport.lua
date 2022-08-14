@@ -704,6 +704,10 @@ function gui.PFMViewport:SetBoneTransformProperty(ent,boneId,propName,value)
 	end
 end
 function gui.PFMViewport:GetTransformWidgetComponent() return self.m_transformComponent end
+function gui.PFMViewport:OnActorTransformChanged(ent)
+	local decalC = ent:GetComponent(ents.COMPONENT_DECAL)
+	if(decalC ~= nil) then decalC:ApplyDecal() end
+end
 function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 	if(enabled == nil) then enabled = true end
 	ent:RemoveComponent("util_bone_transform")

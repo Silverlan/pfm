@@ -31,6 +31,7 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER = 10
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE = 11
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY = 12
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG = 13
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL = 14
 
 function gui.PFMActorEditor:__init()
 	gui.Base.__init(self)
@@ -123,6 +124,7 @@ function gui.PFMActorEditor:OnInitialize()
 		if(hasFogComponent == false) then
 			addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG,"pfm_create_new_fog_controller")
 		end
+		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL,"pfm_create_new_decal")
 
 		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
 		local types = ents.get_registered_entity_types()
@@ -383,6 +385,10 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"fog_controller",false)
 		self:CreateNewActorComponent(actor,"color",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL) then
+		actor = actor or self:CreateNewActor("decal")
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"decal",false)
 	end
 	if(newActor) then self:UpdateActorComponents(actor) end
 	return actor
