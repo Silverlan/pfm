@@ -286,9 +286,8 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 	if(mouseButton ~= input.MOUSE_BUTTON_LEFT and mouseButton ~= input.MOUSE_BUTTON_RIGHT) then return util.EVENT_REPLY_UNHANDLED end
 	if(state ~= input.STATE_PRESS and state ~= input.STATE_RELEASE) then return util.EVENT_REPLY_UNHANDLED end
 
-	local function findActor(pressed)
+	local function findActor(pressed,filter)
 		if(pressed == nil) then pressed = state == input.STATE_PRESS end
-		local filter
 		--[[if(self.m_manipulatorMode ~= gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
 			filter = function(ent,mdlC)
 				return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
@@ -378,10 +377,28 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 				self.m_rtMoverActor:RemoveComponent("pfm_rt_mover")
 				tool.get_filmmaker():TagRenderSceneAsDirty()
 				local actorC = util.is_valid(self.m_rtMoverActor) and self.m_rtMoverActor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
-				if(actorC ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"position",self.m_rtMoverActor:GetPos()) end
+				if(actorC ~= nil) then
+					tool.get_filmmaker():SetActorTransformProperty(actorC,"position",self.m_rtMoverActor:GetPos())
+					if(util.is_valid(self.m_rtMoverActor)) then self:OnActorTransformChanged(self.m_rtMoverActor) end
+				end
 				if(state == input.STATE_RELEASE) then return util.EVENT_REPLY_HANDLED end
 			end
-			local handled,entActor = findActor()
+
+			local handled,entActor
+			if(self:IsMoveManipulatorMode(self:GetManipulatorMode()) and input.is_alt_key_down() == false) then
+				local pm = tool.get_filmmaker()
+				local selectionManager = pm:GetSelectionManager()
+				local objs = selectionManager:GetSelectedObjects()
+				local obj = pairs(objs)(objs)
+				if(util.is_valid(obj)) then
+					handled = util.EVENT_REPLY_UNHANDLED
+					entActor = obj
+				end
+			end
+
+			if(util.is_valid(entActor) == false) then
+				handled,entActor = findActor()
+			end
 			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
 				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
@@ -501,6 +518,11 @@ function gui.PFMViewport:IsRotationManipulatorMode(mode)
 end
 function gui.PFMViewport:IsScaleManipulatorMode(mode)
 	return mode == gui.PFMViewport.MANIPULATOR_MODE_SCALE
+end
+function gui.PFMViewport:GetTransformEntity()
+	local c = self:GetTransformWidgetComponent()
+	if(util.is_valid(c) == false) then return end
+	return c:GetEntity()
 end
 function gui.PFMViewport:GetManipulatorMode() return self.m_manipulatorMode end
 function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
@@ -710,6 +732,9 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 			if(actorC ~= nil) then
 				tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",scale)
 			end
+		end)
+		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END,function(scale)
+			self:OnActorTransformChanged(ent)
 		end)
 		return trC
 	end

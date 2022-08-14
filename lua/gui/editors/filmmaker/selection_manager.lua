@@ -18,6 +18,10 @@ end
 function pfm.SelectionManager:AddChangeListener(listener) table.insert(self.m_listeners,listener) end
 
 function pfm.SelectionManager:GetSelectedObjects() return self.m_selectionData end
+function pfm.SelectionManager:IsSelected(obj)
+	if(self.m_selectionData[obj] == nil) then return false end
+	return self.m_selectionData[obj].selected or false
+end
 
 function pfm.SelectionManager:Remove()
 	self:ClearSelections()
