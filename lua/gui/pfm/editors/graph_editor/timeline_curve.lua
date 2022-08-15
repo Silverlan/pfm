@@ -55,7 +55,7 @@ function gui.PFMTimelineCurve:BuildCurve(curveValues,animClip,channel,curveIndex
 	for i=0,numKeys -1 do
 		local el = gui.create("WIPFMTimelineDataPoint",self)
 		el:SetGraphData(self,i)
-		el:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
+		el:AddCallback("OnMouseEvent",function(el,button,state,mods)
 			if(self.m_timelineGraph:GetCursorMode() ~= gui.PFMTimelineGraph.CURSOR_MODE_SELECT) then return util.EVENT_REPLY_UNHANDLED end
 			if(button == input.MOUSE_BUTTON_LEFT) then
 				if(state == input.STATE_PRESS) then
@@ -66,7 +66,6 @@ function gui.PFMTimelineCurve:BuildCurve(curveValues,animClip,channel,curveIndex
 				el:SetMoveModeEnabled(state == input.STATE_PRESS,5)
 				return util.EVENT_REPLY_HANDLED
 			end
-			wrapper:StartEditMode(false)
 		end)
 		self.m_selectedDataPoint = el
 
