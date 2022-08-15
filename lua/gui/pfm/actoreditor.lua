@@ -11,6 +11,7 @@ include("treeview.lua")
 include("weightslider.lua")
 include("controls_menu.lua")
 include("entry_edit_window.lua")
+include("/pfm/raycast.lua")
 include("/pfm/component_manager.lua")
 include("/pfm/component_actions.lua")
 include("/pfm/util.lua")
@@ -386,9 +387,20 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		self:CreateNewActorComponent(actor,"fog_controller",false)
 		self:CreateNewActorComponent(actor,"color",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL) then
-		actor = actor or self:CreateNewActor("decal")
+		local pm = pfm.get_project_manager()
+		local vp = util.is_valid(pm) and pm:GetViewport() or nil
+		local cam = util.is_valid(vp) and vp:GetActiveCamera() or nil
+		if(util.is_valid(cam)) then
+			local pos = cam:GetEntity():GetPos()
+			local dir = cam:GetEntity():GetForward()
+			pose = pfm.calc_decal_target_pose(pos,dir)
+		end
+
+		actor = actor or self:CreateNewActor("decal",pose)
 		if(actor == nil) then return end
-		self:CreateNewActorComponent(actor,"decal",false)
+		local decalC = self:CreateNewActorComponent(actor,"decal",false)
+		decalC:SetMemberValue("size",udm.TYPE_FLOAT,20.0)
+		decalC:SetMemberValue("material",udm.TYPE_STRING,"logo/test_spray")
 	end
 	if(newActor) then self:UpdateActorComponents(actor) end
 	return actor

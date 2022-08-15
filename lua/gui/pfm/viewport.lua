@@ -1232,3 +1232,15 @@ function gui.PFMViewport:OnUpdate()
 	self:UpdateFilmLabelPositions()
 end
 gui.register("WIPFMViewport",gui.PFMViewport)
+
+function pfm.calc_decal_target_pose(pos,dir)
+	local actor,hitPos,pos,hitData = pfm.raycast(pos,dir,2048.0)
+	if(hitPos == nil) then return end
+	local n = hitData:CalcHitNormal()
+	local n2 = (math.abs(n:DotProduct(vector.UP)) < 0.999) and vector.UP or vector.FORWARD
+	local n3 = n:Cross(n2)
+	n3:Normalize()
+	local rot = Quaternion(n,n3,n2)
+	hitPos = hitPos +n *1.0
+	return math.Transform(hitPos,rot)
+end

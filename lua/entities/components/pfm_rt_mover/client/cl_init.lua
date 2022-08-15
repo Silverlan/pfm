@@ -25,9 +25,14 @@ function Component:OnEntitySpawn()
 		return
 	end -- TODO
 
-	self:GetEntity():RemoveComponent(ents.COMPONENT_STATIC_BVH_USER)
-
 	local ent = self:GetEntity()
+	ent:RemoveComponent(ents.COMPONENT_STATIC_BVH_USER)
+
+	if(ent:HasComponent(ents.COMPONENT_DECAL)) then
+		self.m_placeAtRaycastPosition = true
+		return
+	end
+
 	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
 	local min,max = renderC:GetAbsoluteRenderBounds()
 	local center = (min +max) /2.0
@@ -78,10 +83,16 @@ function Component:Raycast(startPos,dir,maxDist,filterSelf)
 	return hitPos
 end
 function Component:OnTick(dt)
-	if(self.m_valid == false) then
+	if(self.m_valid == false) then return end
+	local ent = self:GetEntity()
+
+	if(self.m_placeAtRaycastPosition) then
+		local pos,dir,vpData = ents.ClickComponent.get_ray_data()
+		if(pos == nil) then return end
+		local pose = pfm.calc_decal_target_pose(pos,dir)
+		if(pose ~= nil) then self:GetEntity():SetPose(pose) end
 		return
 	end
-	local ent = self:GetEntity()
 	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
 	local pos = renderC:GetAbsoluteRenderSphereBounds()
 	local dir = -vector.UP
