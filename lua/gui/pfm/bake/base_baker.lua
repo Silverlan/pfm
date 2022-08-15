@@ -203,6 +203,14 @@ function WIBakeButton:SetBakingState()
 end
 function WIBakeButton:OnThink()
 	if(self.m_baker:IsBaking() ~= true) then return end
+	local progress = self.m_baker:GetBakerProgress()
+	if(progress ~= self.m_prevProgress) then
+		self.m_prevProgress = progress
+		local niceProgress = progress *10000.0
+		niceProgress = math.round(niceProgress)
+		niceProgress = niceProgress /100.0
+		self:SetTooltip(locale.get_text("progress") .. ": " .. niceProgress .. "%")
+	end
 	self.m_progressBar:SetProgress(self.m_baker:GetBakerProgress())
 end
 function WIBakeButton:InitializeProgressBar()
