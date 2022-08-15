@@ -32,6 +32,7 @@ function Component:Initialize()
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 
 	renderC:SetExemptFromOcclusionCulling(true)
+	renderC:AddToRenderGroup("pfm_editor_overlay")
 end
 function Component:UpdateScale()
 	local cam = game.get_render_scene_camera()
