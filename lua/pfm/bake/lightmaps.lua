@@ -110,6 +110,7 @@ pfm.bake.lightmaps = function(gameScene,lightmapTargets,influencers,lightSources
 	scene:SetMaxDiffuseBounces(4)
 	scene:SetMaxGlossyBounces(4)
 	scene:SetLightIntensityFactor(1)
+	scene:SetAdaptiveSampling(true,0.001,0)
 	scene:SetResolution(width,height)
 	if(lightmapDataCache ~= nil) then scene:SetLightmapDataCache(lightmapDataCache) end -- Has to be set before adding any bake targets!
 
@@ -147,8 +148,9 @@ pfm.bake.lightmaps = function(gameScene,lightmapTargets,influencers,lightSources
 		return false
 	end
 
-	local apiData = renderer:GetApiData()
-	apiData:GetFromPath("cycles"):SetValue("adaptiveSamplingThreshold",udm.TYPE_FLOAT,0.001)
+
+	-- local apiData = renderer:GetApiData()
+	-- apiData:GetFromPath("cycles"):SetValue("adaptiveSamplingThreshold",udm.TYPE_FLOAT,0.001)
 	return renderer:StartRender()
 end
 
