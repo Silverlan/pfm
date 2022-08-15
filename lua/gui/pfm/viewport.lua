@@ -1132,6 +1132,9 @@ function gui.PFMViewport:SwitchToCamera(cam)
 	local scene = self.m_viewport:GetScene()
 	if(util.is_valid(scene)) then
 		scene:SetActiveCamera(cam)
+
+		cam:SetAspectRatio(self.m_aspectRatioWrapper:GetAspectRatio())
+		cam:UpdateMatrices()
 	end
 	pfm.tag_render_scene_as_dirty()
 end
