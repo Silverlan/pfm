@@ -23,13 +23,9 @@ include_component("click")
 util.register_class("gui.PFMViewport",gui.PFMBaseViewport)
 
 gui.PFMViewport.MANIPULATOR_MODE_SELECT = 0
-gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL = 1
-gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL = 2
-gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW = 3
-gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL = 4
-gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL = 5
-gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW = 6
-gui.PFMViewport.MANIPULATOR_MODE_SCALE = 7
+gui.PFMViewport.MANIPULATOR_MODE_MOVE = 1
+gui.PFMViewport.MANIPULATOR_MODE_ROTATE = 2
+gui.PFMViewport.MANIPULATOR_MODE_SCALE = 3
 
 gui.PFMViewport.CAMERA_MODE_PLAYBACK = 0
 gui.PFMViewport.CAMERA_MODE_FLY = 1
@@ -238,6 +234,17 @@ function gui.PFMViewport:InitializeSettings(parent)
 		console.run("cl_render_tone_mapping " .. tostring(idx))
 		tool.get_filmmaker():TagRenderSceneAsDirty()
 	end)
+
+	self.m_ctrlTransformSpace = p:AddDropDownMenu(locale.get_text("pfm_transform_space"),"transform_space",{
+		{"global",locale.get_text("pfm_transform_space_global")},
+		{"local",locale.get_text("pfm_transform_space_local")},
+		{"view",locale.get_text("pfm_transform_space_view")}
+	},"global")
+	self.m_ctrlTransformSpace:AddCallback("OnOptionSelected",function(el,idx)
+		local space = self.m_ctrlTransformSpace:GetOptionValue(self.m_ctrlTransformSpace:GetSelectedOption())
+
+	end)
+
 	p:ResetControls()
 end
 function gui.PFMViewport:SetRtViewportRenderer(renderer)
@@ -507,14 +514,10 @@ function gui.PFMViewport:UpdateFilmLabelPositions()
 	end
 end
 function gui.PFMViewport:IsMoveManipulatorMode(mode)
-	return mode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL or
-		mode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL or
-		mode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW
+	return mode == gui.PFMViewport.MANIPULATOR_MODE_MOVE
 end
 function gui.PFMViewport:IsRotationManipulatorMode(mode)
-	return mode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL or
-		mode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL or
-		mode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW
+	return mode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE
 end
 function gui.PFMViewport:IsScaleManipulatorMode(mode)
 	return mode == gui.PFMViewport.MANIPULATOR_MODE_SCALE
@@ -547,6 +550,21 @@ function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
 	end
 	self:UpdateManipulationMode()
 end
+function gui.PFMViewport:GetTransformSpace()
+	local transformSpace = self.m_ctrlTransformSpace:GetOptionValue(self.m_ctrlTransformSpace:GetSelectedOption())
+	if(transformSpace == "global") then return ents.UtilTransformComponent.SPACE_WORLD
+	elseif(transformSpace == "local") then return ents.UtilTransformComponent.SPACE_LOCAL
+	elseif(transformSpace == "view") then return ents.UtilTransformComponent.SPACE_VIEW end
+end
+function gui.PFMViewport:SetTransformSpace(transformSpace)
+	if(transformSpace == ents.UtilTransformComponent.SPACE_WORLD) then
+		self.m_ctrlTransformSpace:SelectOption("global")
+	elseif(transformSpace == ents.UtilTransformComponent.SPACE_LOCAL) then
+		self.m_ctrlTransformSpace:SelectOption("local")
+	elseif(transformSpace == ents.UtilTransformComponent.SPACE_VIEW) then
+		self.m_ctrlTransformSpace:SelectOption("view")
+	end
+end
 function gui.PFMViewport:InitializeTransformWidget(tc,ent)
 	local manipMode = self:GetManipulatorMode()
 	if(selected == false or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
@@ -565,22 +583,23 @@ function gui.PFMViewport:InitializeTransformWidget(tc,ent)
 			tc:SetRotationEnabled(false)
 			tc:SetScaleEnabled(true)
 		end
-		tc:UpdateAxes()
 	end
 
 	if(util.is_valid(tc)) then
-		if(manipMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL or manipMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SCALE) then
-			tc:SetSpace(ents.UtilTransformComponent.SPACE_WORLD)
+		local transformSpace = self:GetTransformSpace()
+		if(self:IsScaleManipulatorMode(manipMode)) then transformSpace = ents.UtilTransformComponent.SPACE_LOCAL end
+		tc:SetSpace(transformSpace)
+
+		if(transformSpace == ents.UtilTransformComponent.SPACE_WORLD) then
 			tc:SetReferenceEntity()
-		elseif(manipMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL or manipMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL) then
-			tc:SetSpace(ents.UtilTransformComponent.SPACE_LOCAL)
+		elseif(transformSpace == ents.UtilTransformComponent.SPACE_LOCAL) then
 			tc:SetReferenceEntity(ent)
-		elseif(manipMode == gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW or manipMode == gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW) then
-			tc:SetSpace(ents.UtilTransformComponent.SPACE_VIEW)
+		elseif(transformSpace == ents.UtilTransformComponent.SPACE_VIEW) then
 			local camC = self:GetActiveCamera()
 			if(util.is_valid(camC)) then tc:SetReferenceEntity(camC:GetEntity()) end
 		end
 	end
+	tc:UpdateAxes()
 end
 function gui.PFMViewport:UpdateManipulationMode()
 	local manipMode = self:GetManipulatorMode()
@@ -714,6 +733,11 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 	ent:RemoveComponent("util_transform")
 	util.remove(self.m_entTransform)
 
+	if(manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
+		tool.get_filmmaker():TagRenderSceneAsDirty()
+		return
+	end
+
 	local function add_transform_component()
 		local trC = ent:GetComponent("util_transform")
 		if(trC ~= nil) then return trC end
@@ -743,7 +767,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 		return trC
 	end
 	local manipMode = manipMode or self.m_manipulatorMode
-	if(enabled and (self:IsMoveManipulatorMode(manipMode) or self:IsRotationManipulatorMode(manipMode))) then
+	if(enabled) then
 		local pm = tool.get_filmmaker()
 		local actorEditor = pm:GetActorEditor()
 		local activeControls = actorEditor:GetActiveControls()
@@ -865,25 +889,27 @@ function gui.PFMViewport:OnActorSelectionChanged(ent,selected)
 	self:UpdateActorManipulation(ent,selected)
 	self:UpdateManipulationMode()
 end
+function gui.PFMViewport:CycleTransformSpace()
+	local transformSpace = self:GetTransformSpace()
+	if(transformSpace == ents.UtilTransformComponent.SPACE_WORLD) then
+		self:SetTransformSpace(ents.UtilTransformComponent.SPACE_LOCAL)
+	elseif(transformSpace == ents.UtilTransformComponent.SPACE_LOCAL) then
+		self:SetTransformSpace(ents.UtilTransformComponent.SPACE_VIEW)
+	elseif(transformSpace == ents.UtilTransformComponent.SPACE_VIEW) then
+		self:SetTransformSpace(ents.UtilTransformComponent.SPACE_WORLD)
+	end
+end
 function gui.PFMViewport:SetTranslationManipulatorMode()
-	local mode = self:GetManipulatorMode()
-	local nextMode = {
-		[gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL,
-		[gui.PFMViewport.MANIPULATOR_MODE_MOVE_LOCAL] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW,
-		[gui.PFMViewport.MANIPULATOR_MODE_MOVE_VIEW] = gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL
-	}
-	mode = nextMode[mode] or gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL
-	self:SetManipulatorMode(mode)
+	if(self:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_MOVE) then
+		self:CycleTransformSpace()
+	end
+	self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_MOVE)
 end
 function gui.PFMViewport:SetRotationManipulatorMode()
-	local mode = self:GetManipulatorMode()
-	local nextMode = {
-		[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL,
-		[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_LOCAL] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW,
-		[gui.PFMViewport.MANIPULATOR_MODE_ROTATE_VIEW] = gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL
-	}
-	mode = nextMode[mode] or gui.PFMViewport.MANIPULATOR_MODE_ROTATE_GLOBAL
-	self:SetManipulatorMode(mode)
+	if(self:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_ROTATE) then
+		self:CycleTransformSpace()
+	end
+	self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_ROTATE)
 end
 function gui.PFMViewport:SetScaleManipulatorMode()
 	self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_SCALE)

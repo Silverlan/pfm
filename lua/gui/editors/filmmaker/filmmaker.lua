@@ -1951,7 +1951,7 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 		return
 	end
 	self.m_preAxisManipulatorMode = vp:GetManipulatorMode()
-	vp:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_MOVE_GLOBAL)
+	vp:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_MOVE)
 	local c = vp:GetTransformWidgetComponent()
 	if(util.is_valid(c)) then
 		self.m_quickAxisTransformModeEnabled = true

@@ -407,11 +407,18 @@ colScheme:SetColor("red",Color.CreateFromHexColor("ff3352"))
 colScheme:SetColor("green",Color.CreateFromHexColor("8bdc00"))
 colScheme:SetColor("blue",Color.CreateFromHexColor("2890ff"))
 colScheme:SetColor("pink",Color.CreateFromHexColor("fcb8cb"))
+colScheme:SetColor("intenseRed",Color.CreateFromHexColor("FF0C0C"))
+colScheme:SetColor("intenseGreen",Color.CreateFromHexColor("13E013"))
+colScheme:SetColor("intenseBlue",Color.CreateFromHexColor("0056E0"))
 
 colScheme:SetColor("lightRed",Color.CreateFromHexColor("fca3b0"))
 colScheme:SetColor("lightGreen",Color.CreateFromHexColor("badf7b"))
 colScheme:SetColor("lightBlue",Color.CreateFromHexColor("8bc3ff"))
 colScheme:SetColor("orange",Color.CreateFromHexColor("ffc343"))
+
+colScheme:SetColor("turquoise",Color.CreateFromHexColor("00ffff"))
+colScheme:SetColor("yellow",Color.CreateFromHexColor("ffff00"))
+colScheme:SetColor("pink",Color.CreateFromHexColor("ff00ff"))
 
 pfm.get_color_scheme = function()
 	return colScheme

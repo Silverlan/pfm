@@ -277,6 +277,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		self:CreateNewActorComponent(actor,"render",false)
 		self:CreateNewActorComponent(actor,"animated",false)
 		self:CreateNewActorComponent(actor,"eye",false)
+		self:CreateNewActorComponent(actor,"flex",false)
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA) then
 		actor = actor or self:CreateNewActor("camera")

@@ -27,26 +27,31 @@ function ents.UtilTransformComponent:Initialize()
 		self.m_scaleAxisEnabled[math.AXIS_Z] = true
 
 		self.m_arrows = {}
-		self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 
 		self:GetTranslationEnabledProperty():AddCallback(function()
 			if(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_TRANSLATION] == nil) then return end
-			for axis,ent in pairs(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_TRANSLATION]) do
-				if(ent:IsValid()) then ent:RemoveSafely() end
+			for axis,ents in pairs(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_TRANSLATION]) do
+				for id,ent in pairs(ents) do
+					if(ent:IsValid()) then ent:RemoveSafely() end
+				end
 			end
 			self.m_arrows[ents.UtilTransformArrowComponent.TYPE_TRANSLATION] = nil
 		end)
 		self:GetRotationEnabledProperty():AddCallback(function()
 			if(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION] == nil) then return end
-			for axis,ent in pairs(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION]) do
-				if(ent:IsValid()) then ent:RemoveSafely() end
+			for axis,ents in pairs(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION]) do
+				for id,ent in pairs(ents) do
+					if(ent:IsValid()) then ent:RemoveSafely() end
+				end
 			end
 			self.m_arrows[ents.UtilTransformArrowComponent.TYPE_ROTATION] = nil
 		end)
 		self:GetScaleEnabledProperty():AddCallback(function()
 			if(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_SCALE] == nil) then return end
-			for axis,ent in pairs(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_SCALE]) do
-				if(ent:IsValid()) then ent:RemoveSafely() end
+			for axis,ents in pairs(self.m_arrows[ents.UtilTransformArrowComponent.TYPE_SCALE]) do
+				for id,ent in pairs(ents) do
+					if(ent:IsValid()) then ent:RemoveSafely() end
+				end
 			end
 			self.m_arrows[ents.UtilTransformArrowComponent.TYPE_SCALE] = nil
 		end)
