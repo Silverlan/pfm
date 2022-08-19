@@ -1,15 +1,9 @@
---[[
-    Copyright (C) 2021 Silverlan
-
-    This Source Code Form is subject to the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with this
-    file, You can obtain one at http://mozilla.org/MPL/2.0/.
-]]
+-- Implementation based on https://github.com/ddiakopoulos/tinygizmo
 
 local Gizmo = util.register_class("util.Gizmo")
 function Gizmo:__init()
 	self.m_hasClicked = false
-	self.m_mouseLeft = false
+	self.m_active = false
 	self.m_snapTranslation = false
 	self.m_rayOrigin = Vector()
 	self.m_rayDirection = Vector(0,0,1)
@@ -24,12 +18,10 @@ function Gizmo:__init()
 end
 
 function Gizmo:PlaneTranslationDragger(id,g,plane_normal,point)
-    -- interaction_state & interaction = g.gizmos[id];
-
     -- Mouse clicked
     if (self.m_interactionStart) then self.m_interaction.initial_pose:SetOrigin(point) end
  
-    if (self.m_mouseLeft) then
+    if (self.m_active) then
         -- Define the plane to contain the original position of the object
         local plane_point = self.m_interaction.initial_pose:GetOrigin();
         local r = { origin = self.m_rayOrigin, direction = self.m_rayDirection };
@@ -49,9 +41,7 @@ function Gizmo:PlaneTranslationDragger(id,g,plane_normal,point)
 end
 
 function Gizmo:AxisTranslationDragger(g, axis, point)
-    -- interaction_state & interaction = g.gizmos[id];
-
-    if (self.m_mouseLeft) then
+    if (self.m_active) then
         -- First apply a plane translation dragger with a plane that contains the desired axis and is oriented to face the camera
         local plane_tangent = axis:Cross(point - self.m_camPosition);
         local plane_normal = axis:Cross(plane_tangent);
@@ -63,30 +53,14 @@ function Gizmo:AxisTranslationDragger(g, axis, point)
     return point
 end
 
-local function rotation_quat(axis,angle)
-	local v = axis *math.sin(angle /2.0)
-	return Quaternion(math.cos(angle /2.0),v.x,v.y,v.z)
-end
-
-local function qmul(a,b)
-	return Quaternion(a.w*b.w - a.x*b.x - a.y*b.y - a.z*b.z, a.x*b.w + a.w*b.x + a.y*b.z - a.z*b.y, a.y*b.w + a.w*b.y + a.z*b.x - a.x*b.z, a.z*b.w + a.w*b.z + a.x*b.y - a.y*b.x)
-end
-
 local function intersect_ray_plane(ray,plane)
-			--[[local d = debug.DrawInfo()
-			d:SetColor(Color.Yellow)
-			d:SetDuration(0.1)
-			debug.draw_plane(plane:GetNormal(),plane:GetDistance(),d)]]
-
 	local t = intersect.line_with_plane(ray.origin,ray.direction *100000,plane:GetNormal(),plane:GetDistance())
 	if(t == false) then return nil end
     return t *100000
 end
 
 function Gizmo:AxisRotationDragger(id,g,axis,center,start_orientation,orientation)
-    -- interaction_state & interaction = g.gizmos[id];
-
-    if (self.m_mouseLeft) then
+    if (self.m_active) then
         local original_pose = math.Transform(self.m_interaction.initial_pose:GetOrigin(), start_orientation);
         local the_axis = axis:Copy()
         the_axis:Rotate(original_pose:GetRotation())
@@ -145,14 +119,12 @@ local function flush_to_zero(f)
 end
 
 function Gizmo:AxisScaleDragger(id,g,axis,center,scale,uniform)
-    -- interaction_state & interaction = g.gizmos[id];
-
-    if (self.m_mouseLeft) then
+    if (self.m_active) then
         local plane_tangent = axis:Cross(center - self.m_camPosition);
         local plane_normal = axis:Cross(plane_tangent);
 
         local distance;
-    	if (self.m_mouseLeft) then
+    	if (self.m_active) then
             -- Define the plane to contain the original position of the object
             local plane_point = center;
             local ray = { origin = self.m_rayOrigin, direction = self.m_rayDirection };
@@ -186,8 +158,9 @@ function Gizmo:SetInteractionStart(start,interactionPos,initialPose)
 	self.m_interaction.click_offset = interactionPos or self.m_interaction.click_offset
 	self.m_interaction.initial_pose = initialPose or self.m_interaction.initial_pose
 end
-function Gizmo:SetActive(active) self.m_mouseLeft = active end
-function Gizmo:IsActive() return self.m_mouseLeft end
+function Gizmo:GetInitialPose() return self.m_interaction.initial_pose end
+function Gizmo:SetActive(active) self.m_active = active end
+function Gizmo:IsActive() return self.m_active end
 
 function Gizmo:SetRay(rayOrigin,rayDir)
 	self.m_rayOrigin = rayOrigin

@@ -7,11 +7,13 @@
 ]]
 
 include("/shaders/pfm/pfm_gizmo.lua")
-include("/util/gizmo.lua")
 
 include_component("click")
 
 util.register_class("ents.UtilTransformArrowComponent",BaseEntityComponent)
+
+include("model.lua")
+include("gizmo.lua")
 
 local Component = ents.UtilTransformArrowComponent
 Component.TYPE_TRANSLATION = 0
@@ -266,25 +268,6 @@ function Component:OnTick(dt)
 	if(util.is_valid(transformC) == false or util.is_valid(clickC) == false) then return end
 	self:ApplyTransform()
 end
-function Component:ApplyTransform()
-	self:UpdateGizmo()
-
-	if(util.is_valid(self.m_elLine)) then
-		local vpData = ents.ClickComponent.get_viewport_data()
-		if(vpData ~= nil) then
-			local cam = ents.ClickComponent.get_camera()
-			local rotationPivot = cam:WorldSpaceToScreenSpace(self:GetEntity():GetPos())
-			local posCursor = input.get_cursor_pos()
-			rotationPivot = Vector2(vpData.x +rotationPivot.x *vpData.width,vpData.y +rotationPivot.y *vpData.height)
-
-			self.m_elLine:SetStartPos(Vector2(posCursor.x,posCursor.y))
-			self.m_elLine:SetEndPos(rotationPivot)
-			self.m_elLine:SizeToContents()
-		end
-	end
-
-	pfm.tag_render_scene_as_dirty()
-end
 function Component:ToLocalSpace(pos)
 	local transformC = self:GetBaseUtilTransformComponent()
 	if(transformC == nil) then return pos end
@@ -318,129 +301,6 @@ function Component:GetAxisVector()
 	return vAxis
 end
 
-function Component:UpdateGizmo()
-	local camPos,camDir,vpData = ents.ClickComponent.get_ray_data()
-	local startRotation = Quaternion()--self.m_gizmoStartRotation
-	local localToggle = self:GetSpace() == ents.UtilTransformComponent.SPACE_LOCAL
-	if(localToggle) then startRotation = self.m_gizmoStartRotation end
-
-	self.m_gizmo:SetRay(camPos,camDir)
-	self.m_gizmo:SetCameraPosition(camPos)
-	local transformC = self:GetBaseUtilTransformComponent()
-
-	local axis = self:GetAxis()
-	local vAxis = self:GetAxisVector()
-	local type = self:GetType()
-	if(type == Component.TYPE_TRANSLATION) then
-		local localToggle = self:GetSpace() == ents.UtilTransformComponent.SPACE_LOCAL
-		local pose = math.Transform()
-		if(localToggle) then pose:SetRotation(self.m_transformComponent:GetEntity():GetRotation()) end
-		vAxis:Rotate(pose:GetRotation())
-	end
-
-	if(type == Component.TYPE_TRANSLATION) then
-		local offset = self.m_gizmoOffset
-		self.m_gizmoPoint = self.m_gizmoPoint +offset
-		if(axis == Component.AXIS_X or axis == Component.AXIS_Y or axis == Component.AXIS_Z) then
-			self.m_gizmoPoint = self.m_gizmo:AxisTranslationDragger(nil,vAxis,self.m_gizmoPoint)
-		elseif(axis == Component.AXIS_XY or axis == Component.AXIS_XZ or axis == Component.AXIS_YZ) then
-			self.m_gizmoPoint = self.m_gizmo:PlaneTranslationDragger(nil,nil,vAxis,self.m_gizmoPoint)
-		else
-			local cam = vpData.camera
-			local camOrientation = cam:GetEntity():GetRotation()
-			local dir = -cam:GetEntity():GetForward()
-			self.m_gizmoPoint = self.m_gizmo:PlaneTranslationDragger(nil,nil,dir,self.m_gizmoPoint)
-		end
-		self.m_gizmoPoint = self.m_gizmoPoint -offset
-
-		transformC:SetAbsTransformPosition(self.m_gizmoPoint)
-		self:GetEntity():SetPos(self.m_gizmoPoint)
-	elseif(type == Component.TYPE_ROTATION) then
-		self.m_gizmoRotation = self.m_gizmo:AxisRotationDragger(nil,nil,vAxis,Vector(),startRotation,self.m_gizmoRotation)
-
-		if(localToggle == false) then transformC:SetTransformRotation(self.m_gizmoRotation *self.m_gizmoStartRotation)
-		else transformC:SetTransformRotation(self.m_gizmoRotation) end
-	elseif(type == Component.TYPE_SCALE) then
-		local uniform = false
-		self.m_gizmoScale = self.m_gizmo:AxisScaleDragger(nil,nil,vAxis,self.m_gizmoPoint,self.m_gizmoScale,uniform)
-
-		transformC:SetTransformScale(self.m_gizmoScale)
-	end
-end
-function Component:StartTransform(hitPos)
-	local gizmo = util.Gizmo()
-	gizmo:SetActive(true)
-	self.m_gizmo = gizmo
-
-	self.m_gizmoPoint = self.m_transformComponent:GetEntity():GetPos()
-	self.m_gizmoRotation = self.m_transformComponent:GetEntity():GetRotation()
-	self.m_gizmoScale = self.m_transformComponent:GetEntity():GetScale()
-	self.m_gizmoStartPosition = self.m_transformComponent:GetEntity():GetPos()
-	self.m_gizmoStartRotation = self.m_transformComponent:GetEntity():GetRotation()
-	self.m_gizmoOffset = hitPos -self.m_gizmoPoint -- Vector()
-
-	gizmo:SetInteractionStart(true,hitPos,math.ScaledTransform(self.m_transformComponent:GetEntity():GetPos(),self.m_transformComponent:GetEntity():GetRotation(),self.m_gizmoScale:Copy()))
-	self:UpdateGizmo()
-	gizmo:SetInteractionStart(false)
-
-	self:SetSelected(true)
-	self:UpdateColor()
-	self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_START)
-
-	util.remove(self.m_elLine)
-	if(self:GetType() == Component.TYPE_ROTATION) then
-		local elLine = gui.create("WILine")
-		self.m_elLine = elLine
-	end
-
-	pfm.tag_render_scene_as_dirty()
-end
-
-function Component:StopTransform()
-	util.remove(self.m_elLine)
-	util.remove(self.m_cbOnMouseRelease)
-	self:SetSelected(false)
-	self:UpdateColor()
-	self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_END)
-
-	pfm.tag_render_scene_as_dirty()
-end
-
-local arrowModel
-function Component:GetArrowModel()
-	if(arrowModel ~= nil) then return arrowModel end
-	local mdl = game.create_model()
-	local meshGroup = mdl:GetMeshGroup(0)
-
-	local scale = 1.0
-	scale = Vector(scale,scale,scale)
-	local mesh = game.Model.Mesh.Create()
-	local meshBase = game.Model.Mesh.Sub.CreateCylinder(0.4,16.0,12)
-	meshBase:SetSkinTextureIndex(0)
-	meshBase:Scale(scale)
-	mesh:AddSubMesh(meshBase)
-
-	local meshTip = game.Model.Mesh.Sub.CreateCone(
-		1.0, -- startRadius
-		5.0, -- length
-		0.0, -- endRadius
-		12 -- segmentCount
-	)
-	meshTip:SetSkinTextureIndex(0)
-	meshTip:Translate(Vector(0.0,0.0,16.0))
-	meshTip:Scale(scale)
-	mesh:AddSubMesh(meshTip)
-
-
-	meshGroup:AddMesh(mesh)
-
-	mdl:Update(game.Model.FUPDATE_ALL)
-	mdl:AddMaterial(0,"pfm/gizmo")
-
-	arrowModel = mdl
-	return mdl
-end
-
 function Component:SetReferenceEntity(ent,boneId)
 	self.m_refEnt = ent
 	self:UpdatePose()
@@ -448,76 +308,6 @@ end
 
 function Component:GetReferenceEntity() return self.m_refEnt end
 
-local function create_model(subMesh,scale)
-	if(type(subMesh) ~= "table") then subMesh = {subMesh} end
-	local mdl = game.create_model()
-	local meshGroup = mdl:GetMeshGroup(0)
-
-	scale = Vector(scale,scale,scale)
-	local mesh = game.Model.Mesh.Create()
-
-	for _,sm in ipairs(subMesh) do
-		sm:SetSkinTextureIndex(0)
-		sm:Scale(scale)
-		mesh:AddSubMesh(sm)
-	end
-
-	meshGroup:AddMesh(mesh)
-
-	mdl:Update(game.Model.FUPDATE_ALL)
-	mdl:AddMaterial(0,"pfm/gizmo")
-	return mdl
-end
-
-local diskModel
-function Component:GetDiskModel()
-	if(diskModel ~= nil) then return diskModel end
-	local scale = 1.5
-	local mesh = game.Model.Mesh.Sub.CreateRing(7.5,8,true)
-	diskModel = create_model(mesh,scale)
-	return diskModel
-end
-
-local scaleModel
-function Component:GetScaleModel()
-	if(scaleModel ~= nil) then return scaleModel end
-	local scale = 1.0
-	local meshScale = 2.0
-	local mesh = game.Model.Mesh.Sub.CreateCylinder(0.5 *meshScale,10.0 *meshScale,12)
-	local mesh2 = game.Model.Mesh.Sub.CreateCylinder(1 *meshScale,3 *meshScale,12)
-	local zOffset = 5
-	for i=0,mesh:GetVertexCount() -1 do
-		local v = mesh:GetVertexPosition(i)
-		v.z = v.z +zOffset
-		mesh:SetVertexPosition(i,v)
-	end
-	for i=0,mesh2:GetVertexCount() -1 do
-		local v = mesh2:GetVertexPosition(i)
-		v.z = v.z +10 *meshScale +zOffset
-		mesh2:SetVertexPosition(i,v)
-	end
-	scaleModel = create_model({mesh,mesh2},scale)
-	return scaleModel
-end
-
-local planeModel
-function Component:GetPlaneModel()
-	if(planeModel ~= nil) then return planeModel end
-	local scale = 1.0
-	local offset = Vector(5,0,5)
-	local meshBox = game.Model.Mesh.Sub.CreateBox(offset +Vector(-3,-0.1,-3),offset +Vector(3,0.1,3))
-	planeModel = create_model(meshBox,scale)
-	return planeModel
-end
-
-local boxModel
-function Component:GetBoxModel()
-	if(boxModel ~= nil) then return boxModel end
-	local scale = 1.0
-	local meshBox = game.Model.Mesh.Sub.CreateBox(Vector(-2,-2,-2),Vector(2,2,2))
-	boxModel = create_model(meshBox,scale)
-	return boxModel
-end
 ents.COMPONENT_UTIL_TRANSFORM_ARROW = ents.register_component("util_transform_arrow",Component)
 Component.EVENT_ON_TRANSFORM_START = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM_ARROW,"on_transform_start")
 Component.EVENT_ON_TRANSFORM_END = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM_ARROW,"on_transform_end")
