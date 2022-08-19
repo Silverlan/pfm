@@ -242,7 +242,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 		{"view",locale.get_text("pfm_transform_space_view")}
 	},"global")
 	self.m_ctrlTransformSpace:AddCallback("OnOptionSelected",function(el,idx)
-		self:SetTransformSpace(self:GetTransformSpace())
+		self:ReloadManipulatorMode()
 	end)
 
 	local gridSteps = {0,1,2,4,8,16,32,64,128}
@@ -592,7 +592,6 @@ function gui.PFMViewport:SetAngularSpacing(spacing)
 	pfm.set_angular_spacing(spacing)
 end
 function gui.PFMViewport:SetTransformSpace(transformSpace)
-	if(transformSpace == self:GetTransformSpace()) then return end
 	if(transformSpace == ents.UtilTransformComponent.SPACE_WORLD) then
 		self.m_ctrlTransformSpace:SelectOption("global")
 	elseif(transformSpace == ents.UtilTransformComponent.SPACE_LOCAL) then
@@ -600,6 +599,10 @@ function gui.PFMViewport:SetTransformSpace(transformSpace)
 	elseif(transformSpace == ents.UtilTransformComponent.SPACE_VIEW) then
 		self.m_ctrlTransformSpace:SelectOption("view")
 	end
+	self:ReloadManipulatorMode()
+end
+function gui.PFMViewport:ReloadManipulatorMode()
+	self:SetManipulatorMode(self:GetManipulatorMode())
 end
 function gui.PFMViewport:InitializeTransformWidget(tc,ent)
 	local manipMode = self:GetManipulatorMode()
