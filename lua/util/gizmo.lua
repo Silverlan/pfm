@@ -16,9 +16,7 @@ function Gizmo:__init()
 	self.m_interaction = {
 		active = false,
 		hover = false,
-		original_position = Vector(),
-		original_orientation = Quaternion(),
-		original_scale = Vector(1,1,1),
+		initial_pose = math.ScaledTransform(),
 		click_offset = Vector(0,0,0),
 		interaction_mode = 0
 	}
@@ -29,11 +27,11 @@ function Gizmo:PlaneTranslationDragger(id,g,plane_normal,point)
     -- interaction_state & interaction = g.gizmos[id];
 
     -- Mouse clicked
-    if (self.has_clicked) then self.m_interaction.original_position = point end
+    if (self.m_interactionStart) then self.m_interaction.initial_pose:SetOrigin(point) end
  
     if (self.m_mouseLeft) then
         -- Define the plane to contain the original position of the object
-        local plane_point = self.m_interaction.original_position;
+        local plane_point = self.m_interaction.initial_pose:GetOrigin();
         local r = { origin = self.m_rayOrigin, direction = self.m_rayDirection };
 
         -- If an intersection exists between the ray and the plane, place the object at that point
@@ -60,7 +58,7 @@ function Gizmo:AxisTranslationDragger(g, axis, point)
         point = self:PlaneTranslationDragger(id, g, plane_normal, point);
 
         -- Constrain object motion to be along the desired axis
-        point = self.m_interaction.original_position + axis * (point - self.m_interaction.original_position):DotProduct(axis);
+        point = self.m_interaction.initial_pose:GetOrigin() + axis * (point - self.m_interaction.initial_pose:GetOrigin()):DotProduct(axis);
     end
     return point
 end
@@ -89,7 +87,7 @@ function Gizmo:AxisRotationDragger(id,g,axis,center,start_orientation,orientatio
     -- interaction_state & interaction = g.gizmos[id];
 
     if (self.m_mouseLeft) then
-        local original_pose = math.Transform(self.m_interaction.original_position, start_orientation);
+        local original_pose = math.Transform(self.m_interaction.initial_pose:GetOrigin(), start_orientation);
         local the_axis = axis:Copy()
         the_axis:Rotate(original_pose:GetRotation())
         the_axis:Normalize()
@@ -98,7 +96,7 @@ function Gizmo:AxisRotationDragger(id,g,axis,center,start_orientation,orientatio
 
         local t = intersect_ray_plane(r, math.Plane(the_plane[1],the_plane[2]))
         if (t ~= nil) then
-            local center_of_rotation = self.m_interaction.original_position + the_axis * the_axis:DotProduct(self.m_interaction.click_offset - self.m_interaction.original_position);
+            local center_of_rotation = self.m_interaction.initial_pose:GetOrigin() + the_axis * the_axis:DotProduct(self.m_interaction.click_offset - self.m_interaction.initial_pose:GetOrigin());
             local arm1 = self.m_interaction.click_offset - center_of_rotation;
             if(arm1:LengthSqr() < 0.001) then
             	arm1 = vector.FORWARD
@@ -172,7 +170,7 @@ function Gizmo:AxisScaleDragger(id,g,axis,center,scale,uniform)
 
         local offset_on_axis = (distance - self.m_interaction.click_offset) * axis;
         flush_to_zero(offset_on_axis);
-        local new_scale = self.m_interaction.original_scale + offset_on_axis;
+        local new_scale = self.m_interaction.initial_pose:GetScale() + offset_on_axis;
 
         if (uniform) then
         	scale = math.clamp(distance:DotProduct(new_scale), 0.01, 1000.0);
@@ -183,8 +181,11 @@ function Gizmo:AxisScaleDragger(id,g,axis,center,scale,uniform)
     return scale
 end
 
-function Gizmo:SetOriginalPosition(pos) self.m_interaction.original_position = pos end
-function Gizmo:SetOriginalRotation(rot) self.m_interaction.original_rotation = rot end
+function Gizmo:SetInteractionStart(start,interactionPos,initialPose)
+	self.m_interactionStart = start or false
+	self.m_interaction.click_offset = interactionPos or self.m_interaction.click_offset
+	self.m_interaction.initial_pose = initialPose or self.m_interaction.initial_pose
+end
 function Gizmo:SetActive(active) self.m_mouseLeft = active end
 function Gizmo:IsActive() return self.m_mouseLeft end
 
