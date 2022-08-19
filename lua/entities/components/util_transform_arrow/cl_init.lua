@@ -291,6 +291,14 @@ function Component:OnClick(action,pressed,hitPos)
 	else self:StopTransform() end
 	return util.EVENT_REPLY_HANDLED
 end
+function Component:GetAffectedAxes()
+	local axis = self:GetAxis()
+	if(axis == Component.AXIS_X or axis == Component.AXIS_Y or axis == Component.AXIS_Z) then return {axis} end
+	if(axis == Component.AXIS_XY) then return {Component.AXIS_X,Component.AXIS_Y} end
+	if(axis == Component.AXIS_XZ) then return {Component.AXIS_X,Component.AXIS_Z} end
+	if(axis == Component.AXIS_YZ) then return {Component.AXIS_Y,Component.AXIS_Z} end
+	if(axis == Component.AXIS_XYZ) then return {Component.AXIS_X,Component.AXIS_Y,Component.AXIS_Z} end
+end
 function Component:GetAxisVector()
 	local axis = self:GetReferenceAxis()
 	local vAxis = Vector()

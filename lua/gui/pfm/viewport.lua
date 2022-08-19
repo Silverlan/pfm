@@ -19,6 +19,7 @@ include("/gui/raytracedviewport.lua")
 include("/pfm/fonts.lua")
 
 include_component("click")
+include_component("util_transform")
 
 util.register_class("gui.PFMViewport",gui.PFMBaseViewport)
 
@@ -241,8 +242,18 @@ function gui.PFMViewport:InitializeSettings(parent)
 		{"view",locale.get_text("pfm_transform_space_view")}
 	},"global")
 	self.m_ctrlTransformSpace:AddCallback("OnOptionSelected",function(el,idx)
-		local space = self.m_ctrlTransformSpace:GetOptionValue(self.m_ctrlTransformSpace:GetSelectedOption())
+		self:SetTransformSpace(self:GetTransformSpace())
+	end)
 
+	local gridSteps = {0,1,2,4,8,16,32,64,128}
+	local options = {}
+	for _,v in ipairs(gridSteps) do
+		table.insert(options,{tostring(v),tostring(v)})
+	end
+	self.m_ctrlSnapToGridSpacing = p:AddDropDownMenu(locale.get_text("pfm_transform_snap_to_grid_spacing"),"snap_to_grid_spacing",options,"0")
+	self.m_ctrlSnapToGridSpacing:AddCallback("OnOptionSelected",function(el,idx)
+		local spacing = toint(self.m_ctrlSnapToGridSpacing:GetOptionValue(self.m_ctrlSnapToGridSpacing:GetSelectedOption()))
+		self:SetSnapToGridSpacing(spacing)
 	end)
 
 	p:ResetControls()
@@ -556,7 +567,16 @@ function gui.PFMViewport:GetTransformSpace()
 	elseif(transformSpace == "local") then return ents.UtilTransformComponent.SPACE_LOCAL
 	elseif(transformSpace == "view") then return ents.UtilTransformComponent.SPACE_VIEW end
 end
+function gui.PFMViewport:GetSnapToGridSpacing()
+	return self.m_ctrlSnapToGridSpacing:GetOptionValue(self.m_ctrlSnapToGridSpacing:GetSelectedOption())
+end
+function gui.PFMViewport:SetSnapToGridSpacing(spacing)
+	if(spacing == self:GetSnapToGridSpacing()) then return end
+	self.m_ctrlSnapToGridSpacing:SelectOption(tostring(spacing))
+	pfm.set_snap_to_grid_spacing(spacing)
+end
 function gui.PFMViewport:SetTransformSpace(transformSpace)
+	if(transformSpace == self:GetTransformSpace()) then return end
 	if(transformSpace == ents.UtilTransformComponent.SPACE_WORLD) then
 		self.m_ctrlTransformSpace:SelectOption("global")
 	elseif(transformSpace == ents.UtilTransformComponent.SPACE_LOCAL) then
@@ -1273,3 +1293,6 @@ function pfm.calc_decal_target_pose(pos,dir)
 	hitPos = hitPos +n *1.0
 	return math.Transform(hitPos,rot)
 end
+local g_snapToGridSpacing = 0
+function pfm.set_snap_to_grid_spacing(spacing) g_snapToGridSpacing = spacing end
+function pfm.get_snap_to_grid_spacing() return g_snapToGridSpacing end
