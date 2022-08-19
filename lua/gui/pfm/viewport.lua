@@ -256,6 +256,17 @@ function gui.PFMViewport:InitializeSettings(parent)
 		self:SetSnapToGridSpacing(spacing)
 	end)
 
+	local angSteps = {0,1,2,5,10,15,45,90}
+	options = {}
+	for _,v in ipairs(angSteps) do
+		table.insert(options,{tostring(v),tostring(v)})
+	end
+	self.m_ctrlAngularSpacing = p:AddDropDownMenu(locale.get_text("pfm_transform_angular_spacing"),"angular_spacing",options,"0")
+	self.m_ctrlAngularSpacing:AddCallback("OnOptionSelected",function(el,idx)
+		local spacing = toint(self.m_ctrlAngularSpacing:GetOptionValue(self.m_ctrlAngularSpacing:GetSelectedOption()))
+		self:SetAngularSpacing(spacing)
+	end)
+
 	p:ResetControls()
 end
 function gui.PFMViewport:SetRtViewportRenderer(renderer)
@@ -402,8 +413,8 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 				if(state == input.STATE_RELEASE) then return util.EVENT_REPLY_HANDLED end
 			end
 
-			local handled,entActor
-			if(self:IsMoveManipulatorMode(self:GetManipulatorMode()) and input.is_alt_key_down() == false) then
+			local handled,entActor = findActor()
+			if(self:IsMoveManipulatorMode(self:GetManipulatorMode()) and (entActor == nil or entActor:HasComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW) == false)) then
 				local pm = tool.get_filmmaker()
 				local selectionManager = pm:GetSelectionManager()
 				local objs = selectionManager:GetSelectedObjects()
@@ -414,9 +425,6 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 				end
 			end
 
-			if(util.is_valid(entActor) == false) then
-				handled,entActor = findActor()
-			end
 			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
 				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
@@ -574,6 +582,14 @@ function gui.PFMViewport:SetSnapToGridSpacing(spacing)
 	if(spacing == self:GetSnapToGridSpacing()) then return end
 	self.m_ctrlSnapToGridSpacing:SelectOption(tostring(spacing))
 	pfm.set_snap_to_grid_spacing(spacing)
+end
+function gui.PFMViewport:GetAngularSpacing()
+	return self.m_ctrlAngularSpacing:GetOptionValue(self.m_ctrlAngularSpacing:GetSelectedOption())
+end
+function gui.PFMViewport:SetAngularSpacing(spacing)
+	if(spacing == self:GetAngularSpacing()) then return end
+	self.m_ctrlAngularSpacing:SelectOption(tostring(spacing))
+	pfm.set_angular_spacing(spacing)
 end
 function gui.PFMViewport:SetTransformSpace(transformSpace)
 	if(transformSpace == self:GetTransformSpace()) then return end
@@ -1293,6 +1309,11 @@ function pfm.calc_decal_target_pose(pos,dir)
 	hitPos = hitPos +n *1.0
 	return math.Transform(hitPos,rot)
 end
+
 local g_snapToGridSpacing = 0
 function pfm.set_snap_to_grid_spacing(spacing) g_snapToGridSpacing = spacing end
 function pfm.get_snap_to_grid_spacing() return g_snapToGridSpacing end
+
+local g_angularSpacing = 0
+function pfm.set_angular_spacing(spacing) g_angularSpacing = spacing end
+function pfm.get_angular_spacing() return g_angularSpacing end

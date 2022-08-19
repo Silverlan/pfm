@@ -1959,12 +1959,13 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 		return
 	end
 	self.m_preAxisManipulatorMode = vp:GetManipulatorMode()
-	vp:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_MOVE)
+	local useRotationGizmo = (vp:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_ROTATE)
+	if(useRotationGizmo == false) then vp:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_MOVE) end
 	local c = vp:GetTransformWidgetComponent()
 	if(util.is_valid(c)) then
 		self.m_quickAxisTransformModeEnabled = true
 		for _,axis in ipairs(axes) do
-			local v = c:GetTransformUtility(ents.UtilTransformArrowComponent.TYPE_TRANSLATION,axis,"translation")
+			local v = c:GetTransformUtility(useRotationGizmo and ents.UtilTransformArrowComponent.TYPE_ROTATION or ents.UtilTransformArrowComponent.TYPE_TRANSLATION,axis,useRotationGizmo and "rotation" or "translation")
 			if(v ~= nil) then
 				v = v:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
 				v:StartTransform()

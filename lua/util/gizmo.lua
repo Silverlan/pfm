@@ -80,13 +80,6 @@ function Gizmo:AxisRotationDragger(axis,center,start_orientation,orientation)
             local arm2 = r.origin + r.direction * t - center_of_rotation;
             arm2:Normalize()
 
-			local d = debug.DrawInfo()
-			d:SetColor(Color.Aqua)
-			d:SetDuration(0.1)
-			debug.draw_line(center_of_rotation,self.m_interaction.click_offset,d)
-			d:SetColor(Color.Red)
-			debug.draw_line(center_of_rotation,r.origin + r.direction * t,d)
-
             local d = arm1:DotProduct(arm2);
             if (d > 0.999) then
             	orientation = start_orientation;
