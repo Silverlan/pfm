@@ -207,9 +207,12 @@ function Component:OnRemove()
 	util.remove(self:GetArrowEntities())
 end
 
-function Component:GetTransformUtility(type,axis)
+function Component:GetTransformUtility(type,axis,id)
 	if(self.m_arrows[type] == nil) then return end
-	return self.m_arrows[type][axis]
+	local t = self.m_arrows[type][axis]
+	if(id == nil) then return t end
+	if(t == nil) then return end
+	return t[id]
 end
 
 function Component:CreateTransformUtility(id,axis,type)

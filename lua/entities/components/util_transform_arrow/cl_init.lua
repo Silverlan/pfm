@@ -308,6 +308,34 @@ end
 
 function Component:GetReferenceEntity() return self.m_refEnt end
 
+function Component.apply_distance_transform(factor)
+	for ent,c in ents.citerator(ents.COMPONENT_UTIL_TRANSFORM_ARROW) do
+		if(c:IsActive() and c:GetAxis() == Component.AXIS_XYZ) then
+			local tgt = c:GetTargetEntity()
+			local cam = ents.ClickComponent.get_camera()
+			local transformC = c:GetBaseUtilTransformComponent()
+			if(util.is_valid(tgt) and util.is_valid(cam) and util.is_valid(transformC)) then
+				local pos = tgt:GetPos()
+				pos = pos +cam:GetEntity():GetForward() *factor
+
+				local offset = cam:GetEntity():GetForward() *factor
+				c.m_gizmo.m_interaction.click_offset = c.m_gizmo.m_interaction.click_offset +offset
+				c.m_gizmo.m_interaction.initial_pose:SetOrigin(c.m_gizmo.m_interaction.initial_pose:GetOrigin() +offset)
+			end
+			break
+		end
+	end
+end
+
 ents.COMPONENT_UTIL_TRANSFORM_ARROW = ents.register_component("util_transform_arrow",Component)
 Component.EVENT_ON_TRANSFORM_START = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM_ARROW,"on_transform_start")
 Component.EVENT_ON_TRANSFORM_END = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM_ARROW,"on_transform_end")
+
+-----------------
+
+console.register_command("pfm_transform_distance",function(pl,...)
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm) == false) then return end
+	local args = {...}
+	Component.apply_distance_transform((args[1] == "in") and 1.0 or -1.0)
+end)

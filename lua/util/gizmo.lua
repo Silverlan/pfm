@@ -17,7 +17,7 @@ function Gizmo:__init()
 	self.m_camPosition = Vector()
 end
 
-function Gizmo:PlaneTranslationDragger(id,g,plane_normal,point)
+function Gizmo:PlaneTranslationDragger(plane_normal,point)
     -- Mouse clicked
     if (self.m_interactionStart) then self.m_interaction.initial_pose:SetOrigin(point) end
  
@@ -40,12 +40,12 @@ function Gizmo:PlaneTranslationDragger(id,g,plane_normal,point)
     return point
 end
 
-function Gizmo:AxisTranslationDragger(g, axis, point)
+function Gizmo:AxisTranslationDragger(axis, point)
     if (self.m_active) then
         -- First apply a plane translation dragger with a plane that contains the desired axis and is oriented to face the camera
         local plane_tangent = axis:Cross(point - self.m_camPosition);
         local plane_normal = axis:Cross(plane_tangent);
-        point = self:PlaneTranslationDragger(id, g, plane_normal, point);
+        point = self:PlaneTranslationDragger(plane_normal, point);
 
         -- Constrain object motion to be along the desired axis
         point = self.m_interaction.initial_pose:GetOrigin() + axis * (point - self.m_interaction.initial_pose:GetOrigin()):DotProduct(axis);
@@ -59,7 +59,7 @@ local function intersect_ray_plane(ray,plane)
     return t *100000
 end
 
-function Gizmo:AxisRotationDragger(id,g,axis,center,start_orientation,orientation)
+function Gizmo:AxisRotationDragger(axis,center,start_orientation,orientation)
     if (self.m_active) then
         local original_pose = math.Transform(self.m_interaction.initial_pose:GetOrigin(), start_orientation);
         local the_axis = axis:Copy()
@@ -118,7 +118,7 @@ local function flush_to_zero(f)
 	if (math.abs(f.z) < 0.02) then f.z = 0.0 end
 end
 
-function Gizmo:AxisScaleDragger(id,g,axis,center,scale,uniform)
+function Gizmo:AxisScaleDragger(axis,center,scale,uniform)
     if (self.m_active) then
         local plane_tangent = axis:Cross(center - self.m_camPosition);
         local plane_normal = axis:Cross(plane_tangent);

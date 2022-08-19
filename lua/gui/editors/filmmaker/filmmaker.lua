@@ -167,8 +167,16 @@ function gui.WIFilmmaker:OnInitialize()
 
 		layers["pfm_viewport"] = bindingLayer
 	end
+	if(layers["pfm_transform"] == nil) then
+		local bindingLayer = input.InputBindingLayer("pfm_transform")
+		bindingLayer:BindKey("scrlup","pfm_transform_distance in")
+		bindingLayer:BindKey("scrldn","pfm_transform_distance out")
+
+		layers["pfm_transform"] = bindingLayer
+	end
 	layers["pfm"].priority = 1000
 	layers["pfm_graph_editor"].priority = 2000
+	layers["pfm_transform"].priority = 4000
 	for _,layer in pairs(layers) do
 		input.add_input_binding_layer(layer)
 		input.set_binding_layer_enabled(layer.identifier,(layer.identifier == "pfm"))
@@ -1956,7 +1964,7 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 	if(util.is_valid(c)) then
 		self.m_quickAxisTransformModeEnabled = true
 		for _,axis in ipairs(axes) do
-			local v = c:GetTransformUtility(ents.UtilTransformArrowComponent.TYPE_TRANSLATION,axis)
+			local v = c:GetTransformUtility(ents.UtilTransformArrowComponent.TYPE_TRANSLATION,axis,"translation")
 			if(v ~= nil) then
 				v = v:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
 				v:StartTransform()
