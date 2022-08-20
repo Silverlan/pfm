@@ -1623,7 +1623,8 @@ function gui.WIFilmmaker:InitializeProjectUI()
 							tc:SetTranslationEnabled(false)
 							tc:SetRotationAxisEnabled(math.AXIS_X,false)
 							tc:SetRotationAxisEnabled(math.AXIS_Z,false)
-							local trUtil = tc:GetTransformUtility(ents.UtilTransformArrowComponent.TYPE_ROTATION,math.AXIS_Y)
+							tc:UpdateAxes()
+							local trUtil = tc:GetTransformUtility(ents.UtilTransformArrowComponent.TYPE_ROTATION,math.AXIS_Y,"rotation")
 							local arrowC = util.is_valid(trUtil) and trUtil:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW) or nil
 							if(arrowC ~= nil) then
 								arrowC:StartTransform()

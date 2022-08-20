@@ -88,8 +88,11 @@ function ents.PFMGhost:OnTick()
 		posDst = posDst -(max +min) /2.0
 	end
 	if(input.get_key_state(input.KEY_LEFT_SHIFT) == input.STATE_RELEASE and input.get_key_state(input.KEY_RIGHT_SHIFT) == input.STATE_RELEASE) then
-		posDst.x = math.snap_to_gridf(posDst.x,ents.PFMGrid.get_unit_size())
-		posDst.z = math.snap_to_gridf(posDst.z,ents.PFMGrid.get_unit_size())
+		local spacing = pfm.get_snap_to_grid_spacing()
+		if(spacing ~= 0) then
+			posDst.x = math.snap_to_gridf(posDst.x,spacing)
+			posDst.z = math.snap_to_gridf(posDst.z,spacing)
+		end
 
 		if(hasHit) then
 			startPos = posDst +Vector(0,10,0)

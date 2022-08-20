@@ -163,6 +163,7 @@ end
 function Component:StopTransform()
 	util.remove(self.m_elLine)
 	util.remove(self.m_cbOnMouseRelease)
+	
 	self:SetSelected(false)
 	self:UpdateColor()
 	self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_END)
