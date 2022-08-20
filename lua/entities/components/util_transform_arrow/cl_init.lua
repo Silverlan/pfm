@@ -59,10 +59,18 @@ function Component:Initialize()
 end
 function Component:UpdateScale()
 	local cam = game.get_render_scene_camera()
-	local d = self:GetEntity():GetPos():Distance(cam:GetEntity():GetPos())
-	--d = ((d *0.008) ^0.9) *3 -- Roughly try to keep the same size regardless of distance to the camera
-	d = d *cam:GetFOVRad() *0.01
-	self:GetEntity():SetScale(Vector(d,d,d))
+	if(util.is_valid(cam) == false) then return end
+	local entCam = cam:GetEntity()
+	local plane = math.Plane(entCam:GetForward(),0)
+	plane:MoveToPos(entCam:GetPos())
+
+	local ent = self:GetEntity()
+	local pos = ent:GetPos()
+	local p = pos:ProjectToPlane(plane:GetNormal(),plane:GetDistance())
+	local d = pos:Distance(p)
+
+	d = d *cam:GetFOVRad() *0.01 -- Resize according to distance to camera
+	ent:SetScale(Vector(d,d,d))
 end
 function Component:OnEntitySpawn()
 	self:UpdateAxis()
