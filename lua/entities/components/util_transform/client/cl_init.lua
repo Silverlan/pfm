@@ -138,6 +138,7 @@ function Component:SetTransformScale(scale)
 		end
 	end
 	if(scale:Equals(self:GetEntity():GetScale())) then return end
+	self:GetEntity():SetScale(scale)
 	--[[self:GetEntity():SetPos(pos)
 	if(self.m_relativeToParent == true) then
 		pos = self:GetParentPose():GetInverse() *pos

@@ -78,17 +78,25 @@ function Component:GetScaleModel()
 	if(scaleModel ~= nil) then return scaleModel end
 	local scale = 1.0
 	local meshScale = 2.0
-	local mesh = game.Model.Mesh.Sub.CreateCylinder(0.5 *meshScale,10.0 *meshScale,12)
-	local mesh2 = game.Model.Mesh.Sub.CreateCylinder(1 *meshScale,3 *meshScale,12)
+
+	local scale0 = 0.5 *meshScale
+	local length0 = 10.0 *meshScale
+	local scale1 = 1 *meshScale
+	local length1 = 3 *meshScale
+	local mesh = game.Model.Mesh.Sub.CreateCylinder(scale0,length0,12)
+	local mesh2 = game.Model.Mesh.Sub.CreateCylinder(scale1,length1,12)
+
 	local zOffset = 5
 	for i=0,mesh:GetVertexCount() -1 do
 		local v = mesh:GetVertexPosition(i)
-		v.z = v.z +zOffset
+		v.z = v.z -zOffset
+		v.z = v.z -scale0 -length0
 		mesh:SetVertexPosition(i,v)
 	end
 	for i=0,mesh2:GetVertexCount() -1 do
 		local v = mesh2:GetVertexPosition(i)
-		v.z = v.z +10 *meshScale +zOffset
+		v.z = v.z -9.5 *meshScale -zOffset
+		v.z = v.z -scale1 -length1
 		mesh2:SetVertexPosition(i,v)
 	end
 	scaleModel = create_model({mesh,mesh2},scale)
