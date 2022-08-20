@@ -85,14 +85,16 @@ function Component:UpdateGizmo()
 		rot = self.m_gizmo:AxisRotationDragger(vAxis,Vector(),startRotation,rot)
 		self.m_gizmoPose:SetRotation(rot)
 
-		if(localToggle == false) then rot = rot *self.m_gizmo:GetInitialPose():GetRotation() end
-
 		local angSpacing = pfm.get_angular_spacing()
 		if(angSpacing ~= 0) then
+			rot = self.m_gizmoBasePose:GetRotation():GetInverse() *rot
 			local ang = rot:ToEulerAngles()
 			for _,axis in ipairs(self:GetAffectedAxes()) do ang:Set(axis,math.snap_to_grid(ang:Get(axis),angSpacing)) end
 			rot = ang:ToQuaternion()
+			rot = self.m_gizmoBasePose:GetRotation() *rot
 		end
+
+		if(localToggle == false) then rot = rot *self.m_gizmo:GetInitialPose():GetRotation() end
 
 		transformC:SetTransformRotation(rot)
 	elseif(type == Component.TYPE_SCALE) then
@@ -118,6 +120,7 @@ function Component:StartTransform(hitPos)
 		if(util.is_valid(cam)) then targetSpaceRotation = cam:GetEntity():GetRotation() end
 	end
 	self.m_gizmoTargetSpaceRotation = targetSpaceRotation
+	self.m_gizmoBasePose = self:GetBasePose()
 		
 	self.m_gizmoPose = self.m_transformComponent:GetEntity():GetPose()
 	hitPos = hitPos or self.m_gizmoPose:GetOrigin()
