@@ -141,6 +141,7 @@ function Component:StartTransform(hitPos)
 	end
 
 	input.set_binding_layer_enabled("pfm_transform",true)
+	input.update_effective_input_bindings()
 	pfm.tag_render_scene_as_dirty()
 end
 
@@ -152,5 +153,6 @@ function Component:StopTransform()
 	self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_END)
 
 	input.set_binding_layer_enabled("pfm_transform",false)
+	input.update_effective_input_bindings()
 	pfm.tag_render_scene_as_dirty()
 end
