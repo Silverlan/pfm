@@ -782,25 +782,26 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 		if(trC ~= nil) then return trC end
 		trC = ent:AddComponent("util_transform")
 		if(trC == nil) then return trC end
+		local newPos
+		local newRot
+		local newScale
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
-			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-			if(actorC ~= nil) then
-				tool.get_filmmaker():SetActorTransformProperty(actorC,"position",pos)
-			end
+			newPos = pos:Copy()
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function(rot)
-			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-			if(actorC ~= nil) then
-				tool.get_filmmaker():SetActorTransformProperty(actorC,"rotation",rot)
-			end
+			newRot = rot:Copy()
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED,function(scale)
-			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-			if(actorC ~= nil) then
-				tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",scale)
-			end
+			newScale = scale:Copy()
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END,function(scale)
+			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if(actorC ~= nil) then
+				if(newPos ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"position",newPos) end
+				if(newRot ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"rotation",newRot) end
+				if(newScale ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",newScale) end
+			end
+
 			self:OnActorTransformChanged(ent)
 		end)
 		return trC
