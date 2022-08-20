@@ -555,16 +555,22 @@ function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
 	self.m_btRotate:SetActivated(self:IsRotationManipulatorMode(manipulatorMode))
 	self.m_btScreen:SetActivated(self:IsScaleManipulatorMode(manipulatorMode))
 
-	local pfm = tool.get_filmmaker()
-	local selectionManager = pfm:GetSelectionManager()
-	local selectedActors = selectionManager:GetSelectedActors()
-	local selectedActorList = {}
-	for ent,b in pairs(selectedActors) do table.insert(selectedActorList,ent) end
+	if(self:UpdateMultiActorSelection() == false) then
+		local pfm = tool.get_filmmaker()
+		local selectionManager = pfm:GetSelectionManager()
+		local selectedActors = selectionManager:GetSelectedActors()
+		local selectedActorList = {}
+		local num = 0
+		for ent,b in pairs(selectedActors) do
+			table.insert(selectedActorList,ent)
+			num = num +1
+		end
 
-	for _,ent in ipairs(selectedActorList) do
-		if(ent:IsValid()) then
-			ent:RemoveComponent("util_bone_transform")
-			self:UpdateActorManipulation(ent,true)
+		for _,ent in ipairs(selectedActorList) do
+			if(ent:IsValid()) then
+				ent:RemoveComponent("util_bone_transform")
+				if(num == 1) then self:UpdateActorManipulation(ent,true) end
+			end
 		end
 	end
 	self:UpdateManipulationMode()
@@ -604,7 +610,8 @@ end
 function gui.PFMViewport:ReloadManipulatorMode()
 	self:SetManipulatorMode(self:GetManipulatorMode())
 end
-function gui.PFMViewport:InitializeTransformWidget(tc,ent)
+function gui.PFMViewport:InitializeTransformWidget(tc,ent,applySpace)
+	if(applySpace == nil) then applySpace = true end
 	local manipMode = self:GetManipulatorMode()
 	if(selected == false or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
 		-- ent:RemoveComponent("util_transform")
@@ -624,7 +631,7 @@ function gui.PFMViewport:InitializeTransformWidget(tc,ent)
 		end
 	end
 
-	if(util.is_valid(tc)) then
+	if(util.is_valid(tc) and applySpace) then
 		local transformSpace = self:GetTransformSpace()
 		if(self:IsScaleManipulatorMode(manipMode)) then transformSpace = ents.UtilTransformComponent.SPACE_LOCAL end
 		tc:SetSpace(transformSpace)
@@ -766,11 +773,69 @@ function gui.PFMViewport:OnActorTransformChanged(ent)
 	local decalC = ent:GetComponent(ents.COMPONENT_DECAL)
 	if(decalC ~= nil) then decalC:ApplyDecal() end
 end
-function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
-	if(enabled == nil) then enabled = true end
+function gui.PFMViewport:CreateMultiActorTransformWidget()
+	tool.get_filmmaker():TagRenderSceneAsDirty()
+
+	util.remove(self.m_entTransform)
+	local manipMode = self:GetManipulatorMode()
+	if(manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SCALE) then return end
+
+	local actors = tool.get_filmmaker():GetSelectionManager():GetSelectedActors()
+
+	local posAvg = Vector()
+	local initialActorPoses = {}
+	local count = 0
+	for actor,_ in pairs(actors) do
+		if(actor:IsValid()) then
+			self:RemoveActorTransformWidget(actor)
+			posAvg = posAvg +actor:GetPos()
+			count = count +1
+
+			initialActorPoses[actor] = actor:GetPose()
+		end
+	end
+	if(count > 0) then posAvg = posAvg /count end
+
+	local entTransform = ents.create("util_transform")
+	entTransform:Spawn()
+	entTransform:SetPos(posAvg)
+	self.m_entTransform = entTransform
+
+	local initialTransformPose = entTransform:GetPose()
+
+	local trC = entTransform:GetComponent("util_transform")
+	trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
+		local dtPos = pos -initialTransformPose:GetOrigin()
+		for ent,origPose in pairs(initialActorPoses) do
+			if(ent:IsValid()) then
+				ent:SetPos(origPose:GetOrigin() +dtPos)
+			end
+		end
+	end)
+	trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function(rot)
+		local dtRot = initialTransformPose:GetRotation():GetInverse() *rot
+		for ent,origPose in pairs(initialActorPoses) do
+			if(ent:IsValid()) then
+				local pose = origPose:Copy()
+				local origin = pose:GetOrigin()
+				origin:RotateAround(initialTransformPose:GetOrigin(),dtRot)
+				pose:SetOrigin(origin)
+				pose:SetRotation(dtRot *pose:GetRotation())
+				ent:SetPose(pose)
+			end
+		end
+	end)
+	self:InitializeTransformWidget(trC,nil,self:GetTransformSpace() == ents.UtilTransformComponent.SPACE_VIEW)
+	self.m_transformComponent = trC
+end
+function gui.PFMViewport:RemoveActorTransformWidget(ent)
 	ent:RemoveComponent("util_bone_transform")
 	ent:RemoveComponent("util_transform")
 	util.remove(self.m_entTransform)
+end
+function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
+	if(enabled == nil) then enabled = true end
+	self:RemoveActorTransformWidget(ent)
 
 	if(manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
 		tool.get_filmmaker():TagRenderSceneAsDirty()
@@ -925,7 +990,24 @@ function gui.PFMViewport:GetActiveCamera()
 	local scene = util.is_valid(self.m_viewport) and self.m_viewport:GetScene()
 	return (scene ~= nil) and scene:GetActiveCamera() or nil
 end
+function gui.PFMViewport:UpdateMultiActorSelection()
+	local actors = tool.get_filmmaker():GetSelectionManager():GetSelectedActors()
+	local n = 0
+	for ent,_ in pairs(actors) do
+		if(ent:IsValid()) then
+			n = n +1
+			if(n > 1) then break end
+		end
+	end
+
+	if(n > 1) then
+		self:CreateMultiActorTransformWidget()
+		return true
+	end
+	return false
+end
 function gui.PFMViewport:OnActorSelectionChanged(ent,selected)
+	if(self:UpdateMultiActorSelection()) then return end
 	self:UpdateActorManipulation(ent,selected)
 	self:UpdateManipulationMode()
 end
