@@ -42,7 +42,7 @@ function Component:Initialize()
 	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_COLOR)
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
-	self:AddEntityComponent(ents.COMPONENT_CLICK)
+	local clickC = self:AddEntityComponent(ents.COMPONENT_CLICK)
 	self:AddEntityComponent(ents.COMPONENT_BVH)
 	self:AddEntityComponent("pfm_overlay_object")
 
@@ -54,6 +54,8 @@ function Component:Initialize()
 	renderC:SetDepthPassEnabled(false)
 	renderC:SetDepthBias(185,180)
 	renderC:AddToRenderGroup("pfm_editor_overlay")
+
+	clickC:SetPriority(100)
 end
 function Component:UpdateScale()
 	local cam = game.get_render_scene_camera()
@@ -121,6 +123,7 @@ end
 function Component:UpdateRotation()
 	local pose = self:GetBasePose()
 	if(pose == nil) then return end
+	pose = math.Transform(pose:GetOrigin(),pose:GetRotation()) -- Get rid of scale
 	local axis = self:GetAxis()
 	local rot = Quaternion()
 	local entParent = self:GetTargetEntity()
