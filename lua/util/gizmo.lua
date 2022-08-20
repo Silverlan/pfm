@@ -134,6 +134,7 @@ function Gizmo:AxisScaleDragger(axis,center,scale,uniform)
         end
 
         local offset_on_axis = (distance - self.m_interaction.click_offset) * axis;
+        offset_on_axis = offset_on_axis /40.0
         flush_to_zero(offset_on_axis);
         local new_scale = self.m_interaction.initial_pose:GetScale() + offset_on_axis;
 
