@@ -121,6 +121,21 @@ function Component:StartTransform(hitPos)
 	end
 	self.m_gizmoTargetSpaceRotation = targetSpaceRotation
 	self.m_gizmoBasePose = self:GetBasePose()
+
+	if(hitPos == nil) then
+		-- Calculate hit position at current cursor intersection with plane
+		local axis = self:GetAxisVector()
+		axis:Rotate(self.m_gizmoBasePose:GetRotation())
+		local plane = math.Plane(axis,0.0)
+		plane:MoveToPos(self:GetEntity():GetPos())
+
+		local camPos,camDir,vpData = ents.ClickComponent.get_ray_data()
+		local maxDist = 10000000.0
+		local t = intersect.line_with_plane(camPos,camDir *maxDist,plane:GetNormal(),plane:GetDistance())
+		if(t ~= false) then
+			hitPos = camPos +camDir *maxDist *t
+		end
+	end
 		
 	self.m_gizmoPose = self.m_transformComponent:GetEntity():GetPose()
 	hitPos = hitPos or self.m_gizmoPose:GetOrigin()
