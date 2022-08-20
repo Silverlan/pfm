@@ -14,7 +14,7 @@ function Component:GetArrowModel()
 	local mdl = game.create_model()
 	local meshGroup = mdl:GetMeshGroup(0)
 
-	local scale = 1.0
+	local scale = 1.2
 	scale = Vector(scale,scale,scale)
 	local mesh = game.Model.Mesh.Create()
 	local meshBase = game.Model.Mesh.Sub.CreateCylinder(0.4,16.0,12)
@@ -67,8 +67,8 @@ end
 local diskModel
 function Component:GetDiskModel()
 	if(diskModel ~= nil) then return diskModel end
-	local scale = 1.5
-	local mesh = game.Model.Mesh.Sub.CreateRing(7.5,8,true)
+	local scale = 2
+	local mesh = game.Model.Mesh.Sub.CreateRing(9,8,true)
 	diskModel = create_model(mesh,scale)
 	return diskModel
 end
@@ -76,7 +76,7 @@ end
 local scaleModel
 function Component:GetScaleModel()
 	if(scaleModel ~= nil) then return scaleModel end
-	local scale = 1.0
+	local scale = 0.8
 	local meshScale = 2.0
 	local mesh = game.Model.Mesh.Sub.CreateCylinder(0.5 *meshScale,10.0 *meshScale,12)
 	local mesh2 = game.Model.Mesh.Sub.CreateCylinder(1 *meshScale,3 *meshScale,12)
@@ -98,7 +98,7 @@ end
 local planeModel
 function Component:GetPlaneModel()
 	if(planeModel ~= nil) then return planeModel end
-	local scale = 1.0
+	local scale = 1.2
 	local offset = Vector(5,0,5)
 	local meshBox = game.Model.Mesh.Sub.CreateBox(offset +Vector(-3,-0.1,-3),offset +Vector(3,0.1,3))
 	planeModel = create_model(meshBox,scale)
@@ -108,7 +108,7 @@ end
 local boxModel
 function Component:GetBoxModel()
 	if(boxModel ~= nil) then return boxModel end
-	local scale = 1.0
+	local scale = 1.2
 	local meshBox = game.Model.Mesh.Sub.CreateBox(Vector(-2,-2,-2),Vector(2,2,2))
 	boxModel = create_model(meshBox,scale)
 	return boxModel
