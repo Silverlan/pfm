@@ -211,54 +211,6 @@ function Component:UpdateModel()
 	ent:SetModel(mdl)
 end
 function Component:GetReferenceAxis() return self:GetAxis() end
-function Component:GetCursorAxisAngle()
-	local transformC = self:GetBaseUtilTransformComponent()
-	if(transformC == nil) then return end
-	local entTransform = transformC:GetEntity()
-	local ang = entTransform:GetAngles()
-	local axis = self:GetAxis()
-
-	local intersectPos = self:GetCursorIntersectionWithAxisPlane()
-	if(intersectPos == nil) then return end
-	local pos = intersectPos -self:GetEntity():GetPos()
-	local axisAngle = 0.0
-	if(axis == math.AXIS_X) then axisAngle = math.atan2(pos.z,pos.y)
-	elseif(axis == math.AXIS_Y) then axisAngle = math.atan2(pos.x,pos.z)
-	else axisAngle = math.atan2(pos.y,pos.x) end
-	return math.deg(axisAngle)
-end
-function Component:GetCursorIntersectionWithAxisPlane()
-	local transformC = self:GetBaseUtilTransformComponent()
-	local ent = self:GetEntity()
-	local clickC = ent:GetComponent(ents.COMPONENT_CLICK)
-	if(transformC == nil or clickC == nil) then return end
-	local axis = self:GetAxis()
-
-	local plane
-	if(self:GetType() == Component.TYPE_TRANSLATION) then
-		if(axis == math.AXIS_X) then
-			plane = math.Plane(transformC:GetEntity():GetUp(),ent:GetPos())
-		elseif(axis == math.AXIS_Y) then
-			plane = math.Plane(-transformC:GetEntity():GetRight(),ent:GetPos())
-		else
-			plane = math.Plane(transformC:GetEntity():GetUp(),ent:GetPos())
-		end
-	else
-		if(axis == math.AXIS_X) then
-			plane = math.Plane(vector.FORWARD,ent:GetPos())
-		elseif(axis == math.AXIS_Y) then
-			plane = math.Plane(vector.UP,ent:GetPos())
-		else
-			plane = math.Plane(vector.RIGHT,ent:GetPos())
-		end
-	end
-
-	local pos,dir = ents.ClickComponent.get_ray_data()
-	local maxDist = 32768
-	local t = intersect.line_with_plane(pos,dir *maxDist,plane:GetNormal(),plane:GetDistance())
-	if(t == false) then return end
-	return pos +dir *t *maxDist
-end
 function Component:OnTick(dt)
 	self:UpdateScale() -- TODO: This doesn't belong here, move it to a render callback
 	if(self:IsSelected() ~= true) then return end

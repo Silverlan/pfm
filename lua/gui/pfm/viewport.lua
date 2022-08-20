@@ -266,8 +266,6 @@ function gui.PFMViewport:InitializeSettings(parent)
 		local spacing = toint(self.m_ctrlAngularSpacing:GetOptionValue(self.m_ctrlAngularSpacing:GetSelectedOption()))
 		self:SetAngularSpacing(spacing)
 	end)
-
-	p:ResetControls()
 end
 function gui.PFMViewport:SetRtViewportRenderer(renderer)
 	local enabled = (renderer ~= nil)
@@ -303,6 +301,8 @@ function gui.PFMViewport:InitializeControls()
 	controls:SizeToContents()
 	self:InitializeManipulatorControls()
 	self:InitializeCameraControls()
+
+	self.m_settingsBox:ResetControls()
 end
 function gui.PFMViewport:UpdateRenderSettings()
 	local pfm = tool.get_filmmaker()
