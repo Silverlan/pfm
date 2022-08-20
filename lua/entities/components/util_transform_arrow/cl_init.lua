@@ -51,13 +51,15 @@ function Component:Initialize()
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 
 	renderC:SetExemptFromOcclusionCulling(true)
+	renderC:SetDepthPassEnabled(false)
+	renderC:SetDepthBias(185,180)
 	renderC:AddToRenderGroup("pfm_editor_overlay")
 end
 function Component:UpdateScale()
 	local cam = game.get_render_scene_camera()
 	local d = self:GetEntity():GetPos():Distance(cam:GetEntity():GetPos())
-	d = ((d *0.008) ^0.9) *3 -- Roughly try to keep the same size regardless of distance to the camera
-	d = 1--2
+	--d = ((d *0.008) ^0.9) *3 -- Roughly try to keep the same size regardless of distance to the camera
+	d = d *cam:GetFOVRad() *0.01
 	self:GetEntity():SetScale(Vector(d,d,d))
 end
 function Component:OnEntitySpawn()
