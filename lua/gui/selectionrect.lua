@@ -13,7 +13,8 @@ function gui.SelectionRect:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(64,64)
-	local el = gui.create("WISelectionOutline",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	local el = gui.create("WIOutlinedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	el:SetColor(pfm.get_color_scheme_color("yellow2"))
 	self:SetThinkingEnabled(true)
 end
 function gui.SelectionRect:IsElementInBounds(el,min,max)

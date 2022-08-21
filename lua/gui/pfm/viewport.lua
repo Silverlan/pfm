@@ -312,6 +312,34 @@ function gui.PFMViewport:UpdateRenderSettings()
 	self.m_rtViewport:Refresh(true)
 end
 function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
+	if(mouseButton == input.MOUSE_BUTTON_LEFT and self:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
+		if(state == input.STATE_PRESS) then
+			self.m_leftMouseInput = true
+			self.m_cursorTracker = gui.CursorTracker()
+			self:EnableThinking()
+			return util.EVENT_REPLY_HANDLED
+		end
+		self:ApplySelection()
+		self.m_leftMouseInput = nil
+		self.m_cursorTracker = nil
+
+		local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true)
+		if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
+			local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+			local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+			if(actor) then
+				local filmmaker = tool.get_filmmaker()
+				if(input.is_alt_key_down()) then
+					filmmaker:DeselectActor(actor)
+				else
+					local deselectCurrent = not input.is_ctrl_key_down()
+					filmmaker:SelectActor(actor,deselectCurrent)
+				end
+			end
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
+
 	if(mouseButton ~= input.MOUSE_BUTTON_LEFT and mouseButton ~= input.MOUSE_BUTTON_RIGHT) then return util.EVENT_REPLY_UNHANDLED end
 	if(state ~= input.STATE_PRESS and state ~= input.STATE_RELEASE) then return util.EVENT_REPLY_UNHANDLED end
 
@@ -1209,10 +1237,69 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 	end
 	self:CallCallbacks("OnGameplayModeChanged",enabled)
 end
+function gui.PFMViewport:ApplySelection()
+	if(util.is_valid(self.m_selectionRect) == false) then return end
+	-- self:SetCursorTrackerEnabled(false)
+	local function getWorldSpacePoint(pos,near)
+		local uv = Vector2(
+			pos.x /self.m_viewport:GetWidth(),
+			pos.y /self.m_viewport:GetHeight()
+		)
+		local cam = self:GetCamera()
+		local p = cam:GetPlanePoint(near and cam:GetNearZ() or cam:GetFarZ(),uv)
+		return p
+	end
+	local pos = self.m_selectionRect:GetPos()
+	local posEnd = pos +self.m_selectionRect:GetSize()
+	local p0n = getWorldSpacePoint(pos,true)
+	local p1n = getWorldSpacePoint(Vector2i(posEnd.x,pos.y),true)
+	local p2n = getWorldSpacePoint(Vector2i(pos.x,posEnd.y),true)
+	local p3n = getWorldSpacePoint(posEnd,true)
+
+	local p0f = getWorldSpacePoint(pos,false)
+	local p1f = getWorldSpacePoint(Vector2i(posEnd.x,pos.y),false)
+	local p2f = getWorldSpacePoint(Vector2i(pos.x,posEnd.y),false)
+	local p3f = getWorldSpacePoint(posEnd,false)
+
+	local planes = {
+		math.Plane(p0n,p2n,p1n), -- Front
+		math.Plane(p0n,p0f,p2f), -- Left
+		math.Plane(p1n,p3f,p1f), -- Right
+		math.Plane(p0n,p1n,p0f), -- Top
+		math.Plane(p2n,p2f,p3n), -- Bottom
+		math.Plane(p0f,p1f,p2f) -- Back
+	}
+
+	local results = ents.ClickComponent.find_entities_in_kdop(planes)
+
+	local pm = tool.get_filmmaker()
+	if(input.is_ctrl_key_down() == false and input.is_alt_key_down() == false) then pm:DeselectAllActors() end
+	local selectionManager = pm:GetSelectionManager()
+	for _,res in ipairs(results) do
+		local actorC = res.entity:GetComponent(ents.COMPONENT_PFM_ACTOR)
+		local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+		if(actor ~= nil) then
+			if(input.is_alt_key_down()) then pm:DeselectActor(actor)
+			else pm:SelectActor(actor,false) end
+		end
+	end
+
+	util.remove(self.m_selectionRect)
+	self:DisableThinking()
+end
 function gui.PFMViewport:OnThink()
 	if(self.m_cursorTracker ~= nil) then
 		self.m_cursorTracker:Update()
 		if(not self.m_cursorTracker:HasExceededMoveThreshold(2)) then return end
+
+		if(self.m_leftMouseInput) then
+			if(util.is_valid(self.m_selectionRect) == false) then
+				self.m_selectionRect = gui.create("WISelectionRect",self.m_viewport)
+				self.m_selectionRect:SetPos(self.m_viewport:GetCursorPos())
+			end
+			return
+		end
+
 		self.m_cursorTracker = nil
 		self:DisableThinking()
 

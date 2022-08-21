@@ -863,6 +863,7 @@ function gui.PFMActorEditor:SelectActor(actor,deselectCurrent)
 		end
 	end
 end
+function gui.PFMActorEditor:DeselectAllActors() self.m_tree:DeselectAll() end
 function gui.PFMActorEditor:DeselectActor(actor)
 	local elTgt = self.m_actorUniqueIdToTreeElement[tostring(actor:GetUniqueId())]
 	for el,_ in pairs(self.m_tree:GetSelectedElements()) do

@@ -420,6 +420,8 @@ colScheme:SetColor("turquoise",Color.CreateFromHexColor("00ffff"))
 colScheme:SetColor("yellow",Color.CreateFromHexColor("ffff00"))
 colScheme:SetColor("pink",Color.CreateFromHexColor("ff00ff"))
 
+colScheme:SetColor("yellow2",Color.CreateFromHexColor("eec94b"))
+
 pfm.get_color_scheme = function()
 	return colScheme
 end

@@ -1918,6 +1918,10 @@ function gui.WIFilmmaker:SelectActor(actor,deselectCurrent)
 
 	self:GoToWindow("actor_editor")
 end
+function gui.WIFilmmaker:DeselectAllActors()
+	if(util.is_valid(self:GetActorEditor()) == false) then return end
+	self:GetActorEditor():DeselectAllActors()
+end
 function gui.WIFilmmaker:DeselectActor(actor)
 	if(util.is_valid(self:GetActorEditor()) == false) then return end
 	self:GetActorEditor():DeselectActor(actor)
