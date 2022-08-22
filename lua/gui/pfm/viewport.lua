@@ -17,6 +17,7 @@ include("/gui/draganddrop.lua")
 include("/gui/playbackcontrols.lua")
 include("/gui/raytracedviewport.lua")
 include("/pfm/fonts.lua")
+include("/pfm/undoredo.lua")
 
 include_component("click")
 include_component("util_transform")
@@ -878,6 +879,9 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 		local newPos
 		local newRot
 		local newScale
+		local pfmActorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+		local actorData = (pfmActorC ~= nil) and pfmActorC:GetActorData() or nil
+		local actorC = (actorData ~= nil) and actorData:FindComponent("pfm_actor") or nil
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
 			newPos = pos:Copy()
 		end)
@@ -888,14 +892,29 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 			newScale = scale:Copy()
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END,function(scale)
-			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-			if(actorC ~= nil) then
-				if(newPos ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"position",newPos) end
-				if(newRot ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"rotation",newRot) end
-				if(newScale ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",newScale) end
-			end
+			local curPose = {
+				position = actorC ~= nil and (newPos ~= nil) and actorC:GetMemberValue("position") or nil,
+				rotation = actorC ~= nil and (newRot ~= nil) and actorC:GetMemberValue("rotation") or nil,
+				scale = actorC ~= nil and (newScale ~= nil) and actorC:GetMemberValue("scale") or nil
+			}
+			local newPose = {
+				position = newPos,
+				rotation = newRot,
+				scale = newScale
+			}
+			for k,v in pairs(newPose) do newPose[k] = v:Copy() end
+			local function apply_pose(pose)
+				console.print_table(pose)
+				local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+				if(actorC ~= nil) then
+					if(pose.position ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"position",pose.position) end
+					if(pose.rotation ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"rotation",pose.rotation) end
+					if(pose.scale ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",pose.scale) end
+				end
 
-			self:OnActorTransformChanged(ent)
+				self:OnActorTransformChanged(ent)
+			end
+			pfm.undoredo.push("pfm_undoredo_transform",function() apply_pose(newPose) end,function() apply_pose(curPose) end)()
 		end)
 		return trC
 	end

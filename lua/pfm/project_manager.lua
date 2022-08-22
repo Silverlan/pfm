@@ -223,6 +223,7 @@ function pfm.ProjectManager:CloseProject()
 		if(self.m_persistentProject ~= true) then self.m_project:Close() end
 		self.m_project = nil
 	end
+	pfm.undoredo.clear()
 	collectgarbage()
 	self:OnProjectClosed()
 end
@@ -261,6 +262,7 @@ function pfm.ProjectManager:InitializeProject(project)
 	debug.start_profiling_task("pfm_initialize_project")
 
 	self.m_animManager:Reset()
+	pfm.undoredo.clear()
 	local session = self:GetSession()
 	local filmTrack = (session ~= nil) and session:GetFilmTrack() or nil
 

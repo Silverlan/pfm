@@ -453,13 +453,14 @@ function gui.PFMActorEditor:GetActorComponentItem(actor,componentName)
 	if(util.is_valid(item) == false) then return end
 	return item:GetItemByIdentifier(componentName)
 end
-function gui.PFMActorEditor:CreateNewActor(actorName,pose)
+function gui.PFMActorEditor:CreateNewActor(actorName,pose,uniqueId)
 	local filmClip = self:GetFilmClip()
 	if(filmClip == nil) then
 		pfm.create_popup_message(locale.get_text("pfm_popup_create_actor_no_film_clip"))
 		return
 	end
 	local actor = pfm.get_project_manager():AddActor(self:GetFilmClip())
+	if(uniqueId ~= nil) then actor:ChangeUniqueId(uniqueId) end
 	local actorIndex
 	if(actorName == nil) then
 		actorName = "actor"
@@ -1296,8 +1297,21 @@ function gui.PFMActorEditor:MouseCallback(button,state,mods)
 		return util.EVENT_REPLY_HANDLED
 	end
 end
+function gui.PFMActorEditor:RemoveActor(uniqueId)
+	local filmmaker = tool.get_filmmaker()
+	local filmClip = filmmaker:GetActiveFilmClip()
+	if(filmClip == nil) then return end
+	local actor = filmClip:FindActorByUniqueId(uniqueId)
+	if(actor == nil) then return end
+	filmClip:RemoveActor(actor)
+	local itemActor = self.m_tree:GetRoot():GetItemByIdentifier(uniqueId)
+	if(itemActor ~= nil) then self.m_tree:RemoveItem(itemActor) end
+
+	util.remove(ents.find_by_uuid(uniqueId))
+	self:TagRenderSceneAsDirty()
+end
 function gui.PFMActorEditor:AddActor(actor)
-	local itemActor = self.m_tree:AddItem(actor:GetName())
+	local itemActor = self.m_tree:AddItem(actor:GetName(),nil,nil,tostring(actor:GetUniqueId()))
 	itemActor:SetAutoSelectChildren(false)
 
 	local uniqueId = tostring(actor:GetUniqueId())
@@ -1327,18 +1341,7 @@ function gui.PFMActorEditor:AddActor(actor)
 					te:RemoveSafely()
 				end)
 			end)
-			pContext:AddItem(locale.get_text("remove"),function()
-				local filmmaker = tool.get_filmmaker()
-				local filmClip = filmmaker:GetActiveFilmClip()
-				if(filmClip == nil) then return end
-				local actor = filmClip:FindActorByUniqueId(uniqueId)
-				if(actor == nil) then return end
-				filmClip:RemoveActor(actor)
-				self.m_tree:RemoveItem(itemActor)
-
-				util.remove(ents.find_by_uuid(uniqueId))
-				self:TagRenderSceneAsDirty()
-			end)
+			pContext:AddItem(locale.get_text("remove"),function() self:RemoveActor(uniqueId) end)
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
 		end

@@ -132,6 +132,8 @@ function gui.WIFilmmaker:OnInitialize()
 		bindingLayer:BindKey("r","pfm_action transform rotate")
 		bindingLayer:BindKey("s","pfm_action transform scale")
 
+		bindingLayer:BindKey("del","pfm_delete")
+
 		layers["pfm"] = bindingLayer
 	end
 	if(layers["pfm_graph_editor"] == nil) then
@@ -721,8 +723,7 @@ function gui.WIFilmmaker:ImportMap(map)
 		local name = keyValues:GetValue("targetname",udm.TYPE_STRING) or (className .. index)
 		if(className == "prop_physics" or className == "world") then
 			if(model ~= nil) then
-				local actor = actorEditor:CreateNewActor(name,pose)
-				if(uuid ~= nil) then actor:ChangeUniqueId(uuid) end
+				local actor = actorEditor:CreateNewActor(name,pose,uuid)
 
 				local mdlC = actorEditor:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(model) end)
 				actorEditor:CreateNewActorComponent(actor,"model",false)
@@ -732,8 +733,7 @@ function gui.WIFilmmaker:ImportMap(map)
 				actorEditor:UpdateActorComponents(actor)
 			end
 		elseif(className == "skybox") then
-			local actor = actorEditor:CreateNewActor(name,pose)
-			if(uuid ~= nil) then actor:ChangeUniqueId(uuid) end
+			local actor = actorEditor:CreateNewActor(name,pose,uuid)
 
 			local mdlC = actorEditor:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(model) end)
 			actorEditor:CreateNewActorComponent(actor,"skybox",false)
@@ -742,8 +742,7 @@ function gui.WIFilmmaker:ImportMap(map)
 		elseif(className == "env_light_environment") then
 
 		elseif(className == "env_light_point") then
-			local actor = actorEditor:CreateNewActor(name,pose)
-			if(uuid ~= nil) then actor:ChangeUniqueId(uuid) end
+			local actor = actorEditor:CreateNewActor(name,pose,uuid)
 
 			local radius = keyValues:GetValue("radius",udm.TYPE_FLOAT) or 1000.0
 			local intensity = keyValues:GetValue("light_intensity",udm.TYPE_FLOAT) or 1000.0
@@ -763,8 +762,7 @@ function gui.WIFilmmaker:ImportMap(map)
 			colorC:SetMemberValue("color",udm.TYPE_VECTOR3,color:ToVector())
 			actorEditor:UpdateActorComponents(actor)
 		elseif(className == "env_fog_controller") then
-			local actor = actorEditor:CreateNewActor(name,pose)
-			if(uuid ~= nil) then actor:ChangeUniqueId(uuid) end
+			local actor = actorEditor:CreateNewActor(name,pose,uuid)
 
 			local fogColor = keyValues:GetValue("fogcolor",udm.TYPE_VECTOR3)
 			fogColor = (fogColor ~= nil) and (fogColor /255.0) or Vector(1,1,1)
@@ -1086,6 +1084,12 @@ function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 					actorEditor:PasteFromClipboard()
 				end
 			end
+			return util.EVENT_REPLY_HANDLED
+		elseif(key == input.KEY_Z) then
+			pfm.undo()
+			return util.EVENT_REPLY_HANDLED
+		elseif(key == input.KEY_Y) then
+			pfm.redo()
 			return util.EVENT_REPLY_HANDLED
 		end
 	else
@@ -2086,5 +2090,28 @@ console.register_command("pfm_action",function(pl,...)
 				end
 			end
 		end
+	end
+end)
+
+console.register_command("pfm_undo",function(pl,...)
+	pfm.undo()
+end)
+
+console.register_command("pfm_redo",function(pl,...)
+	pfm.redo()
+end)
+
+console.register_command("pfm_delete",function(pl,...)
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm) == false) then return end
+	local actorEditor = pm:GetActorEditor()
+	if(util.is_valid(actorEditor) == false) then return end
+	local ids = {}
+	for _,actor in ipairs(actorEditor:GetSelectedActors()) do
+		table.insert(ids,tostring(actor:GetUniqueId()))
+	end
+
+	for _,uuid in ipairs(ids) do
+		actorEditor:RemoveActor(uuid)
 	end
 end)

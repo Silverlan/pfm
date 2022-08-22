@@ -387,7 +387,17 @@ function gui.PFMTreeViewElement:SetSelected(selected,selectChildren)
 		if(item:IsValid()) then item:Select() end
 	end
 end
-function gui.PFMTreeViewElement:GetItemByIdentifier(identifier) return self.m_identifierToItem[identifier] end
+function gui.PFMTreeViewElement:GetItemByIdentifier(identifier,recursive)
+	local item = self.m_identifierToItem[identifier]
+	_self = self
+	if(item ~= nil or recursive ~= true) then return item end
+	for _,child in ipairs(self.m_items) do
+		if(child:IsValid()) then
+			local item = child:GetItemByIdentifier(identifier,recursive)
+			if(item ~= nil) then return item end
+		end
+	end
+end
 function gui.PFMTreeViewElement:SetIdentifier(identifier) self.m_identifier = identifier end
 function gui.PFMTreeViewElement:GetIdentifier() return self.m_identifier end
 function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex,identifier)

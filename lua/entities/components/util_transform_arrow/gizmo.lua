@@ -161,6 +161,8 @@ function Component:StartTransform(hitPos)
 end
 
 function Component:StopTransform()
+	if(self.m_gizmo == nil) then return end
+	self.m_gizmo = nil
 	util.remove(self.m_elLine)
 	util.remove(self.m_cbOnMouseRelease)
 
