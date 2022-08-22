@@ -10,6 +10,29 @@ util.register_class("unirender.GenericShader",unirender.Shader)
 function unirender.GenericShader:__init()
 	unirender.Shader.__init(self)
 end
+function unirender.GenericShader:ApplyEyeUv(desc,mat,uv)
+	local mesh = self:GetMesh()
+	local ent = self:GetEntity()
+	if(mesh == nil or util.is_valid(ent) == false or mat:GetShaderName() ~= "eye") then return uv end
+	local eyeC = ent:GetComponent(ents.COMPONENT_EYE)
+	if(eyeC == nil) then return uv end
+	local eyeballIndex = eyeC:FindEyeballIndex(mesh:GetSkinTextureIndex())
+	if(eyeballIndex == nil) then return uv end
+	local dilationFactor = eyeC:GetIrisDilation(eyeballIndex)
+	local eyeball = ent:GetModel():GetEyeball(eyeballIndex)
+	if(eyeball == nil or dilationFactor == nil) then return uv end
+	local irisProjU,irisProjV = eyeC:GetEyeballProjectionVectors(eyeballIndex)
+	if(irisProjU == nil) then return uv end
+	local eyeUv = desc:AddNode(unirender.NODE_EYE_UV)
+	eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_U_XYZ,Vector(irisProjU.x,irisProjU.y,irisProjU.z))
+	eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_U_W,irisProjU.w)
+	eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_V_XYZ,Vector(irisProjV.x,irisProjV.y,irisProjV.z))
+	eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_V_W,irisProjV.w)
+	eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_DILATION,dilationFactor)
+	eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_MAX_DILATION_FACTOR,eyeball.maxDilationFactor)
+	eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_UV_RADIUS,eyeball.irisUvRadius)
+	return eyeUv:GetPrimaryOutputSocket()
+end
 function unirender.GenericShader:AddTextureNode(desc,dbVolumetric,factorName,mapName)
 	local mat = self:GetMaterial()
 	if(mat == nil) then return end

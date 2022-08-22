@@ -9,6 +9,7 @@
 include("generic.lua")
 include("/unirender/nodes/textures/base.lua")
 include("/unirender/nodes/textures/pbr.lua")
+include("/unirender/nodes/misc/eye_uv.lua")
 
 util.register_class("unirender.PBRShader",unirender.GenericShader)
 
@@ -44,6 +45,36 @@ function unirender.PBRShader:AddAlbedoNode(desc,mat)
 
 	local texCoord = desc:AddNode(unirender.NODE_TEXTURE_COORDINATE)
 	local uv = texCoord:GetOutputSocket(unirender.Node.texture_coordinate.OUT_UV)
+	uv = self:ApplyEyeUv(desc,mat,uv)
+
+	local mesh = self:GetMesh()
+	local ent = self:GetEntity()
+	if(mesh ~= nil and util.is_valid(ent) and mat:GetShaderName() == "eye") then
+		local eyeC = ent:GetComponent(ents.COMPONENT_EYE)
+
+		local eyeballIndex = eyeC:FindEyeballIndex(mesh:GetSkinTextureIndex())
+		local dilationFactor = eyeC:GetIrisDilation(eyeballIndex)
+		local eyeball = ent:GetModel():GetEyeball(eyeballIndex)
+		if(eyeball ~= nil and dilationFactor ~= nil) then
+			local irisProjU,irisProjV = eyeC:GetEyeballProjectionVectors(eyeballIndex)
+
+			if(irisProjU ~= nil) then
+				local eyeUv = desc:AddNode(unirender.NODE_EYE_UV)
+				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_U_XYZ,Vector(irisProjU.x,irisProjU.y,irisProjU.z))
+				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_U_W,irisProjU.w)
+				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_V_XYZ,Vector(irisProjV.x,irisProjV.y,irisProjV.z))
+				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_V_W,irisProjV.w)
+				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_DILATION,dilationFactor)
+				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_MAX_DILATION_FACTOR,eyeball.maxDilationFactor)
+				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_UV_RADIUS,eyeball.irisUvRadius)
+				uv = eyeUv:GetPrimaryOutputSocket()
+			end
+		end
+	end
+
+
+
+
 
 	-- Albedo
 	local nAlbedoMap = desc:AddNode(unirender.NODE_ALBEDO_TEXTURE)
