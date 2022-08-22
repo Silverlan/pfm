@@ -2126,7 +2126,5 @@ console.register_command("pfm_delete",function(pl,...)
 		table.insert(ids,tostring(actor:GetUniqueId()))
 	end
 
-	for _,uuid in ipairs(ids) do
-		actorEditor:RemoveActor(uuid)
-	end
+	actorEditor:RemoveActors(ids)
 end)

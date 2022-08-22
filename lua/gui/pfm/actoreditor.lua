@@ -1198,9 +1198,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 		initializeMembers(c:GetDynamicMemberIndices())
 	end
 end
-function gui.PFMActorEditor:CopyToClipboard(actors)
-	actors = actors or self:GetSelectedActors()
-	local el = udm.create_element()
+function gui.PFMActorEditor:WriteActorsToUdmElement(actors,el)
 	local pfmCopy = el:Add("pfm_copy")
 
 	local filmClip = self:GetFilmClip()
@@ -1225,15 +1223,8 @@ function gui.PFMActorEditor:CopyToClipboard(actors)
 		udmData:SetValue("type",udm.TYPE_STRING,"animation")
 		udmData:Add("data"):Merge(animData)
 	end
-	util.set_clipboard_string(el:ToAscii(udm.ASCII_SAVE_FLAG_NONE))
 end
-function gui.PFMActorEditor:PasteFromClipboard()
-	local res,err = udm.parse(util.get_clipboard_string())
-	if(res == false) then
-		console.print_warning("Failed to parse UDM: ",err)
-		return
-	end
-	local data = res:GetAssetData():GetData()
+function gui.PFMActorEditor:RestoreActorsFromUdmElement(data)
 	local pfmCopy = data:Get("pfm_copy")
 	local data = pfmCopy:Get("data")
 	if(data:IsValid() == false) then
@@ -1303,6 +1294,21 @@ function gui.PFMActorEditor:PasteFromClipboard()
 	tool.get_filmmaker():ReloadGameView()
 	self:Reload()
 end
+function gui.PFMActorEditor:CopyToClipboard(actors)
+	actors = actors or self:GetSelectedActors()
+	local el = udm.create_element()
+	self:WriteActorsToUdmElement(actors,el)
+	util.set_clipboard_string(el:ToAscii(udm.ASCII_SAVE_FLAG_NONE))
+end
+function gui.PFMActorEditor:PasteFromClipboard()
+	local res,err = udm.parse(util.get_clipboard_string())
+	if(res == false) then
+		console.print_warning("Failed to parse UDM: ",err)
+		return
+	end
+	local data = res:GetAssetData():GetData()
+	self:RestoreActorsFromUdmElement(data)
+end
 function gui.PFMActorEditor:MouseCallback(button,state,mods)
 	if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 		local pContext = gui.open_context_menu()
@@ -1315,18 +1321,52 @@ function gui.PFMActorEditor:MouseCallback(button,state,mods)
 		return util.EVENT_REPLY_HANDLED
 	end
 end
+function gui.PFMActorEditor:RemoveActors(ids)
+	local filmmaker = tool.get_filmmaker()
+	local filmClip = filmmaker:GetActiveFilmClip()
+	if(filmClip == nil) then return end
+	local el = udm.create_element()
+	local actors = {}
+	for _,uniqueId in ipairs(ids) do
+		local actor = filmClip:FindActorByUniqueId(uniqueId)
+		if(actor ~= nil) then
+			table.insert(actors,actor)
+		end
+	end
+	self:WriteActorsToUdmElement(actors,el)
+
+	pfm.undoredo.push("pfm_undoredo_remove_actor",function()
+		local filmmaker = tool.get_filmmaker()
+		local filmClip = filmmaker:GetActiveFilmClip()
+		if(filmClip == nil) then return end
+		for _,uniqueId in ipairs(ids) do
+			local actor = filmClip:FindActorByUniqueId(uniqueId)
+			if(actor ~= nil) then self:RemoveActor(uniqueId) end
+		end
+	end,function()
+		self:RestoreActorsFromUdmElement(el)
+	end)
+	for _,uniqueId in ipairs(ids) do
+		local actor = filmClip:FindActorByUniqueId(uniqueId)
+		if(actor ~= nil) then self:RemoveActor(uniqueId) end
+	end
+end
 function gui.PFMActorEditor:RemoveActor(uniqueId)
 	local filmmaker = tool.get_filmmaker()
 	local filmClip = filmmaker:GetActiveFilmClip()
 	if(filmClip == nil) then return end
 	local actor = filmClip:FindActorByUniqueId(uniqueId)
 	if(actor == nil) then return end
-	filmClip:RemoveActor(actor)
-	local itemActor = self.m_tree:GetRoot():GetItemByIdentifier(uniqueId)
-	if(itemActor ~= nil) then self.m_tree:RemoveItem(itemActor) end
 
-	util.remove(ents.find_by_uuid(uniqueId))
-	self:TagRenderSceneAsDirty()
+	local function removeActor(actor)
+		filmClip:RemoveActor(actor)
+		local itemActor = self.m_tree:GetRoot():GetItemByIdentifier(uniqueId)
+		if(itemActor ~= nil) then self.m_tree:RemoveItem(itemActor) end
+
+		util.remove(ents.find_by_uuid(uniqueId))
+		self:TagRenderSceneAsDirty()
+	end
+	removeActor(actor)
 end
 function gui.PFMActorEditor:AddActor(actor)
 	local itemActor = self.m_tree:AddItem(actor:GetName(),nil,nil,tostring(actor:GetUniqueId()))
@@ -1359,7 +1399,7 @@ function gui.PFMActorEditor:AddActor(actor)
 					te:RemoveSafely()
 				end)
 			end)
-			pContext:AddItem(locale.get_text("remove"),function() self:RemoveActor(uniqueId) end)
+			pContext:AddItem(locale.get_text("remove"),function() self:RemoveActors({uniqueId}) end)
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
 		end
