@@ -40,6 +40,8 @@ function gui.PFMColorSelector:OnInitialize()
 
 	local selectorContents = gui.create("WIHBox",self.m_coreContents)
 	self.m_colorWheel = gui.create("WIPFMColorWheel",selectorContents)
+	self.m_colorWheel:AddCallback("OnUserInputStarted",function() self:CallCallbacks("OnUserInputStarted") end)
+	self.m_colorWheel:AddCallback("OnUserInputEnded",function() self:CallCallbacks("OnUserInputEnded") end)
 	self.m_colorWheel:AddCallback("OnColorChanged",function(el,col)
 		if(self.m_skipCallbacks == true) then return end
 		self.m_skipCallbacks = true
@@ -63,6 +65,8 @@ function gui.PFMColorSelector:OnInitialize()
 
 		self.m_skipCallbacks = nil
 	end)
+	brightnessSlider:AddCallback("OnUserInputStarted",function() self:CallCallbacks("OnUserInputStarted") end)
+	brightnessSlider:AddCallback("OnUserInputEnded",function() self:CallCallbacks("OnUserInputEnded") end)
 	selectorContents:Update()
 	brightnessSlider:SetHeight(selectorContents:GetHeight())
 	brightnessSlider:SetAnchor(1,0,1,1)
@@ -280,6 +284,7 @@ function gui.PFMColorSelector:OnInitialize()
 		self.m_origColor = nil
 		local col = Color(preset:GetOptionValue(preset:GetSelectedOption()))
 		self:SelectColor(col)
+		self:CallCallbacks("OnUserInputEnded")
 	end)
 	--preset:Wrap("WIEditableEntry"):SetText(locale.get_text("preset"))
 
@@ -293,6 +298,8 @@ function gui.PFMColorSelector:OnInitialize()
 			fApply(value)
 			self.m_skipCallbacks = nil
 		end)
+		slider:AddCallback("OnUserInputStarted",function() self:CallCallbacks("OnUserInputStarted") end)
+		slider:AddCallback("OnUserInputEnded",function() self:CallCallbacks("OnUserInputEnded") end)
 		slider:SetVisible(false)
 		return slider
 	end
@@ -350,6 +357,8 @@ function gui.PFMColorSelector:OnInitialize()
 		self:UpdateSliders()
 
 		self.m_skipCallbacks = nil
+
+		self:CallCallbacks("OnUserInputEnded")
 	end)
 	local teHexWrapper = teHex:Wrap("WIEditableEntry")
 	teHexWrapper:SetVisible(false)

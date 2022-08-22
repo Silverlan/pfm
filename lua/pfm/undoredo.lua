@@ -10,8 +10,6 @@ include("/util/log.lua")
 
 pfm.register_log_category("pfm_undoredo")
 
-local UNDO_LIMIT = 100
-
 pfm = pfm or {}
 pfm.undoredo = pfm.undoredo or {}
 pfm.undoredo.stack = pfm.undoredo.stack or {}
@@ -27,6 +25,12 @@ pfm.undoredo.push = function(name,actionDo,undo)
 	}
 	pfm.undoredo.action_position = pos
 	while(#pfm.undoredo.stack > pos) do pfm.undoredo.stack[#pfm.undoredo.stack] = nil end
+	local undoLimit = console.get_convar_int("pfm_max_undo_steps")
+	while(#pfm.undoredo.stack > undoLimit) do
+		pfm.log("Undo limit reached, deleting undo step '" .. locale.get_text(pfm.undoredo.stack[1].name) .. "'...",pfm.LOG_CATEGORY_PFM_UNDOREDO)
+		table.remove(pfm.undoredo.stack,1)
+		pfm.undoredo.action_position = pfm.undoredo.action_position -1
+	end
 	return actionDo
 end
 

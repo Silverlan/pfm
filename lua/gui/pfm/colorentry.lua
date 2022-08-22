@@ -59,6 +59,8 @@ function gui.PFMColorEntry:OpenColorSelector()
 	input.set_cursor_pos(cursorPos)
 	colorWheel:InjectMouseInput(colorWheel:GetCursorPos(),input.MOUSE_BUTTON_LEFT,input.STATE_PRESS,input.MOD_NONE)
 
+	el:AddCallback("OnUserInputStarted",function() self:CallCallbacks("OnUserInputStarted") end)
+	el:AddCallback("OnUserInputEnded",function() self:CallCallbacks("OnUserInputEnded") end)
 	el:AddCallback("OnColorChanged",function()
 		local color = el:GetSelectedColorRGB()
 		self:SetColor(color)

@@ -86,10 +86,12 @@ function gui.PFMSliderCursor:SetCursorDragModeEnabled(enabled)
 	if(enabled) then
 		self:SetCursorMovementCheckEnabled(true)
 		self.m_cursorStartOffset = self:IsHorizontal() and self:GetParent():GetCursorPos().x or self:GetParent():GetCursorPos().y
+		self:CallCallbacks("OnUserInputStarted",self:GetFraction())
 		return
 	end
 	self:SetCursorMovementCheckEnabled(false)
 	self.m_cursorStartOffset = nil
+	self:CallCallbacks("OnUserInputEnded",self:GetFraction())
 end
 function gui.PFMSliderCursor:MouseCallback(button,state,mods)
 	if(button == input.MOUSE_BUTTON_LEFT) then

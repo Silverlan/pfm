@@ -31,6 +31,8 @@ function gui.PFMBrightnessSlider:OnInitialize()
 	cursor:AddCallback("OnFractionChanged",function(el,fraction)
 		self:CallCallbacks("OnBrightnessChanged",1.0 -fraction)
 	end)
+	cursor:AddCallback("OnUserInputStarted",function() self:CallCallbacks("OnUserInputStarted") end)
+	cursor:AddCallback("OnUserInputEnded",function() self:CallCallbacks("OnUserInputEnded") end)
 	self.m_locator = locator
 	self.m_cursor = cursor
 	self:SetMouseInputEnabled(true)

@@ -31,6 +31,8 @@ function gui.PFMColorWheel:OnInitialize()
 	locator:AddCallback("OnMouseEvent",function(el,button,state,mods)
 		if(button == input.MOUSE_BUTTON_LEFT) then
 			el.m_dragging = (state == input.STATE_PRESS)
+			if(el.m_dragging) then self:CallCallbacks("OnUserInputStarted")
+			else self:CallCallbacks("OnUserInputEnded") end
 			return util.EVENT_REPLY_HANDLED
 		end
 		return util.EVENT_REPLY_UNHANDLED

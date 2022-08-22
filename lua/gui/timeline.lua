@@ -25,9 +25,12 @@ function gui.Timeline:OnInitialize()
 		if(util.is_valid(self.m_playhead) == false) then return util.EVENT_REPLY_UNHANDLED end
 		if(mouseButton == input.MOUSE_BUTTON_LEFT) then
 			if(keyState == input.STATE_PRESS) then
+				self:CallCallbacks("OnUserInputStarted")
 				local pos = self:GetCursorPos()
 				local timeOffset = self:GetTimeAxis():GetAxis():XOffsetToValue(pos.x)
 				self.m_playhead:SetTimeOffset(timeOffset)
+			elseif(keyState == input.STATE_RELEASE) then
+				self:CallCallbacks("OnUserInputEnded")
 			end
 			self.m_playhead:SetCursorMoveModeEnabled(keyState == input.STATE_PRESS)
 		end

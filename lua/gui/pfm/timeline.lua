@@ -40,6 +40,8 @@ function gui.PFMTimeline:OnInitialize()
 	self.m_timeline:SetStartOffset(1.0)
 	self.m_timeline:Update()
 
+	self.m_timeline:AddCallback("OnUserInputStarted",function() self:CallCallbacks("OnUserInputStarted") end)
+	self.m_timeline:AddCallback("OnUserInputEnded",function() self:CallCallbacks("OnUserInputEnded") end)
 	self.m_timeline:AddCallback("OnTimelineUpdate",function()
 		self:OnTimelineUpdate()
 	end)

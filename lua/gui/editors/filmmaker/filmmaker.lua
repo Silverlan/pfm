@@ -1086,10 +1086,10 @@ function gui.WIFilmmaker:KeyboardCallback(key,scanCode,state,mods)
 			end
 			return util.EVENT_REPLY_HANDLED
 		elseif(key == input.KEY_Z) then
-			pfm.undo()
+			if(state == input.STATE_PRESS) then pfm.undo() end
 			return util.EVENT_REPLY_HANDLED
 		elseif(key == input.KEY_Y) then
-			pfm.redo()
+			if(state == input.STATE_PRESS) then pfm.redo() end
 			return util.EVENT_REPLY_HANDLED
 		end
 	else
@@ -1736,6 +1736,21 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	local timelineFrame = self:AddFrame(self.m_contentsRight)
 	local pfmTimeline = gui.create("WIPFMTimeline")
 	self.m_timeline = pfmTimeline
+
+	local userInteractionTimeStart
+	pfmTimeline:AddCallback("OnUserInputStarted",function() userInteractionTimeStart = self:GetTimeOffset() end)
+	pfmTimeline:AddCallback("OnUserInputEnded",function()
+		if(userInteractionTimeStart == nil) then return end
+		local tOld = userInteractionTimeStart
+		local tNew = self:GetTimeOffset()
+		pfm.undoredo.push("pfm_undoredo_time_offset",function()
+			self:SetTimeOffset(tNew)
+		end,function()
+			self:SetTimeOffset(tOld)
+		end)
+		userInteractionTimeStart = nil
+	end)
+
 	timelineFrame:AddTab("timeline",locale.get_text("pfm_timeline"),pfmTimeline)
 
 	-- Populate UI with project data

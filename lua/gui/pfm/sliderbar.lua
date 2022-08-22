@@ -29,6 +29,8 @@ function gui.PFMSliderBar:OnInitialize()
 	self.m_cursor:AddCallback("OnFractionChanged",function(el,fraction)
 		self:OnFractionChanged(fraction)
 	end)
+	self.m_cursor:AddCallback("OnUserInputStarted",function(el,fraction) self:OnUserInputStarted(fraction) end)
+	self.m_cursor:AddCallback("OnUserInputEnded",function(el,fraction) self:OnUserInputEnded(fraction) end)
 
 	self:SetRange(0,1)
 	self:ScheduleUpdate()
@@ -50,6 +52,12 @@ function gui.PFMSliderBar:SetInteger(b) self.m_cursor:SetInteger(b) end
 function gui.PFMSliderBar:OnFractionChanged(fraction)
 	self:CallCallbacks("OnValueChanged",self:GetValue())
 	self:Update()
+end
+function gui.PFMSliderBar:OnUserInputStarted(fraction)
+	self:CallCallbacks("OnUserInputStarted",self:GetValue())
+end
+function gui.PFMSliderBar:OnUserInputEnded(fraction)
+	self:CallCallbacks("OnUserInputEnded",self:GetValue())
 end
 function gui.PFMSliderBar:GetDefault() return self.m_default end
 function gui.PFMSliderBar:GetValue() return self.m_cursor:GetValue() end

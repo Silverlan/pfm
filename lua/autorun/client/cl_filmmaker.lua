@@ -12,6 +12,7 @@ console.register_variable("pfm_asset_icon_size_character",udm.TYPE_STRING,"256x5
 console.register_variable("pfm_experimental_enable_panima_for_flex_and_skeletal_animations",udm.TYPE_BOOLEAN,true,bit.bor(console.FLAG_BIT_ARCHIVE),"If enabled, the new panima animation system will be used for flex and skeletal animations.")
 console.register_variable("pfm_animation_min_curve_sample_deviation_angle",udm.TYPE_FLOAT,0.25,bit.bor(console.FLAG_BIT_ARCHIVE),"The minimum curve angle (in degrees) at which to create new curve animation data samples.")
 console.register_variable("pfm_animation_max_curve_sample_count",udm.TYPE_UINT32,100,bit.bor(console.FLAG_BIT_ARCHIVE),"Maximum number of curve samples to create when generating curve animation data.")
+console.register_variable("pfm_max_undo_steps",udm.TYPE_UINT32,100,bit.bor(console.FLAG_BIT_ARCHIVE),"Maximum number of undo steps.")
 
 console.register_command("pfm_bind",function(pl,key,cmd)
 	local pm = tool.get_filmmaker()
