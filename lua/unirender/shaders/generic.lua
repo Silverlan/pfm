@@ -13,7 +13,9 @@ end
 function unirender.GenericShader:ApplyEyeUv(desc,mat,uv)
 	local mesh = self:GetMesh()
 	local ent = self:GetEntity()
-	if(mesh == nil or util.is_valid(ent) == false or mat:GetShaderName() ~= "eye") then return uv end
+	if(mesh == nil or util.is_valid(ent) == false) then return uv end
+	local shaderName = mat:GetShaderName()
+	if(shaderName ~= "eye" and shaderName ~= "eye_legacy") then return uv end
 	local eyeC = ent:GetComponent(ents.COMPONENT_EYE)
 	if(eyeC == nil) then return uv end
 	local eyeballIndex = eyeC:FindEyeballIndex(mesh:GetSkinTextureIndex())
@@ -32,6 +34,29 @@ function unirender.GenericShader:ApplyEyeUv(desc,mat,uv)
 	eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_MAX_DILATION_FACTOR,eyeball.maxDilationFactor)
 	eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_UV_RADIUS,eyeball.irisUvRadius)
 	return eyeUv:GetPrimaryOutputSocket()
+end
+function unirender.GenericShader:ApplyEyeColor(desc,mat,uv,sphereUv)
+	local shaderName = mat:GetShaderName()
+	if(shaderName ~= "eye_legacy") then return end
+	local irisMap = mat:GetTextureInfo("iris_map")
+	local irisTesPath = unirender.get_texture_path(irisMap:GetName())
+	local nodeIris = desc:AddTextureNode(irisTesPath)
+	sphereUv:Link(nodeIris,unirender.Node.image_texture.IN_VECTOR)
+
+	local scleraMap = mat:GetTextureInfo("sclera_map")
+	local irisTesPath = unirender.get_texture_path(scleraMap:GetName())
+	local nodeSclera = desc:AddTextureNode(irisTesPath)
+	uv:Link(nodeSclera,unirender.Node.image_texture.IN_VECTOR)
+
+	local albedoColor = nodeSclera:GetPrimaryOutputSocket():Lerp(nodeIris:GetPrimaryOutputSocket(),nodeIris:GetOutputSocket(unirender.Node.image_texture.OUT_ALPHA))
+	return albedoColor
+end
+function unirender.GenericShader:ApplyEye(desc,mat,uv)
+	local shaderName = mat:GetShaderName()
+	if(shaderName ~= "eye" and shaderName ~= "eye_legacy") then return uv end
+	local sphereUv = self:ApplyEyeUv(desc,mat,uv)
+	local eyeColor = self:ApplyEyeColor(desc,mat,uv,sphereUv)
+	return sphereUv,eyeColor
 end
 function unirender.GenericShader:AddTextureNode(desc,dbVolumetric,factorName,mapName)
 	local mat = self:GetMaterial()
@@ -88,8 +113,14 @@ function unirender.GenericShader:LinkDefaultVolume(desc,outputNode)
 end
 
 function unirender.apply_image_view_swizzling(desc,texMapNode,texInfo)
-	local outRgb = texMapNode:GetPrimaryOutputSocket()
-	local outAlpha = texMapNode:GetOutputSocket("alpha")
+	local outRgb,outAlpha
+	if(type(texMapNode) ~= "table") then
+		outRgb = texMapNode:GetPrimaryOutputSocket()
+		outAlpha = texMapNode:GetOutputSocket("alpha")
+	else
+		outRgb = texMapNode[1]
+		outAlpha = texMapNode[2]
+	end
 	if(texInfo == nil) then return outRgb,outAlpha end
 
 	local tex = texInfo:GetTexture()

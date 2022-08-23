@@ -45,47 +45,29 @@ function unirender.PBRShader:AddAlbedoNode(desc,mat)
 
 	local texCoord = desc:AddNode(unirender.NODE_TEXTURE_COORDINATE)
 	local uv = texCoord:GetOutputSocket(unirender.Node.texture_coordinate.OUT_UV)
-	uv = self:ApplyEyeUv(desc,mat,uv)
 
-	local mesh = self:GetMesh()
-	local ent = self:GetEntity()
-	if(mesh ~= nil and util.is_valid(ent) and mat:GetShaderName() == "eye") then
-		local eyeC = ent:GetComponent(ents.COMPONENT_EYE)
+	local col,alpha
+	local sphereUv,eyeColor = self:ApplyEye(desc,mat,uv)
+	if(eyeColor ~= nil) then
+		-- Legacy eye shader
+		col = eyeColor
+		alpha = unirender.Socket(1.0)
+	else
+		uv = sphereUv -- sphereUv is unchanged uv if this is not an eye shader
 
-		local eyeballIndex = eyeC:FindEyeballIndex(mesh:GetSkinTextureIndex())
-		local dilationFactor = eyeC:GetIrisDilation(eyeballIndex)
-		local eyeball = ent:GetModel():GetEyeball(eyeballIndex)
-		if(eyeball ~= nil and dilationFactor ~= nil) then
-			local irisProjU,irisProjV = eyeC:GetEyeballProjectionVectors(eyeballIndex)
+		-- Albedo
+		local nAlbedoMap = desc:AddNode(unirender.NODE_ALBEDO_TEXTURE)
+		nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_TEXTURE,texPath)
+		nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_COLOR_FACTOR,colorFactor)
+		nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_ALPHA_MODE,alphaMode)
+		nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_ALPHA_CUTOFF,alphaCutoff)
+		nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_ALPHA_FACTOR,alphaFactor)
+		uv:Link(nAlbedoMap,unirender.Node.albedo_texture.IN_UV)
 
-			if(irisProjU ~= nil) then
-				local eyeUv = desc:AddNode(unirender.NODE_EYE_UV)
-				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_U_XYZ,Vector(irisProjU.x,irisProjU.y,irisProjU.z))
-				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_U_W,irisProjU.w)
-				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_V_XYZ,Vector(irisProjV.x,irisProjV.y,irisProjV.z))
-				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_PROJ_V_W,irisProjV.w)
-				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_DILATION,dilationFactor)
-				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_MAX_DILATION_FACTOR,eyeball.maxDilationFactor)
-				eyeUv:SetProperty(unirender.Node.eye_uv.IN_IRIS_UV_RADIUS,eyeball.irisUvRadius)
-				uv = eyeUv:GetPrimaryOutputSocket()
-			end
-		end
+		col = nAlbedoMap:GetPrimaryOutputSocket()
+		alpha = nAlbedoMap:GetOutputSocket(unirender.Node.albedo_texture.OUT_ALPHA)
 	end
-
-
-
-
-
-	-- Albedo
-	local nAlbedoMap = desc:AddNode(unirender.NODE_ALBEDO_TEXTURE)
-	nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_TEXTURE,texPath)
-	nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_COLOR_FACTOR,colorFactor)
-	nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_ALPHA_MODE,alphaMode)
-	nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_ALPHA_CUTOFF,alphaCutoff)
-	nAlbedoMap:SetProperty(unirender.Node.albedo_texture.IN_ALPHA_FACTOR,alphaFactor)
-	uv:Link(nAlbedoMap,unirender.Node.albedo_texture.IN_UV)
-
-	local col,alpha = unirender.apply_image_view_swizzling(desc,nAlbedoMap,albedoMap)
+	col,alpha = unirender.apply_image_view_swizzling(desc,{col,alpha},albedoMap)
 
 	local detailMap = mat:GetTextureInfo("detail_map")
 	local blendMode = game.Material.detail_blend_mode_to_enum(data:GetString("detail_blend_mode"))
