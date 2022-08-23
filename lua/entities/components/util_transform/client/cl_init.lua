@@ -92,12 +92,12 @@ function Component:SetParent(parent,relative)
 	self.m_parent = parent
 	self.m_relativeToParent = relative or false
 
-	if(relative) then
+	--[[if(relative) then
 		local attC = self:AddEntityComponent(ents.COMPONENT_ATTACHABLE)
 		local attInfo = ents.AttachableComponent.AttachmentInfo()
 		attInfo.flags = ents.AttachableComponent.FATTACHMENT_MODE_SNAP_TO_ORIGIN
 		attC:AttachToEntity(parent,attInfo)
-	end
+	end]]
 end
 function Component:GetParent() return self.m_parent end
 function Component:GetParentPose()
@@ -225,6 +225,7 @@ function Component:CreateTransformUtility(id,axis,type)
 	if(self.m_relativeToParent) then arrowC:SetRelative(true) end
 	arrowC:SetAxis(axis)
 	arrowC:SetType(type)
+	if(self.m_relativeToParent) then arrowC:SetRelative(true) end
 	arrowC:SetUtilTransformComponent(self)
 	arrowC:SetSpace(self:GetSpace())
 	if(util.is_valid(self.m_refEnt)) then arrowC:SetReferenceEntity(self.m_refEnt) end

@@ -1440,7 +1440,10 @@ function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value,applyUdm
 	actor:GetEntity():SetMemberValue(targetPath,value)
 	self:GetActorEditor():UpdateActorProperty(actorData,targetPath)
 end
-function gui.WIFilmmaker:SetActorBoneTransformProperty(actor,propType,value)
+function gui.WIFilmmaker:SetActorBoneTransformProperty(actor,propType,value,udmType)
+	self:SetActorGenericProperty(actor,"ec/animated/bone/" .. propType,value,udmType)
+
+	if(true) then return end
 	local actorData = actor:GetActorData()
 	if(actorData == nil) then return end
 

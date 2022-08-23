@@ -770,23 +770,37 @@ function gui.PFMViewport:UpdateManipulationMode()
 			end
 		end
 	end
+	local newPos
+	local newRot
+	local newScale
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_POSITION_CHANGED,function(boneId,pos,localPos)
-		self:SetBoneTransformProperty(ent,boneId,"position",localPos)
+		newPos = localPos
 		--update_channel_value(boneId,localPos,"position")
 		--tool.get_filmmaker():TagRenderSceneAsDirty()
 	end)
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_ROTATION_CHANGED,function(boneId,rot,localRot)
-		self:SetBoneTransformProperty(ent,boneId,"rotation",localRot)
+		newRot = localRot
 		--update_channel_value(boneId,localRot,"rotation")
 		--tool.get_filmmaker():TagRenderSceneAsDirty()
 	end)
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_SCALE_CHANGED,function(boneId,scale,localScale)
-		self:SetBoneTransformProperty(ent,boneId,"scale",localScale)
+		newScale = localScale
 		--update_channel_value(boneId,localScale,"scale")
 		--tool.get_filmmaker():TagRenderSceneAsDirty()
 	end)
+	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_TRANSFORM_END,function(scale)
+		if(newPos ~= nil) then
+			self:SetBoneTransformProperty(ent,boneId,"position",newPos,udm.TYPE_VECTOR3)
+		end
+		if(newRot ~= nil) then
+			self:SetBoneTransformProperty(ent,boneId,"rotation",newRot,udm.TYPE_QUATERNION)
+		end
+		if(newScale ~= nil) then
+			self:SetBoneTransformProperty(ent,boneId,"scale",newScale,udm.TYPE_VECTOR3)
+		end
+	end)
 end
-function gui.PFMViewport:SetBoneTransformProperty(ent,boneId,propName,value)
+function gui.PFMViewport:SetBoneTransformProperty(ent,boneId,propName,value,type)
 	if(util.is_valid(ent) == false) then return end
 	local mdl = ent:GetModel()
 	local skeleton = mdl:GetSkeleton()
@@ -794,7 +808,7 @@ function gui.PFMViewport:SetBoneTransformProperty(ent,boneId,propName,value)
 	if(bone == nil) then return end
 	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	if(actorC ~= nil) then
-		tool.get_filmmaker():SetActorBoneTransformProperty(actorC,bone:GetName() .. "/" .. propName,value)
+		tool.get_filmmaker():SetActorBoneTransformProperty(actorC,bone:GetName() .. "/" .. propName,value,type)
 	end
 end
 function gui.PFMViewport:GetTransformWidgetComponent() return self.m_transformComponent end
@@ -948,25 +962,35 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 							entTransform:Spawn()
 
 							local pose = ent:GetPose()
+							local objectSpace = memberInfo:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_OBJECT_SPACE_BIT)
 							local propPath = util.Path.CreateFilePath(targetPath)
 							local basePropName = propPath:GetBack()
 							if(memberInfo.type == udm.TYPE_VECTOR3) then
-								pose:SetOrigin(val)
+								if(objectSpace) then pose:TranslateLocal(val)
+								else pose:SetOrigin(val) end
 								if(basePropName == "position") then
 									propPath:PopBack()
 									local rot = ent:GetMemberValue(propPath:GetString() .. "rotation")
-									pose:SetRotation(rot)
+									if(objectSpace) then pose:RotateLocal(rot)
+									else pose:SetRotation(rot) end
 								end
 							elseif(memberInfo.type == udm.TYPE_QUATERNION) then
-								pose:SetRotation(val)
+								if(objectSpace) then pose:RotateLocal(val)
+								else pose:SetRotation(val) end
 								if(basePropName == "rotation") then
 									propPath:PopBack()
 									local pos = ent:GetMemberValue(propPath:GetString() .. "position")
-									pose:SetOrigin(pos)
+									if(objectSpace) then pose:TranslateLocal(pos)
+									else pose:SetOrigin(pos) end
 								end
 							end
 							entTransform:SetPose(pose)
 							self.m_entTransform = entTransform
+
+							if(objectSpace) then
+								entTransform:GetComponent("util_transform"):SetParent(ent,true)
+								entTransform:SetPose(pose)
+							end
 
 							local trC = entTransform:GetComponent("util_transform")
 							trC:SetScaleEnabled(false)
@@ -988,7 +1012,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 													local skeleton = mdl:GetSkeleton()
 													local function applyBonePoseValue(targetPath)
 														local val = ent:GetMemberValue(targetPath)
-														if(val ~= nil) then tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,val) end
+														if(val ~= nil) then tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,val,memberInfo.type) end
 													end
 													local function applyBonePose(basePropPath)
 														applyBonePoseValue(basePropPath .. "position")
@@ -1004,14 +1028,14 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 											end
 										end
 
-										tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,pos)
+										tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,pos,memberInfo.type)
 									end
 								end)
 							elseif(memberInfo.type == udm.TYPE_QUATERNION) then
 								trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function(rot)
 									local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 									if(actorC ~= nil) then
-										tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,rot)
+										tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,rot,memberInfo.type)
 									end
 								end)
 							end

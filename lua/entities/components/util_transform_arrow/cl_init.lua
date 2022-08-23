@@ -117,7 +117,7 @@ function Component:GetBasePose()
 
 	local pose = math.Transform()
 	local space = self:GetSpace()
-	if(space == ents.UtilTransformComponent.SPACE_LOCAL or self:GetType() == Component.TYPE_SCALE) then
+	if(space == ents.UtilTransformComponent.SPACE_LOCAL or self:GetType() == Component.TYPE_SCALE or self:IsRelative()) then
 		pose = entParent:GetPose()
 	elseif(space == ents.UtilTransformComponent.SPACE_WORLD) then
 		pose:SetOrigin(entParent:GetPos())
@@ -136,7 +136,7 @@ function Component:UpdateRotation()
 	local rot = Quaternion()
 	local entParent = self:GetTargetEntity()
 
-	if(self:GetType() == Component.TYPE_TRANSLATION or self:GetType() == Component.TYPE_SCALE) then
+	if(self:GetType() == Component.TYPE_TRANSLATION or self:GetType() == Component.TYPE_SCALE or self:IsRelative()) then
 		if(axis == Component.AXIS_X) then
 			rot = rot *EulerAngles(0,90,0):ToQuaternion()
 		elseif(axis == Component.AXIS_Y) then

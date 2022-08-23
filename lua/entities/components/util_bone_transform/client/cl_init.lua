@@ -67,6 +67,9 @@ function ents.UtilBoneTransformComponent:SetTransformEnabled(boneId)
 			end
 			self:BroadcastEvent(ents.UtilBoneTransformComponent.EVENT_ON_SCALE_CHANGED,{boneId,scale,scale})
 		end)
+		utilTransformC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END,function()
+			self:BroadcastEvent(ents.UtilBoneTransformComponent.EVENT_ON_TRANSFORM_END)
+		end)
 		utilTransformC:SetParentBone(boneId)
 	end
 	return ent:GetComponent("util_transform")
@@ -75,3 +78,4 @@ ents.COMPONENT_UTIL_BONE_TRANSFORM = ents.register_component("util_bone_transfor
 ents.UtilBoneTransformComponent.EVENT_ON_POSITION_CHANGED = ents.register_component_event(ents.COMPONENT_UTIL_BONE_TRANSFORM,"on_pos_changed")
 ents.UtilBoneTransformComponent.EVENT_ON_ROTATION_CHANGED = ents.register_component_event(ents.COMPONENT_UTIL_BONE_TRANSFORM,"on_rot_changed")
 ents.UtilBoneTransformComponent.EVENT_ON_SCALE_CHANGED = ents.register_component_event(ents.COMPONENT_UTIL_BONE_TRANSFORM,"on_scale_changed")
+ents.UtilBoneTransformComponent.EVENT_ON_TRANSFORM_END = ents.register_component_event(ents.COMPONENT_UTIL_BONE_TRANSFORM,"on_transform_end")
