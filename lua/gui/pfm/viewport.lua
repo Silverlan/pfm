@@ -436,9 +436,16 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 				tool.get_filmmaker():TagRenderSceneAsDirty()
 				local actorC = util.is_valid(self.m_rtMoverActor) and self.m_rtMoverActor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
 				if(actorC ~= nil) then
-					tool.get_filmmaker():SetActorTransformProperty(actorC,"position",self.m_rtMoverActor:GetPos())
-					if(util.is_valid(self.m_rtMoverActor)) then self:OnActorTransformChanged(self.m_rtMoverActor) end
+					local curPos = actorC:GetMemberValue("position") 
+					local newPos = self.m_rtMoverActor:GetPos()
+					local function apply_pos(pos)
+						tool.get_filmmaker():SetActorTransformProperty(actorC,"position",pos)
+						if(util.is_valid(self.m_rtMoverActor)) then self:OnActorTransformChanged(self.m_rtMoverActor) end
+					end
+					pfm.undoredo.push("pfm_undoredo_transform",function() apply_pos(newPos) end,function() apply_pos(curPos) end)()
+					apply_pos(newPos)
 				end
+				self.m_rtMoverActor = nil
 				if(state == input.STATE_RELEASE) then return util.EVENT_REPLY_HANDLED end
 			end
 
