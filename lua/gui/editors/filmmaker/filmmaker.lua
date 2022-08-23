@@ -1365,14 +1365,36 @@ function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 		rt:MarkActorAsDirty(actor:GetEntity())
 	end
 
+	local function applyControllerTarget()
+		local memberInfo = pfm.get_member_info(targetPath,actor:GetEntity())
+		if(memberInfo:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_CONTROLLER_BIT) and memberInfo.metaData ~= nil) then
+			local meta = memberInfo.metaData
+			local controllerTarget = meta:GetValue("controllerTarget")
+			local applyResult = false
+			if(controllerTarget ~= nil) then
+				local memberInfoTarget = pfm.get_member_info(controllerTarget,actor:GetEntity())
+				if(memberInfoTarget ~= nil) then
+					local targetValue = actor:GetEntity():GetMemberValue(controllerTarget)
+					if(targetValue ~= nil) then
+						applyResult = self:SetActorGenericProperty(actor,controllerTarget,targetValue,memberInfoTarget.type)
+					end
+				end
+			end
+			return true,applyResult
+		end
+		return false
+	end
+
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
+		if(applyControllerTarget()) then return end
 		actorEditor:SetAnimationChannelValue(actorData,targetPath,value)
 		return
 	end
 
 	self:GetAnimationManager():SetAnimationDirty(actorData)
 	local res = actor:GetEntity():SetMemberValue(targetPath,value)
+	local hasControlTarget,ctResult = applyControllerTarget()
 	if(udmType ~= nil) then
 		local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
 		if(componentName ~= nil) then
@@ -1382,6 +1404,7 @@ function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 	end
 	self:GetActorEditor():UpdateActorProperty(actorData,targetPath)
 	self:TagRenderSceneAsDirty()
+	if(hasControlTarget) then return ctResult end
 	return res
 end
 function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value,applyUdmValue)

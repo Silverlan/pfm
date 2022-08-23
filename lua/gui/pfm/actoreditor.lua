@@ -739,23 +739,7 @@ function gui.PFMActorEditor:GetAnimationChannel(actor,path,addIfNotExists)
 	local channel = channelClip:GetChannel(path,varType,addIfNotExists)
 	return channel,channelClip
 end
-function gui.PFMActorEditor:GetMemberInfo(actor,path)
-	local path = panima.Channel.Path(path)
-	local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(path)
-	local componentId = componentName and ents.get_component_id(componentName)
-	local componentInfo = componentId and ents.get_component_info(componentId)
-	if(memberName == nil or componentInfo == nil) then return end
-
-	local entActor = actor:FindEntity()
-	if(util.is_valid(entActor)) then
-		local c = entActor:GetComponent(componentId)
-		if(c ~= nil) then
-			local memberId = c:GetMemberIndex(memberName:GetString())
-			if(memberId ~= nil) then return c:GetMemberInfo(memberId) end
-		end
-	end
-	return componentInfo:GetMemberInfo(memberName:GetString())
-end
+function gui.PFMActorEditor:GetMemberInfo(actor,path) return pfm.get_member_info(path,actor:FindEntity()) end
 function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value,baseIndex)
 	local fm = tool.get_filmmaker()
 	local timeline = fm:GetTimeline()
@@ -1022,7 +1006,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				end
 			end
 			local val = component:GetMemberValue(info.name)
-			if(val ~= nil) then
+			if(val ~= nil and info:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_CONTROLLER_BIT) == false) then
 				c:SetMemberValue(info.name,val)
 				return true
 			end
