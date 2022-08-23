@@ -41,7 +41,10 @@ function unirender.GenericShader:ApplyEyeColor(desc,mat,uv,sphereUv)
 	local irisMap = mat:GetTextureInfo("iris_map")
 	local irisTesPath = unirender.get_texture_path(irisMap:GetName())
 	local nodeIris = desc:AddTextureNode(irisTesPath)
-	sphereUv:Link(nodeIris,unirender.Node.image_texture.IN_VECTOR)
+
+	-- TODO: Max() and Min() are being used because of strange results with Clamp(), find out cause!
+	local clamped = desc:CombineRGB(sphereUv.x:Max(0.0):Min(1.0),sphereUv.y:Max(0.0):Min(1.0),sphereUv.z)
+	clamped:Link(nodeIris,unirender.Node.image_texture.IN_VECTOR)
 
 	local scleraMap = mat:GetTextureInfo("sclera_map")
 	local irisTesPath = unirender.get_texture_path(scleraMap:GetName())
