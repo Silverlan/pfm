@@ -679,8 +679,8 @@ end
 function gui.PFMViewport:UpdateManipulationMode()
 	local manipMode = self:GetManipulatorMode()
 	if(self:IsMoveManipulatorMode(manipMode) == false and self:IsRotationManipulatorMode(manipMode) == false and self:IsScaleManipulatorMode(manipMode) == false) then return end
-	local pfm = tool.get_filmmaker()
-	local selectionManager = pfm:GetSelectionManager()
+	local pm = tool.get_filmmaker()
+	local selectionManager = pm:GetSelectionManager()
 	local selectedActors = selectionManager:GetSelectedActors()
 	local selectedActorList = {}
 	for ent,b in pairs(selectedActors) do table.insert(selectedActorList,ent) end
@@ -688,7 +688,7 @@ function gui.PFMViewport:UpdateManipulationMode()
 
 	local boneName
 	-- Check if a bone is selected
-	local actorEditor = pfm:GetActorEditor()
+	local actorEditor = pm:GetActorEditor()
 	if(util.is_valid(actorEditor) == false) then return end
 	local actor = selectedActorList[1]
 	local actorC = util.is_valid(actor) and actor:GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
@@ -750,7 +750,7 @@ function gui.PFMViewport:UpdateManipulationMode()
 		if(layer ~= nil) then
 			local channelClip = channel:FindParentElement(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_CHANNEL_CLIP end)
 			if(channelClip ~= nil) then
-				local projectManager = pfm
+				local projectManager = pm
 				-- TODO: Do we have to take the film clip offset into account?
 				local timeFrame = channelClip:GetTimeFrame()
 				local t = timeFrame:LocalizeOffset(projectManager:GetTimeOffset())
@@ -789,16 +789,31 @@ function gui.PFMViewport:UpdateManipulationMode()
 		--tool.get_filmmaker():TagRenderSceneAsDirty()
 	end)
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_TRANSFORM_END,function(scale)
-		if(newPos ~= nil) then
-			self:SetBoneTransformProperty(ent,boneId,"position",newPos,udm.TYPE_VECTOR3)
+		local animC = actorData:FindComponent("animated")
+		local curPose = {
+			position = animC ~= nil and (newPos ~= nil) and animC:GetMemberValue("bone/" .. boneName .. "/position") or nil,
+			rotation = animC ~= nil and (newRot ~= nil) and animC:GetMemberValue("bone/" .. boneName .. "/rotation") or nil,
+			scale = animC ~= nil and (newScale ~= nil) and animC:GetMemberValue("bone/" .. boneName .. "/scale") or nil
+		}
+		local newPose = {
+			position = newPos,
+			rotation = newRot,
+			scale = newScale
+		}
+		local function apply_pose(pose)
+			if(pose.position ~= nil) then
+				self:SetBoneTransformProperty(ent,boneId,"position",pose.position,udm.TYPE_VECTOR3)
+			end
+			if(pose.rotation ~= nil) then
+				self:SetBoneTransformProperty(ent,boneId,"rotation",pose.rotation,udm.TYPE_QUATERNION)
+			end
+			if(pose.scale ~= nil) then
+				self:SetBoneTransformProperty(ent,boneId,"scale",pose.scale,udm.TYPE_VECTOR3)
+			end
 		end
-		if(newRot ~= nil) then
-			self:SetBoneTransformProperty(ent,boneId,"rotation",newRot,udm.TYPE_QUATERNION)
-		end
-		if(newScale ~= nil) then
-			self:SetBoneTransformProperty(ent,boneId,"scale",newScale,udm.TYPE_VECTOR3)
-		end
+		pfm.undoredo.push("pfm_undoredo_bone_transform",function() apply_pose(newPose) end,function() apply_pose(curPose) end)()
 	end)
+	self.m_transformComponent = trC
 end
 function gui.PFMViewport:SetBoneTransformProperty(ent,boneId,propName,value,type)
 	if(util.is_valid(ent) == false) then return end
@@ -918,7 +933,6 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 			}
 			for k,v in pairs(newPose) do newPose[k] = v:Copy() end
 			local function apply_pose(pose)
-				console.print_table(pose)
 				local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				if(actorC ~= nil) then
 					if(pose.position ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"position",pose.position) end
