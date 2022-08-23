@@ -368,9 +368,23 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		else pfm.log("Failed to save material '" .. self.m_material:GetName() .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR) end
 	end)
 	btSave:SetWidth(self.m_bg:GetWidth())
-	btSave:SetY(self.m_bg:GetBottom() -btSave:GetHeight())
+	btSave:SetY(self.m_bg:GetBottom() -btSave:GetHeight() -32)
 	btSave:SetAnchor(0,1,1,1)
 	self.m_btSave = btSave
+
+	local btOpenInExplorer = gui.create("WIPFMButton",self.m_bg)
+	btOpenInExplorer:SetText(locale.get_text("pfm_open_in_explorer"))
+	btOpenInExplorer:SetHeight(32)
+	btOpenInExplorer:AddCallback("OnPressed",function(btRaytracying)
+		if(util.is_valid(self.m_material) == false) then return end
+		local filePath = asset.find_file(self.m_material:GetName(),asset.TYPE_MATERIAL)
+		if(filePath == nil) then return end
+		filePath = asset.get_asset_root_directory(asset.TYPE_MATERIAL) .. "/" .. filePath
+		util.open_path_in_explorer(file.get_file_path(filePath),file.get_file_name(filePath))
+	end)
+	btOpenInExplorer:SetWidth(self.m_bg:GetWidth())
+	btOpenInExplorer:SetY(self.m_bg:GetBottom() -btOpenInExplorer:GetHeight())
+	btOpenInExplorer:SetAnchor(0,1,1,1)
 end
 
 function gui.PFMMaterialEditor:UpdateSaveButton(saved)
