@@ -837,6 +837,7 @@ function gui.PFMViewport:GetTransformWidgetComponent() return self.m_transformCo
 function gui.PFMViewport:OnActorTransformChanged(ent)
 	local decalC = ent:GetComponent(ents.COMPONENT_DECAL)
 	if(decalC ~= nil) then decalC:ApplyDecal() end
+	self:MarkActorAsDirty(ent)
 end
 function gui.PFMViewport:CreateMultiActorTransformWidget()
 	tool.get_filmmaker():TagRenderSceneAsDirty()
@@ -898,6 +899,12 @@ function gui.PFMViewport:RemoveActorTransformWidget(ent)
 	ent:RemoveComponent("util_transform")
 	util.remove(self.m_entTransform)
 end
+function gui.PFMViewport:MarkActorAsDirty(ent)
+	local rt = self:GetRealtimeRaytracedViewport() or nil
+	if(util.is_valid(rt)) then
+		rt:MarkActorAsDirty(ent)
+	end
+end
 function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 	if(enabled == nil) then enabled = true end
 	self:RemoveActorTransformWidget(ent)
@@ -920,12 +927,15 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 		local actorC = (actorData ~= nil) and actorData:FindComponent("pfm_actor") or nil
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
 			newPos = pos:Copy()
+			self:MarkActorAsDirty(ent)
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function(rot)
 			newRot = rot:Copy()
+			self:MarkActorAsDirty(ent)
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED,function(scale)
 			newScale = scale:Copy()
+			self:MarkActorAsDirty(ent)
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END,function(scale)
 			local curPose = {
