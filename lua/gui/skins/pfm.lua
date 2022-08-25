@@ -115,6 +115,7 @@ skin["infobox"] = {
 		["witext"] = {
 			Initialize = function(GUI,pElement)
 				pElement:SetFont("pfm_medium")
+				pElement:SizeToContents()
 			end
 		}
 	}
@@ -163,11 +164,8 @@ skin["menu_bar"] = {
 			children = {
 				["witext"] = {
 					Initialize = function(GUI,pElement)
-						local p = pElement:GetParent()
-						while(p ~= nil and p:GetClass() ~= "wimenubar") do
-							p = p:GetParent()
-						end
-						if(p ~= nil) then p:ScheduleUpdate() end
+						local el = pElement:FindAncestorByClass("wimenubar")
+						if(el ~= nil) then el:ScheduleUpdate() end
 					end
 				}
 			}

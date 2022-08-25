@@ -26,7 +26,6 @@ function Element:OnInitialize()
 
 	self.m_contents = gui.create("WIVBox",self.m_bg,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	self.m_contents:SetFixedSize(true)
-	self.m_contents:SetAutoFillContents(true)
 
 	local infoBox = gui.create_info_box(self.m_contents,locale.get_text("pfm_web_browser_info",{"{[l:model_catalog]}","{[/l]}"}))
 	infoBox:GetTextElement():AddCallback("HandleLinkTagAction",function(el,arg)
@@ -39,7 +38,26 @@ function Element:OnInitialize()
 	end)
 
 	self.m_browser = gui.create("WIAssetWebBrowser",self.m_contents)
+	infoBox:SizeToContents()
+	self.m_infoBox = infoBox
+
 	self.m_contents:Update()
+	self.m_contents:SetAutoFillContents(true)
+
+	self:SetThinkingEnabled(true)
+	self.m_firstTimeInit = false
 end
 function Element:GetBrowser() return self.m_browser end
+function Element:OnThink()
+	if(self.m_firstTimeInit == false) then
+		self.m_firstTimeInit = true
+		-- TODO: This is a work-around for a bug where the web-browser would not load the URL initially, and the info box would take up
+		-- too much space on the GUI, hiding the browser.
+		self.m_infoBox:SizeToContents()
+		time.create_simple_timer(1.0,function()
+			if(self:IsValid() == false) then return end
+			self:GetBrowser():ReloadURL()
+		end)
+	end
+end
 gui.register("WIPFMWebBrowser",Element)

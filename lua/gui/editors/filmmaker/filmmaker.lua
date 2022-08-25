@@ -1705,14 +1705,6 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:RegisterWindow(self.m_actorDataFrame,"web_browser",locale.get_text("pfm_web_browser"),function()
 		local el = gui.create("WIPFMWebBrowser")
 		el:AddCallback("OnDetached",function(el,window) window:Maximize() end)
-
-		-- TODO: This is a work-around for a bug where the web-browser would not load the URL initially, and the info box would take up
-		-- too much space on the GUI, hiding the browser.
-		time.create_simple_timer(1.0,function()
-			if(el:IsValid() == false) then return end
-			el:SetSize(el:GetWidth(),el:GetHeight() -1)
-			el:GetBrowser():ReloadURL()
-		end)
 		return el
 	end)
 
