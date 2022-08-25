@@ -96,6 +96,7 @@ function gui.WIFilmmaker:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 	tool.filmmaker = self
+	gui.set_context_menu_skin("pfm")
 	fudm.PFMChannel.set_all_channels_enabled(false)
 
 	self.m_editorOverlayRenderMask = game.register_render_mask("pfm_editor_overlay",false)
@@ -287,7 +288,7 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 			self:CreateEmptyProject()
 		end)
-		pSubMenu:Update()
+		pSubMenu:ScheduleUpdate()
 
 		pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
@@ -364,7 +365,7 @@ function gui.WIFilmmaker:OnInitialize()
 			end)
 			self.m_openDialogue:Update()
 		end)
-		pSubMenu:Update()
+		pSubMenu:ScheduleUpdate()
 		--[[pContext:AddItem("Change Map",function(pItem)
 			if(util.is_valid(self) == false) then return end
 			console.run("map","stage")
@@ -411,7 +412,7 @@ function gui.WIFilmmaker:OnInitialize()
 			tool.close_filmmaker()
 			engine.shutdown()
 		end)
-		pContext:Update()
+		pContext:ScheduleUpdate()
 	end)
 	--[[pMenuBar:AddItem(locale.get_text("edit"),function(pContext)
 
@@ -442,9 +443,9 @@ function gui.WIFilmmaker:OnInitialize()
 			pSubMenu:AddItem(locale.get_text("pfm_rebuild_reflection_probes"),function(pItem)
 				
 			end)
-			pSubMenu:Update()
+			pSubMenu:ScheduleUpdate()
 
-			pContext:Update()
+			pContext:ScheduleUpdate()
 		end)
 	end
 	--[[pMenuBar:AddItem(locale.get_text("map"),function(pContext)
@@ -466,9 +467,9 @@ function gui.WIFilmmaker:OnInitialize()
 				self:Start()
 			end)
 		end
-		pSubMenu:Update()
+		pSubMenu:ScheduleUpdate()
 
-		pContext:Update()
+		pContext:ScheduleUpdate()
 	end)
 	pMenuBar:AddItem(locale.get_text("tools"),function(pContext)
 		if(self:IsDeveloperModeEnabled()) then
@@ -506,6 +507,7 @@ function gui.WIFilmmaker:OnInitialize()
 				end
 				pfm.log("Unable to export map: " .. errMsg,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 			end)
+			pContext:ScheduleUpdate()
 		end
 		pContext:AddItem(locale.get_text("pfm_convert_map_to_actors"),function(pItem)
 			if(util.is_valid(self) == false) then return end
@@ -574,7 +576,7 @@ function gui.WIFilmmaker:OnInitialize()
 			end)
 		end
 
-		pContext:Update()
+		pContext:ScheduleUpdate()
 	end)
 	self:AddWindowsMenuBarItem()
 	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
@@ -584,9 +586,9 @@ function gui.WIFilmmaker:OnInitialize()
 		pContext:AddItem(locale.get_text("pfm_report_a_bug"),function(pItem)
 			util.open_url_in_browser("https://github.com/Silverlan/pfm/issues")
 		end)
-		pContext:Update()
+		pContext:ScheduleUpdate()
 	end)
-	pMenuBar:Update()
+	pMenuBar:ScheduleUpdate()
 
 	console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps")))
 
@@ -1193,6 +1195,7 @@ function gui.WIFilmmaker:OnRemove()
 	for _,layer in ipairs(self.m_inputBindingLayers) do input.remove_input_binding_layer(layer.identifier) end
 	self:UpdateInputBindings()
 
+	gui.set_context_menu_skin()
 	collectgarbage()
 end
 function gui.WIFilmmaker:GetInputBindingLayers() return self.m_inputBindingLayers end

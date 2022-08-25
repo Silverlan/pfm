@@ -73,6 +73,7 @@ function gui.PFMMaterialCatalog:OnInitialize()
 		end
 		return tFiles,tDirs,true --[[ preSorted ]]
 	end)
+	explorer:SetInactive(true)
 	self.m_explorer = explorer
 
 	self.m_contents:Update()
@@ -87,6 +88,7 @@ function gui.PFMMaterialCatalog:OnThink()
 	self.m_fit:LoadOrGenerate()
 	self.m_fit:ReloadPath("addons/imported/materials/")
 	self.m_fit:ReloadPath("addons/converted/materials/")
+	self.m_explorer:SetInactive(false)
 	self.m_explorer:Update()
 
 	self:DisableThinking()

@@ -111,6 +111,7 @@ function gui.PFMModelCatalog:OnInitialize()
 		end
 		return tFiles,tDirs,true --[[ preSorted ]]
 	end)
+	explorer:SetInactive(true)
 	self.m_explorer = explorer
 
 	self.m_contents:Update()
@@ -127,6 +128,7 @@ function gui.PFMModelCatalog:OnThink()
 	self.m_fit:LoadOrGenerate()
 	self.m_fit:ReloadPath("addons/imported/models/")
 	self.m_fit:ReloadPath("addons/converted/models/")
+	self.m_explorer:SetInactive(false)
 	self.m_explorer:Update()
 
 	self:DisableThinking()

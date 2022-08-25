@@ -130,6 +130,7 @@ function gui.AssetExplorer:RemoveFromSpecial(id,mdl)
 	if(v == nil) then return end
 	v[mdl] = nil
 end
+function gui.AssetExplorer:SetInactive(inactive) self.m_inactive = inactive or false end
 function gui.AssetExplorer:GetSpecial(id) return self.m_special[id] end
 function gui.AssetExplorer:AddToFavorites(mdl) self:AddToSpecial("fav",mdl) end
 function gui.AssetExplorer:IsInFavorites(mdl) return self:IsInSpecial("fav",mdl) end
@@ -334,6 +335,8 @@ function gui.AssetExplorer:AddAsset(assetName,isDirectory,fDirClickHandler)
 	return self:AddItem(assetName,isDirectory,fDirClickHandler)
 end
 function gui.AssetExplorer:ListFiles()
+	if(self.m_inactive) then return end
+	debug.start_profiling_task("pfm_asset_explorer_list")
 	for _,icon in ipairs(self.m_icons) do
 		if(icon:IsValid()) then icon:RemoveSafely() end
 	end
@@ -348,6 +351,7 @@ function gui.AssetExplorer:ListFiles()
 			self:AddAsset(f,false)
 		end
 		self.m_iconContainer:Update()
+		debug.stop_profiling_task()
 		return
 	end
 	local tFiles,tDirectories,preSorted
@@ -385,5 +389,6 @@ function gui.AssetExplorer:ListFiles()
 		self:AddAsset(f,false)
 	end
 	self.m_iconContainer:Update()
+	debug.stop_profiling_task()
 end
 gui.register("WIAssetExplorer",gui.AssetExplorer)

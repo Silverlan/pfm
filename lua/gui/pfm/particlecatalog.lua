@@ -76,6 +76,7 @@ function gui.PFMParticleCatalog:OnInitialize()
 		end
 		return tFiles,tDirs,true --[[ preSorted ]]
 	end)
+	explorer:SetInactive(true)
 	self.m_explorer = explorer
 
 	self.m_contents:Update()
@@ -88,6 +89,7 @@ end
 function gui.PFMParticleCatalog:OnThink()
 	-- Lazy initialization
 	self.m_fit:LoadOrGenerate()
+	self.m_explorer:SetInactive(false)
 	self.m_explorer:Update()
 
 	self:DisableThinking()

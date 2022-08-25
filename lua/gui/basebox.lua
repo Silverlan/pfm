@@ -67,14 +67,29 @@ end
 function gui.BaseBox:SetFixedWidth(fixed)
 	local size = self:GetSize()
 	self.m_fixedWidth = fixed
-	self:SetAutoSizeToContents(not self.m_fixedWidth,not self.m_fixedHeight)
+	if(self.m_autoSizeActivated) then self.m_autoSizeRestore = {not self.m_fixedWidth,not self.m_fixedHeight}
+	else self:SetAutoSizeToContents(not self.m_fixedWidth,not self.m_fixedHeight) end
 	self:SetSize(size) -- Keep our old size for now
 end
 function gui.BaseBox:SetFixedHeight(fixed)
 	local size = self:GetSize()
 	self.m_fixedHeight = fixed
-	self:SetAutoSizeToContents(not self.m_fixedWidth,not self.m_fixedHeight)
+	if(self.m_autoSizeActivated) then self.m_autoSizeRestore = {not self.m_fixedWidth,not self.m_fixedHeight}
+	else self:SetAutoSizeToContents(not self.m_fixedWidth,not self.m_fixedHeight) end
 	self:SetSize(size) -- Keep our old size for now
+end
+function gui.BaseBox:SetAutoSizeActivated(activated,updateImmediately)
+	if(self.m_autoSizeActivated == activated) then return end
+	self.m_autoSizeActivated = activated
+	if(activated == false) then
+		self.m_autoSizeRestore = {self:ShouldAutoSizeToContentsX(),self:ShouldAutoSizeToContentsY()}
+		self:SetAutoSizeToContents(false,false)
+		return
+	end
+	if(self.m_autoSizeRestore ~= nil) then
+		if(updateImmediately == nil) then updateImmediately = true end
+		self:SetAutoSizeToContents(self.m_autoSizeRestore[1],self.m_autoSizeRestore[2],updateImmediately)
+	end
 end
 function gui.BaseBox:SetFixedSize(fixed)
 	self:SetFixedWidth(fixed)

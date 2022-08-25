@@ -8,6 +8,7 @@ local t = {}
 t.BACKGROUND_COLOR_DEFAULT = Color(38,38,38,255)
 t.BACKGROUND_COLOR_HOVER = Color(48,48,48,255)
 t.BACKGROUND_COLOR_SELECTED = Color(58,58,58,255)
+t.TEXT_COLOR = Color(200,200,200)
 
 -------------------------------------------
 ------------- END OF SETTINGS -------------
@@ -117,5 +118,65 @@ skin["infobox"] = {
 			end
 		}
 	}
+}
+skin["menu_item"] = {
+	children = {
+		["menu_item_selected_background"] = {
+			Initialize = function(GUI,pElement)
+				pElement:SetColor(t.BACKGROUND_COLOR_SELECTED)
+			end
+		},
+		["menu_item_selected_outline"] = {
+			Initialize = function(GUI,pElement)
+
+			end
+		},
+		["witext"] = {
+			Initialize = function(GUI,pElement)
+				pElement:SetColor(t.TEXT_COLOR)
+				pElement:SetFont("pfm_medium")
+			end
+		}
+	}
+}
+skin["context_menu"] = {
+	children = {
+		["context_menu_background"] = {
+			Initialize = function(GUI,pElement)
+				pElement:SetColor(t.BACKGROUND_COLOR_DEFAULT)
+			end
+		},
+		["context_menu_outline"] = {
+			Initialize = function(GUI,pElement)
+			end
+		}
+	}
+}
+skin["menu_bar"] = {
+	children = {
+		["menu_bar_background"] = {
+			Initialize = function(GUI,pElement)
+				pElement:SetColor(t.BACKGROUND_COLOR_DEFAULT)
+			end
+		},
+		["menu_item"] = {
+			children = {
+				["witext"] = {
+					Initialize = function(GUI,pElement)
+						local p = pElement:GetParent()
+						while(p ~= nil and p:GetClass() ~= "wimenubar") do
+							p = p:GetParent()
+						end
+						if(p ~= nil) then p:ScheduleUpdate() end
+					end
+				}
+			}
+		}
+	}
+}
+skin["context_menu_arrow"] = {
+	Initialize = function(GUI,pElement)
+		pElement:SetColor(t.TEXT_COLOR)
+	end
 }
 gui.register_skin("pfm",t,skin,"default")

@@ -1438,6 +1438,7 @@ function gui.PFMActorEditor:AddActor(actor)
 				if(#newComponents > 0) then
 					local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_new_component"))
 					table.sort(newComponents)
+					debug.start_profiling_task("pfm_populate_component_list")
 					for _,name in ipairs(newComponents) do
 						local displayName = name
 						local valid,n = locale.get_text("component_" .. name,nil,true)
@@ -1447,6 +1448,7 @@ function gui.PFMActorEditor:AddActor(actor)
 						end)
 					end
 					pComponentsMenu:Update()
+					debug.stop_profiling_task()
 				end
 			end
 			pContext:Update()
