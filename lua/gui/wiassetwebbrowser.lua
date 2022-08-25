@@ -76,6 +76,11 @@ function Element:OnInitialize()
 	self:UpdateBookmarks()
 	p:ResetControls()
 end
+function Element:ReloadURL()
+	if(util.is_valid(self.m_webBrowser) == false) then return end
+	local url = self.m_webBrowser:GetUrl()
+	self.m_webBrowser:LoadUrl(url)
+end
 function Element:UpdateInfoBox()
 	if(util.is_valid(self.m_webBrowser) == false) then return end
 	local url = self.m_webBrowser:GetUrl()
