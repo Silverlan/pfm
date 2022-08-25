@@ -132,9 +132,9 @@ local function set_model_view_model(mdlView,model,settings,iconPath)
 			local db = mat:GetDataBlock()
 			local mv = db:FindBlock("pfm_model_view")
 			if(mv ~= nil) then
-				lookAtTarget = mv:GetVector("look_at_target")
-				rotation = mv:GetVector("rotation")
-				zoom = mv:GetFloat("zoom")
+				if(mv:HasValue("look_at_target")) then lookAtTarget = mv:GetVector("look_at_target") end
+				if(mv:HasValue("rotation")) then rotation = mv:GetVector("rotation") end
+				if(mv:HasValue("zoom")) then zoom = mv:GetFloat("zoom") end
 			end
 		end
 	end
@@ -191,13 +191,11 @@ local function save_model_icon(mdl,mdlView,iconPath,callback)
 			mv:SetValue("float","aspect_ratio",tostring(aspectRatio))
 		end
 
-		if(camData ~= nil) then
-			local db = mat:GetDataBlock()
-			local mv = db:AddBlock("pfm_model_view")
-			mv:SetValue("vector","look_at_target",tostring(lookAtTarget))
-			mv:SetValue("vector","rotation",tostring(xRot) .. " " .. tostring(yRot) .. " 0")
-			mv:SetValue("float","zoom",tostring(zoom))
-		end
+		local db = mat:GetDataBlock()
+		local mv = db:AddBlock("pfm_model_view")
+		mv:SetValue("vector","look_at_target",tostring(lookAtTarget))
+		mv:SetValue("vector","rotation",tostring(xRot) .. " " .. tostring(yRot) .. " 0")
+		mv:SetValue("float","zoom",tostring(zoom))
 
 		mat:Save(iconLocation)
 		asset.reload(iconLocation,asset.TYPE_MATERIAL)
