@@ -6,18 +6,18 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.RetargetRig",BaseEntityComponent)
+local Component = util.register_class("ents.RetargetRig",BaseEntityComponent)
 
 include("rig.lua")
 include("bone_remapper.lua")
 include("auto_retarget.lua")
 
-function ents.RetargetRig.apply_rig(entSrc,entDst)
+function Component.apply_rig(entSrc,entDst)
 	local rigC = entDst:AddComponent(ents.COMPONENT_RETARGET_RIG)
 	rigC:RigToActor(entSrc)
 end
 
-function ents.RetargetRig:Initialize()
+function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self.m_untranslatedBones = {}
@@ -25,7 +25,7 @@ function ents.RetargetRig:Initialize()
 	self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS,"ApplyRig")
 	self:BindEvent(ents.AnimatedComponent.EVENT_ON_ANIMATION_RESET,"OnAnimationReset")
 end
-function ents.RetargetRig:OnRemove()
+function Component:OnRemove()
 	self:ClearRigFileListener()
 end
 local function add_file_listener(path,callback)
@@ -38,7 +38,7 @@ local function add_file_listener(path,callback)
 		end
 	end,util.DirectoryChangeListener.LISTENER_FLAG_BIT_WATCH_SUB_DIRECTORIES)
 end
-function ents.RetargetRig:InitializeRigFileListener()
+function Component:InitializeRigFileListener()
 	self:ClearRigFileListener()
 
 	if(self.m_rigFilePath == nil) then return end
@@ -48,13 +48,13 @@ function ents.RetargetRig:InitializeRigFileListener()
 		self.m_rigFileListenerCb = game.add_callback("Think",function() listener:Poll() end)
 	end
 end
-function ents.RetargetRig:ClearRigFileListener()
+function Component:ClearRigFileListener()
 	if(self.m_rigFileListener == nil) then return end
 	self.m_rigFileListener:SetEnabled(false)
 	self.m_rigFileListener = nil
 	util.remove(self.m_rigFileListenerCb)
 end
-function ents.RetargetRig:SetRig(rig,animSrc)
+function Component:SetRig(rig,animSrc)
 	self.m_rig = rig
 	self.m_animSrc = animSrc
 
@@ -65,9 +65,9 @@ function ents.RetargetRig:SetRig(rig,animSrc)
 	self:UpdatePoseData()
 	self:InitializeRigFileListener()
 end
-function ents.RetargetRig:GetRig() return self.m_rig end
+function Component:GetRig() return self.m_rig end
 
-function ents.RetargetRig:Unrig()
+function Component:Unrig()
 	self.m_rig = nil
 	self.m_animSrc = nil
 	self.m_absBonePoses = nil
@@ -81,7 +81,7 @@ function ents.RetargetRig:Unrig()
 	self:ClearRigFileListener()
 end
 
-function ents.RetargetRig:RigToActor(actor,mdlSrc,mdlDst)
+function Component:RigToActor(actor,mdlSrc,mdlDst)
 	self:Unrig()
 	mdlDst = mdlDst or self:GetEntity():GetModel()
 	mdlSrc = mdlSrc or actor:GetModel()
@@ -91,13 +91,13 @@ function ents.RetargetRig:RigToActor(actor,mdlSrc,mdlDst)
 	end
 	if(mdlSrc == nil or mdlDst == nil or animSrc == nil or (mdlSrc == mdlDst)) then return false end
 	local newRig = false
-	local rig = ents.RetargetRig.Rig.load(mdlSrc,mdlDst)
-	self.m_rigFilePath = ents.RetargetRig.Rig.get_rig_file_path(mdlSrc,mdlDst):GetString()
+	local rig = Component.Rig.load(mdlSrc,mdlDst)
+	self.m_rigFilePath = Component.Rig.get_rig_file_path(mdlSrc,mdlDst):GetString()
 	self.m_rigTargetEntity = animSrc:GetEntity()
 	--[[if(rig == false) then
-		rig = ents.RetargetRig.Rig(mdlSrc,mdlDst)
+		rig = Component.Rig(mdlSrc,mdlDst)
 
-		local boneRemapper = ents.RetargetRig.BoneRemapper(mdlSrc:GetSkeleton(),mdlSrc:GetReferencePose(),mdlDst:GetSkeleton(),mdlDst:GetReferencePose())
+		local boneRemapper = Component.BoneRemapper(mdlSrc:GetSkeleton(),mdlSrc:GetReferencePose(),mdlDst:GetSkeleton(),mdlDst:GetReferencePose())
 		local translationTable = boneRemapper:AutoRemap()
 		rig:SetDstToSrcTranslationTable(translationTable)
 		newRig = true
@@ -124,11 +124,11 @@ function ents.RetargetRig:RigToActor(actor,mdlSrc,mdlDst)
 	return newRig
 end
 
-function ents.RetargetRig:OnAnimationReset()
+function Component:OnAnimationReset()
 	self:GetEntity():PlayAnimation("reference")
 end
 
-function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,translationTable,bindPoseTransforms,tmpPoses,retargetPoses,boneId,children,parentBoneId)
+function Component:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,translationTable,bindPoseTransforms,tmpPoses,retargetPoses,boneId,children,parentBoneId)
 	if(boneId == nil) then
 		for boneId,children in pairs(self.m_curPoseData.boneHierarchy) do
 			self:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,translationTable,bindPoseTransforms,tmpPoses,retargetPoses,boneId,children)
@@ -183,13 +183,13 @@ function ents.RetargetRig:FixProportionsAndUpdateUnmappedBonesAndApply(animSrc,t
 	end
 end
 
-function ents.RetargetRig:TranslateBoneToTarget(boneId)
+function Component:TranslateBoneToTarget(boneId)
 	local rig = self:GetRig()
 	if(rig == nil) then return end
 	return rig:GetBoneTranslation(boneId)
 end
 
-function ents.RetargetRig:TranslateBoneFromTarget(boneId)
+function Component:TranslateBoneFromTarget(boneId)
 	local boneIds = {}
 	local rig = self:GetRig()
 	if(rig == nil) then return boneIds end
@@ -203,16 +203,16 @@ function ents.RetargetRig:TranslateBoneFromTarget(boneId)
 	return boneIds
 end
 
-function ents.RetargetRig:GetTargetActor() return util.is_valid(self.m_animSrc) and self.m_animSrc:GetEntity() or nil end
+function Component:GetTargetActor() return util.is_valid(self.m_animSrc) and self.m_animSrc:GetEntity() or nil end
 
-function ents.RetargetRig:SetEnabledBones(bones)
+function Component:SetEnabledBones(bones)
 	--[[self.m_enabledBones = {}
 	for _,boneId in ipairs(bones) do
 		self.m_enabledBones[boneId] = true
 	end]]
 end
 
-function ents.RetargetRig:InitializeRemapTables()
+function Component:InitializeRemapTables()
 	local ent = self:GetEntity()
 	local mdl = ent:GetModel()
 	local skeleton = mdl:GetSkeleton()
@@ -237,7 +237,7 @@ function ents.RetargetRig:InitializeRemapTables()
 	self.m_origBindPoseBoneDistances = origBindPoseBoneDistances
 end
 
-function ents.RetargetRig:UpdatePoseData()
+function Component:UpdatePoseData()
 	-- Precalculating some data so we don't have to recompute them every frame
 	local animSrc = self:GetEntity():GetAnimatedComponent() -- TODO: Flip these names
 	local animDst = self.m_animSrc
@@ -278,7 +278,7 @@ function ents.RetargetRig:UpdatePoseData()
 	end
 end
 
-function ents.RetargetRig:ApplyRig(dt)
+function Component:ApplyRig(dt)
 	local animSrc = self:GetEntity():GetAnimatedComponent() -- TODO: Flip these names
 	local animDst = self.m_animSrc
 	local rig = self:GetRig()
@@ -378,7 +378,7 @@ function ents.RetargetRig:ApplyRig(dt)
 
 	return util.EVENT_REPLY_HANDLED
 end
-function ents.RetargetRig:OnEntitySpawn()
+function Component:OnEntitySpawn()
 	self:GetEntity():PlayAnimation("reference")
 end
-ents.COMPONENT_RETARGET_RIG = ents.register_component("retarget_rig",ents.RetargetRig)
+ents.COMPONENT_RETARGET_RIG = ents.register_component("retarget_rig",Component)

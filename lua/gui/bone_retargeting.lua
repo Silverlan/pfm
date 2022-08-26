@@ -61,6 +61,7 @@ function gui.BoneRetargeting:OnInitialize()
 		pFileDialog:Update()
 	end)
 	feImpostee:AddCallback("OnValueChanged",function(...)
+		if(self.m_skipButtonCallbacks) then return end
 		self:UpdateImpostorTargets(feImpostee,feImposter)
 	end)
 	feImposter = controls:AddFileEntry(locale.get_text("pfm_imposter_model"),"imposter_model","",function(resultHandler)
@@ -73,6 +74,7 @@ function gui.BoneRetargeting:OnInitialize()
 		pFileDialog:Update()
 	end)
 	feImposter:AddCallback("OnValueChanged",function(...)
+		if(self.m_skipButtonCallbacks) then return end
 		self:UpdateImpostorTargets(feImpostee,feImposter)
 	end)
 	self.m_feImpostee = feImpostee
@@ -220,9 +222,9 @@ function gui.BoneRetargeting:UpdateImpostorTargets(feImpostee,feImposter)
 	self:SetModelTargets(pathImpostee,pathImposter)
 end
 function gui.BoneRetargeting:SetModelTargets(mdlSrc,mdlDst)
-	local mdlSrcPath = mdlSrc
-	mdlSrc = game.load_model(mdlSrc)
-	mdlDst = game.load_model(mdlDst)
+	local mdlSrcPath = (type(mdlSrc) == "string") and mdlSrc or mdlSrc:GetName()
+	mdlSrc = (type(mdlSrc) == "string") and game.load_model(mdlSrc) or mdlSrc
+	mdlDst = (type(mdlDst) == "string") and game.load_model(mdlDst) or mdlDst
 	if(mdlSrc == nil or mdlDst == nil) then return end
 	local rig = ents.RetargetRig.Rig.load(mdlSrc,mdlDst)
 	if(rig == false) then
@@ -318,6 +320,11 @@ function gui.BoneRetargeting:SetRig(rig)
 	self.m_srcMdl = mdlSrc
 	self.m_dstMdl = mdlDst
 
+	self.m_skipButtonCallbacks = true
+	self:SetImpostee(mdlSrc:GetName())
+	self:SetImposter(mdlDst:GetName())
+	self.m_skipButtonCallbacks = nil
+
 	self.m_rigControls = self.m_controls:AddSubMenu()
 	self.m_boneControlMenu = self.m_rigControls:AddSubMenu()
 	self.m_flexControlMenu = self.m_rigControls:AddSubMenu()
@@ -326,7 +333,7 @@ function gui.BoneRetargeting:SetRig(rig)
 
 	self.m_rigControls:AddButton(locale.get_text("save"),"save",function()
 		local rig = self:GetRig()
-		rig:Save()
+		if(rig:Save()) then self:CallCallbacks("OnRigSaved",rig) end
 	end)
 	gui.create("WIBase",self.m_rigControls) -- Dummy
 	-- TODO: Flex controllers, attachments, etc?
@@ -423,7 +430,11 @@ function gui.BoneRetargeting:InitializeBoneControls(mdlSrc,mdlDst)
 		el:AddCallback("OnMenuClosed",function(el)
 			self:SetBoneColor(2,boneDst:GetID())
 			self:SetBoneColor(1)
+
+			self.m_lastSelectedBoneOption = el:GetSelectedOption()
+			self:ApplyBoneTranslation(el,boneDst)
 		end)
+
 		wrapper:AddCallback("TranslateValueText",function(wrapper,text)
 			return util.EVENT_REPLY_HANDLED,string.remove_whitespace(text)
 		end)
@@ -471,12 +482,15 @@ function gui.BoneRetargeting:UpdateRetargetComponent()
 	if(retargetC == nil) then return end
 	retargetC:InitializeRemapTables()
 	retargetC:UpdatePoseData()
+	retargetC.m_cppCacheData = nil
 end
 function gui.BoneRetargeting:ApplyBoneTranslation(el,bone)
 	if(self.m_rig == nil) then return end
 	local boneId = tonumber(el:GetOptionValue(el:GetSelectedOption()))
-	self:SetBoneTranslation(boneId,bone and bone:GetID() or nil)
+	self:SetBoneTranslation((boneId ~= -1) and boneId or nil,bone and bone:GetID() or nil)
 	self:UpdateModelView()
+
+	self:UpdateRetargetComponent()
 end
 function gui.BoneRetargeting:GetRig() return self.m_rig end
 --[[function gui.BoneRetargeting:ApplyRig()

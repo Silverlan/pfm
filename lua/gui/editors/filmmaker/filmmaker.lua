@@ -6,10 +6,9 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("../base_editor.lua")
-include("/pfm/project_manager.lua")
+include("base_filmmaker.lua")
 
-util.register_class("gui.WIFilmmaker",gui.WIBaseEditor,pfm.ProjectManager)
+util.register_class("gui.WIFilmmaker",gui.WIBaseFilmmaker)
 
 include("/gui/vbox.lua")
 include("/gui/hbox.lua")
@@ -62,10 +61,7 @@ console.add_change_callback("pfm_autosave_enabled",updateAutosave)
 console.add_change_callback("pfm_autosave_time_interval",updateAutosave)
 
 function gui.WIFilmmaker:__init()
-	gui.WIBaseEditor.__init(self)
-	pfm.ProjectManager.__init(self)
-
-	pfm.set_project_manager(self)
+	gui.WIBaseFilmmaker.__init(self)
 end
 include("/pfm/bake/ibl.lua")
 function gui.WIFilmmaker:CheckForUpdates(verbose)
@@ -93,7 +89,7 @@ end
 function gui.WIFilmmaker:OnInitialize()
 	self:SetDeveloperModeEnabled(tool.is_developer_mode_enabled())
 
-	gui.WIBaseEditor.OnInitialize(self)
+	gui.WIBaseFilmmaker.OnInitialize(self)
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 	tool.filmmaker = self
 	gui.set_context_menu_skin("pfm")
@@ -1159,7 +1155,7 @@ function gui.WIFilmmaker:OnThink()
 	end
 end
 function gui.WIFilmmaker:OnRemove()
-	gui.WIBaseEditor.OnRemove(self)
+	gui.WIBaseFilmmaker.OnRemove(self)
 	self:CloseProject()
 	pfm.clear_pragma_renderer_scene()
 	util.remove(self.m_cbDisableDefaultSceneDraw)
@@ -1228,7 +1224,7 @@ function gui.WIFilmmaker:SetGameViewOffset(offset)
 	self.m_updatingProjectTimeOffset = true
 	if(util.is_valid(self.m_playhead)) then self.m_playhead:SetTimeOffset(offset) end
 
-	pfm.ProjectManager.SetGameViewOffset(self,offset)
+	gui.WIBaseFilmmaker.SetGameViewOffset(self,offset)
 
 	local session = self:GetSession()
 	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
@@ -1265,7 +1261,7 @@ function gui.WIFilmmaker:InitializeProject(project)
 		self.m_playbackControls:SetOffset(0.0)
 	end
 
-	local entScene = pfm.ProjectManager.InitializeProject(self,project)
+	local entScene = gui.WIBaseFilmmaker.InitializeProject(self,project)
 
 	-- We want the frame offset to start at 0, but the default value is already 0, which means the
 	-- callbacks would not get triggered properly. To fix that, we'll just set it to some random value != 0
@@ -1642,7 +1638,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					end
 					self:UpdateActor(actor,filmClip)
 
-					filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
+					-- filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
 
 					local entActor = actor:FindEntity()
 					if(util.is_valid(entActor)) then
@@ -1750,7 +1746,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:RegisterWindow(self.m_viewportFrame,"video_player",locale.get_text("pfm_video_player"),function() return gui.create("WIPFMVideoPlayer") end)
 
 	self:OpenWindow("actor_editor")
-	self:OpenWindow("element_viewer")
+	-- self:OpenWindow("element_viewer")
 	-- self:OpenWindow("tutorial_catalog")
 
 	local tab,elVp = self:OpenWindow("primary_viewport")
@@ -1785,7 +1781,8 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	-- Populate UI with project data
 	local project = self:GetProject()
 	local root = project:GetUDMRootNode()
-	self:GetElementViewer():Setup(root)
+	local elViewer = self:GetElementViewer()
+	if(util.is_valid(elViewer)) then elViewer:Setup(root) end
 
 	local playhead = pfmTimeline:GetPlayhead()
 	self.m_playhead = playhead
@@ -1926,7 +1923,7 @@ function gui.WIFilmmaker:AddBookmark()
 	self.m_timeline:AddBookmark(bm)
 end
 function gui.WIFilmmaker:SetTimeOffset(offset)
-	pfm.ProjectManager.SetTimeOffset(self,offset)
+	gui.WIBaseFilmmaker.SetTimeOffset(self,offset)
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor) == false) then return end
 	actorEditor:UpdateControlValues() -- TODO: Panima animations don't update right away, we need to call this *after* they have been updated
@@ -2025,44 +2022,6 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 			end
 		end
 	end
-end
-function gui.WIFilmmaker:OpenBoneRetargetWindow(mdlSrc,mdlDst)
-	local tab,el = self:OpenWindow("bone_retargeting",true)
-	if(util.is_valid(el) == false) then return end
-	el:SetImpostee(mdlSrc)
-	el:SetImposter(mdlDst)
-	--[[local mdlSrcPath = mdlSrc
-	mdlSrc = game.load_model(mdlSrc)
-	mdlDst = game.load_model(mdlDst)
-	if(mdlSrc == nil or mdlDst == nil) then return end
-	local rig = ents.RetargetRig.Rig.load(mdlSrc,mdlDst)
-	if(rig == false) then
-		rig = ents.RetargetRig.Rig(mdlSrc,mdlDst)
-
-		-- local boneRemapper = ents.RetargetRig.BoneRemapper(mdlSrc:GetSkeleton(),mdlSrc:GetReferencePose(),mdlDst:GetSkeleton(),mdlDst:GetReferencePose())
-		-- local translationTable = boneRemapper:AutoRemap()
-		-- rig:SetTranslationTable(translationTable)
-		rig:SetDstToSrcTranslationTable({})
-	end
-	local tab,el = self:OpenWindow("bone_retargeting",true)
-	if(util.is_valid(el)) then el:SetRig(rig) end
-
-	self:OpenModelView(mdlSrcPath)
-	if(util.is_valid(self.m_mdlView)) then
-		el:LinkToModelView(self.m_mdlView)
-		el:InitializeModelView()
-		local entSrc = self.m_mdlView:GetEntity(1)
-		local entDst = self.m_mdlView:GetEntity(2)
-		if(util.is_valid(entSrc) and util.is_valid(entDst)) then
-			local retargetC = entDst:AddComponent("retarget_rig")
-			local animSrc = entSrc:GetComponent(ents.COMPONENT_ANIMATED)
-			if(retargetC ~= nil and animSrc ~= nil) then retargetC:SetRig(rig,animSrc) end
-
-			local retargetMorphC = entDst:AddComponent("retarget_morph")
-			local flexC = entSrc:GetComponent(ents.COMPONENT_FLEX)
-			if(retargetMorphC ~= nil and flexC ~= nil) then retargetMorphC:SetRig(rig,flexC) end
-		end
-	end]]
 end
 gui.register("WIFilmmaker",gui.WIFilmmaker)
 

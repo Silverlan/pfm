@@ -1129,6 +1129,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 							controlData.max = max
 						end
 						-- pfm.log("Adding control for member '" .. controlData.path .. "' with type = " .. memberInfo.type .. ", min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
+						local memberType = memberInfo.type
 						controlData.set = function(component,value,dontTranslateValue,updateAnimationValue,final,oldValue)
 							if(updateAnimationValue == nil) then updateAnimationValue = true end
 							local entActor = ents.find_by_uuid(uniqueId)
@@ -1144,9 +1145,13 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 								oldValue = oldValue or component:GetMemberValue(memberName)
 								if(oldValue ~= nil) then
 									pfm.undoredo.push("pfm_undoredo_property",function()
-										tool.get_filmmaker():SetActorGenericProperty(entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),controlData.path,memberValue,memberInfo.type)
+										local entActor = ents.find_by_uuid(uniqueId)
+										if(entActor == nil) then return end
+										tool.get_filmmaker():SetActorGenericProperty(entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),controlData.path,memberValue,memberType)
 									end,function()
-										tool.get_filmmaker():SetActorGenericProperty(entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),controlData.path,oldValue,memberInfo.type)
+										local entActor = ents.find_by_uuid(uniqueId)
+										if(entActor == nil) then return end
+										tool.get_filmmaker():SetActorGenericProperty(entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),controlData.path,oldValue,memberType)
 									end)
 								end
 							end
@@ -2351,6 +2356,26 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected)
 		local actorEditor = filmmaker:GetActorEditor()
 		if(util.is_valid(actorEditor) == false) then return end
 		actorEditor:ToggleCameraLink(actor)
+	end)
+	pContext:AddItem(locale.get_text("pfm_retarget"),function()
+		local ent = actor:FindEntity()
+		if(ent == nil) then return end
+		local filmmaker = tool.get_filmmaker()
+		gui.open_model_dialog(function(dialogResult,mdlName)
+			if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
+			if(util.is_valid(ent) == false) then return end
+			local filmmaker = tool.get_filmmaker()
+			local actorEditor = filmmaker:GetActorEditor()
+			if(util.is_valid(actorEditor) == false) then return end
+			filmmaker:RetargetActor(ent,mdlName)
+
+			local impostorC = actorEditor:CreateNewActorComponent(actor,"impersonatee",false)
+			impostorC:SetMemberValue("impostorModel",udm.TYPE_STRING,mdlName)
+			actorEditor:CreateNewActorComponent(actor,"retarget_rig",false)
+			actorEditor:CreateNewActorComponent(actor,"retarget_morph",false)
+			actorEditor:UpdateActorComponents(actor)
+			filmmaker:TagRenderSceneAsDirty()
+		end)
 	end)
 	if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
 		pContext:AddItem("Assign entity to x",function()

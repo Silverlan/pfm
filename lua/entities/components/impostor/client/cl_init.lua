@@ -6,19 +6,19 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.Impostor",BaseEntityComponent)
+local Component = util.register_class("ents.Impostor",BaseEntityComponent)
 
-function ents.Impostor:__init()
+function Component:__init()
 	BaseEntityComponent.__init(self)
 end
 
-function ents.Impostor:OnRemove()
+function Component:OnRemove()
 	self:UpdateModel() -- Make sure to reset the impersonatee
 	local impersonateeC = self:GetImpersonatee()
 	if(util.is_valid(impersonateeC)) then impersonateeC:SetImpostor() end
 end
 
-function ents.Impostor:SetRelativePose(pose)
+function Component:SetRelativePose(pose)
 	self.m_relPose = pose
 	local impersonateeC = self:GetImpersonatee()
 	if(util.is_valid(impersonateeC)) then
@@ -27,9 +27,9 @@ function ents.Impostor:SetRelativePose(pose)
 		self:GetEntity():SetPose(absPose *pose)
 	end
 end
-function ents.Impostor:GetRelativePose() return self.m_relPose end
+function Component:GetRelativePose() return self.m_relPose end
 
-function ents.Impostor:Initialize()
+function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 	self:SetRelativePose(math.Transform())
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
@@ -38,7 +38,7 @@ function ents.Impostor:Initialize()
 	self:BindEvent(ents.AnimatedComponent.EVENT_ON_ANIMATION_RESET,"OnAnimationReset")
 end
 
-function ents.Impostor:Impersonate(ent)
+function Component:Impersonate(ent)
 	local impersonateeC = ent:GetComponent("impersonatee")
 	if(impersonateeC == self.m_impersonateeC) then return end
 	impersonateeC = ent:AddComponent("impersonatee")
@@ -74,11 +74,11 @@ function ents.Impostor:Impersonate(ent)
 	return entThis
 end
 
-function ents.Impostor:GetImpersonatee() return self.m_impersonateeC end
+function Component:GetImpersonatee() return self.m_impersonateeC end
 
-function ents.Impostor:OnAnimationReset() self:UpdateModel(self:GetEntity():GetModel()) end
+function Component:OnAnimationReset() self:UpdateModel(self:GetEntity():GetModel()) end
 
-function ents.Impostor:UpdateModel(mdl)
+function Component:UpdateModel(mdl)
 	local impersonateeC = self:GetImpersonatee()
 	if(util.is_valid(impersonateeC) == false) then return end
 
@@ -122,4 +122,4 @@ function ents.Impostor:UpdateModel(mdl)
 		else retargetMorphC:Unrig() end
 	end
 end
-ents.COMPONENT_IMPOSTOR = ents.register_component("impostor",ents.Impostor)
+ents.COMPONENT_IMPOSTOR = ents.register_component("impostor",Component)

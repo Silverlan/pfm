@@ -332,7 +332,7 @@ pfm.is_articulated_model = function(mdl)
 					for _,vw in ipairs(subMesh:GetVertexWeights()) do
 						local n = 0
 						for i=1,4 do
-							if(boneIds:Get(i -1) ~= -1) then n = n +1 end
+							if(vw.boneIds:Get(i -1) ~= -1) then n = n +1 end
 						end
 						if(n > 1) then isArticulatedActor = true; break end
 					end
