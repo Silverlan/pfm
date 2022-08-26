@@ -2002,6 +2002,12 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 	if(self.m_quickAxisTransformModeEnabled) then
 		local entTransform = vp:GetTransformEntity()
 		self.m_quickAxisTransformModeEnabled = nil
+		
+		for _,v in ipairs(self.m_quickAxisTransformAxes) do
+			if(v:IsValid()) then v:StopTransform() end
+		end
+		self.m_quickAxisTransformAxes = nil
+
 		vp:SetManipulatorMode(self.m_preAxisManipulatorMode or gui.PFMViewport.MANIPULATOR_MODE_SELECT)
 		self.m_preAxisManipulatorMode = nil
 
@@ -2014,11 +2020,13 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 	local c = vp:GetTransformWidgetComponent()
 	if(util.is_valid(c)) then
 		self.m_quickAxisTransformModeEnabled = true
+		self.m_quickAxisTransformAxes = {}
 		for _,axis in ipairs(axes) do
 			local v = c:GetTransformUtility(useRotationGizmo and ents.UtilTransformArrowComponent.TYPE_ROTATION or ents.UtilTransformArrowComponent.TYPE_TRANSLATION,axis,useRotationGizmo and "rotation" or "translation")
 			if(v ~= nil) then
 				v = v:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
 				v:StartTransform()
+				table.insert(self.m_quickAxisTransformAxes,v)
 			end
 		end
 	end
