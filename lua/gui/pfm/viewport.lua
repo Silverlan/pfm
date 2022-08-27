@@ -320,21 +320,24 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 			self:EnableThinking()
 			return util.EVENT_REPLY_HANDLED
 		end
-		self:ApplySelection()
+		local selectionApplied = self:ApplySelection()
+
 		self.m_leftMouseInput = nil
 		self.m_cursorTracker = nil
 
-		local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true)
-		if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
-			local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-			local actor = (actorC ~= nil) and actorC:GetActorData() or nil
-			if(actor) then
-				local filmmaker = tool.get_filmmaker()
-				if(input.is_alt_key_down()) then
-					filmmaker:DeselectActor(actor)
-				else
-					local deselectCurrent = not input.is_ctrl_key_down()
-					filmmaker:SelectActor(actor,deselectCurrent)
+		if(selectionApplied == false) then
+			local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true)
+			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
+				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+				if(actor) then
+					local filmmaker = tool.get_filmmaker()
+					if(input.is_alt_key_down()) then
+						filmmaker:DeselectActor(actor)
+					else
+						local deselectCurrent = not input.is_ctrl_key_down()
+						filmmaker:SelectActor(actor,deselectCurrent)
+					end
 				end
 			end
 		end
@@ -1312,7 +1315,7 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 	self:CallCallbacks("OnGameplayModeChanged",enabled)
 end
 function gui.PFMViewport:ApplySelection()
-	if(util.is_valid(self.m_selectionRect) == false) then return end
+	if(util.is_valid(self.m_selectionRect) == false) then return false end
 	-- self:SetCursorTrackerEnabled(false)
 	local function getWorldSpacePoint(pos,near)
 		local uv = Vector2(
@@ -1360,6 +1363,7 @@ function gui.PFMViewport:ApplySelection()
 
 	util.remove(self.m_selectionRect)
 	self:DisableThinking()
+	return true
 end
 function gui.PFMViewport:OnThink()
 	if(self.m_cursorTracker ~= nil) then
