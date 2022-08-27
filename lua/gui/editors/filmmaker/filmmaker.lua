@@ -97,6 +97,14 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self.m_editorOverlayRenderMask = game.register_render_mask("pfm_editor_overlay",false)
 
+	local udmData,err = udm.load("cfg/pfm/settings.udm")
+	if(udmData ~= false) then
+		udmData = udmData:GetAssetData():GetData()
+		self.m_settings = udmData:ClaimOwnership()
+	else
+		self.m_settings = udm.create_element()
+	end
+
 	local udmData,err = udm.load("cfg/pfm/keybindings.udm")
 	local layers = {}
 	if(udmData ~= false) then
@@ -688,6 +696,19 @@ function gui.WIFilmmaker:OnInitialize()
 		local actorEditor = self:GetActorEditor()
 		if(util.is_valid(actorEditor)) then actorEditor:SetPropertyAnimationOverlaysDirty() end
 	end)
+
+	local udmNotifications = self.m_settings:Get("notifications")
+	if((udmNotifications:GetValue("initial_welcome_message",udm.TYPE_UINT8) or 0) == 0) then
+		time.create_simple_timer(10.0,function()
+			if(self:IsValid() == false) then return end
+			local url = "https://wiki.pragma-engine.com/books/pragma-filmmaker/chapter/user-interface"
+			pfm.create_popup_message(
+				locale.get_text("pfm_first_time_message",{"{[l:url \"" .. url .. "\"]}","{[/l]}"}),
+				false
+			)
+			udmNotifications:SetValue("initial_welcome_message",udm.TYPE_UINT8,1)
+		end)
+	end
 end
 function gui.WIFilmmaker:ImportMap(map)
 	map = file.remove_file_extension(map,asset.get_supported_extensions(asset.TYPE_MAP))
@@ -779,6 +800,17 @@ function gui.WIFilmmaker:ImportMap(map)
 			fogC:SetMemberValue("type",udm.TYPE_UINT32,fogType)
 			actorEditor:UpdateActorComponents(actor)
 		end
+	end
+end
+function gui.WIFilmmaker:SaveSettings()
+	local udmData,err = udm.create("PFMST",1)
+	local assetData = udmData:GetAssetData()
+	assetData:GetData():Merge(self.m_settings:Get())
+	file.create_path("cfg/pfm")
+	local f = file.open("cfg/pfm/settings.udm",file.OPEN_MODE_WRITE)
+	if(f ~= nil) then
+		udmData:SaveAscii(f)
+		f:Close()
 	end
 end
 function gui.WIFilmmaker:PreRenderScenes(drawSceneInfo)
@@ -1176,6 +1208,8 @@ function gui.WIFilmmaker:OnRemove()
 
 	-- util.remove(self.m_reflectionProbe)
 	-- util.remove(self.m_entLight)
+
+	self:SaveSettings()
 
 	local layers = {}
 	for _,layer in pairs(self.m_inputBindingLayers) do table.insert(layers,layer) end
