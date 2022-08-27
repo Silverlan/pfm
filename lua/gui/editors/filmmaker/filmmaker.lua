@@ -1321,9 +1321,9 @@ function gui.WIFilmmaker:AddFilmClipElement(filmClip)
 			local pContext = gui.open_context_menu()
 			if(util.is_valid(pContext) == false) then return end
 			pContext:SetPos(input.get_cursor_pos())
-			pContext:AddItem(locale.get_text("pfm_show_in_element_viewer"),function()
+			--[[pContext:AddItem(locale.get_text("pfm_show_in_element_viewer"),function()
 				self:ShowInElementViewer(filmClip)
-			end)
+			end)]]
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
 		end
@@ -1845,6 +1845,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 			end
 		end
 		groupPicture:AddElement(filmStrip)
+		self.m_trackGroupPicture = groupPicture
 
 		local timeFrame = filmClip:GetTimeFrame()
 		local groupSound = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_sound"))
@@ -1861,6 +1862,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 				--end
 			end
 		end
+		self.m_trackGroupSound = groupSound
 
 		local groupOverlay = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_overlay"))
 		local trackGroupOverlay = filmClip:FindTrackGroup("Overlay")
@@ -1874,6 +1876,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 				end
 			end
 		end
+		self.m_trackGroupOverlay = groupOverlay
 
 		local activeBookmarkSet = filmClip:GetActiveBookmarkSet()
 		local bookmarkSet = filmClip:GetBookmarkSet(activeBookmarkSet)
@@ -1883,7 +1886,19 @@ function gui.WIFilmmaker:InitializeProjectUI()
 			end
 		end
 	end
+
+	if(util.is_valid(self.m_trackGroupPicture)) then
+		self.m_trackGroupPicture:Expand()
+	end
+	if(util.is_valid(filmStrip)) then
+		local filmClips = filmStrip:GetFilmClips()
+		local filmClip = filmClips[1]
+		if(util.is_valid(filmClip)) then filmClip:SetSelected(true) end
+	end
 end
+function gui.WIFilmmaker:GetPictureTrackGroup() return self.m_trackGroupPicture end
+function gui.WIFilmmaker:GetSoundTrackGroup() return self.m_trackGroupSound end
+function gui.WIFilmmaker:GetOverlayTrackGroup() return self.m_trackGroupOverlay end
 function gui.WIFilmmaker:OnGameViewReloaded()
 	local function apply_viewport(vp)
 		if(util.is_valid(vp) == false) then return end
@@ -2002,7 +2017,7 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 	if(self.m_quickAxisTransformModeEnabled) then
 		local entTransform = vp:GetTransformEntity()
 		self.m_quickAxisTransformModeEnabled = nil
-		
+
 		for _,v in ipairs(self.m_quickAxisTransformAxes) do
 			if(v:IsValid()) then v:StopTransform() end
 		end
