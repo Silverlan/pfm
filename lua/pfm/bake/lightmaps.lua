@@ -110,7 +110,7 @@ pfm.bake.lightmaps = function(gameScene,lightmapTargets,influencers,lightSources
 	scene:SetMaxDiffuseBounces(4)
 	scene:SetMaxGlossyBounces(4)
 	scene:SetLightIntensityFactor(1)
-	scene:SetAdaptiveSampling(true,0.001,0)
+	scene:SetAdaptiveSampling(true,0.0001,0)
 	scene:SetResolution(width,height)
 	if(lightmapDataCache ~= nil) then scene:SetLightmapDataCache(lightmapDataCache) end -- Has to be set before adding any bake targets!
 
