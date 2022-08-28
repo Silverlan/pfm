@@ -72,6 +72,15 @@ function Component:SetLightmapAtlasDirty()
 end
 function Component:GetLightmapJob() return self.m_lightmapJob end
 function Component:ImportLightmapTexture(matIdentifier,texName,importTex)
+	local ext = file.get_file_extension(importTex)
+	if(ext ~= nil and ext ~= "dds" and ext ~= "ktx") then
+		local img = util.load_image(importTex,false,util.ImageBuffer.FORMAT_RGBA32)
+		if(img == nil) then return end
+		local newTexPath = file.remove_file_extension(importTex)
+		if(self:SaveLightmapImage(img,newTexPath) == false) then return end
+		return self:ImportLightmapTexture(matIdentifier,texName,newTexPath .. ".dds")
+	end
+
 	local lightmapC = self:GetEntity():AddComponent(ents.COMPONENT_LIGHT_MAP)
 	if(lightmapC == nil) then return end
 	local matName = lightmapC:GetMemberValue("lightmapMaterial")
@@ -122,6 +131,16 @@ function Component:ImportLightmapTexture(matIdentifier,texName,importTex)
 	self:SetLightmapAtlasDirty()
 	return mat
 end
+function Component:SaveLightmapImage(img,texPath)
+	local texInfo = util.TextureInfo()
+	texInfo.inputFormat = util.TextureInfo.INPUT_FORMAT_R32G32B32A32_FLOAT
+	texInfo.outputFormat = normalMap and util.TextureInfo.OUTPUT_FORMAT_BC3 or util.TextureInfo.OUTPUT_FORMAT_BC6
+	texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
+	texInfo.flags = bit.bor(texInfo.flags,util.TextureInfo.FLAG_BIT_GENERATE_MIPMAPS)
+
+	img:Convert(util.ImageBuffer.FORMAT_RGBA32)
+	return util.save_image(img,texPath .. ".dds",texInfo)
+end
 function Component:SaveLightmapTexture(jobResult,resultIdentifier,matIdentifier,texName,normalMap)
 	local lightmapC = self:GetEntity():AddComponent(ents.COMPONENT_LIGHT_MAP)
 	if(lightmapC == nil) then return end
@@ -141,12 +160,6 @@ function Component:SaveLightmapTexture(jobResult,resultIdentifier,matIdentifier,
 		mat = game.create_material(matName,"lightmap")
 	end
 
-	local texInfo = util.TextureInfo()
-	texInfo.inputFormat = util.TextureInfo.INPUT_FORMAT_R32G32B32A32_FLOAT
-	texInfo.outputFormat = normalMap and util.TextureInfo.OUTPUT_FORMAT_BC3 or util.TextureInfo.OUTPUT_FORMAT_BC6
-	texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
-	texInfo.flags = bit.bor(texInfo.flags,util.TextureInfo.FLAG_BIT_GENERATE_MIPMAPS)
-
 	local img
 	if(type(resultIdentifier) == "string") then img = jobResult:GetImage(resultIdentifier)
 	else img = resultIdentifier end
@@ -154,10 +167,10 @@ function Component:SaveLightmapTexture(jobResult,resultIdentifier,matIdentifier,
 		pfm.log("Baked texture '" .. matIdentifier .. "' not found, ignoring...",pfm.LOG_CATEGORY_PFM_BAKE)
 		return
 	end
-	img:Convert(util.ImageBuffer.FORMAT_RGBA32)
+
 	local path = asset.get_asset_root_directory(asset.TYPE_MATERIAL) .. "/" .. file.get_file_path(matName)
 	local texPath = path .. texName
-	local r = util.save_image(img,"materials/" .. texPath .. ".dds",texInfo)
+	local r = self:SaveLightmapImage(img,"materials/" .. texPath)
 	if(r) then
 		pfm.log("Baked texture '" .. matIdentifier .. "' saved as '" .. texPath .. "'!",pfm.LOG_CATEGORY_PFM_BAKE)
 		asset.reload(texPath,asset.TYPE_TEXTURE)
