@@ -917,33 +917,9 @@ function gui.WIFilmmaker:CreateSimpleProject()
 	if(util.is_valid(actorEditor) == false) then return end
 
 	actorEditor:AddSkyActor()
-	local cam = actorEditor:CreateNewActorWithComponents("camera",{"pfm_actor","pfm_camera","camera"})
-
-	local entProbe = actorEditor:CreateNewActorWithComponents("reflection_probe",{
-		"pfm_actor",
-		{
-			"reflection_probe",
-			function(c)
-				c:SetMemberValue("iblStrength",udm.TYPE_FLOAT,1.4)
-				c:SetMemberValue("iblMaterial",udm.TYPE_STRING,"pbr/ibl/venice_sunset")
-			end
-		}
-	})
-	local entLightmap = actorEditor:CreateNewActorWithComponents("lightmapper",{
-		"pfm_actor",
-		{
-			"pfm_baked_lighting",
-			function(c)
-				
-			end
-		},
-		{
-			"light_map",
-			function(c)
-				
-			end
-		}
-	})
+	local cam = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA,"camera")
+	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE,"reflection_probe")
+	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER,"lightmapper")
 
 	local filmClip = self:GetActiveGameViewFilmClip()
 	if(filmClip ~= nil) then filmClip:SetCamera(cam) end

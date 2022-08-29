@@ -158,9 +158,9 @@ local LightmapBaker = util.register_class("pfm.bake.LightmapBaker",util.Callback
 function LightmapBaker:__init()
 	util.CallbackHandler.__init(self)
 end
-function LightmapBaker:BakeUvs(lmEntity,cachePath,meshFilter)
+function LightmapBaker:BakeUvs(lmEntity,cachePath,meshFilter,minArea,maxArea)
 	local lightmapReceivers = pfm.bake.find_bake_entities()
-	if(util.bake_lightmap_uvs(lmEntity,lightmapReceivers,cachePath,nil,meshFilter) == false) then return false end
+	if(util.bake_lightmap_uvs(lmEntity,lightmapReceivers,cachePath,nil,meshFilter,minArea,maxArea) == false) then return false end
 	return true
 end
 function LightmapBaker:Start(width,height,sampleCount,lightmapDataCache,initScene,bakeCombined,asJob)

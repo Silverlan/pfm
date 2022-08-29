@@ -117,6 +117,18 @@ pfm.register_component_action("pfm_baked_lighting","pfm_bake_lightmap_job","bake
 	return el
 end)
 
+local function update_directional_lightmaps(c)
+	if(c:IsLightmapUvRebuildRequired()) then
+		pfm.log("Lightmap UV data cache is out of date, rebuilding...",pfm.LOG_CATEGORY_PFM_BAKE)
+		c:GenerateLightmapUvs()
+		
+		local lmMode = c:GetLightmapMode()
+		if(lmMode == ents.PFMBakedLighting.LIGHTMAP_MODE_DIRECTIONAL) then
+			pfm.log("Directional lightmap atlas is out of date, rebuilding...",pfm.LOG_CATEGORY_PFM_BAKE)
+			c:GenerateDirectionalLightmaps()
+		end
+	end
+end
 -- Import direct lightmap
 pfm.register_component_action("pfm_baked_lighting","pfm_import_direct","import_direct_lightmap",function(controls,actorData,entActor,actionData)
 	local bt = gui.create("WIPFMActionButton",controls)
@@ -127,6 +139,7 @@ pfm.register_component_action("pfm_baked_lighting","pfm_import_direct","import_d
 			local dialogue = gui.create_file_open_dialog(function(pDialog,fileName)
 				if(c:IsValid() == false) then return end
 				c:ImportLightmapTexture("diffuse_direct_map","lightmap_diffuse_direct",fileName)
+				update_directional_lightmaps(c)
 			end)
 			dialogue:SetRootPath("")
 			dialogue:SetExtensions(asset.get_supported_extensions(asset.TYPE_TEXTURE))
@@ -146,6 +159,7 @@ pfm.register_component_action("pfm_baked_lighting","pfm_import_indirect","import
 			local dialogue = gui.create_file_open_dialog(function(pDialog,fileName)
 				if(c:IsValid() == false) then return end
 				c:ImportLightmapTexture("diffuse_indirect_map","lightmap_diffuse_indirect",fileName)
+				update_directional_lightmaps(c)
 			end)
 			dialogue:SetRootPath("")
 			dialogue:SetExtensions(asset.get_supported_extensions(asset.TYPE_TEXTURE))

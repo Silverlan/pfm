@@ -49,9 +49,9 @@ local function is_point_in_uv_mesh(ent,lmCache,x,y)
 	local mdl = ent:GetModel()
 	if(mdl == nil) then return end
 	local p = Vector2(x,y)
-	for _,mg in ipairs(mdl:GetMeshGroups()) do
-		for _,m in ipairs(mg:GetMeshes()) do
-			for _,sm in ipairs(m:GetSubMeshes()) do
+	for img,mg in ipairs(mdl:GetMeshGroups()) do
+		for im,m in ipairs(mg:GetMeshes()) do
+			for ism,sm in ipairs(m:GetSubMeshes()) do
 				local lightmapUvs = lmCache:FindLightmapUvs(ent:GetUuid(),sm:GetUuid())
 				if(lightmapUvs ~= nil) then
 					local indices = sm:GetIndices()
@@ -63,7 +63,21 @@ local function is_point_in_uv_mesh(ent,lmCache,x,y)
 						local uv1 = lightmapUvs[idx1 +1]
 						local uv2 = lightmapUvs[idx2 +1]
 						if(is_point_in_triangle(p,uv0,uv1,uv2)) then
-							print(p,uv0,uv1,uv2)
+							local v0 = sm:GetVertexPosition(idx0)
+							local v1 = sm:GetVertexPosition(idx1)
+							local v2 = sm:GetVertexPosition(idx2)
+							-- TODO: Calculate precise position of cursor hit
+							--local p = geometry.calc_point_on_triangle(v0,v1,v2)
+							if(v0 ~= nil and v1 ~= nil and v2 ~= nil) then
+								local pos = v0
+								pos = ent:GetPose() *v0
+								v0 = ent:GetPose() *v0
+								v1 = ent:GetPose() *v1
+								v2 = ent:GetPose() *v2
+								print("Mesh Index: ",img,im,ism)
+								print("Triangle: ",v0,v1,v2)
+								print("Near Position: ",pos)
+							end
 							return true
 						end
 					end

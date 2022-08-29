@@ -303,7 +303,7 @@ function Component:IsLightmapUvRebuildRequired()
 		curUuids[uuid] = true
 		local pose = ent:GetPose()
 		local cachePose = cache:GetInstancePose(uuid)
-		if(cachePose == nil or cachePose ~= pose) then return true end
+		if(cachePose ~= nil and cachePose ~= pose) then return true end
 	end
 
 	for _,uuid in ipairs(cache:GetInstanceIds()) do
@@ -343,8 +343,11 @@ function Component:GenerateLightmapUvs()
 			local res = intersect.aabb_with_aabb(min,max,minArea,maxArea)
 			return res ~= intersect.RESULT_OUTSIDE
 		end
+	else
+		minArea = nil
+		maxArea = nil
 	end
-	if(self.m_baker:BakeUvs(lmC:GetEntity(),util.get_addon_path() .. cachePath,meshFilter) == false) then
+	if(self.m_baker:BakeUvs(lmC:GetEntity(),util.get_addon_path() .. cachePath,meshFilter,minArea,maxArea) == false) then
 		pfm.log("Failed to bake lightmap uvs!",pfm.LOG_CATEGORY_PFM_BAKE,pfm.LOG_SEVERITY_WARNING)
 		return
 	end

@@ -45,7 +45,7 @@ end
 function Component:GetBounds()
 	local minArea = self:GetMinBounds()
 	local maxArea = self:GetMaxBounds()
-	vector.to_min_max(minArea,maxArea)
+	minArea,maxArea = vector.to_min_max(minArea,maxArea)
 	return minArea,maxArea
 end
 ents.COMPONENT_PFM_CUBOID_BOUNDS = ents.register_component("pfm_cuboid_bounds",Component)
