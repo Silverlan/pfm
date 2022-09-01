@@ -271,26 +271,26 @@ function gui.PFMViewport:InitializeSettings(parent)
 	-- if(tool.is_developer_mode_enabled()) then
 		options = {
 			{"0","None"},
-			{"1","Ambient Occlusion"},
+			{"14","Unlit"},
 			{"2","Albedo"},
 			{"3","Metalness"},
 			{"4","Roughness"},
-			{"5","Diffuse Lighting"},
+			{"11","Emission"},
 			{"6","Normals"},
-			{"7","Normal Maps"},
+			{"1","Ambient Occlusion"},
+			{"5","Diffuse Lighting"},
 			{"8","Reflectance"},
+			{"18","Specular"},
+			{"12","Lightmaps"},
+			{"19","Indirect Lightmap"},
+			{"20","Dominant Lightmap"},
+			{"7","Normal Maps"},
 			{"9","IBL Prefilter"},
 			{"10","IBL Irradiance"},
-			{"11","Emission"},
-			{"12","Lightmaps"},
 			{"13","Lightmap Uvs"},
-			{"14","Unlit"},
 			{"15","CSM Cascades"},
 			{"16","Shadow Map Depth"},
-			{"17","Forward+ Heatmap"},
-			{"18","Specular"},
-			{"19","Indirect Lightmap"},
-			{"20","Dominant Lightmap"}
+			{"17","Forward+ Heatmap"}
 		}
 		self.m_ctrlDebugMode = p:AddDropDownMenu(locale.get_text("pfm_debug_mode"),"debug_mode",options,"0")
 		self.m_ctrlDebugMode:AddCallback("OnOptionSelected",function(el,idx)
