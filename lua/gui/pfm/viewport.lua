@@ -268,7 +268,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 		self:SetAngularSpacing(spacing)
 	end)
 
-	if(tool.is_developer_mode_enabled()) then
+	-- if(tool.is_developer_mode_enabled()) then
 		options = {
 			{"0","None"},
 			{"1","Ambient Occlusion"},
@@ -292,13 +292,13 @@ function gui.PFMViewport:InitializeSettings(parent)
 			{"19","Indirect Lightmap"},
 			{"20","Dominant Lightmap"}
 		}
-		self.m_ctrlDebugMode = p:AddDropDownMenu("Debug Mode","debug_mode",options,"0")
+		self.m_ctrlDebugMode = p:AddDropDownMenu(locale.get_text("pfm_debug_mode"),"debug_mode",options,"0")
 		self.m_ctrlDebugMode:AddCallback("OnOptionSelected",function(el,idx)
 			local mode = toint(self.m_ctrlDebugMode:GetOptionValue(self.m_ctrlDebugMode:GetSelectedOption()))
 			console.run("render_debug_mode",mode)
 			pfm.tag_render_scene_as_dirty()
 		end)
-	end
+	-- end
 end
 function gui.PFMViewport:SetRtViewportRenderer(renderer)
 	local enabled = (renderer ~= nil)
