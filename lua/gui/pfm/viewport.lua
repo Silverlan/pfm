@@ -231,7 +231,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 		{"uncharted","Uncharted"},
 		{"aces","Aces"},
 		{"gran_turismo","Gran Turismo"}
-	},"aces")
+	},"uncharted")
 	self.m_ctrlToneMapping:AddCallback("OnOptionSelected",function(el,idx)
 		console.run("cl_render_tone_mapping " .. tostring(idx))
 		tool.get_filmmaker():TagRenderSceneAsDirty()
@@ -267,6 +267,38 @@ function gui.PFMViewport:InitializeSettings(parent)
 		local spacing = toint(self.m_ctrlAngularSpacing:GetOptionValue(self.m_ctrlAngularSpacing:GetSelectedOption()))
 		self:SetAngularSpacing(spacing)
 	end)
+
+	if(tool.is_developer_mode_enabled()) then
+		options = {
+			{"0","None"},
+			{"1","Ambient Occlusion"},
+			{"2","Albedo"},
+			{"3","Metalness"},
+			{"4","Roughness"},
+			{"5","Diffuse Lighting"},
+			{"6","Normals"},
+			{"7","Normal Maps"},
+			{"8","Reflectance"},
+			{"9","IBL Prefilter"},
+			{"10","IBL Irradiance"},
+			{"11","Emission"},
+			{"12","Lightmaps"},
+			{"13","Lightmap Uvs"},
+			{"14","Unlit"},
+			{"15","CSM Cascades"},
+			{"16","Shadow Map Depth"},
+			{"17","Forward+ Heatmap"},
+			{"18","Specular"},
+			{"19","Indirect Lightmap"},
+			{"20","Dominant Lightmap"}
+		}
+		self.m_ctrlDebugMode = p:AddDropDownMenu("Debug Mode","debug_mode",options,"0")
+		self.m_ctrlDebugMode:AddCallback("OnOptionSelected",function(el,idx)
+			local mode = toint(self.m_ctrlDebugMode:GetOptionValue(self.m_ctrlDebugMode:GetSelectedOption()))
+			console.run("render_debug_mode",mode)
+			pfm.tag_render_scene_as_dirty()
+		end)
+	end
 end
 function gui.PFMViewport:SetRtViewportRenderer(renderer)
 	local enabled = (renderer ~= nil)
