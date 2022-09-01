@@ -731,6 +731,11 @@ function gui.WIFilmmaker:ImportMap(map)
 		local model = keyValues:GetValue("model",udm.TYPE_STRING)
 		local uuid = keyValues:GetValue("uuid",udm.TYPE_STRING)
 		local skin = keyValues:GetValue("skin",udm.TYPE_STRING) or 0
+		local angles = keyValues:GetValue("angles",udm.TYPE_STRING)
+		if(angles ~= nil) then
+			angles = EulerAngles(angles)
+			pose:SetRotation(angles:ToQuaternion())
+		end
 		local index
 		if(indexCounters[className] == nil) then
 			indexCounters[className] = 1
