@@ -168,9 +168,9 @@ function Component:SaveLightmapTexture(jobResult,resultIdentifier,matIdentifier,
 		return
 	end
 
-	local path = asset.get_asset_root_directory(asset.TYPE_MATERIAL) .. "/" .. file.get_file_path(matName)
+	local path = file.get_file_path(matName)
 	local texPath = path .. texName
-	local r = self:SaveLightmapImage(img,"materials/" .. texPath)
+	local r = self:SaveLightmapImage(img,asset.get_asset_root_directory(asset.TYPE_MATERIAL) .. "/" .. texPath)
 	if(r) then
 		pfm.log("Baked texture '" .. matIdentifier .. "' saved as '" .. texPath .. "'!",pfm.LOG_CATEGORY_PFM_BAKE)
 		asset.reload(texPath,asset.TYPE_TEXTURE)

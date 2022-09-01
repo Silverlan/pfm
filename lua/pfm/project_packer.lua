@@ -18,14 +18,21 @@ function pfm.ProjectPacker:__init()
 end
 
 function pfm.ProjectPacker:AddFile(f) self.m_assetFileMap[f] = f end
-function pfm.ProjectPacker:AddAsset(f,type)
+function pfm.ProjectPacker:AddAsset(f,type,skipAddFunc)
+	if(skipAddFunc ~= true) then
+		if(type == asset.TYPE_MODEL) then self:AddModel(f)
+		elseif(type == asset.TYPE_MATERIAL) then self:AddMaterial(f)
+		elseif(type == asset.TYPE_SOUND) then self:AddSound(f)
+		elseif(type == asset.TYPE_MAP) then self:AddMap(f) end
+	end
 	f = asset.find_file(f,type)
 	if(f == nil) then return end
 	self:AddFile(asset.relative_path_to_absolute_path(f,type))
 end
 function pfm.ProjectPacker:AddMaterial(mat)
+	if(type(mat) == "string") then mat = game.load_material(mat) end
 	local matName = util.Path(mat:GetName())
-	self:AddAsset(matName:GetString(),asset.TYPE_MATERIAL)
+	self:AddAsset(matName:GetString(),asset.TYPE_MATERIAL,true)
 	local db = mat:GetDataBlock()
 	for _,key in ipairs(db:GetKeys()) do
 		if(db:GetValueType(key) == "texture") then
@@ -48,7 +55,7 @@ function pfm.ProjectPacker:AddModel(mdl)
 	for _,mat in ipairs(mdl:GetMaterials()) do
 		self:AddMaterial(mat)
 	end
-	self:AddAsset(mdl:GetName(),asset.TYPE_MODEL)
+	self:AddAsset(mdl:GetName(),asset.TYPE_MODEL,true)
 
 	for _,mdlName in ipairs(mdl:GetIncludeModels()) do
 		local mdlInclude = game.load_model(mdlName)
@@ -56,7 +63,7 @@ function pfm.ProjectPacker:AddModel(mdl)
 	end
 end
 function pfm.ProjectPacker:AddSound(snd)
-	self:AddAsset(snd,asset.TYPE_AUDIO)
+	self:AddAsset(snd,asset.TYPE_AUDIO,true)
 end
 function pfm.ProjectPacker:AddFilmClip(filmClip)
 	for _,actor in ipairs(filmClip:GetActorList()) do
@@ -88,6 +95,48 @@ function pfm.ProjectPacker:AddFilmClip(filmClip)
 					end
 				end
 			end
+
+			local componentId = ents.find_component_id(type)
+			local componentInfo = (componentId ~= nil) and ents.get_component_info(componentId) or nil
+			if(componentInfo ~= nil) then
+				local numMembers = componentInfo:GetMemberCount()
+				for i=1,numMembers do
+					local memberInfo = componentInfo:GetMemberInfo(i -1)
+					if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE) then
+						local value = component:GetMemberValue(memberInfo.name)
+						if(value ~= nil) then
+							local filePath = value
+							local meta = memberInfo.metaData
+							local assetType = (meta ~= nil) and meta:GetValue("assetType") or nil
+							assetType = (assetType ~= nil) and asset.get_type_enum(assetType) or nil
+							if(assetType ~= nil) then
+								local fileName = asset.find_file(filePath,assetType)
+								if(fileName ~= nil) then
+									self:AddAsset(fileName,assetType)
+								end
+							else
+								local rootPath = (meta ~= nil) and meta:GetValue("rootPath") or nil
+								local extensions = (meta ~= nil and meta:HasValue("extensions")) and meta:GetArrayValues("extensions",udm.TYPE_STRING) or nil
+								if(rootPath ~= nil) then
+									rootPath = util.Path.CreatePath(rootPath)
+									filePath = rootPath:GetString() .. filePath
+								end
+								local ext = (extensions ~= nil) and file.get_file_extension(filePath,extensions) or file.get_file_extension(filePath)
+								if(ext ~= nil) then self:AddFile(filePath)
+								else
+									for _,ext in ipairs(extensions) do
+										local extPath = filePath .. "." .. ext
+										if(file.exists(extPath)) then
+											self:AddFile(extPath)
+											break
+										end
+									end
+								end
+							end
+						end
+					end
+				end
+			end
 		end
 	end
 	for _,trackGroup in ipairs(filmClip:GetTrackGroups()) do
@@ -110,7 +159,7 @@ function pfm.ProjectPacker:AddSession(session)
 end
 function pfm.ProjectPacker:AddMap(map)
 	local mapName = game.get_map_name()
-	self:AddAsset(mapName,asset.TYPE_MAP)
+	self:AddAsset(mapName,asset.TYPE_MAP,true)
 	self:AddAsset(mapName .. "/lightmap_atlas",asset.TYPE_TEXTURE)
 
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_REFLECTION_PROBE)}) do
