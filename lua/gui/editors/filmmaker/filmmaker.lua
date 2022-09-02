@@ -309,6 +309,10 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 			self:Save()
 		end)
+		pContext:AddItem(locale.get_text("save_as"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			self:Save(nil,false,true)
+		end)
 
 		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("import"))
 		pSubMenu:AddItem(locale.get_text("map"),function(pItem)
@@ -885,7 +889,7 @@ function gui.WIFilmmaker:SetOverlaySceneEnabled(enabled)
 
 	self:TagRenderSceneAsDirty()
 end
-function gui.WIFilmmaker:Save(fileName,setAsProjectName)
+function gui.WIFilmmaker:Save(fileName,setAsProjectName,saveAs)
 	if(setAsProjectName == nil) then setAsProjectName = true end
 	local project = self:GetProject()
 	if(project == nil) then return end
@@ -895,7 +899,7 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName)
 		fileName = pfm.Project.get_full_project_file_name(fileName)
 		self:SaveProject(fileName,setAsProjectName and fileName or nil)
 	end
-	if(fileName == nil) then
+	if(fileName == nil and saveAs ~= true) then
 		local projectFileName = self:GetProjectFileName()
 		if(projectFileName ~= nil) then
 			fileName = util.Path.CreateFilePath(projectFileName)
