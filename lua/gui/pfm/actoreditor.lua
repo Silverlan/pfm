@@ -1330,17 +1330,20 @@ function gui.PFMActorEditor:RemoveActors(ids)
 		if(filmClip == nil) then return end
 		for _,uniqueId in ipairs(ids) do
 			local actor = filmClip:FindActorByUniqueId(uniqueId)
-			if(actor ~= nil) then self:RemoveActor(uniqueId) end
+			if(actor ~= nil) then self:RemoveActor(uniqueId,false) end
 		end
+		self.m_tree:GetRoot():UpdateUi()
 	end,function()
 		self:RestoreActorsFromUdmElement(el)
 	end)
 	for _,uniqueId in ipairs(ids) do
 		local actor = filmClip:FindActorByUniqueId(uniqueId)
-		if(actor ~= nil) then self:RemoveActor(uniqueId) end
+		if(actor ~= nil) then self:RemoveActor(uniqueId,false) end
 	end
+	self.m_tree:GetRoot():UpdateUi()
 end
-function gui.PFMActorEditor:RemoveActor(uniqueId)
+function gui.PFMActorEditor:RemoveActor(uniqueId,updateUi)
+	if(updateUi == nil) then updateUi = true end
 	local filmmaker = tool.get_filmmaker()
 	local filmClip = filmmaker:GetActiveFilmClip()
 	if(filmClip == nil) then return end
@@ -1350,7 +1353,7 @@ function gui.PFMActorEditor:RemoveActor(uniqueId)
 	local function removeActor(actor)
 		filmClip:RemoveActor(actor)
 		local itemActor = self.m_tree:GetRoot():GetItemByIdentifier(uniqueId)
-		if(itemActor ~= nil) then self.m_tree:RemoveItem(itemActor) end
+		if(itemActor ~= nil) then self.m_tree:RemoveItem(itemActor,updateUi) end
 
 		util.remove(ents.find_by_uuid(uniqueId))
 		self:TagRenderSceneAsDirty()

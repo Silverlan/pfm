@@ -45,11 +45,11 @@ function gui.PFMTreeView:Clear()
 	if(util.is_valid(self.m_rootElement) == false) then return end
 	self.m_rootElement:Clear()
 end
-function gui.PFMTreeView:RemoveItem(item)
+function gui.PFMTreeView:RemoveItem(item,updateUi)
 	if(util.is_valid(item) == false) then return end
 	local parentItem = item:GetParentItem()
 	if(util.is_valid(parentItem)) then
-		parentItem:RemoveItem(item)
+		parentItem:RemoveItem(item,updateUi)
 		return
 	end
 	item:Remove()
@@ -180,7 +180,8 @@ function gui.PFMTreeViewElement:MouseCallback(button,state,mods)
 	return util.EVENT_REPLY_HANDLED
 end
 function gui.PFMTreeViewElement:IsRoot() return self:GetParentItem() == nil end
-function gui.PFMTreeViewElement:RemoveItem(item)
+function gui.PFMTreeViewElement:RemoveItem(item,updateUi)
+	if(updateUi == nil) then updateUi = true end
 	if(util.is_valid(item) == false) then return end
 	for i,itemOther in ipairs(self.m_items) do
 		if(util.is_same_object(itemOther,item)) then
@@ -195,6 +196,10 @@ function gui.PFMTreeViewElement:RemoveItem(item)
 			break
 		end
 	end
+	if(updateUi == false) then return end
+	self:UpdateUi()
+end
+function gui.PFMTreeViewElement:UpdateUi()
 	self.m_childHBox:Update()
 	self.m_vBoxChildren:Update()
 	

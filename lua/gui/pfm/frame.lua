@@ -45,6 +45,7 @@ function gui.PFMFrame:OnRemove()
 end
 function gui.PFMFrame:SetActiveTab(tabId)
 	if(type(tabId) == "string") then
+		if(tabId == self:GetTabIdentifier(self:GetSelectedTabId())) then return end
 		tabId = self:GetTabId(tabId)
 		if(tabId == nil) then return end
 	end
@@ -58,7 +59,7 @@ function gui.PFMFrame:SetActiveTab(tabId)
 		end
 		return
 	end
-	if(self.m_tabs[tabId] == nil) then return end
+	if(self.m_tabs[tabId] == nil or tabId == self:GetSelectedTabId()) then return end
 	if(util.is_valid(self.m_activeTabButton)) then self.m_activeTabButton:SetActive(false) end
 
 	local bt = self.m_tabs[tabId].button
@@ -75,6 +76,11 @@ function gui.PFMFrame:GetTabId(identifier)
 			return i
 		end
 	end
+end
+function gui.PFMFrame:GetSelectedTabId() return self.m_activeTabIndex end
+function gui.PFMFrame:GetTabIdentifier(i)
+	if(i == nil or self.m_tabs[i] == nil) then return end
+	return self.m_tabs[i].identifier
 end
 function gui.PFMFrame:RemoveTab(identifier)
 	local i = self:GetTabId(identifier)
