@@ -170,15 +170,49 @@ function gui.PFMViewport:InitializeSettings(parent)
 	-- wrapper:SetUseAltMode(true)
 	self.m_ctrlRt:AddCallback("OnOptionSelected",function(el,idx)
 		local val = el:GetOptionValue(idx)
-		if(val == "0") then val = nil
+		if(val == "0") then
+			val = nil
+			if(util.is_valid(self.m_ctrlViewportMode)) then self.m_ctrlViewportMode:SelectOption("auto") end
+			if(util.is_valid(self.m_ctrlViewportWrapper)) then self.m_ctrlViewportWrapper:SetVisible(false) end
 		else
 			val = "cycles"
 			local pfm = tool.get_filmmaker()
 			local renderTab = pfm:GetRenderTab()
 			if(util.is_valid(renderTab)) then val = renderTab:GetRenderSettings():GetRenderEngine() end
+			if(util.is_valid(self.m_ctrlViewportWrapper)) then self.m_ctrlViewportWrapper:SetVisible(true) end
 		end
 		self:SetRtViewportRenderer(val)
 	end)
+
+	local options = {
+		{"auto","Auto"},
+		{"realtime","Realtime"},
+		{"render","Render"}
+	}
+	local ctrlViewportMode,wrapper
+	ctrlViewportMode,wrapper = p:AddDropDownMenu(locale.get_text("pfm_viewport_mode"),"viewport_mode",options,"auto")
+	self.m_ctrlViewportMode = ctrlViewportMode
+	self.m_ctrlViewportWrapper = wrapper
+	self.m_ctrlViewportMode:AddCallback("OnOptionSelected",function(el,idx)
+		local vpMode = self.m_ctrlViewportMode:GetOptionValue(self.m_ctrlViewportMode:GetSelectedOption())
+		if(util.is_valid(self.m_rtViewport) == false) then
+			if(vpMode ~= "auto") then self.m_ctrlViewportMode:SelectOption("auto") end
+			return
+		end
+		if(vpMode == "auto") then
+			if(util.is_valid(self.m_rtViewport)) then vpMode = "render"
+			else vpMode = "realtime" end
+		end
+
+		if(vpMode == "realtime") then
+			self.m_rtViewport:SetZPos(-10)
+			tool.get_filmmaker():SetOverlaySceneEnabled(false)
+		else
+			self.m_rtViewport:SetZPos(10)
+			tool.get_filmmaker():SetOverlaySceneEnabled(true)
+		end
+	end)
+	self.m_ctrlViewportWrapper:SetVisible(false)
 
 	self.m_ctrlVr = p:AddDropDownMenu(locale.get_text("pfm_viewport_vr_enabled"),"vr_enabled",{
 		{"0",locale.get_text("disabled")},
@@ -247,7 +281,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 	end)
 
 	local gridSteps = {0,1,2,4,8,16,32,64,128}
-	local options = {}
+	options = {}
 	for _,v in ipairs(gridSteps) do
 		table.insert(options,{tostring(v),tostring(v)})
 	end
