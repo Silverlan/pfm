@@ -940,7 +940,7 @@ function gui.WIFilmmaker:CreateSimpleProject()
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor) == false) then return end
 
-	actorEditor:AddSkyActor()
+	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY,"sky")
 	local cam = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA,"camera")
 	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE,"reflection_probe")
 	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER,"lightmapper")

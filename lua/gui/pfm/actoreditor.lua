@@ -381,7 +381,11 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		c:SetMemberValue("iblStrength",udm.TYPE_FLOAT,1.4)
 		c:SetMemberValue("iblMaterial",udm.TYPE_STRING,"pbr/ibl/venice_sunset")
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY) then
-		return self:AddSkyActor()
+		actor = actor or self:CreateNewActor("sky")
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"skybox",false)
+		self:CreateNewActorComponent(actor,"pfm_sky",false)
+		self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("maps/empty_sky/skybox_3") end)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG) then
 		actor = actor or self:CreateNewActor("fog")
 		if(actor == nil) then return end
