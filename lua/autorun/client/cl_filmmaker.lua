@@ -6,6 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/gui/pfm/loading_screen.lua")
+
+pfm.show_loading_screen(false)
+
 console.register_variable("pfm_max_fps",udm.TYPE_INT32,-1,bit.bor(console.FLAG_BIT_ARCHIVE),"Clamp the max game fps to this value while the filmmaker is running.")
 console.register_variable("pfm_asset_icon_size",udm.TYPE_UINT32,128,bit.bor(console.FLAG_BIT_ARCHIVE),"The resolution to use for generated asset icons.")
 console.register_variable("pfm_asset_icon_size_character",udm.TYPE_STRING,"256x512",bit.bor(console.FLAG_BIT_ARCHIVE),"The resolution to use for generated asset icons of character models.")
