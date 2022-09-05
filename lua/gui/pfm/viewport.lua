@@ -453,47 +453,31 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 					self.m_cursorTracker = nil
 					self:DisableThinking()
 
-					local handled,entActor = findActor(true)
+					local handled,entActor,hitPos,startPos,hitData = findActor(true)
 					if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
 						local pContext = gui.open_context_menu()
 						if(util.is_valid(pContext) == false) then return end
 						pContext:SetPos(input.get_cursor_pos())
 
+						local hitMaterial
+						local idx = hitData.mesh:GetSkinTextureIndex()
+						local mdl = entActor:GetModel()
+						if(mdl ~= nil) then
+							local mat = mdl:GetMaterial(idx)
+							if(mat ~= nil) then
+								hitMaterial = mat
+							end
+						end
+
 						local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 						local actor = (actorC ~= nil) and actorC:GetActorData() or nil
-						if(actor ~= nil) then pfm.populate_actor_context_menu(pContext,actor) end
+						if(actor ~= nil) then pfm.populate_actor_context_menu(pContext,actor,nil,hitMaterial) end
 
-						--[[local pItem,pSubMenu = pContext:AddSubMenu("materials")
-						for matPath,mat in pairs(materials) do
-							local matName = file.get_file_name(matPath)
-							local pItem,pMatSubMenu = pSubMenu:AddSubMenu(matName)
-							pMatSubMenu:AddItem("Open in material editor",function()
-								tool.get_filmmaker():OpenMaterialEditor(matPath,mdl:GetName())
+						if(hitData.mesh ~= nil and hitData.primitiveIndex ~= nil) then
+							pContext:AddItem(locale.get_text("pfm_copy_hit_position"),function()
+								util.set_clipboard_string(tostring(hitPos))
 							end)
-							local contents = pMatSubMenu:GetContents()
-							local controls = gui.create("WIPFMControlsMenu",contents,0,0,contents:GetWidth(),20)
-							local dataBlock = mat:GetDataBlock()
-
-							local function add_material_slider(name,identifier,prop,default)
-								local ctrl = controls:AddSliderControl(name,identifier,dataBlock:GetFloat(prop,default),0.0,1.0,function(el,value)
-									dataBlock:SetValue("float",prop,tostring(value))
-									mat:InitializeShaderDescriptorSet(true)
-									tool.get_filmmaker():TagRenderSceneAsDirty()
-								end,0.01)
-							end
-							add_material_slider(locale.get_text("metalness"),"metalness","metalness_factor",0.0)
-							add_material_slider(locale.get_text("roughness"),"roughness","roughness_factor",0.5)
-							add_material_slider(locale.get_text("wetness"),"wetness","wetness_factor",0.0)
-
-							-- generate ao if not available
-
-							controls:SetAutoSizeToContents(false,true)
-							controls:SetAutoFillContentsToHeight(false)
-							controls:SetAnchor(0,0,1,0)
-							controls:ResetControls()
-							pMatSubMenu:Update()
 						end
-						pSubMenu:Update()]]
 
 						pContext:Update()
 					end

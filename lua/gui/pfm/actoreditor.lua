@@ -2261,7 +2261,7 @@ end
 gui.register("WIPFMActorEditor",gui.PFMActorEditor)
 
 
-pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected)
+pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected,hitMaterial)
 	local uniqueId = tostring(actor:GetUniqueId())
 	pContext:AddItem(locale.get_text("pfm_export_animation"),function()
 		local entActor = actor:FindEntity()
@@ -2285,9 +2285,14 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected)
 		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
 		for matPath,_ in pairs(materials) do
 			local matName = file.get_file_name(matPath)
-			pSubMenu:AddItem(matName,function()
+			local item = pSubMenu:AddItem(matName,function()
 				tool.get_filmmaker():OpenMaterialEditor(matPath,mdl:GetName())
 			end)
+
+			if(hitMaterial ~= nil and matPath == hitMaterial:GetName()) then
+				local el = gui.create("WIOutlinedRect",item,0,0,item:GetWidth(),item:GetHeight(),0,0,1,1)
+				el:SetColor(pfm.get_color_scheme_color("green"))
+			end
 		end
 		pSubMenu:Update()
 
