@@ -912,7 +912,12 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName,saveAs)
 		file.create_directory("projects")
 		fileName = file.remove_file_extension(fileName,pfm.Project.get_format_extensions())
 		fileName = pfm.Project.get_full_project_file_name(fileName)
-		self:SaveProject(fileName,setAsProjectName and fileName or nil)
+		local res = self:SaveProject(fileName,setAsProjectName and fileName or nil)
+		if(res) then
+			pfm.create_popup_message(locale.get_text("pfm_save_success"),1)
+		else
+			pfm.create_popup_message(locale.get_text("pfm_save_failed"),false,gui.InfoBox.TYPE_ERROR)
+		end
 	end
 	if(fileName == nil and saveAs ~= true) then
 		local projectFileName = self:GetProjectFileName()
