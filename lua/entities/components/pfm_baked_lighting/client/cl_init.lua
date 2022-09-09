@@ -338,16 +338,14 @@ function Component:GenerateLightmapUvs()
 		meshFilter = function(ent,mesh,subMesh)
 			local min,max = subMesh:GetBounds()
 			local pose = ent:GetPose()
-			min = pose *min
-			max = pose *max
+			min,max = boundingvolume.get_rotated_aabb(min,max,pose:GetRotation())
+			min = min +pose:GetOrigin()
+			max = max +pose:GetOrigin()
 			local res = intersect.aabb_with_aabb(min,max,minArea,maxArea)
 			return res ~= intersect.RESULT_OUTSIDE
 		end
-	else
-		minArea = nil
-		maxArea = nil
 	end
-	if(self.m_baker:BakeUvs(lmC:GetEntity(),util.get_addon_path() .. cachePath,meshFilter,minArea,maxArea) == false) then
+	if(self.m_baker:BakeUvs(lmC:GetEntity(),util.get_addon_path() .. cachePath,meshFilter) == false) then
 		pfm.log("Failed to bake lightmap uvs!",pfm.LOG_CATEGORY_PFM_BAKE,pfm.LOG_SEVERITY_WARNING)
 		return
 	end

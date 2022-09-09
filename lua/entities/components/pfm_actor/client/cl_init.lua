@@ -30,6 +30,7 @@ Component:RegisterMember("Visible",udm.TYPE_BOOLEAN,true,{
 		self:UpdateVisibility()
 	end
 },bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
+Component:RegisterMember("Static",udm.TYPE_BOOLEAN,false,{},bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)

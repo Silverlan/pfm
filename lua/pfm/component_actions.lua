@@ -259,3 +259,16 @@ pfm.register_component_action("pfm_baked_lighting","pfm_bake_quality_preset","ba
 	end)
 	return wrapper
 end)
+
+pfm.register_component_action("pfm_region_carver","pfm_carve","carve",function(controls,actorData,entActor,actionData)
+	local bt = gui.create("WIPFMActionButton",controls)
+	bt:SetText(locale.get_text("pfm_carve"))
+	bt:AddCallback("OnPressed",function()
+		if(util.is_valid(entActor) == false) then return end
+		local c = entActor:GetComponent(ents.COMPONENT_PFM_REGION_CARVER)
+		if(c ~= nil) then
+			c:Carve()
+		end
+	end)
+	return bt
+end)

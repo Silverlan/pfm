@@ -261,6 +261,9 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		self:CreateNewActorComponent(actor,"model",false)
 		self:CreateNewActorComponent(actor,"render",false)
 		self:CreateNewActorComponent(actor,"light_map_receiver",false)
+
+		local pfmActorC = actor:FindComponent("pfm_actor")
+		if(pfmActorC ~= nil) then actor:SetStatic(true) end
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP) then
 		actor = actor or self:CreateNewActor("dynamic_prop")
@@ -374,6 +377,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		self:CreateNewActorComponent(actor,"light_map_data_cache",false)
 		self:CreateNewActorComponent(actor,"light_map",false)
 		self:CreateNewActorComponent(actor,"pfm_cuboid_bounds",false)
+		self:CreateNewActorComponent(actor,"pfm_region_carver",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE) then
 		actor = actor or self:CreateNewActor("reflection_probe")
 		if(actor == nil) then return end
