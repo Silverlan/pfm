@@ -24,6 +24,7 @@ function Component:Initialize()
 end
 function Component:OnRemove()
 	util.remove(self.m_listeners)
+	util.remove(self.m_dbgObject)
 end
 function Component:OnEntitySpawn()
 	self:GetEntity():SetModel("pfm/cube_wireframe")
@@ -48,9 +49,31 @@ function Component:SetTarget(ent)
 	if(util.is_valid(ent) == false) then return end
 	local cb = ent:GetComponent(ents.COMPONENT_TRANSFORM):AddEventCallback(ents.TransformComponent.EVENT_ON_POSE_CHANGED,function()
 		self:SetDirty()
+		self:UpdateDebugObjectPose()
 	end)
 	table.insert(self.m_listeners,cb)
 	self:SetDirty()
+
+	util.remove(self.m_dbgObject)
+
+	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+	if(renderC ~= nil) then
+		local dbgInfo = debug.DrawInfo()
+		dbgInfo:SetColor(Color.Clear)
+		dbgInfo:SetOutlineColor(Color(0,255,0,255))
+		local dbgObjects = {}
+		for _,mesh in ipairs(renderC:GetRenderMeshes()) do
+			local dbgObject = debug.draw_mesh(mesh,dbgInfo)
+			if(dbgObject ~= nil) then table.insert(dbgObjects,dbgObject) end
+		end
+		self.m_dbgObject = debug.create_collection(dbgObjects)
+		self:UpdateDebugObjectPose()
+	end
+end
+function Component:UpdateDebugObjectPose()
+	if(util.is_valid(self.m_dbgObject) == false or util.is_valid(self.m_target) == false) then return end
+	self.m_dbgObject:SetPos(self.m_target:GetPos())
+	self.m_dbgObject:SetRotation(self.m_target:GetRotation())
 end
 function Component:UpdateSelection()
 	local target = self:GetTarget()

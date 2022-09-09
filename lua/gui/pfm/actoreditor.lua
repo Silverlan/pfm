@@ -252,7 +252,6 @@ function gui.PFMActorEditor:OnInitialize()
 	self:SetMouseInputEnabled(true)
 end
 function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
-	local actor
 	local newActor = (actor == nil)
 	if(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP) then
 		actor = actor or self:CreateNewActor("static_prop")
@@ -263,7 +262,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		self:CreateNewActorComponent(actor,"light_map_receiver",false)
 
 		local pfmActorC = actor:FindComponent("pfm_actor")
-		if(pfmActorC ~= nil) then actor:SetStatic(true) end
+		if(pfmActorC ~= nil) then pfmActorC:SetMemberValue("static",udm.TYPE_BOOLEAN,true) end
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP) then
 		actor = actor or self:CreateNewActor("dynamic_prop")

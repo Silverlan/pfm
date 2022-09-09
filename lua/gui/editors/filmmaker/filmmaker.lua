@@ -767,12 +767,7 @@ function gui.WIFilmmaker:ImportMap(map)
 		if(className == "prop_physics" or className == "world") then
 			if(model ~= nil) then
 				local actor = actorEditor:CreateNewActor(name,pose,uuid)
-
-				local mdlC = actorEditor:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(model) end)
-				actorEditor:CreateNewActorComponent(actor,"model",false)
-					actorEditor:CreateNewActorComponent(actor,"render",false)
-					actorEditor:CreateNewActorComponent(actor,"light_map_receiver",false)
-
+				actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,actor,model)
 				actorEditor:UpdateActorComponents(actor)
 			end
 		elseif(className == "skybox") then
@@ -945,10 +940,10 @@ function gui.WIFilmmaker:CreateSimpleProject()
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor) == false) then return end
 
-	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY,"sky")
-	local cam = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA,"camera")
-	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE,"reflection_probe")
-	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER,"lightmapper")
+	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY)
+	local cam = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA)
+	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE)
+	actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER)
 
 	local filmClip = self:GetActiveGameViewFilmClip()
 	if(filmClip ~= nil) then filmClip:SetCamera(cam) end
