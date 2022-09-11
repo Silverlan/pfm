@@ -17,6 +17,7 @@ console.register_variable("pfm_experimental_enable_panima_for_flex_and_skeletal_
 console.register_variable("pfm_animation_min_curve_sample_deviation_angle",udm.TYPE_FLOAT,0.25,bit.bor(console.FLAG_BIT_ARCHIVE),"The minimum curve angle (in degrees) at which to create new curve animation data samples.")
 console.register_variable("pfm_animation_max_curve_sample_count",udm.TYPE_UINT32,100,bit.bor(console.FLAG_BIT_ARCHIVE),"Maximum number of curve samples to create when generating curve animation data.")
 console.register_variable("pfm_max_undo_steps",udm.TYPE_UINT32,100,bit.bor(console.FLAG_BIT_ARCHIVE),"Maximum number of undo steps.")
+console.register_variable("pfm_restore",udm.TYPE_BOOLEAN,false,bit.bor(console.FLAG_BIT_HIDDEN),"For internal use only. If enabled, last filmmaker state will be restored after level change.")
 
 console.register_command("pfm_bind",function(pl,key,cmd)
 	local pm = tool.get_filmmaker()
@@ -130,3 +131,13 @@ console.register_command("pfm",function(pl,...)
 	local pfm = tool.open_filmmaker(dev)
 	if(project ~= nil) then pfm:LoadProject(project) end
 end)
+
+if(console.get_convar_bool("pfm_restore")) then
+	console.run("pfm_restore","0")
+	time.create_simple_timer(0.0,function()
+		local pm = tool.open_filmmaker()
+		if(util.is_valid(pm)) then
+			pm:RestoreProject()
+		end
+	end)
+end

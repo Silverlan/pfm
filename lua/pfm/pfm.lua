@@ -57,9 +57,12 @@ util.register_class("pfm.Project")
 pfm.Project.FORMAT_EXTENSION_BINARY = "pfmp_b"
 pfm.Project.FORMAT_EXTENSION_ASCII = "pfmp"
 pfm.Project.get_format_extensions = function() return {pfm.Project.FORMAT_EXTENSION_ASCII,pfm.Project.FORMAT_EXTENSION_BINARY} end
-pfm.Project.get_full_project_file_name = function(baseName)
+pfm.Project.get_full_project_file_name = function(baseName,withProjectsPrefix)
+	if(withProjectsPrefix == nil) then withProjectsPrefix = true end
 	baseName = file.remove_file_extension(baseName,pfm.Project.get_format_extensions())
-	return "projects/" .. baseName .. "." .. pfm.Project.FORMAT_EXTENSION_BINARY
+	local res = baseName .. "." .. pfm.Project.FORMAT_EXTENSION_BINARY
+	if(withProjectsPrefix) then res = "projects/" .. res end
+	return res
 end
 function pfm.Project:__init()
 	self:SetName("new_project")
@@ -195,8 +198,7 @@ function pfm.Project:LoadLegacy(f,fileName)
 	debug.stop_profiling_task()
 	return true
 end
-
-function pfm.Project:Load(fileName)
+function pfm.Project:LoadUdmData(fileName)
 	local f = file.open(fileName,bit.bor(file.OPEN_MODE_READ,file.OPEN_MODE_BINARY))
 	if(f == nil) then return false end
 
@@ -213,12 +215,29 @@ function pfm.Project:Load(fileName)
 		debug.stop_profiling_task()
 		return false,err
 	end
+	return udmFile
+end
+function pfm.Project:Load(fileName,ignoreMap)
+	local udmFile,err = self:LoadUdmData(fileName)
+	if(udmFile == false) then return udmFile,err end
 	local udmData = udmFile:GetAssetData():GetData()
 	if(udmData:Get("session"):IsValid() == false) then
 		debug.stop_profiling_task()
 		return false,"Project file contains no session!"
 	end
-	local session = udm.create_property_from_schema(pfm.udm.SCHEMA,"Session",nil,udmData:Get("session"):ClaimOwnership())
+	local udmSession = udmData:Get("session"):ClaimOwnership()
+	local udmSettings = udmSession:Get("settings")
+	if(ignoreMap ~= true) then
+		local mapName = udmSettings:GetValue("mapName",udm.TYPE_STRING)
+		if(mapName ~= nil) then mapName = asset.get_normalized_path(mapName,asset.TYPE_MAP) end
+		local curMapName = asset.get_normalized_path(game.get_map_name(),asset.TYPE_MAP)
+		if(mapName ~= nil and #mapName > 0 and curMapName ~= mapName) then
+			print("Map of loaded project (" .. mapName .. ") does not match current map (" .. curMapName .. ")! Changing...")
+			pfm.get_project_manager():ChangeMap(mapName,fileName)
+			return false
+		end
+	end
+	local session = udm.create_property_from_schema(pfm.udm.SCHEMA,"Session",nil,udmSession)
 	debug.stop_profiling_task()
 
 	self.m_session = session
@@ -288,9 +307,9 @@ pfm.create_empty_project = function()
 	return project
 end
 
-pfm.load_project = function(fileName)
+pfm.load_project = function(fileName,ignoreMap)
 	local project = pfm.create_project()
-	if(project:Load(fileName) == false) then return end
+	if(project:Load(fileName,ignoreMap) == false) then return end
 	return project
 end
 

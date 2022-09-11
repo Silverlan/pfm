@@ -84,14 +84,15 @@ function pfm.ProjectManager:RestorePersistentProject(data)
 	self.m_project = data.project
 	return util.is_valid(self:InitializeProject(self.m_project))
 end
-function pfm.ProjectManager:LoadProject(fileName)
+function pfm.ProjectManager:SetProjectFileName(fileName) self.m_projectFileName = fileName end
+function pfm.ProjectManager:LoadProject(fileName,ignoreMap)
 	fileName = file.remove_file_extension(fileName,pfm.Project.get_format_extensions())
 	local binFileName = fileName .. "." .. pfm.Project.FORMAT_EXTENSION_BINARY
 	if(file.exists(binFileName)) then fileName = binFileName
 	else fileName = fileName .. "." .. pfm.Project.FORMAT_EXTENSION_ASCII end
 	self:CloseProject()
 	pfm.log("Loading project '" .. fileName .. "'...",pfm.LOG_CATEGORY_PFM)
-	local project = pfm.load_project(fileName)
+	local project = pfm.load_project(fileName,ignoreMap)
 	if(project == nil) then
 		pfm.log("Unable to load project '" .. fileName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return self:CreateNewProject()

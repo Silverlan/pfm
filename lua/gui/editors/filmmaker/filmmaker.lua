@@ -43,6 +43,7 @@ include("/util/table_bininsert.lua")
 gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
 locale.load("pfm_popup_messages.txt")
+locale.load("pfm_loading.txt")
 locale.load("physics_materials.txt")
 
 include("windows")
@@ -380,14 +381,7 @@ function gui.WIFilmmaker:OnInitialize()
 			local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 				if(fileName == nil) then return end
 				local map = el:GetFilePath(true)
-				time.create_simple_timer(0.0,function()
-					tool.close_filmmaker()
-					local elBase = gui.get_base_element()
-					local mapName = asset.get_normalized_path(map,asset.TYPE_MAP)
-					pfm.show_loading_screen(true,mapName)
-					el:SetMap(mapName)
-					console.run("map",mapName)
-				end)
+				self:ChangeMap(map)
 			end)
 			pFileDialog:SetRootPath("maps")
 			pFileDialog:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP))
@@ -729,6 +723,86 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 	end
 end
+function gui.WIFilmmaker:ChangeMap(map,projectFileName)
+	pfm.log("Changing map to '" .. map .. "'...",pfm.LOG_CATEGORY_PFM)
+	time.create_simple_timer(0.0,function()
+		local elBase = gui.get_base_element()
+		local mapName = asset.get_normalized_path(map,asset.TYPE_MAP)
+
+		local el = udm.create_element()
+		local writeNewMapName = (projectFileName == nil)
+		local restoreProjectName = projectFileName
+		projectFileName = projectFileName or self:GetProjectFileName()
+		if(projectFileName ~= nil) then el:SetValue("originalProjectFileName",udm.TYPE_STRING,projectFileName) end
+
+		file.create_path("temp/pfm/restore")
+		if(restoreProjectName == nil) then
+			restoreProjectName = "temp/pfm/restore/project"
+			if(self:Save(restoreProjectName,false,nil,false) == false) then
+				pfm.log("Failed to save restore project. Map will not be changed!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+				return
+			end
+		end
+		el:SetValue("restoreProjectFileName",udm.TYPE_STRING,restoreProjectName)
+		if(writeNewMapName) then el:SetValue("newProjectMapName",udm.TYPE_STRING,map) end
+
+		local udmData,err = udm.create("PFMRST",1)
+		local assetData = udmData:GetAssetData()
+		assetData:GetData():Merge(el:Get())
+
+		local f = file.open("temp/pfm/restore/restore.udm",file.OPEN_MODE_WRITE)
+		if(f ~= nil) then
+			local res,msg = udmData:SaveAscii(f)
+			f:Close()
+
+			if(res == false) then
+				pfm.log("Failed to write restore file. Map will not be changed!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+				return
+			end
+		else
+			pfm.log("Failed to write restore file. Map will not be changed!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+			return
+		end
+
+		tool.close_filmmaker()
+		pfm.show_loading_screen(true,mapName)
+		console.run("pfm_restore","1")
+		console.run("map",mapName)
+	end)
+end
+function gui.WIFilmmaker:RestoreProject()
+	local udmData,err = udm.load("temp/pfm/restore/restore.udm")
+	local originalProjectFileName
+	if(udmData == false) then
+		pfm.log("Failed to restore project: Unable to open restore file!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+		return false
+	end
+	udmData = udmData:GetAssetData():GetData()
+	local restoreData = udmData:ClaimOwnership()
+	originalProjectFileName = restoreData:GetValue("originalProjectFileName",udm.TYPE_STRING)
+	local restoreProjectFileName = restoreData:GetValue("restoreProjectFileName",udm.TYPE_STRING)
+	if(restoreProjectFileName == nil) then
+		pfm.log("Failed to restore project: Invalid restore data!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+		return false
+	end
+	local fileName = restoreProjectFileName
+	if(self:LoadProject(fileName,true) == false) then
+		pfm.log("Failed to restore project: Unable to load restore project!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+		self:CloseProject()
+		self:CreateEmptyProject()
+		return false
+	end
+	local newProjectMapName = restoreData:GetValue("newProjectMapName")
+	if(newProjectMapName ~= nil) then
+		local session = self:GetSession()
+		if(session ~= nil) then
+			local settings = session:GetSettings()
+			settings:SetMapName(asset.get_normalized_path(newProjectMapName,asset.TYPE_MAP))
+		end
+	end
+	self:SetProjectFileName(originalProjectFileName)
+	file.delete_directory("temp/pfm/restore")
+end
 function gui.WIFilmmaker:ImportMap(map)
 	map = file.remove_file_extension(map,asset.get_supported_extensions(asset.TYPE_MAP))
 	map = asset.find_file(map,asset.TYPE_MAP)
@@ -899,14 +973,14 @@ function gui.WIFilmmaker:SetOverlaySceneEnabled(enabled)
 
 	self:TagRenderSceneAsDirty()
 end
-function gui.WIFilmmaker:Save(fileName,setAsProjectName,saveAs)
+function gui.WIFilmmaker:Save(fileName,setAsProjectName,saveAs,withProjectsPrefix)
 	if(setAsProjectName == nil) then setAsProjectName = true end
 	local project = self:GetProject()
 	if(project == nil) then return end
 	local function saveProject(fileName)
 		file.create_directory("projects")
 		fileName = file.remove_file_extension(fileName,pfm.Project.get_format_extensions())
-		fileName = pfm.Project.get_full_project_file_name(fileName)
+		fileName = pfm.Project.get_full_project_file_name(fileName,withProjectsPrefix)
 		local res = self:SaveProject(fileName,setAsProjectName and fileName or nil)
 		if(res) then
 			pfm.create_popup_message(locale.get_text("pfm_save_success"),1)
@@ -950,6 +1024,13 @@ function gui.WIFilmmaker:CreateSimpleProject()
 end
 function gui.WIFilmmaker:CreateEmptyProject()
 	self:CreateNewProject()
+
+	local session = self:GetSession()
+	if(session ~= nil) then
+		local settings = session:GetSettings()
+		pfm.log("Assigning map name '" .. game.get_map_name() .. "' to new project.",pfm.LOG_CATEGORY_PFM)
+		settings:SetMapName(game.get_map_name())
+	end
 
 	local filmClip = self:GetActiveFilmClip()
 	if(filmClip == nil) then return end
