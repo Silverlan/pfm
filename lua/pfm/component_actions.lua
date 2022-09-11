@@ -272,3 +272,21 @@ pfm.register_component_action("pfm_region_carver","pfm_carve","carve",function(c
 	end)
 	return bt
 end)
+
+pfm.register_component_action("pfm_region_carver","pfm_remove_outside_actors","remove_outside",function(controls,actorData,entActor,actionData)
+	local bt = gui.create("WIPFMActionButton",controls)
+	bt:SetText(locale.get_text("remove_outside"))
+	bt:AddCallback("OnPressed",function()
+		local tRemove = {}
+		for ent,c in ents.citerator(ents.COMPONENT_PFM_REGION_CARVE_TARGET) do
+			if(ent:HasComponent(ents.COMPONENT_PFM_ACTOR) and c:GetCarvedModel() == "empty") then
+				table.insert(tRemove,tostring(ent:GetUuid()))
+			end
+		end
+		local actorEditor = tool.get_filmmaker():GetActorEditor()
+		if(util.is_valid(actorEditor)) then
+			actorEditor:RemoveActors(tRemove)
+		end
+	end)
+	return bt
+end)
