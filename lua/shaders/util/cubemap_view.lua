@@ -36,7 +36,8 @@ function shader.CubemapView:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
 function shader.CubemapView:Record(drawCmd,ds,vp,vertexBuffer,vertexCount,lineWidth,xRange,yRange,color)
-	if(self:IsValid() == false) then return false end
+	local shader = self:GetShader()
+	if(shader:IsValid() == false) then return false end
 
 	local dsPushConstants = util.DataStream(PUSH_CONSTANT_SIZE)
 	dsPushConstants:Seek(0)
@@ -44,12 +45,12 @@ function shader.CubemapView:Record(drawCmd,ds,vp,vertexBuffer,vertexCount,lineWi
 
 	local DynArg = prosper.PreparedCommandBuffer.DynArg
 	local bindState = shader.BindState(drawCmd)
-	if(self:RecordBeginDraw(bindState)) then
-		self:RecordBindDescriptorSet(bindState,ds,0)
-		self:RecordBindVertexBuffers(bindState,{vertexBuffer})
-		self:RecordPushConstants(bindState,dsPushConstants)
-		self:RecordDraw(bindState,vertexCount)
-		self:RecordEndDraw(bindState)
+	if(shader:RecordBeginDraw(bindState)) then
+		shader:RecordBindDescriptorSet(bindState,ds,0)
+		shader:RecordBindVertexBuffers(bindState,{vertexBuffer})
+		shader:RecordPushConstants(bindState,dsPushConstants)
+		shader:RecordDraw(bindState,vertexCount)
+		shader:RecordEndDraw(bindState)
 	end
 	return true
 end

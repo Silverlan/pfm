@@ -29,7 +29,8 @@ function shader.PFMCurve:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
 function shader.PFMCurve:Record(pcb,vertexBuffer,vertexCount,lineWidth,xRange,yRange,color)
-	if(self:IsValid() == false) then return false end
+	local shader = self:GetShader()
+	if(shader:IsValid() == false) then return false end
 
 	local dsPushConstants = util.DataStream(PUSH_CONSTANT_SIZE -util.SIZEOF_MAT4 -util.SIZEOF_INT)
 	dsPushConstants:Seek(0)
@@ -38,14 +39,14 @@ function shader.PFMCurve:Record(pcb,vertexBuffer,vertexCount,lineWidth,xRange,yR
 	dsPushConstants:WriteVector2(yRange)
 
 	local DynArg = prosper.PreparedCommandBuffer.DynArg
-	self:RecordBeginDraw(pcb)
+	shader:RecordBeginDraw(pcb)
 		pcb:RecordSetLineWidth(lineWidth)
-		self:RecordBindVertexBuffers(pcb,{vertexBuffer})
-		self:RecordPushConstants(pcb,udm.TYPE_MAT4,DynArg("matDraw"))
-		self:RecordPushConstants(pcb,dsPushConstants,util.SIZEOF_MAT4)
-		self:RecordPushConstants(pcb,udm.TYPE_UINT32,DynArg("viewportSize"),util.SIZEOF_MAT4 +dsPushConstants:GetSize())
-		self:RecordDraw(pcb,vertexCount)
-	self:RecordEndDraw(pcb)
+		shader:RecordBindVertexBuffers(pcb,{vertexBuffer})
+		shader:RecordPushConstants(pcb,udm.TYPE_MAT4,DynArg("matDraw"))
+		shader:RecordPushConstants(pcb,dsPushConstants,util.SIZEOF_MAT4)
+		shader:RecordPushConstants(pcb,udm.TYPE_UINT32,DynArg("viewportSize"),util.SIZEOF_MAT4 +dsPushConstants:GetSize())
+		shader:RecordDraw(pcb,vertexCount)
+	shader:RecordEndDraw(pcb)
 	return true
 end
 shader.register("pfm_curve",shader.PFMCurve)

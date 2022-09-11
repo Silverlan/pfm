@@ -75,6 +75,6 @@ function ents.PFMGrid:Draw()
 	
 	local m = Mat4(1.0)
 	m:Translate(gridOrigin)
-	self.m_shader:Draw(game.get_draw_command_buffer(),origin,spacing,radius,scene,m)
+	self.m_shader:GetWrapper():Draw(game.get_draw_command_buffer(),origin,spacing,radius,scene,m)
 end
 ents.COMPONENT_PFM_GRID = ents.register_component("pfm_grid",ents.PFMGrid)

@@ -74,20 +74,21 @@ function shader.PFMGrid3D:OnDraw(drawCmd)
 end
 function shader.PFMGrid3D:Draw(drawCmd,origin,spacing,radius,scene,m)
 	local bindState = shader.BindState(drawCmd)
-	if(self:RecordBeginDraw(bindState) == false) then return end
+	local baseShader = self:GetShader()
+	if(baseShader:RecordBeginDraw(bindState) == false) then return end
 	local vertexBuffer = self:InitializeBuffer()
 	if(util.is_valid(vertexBuffer) == false) then return end
 	local vertCount = math.ceil((radius *8) /spacing)
-	self:RecordBindVertexBuffers(bindState,{vertexBuffer})
-	self:RecordBindDescriptorSet(bindState,scene:GetCameraDescriptorSet())
+	baseShader:RecordBindVertexBuffers(bindState,{vertexBuffer})
+	baseShader:RecordBindDescriptorSet(bindState,scene:GetCameraDescriptorSet())
 	self:OnDraw(drawCmd)
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteMat4(m)
 	self.m_dsPushConstants:WriteVector4(Vector4(origin.x,origin.y,origin.z,spacing))
 	self.m_dsPushConstants:WriteFloat(radius)
-	self:RecordPushConstants(bindState,self.m_dsPushConstants)
+	baseShader:RecordPushConstants(bindState,self.m_dsPushConstants)
 	drawCmd:RecordDraw(bindState,vertCount,1,0)
 	
-	self:RecordEndDraw(bindState)
+	baseShader:RecordEndDraw(bindState)
 end
 shader.register("pfm_grid_3d",shader.PFMGrid3D)

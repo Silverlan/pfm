@@ -69,12 +69,13 @@ function Shader:InitializeRenderPass(pipelineIdx)
 end
 function Shader:Draw(drawCmd,dsTex)
 	local bindState = shader.BindState(drawCmd)
-	if(self:IsValid() == false or self:RecordBeginDraw(bindState) == false) then return end
+	local baseShader = self:GetShader()
+	if(baseShader:IsValid() == false or baseShader:RecordBeginDraw(bindState) == false) then return end
 	local buf,numVerts = prosper.util.get_square_vertex_uv_buffer()
-	self:RecordBindVertexBuffers(bindState,{buf})
-	self:RecordBindDescriptorSet(bindState,dsTex)
+	baseShader:RecordBindVertexBuffers(bindState,{buf})
+	baseShader:RecordBindDescriptorSet(bindState,dsTex)
 
-	self:RecordDraw(bindState,prosper.util.get_square_vertex_count())
-	self:RecordEndDraw(bindState)
+	baseShader:RecordDraw(bindState,prosper.util.get_square_vertex_count())
+	baseShader:RecordEndDraw(bindState)
 end
 shader.register("util_pbr_to_fake_pbr",Shader)

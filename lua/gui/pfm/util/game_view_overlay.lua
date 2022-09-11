@@ -165,7 +165,7 @@ function util.ImagePostProcessor:ApplyDepthOfField()
 		-- TODO
 		local bloomScale = 1.0
 		local glowScale = 1.0
-		shaderComposition:Draw(drawCmd,self.m_dsSceneComposition,bloomScale,glowScale)
+		shaderComposition:GetWrapper():Draw(drawCmd,self.m_dsSceneComposition,bloomScale,glowScale)
 		drawCmd:RecordEndRenderPass()
 	end
 	-- (Render pass has already moved target image to shader-read layout)
@@ -246,7 +246,7 @@ function util.ImagePostProcessor:ComposeSceneTextures(drawCmd,w,h,renderer,rtOut
 		-- TODO
 		local bloomScale = 1.0
 		local glowScale = 1.0
-		shaderComposition:Draw(drawCmd,self.m_dsSceneComposition,bloomScale,glowScale)
+		shaderComposition:GetWrapper():Draw(drawCmd,self.m_dsSceneComposition,bloomScale,glowScale)
 		drawCmd:RecordEndRenderPass()
 	end
 	-- (Render pass has already moved target image to shader-read layout)

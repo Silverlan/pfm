@@ -135,7 +135,7 @@ function gui.CubemapView:UpdateView(drawCmd)
 	if(drawCmd:RecordBeginRenderPass(rpInfo)) then
 		local shader = shader.get("cubemap_view")
 		drawCmd:RecordImageBarrier(self.m_renderTarget:GetTexture():GetImage(),prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-		shader:Record(drawCmd,self.m_ds,vp,prosper.util.get_square_vertex_uv_buffer(),prosper.util.get_square_vertex_count(),2.0,1,1,Color.Red)
+		shader:GetWrapper():Record(drawCmd,self.m_ds,vp,prosper.util.get_square_vertex_uv_buffer(),prosper.util.get_square_vertex_count(),2.0,1,1,Color.Red)
 		drawCmd:RecordImageBarrier(self.m_renderTarget:GetTexture():GetImage(),prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 
 		drawCmd:RecordEndRenderPass()

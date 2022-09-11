@@ -75,7 +75,7 @@ function gui.ToneMappedImage:InitializeImageProcessor()
 		local toneMapping = 0 -- TODO
 		local isGammaCorrected = (img:GetFormat() ~= prosper.FORMAT_R16G16B16A16_SFLOAT) -- Assume the image is gamma corrected if it's not a HDR image
 		local args = self:GetToneMappingAlgorithmArgs()
-		self.m_shader:Draw(drawCmd,dsTex,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
+		self.m_shader:GetWrapper():Draw(drawCmd,dsTex,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
 	end)
 	self.m_imgProcessor:AddStage("vr",function(drawCmd,dsTex,rtDst)
 		self:ApplyVR(drawCmd,dsTex)
@@ -179,7 +179,7 @@ function gui.ToneMappedImage:RenderDOF(drawCmd)
 		prosper.ACCESS_TRANSFER_WRITE_BIT,bit.bor(prosper.ACCESS_COLOR_ATTACHMENT_READ_BIT,prosper.ACCESS_COLOR_ATTACHMENT_WRITE_BIT)
 	)
 	if(drawCmd:RecordBeginRenderPass(prosper.RenderPassInfo(self.m_rtStaging))) then
-		self.m_shaderDof:Draw(drawCmd,Mat4(1.0),self.m_dsDof,self.m_dofSettings,texStaging:GetWidth(),texStaging:GetHeight(),self.m_nearZ,self.m_farZ)
+		self.m_shaderDof:GetWrapper():Draw(drawCmd,Mat4(1.0),self.m_dsDof,self.m_dofSettings,texStaging:GetWidth(),texStaging:GetHeight(),self.m_nearZ,self.m_farZ)
 
 		drawCmd:RecordEndRenderPass()
 	end
@@ -220,7 +220,7 @@ function gui.ToneMappedImage:Render(drawCmd,pose,toneMapping)
 	-- TODO: Apply scissor
 	local img = self.m_texture:GetImage()
 	local isGammaCorrected = (img:GetFormat() ~= prosper.FORMAT_R16G16B16A16_SFLOAT) -- Assume the image is gamma corrected if it's not a HDR image
-	self.m_shader:Draw(drawCmd,pose,self.m_dsTonemapping,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
+	self.m_shader:GetWrapper():Draw(drawCmd,pose,self.m_dsTonemapping,exposure,toneMapping,isGammaCorrected,self.m_luminance,args)
 
 	--self.m_imgProcessor:Apply(drawCmd)
 end

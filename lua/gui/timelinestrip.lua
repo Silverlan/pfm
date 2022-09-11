@@ -88,7 +88,7 @@ end
 function gui.TimelineStrip:RebuildRenderCommandBuffer()
 	if(self.m_shader == nil) then return end
 	local pcb = prosper.PreparedCommandBuffer()
-	if(self.m_shader:Record(pcb,self:GetLineCount(),self:GetAxis():GetStrideX(self:GetPrimAxisExtents(self)) *self:GetAxis():GetZoomLevelMultiplier(),self:GetColor(),self.m_yMultiplier,self:IsHorizontal()) == false) then pcb = nil end
+	if(self.m_shader:GetWrapper():Record(pcb,self:GetLineCount(),self:GetAxis():GetStrideX(self:GetPrimAxisExtents(self)) *self:GetAxis():GetZoomLevelMultiplier(),self:GetColor(),self.m_yMultiplier,self:IsHorizontal()) == false) then pcb = nil end
 	self:SetRenderCommandBuffer(pcb)
 end
 function gui.TimelineStrip:SetAxis(axis) self.m_axis = axis end

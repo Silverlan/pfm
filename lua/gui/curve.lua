@@ -36,7 +36,7 @@ function gui.Curve:OnInitialize()
 end
 function gui.Curve:RebuildRenderCommandBuffer()
 	local pcb = prosper.PreparedCommandBuffer()
-	if(self.m_shader:Record(pcb,self.m_lineBuffer,self.m_vertexCount,self.m_lineWidth,self.m_xRange,self.m_yRange,self:GetColor()) == false) then pcb = nil end
+	if(self.m_shader:GetWrapper():Record(pcb,self.m_lineBuffer,self.m_vertexCount,self.m_lineWidth,self.m_xRange,self.m_yRange,self:GetColor()) == false) then pcb = nil end
 
 	self:SetRenderCommandBuffer(pcb)
 end

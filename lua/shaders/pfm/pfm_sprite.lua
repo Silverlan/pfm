@@ -40,13 +40,14 @@ function shader.PFMSprite:InitializePipeline(pipelineInfo,pipelineIdx)
 	pipelineInfo:SetLineWidth(4)
 end
 function shader.PFMSprite:Draw(drawCmd,origin,size,color,mvp)
+	local baseShader = self:GetShader()
 	if(self.m_dsInitialized ~= true) then
 		self.m_dsInitialized = true
 		local mat = game.load_material("pfm/bone_transform_path_node",false,true)
 		local texInfo = (mat ~= nil) and mat:GetTextureInfo("albedo_map") or nil
 		local tex = (texInfo ~= nil) and texInfo:GetTexture() or nil
 		local vkTex = (tex ~= nil) and tex:GetVkTexture() or nil
-		local ds = (vkTex ~= nil) and self:CreateDescriptorSet(0) or nil
+		local ds = (vkTex ~= nil) and baseShader:CreateDescriptorSet(0) or nil
 		if(ds ~= nil) then
 			self.m_dsTex = ds
 			ds:SetBindingTexture(0,vkTex)
@@ -54,10 +55,10 @@ function shader.PFMSprite:Draw(drawCmd,origin,size,color,mvp)
 	end
 
 	local bindState = shader.BindState(drawCmd)
-	if(self:IsValid() == false or self.m_dsTex == nil or self:RecordBeginDraw(bindState) == false) then return end
+	if(baseShader:IsValid() == false or self.m_dsTex == nil or baseShader:RecordBeginDraw(bindState) == false) then return end
 	local buf,numVerts = prosper.util.get_square_vertex_uv_buffer()
-	self:RecordBindVertexBuffers(bindState,{buf})
-	self:RecordBindDescriptorSet(bindState,self.m_dsTex)
+	baseShader:RecordBindVertexBuffers(bindState,{buf})
+	baseShader:RecordBindDescriptorSet(bindState,self.m_dsTex)
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteMat4(mvp)
@@ -65,8 +66,8 @@ function shader.PFMSprite:Draw(drawCmd,origin,size,color,mvp)
 	self.m_dsPushConstants:WriteVector4(color:ToVector4())
 	self.m_dsPushConstants:WriteVector2(size)
 
-	self:RecordPushConstants(bindState,self.m_dsPushConstants)
-	self:RecordDraw(bindState,prosper.util.get_square_vertex_count())
-	self:RecordEndDraw(bindState)
+	baseShader:RecordPushConstants(bindState,self.m_dsPushConstants)
+	baseShader:RecordDraw(bindState,prosper.util.get_square_vertex_count())
+	baseShader:RecordEndDraw(bindState)
 end
 shader.register("pfm_sprite",shader.PFMSprite)

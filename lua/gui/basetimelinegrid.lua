@@ -57,7 +57,7 @@ end
 function gui.BaseTimelineGrid:RebuildRenderCommandBuffer()
 	if(self.m_shader == nil) then return end
 	local pcb = prosper.PreparedCommandBuffer()
-	if(self.m_shader:Record(pcb,self:GetLineCount(),self:GetAxis():GetStrideX(self:GetWidth()),self:GetColor(),4,self:GetLineWidth(),self:IsHorizontal()) == false) then pcb = nil end
+	if(self.m_shader:GetWrapper():Record(pcb,self:GetLineCount(),self:GetAxis():GetStrideX(self:GetWidth()),self:GetColor(),4,self:GetLineWidth(),self:IsHorizontal()) == false) then pcb = nil end
 	self:SetRenderCommandBuffer(pcb)
 end
 function gui.BaseTimelineGrid:SetPrimAxisExtents(el,ext)

@@ -26,7 +26,7 @@ function gui.BaseGridLayer:RebuildRenderCommandBuffer()
 	local pcb = prosper.PreparedCommandBuffer()
 
 	local stride = self:GetUnitPixelStride() /self:GetPrimAxisExtents(self)
-	if(self.m_shader:Record(pcb,self:GetLineCount(),stride,self:GetColor(),self.m_yMultiplier,self.m_lineWidth,not self:IsHorizontal()) == false) then pcb = nil end
+	if(self.m_shader:GetWrapper():Record(pcb,self:GetLineCount(),stride,self:GetColor(),self.m_yMultiplier,self.m_lineWidth,not self:IsHorizontal()) == false) then pcb = nil end
 	self:SetRenderCommandBuffer(pcb)
 end
 function gui.BaseGridLayer:SetLineWidth(width) self.m_lineWidth = width end

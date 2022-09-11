@@ -622,7 +622,7 @@ function util.convert_pbr_to_fake_pbr(mat)
 	local drawCmd = game.get_setup_command_buffer()
 
 	if(drawCmd:RecordBeginRenderPass(prosper.RenderPassInfo(rt))) then
-		shaderFakePbr:Draw(drawCmd,ds)
+		shaderFakePbr:GetWrapper():Draw(drawCmd,ds)
 		drawCmd:RecordEndRenderPass()
 	end
 	if(generateMipmaps) then
