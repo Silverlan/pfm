@@ -23,7 +23,7 @@ function gui.HBox:OnUpdate()
 	for i,child in ipairs(children) do
 		if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
 			child:SetX(x)
-			if(self.m_autoFillHeight == true and child:HasAnchor() == false) then child:SetHeight(size.y) end
+			if(self.m_autoFillHeight == true and child:HasAnchor() == false) then child:SetHeight(math.max(size.y,0)) end
 			x = x +child:GetWidth()
 			h = math.max(h,child:GetBottom())
 
@@ -36,8 +36,14 @@ function gui.HBox:OnUpdate()
 	local curSize = size:Copy()
 	if(self.m_fixedWidth ~= true) then size.x = x
 	elseif(self.m_autoFillWidth == true and children[autoFillChild] ~= nil and children[autoFillChild]:HasAnchor() == false) then
-		local sizeAdd = (size.x -children[lastChild]:GetRight())
-		children[autoFillChild]:SetWidth(children[autoFillChild]:GetWidth() +sizeAdd)
+		local width
+		if(util.is_same_object(children[autoFillChild],children[lastChild])) then
+			width = size.x -children[autoFillChild]:GetLeft()
+		else
+			local sizeAdd = (size.x -children[lastChild]:GetRight())
+			width = children[autoFillChild]:GetWidth() +sizeAdd
+		end
+		children[autoFillChild]:SetWidth(width)
 		children[autoFillChild]:Update()
 
 		for i=autoFillChild +1,#children do
@@ -47,9 +53,14 @@ function gui.HBox:OnUpdate()
 			end
 		end
 	end
-	if(self.m_fixedHeight ~= true) then size.y = h end
-	if(size ~= curSize and self:HasAnchor() == false) then self:SetSize(size) end
-	self:CallCallbacks("OnContentsUpdated")
+	if(self.m_sizeUpdateRequired) then
+		if(self.m_fixedHeight ~= true) then size.y = h end
+		size.x = math.max(size.x,0)
+		size.y = math.max(size.y,0)
+		if(size ~= curSize and self:HasAnchor() == false) then self:UpdateSize(size) end
+		self:CallCallbacks("OnContentsUpdated")
+		self.m_sizeUpdateRequired = nil
+	end
 end
 function gui.HBox:IsHorizontalBox() return true end
 gui.register("WIHBox",gui.HBox)

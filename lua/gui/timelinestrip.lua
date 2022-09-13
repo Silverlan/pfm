@@ -240,7 +240,7 @@ function gui.LabelledTimelineStrip:OnUpdate()
 	if((numTextElements +1) <= #self.m_textElements) then
 		for i=numTextElements +1,#self.m_textElements do
 			local el = self.m_textElements[i]
-			if(el:IsValid()) then el:SetVisible(false) end
+			if(util.is_valid(el)) then el:SetVisible(false) end
 		end
 	end
 

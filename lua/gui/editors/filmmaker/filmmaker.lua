@@ -722,6 +722,13 @@ function gui.WIFilmmaker:OnInitialize()
 			udmNotifications:SetValue("initial_welcome_message",udm.TYPE_UINT8,1)
 		end)
 	end
+
+	self:SetSkinCallbacksEnabled(true)
+end
+function gui.WIFilmmaker:OnSkinApplied()
+	self:GetMenuBar():Update()
+	-- This fixes an issue where the initial resizer position is incorrect. TODO: Fix the actual cause and remove this work-around
+	self.m_hResizer:SetFraction(self.m_hResizer:GetFraction())
 end
 function gui.WIFilmmaker:ChangeMap(map,projectFileName)
 	pfm.log("Changing map to '" .. map .. "'...",pfm.LOG_CATEGORY_PFM)
@@ -1595,7 +1602,8 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	local actorDataFrame = self:AddFrame()
 	self.m_actorDataFrame = actorDataFrame
 	
-	gui.create("WIResizer",self.m_contents):SetFraction(0.25)
+	self.m_vResizer = gui.create("WIResizer",self.m_contents)
+	self.m_vResizer:SetFraction(0.25)
 
 	self.m_contentsRight = gui.create("WIVBox",self.m_contents)
 	self.m_contents:Update()
@@ -1871,7 +1879,8 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 	if(util.is_valid(elVp)) then elVp:UpdateRenderSettings() end
 
-	gui.create("WIResizer",self.m_contentsRight):SetFraction(0.75)
+	self.m_hResizer = gui.create("WIResizer",self.m_contentsRight)
+	self.m_hResizer:SetFraction(0.75)
 
 	local timelineFrame = self:AddFrame(self.m_contentsRight)
 	local pfmTimeline = gui.create("WIPFMTimeline")

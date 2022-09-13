@@ -44,11 +44,11 @@ function gui.Resizer:OnInitialize()
 	parent:AddCallback("OnContentsUpdated",function(p)
 		if(self.m_updateRequired ~= true) then return end
 		self.m_updateRequired = nil
-		self:ScheduleUpdate()
+		self:UpdateResizeElements()
 	end)
-	self:ScheduleUpdate()
+	self:UpdateResizeElements()
 end
-function gui.Resizer:OnUpdate()
+function gui.Resizer:UpdateResizeElements()
 	local parent = self:GetParent()
 	if(parent:GetClass() ~= "wihbox" and parent:GetClass() ~= "wivbox") then return end
 	-- If we're a parent of a hbox or vbox, we'll assign some default parameters for convenience
@@ -125,7 +125,7 @@ end
 function gui.Resizer:SetFraction(fraction)
 	fraction = math.clamp(fraction,0.0,1.0)
 	self.m_fraction = fraction
-	self:ScheduleUpdate()
+	self:UpdateResizeElements()
 end
 function gui.Resizer:GetFraction() return self.m_fraction end
 function gui.Resizer:GetRangeExtents()

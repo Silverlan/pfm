@@ -26,7 +26,13 @@ function gui.BaseBox:SetBackgroundElement(el)
 	self.m_backgroundElements = self.m_backgroundElements or {}
 	self.m_backgroundElements[el] = true
 end
+function gui.BaseBox:UpdateSize(size)
+	self.m_skipSizeUpdateSchedule = true
+	self:SetSize(size)
+	self.m_skipSizeUpdateSchedule = nil
+end
 function gui.BaseBox:OnSizeChanged(w,h)
+	if(self.m_skipSizeUpdateSchedule) then return end
 	self:ScheduleUpdate()
 end
 function gui.BaseBox:OnInitialize()
@@ -35,20 +41,24 @@ function gui.BaseBox:OnInitialize()
 	self:SetAutoSizeToContents()
 	self.m_childCallbacks = {}
 	self:AddCallback("OnChildAdded",function(el,elChild)
+		self.m_sizeUpdateRequired = true
 		self:ScheduleUpdate()
 		if(self:IsBackgroundElement(elChild)) then return end
 		self.m_childCallbacks[elChild] = {}
 		table.insert(self.m_childCallbacks[elChild],elChild:AddCallback("SetSize",function(elChild)
 			-- Note: We mustn't update if the child is anchored, otherwise we end up in an infinite recursion!
 			if(elChild:HasAnchor()) then return end
+			self.m_sizeUpdateRequired = true
 			self:ScheduleUpdate()
 		end))
 		table.insert(self.m_childCallbacks[elChild],elChild:AddCallback("OnRemove",function(elChild)
 			-- We'll have to update whenever one of our children has been removed
+			self.m_sizeUpdateRequired = true
 			self:ScheduleUpdate()
 		end))
 		local visProp = elChild:GetVisibilityProperty()
 		table.insert(self.m_childCallbacks[elChild],visProp:AddCallback(function()
+			self.m_sizeUpdateRequired = true
 			self:ScheduleUpdate()
 		end))
 	end)

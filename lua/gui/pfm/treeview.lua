@@ -230,6 +230,7 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 	self.m_vLine:SetName("child vertical line indicator")
 
 	self.m_vBoxChildren = gui.create("WIVBox",self.m_childHBox,0,0,self:GetWidth(),self:GetHeight())
+	self.m_vBoxChildren:SetFixedWidth(true)
 	self.m_vBoxChildren:SetAutoFillContentsToWidth(true)
 	self.m_vBoxChildren:SetName("child contents box")
 
@@ -242,6 +243,7 @@ function gui.PFMTreeViewElement:OnSizeChanged(w,h)
 		-- We need to update immediately to avoid some weird twitching effects
 		self.m_vBox:Update()
 	end
+	if(self.m_skipSizeUpdateSchedule) then return end
 	self:ScheduleUpdate()
 end
 function gui.PFMTreeViewElement:OnUpdate()
@@ -277,7 +279,9 @@ function gui.PFMTreeViewElement:OnUpdate()
 	end
 
 	self:UpdateChildBoxBounds()
+	self.m_skipSizeUpdateSchedule = true
 	self:SizeToContents()
+	self.m_skipSizeUpdateSchedule = nil
 end
 function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 	if(util.is_valid(item.m_expandIcon)) then return item.m_expandIcon end
@@ -289,6 +293,8 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 		if(util.is_valid(item.m_childHBox)) then item.m_childHBox:SetVisible(true) end
 		self:UpdateChildBoxBounds()
 		item:CallCallbacks("OnExpand")
+
+		self:FullUpdate()
 	end)
 	expandIcon:AddCallback("OnCollapse",function()
 		if(item:IsValid() == false) then return end
@@ -299,6 +305,8 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 		end
 		if(util.is_valid(item.m_childHBox)) then item.m_childHBox:SetVisible(false) end
 		item:CallCallbacks("OnCollapse")
+
+		self:FullUpdate()
 	end)
 	item:RemoveElementOnRemoval(expandIcon)
 	item.m_expandIcon = expandIcon
@@ -343,6 +351,19 @@ function gui.PFMTreeViewElement:Collapse()
 	if(self:IsRoot()) then return end -- Root item can never be collapsed
 	self.m_collapsed = true
 	if(util.is_valid(self.m_expandIcon)) then self.m_expandIcon:Collapse() end
+end
+function gui.PFMTreeViewElement:FullUpdate()
+	self.m_treeView:GetRoot():ScheduleUpdate()
+	local parent = self:GetParentItem()
+	if(parent ~= nil) then
+		for _,item in ipairs(parent:GetItems()) do
+			item:ScheduleUpdate()
+		end
+	end
+	while(util.is_valid(parent)) do
+		parent:ScheduleUpdate()
+		parent = parent:GetParentItem()
+	end
 end
 function gui.PFMTreeViewElement:Expand()
 	self.m_collapsed = false

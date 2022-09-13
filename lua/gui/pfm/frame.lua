@@ -35,6 +35,7 @@ function gui.PFMFrame:OnInitialize()
 	self.m_tabButtonContainer = gui.create("WIHBox",self)
 	self.m_tabButtonContainer:SetHeight(28)
 
+	self:SetThinkingEnabled(true)
 	self.m_detachedWindows = {}
 	self:ScheduleUpdate()
 end
@@ -174,8 +175,9 @@ function gui.PFMFrame:AddTab(identifier,name,panel)
 	})
 	return #self.m_tabs
 end
-function gui.PFMFrame:OnUpdate()
+function gui.PFMFrame:OnThink()
 	if(self.m_activeTabButton == nil) then self:SetActiveTab(1) end
+	self:SetThinkingEnabled(false)
 end
 function gui.PFMFrame:DetachTab(identifier)
 	if(type(identifier) ~= "string") then

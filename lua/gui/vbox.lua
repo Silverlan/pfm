@@ -23,7 +23,7 @@ function gui.VBox:OnUpdate()
 	for i,child in ipairs(children) do
 		if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
 			child:SetY(y)
-			if(self.m_autoFillWidth == true and child:HasAnchor() == false) then child:SetWidth(size.x) end
+			if(self.m_autoFillWidth == true and child:HasAnchor() == false) then child:SetWidth(math.max(size.x,0)) end
 			y = y +child:GetHeight()
 			w = math.max(w,child:GetRight())
 
@@ -37,8 +37,14 @@ function gui.VBox:OnUpdate()
 	if(self.m_fixedWidth ~= true) then size.x = w end
 	if(self.m_fixedHeight ~= true) then size.y = y
 	elseif(self.m_autoFillHeight == true and children[autoFillChild] ~= nil and children[autoFillChild]:HasAnchor() == false) then
-		local sizeAdd = (size.y -children[lastChild]:GetBottom())
-		children[autoFillChild]:SetHeight(children[autoFillChild]:GetHeight() +sizeAdd)
+		local height
+		if(util.is_same_object(children[autoFillChild],children[lastChild])) then
+			height = size.y -children[autoFillChild]:GetTop()
+		else
+			local sizeAdd = (size.y -children[lastChild]:GetBottom())
+			height = children[autoFillChild]:GetHeight() +sizeAdd
+		end
+		children[autoFillChild]:SetHeight(height)
 		children[autoFillChild]:Update()
 
 		for i=autoFillChild +1,#children do
@@ -48,8 +54,13 @@ function gui.VBox:OnUpdate()
 			end
 		end
 	end
-	if(size ~= curSize and self:HasAnchor() == false) then self:SetSize(size) end
-	self:CallCallbacks("OnContentsUpdated")
+	if(self.m_sizeUpdateRequired) then
+		size.x = math.max(size.x,0)
+		size.y = math.max(size.y,0)
+		if(size ~= curSize and self:HasAnchor() == false) then self:UpdateSize(size) end
+		self:CallCallbacks("OnContentsUpdated")
+		self.m_sizeUpdateRequired = nil
+	end
 end
 function gui.VBox:IsVerticalBox() return true end
 gui.register("WIVBox",gui.VBox)
