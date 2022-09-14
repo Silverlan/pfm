@@ -416,7 +416,8 @@ end)
 
 sfm.register_element_type_conversion(sfm.FilmClip,function(converter,sfmClip,pfmClip)
 	converter:ConvertElementToPfm(sfmClip:GetTimeFrame(),pfmClip:GetTimeFrame())
-	pfmClip:SetMapName(file.remove_file_extension(sfmClip:GetMapname(),{"bsp"}))
+	local mapName = file.remove_file_extension(sfmClip:GetMapname(),{"bsp"})
+	if(#mapName > 0) then converter:GetPFMProject():GetSession():GetSettings():SetMapName(mapName) end
 	pfmClip:SetFadeIn(sfmClip:GetFadeIn())
 	pfmClip:SetFadeOut(sfmClip:GetFadeOut())
 	pfmClip:SetName(sfmClip:GetName())
@@ -666,6 +667,8 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 			end
 		end
 		
+		local isFlex = false
+		local isBone = false
 		if(pfmPropPath == nil) then
 			if(gm ~= false) then
 				if(toElement:GetType() == "DmeTransform") then
@@ -690,6 +693,7 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 									if(toAttr == "position") then pfmPropPath = cpath .. "position"
 									elseif(toAttr == "orientation") then pfmPropPath = cpath .. "rotation"
 									elseif(toAttr == "scale") then pfmPropPath = cpath .. "scale" end
+									isBone = true
 								else
 									pfm.log("Invalid format for bone name '" .. name .. "'!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
 									return false
@@ -701,6 +705,7 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 				elseif(toElement:GetType() == "DmeGlobalFlexControllerOperator") then
 					local name = toElement:GetName()
 					pfmPropPath = "ec/flex/flexController/" .. name
+					isFlex = true
 				elseif(toAttr == "localViewTargetFactor") then
 					pfmPropPath = "ec/eye/localViewTargetFactor"
 				end
@@ -741,6 +746,18 @@ sfm.register_element_type_conversion(sfm.Channel,function(converter,sfmC,pfmC)
 
 		local pfmActorId = converter.m_sfmObjectToPfmActor[actor]
 		if(pfmActorId == nil) then error("No PFM actor for attribute '" .. toAttr .. "' of element " .. tostring(toElement) .. "!") end
+
+		local pfmActor = udm.dereference(pfmC:GetSchema(),pfmActorId)
+		if(pfmActor ~= nil) then
+			if(isBone) then pfmActor:AddComponentType("animated") end
+			if(isFlex) then pfmActor:AddComponentType("flex") end
+
+			local mdl = pfmActor:GetModel()
+			if(mdl ~= nil) then
+				mdl = game.load_model(mdl)
+				if(mdl ~= nil and pfm.is_articulated_model(mdl)) then pfmActor:AddComponentType("eye") end
+			end
+		end
 
 		local anim = pfmC:GetAnimation()
 		local clip = anim:GetAnimationClip()
