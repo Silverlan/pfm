@@ -481,7 +481,6 @@ function gui.WIFilmmaker:OnInitialize()
 				if(util.is_valid(self) == false) then return end
 				locale.change_language(lan)
 				self:ReloadInterface()
-				self:Start()
 			end)
 		end
 		pSubMenu:ScheduleUpdate()
