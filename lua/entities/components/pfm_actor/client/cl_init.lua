@@ -290,7 +290,7 @@ function Component:InitializeComponentProperties()
 		local c
 		if(componentName ~= "pfm_actor") then
 			c = self:AddEntityComponent(componentName)
-			if(c == nil) then pfm.log("Attempted to add unknown component '" .. componentData:GetComponentName() .. "' to actor '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+			if(c == nil) then pfm.log("Attempted to add unknown component '" .. componentName .. "' to actor '" .. self:GetEntity():GetName() .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 			elseif(c.Setup ~= nil) then c:Setup(actorData,componentData) end
 		else c = self end
 

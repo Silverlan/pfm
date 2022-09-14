@@ -38,19 +38,22 @@ function gui.VBox:OnUpdate()
 	if(self.m_fixedHeight ~= true) then size.y = y
 	elseif(self.m_autoFillHeight == true and children[autoFillChild] ~= nil and children[autoFillChild]:HasAnchor() == false) then
 		local height
+		local sizeAdd
 		if(util.is_same_object(children[autoFillChild],children[lastChild])) then
 			height = size.y -children[autoFillChild]:GetTop()
 		else
-			local sizeAdd = (size.y -children[lastChild]:GetBottom())
+			sizeAdd = (size.y -children[lastChild]:GetBottom())
 			height = children[autoFillChild]:GetHeight() +sizeAdd
 		end
 		children[autoFillChild]:SetHeight(height)
 		children[autoFillChild]:Update()
 
-		for i=autoFillChild +1,#children do
-			local child = children[i]
-			if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
-				child:SetY(child:GetY() +sizeAdd)
+		if(sizeAdd ~= nil) then
+			for i=autoFillChild +1,#children do
+				local child = children[i]
+				if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
+					child:SetY(child:GetY() +sizeAdd)
+				end
 			end
 		end
 	end

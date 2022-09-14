@@ -37,19 +37,22 @@ function gui.HBox:OnUpdate()
 	if(self.m_fixedWidth ~= true) then size.x = x
 	elseif(self.m_autoFillWidth == true and children[autoFillChild] ~= nil and children[autoFillChild]:HasAnchor() == false) then
 		local width
+		local sizeAdd
 		if(util.is_same_object(children[autoFillChild],children[lastChild])) then
 			width = size.x -children[autoFillChild]:GetLeft()
 		else
-			local sizeAdd = (size.x -children[lastChild]:GetRight())
+			sizeAdd = (size.x -children[lastChild]:GetRight())
 			width = children[autoFillChild]:GetWidth() +sizeAdd
 		end
 		children[autoFillChild]:SetWidth(width)
 		children[autoFillChild]:Update()
 
-		for i=autoFillChild +1,#children do
-			local child = children[i]
-			if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
-				child:SetX(child:GetX() +sizeAdd)
+		if(sizeAdd ~= nil) then
+			for i=autoFillChild +1,#children do
+				local child = children[i]
+				if(child:IsVisible() and self:IsBackgroundElement(child) == false) then
+					child:SetX(child:GetX() +sizeAdd)
+				end
 			end
 		end
 	end
