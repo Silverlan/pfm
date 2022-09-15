@@ -1,0 +1,8 @@
+"pbr"
+{
+	"textures"
+	{
+		$string albedo_map "pfm/logo/pfm_logo"
+		$uint32 alpha_mode 2
+	}
+}
