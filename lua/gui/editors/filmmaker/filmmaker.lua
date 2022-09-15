@@ -531,6 +531,14 @@ function gui.WIFilmmaker:OnInitialize()
 			local mapFile = asset.find_file(mapName,asset.TYPE_MAP)
 			if(mapFile == nil) then return end
 			util.remove(ents.get_all(ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_MAP)})))
+
+			local session = self:GetSession()
+			if(session ~= nil) then
+				local settings = session:GetSettings()
+				-- The map is now part of the project, so we want to load an empty map next time the project is loaded
+				settings:SetMapName("empty")
+			end
+
 			self:ImportMap(mapFile)
 		end)
 		if(self:IsDeveloperModeEnabled()) then
