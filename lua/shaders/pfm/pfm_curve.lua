@@ -39,7 +39,7 @@ function shader.PFMCurve:Record(pcb,vertexBuffer,vertexCount,lineWidth,xRange,yR
 	dsPushConstants:WriteVector2(yRange)
 
 	local DynArg = prosper.PreparedCommandBuffer.DynArg
-	shader:RecordBeginDraw(pcb)
+	self:RecordBeginDraw(pcb)
 		pcb:RecordSetLineWidth(lineWidth)
 		shader:RecordBindVertexBuffers(pcb,{vertexBuffer})
 		shader:RecordPushConstants(pcb,udm.TYPE_MAT4,DynArg("matDraw"))

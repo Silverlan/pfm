@@ -43,7 +43,7 @@ function shader.PFMGrid:Record(pcb,lineCount,strideX,color,yMultiplier,lineWidth
 
 	local vertexBuffer = prosper.util.get_line_vertex_buffer()
 	local DynArg = prosper.PreparedCommandBuffer.DynArg
-	shader:RecordBeginDraw(pcb)
+	self:RecordBeginDraw(pcb)
 		shader:RecordBindVertexBuffers(pcb,{vertexBuffer})
 		pcb:RecordSetLineWidth(lineWidth or 1)
 		shader:RecordPushConstants(pcb,udm.TYPE_MAT4,DynArg("matDraw"))

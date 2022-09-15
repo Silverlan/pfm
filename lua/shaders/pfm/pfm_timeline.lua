@@ -42,7 +42,7 @@ function shader.PFMTimeline:Record(pcb,lineCount,strideX,color,yMultiplier,horiz
 
 	local vertexBuffer = prosper.util.get_line_vertex_buffer()
 	local DynArg = prosper.PreparedCommandBuffer.DynArg
-	shader:RecordBeginDraw(pcb)
+	self:RecordBeginDraw(pcb)
 		shader:RecordBindVertexBuffers(pcb,{vertexBuffer})
 		shader:RecordPushConstants(pcb,udm.TYPE_MAT4,DynArg("matDraw"))
 		shader:RecordPushConstants(pcb,dsPushConstants,util.SIZEOF_MAT4)

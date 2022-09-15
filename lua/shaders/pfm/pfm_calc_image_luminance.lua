@@ -93,7 +93,7 @@ function shader.PFMCalcImageLuminance:CalcImageLuminance(tex,useBlackAsTranspare
 		prosper.PIPELINE_STAGE_COMPUTE_SHADER_BIT,prosper.PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		bit.bor(prosper.ACCESS_SHADER_WRITE_BIT,prosper.ACCESS_HOST_READ_BIT),prosper.ACCESS_SHADER_WRITE_BIT
 	)
-	local dsData = self:CreateDescriptorSet(shader.PFMCalcImageLuminance.DESCRIPTOR_SET_DATA)
+	local dsData = self:GetShader():CreateDescriptorSet(shader.PFMCalcImageLuminance.DESCRIPTOR_SET_DATA)
 	dsData:SetBindingTexture(shader.PFMCalcImageLuminance.DATA_BINDING_HDR_IMAGE,tex)
 	dsData:SetBindingStorageBuffer(shader.PFMCalcImageLuminance.DATA_BINDING_LUMINANCE,bufResult)
 	self:Compute(drawCmd,dsData,tex:GetWidth(),tex:GetHeight(),useBlackAsTransparency)
