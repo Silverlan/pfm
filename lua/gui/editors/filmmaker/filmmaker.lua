@@ -735,6 +735,21 @@ end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()
 end
+function gui.WIFilmmaker:ImportSFMProject(projectFilePath)
+	local res = pfm.ProjectManager.ImportSFMProject(self,projectFilePath)
+	if(res == false) then return false end
+	local session = self:GetSession()
+	if(session ~= nil) then
+		local settings = session:GetSettings()
+		local mapName = asset.get_normalized_path(settings:GetMapName(),asset.TYPE_MAP)
+		if(mapName ~= asset.get_normalized_path(game.get_map_name(),asset.TYPE_MAP)) then
+			time.create_simple_timer(0.0,function()
+				if(self:IsValid()) then self:ChangeMap(mapName) end
+			end)
+		end
+	end
+	return res
+end
 function gui.WIFilmmaker:ChangeMap(map,projectFileName)
 	pfm.log("Changing map to '" .. map .. "'...",pfm.LOG_CATEGORY_PFM)
 	time.create_simple_timer(0.0,function()
@@ -1040,8 +1055,9 @@ function gui.WIFilmmaker:CreateEmptyProject()
 	local session = self:GetSession()
 	if(session ~= nil) then
 		local settings = session:GetSettings()
-		pfm.log("Assigning map name '" .. game.get_map_name() .. "' to new project.",pfm.LOG_CATEGORY_PFM)
-		settings:SetMapName(game.get_map_name())
+		local mapName = asset.get_normalized_path(game.get_map_name(),asset.TYPE_MAP)
+		pfm.log("Assigning map name '" .. mapName .. "' to new project.",pfm.LOG_CATEGORY_PFM)
+		settings:SetMapName(mapName)
 	end
 
 	local filmClip = self:GetActiveFilmClip()
