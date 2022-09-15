@@ -726,8 +726,6 @@ function gui.WIFilmmaker:OnInitialize()
 end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()
-	-- This fixes an issue where the initial resizer position is incorrect. TODO: Fix the actual cause and remove this work-around
-	self.m_hResizer:SetFraction(self.m_hResizer:GetFraction())
 end
 function gui.WIFilmmaker:ChangeMap(map,projectFileName)
 	pfm.log("Changing map to '" .. map .. "'...",pfm.LOG_CATEGORY_PFM)
@@ -2018,6 +2016,8 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		local filmClip = filmClips[1]
 		if(util.is_valid(filmClip)) then filmClip:SetSelected(true) end
 	end
+	-- This fixes an issue where the initial resizer position is incorrect. TODO: Fix the actual cause and remove this work-around
+	self.m_hResizer:SetFraction(self.m_hResizer:GetFraction())
 end
 function gui.WIFilmmaker:GetPictureTrackGroup() return self.m_trackGroupPicture end
 function gui.WIFilmmaker:GetSoundTrackGroup() return self.m_trackGroupSound end
