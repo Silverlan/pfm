@@ -292,6 +292,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		actor = actor or self:CreateNewActor("particle_system")
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_particle_system",false)
+		self:CreateNewActorComponent(actor,"particle_system",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT) then
 		actor = actor or self:CreateNewActor("spot_light")
 		if(actor == nil) then return end
