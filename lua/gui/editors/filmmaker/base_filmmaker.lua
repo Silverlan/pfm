@@ -16,6 +16,10 @@ function gui.WIBaseFilmmaker:__init()
 
 	pfm.set_project_manager(self)
 end
+function gui.WIBaseFilmmaker:OnRemove()
+	gui.WIBaseEditor.OnRemove(self)
+	pfm.ProjectManager.OnRemove(self)
+end
 function gui.WIBaseFilmmaker:OnInitialize() gui.WIBaseEditor.OnInitialize(self) end
 function gui.WIBaseFilmmaker:OpenBoneRetargetWindow(mdlSrc,mdlDst)
 	local mdlSrcPath = (type(mdlSrc) == "string") and mdlSrc or mdlSrc:GetName()

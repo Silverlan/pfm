@@ -23,9 +23,20 @@ function pfm.ProjectManager:OnInitialize()
 	self.m_performanceCache = pfm.PerformanceCache()
 	self.m_animManager = pfm.AnimationManager()
 
+	self.m_cbDisableEscapeMenu = input.add_callback("OnKeyboardInput",function(key,state,mods)
+		if(key == input.KEY_ESCAPE) then
+			if(state == input.STATE_PRESS) then self:OpenEscapeMenu() end
+			return util.EVENT_REPLY_HANDLED -- Disable default behavior
+		end
+	end)
+
 	self:CreateInitialProject()
 	self.m_map = game.get_map_name()
 end
+function pfm.ProjectManager:OnRemove()
+	util.remove(self.m_cbDisableEscapeMenu)
+end
+function pfm.ProjectManager:OpenEscapeMenu() end
 function pfm.ProjectManager:CreateInitialProject() self:CreateNewProject() end
 function pfm.ProjectManager:GetAnimationManager() return self.m_animManager end
 function pfm.ProjectManager:LoadMap(mapName)
@@ -365,6 +376,7 @@ function pfm.ProjectManager:GetFrameRate()
 end
 function pfm.ProjectManager:GetTimeOffset()
 	local session = self:GetSession()
+	if(session == nil) then return 0.0 end
 	local settings = session:GetSettings()
 	return settings:GetPlayheadOffset()
 end
