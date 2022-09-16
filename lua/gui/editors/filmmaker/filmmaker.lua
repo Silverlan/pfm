@@ -385,7 +385,40 @@ function gui.WIFilmmaker:OnInitialize()
 				self:ChangeMap(map)
 			end)
 			pFileDialog:SetRootPath("maps")
-			pFileDialog:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP))
+			pFileDialog:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP,asset.FORMAT_TYPE_ALL))
+
+			local pFileList = pFileDialog:GetFileList()
+			pFileList:SetFileFinder(function(path)
+				local tFiles,tDirs = file.find(path)
+				local fileMap = {}
+				local dirMap = {}
+				for _,f in ipairs(tFiles) do
+					local ext = file.get_file_extension(f)
+					if(pFileList:IsValidExtension(ext)) then
+						fileMap[f] = true
+					end
+				end
+				for _,d in ipairs(tDirs) do dirMap[d] = true end
+
+				local tFiles,tDirs = file.find_external_game_asset_files(file.get_file_path(path) .. "*.bsp")
+				for _,f in ipairs(tFiles) do
+					local ext = file.get_file_extension(f)
+					if(pFileList:IsValidExtension(ext)) then
+						fileMap[f] = true
+					end
+				end
+				for _,d in ipairs(tDirs) do dirMap[d] = true end
+				
+				local fileList = {}
+				for f,_ in pairs(fileMap) do table.insert(fileList,f) end
+				
+				local dirList = {}
+				for d,_ in pairs(dirMap) do table.insert(dirList,d) end
+
+				table.sort(fileList)
+				table.sort(dirList)
+				return fileList,dirList
+			end)
 			pFileDialog:Update()
 		end)
 		--[[pContext:AddItem(locale.get_text("pfm_export_blender_scene") .. "...",function(pItem)
