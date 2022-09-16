@@ -35,6 +35,7 @@ include("/gui/pfm/material_editor/materialeditor.lua")
 include("/gui/pfm/particleeditor.lua")
 include("/gui/pfm/webbrowser.lua")
 include("/gui/pfm/loading_screen.lua")
+include("/gui/pfm/settings.lua")
 include("/pfm/util_particle_system.lua")
 include("/pfm/auto_save.lua")
 include("/pfm/util.lua")
@@ -1847,6 +1848,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 		el:AddCallback("OnDetached",function(el,window) window:Maximize() end)
 		return el
 	end)
+	self:RegisterWindow(self.m_actorDataFrame,"settings",locale.get_text("pfm_settings"),function() return gui.create("WIPFMSettings") end)
 
 	self:RegisterWindow(self.m_viewportFrame,"primary_viewport",locale.get_text("pfm_primary_viewport"),function()
 		local el = gui.create("WIPFMViewport")
@@ -2042,6 +2044,10 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	end
 	-- This fixes an issue where the initial resizer position is incorrect. TODO: Fix the actual cause and remove this work-around
 	self.m_hResizer:SetFraction(self.m_hResizer:GetFraction())
+end
+function gui.WIFilmmaker:OpenEscapeMenu()
+	self:OpenWindow("settings")
+	self:GoToWindow("settings")
 end
 function gui.WIFilmmaker:GetPictureTrackGroup() return self.m_trackGroupPicture end
 function gui.WIFilmmaker:GetSoundTrackGroup() return self.m_trackGroupSound end
