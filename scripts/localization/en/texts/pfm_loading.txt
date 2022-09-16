@@ -1,0 +1,2 @@
+pfm_loading = "Loading..."
+pfm_loading_map = "Loading map '{0}'..."
