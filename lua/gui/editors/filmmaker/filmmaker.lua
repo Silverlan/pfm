@@ -317,6 +317,44 @@ function gui.WIFilmmaker:OnInitialize()
 			self:Save(nil,false,true)
 		end)
 
+		local function initMapDialog(pFileDialog)
+			pFileDialog:SetRootPath("maps")
+			pFileDialog:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP,asset.FORMAT_TYPE_ALL))
+			local pFileList = pFileDialog:GetFileList()
+			pFileList:SetFileFinder(function(path)
+				local tFiles,tDirs = file.find(path)
+				local fileMap = {}
+				local dirMap = {}
+				for _,f in ipairs(tFiles) do
+					local ext = file.get_file_extension(f)
+					if(pFileList:IsValidExtension(ext)) then
+						fileMap[f] = true
+					end
+				end
+				for _,d in ipairs(tDirs) do dirMap[d] = true end
+
+				local tFiles,tDirs = file.find_external_game_asset_files(file.get_file_path(path) .. "*.bsp")
+				for _,f in ipairs(tFiles) do
+					local ext = file.get_file_extension(f)
+					if(pFileList:IsValidExtension(ext)) then
+						fileMap[f] = true
+					end
+				end
+				for _,d in ipairs(tDirs) do dirMap[d] = true end
+				
+				local fileList = {}
+				for f,_ in pairs(fileMap) do table.insert(fileList,f) end
+				
+				local dirList = {}
+				for d,_ in pairs(dirMap) do table.insert(dirList,d) end
+
+				table.sort(fileList)
+				table.sort(dirList)
+				return fileList,dirList
+			end)
+			pFileDialog:Update()
+		end
+
 		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("import"))
 		pSubMenu:AddItem(locale.get_text("map"),function(pItem)
 			if(util.is_valid(self) == false) then return end
@@ -324,9 +362,7 @@ function gui.WIFilmmaker:OnInitialize()
 				if(fileName == nil) then return end
 				self:ImportMap(el:GetFilePath(true))
 			end)
-			pFileDialog:SetRootPath("maps")
-			pFileDialog:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP))
-			pFileDialog:Update()
+			initMapDialog(pFileDialog)
 		end)
 		pSubMenu:AddItem(locale.get_text("pfm_sfm_project"),function(pItem)
 			if(util.is_valid(self) == false) then return end
@@ -384,42 +420,7 @@ function gui.WIFilmmaker:OnInitialize()
 				local map = el:GetFilePath(true)
 				self:ChangeMap(map)
 			end)
-			pFileDialog:SetRootPath("maps")
-			pFileDialog:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP,asset.FORMAT_TYPE_ALL))
-
-			local pFileList = pFileDialog:GetFileList()
-			pFileList:SetFileFinder(function(path)
-				local tFiles,tDirs = file.find(path)
-				local fileMap = {}
-				local dirMap = {}
-				for _,f in ipairs(tFiles) do
-					local ext = file.get_file_extension(f)
-					if(pFileList:IsValidExtension(ext)) then
-						fileMap[f] = true
-					end
-				end
-				for _,d in ipairs(tDirs) do dirMap[d] = true end
-
-				local tFiles,tDirs = file.find_external_game_asset_files(file.get_file_path(path) .. "*.bsp")
-				for _,f in ipairs(tFiles) do
-					local ext = file.get_file_extension(f)
-					if(pFileList:IsValidExtension(ext)) then
-						fileMap[f] = true
-					end
-				end
-				for _,d in ipairs(tDirs) do dirMap[d] = true end
-				
-				local fileList = {}
-				for f,_ in pairs(fileMap) do table.insert(fileList,f) end
-				
-				local dirList = {}
-				for d,_ in pairs(dirMap) do table.insert(dirList,d) end
-
-				table.sort(fileList)
-				table.sort(dirList)
-				return fileList,dirList
-			end)
-			pFileDialog:Update()
+			initMapDialog(pFileDialog)
 		end)
 		--[[pContext:AddItem(locale.get_text("pfm_export_blender_scene") .. "...",function(pItem)
 			local dialoge = gui.create_file_save_dialog(function(pDialoge)
@@ -433,12 +434,13 @@ function gui.WIFilmmaker:OnInitialize()
 			dialoge:Update()
 		end)]]
 		pContext:AddItem(locale.get_text("pfm_pack_project") .. "...",function(pItem)
+			file.create_directory("export")
 			local dialoge = gui.create_file_save_dialog(function(pDialoge)
 				local fname = pDialoge:GetFilePath(true)
 				self:PackProject(fname)
 			end)
 			dialoge:SetExtensions({"zip"})
-			dialoge:SetRootPath(util.get_addon_path())
+			dialoge:SetRootPath(util.get_addon_path() .. "export/")
 			dialoge:Update()
 		end)
 		--[[pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
@@ -865,9 +867,14 @@ function gui.WIFilmmaker:RestoreProject()
 	file.delete_directory("temp/pfm/restore")
 end
 function gui.WIFilmmaker:ImportMap(map)
-	map = file.remove_file_extension(map,asset.get_supported_extensions(asset.TYPE_MAP))
-	map = asset.find_file(map,asset.TYPE_MAP)
-	if(map == nil) then return end
+	map = file.remove_file_extension(map,asset.get_supported_extensions(asset.TYPE_MAP,asset.FORMAT_TYPE_ALL))
+	local origMapName = map
+	map = asset.find_file(origMapName,asset.TYPE_MAP)
+	if(map == nil) then
+		if(asset.import("maps/" .. origMapName,asset.TYPE_MAP) == false) then return end
+		map = asset.find_file(origMapName,asset.TYPE_MAP)
+		if(map == nil) then return end
+	end
 	local actorEditor = self:GetActorEditor()
 	local data,msg = udm.load("maps/" .. map)
 	if(data == false) then
@@ -1100,14 +1107,21 @@ function gui.WIFilmmaker:CreateEmptyProject()
 	self:SelectFilmClip(filmClip)
 end
 function gui.WIFilmmaker:PackProject(fileName)
+	local projName = file.remove_file_extension(file.get_file_name(self:GetProjectFileName() or "new_project"),pfm.Project.get_format_extensions())
 	local project = self:GetProject()
 	local session = self:GetSession()
 
 	local assetFiles = project:CollectAssetFiles()
 	local projectFileName = self:GetProjectFileName()
-	if(projectFileName ~= nil) then table.insert(assetFiles,projectFileName) end
+	if(projectFileName ~= nil) then assetFiles[projectFileName] = projectFileName end
 	
-	pfm.save_asset_files_as_archive(assetFiles,fileName)
+	local finalAssetFiles = {}
+	for fZip,f in pairs(assetFiles) do
+		local rootPath = "addons/pfmp_" .. projName .. "/"
+		finalAssetFiles[rootPath .. fZip] = f
+	end
+
+	pfm.save_asset_files_as_archive(finalAssetFiles,fileName)
 end
 function gui.WIFilmmaker:AddActor(filmClip)
 	local actor = filmClip:GetScene():AddActor()
