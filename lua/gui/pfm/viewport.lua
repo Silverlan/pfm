@@ -923,11 +923,16 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 	local initialTransformPose = entTransform:GetPose()
 
 	local trC = entTransform:GetComponent("util_transform")
+	local newPos = {}
+	local newRot = {}
 	trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
 		local dtPos = pos -initialTransformPose:GetOrigin()
 		for ent,origPose in pairs(initialActorPoses) do
 			if(ent:IsValid()) then
 				ent:SetPos(origPose:GetOrigin() +dtPos)
+
+				newPos[ent] = ent:GetPos()
+				self:MarkActorAsDirty(ent)
 			end
 		end
 	end)
@@ -941,8 +946,26 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 				pose:SetOrigin(origin)
 				pose:SetRotation(dtRot *pose:GetRotation())
 				ent:SetPose(pose)
+
+				newPos[ent] = ent:GetPos()
+				newRot[ent] = ent:GetRotation()
+				self:MarkActorAsDirty(ent)
 			end
 		end
+	end)
+	trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END,function()
+		for ent,origPose in pairs(initialActorPoses) do
+			if(ent:IsValid()) then
+				local pos = newPos[ent]
+				if(pos ~= nil) then tool.get_filmmaker():SetActorTransformProperty(ent:GetComponent(ents.COMPONENT_PFM_ACTOR),"position",pos) end
+
+				local rot = newRot[ent]
+				if(rot ~= nil) then tool.get_filmmaker():SetActorTransformProperty(ent:GetComponent(ents.COMPONENT_PFM_ACTOR),"rotation",rot) end
+				self:OnActorTransformChanged(ent)
+			end
+		end
+		-- TODO
+		-- pfm.undoredo.push("pfm_undoredo_transform",function() apply_pose(newPose) end,function() apply_pose(curPose) end)()
 	end)
 	self:InitializeTransformWidget(trC,nil,self:GetTransformSpace() == ents.UtilTransformComponent.SPACE_VIEW)
 	self.m_transformComponent = trC
