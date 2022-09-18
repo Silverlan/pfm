@@ -13,6 +13,14 @@ function pfm.udm.Actor:FindEntity()
 	end
 end
 
+function pfm.udm.Actor:IsVisible()
+	local c = self:FindComponent("pfm_actor")
+	if(c == nil) then return true end
+	local visible = c:GetMemberValue("visible")
+	if(visible == nil) then return true end
+	return visible
+end
+
 function pfm.udm.Actor:FindComponent(name)
 	for _,component in ipairs(self:GetComponents()) do
 		if(component:GetType() == name) then return component end

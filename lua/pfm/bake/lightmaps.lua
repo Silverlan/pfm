@@ -21,6 +21,7 @@ pfm.bake.find_bake_entities = function()
 
 	-- We want all lightmap receiver actors
 	local entities = ents.get_all(ents.citerator(ents.COMPONENT_PFM_ACTOR,{ents.IteratorFilterFunction(function(ent,c)
+		if(c:IsVisible() == false) then return false end
 		local actorData = c:GetActorData()
 		return actorData ~= nil and actorMap[actorData] ~= nil
 	end)}))
