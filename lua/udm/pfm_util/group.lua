@@ -24,8 +24,8 @@ function pfm.udm.Group:FindActorByUniqueId(uniqueId)
 		end
 	end
 	for _,group in ipairs(self:GetGroups()) do
-		local actor = group:FindActorByUniqueId(uniqueId)
-		if(actor ~= nil) then return actor,group end
+		local actor,actorGroup = group:FindActorByUniqueId(uniqueId)
+		if(actor ~= nil) then return actor,actorGroup end
 	end
 end
 
