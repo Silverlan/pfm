@@ -78,12 +78,16 @@ function pfm.udm.FilmClip:RemoveActor(actor)
 	local track = self:FindAnimationChannelTrack()
 	if(track ~= nil) then
 		local animClip = self:FindActorAnimationClip(actor,false)
-		if(animClip ~= nil) then track:RemoveAnimationClip(animClip) end
+		if(animClip ~= nil) then
+			track:RemoveAnimationClip(animClip)
+			track:Reinitialize(track:GetUdmData())
+		end
 	end
 
 	local _,group = self:FindActorByUniqueId(tostring(actor:GetUniqueId()))
 	if(group ~= nil) then
 		group:RemoveActor(actor)
+		group:Reinitialize(track:GetUdmData())
 	end
 end
 function pfm.udm.FilmClip:RemoveActorComponent(actor,component)
