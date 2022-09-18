@@ -396,11 +396,13 @@ pfm.find_inanimate_actors = function(session)
 				for _,channelClip in ipairs(track:GetAnimationClips()) do
 					local anim = channelClip:GetAnimation()
 					local actor = channelClip:GetActor()
-					local numValues = 0
-					for _,channel in ipairs(anim:GetChannels()) do
-						numValues = numValues +channel:GetValueCount()
+					if(anim ~= nil and actor ~= nil) then
+						local numValues = 0
+						for _,channel in ipairs(anim:GetChannels()) do
+							numValues = numValues +channel:GetValueCount()
+						end
+						actors[actor] = numValues
 					end
-					actors[actor] = numValues
 				end
 			end
 		end

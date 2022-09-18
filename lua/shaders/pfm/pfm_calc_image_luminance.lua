@@ -109,20 +109,22 @@ function shader.PFMCalcImageLuminance:CalcImageLuminance(tex,useBlackAsTranspare
 	return bufResult
 end
 function shader.PFMCalcImageLuminance:Compute(computeCmd,dsData,w,h,useBlackAsTransparency)
-	if(self:IsValid() == false or self:RecordBeginCompute(computeCmd) == false) then return end
+	local baseShader = self:GetShader()
+	local bindState = shader.BindState(computeCmd)
+	if(baseShader:IsValid() == false or baseShader:RecordBeginCompute(bindState,0) == false) then return end
 
-	self:RecordBindDescriptorSet(dsData)
+	baseShader:RecordBindDescriptorSet(bindState,dsData)
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteUInt32(w)
 	self.m_dsPushConstants:WriteUInt32(h)
 	self.m_dsPushConstants:WriteUInt32(useBlackAsTransparency and 1 or 0)
-	self:RecordPushConstants(self.m_dsPushConstants)
+	baseShader:RecordPushConstants(bindState,self.m_dsPushConstants)
 
 	-- Work groups can't be synchronized, so we have to
 	-- use a single work group
-	self:RecordDispatch()
+	baseShader:RecordDispatch(bindState)
 
-	self:RecordEndCompute()
+	baseShader:RecordEndCompute(bindState)
 end
 shader.register("pfm_calc_image_luminance",shader.PFMCalcImageLuminance)

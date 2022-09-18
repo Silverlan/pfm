@@ -516,7 +516,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 							-- No luminance information available; Calculate it now
 							local alphaMode = ptC:GetEffectiveAlphaMode()
 							local useBlackAsTransparency = (alphaMode == ents.ParticleSystemComponent.ALPHA_MODE_ADDITIVE_BY_COLOR)
-							luminance = shader.get("pfm_calc_image_luminance"):CalcImageLuminance(vkTex,useBlackAsTransparency)
+							luminance = shader.get("pfm_calc_image_luminance"):GetWrapper():CalcImageLuminance(vkTex,useBlackAsTransparency)
 							-- TODO: What about animated textures?
 
 							local msg = "Computed luminance: " .. tostring(luminance)
