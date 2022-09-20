@@ -50,66 +50,6 @@ function gui.PFMParticleEditor:OnInitialize()
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_SINGLE)
 	self.m_tree:SetAutoSelectChildren(true)
 
-	local function add_category(text,fPopulateContextMenu)
-		local el = self.m_tree:AddItem(text)
-
-		if(fPopulateContextMenu ~= nil) then
-			el:AddCallback("OnMouseEvent",function(src,button,state,mods)
-				if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-					local pContext = gui.open_context_menu()
-					pContext:SetPos(input.get_cursor_pos())
-					fPopulateContextMenu(pContext)
-					pContext:Update()
-					return util.EVENT_REPLY_HANDLED
-				end
-			end)
-		end
-		return el
-	end
-	self.m_propertyItems = {}
-	local function add_property_category(propertyType,text)
-		local item = add_category(text,function(pContext)
-			local pt = self.m_particleSystem
-			local ptC = util.is_valid(pt) and pt:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) or nil
-			if(ptC == nil) then return end
-			local propertyList = {}
-			if(propertyType == "initializer") then
-				for _,initializer in ipairs(ents.ParticleSystemComponent.get_registered_initializers()) do
-					if(ptC:FindInitializerByType(initializer) == nil) then
-						table.insert(propertyList,initializer)
-					end
-				end
-			elseif(propertyType == "operator") then
-				for _,op in ipairs(ents.ParticleSystemComponent.get_registered_operators()) do
-					if(ptC:FindOperatorByType(op) == nil) then
-						table.insert(propertyList,op)
-					end
-				end
-			elseif(propertyType == "renderer") then
-				for _,renderer in ipairs(ents.ParticleSystemComponent.get_registered_renderers()) do
-					if(ptC:FindRendererByType(renderer) == nil) then
-						table.insert(propertyList,renderer)
-					end
-				end
-			end
-			if(#propertyList == 0) then return end
-			local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_pted_add_" .. propertyType))
-			for _,property in ipairs(propertyList) do
-				pSubMenu:AddItem(locale.get_text("pts_" .. property),function()
-					self:AddProperty(propertyType,property)
-				end)
-				pSubMenu:Update()
-			end
-		end)
-		self.m_propertyItems[propertyType] = item
-	end
-
-	self.m_elBasePropertiesItem = add_category(locale.get_text("pfm_pted_base_properties"))
-	add_property_category("initializer",locale.get_text("pfm_pted_initializers"))
-	add_property_category("operator",locale.get_text("pfm_pted_operators"))
-	add_property_category("renderer",locale.get_text("pfm_pted_renderers"))
-	self.m_elChildrenItem = add_category("children")
-
 	gui.create("WIResizer",self.m_controlsContents):SetFraction(0.5)
 
 	self.m_propertiesBox = gui.create("WIVBox",self.m_controlsContents)
@@ -169,6 +109,70 @@ function gui.PFMParticleEditor:OnInitialize()
 	btOpenInExplorer:SetWidth(self.m_bg:GetWidth())
 	btOpenInExplorer:SetY(self.m_bg:GetBottom() -btOpenInExplorer:GetHeight())
 	btOpenInExplorer:SetAnchor(0,1,1,1)
+
+	self.m_propertyItems = {}
+	self.m_parentSystems = {}
+end
+function gui.PFMParticleEditor:PopulatePropertyTree()
+	local parentItem = self.m_tree
+	local function add_category(text,fPopulateContextMenu)
+		local el = parentItem:AddItem(text)
+
+		if(fPopulateContextMenu ~= nil) then
+			el:AddCallback("OnMouseEvent",function(src,button,state,mods)
+				if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+					local pContext = gui.open_context_menu()
+					pContext:SetPos(input.get_cursor_pos())
+					fPopulateContextMenu(pContext)
+					pContext:Update()
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+		end
+		return el
+	end
+	local function add_property_category(propertyType,text)
+		local item = add_category(text,function(pContext)
+			local pt = self:GetTargetParticleSystem()
+			local ptC = util.is_valid(pt) and pt:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) or nil
+			if(ptC == nil) then return end
+			local propertyList = {}
+			if(propertyType == "initializer") then
+				for _,initializer in ipairs(ents.ParticleSystemComponent.get_registered_initializers()) do
+					if(ptC:FindInitializerByType(initializer) == nil) then
+						table.insert(propertyList,initializer)
+					end
+				end
+			elseif(propertyType == "operator") then
+				for _,op in ipairs(ents.ParticleSystemComponent.get_registered_operators()) do
+					if(ptC:FindOperatorByType(op) == nil) then
+						table.insert(propertyList,op)
+					end
+				end
+			elseif(propertyType == "renderer") then
+				for _,renderer in ipairs(ents.ParticleSystemComponent.get_registered_renderers()) do
+					if(ptC:FindRendererByType(renderer) == nil) then
+						table.insert(propertyList,renderer)
+					end
+				end
+			end
+			if(#propertyList == 0) then return end
+			local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_pted_add_" .. propertyType))
+			for _,property in ipairs(propertyList) do
+				pSubMenu:AddItem(locale.get_text("pts_" .. property),function()
+					self:AddProperty(propertyType,property)
+				end)
+				pSubMenu:Update()
+			end
+		end)
+		self.m_propertyItems[propertyType] = item
+	end
+
+	self.m_elBasePropertiesItem = add_category(locale.get_text("pfm_pted_base_properties"))
+	add_property_category("initializer",locale.get_text("pfm_pted_initializers"))
+	add_property_category("operator",locale.get_text("pfm_pted_operators"))
+	add_property_category("renderer",locale.get_text("pfm_pted_renderers"))
+	self.m_elChildrenItem = add_category("children")
 end
 function gui.PFMParticleEditor:GetFullFileName()
 	if(self.m_particleFileName == nil) then return end
@@ -217,6 +221,25 @@ function gui.PFMParticleEditor:GetParticleEffectUdmData(ptName)
 	return child:Get("assetData")
 end
 function gui.PFMParticleEditor:ReloadParticleProperties()
+	self.m_tree:Clear()
+
+	if(#self.m_parentSystems > 0) then
+		local pd = self.m_parentSystems[#self.m_parentSystems]
+		local el = self.m_tree:AddItem("Go to parent (" .. pd.systemName .. ")")
+		el:AddCallback("OnDoubleClick",function(el,button,state,mods)
+			time.create_simple_timer(0.0,function()
+				if(self:IsValid() == false) then return end
+				local fileName = pd.fileName
+				local systemName = pd.systemName
+				self.m_parentSystems[#self.m_parentSystems] = nil
+				self:LoadParticleSystem(fileName,systemName,false)
+			end)
+			return util.EVENT_REPLY_HANDLED
+		end)
+	end
+
+	self:PopulatePropertyTree()
+
 	local udmData,err = udm.load(asset.get_asset_root_directory(asset.TYPE_PARTICLE_SYSTEM) .. "/" .. self.m_particleFileName)
 	if(udmData == false) then return end
 	local assetData = udmData:GetAssetData():GetData()
@@ -267,8 +290,48 @@ function gui.PFMParticleEditor:ReloadParticleProperties()
 	for _,child in ipairs(children:GetArrayValues()) do
 		local type = child:GetValue("type",udm.TYPE_STRING) or ""
 		local el = self.m_elChildrenItem:AddItem(type)
-		
-		-- TODO
+
+		el:AddCallback("OnDoubleClick",function(el,button,state,mods)
+			time.create_simple_timer(0.0,function()
+				if(self:IsValid() == false) then return end
+				table.insert(self.m_parentSystems,{
+					fileName = self.m_particleFileName,
+					systemName = self.m_particleName
+				})
+				self:LoadParticleSystem(self.m_particleFileName,type,false)
+			end)
+			return util.EVENT_REPLY_HANDLED
+		end)
+	end
+end
+function gui.PFMParticleEditor:GetParentParticleSystem()
+	local ptC = self.m_particleSystem
+	if(util.is_valid(ptC) == false) then return end
+	ptC = ptC:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
+	if(ptC == nil) then return end
+	local parent = ptC:GetParent()
+	while(parent ~= nil) do
+		local pparent = parent:GetParent()
+		if(pparent ~= nil) then parent = pparent end
+	end
+	parent = parent or ptC
+	return parent
+end
+function gui.PFMParticleEditor:FindChildParticleSystem(name,ptC)
+	if(ptC == nil) then
+		ptC = self:GetParentParticleSystem()
+		if(util.is_valid(ptC) == false) then return end
+		return self:FindChildParticleSystem(name,ptC)
+	end
+
+	if(util.is_valid(ptC) == false) then return end
+	for _,child in ipairs(ptC:GetChildren()) do
+		local childName = child:GetName()
+		if(childName == name) then
+			return child
+		end
+		local pt = self:FindChildParticleSystem(name,child)
+		if(pt ~= nil) then return pt end
 	end
 end
 function gui.PFMParticleEditor:InitializeViewportControls()
@@ -343,8 +406,7 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 	if(ptDef:IsValid() == false) then return end
 	local keyValueBlock = ptDef:Get("keyvalues")
 	if(keyValueBlock:IsValid()) then
-		local pt = self.m_particleSystem
-		local ptC = util.is_valid(pt) and pt:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) or nil
+		local ptC = self:GetTargetParticleSystem()
 		local property
 		if(ptC ~= nil and propertyType ~= "base") then
 			if(propertyType == "initializer") then property = ptC:FindInitializerByType(opType)
@@ -450,10 +512,21 @@ end
 function gui.PFMParticleEditor:DestroyParticleSystem()
 	-- if(util.is_valid(self.m_particleSystem)) then self.m_particleSystem:Remove() end
 end
-function gui.PFMParticleEditor:LoadParticleSystem(fileName,ptName)
+function gui.PFMParticleEditor:LoadParticleSystem(fileName,ptName,updateViewport)
+	if(updateViewport == nil) then updateViewport = true end
+
 	game.precache_particle_system(fileName)
-	self.m_viewport:SetParticleSystem(ptName)
-	self.m_particleSystem = self.m_viewport:GetEntity()
+	if(updateViewport) then self.m_viewport:SetParticleSystem(ptName) end
+
+	local ent = self.m_viewport:GetEntity()
+	if(util.is_valid(ent)) then
+		local ptC = ent:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
+		if(ptC ~= nil) then
+			self.m_particleSystem = ptC:GetEntity()
+			self.m_childParticleSystem = self:FindChildParticleSystem(ptName)
+		end
+	end
+
 	self.m_particleFileName = fileName
 	self.m_particleName = ptName
 
@@ -466,6 +539,10 @@ function gui.PFMParticleEditor:SaveParticleSystem()
 end
 function gui.PFMParticleEditor:GetParticleSystem()
 	return util.is_valid(self.m_particleSystem) and self.m_particleSystem:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) or nil
+end
+function gui.PFMParticleEditor:GetTargetParticleSystem()
+	if(self.m_childParticleSystem ~= nil) then return self.m_childParticleSystem end
+	if(util.is_valid(self.m_particleSystem)) then return self.m_particleSystem:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) end
 end
 function gui.PFMParticleEditor:CreateNewParticleSystem()
 	self.m_viewport:SetParticleSystem()
@@ -533,7 +610,7 @@ function gui.PFMParticleEditor:AddInitializer(initializer) self:AddProperty("ini
 function gui.PFMParticleEditor:AddOperator(operator) self:AddProperty("operator",operator) end
 function gui.PFMParticleEditor:AddEmitter(emitter) self:AddProperty("emitter",emitter) end
 function gui.PFMParticleEditor:AddProperty(propertyType,property)
-	local pt = self.m_particleSystem
+	local pt = self:GetTargetParticleSystem()
 	local ptC = util.is_valid(pt) and pt:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) or nil
 	if(ptC == nil or ptC:FindInitializerByType(property)) then return end
 	if(propertyType == "initializer") then property = ptC:AddInitializer(property,{})
@@ -556,11 +633,9 @@ function gui.PFMParticleEditor:RemoveProperty(propertyType,property)
 	self:ReloadParticleSystem(self.m_ptName)
 	self:UpdateSaveButton(false)
 end
-function gui.ReloadParticleSystem(ptName)
-	local pt = self.m_particleSystem
-	if(util.is_valid(pt) == false) then return end
-	local ptC = pt:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
-	if(ptC ~= nil) then
+function gui.PFMParticleEditor:ReloadParticleSystem(ptName)
+	local ptC = self:GetTargetParticleSystem()
+	if(util.is_valid(ptC)) then
 		local name = ptName
 		ptC:Clear()
 
@@ -594,7 +669,7 @@ function gui.PFMParticleEditor:PopulateProperty(ptC,propertyType,property)
 	end)
 end
 function gui.PFMParticleEditor:PopulateParticleProperties()
-	local ent = self.m_particleSystem
+	local pt = self:GetTargetParticleSystem()
 	local ptC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) or nil
 	if(ptC == nil) then return end
 	for _,initializer in ipairs(ptC:GetInitializers()) do
@@ -608,7 +683,7 @@ function gui.PFMParticleEditor:PopulateParticleProperties()
 	end
 end
 function gui.PFMParticleEditor:ReloadParticle()
-	local ent = self.m_particleSystem
+	local pt = self:GetTargetParticleSystem()
 	if(util.is_valid(ent) == false) then return end
 	local toggleC = ent:GetComponent(ents.COMPONENT_TOGGLE)
 	if(toggleC ~= nil) then
