@@ -2334,7 +2334,7 @@ console.register_command("pfm_delete",function(pl,...)
 	if(util.is_valid(actorEditor) == false) then return end
 	local ids = {}
 	for _,actor in ipairs(actorEditor:GetSelectedActors()) do
-		table.insert(ids,tostring(actor:GetUniqueId()))
+		if(actor:IsValid()) then table.insert(ids,tostring(actor:GetUniqueId())) end
 	end
 
 	actorEditor:RemoveActors(ids)
