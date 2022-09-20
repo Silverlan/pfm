@@ -1,0 +1,1122 @@
+"source_radius_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"radius_min"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 100
+		}
+		"radius_max"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 100
+		}
+		"radius_random_exponent"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 5
+		}
+	}
+}
+"source_alpha_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"alpha_min"
+		{
+			$string type "float"
+			$float default 255
+			$float min 0
+			$float max 255
+		}
+		"alpha_max"
+		{
+			$string type "float"
+			$float default 255
+			$float min 0
+			$float max 255
+		}
+		"alpha_random_exponent"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 5
+		}
+	}
+}
+"source_render_sprite_trail"
+{
+	$string type "renderer"
+	"keyvalues"
+	{
+		"min_length"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 50
+		}
+		"animation_rate"
+		{
+			$string type "float"
+			$float default 0.1
+			$float min 0
+			$float max 5
+		}
+		"max_length"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 50
+		}
+		"length_fade_in_time"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+	}
+}
+"source_lifetime_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"lifetime_min"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"lifetime_max"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"lifetime_random_exponent"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 5
+		}
+	}
+}
+"source_movement_basic"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"drag"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 5
+		}
+		"max_constraint_passes"
+		{
+			$string type "int"
+			$int32 default 3
+			$int32 min 0
+			$int32 max 10
+		}
+		"gravity"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+	}
+}
+"source_oscillate_vector"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"end_time_max"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 30
+		}
+		"oscillation_field"
+		{
+			$string type "string"
+		}
+		"oscillation_rate_min"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"oscillation_frequency_max"
+		{
+			$string type "vector"
+			$vec3 default [1,1,1]
+		}
+		"oscillation_multiplier"
+		{
+			$string type "float"
+			$float default 2
+			$float min 0
+			$float max 5
+		}
+		"oscillation_rate_max"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"oscillation_frequency_min"
+		{
+			$string type "vector"
+			$vec3 default [1,1,1]
+		}
+		"proportional"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"start_time_min"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"start_time_max"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"end_time_min"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 30
+		}
+		"start_end_proportional"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"oscillation_start_phase"
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0
+			$float max 5
+		}
+	}
+}
+"source_lifetime_from_sequence"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"frames_per_second"
+		{
+			$string type "int"
+			$int32 default 30
+			$int32 min 0
+			$int32 max 100
+		}
+	}
+}
+"source_color_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"tint_control_point"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+		"tint_clamp_min"
+		{
+			$string type "color"
+			$srgba default [0,0,0,0]
+		}
+		"color1"
+		{
+			$string type "color"
+			$srgba default [255,255,255,255]
+		}
+		"color2"
+		{
+			$string type "color"
+			$srgba default [255,255,255,255]
+		}
+		"tint_perc"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 1
+		}
+		"tint_clamp_max"
+		{
+			$string type "color"
+			$srgba default [255,255,255,255]
+		}
+		"tint_update_movement_threshold"
+		{
+			$string type "int"
+			$int32 default 32
+			$int32 min 0
+			$int32 max 64
+		}
+	}
+}
+"source_remap_initial_scalar"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"emitter_lifetime_start_time"
+		{
+			$string type "float"
+			$float default -1
+			$float min 0
+			$float max 30
+		}
+		"input_maximum"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10
+		}
+		"emitter_lifetime_end_time"
+		{
+			$string type "float"
+			$float default -1
+			$float min 0
+			$float max 30
+		}
+		"output_maximum"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10
+		}
+		"input_field"
+		{
+			$string type "string"
+		}
+		"input_minimum"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10
+		}
+		"output_field"
+		{
+			$string type "string"
+		}
+		"output_minimum"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10
+		}
+		"output_scalar_of_initial_random_range"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"only_active_within_specified_input_range"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+"source_sequence_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"sequence_min"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+		"sequence_max"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+	}
+}
+"source_rotation_yaw_flip_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"flip_percentage"
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0
+			$float max 1
+		}
+	}
+}
+"source_rotation_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"rotation_initial"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 360
+		}
+		"rotation_offset_min"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 360
+		}
+		"rotation_offset_max"
+		{
+			$string type "float"
+			$float default 360
+			$float min 0
+			$float max 360
+		}
+		"rotation_random_exponent"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 5
+		}
+	}
+}
+"source_trail_length_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"length_min"
+		{
+			$string type "float"
+			$float default 0.1
+			$float min 0
+			$float max 100
+		}
+		"length_max"
+		{
+			$string type "float"
+			$float default 0.1
+			$float min 0
+			$float max 100
+		}
+		"length_random_exponent"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 5
+		}
+	}
+}
+"source_render_animated_sprites"
+{
+	$string type "renderer"
+	"keyvalues"
+	{
+		"orientation_type"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+		"control_point_id"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+		"second_sequence_animation_rate"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 5
+		}
+	}
+}
+"source_position_modify_random_offset"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"control_point_id"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+		"offset_min"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"offset_in_local_space"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"offset_max"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"offset_proportional_to_radius"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+"source_position_random_box"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"control_point_id"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+		"max"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"min"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+	}
+}
+"source_velocity_random_noise"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"control_point_id"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+		"time_noise_coordinate_scale"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 5
+		}
+		"spatial_noise_coordinate_scale"
+		{
+			$string type "float"
+			$float default 0.01
+			$float min 0
+			$float max 1
+		}
+		"spatial_coordinate_offset"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"time_coordinate_offset"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 5
+		}
+		"output_minimum"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"absolute_value"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"invert_abs_value"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"output_maximum"
+		{
+			$string type "vector"
+			$vec3 default [1,1,1]
+		}
+		"apply_velocity_in_local_space"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+"source_position_random_sphere"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"distance_min"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 50
+		}
+		"control_point_id"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+		"speed_max"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 50
+		}
+		"distance_max"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 50
+		}
+		"create_in_model"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"speed_min"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 50
+		}
+		"distance_bias"
+		{
+			$string type "vector"
+			$vec3 default [1,1,1]
+		}
+		"distance_bias_absolute_value"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"bias_in_local_system"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"speed_in_local_coordinate_system_max"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"speed_random_exponent"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 5
+		}
+		"speed_in_local_coordinate_system_min"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"randomly_distribute_to_cp"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"random_distribution_growth_time"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 5
+		}
+	}
+}
+"source_remap_scalar_to_vector"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"emitter_lifetime_start_time"
+		{
+			$string type "float"
+			$float default -1
+			$float min 0
+			$float max 30
+		}
+		"input_maximum"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10
+		}
+		"emitter_lifetime_end_time"
+		{
+			$string type "float"
+			$float default -1
+			$float min 0
+			$float max 30
+		}
+		"output_maximum"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10
+		}
+		"input_field"
+		{
+			$string type "string"
+		}
+		"input_minimum"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10
+		}
+		"output_field"
+		{
+			$string type "string"
+		}
+		"output_minimum"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10
+		}
+		"output_scalar_of_initial_random_range"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"use_local_system"
+		{
+			$string type "bool"
+			$bool default 1
+		}
+		"control_point_id"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+	}
+}
+"source_radius_scale"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"start_time"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"radius_start_scale"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 50
+		}
+		"end_time"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 30
+		}
+		"ease_in_and_out"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"radius_end_scale"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 50
+		}
+		"scale_bias"
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0
+			$float max 2
+		}
+	}
+}
+"source_animation"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"animation_rate"
+		{
+			$string type "float"
+			$float default 0.1
+			$float min 0
+			$float max 5
+		}
+		"animation_fit_lifetime"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"use_animation_rate_as_fps"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+"source_color_fade"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"fade_start_time"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"fade_end_time"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"color_fade"
+		{
+			$string type "color"
+			$srgba default [255,255,255,255]
+		}
+		"ease_in_and_out"
+		{
+			$string type "bool"
+			$bool default 1
+		}
+	}
+}
+"source_alpha_fade_and_decay"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"start_alpha"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 1
+		}
+		"start_fade_in_time"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"end_alpha"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 1
+		}
+		"end_fade_in_time"
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0
+			$float max 30
+		}
+		"start_fade_out_time"
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0
+			$float max 30
+		}
+		"end_fade_out_time"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 30
+		}
+	}
+}
+"source_oscillate_scalar"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"end_time_max"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 30
+		}
+		"oscillation_field"
+		{
+			$string type "string"
+		}
+		"oscillation_rate_min"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10
+		}
+		"oscillation_frequency_max"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 10
+		}
+		"oscillation_multiplier"
+		{
+			$string type "float"
+			$float default 2
+			$float min 0
+			$float max 5
+		}
+		"oscillation_rate_max"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10
+		}
+		"oscillation_frequency_min"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 10
+		}
+		"proportional"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"start_time_min"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"start_time_max"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"end_time_min"
+		{
+			$string type "float"
+			$float default 1
+			$float min 0
+			$float max 30
+		}
+		"start_end_proportional"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"oscillation_start_phase"
+		{
+			$string type "float"
+			$float default 0.5
+			$float min 0
+			$float max 5
+		}
+	}
+}
+"source_pull_towards_control_point"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"amount_of_force"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10000
+		}
+		"falloff_power"
+		{
+			$string type "float"
+			$float default 2
+			$float min 0
+			$float max 50
+		}
+		"control_point_id"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+	}
+}
+"source_twist_around_axis"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"amount_of_force"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 10000
+		}
+		"twist_axis"
+		{
+			$string type "vector"
+			$vec3 default [0,1,0]
+			$bool normalized 1
+		}
+		"control_point_id"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+		"local_space_axis"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
+"source_force_random"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"min_force"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+		"max_force"
+		{
+			$string type "vector"
+			$vec3 default [0,0,0]
+		}
+	}
+}
+"source_movement_rotate_particle_around_axis"
+{
+	$string type "operator"
+	"keyvalues"
+	{
+		"rotation_axis"
+		{
+			$string type "vector"
+			$vec3 default [0,1,0]
+			$bool normalized 1
+		}
+		"control_point_id"
+		{
+			$string type "int"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 10
+		}
+		"use_local_space"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"rotation_rate"
+		{
+			$string type "float"
+			$float default 180
+			$float min 0
+			$float max 360
+		}
+	}
+}
