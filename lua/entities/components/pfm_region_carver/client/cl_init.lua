@@ -44,8 +44,17 @@ function Component:CarveModel(ent)
 	local mdl = game.load_model(mdlName)
 	if(mdl == nil) then return end
 
+	local bodygroups = {}
+	local skin = ent:GetSkin()
+	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
+	if(mdlC ~= nil) then bodygroups = mdlC:GetBodyGroups() end
+	
 	ent:ClearModel()
 	ent:SetModel(mdlName) -- Reset original model
+
+	ent:SetSkin(skin)
+	if(util.is_valid(mdlC)) then for k,v in pairs(bodygroups) do mdlC:SetBodyGroup(k,v) end end
+
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC ~= nil) then mdlC:UpdateRenderMeshes() end
 	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
