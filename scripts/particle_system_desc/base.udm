@@ -1,3 +1,51 @@
+"base"
+{
+	$string type "base"
+	"keyvalues"
+	{
+		"maxparticles"
+		{
+			$string type "int32"
+			$int32 default 0
+			$float min 0
+			$float max 5000
+		}
+		"emission_rate"
+		{
+			$string type "int32"
+			$int32 default 0
+			$float min 0
+			$float max 200
+		}
+		"material"
+		{
+			$string type "string"
+			$string default ""
+		}
+		"radius"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 100
+		}
+		"sort_particles"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"color"
+		{
+			$string type "srgba"
+			$vec4 default [255,255,255,255]
+		}
+		"soft_particles"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+	}
+}
 "color_random"
 {
 	$string type "initializer"
@@ -5,12 +53,12 @@
 	{
 		"color_min"
 		{
-			$string type "color"
+			$string type "srgba"
 			$srgba default [255,255,255,255]
 		}
 		"color_max"
 		{
-			$string type "color"
+			$string type "srgba"
 			$srgba default [255,255,255,255]
 		}
 	}
@@ -22,12 +70,12 @@
 	{
 		"min"
 		{
-			$string type "min"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"origin"
 		{
-			$string type "max"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"on_sides"
@@ -49,7 +97,7 @@
 	{
 		"acceleration"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 	}
@@ -96,17 +144,17 @@
 		}
 		"angular_factor"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"linear_factor"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"translation_offset"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"angular_damping"
@@ -118,7 +166,7 @@
 		}
 		"rotation_offset"
 		{
-			$string type "vector4"
+			$string type "vec4"
 			$vec4 default [1,0,0,0]
 		}
 		"radius"
@@ -151,7 +199,7 @@
 		}
 		"direction"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,0,0]
 			$bool normalized 1
 		}
@@ -192,27 +240,27 @@
 	{
 		"velocity"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"spread_min"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"spread_max"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"velocity_min"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"velocity_max"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 	}
@@ -238,11 +286,11 @@
 		}
 		"origin"
 		{
-			$string type "vector"
+			$string type "vec3"
 		}
 		"distance_bias"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 	}
@@ -254,7 +302,7 @@
 	{
 		"axis"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,1,0]
 		}
 		"distance_min"
@@ -273,7 +321,7 @@
 		}
 		"origin"
 		{
-			$string type "vector"
+			$string type "vec3"
 		}
 	}
 }
@@ -284,7 +332,7 @@
 	{
 		"bias"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 	}
@@ -331,27 +379,27 @@
 	{
 		"velocity"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"spread_min"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"spread_max"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"velocity_min"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"velocity_max"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 	}
@@ -405,7 +453,7 @@
 	{
 		"color_start"
 		{
-			$string type "color"
+			$string type "srgba"
 			$srgba default [255,255,255,255]
 		}
 		"ease_in"
@@ -434,7 +482,7 @@
 		}
 		"color_end"
 		{
-			$string type "color"
+			$string type "srgba"
 			$srgba default [255,255,255,255]
 		}
 		"fade_lifetime_fraction"
@@ -498,7 +546,7 @@
 		}
 		"acceleration"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,-1,0]
 		}
 	}
@@ -552,17 +600,17 @@
 		}
 		"angular_factor"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"linear_factor"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"translation_offset"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"angular_damping"
@@ -574,7 +622,7 @@
 		}
 		"rotation_offset"
 		{
-			$string type "vector4"
+			$string type "vec4"
 			$vec4 default [1,0,0,0]
 		}
 	}
@@ -600,17 +648,17 @@
 		}
 		"angular_factor"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"linear_factor"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"translation_offset"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"angular_damping"
@@ -622,7 +670,7 @@
 		}
 		"rotation_offset"
 		{
-			$string type "vector4"
+			$string type "vec4"
 			$vec4 default [1,0,0,0]
 		}
 		"radius"
@@ -683,17 +731,17 @@
 		}
 		"angular_factor"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"linear_factor"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"translation_offset"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"angular_damping"
@@ -705,7 +753,7 @@
 		}
 		"rotation_offset"
 		{
-			$string type "vector4"
+			$string type "vec4"
 			$vec4 default [1,0,0,0]
 		}
 		"model"
@@ -721,7 +769,7 @@
 	{
 		"axis"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,1,0]
 			$bool normalized 1
 		}
@@ -797,7 +845,7 @@
 	{
 		"velocity"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 	}
@@ -809,7 +857,7 @@
 	{
 		"axis"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,1,0]
 			$bool normalized 1
 		}
@@ -921,14 +969,14 @@
 		}
 		"bodygroup2"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
 		}
 		"skin"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
@@ -939,14 +987,14 @@
 		}
 		"bodygroup0"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
 		}
 		"bodygroup1"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
@@ -981,7 +1029,7 @@
 		}
 		"direction"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,0,0]
 			$bool normalized 1
 		}
@@ -999,14 +1047,14 @@
 	{
 		"node_start"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
 		}
 		"node_end"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
@@ -1027,7 +1075,7 @@
 	{
 		"specular_color"
 		{
-			$string type "vector4"
+			$string type "vec4"
 			$vec4 default [0,0,0,0]
 		}
 		"specular_shininess"

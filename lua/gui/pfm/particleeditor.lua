@@ -133,8 +133,7 @@ function gui.PFMParticleEditor:PopulatePropertyTree()
 	end
 	local function add_property_category(propertyType,text)
 		local item = add_category(text,function(pContext)
-			local pt = self:GetTargetParticleSystem()
-			local ptC = util.is_valid(pt) and pt:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) or nil
+			local ptC = self:GetTargetParticleSystem()
 			if(ptC == nil) then return end
 			local propertyList = {}
 			if(propertyType == "initializer") then
@@ -173,6 +172,75 @@ function gui.PFMParticleEditor:PopulatePropertyTree()
 	add_property_category("operator",locale.get_text("pfm_pted_operators"))
 	add_property_category("renderer",locale.get_text("pfm_pted_renderers"))
 	self.m_elChildrenItem = add_category("children")
+	self.m_elChildrenItem:AddCallback("OnMouseEvent",function(src,button,state,mods)
+		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+			self.m_elChildrenItem:Expand()
+			local elTmpItem = self.m_elChildrenItem:AddItem("")
+
+			local te = gui.create("WITextEntry",elTmpItem,0,0,elTmpItem:GetWidth(),elTmpItem:GetHeight(),0,0,1,1)
+			te:SetText("")
+			te:RequestFocus()
+			te:AddCallback("OnFocusKilled",function()
+				local childName = te:GetText()
+				util.remove(elTmpItem,true)
+				util.remove(te,true)
+				if(#childName > 0) then
+					local udmData = self:GetParticleEffectUdmData(self.m_particleName)
+					local udmChildren = udmData:Get("children")
+					udmChildren:Resize(udmChildren:GetSize() +1)
+					local el = udmChildren:Get(udmChildren:GetSize() -1)
+					el:SetValue("type",udm.TYPE_STRING,childName)
+					el:SetValue("delay",udm.TYPE_FLOAT,0.0)
+
+					self:AddParticleChildItem(childName)
+
+					self:ReloadParticleSystem(self.m_ptName)
+					self:UpdateSaveButton(false)
+				end
+			end)
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
+end
+function gui.PFMParticleEditor:AddParticleChildItem(childName)
+	local el = self.m_elChildrenItem:AddItem(childName)
+	el:AddCallback("OnDoubleClick",function(el,button,state,mods)
+		time.create_simple_timer(0.0,function()
+			if(self:IsValid() == false) then return end
+			table.insert(self.m_parentSystems,{
+				fileName = self.m_particleFileName,
+				systemName = self.m_particleName
+			})
+			self:LoadParticleSystem(self.m_particleFileName,childName,false)
+		end)
+		return util.EVENT_REPLY_HANDLED
+	end)
+	el:AddCallback("OnMouseEvent",function(el,button,state,mods)
+		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+			local pContext = gui.open_context_menu()
+			pContext:SetPos(input.get_cursor_pos())
+			pContext:AddItem(locale.get_text("remove"),function()
+				util.remove(el)
+
+				local udmData = self:GetParticleEffectUdmData(self.m_particleName)
+				local udmChildren = udmData:Get("children")
+				for i,udmChild in ipairs(udmChildren:GetArrayValues()) do
+					local type = udmChild:GetValue("type",udm.TYPE_STRING)
+					if(type == childName) then
+						udmChildren:RemoveValue(i -1)
+						util.remove(el,true)
+						break
+					end
+				end
+
+				self:ReloadParticleSystem(self.m_ptName)
+				self:UpdateSaveButton(false)
+			end)
+			pContext:Update()
+			return util.EVENT_REPLY_HANDLED
+		end
+		return util.EVENT_REPLY_UNHANDLED
+	end)
 end
 function gui.PFMParticleEditor:GetFullFileName()
 	if(self.m_particleFileName == nil) then return end
@@ -225,7 +293,7 @@ function gui.PFMParticleEditor:ReloadParticleProperties()
 
 	if(#self.m_parentSystems > 0) then
 		local pd = self.m_parentSystems[#self.m_parentSystems]
-		local el = self.m_tree:AddItem("Go to parent (" .. pd.systemName .. ")")
+		local el = self.m_tree:AddItem(locale.get_text("pfm_pted_go_to_parent") .. " (" .. pd.systemName .. ")")
 		el:AddCallback("OnDoubleClick",function(el,button,state,mods)
 			time.create_simple_timer(0.0,function()
 				if(self:IsValid() == false) then return end
@@ -255,29 +323,29 @@ function gui.PFMParticleEditor:ReloadParticleProperties()
 		if(props:IsValid()) then
 			for _,udmProp in ipairs(props:GetArrayValues()) do
 				local name = udmProp:GetValue("name")
-					local propertyType = baseName
-					local type = name
-					local el = self.m_propertyItems[propertyType]:AddItem(locale.get_text("pts_" .. type))
-					self.m_operatorData[el] = {
-						operatorType = propertyType,
-						type = name,
-						udmOperator = udmProp
-					}
-					el:AddCallback("OnMouseEvent",function(el,button,state,mods)
-						if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-							local pContext = gui.open_context_menu()
-							pContext:SetPos(input.get_cursor_pos())
-							local item
-							item = pContext:AddItem(locale.get_text("remove"),function()
-								util.remove(item)
-								self:RemoveProperty(propertyType,type)
-							end)
-							pContext:Update()
-							return util.EVENT_REPLY_HANDLED
-						end
-						return util.EVENT_REPLY_UNHANDLED
-					end)
-				--end
+				local propertyType = baseName
+				local type = name
+				local el = self.m_propertyItems[propertyType]:AddItem(locale.get_text("pts_" .. type))
+				self.m_operatorData[el] = {
+					operatorType = propertyType,
+					type = name,
+					udmOperator = udmProp
+				}
+				el:AddCallback("OnMouseEvent",function(el,button,state,mods)
+					if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+						local pContext = gui.open_context_menu()
+						pContext:SetPos(input.get_cursor_pos())
+						pContext:AddItem(locale.get_text("remove"),function()
+							self.m_propertyItems[propertyType]:ScheduleUpdate()
+							self.m_operatorData[el] = nil
+							util.remove(el,true)
+							self:RemoveProperty(propertyType,type)
+						end)
+						pContext:Update()
+						return util.EVENT_REPLY_HANDLED
+					end
+					return util.EVENT_REPLY_UNHANDLED
+				end)
 			end
 			
 		end
@@ -289,19 +357,7 @@ function gui.PFMParticleEditor:ReloadParticleProperties()
 	local children = child:Get("assetData"):Get("children")
 	for _,child in ipairs(children:GetArrayValues()) do
 		local type = child:GetValue("type",udm.TYPE_STRING) or ""
-		local el = self.m_elChildrenItem:AddItem(type)
-
-		el:AddCallback("OnDoubleClick",function(el,button,state,mods)
-			time.create_simple_timer(0.0,function()
-				if(self:IsValid() == false) then return end
-				table.insert(self.m_parentSystems,{
-					fileName = self.m_particleFileName,
-					systemName = self.m_particleName
-				})
-				self:LoadParticleSystem(self.m_particleFileName,type,false)
-			end)
-			return util.EVENT_REPLY_HANDLED
-		end)
+		self:AddParticleChildItem(type)
 	end
 end
 function gui.PFMParticleEditor:GetParentParticleSystem()
@@ -405,6 +461,7 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 	local ptDef = data:Get(opType)
 	if(ptDef:IsValid() == false) then return end
 	local keyValueBlock = ptDef:Get("keyvalues")
+	if(keyValueBlock:IsValid() == false) then keyValueBlock = ptDef:Add("keyvalues") end
 	if(keyValueBlock:IsValid()) then
 		local ptC = self:GetTargetParticleSystem()
 		local property
@@ -414,6 +471,21 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 			elseif(propertyType == "renderer") then property = ptC:FindRendererByType(opType) end
 		end
 		local keyValues = (property ~= nil) and property:GetKeyValues() or {}
+		local function get_def_type(keyValueBlock,key)
+			local kvData = keyValueBlock:Get(key)
+			local strType = kvData:GetValue("type",udm.TYPE_STRING)
+			local type
+			if(strType ~= nil) then
+				local etype = udm.ascii_type_to_enum(strType)
+				if(etype ~= udm.TYPE_INVALID) then type = etype
+				else
+					pfm.log("Unrecognized keyvalue type '" .. strType .. "' for keyvalue '" .. key .. "' of operator '" .. opType .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+				end
+			else
+				pfm.log("Missing keyvalue type for keyvalue '" .. key .. "' of operator '" .. opType .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+			end
+			return type
+		end
 		local function get_key_value(key)
 			if(propertyType ~= "base") then return keyValues[key] end
 			if(util.is_valid(ptC) == false) then return end
@@ -429,10 +501,38 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 			if(key == "soft_particles") then return ptC:GetSoftParticles() and "1" or "0" end
 		end
 		local function set_key_value(key,val)
-			if(udmOperator ~= nil) then
+			if(propertyType == "base") then
+				local ptUdmData = self:GetParticleEffectUdmData(self.m_particleName)
+				local udmKeyValues = ptUdmData:Get("keyValues")
+				local type = get_def_type(data:Get("base"):Get("keyvalues"),key)
+				if(type ~= nil) then
+					udmKeyValues:SetValue(key,udm.TYPE_STRING,val)
+				end
+				--if(key == "maxparticles") then  end -- TODO
+				if(key == "emission_rate") then ptC:SetEmissionRate(tonumber(val)) end
+				if(key == "material") then ptC:SetMaterial(val) end
+				if(key == "radius") then ptC:SetRadius(tonumber(val)) end
+				if(key == "sort_particles") then ptC:SetSortParticles(toboolean(val)) end
+				if(key == "color") then ptC:SetInitialColor(Color(val)) end
+				if(key == "soft_particles") then ptC:SetSoftParticles(toboolean(val)) end
+			elseif(udmOperator ~= nil) then
 				local udmKeyValues = udmOperator:Get("keyValues")
+				if(udmKeyValues:IsValid() == false) then udmKeyValues = udmOperator:Add("keyValues") end
 				if(udmKeyValues:IsValid()) then
-					udmKeyValues:SetValue(key,udmKeyValues:Get(key):GetType(),val)
+					local type = udmKeyValues:Get(key):GetType()
+					if(type == udm.TYPE_NIL or type == udm.TYPE_INVALID) then
+						type = get_def_type(keyValueBlock,key) or type
+					end
+					val = udm.convert(val,udm.TYPE_STRING,type)
+					if(type == udm.TYPE_SRGBA) then
+						val = Color(val[1] or 255,val[2] or 255,val[3] or 255,val[4] or 255):ToVector4()
+						type = udm.TYPE_VECTOR4
+					end
+					if(val ~= nil) then
+						udmKeyValues:SetValue(key,type,val)
+					else
+						pfm.log("Failed to convert keyvalue '" .. key .. "' from type 'string' to '" .. udm.enum_type_to_ascii(type) .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+					end
 				end
 			end
 
@@ -443,7 +543,7 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 			local locName = locale.get_text("pts_" .. opType .. "_" .. name)
 			local type = kvData:GetValue("type",udm.TYPE_STRING)
 			local ctrl
-			if(type == "float" or type == "int") then -- or type == "bool") then
+			if(type == "float" or type == "int32") then -- or type == "bool") then
 				local min = kvData:GetValue("min",udm.TYPE_FLOAT) or 0.0
 				local max = kvData:GetValue("max",udm.TYPE_FLOAT) or 0.0
 				local default = kvData:GetValue("default",udm.TYPE_FLOAT) or 0.0
@@ -464,7 +564,7 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 					self:ReloadParticle()
 				end)
 				ctrl = sliderCtrl
-			elseif(type == "string" or type == "vector") then
+			elseif(type == "string" or type == "vec3" or type == "vec4") then
 				local default = kvData:GetValue("default",udm.TYPE_STRING) or ""
 				local teCtrl = gui.create("WITextEntry",self.m_propertiesBox)
 				teCtrl:AddCallback("OnTextEntered",function(pEntry)
@@ -479,7 +579,7 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 				if(val ~= nil) then teCtrl:SetText(tostring(val)) end
 
 				ctrl = wrapper
-			elseif(type == "color") then
+			elseif(type == "srgba") then
 				local default = kvData:GetValue("default",udm.TYPE_VECTOR4) or Vector4(1,1,1,1)
 				default = Color(default)
 				local colorCtrl = gui.create("WIPFMColorEntry",self.m_propertiesBox)
@@ -610,22 +710,31 @@ function gui.PFMParticleEditor:AddInitializer(initializer) self:AddProperty("ini
 function gui.PFMParticleEditor:AddOperator(operator) self:AddProperty("operator",operator) end
 function gui.PFMParticleEditor:AddEmitter(emitter) self:AddProperty("emitter",emitter) end
 function gui.PFMParticleEditor:AddProperty(propertyType,property)
-	local pt = self:GetTargetParticleSystem()
-	local ptC = util.is_valid(pt) and pt:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM) or nil
+	local ptC = self:GetTargetParticleSystem()
 	if(ptC == nil or ptC:FindInitializerByType(property)) then return end
+	local propName = property
 	if(propertyType == "initializer") then property = ptC:AddInitializer(property,{})
 	elseif(propertyType == "operator") then property = ptC:AddOperator(property,{})
 	elseif(propertyType == "renderer") then property = ptC:AddRenderer(property,{}) end
 	if(property == nil) then return end
-	self:PopulateProperty(ptC,propertyType,property)
+
+	local ptUdmData = self:GetParticleEffectUdmData(self.m_particleName)
+	local props = ptUdmData:Get(propertyType .. "s")
+	props:Resize(props:GetSize() +1)
+	local udmEl = props:Get(props:GetSize() -1)
+	udmEl:SetValue("name",udm.TYPE_STRING,propName)
+
+	local el = self:PopulateProperty(ptC,propertyType,property)
+
+	self.m_operatorData[el].udmOperator = udmEl
 end
 function gui.PFMParticleEditor:RemoveProperty(propertyType,property)
 	local ptUdmData = self:GetParticleEffectUdmData(self.m_particleName)
 	local props = ptUdmData:Get(propertyType .. "s")
-	for i,child in ipairs(props:GetChildren()) do
+	for i,child in ipairs(props:GetArrayValues()) do
 		local name = child:GetValue("name",udm.TYPE_STRING) or ""
 		if(name == property) then
-			child:RemoveValue(i -1)
+			props:RemoveValue(i -1)
 			break
 		end
 	end
@@ -660,6 +769,9 @@ function gui.PFMParticleEditor:PopulateProperty(ptC,propertyType,property)
 			local pContext = gui.open_context_menu()
 			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem(locale.get_text("remove"),function()
+				self.m_propertyItems[propertyType]:ScheduleUpdate()
+				self.m_operatorData[el] = nil
+				util.remove(el,true)
 				self:RemoveProperty(propertyType,type)
 			end)
 			pContext:Update()
@@ -667,6 +779,7 @@ function gui.PFMParticleEditor:PopulateProperty(ptC,propertyType,property)
 		end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
+	return el
 end
 function gui.PFMParticleEditor:PopulateParticleProperties()
 	local pt = self:GetTargetParticleSystem()

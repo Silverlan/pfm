@@ -131,19 +131,19 @@
 		}
 		"max_constraint_passes"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 3
 			$int32 min 0
 			$int32 max 10
 		}
 		"gravity"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 	}
 }
-"source_oscillate_vector"
+"source_oscillate_vec3"
 {
 	$string type "operator"
 	"keyvalues"
@@ -161,12 +161,12 @@
 		}
 		"oscillation_rate_min"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"oscillation_frequency_max"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"oscillation_multiplier"
@@ -178,12 +178,12 @@
 		}
 		"oscillation_rate_max"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"oscillation_frequency_min"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"proportional"
@@ -233,7 +233,7 @@
 	{
 		"frames_per_second"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 30
 			$int32 min 0
 			$int32 max 100
@@ -247,24 +247,24 @@
 	{
 		"tint_control_point"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
 		}
 		"tint_clamp_min"
 		{
-			$string type "color"
+			$string type "srgba"
 			$srgba default [0,0,0,0]
 		}
 		"color1"
 		{
-			$string type "color"
+			$string type "srgba"
 			$srgba default [255,255,255,255]
 		}
 		"color2"
 		{
-			$string type "color"
+			$string type "srgba"
 			$srgba default [255,255,255,255]
 		}
 		"tint_perc"
@@ -276,12 +276,12 @@
 		}
 		"tint_clamp_max"
 		{
-			$string type "color"
+			$string type "srgba"
 			$srgba default [255,255,255,255]
 		}
 		"tint_update_movement_threshold"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 32
 			$int32 min 0
 			$int32 max 64
@@ -362,14 +362,14 @@
 	{
 		"sequence_min"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
 		}
 		"sequence_max"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
@@ -460,14 +460,14 @@
 	{
 		"orientation_type"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
 		}
 		"control_point_id"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
@@ -488,14 +488,14 @@
 	{
 		"control_point_id"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
 		}
 		"offset_min"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"offset_in_local_space"
@@ -505,7 +505,7 @@
 		}
 		"offset_max"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"offset_proportional_to_radius"
@@ -522,19 +522,19 @@
 	{
 		"control_point_id"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
 		}
 		"max"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"min"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 	}
@@ -546,7 +546,7 @@
 	{
 		"control_point_id"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
@@ -567,7 +567,7 @@
 		}
 		"spatial_coordinate_offset"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"time_coordinate_offset"
@@ -579,22 +579,22 @@
 		}
 		"output_minimum"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"absolute_value"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"invert_abs_value"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"output_maximum"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"apply_velocity_in_local_space"
@@ -618,7 +618,7 @@
 		}
 		"control_point_id"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
@@ -651,12 +651,12 @@
 		}
 		"distance_bias"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [1,1,1]
 		}
 		"distance_bias_absolute_value"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"bias_in_local_system"
@@ -666,7 +666,7 @@
 		}
 		"speed_in_local_coordinate_system_max"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"speed_random_exponent"
@@ -678,7 +678,7 @@
 		}
 		"speed_in_local_coordinate_system_min"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"randomly_distribute_to_cp"
@@ -695,7 +695,7 @@
 		}
 	}
 }
-"source_remap_scalar_to_vector"
+"source_remap_scalar_to_vec3"
 {
 	$string type "initializer"
 	"keyvalues"
@@ -762,7 +762,7 @@
 		}
 		"control_point_id"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
@@ -861,7 +861,7 @@
 		}
 		"color_fade"
 		{
-			$string type "color"
+			$string type "srgba"
 			$srgba default [255,255,255,255]
 		}
 		"ease_in_and_out"
@@ -1032,7 +1032,7 @@
 		}
 		"control_point_id"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
@@ -1053,13 +1053,13 @@
 		}
 		"twist_axis"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,1,0]
 			$bool normalized 1
 		}
 		"control_point_id"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
@@ -1078,12 +1078,12 @@
 	{
 		"min_force"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 		"max_force"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,0,0]
 		}
 	}
@@ -1095,13 +1095,13 @@
 	{
 		"rotation_axis"
 		{
-			$string type "vector"
+			$string type "vec3"
 			$vec3 default [0,1,0]
 			$bool normalized 1
 		}
 		"control_point_id"
 		{
-			$string type "int"
+			$string type "int32"
 			$int32 default 0
 			$int32 min 0
 			$int32 max 10
