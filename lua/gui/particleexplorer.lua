@@ -147,6 +147,7 @@ function gui.ParticleExplorer:PopulateContextMenu(pContext,tSelectedFiles)
 
 						assetData:AddArray("operators",0,udm.TYPE_ELEMENT)
 						assetData:AddArray("renderers",0,udm.TYPE_ELEMENT)
+						assetData:AddArray("children",0,udm.TYPE_ELEMENT)
 						local keyValues = assetData:Get("keyValues")
 						keyValues:SetValue("maxparticles",udm.TYPE_STRING,"1000")
 						keyValues:SetValue("material",udm.TYPE_STRING,"white")

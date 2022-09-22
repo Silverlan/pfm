@@ -187,6 +187,7 @@ function gui.PFMParticleEditor:PopulatePropertyTree()
 				if(#childName > 0) then
 					local udmData = self:GetParticleEffectUdmData(self.m_particleName)
 					local udmChildren = udmData:Get("children")
+					if(udmChildren:IsValid() == false) then udmChildren = udmData:AddArray("children",0,udm.TYPE_ELEMENT) end
 					udmChildren:Resize(udmChildren:GetSize() +1)
 					local el = udmChildren:Get(udmChildren:GetSize() -1)
 					el:SetValue("type",udm.TYPE_STRING,childName)
@@ -633,16 +634,17 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 			elseif(type == "string" or type == "vec3" or type == "vec4") then
 				local default = kvData:GetValue("default",udm.TYPE_STRING) or ""
 				local teCtrl = gui.create("WITextEntry",self.m_propertiesBox)
-				teCtrl:AddCallback("OnTextEntered",function(pEntry)
-					set_key_value(name,pEntry:GetText())
-					self:ReloadParticle()
-				end)
 				local wrapper = teCtrl:Wrap("WIEditableEntry")
 				wrapper:SetText(locName)
 				teCtrl:SetText(default)
 
 				local val = get_key_value(name)
 				if(val ~= nil) then teCtrl:SetText(tostring(val)) end
+
+				teCtrl:AddCallback("OnTextEntered",function(pEntry)
+					set_key_value(name,pEntry:GetText())
+					self:ReloadParticle()
+				end)
 
 				ctrl = wrapper
 			elseif(type == "enum") then
@@ -654,11 +656,6 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 					local val = udmValues:GetArrayValue(i,udm.TYPE_STRING)
 					menu:AddOption(val,tostring(i))
 				end
-				menu:AddCallback("OnOptionSelected",function(el,option)
-					local val = menu:GetOptionValue(menu:GetSelectedOption())
-					set_key_value(name,val)
-					self:ReloadParticle()
-				end)
 				local wrapper = menu:Wrap("WIEditableEntry")
 				wrapper:SetText(locName)
 
@@ -667,21 +664,27 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 					local idx = alpha_mode_to_enum(val)
 					if(idx ~= nil) then menu:SelectOption(idx) end
 				end
+				menu:AddCallback("OnOptionSelected",function(el,option)
+					local val = menu:GetOptionValue(menu:GetSelectedOption())
+					set_key_value(name,val)
+					self:ReloadParticle()
+				end)
 
 				ctrl = wrapper
 			elseif(type == "srgba") then
 				local default = kvData:GetValue("default",udm.TYPE_VECTOR4) or Vector4(1,1,1,1)
 				default = Color(default)
 				local colorCtrl = gui.create("WIPFMColorEntry",self.m_propertiesBox)
-				colorCtrl:GetColorProperty():AddCallback(function(oldCol,newCol)
-					set_key_value(name,tostring(newCol))
-					self:ReloadParticle()
-				end)
 				local wrapper = colorCtrl:Wrap("WIEditableEntry")
 				wrapper:SetText(locName)
 
 				local val = get_key_value(name)
 				if(val ~= nil) then colorCtrl:SetColor(Color(val)) end
+
+				colorCtrl:GetColorProperty():AddCallback(function(oldCol,newCol)
+					set_key_value(name,tostring(newCol))
+					self:ReloadParticle()
+				end)
 
 				ctrl = wrapper
 			else console.print_warning("Unsupported particle field type '" .. type .. "' for key '" .. name .. "' of operator '" .. opType .. "'! Ignoring...") end
