@@ -13,8 +13,8 @@ function ents.ParticleSystemComponent.OperatorColorFade:__init()
 end
 function ents.ParticleSystemComponent.OperatorColorFade:Initialize()
 	self.m_colorFade = Color(self:GetKeyValue("color_fade") or "255 255 255 255")
-	self.m_fadeStartTime = tonumber(self:GetKeyValue("fade_start_time") or "0")
-	self.m_fadeEndTime = tonumber(self:GetKeyValue("fade_end_time") or "1")
+	self.m_fadeStartTime = tonumber(self:GetKeyValue("fade_start_time")) or 0
+	self.m_fadeEndTime = tonumber(self:GetKeyValue("fade_end_time")) or 1
 	self.m_easeInAndOut = toboolean(self:GetKeyValue("ease_in_and_out") or "") or true
 end
 function ents.ParticleSystemComponent.OperatorColorFade:Simulate(pt,dt)

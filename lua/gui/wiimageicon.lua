@@ -55,6 +55,7 @@ function gui.ImageIcon:SetText(text)
 end
 function gui.ImageIcon:GetTextureElement() return self.m_texture end
 function gui.ImageIcon:GetBackgroundElement() return self.m_bg end
+function gui.ImageIcon:GetTextBackgroundElement() return self.m_textBg end
 function gui.ImageIcon:GetMaterial() return self.m_texture:GetMaterial() end
 function gui.ImageIcon:SetMaterial(mat,w,h)
 	self.m_texture:SetMaterial(mat)

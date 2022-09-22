@@ -44,6 +44,63 @@
 			$string type "bool"
 			$bool default 0
 		}
+		"rotate_with_emitter"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"move_with_emitter"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"premultiply_alpha"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"texture_scrolling_enabled"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"cast_shadows"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"radius"
+		{
+			$string type "float"
+			$float default 0
+			$int32 min 0
+			$int32 max 100
+		}
+		"extent"
+		{
+			$string type "float"
+			$float default 0
+			$int32 min 0
+			$int32 max 100
+		}
+		"loop"
+		{
+			$string type "bool"
+			$bool default 1
+		}
+		"max_node_count"
+		{
+			$string type "int32"
+			$int32 default 0
+			$int32 min 0
+			$int32 max 50
+		}
+		"alpha_mode"
+		{
+			$string type "enum"
+			$array values [string]["additive","additive_by_color","opaque","masked","translucent","premultiplied"]
+			$int32 default 0
+		}
 	}
 }
 "color_random"
@@ -51,12 +108,17 @@
 	$string type "initializer"
 	"keyvalues"
 	{
-		"color_min"
+		"color1"
 		{
 			$string type "srgba"
 			$srgba default [255,255,255,255]
 		}
-		"color_max"
+		"color2"
+		{
+			$string type "srgba"
+			$srgba default [255,255,255,255]
+		}
+		"color3"
 		{
 			$string type "srgba"
 			$srgba default [255,255,255,255]
@@ -422,6 +484,65 @@
 			$float default 0
 			$float min 0
 			$float max 50
+		}
+	}
+}
+"lifetime_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"lifetime_min"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 50
+		}
+		"lifetime_max"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 50
+		}
+	}
+}
+"alpha_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"alpha_min"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 255
+		}
+		"alpha_max"
+		{
+			$string type "float"
+			$float default 255
+			$float min 0
+			$float max 255
+		}
+	}
+}
+"rotation_random"
+{
+	$string type "initializer"
+	"keyvalues"
+	{
+		"rotation_min"
+		{
+			$string type "euler_angles"
+			$ang default [0,0,0]
+		}
+		"rotation_max"
+		{
+			$string type "euler_angles"
+			$ang default [0,0,0]
 		}
 	}
 }

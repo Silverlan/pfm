@@ -1,3 +1,4 @@
+pfm_add_particle_collection = "Add Particle Collection"
 pfm_pted_add_initializer = "Add Initializer"
 pfm_pted_add_operator = "Add Operator"
 pfm_pted_add_renderer = "Add Renderer"

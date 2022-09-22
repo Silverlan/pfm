@@ -12,9 +12,9 @@ function ents.ParticleSystemComponent.InitializerLifetimeRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerLifetimeRandom:Initialize()
-	self.m_lifetimeMin = tonumber(self:GetKeyValue("lifetime_min") or "0")
-	self.m_lifetimeMax = tonumber(self:GetKeyValue("lifetime_max") or "0")
-	self.m_lifetimeRandomExponent = tonumber(self:GetKeyValue("lifetime_random_exponent") or "1.0")
+	self.m_lifetimeMin = tonumber(self:GetKeyValue("lifetime_min")) or 0
+	self.m_lifetimeMax = tonumber(self:GetKeyValue("lifetime_max")) or 0
+	self.m_lifetimeRandomExponent = tonumber(self:GetKeyValue("lifetime_random_exponent")) or 1.0
 end
 function ents.ParticleSystemComponent.InitializerLifetimeRandom:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

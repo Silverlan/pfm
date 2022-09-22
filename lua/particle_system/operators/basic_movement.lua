@@ -12,8 +12,8 @@ function ents.ParticleSystemComponent.OperatorBasicMovement:__init()
 	ents.ParticleSystemComponent.BaseOperator.__init(self)
 end
 function ents.ParticleSystemComponent.OperatorBasicMovement:Initialize()
-	self.m_drag = tonumber(self:GetKeyValue("drag") or "0.0")
-	self.m_maxConstraintPasses = tonumber(self:GetKeyValue("max_constraint_passes") or "3")
+	self.m_drag = tonumber(self:GetKeyValue("drag")) or 0.0
+	self.m_maxConstraintPasses = tonumber(self:GetKeyValue("max_constraint_passes")) or 3
 	self.m_gravity = vector.create_from_string(self:GetKeyValue("gravity") or "0 0 0")
 end
 function ents.ParticleSystemComponent.OperatorBasicMovement:Simulate(pt,dt,strength)

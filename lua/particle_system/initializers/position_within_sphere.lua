@@ -12,20 +12,20 @@ function ents.ParticleSystemComponent.InitializerPositionWithinSphere:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerPositionWithinSphere:Initialize()
-	self.m_distanceMin = tonumber(self:GetKeyValue("distance_min") or "0")
-	self.m_distanceMax = tonumber(self:GetKeyValue("distance_max") or "0")
+	self.m_distanceMin = tonumber(self:GetKeyValue("distance_min")) or 0
+	self.m_distanceMax = tonumber(self:GetKeyValue("distance_max")) or 0
 	self.m_distanceBias = vector.create_from_string(self:GetKeyValue("distance_bias") or "1 1 1")
 	self.m_distanceBiasAbsoluteValue = vector.create_from_string(self:GetKeyValue("distance_bias_absolute_value") or "0 0 0")
 	self.m_biasInLocalSystem = toboolean(self:GetKeyValue("bias_in_local_system") or "0")
-	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id") or "0")
-	self.m_speedMin = tonumber(self:GetKeyValue("speed_min") or "0")
-	self.m_speedMax = tonumber(self:GetKeyValue("speed_max") or "0")
-	self.m_speedRandomExponent = tonumber(self:GetKeyValue("speed_random_exponent") or "1")
+	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id")) or 0
+	self.m_speedMin = tonumber(self:GetKeyValue("speed_min")) or 0
+	self.m_speedMax = tonumber(self:GetKeyValue("speed_max")) or 0
+	self.m_speedRandomExponent = tonumber(self:GetKeyValue("speed_random_exponent")) or 1
 	self.m_speedInLocalCoordinateSystemMin = vector.create_from_string(self:GetKeyValue("speed_in_local_coordinate_system_min") or "0 0 0")
 	self.m_speedInLocalCoordinateSystemMax = vector.create_from_string(self:GetKeyValue("speed_in_local_coordinate_system_max") or "0 0 0")
-	self.m_createInModel = tonumber(self:GetKeyValue("create_in_model") or "0")
+	self.m_createInModel = tonumber(self:GetKeyValue("create_in_model")) or 0
 	self.m_randomlyDistributeToHighestSuppliedControlPoint = toboolean(self:GetKeyValue("randomly_distribute_to_cp") or "0")
-	self.m_randomlyDistributionGrowthTime = tonumber(self:GetKeyValue("random_distribution_growth_time") or "0")
+	self.m_randomlyDistributionGrowthTime = tonumber(self:GetKeyValue("random_distribution_growth_time")) or 0
 
 	self.m_hasDistanceBias = (self.m_distanceBias.x ~= 1.0 and self.m_distanceBias.y ~= 1.0 and self.m_distanceBias.z ~= 1.0)
 	self.m_hasDistanceBiasAbs = (self.m_distanceBiasAbsoluteValue.x ~= 0.0 and self.m_distanceBiasAbsoluteValue.y ~= 0.0 and self.m_distanceBiasAbsoluteValue.z ~= 0.0)

@@ -12,12 +12,12 @@ function ents.ParticleSystemComponent.OperatorRadiusScale:__init()
 	ents.ParticleSystemComponent.BaseOperator.__init(self)
 end
 function ents.ParticleSystemComponent.OperatorRadiusScale:Initialize()
-	self.m_startTime = tonumber(self:GetKeyValue("start_time") or "0")
-	self.m_endTime = tonumber(self:GetKeyValue("end_time") or "1")
-	self.m_radiusStartScale = tonumber(self:GetKeyValue("radius_start_scale") or "1")
-	self.m_radiusEndScale = tonumber(self:GetKeyValue("radius_end_scale") or "1")
+	self.m_startTime = tonumber(self:GetKeyValue("start_time")) or 0
+	self.m_endTime = tonumber(self:GetKeyValue("end_time")) or 1
+	self.m_radiusStartScale = tonumber(self:GetKeyValue("radius_start_scale")) or 1
+	self.m_radiusEndScale = tonumber(self:GetKeyValue("radius_end_scale")) or 1
 	self.m_easeInAndOut = toboolean(self:GetKeyValue("ease_in_and_out") or false)
-	self.m_scaleBias = tonumber(self:GetKeyValue("scale_bias") or "0.5")
+	self.m_scaleBias = tonumber(self:GetKeyValue("scale_bias")) or 0.5
 
 	self.m_biasParam = PreCalcBiasParameter(self.m_scaleBias)
 end

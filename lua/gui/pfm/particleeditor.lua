@@ -486,6 +486,13 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 			end
 			return type
 		end
+		local function is_flag_set(flag) return (bit.band(ptC:GetFlags(),flag) ~= 0) end
+		local function set_flag(flag,set)
+			local flags = ptC:GetFlags()
+			if(set) then flags = bit.bor(flags,flag)
+			else flags = bit.band(flags,bit.bnot(flag)) end
+			ptC:SetFlags(flags)
+		end
 		local function get_key_value(key)
 			if(propertyType ~= "base") then return keyValues[key] end
 			if(util.is_valid(ptC) == false) then return end
@@ -496,9 +503,37 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 				return (mat ~= nil) and mat:GetName() or nil
 			end
 			if(key == "radius") then return tostring(ptC:GetRadius()) end
+			if(key == "extent") then return tostring(ptC:GetExtent()) end
 			if(key == "sort_particles") then return ptC:GetSortParticles() and "1" or "0" end
 			if(key == "color") then return tostring(ptC:GetInitialColor()) end
 			if(key == "soft_particles") then return ptC:GetSoftParticles() and "1" or "0" end
+			if(key == "rotate_with_emitter") then return is_flag_set(ents.ParticleSystemComponent.FLAG_BIT_ROTATE_WITH_EMITTER) and "1" or "0" end
+			if(key == "move_with_emitter") then return is_flag_set(ents.ParticleSystemComponent.FLAG_BIT_MOVE_WITH_EMITTER) and "1" or "0" end
+			if(key == "premultiply_alpha") then return is_flag_set(ents.ParticleSystemComponent.FLAG_BIT_PREMULTIPLY_ALPHA) and "1" or "0" end
+			if(key == "texture_scrolling_enabled") then return is_flag_set(ents.ParticleSystemComponent.FLAG_BIT_TEXTURE_SCROLLING_ENABLED) and "1" or "0" end
+			if(key == "cast_shadows") then return is_flag_set(ents.ParticleSystemComponent.FLAG_BIT_CAST_SHADOWS) and "1" or "0" end
+			if(key == "loop") then return bit.band(ptC:GetEntity():GetSpawnFlags(),ents.ParticleSystemComponent.SF_PARTICLE_SYSTEM_CONTINUOUS) ~= 0 end
+			if(key == "max_node_count") then return tostring(ptC:GetMaxNodes()) end
+			if(key == "alpha_mode") then
+				local alphaMode = ptC:GetAlphaMode()
+				if(alphaMode == ents.ParticleSystemComponent.ALPHA_MODE_ADDITIVE) then return "additive" end
+				if(alphaMode == ents.ParticleSystemComponent.ALPHA_MODE_ADDITIVE_BY_COLOR) then return "additive_by_color" end
+				if(alphaMode == ents.ParticleSystemComponent.ALPHA_MODE_OPAQUE) then return "opaque" end
+				if(alphaMode == ents.ParticleSystemComponent.ALPHA_MODE_MASKED) then return "masked" end
+				if(alphaMode == ents.ParticleSystemComponent.ALPHA_MODE_TRANSLUCENT) then return "translucent" end
+				if(alphaMode == ents.ParticleSystemComponent.ALPHA_MODE_PREMULTIPLIED) then return "premultiplied" end
+				return "additive"
+			end
+		end
+		local function alpha_mode_to_enum(val)
+			local alphaMode
+			if(val == "additive") then alphaMode = ents.ParticleSystemComponent.ALPHA_MODE_ADDITIVE
+			elseif(val == "additive_by_color") then alphaMode = ents.ParticleSystemComponent.ALPHA_MODE_ADDITIVE_BY_COLOR
+			elseif(val == "opaque") then alphaMode = ents.ParticleSystemComponent.ALPHA_MODE_OPAQUE
+			elseif(val == "masked") then alphaMode = ents.ParticleSystemComponent.ALPHA_MODE_MASKED
+			elseif(val == "translucent") then alphaMode = ents.ParticleSystemComponent.ALPHA_MODE_TRANSLUCENT
+			elseif(val == "premultiplied") then alphaMode = ents.ParticleSystemComponent.ALPHA_MODE_PREMULTIPLIED end
+			return alphaMode
 		end
 		local function set_key_value(key,val)
 			if(propertyType == "base") then
@@ -508,13 +543,29 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 				if(type ~= nil) then
 					udmKeyValues:SetValue(key,udm.TYPE_STRING,val)
 				end
-				--if(key == "maxparticles") then  end -- TODO
+				if(key == "maxparticles") then ptC:SetMaxParticleCount(toint(val)) end
 				if(key == "emission_rate") then ptC:SetEmissionRate(tonumber(val)) end
 				if(key == "material") then ptC:SetMaterial(val) end
 				if(key == "radius") then ptC:SetRadius(tonumber(val)) end
 				if(key == "sort_particles") then ptC:SetSortParticles(toboolean(val)) end
 				if(key == "color") then ptC:SetInitialColor(Color(val)) end
 				if(key == "soft_particles") then ptC:SetSoftParticles(toboolean(val)) end
+				if(key == "rotate_with_emitter") then set_flag(ents.ParticleSystemComponent.FLAG_BIT_ROTATE_WITH_EMITTER,toboolean(val)) end
+				if(key == "move_with_emitter") then set_flag(ents.ParticleSystemComponent.FLAG_BIT_MOVE_WITH_EMITTER,toboolean(val)) end
+				if(key == "premultiply_alpha") then set_flag(ents.ParticleSystemComponent.FLAG_BIT_PREMULTIPLY_ALPHA,toboolean(val)) end
+				if(key == "texture_scrolling_enabled") then set_flag(ents.ParticleSystemComponent.FLAG_BIT_TEXTURE_SCROLLING_ENABLED,toboolean(val)) end
+				if(key == "cast_shadows") then set_flag(ents.ParticleSystemComponent.FLAG_BIT_CAST_SHADOWS,toboolean(val)) end
+				if(key == "loop") then
+					local flags = ptC:GetEntity():GetSpawnFlags()
+					local flag = ents.ParticleSystemComponent.SF_PARTICLE_SYSTEM_CONTINUOUS
+					if(toboolean(val)) then flags = bit.bor(flags,flag)
+					else flags = bit.band(flags,bit.bnot(flag)) end
+					ptC:GetEntity():SetKeyValue("spawnflags",tostring(flags))
+				end
+				if(key == "max_node_count") then ptC:SetMaxNodes(toint(val)) end
+				if(key == "alpha_mode") then
+					ptC:SetAlphaMode(toint(val))
+				end
 			elseif(udmOperator ~= nil) then
 				local udmKeyValues = udmOperator:Get("keyValues")
 				if(udmKeyValues:IsValid() == false) then udmKeyValues = udmOperator:Add("keyValues") end
@@ -564,6 +615,21 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 					self:ReloadParticle()
 				end)
 				ctrl = sliderCtrl
+			elseif(type == "bool") then
+				local default = kvData:GetValue("default",udm.TYPE_BOOLEAN) or false
+				local checkbox = gui.create("WIToggleOption",self.m_propertiesBox)
+				checkbox:SetChecked(default)
+
+				local val = get_key_value(name)
+				if(val ~= nil) then checkbox:SetChecked(toboolean(val)) end
+
+				checkbox:GetCheckbox():AddCallback("OnChange",function(el,value)
+					set_key_value(name,value and "1" or "0")
+					self:ReloadParticle()
+				end)
+				local wrapper = checkbox:Wrap("WIEditableEntry")
+				checkbox:SetText(locName)
+				ctrl = wrapper
 			elseif(type == "string" or type == "vec3" or type == "vec4") then
 				local default = kvData:GetValue("default",udm.TYPE_STRING) or ""
 				local teCtrl = gui.create("WITextEntry",self.m_propertiesBox)
@@ -577,6 +643,30 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType,opType,udmOperato
 
 				local val = get_key_value(name)
 				if(val ~= nil) then teCtrl:SetText(tostring(val)) end
+
+				ctrl = wrapper
+			elseif(type == "enum") then
+				local default = kvData:GetValue("default",udm.TYPE_INT32) or 0
+				local menu = gui.create("WIDropDownMenu",self.m_propertiesBox)
+				local udmValues = kvData:Get("values")
+				local n = udmValues:GetSize()
+				for i=0,n -1 do
+					local val = udmValues:GetArrayValue(i,udm.TYPE_STRING)
+					menu:AddOption(val,tostring(i))
+				end
+				menu:AddCallback("OnOptionSelected",function(el,option)
+					local val = menu:GetOptionValue(menu:GetSelectedOption())
+					set_key_value(name,val)
+					self:ReloadParticle()
+				end)
+				local wrapper = menu:Wrap("WIEditableEntry")
+				wrapper:SetText(locName)
+
+				local val = get_key_value(name)
+				if(val ~= nil) then
+					local idx = alpha_mode_to_enum(val)
+					if(idx ~= nil) then menu:SelectOption(idx) end
+				end
 
 				ctrl = wrapper
 			elseif(type == "srgba") then

@@ -12,7 +12,7 @@ function ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom:__in
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom:Initialize()
-	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id") or "0")
+	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id")) or 0
 	self.m_offsetMin = vector.create_from_string(self:GetKeyValue("offset_min") or "0 0 0")
 	self.m_offsetMax = vector.create_from_string(self:GetKeyValue("offset_max") or "0 0 0")
 	self.m_offsetInLocalSpace = toboolean(self:GetKeyValue("offset_in_local_space") or "0")

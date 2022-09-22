@@ -22,7 +22,7 @@ function ents.ParticleSystemComponent.InitializerRemapScalarToVector:Initialize(
 	self.m_outputMaximum = vector.create_from_string(self:GetKeyValue("output_maximum") or "1 1 1")
 	self.m_scaleInitialRange = toboolean(self:GetKeyValue("output_scalar_of_initial_random_range") or "") or false
 	self.m_useLocalSystem = toboolean(self:GetKeyValue("use_local_system") or "1")
-	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id") or "0")
+	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id")) or 0
 
 	self.m_inputFieldId = ents.ParticleSystemComponent.Particle.name_to_field_id(self.m_inputField)
 	self.m_outputFieldId = ents.ParticleSystemComponent.Particle.name_to_field_id(self.m_outputField)

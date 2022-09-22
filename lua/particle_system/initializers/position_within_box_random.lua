@@ -14,7 +14,7 @@ end
 function ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom:Initialize()
 	self.m_min = vector.create_from_string(self:GetKeyValue("min") or "0 0 0")
 	self.m_max = vector.create_from_string(self:GetKeyValue("max") or "0 0 0")
-	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id") or "0")
+	self.m_controlPointNumber = tonumber(self:GetKeyValue("control_point_id")) or 0
 end
 function ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

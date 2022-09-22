@@ -12,13 +12,13 @@ function ents.ParticleSystemComponent.InitializerColorRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
 end
 function ents.ParticleSystemComponent.InitializerColorRandom:Initialize()
-	self.m_controlPointNumber = tonumber(self:GetKeyValue("tint_control_point") or "0")
+	self.m_controlPointNumber = tonumber(self:GetKeyValue("tint_control_point")) or 0
 	self.m_color1 = Color(self:GetKeyValue("color1") or "255 255 255 255")
 	self.m_color2 = Color(self:GetKeyValue("color2") or "255 255 255 255")
-	self.m_tintPerc = tonumber(self:GetKeyValue("tint_perc") or "0")
+	self.m_tintPerc = tonumber(self:GetKeyValue("tint_perc")) or 0
 	self.m_tintClampMin = Color(self:GetKeyValue("tint_clamp_min") or "0 0 0 0")
 	self.m_tintClampMax = Color(self:GetKeyValue("tint_clamp_max") or "255 255 255 255")
-	self.m_tintUpdateMovementTreshold = tonumber(self:GetKeyValue("tint_update_movement_threshold") or "32")
+	self.m_tintUpdateMovementTreshold = tonumber(self:GetKeyValue("tint_update_movement_threshold")) or 32
 end
 function ents.ParticleSystemComponent.InitializerColorRandom:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")

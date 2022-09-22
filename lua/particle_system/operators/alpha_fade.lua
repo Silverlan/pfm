@@ -12,12 +12,12 @@ function ents.ParticleSystemComponent.OperatorAlphaFade:__init()
 	ents.ParticleSystemComponent.BaseOperator.__init(self)
 end
 function ents.ParticleSystemComponent.OperatorAlphaFade:Initialize()
-	self.m_startAlpha = tonumber(self:GetKeyValue("start_alpha") or "1")
-	self.m_endAlpha = tonumber(self:GetKeyValue("end_alpha") or "0")
-	self.m_startFadeInTime = tonumber(self:GetKeyValue("start_fade_in_time") or "0")
-	self.m_endFadeInTime = tonumber(self:GetKeyValue("end_fade_in_time") or "0.5")
-	self.m_startFadeOutTime = tonumber(self:GetKeyValue("start_fade_out_time") or "0.5")
-	self.m_endFadeOutTime = tonumber(self:GetKeyValue("end_fade_out_time") or "1")
+	self.m_startAlpha = tonumber(self:GetKeyValue("start_alpha")) or 1
+	self.m_endAlpha = tonumber(self:GetKeyValue("end_alpha")) or 0
+	self.m_startFadeInTime = tonumber(self:GetKeyValue("start_fade_in_time")) or 0
+	self.m_endFadeInTime = tonumber(self:GetKeyValue("end_fade_in_time")) or 0.5
+	self.m_startFadeOutTime = tonumber(self:GetKeyValue("start_fade_out_time")) or 0.5
+	self.m_endFadeOutTime = tonumber(self:GetKeyValue("end_fade_out_time")) or 1
 
 	-- Cache off and validate values
 	if(self.m_endFadeInTime < self.m_startFadeInTime) then

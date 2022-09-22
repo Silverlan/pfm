@@ -1,3 +1,5 @@
+pfm_add_folder = "Verzeichnis hinzufügen"
+pfm_add_particle_system = "Partikelsystem hinzufügen"
 pfm_bake_lightmap_uvs = "Bake lightmap UVs"
 pfm_bake_lightmaps = "Bake Lightmaps"
 pfm_bake_reflection_probe = "Bake Reflektions-Probe"

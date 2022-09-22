@@ -13,8 +13,8 @@ function ents.ParticleSystemComponent.OperatorMovementRotateParticleAroundAxis:_
 end
 function ents.ParticleSystemComponent.OperatorMovementRotateParticleAroundAxis:Initialize()
 	self.m_rotAxis = vector.create_from_string(self:GetKeyValue("rotation_axis") or "0 1 0")
-	self.m_rotRate = tonumber(self:GetKeyValue("rotation_rate") or "180")
-	self.m_controlPoint = tonumber(self:GetKeyValue("control_point_id") or "0")
+	self.m_rotRate = tonumber(self:GetKeyValue("rotation_rate")) or 180
+	self.m_controlPoint = tonumber(self:GetKeyValue("control_point_id")) or 0
 	self.m_localSpace = toboolean(self:GetKeyValue("use_local_space") or "0")
 end
 function ents.ParticleSystemComponent.OperatorMovementRotateParticleAroundAxis:Simulate(pt,dt,strength)

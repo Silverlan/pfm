@@ -39,6 +39,7 @@ function gui.AssetExplorer:OnInitialize()
 			end
 			self:Refresh()
 		end)
+		self:PopulateContextMenu(pContext,{},{})
 	end)
 
 	self:SetIconFactory(function(parent)
