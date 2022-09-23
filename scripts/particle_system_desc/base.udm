@@ -183,6 +183,41 @@
 			$float min 0
 			$float max 50
 		}
+		"fade_lifetime_fraction"
+		{
+			$string type "bool"
+			$bool default 0
+		}
+		"fade_start"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"fade_end"
+		{
+			$string type "float"
+			$float default 0
+			$float min 0
+			$float max 30
+		}
+		"ease_in"
+		{
+			$string type "bool"
+			$bool default 1
+		}
+		"ease_out"
+		{
+			$string type "bool"
+			$bool default 1
+		}
+		"ease"
+		{
+			$string type "enum"
+			$array values [string]["back","bounce","circular","cubic","elastic","exponential","linear","quadratic","quartic","quintic","sine"]
+			$int32 default 0
+		}
 	}
 }
 "physics_sphere"
@@ -582,24 +617,16 @@
 			$string type "bool"
 			$bool default 1
 		}
+		"ease_out"
+		{
+			$string type "bool"
+			$bool default 1
+		}
 		"ease"
 		{
 			$string type "enum"
-			"enums"
-			{
-				$int32 back 0
-				$int32 bounce 1
-				$int32 cubic 3
-				$int32 circular 2
-				$int32 quartic 8
-				$int32 elastic 4
-				$int32 exponential 5
-				$int32 linear 6
-				$int32 quadratic 7
-				$int32 quintic 9
-				$int32 sine 10
-			}
-			$string default "back"
+			$array values [string]["back","bounce","circular","cubic","elastic","exponential","linear","quadratic","quartic","quintic","sine"]
+			$int32 default 0
 		}
 		"color_end"
 		{
@@ -624,11 +651,6 @@
 			$float default 0
 			$float min 0
 			$float max 30
-		}
-		"ease_out"
-		{
-			$string type "bool"
-			$bool default 1
 		}
 	}
 }
