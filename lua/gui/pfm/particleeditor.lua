@@ -136,20 +136,33 @@ function gui.PFMParticleEditor:PopulatePropertyTree()
 			local ptC = self:GetTargetParticleSystem()
 			if(ptC == nil) then return end
 			local propertyList = {}
+			local function get_sorted_list(list)
+				local listTmp = {}
+				for _,item in ipairs(list) do
+					table.insert(listTmp,{locale.get_text("pts_" .. item),item})
+				end
+				table.sort(listTmp,function(a,b) return a[1] < b[1] end)
+				list = {}
+				for _,data in ipairs(listTmp) do table.insert(list,data[2]) end
+				return list
+			end
 			if(propertyType == "initializer") then
-				for _,initializer in ipairs(ents.ParticleSystemComponent.get_registered_initializers()) do
+				local initializers = get_sorted_list(ents.ParticleSystemComponent.get_registered_initializers())
+				for _,initializer in ipairs(initializers) do
 					if(ptC:FindInitializerByType(initializer) == nil) then
 						table.insert(propertyList,initializer)
 					end
 				end
 			elseif(propertyType == "operator") then
-				for _,op in ipairs(ents.ParticleSystemComponent.get_registered_operators()) do
+				local operators = get_sorted_list(ents.ParticleSystemComponent.get_registered_operators())
+				for _,op in ipairs(operators) do
 					if(ptC:FindOperatorByType(op) == nil) then
 						table.insert(propertyList,op)
 					end
 				end
 			elseif(propertyType == "renderer") then
-				for _,renderer in ipairs(ents.ParticleSystemComponent.get_registered_renderers()) do
+				local renderers = get_sorted_list(ents.ParticleSystemComponent.get_registered_renderers())
+				for _,renderer in ipairs(renderers) do
 					if(ptC:FindRendererByType(renderer) == nil) then
 						table.insert(propertyList,renderer)
 					end
@@ -161,7 +174,7 @@ function gui.PFMParticleEditor:PopulatePropertyTree()
 				pSubMenu:AddItem(locale.get_text("pts_" .. property),function()
 					self:AddProperty(propertyType,property)
 				end)
-				pSubMenu:Update()
+				pSubMenu:ScheduleUpdate()
 			end
 		end)
 		self.m_propertyItems[propertyType] = item
