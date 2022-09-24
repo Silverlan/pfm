@@ -56,7 +56,7 @@ function Component:SetTarget(ent)
 
 	util.remove(self.m_dbgObject)
 
-	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+	--[[local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
 	if(renderC ~= nil) then
 		local dbgInfo = debug.DrawInfo()
 		dbgInfo:SetColor(Color.Clear)
@@ -68,7 +68,7 @@ function Component:SetTarget(ent)
 		end
 		self.m_dbgObject = debug.create_collection(dbgObjects)
 		self:UpdateDebugObjectPose()
-	end
+	end]]
 end
 function Component:UpdateDebugObjectPose()
 	if(util.is_valid(self.m_dbgObject) == false or util.is_valid(self.m_target) == false) then return end
