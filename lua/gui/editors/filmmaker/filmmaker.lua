@@ -767,6 +767,7 @@ function gui.WIFilmmaker:OnInitialize()
 	end
 
 	self:SetSkinCallbacksEnabled(true)
+	game.call_callbacks("OnFilmmakerLaunched",self)
 end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()
@@ -1347,6 +1348,7 @@ function gui.WIFilmmaker:OnRemove()
 	gui.WIBaseFilmmaker.OnRemove(self)
 	self:CloseProject()
 	pfm.clear_pragma_renderer_scene()
+	game.set_default_game_render_enabled(true)
 	util.remove(self.m_cbDisableDefaultSceneDraw)
 	util.remove(self.m_cbPreRenderScenes)
 	util.remove(self.m_overlaySceneCallback)

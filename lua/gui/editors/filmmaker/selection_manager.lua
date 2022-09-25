@@ -31,7 +31,7 @@ function pfm.SelectionManager:ClearSelections()
 	local selections = self.m_selectionData
 	self.m_selectionData = {}
 	for object,selected in pairs(selections) do
-		util.remove(selected.selectionEntity)
+		object:RemoveComponent("pfm_selection_wireframe")
 		if(object:IsValid()) then
 			for _,listener in ipairs(self.m_listeners) do
 				listener(object,false)
@@ -43,7 +43,7 @@ end
 function pfm.SelectionManager:SetSelected(obj,selected)
 	if(selected == false) then
 		if(self.m_selectionData[obj] ~= nil) then
-			util.remove(self.m_selectionData[obj].selectionEntity)
+			obj:RemoveComponent("pfm_selection_wireframe")
 		end
 		self.m_selectionData[obj] = nil
 	else
@@ -51,15 +51,7 @@ function pfm.SelectionManager:SetSelected(obj,selected)
 			selected = true
 		}
 		if(obj:HasComponent(ents.COMPONENT_RENDER)) then
-			local ent = ents.create("pfm_selection")
-			if(ent ~= nil) then
-				self.m_selectionData[obj].selectionEntity = ent
-				local wfC = ent:GetComponent(ents.COMPONENT_PFM_SELECTION_WIREFRAME)
-				if(wfC ~= nil) then
-					wfC:SetTarget(obj)
-				end
-				ent:Spawn()
-			end
+			obj:AddComponent("pfm_selection_wireframe")
 		end
 	end
 	for _,listener in ipairs(self.m_listeners) do
