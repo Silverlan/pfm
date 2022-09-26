@@ -30,7 +30,11 @@ Component:RegisterMember("Visible",udm.TYPE_BOOLEAN,true,{
 		self:UpdateVisibility()
 	end
 },bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
-Component:RegisterMember("Static",udm.TYPE_BOOLEAN,false,{},bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
+Component:RegisterMember("Static",udm.TYPE_BOOLEAN,false,{
+	onChange = function(self)
+		self:UpdateStatic()
+	end
+},bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -53,6 +57,21 @@ function Component:SetSelected(selected)
 	if(selected == self.m_selected) then return end
 	self.m_selected = selected
 	self:BroadcastEvent(Component.EVENT_ON_SELECTION_CHANGED,{selected})
+end
+function Component:SetProject(project)
+	self.m_project = project
+	self:UpdateStatic()
+end
+function Component:GetProject() return self.m_project end
+function Component:UpdateStatic()
+	if(util.is_valid(self.m_project) == false) then return end
+	local bvhCache = self.m_project:GetEntityComponent(ents.COMPONENT_STATIC_BVH_CACHE)
+	if(bvhCache == nil) then return end
+	if(self:IsStatic()) then
+		bvhCache:AddEntity(self:GetEntity())
+	else
+		bvhCache:RemoveEntity(self:GetEntity())
+	end
 end
 function Component:UpdateVisibility()
 	local visible = self:IsVisible() and self:GetActorData():IsAbsoluteVisible() or false

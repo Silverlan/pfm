@@ -31,10 +31,8 @@ function ents.PFMProject:Initialize()
 end
 
 function ents.PFMProject:OnEntityCreated(ent)
-	local bvhCache = self:GetEntityComponent(ents.COMPONENT_STATIC_BVH_CACHE)
-	if(bvhCache ~= nil) then
-		bvhCache:AddEntity(ent)
-	end
+	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+	if(actorC ~= nil) then actorC:SetProject(self) end
 
 	local filmClipC = ent:GetComponent(ents.COMPONENT_PFM_FILM_CLIP)
 	if(filmClipC == nil) then return end
