@@ -2093,6 +2093,12 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	end
 	-- This fixes an issue where the initial resizer position is incorrect. TODO: Fix the actual cause and remove this work-around
 	self.m_hResizer:SetFraction(self.m_hResizer:GetFraction())
+
+	local vp = self:GetViewport()
+	local camScene = util.is_valid(vp) and vp:GetSceneCamera() or nil
+	if(util.is_valid(camScene)) then
+		vp:SetWorkCameraPose(camScene:GetEntity():GetPose())
+	end
 end
 function gui.WIFilmmaker:OpenEscapeMenu()
 	self:OpenWindow("settings")

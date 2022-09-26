@@ -1570,6 +1570,7 @@ function gui.PFMViewport:SetWorkCameraPose(pose)
 	local pos = pose:GetOrigin()
 	local ang = pose:GetRotation():ToEulerAngles()
 	local pl = ents.get_local_player()
+	cam:GetEntity():SetPose(math.Transform(pos,ang))
 	if(util.is_valid(pl)) then pos = pos -pl:GetViewOffset() end
 	console.run("setpos",tostring(pos.x),tostring(pos.y),tostring(pos.z))
 	console.run("setang",tostring(ang.p),tostring(ang.y),0.0)
