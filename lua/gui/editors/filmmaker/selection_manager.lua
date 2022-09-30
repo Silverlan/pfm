@@ -31,8 +31,8 @@ function pfm.SelectionManager:ClearSelections()
 	local selections = self.m_selectionData
 	self.m_selectionData = {}
 	for object,selected in pairs(selections) do
-		object:RemoveComponent("pfm_selection_wireframe")
 		if(object:IsValid()) then
+			object:RemoveComponent("pfm_selection_wireframe")
 			for _,listener in ipairs(self.m_listeners) do
 				listener(object,false)
 			end
