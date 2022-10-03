@@ -19,11 +19,24 @@ function Component:Initialize()
 	end
 end
 function Component:OnRemove()
+	local pm = pfm.get_project_manager()
+	local vp = util.is_valid(pm) and pm:GetViewport() or nil
+	if(util.is_valid(self.m_targetActor) and util.is_valid(vp)) then
+		local newPose = self:GetEntity():GetPose()
+		local pfmActorC = self.m_targetActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+		if(pfmActorC ~= nil) then
+			vp:ApplyPoseToKeyframeAnimation(pfmActorC:GetActorData(),self.m_origPose,{
+				position = newPose:GetOrigin(),
+				rotation = newPose:GetRotation()
+			})
+		end
+	end
 	util.remove(self.m_listeners)
 end
 function Component:SetTargetActor(actor)
 	if(util.is_valid(actor) and actor == self:GetEntity()) then return end
 	self.m_targetActor = actor
+	self.m_origPose = actor:GetPose()
 end
 function Component:OnPoseChanged()
 	if(util.is_valid(self.m_targetActor) == false) then return end
