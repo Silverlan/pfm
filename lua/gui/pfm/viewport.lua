@@ -280,6 +280,11 @@ function gui.PFMViewport:InitializeSettings(parent)
 		self:ReloadManipulatorMode()
 	end)
 
+	self.m_ctrlTransformKeyframes = p:AddDropDownMenu(locale.get_text("pfm_transform_keyframes"),"transform_keyframes",{
+		{"0",locale.get_text("no")},
+		{"1",locale.get_text("yes")}
+	},0)
+
 	local gridSteps = {0,1,2,4,8,16,32,64,128}
 	options = {}
 	for _,v in ipairs(gridSteps) do
@@ -998,6 +1003,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 		local newPos
 		local newRot
 		local newScale
+		local origPose
 		local pfmActorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 		local actorData = (pfmActorC ~= nil) and pfmActorC:GetActorData() or nil
 		local actorC = (actorData ~= nil) and actorData:FindComponent("pfm_actor") or nil
@@ -1013,6 +1019,9 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 			newScale = scale:Copy()
 			self:MarkActorAsDirty(ent)
 		end)
+		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START,function()
+			origPose = ent:GetPose()
+		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END,function(scale)
 			local curPose = {
 				position = actorC ~= nil and (newPos ~= nil) and actorC:GetMemberValue("position") or nil,
@@ -1025,17 +1034,111 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 				scale = newScale
 			}
 			for k,v in pairs(newPose) do newPose[k] = v:Copy() end
-			local function apply_pose(pose)
-				local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-				if(actorC ~= nil) then
-					if(pose.position ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"position",pose.position) end
-					if(pose.rotation ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"rotation",pose.rotation) end
-					if(pose.scale ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",pose.scale) end
-				end
 
-				self:OnActorTransformChanged(ent)
+			local function apply_to_keyframes()
+				local offsetPose = math.Transform()
+				if(newPose.position ~= nil) then offsetPose:SetOrigin(newPose.position -origPose:GetOrigin()) end
+				if(newPose.rotation ~= nil) then offsetPose:SetRotation(origPose:GetInverse() *newPose.rotation) end
+
+				local rotOrigin = (newPose.position ~= nil) and newPose.position or origPose:GetOrigin()
+
+				local pm = pfm.get_project_manager()
+				local session = (pm ~= nil) and pm:GetSession() or nil
+				local filmClip = (session ~= nil) and session:FindClipAtTimeOffset(pm:GetTimeOffset()) or nil
+
+				local paths = {"ec/pfm_actor/position","ec/pfm_actor/rotation"}
+				local animPath = 2
+				for i,path in ipairs(paths) do
+					local isRotation = (i == animPath)
+
+					local track = filmClip:FindAnimationChannelTrack()
+					local animClip = (track ~= nil) and track:FindActorAnimationClip(actorData) or nil
+					local channel = (animClip ~= nil) and animClip:FindChannel(path) or nil
+					if(channel ~= nil) then
+						local valueType = channel:GetValueArrayValueType()
+						if(valueType == udm.TYPE_VECTOR3 or valueType == udm.TYPE_QUATERNION) then
+							local values = channel:GetValues()
+							for i,v in ipairs(values) do
+								v = offsetPose:GetOrigin() +v
+								v:RotateAround(rotOrigin,offsetPose:GetRotation())
+								channel:SetValue(i -1,v)
+							end
+						elseif(valueType == udm.TYPE_EULER_ANGLES) then
+							local values = channel:GetValues()
+							for i,v in ipairs(values) do
+								v = offsetPose:GetRotation() *v:ToQuaternion()
+								channel:SetValue(i -1,v:ToEulerAngles())
+							end
+						end
+					end
+
+					-- Update keyframes
+					local editorData = (animClip ~= nil) and animClip:GetEditorData() or nil
+					local editorChannel = (editorData ~= nil) and editorData:FindChannel(path) or nil
+					local graphCurve = (editorChannel ~= nil) and editorChannel:GetGraphCurve() or nil
+					if(graphCurve ~= nil) then
+						local k0 = graphCurve:GetKey(0)
+						local k1 = graphCurve:GetKey(1)
+						local k2 = graphCurve:GetKey(2)
+						if(k0 ~= nil and k1 ~= nil and k2 ~= nil and k0:GetValueCount() == k1:GetValueCount() and k0:GetValueCount() == k2:GetValueCount()) then
+							local n = k0:GetValueCount()
+							local applyToKeyframe = true
+							for i=0,n -1 do
+								local t0 = k0:GetTime(i)
+								local t1 = k1:GetTime(i)
+								local t2 = k2:GetTime(i)
+								if(math.abs(t1 -t0) > 0.001 or math.abs(t2 -t0) > 0.001) then
+									applyToKeyframe = false
+									break
+								end
+							end
+							if(applyToKeyframe == false) then
+								pfm.create_popup_message(locale.get_text("pfm_popup_failed_to_transform_keyframe",{path}))
+							else
+								if(isRotation) then
+									for i=0,n -1 do
+										local v = EulerAngles(k0:GetValue(i),k1:GetValue(i),k2:GetValue(i)):ToQuaternion()
+										v = offsetPose:GetRotation() *v
+										v = v:ToEulerAngles()
+										k0:SetValue(i,v:Get(0))
+										k1:SetValue(i,v:Get(1))
+										k2:SetValue(i,v:Get(2))
+									end
+								else
+									for i=0,n -1 do
+										local v = Vector(k0:GetValue(i),k1:GetValue(i),k2:GetValue(i))
+										v = offsetPose:GetOrigin() +v
+										v:RotateAround(rotOrigin,offsetPose:GetRotation())
+										k0:SetValue(i,v:Get(0))
+										k1:SetValue(i,v:Get(1))
+										k2:SetValue(i,v:Get(2))
+									end
+								end
+							end
+						end
+					end
+
+					local pm = pfm.get_project_manager()
+					local animManager = pm:GetAnimationManager()
+					animClip:SetPanimaAnimationDirty()
+					animManager:SetAnimationsDirty()
+				end
 			end
-			pfm.undoredo.push("pfm_undoredo_transform",function() apply_pose(newPose) end,function() apply_pose(curPose) end)()
+			if(toboolean(self.m_ctrlTransformKeyframes:GetOptionValue(self.m_ctrlTransformKeyframes:GetSelectedOption()))) then
+				apply_to_keyframes()
+			else
+				local function apply_pose(pose)
+					local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+					if(actorC ~= nil) then
+						if(pose.position ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"position",pose.position) end
+						if(pose.rotation ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"rotation",pose.rotation) end
+						if(pose.scale ~= nil) then tool.get_filmmaker():SetActorTransformProperty(actorC,"scale",pose.scale) end
+					end
+
+					self:OnActorTransformChanged(ent)
+				end
+				pfm.undoredo.push("pfm_undoredo_transform",function() apply_pose(newPose) end,function() apply_pose(curPose) end)()
+			end
 		end)
 		return trC
 	end

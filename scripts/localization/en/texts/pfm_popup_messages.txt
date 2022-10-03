@@ -1,3 +1,5 @@
 pfm_popup_create_actor_no_film_clip = "Unable to create actor: No film clip has been selected!"
+pfm_popup_failed_to_import_lightmaps = "Unable to import lightmaps: {0} not found!"
+pfm_popup_failed_to_transform_keyframe = "Failed to transform keyframe for property {0}"
 pfm_popup_no_lightmap = "No lightmap found! Lighting will be incomplete."
 pfm_popup_no_reflection_probe = "No reflection probe found! Reflections will be incorrect."
