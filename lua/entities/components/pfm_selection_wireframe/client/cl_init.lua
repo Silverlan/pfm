@@ -33,11 +33,13 @@ function Component:UpdateWireframe()
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil) then return end
-	local mat = game.load_material('wireframe')
+	local mat = game.load_material("wireframe")
 	if(util.is_valid(mat) == false) then return end
 	local renderMeshes = mdlC:GetRenderMeshes()
 	for _,mesh in ipairs(renderMeshes) do
-		mdlC:AddRenderMesh(mesh,mat,false)
+		if(mesh:GetGeometryType() == game.Model.Mesh.Sub.GEOMETRY_TYPE_TRIANGLES) then
+			mdlC:AddRenderMesh(mesh,mat,false)
+		end
 	end
 end
 ents.COMPONENT_PFM_SELECTION_WIREFRAME = ents.register_component("pfm_selection_wireframe",Component)
