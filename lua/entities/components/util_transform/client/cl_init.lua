@@ -44,6 +44,15 @@ function Component:SetSpace(space)
 	self:UpdateSpace()
 end
 
+function Component:GetBasePose() -- TODO: This should swap places with ents.UtilTransformArrowComponent:GetBasePose
+	local tEnts = self:GetArrowEntities()
+	if(#tEnts == 0) then return math.Transform() end
+	local ent = tEnts[1]
+	local c = ent:GetComponent("util_transform_arrow")
+	if(c == nil) then return end
+	return c:GetBasePose()
+end
+
 function Component:UpdateSpace()
 	for _,ent in ipairs(self:GetArrowEntities()) do
 		local arrowC = ent:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)

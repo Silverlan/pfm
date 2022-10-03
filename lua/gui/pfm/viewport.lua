@@ -1331,12 +1331,95 @@ function gui.PFMViewport:InitializeManipulatorControls()
 		return true
 	end)
 	self.m_btMove:SetTooltip(locale.get_text("pfm_viewport_tool_move",{pfm.get_key_binding("pfm_action transform translate")}))
+	self.m_btMove:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)
+		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+			local pContext = gui.open_context_menu()
+			if(util.is_valid(pContext) == false) then return end
+			pContext:SetPos(input.get_cursor_pos())
+			pContext:AddItem(locale.get_text("pfm_set_position"),function()
+				local tePos
+				local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_position"),function(ok)
+					if(ok) then
+						if(self:GetManipulatorMode() ~= gui.PFMViewport.MANIPULATOR_MODE_MOVE) then self:SetTranslationManipulatorMode() end
+						local v = Vector(tePos:GetText())
+						if(v ~= nil) then
+							local trC = self:GetTransformWidgetComponent()
+							if(util.is_valid(trC)) then
+								local c = trC:GetTransformUtility(ents.UtilTransformArrowComponent.TYPE_TRANSLATION,ents.UtilTransformArrowComponent.AXIS_X,"translation")
+								if(c ~= nil) then
+									local pose = trC:GetBasePose()
+									pose:TranslateLocal(v)
+									trC:BroadcastEvent(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START)
+									trC:BroadcastEvent(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,{pose:GetOrigin()})
+									trC:BroadcastEvent(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END)
+								end
+							end
+						end
+					else return end
+				end)
+
+				tePos = p:AddNumericEntryField(locale.get_text("position") .. ":","0 0 0")
+				p:SetWindowSize(Vector2i(202,100))
+				p:Update()
+			end)
+			pContext:Update()
+			return util.EVENT_REPLY_HANDLED
+		end
+		return util.EVENT_REPLY_UNHANDLED
+	end)
 
 	self.m_btRotate = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_rotate","gui/pfm/icon_manipulator_rotate_activated",function()
 		self:SetRotationManipulatorMode()
 		return true
 	end)
 	self.m_btRotate:SetTooltip(locale.get_text("pfm_viewport_tool_rotate",{pfm.get_key_binding("pfm_action transform rotate")}))
+	self.m_btRotate:AddCallback("OnMouseEvent",function(pFilmClip,button,state,mods)
+		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+			local pContext = gui.open_context_menu()
+			if(util.is_valid(pContext) == false) then return end
+			pContext:SetPos(input.get_cursor_pos())
+			pContext:AddItem(locale.get_text("pfm_set_rotation"),function()
+				local teRot
+				local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_rotation"),function(ok)
+					if(ok) then
+						if(self:GetManipulatorMode() ~= gui.PFMViewport.MANIPULATOR_MODE_ROTATE) then self:SetRotationManipulatorMode() end
+						local str = teRot:GetText()
+						local c = string.split(str," ")
+						local rot
+						if(#c == 4) then rot = Quaternion(tonumber(c[1]) or 1.0,tonumber(c[2]) or 0.0,tonumber(c[3]) or 0.0,tonumber(c[4]) or 0.0)
+						else
+							rot = EulerAngles(str)
+							rot = (rot ~= nil) and rot:ToQuaternion() or nil
+						end
+						if(rot ~= nil) then
+							local trC = self:GetTransformWidgetComponent()
+							if(util.is_valid(trC)) then
+								local ent = trC:GetTransformUtility(ents.UtilTransformArrowComponent.TYPE_ROTATION,ents.UtilTransformArrowComponent.AXIS_X,"rotation")
+								if(ent ~= nil) then
+									local c = ent:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
+									if(c ~= nil) then
+										local targetSpaceRotation = c:GetTargetSpaceRotation()
+										local baseRot = targetSpaceRotation:GetInverse() *trC:GetEntity():GetRotation()
+										rot = baseRot *rot
+										trC:BroadcastEvent(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START)
+										trC:BroadcastEvent(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,{rot})
+										trC:BroadcastEvent(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END)
+									end
+								end
+							end
+						end
+					else return end
+				end)
+
+				teRot = p:AddNumericEntryField(locale.get_text("rotation") .. ":","0 0 0")
+				p:SetWindowSize(Vector2i(202,100))
+				p:Update()
+			end)
+			pContext:Update()
+			return util.EVENT_REPLY_HANDLED
+		end
+		return util.EVENT_REPLY_UNHANDLED
+	end)
 
 	self.m_btScreen = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_screen","gui/pfm/icon_manipulator_screen_activated",function()
 		self:SetScaleManipulatorMode()

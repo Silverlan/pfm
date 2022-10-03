@@ -109,16 +109,21 @@ end
 
 function Component:IsActive() return (self.m_gizmo ~= nil and self.m_gizmo:IsActive()) end
 
-function Component:StartTransform(hitPos)
-	local gizmo = util.Gizmo()
-	gizmo:SetActive(true)
-	self.m_gizmo = gizmo
-
+function Component:GetTargetSpaceRotation()
 	local targetSpaceRotation = math.Transform()
 	if(self:GetSpace() == ents.UtilTransformComponent.SPACE_VIEW) then
 		local cam = ents.ClickComponent.get_camera()
 		if(util.is_valid(cam)) then targetSpaceRotation = cam:GetEntity():GetRotation() end
 	end
+	return targetSpaceRotation
+end
+
+function Component:StartTransform(hitPos)
+	local gizmo = util.Gizmo()
+	gizmo:SetActive(true)
+	self.m_gizmo = gizmo
+
+	local targetSpaceRotation = self:GetTargetSpaceRotation()
 	self.m_gizmoTargetSpaceRotation = targetSpaceRotation
 	self.m_gizmoBasePose = self:GetBasePose()
 
