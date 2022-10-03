@@ -169,6 +169,31 @@ pfm.register_component_action("pfm_baked_lighting","pfm_import_indirect","import
 	return bt
 end)
 
+-- Auto import lightmaps
+pfm.register_component_action("pfm_baked_lighting","pfm_import_render_tool","import_render_tool_lightmaps",function(controls,actorData,entActor,actionData)
+	local bt = gui.create("WIPFMActionButton",controls)
+	bt:SetText(locale.get_text("pfm_import_render_tool_lightmaps"))
+	bt:AddCallback("OnPressed",function()
+		local c = entActor:GetComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)
+		if(c ~= nil) then
+			local basePath = "render/lightmaps/"
+			local directPath = basePath .. "lightmap.png_direct.dds"
+			local indirectPath = basePath .. "lightmap.png_indirect.dds"
+			for _,path in ipairs({directPath,indirectPath}) do
+				if(file.exists(path) == false) then
+					pfm.create_popup_message(locale.get_text("pfm_popup_failed_to_import_lightmaps",{path}),nil,gui.InfoBox.TYPE_WARNING)
+					return util.EVENT_REPLY_HANDLED
+				end
+			end
+			c:ImportLightmapTexture("diffuse_direct_map","lightmap_diffuse_direct",directPath)
+			c:ImportLightmapTexture("diffuse_indirect_map","lightmap_diffuse_indirect",indirectPath)
+			update_directional_lightmaps(c)
+		end
+		return util.EVENT_REPLY_HANDLED
+	end)
+	return bt
+end)
+
 -- View lightmap atlas
 pfm.register_component_action("pfm_baked_lighting","pfm_view_lightmap_atlas","view_lightmap_atlas",function(controls,actorData,entActor,actionData)
 	if(util.is_valid(actionData.windowHandle)) then actionData.windowHandle:Close() end
