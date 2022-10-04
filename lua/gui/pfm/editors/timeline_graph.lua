@@ -973,6 +973,8 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 					local lastValue = udm.get_numeric_component(getChannelValue(channel,valueIndex),i)
 					local n = channel:GetValueCount()
 					for j=valueIndex +1,n -1 do
+						local ct = channel:GetTime(j)
+						if(ct > localEndTime) then break end
 						local val = getChannelValue(channel,j)
 						val = set_value_component_value(val,valueType,i,lastValue)
 						channel:SetValue(j,editor_value_to_channel_value(val,valueType))
@@ -991,6 +993,8 @@ function gui.PFMTimelineGraph:InitializeCurveSegmentAnimationData(actor,targetPa
 				if(valueIndex ~= nil) then
 					local firstValue = udm.get_numeric_component(getChannelValue(channel,valueIndex),i)
 					for j=0,valueIndex -1 do
+						local ct = channel:GetTime(j)
+						if(ct < localStartTime) then break end
 						local val = getChannelValue(channel,j)
 						val = set_value_component_value(val,valueType,i,firstValue)
 						channel:SetValue(j,editor_value_to_channel_value(val,valueType))
