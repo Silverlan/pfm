@@ -154,7 +154,14 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t,v)
 		v = curveData.valueTranslator[2](v,curVal)
 	end
 
-	t = t or self:GetTime()
+	if(t == nil) then
+		t = self:GetTime()
+		local graphData = self.m_graphData
+		local timelineCurve = graphData.timelineCurve
+		local timelineGraph = timelineCurve:GetTimelineGraph()
+		local curveData = timelineGraph:GetGraphCurve(timelineCurve:GetCurveIndex())
+		t = timelineGraph:DataTimeToInterfaceTime(curveData,t)
+	end
 	v = v or self:GetValue()
 	pm:UpdateKeyframe(actor,targetPath,panimaChannel,keyIndex,t,v,self:GetTypeComponentIndex())
 end
