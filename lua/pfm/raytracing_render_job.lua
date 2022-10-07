@@ -11,6 +11,8 @@ include("/shaders/pfm/pfm_calc_image_luminance.lua")
 include("unirender.lua")
 include("pragma_render_job.lua")
 
+include_component("pfm_sky")
+
 pfm = pfm or {}
 
 util.register_class("pfm.RaytracingRenderJob",util.CallbackHandler)

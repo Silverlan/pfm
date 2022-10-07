@@ -357,7 +357,9 @@ function gui.PFMTreeViewElement:FullUpdate()
 	local parent = self:GetParentItem()
 	if(parent ~= nil) then
 		for _,item in ipairs(parent:GetItems()) do
-			item:ScheduleUpdate()
+			if(item:IsValid()) then
+				item:ScheduleUpdate()
+			end
 		end
 	end
 	while(util.is_valid(parent)) do
