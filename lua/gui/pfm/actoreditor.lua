@@ -251,10 +251,119 @@ function gui.PFMActorEditor:OnInitialize()
 
 	self:SetMouseInputEnabled(true)
 end
+function gui.PFMActorEditor:AddCollectionItem(parentItem,parent)
+	local itemGroup = parentItem:AddItem(parent:GetName(),nil,nil,tostring(parent:GetUniqueId()))
+	itemGroup:AddCallback("OnMouseEvent",function(el,button,state,mods)
+		if(button == input.MOUSE_BUTTON_RIGHT) then
+			if(state == input.STATE_PRESS) then
+				local pContext = gui.open_context_menu()
+				if(util.is_valid(pContext) == false) then return util.EVENT_REPLY_HANDLED end
+				pContext:SetPos(input.get_cursor_pos())
+
+				pContext:AddItem(locale.get_text("pfm_add_collection"),function()
+					itemGroup:Expand()
+					local child = itemGroup:AddItem("")
+					local initialText = ""
+					local te = gui.create("WITextEntry",child,0,0,child:GetWidth(),child:GetHeight(),0,0,1,1)
+					te:SetText(initialText)
+					te:RequestFocus()
+					te:AddCallback("OnFocusKilled",function()
+						local itemText = te:GetText()
+						if(child:IsValid()) then child:RemoveSafely() end
+						te:RemoveSafely()
+						if(itemGroup:IsValid()) then itemGroup:Update() end
+
+						if(itemText ~= initialText) then
+							local childGroup = parent:AddGroup()
+							childGroup:SetName(itemText)
+							child = self:AddCollection(itemGroup,childGroup)
+						end
+					end)
+				end)
+				pContext:AddItem(locale.get_text("pfm_remove_collection"),function()
+					local actorIds = {}
+					local pm = pfm.get_project_manager()
+					local session = pm:GetSession()
+					local schema = session:GetSchema()
+					local function find_actors(itemGroup)
+						for _,item in ipairs(itemGroup:GetItems()) do
+							local id = item:GetIdentifier()
+							local el = udm.dereference(schema,id)
+							if(util.get_type_name(el) == "Group") then
+								find_actors(item)
+							elseif(util.get_type_name(el) == "Actor") then
+								table.insert(actorIds,id)
+							end
+						end
+					end
+					find_actors(itemGroup)
+
+					self:RemoveActors(actorIds)
+					local itemParent = itemGroup:GetParentItem()
+					if(util.is_valid(itemParent)) then
+						local group = self:GetCollectionUdmObject(itemGroup)
+						local groupParent = self:GetCollectionUdmObject(itemParent)
+						if(group ~= nil and groupParent ~= nil and groupParent.RemoveGroup ~= nil) then
+							groupParent:RemoveGroup(group)
+							itemGroup:RemoveSafely()
+							itemParent:FullUpdate()
+						end
+					end
+				end)
+				if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
+					pContext:AddItem("Copy UUID",function()
+						util.set_clipboard_string(tostring(parent:GetUniqueId()))
+					end)
+				end
+				pContext:Update()
+			end
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
+	itemGroup:AddCallback("OnSelectionChanged",function(el,selected)
+		if(selected) then
+			self.m_lastSelectedGroup = self:GetCollectionUdmObject(itemGroup)
+		end
+	end)
+	return itemGroup
+end
+function gui.PFMActorEditor:GetCollectionUdmObject(elCollection)
+	local pm = pfm.get_project_manager()
+	local session = pm:GetSession()
+	local schema = session:GetSchema()
+	return udm.dereference(schema,elCollection:GetIdentifier())
+end
+function gui.PFMActorEditor:AddCollection(name)
+	local root = self.m_tree:GetRoot():GetItems()[1]
+	if(root == nil) then return end
+
+	local parent = self:GetCollectionUdmObject(root)
+	if(parent == nil) then return end
+
+	local childGroup = parent:AddGroup()
+	childGroup:SetName(name)
+	local item = self:AddCollectionItem(root,childGroup)
+	return childGroup,item
+end
+function gui.PFMActorEditor:FindCollection(name,createIfNotExists)
+	local root = self.m_tree:GetRoot():GetItems()[1]
+	if(root == nil) then return end
+	for _,item in ipairs(root:GetItems()) do
+		if(item:GetName() == name) then
+			local elUdm = self:GetCollectionUdmObject(item)
+			if(elUdm ~= nil) then return elUdm,item end
+		end
+	end
+	return self:AddCollection(name)
+end
 function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 	local newActor = (actor == nil)
+	local function create_new_actor(name,collection,pose)
+		if(collection ~= nil) then collection = self:FindCollection(collection,true) end
+		return self:CreateNewActor(name,pose,nil,collection)
+	end
 	if(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP) then
-		actor = actor or self:CreateNewActor("static_prop")
+		actor = actor or create_new_actor("static_prop","scenebuild")
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
 		self:CreateNewActorComponent(actor,"model",false)
@@ -265,14 +374,14 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		if(pfmActorC ~= nil) then pfmActorC:SetMemberValue("static",udm.TYPE_BOOLEAN,true) end
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP) then
-		actor = actor or self:CreateNewActor("dynamic_prop")
+		actor = actor or create_new_actor("dynamic_prop","actors")
 		if(actor == nil) then return end
 		local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
 		self:CreateNewActorComponent(actor,"model",false)
 		self:CreateNewActorComponent(actor,"render",false)
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR) then
-		actor = actor or self:CreateNewActor("articulated_actor")
+		actor = actor or create_new_actor("articulated_actor","actors")
 		if(actor == nil) then return end
 		local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
 		self:CreateNewActorComponent(actor,"model",false)
@@ -282,19 +391,19 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		self:CreateNewActorComponent(actor,"flex",false)
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA) then
-		actor = actor or self:CreateNewActor("camera")
+		actor = actor or create_new_actor("camera","cameras")
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_camera",false)
 		-- self:CreateNewActorComponent(actor,"toggle",false)
 		self:CreateNewActorComponent(actor,"camera",false)
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_PARTICLE_SYSTEM) then
-		actor = actor or self:CreateNewActor("particle_system")
+		actor = actor or create_new_actor("particle_system","effects")
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_particle_system",false)
 		self:CreateNewActorComponent(actor,"particle_system",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT) then
-		actor = actor or self:CreateNewActor("spot_light")
+		actor = actor or create_new_actor("spot_light","lights")
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_light_spot",false)
 		local lightC = self:CreateNewActorComponent(actor,"light",false)
@@ -308,7 +417,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
 		radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT) then
-		actor = actor or self:CreateNewActor("point_light")
+		actor = actor or create_new_actor("point_light","lights")
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_light_point",false)
 		local lightC = self:CreateNewActorComponent(actor,"light",false)
@@ -320,7 +429,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
 		radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DIRECTIONAL_LIGHT) then
-		actor = actor or self:CreateNewActor("dir_light")
+		actor = actor or create_new_actor("dir_light","lights")
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_light_directional",false)
 		local lightC = self:CreateNewActorComponent(actor,"light",false)
@@ -341,7 +450,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 			end
 		end
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME) then
-		actor = actor or self:CreateNewActor("volume")
+		actor = actor or create_new_actor("volume","environment")
 		if(actor == nil) then return end
 		local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube") end)
 		local volC = self:CreateNewActorComponent(actor,"pfm_volumetric",false)
@@ -369,9 +478,9 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		boundsC:SetMemberValue("maxBounds",udm.TYPE_VECTOR3,max)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR) then
 		if(self:IsValid() == false) then return end
-		actor = actor or self:CreateNewActor("actor")
+		actor = actor or create_new_actor("actor","misc")
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER) then
-		actor = actor or self:CreateNewActor("lightmapper")
+		actor = actor or create_new_actor("lightmapper","baking")
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_baked_lighting",false)
 		self:CreateNewActorComponent(actor,"light_map_data_cache",false)
@@ -379,19 +488,19 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		self:CreateNewActorComponent(actor,"pfm_cuboid_bounds",false)
 		self:CreateNewActorComponent(actor,"pfm_region_carver",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE) then
-		actor = actor or self:CreateNewActor("reflection_probe")
+		actor = actor or create_new_actor("reflection_probe","baking")
 		if(actor == nil) then return end
 		local c = self:CreateNewActorComponent(actor,"reflection_probe",false)
 		c:SetMemberValue("iblStrength",udm.TYPE_FLOAT,1.4)
 		c:SetMemberValue("iblMaterial",udm.TYPE_STRING,"pbr/ibl/venice_sunset")
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY) then
-		actor = actor or self:CreateNewActor("sky")
+		actor = actor or create_new_actor("sky","environment")
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"skybox",false)
 		self:CreateNewActorComponent(actor,"pfm_sky",false)
 		self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("maps/empty_sky/skybox_3") end)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG) then
-		actor = actor or self:CreateNewActor("fog")
+		actor = actor or create_new_actor("fog","environment")
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"fog_controller",false)
 		self:CreateNewActorComponent(actor,"color",false)
@@ -405,7 +514,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 			pose = pfm.calc_decal_target_pose(pos,dir)
 		end
 
-		actor = actor or self:CreateNewActor("decal",pose)
+		actor = actor or create_new_actor("decal","effects",pose)
 		if(actor == nil) then return end
 		local decalC = self:CreateNewActorComponent(actor,"decal",false)
 		decalC:SetMemberValue("size",udm.TYPE_FLOAT,20.0)
@@ -461,13 +570,16 @@ function gui.PFMActorEditor:GetActorComponentItem(actor,componentName)
 	if(util.is_valid(item) == false) then return end
 	return item:GetItemByIdentifier(componentName)
 end
-function gui.PFMActorEditor:CreateNewActor(actorName,pose,uniqueId)
+function gui.PFMActorEditor:GetSelectedGroup() return self.m_lastSelectedGroup end
+function gui.PFMActorEditor:CreateNewActor(actorName,pose,uniqueId,group)
 	local filmClip = self:GetFilmClip()
 	if(filmClip == nil) then
 		pfm.create_popup_message(locale.get_text("pfm_popup_create_actor_no_film_clip"))
 		return
 	end
-	local actor = pfm.get_project_manager():AddActor(self:GetFilmClip())
+
+	group = group or self:GetSelectedGroup()
+	local actor = pfm.get_project_manager():AddActor(self:GetFilmClip(),group)
 	if(uniqueId ~= nil) then actor:ChangeUniqueId(uniqueId) end
 	local actorIndex
 	if(actorName == nil) then
@@ -493,7 +605,11 @@ function gui.PFMActorEditor:CreateNewActor(actorName,pose,uniqueId)
 		end
 	end
 
-	self:AddActor(actor)
+	local itemGroup
+	if(group ~= nil) then
+		itemGroup = self.m_tree:GetRoot():GetItemByIdentifier(tostring(group:GetUniqueId()),true)
+	end
+	self:AddActor(actor,itemGroup)
 
 	local pfmActorC = self:CreateNewActorComponent(actor,"pfm_actor",false)
 	pfmActorC:SetMemberValue("position",udm.TYPE_VECTOR3,pos)
@@ -802,14 +918,25 @@ function gui.PFMActorEditor:ScheduleUpdateSelectedEntities()
 end
 function gui.PFMActorEditor:GetSelectedActors()
 	local actors = {}
-	for _,el in ipairs(self.m_tree:GetRoot():GetItems()) do
-		if(el:IsSelected()) then
-			local actorData = self.m_treeElementToActorData[el]
-			if(actorData ~= nil) then
-				table.insert(actors,actorData.actor)
+	local pm = pfm.get_project_manager()
+	local session = pm:GetSession()
+	local schema = session:GetSchema()
+	local function find_actors(parent)
+		for _,el in ipairs(parent:GetItems()) do
+			if(el:IsSelected()) then
+				local elUdm = udm.dereference(schema,el:GetIdentifier())
+				if(util.get_type_name(elUdm) == "Group") then
+					find_actors(el)
+				else
+					local actorData = self.m_treeElementToActorData[el]
+					if(actorData ~= nil) then
+						table.insert(actors,actorData.actor)
+					end
+				end
 			end
 		end
 	end
+	find_actors(self.m_tree:GetRoot())
 	return actors
 end
 function gui.PFMActorEditor:UpdateSelectedEntities()
@@ -826,9 +953,9 @@ function gui.PFMActorEditor:UpdateSelectedEntities()
 				if(selected == true and level > 0) then break end
 			end
 		end
-		if(selected and level == 1) then
+		local actorData = self.m_treeElementToActorData[el]
+		if(selected and actorData ~= nil) then
 			-- Root element or one of its children is selected; Select entity associated with the actor
-			local actorData = self.m_treeElementToActorData[el]
 			local ent = actorData.actor:FindEntity()
 			if(ent ~= nil) then
 				selectionManager:Select(ent)
@@ -1220,7 +1347,7 @@ function gui.PFMActorEditor:WriteActorsToUdmElement(actors,el)
 		udmData:Add("data"):Merge(animData)
 	end
 end
-function gui.PFMActorEditor:RestoreActorsFromUdmElement(data)
+function gui.PFMActorEditor:RestoreActorsFromUdmElement(data,keepOriginalUuids)
 	local pfmCopy = data:Get("pfm_copy")
 	local data = pfmCopy:Get("data")
 	if(data:IsValid() == false) then
@@ -1246,24 +1373,26 @@ function gui.PFMActorEditor:RestoreActorsFromUdmElement(data)
 			end
 		end
 	end
-	iterate_elements(data,function(udmData)
-		if(udmData:HasValue("uniqueId")) then
-			local oldUniqueId = udmData:GetValue("uniqueId",udm.TYPE_STRING)
-			local newUniqueId = tostring(util.generate_uuid_v4())
-			udmData:SetValue("uniqueId",udm.TYPE_STRING,newUniqueId)
-			oldIdToNewId[oldUniqueId] = newUniqueId
-		end
-	end)
-	iterate_elements(data,function(udmData)
-		for name,udmChild in pairs(udmData:GetChildren()) do
-			if(udmChild:GetType() == udm.TYPE_STRING) then
-				local val = udmData:GetValue(name,udm.TYPE_STRING)
-				if(oldIdToNewId[val] ~= nil) then
-					udmData:SetValue(name,udm.TYPE_STRING,oldIdToNewId[val])
+	if(keepOriginalUuids ~= true) then
+		iterate_elements(data,function(udmData)
+			if(udmData:HasValue("uniqueId")) then
+				local oldUniqueId = udmData:GetValue("uniqueId",udm.TYPE_STRING)
+				local newUniqueId = tostring(util.generate_uuid_v4())
+				udmData:SetValue("uniqueId",udm.TYPE_STRING,newUniqueId)
+				oldIdToNewId[oldUniqueId] = newUniqueId
+			end
+		end)
+		iterate_elements(data,function(udmData)
+			for name,udmChild in pairs(udmData:GetChildren()) do
+				if(udmChild:GetType() == udm.TYPE_STRING) then
+					local val = udmData:GetValue(name,udm.TYPE_STRING)
+					if(oldIdToNewId[val] ~= nil) then
+						udmData:SetValue(name,udm.TYPE_STRING,oldIdToNewId[val])
+					end
 				end
 			end
-		end
-	end)
+		end)
+	end
 	--
 
 	local n = data:GetSize()
@@ -1296,14 +1425,14 @@ function gui.PFMActorEditor:CopyToClipboard(actors)
 	self:WriteActorsToUdmElement(actors,el)
 	util.set_clipboard_string(el:ToAscii(udm.ASCII_SAVE_FLAG_NONE))
 end
-function gui.PFMActorEditor:PasteFromClipboard()
+function gui.PFMActorEditor:PasteFromClipboard(keepOriginalUuids)
 	local res,err = udm.parse(util.get_clipboard_string())
 	if(res == false) then
 		console.print_warning("Failed to parse UDM: ",err)
 		return
 	end
 	local data = res:GetAssetData():GetData()
-	self:RestoreActorsFromUdmElement(data)
+	self:RestoreActorsFromUdmElement(data,keepOriginalUuids)
 end
 function gui.PFMActorEditor:MouseCallback(button,state,mods)
 	if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
@@ -1359,16 +1488,17 @@ function gui.PFMActorEditor:RemoveActor(uniqueId,updateUi)
 
 	local function removeActor(actor)
 		filmClip:RemoveActor(actor)
-		local itemActor = self.m_tree:GetRoot():GetItemByIdentifier(uniqueId)
-		if(itemActor ~= nil) then self.m_tree:RemoveItem(itemActor,updateUi) end
+		local itemActor,parent = self.m_tree:GetRoot():GetItemByIdentifier(uniqueId,true)
+		if(itemActor ~= nil) then parent:RemoveItem(itemActor,updateUi) end
 
 		util.remove(ents.find_by_uuid(uniqueId))
 		self:TagRenderSceneAsDirty()
 	end
 	removeActor(actor)
 end
-function gui.PFMActorEditor:AddActor(actor)
-	local itemActor = self.m_tree:AddItem(actor:GetName(),nil,nil,tostring(actor:GetUniqueId()))
+function gui.PFMActorEditor:AddActor(actor,parentItem)
+	parentItem = parentItem or self.m_tree
+	local itemActor = parentItem:AddItem(actor:GetName(),nil,nil,tostring(actor:GetUniqueId()))
 	itemActor:SetAutoSelectChildren(false)
 
 	local uniqueId = tostring(actor:GetUniqueId())
@@ -1398,9 +1528,44 @@ function gui.PFMActorEditor:AddActor(actor)
 					te:RemoveSafely()
 				end)
 			end)
-			pContext:AddItem(locale.get_text("remove"),function() self:RemoveActors({uniqueId}) end)
+			pContext:AddItem(locale.get_text("remove"),function()
+				self:RemoveActors({uniqueId})
+				time.create_simple_timer(0.0,function()
+					if(itemActor:IsValid()) then
+						local parent = itemActor:GetParentItem()
+						itemActor:Remove()
+						if(util.is_valid(parent)) then parent:FullUpdate() end
+					end
+				end)
+			end)
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
+		end
+		if(button == input.MOUSE_BUTTON_LEFT) then
+			if(state == input.STATE_PRESS) then self.m_draggingItem = itemActor
+			else
+				local elItem = gui.get_element_under_cursor(function(el)
+					return el:GetClass() == "wipfmtreeviewelement"
+				end)
+				if(elItem ~= nil) then
+					local groupUuid = elItem:GetIdentifier()
+					local group = self:GetCollectionUdmObject(elItem)
+					local curGroup = tostring(actor:GetParent():GetUniqueId())
+					if(group ~= nil and util.get_type_name(group) == "Group" and util.is_same_object(group,actor:GetParent()) == false) then
+						time.create_simple_timer(0.0,function()
+							if(self:IsValid() == false) then return end
+							self:CopyToClipboard({actor})
+							self:RemoveActors({uniqueId})
+
+							local pm = pfm.get_project_manager()
+							local session = pm:GetSession()
+							self.m_lastSelectedGroup = udm.dereference(session:GetSchema(),groupUuid)
+							self:PasteFromClipboard(true)
+						end)
+					end
+				end
+			end
+			return util.EVENT_REPLY_UNHANDLED
 		end
 	end)
 
@@ -1471,6 +1636,11 @@ function gui.PFMActorEditor:AddActor(actor)
 		end
 	end)
 	self:UpdateActorComponentEntries(self.m_treeElementToActorData[itemActor])
+
+	if(parentItem:GetClass() == "wipfmtreeviewelement") then
+		parentItem:FullUpdate()
+		parentItem:Expand()
+	end
 end
 function gui.PFMActorEditor:Reload()
 	if(self.m_filmClip == nil) then return end
@@ -1485,9 +1655,33 @@ function gui.PFMActorEditor:Setup(filmClip)
 	self.m_treeElementToActorData = {}
 	self.m_actorUniqueIdToTreeElement = {}
 	-- TODO: Include groups the actors belong to!
-	for _,actor in ipairs(filmClip:GetActorList()) do
-		self:AddActor(actor)
+
+	local function add_actors(parent,parentItem,root)
+		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree,parent)
+		if(root) then itemGroup:SetText("Scene") end
+		for _,group in ipairs(parent:GetGroups()) do
+			add_actors(group,itemGroup)
+		end
+		for _,actor in ipairs(parent:GetActors()) do
+			self:AddActor(actor,itemGroup)
+		end
 	end
+
+	local function add_film_clip(filmClip,root)
+		add_actors(filmClip:GetScene(),nil,root)
+		for _,trackGroup in ipairs(filmClip:GetTrackGroups()) do
+			for _,track in ipairs(trackGroup:GetTracks()) do
+				for _,filmClip in ipairs(track:GetFilmClips()) do
+					add_film_clip(filmClip)
+				end
+			end
+		end
+	end
+	add_film_clip(filmClip,true)
+
+	--[[for _,actor in ipairs(filmClip:GetActorList()) do
+		self:AddActor(actor)
+	end]]
 	debug.stop_profiling_task()
 end
 function gui.PFMActorEditor:AddProperty(name,child,fInitPropertyEl)
@@ -2325,7 +2519,7 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected,hitM
 		local filmmaker = tool.get_filmmaker()
 		local actorEditor = filmmaker:GetActorEditor()
 		if(util.is_valid(actorEditor) == false) then return end
-		actorEditor:PasteFromClipboard(actors)
+		actorEditor:PasteFromClipboard()
 	end)
 	local mdl = actor:GetModel()
 	if(mdl ~= nil) then

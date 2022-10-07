@@ -417,12 +417,11 @@ function gui.PFMTreeViewElement:SetSelected(selected,selectChildren)
 end
 function gui.PFMTreeViewElement:GetItemByIdentifier(identifier,recursive)
 	local item = self.m_identifierToItem[identifier]
-	_self = self
-	if(item ~= nil or recursive ~= true) then return item end
+	if(item ~= nil or recursive ~= true) then return item,self end
 	for _,child in ipairs(self.m_items) do
 		if(child:IsValid()) then
-			local item = child:GetItemByIdentifier(identifier,recursive)
-			if(item ~= nil) then return item end
+			local item,c = child:GetItemByIdentifier(identifier,recursive)
+			if(item ~= nil) then return item,c end
 		end
 	end
 end

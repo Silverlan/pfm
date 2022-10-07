@@ -308,6 +308,12 @@ function gui.WIFilmmaker:OnInitialize()
 			self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
 			self.m_openDialogue:Update()
 		end)
+		if(self:IsDeveloperModeEnabled()) then
+			pContext:AddItem("Reopen",function(pItem)
+				if(util.is_valid(self) == false) then return end
+				self:LoadProject(self:GetProjectFileName())
+			end)
+		end
 		pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
 			self:Save()
@@ -1124,8 +1130,9 @@ function gui.WIFilmmaker:PackProject(fileName)
 
 	pfm.save_asset_files_as_archive(finalAssetFiles,fileName)
 end
-function gui.WIFilmmaker:AddActor(filmClip)
-	local actor = filmClip:GetScene():AddActor()
+function gui.WIFilmmaker:AddActor(filmClip,group)
+	group = group or filmClip:GetScene()
+	local actor = group:AddActor()
 	self:UpdateActor(actor,filmClip)
 	return actor
 end
