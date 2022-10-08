@@ -948,15 +948,13 @@ function gui.PFMActorEditor:GetSelectedActors()
 	local schema = session:GetSchema()
 	local function find_actors(parent)
 		for _,el in ipairs(parent:GetItems()) do
-			if(el:IsSelected()) then
-				local elUdm = udm.dereference(schema,el:GetIdentifier())
-				if(util.get_type_name(elUdm) == "Group") then
-					find_actors(el)
-				else
-					local actorData = self.m_treeElementToActorData[el]
-					if(actorData ~= nil) then
-						table.insert(actors,actorData.actor)
-					end
+			local elUdm = udm.dereference(schema,el:GetIdentifier())
+			if(util.get_type_name(elUdm) == "Group") then
+				find_actors(el)
+			elseif(el:IsSelected()) then
+				local actorData = self.m_treeElementToActorData[el]
+				if(actorData ~= nil) then
+					table.insert(actors,actorData.actor)
 				end
 			end
 		end
@@ -1574,8 +1572,12 @@ function gui.PFMActorEditor:AddActor(actor,parentItem)
 					if(group ~= nil and util.get_type_name(group) == "Group" and util.is_same_object(group,actor:GetParent()) == false) then
 						time.create_simple_timer(0.0,function()
 							if(self:IsValid() == false) then return end
-							self:CopyToClipboard({actor})
-							self:RemoveActors({uniqueId})
+							local actors = self:GetSelectedActors()
+							local uniqueIds = {}
+							for _,actor in ipairs(actors) do table.insert(uniqueIds,tostring(actor:GetUniqueId())) end
+
+							self:CopyToClipboard(actors)
+							self:RemoveActors(uniqueIds)
 
 							local pm = pfm.get_project_manager()
 							local session = pm:GetSession()
