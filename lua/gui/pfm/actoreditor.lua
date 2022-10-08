@@ -288,6 +288,8 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem,parent,isRoot)
 						end
 					end)
 				end)
+				pContext:AddItem(locale.get_text("pfm_expand_all"),function() itemGroup:ExpandAll() end)
+				pContext:AddItem(locale.get_text("pfm_collapse_all"),function() itemGroup:CollapseAll() end)
 				if(isRoot ~= true) then
 					pContext:AddItem(locale.get_text("pfm_remove_collection"),function()
 						local actorIds = {}
