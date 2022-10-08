@@ -262,6 +262,7 @@ function gui.PFMActorEditor:OnInitialize()
 end
 function gui.PFMActorEditor:AddCollectionItem(parentItem,parent)
 	local itemGroup = parentItem:AddItem(parent:GetName(),nil,nil,tostring(parent:GetUniqueId()))
+	itemGroup:SetAutoSelectChildren(false)
 	itemGroup:AddCallback("OnMouseEvent",function(el,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT) then
 			if(state == input.STATE_PRESS) then
@@ -1103,7 +1104,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				filmClip:RemoveActorComponent(actor,componentType)
 				if(util.is_valid(itemComponent)) then
 					local itemParent = itemComponent:GetParentItem()
-					if(util.is_valid(itemParent)) then itemParent:RemoveItem(itemComponent) end
+					if(util.is_valid(itemParent)) then itemParent:RemoveItem(itemComponent) itemParent:FullUpdate() end
 				end
 				self:UpdateActorComponentEntries(actorData)
 				local entActor = ents.find_by_uuid(uniqueId)
@@ -1526,7 +1527,7 @@ function gui.PFMActorEditor:AddActor(actor,parentItem)
 				pfmActorC:SetSelected(selected)
 			end
 		end
-	end)	
+	end)
 	itemActor:AddCallback("OnMouseEvent",function(el,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 			local pContext = gui.open_context_menu()
@@ -1545,14 +1546,9 @@ function gui.PFMActorEditor:AddActor(actor,parentItem)
 				end)
 			end)
 			pContext:AddItem(locale.get_text("remove"),function()
+				local parent = itemActor:GetParentItem()
 				self:RemoveActors({uniqueId})
-				time.create_simple_timer(0.0,function()
-					if(itemActor:IsValid()) then
-						local parent = itemActor:GetParentItem()
-						itemActor:Remove()
-						if(util.is_valid(parent)) then parent:FullUpdate() end
-					end
-				end)
+				if(util.is_valid(parent)) then parent:FullUpdate() end
 			end)
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
