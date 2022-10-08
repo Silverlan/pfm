@@ -284,9 +284,7 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem,parent)
 						if(itemGroup:IsValid()) then itemGroup:Update() end
 
 						if(itemText ~= initialText) then
-							local childGroup = parent:AddGroup()
-							childGroup:SetName(itemText)
-							child = self:AddCollection(itemGroup,childGroup)
+							child = self:AddCollection(itemText,parent)
 						end
 					end)
 				end)
