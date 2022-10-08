@@ -891,6 +891,7 @@ function gui.WIFilmmaker:ImportMap(map)
 
 	local indexCounters = {}
 
+	local group = actorEditor:FindCollection(asset.get_normalized_path(map,asset.TYPE_MAP),true)
 	local entityData = data:GetAssetData():GetData():Get("entities")
 	for _,entData in ipairs(entityData:GetArrayValues()) do
 		local keyValues = entData:Get("keyValues")
@@ -915,12 +916,12 @@ function gui.WIFilmmaker:ImportMap(map)
 		local name = keyValues:GetValue("targetname",udm.TYPE_STRING) or (className .. index)
 		if(className == "prop_physics" or className == "world") then
 			if(model ~= nil) then
-				local actor = actorEditor:CreateNewActor(name,pose,uuid)
+				local actor = actorEditor:CreateNewActor(name,pose,uuid,actorEditor:FindCollection(gui.PFMActorEditor.COLLECTION_SCENEBUILD,true,group))
 				actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,actor,model)
 				actorEditor:UpdateActorComponents(actor)
 			end
 		elseif(className == "skybox") then
-			local actor = actorEditor:CreateNewActor(name,pose,uuid)
+			local actor = actorEditor:CreateNewActor(name,pose,uuid,actorEditor:FindCollection(gui.PFMActorEditor.COLLECTION_ENVIRONMENT,true,group))
 
 			local mdlC = actorEditor:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(model) end)
 			actorEditor:CreateNewActorComponent(actor,"skybox",false)
@@ -929,7 +930,7 @@ function gui.WIFilmmaker:ImportMap(map)
 		elseif(className == "env_light_environment") then
 
 		elseif(className == "env_light_point") then
-			local actor = actorEditor:CreateNewActor(name,pose,uuid)
+			local actor = actorEditor:CreateNewActor(name,pose,uuid,actorEditor:FindCollection(gui.PFMActorEditor.COLLECTION_LIGHTS,true,group))
 
 			local radius = keyValues:GetValue("radius",udm.TYPE_FLOAT) or 1000.0
 			local intensity = keyValues:GetValue("light_intensity",udm.TYPE_FLOAT) or 1000.0
@@ -949,7 +950,7 @@ function gui.WIFilmmaker:ImportMap(map)
 			colorC:SetMemberValue("color",udm.TYPE_VECTOR3,color:ToVector())
 			actorEditor:UpdateActorComponents(actor)
 		elseif(className == "env_fog_controller") then
-			local actor = actorEditor:CreateNewActor(name,pose,uuid)
+			local actor = actorEditor:CreateNewActor(name,pose,uuid,actorEditor:FindCollection(gui.PFMActorEditor.COLLECTION_ENVIRONMENT,true,group))
 
 			local fogColor = keyValues:GetValue("fogcolor",udm.TYPE_VECTOR3)
 			fogColor = (fogColor ~= nil) and (fogColor /255.0) or Vector(1,1,1)

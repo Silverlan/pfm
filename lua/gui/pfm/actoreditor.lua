@@ -34,6 +34,15 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY = 12
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG = 13
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL = 14
 
+gui.PFMActorEditor.COLLECTION_SCENEBUILD = "scenebuild"
+gui.PFMActorEditor.COLLECTION_ACTORS = "actors"
+gui.PFMActorEditor.COLLECTION_CAMERAS = "cameras"
+gui.PFMActorEditor.COLLECTION_EFFECTS = "effects"
+gui.PFMActorEditor.COLLECTION_LIGHTS = "lights"
+gui.PFMActorEditor.COLLECTION_ENVIRONMENT = "environment"
+gui.PFMActorEditor.COLLECTION_BAKING = "baking"
+gui.PFMActorEditor.COLLECTION_MISC = "misc"
+
 function gui.PFMActorEditor:__init()
 	gui.Base.__init(self)
 end
@@ -333,9 +342,14 @@ function gui.PFMActorEditor:GetCollectionUdmObject(elCollection)
 	local schema = session:GetSchema()
 	return udm.dereference(schema,elCollection:GetIdentifier())
 end
-function gui.PFMActorEditor:AddCollection(name)
-	local root = self.m_tree:GetRoot():GetItems()[1]
-	if(root == nil) then return end
+function gui.PFMActorEditor:GetCollectionTreeItem(uuid)
+	return self.m_tree:GetRoot():GetItemByIdentifier(uuid,true)
+end
+function gui.PFMActorEditor:AddCollection(name,parentGroup)
+	local root
+	if(parentGroup ~= nil) then root = self:GetCollectionTreeItem(tostring(parentGroup:GetUniqueId()))
+	else root = self.m_tree:GetRoot():GetItems()[1] end
+	if(util.is_valid(root) == false) then return end
 
 	local parent = self:GetCollectionUdmObject(root)
 	if(parent == nil) then return end
@@ -345,16 +359,18 @@ function gui.PFMActorEditor:AddCollection(name)
 	local item = self:AddCollectionItem(root,childGroup)
 	return childGroup,item
 end
-function gui.PFMActorEditor:FindCollection(name,createIfNotExists)
-	local root = self.m_tree:GetRoot():GetItems()[1]
-	if(root == nil) then return end
+function gui.PFMActorEditor:FindCollection(name,createIfNotExists,parentGroup)
+	local root
+	if(parentGroup ~= nil) then root = self:GetCollectionTreeItem(tostring(parentGroup:GetUniqueId()))
+	else root = self.m_tree:GetRoot():GetItems()[1] end
+	if(util.is_valid(root) == false) then return end
 	for _,item in ipairs(root:GetItems()) do
 		if(item:GetName() == name) then
 			local elUdm = self:GetCollectionUdmObject(item)
 			if(elUdm ~= nil) then return elUdm,item end
 		end
 	end
-	return self:AddCollection(name)
+	return self:AddCollection(name,parentGroup)
 end
 function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 	local newActor = (actor == nil)
@@ -363,7 +379,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		return self:CreateNewActor(name,pose,nil,collection)
 	end
 	if(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP) then
-		actor = actor or create_new_actor("static_prop","scenebuild")
+		actor = actor or create_new_actor("static_prop",gui.PFMActorEditor.COLLECTION_SCENEBUILD)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
 		self:CreateNewActorComponent(actor,"model",false)
@@ -374,14 +390,14 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		if(pfmActorC ~= nil) then pfmActorC:SetMemberValue("static",udm.TYPE_BOOLEAN,true) end
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP) then
-		actor = actor or create_new_actor("dynamic_prop","actors")
+		actor = actor or create_new_actor("dynamic_prop",gui.PFMActorEditor.COLLECTION_ACTORS)
 		if(actor == nil) then return end
 		local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
 		self:CreateNewActorComponent(actor,"model",false)
 		self:CreateNewActorComponent(actor,"render",false)
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR) then
-		actor = actor or create_new_actor("articulated_actor","actors")
+		actor = actor or create_new_actor("articulated_actor",gui.PFMActorEditor.COLLECTION_ACTORS)
 		if(actor == nil) then return end
 		local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel(mdlName) end)
 		self:CreateNewActorComponent(actor,"model",false)
@@ -391,19 +407,19 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		self:CreateNewActorComponent(actor,"flex",false)
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA) then
-		actor = actor or create_new_actor("camera","cameras")
+		actor = actor or create_new_actor("camera",gui.PFMActorEditor.COLLECTION_CAMERAS)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_camera",false)
 		-- self:CreateNewActorComponent(actor,"toggle",false)
 		self:CreateNewActorComponent(actor,"camera",false)
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_PARTICLE_SYSTEM) then
-		actor = actor or create_new_actor("particle_system","effects")
+		actor = actor or create_new_actor("particle_system",gui.PFMActorEditor.COLLECTION_EFFECTS)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_particle_system",false)
 		self:CreateNewActorComponent(actor,"particle_system",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT) then
-		actor = actor or create_new_actor("spot_light","lights")
+		actor = actor or create_new_actor("spot_light",gui.PFMActorEditor.COLLECTION_LIGHTS)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_light_spot",false)
 		local lightC = self:CreateNewActorComponent(actor,"light",false)
@@ -417,7 +433,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
 		radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT) then
-		actor = actor or create_new_actor("point_light","lights")
+		actor = actor or create_new_actor("point_light",gui.PFMActorEditor.COLLECTION_LIGHTS)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_light_point",false)
 		local lightC = self:CreateNewActorComponent(actor,"light",false)
@@ -429,7 +445,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		lightC:SetMemberValue("castShadows",udm.TYPE_BOOLEAN,false)
 		radiusC:SetMemberValue("radius",udm.TYPE_FLOAT,1000)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DIRECTIONAL_LIGHT) then
-		actor = actor or create_new_actor("dir_light","lights")
+		actor = actor or create_new_actor("dir_light",gui.PFMActorEditor.COLLECTION_LIGHTS)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_light_directional",false)
 		local lightC = self:CreateNewActorComponent(actor,"light",false)
@@ -450,7 +466,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 			end
 		end
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME) then
-		actor = actor or create_new_actor("volume","environment")
+		actor = actor or create_new_actor("volume",gui.PFMActorEditor.COLLECTION_ENVIRONMENT)
 		if(actor == nil) then return end
 		local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube") end)
 		local volC = self:CreateNewActorComponent(actor,"pfm_volumetric",false)
@@ -478,9 +494,9 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		boundsC:SetMemberValue("maxBounds",udm.TYPE_VECTOR3,max)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR) then
 		if(self:IsValid() == false) then return end
-		actor = actor or create_new_actor("actor","misc")
+		actor = actor or create_new_actor("actor",gui.PFMActorEditor.COLLECTION_MISC)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER) then
-		actor = actor or create_new_actor("lightmapper","baking")
+		actor = actor or create_new_actor("lightmapper",gui.PFMActorEditor.COLLECTION_BAKING)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_baked_lighting",false)
 		self:CreateNewActorComponent(actor,"light_map_data_cache",false)
@@ -488,19 +504,19 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		self:CreateNewActorComponent(actor,"pfm_cuboid_bounds",false)
 		self:CreateNewActorComponent(actor,"pfm_region_carver",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE) then
-		actor = actor or create_new_actor("reflection_probe","baking")
+		actor = actor or create_new_actor("reflection_probe",gui.PFMActorEditor.COLLECTION_BAKING)
 		if(actor == nil) then return end
 		local c = self:CreateNewActorComponent(actor,"reflection_probe",false)
 		c:SetMemberValue("iblStrength",udm.TYPE_FLOAT,1.4)
 		c:SetMemberValue("iblMaterial",udm.TYPE_STRING,"pbr/ibl/venice_sunset")
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY) then
-		actor = actor or create_new_actor("sky","environment")
+		actor = actor or create_new_actor("sky",gui.PFMActorEditor.COLLECTION_ENVIRONMENT)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"skybox",false)
 		self:CreateNewActorComponent(actor,"pfm_sky",false)
 		self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("maps/empty_sky/skybox_3") end)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG) then
-		actor = actor or create_new_actor("fog","environment")
+		actor = actor or create_new_actor("fog",gui.PFMActorEditor.COLLECTION_ENVIRONMENT)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"fog_controller",false)
 		self:CreateNewActorComponent(actor,"color",false)
@@ -514,7 +530,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 			pose = pfm.calc_decal_target_pose(pos,dir)
 		end
 
-		actor = actor or create_new_actor("decal","effects",pose)
+		actor = actor or create_new_actor("decal",gui.PFMActorEditor.COLLECTION_EFFECTS,pose)
 		if(actor == nil) then return end
 		local decalC = self:CreateNewActorComponent(actor,"decal",false)
 		decalC:SetMemberValue("size",udm.TYPE_FLOAT,20.0)
@@ -1658,7 +1674,7 @@ function gui.PFMActorEditor:Setup(filmClip)
 
 	local function add_actors(parent,parentItem,root)
 		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree,parent)
-		if(root) then itemGroup:SetText("Scene") end
+		if(root) then itemGroup:SetText("Scene") itemGroup:Expand() end
 		for _,group in ipairs(parent:GetGroups()) do
 			add_actors(group,itemGroup)
 		end
