@@ -320,6 +320,16 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem,parent)
 						end
 					end
 				end)
+				pContext:AddItem(locale.get_text("rename"),function()
+					local te = gui.create("WITextEntry",itemGroup,0,0,itemGroup:GetWidth(),itemGroup:GetHeight(),0,0,1,1)
+					te:SetText(parent:GetName())
+					te:RequestFocus()
+					te:AddCallback("OnFocusKilled",function()
+						parent:SetName(te:GetText())
+						itemGroup:SetText(te:GetText())
+						te:RemoveSafely()
+					end)
+				end)
 				if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
 					pContext:AddItem("Copy UUID",function()
 						util.set_clipboard_string(tostring(parent:GetUniqueId()))
