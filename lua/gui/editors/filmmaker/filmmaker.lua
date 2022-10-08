@@ -1131,13 +1131,13 @@ function gui.WIFilmmaker:PackProject(fileName)
 
 	pfm.save_asset_files_as_archive(finalAssetFiles,fileName)
 end
-function gui.WIFilmmaker:AddActor(filmClip,group)
+function gui.WIFilmmaker:AddActor(filmClip,group,dontRefreshAnimation)
 	group = group or filmClip:GetScene()
 	local actor = group:AddActor()
-	self:UpdateActor(actor,filmClip)
+	if(dontUpdateActor ~= true) then self:UpdateActor(actor,filmClip,nil,dontRefreshAnimation) end
 	return actor
 end
-function gui.WIFilmmaker:UpdateActor(actor,filmClip,reload)
+function gui.WIFilmmaker:UpdateActor(actor,filmClip,reload,dontRefreshAnimation)
 	if(reload == true) then
 		for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR)}) do
 			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
@@ -1154,7 +1154,7 @@ function gui.WIFilmmaker:UpdateActor(actor,filmClip,reload)
 		filmClipC:UpdateCamera()
 	end
 	self:TagRenderSceneAsDirty()
-	self:SetTimeOffset(self:GetTimeOffset()) -- Refresh animation
+	if(dontRefreshAnimation ~= true) then self:SetTimeOffset(self:GetTimeOffset()) end
 end
 function gui.WIFilmmaker:StopLiveRaytracing()
 	local vp = self:GetViewport()

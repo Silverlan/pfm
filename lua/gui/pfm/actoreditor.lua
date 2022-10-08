@@ -260,7 +260,7 @@ function gui.PFMActorEditor:OnInitialize()
 
 	self:SetMouseInputEnabled(true)
 end
-function gui.PFMActorEditor:AddCollectionItem(parentItem,parent)
+function gui.PFMActorEditor:AddCollectionItem(parentItem,parent,isRoot)
 	local itemGroup = parentItem:AddItem(parent:GetName(),nil,nil,tostring(parent:GetUniqueId()))
 	itemGroup:SetAutoSelectChildren(false)
 	itemGroup:AddCallback("OnMouseEvent",function(el,button,state,mods)
@@ -288,46 +288,54 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem,parent)
 						end
 					end)
 				end)
-				pContext:AddItem(locale.get_text("pfm_remove_collection"),function()
-					local actorIds = {}
-					local pm = pfm.get_project_manager()
-					local session = pm:GetSession()
-					local schema = session:GetSchema()
-					local function find_actors(itemGroup)
-						for _,item in ipairs(itemGroup:GetItems()) do
-							local id = item:GetIdentifier()
-							local el = udm.dereference(schema,id)
-							if(util.get_type_name(el) == "Group") then
-								find_actors(item)
-							elseif(util.get_type_name(el) == "Actor") then
-								table.insert(actorIds,id)
+				if(isRoot ~= true) then
+					pContext:AddItem(locale.get_text("pfm_remove_collection"),function()
+						local actorIds = {}
+						local pm = pfm.get_project_manager()
+						local session = pm:GetSession()
+						local schema = session:GetSchema()
+						local function find_actors(itemGroup)
+							for _,item in ipairs(itemGroup:GetItems()) do
+								local id = item:GetIdentifier()
+								local el = udm.dereference(schema,id)
+								if(util.get_type_name(el) == "Group") then
+									find_actors(item)
+								elseif(util.get_type_name(el) == "Actor") then
+									table.insert(actorIds,id)
+								end
 							end
 						end
-					end
-					find_actors(itemGroup)
+						find_actors(itemGroup)
 
-					self:RemoveActors(actorIds)
-					local itemParent = itemGroup:GetParentItem()
-					if(util.is_valid(itemParent)) then
-						local group = self:GetCollectionUdmObject(itemGroup)
-						local groupParent = self:GetCollectionUdmObject(itemParent)
-						if(group ~= nil and groupParent ~= nil and groupParent.RemoveGroup ~= nil) then
-							groupParent:RemoveGroup(group)
-							itemGroup:RemoveSafely()
-							itemParent:FullUpdate()
+						local itemParent = itemGroup:GetParentItem()
+						local groupUuid = itemGroup:GetIdentifier()
+						local parentUuid
+						if(util.is_valid(itemParent)) then parentUuid = itemParent:GetIdentifier() end
+						self:RemoveActors(actorIds)
+
+						itemParent = self:GetCollectionTreeItem(parentUuid)
+						itemGroup = self:GetCollectionTreeItem(groupUuid)
+						if(util.is_valid(groupUuid) and util.is_valid(itemParent)) then
+							local group = self:GetCollectionUdmObject(itemGroup)
+							local groupParent = self:GetCollectionUdmObject(itemParent)
+							if(group ~= nil and groupParent ~= nil and groupParent.RemoveGroup ~= nil) then
+								groupParent:RemoveGroup(group)
+								itemGroup:RemoveSafely()
+								itemParent:FullUpdate()
+							end
 						end
-					end
-				end)
-				pContext:AddItem(locale.get_text("rename"),function()
-					local te = gui.create("WITextEntry",itemGroup,0,0,itemGroup:GetWidth(),itemGroup:GetHeight(),0,0,1,1)
-					te:SetText(parent:GetName())
-					te:RequestFocus()
-					te:AddCallback("OnFocusKilled",function()
-						parent:SetName(te:GetText())
-						itemGroup:SetText(te:GetText())
-						te:RemoveSafely()
 					end)
-				end)
+					pContext:AddItem(locale.get_text("rename"),function()
+						local te = gui.create("WITextEntry",itemGroup,0,0,itemGroup:GetWidth(),itemGroup:GetHeight(),0,0,1,1)
+						te:SetText(parent:GetName())
+						te:RequestFocus()
+						te:AddCallback("OnFocusKilled",function()
+							parent:SetName(te:GetText())
+							itemGroup:SetText(te:GetText())
+							te:RemoveSafely()
+						end)
+					end)
+				end
 				if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
 					pContext:AddItem("Copy UUID",function()
 						util.set_clipboard_string(tostring(parent:GetUniqueId()))
@@ -336,6 +344,39 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem,parent)
 				pContext:Update()
 			end
 			return util.EVENT_REPLY_HANDLED
+		end
+
+		if(root ~= true) then
+			--[[if(button == input.MOUSE_BUTTON_LEFT) then
+				if(state ~= input.STATE_PRESS) then
+					print("Moving collections is not yet implemented!")
+					local elItem = gui.get_element_under_cursor(function(el)
+						return el:GetClass() == "wipfmtreeviewelement"
+					end)
+					if(elItem ~= nil) then
+						local groupUuid = elItem:GetIdentifier()
+						local group = self:GetCollectionUdmObject(elItem)
+						local curGroup = tostring(actor:GetParent():GetUniqueId())
+						if(group ~= nil and util.get_type_name(group) == "Group" and util.is_same_object(group,actor:GetParent()) == false) then
+							time.create_simple_timer(0.0,function()
+								if(self:IsValid() == false) then return end
+								local actors = self:GetSelectedActors()
+								local uniqueIds = {}
+								for _,actor in ipairs(actors) do table.insert(uniqueIds,tostring(actor:GetUniqueId())) end
+
+								self:CopyToClipboard(actors)
+								self:RemoveActors(uniqueIds)
+
+								local pm = pfm.get_project_manager()
+								local session = pm:GetSession()
+								self.m_lastSelectedGroup = udm.dereference(session:GetSchema(),groupUuid)
+								self:PasteFromClipboard(true)
+							end)
+						end
+					end
+				end
+			end
+			return util.EVENT_REPLY_HANDLED]]
 		end
 	end)
 	itemGroup:AddCallback("OnSelectionChanged",function(el,selected)
@@ -596,7 +637,7 @@ function gui.PFMActorEditor:GetActorComponentItem(actor,componentName)
 	return item:GetItemByIdentifier(componentName)
 end
 function gui.PFMActorEditor:GetSelectedGroup() return self.m_lastSelectedGroup end
-function gui.PFMActorEditor:CreateNewActor(actorName,pose,uniqueId,group)
+function gui.PFMActorEditor:CreateNewActor(actorName,pose,uniqueId,group,dontRefreshAnimation)
 	local filmClip = self:GetFilmClip()
 	if(filmClip == nil) then
 		pfm.create_popup_message(locale.get_text("pfm_popup_create_actor_no_film_clip"))
@@ -604,7 +645,7 @@ function gui.PFMActorEditor:CreateNewActor(actorName,pose,uniqueId,group)
 	end
 
 	group = group or self:GetSelectedGroup()
-	local actor = pfm.get_project_manager():AddActor(self:GetFilmClip(),group)
+	local actor = pfm.get_project_manager():AddActor(self:GetFilmClip(),group,dontRefreshAnimation)
 	if(uniqueId ~= nil) then actor:ChangeUniqueId(uniqueId) end
 	local actorIndex
 	if(actorName == nil) then
@@ -941,52 +982,49 @@ function gui.PFMActorEditor:ScheduleUpdateSelectedEntities()
 	self:EnableThinking()
 	self.m_updateSelectedEntities = true
 end
-function gui.PFMActorEditor:GetSelectedActors()
-	local actors = {}
+function gui.PFMActorEditor:IterateActors(f)
 	local pm = pfm.get_project_manager()
 	local session = pm:GetSession()
 	local schema = session:GetSchema()
-	local function find_actors(parent)
+	local function iterate_actors(parent)
 		for _,el in ipairs(parent:GetItems()) do
 			local elUdm = udm.dereference(schema,el:GetIdentifier())
 			if(util.get_type_name(elUdm) == "Group") then
-				find_actors(el)
-			elseif(el:IsSelected()) then
-				local actorData = self.m_treeElementToActorData[el]
-				if(actorData ~= nil) then
-					table.insert(actors,actorData.actor)
-				end
+				iterate_actors(el)
+			else
+				f(el)
 			end
 		end
 	end
-	find_actors(self.m_tree:GetRoot())
+	iterate_actors(self.m_tree:GetRoot())
+end
+function gui.PFMActorEditor:GetSelectedActors()
+	local actors = {}
+	self:IterateActors(function(el)
+		if(el:IsSelected()) then
+			local actorData = self.m_treeElementToActorData[el]
+			if(actorData ~= nil) then
+				table.insert(actors,actorData.actor)
+			end
+		end
+	end)
 	return actors
 end
 function gui.PFMActorEditor:UpdateSelectedEntities()
 	if(util.is_valid(self.m_tree) == false) then return end
 	local selectionManager = tool.get_filmmaker():GetSelectionManager()
 	selectionManager:ClearSelections()
-	local function iterate_tree(el,level)
-		if(util.is_valid(el) == false) then return false end
-		level = level or 0
-		local selected = el:IsSelected()
-		if(selected == false) then
-			for _,item in ipairs(el:GetItems()) do
-				selected = iterate_tree(item,level +1)
-				if(selected == true and level > 0) then break end
+	self:IterateActors(function(el)
+		if(el:IsSelected()) then
+			local actorData = self.m_treeElementToActorData[el]
+			if(actorData ~= nil) then
+				local ent = actorData.actor:FindEntity()
+				if(ent ~= nil) then
+					selectionManager:Select(ent)
+				end
 			end
 		end
-		local actorData = self.m_treeElementToActorData[el]
-		if(selected and actorData ~= nil) then
-			-- Root element or one of its children is selected; Select entity associated with the actor
-			local ent = actorData.actor:FindEntity()
-			if(ent ~= nil) then
-				selectionManager:Select(ent)
-			end
-		end
-		return selected
-	end
-	iterate_tree(self.m_tree:GetRoot())
+	end)
 end
 function gui.PFMActorEditor:OnThink()
 	if(self.m_updateSelectedEntities) then
@@ -1008,6 +1046,12 @@ function gui.PFMActorEditor:SelectActor(actor,deselectCurrent)
 			if(itemActor:IsValid() and itemActor:IsSelected() == false) then
 				itemActor:Select(false)
 				itemActor:Expand()
+
+				local parent = itemActor:GetParentItem()
+				while(util.is_valid(parent)) do
+					parent:Expand()
+					parent = parent:GetParentItem()
+				end
 			end
 			break
 		end
@@ -1423,7 +1467,7 @@ function gui.PFMActorEditor:RestoreActorsFromUdmElement(data,keepOriginalUuids)
 		local udmData = data:Get(i -1)
 		local type = udmData:GetValue("type",udm.TYPE_STRING)
 		if(type == "actor") then
-			local actor = self:CreateNewActor()
+			local actor = self:CreateNewActor(nil,nil,nil,nil,true)
 			actor:Reinitialize(udmData:Get("data"))
 		elseif(type == "animation") then
 			local animData = udmData:Get("data")
@@ -1439,7 +1483,9 @@ function gui.PFMActorEditor:RestoreActorsFromUdmElement(data,keepOriginalUuids)
 		end
 	end
 
-	tool.get_filmmaker():ReloadGameView()
+	local pm = tool.get_filmmaker()
+	pm:ReloadGameView()
+
 	self:Reload()
 end
 function gui.PFMActorEditor:CopyToClipboard(actors)
@@ -1500,6 +1546,7 @@ function gui.PFMActorEditor:RemoveActors(ids)
 		if(actor ~= nil) then self:RemoveActor(uniqueId,false) end
 	end
 	self.m_tree:GetRoot():UpdateUi()
+	self:Reload()
 end
 function gui.PFMActorEditor:RemoveActor(uniqueId,updateUi)
 	if(updateUi == nil) then updateUi = true end
@@ -1560,8 +1607,7 @@ function gui.PFMActorEditor:AddActor(actor,parentItem)
 			return util.EVENT_REPLY_HANDLED
 		end
 		if(button == input.MOUSE_BUTTON_LEFT) then
-			if(state == input.STATE_PRESS) then self.m_draggingItem = itemActor
-			else
+			if(state ~= input.STATE_PRESS) then
 				local elItem = gui.get_element_under_cursor(function(el)
 					return el:GetClass() == "wipfmtreeviewelement"
 				end)
@@ -1663,6 +1709,7 @@ function gui.PFMActorEditor:AddActor(actor,parentItem)
 		parentItem:FullUpdate()
 		parentItem:Expand()
 	end
+	return itemActor
 end
 function gui.PFMActorEditor:Reload()
 	if(self.m_filmClip == nil) then return end
@@ -1679,13 +1726,17 @@ function gui.PFMActorEditor:Setup(filmClip)
 	-- TODO: Include groups the actors belong to!
 
 	local function add_actors(parent,parentItem,root)
-		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree,parent)
+		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree,parent,root)
 		if(root) then itemGroup:SetText("Scene") itemGroup:Expand() end
 		for _,group in ipairs(parent:GetGroups()) do
 			add_actors(group,itemGroup)
 		end
 		for _,actor in ipairs(parent:GetActors()) do
-			self:AddActor(actor,itemGroup)
+			local itemActor = self:AddActor(actor,itemGroup)
+			local itemParent = util.is_valid(itemActor) and itemActor:GetParentItem() or nil
+			if(util.is_valid(itemParent)) then
+				itemParent:Collapse()
+			end
 		end
 	end
 
