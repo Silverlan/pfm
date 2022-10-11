@@ -466,7 +466,7 @@ function gui.PFMMaterialEditor:UpdateHair()
 		if(dbHair:HasValue("enabled")) then enabled = dbHair:GetBool("enabled") end
 		if(enabled) then
 			hairConfig = util.HairConfig()
-			hairConfig.hairPerSquareMeter = dbHair:GetFloat("hair_per_square_meter",1000000)
+			hairConfig.hairPerSquareMeter = dbHair:GetFloat("hair_per_square_meter",500)
 			hairConfig.numSegments = dbHair:GetFloat("segment_count",2)
 			hairConfig.defaultThickness = util.units_to_metres(dbHair:GetFloat("thickness",0.005))
 			hairConfig.defaultLength = util.units_to_metres(dbHair:GetFloat("length",0.6))
