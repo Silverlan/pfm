@@ -339,7 +339,7 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem,parent,isRoot)
 					end)
 				end
 				if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
-					pContext:AddItem("Copy UUID",function()
+					pContext:AddItem(locale.get_text("pfm_copy_id"),function()
 						util.set_clipboard_string(tostring(parent:GetUniqueId()))
 					end)
 				end
@@ -2669,4 +2669,7 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected,hitM
 			y = actor:FindEntity()
 		end)
 	end
+	pContext:AddItem(locale.get_text("pfm_copy_id"),function()
+		util.set_clipboard_string(tostring(actor:GetUniqueId()))
+	end)
 end
