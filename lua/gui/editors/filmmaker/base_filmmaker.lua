@@ -104,6 +104,7 @@ function gui.WIBaseFilmmaker:ChangeActorModel(actorC,mdlName)
 
 	local entActor = actorC:GetEntity()
 	if(entActor:HasComponent("click")) then entImpostor:AddComponent("click") end
+	if(entActor:HasComponent("bvh")) then entImpostor:AddComponent("bvh") end
 
 	-- TODO: We shouldn't need this!
 	local renderC = entImpostor:GetComponent(ents.COMPONENT_RENDER)

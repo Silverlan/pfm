@@ -36,9 +36,21 @@ function gui.PFMElementViewer:OnInitialize()
 		print("TODO")
 	end)
 	self.m_btTools:SetX(self:GetWidth() -self.m_btTools:GetWidth())
+	self.m_btTools:SetupContextMenu(function(pContext)
+		pContext:AddItem(locale.get_text("open"),function()
+			local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
+				if(fileName == nil) then return end
+				self:OpenUdmFile(fileName)
+			end)
+			pFileDialog:SetRootPath("")
+			pFileDialog:Update()
+		end)
+	end,true)
 
+	local btSave = gui.create("WIPFMButton",self.m_bg)
+	btSave:SetHeight(32)
 	self.m_contents = gui.create("WIHBox",self,
-		0,self.m_btTools:GetBottom(),self:GetWidth(),self:GetHeight() -self.m_btTools:GetBottom(),
+		0,self.m_btTools:GetBottom(),self:GetWidth(),self:GetHeight() -self.m_btTools:GetBottom() -btSave:GetHeight(),
 		0,0,1,1
 	)
 	self.m_contents:SetAutoFillContents(true)
@@ -109,6 +121,73 @@ function gui.PFMElementViewer:OnInitialize()
 			treeScrollContainer:GetVerticalScrollBar():SetScrollOffset(offset)
 		inCallback = false
 	end)
+
+	-- Save
+	local pBg = gui.create("WIRect",btSave,0,0,btSave:GetWidth(),btSave:GetHeight(),0,0,1,1)
+	pBg:SetVisible(false)
+	self.m_saveBg = pBg
+	btSave:SetText(locale.get_text("save"))
+	btSave:AddCallback("OnPressed",function()
+		self:Save()
+	end)
+	btSave:SetWidth(self.m_bg:GetWidth())
+	btSave:SetY(self.m_bg:GetBottom() -btSave:GetHeight())
+	btSave:SetAnchor(0,1,1,1)
+	self.m_btSave = btSave
+
+	self:OpenUdmFile("models/error_test2.pmdl_b")
+end
+function gui.PFMElementViewer:UpdateSaveButton(saved)
+	self.m_saveBg:SetVisible(true)
+	if(saved) then self.m_saveBg:SetColor(Color(20,100,20))
+	else self.m_saveBg:SetColor(Color(100,20,20)) end
+end
+function gui.PFMElementViewer:Save()
+	if(self.m_udmData == nil) then return end
+	local fileName = self.m_fileName
+	if(fileName == nil) then return false end
+
+	local isBinary = fileName:sub(-2):lower() == "_b"
+
+	local flags = file.OPEN_MODE_WRITE
+	if(isBinary) then flags = bit.bor(flags,file.OPEN_MODE_BINARY) end
+	local f = file.open(fileName,flags)
+	if(f == nil) then
+		pfm.log("Unable to open UDM file '" .. fileName .. "' for writing!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+
+	local res,err
+	if(isBinary) then res,err = self.m_udmData:Save(f)
+	else res,err = self.m_udmData:SaveAscii(f) end
+	f:Close()
+	if(res == false) then
+		pfm.log("Failed to UDM file as '" .. fileName .. "': " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+	pfm.log("UDM file has been saved as '" .. fileName .. "'...",pfm.LOG_CATEGORY_PFM)
+	self:UpdateSaveButton(true)
+	return true
+end
+function gui.PFMElementViewer:OpenUdmFile(fileName)
+	self.m_fileName = nil
+	self.m_tree:Clear()
+
+	local udmData,err = udm.load(fileName)
+	if(udmData == false) then
+		console.print_warning("Unable to open UDM file: ",err)
+		return
+	end
+
+	self.m_fileName = fileName
+	local assetData = udmData:GetAssetData()
+	self.m_assetData = assetData:ClaimOwnership()
+	self.m_udmData = udmData
+	self:Setup(assetData)
+
+	self:MakeElementRoot(assetData:GetData())
+	local elRoot = self.m_tree:GetRoot():FindItemByText("root")
+	if(elRoot ~= nil) then elRoot:Expand() end
 end
 function gui.PFMElementViewer:UpdateDataElementPositions()
 	if(util.is_valid(self.m_tree) == false) then return end
@@ -123,7 +202,7 @@ end
 function gui.PFMElementViewer:PopulateFromUDMData(rootNode)
 	if(util.is_valid(self.m_tree) == false) then return end
 	self.m_tree:Clear()
-	self:AddUDMNode(rootNode,rootNode:GetName(),self.m_tree,self.m_tree)
+	self:AddUDMNode(nil,rootNode,"root",self.m_tree,self.m_tree)
 	self.m_tree:Update()
 	self:UpdateDataElementPositions()
 end
@@ -136,34 +215,174 @@ function gui.PFMElementViewer:GetHistory() return self.m_history end
 function gui.PFMElementViewer:MakeElementRoot(element)
 	self:GetHistory():Add(element)
 end
-function gui.PFMElementViewer:AddUDMNode(node,name,elTreeParent,elTreePrevious)
+function gui.PFMElementViewer:AddUDMNode(parent,node,name,elTreeParent,elTreePrevious)
 	if(util.is_valid(self.m_data) == false) then return end
 	local elTreeChild
 	local text
-	if(node:IsElement()) then
+	local isValue = false
+	local validValue = true
+	local function addContextMenuRemoveItem(pContext)
+		pContext:AddItem(locale.get_text("remove"),function()
+			parent:RemoveValue(name)
+			util.remove({elTreeChild,self.m_treeElementToDataElement[elTreeChild]})
+			elTreeParent:FullUpdate()
+
+			self:UpdateSaveButton(false)
+		end)
+	end
+	if(node:GetType() == udm.TYPE_ELEMENT or udm.is_array_type(node:GetType())) then
 		elTreeChild = elTreeParent:AddItem(name,function(elTree)
 			local elTreePrevious = elTree
-			for name,child in pairs(node:GetChildren()) do
-				elTreePrevious = self:AddUDMNode(child,name,elTree,elTreePrevious)
+			if(node:GetChildCount() > 0) then
+				local children = node:GetChildren()
+				local sorted = {}
+				for name,child in pairs(children) do table.insert(sorted,name) end
+				table.sort(sorted)
+
+				for _,name in ipairs(sorted) do
+					local child = children[name]
+					elTreePrevious = self:AddUDMNode(node,child,name,elTree,elTreePrevious)
+				end
+			elseif(node:GetSize() < 1000) then
+				local items = node:GetArrayValues()
+				for i,item in ipairs(items) do
+					elTreePrevious = self:AddUDMNode(node,node:Get(i -1),tostring(i),elTree,elTreePrevious)
+				end
 			end
 			self:UpdateDataElementPositions()
 		end)
-		elTreeChild:AddCallback("OnMouseEvent",function(elTreeChild,button,state,mods)
-			if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-				local pContext = gui.open_context_menu()
-				if(util.is_valid(pContext) == false) then return end
-				pContext:SetPos(input.get_cursor_pos())
-				pContext:AddItem(locale.get_text("pfm_make_root"),function()
-					self:MakeElementRoot(node)
-				end)
-				pContext:Update()
-			end
-		end)
-		text = node:GetTypeName()
+		if(node:GetType() == udm.TYPE_ELEMENT) then
+			elTreeChild:AddCallback("OnMouseEvent",function(elTreeChild,button,state,mods)
+				if(button == input.MOUSE_BUTTON_RIGHT) then
+					if(state == input.STATE_PRESS) then
+						local pContext = gui.open_context_menu()
+						if(util.is_valid(pContext) == false) then return end
+						pContext:SetPos(input.get_cursor_pos())
+						pContext:AddItem(locale.get_text("pfm_make_root"),function()
+							self:MakeElementRoot(node)
+						end)
+
+						local types = {}
+						for i=0,udm.TYPE_COUNT -1 do
+							if(i ~= udm.TYPE_ARRAY) then
+								table.insert(types,{i,udm.enum_type_to_ascii(i)})
+							end
+						end
+						table.sort(types,function(a,b) return a[2] < b[2] end)
+
+						local function addProperty(type,arrayValueType)
+							elTreeChild:Expand()
+
+							local tmpItem = elTreeChild:AddItem("")
+							local te = gui.create("WITextEntry",tmpItem,0,0,tmpItem:GetWidth(),tmpItem:GetHeight(),0,0,1,1)
+							te:RequestFocus()
+							te:AddCallback("OnFocusKilled",function()
+								local text = te:GetText()
+								if(#text == 0) then
+									te:RemoveSafely()
+									tmpItem:RemoveSafely()
+									elTreeChild:FullUpdate()
+									return
+								end
+								if(type == udm.TYPE_ELEMENT) then node:Add(text)
+								elseif(udm.is_array_type(type)) then node:AddArray(text,0,arrayValueType,(type == udm.TYPE_ARRAY) and udm.ARRAY_TYPE_RAW or udm.ARRAY_TYPE_COMPRESSED)
+								else node:SetValue(text,type,udm.convert("",udm.TYPE_STRING,type)) end
+								te:RemoveSafely()
+								tmpItem:RemoveSafely()
+
+								elTreeChild:Collapse()
+								elTreeChild:Expand()
+
+								self:UpdateSaveButton(false)
+							end)
+						end
+
+						local _,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_add_property"))
+						for _,typeInfo in ipairs(types) do
+							local type = typeInfo[1]
+							pSubMenu:AddItem(typeInfo[2],function(pItem) addProperty(type) end)
+						end
+
+						local _,pSubMenuArray = pSubMenu:AddSubMenu(locale.get_text("pfm_add_array"))
+						for _,typeInfo in ipairs(types) do
+							local type = typeInfo[1]
+							if(udm.is_supported_array_value_type(type)) then
+								pSubMenuArray:AddItem(typeInfo[2],function(pItem)
+									if(util.is_valid(self) == false) then return end
+									addProperty(udm.TYPE_ARRAY,type)
+								end)
+							end
+						end
+
+						local _,pSubMenuArray = pSubMenu:AddSubMenu(locale.get_text("pfm_add_compressed_array"))
+						for _,typeInfo in ipairs(types) do
+							local type = typeInfo[1]
+							if(udm.is_supported_array_value_type(type)) then
+								pSubMenuArray:AddItem(typeInfo[2],function(pItem)
+									if(util.is_valid(self) == false) then return end
+									addProperty(udm.TYPE_ARRAY_LZ4,type)
+								end)
+							end
+						end
+
+						pSubMenu:ScheduleUpdate()
+
+						addContextMenuRemoveItem(pContext)
+
+						pContext:Update()
+					end
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+		else
+			elTreeChild:AddCallback("OnMouseEvent",function(elTreeChild,button,state,mods)
+				if(button == input.MOUSE_BUTTON_RIGHT) then
+					if(state == input.STATE_PRESS) then
+						local pContext = gui.open_context_menu()
+						if(util.is_valid(pContext) == false) then return end
+						pContext:SetPos(input.get_cursor_pos())
+						pContext:AddItem(locale.get_text("pfm_add_item"),function()
+							node:Resize(node:GetSize() +1)
+							elTreeChild:Collapse()
+							elTreeChild:Expand()
+
+							self:UpdateSaveButton(false)
+						end)
+
+						addContextMenuRemoveItem(pContext)
+
+						pContext:Update()
+					end
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+		end
+		text = util.get_type_name(node)
+		if(text == "LinkedPropertyWrapper") then text = "Element" end
 	else
 		elTreeChild = elTreeParent:AddItem(name)
+
+		elTreeChild:AddCallback("OnMouseEvent",function(elTreeChild,button,state,mods)
+			if(button == input.MOUSE_BUTTON_RIGHT) then
+				if(state == input.STATE_PRESS) then
+					local pContext = gui.open_context_menu()
+					if(util.is_valid(pContext) == false) then return end
+					pContext:SetPos(input.get_cursor_pos())
+					addContextMenuRemoveItem(pContext)
+
+					pContext:Update()
+				end
+				return util.EVENT_REPLY_HANDLED
+			end
+		end)
+
 		elTreeChild:Collapse()
-		text = node:ToASCIIString()
+		text = udm.convert(node:GetValue(),node:GetType(),udm.TYPE_STRING)
+		if(text == nil) then
+			if(node:GetType() == udm.TYPE_NIL) then text = "nil"
+			else validValue = false text = "[INVALID]" end
+		end
+		isValue = true
 	end
 
 	local itemParent = self.m_treeElementToDataElement[elTreePrevious]
@@ -172,7 +391,36 @@ function gui.PFMElementViewer:AddUDMNode(node,name,elTreeParent,elTreePrevious)
 		insertIndex = itemParent:GetParent():FindChildIndex(itemParent)
 		if(insertIndex ~= nil) then insertIndex = insertIndex +1 end
 	end
+
 	local item = self.m_data:AddItem(text,nil,insertIndex)
+	local function addTextEntry(itemParent,onComplete)
+		local te = gui.create("WITextEntry",itemParent,0,0,itemParent:GetWidth(),itemParent:GetHeight(),0,0,1,1)
+		te:RequestFocus()
+		te:AddCallback("OnFocusKilled",function()
+			te:RemoveSafely()
+			onComplete(te:GetText())
+		end)
+		return te
+	end
+
+	if(isValue and validValue) then
+		item:AddCallback("OnDoubleClick",function()
+			local te = addTextEntry(item,function(text)
+				local newValue = udm.convert(text,udm.TYPE_STRING,node:GetType())
+				parent:SetValue(name,node:GetType(),newValue)
+				item:SetText(udm.convert(node:GetValue(),node:GetType(),udm.TYPE_STRING))
+
+				self:UpdateSaveButton(false)
+			end)
+			te:SetText(udm.convert(node:GetValue(),node:GetType(),udm.TYPE_STRING))
+		end)
+	end
+	self.m_treeElementToDataElement[elTreeChild] = item
+	elTreeChild:AddCallback("OnRemove",function()
+		if(self.m_data:IsValid() and item:IsValid()) then
+			self.m_data:GetRoot():RemoveItem(item)
+		end
+	end)
 	--[[if(node:GetType() == fudm.ATTRIBUTE_TYPE_BOOL) then
 		local el = gui.create("WICheckbox")
 		pRow:InsertElement(0,el)
@@ -180,38 +428,15 @@ function gui.PFMElementViewer:AddUDMNode(node,name,elTreeParent,elTreePrevious)
 	else
 		pRow:SetValue(0,text)
 	end]]
-	if(node:IsAttribute()) then
-		--[[item:AddCallback("OnDoubleClick",function()
-			local pEntry = gui.create("WITextEntry")
-			pEntry:SetSize(item:GetSize())
-			pEntry:SetAnchor(0,0,1,1)
-			pEntry:SetText(node:ToASCIIString())
-			item:InsertElement(0,pEntry)
-
-			pEntry:RequestFocus()
-			pEntry:AddCallback("OnTextEntered",function()
-				pEntry:RemoveSafely()
-				local newValue = pEntry:GetText()
-				node:LoadFromASCIIString(newValue)
-			end)
-		end)]]
-	end
-	itemParent = item
-	self.m_treeElementToDataElement[elTreeChild] = item
 
 	--
-	elTreeChild:AddCallback("OnRemove",function()
-		if(self.m_data:IsValid() and item:IsValid()) then
-			self.m_data:GetRoot():RemoveItem(item)
-		end
-	end)
 
-	if(node:IsAttribute()) then
+	--[[if(node:IsAttribute()) then
 		node:AddChangeListener(function(newVal)
 			-- TODO
 			--if(item:IsValid()) then item:SetValue(0,node:ToASCIIString()) end
 		end)
-	end
+	end]]
 	return elTreeChild
 end
 function gui.PFMElementViewer:OnSizeChanged(w,h)

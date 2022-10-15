@@ -425,6 +425,17 @@ function gui.PFMTreeViewElement:GetItemByIdentifier(identifier,recursive)
 		end
 	end
 end
+function gui.PFMTreeViewElement:FindItemByText(text,recursive)
+	for _,child in ipairs(self.m_items) do
+		if(child:IsValid()) then
+			if(child:GetText() == text) then return child end
+			if(recursive) then
+				local c = child:FindItemByText(text)
+				if(c ~= nil) then return c end
+			end
+		end
+	end
+end
 function gui.PFMTreeViewElement:SetIdentifier(identifier) self.m_identifier = identifier end
 function gui.PFMTreeViewElement:GetIdentifier() return self.m_identifier end
 function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex,identifier)
