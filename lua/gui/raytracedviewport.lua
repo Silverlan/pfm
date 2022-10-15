@@ -12,6 +12,12 @@ include("/shaders/pfm/pfm_calc_image_luminance.lua")
 include("renderimage.lua")
 
 util.register_class("gui.RaytracedViewport",gui.Base)
+
+gui.RaytracedViewport.STATE_INITIAL = 0
+gui.RaytracedViewport.STATE_RENDERING = 1
+gui.RaytracedViewport.STATE_COMPLETE = 2
+gui.RaytracedViewport.STATE_CANCELLED = 3
+
 function gui.RaytracedViewport:__init()
 	gui.Base.__init(self)
 end
@@ -33,6 +39,8 @@ function gui.RaytracedViewport:OnInitialize()
 	self.m_renderSettings:SetDeviceType(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU)
 	self.m_renderSettings:SetCamType(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PERSPECTIVE)
 	self.m_renderSettings:SetPanoramaType(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
+
+	self.m_state = gui.RaytracedViewport.STATE_INITIAL
 
 	self:SetToneMapping(shader.TONE_MAPPING_GAMMA_CORRECTION)
 
@@ -157,6 +165,7 @@ function gui.RaytracedViewport:GetRenderSettings() return self.m_renderSettings 
 function gui.RaytracedViewport:SetRenderSettings(renderSettings) self.m_renderSettings = renderSettings end
 function gui.RaytracedViewport:SetGameScene(gameScene) self.m_gameScene = gameScene end
 function gui.RaytracedViewport:GetGameScene() return self.m_gameScene or game.get_scene() end
+function gui.RaytracedViewport:GetState() return self.m_state end
 function gui.RaytracedViewport:OnRemove()
 	self:CancelRendering()
 	self:ClearJob()
@@ -168,14 +177,16 @@ function gui.RaytracedViewport:ClearJob()
 end
 function gui.RaytracedViewport:CancelRendering()
 	if(self.m_rtJob == nil) then return end
+	self.m_state = gui.RaytracedViewport.STATE_CANCELLED
 	self.m_rtJob:CancelRendering()
+	self:UpdateThinkState()
 	-- self.m_rtJob = nil
 end
 function gui.RaytracedViewport:IsRendering()
 	return (self.m_rtJob ~= nil) and self.m_rtJob:IsRendering() or false
 end
 function gui.RaytracedViewport:UpdateThinkState()
-	if(self.m_rendering == true) then
+	if(self.m_rendering == true and self.m_rtJob:IsCancelled() == false) then
 		self:EnableThinking()
 		self:SetAlwaysUpdate(true)
 		return
@@ -188,6 +199,7 @@ function gui.RaytracedViewport:OnThink()
 	local progress = self.m_rtJob:GetProgress()
 	local state = self.m_rtJob:Update()
 	local newProgress = self.m_rtJob:GetProgress()
+	if(self.m_rtJob:IsCancelled()) then return end
 	if(newProgress ~= progress) then
 		self:CallCallbacks("OnProgressChanged",newProgress)
 	end
@@ -212,8 +224,8 @@ function gui.RaytracedViewport:OnThink()
 	end
 	if(state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FAILED) then
 		-- self:ClearJob()
+		self.m_state = gui.RaytracedViewport.STATE_COMPLETE
 		self:UpdateThinkState()
-		
 		self:CallCallbacks("OnComplete",state,self.m_rtJob)
 	elseif(state == pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE or state == pfm.RaytracingRenderJob.STATE_SUB_FRAME_COMPLETE) then self.m_rtJob:RenderNextImage() end
 end
@@ -276,6 +288,7 @@ function gui.RaytracedViewport:Refresh(preview,rtJobCallback,startFrame,frameHan
 	if(self.m_gameScene ~= nil) then self.m_rtJob:SetGameScene(self.m_gameScene) end
 
 	pfm.log("Rendering image with resolution " .. settings:GetWidth() .. "x" .. settings:GetHeight() .. " and " .. settings:GetSamples() .. " samples...",pfm.LOG_CATEGORY_PFM_INTERFACE)
+	self.m_state = gui.RaytracedViewport.STATE_RENDERING
 	self.m_rtJob:Start()
 
 	self.m_rendering = true

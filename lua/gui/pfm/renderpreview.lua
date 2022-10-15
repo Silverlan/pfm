@@ -745,10 +745,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	self.m_controls = controls
 
 	self.m_btCancel = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
-		if(self:IsRendering()) then
-			self:CancelRendering()
-			return
-		end
+		if(self.m_rt:GetState() == gui.RaytracedViewport.STATE_RENDERING) then self:CancelRendering() end
 		self.m_btCancel:SetVisible(false)
 		self.m_btStop:SetVisible(false)
 		self.m_renderBtContainer:SetVisible(true)
@@ -969,7 +966,7 @@ function gui.PFMRenderPreview:GetRenderSettings(preview,prepareOnly)
 	return settings
 end
 function gui.PFMRenderPreview:CancelRendering()
-	if(self:IsRendering()) then self.m_rt:CancelRendering() end
+	if(self.m_rt:GetState() == gui.RaytracedViewport.STATE_RENDERING) then self.m_rt:CancelRendering() end
 	console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps"))) -- Unclamp FPS
 end
 function gui.PFMRenderPreview:Refresh(preview,prepareOnly)

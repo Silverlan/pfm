@@ -348,6 +348,7 @@ function pfm.RaytracingRenderJob:Start()
 	self.m_imageBuffers = {}
 	self.m_currentFrame = self.m_startFrame -1
 	self.m_endFrame = self.m_currentFrame +self:GetSettings():GetFrameCount()
+	self.m_cancelled = false
 	self:RenderNextImage()
 end
 function pfm.RaytracingRenderJob:OnRenderEnd()
@@ -663,16 +664,19 @@ function pfm.RaytracingRenderJob:RenderNextImage()
 	self.m_tRenderStart = time.cur_time() +0.2
 	return false
 end
-function pfm.RaytracingRenderJob:IsRendering() return (self.m_raytracingJob ~= nil and self.m_raytracingJob:IsComplete() == false) end
+function pfm.RaytracingRenderJob:IsRendering() return (self.m_raytracingJob ~= nil and self.m_raytracingJob:IsComplete() == false and self.m_cancelled ~= true) end
 function pfm.RaytracingRenderJob:GetRenderScene() return self.m_rtScene end
 function pfm.RaytracingRenderJob:GetRenderer() return self.m_rtRenderer end
+function pfm.RaytracingRenderJob:IsCancelled() return self.m_cancelled or false end
 function pfm.RaytracingRenderJob:RestartRendering()
 	if(self:IsRendering() == false) then return end
 	self.m_rtRenderer:Restart()
+	self.m_cancelled = false
 end
 function pfm.RaytracingRenderJob:CancelRendering()
 	self.m_prt = nil
 	self.m_tRenderStart = nil
+	self.m_cancelled = true
 	if(self:IsRendering() == false) then return end
 	self.m_raytracingJob:Cancel()
 	self:OnRenderEnd()
