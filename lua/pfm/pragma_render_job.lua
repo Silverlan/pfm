@@ -20,6 +20,7 @@ function pfm.PragmaRenderScene:__init(width,height,ssFactor)
 
 	-- Create temporary renderer
 	local entRenderer = ents.create("rasterization_renderer")
+	entRenderer:Spawn()
 	local renderer = entRenderer:GetComponent(ents.COMPONENT_RENDERER)
 	local rasterizer = entRenderer:GetComponent(ents.COMPONENT_RASTERIZATION_RENDERER)
 	entRenderer:AddComponent("pfm_pragma_renderer")
@@ -27,6 +28,7 @@ function pfm.PragmaRenderScene:__init(width,height,ssFactor)
 	toneMappingC:SetApplyToHdrImage(true)
 	rasterizer:SetSSAOEnabled(true)
 	renderer:InitializeRenderTarget(gameScene,width *ssFactor,height *ssFactor)
+	renderer:GetEntity():AddComponent(ents.COMPONENT_RENDERER_PP_VOLUMETRIC)
 	scene:SetRenderer(renderer)
 	scene:SetWorldEnvironment(gameScene:GetWorldEnvironment())
 	self.m_renderer = renderer
