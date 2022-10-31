@@ -224,6 +224,31 @@ function gui.PFMElementViewer:GetHistory() return self.m_history end
 function gui.PFMElementViewer:MakeElementRoot(element)
 	self:GetHistory():Add(element)
 end
+function gui.PFMElementViewer:PasteFromClipboard(node,elTreeItem)
+	local res,err = udm.parse(util.get_clipboard_string())
+	if(res == false) then
+		console.print_warning("Failed to parse UDM: ",err)
+		return
+	end
+	local data = res:GetAssetData():GetData()
+	local pfmCopy = data:Get("pfm_udm_copy")
+	if(util.is_valid(pfmCopy) == false) then
+		console.print_warning("No copy data found in clipboard UDM string!")
+		return
+	end
+	node:Merge(pfmCopy,bit.bor(udm.MERGE_FLAG_BIT_OVERWRITE_EXISTING,udm.MERGE_FLAG_BIT_DEEP_COPY))
+	if(util.is_valid(elTreeItem)) then
+		elTreeItem:Collapse()
+		elTreeItem:Expand()
+		self:UpdateSaveButton(false)
+	end
+end
+function gui.PFMElementViewer:CopyToClipboard(node)
+	local el = udm.create_element()
+	local pfmCopy = el:Add("pfm_udm_copy")
+	pfmCopy:Merge(node,bit.bor(udm.MERGE_FLAG_BIT_OVERWRITE_EXISTING,udm.MERGE_FLAG_BIT_DEEP_COPY))
+	util.set_clipboard_string(el:ToAscii(udm.ASCII_SAVE_FLAG_NONE))
+end
 function gui.PFMElementViewer:AddUDMNode(parent,node,name,elTreeParent,elTreePrevious)
 	if(util.is_valid(self.m_data) == false) then return end
 	local elTreeChild
@@ -270,6 +295,14 @@ function gui.PFMElementViewer:AddUDMNode(parent,node,name,elTreeParent,elTreePre
 						pContext:SetPos(input.get_cursor_pos())
 						pContext:AddItem(locale.get_text("pfm_make_root"),function()
 							self:MakeElementRoot(node)
+						end)
+						pContext:AddItem(locale.get_text("paste_from_clipboard"),function()
+							self:PasteFromClipboard(node,elTreeChild)
+						end)
+						pContext:AddItem(locale.get_text("copy_to_clipboard"),function()
+							local el = node
+							if(util.get_type_name(el) == "Property") then el = udm.LinkedPropertyWrapper(el) end
+							self:CopyToClipboard(el)
 						end)
 
 						local types = {}
@@ -358,6 +391,10 @@ function gui.PFMElementViewer:AddUDMNode(parent,node,name,elTreeParent,elTreePre
 
 							self:UpdateSaveButton(false)
 						end)
+						-- TODO: Implement this
+						--[[pContext:AddItem(locale.get_text("copy_to_clipboard"),function()
+
+						end)]]
 
 						addContextMenuRemoveItem(pContext)
 
@@ -368,7 +405,7 @@ function gui.PFMElementViewer:AddUDMNode(parent,node,name,elTreeParent,elTreePre
 			end)
 		end
 		text = util.get_type_name(node)
-		if(text == "LinkedPropertyWrapper") then text = "Element" end
+		if(text == "LinkedPropertyWrapper") then text = (node:GetType() == udm.TYPE_ELEMENT) and "Element" or "Array" end
 	else
 		elTreeChild = elTreeParent:AddItem(name)
 
@@ -378,6 +415,11 @@ function gui.PFMElementViewer:AddUDMNode(parent,node,name,elTreeParent,elTreePre
 					local pContext = gui.open_context_menu()
 					if(util.is_valid(pContext) == false) then return end
 					pContext:SetPos(input.get_cursor_pos())
+					pContext:AddItem(locale.get_text("copy_to_clipboard"),function()
+						local el = udm.create_element()
+						el:SetValue(name,node:GetType(),node:GetValue())
+						self:CopyToClipboard(udm.LinkedPropertyWrapper(el))
+					end)
 					addContextMenuRemoveItem(pContext)
 
 					pContext:Update()
