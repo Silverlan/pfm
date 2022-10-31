@@ -174,6 +174,11 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		ctrlEmissionFactor:SetColor(Color(colorFactor))
 	end)
 
+	-- Emission strength
+	local ctrlEmissionStrength = ctrlVbox:AddSliderControl(locale.get_text("emission_strength"),"emission_strength",1.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","emission_strength",value) end,0.01)
+	ctrlEmissionStrength:SetTooltip(locale.get_text("pfm_emission_strength_desc"))
+	self:LinkControlToMaterialParameter("emission_strength",ctrlEmissionStrength)
+
 	-- Ao factor
 	local ctrlAoFactor = ctrlVbox:AddSliderControl(locale.get_text("ao_factor"),"ao_factor",1.0,0.0,1.0,function(el,value) self:SetMaterialParameter("float","ao_factor",value) end,0.01)
 	ctrlAoFactor:SetTooltip(locale.get_text("pfm_ao_factor_desc"))
