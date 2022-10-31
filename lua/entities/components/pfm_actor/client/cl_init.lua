@@ -35,6 +35,11 @@ Component:RegisterMember("Static",udm.TYPE_BOOLEAN,false,{
 		self:UpdateStatic()
 	end
 },bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
+Component:RegisterMember("MaterialOverrides",ents.MEMBER_TYPE_ELEMENT,"",{
+	onChange = function(self)
+		self:UpdateMaterialOverrides()
+	end
+},bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT))
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -51,6 +56,47 @@ function Component:Initialize()
 	self.m_boneChannels = {}
 	self.m_flexControllerChannels = {}
 	self.m_selected = false
+end
+function Component:UpdateMaterialOverrides()
+	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
+	if(mdlC == nil) then return end
+	mdlC:ClearMaterialOverrides()
+	local udmMatOverrides = self:GetMaterialOverrides():Get("materialOverrides")
+	for _,udmMatOverride in ipairs(udmMatOverrides:GetArrayValues()) do
+		local srcMaterial = udmMatOverride:GetValue("srcMaterial",udm.TYPE_STRING)
+		local dstMaterial = udmMatOverride:GetValue("dstMaterial",udm.TYPE_STRING) or ""
+		if(srcMaterial ~= nil and #srcMaterial > 0) then
+			local matOverride
+
+			local udmOverride = udmMatOverride:Get("override")
+			local children = udmOverride:GetChildren()
+			local shaderName,properties = pairs(children)(children)
+			if(shaderName ~= nil) then
+				local matRef
+				if(#dstMaterial > 0) then matRef = dstMaterial
+				else matRef = srcMaterial end
+
+				matRef = asset.load(matRef,asset.TYPE_MATERIAL)
+				if(util.is_valid(matRef)) then
+					-- TODO: Update shader
+					local cpy = matRef:Copy()
+					cpy:MergeData(properties)
+					cpy:UpdateTextures()
+					cpy:InitializeShaderDescriptorSet(true)
+					matOverride = cpy
+				end
+			else
+				matOverride = asset.load(dstMaterial,asset.TYPE_MATERIAL)
+			end
+
+			if(util.is_valid(matOverride)) then
+				mdlC:SetMaterialOverride(srcMaterial,matOverride)
+			else
+				pfm.log("Failed to apply material override for material '" .. srcMaterial .. "': Target material is not valid!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+			end
+		end
+	end
+	mdlC:UpdateRenderMeshes()
 end
 function Component:IsSelected() return self.m_selected end
 function Component:SetSelected(selected)
@@ -131,11 +177,13 @@ end
 
 function Component:OnEntitySpawn()
 	local actorData = self:GetActorData()
-	if(actorData == nil) then return end
-	local ent = self:GetEntity()
-	ent:SetPose(actorData:GetAbsolutePose())
+	if(actorData ~= nil) then
+		local ent = self:GetEntity()
+		ent:SetPose(actorData:GetAbsolutePose())
 
-	self:InitializeComponentProperties()
+		self:InitializeComponentProperties()
+	end
+	self:UpdateMaterialOverrides()
 end
 
 function Component:SetDefaultRenderMode(renderMode,useIfTurnedOff)
@@ -330,8 +378,24 @@ function Component:InitializeComponentProperties()
 					local childPath = path
 					if(#childPath > 0) then childPath = childPath .. "/" end
 					childPath = childPath .. name
+					local isElementProperty = false
 					if(udmVal:GetType() == udm.TYPE_ELEMENT) then
-						applyProperties(udmVal,childPath)
+						local idx = c:GetMemberIndex(name)
+						local info = (idx ~= nil) and c:GetMemberInfo(idx) or nil
+						if(info ~= nil and info.type == ents.MEMBER_TYPE_ELEMENT) then
+							isElementProperty = true
+						end
+					end
+					if(udmVal:GetType() == udm.TYPE_ELEMENT) then
+						if(isElementProperty) then
+							local udmEl = c:GetMemberValue(childPath)
+							if(udmEl == nil) then
+								pfm.log("Failed to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+							else
+								udmEl:Clear()
+								udmEl:Merge(udmVal,udm.MERGE_FLAG_BIT_DEEP_COPY)
+							end
+						else applyProperties(udmVal,childPath) end
 					else
 						local val = udmVal:GetValue()
 						if(val == nil) then pfm.log("Attempted to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)

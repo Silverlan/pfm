@@ -49,6 +49,7 @@ function Component:InitializeModel()
 	return mdl
 end
 function Component:UpdateModel(updateBuffers)
+	if(self.m_coneModel == nil) then return end
 	if(updateBuffers == nil) then updateBuffers = true end
 	local meshGroup = self.m_coneModel:GetMeshGroup(0) or nil
 	local mesh = (meshGroup ~= nil) and meshGroup:GetMesh(0) or nil

@@ -1586,7 +1586,7 @@ function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 	end
 
 	local actorEditor = self:GetActorEditor()
-	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
+	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH and udmType ~= ents.MEMBER_TYPE_ELEMENT) then
 		if(applyControllerTarget()) then return end
 		actorEditor:SetAnimationChannelValue(actorData,targetPath,value)
 		return

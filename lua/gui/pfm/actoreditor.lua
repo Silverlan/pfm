@@ -1262,6 +1262,8 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			--elseif(info.type == udm.TYPE_HALF) then props:SetProperty(info.name,udm.(info.default))
 			--elseif(info.type == udm.TYPE_UTF8_STRING) then props:SetProperty(info.name,udm.(info.default))
 			--elseif(info.type == udm.TYPE_NIL) then props:SetProperty(info.name,udm.(info.default))
+			elseif(info.type == ents.MEMBER_TYPE_ENTITY) then
+			elseif(info.type == ents.MEMBER_TYPE_ELEMENT) then
 			else
 				pfm.log("Unsupported component member type " .. info.type .. "!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 				valid = false
@@ -1333,12 +1335,17 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 						end
 						-- pfm.log("Adding control for member '" .. controlData.path .. "' with type = " .. memberInfo.type .. ", min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
 						local memberType = memberInfo.type
-						controlData.set = function(component,value,dontTranslateValue,updateAnimationValue,final,oldValue)
-							if(updateAnimationValue == nil) then updateAnimationValue = true end
+						controlData.getActor = function()
 							local entActor = ents.find_by_uuid(uniqueId)
 							local c = (entActor ~= nil) and entActor:GetComponent(componentId) or nil
 							local memberIdx = (c ~= nil) and c:GetMemberIndex(controlData.name) or nil
 							local info = (memberIdx ~= nil) and c:GetMemberInfo(memberIdx) or nil
+							if(info == nil) then return end
+							return entActor,c,memberIdx,info
+						end
+						controlData.set = function(component,value,dontTranslateValue,updateAnimationValue,final,oldValue)
+							if(updateAnimationValue == nil) then updateAnimationValue = true end
+							local entActor,c,memberIdx,info = controlData.getActor()
 							if(info == nil) then return end
 							if(dontTranslateValue ~= true) then value = controlData.translateFromInterface(value) end
 							local memberValue = value
@@ -1359,16 +1366,17 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 								end
 							end
 							component:SetMemberValue(memberName,info.type,memberValue)
-							
-							local entActor = actorData.actor:FindEntity()
-							if(entActor ~= nil) then
-								local c = entActor:GetComponent(componentId)
-								if(c ~= nil) then
-									c:SetMemberValue(memberName,memberValue)
-									self:OnActorPropertyChanged(entActor)
+							if(memberType ~= ents.MEMBER_TYPE_ELEMENT) then
+								local entActor = actorData.actor:FindEntity()
+								if(entActor ~= nil) then
+									local c = entActor:GetComponent(componentId)
+									if(c ~= nil) then
+										c:SetMemberValue(memberName,memberValue)
+										self:OnActorPropertyChanged(entActor)
+									end
 								end
+								if(updateAnimationValue) then applyComponentChannelValue(self,component,controlData,memberValue) end
 							end
-							if(updateAnimationValue) then applyComponentChannelValue(self,component,controlData,memberValue) end
 							self:TagRenderSceneAsDirty()
 						end
 						controlData.set(component,value,true,false)
@@ -1908,7 +1916,42 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 
 	local ctrl
 	if(controlData.path ~= nil) then
-		if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
+		if(memberInfo.type == ents.MEMBER_TYPE_ENTITY) then
+			local elText,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,controlData.default or "",function(el)
+				if(self.m_skipUpdateCallback) then return end
+				if(controlData.set ~= nil) then controlData.set(udmComponent,el:GetText(),nil,nil,true) end
+			end)
+			if(controlData.getValue ~= nil) then
+				controlData.updateControlValue = function()
+					if(elText:IsValid() == false) then return end
+					local val = controlData.getValue()
+					if(val ~= nil) then
+						local uuid = val:GetUuid()
+						if(uuid ~= nil) then
+							elText:SetText(tostring(uuid))
+						end
+					end
+				end
+			end
+			ctrl = wrapper
+		elseif(memberInfo.type == ents.MEMBER_TYPE_ELEMENT) then
+			local bt = self.m_animSetControls:AddButton(locale.get_text("edit") .. " " .. memberInfo.name,memberInfo.name,function()
+				local filmmaker = tool.get_filmmaker()
+				local tab,el = filmmaker:OpenWindow("element_viewer")
+				filmmaker:GoToWindow("element_viewer")
+				if(util.is_valid(el)) then
+					local elUdm = controlData.getValue()
+					el:InitializeFromUdmElement(elUdm,nil,function()
+						local entActor,c,memberIdx,info = controlData.getActor()
+						if(info == nil) then return true end
+						if(controlData.set ~= nil) then controlData.set(udmComponent,elUdm) end
+						c:OnMemberValueChanged(memberIdx)
+						return true
+					end)
+				end
+			end)
+			ctrl = bt
+		elseif(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
 			local colField,wrapper = self.m_animSetControls:AddColorField(memberInfo.name,memberInfo.name,(controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
 				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,newCol) end
@@ -2361,7 +2404,18 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 
 	local ctrl
 	local selectedCount = 0
-	local fOnSelected = function()
+	local fOnSelected = function(item)
+		local itemParent = item:GetParentItem()
+		while(util.is_valid(itemParent)) do
+			local udmEl = self:GetCollectionUdmObject(itemParent)
+			if(util.get_type_name(udmEl) == "Actor") then
+				local itemActor = self:GetCollectionTreeItem(tostring(udmEl:GetUniqueId()))
+				if(util.is_valid(itemActor)) then itemActor:SetSelected(true,false) end
+				break
+			end
+			itemParent = itemParent:GetParentItem()
+		end
+
 		selectedCount = selectedCount +1
 		if(selectedCount > 1 or util.is_valid(ctrl)) then return end
 		ctrl = self:OnControlSelected(actor,actorData,udmComponent,controlData)

@@ -15,7 +15,14 @@ function pfm.udm.EntityComponent:SetMemberValue(memberName,type,value)
 		path:PopBack()
 		props = props:GetFromPath(path:GetString():sub(0,-2))
 	end
-	props:SetValue(memberName,type,value)
+	if(type == ents.MEMBER_TYPE_ELEMENT) then
+		type = udm.TYPE_ELEMENT
+		local child = props:Add(memberName)
+		child:Clear()
+		child:Merge(udm.LinkedPropertyWrapper(value),udm.MERGE_FLAG_BIT_DEEP_COPY)
+	else
+		props:SetValue(memberName,type,value)
+	end
 	self:CallChangeListeners(fullMemberPath,value)
 end
 

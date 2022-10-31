@@ -134,8 +134,6 @@ function gui.PFMElementViewer:OnInitialize()
 	btSave:SetY(self.m_bg:GetBottom() -btSave:GetHeight())
 	btSave:SetAnchor(0,1,1,1)
 	self.m_btSave = btSave
-
-	self:OpenUdmFile("models/error_test2.pmdl_b")
 end
 function gui.PFMElementViewer:UpdateSaveButton(saved)
 	self.m_saveBg:SetVisible(true)
@@ -143,7 +141,13 @@ function gui.PFMElementViewer:UpdateSaveButton(saved)
 	else self.m_saveBg:SetColor(Color(100,20,20)) end
 end
 function gui.PFMElementViewer:Save()
-	if(self.m_udmData == nil) then return end
+	if(self.m_onSave ~= nil and self.m_onSave() == true) then
+		self:UpdateSaveButton(true)
+		return true
+	end
+
+	if(self.m_udmData == nil) then return false end
+
 	local fileName = self.m_fileName
 	if(fileName == nil) then return false end
 
@@ -182,10 +186,15 @@ function gui.PFMElementViewer:OpenUdmFile(fileName)
 	self.m_fileName = fileName
 	local assetData = udmData:GetAssetData()
 	self.m_assetData = assetData:ClaimOwnership()
-	self.m_udmData = udmData
-	self:Setup(assetData)
 
-	self:MakeElementRoot(assetData:GetData())
+	self.m_udmData = udmData
+	self:InitializeFromUdmElement(assetData:GetData(),assetData)
+end
+function gui.PFMElementViewer:InitializeFromUdmElement(el,elRoot,onSave)
+	elRoot = elRoot or el
+	self.m_onSave = onSave
+	self:Setup(elRoot)
+	self:MakeElementRoot(el)
 	local elRoot = self.m_tree:GetRoot():FindItemByText("root")
 	if(elRoot ~= nil) then elRoot:Expand() end
 end
@@ -230,6 +239,7 @@ function gui.PFMElementViewer:AddUDMNode(parent,node,name,elTreeParent,elTreePre
 			self:UpdateSaveButton(false)
 		end)
 	end
+
 	if(node:GetType() == udm.TYPE_ELEMENT or udm.is_array_type(node:GetType())) then
 		elTreeChild = elTreeParent:AddItem(name,function(elTree)
 			local elTreePrevious = elTree
@@ -241,7 +251,7 @@ function gui.PFMElementViewer:AddUDMNode(parent,node,name,elTreeParent,elTreePre
 
 				for _,name in ipairs(sorted) do
 					local child = children[name]
-					elTreePrevious = self:AddUDMNode(node,child,name,elTree,elTreePrevious)
+					elTreePrevious = self:AddUDMNode(node,node:Get(name),name,elTree,elTreePrevious)
 				end
 			elseif(node:GetSize() < 1000) then
 				local items = node:GetArrayValues()
@@ -264,7 +274,7 @@ function gui.PFMElementViewer:AddUDMNode(parent,node,name,elTreeParent,elTreePre
 
 						local types = {}
 						for i=0,udm.TYPE_COUNT -1 do
-							if(i ~= udm.TYPE_ARRAY) then
+							if(udm.is_array_type(i) == false) then
 								table.insert(types,{i,udm.enum_type_to_ascii(i)})
 							end
 						end
