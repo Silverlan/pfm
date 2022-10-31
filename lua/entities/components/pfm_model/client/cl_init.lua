@@ -13,6 +13,11 @@ Component:RegisterMember("flexControllerScale",udm.TYPE_FLOAT,1.0,{
 	max = 100.0
 })
 Component:RegisterMember("flexControllerLimitsEnabled",udm.TYPE_BOOLEAN,true)
+Component:RegisterMember("MaterialOverrides",ents.MEMBER_TYPE_ELEMENT,"",{
+	onChange = function(self)
+		self:UpdateMaterialOverrides()
+	end
+},bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT))
 
 local cvPanima = console.get_convar("pfm_experimental_enable_panima_for_flex_and_skeletal_animations")
 function ents.PFMModel:Initialize()
@@ -31,6 +36,50 @@ function ents.PFMModel:Initialize()
 	self:BindEvent(ents.BaseStaticBvhUserComponent.EVENT_ON_ACTIVATION_STATE_CHANGED,"OnStaticBvhStatusChanged")
 	if(cvPanima:GetBool()) then self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS,"MaintainAnimations") end
 	self.m_listeners = {}
+end
+function ents.PFMModel:OnEntitySpawn()
+	self:UpdateMaterialOverrides()
+end
+function ents.PFMModel:UpdateMaterialOverrides()
+	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
+	if(mdlC == nil) then return end
+	mdlC:ClearMaterialOverrides()
+	local udmMatOverrides = self:GetMaterialOverrides():Get("materialOverrides")
+	for _,udmMatOverride in ipairs(udmMatOverrides:GetArrayValues()) do
+		local srcMaterial = udmMatOverride:GetValue("srcMaterial",udm.TYPE_STRING)
+		local dstMaterial = udmMatOverride:GetValue("dstMaterial",udm.TYPE_STRING) or ""
+		if(srcMaterial ~= nil and #srcMaterial > 0) then
+			local matOverride
+
+			local udmOverride = udmMatOverride:Get("override")
+			local children = udmOverride:GetChildren()
+			local shaderName,properties = pairs(children)(children)
+			if(shaderName ~= nil) then
+				local matRef
+				if(#dstMaterial > 0) then matRef = dstMaterial
+				else matRef = srcMaterial end
+
+				matRef = asset.load(matRef,asset.TYPE_MATERIAL)
+				if(util.is_valid(matRef)) then
+					-- TODO: Update shader
+					local cpy = matRef:Copy()
+					cpy:MergeData(properties)
+					cpy:UpdateTextures()
+					cpy:InitializeShaderDescriptorSet(true)
+					matOverride = cpy
+				end
+			else
+				matOverride = asset.load(dstMaterial,asset.TYPE_MATERIAL)
+			end
+
+			if(util.is_valid(matOverride)) then
+				mdlC:SetMaterialOverride(srcMaterial,matOverride)
+			else
+				pfm.log("Failed to apply material override for material '" .. srcMaterial .. "': Target material is not valid!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+			end
+		end
+	end
+	mdlC:UpdateRenderMeshes()
 end
 function ents.PFMModel:OnStaticBvhStatusChanged()
 	local c = self:GetEntityComponent(ents.COMPONENT_STATIC_BVH_USER)
