@@ -103,9 +103,9 @@ function pfm.ProjectManager:LoadProject(fileName,ignoreMap)
 	else fileName = fileName .. "." .. pfm.Project.FORMAT_EXTENSION_ASCII end
 	self:CloseProject()
 	pfm.log("Loading project '" .. fileName .. "'...",pfm.LOG_CATEGORY_PFM)
-	local project = pfm.load_project(fileName,ignoreMap)
-	if(project == nil) then
-		pfm.log("Unable to load project '" .. fileName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+	local project,err = pfm.load_project(fileName,ignoreMap)
+	if(project == false) then
+		pfm.log("Unable to load project '" .. fileName .. "': " .. (err or "Unknown error") .. "!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return self:CreateNewProject()
 	end
 	local session = project:GetSession()

@@ -132,16 +132,24 @@ function pfm.Project:SaveLegacy(fileName)
 end
 
 function pfm.Project:Save(fileName,legacy)
+	local saveAsAscii = false
 	if(legacy) then return self:SaveLegacy(fileName) end
 
 	file.create_path(file.get_file_path(fileName))
-	local f = file.open(fileName,bit.bor(file.OPEN_MODE_WRITE,file.OPEN_MODE_BINARY))
+	local fileMode = file.OPEN_MODE_WRITE
+	if(saveAsAscii == false) then fileMode = bit.bor(fileMode,file.OPEN_MODE_BINARY) end
+	local f = file.open(fileName,fileMode)
 	if(f == nil) then return false end
 	local udmData = udm.create("PFMP",1)
 	udmData:GetAssetData():GetData():SetValue("session",self:GetSession():GetRootUdmData())
-	-- udmData:SaveAscii(f,bit.bor(udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER,udm.ASCII_SAVE_FLAG_BIT_DONT_COMPRESS_LZ4_ARRAYS))
-	udmData:Save(f)
+	local res,err
+	if(saveAsAscii) then res,err = udmData:SaveAscii(f,bit.bor(udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER,udm.ASCII_SAVE_FLAG_BIT_DONT_COMPRESS_LZ4_ARRAYS))
+	else res,err = udmData:Save(f) end
 	f:Close()
+	if(res == false) then
+		console.print_warning("Failed to save PFM project: " .. err)
+		return false
+	end
 
 	return true
 end
@@ -309,7 +317,8 @@ end
 
 pfm.load_project = function(fileName,ignoreMap)
 	local project = pfm.create_project()
-	if(project:Load(fileName,ignoreMap) == false) then return end
+	local res,err = project:Load(fileName,ignoreMap)
+	if(res == false) then return res,err end
 	return project
 end
 
