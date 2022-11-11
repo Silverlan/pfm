@@ -7,6 +7,7 @@
 ]]
 
 include("udm_sound.lua")
+include("/pfm/udm/film_clip/udm_time_frame.lua")
 
 fudm.ELEMENT_TYPE_PFM_AUDIO_CLIP = fudm.register_element("PFMAudioClip")
 fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_AUDIO_CLIP,"timeFrame",fudm.PFMTimeFrame())
