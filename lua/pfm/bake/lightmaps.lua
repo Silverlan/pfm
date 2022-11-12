@@ -143,9 +143,9 @@ pfm.bake.lightmaps = function(gameScene,lightmapTargets,influencers,lightSources
 		end
 		return res
 	end
-	local renderer = unirender.create_renderer(scene,createInfo.renderer,flags)
-	if(renderer == nil) then
-		pfm.log("Unable to create renderer for render engine '" .. createInfo.renderer .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
+	local renderer,err = unirender.create_renderer(scene,createInfo.renderer,flags)
+	if(renderer == false) then
+		pfm.log("Unable to create renderer for render engine '" .. createInfo.renderer .. "': " .. err .. "!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
 		return false
 	end
 

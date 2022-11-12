@@ -99,9 +99,9 @@ pfm.bake.ibl = function(pose,gameScene,lightSources,width,height,sampleCount,ini
 
 	scene:Finalize()
 	local flags = unirender.Renderer.FLAG_NONE
-	local renderer = unirender.create_renderer(scene,createInfo.renderer,flags)
-	if(renderer == nil) then
-		pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
+	local renderer,err = unirender.create_renderer(scene,createInfo.renderer,flags)
+	if(renderer == false) then
+		pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "': " .. err .. "!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
 		return
 	end
 

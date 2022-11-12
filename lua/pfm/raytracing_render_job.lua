@@ -576,9 +576,9 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		local flags = unirender.Renderer.FLAG_NONE
 		if(renderSettings:IsLiveEditingEnabled()) then flags = bit.bor(flags,unirender.Renderer.FLAG_ENABLE_LIVE_EDITING_BIT) end
 		self.m_renderEngine = renderSettings:GetRenderEngine()
-		local renderer = unirender.create_renderer(scene,self.m_renderEngine,flags)
-		if(renderer == nil) then
-			pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "'!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
+		local renderer,err = unirender.create_renderer(scene,self.m_renderEngine,flags)
+		if(renderer == false) then
+			pfm.log("Unable to create renderer for render engine '" .. renderSettings:GetRenderEngine() .. "': " .. err .. "!",pfm.LOG_CATEGORY_PFM_RENDER,pfm.LOG_SEVERITY_WARNING)
 			return
 		end
 
