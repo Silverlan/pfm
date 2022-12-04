@@ -22,53 +22,96 @@ function gui.Marquee:OnInitialize()
 	gui.Base.OnInitialize(self)
 	self:SetSize(256,64)
 
+	self.m_contents = gui.create("WIBase",self)
+
 	self.m_currentOffset = 0
-	self.m_elementQueue = {}
+	self.m_lastMove = time.real_time()
+	self.m_elements = {}
 	self:EnableThinking()
 	self:SetMoveSpeed(100.0)
 end
 function gui.Marquee:OnThink()
+	local dt = time.real_time() -self.m_lastMove
+	local stepDt = 0.2
+	if(dt < stepDt) then return end
+	dt = stepDt
+	self.m_lastMove = time.real_time()
+
 	local moveSpeed = self:GetMoveSpeed()
-	local dt = gui.get_delta_time()
 	self:Move(moveSpeed *dt)
 end
 function gui.Marquee:AddElement(el)
-	table.insert(self.m_elementQueue,el)
+	el:SetParent(self.m_contents)
+	local prevElement = self.m_elements[#self.m_elements]
+	local offset = util.is_valid(prevElement) and prevElement:GetRight() or 0
+	el:SetX(offset)
+	table.insert(self.m_elements,el)
+end
+function gui.Marquee:OnUpdate()
+	self.m_contents:SizeToContents()
+	self.m_contents:SetHeight(self:GetHeight())
 end
 function gui.Marquee:SetMoveSpeed(speed) self.m_moveSpeed = speed end
 function gui.Marquee:GetMoveSpeed() return self.m_moveSpeed end
+function gui.Marquee:GetElements() return self.m_elements end
+function gui.Marquee:Reset()
+	self.m_contents:SetX(0)
+end
+function gui.Marquee:Rearrange()
+	local offset = 0
+	for _,el in ipairs(self.m_elements) do
+		if(el:IsValid()) then
+			el:SetX(offset)
+			offset = offset +el:GetWidth()
+		end
+	end
+end
 function gui.Marquee:Move(offset)
+	if(#self.m_elements == 0) then return end
 	self.m_currentOffset = self.m_currentOffset +offset
 
 	local w = self:GetWidth()
 	local totalElementWidth = 0
 	local firstEl
-	while(#self.m_elementQueue > 0) do
-		local el = self.m_elementQueue[#self.m_elementQueue]
-		if(el == firstEl) then break end -- Prevent infinite recursion
-		if(el:IsValid() == false) then
-			table.remove(self.m_elementQueue,#self.m_elementQueue)
-		else
-			firstEl = firstEl or el
-			if(el:GetLeft() > w) then
-				table.remove(self.m_elementQueue,#self.m_elementQueue)
-				table.insert(self.m_elementQueue,1)
+	self.m_contents:SetX(self.m_contents:GetX() +offset)
+
+	if(offset < 0) then
+		local veryFirstElement
+		while(true) do
+			local elFirst = self.m_elements[1]
+			if(veryFirstElement == nil) then veryFirstElement = elFirst
+			elseif(util.is_same_object(elFirst,veryFirstElement)) then
+				-- Prevent infinite loop
+				break
 			end
+			local x = self.m_contents:GetX() +elFirst:GetX()
+			if(x +elFirst:GetWidth() <= 0) then
+				table.remove(self.m_elements,1)
+				table.insert(self.m_elements,elFirst)
+
+				self:Rearrange()
+				self.m_contents:SetX(self.m_contents:GetX() +elFirst:GetWidth())
+			else break end
+		end
+	else
+		local veryLastElement
+		while(true) do
+			local elLast = self.m_elements[#self.m_elements]
+			if(veryLastElement == nil) then veryLastElement = elLast
+			elseif(util.is_same_object(elLast,veryLastElement)) then
+				-- Prevent infinite loop
+				break
+			end
+			local x = self.m_contents:GetX() +elLast:GetX()
+			if(x >= self:GetWidth()) then
+				table.remove(self.m_elements,#self.m_elements)
+				table.insert(self.m_elements,1,elLast)
+
+				self:Rearrange()
+				self.m_contents:SetX(self.m_contents:GetX() -elLast:GetWidth())
+			else break end
 		end
 	end
-	for _,el in ipairs(self.m_elementQueue) do
-		if(el:IsValid()) then
-			totalElementWidth = totalElementWidth +el:GetWidth()
-		end
-	end
-	
-	--[[local x = self.m_currentOffset
-	local w = self:GetWidth()
-	for _,child in ipairs(self:GetChildren()) do
-		x = x %w
-		child:SetX(x)
-		x = child:GetRight()
-	end]]
 end
 function gui.Marquee:MoveLeft() self:Move(-1) end
 function gui.Marquee:MoveRight() self:Move(1) end
