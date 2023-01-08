@@ -1188,8 +1188,10 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 								if(basePropName == "position") then
 									propPath:PopBack()
 									local rot = ent:GetMemberValue(propPath:GetString() .. "rotation")
-									if(objectSpace) then pose:RotateLocal(rot)
-									else pose:SetRotation(rot) end
+									if(rot ~= nil) then
+										if(objectSpace) then pose:RotateLocal(rot)
+										else pose:SetRotation(rot) end
+									end
 								end
 							elseif(memberInfo.type == udm.TYPE_QUATERNION) then
 								if(objectSpace) then pose:RotateLocal(val)
@@ -1197,8 +1199,10 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 								if(basePropName == "rotation") then
 									propPath:PopBack()
 									local pos = ent:GetMemberValue(propPath:GetString() .. "position")
-									if(objectSpace) then pose:TranslateLocal(pos)
-									else pose:SetOrigin(pos) end
+									if(pos ~= nil) then
+										if(objectSpace) then pose:TranslateLocal(pos)
+										else pose:SetOrigin(pos) end
+									end
 								end
 							end
 							entTransform:SetPose(pose)
@@ -1227,13 +1231,13 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 												local mdl = ent:GetModel()
 												if(chain ~= nil and mdl ~= nil) then
 													local skeleton = mdl:GetSkeleton()
-													local function applyBonePoseValue(targetPath)
+													local function applyBonePoseValue(targetPath,type)
 														local val = ent:GetMemberValue(targetPath)
-														if(val ~= nil) then tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,val,memberInfo.type) end
+														if(val ~= nil) then tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,val,type) end
 													end
 													local function applyBonePose(basePropPath)
-														applyBonePoseValue(basePropPath .. "position")
-														applyBonePoseValue(basePropPath .. "rotation")
+														applyBonePoseValue(basePropPath .. "position",udm.TYPE_VECTOR3)
+														applyBonePoseValue(basePropPath .. "rotation",udm.TYPE_QUATERNION)
 													end
 													for _,boneId in ipairs(chain) do
 														local bone = skeleton:GetBone(boneId)

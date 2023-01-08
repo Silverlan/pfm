@@ -1594,7 +1594,9 @@ function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 	end
 
 	self:GetAnimationManager():SetAnimationDirty(actorData)
-	local res = actor:GetEntity():SetMemberValue(targetPath,value)
+	local res
+	if(udmType ~= udm.TYPE_ELEMENT) then res = actor:GetEntity():SetMemberValue(targetPath,value)
+	else res = true end
 	local hasControlTarget,ctResult = applyControllerTarget()
 	if(udmType ~= nil) then
 		local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))

@@ -33,6 +33,7 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE = 11
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY = 12
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG = 13
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL = 14
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_MANAGER = 15
 
 gui.PFMActorEditor.COLLECTION_SCENEBUILD = "scenebuild"
 gui.PFMActorEditor.COLLECTION_ACTORS = "actors"
@@ -42,6 +43,7 @@ gui.PFMActorEditor.COLLECTION_LIGHTS = "lighting"
 gui.PFMActorEditor.COLLECTION_ENVIRONMENT = "environment"
 gui.PFMActorEditor.COLLECTION_BAKING = "baking"
 gui.PFMActorEditor.COLLECTION_MISC = "misc"
+gui.PFMActorEditor.COLLECTION_VR = "vr"
 
 function gui.PFMActorEditor:__init()
 	gui.Base.__init(self)
@@ -107,6 +109,7 @@ function gui.PFMActorEditor:OnInitialize()
 		local hasSkyComponent = false
 		local hasFogComponent = false
 		local hasLightmapperComponent = false
+		local hasVrManagerComponent = false
 		if(filmClip ~= nil) then
 			for _,actor in ipairs(filmClip:GetActorList()) do
 				local c = actor:FindComponent("pfm_sky")
@@ -120,6 +123,10 @@ function gui.PFMActorEditor:OnInitialize()
 				local c = actor:FindComponent("pfm_baked_lighting")
 				if(c ~= nil) then
 					hasLightmapperComponent = true
+				end
+				local c = actor:FindComponent("pfm_vr_manager")
+				if(c ~= nil) then
+					hasVrManagerComponent = true
 				end
 			end
 		end
@@ -135,6 +142,10 @@ function gui.PFMActorEditor:OnInitialize()
 			addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG,"pfm_create_new_fog_controller")
 		end
 		addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL,"pfm_create_new_decal")
+
+		local pVrItem,pVrMenu = pContext:AddSubMenu(locale.get_text("virtual_reality"))
+		if(hasVrManagerComponent == false) then addPresetActorOption(pVrMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_MANAGER,"pfm_create_vr_manager",pVrMenu) end
+		pVrMenu:Update()
 
 		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
 		local types = ents.get_registered_entity_types()
@@ -587,7 +598,12 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		local decalC = self:CreateNewActorComponent(actor,"decal",false)
 		decalC:SetMemberValue("size",udm.TYPE_FLOAT,20.0)
 		decalC:SetMemberValue("material",udm.TYPE_STRING,"logo/test_spray")
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_MANAGER) then
+		actor = actor or create_new_actor("vr_manager",gui.PFMActorEditor.COLLECTION_VR)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"pfm_vr_manager",false)
 	end
+
 	if(newActor) then self:UpdateActorComponents(actor) end
 	return actor
 end
@@ -1376,6 +1392,8 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 									end
 								end
 								if(updateAnimationValue) then applyComponentChannelValue(self,component,controlData,memberValue) end
+							else
+								c:OnMemberValueChanged(memberIdx)
 							end
 							self:TagRenderSceneAsDirty()
 						end
@@ -1945,7 +1963,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 						local entActor,c,memberIdx,info = controlData.getActor()
 						if(info == nil) then return true end
 						if(controlData.set ~= nil) then controlData.set(udmComponent,elUdm) end
-						c:OnMemberValueChanged(memberIdx)
+						-- c:OnMemberValueChanged(memberIdx)
 						return true
 					end)
 				end
@@ -2715,6 +2733,7 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected,hitM
 			filmmaker:TagRenderSceneAsDirty()
 		end)
 	end)
+	tool.get_filmmaker():CallCallbacks("PopulateActorContextMenu",pContext,actor)
 	if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
 		pContext:AddItem("Assign entity to x",function()
 			x = actor:FindEntity()

@@ -136,7 +136,7 @@ function Component:UpdateRotation()
 	local rot = Quaternion()
 	local entParent = self:GetTargetEntity()
 
-	if(self:GetType() == Component.TYPE_TRANSLATION or self:GetType() == Component.TYPE_SCALE or self:IsRelative()) then
+	if(self:GetType() == Component.TYPE_TRANSLATION or self:GetType() == Component.TYPE_SCALE) then
 		if(axis == Component.AXIS_X) then
 			rot = rot *EulerAngles(0,90,0):ToQuaternion()
 		elseif(axis == Component.AXIS_Y) then

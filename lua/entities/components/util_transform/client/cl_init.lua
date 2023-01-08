@@ -231,7 +231,6 @@ function Component:CreateTransformUtility(id,axis,type)
 	local entArrow = ents.create("entity")
 	local arrowC = entArrow:AddComponent("util_transform_arrow")
 	entArrow:Spawn()
-	if(self.m_relativeToParent) then arrowC:SetRelative(true) end
 	arrowC:SetAxis(axis)
 	arrowC:SetType(type)
 	if(self.m_relativeToParent) then arrowC:SetRelative(true) end

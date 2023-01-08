@@ -16,7 +16,7 @@ function shader.PFMSelectionWireframe:InitializePipeline(pipelineInfo,pipelineId
 	pipelineInfo:SetDepthBiasEnabled(true)
 	pipelineInfo:SetDepthBiasSlopeFactor(-0.001)
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
-	pipelineInfo:SetLineWidth(2)
+	pipelineInfo:SetLineWidth(1)
 end
 function shader.PFMSelectionWireframe:InitializeGfxPipelinePushConstantRanges(pipelineInfo,pipelineIdx)
 	pipelineInfo:AttachPushConstantRange(0,shader.TexturedLit3D.PUSH_CONSTANTS_SIZE +self.m_dsPushConstants:GetSize(),bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT,prosper.SHADER_STAGE_VERTEX_BIT))
