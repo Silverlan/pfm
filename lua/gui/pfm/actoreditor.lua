@@ -2310,8 +2310,9 @@ end
 function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
 	if(chainLength <= 1) then return false end
 
-	local c = self:CreateNewActorComponent(actor,"pfm_ik",false)
-	if(c == nil) then return false end
+	local c = self:CreateNewActorComponent(actor,"pfm_fbik",false)
+	local solverC = self:CreateNewActorComponent(actor,"ik_solver",false)
+	if(c == nil or solverC == nil) then return false end
 
 	local ent = actor:FindEntity()
 	if(util.is_valid(ent) == false) then return false end
@@ -2320,7 +2321,7 @@ function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
 	local boneId = mdl:LookupBone(boneName)
 	if(boneId == -1) then return false end
 
-	local pfmIk = util.is_valid(ent) and ent:AddComponent("pfm_ik") or nil
+	local pfmIk = util.is_valid(ent) and ent:AddComponent("pfm_fbik") or nil
 	if(pfmIk == nil) then return false end
 	local bone = skeleton:GetBone(boneId)
 	ikName = ikName or bone:GetName()
@@ -2328,14 +2329,15 @@ function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
 	self:UpdateActorComponents(actor)
 
 	ent = actor:FindEntity()
-	pfmIk = util.is_valid(ent) and ent:GetComponent("pfm_ik") or nil
+	pfmIk = util.is_valid(ent) and ent:GetComponent("pfm_fbik") or nil
 	if(pfmIk ~= nil) then
-		pfmIk:AddIkControllerByChain(boneName,chainLength,ikName)
-		pfmIk:SaveConfig()
-		pfmIk:InitializeFromConfiguration()
+		pfmIk:AddIkSolverByChain(boneName,chainLength,ikName)
+		local ikSolverC = ent:GetComponent(ents.COMPONENT_IK_SOLVER)
+		local memberId = ikSolverC:GetMemberIndex("IkRig")
+		if(memberId ~= nil) then ikSolverC:OnMemberValueChanged(memberId) end
 	end
 
-	local componentId = ents.find_component_id("pfm_ik")
+	local componentId = ents.find_component_id("ik_solver")
 	if(componentId ~= nil) then
 		self:RemoveActorComponentEntry(tostring(actor:GetUniqueId()),componentId)
 		self:SetActorDirty(tostring(actor:GetUniqueId()))
