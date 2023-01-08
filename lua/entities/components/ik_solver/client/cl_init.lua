@@ -444,7 +444,7 @@ function Component:OnTick(dt)
 	-- TODO: Reset pose?
 	self:UpdateControlPoses()
 	self:ResetIkBones()
-	for i=1,100 do self.m_solver:Solve() end
+	for i=1,1 do self.m_solver:Solve() end
 
 	dbgInfo:SetColor(Color.Lime)
 	--debug.draw_line(points[1],points[2],dbgInfo)

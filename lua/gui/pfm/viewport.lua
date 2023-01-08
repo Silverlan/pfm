@@ -21,6 +21,7 @@ include("/pfm/undoredo.lua")
 
 include_component("click")
 include_component("util_transform")
+include_component("pfm_bone")
 
 util.register_class("gui.PFMViewport",gui.PFMBaseViewport)
 
@@ -338,6 +339,26 @@ function gui.PFMViewport:InitializeSettings(parent)
 			pfm.tag_render_scene_as_dirty()
 		end)
 	-- end
+
+	self.m_ctrlShowBones = p:AddDropDownMenu(locale.get_text("pfm_show_bones"),"show_bones",{
+		{"0",locale.get_text("no")},
+		{"1",locale.get_text("yes")}
+	},1)
+	self.m_ctrlShowBones:AddCallback("OnOptionSelected",function(el,idx)
+		local enabled = toboolean(self.m_ctrlShowBones:GetOptionValue(self.m_ctrlShowBones:GetSelectedOption()))
+		tool.get_filmmaker():GetSelectionManager():SetShowBones(enabled)
+		pfm.tag_render_scene_as_dirty()
+	end)
+
+	self.m_ctrlShowSelectionWireframe = p:AddDropDownMenu(locale.get_text("pfm_show_selection_wireframe"),"show_selection_wireframe",{
+		{"0",locale.get_text("no")},
+		{"1",locale.get_text("yes")}
+	},1)
+	self.m_ctrlShowSelectionWireframe:AddCallback("OnOptionSelected",function(el,idx)
+		local enabled = toboolean(self.m_ctrlShowSelectionWireframe:GetOptionValue(self.m_ctrlShowSelectionWireframe:GetSelectedOption()))
+		tool.get_filmmaker():GetSelectionManager():SetSelectionWireframeEnabled(enabled)
+		pfm.tag_render_scene_as_dirty()
+	end)
 end
 function gui.PFMViewport:SetRtViewportRenderer(renderer)
 	local enabled = (renderer ~= nil)
@@ -406,8 +427,35 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 					if(input.is_alt_key_down()) then
 						filmmaker:DeselectActor(actor)
 					else
+						local property
+
+						-- Check for bone
+						local handled,entBone = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true,function(ent)
+							local ownableC = ent:GetComponent(ents.COMPONENT_OWNABLE)
+							if(ownableC == nil or ent:HasComponent(ents.COMPONENT_PFM_BONE) == false) then return false end
+							return ownableC:GetOwner() == entActor
+						end)
+						
+						if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entBone)) then
+							local boneC = entBone:GetComponent(ents.COMPONENT_PFM_BONE)
+							local boneId = boneC:GetBoneId()
+							local mdl = entActor:GetModel()
+							local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
+							local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
+							if(bone ~= nil) then
+								local ikSolverC = entActor:GetComponent(ents.COMPONENT_IK_SOLVER)
+								if(ikSolverC ~= nil) then
+									if(ikSolverC:GetIkBoneId(bone:GetID()) ~= nil) then
+										-- Prefer ik_solver controls if they exist
+										property = "ec/ik_solver/control/" .. bone:GetName()
+									end
+								end
+								property = property or ("ec/animated/bone/" .. bone:GetName())
+							end
+						end
+
 						local deselectCurrent = not input.is_ctrl_key_down()
-						filmmaker:SelectActor(actor,deselectCurrent)
+						filmmaker:SelectActor(actor,deselectCurrent,property)
 					end
 				end
 			end

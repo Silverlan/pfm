@@ -18,7 +18,6 @@ function Component:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
-	self:AddEntityComponent("debug_skeleton_draw")
 
 	self.m_cbUpdateIk = ikSolverC:AddEventCallback(ents.IkSolver.EVENT_UPDATE_IK,function()
 		self:UpdateIk()
@@ -126,7 +125,7 @@ function Component:AddIkSolverByChain(boneName,chainLength,ikName,offsetPose)
 	return true
 end
 function Component:InitializeSolver(solver)
-	self:GetEntity():SetModel("player/soldier")
+	--self:GetEntity():SetModel("player/soldier")
 	self:GetEntity():PlayAnimation("reference")
 	local mdl = self:GetEntity():GetModel()
 

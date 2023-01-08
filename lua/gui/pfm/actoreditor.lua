@@ -1056,19 +1056,44 @@ function gui.PFMActorEditor:OnThink()
 	self:DisableThinking()
 end
 function gui.PFMActorEditor:GetFilmClip() return self.m_filmClip end
-function gui.PFMActorEditor:SelectActor(actor,deselectCurrent)
+function gui.PFMActorEditor:SelectActor(actor,deselectCurrent,property)
 	if(deselectCurrent == nil) then deselectCurrent = true end
 	if(deselectCurrent and util.is_valid(self.m_tree)) then self.m_tree:DeselectAll(nil,function(el) return self.m_treeElementToActorData[el] == nil or util.is_same_object(self.m_treeElementToActorData[el].actor,actor) == false end) end
 	for itemActor,actorData in pairs(self.m_treeElementToActorData) do
 		if(util.is_same_object(actor,actorData.actor)) then
-			if(itemActor:IsValid() and itemActor:IsSelected() == false) then
-				itemActor:Select(false)
-				itemActor:Expand()
+			if(itemActor:IsValid()) then
+				if(itemActor:IsSelected() == false) then
+					itemActor:Select(false)
+					itemActor:Expand()
 
-				local parent = itemActor:GetParentItem()
-				while(util.is_valid(parent)) do
-					parent:Expand()
-					parent = parent:GetParentItem()
+					local parent = itemActor:GetParentItem()
+					while(util.is_valid(parent)) do
+						parent:Expand()
+						parent = parent:GetParentItem()
+					end
+				end
+				if(property ~= nil) then
+					itemActor:Expand()
+					actorData.componentsEntry:Expand()
+
+					local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(property))
+
+					local itemComponent = (componentName ~= nil) and actorData.componentsEntry:FindItemByText(componentName) or nil
+					if(itemComponent ~= nil) then
+						itemComponent:Expand()
+
+						local parent = itemComponent
+						for _,name in ipairs(memberName:ToComponents()) do
+							local child = parent:FindItemByText(name)
+							if(child == nil) then
+								parent = nil
+								break
+							end
+							child:Expand()
+							parent = child
+						end
+						if(parent ~= nil) then parent:Select(true) end
+					end
 				end
 			end
 			break

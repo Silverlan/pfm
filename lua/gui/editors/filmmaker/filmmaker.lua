@@ -2191,9 +2191,9 @@ function gui.WIFilmmaker:ShowInElementViewer(el)
 
 	self:GoToWindow("element_viewer")
 end
-function gui.WIFilmmaker:SelectActor(actor,deselectCurrent)
+function gui.WIFilmmaker:SelectActor(actor,deselectCurrent,property)
 	if(util.is_valid(self:GetActorEditor()) == false) then return end
-	self:GetActorEditor():SelectActor(actor,deselectCurrent)
+	self:GetActorEditor():SelectActor(actor,deselectCurrent,property)
 
 	self:GoToWindow("actor_editor")
 end

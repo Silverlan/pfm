@@ -13,6 +13,32 @@ util.register_class("pfm.SelectionManager")
 function pfm.SelectionManager:__init()
 	self.m_selectionData = {}
 	self.m_listeners = {}
+	self.m_selectionWireframeEnabled = true
+	self.m_showBones = true
+end
+
+function pfm.SelectionManager:SetSelectionWireframeEnabled(enabled)
+	if(enabled == self.m_selectionWireframeEnabled) then return end
+	self.m_selectionWireframeEnabled = enabled
+
+	for object,selected in pairs(self.m_selectionData) do
+		if(object:IsValid()) then
+			if(selected.selected and enabled) then object:AddComponent("pfm_selection_wireframe")
+			else object:RemoveComponent("pfm_selection_wireframe") end
+		end
+	end
+end
+
+function pfm.SelectionManager:SetShowBones(enabled)
+	if(enabled == self.m_showBones) then return end
+	self.m_showBones = enabled
+
+	for object,selected in pairs(self.m_selectionData) do
+		if(object:IsValid()) then
+			if(selected.selected and enabled) then object:AddComponent("pfm_skeleton")
+			else object:RemoveComponent("pfm_skeleton") end
+		end
+	end
 end
 
 function pfm.SelectionManager:AddChangeListener(listener) table.insert(self.m_listeners,listener) end
@@ -44,6 +70,7 @@ function pfm.SelectionManager:SetSelected(obj,selected)
 	if(selected == false) then
 		if(self.m_selectionData[obj] ~= nil) then
 			obj:RemoveComponent("pfm_selection_wireframe")
+			obj:RemoveComponent("pfm_skeleton")
 		end
 		self.m_selectionData[obj] = nil
 	else
@@ -51,7 +78,8 @@ function pfm.SelectionManager:SetSelected(obj,selected)
 			selected = true
 		}
 		if(obj:HasComponent(ents.COMPONENT_RENDER)) then
-			obj:AddComponent("pfm_selection_wireframe")
+			if(self.m_selectionWireframeEnabled) then obj:AddComponent("pfm_selection_wireframe") end
+			if(self.m_showBones) then obj:AddComponent("pfm_skeleton") end
 		end
 	end
 	for _,listener in ipairs(self.m_listeners) do
