@@ -1,0 +1,5 @@
+pfm_popup_create_actor_no_film_clip = "アクターを作成できません: フィルムクリップが選択されていません!"
+pfm_popup_failed_to_import_lightmaps = "ライトマップをインポートできません: {0}が見つかりませんでした!"
+pfm_popup_failed_to_transform_keyframe = "プロパティ {0} のキーフレームを変換できませんでした"
+pfm_popup_no_lightmap = "ライトマップが見つかりません! ライティングが不完全です。"
+pfm_popup_no_reflection_probe = "リフレクションプローブが見つかりません! 反射が正しくありません。"

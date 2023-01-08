@@ -1,0 +1,5 @@
+pfm_bone_retargeting = "アニメーションリターゲティング"
+pfm_edit_retarget_rig = "リターゲットリグの編集"
+pfm_impostee_model = "インポスティーモデル"
+pfm_imposter_model = "インポスターモデル"
+pfm_retarget_auto = "自動リターゲット"

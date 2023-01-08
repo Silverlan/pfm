@@ -1,1 +1,2 @@
-pfm_loading = "読み込み中..."
+pfm_loading = "ロード中..."
+pfm_loading_map = "マップ '{0}' をロード中..."
