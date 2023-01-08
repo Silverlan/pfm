@@ -522,6 +522,7 @@ function gui.WIFilmmaker:OnInitialize()
 			pSubMenu:AddItem(lanLoc,function(pItem)
 				if(util.is_valid(self) == false) then return end
 				locale.change_language(lan)
+				console.run("cl_language",lan)
 				self:ReloadInterface()
 			end)
 		end
