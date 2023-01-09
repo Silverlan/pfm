@@ -20,6 +20,7 @@ end
 
 function ents.PFMSkeleton:OnRemove()
 	self:ClearCallbacks()
+	self:GetEntity():RemoveComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
 end
 
 function ents.PFMSkeleton:ClearCallbacks()
