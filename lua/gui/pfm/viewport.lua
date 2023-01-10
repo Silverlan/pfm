@@ -404,6 +404,38 @@ function gui.PFMViewport:UpdateRenderSettings()
 	self.m_rtViewport:SetRenderSettings(renderTab:GetRenderSettings())
 	self.m_rtViewport:Refresh(true)
 end
+function gui.PFMViewport:FindBoneUnderCursor(entActor)
+	local handled,entBone,hitPosBone = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true,function(ent)
+		local ownableC = ent:GetComponent(ents.COMPONENT_OWNABLE)
+		if(ownableC == nil or ent:HasComponent(ents.COMPONENT_PFM_BONE) == false) then return false end
+		return ownableC:GetOwner() == entActor
+	end)
+	if(handled ~= util.EVENT_REPLY_UNHANDLED or not util.is_valid(entBone)) then return end
+	local boneC = entBone:GetComponent(ents.COMPONENT_PFM_BONE)
+	local boneId = boneC:GetBoneId()
+	local mdl = entActor:GetModel()
+	local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
+	local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
+	return bone,hitPosBone
+end
+function gui.PFMViewport:SelectActor(entActor,bone,deselectCurrent)
+	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+	local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+	if(actor == nil) then return end
+	local property
+	if(bone ~= nil) then
+		local ikSolverC = entActor:GetComponent(ents.COMPONENT_IK_SOLVER)
+		if(ikSolverC ~= nil) then
+			if(ikSolverC:GetIkBoneId(bone:GetID()) ~= nil) then
+				-- Prefer ik_solver controls if they exist
+				property = "ec/ik_solver/control/" .. bone:GetName()
+			end
+		end
+		property = property or ("ec/animated/bone/" .. bone:GetName())
+	end
+
+	tool.get_filmmaker():SelectActor(actor,deselectCurrent,property)
+end
 function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 	if(mouseButton == input.MOUSE_BUTTON_LEFT and self:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
 		if(state == input.STATE_PRESS) then
@@ -427,35 +459,9 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 					if(input.is_alt_key_down()) then
 						filmmaker:DeselectActor(actor)
 					else
-						local property
-
-						-- Check for bone
-						local handled,entBone = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true,function(ent)
-							local ownableC = ent:GetComponent(ents.COMPONENT_OWNABLE)
-							if(ownableC == nil or ent:HasComponent(ents.COMPONENT_PFM_BONE) == false) then return false end
-							return ownableC:GetOwner() == entActor
-						end)
-						
-						if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entBone)) then
-							local boneC = entBone:GetComponent(ents.COMPONENT_PFM_BONE)
-							local boneId = boneC:GetBoneId()
-							local mdl = entActor:GetModel()
-							local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
-							local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
-							if(bone ~= nil) then
-								local ikSolverC = entActor:GetComponent(ents.COMPONENT_IK_SOLVER)
-								if(ikSolverC ~= nil) then
-									if(ikSolverC:GetIkBoneId(bone:GetID()) ~= nil) then
-										-- Prefer ik_solver controls if they exist
-										property = "ec/ik_solver/control/" .. bone:GetName()
-									end
-								end
-								property = property or ("ec/animated/bone/" .. bone:GetName())
-							end
-						end
-
+						local bone,hitPosBone = self:FindBoneUnderCursor(entActor)
 						local deselectCurrent = not input.is_ctrl_key_down()
-						filmmaker:SelectActor(actor,deselectCurrent,property)
+						self:SelectActor(entActor,bone,deselectCurrent)
 					end
 				end
 			end
@@ -567,11 +573,19 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 				end
 			end
 
-			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
+			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor) and state == input.STATE_PRESS) then
 				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
 				if(actor) then
-					if(self:IsMoveManipulatorMode(self:GetManipulatorMode())) then
+					local bone,hitPosBone = self:FindBoneUnderCursor(entActor)
+					if(bone ~= nil) then
+						self:SelectActor(entActor,bone,true)
+						filmmaker:GetActorEditor():UpdateSelectedEntities()
+
+						local transformC = util.is_valid(self.m_entTransform) and self.m_entTransform:GetComponent(ents.COMPONENT_UTIL_TRANSFORM) or nil
+						if(transformC ~= nil) then transformC:StartTransform("xyz",ents.UtilTransformArrowComponent.AXIS_XYZ,ents.UtilTransformArrowComponent.TYPE_TRANSLATION,hitPosBone) end
+					end
+					--[[if(self:IsMoveManipulatorMode(self:GetManipulatorMode())) then
 						if(state == input.STATE_PRESS) then
 							self.m_rtMoverActor = entActor
 							entActor:AddComponent("pfm_rt_mover")
@@ -584,7 +598,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 							local deselectCurrent = not input.is_ctrl_key_down()
 							filmmaker:SelectActor(actor,deselectCurrent)
 						end
-					end
+					end]]
 				end
 			end
 		end
@@ -1207,12 +1221,26 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 			local targetPath
 			local i = 0
 			for path,data in pairs(activeControls[uuid]) do
-				i = i +1
-				if(i == 2) then
-					targetPath = nil
-					break
+				local memberInfo = ent:FindMemberInfo(path)
+				if(memberInfo ~= nil) then
+					if(self:IsMoveManipulatorMode(manipMode)) then
+						if(memberInfo.type == udm.TYPE_VECTOR3) then
+							i = i +1
+							targetPath = path
+						end
+					elseif(self:IsRotationManipulatorMode(manipMode)) then
+						if(memberInfo.type == udm.TYPE_QUATERNION) then
+							i = i +1
+							targetPath = path
+						end
+					end
+					if(i == 2) then
+						-- If multiple properties of the same type are selected (e.g. multiple position properties),
+						-- we'll fall back to the actor position/rotation
+						targetPath = nil
+						break
+					end
 				end
-				targetPath = path
 			end
 			if(targetPath ~= nil and targetPath ~= "ec/pfm_actor/position" and targetPath ~= "ec/pfm_actor/rotation") then -- Actor translation and rotation are handled differently (see bottom of this function)
 				local memberInfo = ent:FindMemberInfo(targetPath)
@@ -1267,36 +1295,6 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 								trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
 									local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 									if(actorC ~= nil) then
-										local cname,path = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
-										if(cname == "pfm_ik") then
-											-- If this is an ik property, we'll want to update the animation data for the position and rotation of
-											-- all of the involved bones
-											path:PopFront() -- Pop "effector/" prefix
-											local boneName = path:GetFront()
-											local ikC = ent:GetComponent("pfm_ik")
-											if(ikC ~= nil) then
-												local chain = ikC:GetIkControllerBoneChain(boneName)
-												local mdl = ent:GetModel()
-												if(chain ~= nil and mdl ~= nil) then
-													local skeleton = mdl:GetSkeleton()
-													local function applyBonePoseValue(targetPath,type)
-														local val = ent:GetMemberValue(targetPath)
-														if(val ~= nil) then tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,val,type) end
-													end
-													local function applyBonePose(basePropPath)
-														applyBonePoseValue(basePropPath .. "position",udm.TYPE_VECTOR3)
-														applyBonePoseValue(basePropPath .. "rotation",udm.TYPE_QUATERNION)
-													end
-													for _,boneId in ipairs(chain) do
-														local bone = skeleton:GetBone(boneId)
-														if(bone ~= nil) then
-															applyBonePose("ec/animated/bone/" .. bone:GetName() .. "/")
-														end
-													end
-												end
-											end
-										end
-
 										tool.get_filmmaker():SetActorGenericProperty(actorC,targetPath,pos,memberInfo.type)
 									end
 								end)

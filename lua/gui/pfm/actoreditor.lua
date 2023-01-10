@@ -1029,6 +1029,7 @@ function gui.PFMActorEditor:GetSelectedActors()
 	return actors
 end
 function gui.PFMActorEditor:UpdateSelectedEntities()
+	self.m_updateSelectedEntities = nil
 	if(util.is_valid(self.m_tree) == false) then return end
 	local selectionManager = tool.get_filmmaker():GetSelectionManager()
 	selectionManager:ClearSelections()
@@ -1046,7 +1047,6 @@ function gui.PFMActorEditor:UpdateSelectedEntities()
 end
 function gui.PFMActorEditor:OnThink()
 	if(self.m_updateSelectedEntities) then
-		self.m_updateSelectedEntities = nil
 		self:UpdateSelectedEntities()
 	end
 	if(self.m_controlOverlayUpdateRequired) then

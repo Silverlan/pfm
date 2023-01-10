@@ -341,6 +341,9 @@ end
 function Component:UpdateRotation()
 
 end
+function Component:GetHandle(boneId)
+	return self.m_handleControls[boneId]
+end
 function Component:GetDragControl(boneId)
 	return self.m_handleControls[boneId]
 end

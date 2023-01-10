@@ -38,6 +38,7 @@ function ents.PFMSkeleton:OnBonesCreated()
 	local c = self:GetEntityComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
 	if(c == nil) then return end
 	self:ClearCallbacks()
+	local solverC = self:GetEntity():GetComponent(ents.COMPONENT_IK_SOLVER)
 	for boneId,ent in pairs(c:GetBones()) do
 		if(ent:IsValid()) then
 			ent:AddComponent(ents.COMPONENT_BVH)
@@ -48,6 +49,14 @@ function ents.PFMSkeleton:OnBonesCreated()
 			self.m_clickCallbacks[boneId] = clickC:AddEventCallback(ents.ClickComponent.EVENT_ON_CLICK,function()
 				if(ent:IsValid()) then self:OnBoneClicked(boneId,ent) end
 			end)
+
+			if(solverC ~= nil) then
+				local handle = solverC:GetHandle(boneId)
+				if(handle ~= nil) then
+					local col = (util.get_type_name(handle) == "StateControl") and Color.Crimson or Color.Orange
+					ent:SetColor(col)
+				end
+			end
 		end
 	end
 end

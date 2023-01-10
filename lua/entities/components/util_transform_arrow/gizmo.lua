@@ -160,6 +160,13 @@ function Component:StartTransform(hitPos)
 		self.m_elLine = elLine
 	end
 
+	util.remove(self.m_cbOnMouseRelease)
+	self.m_cbOnMouseRelease = input.add_callback("OnMouseInput",function(mouseButton,state,mods)
+		if(mouseButton == input.MOUSE_BUTTON_LEFT and state == input.STATE_RELEASE) then
+			self:StopTransform()
+		end
+	end)
+
 	input.set_binding_layer_enabled("pfm_transform",true)
 	input.update_effective_input_bindings()
 	pfm.tag_render_scene_as_dirty()

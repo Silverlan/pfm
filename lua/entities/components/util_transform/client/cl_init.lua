@@ -225,6 +225,18 @@ function Component:GetTransformUtility(type,axis,id)
 	return t[id]
 end
 
+function Component:StartTransform(id,axis,type,hitPos)
+	local a = self.m_arrows[type]
+	if(a == nil) then return end
+	a = a[axis]
+	if(a == nil) then return end
+	a = a[id]
+	if(util.is_valid(a) == false) then return end
+	local c = a:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
+	if(c == nil) then return end
+	c:StartTransform(hitPos)
+end
+
 function Component:CreateTransformUtility(id,axis,type)
 	if(self.m_arrows[type] ~= nil and self.m_arrows[type][axis] ~= nil and util.is_valid(self.m_arrows[type][axis][id])) then return end
 	local trC = self:GetEntity():GetComponent(ents.COMPONENT_TRANSFORM)

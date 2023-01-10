@@ -245,14 +245,7 @@ function Component:ToGlobalSpace(pos)
 end
 function Component:OnClick(action,pressed,hitPos)
 	if(action ~= input.ACTION_ATTACK) then return util.EVENT_REPLY_UNHANDLED end
-	if(pressed) then
-		self:StartTransform(hitPos)
-		util.remove(self.m_cbOnMouseRelease)
-		self.m_cbOnMouseRelease = input.add_callback("OnMouseInput",function(mouseButton,state,mods)
-			if(mouseButton == input.MOUSE_BUTTON_LEFT and state == input.STATE_RELEASE) then
-				self:StopTransform()
-			end
-		end)
+	if(pressed) then self:StartTransform(hitPos)
 	else self:StopTransform() end
 	return util.EVENT_REPLY_HANDLED
 end
