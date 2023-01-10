@@ -2450,12 +2450,13 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 	local ctrl
 	local selectedCount = 0
 	local fOnSelected = function(item)
+		self:CallCallbacks("OnPropertySelected",udmComponent,item,controlData.name,true)
 		local itemParent = item:GetParentItem()
 		while(util.is_valid(itemParent)) do
 			local udmEl = self:GetCollectionUdmObject(itemParent)
 			if(util.get_type_name(udmEl) == "Actor") then
 				local itemActor = self:GetCollectionTreeItem(tostring(udmEl:GetUniqueId()))
-				if(util.is_valid(itemActor)) then itemActor:SetSelected(true,false) end
+				if(util.is_valid(itemActor)) then itemActor:SetSelected(true,false) end 
 				break
 			end
 			itemParent = itemParent:GetParentItem()
@@ -2475,6 +2476,7 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 		end
 	end
 	local fOnDeselected = function()
+		self:CallCallbacks("OnPropertySelected",udmComponent,item,controlData.name,false)
 		selectedCount = selectedCount -1
 		if(selectedCount > 0) then return end
 		self:CallCallbacks("OnControlDeselected",udmComponent,controlData,ctrl)
