@@ -1957,10 +1957,14 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 		return
 	end
 
+	local baseMemberName = memberInfo.name
+	local t = string.split(baseMemberName,"/")
+	baseMemberName = t[#t]
+
 	local ctrl
 	if(controlData.path ~= nil) then
 		if(memberInfo.type == ents.MEMBER_TYPE_ENTITY) then
-			local elText,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,controlData.default or "",function(el)
+			local elText,wrapper = self.m_animSetControls:AddTextEntry(baseMemberName,memberInfo.name,controlData.default or "",function(el)
 				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,el:GetText(),nil,nil,true) end
 			end)
@@ -1978,7 +1982,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			end
 			ctrl = wrapper
 		elseif(memberInfo.type == ents.MEMBER_TYPE_ELEMENT) then
-			local bt = self.m_animSetControls:AddButton(locale.get_text("edit") .. " " .. memberInfo.name,memberInfo.name,function()
+			local bt = self.m_animSetControls:AddButton(locale.get_text("edit") .. " " .. baseMemberName,memberInfo.name,function()
 				local filmmaker = tool.get_filmmaker()
 				local tab,el = filmmaker:OpenWindow("element_viewer")
 				filmmaker:GoToWindow("element_viewer")
@@ -1995,7 +1999,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			end)
 			ctrl = bt
 		elseif(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR) then
-			local colField,wrapper = self.m_animSetControls:AddColorField(memberInfo.name,memberInfo.name,(controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
+			local colField,wrapper = self.m_animSetControls:AddColorField(baseMemberName,memberInfo.name,(controlData.default and Color(controlData.default)) or Color.White,function(oldCol,newCol)
 				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,newCol) end
 			end)
@@ -2069,7 +2073,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 					end)
 				end
 			else
-				local elText,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,controlData.default or "",function(el)
+				local elText,wrapper = self.m_animSetControls:AddTextEntry(baseMemberName,memberInfo.name,controlData.default or "",function(el)
 					if(self.m_skipUpdateCallback) then return end
 					if(controlData.set ~= nil) then controlData.set(udmComponent,el:GetText(),nil,nil,true) end
 				end)
@@ -2083,7 +2087,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 				ctrl = wrapper
 			end
 		elseif(memberInfo.type == udm.TYPE_BOOLEAN) then
-			local elToggle,wrapper = self.m_animSetControls:AddToggleControl(memberInfo.name,memberInfo.name,controlData.default or false,function(oldChecked,checked)
+			local elToggle,wrapper = self.m_animSetControls:AddToggleControl(baseMemberName,memberInfo.name,controlData.default or false,function(oldChecked,checked)
 				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,checked,nil,nil,true) end
 			end)
@@ -2105,7 +2109,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 						defaultValueIndex = i -1
 					end
 				end
-				local el,wrapper = self.m_animSetControls:AddDropDownMenu(memberInfo.name,memberInfo.name,enumValues,tostring(defaultValueIndex),function(el)
+				local el,wrapper = self.m_animSetControls:AddDropDownMenu(baseMemberName,memberInfo.name,enumValues,tostring(defaultValueIndex),function(el)
 					if(self.m_skipUpdateCallback) then return end
 					if(controlData.set ~= nil) then controlData.set(udmComponent,tonumber(el:GetOptionValue(el:GetSelectedOption())),nil,nil,true) end
 				end)
@@ -2155,7 +2159,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			end
 		elseif(memberInfo.type == udm.TYPE_EULER_ANGLES) then
 			local val = EulerAngles()
-			local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)
+			local el,wrapper = self.m_animSetControls:AddTextEntry(baseMemberName,memberInfo.name,tostring(val),function(el)
 				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,EulerAngles(el:GetText()),nil,nil,true) end
 			end)
@@ -2169,7 +2173,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			ctrl = wrapper
 		elseif(memberInfo.type == udm.TYPE_QUATERNION) then
 			local val = EulerAngles()
-			local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)
+			local el,wrapper = self.m_animSetControls:AddTextEntry(baseMemberName,memberInfo.name,tostring(val),function(el)
 				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,EulerAngles(el:GetText()):ToQuaternion(),nil,nil,true) end
 			end)
@@ -2185,7 +2189,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 			local type = udm.get_class_type(memberInfo.type)
 			local val = type()
 			if(controlData.getValue ~= nil) then val = controlData.getValue() or val end
-			local el,wrapper = self.m_animSetControls:AddTextEntry(memberInfo.name,memberInfo.name,tostring(val),function(el)
+			local el,wrapper = self.m_animSetControls:AddTextEntry(baseMemberName,memberInfo.name,tostring(val),function(el)
 				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,type(el:GetText()),nil,nil,true) end
 			end)
