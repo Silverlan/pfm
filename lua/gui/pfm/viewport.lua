@@ -405,16 +405,53 @@ function gui.PFMViewport:UpdateRenderSettings()
 	self.m_rtViewport:Refresh(true)
 end
 function gui.PFMViewport:FindBoneUnderCursor(entActor)
-	local handled,entBone,hitPosBone = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true,function(ent)
+	local handled,entBone,hitPosBone,startPos,hitDataBone = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true,function(ent)
 		local ownableC = ent:GetComponent(ents.COMPONENT_OWNABLE)
 		if(ownableC == nil or ent:HasComponent(ents.COMPONENT_PFM_BONE) == false) then return false end
 		return ownableC:GetOwner() == entActor
 	end)
-	if(handled ~= util.EVENT_REPLY_UNHANDLED or not util.is_valid(entBone)) then return end
-	local boneC = entBone:GetComponent(ents.COMPONENT_PFM_BONE)
-	local boneId = boneC:GetBoneId()
 	local mdl = entActor:GetModel()
 	local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
+	if(handled ~= util.EVENT_REPLY_UNHANDLED or not util.is_valid(entBone)) then
+		local handled,entActor,hitPos,startPos,hitData = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true)
+		if(handled == util.EVENT_REPLY_UNHANDLED and hitData.mesh ~= nil) then
+			-- Try to determine bone by vertex weight of selected triangle
+			local vws = {
+				hitData.mesh:GetVertexWeight(hitData.primitiveIndex *3),
+				hitData.mesh:GetVertexWeight(hitData.primitiveIndex *3 +1),
+				hitData.mesh:GetVertexWeight(hitData.primitiveIndex *3 +2)
+			}
+
+			local vWeights = {1.0 -hitData.u,1.0 -hitData.v,hitData.u +hitData.v}
+			local accWeights = {}
+			for i=0,3 do
+				for j,vw in ipairs(vws) do
+					local boneId = vw.boneIds:Get(i)
+					if(boneId ~= -1) then
+						accWeights[boneId] = accWeights[boneId] or 0.0
+						accWeights[boneId] = accWeights[boneId] +vw.weights:Get(i) *vWeights[j]
+					end
+				end
+			end
+
+			local largestWeight = -1.0
+			local boneId = -1
+			for accBoneId,accWeight in pairs(accWeights) do
+				if(accWeight > largestWeight) then
+					largestWeight = accWeight
+					boneId = accBoneId
+				end
+			end
+
+			if(boneId ~= -1) then
+				local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
+				return bone,hitPos
+			end
+		end
+		return
+	end
+	local boneC = entBone:GetComponent(ents.COMPONENT_PFM_BONE)
+	local boneId = boneC:GetBoneId()
 	local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
 	return bone,hitPosBone
 end
@@ -426,7 +463,7 @@ function gui.PFMViewport:SelectActor(entActor,bone,deselectCurrent)
 	if(bone ~= nil) then
 		local ikSolverC = entActor:GetComponent(ents.COMPONENT_IK_SOLVER)
 		if(ikSolverC ~= nil) then
-			if(ikSolverC:GetIkBoneId(bone:GetID()) ~= nil) then
+			if(ikSolverC:GetHandle(bone:GetID()) ~= nil) then
 				-- Prefer ik_solver controls if they exist
 				property = "ec/ik_solver/control/" .. bone:GetName()
 			end
@@ -450,7 +487,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 		self.m_cursorTracker = nil
 
 		if(selectionApplied == false) then
-			local handled,entActor = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true)
+			local handled,entActor,hitPos,startPos,hitData = ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,true)
 			if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
 				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				local actor = (actorC ~= nil) and actorC:GetActorData() or nil

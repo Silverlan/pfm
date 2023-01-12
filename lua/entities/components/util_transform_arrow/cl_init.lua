@@ -117,7 +117,7 @@ function Component:GetBasePose()
 
 	local pose = math.Transform()
 	local space = self:GetSpace()
-	if(space == ents.UtilTransformComponent.SPACE_LOCAL or self:GetType() == Component.TYPE_SCALE or self:IsRelative()) then
+	if(space == ents.UtilTransformComponent.SPACE_LOCAL or self:GetType() == Component.TYPE_SCALE) then
 		pose = entParent:GetPose()
 	elseif(space == ents.UtilTransformComponent.SPACE_WORLD) then
 		pose:SetOrigin(entParent:GetPos())
