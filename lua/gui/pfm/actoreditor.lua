@@ -1053,6 +1053,16 @@ function gui.PFMActorEditor:OnThink()
 		self.m_controlOverlayUpdateRequired = nil
 		self:UpdateAnimatedPropertyOverlays()
 	end
+	if(self.m_dirtyActorComponents ~= nil) then
+		for uniqueId,components in pairs(self.m_dirtyActorComponents) do
+			for componentId,_ in pairs(components) do
+				self:RemoveActorComponentEntry(uniqueId,componentId)
+			end
+			self:SetActorDirty(uniqueId)
+			self:InitializeDirtyActorComponents(uniqueId)
+		end
+		self.m_dirtyActorComponents = nil
+	end
 	self:DisableThinking()
 end
 function gui.PFMActorEditor:GetFilmClip() return self.m_filmClip end
@@ -1118,6 +1128,13 @@ function gui.PFMActorEditor:SetActorDirty(uniqueId)
 	if(type(uniqueId) ~= "string") then uniqueId = tostring(uniqueId) end
 	self.m_dirtyActorEntries = self.m_dirtyActorEntries or {}
 	self.m_dirtyActorEntries[uniqueId] = true
+end
+function gui.PFMActorEditor:SetActorComponentDirty(uniqueId,componentId)
+	if(type(uniqueId) ~= "string") then uniqueId = tostring(uniqueId) end
+	self.m_dirtyActorComponents = self.m_dirtyActorComponents or {}
+	self.m_dirtyActorComponents[uniqueId] = self.m_dirtyActorComponents[uniqueId] or {}
+	self.m_dirtyActorComponents[uniqueId][componentId] = true
+	self:EnableThinking()
 end
 function gui.PFMActorEditor:UpdateActorComponentEntries(actorData)
 	self:SetActorDirty(tostring(actorData.actor:GetUniqueId()))
@@ -2369,12 +2386,15 @@ function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
 
 	local componentId = ents.find_component_id("ik_solver")
 	if(componentId ~= nil) then
-		self:RemoveActorComponentEntry(tostring(actor:GetUniqueId()),componentId)
-		self:SetActorDirty(tostring(actor:GetUniqueId()))
-		self:InitializeDirtyActorComponents(tostring(actor:GetUniqueId()))
+		self:ReloadActorComponentEntries(actor,componentId)
 	end
 
 	return true
+end
+function gui.PFMActorEditor:ReloadActorComponentEntries(actor,componentId)
+	self:RemoveActorComponentEntry(tostring(actor:GetUniqueId()),componentId)
+	self:SetActorDirty(tostring(actor:GetUniqueId()))
+	self:InitializeDirtyActorComponents(tostring(actor:GetUniqueId()))
 end
 function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentData,udmComponent,item,controlData,identifier)
 	local actor = udmComponent:GetActor()

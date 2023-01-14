@@ -44,13 +44,29 @@ function Component:Initialize()
 	self:BindComponentInitEvent(ents.COMPONENT_RENDER,function(renderC)
 		renderC:SetExemptFromOcclusionCulling(true)
 	end)
+
 	self.m_listeners = {}
+	local genericC = self:GetEntity():GetGenericComponent()
+	if(genericC ~= nil) then
+		local cb = genericC:AddEventCallback(ents.BaseGenericComponent.EVENT_ON_MEMBERS_CHANGED,function(c)
+			self:OnComponentMembersChanged(c)
+		end)
+		table.insert(self.m_listeners,cb)
+	end
 
 	self.m_cvAnimCache = console.get_convar("pfm_animation_cache_enabled")
 
 	self.m_boneChannels = {}
 	self.m_flexControllerChannels = {}
 	self.m_selected = false
+end
+function Component:OnComponentMembersChanged(c)
+	local pm = tool.get_filmmaker()
+	local actorEditor = util.is_valid(pm) and pm:GetActorEditor() or nil
+	if(util.is_valid(actorEditor)) then
+		local actorData = self:GetActorData()
+		if(actorData ~= nil) then actorEditor:SetActorComponentDirty(tostring(actorData:GetUniqueId()),c:GetComponentId()) end
+	end
 end
 function Component:IsSelected() return self.m_selected end
 function Component:SetSelected(selected)
@@ -124,9 +140,7 @@ end
 function Component:GetActorData() return self.m_actorData end
 
 function Component:OnRemove()
-	for _,listener in ipairs(self.m_listeners) do
-		if(listener:IsValid()) then listener:Remove() end
-	end
+	util.remove(self.m_listeners)
 end
 
 function Component:OnEntitySpawn()

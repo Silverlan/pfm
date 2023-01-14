@@ -32,9 +32,10 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 end
 function Component:UpdateIkRigFile()
-	local ikRig = util.IkRig.load(self:GetIkRigFile())
-	if(ikRig == false) then return end
-	self:AddIkSolverByRig(ikRig)
+	self:InitializeSolver() -- Clear Rig
+	local ikRig = util.IkRig.load("scripts/ik_rigs/" .. self:GetIkRigFile())
+	if(ikRig ~= false) then self:AddIkSolverByRig(ikRig) end
+	self:UpdateIkRig()
 end
 function Component:AddIkSolverByRig(rig)
 	local mdl = self:GetEntity():GetModel()
@@ -149,6 +150,7 @@ function Component:UpdateIkRig()
 	local rig = util.IkRig.load_from_udm_data(self:GetIkRig())
 	if(rig == false) then return false end
 	self:AddIkSolverByRig(rig)
+	self:OnMembersChanged()
 	return true
 end
 function Component:OnEntitySpawn()
