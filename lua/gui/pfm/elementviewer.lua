@@ -37,12 +37,32 @@ function gui.PFMElementViewer:OnInitialize()
 	end)
 	self.m_btTools:SetX(self:GetWidth() -self.m_btTools:GetWidth())
 	self.m_btTools:SetupContextMenu(function(pContext)
+		pContext:AddItem(locale.get_text("new"),function()
+			local pFileDialog = gui.create_file_save_dialog(function(pDialoge,fileName)
+				if(fileName == nil) then return end
+				if(file.exists(fileName) == false) then
+					file.write(fileName,"")
+				end
+				self:OpenUdmFile(fileName)
+			end)
+			pFileDialog:SetRootPath(self.m_rootPath or "")
+			pFileDialog:Update()
+		end)
 		pContext:AddItem(locale.get_text("open"),function()
 			local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 				if(fileName == nil) then return end
 				self:OpenUdmFile(fileName)
 			end)
-			pFileDialog:SetRootPath("")
+			pFileDialog:SetRootPath(self.m_rootPath or "")
+			pFileDialog:Update()
+		end)
+		pContext:AddItem(locale.get_text("save_as"),function()
+			local pFileDialog = gui.create_file_save_dialog(function(pDialoge,fileName)
+				if(fileName == nil) then return end
+				self.m_fileName = fileName
+				self:Save(true)
+			end)
+			pFileDialog:SetRootPath(self.m_rootPath or "")
 			pFileDialog:Update()
 		end)
 	end,true)
@@ -140,16 +160,24 @@ function gui.PFMElementViewer:UpdateSaveButton(saved)
 	if(saved) then self.m_saveBg:SetColor(Color(20,100,20))
 	else self.m_saveBg:SetColor(Color(100,20,20)) end
 end
-function gui.PFMElementViewer:Save()
-	if(self.m_onSave ~= nil and self.m_onSave() == true) then
-		self:UpdateSaveButton(true)
-		return true
+function gui.PFMElementViewer:Save(asFile)
+	if(asFile ~= true) then
+		if(self.m_onSave ~= nil and self.m_onSave() == true) then
+			self:UpdateSaveButton(true)
+			return true
+		end
 	end
-
-	if(self.m_udmData == nil) then return false end
 
 	local fileName = self.m_fileName
 	if(fileName == nil) then return false end
+
+	local udmData = self.m_udmData
+	if(udmData == nil) then
+		local err
+		udmData,err = udm.create()
+		local assetData = udmData:GetAssetData()
+		assetData:GetData():Merge(self.m_rootNode:Get())
+	end
 
 	local isBinary = fileName:sub(-2):lower() == "_b"
 
@@ -162,8 +190,8 @@ function gui.PFMElementViewer:Save()
 	end
 
 	local res,err
-	if(isBinary) then res,err = self.m_udmData:Save(f)
-	else res,err = self.m_udmData:SaveAscii(f) end
+	if(isBinary) then res,err = udmData:Save(f)
+	else res,err = udmData:SaveAscii(f) end
 	f:Close()
 	if(res == false) then
 		pfm.log("Failed to UDM file as '" .. fileName .. "': " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
@@ -176,6 +204,7 @@ end
 function gui.PFMElementViewer:OpenUdmFile(fileName)
 	self.m_fileName = nil
 	self.m_tree:Clear()
+	self.m_rootPath = nil
 
 	local udmData,err = udm.load(fileName)
 	if(udmData == false) then
@@ -190,13 +219,14 @@ function gui.PFMElementViewer:OpenUdmFile(fileName)
 	self.m_udmData = udmData
 	self:InitializeFromUdmElement(assetData:GetData(),assetData)
 end
-function gui.PFMElementViewer:InitializeFromUdmElement(el,elRoot,onSave)
+function gui.PFMElementViewer:InitializeFromUdmElement(el,elRoot,onSave,rootPath)
 	elRoot = elRoot or el
 	self.m_onSave = onSave
 	self:Setup(elRoot)
 	self:MakeElementRoot(el)
 	local elRoot = self.m_tree:GetRoot():FindItemByText("root")
 	if(elRoot ~= nil) then elRoot:Expand() end
+	self.m_rootPath = rootPath
 end
 function gui.PFMElementViewer:UpdateDataElementPositions()
 	if(util.is_valid(self.m_tree) == false) then return end
@@ -211,6 +241,7 @@ end
 function gui.PFMElementViewer:PopulateFromUDMData(rootNode)
 	if(util.is_valid(self.m_tree) == false) then return end
 	self.m_tree:Clear()
+	self.m_data:Clear()
 	self:AddUDMNode(nil,rootNode,"root",self.m_tree,self.m_tree)
 	self.m_tree:Update()
 	self:UpdateDataElementPositions()
@@ -303,6 +334,26 @@ function gui.PFMElementViewer:AddUDMNode(parent,node,name,elTreeParent,elTreePre
 							local el = node
 							if(util.get_type_name(el) == "Property") then el = udm.LinkedPropertyWrapper(el) end
 							self:CopyToClipboard(el)
+						end)
+						pContext:AddItem(locale.get_text("import"),function()
+							local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
+								if(fileName == nil) then return end
+								local udmData,err = udm.load(fileName)
+								if(udmData == false) then
+									console.print_warning("Unable to open UDM file: ",err)
+									return
+								end
+
+								local assetData = udmData:GetAssetData()
+								node:Merge(assetData:GetData(),udm.MERGE_FLAG_BIT_DEEP_COPY)
+
+								elTreeChild:Collapse()
+								elTreeChild:Expand()
+
+								self:UpdateSaveButton(false)
+							end)
+							pFileDialog:SetRootPath("") -- self.m_rootPath or "")
+							pFileDialog:Update()
 						end)
 
 						local types = {}
