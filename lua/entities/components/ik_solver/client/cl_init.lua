@@ -6,75 +6,158 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/util/ik_rig.lua")
+
 local Component = util.register_class("ents.IkSolver",BaseEntityComponent)
 
 Component:RegisterMember("IkRig",ents.MEMBER_TYPE_ELEMENT,"",{
 	onChange = function(self)
 		self:UpdateIkRig()
-	end,
-	flags = ents.ComponentInfo.MemberInfo.FLAG_MEMBER_CONTROLLER_BIT
+	end
 },bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT))
+
+Component:RegisterMember("IkRigFile",udm.TYPE_STRING,"",{
+	specializationType = ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE,
+	onChange = function(c)
+		c:UpdateIkRigFile()
+	end,
+	metaData = {
+		rootPath = "scripts/ik_rigs/",
+		extensions = util.IkRig.extensions,
+		stripExtension = true
+	}
+})
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 end
-function Component:UpdateIkRig()
+function Component:UpdateIkRigFile()
+	local ikRig = util.IkRig.load(self:GetIkRigFile())
+	if(ikRig == false) then return end
+	self:AddIkSolverByRig(ikRig)
+end
+function Component:AddIkSolverByRig(rig)
 	local mdl = self:GetEntity():GetModel()
-	local skel = mdl:GetSkeleton()
-	self.m_skipUdm = true
-	for _,bone in ipairs(self:GetIkRig():Get("bones"):GetArrayValues()) do
-		local boneId = skel:LookupBone(bone:GetValue("name",udm.TYPE_STRING))
-		if(boneId ~= -1) then
-			local pose = mdl:GetReferencePose():GetBonePose(boneId)
-			local ikBone = self:AddSimpleBone(boneId)
-			if(ikBone ~= nil) then
-				local locked = bone:GetValue("locked",udm.TYPE_BOOLEAN)
-				ikBone:SetPinned(locked)
-			end
+	local skeleton = (mdl ~= nil) and mdl:GetSkeleton() or nil
+	if(skeleton == nil) then return end
+	for _,boneData in ipairs(rig:GetBones()) do
+		local boneId = skeleton:LookupBone(boneData.name)
+		if(boneId == -1) then return false end
+		self:AddSimpleBone(boneId)
+		if(boneData.locked) then self:SetBoneLocked(boneId,true) end
+	end
+
+	for _,controlData in ipairs(rig:GetControls()) do
+		local boneId = skeleton:LookupBone(controlData.bone)
+		if(boneId == -1) then return false end
+		if(controlData.type == "drag") then
+			self:AddDragControl(boneId)
+		elseif(controlData.type == "state") then
+			self:AddStateControl(boneId)
 		end
 	end
-	for _,handle in ipairs(self:GetIkRig():Get("handles"):GetArrayValues()) do
-		local boneId = skel:LookupBone(handle:GetValue("bone",udm.TYPE_STRING))
-		if(boneId ~= -1) then
-			local type = handle:GetValue("type",udm.TYPE_STRING)
-			if(type == "drag") then self:AddDragControl(boneId)
-			else self:AddStateControl(boneId) end
+
+	for _,constraintData in ipairs(rig:GetConstraints()) do
+		local boneId0 = skeleton:LookupBone(constraintData.bone0)
+		local boneId1 = skeleton:LookupBone(constraintData.bone1)
+		if(boneId0 == -1 or boneId1 == -1) then return false end
+		if(constraintData.type == "fixed") then
+			self:AddFixedConstraint(boneId0,boneId1)
+		elseif(constraintData.type == "hinge") then
+			self:AddHingeConstraint(boneId0,boneId1,constraintData.min,constraintData.max)
+		elseif(constraintData.type == "ballSocket") then
+			self:AddBallSocketJoint(boneId0,boneId1,constraintData.min,constraintData.max)
 		end
 	end
-	for _,constraint in ipairs(self:GetIkRig():Get("constraints"):GetArrayValues()) do
-		local bone0 = constraint:GetValue("bone0",udm.TYPE_STRING)
-		local bone1 = constraint:GetValue("bone1",udm.TYPE_STRING)
-		if(bone0 ~= nil and bone1 ~= nil) then
-			local boneId0 = skel:LookupBone(bone0)
-			local boneId1 = skel:LookupBone(bone1)
-			if(boneId0 ~= -1 and boneId1 ~= -1) then
-				local minLimits = EulerAngles(-90,-90,-0.5)
-				local maxLimits = EulerAngles(90,90,0.5)
-				self:AddBallSocketJoint(boneId0,boneId1,minLimits,maxLimits)
-			end
-		end
+	-- self:OnMembersChanged()
+	return true
+end
+function Component:AddIkSolverByChain(boneName,chainLength,ikName,offsetPose)
+	chainLength = chainLength +1
+	ikName = ikName or boneName
+
+	local ent = self:GetEntity()
+	local mdl = ent:GetModel()
+	if(mdl == nil) then return false end
+	local skeleton = mdl:GetSkeleton()
+	local ref = mdl:GetReferencePose()
+
+	local ikChain = {}
+	local boneId = skeleton:LookupBone(boneName)
+	if(boneId == -1) then return false end
+
+	-- TODO: Remove existing solver?
+
+	local bone = skeleton:GetBone(boneId)
+	for i=1,chainLength do
+		if(bone == nil) then return false end
+		table.insert(ikChain,1,bone:GetID())
+		bone = bone:GetParent()
 	end
-	self.m_skipUdm = nil
+
+	if(#ikChain == 0) then return false end
+	offsetPose = offsetPose or math.Transform()
+
+	local rig = util.IkRig()
+	for _,id in ipairs(ikChain) do
+		local bone = skeleton:GetBone(id)
+		rig:AddBone(bone:GetName())
+	end
+
+	-- Pin the top-most parent of the chain (e.g. shoulder)
+	rig:SetBoneLocked(skeleton:GetBone(ikChain[1]):GetName(),true)
+
+	-- Add handles for all other bones in the chain (e.g. forearm or hand)
+	for i=3,#ikChain do
+		-- We want to be able to control the rotation of the last element in the chain (the effector), but
+		-- not the other elements
+		if(i == #ikChain) then rig:AddStateControl(skeleton:GetBone(ikChain[i]):GetName())
+		else rig:AddDragControl(skeleton:GetBone(ikChain[i]):GetName()) end
+	end
+
+	-- Add generic ballsocket constraints with no twist
+	for i=2,#ikChain do
+		-- We need to allow some minor twisting to avoid instability
+		rig:AddBallSocketConstraint(
+			skeleton:GetBone(ikChain[i -1]):GetName(),
+			skeleton:GetBone(ikChain[i]):GetName(),
+			EulerAngles(-90,-90,-0.5),
+			EulerAngles(90,90,0.5)
+		)
+		--solverC:AddBallSocketJoint(ikChain[i -1],ikChain[i],EulerAngles(-90,-90,-0.5),EulerAngles(90,90,0.5))
+	end
+	self:AddIkSolverByRig(rig)
+	rig:ToUdmData(self:GetIkRig())
+
+			--[[add_hinge_constaint("Bind_LeftUpLeg","Bind_LeftLeg",-10,60)
+			add_fixed_constaint("Bind_LeftLeg","Bind_LeftFoot",EulerAngles(-20,-40,-5),EulerAngles(20,10,5))
+			solverC:AddDragControl(skeleton:LookupBone("Bind_LeftFoot"))
+			solverC:GetIkBone(skeleton:LookupBone("Bind_LeftUpLeg")):SetPinned(true)]]
+	-- TODO: Lock top-most bone
+	-- TODO: Add handles for all others
+	-- TODO: Ballsocket constraints with no wist?
+
+	--local ikBone = solverC:AddBone(bone:GetID(),get_bone_pos(bone:GetID()), get_bone_rot(bone:GetID()), 1, 1);
+	--self:AddIkController(ikName,ikChain,offsetPose)
+
+	--[[local pose = ent:GetPose() *ref:GetBonePose(boneId)
+	self:SetMemberValue("effector/" .. ikName .. "/position",pose:GetOrigin())
+	self:SetMemberValue("effector/" .. ikName .. "/rotation",pose:GetRotation())]]
+	return true
+end
+function Component:UpdateIkRig()
+	local rig = util.IkRig.load_from_udm_data(self:GetIkRig())
+	if(rig == false) then return false end
+	self:AddIkSolverByRig(rig)
+	return true
 end
 function Component:OnEntitySpawn()
-	self:GetIkRig():AddArray("bones",0,udm.TYPE_ELEMENT)
-	self:GetIkRig():AddArray("constraints",0,udm.TYPE_ELEMENT)
-	self:GetIkRig():AddArray("handles",0,udm.TYPE_ELEMENT)
-
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 	self:InitializeSolver()
 end
-function Component:ClearBoneModels()
-	if(self.m_bones == nil) then return end
-	for _,boneData in ipairs(self.m_bones) do
-		util.remove(boneData.entity)
-	end
-end
 function Component:OnRemove()
-	self:ClearBoneModels()
 end
 function Component:InitializeSolver()
-	self:ClearBoneModels()
 	local solver = ik.Solver(100,10)
 	self.m_solver = solver
 	self.m_relationships = {}
@@ -132,15 +215,6 @@ function Component:AddBallSocketJoint(boneId0,boneId1,minLimits,maxLimits)
 
 	self.m_solver:AddTwistLimit(bone0,bone1,rotBone1WithOffset:GetForward(),rotBone1:GetForward(),math.rad(maxLimits.r -minLimits.r)):SetRigidity(1000)
 
-	if(self.m_skipUdm ~= true) then
-		local mdl = self:GetEntity():GetModel()
-		local skeleton = mdl:GetSkeleton()
-		local udmConstraints = self:GetIkRig():Get("constraints")
-		udmConstraints:Resize(udmConstraints:GetSize() +1)
-		local udmConstraint = udmConstraints:Get(udmConstraints:GetSize() -1)
-		udmConstraint:SetValue("bone0",udm.TYPE_STRING,skeleton:GetBone(boneId0):GetName())
-		udmConstraint:SetValue("bone1",udm.TYPE_STRING,skeleton:GetBone(boneId1):GetName())
-	end
 	--self:GetIkRig():AddArray("constraints",udm.TYPE_ELEMENT)
 
 	--[[local pose0 = self:GetReferenceBonePose(boneId0)
@@ -271,15 +345,6 @@ function Component:SetBoneLocked(boneId,locked)
 	local ikBone = self:GetIkBone(boneId)
 	if(ikBone == nil) then return end
 	ikBone:SetPinned(locked)
-
-	for i,boneData in ipairs(self.m_bones) do
-		if(boneData.boneId == boneId) then
-			local udmBones = self:GetIkRig():Get("bones")
-			local udmBone = udmBones:Get(i -1)
-			udmBone:SetValue("locked",udm.TYPE_BOOLEAN,locked)
-			break
-		end
-	end
 end
 function Component:AddSimpleBone(id)
 	local ent = self:GetEntity()
@@ -301,14 +366,7 @@ function Component:AddBone(boneId,pos,rot,radius,length,parent)
 	local bone = self.m_solver:AddBone(pos,rot,radius,length)
 	if(parent ~= nil) then table.insert(self.m_relationships,{parent,bone}) end
 
-	local mdl = game.Model.create_cylinder(radius,length,4)
-
-	local ent = ents.create("prop_dynamic")
-	ent:SetModel(mdl)
-	ent:Spawn()
-
 	table.insert(self.m_bones,{
-		entity = ent,
 		bone = bone,
 		length = length,
 		radius = radius,
@@ -316,13 +374,6 @@ function Component:AddBone(boneId,pos,rot,radius,length,parent)
 	})
 	self.m_boneIdToIkBoneId[boneId] = #self.m_bones -1
 	self.m_ikBoneIdToBoneId[#self.m_bones -1] = boneId
-	if(self.m_skipUdm ~= true) then
-		local udmBones = self:GetIkRig():Get("bones")
-		udmBones:Resize(udmBones:GetSize() +1)
-		local udmBone = udmBones:Get(udmBones:GetSize() -1)
-		udmBone:SetValue("name",udm.TYPE_STRING,self:GetEntity():GetModel():GetSkeleton():GetBone(boneId):GetName())
-		udmBone:SetValue("locked",udm.TYPE_BOOLEAN,false)
-	end
 	return bone
 end
 function Component:GetIkBone(id)
@@ -405,16 +456,6 @@ function Component:AddControl(boneId,translation,rotation)
 
 	self:SetMemberValue("control/" .. name .. "/position",bone:GetPos())
 	if(rotation) then self:SetMemberValue("control/" .. name .. "/rotation",bone:GetRot()) end
-
-	if(self.m_skipUdm ~= true) then
-		local udmHandles = self:GetIkRig():Get("handles")
-		udmHandles:Resize(udmHandles:GetSize() +1)
-		local udmHandle = udmHandles:Get(udmHandles:GetSize() -1)
-		udmHandle:SetValue("bone",udm.TYPE_STRING,name)
-
-		if(not rotation) then udmHandle:SetValue("type",udm.TYPE_STRING,"drag")
-		else udmHandle:SetValue("type",udm.TYPE_STRING,"state") end
-	end
 end
 function Component:AddDragControl(boneId)
 	return self:AddControl(boneId,true,false)
@@ -454,17 +495,6 @@ function Component:OnTick(dt)
 	
 	dbgInfo:SetColor(Color.Aqua)
 	--debug.draw_line(self.m_bones[1]:GetPos(),self.m_bones[2]:GetPos(),dbgInfo)
-
-	for _,boneData in ipairs(self.m_bones) do
-		if(boneData.entity:IsValid()) then
-			local pose = self:GetEntity():GetPose() *math.Transform(boneData.bone:GetPos(),boneData.bone:GetRot() *EulerAngles(90,0,0):ToQuaternion())
-			boneData.entity:SetPose(pose)
-
-			local pose = boneData.entity:GetPose()
-			--pose:TranslateLocal(Vector(boneData.length,0,0))
-			boneData.entity:SetPose(pose)
-		end
-	end
 
 	--[[if(self.m_handleControls[effectorIdx] ~= nil) then
 		dbgInfo:SetColor(Color.Aqua)

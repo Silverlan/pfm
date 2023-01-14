@@ -1988,13 +1988,17 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 				filmmaker:GoToWindow("element_viewer")
 				if(util.is_valid(el)) then
 					local elUdm = controlData.getValue()
+					local rootPath
+					if(memberInfo.metaData ~= nil) then
+						rootPath = memberInfo.metaData:GetValue("rootPath",udm.TYPE_STRING)
+					end
 					el:InitializeFromUdmElement(elUdm,nil,function()
 						local entActor,c,memberIdx,info = controlData.getActor()
 						if(info == nil) then return true end
 						if(controlData.set ~= nil) then controlData.set(udmComponent,elUdm) end
 						-- c:OnMemberValueChanged(memberIdx)
 						return true
-					end)
+					end,rootPath)
 				end
 			end)
 			ctrl = bt
@@ -2339,9 +2343,9 @@ end
 function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
 	if(chainLength <= 1) then return false end
 
-	local c = self:CreateNewActorComponent(actor,"pfm_fbik",false)
 	local solverC = self:CreateNewActorComponent(actor,"ik_solver",false)
-	if(c == nil or solverC == nil) then return false end
+	self:CreateNewActorComponent(actor,"pfm_fbik",false)
+	if(solverC == nil) then return false end
 
 	local ent = actor:FindEntity()
 	if(util.is_valid(ent) == false) then return false end
@@ -2350,21 +2354,18 @@ function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
 	local boneId = mdl:LookupBone(boneName)
 	if(boneId == -1) then return false end
 
-	local pfmIk = util.is_valid(ent) and ent:AddComponent("pfm_fbik") or nil
-	if(pfmIk == nil) then return false end
-	local bone = skeleton:GetBone(boneId)
-	ikName = ikName or bone:GetName()
-
+	ent:AddComponent("ik_solver")
 	self:UpdateActorComponents(actor)
 
 	ent = actor:FindEntity()
-	pfmIk = util.is_valid(ent) and ent:GetComponent("pfm_fbik") or nil
-	if(pfmIk ~= nil) then
-		pfmIk:AddIkSolverByChain(boneName,chainLength,ikName)
-		local ikSolverC = ent:GetComponent(ents.COMPONENT_IK_SOLVER)
-		local memberId = ikSolverC:GetMemberIndex("IkRig")
-		if(memberId ~= nil) then ikSolverC:OnMemberValueChanged(memberId) end
-	end
+	local ikSolverC = util.is_valid(ent) and ent:AddComponent("ik_solver") or nil
+	if(ikSolverC == nil) then return false end
+	local bone = skeleton:GetBone(boneId)
+	ikName = ikName or bone:GetName()
+
+	ikSolverC:AddIkSolverByChain(boneName,chainLength,ikName)
+	local memberId = ikSolverC:GetMemberIndex("IkRig")
+	if(memberId ~= nil) then ikSolverC:OnMemberValueChanged(memberId) end
 
 	local componentId = ents.find_component_id("ik_solver")
 	if(componentId ~= nil) then

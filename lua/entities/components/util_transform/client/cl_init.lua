@@ -34,9 +34,33 @@ function Component:SetScaleAxisEnabled(axis,enabled)
 	self.m_scaleAxisEnabled[axis] = enabled
 	self:ScheduleUpdate()
 end
-function Component:IsTranslationAxisEnabled(axis) return self:IsTranslationEnabled() and self.m_translationAxisEnabled[axis] end
-function Component:IsRotationAxisEnabled(axis) return self:IsRotationEnabled() and self.m_rotationAxisEnabled[axis] end
-function Component:IsScaleAxisEnabled(axis) return self:IsScaleEnabled() and self.m_scaleAxisEnabled[axis] end
+function Component:IsTranslationAxisEnabled(axis)
+	if(axis > ents.UtilTransformArrowComponent.AXIS_Z) then
+		if(axis == ents.UtilTransformArrowComponent.AXIS_XY) then return self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_X) and self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Y) end
+		if(axis == ents.UtilTransformArrowComponent.AXIS_XZ) then return self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_X) and self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z) end
+		if(axis == ents.UtilTransformArrowComponent.AXIS_YZ) then return self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Y) and self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z) end
+		if(axis == ents.UtilTransformArrowComponent.AXIS_XYZ) then return self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_X) and self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Y) and self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z) end
+	end
+	return self:IsTranslationEnabled() and self.m_translationAxisEnabled[axis]
+end
+function Component:IsRotationAxisEnabled(axis)
+	if(axis > ents.UtilTransformArrowComponent.AXIS_Z) then
+		if(axis == ents.UtilTransformArrowComponent.AXIS_XY) then return self:IsRotationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_X) and self:IsRotationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Y) end
+		if(axis == ents.UtilTransformArrowComponent.AXIS_XZ) then return self:IsRotationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_X) and self:IsRotationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z) end
+		if(axis == ents.UtilTransformArrowComponent.AXIS_YZ) then return self:IsRotationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Y) and self:IsRotationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z) end
+		if(axis == ents.UtilTransformArrowComponent.AXIS_XYZ) then return self:IsRotationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_X) and self:IsRotationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Y) and self:IsRotationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z) end
+	end
+	return self:IsRotationEnabled() and self.m_rotationAxisEnabled[axis]
+end
+function Component:IsScaleAxisEnabled(axis)
+	if(axis > ents.UtilTransformArrowComponent.AXIS_Z) then
+		if(axis == ents.UtilTransformArrowComponent.AXIS_XY) then return self:IsScaleAxisEnabled(ents.UtilTransformArrowComponent.AXIS_X) and self:IsScaleAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Y) end
+		if(axis == ents.UtilTransformArrowComponent.AXIS_XZ) then return self:IsScaleAxisEnabled(ents.UtilTransformArrowComponent.AXIS_X) and self:IsScaleAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z) end
+		if(axis == ents.UtilTransformArrowComponent.AXIS_YZ) then return self:IsScaleAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Y) and self:IsScaleAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z) end
+		if(axis == ents.UtilTransformArrowComponent.AXIS_XYZ) then return self:IsScaleAxisEnabled(ents.UtilTransformArrowComponent.AXIS_X) and self:IsScaleAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Y) and self:IsScaleAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z) end
+	end
+	return self:IsScaleEnabled() and self.m_scaleAxisEnabled[axis]
+end
 
 if(util.get_class_value(Component,"SetSpaceBase") == nil) then Component.SetSpaceBase = Component.SetSpace end
 function Component:SetSpace(space)
@@ -79,17 +103,20 @@ function Component:UpdateAxes()
 		else self:RemoveTransformUtility("scale",i,ents.UtilTransformArrowComponent.TYPE_SCALE) end
 	end
 
-	if(self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_X)) then self:CreateTransformUtility("xy",ents.UtilTransformArrowComponent.AXIS_XY,ents.UtilTransformArrowComponent.TYPE_TRANSLATION)
-	else self:RemoveTransformUtility("xy",ents.UtilTransformArrowComponent.AXIS_X,ents.UtilTransformArrowComponent.TYPE_TRANSLATION) end
+	if(self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_XY)) then self:CreateTransformUtility("xy",ents.UtilTransformArrowComponent.AXIS_XY,ents.UtilTransformArrowComponent.TYPE_TRANSLATION)
+	else self:RemoveTransformUtility("xy",ents.UtilTransformArrowComponent.AXIS_XY,ents.UtilTransformArrowComponent.TYPE_TRANSLATION) end
 
-	if(self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Y)) then self:CreateTransformUtility("yz",ents.UtilTransformArrowComponent.AXIS_YZ,ents.UtilTransformArrowComponent.TYPE_TRANSLATION)
-	else self:RemoveTransformUtility("yz",ents.UtilTransformArrowComponent.AXIS_Y,ents.UtilTransformArrowComponent.TYPE_TRANSLATION) end
+	if(self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_YZ)) then self:CreateTransformUtility("yz",ents.UtilTransformArrowComponent.AXIS_YZ,ents.UtilTransformArrowComponent.TYPE_TRANSLATION)
+	else self:RemoveTransformUtility("yz",ents.UtilTransformArrowComponent.AXIS_YZ,ents.UtilTransformArrowComponent.TYPE_TRANSLATION) end
 
-	if(self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z)) then self:CreateTransformUtility("xz",ents.UtilTransformArrowComponent.AXIS_XZ,ents.UtilTransformArrowComponent.TYPE_TRANSLATION)
-	else self:RemoveTransformUtility("xz",ents.UtilTransformArrowComponent.AXIS_Y,ents.UtilTransformArrowComponent.TYPE_TRANSLATION) end
+	if(self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_XZ)) then self:CreateTransformUtility("xz",ents.UtilTransformArrowComponent.AXIS_XZ,ents.UtilTransformArrowComponent.TYPE_TRANSLATION)
+	else self:RemoveTransformUtility("xz",ents.UtilTransformArrowComponent.AXIS_XZ,ents.UtilTransformArrowComponent.TYPE_TRANSLATION) end
 
-	if(self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_Z)) then self:CreateTransformUtility("xyz",ents.UtilTransformArrowComponent.AXIS_XYZ,ents.UtilTransformArrowComponent.TYPE_TRANSLATION)
-	else self:RemoveTransformUtility("xyz",ents.UtilTransformArrowComponent.AXIS_Y,ents.UtilTransformArrowComponent.TYPE_TRANSLATION) end
+	if(self:IsTranslationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_XYZ)) then self:CreateTransformUtility("xyz",ents.UtilTransformArrowComponent.AXIS_XYZ,ents.UtilTransformArrowComponent.TYPE_TRANSLATION)
+	else self:RemoveTransformUtility("xyz",ents.UtilTransformArrowComponent.AXIS_XYZ,ents.UtilTransformArrowComponent.TYPE_TRANSLATION) end
+
+	--if(self:IsRotationAxisEnabled(ents.UtilTransformArrowComponent.AXIS_XY)) then self:CreateTransformUtility("rotation",ents.UtilTransformArrowComponent.AXIS_XY,ents.UtilTransformArrowComponent.TYPE_ROTATION)
+	--else self:RemoveTransformUtility("rotation",ents.UtilTransformArrowComponent.AXIS_XY,ents.UtilTransformArrowComponent.TYPE_ROTATION) end
 
 	self:UpdateSpace()
 end

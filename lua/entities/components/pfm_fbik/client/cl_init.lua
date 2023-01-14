@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/util/ik_rig.lua")
+
 include_component("ik_solver")
 
 local Component = util.register_class("ents.PFMFbIk",BaseEntityComponent)
@@ -54,75 +56,6 @@ function Component:AddBone(id)
 end
 function Component:UpdateIkRig()
 	
-end
-function Component:AddIkSolverByChain(boneName,chainLength,ikName,offsetPose)
-	chainLength = chainLength +1
-	local solverC = self:GetEntityComponent(ents.COMPONENT_IK_SOLVER)
-	if(solverC == nil) then return false end
-	ikName = ikName or boneName
-
-	local ent = self:GetEntity()
-	local mdl = ent:GetModel()
-	if(mdl == nil) then return false end
-	local skeleton = mdl:GetSkeleton()
-	local ref = mdl:GetReferencePose()
-
-	local ikChain = {}
-	local boneId = skeleton:LookupBone(boneName)
-	if(boneId == -1) then return false end
-
-	-- TODO: Remove existing solver?
-
-	local bone = skeleton:GetBone(boneId)
-	for i=1,chainLength do
-		if(bone == nil) then return false end
-		table.insert(ikChain,1,bone:GetID())
-		bone = bone:GetParent()
-	end
-
-	if(#ikChain == 0) then return false end
-	offsetPose = offsetPose or math.Transform()
-
-	local ikSolverC = self:GetEntityComponent(ents.COMPONENT_IK_SOLVER)
-	if(ikSolverC == nil) then return false end
-
-	for _,id in ipairs(ikChain) do
-		self:AddBone(id)
-	end
-
-	-- Pin the top-most parent of the chain (e.g. shoulder)
-	solverC:SetBoneLocked(ikChain[1],true)
-
-	-- Add handles for all other bones in the chain (e.g. forearm or hand)
-	for i=3,#ikChain do
-		-- We want to be able to control the rotation of the last element in the chain (the effector), but
-		-- not the other elements
-		if(i == #ikChain) then solverC:AddStateControl(ikChain[i])
-		else solverC:AddDragControl(ikChain[i]) end
-	end
-
-	-- Add generic ballsocket constraints with no twist
-	for i=2,#ikChain do
-		-- We need to allow some minor twisting to avoid instability
-		solverC:AddBallSocketJoint(ikChain[i -1],ikChain[i],EulerAngles(-90,-90,-0.5),EulerAngles(90,90,0.5))
-		--solverC:AddBallSocketJoint(ikChain[i -1],ikChain[i],EulerAngles(-90,-90,-0.5),EulerAngles(90,90,0.5))
-	end
-
-			--[[add_hinge_constaint("Bind_LeftUpLeg","Bind_LeftLeg",-10,60)
-			add_fixed_constaint("Bind_LeftLeg","Bind_LeftFoot",EulerAngles(-20,-40,-5),EulerAngles(20,10,5))
-			solverC:AddDragControl(skeleton:LookupBone("Bind_LeftFoot"))
-			solverC:GetIkBone(skeleton:LookupBone("Bind_LeftUpLeg")):SetPinned(true)]]
-	-- TODO: Lock top-most bone
-	-- TODO: Add handles for all others
-	-- TODO: Ballsocket constraints with no wist?
-
-	--local ikBone = solverC:AddBone(bone:GetID(),get_bone_pos(bone:GetID()), get_bone_rot(bone:GetID()), 1, 1);
-	--self:AddIkController(ikName,ikChain,offsetPose)
-
-	--[[local pose = ent:GetPose() *ref:GetBonePose(boneId)
-	self:SetMemberValue("effector/" .. ikName .. "/position",pose:GetOrigin())
-	self:SetMemberValue("effector/" .. ikName .. "/rotation",pose:GetRotation())]]
-	return true
 end
 function Component:InitializeSolver(solver)
 	--self:GetEntity():SetModel("player/soldier")
