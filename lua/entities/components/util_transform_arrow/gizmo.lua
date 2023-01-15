@@ -46,7 +46,7 @@ function Component:UpdateGizmo()
 	local vAxis = self:GetAxisVector()
 	local type = self:GetType()
 	if(type == Component.TYPE_TRANSLATION) then
-		local localToggle = self:GetSpace() == ents.UtilTransformComponent.SPACE_LOCAL or self:IsRelative()
+		local localToggle = self:GetSpace() == ents.UtilTransformComponent.SPACE_LOCAL
 		local pose = math.Transform()
 		if(localToggle) then pose:SetRotation(self.m_transformComponent:GetEntity():GetRotation())
 		elseif(space == ents.UtilTransformComponent.SPACE_VIEW) then
