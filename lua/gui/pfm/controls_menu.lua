@@ -58,6 +58,17 @@ function gui.PFMControlsMenu:AddFileEntry(name,identifier,default,callback)
 	if(identifier ~= nil) then self:AddControl(identifier,el,wrapper,default) end
 	return el,wrapper
 end
+function gui.PFMControlsMenu:AddText(name,identifier,default)
+	local el = gui.create("WIText",self)
+	el:SetTooltip(name .. "_desc")
+	el:SetText(default)
+	el:SizeToContents()
+	el:SetHeight(32)
+	local wrapper = el:Wrap("WIEditableEntry")
+	wrapper:SetText(name)
+	if(identifier ~= nil) then self:AddControl(identifier,el,wrapper,default) end
+	return el,wrapper
+end
 function gui.PFMControlsMenu:AddTextEntry(name,identifier,default,callback)
 	local el = gui.create("WITextEntry",self)
 	el:AddCallback("OnTextEntered",function(...)

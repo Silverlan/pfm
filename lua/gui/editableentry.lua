@@ -38,6 +38,11 @@ function gui.EditableEntry:OnInitialize()
 				self.m_target:SetVisible(false)
 			end)
 			elChild:SetVisible(false)
+		elseif(elChild:GetClass() == "witext") then
+			elChild:AddCallback("OnTextChanged",function()
+				self:UpdateText()
+			end)
+			elChild:SetVisible(false)
 		elseif(elChild:GetClass() == "wipfmcolorentry") then
 			self:RemoveStyleClass("input_field")
 			self:AddStyleClass("input_field_outline")
@@ -175,6 +180,7 @@ function gui.EditableEntry:OnThink()
 end
 function gui.EditableEntry:StartEditMode(enabled)
 	if(self.m_activeTarget) then return end
+	if(util.is_valid(self.m_target) and self.m_target:GetClass() == "witext") then return end
 	self:SetThinkingEnabled(enabled)
 	self.m_descContainer:SetVisible(not enabled)
 	if(util.is_valid(self.m_target)) then
@@ -204,6 +210,7 @@ function gui.EditableEntry:UpdateText(value)
 				if(selectedOption ~= -1) then value = self.m_target:GetOptionText(selectedOption)
 				else value = self.m_target:GetText() end
 			elseif(self.m_target:GetClass() == "witoggleoption") then value = self.m_target:IsChecked() and "1" or "0"
+			elseif(self.m_target:GetClass() == "witext") then value = self.m_target:GetText()
 			else value = tostring(self.m_target:GetValue()) end
 			if(#value == 0) then value = "-" end
 		else value = "" end
