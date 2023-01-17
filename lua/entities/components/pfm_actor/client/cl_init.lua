@@ -143,7 +143,7 @@ function Component:OnRemove()
 	util.remove(self.m_listeners)
 end
 
-function Component:OnEntitySpawn()
+function Component:ApplyPropertyValues()
 	local actorData = self:GetActorData()
 	if(actorData ~= nil) then
 		local ent = self:GetEntity()
@@ -151,6 +151,9 @@ function Component:OnEntitySpawn()
 
 		self:InitializeComponentProperties()
 	end
+end
+
+function Component:OnEntitySpawn()
 end
 
 function Component:SetDefaultRenderMode(renderMode,useIfTurnedOff)

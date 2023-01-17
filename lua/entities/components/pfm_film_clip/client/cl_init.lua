@@ -185,13 +185,20 @@ end
 
 function ents.PFMFilmClip:InitializeActors()
 	-- Only create actors that don't exist in the scene yet!
+	local newActors = {}
 	local actorDataToEnt = {}
 	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR)}) do
 		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 		actorDataToEnt[actorC:GetActorData()] = ent
 	end
 	for _,actorData in ipairs(self.m_filmClipData:GetActorList()) do
-		if(actorDataToEnt[actorData] == nil) then self:CreateActor(actorData) end
+		if(actorDataToEnt[actorData] == nil) then
+			local ent = self:CreateActor(actorData)
+			table.insert(newActors,ent)
+		end
+	end
+	for _,ent in ipairs(newActors) do
+		if(ent:IsValid()) then ent:Spawn() end
 	end
 end
 
@@ -207,7 +214,8 @@ function ents.PFMFilmClip:CreateActor(actor)
 			end
 		end
 	end
-	entActor:Spawn()
+	actorC:ApplyPropertyValues()
+	-- entActor:Spawn()
 	table.insert(self.m_actors,entActor)
 
 	local pos = entActor:GetPos()
@@ -231,6 +239,7 @@ function ents.PFMFilmClip:CreateActor(actor)
 		projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ACTOR_CREATED,{actorC})
 		projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED,{actorC:GetEntity()})
 	end
+	return entActor
 end
 
 function ents.PFMFilmClip:GetProject()
