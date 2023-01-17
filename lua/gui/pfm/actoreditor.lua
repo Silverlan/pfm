@@ -2001,7 +2001,16 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 
 	local ctrl
 	if(controlData.path ~= nil) then
-		if(memberInfo.type == ents.MEMBER_TYPE_ENTITY) then
+		if(memberInfo:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_READ_ONLY_BIT)) then
+			local elText,wrapper = self.m_animSetControls:AddText(baseMemberName,memberInfo.name,controlData.default or "")
+			if(controlData.getValue ~= nil) then
+				controlData.updateControlValue = function()
+					if(elText:IsValid() == false) then return end
+					local val = controlData.getValue()
+					if(val ~= nil) then elText:SetText(val) end
+				end
+			end
+			ctrl = wrapper
 			local elText,wrapper = self.m_animSetControls:AddTextEntry(baseMemberName,memberInfo.name,controlData.default or "",function(el)
 				if(self.m_skipUpdateCallback) then return end
 				if(controlData.set ~= nil) then controlData.set(udmComponent,el:GetText(),nil,nil,true) end
