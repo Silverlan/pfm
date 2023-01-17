@@ -1,0 +1,7 @@
+#ifndef F_SH_PARTICLE_ANIMATED_SPRITES_GLS
+#define F_SH_PARTICLE_ANIMATED_SPRITES_GLS
+
+#define PUSH_USER_CONSTANTS \
+	float cameraBias;
+
+#endif
