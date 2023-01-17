@@ -100,7 +100,7 @@ function pfm.AnimationManager:AddChannel(anim,channelClip,channelPath,type)
 	return animChannel
 end
 
-function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists,type)
+function pfm.AnimationManager:FindAnimation(actor,addIfNotExists)
 	if(self.m_filmClip == nil or self.m_filmClip == nil) then return end
 	local animClip,newAnim = self.m_filmClip:FindActorAnimationClip(actor,addIfNotExists)
 	if(animClip == nil) then return end
@@ -109,7 +109,11 @@ function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists,typ
 		local ent = actor:FindEntity()
 		if(ent ~= nil) then self:PlayActorAnimation(ent) end
 	end
-	local anim = animClip:GetPanimaAnimation()
+	return animClip:GetPanimaAnimation(),animClip,newAnim
+end
+
+function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists,type)
+	local anim,animClip,newAnim = self:FindAnimation(actor,addIfNotExists)
 	if(anim == nil) then return end
 	local channel = anim:FindChannel(path)
 	local newChannel = false
