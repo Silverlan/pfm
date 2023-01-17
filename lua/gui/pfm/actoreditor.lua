@@ -1224,6 +1224,20 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				end
 				self:TagRenderSceneAsDirty()
 			end)
+			if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
+				pContext:AddItem("Assign component to x",function()
+					local entActor = ents.find_by_uuid(uniqueId)
+					local c = (entActor ~= nil) and entActor:GetComponent(componentId) or nil
+					if(c == nil) then return end
+					x = c
+				end)
+				pContext:AddItem("Assign component to y",function()
+					local entActor = ents.find_by_uuid(uniqueId)
+					local c = (entActor ~= nil) and entActor:GetComponent(componentId) or nil
+					if(c == nil) then return end
+					y = c
+				end)
+			end
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
 		end
