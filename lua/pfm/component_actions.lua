@@ -315,3 +315,19 @@ pfm.register_component_action("pfm_region_carver","pfm_remove_outside_actors","r
 	end)
 	return bt
 end)
+
+-------------------
+
+pfm.register_component_action("pfm_vr_tracked_device","pfm_vr_identify_device","vr_identify_device",function(controls,actorData,entActor,actionData)
+	local bt = gui.create("WIPFMActionButton",controls)
+	bt:SetText(locale.get_text("vr_identify_device"))
+	bt:AddCallback("OnPressed",function()
+		if(util.is_valid(entActor) == false) then return end
+		local c = entActor:GetComponent(ents.COMPONENT_PFM_VR_TRACKED_DEVICE)
+		local tdC = (c ~= nil) and c:GetTrackedDevice()
+		if(tdC ~= nil) then
+			tdC:TriggerHapticPulse()
+		end
+	end)
+	return bt
+end)

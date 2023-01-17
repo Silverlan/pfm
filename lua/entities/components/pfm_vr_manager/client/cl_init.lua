@@ -6,10 +6,16 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include_component("pfm_vr_tracked_device")
+
+pfm.register_log_category("pfm_vr")
+
 local Component = util.register_class("ents.PFMVrManager",BaseEntityComponent)
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
+
+	self.m_trackedDevices = {}
 end
 function Component:OnEntitySpawn()
 	local entHmd = ents.create("vr_hmd")
@@ -20,6 +26,10 @@ function Component:OnEntitySpawn()
 	local hmdC = entHmd:GetComponent(ents.COMPONENT_VR_HMD)
 	if(hmdC ~= nil) then
 		hmdC:SetOwner(ents.get_local_player():GetEntity())
+		self.m_cbOnTrackedDeviceAdded = hmdC:AddEventCallback(ents.VRHMD.EVENT_ON_TRACKED_DEVICE_ADDED,function(tdC) self:InitializeTrackedDevice(tdC) end)
+		for _,tdC in pairs(hmdC:GetTrackedDevices()) do
+			if(tdC:IsValid()) then self:InitializeTrackedDevice(tdC) end
+		end
 	end
 
 	local pm = tool.get_filmmaker()
@@ -40,10 +50,55 @@ function Component:OnEntitySpawn()
 
 	console.run("vr_hide_primary_game_scene","0")
 end
+function Component:InitializeTrackedDevice(tdC)
+	local serialNumber = tdC:GetSerialNumber()
+	pfm.log("Initializing tracked device " .. tostring(serialNumber) .. "...",pfm.LOG_CATEGORY_PFM_VR)
+	if(serialNumber == nil) then return end
+	for ent,c in ents.citerator(ents.COMPONENT_PFM_VR_TRACKED_DEVICE,bit.bor(ents.ITERATOR_FILTER_DEFAULT,ents.ITERATOR_FILTER_BIT_PENDING)) do
+		if(c:GetSerialNumber() == serialNumber) then
+			pfm.log("Found tracked device as existing actor.",pfm.LOG_CATEGORY_PFM_VR)
+			table.insert(self.m_trackedDevices,c)
+			c:SetTrackedDevice(tdC)
+			return
+		end
+	end
+	
+	local pm = tool.get_filmmaker()
+	local actorEditor = util.is_valid(pm) and pm:GetActorEditor() or nil
+	if(util.is_valid(actorEditor) == false) then return end
+	pfm.log("No existing actor found for tracked device, creating new one...",pfm.LOG_CATEGORY_PFM_VR)
+	local name
+	local role = tdC:GetRole()
+	if(role == openvr.TRACKED_CONTROLLER_ROLE_LEFT_HAND) then name = "vrc_left_hand"
+	elseif(role == openvr.TRACKED_CONTROLLER_ROLE_RIGHT_HAND) then name = "vrc_right_hand"
+	elseif(role == openvr.TRACKED_CONTROLLER_ROLE_TREADMILL) then name = "vrc_treadmill"
+	elseif(role == openvr.TRACKED_CONTROLLER_ROLE_STYLUS) then name = "vrc_stylus"
+	else
+		name = tdC:GetDeviceType()
+		if(name ~= nil) then name = "vrc_" .. name end
+	end
+	local actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_TRACKED_DEVICE,{
+		["updateActorComponents"] = false,
+		["name"] = name
+	})
+	local pfmTdc = (actor ~= nil) and actor:FindComponent("pfm_vr_tracked_device") or nil
+	if(pfmTdc == nil) then return end
+	pfmTdc:SetMemberValue("SerialNumber",udm.TYPE_STRING,serialNumber)
+	actorEditor:UpdateActorComponents(actor)
+
+	local ent = actor:FindEntity()
+	local pfmTdc = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_PFM_VR_TRACKED_DEVICE) or nil
+	if(pfmTdc ~= nil) then
+		table.insert(self.m_trackedDevices,pfmTdc)
+		pfmTdc:SetTrackedDevice(tdC)
+	end
+end
 function Component:OnRemove()
 	util.remove(self.m_entHmd)
 	util.remove(self.m_cbPopulateActorContextMenu)
 	util.remove(self.m_cbUpdateCameraPose)
+	util.remove(self.m_cbOnTrackedDeviceAdded)
+	util.remove(self.m_trackedDevices)
 
 	-- Restore defaults
 	console.run("vr_hide_primary_game_scene","1")

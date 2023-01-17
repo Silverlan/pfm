@@ -34,6 +34,7 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY = 12
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG = 13
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL = 14
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_MANAGER = 15
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_TRACKED_DEVICE = 16
 
 gui.PFMActorEditor.COLLECTION_SCENEBUILD = "scenebuild"
 gui.PFMActorEditor.COLLECTION_ACTORS = "actors"
@@ -609,6 +610,10 @@ function gui.PFMActorEditor:CreatePresetActor(type,args)
 		actor = actor or create_new_actor("vr_manager",gui.PFMActorEditor.COLLECTION_VR)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_vr_manager",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_TRACKED_DEVICE) then
+		actor = actor or create_new_actor("vr_tracked_device",gui.PFMActorEditor.COLLECTION_VR)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"pfm_vr_tracked_device",false)
 	end
 
 	if(newActor and updateActorComponents) then self:UpdateActorComponents(actor) end
@@ -2011,9 +2016,13 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 				end
 			end
 			ctrl = wrapper
+		elseif(memberInfo.type == ents.MEMBER_TYPE_ENTITY) then
 			local elText,wrapper = self.m_animSetControls:AddTextEntry(baseMemberName,memberInfo.name,controlData.default or "",function(el)
 				if(self.m_skipUpdateCallback) then return end
-				if(controlData.set ~= nil) then controlData.set(udmComponent,el:GetText(),nil,nil,true) end
+				if(controlData.set ~= nil) then
+					local ref = ents.UniversalEntityReference(util.Uuid(el:GetText()))
+					controlData.set(udmComponent,ref,nil,nil,true)
+				end
 			end)
 			if(controlData.getValue ~= nil) then
 				controlData.updateControlValue = function()
@@ -2022,7 +2031,8 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 					if(val ~= nil) then
 						local uuid = val:GetUuid()
 						if(uuid ~= nil) then
-							elText:SetText(tostring(uuid))
+							if(uuid:IsValid()) then elText:SetText(tostring(uuid))
+							else elText:SetText("-") end
 						end
 					end
 				end
