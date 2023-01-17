@@ -77,7 +77,7 @@ function gui.PFMActorEditor:OnInitialize()
 			gui.open_model_dialog(function(dialogResult,mdlName)
 				if(dialogResult ~= gui.DIALOG_RESULT_OK) then return end
 				if(self:IsValid() == false) then return end
-				local actor = self:CreatePresetActor(type,nil,mdlName)
+				local actor = self:CreatePresetActor(type,{["modelName"] = mdlName})
 			end)
 		end)
 	end
@@ -435,11 +435,18 @@ function gui.PFMActorEditor:FindCollection(name,createIfNotExists,parentGroup)
 	end
 	return self:AddCollection(name,parentGroup)
 end
-function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
+function gui.PFMActorEditor:CreatePresetActor(type,args)
+	args = args or {}
+	local actor = args["actor"]
+	local mdlName = args["modelName"]
+	local updateActorComponents = args["updateActorComponents"]
+	local nameOverride = args["name"]
+
+	if(updateActorComponents == nil) then updateActorComponents = true end
 	local newActor = (actor == nil)
 	local function create_new_actor(name,collection,pose)
 		if(collection ~= nil) then collection = self:FindCollection(collection,true) end
-		return self:CreateNewActor(name,pose,nil,collection)
+		return self:CreateNewActor(nameOverride or name,pose,nil,collection)
 	end
 	if(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP) then
 		actor = actor or create_new_actor("static_prop",gui.PFMActorEditor.COLLECTION_SCENEBUILD)
@@ -604,7 +611,7 @@ function gui.PFMActorEditor:CreatePresetActor(type,actor,mdlName)
 		self:CreateNewActorComponent(actor,"pfm_vr_manager",false)
 	end
 
-	if(newActor) then self:UpdateActorComponents(actor) end
+	if(newActor and updateActorComponents) then self:UpdateActorComponents(actor) end
 	return actor
 end
 function gui.PFMActorEditor:AddSkyActor()

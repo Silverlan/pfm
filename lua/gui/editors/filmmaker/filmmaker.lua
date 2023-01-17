@@ -918,7 +918,10 @@ function gui.WIFilmmaker:ImportMap(map)
 		if(className == "prop_physics" or className == "world") then
 			if(model ~= nil) then
 				local actor = actorEditor:CreateNewActor(name,pose,uuid,actorEditor:FindCollection(gui.PFMActorEditor.COLLECTION_SCENEBUILD,true,group))
-				actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,actor,model)
+				actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,{
+					["actor"] = actor,
+					["modelName"] = model
+				})
 				actorEditor:UpdateActorComponents(actor)
 			end
 		elseif(className == "skybox") then
@@ -1840,9 +1843,13 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					if(mdl == nil) then return end
 					local actor
 					if(pfm.is_articulated_model(mdl)) then
-						actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR,nil,path:GetString())
+						actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR,{
+							["modelName"] = path:GetString()
+						})
 					else
-						actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,nil,path:GetString())
+						actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,{
+							["modelName"] = path:GetString()
+						})
 					end
 					self:UpdateActor(actor,filmClip)
 
