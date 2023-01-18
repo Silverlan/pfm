@@ -349,9 +349,9 @@ function Component:InitializeComponentProperties()
 					if(#childPath > 0) then childPath = childPath .. "/" end
 					childPath = childPath .. name
 					local isElementProperty = false
+					local idx = c:GetMemberIndex(name)
+					local info = (idx ~= nil) and c:GetMemberInfo(idx) or nil
 					if(udmVal:GetType() == udm.TYPE_ELEMENT) then
-						local idx = c:GetMemberIndex(name)
-						local info = (idx ~= nil) and c:GetMemberInfo(idx) or nil
 						if(info ~= nil and info.type == ents.MEMBER_TYPE_ELEMENT) then
 							isElementProperty = true
 						end
@@ -368,8 +368,12 @@ function Component:InitializeComponentProperties()
 						else applyProperties(udmVal,childPath) end
 					else
 						local val = udmVal:GetValue()
-						if(val == nil) then pfm.log("Attempted to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+						if(val == nil) then
+							pfm.log("Attempted to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 						else
+							if(info ~= nil and info.type == ents.MEMBER_TYPE_ENTITY) then
+								val = ents.UniversalEntityReference(util.Uuid(val))
+							end
 							if(c:SetMemberValue(childPath,val) == false) then
 								pfm.log("Failed to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 							end

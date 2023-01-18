@@ -1294,6 +1294,9 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			end
 			local val = component:GetMemberValue(info.name)
 			if(val ~= nil and info:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_CONTROLLER_BIT) == false) then
+				if(info.type == ents.MEMBER_TYPE_ENTITY) then
+					val = ents.UniversalEntityReference(util.Uuid(val))
+				end
 				c:SetMemberValue(info.name,val)
 				return true
 			end
@@ -1435,6 +1438,15 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 							local memberValue = value
 							if(util.get_type_name(memberValue) == "Color") then memberValue = memberValue:ToVector() end
 
+							local udmValue = memberValue
+							local udmType = info.type
+							if(memberType == ents.MEMBER_TYPE_ENTITY) then
+								local uuid = udmValue:GetUuid()
+								if(uuid:IsValid()) then udmValue = tostring(uuid)
+								else udmValue = "" end
+								udmType = udm.TYPE_STRING
+							end
+
 							if(final) then
 								oldValue = oldValue or component:GetMemberValue(memberName)
 								if(oldValue ~= nil) then
@@ -1449,7 +1461,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 									end)
 								end
 							end
-							component:SetMemberValue(memberName,info.type,memberValue)
+							component:SetMemberValue(memberName,udmType,udmValue)
 							if(memberType ~= ents.MEMBER_TYPE_ELEMENT) then
 								local entActor = actorData.actor:FindEntity()
 								if(entActor ~= nil) then
