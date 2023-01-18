@@ -340,7 +340,15 @@ function Component:InitializeComponentProperties()
 				-- Since the UDM properties are unordered, we'll have to handle it as a special case.
 				-- TODO: Find a better way to handle this (via schema properties?)
 				local mdl = el:GetValue("model",udm.TYPE_STRING)
-				if(mdl ~= nil) then self:GetEntity():SetModel(mdl) end
+				if(mdl ~= nil) then
+					self:GetEntity():SetModel(mdl)
+
+					-- Since the entity hasn't been spawned yet, the above function will only preload the model
+					-- but not actually initialize it. We need to initialize it immediately, which we can force by
+					-- calling SetModel with the actual model object.
+					mdl = game.load_model(mdl)
+					if(mdl ~= nil) then self:GetEntity():SetModel(mdl) end
+				end
 			end
 			path = path or ""
 			for name,udmVal in pairs(el:GetChildren()) do
