@@ -69,11 +69,13 @@ end
 console.register_command("pfm",function(pl,...)
 	tool.load_filmmaker_scripts()
 	local logCategories = 0
+	local logCategoriesDefined = false
 	local reload = false
 	local dev = false
 	local project
 	for cmd,args in pairs(console.parse_command_arguments({...})) do
 		if(cmd == "log") then
+			logCategoriesDefined = true
 			for _,catName in ipairs(args) do
 				if(catName:lower() == "all") then
 					logCategories = bit.lshift(1,pfm.MAX_LOG_CATEGORIES) -1
@@ -89,6 +91,7 @@ console.register_command("pfm",function(pl,...)
 		elseif(cmd == "dev") then dev = true
 		elseif(cmd == "project") then project = args[1] end
 	end
+	if(logCategoriesDefined == false) then logCategories = bit.lshift(1,pfm.MAX_LOG_CATEGORIES) -1 end -- Log everything by default
 	pfm.set_enabled_log_categories(logCategories)
 
 	if(tool.is_filmmaker_open()) then
