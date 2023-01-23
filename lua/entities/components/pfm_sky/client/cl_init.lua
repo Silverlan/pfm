@@ -36,6 +36,8 @@ function Component:Initialize()
 			self:ApplySceneSkySettings(scene)
 		end))
 	end))
+
+	self:BindEvent(ents.ModelComponent.EVENT_ON_MATERIAL_OVERRIDES_CLEARED,"UpdateSkyTexture")
 end
 function Component:ApplySceneSkySettings(scene)
 	scene:SetSkyAngles(self:GetEntity():GetAngles())
@@ -51,7 +53,9 @@ function Component:OnPoseChanged()
 		ent:GetComponent(ents.COMPONENT_SKYBOX):SetSkyAngles(ang)
 	end
 end
+function Component:OnEntitySpawn() self:UpdateSkyTexture() end
 function Component:UpdateSkyTexture(clear)
+	if(self:GetEntity():IsSpawned() == false) then return end
 	local mat
 	if(clear ~= true) then
 		local skyTex = self:GetSkyTexture()
