@@ -26,6 +26,7 @@ function ents.UtilBoneTransformComponent:SetTransformEnabled(boneId)
 	if(boneId == -1) then return end
 	if(util.is_valid(self.m_transforms[boneId])) then return self.m_transforms[boneId]:GetComponent("util_transform") end
 	local ent = ents.create("util_transform")
+	ent:AddComponent("pfm_transform_gizmo")
 	ent:Spawn()
 	self.m_transforms[boneId] = ent
 
