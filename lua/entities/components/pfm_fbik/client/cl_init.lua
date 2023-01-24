@@ -20,6 +20,7 @@ function Component:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
+	self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS,"MaintainAnimations")
 
 	self.m_cbUpdateIk = ikSolverC:AddEventCallback(ents.IkSolver.EVENT_UPDATE_IK,function()
 		self:UpdateIk()
@@ -27,6 +28,10 @@ function Component:Initialize()
 end
 function Component:OnRemove()
 	util.remove(self.m_cbUpdateIk)
+end
+function Component:MaintainAnimations()
+	-- Disable default skeletal animation playback
+	return util.EVENT_REPLY_HANDLED
 end
 function Component:UpdateIk()
 	local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
