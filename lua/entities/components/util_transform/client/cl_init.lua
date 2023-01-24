@@ -22,6 +22,13 @@ function Component:OnEntitySpawn()
 	if(util.is_valid(parent)) then self:GetEntity():SetPos(parent:GetPos()) end
 end
 
+function Component:SetCamera(cam)
+	self.m_cam = cam
+	for _,ent in ipairs(self:GetArrowEntities()) do
+		local arrowC = ent:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
+		if(arrowC ~= nil) then arrowC:SetCamera(cam) end
+	end
+end
 function Component:SetTranslationAxisEnabled(axis,enabled)
 	self.m_translationAxisEnabled[axis] = enabled
 	self:ScheduleUpdate()
@@ -302,15 +309,20 @@ function Component:CreateTransformUtility(id,axis,type)
 		self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_END)
 	end)
 
-	local trArrowC = entArrow:GetComponent(ents.COMPONENT_TRANSFORM)
-	if(trC ~= nil and trArrowC ~= nil) then
-		--trArrowC:GetScaleProperty():Link(trC:GetScaleProperty())
-		trArrowC:SetScale(Vector(0.3,0.3,0.3))
+	local trC = entArrow:GetComponent(ents.COMPONENT_TRANSFORM)
+	if(trC ~= nil and trC ~= nil) then
+		--trC:GetScaleProperty():Link(trC:GetScaleProperty())
+		trC:SetScale(Vector(0.3,0.3,0.3))
 	end
+
+	local trArrowC = entArrow:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
+	if(trArrowC ~= nil) then trArrowC:SetCamera(self.m_cam) end
 
 	self.m_arrows[type] = self.m_arrows[type] or {}
 	self.m_arrows[type][axis] = self.m_arrows[type][axis] or {}
 	self.m_arrows[type][axis][id] = entArrow
+
+	self:BroadcastEvent(Component.EVENT_ON_GIZMO_CONTROL_ADDED,{entArrow})
 end
 
 Component.EVENT_ON_POSITION_CHANGED = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_pos_changed")
@@ -318,3 +330,4 @@ Component.EVENT_ON_ROTATION_CHANGED = ents.register_component_event(ents.COMPONE
 Component.EVENT_ON_SCALE_CHANGED = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_scale_changed")
 Component.EVENT_ON_TRANSFORM_START = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_transform_start")
 Component.EVENT_ON_TRANSFORM_END = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_transform_end")
+Component.EVENT_ON_GIZMO_CONTROL_ADDED = ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM,"on_gizmo_control_added")
