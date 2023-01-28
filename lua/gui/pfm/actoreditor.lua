@@ -1473,7 +1473,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 								end
 								if(updateAnimationValue) then applyComponentChannelValue(self,component,controlData,memberValue) end
 							else
-								c:OnMemberValueChanged(memberIdx)
+								c:InvokeElementMemberChangeCallback(memberIdx)
 							end
 							self:TagRenderSceneAsDirty()
 						end
@@ -2409,7 +2409,7 @@ function gui.PFMActorEditor:SetPropertyAnimationOverlaysDirty()
 	self.m_controlOverlayUpdateRequired = true
 	self:EnableThinking()
 end
-function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
+function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength)
 	if(chainLength <= 1) then return false end
 
 	local solverC = self:CreateNewActorComponent(actor,"ik_solver",false)
@@ -2430,9 +2430,8 @@ function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength,ikName)
 	local ikSolverC = util.is_valid(ent) and ent:AddComponent("ik_solver") or nil
 	if(ikSolverC == nil) then return false end
 	local bone = skeleton:GetBone(boneId)
-	ikName = ikName or bone:GetName()
 
-	ikSolverC:AddIkSolverByChain(boneName,chainLength,ikName)
+	ikSolverC:AddIkSolverByChain(boneName,chainLength)
 	local memberId = ikSolverC:GetMemberIndex("IkRig")
 	if(memberId ~= nil) then ikSolverC:OnMemberValueChanged(memberId) end
 

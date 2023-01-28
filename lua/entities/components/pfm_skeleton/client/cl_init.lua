@@ -79,9 +79,9 @@ function ents.PFMSkeleton:OnBonesCreated()
 			end)
 
 			if(solverC ~= nil) then
-				local handle = solverC:GetHandle(boneId)
+				local handle = solverC:GetControl(boneId)
 				if(handle ~= nil) then
-					local col = (util.get_type_name(handle) == "StateControl") and Color.Crimson or Color.Orange
+					local col = (handle.type == ents.IkSolverComponent.RigConfig.Control.TYPE_STATE) and Color.Crimson or Color.Orange
 					ent:SetColor(col)
 				end
 			end

@@ -7,7 +7,6 @@
 ]]
 
 include("pfm/controls_menu.lua")
-include("/util/ik_rig.lua")
 
 local Element = util.register_class("gui.IkRigEditor",gui.Base)
 

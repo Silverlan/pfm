@@ -6,15 +6,13 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/util/ik_rig.lua")
-
 include_component("ik_solver")
 
 local Component = util.register_class("ents.PFMFbIk",BaseEntityComponent)
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
-	self:BindEvent(ents.IkSolver.EVENT_INITIALIZE_SOLVER,"InitializeSolver")
+	self:BindEvent(ents.IkSolverComponent.EVENT_INITIALIZE_SOLVER,"InitializeSolver")
 	local ikSolverC = self:AddEntityComponent("ik_solver")
 
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
@@ -22,7 +20,7 @@ function Component:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
 	self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS,"MaintainAnimations")
 
-	self.m_cbUpdateIk = ikSolverC:AddEventCallback(ents.IkSolver.EVENT_UPDATE_IK,function()
+	self.m_cbUpdateIk = ikSolverC:AddEventCallback(ents.IkSolverComponent.EVENT_UPDATE_IK,function()
 		self:UpdateIk()
 	end)
 end
@@ -38,10 +36,10 @@ function Component:UpdateIk()
 	local ikSolverC = self:GetEntity():GetComponent(ents.COMPONENT_IK_SOLVER)
 	local mdl = self:GetEntity():GetModel()
 	if(ikSolverC == nil) then return end
-	for _,boneData in ipairs(ikSolverC:GetBones()) do
-		local boneId = boneData.boneId
-		local bone = boneData.bone
-		if(bone == false) then
+	for i=1,ikSolverC:GetBoneCount() do
+		local boneId = ikSolverC:GetSkeletalBoneId(i -1)
+		local bone = ikSolverC:GetBone(boneId)
+		if(bone == nil) then
 			--local pose = animC:GetGlobalBonePose(mdl:GetSkeleton():GetBone(boneId):GetParent():GetID()) *mdl:GetReferencePose():GetBonePose(boneId)
 			--animC:SetGlobalBonePose(boneId,pose)
 		else
