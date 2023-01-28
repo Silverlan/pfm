@@ -29,7 +29,7 @@ function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(64,128)
-	self.m_ikRig = util.IkRig()
+	self.m_ikRig = ents.IkSolverComponent.RigConfig()
 	self:UpdateModelView()
 
 	local scrollContainer = gui.create("WIScrollContainer",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
@@ -120,7 +120,7 @@ function Element:UpdateImpostorTargets(feModel)
 	end
 	self:UpdateMode()
 
-	self.m_ikRig = util.IkRig()
+	self.m_ikRig = ents.IkSolverComponent.RigConfig()
 end
 function Element:OnRemove()
 	self:UnlinkFromModelView()
@@ -319,12 +319,12 @@ function Element:InitializeBoneControls(mdl)
 					else
 						pContext:AddItem("Add Drag Control",function()
 							--self:MapFlexController(i -1,-1)
-							self.m_ikRig:AddDragControl(boneDst:GetName())
+							self.m_ikRig:AddControl(boneDst:GetName(),ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG)
 							self:ReloadIkRig()
 						end)
 						pContext:AddItem("Add State Control",function()
 							--self:MapFlexController(i -1,-1)
-							self.m_ikRig:AddStateControl(boneDst:GetName())
+							self.m_ikRig:AddControl(boneDst:GetName(),ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
 							self:ReloadIkRig()
 						end)
 					end
@@ -396,6 +396,7 @@ function Element:AddConstraint(item,boneName,type)
 	self.m_ikRig:AddBone(boneName)
 	self.m_ikRig:AddBone(parent:GetName())
 
+	local constraint
 	local child = item:AddItem(type .. " Constraint")
 	child:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
@@ -403,7 +404,7 @@ function Element:AddConstraint(item,boneName,type)
 			if(util.is_valid(pContext)) then
 				pContext:SetPos(input.get_cursor_pos())
 				pContext:AddItem("Remove",function()
-					self.m_ikRig:RemoveConstraint(parent:GetName(),bone:GetName())
+					self.m_ikRig:RemoveConstraint(constraint)
 					child:RemoveSafely()
 					item:ScheduleUpdate()
 					self:ReloadIkRig()
@@ -420,7 +421,6 @@ function Element:AddConstraint(item,boneName,type)
 	crtl:SetAutoAlignToParent(true,false)
 	crtl:SetAutoFillContentsToHeight(false)
 
-	local constraint
 	local singleAxis
 	local minLimits,maxLimits
 	local function add_rotation_axis_slider(name,axisId,min,defVal)
@@ -444,14 +444,10 @@ function Element:AddConstraint(item,boneName,type)
 
 				self.m_mdlView:Render()
 
-				if(singleAxis ~= nil) then
-					if(min) then minLimits = value
-					else maxLimits = value end
-				else
-					if(min) then minLimits:Set(tAxisId,value)
-					else maxLimits:Set(tAxisId,value) end
-				end
-				self.m_ikRig:SetConstraintLimits(constraint,minLimits,maxLimits)
+				if(min) then minLimits:Set(singleAxis and 0 or tAxisId,value)
+				else maxLimits:Set(singleAxis and 0 or tAxisId,value) end
+				constraint.minLimits = minLimits
+				constraint.maxLimits = maxLimits
 				--self:ReloadIkRig()
 			end
 		end,0.01)
@@ -474,8 +470,8 @@ function Element:AddConstraint(item,boneName,type)
 		add_rotation_axis("roll",2,-0.5,0.5)
 	elseif(type == "hinge") then
 		singleAxis = 0
-		minLimits = 0.0
-		maxLimits = 0.0
+		minLimits = EulerAngles()
+		maxLimits = EulerAngles()
 		crtl:AddDropDownMenu("axis","axis",{
 			{"x",locale.get_text("x")},
 			{"y",locale.get_text("y")},
@@ -524,7 +520,7 @@ function Element:ReloadIkRig()
 	local pfmFbIkC = entActor:AddComponent("pfm_fbik")
 	local ikSolverC = entActor:GetComponent(ents.COMPONENT_IK_SOLVER)
 	if(ikSolverC == nil) then return end
-	ikSolverC:InitializeSolver() -- Clear Rig
+	ikSolverC:ResetIkRig() -- Clear Rig
 	ikSolverC:AddIkSolverByRig(self.m_ikRig)
 end
 function Element:CreateTransformGizmo()
