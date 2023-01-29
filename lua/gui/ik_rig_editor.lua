@@ -41,8 +41,25 @@ function Element:OnInitialize()
 	self:SetThinkingEnabled(true)
 	self.m_controls = controls
 
+	local rootPath = "scripts/ik_rigs"
+	local fe = controls:AddFileEntry("IK RIG","ik_rig","",function(resultHandler)
+		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
+			if(fileName == nil) then return end
+			local rig = ents.IkSolverComponent.RigConfig.load(rootPath .. fileName)
+			if(rig == nil) then
+				pfm.log("Failed to load ik rig '" .. rootPath .. fileName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+				return
+			end
+
+			self:LoadRig(rig)
+		end)
+		pFileDialog:SetRootPath(rootPath)
+		pFileDialog:SetExtensions(ents.IkSolverComponent.RigConfig.get_supported_extensions())
+		pFileDialog:Update()
+	end)
+
 	local feModel
-	feModel = controls:AddFileEntry(locale.get_text("pfm_impostee_model"),"impostee_model","",function(resultHandler)
+	feModel = controls:AddFileEntry("Reference Model","reference_model","",function(resultHandler)
 		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 			if(fileName == nil) then return end
 			resultHandler(el:GetFilePath(true))
@@ -53,17 +70,50 @@ function Element:OnInitialize()
 	end)
 	feModel:AddCallback("OnValueChanged",function(...)
 		if(self.m_skipButtonCallbacks) then return end
-		self:UpdateImpostorTargets(feModel)
+		self:ReloadBoneList(feModel)
 	end)
 	self.m_feModel = feModel
 
-	--[[controls:AddButton(locale.get_text("pfm_retarget_auto"),"retarget_auto",function()
-		local mode = self.m_ctrlMode:GetOptionValue(self.m_ctrlMode:GetSelectedOption())
-		self:AutoRetarget(mode == "skeleton",mode == "flex_controller")
-	end)]]
-	controls:ResetControls()
+	local el,wrapper = controls:AddDropDownMenu(locale.get_text("pfm_show_bones"),"show_bones",{{"0",locale.get_text("disabled")},{"1",locale.get_text("enabled")}},"0",function(el)
+		self:UpdateBoneVisibility()
+	end)
+	self.m_elShowBones = el
 
-	self.m_boneControls = {}
+	controls:AddButton(locale.get_text("save"),"save",function()
+		local rig = self:GetRig()
+		if(rig == nil) then return end
+		local pFileDialog = gui.create_file_save_dialog(function(pDialoge,fileName)
+			if(fileName == nil) then return end
+			fileName = file.remove_file_extension(fileName,{"pikr","pikr_b"})
+			local res,err = rig:Save("scripts/ik_rigs/" .. fileName .. ".pikr")
+			if(res == false) then
+				pfm.log("Failed to save ik rig: " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+			end
+		end)
+		pFileDialog:SetRootPath("scripts/ik_rigs/")
+		pFileDialog:Update()
+	end)
+
+	controls:ResetControls()
+end
+function Element:LoadRig(rig)
+	self:Clear()
+	self:ReloadBoneList(self.m_feModel)
+
+	self.m_ikRig = rig
+	for _,c in ipairs(rig:GetConstraints()) do
+		local item = self.m_skelTree:GetRoot():GetItemByIdentifier(c.bone1,true)
+		if(util.is_valid(item)) then
+			if(c.type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_FIXED) then
+				self:AddFixedConstraint(item,c.bone1,c)
+			elseif(c.type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_HINGE) then
+				self:AddHingeConstraint(item,c.bone1,c)
+			elseif(c.type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_BALL_SOCKET) then
+				self:AddBallSocketConstraint(item,c.bone1,c)
+			end
+		end
+	end
+	self:ReloadIkRig()
 end
 function Element:UpdateMode()
 	if(util.is_valid(self.m_modelView) == false or self.m_mdl == nil) then return end
@@ -71,12 +121,6 @@ function Element:UpdateMode()
 	if(util.is_valid(ent) == false) then return end
 	local mdl = ent:GetModel()
 	if(mdl == nil) then return end
-	if(self.m_lastSkeletalAnim ~= nil) then
-		ent0:PlayAnimation(self.m_lastSkeletalAnim)
-		self.m_lastSkeletalAnim = nil
-	end
-	local min,max = mdl:GetRenderBounds()
-	ent:SetPos(Vector(-(max.x -min.x) *0.5,0,0))
 
 	local vc = self.m_modelView:GetViewerCamera()
 	if(util.is_valid(vc)) then
@@ -88,25 +132,13 @@ function Element:UpdateMode()
 
 	self:UpdateBoneVisibility()
 end
-function Element:Clear(clearSkeleton,clearFlex)
-	if(self.m_dstMdl == nil) then return end
-	if(clearSkeleton == nil) then clearSkeleton = true end
-	if(clearFlex == nil) then clearFlex = true end
-	if(clearSkeleton) then
-		local skeleton = self.m_dstMdl:GetSkeleton()
-		local numBones = skeleton:GetBoneCount()
-		for boneId,el in pairs(self.m_boneControls) do
-			if(el:IsValid()) then
-				el:ClearSelectedOption()
-			end
-		end
-	end
-	if(clearFlex) then self:ResetFlexControllerControls() end
+function Element:Clear()
+	self.m_skelTree:Clear()
 end
 function Element:SetModel(impostee)
 	if(util.is_valid(self.feModel)) then self.feModel:SetValue(impostee) end
 end
-function Element:UpdateImpostorTargets(feModel)
+function Element:ReloadBoneList(feModel)
 	local pathMdl = feModel:GetValue()
 	if(#pathMdl == 0) then return end
 	local mdl = game.load_model(pathMdl)
@@ -131,8 +163,6 @@ end
 function Element:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_controls)) then self.m_controls:SetWidth(w) end
 end
-function Element:GetSourceModel() return self.m_mdl end
-function Element:GetBoneControl(i) return self.m_boneControls[i] end
 function Element:LinkToModelView(mv) self.m_modelView = mv end
 function Element:UnlinkFromModelView()
 	if(util.is_valid(self.m_modelView) == false) then return end
@@ -174,33 +204,12 @@ function Element:AddBoneList()
 	local mdl = self.m_mdl
 	if(mdl == nil) then return end
 
+	util.remove(self.m_rigControls)
 	self.m_rigControls = self.m_controls:AddSubMenu()
 	self.m_boneControlMenu = self.m_rigControls:AddSubMenu()
 	self:InitializeBoneControls(mdl)
 
-	self.m_rigControls:AddButton(locale.get_text("save"),"save",function()
-		local rig = self:GetRig()
-		if(rig:Save()) then self:CallCallbacks("OnRigSaved",rig) end
-	end)
 	gui.create("WIBase",self.m_rigControls) -- Dummy
-end
-function Element:ResetBoneControls()
-	self.m_skipCallbacks = true
-	for boneId,el in pairs(self.m_boneControls) do
-		if(el:IsValid()) then el:SelectOption(0) end
-	end
-	self.m_skipCallbacks = nil
-end
-function Element:MapBone(boneSrc,boneDst,skipCallbacks)
-	if(type(boneSrc) == "string") then boneSrc = self.m_srcMdl:GetSkeleton():LookupBone(boneSrc) end
-	if(type(boneDst) == "string") then boneDst = self.m_dstMdl:GetSkeleton():LookupBone(boneDst) end
-
-	if(skipCallbacks) then self.m_skipCallbacks = true end
-	local ctrl = self.m_boneControls[boneDst]
-	if(util.is_valid(ctrl)) then
-		ctrl:SelectOption(tostring(boneSrc))
-	end
-	if(skipCallbacks) then self.m_skipCallbacks = nil end
 end
 function Element:SetBoneColor(actorId,boneId,col)
 	if(boneId == nil) then
@@ -230,40 +239,22 @@ function Element:SetBoneColor(actorId,boneId,col)
 end
 function Element:InitializeBoneControls(mdl)
 	local options = {}
-	--[[local bonesSrc = get_bones_in_hierarchical_order(mdl)
-	for _,boneInfo in ipairs(bonesSrc) do
-		local bone = boneInfo[1]
-		local depth = boneInfo[2]
-		local name = string.rep("  ",depth) .. bone:GetName()
-		table.insert(options,{tostring(bone:GetID()),name})
-	end
-	table.insert(options,1,{"-1","-"})]]
-
 	table.insert(options,{"none","-"})
 	table.insert(options,{"hinge","Hinge"})
 	table.insert(options,{"ballsocket","BallSocket"})
 
+	util.remove(self.m_skelTreeSubMenu)
 	local subMenu = self.m_boneControlMenu:AddSubMenu()
+	self.m_skelTreeSubMenu = subMenu
 	local tree = gui.create("WIPFMTreeView",subMenu,0,0,subMenu:GetWidth(),20)
 	self.m_skelTree = tree
 	tree:SetSelectable(gui.Table.SELECTABLE_MODE_SINGLE)
-
-	local el,wrapper = self.m_boneControlMenu:AddDropDownMenu(locale.get_text("pfm_show_bones"),"show_bones",{{"0",locale.get_text("disabled")},{"1",locale.get_text("enabled")}},"0",function(el)
-		self:UpdateBoneVisibility()
-	end)
-	self.m_elShowBones = el
 
 	local bones = get_bones_in_hierarchical_order(mdl)
 	for _,boneInfo in ipairs(bones) do
 		local boneDst = boneInfo[1]
 		local depth = boneInfo[2]
 		local name = string.rep("  ",depth) .. boneDst:GetName()
-		--[[local el,wrapper = self.m_boneControlMenu:AddDropDownMenu(name,boneDst:GetID(),options,0,function(el)
-			if(self.m_skipCallbacks) then return end
-			self.m_lastSelectedBoneOption = el:GetSelectedOption()
-			self:ApplyBoneTranslation(el,boneDst)
-		end)
-]]
 
 		local item = tree:AddItem(name)
 		item:SetIdentifier(boneDst:GetName())
@@ -299,92 +290,40 @@ function Element:InitializeBoneControls(mdl)
 					end
 					if(self.m_ikRig:IsBoneLocked(boneDst:GetName())) then
 						pContext:AddItem("Unlock Bone",function()
-							--self:MapFlexController(i -1,-1)
 							self.m_ikRig:SetBoneLocked(boneDst:GetName(),false)
 							self:ReloadIkRig()
 						end)
 					else
 						pContext:AddItem("Lock Bone",function()
-							--self:MapFlexController(i -1,-1)
 							self.m_ikRig:SetBoneLocked(boneDst:GetName(),true)
 							self:ReloadIkRig()
 						end)
 					end
 					if(self.m_ikRig:HasControl(boneDst:GetName())) then
 						pContext:AddItem("Remove Control",function()
-							--self:MapFlexController(i -1,-1)
 							self.m_ikRig:RemoveControl(boneDst:GetName())
 							self:ReloadIkRig()
 						end)
 					else
 						pContext:AddItem("Add Drag Control",function()
-							--self:MapFlexController(i -1,-1)
 							self.m_ikRig:AddControl(boneDst:GetName(),ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG)
 							self:ReloadIkRig()
 						end)
 						pContext:AddItem("Add State Control",function()
-							--self:MapFlexController(i -1,-1)
 							self.m_ikRig:AddControl(boneDst:GetName(),ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
 							self:ReloadIkRig()
 						end)
 					end
-
-					--[[for i,flexC in ipairs(flexControllersSrc) do
-						pContext:AddItem(flexC.name,function()
-							-- self:ShowInElementViewer(filmClip)
-						end)
-					end]]
 					pContext:Update()
 					return util.EVENT_REPLY_HANDLED
 				end
 				return util.EVENT_REPLY_HANDLED
 			end
 		end)
-
-
-		--[[el:AddCallback("OnMenuOpened",function(el)
-			if(self.m_lastSelectedBoneOption ~= nil) then el:ScrollToOption(self.m_lastSelectedBoneOption) end
-			self:SetBoneColor(2,boneDst:GetID(),Color.Red)
-		end)
-		el:AddCallback("OnMenuClosed",function(el)
-			self:SetBoneColor(2,boneDst:GetID())
-			self:SetBoneColor(1)
-
-			self.m_lastSelectedBoneOption = el:GetSelectedOption()
-			self:ApplyBoneTranslation(el,boneDst)
-		end)
-
-		wrapper:AddCallback("TranslateValueText",function(wrapper,text)
-			return util.EVENT_REPLY_HANDLED,string.remove_whitespace(text)
-		end)
-		wrapper:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
-			if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-				wrapper:StartEditMode(false)
-
-				el:SelectOption(0)
-				el:CloseMenu()
-				self:UpdateModelView()
-				return util.EVENT_REPLY_HANDLED
-			end
-		end)
-		wrapper:SetCenterText(false)
-		for i=0,el:GetOptionCount() -1 do
-			el:GetOptionElement(i):AddCallback("OnSelectionChanged",function(pItem,selected)
-				local boneIdSrc = tonumber(el:GetOptionValue(i))
-				if(boneIdSrc ~= nil) then
-					if(selected) then
-						self:SetBoneColor(1,boneIdSrc,Color.Red)
-					else self:SetBoneColor(1,boneIdSrc) end
-				end
-				self:UpdateModelView()
-			end)
-		end]]
-		--wrapper:SetUseAltMode(true)
-		--self.m_boneControls[boneDst:GetID()] = el
 	end
 	self.m_boneControlMenu:ResetControls()
 end
-function Element:AddConstraint(item,boneName,type)
+function Element:AddConstraint(item,boneName,type,constraint)
 	local ent = self.m_modelView:GetEntity(1)
 	if(util.is_valid(ent) == false) then return end
 	local mdl = ent:GetModel()
@@ -396,7 +335,6 @@ function Element:AddConstraint(item,boneName,type)
 	self.m_ikRig:AddBone(boneName)
 	self.m_ikRig:AddBone(parent:GetName())
 
-	local constraint
 	local child = item:AddItem(type .. " Constraint")
 	child:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
@@ -448,72 +386,53 @@ function Element:AddConstraint(item,boneName,type)
 				else maxLimits:Set(singleAxis and 0 or tAxisId,value) end
 				constraint.minLimits = minLimits
 				constraint.maxLimits = maxLimits
-				--self:ReloadIkRig()
 			end
 		end,0.01)
 	end
 
-	if(type == "fixed") then constraint = self.m_ikRig:AddFixedConstraint(parent:GetName(),bone:GetName())
-	elseif(type == "hinge") then constraint = self.m_ikRig:AddHingeConstraint(parent:GetName(),bone:GetName(),-90.0,90.0)
-	elseif(type == "ballSocket") then constraint = self.m_ikRig:AddBallSocketConstraint(parent:GetName(),bone:GetName(),EulerAngles(-90,-90,-0.5),EulerAngles(90,90,0.5)) end
-	pfm.log("Adding " .. type .. " constraint from bone '" .. parent:GetName() .. "' to '" .. bone:GetName() .. "' of actor with model '" .. mdl:GetName() .. "'...",pfm.LOG_CATEGORY_PFM)
+	if(constraint == nil) then
+		pfm.log("Adding " .. type .. " constraint from bone '" .. parent:GetName() .. "' to '" .. bone:GetName() .. "' of actor with model '" .. mdl:GetName() .. "'...",pfm.LOG_CATEGORY_PFM)
+		if(type == "fixed") then constraint = self.m_ikRig:AddFixedConstraint(parent:GetName(),bone:GetName())
+		elseif(type == "hinge") then constraint = self.m_ikRig:AddHingeConstraint(parent:GetName(),bone:GetName(),-90.0,90.0)
+		elseif(type == "ballSocket") then constraint = self.m_ikRig:AddBallSocketConstraint(parent:GetName(),bone:GetName(),EulerAngles(-90,-90,-0.5),EulerAngles(90,90,0.5)) end
+	end
+	minLimits = constraint.minLimits
+	maxLimits = constraint.maxLimits
 
 	local function add_rotation_axis(name,axisId,defMin,defMax)
 		add_rotation_axis_slider(name .. " min",axisId,true,defMin)
 		add_rotation_axis_slider(name .. " max",axisId,false,defMax)
 	end
 	if(type == "ballSocket") then
-		minLimits = EulerAngles()
-		maxLimits = EulerAngles()
-		add_rotation_axis("pitch",0,-90,90)
-		add_rotation_axis("yaw",1,-90,90)
-		add_rotation_axis("roll",2,-0.5,0.5)
+		add_rotation_axis("pitch",0,minLimits.p,maxLimits.p)
+		add_rotation_axis("yaw",1,minLimits.y,maxLimits.y)
+		add_rotation_axis("roll",2,minLimits.r,maxLimits.r)
 	elseif(type == "hinge") then
 		singleAxis = 0
-		minLimits = EulerAngles()
-		maxLimits = EulerAngles()
-		crtl:AddDropDownMenu("axis","axis",{
+		crtl:AddDropDownMenu("Axis","axis",{
 			{"x",locale.get_text("x")},
 			{"y",locale.get_text("y")},
 			{"z",locale.get_text("z")}
 		},0,function(el,option)
 			singleAxis = el:GetSelectedOption()
 		end)
-		add_rotation_axis("angle",nil,-90,90)
+		add_rotation_axis("angle",nil,minLimits.p,maxLimits.p)
 	end
 	crtl:ResetControls()
 	crtl:Update()
 	crtl:SizeToContents()
-	--crtl:AddFileEntry(locale.get_text("pfm_impostee_model"),"impostee_model","",function(resultHandler) end)
-	--[[local ctrlsParent = child:AddItem("")
-	local crtl = gui.create("WIPFMControlsMenu",ctrlsParent,0,0,ctrlsParent:GetWidth(),ctrlsParent:GetHeight())
-	crtl:SetAutoAlignToParent(true,false)
-	crtl:AddSliderControl(locale.get_text("roughness"),"roughness",0.0,0.0,1.0,function(el,value) end,0.01)
-	--crtl:AddFileEntry(locale.get_text("pfm_impostee_model"),"impostee_model","",function(resultHandler) end)
-]]
-
-
-
-
-	--[[local menu = gui.create("WIDropDownMenu",child)
-	for _,option in pairs(self.m_dstFlexControllerOptions) do menu:AddOption(option[2],option[1]) end -- TODO: Don't add option that is already taken!
-	local wrapper = menu:Wrap("WIEditableEntry")
-	wrapper:SetText(locale.get_text("controller"))
-	wrapper:SetSize(child:GetWidth(),20)
-	wrapper:SetAnchor(0,0,1,0)
-	wrapper:SetUseAltMode(true)]]
 
 	self:ReloadIkRig()
 	return constraint
 end
-function Element:AddBallSocketConstraint(item,boneName)
-	return self:AddConstraint(item,boneName,"ballSocket")
+function Element:AddBallSocketConstraint(item,boneName,c)
+	return self:AddConstraint(item,boneName,"ballSocket",c)
 end
-function Element:AddHingeConstraint(item,boneName)
-	return self:AddConstraint(item,boneName,"hinge")
+function Element:AddHingeConstraint(item,boneName,c)
+	return self:AddConstraint(item,boneName,"hinge",c)
 end
-function Element:AddFixedConstraint(item,boneName)
-	return self:AddConstraint(item,boneName,"fixed")
+function Element:AddFixedConstraint(item,boneName,c)
+	return self:AddConstraint(item,boneName,"fixed",c)
 end
 function Element:ReloadIkRig()
 	local entActor = self.m_mdlView:GetEntity(1)
@@ -597,60 +516,5 @@ function Element:OnThink()
 	end
 end
 function Element:SetModelView(mdlView) self.m_mdlView = mdlView end
-function Element:UpdateRetargetComponent()
-	if(util.is_valid(self.m_mdlView) == false) then return end
-	local entDst = self.m_mdlView:GetEntity(2)
-	local retargetC = util.is_valid(entDst) and entDst:AddComponent("retarget_rig") or nil
-	if(retargetC == nil) then return end
-	retargetC:InitializeRemapTables()
-	retargetC:UpdatePoseData()
-	retargetC.m_cppCacheData = nil
-end
-function Element:ApplyBoneTranslation(el,bone)
-	if(self.m_rig == nil) then return end
-	local boneId = tonumber(el:GetOptionValue(el:GetSelectedOption()))
-	self:SetBoneTranslation((boneId ~= -1) and boneId or nil,bone and bone:GetID() or nil)
-	self:UpdateModelView()
-
-	self:UpdateRetargetComponent()
-end
-function Element:GetRig() return self.m_rig end
---[[function Element:ApplyRig()
-	local entSrc = self.m_modelView:GetEntity(1)
-	local entDst = self.m_modelView:GetEntity(2)
-	if(util.is_valid(entSrc) == false or util.is_valid(entDst) == false) then return end
-	local animCSrc = entSrc:GetComponent(ents.COMPONENT_ANIMATED)
-	if(animCSrc == nil) then return end
-	local retargetRigC = entDst:AddComponent("retarget_rig")
-	if(retargetRigC == nil) then return end
-	local rig = ents.RetargetRig.Rig(self.m_srcMdl,self.m_dstMdl)
-	rig:SetDstToSrcTranslationTable(self:GetTranslationTable())
-
-	retargetRigC:SetRig(rig,animCSrc)
-	self.m_rig = rig
-end]]
-function Element:GetTranslationTable()
-	local translationTable = {}
-	local skeleton = self.m_dstMdl:GetSkeleton()
-	for _,bone in ipairs(skeleton:GetBones()) do
-		local ctrl = self:GetBoneControl(bone:GetID())
-		if(util.is_valid(ctrl)) then
-			local boneIdSrc = tonumber(ctrl:GetOptionValue(ctrl:GetSelectedOption()))
-			if(boneIdSrc ~= -1) then translationTable[bone:GetID()] = boneIdSrc end -- TODO: Flip
-		end
-	end
-	return translationTable
-end
-function Element:GetBoneNames(mdl)
-	local boneNames = {}
-	local skeleton = mdl:GetSkeleton()
-	for _,bone in ipairs(skeleton:GetBones()) do
-		table.insert(boneNames,bone:GetName())
-	end
-	return boneNames
-end
-function Element:SetSelectedOptions(options)
-	self:ResetBoneControls()
-	for boneIdDst,boneSrcData in pairs(options) do self:MapBone(boneSrcData[1],boneIdDst,true) end
-end
+function Element:GetRig() return self.m_ikRig end
 gui.register("WIIkRigEditor",Element)
