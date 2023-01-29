@@ -436,7 +436,12 @@ function gui.PFMTreeViewElement:FindItemByText(text,recursive)
 		end
 	end
 end
-function gui.PFMTreeViewElement:SetIdentifier(identifier) self.m_identifier = identifier end
+function gui.PFMTreeViewElement:SetIdentifier(identifier)
+	self.m_identifier = identifier
+	if(util.is_valid(self.m_parent)) then
+		self.m_parent.m_identifierToItem[identifier] = self
+	end
+end
 function gui.PFMTreeViewElement:GetIdentifier() return self.m_identifier end
 function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex,identifier)
 	self:InitializeChildBox()
@@ -461,7 +466,6 @@ function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex,identifier)
 		table.insert(self.m_items,item)
 	end
 	if(identifier ~= nil) then
-		self.m_identifierToItem[identifier] = item
 		item:SetIdentifier(identifier)
 	end
 	self:ScheduleUpdate()
