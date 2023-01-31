@@ -130,6 +130,7 @@ util.register_class_property(pfm.RaytracingRenderJob.Settings,"liveEditingEnable
 	getter = "IsLiveEditingEnabled"
 })
 util.register_class_property(pfm.RaytracingRenderJob.Settings,"useOptix",false)
+util.register_class_property(pfm.RaytracingRenderJob.Settings,"tileSize",512)
 
 function pfm.RaytracingRenderJob.Settings:__init()
 	self:SetRenderMode(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED)
@@ -191,6 +192,7 @@ function pfm.RaytracingRenderJob.Settings:Copy()
 	cpy:SetColorTransformLook(self:GetColorTransformLook())
 	cpy:SetLiveEditingEnabled(self:IsLiveEditingEnabled())
 	cpy:SetUseOptix(self:GetUseOptix())
+	cpy:SetTileSize(self:GetTileSize())
 	return cpy
 end
 

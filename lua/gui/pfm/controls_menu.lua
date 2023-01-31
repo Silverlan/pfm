@@ -154,7 +154,7 @@ function gui.PFMControlsMenu:SetValue(identifier,value)
 	if(ctrl.element:GetClass() == "widropdownmenu") then ctrl.element:SelectOption(value)
 	elseif(ctrl.element:GetClass() == "wipfmslider") then ctrl.element:SetDefault(value)
 	elseif(ctrl.element:GetClass() == "wipfmcolorentry") then ctrl.element:SetColor(value)
-	elseif(ctrl.element:GetClass() == "witextentry") then ctrl.element:SetText(value)
+	elseif(ctrl.element:GetClass() == "witextentry") then ctrl.element:SetText(tostring(value))
 	elseif(ctrl.element:GetClass() == "witoggleoption") then ctrl.element:SetChecked(value)
 	else ctrl.element:SetValue(value) end
 end

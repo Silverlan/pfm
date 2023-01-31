@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+pfm.register_log_category("pragma_renderer")
+
 util.register_class("pfm.PragmaRenderScene")
 function pfm.PragmaRenderScene:__init(width,height,ssFactor)
 	ssFactor = ssFactor or 1.0
@@ -115,6 +117,7 @@ function pfm.PragmaRenderJob:RestoreCamera()
 	cam:GetEntity():SetPose(restoreData.pose)
 end
 function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
+	pfm.log("Rendering frame " .. self.m_curFrame .. ((self.m_curTile ~= nil) and (", tile " .. self.m_curTile) or ""),pfm.LOG_CATEGORY_PRAGMA_RENDERER,pfm.LOG_SEVERITY_DEBUG)
 	local pragmaRendererC = self.m_renderer:GetEntity():GetComponent("pfm_pragma_renderer")
 	if(pragmaRendererC ~= nil) then
 		pragmaRendererC:OnRender()
@@ -162,6 +165,33 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
 			end
 		end
 	end
+
+	local cam = game.get_scene():GetActiveCamera()
+	if(self.m_useTiledRendering) then
+		local x,y = self:GetTileOffsets(false,false)
+		local w,h = self:GetTileSizes()
+
+		local maxW = self.m_tileCompositeImgBuf:GetWidth()
+		local maxH = self.m_tileCompositeImgBuf:GetHeight()
+
+		local fx = 2 /(1.0 +(w /maxW))
+		local fy = 2 /(1.0 +(h /maxH))
+
+		local v0 = x
+		local v1 = y
+		local v2 = (w /2.0) +maxW /fx
+		local v3 = (h /2.0) +maxH /fy
+		cam:SetAspectRatio(self.m_renderSettings:GetWidth() /self.m_renderSettings:GetHeight())--1280/1024)
+		local proj = ents.CameraComponent.calc_projection_matrix(cam:GetFOVRad(),cam:GetAspectRatio(),cam:GetNearZ(),cam:GetFarZ(),util.RenderTile(v0 /maxW,v1 /maxH,v2 /maxW,v3 /maxH))
+		cam:SetProjectionMatrix(proj)
+		cam:UpdateViewMatrix()
+	else
+		cam:SetAspectRatio(self.m_renderSettings:GetWidth() /self.m_renderSettings:GetHeight())--1280/1024)
+		cam:UpdateMatrices()
+	end
+	--
+
+
 	self.m_drawCommandBuffer:StartRecording(false,false)
 	local incMask,excMask = game.get_primary_camera_render_mask()
 	local drawSceneInfo = game.DrawSceneInfo()
@@ -195,12 +225,17 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 	local function finalize()
 		self:RestoreCamera()
 
-		self.m_progress = (self.m_numFrames > 1) and (self.m_curFrame /(self.m_numFrames -1)) or 1.0
-		if(self.m_curFrame < (self.m_numFrames -1)) then
-			self.m_curFrame = self.m_curFrame +1
+		if(self.m_useTiledRendering and self.m_curTile < (self.m_numTiles -1)) then
+			self.m_curTile = self.m_curTile +1
 			self:RenderNextFrame(true)
 		else
-			self:Clear()
+			self.m_progress = (self.m_numFrames > 1) and (self.m_curFrame /(self.m_numFrames -1)) or 1.0
+			if(self.m_curFrame < (self.m_numFrames -1)) then
+				self.m_curFrame = self.m_curFrame +1
+				self:RenderNextFrame(true)
+			else
+				self:Clear()
+			end
 		end
 	end
 
@@ -269,6 +304,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 	local width = self.m_renderSettings:GetWidth()
 	local height = self.m_renderSettings:GetHeight()
 
+	pfm.log("Finalizing image buffer...",pfm.LOG_CATEGORY_PRAGMA_RENDERER,pfm.LOG_SEVERITY_DEBUG)
 	if(self.m_renderPanorama) then
 		if(self.m_curFrame == (self.m_numFrames -1)) then
 			local horizontalRange = self.m_renderSettings:GetPanoramaHorizontalRange()
@@ -306,11 +342,37 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 		end
 	else
 		local imgBuf = imgOutput:ToImageBuffer(false,false,util.ImageBuffer.FORMAT_RGBA16,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
-		self.m_imageBuffer = imgBuf
-		local res = unirender.apply_color_transform(self.m_imageBuffer,nil,nil,self.m_renderSettings:GetColorTransform(),self.m_renderSettings:GetColorTransformLook())
+		local res = unirender.apply_color_transform(imgBuf,nil,nil,self.m_renderSettings:GetColorTransform(),self.m_renderSettings:GetColorTransformLook())
+
+		if(self.m_useTiledRendering) then
+			self.m_imageBuffer = self.m_tileCompositeImgBuf
+			local x,y = self:GetTileOffsets()
+			self.m_tileCompositeImgBuf:Insert(imgBuf,x,y)
+		else
+			self.m_imageBuffer = imgBuf
+		end
 	end
 
 	finalize()
+end
+function pfm.PragmaRenderJob:GetTileIndices()
+	local numTilesX = self.m_tileCompositeImgBuf:GetWidth() /self.m_tileWidth
+	local x = self.m_curTile %self.m_numTilesX
+	local y = math.floor(self.m_curTile /self.m_numTilesX)
+	return x,y
+end
+function pfm.PragmaRenderJob:GetTileOffsets(flipX,flipY)
+	local x,y = self:GetTileIndices()
+	if(flipX) then x = self.m_tileCompositeImgBuf:GetWidth() -(x +1) *self.m_tileWidth
+	else x = x *self.m_tileWidth end
+
+	if(flipY) then y = self.m_tileCompositeImgBuf:GetHeight() -(y +1) *self.m_tileHeight
+	else y = y *self.m_tileHeight end
+
+	return x,y
+end
+function pfm.PragmaRenderJob:GetTileSizes()
+	return self.m_tileWidth,self.m_tileHeight
 end
 function pfm.PragmaRenderJob:Start()
 	local cam = game.get_scene():GetActiveCamera()
@@ -329,8 +391,34 @@ function pfm.PragmaRenderJob:Start()
 		height = size
 		-- ssFactor = 1.0
 	end
-	if(pfm.g_pragmaRendererRenderScene == nil) then pfm.g_pragmaRendererRenderScene = pfm.PragmaRenderScene(width,height,ssFactor)
-	else pfm.g_pragmaRendererRenderScene:ChangeResolution(width,height,ssFactor) end
+
+	local tileSize = self.m_renderSettings:GetTileSize()
+	if(self.m_renderPanorama or self.m_stereoscopic) then tileSize = 0 end -- Tiled rendering currently not supported for panorama and stereo renders
+	local renderWidth = width
+	local renderHeight = height
+	if(tileSize > 0) then
+		pfm.log("Initializing tiled rendering with tile size " .. tileSize,pfm.LOG_CATEGORY_PRAGMA_RENDERER,pfm.LOG_SEVERITY_DEBUG)
+		self.m_useTiledRendering = true
+		self.m_tileWidth = tileSize
+		self.m_tileHeight = tileSize
+		self.m_tileCompositeImgBuf = util.ImageBuffer.Create(width,height,util.ImageBuffer.FORMAT_RGBA16)
+		renderWidth = self.m_tileWidth
+		renderHeight = self.m_tileHeight
+
+		self.m_numTilesX = math.ceil(width /self.m_tileWidth)
+		self.m_numTilesY = math.ceil(height /self.m_tileHeight)
+		self.m_numTiles = self.m_numTilesX *self.m_numTilesY
+		self.m_curTile = 0
+
+		pfm.log("Number of tiles: " .. self.m_numTilesX .. "x" .. self.m_numTilesY,pfm.LOG_CATEGORY_PRAGMA_RENDERER,pfm.LOG_SEVERITY_DEBUG)
+	else
+		pfm.log("Tile size is 0, tiled rendering will be disabled.",pfm.LOG_CATEGORY_PRAGMA_RENDERER,pfm.LOG_SEVERITY_DEBUG)
+		self.m_useTiledRendering = false
+	end
+
+	pfm.log("Using renderer resolution " .. renderWidth .. "x" .. renderHeight,pfm.LOG_CATEGORY_PRAGMA_RENDERER,pfm.LOG_SEVERITY_DEBUG)
+	if(pfm.g_pragmaRendererRenderScene == nil) then pfm.g_pragmaRendererRenderScene = pfm.PragmaRenderScene(renderWidth,renderHeight,ssFactor)
+	else pfm.g_pragmaRendererRenderScene:ChangeResolution(renderWidth,renderHeight,ssFactor) end
 
 	self.m_scene = pfm.g_pragmaRendererRenderScene:GetScene()
 	self.m_scene:SetActiveCamera(cam)
