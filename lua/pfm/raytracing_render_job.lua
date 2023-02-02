@@ -260,7 +260,7 @@ end
 function pfm.RaytracingRenderJob:GetRenderTime() return self.m_tRender end
 function pfm.RaytracingRenderJob:IsProgressive() return self.m_progressiveRendering or false end
 function pfm.RaytracingRenderJob:GetProgressiveTexture() return self.m_progressiveRendering and self.m_prt ~= nil and self.m_prt:GetTexture() or nil end
-function pfm.RaytracingRenderJob:GetRenderResultTexture() return self.m_renderResult end
+function pfm.RaytracingRenderJob:GetRenderResultPreviewTexture() return self.m_renderResult end
 function pfm.RaytracingRenderJob:GetRenderResult() return self.m_currentImageBuffer end
 function pfm.RaytracingRenderJob:GetRenderResultFrameIndex() return self.m_renderResultFrameIndex end
 function pfm.RaytracingRenderJob:GetRenderResultRemainingSubStages() return self.m_renderResultRemainingSubStages end
@@ -272,11 +272,30 @@ function pfm.RaytracingRenderJob:GenerateResult()
 	imgCreateInfo.usageFlags = bit.bor(imgCreateInfo.usageFlags,prosper.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,prosper.IMAGE_USAGE_TRANSFER_SRC_BIT,prosper.IMAGE_USAGE_TRANSFER_DST_BIT)
 	if(cubemap == false) then
 		self.m_currentImageBuffer = self.m_imageBuffers[1]
-		img = prosper.create_image(self.m_currentImageBuffer,imgCreateInfo)
 	else
 		self.m_currentImageBuffer = util.ImageBuffer.CreateCubemap(self.m_imageBuffers)
-		img = prosper.create_image(self.m_currentImageBuffer,imgCreateInfo)
 	end
+	local w = self.m_currentImageBuffer:GetWidth()
+	local h = self.m_currentImageBuffer:GetHeight()
+
+	-- Maximum extent for preview image
+	-- TODO: Make this dependent on the resolution
+	local maxPreviewExtent = 1600
+	if(w > maxPreviewExtent) then
+		local f = maxPreviewExtent /w
+		w = maxPreviewExtent
+		h = math.round(h *f)
+	end
+	if(h > maxPreviewExtent) then
+		local f = maxPreviewExtent /h
+		h = maxPreviewExtent
+		w = math.round(w *f)
+	end
+
+	local downscaled = opencv.resize(self.m_currentImageBuffer,16,16)
+	imgCreateInfo.width = downscaled:GetWidth()
+	imgCreateInfo.height = downscaled:GetHeight()
+	img = prosper.create_image(downscaled,imgCreateInfo)
 	self.m_imageBuffers = {}
 
 	local imgViewCreateInfo = prosper.ImageViewCreateInfo()

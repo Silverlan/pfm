@@ -6,6 +6,11 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+local r = engine.load_library("opencv/pr_opencv")
+if(r ~= true) then
+	console.print_warning("An error occured trying to load the 'pr_opencv' module: ",r)
+end
+
 pfm.register_log_category("pragma_renderer")
 
 util.register_class("pfm.PragmaRenderScene")
@@ -117,7 +122,7 @@ function pfm.PragmaRenderJob:RestoreCamera()
 	cam:GetEntity():SetPose(restoreData.pose)
 end
 function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
-	pfm.log("Rendering frame " .. self.m_curFrame .. ((self.m_curTile ~= nil) and (", tile " .. self.m_curTile) or ""),pfm.LOG_CATEGORY_PRAGMA_RENDERER,pfm.LOG_SEVERITY_DEBUG)
+	pfm.log("Rendering frame " .. self.m_curFrame .. ((self.m_curTile ~= nil) and (", tile " .. self.m_curTile .. "/" .. self.m_numTiles) or ""),pfm.LOG_CATEGORY_PRAGMA_RENDERER,pfm.LOG_SEVERITY_DEBUG)
 	local pragmaRendererC = self.m_renderer:GetEntity():GetComponent("pfm_pragma_renderer")
 	if(pragmaRendererC ~= nil) then
 		pragmaRendererC:OnRender()
@@ -205,18 +210,21 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
 		debug.start_profiling_task("pfm_render_pragma_frame")
 		game.render_scenes({drawSceneInfo})
 		if(finalize == nil) then finalize = true end
-		if(finalize) then self:FinalizeFrame() end
+		local shouldRenderNextFrame = false
+		if(finalize) then shouldRenderNextFrame = self:FinalizeFrame() end
 		debug.stop_profiling_task()
-	else
-		game.queue_scene_for_rendering(drawSceneInfo)
-		self.m_cbPreRenderScenes = game.add_callback("PreRenderScenes",function(drawSceneInfo)
-			self:RenderNextFrame(true,false)
-		end)
-
-		self.m_cbPostRenderScenes = game.add_callback("PostRenderScenes",function(drawSceneInfo)
-			self:FinalizeFrame()
-		end)
+		return shouldRenderNextFrame
 	end
+
+	game.queue_scene_for_rendering(drawSceneInfo)
+	self.m_cbPreRenderScenes = game.add_callback("PreRenderScenes",function(drawSceneInfo)
+		self:RenderNextFrame(true,false)
+	end)
+
+	self.m_cbPostRenderScenes = game.add_callback("PostRenderScenes",function(drawSceneInfo)
+		self:FinalizeFrame()
+	end)
+	return false
 end
 function pfm.PragmaRenderJob:FinalizeFrame()
 	self.m_drawCommandBuffer:Flush()
@@ -227,16 +235,17 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 
 		if(self.m_useTiledRendering and self.m_curTile < (self.m_numTiles -1)) then
 			self.m_curTile = self.m_curTile +1
-			self:RenderNextFrame(true)
+			return true
 		else
 			self.m_progress = (self.m_numFrames > 1) and (self.m_curFrame /(self.m_numFrames -1)) or 1.0
 			if(self.m_curFrame < (self.m_numFrames -1)) then
 				self.m_curFrame = self.m_curFrame +1
-				self:RenderNextFrame(true)
+				return true
 			else
 				self:Clear()
 			end
 		end
+		return false
 	end
 
 	local baseSettings = tool.get_filmmaker():GetSettings():GetRenderSettings()
@@ -247,8 +256,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 			texOutput = rasterC:GetPostPrepassDepthTexture()
 			local imgBuf = texOutput:GetImage():ToImageBuffer(false,false,util.ImageBuffer.FORMAT_RGBA16,prosper.IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 			self.m_imageBuffer = imgBuf
-			finalize()
-			return
+			return finalize()
 		end
 	end
 
@@ -341,19 +349,35 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 			local res = unirender.apply_color_transform(self.m_imageBuffer,nil,nil,self.m_renderSettings:GetColorTransform(),self.m_renderSettings:GetColorTransformLook())
 		end
 	else
-		local imgBuf = imgOutput:ToImageBuffer(false,false,util.ImageBuffer.FORMAT_RGBA16,prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+		local createInfo = imgOutput:GetCreateInfo()
+		if(self.m_imgOutputStagingImage == nil or self.m_imgOutputStagingImage:GetWidth() ~= createInfo.width or self.m_imgOutputStagingImage:GetHeight() ~= createInfo.height) then
+			createInfo.usageFlags = bit.bor(createInfo.usageFlags,prosper.IMAGE_USAGE_TRANSFER_DST_BIT)
+			createInfo.postCreateLayout = prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			createInfo.format = prosper.FORMAT_R16G16B16A16_SFLOAT
+
+			self.m_imgOutputStagingImage = prosper.create_image(createInfo)
+		end
+		local imgBufInfo = prosper.Image.ToImageBufferInfo()
+		imgBufInfo.includeLayers = false
+		imgBufInfo.includeMipmaps = false
+		imgBufInfo.targetFormat = util.ImageBuffer.FORMAT_RGBA16
+		imgBufInfo.inputImageLayout = prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+		imgBufInfo.stagingImage = self.m_imgOutputStagingImage
+		local imgBuf = imgOutput:ToImageBuffer(imgBufInfo)
 		local res = unirender.apply_color_transform(imgBuf,nil,nil,self.m_renderSettings:GetColorTransform(),self.m_renderSettings:GetColorTransformLook())
 
 		if(self.m_useTiledRendering) then
 			self.m_imageBuffer = self.m_tileCompositeImgBuf
 			local x,y = self:GetTileOffsets()
-			self.m_tileCompositeImgBuf:Insert(imgBuf,x,y)
+
+			if(opencv) then opencv.copy(imgBuf,self.m_tileCompositeImgBuf,x,y,imgBuf:GetWidth(),imgBuf:GetHeight())
+			else self.m_tileCompositeImgBuf:Insert(imgBuf,x,y) end
 		else
 			self.m_imageBuffer = imgBuf
 		end
 	end
 
-	finalize()
+	return finalize()
 end
 function pfm.PragmaRenderJob:GetTileIndices()
 	local numTilesX = self.m_tileCompositeImgBuf:GetWidth() /self.m_tileWidth
@@ -434,7 +458,10 @@ function pfm.PragmaRenderJob:Start()
 	self.m_numFrames = self.m_stereoscopic and 12 or (self.m_renderPanorama and 6 or 1)
 	self.m_curFrame = 0
 
-	self:RenderNextFrame(true)
+	local shouldRenderNextFrame = self:RenderNextFrame(true)
+	while(shouldRenderNextFrame) do
+		shouldRenderNextFrame = self:RenderNextFrame(true)
+	end
 end
 function pfm.PragmaRenderJob:GetCommandBuffer() return self.m_drawCommandBuffer end
 function pfm.PragmaRenderJob:IsComplete() return self:GetProgress() == 1.0 end
@@ -469,6 +496,7 @@ function pfm.PragmaRenderer:EndSceneEdit()
 	self.m_pragmaRenderJob:RenderNextFrame(true)
 	local result = self.m_rtJob:GetRenderResultTexture()
 	local imgBuf = self.m_pragmaRenderJob:GetImage()
+	-- TODO: Downscale the image if we're rendering at a really high resolution
 	if(result ~= nil and imgBuf ~= nil) then
 		self:InitializeStagingImage()
 
