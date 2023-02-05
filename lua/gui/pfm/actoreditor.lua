@@ -1296,6 +1296,8 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			if(val ~= nil and info:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_CONTROLLER_BIT) == false) then
 				if(info.type == ents.MEMBER_TYPE_ENTITY) then
 					val = ents.UniversalEntityReference(util.Uuid(val))
+				elseif(info.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY) then
+					val = ents.UniversalMemberReference(val)
 				end
 				c:SetMemberValue(info.name,val)
 				return true
@@ -1350,6 +1352,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			--elseif(info.type == udm.TYPE_UTF8_STRING) then props:SetProperty(info.name,udm.(info.default))
 			--elseif(info.type == udm.TYPE_NIL) then props:SetProperty(info.name,udm.(info.default))
 			elseif(info.type == ents.MEMBER_TYPE_ENTITY) then
+			elseif(info.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY) then
 			elseif(info.type == ents.MEMBER_TYPE_ELEMENT) then
 			else
 				pfm.log("Unsupported component member type " .. info.type .. "!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
@@ -1444,6 +1447,9 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 								local uuid = udmValue:GetUuid()
 								if(uuid:IsValid()) then udmValue = tostring(uuid)
 								else udmValue = "" end
+								udmType = udm.TYPE_STRING
+							elseif(memberType == ents.MEMBER_TYPE_COMPONENT_PROPERTY) then
+								udmValue = udmValue:GetPath() or ""
 								udmType = udm.TYPE_STRING
 							end
 
@@ -2046,6 +2052,26 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 							if(uuid:IsValid()) then elText:SetText(tostring(uuid))
 							else elText:SetText("-") end
 						end
+					end
+				end
+			end
+			ctrl = wrapper
+		elseif(memberInfo.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY) then
+			local elText,wrapper = self.m_animSetControls:AddTextEntry(baseMemberName,memberInfo.name,controlData.default or "",function(el)
+				if(self.m_skipUpdateCallback) then return end
+				if(controlData.set ~= nil) then
+					local ref = ents.UniversalMemberReference(el:GetText())
+					controlData.set(udmComponent,ref,nil,nil,true)
+				end
+			end)
+			if(controlData.getValue ~= nil) then
+				controlData.updateControlValue = function()
+					if(elText:IsValid() == false) then return end
+					local val = controlData.getValue()
+					if(val ~= nil) then
+						local path = val:GetPath()
+						if(path ~= nil) then elText:SetText(path)
+						else elText:SetText("-") end
 					end
 				end
 			end

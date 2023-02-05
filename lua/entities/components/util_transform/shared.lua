@@ -1,8 +1,8 @@
 util.register_class("ents.UtilTransformComponent",BaseEntityComponent)
 
-ents.UtilTransformComponent.SPACE_WORLD = 0
-ents.UtilTransformComponent.SPACE_LOCAL = 1
-ents.UtilTransformComponent.SPACE_VIEW = 2
+ents.UtilTransformComponent.SPACE_WORLD = math.COORDINATE_SPACE_WORLD
+ents.UtilTransformComponent.SPACE_LOCAL = math.COORDINATE_SPACE_LOCAL
+ents.UtilTransformComponent.SPACE_VIEW = math.COORDINATE_SPACE_VIEW
 
 function ents.UtilTransformComponent:Initialize()
 	BaseEntityComponent.Initialize(self)

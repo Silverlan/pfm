@@ -379,8 +379,12 @@ function Component:InitializeComponentProperties()
 						if(val == nil) then
 							pfm.log("Attempted to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 						else
-							if(info ~= nil and info.type == ents.MEMBER_TYPE_ENTITY) then
-								val = ents.UniversalEntityReference(util.Uuid(val))
+							if(info ~= nil) then
+								if(info.type == ents.MEMBER_TYPE_ENTITY) then
+									val = ents.UniversalEntityReference(util.Uuid(val))
+								elseif(info.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY) then
+									val = ents.UniversalMemberReference(val)
+								end
 							end
 							if(c:SetMemberValue(childPath,val) == false) then
 								pfm.log("Failed to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
