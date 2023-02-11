@@ -35,6 +35,14 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG = 13
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL = 14
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_MANAGER = 15
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_TRACKED_DEVICE = 16
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION = 17
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION = 18
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE = 19
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE = 20
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION = 21
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION = 22
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE = 23
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_TRACK_TO = 24
 
 gui.PFMActorEditor.COLLECTION_SCENEBUILD = "scenebuild"
 gui.PFMActorEditor.COLLECTION_ACTORS = "actors"
@@ -45,6 +53,7 @@ gui.PFMActorEditor.COLLECTION_ENVIRONMENT = "environment"
 gui.PFMActorEditor.COLLECTION_BAKING = "baking"
 gui.PFMActorEditor.COLLECTION_MISC = "misc"
 gui.PFMActorEditor.COLLECTION_VR = "vr"
+gui.PFMActorEditor.COLLECTION_CONSTRAINTS = "constraints"
 
 function gui.PFMActorEditor:__init()
 	gui.Base.__init(self)
@@ -147,6 +156,19 @@ function gui.PFMActorEditor:OnInitialize()
 		local pVrItem,pVrMenu = pContext:AddSubMenu(locale.get_text("virtual_reality"))
 		if(hasVrManagerComponent == false) then addPresetActorOption(pVrMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_MANAGER,"pfm_create_vr_manager",pVrMenu) end
 		pVrMenu:Update()
+
+		if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
+			local pConstraintItem,pConstraintMenu = pContext:AddSubMenu(locale.get_text("constraints"))
+			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION,"pfm_create_copy_location_constraint",pConstraintMenu)
+			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION,"pfm_create_copy_rotation_constraint",pConstraintMenu)
+			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE,"pfm_create_copy_scale_constraint",pConstraintMenu)
+			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE,"pfm_create_limit_distance_constraint",pConstraintMenu)
+			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,"pfm_create_limit_location_constraint",pConstraintMenu)
+			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,"pfm_create_limit_rotation_constraint",pConstraintMenu)
+			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,"pfm_create_limit_scale_constraint",pConstraintMenu)
+			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_TRACK_TO,"pfm_create_track_to_constraint",pConstraintMenu)
+			pConstraintMenu:Update()
+		end
 
 		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
 		local types = ents.get_registered_entity_types()
@@ -269,6 +291,22 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_componentManager = pfm.ComponentManager()
 
 	self.m_leftRightWeightSlider = gui.create("WIPFMWeightSlider",self.m_animSetControls)
+	self.m_specialPropertyIcons = {}
+
+	local animManager = tool.get_filmmaker():GetAnimationManager()
+	self.m_callbacks = {}
+	table.insert(self.m_callbacks,animManager:AddCallback("OnChannelAdded",function(actor,path)
+		local componentName,pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+		local componentId = (componentName ~= nil) and ents.get_component_id(componentName) or nil
+		if(componentId == nil) then return end
+		self:UpdatePropertyIcons(actor:GetUniqueId(),componentId,"ec/" .. componentName .. "/" .. pathName:GetString())
+	end))
+	table.insert(self.m_callbacks,animManager:AddCallback("OnChannelRemoved",function(actor,path)
+		local componentName,pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+		local componentId = (componentName ~= nil) and ents.get_component_id(componentName) or nil
+		if(componentId == nil) then return end
+		self:UpdatePropertyIcons(actor:GetUniqueId(),componentId,"ec/" .. componentName .. "/" .. pathName:GetString())
+	end))
 
 	self:SetMouseInputEnabled(true)
 end
@@ -614,6 +652,44 @@ function gui.PFMActorEditor:CreatePresetActor(type,args)
 		actor = actor or create_new_actor("vr_tracked_device",gui.PFMActorEditor.COLLECTION_VR)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"pfm_vr_tracked_device",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION) then
+		actor = actor or create_new_actor("ct_copy_location",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"constraint_copy_location",false)
+		self:CreateNewActorComponent(actor,"constraint",false)
+		self:CreateNewActorComponent(actor,"constraint_space",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION) then
+		actor = actor or create_new_actor("ct_copy_rotation",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"constraint_copy_rotation",false)
+		self:CreateNewActorComponent(actor,"constraint",false)
+		self:CreateNewActorComponent(actor,"constraint_space",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE) then
+		actor = actor or create_new_actor("ct_copy_scale",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"constraint_copy_scale",false)
+		self:CreateNewActorComponent(actor,"constraint",false)
+		self:CreateNewActorComponent(actor,"constraint_space",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE) then
+		actor = actor or create_new_actor("ct_limit_distance",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"constraint_limit_distance",false)
+		self:CreateNewActorComponent(actor,"constraint",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION) then
+		actor = actor or create_new_actor("ct_limit_location",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"constraint_limit_location",false)
+		self:CreateNewActorComponent(actor,"constraint",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION) then
+		actor = actor or create_new_actor("ct_limit_rotation",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"constraint_limit_rotation",false)
+		self:CreateNewActorComponent(actor,"constraint",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE) then
+		actor = actor or create_new_actor("ct_limit_scale",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"constraint_limit_scale",false)
+		self:CreateNewActorComponent(actor,"constraint",false)
 	end
 
 	if(newActor and updateActorComponents) then self:UpdateActorComponents(actor) end
@@ -1040,6 +1116,39 @@ function gui.PFMActorEditor:GetSelectedActors()
 	end)
 	return actors
 end
+function gui.PFMActorEditor:GetSelectedProperties()
+	local props = {}
+	local function add_property(actorElement,actorData,componentElement,componentData,elParent)
+		for _,elProp in ipairs(elParent:GetItems()) do
+			if(elProp:IsValid()) then
+				local ctrlData = componentData.treeElementToControlData[elProp]
+				if(elProp:IsSelected() and ctrlData ~= nil) then
+					table.insert(props,{
+						actorElement = el,
+						componentElement = elComponent,
+						propertyElement = elProp,
+
+						actorData = actorData,
+						componentData = componentData,
+						controlData = ctrlData
+					})
+				end
+				add_property(actorElement,actorData,componentElement,componentData,elProp)
+			end
+		end
+	end
+	self:IterateActors(function(el)
+		local actorData = self.m_treeElementToActorData[el]
+		if(actorData ~= nil) then
+			for _,elComponent in ipairs(actorData.componentsEntry:GetItems()) do
+				if(elComponent:IsValid() and actorData.treeElementToComponentId[elComponent] ~= nil) then
+					add_property(actorElement,actorData,componentElement,actorData.componentData[actorData.treeElementToComponentId[elComponent]],elComponent)
+				end
+			end
+		end
+	end)
+	return props
+end
 function gui.PFMActorEditor:UpdateSelectedEntities()
 	self.m_updateSelectedEntities = nil
 	if(util.is_valid(self.m_tree) == false) then return end
@@ -1074,6 +1183,10 @@ function gui.PFMActorEditor:OnThink()
 			self:InitializeDirtyActorComponents(uniqueId)
 		end
 		self.m_dirtyActorComponents = nil
+	end
+	if(self.m_updatePropertyIcons) then
+		self.m_updatePropertyIcons = nil
+		self:UpdateConstraintPropertyIcons()
 	end
 	self:DisableThinking()
 end
@@ -1159,7 +1272,8 @@ function gui.PFMActorEditor:RemoveActorComponentEntry(uniqueId,componentId)
 	if(util.is_valid(itemActor) == false) then return end
 	local actorData = self.m_treeElementToActorData[itemActor]
 	if(actorData.componentData[componentId] == nil) then return end
-	util.remove(actorData.componentData[componentId].items)
+	for idx,els in pairs(actorData.componentData[componentId].items) do util.remove(els.control) end
+	util.remove(actorData.componentData[componentId].callbacks)
 	util.remove(actorData.componentData[componentId].actionItems)
 	util.remove(actorData.componentData[componentId].itemComponent)
 	actorData.componentData[componentId] = nil
@@ -1190,6 +1304,9 @@ function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId,entActor)
 		end
 	end
 	actorData.componentsEntry:Update()
+
+	self.m_updatePropertyIcons = true
+	self:EnableThinking()
 end
 function gui.PFMActorEditor:OnActorPropertyChanged(entActor)
 	local pm = pfm.get_project_manager()
@@ -1198,17 +1315,43 @@ function gui.PFMActorEditor:OnActorPropertyChanged(entActor)
 	if(rt == nil) then return end
 	rt:MarkActorAsDirty(entActor)
 end
+local componentIcons = { -- TODO: Add a way for adding custom icons
+	["camera"] = "gui/pfm/icon_camera_item",
+	["particle_system"] = "gui/pfm/icon_particle_item",
+	["light"] = "gui/pfm/icon_light_item",
+	["light_spot"] = "gui/pfm/icon_light_item",
+	["light_point"] = "gui/pfm/icon_light_item",
+	["light_directional"] = "gui/pfm/icon_light",
+	["model"] = "gui/pfm/icon_model_item"
+}
 function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,component)
 	local componentType = component:GetType()
 	local componentId = ents.find_component_id(componentType)
 	if(componentId == nil) then return end
+
+
 	actorData.componentData[componentId] = actorData.componentData[componentId] or {
 		items = {},
 		actionItems = {},
-		actionData = {}
+		actionData = {},
+		treeElementToControlData = {},
+		callbacks = {}
 	}
+	if(componentType == "constraint") then
+		local cb = component:AddChangeListener("drivenObject",function()
+			self.m_updatePropertyIcons = true
+			self:EnableThinking()
+		end)
+		table.insert(actorData.componentData[componentId].callbacks,cb)
+	end
+
 	local componentData = actorData.componentData[componentId]
 	local itemComponent = actorData.componentsEntry:AddItem(componentType,nil,nil,componentType)
+	if(componentIcons[componentType] ~= nil) then
+		itemComponent:AddIcon(componentIcons[componentType])
+		itemActor:AddUniqueIcon(componentIcons[componentType])
+	end
+	actorData.treeElementToComponentId[itemComponent] = componentId
 	actorData.componentData[componentId].itemComponent = itemComponent
 	local uniqueId = entActor:GetUuid()
 	itemComponent:AddCallback("OnMouseEvent",function(tex,button,state,mods)
@@ -1271,10 +1414,6 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 			end
 		else util.remove(actorData.componentData[componentId].actionItems) end
 	end)
-	if(component.GetIconMaterial) then
-		itemComponent:AddIcon(component:GetIconMaterial())
-		itemActor:AddIcon(component:GetIconMaterial())
-	end
 
 	if(util.is_valid(componentData.itemBaseProps) == false) then
 		componentData.itemBaseProps = itemComponent:AddItem(locale.get_text("pfm_base_properties"))
@@ -1381,6 +1520,8 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 						controlData.name = info.name
 						controlData.default = info.default
 						controlData.path = path
+						controlData.type = info.type
+						controlData.componentId = componentId
 						controlData.getValue = function()
 							if(util.is_valid(c) == false) then
 								if(util.is_valid(entActor) == false) then entActor = ents.find_by_uuid(uniqueId) end
@@ -1484,7 +1625,14 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 							self:TagRenderSceneAsDirty()
 						end
 						controlData.set(component,value,true,false)
-						actorData.componentData[componentId].items[memberIdx] = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData,path)
+						local ctrl,elChild = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData,path)
+						if(elChild ~= nil) then actorData.componentData[componentId].treeElementToControlData[elChild] = controlData end
+						actorData.componentData[componentId].items[controlData.path] = {
+							control = ctrl,
+							treeElement = elChild,
+							controlData = controlData
+						}
+						self:DoUpdatePropertyIcons(actorData,controlData)
 					else
 						pfm.log("Unable to add control for member '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 					end
@@ -1756,7 +1904,8 @@ function gui.PFMActorEditor:AddActor(actor,parentItem)
 		actor = actor,
 		itemActor = itemActor,
 		componentsEntry = itemComponents,
-		componentData = {}
+		componentData = {},
+		treeElementToComponentId = {}
 	}
 	self.m_actorUniqueIdToTreeElement[tostring(actor:GetUniqueId())] = itemActor
 	itemComponents:AddCallback("OnMouseEvent",function(tex,button,state,mods)
@@ -1977,20 +2126,7 @@ function gui.PFMActorEditor:UpdateAnimatedPropertyOverlay(uuid,controlData)
 				-- so we have to delay it
 				local propertyName = controlData.controlData.name
 				time.create_simple_timer(0.0,function()
-					local timeline = tool.get_filmmaker():GetTimeline()
-					if(util.is_valid(timeline)) then
-						timeline:SetEditor(gui.PFMTimeline.EDITOR_GRAPH)
-						local graphEditor = timeline:GetGraphEditor()
-						if(util.is_valid(graphEditor)) then
-							local tree = graphEditor:GetPropertyList()
-							if(util.is_valid(tree)) then
-								tree:DeselectAll()
-								local item = tree:GetRoot():GetItemByIdentifier(propertyName)
-								if(util.is_valid(item)) then item:Select() end
-								graphEditor:FitViewToDataRange()
-							end
-						end
-					end
+					if(self:IsValid()) then self:ShowPropertyInGraphEditor(propertyName) end
 				end)
 				return util.EVENT_REPLY_HANDLED
 			end
@@ -2313,117 +2449,8 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 		end
 	end
 	if(ctrl ~= nil) then
-		local type = memberInfo.type
-		local exprIcon
-		local enable_expr_icon
-		local function clear_expression()
-			local pm = pfm.get_project_manager()
-			local animManager = pm:GetAnimationManager()
-			if(animManager == nil) then return end
-			animManager:SetValueExpression(actorData.actor,controlData.path)
-
-			local anim,channel,animClip = animManager:FindAnimationChannel(actorData.actor,controlData.path)
-			if(animClip ~= nil) then
-				local channel = animClip:GetChannel(controlData.path)
-				if(channel ~= nil) then
-					channel:SetExpression()
-				end
-			end
-			enable_expr_icon(false)
-		end
-		local function set_expression()
-			local pm = pfm.get_project_manager()
-			local animManager = pm:GetAnimationManager()
-			if(animManager == nil) then return end
-			local te
-			local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"),function(ok)
-				if(ok) then
-					local res = animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText(),type)
-					if(res) then
-						local anim,channel,animClip = animManager:FindAnimationChannel(actorData.actor,controlData.path,true,type)
-						if(animClip ~= nil) then
-							local channel = animClip:GetChannel(controlData.path)
-							if(channel ~= nil) then
-								channel:SetExpression(te:GetText())
-							end
-						end
-					else
-						clear_expression()
-					end
-					enable_expr_icon(res)
-				end
-			end)
-			local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
-			te = p:AddTextField(locale.get_text("pfm_expression") .. ":",expr or "")
-			te:GetTextElement():SetFont("pfm_medium")
-
-			p:SetWindowSize(Vector2i(800,120))
-			p:Update()
-		end
-		enable_expr_icon = function(enabled)
-			if(enabled == false) then
-				util.remove(exprIcon)
-				return
-			end
-			if(util.is_valid(exprIcon)) then return end
-			local el = gui.create("WIRect",ctrl)
-			el:SetSize(5,5)
-			el:SetPos(ctrl:GetWidth() -7,2)
-			el:SetColor(pfm.get_color_scheme_color("red"))
-			el:SetAnchor(1,0,1,0)
-			el:SetCursor(gui.CURSOR_SHAPE_HAND)
-			el:SetMouseInputEnabled(true)
-			el:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
-				if(button == input.MOUSE_BUTTON_LEFT) then
-					if(state == input.STATE_PRESS) then
-						set_expression()
-					end
-					return util.EVENT_REPLY_HANDLED
-				end
-			end)
-			exprIcon = el
-		end
-		local pm = pfm.get_project_manager()
-		local animManager = pm:GetAnimationManager()
-		if(animManager ~= nil and animManager:GetValueExpression(actorData.actor,controlData.path) ~= nil) then
-			enable_expr_icon(true)
-		end
-
 		ctrl:AddCallback("PopulateContextMenu",function(ctrl,context)
-			local pm = pfm.get_project_manager()
-			local animManager = pm:GetAnimationManager()
-			if(animManager ~= nil) then
-				local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
-				if(expr ~= nil) then
-					context:AddItem(locale.get_text("pfm_clear_expression"),function()
-						clear_expression()
-					end)
-					context:AddItem(locale.get_text("pfm_copy_expression"),function() util.set_clipboard_string(expr) end)
-				end
-				context:AddItem(locale.get_text("pfm_set_expression"),set_expression)
-				if(controlData.path ~= nil) then
-					context:AddItem(locale.get_text("pfm_copy_property_path"),function()
-						util.set_clipboard_string(controlData.path)
-					end)
-				end
-				local anim,channel = animManager:FindAnimationChannel(actorData.actor,controlData.path,false)
-				if(channel ~= nil) then
-					context:AddItem(locale.get_text("pfm_clear_animation"),function()
-						animManager:RemoveChannel(actorData.actor,controlData.path)
-						local entActor = actorData.actor:FindEntity()
-						if(util.is_valid(entActor) == false) then return end
-						local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-						if(actorC ~= nil) then
-							actorC:ApplyComponentMemberValue(controlData.path)
-						end
-
-						local animC = entActor:GetComponent(ents.COMPONENT_PANIMA)
-						if(animC ~= nil) then animC:ReloadAnimation() end
-
-						self:SetPropertyAnimationOverlaysDirty()
-					end)
-				end
-			end
+			self:PopulatePropertyContextMenu(context,actorData,controlData)
 		end)
 	end
 	self:SetPropertyAnimationOverlaysDirty()
@@ -2472,6 +2499,129 @@ function gui.PFMActorEditor:ReloadActorComponentEntries(actor,componentId)
 	self:RemoveActorComponentEntry(tostring(actor:GetUniqueId()),componentId)
 	self:SetActorDirty(tostring(actor:GetUniqueId()))
 	self:InitializeDirtyActorComponents(tostring(actor:GetUniqueId()))
+end
+function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,controlData)
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+	if(animManager ~= nil) then
+		local type = controlData.type
+		local exprIcon
+		local enable_expr_icon
+		local function clear_expression()
+			local pm = pfm.get_project_manager()
+			local animManager = pm:GetAnimationManager()
+			if(animManager == nil) then return end
+			animManager:SetValueExpression(actorData.actor,controlData.path)
+
+			local anim,channel,animClip = animManager:FindAnimationChannel(actorData.actor,controlData.path)
+			if(animClip ~= nil) then
+				local channel = animClip:GetChannel(controlData.path)
+				if(channel ~= nil) then
+					channel:SetExpression()
+				end
+			end
+			enable_expr_icon(false)
+		end
+		enable_expr_icon = function(enabled)
+			self:DoUpdatePropertyIcons(actorData,controlData)
+		end
+		local pm = pfm.get_project_manager()
+		local animManager = pm:GetAnimationManager()
+		if(animManager ~= nil and animManager:GetValueExpression(actorData.actor,controlData.path) ~= nil) then
+			enable_expr_icon(true)
+		end
+
+		local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
+		if(expr ~= nil) then
+			context:AddItem(locale.get_text("pfm_clear_expression"),function()
+				clear_expression()
+			end)
+			context:AddItem(locale.get_text("pfm_copy_expression"),function() util.set_clipboard_string(expr) end)
+		end
+		context:AddItem(locale.get_text("pfm_set_expression"),function() self:OpenPropertyExpressionWindow(actorData,controlData) end)
+		if(controlData.path ~= nil) then
+			context:AddItem(locale.get_text("pfm_copy_property_path"),function()
+				util.set_clipboard_string(controlData.path)
+			end)
+		end
+		local anim,channel = animManager:FindAnimationChannel(actorData.actor,controlData.path,false)
+		if(channel ~= nil) then
+			context:AddItem(locale.get_text("pfm_clear_animation"),function()
+				animManager:RemoveChannel(actorData.actor,controlData.path)
+				local entActor = actorData.actor:FindEntity()
+				if(util.is_valid(entActor) == false) then return end
+				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+				if(actorC ~= nil) then
+					actorC:ApplyComponentMemberValue(controlData.path)
+				end
+
+				local animC = entActor:GetComponent(ents.COMPONENT_PANIMA)
+				if(animC ~= nil) then animC:ReloadAnimation() end
+
+				self:SetPropertyAnimationOverlaysDirty()
+			end)
+		end
+	end
+
+	local props = self:GetSelectedProperties()
+	if(#props > 2) then props = {{actorData = actorData,controlData = controlData}} -- If more than two properties are selected, we'll only show self-contained constraints for the property that was clicked
+	else
+		local hasControlData = false
+		for _,propData in ipairs(props) do
+			if(propData.controlData == controlData) then
+				hasControlData = true
+				break
+			end
+		end
+		if(hasControlData == false) then table.insert(props,1,{controlData = controlData}) end
+	end
+	if(#props > 0 and #props <= 2) then
+		local prop0 = props[1]
+		local prop1 = props[2]
+		if(#props == 2 and prop1.controlData == controlData) then
+			local tmp = prop0
+			prop0 = prop1
+			prop1 = tmp
+		end
+		if(prop0.controlData == controlData) then -- Make sure that the context menu property is prop0
+			local constraintTypes = {}
+			if(udm.is_convertible(prop0.controlData.type,udm.TYPE_VECTOR3) and udm.is_numeric_type(prop0.controlData.type) == false) then
+				table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,"limit_location",false})
+				table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,"limit_scale",false})
+
+				if(#props > 1 and udm.is_convertible(prop1.controlData.type,udm.TYPE_VECTOR3) and udm.is_numeric_type(prop1.controlData.type) == false) then
+					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION,"copy_location",true})
+					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE,"copy_scale",true})
+					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE,"limit_distance",true})
+				end
+			end
+			if(prop0.controlData.type == udm.TYPE_EULER_ANGLES or prop0.controlData.type == udm.TYPE_QUATERNION) then
+				table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,"limit_rotation",false})
+				if(#props > 1 and udm.is_convertible(prop1.controlData.type,udm.TYPE_VECTOR3) and udm.is_numeric_type(prop1.controlData.type) == false) then
+					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION,"copy_rotation",true})
+					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,"track_to",true}) -- TODO: Only add track_to constraint to list if rotation property has associated position property
+				end
+			end
+
+			if(#constraintTypes > 0) then
+				local ctItem,ctMenu = context:AddSubMenu("pfm_add_constraint")
+				for _,typeInfo in ipairs(constraintTypes) do
+					ctMenu:AddItem("pfm_constraint_" .. typeInfo[2],function()
+						local actor = self:CreatePresetActor(typeInfo[1],{
+							["updateActorComponents"] = false
+						})
+						local ctC = actor:FindComponent("constraint")
+						if(ctC ~= nil) then
+							ctC:SetMemberValue("drivenObject",udm.TYPE_STRING,ents.create_uri(prop0.actorData.actor:GetUniqueId(),prop0.controlData.path))
+							if(typeInfo[3] == true and prop1.controlData ~= nil) then ctC:SetMemberValue("driver",udm.TYPE_STRING,ents.create_uri(prop1.actorData.actor:GetUniqueId(),prop1.controlData.path)) end
+							self:UpdateActorComponents(actor)
+						end
+					end)
+				end
+				ctMenu:Update()
+			end
+		end
+	end
 end
 function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentData,udmComponent,item,controlData,identifier)
 	local actor = udmComponent:GetActor()
@@ -2545,6 +2695,12 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 	local child = baseItem:AddItem(propertyPathComponents[#propertyPathComponents],nil,nil,identifier)
 	child:AddCallback("OnMouseEvent",function(tex,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT) then
+			local pContext = gui.open_context_menu()
+			if(util.is_valid(pContext) == false) then return end
+			pContext:SetPos(input.get_cursor_pos())
+
+			self:PopulatePropertyContextMenu(pContext,actorData,controlData)
+			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
 		end
 	end)
@@ -2613,7 +2769,199 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 		child:AddCallback("OnSelected",fOnSelected)
 		child:AddCallback("OnDeselected",fOnDeselected)
 	end
-	return ctrl
+	return ctrl,child
+end
+function gui.PFMActorEditor:ClearPropertyExpression(actorData,controlData)
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+	if(animManager == nil) then return end
+	animManager:SetValueExpression(actorData.actor,controlData.path)
+
+	local anim,channel,animClip = animManager:FindAnimationChannel(actorData.actor,controlData.path)
+	if(animClip ~= nil) then
+		local channel = animClip:GetChannel(controlData.path)
+		if(channel ~= nil) then
+			channel:SetExpression()
+		end
+	end
+	self:DoUpdatePropertyIcons(actorData,controlData)
+end
+function gui.PFMActorEditor:OpenPropertyExpressionWindow(actorData,controlData)
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+	if(animManager == nil) then return end
+	local te
+	local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"),function(ok)
+		if(ok) then
+			local res = animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText(),controlData.type)
+			if(res) then
+				local anim,channel,animClip = animManager:FindAnimationChannel(actorData.actor,controlData.path,true,controlData.type)
+				if(animClip ~= nil) then
+					local channel = animClip:GetChannel(controlData.path)
+					if(channel ~= nil) then
+						channel:SetExpression(te:GetText())
+					end
+				end
+				self:DoUpdatePropertyIcons(actorData,controlData)
+			else
+				self:ClearPropertyExpression(actorData,controlData)
+			end
+		end
+	end)
+	local expr = animManager:GetValueExpression(actorData.actor,controlData.path)
+	te = p:AddTextField(locale.get_text("pfm_expression") .. ":",expr or "")
+	te:GetTextElement():SetFont("pfm_medium")
+
+	p:SetWindowSize(Vector2i(800,120))
+	p:Update()
+end
+function gui.PFMActorEditor:GetActorEntry(uuid)
+	return self.m_actorUniqueIdToTreeElement[tostring(uuid)]
+end
+function gui.PFMActorEditor:GetActorData(uuid)
+	local el = self:GetActorEntry(uuid)
+	if(util.is_valid(el) == false) then return end
+	return self.m_treeElementToActorData[el]
+end
+function gui.PFMActorEditor:GetComponentEntry(uuid,componentType)
+	if(type(componentType) ~= "number") then componentType = ents.find_component_id(componentType) end
+	local actorData = self:GetActorData(uuid)
+	if(actorData == nil) then return end
+	local componentData = actorData.componentData[componentType]
+	if(componentData == nil) then return end
+	return actorData.componentData[componentType].itemComponent,componentData,actorData
+end
+function gui.PFMActorEditor:GetPropertyEntry(uuid,componentType,propertyName)
+	local elComponent,componentData,actorData = self:GetComponentEntry(uuid,componentType)
+	if(elComponent == nil) then return end
+	if(componentData.items[propertyName] == nil) then return end
+	return componentData.items[propertyName].treeElement,componentData.items[propertyName].controlData,componentData,actorData
+end
+function gui.PFMActorEditor:GetPropertyControl(uuid,componentType,propertyName)
+	local elComponent,componentData,actorData = self:GetComponentEntry(uuid,componentType)
+	if(elComponent == nil) then return end
+	if(componentData.items[propertyName] == nil) then return end
+	return componentData.items[propertyName].control,componentData.items[propertyName].controlData,componentData,actorData
+end
+function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
+	if(self.m_specialPropertyIcons["constraints"] ~= nil) then
+		for _,ctInfo in ipairs(self.m_specialPropertyIcons["constraints"]) do
+			util.remove(ctInfo.icon)
+		end
+	end
+	self.m_specialPropertyIcons["constraints"] = {}
+	self:IterateActors(function(el)
+		local actorData = self.m_treeElementToActorData[el]
+		if(actorData ~= nil) then
+			local c = actorData.actor:FindComponent("constraint")
+			if(c ~= nil) then
+				local drivenObject = c:GetMemberValue("drivenObject")
+				if(drivenObject ~= nil) then
+					local ref = ents.parse_uri(drivenObject)
+					if(ref ~= nil) then
+						local uuid = ref:GetUuid()
+						local componentType = ref:GetComponentName()
+						local propName = ref:GetMemberName()
+						propName = "ec/" .. componentType .. "/" .. propName
+						local el,ctrlData,componentDataDriven,actorDataDriven = self:GetPropertyEntry(uuid,componentType,propName)
+						if(util.is_valid(el)) then
+							local icon = el:AddIcon("gui/pfm/icon_constraint")
+							if(util.is_valid(icon)) then
+								local constraintType
+								for _,ctName in ipairs({"copy_location","copy_rotation","copy_scale","limit_distance","limit_location","limit_rotation","limit_scale","track_to"}) do
+									if(actorData.actor:HasComponent(ctName)) then
+										constraintType = ctName
+										break
+									end
+								end
+								icon:SetCursor(gui.CURSOR_SHAPE_HAND)
+								icon:SetMouseInputEnabled(true)
+								icon:SetTooltip(locale.get_text("pfm_constraint",{constraintType or locale.get_text("unknown")}))
+								icon:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
+									if(button == input.MOUSE_BUTTON_LEFT) then
+										if(state == input.STATE_PRESS) then
+											self:SelectActor(actorData.actor,true,"ec/constraint/drivenObject")
+										end
+										return util.EVENT_REPLY_HANDLED
+									end
+								end)
+								
+								table.insert(self.m_specialPropertyIcons["constraints"],{
+									icon = icon,
+									actorUuid = uuid,
+									componentType = componentType,
+									property = propName
+								})
+							end
+						end
+					end
+				end
+			end
+		end
+	end)
+end
+function gui.PFMActorEditor:ShowPropertyInGraphEditor(propertyName)
+	local timeline = tool.get_filmmaker():GetTimeline()
+	if(util.is_valid(timeline) == false) then return end
+	timeline:SetEditor(gui.PFMTimeline.EDITOR_GRAPH)
+	local graphEditor = timeline:GetGraphEditor()
+	if(util.is_valid(graphEditor) == false) then return end
+	local tree = graphEditor:GetPropertyList()
+	if(util.is_valid(tree) == false) then return end
+	tree:DeselectAll()
+	local item = tree:GetRoot():GetItemByIdentifier(propertyName)
+	if(util.is_valid(item)) then item:Select() end
+	graphEditor:FitViewToDataRange()
+end
+function gui.PFMActorEditor:UpdatePropertyIcons(uuid,componentId,propPath)
+	local itemC,ctrlData,componentData,actorData = self:GetPropertyEntry(uuid,componentId,propPath)
+	if(itemC == nil) then return end
+	return self:DoUpdatePropertyIcons(actorData,ctrlData)
+end
+function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData,controlData)
+	local cData = actorData.componentData[controlData.componentId]
+	if(cData == nil or cData.items[controlData.path] == nil or util.is_valid(cData.items[controlData.path].treeElement) == false) then return end
+	local el = cData.items[controlData.path].treeElement
+	el:ClearIcons()
+	local channel = self:GetAnimationChannel(actorData.actor,controlData.path,false)
+	if(channel ~= nil) then
+		local icon = el:AddUniqueIcon("gui/pfm/icon_animated")
+		if(util.is_valid(icon)) then
+			icon:SetCursor(gui.CURSOR_SHAPE_HAND)
+			icon:SetMouseInputEnabled(true)
+			icon:SetTooltip(locale.get_text("pfm_animated"))
+			util.remove(icon.__cbShowAnim)
+			icon.__cbShowAnim = icon:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
+				if(button == input.MOUSE_BUTTON_LEFT) then
+					if(state == input.STATE_PRESS) then
+						el:Select()
+						time.create_simple_timer(0.0,function()
+							if(self:IsValid()) then self:ShowPropertyInGraphEditor(controlData.name) end
+						end)
+					end
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+		end
+	end
+	local hasExpression = (channel ~= nil and channel:GetExpression() ~= nil)
+	if(hasExpression) then
+		local icon = el:AddUniqueIcon("gui/pfm/icon_math_expression")
+		if(util.is_valid(icon)) then
+			icon:SetCursor(gui.CURSOR_SHAPE_HAND)
+			icon:SetMouseInputEnabled(true)
+			icon:SetTooltip(locale.get_text("pfm_math_expression",{channel:GetExpression()}))
+			util.remove(icon.__cbEditMathExpression)
+			icon.__cbEditMathExpression = icon:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
+				if(button == input.MOUSE_BUTTON_LEFT) then
+					if(state == input.STATE_PRESS) then
+						self:OpenPropertyExpressionWindow(actorData,controlData)
+					end
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+		end
+	end
 end
 function gui.PFMActorEditor:ToggleCameraLink(actor)
 	util.remove(self.m_cameraLinkOutlineElement)
@@ -2676,6 +3024,7 @@ end
 function gui.PFMActorEditor:OnRemove()
 	util.remove(self.m_cbCamLinkGameplayCb)
 	util.remove(self.m_cameraLinkOutlineElement)
+	util.remove(self.m_callbacks)
 end
 function gui.PFMActorEditor:InitializeNavigationBar()
 	--[[self.m_btHome = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_home","gui/pfm/icon_nav_home_activated",function()
