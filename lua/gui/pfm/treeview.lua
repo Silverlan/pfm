@@ -206,12 +206,21 @@ function gui.PFMTreeViewElement:UpdateUi()
 	self:ScheduleUpdate()
 	self.m_treeView:GetRoot():ScheduleUpdate()
 end
+function gui.PFMTreeViewElement:ClearIcons()
+	util.remove(self.m_icons)
+end
 function gui.PFMTreeViewElement:AddIcon(material)
 	local icon = gui.create("WITexturedRect",self.m_iconBox)
 	icon:SetSize(14,14)
 	icon:SetMaterial(material)
 	table.insert(self.m_icons,icon)
 	return icon
+end
+function gui.PFMTreeViewElement:AddUniqueIcon(material)
+	for _,icon in ipairs(self.m_icons) do
+		if(icon:IsValid() and icon:GetMaterial():GetName() == asset.get_normalized_path(material,asset.TYPE_MATERIAL)) then return icon end
+	end
+	return self:AddIcon(material)
 end
 function gui.PFMTreeViewElement:GetHeader() return self.m_header end
 function gui.PFMTreeViewElement:GetTreeView() return self.m_treeView end
