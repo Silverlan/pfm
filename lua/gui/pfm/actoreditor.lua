@@ -2535,7 +2535,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 				break
 			end
 		end
-		if(hasControlData == false) then table.insert(props,1,{controlData = controlData}) end
+		if(hasControlData == false) then table.insert(props,1,{actorData = actorData,controlData = controlData}) end
 	end
 	if(#props > 0 and #props <= 2) then
 		local prop0 = props[1]

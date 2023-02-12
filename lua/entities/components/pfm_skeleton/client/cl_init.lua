@@ -28,7 +28,7 @@ end
 
 function ents.PFMSkeleton:OnActorPropertySelected(udmComponent,item,path,selected)
 	local actor = udmComponent:GetActor()
-	if(tostring(actor:GetUniqueId()) ~= tostring(self:GetEntity():GetUuid())) then return end
+	if(actor:IsValid() == false or tostring(actor:GetUniqueId()) ~= tostring(self:GetEntity():GetUuid())) then return end
 	local type = udmComponent:GetType()
 	if(type ~= "animated" and type ~= "ik_solver") then return end
 	local t = string.split(path,"/")
