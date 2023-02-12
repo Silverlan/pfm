@@ -1213,21 +1213,23 @@ function gui.PFMActorEditor:SelectActor(actor,deselectCurrent,property)
 
 					local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(property))
 
-					local itemComponent = (componentName ~= nil) and actorData.componentsEntry:FindItemByText(componentName) or nil
+					local itemComponent = (componentName ~= nil) and actorData.componentsEntry:GetItemByIdentifier(componentName) or nil
 					if(itemComponent ~= nil) then
 						itemComponent:Expand()
 
 						local parent = itemComponent
-						for _,name in ipairs(memberName:ToComponents()) do
-							local child = parent:FindItemByText(name)
-							if(child == nil) then
-								parent = nil
-								break
+						local child = parent:GetItemByIdentifier("ec/" .. componentName .. "/" .. memberName:GetString(),true)
+						if(child ~= nil) then
+							local p = child:GetParentItem()
+							while(p ~= nil) do
+								p:Expand()
+								p:Select(false)
+								p = p:GetParentItem()
+								if(p == parent) then break end
 							end
 							child:Expand()
-							parent = child
+							child:Select(true)
 						end
-						if(parent ~= nil) then parent:Select(true) end
 					end
 				end
 			end
@@ -1432,6 +1434,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 	if(util.is_valid(componentData.itemBaseProps) == false) then
 		componentData.itemBaseProps = itemComponent:AddItem(locale.get_text("pfm_base_properties"))
 		componentData.itemBaseProps:SetTooltip("pfm_base_properties_desc")
+		componentData.itemBaseProps:SetIdentifier("base_properties")
 	end
 	local componentInfo = (componentId ~= nil) and ents.get_component_info(componentId) or nil
 	if(componentInfo ~= nil) then
