@@ -125,6 +125,8 @@ function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists,typ
 		local ent = actor:FindEntity()
 		if(util.is_valid(ent)) then self:PlayActorAnimation(ent) end
 		anim = animClip:GetPanimaAnimation()
+
+		if(newChannel) then self:CallCallbacks("OnChannelAdded",actor,path) end
 	end
 	return anim,anim:FindChannel(path),animClip,newChannel
 end
@@ -154,6 +156,7 @@ function pfm.AnimationManager:RemoveChannel(actor,path)
 	if(animClip ~= nil) then animClip:RemoveChannel(path) end
 	if(channel == nil) then return end
 	anim:RemoveChannel(path)
+	self:CallCallbacks("OnChannelRemoved",actor,path)
 end
 
 function pfm.AnimationManager:RemoveKeyframe(actor,path,keyIdx,baseIndex)
