@@ -337,6 +337,7 @@ function gui.PFMTreeViewElement:UpdateChildBoxBounds()
 end
 function gui.PFMTreeViewElement:GetParentItem() return self.m_parent end
 function gui.PFMTreeViewElement:GetItems() return self.m_items end
+function gui.PFMTreeViewElement:GetItemCount() return #self.m_items end
 function gui.PFMTreeViewElement:IsCollapsed() return self.m_collapsed end
 function gui.PFMTreeViewElement:Toggle()
 	if(self:IsCollapsed()) then self:Expand()
@@ -385,6 +386,7 @@ function gui.PFMTreeViewElement:Clear()
 	for _,item in ipairs(self.m_items) do
 		if(item:IsValid()) then item:Remove() end
 	end
+	for _,item in pairs(self.m_items) do if(item:IsValid()) then debug.print("DANGLING ITEM") end end
 	self.m_items = {}
 	self.m_itemElements = {}
 end

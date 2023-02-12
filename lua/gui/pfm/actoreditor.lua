@@ -1649,6 +1649,8 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 		-- Initialize dynamic members next. Dynamic members must not have any dependencies to other dynamic members
 		initializeMembers(c:GetDynamicMemberIndices())
 	end
+
+	if(util.is_valid(componentData.itemBaseProps)) then componentData.itemBaseProps:SetVisible(componentData.itemBaseProps:GetItemCount() > 0) end
 end
 function gui.PFMActorEditor:WriteActorsToUdmElement(actors,el)
 	local pfmCopy = el:Add("pfm_copy")
