@@ -1901,7 +1901,7 @@ function gui.PFMActorEditor:AddActor(actor,parentItem)
 		end
 	end)
 
-	local itemComponents = itemActor:AddItem(locale.get_text("components"))
+	local itemComponents = itemActor -- itemActor:AddItem(locale.get_text("components"))
 	self.m_treeElementToActorData[itemActor] = {
 		actor = actor,
 		itemActor = itemActor,
@@ -1910,64 +1910,6 @@ function gui.PFMActorEditor:AddActor(actor,parentItem)
 		treeElementToComponentId = {}
 	}
 	self.m_actorUniqueIdToTreeElement[tostring(actor:GetUniqueId())] = itemActor
-	itemComponents:AddCallback("OnMouseEvent",function(tex,button,state,mods)
-		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
-			local pContext = gui.open_context_menu()
-			if(util.is_valid(pContext) == false) then return end
-			pContext:SetPos(input.get_cursor_pos())
-
-			local entActor = actor:FindEntity()
-			if(util.is_valid(entActor)) then
-				local existingComponents = {}
-				local newComponentMap = {}
-				for _,componentId in ipairs(ents.get_registered_component_types()) do
-					local info = ents.get_component_info(componentId)
-					local name = info.name
-					if(actor:HasComponent(name) == false) then
-						if(entActor:HasComponent(name)) then table.insert(existingComponents,name)
-						else newComponentMap[name] = true end
-					end
-				end
-				for _,name in ipairs(ents.find_installed_custom_components()) do
-					newComponentMap[name] = true
-				end
-				local newComponents = {}
-				for name,_ in pairs(newComponentMap) do
-					table.insert(newComponents,name)
-				end
-				if(#existingComponents > 0) then
-					local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
-					table.sort(existingComponents)
-					for _,name in ipairs(existingComponents) do
-						local displayName = name
-						local valid,n = locale.get_text("component_" .. name,nil,true)
-						if(valid) then displayName = n end
-						pComponentsMenu:AddItem(displayName,function()
-							self:CreateNewActorComponent(actor,name,true)
-						end)
-					end
-					pComponentsMenu:Update()
-				end
-				if(#newComponents > 0) then
-					local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_new_component"))
-					table.sort(newComponents)
-					debug.start_profiling_task("pfm_populate_component_list")
-					for _,name in ipairs(newComponents) do
-						local displayName = name
-						local valid,n = locale.get_text("component_" .. name,nil,true)
-						if(valid) then displayName = n end
-						pComponentsMenu:AddItem(displayName,function()
-							self:CreateNewActorComponent(actor,name,true)
-						end)
-					end
-					pComponentsMenu:Update()
-					debug.stop_profiling_task()
-				end
-			end
-			pContext:Update()
-			return util.EVENT_REPLY_HANDLED
-		end
-	end)
 	self:UpdateActorComponentEntries(self.m_treeElementToActorData[itemActor])
 
 	if(parentItem:GetClass() == "wipfmtreeviewelement") then
@@ -3093,6 +3035,57 @@ gui.register("WIPFMActorEditor",gui.PFMActorEditor)
 
 
 pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected,hitMaterial)
+	-- Components
+	local entActor = actor:FindEntity()
+	if(util.is_valid(entActor)) then
+		local existingComponents = {}
+		local newComponentMap = {}
+		for _,componentId in ipairs(ents.get_registered_component_types()) do
+			local info = ents.get_component_info(componentId)
+			local name = info.name
+			if(actor:HasComponent(name) == false) then
+				if(entActor:HasComponent(name)) then table.insert(existingComponents,name)
+				else newComponentMap[name] = true end
+			end
+		end
+		for _,name in ipairs(ents.find_installed_custom_components()) do
+			newComponentMap[name] = true
+		end
+		local newComponents = {}
+		for name,_ in pairs(newComponentMap) do
+			table.insert(newComponents,name)
+		end
+		if(#existingComponents > 0) then
+			local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
+			table.sort(existingComponents)
+			for _,name in ipairs(existingComponents) do
+				local displayName = name
+				local valid,n = locale.get_text("component_" .. name,nil,true)
+				if(valid) then displayName = n end
+				pComponentsMenu:AddItem(displayName,function()
+					self:CreateNewActorComponent(actor,name,true)
+				end)
+			end
+			pComponentsMenu:Update()
+		end
+		if(#newComponents > 0) then
+			local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_new_component"))
+			table.sort(newComponents)
+			debug.start_profiling_task("pfm_populate_component_list")
+			for _,name in ipairs(newComponents) do
+				local displayName = name
+				local valid,n = locale.get_text("component_" .. name,nil,true)
+				if(valid) then displayName = n end
+				pComponentsMenu:AddItem(displayName,function()
+					self:CreateNewActorComponent(actor,name,true)
+				end)
+			end
+			pComponentsMenu:Update()
+			debug.stop_profiling_task()
+		end
+	end
+	--
+
 	local uniqueId = tostring(actor:GetUniqueId())
 	pContext:AddItem(locale.get_text("pfm_export_animation"),function()
 		local entActor = actor:FindEntity()
@@ -3106,26 +3099,33 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected,hitM
 	local mdl = util.is_valid(entActor) and entActor:GetModel() or nil
 	if(renderC ~= nil and mdl ~= nil) then
 		local materials = {}
+		local hasMaterials = false
 		for _,mesh in ipairs(renderC:GetRenderMeshes()) do
 			local mat = mdl:GetMaterial(mesh:GetSkinTextureIndex())
 			if(util.is_valid(mat)) then
-				materials[mat:GetName()] = mat
+				local name = mat:GetName()
+				if(#name > 0) then
+					materials[name] = mat
+					hasMaterials = true
+				end
 			end
 		end
 
-		local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
-		for matPath,_ in pairs(materials) do
-			local matName = file.get_file_name(matPath)
-			local item = pSubMenu:AddItem(matName,function()
-				tool.get_filmmaker():OpenMaterialEditor(matPath,mdl:GetName())
-			end)
+		if(hasMaterials) then
+			local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
+			for matPath,_ in pairs(materials) do
+				local matName = file.get_file_name(matPath)
+				local item = pSubMenu:AddItem(matName,function()
+					tool.get_filmmaker():OpenMaterialEditor(matPath,mdl:GetName())
+				end)
 
-			if(hitMaterial ~= nil and matPath == hitMaterial:GetName()) then
-				local el = gui.create("WIOutlinedRect",item,0,0,item:GetWidth(),item:GetHeight(),0,0,1,1)
-				el:SetColor(pfm.get_color_scheme_color("green"))
+				if(hitMaterial ~= nil and matPath == hitMaterial:GetName()) then
+					local el = gui.create("WIOutlinedRect",item,0,0,item:GetWidth(),item:GetHeight(),0,0,1,1)
+					el:SetColor(pfm.get_color_scheme_color("green"))
+				end
 			end
+			pSubMenu:Update()
 		end
-		pSubMenu:Update()
 
 		pContext:AddItem(locale.get_text("pfm_export_model"),function()
 			local exportInfo = game.Model.ExportInfo()
@@ -3216,6 +3216,7 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected,hitM
 			filmmaker:TagRenderSceneAsDirty()
 		end)
 	end)
+
 	tool.get_filmmaker():CallCallbacks("PopulateActorContextMenu",pContext,actor)
 	if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
 		pContext:AddItem("Assign entity to x",function()
