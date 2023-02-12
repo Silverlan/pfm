@@ -2585,7 +2585,8 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 		end
 		if(prop0.controlData == controlData) then -- Make sure that the context menu property is prop0
 			local constraintTypes = {}
-			if(udm.is_convertible(prop0.controlData.type,udm.TYPE_VECTOR3) and udm.is_numeric_type(prop0.controlData.type) == false) then
+			local function is_valid_constraint_type(type) return udm.is_convertible(type,udm.TYPE_VECTOR3) and udm.is_numeric_type(type) == false and type ~= udm.TYPE_STRING end
+			if(is_valid_constraint_type(prop0.controlData.type)) then
 				table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,"limit_location",false})
 				table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,"limit_scale",false})
 
@@ -2597,7 +2598,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 			end
 			if(prop0.controlData.type == udm.TYPE_EULER_ANGLES or prop0.controlData.type == udm.TYPE_QUATERNION) then
 				table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,"limit_rotation",false})
-				if(#props > 1 and udm.is_convertible(prop1.controlData.type,udm.TYPE_VECTOR3) and udm.is_numeric_type(prop1.controlData.type) == false) then
+				if(#props > 1 and is_valid_constraint_type(prop1.controlData.type)) then
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION,"copy_rotation",true})
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,"track_to",true}) -- TODO: Only add track_to constraint to list if rotation property has associated position property
 				end
@@ -2630,7 +2631,7 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 	controlData.translateToInterface = controlData.translateToInterface or function(val) return val end
 	controlData.translateFromInterface = controlData.translateFromInterface or function(val) return val end
 
-	local isBaseProperty = (memberInfo.type == udm.TYPE_STRING)
+	local isBaseProperty = not ents.is_member_type_animatable(memberInfo.type)
 	local baseItem = isBaseProperty and componentData.itemBaseProps or item
 
 	local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(controlData.path))
