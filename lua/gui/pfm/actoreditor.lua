@@ -1345,8 +1345,22 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 		table.insert(actorData.componentData[componentId].callbacks,cb)
 	end
 
+	local displayName = componentType
+	local locId = "c_" .. componentType
+	local res,text = locale.get_text(locId,true)
+	if(res == true) then
+		displayName = text
+	end
+
+	local description
+	local res,textDesc = locale.get_text(locId .. "_desc",true)
+	if(res == true) then
+		description = textDesc
+	end
+
 	local componentData = actorData.componentData[componentId]
-	local itemComponent = actorData.componentsEntry:AddItem(componentType,nil,nil,componentType)
+	local itemComponent = actorData.componentsEntry:AddItem(displayName,nil,nil,componentType)
+	if(description ~= nil) then itemComponent:SetTooltip(description) end
 	if(componentIcons[componentType] ~= nil) then
 		itemComponent:AddIcon(componentIcons[componentType])
 		itemActor:AddUniqueIcon(componentIcons[componentType])
@@ -1417,6 +1431,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 
 	if(util.is_valid(componentData.itemBaseProps) == false) then
 		componentData.itemBaseProps = itemComponent:AddItem(locale.get_text("pfm_base_properties"))
+		componentData.itemBaseProps:SetTooltip("pfm_base_properties_desc")
 	end
 	local componentInfo = (componentId ~= nil) and ents.get_component_info(componentId) or nil
 	if(componentInfo ~= nil) then
@@ -2637,7 +2652,26 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 		end
 	end
 
-	local child = baseItem:AddItem(propertyPathComponents[#propertyPathComponents],nil,nil,identifier)
+	local displayName = propertyPathComponents[#propertyPathComponents]
+
+	local componentName,pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(identifier))
+	local description
+	if(componentName ~= nil) then
+		local propName = string.camel_case_to_snake_case(pathName:GetString())
+		local locId = "c_" .. componentName .. "_p_" .. propName
+		local res,text = locale.get_text(locId,true)
+		if(res == true) then
+			displayName = text
+		end
+
+		local res,textDesc = locale.get_text(locId .. "_desc",true)
+		if(res == true) then
+			description = textDesc
+		end
+	end
+
+	local child = baseItem:AddItem(displayName,nil,nil,identifier)
+	if(description ~= nil) then child:SetTooltip(description) end
 	child:AddCallback("OnMouseEvent",function(tex,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT) then
 			local pContext = gui.open_context_menu()
@@ -3063,7 +3097,10 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected,hitM
 				local valid,n = locale.get_text("component_" .. name,nil,true)
 				if(valid) then displayName = n end
 				pComponentsMenu:AddItem(displayName,function()
-					self:CreateNewActorComponent(actor,name,true)
+					local filmmaker = tool.get_filmmaker()
+					local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
+					if(util.is_valid(actorEditor) == false) then return end
+					actorEditor:CreateNewActorComponent(actor,name,true)
 				end)
 			end
 			pComponentsMenu:Update()
@@ -3077,7 +3114,10 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected,hitM
 				local valid,n = locale.get_text("component_" .. name,nil,true)
 				if(valid) then displayName = n end
 				pComponentsMenu:AddItem(displayName,function()
-					self:CreateNewActorComponent(actor,name,true)
+					local filmmaker = tool.get_filmmaker()
+					local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
+					if(util.is_valid(actorEditor) == false) then return end
+					actorEditor:CreateNewActorComponent(actor,name,true)
 				end)
 			end
 			pComponentsMenu:Update()

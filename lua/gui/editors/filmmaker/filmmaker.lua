@@ -46,6 +46,7 @@ gui.load_skin("pfm")
 locale.load("pfm_user_interface.txt")
 locale.load("pfm_popup_messages.txt")
 locale.load("pfm_loading.txt")
+locale.load("pfm_components.txt")
 locale.load("physics_materials.txt")
 
 include("windows")
