@@ -3084,6 +3084,9 @@ function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData,controlData)
 			end)
 		end
 	end
+
+	self.m_updatePropertyIcons = true
+	self:EnableThinking()
 end
 function gui.PFMActorEditor:ToggleCameraLink(actor)
 	util.remove(self.m_cameraLinkOutlineElement)
