@@ -378,7 +378,6 @@ function gui.WIFilmmaker:OnInitialize()
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
 				self:ImportSFMProject(fileName)
 			end)
-			self.m_openDialogue:SetRootPath("elements/sessions")
 			self.m_openDialogue:SetExtensions({"dmx"})
 			self.m_openDialogue:GetFileList():SetFileFinder(function(path)
 				local tFiles,tDirs = file.find(path .. "*")
@@ -418,6 +417,7 @@ function gui.WIFilmmaker:OnInitialize()
 				table.sort(tDirs)
 				return tFiles,tDirs
 			end)
+			self.m_openDialogue:SetPath("elements/sessions")
 			self.m_openDialogue:Update()
 		end)
 		pSubMenu:ScheduleUpdate()
@@ -783,7 +783,10 @@ function gui.WIFilmmaker:OnSkinApplied()
 end
 function gui.WIFilmmaker:ImportSFMProject(projectFilePath)
 	local res = pfm.ProjectManager.ImportSFMProject(self,projectFilePath)
-	if(res == false) then return false end
+	if(res == false) then
+		pfm.log("Failed to import SFM project '" .. projectFilePath .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+		return false
+	end
 	local session = self:GetSession()
 	if(session ~= nil) then
 		local settings = session:GetSettings()
