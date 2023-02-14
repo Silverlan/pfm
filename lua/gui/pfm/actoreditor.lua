@@ -3289,35 +3289,36 @@ pfm.populate_actor_context_menu = function(pContext,actor,copyPasteSelected,hitM
 		for name,_ in pairs(newComponentMap) do
 			table.insert(newComponents,name)
 		end
+		for _,list in ipairs({existingComponents,newComponents}) do
+			for i,name in ipairs(list) do
+				local displayName = name
+				local valid,n = locale.get_text("c_" .. name,nil,true)
+				if(valid) then displayName = n end
+				list[i] = {name,displayName}
+			end
+			table.sort(list,function(a,b) return a[2] < b[2] end)
+		end
 		if(#existingComponents > 0) then
 			local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
-			table.sort(existingComponents)
-			for _,name in ipairs(existingComponents) do
-				local displayName = name
-				local valid,n = locale.get_text("component_" .. name,nil,true)
-				if(valid) then displayName = n end
-				pComponentsMenu:AddItem(displayName,function()
+			for _,nameInfo in ipairs(existingComponents) do
+				pComponentsMenu:AddItem(nameInfo[2],function()
 					local filmmaker = tool.get_filmmaker()
 					local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
 					if(util.is_valid(actorEditor) == false) then return end
-					actorEditor:CreateNewActorComponent(actor,name,true)
+					actorEditor:CreateNewActorComponent(actor,nameInfo[1],true)
 				end)
 			end
 			pComponentsMenu:Update()
 		end
 		if(#newComponents > 0) then
 			local pComponentsItem,pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_new_component"))
-			table.sort(newComponents)
 			debug.start_profiling_task("pfm_populate_component_list")
-			for _,name in ipairs(newComponents) do
-				local displayName = name
-				local valid,n = locale.get_text("component_" .. name,nil,true)
-				if(valid) then displayName = n end
-				pComponentsMenu:AddItem(displayName,function()
+			for _,nameInfo in ipairs(newComponents) do
+				pComponentsMenu:AddItem(nameInfo[2],function()
 					local filmmaker = tool.get_filmmaker()
 					local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
 					if(util.is_valid(actorEditor) == false) then return end
-					actorEditor:CreateNewActorComponent(actor,name,true)
+					actorEditor:CreateNewActorComponent(actor,nameInfo[1],true)
 				end)
 			end
 			pComponentsMenu:Update()
