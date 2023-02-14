@@ -2522,7 +2522,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 		context:AddItem(locale.get_text("pfm_set_expression"),function() self:OpenPropertyExpressionWindow(actorData,controlData) end)
 		if(controlData.path ~= nil) then
 			context:AddItem(locale.get_text("pfm_copy_property_path"),function()
-				util.set_clipboard_string(controlData.path)
+				util.set_clipboard_string(ents.create_uri(actorData.actor:GetUniqueId(),controlData.path))
 			end)
 		end
 		local anim,channel = animManager:FindAnimationChannel(actorData.actor,controlData.path,false)
