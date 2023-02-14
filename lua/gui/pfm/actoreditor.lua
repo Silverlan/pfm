@@ -2675,6 +2675,23 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 			end)
 		end
 	end
+
+	if(controlData.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY) then
+		context:AddItem(locale.get_text("pfm_go_to_property"),function()
+			local val = controlData.getValue()
+			if(val == nil) then return end
+			local uuid = tostring(val:GetUuid())
+			local componentName = val:GetComponentName()
+			local propName = val:GetMemberName()
+			if(componentName == nil or propName == nil) then return end
+			local pm = pfm.get_project_manager()
+			local session = pm:GetSession()
+			local schema = session:GetSchema()
+			local actor = udm.dereference(schema,uuid)
+			if(actor == nil) then return end
+			self:SelectActor(actor,true,"ec/" .. componentName .. "/" .. propName)
+		end)
+	end
 end
 function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentData,udmComponent,item,controlData,identifier)
 	local actor = udmComponent:GetActor()
