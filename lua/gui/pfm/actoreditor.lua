@@ -2600,6 +2600,12 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 							if(typeInfo[3] == true and prop1.controlData ~= nil) then ctC:SetMemberValue("driver",udm.TYPE_STRING,ents.create_uri(prop1.actorData.actor:GetUniqueId(),prop1.controlData.path)) end
 							self:UpdateActorComponents(actor)
 						end
+
+						local pm = pfm.get_project_manager()
+						local animManager = pm:GetAnimationManager()
+						if(animManager == nil) then return end
+						-- Constraints require there to be an animation channel with at least one animation value
+						animManager:InitChannelWithBaseValue(prop0.actorData.actor,prop0.controlData.path,true,prop0.controlData.type)
 					end)
 				end
 				ctMenu:Update()

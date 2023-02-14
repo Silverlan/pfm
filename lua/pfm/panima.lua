@@ -131,9 +131,18 @@ function pfm.AnimationManager:FindAnimationChannel(actor,path,addIfNotExists,typ
 	return anim,anim:FindChannel(path),animClip,newChannel
 end
 
+function pfm.AnimationManager:InitChannelWithBaseValue(actor,path,addIfNotExists,type)
+	local anim,channel = self:FindAnimationChannel(actor,path,addIfNotExists,type)
+	if(channel == nil or channel:GetValueCount() > 0) then return end
+	local value = actor:GetMemberValue(path)
+	if(value == nil) then return end
+	channel:AddValue(0.0,value)
+end
+
 function pfm.AnimationManager:SetValueExpression(actor,path,expr,type)
 	local anim,channel = self:FindAnimationChannel(actor,path,(type ~= nil),type)
 	if(channel == nil) then return false end
+	self:InitChannelWithBaseValue(actor,path)
 	if(expr == nil) then
 		channel:ClearValueExpression()
 		return false
