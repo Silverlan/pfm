@@ -1663,6 +1663,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 						controlData.set(component,value,true,false)
 						local ctrl,elChild = self:AddControl(entActor,c,actorData,componentData,component,itemComponent,controlData,path)
 						if(elChild ~= nil) then actorData.componentData[componentId].treeElementToControlData[elChild] = controlData end
+						controlData.treeElement = elChild
 						actorData.componentData[componentId].items[controlData.path] = {
 							control = ctrl,
 							treeElement = elChild,
@@ -2612,7 +2613,9 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 		end
 	end
 
-	if(#props > 0) then
+	if(util.is_valid(controlData.treeElement) and controlData.treeElement.__elDriverActorData ~= nil and util.is_valid(controlData.treeElement.__elDriverActorData.icon)) then
+		-- Don't allow adding driver if there already is one
+	elseif(#props > 0) then
 		local prop = props[1]
 		if(controlData.type < udm.TYPE_COUNT) then
 			context:AddItem("pfm_add_driver",function()
@@ -2957,6 +2960,18 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 							self:SelectActor(actorData.actor,true,"ec/" .. componentType .. "/drivenObject")
 						end
 						return util.EVENT_REPLY_HANDLED
+					elseif(button == input.MOUSE_BUTTON_RIGHT) then
+						if(state == input.STATE_PRESS) then
+							local pContext = gui.open_context_menu()
+							if(util.is_valid(pContext) == false) then return end
+							pContext:SetPos(input.get_cursor_pos())
+
+							pContext:AddItem(locale.get_text("remove"),function()
+								self:RemoveActors({tostring(actorData.actor:GetUniqueId())})
+							end)
+							pContext:Update()
+						end
+						return util.EVENT_REPLY_HANDLED
 					end
 				end)
 				table.insert(self.m_specialPropertyIcons["constraints"],{
@@ -2965,14 +2980,14 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 					componentType = componentType,
 					property = propName
 				})
-				return icon,actorData
+				return icon,actorData,el
 			end
 		end
 
 	end
 
 	self:IterateActors(function(el)
-		local icon,actorData = add_icon(el,"constraint","gui/pfm/icon_constraint")
+		local icon,actorData,elDrivenObject = add_icon(el,"constraint","gui/pfm/icon_constraint")
 		if(icon ~= nil) then
 			local constraintType
 			for _,ctName in ipairs({"copy_location","copy_rotation","copy_scale","limit_distance","limit_location","limit_rotation","limit_scale","track_to"}) do
@@ -2982,11 +2997,28 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 				end
 			end
 			icon:SetTooltip(locale.get_text("pfm_constraint",{constraintType or locale.get_text("unknown")}))
+
+			elDrivenObject.__elConstraintActorData = elDrivenObject.__elConstraintActorData or {}
+			for i=#elDrivenObject.__elConstraintActorData,1,-1 do
+				local data = elDrivenObject.__elConstraintActorData[i]
+				if(data.icon:IsValid() == false) then
+					table.remove(elDrivenObject.__elConstraintActorData,i)
+				end
+			end
+
+			table.insert(elDrivenObject.__elConstraintActorData,{
+				icon = icon,
+				constraintActorElement = el
+			})
 		end
 
-		icon = add_icon(el,"animation_driver","gui/pfm/icon_driver")
+		local icon,actorData,elDrivenObject = add_icon(el,"animation_driver","gui/pfm/icon_driver")
 		if(icon ~= nil) then
 			icon:SetTooltip(locale.get_text("pfm_animation_driver"))
+			elDrivenObject.__elDriverActorData = {
+				icon = icon,
+				driverActorElement = el
+			}
 		end
 	end)
 end
