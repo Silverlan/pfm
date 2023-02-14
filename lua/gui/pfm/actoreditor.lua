@@ -43,6 +43,7 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION = 21
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION = 22
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE = 23
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_TRACK_TO = 24
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER = 25
 
 gui.PFMActorEditor.COLLECTION_SCENEBUILD = "scenebuild"
 gui.PFMActorEditor.COLLECTION_ACTORS = "actors"
@@ -168,6 +169,8 @@ function gui.PFMActorEditor:OnInitialize()
 			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,"pfm_create_limit_scale_constraint",pConstraintMenu)
 			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_TRACK_TO,"pfm_create_track_to_constraint",pConstraintMenu)
 			pConstraintMenu:Update()
+
+			addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER,"pfm_create_animation_driver")
 		end
 
 		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
@@ -690,6 +693,15 @@ function gui.PFMActorEditor:CreatePresetActor(type,args)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"constraint_limit_scale",false)
 		self:CreateNewActorComponent(actor,"constraint",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_TRACK_TO) then
+		actor = actor or create_new_actor("ct_track_to",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"constraint_track_to",false)
+		self:CreateNewActorComponent(actor,"constraint",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER) then
+		actor = actor or create_new_actor("ct_driver",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"animation_driver",false)
 	end
 
 	if(newActor and updateActorComponents) then self:UpdateActorComponents(actor) end
@@ -1339,7 +1351,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 		treeElementToControlData = {},
 		callbacks = {}
 	}
-	if(componentType == "constraint") then
+	if(componentType == "constraint" or componentType == "animation_driver") then
 		local cb = component:AddChangeListener("drivenObject",function()
 			self.m_updatePropertyIcons = true
 			self:EnableThinking()
@@ -1455,6 +1467,12 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 					val = ents.UniversalEntityReference(util.Uuid(val))
 				elseif(info.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY) then
 					val = ents.UniversalMemberReference(val)
+				elseif(info.type == ents.MEMBER_TYPE_ELEMENT) then
+					local udmVal = c:GetMemberValue(info.name)
+					if(udmVal == nil) then return false end
+					udmVal:Clear()
+					udmVal:Merge(val,udm.MERGE_FLAG_BIT_DEEP_COPY)
+					return true
 				end
 				c:SetMemberValue(info.name,val)
 				return true
@@ -2526,33 +2544,41 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 	end
 
 	local props = self:GetSelectedProperties()
-	if(#props > 2) then props = {{actorData = actorData,controlData = controlData}} -- If more than two properties are selected, we'll only show self-contained constraints for the property that was clicked
-	else
-		local hasControlData = false
-		for _,propData in ipairs(props) do
-			if(propData.controlData == controlData) then
-				hasControlData = true
-				break
+	for i,propOther in ipairs(props) do
+		if(propOther.controlData == controlData) then
+			if(i ~= 1) then
+				-- Make sure that the context menu property is the first in the list
+				local tmp = props[1]
+				props[1] = propOther
+				props[i] = tmp
 			end
+			break
 		end
-		if(hasControlData == false) then table.insert(props,1,{actorData = actorData,controlData = controlData}) end
 	end
-	if(#props > 0 and #props <= 2) then
-		local prop0 = props[1]
-		local prop1 = props[2]
-		if(#props == 2 and prop1.controlData == controlData) then
-			local tmp = prop0
-			prop0 = prop1
-			prop1 = tmp
+	if(#props > 0) then
+		local constraintProps = props
+		if(#constraintProps > 2) then constraintProps = {{actorData = actorData,controlData = controlData}} -- If more than two properties are selected, we'll only show self-contained constraints for the property that was clicked
+		else
+			local hasControlData = false
+			for _,propData in ipairs(constraintProps) do
+				if(propData.controlData == controlData) then
+					hasControlData = true
+					break
+				end
+			end
+			if(hasControlData == false) then table.insert(constraintProps,1,{actorData = actorData,controlData = controlData}) end
 		end
-		if(prop0.controlData == controlData) then -- Make sure that the context menu property is prop0
+
+		local prop0 = constraintProps[1]
+		local prop1 = constraintProps[2]
+		if(prop0.controlData == controlData) then
 			local constraintTypes = {}
 			local function is_valid_constraint_type(type) return udm.is_convertible(type,udm.TYPE_VECTOR3) and udm.is_numeric_type(type) == false and type ~= udm.TYPE_STRING end
 			if(is_valid_constraint_type(prop0.controlData.type)) then
 				table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,"limit_location",false})
 				table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,"limit_scale",false})
 
-				if(#props > 1 and udm.is_convertible(prop1.controlData.type,udm.TYPE_VECTOR3) and udm.is_numeric_type(prop1.controlData.type) == false) then
+				if(#constraintProps > 1 and udm.is_convertible(prop1.controlData.type,udm.TYPE_VECTOR3) and udm.is_numeric_type(prop1.controlData.type) == false) then
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION,"copy_location",true})
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE,"copy_scale",true})
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE,"limit_distance",true})
@@ -2560,7 +2586,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 			end
 			if(prop0.controlData.type == udm.TYPE_EULER_ANGLES or prop0.controlData.type == udm.TYPE_QUATERNION) then
 				table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,"limit_rotation",false})
-				if(#props > 1 and is_valid_constraint_type(prop1.controlData.type)) then
+				if(#constraintProps > 1 and is_valid_constraint_type(prop1.controlData.type)) then
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION,"copy_rotation",true})
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,"track_to",true}) -- TODO: Only add track_to constraint to list if rotation property has associated position property
 				end
@@ -2583,6 +2609,73 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 				end
 				ctMenu:Update()
 			end
+		end
+	end
+
+	if(#props > 0) then
+		local prop = props[1]
+		if(controlData.type < udm.TYPE_COUNT) then
+			context:AddItem("pfm_add_driver",function()
+				local actor = self:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER,{
+					["updateActorComponents"] = false
+				})
+				local ctC = actor:FindComponent("animation_driver")
+				if(ctC ~= nil) then
+					ctC:SetMemberValue("drivenObject",udm.TYPE_STRING,ents.create_uri(prop.actorData.actor:GetUniqueId(),prop.controlData.path))
+					self:UpdateActorComponents(actor)
+
+					local nameCountMap = {}
+					local function get_var_name(baseName)
+						if(nameCountMap[baseName] == nil) then
+							nameCountMap[baseName] = 1
+							return baseName
+						end
+						nameCountMap[baseName] = nameCountMap[baseName] +1
+						return baseName .. nameCountMap[baseName]
+					end
+
+					local ctrl,ctrlData,componentData,actorData = self:GetPropertyControl(actor:GetUniqueId(),"animation_driver","ec/animation_driver/parameters")
+					local elUdm = ctrlData.getValue()
+					local params = ctC:GetMemberValue("parameters")
+					if(util.is_valid(params)) then
+						local udmConstants = params:Add("constants")
+						local udmReferences = params:Add("references")
+
+						-- Add the selected properties, components and actors as input parameters for the expression
+						local actors = {}
+						for _,propParam in ipairs(props) do
+							local uuid = propParam.actorData.actor:GetUniqueId()
+							local uri = ents.create_uri(uuid,propParam.controlData.path)
+							udmReferences:SetValue(get_var_name(util.Path.CreateFilePath(propParam.controlData.path):GetFileName()),udm.TYPE_STRING,uri)
+
+							local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(propParam.controlData.path))
+							actors[tostring(uuid)] = actors[tostring(uuid)] or {}
+							actors[tostring(uuid)][componentName] = true
+						end
+
+						local pm = pfm.get_project_manager()
+						local session = pm:GetSession()
+						local schema = session:GetSchema()
+						for uuid,components in pairs(actors) do
+							local actor = udm.dereference(schema,uuid)
+							if(actor ~= nil) then
+								udmReferences:SetValue(get_var_name("e_" .. actor:GetName()),udm.TYPE_STRING,ents.create_entity_uri(util.Uuid(uuid)))
+								
+								for componentName,_ in pairs(components) do
+									udmReferences:SetValue(get_var_name("c_" .. componentName),udm.TYPE_STRING,ents.create_component_uri(util.Uuid(uuid),componentName))
+								end
+							end
+						end
+
+						if(controlData.set ~= nil) then
+							elUdm:Clear()
+							elUdm:Merge(params,udm.MERGE_FLAG_BIT_DEEP_COPY)
+
+							ctrlData.set(actorData.actor:FindComponent("animation_driver"),elUdm)
+						end
+					end
+				end
+			end)
 		end
 	end
 end
@@ -2832,53 +2925,68 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 		end
 	end
 	self.m_specialPropertyIcons["constraints"] = {}
-	self:IterateActors(function(el)
-		local actorData = self.m_treeElementToActorData[el]
-		if(actorData ~= nil) then
-			local c = actorData.actor:FindComponent("constraint")
-			if(c ~= nil) then
-				local drivenObject = c:GetMemberValue("drivenObject")
-				if(drivenObject ~= nil) then
-					local ref = ents.parse_uri(drivenObject)
-					if(ref ~= nil) then
-						local uuid = ref:GetUuid()
-						local componentType = ref:GetComponentName()
-						local propName = ref:GetMemberName()
-						propName = "ec/" .. componentType .. "/" .. propName
-						local el,ctrlData,componentDataDriven,actorDataDriven = self:GetPropertyEntry(uuid,componentType,propName)
-						if(util.is_valid(el)) then
-							local icon = el:AddIcon("gui/pfm/icon_constraint")
-							if(util.is_valid(icon)) then
-								local constraintType
-								for _,ctName in ipairs({"copy_location","copy_rotation","copy_scale","limit_distance","limit_location","limit_rotation","limit_scale","track_to"}) do
-									if(actorData.actor:HasComponent(ctName)) then
-										constraintType = ctName
-										break
-									end
-								end
-								icon:SetCursor(gui.CURSOR_SHAPE_HAND)
-								icon:SetMouseInputEnabled(true)
-								icon:SetTooltip(locale.get_text("pfm_constraint",{constraintType or locale.get_text("unknown")}))
-								icon:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
-									if(button == input.MOUSE_BUTTON_LEFT) then
-										if(state == input.STATE_PRESS) then
-											self:SelectActor(actorData.actor,true,"ec/constraint/drivenObject")
-										end
-										return util.EVENT_REPLY_HANDLED
-									end
-								end)
-								
-								table.insert(self.m_specialPropertyIcons["constraints"],{
-									icon = icon,
-									actorUuid = uuid,
-									componentType = componentType,
-									property = propName
-								})
-							end
+
+	local function find_driven_object_entry(elActor,componentType)
+		local actorData = self.m_treeElementToActorData[elActor]
+		if(actorData == nil) then return end
+		local c = actorData.actor:FindComponent(componentType)
+		if(c == nil) then return end
+		local drivenObject = c:GetMemberValue("drivenObject")
+		if(drivenObject == nil) then return end
+		local ref = ents.parse_uri(drivenObject)
+		if(ref == nil) then return end
+		local uuid = ref:GetUuid()
+		local componentType = ref:GetComponentName()
+		local propName = ref:GetMemberName()
+		propName = "ec/" .. componentType .. "/" .. propName
+		local el,ctrlData,componentDataDriven,actorDataDriven = self:GetPropertyEntry(uuid,componentType,propName)
+		if(util.is_valid(el) == false) then return end
+		return el,actorData,uuid,propName
+	end
+
+	local function add_icon(elActor,componentType,icon)
+		local el,actorData,uuid,propName = find_driven_object_entry(elActor,componentType)
+		if(el ~= nil) then
+			local icon = el:AddIcon(icon)
+			if(util.is_valid(icon)) then
+				icon:SetCursor(gui.CURSOR_SHAPE_HAND)
+				icon:SetMouseInputEnabled(true)
+				icon:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
+					if(button == input.MOUSE_BUTTON_LEFT) then
+						if(state == input.STATE_PRESS) then
+							self:SelectActor(actorData.actor,true,"ec/" .. componentType .. "/drivenObject")
 						end
+						return util.EVENT_REPLY_HANDLED
 					end
+				end)
+				table.insert(self.m_specialPropertyIcons["constraints"],{
+					icon = icon,
+					actorUuid = uuid,
+					componentType = componentType,
+					property = propName
+				})
+				return icon,actorData
+			end
+		end
+
+	end
+
+	self:IterateActors(function(el)
+		local icon,actorData = add_icon(el,"constraint","gui/pfm/icon_constraint")
+		if(icon ~= nil) then
+			local constraintType
+			for _,ctName in ipairs({"copy_location","copy_rotation","copy_scale","limit_distance","limit_location","limit_rotation","limit_scale","track_to"}) do
+				if(actorData.actor:HasComponent(ctName)) then
+					constraintType = ctName
+					break
 				end
 			end
+			icon:SetTooltip(locale.get_text("pfm_constraint",{constraintType or locale.get_text("unknown")}))
+		end
+
+		icon = add_icon(el,"animation_driver","gui/pfm/icon_driver")
+		if(icon ~= nil) then
+			icon:SetTooltip(locale.get_text("pfm_animation_driver"))
 		end
 	end)
 end
