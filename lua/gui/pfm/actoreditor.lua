@@ -2588,9 +2588,9 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 			end
 
 			if(#constraintTypes > 0) then
-				local ctItem,ctMenu = context:AddSubMenu("pfm_add_constraint")
+				local ctItem,ctMenu = context:AddSubMenu(locale.get_text("pfm_add_constraint"))
 				for _,typeInfo in ipairs(constraintTypes) do
-					ctMenu:AddItem("pfm_constraint_" .. typeInfo[2],function()
+					ctMenu:AddItem(locale.get_text("c_constraint_" .. typeInfo[2]),function()
 						local actor = self:CreatePresetActor(typeInfo[1],{
 							["updateActorComponents"] = false
 						})
@@ -2618,7 +2618,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 	elseif(#props > 0) then
 		local prop = props[1]
 		if(controlData.type < udm.TYPE_COUNT) then
-			context:AddItem("pfm_add_driver",function()
+			context:AddItem(locale.get_text("pfm_add_driver"),function()
 				local actor = self:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER,{
 					["updateActorComponents"] = false
 				})
@@ -2987,6 +2987,16 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 							if(util.is_valid(pContext) == false) then return end
 							pContext:SetPos(input.get_cursor_pos())
 
+							pContext:AddItem(locale.get_text("pfm_go_to_driver_property"),function()
+								local elDriver,actorData,uuidDriver,propNameDriver = find_property_object_entry(elActor,"constraint","driver")
+								if(uuidDriver ~= nil) then
+									local pm = pfm.get_project_manager()
+									local session = pm:GetSession()
+									local schema = session:GetSchema()
+									local actorDriver = udm.dereference(schema,tostring(uuidDriver))
+									if(actorDriver ~= nil) then self:SelectActor(actorDriver,true,propNameDriver) end
+								end
+							end)
 							pContext:AddItem(locale.get_text("remove"),function()
 								self:RemoveActors({tostring(actorData.actor:GetUniqueId())})
 							end)
@@ -3028,9 +3038,16 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 
 			constraintName = constraintName or locale.get_text("unknown")
 
-			local elDriver,actorDataDriver,uuidDriver,propNameDriver = find_driven_object_entry(el,"constraint","driver")
-			if(actorDataDriver ~= nil) then
-				icon:SetTooltip(locale.get_text("pfm_constraint_to",{constraintName,actorDataDriver.actor:GetName()}))
+			local elDriver,actorData,uuidDriver,propNameDriver = find_property_object_entry(el,"constraint","driver")
+			local actorDriver
+			if(uuidDriver ~= nil) then
+				local pm = pfm.get_project_manager()
+				local session = pm:GetSession()
+				local schema = session:GetSchema()
+				actorDriver = udm.dereference(schema,tostring(uuidDriver))
+			end
+			if(actorDriver ~= nil) then
+				icon:SetTooltip(locale.get_text("pfm_constraint_to",{constraintName,propNameDriver,actorDriver:GetName()}))
 			else
 				icon:SetTooltip(locale.get_text("pfm_constraint",{constraintName}))
 			end
