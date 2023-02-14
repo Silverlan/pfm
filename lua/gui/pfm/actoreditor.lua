@@ -2545,6 +2545,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 	end
 
 	local props = self:GetSelectedProperties()
+	local hasControlData = false
 	for i,propOther in ipairs(props) do
 		if(propOther.controlData == controlData) then
 			if(i ~= 1) then
@@ -2553,22 +2554,15 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 				props[1] = propOther
 				props[i] = tmp
 			end
+			hasControlData = true
 			break
 		end
 	end
+
+	if(hasControlData == false) then table.insert(props,1,{actorData = actorData,controlData = controlData}) end
 	if(#props > 0) then
 		local constraintProps = props
-		if(#constraintProps > 2) then constraintProps = {{actorData = actorData,controlData = controlData}} -- If more than two properties are selected, we'll only show self-contained constraints for the property that was clicked
-		else
-			local hasControlData = false
-			for _,propData in ipairs(constraintProps) do
-				if(propData.controlData == controlData) then
-					hasControlData = true
-					break
-				end
-			end
-			if(hasControlData == false) then table.insert(constraintProps,1,{actorData = actorData,controlData = controlData}) end
-		end
+		if(#constraintProps > 2) then constraintProps = {{actorData = actorData,controlData = controlData}} end -- If more than two properties are selected, we'll only show self-contained constraints for the property that was clicked
 
 		local prop0 = constraintProps[1]
 		local prop1 = constraintProps[2]
@@ -2929,12 +2923,12 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 	end
 	self.m_specialPropertyIcons["constraints"] = {}
 
-	local function find_driven_object_entry(elActor,componentType)
+	local function find_property_object_entry(elActor,componentType,propName)
 		local actorData = self.m_treeElementToActorData[elActor]
 		if(actorData == nil) then return end
 		local c = actorData.actor:FindComponent(componentType)
 		if(c == nil) then return end
-		local drivenObject = c:GetMemberValue("drivenObject")
+		local drivenObject = c:GetMemberValue(propName)
 		if(drivenObject == nil) then return end
 		local ref = ents.parse_uri(drivenObject)
 		if(ref == nil) then return end
@@ -2945,6 +2939,10 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 		local el,ctrlData,componentDataDriven,actorDataDriven = self:GetPropertyEntry(uuid,componentType,propName)
 		if(util.is_valid(el) == false) then return end
 		return el,actorData,uuid,propName
+	end
+
+	local function find_driven_object_entry(elActor,componentType)
+		return find_property_object_entry(elActor,componentType,"drivenObject")
 	end
 
 	local function add_icon(elActor,componentType,icon)
@@ -2991,12 +2989,28 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 		if(icon ~= nil) then
 			local constraintType
 			for _,ctName in ipairs({"copy_location","copy_rotation","copy_scale","limit_distance","limit_location","limit_rotation","limit_scale","track_to"}) do
-				if(actorData.actor:HasComponent(ctName)) then
+				if(actorData.actor:HasComponent("constraint_" .. ctName)) then
 					constraintType = ctName
 					break
 				end
 			end
-			icon:SetTooltip(locale.get_text("pfm_constraint",{constraintType or locale.get_text("unknown")}))
+
+			local constraintName
+			if(constraintType ~= nil) then
+				local valid,n = locale.get_text("c_constraint_" .. constraintType,nil,true)
+				if(valid) then
+					constraintName = n
+				end
+			end
+
+			constraintName = constraintName or locale.get_text("unknown")
+
+			local elDriver,actorDataDriver,uuidDriver,propNameDriver = find_driven_object_entry(el,"constraint","driver")
+			if(actorDataDriver ~= nil) then
+				icon:SetTooltip(locale.get_text("pfm_constraint_to",{constraintName,actorDataDriver.actor:GetName()}))
+			else
+				icon:SetTooltip(locale.get_text("pfm_constraint",{constraintName}))
+			end
 
 			elDrivenObject.__elConstraintActorData = elDrivenObject.__elConstraintActorData or {}
 			for i=#elDrivenObject.__elConstraintActorData,1,-1 do
