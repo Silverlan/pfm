@@ -21,6 +21,31 @@ function pfm.udm.Actor:IsVisible()
 	return visible
 end
 
+function pfm.udm.Actor:GetMemberValue(path)
+	local componentName,pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+	if(componentName == nil) then return end
+	local component = self:FindComponent(componentName)
+	if(component == nil) then return end
+	return component:GetMemberValue(pathName:GetString())
+end
+
+function pfm.udm.Actor:SetMemberValue(path,type,value)
+	local componentName,pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+	if(componentName == nil) then return false end
+	local component = self:FindComponent(componentName)
+	if(component == nil) then return false end
+	component:SetMemberValue(pathName:GetString(),type,value)
+	return true
+end
+
+function pfm.udm.Actor:GetMemberType(path)
+	local componentName,pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+	if(componentName == nil) then return end
+	local component = self:FindComponent(componentName)
+	if(component == nil) then return end
+	return component:GetMemberType(pathName:GetString())
+end
+
 function pfm.udm.Actor:FindComponent(name)
 	for _,component in ipairs(self:GetComponents()) do
 		if(component:GetType() == name) then return component end

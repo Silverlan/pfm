@@ -641,6 +641,13 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:LinkToUDMProperty("pvs_culling",settings,"pvsCullingEnabled")
 	p:LinkToUDMProperty("progressive",settings,"progressive")
 	p:LinkToUDMProperty("progressive_refine",settings,"progressiveRefinementEnabled")
+	if(tool.get_filmmaker():IsDeveloperModeEnabled()) then
+		local elText,wrapper = p:AddTextEntry("Tile Size (Pragma)","tile_size",tostring(settings:GetTileSize()),function(el)
+
+		end)
+		p:LinkToUDMProperty("tile_size",settings,"tileSize")
+		self.m_ctrlTileSize = elText
+	end
 
 	-- Presets
 	qualityPreset:AddCallback("OnOptionSelected",function(el,option)
@@ -960,6 +967,7 @@ function gui.PFMRenderPreview:GetRenderSettings(preview,prepareOnly)
 	settings:SetExposure(self.m_ctrlExposure:GetValue())
 	settings:SetHDROutput(tonumber(self.m_ctrlOutputFormat:GetOptionValue(self.m_ctrlOutputFormat:GetSelectedOption())) == util.IMAGE_FORMAT_HDR)
 	settings:SetUseOptix(self.m_ctrlOptix:IsChecked())
+	if(util.is_valid(self.m_ctrlTileSize)) then settings:SetTileSize(tonumber(self.m_ctrlTileSize:GetText())) end
 
 	settings:SetColorTransform(self.m_ctrlColorTransform:GetOptionValue(self.m_ctrlColorTransform:GetSelectedOption()))
 	settings:SetColorTransformLook(self.m_ctrlColorTransformLook:GetOptionValue(self.m_ctrlColorTransformLook:GetSelectedOption()))

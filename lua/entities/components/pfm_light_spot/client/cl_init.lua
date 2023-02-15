@@ -16,7 +16,10 @@ function ents.PFMLightSpot:Initialize()
 
 	self:BindEvent(ents.PFMActorComponent.EVENT_ON_SELECTION_CHANGED,"OnSelectionChanged")
 end
-function ents.PFMLightSpot:OnSelectionChanged(selected)
+function ents.PFMLightSpot:OnTick()
+	self:SetTickPolicy(ents.TICK_POLICY_NEVER)
+
+	local selected = self.m_updateSelectionWireframe
 	if(selected and self:GetEntity():HasComponent("pfm_cone_wireframe") == false) then
 		local c = self:AddEntityComponent("pfm_cone_wireframe")
 		if(c ~= nil) then
@@ -33,6 +36,13 @@ function ents.PFMLightSpot:OnSelectionChanged(selected)
 	end
 	local c = self:GetEntityComponent("pfm_cone_wireframe")
 	if(c ~= nil) then c:SetConeModelVisible(selected) end
+	self.m_updateSelectionWireframe = nil
+end
+function ents.PFMLightSpot:OnSelectionChanged(selected)
+	-- We need to update the selection wireframe, but we're not allowed to add
+	-- or remove components in this event, so we defer it to the next tick instead.
+	self.m_updateSelectionWireframe = selected
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 function ents.PFMLightSpot:Setup(actorData,lightData)
 	local lightC = self:GetEntity():GetComponent("pfm_light")

@@ -131,6 +131,7 @@
 					$string default "360_left_eye"
 				}
 				"panoramaRange" {$float default 180}
+				"tileSize" {$uint32 default 512}
 			}
 		}
 		"Settings"

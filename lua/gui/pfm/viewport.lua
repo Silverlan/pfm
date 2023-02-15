@@ -1020,6 +1020,7 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 	if(count > 0) then posAvg = posAvg /count end
 
 	local entTransform = ents.create("util_transform")
+	entTransform:AddComponent("pfm_transform_gizmo")
 	entTransform:Spawn()
 	entTransform:SetPos(posAvg)
 	self.m_entTransform = entTransform
@@ -1195,6 +1196,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 		if(trC ~= nil) then return trC end
 		trC = ent:AddComponent("util_transform")
 		if(trC == nil) then return trC end
+		ent:AddComponent("pfm_transform_gizmo")
 		local newPos
 		local newRot
 		local newScale
@@ -1289,6 +1291,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent,manipMode,enabled)
 						local val = ent:GetMemberValue(targetPath)
 						if(val ~= nil) then
 							local entTransform = ents.create("util_transform")
+							entTransform:AddComponent("pfm_transform_gizmo")
 							entTransform:Spawn()
 
 							local pose = ent:GetPose()

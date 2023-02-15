@@ -117,6 +117,7 @@ function gui.PFMActorCatalog:OnInitialize()
 			if(util.is_valid(entActor)) then
 				local tc = entActor:AddComponent("util_transform")
 				if(tc ~= nil) then
+					entActor:AddComponent("pfm_transform_gizmo")
 					tc:SetTranslationEnabled(false)
 					tc:SetRotationAxisEnabled(math.AXIS_X,false)
 					tc:SetRotationAxisEnabled(math.AXIS_Z,false)

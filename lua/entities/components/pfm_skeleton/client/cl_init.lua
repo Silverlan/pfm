@@ -28,7 +28,7 @@ end
 
 function ents.PFMSkeleton:OnActorPropertySelected(udmComponent,item,path,selected)
 	local actor = udmComponent:GetActor()
-	if(tostring(actor:GetUniqueId()) ~= tostring(self:GetEntity():GetUuid())) then return end
+	if(actor:IsValid() == false or tostring(actor:GetUniqueId()) ~= tostring(self:GetEntity():GetUuid())) then return end
 	local type = udmComponent:GetType()
 	if(type ~= "animated" and type ~= "ik_solver") then return end
 	local t = string.split(path,"/")
@@ -79,9 +79,9 @@ function ents.PFMSkeleton:OnBonesCreated()
 			end)
 
 			if(solverC ~= nil) then
-				local handle = solverC:GetHandle(boneId)
+				local handle = solverC:GetControl(boneId)
 				if(handle ~= nil) then
-					local col = (util.get_type_name(handle) == "StateControl") and Color.Crimson or Color.Orange
+					local col = (handle.type == ents.IkSolverComponent.RigConfig.Control.TYPE_STATE) and Color.Crimson or Color.Orange
 					ent:SetColor(col)
 				end
 			end

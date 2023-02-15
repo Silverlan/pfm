@@ -206,12 +206,21 @@ function gui.PFMTreeViewElement:UpdateUi()
 	self:ScheduleUpdate()
 	self.m_treeView:GetRoot():ScheduleUpdate()
 end
+function gui.PFMTreeViewElement:ClearIcons()
+	util.remove(self.m_icons)
+end
 function gui.PFMTreeViewElement:AddIcon(material)
 	local icon = gui.create("WITexturedRect",self.m_iconBox)
 	icon:SetSize(14,14)
 	icon:SetMaterial(material)
 	table.insert(self.m_icons,icon)
 	return icon
+end
+function gui.PFMTreeViewElement:AddUniqueIcon(material)
+	for _,icon in ipairs(self.m_icons) do
+		if(icon:IsValid() and icon:GetMaterial():GetName() == asset.get_normalized_path(material,asset.TYPE_MATERIAL)) then return icon end
+	end
+	return self:AddIcon(material)
 end
 function gui.PFMTreeViewElement:GetHeader() return self.m_header end
 function gui.PFMTreeViewElement:GetTreeView() return self.m_treeView end
@@ -328,6 +337,7 @@ function gui.PFMTreeViewElement:UpdateChildBoxBounds()
 end
 function gui.PFMTreeViewElement:GetParentItem() return self.m_parent end
 function gui.PFMTreeViewElement:GetItems() return self.m_items end
+function gui.PFMTreeViewElement:GetItemCount() return #self.m_items end
 function gui.PFMTreeViewElement:IsCollapsed() return self.m_collapsed end
 function gui.PFMTreeViewElement:Toggle()
 	if(self:IsCollapsed()) then self:Expand()
@@ -376,6 +386,7 @@ function gui.PFMTreeViewElement:Clear()
 	for _,item in ipairs(self.m_items) do
 		if(item:IsValid()) then item:Remove() end
 	end
+	for _,item in pairs(self.m_items) do if(item:IsValid()) then debug.print("DANGLING ITEM") end end
 	self.m_items = {}
 	self.m_itemElements = {}
 end
@@ -436,7 +447,12 @@ function gui.PFMTreeViewElement:FindItemByText(text,recursive)
 		end
 	end
 end
-function gui.PFMTreeViewElement:SetIdentifier(identifier) self.m_identifier = identifier end
+function gui.PFMTreeViewElement:SetIdentifier(identifier)
+	self.m_identifier = identifier
+	if(util.is_valid(self.m_parent)) then
+		self.m_parent.m_identifierToItem[identifier] = self
+	end
+end
 function gui.PFMTreeViewElement:GetIdentifier() return self.m_identifier end
 function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex,identifier)
 	self:InitializeChildBox()
@@ -461,7 +477,6 @@ function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex,identifier)
 		table.insert(self.m_items,item)
 	end
 	if(identifier ~= nil) then
-		self.m_identifierToItem[identifier] = item
 		item:SetIdentifier(identifier)
 	end
 	self:ScheduleUpdate()

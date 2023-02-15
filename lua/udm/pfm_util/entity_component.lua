@@ -33,6 +33,12 @@ function pfm.udm.EntityComponent:GetMemberValue(memberName)
 	return self.m_defaultMemberValues[memberName]
 end
 
+function pfm.udm.EntityComponent:GetMemberType(memberName)
+	local prop = self:GetProperties():GetFromPath(memberName)
+	if(util.is_valid(prop) == false) then return end
+	return prop:GetType()
+end
+
 function pfm.udm.EntityComponent:OnTypeChanged()
 	self.m_defaultMemberValues = {}
 	local type = self:GetType()

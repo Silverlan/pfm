@@ -27,7 +27,7 @@ function Component:Initialize()
 
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
 	-- self:AddEntityComponent(ents.COMPONENT_IK)
-	self:BindEvent(ents.AnimatedComponent.EVENT_UPDATE_BONE_POSES,"UpdateIkTrees")
+	-- self:BindEvent(ents.AnimatedComponent.EVENT_UPDATE_BONE_POSES,"UpdateIkTrees")
 	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED,"OnModelChanged")
 	-- self:BindEvent(ents.PanimaComponent.EVENT_ON_ANIMATIONS_UPDATED,"UpdateIkTrees")
 

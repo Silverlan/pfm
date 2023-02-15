@@ -66,27 +66,12 @@ function gui.RaytracedViewport:SetTextureFromImageBuffer(imgBuf)
 end
 function gui.RaytracedViewport:SaveImage(path,imgFormat,hdr)
 	hdr = hdr or false
-	local img
-	local imgBufFormat
-	if(imgFormat == util.IMAGE_FORMAT_HDR) then
-		-- Image is not tonemapped, we'll save it with the original HDR colors
-		hdr = true
-		img = self.m_tex:GetTexture():GetImage()
-		imgBufFormat = util.ImageBuffer.FORMAT_RGBA_HDR
-	else
-		-- Apply Tonemapping
-		--[[img = self:ApplyToneMapping()
-		if(img == nil) then return false end]]
-		img = self.m_rtJob:GetRenderResultTexture():GetImage()
-		imgBufFormat = util.ImageBuffer.FORMAT_RGBA_HDR
-		--imgBufFormat = util.ImageBuffer.FORMAT_RGBA_LDR
-	end
 
 	local ent = ents.create("entity")
 	ent:RemoveSafely()
 
 	self.m_threadPool:WaitForPendingCount(15)
-	local imgBuf = img:ToImageBuffer(false,false)
+	local imgBuf = self.m_rtJob:GetRenderResult()
 	local task = util.ThreadPool.ThreadTask()
 	if(hdr == false) then imgBuf:ToLDR(task) end
 
@@ -208,7 +193,7 @@ function gui.RaytracedViewport:OnThink()
 		if(preStageScene ~= nil) then
 			self:CallCallbacks("OnSceneComplete",preStageScene)
 		else
-			local tex = self.m_rtJob:GetRenderResultTexture()
+			local tex = self.m_rtJob:GetRenderResultPreviewTexture()
 			local imgBuf = self.m_rtJob:GetRenderResult()
 			if(tex ~= nil) then
 				-- The scene has been completely rendered with Cycles with the exception of

@@ -53,12 +53,13 @@ function Component:Initialize()
 	renderC:SetExemptFromOcclusionCulling(true)
 	renderC:SetDepthPassEnabled(false)
 	renderC:SetDepthBias(185,180)
-	renderC:AddToRenderGroup("pfm_editor_overlay")
 
 	clickC:SetPriority(100)
 end
+function Component:SetCamera(cam) self.m_cam = cam end
 function Component:UpdateScale()
-	local cam = game.get_render_scene_camera()
+	local cam = self.m_cam
+	if(util.is_valid(cam) == false) then cam = game.get_render_scene_camera() end
 	if(util.is_valid(cam) == false) then return end
 	local entCam = cam:GetEntity()
 	local plane = math.Plane(entCam:GetForward(),0)
