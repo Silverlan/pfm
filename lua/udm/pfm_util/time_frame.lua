@@ -10,7 +10,13 @@ function pfm.udm.TimeFrame:GetEnd() return self:GetStart() +self:GetDuration() e
 function pfm.udm.TimeFrame:IsInTimeFrame(t,e)
     e = e or 0.001
     -- Note: -e for both start and end is on purpose
-    return t >= self:GetStart() -e and t < self:GetEnd() -e
+    return t >= self:GetStart() -e and t <= self:GetEnd() -e
+end
+function pfm.udm.TimeFrame:ClampToTimeFrame(t,e)
+    e = e or 0.001
+	local tStart = self:GetStart() +e
+	local tEnd = self:GetEnd() -e
+	return math.clamp(t,tStart,tEnd)
 end
 function pfm.udm.TimeFrame:Max(timeFrameOther)
     local startTime = math.min(self:GetStart(),timeFrameOther:GetStart())

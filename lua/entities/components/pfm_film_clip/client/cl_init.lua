@@ -228,13 +228,15 @@ function ents.PFMFilmClip:CreateActor(actor)
 		") with scale (" .. util.round_string(scale.x,2) .. "," .. util.round_string(scale.y,2) .. "," .. util.round_string(scale.z,2) .. ")...",pfm.LOG_CATEGORY_PFM_GAME)
 	actorC:OnOffsetChanged(self:GetOffset(),ents.PFMProject.GAME_VIEW_FLAG_NONE)
 
-	local pm = pfm.get_project_manager()
-	local animManager = pm:GetAnimationManager()
-	if(animManager ~= nil) then animManager:PlayActorAnimation(entActor) end
+	local projectC = self:GetProject()
+	local pm = util.is_valid(projectC) and projectC:GetProjectManager() or nil
+	if(pm ~= nil) then
+		local animManager = pm:GetAnimationManager()
+		if(animManager ~= nil) then animManager:PlayActorAnimation(entActor) end
+	end
 
 	self:BroadcastEvent(ents.PFMFilmClip.EVENT_ON_ACTOR_CREATED,{actorC})
 
-	local projectC = self:GetProject()
 	if(util.is_valid(projectC)) then
 		projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ACTOR_CREATED,{actorC})
 		projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED,{actorC:GetEntity()})
@@ -250,6 +252,12 @@ function ents.PFMFilmClip:GetProject()
 	local trackGroupC = trackC:GetTrackGroup()
 	if(util.is_valid(trackGroupC) == false) then return end
 	return trackGroupC:GetProject()
+end
+
+function ents.PFMFilmClip:GetProjectManager()
+	local projectC = self:GetProject()
+	if(util.is_valid(projectC) == false) then return end
+	return projectC:GetProjectManager()
 end
 
 function ents.PFMFilmClip:GetTimeFrame()

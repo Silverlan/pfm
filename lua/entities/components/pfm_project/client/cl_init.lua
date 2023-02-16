@@ -46,8 +46,9 @@ function ents.PFMProject:OnRemove()
 	self:Reset()
 end
 
-function ents.PFMProject:SetProjectData(project)
+function ents.PFMProject:SetProjectData(project,projectManager)
 	self.m_project = project
+	self:SetProjectManager(projectManager)
 
 	local timeFrame
 	local session = project:GetSession()
@@ -124,9 +125,12 @@ function ents.PFMProject:OnOffsetChanged()
 	self.m_skipOffsetOnChangeCallback = nil
 end
 
+function ents.PFMProject:SetProjectManager(pm) self.m_projectManager = pm end
+function ents.PFMProject:GetProjectManager() return self.m_projectManager end
+
 local cvPanima = console.get_convar("pfm_experimental_enable_panima_for_flex_and_skeletal_animations")
 function ents.PFMProject:ChangePlaybackOffset(offset,gameViewFlags)
-	if(offset == self.m_prevPlaybackOffset) then return end
+	if(offset == self.m_prevPlaybackOffset or self.m_projectManager == nil) then return end
 	self.m_prevPlaybackOffset = offset
 	self:SetPlaybackOffset(offset)
 
@@ -138,7 +142,7 @@ function ents.PFMProject:ChangePlaybackOffset(offset,gameViewFlags)
 	if(cvAnimCache:GetBool() == false) then return end
 	-- if(bit.band(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE) == ents.PFMProject.GAME_VIEW_FLAG_NONE) then return end
 
-	local pm = pfm.get_project_manager()
+	local pm = self.m_projectManager
 	local animCache = pm:GetAnimationCache()
 	local frameIndex = pm:TimeOffsetToFrameOffset(offset)
 	if(animCache == nil) then return end

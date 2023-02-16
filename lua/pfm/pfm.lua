@@ -25,12 +25,14 @@ include("/util/log.lua")
 include("/util/color_scheme.lua")
 include("/udm/udm.lua")
 include("/udm/schema_api.lua")
+include("/sfm.lua")
 include("udm")
 include("math.lua")
 include("unirender.lua")
 include("message_popup.lua")
 include("tree/pfm_tree.lua")
 include("project_packer.lua")
+include("undoredo.lua")
 
 -- Load and initialize schema
 pfm.udm = pfm.udm or {}

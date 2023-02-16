@@ -24,7 +24,7 @@ function pfm.GameView:StartGameView(project)
 	end
 
 	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
-	projectC:SetProjectData(project)
+	projectC:SetProjectData(project,self)
 	entScene:Spawn()
 	self.m_gameView = entScene
 	self:OnGameViewCreated(projectC)
