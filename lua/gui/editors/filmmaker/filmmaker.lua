@@ -101,6 +101,8 @@ function gui.WIFilmmaker:OnInitialize()
 	fudm.PFMChannel.set_all_channels_enabled(false)
 
 	self.m_editorOverlayRenderMask = game.register_render_mask("pfm_editor_overlay",false)
+	self.m_worldAxesGizmo = ents.create("pfm_world_axes_gizmo")
+	self.m_worldAxesGizmo:Spawn()
 
 	local udmData,err = udm.load("cfg/pfm/settings.udm")
 	if(udmData ~= false) then
@@ -778,6 +780,7 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched",self)
 end
+function gui.WIFilmmaker:GetWorldAxesGizmo() return self.m_worldAxesGizmo end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()
 end
@@ -1366,6 +1369,7 @@ function gui.WIFilmmaker:OnRemove()
 	self:CloseProject()
 	pfm.clear_pragma_renderer_scene()
 	game.set_default_game_render_enabled(true)
+	util.remove(self.m_worldAxesGizmo)
 	util.remove(self.m_cbDisableDefaultSceneDraw)
 	util.remove(self.m_cbPreRenderScenes)
 	util.remove(self.m_overlaySceneCallback)

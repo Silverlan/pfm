@@ -359,6 +359,17 @@ function gui.PFMViewport:InitializeSettings(parent)
 		tool.get_filmmaker():GetSelectionManager():SetSelectionWireframeEnabled(enabled)
 		pfm.tag_render_scene_as_dirty()
 	end)
+
+	self.m_ctrlShowAxes = p:AddDropDownMenu(locale.get_text("pfm_show_axes"),"show_axes",{
+		{"0",locale.get_text("no")},
+		{"1",locale.get_text("yes")}
+	},1)
+	self.m_ctrlShowAxes:AddCallback("OnOptionSelected",function(el,idx)
+		local enabled = toboolean(self.m_ctrlShowAxes:GetOptionValue(self.m_ctrlShowAxes:GetSelectedOption()))
+		local ent = tool.get_filmmaker():GetWorldAxesGizmo()
+		if(util.is_valid(ent)) then ent:SetEnabled(enabled) end
+		pfm.tag_render_scene_as_dirty()
+	end)
 end
 function gui.PFMViewport:SetRtViewportRenderer(renderer)
 	local enabled = (renderer ~= nil)
