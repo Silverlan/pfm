@@ -9,7 +9,7 @@
 include("/pfm/pfm.lua")
 include("/pfm/project_manager.lua")
 
-local Component = util.register_class("ComponentManager",BaseEntityComponent)
+local Component = util.register_class("ents.PFMProjectManager",BaseEntityComponent)
 
 Component:RegisterMember("ProjectFile",udm.TYPE_STRING,"",{
 	specializationType = ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE,
