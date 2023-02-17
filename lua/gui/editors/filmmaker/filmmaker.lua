@@ -1568,6 +1568,12 @@ function gui.WIFilmmaker:SetActorAnimationComponentProperty(actor,targetPath,tim
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor)) then actorEditor:UpdateActorProperty(actor,targetPath) end
 end
+
+function gui.WIFilmmaker:UpdateActorAnimatedPropertyValue(actorData,targetPath,value) -- For internal use only
+	local actorEditor = self:GetActorEditor()
+	if(util.is_valid(actorEditor) == false) then return true end
+	return actorEditor:UpdateActorAnimatedPropertyValue(actorData,targetPath,value)
+end
 function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 	local actorData = actor:GetActorData()
 	if(actorData == nil) then return end
@@ -1578,7 +1584,7 @@ function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 		rt:MarkActorAsDirty(actor:GetEntity())
 	end
 
-	local function applyControllerTarget()
+	local function applyControllerTarget() -- TODO: Obsolete?
 		local memberInfo = pfm.get_member_info(targetPath,actor:GetEntity())
 		if(memberInfo:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_CONTROLLER_BIT) and memberInfo.metaData ~= nil) then
 			local meta = memberInfo.metaData
@@ -1598,12 +1604,7 @@ function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 		return false
 	end
 
-	local actorEditor = self:GetActorEditor()
-	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH and udmType ~= ents.MEMBER_TYPE_ELEMENT) then
-		if(applyControllerTarget()) then return end
-		actorEditor:SetAnimationChannelValue(actorData,targetPath,value)
-		return
-	end
+	if(self:UpdateActorAnimatedPropertyValue(actorData,targetPath,value) == false) then return end
 
 	self:GetAnimationManager():SetAnimationDirty(actorData)
 	local res
@@ -1634,16 +1635,9 @@ function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value,applyUdm
 
 	local actorEditor = self:GetActorEditor()
 	local targetPath = "ec/pfm_actor/" .. propType
-	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
-		actorEditor:SetAnimationChannelValue(actorData,targetPath,value)
-		if(applyUdmValue) then
-			local actorC = actorData:AddComponentType("pfm_actor")
-			if(propType == "position") then actorC:SetMemberValue(propType,udm.TYPE_VECTOR3,value)
-			elseif(propType == "rotation") then actorC:SetMemberValue(propType,udm.TYPE_QUATERNION,value)
-			elseif(propType == "scale") then actorC:SetMemberValue(propType,udm.TYPE_VECTOR3,value) end
-		end
-		return
-	end
+
+	if(self:UpdateActorAnimatedPropertyValue(actorData,targetPath,value) == false) then return end
+
 	local transform = actorData:GetTransform()
 	if(propType == "position") then transform:SetOrigin(value)
 	elseif(propType == "rotation") then transform:SetRotation(value)
@@ -1655,26 +1649,8 @@ function gui.WIFilmmaker:SetActorTransformProperty(actor,propType,value,applyUdm
 	actor:GetEntity():SetMemberValue(targetPath,value)
 	self:GetActorEditor():UpdateActorProperty(actorData,targetPath)
 end
-function gui.WIFilmmaker:SetActorBoneTransformProperty(actor,propType,value,udmType)
+function gui.WIFilmmaker:SetActorBoneTransformProperty(actor,propType,value,udmType) -- TODO: Obsolete?
 	self:SetActorGenericProperty(actor,"ec/animated/bone/" .. propType,value,udmType)
-
-	if(true) then return end
-	local actorData = actor:GetActorData()
-	if(actorData == nil) then return end
-
-	-- TODO: Live animation editing for RT is not supported yet
-	--[[local vp = self:GetViewport()
-	local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
-	if(util.is_valid(rt)) then
-		rt:MarkActorAsDirty(actor:GetEntity())
-	end]]
-
-	local actorEditor = self:GetActorEditor()
-	if(util.is_valid(actorEditor) and actorEditor:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH) then
-		actorEditor:SetAnimationChannelValue(actorData,"ec/animated/bone/" .. propType,value)
-		return
-	end
-	self:TagRenderSceneAsDirty()
 end
 function gui.WIFilmmaker:OnActorControlSelected(actorEditor,actor,component,controlData,slider)
 	local memberInfo = controlData.getMemberInfo(controlData.name)

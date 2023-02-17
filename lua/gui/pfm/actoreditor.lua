@@ -847,7 +847,7 @@ end
 local function applyComponentChannelValue(actorEditor,component,controlData,value)
 	local actor = component:GetActor()
 	if(actor ~= nil and controlData.path ~= nil) then
-		actorEditor:SetAnimationChannelValue(actor,controlData.path,value)
+		actorEditor:UpdateAnimationChannelValue(actor,controlData.path,value)
 	end
 end
 function gui.PFMActorEditor:AddSliderControl(component,controlData)
@@ -856,7 +856,7 @@ function gui.PFMActorEditor:AddSliderControl(component,controlData)
 	local function applyValue(value)
 		local actor = component:GetActor()
 		if(actor ~= nil and controlData.path ~= nil) then
-			self:SetAnimationChannelValue(actor,controlData.path,value)
+			self:UpdateAnimationChannelValue(actor,controlData.path,value)
 		end
 	end
 
@@ -1048,51 +1048,69 @@ function gui.PFMActorEditor:GetAnimationChannel(actor,path,addIfNotExists)
 	return channel,channelClip
 end
 function gui.PFMActorEditor:GetMemberInfo(actor,path) return pfm.get_member_info(path,actor:FindEntity()) end
-function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value,baseIndex)
+function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData,targetPath,value,baseIndex) -- For internal use only
+	-- If the property is animated, we'll defer the assignment of the value to the animation manager.
+	-- If the channel for the property only has a single animation value, and we're not in the graph editor, special behavior is triggered:
+	-- In this case we will set both the base value of the property, as well as the animation value.
+	-- This is for convenience, so that the user can quickly edit the value through the actor editor, even
+	-- when they're not in the graph editor.
 	local fm = tool.get_filmmaker()
-	local timeline = fm:GetTimeline()
-	if(util.is_valid(timeline) and timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH) then
-		local filmClip = self:GetFilmClip()
-		local track = filmClip:FindAnimationChannelTrack()
-		
-		local animManager = fm:GetAnimationManager()
-		local channelClip = track:FindActorAnimationClip(actor,true)
-		local path = panima.Channel.Path(path)
-		local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(path)
-		local componentId = componentName and ents.get_component_id(componentName)
-		local componentInfo = componentId and ents.get_component_info(componentId)
+	local inGraphEditor = (self:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH)
+	local animManager = fm:GetAnimationManager()
+	local anim,channel = animManager:FindAnimationChannel(actorData,targetPath,false)
+	if(inGraphEditor or (channel ~= nil and channel:GetValueCount() < 2)) then
+		if(inGraphEditor) then if(log.is_log_level_enabled(log.SEVERITY_DEBUG)) then pfm.log("Graph editor is active. Value " .. tostring(value) .. " of property '" .. targetPath .. "' will be assigned as animation value...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG) end
+		else if(log.is_log_level_enabled(log.SEVERITY_DEBUG)) then pfm.log("Animation channel for property '" .. targetPath .. "' contains less than two values. Value " .. tostring(value) .. " will be assigned as animation value, as well as base value...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG) end end
+		local time
+		if(inGraphEditor == false) then time = (channel:GetValueCount() > 0) and channel:GetTime(0) or 0.0 end
+		self:SetAnimationChannelValue(actorData,targetPath,value,baseIndex,time)
+		if(inGraphEditor) then return false end
+	else if(log.is_log_level_enabled(log.SEVERITY_DEBUG)) then pfm.log("Graph editor is not active. Value " .. tostring(value) .. " of property '" .. targetPath .. "' will be applied as base value only...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG) end end
+	return true -- Returning true will ensure the base value will be changed
+end
+function gui.PFMActorEditor:SetAnimationChannelValue(actor,path,value,baseIndex,forceAtTime)
+	local fm = tool.get_filmmaker()
 
-		local entActor = actor:FindEntity()
-		local memberInfo
-		if(memberName ~= nil and componentInfo ~= nil) then
-			if(util.is_valid(entActor)) then
-				local c = entActor:GetComponent(componentId)
-				if(c ~= nil) then
-					local memberId = c:GetMemberIndex(memberName:GetString())
-					if(memberId ~= nil) then memberInfo = c:GetMemberInfo(memberId) end
-				end
+	local filmClip = self:GetFilmClip()
+	local track = filmClip:FindAnimationChannelTrack()
+	
+	local animManager = fm:GetAnimationManager()
+	local channelClip = track:FindActorAnimationClip(actor,true)
+	local path = panima.Channel.Path(path)
+	local componentName,memberName = ents.PanimaComponent.parse_component_channel_path(path)
+	local componentId = componentName and ents.get_component_id(componentName)
+	local componentInfo = componentId and ents.get_component_info(componentId)
+
+	local entActor = actor:FindEntity()
+	local memberInfo
+	if(memberName ~= nil and componentInfo ~= nil) then
+		if(util.is_valid(entActor)) then
+			local c = entActor:GetComponent(componentId)
+			if(c ~= nil) then
+				local memberId = c:GetMemberIndex(memberName:GetString())
+				if(memberId ~= nil) then memberInfo = c:GetMemberInfo(memberId) end
 			end
-			memberInfo = memberInfo or componentInfo:GetMemberInfo(memberName:GetString())
 		end
-		if(memberInfo ~= nil) then
-			local type = memberInfo.type
-			path = path:ToUri(false)
+		memberInfo = memberInfo or componentInfo:GetMemberInfo(memberName:GetString())
+	end
+	if(memberInfo ~= nil) then
+		local type = memberInfo.type
+		path = path:ToUri(false)
 
-			local time = fm:GetTimeOffset()
-			local localTime = channelClip:LocalizeOffsetAbs(time)
-			local channelValue = value
-			if(util.get_type_name(channelValue) == "Color") then channelValue = channelValue:ToVector() end
-			if(baseIndex ~= nil) then
-				fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type,baseIndex)
-			else
-				fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type)
-			end
+		local time = forceAtTime or fm:GetTimeOffset()
+		local localTime = channelClip:LocalizeOffsetAbs(time)
+		local channelValue = value
+		if(util.get_type_name(channelValue) == "Color") then channelValue = channelValue:ToVector() end
+		if(baseIndex ~= nil) then
+			fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type,baseIndex)
 		else
-			local baseMsg = "Unable to apply animation channel value with channel path '" .. path.path:GetString() .. "': "
-			if(componentName == nil) then pfm.log(baseMsg .. "Unable to determine component type from animation channel path '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-			elseif(componentId == nil) then pfm.log(baseMsg .. "Component '" .. componentName .. "' is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-			else pfm.log(baseMsg .. "Component '" .. componentName .. "' has no known member '" .. memberName:GetString() .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
+			fm:SetActorAnimationComponentProperty(actor,path,localTime,channelValue,type)
 		end
+	else
+		local baseMsg = "Unable to apply animation channel value with channel path '" .. path.path:GetString() .. "': "
+		if(componentName == nil) then pfm.log(baseMsg .. "Unable to determine component type from animation channel path '" .. path .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		elseif(componentId == nil) then pfm.log(baseMsg .. "Component '" .. componentName .. "' is unknown!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		else pfm.log(baseMsg .. "Component '" .. componentName .. "' has no known member '" .. memberName:GetString() .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING) end
 	end
 end
 function gui.PFMActorEditor:ScheduleUpdateSelectedEntities()
@@ -1614,6 +1632,9 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 							if(updateAnimationValue == nil) then updateAnimationValue = true end
 							local entActor,c,memberIdx,info = controlData.getActor()
 							if(info == nil) then return end
+							if(log.is_log_level_enabled(log.SEVERITY_DEBUG)) then
+								pfm.log("Setting value for property '" .. controlData.path .. "' of component '" .. tostring(component) .. "' to value '" .. tostring(value) .. "'...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG)
+							end
 							if(dontTranslateValue ~= true) then value = controlData.translateFromInterface(value) end
 							local memberValue = value
 							if(util.get_type_name(memberValue) == "Color") then memberValue = memberValue:ToVector() end
@@ -1633,6 +1654,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 							if(final) then
 								oldValue = oldValue or component:GetMemberValue(memberName)
 								if(oldValue ~= nil) then
+									if(log.is_log_level_enabled(log.SEVERITY_DEBUG)) then pfm.log("Adding undo/redo for value change...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG) end
 									pfm.undoredo.push("pfm_undoredo_property",function()
 										local entActor = ents.find_by_uuid(uniqueId)
 										if(entActor == nil) then return end
@@ -1642,19 +1664,28 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 										if(entActor == nil) then return end
 										tool.get_filmmaker():SetActorGenericProperty(entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),controlData.path,oldValue,memberType)
 									end)
+								else
+									if(log.is_log_level_enabled(log.SEVERITY_DEBUG)) then
+										pfm.log("Could not retrieve current value for property '" .. controlData.path .. "'. No undo/redo will be added.",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG)
+									end
 								end
 							end
+							if(log.is_log_level_enabled(log.SEVERITY_DEBUG)) then pfm.log("Applying value " .. tostring(udmValue) .. " as type " .. udmType .. ".",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG) end
 							component:SetMemberValue(memberName,udmType,udmValue)
 							if(memberType ~= ents.MEMBER_TYPE_ELEMENT) then
 								local entActor = actorData.actor:FindEntity()
 								if(entActor ~= nil) then
 									local c = entActor:GetComponent(componentId)
 									if(c ~= nil) then
+										if(log.is_log_level_enabled(log.SEVERITY_DEBUG)) then pfm.log("Applying value " .. tostring(memberValue) .. " to entity component " .. tostring(c) .. ".",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG) end
 										c:SetMemberValue(memberName,memberValue)
 										self:OnActorPropertyChanged(entActor)
 									end
 								end
-								if(updateAnimationValue) then applyComponentChannelValue(self,component,controlData,memberValue) end
+								if(updateAnimationValue) then
+									if(log.is_log_level_enabled(log.SEVERITY_DEBUG)) then pfm.log("Updating animation value for property '" .. controlData.path .. "' with value " .. tostring(memberValue) .. ".",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG) end
+									applyComponentChannelValue(self,component,controlData,memberValue)
+								end
 							else
 								c:InvokeElementMemberChangeCallback(memberIdx)
 							end
@@ -2092,28 +2123,31 @@ function gui.PFMActorEditor:UpdateAnimatedPropertyOverlay(uuid,controlData)
 
 	local ctrl = controlData.control
 	if(util.is_valid(ctrl) == false) then return end
+
 	controlData.animatedPropertyOverlay = nil
 	local outlineParent = ctrl
-	if(inGraphEditor == false) then
-		local elDisabled = gui.create("WIRect",ctrl,0,0,ctrl:GetWidth(),ctrl:GetHeight(),0,0,1,1)
-		elDisabled:SetColor(Color(0,0,0,200))
-		elDisabled:SetZPos(10)
-		elDisabled:SetMouseInputEnabled(true)
-		elDisabled:SetCursor(gui.CURSOR_SHAPE_HAND)
-		elDisabled:SetTooltip(locale.get_text("pfm_animated_property_tooltip"))
-		elDisabled:AddCallback("OnMouseEvent",function(el,button,state,mods)
-			if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
-				-- We have to switch to the graph editor, but that changes the overlay state (which invalidates this callback),
-				-- so we have to delay it
-				local propertyName = controlData.controlData.name
-				time.create_simple_timer(0.0,function()
-					if(self:IsValid()) then self:ShowPropertyInGraphEditor(propertyName) end
-				end)
-				return util.EVENT_REPLY_HANDLED
-			end
-		end)
-		controlData.animatedPropertyOverlay = elDisabled
-		outlineParent = elDisabled
+	if(channel:GetValueCount() >= 2) then -- Disable the field if there is more than one animation value
+		if(inGraphEditor == false) then
+			local elDisabled = gui.create("WIRect",ctrl,0,0,ctrl:GetWidth(),ctrl:GetHeight(),0,0,1,1)
+			elDisabled:SetColor(Color(0,0,0,200))
+			elDisabled:SetZPos(10)
+			elDisabled:SetMouseInputEnabled(true)
+			elDisabled:SetCursor(gui.CURSOR_SHAPE_HAND)
+			elDisabled:SetTooltip(locale.get_text("pfm_animated_property_tooltip"))
+			elDisabled:AddCallback("OnMouseEvent",function(el,button,state,mods)
+				if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
+					-- We have to switch to the graph editor, but that changes the overlay state (which invalidates this callback),
+					-- so we have to delay it
+					local propertyName = controlData.controlData.name
+					time.create_simple_timer(0.0,function()
+						if(self:IsValid()) then self:ShowPropertyInGraphEditor(propertyName) end
+					end)
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+			controlData.animatedPropertyOverlay = elDisabled
+			outlineParent = elDisabled
+		end
 	end
 
 	local elOutline = gui.create("WIOutlinedRect",outlineParent,0,0,outlineParent:GetWidth(),outlineParent:GetHeight(),0,0,1,1)
