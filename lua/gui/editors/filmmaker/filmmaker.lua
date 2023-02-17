@@ -1572,7 +1572,7 @@ end
 function gui.WIFilmmaker:UpdateActorAnimatedPropertyValue(actorData,targetPath,value) -- For internal use only
 	local actorEditor = self:GetActorEditor()
 	if(util.is_valid(actorEditor) == false) then return true end
-	return actorEditor:UpdateActorAnimatedPropertyValue(actorData,targetPath,value)
+	return actorEditor:UpdateAnimationChannelValue(actorData,targetPath,value)
 end
 function gui.WIFilmmaker:SetActorGenericProperty(actor,targetPath,value,udmType)
 	local actorData = actor:GetActorData()
