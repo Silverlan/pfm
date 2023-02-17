@@ -1832,14 +1832,19 @@ function gui.WIFilmmaker:InitializeProjectUI()
 					path:PopFront()
 					local mdl = game.load_model(path:GetString())
 					if(mdl == nil) then return end
+					local name = util.Path.CreateFilePath(asset.get_normalized_path(path:GetString(),asset.TYPE_MODEL)):GetFileName()
+					if(#name == 0) then name = nil end
+
 					local actor
 					if(pfm.is_articulated_model(mdl)) then
 						actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR,{
-							["modelName"] = path:GetString()
+							["modelName"] = path:GetString(),
+							["name"] = name
 						})
 					else
 						actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,{
-							["modelName"] = path:GetString()
+							["modelName"] = path:GetString(),
+							["name"] = name
 						})
 					end
 					self:UpdateActor(actor,filmClip)
