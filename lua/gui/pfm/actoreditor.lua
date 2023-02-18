@@ -2484,28 +2484,49 @@ function gui.PFMActorEditor:SetPropertyAnimationOverlaysDirty()
 	self:EnableThinking()
 end
 function gui.PFMActorEditor:AddIkController(actor,boneName,chainLength)
-	if(chainLength <= 1) then return false end
+	pfm.log("Adding ik controller for bone '" .. boneName .. "' of actor '" .. tostring(actor) .. "' with chain length " .. chainLength .. "...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG)
+	if(chainLength <= 1) then
+		pfm.log("Chain length of " .. chainLength .. " is not long enough! Ik Controller will not be created.",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG)
+		return false
+	end
 
 	local solverC = self:CreateNewActorComponent(actor,"ik_solver",false)
 	self:CreateNewActorComponent(actor,"pfm_fbik",false)
-	if(solverC == nil) then return false end
+	if(solverC == nil) then
+		pfm.log("Failed to add ik_solver component! Ik Controller will not be created.",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG)
+		return false
+	end
 
 	local ent = actor:FindEntity()
-	if(util.is_valid(ent) == false) then return false end
+	if(util.is_valid(ent) == false) then
+		pfm.log("Actor entity is not valid! Ik Controller will not be created.",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG)
+		return false
+	end
 	local mdl = ent:GetModel()
 	local skeleton = mdl:GetSkeleton()
 	local boneId = mdl:LookupBone(boneName)
-	if(boneId == -1) then return false end
+	if(boneId == -1) then
+		pfm.log("Bone '" .. boneName .. "' could not be found in model '" .. mdl:GetName() .. "'! Ik Controller will not be created.",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG)
+		return false
+	end
 
 	ent:AddComponent("ik_solver")
 	self:UpdateActorComponents(actor)
 
 	ent = actor:FindEntity()
 	local ikSolverC = util.is_valid(ent) and ent:AddComponent("ik_solver") or nil
-	if(ikSolverC == nil) then return false end
+	if(ikSolverC == nil) then
+		pfm.log("Actor entity does not have ik_solver component! Ik Controller will not be created.",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG)
+		return false
+	end
 	local bone = skeleton:GetBone(boneId)
 
 	ikSolverC:AddIkSolverByChain(boneName,chainLength)
+
+	local udmRigData = solverC:GetMemberValue("rigConfig")
+	udmRigData:Clear()
+	udmRigData:Merge(ikSolverC:GetMemberValue("rigConfig"):Get(),udm.MERGE_FLAG_BIT_DEEP_COPY)
+
 	local memberId = ikSolverC:GetMemberIndex("IkRig")
 	if(memberId ~= nil) then ikSolverC:OnMemberValueChanged(memberId) end
 
