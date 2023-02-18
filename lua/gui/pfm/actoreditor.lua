@@ -1476,7 +1476,10 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 				controlData.enum = true
 				controlData.enumValues = {}
 				for _,v in ipairs(info:GetEnumValues()) do
-					table.insert(controlData.enumValues,{v,info:ValueToEnumName(v)})
+					local name = info:ValueToEnumName(v)
+					if(name ~= "Count") then
+						table.insert(controlData.enumValues,{v,name})
+					end
 				end
 			end
 			local val = component:GetMemberValue(info.name)
@@ -2354,9 +2357,12 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 				local enumValues = {}
 				local defaultValueIndex
 				for i,v in ipairs(memberInfo:GetEnumValues()) do
-					table.insert(enumValues,{tostring(v),memberInfo:ValueToEnumName(v)})
-					if(v == memberInfo.default) then
-						defaultValueIndex = i -1
+					local name = memberInfo:ValueToEnumName(v)
+					if(name ~= "Count") then
+						table.insert(enumValues,{tostring(v),name})
+						if(v == memberInfo.default) then
+							defaultValueIndex = i -1
+						end
 					end
 				end
 				local el,wrapper = self.m_animSetControls:AddDropDownMenu(baseMemberName,memberInfo.name,enumValues,tostring(defaultValueIndex),function(el)
