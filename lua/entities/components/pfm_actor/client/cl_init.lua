@@ -13,17 +13,25 @@ local Component = util.register_class("ents.PFMActorComponent",BaseEntityCompone
 Component:RegisterMember("Position",udm.TYPE_VECTOR3,Vector(0,0,0),{
 	onChange = function(self)
 		self:UpdatePosition()
-	end
+	end,
+	typeMetaData = {ents.ComponentInfo.MemberInfo.PoseComponentTypeMetaData("pose")}
 })
 Component:RegisterMember("Rotation",udm.TYPE_QUATERNION,Quaternion(),{
 	onChange = function(self)
 		self:UpdateRotation()
-	end
+	end,
+	typeMetaData = {ents.ComponentInfo.MemberInfo.PoseComponentTypeMetaData("pose")}
 })
 Component:RegisterMember("Scale",udm.TYPE_VECTOR3,Vector(1,1,1),{
 	onChange = function(self)
 		self:UpdateScale()
-	end
+	end,
+	typeMetaData = {ents.ComponentInfo.MemberInfo.PoseComponentTypeMetaData("pose")}
+})
+Component:RegisterMember("Pose",udm.TYPE_SCALED_TRANSFORM,math.ScaledTransform(),{
+	typeMetaData = {ents.ComponentInfo.MemberInfo.PoseTypeMetaData("position","rotation","scale")},
+	getter = "GetPoseImpl",
+	setter = "SetPoseImpl"
 })
 Component:RegisterMember("Visible",udm.TYPE_BOOLEAN,true,{
 	onChange = function(self)
@@ -411,6 +419,17 @@ function Component:Setup(actorData)
 	self:GetEntity():SetName(actorData:GetName())
 	self:GetEntity():SetUuid(actorData:GetUniqueId())
 end
+
+function Component:GetPoseImpl()
+	return math.ScaledTransform(self:GetPosition(),self:GetRotation(),self:GetScale())
+end
+
+function Component:SetPoseImpl(pose)
+	self:SetPosition(pose:GetOrigin())
+	self:SetRotation(pose:GetRotation())
+	self:SetScale(pose:GetScale())
+end
+
 ents.COMPONENT_PFM_ACTOR = ents.register_component("pfm_actor",Component)
 Component.EVENT_ON_OFFSET_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR,"on_offset_changed")
 Component.EVENT_ON_VISIBILITY_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR,"on_visibility_changed")
