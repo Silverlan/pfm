@@ -42,7 +42,7 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE = 20
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION = 21
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION = 22
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE = 23
-gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_TRACK_TO = 24
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT = 24
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER = 25
 
 gui.PFMActorEditor.COLLECTION_SCENEBUILD = "scenebuild"
@@ -167,7 +167,7 @@ function gui.PFMActorEditor:OnInitialize()
 			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,"pfm_create_limit_location_constraint",pConstraintMenu)
 			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,"pfm_create_limit_rotation_constraint",pConstraintMenu)
 			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,"pfm_create_limit_scale_constraint",pConstraintMenu)
-			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_TRACK_TO,"pfm_create_track_to_constraint",pConstraintMenu)
+			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT,"pfm_create_look_at_constraint",pConstraintMenu)
 			pConstraintMenu:Update()
 
 			addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER,"pfm_create_animation_driver")
@@ -693,10 +693,10 @@ function gui.PFMActorEditor:CreatePresetActor(type,args)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"constraint_limit_scale",false)
 		self:CreateNewActorComponent(actor,"constraint",false)
-	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_TRACK_TO) then
-		actor = actor or create_new_actor("ct_track_to",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT) then
+		actor = actor or create_new_actor("ct_look_at",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if(actor == nil) then return end
-		self:CreateNewActorComponent(actor,"constraint_track_to",false)
+		self:CreateNewActorComponent(actor,"constraint_look_at",false)
 		self:CreateNewActorComponent(actor,"constraint",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER) then
 		actor = actor or create_new_actor("ct_driver",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
@@ -2644,7 +2644,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 				table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,"limit_rotation",false})
 				if(#constraintProps > 1 and is_valid_constraint_type(prop1.controlData.type)) then
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION,"copy_rotation",true})
-					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,"track_to",true}) -- TODO: Only add track_to constraint to list if rotation property has associated position property
+					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT,"look_at",true}) -- TODO: Only add look_at constraint to list if rotation property has associated position property
 				end
 			end
 
@@ -3082,7 +3082,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 		local icon,actorData,elDrivenObject = add_icon(el,"constraint","gui/pfm/icon_constraint")
 		if(icon ~= nil) then
 			local constraintType
-			for _,ctName in ipairs({"copy_location","copy_rotation","copy_scale","limit_distance","limit_location","limit_rotation","limit_scale","track_to"}) do
+			for _,ctName in ipairs({"copy_location","copy_rotation","copy_scale","limit_distance","limit_location","limit_rotation","limit_scale","look_at"}) do
 				if(actorData.actor:HasComponent("constraint_" .. ctName)) then
 					constraintType = ctName
 					break
