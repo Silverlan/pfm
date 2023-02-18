@@ -336,70 +336,72 @@ function Component:InitializeComponentProperties()
 			elseif(c.Setup ~= nil) then c:Setup(actorData,componentData) end
 		else c = self end
 
-		local isModelComponent = (componentName == "model")
+		if(c ~= nil) then
+			local isModelComponent = (componentName == "model")
 
-		-- Initialize component member values
-		local function applyProperties(el,path)
-			if(isModelComponent and path == nil) then
-				-- HACK: For the model component, the model has to be applied *before* other properties (like the skin or bodygroups).
-				-- Since the UDM properties are unordered, we'll have to handle it as a special case.
-				-- TODO: Find a better way to handle this (via schema properties?)
-				local mdl = el:GetValue("model",udm.TYPE_STRING)
-				if(mdl ~= nil) then
-					self:GetEntity():SetModel(mdl)
+			-- Initialize component member values
+			local function applyProperties(el,path)
+				if(isModelComponent and path == nil) then
+					-- HACK: For the model component, the model has to be applied *before* other properties (like the skin or bodygroups).
+					-- Since the UDM properties are unordered, we'll have to handle it as a special case.
+					-- TODO: Find a better way to handle this (via schema properties?)
+					local mdl = el:GetValue("model",udm.TYPE_STRING)
+					if(mdl ~= nil) then
+						self:GetEntity():SetModel(mdl)
 
-					-- Since the entity hasn't been spawned yet, the above function will only preload the model
-					-- but not actually initialize it. We need to initialize it immediately, which we can force by
-					-- calling SetModel with the actual model object.
-					mdl = game.load_model(mdl)
-					if(mdl ~= nil) then self:GetEntity():SetModel(mdl) end
-				end
-			end
-			path = path or ""
-			for name,udmVal in pairs(el:GetChildren()) do
-				if(not isModelComponent or name ~= "model") then
-					local childPath = path
-					if(#childPath > 0) then childPath = childPath .. "/" end
-					childPath = childPath .. name
-					local isElementProperty = false
-					local idx = c:GetMemberIndex(name)
-					local info = (idx ~= nil) and c:GetMemberInfo(idx) or nil
-					if(udmVal:GetType() == udm.TYPE_ELEMENT) then
-						if(info ~= nil and info.type == ents.MEMBER_TYPE_ELEMENT) then
-							isElementProperty = true
-						end
+						-- Since the entity hasn't been spawned yet, the above function will only preload the model
+						-- but not actually initialize it. We need to initialize it immediately, which we can force by
+						-- calling SetModel with the actual model object.
+						mdl = game.load_model(mdl)
+						if(mdl ~= nil) then self:GetEntity():SetModel(mdl) end
 					end
-					if(udmVal:GetType() == udm.TYPE_ELEMENT) then
-						if(isElementProperty) then
-							local udmEl = c:GetMemberValue(childPath)
-							if(udmEl == nil) then
-								pfm.log("Failed to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
-							else
-								udmEl:Clear()
-								udmEl:Merge(udmVal,udm.MERGE_FLAG_BIT_DEEP_COPY)
+				end
+				path = path or ""
+				for name,udmVal in pairs(el:GetChildren()) do
+					if(not isModelComponent or name ~= "model") then
+						local childPath = path
+						if(#childPath > 0) then childPath = childPath .. "/" end
+						childPath = childPath .. name
+						local isElementProperty = false
+						local idx = c:GetMemberIndex(name)
+						local info = (idx ~= nil) and c:GetMemberInfo(idx) or nil
+						if(udmVal:GetType() == udm.TYPE_ELEMENT) then
+							if(info ~= nil and info.type == ents.MEMBER_TYPE_ELEMENT) then
+								isElementProperty = true
 							end
-						else applyProperties(udmVal,childPath) end
-					else
-						local val = udmVal:GetValue()
-						if(val == nil) then
-							pfm.log("Attempted to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+						end
+						if(udmVal:GetType() == udm.TYPE_ELEMENT) then
+							if(isElementProperty) then
+								local udmEl = c:GetMemberValue(childPath)
+								if(udmEl == nil) then
+									pfm.log("Failed to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+								else
+									udmEl:Clear()
+									udmEl:Merge(udmVal,udm.MERGE_FLAG_BIT_DEEP_COPY)
+								end
+							else applyProperties(udmVal,childPath) end
 						else
-							if(info ~= nil) then
-								if(info.type == ents.MEMBER_TYPE_ENTITY) then
-									val = ents.UniversalEntityReference(util.Uuid(val))
-								elseif(info.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY) then
-									val = ents.UniversalMemberReference(val)
+							local val = udmVal:GetValue()
+							if(val == nil) then
+								pfm.log("Attempted to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'! Ignoring...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+							else
+								if(info ~= nil) then
+									if(info.type == ents.MEMBER_TYPE_ENTITY) then
+										val = ents.UniversalEntityReference(util.Uuid(val))
+									elseif(info.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY) then
+										val = ents.UniversalMemberReference(val)
+									end
+								end
+								if(c:SetMemberValue(childPath,val) == false) then
+									pfm.log("Failed to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
 								end
 							end
-							if(c:SetMemberValue(childPath,val) == false) then
-								pfm.log("Failed to apply member value for unknown member '" .. childPath .. "' of component '" .. componentName .. "'!",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
-							end
 						end
 					end
 				end
 			end
+			applyProperties(componentData:GetProperties())
 		end
-		applyProperties(componentData:GetProperties())
 	end
 	self:UpdateVisibility()
 end
