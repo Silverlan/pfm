@@ -29,9 +29,7 @@ Component:RegisterMember("Scale",udm.TYPE_VECTOR3,Vector(1,1,1),{
 	typeMetaData = {ents.ComponentInfo.MemberInfo.PoseComponentTypeMetaData("pose")}
 })
 Component:RegisterMember("Pose",udm.TYPE_SCALED_TRANSFORM,math.ScaledTransform(),{
-	typeMetaData = {ents.ComponentInfo.MemberInfo.PoseTypeMetaData("position","rotation","scale")},
-	getter = "GetPoseImpl",
-	setter = "SetPoseImpl"
+	typeMetaData = {ents.ComponentInfo.MemberInfo.PoseTypeMetaData("position","rotation","scale")}
 })
 Component:RegisterMember("Visible",udm.TYPE_BOOLEAN,true,{
 	onChange = function(self)
@@ -418,16 +416,6 @@ function Component:Setup(actorData)
 	self.m_actorData = actorData
 	self:GetEntity():SetName(actorData:GetName())
 	self:GetEntity():SetUuid(actorData:GetUniqueId())
-end
-
-function Component:GetPoseImpl()
-	return math.ScaledTransform(self:GetPosition(),self:GetRotation(),self:GetScale())
-end
-
-function Component:SetPoseImpl(pose)
-	self:SetPosition(pose:GetOrigin())
-	self:SetRotation(pose:GetRotation())
-	self:SetScale(pose:GetScale())
 end
 
 ents.COMPONENT_PFM_ACTOR = ents.register_component("pfm_actor",Component)
