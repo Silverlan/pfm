@@ -126,6 +126,7 @@ function gui.PFMViewport:InitializeCustomScene()
 	rasterizer:SetSSAOEnabled(true)
 	renderer:InitializeRenderTarget(scene,gameRenderer:GetWidth(),gameRenderer:GetHeight())
 	scene:SetRenderer(renderer)
+	scene:SetWorldEnvironment(gameScene:GetWorldEnvironment())
 
 	local gameCam = gameScene:GetActiveCamera()
 	local cam = ents.create_camera(gameCam:GetAspectRatio(),gameCam:GetFOV(),gameCam:GetNearZ(),gameCam:GetFarZ())
