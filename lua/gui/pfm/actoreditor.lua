@@ -43,7 +43,8 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION = 21
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION = 22
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE = 23
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT = 24
-gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER = 25
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF = 25
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER = 26
 
 gui.PFMActorEditor.COLLECTION_SCENEBUILD = "scenebuild"
 gui.PFMActorEditor.COLLECTION_ACTORS = "actors"
@@ -168,6 +169,7 @@ function gui.PFMActorEditor:OnInitialize()
 			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,"pfm_create_limit_rotation_constraint",pConstraintMenu)
 			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,"pfm_create_limit_scale_constraint",pConstraintMenu)
 			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT,"pfm_create_look_at_constraint",pConstraintMenu)
+			addPresetActorOption(pConstraintMenu,gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF,"pfm_create_child_of_constraint",pConstraintMenu)
 			pConstraintMenu:Update()
 
 			addPresetActorOption(pContext,gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER,"pfm_create_animation_driver")
@@ -697,6 +699,11 @@ function gui.PFMActorEditor:CreatePresetActor(type,args)
 		actor = actor or create_new_actor("ct_look_at",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if(actor == nil) then return end
 		self:CreateNewActorComponent(actor,"constraint_look_at",false)
+		self:CreateNewActorComponent(actor,"constraint",false)
+	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF) then
+		actor = actor or create_new_actor("ct_child_of",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
+		if(actor == nil) then return end
+		self:CreateNewActorComponent(actor,"constraint_child_of",false)
 		self:CreateNewActorComponent(actor,"constraint",false)
 	elseif(type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER) then
 		actor = actor or create_new_actor("ct_driver",gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
@@ -2638,6 +2645,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context,actorData,contro
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION,"copy_location",true})
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE,"copy_scale",true})
 					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE,"limit_distance",true})
+					table.insert(constraintTypes,{gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF,"child_of",true})
 				end
 			end
 			if(prop0.controlData.type == udm.TYPE_EULER_ANGLES or prop0.controlData.type == udm.TYPE_QUATERNION) then
