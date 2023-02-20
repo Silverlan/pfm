@@ -2785,13 +2785,17 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 	local isBone = (#memberComponents >= 2 and memberComponents[1] == "bone")
 
 	local propertyPathComponents = string.split(controlData.name,"/")
+	local subPath = "ec/" .. componentName .. "/"
 	for i=1,#propertyPathComponents -1 do
 		local cname = propertyPathComponents[i]
-		local cnameItem = baseItem:GetItemByIdentifier(cname)
+		subPath = subPath .. cname
+
+		local cnameItem = baseItem:GetItemByIdentifier(subPath)
 		local childItem
 		if(util.is_valid(cnameItem)) then childItem = cnameItem
-		else childItem = baseItem:AddItem(cname,nil,nil,cname) end
+		else childItem = baseItem:AddItem(cname,nil,nil,subPath) end
 		baseItem = childItem
+		subPath = subPath .. "/"
 
 		if(isBone and i == 2) then
 			childItem.__boneMouseEvent = childItem.__boneMouseEvent or childItem:AddCallback("OnMouseEvent",function(tex,button,state,mods)
