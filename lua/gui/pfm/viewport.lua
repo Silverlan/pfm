@@ -422,6 +422,7 @@ function gui.PFMViewport:FindBoneUnderCursor(entActor)
 		if(ownableC == nil or ent:HasComponent(ents.COMPONENT_PFM_BONE) == false) then return false end
 		return ownableC:GetOwner() == entActor
 	end)
+
 	local mdl = entActor:GetModel()
 	local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
 	if(handled ~= util.EVENT_REPLY_UNHANDLED or not util.is_valid(entBone)) then
@@ -429,9 +430,9 @@ function gui.PFMViewport:FindBoneUnderCursor(entActor)
 		if(handled == util.EVENT_REPLY_UNHANDLED and hitData.mesh ~= nil) then
 			-- Try to determine bone by vertex weight of selected triangle
 			local vws = {
-				hitData.mesh:GetVertexWeight(hitData.primitiveIndex *3),
-				hitData.mesh:GetVertexWeight(hitData.primitiveIndex *3 +1),
-				hitData.mesh:GetVertexWeight(hitData.primitiveIndex *3 +2)
+				hitData.mesh:GetVertexWeight(hitData.mesh:GetIndex(hitData.primitiveIndex *3)),
+				hitData.mesh:GetVertexWeight(hitData.mesh:GetIndex(hitData.primitiveIndex *3 +1)),
+				hitData.mesh:GetVertexWeight(hitData.mesh:GetIndex(hitData.primitiveIndex *3 +2))
 			}
 
 			local vWeights = {1.0 -hitData.u,1.0 -hitData.v,hitData.u +hitData.v}
