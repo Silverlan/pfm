@@ -1,0 +1,24 @@
+#version 440
+
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_shading_language_420pack : enable
+
+#include "/world/pbr/vs_config.gls"
+#include "/modules/vs_world.gls"
+#include "/modules/sh_rendersettings.gls"
+#include "/modules/sh_entity_info.gls"
+#include "/modules/sh_instance_info.gls"
+#include "/modules/sh_material.gls"
+
+void main()
+{
+	vec3 camPos = u_renderSettings.posCam.xyz;
+	vec3 vertexPos = in_vert_pos.xyz;
+	vertexPos = (get_model_matrix() *vec4(vertexPos,1.0)).xyz;
+	float distance = length(vertexPos -camPos);
+
+	float fov = get_fov();
+	float scalingFactor = distance *fov *u_material.material.glowScale;
+
+	export_world_fragment_data(in_vert_pos.xyz +in_vert_normal.xyz *scalingFactor);
+}

@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/shaders/pfm/pfm_selection_outline.lua")
+
 local Component = util.register_class("ents.PFMSelectionWireframe",BaseEntityComponent)
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -33,7 +35,7 @@ function Component:UpdateWireframe()
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil) then return end
-	local mat = game.load_material("wireframe")
+	local mat = game.load_material("pfm/selection_outline")
 	if(util.is_valid(mat) == false) then return end
 	local renderMeshes = mdlC:GetRenderMeshes()
 	for _,mesh in ipairs(renderMeshes) do
