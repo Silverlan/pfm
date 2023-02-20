@@ -19,8 +19,10 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 	self.m_bones = {}
 	self:SetColor(Color.White)
-	self:BindEvent(ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED,"UpdateBones")
+	-- self:BindEvent(ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED,"UpdateBones")
 	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED,"InitializeBones")
+
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 
 function Component:OnEntitySpawn()
@@ -33,14 +35,21 @@ function Component:OnRemove()
 end
 
 function Component:ClearBones()
-	for boneId,ent in pairs(self.m_bones) do
-		util.remove(ent)
+	for _,tEnts in pairs(self.m_bones) do
+		for _,ent in pairs(tEnts) do
+			util.remove(ent)
+		end
 	end
 	self.m_bones = {}
 end
 
-function Component:GetBoneEntity(boneId)
+function Component:GetBoneEntities(boneId)
 	return self.m_bones[boneId]
+end
+
+function Component:GetBoneEntity(boneId,boneDst)
+	if(self.m_bones[boneId] == nil) then return end
+	return self.m_bones[boneId][boneDst]
 end
 
 function Component:GetBones() return self.m_bones end
@@ -51,16 +60,31 @@ function Component:InitializeBones()
 	if(mdl == nil) then return end
 	local compositeC = self:GetEntity():AddComponent(ents.COMPONENT_COMPOSITE)
 	local skeleton = mdl:GetSkeleton()
-	for _,bone in ipairs(skeleton:GetBones()) do
+	local function add_bone_model(boneParent,boneChild)
 		local ent = ents.create_prop("pfm/bone")
-		if(ent ~= nil) then
-			ent:SetColor(self.m_color)
-			self.m_bones[bone:GetID()] = ent
-			compositeC:AddEntity(ent)
+		if(ent == nil) then return end
+		ent:SetColor(self.m_color)
+		self.m_bones[boneParent:GetID()] = self.m_bones[boneParent:GetID()] or {}
+		self.m_bones[boneParent:GetID()][(boneChild ~= nil) and boneChild:GetID() or -1] = ent
+		compositeC:AddEntity(ent)
 
-			local ownableC = ent:AddComponent(ents.COMPONENT_OWNABLE)
-			ownableC:SetOwner(self:GetEntity())
+		local ownableC = ent:AddComponent(ents.COMPONENT_OWNABLE)
+		ownableC:SetOwner(self:GetEntity())
+	end
+	local function add_bone(bone)
+		local hasChildBone = false
+		for boneId,child in pairs(bone:GetChildren()) do
+			add_bone_model(bone,child)
+			add_bone(child)
+			hasChildBone = true
 		end
+
+		if(hasChildBone == false) then
+			add_bone_model(bone)
+		end
+	end
+	for boneId,bone in pairs(skeleton:GetRootBones()) do
+		add_bone(bone)
 	end
 
 	self:BroadcastEvent(Component.EVENT_ON_BONES_CREATED)
@@ -68,8 +92,10 @@ end
 
 function Component:SetColor(col)
 	self.m_color = col
-	for boneId,ent in pairs(self.m_bones) do
-		if(ent:IsValid()) then ent:SetColor(col) end
+	for _,tEnts in pairs(self.m_bones) do
+		for _,ent in pairs(tEnts) do
+			if(ent:IsValid()) then ent:SetColor(col) end
+		end
 	end
 end
 function Component:GetColor() return self.m_color end
@@ -86,11 +112,18 @@ function Component:GetLines(animC,rootPose,bone,parentPose,lines)
 	end
 end
 
+function Component:OnTick()
+	self:UpdateBones()
+end
+
+local leafPose = math.ScaledTransform(Vector(0,0,1),Quaternion())
 function Component:UpdateBones()
 	local ent = self:GetEntity()
 	local mdl = ent:GetModel()
-	if(mdl == nil) then return end
+	self:SetNextTick(time.cur_time() +0.02)
+	if(mdl == nil) then self:SetNextTick(time.cur_time() +0.5) return end
 	local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
+	if(animC == nil) then self:SetNextTick(time.cur_time() +0.5) return end
 	local skeleton = mdl:GetSkeleton()
 	local parentPose = math.ScaledTransform()
 	local rootPose = self:GetEntity():GetPose()
@@ -101,23 +134,55 @@ function Component:UpdateBones()
 		end
 		debug.draw_lines(lines,Color.Red,0.1)
 	else
-		for _,bone in ipairs(skeleton:GetBones()) do
-			local ent = self.m_bones[bone:GetID()]
-			if(util.is_valid(ent)) then
-				local pose
-				local parent = bone:GetParent()
-				local length = 5.0
-				if(parent ~= nil) then
-					pose = rootPose *animC:GetEffectiveBoneTransform(parent:GetID())
-					length = animC:GetBonePos(bone:GetID()):Length()
-				else
-					local bonePose = animC:GetEffectiveBoneTransform(bone:GetID())
-					if(bonePose ~= nil) then pose = rootPose *animC:GetEffectiveBoneTransform(bone:GetID())
-					else pose = rootPose end
+		local dirtyBones = {}
+		local poses = animC:GetEffectiveBoneTransforms()
+		local hasDirtyBones = false
+		local rootPoseChanged = rootPose ~= self.m_prevRootPose
+		for i,pose in ipairs(poses) do
+			if(rootPoseChanged or self.m_prevPoses == nil or self.m_prevPoses[i] == nil or self.m_prevPoses[i] ~= pose) then
+				dirtyBones[i -1] = true
+				hasDirtyBones = true
+			end
+		end
+
+		self.m_prevPoses = poses
+		self.m_prevRootPose = rootPose
+		if(hasDirtyBones) then
+			for _,bone in ipairs(skeleton:GetBones()) do
+				local boneId = bone:GetID()
+				local tEnts = self.m_bones[boneId]
+				for boneDstId,ent in pairs(tEnts) do
+					if(ent:IsValid() and (dirtyBones[boneId] or dirtyBones[boneDstId])) then
+						local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+						if(renderC == nil or renderC:GetSceneRenderPass() == game.SCENE_RENDER_PASS_NONE) then self.m_prevPoses[boneId +1] = nil -- Keep this pose dirty until the bone is visible
+						else
+							local bonePose = poses[bone:GetID() +1]
+							local pose = rootPose *bonePose
+
+							local childPose
+							if(boneDstId ~= -1) then childPose = poses[boneDstId +1]
+							else childPose = bonePose *leafPose end
+							childPose = rootPose *childPose
+
+							local dirToChild = childPose:GetOrigin() -pose:GetOrigin()
+							local l = dirToChild:Length()
+							if(l < 0.0001) then dirToChild = vector.FORWARD
+							else dirToChild = dirToChild /l end
+
+							local up = vector.UP
+							if(math.abs(dirToChild:DotProduct(up)) > 0.999) then up = vector.RIGHT end
+							local rot = Quaternion(dirToChild,up)
+							pose:SetRotation(rot)
+
+							ent:SetPose(pose)
+
+							local length = pose:GetOrigin():Distance(childPose:GetOrigin())
+
+							local orthoAxisLengthScale = math.max(0.4 *length,1.4)
+							ent:SetScale(Vector(orthoAxisLengthScale,orthoAxisLengthScale,length))
+						end
+					end
 				end
-				ent:SetPose(pose)
-				local orthoAxisLengthScale = 0.4
-				ent:SetScale(Vector(length *orthoAxisLengthScale,length *orthoAxisLengthScale,length))
 			end
 		end
 	end

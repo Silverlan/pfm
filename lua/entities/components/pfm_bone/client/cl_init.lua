@@ -19,6 +19,10 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 end
 
+function Component:OnEntitySpawn()
+	self:OnSelectionChanged()
+end
+
 function Component:OnSelectionChanged()
 	local selected = self:IsSelected()
 	if(selected) then
@@ -26,9 +30,17 @@ function Component:OnSelectionChanged()
 			self.m_unselectedColor = self:GetEntity():GetColor()
 			self:GetEntity():SetColor(Color.Lime)
 		end
-	elseif(self.m_unselectedColor ~= nil) then
-		self:GetEntity():SetColor(self.m_unselectedColor)
-		self.m_unselectedColor = nil
+
+		local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
+		if(renderC ~= nil) then renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_WORLD) end
+	else
+		if(self.m_unselectedColor ~= nil) then
+			self:GetEntity():SetColor(self.m_unselectedColor)
+			self.m_unselectedColor = nil
+		end
+
+		local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
+		if(renderC ~= nil) then renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_NONE) end
 	end
 end
 ents.COMPONENT_PFM_BONE = ents.register_component("pfm_bone",Component)

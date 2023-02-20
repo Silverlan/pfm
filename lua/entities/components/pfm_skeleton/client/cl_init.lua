@@ -37,10 +37,13 @@ function ents.PFMSkeleton:OnActorPropertySelected(udmComponent,item,path,selecte
 	if(mdl == nil) then return end
 	local skel = mdl:GetSkeleton()
 	local boneId = skel:LookupBone(t[2])
-	if(boneId == -1 or util.is_valid(self.m_bones[boneId]) == false) then return end
-	local boneC = self.m_bones[boneId]:GetComponent(ents.COMPONENT_PFM_BONE)
-	if(boneC == nil) then return end
-	boneC:SetSelected(selected)
+	if(boneId == -1 or self.m_bones[boneId] == nil) then return end
+	for childBoneId,ent in pairs(self.m_bones[boneId]) do
+		if(ent:IsValid()) then
+			local boneC = ent:GetComponent(ents.COMPONENT_PFM_BONE)
+			if(boneC ~= nil) then boneC:SetSelected(selected) end
+		end
+	end
 end
 
 function ents.PFMSkeleton:OnRemove()
@@ -57,7 +60,7 @@ function ents.PFMSkeleton:ClearCallbacks()
 end
 
 function ents.PFMSkeleton:OnBoneClicked(boneId,ent)
-
+	
 end
 
 function ents.PFMSkeleton:OnBonesCreated()
@@ -66,23 +69,26 @@ function ents.PFMSkeleton:OnBonesCreated()
 	self:ClearCallbacks()
 	self.m_bones = {}
 	local solverC = self:GetEntity():GetComponent(ents.COMPONENT_IK_SOLVER)
-	for boneId,ent in pairs(c:GetBones()) do
-		if(ent:IsValid()) then
-			self.m_bones[boneId] = ent
-			ent:AddComponent(ents.COMPONENT_BVH)
-			local boneC = ent:AddComponent("pfm_bone")
-			boneC:SetBoneId(boneId)
-			local clickC = ent:AddComponent(ents.COMPONENT_CLICK)
-			util.remove(self.m_clickCallbacks[boneId])
-			self.m_clickCallbacks[boneId] = clickC:AddEventCallback(ents.ClickComponent.EVENT_ON_CLICK,function()
-				if(ent:IsValid()) then self:OnBoneClicked(boneId,ent) end
-			end)
+	for boneId,tEnts in pairs(c:GetBones()) do
+		for boneIdChild,ent in pairs(tEnts) do
+			if(ent:IsValid()) then
+				self.m_bones[boneId] = self.m_bones[boneId] or {}
+				self.m_bones[boneId][boneIdChild] = ent
+				ent:AddComponent(ents.COMPONENT_BVH)
+				local boneC = ent:AddComponent("pfm_bone")
+				boneC:SetBoneId(boneId)
+				local clickC = ent:AddComponent(ents.COMPONENT_CLICK)
+				util.remove(self.m_clickCallbacks[boneId])
+				self.m_clickCallbacks[boneId] = clickC:AddEventCallback(ents.ClickComponent.EVENT_ON_CLICK,function()
+					if(ent:IsValid()) then self:OnBoneClicked(boneId,ent) end
+				end)
 
-			if(solverC ~= nil) then
-				local handle = solverC:GetControl(boneId)
-				if(handle ~= nil) then
-					local col = (handle.type == ents.IkSolverComponent.RigConfig.Control.TYPE_STATE) and Color.Crimson or Color.Orange
-					ent:SetColor(col)
+				if(solverC ~= nil) then
+					local handle = solverC:GetControl(boneId)
+					if(handle ~= nil) then
+						local col = (handle.type == ents.IkSolverComponent.RigConfig.Control.TYPE_STATE) and Color.Crimson or Color.Orange
+						ent:SetColor(col)
+					end
 				end
 			end
 		end
