@@ -66,7 +66,7 @@ function gui.PFMViewport:SelectActor(entActor,bone,deselectCurrent)
 	if(bone ~= nil) then
 		local ikSolverC = entActor:GetComponent(ents.COMPONENT_IK_SOLVER)
 		if(ikSolverC ~= nil) then
-			if(ikSolverC:GetHandle(bone:GetID()) ~= nil) then
+			if(ikSolverC:GetControl(bone:GetID()) ~= nil) then
 				-- Prefer ik_solver controls if they exist
 				property = "ec/ik_solver/control/" .. bone:GetName()
 			end
