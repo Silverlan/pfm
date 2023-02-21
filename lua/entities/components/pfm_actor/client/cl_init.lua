@@ -46,7 +46,6 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
 	self:AddEntityComponent(ents.COMPONENT_NAME)
-	self.m_originC = self:AddEntityComponent(ents.COMPONENT_ORIGIN)
 	self:AddEntityComponent("click")
 	self:BindComponentInitEvent(ents.COMPONENT_RENDER,function(renderC)
 		renderC:SetExemptFromOcclusionCulling(true)
@@ -114,15 +113,11 @@ function Component:UpdatePosition()
 	local pose = self:GetActorData():GetAbsoluteParentPose()
 	pose:TranslateLocal(self:GetPosition())
 	self:GetEntity():SetPos(pose:GetOrigin())
-
-	self.m_originC:SetOriginPos(pose:GetOrigin())
 end
 function Component:UpdateRotation()
 	local pose = self:GetActorData():GetAbsoluteParentPose()
 	pose:RotateLocal(self:GetRotation())
 	self:GetEntity():SetRotation(pose:GetRotation())
-
-	self.m_originC:SetOriginRot(pose:GetRotation())
 end
 function Component:UpdateScale()
 	local pose = self:GetActorData():GetAbsoluteParentPose()
