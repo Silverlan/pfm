@@ -71,7 +71,7 @@ function gui.PFMViewport:SelectActor(entActor,bone,deselectCurrent)
 				property = "ec/ik_solver/control/" .. bone:GetName()
 			end
 		end
-		property = property or ("ec/animated/bone/" .. bone:GetName())
+		property = property or ("ec/animated/bone/" .. bone:GetName() .. "/position")
 	end
 
 	tool.get_filmmaker():SelectActor(actor,deselectCurrent,property)

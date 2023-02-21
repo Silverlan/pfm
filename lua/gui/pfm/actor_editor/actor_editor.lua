@@ -1207,6 +1207,38 @@ function gui.PFMActorEditor:AddControl(entActor,component,actorData,componentDat
 
 	local propertyPathComponents = string.split(controlData.name,"/")
 	local subPath = "ec/" .. componentName .. "/"
+	
+	--[[local metaInfo = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_PARENT)
+	if(metaInfo ~= nil) then
+		local id = "ec/" .. componentName .. "/" .. metaInfo.parentProperty
+		id = util.Path.CreateFilePath(id)
+		id:PopBack()
+		id = id:GetString()
+		id = id:sub(1,#id -1)
+		local item = self.m_tree:GetRoot():GetItemByIdentifier(id,true)
+		if(item ~= nil) then subPath = subPath .. "bone/" table.remove(propertyPathComponents,1) baseItem = item end
+	end]]
+
+	if(isBone) then
+		-- We want the bones to show in a hierarchical order.
+		-- This is currently not possible with the component property system, so
+		-- for now it's hardcoded here.
+		local boneName = memberComponents[2]
+		local mdl = entActor:GetModel()
+		local skeleton = (mdl ~= nil) and mdl:GetSkeleton() or nil
+		local bone = (skeleton ~= nil) and skeleton:GetBone(skeleton:LookupBone(boneName)) or nil
+		local parent = (bone ~= nil) and bone:GetParent() or nil
+		if(parent ~= nil) then
+			local id = "ec/animated/bone/" .. parent:GetName()
+			local item = self.m_tree:GetRoot():GetItemByIdentifier(id,true)
+			if(item ~= nil) then
+				subPath = subPath .. "bone/"
+				table.remove(propertyPathComponents,1)
+				baseItem = item
+			end
+		end
+	end
+
 	for i=1,#propertyPathComponents -1 do
 		local cname = propertyPathComponents[i]
 		subPath = subPath .. cname
