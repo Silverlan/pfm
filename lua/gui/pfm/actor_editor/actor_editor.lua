@@ -187,6 +187,7 @@ function gui.PFMActorEditor:OnInitialize()
 			self.m_tree:SetWidth(el:GetWidth())
 		end
 	end)
+	self.m_treeScrollContainer = treeScrollContainer
 	--treeScrollContainer:SetFixedSize(true)
 	--[[local bg = gui.create("WIRect",treeScrollContainer,0,0,treeScrollContainer:GetWidth(),treeScrollContainer:GetHeight(),0,0,1,1)
 	bg:SetColor(Color(38,38,38))

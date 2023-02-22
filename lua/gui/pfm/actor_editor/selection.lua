@@ -107,6 +107,12 @@ function gui.PFMActorEditor:SelectActor(actor,deselectCurrent,property)
 							end
 							child:Expand()
 							child:Select(true)
+
+							-- Expanding elements in the tree is not immediate. If we want to scroll to a specific item, we
+							-- have to delay it slightly to make sure the tree was updated.
+							time.create_simple_timer(0.05,function()
+								if(self:IsValid() and self.m_treeScrollContainer:IsValid() and child:IsValid()) then self.m_treeScrollContainer:ScrollToElementY(child) end
+							end)
 						end
 					end
 				end
