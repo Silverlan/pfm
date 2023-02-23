@@ -410,7 +410,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor,itemActor,actorData,compo
 								end
 								if(updateAnimationValue) then
 									if(log.is_log_level_enabled(log.SEVERITY_DEBUG)) then pfm.log("Updating animation value for property '" .. controlData.path .. "' with value " .. tostring(memberValue) .. ".",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG) end
-									applyComponentChannelValue(self,component,controlData,memberValue)
+									self:ApplyComponentChannelValue(self,component,controlData,memberValue)
 								end
 							else
 								c:InvokeElementMemberChangeCallback(memberIdx)

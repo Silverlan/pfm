@@ -591,7 +591,7 @@ function gui.PFMActorEditor:UpdateControlValues()
 		end
 	end
 end
-local function applyComponentChannelValue(actorEditor,component,controlData,value)
+function gui.PFMActorEditor:ApplyComponentChannelValue(actorEditor,component,controlData,value)
 	local actor = component:GetActor()
 	if(actor ~= nil and controlData.path ~= nil) then
 		actorEditor:UpdateAnimationChannelValue(actor,controlData.path,value)
@@ -895,7 +895,7 @@ function gui.PFMActorEditor:OnControlSelected(actor,actorData,udmComponent,contr
 	if(util.is_valid(ctrl) == false) then
 		if(controlData.addControl) then
 			ctrl = controlData.addControl(self.m_animSetControls,function(value)
-				applyComponentChannelValue(self,udmComponent,controlData,value)
+				self:ApplyComponentChannelValue(self,udmComponent,controlData,value)
 			end)
 		else
 			ctrl = self:AddSliderControl(udmComponent,controlData)
