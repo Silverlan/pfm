@@ -209,15 +209,6 @@ function gui.WIFilmmaker:OnInitialize()
 	-- infoBar:AddIcon("third_party/reddit_logo",engineInfo.redditURL,"Reddit")
 	infoBar:AddIcon("third_party/discord_logo",engineInfo.discordURL,"Discord")
 
-	local elVersion = gui.create("WIText")
-	elVersion:SetColor(Color.White)
-	elVersion:SetText("v" .. pfm.VERSION:ToString())
-	elVersion:SetFont("pfm_medium")
-	elVersion:SetColor(Color(200,200,200))
-	elVersion:SetY(5)
-	elVersion:SizeToContents()
-
-	infoBar:AddRightElement(elVersion)
 	local gap = gui.create("WIBase")
 	gap:SetSize(10,1)
 	infoBar:AddRightElement(gap)
@@ -660,6 +651,39 @@ function gui.WIFilmmaker:OnInitialize()
 		pContext:ScheduleUpdate()
 	end)
 	pMenuBar:ScheduleUpdate()
+
+	-- Version Info
+	local engineInfo = engine.get_info()
+	local versionString = "v" .. pfm.VERSION:ToString()
+	local gitInfo = file.read("addons/filmmaker/git_info.txt")
+	if(gitInfo ~= nil) then
+		local pos = gitInfo:find("commit:")
+		if(pos ~= nil) then
+			local sha = gitInfo:sub(pos +7,pos +14)
+			sha = string.remove_whitespace(sha)
+			versionString = versionString .. ", " .. sha
+		end
+	end
+	versionString = versionString .. " [P " .. engineInfo.prettyVersion
+	local gitInfo = engine.get_git_info()
+	if(gitInfo ~= nil) then
+		-- Pragma SHA
+		versionString = versionString .. ", " .. gitInfo.commitSha:sub(0,7)
+	end
+	versionString = versionString .. "]"
+	local elVersion = gui.create("WIText",pMenuBar)
+	elVersion:SetColor(Color.White)
+	elVersion:SetText(versionString)
+	elVersion:SetFont("pfm_medium")
+	elVersion:SetColor(Color(200,200,200))
+	elVersion:SetY(5)
+	elVersion:SizeToContents()
+
+	elVersion:SetX(pMenuBar:GetWidth() -elVersion:GetWidth() -4)
+	elVersion:SetY(3)
+	elVersion:SetAnchor(1,0,1,0)
+	log.info("PFM Version: " .. versionString)
+	--
 
 	console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps")))
 
