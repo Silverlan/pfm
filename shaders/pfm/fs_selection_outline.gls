@@ -10,4 +10,5 @@
 void main()
 {
 	fs_color = u_material.material.color;
+	extract_bright_color(fs_color *u_material.material.glowScale);
 }

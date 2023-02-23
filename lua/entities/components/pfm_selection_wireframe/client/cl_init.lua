@@ -13,15 +13,27 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 end
 function Component:OnEntitySpawn()
-	self:UpdateWireframe()
+	self:UpdateEffect()
 
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil) then return end
 	self.m_onRenderMeshesUpdated = mdlC:AddEventCallback(ents.ModelComponent.EVENT_ON_RENDER_MESHES_UPDATED,function(mdl)
-		self:UpdateWireframe()
+		self:UpdateEffect()
 	end)
+	mdlC:SetRenderMeshesDirty()
+	mdlC:UpdateRenderMeshes()
 end
+function Component:SetPersistent(persistent)
+	self.m_persistent = persistent
+
+	local ent = self:GetEntity()
+	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
+	if(mdlC == nil) then return end
+	mdlC:SetRenderMeshesDirty()
+	mdlC:UpdateRenderMeshes()
+end
+function Component:IsPersistent() return self.m_persistent or false end
 function Component:OnRemove()
 	util.remove(self.m_onRenderMeshesUpdated)
 	
@@ -31,11 +43,11 @@ function Component:OnRemove()
 	mdlC:SetRenderMeshesDirty()
 	mdlC:UpdateRenderMeshes()
 end
-function Component:UpdateWireframe()
+function Component:UpdateEffect()
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	if(mdlC == nil) then return end
-	local mat = game.load_material("pfm/selection_outline")
+	local mat = game.load_material(self:IsPersistent() and "pfm/selection_outline" or "pfm/selection_outline_hover")
 	if(util.is_valid(mat) == false) then return end
 	local renderMeshes = mdlC:GetRenderMeshes()
 	for _,mesh in ipairs(renderMeshes) do

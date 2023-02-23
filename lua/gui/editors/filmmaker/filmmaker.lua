@@ -104,6 +104,10 @@ function gui.WIFilmmaker:OnInitialize()
 	self.m_worldAxesGizmo = ents.create("pfm_world_axes_gizmo")
 	self.m_worldAxesGizmo:Spawn()
 
+	self.m_pfmManager = ents.create("entity")
+	self.m_pfmManager:AddComponent("pfm_manager")
+	self.m_pfmManager:Spawn()
+
 	local udmData,err = udm.load("cfg/pfm/settings.udm")
 	if(udmData ~= false) then
 		udmData = udmData:GetAssetData():GetData()
@@ -1394,6 +1398,7 @@ function gui.WIFilmmaker:OnRemove()
 	pfm.clear_pragma_renderer_scene()
 	game.set_default_game_render_enabled(true)
 	util.remove(self.m_worldAxesGizmo)
+	util.remove(self.m_pfmManager)
 	util.remove(self.m_cbDisableDefaultSceneDraw)
 	util.remove(self.m_cbPreRenderScenes)
 	util.remove(self.m_overlaySceneCallback)

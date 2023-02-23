@@ -1,0 +1,9 @@
+"pfm_selection_outline"
+{
+	"properties"
+	{
+		$vec3 color_factor [1,1,1]
+		$float outline_width 0.002
+		$float glow_factor 0.8
+	}
+}

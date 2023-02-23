@@ -23,7 +23,9 @@ function pfm.SelectionManager:SetSelectionWireframeEnabled(enabled)
 
 	for object,selected in pairs(self.m_selectionData) do
 		if(object:IsValid()) then
-			if(selected.selected and enabled) then object:AddComponent("pfm_selection_wireframe")
+			if(selected.selected and enabled) then
+				local c = object:AddComponent("pfm_selection_wireframe")
+				if(c ~= nil) then c:SetPersistent(true) end
 			else object:RemoveComponent("pfm_selection_wireframe") end
 		end
 	end
@@ -78,7 +80,10 @@ function pfm.SelectionManager:SetSelected(obj,selected)
 			selected = true
 		}
 		if(obj:HasComponent(ents.COMPONENT_RENDER)) then
-			if(self.m_selectionWireframeEnabled) then obj:AddComponent("pfm_selection_wireframe") end
+			if(self.m_selectionWireframeEnabled) then
+				local c = obj:AddComponent("pfm_selection_wireframe")
+				if(c ~= nil) then c:SetPersistent(true) end
+			end
 			if(self.m_showBones) then obj:AddComponent("pfm_skeleton") end
 		end
 	end

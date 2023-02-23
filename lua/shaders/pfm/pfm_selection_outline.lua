@@ -31,7 +31,8 @@ function Shader:InitializeMaterialData(mat,matData)
 	shader.BaseTexturedLit3D.InitializeMaterialData(self,mat,matData)
 
 	local data = mat:GetDataBlock()
-	local outlineWidth = data:GetFloat("outline_width",0.005)
-	matData.glowScale = outlineWidth
+	matData.glowScale = data:GetFloat("glow_factor",0.0)
+	matData.parallaxHeightScale = data:GetFloat("outline_width",0.005)
+	matData.aoFactor = data:GetFloat("scale_by_distance_factor",1)
 end
 shader.register("pfm_selection_outline",Shader)
