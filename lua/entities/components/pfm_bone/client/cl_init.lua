@@ -11,7 +11,12 @@ local Component = util.register_class("ents.PFMBone",BaseEntityComponent)
 Component:RegisterMember("BoneId",udm.TYPE_INT32,-1)
 Component:RegisterMember("Selected",udm.TYPE_BOOLEAN,false,{
 	onChange = function(self)
-		self:OnSelectionChanged()
+		self:UpdateSelection()
+	end
+},bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
+Component:RegisterMember("Persistent",udm.TYPE_BOOLEAN,false,{
+	onChange = function(self)
+		self:UpdateSelection()
 	end
 },bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
 
@@ -20,16 +25,16 @@ function Component:Initialize()
 end
 
 function Component:OnEntitySpawn()
-	self:OnSelectionChanged()
+	self:UpdateSelection()
 end
 
-function Component:OnSelectionChanged()
+function Component:UpdateSelection()
 	local selected = self:IsSelected()
 	if(selected) then
 		if(self.m_unselectedColor == nil) then
 			self.m_unselectedColor = self:GetEntity():GetColor()
-			self:GetEntity():SetColor(Color.Lime)
 		end
+		self:GetEntity():SetColor(self:IsPersistent() and Color.Lime or Color.White)
 
 		local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 		if(renderC ~= nil) then renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_WORLD) end

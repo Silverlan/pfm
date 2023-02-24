@@ -20,7 +20,7 @@ function Component:OnTick(dt)
 	local t = time.time_since_epoch()
 	local actor,hitPos,pos,hitData = pfm.raycast(startPos,dir,maxDist)
 	local dt = time.time_since_epoch() -t
-	local prevActor = (self.m_lastRayInfo ~= nil) and self.m_lastRayInfo.actor or nil
+	local prevRayInfo = self.m_lastRayInfo
 	self.m_lastRayInfo = {
 		actor = actor,
 		hitPos = hitPos,
@@ -29,9 +29,13 @@ function Component:OnTick(dt)
 	}
 	self:SetNextTick(time.cur_time() +0.05)
 
-	if(util.is_valid(prevActor) and actor ~= prevActor) then
-		self:InvokeEventCallbacks(Component.EVENT_ON_TARGET_CHANGED,{self.m_lastRayInfo,prevActor})
+	if(prevRayInfo == nil or actor ~= prevRayInfo.actor) then
+		self:InvokeEventCallbacks(Component.EVENT_ON_TARGET_ACTOR_CHANGED,{self.m_lastRayInfo,prevActor})
+	end
+	if(prevRayInfo == nil or actor ~= prevRayInfo.actor or hitPos ~= prevRayInfo.hitPos or prevRayInfo.hitData.primitiveIndex ~= hitData.primitiveIndex or prevRayInfo.hitData.mesh ~= hitData.mesh) then
+		self:InvokeEventCallbacks(Component.EVENT_ON_TARGET_CHANGED,{self.m_lastRayInfo})
 	end
 end
 ents.COMPONENT_PFM_CURSOR_TARGET = ents.register_component("pfm_cursor_target",Component)
 Component.EVENT_ON_TARGET_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_CURSOR_TARGET,"on_target_changed")
+Component.EVENT_ON_TARGET_ACTOR_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_CURSOR_TARGET,"on_target_actor_changed")

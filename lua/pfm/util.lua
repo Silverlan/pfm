@@ -46,3 +46,34 @@ function pfm.get_member_info(path,actor)
 	end
 	return componentInfo:GetMemberInfo(memberName:GetString())
 end
+
+function pfm.get_bone_index_from_hit_data(hitData)
+	-- Try to determine bone by vertex weight of selected triangle
+	local vws = {
+		hitData.mesh:GetVertexWeight(hitData.mesh:GetIndex(hitData.primitiveIndex *3)),
+		hitData.mesh:GetVertexWeight(hitData.mesh:GetIndex(hitData.primitiveIndex *3 +1)),
+		hitData.mesh:GetVertexWeight(hitData.mesh:GetIndex(hitData.primitiveIndex *3 +2))
+	}
+
+	local vWeights = {1.0 -hitData.u,1.0 -hitData.v,hitData.u +hitData.v}
+	local accWeights = {}
+	for i=0,3 do
+		for j,vw in ipairs(vws) do
+			local boneId = vw.boneIds:Get(i)
+			if(boneId ~= -1) then
+				accWeights[boneId] = accWeights[boneId] or 0.0
+				accWeights[boneId] = accWeights[boneId] +vw.weights:Get(i) *vWeights[j]
+			end
+		end
+	end
+
+	local largestWeight = -1.0
+	local boneId = -1
+	for accBoneId,accWeight in pairs(accWeights) do
+		if(accWeight > largestWeight) then
+			largestWeight = accWeight
+			boneId = accBoneId
+		end
+	end
+	return boneId
+end

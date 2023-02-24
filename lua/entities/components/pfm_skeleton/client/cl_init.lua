@@ -41,7 +41,10 @@ function ents.PFMSkeleton:OnActorPropertySelected(udmComponent,item,path,selecte
 	for childBoneId,ent in pairs(self.m_bones[boneId]) do
 		if(ent:IsValid()) then
 			local boneC = ent:GetComponent(ents.COMPONENT_PFM_BONE)
-			if(boneC ~= nil) then boneC:SetSelected(selected) end
+			if(boneC ~= nil) then
+				boneC:SetSelected(selected)
+				boneC:SetPersistent(selected)
+			end
 		end
 	end
 end
