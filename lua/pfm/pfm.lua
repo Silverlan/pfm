@@ -305,7 +305,8 @@ pfm.create_empty_project = function()
 	local track = trackGroup:AddTrack()
 	track:SetName("Film")
 
-	local shot1 = track:AddFilmClip("shot1")
+	local shot1 = track:AddFilmClip()
+	shot1:SetName("shot1")
 	shot1:GetTimeFrame():SetDuration(60.0)
 	filmClip:GetTimeFrame():SetDuration(60.0)
 

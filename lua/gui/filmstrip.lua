@@ -23,6 +23,14 @@ function gui.FilmStrip:OnInitialize()
 end
 function gui.FilmStrip:GetTimeFrame() return self.m_timeFrame end
 function gui.FilmStrip:GetFilmClips() return self.m_filmClips end
+function gui.FilmStrip:FindFilmClipElement(fc)
+	for _,el in ipairs(self.m_filmClips) do
+		if(el:IsValid()) then
+			local filmClipData = el:GetFilmClipData()
+			if(util.is_same_object(filmClipData,fc)) then return el end
+		end
+	end
+end
 function gui.FilmStrip:OnUpdate()
 	local timeFrame
 	-- Calculate total time frame

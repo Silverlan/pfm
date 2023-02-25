@@ -33,6 +33,7 @@ function gui.FilmClip:OnInitialize()
 
 	self:AddStyleClass("timeline_clip_film")
 end
+function gui.FilmClip:UpdateFilmClipData() self:SetFilmClipData(self.m_filmClip) end
 function gui.FilmClip:SetFilmClipData(filmClip)
 	self.m_filmClip = filmClip
 	self:SetText(filmClip:GetName())

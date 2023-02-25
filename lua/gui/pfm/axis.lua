@@ -35,7 +35,7 @@ end
 function gui.Axis:GetAxis() return self.m_axis end
 function gui.Axis:IsHorizontal() return self.m_horizontal end
 function gui.Axis:IsVertical() return self:IsHorizontal() == false end
-function gui.Axis:UpdateAttachment(i,start,duration,timeFrame)
+function gui.Axis:UpdateAttachment(i,start,duration)
 	local itemData = self.m_items[i]
 	if(itemData == nil) then return end
 	if(itemData.element:IsValid() == false) then
@@ -72,10 +72,10 @@ function gui.Axis:AttachElementToRange(el,timeFrame)
 	itemData.value = timeFrame:GetStart()
 	itemData.lengthValue = timeFrame:GetDuration()
 	itemData.callbacks = {
-		timeFrame:AddChangeListener("start",function(newValue)
+		timeFrame:AddChangeListener("start",function(timeFrame,newValue)
 			self:UpdateAttachment(index,newValue)
 		end),
-		timeFrame:AddChangeListener("duration",function(newValue)
+		timeFrame:AddChangeListener("duration",function(timeFrame,newValue)
 			self:UpdateAttachment(index,nil,newValue)
 		end)
 	}

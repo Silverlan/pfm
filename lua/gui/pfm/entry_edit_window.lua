@@ -87,4 +87,18 @@ pfm.open_entry_edit_window = function(title,cb)
 	end
 	return p
 end
+pfm.open_single_value_edit_window = function(title,cb,def)
+	local te
+	local p = pfm.open_entry_edit_window(title,function(ok)
+		if(ok) then
+			cb(ok,te:GetText())
+		else cb(false) end
+	end)
+	te = p:AddTextField(title .. ":",def or "")
+	te:GetTextElement():SetFont("pfm_medium")
+
+	p:SetWindowSize(Vector2i(800,120))
+	p:Update()
+	return p,te
+end
 gui.register("WIPFMEntryEditWindow",PfmEditEntryWindow)
