@@ -23,14 +23,17 @@ function Component:Initialize()
 		self:OnCursorTargetActorChanged(...)
 	end)
 end
-function Component:OnEntitySpawn()
-	self.m_elTextHover = gui.create("WIHoverText")
+function Component:GetHoverTextElement()
+	if(util.is_valid(self.m_elTextHover) == false) then
+		self.m_elTextHover = gui.create("WIHoverText")
+	end
+	return self.m_elTextHover
 end
 function Component:SetHoverText(text)
-	self.m_elTextHover:SetText(text)
+	self:GetHoverTextElement():SetText(text)
 end
 function Component:SetHoverTextVisible(visible)
-	self.m_elTextHover:SetVisible(visible)
+	self:GetHoverTextElement():SetVisible(visible)
 end
 function Component:OnRemove()
 	util.remove(self.m_elTextHover)
@@ -53,6 +56,7 @@ function Component:OnCursorTargetChanged(rayInfo)
 	local curSelected = self.m_curSelectedBones
 	self.m_curSelectedBones = {}
 	local showHoverText = false
+	local elHoverText = self:GetHoverTextElement()
 	if(rayInfo.hitData ~= nil and rayInfo.hitData.mesh ~= nil) then
 		local boneId = pfm.get_bone_index_from_hit_data(rayInfo.hitData)
 		if(boneId ~= -1) then
@@ -66,9 +70,9 @@ function Component:OnCursorTargetChanged(rayInfo)
 					local animC = rayInfo.actor:GetComponent(ents.COMPONENT_ANIMATED)
 					local pos = (animC ~= nil) and animC:GetGlobalBonePose(boneId):GetOrigin() or nil
 					if(pos ~= nil) then
-						self.m_elTextHover:SetParent(rayInfo.vpData.viewport)
-						self.m_elTextHover:SetText(bone:GetName())
-						self.m_elTextHover:SetWorldSpacePosition(pos)
+						elHoverText:SetParent(rayInfo.vpData.viewport)
+						elHoverText:SetText(bone:GetName())
+						elHoverText:SetWorldSpacePosition(pos)
 						showHoverText = true
 					end
 				end
@@ -87,7 +91,7 @@ function Component:OnCursorTargetChanged(rayInfo)
 			end
 		end
 	end
-	self.m_elTextHover:SetVisible(showHoverText)
+	elHoverText:SetVisible(showHoverText)
 	for ent,_ in pairs(curSelected) do
 		if(ent:IsValid()) then self:DeselectBone(ent) end
 	end
