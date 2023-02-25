@@ -25,14 +25,16 @@ function Component:OnTick(dt)
 		actor = actor,
 		hitPos = hitPos,
 		startPos = pos,
-		hitData = hitData
+		hitData = hitData,
+		vpData = vpData
 	}
 	self:SetNextTick(time.cur_time() +0.05)
 
 	if(prevRayInfo == nil or actor ~= prevRayInfo.actor) then
 		self:InvokeEventCallbacks(Component.EVENT_ON_TARGET_ACTOR_CHANGED,{self.m_lastRayInfo,prevActor})
 	end
-	if(prevRayInfo == nil or actor ~= prevRayInfo.actor or hitPos ~= prevRayInfo.hitPos or prevRayInfo.hitData.primitiveIndex ~= hitData.primitiveIndex or prevRayInfo.hitData.mesh ~= hitData.mesh) then
+	if(prevRayInfo == nil or actor ~= prevRayInfo.actor or hitPos ~= prevRayInfo.hitPos or (hitData == nil and prevRayInfo.hitData ~= nil) or 
+		(hitData ~= nil and prevRayInfo.hitData == nil) or (hitData ~= nil and prevRayInfo.hitData ~= nil and (prevRayInfo.hitData.primitiveIndex ~= hitData.primitiveIndex or prevRayInfo.hitData.mesh ~= hitData.mesh))) then
 		self:InvokeEventCallbacks(Component.EVENT_ON_TARGET_CHANGED,{self.m_lastRayInfo})
 	end
 end

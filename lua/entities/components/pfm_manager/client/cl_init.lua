@@ -7,6 +7,7 @@
 ]]
 
 include_component("pfm_selection_wireframe")
+include("/gui/hover_text.lua")
 
 local Component = util.register_class("ents.PFMManager",BaseEntityComponent)
 
@@ -22,10 +23,22 @@ function Component:Initialize()
 		self:OnCursorTargetActorChanged(...)
 	end)
 end
+function Component:OnEntitySpawn()
+	self.m_elTextHover = gui.create("WIHoverText")
+end
+function Component:SetHoverText(text)
+	self.m_elTextHover:SetText(text)
+end
+function Component:SetHoverTextVisible(visible)
+	self.m_elTextHover:SetVisible(visible)
+end
 function Component:OnRemove()
+	util.remove(self.m_elTextHover)
 end
 function Component:AddOutline(ent)
+	debug.start_profiling_task("pfm_selection_outline")
 	ent:AddComponent(ents.COMPONENT_PFM_SELECTION_WIREFRAME)
+	debug.stop_profiling_task()
 end
 function Component:RemoveOutline(ent)
 	ent:RemoveComponent(ents.COMPONENT_PFM_SELECTION_WIREFRAME)
@@ -39,11 +52,27 @@ end
 function Component:OnCursorTargetChanged(rayInfo)
 	local curSelected = self.m_curSelectedBones
 	self.m_curSelectedBones = {}
+	local showHoverText = false
 	if(rayInfo.hitData ~= nil and rayInfo.hitData.mesh ~= nil) then
 		local boneId = pfm.get_bone_index_from_hit_data(rayInfo.hitData)
 		if(boneId ~= -1) then
+			local mdl = rayInfo.actor:GetModel()
+			local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
+			local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
+
 			local c = rayInfo.actor:GetComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
 			if(c ~= nil) then
+				if(bone ~= nil and util.is_valid(rayInfo.vpData.viewport)) then
+					local animC = rayInfo.actor:GetComponent(ents.COMPONENT_ANIMATED)
+					local pos = (animC ~= nil) and animC:GetGlobalBonePose(boneId):GetOrigin() or nil
+					if(pos ~= nil) then
+						self.m_elTextHover:SetParent(rayInfo.vpData.viewport)
+						self.m_elTextHover:SetText(bone:GetName())
+						self.m_elTextHover:SetWorldSpacePosition(pos)
+						showHoverText = true
+					end
+				end
+
 				local tEnts = c:GetBoneEntities(boneId) or {}
 				for dstBoneId,ent in pairs(tEnts) do
 					if(ent:IsValid()) then
@@ -58,6 +87,7 @@ function Component:OnCursorTargetChanged(rayInfo)
 			end
 		end
 	end
+	self.m_elTextHover:SetVisible(showHoverText)
 	for ent,_ in pairs(curSelected) do
 		if(ent:IsValid()) then self:DeselectBone(ent) end
 	end

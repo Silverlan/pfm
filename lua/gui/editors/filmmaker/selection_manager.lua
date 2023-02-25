@@ -61,6 +61,7 @@ function pfm.SelectionManager:ClearSelections()
 	for object,selected in pairs(selections) do
 		if(object:IsValid()) then
 			object:RemoveComponent("pfm_selection_wireframe")
+			object:RemoveComponent("pfm_skeleton")
 			for _,listener in ipairs(self.m_listeners) do
 				listener(object,false)
 			end
@@ -80,11 +81,15 @@ function pfm.SelectionManager:SetSelected(obj,selected)
 			selected = true
 		}
 		if(obj:HasComponent(ents.COMPONENT_RENDER)) then
+			debug.start_profiling_task("pfm_init_selection")
+
 			if(self.m_selectionWireframeEnabled) then
 				local c = obj:AddComponent("pfm_selection_wireframe")
 				if(c ~= nil) then c:SetPersistent(true) end
 			end
 			if(self.m_showBones) then obj:AddComponent("pfm_skeleton") end
+			
+			debug.stop_profiling_task()
 		end
 	end
 	for _,listener in ipairs(self.m_listeners) do
