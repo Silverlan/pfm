@@ -605,12 +605,14 @@ function gui.PFMViewport:SetScaleManipulatorMode()
 end
 function gui.PFMViewport:InitializeManipulatorControls()
 	local controls = gui.create("WIHBox",self.m_controls)
+	controls:SetName("manip_controls")
 
 	self.m_btSelect = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_select","gui/pfm/icon_manipulator_select_activated",function()
 		self:SetManipulatorMode(gui.PFMViewport.MANIPULATOR_MODE_SELECT)
 		return true
 	end)
 	self.m_btSelect:SetTooltip(locale.get_text("pfm_viewport_tool_select",{pfm.get_key_binding("pfm_action transform select")}))
+	self.m_btSelect:SetName("manip_select")
 
 	self.m_btMove = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_move","gui/pfm/icon_manipulator_move_activated",function()
 		self:SetTranslationManipulatorMode()
@@ -653,6 +655,7 @@ function gui.PFMViewport:InitializeManipulatorControls()
 		end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
+	self.m_btMove:SetName("manip_move")
 
 	self.m_btRotate = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_rotate","gui/pfm/icon_manipulator_rotate_activated",function()
 		self:SetRotationManipulatorMode()
@@ -706,12 +709,14 @@ function gui.PFMViewport:InitializeManipulatorControls()
 		end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
+	self.m_btRotate:SetName("manip_rotate")
 
 	self.m_btScreen = gui.PFMButton.create(controls,"gui/pfm/icon_manipulator_screen","gui/pfm/icon_manipulator_screen_activated",function()
 		self:SetScaleManipulatorMode()
 		return true
 	end)
 	self.m_btScreen:SetTooltip(locale.get_text("pfm_viewport_tool_scale",{pfm.get_key_binding("pfm_action transform scale")}))
+	self.m_btScreen:SetName("manip_screen")
 
 	controls:SetHeight(self.m_btSelect:GetHeight())
 	controls:Update()

@@ -214,8 +214,9 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 		return util.EVENT_REPLY_HANDLED
 	end
 
-	local window = self:GetRootWindow()
-	local el = gui.get_element_under_cursor(window)
+	local root = self:GetRootWindow()
+	if(root == gui.get_primary_window()) then root = filmmaker:GetContentsElement() end
+	local el = gui.get_element_under_cursor(root)
 	if(util.is_valid(el) and (el == self or el:IsDescendantOf(self))) then
 		if(mouseButton == input.MOUSE_BUTTON_RIGHT) then
 			if(state == input.STATE_PRESS) then

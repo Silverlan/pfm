@@ -13,6 +13,7 @@ function gui.PFMViewport:InitializeViewport(parent)
 
 	self.m_viewport = gui.create("WIViewport",vpContainer,0,0,vpContainer:GetWidth(),vpContainer:GetHeight(),0,0,1,1)
 	self.m_viewport:SetMovementControlsEnabled(false)
+	self.m_viewport:SetName("viewport")
 
 	self.m_viewport:SetType(gui.WIViewport.VIEWPORT_TYPE_3D)
 
@@ -28,6 +29,7 @@ end
 function gui.PFMViewport:InitializeSettings(parent)
 	gui.PFMBaseViewport.InitializeSettings(self,parent)
 	local p = self.m_settingsBox
+	p:SetName("vp_settings")
 
 	--[[local ctrlRt,wrapper = p:AddDropDownMenu(locale.get_text("pfm_viewport_rt_enabled"),"rt_enabled",{
 		{"disabled",locale.get_text("disabled")},

@@ -2076,6 +2076,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 
 	self:RegisterWindow(self.m_viewportFrame,"primary_viewport",locale.get_text("pfm_primary_viewport"),function()
 		local el = gui.create("WIPFMViewport")
+		el:SetName("pfm_primary_viewport")
 		el:AddCallback("OnReattached",function(el,window) self:RequestFocus() end)
 		return el
 	end)

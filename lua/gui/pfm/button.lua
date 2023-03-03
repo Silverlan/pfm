@@ -40,11 +40,13 @@ function gui.PFMButton:SetText(text)
 	self.m_text:CenterToParent()
 	self.m_text:SetAnchor(0.5,0.5,0.5,0.5)
 end
+function gui.PFMButton:SetEnabledColor(col) self.m_enabledColor = col end
+function gui.PFMButton:SetDisabledColor(col) self.m_disabledColor = col end
 function gui.PFMButton:SetEnabled(enabled)
 	if(enabled == self:IsEnabled()) then return end
 	if(enabled == false) then self:SetActivated(false) end
 	self.m_enabled = enabled
-	local color = enabled and Color.White or Color(128,128,128)
+	local color = enabled and (self.m_enabledColor or Color.White) or (self.m_disabledColor or Color(128,128,128))
 	self:SetColor(color)
 end
 function gui.PFMButton:IsEnabled() return self.m_enabled end
