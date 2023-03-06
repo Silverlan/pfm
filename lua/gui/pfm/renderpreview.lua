@@ -24,6 +24,14 @@ gui.PFMRenderPreview.IMAGE_TYPE_FLAT = 0
 gui.PFMRenderPreview.IMAGE_TYPE_MONO = 1
 gui.PFMRenderPreview.IMAGE_TYPE_STEREO = 2
 
+gui.PFMRenderPreview.VIEWPORT_MODE_FLAT = 0
+gui.PFMRenderPreview.VIEWPORT_MODE_360_LEFT_EYE = 1
+gui.PFMRenderPreview.VIEWPORT_MODE_360_RIGHT_EYE = 2
+
+gui.PFMRenderPreview.PREVIEW_QUALITY_LOW = 0
+gui.PFMRenderPreview.PREVIEW_QUALITY_MEDIUM = 1
+gui.PFMRenderPreview.PREVIEW_QUALITY_HIGH = 2
+
 function gui.PFMRenderPreview:__init()
 	gui.PFMBaseViewport.__init(self)
 end
@@ -296,7 +304,7 @@ function gui.PFMRenderPreview:UpdateViewport(settings)
 	self:UpdateVRMode()
 end
 function gui.PFMRenderPreview:UpdateVRMode()
-	local enableVrView = (self.m_renderedImageType ~= gui.PFMRenderPreview.IMAGE_TYPE_FLAT and tonumber(self.m_ctrlPreviewMode:GetOptionValue(self.m_ctrlPreviewMode:GetSelectedOption())) ~= fudm.PFMRenderSettings.VIEWPORT_MODE_FLAT)
+	local enableVrView = (self.m_renderedImageType ~= gui.PFMRenderPreview.IMAGE_TYPE_FLAT and tonumber(self.m_ctrlPreviewMode:GetOptionValue(self.m_ctrlPreviewMode:GetSelectedOption())) ~= gui.PFMRenderPreview.VIEWPORT_MODE_FLAT)
 	self.m_rt:GetToneMappedImageElement():SetVRView(enableVrView,tool.get_filmmaker())
 end
 function gui.PFMRenderPreview:GetOutputPath()
@@ -320,7 +328,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	-- Preset
 	local settings = tool.get_filmmaker():GetSettings()
-	settings = (settings ~= nil) and settings:GetRenderSettings() or fudm.PFMRenderSettings()
+	settings = (settings ~= nil) and settings:GetRenderSettings() or udm.create_property_from_schema(pfm.udm.SCHEMA,"RenderSettings")
 	self.m_ctrlPreset = p:AddDropDownMenu(locale.get_text("preset"),"preset",{
 		{"standard",locale.get_text("pfm_rt_preset_standard")},
 		-- {"cinematic",locale.get_text("pfm_rt_preset_cinematic")},
@@ -348,33 +356,33 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	
 	-- Render Mode
 	self.m_ctrlRenderMode = p:AddDropDownMenu(locale.get_text("pfm_render_mode"),"render_mode",{
-		{tostring(fudm.PFMRenderSettings.MODE_COMBINED),locale.get_text("pfm_cycles_bake_type_combined")},
-		{tostring(fudm.PFMRenderSettings.MODE_ALBEDO),locale.get_text("pfm_cycles_bake_type_albedo")},
-		{tostring(fudm.PFMRenderSettings.MODE_NORMALS),locale.get_text("pfm_cycles_bake_type_normals")},
-		{tostring(fudm.PFMRenderSettings.MODE_DEPTH),locale.get_text("pfm_cycles_bake_type_depth")},
-		{tostring(fudm.PFMRenderSettings.MODE_ALPHA),"Alpha"},
-		{tostring(fudm.PFMRenderSettings.MODE_GEOMETRY_NORMAL),"Geometry Normal"},
-		{tostring(fudm.PFMRenderSettings.MODE_SHADING_NORMAL),"Shading Normal"},
-		{tostring(fudm.PFMRenderSettings.MODE_DIRECT_DIFFUSE),"Direct Diffuse"},
-		{tostring(fudm.PFMRenderSettings.MODE_DIRECT_DIFFUSE_REFLECT),"Direct Diffuse Reflect"},
-		{tostring(fudm.PFMRenderSettings.MODE_DIRECT_DIFFUSE_TRANSMIT),"Direct Diffuse Transmit"},
-		{tostring(fudm.PFMRenderSettings.MODE_DIRECT_GLOSSY),"Direct Glossy"},
-		{tostring(fudm.PFMRenderSettings.MODE_DIRECT_GLOSSY_REFLECT),"Direct Glossy Reflect"},
-		{tostring(fudm.PFMRenderSettings.MODE_DIRECT_GLOSSY_TRANSMIT),"Direct Glossy Transmit"},
-		{tostring(fudm.PFMRenderSettings.MODE_EMISSION),"Emission"},
-		{tostring(fudm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE),"Indirect Diffuse"},
-		{tostring(fudm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE_REFLECT),"Indirect Diffuse Reflect"},
-		{tostring(fudm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE_TRANSMIT),"Indirect Diffuse Transmit"},
-		{tostring(fudm.PFMRenderSettings.MODE_INDIRECT_GLOSSY),"Indirect Glossy"},
-		{tostring(fudm.PFMRenderSettings.MODE_INDIRECT_GLOSSY_REFLECT),"Indirect Glossy Reflect"},
-		{tostring(fudm.PFMRenderSettings.MODE_INDIRECT_GLOSSY_TRANSMIT),"Indirect Glossy Transmit"},
-		{tostring(fudm.PFMRenderSettings.MODE_INDIRECT_SPECULAR),"Indirect Specular"},
-		{tostring(fudm.PFMRenderSettings.MODE_INDIRECT_SPECULAR_REFLECT),"Indirect Specular Reflect"},
-		{tostring(fudm.PFMRenderSettings.MODE_INDIRECT_SPECULAR_TRANSMIT),"Indirect Specular Transmit"},
-		{tostring(fudm.PFMRenderSettings.MODE_UV),"UV"},
-		{tostring(fudm.PFMRenderSettings.MODE_IRRADIANCE),"Irradiance"},
-		{tostring(fudm.PFMRenderSettings.MODE_NOISE),"Noise"},
-		{tostring(fudm.PFMRenderSettings.MODE_CAUSTIC),"Caustic"}
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED),locale.get_text("pfm_cycles_bake_type_combined")},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALBEDO),locale.get_text("pfm_cycles_bake_type_albedo")},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_NORMALS),locale.get_text("pfm_cycles_bake_type_normals")},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH),locale.get_text("pfm_cycles_bake_type_depth")},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALPHA),"Alpha"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_GEOMETRY_NORMAL),"Geometry Normal"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_SHADING_NORMAL),"Shading Normal"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE),"Direct Diffuse"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE_REFLECT),"Direct Diffuse Reflect"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE_TRANSMIT),"Direct Diffuse Transmit"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY),"Direct Glossy"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY_REFLECT),"Direct Glossy Reflect"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY_TRANSMIT),"Direct Glossy Transmit"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_EMISSION),"Emission"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE),"Indirect Diffuse"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE_REFLECT),"Indirect Diffuse Reflect"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE_TRANSMIT),"Indirect Diffuse Transmit"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY),"Indirect Glossy"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY_REFLECT),"Indirect Glossy Reflect"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY_TRANSMIT),"Indirect Glossy Transmit"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR),"Indirect Specular"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR_REFLECT),"Indirect Specular Reflect"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR_TRANSMIT),"Indirect Specular Transmit"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_UV),"UV"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_IRRADIANCE),"Irradiance"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_NOISE),"Noise"},
+		{tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_CAUSTIC),"Caustic"}
 	},tostring(settings:GetMode()))
 	p:LinkToUDMProperty("render_mode",settings,"mode")
 	if(tool.get_filmmaker():IsDeveloperModeEnabled() == false) then p:SetControlVisible("render_mode",false) end
@@ -410,9 +418,9 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:SetControlVisible("equirect_mode",false)
 
 	self.m_ctrlPreviewMode = p:AddDropDownMenu(locale.get_text("pfm_cycles_preview_mode"),"preview_mode",{
-		{tostring(fudm.PFMRenderSettings.VIEWPORT_MODE_FLAT),locale.get_text("pfm_cycles_preview_mode_flat")},
-		{tostring(fudm.PFMRenderSettings.VIEWPORT_MODE_360_LEFT_EYE),locale.get_text("pfm_cycles_preview_mode_360_left")},
-		{tostring(fudm.PFMRenderSettings.VIEWPORT_MODE_360_RIGHT_EYE),locale.get_text("pfm_cycles_preview_mode_360_right")}
+		{tostring(gui.PFMRenderPreview.VIEWPORT_MODE_FLAT),locale.get_text("pfm_cycles_preview_mode_flat")},
+		{tostring(gui.PFMRenderPreview.VIEWPORT_MODE_360_LEFT_EYE),locale.get_text("pfm_cycles_preview_mode_360_left")},
+		{tostring(gui.PFMRenderPreview.VIEWPORT_MODE_360_RIGHT_EYE),locale.get_text("pfm_cycles_preview_mode_360_right")}
 	},tostring(settings:GetViewportMode()),function() self:UpdateViewportMode() end)
 	p:LinkToUDMProperty("preview_mode",settings,"viewportMode")
 	p:SetControlVisible("preview_mode",false)
@@ -565,10 +573,10 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	-- Preview quality
 	self.m_ctrlPreviewQuality = p:AddDropDownMenu(locale.get_text("pfm_cycles_preview_quality"),"preview_quality",{
-		{tostring(fudm.PFMRenderSettings.PREVIEW_QUALITY_LOW),locale.get_text("low")},
-		{tostring(fudm.PFMRenderSettings.PREVIEW_QUALITY_MEDIUM),locale.get_text("medium")},
-		{tostring(fudm.PFMRenderSettings.PREVIEW_QUALITY_HIGH),locale.get_text("high")}
-	},tostring(fudm.PFMRenderSettings.PREVIEW_QUALITY_LOW))
+		{tostring(gui.PFMRenderPreview.PREVIEW_QUALITY_LOW),locale.get_text("low")},
+		{tostring(gui.PFMRenderPreview.PREVIEW_QUALITY_MEDIUM),locale.get_text("medium")},
+		{tostring(gui.PFMRenderPreview.PREVIEW_QUALITY_HIGH),locale.get_text("high")}
+	},tostring(gui.PFMRenderPreview.PREVIEW_QUALITY_LOW))
 	p:LinkToUDMProperty("preview_quality",settings,"previewQuality")
 
 	-- Output directory
@@ -665,8 +673,8 @@ function gui.PFMRenderPreview:InitializeOfflineRendererControls(p,settings)
 	local offlineRendererOptions = p:AddSubMenu()
 	-- Device Type
 	self.m_ctrlDeviceType = offlineRendererOptions:AddDropDownMenu(locale.get_text("pfm_cycles_device_type"),"device_type",{
-		{tostring(fudm.PFMRenderSettings.DEVICE_TYPE_GPU),locale.get_text("pfm_cycles_device_type_gpu")},
-		{tostring(fudm.PFMRenderSettings.DEVICE_TYPE_CPU),locale.get_text("pfm_cycles_device_type_cpu")}
+		{tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU),locale.get_text("pfm_cycles_device_type_gpu")},
+		{tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU),locale.get_text("pfm_cycles_device_type_cpu")}
 	},tostring(settings:GetDeviceType()))
 	offlineRendererOptions:LinkToUDMProperty("device_type",settings,"deviceType")
 
@@ -726,7 +734,7 @@ function gui.PFMRenderPreview:IsInVRMode()
 		--and self.m_ctrlEquirectMode:GetOptionValue(self.m_ctrlEquirectMode:GetSelectedOption()) == "stereo"
 end
 function gui.PFMRenderPreview:UpdateViewportMode()
-	self.m_rt:GetToneMappedImageElement():SetStereoImage((tonumber(self.m_ctrlPreviewMode:GetOptionValue(self.m_ctrlPreviewMode:GetSelectedOption())) == fudm.PFMRenderSettings.VIEWPORT_MODE_360_RIGHT_EYE) and gui.VRView.STEREO_IMAGE_RIGHT or gui.VRView.STEREO_IMAGE_LEFT)
+	self.m_rt:GetToneMappedImageElement():SetStereoImage((tonumber(self.m_ctrlPreviewMode:GetOptionValue(self.m_ctrlPreviewMode:GetSelectedOption())) == gui.PFMRenderPreview.VIEWPORT_MODE_360_RIGHT_EYE) and gui.VRView.STEREO_IMAGE_RIGHT or gui.VRView.STEREO_IMAGE_LEFT)
 	self:UpdateVRMode()
 end
 function gui.PFMRenderPreview:UpdateVROptions()
@@ -894,38 +902,11 @@ function gui.PFMRenderPreview:GetRenderSettings(preview,prepareOnly)
 	local renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED
 
 	local selectedRenderMode = tonumber(self.m_ctrlRenderMode:GetValue())
-	if(selectedRenderMode == fudm.PFMRenderSettings.MODE_COMBINED) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_ALBEDO) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALBEDO
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_NORMALS) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_NORMALS
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_DEPTH) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_ALPHA) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_ALPHA
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_GEOMETRY_NORMAL) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_GEOMETRY_NORMAL
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_SHADING_NORMAL) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_SHADING_NORMAL
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_DIRECT_DIFFUSE) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_DIRECT_DIFFUSE_REFLECT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE_REFLECT
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_DIRECT_DIFFUSE_TRANSMIT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_DIFFUSE_TRANSMIT
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_DIRECT_GLOSSY) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_DIRECT_GLOSSY_REFLECT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY_REFLECT
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_DIRECT_GLOSSY_TRANSMIT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_DIRECT_GLOSSY_TRANSMIT
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_EMISSION) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_EMISSION
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE_REFLECT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE_REFLECT
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_INDIRECT_DIFFUSE_TRANSMIT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_DIFFUSE_TRANSMIT
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_INDIRECT_GLOSSY) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_INDIRECT_GLOSSY_REFLECT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY_REFLECT
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_INDIRECT_GLOSSY_TRANSMIT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_GLOSSY_TRANSMIT
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_INDIRECT_SPECULAR) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_INDIRECT_SPECULAR_REFLECT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR_REFLECT
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_INDIRECT_SPECULAR_TRANSMIT) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_INDIRECT_SPECULAR_TRANSMIT
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_UV) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_UV
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_IRRADIANCE) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_IRRADIANCE
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_NOISE) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_NOISE
-	elseif(selectedRenderMode == fudm.PFMRenderSettings.MODE_CAUSTIC) then renderMode = pfm.RaytracingRenderJob.Settings.RENDER_MODE_CAUSTIC end
+	renderMode = selectedRenderMode
 
 	local deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU
 	local selectedDeviceType = tonumber(self.m_ctrlDeviceType:GetValue())
-	if(selectedDeviceType == fudm.PFMRenderSettings.DEVICE_TYPE_CPU) then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU
-	elseif(selectedDeviceType == fudm.PFMRenderSettings.DEVICE_TYPE_GPU) then deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU end
+	deviceType = selectedDeviceType
 
 	local width,height = self:GetResolution()
 

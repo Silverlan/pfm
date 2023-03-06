@@ -13,7 +13,7 @@ util.register_class("ents.PFMTrack",BaseEntityComponent)
 
 function ents.PFMTrack:Initialize()
 	BaseEntityComponent.Initialize(self)
-	self.m_timeFrame = fudm.PFMTimeFrame()
+	self.m_timeFrame = udm.create_property_from_schema(pfm.udm.SCHEMA,"TimeFrame")
 
 	self.m_activeClips = {}
 	self.m_inactiveClips = {}
@@ -65,7 +65,7 @@ function ents.PFMTrack:Setup(trackData,trackGroup,projectC)
 		endTime = 0.0
 	end
 
-	self.m_timeFrame = fudm.PFMTimeFrame()
+	self.m_timeFrame = udm.create_property_from_schema(pfm.udm.SCHEMA,"TimeFrame")
 	self.m_timeFrame:SetStart(startTime)
 	self.m_timeFrame:SetDuration(endTime -startTime)
 end

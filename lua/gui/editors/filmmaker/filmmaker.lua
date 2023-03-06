@@ -98,7 +98,6 @@ function gui.WIFilmmaker:OnInitialize()
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 	tool.filmmaker = self
 	gui.set_context_menu_skin("pfm")
-	fudm.PFMChannel.set_all_channels_enabled(false)
 
 	self.m_editorOverlayRenderMask = game.register_render_mask("pfm_editor_overlay",false)
 	self.m_worldAxesGizmo = ents.create("pfm_world_axes_gizmo")
@@ -808,6 +807,7 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched",self)
 end
+function gui.WIFilmmaker:GetManagerEntity() return self.m_pfmManager end
 function gui.WIFilmmaker:GetWorldAxesGizmo() return self.m_worldAxesGizmo end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()

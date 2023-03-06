@@ -24,7 +24,7 @@ function ents.PFMProject:__init(ent) BaseEntityComponent.__init(self,ent) end
 function ents.PFMProject:Initialize()
 	BaseEntityComponent.Initialize(self)
 	
-	self.m_timeFrame = fudm.PFMTimeFrame()
+	self.m_timeFrame = udm.create_property_from_schema(pfm.udm.SCHEMA,"TimeFrame")
 	self:AddEventCallback(ents.PFMProject.EVENT_ON_ENTITY_CREATED,function(ent) self:OnEntityCreated(ent) end)
 
 	self:AddEntityComponent(ents.COMPONENT_STATIC_BVH_CACHE)

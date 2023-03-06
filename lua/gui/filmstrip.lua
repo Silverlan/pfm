@@ -16,7 +16,7 @@ end
 function gui.FilmStrip:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self.m_timeFrame = fudm.PFMTimeFrame()
+	self.m_timeFrame = udm.create_property_from_schema(pfm.udm.SCHEMA,"TimeFrame")
 	self.m_container = gui.create("WIContainer",self)
 	self:GetSizeProperty():Link(self.m_container:GetSizeProperty())
 	self.m_filmClips = {}
@@ -42,6 +42,6 @@ function gui.FilmStrip:OnUpdate()
 			else timeFrame = timeFrame:Max(timeFrameClip) end
 		end
 	end
-	self.m_timeFrame = timeFrame or fudm.PFMTimeFrame()
+	self.m_timeFrame = timeFrame or udm.create_property_from_schema(pfm.udm.SCHEMA,"TimeFrame")
 end
 gui.register("WIFilmStrip",gui.FilmStrip)

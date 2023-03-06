@@ -139,8 +139,8 @@ function gui.PFMActorEditor:GetAnimationChannel(actor,path,addIfNotExists)
 
 	local type = memberInfo.type
 	path = path:ToUri(false)
-	local varType = fudm.udm_type_to_var_type(type)
-	if(memberName:GetString() == "color") then varType = util.VAR_TYPE_COLOR end -- TODO: How to handle this properly?
+	local varType = type
+	-- if(memberName:GetString() == "color") then varType = util.VAR_TYPE_COLOR end -- TODO: How to handle this properly?
 	local channel = channelClip:GetChannel(path,varType,addIfNotExists)
 	return channel,channelClip
 end

@@ -23,7 +23,6 @@ pfm.PROJECT_TITLE = "PFM"
 
 include("/util/log.lua")
 include("/util/color_scheme.lua")
-include("/udm/udm.lua")
 include("/udm/schema_api.lua")
 include("/sfm.lua")
 include("udm")
