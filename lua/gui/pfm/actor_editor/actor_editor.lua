@@ -195,6 +195,7 @@ function gui.PFMActorEditor:OnInitialize()
 
 
 	local resizer = gui.create("WIResizer",self.m_contents)
+	self.m_centralDivider = resizer
 	local dataVBox = gui.create("WIVBox",self.m_contents)
 	dataVBox:SetFixedSize(true)
 	dataVBox:SetAutoFillContentsToWidth(true)
@@ -283,6 +284,8 @@ function gui.PFMActorEditor:OnInitialize()
 
 	self:SetMouseInputEnabled(true)
 end
+function gui.PFMActorEditor:GetToolIconElement() return self.m_btTools end
+function gui.PFMActorEditor:GetCentralDivider() return self.m_centralDivider end
 function gui.PFMActorEditor:GetTree() return self.m_tree end
 function gui.PFMActorEditor:GetActorItem(actor)
 	for item,actorData in pairs(self.m_treeElementToActorData) do
@@ -1448,6 +1451,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 		if(el ~= nil) then
 			local icon = el:AddIcon(icon)
 			if(util.is_valid(icon)) then
+				icon:SetName(componentType)
 				icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 				icon:SetMouseInputEnabled(true)
 				icon:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
@@ -1578,6 +1582,7 @@ function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData,controlData)
 	if(channel ~= nil) then
 		local icon = el:AddUniqueIcon("gui/pfm/icon_animated")
 		if(util.is_valid(icon)) then
+			icon:SetName("animated")
 			icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 			icon:SetMouseInputEnabled(true)
 			icon:SetTooltip(locale.get_text("pfm_animated"))
@@ -1599,6 +1604,7 @@ function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData,controlData)
 	if(hasExpression) then
 		local icon = el:AddUniqueIcon("gui/pfm/icon_math_expression")
 		if(util.is_valid(icon)) then
+			icon:SetName("math_expr")
 			icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 			icon:SetMouseInputEnabled(true)
 			icon:SetTooltip(locale.get_text("pfm_math_expression",{channel:GetExpression()}))

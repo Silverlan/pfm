@@ -206,6 +206,7 @@ function gui.PFMTreeViewElement:UpdateUi()
 	self:ScheduleUpdate()
 	self.m_treeView:GetRoot():ScheduleUpdate()
 end
+function gui.PFMTreeViewElement:GetIcons() return self.m_icons end
 function gui.PFMTreeViewElement:ClearIcons()
 	util.remove(self.m_icons)
 end
@@ -224,6 +225,7 @@ function gui.PFMTreeViewElement:AddUniqueIcon(material)
 end
 function gui.PFMTreeViewElement:GetHeader() return self.m_header end
 function gui.PFMTreeViewElement:GetTreeView() return self.m_treeView end
+function gui.PFMTreeViewElement:GetChildContainer() return self.m_childHBox end
 function gui.PFMTreeViewElement:InitializeChildBox()
 	if(util.is_valid(self.m_childHBox)) then return end
 	self.m_childHBox = gui.create("WIHBox",self.m_vBox,0,0,self.m_vBox:GetWidth(),self.m_vBox:GetHeight())

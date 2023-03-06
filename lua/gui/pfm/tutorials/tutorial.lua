@@ -14,48 +14,17 @@ function Element:OnInitialize()
 
 	self:SetSize(64,64)
 
-	local yOffset = -20
-	local btPrev = self:CreateButton("Go Back",function() self:PreviousSlide() end)
-	btPrev:SetY(self:GetHeight() -btPrev:GetHeight() +yOffset)
-	btPrev:SetAnchor(0,1,0,1)
-	btPrev:SetVisible(false)
-	self.m_buttonPrev = btPrev
-
-	local btNext = self:CreateButton("Continue",function() self:NextSlide() end)
-	btNext:SetX(self:GetWidth() -btNext:GetWidth())
-	btNext:SetY(self:GetHeight() -btNext:GetHeight() +yOffset)
-	btNext:SetAnchor(1,1,1,1)
-	btNext:SetEnabledColor(Color.Lime)
-	btNext:SetDisabledColor(Color.Red)
-	btNext:SetEnabled(false)
-	self.m_buttonNext = btNext
-
-	local btEnd = self:CreateButton("End Tutorial",function() self:EndTutorial() end)
-	btEnd:SetX(self:GetWidth() -btEnd:GetWidth())
-	btEnd:SetY(btNext:GetTop() -btEnd:GetHeight())
-	btEnd:SetAnchor(1,1,1,1)
-	self.m_buttonEnd = btEnd
-
 	self.m_slides = {}
 	self.m_prevSlides = {}
 
 	self:SetThinkingEnabled(true)
 end
-function Element:CreateButton(text,f)
-	local bt = gui.PFMButton.create(self,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
-		f()
-		return util.EVENT_REPLY_HANDLED
-	end)
-	bt:SetSize(100,32)
-	bt:SetText(text)
-	bt:SetZPos(1)
-	return bt
-end
 function Element:OnThink()
 	if(self.m_curSlide == nil) then return end
 	local slideData = self.m_slides[self.m_curSlide.identifier]
 	if(slideData ~= nil and slideData.clearCondition ~= nil) then
-		self.m_buttonNext:SetEnabled(slideData.clearCondition(self.m_curSlide.data))
+		local bt = self.m_curSlide.element:GetContinueButton()
+		bt:SetEnabled(slideData.clearCondition(self.m_curSlide.data))
 	end
 end
 function Element:OnRemove()
@@ -80,22 +49,30 @@ function Element:StartSlide(identifier)
 		element = gui.create("WITutorialSlide",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1),
 		data = {}
 	}
+	self.m_curSlide.element:SetTutorial(self)
 	self.m_slides[identifier].init(self.m_curSlide.data,self.m_curSlide.element)
 
 	local slideData = self.m_slides[identifier]
-	if(slideData.clearCondition ~= nil) then
-		-- Disable button until clear condition has been met
-		self.m_buttonNext:SetEnabled(false)
-	else self.m_buttonNext:SetEnabled(true) end
+	local bt = self.m_curSlide.element:GetContinueButton()
+	if(util.is_valid(bt)) then
+		if(slideData.clearCondition ~= nil) then
+			-- Disable button until clear condition has been met
+			bt:SetEnabled(false)
+		else bt:SetEnabled(true) end
+	end
 
 	self:UpdateButtons()
 end
 function Element:UpdateButtons()
-	self.m_buttonPrev:SetVisible(#self.m_prevSlides > 1)
-	if(self.m_curSlide == nil or self.m_slides[self.m_curSlide.identifier].nextSlide == nil) then
-		self.m_buttonNext:SetVisible(false)
-	else
-		self.m_buttonNext:SetVisible(true)
+	local btPrev = self.m_curSlide.element:GetBackButton()
+	if(util.is_valid(btPrev)) then btPrev:SetVisible(#self.m_prevSlides > 1) end
+	local btNext = self.m_curSlide.element:GetContinueButton()
+	if(util.is_valid(btNext)) then
+		if(self.m_curSlide == nil or self.m_slides[self.m_curSlide.identifier].nextSlide == nil) then
+			btNext:SetVisible(false)
+		else
+			btNext:SetVisible(true)
+		end
 	end
 end
 function Element:EndTutorial()
@@ -117,3 +94,20 @@ function Element:PreviousSlide()
 	self:StartSlide(identifier)
 end
 gui.register("WITutorial",Element)
+
+Element.registered_tutorials = {}
+Element.register_tutorial = function(identifier,fc)
+	Element.registered_tutorials[identifier] = fc
+end
+
+Element.start_tutorial = function(identifier)
+	if(Element.registered_tutorials[identifier] == nil) then return end
+	local fc = Element.registered_tutorials[identifier]
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm) == false) then return end
+	util.remove(Element.tutorial_element)
+	local elTut = gui.create("WITutorial",pm)
+	Element.tutorial_element = elTut
+	elTut:SetSize(pm:GetWidth(),pm:GetHeight())
+	fc(elTut,pm)
+end

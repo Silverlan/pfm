@@ -17,6 +17,19 @@ gui.PFMActorEditor.COLLECTION_MISC = "misc"
 gui.PFMActorEditor.COLLECTION_VR = "vr"
 gui.PFMActorEditor.COLLECTION_CONSTRAINTS = "constraints"
 
+gui.PFMActorEditor.COLLECTION_TYPES = {
+	gui.PFMActorEditor.COLLECTION_SCENEBUILD,
+	gui.PFMActorEditor.COLLECTION_ACTORS,
+	gui.PFMActorEditor.COLLECTION_CAMERAS,
+	gui.PFMActorEditor.COLLECTION_EFFECTS,
+	gui.PFMActorEditor.COLLECTION_LIGHTS,
+	gui.PFMActorEditor.COLLECTION_ENVIRONMENT,
+	gui.PFMActorEditor.COLLECTION_BAKING,
+	gui.PFMActorEditor.COLLECTION_MISC,
+	gui.PFMActorEditor.COLLECTION_VR,
+	gui.PFMActorEditor.COLLECTION_CONSTRAINTS
+}
+
 function gui.PFMActorEditor:AddCollectionItem(parentItem,parent,isRoot)
 	local itemGroup = parentItem:AddItem(parent:GetName(),nil,nil,tostring(parent:GetUniqueId()))
 	itemGroup:SetAutoSelectChildren(false)
@@ -179,5 +192,6 @@ function gui.PFMActorEditor:FindCollection(name,createIfNotExists,parentGroup)
 			if(elUdm ~= nil) then return elUdm,item end
 		end
 	end
+	if(createIfNotExists == false) then return end
 	return self:AddCollection(name,parentGroup)
 end

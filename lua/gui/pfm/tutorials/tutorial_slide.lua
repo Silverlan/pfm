@@ -18,9 +18,10 @@ function Element:OnInitialize()
 	self.m_highlights = {}
 	self.m_messageBoxes = {}
 end
-function Element:FindElementByPath(path)
+function Element:SetTutorial(t) self.m_tutorial = t end
+function Element:FindElementByPath(path,baseElement)
 	if(type(path) == "string") then path = util.Path.CreateFilePath(path) end
-	local el = tool.get_filmmaker()
+	local el = baseElement or tool.get_filmmaker()
 	local pathComponents = path:ToComponents()
 	for _,c in ipairs(pathComponents) do
 		local children = el:FindDescendantsByName(c)
@@ -30,6 +31,9 @@ function Element:FindElementByPath(path)
 	end
 	return el
 end
+function Element:GetBackButton() return self.m_buttonPrev end
+function Element:GetContinueButton() return self.m_buttonNext end
+function Element:GetEndButton() return self.m_buttonEnd end
 function Element:AddHighlight(el)
 	if(util.is_valid(el) == false) then return end
 	local elOutline = gui.create("WIElementSelectionOutline",self)
@@ -44,8 +48,20 @@ function Element:SetFocusElement(el)
 	elOutline:SetTargetElement(el)
 	elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MINOR)
 end
+function Element:CreateButton(parent,text,f)
+	local bt = gui.PFMButton.create(parent,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
+		f()
+		return util.EVENT_REPLY_HANDLED
+	end)
+	bt:SetSize(100,32)
+	bt:SetText(text)
+	bt:SetZPos(1)
+	return bt
+end
 function Element:AddMessageBox(msg)
-	local elTgt = self.m_highlights[1]
+	local elTgt
+	if(#self.m_highlights > 1) then elTgt = self.m_elFocus end
+	elTgt = elTgt or self.m_highlights[1]
 	if(util.is_valid(elTgt) == false) then return end
 	local elFocus = util.is_valid(self.m_elFocus) and self.m_elFocus or elTgt
 	local overlay = gui.create("WIModalOverlay",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
@@ -57,14 +73,28 @@ function Element:AddMessageBox(msg)
 	el:SetMouseInputEnabled(true)
 	el:GetDragArea():SetAutoAlignToParent(true)
 
-	local elBox = gui.create_info_box(el,msg)
+	local vbox = gui.create("WIVBox",el)
+
+	local elBox = gui.create_info_box(vbox,msg)
 	elBox:SetAlpha(220)
 	elBox:SetSize(el:GetSize())
-	table.insert(self.m_messageBoxes,el)
+	table.insert(self.m_messageBoxes,vbox)
+
+	local buttonContainer = gui.create("WIBase",vbox)
+	local hbox = gui.create("WIHBox",buttonContainer)
+	self.m_buttonPrev = self:CreateButton(hbox,"Go Back",function() self.m_tutorial:PreviousSlide() end)
+	self.m_buttonNext = self:CreateButton(hbox,"Continue",function() self.m_tutorial:NextSlide() end)
+	self.m_buttonNext:SetEnabledColor(Color.Lime)
+	self.m_buttonNext:SetDisabledColor(Color.Red)
+	hbox:Update()
+	self.m_buttonEnd = self:CreateButton(buttonContainer,"End Tutorial",function() self.m_tutorial:EndTutorial() end)
+	self.m_buttonEnd:SetX(elBox:GetWidth() -self.m_buttonEnd:GetWidth())
+	buttonContainer:SizeToContents()
+
 	elBox:SizeToContents()
 	elBox:Update()
-	el:SetSize(elBox:GetSize())
-	elBox:SetAnchor(0,0,1,1)
+	vbox:Update()
+	el:SetSize(vbox:GetSize())
 
 	local l = gui.create("WIElementConnectorLine",self)
 	l:SetSize(self:GetSize())
