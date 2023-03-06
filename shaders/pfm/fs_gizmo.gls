@@ -16,6 +16,6 @@ void main()
 	fs_color.r *= colorMod.r;
 	fs_color.g *= colorMod.g;
 	fs_color.b *= colorMod.b;
-	if(CSPEC_BLOOM_OUTPUT_ENABLED == 1)
-		extract_bright_color(fs_color);
+	//if(CSPEC_BLOOM_OUTPUT_ENABLED == 1)
+	//	extract_bright_color(fs_color);
 }
