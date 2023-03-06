@@ -159,20 +159,36 @@ function gui.PFMActorEditor:RemoveActors(ids)
 		local filmmaker = tool.get_filmmaker()
 		local filmClip = filmmaker:GetActiveFilmClip()
 		if(filmClip == nil) then return end
+		local pm = pfm.get_project_manager()
+		local session = pm:GetSession()
+		local items = {}
 		for _,uniqueId in ipairs(ids) do
+			local item = self:GetActorEntry(uniqueId)
+			if(util.is_valid(item)) then table.insert(items,item:GetParentItem()) end
+
 			local actor = filmClip:FindActorByUniqueId(uniqueId)
 			if(actor ~= nil) then self:RemoveActor(uniqueId,false) end
 		end
-		self.m_tree:GetRoot():UpdateUi()
+
+		for _,item in ipairs(items) do
+			item:UpdateUi()
+		end
 	end,function()
 		self:RestoreActorsFromUdmElement(el)
 	end)
+	local pm = pfm.get_project_manager()
+	local session = pm:GetSession()
+	local items = {}
 	for _,uniqueId in ipairs(ids) do
+		local item = self:GetActorEntry(uniqueId)
+		if(util.is_valid(item)) then table.insert(items,item:GetParentItem()) end
+
 		local actor = filmClip:FindActorByUniqueId(uniqueId)
 		if(actor ~= nil) then self:RemoveActor(uniqueId,false) end
 	end
-	self.m_tree:GetRoot():UpdateUi()
-	self:Reload()
+	for _,item in ipairs(items) do
+		item:UpdateUi()
+	end
 end
 function gui.PFMActorEditor:RemoveActor(uniqueId,updateUi)
 	if(updateUi == nil) then updateUi = true end

@@ -80,14 +80,14 @@ function pfm.udm.FilmClip:RemoveActor(actor)
 		local animClip = self:FindActorAnimationClip(actor,false)
 		if(animClip ~= nil) then
 			track:RemoveAnimationClip(animClip)
-			track:Reinitialize(track:GetUdmData())
+			-- track:Reinitialize(track:GetUdmData())
 		end
 	end
 
 	local _,group = self:FindActorByUniqueId(tostring(actor:GetUniqueId()))
 	if(group ~= nil) then
 		group:RemoveActor(actor)
-		group:Reinitialize(group:GetUdmData())
+		-- group:Reinitialize(group:GetUdmData())
 	end
 end
 function pfm.udm.FilmClip:RemoveActorComponent(actor,component)
