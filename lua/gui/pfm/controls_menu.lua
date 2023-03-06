@@ -206,6 +206,12 @@ function gui.PFMControlsMenu:AddSubMenu()
 	local el = gui.create("WIPFMControlsMenu",self)
 	el:SetAutoSizeToContents(true)
 	el:SetAutoFillContentsToHeight(false)
+
+	local o = gui.create("WIOutlinedRect",el,0,0,el:GetWidth(),el:GetHeight(),0,0,1,1)
+	o:SetColor(Color(100,100,100,255))
+	o:SetZPos(1)
+	el:SetBackgroundElement(o)
+
 	table.insert(self.m_subMenus,el)
 	return el
 end
