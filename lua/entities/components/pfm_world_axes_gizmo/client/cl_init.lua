@@ -13,6 +13,7 @@ function Component:Initialize()
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_TOGGLE)
+	self:AddEntityComponent("pfm_overlay_object")
 
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON,"UpdateGizmo")
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF,"UpdateGizmo")

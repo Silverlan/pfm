@@ -202,7 +202,7 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
 	local drawSceneInfo = game.DrawSceneInfo()
 	drawSceneInfo.toneMapping = shader.TONE_MAPPING_HDR
 	drawSceneInfo.scene = self.m_scene
-	drawSceneInfo.renderFlags = bit.bor(bit.band(drawSceneInfo.renderFlags,bit.bnot(game.RENDER_FLAG_BIT_VIEW)),game.RENDER_FLAG_HDR_BIT) -- Don't render view models
+	drawSceneInfo.renderFlags = bit.bor(bit.band(drawSceneInfo.renderFlags,bit.bnot(game.RENDER_FLAG_BIT_VIEW),bit.bnot(game.RENDER_FLAG_BIT_DEBUG)),game.RENDER_FLAG_HDR_BIT) -- Don't render view models
 	drawSceneInfo.inclusionMask = incMask
 	drawSceneInfo.exclusionMask = excMask
 	drawSceneInfo.commandBuffer = self.m_drawCommandBuffer
@@ -250,7 +250,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 
 	local baseSettings = tool.get_filmmaker():GetSettings():GetRenderSettings()
 	local mode = baseSettings:GetMode()
-	if(mode == fudm.PFMRenderSettings.MODE_DEPTH) then
+	if(mode == pfm.RaytracingRenderJob.Settings.RENDER_MODE_DEPTH) then
 		local rasterC = self.m_renderer:GetEntity():GetComponent(ents.COMPONENT_RASTERIZATION_RENDERER)
 		if(rasterC ~= nil) then
 			texOutput = rasterC:GetPostPrepassDepthTexture()
