@@ -673,8 +673,8 @@ function gui.PFMRenderPreview:InitializeOfflineRendererControls(p,settings)
 	local offlineRendererOptions = p:AddSubMenu()
 	-- Device Type
 	self.m_ctrlDeviceType = offlineRendererOptions:AddDropDownMenu(locale.get_text("pfm_cycles_device_type"),"device_type",{
-		{tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU),locale.get_text("pfm_cycles_device_type_gpu")},
-		{tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU),locale.get_text("pfm_cycles_device_type_cpu")}
+		{tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU),locale.get_text("pfm_cycles_device_type_gpu")},
+		{tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU),locale.get_text("pfm_cycles_device_type_cpu")}
 	},tostring(settings:GetDeviceType()))
 	offlineRendererOptions:LinkToUDMProperty("device_type",settings,"deviceType")
 
