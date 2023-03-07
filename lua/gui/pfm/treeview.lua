@@ -497,6 +497,7 @@ function gui.PFMTreeViewElement:AttachItem(item,insertIndex)
 	local parent = item:GetParentItem()
 	if(util.is_valid(parent)) then parent:DetachItem(item) end
 
+	self:InitializeChildBox()
 	if(insertIndex == nil) then item:SetParent(self.m_vBoxChildren)
 	else item:SetParent(self.m_vBoxChildren,insertIndex) end
 	item.m_treeView = self.m_treeView
