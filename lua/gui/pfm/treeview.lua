@@ -300,15 +300,19 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 	expandIcon:SetColor(Color(80,80,80))
 	expandIcon:AddCallback("OnExpand",function()
 		if(item:IsValid() == false) then return end
+		local itemParent = item:GetParentItem()
+		if(util.is_valid(itemParent) == false) then return end
 		if(item.m_fPopulate) then item.m_fPopulate(item) end
 		if(util.is_valid(item.m_childHBox)) then item.m_childHBox:SetVisible(true) end
-		self:UpdateChildBoxBounds()
+		itemParent:UpdateChildBoxBounds()
 		item:CallCallbacks("OnExpand")
 
-		self:FullUpdate()
+		itemParent:FullUpdate()
 	end)
 	expandIcon:AddCallback("OnCollapse",function()
 		if(item:IsValid() == false) then return end
+		local itemParent = item:GetParentItem()
+		if(util.is_valid(itemParent) == false) then return end
 		if(item.m_fPopulate) then
 			for _,child in ipairs(item:GetItems()) do
 				if(child:IsValid()) then child:Remove() end
@@ -317,7 +321,7 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 		if(util.is_valid(item.m_childHBox)) then item.m_childHBox:SetVisible(false) end
 		item:CallCallbacks("OnCollapse")
 
-		self:FullUpdate()
+		itemParent:FullUpdate()
 	end)
 	item:RemoveElementOnRemoval(expandIcon)
 	item.m_expandIcon = expandIcon
@@ -456,14 +460,46 @@ function gui.PFMTreeViewElement:SetIdentifier(identifier)
 	end
 end
 function gui.PFMTreeViewElement:GetIdentifier() return self.m_identifier end
-function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex,identifier)
-	self:InitializeChildBox()
-	local item = gui.create("WIPFMTreeViewElement")
+function gui.PFMTreeViewElement:DetachItem(item)
+	if(util.is_valid(item.m_treeView) == false) then return end
+
+	if(util.is_valid(item.m_parent)) then
+		for i,itemOther in ipairs(item.m_parent.m_items) do
+			if(itemOther:IsValid() and itemOther == item) then
+				table.remove(item.m_parent.m_items,i)
+				break
+			end
+		end
+
+		for i,itemEls in ipairs(item.m_parent.m_itemElements) do
+			if(itemEls[1]:IsValid() and itemEls[1] == item) then
+				util.remove(itemEls[2])
+				table.remove(item.m_parent.m_itemElements,i)
+				break
+			end
+		end
+
+		if(util.is_valid(item.m_expandIcon)) then
+			item.m_expandIcon:ClearParent()
+		end
+
+		item.m_parent:ScheduleUpdate()
+	end	
+
+	item:ClearParent()
+	item.m_treeView = nil
+	item.m_parent = nil
+
+	self:ScheduleUpdate()
+	self.m_treeView:GetRoot():ScheduleUpdate()
+end
+function gui.PFMTreeViewElement:AttachItem(item,insertIndex)
+	local parent = item:GetParentItem()
+	if(util.is_valid(parent)) then parent:DetachItem(item) end
+
 	if(insertIndex == nil) then item:SetParent(self.m_vBoxChildren)
 	else item:SetParent(self.m_vBoxChildren,insertIndex) end
-	item:SetText(text)
 	item.m_treeView = self.m_treeView
-	item.m_fPopulate = fPopulate
 	item.m_parent = self
 
 	local hLine = gui.create("WIRect",self.m_childPrefix)
@@ -478,11 +514,23 @@ function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex,identifier)
 		table.insert(self.m_itemElements,{item,hLine})
 		table.insert(self.m_items,item)
 	end
+
+	if(util.is_valid(item.m_expandIcon)) then
+		item.m_expandIcon:SetParent(self.m_childPrefix)
+	end
+
+	self:ScheduleUpdate()
+	self.m_treeView:GetRoot():ScheduleUpdate()
+end
+function gui.PFMTreeViewElement:AddItem(text,fPopulate,insertIndex,identifier)
+	self:InitializeChildBox()
+	local item = gui.create("WIPFMTreeViewElement")
+	item:SetText(text)
+	self:AttachItem(item,insertIndex)
+
 	if(identifier ~= nil) then
 		item:SetIdentifier(identifier)
 	end
-	self:ScheduleUpdate()
-	self.m_treeView:GetRoot():ScheduleUpdate()
 	return item
 end
 gui.register("WIPFMTreeViewElement",gui.PFMTreeViewElement)

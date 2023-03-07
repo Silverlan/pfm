@@ -261,16 +261,11 @@ function gui.PFMActorEditor:AddActor(actor,parentItem)
 						time.create_simple_timer(0.0,function()
 							if(self:IsValid() == false) then return end
 							local actors = self:GetSelectedActors()
-							local uniqueIds = {}
-							for _,actor in ipairs(actors) do table.insert(uniqueIds,tostring(actor:GetUniqueId())) end
-
-							self:CopyToClipboard(actors)
-							self:RemoveActors(uniqueIds)
-
-							local pm = pfm.get_project_manager()
-							local session = pm:GetSession()
-							self.m_lastSelectedGroup = udm.dereference(session:GetSchema(),groupUuid)
-							self:PasteFromClipboard(true)
+							for _,actor in ipairs(actors) do
+								if(self:MoveActorToCollection(actor,group) == false) then
+									pfm.log("Failed to move actor '" .. tostring(actor) .. "' to collection '" .. tostring(group) .. "'...",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+								end
+							end
 						end)
 					end
 				end
@@ -295,4 +290,18 @@ function gui.PFMActorEditor:AddActor(actor,parentItem)
 		parentItem:Expand()
 	end
 	return itemActor
+end
+
+function gui.PFMActorEditor:MoveActorToCollection(actor,col)
+	pfm.log("Moving actor '" .. tostring(actor) .. "' to collection '" .. tostring(col) .. "'...",pfm.LOG_CATEGORY_PFM)
+
+	local elActor = self:GetActorItem(actor)
+	local itemGroupTarget = self.m_tree:GetRoot():GetItemByIdentifier(tostring(col:GetUniqueId()),true)
+	if(util.is_valid(elActor) == false or util.is_valid(itemGroupTarget) == false) then return end
+
+	local srcGroup = actor:GetParent()
+	if(srcGroup:MoveActorTo(actor,col) == false) then return false end
+
+	itemGroupTarget:AttachItem(elActor)
+	return true
 end
