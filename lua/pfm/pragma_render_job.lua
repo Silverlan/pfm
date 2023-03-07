@@ -213,6 +213,8 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate,finalize)
 		local shouldRenderNextFrame = false
 		if(finalize) then shouldRenderNextFrame = self:FinalizeFrame() end
 		debug.stop_profiling_task()
+
+		if(self.m_useTiledRendering) then cam:UpdateMatrices() end
 		return shouldRenderNextFrame
 	end
 
