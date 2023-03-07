@@ -42,7 +42,7 @@ function Element:OnInitialize()
 	self.m_controls = controls
 
 	local rootPath = "scripts/ik_rigs"
-	local fe = controls:AddFileEntry("IK RIG","ik_rig","",function(resultHandler)
+	local fe = controls:AddFileEntry(locale.get_text("pfm_ik_rig_file"),"ik_rig","",function(resultHandler)
 		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 			if(fileName == nil) then return end
 			local rig = ents.IkSolverComponent.RigConfig.load(rootPath .. fileName)
@@ -59,7 +59,7 @@ function Element:OnInitialize()
 	end)
 
 	local feModel
-	feModel = controls:AddFileEntry("Reference Model","reference_model","",function(resultHandler)
+	feModel = controls:AddFileEntry(locale.get_text("pfm_ik_rig_reference_model"),"reference_model","",function(resultHandler)
 		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 			if(fileName == nil) then return end
 			resultHandler(el:GetFilePath(true))
@@ -144,6 +144,7 @@ function Element:ReloadBoneList(feModel)
 	local mdl = game.load_model(pathMdl)
 	if(mdl == nil) then return end
 	self.m_mdl = mdl
+	self.m_ikRig = ents.IkSolverComponent.RigConfig()
 
 	self:AddBoneList()
 	if(util.is_valid(self.m_mdlView)) then
@@ -152,7 +153,19 @@ function Element:ReloadBoneList(feModel)
 	end
 	self:UpdateMode()
 
-	self.m_ikRig = ents.IkSolverComponent.RigConfig()
+	self.m_modelView:SetAlwaysRender(true)
+	if(util.is_valid(self.m_mdlView)) then
+		local ent = self.m_mdlView:GetEntity(1)
+		if(util.is_valid(ent)) then
+			ent:RemoveComponent("click")
+			ent:RemoveComponent("bvh")
+			ent:RemoveComponent("pfm_skeleton")
+
+			ent:AddComponent("click")
+			ent:AddComponent("bvh")
+			ent:AddComponent("pfm_skeleton")
+		end
+	end
 end
 function Element:OnRemove()
 	self:UnlinkFromModelView()
@@ -237,11 +250,34 @@ function Element:SetBoneColor(actorId,boneId,col)
 	entBone:SetColor(col)
 	self.m_mdlView:Render()
 end
+function Element:UpdateBoneColor(name)
+	local item = self.m_skelTree:GetRoot():GetItemByIdentifier(name,true)
+	if(util.is_valid(item) == false) then return end
+	local te = item:GetTextElement()
+	if(self.m_ikRig:HasBone(name) == false) then
+		te:SetColor(Color(100,100,100))
+		return
+	end
+	local bone = self.m_ikRig:FindBone(name)
+	if(bone.locked) then
+		te:SetColor(Color.Red)
+		return
+	end
+	te:SetColor(Color.White)
+end
+function Element:AddBone(name)
+	self.m_ikRig:AddBone(name)
+	self:UpdateBoneColor(name)
+end
+function Element:RemoveBone(name)
+	self.m_ikRig:RemoveBone(name)
+	self:UpdateBoneColor(name)
+end
 function Element:InitializeBoneControls(mdl)
 	local options = {}
 	table.insert(options,{"none","-"})
-	table.insert(options,{"hinge","Hinge"})
-	table.insert(options,{"ballsocket","BallSocket"})
+	table.insert(options,{"hinge",locale.get_text("pfm_constraint_hinge")})
+	table.insert(options,{"ballsocket",locale.get_text("pfm_constraint_ball_socket")})
 
 	util.remove(self.m_skelTreeSubMenu)
 	local subMenu = self.m_boneControlMenu:AddSubMenu()
@@ -268,48 +304,50 @@ function Element:InitializeBoneControls(mdl)
 				local pContext = gui.open_context_menu()
 				if(util.is_valid(pContext)) then
 					pContext:SetPos(input.get_cursor_pos())
-					pContext:AddItem("Add Fixed Constraint",function()
+					pContext:AddItem(locale.get_text("pfm_add_fixed_constraint"),function()
 						self:AddFixedConstraint(item,boneDst:GetName())
 					end)
-					pContext:AddItem("Add Hinge Constraint",function()
+					pContext:AddItem(locale.get_text("pfm_add_hinge_constraint"),function()
 						self:AddHingeConstraint(item,boneDst:GetName())
 					end)
-					pContext:AddItem("Add Ball Socket Constraint",function()
+					pContext:AddItem(locale.get_text("pfm_add_ball_socket_constraint"),function()
 						self:AddBallSocketConstraint(item,boneDst:GetName())
 					end)
 					if(self.m_ikRig:HasBone(boneDst:GetName())) then
-						pContext:AddItem("Remove Bone",function()
-							self.m_ikRig:RemoveBone(boneDst:GetName())
+						pContext:AddItem(locale.get_text("pfm_remove_bone"),function()
+							self:RemoveBone(boneDst:GetName())
 							self:ReloadIkRig()
 						end)
 					else
-						pContext:AddItem("Add Bone",function()
-							self.m_ikRig:AddBone(boneDst:GetName())
+						pContext:AddItem(locale.get_text("pfm_add_bone"),function()
+							self:AddBone(boneDst:GetName())
 							self:ReloadIkRig()
 						end)
 					end
 					if(self.m_ikRig:IsBoneLocked(boneDst:GetName())) then
-						pContext:AddItem("Unlock Bone",function()
+						pContext:AddItem(locale.get_text("pfm_unlock_bone"),function()
 							self.m_ikRig:SetBoneLocked(boneDst:GetName(),false)
 							self:ReloadIkRig()
+							self:UpdateBoneColor(boneDst:GetName())
 						end)
 					else
-						pContext:AddItem("Lock Bone",function()
+						pContext:AddItem(locale.get_text("pfm_lock_bone"),function()
 							self.m_ikRig:SetBoneLocked(boneDst:GetName(),true)
 							self:ReloadIkRig()
+							self:UpdateBoneColor(boneDst:GetName())
 						end)
 					end
 					if(self.m_ikRig:HasControl(boneDst:GetName())) then
-						pContext:AddItem("Remove Control",function()
+						pContext:AddItem(locale.get_text("pfm_remove_control"),function()
 							self.m_ikRig:RemoveControl(boneDst:GetName())
 							self:ReloadIkRig()
 						end)
 					else
-						pContext:AddItem("Add Drag Control",function()
+						pContext:AddItem(locale.get_text("pfm_add_drag_control"),function()
 							self.m_ikRig:AddControl(boneDst:GetName(),ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG)
 							self:ReloadIkRig()
 						end)
-						pContext:AddItem("Add State Control",function()
+						pContext:AddItem(locale.get_text("pfm_add_state_control"),function()
 							self.m_ikRig:AddControl(boneDst:GetName(),ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
 							self:ReloadIkRig()
 						end)
@@ -320,6 +358,7 @@ function Element:InitializeBoneControls(mdl)
 				return util.EVENT_REPLY_HANDLED
 			end
 		end)
+		self:UpdateBoneColor(boneDst:GetName())
 	end
 	self.m_boneControlMenu:ResetControls()
 end
@@ -332,10 +371,10 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	local boneId = skel:LookupBone(boneName)
 	local bone = skel:GetBone(boneId)
 	local parent = bone:GetParent()
-	self.m_ikRig:AddBone(boneName)
-	self.m_ikRig:AddBone(parent:GetName())
+	self:AddBone(boneName)
+	self:AddBone(parent:GetName())
 
-	local child = item:AddItem(type .. " Constraint")
+	local child = item:AddItem(locale.get_text("pfm_" .. type .. "_constraint"))
 	child:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 			local pContext = gui.open_context_menu()
@@ -361,22 +400,34 @@ function Element:AddConstraint(item,boneName,type,constraint)
 
 	local singleAxis
 	local minLimits,maxLimits
-	local function add_rotation_axis_slider(name,axisId,min,defVal)
-		crtl:AddSliderControl("Rot " .. name,"rot_" .. name,defVal,-180.0,180.0,function(el,value)
+	local twistAxis = math.AXIS_Z
+	local function add_rotation_axis_slider(id,name,axisId,min,defVal)
+		crtl:AddSliderControl(locale.get_text(name),id,defVal,-180.0,180.0,function(el,value)
 			local animatedC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 			if(animatedC ~= nil) then
 				local ref = mdl:GetReferencePose()
 				local pose = ref:GetBonePose(parent:GetID()):GetInverse() *ref:GetBonePose(boneId)
-				local rot = pose:GetRotation():ToEulerAngles()
+				local rot = pose:GetRotation()
 				local tAxisId = singleAxis or axisId
-				rot:Set(tAxisId,rot:Get(tAxisId) +value)
+				local localRot = EulerAngles()
+				localRot:Set(tAxisId,value)
+
+				if(twistAxis == math.AXIS_X) then
+					localRot = EulerAngles(localRot.y,localRot.r,localRot.p)
+				elseif(twistAxis == math.AXIS_Y) then
+					localRot = EulerAngles(localRot.r,localRot.p,localRot.y)
+				elseif(twistAxis == math.AXIS_Z) then
+					
+				end
+				localRot = localRot:ToQuaternion()
+
+				rot = rot *localRot
 				pose:SetRotation(rot)
 				ent:RemoveComponent(ents.COMPONENT_IK_SOLVER)
 				ent:RemoveComponent(ents.COMPONENT_PFM_FBIK)
 
 				util.remove(self.m_cbOnAnimsUpdated)
 				self.m_cbOnAnimsUpdated = ent:GetComponent(ents.COMPONENT_ANIMATED):AddEventCallback(ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED,function()
-
 					animatedC:SetBonePose(boneId,pose)
 				end)
 
@@ -393,28 +444,39 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	if(constraint == nil) then
 		pfm.log("Adding " .. type .. " constraint from bone '" .. parent:GetName() .. "' to '" .. bone:GetName() .. "' of actor with model '" .. mdl:GetName() .. "'...",pfm.LOG_CATEGORY_PFM)
 		if(type == "fixed") then constraint = self.m_ikRig:AddFixedConstraint(parent:GetName(),bone:GetName())
-		elseif(type == "hinge") then constraint = self.m_ikRig:AddHingeConstraint(parent:GetName(),bone:GetName(),-90.0,90.0)
+		elseif(type == "hinge") then constraint = self.m_ikRig:AddHingeConstraint(parent:GetName(),bone:GetName(),-90.0,90.0,Quaternion(0.0379829, 0.699617, 7.66765e-07, 0.713508) *EulerAngles(0,0,90):ToQuaternion()) -- 0,0,0 -> roll | 0,90,0 -> pitch | 0,0,90 -> yaw
 		elseif(type == "ballSocket") then constraint = self.m_ikRig:AddBallSocketConstraint(parent:GetName(),bone:GetName(),EulerAngles(-90,-90,-0.5),EulerAngles(90,90,0.5)) end
 	end
 	minLimits = constraint.minLimits
 	maxLimits = constraint.maxLimits
 
 	local function add_rotation_axis(name,axisId,defMin,defMax)
-		add_rotation_axis_slider(name .. " min",axisId,true,defMin)
-		add_rotation_axis_slider(name .. " max",axisId,false,defMax)
+		add_rotation_axis_slider("pfm_ik_rot_" .. name .. "_min",name .. " min",axisId,true,defMin)
+		add_rotation_axis_slider("pfm_ik_rot_" .. name .. "_max",name .. " max",axisId,false,defMax)
 	end
 	if(type == "ballSocket") then
+		crtl:AddDropDownMenu(locale.get_text("pfm_ik_twist_axis"),"twist_axis",{
+			{tostring(math.AXIS_X),"X"},
+			{tostring(math.AXIS_Y),"Y"},
+			{tostring(math.AXIS_Z),"Z"}
+		},twistAxis,function(el,option)
+			local axis = el:GetOptionValue(el:GetSelectedOption())
+			twistAxis = tonumber(axis)
+			constraint.axis = twistAxis
+		end)
+
 		add_rotation_axis("pitch",0,minLimits.p,maxLimits.p)
 		add_rotation_axis("yaw",1,minLimits.y,maxLimits.y)
 		add_rotation_axis("roll",2,minLimits.r,maxLimits.r)
 	elseif(type == "hinge") then
 		singleAxis = 0
-		crtl:AddDropDownMenu("Axis","axis",{
+		crtl:AddDropDownMenu(locale.get_text("pfm_ik_axis"),"axis",{
 			{"x",locale.get_text("x")},
 			{"y",locale.get_text("y")},
 			{"z",locale.get_text("z")}
 		},0,function(el,option)
 			singleAxis = el:GetSelectedOption()
+			constraint.axis = singleAxis
 		end)
 		add_rotation_axis("angle",nil,minLimits.p,maxLimits.p)
 	end
@@ -466,12 +528,31 @@ function Element:CreateTransformGizmo()
 		trC:SetRotationEnabled(false)
 		trC:SetScaleEnabled(false)
 
+		local useLocalSpace = true
+
 		local ikSolverC = entActor:GetComponent(ents.COMPONENT_IK_SOLVER)
 		local memberPath = "control/" .. boneName .. "/position"
 		local pos = ikSolverC:GetMemberValue(memberPath)
-		local localPose = math.Transform(pos)
+		local rot = Quaternion()
+		if(useLocalSpace) then
+			local animC = entActor:GetComponent(ents.COMPONENT_ANIMATED)
+			if(animC ~= nil) then
+				local idx = animC:GetMemberIndex("bone/" .. boneName .. "/rotation")
+				if(idx ~= nil) then
+					rot = animC:GetTransformMemberRot(idx,math.COORDINATE_SPACE_OBJECT) or rot
+				end
+			end
+		end
+
+		local localPose = math.Transform(pos,rot)
 		local pose = entActor:GetPose()
 		entTransform:SetPose(pose *localPose)
+
+		if(useLocalSpace) then
+			trC:SetSpace(ents.UtilTransformComponent.SPACE_LOCAL)
+			trC:SetReferenceEntity(ent)
+		end
+
 		self.m_mdlView:Render()
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,function(pos)
 			self.m_mdlView:Render()
