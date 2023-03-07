@@ -13,7 +13,8 @@ end
 function Component:OnEntitySpawn()
 	local pm = tool.get_filmmaker()
 	if(util.is_valid(pm) == false) then return end
-	self:GetEntity():AddToScene(pm:GetOverlayScene())
+	local scene = pm:GetOverlayScene()
+	if(util.is_valid(scene)) then self:GetEntity():AddToScene(scene) end
 end
 function Component:OnRemove()
 	local pm = tool.get_filmmaker()
