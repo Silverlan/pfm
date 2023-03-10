@@ -8,6 +8,8 @@
 
 include("pfm/controls_menu.lua")
 
+locale.load("pfm_ik_rig_editor.txt")
+
 local Element = util.register_class("gui.IkRigEditor",gui.Base)
 
 local function get_bones_in_hierarchical_order(mdl)
@@ -276,8 +278,8 @@ end
 function Element:InitializeBoneControls(mdl)
 	local options = {}
 	table.insert(options,{"none","-"})
-	table.insert(options,{"hinge",locale.get_text("pfm_constraint_hinge")})
-	table.insert(options,{"ballsocket",locale.get_text("pfm_constraint_ball_socket")})
+	table.insert(options,{"hinge",locale.get_text("pfm_hinge_constraint")})
+	table.insert(options,{"ballsocket",locale.get_text("pfm_ball_socket_constraint")})
 
 	util.remove(self.m_skelTreeSubMenu)
 	local subMenu = self.m_boneControlMenu:AddSubMenu()
@@ -374,7 +376,7 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	self:AddBone(boneName)
 	self:AddBone(parent:GetName())
 
-	local child = item:AddItem(locale.get_text("pfm_" .. type .. "_constraint"))
+	local child = item:AddItem(locale.get_text("pfm_" .. string.camel_case_to_snake_case(type) .. "_constraint"))
 	child:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 			local pContext = gui.open_context_menu()
@@ -404,7 +406,7 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	local includeUnidirectionalLimit = false
 	local twistAxis = math.AXIS_Z
 	if(type == "ballSocket") then twistAxis = ents.IkSolverComponent.find_forward_axis(mdl,parent:GetID(),boneId) or twistAxis end
-	local function add_rotation_axis_slider(ctrl,id,name,axisId,min,defVal)
+	local function add_rotation_axis_slider(ctrl,name,id,axisId,min,defVal)
 		return ctrl:AddSliderControl(locale.get_text(name),id,defVal,-180.0,180.0,function(el,value)
 			local animatedC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 			if(animatedC ~= nil) then
@@ -597,9 +599,9 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	elseif(type == "hinge") then
 		singleAxis = 0
 		ctrl:AddDropDownMenu(locale.get_text("pfm_ik_axis"),"axis",{
-			{"x",locale.get_text("x")},
-			{"y",locale.get_text("y")},
-			{"z",locale.get_text("z")}
+			{"x","X"},
+			{"y","Y"},
+			{"z","Z"}
 		},0,function(el,option)
 			singleAxis = el:GetSelectedOption()
 			constraint.axis = singleAxis
