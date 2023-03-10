@@ -72,7 +72,7 @@ end
 function gui.PFMSlider:SetStepSize(stepSize)
 	self.m_stepSize = stepSize
 	local strStepSize = tostring(stepSize)
-	local decimalPlacePos = strStepSize:find(".")
+	local decimalPlacePos = strStepSize:find("%.")
 	self.m_numDecimalPlaces = 0
 	if(decimalPlacePos ~= nil) then
 		if(stepSize == 0) then self.m_numDecimalPlaces = 2
