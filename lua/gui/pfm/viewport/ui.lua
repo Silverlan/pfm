@@ -253,6 +253,7 @@ function gui.PFMViewport:InitializeControls()
 	self.m_controls = controls
 
 	self.m_playControls = gui.create("PlaybackControls",controls)
+	self.m_playControls:SetName("playback_controls")
 	self.m_playControls:CenterToParentX()
 	self.m_playControls:SetAnchor(0.5,0,0.5,0)
 	self.m_playControls:LinkToPFMProject(tool.get_filmmaker())

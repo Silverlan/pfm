@@ -138,6 +138,7 @@ function gui.PFMFrame:AddTab(identifier,name,panel)
 	end
 	local bt = gui.create("WIPFMTabButton",self.m_tabButtonContainer)
 	bt:SetText(name)
+	bt:SetName(identifier .. "_tab_button")
 	bt:SetFrame(self)
 	bt:AddCallback("OnPressed",function()
 		local tabId = self:GetTabId(identifier)

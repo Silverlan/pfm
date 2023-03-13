@@ -44,7 +44,14 @@ function Element:OnRemove()
 	util.remove(self.m_elCallbacks)
 end
 function Element:OnUpdate()
-	if(util.is_valid(self.m_elTarget) == false) then return end
+	if(util.is_valid(self.m_elTarget) == false) then
+		self.m_bgEls[1]:SetWidth(self:GetWidth())
+		self.m_bgEls[1]:SetHeight(self:GetHeight())
+		for i=2,4 do
+			self.m_bgEls[i]:SetSize(0,0)
+		end
+		return
+	end
 	local absPos = self.m_elTarget:GetAbsolutePos()
 	self.m_bgEls[1]:SetWidth(self:GetWidth())
 	self.m_bgEls[1]:SetHeight(absPos.y)

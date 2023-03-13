@@ -470,7 +470,7 @@ function gui.WIFilmmaker:OnInitialize()
 			engine.shutdown()
 		end)
 		pContext:ScheduleUpdate()
-	end)
+	end):SetName("file")
 	--[[pMenuBar:AddItem(locale.get_text("edit"),function(pContext)
 
 	end)
@@ -503,7 +503,7 @@ function gui.WIFilmmaker:OnInitialize()
 			pSubMenu:ScheduleUpdate()
 
 			pContext:ScheduleUpdate()
-		end)
+		end):SetName("render")
 	end
 	--[[pMenuBar:AddItem(locale.get_text("map"),function(pContext)
 		pContext:AddItem(locale.get_text("pfm_generate_lightmaps"),function(pItem)
@@ -527,7 +527,7 @@ function gui.WIFilmmaker:OnInitialize()
 		pSubMenu:ScheduleUpdate()
 
 		pContext:ScheduleUpdate()
-	end)
+	end):SetName("preferences")
 	pMenuBar:AddItem(locale.get_text("tools"),function(pContext)
 		if(self:IsDeveloperModeEnabled()) then
 			pContext:AddItem(locale.get_text("pfm_export_map"),function(pItem)
@@ -642,7 +642,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end
 
 		pContext:ScheduleUpdate()
-	end)
+	end):SetName("tools")
 	self:AddWindowsMenuBarItem()
 	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
 		pContext:AddItem(locale.get_text("pfm_getting_started"),function(pItem)
@@ -652,7 +652,7 @@ function gui.WIFilmmaker:OnInitialize()
 			util.open_url_in_browser("https://github.com/Silverlan/pfm/issues")
 		end)
 		pContext:ScheduleUpdate()
-	end)
+	end):SetName("help")
 	pMenuBar:ScheduleUpdate()
 
 	-- Version Info
@@ -928,7 +928,7 @@ function gui.WIFilmmaker:ImportMap(map)
 
 	local indexCounters = {}
 
-	local group = actorEditor:FindCollection(asset.get_normalized_path(map,asset.TYPE_MAP),true)
+	local group = actorEditor:FindCollection(file.get_file_name(asset.get_normalized_path(map,asset.TYPE_MAP)),true)
 	local entityData = data:GetAssetData():GetData():Get("entities")
 	for _,entData in ipairs(entityData:GetArrayValues()) do
 		local keyValues = entData:Get("keyValues")
@@ -1828,6 +1828,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:InitializeGenericLayout()
 
 	local actorDataFrame = self:AddFrame()
+	actorDataFrame:SetName("actor_frame")
 	self.m_actorDataFrame = actorDataFrame
 	
 	self.m_vResizer = gui.create("WIResizer",self.m_contents)
@@ -1838,6 +1839,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self.m_contentsRight:SetAutoFillContents(true)
 
 	local viewportFrame = self:AddFrame(self.m_contentsRight)
+	viewportFrame:SetName("viewport_frame")
 	self.m_viewportFrame = viewportFrame
 	viewportFrame:SetHeight(self:GetHeight())
 
@@ -2160,6 +2162,7 @@ function gui.WIFilmmaker:InitializeProjectUI()
 	self:OpenWindow("render")
 	self:OpenWindow("web_browser")
 	self:OpenWindow("model_catalog")
+	self:OpenWindow("tutorial_catalog")
 
 	if(util.is_valid(elVp)) then elVp:UpdateRenderSettings() end
 

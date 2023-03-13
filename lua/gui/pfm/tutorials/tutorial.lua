@@ -24,7 +24,12 @@ function Element:OnThink()
 	local slideData = self.m_slides[self.m_curSlide.identifier]
 	if(slideData ~= nil and slideData.clearCondition ~= nil) then
 		local bt = self.m_curSlide.element:GetContinueButton()
-		bt:SetEnabled(slideData.clearCondition(self.m_curSlide.data))
+		local enabled = slideData.clearCondition(self.m_curSlide.data)
+		bt:SetEnabled(enabled)
+
+		if(enabled and slideData.autoContinue) then
+			self:NextSlide()
+		end
 	end
 end
 function Element:OnRemove()
@@ -58,7 +63,9 @@ function Element:StartSlide(identifier)
 		if(slideData.clearCondition ~= nil) then
 			-- Disable button until clear condition has been met
 			bt:SetEnabled(false)
-		else bt:SetEnabled(true) end
+		else
+			bt:SetEnabled(true)
+		end
 	end
 
 	self:UpdateButtons()

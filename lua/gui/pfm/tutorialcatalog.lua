@@ -64,6 +64,7 @@ function gui.PFMTutorialCatalog:OnInitialize()
 
 	self:EnableThinking()
 end
+function gui.PFMTutorialCatalog:GetExplorer() return self.m_explorer end
 function gui.PFMTutorialCatalog:OnThink()
 	-- Lazy initialization
 	self.m_explorer:Update()

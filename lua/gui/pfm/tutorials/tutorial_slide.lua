@@ -61,8 +61,7 @@ end
 function Element:AddMessageBox(msg)
 	local elTgt
 	if(#self.m_highlights > 1) then elTgt = self.m_elFocus end
-	elTgt = elTgt or self.m_highlights[1]
-	if(util.is_valid(elTgt) == false) then return end
+	elTgt = elTgt or self.m_highlights[1] or self
 	local elFocus = util.is_valid(self.m_elFocus) and self.m_elFocus or elTgt
 	local overlay = gui.create("WIModalOverlay",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	
@@ -82,12 +81,12 @@ function Element:AddMessageBox(msg)
 
 	local buttonContainer = gui.create("WIBase",vbox)
 	local hbox = gui.create("WIHBox",buttonContainer)
-	self.m_buttonPrev = self:CreateButton(hbox,"Go Back",function() self.m_tutorial:PreviousSlide() end)
-	self.m_buttonNext = self:CreateButton(hbox,"Continue",function() self.m_tutorial:NextSlide() end)
+	self.m_buttonPrev = self:CreateButton(hbox,locale.get_text("pfm_go_back"),function() self.m_tutorial:PreviousSlide() end)
+	self.m_buttonNext = self:CreateButton(hbox,locale.get_text("pfm_continue"),function() self.m_tutorial:NextSlide() end)
 	self.m_buttonNext:SetEnabledColor(Color.Lime)
 	self.m_buttonNext:SetDisabledColor(Color.Red)
 	hbox:Update()
-	self.m_buttonEnd = self:CreateButton(buttonContainer,"End Tutorial",function() self.m_tutorial:EndTutorial() end)
+	self.m_buttonEnd = self:CreateButton(buttonContainer,locale.get_text("pfm_end_tutorial"),function() self.m_tutorial:EndTutorial() end)
 	self.m_buttonEnd:SetX(elBox:GetWidth() -self.m_buttonEnd:GetWidth())
 	buttonContainer:SizeToContents()
 
@@ -96,35 +95,38 @@ function Element:AddMessageBox(msg)
 	vbox:Update()
 	el:SetSize(vbox:GetSize())
 
-	local l = gui.create("WIElementConnectorLine",self)
-	l:SetSize(self:GetSize())
-	l:SetAnchor(0,0,1,1)
-	l:Setup(el,elTgt)
+	if(elTgt ~= self) then
+		local l = gui.create("WIElementConnectorLine",self)
+		l:SetSize(self:GetSize())
+		l:SetAnchor(0,0,1,1)
+		l:Setup(el,elTgt)
 
-	local posAbs = elTgt:GetAbsolutePos()
-	local posAbsEnd = posAbs +elTgt:GetSize()
-	local spaceLeft = posAbs.x
-	local spaceRight = self:GetWidth() -posAbsEnd.x
-	local spaceUp = posAbs.y
-	local spaceDown = self:GetHeight() -posAbsEnd.y
+		local posAbs = elTgt:GetAbsolutePos()
+		local posAbsEnd = posAbs +elTgt:GetSize()
+		local spaceLeft = posAbs.x
+		local spaceRight = self:GetWidth() -posAbsEnd.x
+		local spaceUp = posAbs.y
+		local spaceDown = self:GetHeight() -posAbsEnd.y
 
-	local w = elBox:GetWidth()
-	local h = elBox:GetHeight()
+		local w = elBox:GetWidth()
+		local h = elBox:GetHeight()
 
-	local max = math.max(spaceLeft -w,spaceRight -w,spaceUp -h,spaceDown -h)
-	local hw = el:GetHalfWidth()
-	local hh = el:GetHalfHeight()
-	if(spaceLeft -w >= max) then
-		el:SetPos(spaceLeft *0.75 -hw,self:GetHeight() *0.25 -hh)
-	elseif(spaceRight -w >= max) then
-		el:SetPos(posAbsEnd.x +spaceRight *0.75 -hw,self:GetHeight() *0.25 -hh)
-	elseif(spaceUp -h >= max) then
-		el:SetPos(self:GetWidth() *0.25 -hw,spaceUp *0.75 -hh)
-	elseif(spaceDown -h >= max) then
-		el:SetPos(self:GetWidth() *0.25 -hw,posAbsEnd.y +spaceDown *0.75 -hh)
-	end
+		local max = math.max(spaceLeft -w,spaceRight -w,spaceUp -h,spaceDown -h)
+		local hw = el:GetHalfWidth()
+		local hh = el:GetHalfHeight()
+		if(spaceLeft -w >= max) then
+			el:SetPos(spaceLeft *0.75 -hw,self:GetHeight() *0.25 -hh)
+		elseif(spaceRight -w >= max) then
+			el:SetPos(posAbsEnd.x +spaceRight *0.75 -hw,self:GetHeight() *0.25 -hh)
+		elseif(spaceUp -h >= max) then
+			el:SetPos(self:GetWidth() *0.25 -hw,spaceUp *0.75 -hh)
+		elseif(spaceDown -h >= max) then
+			el:SetPos(self:GetWidth() *0.25 -hw,posAbsEnd.y +spaceDown *0.75 -hh)
+		end
+		overlay:SetTarget(elFocus)
+	else el:CenterToParent() end
+	overlay:ScheduleUpdate()
 
-	overlay:SetTarget(elFocus)
 	return el
 end
 function Element:OnRemove()

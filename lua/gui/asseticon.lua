@@ -415,6 +415,11 @@ function gui.AssetIcon:ReloadFromCache(importAsset)
 end
 function gui.AssetIcon:SetAsset(path,assetName,importAsset,attrData)
 	attrData = attrData or {}
+
+	local identifier = path .. assetName
+	identifier = identifier:replace("/","_")
+	self:SetName(identifier)
+
 	self.m_assetPath = path
 	self.m_assetName = assetName
 	self.m_attrData = attrData
