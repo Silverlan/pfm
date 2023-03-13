@@ -59,16 +59,21 @@ function gui.PFMActorEditor:CreateNewActor(actorName,pose,uniqueId,group,dontRef
 	actor:SetName(actorName)
 
 	local pos,rot
+	local scale
 	if(pose ~= nil) then
 		pos = pose:GetOrigin()
 		rot = pose:GetRotation()
+		if(util.get_type_name(pose) == "ScaledTransform") then
+			scale = pose:GetScale()
+			if(scale == Vector(1,1,1)) then scale = nil end
+		end
 	else
 		pos = Vector()
 		rot = Quaternion()
 		local cam = tool.get_filmmaker():GetActiveCamera()
 		if(util.is_valid(cam)) then
 			local entCam = cam:GetEntity()
-			pos = entCam:GetPos() +entCam:GetForward() *100.0
+			pos = entCam:GetPos() +entCam:GetForward() *50.0
 			rot = EulerAngles(0,entCam:GetAngles().y,0):ToQuaternion()
 		end
 	end
@@ -82,7 +87,7 @@ function gui.PFMActorEditor:CreateNewActor(actorName,pose,uniqueId,group,dontRef
 	local pfmActorC = self:CreateNewActorComponent(actor,"pfm_actor",false)
 	pfmActorC:SetMemberValue("position",udm.TYPE_VECTOR3,pos)
 	pfmActorC:SetMemberValue("rotation",udm.TYPE_QUATERNION,rot)
-
+	if(scale ~= nil) then pfmActorC:SetMemberValue("scale",udm.TYPE_VECTOR3,scale) end
 	return actor
 end
 function gui.PFMActorEditor:CreateNewActorComponent(actor,componentType,updateActorAndUi,initComponent)

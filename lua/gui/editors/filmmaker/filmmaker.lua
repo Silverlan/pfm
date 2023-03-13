@@ -933,14 +933,19 @@ function gui.WIFilmmaker:ImportMap(map)
 	for _,entData in ipairs(entityData:GetArrayValues()) do
 		local keyValues = entData:Get("keyValues")
 		local className = entData:GetValue("className",udm.TYPE_STRING)
-		local pose = entData:GetValue("pose",udm.TYPE_TRANSFORM) or math.Transform()
+		local pose = entData:GetValue("pose",udm.TYPE_SCALED_TRANSFORM) or math.ScaledTransform()
 		local model = keyValues:GetValue("model",udm.TYPE_STRING)
 		local uuid = keyValues:GetValue("uuid",udm.TYPE_STRING)
 		local skin = keyValues:GetValue("skin",udm.TYPE_STRING) or 0
 		local angles = keyValues:GetValue("angles",udm.TYPE_STRING)
+		local scale = keyValues:GetValue("scale",udm.TYPE_STRING)
 		if(angles ~= nil) then
 			angles = EulerAngles(angles)
 			pose:SetRotation(angles:ToQuaternion())
+		end
+		if(scale ~= nil) then
+			scale = Vector(scale)
+			pose:SetScale(scale)
 		end
 		local index
 		if(indexCounters[className] == nil) then
