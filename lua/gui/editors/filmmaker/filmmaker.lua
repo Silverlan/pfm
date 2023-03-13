@@ -951,8 +951,9 @@ function gui.WIFilmmaker:ImportMap(map)
 			indexCounters[className] = index +1
 		end
 		local name = keyValues:GetValue("targetname",udm.TYPE_STRING) or (className .. index)
-		if(className == "prop_physics" or className == "world") then
+		if(className == "prop_physics" or className == "prop_dynamic" or className == "world") then
 			if(model ~= nil) then
+				name = file.get_file_name(model)
 				local actor = actorEditor:CreateNewActor(name,pose,uuid,actorEditor:FindCollection(gui.PFMActorEditor.COLLECTION_SCENEBUILD,true,group))
 				actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,{
 					["actor"] = actor,
