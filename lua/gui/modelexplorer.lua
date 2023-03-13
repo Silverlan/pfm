@@ -18,6 +18,7 @@ function gui.ModelExplorer:OnInitialize()
 
 	self:SetAssetType(asset.TYPE_MODEL)
 	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
+	table.insert(extensions,1,asset.FORMAT_MODEL_ASCII)
 	table.insert(extensions,1,asset.FORMAT_MODEL_BINARY)
 	self:SetFileExtensions(extensions,asset.get_supported_import_file_extensions(asset.TYPE_MODEL))
 

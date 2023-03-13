@@ -28,7 +28,7 @@ function gui.PFMModelCatalog:OnInitialize()
 	self.m_contents:SetFixedSize(true)
 	self.m_contents:SetAutoFillContents(true)
 
-	local fit = pfm.FileIndexTable("models","models/",{asset.FORMAT_MODEL_BINARY},asset.get_supported_import_file_extensions(asset.TYPE_MODEL))
+	local fit = pfm.FileIndexTable("models","models/",{asset.FORMAT_MODEL_BINARY,asset.FORMAT_MODEL_ASCII},asset.get_supported_import_file_extensions(asset.TYPE_MODEL))
 	self.m_fit = fit
 
 	self.m_teLocation = gui.create("WITextEntry",self.m_contents,0,0,self:GetWidth(),24)
@@ -71,6 +71,7 @@ function gui.PFMModelCatalog:OnInitialize()
 
 	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
 	table.insert(extensions,asset.FORMAT_MODEL_BINARY)
+	table.insert(extensions,asset.FORMAT_MODEL_ASCII)
 	local explorer = gui.create("WIModelExplorer",scrollContainer,0,0,self:GetWidth(),self:GetHeight())
 	explorer:SetAutoAlignToParent(true,false)
 	explorer:SetRootPath("models")
