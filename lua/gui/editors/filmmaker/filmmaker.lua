@@ -1943,6 +1943,37 @@ function gui.WIFilmmaker:InitializeProjectUI()
 						end
 						pSubMenu:Update()
 					end
+
+					local mdl = game.load_model(path)
+					local name = (mdl:GetName() ~= nil) and mdl:GetName() or ""
+					if(#name > 0) then
+						local filePath = asset.find_file(name,asset.TYPE_MODEL)
+						if(filePath ~= nil) then
+							filePath = asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. filePath
+							local formatType,err = udm.get_format_type(filePath)
+							if(formatType ~= false) then
+								if(formatType == udm.FORMAT_TYPE_BINARY) then
+									pContext:AddItem(locale.get_text("pfm_convert_to_ascii_format"),function()
+										local newFileName,err = udm.convert_udm_file_to_ascii(filePath)
+										if(newFileName == false) then
+											console.print_warning("Failed to convert asset to ASCII format: " .. err)
+										else
+											util.open_path_in_explorer(file.get_file_path(newFileName),file.get_file_name(newFileName))
+										end
+									end)
+								else
+									pContext:AddItem(locale.get_text("pfm_convert_to_binary_format"),function()
+										local newFileName,err = udm.convert_udm_file_to_binary(filePath)
+										if(newFileName == false) then
+											console.print_warning("Failed to convert asset to binary format: " .. err)
+										else
+											util.open_path_in_explorer(file.get_file_path(newFileName),file.get_file_name(newFileName))
+										end
+									end)
+								end
+							end
+						end
+					end
 				end
 			end
 
