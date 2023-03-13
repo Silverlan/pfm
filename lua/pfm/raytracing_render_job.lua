@@ -292,7 +292,8 @@ function pfm.RaytracingRenderJob:GenerateResult()
 		w = math.round(w *f)
 	end
 
-	local downscaled = opencv.resize(self.m_currentImageBuffer,w,h)
+	local downscaled = self.m_currentImageBuffer
+	if(opencv ~= nil) then downscaled = opencv.resize(self.m_currentImageBuffer,w,h) end
 	imgCreateInfo.width = downscaled:GetWidth()
 	imgCreateInfo.height = downscaled:GetHeight()
 	img = prosper.create_image(downscaled,imgCreateInfo)
