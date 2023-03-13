@@ -31,7 +31,7 @@ function gui.ModelExplorer:OnInitialize()
 					if(assetType == asset.TYPE_MODEL) then
 						self:AddToSpecial("new",assetPath)
 					end
-				end)
+				end,function() if(self:IsValid()) then self:ScheduleUpdate() end end)
 			end
 		end
 		return util.EVENT_REPLY_HANDLED
