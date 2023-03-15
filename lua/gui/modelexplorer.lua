@@ -27,7 +27,11 @@ function gui.ModelExplorer:OnInitialize()
 		for _,fname in ipairs(tFiles) do
 			local f = game.open_dropped_file(fname,true)
 			if(f ~= nil) then
-				util.import_assets(f,nil,basePath:GetString(),true,function(assetType,assetPath)
+				local dirName = file.remove_file_extension(fname)
+				dirName = string.replace(dirName,".","_")
+				local outputPath = basePath +util.Path.CreatePath(dirName)
+				self:SetPath(outputPath:GetString())
+				util.import_assets(f,nil,outputPath:GetString(),true,function(assetType,assetPath)
 					if(assetType == asset.TYPE_MODEL) then
 						self:AddToSpecial("new",assetPath)
 					end
