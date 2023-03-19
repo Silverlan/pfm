@@ -70,26 +70,40 @@ function gui.WIFilmmaker:__init()
 end
 include("/pfm/bake/ibl.lua")
 function gui.WIFilmmaker:CheckForUpdates(verbose)
-	if(util.is_valid(self.m_updateChecker)) then return end
-	-- TODO: Locale, etc
-	local url = "http://wiki.pragma-engine.com/queries/query_version.php"
-	self.m_updateChecker = util.UpdateChecker(url,function(version)
-		if(version > pfm.VERSION) then
-			-- New version available!
-			local updateUrl = "https://wiki.pragma-engine.com/download_pfm.php"
-			local el = pfm.create_popup_message(locale.get_text("vrp_new_version_available",{version:ToString(),updateUrl}))
-			el:SetMouseInputEnabled(true)
-			el:SetCursor(gui.CURSOR_SHAPE_HAND)
-			el:AddCallback("OnMouseEvent",function(el,button,state,mods)
-				if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
-					util.open_url_in_browser(updateUrl)
-					return util.EVENT_REPLY_HANDLED
-				end
-			end)
-		elseif(verbose) then
-			pfm.create_popup_message(locale.get_text("vrp_up_to_date",{pfm.VERSION:ToString()}))
+	local r = engine.load_library("git/pr_git")
+	if(r ~= true) then
+		pfm.log("Failed to load pr_git module: " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+
+	local res,err = git.get_remote_tags("https://github.com/Silverlan/pragma.git")
+	if(res == false) then
+		pfm.log("Failed to retrieve remote tags: " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+
+	local highestVersion = util.Version(0,0,0)
+	for _,tag in ipairs(res) do
+		if(tag:sub(1,1) == "v") then
+			local v = util.Version(tag:sub(2))
+			if(v > highestVersion) then highestVersion = v end
 		end
-	end)
+	end
+
+	local curVersion = engine.get_info().version
+	if(highestVersion > curVersion) then
+		-- New version available!
+		local updateUrl = "https://github.com/Silverlan/pragma/releases/tag/v" .. highestVersion:ToString()
+		pfm.create_popup_message(
+			locale.get_text("pfm_new_version_available",{highestVersion:ToString(),updateUrl}),
+			false,nil,{
+				url = updateUrl,
+				openUrlInSystemBrowser = true
+			}
+		)
+	elseif(verbose) then
+		pfm.create_popup_message(locale.get_text("pfm_up_to_date",{pfm.VERSION:ToString()}))
+	end
 end
 function gui.WIFilmmaker:OnInitialize()
 	self:SetDeveloperModeEnabled(tool.is_developer_mode_enabled())
@@ -646,10 +660,13 @@ function gui.WIFilmmaker:OnInitialize()
 	self:AddWindowsMenuBarItem()
 	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
 		pContext:AddItem(locale.get_text("pfm_getting_started"),function(pItem)
-			util.open_url_in_browser("https://wiki.pragma-engine.com/books/pragma-filmmaker")
+			self:OpenUrlInBrowser("https://wiki.pragma-engine.com/books/pragma-filmmaker")
 		end)
 		pContext:AddItem(locale.get_text("pfm_report_a_bug"),function(pItem)
-			util.open_url_in_browser("https://github.com/Silverlan/pfm/issues")
+			self:OpenUrlInBrowser("https://github.com/Silverlan/pfm/issues")
+		end)
+		pContext:AddItem(locale.get_text("pfm_check_for_updates"),function(pItem)
+			self:CheckForUpdates(true)
 		end)
 		pContext:ScheduleUpdate()
 	end):SetName("help")
@@ -686,6 +703,11 @@ function gui.WIFilmmaker:OnInitialize()
 	elVersion:SetY(3)
 	elVersion:SetAnchor(1,0,1,0)
 	log.info("PFM Version: " .. versionString)
+
+	time.create_simple_timer(5.0,function()
+		if(self:IsValid() == false) then return end
+		self:CheckForUpdates()
+	end)
 	--
 
 	console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps")))
@@ -806,6 +828,18 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched",self)
+end
+function gui.WIFilmmaker:OpenUrlInBrowser(url)
+	self:OpenWindow("web_browser")
+	self:GoToWindow("web_browser")
+	time.create_simple_timer(0.25,function()
+		if(self:IsValid() == false) then return end
+		local w = self:GetWindow("web_browser")
+		w = util.is_valid(w) and w:GetBrowser() or nil
+		w = util.is_valid(w) and w:GetWebBrowser() or nil
+		if(util.is_valid(w) == false) then return end
+		w:LoadUrl(url)
+	end)
 end
 function gui.WIFilmmaker:GetManagerEntity() return self.m_pfmManager end
 function gui.WIFilmmaker:GetWorldAxesGizmo() return self.m_worldAxesGizmo end

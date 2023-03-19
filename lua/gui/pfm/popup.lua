@@ -63,21 +63,40 @@ function gui.PFMPopup:OnThink()
 end
 function gui.PFMPopup:DisplayNextText()
 	if(#self.m_queue == 0) then return end
-	local infoBox = gui.create_info_box(tool.get_filmmaker(),self.m_queue[1][1],self.m_queue[1][3])
+	local item = self.m_queue[1]
+	local infoBox = gui.create_info_box(tool.get_filmmaker(),item.text,item.type)
 	infoBox:SetWidth(400)
 	infoBox:SetMouseInputEnabled(true)
 	infoBox:SetRemoveOnClose(true)
 	infoBox:SizeToContents()
 
+	local settings = item.settings
+	if(settings ~= nil and settings.url ~= nil) then
+		infoBox:SetCursor(gui.CURSOR_SHAPE_HAND)
+		infoBox:AddCallback("OnMouseEvent",function(el,button,state,mods)
+			if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
+				if(settings.openUrlInSystemBrowser) then util.open_url_in_browser(settings.url)
+				else tool.get_filmmaker():OpenUrlInBrowser(settings.url) end
+				util.remove(self.m_infoBox,true)
+				return util.EVENT_REPLY_HANDLED
+			end
+		end)
+	end
+
 	util.remove(self.m_infoBox)
 	self.m_infoBox = infoBox
 	self.m_infoStartTime = time.real_time()
-	self.m_displayDuration = self.m_queue[1][2]
+	self.m_displayDuration = item.duration
 
 	table.remove(self.m_queue,1)
 end
-function gui.PFMPopup:AddToQueue(text,duration,type)
-	table.insert(self.m_queue,{text,(duration == nil) and 10.0 or duration,type or gui.InfoBox.TYPE_INFO})
+function gui.PFMPopup:AddToQueue(text,duration,type,settings)
+	table.insert(self.m_queue,{
+		text = text,
+		duration = (duration == nil) and 10.0 or duration,
+		type = type or gui.InfoBox.TYPE_INFO,
+		settings = settings
+	})
 	if(self.m_first) then
 		self:DisplayNextText()
 		self.m_first = false
