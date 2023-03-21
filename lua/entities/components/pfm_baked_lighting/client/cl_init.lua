@@ -186,10 +186,10 @@ function Component:OnTick(dt)
 		if(self.m_lightmapJob:IsComplete()) then
 			if(self.m_lightmapJob:IsSuccessful()) then
 				local result = self.m_lightmapJob:GetResult()
-				local mat = self:SaveLightmapTexture(result,"DIFFUSE","diffuse_map","lightmap_diffuse")
+				local mat = self:SaveLightmapTexture(result,"Diffuse","diffuse_map","lightmap_diffuse")
 				if(mat == nil) then
-					mat = self:SaveLightmapTexture(result,"DIFFUSE_DIRECT","diffuse_direct_map","lightmap_diffuse_direct")
-					self:SaveLightmapTexture(result,"DIFFUSE_INDIRECT","diffuse_indirect_map","lightmap_diffuse_indirect")
+					mat = self:SaveLightmapTexture(result,"DiffuseDirect","diffuse_direct_map","lightmap_diffuse_direct")
+					self:SaveLightmapTexture(result,"DiffuseIndirect","diffuse_indirect_map","lightmap_diffuse_indirect")
 					if(mat ~= nil) then mat:GetDataBlock():RemoveValue("diffuse_map") end
 				else
 					mat:GetDataBlock():RemoveValue("diffuse_direct_map")

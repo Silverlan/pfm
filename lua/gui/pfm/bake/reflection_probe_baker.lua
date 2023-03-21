@@ -73,7 +73,7 @@ function ReflectionProbeBaker:GetBakerProgress() return self.m_baker:GetProgress
 function ReflectionProbeBaker:FinalizeBaker()
 	local ent = self:GetActorEntity()
 	local reflC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
-	return reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult():GetImage("COLOR"))
+	return reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult():GetImage("Combined"))
 end
 function ReflectionProbeBaker:OpenWindow(title)
 	pfm.BaseBaker.OpenWindow(self,title)
@@ -87,7 +87,7 @@ function ReflectionProbeBaker:OnComplete()
 	if(self.m_baker:IsSuccessful()) then
 		local ent = self.m_baker:GetActorEntity()
 		local reflC = ent:GetComponent(ents.COMPONENT_REFLECTION_PROBE)
-		local res = reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult():GetImage("COLOR"))
+		local res = reflC:GenerateFromEquirectangularImage(self.m_baker:GetResult():GetImage("Combined"))
 		if(res == true) then
 			self:OpenWindow(locale.get_text("pfm_reflection_probe_view"))
 		end
