@@ -596,6 +596,10 @@ function gui.WIFilmmaker:OnInitialize()
 
 			self:ImportMap(mapFile)
 		end)
+		pContext:AddItem(locale.get_text("pfm_convert_static_actors_to_map"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			self:ConvertStaticActorsToMap()
+		end)
 		pContext:AddItem(locale.get_text("pfm_start_lua_debugger_server"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			debug.start_debugger_server()
@@ -850,6 +854,144 @@ function gui.WIFilmmaker:OpenUrlInBrowser(url)
 		if(util.is_valid(w) == false) then return end
 		w:LoadUrl(url)
 	end)
+end
+function gui.WIFilmmaker:ConvertStaticActorsToMap()
+	local filmClip = self:GetActiveGameViewFilmClip()
+	if(filmClip == nil) then return end
+	local function add_entity(actor,className)
+		local ent = util.WorldData.EntityData()
+		ent:SetFlags(bit.bor(ent:GetFlags(),util.WorldData.EntityData.FLAG_CLIENTSIDE_ONLY_BIT))
+		ent:SetClassName(className)
+		ent:SetKeyValue("uuid",tostring(actor:GetUniqueId()))
+		local pose = actor:GetAbsolutePose()
+		ent:SetOrigin(pose:GetOrigin())
+		local ang = pose:GetRotation():ToEulerAngles()
+		ent:SetKeyValue("angles",ang.p .. " " .. ang.y .. " " .. ang.r)
+		local scale = pose:GetScale()
+		if(scale:DistanceSqr(Vector(1,1,1)) > 0.001) then
+			ent:SetKeyValue("scale",scale.x .. " " .. scale.y .. " " .. scale.z)
+		end
+		return ent
+	end
+	local function apply_key_value(c,ent,memberName,kvName)
+		kvName = kvName or memberName
+		local val = c:GetMemberValue(memberName)
+		if(val ~= nil) then ent:SetKeyValue(kvName,tostring(val)) end
+	end
+	local function apply_component_property(c,cMap,propName)
+		local udmData = cMap:GetData()
+		local val = c:GetMemberValue(propName)
+		if(val ~= nil) then udmData:SetValue(propName,c:GetMemberType(propName),val) end
+	end
+	local function add_component(cActor,entMap)
+		if(cActor == nil) then return end
+		local componentMap = entMap:AddComponent(cActor:GetType())
+		componentMap:SetFlags(bit.bor(componentMap:GetFlags(),util.WorldData.ComponentData.FLAG_CLIENTSIDE_ONLY_BIT))
+		for name,udmProp in pairs(cActor:GetProperties():GetChildren()) do
+			apply_component_property(cActor,componentMap,name)
+		end
+	end
+	local worldData = util.WorldData()
+	for _,actor in ipairs(filmClip:GetActorList()) do
+		local pfmActorC = actor:FindComponent("pfm_actor")
+		local isVisible = true
+		if(pfmActorC ~= nil) then
+			isVisible = pfmActorC:GetMemberValue("visible")
+		end
+		if(isVisible) then
+			local c = actor:FindComponent("light_map_receiver")
+			local mdlC = actor:FindComponent("model")
+			if(c ~= nil and mdlC ~= nil) then
+				local ent = add_entity(actor,"prop_dynamic")
+
+				apply_key_value(mdlC,ent,"model")
+				apply_key_value(mdlC,ent,"skin")
+				add_component(c,ent)
+
+				-- TODO: Bodygroups?
+
+				worldData:AddEntity(ent)
+			end
+
+			local cLight = actor:FindComponent("light")
+			if(cLight ~= nil and cLight:GetMemberValue("baked") == true) then
+				local pointC = actor:FindComponent("light_point")
+				local dirC = actor:FindComponent("light_directional")
+				local spotC = actor:FindComponent("light_spot")
+				local ent
+				if(pointC ~= nil) then
+					ent = add_entity(actor,"env_light_point")
+					local radiusC = actor:FindComponent("radius")
+					if(radiusC ~= nil) then apply_key_value(radiusC,ent,"radius") end
+				elseif(dirC ~= nil) then
+					ent = add_entity(actor,"env_light_environment")
+
+				elseif(spotC ~= nil) then
+					ent = add_entity(actor,"env_light_spot")
+					local radiusC = actor:FindComponent("radius")
+					if(radiusC ~= nil) then apply_key_value(radiusC,ent,"radius") end
+					apply_key_value(spotC,ent,"outerConeAngle","outerCutoff")
+					apply_key_value(spotC,ent,"blendFraction","blendFraction")
+				end
+				if(ent ~= nil) then
+					local colorC = actor:FindComponent("color")
+					if(colorC ~= nil) then apply_key_value(colorC,ent,"color") end
+
+					apply_key_value(cLight,ent,"intensityType","light_intensity_type")
+					apply_key_value(cLight,ent,"intensity")
+					worldData:AddEntity(ent)
+				end
+			end
+
+			local lmC = actor:FindComponent("light_map")
+			if(lmC ~= nil) then
+				local ent = add_entity(actor,"entity")
+				add_component(lmC,ent)
+				add_component(actor:FindComponent("light_map_data_cache"),ent)
+				add_component(actor:FindComponent("pfm_cuboid_bounds"),ent)
+
+				worldData:AddEntity(ent)
+			end
+
+			local probeC = actor:FindComponent("reflection_probe")
+			if(probeC ~= nil) then
+				local ent = add_entity(actor,"entity")
+				add_component(probeC,ent)
+
+				worldData:AddEntity(ent)
+			end
+
+			local skyC = actor:FindComponent("pfm_sky")
+			if(skyC ~= nil) then
+				local ent = add_entity(actor,"entity")
+				add_component(skyC,ent)
+
+				worldData:AddEntity(ent)
+			end
+		end
+	end
+
+	local dialogue = gui.create_file_save_dialog(function(pDialog,fileName)
+		if(fileName == nil) then return end
+		fileName = "maps/" .. fileName
+
+		local udmData,err = udm.create()
+		if(udmData ~= nil) then
+			local normalizedPath = asset.get_normalized_path(fileName,asset.TYPE_MAP)
+			local res,err = worldData:Save(udmData:GetAssetData(),file.get_file_name(normalizedPath))
+			if(res == false) then pfm.log("Failed to save world data: " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+			else
+				local fileName = normalizedPath .. "." .. asset.get_udm_format_extension(asset.TYPE_MAP,true)
+				file.create_path(file.get_file_path(fileName))
+				res,err = udmData:Save(fileName)
+				if(res == false) then pfm.log("Failed to save map file '" .. fileName .. "': " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+				else pfm.log("Successfully saved map file as '" .. fileName .. "'!",pfm.LOG_CATEGORY_PFM) end
+			end
+		end
+	end)
+	dialogue:SetRootPath("maps")
+	dialogue:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP))
+	dialogue:Update()
 end
 function gui.WIFilmmaker:GetManagerEntity() return self.m_pfmManager end
 function gui.WIFilmmaker:GetWorldAxesGizmo() return self.m_worldAxesGizmo end
