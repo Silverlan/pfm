@@ -361,6 +361,29 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 	self:InitializeTransformWidget(trC,nil,self:GetTransformSpace() == ents.UtilTransformComponent.SPACE_VIEW)
 	self.m_transformComponent = trC
 end
+function gui.PFMViewport:ScaleSelectedActors(scale)
+	local actors = tool.get_filmmaker():GetSelectionManager():GetSelectedActors()
+	local center = Vector()
+	local numActors = 0
+	for actor,_ in pairs(actors) do
+		if(actor:IsValid()) then
+			center = center +actor:GetPos()
+			numActors = numActors +1
+		end
+	end
+	center = center /numActors
+	for actor,_ in pairs(actors) do
+		if(actor:IsValid()) then
+			local pos = actor:GetPos()
+			pos = pos -center
+			pos = pos *scale
+			pos = pos +center
+			tool.get_filmmaker():SetActorTransformProperty(actor:GetComponent(ents.COMPONENT_PFM_ACTOR),"position",pos)
+			tool.get_filmmaker():SetActorTransformProperty(actor:GetComponent(ents.COMPONENT_PFM_ACTOR),"scale",actor:GetScale() *scale)
+			self:OnActorTransformChanged(actor)
+		end
+	end
+end
 function gui.PFMViewport:RemoveActorTransformWidget(ent)
 	ent:RemoveComponent("util_bone_transform")
 	ent:RemoveComponent("util_transform")
