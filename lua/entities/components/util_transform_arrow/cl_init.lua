@@ -29,10 +29,18 @@ Component.AXIS_YZ = 5
 Component.AXIS_XYZ = 6
 
 local defaultMemberFlags = bit.band(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,bit.bnot(bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_BIT_KEY_VALUE,ents.BaseEntityComponent.MEMBER_FLAG_BIT_INPUT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_OUTPUT)))
-Component:RegisterMember("Axis",udm.TYPE_UINT8,Component.AXIS_X,{},ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT)
+Component:RegisterMember("Axis",udm.TYPE_UINT8,Component.AXIS_X,{
+	onChange = function(self)
+		self:UpdateLine()
+	end
+},ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT)
 Component:RegisterMember("Selected",udm.TYPE_BOOLEAN,false,{},bit.bor(defaultMemberFlags,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
 Component:RegisterMember("Relative",udm.TYPE_BOOLEAN,false,{},bit.bor(defaultMemberFlags,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
-Component:RegisterMember("Type",udm.TYPE_UINT8,Component.TYPE_TRANSLATION,{},ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT)
+Component:RegisterMember("Type",udm.TYPE_UINT8,Component.TYPE_TRANSLATION,{
+	onChange = function(self)
+		self:UpdateLine()
+	end
+},ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT)
 Component:RegisterMember("Space",udm.TYPE_UINT8,ents.UtilTransformComponent.SPACE_WORLD,{},defaultMemberFlags)
 
 function Component:Initialize()
@@ -72,14 +80,32 @@ function Component:UpdateScale()
 
 	d = d *cam:GetFOVRad() *0.01 -- Resize according to distance to camera
 	ent:SetScale(Vector(d,d,d))
+
+	if(util.is_valid(self.m_debugLine) == false) then return end
+	local pose = self:GetBasePose()
+	if(pose == nil) then return end
+	self.m_debugLine:SetPos(self:GetEntity():GetPos())
+	self.m_debugLine:SetRotation(self:GetEntity():GetRotation() *EulerAngles(0,-90,0):ToQuaternion())
+end
+function Component:UpdateLine()
+	util.remove(self.m_debugLine)
+	if(self:GetEntity():IsSpawned() == false) then return end
+	local axis = self:GetAxis()
+	if(self:GetType() ~= Component.TYPE_TRANSLATION or (axis ~= Component.AXIS_X and axis ~= Component.AXIS_Y and axis ~= Component.AXIS_Z)) then return end
+	local colC = self:GetEntity():GetComponent(ents.COMPONENT_COLOR)
+	local drawInfo = debug.DrawInfo()
+	drawInfo:SetColor((colC ~= nil) and Color(colC:GetColor()) or Color.White)
+	self.m_debugLine = debug.draw_line(Vector(-1000,0,0),Vector(1000,0,0),drawInfo)
 end
 function Component:OnEntitySpawn()
 	self:UpdateAxis()
+	self:UpdateLine()
 end
 
 function Component:OnRemove()
 	util.remove(self.m_elLine)
 	util.remove(self.m_cbOnMouseRelease)
+	util.remove(self.m_debugLine)
 end
 
 if(util.get_class_value(Component,"SetAxisBase") == nil) then Component.SetAxisBase = Component.SetAxis end
@@ -203,6 +229,7 @@ function Component:UpdateColor()
 		end
 		colC:SetColor(col)
 	end
+	self:UpdateLine()
 end
 function Component:UpdateAxis()
 	local ent = self:GetEntity()
