@@ -596,6 +596,16 @@ function gui.WIFilmmaker:OnInitialize()
 
 			self:ImportMap(mapFile)
 		end)
+		pContext:AddItem(locale.get_text("pfm_start_lua_debugger_server"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			debug.start_debugger_server()
+			pfm.create_popup_message(
+				locale.get_text("pfm_lua_debugger_server_active"),
+				10,gui.InfoBox.TYPE_WARNING,{
+					url = "https://wiki.pragma-engine.com/books/lua-api/page/visual-studio-code"
+				}
+			)
+		end)
 		if(self:IsDeveloperModeEnabled()) then
 			local recorder
 			pContext:AddItem("Record animation as image sequence",function(pItem)
