@@ -326,8 +326,15 @@ function unirender.PBRShader:InitializeCombinedPass(desc,outputNode)
 	if(globalEmissionStrength > 0.0) then
 		local emissionMap = mat:GetTextureInfo("emission_map")
 		local emissionTex = (emissionMap ~= nil) and unirender.get_texture_path(emissionMap:GetName()) or nil
+		local emissionFactor
+		if(data:HasValue("emission_factor")) then
+			emissionFactor = data:GetVector("emission_factor",Vector(1,1,1)) *globalEmissionStrength *data:GetFloat("emission_strength",1.0)
+			if(emissionFactor:LengthSqr() == 0.0) then emissionFactor = nil end
+		end
+		if(emissionFactor ~= nil and emissionTex == nil) then
+			emissionTex = unirender.get_texture_path("white")
+		end
 		if(emissionTex ~= nil) then
-			local emissionFactor = data:GetVector("emission_factor",Vector(1,1,1)) *globalEmissionStrength *data:GetFloat("emission_strength",1.0)
 			local nEmissionMap = desc:AddNode(unirender.NODE_EMISSION_TEXTURE)
 			nEmissionMap:SetProperty(unirender.Node.emission_texture.IN_TEXTURE,emissionTex)
 			unirender.Socket(emissionFactor):Link(nEmissionMap,unirender.Node.emission_texture.IN_COLOR_FACTOR)
