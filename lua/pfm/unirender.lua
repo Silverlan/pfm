@@ -19,6 +19,11 @@ function pfm.load_unirender()
 		return loaded
 	end
 	unirender.set_log_enabled(pfm.is_log_category_enabled(pfm.LOG_CATEGORY_PFM_UNIRENDER))
+	unirender.set_kernel_compile_callback(function(building)
+		local pm = tool.get_filmmaker()
+		if(util.is_valid(pm) == false) then return end
+		pm:SetBuildKernels(building)
+	end)
 
 	loaded = true
 	pfm.log("Loading unirender shaders...",pfm.LOG_CATEGORY_PFM_RENDER)

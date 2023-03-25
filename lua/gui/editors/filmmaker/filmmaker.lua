@@ -37,6 +37,7 @@ include("/gui/pfm/particleeditor.lua")
 include("/gui/pfm/webbrowser.lua")
 include("/gui/pfm/loading_screen.lua")
 include("/gui/pfm/settings.lua")
+include("/gui/pfm/kernels_build_message.lua")
 include("/pfm/util_particle_system.lua")
 include("/pfm/auto_save.lua")
 include("/pfm/util.lua")
@@ -311,6 +312,7 @@ function gui.WIFilmmaker:OnInitialize()
 
 		pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
+			if(self:CheckBuildKernels()) then return end
 			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
 				fileName = "projects/" .. fileName
@@ -323,6 +325,7 @@ function gui.WIFilmmaker:OnInitialize()
 		if(self:IsDeveloperModeEnabled()) then
 			pContext:AddItem("Reopen",function(pItem)
 				if(util.is_valid(self) == false) then return end
+				if(self:CheckBuildKernels()) then return end
 				self:LoadProject(self:GetProjectFileName())
 			end)
 		end
@@ -384,6 +387,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 		pSubMenu:AddItem(locale.get_text("pfm_sfm_project"),function(pItem)
 			if(util.is_valid(self) == false) then return end
+			if(self:CheckBuildKernels()) then return end
 			util.remove(self.m_openDialogue)
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
 				self:ImportSFMProject(fileName)
@@ -433,6 +437,7 @@ function gui.WIFilmmaker:OnInitialize()
 		pSubMenu:ScheduleUpdate()
 		pContext:AddItem(locale.get_text("pfm_change_map"),function(pItem)
 			if(util.is_valid(self) == false) then return end
+			if(self:CheckBuildKernels()) then return end
 			local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 				if(fileName == nil) then return end
 				local map = el:GetFilePath(true)
@@ -480,6 +485,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 		pContext:AddItem(locale.get_text("exit"),function(pItem)
 			if(util.is_valid(self) == false) then return end
+			if(self:CheckBuildKernels()) then return end
 			tool.close_filmmaker()
 			engine.shutdown()
 		end)
@@ -599,6 +605,10 @@ function gui.WIFilmmaker:OnInitialize()
 		pContext:AddItem(locale.get_text("pfm_convert_static_actors_to_map"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			self:ConvertStaticActorsToMap()
+		end)
+		pContext:AddItem(locale.get_text("pfm_build_kernels"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			self:BuildKernels()
 		end)
 		pContext:AddItem(locale.get_text("pfm_start_lua_debugger_server"),function(pItem)
 			if(util.is_valid(self) == false) then return end
@@ -842,6 +852,36 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched",self)
+end
+function gui.WIFilmmaker:BuildKernels()
+	if(util.is_valid(self.m_rtBuildKernels)) then return end
+	local tFiles = file.find("modules/unirender/cycles/cache/kernels/*")
+	if(#tFiles > 0) then return end
+	local rt = gui.create("WIRealtimeRaytracedViewport",self)
+	rt:Refresh(true)
+	self.m_rtBuildKernels = rt
+end
+function gui.WIFilmmaker:SetBuildKernels(buildKernels)
+	if(buildKernels == self.m_buildingKernels) then return end
+	self.m_buildingKernels = buildKernels
+	if(buildKernels and util.is_valid(self.m_kernelsBuildMessage)) then return end
+	util.remove(self.m_kernelsBuildMessage)
+	if(buildKernels == false) then
+		util.remove(self.m_rtBuildKernels)
+		pfm.create_popup_message(locale.get_text("pfm_render_kernels_built_msg"),false)
+	end
+	if(buildKernels == false or util.is_valid(self.m_viewportFrame) == false) then return end
+	local tabContainer = self.m_viewportFrame:GetTabContainer()
+	if(util.is_valid(tabContainer) == false) then return end
+	self.m_kernelsBuildMessage = gui.create("WIKernelsBuildMessage",tabContainer)
+
+	pfm.create_popup_message(locale.get_text("pfm_building_render_kernels_msg"),16)
+end
+function gui.WIFilmmaker:CheckBuildKernels()
+	local buildingKernels = self.m_buildingKernels or false
+	if(buildingKernels == false) then return false end
+	pfm.create_popup_message(locale.get_text("pfm_wait_for_kernels"),16)
+	return true
 end
 function gui.WIFilmmaker:OpenUrlInBrowser(url)
 	self:OpenWindow("web_browser")

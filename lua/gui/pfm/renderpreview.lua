@@ -984,6 +984,8 @@ function gui.PFMRenderPreview:CancelRendering()
 	console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps"))) -- Unclamp FPS
 end
 function gui.PFMRenderPreview:Refresh(preview,prepareOnly)
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm) and pm:CheckBuildKernels()) then return end
 	if(self.m_ctrlRenderEngine:GetValue() == "pragma") then
 		local probe = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_REFLECTION_PROBE)})()
 		local entLightmapper = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),ents.IteratorFilterComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)})()

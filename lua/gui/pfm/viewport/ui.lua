@@ -44,6 +44,8 @@ function gui.PFMViewport:InitializeSettings(parent)
 	self.m_ctrlRt = ctrlRt
 	-- wrapper:SetUseAltMode(true)
 	self.m_ctrlRt:AddCallback("OnOptionSelected",function(el,idx)
+		local pm = tool.get_filmmaker()
+		if(util.is_valid(pm) and pm:CheckBuildKernels()) then return end
 		local val = el:GetOptionValue(idx)
 		if(val == "0") then
 			val = nil

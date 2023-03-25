@@ -131,6 +131,7 @@ function gui.PFMFrame:IsTabDetached(name)
 	if(tabData == nil) then return false end
 	return util.is_valid(tabData.window)
 end
+function gui.PFMFrame:GetTabContainer() return self.m_tabButtonContainer end
 function gui.PFMFrame:AddTab(identifier,name,panel)
 	if(util.is_valid(self.m_contents) == false or util.is_valid(self.m_tabButtonContainer) == false) then
 		panel:RemoveSafely()

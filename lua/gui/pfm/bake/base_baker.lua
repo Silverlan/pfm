@@ -154,6 +154,8 @@ function WIBakeButton:SetBakeText(text)
 	self:SetText(text)
 end
 function WIBakeButton:OnPressed()
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm) and pm:CheckBuildKernels()) then return end
 	if(self.m_baker:IsBaking() == true) then
 		self.m_baker:Cancel()
 		return
