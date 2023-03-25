@@ -722,6 +722,15 @@ function gui.WIFilmmaker:OnInitialize()
 	elVersion:SetColor(Color(200,200,200))
 	elVersion:SetY(5)
 	elVersion:SizeToContents()
+	elVersion:SetCursor(gui.CURSOR_SHAPE_HAND)
+	elVersion:SetMouseInputEnabled(true)
+	elVersion:AddCallback("OnMouseEvent",function(el,button,state,mods)
+		if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
+			util.set_clipboard_string(elVersion:GetText())
+			pfm.create_popup_message(locale.get_text("pfm_version_copied_to_clipboard"),3)
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
 
 	elVersion:SetX(pMenuBar:GetWidth() -elVersion:GetWidth() -4)
 	elVersion:SetY(3)
