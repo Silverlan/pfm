@@ -1,0 +1,3 @@
+pfm_continue = "Continue"
+pfm_end_tutorial = "End Tutorial"
+pfm_go_back = "Go Back"
