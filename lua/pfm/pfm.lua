@@ -58,10 +58,10 @@ util.register_class("pfm.Project")
 pfm.Project.FORMAT_EXTENSION_BINARY = "pfmp_b"
 pfm.Project.FORMAT_EXTENSION_ASCII = "pfmp"
 pfm.Project.get_format_extensions = function() return {pfm.Project.FORMAT_EXTENSION_ASCII,pfm.Project.FORMAT_EXTENSION_BINARY} end
-pfm.Project.get_full_project_file_name = function(baseName,withProjectsPrefix)
+pfm.Project.get_full_project_file_name = function(baseName,withProjectsPrefix,saveAsAscii)
 	if(withProjectsPrefix == nil) then withProjectsPrefix = true end
 	baseName = file.remove_file_extension(baseName,pfm.Project.get_format_extensions())
-	local res = baseName .. "." .. pfm.Project.FORMAT_EXTENSION_BINARY
+	local res = baseName .. "." .. (saveAsAscii and pfm.Project.FORMAT_EXTENSION_ASCII or pfm.Project.FORMAT_EXTENSION_BINARY)
 	if(withProjectsPrefix) then res = "projects/" .. res end
 	return res
 end
@@ -133,7 +133,7 @@ function pfm.Project:SaveLegacy(fileName)
 end
 
 function pfm.Project:Save(fileName,legacy)
-	local saveAsAscii = false
+	local saveAsAscii = (file.get_file_extension(fileName) == pfm.Project.FORMAT_EXTENSION_ASCII)
 	if(legacy) then return self:SaveLegacy(fileName) end
 
 	file.create_path(file.get_file_path(fileName))

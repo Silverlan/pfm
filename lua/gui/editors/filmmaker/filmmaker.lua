@@ -1336,13 +1336,15 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName,saveAs,withProjectsPrefi
 	if(project == nil) then return end
 	local function saveProject(fileName)
 		file.create_directory("projects")
+		local ext = file.get_file_extension(fileName)
+		local saveAsAscii = (ext == pfm.Project.FORMAT_EXTENSION_ASCII)
 		fileName = file.remove_file_extension(fileName,pfm.Project.get_format_extensions())
-		fileName = pfm.Project.get_full_project_file_name(fileName,withProjectsPrefix)
+		fileName = pfm.Project.get_full_project_file_name(fileName,withProjectsPrefix,saveAsAscii)
 		local res = self:SaveProject(fileName,setAsProjectName and fileName or nil)
 		if(res) then
-			pfm.create_popup_message(locale.get_text("pfm_save_success"),1)
+			pfm.create_popup_message(locale.get_text("pfm_save_success",{fileName}),1)
 		else
-			pfm.create_popup_message(locale.get_text("pfm_save_failed"),false,gui.InfoBox.TYPE_ERROR)
+			pfm.create_popup_message(locale.get_text("pfm_save_failed",{fileName}),false,gui.InfoBox.TYPE_ERROR)
 		end
 	end
 	if(fileName == nil and saveAs ~= true) then

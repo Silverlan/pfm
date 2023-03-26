@@ -97,10 +97,14 @@ function pfm.ProjectManager:RestorePersistentProject(data)
 end
 function pfm.ProjectManager:SetProjectFileName(fileName) self.m_projectFileName = fileName end
 function pfm.ProjectManager:LoadProject(fileName,ignoreMap)
+	local loadAsAscii = (file.get_file_extension(fileName) == pfm.Project.FORMAT_EXTENSION_ASCII)
 	fileName = file.remove_file_extension(fileName,pfm.Project.get_format_extensions())
-	local binFileName = fileName .. "." .. pfm.Project.FORMAT_EXTENSION_BINARY
-	if(file.exists(binFileName)) then fileName = binFileName
-	else fileName = fileName .. "." .. pfm.Project.FORMAT_EXTENSION_ASCII end
+	if(loadAsAscii) then fileName = fileName .. "." .. pfm.Project.FORMAT_EXTENSION_ASCII
+	else
+		local binFileName = fileName .. "." .. pfm.Project.FORMAT_EXTENSION_BINARY
+		if(file.exists(binFileName)) then fileName = binFileName
+		else fileName = fileName .. "." .. pfm.Project.FORMAT_EXTENSION_ASCII end
+	end
 	self:CloseProject()
 	pfm.log("Loading project '" .. fileName .. "'...",pfm.LOG_CATEGORY_PFM)
 	local project,err = pfm.load_project(fileName,ignoreMap)
@@ -129,7 +133,7 @@ function pfm.ProjectManager:SaveProject(fileName,newInternalName)
 	end
 	pfm.log("Saving project as '" .. fileName .. "'...",pfm.LOG_CATEGORY_PFM)
 	local t = time.time_since_epoch()
-	local success = project:Save(fileName)
+	local success = project:Save(fileName,nil)
 	if(success == false) then
 		pfm.log("Failed to save project as '" .. fileName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return success
