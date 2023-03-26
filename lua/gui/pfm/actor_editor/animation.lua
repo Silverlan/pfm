@@ -88,7 +88,9 @@ function gui.PFMActorEditor:OpenPropertyExpressionWindow(actorData,controlData)
 	local animManager = pm:GetAnimationManager()
 	if(animManager == nil) then return end
 	local te
+	local timer
 	local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"),function(ok)
+		util.remove(timer)
 		if(ok) then
 			local res = animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText(),controlData.type)
 			if(res) then
@@ -109,7 +111,28 @@ function gui.PFMActorEditor:OpenPropertyExpressionWindow(actorData,controlData)
 	te = p:AddTextField(locale.get_text("pfm_expression") .. ":",expr or "")
 	te:GetTextElement():SetFont("pfm_medium")
 
-	p:SetWindowSize(Vector2i(800,120))
+	local elMsg = p:AddText(locale.get_text("evaluation"),locale.get_text("pfm_no_error"))
+	elMsg:SetColor(Color.Green)
+	elMsg:SetFont("pfm_small")
+	te:AddCallback("OnTextChanged",function()
+		util.remove(timer)
+		timer = time.create_timer(0.5,0,function()
+			if(te:IsValid() == false) then return end
+			local res,msg = animManager:SetValueExpression(actorData.actor,controlData.path,te:GetText(),controlData.type,true)
+			if(res) then
+				elMsg:SetText(locale.get_text("pfm_no_error"))
+				elMsg:SetColor(Color.Green)
+				elMsg:SizeToContents()
+			else
+				elMsg:SetText(msg)
+				elMsg:SetColor(Color.Red)
+				elMsg:SizeToContents()
+			end
+		end)
+		timer:Start()
+	end)
+
+	p:SetWindowSize(Vector2i(800,140))
 	p:Update()
 end
 function gui.PFMActorEditor:GetAnimationChannel(actor,path,addIfNotExists)
