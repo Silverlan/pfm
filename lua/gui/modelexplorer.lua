@@ -27,15 +27,37 @@ function gui.ModelExplorer:OnInitialize()
 		for _,fname in ipairs(tFiles) do
 			local f = game.open_dropped_file(fname,true)
 			if(f ~= nil) then
-				local dirName = file.remove_file_extension(fname)
-				dirName = string.replace(dirName,".","_")
-				local outputPath = basePath +util.Path.CreatePath(dirName)
-				self:SetPath(outputPath:GetString())
-				util.import_assets(f,nil,outputPath:GetString(),true,function(assetType,assetPath)
-					if(assetType == asset.TYPE_MODEL) then
-						self:AddToSpecial("new",assetPath)
-					end
-				end,function() if(self:IsValid()) then self:ScheduleUpdate() end end)
+				local function import_model(importAsSingleModel)
+					if(self:IsValid() == false) then return end
+					local dirName = file.remove_file_extension(fname)
+					dirName = string.replace(dirName,".","_")
+					local outputPath = basePath +util.Path.CreatePath(dirName)
+					self:SetPath(outputPath:GetString())
+	
+					util.import_assets(f,{
+						modelImportCallback = function(assetType,assetPath)
+							if(assetType == asset.TYPE_MODEL) then
+								self:AddToSpecial("new",assetPath)
+							end
+						end,
+						onComplete = function() if(self:IsValid()) then self:ScheduleUpdate() end end,
+						basePath = outputPath:GetString(),
+						dropped = true,
+						importAsCollection = not importAsSingleModel
+					})
+				end
+				local pContext = gui.open_context_menu()
+				if(util.is_valid(pContext)) then
+					pContext:SetPos(input.get_cursor_pos())
+					pContext:AddItem(locale.get_text("pfm_import_as_single_model"),function()
+						import_model(true)
+					end)
+					pContext:AddItem(locale.get_text("pfm_import_as_collection"),function()
+						import_model(false)
+					end)
+					pContext:Update()
+					return util.EVENT_REPLY_HANDLED
+				end
 			end
 		end
 		return util.EVENT_REPLY_HANDLED
