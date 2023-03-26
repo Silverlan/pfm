@@ -300,7 +300,7 @@ end)
 
 pfm.register_component_action("pfm_region_carver","pfm_remove_outside_actors","remove_outside",function(controls,actorData,entActor,actionData)
 	local bt = gui.create("WIPFMActionButton",controls)
-	bt:SetText(locale.get_text("remove_outside"))
+	bt:SetText(locale.get_text("pfm_remove_outside"))
 	bt:AddCallback("OnPressed",function()
 		local tRemove = {}
 		for ent,c in ents.citerator(ents.COMPONENT_PFM_REGION_CARVE_TARGET) do

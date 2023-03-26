@@ -261,7 +261,7 @@ function MatrixBuildRotationAboutAxis(vAxisOfRot,angleDegrees)
 end
 
 function GetControlPointTransformAtTime(self,nControlPoint,flTime)
-	local pose = self:GetParticleSystem():GetEntity():GetPose()
+	local pose = math.Transform() -- self:GetParticleSystem():GetEntity():GetPose()
 	-- TODO: Entity pose is confirmed to be required for ExplosionCore_MidAir, but NOT for flamethrower?
 	return pose *(self:GetParticleSystem():GetControlPointPose(nControlPoint or 0,flTime) or math.Transform())
 end

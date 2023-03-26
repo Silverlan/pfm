@@ -58,6 +58,17 @@ function PfmEditEntryWindow:OnUpdate()
 	self.m_table:Update()
 	self.m_table:SizeToContents()
 end
+function PfmEditEntryWindow:AddText(name,text)
+	local row = self.m_table:AddRow()
+	row:SetValue(0,name)
+
+	local te = gui.create("WIText")
+	te:SetText(text)
+	te:SizeToContents()
+	te:SetWidth(self:GetWidth())
+	row:InsertElement(1,te)
+	return te
+end
 function PfmEditEntryWindow:AddTextField(name,value)
 	local row = self.m_table:AddRow()
 	row:SetValue(0,name)

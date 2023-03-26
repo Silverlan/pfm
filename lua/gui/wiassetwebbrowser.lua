@@ -69,6 +69,7 @@ function Element:OnInitialize()
 		self.m_webBrowser:SetSize(self:GetWidth(),400)
 
 		local log = self:InitializeLog(self.m_contents)
+		log:SetName("log")
 		log:SetSize(self:GetWidth(),80)
 		self.m_contents:SetAutoFillTarget(self.m_webBrowser)
 	end
@@ -79,6 +80,14 @@ end
 function Element:ReloadURL()
 	if(util.is_valid(self.m_webBrowser) == false) then return end
 	local url = self.m_webBrowser:GetUrl()
+	self.m_webBrowser:LoadUrl(url)
+end
+function Element:GetUrl()
+	if(util.is_valid(self.m_webBrowser) == false) then return "" end
+	return self.m_webBrowser:GetUrl()
+end
+function Element:SetUrl(url)
+	if(util.is_valid(self.m_webBrowser) == false) then return end
 	self.m_webBrowser:LoadUrl(url)
 end
 function Element:UpdateInfoBox()
@@ -105,8 +114,9 @@ function Element:UpdateInfoBox()
 	self.m_infoBox:SizeToContents()
 end
 function Element:SetNsfwContentEnabled(enabled) self.m_enableNsfwMenu:SelectOption(enabled and "1" or "0") end
+function Element:IsNsfwContentEnabled() return toboolean(self.m_enableNsfwMenu:GetOptionValue(self.m_enableNsfwMenu:GetSelectedOption())) end
 function Element:UpdateBookmarks()
-	local enableNsfw = toboolean(self.m_enableNsfwMenu:GetOptionValue(self.m_enableNsfwMenu:GetSelectedOption()))
+	local enableNsfw = self:IsNsfwContentEnabled()
 
 	local p = self.m_settingsBox
 	local links = {}
@@ -116,6 +126,7 @@ function Element:UpdateBookmarks()
 		linkMap[id] = #links
 	end
 	addLink("pfm_wiki","PFM Wiki","https://wiki.pragma-engine.com/books/pragma-filmmaker")
+	addLink("lua_api","Lua API","https://wiki.pragma-engine.com/api/docs")
 	addLink("supporter_hub","Supporter Hub","https://supporter.pragma-engine.com")
 	if(enableNsfw) then
 		addLink("sfm_lab","SFM Lab","https://sfmlab.com/")
@@ -152,6 +163,7 @@ end
 function Element:GetWebBrowser() return self.m_webBrowser end
 function Element:InitializeBrowser(parent,w,h)
 	local el = gui.create("WIWeb",parent)
+	el:SetName("browser")
 	el:SetBrowserViewSize(Vector2i(w,h))
 	el:SetSize(w,h)
 	el:SetInitialUrl("https://wiki.pragma-engine.com/books/pragma-filmmaker")
@@ -187,6 +199,7 @@ function Element:InitializeBrowser(parent,w,h)
 	end)
 	el:AddCallback("OnDownloadUpdate",function(el,id,state,percentage)
 		if(util.is_valid(self.m_log) == false or self.m_downloads[id] == nil) then return end
+		self:CallCallbacks("OnDownloadUpdate",id,state,percentage)
 		local path = self.m_downloads[id]
 		if(state == chromium.DOWNLOAD_STATE_CANCELLED) then
 			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been cancelled!")
@@ -207,15 +220,22 @@ function Element:InitializeBrowser(parent,w,h)
 		if(util.is_valid(self.m_log) == false) then return end
 		self.m_log:AppendText("\nDownload started: " .. file.get_file_name(path:GetString()))
 		self.m_downloads[id] = path
+
+		self:CallCallbacks("OnDownloadStarted",id,path)
 	end)
 	return el
 end
 function Element:ImportDownloadAssets(path)
-	util.import_assets(path:GetString(),function(msg,severity)
-		if(severity ~= log.SEVERITY_INFO) then msg = "\n{[c:ff0000]}" .. msg .. "{[/c]}"
-		else msg = "\n" .. msg end
-		self.m_log:AppendText(msg)
-	end)
+	util.import_assets(path:GetString(),{
+		modelImportCallback = function(msg,severity)
+			if(severity ~= log.SEVERITY_INFO) then msg = "\n{[c:ff0000]}" .. msg .. "{[/c]}"
+			else msg = "\n" .. msg end
+			self.m_log:AppendText(msg)
+		end,
+		onComplete = function()
+			self:CallCallbacks("OnDownloadAssetsImported")
+		end
+	})
 end
 function Element:InitializeLog(parent)
 	local elBg = gui.create("WIRect",parent)

@@ -8,6 +8,8 @@
 
 include("tutorial_slide.lua")
 
+locale.load("pfm_tutorials.txt")
+
 local Element = util.register_class("gui.Tutorial",gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)

@@ -517,6 +517,7 @@ function gui.PFMViewport:OnThink()
 	self.m_camStartPose = pose:Copy()
 end
 function gui.PFMViewport:GetPlayButton() return self.m_btPlay end
+function gui.PFMViewport:GetPlayState() return self.m_btPlay:GetState() end
 function gui.PFMViewport:GetViewport() return self.m_viewport end
 function gui.PFMViewport:OnSizeChanged(w,h)
 	self:Update()

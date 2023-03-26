@@ -34,6 +34,23 @@ end
 function Element:GetBackButton() return self.m_buttonPrev end
 function Element:GetContinueButton() return self.m_buttonNext end
 function Element:GetEndButton() return self.m_buttonEnd end
+function Element:AddLocationMarker(pos)
+	local ent = ents.create("env_particle_system")
+	ent:SetKeyValue("loop","0")
+	ent:SetKeyValue("particle_file","tutorial_viewport")
+	ent:SetKeyValue("particle","location_highlight")
+	ent:SetKeyValue("transform_with_emitter","0")
+	ent:SetKeyValue("orientation_type","3")
+	ent:SetKeyValue("static_scale","0.4")
+	ent:Spawn()
+	
+	ent:SetPos(pos)
+	ent:SetAngles(EulerAngles(-90,0,0))
+	
+	local ptC = ent:GetComponent(ents.COMPONENT_PARTICLE_SYSTEM)
+	if(ptC ~= nil) then ptC:Start() end
+	return ent
+end
 function Element:AddHighlight(el)
 	if(util.is_valid(el) == false) then return end
 	local elOutline = gui.create("WIElementSelectionOutline",self)
