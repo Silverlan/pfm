@@ -335,6 +335,9 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 		pContext:AddItem(locale.get_text("save_as"),function(pItem)
 			if(util.is_valid(self) == false) then return end
+			self:Save(nil,true,true)
+		end)
+			if(util.is_valid(self) == false) then return end
 			self:Save(nil,false,true)
 		end)
 
