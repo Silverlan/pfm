@@ -66,7 +66,7 @@ tool.open_filmmaker = function(devMode)
 	return tool.editor
 end
 
-console.register_command("pfm",function(pl,...)
+local function start_pfm(...)
 	tool.load_filmmaker_scripts()
 	local logCategories = 0
 	local logCategoriesDefined = false
@@ -133,6 +133,20 @@ console.register_command("pfm",function(pl,...)
 	--
 	local pfm = tool.open_filmmaker(dev)
 	if(project ~= nil) then pfm:LoadProject(project) end
+end
+
+local cbOnGameReady
+console.register_command("pfm",function(pl,...)
+	if(game.is_game_ready()) then
+		start_pfm(...)
+	else
+		util.remove(cbOnGameReady)
+		local args = {...}
+		cbOnGameReady = game.add_callback("OnGameReady",function()
+			util.remove(cbOnGameReady)
+			time.create_simple_timer(0.0,function() start_pfm(unpack(args)) end)
+		end)
+	end
 end)
 
 if(console.get_convar_bool("pfm_restore")) then
