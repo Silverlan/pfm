@@ -114,6 +114,11 @@ function gui.WIFilmmaker:OnInitialize()
 	tool.filmmaker = self
 	gui.set_context_menu_skin("pfm")
 
+	local windowTitle = ""
+	local window = gui.get_primary_window()
+	if(util.is_valid(window)) then windowTitle = window:GetWindowTitle() end
+	self.m_originalWindowTitle = windowTitle
+
 	self.m_editorOverlayRenderMask = game.register_render_mask("pfm_editor_overlay",false)
 	self.m_worldAxesGizmo = ents.create("pfm_world_axes_gizmo")
 	self.m_worldAxesGizmo:Spawn()
@@ -1677,6 +1682,18 @@ function gui.WIFilmmaker:OnThink()
 		self:CaptureRaytracedImage()
 	end
 end
+function gui.WIFilmmaker:OnProjectFileNameChanged(projectFileName)
+	local window = gui.get_primary_window()
+	if(util.is_valid(window)) then
+		local title = self.m_originalWindowTitle
+		if(projectFileName ~= nil) then
+			title = title .. " - " .. projectFileName
+		else
+			title = title .. " - " .. locale.get_text("untitled")
+		end
+		window:SetWindowTitle(title)
+	end
+end
 function gui.WIFilmmaker:OnRemove()
 	gui.WIBaseFilmmaker.OnRemove(self)
 	self:CloseProject()
@@ -1694,6 +1711,9 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_previewWindow)
 	util.remove(self.m_renderResultWindow)
 	self.m_selectionManager:Remove()
+
+	local window = gui.get_primary_window()
+	if(util.is_valid(window)) then window:SetWindowTitle(self.m_originalWindowTitle) end
 
 	if(self.m_animRecorder ~= nil) then
 		self.m_animRecorder:Clear()

@@ -91,11 +91,14 @@ function pfm.ProjectManager:MakeProjectPersistent()
 	}
 end
 function pfm.ProjectManager:RestorePersistentProject(data)
-	self.m_projectFileName = data.fileName
+	self:SetProjectFileName(data.fileName)
 	self.m_project = data.project
 	return util.is_valid(self:InitializeProject(self.m_project))
 end
-function pfm.ProjectManager:SetProjectFileName(fileName) self.m_projectFileName = fileName end
+function pfm.ProjectManager:SetProjectFileName(fileName)
+	self.m_projectFileName = fileName
+	self:OnProjectFileNameChanged(fileName)
+end
 function pfm.ProjectManager:LoadProject(fileName,ignoreMap)
 	local loadAsAscii = (file.get_file_extension(fileName) == pfm.Project.FORMAT_EXTENSION_ASCII)
 	fileName = file.remove_file_extension(fileName,pfm.Project.get_format_extensions())
@@ -120,7 +123,7 @@ function pfm.ProjectManager:LoadProject(fileName,ignoreMap)
 	end
 	self:PrecacheSessionAssets(session)
 	if(session ~= nil) then self.m_animationCache = pfm.SceneAnimationCache(session) end
-	self.m_projectFileName = fileName
+	self:SetProjectFileName(fileName)
 	self.m_project = project
 	-- self:LoadAnimationCache(fileName)
 	return util.is_valid(self:InitializeProject(project))
@@ -138,7 +141,10 @@ function pfm.ProjectManager:SaveProject(fileName,newInternalName)
 		pfm.log("Failed to save project as '" .. fileName .. "'!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
 		return success
 	end
-	if(newInternalName ~= nil) then self.m_projectFileName = newInternalName end
+	if(newInternalName ~= nil) then
+		self:SetProjectFileName(newInternalName)
+		pfm.log("New internal project name: " .. self.m_projectFileName,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_DEBUG)
+	end
 	-- self:SaveAnimationCache(fileName)
 	local dt = time.time_since_epoch() -t
 	pfm.log("Saving successful! Saving took " .. util.get_pretty_time(dt /1000000000.0),pfm.LOG_CATEGORY_PFM)
@@ -234,7 +240,7 @@ function pfm.ProjectManager:CloseProject()
 	if(self.m_animationCache ~= nil) then self.m_animationCache:Clear() end
 	self.m_animationCache = nil
 	self.m_animationCacheLoaded = false
-	self.m_projectFileName = nil
+	self:SetProjectFileName(nil)
 	if(self.m_project) then
 		if(self.m_persistentProject ~= true) then self.m_project:Close() end
 		self.m_project = nil
@@ -490,3 +496,4 @@ end
 function pfm.ProjectManager:OnProjectInitialized(project) end
 function pfm.ProjectManager:OnGameViewFilmClipChanged(filmClip) end
 function pfm.ProjectManager:TranslateGameViewOffset(offset) return offset end
+function pfm.ProjectManager:OnProjectFileNameChanged(projectFileName) end
