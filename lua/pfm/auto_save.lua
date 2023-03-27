@@ -50,6 +50,11 @@ end
 
 function pfm.AutoSave:Save()
 	local fm = tool.get_filmmaker()
+	local project = fm:GetProject()
+	if(project ~= nil and project:IsReadOnly() and fm:IsDeveloperModeEnabled() == false) then
+		return
+	end
+
 	local fileName = fm:GetProjectFileName() or "unnamed"
 	local autoSaveFileName = self:DetermineName(fileName)
 	fm:Save(autoSaveFileName,false)

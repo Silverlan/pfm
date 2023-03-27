@@ -329,10 +329,12 @@ function gui.WIFilmmaker:OnInitialize()
 				self:LoadProject(self:GetProjectFileName())
 			end)
 		end
-		pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
+		local itemSave = pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
 			self:Save()
 		end)
+		local session = self:GetSession()
+		if(session ~= nil and session:GetSettings():IsReadOnly() and self:IsDeveloperModeEnabled() == false) then itemSave:SetEnabled(false) end
 		pContext:AddItem(locale.get_text("save_as"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			self:Save(nil,true,true)
@@ -1363,9 +1365,16 @@ function gui.WIFilmmaker:SetOverlaySceneEnabled(enabled)
 	self:TagRenderSceneAsDirty()
 end
 function gui.WIFilmmaker:Save(fileName,setAsProjectName,saveAs,withProjectsPrefix)
-	if(setAsProjectName == nil) then setAsProjectName = true end
 	local project = self:GetProject()
 	if(project == nil) then return end
+	if(self:IsDeveloperModeEnabled() == false) then
+		local session = self:GetSession()
+		if(session ~= nil and session:GetSettings():IsReadOnly()) then
+			pfm.log("Failed to save project: Project is read-only!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_ERROR)
+			return
+		end
+	end
+	if(setAsProjectName == nil) then setAsProjectName = true end
 	local function saveProject(fileName)
 		self:UpdateWorkCamera()
 		file.create_directory("projects")

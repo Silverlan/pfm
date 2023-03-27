@@ -157,6 +157,10 @@
 			"children"
 			{
 				"playheadOffset" {$float default 0.0}
+				"readOnly" {
+					$bool default false
+					$string getterName "IsReadOnly"
+				}
 				"renderSettings" {$string type "RenderSettings"}
 				"workCamera" {$string type "WorkCamera"}
 				"cameraView"
