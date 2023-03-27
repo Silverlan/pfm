@@ -134,12 +134,36 @@
 				"tileSize" {$uint32 default 512}
 			}
 		}
+
+		"WorkCamera"
+		{
+			"children"
+			{
+				"pose" {$transform default [[0,0,0][1,0,0,0]]}
+				"fov" {$float default 90}
+			}
+		}
+
+		"CameraView"
+		{
+			$string type "enum"
+			$array values [string][
+				"Work","Scene"
+			]
+		}
+		
 		"Settings"
 		{
 			"children"
 			{
 				"playheadOffset" {$float default 0.0}
 				"renderSettings" {$string type "RenderSettings"}
+				"workCamera" {$string type "WorkCamera"}
+				"cameraView"
+				{
+					$string type "CameraView"
+					$string default "Work"
+				}
 				"mapName" {$string default ""}
 			}
 		}

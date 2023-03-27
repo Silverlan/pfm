@@ -241,6 +241,11 @@ function gui.PFMViewport:RefreshCamera()
 	if(self:IsSceneCamera()) then self:SwitchToSceneCamera()
 	else self:SwitchToWorkCamera() end
 end
+function gui.PFMViewport:SetCameraView(cameraView)
+	if(self:IsWorkCamera()) then tool.get_filmmaker():UpdateWorkCamera(cameraView) end
+	self.m_cameraView = cameraView
+end
+function gui.PFMViewport:GetCameraView() return self.m_cameraView end
 function gui.PFMViewport:SwitchToSceneCamera()
 	self:SwitchToGameplay(false)
 	local cam = self:GetSceneCamera()
@@ -250,7 +255,7 @@ function gui.PFMViewport:SwitchToSceneCamera()
 		if(#name == 0) then name = locale.get_text("pfm_scene_camera") end
 		self.m_btCamera:SetText(name)
 
-		self.m_cameraView = gui.PFMViewport.CAMERA_VIEW_SCENE
+		self:SetCameraView(gui.PFMViewport.CAMERA_VIEW_SCENE)
 		game.clear_gameplay_control_camera()
 	end
 	--[[self:SwitchToGameplay(false)
@@ -299,7 +304,7 @@ function gui.PFMViewport:SwitchToWorkCamera(ignoreGameplay)
 	if(util.is_valid(cam)) then self:SwitchToCamera(cam) end
 	if(util.is_valid(self.m_btCamera)) then self.m_btCamera:SetText(locale.get_text("pfm_work_camera")) end
 
-	self.m_cameraView = gui.PFMViewport.CAMERA_VIEW_GAME
+	self:SetCameraView(gui.PFMViewport.CAMERA_VIEW_GAME)
 	self:UpdateWorkCamera()
 
 	--[[if(ignoreGameplay ~= true) then self:SwitchToGameplay(false) end

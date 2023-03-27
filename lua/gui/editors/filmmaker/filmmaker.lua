@@ -1252,6 +1252,34 @@ function gui.WIFilmmaker:ImportMap(map)
 		end
 	end
 end
+function gui.WIFilmmaker:RestoreWorkCamera()
+	local session = self:GetSession()
+	local vp = self:GetViewport()
+	if(session == nil or util.is_valid(vp) == false) then return end
+	local settings = session:GetSettings()
+	local workCameraSettings = settings:GetWorkCamera()
+	vp:SetWorkCameraPose(workCameraSettings:GetPose())
+	local workCamera = vp:GetWorkCamera()
+	if(util.is_valid(workCamera)) then workCamera:SetFOV(workCameraSettings:GetFov()) end
+
+	local camView = settings:GetCameraView()
+	vp:SetCameraView(camView)
+end
+function gui.WIFilmmaker:UpdateWorkCamera(cameraView)
+	local session = self:GetSession()
+	local vp = self:GetViewport()
+	if(session == nil or util.is_valid(vp) == false) then return end
+	local settings = session:GetSettings()
+	if(vp:IsWorkCamera()) then
+		local cam = vp:GetWorkCamera()
+		if(util.is_valid(cam) == false) then return end
+		local workCamera = settings:GetWorkCamera()
+		workCamera:SetPose(math.Transform(cam:GetEntity():GetPose()))
+		workCamera:SetFov(cam:GetFOV())
+	end
+	cameraView = cameraView or vp:GetCameraView()
+	if(cameraView ~= nil) then settings:SetCameraView(cameraView) end
+end
 function gui.WIFilmmaker:SaveSettings()
 	local udmData,err = udm.create("PFMST",1)
 	local assetData = udmData:GetAssetData()
@@ -1335,6 +1363,7 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName,saveAs,withProjectsPrefi
 	local project = self:GetProject()
 	if(project == nil) then return end
 	local function saveProject(fileName)
+		self:UpdateWorkCamera()
 		file.create_directory("projects")
 		local ext = file.get_file_extension(fileName)
 		local saveAsAscii = (ext == pfm.Project.FORMAT_EXTENSION_ASCII)
@@ -1774,15 +1803,7 @@ function gui.WIFilmmaker:InitializeProject(project)
 
 	self:InitializeProjectUI()
 	self:SetTimeOffset(0)
-
-	local cam = self:GetActiveCamera()
-	if(util.is_valid(cam)) then
-		local pos = cam:GetEntity():GetPos()
-		console.run("setpos",tostring(pos.x),tostring(pos.y),tostring(pos.z))
-
-		local ang = cam:GetEntity():GetAngles()
-		console.run("setang",tostring(ang.p),tostring(ang.y),0)
-	end
+	self:RestoreWorkCamera()
 
 	return entScene
 end

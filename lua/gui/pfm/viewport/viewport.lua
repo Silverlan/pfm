@@ -39,7 +39,7 @@ function gui.PFMViewport:OnInitialize()
 	self.m_titleBar:SetHeight(37)
 
 	self.m_gameplayEnabled = true
-	self.m_cameraView = gui.PFMViewport.CAMERA_VIEW_SCENE
+	self.m_cameraView = gui.PFMViewport.CAMERA_VIEW_GAME
 	self.m_aspectRatioWrapper:AddCallback("OnAspectRatioChanged",function(el,aspectRatio)
 		if(util.is_valid(self.m_viewport)) then
 			local scene = self.m_viewport:GetScene()
@@ -86,7 +86,12 @@ function gui.PFMViewport:OnInitialize()
 
 	self:SwitchToGameplay(false)
 	time.create_simple_timer(0.0,function()
-		if(self:IsValid()) then self:SwitchToWorkCamera() end
+		if(self:IsValid()) then
+			local camView = self.m_cameraView
+			self.m_cameraView = nil
+			if(camView == gui.PFMViewport.CAMERA_VIEW_GAME) then self:SwitchToWorkCamera()
+			else self:SwitchToSceneCamera() end
+		end
 	end)
 end
 function gui.PFMViewport:ShowAnimationOutline(show)
