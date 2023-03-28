@@ -331,3 +331,25 @@ pfm.register_component_action("pfm_vr_tracked_device","pfm_vr_identify_device","
 	end)
 	return bt
 end)
+
+-- View bloom map
+local function view_bloom_map(ent,onInit)
+	pfm.util.open_simple_window(locale.get_text("pfm_bloom_map"),function(windowHandle,contents,controls)
+		local el = gui.create("WIDebugHDRBloom",contents,0,0,contents:GetWidth(),contents:GetHeight(),0,0,1,1)
+		el:ScheduleUpdate()
+
+		if(onInit ~= nil) then onInit(windowHandle,contents,controls) end
+	end)
+end
+pfm.register_component_action("pfm_bloom","pfm_view_bloom_map","view_bloom_map",function(controls,actorData,entActor,actionData)
+	if(util.is_valid(actionData.windowHandle)) then actionData.windowHandle:Close() end
+	util.remove(actionData.windowHandle)
+	local bt = gui.create("WIPFMActionButton",controls)
+	bt:SetText(locale.get_text("pfm_view_bloom_map"))
+	bt:AddCallback("OnPressed",function()
+		view_bloom_map(entActor,function(windowHandle,contents,controls)
+			actionData.windowHandle = windowHandle
+		end)
+	end)
+	return bt
+end)
