@@ -50,8 +50,8 @@ end
 
 function pfm.AutoSave:Save()
 	local fm = tool.get_filmmaker()
-	local project = fm:GetProject()
-	if(project ~= nil and project:IsReadOnly() and fm:IsDeveloperModeEnabled() == false) then
+	local session = fm:GetSession()
+	if(session ~= nil and session:GetSettings():IsReadOnly() and fm:IsDeveloperModeEnabled() == false) then
 		return
 	end
 
