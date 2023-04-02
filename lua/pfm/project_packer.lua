@@ -17,8 +17,12 @@ function pfm.ProjectPacker:__init()
 	self.m_assetFileMap = {}
 end
 
-function pfm.ProjectPacker:AddFile(f) self.m_assetFileMap[f] = f end
+function pfm.ProjectPacker:AddFile(f)
+	pfm.log("Adding file '" .. f .. "'...",pfm.LOG_CATEGORY_PFM)
+	self.m_assetFileMap[f] = f
+end
 function pfm.ProjectPacker:AddAsset(f,type,skipAddFunc)
+	pfm.log("Adding asset '" .. f .. " (" .. asset.type_to_string(type) .. ")" .. "'...",pfm.LOG_CATEGORY_PFM)
 	if(skipAddFunc ~= true) then
 		if(type == asset.TYPE_MODEL) then self:AddModel(f)
 		elseif(type == asset.TYPE_MATERIAL) then self:AddMaterial(f)
@@ -67,6 +71,7 @@ function pfm.ProjectPacker:AddSound(snd)
 end
 function pfm.ProjectPacker:AddFilmClip(filmClip)
 	for _,actor in ipairs(filmClip:GetActorList()) do
+		pfm.log("Adding actor '" .. tostring(actor) .. "'...",pfm.LOG_CATEGORY_PFM)
 		for _,component in ipairs(actor:GetComponents()) do
 			local type = component:GetType()
 			if(type == "model") then
@@ -100,8 +105,16 @@ function pfm.ProjectPacker:AddFilmClip(filmClip)
 			local componentInfo = (componentId ~= nil) and ents.get_component_info(componentId) or nil
 			if(componentInfo ~= nil) then
 				local numMembers = componentInfo:GetMemberCount()
+				local isLuaComponent = false
+				if(numMembers == 0) then
+					numMembers = ents.get_lua_component_member_count(componentId)
+					debug.print(numMembers)
+					isLuaComponent = true
+				end
 				for i=1,numMembers do
-					local memberInfo = componentInfo:GetMemberInfo(i -1)
+					local memberInfo
+					if(isLuaComponent) then memberInfo = ents.get_lua_component_member_info(componentId,i -1)
+					else memberInfo = componentInfo:GetMemberInfo(i -1) end
 					if(memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE) then
 						local value = component:GetMemberValue(memberInfo.name)
 						if(value ~= nil) then
@@ -153,11 +166,13 @@ function pfm.ProjectPacker:AddFilmClip(filmClip)
 	end
 end
 function pfm.ProjectPacker:AddSession(session)
+	pfm.log("Adding session '" .. tostring(session) .. "'...",pfm.LOG_CATEGORY_PFM)
 	for _,filmClip in ipairs(session:GetClips()) do
 		self:AddFilmClip(filmClip)
 	end
 end
 function pfm.ProjectPacker:AddMap(map)
+	pfm.log("Adding map '" .. map .. "'...",pfm.LOG_CATEGORY_PFM)
 	local mapName = game.get_map_name()
 	self:AddAsset(mapName,asset.TYPE_MAP,true)
 	self:AddAsset(mapName .. "/lightmap_atlas",asset.TYPE_TEXTURE)
@@ -168,6 +183,12 @@ function pfm.ProjectPacker:AddMap(map)
 		path:PopFront()
 		local mat = game.load_material(path:GetString())
 		if(mat ~= nil) then self:AddMaterial(mat) end
+	end
+
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_LIGHT_MAP)}) do
+		local lightMapC = ent:GetComponent(ents.COMPONENT_LIGHT_MAP)
+		local matName = lightMapC:GetLightmapMaterialName()
+		if(#matName > 0) then self:AddMaterial(matName) end
 	end
 
 	for _,ent in ipairs(ents.get_all()) do
