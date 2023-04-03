@@ -108,7 +108,6 @@ function pfm.ProjectPacker:AddFilmClip(filmClip)
 				local isLuaComponent = false
 				if(numMembers == 0) then
 					numMembers = ents.get_lua_component_member_count(componentId)
-					debug.print(numMembers)
 					isLuaComponent = true
 				end
 				for i=1,numMembers do
@@ -189,6 +188,12 @@ function pfm.ProjectPacker:AddMap(map)
 		local lightMapC = ent:GetComponent(ents.COMPONENT_LIGHT_MAP)
 		local matName = lightMapC:GetLightmapMaterialName()
 		if(#matName > 0) then self:AddMaterial(matName) end
+	end
+
+	for ent in ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_LIGHT_MAP_DATA_CACHE)}) do
+		local lightMapDataCacheC = ent:GetComponent(ents.COMPONENT_LIGHT_MAP_DATA_CACHE)
+		local dataCache = lightMapDataCacheC:GetLightMapDataCacheFilePath()
+		if(#dataCache > 0) then self:AddFile(dataCache) end
 	end
 
 	for _,ent in ipairs(ents.get_all()) do
