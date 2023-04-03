@@ -56,7 +56,7 @@ function pfm.PragmaRenderScene:UpdateDownSampledRenderTexture()
 	local imgCreateInfo = prosper.ImageCreateInfo()
 	imgCreateInfo.width = self.m_width
 	imgCreateInfo.height = self.m_height
-	imgCreateInfo.format = prosper.FORMAT_R16G16B16A16_UNORM
+	imgCreateInfo.format = prosper.FORMAT_R16G16B16A16_SFLOAT
 	imgCreateInfo.usageFlags = bit.bor(prosper.IMAGE_USAGE_TRANSFER_SRC_BIT,prosper.IMAGE_USAGE_TRANSFER_DST_BIT)
 	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
 	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
