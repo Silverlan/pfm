@@ -69,7 +69,7 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 			print("Saving image as " .. outputPath .. "...")
 			local framePath = self:GetFrameFilePath(rtJob:GetRenderResultFrameIndex())
 			self.m_rt:ClearCachedPreview()
-			self.m_rt:SaveImage(outputPath,self.m_rt:GetImageSaveFormat())
+			self.m_rt:SaveImage(outputPath,self.m_rt:GetImageSaveFormat(),renderSettings:GetHDROutput())
 			-- TODO
 			-- self.m_rt:GeneratePreviewImage("render/" .. framePath,self.m_rt:GetRenderResultRenderSettings())
 		end
