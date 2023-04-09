@@ -158,6 +158,7 @@ function gui.PFMViewport:UpdateRenderSettings()
 end
 function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 	if(mouseButton == input.MOUSE_BUTTON_LEFT and self:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
+		tool.get_filmmaker():TagRenderSceneAsDirty()
 		if(state == input.STATE_PRESS) then
 			self.m_leftMouseInput = true
 			self.m_cursorTracker = gui.CursorTracker()
@@ -192,14 +193,14 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 	if(mouseButton ~= input.MOUSE_BUTTON_LEFT and mouseButton ~= input.MOUSE_BUTTON_RIGHT) then return util.EVENT_REPLY_UNHANDLED end
 	if(state ~= input.STATE_PRESS and state ~= input.STATE_RELEASE) then return util.EVENT_REPLY_UNHANDLED end
 
-	local function findActor(pressed,filter)
+	local function findActor(pressed,filter,action)
 		if(pressed == nil) then pressed = state == input.STATE_PRESS end
 		--[[if(self.m_manipulatorMode ~= gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
 			filter = function(ent,mdlC)
 				return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
 			end
 		end]]
-		return ents.ClickComponent.inject_click_input(input.ACTION_ATTACK,pressed,filter)
+		return ents.ClickComponent.inject_click_input(action or input.ACTION_ATTACK,pressed,filter)
 	end
 
 	--[[if(mouseButton == input.MOUSE_BUTTON_RIGHT) then
@@ -232,8 +233,9 @@ function gui.PFMViewport:OnViewportMouseEvent(el,mouseButton,state,mods)
 				if(self.m_cursorTracker ~= nil) then
 					self.m_cursorTracker = nil
 					self:DisableThinking()
+					tool.get_filmmaker():TagRenderSceneAsDirty()
 
-					local handled,entActor,hitPos,startPos,hitData = findActor(true)
+					local handled,entActor,hitPos,startPos,hitData = findActor(true,nil,input.ACTION_ATTACK2)
 					if(handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor)) then
 						local pContext = gui.open_context_menu()
 						if(util.is_valid(pContext) == false) then return end
