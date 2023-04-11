@@ -1,0 +1,12 @@
+"pfm_flat_wdt"
+{
+	"textures"
+	{
+		$string albedo_map "white"
+	}
+	"properties"
+	{
+		$vec4 color_factor [1,1,1,1]
+		$uint32 alpha_mode 2
+	}
+}
