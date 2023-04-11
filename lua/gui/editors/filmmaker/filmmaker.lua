@@ -113,6 +113,7 @@ function gui.WIFilmmaker:OnInitialize()
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 	tool.filmmaker = self
 	gui.set_context_menu_skin("pfm")
+	gui.get_primary_window():SetResizable(true)
 
 	local windowTitle = ""
 	local window = gui.get_primary_window()
