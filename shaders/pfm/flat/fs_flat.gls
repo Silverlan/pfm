@@ -23,5 +23,6 @@ void main()
 	fs_color.r *= colorMod.r;
 	fs_color.g *= colorMod.g;
 	fs_color.b *= colorMod.b;
+	fs_color.a *= colorMod.a;
 	extract_bright_color(fs_color);
 }
