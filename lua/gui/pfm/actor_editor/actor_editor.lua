@@ -486,6 +486,7 @@ function gui.PFMActorEditor:Setup(filmClip)
 	-- if(util.is_same_object(filmClip,self.m_filmClip)) then return end
 
 	debug.start_profiling_task("pfm_populate_actor_editor")
+	asset.clear_unused()
 	self.m_filmClip = filmClip
 	self.m_tree:Clear()
 	self.m_treeElementToActorData = {}
@@ -522,6 +523,7 @@ function gui.PFMActorEditor:Setup(filmClip)
 	--[[for _,actor in ipairs(filmClip:GetActorList()) do
 		self:AddActor(actor)
 	end]]
+	asset.clear_unused()
 	debug.stop_profiling_task()
 end
 function gui.PFMActorEditor:AddProperty(name,child,fInitPropertyEl)
