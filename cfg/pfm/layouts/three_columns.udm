@@ -1,0 +1,60 @@
+layout
+{
+	rootContainer
+	{
+		$string name "main_container"
+		$array children [element][
+			{
+				$string name "left_container"
+				$string type "container"
+				$float defaultFrameSizeRatio 0.5
+				$array children [element][
+					{
+						$string name "tb_container"
+						$string type "container"
+						$bool horizontal true
+						$array children [element][
+							{
+								$string name "top_frame"
+								$string type "frame"
+								$array windowCategories [string][
+									"editors"
+								]
+							},
+							{
+								$string name "bottom_frame"
+								$string type "frame"
+								$array windowCategories [string][
+									"catalogs",
+									"misc"
+								]
+							}
+						]
+					}
+				]
+			},
+			{
+				$string name "right_container"
+				$string type "container"
+				$bool horizontal false
+				$array children [element][
+					{
+						$string name "viewport_frame"
+						$string type "frame"
+						$float defaultFrameSizeRatio 0.75
+						$array windowCategories [string][
+							"viewers"
+						]
+					},
+					{
+						$string name "timeline_frame"
+						$string type "frame"
+						$array windowCategories [string][
+							"timeline"
+						]
+					}
+				]
+			}
+		]
+	}
+}

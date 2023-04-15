@@ -49,6 +49,7 @@ function PfmEditEntryWindow:OnInitialize()
 	boxButtons:Update()
 	boxButtons:SetX(contents:GetWidth() -boxButtons:GetWidth())
 end
+function PfmEditEntryWindow:GetTable() return self.m_table end
 function PfmEditEntryWindow:OnSizeChanged(w,h)
 	gui.PFMWindow.OnSizeChanged(self,w,h)
 	if(util.is_valid(self.m_table)) then self.m_table:SetWidth(self:GetWidth() -13) end

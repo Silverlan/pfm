@@ -1,0 +1,13 @@
+layout
+{
+	rootContainer
+	{
+		$string name "main_container"
+		$array children [element][
+			{
+				$string name "main_frame"
+				$string type "frame"
+			}
+		]
+	}
+}
