@@ -1,0 +1,15 @@
+"layout_state"
+{
+	"containers"
+	{
+		"main_container"
+		{
+			$array frameSizeRatios [float;1][0.25]
+		}
+		"viewport_container"
+		{
+			$array frameSizeRatios [float;1][0.75]
+		}
+	}
+	$string layout "cfg/pfm/layouts/default.udm"
+}
