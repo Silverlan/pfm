@@ -67,6 +67,7 @@ local function updateAutosave()
 end
 console.add_change_callback("pfm_autosave_enabled",updateAutosave)
 console.add_change_callback("pfm_autosave_time_interval",updateAutosave)
+console.register_variable("pfm_keep_current_layout",udm.TYPE_BOOLEAN,false,bit.bor(console.FLAG_BIT_ARCHIVE),"Keep the current layout when opening a project.")
 
 function gui.WIFilmmaker:__init()
 	gui.WIBaseFilmmaker.__init(self)
@@ -322,16 +323,29 @@ function gui.WIFilmmaker:OnInitialize()
 			if(util.is_valid(self) == false) then return end
 			if(self:CheckBuildKernels()) then return end
 			util.remove(self.m_openDialogue)
+			local pOptionKeepCurrentLayout
 			self.m_openDialogue = gui.create_file_open_dialog(function(pDialog,fileName)
 				fileName = "projects/" .. fileName
+
+				if(console.get_convar_bool("pfm_keep_current_layout")) then
+					file.create_path("temp/pfm/")
+					self:SaveWindowLayoutState("temp/pfm/restore_layout_state.udm",true)
+				end
+
 				self:LoadProject(fileName)
 			end)
 			self.m_openDialogue:SetRootPath("projects")
 			self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
+
+			local pOptions = self.m_openDialogue:GetOptionsPanel()
+			pOptionKeepCurrentLayout = pOptions:AddToggleControl(locale.get_text("pfm_keep_current_layout"),"keep_current_layout",console.get_convar_bool("pfm_keep_current_layout"),function(el,checked)
+				console.run("pfm_keep_current_layout",checked and "1" or "0")
+			end)
+
 			self.m_openDialogue:Update()
 		end)
 		if(self:IsDeveloperModeEnabled()) then
-			pContext:AddItem("Reopen",function(pItem)
+			pContext:AddItem(locale.get_text("reopen"),function(pItem)
 				if(util.is_valid(self) == false) then return end
 				if(self:CheckBuildKernels()) then return end
 				self:LoadProject(self:GetProjectFileName())
@@ -707,6 +721,16 @@ function gui.WIFilmmaker:OnInitialize()
 			end)
 		end
 		pSubMenu:ScheduleUpdate()
+
+		pContext:AddItem(locale.get_text("pfm_save_current_layout_state_as_default"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			self:SaveWindowLayoutState("cfg/pfm/default_layout_state.udm",true)
+		end)
+		pContext:AddItem(locale.get_text("pfm_restore_default_layout_state"),function(pItem)
+			if(util.is_valid(self) == false) then return end
+			self:RestoreWindowLayoutState("cfg/pfm/default_layout_state.udm")
+		end)
+
 		pContext:ScheduleUpdate()
 	end)
 	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
@@ -1851,11 +1875,25 @@ function gui.WIFilmmaker:InitializeProject(project)
 		end
 	end
 
+	local layoutStateFileName = "temp/pfm/restore_layout_state.udm"
+	local layout
+	local udmLayout
+	if(console.get_convar_bool("pfm_keep_current_layout") and file.exists(layoutStateFileName)) then
+		-- Restore previous layout state
+		local udmData = self:LoadWindowLayoutState(layoutStateFileName)
+		file.delete(layoutStateFileName)
+
+		if(udmData ~= nil) then
+			udmLayout = udmData:Get("layout_state")
+			layout = udmLayout:GetValue("layout",udm.TYPE_STRING)
+		end
+	end
+
 	local settings = session:GetSettings()
-	self:InitializeProjectUI(settings:GetLayout())
+	self:InitializeProjectUI(layout or settings:GetLayout())
 	self:SetTimeOffset(0)
 	self:RestoreWorkCamera()
-	self:RestoreWindowLayoutState(settings:GetLayoutState():GetUdmData())
+	self:RestoreWindowLayoutState(udmLayout or settings:GetLayoutState():GetUdmData(),udmLayout == nil)
 	return entScene
 end
 function gui.WIFilmmaker:OnFilmClipAdded(el)

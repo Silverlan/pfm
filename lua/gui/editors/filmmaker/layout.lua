@@ -179,18 +179,31 @@ function Element:LoadLayout(fileName)
     self:InitializeProjectUI(fileName)
 end
 
-function Element:RestoreWindowLayoutState(udmData)
+function Element:LoadWindowLayoutState(fileName)
+    local udmData,err = udm.load(fileName)
+    if(udmData == false) then
+        pfm.log("Unable to open layout state configuration '" .. fileName .. "': " .. err,pfm.LOG_CATEGORY_LAYOUT,pfm.LOG_SEVERITY_WARNING)
+        return
+    end
+    udmData = udmData:GetAssetData():GetData()
+    udmData = udmData:ClaimOwnership()
+    return udmData
+end
+
+function Element:RestoreWindowLayoutState(udmData,restoreLayout)
+    if(restoreLayout == nil) then restoreLayout = true end
     if(type(udmData) == "string") then
-        local fileName = udmData
-        local udmData,err = udm.load(fileName)
-        if(udmData == false) then
-            pfm.log("Unable to open layout state configuration '" .. fileName .. "': " .. err,pfm.LOG_CATEGORY_LAYOUT,pfm.LOG_SEVERITY_WARNING)
-            return
-        end
-        udmData = udmData:GetAssetData():GetData()
-        udmData = udmData:ClaimOwnership()
+        udmData = self:LoadWindowLayoutState(udmData)
+        if(udmData == nil) then return end
     end
     local udmLayout = udmData:Get("layout_state")
+
+    if(restoreLayout) then
+        local layout = udmLayout:GetValue("layout",udm.TYPE_STRING)
+        if(layout ~= nil) then
+            self:LoadLayout(layout)
+        end
+    end
 
     for containerId,udmContainer in pairs(udmLayout:GetChildren("containers")) do
         local frameContainerId = "frame_container_" .. containerId
@@ -241,7 +254,7 @@ function Element:RestoreWindowLayoutState(udmData)
 	end
 end
 
-function Element:SaveWindowLayoutState(assetData)
+function Element:SaveWindowLayoutState(assetData,saveLayout)
     local fileName
     if(type(assetData) == "string") then
         fileName = assetData
@@ -321,6 +334,10 @@ function Element:SaveWindowLayoutState(assetData)
     end
 
     if(udmData == nil) then return end
+
+    if(saveLayout) then
+        udmLayoutState:SetValue("layout",udm.TYPE_STRING,self.m_layoutFileName)
+    end
 
     local filePath = util.Path.CreateFilePath(fileName)
 	if(file.create_path(filePath:GetPath()) == false) then return end
