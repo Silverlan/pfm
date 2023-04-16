@@ -1398,6 +1398,7 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName,saveAs,withProjectsPrefi
 	if(setAsProjectName == nil) then setAsProjectName = true end
 	local function saveProject(fileName)
 		self:UpdateWorkCamera()
+		self:UpdateWindowLayoutState()
 		file.create_directory("projects")
 		local ext = file.get_file_extension(fileName)
 		local saveAsAscii = (ext == pfm.Project.FORMAT_EXTENSION_ASCII)
@@ -1850,10 +1851,11 @@ function gui.WIFilmmaker:InitializeProject(project)
 		end
 	end
 
-	self:InitializeProjectUI()
+	local settings = session:GetSettings()
+	self:InitializeProjectUI(settings:GetLayout())
 	self:SetTimeOffset(0)
 	self:RestoreWorkCamera()
-
+	self:RestoreWindowLayoutState(settings:GetLayoutState():GetUdmData())
 	return entScene
 end
 function gui.WIFilmmaker:OnFilmClipAdded(el)

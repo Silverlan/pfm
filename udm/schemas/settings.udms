@@ -144,6 +144,55 @@
 			}
 		}
 
+		"LayoutStateWindowDetached"
+		{
+			"children"
+			{
+				"pos" {$vec2i default [0,0]}
+				"size" {$vec2i default [0,0]}
+			}
+		}
+
+		"LayoutStateWindow"
+		{
+			"children"
+			{
+				"detachedWindow"
+				{
+					$string type "LayoutStateWindowDetached"
+				}
+			}
+		}
+
+		"LayoutStateContainer"
+		{
+			"children"
+			{
+				"frameSizeRatios"
+				{
+					$string type "array"
+					$string valueType "float"
+				}
+			}
+		}
+
+		"LayoutState"
+		{
+			"children"
+			{
+				"windows"
+				{
+					$string type "array"
+					$string valueType "LayoutStateWindow"
+				}
+				"containers"
+				{
+					$string type "array"
+					$string valueType "LayoutStateContainer"
+				}
+			}
+		}
+
 		"CameraView"
 		{
 			$string type "enum"
@@ -163,6 +212,11 @@
 				}
 				"renderSettings" {$string type "RenderSettings"}
 				"workCamera" {$string type "WorkCamera"}
+				"layout" {
+					$string type "string"
+					$string default "cfg/pfm/layouts/default.udm"
+				}
+				"layoutState" {$string type "LayoutState"}
 				"cameraView"
 				{
 					$string type "CameraView"

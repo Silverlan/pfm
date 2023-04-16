@@ -86,7 +86,7 @@ function FrameContainer:AddFrameContainer(frameName,defaultRatio)
     local frameContainer = gui.WIFilmmaker.Layout.FrameContainer()
     table.insert(self.m_frames,{
         type = "frameContainer",
-        frame = frameContainer,
+        container = frameContainer,
         name = frameName,
         defaultRatio = defaultRatio
     })
@@ -110,6 +110,7 @@ end
 
 function Element:InitializeLayout(layoutFileName)
     layoutFileName = layoutFileName or "cfg/pfm/layouts/default.udm"
+    self.m_layoutFileName = layoutFileName
     pfm.log("Loading layout configuration '" .. layoutFileName .. "'...",pfm.LOG_CATEGORY_LAYOUT,pfm.LOG_SEVERITY_INFO)
     local layout,err = gui.WIFilmmaker.Layout.load(layoutFileName)
     if(layout == false) then
@@ -129,23 +130,26 @@ function Element:InitializeLayout(layoutFileName)
         else
             elContents = gui.create("WIVBox",parent)
         end
+        local frameContainerId = "frame_container_" .. fcId
+        elContents:SetName(frameContainerId)
         elContents:SetAutoFillContents(true)
 
         local frames = {}
         local dividers = {}
         local first = true
         local resizerRatio = 0.25
-        for _,frameData in ipairs(container:GetFrames()) do
+        for i,frameData in ipairs(container:GetFrames()) do
             if(first) then
                 first = false
             else
                 local resizer = gui.create("WIResizer",elContents)
                 resizer:SetFraction(resizerRatio)
+                resizer:SetName(frameContainerId .. "_divider_" .. (i -1))
                 table.insert(dividers,resizer)
             end
             resizerRatio = frameData.defaultRatio or 0.5
             if(frameData.type == "frameContainer") then
-                addFrameContainer(frameData.name,frameData.frame,elContents)
+                addFrameContainer(frameData.name,frameData.container,elContents)
             else
                 local elFrame = self:AddFrame(elContents)
                 self.m_firstFrame = elFrame
@@ -173,4 +177,165 @@ function Element:GetFrameContainerData(identifier) return self.m_frameContainers
 
 function Element:LoadLayout(fileName)
     self:InitializeProjectUI(fileName)
+end
+
+function Element:RestoreWindowLayoutState(udmData)
+    if(type(udmData) == "string") then
+        local fileName = udmData
+        local udmData,err = udm.load(fileName)
+        if(udmData == false) then
+            pfm.log("Unable to open layout state configuration '" .. fileName .. "': " .. err,pfm.LOG_CATEGORY_LAYOUT,pfm.LOG_SEVERITY_WARNING)
+            return
+        end
+        udmData = udmData:GetAssetData():GetData()
+        udmData = udmData:ClaimOwnership()
+    end
+    local udmLayout = udmData:Get("layout_state")
+
+    for containerId,udmContainer in pairs(udmLayout:GetChildren("containers")) do
+        local frameContainerId = "frame_container_" .. containerId
+        local frameSizeRatios = udmContainer:GetArrayValues("frameSizeRatios",udm.TYPE_FLOAT)
+        for iResizer,ratio in ipairs(frameSizeRatios) do
+            local elResizer = gui.find_element_by_name(frameContainerId .. "_divider_" .. iResizer)
+            if(util.is_valid(elResizer)) then elResizer:SetFraction(ratio) end
+        end
+    end
+
+    local primMonitor = gui.get_primary_monitor()
+    local primVideoMode = primMonitor:GetVideoMode()
+    local detachedWindows = {}
+    for name,udmWindow in pairs(udmLayout:GetChildren("windows")) do
+        local udmDetachedWindow = udmWindow:Get("detachedWindow")
+        if(udmDetachedWindow:IsValid()) then
+            local pos = udmDetachedWindow:GetValue("pos",udm.TYPE_VECTOR2)
+            local size = udmDetachedWindow:GetValue("size",udm.TYPE_VECTOR2)
+
+            if(pos ~= nil) then pos = Vector2i(pos.x *primVideoMode.width,pos.y *primVideoMode.height) end
+            if(size ~= nil) then size = Vector2i(size.x *primVideoMode.width,size.y *primVideoMode.height) end
+
+            detachedWindows[name] = true
+            local tab,el,frame = self:OpenWindow(name)
+            if(util.is_valid(frame)) then
+                local window = frame:DetachTab(name,(size ~= nil) and size.x or nil,(size ~= nil) and size.y or nil)
+                if(util.is_valid(window)) then
+                    if(size ~= nil) then
+                        window:SetSize(size)
+                    end
+                    if(pos ~= nil) then
+                        window:SetPos(pos)
+                    end
+                end
+            end
+        end
+    end
+
+	for _,windowData in ipairs(pfm.get_registered_windows()) do
+        if(detachedWindows[windowData.name] ~= true and self:IsWindowOpen(windowData.name)) then
+            self:AttachWindow(windowData.name)
+        end
+	end
+end
+
+function Element:SaveWindowLayoutState(assetData)
+    local fileName
+    if(type(assetData) == "string") then
+        fileName = assetData
+        assetData = nil
+    end
+    local udmData
+    if(assetData == nil) then
+        udmData = udm.create()
+	    assetData = udmData:GetAssetData():GetData()
+    end
+	local udmLayoutState = assetData:Add("layout_state")
+    local frameMap = {}
+    for catName,frame in pairs(self:GetFrames()) do
+        if(frame:IsValid()) then
+            frameMap[frame] = true
+        end
+    end
+    local frames = {}
+    for frame,_ in pairs(frameMap) do table.insert(frames,frame) end
+
+    local udmContainers = udmLayoutState:Add("containers")
+    local function addContainer(containerId,containerInfo)
+        local frameContainerId = "frame_container_" .. containerId
+        local el = gui.find_element_by_name(frameContainerId)
+
+        local resizerValues = {}
+        local iResizer = 1
+        local elResizer = gui.find_element_by_name(frameContainerId .. "_divider_" .. iResizer)
+        while(util.is_valid(elResizer)) do
+            table.insert(resizerValues,elResizer:GetFraction())
+            iResizer = iResizer +1
+            elResizer = gui.find_element_by_name(frameContainerId .. "_divider_" .. iResizer)
+        end
+        local udmContainer = udmContainers:Add(containerId)
+        udmContainer:SetArrayValues("frameSizeRatios",udm.TYPE_FLOAT,resizerValues)
+
+        local container = containerInfo.container
+        for frameId,frameInfo in pairs(container:GetFrames()) do
+            if(frameInfo.type == "frameContainer") then addContainer(frameInfo.name,frameInfo)
+            else
+
+            end
+        end
+    end
+    for containerId,containerInfo in pairs(self.m_layout:GetFrameContainers()) do
+        addContainer(containerId,containerInfo)
+    end
+
+    local udmWindows = udmLayoutState:Add("windows")
+    local primWindow = gui.get_primary_window()
+    local primMonitor = gui.get_primary_monitor()
+    local primVideoMode = primMonitor:GetVideoMode()
+    for _,frame in ipairs(frames) do
+        for _,tabData in ipairs(frame:GetTabs()) do
+            if(tabData.panel:IsValid()) then
+                local window = tabData.panel:GetRootWindow()
+                if(window ~= primWindow) then
+                    local udmWindow = udmWindows:Add(tabData.panel:GetName())
+                    local udmDetachedWindow = udmWindow:Add("detachedWindow")
+                    local pos = window:GetPos()
+                    local size = window:GetSize()
+
+                    pos = Vector2(pos.x /primVideoMode.width,pos.y /primVideoMode.height)
+                    size = Vector2(size.x /primVideoMode.width,size.y /primVideoMode.height)
+                    
+                    udmDetachedWindow:SetValue("pos",udm.TYPE_VECTOR2,pos)
+                    udmDetachedWindow:SetValue("size",udm.TYPE_VECTOR2,size)
+                end
+            end
+        end
+    end
+
+    if(udmData == nil) then return end
+
+    local filePath = util.Path.CreateFilePath(fileName)
+	if(file.create_path(filePath:GetPath()) == false) then return end
+	local f = file.open(filePath:GetString(),file.OPEN_MODE_WRITE)
+	if(f == nil) then
+		pfm.log("Unable to open file '" .. filePath:GetString() .. "' for writing!",pfm.LOG_CATEGORY_LAYOUT,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+	local res,err = udmData:SaveAscii(f) -- ,udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER)
+	f:Close()
+	if(res == false) then
+		pfm.log("Failed to save layout state as '" .. filePath:GetString() .. "': " .. err,pfm.LOG_CATEGORY_LAYOUT,pfm.LOG_SEVERITY_WARNING)
+		return false
+	end
+    return true
+end
+
+function gui.WIFilmmaker:UpdateWindowLayoutState()
+	local session = self:GetSession()
+	if(session == nil) then return end
+	local settings = session:GetSettings()
+    local layoutState = settings:GetLayoutState()
+    layoutState:ClearWindows()
+    layoutState:ClearContainers()
+    self:SaveWindowLayoutState(layoutState:GetUdmData())
+    layoutState:ReloadUdmData(layoutState:GetUdmData())
+
+    settings:SetLayout(self.m_layoutFileName)
 end

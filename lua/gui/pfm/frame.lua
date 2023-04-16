@@ -177,21 +177,24 @@ function gui.PFMFrame:AddTab(identifier,name,panel)
 	})
 	return #self.m_tabs
 end
+function gui.PFMFrame:GetTabs() return self.m_tabs end
 function gui.PFMFrame:OnThink()
 	if(self.m_activeTabButton == nil) then self:SetActiveTab(1) end
 	self:SetThinkingEnabled(false)
 end
-function gui.PFMFrame:DetachTab(identifier)
+function gui.PFMFrame:DetachTab(identifier,width,height)
 	if(type(identifier) ~= "string") then
 		identifier = self:FindTabIdentifier(identifier)
 		if(identifier == nil) then return end
 	end
 	local tabData = self:FindTabData(identifier)
-	if(tabData == nil or util.is_valid(tabData.panel) == false or util.is_valid(tabData.window)) then return end
+	if(tabData == nil or util.is_valid(tabData.panel) == false) then return end
+	if(util.is_valid(tabData.window)) then return tabData.window end
 	local panel = tabData.panel
 	local createInfo = prosper.WindowCreateInfo()
-	createInfo.width = panel:GetWidth()
-	createInfo.height = panel:GetHeight()
+	createInfo.width = width or panel:GetWidth()
+	createInfo.height = height or panel:GetHeight()
+	pfm.log("Detaching frame " .. identifier .. " with size " .. createInfo.width .. "x" .. createInfo.height,pfm.LOG_CATEGORY_PFM)
 	if(util.is_valid(tabData.button)) then createInfo.title = tabData.button:GetText() end
 	local windowHandle = prosper.create_window(createInfo)
 	if(windowHandle == nil) then return end
@@ -201,7 +204,10 @@ function gui.PFMFrame:DetachTab(identifier)
 	local elBg = gui.create("WIRect",el,0,0,el:GetWidth(),el:GetHeight(),0,0,1,1)
 	elBg:SetColor(Color(38,38,38,255))
 
+	panel:ClearAnchor()
 	panel:SetParentAndUpdateWindow(elBg)
+	panel:SetPos(0,0)
+	panel:SetSize(elBg:GetSize())
 	panel:SetAnchor(0,0,1,1)
 	panel:TrapFocus(true)
 	panel:RequestFocus()
@@ -219,6 +225,7 @@ function gui.PFMFrame:DetachTab(identifier)
 		panel:SetVisible(true)
 		panel:CallCallbacks("OnDetached",windowHandle)
 	end
+	return windowHandle
 end
 
 function gui.PFMFrame:AttachTab(identifier)
@@ -228,6 +235,7 @@ function gui.PFMFrame:AttachTab(identifier)
 	end
 	local tabData = self:FindTabData(identifier)
 	if(tabData == nil or util.is_valid(tabData.panel) == false or tabData.window == nil) then return end
+	pfm.log("Attaching frame " .. identifier,pfm.LOG_CATEGORY_PFM)
 	local windowHandle = tabData.window
 
 	local panel = tabData.panel
