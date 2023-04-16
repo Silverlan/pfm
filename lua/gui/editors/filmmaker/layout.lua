@@ -214,16 +214,21 @@ function Element:RestoreWindowLayoutState(udmData)
             if(size ~= nil) then size = Vector2i(size.x *primVideoMode.width,size.y *primVideoMode.height) end
 
             detachedWindows[name] = true
-            local tab,el,frame = self:OpenWindow(name)
-            if(util.is_valid(frame)) then
-                local window = frame:DetachTab(name,(size ~= nil) and size.x or nil,(size ~= nil) and size.y or nil)
-                if(util.is_valid(window)) then
-                    if(size ~= nil) then
-                        window:SetSize(size)
-                    end
-                    if(pos ~= nil) then
-                        window:SetPos(pos)
-                    end
+
+            local window
+            if(name == "main") then window = gui.get_primary_window()
+            else
+                local tab,el,frame = self:OpenWindow(name)
+                if(util.is_valid(frame)) then
+                    window = frame:DetachTab(name,(size ~= nil) and size.x or nil,(size ~= nil) and size.y or nil)
+                end
+            end
+            if(util.is_valid(window)) then
+                if(size ~= nil) then
+                    window:SetSize(size)
+                end
+                if(pos ~= nil) then
+                    window:SetPos(pos)
                 end
             end
         end
@@ -287,23 +292,29 @@ function Element:SaveWindowLayoutState(assetData)
 
     local udmWindows = udmLayoutState:Add("windows")
     local primWindow = gui.get_primary_window()
+
     local primMonitor = gui.get_primary_monitor()
     local primVideoMode = primMonitor:GetVideoMode()
+    local function add_window(name,window)
+        local udmWindow = udmWindows:Add(name)
+        local udmDetachedWindow = udmWindow:Add("detachedWindow")
+        local pos = window:GetPos()
+        local size = window:GetSize()
+
+        pos = Vector2(pos.x /primVideoMode.width,pos.y /primVideoMode.height)
+        size = Vector2(size.x /primVideoMode.width,size.y /primVideoMode.height)
+        
+        udmDetachedWindow:SetValue("pos",udm.TYPE_VECTOR2,pos)
+        udmDetachedWindow:SetValue("size",udm.TYPE_VECTOR2,size)
+    end
+    add_window("main",primWindow)
+
     for _,frame in ipairs(frames) do
         for _,tabData in ipairs(frame:GetTabs()) do
             if(tabData.panel:IsValid()) then
                 local window = tabData.panel:GetRootWindow()
                 if(window ~= primWindow) then
-                    local udmWindow = udmWindows:Add(tabData.panel:GetName())
-                    local udmDetachedWindow = udmWindow:Add("detachedWindow")
-                    local pos = window:GetPos()
-                    local size = window:GetSize()
-
-                    pos = Vector2(pos.x /primVideoMode.width,pos.y /primVideoMode.height)
-                    size = Vector2(size.x /primVideoMode.width,size.y /primVideoMode.height)
-                    
-                    udmDetachedWindow:SetValue("pos",udm.TYPE_VECTOR2,pos)
-                    udmDetachedWindow:SetValue("size",udm.TYPE_VECTOR2,size)
+                    add_window(tabData.panel:GetName(),window)
                 end
             end
         end
