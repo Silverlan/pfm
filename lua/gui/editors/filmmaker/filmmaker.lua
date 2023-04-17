@@ -1458,7 +1458,10 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName,saveAs,withProjectsPrefi
 		self.m_openDialogue:Update()
 	end
 end
-function gui.WIFilmmaker:CreateInitialProject() self:CreateSimpleProject(true) end
+function gui.WIFilmmaker:CreateInitialProject()
+	self:CreateSimpleProject(true)
+	self:RestoreWindowLayoutState("cfg/pfm/default_layout_state.udm")
+end
 function gui.WIFilmmaker:CreateSimpleProject()
 	self:CreateEmptyProject()
 
