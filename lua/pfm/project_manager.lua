@@ -126,6 +126,7 @@ function pfm.ProjectManager:LoadProject(fileName,ignoreMap)
 	self:SetProjectFileName(fileName)
 	self.m_project = project
 	-- self:LoadAnimationCache(fileName)
+	self:OnProjectLoaded(fileName,project)
 	return util.is_valid(self:InitializeProject(project))
 end
 function pfm.ProjectManager:SaveProject(fileName,newInternalName)
@@ -249,6 +250,7 @@ function pfm.ProjectManager:CloseProject()
 	collectgarbage()
 	self:OnProjectClosed()
 end
+function pfm.ProjectManager:OnProjectLoaded(fileName,project) end
 function pfm.ProjectManager:OnProjectClosed() end
 function pfm.ProjectManager:ImportSFMProject(projectFilePath)
 	self:CloseProject()

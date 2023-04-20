@@ -366,6 +366,19 @@ function gui.WIFilmmaker:OnInitialize()
 			self:Save(nil,false,true)
 		end)
 
+		local recentFiles = self.m_settings:GetArrayValues("recent_projects",udm.TYPE_STRING)
+		if(#recentFiles > 0) then
+			local pItem,pSubMenu = pContext:AddSubMenu(locale.get_text("recent_projects"))
+			for _,f in ipairs(recentFiles) do
+				pSubMenu:AddItem(f,function(pItem)
+					if(util.is_valid(self) == false) then return end
+					if(self:CheckBuildKernels()) then return end
+					self:LoadProject(f)
+				end)
+				pSubMenu:ScheduleUpdate()
+			end
+		end
+
 		local function initMapDialog(pFileDialog)
 			pFileDialog:SetRootPath("maps")
 			pFileDialog:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP,asset.FORMAT_TYPE_ALL))
@@ -917,6 +930,27 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched",self)
 end
+function gui.WIFilmmaker:OnProjectLoaded(fileName,project)
+	self:AddRecentProject(fileName)
+end
+function gui.WIFilmmaker:AddRecentProject(fileName)
+	pfm.log("Adding recent project '" .. fileName .. "'...",pfm.LOG_CATEGORY_PFM)
+	local maxCount = 10
+	local udmRecentProjects = self.m_settings:Get("recent_projects")
+	if(udmRecentProjects:IsValid() == false) then
+		self.m_settings:AddArray("recent_projects",0,udm.TYPE_STRING)
+		udmRecentProjects = self.m_settings:Get("recent_projects")
+	end
+	local recentFiles = self.m_settings:GetArrayValues("recent_projects",udm.TYPE_STRING)
+	for i,f in ipairs(recentFiles) do
+		if(f == fileName) then
+			udmRecentProjects:RemoveValue(i -1)
+			break
+		end
+	end
+	udmRecentProjects:InsertValue(0,fileName)
+	if(udmRecentProjects:GetSize() > maxCount) then udmRecentProjects:Resize(maxCount) end
+end
 function gui.WIFilmmaker:BuildKernels()
 	if(util.is_valid(self.m_rtBuildKernels)) then return end
 	local tFiles = file.find("modules/unirender/cycles/cache/kernels/*")
@@ -1435,6 +1469,7 @@ function gui.WIFilmmaker:Save(fileName,setAsProjectName,saveAs,withProjectsPrefi
 		local res = self:SaveProject(fileName,setAsProjectName and fileName or nil)
 		if(res) then
 			pfm.create_popup_message(locale.get_text("pfm_save_success",{fileName}),1)
+			if(setAsProjectName) then self:AddRecentProject(fileName) end
 		else
 			pfm.create_popup_message(locale.get_text("pfm_save_failed",{fileName}),false,gui.InfoBox.TYPE_ERROR)
 		end
