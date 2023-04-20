@@ -115,8 +115,12 @@ function gui.WIFilmmaker:OnInitialize()
 	gui.WIBaseFilmmaker.OnInitialize(self)
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 	tool.filmmaker = self
+	
 	gui.set_context_menu_skin("pfm")
 	gui.get_primary_window():SetResizable(true)
+
+	local elConsole = gui.get_console()
+	if(util.is_valid(elConsole)) then elConsole:SetExternallyOwned(true) end
 
 	local windowTitle = ""
 	local window = gui.get_primary_window()
@@ -357,6 +361,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 		local session = self:GetSession()
 		if(session ~= nil and session:GetSettings():IsReadOnly() and self:IsDeveloperModeEnabled() == false) then itemSave:SetEnabled(false) end
+
 		pContext:AddItem(locale.get_text("save_as"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			self:Save(nil,true,true)
@@ -1380,6 +1385,7 @@ function gui.WIFilmmaker:SaveSettings()
 		f:Close()
 	end
 end
+
 function gui.WIFilmmaker:PreRenderScenes(drawSceneInfo)
 	if(self.m_overlaySceneEnabled ~= true or self.m_nonOverlayRtTexture == nil) then return end
 	local gameScene = game.get_scene()

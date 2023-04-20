@@ -317,6 +317,22 @@ pfm.register_window("code_editor","editors",locale.get_text("pfm_code_editor"),f
 	el:AddCallback("OnDetached",function(el,window) window:Maximize() end)
 	return el
 end)
+pfm.register_window("console","editors",locale.get_text("console"),function(pm)
+	local elConsole = gui.get_console()
+	if(util.is_valid(elConsole) == false) then return end
+	elConsole:SetExternallyOwned(true)
+	local el = gui.create("WIBase")
+	el:SetSize(512,512)
+	el:SetName("console")
+	el:AddCallback("OnDetached",function(el,window) window:Maximize() end)
+	el:AddCallback("OnReattached",function(el,window)
+		if(elConsole:IsValid()) then elConsole:SetExternallyOwned(false) end
+	end)
+	elConsole:SetParent(el)
+	elConsole:SetSize(el:GetSize())
+	elConsole:SetAnchor(0,0,1,1)
+	return el
+end)
 pfm.register_window("settings","editors",locale.get_text("pfm_settings"),function(pm)
 	local el = gui.create("WIPFMSettings")
 	el:SetName("pfm_settings")

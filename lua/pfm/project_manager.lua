@@ -23,6 +23,17 @@ function pfm.ProjectManager:OnInitialize()
 	self.m_performanceCache = pfm.PerformanceCache()
 	self.m_animManager = pfm.AnimationManager()
 
+	gui.close_main_menu()
+	self.m_cbDisableDefaultConsoleInput = input.add_callback("OnCharInput",function(c)
+		if(c == input.KEY_GRAVE_ACCENT) then
+			self:OpenWindow("console")
+			self:GoToWindow("console")
+			local console = gui.get_console()
+			if(util.is_valid(console)) then console:RequestFocus() end
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
+
 	self.m_cbDisableEscapeMenu = input.add_callback("OnKeyboardInput",function(key,state,mods)
 		if(key == input.KEY_ESCAPE) then
 			if(state == input.STATE_PRESS) then self:OpenEscapeMenu() end
@@ -35,6 +46,7 @@ function pfm.ProjectManager:OnInitialize()
 end
 function pfm.ProjectManager:OnRemove()
 	util.remove(self.m_cbDisableEscapeMenu)
+	util.remove(self.m_cbDisableDefaultConsoleInput)
 end
 function pfm.ProjectManager:OpenEscapeMenu() end
 function pfm.ProjectManager:CreateInitialProject() self:CreateNewProject() end
