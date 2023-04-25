@@ -817,6 +817,8 @@ function gui.WIFilmmaker:OnInitialize()
 	--
 
 	console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps")))
+	-- Smooth camera acceleration
+	console.run("sv_acceleration_ramp_up_time",tostring(0.5))
 
 	--[[local framePlaybackControls = gui.create("WIFrame",self)
 	framePlaybackControls:SetCloseButtonEnabled(false)
