@@ -21,6 +21,7 @@ include("/gui/patreon_ticker.lua")
 include("/gui/bone_retargeting.lua")
 include("/gui/ik_rig_editor.lua")
 include("/gui/pfm/viewport/viewport.lua")
+include("/gui/pfm/message_prompt.lua")
 include("/gui/pfm/postprocessing.lua")
 include("/gui/pfm/videoplayer.lua")
 include("/gui/pfm/timeline.lua")
@@ -886,24 +887,24 @@ function gui.WIFilmmaker:OnInitialize()
 		if(util.is_valid(actorEditor)) then actorEditor:SetPropertyAnimationOverlaysDirty() end
 	end)
 
-	local udmNotifications = self.m_settings:Get("notifications")
-	if((udmNotifications:GetValue("initial_welcome_message",udm.TYPE_UINT8) or 0) == 0) then
+	--[[local udmNotifications = self.m_settings:Get("notifications")
+	if((udmNotifications:GetValue("initial_tutorial_message",udm.TYPE_UINT8) or 0) == 0) then
 		time.create_simple_timer(10.0,function()
 			if(self:IsValid() == false) then return end
-			local url = "https://wiki.pragma-engine.com/books/pragma-filmmaker/chapter/user-interface"
 			pfm.create_popup_message(
-				locale.get_text("pfm_first_time_message",{"{[l:url \"" .. url .. "\"]}","{[/l]}"}),
+				locale.get_text("pfm_initial_tutorial_message",{"{[l:url \"" .. url .. "\"]}","{[/l]}"}),
 				false
 			)
-			udmNotifications:SetValue("initial_welcome_message",udm.TYPE_UINT8,1)
+			udmNotifications:SetValue("initial_tutorial_message",udm.TYPE_UINT8,1)
 		end)
-	end
+	end]]
 
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched",self)
 end
 function gui.WIFilmmaker:OnProjectLoaded(fileName,project)
 	self:AddRecentProject(fileName)
+	self:CallCallbacks("OnProjectLoaded")
 end
 function gui.WIFilmmaker:AddRecentProject(fileName)
 	pfm.log("Adding recent project '" .. fileName .. "'...",pfm.LOG_CATEGORY_PFM)
@@ -940,8 +941,10 @@ function gui.WIFilmmaker:SetBuildKernels(buildKernels)
 		util.remove(self.m_rtBuildKernels)
 		pfm.create_popup_message(locale.get_text("pfm_render_kernels_built_msg"),false)
 	end
-	if(buildKernels == false or util.is_valid(self.m_viewportFrame) == false) then return end
-	local tabContainer = self.m_viewportFrame:GetTabContainer()
+	if(buildKernels == false) then return end
+	local frame = self.m_windowFrames["timeline"]
+	if(util.is_valid(frame) == false) then return end
+	local tabContainer = frame:GetTabContainer()
 	if(util.is_valid(tabContainer) == false) then return end
 	self.m_kernelsBuildMessage = gui.create("WIKernelsBuildMessage",tabContainer)
 
@@ -1558,6 +1561,7 @@ end
 function gui.WIFilmmaker:OnProjectClosed()
 	pfm.ProjectManager.OnProjectClosed(self)
 	self:UpdateAutosave(true)
+	self:CallCallbacks("OnProjectClosed")
 end
 function gui.WIFilmmaker:ReloadInterface()
 	local projectData = self:MakeProjectPersistent()
@@ -1794,6 +1798,10 @@ function gui.WIFilmmaker:OnRemove()
 	end
 	for _,layer in ipairs(self.m_inputBindingLayers) do input.remove_input_binding_layer(layer.identifier) end
 	self:UpdateInputBindings()
+
+	if(self.m_runUpdaterOnShutdown) then
+		util.run_updater()
+	end
 
 	gui.set_context_menu_skin()
 	collectgarbage()
@@ -2201,7 +2209,7 @@ function gui.WIFilmmaker:InitializeProjectUI(layoutName)
 			return windowData.factory(self)
 		end)
 	end
-
+	
 	self:OpenWindow("actor_editor")
 	-- self:OpenWindow("element_viewer")
 	-- self:OpenWindow("tutorial_catalog")
@@ -2230,6 +2238,7 @@ function gui.WIFilmmaker:InitializeProjectUI(layoutName)
 			self:SetTimeOffset(offset)
 		end
 	end)
+	
 	local playButton = self:GetViewport():GetPlayButton()
 	playButton:AddCallback("OnTimeAdvance",function(el,dt)
 		if(playhead:IsValid()) then
