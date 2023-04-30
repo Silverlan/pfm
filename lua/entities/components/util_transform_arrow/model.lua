@@ -17,16 +17,17 @@ function Component:GetArrowModel()
 	local scale = 1.2
 	scale = Vector(scale,scale,scale)
 	local mesh = game.Model.Mesh.Create()
-	local meshBase = game.Model.Mesh.Sub.CreateCylinder(0.4,16.0,12)
+	local meshBase = game.Model.Mesh.Sub.create_cylinder(game.Model.CylinderCreateInfo(0.4,16.0))
 	meshBase:SetSkinTextureIndex(0)
 	meshBase:Scale(scale)
 	mesh:AddSubMesh(meshBase)
 
-	local meshTip = game.Model.Mesh.Sub.CreateCone(
-		1.0, -- startRadius
-		5.0, -- length
-		0.0, -- endRadius
-		12 -- segmentCount
+	local meshTip = game.Model.Mesh.Sub.create_cone(
+		game.Model.ConeCreateInfo(
+			1.0, -- startRadius
+			5.0, -- length
+			0.0 -- endRadius
+		)
 	)
 	meshTip:SetSkinTextureIndex(0)
 	meshTip:Translate(Vector(0.0,0.0,16.0))
@@ -68,7 +69,7 @@ local diskModel
 function Component:GetDiskModel()
 	if(diskModel ~= nil) then return diskModel end
 	local scale = 2
-	local mesh = game.Model.Mesh.Sub.CreateRing(9,8,true)
+	local mesh = game.Model.Mesh.Sub.create_ring(game.Model.RingCreateInfo(9,8,true))
 	diskModel = create_model(mesh,scale)
 	return diskModel
 end
@@ -78,8 +79,8 @@ function Component:GetScaleModel()
 	if(scaleModel ~= nil) then return scaleModel end
 	local scale = 0.8
 	local meshScale = 2.0
-	local mesh = game.Model.Mesh.Sub.CreateCylinder(0.5 *meshScale,10.0 *meshScale,12)
-	local mesh2 = game.Model.Mesh.Sub.CreateCylinder(1 *meshScale,3 *meshScale,12)
+	local mesh = game.Model.Mesh.Sub.create_cylinder(game.Model.CylinderCreateInfo(0.5 *meshScale,10.0 *meshScale))
+	local mesh2 = game.Model.Mesh.Sub.create_cylinder(game.Model.CylinderCreateInfo(1 *meshScale,3 *meshScale))
 	local zOffset = 5
 	for i=0,mesh:GetVertexCount() -1 do
 		local v = mesh:GetVertexPosition(i)
@@ -100,7 +101,7 @@ function Component:GetPlaneModel()
 	if(planeModel ~= nil) then return planeModel end
 	local scale = 1.2
 	local offset = Vector(5,0,5)
-	local meshBox = game.Model.Mesh.Sub.CreateBox(offset +Vector(-3,-0.1,-3),offset +Vector(3,0.1,3))
+	local meshBox = game.Model.Mesh.Sub.create_box(game.Model.BoxCreateInfo(offset +Vector(-3,-0.1,-3),offset +Vector(3,0.1,3)))
 	planeModel = create_model(meshBox,scale)
 	return planeModel
 end
@@ -109,7 +110,7 @@ local boxModel
 function Component:GetBoxModel()
 	if(boxModel ~= nil) then return boxModel end
 	local scale = 1.2
-	local meshBox = game.Model.Mesh.Sub.CreateBox(Vector(-2,-2,-2),Vector(2,2,2))
+	local meshBox = game.Model.Mesh.Sub.create_box(game.Model.BoxCreateInfo(Vector(-2,-2,-2),Vector(2,2,2)))
 	boxModel = create_model(meshBox,scale)
 	return boxModel
 end

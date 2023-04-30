@@ -27,7 +27,7 @@ function Component:InitializeModel()
 	local mdl = game.create_model()
 	local meshGroup = mdl:GetMeshGroup(0)
 
-	local subMesh = game.Model.Mesh.Sub.Create()
+	local subMesh = game.Model.Mesh.Sub.create()
 	subMesh:SetGeometryType(game.Model.Mesh.Sub.GEOMETRY_TYPE_LINES)
 
 	local mat = game.create_material("pfm_wireframe_line")

@@ -57,7 +57,7 @@ function ents.PFMVolumetricSpot:GenerateModel()
 
 			local startPos = dir *maxDist *(segStartRadius /endRadius)
 			local endPos = dir *maxDist *(segEndRadius /endRadius)
-			local subMesh = game.Model.Mesh.Sub.Create()
+			local subMesh = game.Model.Mesh.Sub.create()
 			local verts,tris,normals = geometry.generate_truncated_cone_mesh(startPos,segStartRadius,dir,startPos:Distance(endPos),segEndRadius,coneDetail,false,true,true)
 			for i=1,#tris,3 do
 				subMesh:AddTriangle(tris[i],tris[i +1],tris[i +2])
