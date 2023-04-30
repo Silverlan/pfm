@@ -24,12 +24,15 @@ end
 function Component:OnTick(dt)
 	local startPos,dir,vpData = ents.ClickComponent.get_ray_data()
 	if(startPos == nil) then self:SetNextTick(time.cur_time() +0.2) return end
-	local filter
+	local filter = function(ent)
+		return ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
+	end
 	if(util.is_valid(vpData.viewport)) then
 		local scene = vpData.viewport:GetScene()
 		if(util.is_valid(scene)) then
+			local preFilter = filter
 			filter = function(ent)
-				return ent:IsInScene(scene)
+				return preFilter(ent) and ent:IsInScene(scene)
 			end
 		end
 	end
