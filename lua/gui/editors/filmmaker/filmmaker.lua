@@ -55,6 +55,7 @@ include("video_recorder.lua")
 include("selection_manager.lua")
 include("animation_export.lua")
 include("layout.lua")
+include("update.lua")
 include("windows.lua")
 
 include_component("pfm_camera")
@@ -73,42 +74,6 @@ function gui.WIFilmmaker:__init()
 	gui.WIBaseFilmmaker.__init(self)
 end
 include("/pfm/bake/ibl.lua")
-function gui.WIFilmmaker:CheckForUpdates(verbose)
-	local r = engine.load_library("git/pr_git")
-	if(r ~= true) then
-		pfm.log("Failed to load pr_git module: " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-		return
-	end
-
-	local res,err = git.get_remote_tags("https://github.com/Silverlan/pragma.git")
-	if(res == false) then
-		pfm.log("Failed to retrieve remote tags: " .. err,pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
-		return
-	end
-
-	local highestVersion = util.Version(0,0,0)
-	for _,tag in ipairs(res) do
-		if(tag:sub(1,1) == "v") then
-			local v = util.Version(tag:sub(2))
-			if(v > highestVersion) then highestVersion = v end
-		end
-	end
-
-	local curVersion = engine.get_info().version
-	if(highestVersion > curVersion) then
-		-- New version available!
-		local updateUrl = "https://github.com/Silverlan/pragma/releases/tag/v" .. highestVersion:ToString()
-		pfm.create_popup_message(
-			locale.get_text("pfm_new_version_available",{highestVersion:ToString(),updateUrl}),
-			false,nil,{
-				url = updateUrl,
-				openUrlInSystemBrowser = true
-			}
-		)
-	elseif(verbose) then
-		pfm.create_popup_message(locale.get_text("pfm_up_to_date",{pfm.VERSION:ToString()}))
-	end
-end
 function gui.WIFilmmaker:OnInitialize()
 	self:SetDeveloperModeEnabled(tool.is_developer_mode_enabled())
 
