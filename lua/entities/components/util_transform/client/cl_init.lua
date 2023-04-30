@@ -7,6 +7,11 @@ Component:RegisterMember("TranslationEnabled",udm.TYPE_BOOLEAN,true,{},flags)
 Component:RegisterMember("RotationEnabled",udm.TYPE_BOOLEAN,true,{},flags)
 Component:RegisterMember("ScaleEnabled",udm.TYPE_BOOLEAN,false,{},flags)
 Component:RegisterMember("Space",udm.TYPE_UINT8,Component.SPACE_WORLD,{},bit.band(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,bit.bnot(bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_BIT_KEY_VALUE,ents.BaseEntityComponent.MEMBER_FLAG_BIT_INPUT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_OUTPUT))))
+Component:RegisterMember("AxisGuidesEnabled",udm.TYPE_BOOLEAN,true,{
+	onChange = function(self)
+		self:UpdateAxisGuides()
+	end
+},ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT)
 
 function Component:ScheduleUpdate()
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
@@ -271,6 +276,13 @@ function Component:StartTransform(id,axis,type,hitPos)
 	c:StartTransform(hitPos)
 end
 
+function Component:UpdateAxisGuides()
+	for _,ent in ipairs(self:GetArrowEntities()) do
+		local arrowC = ent:IsValid() and ent:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW) or nil
+		if(arrowC ~= nil) then arrowC:SetAxisGuidesEnabled(self:GetAxisGuidesEnabled()) end
+	end
+end
+
 function Component:CreateTransformUtility(id,axis,type)
 	if(self.m_arrows[type] ~= nil and self.m_arrows[type][axis] ~= nil and util.is_valid(self.m_arrows[type][axis][id])) then return end
 	local trC = self:GetEntity():GetComponent(ents.COMPONENT_TRANSFORM)
@@ -279,6 +291,7 @@ function Component:CreateTransformUtility(id,axis,type)
 	entArrow:Spawn()
 	arrowC:SetAxis(axis)
 	arrowC:SetType(type)
+	arrowC:SetAxisGuidesEnabled(self:GetAxisGuidesEnabled())
 	if(self.m_relativeToParent) then arrowC:SetRelative(true) end
 	arrowC:SetUtilTransformComponent(self)
 	arrowC:SetSpace(self:GetSpace())

@@ -42,6 +42,11 @@ Component:RegisterMember("Type",udm.TYPE_UINT8,Component.TYPE_TRANSLATION,{
 	end
 },ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT)
 Component:RegisterMember("Space",udm.TYPE_UINT8,ents.UtilTransformComponent.SPACE_WORLD,{},defaultMemberFlags)
+Component:RegisterMember("AxisGuidesEnabled",udm.TYPE_BOOLEAN,true,{
+	onChange = function(self)
+		self:UpdateAxisGuides()
+	end
+},defaultMemberFlags)
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -87,9 +92,16 @@ function Component:UpdateScale()
 	self.m_debugLine:SetPos(self:GetEntity():GetPos())
 	self.m_debugLine:SetRotation(self:GetEntity():GetRotation() *EulerAngles(0,-90,0):ToQuaternion())
 end
+function Component:UpdateAxisGuides()
+	if(self:GetAxisGuidesEnabled() == false) then
+		util.remove(self.m_debugLine)
+		return
+	end
+	self:UpdateLine()
+end
 function Component:UpdateLine()
 	util.remove(self.m_debugLine)
-	if(self:GetEntity():IsSpawned() == false) then return end
+	if(self:GetEntity():IsSpawned() == false or self:GetAxisGuidesEnabled() == false) then return end
 	local axis = self:GetAxis()
 	if(self:GetType() ~= Component.TYPE_TRANSLATION or (axis ~= Component.AXIS_X and axis ~= Component.AXIS_Y and axis ~= Component.AXIS_Z)) then return end
 	local colC = self:GetEntity():GetComponent(ents.COMPONENT_COLOR)
