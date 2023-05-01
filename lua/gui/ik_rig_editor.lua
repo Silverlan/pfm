@@ -33,7 +33,7 @@ function Element:OnInitialize()
 	self:SetThinkingEnabled(true)
 	self.m_controls = controls
 
-	local rootPath = "scripts/ik_rigs"
+	local rootPath = "scripts/ik_rigs/"
 	local fe = controls:AddFileEntry(locale.get_text("pfm_ik_rig_file"),"ik_rig","",function(resultHandler)
 		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
 			if(fileName == nil) then return end
@@ -136,6 +136,7 @@ function Element:OnRemove()
 	util.remove(self.m_trOnGizmoControlAdded)
 	util.remove(self.m_cbOnAnimsUpdated)
 	util.remove(self.m_constraintVisualizers)
+	util.remove(self.m_entDebugVisualizer)
 end
 function Element:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_controls)) then self.m_controls:SetWidth(w) end
@@ -203,6 +204,13 @@ function Element:ReloadIkRig()
 	if(ikSolverC == nil) then return end
 	ikSolverC:ResetIkRig() -- Clear Rig
 	ikSolverC:AddIkSolverByRig(self.m_ikRig)
+
+	util.remove(self.m_entDebugVisualizer)
+	local entDebugVis = ents.create("entity")
+	self.m_entDebugVisualizer = entDebugVis
+	local c = entDebugVis:AddComponent("debug_ik_visualizer")
+	entDebugVis:Spawn()
+	c:SetSolver(ikSolverC:GetIkSolver())
 end
 function Element:CreateTransformGizmo()
 	util.remove(self.m_entTransformGizmo)

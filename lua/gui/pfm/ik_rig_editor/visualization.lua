@@ -11,7 +11,7 @@ function Element:UpdateDebugVisualization()
 	util.remove(self.m_constraintVisualizers)
 	self:ReloadIkRig()
 	local function iterate_items(item)
-		if(item.__jointType ~= nil) then
+		if(item.__jointType ~= nil and item.__jointType ~= "fixed") then
 			local icon = item:GetIcons()[1]
 			if(util.is_valid(icon)) then
 				local parent = item:GetParentItem()
@@ -41,11 +41,19 @@ function Element:AddJointVisualization(jointIdx)
 	if(ikSolverC == nil) then return end
 	local solver = ikSolverC:GetIkSolver()
 	if(solver == nil) then return end
+	local jointNextIndex = jointIdx +1
+	local jointNext = solver:GetJoint(jointNextIndex)
+	if(jointNext == nil) then return end
+	local hingeIndex
+	if(jointNext:GetType() == ik.Joint.TYPE_REVOLUTE_JOINT) then
+		hingeIndex = jointNextIndex
+		jointNextIndex = jointNextIndex +1
+	end
 
 	local ent = ents.create("debug_ik_constraint_visualizer")
 	table.insert(self.m_constraintVisualizers,ent)
 	ent:RemoveFromScene(game.get_scene())
 	ent:AddToScene(self.m_mdlView:GetScene())
-	ent:GetComponent("debug_ik_constraint_visualizer"):SetJoint(solver,jointIdx,jointIdx +1)
+	ent:GetComponent("debug_ik_constraint_visualizer"):SetJoint(solver,jointIdx,jointNextIndex,hingeIndex)
 	ent:Spawn()
 end

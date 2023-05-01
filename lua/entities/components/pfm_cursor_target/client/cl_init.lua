@@ -25,7 +25,7 @@ function Component:OnTick(dt)
 	local startPos,dir,vpData = ents.ClickComponent.get_ray_data()
 	if(startPos == nil) then self:SetNextTick(time.cur_time() +0.2) return end
 	local filter = function(ent)
-		return ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
+		return ent:HasComponent(ents.COMPONENT_CLICK)
 	end
 	if(util.is_valid(vpData.viewport)) then
 		local scene = vpData.viewport:GetScene()

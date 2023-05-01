@@ -6,7 +6,7 @@ function Shader:__init()
 	shader.BaseTexturedLit3D.__init(self)
 end
 function Shader:InitializePipeline(pipelineInfo,pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
+	shader.BaseTexturedLit3D.InitializePipeline(self,pipelineInfo,pipelineIdx)
 
 	pipelineInfo:SetDepthTestEnabled(false)
 end

@@ -43,19 +43,22 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	icon:SetMouseInputEnabled(true)
 	icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 	icon:SetTooltip(locale.get_text("pfm_rig_editor_visualize_constraint"))
+	local function toggle_constraint_visualization()
+		if(visualize) then
+			visualize = false
+			icon:SetMaterial("gui/pfm/icon_item_visible_off")
+			child.__visualizationEnabled = visualize
+			self:UpdateDebugVisualization()
+		else
+			visualize = true
+			icon:SetMaterial("gui/pfm/icon_item_visible_on")
+			child.__visualizationEnabled = visualize
+			self:UpdateDebugVisualization()
+		end
+	end
 	icon:AddCallback("OnMouseEvent",function(icon,button,state,mods)
 		if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
-			if(visualize) then
-				visualize = false
-				icon:SetMaterial("gui/pfm/icon_item_visible_off")
-				child.__visualizationEnabled = visualize
-				self:UpdateDebugVisualization()
-			else
-				visualize = true
-				icon:SetMaterial("gui/pfm/icon_item_visible_on")
-				child.__visualizationEnabled = visualize
-				self:UpdateDebugVisualization()
-			end
+			toggle_constraint_visualization()
 			return util.EVENT_REPLY_HANDLED
 		end
 		return util.EVENT_REPLY_UNHANDLED
@@ -71,7 +74,9 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	local useUnidirectionalSpan = false
 	local includeUnidirectionalLimit = false
 	local twistAxis = math.AXIS_Z
-	if(type == "ballSocket") then twistAxis = ents.IkSolverComponent.find_forward_axis(mdl,parent:GetID(),boneId) or twistAxis end
+	if(type == "ballSocket") then
+		twistAxis = ents.IkSolverComponent.find_forward_axis(mdl,boneId) or twistAxis
+	end
 	local function add_rotation_axis_slider(ctrl,name,id,axisId,min,defVal)
 		return ctrl:AddSliderControl(locale.get_text(name),id,defVal,-180.0,180.0,function(el,value)
 			local animatedC = ent:GetComponent(ents.COMPONENT_ANIMATED)
@@ -122,24 +127,23 @@ function Element:AddConstraint(item,boneName,type,constraint)
 		end,1.0)
 	end
 
-	local getDefaultLimits
+	local getDefaultLimits = function()
+		local limits = EulerAngles(45,45,45)
+		-- Set the rotation around the twist axis to -1/1
+		if(twistAxis == math.AXIS_X) then
+			limits.y = 1
+		elseif(twistAxis == math.AXIS_Y) then
+			limits.p = 1
+		else
+			limits.r = 1
+		end
+		return limits
+	end
 	if(constraint == nil) then
 		pfm.log("Adding " .. type .. " constraint from bone '" .. parent:GetName() .. "' to '" .. bone:GetName() .. "' of actor with model '" .. mdl:GetName() .. "'...",pfm.LOG_CATEGORY_PFM)
 		if(type == "fixed") then constraint = self.m_ikRig:AddFixedConstraint(parent:GetName(),bone:GetName())
 		elseif(type == "hinge") then constraint = self.m_ikRig:AddHingeConstraint(parent:GetName(),bone:GetName(),-45.0,45.0,Quaternion())
 		elseif(type == "ballSocket") then
-			getDefaultLimits = function()
-				local limits = EulerAngles(45,45,45)
-				-- Set the rotation around the twist axis to -1/1
-				if(twistAxis == math.AXIS_X) then
-					limits.y = 1
-				elseif(twistAxis == math.AXIS_Y) then
-					limits.p = 1
-				else
-					limits.r = 1
-				end
-				return limits
-			end
 			local limits = getDefaultLimits()
 			constraint = self.m_ikRig:AddBallSocketConstraint(parent:GetName(),bone:GetName(),-limits,limits)
 		end
@@ -299,6 +303,9 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	ctrl:SizeToContents()
 
 	self:ReloadIkRig()
+	toggle_constraint_visualization()
+	item:Expand()
+	child:ExpandAll()
 	return constraint
 end
 function Element:AddBallSocketConstraint(item,boneName,c)
