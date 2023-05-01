@@ -46,7 +46,7 @@ end
 function Component:UpdateEffect()
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
-	if(mdlC == nil) then return end
+	if(mdlC == nil or ent:GetColor().a < 255) then return end
 	local mat = game.load_material(self:IsPersistent() and "pfm/selection_outline" or "pfm/selection_outline_hover")
 	if(util.is_valid(mat) == false) then return end
 	local renderMeshes = mdlC:GetRenderMeshes()
