@@ -31,19 +31,9 @@ end
 function Component:UpdateSelection()
 	local selected = self:IsSelected()
 	if(selected) then
-		if(self.m_unselectedColor == nil) then
-			self.m_unselectedColor = self:GetEntity():GetColor()
-		end
-		self:GetEntity():SetColor(self:IsPersistent() and Color.Lime or Color.White)
-
 		local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 		if(renderC ~= nil) then renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_WORLD) end
 	else
-		if(self.m_unselectedColor ~= nil) then
-			self:GetEntity():SetColor(self.m_unselectedColor)
-			self.m_unselectedColor = nil
-		end
-
 		local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 		if(renderC ~= nil) then renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_NONE) end
 	end

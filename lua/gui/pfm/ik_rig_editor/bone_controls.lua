@@ -92,9 +92,43 @@ function Element:SetBoneColor(actorId,boneId,col)
 	entBone:SetColor(col)
 	self.m_mdlView:Render()
 end
+function Element:FindBoneEntities(name)
+	local ent = self.m_mdlView:GetEntity(1)
+	if(util.is_valid(ent) == false) then return {} end
+	local mdl = ent:GetModel()
+	local dbgSkelC = ent:GetComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
+	if(dbgSkelC == nil or mdl == nil) then return {} end
+	local skeleton = mdl:GetSkeleton()
+	local boneId = name
+	if(type(boneId) == "string") then
+		boneId = skeleton:LookupBone(name)
+	end
+	if(boneId == -1) then return {} end
+	return dbgSkelC:GetBoneEntities(boneId)
+end
+function Element:SetBoneEntityPersistent(name,persistent)
+	local tEnts = self:FindBoneEntities(name)
+	for _,ent in pairs(tEnts) do
+		local boneC = ent:GetComponent(ents.COMPONENT_PFM_BONE)
+		if(boneC ~= nil) then
+			boneC:SetPersistent(persistent or false)
+		end
+	end
+end
+function Element:SetBoneEntityColor(name,color,persistent)
+	local tEnts = self:FindBoneEntities(name)
+	for _,ent in pairs(tEnts) do
+		ent:SetColor(color or Color.White)
+		local boneC = ent:GetComponent(ents.COMPONENT_PFM_BONE)
+		if(boneC ~= nil) then
+			boneC:SetPersistent(persistent or false)
+		end
+	end
+end
 function Element:UpdateBoneColor(name)
 	local item = self.m_skelTree:GetRoot():GetItemByIdentifier(name,true)
 	if(util.is_valid(item) == false) then return end
+
 	local te = item:GetTextElement()
 	if(self.m_ikRig:HasBone(name) == false) then
 		te:SetColor(Color(100,100,100))
@@ -120,6 +154,64 @@ local function get_bones_in_hierarchical_order(mdl)
 		add_bones(bone)
 	end
 	return bones
+end
+function Element:SetBoneLocked(boneName,locked)
+	self.m_ikRig:SetBoneLocked(boneName,locked)
+	self:ReloadIkRig()
+	self:UpdateBoneColor(boneName)
+	
+	self:SetBoneEntityColor(boneName,locked and Color.Red or Color.White)
+	self:SetBoneEntityPersistent(boneName,locked)
+	self:UpdateBoneEntityStates()
+end
+function Element:UpdateBoneEntityStates()
+	local ent = self.m_mdlView:GetEntity(1)
+	local solver = self:GetIkSolver()
+	if(util.is_valid(ent) == false or solver == nil) then return end
+	local mdl = ent:GetModel()
+	if(mdl == nil) then return end
+	local skeleton = mdl:GetSkeleton()
+	local numBones = skeleton:GetBoneCount()
+
+	local boneStates = {} -- (color, persistent)
+	local numControls = solver:GetControlCount()
+	for i=0,numControls -1 do
+		local ikControl = solver:GetControl(i)
+		if(ikControl ~= nil) then
+			local bone = ikControl:GetTargetBone()
+			if(bone ~= nil) then
+				local boneId = skeleton:LookupBone(bone:GetName())
+				if(boneId ~= -1) then
+					local col = (ikControl:GetType() == ik.Control.TYPE_DRAG) and Color.Lime or Color.Aqua
+					boneStates[boneId] = {col,true}
+				end
+			end
+		end
+	end
+
+	for i=0,numBones -1 do
+		local ikBone = solver:GetBone(i)
+		if(ikBone ~= nil) then
+			if(ikBone:IsPinned()) then
+				boneStates[i] = {Color.Red,true}
+			end
+		end
+	end
+
+	for i=0,numBones -1 do
+		local boneState = boneStates[i] or {Color.White,false}
+		local tEnts = self:FindBoneEntities(i)
+		for _,ent in pairs(tEnts) do
+			if(ent:IsValid()) then
+				local boneC = ent:GetComponent(ents.COMPONENT_PFM_BONE)
+				if(boneC ~= nil) then
+					boneC:SetSelected(boneState[2])
+					boneC:SetPersistent(boneState[2])
+					boneC:GetEntity():SetColor(boneState[1])
+				end
+			end
+		end
+	end
 end
 function Element:InitializeBoneControls(mdl)
 	local options = {}
@@ -166,39 +258,40 @@ function Element:InitializeBoneControls(mdl)
 						pContext:AddItem(locale.get_text("pfm_remove_bone"),function()
 							self:RemoveBone(boneDst:GetName())
 							self:ReloadIkRig()
+							self:UpdateBoneEntityStates()
 						end)
 					else
 						pContext:AddItem(locale.get_text("pfm_add_bone"),function()
 							self:AddBone(boneDst:GetName())
 							self:ReloadIkRig()
+							self:UpdateBoneEntityStates()
 						end)
 					end
 					if(self.m_ikRig:IsBoneLocked(boneDst:GetName())) then
 						pContext:AddItem(locale.get_text("pfm_unlock_bone"),function()
-							self.m_ikRig:SetBoneLocked(boneDst:GetName(),false)
-							self:ReloadIkRig()
-							self:UpdateBoneColor(boneDst:GetName())
+							self:SetBoneLocked(boneDst:GetName(),false)
 						end)
 					else
 						pContext:AddItem(locale.get_text("pfm_lock_bone"),function()
-							self.m_ikRig:SetBoneLocked(boneDst:GetName(),true)
-							self:ReloadIkRig()
-							self:UpdateBoneColor(boneDst:GetName())
+							self:SetBoneLocked(boneDst:GetName(),true)
 						end)
 					end
 					if(self.m_ikRig:HasControl(boneDst:GetName())) then
 						pContext:AddItem(locale.get_text("pfm_remove_control"),function()
 							self.m_ikRig:RemoveControl(boneDst:GetName())
 							self:ReloadIkRig()
+							self:UpdateBoneEntityStates()
 						end)
 					else
 						pContext:AddItem(locale.get_text("pfm_add_drag_control"),function()
 							self.m_ikRig:AddControl(boneDst:GetName(),ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG)
 							self:ReloadIkRig()
+							self:UpdateBoneEntityStates()
 						end)
 						pContext:AddItem(locale.get_text("pfm_add_state_control"),function()
 							self.m_ikRig:AddControl(boneDst:GetName(),ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
 							self:ReloadIkRig()
+							self:UpdateBoneEntityStates()
 						end)
 					end
 					pContext:Update()
