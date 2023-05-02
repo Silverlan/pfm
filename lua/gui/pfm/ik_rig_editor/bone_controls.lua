@@ -213,6 +213,58 @@ function Element:UpdateBoneEntityStates()
 		end
 	end
 end
+function Element:PopulateBoneContextMenu(pContext,boneName)
+	local item = self.m_skelTree:GetRoot():GetItemByIdentifier(boneName,true)
+	pContext:AddItem(locale.get_text("pfm_add_fixed_constraint"),function()
+		self:AddFixedConstraint(item,boneName)
+	end)
+	pContext:AddItem(locale.get_text("pfm_add_hinge_constraint"),function()
+		self:AddHingeConstraint(item,boneName)
+	end)
+	pContext:AddItem(locale.get_text("pfm_add_ball_socket_constraint"),function()
+		self:AddBallSocketConstraint(item,boneName)
+	end)
+	if(self.m_ikRig:HasBone(boneName)) then
+		pContext:AddItem(locale.get_text("pfm_remove_bone"),function()
+			self:RemoveBone(boneName)
+			self:ReloadIkRig()
+			self:UpdateBoneEntityStates()
+		end)
+	else
+		pContext:AddItem(locale.get_text("pfm_add_bone"),function()
+			self:AddBone(boneName)
+			self:ReloadIkRig()
+			self:UpdateBoneEntityStates()
+		end)
+	end
+	if(self.m_ikRig:IsBoneLocked(boneName)) then
+		pContext:AddItem(locale.get_text("pfm_unlock_bone"),function()
+			self:SetBoneLocked(boneName,false)
+		end)
+	else
+		pContext:AddItem(locale.get_text("pfm_lock_bone"),function()
+			self:SetBoneLocked(boneName,true)
+		end)
+	end
+	if(self.m_ikRig:HasControl(boneName)) then
+		pContext:AddItem(locale.get_text("pfm_remove_control"),function()
+			self.m_ikRig:RemoveControl(boneName)
+			self:ReloadIkRig()
+			self:UpdateBoneEntityStates()
+		end)
+	else
+		pContext:AddItem(locale.get_text("pfm_add_drag_control"),function()
+			self.m_ikRig:AddControl(boneName,ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG)
+			self:ReloadIkRig()
+			self:UpdateBoneEntityStates()
+		end)
+		pContext:AddItem(locale.get_text("pfm_add_state_control"),function()
+			self.m_ikRig:AddControl(boneName,ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
+			self:ReloadIkRig()
+			self:UpdateBoneEntityStates()
+		end)
+	end
+end
 function Element:InitializeBoneControls(mdl)
 	local options = {}
 	table.insert(options,{"none","-"})
@@ -245,55 +297,7 @@ function Element:InitializeBoneControls(mdl)
 				local pContext = gui.open_context_menu()
 				if(util.is_valid(pContext)) then
 					pContext:SetPos(input.get_cursor_pos())
-					pContext:AddItem(locale.get_text("pfm_add_fixed_constraint"),function()
-						self:AddFixedConstraint(item,boneDst:GetName())
-					end)
-					pContext:AddItem(locale.get_text("pfm_add_hinge_constraint"),function()
-						self:AddHingeConstraint(item,boneDst:GetName())
-					end)
-					pContext:AddItem(locale.get_text("pfm_add_ball_socket_constraint"),function()
-						self:AddBallSocketConstraint(item,boneDst:GetName())
-					end)
-					if(self.m_ikRig:HasBone(boneDst:GetName())) then
-						pContext:AddItem(locale.get_text("pfm_remove_bone"),function()
-							self:RemoveBone(boneDst:GetName())
-							self:ReloadIkRig()
-							self:UpdateBoneEntityStates()
-						end)
-					else
-						pContext:AddItem(locale.get_text("pfm_add_bone"),function()
-							self:AddBone(boneDst:GetName())
-							self:ReloadIkRig()
-							self:UpdateBoneEntityStates()
-						end)
-					end
-					if(self.m_ikRig:IsBoneLocked(boneDst:GetName())) then
-						pContext:AddItem(locale.get_text("pfm_unlock_bone"),function()
-							self:SetBoneLocked(boneDst:GetName(),false)
-						end)
-					else
-						pContext:AddItem(locale.get_text("pfm_lock_bone"),function()
-							self:SetBoneLocked(boneDst:GetName(),true)
-						end)
-					end
-					if(self.m_ikRig:HasControl(boneDst:GetName())) then
-						pContext:AddItem(locale.get_text("pfm_remove_control"),function()
-							self.m_ikRig:RemoveControl(boneDst:GetName())
-							self:ReloadIkRig()
-							self:UpdateBoneEntityStates()
-						end)
-					else
-						pContext:AddItem(locale.get_text("pfm_add_drag_control"),function()
-							self.m_ikRig:AddControl(boneDst:GetName(),ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG)
-							self:ReloadIkRig()
-							self:UpdateBoneEntityStates()
-						end)
-						pContext:AddItem(locale.get_text("pfm_add_state_control"),function()
-							self.m_ikRig:AddControl(boneDst:GetName(),ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
-							self:ReloadIkRig()
-							self:UpdateBoneEntityStates()
-						end)
-					end
+					self:PopulateBoneContextMenu(pContext,boneDst:GetName())
 					pContext:Update()
 					return util.EVENT_REPLY_HANDLED
 				end

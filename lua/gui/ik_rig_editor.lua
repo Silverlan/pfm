@@ -107,6 +107,12 @@ function Element:LoadRig(rig)
 	end
 	self:ReloadIkRig()
 end
+function Element:GetModel()
+	if(util.is_valid(self.m_modelView) == false or self.m_mdl == nil) then return end
+	local ent = self.m_modelView:GetEntity(1)
+	if(util.is_valid(ent) == false) then return end
+	return ent:GetModel()
+end
 function Element:UpdateMode()
 	if(util.is_valid(self.m_modelView) == false or self.m_mdl == nil) then return end
 	local ent = self.m_modelView:GetEntity(1)
@@ -137,6 +143,7 @@ function Element:OnRemove()
 	util.remove(self.m_cbOnAnimsUpdated)
 	util.remove(self.m_constraintVisualizers)
 	util.remove(self.m_entDebugVisualizer)
+	util.remove(self.m_cbPopulateContextMenu)
 end
 function Element:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_controls)) then self.m_controls:SetWidth(w) end
@@ -156,6 +163,35 @@ function Element:InitializeModelView()
 	if(util.is_valid(ent) == false) then return end
 	self.m_modelView:SetModel(self.m_mdl)
 	self.m_modelView:PlayAnimation("reference",1)
+	util.remove(self.m_cbPopulateContextMenu)
+	self.m_cbPopulateContextMenu = self.m_modelView:AddCallback("PopulateContextMenu",function(p,pContext)
+		if(self:IsValid() == false) then return end
+		local ent,c = ents.citerator(ents.COMPONENT_PFM_MANAGER)()
+		if(c ~= nil) then
+			local bones = c:GetSelectedBones()
+			if(#bones == 1) then
+				local boneC = bones[1]:GetComponent(ents.COMPONENT_PFM_BONE)
+				local mdl = self:GetModel()
+				if(boneC ~= nil and mdl ~= nil) then
+					local boneId = boneC:GetBoneId()
+					local skeleton = mdl:GetSkeleton()
+					local bone = skeleton:GetBone(boneId)
+					if(bone ~= nil) then
+						boneC:SetPersistent(true)
+						self:PopulateBoneContextMenu(pContext,bone:GetName())
+
+						pContext:AddCallback("OnRemove",function()
+							if(boneC:IsValid()) then
+								boneC:SetPersistent(false)
+								boneC:SetSelected(false)
+							end
+							if(self:IsValid()) then self:UpdateBoneEntityStates() end
+						end)
+					end
+				end
+			end
+		end
+	end)
 	ent:SetColor(Color(255,255,255,200))
 	self:UpdateMode()
 	return ent

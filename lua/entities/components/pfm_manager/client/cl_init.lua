@@ -52,6 +52,15 @@ function Component:DeselectBone(ent)
 		boneC:SetSelected(false)
 	end
 end
+function Component:GetSelectedBones()
+	local bones = {}
+	for ent,_ in pairs(self.m_curSelectedBones) do
+		if(ent:IsValid()) then
+			table.insert(bones,ent)
+		end
+	end
+	return bones
+end
 function Component:OnCursorTargetChanged(rayInfo)
 	local curSelected = self.m_curSelectedBones
 	self.m_curSelectedBones = {}

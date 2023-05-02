@@ -2460,6 +2460,7 @@ end
 function gui.WIFilmmaker:GetSelectedClip() return self:GetTimeline():GetSelectedClip() end
 function gui.WIFilmmaker:GetTimeline() return self.m_timeline end
 function gui.WIFilmmaker:GetFilmStrip() return self.m_filmStrip end
+function gui.WIFilmmaker:GetModelViewer() return self:GetWindow("model_viewer") end
 function gui.WIFilmmaker:OpenModelView(mdl,animName)
 	self:OpenWindow("model_viewer",true)
 	if(util.is_valid(self.m_mdlView) == false) then return end
