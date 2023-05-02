@@ -70,6 +70,7 @@ function Element:OnInitialize()
 		self:UpdateBoneVisibility()
 	end)
 	self.m_elShowBones = el
+	wrapper:SetVisible(false)
 
 	controls:AddButton(locale.get_text("save"),"save",function()
 		local rig = self:GetRig()
