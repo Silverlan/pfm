@@ -18,6 +18,10 @@ Component:RegisterMember("LightmapMode",udm.TYPE_UINT32,1,{
 -- Debug mode
 Component:RegisterMember("Resolution",udm.TYPE_STRING,"2048x2048")
 Component:RegisterMember("SampleCount",udm.TYPE_UINT32,20000)
+Component:RegisterMember("LightIntensityFactor",udm.TYPE_FLOAT,1.0,{
+    min = 0,
+    max = 10
+})
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -407,7 +411,10 @@ function Component:GenerateLightmaps(preview,lightIntensityFactor,asJob)
 
 	local mode = self:GetLightmapMode()
 	local bakeCombined = (mode == Component.LIGHTMAP_MODE_NON_DIRECTIONAL)
-	self.m_baker:Start(width,height,self:GetSampleCount(),cCache:GetLightMapDataCache(),nil,bakeCombined,asJob)
+	self.m_baker:Start(width,height,self:GetSampleCount(),cCache:GetLightMapDataCache(),function(scene)
+		scene:SetLightIntensityFactor(self:GetLightIntensityFactor())
+	end,bakeCombined,asJob)
+	
 	if(asJob) then return true end
 	self.m_lightmapJob = self.m_baker.m_job
 
