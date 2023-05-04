@@ -50,8 +50,9 @@ pfm.util.open_simple_window = function(title,onOpen)
 end
 
 local BaseBaker = util.register_class("pfm.BaseBaker",util.CallbackHandler)
-function BaseBaker:__init()
+function BaseBaker:__init(name)
 	util.CallbackHandler.__init(self)
+	self.m_name = name
 end
 function BaseBaker:__finalize()
 	self:Clear()
@@ -75,6 +76,7 @@ function BaseBaker:Clear()
 	self:Cancel()
 	self:CloseWindow()
 	util.remove(self.m_cbTick)
+	util.remove(self.m_progressBar)
 end
 function BaseBaker:CloseWindow()
 	if(util.is_valid(self.m_viewWindow) == false) then return end
@@ -93,14 +95,24 @@ function BaseBaker:StartBake()
 
 	util.remove(self.m_cbTick)
 	self.m_cbTick = game.add_callback("Tick",function() self:Poll() end)
+
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm)) then
+		util.remove(self.m_progressBar)
+		self.m_progressBar = pm:AddProgressStatusBar("bake_" .. self.m_name,locale.get_text("pfm_bake",{self.m_name}))
+	end
 end
 function BaseBaker:Poll()
 	if(self.m_baking ~= true) then return end
 	self:PollBaker()
 
+	if(util.is_valid(self.m_progressBar)) then
+		self.m_progressBar:SetProgress(self:GetBakerProgress())
+	end
 	if(self:IsBakerComplete()) then
 		self.m_baking = false
 		util.remove(self.m_cbTick)
+		util.remove(self.m_progressBar)
 		local res = self:OnComplete()
 		self:CallCallbacks("OnBakingCompleted",res)
 	end

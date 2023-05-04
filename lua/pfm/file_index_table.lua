@@ -13,6 +13,7 @@ function pfm.FileIndexTable.Indexer:__init(fit,extensions,externalExtensions)
 	self.m_fit = fit
 	self.m_queue = {}
 	self.m_traversed = {}
+	self.m_maxQueueCount = 0
 
 	self.m_extensions = {}
 	for _,ext in ipairs(extensions) do
@@ -50,8 +51,17 @@ function pfm.FileIndexTable.Indexer:RunBatch()
 		self:CollectFiles(path)
 		table.remove(self.m_queue,1)
 		numBatches = numBatches -1
+
+		self:UpdateProgress()
 	end
+	self:UpdateProgress()
 	return #self.m_queue == 0
+end
+function pfm.FileIndexTable.Indexer:UpdateProgress()
+	local progress
+	if(self.m_maxQueueCount == 0) then progress = 1
+	else progress = 1 -(#self.m_queue /self.m_maxQueueCount) end
+	self.m_fit:OnProgressChanged(progress)
 end
 function pfm.FileIndexTable.Indexer:CollectSubFiles(path,tFiles,tDirs,extensions,isAddonPath)
 	for _,f in ipairs(tFiles) do
@@ -73,6 +83,7 @@ function pfm.FileIndexTable.Indexer:CollectSubFiles(path,tFiles,tDirs,extensions
 	end
 	for _,d in ipairs(tDirs) do
 		table.insert(self.m_queue,path .. d .. "/")
+		self.m_maxQueueCount = math.max(self.m_maxQueueCount,#self.m_queue)
 	end
 end
 function pfm.FileIndexTable.Indexer:CollectFiles(path)
@@ -117,6 +128,11 @@ function pfm.FileIndexTable:GetFilePaths() return self.m_tFilePaths end
 function pfm.FileIndexTable:GetFileHashes() return self.m_tFileHashes end
 function pfm.FileIndexTable:GetFileName(i) return self.m_tFileNames[i] end
 function pfm.FileIndexTable:GetFilePath(i) return self.m_tPaths[self.m_tFilePaths[i]] end
+function pfm.FileIndexTable:OnProgressChanged(progress)
+	if(util.is_valid(self.m_progressBar)) then
+		self.m_progressBar:SetProgress(progress)
+	end
+end
 function pfm.FileIndexTable:AddFile(fileName)
 	local npath = util.Path.CreateFilePath(fileName)
 	local hash = tonumber(util.get_string_hash(npath:GetString()))
@@ -228,12 +244,20 @@ function pfm.FileIndexTable:SaveToCache()
 	end
 	return true
 end
+function pfm.FileIndexTable:__finalize()
+	util.remove(self.m_progressBar)
+end
 function pfm.FileIndexTable:OnIndexerComplete()
 	self:SaveToCache()
+	util.remove(self.m_progressBar)
 end
 function pfm.FileIndexTable:InitializeIndexer()
 	if(self.m_indexer ~= nil) then return self.m_indexer end
 	self.m_indexer = pfm.FileIndexTable.Indexer(self,self.m_extensions,self.m_externalExtensions)
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm)) then
+		self.m_progressBar = pm:AddProgressStatusBar("fit_" .. self:GetName(),locale.get_text("pfm_generate_fit",{self:GetName()}))
+	end
 	return self.m_indexer
 end
 function pfm.FileIndexTable:ReloadPath(path)
@@ -246,6 +270,10 @@ function pfm.FileIndexTable:LoadOrGenerate()
 	self.m_initialized = true
 	if(self:LoadFromCache() == true) then return end
 	print("No file index table found for '" .. self:GetName() .. "'! Generating...")
+	pfm.create_popup_message(
+		"Generating '" .. self:GetName() .. "' file index cache. This may cause PFM to run slowly for a few minutes.",
+		3
+	)
 	self:Generate()
 end
 function pfm.FileIndexTable:Generate()

@@ -265,6 +265,7 @@ function gui.RaytracedViewport:Refresh(preview,rtJobCallback,startFrame,frameHan
 	self.m_rtJob = pfm.RaytracingRenderJob(settings,frameHandler)
 	self.m_rtJob:SetStartFrame(startFrame or 0)
 	self.m_rtJob:AddCallback("OnFrameStart",function()
+		self:CallCallbacks("OnFrameStart")
 		if(self.m_rtJob:IsProgressive() == false) then return end
 		local tex = self.m_rtJob:GetProgressiveTexture()
 		self.m_tex:SetTexture(tex)
@@ -282,7 +283,7 @@ function gui.RaytracedViewport:Refresh(preview,rtJobCallback,startFrame,frameHan
 	return self.m_rtJob
 end
 function gui.RaytracedViewport:InitializeRenderSettings(settings) return settings end
-function gui.RaytracedViewport:OnRenderStart() end
+function gui.RaytracedViewport:OnRenderStart() self:CallCallbacks("OnRenderStart") end
 gui.register("WIRaytracedViewport",gui.RaytracedViewport)
 
 

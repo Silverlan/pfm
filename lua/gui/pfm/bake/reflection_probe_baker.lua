@@ -58,7 +58,7 @@ end
 
 local ReflectionProbeBaker = util.register_class("pfm.ReflectionProbeBaker",pfm.BaseBaker)
 function ReflectionProbeBaker:__init()
-	pfm.BaseBaker.__init(self)
+	pfm.BaseBaker.__init(self,"ReflectionProbeBaker")
 end
 function ReflectionProbeBaker:SetActor(actorData,entActor)
 	pfm.BaseBaker.SetActor(self,actorData,entActor)

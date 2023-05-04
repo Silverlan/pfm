@@ -52,8 +52,16 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 	self.m_rt = gui.create("WIPFMRaytracedAnimationViewport",parent)
 	self.m_rt:SetProjectManager(tool.get_filmmaker())
 	self.m_rt:GetToneMappedImageElement():SetVRCamera(game.get_primary_camera())
+	self.m_rt:AddCallback("OnFrameStart",function()
+		local pm = tool.get_filmmaker()
+		if(util.is_valid(pm)) then
+			util.remove(self.m_renderProgressBar)
+			self.m_renderProgressBar = pm:AddProgressStatusBar("render",locale.get_text("render"))
+		end
+	end)
 	self.m_rt:AddCallback("OnProgressChanged",function(rt,progress)
 		self:CallCallbacks("OnProgressChanged",progress)
+		if(util.is_valid(self.m_renderProgressBar)) then self.m_renderProgressBar:SetProgress(progress) end
 	end)
 	self.m_rt:AddCallback("OnFrameComplete",function(rt,state,job)
 		local rtJob = self.m_rt:GetRTJob()
@@ -73,6 +81,8 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 			-- TODO
 			-- self.m_rt:GeneratePreviewImage("render/" .. framePath,self.m_rt:GetRenderResultRenderSettings())
 		end
+
+		util.remove(self.m_renderProgressBar)
 	end)
 	self.m_rt:AddCallback("OnSceneComplete",function(rt,scene)
 		local outputPath = self:GetOutputPath()
@@ -321,6 +331,7 @@ end
 function gui.PFMRenderPreview:OnRemove()
 	self:CancelRendering()
 	if(util.is_valid(self.m_cbOnTimeOffsetChanged)) then self.m_cbOnTimeOffsetChanged:Remove() end
+	util.remove(self.m_renderProgressBar)
 end
 function gui.PFMRenderPreview:InitializeSettings(parent)
 	gui.PFMBaseViewport.InitializeSettings(self,parent)

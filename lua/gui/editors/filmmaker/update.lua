@@ -36,8 +36,8 @@ function Element:CheckForUpdates(verbose)
 		-- New version available!
 		local updateUrl = "https://github.com/Silverlan/pragma/releases/download/v" .. highestVersion:ToString()
         pfm.open_message_prompt(
-            "New update available",
-            "A new update is available. Would you like to download it now?",
+            locale.get_text("New update available"),
+            locale.get_text("A new update is available. Would you like to download it now?"),
             bit.bor(gui.PfmPrompt.BUTTON_YES,gui.PfmPrompt.BUTTON_NO),
             function(bt)
                 if(bt == gui.PfmPrompt.BUTTON_YES) then
@@ -50,7 +50,7 @@ function Element:CheckForUpdates(verbose)
 
                     self:DownloadUpdate(updateUrl .. "/" .. fileName)
                     pfm.create_popup_message(
-                        "The update will be downloaded in the background and installed when you quit PFM.",
+                        locale.get_text("The update will be downloaded in the background and installed when you quit PFM."),
                         6
                     )
                 end
@@ -149,18 +149,38 @@ function Element:DownloadUpdate(url)
                 resultHandler(false,msgOrPath)
                 return
             end
-            local res,err = extract_update_files(msgOrPath:GetString())
-            resultHandler(res,err)
+            pfm.create_popup_message(
+                locale.get_text("Preparing update files..."),
+                3
+            )
+            time.create_simple_timer(2.0,function()
+                local res,err = extract_update_files(msgOrPath:GetString())
+                resultHandler(res,err)
+            end)
         end,progressHandler,10)
     end
+    util.remove(self.m_updateProgressBar)
+    self.m_updateProgressBar = self:AddProgressStatusBar("update",locale.get_text("pfm_updating"))
     autoupdate(function(success,result)
+        util.remove(self.m_updateProgressBar)
         if(success == false) then
-            pfm.log("Failed to download update: " .. result .. "...",pfm.LOG_CATEGORY_UPDATE,pfm.LOG_SEVERITY_ERROR)
+            pfm.log("Failed to download update: " .. result .. "!",pfm.LOG_CATEGORY_UPDATE,pfm.LOG_SEVERITY_ERROR)
+
+            pfm.create_popup_message(
+                locale.get_text("Failed to download update: " .. result .. "!"),
+                6
+            )
             return
         end
         pfm.log("Update downloaded successfully.",pfm.LOG_CATEGORY_UPDATE,pfm.LOG_SEVERITY_INFO)
         self.m_runUpdaterOnShutdown = true
+
+        pfm.create_popup_message(
+            locale.get_text("The update is ready and will be installed when PFM is closed."),
+            6
+        )
     end,function(progress)
         print("Update download progress: ",progress)
+        if(util.is_valid(self.m_updateProgressBar)) then self.m_updateProgressBar:SetProgress(progress /100.0) end
     end)
 end

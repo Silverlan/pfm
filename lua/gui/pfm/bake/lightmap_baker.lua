@@ -10,6 +10,9 @@ include("base_baker.lua")
 include("uv_atlas_mesh_overlay.lua")
 
 local UvBaker = util.register_class("pfm.UvBaker",pfm.BaseBaker)
+function UvBaker:__init()
+	pfm.UvBaker.__init(self,"UvBaker")
+end
 function UvBaker:StartBaker()
 	local ent = self:GetActorEntity()
 	local bakedLightingC = ent:GetComponent("pfm_baked_lighting")
@@ -191,7 +194,7 @@ end
 
 local LightmapBaker = util.register_class("pfm.LightmapBaker",pfm.BaseBaker)
 function LightmapBaker:__init()
-	pfm.BaseBaker.__init(self)
+	pfm.BaseBaker.__init(self,"LightmapBaker")
 
 	self.m_jobs = {}
 end

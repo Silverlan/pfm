@@ -77,6 +77,9 @@ function Element:OnInitialize()
 	self:UpdateBookmarks()
 	p:ResetControls()
 end
+function Element:OnRemove()
+	util.remove(self.m_downloadProgressBar)
+end
 function Element:ReloadURL()
 	if(util.is_valid(self.m_webBrowser) == false) then return end
 	local url = self.m_webBrowser:GetUrl()
@@ -204,22 +207,38 @@ function Element:InitializeBrowser(parent,w,h)
 		if(state == chromium.DOWNLOAD_STATE_CANCELLED) then
 			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been cancelled!")
 			self.m_downloads[id] = nil
+
+			if(id == self.m_downloadProgressBarDownloadId) then util.remove(self.m_downloadProgressBar) end
 		elseif(state == chromium.DOWNLOAD_STATE_COMPLETE) then
 			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been completed!")
 			self:ImportDownloadAssets(path)
 			file.delete(path:GetString())
 			self.m_downloads[id] = nil
+
+			if(id == self.m_downloadProgressBarDownloadId) then util.remove(self.m_downloadProgressBar) end
 		elseif(state == chromium.DOWNLOAD_STATE_INVALIDATED) then
 			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been invalidated!")
 			self.m_downloads[id] = nil
+
+			if(id == self.m_downloadProgressBarDownloadId) then util.remove(self.m_downloadProgressBar) end
 		else
 			self.m_log:AppendText("\nDownload progress for '" .. file.get_file_name(path:GetString()) .. "': " .. percentage .. "%")
+			if(util.is_valid(self.m_downloadProgressBar) and id == self.m_downloadProgressBarDownloadId) then
+				self.m_downloadProgressBar:SetProgress(percentage /100.0)
+			end
 		end
 	end)
 	el:AddCallback("OnDownloadStarted",function(el,id,path)
 		if(util.is_valid(self.m_log) == false) then return end
 		self.m_log:AppendText("\nDownload started: " .. file.get_file_name(path:GetString()))
 		self.m_downloads[id] = path
+
+		local pm = tool.get_filmmaker()
+		if(util.is_valid(pm)) then
+			util.remove(self.m_downloadProgressBar)
+			self.m_downloadProgressBar = pm:AddProgressStatusBar("download",locale.get_text("pfm_downloading_file"))
+			self.m_downloadProgressBarDownloadId = id
+		end
 
 		self:CallCallbacks("OnDownloadStarted",id,path)
 	end)

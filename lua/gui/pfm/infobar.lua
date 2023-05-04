@@ -36,8 +36,9 @@ function gui.PFMInfobar:OnUpdate()
 	self.m_contents:SetSize(self.m_iconContainer:GetX(),self:GetHeight())
 	self.m_contents:SetAnchor(0,0,1,1)
 end
-function gui.PFMInfobar:AddRightElement(el)
-	el:SetParent(self.m_iconContainer)
+function gui.PFMInfobar:AddRightElement(el,index)
+	if(index ~= nil) then el:SetParent(self.m_iconContainer,index)
+	else el:SetParent(self.m_iconContainer) end
 end
 function gui.PFMInfobar:AddIcon(material,url,tooltip)
 	local icon = gui.create("WITexturedRect",self.m_iconContainer)

@@ -39,6 +39,7 @@ include("/gui/pfm/webbrowser.lua")
 include("/gui/pfm/loading_screen.lua")
 include("/gui/pfm/settings.lua")
 include("/gui/pfm/kernels_build_message.lua")
+include("/gui/pfm/progress_status_info.lua")
 include("/pfm/util_particle_system.lua")
 include("/pfm/auto_save.lua")
 include("/pfm/util.lua")
@@ -209,6 +210,10 @@ function gui.WIFilmmaker:OnInitialize()
 	local gap = gui.create("WIBase")
 	gap:SetSize(10,1)
 	infoBar:AddRightElement(gap)
+
+	local gap = gui.create("WIBase")
+	gap:SetSize(10,1)
+	infoBar:AddRightElement(gap,0)
 	
 	infoBar:Update()
 
@@ -924,6 +929,20 @@ function gui.WIFilmmaker:AddRecentProject(fileName)
 	udmRecentProjects:InsertValue(0,fileName)
 	if(udmRecentProjects:GetSize() > maxCount) then udmRecentProjects:Resize(maxCount) end
 end
+function gui.WIFilmmaker:AddProgressStatusBar(identifier,text)
+	local infoBar = self:GetInfoBar()
+
+	local statusBar = gui.create("WIProgressStatusInfo")
+	statusBar:SetName("status_info_" .. identifier)
+	statusBar:SetText(text)
+	statusBar:SetProgress(0.0)
+	statusBar:SetHeight(infoBar:GetHeight())
+	statusBar:AddCallback("OnRemove",function() if(infoBar:IsValid()) then infoBar:ScheduleUpdate() end end)
+	infoBar:AddRightElement(statusBar,0)
+	
+	infoBar:Update()
+	return statusBar
+end
 function gui.WIFilmmaker:BuildKernels()
 	if(util.is_valid(self.m_rtBuildKernels)) then return end
 	local tFiles = file.find("modules/unirender/cycles/cache/kernels/*")
@@ -937,6 +956,8 @@ function gui.WIFilmmaker:SetBuildKernels(buildKernels)
 	self.m_buildingKernels = buildKernels
 	if(buildKernels and util.is_valid(self.m_kernelsBuildMessage)) then return end
 	util.remove(self.m_kernelsBuildMessage)
+	util.remove(self.m_cbKernelProgress)
+	util.remove(self.m_kernelProgressBar)
 	if(buildKernels == false) then
 		util.remove(self.m_rtBuildKernels)
 		pfm.create_popup_message(locale.get_text("pfm_render_kernels_built_msg"),false)
@@ -947,6 +968,15 @@ function gui.WIFilmmaker:SetBuildKernels(buildKernels)
 	local tabContainer = frame:GetTabContainer()
 	if(util.is_valid(tabContainer) == false) then return end
 	self.m_kernelsBuildMessage = gui.create("WIKernelsBuildMessage",tabContainer)
+	self.m_kernelProgressBar = self:AddProgressStatusBar("kernel",locale.get_text("pfm_building_kernels"))
+	local tStart = time.real_time()
+	self.m_cbKernelProgress = game.add_callback("Think",function()
+		-- There's no way to get the actual kernel progress, so we'll just
+		-- move the progress bar to indicate that something is happening.
+		local dt = time.real_time() -tStart
+		local f = (dt %5.0) /5.0
+		self.m_kernelProgressBar:SetProgress(f)
+	end)
 
 	pfm.create_popup_message(locale.get_text("pfm_building_render_kernels_msg"),16)
 end
@@ -1770,6 +1800,7 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_openDialogue)
 	util.remove(self.m_previewWindow)
 	util.remove(self.m_renderResultWindow)
+	util.remove(self.m_updateProgressBar)
 	self.m_selectionManager:Remove()
 
 	local window = gui.get_primary_window()
