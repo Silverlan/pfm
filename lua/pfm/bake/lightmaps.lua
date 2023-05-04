@@ -80,18 +80,12 @@ end
 pfm.bake.lightmaps = function(gameScene,lightmapTargets,influencers,lightSources,width,height,sampleCount,lightmapDataCache,initScene,bakeCombined,asJob)
 	if(bakeCombined == nil) then bakeCombined = true end
 	local createInfo = unirender.Scene.CreateInfo()
-	createInfo.width = width
-	createInfo.height = height
-	createInfo.denoise = true
+	createInfo.denoise = unirender.Scene.DENOISE_MODE_AUTO_DETAILED
 	createInfo.hdrOutput = true
-	createInfo.renderJob = false
 	createInfo.exposure = 1.0
 	-- createInfo.colorTransform = colorTransform
-	createInfo.device = unirender.Scene.DEVICE_TYPE_GPU
-	createInfo.globalLightIntensityFactor = 1.0
+	createInfo.deviceType = unirender.Scene.DEVICE_TYPE_GPU
 	-- createInfo.sky = skyTex
-	createInfo.skyAngles = EulerAngles(0,0,0)
-	createInfo.skyStrength = 1.0
 	createInfo.renderer = "cycles"
 	createInfo:SetSamplesPerPixel(sampleCount)
 
