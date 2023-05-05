@@ -230,7 +230,7 @@ function gui.AssetIcon.IconGenerator:__init(width,height,widthChar,heightChar)
 end
 
 function gui.AssetIcon.IconGenerator:Clear()
-	util.remove({self.m_modelView,self.m_modelViewCharacter,self.m_cbTick})
+	util.remove({self.m_modelView,self.m_modelViewCharacter,self.m_cbTick,self.m_iconProgressBar})
 end
 
 function gui.AssetIcon.IconGenerator:ProcessIcon()
@@ -259,6 +259,10 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 	asset.clear_unused(asset.TYPE_MATERIAL)
 	asset.clear_unused(asset.TYPE_TEXTURE)
 
+	if(util.is_valid(self.m_iconProgressBar)) then
+		self.m_iconProgressBar:SetProgress(1 -(#self.m_mdlQueue /self.m_maxQueueSize))
+		if(#self.m_mdlQueue == 0) then self.m_iconProgressBar:Remove() end
+	end
 	self:GenerateNextIcon()
 end
 
@@ -281,7 +285,18 @@ function gui.AssetIcon.IconGenerator:AddModelToQueue(mdl,callback,iconPath,setti
 		iconPath = iconPath,
 		settings = settings
 	})
-	if(#self.m_mdlQueue == 1) then self:GenerateNextIcon() end
+	if(#self.m_mdlQueue == 1) then
+		self:GenerateNextIcon()
+		self.m_maxQueueSize = 1
+		local pm = tool.get_filmmaker()
+		if(util.is_valid(pm) and util.is_valid(self.m_iconProgressBar) == false) then
+			self.m_iconProgressBar = pm:AddProgressStatusBar("icon_generation",locale.get_text("pfm_generating_icons"))
+		end
+	end
+	if(util.is_valid(self.m_iconProgressBar)) then
+		self.m_maxQueueSize = math.max(self.m_maxQueueSize,#self.m_mdlQueue)
+		self.m_iconProgressBar:SetProgress(#self.m_mdlQueue /self.m_maxQueueSize)
+	end
 end
 
 function gui.AssetIcon.IconGenerator:GenerateNextIcon()
