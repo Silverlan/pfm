@@ -8,6 +8,7 @@
 
 local Element = util.register_class("gui.ProgressStatusInfo",gui.Base)
 
+local g_activeProcesses = 0
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -22,6 +23,12 @@ function Element:OnInitialize()
     elText:SetColor(Color(51, 51, 51))
 	elText:AddStyleClass("input_field_text")
     self.m_elText = elText
+
+    if(g_activeProcesses == 0) then
+        -- Disable automatic sleep mode as long as the process is active
+        os.set_prevent_os_sleep_mode(true)
+    end
+    g_activeProcesses = g_activeProcesses +1
 end
 function Element:SetProgress(progress)
     local width = self.m_progressBarBg:GetWidth() *progress
@@ -43,5 +50,10 @@ function Element:SetText(text)
     self:ScheduleUpdate()
 end
 function Element:OnRemove()
+    g_activeProcesses = g_activeProcesses -1
+    if(g_activeProcesses == 0) then
+        -- Re-enable automatic sleep mode
+        os.set_prevent_os_sleep_mode(false)
+    end
 end
 gui.register("WIProgressStatusInfo",Element)

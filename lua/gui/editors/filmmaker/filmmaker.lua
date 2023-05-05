@@ -86,6 +86,9 @@ function gui.WIFilmmaker:OnInitialize()
 	gui.set_context_menu_skin("pfm")
 	gui.get_primary_window():SetResizable(true)
 
+	-- Sleep mode is enabled by default, but will be disabled tempoarily if there is a continuous process going on (e.g. rendering).
+	os.set_prevent_os_sleep_mode(false)
+
 	local elConsole = gui.get_console()
 	if(util.is_valid(elConsole)) then elConsole:SetExternallyOwned(true) end
 
