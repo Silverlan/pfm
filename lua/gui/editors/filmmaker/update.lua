@@ -23,31 +23,13 @@ function Element:CheckForUpdates(verbose)
 		return
 	end
 
-	local highestVersion = util.Version(0,0,0)
-	for _,tag in ipairs(res) do
-		if(tag:sub(1,1) == "v") then
-			local v = util.Version(tag:sub(2))
-			if(v > highestVersion) then highestVersion = v end
-		end
-	end
-
-	local curVersion = engine.get_info().version
-	if(highestVersion > curVersion) then
-		-- New version available!
-		local updateUrl = "https://github.com/Silverlan/pragma/releases/download/v" .. highestVersion:ToString()
+    local function download_update(updateUrl,fileName)
         pfm.open_message_prompt(
             locale.get_text("New update available"),
             locale.get_text("A new update is available. Would you like to download it now?"),
             bit.bor(gui.PfmPrompt.BUTTON_YES,gui.PfmPrompt.BUTTON_NO),
             function(bt)
                 if(bt == gui.PfmPrompt.BUTTON_YES) then
-                    local fileName
-                    if(os.SYSTEM_WINDOWS) then
-                        fileName = "pragma-v" .. highestVersion:ToString() .. "-win64.zip"
-                    else
-                        fileName = "pragma-v" .. highestVersion:ToString() .. "-lin64.zip"
-                    end
-
                     self:DownloadUpdate(updateUrl .. "/" .. fileName)
                     pfm.create_popup_message(
                         locale.get_text("The update will be downloaded in the background and installed when you quit PFM."),
@@ -56,6 +38,55 @@ function Element:CheckForUpdates(verbose)
                 end
             end
         )
+    end
+
+    local enableExperimental = console.get_convar_bool("pfm_enable_experimental_updates")
+    if(enableExperimental) then
+        local gitInfo = engine.get_git_info()
+        local newVersionAvailable = false
+        for _,tagInfo in ipairs(res) do
+            if(tagInfo.tagName == "nightly") then
+                print("SHA: ",tagInfo.sha)
+                if(gitInfo == nil or tagInfo.sha ~= gitInfo.commitSha) then
+                    newVersionAvailable = true
+                end
+                break
+            end
+        end
+        if(newVersionAvailable) then
+            local updateUrl = "https://github.com/Silverlan/pragma/releases/download/nightly"
+            local fileName = "pragma"
+            if(os.SYSTEM_WINDOWS) then
+                fileName = fileName .. ".zip"
+            else
+                fileName = fileName .. ".tar.gz"
+            end
+            print("DOWNLOAD!")
+            download_update(updateUrl,fileName)
+        elseif(verbose) then pfm.create_popup_message(locale.get_text("pfm_up_to_date",{(gitInfo ~= nil) and gitInfo.commitSha or locale.get_text("unknown")})) end
+        return
+    end
+
+	local highestVersion = util.Version(0,0,0)
+	for _,tagInfo in ipairs(res) do
+		if(tagInfo.tagName:sub(1,1) == "v") then
+			local v = util.Version(tagInfo.tagName:sub(2))
+			if(v > highestVersion) then highestVersion = v end
+        end
+	end
+
+	local curVersion = engine.get_info().version
+    -- TODO: if(highestVersion > curVersion) then
+	if(true) then--highestVersion > curVersion) then
+		-- New version available!
+		local updateUrl = "https://github.com/Silverlan/pragma/releases/download/v" .. highestVersion:ToString()
+        local fileName
+        if(os.SYSTEM_WINDOWS) then
+            fileName = "pragma-v" .. highestVersion:ToString() .. "-win64.zip"
+        else
+            fileName = "pragma-v" .. highestVersion:ToString() .. "-lin64.tar.gz"
+        end
+        download_update(updateUrl,fileName)
 	elseif(verbose) then
 		pfm.create_popup_message(locale.get_text("pfm_up_to_date",{pfm.VERSION:ToString()}))
 	end

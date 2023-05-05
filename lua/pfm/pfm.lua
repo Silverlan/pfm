@@ -326,6 +326,16 @@ end
 
 pfm.get_projects = function() return pfm.impl.projects end
 
+pfm.get_git_sha = function(gitInfoFileName)
+	local gitInfo = file.read(gitInfoFileName)
+	if(gitInfo == nil) then return end
+	local pos = gitInfo:find("commit:")
+	if(pos == nil) then return end
+	local sha = gitInfo:sub(pos +7,pos +14)
+	sha = string.remove_whitespace(sha)
+	return sha
+end
+
 pfm.get_key_binding = function(cmd)
 	local pm = tool.get_filmmaker()
 	if(util.is_valid(pm)) then

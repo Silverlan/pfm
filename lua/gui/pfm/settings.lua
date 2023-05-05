@@ -53,6 +53,10 @@ function Element:OnInitialize()
 	end)
 	wrapper:SetUseAltMode(true)
 
+	local pEnableExperimentalUpdates = p:AddToggleControl(locale.get_text("pfm_enable_experimental_updates"),"enable_experimental_updates",console.get_convar_bool("pfm_enable_experimental_updates"),function(el,checked)
+		console.run("pfm_enable_experimental_updates",checked and "1" or "0")
+	end)
+
 	p:Update()
 	p:SizeToContents()
 

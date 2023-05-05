@@ -746,14 +746,9 @@ function gui.WIFilmmaker:OnInitialize()
 	-- Version Info
 	local engineInfo = engine.get_info()
 	local versionString = "v" .. pfm.VERSION:ToString()
-	local gitInfo = file.read("addons/filmmaker/git_info.txt")
-	if(gitInfo ~= nil) then
-		local pos = gitInfo:find("commit:")
-		if(pos ~= nil) then
-			local sha = gitInfo:sub(pos +7,pos +14)
-			sha = string.remove_whitespace(sha)
-			versionString = versionString .. ", " .. sha
-		end
+	local sha = pfm.get_git_sha("addons/filmmaker/git_info.txt")
+	if(sha ~= nil) then
+		versionString = versionString .. ", " .. sha
 	end
 	versionString = versionString .. " [P " .. engineInfo.prettyVersion
 	local gitInfo = engine.get_git_info()
