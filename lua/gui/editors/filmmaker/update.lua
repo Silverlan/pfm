@@ -46,7 +46,6 @@ function Element:CheckForUpdates(verbose)
         local newVersionAvailable = false
         for _,tagInfo in ipairs(res) do
             if(tagInfo.tagName == "nightly") then
-                print("SHA: ",tagInfo.sha)
                 if(gitInfo == nil or tagInfo.sha ~= gitInfo.commitSha) then
                     newVersionAvailable = true
                 end
@@ -61,7 +60,6 @@ function Element:CheckForUpdates(verbose)
             else
                 fileName = fileName .. ".tar.gz"
             end
-            print("DOWNLOAD!")
             download_update(updateUrl,fileName)
         elseif(verbose) then pfm.create_popup_message(locale.get_text("pfm_up_to_date",{(gitInfo ~= nil) and gitInfo.commitSha or locale.get_text("unknown")})) end
         return

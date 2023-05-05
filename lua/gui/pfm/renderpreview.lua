@@ -46,6 +46,7 @@ function gui.PFMRenderPreview:OnInitialize()
 		-- self.m_test = true
 		self:EnableThinking()
 	end)
+	self.m_settingsBox:ResetControls()
 end
 function gui.PFMRenderPreview:InitializeViewport(parent)
 	gui.PFMBaseViewport.InitializeViewport(self,parent)
@@ -358,9 +359,11 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		if(val == "pragma") then
 			offlineRendererOptions:SetVisible(false)
 			pragmaRendererOptions:SetVisible(true)
+			self.m_btPrepare:SetEnabled(false)
 		else
 			offlineRendererOptions:SetVisible(true)
 			pragmaRendererOptions:SetVisible(false)
+			self.m_btPrepare:SetEnabled(true)
 		end
 	end)
 	p:LinkToUDMProperty("render_engine",settings,"renderEngine")
@@ -652,7 +655,6 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	self:InitializeToneMapControls(p,settings)
 
-	p:ResetControls()
 	skipResolutionAttrCallbacks = true
 	settings:SetWidth(w)
 	settings:SetHeight(h)
