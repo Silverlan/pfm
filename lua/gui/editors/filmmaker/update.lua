@@ -25,14 +25,14 @@ function Element:CheckForUpdates(verbose)
 
     local function download_update(updateUrl,fileName)
         pfm.open_message_prompt(
-            locale.get_text("New update available"),
-            locale.get_text("A new update is available. Would you like to download it now?"),
+            locale.get_text("pfm_new_update_available"),
+            locale.get_text("pfm_update_available_download_now"),
             bit.bor(gui.PfmPrompt.BUTTON_YES,gui.PfmPrompt.BUTTON_NO),
             function(bt)
                 if(bt == gui.PfmPrompt.BUTTON_YES) then
                     self:DownloadUpdate(updateUrl .. "/" .. fileName)
                     pfm.create_popup_message(
-                        locale.get_text("The update will be downloaded in the background and installed when you quit PFM."),
+                        locale.get_text("pfm_update_info"),
                         6
                     )
                 end
@@ -179,7 +179,7 @@ function Element:DownloadUpdate(url)
                 return
             end
             pfm.create_popup_message(
-                locale.get_text("Preparing update files..."),
+                locale.get_text("pfm_preparing_update_files"),
                 3
             )
             time.create_simple_timer(2.0,function()
@@ -205,7 +205,7 @@ function Element:DownloadUpdate(url)
         self.m_runUpdaterOnShutdown = true
 
         pfm.create_popup_message(
-            locale.get_text("The update is ready and will be installed when PFM is closed."),
+            locale.get_text("pfm_update_ready"),
             6
         )
     end,function(progress)
