@@ -773,6 +773,8 @@ function gui.WIFilmmaker:OnInitialize()
 			return util.EVENT_REPLY_HANDLED
 		end
 	end)
+	elVersion:AddCallback("OnCursorEntered",function() elVersion:SetColor(Color.White) end)
+	elVersion:AddCallback("OnCursorExited",function() elVersion:SetColor(Color(200,200,200)) end)
 
 	elVersion:SetX(pMenuBar:GetWidth() -elVersion:GetWidth() -4)
 	elVersion:SetY(3)
