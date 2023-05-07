@@ -11,7 +11,7 @@ include("uv_atlas_mesh_overlay.lua")
 
 local UvBaker = util.register_class("pfm.UvBaker",pfm.BaseBaker)
 function UvBaker:__init()
-	pfm.UvBaker.__init(self,"UvBaker")
+	pfm.BaseBaker.__init(self,"UvBaker")
 end
 function UvBaker:StartBaker()
 	local ent = self:GetActorEntity()
