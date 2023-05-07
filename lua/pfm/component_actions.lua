@@ -353,3 +353,18 @@ pfm.register_component_action("pfm_bloom","pfm_view_bloom_map","view_bloom_map",
 	end)
 	return bt
 end)
+
+-------------------
+
+pfm.register_component_action("lua_script","pfm_lua_script_execute","execute_lua_script",function(controls,actorData,entActor,actionData)
+	local bt = gui.create("WIPFMActionButton",controls)
+	bt:SetText(locale.get_text("execute"))
+	bt:AddCallback("OnPressed",function()
+		if(util.is_valid(entActor) == false) then return end
+		local c = entActor:GetComponent(ents.COMPONENT_LUA_SCRIPT)
+		if(c ~= nil) then
+			c:Execute()
+		end
+	end)
+	return bt
+end)
