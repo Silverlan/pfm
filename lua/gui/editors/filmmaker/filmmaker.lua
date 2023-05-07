@@ -1006,14 +1006,7 @@ function gui.WIFilmmaker:ConvertStaticActorsToMap()
 		ent:SetFlags(bit.bor(ent:GetFlags(),util.WorldData.EntityData.FLAG_CLIENTSIDE_ONLY_BIT))
 		ent:SetClassName(className)
 		ent:SetKeyValue("uuid",tostring(actor:GetUniqueId()))
-		local pose = actor:GetAbsolutePose()
-		ent:SetOrigin(pose:GetOrigin())
-		local ang = pose:GetRotation():ToEulerAngles()
-		ent:SetKeyValue("angles",ang.p .. " " .. ang.y .. " " .. ang.r)
-		local scale = pose:GetScale()
-		if(scale:DistanceSqr(Vector(1,1,1)) > 0.001) then
-			ent:SetKeyValue("scale",scale.x .. " " .. scale.y .. " " .. scale.z)
-		end
+		ent:SetPose(actor:GetAbsolutePose())
 		return ent
 	end
 	local function apply_key_value(c,ent,memberName,kvName)
