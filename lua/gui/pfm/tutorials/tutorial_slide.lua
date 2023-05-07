@@ -17,6 +17,14 @@ function Element:OnInitialize()
 	self:SetSize(64,64)
 	self.m_highlights = {}
 	self.m_messageBoxes = {}
+
+	self.m_cbAudioEnabled = console.add_change_callback("pfm_tutorial_audio_enabled",function(old,new)
+		self:UpdateAudio()
+	end)
+end
+function Element:OnRemove()
+	if(self.m_sound ~= nil) then self.m_sound:Stop() end
+	util.remove(self.m_cbAudioEnabled)
 end
 function Element:SetTutorial(t) self.m_tutorial = t end
 function Element:FindElementByPath(path,baseElement)
@@ -75,7 +83,7 @@ function Element:CreateButton(parent,text,f)
 	bt:SetZPos(1)
 	return bt
 end
-function Element:AddMessageBox(msg)
+function Element:AddMessageBox(msg,audioFile)
 	local elTgt
 	if(#self.m_highlights > 1) then elTgt = self.m_elFocus end
 	elTgt = elTgt or self.m_highlights[1] or self
@@ -106,6 +114,14 @@ function Element:AddMessageBox(msg)
 	self.m_buttonEnd = self:CreateButton(buttonContainer,locale.get_text("pfm_end_tutorial"),function() self.m_tutorial:EndTutorial() end)
 	self.m_buttonEnd:SetX(elBox:GetWidth() -self.m_buttonEnd:GetWidth())
 	buttonContainer:SizeToContents()
+
+	local iconAudio = gui.PFMButton.create(el,"gui/pfm/icon_mute","gui/pfm/icon_mute_activated",function()
+		self:ToggleAudio()
+		return true
+	end)
+	iconAudio:SetSize(20,20)
+	iconAudio:SetPos(5,0)
+	self.m_iconAudio = iconAudio
 
 	elBox:SizeToContents()
 	elBox:Update()
@@ -144,8 +160,27 @@ function Element:AddMessageBox(msg)
 	else el:CenterToParent() end
 	overlay:ScheduleUpdate()
 
+	if(audioFile ~= nil) then
+		if(self.m_sound ~= nil) then self.m_sound:Stop() end
+		self.m_sound = sound.create(audioFile,sound.TYPE_VOICE,1.0,1.0)
+		self:UpdateAudio()
+	end
+
 	return el
 end
-function Element:OnRemove()
+function Element:IsAudioEnabled() return console.get_convar_bool("pfm_tutorial_audio_enabled") end
+function Element:UpdateAudio()
+	local enabled = self:IsAudioEnabled()
+	self.m_iconAudio:SetActivated(not enabled)
+
+	if(enabled == false) then
+		if(self.m_sound ~= nil) then self.m_sound:Stop() end
+	else
+		if(self.m_sound ~= nil) then self.m_sound:Play() end
+	end
+end
+function Element:ToggleAudio()
+	local enabled = not self:IsAudioEnabled()
+	console.run("pfm_tutorial_audio_enabled",enabled and "1" or "0")
 end
 gui.register("WITutorialSlide",Element)

@@ -19,6 +19,7 @@ console.register_variable("pfm_animation_max_curve_sample_count",udm.TYPE_UINT32
 console.register_variable("pfm_max_undo_steps",udm.TYPE_UINT32,100,bit.bor(console.FLAG_BIT_ARCHIVE),"Maximum number of undo steps.")
 console.register_variable("pfm_restore",udm.TYPE_BOOLEAN,false,bit.bor(console.FLAG_BIT_HIDDEN),"For internal use only. If enabled, last filmmaker state will be restored after level change.")
 console.register_variable("pfm_enable_experimental_updates",udm.TYPE_BOOLEAN,false,bit.bor(console.FLAG_BIT_ARCHIVE),"If enabled, the auto-updater will download the latest nightly release instead of stable versions.")
+console.register_variable("pfm_tutorial_audio_enabled",udm.TYPE_BOOLEAN,true,bit.bor(console.FLAG_BIT_ARCHIVE),"If enabled, voiced audio will be played during tutorials if available.")
 
 console.register_command("pfm_bind",function(pl,key,cmd)
 	local pm = tool.get_filmmaker()
