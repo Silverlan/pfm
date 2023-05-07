@@ -24,9 +24,11 @@ function PfmPrompt:OnInitialize()
 	gui.create("WIBase",contents,0,0,1,12) -- Gap
 
 	local elMsg = gui.create("WIText",contents)
+	elMsg:SetFont("pfm_medium")
+	elMsg:SetColor(Color(200,200,200))
 	self.m_message = elMsg
 
-	gui.create("WIBase",contents,0,0,1,3) -- Gap
+	gui.create("WIBase",contents,0,0,1,12) -- Gap
 
 	local boxButtons = gui.create("WIHBox",contents)
 	self.m_boxButtons = boxButtons
@@ -60,14 +62,12 @@ function PfmPrompt:AddButtons(bts)
 		self:AddButton(vals[i])
 	end
 end
-function PfmPrompt:GetTable() return self.m_table end
 function PfmPrompt:SetMessage(msg)
 	self.m_message:SetText(msg)
 	self.m_message:SizeToContents()
 end
 function PfmPrompt:OnSizeChanged(w,h)
 	gui.PFMWindow.OnSizeChanged(self,w,h)
-	if(util.is_valid(self.m_table)) then self.m_table:SetWidth(self:GetWidth() -13) end
 end
 function PfmPrompt:OnUpdate()
 	gui.PFMWindow.OnUpdate(self)

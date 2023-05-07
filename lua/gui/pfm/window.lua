@@ -21,12 +21,16 @@ function gui.PFMWindow:OnInitialize()
 	local bg = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	bg:SetColor(Color(54,54,54))
 
-	local mainBox = gui.create("WIVBox",self,0,0,self:GetWidth(),self:GetHeight())
+	local mainBox = gui.create("WIVBox",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	mainBox:SetFixedSize(true)
 	mainBox:SetAutoFillContentsToWidth(true)
 	self.m_mainBox = mainBox
 
 	self.m_titleBar = gui.create("WIPFMTitlebar",mainBox)
-	self.m_contents = gui.create("WIVBox",mainBox)
+	local contents = gui.create("WIHBox",mainBox)
+	gui.create("WIBase",contents,0,0,12,1) -- Gap
+	self.m_innerContents = gui.create("WIVBox",contents)
+	gui.create("WIBase",contents,0,0,12,1) -- Gap
 
 	local outline = gui.create("WIOutlinedRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
 	outline:SetColor(Color.DodgerBlue)
@@ -73,7 +77,7 @@ function gui.PFMWindow:SetTitle(title)
 	if(util.is_valid(self.m_titleBar) == false) then return end
 	self.m_titleBar:SetText(title)
 end
-function gui.PFMWindow:GetContents() return self.m_contents end
+function gui.PFMWindow:GetContents() return self.m_innerContents end
 function gui.PFMWindow:OnSizeChanged(w,h)
 	if(util.is_valid(self.m_mainBox) == false) then return end
 	self.m_mainBox:SetWidth(w)
