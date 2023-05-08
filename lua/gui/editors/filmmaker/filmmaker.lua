@@ -781,10 +781,13 @@ function gui.WIFilmmaker:OnInitialize()
 	elVersion:SetAnchor(1,0,1,0)
 	log.info("PFM Version: " .. versionString)
 
-	time.create_simple_timer(5.0,function()
-		if(self:IsValid() == false) then return end
-		self:CheckForUpdates()
-	end)
+	if(console.get_convar_bool("pfm_should_check_for_updates")) then
+		console.run("pfm_should_check_for_updates","0") -- Only auto-check once per session
+		time.create_simple_timer(5.0,function()
+			if(self:IsValid() == false) then return end
+			self:CheckForUpdates()
+		end)
+	end
 	--
 
 	console.run("cl_max_fps",tostring(console.get_convar_int("pfm_max_fps")))
