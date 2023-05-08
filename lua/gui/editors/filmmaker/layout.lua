@@ -184,6 +184,7 @@ end
 function Element:GetFrameContainerData(identifier) return self.m_frameContainers[identifier] end
 
 function Element:LoadLayout(fileName)
+    self:CallCallbacks("OnChangeLayout",fileName)
     self:InitializeProjectUI(fileName)
 end
 
