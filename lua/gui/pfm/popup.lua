@@ -26,6 +26,7 @@ end
 function gui.PFMPopup:OnRemove()
 	util.remove(self.m_infoBox)
 end
+function gui.PFMPopup:GetInfoBox() return self.m_infoBox end
 function gui.PFMPopup:OnThink()
 	local t = time.real_time()
 	if(self.m_infoStartTime == nil) then return end
@@ -71,12 +72,15 @@ function gui.PFMPopup:DisplayNextText()
 	infoBox:SizeToContents()
 
 	local settings = item.settings
-	if(settings ~= nil and settings.url ~= nil) then
+	if(settings ~= nil and (settings.url ~= nil or settings.onClick ~= nil)) then
 		infoBox:SetCursor(gui.CURSOR_SHAPE_HAND)
 		infoBox:AddCallback("OnMouseEvent",function(el,button,state,mods)
 			if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
-				if(settings.openUrlInSystemBrowser) then util.open_url_in_browser(settings.url)
-				else tool.get_filmmaker():OpenUrlInBrowser(settings.url) end
+				if(settings.onClick ~= nil) then settings.onClick()
+				else
+					if(settings.openUrlInSystemBrowser) then util.open_url_in_browser(settings.url)
+					else tool.get_filmmaker():OpenUrlInBrowser(settings.url) end
+				end
 				util.remove(self.m_infoBox,true)
 				return util.EVENT_REPLY_HANDLED
 			end

@@ -118,5 +118,6 @@ Element.start_tutorial = function(identifier)
 	local elTut = gui.create("WITutorial",pm)
 	Element.tutorial_element = elTut
 	elTut:SetSize(pm:GetWidth(),pm:GetHeight())
+	elTut:SetZPos(10000)
 	fc(elTut,pm)
 end

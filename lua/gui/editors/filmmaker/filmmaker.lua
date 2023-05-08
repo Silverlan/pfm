@@ -727,6 +727,9 @@ function gui.WIFilmmaker:OnInitialize()
 	end)
 	pMenuBar:AddItem(locale.get_text("help"),function(pContext)
 		pContext:AddItem(locale.get_text("pfm_getting_started"),function(pItem)
+			self:LoadProject("projects/tutorials/interface/01_viewport")
+		end)
+		pContext:AddItem(locale.get_text("pfm_wiki"),function(pItem)
 			self:OpenUrlInBrowser("https://wiki.pragma-engine.com/books/pragma-filmmaker")
 		end)
 		pContext:AddItem(locale.get_text("pfm_report_a_bug"),function(pItem)
@@ -895,17 +898,31 @@ function gui.WIFilmmaker:OnInitialize()
 		if(util.is_valid(actorEditor)) then actorEditor:SetPropertyAnimationOverlaysDirty() end
 	end)
 
-	--[[local udmNotifications = self.m_settings:Get("notifications")
-	if((udmNotifications:GetValue("initial_tutorial_message",udm.TYPE_UINT8) or 0) == 0) then
+	local udmNotifications = self.m_settings:Get("notifications")
+	if((udmNotifications:GetValue("initial_tutorial_message",udm.TYPE_BOOLEAN) or false) == false) then
 		time.create_simple_timer(10.0,function()
 			if(self:IsValid() == false) then return end
-			pfm.create_popup_message(
-				locale.get_text("pfm_initial_tutorial_message",{"{[l:url \"" .. url .. "\"]}","{[/l]}"}),
-				false
+			local msg = pfm.create_popup_message(
+				locale.get_text("pfm_initial_tutorial_message"),
+				false,gui.InfoBox.TYPE_INFO,{
+					onClick = function()
+						udmNotifications:SetValue("initial_tutorial_message",udm.TYPE_BOOLEAN,true)
+						time.create_simple_timer(0.0,function()
+							if(self:IsValid()) then
+								self:LoadProject("projects/tutorials/interface/01_viewport")
+							end
+						end)
+					end
+				}
 			)
-			udmNotifications:SetValue("initial_tutorial_message",udm.TYPE_UINT8,1)
+			local infoBox = msg:GetInfoBox()
+			local cbOnClose
+			cbOnClose = infoBox:AddCallback("OnClose",function()
+				util.remove(cbOnClose)
+				udmNotifications:SetValue("initial_tutorial_message",udm.TYPE_BOOLEAN,true)
+			end)
 		end)
-	end]]
+	end
 
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched",self)

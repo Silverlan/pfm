@@ -127,9 +127,13 @@ function gui.PFMFrame:FindTabButton(name)
 	return tabData.button
 end
 function gui.PFMFrame:IsTabDetached(name)
+	local window = self:GetDetachedTabWindow(name)
+	return util.is_valid(window)
+end
+function gui.PFMFrame:GetDetachedTabWindow(name)
 	local tabData = self:FindTabData(name)
 	if(tabData == nil) then return false end
-	return util.is_valid(tabData.window)
+	return util.is_valid(tabData.window) and tabData.window or nil
 end
 function gui.PFMFrame:GetTabContainer() return self.m_tabButtonContainer end
 function gui.PFMFrame:AddTab(identifier,name,panel)

@@ -27,17 +27,39 @@ function Element:OnRemove()
 	util.remove(self.m_cbAudioEnabled)
 end
 function Element:SetTutorial(t) self.m_tutorial = t end
+function Element:FindPanelByWindow(identifier)
+	local pm = tool.get_filmmaker()
+	if(util.is_valid(pm) == false) then return end
+	return pm:GetWindowFrame(identifier)
+end
 function Element:FindElementByPath(path,baseElement)
 	if(type(path) == "string") then path = util.Path.CreateFilePath(path) end
-	local el = baseElement or tool.get_filmmaker()
+	local root = baseElement or tool.get_filmmaker()
 	local pathComponents = path:ToComponents()
-	for _,c in ipairs(pathComponents) do
-		local children = el:FindDescendantsByName(c)
-		print(el,c)
-		if(#children == 0) then return end
-		el = children[1]
+	local function find_descendant(elBase)
+		local el = elBase
+		for _,c in ipairs(pathComponents) do
+			local children = elBase:FindDescendantsByName(c)
+			if(#children == 0) then return false end
+			el = children[1]
+		end
+		return el
 	end
-	return el
+	local elChild = find_descendant(root)
+	if(elChild == false and baseElement == nil) then
+		for cat,frame in pairs(tool.get_filmmaker():GetFrames()) do
+			for _,tabData in ipairs(frame:GetTabs()) do
+				local window = frame:GetDetachedTabWindow(tabData.identifier)
+				if(util.is_valid(window)) then
+					local el = gui.get_base_element(window)
+					if(el ~= nil) then
+						elChild = find_descendant(el)
+					end
+				end
+			end
+		end
+	end
+	return elChild or root
 end
 function Element:GetBackButton() return self.m_buttonPrev end
 function Element:GetContinueButton() return self.m_buttonNext end
@@ -115,13 +137,16 @@ function Element:AddMessageBox(msg,audioFile)
 	self.m_buttonEnd:SetX(elBox:GetWidth() -self.m_buttonEnd:GetWidth())
 	buttonContainer:SizeToContents()
 
-	local iconAudio = gui.PFMButton.create(el,"gui/pfm/icon_mute","gui/pfm/icon_mute_activated",function()
-		self:ToggleAudio()
-		return true
-	end)
-	iconAudio:SetSize(20,20)
-	iconAudio:SetPos(5,0)
-	self.m_iconAudio = iconAudio
+	local hasAudio = (audioFile ~= nil and asset.exists(audioFile,asset.TYPE_AUDIO))
+	if(hasAudio) then
+		local iconAudio = gui.PFMButton.create(el,"gui/pfm/icon_mute","gui/pfm/icon_mute_activated",function()
+			self:ToggleAudio()
+			return true
+		end)
+		iconAudio:SetSize(20,20)
+		iconAudio:SetPos(5,0)
+		self.m_iconAudio = iconAudio
+	end
 
 	elBox:SizeToContents()
 	elBox:Update()
@@ -160,7 +185,7 @@ function Element:AddMessageBox(msg,audioFile)
 	else el:CenterToParent() end
 	overlay:ScheduleUpdate()
 
-	if(audioFile ~= nil) then
+	if(hasAudio) then
 		if(self.m_sound ~= nil) then self.m_sound:Stop() end
 		self.m_sound = sound.create(audioFile,sound.TYPE_VOICE,1.0,1.0)
 		self:UpdateAudio()

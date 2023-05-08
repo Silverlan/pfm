@@ -30,6 +30,8 @@ function gui.PFMTabButton:OnInitialize()
 
 	local elDetach = gui.create("WITexturedRect",self)
 	elDetach:SetMaterial("gui/pfm/icon_detach")
+	elDetach:SetName("detach_icon")
+	elDetach:SetCursor(gui.CURSOR_SHAPE_HAND)
 	elDetach:SizeToTexture()
 	elDetach:SetSize(8,8)
 	elDetach:SetPos(self:GetWidth() -elDetach:GetWidth() -3,3)
