@@ -178,7 +178,7 @@ function Component:UpdateBones()
 
 							local length = pose:GetOrigin():Distance(childPose:GetOrigin())
 
-							local orthoAxisLengthScale = math.max(0.4 *length,1.4)
+							local orthoAxisLengthScale = math.max(0.3 *length,1.0)
 							ent:SetScale(Vector(orthoAxisLengthScale,orthoAxisLengthScale,length))
 						end
 					end
