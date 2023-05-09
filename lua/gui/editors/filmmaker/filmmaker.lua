@@ -59,6 +59,7 @@ include("animation_export.lua")
 include("layout.lua")
 include("update.lua")
 include("windows.lua")
+include("tutorials.lua")
 
 include_component("pfm_camera")
 include_component("pfm_sound_source")
@@ -860,7 +861,7 @@ function gui.WIFilmmaker:OnInitialize()
 	pMenuBar
 		:AddItem(locale.get_text("help"), function(pContext)
 			pContext:AddItem(locale.get_text("pfm_getting_started"), function(pItem)
-				self:LoadProject("projects/tutorials/interface/01_viewport")
+				self:LoadTutorial("intro")
 			end)
 			pContext:AddItem(locale.get_text("pfm_wiki"), function(pItem)
 				self:OpenUrlInBrowser("https://wiki.pragma-engine.com/books/pragma-filmmaker")
@@ -1057,7 +1058,7 @@ function gui.WIFilmmaker:OnInitialize()
 						udmNotifications:SetValue("initial_tutorial_message", udm.TYPE_BOOLEAN, true)
 						time.create_simple_timer(0.0, function()
 							if self:IsValid() then
-								self:LoadProject("projects/tutorials/interface/01_viewport")
+								self:LoadTutorial("intro")
 							end
 						end)
 					end,

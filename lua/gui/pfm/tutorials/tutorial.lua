@@ -122,12 +122,23 @@ Element.register_tutorial = function(identifier, fc)
 end
 
 Element.start_tutorial = function(identifier)
+	pfm.log("Starting tutorial '" .. identifier .. "'...", pfm.LOG_CATEGORY_PFM)
 	if Element.registered_tutorials[identifier] == nil then
+		pfm.log(
+			"Failed to start tutorial '" .. identifier .. "': Unknown tutorial!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_WARNING
+		)
 		return
 	end
 	local fc = Element.registered_tutorials[identifier]
 	local pm = tool.get_filmmaker()
 	if util.is_valid(pm) == false then
+		pfm.log(
+			"Failed to start tutorial '" .. identifier .. "': Filmmaker is not running!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_WARNING
+		)
 		return
 	end
 	util.remove(Element.tutorial_element)

@@ -42,8 +42,14 @@ function Element:CreateAssetIcon(path, assetName, isDirectory, importAsset)
 	return el
 end
 function Element:LoadTutorial(asset)
-	local pm = tool.get_filmmaker()
-	pm:LoadProject(asset)
+	local path = util.Path.CreateFilePath(asset)
+	path:PopFront()
+	time.create_simple_timer(0.0, function()
+		local pm = tool.get_filmmaker()
+		if util.is_valid(pm) then
+			pm:LoadTutorial(path:GetString())
+		end
+	end)
 end
 function Element:OnRemove() end
 gui.register("WITutorialExplorer", Element)
