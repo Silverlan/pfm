@@ -50,6 +50,10 @@ function Component:OnEntitySpawn()
 
 	console.run("vr_hide_primary_game_scene","0")
 end
+function Component:GetHmd()
+	if(util.is_valid(self.m_entHmd) == false) then return end
+	return self.m_entHmd:GetComponent(ents.COMPONENT_VR_HMD)
+end
 function Component:InitializeTrackedDevice(tdC)
 	local serialNumber = tdC:GetSerialNumber()
 	pfm.log("Initializing tracked device " .. tostring(serialNumber) .. "...",pfm.LOG_CATEGORY_PFM_VR)
@@ -83,7 +87,7 @@ function Component:InitializeTrackedDevice(tdC)
 	})
 	local pfmTdc = (actor ~= nil) and actor:FindComponent("pfm_vr_tracked_device") or nil
 	if(pfmTdc == nil) then return end
-	pfmTdc:SetMemberValue("SerialNumber",udm.TYPE_STRING,serialNumber)
+	pfmTdc:SetMemberValue("serialNumber",udm.TYPE_STRING,serialNumber)
 	actorEditor:UpdateActorComponents(actor)
 
 	local ent = actor:FindEntity()
