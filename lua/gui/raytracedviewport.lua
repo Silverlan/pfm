@@ -75,6 +75,9 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat,hdr)
 	local task = util.ThreadPool.ThreadTask()
 	if(hdr == false) then imgBuf:ToLDR(task) end
 
+	path = path .. ".hdr"
+	file.create_path(file.get_file_path(path))
+	--local result,err = opencv.save(imgBuf,path) -- TODO: Doesn't save HDR for some reason
 	local result = util.save_image(imgBuf,path,imgFormat,1.0,task)
 	self.m_threadPool:AddTask(task)
 	if(result == nil) then
@@ -82,7 +85,6 @@ function gui.RaytracedViewport:SaveImage(path,imgFormat,hdr)
 	else
 		pfm.log("Saving image as '" .. path .. "'...!",pfm.LOG_CATEGORY_PFM_RENDER)
 	end
-	buf = nil
 	collectgarbage()
 	return result
 end
@@ -185,6 +187,7 @@ function gui.RaytracedViewport:OnThink()
 	local state = self.m_rtJob:Update()
 	local newProgress = self.m_rtJob:GetProgress()
 	if(self.m_rtJob:IsCancelled()) then return end
+
 	if(newProgress ~= progress) then
 		self:CallCallbacks("OnProgressChanged",newProgress)
 	end
