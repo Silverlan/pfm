@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.OperatorAnimation",ents.ParticleSystemComponent.BaseOperator)
+util.register_class("ents.ParticleSystemComponent.OperatorAnimation", ents.ParticleSystemComponent.BaseOperator)
 
 function ents.ParticleSystemComponent.OperatorAnimation:__init()
 	ents.ParticleSystemComponent.BaseOperator.__init(self)
@@ -16,14 +16,14 @@ function ents.ParticleSystemComponent.OperatorAnimation:Initialize()
 	self.m_animationFitLifetime = toboolean(self:GetKeyValue("animation_fit_lifetime") or "") or false
 	self.m_animateInFps = toboolean(self:GetKeyValue("use_animation_rate_as_fps") or "") or false
 end
-function ents.ParticleSystemComponent.OperatorAnimation:Simulate(pt,dt)
+function ents.ParticleSystemComponent.OperatorAnimation:Simulate(pt, dt)
 	-- TODO: Unsure about these
-	if(self.m_animationFitLifetime) then
+	if self.m_animationFitLifetime then
 		local lifeDuration = pt:GetLifeSpan()
-		pt:SetAnimationFrameOffset(pt:GetTimeAlive() /lifeDuration)
+		pt:SetAnimationFrameOffset(pt:GetTimeAlive() / lifeDuration)
 	else
-		if(self.m_animateInFps) then
-			pt:SetAnimationFrameOffset(pt:GetTimeAlive() /self.m_animationRate)
+		if self.m_animateInFps then
+			pt:SetAnimationFrameOffset(pt:GetTimeAlive() / self.m_animationRate)
 		else
 			pt:SetAnimationFrameOffset(self.m_animationRate)
 		end
@@ -41,4 +41,4 @@ end
 function ents.ParticleSystemComponent.OperatorAnimation:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_operator("source_animation",ents.ParticleSystemComponent.OperatorAnimation)
+ents.ParticleSystemComponent.register_operator("source_animation", ents.ParticleSystemComponent.OperatorAnimation)

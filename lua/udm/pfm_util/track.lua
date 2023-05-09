@@ -6,24 +6,36 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function pfm.udm.Track:FindActorAnimationClip(actor,addIfNotExists)
-    if(type(actor) ~= "string") then actor = tostring(actor:GetUniqueId()) end
-    for _,channelClip in ipairs(self:GetAnimationClips()) do
-        if(tostring(channelClip:GetActorId()) == actor) then return channelClip,false end
-    end
-    if(addIfNotExists ~= true) then return end
-    actor = udm.dereference(self:GetSchema(),actor)
-    if(actor == nil) then return end
-    channelClip = self:AddAnimationClip()
-    channelClip:SetName(actor:GetName())
-    channelClip:SetActor(actor:GetUniqueId())
-    return channelClip,true
+function pfm.udm.Track:FindActorAnimationClip(actor, addIfNotExists)
+	if type(actor) ~= "string" then
+		actor = tostring(actor:GetUniqueId())
+	end
+	for _, channelClip in ipairs(self:GetAnimationClips()) do
+		if tostring(channelClip:GetActorId()) == actor then
+			return channelClip, false
+		end
+	end
+	if addIfNotExists ~= true then
+		return
+	end
+	actor = udm.dereference(self:GetSchema(), actor)
+	if actor == nil then
+		return
+	end
+	channelClip = self:AddAnimationClip()
+	channelClip:SetName(actor:GetName())
+	channelClip:SetActor(actor:GetUniqueId())
+	return channelClip, true
 end
 
 function pfm.udm.Track:GetSortedFilmClips()
 	local sorted = {}
-	for _,fc in ipairs(self:GetFilmClips()) do table.insert(sorted,fc) end
-	table.sort(sorted,function(a,b) return a:GetTimeFrame():GetStart() < b:GetTimeFrame():GetStart() end)
+	for _, fc in ipairs(self:GetFilmClips()) do
+		table.insert(sorted, fc)
+	end
+	table.sort(sorted, function(a, b)
+		return a:GetTimeFrame():GetStart() < b:GetTimeFrame():GetStart()
+	end)
 	return sorted
 end
 
@@ -32,16 +44,16 @@ function pfm.udm.Track:InsertFilmClipAfter(target)
 	local newFc = self:AddFilmClip()
 	newFc:GetTimeFrame():SetDuration(10)
 	local targetIndex
-	for i,fc in ipairs(clips) do
-		if(util.is_same_object(fc,target)) then
+	for i, fc in ipairs(clips) do
+		if util.is_same_object(fc, target) then
 			targetIndex = i
 			break
 		end
 	end
-	if(targetIndex ~= nil) then
+	if targetIndex ~= nil then
 		local tStart = target:GetTimeFrame():GetEnd()
 		newFc:GetTimeFrame():SetStart(tStart)
-		for i=targetIndex +1,#clips do
+		for i = targetIndex + 1, #clips do
 			local timeFrame = clips[i]:GetTimeFrame()
 			timeFrame:SetStart(tStart)
 			tStart = timeFrame:GetEnd()
@@ -56,19 +68,19 @@ function pfm.udm.Track:InsertFilmClipBefore(target)
 	local newFc = self:AddFilmClip()
 	newFc:GetTimeFrame():SetDuration(10)
 	local targetIndex
-	for i,fc in ipairs(clips) do
-		if(util.is_same_object(fc,target)) then
+	for i, fc in ipairs(clips) do
+		if util.is_same_object(fc, target) then
 			targetIndex = i
 			break
 		end
 	end
-	if(targetIndex ~= nil) then
-		local tStart = target:GetTimeFrame():GetStart() -newFc:GetTimeFrame():GetDuration()
+	if targetIndex ~= nil then
+		local tStart = target:GetTimeFrame():GetStart() - newFc:GetTimeFrame():GetDuration()
 		newFc:GetTimeFrame():SetStart(tStart)
-		if(targetIndex > 1) then
-			for i=targetIndex -1,1 do
+		if targetIndex > 1 then
+			for i = targetIndex - 1, 1 do
 				local timeFrame = clips[i]:GetTimeFrame()
-				timeFrame:SetStart(tStart -timeFrame:GetDuration())
+				timeFrame:SetStart(tStart - timeFrame:GetDuration())
 				tStart = timeFrame:GetStart()
 			end
 		end
@@ -79,10 +91,12 @@ end
 
 function pfm.udm.Track:MoveFilmClipToRight(fc)
 	local clips = self:GetSortedFilmClips()
-	for i,clip in ipairs(clips) do
-		if(util.is_same_object(clip,fc)) then
-			local clipNext = clips[i +1]
-			if(clipNext == nil) then return end
+	for i, clip in ipairs(clips) do
+		if util.is_same_object(clip, fc) then
+			local clipNext = clips[i + 1]
+			if clipNext == nil then
+				return
+			end
 			self:MoveFilmClipToLeft(clipNext)
 			break
 		end
@@ -91,12 +105,14 @@ end
 
 function pfm.udm.Track:MoveFilmClipToLeft(fc)
 	local clips = self:GetSortedFilmClips()
-	for i,clip in ipairs(clips) do
-		if(util.is_same_object(clip,fc)) then
-			local clipPrev = clips[i -1]
-			if(clipPrev == nil) then return end
+	for i, clip in ipairs(clips) do
+		if util.is_same_object(clip, fc) then
+			local clipPrev = clips[i - 1]
+			if clipPrev == nil then
+				return
+			end
 			local startPrev = clipPrev:GetTimeFrame():GetStart()
-			clipPrev:GetTimeFrame():SetStart(startPrev +fc:GetTimeFrame():GetDuration())
+			clipPrev:GetTimeFrame():SetStart(startPrev + fc:GetTimeFrame():GetDuration())
 			fc:GetTimeFrame():SetStart(startPrev)
 			break
 		end
@@ -105,7 +121,7 @@ end
 
 function pfm.udm.Track:UpdateFilmClipTimeFrames()
 	local tStart = 0.0
-	for _,fc in ipairs(self:GetSortedFilmClips()) do
+	for _, fc in ipairs(self:GetSortedFilmClips()) do
 		local timeFrame = fc:GetTimeFrame()
 		timeFrame:SetStart(tStart)
 		tStart = timeFrame:GetEnd()

@@ -7,10 +7,10 @@
 ]]
 
 sfm.register_element_type("RigPointConstraintOperator")
-sfm.link_dmx_type("DmeRigPointConstraintOperator",sfm.RigPointConstraintOperator)
+sfm.link_dmx_type("DmeRigPointConstraintOperator", sfm.RigPointConstraintOperator)
 
 sfm.register_element_type("ConstraintTarget") -- Predeclaration
 sfm.register_element_type("ConstraintSlave") -- Predeclaration
 
-sfm.BaseElement.RegisterArray(sfm.RigPointConstraintOperator,"targets",sfm.ConstraintTarget)
-sfm.BaseElement.RegisterProperty(sfm.RigPointConstraintOperator,"slave",sfm.ConstraintSlave)
+sfm.BaseElement.RegisterArray(sfm.RigPointConstraintOperator, "targets", sfm.ConstraintTarget)
+sfm.BaseElement.RegisterProperty(sfm.RigPointConstraintOperator, "slave", sfm.ConstraintSlave)

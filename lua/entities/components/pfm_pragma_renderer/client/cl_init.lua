@@ -6,18 +6,19 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Component = util.register_class("ents.PFMPragmaRenderer",BaseEntityComponent)
-function Component:Initialize()
-end
+local Component = util.register_class("ents.PFMPragmaRenderer", BaseEntityComponent)
+function Component:Initialize() end
 function Component:OnRender()
 	local motionBlurId = ents.get_component_id("pfm_motion_blur")
-	if(motionBlurId == nil) then return end
-	local e,c = ents.citerator(motionBlurId)()
-	if(c ~= nil) then
+	if motionBlurId == nil then
+		return
+	end
+	local e, c = ents.citerator(motionBlurId)()
+	if c ~= nil then
 		local rendererC = self:GetEntity():GetComponent(ents.COMPONENT_RENDERER)
-		if(rendererC ~= nil) then
+		if rendererC ~= nil then
 			c:AddRenderer(rendererC)
 		end
 	end
 end
-ents.COMPONENT_PFM_PRAGMA_RENDERER = ents.register_component("pfm_pragma_renderer",Component)
+ents.COMPONENT_PFM_PRAGMA_RENDERER = ents.register_component("pfm_pragma_renderer", Component)

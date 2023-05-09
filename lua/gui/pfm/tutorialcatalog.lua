@@ -9,7 +9,7 @@
 include("/gui/tutorialexplorer.lua")
 include("/gui/editableentry.lua")
 
-util.register_class("gui.PFMTutorialCatalog",gui.Base)
+util.register_class("gui.PFMTutorialCatalog", gui.Base)
 
 function gui.PFMTutorialCatalog:__init()
 	gui.Base.__init(self)
@@ -17,23 +17,24 @@ end
 function gui.PFMTutorialCatalog:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64,128)
+	self:SetSize(64, 128)
 
-	self.m_bg = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	self.m_bg:SetColor(Color(54,54,54))
+	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_bg:SetColor(Color(54, 54, 54))
 
-	self.m_contents = gui.create("WIVBox",self.m_bg,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
+	self.m_contents = gui.create("WIVBox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents:SetFixedSize(true)
 	self.m_contents:SetAutoFillContents(true)
 
-	self.m_teLocation = gui.create("WITextEntry",self.m_contents,0,0,self:GetWidth(),24)
-	self.m_teLocation:AddCallback("OnTextEntered",function(pEntry)
+	self.m_teLocation = gui.create("WITextEntry", self.m_contents, 0, 0, self:GetWidth(), 24)
+	self.m_teLocation:AddCallback("OnTextEntered", function(pEntry)
 		self.m_explorer:SetPath(pEntry:GetText())
 		self.m_explorer:Update()
 	end)
 	self.m_teLocation:Wrap("WIEditableEntry"):SetText(locale.get_text("explorer_location"))
 
-	local scrollContainer = gui.create("WIScrollContainer",self.m_contents,0,0,self:GetWidth(),self:GetHeight() -48)
+	local scrollContainer =
+		gui.create("WIScrollContainer", self.m_contents, 0, 0, self:GetWidth(), self:GetHeight() - 48)
 	scrollContainer:SetContentsWidthFixed(true)
 	--[[scrollContainer:AddCallback("SetSize",function(el)
 		if(self:IsValid() and util.is_valid(self.m_explorer)) then
@@ -41,34 +42,36 @@ function gui.PFMTutorialCatalog:OnInitialize()
 		end
 	end)]]
 
-	self.m_teFilter = gui.create("WITextEntry",self.m_contents,0,0,self:GetWidth(),24)
-	self.m_teFilter:AddCallback("OnTextEntered",function(pEntry)
+	self.m_teFilter = gui.create("WITextEntry", self.m_contents, 0, 0, self:GetWidth(), 24)
+	self.m_teFilter:AddCallback("OnTextEntered", function(pEntry)
 		self.m_explorer:Refresh()
 		self.m_explorer:ListFiles()
 	end)
 	self.m_teFilter:Wrap("WIEditableEntry"):SetText(locale.get_text("filter"))
 
-	local explorer = gui.create("WITutorialExplorer",scrollContainer,0,0,self:GetWidth(),self:GetHeight())
-	explorer:SetAutoAlignToParent(true,false)
+	local explorer = gui.create("WITutorialExplorer", scrollContainer, 0, 0, self:GetWidth(), self:GetHeight())
+	explorer:SetAutoAlignToParent(true, false)
 	explorer:SetRootPath("tutorials")
-	explorer:SetExtensions({"udm"})
-	explorer:AddCallback("OnPathChanged",function(explorer,path)
+	explorer:SetExtensions({ "udm" })
+	explorer:AddCallback("OnPathChanged", function(explorer, path)
 		self.m_teLocation:SetText(path)
 	end)
 	self.m_explorer = explorer
 
 	self.m_contents:Update()
-	scrollContainer:SetAnchor(0,0,1,1)
-	self.m_teLocation:SetAnchor(0,0,1,1)
-	self.m_teFilter:SetAnchor(0,0,1,1)
+	scrollContainer:SetAnchor(0, 0, 1, 1)
+	self.m_teLocation:SetAnchor(0, 0, 1, 1)
+	self.m_teFilter:SetAnchor(0, 0, 1, 1)
 
 	self:EnableThinking()
 end
-function gui.PFMTutorialCatalog:GetExplorer() return self.m_explorer end
+function gui.PFMTutorialCatalog:GetExplorer()
+	return self.m_explorer
+end
 function gui.PFMTutorialCatalog:OnThink()
 	-- Lazy initialization
 	self.m_explorer:Update()
 
 	self:DisableThinking()
 end
-gui.register("WIPFMTutorialCatalog",gui.PFMTutorialCatalog)
+gui.register("WIPFMTutorialCatalog", gui.PFMTutorialCatalog)

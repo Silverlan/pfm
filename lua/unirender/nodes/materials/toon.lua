@@ -10,21 +10,26 @@ unirender.Node.glass_material = {
 	IN_COLOR = "color",
 	IN_ROUGHNESS = "roughness",
 	IN_IOR = "ior",
-	OUT_SHADER = "shader"
+	OUT_SHADER = "shader",
 }
-unirender.NODE_GLASS_MATERIAL = unirender.register_node("glass_material",function(desc)
+unirender.NODE_GLASS_MATERIAL = unirender.register_node("glass_material", function(desc)
 	-- This implementation is equivalent to https://docs.blender.org/manual/en/dev/render/cycles/optimizations/reducing_noise.html#render-cycles-reducing-noise-glass-and-transp-shadows
-	local inColor = desc:RegisterInput(unirender.Socket.TYPE_COLOR,unirender.Node.glass_material.IN_COLOR,Vector(0.8,0.8,0.8))
-	local inRoughness = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.glass_material.IN_ROUGHNESS,0.0)
-	local inIOR = desc:RegisterInput(unirender.Socket.TYPE_FLOAT,unirender.Node.glass_material.IN_IOR,0.3)
-	local outShader = desc:RegisterOutput(unirender.Socket.TYPE_CLOSURE,unirender.Node.glass_material.OUT_SHADER)
+	local inColor =
+		desc:RegisterInput(unirender.Socket.TYPE_COLOR, unirender.Node.glass_material.IN_COLOR, Vector(0.8, 0.8, 0.8))
+	local inRoughness = desc:RegisterInput(unirender.Socket.TYPE_FLOAT, unirender.Node.glass_material.IN_ROUGHNESS, 0.0)
+	local inIOR = desc:RegisterInput(unirender.Socket.TYPE_FLOAT, unirender.Node.glass_material.IN_IOR, 0.3)
+	local outShader = desc:RegisterOutput(unirender.Socket.TYPE_CLOSURE, unirender.Node.glass_material.OUT_SHADER)
 	desc:SetPrimaryOutputSocket(outShader)
 
 	local lp = desc:AddNode(unirender.NODE_LIGHT_PATH)
-	local min = desc:AddMathNode(unirender.Node.math.TYPE_MINIMUM,lp:GetOutputSocket(unirender.Node.light_path.OUT_IS_SHADOW_RAY),lp:GetOutputSocket(unirender.Node.light_path.OUT_IS_REFLECTION_RAY))
+	local min = desc:AddMathNode(
+		unirender.Node.math.TYPE_MINIMUM,
+		lp:GetOutputSocket(unirender.Node.light_path.OUT_IS_SHADOW_RAY),
+		lp:GetOutputSocket(unirender.Node.light_path.OUT_IS_REFLECTION_RAY)
+	)
 
 	local glass = desc:AddNode(unirender.NODE_GLASS_BSDF)
-	glass:SetProperty(unirender.Node.glass_bsdf.IN_DISTRIBUTION,unirender.Node.glass_bsdf.DISTRIBUTION_BECKMANN)
+	glass:SetProperty(unirender.Node.glass_bsdf.IN_DISTRIBUTION, unirender.Node.glass_bsdf.DISTRIBUTION_BECKMANN)
 	inColor:Link(glass:GetInputSocket(unirender.Node.glass_bsdf.IN_COLOR))
 	inRoughness:Link(glass:GetInputSocket(unirender.Node.glass_bsdf.IN_ROUGHNESS))
 	inIOR:Link(glass:GetInputSocket(unirender.Node.glass_bsdf.IN_IOR))

@@ -6,7 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.InitializerRotationRandom",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class(
+	"ents.ParticleSystemComponent.InitializerRotationRandom",
+	ents.ParticleSystemComponent.BaseInitializer
+)
 
 function ents.ParticleSystemComponent.InitializerRotationRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -25,11 +28,15 @@ function ents.ParticleSystemComponent.InitializerRotationRandom:OnParticleSystem
 end
 function ents.ParticleSystemComponent.InitializerRotationRandom:OnParticleCreated(pt)
 	--print("[Particle Initializer] On particle created")
-	local rot = self.m_rotationInitial +pt:CalcRandomFloatExp(self.m_rotationOffsetMin,self.m_rotationOffsetMax,self.m_rotationRandomExponent)
+	local rot = self.m_rotationInitial
+		+ pt:CalcRandomFloatExp(self.m_rotationOffsetMin, self.m_rotationOffsetMax, self.m_rotationRandomExponent)
 	rot = math.rad(rot)
 	pt:SetRotation(rot)
 end
 function ents.ParticleSystemComponent.InitializerRotationRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_rotation_random",ents.ParticleSystemComponent.InitializerRotationRandom)
+ents.ParticleSystemComponent.register_initializer(
+	"source_rotation_random",
+	ents.ParticleSystemComponent.InitializerRotationRandom
+)

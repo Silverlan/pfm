@@ -7,6 +7,6 @@
 ]]
 
 sfm.register_element_type("RigHandle")
-sfm.link_dmx_type("DmeRigHandle",sfm.RigHandle)
+sfm.link_dmx_type("DmeRigHandle", sfm.RigHandle)
 
-sfm.BaseElement.RegisterProperty(sfm.RigHandle,"transform",sfm.Transform)
+sfm.BaseElement.RegisterProperty(sfm.RigHandle, "transform", sfm.Transform)

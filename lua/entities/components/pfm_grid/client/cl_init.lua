@@ -8,20 +8,24 @@
 
 include("/shaders/pfm/pfm_grid_3d.lua")
 
-util.register_class("ents.PFMGrid",BaseEntityComponent)
+util.register_class("ents.PFMGrid", BaseEntityComponent)
 
-ents.PFMGrid.GRID_UNIT_SIZE = bit.lshift(1,4)
+ents.PFMGrid.GRID_UNIT_SIZE = bit.lshift(1, 4)
 ents.PFMGrid.GRID_RADIUS = 512.0
 ents.PFMGrid.set_unit_size = function(gridSize)
-	gridSize = math.clamp(gridSize,1.0,512.0)
+	gridSize = math.clamp(gridSize, 1.0, 512.0)
 	ents.PFMGrid.GRID_UNIT_SIZE = gridSize
 end
 
-ents.PFMGrid.get_unit_size = function() return ents.PFMGrid.GRID_UNIT_SIZE end
-ents.PFMGrid.get_radius = function() return ents.PFMGrid.GRID_RADIUS end
+ents.PFMGrid.get_unit_size = function()
+	return ents.PFMGrid.GRID_UNIT_SIZE
+end
+ents.PFMGrid.get_radius = function()
+	return ents.PFMGrid.GRID_RADIUS
+end
 
 ents.PFMGrid.set_radius = function(radius)
-	radius = math.clamp(radius,100.0,1000.0)
+	radius = math.clamp(radius, 100.0, 1000.0)
 	ents.PFMGrid.GRID_RADIUS = radius
 end
 
@@ -49,22 +53,28 @@ function ents.PFMGrid:Initialize()
 end
 
 function ents.PFMGrid:OnEntitySpawn()
-	self.m_cbRender = game.add_callback("Render",function()
+	self.m_cbRender = game.add_callback("Render", function()
 		self:Draw()
 	end)
 end
 
-function ents.PFMGrid:GetUp() return Vector(0,1,0) end
+function ents.PFMGrid:GetUp()
+	return Vector(0, 1, 0)
+end
 
 function ents.PFMGrid:OnRemove()
 	self.m_bReleased = true
-	if(util.is_valid(self.m_cbRender)) then self.m_cbRender:Remove() end
+	if util.is_valid(self.m_cbRender) then
+		self.m_cbRender:Remove()
+	end
 end
 
 function ents.PFMGrid:Draw()
-	if(self.m_shader == nil) then return end
+	if self.m_shader == nil then
+		return
+	end
 	local origin = self:GetEntity():GetPos()
-	
+
 	local cam = game.get_render_scene_camera()
 	local scene = game.get_render_scene()
 	local radius = ents.PFMGrid.GRID_RADIUS
@@ -72,9 +82,9 @@ function ents.PFMGrid:Draw()
 	local gridOrigin = origin:Copy()
 	gridOrigin:SnapToGrid(spacing)
 	gridOrigin.y = origin.y
-	
+
 	local m = Mat4(1.0)
 	m:Translate(gridOrigin)
-	self.m_shader:GetWrapper():Draw(game.get_draw_command_buffer(),origin,spacing,radius,scene,m)
+	self.m_shader:GetWrapper():Draw(game.get_draw_command_buffer(), origin, spacing, radius, scene, m)
 end
-ents.COMPONENT_PFM_GRID = ents.register_component("pfm_grid",ents.PFMGrid)
+ents.COMPONENT_PFM_GRID = ents.register_component("pfm_grid", ents.PFMGrid)

@@ -6,7 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.InitializerRemapScalarToVector",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class(
+	"ents.ParticleSystemComponent.InitializerRemapScalarToVector",
+	ents.ParticleSystemComponent.BaseInitializer
+)
 
 function ents.ParticleSystemComponent.InitializerRemapScalarToVector:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -37,48 +40,72 @@ function ents.ParticleSystemComponent.InitializerRemapScalarToVector:OnParticleC
 	local creationTime = pt:GetTimeCreated()
 
 	-- only use within start/end time frame and, if set, active input range
-	if(((creationTime < self.m_startTime) or (creationTime >= self.m_endTime)) and ((self.m_startTime ~= -1.0) and (self.m_endTime ~= -1.0))) then
+	if
+		((creationTime < self.m_startTime) or (creationTime >= self.m_endTime))
+		and ((self.m_startTime ~= -1.0) and (self.m_endTime ~= -1.0))
+	then
 		--
 	else
 		local input = pt:GetField(self.m_inputFieldId)
 		local vecOutput = Vector()
-		vecOutput.x = RemapValClamped(input,self.m_inputMinimum,self.m_inputMaximum,self.m_outputMinimum.x,self.m_outputMaximum.x)
-		vecOutput.y = RemapValClamped(input,self.m_inputMinimum,self.m_inputMaximum,self.m_outputMinimum.y,self.m_outputMaximum.y)
-		vecOutput.z = RemapValClamped(input,self.m_inputMinimum,self.m_inputMaximum,self.m_outputMinimum.z,self.m_outputMaximum.z)
+		vecOutput.x = RemapValClamped(
+			input,
+			self.m_inputMinimum,
+			self.m_inputMaximum,
+			self.m_outputMinimum.x,
+			self.m_outputMaximum.x
+		)
+		vecOutput.y = RemapValClamped(
+			input,
+			self.m_inputMinimum,
+			self.m_inputMaximum,
+			self.m_outputMinimum.y,
+			self.m_outputMaximum.y
+		)
+		vecOutput.z = RemapValClamped(
+			input,
+			self.m_inputMinimum,
+			self.m_inputMaximum,
+			self.m_outputMinimum.z,
+			self.m_outputMaximum.z
+		)
 
-		if(self.m_outputFieldId == ents.ParticleSystemComponent.Particle.FIELD_ID_POS) then
-			if(self.m_useLocalSystem == false) then
-				local pose = GetControlPointTransformAtTime(self,self.m_controlPointNumber,creationTime)
+		if self.m_outputFieldId == ents.ParticleSystemComponent.Particle.FIELD_ID_POS then
+			if self.m_useLocalSystem == false then
+				local pose = GetControlPointTransformAtTime(self, self.m_controlPointNumber, creationTime)
 				local vecControlPoint = pose:GetOrigin()
-				vecOutput = vecOutput +vecControlPoint
+				vecOutput = vecOutput + vecControlPoint
 				local vecOutputPrev = vecOutput:Copy()
-				if(self.m_scaleInitialRange) then
-					vecOutput = vecOutput *pt:GetField(self.m_outputFieldId)
-					vecOutputPrev = vecOutputPrev *pt:GetPreviousPosition()
+				if self.m_scaleInitialRange then
+					vecOutput = vecOutput * pt:GetField(self.m_outputFieldId)
+					vecOutputPrev = vecOutputPrev * pt:GetPreviousPosition()
 				end
-				pt:SetField(self.m_outputFieldId,Vector4(vecOutput,0))
+				pt:SetField(self.m_outputFieldId, Vector4(vecOutput, 0))
 				pt:SetPreviousPosition(vecOutputPrev)
 			else
-				local pose = GetControlPointTransformAtTime(self,self.m_controlPointNumber,creationTime)
-				local vecTransformLocal = pose *vecOutput
+				local pose = GetControlPointTransformAtTime(self, self.m_controlPointNumber, creationTime)
+				local vecTransformLocal = pose * vecOutput
 				vecOutput = vecTransformLocal:Copy()
 				local vecOutputPrev = vecOutput:Copy()
-				if(self.m_scaleInitialRange) then
-					vecOutput = vecOutput *pt:GetField(self.m_outputFieldId)
-					vecOutputPrev = vecOutputPrev *pt:GetPreviousPosition()
+				if self.m_scaleInitialRange then
+					vecOutput = vecOutput * pt:GetField(self.m_outputFieldId)
+					vecOutputPrev = vecOutputPrev * pt:GetPreviousPosition()
 				end
-				pt:SetField(self.m_outputFieldId,Vector4(vecOutput,0))
+				pt:SetField(self.m_outputFieldId, Vector4(vecOutput, 0))
 				pt:SetPreviousPosition(vecOutputPrev)
 			end
 		else
-			if(self.m_scaleInitialRange) then
-				vecOutput = vecOutput *pt:GetField(self.m_outputFieldId)
+			if self.m_scaleInitialRange then
+				vecOutput = vecOutput * pt:GetField(self.m_outputFieldId)
 			end
-			pt:SetField(self.m_outputFieldId,Vector4(vecOutput,0))
+			pt:SetField(self.m_outputFieldId, Vector4(vecOutput, 0))
 		end
 	end
 end
 function ents.ParticleSystemComponent.InitializerRemapScalarToVector:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_remap_scalar_to_vector",ents.ParticleSystemComponent.InitializerRemapScalarToVector)
+ents.ParticleSystemComponent.register_initializer(
+	"source_remap_scalar_to_vector",
+	ents.ParticleSystemComponent.InitializerRemapScalarToVector
+)

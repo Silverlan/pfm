@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.TrailLengthRandom",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class("ents.ParticleSystemComponent.TrailLengthRandom", ents.ParticleSystemComponent.BaseInitializer)
 
 function ents.ParticleSystemComponent.TrailLengthRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -24,10 +24,13 @@ function ents.ParticleSystemComponent.TrailLengthRandom:OnParticleSystemStopped(
 end
 function ents.ParticleSystemComponent.TrailLengthRandom:OnParticleCreated(pt)
 	--print("[Particle Initializer] On particle created")
-	local len = pt:CalcRandomFloatExp(self.m_lengthMin,self.m_lengthMax,self.m_lengthRandomExponent)
+	local len = pt:CalcRandomFloatExp(self.m_lengthMin, self.m_lengthMax, self.m_lengthRandomExponent)
 	pt:SetLength(len)
 end
 function ents.ParticleSystemComponent.TrailLengthRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_trail_length_random",ents.ParticleSystemComponent.TrailLengthRandom)
+ents.ParticleSystemComponent.register_initializer(
+	"source_trail_length_random",
+	ents.ParticleSystemComponent.TrailLengthRandom
+)

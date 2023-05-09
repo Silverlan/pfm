@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.OperatorOscillateScalar",ents.ParticleSystemComponent.BaseOperator)
+util.register_class("ents.ParticleSystemComponent.OperatorOscillateScalar", ents.ParticleSystemComponent.BaseOperator)
 
 --[[local function _SinEst01(val)
 	return val *(4.0 -(val *4.0))
@@ -56,42 +56,46 @@ function ents.ParticleSystemComponent.OperatorOscillateScalar:Initialize()
 
 	self.m_fieldId = ents.ParticleSystemComponent.Particle.name_to_field_id(self.m_oscillationField)
 end
-function ents.ParticleSystemComponent.OperatorOscillateScalar:Simulate(pt,dt,strength)
+function ents.ParticleSystemComponent.OperatorOscillateScalar:Simulate(pt, dt, strength)
 	local lifeDuration = pt:GetLifeSpan()
 	local age = pt:GetTimeAlive()
 	local lifeTime
-	if(self.m_startEndProportional) then
-		lifeTime = age *ReciprocalEst(lifeDuration)
+	if self.m_startEndProportional then
+		lifeTime = age * ReciprocalEst(lifeDuration)
 	else
 		lifeTime = age
 	end
-	local startTime = pt:CalcRandomFloat(self.m_startTimeMin,self.m_startTimeMax)
-	local endTime = pt:CalcRandomFloat(self.m_endTimeMin,self.m_endTimeMax)
-	if(lifeDuration > 0.0 and lifeTime >= startTime and lifeTime < endTime) then
-		local frequency = pt:CalcRandomFloat(self.m_oscillationFrequencyMin,self.m_oscillationFrequencyMax)
-		local rate = pt:CalcRandomFloat(self.m_oscillationRateMin,self.m_oscillationRateMax)
+	local startTime = pt:CalcRandomFloat(self.m_startTimeMin, self.m_startTimeMax)
+	local endTime = pt:CalcRandomFloat(self.m_endTimeMin, self.m_endTimeMax)
+	if lifeDuration > 0.0 and lifeTime >= startTime and lifeTime < endTime then
+		local frequency = pt:CalcRandomFloat(self.m_oscillationFrequencyMin, self.m_oscillationFrequencyMax)
+		local rate = pt:CalcRandomFloat(self.m_oscillationRateMin, self.m_oscillationRateMax)
 		local cos
-		if(self.m_proportional) then
-			lifeTime = age *ReciprocalEst(lifeDuration)
-			cos = ((lifeTime *frequency) *self.m_oscillationMultiplier) +self.m_oscillationStartPhase
+		if self.m_proportional then
+			lifeTime = age * ReciprocalEst(lifeDuration)
+			cos = ((lifeTime * frequency) * self.m_oscillationMultiplier) + self.m_oscillationStartPhase
 		else
-			local curTime = pt:GetTimeCreated() +age
-			local cosFactor = (self.m_oscillationMultiplier *curTime) +self.m_oscillationStartPhase
-			cos = cosFactor *frequency
+			local curTime = pt:GetTimeCreated() + age
+			local cosFactor = (self.m_oscillationMultiplier * curTime) + self.m_oscillationStartPhase
+			cos = cosFactor * frequency
 		end
-		cos = cos *math.pi
-		local scaleFactor = strength *dt *0.01 -- TODO: Factor 0.01 is arbitrary but resulted in a closer match for field 'rotation' (See particle system "Explosions_MA_Smoke_1")
-		local oscMultiplier = rate *scaleFactor
+		cos = cos * math.pi
+		local scaleFactor = strength * dt * 0.01 -- TODO: Factor 0.01 is arbitrary but resulted in a closer match for field 'rotation' (See particle system "Explosions_MA_Smoke_1")
+		local oscMultiplier = rate * scaleFactor
 
 		local curVal = pt:GetField(self.m_fieldId)
-		if(curVal ~= nil and type(curVal) == "number") then
-			if(self.m_fieldId == ents.ParticleSystemComponent.Particle.FIELD_ID_ROT) then curVal = math.rad(curVal) end
-			local oscVal = curVal +oscMultiplier *SinEst01(cos)
-			if(self.m_fieldId == ents.ParticleSystemComponent.Particle.FIELD_ID_ALPHA) then
-				oscVal = math.clamp(oscVal,0.0,1.0)
+		if curVal ~= nil and type(curVal) == "number" then
+			if self.m_fieldId == ents.ParticleSystemComponent.Particle.FIELD_ID_ROT then
+				curVal = math.rad(curVal)
 			end
-			if(self.m_fieldId == ents.ParticleSystemComponent.Particle.FIELD_ID_ROT) then oscVal = math.deg(oscVal) end
-			pt:SetField(self.m_fieldId,oscVal)
+			local oscVal = curVal + oscMultiplier * SinEst01(cos)
+			if self.m_fieldId == ents.ParticleSystemComponent.Particle.FIELD_ID_ALPHA then
+				oscVal = math.clamp(oscVal, 0.0, 1.0)
+			end
+			if self.m_fieldId == ents.ParticleSystemComponent.Particle.FIELD_ID_ROT then
+				oscVal = math.deg(oscVal)
+			end
+			pt:SetField(self.m_fieldId, oscVal)
 		end
 	end
 end
@@ -107,4 +111,7 @@ end
 function ents.ParticleSystemComponent.OperatorOscillateScalar:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_operator("source_oscillate_scalar",ents.ParticleSystemComponent.OperatorOscillateScalar)
+ents.ParticleSystemComponent.register_operator(
+	"source_oscillate_scalar",
+	ents.ParticleSystemComponent.OperatorOscillateScalar
+)

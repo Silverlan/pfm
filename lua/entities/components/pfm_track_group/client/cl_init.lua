@@ -8,7 +8,7 @@
 
 include_component("pfm_track")
 
-util.register_class("ents.PFMTrackGroup",BaseEntityComponent)
+util.register_class("ents.PFMTrackGroup", BaseEntityComponent)
 
 function ents.PFMTrackGroup:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -27,35 +27,45 @@ function ents.PFMTrackGroup:OnTurnOff()
 end]]
 
 function ents.PFMTrackGroup:OnRemove()
-	for _,track in ipairs(self.m_tracks) do
-		if(track:IsValid()) then track:Remove() end
+	for _, track in ipairs(self.m_tracks) do
+		if track:IsValid() then
+			track:Remove()
+		end
 	end
 end
 
 function ents.PFMTrackGroup:GetProject()
 	local filmClipC = self:GetFilmClip()
-	if(util.is_valid(filmClipC) == false) then return end
+	if util.is_valid(filmClipC) == false then
+		return
+	end
 	return filmClipC:GetProject()
 end
 
-function ents.PFMTrackGroup:OnOffsetChanged(offset,gameViewFlags)
-	for _,track in ipairs(self.m_tracks) do
+function ents.PFMTrackGroup:OnOffsetChanged(offset, gameViewFlags)
+	for _, track in ipairs(self.m_tracks) do
 		local trackC = track:IsValid() and track:GetComponent(ents.COMPONENT_PFM_TRACK) or nil
-		if(trackC ~= nil) then
-			trackC:OnOffsetChanged(offset,gameViewFlags)
+		if trackC ~= nil then
+			trackC:OnOffsetChanged(offset, gameViewFlags)
 		end
 	end
 end
 
-function ents.PFMTrackGroup:GetTrackGroupData() return self.m_trackGroupData end
-function ents.PFMTrackGroup:GetFilmClip() return self.m_filmClip end
-function ents.PFMTrackGroup:GetTracks() return self.m_tracks end
+function ents.PFMTrackGroup:GetTrackGroupData()
+	return self.m_trackGroupData
+end
+function ents.PFMTrackGroup:GetFilmClip()
+	return self.m_filmClip
+end
+function ents.PFMTrackGroup:GetTracks()
+	return self.m_tracks
+end
 
-function ents.PFMTrackGroup:Setup(trackGroupData,filmClipC)
+function ents.PFMTrackGroup:Setup(trackGroupData, filmClipC)
 	self.m_trackGroupData = trackGroupData
 	self.m_filmClip = filmClipC
-	for _,track in ipairs(trackGroupData:GetTracks()) do
-		if(track:IsMuted() == false) then
+	for _, track in ipairs(trackGroupData:GetTracks()) do
+		if track:IsMuted() == false then
 			self:CreateTrack(track)
 		end
 	end
@@ -63,13 +73,15 @@ function ents.PFMTrackGroup:Setup(trackGroupData,filmClipC)
 end
 
 function ents.PFMTrackGroup:CreateTrack(trackData)
-	pfm.log("Creating track '" .. trackData:GetName() .. "'...",pfm.LOG_CATEGORY_PFM_GAME)
+	pfm.log("Creating track '" .. trackData:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
 	local ent = ents.create("pfm_track")
-	ent:GetComponent(ents.COMPONENT_PFM_TRACK):Setup(trackData,self,self:GetProject())
+	ent:GetComponent(ents.COMPONENT_PFM_TRACK):Setup(trackData, self, self:GetProject())
 	ent:Spawn()
-	table.insert(self.m_tracks,ent)
+	table.insert(self.m_tracks, ent)
 
 	local projectC = self:GetProject()
-	if(util.is_valid(projectC)) then projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED,{ent}) end
+	if util.is_valid(projectC) then
+		projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED, { ent })
+	end
 end
-ents.COMPONENT_PFM_TRACK_GROUP = ents.register_component("pfm_track_group",ents.PFMTrackGroup)
+ents.COMPONENT_PFM_TRACK_GROUP = ents.register_component("pfm_track_group", ents.PFMTrackGroup)

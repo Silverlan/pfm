@@ -10,7 +10,7 @@ include("../../time_frame.lua")
 include("../animation_set/control/channel.lua")
 
 sfm.register_element_type("ChannelClip")
-sfm.link_dmx_type("DmeChannelsClip",sfm.ChannelClip)
+sfm.link_dmx_type("DmeChannelsClip", sfm.ChannelClip)
 
-sfm.BaseElement.RegisterProperty(sfm.ChannelClip,"timeFrame",sfm.TimeFrame)
-sfm.BaseElement.RegisterArray(sfm.ChannelClip,"channels",sfm.Channel)
+sfm.BaseElement.RegisterProperty(sfm.ChannelClip, "timeFrame", sfm.TimeFrame)
+sfm.BaseElement.RegisterArray(sfm.ChannelClip, "channels", sfm.Channel)

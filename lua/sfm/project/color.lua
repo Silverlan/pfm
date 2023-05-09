@@ -7,6 +7,6 @@
 ]]
 
 sfm.register_element_type("Color")
-sfm.link_dmx_type("DmeColor",sfm.Color)
+sfm.link_dmx_type("DmeColor", sfm.Color)
 
-sfm.BaseElement.RegisterAttribute(sfm.Color,"color",Color())
+sfm.BaseElement.RegisterAttribute(sfm.Color, "color", Color())

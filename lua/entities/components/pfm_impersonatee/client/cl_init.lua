@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.PFMImpersonatee",BaseEntityComponent)
+util.register_class("ents.PFMImpersonatee", BaseEntityComponent)
 
 function ents.PFMImpersonatee:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -14,43 +14,54 @@ function ents.PFMImpersonatee:Initialize()
 	self.m_listeners = {}
 end
 function ents.PFMImpersonatee:OnRemove()
-	for _,cb in ipairs(self.m_listeners) do
-		if(cb:IsValid()) then cb:Remove() end
+	for _, cb in ipairs(self.m_listeners) do
+		if cb:IsValid() then
+			cb:Remove()
+		end
 	end
 	self:GetEntity():RemoveComponent("impersonatee")
 end
 function ents.PFMImpersonatee:ChangeModel(mdlName)
 	local ent = self:GetEntity()
-	if(#mdlName == 0) then
+	if #mdlName == 0 then
 		self:GetEntity():RemoveComponent("impersonatee")
 		return
 	end
 	local impersonateeC = self:GetEntity():AddComponent("impersonatee")
-	if(impersonateeC == nil) then return end
+	if impersonateeC == nil then
+		return
+	end
 	impersonateeC:SetImpostorModel(mdlName)
 
 	local tEnts = {}
 	local c = ent:GetComponent(ents.COMPONENT_COMPOSITE)
-	if(c ~= nil) then tEnts = c:GetEntities() end
-	table.insert(tEnts,ent)
+	if c ~= nil then
+		tEnts = c:GetEntities()
+	end
+	table.insert(tEnts, ent)
 
-	for _,ent in ipairs(tEnts) do
+	for _, ent in ipairs(tEnts) do
 		local actorC = ent:GetComponent("pfm_actor")
-		if(actorC ~= nil) then
+		if actorC ~= nil then
 			actorC:SetDefaultRenderMode((#mdlName > 0) and game.SCENE_RENDER_PASS_NONE or game.SCENE_RENDER_PASS_WORLD)
 			local impostorC = impersonateeC:GetImpostor()
-			if(util.is_valid(impostorC)) then
+			if util.is_valid(impostorC) then
 				local renderC = impostorC:GetEntity():GetComponent(ents.COMPONENT_RENDER)
-				if(renderC ~= nil) then renderC:SetExemptFromOcclusionCulling(true) end -- TODO: This shouldn't be necessary
+				if renderC ~= nil then
+					renderC:SetExemptFromOcclusionCulling(true)
+				end -- TODO: This shouldn't be necessary
 			end
 		end
 	end
 end
-function ents.PFMImpersonatee:Setup(actorData,cData)
+function ents.PFMImpersonatee:Setup(actorData, cData)
 	local ent = self:GetEntity()
-	table.insert(self.m_listeners,cData:GetModelNameAttr():AddChangeListener(function(newModel)
-		self:ChangeModel(newModel)
-	end))
+	table.insert(
+		self.m_listeners,
+		cData:GetModelNameAttr():AddChangeListener(function(newModel)
+			self:ChangeModel(newModel)
+		end)
+	)
 	self:ChangeModel(cData:GetModelName())
 end
-ents.COMPONENT_PFM_IMPERSONATEE = ents.register_component("pfm_impersonatee",ents.PFMImpersonatee)
+ents.COMPONENT_PFM_IMPERSONATEE = ents.register_component("pfm_impersonatee", ents.PFMImpersonatee)

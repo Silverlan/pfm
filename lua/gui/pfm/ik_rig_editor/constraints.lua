@@ -7,11 +7,15 @@
 ]]
 
 local Element = gui.IkRigEditor
-function Element:AddConstraint(item,boneName,type,constraint)
+function Element:AddConstraint(item, boneName, type, constraint)
 	local ent = self.m_modelView:GetEntity(1)
-	if(util.is_valid(ent) == false) then return end
+	if util.is_valid(ent) == false then
+		return
+	end
 	local mdl = ent:GetModel()
-	if(mdl == nil) then return end
+	if mdl == nil then
+		return
+	end
 	local skel = mdl:GetSkeleton()
 	local boneId = skel:LookupBone(boneName)
 	local bone = skel:GetBone(boneId)
@@ -20,12 +24,12 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	self:AddBone(parent:GetName())
 
 	local child = item:AddItem(locale.get_text("pfm_" .. string.camel_case_to_snake_case(type) .. "_constraint"))
-	child:AddCallback("OnMouseEvent",function(wrapper,button,state,mods)
-		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
+	child:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
+		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 			local pContext = gui.open_context_menu()
-			if(util.is_valid(pContext)) then
+			if util.is_valid(pContext) then
 				pContext:SetPos(input.get_cursor_pos())
-				pContext:AddItem("Remove",function()
+				pContext:AddItem("Remove", function()
 					self.m_ikRig:RemoveConstraint(constraint)
 					child:RemoveSafely()
 					item:ScheduleUpdate()
@@ -44,7 +48,7 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 	icon:SetTooltip(locale.get_text("pfm_rig_editor_visualize_constraint"))
 	local function toggle_constraint_visualization()
-		if(visualize) then
+		if visualize then
 			visualize = false
 			icon:SetMaterial("gui/pfm/icon_item_visible_off")
 			child.__visualizationEnabled = visualize
@@ -56,8 +60,8 @@ function Element:AddConstraint(item,boneName,type,constraint)
 			self:UpdateDebugVisualization()
 		end
 	end
-	icon:AddCallback("OnMouseEvent",function(icon,button,state,mods)
-		if(button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS) then
+	icon:AddCallback("OnMouseEvent", function(icon, button, state, mods)
+		if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
 			toggle_constraint_visualization()
 			return util.EVENT_REPLY_HANDLED
 		end
@@ -65,110 +69,133 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	end)
 
 	local ctrlsParent = child:AddItem("")
-	local ctrl = gui.create("WIPFMControlsMenu",ctrlsParent,0,0,ctrlsParent:GetWidth(),ctrlsParent:GetHeight())
-	ctrl:SetAutoAlignToParent(true,false)
+	local ctrl = gui.create("WIPFMControlsMenu", ctrlsParent, 0, 0, ctrlsParent:GetWidth(), ctrlsParent:GetHeight())
+	ctrl:SetAutoAlignToParent(true, false)
 	ctrl:SetAutoFillContentsToHeight(false)
 
 	local singleAxis
-	local minLimits,maxLimits
+	local minLimits, maxLimits
 	local useUnidirectionalSpan = false
 	local includeUnidirectionalLimit = false
 	local twistAxis = math.AXIS_Z
-	if(type == "ballSocket") then
-		twistAxis = ents.IkSolverComponent.find_forward_axis(mdl,boneId) or twistAxis
+	if type == "ballSocket" then
+		twistAxis = ents.IkSolverComponent.find_forward_axis(mdl, boneId) or twistAxis
 	end
-	local function add_rotation_axis_slider(ctrl,name,id,axisId,min,defVal)
-		return ctrl:AddSliderControl(locale.get_text(name),id,defVal,-180.0,180.0,function(el,value)
+	local function add_rotation_axis_slider(ctrl, name, id, axisId, min, defVal)
+		return ctrl:AddSliderControl(locale.get_text(name), id, defVal, -180.0, 180.0, function(el, value)
 			local animatedC = ent:GetComponent(ents.COMPONENT_ANIMATED)
-			if(animatedC ~= nil) then
+			if animatedC ~= nil then
 				local ref = mdl:GetReferencePose()
-				local pose = ref:GetBonePose(parent:GetID()):GetInverse() *ref:GetBonePose(boneId)
+				local pose = ref:GetBonePose(parent:GetID()):GetInverse() * ref:GetBonePose(boneId)
 				local rot = pose:GetRotation()
 				local tAxisId = singleAxis or axisId
 				local localRot = EulerAngles()
-				localRot:Set(tAxisId,value)
-				if(useUnidirectionalSpan) then
-					if(includeUnidirectionalLimit) then
-						if(min) then localRot = minLimits
-						else localRot = maxLimits end
+				localRot:Set(tAxisId, value)
+				if useUnidirectionalSpan then
+					if includeUnidirectionalLimit then
+						if min then
+							localRot = minLimits
+						else
+							localRot = maxLimits
+						end
 					else
-						localRot = (minLimits +maxLimits) *0.5
+						localRot = (minLimits + maxLimits) * 0.5
 					end
 				end
 
-				if(twistAxis == math.AXIS_X) then
-					localRot = EulerAngles(localRot.y,localRot.r,localRot.p)
-				elseif(twistAxis == math.AXIS_Y) then
-					localRot = EulerAngles(localRot.r,localRot.p,localRot.y)
-				elseif(twistAxis == math.AXIS_Z) then
-					
+				if twistAxis == math.AXIS_X then
+					localRot = EulerAngles(localRot.y, localRot.r, localRot.p)
+				elseif twistAxis == math.AXIS_Y then
+					localRot = EulerAngles(localRot.r, localRot.p, localRot.y)
+				elseif twistAxis == math.AXIS_Z then
 				end
 				localRot = localRot:ToQuaternion()
 
-				rot = rot *localRot
+				rot = rot * localRot
 				pose:SetRotation(rot)
 				-- ent:RemoveComponent(ents.COMPONENT_IK_SOLVER)
 				-- ent:RemoveComponent(ents.COMPONENT_PFM_FBIK)
 
 				util.remove(self.m_cbOnAnimsUpdated)
-				self.m_cbOnAnimsUpdated = ent:GetComponent(ents.COMPONENT_ANIMATED):AddEventCallback(ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED,function()
-					animatedC:SetBonePose(boneId,pose)
-				end)
+				self.m_cbOnAnimsUpdated = ent:GetComponent(ents.COMPONENT_ANIMATED):AddEventCallback(
+					ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED,
+					function()
+						animatedC:SetBonePose(boneId, pose)
+					end
+				)
 
 				self.m_mdlView:Render()
 
-				if(min) then minLimits:Set(singleAxis and 0 or tAxisId,value)
-				else maxLimits:Set(singleAxis and 0 or tAxisId,value) end
+				if min then
+					minLimits:Set(singleAxis and 0 or tAxisId, value)
+				else
+					maxLimits:Set(singleAxis and 0 or tAxisId, value)
+				end
 				constraint.minLimits = minLimits
 				constraint.maxLimits = maxLimits
 
 				self:UpdateDebugVisualization()
 			end
-		end,1.0)
+		end, 1.0)
 	end
 
 	local getDefaultLimits = function()
-		local limits = EulerAngles(45,45,45)
+		local limits = EulerAngles(45, 45, 45)
 		-- Set the rotation around the twist axis to -1/1
-		if(twistAxis == math.AXIS_X) then
+		if twistAxis == math.AXIS_X then
 			limits.y = 1
-		elseif(twistAxis == math.AXIS_Y) then
+		elseif twistAxis == math.AXIS_Y then
 			limits.p = 1
 		else
 			limits.r = 1
 		end
 		return limits
 	end
-	if(constraint == nil) then
-		pfm.log("Adding " .. type .. " constraint from bone '" .. parent:GetName() .. "' to '" .. bone:GetName() .. "' of actor with model '" .. mdl:GetName() .. "'...",pfm.LOG_CATEGORY_PFM)
-		if(type == "fixed") then constraint = self.m_ikRig:AddFixedConstraint(parent:GetName(),bone:GetName())
-		elseif(type == "hinge") then constraint = self.m_ikRig:AddHingeConstraint(parent:GetName(),bone:GetName(),-45.0,45.0,Quaternion())
-		elseif(type == "ballSocket") then
+	if constraint == nil then
+		pfm.log(
+			"Adding "
+				.. type
+				.. " constraint from bone '"
+				.. parent:GetName()
+				.. "' to '"
+				.. bone:GetName()
+				.. "' of actor with model '"
+				.. mdl:GetName()
+				.. "'...",
+			pfm.LOG_CATEGORY_PFM
+		)
+		if type == "fixed" then
+			constraint = self.m_ikRig:AddFixedConstraint(parent:GetName(), bone:GetName())
+		elseif type == "hinge" then
+			constraint = self.m_ikRig:AddHingeConstraint(parent:GetName(), bone:GetName(), -45.0, 45.0, Quaternion())
+		elseif type == "ballSocket" then
 			local limits = getDefaultLimits()
-			constraint = self.m_ikRig:AddBallSocketConstraint(parent:GetName(),bone:GetName(),-limits,limits)
+			constraint = self.m_ikRig:AddBallSocketConstraint(parent:GetName(), bone:GetName(), -limits, limits)
 		end
 	end
 	minLimits = constraint.minLimits
 	maxLimits = constraint.maxLimits
 
-	local function add_rotation_axis(ctrl,name,axisId,defMin,defMax)
-		local minSlider = add_rotation_axis_slider(ctrl,"pfm_ik_rot_" .. name .. "_min",name .. " min",axisId,true,defMin)
-		local maxSlider = add_rotation_axis_slider(ctrl,"pfm_ik_rot_" .. name .. "_max",name .. " max",axisId,false,defMax)
-		return minSlider,maxSlider
+	local function add_rotation_axis(ctrl, name, axisId, defMin, defMax)
+		local minSlider =
+			add_rotation_axis_slider(ctrl, "pfm_ik_rot_" .. name .. "_min", name .. " min", axisId, true, defMin)
+		local maxSlider =
+			add_rotation_axis_slider(ctrl, "pfm_ik_rot_" .. name .. "_max", name .. " max", axisId, false, defMax)
+		return minSlider, maxSlider
 	end
-	if(type == "ballSocket") then
-		local minP,maxP
-		local minY,maxY
-		local minR,maxR
+	if type == "ballSocket" then
+		local minP, maxP
+		local minY, maxY
+		local minR, maxR
 
 		local axes
 		local function update_axes()
-			if(twistAxis == math.AXIS_X) then
-				axes = {math.AXIS_X,math.AXIS_Z,math.AXIS_Y}
-			elseif(twistAxis == math.AXIS_Y) then
-				axes = {math.AXIS_Z,math.AXIS_Y,math.AXIS_X}
+			if twistAxis == math.AXIS_X then
+				axes = { math.AXIS_X, math.AXIS_Z, math.AXIS_Y }
+			elseif twistAxis == math.AXIS_Y then
+				axes = { math.AXIS_Z, math.AXIS_Y, math.AXIS_X }
 			else
-				axes = {math.AXIS_X,math.AXIS_Y,math.AXIS_Z}
+				axes = { math.AXIS_X, math.AXIS_Y, math.AXIS_Z }
 			end
 			local limits = getDefaultLimits()
 			minP:SetValue(-limits.p)
@@ -179,17 +206,23 @@ function Element:AddConstraint(item,boneName,type,constraint)
 			maxR:SetValue(limits.r)
 		end
 
-		ctrl:AddDropDownMenu(locale.get_text("pfm_ik_twist_axis"),"twist_axis",{
-			{tostring(math.AXIS_X),"X"},
-			{tostring(math.AXIS_Y),"Y"},
-			{tostring(math.AXIS_Z),"Z"}
-		},twistAxis,function(el,option)
-			local axis = el:GetOptionValue(el:GetSelectedOption())
-			twistAxis = tonumber(axis)
-			constraint.axis = twistAxis
-			update_axes()
-			self:UpdateDebugVisualization()
-		end)
+		ctrl:AddDropDownMenu(
+			locale.get_text("pfm_ik_twist_axis"),
+			"twist_axis",
+			{
+				{ tostring(math.AXIS_X), "X" },
+				{ tostring(math.AXIS_Y), "Y" },
+				{ tostring(math.AXIS_Z), "Z" },
+			},
+			twistAxis,
+			function(el, option)
+				local axis = el:GetOptionValue(el:GetSelectedOption())
+				twistAxis = tonumber(axis)
+				constraint.axis = twistAxis
+				update_axes()
+				self:UpdateDebugVisualization()
+			end
+		)
 
 		local subSeparate
 		--[[local subUnidirectional
@@ -205,22 +238,22 @@ function Element:AddConstraint(item,boneName,type,constraint)
 		subSeparate = ctrl:AddSubMenu()
 		--subUnidirectional = ctrl:AddSubMenu()
 
-		minP,maxP = add_rotation_axis(subSeparate,"pitch",0,minLimits.p,maxLimits.p)
-		minY,maxY = add_rotation_axis(subSeparate,"yaw",1,minLimits.y,maxLimits.y)
-		minR,maxR = add_rotation_axis(subSeparate,"roll",2,minLimits.r,maxLimits.r)
+		minP, maxP = add_rotation_axis(subSeparate, "pitch", 0, minLimits.p, maxLimits.p)
+		minY, maxY = add_rotation_axis(subSeparate, "yaw", 1, minLimits.y, maxLimits.y)
+		minR, maxR = add_rotation_axis(subSeparate, "roll", 2, minLimits.r, maxLimits.r)
 		local pairs = {
-			{minP,maxP},
-			{minY,maxY},
-			{minR,maxR}
+			{ minP, maxP },
+			{ minY, maxY },
+			{ minR, maxR },
 		}
-		for _,p in ipairs(pairs) do
-			p[1]:AddCallback("OnLeftValueChanged",function()
-				if(input.is_shift_key_down()) then
+		for _, p in ipairs(pairs) do
+			p[1]:AddCallback("OnLeftValueChanged", function()
+				if input.is_shift_key_down() then
 					p[2]:SetValue(-p[1]:GetValue())
 				end
 			end)
-			p[2]:AddCallback("OnLeftValueChanged",function()
-				if(input.is_shift_key_down()) then
+			p[2]:AddCallback("OnLeftValueChanged", function()
+				if input.is_shift_key_down() then
 					p[1]:SetValue(-p[2]:GetValue())
 				end
 			end)
@@ -285,18 +318,24 @@ function Element:AddConstraint(item,boneName,type,constraint)
 		subUnidirectional:SizeToContents()]]
 		subSeparate:Update()
 		subSeparate:SizeToContents()
-	elseif(type == "hinge") then
+	elseif type == "hinge" then
 		singleAxis = 0
-		ctrl:AddDropDownMenu(locale.get_text("pfm_ik_axis"),"axis",{
-			{"x","X"},
-			{"y","Y"},
-			{"z","Z"}
-		},0,function(el,option)
-			singleAxis = el:GetSelectedOption()
-			constraint.axis = singleAxis
-			self:UpdateDebugVisualization()
-		end)
-		add_rotation_axis(ctrl,"angle",nil,minLimits.p,maxLimits.p)
+		ctrl:AddDropDownMenu(
+			locale.get_text("pfm_ik_axis"),
+			"axis",
+			{
+				{ "x", "X" },
+				{ "y", "Y" },
+				{ "z", "Z" },
+			},
+			0,
+			function(el, option)
+				singleAxis = el:GetSelectedOption()
+				constraint.axis = singleAxis
+				self:UpdateDebugVisualization()
+			end
+		)
+		add_rotation_axis(ctrl, "angle", nil, minLimits.p, maxLimits.p)
 	end
 	ctrl:ResetControls()
 	ctrl:Update()
@@ -308,12 +347,12 @@ function Element:AddConstraint(item,boneName,type,constraint)
 	child:ExpandAll()
 	return constraint
 end
-function Element:AddBallSocketConstraint(item,boneName,c)
-	return self:AddConstraint(item,boneName,"ballSocket",c)
+function Element:AddBallSocketConstraint(item, boneName, c)
+	return self:AddConstraint(item, boneName, "ballSocket", c)
 end
-function Element:AddHingeConstraint(item,boneName,c)
-	return self:AddConstraint(item,boneName,"hinge",c)
+function Element:AddHingeConstraint(item, boneName, c)
+	return self:AddConstraint(item, boneName, "hinge", c)
 end
-function Element:AddFixedConstraint(item,boneName,c)
-	return self:AddConstraint(item,boneName,"fixed",c)
+function Element:AddFixedConstraint(item, boneName, c)
+	return self:AddConstraint(item, boneName, "fixed", c)
 end

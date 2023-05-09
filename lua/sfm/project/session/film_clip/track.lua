@@ -7,15 +7,15 @@
 ]]
 
 sfm.register_element_type("Track")
-sfm.link_dmx_type("DmeTrack",sfm.Track)
+sfm.link_dmx_type("DmeTrack", sfm.Track)
 
 include("track")
 include("scene")
 
-sfm.BaseElement.RegisterAttribute(sfm.Track,"mute",false,{
-	getterName = "IsMuted"
+sfm.BaseElement.RegisterAttribute(sfm.Track, "mute", false, {
+	getterName = "IsMuted",
 })
-sfm.BaseElement.RegisterAttribute(sfm.Track,"volume",1.0)
+sfm.BaseElement.RegisterAttribute(sfm.Track, "volume", 1.0)
 
 function sfm.Track:Initialize()
 	self.m_channelClips = {}
@@ -25,26 +25,42 @@ function sfm.Track:Initialize()
 end
 
 function sfm.Track:Load(el)
-	sfm.BaseElement.Load(self,el)
-	
-	for _,attrClip in ipairs(el:GetAttrV("children") or {}) do
+	sfm.BaseElement.Load(self, el)
+
+	for _, attrClip in ipairs(el:GetAttrV("children") or {}) do
 		local elClip = attrClip:GetValue()
 		local type = elClip:GetType()
-		if(type == "DmeSoundClip") then
-			table.insert(self.m_soundClips,self:LoadArrayValue(attrClip,sfm.SoundClip))
-		elseif(type == "DmeChannelsClip") then
-			table.insert(self.m_channelClips,self:LoadArrayValue(attrClip,sfm.ChannelClip))
-		elseif(type == "DmeFilmClip") then
-			table.insert(self.m_filmClips,self:LoadArrayValue(attrClip,sfm.FilmClip))
-		elseif(type == "DmeMaterialOverlayFXClip") then
-			table.insert(self.m_overlayClips,self:LoadArrayValue(attrClip,sfm.MaterialOverlayFXClip))
+		if type == "DmeSoundClip" then
+			table.insert(self.m_soundClips, self:LoadArrayValue(attrClip, sfm.SoundClip))
+		elseif type == "DmeChannelsClip" then
+			table.insert(self.m_channelClips, self:LoadArrayValue(attrClip, sfm.ChannelClip))
+		elseif type == "DmeFilmClip" then
+			table.insert(self.m_filmClips, self:LoadArrayValue(attrClip, sfm.FilmClip))
+		elseif type == "DmeMaterialOverlayFXClip" then
+			table.insert(self.m_overlayClips, self:LoadArrayValue(attrClip, sfm.MaterialOverlayFXClip))
 		else
-			pfm.log("Unsupported track child type '" .. type .. "' for track '" .. self:GetName() .. "'! Child will be ignored!",pfm.LOG_CATEGORY_SFM,pfm.LOG_SEVERITY_WARNING)
+			pfm.log(
+				"Unsupported track child type '"
+					.. type
+					.. "' for track '"
+					.. self:GetName()
+					.. "'! Child will be ignored!",
+				pfm.LOG_CATEGORY_SFM,
+				pfm.LOG_SEVERITY_WARNING
+			)
 		end
 	end
 end
 
-function sfm.Track:GetChannelClips() return self.m_channelClips end
-function sfm.Track:GetSoundClips() return self.m_soundClips end
-function sfm.Track:GetFilmClips() return self.m_filmClips end
-function sfm.Track:GetOverlayClips() return self.m_overlayClips end
+function sfm.Track:GetChannelClips()
+	return self.m_channelClips
+end
+function sfm.Track:GetSoundClips()
+	return self.m_soundClips
+end
+function sfm.Track:GetFilmClips()
+	return self.m_filmClips
+end
+function sfm.Track:GetOverlayClips()
+	return self.m_overlayClips
+end

@@ -6,13 +6,12 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.UnirenderComponent",BaseEntityComponent)
+util.register_class("ents.UnirenderComponent", BaseEntityComponent)
 
 local Component = ents.UnirenderComponent
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 end
-function Component:OnRemove()
-end
-ents.COMPONENT_UNIRENDER = ents.register_component("unirender",Component)
-Component.EVENT_INITIALIZE_SCENE = ents.register_component_event(ents.COMPONENT_UNIRENDER,"initialize_scene")
+function Component:OnRemove() end
+ents.COMPONENT_UNIRENDER = ents.register_component("unirender", Component)
+Component.EVENT_INITIALIZE_SCENE = ents.register_component_event(ents.COMPONENT_UNIRENDER, "initialize_scene")

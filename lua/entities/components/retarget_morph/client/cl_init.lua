@@ -8,72 +8,80 @@
 
 include_component("retarget_rig")
 
-util.register_class("ents.RetargetMorph",BaseEntityComponent)
+util.register_class("ents.RetargetMorph", BaseEntityComponent)
 local Component = ents.RetargetMorph
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
-	self:BindEvent(ents.FlexComponent.EVENT_ON_FLEX_CONTROLLERS_UPDATED,"ApplyFlexControllers")
+	self:BindEvent(ents.FlexComponent.EVENT_ON_FLEX_CONTROLLERS_UPDATED, "ApplyFlexControllers")
 end
 
-function Component:SetRig(rig,flexC)
+function Component:SetRig(rig, flexC)
 	self.m_rig = rig
 	self.m_flexC = flexC
 end
 
-function Component:GetRig() return self.m_rig end
+function Component:GetRig()
+	return self.m_rig
+end
 
 function Component:Unrig()
 	self.m_rig = nil
 	self.m_flexC = nil
 end
 
-function Component:RigToActor(actor,mdlSrc,mdlDst)
+function Component:RigToActor(actor, mdlSrc, mdlDst)
 	self:Unrig()
 	mdlDst = mdlDst or self:GetEntity():GetModel()
 	mdlSrc = mdlSrc or actor:GetModel()
 	local flexC = actor:GetComponent(ents.COMPONENT_FLEX)
-	if(flexC == nil) then
+	if flexC == nil then
 		console.print_warning("Unable to apply retarget morph: Actor " .. tostring(actor) .. " has no flex component!")
 		return
 	end
-	if(mdlSrc == nil or mdlDst == nil or flexC == nil) then return end
-	local rig = ents.RetargetRig.Rig.load(mdlSrc,mdlDst)
-	if(rig == false) then
+	if mdlSrc == nil or mdlDst == nil or flexC == nil then
+		return
+	end
+	local rig = ents.RetargetRig.Rig.load(mdlSrc, mdlDst)
+	if rig == false then
 		console.print_warning("Unable to apply retarget morph: No rig found!")
 		return
 	end
-	self:SetRig(rig,flexC)
+	self:SetRig(rig, flexC)
 end
 
 function Component:ApplyFlexControllers()
 	local flexCDst = self:GetEntity():GetComponent(ents.COMPONENT_FLEX)
 	local flexCSrc = self.m_flexC
-	if(util.is_valid(flexCSrc) == false or flexCDst == nil) then return end
+	if util.is_valid(flexCSrc) == false or flexCDst == nil then
+		return
+	end
 	local rig = self:GetRig()
-	if(rig == nil) then return end
+	if rig == nil then
+		return
+	end
 	local translationTable = rig:GetFlexControllerTranslationTable()
 
 	local enableCppAcceleration = true
-	if(enableCppAcceleration) then
+	if enableCppAcceleration then
 		-- Same algorithm as the Lua variant, but significantly faster (since the garbage collector will not get overloaded)
 		self.m_cppCacheData = self.m_cppCacheData or util.retarget.initialize_retarget_flex_data(translationTable)
-		util.retarget.apply_retarget_flex(self.m_cppCacheData,flexCSrc,flexCDst)
+		util.retarget.apply_retarget_flex(self.m_cppCacheData, flexCSrc, flexCDst)
 		return util.EVENT_REPLY_HANDLED
 	end
 
 	local accTable = {}
-	for flexCIdSrc,mappings in pairs(translationTable) do
+	for flexCIdSrc, mappings in pairs(translationTable) do
 		local val = flexCSrc:GetFlexController(flexCIdSrc)
-		for flexCIdDst,data in pairs(mappings) do
-			local srcVal = math.clamp(val,data.min_source,data.max_source)
-			local f = srcVal /(data.max_source -data.min_source)
-			local dstVal = data.min_target +f *(data.max_target -data.min_target)
-			dstVal = dstVal +(accTable[flexCIdDst] or 0.0)
-			flexCDst:SetFlexController(flexCIdDst,dstVal,0.0,false)
+		for flexCIdDst, data in pairs(mappings) do
+			local srcVal = math.clamp(val, data.min_source, data.max_source)
+			local f = srcVal / (data.max_source - data.min_source)
+			local dstVal = data.min_target + f * (data.max_target - data.min_target)
+			dstVal = dstVal + (accTable[flexCIdDst] or 0.0)
+			flexCDst:SetFlexController(flexCIdDst, dstVal, 0.0, false)
 			accTable[flexCIdDst] = dstVal
 		end
 	end
 end
-ents.COMPONENT_RETARGET_MORPH = ents.register_component("retarget_morph",Component)
+ents.COMPONENT_RETARGET_MORPH = ents.register_component("retarget_morph", Component)

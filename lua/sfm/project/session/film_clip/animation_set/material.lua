@@ -7,7 +7,7 @@
 ]]
 
 sfm.register_element_type("Material")
-sfm.link_dmx_type("DmeMaterial",sfm.Material)
+sfm.link_dmx_type("DmeMaterial", sfm.Material)
 
-sfm.BaseElement.RegisterAttribute(sfm.Material,"mtlName","")
-sfm.BaseElement.RegisterAttribute(sfm.Material,"$basetexture","")
+sfm.BaseElement.RegisterAttribute(sfm.Material, "mtlName", "")
+sfm.BaseElement.RegisterAttribute(sfm.Material, "$basetexture", "")

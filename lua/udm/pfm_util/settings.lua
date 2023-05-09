@@ -6,7 +6,15 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function pfm.udm.Settings:GetPlayheadFrameOffset() return self:TimeOffsetToFrameOffset(self:GetPlayheadOffset()) end
-function pfm.udm.Settings:GetFrameRate() return self:GetRenderSettings():GetFrameRate() end
-function pfm.udm.Settings:TimeOffsetToFrameOffset(offset) return offset *self:GetFrameRate() end
-function pfm.udm.Settings:FrameOffsetToTimeOffset(offset) return offset /self:GetFrameRate() end
+function pfm.udm.Settings:GetPlayheadFrameOffset()
+	return self:TimeOffsetToFrameOffset(self:GetPlayheadOffset())
+end
+function pfm.udm.Settings:GetFrameRate()
+	return self:GetRenderSettings():GetFrameRate()
+end
+function pfm.udm.Settings:TimeOffsetToFrameOffset(offset)
+	return offset * self:GetFrameRate()
+end
+function pfm.udm.Settings:FrameOffsetToTimeOffset(offset)
+	return offset / self:GetFrameRate()
+end

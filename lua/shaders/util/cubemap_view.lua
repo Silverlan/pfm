@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("shader.CubemapView",shader.BaseGraphics)
+util.register_class("shader.CubemapView", shader.BaseGraphics)
 
 shader.CubemapView.FragmentShader = "util/fs_cubemap_view"
 shader.CubemapView.VertexShader = "util/vs_cubemap_view"
@@ -16,28 +16,30 @@ shader.CubemapView.TEXTURE_BINDING_TEXTURE = 0
 
 local PUSH_CONSTANT_SIZE = util.SIZEOF_MAT4
 
-function shader.CubemapView:InitializePipeline(pipelineInfo,pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX),{
+function shader.CubemapView:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
+	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
-		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT) -- UV
+		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- UV
 	})
 
-	pipelineInfo:AttachPushConstantRange(0,PUSH_CONSTANT_SIZE,prosper.SHADER_STAGE_VERTEX_BIT)
+	pipelineInfo:AttachPushConstantRange(0, PUSH_CONSTANT_SIZE, prosper.SHADER_STAGE_VERTEX_BIT)
 
 	pipelineInfo:AttachDescriptorSetInfo(shader.DescriptorSetInfo({
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,prosper.SHADER_STAGE_FRAGMENT_BIT)
+		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, prosper.SHADER_STAGE_FRAGMENT_BIT),
 	}))
-	
+
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_FILL)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 	pipelineInfo:SetDepthTestEnabled(false)
 	pipelineInfo:SetDepthWritesEnabled(false)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
-function shader.CubemapView:Record(drawCmd,ds,vp,vertexBuffer,vertexCount,lineWidth,xRange,yRange,color)
+function shader.CubemapView:Record(drawCmd, ds, vp, vertexBuffer, vertexCount, lineWidth, xRange, yRange, color)
 	local baseShader = self:GetShader()
-	if(baseShader:IsValid() == false) then return false end
+	if baseShader:IsValid() == false then
+		return false
+	end
 
 	local dsPushConstants = util.DataStream(PUSH_CONSTANT_SIZE)
 	dsPushConstants:Seek(0)
@@ -45,13 +47,13 @@ function shader.CubemapView:Record(drawCmd,ds,vp,vertexBuffer,vertexCount,lineWi
 
 	local DynArg = prosper.PreparedCommandBuffer.DynArg
 	local bindState = shader.BindState(drawCmd)
-	if(baseShader:RecordBeginDraw(bindState)) then
-		baseShader:RecordBindDescriptorSet(bindState,ds,0)
-		baseShader:RecordBindVertexBuffers(bindState,{vertexBuffer})
-		baseShader:RecordPushConstants(bindState,dsPushConstants)
-		baseShader:RecordDraw(bindState,vertexCount)
+	if baseShader:RecordBeginDraw(bindState) then
+		baseShader:RecordBindDescriptorSet(bindState, ds, 0)
+		baseShader:RecordBindVertexBuffers(bindState, { vertexBuffer })
+		baseShader:RecordPushConstants(bindState, dsPushConstants)
+		baseShader:RecordDraw(bindState, vertexCount)
 		baseShader:RecordEndDraw(bindState)
 	end
 	return true
 end
-shader.register("cubemap_view",shader.CubemapView)
+shader.register("cubemap_view", shader.CubemapView)

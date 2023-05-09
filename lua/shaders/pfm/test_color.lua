@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("shader.TestColor",shader.BaseGraphics)
+util.register_class("shader.TestColor", shader.BaseGraphics)
 
 shader.TestColor.FragmentShader = "test/fs_test_color"
 shader.TestColor.VertexShader = "screen/vs_screen"
@@ -18,29 +18,35 @@ function shader.TestColor:__init()
 
 	self.m_dsPushConstants = util.DataStream(util.SIZEOF_VECTOR4)
 end
-function shader.TestColor:InitializePipeline(pipelineInfo,pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self,pipelineInfo,pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX),{
-		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT) -- Position
+function shader.TestColor:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
+	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 	})
-	pipelineInfo:AttachPushConstantRange(0,self.m_dsPushConstants:GetSize(),bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT))
+	pipelineInfo:AttachPushConstantRange(
+		0,
+		self.m_dsPushConstants:GetSize(),
+		bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT)
+	)
 
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_FILL)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
-function shader.TestColor:Draw(drawCmd,color)
+function shader.TestColor:Draw(drawCmd, color)
 	local bindState = shader.BindState(drawCmd)
 	local baseShader = self:GetShader()
-	if(baseShader:IsValid() == false or baseShader:RecordBeginDraw(bindState) == false) then return end
-	local buf,numVerts = prosper.util.get_square_vertex_buffer()
-	baseShader:RecordBindVertexBuffers(bindState,{buf})
+	if baseShader:IsValid() == false or baseShader:RecordBeginDraw(bindState) == false then
+		return
+	end
+	local buf, numVerts = prosper.util.get_square_vertex_buffer()
+	baseShader:RecordBindVertexBuffers(bindState, { buf })
 
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteVector4((color or Color.Red):ToVector4())
-	baseShader:RecordPushConstants(bindState,self.m_dsPushConstants)
+	baseShader:RecordPushConstants(bindState, self.m_dsPushConstants)
 
-	baseShader:RecordDraw(bindState,prosper.util.get_square_vertex_count())
+	baseShader:RecordDraw(bindState, prosper.util.get_square_vertex_count())
 	baseShader:RecordEndDraw(bindState)
 end
-shader.register("test_color",shader.TestColor)
+shader.register("test_color", shader.TestColor)

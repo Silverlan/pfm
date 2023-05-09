@@ -6,4 +6,4 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-ents.register("unirender",{"unirender"},Entity.TYPE_LOCAL)
+ents.register("unirender", { "unirender" }, Entity.TYPE_LOCAL)

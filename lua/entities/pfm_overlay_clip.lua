@@ -6,4 +6,4 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-ents.register("pfm_overlay_clip",{"pfm_overlay_clip"},Entity.TYPE_SHARED)
+ents.register("pfm_overlay_clip", { "pfm_overlay_clip" }, Entity.TYPE_SHARED)

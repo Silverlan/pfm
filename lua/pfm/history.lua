@@ -8,7 +8,7 @@
 
 pfm = pfm or {}
 
-util.register_class("pfm.History",util.CallbackHandler)
+util.register_class("pfm.History", util.CallbackHandler)
 function pfm.History:__init()
 	util.CallbackHandler.__init(self)
 	self:Clear()
@@ -23,35 +23,41 @@ function pfm.History:Get(index)
 end
 
 function pfm.History:Add(item)
-	while(#self > self.m_currentPosition) do
-		table.remove(self.m_history,#self)
+	while #self > self.m_currentPosition do
+		table.remove(self.m_history, #self)
 	end
-	table.insert(self.m_history,item)
-	self:CallCallbacks("OnItemAdded",item,#self)
+	table.insert(self.m_history, item)
+	self:CallCallbacks("OnItemAdded", item, #self)
 	self:SetCurrentPosition(#self)
 end
 
 function pfm.History:SetCurrentPosition(index)
-	index = math.clamp(index,1,#self)
+	index = math.clamp(index, 1, #self)
 	self.m_currentPosition = index
 	local item = self:Get()
-	self:CallCallbacks("OnPositionChanged",item,index)
+	self:CallCallbacks("OnPositionChanged", item, index)
 	return item
 end
 
 function pfm.History:GoBack()
-	if(self.m_currentPosition <= 1) then return end
-	self:SetCurrentPosition(self:GetCurrentPosition() -1)
+	if self.m_currentPosition <= 1 then
+		return
+	end
+	self:SetCurrentPosition(self:GetCurrentPosition() - 1)
 	return self:Get()
 end
 
 function pfm.History:GoForward()
-	if(self.m_currentPosition >= #self.m_history) then return end
-	self:SetCurrentPosition(self:GetCurrentPosition() +1)
+	if self.m_currentPosition >= #self.m_history then
+		return
+	end
+	self:SetCurrentPosition(self:GetCurrentPosition() + 1)
 	return self:Get()
 end
 
-function pfm.History:GetCurrentPosition() return self.m_currentPosition end
+function pfm.History:GetCurrentPosition()
+	return self.m_currentPosition
+end
 
 function pfm.History:Clear()
 	self.m_history = {}

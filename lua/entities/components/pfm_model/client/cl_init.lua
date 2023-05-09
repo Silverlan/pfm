@@ -6,18 +6,18 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Component = util.register_class("ents.PFMModel",BaseEntityComponent)
+local Component = util.register_class("ents.PFMModel", BaseEntityComponent)
 
-Component:RegisterMember("flexControllerScale",udm.TYPE_FLOAT,1.0,{
+Component:RegisterMember("flexControllerScale", udm.TYPE_FLOAT, 1.0, {
 	min = 0.0,
-	max = 100.0
+	max = 100.0,
 })
-Component:RegisterMember("flexControllerLimitsEnabled",udm.TYPE_BOOLEAN,true)
-Component:RegisterMember("MaterialOverrides",ents.MEMBER_TYPE_ELEMENT,"",{
+Component:RegisterMember("flexControllerLimitsEnabled", udm.TYPE_BOOLEAN, true)
+Component:RegisterMember("MaterialOverrides", ents.MEMBER_TYPE_ELEMENT, "", {
 	onChange = function(self)
 		self:UpdateMaterialOverrides()
-	end
-},bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT))
+	end,
+}, bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT))
 
 local cvPanima = console.get_convar("pfm_experimental_enable_panima_for_flex_and_skeletal_animations")
 function ents.PFMModel:Initialize()
@@ -28,13 +28,15 @@ function ents.PFMModel:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_BVH)
 	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent("pfm_actor")
-	if(renderC ~= nil) then
+	if renderC ~= nil then
 		renderC:SetCastShadows(true)
 	end
 
-	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED,"UpdateModel")
-	self:BindEvent(ents.BaseStaticBvhUserComponent.EVENT_ON_ACTIVATION_STATE_CHANGED,"OnStaticBvhStatusChanged")
-	if(cvPanima:GetBool()) then self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS,"MaintainAnimations") end
+	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED, "UpdateModel")
+	self:BindEvent(ents.BaseStaticBvhUserComponent.EVENT_ON_ACTIVATION_STATE_CHANGED, "OnStaticBvhStatusChanged")
+	if cvPanima:GetBool() then
+		self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS, "MaintainAnimations")
+	end
 	self.m_listeners = {}
 end
 function ents.PFMModel:OnEntitySpawn()
@@ -42,25 +44,30 @@ function ents.PFMModel:OnEntitySpawn()
 end
 function ents.PFMModel:UpdateMaterialOverrides()
 	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
-	if(mdlC == nil) then return end
+	if mdlC == nil then
+		return
+	end
 	mdlC:ClearMaterialOverrides()
 	local udmMatOverrides = self:GetMaterialOverrides():Get("materialOverrides")
-	for _,udmMatOverride in ipairs(udmMatOverrides:GetArrayValues()) do
-		local srcMaterial = udmMatOverride:GetValue("srcMaterial",udm.TYPE_STRING)
-		local dstMaterial = udmMatOverride:GetValue("dstMaterial",udm.TYPE_STRING) or ""
-		if(srcMaterial ~= nil and #srcMaterial > 0) then
+	for _, udmMatOverride in ipairs(udmMatOverrides:GetArrayValues()) do
+		local srcMaterial = udmMatOverride:GetValue("srcMaterial", udm.TYPE_STRING)
+		local dstMaterial = udmMatOverride:GetValue("dstMaterial", udm.TYPE_STRING) or ""
+		if srcMaterial ~= nil and #srcMaterial > 0 then
 			local matOverride
 
 			local udmOverride = udmMatOverride:Get("override")
 			local children = udmOverride:GetChildren()
-			local shaderName,properties = pairs(children)(children)
-			if(shaderName ~= nil) then
+			local shaderName, properties = pairs(children)(children)
+			if shaderName ~= nil then
 				local matRef
-				if(#dstMaterial > 0) then matRef = dstMaterial
-				else matRef = srcMaterial end
+				if #dstMaterial > 0 then
+					matRef = dstMaterial
+				else
+					matRef = srcMaterial
+				end
 
-				matRef = asset.load(matRef,asset.TYPE_MATERIAL)
-				if(util.is_valid(matRef)) then
+				matRef = asset.load(matRef, asset.TYPE_MATERIAL)
+				if util.is_valid(matRef) then
 					-- TODO: Update shader
 					local cpy = matRef:Copy()
 					cpy:MergeData(properties)
@@ -69,13 +76,19 @@ function ents.PFMModel:UpdateMaterialOverrides()
 					matOverride = cpy
 				end
 			else
-				matOverride = asset.load(dstMaterial,asset.TYPE_MATERIAL)
+				matOverride = asset.load(dstMaterial, asset.TYPE_MATERIAL)
 			end
 
-			if(util.is_valid(matOverride)) then
-				mdlC:SetMaterialOverride(srcMaterial,matOverride)
+			if util.is_valid(matOverride) then
+				mdlC:SetMaterialOverride(srcMaterial, matOverride)
 			else
-				pfm.log("Failed to apply material override for material '" .. srcMaterial .. "': Target material is not valid!",pfm.LOG_CATEGORY_PFM,pfm.LOG_SEVERITY_WARNING)
+				pfm.log(
+					"Failed to apply material override for material '"
+						.. srcMaterial
+						.. "': Target material is not valid!",
+					pfm.LOG_CATEGORY_PFM,
+					pfm.LOG_SEVERITY_WARNING
+				)
 			end
 		end
 	end
@@ -83,14 +96,21 @@ function ents.PFMModel:UpdateMaterialOverrides()
 end
 function ents.PFMModel:OnStaticBvhStatusChanged()
 	local c = self:GetEntityComponent(ents.COMPONENT_STATIC_BVH_USER)
-	if(c:IsActive()) then c:GetEntity():RemoveComponent(ents.COMPONENT_BVH)
-	else c:GetEntity():AddComponent(ents.COMPONENT_BVH) end
+	if c:IsActive() then
+		c:GetEntity():RemoveComponent(ents.COMPONENT_BVH)
+	else
+		c:GetEntity():AddComponent(ents.COMPONENT_BVH)
+	end
 end
 function ents.PFMModel:OnRemove()
 	util.remove(self.m_listeners)
 end
-function ents.PFMModel:SetAnimationFrozen(frozen) self.m_animFrozen = frozen end
-function ents.PFMModel:IsAnimationFrozen() return self.m_animFrozen or false end
+function ents.PFMModel:SetAnimationFrozen(frozen)
+	self.m_animFrozen = frozen
+end
+function ents.PFMModel:IsAnimationFrozen()
+	return self.m_animFrozen or false
+end
 function ents.PFMModel:MaintainAnimations()
 	-- Disable default skeletal animation playback
 	return util.EVENT_REPLY_HANDLED
@@ -100,13 +120,15 @@ function ents.PFMModel:InitModel()
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 	local mdl = (mdlC ~= nil) and mdlC:GetModel() or nil
-	if(mdl == nil) then return end
+	if mdl == nil then
+		return
+	end
 	--local animSetC = (not mdl:HasFlag(game.Model.FLAG_BIT_INANIMATE)) and self:AddEntityComponent("pfm_animation_set") or nil
 	--if(animSetC == nil) then return end -- TODO: What if flexes, but no bones? (Animation component shouldn't be needed in this case)
 	--animSetC:Setup(self:GetActorData())
 
 	local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
-	if(animC ~= nil) then
+	if animC ~= nil then
 		--[[local function apply_bone_transforms(entInvPose,bone)
 			local boneName = bone:GetName()
 			local boneId = mdl:LookupBone(boneName) -- TODO: Cache this
@@ -195,47 +217,57 @@ function ents.PFMModel:InitModel()
 		if(flexC ~= nil) then flexC:SetFlexControllerScale(newScale) end
 	end))]]
 end
-function ents.PFMModel:GetModelData() return self.m_mdlInfo end
-function ents.PFMModel:GetActorData() return self.m_actorData end
+function ents.PFMModel:GetModelData()
+	return self.m_mdlInfo
+end
+function ents.PFMModel:GetActorData()
+	return self.m_actorData
+end
 
 -- Calculates local bodygroup indices from a global bodygroup index
 function ents.PFMModel:GetBodyGroups(bgIdx)
 	local mdl = self:GetEntity():GetModel()
-	if(mdl == nil) then return {} end
+	if mdl == nil then
+		return {}
+	end
 	local bodyGroups = mdl:GetBodyGroups()
 
 	-- Calculate total number of bodygroup combinations
 	local numCombinations = 1
-	for _,bg in ipairs(bodyGroups) do
-		numCombinations = numCombinations *#bg.meshGroups
+	for _, bg in ipairs(bodyGroups) do
+		numCombinations = numCombinations * #bg.meshGroups
 	end
 
 	local localBgIndices = {}
-	for i=#bodyGroups,1,-1 do
+	for i = #bodyGroups, 1, -1 do
 		local bg = bodyGroups[i]
-		numCombinations = numCombinations /#bg.meshGroups
-		local localBgIdx = math.floor(bgIdx /numCombinations)
-		bgIdx = bgIdx %numCombinations
+		numCombinations = numCombinations / #bg.meshGroups
+		local localBgIdx = math.floor(bgIdx / numCombinations)
+		bgIdx = bgIdx % numCombinations
 
 		-- TODO: This is in reverse order because that's how it's done in the SFM,
 		-- but there's really no reason to. Instead the global index should be inversed
 		-- in the SFM->PFM conversion script!
-		table.insert(localBgIndices,1,localBgIdx)
+		table.insert(localBgIndices, 1, localBgIdx)
 	end
 	return localBgIndices
 end
 
 function ents.PFMModel:UpdateModel()
 	self:InitModel()
-	
+
 	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
-	if(mdlC == nil) then return end
+	if mdlC == nil then
+		return
+	end
 	local mdlInfo = self.m_mdlInfo
 	mdlC:SetSkin(mdlInfo:GetMemberValue("skin") or 0)
 
 	local mdl = mdlC:GetModel()
-	if(mdl == nil) then return end
-	if(mdl:GetEyeballCount() > 0) then
+	if mdl == nil then
+		return
+	end
+	if mdl:GetEyeballCount() > 0 then
 		self:AddEntityComponent(ents.COMPONENT_EYE)
 	end
 	local materials = mdl:GetMaterials()
@@ -274,12 +306,14 @@ function ents.PFMModel:UpdateModel()
 	end]]
 end
 
-function ents.PFMModel:Setup(actorData,mdlInfo)
+function ents.PFMModel:Setup(actorData, mdlInfo)
 	self.m_mdlInfo = actorData:FindComponent("model")
 	self.m_actorData = actorData
 	local ent = self:GetEntity()
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
-	if(mdlC == nil or self.m_mdlInfo == nil) then return end
+	if mdlC == nil or self.m_mdlInfo == nil then
+		return
+	end
 	--[[table.insert(self.m_listeners,self.m_mdlInfo:AddChangeListener("model",function(c,newModel)
 		local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 		if(mdlC ~= nil) then mdlC:SetModel(newModel) end
@@ -287,4 +321,4 @@ function ents.PFMModel:Setup(actorData,mdlInfo)
 	table.insert(self.m_listeners,self.m_mdlInfo:AddChangeListener("skin",function(c,newSkin) ent:SetSkin(newSkin) end))
 	mdlC:SetModel(self.m_mdlInfo:GetMemberValue("model") or "")]]
 end
-ents.COMPONENT_PFM_MODEL = ents.register_component("pfm_model",ents.PFMModel)
+ents.COMPONENT_PFM_MODEL = ents.register_component("pfm_model", ents.PFMModel)

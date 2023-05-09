@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.InitializerAlphaRandom",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class("ents.ParticleSystemComponent.InitializerAlphaRandom", ents.ParticleSystemComponent.BaseInitializer)
 
 function ents.ParticleSystemComponent.InitializerAlphaRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -24,10 +24,13 @@ function ents.ParticleSystemComponent.InitializerAlphaRandom:OnParticleSystemSto
 end
 function ents.ParticleSystemComponent.InitializerAlphaRandom:OnParticleCreated(pt)
 	--print("[Particle Initializer] On particle created")
-	local alpha = self.m_alphaMin +(math.randomf(0.0,self.m_alphaMax -self.m_alphaMin) ^self.m_alphaRandomExponent)
-	pt:SetAlpha(alpha /255.0)
+	local alpha = self.m_alphaMin + (math.randomf(0.0, self.m_alphaMax - self.m_alphaMin) ^ self.m_alphaRandomExponent)
+	pt:SetAlpha(alpha / 255.0)
 end
 function ents.ParticleSystemComponent.InitializerAlphaRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_alpha_random",ents.ParticleSystemComponent.InitializerAlphaRandom)
+ents.ParticleSystemComponent.register_initializer(
+	"source_alpha_random",
+	ents.ParticleSystemComponent.InitializerAlphaRandom
+)

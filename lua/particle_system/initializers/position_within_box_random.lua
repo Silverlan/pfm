@@ -6,7 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class(
+	"ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom",
+	ents.ParticleSystemComponent.BaseInitializer
+)
 
 function ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -24,13 +27,16 @@ function ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom:OnParti
 end
 function ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom:OnParticleCreated(pt)
 	--print("[Particle Initializer] On particle created")
-	local v = RandomVector(self.m_min,self.m_max)
-	local vecControlPoint = GetControlPointAtTime(self,self.m_controlPointNumber,pt:GetTimeCreated())
-	v = v +vecControlPoint
+	local v = RandomVector(self.m_min, self.m_max)
+	local vecControlPoint = GetControlPointAtTime(self, self.m_controlPointNumber, pt:GetTimeCreated())
+	v = v + vecControlPoint
 	pt:SetPosition(v)
 	pt:SetPreviousPosition(v)
 end
 function ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_position_random_box",ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom)
+ents.ParticleSystemComponent.register_initializer(
+	"source_position_random_box",
+	ents.ParticleSystemComponent.InitializerPositionWithinBoxRandom
+)

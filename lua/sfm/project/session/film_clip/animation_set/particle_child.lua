@@ -7,8 +7,8 @@
 ]]
 
 sfm.register_element_type("ParticleChild")
-sfm.link_dmx_type("DmeParticleChild",sfm.ParticleChild)
+sfm.link_dmx_type("DmeParticleChild", sfm.ParticleChild)
 
-sfm.BaseElement.RegisterAttribute(sfm.ParticleChild,"name")
-sfm.BaseElement.RegisterAttribute(sfm.ParticleChild,"child")
-sfm.BaseElement.RegisterAttribute(sfm.ParticleChild,"delay",0)
+sfm.BaseElement.RegisterAttribute(sfm.ParticleChild, "name")
+sfm.BaseElement.RegisterAttribute(sfm.ParticleChild, "child")
+sfm.BaseElement.RegisterAttribute(sfm.ParticleChild, "delay", 0)

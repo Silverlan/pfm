@@ -7,9 +7,9 @@
 ]]
 
 sfm.register_element_type("ExpressionOperator")
-sfm.link_dmx_type("DmeExpressionOperator",sfm.ExpressionOperator)
+sfm.link_dmx_type("DmeExpressionOperator", sfm.ExpressionOperator)
 
-sfm.BaseElement.RegisterAttribute(sfm.ExpressionOperator,"result",0)
-sfm.BaseElement.RegisterAttribute(sfm.ExpressionOperator,"expr","")
-sfm.BaseElement.RegisterAttribute(sfm.ExpressionOperator,"spewresult",false)
-sfm.BaseElement.RegisterAttribute(sfm.ExpressionOperator,"value",0)
+sfm.BaseElement.RegisterAttribute(sfm.ExpressionOperator, "result", 0)
+sfm.BaseElement.RegisterAttribute(sfm.ExpressionOperator, "expr", "")
+sfm.BaseElement.RegisterAttribute(sfm.ExpressionOperator, "spewresult", false)
+sfm.BaseElement.RegisterAttribute(sfm.ExpressionOperator, "value", 0)

@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.OperatorTwistAroundAxis",ents.ParticleSystemComponent.BaseOperator)
+util.register_class("ents.ParticleSystemComponent.OperatorTwistAroundAxis", ents.ParticleSystemComponent.BaseOperator)
 
 function ents.ParticleSystemComponent.OperatorTwistAroundAxis:__init()
 	ents.ParticleSystemComponent.BaseOperator.__init(self)
@@ -17,23 +17,23 @@ function ents.ParticleSystemComponent.OperatorTwistAroundAxis:Initialize()
 	self.m_localSpace = toboolean(self:GetKeyValue("local_space_axis") or "") or false
 	self._isForce = true
 end
-function ents.ParticleSystemComponent.OperatorTwistAroundAxis:AddForces(force,pt,dt,strength)
-	local axisInWorldSpace = TransformAxis(self,self.m_twistAxis,self.m_localSpace)
+function ents.ParticleSystemComponent.OperatorTwistAroundAxis:AddForces(force, pt, dt, strength)
+	local axisInWorldSpace = TransformAxis(self, self.m_twistAxis, self.m_localSpace)
 
-	local vecCenter = GetControlPointAtTime(self,self.m_controlPoint,pt:GetTimeCreated())
+	local vecCenter = GetControlPointAtTime(self, self.m_controlPoint, pt:GetTimeCreated())
 	local center = vecCenter:Copy()
 
-	local forceScale = self.m_force *strength
+	local forceScale = self.m_force * strength
 	local ofs = pt:GetPosition()
-	ofs = ofs -center
+	ofs = ofs - center
 	ofs:Normalize()
 
-	local parallelComp = ofs *(ofs *axisInWorldSpace)
-	ofs = ofs -parallelComp
+	local parallelComp = ofs * (ofs * axisInWorldSpace)
+	ofs = ofs - parallelComp
 	ofs:Normalize()
 	local tangentialForce = ofs:Cross(axisInWorldSpace)
-	tangentialForce = tangentialForce *forceScale
-	return force +tangentialForce
+	tangentialForce = tangentialForce * forceScale
+	return force + tangentialForce
 end
 function ents.ParticleSystemComponent.OperatorTwistAroundAxis:OnParticleSystemStarted(pt)
 	--print("[Particle Initializer] On particle system started")
@@ -47,4 +47,7 @@ end
 function ents.ParticleSystemComponent.OperatorTwistAroundAxis:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_operator("source_twist_around_axis",ents.ParticleSystemComponent.OperatorTwistAroundAxis)
+ents.ParticleSystemComponent.register_operator(
+	"source_twist_around_axis",
+	ents.ParticleSystemComponent.OperatorTwistAroundAxis
+)

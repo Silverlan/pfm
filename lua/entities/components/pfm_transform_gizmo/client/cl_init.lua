@@ -6,17 +6,19 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Component = util.register_class("ents.PFMTransformGizmo",BaseEntityComponent)
+local Component = util.register_class("ents.PFMTransformGizmo", BaseEntityComponent)
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self:AddEntityComponent("util_transform")
 
-	self:BindEvent(ents.UtilTransformComponent.EVENT_ON_GIZMO_CONTROL_ADDED,"OnGizmoControlAdded")
+	self:BindEvent(ents.UtilTransformComponent.EVENT_ON_GIZMO_CONTROL_ADDED, "OnGizmoControlAdded")
 end
 function Component:OnGizmoControlAdded(entCtrl)
 	local renderC = entCtrl:GetComponent(ents.COMPONENT_RENDER)
-	if(renderC ~= nil) then renderC:AddToRenderGroup("pfm_editor_overlay") end
+	if renderC ~= nil then
+		renderC:AddToRenderGroup("pfm_editor_overlay")
+	end
 end
-ents.COMPONENT_PFM_TRANSFORM_GIZMO = ents.register_component("pfm_transform_gizmo",Component)
+ents.COMPONENT_PFM_TRANSFORM_GIZMO = ents.register_component("pfm_transform_gizmo", Component)

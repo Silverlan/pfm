@@ -14,6 +14,12 @@ function Class:__init(defaultColor)
 	self.m_colors = {}
 end
 
-function Class:GetDefaultColor() return self.m_defaultColor end
-function Class:SetColor(name,col) self.m_colors[name] = col end
-function Class:GetColor(name) return self.m_colors[name] or self.m_defaultColor end
+function Class:GetDefaultColor()
+	return self.m_defaultColor
+end
+function Class:SetColor(name, col)
+	self.m_colors[name] = col
+end
+function Class:GetColor(name)
+	return self.m_colors[name] or self.m_defaultColor
+end

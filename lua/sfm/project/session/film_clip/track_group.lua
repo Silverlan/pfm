@@ -9,12 +9,12 @@
 include("track.lua")
 
 sfm.register_element_type("TrackGroup")
-sfm.link_dmx_type("DmeTrackGroup",sfm.TrackGroup)
+sfm.link_dmx_type("DmeTrackGroup", sfm.TrackGroup)
 
-sfm.BaseElement.RegisterArray(sfm.TrackGroup,"tracks",sfm.Track)
-sfm.BaseElement.RegisterAttribute(sfm.TrackGroup,"visible",true,{
-	getterName = "IsVisible"
+sfm.BaseElement.RegisterArray(sfm.TrackGroup, "tracks", sfm.Track)
+sfm.BaseElement.RegisterAttribute(sfm.TrackGroup, "visible", true, {
+	getterName = "IsVisible",
 })
-sfm.BaseElement.RegisterAttribute(sfm.TrackGroup,"mute",false,{
-	getterName = "IsMuted"
+sfm.BaseElement.RegisterAttribute(sfm.TrackGroup, "mute", false, {
+	getterName = "IsMuted",
 })

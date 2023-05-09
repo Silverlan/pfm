@@ -6,14 +6,14 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.PFMActorComponent.RotationChannel",ents.PFMActorComponent.Channel)
+util.register_class("ents.PFMActorComponent.RotationChannel", ents.PFMActorComponent.Channel)
 function ents.PFMActorComponent.RotationChannel:__init()
 	ents.PFMActorComponent.Channel.__init(self)
 end
-function ents.PFMActorComponent.RotationChannel:GetInterpolatedValue(value0,value1,interpAm)
-	return value0:Slerp(value1,interpAm)
+function ents.PFMActorComponent.RotationChannel:GetInterpolatedValue(value0, value1, interpAm)
+	return value0:Slerp(value1, interpAm)
 end
-function ents.PFMActorComponent.RotationChannel:ApplyValue(ent,controllerId,value)
+function ents.PFMActorComponent.RotationChannel:ApplyValue(ent, controllerId, value)
 	ent:SetRotation(value)
 	return true
 end

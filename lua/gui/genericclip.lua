@@ -9,7 +9,7 @@
 include("/pfm/fonts.lua")
 include("baseclip.lua")
 
-util.register_class("gui.GenericClip",gui.BaseClip)
+util.register_class("gui.GenericClip", gui.BaseClip)
 
 function gui.GenericClip:__init()
 	gui.BaseClip.__init(self)
@@ -18,8 +18,8 @@ function gui.GenericClip:OnInitialize()
 	gui.BaseClip.OnInitialize(self)
 
 	self:SetMouseInputEnabled(true)
-	self:AddCallback("OnMousePressed",function()
+	self:AddCallback("OnMousePressed", function()
 		self:SetSelected(true)
 	end)
 end
-gui.register("WIGenericClip",gui.GenericClip)
+gui.register("WIGenericClip", gui.GenericClip)

@@ -6,27 +6,26 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Component = util.register_class("ents.PFMVrTrackedDevice",BaseEntityComponent)
+local Component = util.register_class("ents.PFMVrTrackedDevice", BaseEntityComponent)
 
-Component:RegisterMember(
-	"SerialNumber",ents.MEMBER_TYPE_STRING,"",{
-		flags = ents.ComponentInfo.MemberInfo.FLAG_READ_ONLY_BIT
-	}
-)
-Component:RegisterMember("TargetActor",ents.MEMBER_TYPE_ENTITY,"")
-Component:RegisterMember("IkControl",ents.MEMBER_TYPE_STRING,"")
+Component:RegisterMember("SerialNumber", ents.MEMBER_TYPE_STRING, "", {
+	flags = ents.ComponentInfo.MemberInfo.FLAG_READ_ONLY_BIT,
+})
+Component:RegisterMember("TargetActor", ents.MEMBER_TYPE_ENTITY, "")
+Component:RegisterMember("IkControl", ents.MEMBER_TYPE_STRING, "")
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 end
 
-function Component:OnRemove()
+function Component:OnRemove() end
+
+function Component:OnEntitySpawn() end
+
+function Component:SetTrackedDevice(tdC)
+	self.m_trackedDevice = tdC
 end
-
-function Component:OnEntitySpawn()
-
+function Component:GetTrackedDevice()
+	return self.m_trackedDevice
 end
-
-function Component:SetTrackedDevice(tdC) self.m_trackedDevice = tdC end
-function Component:GetTrackedDevice() return self.m_trackedDevice end
-ents.COMPONENT_PFM_VR_TRACKED_DEVICE = ents.register_component("pfm_vr_tracked_device",Component)
+ents.COMPONENT_PFM_VR_TRACKED_DEVICE = ents.register_component("pfm_vr_tracked_device", Component)

@@ -7,7 +7,9 @@
 ]]
 
 function pfm.udm.TrackGroup:FindTrack(name)
-    for _,track in ipairs(self:GetTracks()) do
-        if(track:GetName() == name) then return track end
-    end
+	for _, track in ipairs(self:GetTracks()) do
+		if track:GetName() == name then
+			return track
+		end
+	end
 end

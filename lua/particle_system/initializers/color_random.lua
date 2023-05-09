@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.InitializerColorRandom",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class("ents.ParticleSystemComponent.InitializerColorRandom", ents.ParticleSystemComponent.BaseInitializer)
 
 function ents.ParticleSystemComponent.InitializerColorRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -30,19 +30,19 @@ function ents.ParticleSystemComponent.InitializerColorRandom:OnParticleCreated(p
 	--print("[Particle Initializer] On particle created")
 	local tint = Color.White:Copy()
 	-- If we're factoring in luminosity or tint, then get our lighting info for this position
-	if(self.m_tintPerc ~= 0.0) then
+	if self.m_tintPerc ~= 0.0 then
 		-- TODO
 	end
 
-	local randomPerc = math.randomf(0,1)
+	local randomPerc = math.randomf(0, 1)
 	-- Randomly choose a range between the two colors
 	local colorMin = self.m_color1:ToVector4()
 	local colorMax = self.m_color2:ToVector4()
-	local color = colorMin +(colorMax -colorMin) *randomPerc
+	local color = colorMin + (colorMax - colorMin) * randomPerc
 	color.a = pt:GetAlpha()
 
 	-- Tint the particles
-	if(self.m_tintPerc ~= 0.0) then
+	if self.m_tintPerc ~= 0.0 then
 		-- TODO
 	end
 	pt:SetColor(color)
@@ -50,4 +50,7 @@ end
 function ents.ParticleSystemComponent.InitializerColorRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_color_random",ents.ParticleSystemComponent.InitializerColorRandom)
+ents.ParticleSystemComponent.register_initializer(
+	"source_color_random",
+	ents.ParticleSystemComponent.InitializerColorRandom
+)

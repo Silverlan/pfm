@@ -6,7 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.OperatorAttractToControlPoint",ents.ParticleSystemComponent.BaseOperator)
+util.register_class(
+	"ents.ParticleSystemComponent.OperatorAttractToControlPoint",
+	ents.ParticleSystemComponent.BaseOperator
+)
 
 function ents.ParticleSystemComponent.OperatorAttractToControlPoint:__init()
 	ents.ParticleSystemComponent.BaseOperator.__init(self)
@@ -17,20 +20,20 @@ function ents.ParticleSystemComponent.OperatorAttractToControlPoint:Initialize()
 	self.m_controlPoint = tonumber(self:GetKeyValue("control_point_id") or "") or 0
 	self._isForce = true
 end
-function ents.ParticleSystemComponent.OperatorAttractToControlPoint:AddForces(force,pt,dt,strength)
+function ents.ParticleSystemComponent.OperatorAttractToControlPoint:AddForces(force, pt, dt, strength)
 	local powerFrac = -self.m_falloffPower
-	local forceScale = -self.m_force *strength
+	local forceScale = -self.m_force * strength
 
-	local vecCenter = GetControlPointAtTime(self,self.m_controlPoint,pt:GetTimeCreated())
+	local vecCenter = GetControlPointAtTime(self, self.m_controlPoint, pt:GetTimeCreated())
 	local center = vecCenter:Copy()
 
 	local ofs = pt:GetPosition()
-	ofs = ofs -center
+	ofs = ofs - center
 	local len = ofs:Length()
-	ofs = ofs *forceScale *ReciprocalSaturate(len)
-	ofs = ofs *math.pow(len,powerFrac)
-	if(len > FLT_EPSILON) then
-		force = force +ofs
+	ofs = ofs * forceScale * ReciprocalSaturate(len)
+	ofs = ofs * math.pow(len, powerFrac)
+	if len > FLT_EPSILON then
+		force = force + ofs
 	end
 	return force
 end
@@ -46,4 +49,7 @@ end
 function ents.ParticleSystemComponent.OperatorAttractToControlPoint:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_operator("source_pull_towards_control_point",ents.ParticleSystemComponent.OperatorAttractToControlPoint)
+ents.ParticleSystemComponent.register_operator(
+	"source_pull_towards_control_point",
+	ents.ParticleSystemComponent.OperatorAttractToControlPoint
+)

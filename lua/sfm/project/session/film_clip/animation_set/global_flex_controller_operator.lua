@@ -7,7 +7,13 @@
 ]]
 
 sfm.register_element_type("GlobalFlexControllerOperator")
-sfm.link_dmx_type("DmeGlobalFlexControllerOperator",sfm.GlobalFlexControllerOperator)
+sfm.link_dmx_type("DmeGlobalFlexControllerOperator", sfm.GlobalFlexControllerOperator)
 
-sfm.BaseElement.RegisterAttribute(sfm.GlobalFlexControllerOperator,"flexWeight",0.0)
-sfm.BaseElement.RegisterProperty(sfm.GlobalFlexControllerOperator,"gameModel",sfm.GameModel,nil,sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL)
+sfm.BaseElement.RegisterAttribute(sfm.GlobalFlexControllerOperator, "flexWeight", 0.0)
+sfm.BaseElement.RegisterProperty(
+	sfm.GlobalFlexControllerOperator,
+	"gameModel",
+	sfm.GameModel,
+	nil,
+	sfm.BaseElement.PROPERTY_FLAG_BIT_OPTIONAL
+)

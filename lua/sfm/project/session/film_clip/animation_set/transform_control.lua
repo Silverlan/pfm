@@ -9,9 +9,9 @@
 include("control")
 
 sfm.register_element_type("TransformControl")
-sfm.link_dmx_type("DmeTransformControl",sfm.TransformControl)
+sfm.link_dmx_type("DmeTransformControl", sfm.TransformControl)
 
-sfm.BaseElement.RegisterAttribute(sfm.TransformControl,"valuePosition",Vector())
-sfm.BaseElement.RegisterAttribute(sfm.TransformControl,"valueOrientation",Quaternion())
-sfm.BaseElement.RegisterProperty(sfm.TransformControl,"positionChannel",sfm.Channel)
-sfm.BaseElement.RegisterProperty(sfm.TransformControl,"orientationChannel",sfm.Channel)
+sfm.BaseElement.RegisterAttribute(sfm.TransformControl, "valuePosition", Vector())
+sfm.BaseElement.RegisterAttribute(sfm.TransformControl, "valueOrientation", Quaternion())
+sfm.BaseElement.RegisterProperty(sfm.TransformControl, "positionChannel", sfm.Channel)
+sfm.BaseElement.RegisterProperty(sfm.TransformControl, "orientationChannel", sfm.Channel)

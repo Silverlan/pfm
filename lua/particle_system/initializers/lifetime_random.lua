@@ -6,7 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.InitializerLifetimeRandom",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class(
+	"ents.ParticleSystemComponent.InitializerLifetimeRandom",
+	ents.ParticleSystemComponent.BaseInitializer
+)
 
 function ents.ParticleSystemComponent.InitializerLifetimeRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -24,10 +27,14 @@ function ents.ParticleSystemComponent.InitializerLifetimeRandom:OnParticleSystem
 end
 function ents.ParticleSystemComponent.InitializerLifetimeRandom:OnParticleCreated(pt)
 	--print("[Particle Initializer] On particle created")
-	local lifetime = self.m_lifetimeMin +(math.randomf(0.0,self.m_lifetimeMax -self.m_lifetimeMin) ^self.m_lifetimeRandomExponent)
+	local lifetime = self.m_lifetimeMin
+		+ (math.randomf(0.0, self.m_lifetimeMax - self.m_lifetimeMin) ^ self.m_lifetimeRandomExponent)
 	pt:SetLife(lifetime)
 end
 function ents.ParticleSystemComponent.InitializerLifetimeRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_lifetime_random",ents.ParticleSystemComponent.InitializerLifetimeRandom)
+ents.ParticleSystemComponent.register_initializer(
+	"source_lifetime_random",
+	ents.ParticleSystemComponent.InitializerLifetimeRandom
+)

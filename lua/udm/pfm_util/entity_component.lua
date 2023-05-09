@@ -6,36 +6,40 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function pfm.udm.EntityComponent:SetMemberValue(memberName,type,value)
+function pfm.udm.EntityComponent:SetMemberValue(memberName, type, value)
 	local path = util.Path.CreateFilePath(memberName)
 	local props = self:GetProperties()
 	local fullMemberPath = memberName
-	if(path:GetComponentCount() > 1) then
+	if path:GetComponentCount() > 1 then
 		memberName = path:GetBack()
 		path:PopBack()
-		props = props:GetFromPath(path:GetString():sub(0,-2))
+		props = props:GetFromPath(path:GetString():sub(0, -2))
 	end
-	if(type == ents.MEMBER_TYPE_ELEMENT) then
+	if type == ents.MEMBER_TYPE_ELEMENT then
 		type = udm.TYPE_ELEMENT
 		local child = props:Add(memberName)
 		child:Clear()
-		child:Merge(udm.LinkedPropertyWrapper(value),udm.MERGE_FLAG_BIT_DEEP_COPY)
+		child:Merge(udm.LinkedPropertyWrapper(value), udm.MERGE_FLAG_BIT_DEEP_COPY)
 	else
-		props:SetValue(memberName,type,value)
+		props:SetValue(memberName, type, value)
 	end
-	self:CallChangeListeners(fullMemberPath,value)
+	self:CallChangeListeners(fullMemberPath, value)
 end
 
 function pfm.udm.EntityComponent:GetMemberValue(memberName)
 	local val = self:GetProperties():GetFromPath(memberName):GetValue()
-	if(val ~= nil) then return val end
+	if val ~= nil then
+		return val
+	end
 	-- TODO: Copy this value if it is a non-trivial type (e.g. vec3, mat4, etc.)
 	return self.m_defaultMemberValues[memberName]
 end
 
 function pfm.udm.EntityComponent:GetMemberType(memberName)
 	local prop = self:GetProperties():GetFromPath(memberName)
-	if(util.is_valid(prop) == false) then return end
+	if util.is_valid(prop) == false then
+		return
+	end
 	return prop:GetType()
 end
 
@@ -43,28 +47,32 @@ function pfm.udm.EntityComponent:OnTypeChanged()
 	self.m_defaultMemberValues = {}
 	local type = self:GetType()
 	local id = ents.get_component_id(type)
-	if(id ~= nil) then
+	if id ~= nil then
 		local componentInfo = ents.get_component_info(id)
-		if(componentInfo ~= nil) then
+		if componentInfo ~= nil then
 			local numMembers = componentInfo:GetMemberCount()
-			for i=1,numMembers do
-				local memberInfo = componentInfo:GetMemberInfo(i -1)
+			for i = 1, numMembers do
+				local memberInfo = componentInfo:GetMemberInfo(i - 1)
 				assert(memberInfo ~= nil)
 				self.m_defaultMemberValues[memberInfo.name] = memberInfo.default
 			end
 		end
 	end
 
-	self:GetParent():OnComponentTypeChanged(self,type)
+	self:GetParent():OnComponentTypeChanged(self, type)
 end
 
 function pfm.udm.EntityComponent:OnInitialize()
 	udm.BaseSchemaType.OnInitialize(self)
 	self.m_defaultMemberValues = {}
-	self:AddChangeListener("type",function(c,type)
+	self:AddChangeListener("type", function(c, type)
 		self:OnTypeChanged()
 	end)
-	if(#self:GetType() > 0) then self:OnTypeChanged() end
+	if #self:GetType() > 0 then
+		self:OnTypeChanged()
+	end
 end
 
-function pfm.udm.EntityComponent:GetActor() return self:GetParent() end
+function pfm.udm.EntityComponent:GetActor()
+	return self:GetParent()
+end

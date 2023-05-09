@@ -9,9 +9,9 @@
 include("/pfm/pfm.lua")
 include("/pfm/project_manager.lua")
 
-local Component = util.register_class("ents.PFMProjectManager",BaseEntityComponent)
+local Component = util.register_class("ents.PFMProjectManager", BaseEntityComponent)
 
-Component:RegisterMember("ProjectFile",udm.TYPE_STRING,"",{
+Component:RegisterMember("ProjectFile", udm.TYPE_STRING, "", {
 	specializationType = ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE,
 	onChange = function(c)
 		c:UpdateProject()
@@ -19,27 +19,27 @@ Component:RegisterMember("ProjectFile",udm.TYPE_STRING,"",{
 	metaData = {
 		rootPath = "projects/",
 		extensions = pfm.Project.get_format_extensions(),
-		stripExtension = true
-	}
+		stripExtension = true,
+	},
 })
 
-Component:RegisterMember("TimeOffset",udm.TYPE_FLOAT,0.0,{
+Component:RegisterMember("TimeOffset", udm.TYPE_FLOAT, 0.0, {
 	onChange = function(c)
 		c:UpdateTimeOffset()
-	end
+	end,
 })
 
-Component:RegisterMember("Looping",udm.TYPE_BOOLEAN,true,{},"def+is")
-Component:RegisterMember("Playing",udm.TYPE_BOOLEAN,false,{
+Component:RegisterMember("Looping", udm.TYPE_BOOLEAN, true, {}, "def+is")
+Component:RegisterMember("Playing", udm.TYPE_BOOLEAN, false, {
 	onChange = function(c)
 		c:UpdatePlayCallback()
-	end
-},"def+is")
-Component:RegisterMember("SceneCameraEnabled",udm.TYPE_BOOLEAN,false,{
+	end,
+}, "def+is")
+Component:RegisterMember("SceneCameraEnabled", udm.TYPE_BOOLEAN, false, {
 	onChange = function(c)
 		c:UpdateSceneCamera()
-	end
-},"def+is")
+	end,
+}, "def+is")
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -54,29 +54,38 @@ function Component:OnEntitySpawn()
 end
 
 function Component:UpdateSceneCamera()
-	if(util.is_valid(self.m_initialGameCam) == false) then return end
-	if(self:IsSceneCameraEnabled()) then game.clear_gameplay_control_camera()
+	if util.is_valid(self.m_initialGameCam) == false then
+		return
+	end
+	if self:IsSceneCameraEnabled() then
+		game.clear_gameplay_control_camera()
 	else
 		local cam = self.m_initialGameCam
-		if(cam ~= nil) then game.set_gameplay_control_camera(cam) end
+		if cam ~= nil then
+			game.set_gameplay_control_camera(cam)
+		end
 	end
 end
 
 function Component:UpdatePlayCallback()
-	if(self:IsPlaying() == false) then
+	if self:IsPlaying() == false then
 		util.remove(self.m_cbUpdate)
 		return
 	end
-	if(util.is_valid(self.m_cbUpdate) or util.is_valid(self.m_projectC) == false) then return end
+	if util.is_valid(self.m_cbUpdate) or util.is_valid(self.m_projectC) == false then
+		return
+	end
 	self:UpdateSceneCamera()
 
 	self.m_tCur = time.cur_time()
-	self.m_cbUpdate = game.add_callback("Think",function()
+	self.m_cbUpdate = game.add_callback("Think", function()
 		local t = time.cur_time()
-		local dt = t -self.m_tCur
-		local tNew = self:GetTimeOffset() +dt
+		local dt = t - self.m_tCur
+		local tNew = self:GetTimeOffset() + dt
 		local timeFrame = self.m_projectC:GetTimeFrame()
-		if(self:IsLooping()) then tNew = (self.m_duration > 0.0) and (tNew %self.m_duration) or 0.0 end
+		if self:IsLooping() then
+			tNew = (self.m_duration > 0.0) and (tNew % self.m_duration) or 0.0
+		end
 		tNew = timeFrame:ClampToTimeFrame(tNew)
 		self:SetTimeOffset(tNew)
 		self.m_tCur = t
@@ -96,17 +105,23 @@ function Component:UpdateTimeOffset()
 	self.m_projectManager:SetTimeOffset(t)
 end
 
-function Component:GetDuration() return self.m_duration or 0.0 end
+function Component:GetDuration()
+	return self.m_duration or 0.0
+end
 
 function Component:UpdateProject()
-	if(self:GetEntity():IsSpawned() == false) then return end
+	if self:GetEntity():IsSpawned() == false then
+		return
+	end
 	local projectFileName = self:GetProjectFile()
-	if(projectFileName == self.m_curProjectFileName) then return end
+	if projectFileName == self.m_curProjectFileName then
+		return
+	end
 	self:Clear()
 	self.m_curProjectFileName = projectFileName
 	local ignoreMap = true
-	self.m_projectLoadResult = self.m_projectManager:LoadProject(self.m_curProjectFileName,ignoreMap)
-	if(self.m_projectLoadResult) then
+	self.m_projectLoadResult = self.m_projectManager:LoadProject(self.m_curProjectFileName, ignoreMap)
+	if self.m_projectLoadResult then
 		self.m_projectC = self.m_projectManager:GetGameView():GetComponent(ents.COMPONENT_PFM_PROJECT)
 
 		local timeFrame = self.m_projectC:GetTimeFrame()
@@ -128,4 +143,4 @@ function Component:OnRemove()
 	self:Clear()
 	self.m_projectManager = nil
 end
-ents.COMPONENT_PFM_PROJECT_MANAGER = ents.register_component("pfm_project_manager",Component)
+ents.COMPONENT_PFM_PROJECT_MANAGER = ents.register_component("pfm_project_manager", Component)

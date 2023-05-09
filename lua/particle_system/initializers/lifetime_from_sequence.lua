@@ -6,7 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.InitializerLifetimeFromSequence",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class(
+	"ents.ParticleSystemComponent.InitializerLifetimeFromSequence",
+	ents.ParticleSystemComponent.BaseInitializer
+)
 
 function ents.ParticleSystemComponent.InitializerLifetimeFromSequence:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -29,15 +32,24 @@ function ents.ParticleSystemComponent.InitializerLifetimeFromSequence:OnParticle
 	--print("[Particle Initializer] On particle created")
 	local pts = self:GetParticleSystem()
 	local spriteSheetAnim = pts:GetSpriteSheetAnimation()
-	if(spriteSheetAnim == nil) then return end
+	if spriteSheetAnim == nil then
+		return
+	end
 	local seq = spriteSheetAnim:GetSequence(pt:GetSequence())
-	if(seq == nil) then return end
+	if seq == nil then
+		return
+	end
 	local numFrames = seq:GetFrameCount()
-	if(numFrames > 0) then numFrames = numFrames -1 end
-	local lifeTime = numFrames /self.m_fps
+	if numFrames > 0 then
+		numFrames = numFrames - 1
+	end
+	local lifeTime = numFrames / self.m_fps
 	pt:SetLife(lifeTime)
 end
 function ents.ParticleSystemComponent.InitializerLifetimeFromSequence:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_lifetime_from_sequence",ents.ParticleSystemComponent.InitializerLifetimeFromSequence)
+ents.ParticleSystemComponent.register_initializer(
+	"source_lifetime_from_sequence",
+	ents.ParticleSystemComponent.InitializerLifetimeFromSequence
+)

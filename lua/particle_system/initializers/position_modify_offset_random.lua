@@ -6,7 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class(
+	"ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom",
+	ents.ParticleSystemComponent.BaseInitializer
+)
 
 function ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -27,20 +30,23 @@ end
 function ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom:OnParticleCreated(pt)
 	--print("[Particle Initializer] On particle created")
 	local randPos = Vector()
-	if(self.m_offsetProportionalToRadius) then
-		randPos = RandomVector((self.m_offsetMin *radius),self.m_offsetMax *radius)
+	if self.m_offsetProportionalToRadius then
+		randPos = RandomVector((self.m_offsetMin * radius), self.m_offsetMax * radius)
 	else
-		randPos = RandomVector(self.m_offsetMin,self.m_offsetMax)
+		randPos = RandomVector(self.m_offsetMin, self.m_offsetMax)
 	end
 
-	if(self.m_offsetInLocalSpace) then
-		local pose = GetControlPointTransformAtTime(self,self.m_controlPointNumber,pt:GetTimeCreated())
+	if self.m_offsetInLocalSpace then
+		local pose = GetControlPointTransformAtTime(self, self.m_controlPointNumber, pt:GetTimeCreated())
 		randPos:Rotate(pose:GetRotation())
 	end
-	pt:SetPosition(pt:GetPosition() +randPos)
-	pt:SetPreviousPosition(pt:GetPreviousPosition() +randPos)
+	pt:SetPosition(pt:GetPosition() + randPos)
+	pt:SetPreviousPosition(pt:GetPreviousPosition() + randPos)
 end
 function ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_position_modify_random_offset",ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom)
+ents.ParticleSystemComponent.register_initializer(
+	"source_position_modify_random_offset",
+	ents.ParticleSystemComponent.InitializerPositionModifyOffsetRandom
+)

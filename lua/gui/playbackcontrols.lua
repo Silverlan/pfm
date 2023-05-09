@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("gui.PlaybackControls",gui.Base)
+util.register_class("gui.PlaybackControls", gui.Base)
 gui.PlaybackControls.BUTTON_FIRST_FRAME = 0
 gui.PlaybackControls.BUTTON_PREVIOUS_CLIP = 1
 gui.PlaybackControls.BUTTON_PREVIOUS_FRAME = 2
@@ -21,59 +21,97 @@ function gui.PlaybackControls:__init()
 end
 function gui.PlaybackControls:OnInitialize()
 	gui.Base.OnInitialize(self)
-	
-	local controls = gui.create("WIHBox",self)
 
-	self.m_btFirstFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_firstframe","gui/pfm/icon_cp_firstframe_activated",function()
-		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_FIRST_FRAME)
-	end)
+	local controls = gui.create("WIHBox", self)
+
+	self.m_btFirstFrame = gui.PFMButton.create(
+		controls,
+		"gui/pfm/icon_cp_firstframe",
+		"gui/pfm/icon_cp_firstframe_activated",
+		function()
+			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_FIRST_FRAME)
+		end
+	)
 	self.m_btFirstFrame:SetTooltip(locale.get_text("pfm_playback_first_frame"))
 	self.m_btFirstFrame:SetName("pc_first_frame")
 
-	self.m_btPrevClip = gui.PFMButton.create(controls,"gui/pfm/icon_cp_prevclip","gui/pfm/icon_cp_prevclip_activated",function()
-		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_PREVIOUS_CLIP)
-	end)
+	self.m_btPrevClip = gui.PFMButton.create(
+		controls,
+		"gui/pfm/icon_cp_prevclip",
+		"gui/pfm/icon_cp_prevclip_activated",
+		function()
+			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_PREVIOUS_CLIP)
+		end
+	)
 	self.m_btPrevClip:SetTooltip(locale.get_text("pfm_playback_previous_clip"))
 	self.m_btPrevClip:SetName("pc_prev_clip")
 
-	self.m_btPrevFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_prevframe","gui/pfm/icon_cp_prevframe_activated",function()
-		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_PREVIOUS_FRAME)
-	end)
+	self.m_btPrevFrame = gui.PFMButton.create(
+		controls,
+		"gui/pfm/icon_cp_prevframe",
+		"gui/pfm/icon_cp_prevframe_activated",
+		function()
+			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_PREVIOUS_FRAME)
+		end
+	)
 	self.m_btPrevFrame:SetTooltip(locale.get_text("pfm_playback_previous_frame"))
 	self.m_btPrevFrame:SetName("pc_prev_frame")
 
-	self.m_btRecord = gui.PFMButton.create(controls,"gui/pfm/icon_cp_record","gui/pfm/icon_cp_record_activated",function()
-		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_RECORD)
-	end)
+	self.m_btRecord = gui.PFMButton.create(
+		controls,
+		"gui/pfm/icon_cp_record",
+		"gui/pfm/icon_cp_record_activated",
+		function()
+			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_RECORD)
+		end
+	)
 	self.m_btRecord:SetTooltip(locale.get_text("pfm_playback_record"))
 	self.m_btRecord:SetName("pc_record")
 
-	self.m_btPlay = gui.create("WIPFMPlayButton",controls)
+	self.m_btPlay = gui.create("WIPFMPlayButton", controls)
 	self.m_btPlay:SetTooltip(locale.get_text("pfm_playback_play"))
-	self.m_btPlay:AddCallback("OnStateChanged",function(btPlay,oldState,newState)
-		if(newState == gui.PFMPlayButton.STATE_PLAYING) then self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_PLAY)
-		elseif(newState == gui.PFMPlayButton.STATE_PAUSED) then self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_PAUSE) end
+	self.m_btPlay:AddCallback("OnStateChanged", function(btPlay, oldState, newState)
+		if newState == gui.PFMPlayButton.STATE_PLAYING then
+			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_PLAY)
+		elseif newState == gui.PFMPlayButton.STATE_PAUSED then
+			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_PAUSE)
+		end
 	end)
-	self.m_btPlay:AddCallback("OnTimeAdvance",function(el,dt)
-		self:CallCallbacks("OnTimeAdvance",dt)
+	self.m_btPlay:AddCallback("OnTimeAdvance", function(el, dt)
+		self:CallCallbacks("OnTimeAdvance", dt)
 	end)
 	self.m_btPlay:SetName("pc_player")
 
-	self.m_btNextFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_nextframe","gui/pfm/icon_cp_nextframe_activated",function()
-		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_NEXT_FRAME)
-	end)
+	self.m_btNextFrame = gui.PFMButton.create(
+		controls,
+		"gui/pfm/icon_cp_nextframe",
+		"gui/pfm/icon_cp_nextframe_activated",
+		function()
+			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_NEXT_FRAME)
+		end
+	)
 	self.m_btNextFrame:SetTooltip(locale.get_text("pfm_playback_next_frame"))
 	self.m_btNextFrame:SetName("pc_next_frame")
 
-	self.m_btNextClip = gui.PFMButton.create(controls,"gui/pfm/icon_cp_nextclip","gui/pfm/icon_cp_nextclip_activated",function()
-		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_NEXT_CLIP)
-	end)
+	self.m_btNextClip = gui.PFMButton.create(
+		controls,
+		"gui/pfm/icon_cp_nextclip",
+		"gui/pfm/icon_cp_nextclip_activated",
+		function()
+			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_NEXT_CLIP)
+		end
+	)
 	self.m_btNextClip:SetTooltip(locale.get_text("pfm_playback_next_clip"))
 	self.m_btNextClip:SetName("pc_next_clip")
 
-	self.m_btLastFrame = gui.PFMButton.create(controls,"gui/pfm/icon_cp_lastframe","gui/pfm/icon_cp_lastframe_activated",function()
-		self:CallCallbacks("OnButtonPressed",gui.PlaybackControls.BUTTON_LAST_FRAME)
-	end)
+	self.m_btLastFrame = gui.PFMButton.create(
+		controls,
+		"gui/pfm/icon_cp_lastframe",
+		"gui/pfm/icon_cp_lastframe_activated",
+		function()
+			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_LAST_FRAME)
+		end
+	)
 	self.m_btLastFrame:SetTooltip(locale.get_text("pfm_playback_last_frame"))
 	self.m_btLastFrame:SetName("pc_last_frame")
 
@@ -84,36 +122,56 @@ function gui.PlaybackControls:OnInitialize()
 	self:SizeToContents()
 	return controls
 end
-function gui.PlaybackControls:GetPlayButton() return self.m_btPlay end
-function gui.PlaybackControls:HandleKeyboardInput(key,state,mods)
-	if(state ~= input.STATE_PRESS) then return end
+function gui.PlaybackControls:GetPlayButton()
+	return self.m_btPlay
+end
+function gui.PlaybackControls:HandleKeyboardInput(key, state, mods)
+	if state ~= input.STATE_PRESS then
+		return
+	end
 	local bt
-	if(key == input.KEY_SPACE) then bt = self.m_btPlay
-	elseif(key == input.KEY_LEFT) then bt = self.m_btPrevFrame
-	elseif(key == input.KEY_RIGHT) then bt = self.m_btNextFrame
-	elseif(key == input.KEY_UP) then bt = self.m_btPrevClip
-	elseif(key == input.KEY_DOWN) then bt = self.m_btNextClip
-	elseif(key == input.KEY_HOME) then bt = self.m_btFirstFrame
-	elseif(key == input.KEY_END) then bt = self.m_btLastFrame end
-	if(util.is_valid(bt)) then
-		bt:InjectMouseClick(Vector2(0,0),input.MOUSE_BUTTON_LEFT)
+	if key == input.KEY_SPACE then
+		bt = self.m_btPlay
+	elseif key == input.KEY_LEFT then
+		bt = self.m_btPrevFrame
+	elseif key == input.KEY_RIGHT then
+		bt = self.m_btNextFrame
+	elseif key == input.KEY_UP then
+		bt = self.m_btPrevClip
+	elseif key == input.KEY_DOWN then
+		bt = self.m_btNextClip
+	elseif key == input.KEY_HOME then
+		bt = self.m_btFirstFrame
+	elseif key == input.KEY_END then
+		bt = self.m_btLastFrame
+	end
+	if util.is_valid(bt) then
+		bt:InjectMouseClick(Vector2(0, 0), input.MOUSE_BUTTON_LEFT)
 		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.PlaybackControls:LinkToPFMProject(projectManager)
-	if(util.is_valid(self.m_cbButtonPressed)) then self.m_cbButtonPressed:Remove() end
-	self.m_cbButtonPressed = self:AddCallback("OnButtonPressed",function(el,button)
-		if(button == gui.PlaybackControls.BUTTON_FIRST_FRAME) then projectManager:GoToFirstFrame()
-		elseif(button == gui.PlaybackControls.BUTTON_PREVIOUS_CLIP) then projectManager:GoToPreviousClip()
-		elseif(button == gui.PlaybackControls.BUTTON_PREVIOUS_FRAME) then projectManager:GoToPreviousFrame()
-		elseif(button == gui.PlaybackControls.BUTTON_RECORD) then -- TODO
-		elseif(button == gui.PlaybackControls.BUTTON_NEXT_FRAME) then projectManager:GoToNextFrame()
-		elseif(button == gui.PlaybackControls.BUTTON_NEXT_CLIP) then projectManager:GoToNextClip()
-		elseif(button == gui.PlaybackControls.BUTTON_LAST_FRAME) then projectManager:GoToLastFrame() end
+	if util.is_valid(self.m_cbButtonPressed) then
+		self.m_cbButtonPressed:Remove()
+	end
+	self.m_cbButtonPressed = self:AddCallback("OnButtonPressed", function(el, button)
+		if button == gui.PlaybackControls.BUTTON_FIRST_FRAME then
+			projectManager:GoToFirstFrame()
+		elseif button == gui.PlaybackControls.BUTTON_PREVIOUS_CLIP then
+			projectManager:GoToPreviousClip()
+		elseif button == gui.PlaybackControls.BUTTON_PREVIOUS_FRAME then
+			projectManager:GoToPreviousFrame()
+		elseif button == gui.PlaybackControls.BUTTON_RECORD then -- TODO
+		elseif button == gui.PlaybackControls.BUTTON_NEXT_FRAME then
+			projectManager:GoToNextFrame()
+		elseif button == gui.PlaybackControls.BUTTON_NEXT_CLIP then
+			projectManager:GoToNextClip()
+		elseif button == gui.PlaybackControls.BUTTON_LAST_FRAME then
+			projectManager:GoToLastFrame()
+		end
 	end)
 end
 
-function gui.PlaybackControls:OnRemove()
-end
-gui.register("PlaybackControls",gui.PlaybackControls)
+function gui.PlaybackControls:OnRemove() end
+gui.register("PlaybackControls", gui.PlaybackControls)

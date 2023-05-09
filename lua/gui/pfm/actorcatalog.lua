@@ -9,7 +9,7 @@
 include("/gui/icongridview.lua")
 include("/gui/draganddrop.lua")
 
-util.register_class("gui.PFMActorCatalog",gui.Base)
+util.register_class("gui.PFMActorCatalog", gui.Base)
 
 function gui.PFMActorCatalog:__init()
 	gui.Base.__init(self)
@@ -17,30 +17,31 @@ end
 function gui.PFMActorCatalog:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64,128)
+	self:SetSize(64, 128)
 
-	self.m_bg = gui.create("WIRect",self,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	self.m_bg:SetColor(Color(54,54,54))
+	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_bg:SetColor(Color(54, 54, 54))
 
-	local scrollContainer = gui.create("WIScrollContainer",self.m_bg,0,0,self:GetWidth(),self:GetHeight(),0,0,1,1)
-	scrollContainer:AddCallback("SetSize",function(el)
-		if(self:IsValid() and util.is_valid(self.m_explorer)) then
+	local scrollContainer =
+		gui.create("WIScrollContainer", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	scrollContainer:AddCallback("SetSize", function(el)
+		if self:IsValid() and util.is_valid(self.m_explorer) then
 			self.m_explorer:SetWidth(el:GetWidth())
 		end
 	end)
 
-	local explorer = gui.create("WIIconGridView",scrollContainer,0,0,self:GetWidth(),self:GetHeight())
-	explorer:AddCallback("OnIconAdded",function(explorer,icon)
-		icon:AddCallback("OnIconClicked",function(icon)
-			
-		end)
-		gui.enable_drag_and_drop(icon,"ModelCatalog",function(elGhost)
+	local explorer = gui.create("WIIconGridView", scrollContainer, 0, 0, self:GetWidth(), self:GetHeight())
+	explorer:AddCallback("OnIconAdded", function(explorer, icon)
+		icon:AddCallback("OnIconClicked", function(icon) end)
+		gui.enable_drag_and_drop(icon, "ModelCatalog", function(elGhost)
 			elGhost:SetAlpha(128)
-			elGhost:AddCallback("OnDragTargetHoverStart",function(elGhost,elTgt)
+			elGhost:AddCallback("OnDragTargetHoverStart", function(elGhost, elTgt)
 				elGhost:SetAlpha(0)
 				elGhost:SetAlwaysUpdate(true)
 
-				if(util.is_valid(entGhost)) then entGhost:Remove() end
+				if util.is_valid(entGhost) then
+					entGhost:Remove()
+				end
 
 				entGhost = ents.create("pfm_ghost")
 				entGhost:Spawn()
@@ -51,53 +52,64 @@ function gui.PFMActorCatalog:OnInitialize()
 				--entGhost:SetPos(Vector(2751.68, 549.374, -26.2904))
 				--entGhost:AddComponent("pfm_ghost")
 				local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
-				if(ghostC ~= nil) then
+				if ghostC ~= nil then
 					ghostC:SetHoverMode(true)
-					ghostC:SetPlacementCallback(function(pos,startPos,dir)
-						if(ray == false) then return end
-						pos:Set(startPos +dir *100)
+					ghostC:SetPlacementCallback(function(pos, startPos, dir)
+						if ray == false then
+							return
+						end
+						pos:Set(startPos + dir * 100)
 					end)
 
-					if(string.compare(elTgt:GetClass(),"WIViewport",false)) then ghostC:SetViewport(elTgt) end
+					if string.compare(elTgt:GetClass(), "WIViewport", false) then
+						ghostC:SetViewport(elTgt)
+					end
 				end
 
 				local lightPointC = entGhost:AddComponent(ents.COMPONENT_LIGHT_POINT)
-				if(lightPointC ~= nil) then
-
+				if lightPointC ~= nil then
 				end
 
 				local radiusC = entGhost:GetComponent(ents.COMPONENT_RADIUS)
-				if(radiusC ~= nil) then
+				if radiusC ~= nil then
 					radiusC:SetRadius(200)
 				end
 
 				local colorC = entGhost:GetComponent(ents.COMPONENT_COLOR)
-				if(colorC ~= nil) then
-					colorC:SetColor(light.color_temperature_to_color(light.get_average_color_temperature(light.NATURAL_LIGHT_TYPE_LED_LAMP)))
+				if colorC ~= nil then
+					colorC:SetColor(
+						light.color_temperature_to_color(
+							light.get_average_color_temperature(light.NATURAL_LIGHT_TYPE_LED_LAMP)
+						)
+					)
 				end
 
 				local toggleC = entGhost:GetComponent(ents.COMPONENT_TOGGLE)
-				if(toggleC ~= nil) then
+				if toggleC ~= nil then
 					toggleC:TurnOn()
 				end
 
 				-- TODO: FIXME
 				local lightC = entGhost:AddComponent(ents.COMPONENT_LIGHT)
-				if(lightC ~= nil) then
-					lightC:SetLightIntensity(100,ents.LightComponent.INTENSITY_TYPE_LUMEN)
+				if lightC ~= nil then
+					lightC:SetLightIntensity(100, ents.LightComponent.INTENSITY_TYPE_LUMEN)
 					lightC:SetShadowType(ents.LightComponent.SHADOW_TYPE_NONE)
 					lightC:SetShadowType(ents.LightComponent.SHADOW_TYPE_FULL)
 				end
 			end)
-			elGhost:AddCallback("OnDragTargetHoverStop",function(elGhost)
+			elGhost:AddCallback("OnDragTargetHoverStop", function(elGhost)
 				elGhost:SetAlpha(128)
 				elGhost:SetAlwaysUpdate(false)
-				if(util.is_valid(entGhost)) then entGhost:Remove() end
+				if util.is_valid(entGhost) then
+					entGhost:Remove()
+				end
 				tool.get_filmmaker():TagRenderSceneAsDirty(false)
 			end)
 		end)
-		icon:AddCallback("OnDragDropped",function(elIcon,elDrop)
-			if(util.is_valid(entGhost) == false) then return end
+		icon:AddCallback("OnDragDropped", function(elIcon, elDrop)
+			if util.is_valid(entGhost) == false then
+				return
+			end
 			local filmmaker = tool.get_filmmaker()
 			entGhost:RemoveComponent("pfm_ghost")
 			entGhost = nil
@@ -146,4 +158,4 @@ function gui.PFMActorCatalog:OnInitialize()
 	explorer:Update()
 	self.m_explorer = explorer
 end
-gui.register("WIPFMActorCatalog",gui.PFMActorCatalog)
+gui.register("WIPFMActorCatalog", gui.PFMActorCatalog)

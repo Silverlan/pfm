@@ -7,6 +7,6 @@
 ]]
 
 sfm.register_element_type("ParticleSystemOperator")
-sfm.link_dmx_type("DmeParticleOperator",sfm.ParticleSystemOperator)
+sfm.link_dmx_type("DmeParticleOperator", sfm.ParticleSystemOperator)
 
-sfm.BaseElement.RegisterAttribute(sfm.ParticleSystemOperator,"functionName","")
+sfm.BaseElement.RegisterAttribute(sfm.ParticleSystemOperator, "functionName", "")

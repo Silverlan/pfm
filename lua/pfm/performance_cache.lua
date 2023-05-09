@@ -13,28 +13,31 @@ pfm = pfm or {}
 
 util.register_class("pfm.PerformanceCache")
 
-function pfm.PerformanceCache:__init()
-end
+function pfm.PerformanceCache:__init() end
 
 function pfm.PerformanceCache:Initialize(filmClip)
 	local cam = filmClip:GetProperty("camera")
 	local animChannelTrack = filmClip:FindAnimationChannelTrack()
-	if(cam == nil or animChannelTrack == nil) then return end
+	if cam == nil or animChannelTrack == nil then
+		return
+	end
 	local posChannelClip
 	local posChannel
 	local rotChannelClip
 	local rotChannel
-	for _,channelClip in ipairs(animChannelTrack:GetChannelClips():GetTable()) do
-		for _,channel in ipairs(channelClip:GetChannels():GetTable()) do
+	for _, channelClip in ipairs(animChannelTrack:GetChannelClips():GetTable()) do
+		for _, channel in ipairs(channelClip:GetChannels():GetTable()) do
 			local toElement = channel:GetToElement()
-			if(toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_TRANSFORM) then
-				local parent = toElement:FindParentElement(function(el) return el:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR end)
-				if(util.is_same_object(parent,cam)) then
+			if toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_TRANSFORM then
+				local parent = toElement:FindParentElement(function(el)
+					return el:GetType() == fudm.ELEMENT_TYPE_PFM_ACTOR
+				end)
+				if util.is_same_object(parent, cam) then
 					local attr = channel:GetToAttribute()
-					if(attr == "position") then
+					if attr == "position" then
 						posChannelClip = channelClip
 						posChannel = channel
-					elseif(attr == "rotation") then
+					elseif attr == "rotation" then
 						rotChannelClip = channelClip
 						rotChannel = channel
 					end
@@ -48,15 +51,18 @@ function pfm.PerformanceCache:Initialize(filmClip)
 	self.m_camRotChannel = rotChannel
 end
 
-function pfm.PerformanceCache:SetOffset(gameViewFilmClip,offset)
-	if(self.m_lastGameViewFilmClip == nil or util.is_same_object(gameViewFilmClip,self.m_lastGameViewFilmClip) == false) then
+function pfm.PerformanceCache:SetOffset(gameViewFilmClip, offset)
+	if
+		self.m_lastGameViewFilmClip == nil
+		or util.is_same_object(gameViewFilmClip, self.m_lastGameViewFilmClip) == false
+	then
 		self.m_lastGameViewFilmClip = gameViewFilmClip
 		self:Initialize(gameViewFilmClip)
 	end
-	if(self.m_camPosChannel ~= nil) then
+	if self.m_camPosChannel ~= nil then
 		self.m_camPosChannel:SetPlaybackOffset(self.m_camPosChannelClip:GetTimeFrame():LocalizeOffset(offset))
 	end
-	if(self.m_camRotChannel ~= nil) then
+	if self.m_camRotChannel ~= nil then
 		self.m_camRotChannel:SetPlaybackOffset(self.m_camRotChannelClip:GetTimeFrame():LocalizeOffset(offset))
 	end
 end

@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.PFMLightPoint",BaseEntityComponent)
+util.register_class("ents.PFMLightPoint", BaseEntityComponent)
 
 function ents.PFMLightPoint:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -14,8 +14,10 @@ function ents.PFMLightPoint:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_LIGHT_POINT)
 	self:AddEntityComponent("pfm_light")
 end
-function ents.PFMLightPoint:Setup(actorData,lightData)
+function ents.PFMLightPoint:Setup(actorData, lightData)
 	local lightC = self:GetEntity():GetComponent("pfm_light")
-	if(lightC ~= nil) then lightC:Setup(actorData,lightData) end
+	if lightC ~= nil then
+		lightC:Setup(actorData, lightData)
+	end
 end
-ents.COMPONENT_PFM_LIGHT_POINT = ents.register_component("pfm_light_point",ents.PFMLightPoint)
+ents.COMPONENT_PFM_LIGHT_POINT = ents.register_component("pfm_light_point", ents.PFMLightPoint)

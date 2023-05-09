@@ -6,10 +6,12 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-console.register_command("taunt",function(pl,joystickAxisMagnitude)
-	if(util.is_valid(pl) == false) then return end
+console.register_command("taunt", function(pl, joystickAxisMagnitude)
+	if util.is_valid(pl) == false then
+		return
+	end
 	local pfmPlC = pl:GetEntity():GetComponent("pfm_player")
-	if(pfmPlC ~= nil) then
+	if pfmPlC ~= nil then
 		pfmPlC:Taunt()
 	end
 end)

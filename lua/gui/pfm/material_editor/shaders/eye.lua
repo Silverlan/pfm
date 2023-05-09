@@ -7,16 +7,14 @@
 ]]
 
 function gui.PFMMaterialEditor:InitializeEyeControls()
-	local mapVbox = gui.create("WIVBox",self.m_controlBox)
+	local mapVbox = gui.create("WIVBox", self.m_controlBox)
 	mapVbox:SetAutoFillContents(true)
 
 	-- Noise map
 	local numMaps = 6
-	local fractionPerMap = 1.0 /numMaps
-	self.m_teAlbedoMap = self:AddTextureSlot(mapVbox,locale.get_text("albedo_map"),"albedo_map",false,true)
-	gui.create("WIResizer",mapVbox):SetFraction(fractionPerMap)
-
-	
+	local fractionPerMap = 1.0 / numMaps
+	self.m_teAlbedoMap = self:AddTextureSlot(mapVbox, locale.get_text("albedo_map"), "albedo_map", false, true)
+	gui.create("WIResizer", mapVbox):SetFraction(fractionPerMap)
 end
 
 --[[	$texture noise_map "models/player/shared/eye-cornea_noise"

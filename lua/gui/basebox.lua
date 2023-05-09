@@ -6,15 +6,19 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("gui.BaseBox",gui.Base)
+util.register_class("gui.BaseBox", gui.Base)
 
 function gui.BaseBox:__init()
 	gui.Base.__init(self)
 end
 function gui.BaseBox:RemoveChildCallbacks(el)
-	if(self.m_childCallbacks[el] == nil) then return end
-	for _,cb in ipairs(self.m_childCallbacks[el]) do
-		if(cb:IsValid()) then cb:Remove() end
+	if self.m_childCallbacks[el] == nil then
+		return
+	end
+	for _, cb in ipairs(self.m_childCallbacks[el]) do
+		if cb:IsValid() then
+			cb:Remove()
+		end
 	end
 	self.m_childCallbacks[el] = nil
 end
@@ -31,8 +35,10 @@ function gui.BaseBox:UpdateSize(size)
 	self:SetSize(size)
 	self.m_skipSizeUpdateSchedule = nil
 end
-function gui.BaseBox:OnSizeChanged(w,h)
-	if(self.m_skipSizeUpdateSchedule) then return end
+function gui.BaseBox:OnSizeChanged(w, h)
+	if self.m_skipSizeUpdateSchedule then
+		return
+	end
 	self:ScheduleUpdate()
 end
 function gui.BaseBox:OnInitialize()
@@ -40,65 +46,90 @@ function gui.BaseBox:OnInitialize()
 
 	self:SetAutoSizeToContents()
 	self.m_childCallbacks = {}
-	self:AddCallback("OnChildAdded",function(el,elChild)
+	self:AddCallback("OnChildAdded", function(el, elChild)
 		self.m_sizeUpdateRequired = true
 		self:ScheduleUpdate()
-		if(self:IsBackgroundElement(elChild)) then return end
+		if self:IsBackgroundElement(elChild) then
+			return
+		end
 		self.m_childCallbacks[elChild] = {}
-		table.insert(self.m_childCallbacks[elChild],elChild:AddCallback("SetSize",function(elChild)
-			-- Note: We mustn't update if the child is anchored, otherwise we end up in an infinite recursion!
-			if(elChild:HasAnchor()) then return end
-			self.m_sizeUpdateRequired = true
-			self:ScheduleUpdate()
-		end))
-		table.insert(self.m_childCallbacks[elChild],elChild:AddCallback("OnRemove",function(elChild)
-			-- We'll have to update whenever one of our children has been removed
-			self.m_sizeUpdateRequired = true
-			self:ScheduleUpdate()
-		end))
+		table.insert(
+			self.m_childCallbacks[elChild],
+			elChild:AddCallback("SetSize", function(elChild)
+				-- Note: We mustn't update if the child is anchored, otherwise we end up in an infinite recursion!
+				if elChild:HasAnchor() then
+					return
+				end
+				self.m_sizeUpdateRequired = true
+				self:ScheduleUpdate()
+			end)
+		)
+		table.insert(
+			self.m_childCallbacks[elChild],
+			elChild:AddCallback("OnRemove", function(elChild)
+				-- We'll have to update whenever one of our children has been removed
+				self.m_sizeUpdateRequired = true
+				self:ScheduleUpdate()
+			end)
+		)
 		local visProp = elChild:GetVisibilityProperty()
-		table.insert(self.m_childCallbacks[elChild],visProp:AddCallback(function()
-			self.m_sizeUpdateRequired = true
-			self:ScheduleUpdate()
-		end))
+		table.insert(
+			self.m_childCallbacks[elChild],
+			visProp:AddCallback(function()
+				self.m_sizeUpdateRequired = true
+				self:ScheduleUpdate()
+			end)
+		)
 	end)
-	self:AddCallback("OnChildRemoved",function(el,elChild)
+	self:AddCallback("OnChildRemoved", function(el, elChild)
 		self:ScheduleUpdate()
 		self:RemoveChildCallbacks(elChild)
 	end)
 end
 function gui.BaseBox:OnRemove()
-	for elChild,callbacks in pairs(self.m_childCallbacks) do
-		for _,cb in ipairs(callbacks) do
-			if(cb:IsValid()) then cb:Remove() end
+	for elChild, callbacks in pairs(self.m_childCallbacks) do
+		for _, cb in ipairs(callbacks) do
+			if cb:IsValid() then
+				cb:Remove()
+			end
 		end
 	end
 end
 function gui.BaseBox:SetFixedWidth(fixed)
 	local size = self:GetSize()
 	self.m_fixedWidth = fixed
-	if(self.m_autoSizeActivated) then self.m_autoSizeRestore = {not self.m_fixedWidth,not self.m_fixedHeight}
-	else self:SetAutoSizeToContents(not self.m_fixedWidth,not self.m_fixedHeight) end
+	if self.m_autoSizeActivated then
+		self.m_autoSizeRestore = { not self.m_fixedWidth, not self.m_fixedHeight }
+	else
+		self:SetAutoSizeToContents(not self.m_fixedWidth, not self.m_fixedHeight)
+	end
 	self:SetSize(size) -- Keep our old size for now
 end
 function gui.BaseBox:SetFixedHeight(fixed)
 	local size = self:GetSize()
 	self.m_fixedHeight = fixed
-	if(self.m_autoSizeActivated) then self.m_autoSizeRestore = {not self.m_fixedWidth,not self.m_fixedHeight}
-	else self:SetAutoSizeToContents(not self.m_fixedWidth,not self.m_fixedHeight) end
+	if self.m_autoSizeActivated then
+		self.m_autoSizeRestore = { not self.m_fixedWidth, not self.m_fixedHeight }
+	else
+		self:SetAutoSizeToContents(not self.m_fixedWidth, not self.m_fixedHeight)
+	end
 	self:SetSize(size) -- Keep our old size for now
 end
-function gui.BaseBox:SetAutoSizeActivated(activated,updateImmediately)
-	if(self.m_autoSizeActivated == activated) then return end
-	self.m_autoSizeActivated = activated
-	if(activated == false) then
-		self.m_autoSizeRestore = {self:ShouldAutoSizeToContentsX(),self:ShouldAutoSizeToContentsY()}
-		self:SetAutoSizeToContents(false,false)
+function gui.BaseBox:SetAutoSizeActivated(activated, updateImmediately)
+	if self.m_autoSizeActivated == activated then
 		return
 	end
-	if(self.m_autoSizeRestore ~= nil) then
-		if(updateImmediately == nil) then updateImmediately = true end
-		self:SetAutoSizeToContents(self.m_autoSizeRestore[1],self.m_autoSizeRestore[2],updateImmediately)
+	self.m_autoSizeActivated = activated
+	if activated == false then
+		self.m_autoSizeRestore = { self:ShouldAutoSizeToContentsX(), self:ShouldAutoSizeToContentsY() }
+		self:SetAutoSizeToContents(false, false)
+		return
+	end
+	if self.m_autoSizeRestore ~= nil then
+		if updateImmediately == nil then
+			updateImmediately = true
+		end
+		self:SetAutoSizeToContents(self.m_autoSizeRestore[1], self.m_autoSizeRestore[2], updateImmediately)
 	end
 end
 function gui.BaseBox:SetFixedSize(fixed)
@@ -111,16 +142,26 @@ end
 -- The behavior for vertical boxes is the same, but opposite.
 function gui.BaseBox:SetAutoFillContentsToWidth(autoFill)
 	self.m_autoFillWidth = autoFill
-	if(autoFill) then self:SetFixedWidth(true) end
+	if autoFill then
+		self:SetFixedWidth(true)
+	end
 end
 function gui.BaseBox:SetAutoFillContentsToHeight(autoFill)
 	self.m_autoFillHeight = autoFill
-	if(autoFill) then self:SetFixedHeight(true) end
+	if autoFill then
+		self:SetFixedHeight(true)
+	end
 end
 function gui.BaseBox:SetAutoFillContents(autoFill)
 	self:SetAutoFillContentsToWidth(autoFill)
 	self:SetAutoFillContentsToHeight(autoFill)
 end
-function gui.BaseBox:SetAutoFillTarget(el) self.m_autoFillTarget = el end
-function gui.BaseBox:IsHorizontalBox() return false end
-function gui.BaseBox:IsVerticalBox() return false end
+function gui.BaseBox:SetAutoFillTarget(el)
+	self.m_autoFillTarget = el
+end
+function gui.BaseBox:IsHorizontalBox()
+	return false
+end
+function gui.BaseBox:IsVerticalBox()
+	return false
+end

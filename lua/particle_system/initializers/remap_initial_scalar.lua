@@ -6,7 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.InitializerRemapInitialScalar",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class(
+	"ents.ParticleSystemComponent.InitializerRemapInitialScalar",
+	ents.ParticleSystemComponent.BaseInitializer
+)
 
 function ents.ParticleSystemComponent.InitializerRemapInitialScalar:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -35,7 +38,7 @@ end
 
 local attributesWhichAre0To1 = {
 	-- PARTICLE_ATTRIBUTE_ALPHA_MASK | PARTICLE_ATTRIBUTE_ALPHA2_MASK
-	[ents.ParticleSystemComponent.Particle.FIELD_ID_ALPHA] = true
+	[ents.ParticleSystemComponent.Particle.FIELD_ID_ALPHA] = true,
 }
 local attributesWhichAreInts = {
 	-- PARTICLE_ATTRIBUTE_PARTICLE_ID_MASK | PARTICLE_ATTRIBUTE_HITBOX_INDEX_MASK
@@ -43,28 +46,39 @@ local attributesWhichAreInts = {
 function ents.ParticleSystemComponent.InitializerRemapInitialScalar:OnParticleCreated(pt)
 	local min = self.m_outputMinimum
 	local max = self.m_outputMaximum
-	if(attributesWhichAre0To1[self.m_outputFieldId] == true) then
-		min = math.clamp(min,0,1)
-		max = math.clamp(max,0,1)
+	if attributesWhichAre0To1[self.m_outputFieldId] == true then
+		min = math.clamp(min, 0, 1)
+		max = math.clamp(max, 0, 1)
 	end
 
-	if(attributesWhichAreInts[self.m_inputFieldId] == true) then
-
+	if attributesWhichAreInts[self.m_inputFieldId] == true then
 	end
 
 	local creationTime = pt:GetTimeCreated()
 	local input = pt:GetField(self.m_inputFieldId)
-	if(input == nil) then return end
+	if input == nil then
+		return
+	end
 	-- only use within start/end time frame and, if set, active input range
-	if((((creationTime < self.m_startTime) or (creationTime >= self.m_endTime)) and ((self.m_startTime ~= -1.0) and (self.m_endTime ~= -1.0))) or (self.m_activeRange and (input < self.m_inputMinimum or input > self.m_inputMaximum))) then
+	if
+		(
+			((creationTime < self.m_startTime) or (creationTime >= self.m_endTime))
+			and ((self.m_startTime ~= -1.0) and (self.m_endTime ~= -1.0))
+		) or (self.m_activeRange and (input < self.m_inputMinimum or input > self.m_inputMaximum))
+	then
 		--
 	else
-		local output = RemapValClamped(input,self.m_inputMinimum,self.m_inputMaximum,min,max)
-		if(self.m_scaleInitialRange) then output = pt:GetField(self.m_outputFieldId) *output end
-		pt:SetField(self.m_outputFieldId,output)
+		local output = RemapValClamped(input, self.m_inputMinimum, self.m_inputMaximum, min, max)
+		if self.m_scaleInitialRange then
+			output = pt:GetField(self.m_outputFieldId) * output
+		end
+		pt:SetField(self.m_outputFieldId, output)
 	end
 end
 function ents.ParticleSystemComponent.InitializerRemapInitialScalar:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_remap_initial_scalar",ents.ParticleSystemComponent.InitializerRemapInitialScalar)
+ents.ParticleSystemComponent.register_initializer(
+	"source_remap_initial_scalar",
+	ents.ParticleSystemComponent.InitializerRemapInitialScalar
+)

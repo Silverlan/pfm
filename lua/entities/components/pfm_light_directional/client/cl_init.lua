@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.PFMLightDirectional",BaseEntityComponent)
+util.register_class("ents.PFMLightDirectional", BaseEntityComponent)
 
 function ents.PFMLightDirectional:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -20,11 +20,13 @@ function ents.PFMLightDirectional:Initialize()
 	self.m_listeners = {}
 end
 function ents.PFMLightDirectional:OnRemove()
-	for _,cb in ipairs(self.m_listeners) do
-		if(cb:IsValid()) then cb:Remove() end
+	for _, cb in ipairs(self.m_listeners) do
+		if cb:IsValid() then
+			cb:Remove()
+		end
 	end
 end
-function ents.PFMLightDirectional:Setup(actorData,lightData)
+function ents.PFMLightDirectional:Setup(actorData, lightData)
 	-- TODO
 end
-ents.COMPONENT_PFM_LIGHT_DIRECTIONAL = ents.register_component("pfm_light_directional",ents.PFMLightDirectional)
+ents.COMPONENT_PFM_LIGHT_DIRECTIONAL = ents.register_component("pfm_light_directional", ents.PFMLightDirectional)

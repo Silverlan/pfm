@@ -6,20 +6,27 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Component = util.register_class("ents.PFMOverlayObject",BaseEntityComponent)
+local Component = util.register_class("ents.PFMOverlayObject", BaseEntityComponent)
 
-function Component:Initialize()
-end
+function Component:Initialize() end
 function Component:OnEntitySpawn()
 	local pm = tool.get_filmmaker()
-	if(util.is_valid(pm) == false) then return end
+	if util.is_valid(pm) == false then
+		return
+	end
 	local scene = pm:GetOverlayScene()
-	if(util.is_valid(scene)) then self:GetEntity():AddToScene(scene) end
+	if util.is_valid(scene) then
+		self:GetEntity():AddToScene(scene)
+	end
 end
 function Component:OnRemove()
 	local pm = tool.get_filmmaker()
-	if(util.is_valid(pm) == false) then return end
+	if util.is_valid(pm) == false then
+		return
+	end
 	local scene = pm:GetOverlayScene()
-	if(util.is_valid(scene)) then self:GetEntity():RemoveFromScene(scene) end
+	if util.is_valid(scene) then
+		self:GetEntity():RemoveFromScene(scene)
+	end
 end
-ents.COMPONENT_PFM_OVERLAY_OBJECT = ents.register_component("pfm_overlay_object",Component)
+ents.COMPONENT_PFM_OVERLAY_OBJECT = ents.register_component("pfm_overlay_object", Component)

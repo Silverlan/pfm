@@ -15,27 +15,35 @@ pfm.undoredo = pfm.undoredo or {}
 pfm.undoredo.stack = pfm.undoredo.stack or {}
 pfm.undoredo.detail = pfm.undoredo.detail or {}
 pfm.undoredo.action_position = 0
-pfm.undoredo.push = function(name,actionDo,undo)
-	local pos = pfm.undoredo.action_position +1
-	pfm.log("Pushing action '" .. locale.get_text(name) .. "' to undoredo stack (#" .. pos .. ").",pfm.LOG_CATEGORY_PFM_UNDOREDO)
+pfm.undoredo.push = function(name, actionDo, undo)
+	local pos = pfm.undoredo.action_position + 1
+	pfm.log(
+		"Pushing action '" .. locale.get_text(name) .. "' to undoredo stack (#" .. pos .. ").",
+		pfm.LOG_CATEGORY_PFM_UNDOREDO
+	)
 	pfm.undoredo.stack[pos] = {
 		name = name,
 		action = actionDo,
-		undo = undo
+		undo = undo,
 	}
 	pfm.undoredo.action_position = pos
-	while(#pfm.undoredo.stack > pos) do pfm.undoredo.stack[#pfm.undoredo.stack] = nil end
+	while #pfm.undoredo.stack > pos do
+		pfm.undoredo.stack[#pfm.undoredo.stack] = nil
+	end
 	local undoLimit = console.get_convar_int("pfm_max_undo_steps")
-	while(#pfm.undoredo.stack > undoLimit) do
-		pfm.log("Undo limit reached, deleting undo step '" .. locale.get_text(pfm.undoredo.stack[1].name) .. "'...",pfm.LOG_CATEGORY_PFM_UNDOREDO)
-		table.remove(pfm.undoredo.stack,1)
-		pfm.undoredo.action_position = pfm.undoredo.action_position -1
+	while #pfm.undoredo.stack > undoLimit do
+		pfm.log(
+			"Undo limit reached, deleting undo step '" .. locale.get_text(pfm.undoredo.stack[1].name) .. "'...",
+			pfm.LOG_CATEGORY_PFM_UNDOREDO
+		)
+		table.remove(pfm.undoredo.stack, 1)
+		pfm.undoredo.action_position = pfm.undoredo.action_position - 1
 	end
 	return actionDo
 end
 
 pfm.undoredo.clear = function()
-	pfm.log("Clearing undoredo stack.",pfm.LOG_CATEGORY_PFM_UNDOREDO)
+	pfm.log("Clearing undoredo stack.", pfm.LOG_CATEGORY_PFM_UNDOREDO)
 	pfm.undoredo.stack = {}
 	pfm.undoredo.action_position = 0
 end
@@ -43,19 +51,23 @@ end
 pfm.undo = function()
 	local pos = pfm.undoredo.action_position
 	local data = pfm.undoredo.stack[pos]
-	if(data == nil) then return end
-	pfm.log("Undoing action #" .. pos .. " '" .. locale.get_text(data.name) .. "'...",pfm.LOG_CATEGORY_PFM_UNDOREDO)
+	if data == nil then
+		return
+	end
+	pfm.log("Undoing action #" .. pos .. " '" .. locale.get_text(data.name) .. "'...", pfm.LOG_CATEGORY_PFM_UNDOREDO)
 	data.undo()
-	pfm.undoredo.action_position = pos -1
+	pfm.undoredo.action_position = pos - 1
 
 	pfm.tag_render_scene_as_dirty()
 end
 
 pfm.redo = function()
-	local pos = pfm.undoredo.action_position +1
+	local pos = pfm.undoredo.action_position + 1
 	local data = pfm.undoredo.stack[pos]
-	if(data == nil) then return end
-	pfm.log("Redoing action #" .. pos .. " '" .. locale.get_text(data.name) .. "'...",pfm.LOG_CATEGORY_PFM_UNDOREDO)
+	if data == nil then
+		return
+	end
+	pfm.log("Redoing action #" .. pos .. " '" .. locale.get_text(data.name) .. "'...", pfm.LOG_CATEGORY_PFM_UNDOREDO)
 	data.action()
 	pfm.undoredo.action_position = pos
 
@@ -63,13 +75,19 @@ pfm.redo = function()
 end
 
 pfm.undoredo.detail.print = function()
-	print("Position: ",pfm.undoredo.action_position)
+	print("Position: ", pfm.undoredo.action_position)
 	print("Stack:")
 	console.print_table(pfm.undoredo.stack)
 end
 
 pfm.undoredo.detail.unit_test = function()
-	local function push_case(i) pfm.undoredo.push(tostring(i),function() print("Do (" .. i .. ")") end,function() print("Undo (" .. i .. ")") end) end
+	local function push_case(i)
+		pfm.undoredo.push(tostring(i), function()
+			print("Do (" .. i .. ")")
+		end, function()
+			print("Undo (" .. i .. ")")
+		end)
+	end
 	print("Test 1")
 	pfm.undoredo.clear()
 	push_case(1)

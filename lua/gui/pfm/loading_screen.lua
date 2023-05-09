@@ -8,8 +8,10 @@
 
 include("../base_loading_screen.lua")
 
-pfm.show_loading_screen = function(enabled,mapName)
+pfm.show_loading_screen = function(enabled, mapName)
 	local loadText
-	if(mapName ~= nil) then loadText = locale.get_text("pfm_loading_map",{mapName}) end
-	return pfm.show_base_loading_screen(enabled,"pragma filmmaker","pfm/logo/pfm_logo",loadText)
+	if mapName ~= nil then
+		loadText = locale.get_text("pfm_loading_map", { mapName })
+	end
+	return pfm.show_base_loading_screen(enabled, "pragma filmmaker", "pfm/logo/pfm_logo", loadText)
 end

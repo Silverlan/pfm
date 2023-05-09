@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.SequenceRandom",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class("ents.ParticleSystemComponent.SequenceRandom", ents.ParticleSystemComponent.BaseInitializer)
 
 function ents.ParticleSystemComponent.SequenceRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -23,9 +23,9 @@ function ents.ParticleSystemComponent.SequenceRandom:OnParticleSystemStopped(pt)
 end
 function ents.ParticleSystemComponent.SequenceRandom:OnParticleCreated(pt)
 	--print("[Particle Initializer] On particle created")
-	pt:SetSequence(pt:CalcRandomInt(self.m_sequenceMin,self.m_sequenceMax))
+	pt:SetSequence(pt:CalcRandomInt(self.m_sequenceMin, self.m_sequenceMax))
 end
 function ents.ParticleSystemComponent.SequenceRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_sequence_random",ents.ParticleSystemComponent.SequenceRandom)
+ents.ParticleSystemComponent.register_initializer("source_sequence_random", ents.ParticleSystemComponent.SequenceRandom)

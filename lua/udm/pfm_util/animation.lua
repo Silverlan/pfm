@@ -6,4 +6,6 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function pfm.udm.Animation:GetAnimationClip() return self:GetParent() end
+function pfm.udm.Animation:GetAnimationClip()
+	return self:GetParent()
+end

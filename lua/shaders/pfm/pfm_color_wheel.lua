@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("shader.PFMColorWheel",shader.BaseGUITextured)
+util.register_class("shader.PFMColorWheel", shader.BaseGUITextured)
 
 shader.PFMColorWheel.FragmentShader = "pfm/fs_hsv_color_wheel"
 shader.PFMColorWheel.VertexShader = "wgui/vs_wgui_textured"
@@ -14,4 +14,4 @@ shader.PFMColorWheel.VertexShader = "wgui/vs_wgui_textured"
 function shader.PFMColorWheel:__init()
 	shader.BaseGUITextured.__init(self)
 end
-shader.register("pfm_color_wheel",shader.PFMColorWheel)
+shader.register("pfm_color_wheel", shader.PFMColorWheel)

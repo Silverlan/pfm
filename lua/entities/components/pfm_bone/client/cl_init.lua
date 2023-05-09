@@ -6,19 +6,19 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Component = util.register_class("ents.PFMBone",BaseEntityComponent)
+local Component = util.register_class("ents.PFMBone", BaseEntityComponent)
 
-Component:RegisterMember("BoneId",udm.TYPE_INT32,-1)
-Component:RegisterMember("Selected",udm.TYPE_BOOLEAN,false,{
+Component:RegisterMember("BoneId", udm.TYPE_INT32, -1)
+Component:RegisterMember("Selected", udm.TYPE_BOOLEAN, false, {
 	onChange = function(self)
 		self:UpdateSelection()
-	end
-},bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
-Component:RegisterMember("Persistent",udm.TYPE_BOOLEAN,false,{
+	end,
+}, bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT, ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
+Component:RegisterMember("Persistent", udm.TYPE_BOOLEAN, false, {
 	onChange = function(self)
 		self:UpdateSelection()
-	end
-},bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
+	end,
+}, bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT, ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -30,12 +30,16 @@ end
 
 function Component:UpdateSelection()
 	local selected = self:IsSelected()
-	if(selected) then
+	if selected then
 		local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
-		if(renderC ~= nil) then renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_WORLD) end
+		if renderC ~= nil then
+			renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_WORLD)
+		end
 	else
 		local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
-		if(renderC ~= nil) then renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_NONE) end
+		if renderC ~= nil then
+			renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_NONE)
+		end
 	end
 end
-ents.COMPONENT_PFM_BONE = ents.register_component("pfm_bone",Component)
+ents.COMPONENT_PFM_BONE = ents.register_component("pfm_bone", Component)

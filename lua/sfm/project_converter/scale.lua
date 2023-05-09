@@ -8,13 +8,13 @@
 
 local function find_scale_channels(channels)
 	local scaleChannels = {}
-	for _,channel in ipairs(channels) do
-		if(channel:GetToAttribute() == "scale") then
+	for _, channel in ipairs(channels) do
+		if channel:GetToAttribute() == "scale" then
 			scaleChannels[channel] = true
 			local fromElement = channel:GetFromElement()
-			for _,channelOther in ipairs(channels) do
+			for _, channelOther in ipairs(channels) do
 				local toElement = channelOther:GetToElement()
-				if(util.is_same_object(fromElement,toElement)) then
+				if util.is_same_object(fromElement, toElement) then
 					scaleChannels[channelOther] = true
 				end
 			end
@@ -22,52 +22,58 @@ local function find_scale_channels(channels)
 	end
 
 	local scaleChannelList = {}
-	for channel in pairs(scaleChannels) do table.insert(scaleChannelList,channel) end
+	for channel in pairs(scaleChannels) do
+		table.insert(scaleChannelList, channel)
+	end
 	return scaleChannelList
 end
 
-local function search_and_replace(curEl,searchAndReplaceTable,traversed)
+local function search_and_replace(curEl, searchAndReplaceTable, traversed)
 	-- Replace all instances of the search-element in the tree with the replace element
 	traversed = traversed or {}
-	if(traversed[curEl] ~= nil or curEl:IsElement() == false) then return end
+	if traversed[curEl] ~= nil or curEl:IsElement() == false then
+		return
+	end
 	traversed[curEl] = true
 	local children = curEl:GetChildren()
-	for name,child in pairs(curEl:GetChildren()) do
-		if(searchAndReplaceTable[child] ~= nil) then
+	for name, child in pairs(curEl:GetChildren()) do
+		if searchAndReplaceTable[child] ~= nil then
 			local replace = searchAndReplaceTable[child]
 			curEl:RemoveChild(name)
-			curEl:AddChild(replace,name)
+			curEl:AddChild(replace, name)
 		end
 	end
 
-	for name,child in pairs(curEl:GetChildren()) do
-		search_and_replace(child,searchAndReplaceTable,traversed)
+	for name, child in pairs(curEl:GetChildren()) do
+		search_and_replace(child, searchAndReplaceTable, traversed)
 	end
 end
 
 sfm.convert_scale_factors_to_vectors = function(project)
 	local root = project:GetUDMRootNode()
 	local channels = {}
-	root:FindElementsByType(fudm.ELEMENT_TYPE_PFM_CHANNEL,channels)
+	root:FindElementsByType(fudm.ELEMENT_TYPE_PFM_CHANNEL, channels)
 
 	local scaleChannels = find_scale_channels(channels)
 	local modifiedElements = {}
 	local searchAndReplaceTable = {}
 	local function sfm_to_pfm_scale_expression_operator(op)
-		if(modifiedElements[op] ~= nil) then return end
+		if modifiedElements[op] ~= nil then
+			return
+		end
 		modifiedElements[op] = true
 
-		local attrs = {"value","lo","hi","result"}
-		for _,attr in ipairs(attrs) do
+		local attrs = { "value", "lo", "hi", "result" }
+		for _, attr in ipairs(attrs) do
 			local prop = op:GetProperty(attr)
-			if(prop ~= nil) then
+			if prop ~= nil then
 				local value = prop:GetValue()
-				local newProp = fudm.Vector3(Vector(value,value,value))
+				local newProp = fudm.Vector3(Vector(value, value, value))
 				searchAndReplaceTable[prop] = newProp
 			end
 		end
 	end
-	for _,channel in ipairs(scaleChannels) do
+	for _, channel in ipairs(scaleChannels) do
 		local log = channel:GetLog()
 		--[[for _,layer in ipairs(log:GetLayers():GetTable()) do
 			local values = layer:GetValues()
@@ -81,17 +87,21 @@ sfm.convert_scale_factors_to_vectors = function(project)
 		end]]
 
 		local fromElement = channel:GetFromElement()
-		if(fromElement ~= nil and fromElement:GetType() == fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR) then sfm_to_pfm_scale_expression_operator(fromElement) end
+		if fromElement ~= nil and fromElement:GetType() == fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR then
+			sfm_to_pfm_scale_expression_operator(fromElement)
+		end
 
 		local toElement = channel:GetToElement()
-		if(toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR) then sfm_to_pfm_scale_expression_operator(toElement) end
+		if toElement ~= nil and toElement:GetType() == fudm.ELEMENT_TYPE_PFM_EXPRESSION_OPERATOR then
+			sfm_to_pfm_scale_expression_operator(toElement)
+		end
 
 		local defaultValueAttr = log:GetDefaultValueAttr()
-		if(defaultValueAttr ~= nil) then
+		if defaultValueAttr ~= nil then
 			local defaultValue = defaultValueAttr:GetValue()
-			local newDefaultValueAttr = fudm.Vector3(Vector(defaultValue,defaultValue,defaultValue))
+			local newDefaultValueAttr = fudm.Vector3(Vector(defaultValue, defaultValue, defaultValue))
 			searchAndReplaceTable[defaultValueAttr] = newDefaultValueAttr
 		end
 	end
-	search_and_replace(root,searchAndReplaceTable)
+	search_and_replace(root, searchAndReplaceTable)
 end

@@ -6,7 +6,10 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("ents.ParticleSystemComponent.InitializerRadiusRandom",ents.ParticleSystemComponent.BaseInitializer)
+util.register_class(
+	"ents.ParticleSystemComponent.InitializerRadiusRandom",
+	ents.ParticleSystemComponent.BaseInitializer
+)
 
 function ents.ParticleSystemComponent.InitializerRadiusRandom:__init()
 	ents.ParticleSystemComponent.BaseInitializer.__init(self)
@@ -24,10 +27,14 @@ function ents.ParticleSystemComponent.InitializerRadiusRandom:OnParticleSystemSt
 end
 function ents.ParticleSystemComponent.InitializerRadiusRandom:OnParticleCreated(pt)
 	--print("[Particle Initializer] On particle created")
-	local radius = self.m_radiusMin +(math.randomf(0.0,self.m_radiusMax -self.m_radiusMin) ^self.m_radiusRandomExponent)
+	local radius = self.m_radiusMin
+		+ (math.randomf(0.0, self.m_radiusMax - self.m_radiusMin) ^ self.m_radiusRandomExponent)
 	pt:SetRadius(radius)
 end
 function ents.ParticleSystemComponent.InitializerRadiusRandom:OnParticleDestroyed(pt)
 	--print("[Particle Initializer] On particle destroyed")
 end
-ents.ParticleSystemComponent.register_initializer("source_radius_random",ents.ParticleSystemComponent.InitializerRadiusRandom)
+ents.ParticleSystemComponent.register_initializer(
+	"source_radius_random",
+	ents.ParticleSystemComponent.InitializerRadiusRandom
+)

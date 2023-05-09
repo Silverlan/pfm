@@ -8,26 +8,29 @@
 
 include("pbr.lua")
 
-util.register_class("unirender.ToonShader",unirender.PBRShader)
+util.register_class("unirender.ToonShader", unirender.PBRShader)
 function unirender.ToonShader:__init()
 	unirender.PBRShader.__init(self)
 end
-function unirender.ToonShader:InitializeCombinedPass(desc,outputNode)
+function unirender.ToonShader:InitializeCombinedPass(desc, outputNode)
 	local mat = self:GetMaterial()
 	local albedoMap = mat:GetTextureInfo("albedo_map")
-	if(albedoMap == nil) then return end
+	if albedoMap == nil then
+		return
+	end
 
 	local texPath = unirender.get_texture_path(albedoMap:GetName())
-	if(texPath == nil) then return end
+	if texPath == nil then
+		return
+	end
 
 	local data = mat:GetDataBlock()
-	local alphaFactor = data:GetFloat("alpha_factor",1.0)
+	local alphaFactor = data:GetFloat("alpha_factor", 1.0)
 
-	local alphaMode = game.Material.ALPHA_MODE_BLEND--mat:GetAlphaMode()
+	local alphaMode = game.Material.ALPHA_MODE_BLEND --mat:GetAlphaMode()
 	local alphaCutoff = mat:GetAlphaCutoff()
 
-
-	local albedoColor,alpha = self:AddAlbedoNode(desc,mat)
+	local albedoColor, alpha = self:AddAlbedoNode(desc, mat)
 	--[[local nAlbedoMap = desc:AddNode(unirender.NODE_ALBEDO_MAP)
 	nAlbedoMap:SetProperty(unirender.Node.albedo_map.IN_TEXTURE,texPath)--albedoMap:GetName())
 	nAlbedoMap:SetProperty(unirender.Node.albedo_map.IN_ALPHA_FACTOR,alphaFactor)
@@ -46,11 +49,8 @@ function unirender.ToonShader:InitializeCombinedPass(desc,outputNode)
 	--test:GetPrimaryOutputSocket():Link(outputNode:GetInputSocket(unirender.Node.output.IN_SURFACE))
 
 	local toon = desc:AddNode(unirender.NODE_TOON_BSDF)
-	albedoColor:Link(toon,unirender.Node.toon_bsdf.IN_COLOR)
-	toon:GetPrimaryOutputSocket():Link(outputNode,unirender.Node.output.IN_SURFACE)
-
-
-
+	albedoColor:Link(toon, unirender.Node.toon_bsdf.IN_COLOR)
+	toon:GetPrimaryOutputSocket():Link(outputNode, unirender.Node.output.IN_SURFACE)
 
 	--[[print("Albedo: ",albedoMap)
 
@@ -68,6 +68,5 @@ function unirender.ToonShader:InitializeCombinedPass(desc,outputNode)
 	desc:Link(rgb,"image",outputNode,unirender.Node.output.IN_SURFACE)]]
 
 	--local t = desc:AddNode("test")
-
 end
-unirender.register_shader("toon",unirender.ToonShader)
+unirender.register_shader("toon", unirender.ToonShader)
