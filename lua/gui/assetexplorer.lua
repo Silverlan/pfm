@@ -328,28 +328,30 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 				end
 			end
 
-			if numInFavorites == #tSelected then
-				pContext:AddItem(locale.get_text("pfm_asset_icon_remove_from_favorites"), function()
-					for _, el in ipairs(tSelected) do
-						if el:IsValid() then
-							local path = el:GetRelativeAsset()
-							self:RemoveFromFavorites(path)
-							if self.m_inSpecial == "fav" then
-								self:ReloadPath()
-								self:ScheduleUpdate()
+			if self:IsSpecialDirectoryEnabled("favorites") then
+				if numInFavorites == #tSelected then
+					pContext:AddItem(locale.get_text("pfm_asset_icon_remove_from_favorites"), function()
+						for _, el in ipairs(tSelected) do
+							if el:IsValid() then
+								local path = el:GetRelativeAsset()
+								self:RemoveFromFavorites(path)
+								if self.m_inSpecial == "fav" then
+									self:ReloadPath()
+									self:ScheduleUpdate()
+								end
 							end
 						end
-					end
-				end)
-			else
-				pContext:AddItem(locale.get_text("pfm_asset_icon_add_to_favorites"), function()
-					for _, el in ipairs(tSelected) do
-						if el:IsValid() then
-							local path = el:GetRelativeAsset()
-							self:AddToFavorites(path)
+					end)
+				else
+					pContext:AddItem(locale.get_text("pfm_asset_icon_add_to_favorites"), function()
+						for _, el in ipairs(tSelected) do
+							if el:IsValid() then
+								local path = el:GetRelativeAsset()
+								self:AddToFavorites(path)
+							end
 						end
-					end
-				end)
+					end)
+				end
 			end
 			if #tSelectedFiles == 1 then
 				local assetPath = tSelectedFiles[1]:GetAsset()
@@ -391,6 +393,19 @@ end
 function gui.AssetExplorer:PopulateContextMenu(pContext, tSelectedFiles, tExternalFiles) end
 function gui.AssetExplorer:AddAsset(assetName, isDirectory, fDirClickHandler)
 	return self:AddItem(assetName, isDirectory, fDirClickHandler)
+end
+function gui.AssetExplorer:SetSpecialDirectoryEnabled(specialDir, enabled)
+	self.m_specialDirEnabled = self.m_specialDirEnabled or {}
+	self.m_specialDirEnabled[specialDir] = enabled
+end
+function gui.AssetExplorer:IsSpecialDirectoryEnabled(specialDir)
+	if self.m_specialDirEnabled == nil then
+		return true
+	end
+	if self.m_specialDirEnabled[specialDir] == nil then
+		return true
+	end
+	return self.m_specialDirEnabled[specialDir]
 end
 function gui.AssetExplorer:ListFiles()
 	if self.m_inactive then
@@ -436,14 +451,18 @@ function gui.AssetExplorer:ListFiles()
 		tFiles, tDirectories, preSorted = self:FindFiles()
 	end
 	if self:IsAtRoot() then
-		self:AddAsset(locale.get_text("favorites"), true, function()
-			self.m_inSpecial = "fav"
-			self:Update()
-		end)
-		self:AddAsset(locale.get_text("new"), true, function()
-			self.m_inSpecial = "new"
-			self:Update()
-		end)
+		if self:IsSpecialDirectoryEnabled("favorites") then
+			self:AddAsset(locale.get_text("favorites"), true, function()
+				self.m_inSpecial = "fav"
+				self:Update()
+			end)
+		end
+		if self:IsSpecialDirectoryEnabled("new") then
+			self:AddAsset(locale.get_text("new"), true, function()
+				self.m_inSpecial = "new"
+				self:Update()
+			end)
+		end
 	end
 	for _, d in ipairs(tDirectories) do
 		self:AddAsset(d, true)

@@ -25,6 +25,8 @@ function Element:OnInitialize()
 			self:HidePreview()
 		end)
 	end)
+	self:SetSpecialDirectoryEnabled("favorites", false)
+	self:SetSpecialDirectoryEnabled("new", false)
 end
 function Element:CreateAssetIcon(path, assetName, isDirectory, importAsset)
 	if isDirectory then
@@ -75,9 +77,17 @@ function Element:ApplyAsset(path, importAsset)
 		if #icon > 0 then
 			self:SetMaterial(icon)
 		end
-		local title = udmData:GetValue("title", udm.TYPE_STRING) or ""
-		if #title > 0 then
-			self:SetText(title)
+
+		local name = udmData:GetValue("name", udm.TYPE_STRING)
+		if name ~= nil then
+			local res, text = locale.get_text("pfm_tutorial_" .. name, true)
+			if res ~= false then
+				local posInSeries = udmData:GetValue("position_in_series", udm.TYPE_UINT32)
+				if posInSeries ~= nil then
+					text = string.fill_zeroes(tostring(posInSeries), 2) .. " - " .. text
+				end
+				self:SetText(text)
+			end
 		end
 	else
 		self:SetMaterial("error", self:GetWidth(), self:GetHeight())

@@ -13,7 +13,7 @@ function Element:LoadTutorial(tutorial)
 	local fileName = "tutorials/" .. file.remove_file_extension(tutorial, { "udm" }) .. ".udm"
 	local udmData, err = udm.load(fileName)
 	if udmData == false then
-		pfm.log("Failed to load tutorial '" .. tutorial, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		pfm.log("Failed to load tutorial '" .. tutorial .. "': " .. err, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
 		return false, err
 	end
 	udmData = udmData:GetAssetData():GetData()
