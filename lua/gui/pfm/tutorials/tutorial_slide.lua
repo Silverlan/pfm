@@ -100,13 +100,22 @@ function Element:AddLocationMarker(pos)
 	return ent
 end
 function Element:AddHighlight(el)
-	if util.is_valid(el) == false then
+	local els = el
+	if type(els) ~= "table" then
+		els = { els }
+	end
+	if #els == 0 then
+		return
+	end
+	local elFirst = els[1]
+	if util.is_valid(elFirst) == false then
 		return
 	end
 	local elOutline = gui.create("WIElementSelectionOutline", self)
-	elOutline:SetTargetElement(el)
-	table.insert(self.m_highlights, el)
-	return el
+	elOutline:SetTargetElement(els)
+	elOutline:Update()
+	table.insert(self.m_highlights, elOutline)
+	return elFirst
 end
 function Element:SetFocusElement(el)
 	if util.is_valid(el) == false then

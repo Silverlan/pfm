@@ -19,6 +19,7 @@ function Element:OnInitialize()
 	elOutline:SetOutlineWidth(2)
 	self.m_elOutline = elOutline
 
+	self.m_targetElements = {}
 	self.m_elCallbacks = {}
 end
 function Element:SetOutlineType(type)
@@ -31,39 +32,56 @@ function Element:OnRemove()
 	util.remove(self.m_elCallbacks)
 end
 function Element:SetTargetElement(el)
+	local els = el
+	if type(els) ~= "table" then
+		els = { els }
+	end
 	util.remove(self.m_elCallbacks)
-	self.m_targetElement = el
-	table.insert(
-		self.m_elCallbacks,
-		el:AddCallback("SetSize", function()
-			self:ScheduleUpdate()
-		end)
-	)
-	table.insert(
-		self.m_elCallbacks,
-		el:AddCallback("SetPos", function()
-			self:ScheduleUpdate()
-		end)
-	)
+	self.m_targetElements = els
+	for _, el in ipairs(els) do
+		table.insert(
+			self.m_elCallbacks,
+			el:AddCallback("SetSize", function()
+				self:ScheduleUpdate()
+			end)
+		)
+		table.insert(
+			self.m_elCallbacks,
+			el:AddCallback("SetPos", function()
+				self:ScheduleUpdate()
+			end)
+		)
+	end
 
 	self:ScheduleUpdate()
 end
 function Element:GetTargetElement()
-	return self.m_targetElement
+	return self.m_targetElements[1]
 end
 function Element:UpdateBounds()
-	if util.is_valid(self.m_targetElement) == false then
+	local min = Vector2(math.huge, math.huge)
+	local max = Vector2(-math.huge, -math.huge)
+	for i, el in ipairs(self.m_targetElements) do
+		if util.is_valid(el) ~= false then
+			if i == 1 and el:IsHidden() then
+				self:SetVisible(false)
+				return
+			end
+			self:SetVisible(true)
+			local absPos = el:GetAbsolutePos()
+			local size = el:GetSize()
+			local endPos = absPos + size
+			min.x = math.min(min.x, absPos.x)
+			min.y = math.min(min.y, absPos.y)
+			max.x = math.max(max.x, endPos.x)
+			max.y = math.max(max.y, endPos.y)
+		end
+	end
+	if min.x == math.huge then
 		return
 	end
-	if self.m_targetElement:IsHidden() then
-		self:SetVisible(false)
-		return
-	end
-	self:SetVisible(true)
-	local absPos = self.m_targetElement:GetAbsolutePos()
-	local size = self.m_targetElement:GetSize()
-	self:SetAbsolutePos(absPos)
-	self:SetSize(size)
+	self:SetAbsolutePos(min)
+	self:SetSize(max - min)
 end
 function Element:OnUpdate()
 	self:UpdateBounds()
