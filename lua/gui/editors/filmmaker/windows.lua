@@ -17,6 +17,7 @@ pfm.register_window = function(name, category, localizedName, factory)
 		localizedName = localizedName,
 		factory = factory,
 	})
+	pfm["WINDOW_" .. name:upper()] = name
 end
 
 pfm.register_window("actor_editor", "editors", locale.get_text("pfm_actor_editor"), function(pm)

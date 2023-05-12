@@ -216,15 +216,38 @@ function Element:AddMessageBox(msg, audioFile)
 		local max = math.max(spaceLeft - w, spaceRight - w, spaceUp - h, spaceDown - h)
 		local hw = el:GetHalfWidth()
 		local hh = el:GetHalfHeight()
+		local offset = 0.333
+		local oneMinusOffset = 1.0 - offset
 		if spaceLeft - w >= max then
-			el:SetPos(spaceLeft * 0.75 - hw, self:GetHeight() * 0.25 - hh)
+			el:SetPos(spaceLeft * oneMinusOffset - hw, self:GetHeight() * offset - hh)
 		elseif spaceRight - w >= max then
-			el:SetPos(posAbsEnd.x + spaceRight * 0.75 - hw, self:GetHeight() * 0.25 - hh)
+			el:SetPos(posAbsEnd.x + spaceRight * oneMinusOffset - hw, self:GetHeight() * offset - hh)
 		elseif spaceUp - h >= max then
-			el:SetPos(self:GetWidth() * 0.25 - hw, spaceUp * 0.75 - hh)
+			el:SetPos(self:GetWidth() * offset - hw, spaceUp * oneMinusOffset - hh)
 		elseif spaceDown - h >= max then
-			el:SetPos(self:GetWidth() * 0.25 - hw, posAbsEnd.y + spaceDown * 0.75 - hh)
+			el:SetPos(self:GetWidth() * offset - hw, posAbsEnd.y + spaceDown * oneMinusOffset - hh)
 		end
+
+		-- If element is out of bounds, re-adjust its position
+		local margin = 20
+		if el:GetX() <= margin then
+			el:SetX(margin)
+		elseif el:GetRight() >= self:GetWidth() - margin then
+			el:SetX(self:GetWidth() - el:GetWidth() - 20)
+		end
+		if el:GetY() <= margin then
+			el:SetY(margin)
+		elseif el:GetBottom() >= self:GetHeight() - margin then
+			el:SetY(self:GetHeight() - el:GetHeight() - 20)
+		end
+
+		--[[if
+			(el:GetRight() > posAbs.x and el:GetX() < posAbsEnd.x)
+			and (el:GetBottom() > posAbs.y and el:GetY() < posAbsEnd.y)
+		then
+			el:SetPos(posAbs.x + elTgt:GetHalfWidth() - hw, posAbs.y + elTgt:GetHalfHeight() - hh)
+		end]]
+
 		overlay:SetTarget(elFocus)
 	else
 		el:CenterToParent()
@@ -240,6 +263,85 @@ function Element:AddMessageBox(msg, audioFile)
 	end
 
 	return el
+end
+function Element:SetMinWindowFrameDividerFraction(windowIdentifier, fraction)
+	return self:SetWindowFrameDividerFraction(windowIdentifier, fraction, true)
+end
+function Element:GetWindowFrame(windowIdentifier)
+	return tool.get_filmmaker():GetWindowFrame(windowIdentifier)
+end
+function Element:GetWindowFrameDividers(windowIdentifier)
+	local frame = self:GetWindowFrame(windowIdentifier)
+	if util.is_valid(frame) == false then
+		return
+	end
+	local parent = frame:GetParent()
+	if parent == nil then
+		return
+	end
+	local className = parent:GetClass()
+	if className ~= "wihbox" and className ~= "wivbox" then
+		return
+	end
+	local children = parent:GetChildren()
+	local preDivider
+	local postDivider
+	for i, c in ipairs(children) do
+		if c:GetClass() == "wiresizer" then
+			preDivider = c
+		end
+		if c == frame then
+			for j = i, #children do
+				if children[j]:GetClass() == "wiresizer" then
+					postDivider = children[j]
+					break
+				end
+			end
+			break
+		end
+	end
+	return preDivider, postDivider, parent
+end
+function Element:SetWindowFrameDividerFraction(windowIdentifier, fraction, dontChangeIfLargerFraction)
+	local frame = self:GetWindowFrame(windowIdentifier)
+	if util.is_valid(frame) == false then
+		return
+	end
+	local preDivider, postDivider, parent = self:GetWindowFrameDividers(windowIdentifier)
+	local children = parent:GetChildren()
+	for i, c in ipairs(children) do
+		if c:GetClass() == "wiresizer" then
+			preDivider = c
+		end
+		if c == frame then
+			for j = i, #children do
+				if children[j]:GetClass() == "wiresizer" then
+					postDivider = children[j]
+					break
+				end
+			end
+			break
+		end
+	end
+	if preDivider ~= nil then
+		fraction = 1.0 - fraction
+		if
+			dontChangeIfLargerFraction == nil
+			or (dontChangeIfLargerFraction == true and preDivider:GetFraction() < fraction)
+		then
+			preDivider:SetFraction(fraction)
+		end
+		return preDivider
+	elseif postDivider ~= nil then
+		if
+			dontChangeIfLargerFraction == nil
+			or (dontChangeIfLargerFraction == true and postDivider:GetFraction() < fraction)
+		then
+			postDivider:SetFraction(fraction)
+		end
+		return postDivider
+	end
+	-- TODO: What if there is both a pre- and a post-divider?
 end
 function Element:IsAudioEnabled()
 	return console.get_convar_bool("pfm_tutorial_audio_enabled")

@@ -77,26 +77,37 @@ function Element:OnUpdate()
 	endPoint = Vector2()
 	local horizontal = true
 	local invArrow = false
+	local hide = false
 	if absTgt.x > absSrcEnd.x then
 		-- Right
 		startPoint = Vector2(absTgt.x, absTgt.y + hhTgt)
 		endPoint = Vector2(absSrcEnd.x, absSrc.y + hhSrc)
 		invArrow = true
+		hide = (endPoint.x > startPoint.x)
 	elseif absTgtEnd.x < absSrc.x then
 		-- Left
 		startPoint = Vector2(absSrc.x, absSrc.y + hhSrc)
 		endPoint = Vector2(absTgtEnd.x, absTgt.y + hhTgt)
+		hide = (endPoint.x > startPoint.x)
 	elseif absTgt.y > absSrcEnd.y then
 		-- Down
 		startPoint = Vector2(absSrc.x + hwSrc, absSrcEnd.y)
 		endPoint = Vector2(absTgt.x + hwTgt, absTgt.y)
 		horizontal = false
+		hide = (endPoint.y <= startPoint.y)
 	else
 		-- Up
 		startPoint = Vector2(absTgt.x + hwTgt, absTgtEnd.y)
 		endPoint = Vector2(absSrc.x + hwSrc, absSrc.y)
 		horizontal = false
 		invArrow = true
+		hide = (endPoint.y <= startPoint.y)
+	end
+
+	for _, l in ipairs(self.m_lines) do
+		if l:IsValid() then
+			l:SetVisible(not hide)
+		end
 	end
 
 	local mid = (startPoint + endPoint) * 0.5
