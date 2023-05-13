@@ -391,9 +391,11 @@ function gui.PFMRenderPreview:ApplyToneMappingSettings(toneMapping)
 	end
 	self.m_rt:SetToneMappingArguments(args)
 end
-function gui.PFMRenderPreview:UpdateViewport(settings)
+function gui.PFMRenderPreview:UpdateViewport(settings, camRot)
+	self.m_rt:GetToneMappedImageElement():SetHorizontalRange(settings:GetPanoramaHorizontalRange())
 	self.m_rt:GetToneMappedImageElement():SetHorizontalRange(settings:GetPanoramaHorizontalRange())
 	self.m_rt:GetToneMappedImageElement():SetStereo(false)
+	self.m_rt:GetToneMappedImageElement():SetReferenceCameraRotation(camRot)
 	self.m_rt:GetToneMappedImageElement():SetToneMappingAlgorithm(
 		settings:GetHDROutput() and shader.TONE_MAPPING_GAMMA_CORRECTION or shader.TONE_MAPPING_NONE
 	)
@@ -1478,6 +1480,14 @@ function gui.PFMRenderPreview:Refresh(preview, prepareOnly)
 	self.m_rt:Refresh(preview, function(rtJob)
 		self:CallCallbacks("InitializeRender", rtJob, settings, preview)
 	end)
-	self:UpdateViewport(settings)
+	local camRot = Quaternion()
+	-- TODO: Can we guarantee that this is the target camera of the render?
+	local cam = game.get_render_scene_camera()
+	if cam ~= nil then
+		camRot = cam:GetEntity():GetRotation()
+	end
+	self:UpdateViewport(settings, camRot)
+
+	self:CallCallbacks("OnRenderImage", preview, prepareOnly)
 end
 gui.register("WIPFMRenderPreview", gui.PFMRenderPreview)
