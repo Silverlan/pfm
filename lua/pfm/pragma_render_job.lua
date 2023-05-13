@@ -228,7 +228,7 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate, finalize)
 		local v1 = y
 		local v2 = (w / 2.0) + maxW / fx
 		local v3 = (h / 2.0) + maxH / fy
-		cam:SetAspectRatio(self.m_renderSettings:GetWidth() / self.m_renderSettings:GetHeight()) --1280/1024)
+		cam:SetAspectRatio(self.m_renderWidth / self.m_renderHeight)
 		local proj = ents.CameraComponent.calc_projection_matrix(
 			cam:GetFOVRad(),
 			cam:GetAspectRatio(),
@@ -239,7 +239,7 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate, finalize)
 		cam:SetProjectionMatrix(proj)
 		cam:UpdateViewMatrix()
 	else
-		cam:SetAspectRatio(self.m_renderSettings:GetWidth() / self.m_renderSettings:GetHeight()) --1280/1024)
+		cam:SetAspectRatio(self.m_renderWidth / self.m_renderHeight)
 		cam:UpdateMatrices()
 	end
 	--
@@ -537,6 +537,8 @@ function pfm.PragmaRenderJob:Start()
 	end -- Tiled rendering currently not supported for panorama and stereo renders
 	local renderWidth = width
 	local renderHeight = height
+	self.m_renderWidth = renderWidth
+	self.m_renderHeight = renderHeight
 	if tileSize > 0 then
 		pfm.log(
 			"Initializing tiled rendering with tile size " .. tileSize,
