@@ -54,6 +54,7 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 	gui.PFMBaseViewport.InitializeViewport(self, parent)
 	self.m_rt = gui.create("WIPFMRaytracedAnimationViewport", parent)
 	self.m_rt:SetProjectManager(tool.get_filmmaker())
+	self.m_rt:SetName("render_viewport")
 	self.m_rt:GetToneMappedImageElement():SetVRCamera(game.get_primary_camera())
 	self.m_rt:AddCallback("OnFrameStart", function()
 		local pm = tool.get_filmmaker()
@@ -134,6 +135,8 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 		self.m_rt
 			:GetToneMappedImageElement()
 			:SetStereo(self.m_renderedImageType == gui.PFMRenderPreview.IMAGE_TYPE_STEREO)
+
+		self:CallCallbacks("OnRenderComplete", rt, state)
 	end)
 end
 function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
@@ -1157,6 +1160,7 @@ function gui.PFMRenderPreview:InitializeControls()
 			self.m_renderBtContainer:SetVisible(true)
 		end
 	)
+	self.m_btCancel:SetName("bt_cancel")
 	self.m_btCancel:SetText(locale.get_text("pfm_cancel_rendering"))
 	-- self.m_btCancel:SetTooltip(locale.get_text("pfm_refresh_preview"))
 	self.m_btCancel:SetVisible(false)
@@ -1175,6 +1179,7 @@ function gui.PFMRenderPreview:InitializeControls()
 			self.m_btStop:SetVisible(false)
 		end
 	)
+	self.m_btStop:SetName("bt_stop")
 	self.m_btStop:SetText(locale.get_text("pfm_stop_rendering"))
 	self.m_btStop:SetVisible(false)
 
@@ -1188,6 +1193,7 @@ function gui.PFMRenderPreview:InitializeControls()
 			self:Refresh(true)
 		end
 	)
+	self.m_btRefreshPreview:SetName("bt_render_preview")
 	self.m_btRefreshPreview:SetText(locale.get_text("pfm_render_preview"))
 	self.m_btRefreshPreview:SetTooltip(locale.get_text("pfm_refresh_preview"))
 
@@ -1201,6 +1207,7 @@ function gui.PFMRenderPreview:InitializeControls()
 			self:Refresh()
 		end
 	)
+	self.m_btRefresh:SetName("bt_render_image")
 	self.m_btRefresh:SetText(locale.get_text("pfm_render_image"))
 	self.m_btRefresh:SetTooltip(locale.get_text("pfm_render_frame"))
 
@@ -1214,6 +1221,7 @@ function gui.PFMRenderPreview:InitializeControls()
 			self:Refresh(false, true)
 		end
 	)
+	self.m_btPrepare:SetName("bt_create_render_job")
 	self.m_btPrepare:SetText(locale.get_text("pfm_create_render_job"))
 	self.m_btPrepare:SetTooltip(locale.get_text("pfm_create_render_job_desc"))
 
@@ -1231,6 +1239,7 @@ function gui.PFMRenderPreview:InitializeControls()
 			)
 		end
 	)
+	self.m_btOpenOutputDir:SetName("bt_open_output_dir")
 	self.m_btOpenOutputDir:SetText(locale.get_text("pfm_open_output_dir"))
 
 	--[[self.m_btApplyPostProcessing = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()

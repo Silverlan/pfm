@@ -15,14 +15,20 @@ pfm.register_window = function(name, category, localizedName, factory)
 		name = name,
 		category = category,
 		localizedName = localizedName,
-		factory = factory,
+		factory = function(...)
+			local el = factory(...)
+			if util.is_valid(el) then
+				el:SetName("window_" .. name)
+			end
+			return el
+		end,
 	})
 	pfm["WINDOW_" .. name:upper()] = name
+	pfm["WINDOW_" .. name:upper() .. "_UI_ID"] = "window_" .. name
 end
 
 pfm.register_window("actor_editor", "editors", locale.get_text("pfm_actor_editor"), function(pm)
 	local actorEditor = gui.create("WIPFMActorEditor")
-	actorEditor:SetName("actor_editor")
 	actorEditor:AddCallback("OnControlSelected", function(actorEditor, actor, component, controlData, slider)
 		pm:OnActorControlSelected(actorEditor, actor, component, controlData, slider)
 	end)
@@ -87,7 +93,6 @@ pfm.register_window("model_viewer", "viewers", locale.get_text("vrp_model_viewer
 end)
 pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_catalog"), function(pm)
 	local mdlCatalog = gui.create("WIPFMModelCatalog")
-	mdlCatalog:SetName("model_catalog")
 	local explorer = mdlCatalog:GetExplorer()
 	explorer:AddCallback("PopulateIconContextMenu", function(explorer, pContext, tSelectedFiles, tExternalFiles)
 		local hasExternalFiles = (#tExternalFiles > 0)
@@ -317,42 +322,34 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 end)
 pfm.register_window("material_catalog", "catalogs", locale.get_text("pfm_material_catalog"), function(pm)
 	local el = gui.create("WIPFMMaterialCatalog")
-	el:SetName("material_catalog")
 	return el
 end)
 pfm.register_window("particle_catalog", "catalogs", locale.get_text("pfm_particle_catalog"), function(pm)
 	local el = gui.create("WIPFMParticleCatalog")
-	el:SetName("particle_catalog")
 	return el
 end)
 pfm.register_window("tutorial_catalog", "catalogs", locale.get_text("pfm_tutorial_catalog"), function(pm)
 	local el = gui.create("WIPFMTutorialCatalog")
-	el:SetName("tutorial_catalog")
 	return el
 end)
 pfm.register_window("actor_catalog", "catalogs", locale.get_text("pfm_actor_catalog"), function(pm)
 	local el = gui.create("WIPFMActorCatalog")
-	el:SetName("actor_catalog")
 	return el
 end)
 pfm.register_window("element_viewer", "editors", locale.get_text("pfm_element_viewer"), function(pm)
 	local el = gui.create("WIPFMElementViewer")
-	el:SetName("element_viewer")
 	return el
 end)
 pfm.register_window("material_editor", "editors", locale.get_text("pfm_material_editor"), function(pm)
 	local el = gui.create("WIPFMMaterialEditor")
-	el:SetName("material_editor")
 	return el
 end)
 pfm.register_window("particle_editor", "editors", locale.get_text("pfm_particle_editor"), function(pm)
 	local el = gui.create("WIPFMParticleEditor")
-	el:SetName("particle_editor")
 	return el
 end)
 pfm.register_window("web_browser", "editors", locale.get_text("pfm_web_browser"), function(pm)
 	local el = gui.create("WIPFMWebBrowser")
-	el:SetName("web_browser")
 	el:AddCallback("OnDetached", function(el, window)
 		window:Maximize()
 	end)
@@ -360,7 +357,6 @@ pfm.register_window("web_browser", "editors", locale.get_text("pfm_web_browser")
 end)
 pfm.register_window("code_editor", "editors", locale.get_text("pfm_code_editor"), function(pm)
 	local el = gui.create("WIPFMCodeEditor")
-	el:SetName("code_editor")
 	el:AddCallback("OnDetached", function(el, window)
 		window:Maximize()
 	end)
@@ -374,7 +370,6 @@ pfm.register_window("console", "editors", locale.get_text("console"), function(p
 	elConsole:SetExternallyOwned(true)
 	local el = gui.create("WIBase")
 	el:SetSize(512, 512)
-	el:SetName("console")
 	el:AddCallback("OnDetached", function(el, window)
 		window:Maximize()
 	end)
@@ -390,13 +385,11 @@ pfm.register_window("console", "editors", locale.get_text("console"), function(p
 end)
 pfm.register_window("settings", "editors", locale.get_text("pfm_settings"), function(pm)
 	local el = gui.create("WIPFMSettings")
-	el:SetName("pfm_settings")
 	return el
 end)
 
 pfm.register_window("primary_viewport", "viewers", locale.get_text("pfm_primary_viewport"), function(pm)
 	local el = gui.create("WIPFMViewport")
-	el:SetName("pfm_primary_viewport")
 	el:AddCallback("OnReattached", function(el, window)
 		pm:RequestFocus()
 	end)
