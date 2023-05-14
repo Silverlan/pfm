@@ -51,6 +51,7 @@ locale.load("pfm_popup_messages.txt")
 locale.load("pfm_loading.txt")
 locale.load("pfm_components.txt")
 locale.load("physics_materials.txt")
+locale.load("pfm_render_panel.txt")
 
 include("windows")
 include("video_recorder.lua")
