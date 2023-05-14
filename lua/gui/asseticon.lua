@@ -60,6 +60,12 @@ local function is_character_model(model)
 end
 
 local function set_model_view_model(mdlView, model, settings, iconPath)
+	local vc = mdlView:GetViewerCamera()
+	if util.is_valid(vc) then
+		-- Reset default rotation
+		vc:SetRotation(0.0, 0.0)
+		vc:Rotate(-25, 10)
+	end
 	if settings.particleFileName then
 		local ptFileName = settings.particleFileName
 		local ptName = settings.particleName
@@ -82,8 +88,16 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 		-- the bounds can be calculated properly
 		mdlView:FitCameraToScene()
 	else
-		mdlView:SetModel(model)
+		local res, min, max = mdlView:SetModel(model)
 		mdlView:SetAlwaysRender(true)
+
+		if res and min ~= nil and util.is_valid(vc) then
+			if max.z - min.z > max.x - min.x then
+				-- Object has more width than length, so we might get a better
+				-- view by rotating the camera
+				vc:Rotate(-90, 0)
+			end
+		end
 
 		local playIdleAnim = true
 		local ent = mdlView:GetEntity()
@@ -149,7 +163,7 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 	local rotation
 	local zoom
 
-	iconLocation = iconPath or get_icon_location(model, asset.TYPE_MODEL)
+	local iconLocation = iconPath or get_icon_location(model, asset.TYPE_MODEL)
 	if asset.is_loaded(iconLocation, asset.TYPE_MATERIAL) then
 		local mat = game.load_material(iconLocation)
 		if mat ~= nil then
@@ -290,7 +304,10 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 		self.m_waitForAsset = nil
 	end
 	local data = self.m_mdlQueue[1]
-	local mdlView = is_character_model(data.model) and self.m_modelViewCharacter or self.m_modelView
+	if self.m_isCharacterModel == nil then
+		self.m_isCharacterModel = is_character_model(data.model)
+	end
+	local mdlView = self.m_isCharacterModel and self.m_modelViewCharacter or self.m_modelView
 	local dtFrameIndex = mdlView:GetFrameIndex() - self.m_tStartFrameIndex
 	-- Make sure the model has been set up properly by waiting a few frames
 	if dtFrameIndex < 4 then
@@ -298,6 +315,7 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 	end
 	table.remove(self.m_mdlQueue, 1) -- Remove from queue
 
+	self.m_isCharacterModel = nil
 	self.m_saveImage = false
 	save_model_icon(data.model, mdlView, data.iconPath, data.callback)
 	mdlView:SetVisible(false)
