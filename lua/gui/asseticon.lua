@@ -125,6 +125,7 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 				else
 					mdlC:ClearMaterialOverride(0)
 				end
+				mdlC:UpdateRenderMeshes()
 			end
 
 			if settings.skin ~= nil then
