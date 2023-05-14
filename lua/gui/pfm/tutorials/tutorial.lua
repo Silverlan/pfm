@@ -20,6 +20,26 @@ function Element:OnInitialize()
 	self.m_prevSlides = {}
 
 	self:SetThinkingEnabled(true)
+
+	self.m_bindingLayer = "pfm_tutorial"
+	local bindingLayer = input.InputBindingLayer("pfm_tutorial")
+	bindingLayer:BindKey("c", "pfm_tutorial_next")
+	bindingLayer:BindKey("b", "pfm_tutorial_back")
+	bindingLayer:BindKey("m", "pfm_tutorial_toggle_mute")
+	bindingLayer.priority = 10000
+
+	local pm = tool.get_filmmaker()
+	if util.is_valid(pm) then
+		pm:AddInputBindingLayer(self.m_bindingLayer, bindingLayer)
+	end
+end
+function Element:OnRemove()
+	self:ClearSlide()
+
+	local pm = tool.get_filmmaker()
+	if util.is_valid(pm) then
+		pm:RemoveInputBindingLayer(self.m_bindingLayer)
+	end
 end
 function Element:OnThink()
 	if self.m_curSlide == nil then
@@ -35,9 +55,6 @@ function Element:OnThink()
 			self:NextSlide()
 		end
 	end
-end
-function Element:OnRemove()
-	self:ClearSlide()
 end
 function Element:RegisterSlide(identifier, data)
 	self.m_slides[identifier] = data
@@ -99,6 +116,10 @@ function Element:EndTutorial()
 	self:RemoveSafely()
 end
 function Element:NextSlide()
+	local btNext = (self.m_curSlide ~= nil) and self.m_curSlide.element:GetContinueButton() or nil
+	if util.is_valid(btNext) and btNext:IsEnabled() == false then
+		return
+	end
 	if self.m_curSlide == nil or self.m_slides[self.m_curSlide.identifier].nextSlide == nil then
 		self:EndTutorial()
 		return
@@ -106,6 +127,10 @@ function Element:NextSlide()
 	self:StartSlide(self.m_slides[self.m_curSlide.identifier].nextSlide)
 end
 function Element:PreviousSlide()
+	local btPrev = (self.m_curSlide ~= nil) and self.m_curSlide.element:GetBackButton() or nil
+	if util.is_valid(btPrev) and btPrev:IsEnabled() == false then
+		return
+	end
 	if #self.m_prevSlides < 2 then
 		return
 	end
@@ -148,3 +173,35 @@ Element.start_tutorial = function(identifier)
 	elTut:SetZPos(10000)
 	fc(elTut, pm)
 end
+
+Element.close_tutorial = function()
+	util.remove(Element.tutorial_element)
+end
+
+console.register_command("pfm_tutorial_next", function(pl, ...)
+	local pm = tool.get_filmmaker()
+	if util.is_valid(pm) == false then
+		return
+	end
+	if util.is_valid(Element.tutorial_element) == false then
+		return
+	end
+	Element.tutorial_element:NextSlide()
+end)
+
+console.register_command("pfm_tutorial_back", function(pl, ...)
+	local pm = tool.get_filmmaker()
+	if util.is_valid(pm) == false then
+		return
+	end
+	if util.is_valid(Element.tutorial_element) == false then
+		return
+	end
+	Element.tutorial_element:PreviousSlide()
+end)
+
+console.register_command("pfm_tutorial_toggle_mute", function(pl, ...)
+	local audio = console.get_convar_bool("pfm_tutorial_audio_enabled")
+	audio = not audio
+	console.run("pfm_tutorial_audio_enabled", audio and "1" or "0")
+end)

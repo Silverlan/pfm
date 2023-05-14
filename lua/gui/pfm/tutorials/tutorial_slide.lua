@@ -166,12 +166,20 @@ function Element:AddMessageBox(msg, audioFile)
 
 	local buttonContainer = gui.create("WIBase", vbox)
 	local hbox = gui.create("WIHBox", buttonContainer)
-	self.m_buttonPrev = self:CreateButton(hbox, locale.get_text("pfm_go_back"), function()
-		self.m_tutorial:PreviousSlide()
-	end)
-	self.m_buttonNext = self:CreateButton(hbox, locale.get_text("pfm_continue"), function()
-		self.m_tutorial:NextSlide()
-	end)
+	self.m_buttonPrev = self:CreateButton(
+		hbox,
+		locale.get_text("pfm_go_back") .. " (" .. pfm.get_key_binding("pfm_tutorial_back") .. ")",
+		function()
+			self.m_tutorial:PreviousSlide()
+		end
+	)
+	self.m_buttonNext = self:CreateButton(
+		hbox,
+		locale.get_text("pfm_continue") .. " (" .. pfm.get_key_binding("pfm_tutorial_next") .. ")",
+		function()
+			self.m_tutorial:NextSlide()
+		end
+	)
 	self.m_buttonNext:SetEnabledColor(Color.Lime)
 	self.m_buttonNext:SetDisabledColor(Color.Red)
 	hbox:Update()
