@@ -51,12 +51,32 @@ function Element:SetTargetElement(el)
 				self:ScheduleUpdate()
 			end)
 		)
+		local parent = el:GetParent()
+		while parent ~= nil do
+			table.insert(
+				self.m_elCallbacks,
+				parent:AddCallback("SetSize", function()
+					self:ScheduleUpdate()
+				end)
+			)
+			table.insert(
+				self.m_elCallbacks,
+				parent:AddCallback("SetPos", function()
+					self:ScheduleUpdate()
+				end)
+			)
+			parent = parent:GetParent()
+		end
 	end
 
 	self:ScheduleUpdate()
 end
+function Element:GetTargetElementBounds() end
 function Element:GetTargetElement()
 	return self.m_targetElements[1]
+end
+function Element:IsOutOfBounds()
+	return self.m_outOfBounds or false
 end
 function Element:UpdateBounds()
 	local min = Vector2(math.huge, math.huge)
@@ -68,11 +88,11 @@ function Element:UpdateBounds()
 				return
 			end
 			self:SetVisible(true)
-			local absPos = el:GetAbsolutePos()
-			local size = el:GetSize()
-			local endPos = absPos + size
-			min.x = math.min(min.x, absPos.x)
-			min.y = math.min(min.y, absPos.y)
+			local pos, size = el:GetAbsoluteVisibleBounds()
+			self.m_outOfBounds = (size.x == 0 or size.y == 0)
+			local endPos = pos + size
+			min.x = math.min(min.x, pos.x)
+			min.y = math.min(min.y, pos.y)
 			max.x = math.max(max.x, endPos.x)
 			max.y = math.max(max.y, endPos.y)
 		end

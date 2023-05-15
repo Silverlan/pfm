@@ -21,6 +21,9 @@ function Element:OnInitialize()
 		l:SetColor(Color(200, 200, 200))
 	end
 
+	self.m_lineTunnel = gui.create("WIRect", self)
+	self.m_lineTunnel:SetVisible(false)
+
 	self.m_elCallbacks = {}
 end
 function Element:Setup(src, tgt)
@@ -104,6 +107,13 @@ function Element:OnUpdate()
 		hide = (endPoint.y <= startPoint.y)
 	end
 
+	local pm = tool.get_filmmaker()
+	if util.is_valid(pm) then
+		-- Clamp to filmmaker bounds
+		endPoint.x = math.min(endPoint.x, pm:GetRight())
+		endPoint.y = math.min(endPoint.y, pm:GetBottom())
+	end
+
 	for _, l in ipairs(self.m_lines) do
 		if l:IsValid() then
 			l:SetVisible(not hide)
@@ -151,6 +161,19 @@ function Element:OnUpdate()
 		self.m_lines[5]:SetStartPos(Vector2(arrowPoint.x, arrowPoint.y))
 		self.m_lines[5]:SetEndPos(Vector2(arrowPoint.x + 10, arrowPoint.y - 20 * sign))
 		self.m_lines[5]:SizeToContents()
+	end
+
+	local sz = self.m_elTgt:GetSize()
+	local showTunnel = (sz.x == 0 or sz.y == 0)
+	self.m_lineTunnel:SetVisible(showTunnel)
+	if showTunnel then
+		if horizontal then
+			self.m_lineTunnel:SetSize(1, 20)
+			self.m_lineTunnel:SetPos(endPoint.x, endPoint.y - self.m_lineTunnel:GetHalfHeight())
+		else
+			self.m_lineTunnel:SetSize(20, 1)
+			self.m_lineTunnel:SetPos(endPoint.x - self.m_lineTunnel:GetHalfWidth(), endPoint.y)
+		end
 	end
 end
 gui.register("WIElementConnectorLine", Element)
