@@ -177,6 +177,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 	end)
 	explorer:AddCallback("OnIconAdded", function(explorer, icon)
 		if icon:IsDirectory() == false then
+			local entGhost
 			gui.enable_drag_and_drop(icon, "ModelCatalog", function(elGhost)
 				elGhost:SetAlpha(128)
 				elGhost:AddCallback("OnDragTargetHoverStart", function(elGhost, elTgt)
@@ -289,6 +290,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 												entActor:GetRotation(),
 												true
 											)
+											pm:SelectActor(actorC:GetActorData(), true, nil, false)
 										end
 									end
 									cb:Remove()

@@ -2988,13 +2988,20 @@ function gui.WIFilmmaker:ShowInElementViewer(el)
 
 	self:GoToWindow("element_viewer")
 end
-function gui.WIFilmmaker:SelectActor(actor, deselectCurrent, property)
+function gui.WIFilmmaker:SelectActor(actor, deselectCurrent, property, goToActorEditor)
 	if util.is_valid(self:GetActorEditor()) == false then
 		return
 	end
 	self:GetActorEditor():SelectActor(actor, deselectCurrent, property)
 
-	self:GoToWindow("actor_editor")
+	if goToActorEditor ~= false then
+		self:GoToWindow("actor_editor")
+	else
+		local actorEditor = self:GetActorEditor()
+		if util.is_valid(actorEditor) then
+			actorEditor:InvokeThink()
+		end
+	end
 end
 function gui.WIFilmmaker:DeselectAllActors()
 	if util.is_valid(self:GetActorEditor()) == false then
