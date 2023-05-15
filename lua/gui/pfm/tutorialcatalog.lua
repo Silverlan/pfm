@@ -43,6 +43,7 @@ function gui.PFMTutorialCatalog:OnInitialize()
 	end)]]
 
 	self.m_teFilter = gui.create("WITextEntry", self.m_contents, 0, 0, self:GetWidth(), 24)
+	self.m_teFilter:SetName("filter")
 	self.m_teFilter:AddCallback("OnTextEntered", function(pEntry)
 		self.m_explorer:Refresh()
 		self.m_explorer:ListFiles()

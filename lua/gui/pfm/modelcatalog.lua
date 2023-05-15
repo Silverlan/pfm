@@ -25,6 +25,7 @@ function gui.PFMModelCatalog:OnInitialize()
 	self.m_bg:SetColor(Color(54, 54, 54))
 
 	self.m_contents = gui.create("WIVBox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_contents:SetName("contents")
 	self.m_contents:SetFixedSize(true)
 	self.m_contents:SetAutoFillContents(true)
 
@@ -67,6 +68,7 @@ function gui.PFMModelCatalog:OnInitialize()
 
 	local scrollContainer =
 		gui.create("WIScrollContainer", self.m_contents, 0, 0, self:GetWidth(), self:GetHeight() - 72)
+	scrollContainer:SetName("scroll_container")
 	scrollContainer:SetContentsWidthFixed(true)
 	--[[scrollContainer:AddCallback("SetSize",function(el)
 		if(self:IsValid() and util.is_valid(self.m_explorer)) then
@@ -79,7 +81,9 @@ function gui.PFMModelCatalog:OnInitialize()
 		self.m_explorer:Refresh()
 		self.m_explorer:ListFiles()
 	end)
-	self.m_teFilter:Wrap("WIEditableEntry"):SetText(locale.get_text("filter"))
+	local wrapper = self.m_teFilter:Wrap("WIEditableEntry")
+	wrapper:SetText(locale.get_text("filter"))
+	wrapper:SetName("filter")
 
 	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
 	table.insert(extensions, asset.FORMAT_MODEL_BINARY)
