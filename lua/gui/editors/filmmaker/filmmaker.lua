@@ -2229,7 +2229,7 @@ function gui.WIFilmmaker:OnRemove()
 	gui.set_context_menu_skin()
 	collectgarbage()
 end
-function gui.WIFilmmaker:AddInputBindingLayer(name,bindingLayer)
+function gui.WIFilmmaker:AddInputBindingLayer(name, bindingLayer)
 	self.m_inputBindingLayers[name] = bindingLayer
 
 	input.add_input_binding_layer(bindingLayer)
@@ -2237,10 +2237,12 @@ function gui.WIFilmmaker:AddInputBindingLayer(name,bindingLayer)
 	input.update_effective_input_bindings()
 end
 function gui.WIFilmmaker:RemoveInputBindingLayer(name)
-	if(self.m_inputBindingLayers[name] == nil) then return end
+	if self.m_inputBindingLayers[name] == nil then
+		return
+	end
 	self.m_inputBindingLayers[name] = nil
 
-	input.remove_input_binding_layer(self.m_inputBindingLayers[name])
+	input.remove_input_binding_layer(name)
 	input.update_effective_input_bindings()
 end
 function gui.WIFilmmaker:GetInputBindingLayers()
