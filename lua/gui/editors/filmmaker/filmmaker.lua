@@ -36,6 +36,7 @@ include("/gui/pfm/renderpreview.lua")
 include("/gui/pfm/material_editor/materialeditor.lua")
 include("/gui/pfm/particleeditor.lua")
 include("/gui/pfm/webbrowser.lua")
+include("/gui/pfm/code_editor.lua")
 include("/gui/pfm/loading_screen.lua")
 include("/gui/pfm/settings.lua")
 include("/gui/pfm/kernels_build_message.lua")
@@ -52,6 +53,7 @@ locale.load("pfm_loading.txt")
 locale.load("pfm_components.txt")
 locale.load("physics_materials.txt")
 locale.load("pfm_render_panel.txt")
+locale.load("pfm_context_menues.txt")
 
 include("windows")
 include("video_recorder.lua")
@@ -323,18 +325,22 @@ function gui.WIFilmmaker:OnInitialize()
 		end)]]
 
 			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("new"))
-			pSubMenu:AddItem(locale.get_text("pfm_simple_project"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				self:CreateSimpleProject()
-			end)
-			pSubMenu:AddItem(locale.get_text("pfm_empty_project"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				self:CreateEmptyProject()
-			end)
+			pSubMenu
+				:AddItem(locale.get_text("pfm_simple_project"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					self:CreateSimpleProject()
+				end)
+				:SetTooltip(locale.get_text("pfm_menu_context_simple_project"))
+			pSubMenu
+				:AddItem(locale.get_text("pfm_empty_project"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					self:CreateEmptyProject()
+				end)
+				:SetTooltip(locale.get_text("pfm_menu_context_empty_project"))
 			pSubMenu:ScheduleUpdate()
 
 			pContext:AddItem(locale.get_text("open") .. "...", function(pItem)
@@ -393,18 +399,22 @@ function gui.WIFilmmaker:OnInitialize()
 				itemSave:SetEnabled(false)
 			end
 
-			pContext:AddItem(locale.get_text("save_as"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				self:Save(nil, true, true)
-			end)
-			pContext:AddItem(locale.get_text("save_copy"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				self:Save(nil, false, true)
-			end)
+			pContext
+				:AddItem(locale.get_text("save_as"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					self:Save(nil, true, true)
+				end)
+				:SetTooltip(locale.get_text("pfm_menu_context_save_as"))
+			pContext
+				:AddItem(locale.get_text("save_copy"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					self:Save(nil, false, true)
+				end)
+				:SetTooltip(locale.get_text("pfm_menu_context_save_copy"))
 
 			local recentFiles = self.m_settings:GetArrayValues("recent_projects", udm.TYPE_STRING)
 			if #recentFiles > 0 then
@@ -470,88 +480,109 @@ function gui.WIFilmmaker:OnInitialize()
 			end
 
 			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("import"))
-			pSubMenu:AddItem(locale.get_text("map"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
-					if fileName == nil then
+			pSubMenu
+				:AddItem(locale.get_text("map"), function(pItem)
+					if util.is_valid(self) == false then
 						return
 					end
-					self:ImportMap(el:GetFilePath(true))
+					local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+						if fileName == nil then
+							return
+						end
+						self:ImportMap(el:GetFilePath(true))
+					end)
+					initMapDialog(pFileDialog)
 				end)
-				initMapDialog(pFileDialog)
-			end)
-			pSubMenu:AddItem(locale.get_text("pfm_sfm_project"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				if self:CheckBuildKernels() then
-					return
-				end
-				util.remove(self.m_openDialogue)
-				self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
-					self:ImportSFMProject(fileName)
+				:SetTooltip(locale.get_text("pfm_menu_context_import_map"))
+			pSubMenu
+				:AddItem(locale.get_text("pfm_sfm_project"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					if self:CheckBuildKernels() then
+						return
+					end
+					util.remove(self.m_openDialogue)
+					self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
+						self:ImportSFMProject(fileName)
+					end)
+					self.m_openDialogue:SetExtensions({ "dmx" })
+					self.m_openDialogue:GetFileList():SetFileFinder(function(path)
+						local tFiles, tDirs = file.find(path .. "*")
+						tFiles = file.find(path .. "*.dmx")
+
+						local tFilesExt, tDirsExt = file.find_external_game_asset_files(path .. "*")
+						tFilesExt = file.find_external_game_asset_files(path .. ".dmx")
+
+						local tFilesExtUnique = {}
+						for _, f in ipairs(tFilesExt) do
+							f = file.remove_file_extension(f) .. ".dmx"
+							tFilesExtUnique[f] = true
+						end
+						for _, f in ipairs(tFiles) do
+							f = file.remove_file_extension(f) .. ".dmx"
+							tFilesExtUnique[f] = true
+						end
+
+						local tDirsExtUnique = {}
+						for _, f in ipairs(tDirsExt) do
+							tDirsExtUnique[f] = true
+						end
+						for _, f in ipairs(tDirs) do
+							tDirsExtUnique[f] = true
+						end
+
+						tFiles = {}
+						tDirs = {}
+						for f, _ in pairs(tFilesExtUnique) do
+							table.insert(tFiles, f)
+						end
+						table.sort(tFiles)
+
+						for d, _ in pairs(tDirsExtUnique) do
+							table.insert(tDirs, d)
+						end
+						table.sort(tDirs)
+						return tFiles, tDirs
+					end)
+					self.m_openDialogue:SetPath("elements/sessions")
+					self.m_openDialogue:Update()
 				end)
-				self.m_openDialogue:SetExtensions({ "dmx" })
-				self.m_openDialogue:GetFileList():SetFileFinder(function(path)
-					local tFiles, tDirs = file.find(path .. "*")
-					tFiles = file.find(path .. "*.dmx")
-
-					local tFilesExt, tDirsExt = file.find_external_game_asset_files(path .. "*")
-					tFilesExt = file.find_external_game_asset_files(path .. ".dmx")
-
-					local tFilesExtUnique = {}
-					for _, f in ipairs(tFilesExt) do
-						f = file.remove_file_extension(f) .. ".dmx"
-						tFilesExtUnique[f] = true
+				:SetTooltip(locale.get_text("pfm_menu_context_import_sfm_project"))
+			if self:IsDeveloperModeEnabled() then
+				pSubMenu:AddItem(locale.get_text("pfm_pfm_project"), function(pItem)
+					if util.is_valid(self) == false then
+						return
 					end
-					for _, f in ipairs(tFiles) do
-						f = file.remove_file_extension(f) .. ".dmx"
-						tFilesExtUnique[f] = true
-					end
-
-					local tDirsExtUnique = {}
-					for _, f in ipairs(tDirsExt) do
-						tDirsExtUnique[f] = true
-					end
-					for _, f in ipairs(tDirs) do
-						tDirsExtUnique[f] = true
-					end
-
-					tFiles = {}
-					tDirs = {}
-					for f, _ in pairs(tFilesExtUnique) do
-						table.insert(tFiles, f)
-					end
-					table.sort(tFiles)
-
-					for d, _ in pairs(tDirsExtUnique) do
-						table.insert(tDirs, d)
-					end
-					table.sort(tDirs)
-					return tFiles, tDirs
+					util.remove(self.m_openDialogue)
+					self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
+						self:ImportPFMProject(fileName)
+					end)
+					self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
+					self.m_openDialogue:SetPath("projects")
+					self.m_openDialogue:Update()
 				end)
-				self.m_openDialogue:SetPath("elements/sessions")
-				self.m_openDialogue:Update()
-			end)
+			end
 			pSubMenu:ScheduleUpdate()
-			pContext:AddItem(locale.get_text("pfm_change_map"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				if self:CheckBuildKernels() then
-					return
-				end
-				local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
-					if fileName == nil then
+
+			pContext
+				:AddItem(locale.get_text("pfm_change_map"), function(pItem)
+					if util.is_valid(self) == false then
 						return
 					end
-					local map = el:GetFilePath(true)
-					self:ChangeMap(map)
+					if self:CheckBuildKernels() then
+						return
+					end
+					local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+						if fileName == nil then
+							return
+						end
+						local map = el:GetFilePath(true)
+						self:ChangeMap(map)
+					end)
+					initMapDialog(pFileDialog)
 				end)
-				initMapDialog(pFileDialog)
-			end)
+				:SetTooltip(locale.get_text("pfm_menu_context_change_map"))
 			--[[pContext:AddItem(locale.get_text("pfm_export_blender_scene") .. "...",function(pItem)
 			local dialoge = gui.create_file_save_dialog(function(pDialoge)
 				local fname = pDialoge:GetFilePath(true)
@@ -563,16 +594,18 @@ function gui.WIFilmmaker:OnInitialize()
 			dialoge:SetRootPath(util.get_addon_path())
 			dialoge:Update()
 		end)]]
-			pContext:AddItem(locale.get_text("pfm_pack_project") .. "...", function(pItem)
-				file.create_directory("export")
-				local dialoge = gui.create_file_save_dialog(function(pDialoge)
-					local fname = pDialoge:GetFilePath(true)
-					self:PackProject(fname)
+			pContext
+				:AddItem(locale.get_text("pfm_pack_project") .. "...", function(pItem)
+					file.create_directory("export")
+					local dialoge = gui.create_file_save_dialog(function(pDialoge)
+						local fname = pDialoge:GetFilePath(true)
+						self:PackProject(fname)
+					end)
+					dialoge:SetExtensions({ "zip" })
+					dialoge:SetRootPath(util.get_addon_path() .. "export/")
+					dialoge:Update()
 				end)
-				dialoge:SetExtensions({ "zip" })
-				dialoge:SetRootPath(util.get_addon_path() .. "export/")
-				dialoge:Update()
-			end)
+				:SetTooltip(locale.get_text("pfm_menu_pack_project"))
 			--[[pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
 			local project = self:GetProject()
@@ -618,26 +651,28 @@ function gui.WIFilmmaker:OnInitialize()
 		pMenuBar
 			:AddItem(locale.get_text("render"), function(pContext)
 				local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pbr"))
-				pSubMenu:AddItem(locale.get_text("pfm_generate_ambient_occlusion_maps"), function(pItem)
-					if util.is_valid(self) == false then
-						return
-					end
-					local entPbrConverter = ents.find_by_component("pbr_converter")[1]
-					if util.is_valid(entPbrConverter) == false then
-						return
-					end
-					local pbrC = entPbrConverter:GetComponent(ents.COMPONENT_PBR_CONVERTER)
-					for ent in ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_MODEL) }) do
-						if ent:IsWorld() == false then
-							local mdl = ent:GetModel()
-							if mdl == nil or ent:IsWorld() then
-								return
-							end
-							pbrC:GenerateAmbientOcclusionMaps(mdl)
-							-- TODO: Also include all models for entire project which haven't been loaded yet
+				pSubMenu
+					:AddItem(locale.get_text("pfm_generate_ambient_occlusion_maps"), function(pItem)
+						if util.is_valid(self) == false then
+							return
 						end
-					end
-				end)
+						local entPbrConverter = ents.find_by_component("pbr_converter")[1]
+						if util.is_valid(entPbrConverter) == false then
+							return
+						end
+						local pbrC = entPbrConverter:GetComponent(ents.COMPONENT_PBR_CONVERTER)
+						for ent in ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_MODEL) }) do
+							if ent:IsWorld() == false then
+								local mdl = ent:GetModel()
+								if mdl == nil or ent:IsWorld() then
+									return
+								end
+								pbrC:GenerateAmbientOcclusionMaps(mdl)
+								-- TODO: Also include all models for entire project which haven't been loaded yet
+							end
+						end
+					end)
+					:SetTooltip(locale.get_text("pfm_menu_generate_ao"))
 				pSubMenu:AddItem(locale.get_text("pfm_rebuild_reflection_probes"), function(pItem) end)
 				pSubMenu:ScheduleUpdate()
 
@@ -667,6 +702,7 @@ function gui.WIFilmmaker:OnInitialize()
 					self:ReloadInterface()
 				end)
 			end
+			pItem:SetTooltip(locale.get_text("pfm_menu_change_language"))
 			pSubMenu:ScheduleUpdate()
 
 			pContext:ScheduleUpdate()
@@ -674,8 +710,8 @@ function gui.WIFilmmaker:OnInitialize()
 		:SetName("preferences")
 	pMenuBar
 		:AddItem(locale.get_text("tools"), function(pContext)
-			if self:IsDeveloperModeEnabled() then
-				pContext:AddItem(locale.get_text("pfm_export_map"), function(pItem)
+			pContext
+				:AddItem(locale.get_text("pfm_export_map"), function(pItem)
 					if util.is_valid(self) == false then
 						return
 					end
@@ -716,49 +752,61 @@ function gui.WIFilmmaker:OnInitialize()
 					end
 					pfm.log("Unable to export map: " .. errMsg, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
 				end)
-				pContext:ScheduleUpdate()
-			end
-			pContext:AddItem(locale.get_text("pfm_convert_map_to_actors"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				local mapName = game.get_map_name()
-				local mapFile = asset.find_file(mapName, asset.TYPE_MAP)
-				if mapFile == nil then
-					return
-				end
-				util.remove(ents.get_all(ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_MAP) })))
+				:SetTooltip(locale.get_text("pfm_menu_context_export_map"))
+			pContext
+				:AddItem(locale.get_text("pfm_convert_map_to_actors"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					local mapName = game.get_map_name()
+					local mapFile = asset.find_file(mapName, asset.TYPE_MAP)
+					if mapFile == nil then
+						return
+					end
+					util.remove(ents.get_all(ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_MAP) })))
 
-				local session = self:GetSession()
-				if session ~= nil then
-					local settings = session:GetSettings()
-					-- The map is now part of the project, so we want to load an empty map next time the project is loaded
-					settings:SetMapName("empty")
-				end
+					local session = self:GetSession()
+					if session ~= nil then
+						local settings = session:GetSettings()
+						-- The map is now part of the project, so we want to load an empty map next time the project is loaded
+						settings:SetMapName("empty")
+					end
 
-				self:ImportMap(mapFile)
-			end)
-			pContext:AddItem(locale.get_text("pfm_convert_static_actors_to_map"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				self:ConvertStaticActorsToMap()
-			end)
-			pContext:AddItem(locale.get_text("pfm_build_kernels"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				self:BuildKernels()
-			end)
-			pContext:AddItem(locale.get_text("pfm_start_lua_debugger_server"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				debug.start_debugger_server()
-				pfm.create_popup_message(locale.get_text("pfm_lua_debugger_server_active"), 10, gui.InfoBox.TYPE_WARNING, {
-					url = "https://wiki.pragma-engine.com/books/lua-api/page/visual-studio-code",
-				})
-			end)
+					self:ImportMap(mapFile)
+				end)
+				:SetTooltip(locale.get_text("pfm_menu_context_convert_map_to_actors"))
+			pContext
+				:AddItem(locale.get_text("pfm_convert_static_actors_to_map"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					self:ConvertStaticActorsToMap()
+				end)
+				:SetTooltip(locale.get_text("pfm_menu_context_convert_static_actors_to_map"))
+			pContext
+				:AddItem(locale.get_text("pfm_build_kernels"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					self:BuildKernels()
+				end)
+				:SetTooltip(locale.get_text("pfm_menu_context_build_kernels"))
+			pContext
+				:AddItem(locale.get_text("pfm_start_lua_debugger_server"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					debug.start_debugger_server()
+					pfm.create_popup_message(
+						locale.get_text("pfm_lua_debugger_server_active"),
+						10,
+						gui.InfoBox.TYPE_WARNING,
+						{
+							url = "https://wiki.pragma-engine.com/books/lua-api/page/visual-studio-code",
+						}
+					)
+				end)
+				:SetTooltip(locale.get_text("pfm_menu_context_start_lua_debugger_server"))
 			if self:IsDeveloperModeEnabled() then
 				local recorder
 				pContext:AddItem("Record animation as image sequence", function(pItem)
@@ -844,26 +892,32 @@ function gui.WIFilmmaker:OnInitialize()
 		end
 		pSubMenu:ScheduleUpdate()
 
-		pContext:AddItem(locale.get_text("pfm_save_current_layout_state_as_default"), function(pItem)
-			if util.is_valid(self) == false then
-				return
-			end
-			self:SaveWindowLayoutState("cfg/pfm/default_layout_state.udm", true)
-		end)
-		pContext:AddItem(locale.get_text("pfm_restore_default_layout_state"), function(pItem)
-			if util.is_valid(self) == false then
-				return
-			end
-			self:RestoreWindowLayoutState("cfg/pfm/default_layout_state.udm")
-		end)
+		pContext
+			:AddItem(locale.get_text("pfm_save_current_layout_state_as_default"), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				self:SaveWindowLayoutState("cfg/pfm/default_layout_state.udm", true)
+			end)
+			:SetTooltip(locale.get_text("pfm_menu_context_save_layout_state_as_default"))
+		pContext
+			:AddItem(locale.get_text("pfm_restore_default_layout_state"), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				self:RestoreWindowLayoutState("cfg/pfm/default_layout_state.udm")
+			end)
+			:SetTooltip(locale.get_text("pfm_menu_context_restore_default_layout_state"))
 
 		pContext:ScheduleUpdate()
 	end)
 	pMenuBar
 		:AddItem(locale.get_text("help"), function(pContext)
-			pContext:AddItem(locale.get_text("pfm_getting_started"), function(pItem)
-				self:LoadTutorial("intro")
-			end)
+			pContext
+				:AddItem(locale.get_text("pfm_getting_started"), function(pItem)
+					self:LoadTutorial("intro")
+				end)
+				:SetTooltip(locale.get_text("pfm_menu_context_getting_started"))
 			pContext:AddItem(locale.get_text("pfm_tutorial_catalog"), function(pItem)
 				self:GoToWindow("tutorial_catalog")
 			end)
@@ -876,10 +930,12 @@ function gui.WIFilmmaker:OnInitialize()
 			pContext:AddItem(locale.get_text("pfm_check_for_updates"), function(pItem)
 				self:CheckForUpdates(true)
 			end)
-			pContext:AddItem(locale.get_text("pfm_community"), function(pItem)
-				local engineInfo = engine.get_info()
-				self:OpenUrlInBrowser(engineInfo.discordURL)
-			end)
+			pContext
+				:AddItem(locale.get_text("pfm_community"), function(pItem)
+					local engineInfo = engine.get_info()
+					self:OpenUrlInBrowser(engineInfo.discordURL)
+				end)
+				:SetTooltip(locale.get_text("pfm_menu_context_pfm_community"))
 			pContext:ScheduleUpdate()
 		end)
 		:SetName("help")
@@ -1359,6 +1415,19 @@ function gui.WIFilmmaker:GetWorldAxesGizmo()
 end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()
+end
+function gui.WIFilmmaker:ImportPFMProject(projectFilePath)
+	local project, err = pfm.load_project(projectFilePath, true)
+	if project == false then
+		pfm.log(
+			"Failed to import PFM project '" .. projectFilePath .. "'!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_ERROR
+		)
+		return false
+	end
+	-- TODO: Not yet implemented
+	return true
 end
 function gui.WIFilmmaker:ImportSFMProject(projectFilePath)
 	local res = pfm.ProjectManager.ImportSFMProject(self, projectFilePath)
