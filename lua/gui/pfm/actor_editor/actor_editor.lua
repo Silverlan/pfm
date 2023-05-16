@@ -48,22 +48,26 @@ function gui.PFMActorEditor:OnInitialize()
 	end)
 	self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())
 	local function addPresetActorOption(subMenu, type, locId)
-		subMenu:AddItem(locale.get_text(locId), function()
-			self:CreatePresetActor(type)
-		end)
+		subMenu
+			:AddItem(locale.get_text(locId), function()
+				self:CreatePresetActor(type)
+			end)
+			:SetTooltip(locale.get_text(locId .. "_desc"))
 	end
 	local function addPresetModelActorOption(subMenu, type, locId)
-		subMenu:AddItem(locale.get_text(locId), function()
-			gui.open_model_dialog(function(dialogResult, mdlName)
-				if dialogResult ~= gui.DIALOG_RESULT_OK then
-					return
-				end
-				if self:IsValid() == false then
-					return
-				end
-				local actor = self:CreatePresetActor(type, { ["modelName"] = mdlName })
+		subMenu
+			:AddItem(locale.get_text(locId), function()
+				gui.open_model_dialog(function(dialogResult, mdlName)
+					if dialogResult ~= gui.DIALOG_RESULT_OK then
+						return
+					end
+					if self:IsValid() == false then
+						return
+					end
+					local actor = self:CreatePresetActor(type, { ["modelName"] = mdlName })
+				end)
 			end)
-		end)
+			:SetTooltip(locale.get_text(locId .. "_desc"))
 	end
 	self.m_btTools:SetupContextMenu(function(pContext)
 		addPresetModelActorOption(
