@@ -77,6 +77,10 @@ function ents.PFMGhost:OnTick()
 	if startPos == nil then
 		return
 	end
+
+	local ent = self:GetEntity()
+	local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
+
 	local maxDist = 2048.0
 	local actor, hitPos, pos, hitData = pfm.raycast(startPos, dir, maxDist)
 	local hasHit = (hitPos ~= nil)
@@ -104,6 +108,25 @@ function ents.PFMGhost:OnTick()
 	--debug.draw_line(Vector(),posDst,Color.Red,12)
 	--print(ray.entity)
 
+	if
+		input.get_key_state(input.KEY_LEFT_SHIFT) == input.STATE_RELEASE
+		and input.get_key_state(input.KEY_RIGHT_SHIFT) == input.STATE_RELEASE
+	then
+		if hasHit then
+			startPos = posDst - dir * 1.0 + Vector(0, 10, 0)
+			local dstPos = posDst - dir * 1.0 - Vector(0, 50, 0)
+			local dir = (dstPos - startPos)
+			maxDist = dir:Length()
+			if maxDist > 0.0 then
+				dir = dir / maxDist
+			end
+
+			actor, hitPos, pos = pfm.raycast(startPos, dir, maxDist)
+			if hitPos ~= nil then
+				posDst = hitPos
+			end
+		end
+	end
 	if renderC ~= nil then
 		local min, max = renderC:GetLocalRenderBounds()
 		-- debug.draw_box(ent:GetPos() +min,ent:GetPos() +max,Color.Red,0.1)
@@ -120,21 +143,6 @@ function ents.PFMGhost:OnTick()
 			posDst.x = math.snap_to_gridf(posDst.x, spacing)
 			posDst.z = math.snap_to_gridf(posDst.z, spacing)
 		end
-
-		if hasHit then
-			startPos = posDst + Vector(0, 10, 0)
-			local dstPos = posDst - Vector(0, 50, 0)
-			local dir = (dstPos - startPos)
-			maxDist = dir:Length()
-			if maxDist > 0.0 then
-				dir = dir / maxDist
-			end
-
-			actor, hitPos, pos = pfm.raycast(startPos, dir, maxDist)
-			if hitPos ~= nil then
-				posDst = hitPos
-			end
-		end
 	end
 	if renderC ~= nil then
 		local min, max = renderC:GetLocalRenderBounds()
@@ -143,7 +151,6 @@ function ents.PFMGhost:OnTick()
 	if self.m_placementCallback ~= nil and hasHit then
 		self.m_placementCallback(posDst, startPos, dir)
 	end
-	local ent = self:GetEntity()
 	if posDst ~= nil then
 		ent:SetPos(posDst)
 	end
