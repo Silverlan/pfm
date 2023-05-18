@@ -50,8 +50,7 @@ function Element:OnThink()
 		local bt = self.m_curSlide.element:GetContinueButton()
 		local enabled = slideData.clearCondition(self.m_curSlide.data)
 		bt:SetEnabled(enabled)
-
-		if enabled and slideData.autoContinue then
+		if enabled and self.m_curSlide.data.autoContinue then
 			self:NextSlide()
 		end
 	end
@@ -82,9 +81,10 @@ function Element:StartSlide(identifier)
 		data = {},
 	}
 	self.m_curSlide.element:SetTutorial(self)
-	self.m_slides[identifier].init(self.m_curSlide.data, self.m_curSlide.element)
-
 	local slideData = self.m_slides[identifier]
+	self.m_curSlide.data.autoContinue = slideData.autoContinue
+	slideData.init(self.m_curSlide.data, self.m_curSlide.element)
+
 	local bt = self.m_curSlide.element:GetContinueButton()
 	if util.is_valid(bt) then
 		if slideData.clearCondition ~= nil then
