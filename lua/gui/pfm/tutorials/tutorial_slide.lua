@@ -272,6 +272,16 @@ function Element:AddMessageBox(msg, audioFile)
 
 	return el
 end
+function Element:OpenWindow(window)
+	return tool.get_filmmaker():OpenWindow(window)
+end
+function Element:GoToWindow(window, minDividerFraction)
+	minDividerFraction = minDividerFraction or 0.4
+	local window = tool.get_filmmaker():OpenWindow(window)
+	tool.get_filmmaker():GoToWindow(window)
+	self:SetMinWindowFrameDividerFraction(window, minDividerFraction)
+	return window
+end
 function Element:SetMinWindowFrameDividerFraction(windowIdentifier, fraction)
 	return self:SetWindowFrameDividerFraction(windowIdentifier, fraction, true)
 end

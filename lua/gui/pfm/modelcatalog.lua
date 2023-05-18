@@ -144,6 +144,9 @@ function gui.PFMModelCatalog:OnInitialize()
 	self:EnableThinking()
 	p:ResetControls()
 end
+function gui.PFMModelCatalog:GetFilterElement()
+	return self.m_teFilter
+end
 function gui.PFMModelCatalog:GetExplorer()
 	return self.m_explorer
 end

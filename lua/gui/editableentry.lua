@@ -93,6 +93,9 @@ function gui.EditableEntry:OnInitialize()
 	self:SetText("")
 	self:AddStyleClass("input_field")
 end
+function gui.EditableEntry:GetTarget()
+	return self.m_target
+end
 function gui.EditableEntry:MouseCallback(button, state, mods)
 	if button ~= input.MOUSE_BUTTON_LEFT and button ~= input.MOUSE_BUTTON_RIGHT then
 		return util.EVENT_REPLY_UNHANDLED
@@ -215,6 +218,9 @@ function gui.EditableEntry:OnThink()
 	if endEditMode then
 		self:StartEditMode(false)
 	end
+end
+function gui.EditableEntry:IsInEditMode()
+	return not self.m_descContainer:IsVisible()
 end
 function gui.EditableEntry:StartEditMode(enabled)
 	if self.m_activeTarget then

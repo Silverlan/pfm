@@ -34,6 +34,7 @@ function gui.PFMFrame:OnInitialize()
 	self.m_tabs = {}
 	self.m_tabButtonContainer = gui.create("WIHBox", self)
 	self.m_tabButtonContainer:SetHeight(28)
+	self.m_tabButtonContainer:SetName("tab_button_container")
 
 	self:SetThinkingEnabled(true)
 	self.m_detachedWindows = {}
