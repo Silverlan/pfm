@@ -407,6 +407,7 @@ function gui.AssetExplorer:IsSpecialDirectoryEnabled(specialDir)
 	end
 	return self.m_specialDirEnabled[specialDir]
 end
+function gui.AssetExplorer:OnPopulated() end
 function gui.AssetExplorer:ListFiles()
 	if self.m_inactive then
 		return
@@ -475,6 +476,7 @@ function gui.AssetExplorer:ListFiles()
 	for _, f in ipairs(tFiles) do
 		self:AddAsset(f, false)
 	end
+	self:OnPopulated()
 	self.m_iconContainer:Update()
 	debug.stop_profiling_task()
 end

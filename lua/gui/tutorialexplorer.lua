@@ -28,6 +28,26 @@ function Element:OnInitialize()
 	self:SetSpecialDirectoryEnabled("favorites", false)
 	self:SetSpecialDirectoryEnabled("new", false)
 end
+function Element:OnPopulated()
+	local t = {}
+	for i, item in ipairs(self.m_iconContainer:GetChildren()) do
+		table.insert(t, { item, item:GetText(), i })
+	end
+	table.sort(t, function(a, b)
+		if a[1]:IsDirectory() and not b[1]:IsDirectory() then
+			return true
+		end
+		if not a[1]:IsDirectory() and b[1]:IsDirectory() then
+			return false
+		end
+		return a[2] < b[2]
+	end)
+	local order = {}
+	for _, data in ipairs(t) do
+		table.insert(order, data[3])
+	end
+	self.m_iconContainer:SetChildOrder(order)
+end
 function Element:CreateAssetIcon(path, assetName, isDirectory, importAsset)
 	if isDirectory then
 		return gui.AssetExplorer.CreateAssetIcon(self, path, assetName, isDirectory, importAsset)

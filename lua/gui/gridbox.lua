@@ -68,13 +68,24 @@ end
 function gui.GridBox:OnSizeChanged(w, h)
 	self:ScheduleUpdate()
 end
+function gui.GridBox:SetChildOrder(order)
+	self.m_childOrder = order
+end
 function gui.GridBox:OnUpdate()
 	local x = 0
 	local y = 0
 	local w = self:GetWidth()
 	local h = self:GetHeight()
 	local childHeight
-	for _, child in ipairs(self:GetChildren()) do
+	local children = self:GetChildren()
+	if self.m_childOrder ~= nil then
+		local sorted = {}
+		for _, idx in ipairs(self.m_childOrder) do
+			table.insert(sorted, children[idx])
+		end
+		children = sorted
+	end
+	for _, child in ipairs(children) do
 		if child:IsVisible() then
 			childHeight = childHeight or child:GetHeight()
 			local r = x + child:GetWidth()
