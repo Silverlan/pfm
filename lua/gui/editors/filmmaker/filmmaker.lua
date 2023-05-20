@@ -63,6 +63,7 @@ include("layout.lua")
 include("update.lua")
 include("windows.lua")
 include("tutorials.lua")
+include("global_state_data.lua")
 
 include_component("pfm_camera")
 include_component("pfm_sound_source")
@@ -1133,6 +1134,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 	end
 
+	self:LoadGlobalStateData()
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched", self)
 end
@@ -2272,6 +2274,7 @@ function gui.WIFilmmaker:OnRemove()
 	-- util.remove(self.m_entLight)
 
 	self:SaveSettings()
+	self:SaveGlobalStateData()
 
 	local layers = {}
 	for _, layer in pairs(self.m_inputBindingLayers) do
