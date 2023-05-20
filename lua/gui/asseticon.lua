@@ -412,6 +412,7 @@ end
 function gui.AssetIcon:OnInitialize()
 	gui.ImageIcon.OnInitialize(self)
 
+	self.m_icons = {}
 	gui.AssetIcon.impl.count = gui.AssetIcon.impl.count and (gui.AssetIcon.impl.count + 1) or 1
 end
 function gui.AssetIcon:OnRemove()
@@ -422,6 +423,44 @@ function gui.AssetIcon:OnRemove()
 	if gui.AssetIcon.impl.count == 0 and gui.AssetIcon.impl.iconGenerator ~= nil then
 		gui.AssetIcon.impl.iconGenerator:Clear()
 		gui.AssetIcon.impl.iconGenerator = nil
+	end
+end
+function gui.AssetIcon:RemoveIcon(identifier)
+	util.remove(self.m_icons[identifier])
+	self.m_icons[identifier] = nil
+	self:UpdateIcons()
+end
+function gui.AssetIcon:AddIcon(identifier, icon, tooltip, clickCallback)
+	if util.is_valid(self.m_icons[identifier]) then
+		return self.m_icons[identifier]
+	end
+	local elIcon = gui.create("WISilkIcon", self)
+	elIcon:SetIcon(icon)
+	elIcon:SetAnchor(1, 1, 1, 1)
+	elIcon:SetTooltip(locale.get_text(tooltip))
+	if clickCallback ~= nil then
+		elIcon:SetCursor(gui.CURSOR_SHAPE_HAND)
+		elIcon:SetMouseInputEnabled(true)
+		elIcon:AddCallback("OnMouseEvent", function(el, button, state, mods)
+			if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
+				clickCallback()
+				return util.EVENT_REPLY_HANDLED
+			end
+		end)
+	end
+	self.m_icons[identifier] = elIcon
+	self:UpdateIcons()
+	return elIcon
+end
+function gui.AssetIcon:UpdateIcons()
+	local x
+	for id, icon in pairs(self.m_icons) do
+		if icon:IsValid() then
+			x = x or (self:GetWidth() - icon:GetWidth() - 5)
+			icon:SetX(x)
+			icon:SetY(self:GetHeight() - icon:GetHeight() - 22)
+			x = icon:GetX() - icon:GetWidth() - 5
+		end
 	end
 end
 function gui.AssetIcon:MouseCallback(button, state, mods)

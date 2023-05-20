@@ -61,6 +61,7 @@ function gui.PFMMaterialCatalog:OnInitialize()
 	wrapper:SetName("filter")
 
 	local explorer = gui.create("WIMaterialExplorer", scrollContainer, 0, 0, self:GetWidth(), self:GetHeight())
+	explorer:Setup()
 	explorer:SetAutoAlignToParent(true, false)
 	explorer:SetRootPath("materials")
 	explorer:SetExtensions(asset.get_supported_extensions(asset.TYPE_MATERIAL))

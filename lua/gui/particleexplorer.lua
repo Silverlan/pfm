@@ -21,6 +21,9 @@ function gui.ParticleExplorer:OnInitialize()
 	table.insert(extensions, 1, asset.FORMAT_PARTICLE_SYSTEM_ASCII)
 	self:SetFileExtensions(extensions, asset.get_supported_import_file_extensions(asset.TYPE_PARTICLE_SYSTEM))
 end
+function gui.ParticleExplorer:GetIdentifier()
+	return "particle_explorer"
+end
 function gui.ParticleExplorer:OnAssetIconCreated(path, assetName, el)
 	el:AddCallback("OnParticleSelected", function(el, ptPath)
 		local relPath = util.Path(ptPath)

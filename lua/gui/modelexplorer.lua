@@ -69,6 +69,9 @@ function gui.ModelExplorer:OnInitialize()
 		return util.EVENT_REPLY_HANDLED
 	end)
 end
+function gui.ModelExplorer:GetIdentifier()
+	return "model_explorer"
+end
 function gui.ModelExplorer:PopulateContextMenu(pContext, tSelectedFiles, tExternalFiles)
 	self:CallCallbacks("PopulateIconContextMenu", pContext, tSelectedFiles, tExternalFiles)
 end

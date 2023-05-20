@@ -130,6 +130,8 @@ function gui.WIFilmmaker:OnInitialize()
 		self.m_settings = udm.create_element()
 	end
 
+	self:LoadGlobalStateData()
+
 	local udmData, err = udm.load("cfg/pfm/keybindings.udm")
 	local layers = {}
 	if udmData ~= false then
@@ -1134,7 +1136,6 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 	end
 
-	self:LoadGlobalStateData()
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched", self)
 end

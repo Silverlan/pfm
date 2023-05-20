@@ -51,6 +51,7 @@ function gui.PFMTutorialCatalog:OnInitialize()
 	self.m_teFilter:Wrap("WIEditableEntry"):SetText(locale.get_text("filter"))
 
 	local explorer = gui.create("WITutorialExplorer", scrollContainer, 0, 0, self:GetWidth(), self:GetHeight())
+	explorer:Setup()
 	explorer:SetAutoAlignToParent(true, false)
 	explorer:SetRootPath("tutorials")
 	explorer:SetExtensions({ "udm" })

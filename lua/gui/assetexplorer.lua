@@ -19,6 +19,7 @@ end
 function gui.AssetExplorer:OnInitialize()
 	gui.IconGridView.OnInitialize(self)
 
+	self.m_pathToAssetIcon = {}
 	self.m_special = {
 		["fav"] = {},
 		["new"] = {},
@@ -107,6 +108,16 @@ function gui.AssetExplorer:OnInitialize()
 	end)
 	self:SetShowExternalAssets(true)
 end
+function gui.AssetExplorer:Setup()
+	local gsd = tool.get_filmmaker():GetGlobalStateData()
+	local udmCatalog = gsd:Get("catalogs"):Get(self:GetIdentifier())
+	for _, fav in ipairs(udmCatalog:GetArrayValues("favorites", udm.TYPE_STRING)) do
+		self:AddToFavorites(fav, false)
+	end
+end
+function gui.AssetExplorer:GetIdentifier()
+	return "asset_explorer"
+end
 function gui.AssetExplorer:SetShowExternalAssets(show)
 	self.m_showExternalAssets = show
 	self:ScheduleUpdate()
@@ -129,12 +140,51 @@ function gui.AssetExplorer:SetFileExtensions(extensions, extExtensions)
 		self.m_extensionMap[ext] = true
 	end
 end
-function gui.AssetExplorer:AddToSpecial(id, mdl)
+local function find_in_gsd_favorites(udmCatalog, assetName)
+	local favorites = udmCatalog:GetArrayValues("favorites", udm.TYPE_STRING)
+	for i, fav in ipairs(favorites) do
+		if fav == assetName then
+			return i - 1
+		end
+	end
+end
+function gui.AssetExplorer:AddToSpecial(id, mdl, addToGlobalState)
+	if addToGlobalState == nil then
+		addToGlobalState = true
+	end
 	local v = self.m_special[id]
 	if v == nil then
 		return
 	end
 	v[mdl] = true
+
+	if addToGlobalState and id == "fav" then
+		local gsd = tool.get_filmmaker():GetGlobalStateData()
+
+		local identifier = self:GetIdentifier()
+		local udmCatalog = gsd:Get("catalogs"):Get(identifier)
+
+		local i = find_in_gsd_favorites(udmCatalog, mdl)
+		if i == nil then
+			if udmCatalog:Get("favorites"):IsValid() == false then
+				udmCatalog:AddArray("favorites", 0, udm.TYPE_STRING)
+			end
+			local udmFavorites = udmCatalog:Get("favorites")
+			udmFavorites:Resize(udmFavorites:GetSize() + 1)
+			udmFavorites:SetValue(udmFavorites:GetSize() - 1, udm.TYPE_STRING, mdl)
+			tool.get_filmmaker():SaveGlobalStateData()
+		end
+
+		local el = self:GetAssetIcon(mdl)
+		if util.is_valid(el) then
+			el:AddIcon("favorite", "star", "pfm_asset_icon_remove_from_favorites", function()
+				self:RemoveFromFavorites(mdl)
+			end)
+		end
+	end
+end
+function gui.AssetExplorer:GetAssetIcon(id)
+	return self.m_pathToAssetIcon[id]
 end
 function gui.AssetExplorer:IsInSpecial(id, mdl)
 	local v = self.m_special[id]
@@ -149,6 +199,23 @@ function gui.AssetExplorer:RemoveFromSpecial(id, mdl)
 		return
 	end
 	v[mdl] = nil
+
+	if id == "fav" then
+		local gsd = tool.get_filmmaker():GetGlobalStateData()
+		local identifier = self:GetIdentifier()
+		local udmCatalog = gsd:Get("catalogs"):Get(identifier)
+		local i = find_in_gsd_favorites(udmCatalog, mdl)
+		if i ~= nil then
+			local udmFavorites = udmCatalog:Get("favorites")
+			udmFavorites:RemoveValue(i)
+			tool.get_filmmaker():SaveGlobalStateData()
+		end
+
+		local el = self:GetAssetIcon(mdl)
+		if util.is_valid(el) then
+			el:RemoveIcon("favorite")
+		end
+	end
 end
 function gui.AssetExplorer:SetInactive(inactive)
 	self.m_inactive = inactive or false
@@ -156,14 +223,24 @@ end
 function gui.AssetExplorer:GetSpecial(id)
 	return self.m_special[id]
 end
-function gui.AssetExplorer:AddToFavorites(mdl)
-	self:AddToSpecial("fav", mdl)
+function gui.AssetExplorer:AddToFavorites(mdl, addToGlobalState)
+	self:AddToSpecial("fav", mdl, addToGlobalState)
+
+	if self.m_inSpecial == "fav" then
+		self:ReloadPath()
+		self:ScheduleUpdate()
+	end
 end
 function gui.AssetExplorer:IsInFavorites(mdl)
 	return self:IsInSpecial("fav", mdl)
 end
 function gui.AssetExplorer:RemoveFromFavorites(mdl)
 	self:RemoveFromSpecial("fav", mdl)
+
+	if self.m_inSpecial == "fav" then
+		self:ReloadPath()
+		self:ScheduleUpdate()
+	end
 end
 function gui.AssetExplorer:GetFavorites()
 	return self:GetSpecial("fav")
@@ -189,6 +266,15 @@ function gui.AssetExplorer:CreateAssetIcon(path, assetName, isDirectory, importA
 	end
 	el:SetAsset(path, assetName, importAsset)
 	self:OnAssetIconCreated(path, assetName, el)
+
+	local relPath = el:GetRelativeAsset()
+	self.m_pathToAssetIcon[relPath] = el
+	if self:IsInFavorites(relPath) then
+		el:AddIcon("favorite", "star", "pfm_asset_icon_remove_from_favorites", function()
+			self:RemoveFromFavorites(relPath)
+		end)
+	end
+
 	return el
 end
 function gui.AssetExplorer:OnAssetIconCreated(path, assetName, el) end
@@ -335,10 +421,6 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 							if el:IsValid() then
 								local path = el:GetRelativeAsset()
 								self:RemoveFromFavorites(path)
-								if self.m_inSpecial == "fav" then
-									self:ReloadPath()
-									self:ScheduleUpdate()
-								end
 							end
 						end
 					end)

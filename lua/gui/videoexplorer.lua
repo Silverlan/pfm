@@ -43,6 +43,9 @@ function gui.VideoExplorer:OnInitialize()
 		end)
 	end)
 end
+function gui.VideoExplorer:GetIdentifier()
+	return "video_explorer"
+end
 function gui.VideoExplorer:CreateAssetIcon(path, assetName, isDirectory, importAsset)
 	if isDirectory then
 		return gui.AssetExplorer.CreateAssetIcon(self, path, assetName, isDirectory, importAsset)
