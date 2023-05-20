@@ -200,7 +200,7 @@ function Element:DownloadUpdate(url)
 		if success == false then
 			pfm.log("Failed to download update: " .. result .. "!", pfm.LOG_CATEGORY_UPDATE, pfm.LOG_SEVERITY_ERROR)
 
-			pfm.create_popup_message(locale.get_text("Failed to download update: " .. result .. "!"), 6)
+			pfm.create_popup_message(locale.get_text("pfm_update_download_failed", { tostring(result) }), 6)
 			return
 		end
 		pfm.log("Update downloaded successfully.", pfm.LOG_CATEGORY_UPDATE, pfm.LOG_SEVERITY_INFO)
