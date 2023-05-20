@@ -169,13 +169,19 @@ Element.start_tutorial = function(identifier)
 	util.remove(Element.tutorial_element)
 	local elTut = gui.create("WITutorial", pm)
 	Element.tutorial_element = elTut
+	Element.tutorial_identifier = identifier
 	elTut:SetSize(pm:GetWidth(), pm:GetHeight())
 	elTut:SetZPos(10000)
 	fc(elTut, pm)
 end
 
+Element.get_current_tutorial_identifier = function()
+	return Element.tutorial_identifier
+end
+
 Element.close_tutorial = function()
 	util.remove(Element.tutorial_element)
+	Element.tutorial_identifier = nil
 end
 
 console.register_command("pfm_tutorial_next", function(pl, ...)

@@ -382,4 +382,12 @@ function Element:ToggleAudio()
 	local enabled = not self:IsAudioEnabled()
 	console.run("pfm_tutorial_audio_enabled", enabled and "1" or "0")
 end
+function Element:SetTutorialCompleted()
+	tool.get_filmmaker():SetTutorialCompleted()
+	local window = tool.get_filmmaker():GetWindow("tutorial_catalog")
+	local explorer = util.is_valid(window) and window:GetExplorer() or nil
+	if util.is_valid(explorer) then
+		explorer:ReloadPath()
+	end
+end
 gui.register("WITutorialSlide", Element)

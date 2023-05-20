@@ -61,6 +61,17 @@ function Element:CreateAssetIcon(path, assetName, isDirectory, importAsset)
 		ptPath:PopFront()
 		self:LoadTutorial(el:GetAsset())
 	end)
+
+	if
+		tool.get_filmmaker():IsTutorialCompleted(file.remove_file_extension(file.get_file_name(assetName), { "udm" }))
+	then
+		local icon = gui.create("WISilkIcon", el)
+		icon:SetIcon("accept")
+		icon:SetX(el:GetWidth() - icon:GetWidth() - 5)
+		icon:SetY(el:GetHeight() - icon:GetHeight() - 22)
+		icon:SetAnchor(1, 1, 1, 1)
+		icon:SetTooltip(locale.get_text("pfm_tutorial_completed"))
+	end
 	return el
 end
 function Element:LoadTutorial(asset)

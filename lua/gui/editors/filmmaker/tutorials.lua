@@ -35,3 +35,24 @@ function Element:LoadTutorial(tutorial)
 		end
 	end
 end
+
+function Element:SetTutorialCompleted(name)
+	if name == nil then
+		name = gui.Tutorial.get_current_tutorial_identifier()
+		if name == nil then
+			return
+		end
+	end
+	local gsd = tool.get_filmmaker():GetGlobalStateData()
+	local udmTutorials = gsd:Get("tutorials")
+	local udmTutorial = udmTutorials:Get(name)
+	udmTutorial:SetValue("completed", udm.TYPE_BOOLEAN, true)
+	self:SaveGlobalStateData()
+end
+
+function Element:IsTutorialCompleted(name)
+	local gsd = tool.get_filmmaker():GetGlobalStateData()
+	local udmTutorials = gsd:Get("tutorials")
+	local udmTutorial = udmTutorials:Get(name)
+	return udmTutorial:GetValue("completed", udm.TYPE_BOOLEAN) or false
+end
