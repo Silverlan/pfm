@@ -1005,7 +1005,7 @@ end
 function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
 	local offlineRendererOptions = p:AddSubMenu()
 	-- Device Type
-	local ctr, wrapper =
+	local ctrl, wrapper =
 		offlineRendererOptions:AddDropDownMenu(locale.get_text("pfm_cycles_device_type"), "device_type", {
 			{
 				tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU),
@@ -1021,7 +1021,7 @@ function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
 	offlineRendererOptions:LinkToUDMProperty("device_type", settings, "deviceType")
 
 	-- Denoise Mode
-	ctr, wrapper = offlineRendererOptions:AddDropDownMenu(locale.get_text("pfm_denoise_mode"), "denoise_mode", {
+	ctrl, wrapper = offlineRendererOptions:AddDropDownMenu(locale.get_text("pfm_denoise_mode"), "denoise_mode", {
 		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_NONE), locale.get_text("disabled") },
 		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_FAST), locale.get_text("fast") },
 		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_DETAILED), locale.get_text("detailed") },
