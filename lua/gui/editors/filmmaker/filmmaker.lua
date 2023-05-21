@@ -293,6 +293,16 @@ function gui.WIFilmmaker:OnInitialize()
 		end
 		return false
 	end)
+	self.m_cbOnWindowShouldClose = game.add_callback("OnWindowShouldClose", function(window)
+		if window == gui.get_primary_window() then
+			self:ShowCloseConfirmation(function(res)
+				tool.close_filmmaker()
+				engine.shutdown()
+			end)
+			return false
+		end
+		return true
+	end)
 	game.set_default_game_render_enabled(false)
 
 	self:EnableThinking()
@@ -2313,6 +2323,7 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_worldAxesGizmo)
 	util.remove(self.m_pfmManager)
 	util.remove(self.m_cbDisableDefaultSceneDraw)
+	util.remove(self.m_cbOnWindowShouldClose)
 	util.remove(self.m_cbPreRenderScenes)
 	util.remove(self.m_overlaySceneCallback)
 	if util.is_valid(self.m_overlayScene) then
