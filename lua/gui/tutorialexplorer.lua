@@ -62,7 +62,9 @@ function Element:CreateAssetIcon(path, assetName, isDirectory, importAsset)
 	el:AddCallback("OnDoubleClick", function(el)
 		local ptPath = util.Path(el:GetAsset())
 		ptPath:PopFront()
-		self:LoadTutorial(el:GetAsset())
+		tool.get_filmmaker():ShowCloseConfirmation(function(res)
+			self:LoadTutorial(el:GetAsset())
+		end)
 	end)
 
 	if

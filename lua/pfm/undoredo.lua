@@ -15,6 +15,10 @@ pfm.undoredo = pfm.undoredo or {}
 pfm.undoredo.stack = pfm.undoredo.stack or {}
 pfm.undoredo.detail = pfm.undoredo.detail or {}
 pfm.undoredo.action_position = 0
+pfm.undoredo.is_empty = function()
+	return pfm.undoredo.stack[1] == nil
+end
+
 pfm.undoredo.push = function(name, actionDo, undo)
 	local pos = pfm.undoredo.action_position + 1
 	pfm.log(

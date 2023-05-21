@@ -333,7 +333,9 @@ function gui.WIFilmmaker:OnInitialize()
 					if util.is_valid(self) == false then
 						return
 					end
-					self:CreateSimpleProject()
+					self:ShowCloseConfirmation(function(res)
+						self:CreateSimpleProject()
+					end)
 				end)
 				:SetTooltip(locale.get_text("pfm_menu_context_simple_project"))
 			pSubMenu
@@ -341,7 +343,9 @@ function gui.WIFilmmaker:OnInitialize()
 					if util.is_valid(self) == false then
 						return
 					end
-					self:CreateEmptyProject()
+					self:ShowCloseConfirmation(function(res)
+						self:CreateEmptyProject()
+					end)
 				end)
 				:SetTooltip(locale.get_text("pfm_menu_context_empty_project"))
 			pSubMenu:ScheduleUpdate()
@@ -353,32 +357,34 @@ function gui.WIFilmmaker:OnInitialize()
 				if self:CheckBuildKernels() then
 					return
 				end
-				util.remove(self.m_openDialogue)
-				local pOptionKeepCurrentLayout
-				self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
-					fileName = "projects/" .. fileName
+				self:ShowCloseConfirmation(function(res)
+					util.remove(self.m_openDialogue)
+					local pOptionKeepCurrentLayout
+					self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
+						fileName = "projects/" .. fileName
 
-					if console.get_convar_bool("pfm_keep_current_layout") then
-						file.create_path("temp/pfm/")
-						self:SaveWindowLayoutState("temp/pfm/restore_layout_state.udm", true)
-					end
+						if console.get_convar_bool("pfm_keep_current_layout") then
+							file.create_path("temp/pfm/")
+							self:SaveWindowLayoutState("temp/pfm/restore_layout_state.udm", true)
+						end
 
-					self:LoadProject(fileName)
+						self:LoadProject(fileName)
+					end)
+					self.m_openDialogue:SetRootPath("projects")
+					self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
+
+					local pOptions = self.m_openDialogue:GetOptionsPanel()
+					pOptionKeepCurrentLayout = pOptions:AddToggleControl(
+						locale.get_text("pfm_keep_current_layout"),
+						"keep_current_layout",
+						console.get_convar_bool("pfm_keep_current_layout"),
+						function(el, checked)
+							console.run("pfm_keep_current_layout", checked and "1" or "0")
+						end
+					)
+
+					self.m_openDialogue:Update()
 				end)
-				self.m_openDialogue:SetRootPath("projects")
-				self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
-
-				local pOptions = self.m_openDialogue:GetOptionsPanel()
-				pOptionKeepCurrentLayout = pOptions:AddToggleControl(
-					locale.get_text("pfm_keep_current_layout"),
-					"keep_current_layout",
-					console.get_convar_bool("pfm_keep_current_layout"),
-					function(el, checked)
-						console.run("pfm_keep_current_layout", checked and "1" or "0")
-					end
-				)
-
-				self.m_openDialogue:Update()
 			end)
 			if self:IsDeveloperModeEnabled() then
 				pContext:AddItem(locale.get_text("reopen"), function(pItem)
@@ -430,7 +436,9 @@ function gui.WIFilmmaker:OnInitialize()
 						if self:CheckBuildKernels() then
 							return
 						end
-						self:LoadProject(f)
+						self:ShowCloseConfirmation(function(res)
+							self:LoadProject(f)
+						end)
 					end)
 					pSubMenu:ScheduleUpdate()
 				end
@@ -507,7 +515,9 @@ function gui.WIFilmmaker:OnInitialize()
 					end
 					util.remove(self.m_openDialogue)
 					self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
-						self:ImportSFMProject(fileName)
+						self:ShowCloseConfirmation(function(res)
+							self:ImportSFMProject(fileName)
+						end)
 					end)
 					self.m_openDialogue:SetExtensions({ "dmx" })
 					self.m_openDialogue:GetFileList():SetFileFinder(function(path)
@@ -626,7 +636,9 @@ function gui.WIFilmmaker:OnInitialize()
 				if util.is_valid(self) == false then
 					return
 				end
-				self:CreateNewProject()
+				self:ShowCloseConfirmation(function(res)
+					self:CreateNewProject()
+				end)
 			end)
 			pContext:AddItem(locale.get_text("exit"), function(pItem)
 				if util.is_valid(self) == false then
@@ -635,8 +647,10 @@ function gui.WIFilmmaker:OnInitialize()
 				if self:CheckBuildKernels() then
 					return
 				end
-				tool.close_filmmaker()
-				engine.shutdown()
+				self:ShowCloseConfirmation(function(res)
+					tool.close_filmmaker()
+					engine.shutdown()
+				end)
 			end)
 			pContext:ScheduleUpdate()
 		end)
@@ -761,21 +775,32 @@ function gui.WIFilmmaker:OnInitialize()
 					if util.is_valid(self) == false then
 						return
 					end
-					local mapName = game.get_map_name()
-					local mapFile = asset.find_file(mapName, asset.TYPE_MAP)
-					if mapFile == nil then
-						return
-					end
-					util.remove(ents.get_all(ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_MAP) })))
+					pfm.open_message_prompt(
+						locale.get_text("pfm_prompt_continue"),
+						locale.get_text("pfm_prompt_action_cannot_be_undone"),
+						bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
+						function(bt)
+							if bt == gui.PfmPrompt.BUTTON_YES then
+								local mapName = game.get_map_name()
+								local mapFile = asset.find_file(mapName, asset.TYPE_MAP)
+								if mapFile == nil then
+									return
+								end
+								util.remove(
+									ents.get_all(ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_MAP) }))
+								)
 
-					local session = self:GetSession()
-					if session ~= nil then
-						local settings = session:GetSettings()
-						-- The map is now part of the project, so we want to load an empty map next time the project is loaded
-						settings:SetMapName("empty")
-					end
+								local session = self:GetSession()
+								if session ~= nil then
+									local settings = session:GetSettings()
+									-- The map is now part of the project, so we want to load an empty map next time the project is loaded
+									settings:SetMapName("empty")
+								end
 
-					self:ImportMap(mapFile)
+								self:ImportMap(mapFile)
+							end
+						end
+					)
 				end)
 				:SetTooltip(locale.get_text("pfm_menu_context_convert_map_to_actors"))
 			pContext
@@ -918,7 +943,9 @@ function gui.WIFilmmaker:OnInitialize()
 		:AddItem(locale.get_text("help"), function(pContext)
 			pContext
 				:AddItem(locale.get_text("pfm_getting_started"), function(pItem)
-					self:LoadTutorial("intro")
+					self:ShowCloseConfirmation(function(res)
+						self:LoadTutorial("intro")
+					end)
 				end)
 				:SetTooltip(locale.get_text("pfm_menu_context_getting_started"))
 			pContext:AddItem(locale.get_text("pfm_tutorial_catalog"), function(pItem)
@@ -1121,7 +1148,9 @@ function gui.WIFilmmaker:OnInitialize()
 						udmNotifications:SetValue("initial_tutorial_message", udm.TYPE_BOOLEAN, true)
 						time.create_simple_timer(0.0, function()
 							if self:IsValid() then
-								self:LoadTutorial("intro")
+								self:ShowCloseConfirmation(function(res)
+									self:LoadTutorial("intro")
+								end)
 							end
 						end)
 					end,
@@ -1138,6 +1167,31 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched", self)
+end
+function gui.WIFilmmaker:ShowCloseConfirmation(action, callActionOnCancel)
+	callActionOnCancel = callActionOnCancel or false
+	if pfm.undoredo.is_empty() then
+		-- Nothing has been changed in the project, no reason to show the save prompt
+		action(true)
+		return
+	end
+	local fileName = self:GetProjectFileName() or locale.get_text("untitled")
+	pfm.open_message_prompt(
+		locale.get_text("pfm_prompt_save_changes"),
+		locale.get_text("pfm_prompt_save_changes_message", { fileName }),
+		bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO, gui.PfmPrompt.BUTTON_CANCEL),
+		function(bt)
+			if bt == gui.PfmPrompt.BUTTON_YES then
+				self:Save(nil, nil, nil, nil, function(res)
+					action(true)
+				end)
+			elseif bt == gui.PfmPrompt.BUTTON_NO then
+				action(true)
+			elseif bt == gui.PfmPrompt.BUTTON_NO and callActionOnCancel then
+				action(false)
+			end
+		end
+	)
 end
 function gui.WIFilmmaker:OnProjectLoaded(fileName, project)
 	self:AddRecentProject(fileName)
@@ -1829,9 +1883,12 @@ function gui.WIFilmmaker:SetOverlaySceneEnabled(enabled)
 
 	self:TagRenderSceneAsDirty()
 end
-function gui.WIFilmmaker:Save(fileName, setAsProjectName, saveAs, withProjectsPrefix)
+function gui.WIFilmmaker:Save(fileName, setAsProjectName, saveAs, withProjectsPrefix, resultCallback)
 	local project = self:GetProject()
 	if project == nil then
+		if resultCallback ~= nil then
+			resultCallback(true)
+		end
 		return
 	end
 	if self:IsDeveloperModeEnabled() == false then
@@ -1844,6 +1901,9 @@ function gui.WIFilmmaker:Save(fileName, setAsProjectName, saveAs, withProjectsPr
 				false,
 				gui.InfoBox.TYPE_ERROR
 			)
+			if resultCallback ~= nil then
+				resultCallback(true)
+			end
 			return
 		end
 	end
@@ -1867,6 +1927,7 @@ function gui.WIFilmmaker:Save(fileName, setAsProjectName, saveAs, withProjectsPr
 		else
 			pfm.create_popup_message(locale.get_text("pfm_save_failed", { fileName }), false, gui.InfoBox.TYPE_ERROR)
 		end
+		return res
 	end
 	if fileName == nil and saveAs ~= true then
 		local projectFileName = self:GetProjectFileName()
@@ -1877,11 +1938,17 @@ function gui.WIFilmmaker:Save(fileName, setAsProjectName, saveAs, withProjectsPr
 		end
 	end
 	if fileName ~= nil then
-		saveProject(fileName)
+		local res = saveProject(fileName)
+		if resultCallback ~= nil then
+			resultCallback(res)
+		end
 	else
 		util.remove(self.m_openDialogue)
 		self.m_openDialogue = gui.create_file_save_dialog(function(pDialog, fileName)
-			saveProject(fileName)
+			local res = saveProject(fileName)
+			if resultCallback then
+				resultCallback(res)
+			end
 		end)
 		self.m_openDialogue:SetRootPath("projects")
 		self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
