@@ -516,10 +516,17 @@ function gui.PFMTreeViewElement:FullUpdate()
 		parent = parent:GetParentItem()
 	end
 end
-function gui.PFMTreeViewElement:Expand()
+function gui.PFMTreeViewElement:Expand(expandParents)
 	self.m_collapsed = false
 	if util.is_valid(self.m_expandIcon) then
 		self.m_expandIcon:Expand()
+	end
+
+	if expandParents then
+		local parent = self:GetParentItem()
+		if util.is_valid(parent) then
+			parent:Expand(expandParents)
+		end
 	end
 end
 function gui.PFMTreeViewElement:GetExpandIcon()
@@ -529,11 +536,6 @@ function gui.PFMTreeViewElement:Clear()
 	for _, item in ipairs(self.m_items) do
 		if item:IsValid() then
 			item:Remove()
-		end
-	end
-	for _, item in pairs(self.m_items) do
-		if item:IsValid() then
-			debug.print("DANGLING ITEM")
 		end
 	end
 	self.m_items = {}
