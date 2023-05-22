@@ -46,6 +46,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_btTools = gui.PFMButton.create(self, "gui/pfm/icon_gear", "gui/pfm/icon_gear_activated", function()
 		print("TODO")
 	end)
+	self.m_btTools:SetName("new_actor_button")
 	self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())
 	local function addPresetActorOption(subMenu, type, locId)
 		subMenu
@@ -355,6 +356,7 @@ function gui.PFMActorEditor:OnInitialize()
 		treeScrollContainer:GetHeight()
 	)
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
+	self.m_tree:SetName("actor_tree")
 	self.m_treeElementToActorData = {}
 	self.m_actorUniqueIdToTreeElement = {}
 	self.m_tree:AddCallback("OnItemSelectChanged", function(tree, el, selected)
