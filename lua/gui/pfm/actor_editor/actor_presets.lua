@@ -233,6 +233,8 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		end
 		self:CreateNewActorComponent(actor, "fog_controller", false)
 		self:CreateNewActorComponent(actor, "color", false)
+		local toggleC = self:CreateNewActorComponent(actor, "toggle", false)
+		toggleC:SetMemberValue("enabled", udm.TYPE_BOOLEAN, true)
 	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL then
 		local pm = pfm.get_project_manager()
 		local vp = util.is_valid(pm) and pm:GetViewport() or nil
