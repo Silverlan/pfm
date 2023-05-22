@@ -18,6 +18,7 @@ function Element:OnInitialize()
 
 	self.m_slides = {}
 	self.m_prevSlides = {}
+	self.m_tutorialData = {}
 
 	self:SetThinkingEnabled(true)
 
@@ -48,7 +49,7 @@ function Element:OnThink()
 	local slideData = self.m_slides[self.m_curSlide.identifier]
 	if slideData ~= nil and slideData.clearCondition ~= nil then
 		local bt = self.m_curSlide.element:GetContinueButton()
-		local enabled = slideData.clearCondition(self.m_curSlide.data)
+		local enabled = slideData.clearCondition(self.m_tutorialData, self.m_curSlide.data, self.m_curSlide.element)
 		bt:SetEnabled(enabled)
 		if enabled and self.m_curSlide.data.autoContinue then
 			self:NextSlide()
@@ -65,7 +66,7 @@ function Element:ClearSlide()
 	util.remove(self.m_curSlide.element)
 	local slideData = self.m_slides[self.m_curSlide.identifier]
 	if slideData.clear ~= nil then
-		slideData.clear(self.m_curSlide.data)
+		slideData.clear(self.m_tutorialData, self.m_curSlide.data)
 	end
 	self.m_curSlide = nil
 end
@@ -83,7 +84,7 @@ function Element:StartSlide(identifier)
 	self.m_curSlide.element:SetTutorial(self)
 	local slideData = self.m_slides[identifier]
 	self.m_curSlide.data.autoContinue = slideData.autoContinue
-	slideData.init(self.m_curSlide.data, self.m_curSlide.element)
+	slideData.init(self.m_tutorialData, self.m_curSlide.data, self.m_curSlide.element)
 
 	local bt = self.m_curSlide.element:GetContinueButton()
 	if util.is_valid(bt) then

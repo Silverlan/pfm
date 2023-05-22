@@ -16,17 +16,46 @@ function Element:OnInitialize()
 
 	self:SetSize(64, 64)
 	self.m_highlights = {}
+	self.m_namedHighlights = {}
 	self.m_messageBoxes = {}
 
 	self.m_cbAudioEnabled = console.add_change_callback("pfm_tutorial_audio_enabled", function(old, new)
 		self:UpdateAudio()
 	end)
+	self:SetThinkingEnabled(true)
+end
+function Element:OnThink()
+	for _, data in ipairs(self.m_namedHighlights) do
+		local els = {}
+		local elRoot = gui.get_base_element()
+		for _, path in ipairs(data.els) do
+			local el = self:FindElementByPath(path, elRoot)
+			if el == nil or el == elRoot then
+				break
+			end
+			table.insert(els, el)
+		end
+		if #els == #data.els then
+			if util.is_valid(data.elOutline) == false then
+				local elOutline = gui.create("WIElementSelectionOutline")
+				elOutline:SetTargetElement(els)
+				elOutline:Update()
+				data.elOutline = elOutline
+			end
+		else
+			util.remove(data.elOutline)
+		end
+	end
 end
 function Element:OnRemove()
 	if self.m_sound ~= nil then
 		self.m_sound:Stop()
 	end
 	util.remove(self.m_cbAudioEnabled)
+
+	for _, data in ipairs(self.m_namedHighlights) do
+		util.remove(data.elOutline)
+	end
 end
 function Element:SetTutorial(t)
 	self.m_tutorial = t
@@ -48,6 +77,12 @@ function Element:FindElementByPath(path, baseElement)
 		local el = elBase
 		for _, c in ipairs(pathComponents) do
 			local children = elBase:FindDescendantsByName(c)
+			for i = #children, 1, -1 do
+				local child = children[i]
+				if child:IsVisible() == false then
+					table.remove(children, i)
+				end
+			end
 			if #children == 0 then
 				return false
 			end
@@ -105,6 +140,12 @@ function Element:AddHighlight(el)
 		els = { els }
 	end
 	if #els == 0 then
+		return
+	end
+	if type(els[1]) == "string" then
+		table.insert(self.m_namedHighlights, {
+			els = els,
+		})
 		return
 	end
 	local elFirst = els[1]
@@ -271,6 +312,9 @@ function Element:AddMessageBox(msg, audioFile)
 	end
 
 	return el
+end
+function Element:GetWindow(window)
+	return tool.get_filmmaker():GetWindow(window)
 end
 function Element:OpenWindow(window)
 	return tool.get_filmmaker():OpenWindow(window)
