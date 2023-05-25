@@ -48,54 +48,69 @@ function gui.PFMActorEditor:OnInitialize()
 	end)
 	self.m_btTools:SetName("new_actor_button")
 	self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())
-	local function addPresetActorOption(subMenu, type, locId)
-		subMenu
-			:AddItem(locale.get_text(locId), function()
-				self:CreatePresetActor(type)
-			end)
-			:SetTooltip(locale.get_text(locId .. "_desc"))
+	local function addPresetActorOption(id, subMenu, type, locId)
+		local subItem = subMenu:AddItem(locale.get_text(locId), function()
+			self:CreatePresetActor(type)
+		end)
+		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
+		subItem:SetName(id)
 	end
-	local function addPresetModelActorOption(subMenu, type, locId)
-		subMenu
-			:AddItem(locale.get_text(locId), function()
-				gui.open_model_dialog(function(dialogResult, mdlName)
-					if dialogResult ~= gui.DIALOG_RESULT_OK then
-						return
-					end
-					if self:IsValid() == false then
-						return
-					end
-					local actor = self:CreatePresetActor(type, { ["modelName"] = mdlName })
-				end)
+	local function addPresetModelActorOption(id, subMenu, type, locId)
+		local subItem = subMenu:AddItem(locale.get_text(locId), function()
+			gui.open_model_dialog(function(dialogResult, mdlName)
+				if dialogResult ~= gui.DIALOG_RESULT_OK then
+					return
+				end
+				if self:IsValid() == false then
+					return
+				end
+				local actor = self:CreatePresetActor(type, { ["modelName"] = mdlName })
 			end)
-			:SetTooltip(locale.get_text(locId .. "_desc"))
+		end)
+		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
+		subItem:SetName(id)
 	end
 	self.m_btTools:SetupContextMenu(function(pContext)
 		addPresetModelActorOption(
+			"static_prop",
 			pContext,
 			gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,
 			"pfm_create_new_static_prop"
 		)
 		addPresetModelActorOption(
+			"dynamic_prop",
 			pContext,
 			gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP,
 			"pfm_create_new_dynamic_prop"
 		)
 		addPresetModelActorOption(
+			"articulated_actor",
 			pContext,
 			gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR,
 			"pfm_create_new_articulated_actor"
 		)
 
-		addPresetActorOption(pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA, "pfm_create_new_camera")
+		addPresetActorOption("camera", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA, "pfm_create_new_camera")
 		addPresetActorOption(
+			"particle_system",
 			pContext,
 			gui.PFMActorEditor.ACTOR_PRESET_TYPE_PARTICLE_SYSTEM,
 			"pfm_create_new_particle_system"
 		)
-		addPresetActorOption(pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT, "pfm_create_new_spot_light")
-		addPresetActorOption(pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT, "pfm_create_new_point_light")
 		addPresetActorOption(
+			"spot_light",
+			pContext,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT,
+			"pfm_create_new_spot_light"
+		)
+		addPresetActorOption(
+			"point_light",
+			pContext,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT,
+			"pfm_create_new_point_light"
+		)
+		addPresetActorOption(
+			"directional_light",
 			pContext,
 			gui.PFMActorEditor.ACTOR_PRESET_TYPE_DIRECTIONAL_LIGHT,
 			"pfm_create_new_directional_light"
@@ -111,8 +126,8 @@ function gui.PFMActorEditor:OnInitialize()
 			actor:SetTransform(transform)
 			self:UpdateActorComponents(actor)
 		end)]]
-		addPresetActorOption(pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME, "pfm_create_new_volume")
-		addPresetActorOption(pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR, "pfm_create_new_actor")
+		addPresetActorOption("volume", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME, "pfm_create_new_volume")
+		addPresetActorOption("actor", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR, "pfm_create_new_actor")
 
 		local filmClip = self:GetFilmClip()
 		local hasSkyComponent = false
@@ -141,8 +156,10 @@ function gui.PFMActorEditor:OnInitialize()
 		end
 
 		local pBakingItem, pBakingMenu = pContext:AddSubMenu(locale.get_text("pfm_baking"))
+		pBakingItem:SetName("baking")
 		if hasLightmapperComponent == false then
 			addPresetActorOption(
+				"lightmapper",
 				pBakingMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER,
 				"pfm_create_lightmapper",
@@ -150,6 +167,7 @@ function gui.PFMActorEditor:OnInitialize()
 			)
 		end
 		addPresetActorOption(
+			"reflection_probe",
 			pBakingMenu,
 			gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE,
 			"pfm_create_reflection_probe",
@@ -157,16 +175,23 @@ function gui.PFMActorEditor:OnInitialize()
 		)
 		pBakingMenu:Update()
 		if hasSkyComponent == false then
-			addPresetActorOption(pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY, "pfm_add_sky")
+			addPresetActorOption("sky", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY, "pfm_add_sky")
 		end
 		if hasFogComponent == false then
-			addPresetActorOption(pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG, "pfm_create_new_fog_controller")
+			addPresetActorOption(
+				"fog_controller",
+				pContext,
+				gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG,
+				"pfm_create_new_fog_controller"
+			)
 		end
-		addPresetActorOption(pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL, "pfm_create_new_decal")
+		addPresetActorOption("decal", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL, "pfm_create_new_decal")
 
 		local pVrItem, pVrMenu = pContext:AddSubMenu(locale.get_text("virtual_reality"))
+		pVrItem:SetName("virtual_reality")
 		if hasVrManagerComponent == false then
 			addPresetActorOption(
+				"vr_manager",
 				pVrMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_MANAGER,
 				"pfm_create_vr_manager",
@@ -177,55 +202,65 @@ function gui.PFMActorEditor:OnInitialize()
 
 		if tool.get_filmmaker():IsDeveloperModeEnabled() then
 			local pConstraintItem, pConstraintMenu = pContext:AddSubMenu(locale.get_text("constraints"))
+			pConstraintItem:SetName("constraints")
 			addPresetActorOption(
+				"copy_location_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION,
 				"pfm_create_copy_location_constraint",
 				pConstraintMenu
 			)
 			addPresetActorOption(
+				"copy_rotation_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION,
 				"pfm_create_copy_rotation_constraint",
 				pConstraintMenu
 			)
 			addPresetActorOption(
+				"copy_scale_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE,
 				"pfm_create_copy_scale_constraint",
 				pConstraintMenu
 			)
 			addPresetActorOption(
+				"limit_distance_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE,
 				"pfm_create_limit_distance_constraint",
 				pConstraintMenu
 			)
 			addPresetActorOption(
+				"limit_location_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,
 				"pfm_create_limit_location_constraint",
 				pConstraintMenu
 			)
 			addPresetActorOption(
+				"limit_rotation_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,
 				"pfm_create_limit_rotation_constraint",
 				pConstraintMenu
 			)
 			addPresetActorOption(
+				"limit_scale_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,
 				"pfm_create_limit_scale_constraint",
 				pConstraintMenu
 			)
 			addPresetActorOption(
+				"look_at_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT,
 				"pfm_create_look_at_constraint",
 				pConstraintMenu
 			)
 			addPresetActorOption(
+				"child_of_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF,
 				"pfm_create_child_of_constraint",
@@ -234,6 +269,7 @@ function gui.PFMActorEditor:OnInitialize()
 			pConstraintMenu:Update()
 
 			addPresetActorOption(
+				"animation_driver",
 				pContext,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER,
 				"pfm_create_animation_driver"
@@ -630,12 +666,16 @@ function gui.PFMActorEditor:MouseCallback(button, state, mods)
 		end
 		pContext:SetPos(input.get_cursor_pos())
 
-		pContext:AddItem(locale.get_text("pfm_copy_actors"), function()
-			self:CopyToClipboard()
-		end)
-		pContext:AddItem(locale.get_text("pfm_paste_actors"), function()
-			self:PasteFromClipboard()
-		end)
+		pContext
+			:AddItem(locale.get_text("pfm_copy_actors"), function()
+				self:CopyToClipboard()
+			end)
+			:SetName("copy_actors")
+		pContext
+			:AddItem(locale.get_text("pfm_paste_actors"), function()
+				self:PasteFromClipboard()
+			end)
+			:SetName("paste_actors")
 		pContext:Update()
 		return util.EVENT_REPLY_HANDLED
 	end
@@ -1420,41 +1460,51 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 
 		local expr = animManager:GetValueExpression(actorData.actor, controlData.path)
 		if expr ~= nil then
-			context:AddItem(locale.get_text("pfm_clear_expression"), function()
-				clear_expression()
-			end)
-			context:AddItem(locale.get_text("pfm_copy_expression"), function()
-				util.set_clipboard_string(expr)
-			end)
+			context
+				:AddItem(locale.get_text("pfm_clear_expression"), function()
+					clear_expression()
+				end)
+				:SetName("clear_expression")
+			context
+				:AddItem(locale.get_text("pfm_copy_expression"), function()
+					util.set_clipboard_string(expr)
+				end)
+				:SetName("copy_expression")
 		end
-		context:AddItem(locale.get_text("pfm_set_expression"), function()
-			self:OpenPropertyExpressionWindow(actorData, controlData)
-		end)
-		if controlData.path ~= nil then
-			context:AddItem(locale.get_text("pfm_copy_property_path"), function()
-				util.set_clipboard_string(ents.create_uri(actorData.actor:GetUniqueId(), controlData.path))
+		context
+			:AddItem(locale.get_text("pfm_set_expression"), function()
+				self:OpenPropertyExpressionWindow(actorData, controlData)
 			end)
+			:SetName("set_expression")
+		if controlData.path ~= nil then
+			context
+				:AddItem(locale.get_text("pfm_copy_property_path"), function()
+					util.set_clipboard_string(ents.create_uri(actorData.actor:GetUniqueId(), controlData.path))
+				end)
+				:SetName("copy_property_path")
 		end
 		local anim, channel = animManager:FindAnimationChannel(actorData.actor, controlData.path, false)
 		if channel ~= nil then
-			context:AddItem(locale.get_text("pfm_clear_animation"), function()
-				animManager:RemoveChannel(actorData.actor, controlData.path)
-				local entActor = actorData.actor:FindEntity()
-				if util.is_valid(entActor) == false then
-					return
-				end
-				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-				if actorC ~= nil then
-					actorC:ApplyComponentMemberValue(controlData.path)
-				end
+			context
+				:AddItem(locale.get_text("pfm_clear_animation"), function()
+					animManager:RemoveChannel(actorData.actor, controlData.path)
+					local entActor = actorData.actor:FindEntity()
+					if util.is_valid(entActor) == false then
+						return
+					end
+					local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+					if actorC ~= nil then
+						actorC:ApplyComponentMemberValue(controlData.path)
+					end
 
-				local animC = entActor:GetComponent(ents.COMPONENT_PANIMA)
-				if animC ~= nil then
-					animC:ReloadAnimation()
-				end
+					local animC = entActor:GetComponent(ents.COMPONENT_PANIMA)
+					if animC ~= nil then
+						animC:ReloadAnimation()
+					end
 
-				self:SetPropertyAnimationOverlaysDirty()
-			end)
+					self:SetPropertyAnimationOverlaysDirty()
+				end)
+				:SetName("clear_animation")
 		end
 	end
 
@@ -1543,41 +1593,44 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 
 			if #constraintTypes > 0 then
 				local ctItem, ctMenu = context:AddSubMenu(locale.get_text("pfm_add_constraint"))
+				ctItem:SetName("add_constraint")
 				for _, typeInfo in ipairs(constraintTypes) do
-					ctMenu:AddItem(locale.get_text("c_constraint_" .. typeInfo[2]), function()
-						local actor = self:CreatePresetActor(typeInfo[1], {
-							["updateActorComponents"] = false,
-						})
-						local ctC = actor:FindComponent("constraint")
-						if ctC ~= nil then
-							ctC:SetMemberValue(
-								"drivenObject",
-								udm.TYPE_STRING,
-								ents.create_uri(prop0.actorData.actor:GetUniqueId(), prop0.controlData.path)
-							)
-							if typeInfo[3] == true and prop1.controlData ~= nil then
+					ctMenu
+						:AddItem(locale.get_text("c_constraint_" .. typeInfo[2]), function()
+							local actor = self:CreatePresetActor(typeInfo[1], {
+								["updateActorComponents"] = false,
+							})
+							local ctC = actor:FindComponent("constraint")
+							if ctC ~= nil then
 								ctC:SetMemberValue(
-									"driver",
+									"drivenObject",
 									udm.TYPE_STRING,
-									ents.create_uri(prop1.actorData.actor:GetUniqueId(), prop1.controlData.path)
+									ents.create_uri(prop0.actorData.actor:GetUniqueId(), prop0.controlData.path)
 								)
+								if typeInfo[3] == true and prop1.controlData ~= nil then
+									ctC:SetMemberValue(
+										"driver",
+										udm.TYPE_STRING,
+										ents.create_uri(prop1.actorData.actor:GetUniqueId(), prop1.controlData.path)
+									)
+								end
+								self:UpdateActorComponents(actor)
 							end
-							self:UpdateActorComponents(actor)
-						end
 
-						local pm = pfm.get_project_manager()
-						local animManager = pm:GetAnimationManager()
-						if animManager == nil then
-							return
-						end
-						-- Constraints require there to be an animation channel with at least one animation value
-						animManager:InitChannelWithBaseValue(
-							prop0.actorData.actor,
-							prop0.controlData.path,
-							true,
-							prop0.controlData.type
-						)
-					end)
+							local pm = pfm.get_project_manager()
+							local animManager = pm:GetAnimationManager()
+							if animManager == nil then
+								return
+							end
+							-- Constraints require there to be an animation channel with at least one animation value
+							animManager:InitChannelWithBaseValue(
+								prop0.actorData.actor,
+								prop0.controlData.path,
+								true,
+								prop0.controlData.type
+							)
+						end)
+						:SetName("constraint_" .. typeInfo[2])
 				end
 				ctMenu:Update()
 			end
@@ -1593,113 +1646,117 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 	elseif #props > 0 then
 		local prop = props[1]
 		if controlData.type < udm.TYPE_COUNT then
-			context:AddItem(locale.get_text("pfm_add_driver"), function()
-				local actor = self:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER, {
-					["updateActorComponents"] = false,
-				})
-				local ctC = actor:FindComponent("animation_driver")
-				if ctC ~= nil then
-					ctC:SetMemberValue(
-						"drivenObject",
-						udm.TYPE_STRING,
-						ents.create_uri(prop.actorData.actor:GetUniqueId(), prop.controlData.path)
-					)
-					self:UpdateActorComponents(actor)
+			context
+				:AddItem(locale.get_text("pfm_add_driver"), function()
+					local actor = self:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER, {
+						["updateActorComponents"] = false,
+					})
+					local ctC = actor:FindComponent("animation_driver")
+					if ctC ~= nil then
+						ctC:SetMemberValue(
+							"drivenObject",
+							udm.TYPE_STRING,
+							ents.create_uri(prop.actorData.actor:GetUniqueId(), prop.controlData.path)
+						)
+						self:UpdateActorComponents(actor)
 
-					local nameCountMap = {}
-					local function get_var_name(baseName)
-						if nameCountMap[baseName] == nil then
-							nameCountMap[baseName] = 1
-							return baseName
-						end
-						nameCountMap[baseName] = nameCountMap[baseName] + 1
-						return baseName .. nameCountMap[baseName]
-					end
-
-					local ctrl, ctrlData, componentData, actorData = self:GetPropertyControl(
-						actor:GetUniqueId(),
-						"animation_driver",
-						"ec/animation_driver/parameters"
-					)
-					local elUdm = ctrlData.getValue()
-					local params = ctC:GetMemberValue("parameters")
-					if util.is_valid(params) then
-						local udmConstants = params:Add("constants")
-						local udmReferences = params:Add("references")
-
-						-- Add the selected properties, components and actors as input parameters for the expression
-						local actors = {}
-						for _, propParam in ipairs(props) do
-							local uuid = propParam.actorData.actor:GetUniqueId()
-							local uri = ents.create_uri(uuid, propParam.controlData.path)
-							udmReferences:SetValue(
-								get_var_name(util.Path.CreateFilePath(propParam.controlData.path):GetFileName()),
-								udm.TYPE_STRING,
-								uri
-							)
-
-							local componentName, memberName = ents.PanimaComponent.parse_component_channel_path(
-								panima.Channel.Path(propParam.controlData.path)
-							)
-							actors[tostring(uuid)] = actors[tostring(uuid)] or {}
-							actors[tostring(uuid)][componentName] = true
+						local nameCountMap = {}
+						local function get_var_name(baseName)
+							if nameCountMap[baseName] == nil then
+								nameCountMap[baseName] = 1
+								return baseName
+							end
+							nameCountMap[baseName] = nameCountMap[baseName] + 1
+							return baseName .. nameCountMap[baseName]
 						end
 
-						local pm = pfm.get_project_manager()
-						local session = pm:GetSession()
-						local schema = session:GetSchema()
-						for uuid, components in pairs(actors) do
-							local actor = udm.dereference(schema, uuid)
-							if actor ~= nil then
+						local ctrl, ctrlData, componentData, actorData = self:GetPropertyControl(
+							actor:GetUniqueId(),
+							"animation_driver",
+							"ec/animation_driver/parameters"
+						)
+						local elUdm = ctrlData.getValue()
+						local params = ctC:GetMemberValue("parameters")
+						if util.is_valid(params) then
+							local udmConstants = params:Add("constants")
+							local udmReferences = params:Add("references")
+
+							-- Add the selected properties, components and actors as input parameters for the expression
+							local actors = {}
+							for _, propParam in ipairs(props) do
+								local uuid = propParam.actorData.actor:GetUniqueId()
+								local uri = ents.create_uri(uuid, propParam.controlData.path)
 								udmReferences:SetValue(
-									get_var_name("e_" .. actor:GetName()),
+									get_var_name(util.Path.CreateFilePath(propParam.controlData.path):GetFileName()),
 									udm.TYPE_STRING,
-									ents.create_entity_uri(util.Uuid(uuid))
+									uri
 								)
 
-								for componentName, _ in pairs(components) do
+								local componentName, memberName = ents.PanimaComponent.parse_component_channel_path(
+									panima.Channel.Path(propParam.controlData.path)
+								)
+								actors[tostring(uuid)] = actors[tostring(uuid)] or {}
+								actors[tostring(uuid)][componentName] = true
+							end
+
+							local pm = pfm.get_project_manager()
+							local session = pm:GetSession()
+							local schema = session:GetSchema()
+							for uuid, components in pairs(actors) do
+								local actor = udm.dereference(schema, uuid)
+								if actor ~= nil then
 									udmReferences:SetValue(
-										get_var_name("c_" .. componentName),
+										get_var_name("e_" .. actor:GetName()),
 										udm.TYPE_STRING,
-										ents.create_component_uri(util.Uuid(uuid), componentName)
+										ents.create_entity_uri(util.Uuid(uuid))
 									)
+
+									for componentName, _ in pairs(components) do
+										udmReferences:SetValue(
+											get_var_name("c_" .. componentName),
+											udm.TYPE_STRING,
+											ents.create_component_uri(util.Uuid(uuid), componentName)
+										)
+									end
 								end
 							end
-						end
 
-						if controlData.set ~= nil then
-							elUdm:Clear()
-							elUdm:Merge(params, udm.MERGE_FLAG_BIT_DEEP_COPY)
+							if controlData.set ~= nil then
+								elUdm:Clear()
+								elUdm:Merge(params, udm.MERGE_FLAG_BIT_DEEP_COPY)
 
-							ctrlData.set(actorData.actor:FindComponent("animation_driver"), elUdm)
+								ctrlData.set(actorData.actor:FindComponent("animation_driver"), elUdm)
+							end
 						end
 					end
-				end
-			end)
+				end)
+				:SetName("driver")
 		end
 	end
 
 	if controlData.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY then
-		context:AddItem(locale.get_text("pfm_go_to_property"), function()
-			local val = controlData.getValue()
-			if val == nil then
-				return
-			end
-			local uuid = tostring(val:GetUuid())
-			local componentName = val:GetComponentName()
-			local propName = val:GetMemberName()
-			if componentName == nil or propName == nil then
-				return
-			end
-			local pm = pfm.get_project_manager()
-			local session = pm:GetSession()
-			local schema = session:GetSchema()
-			local actor = udm.dereference(schema, uuid)
-			if actor == nil then
-				return
-			end
-			self:SelectActor(actor, true, "ec/" .. componentName .. "/" .. propName)
-		end)
+		context
+			:AddItem(locale.get_text("pfm_go_to_property"), function()
+				local val = controlData.getValue()
+				if val == nil then
+					return
+				end
+				local uuid = tostring(val:GetUuid())
+				local componentName = val:GetComponentName()
+				local propName = val:GetMemberName()
+				if componentName == nil or propName == nil then
+					return
+				end
+				local pm = pfm.get_project_manager()
+				local session = pm:GetSession()
+				local schema = session:GetSchema()
+				local actor = udm.dereference(schema, uuid)
+				if actor == nil then
+					return
+				end
+				self:SelectActor(actor, true, "ec/" .. componentName .. "/" .. propName)
+			end)
+			:SetName("go_to_property")
 	end
 end
 function gui.PFMActorEditor:AddControl(
@@ -1811,9 +1868,10 @@ function gui.PFMActorEditor:AddControl(
 
 									local ikItem, ikMenu =
 										pContext:AddSubMenu(locale.get_text("pfm_actor_editor_add_ik_control"))
+									ikItem:SetName("add_ik_control")
 									parent = bone:GetParent()
 									for i = 1, numParents do
-										ikMenu:AddItem(
+										local subItem = ikMenu:AddItem(
 											locale.get_text(
 												"pfm_actor_editor_add_ik_control_chain",
 												{ i + 1, parent:GetName() }
@@ -1822,6 +1880,7 @@ function gui.PFMActorEditor:AddControl(
 												self:AddIkController(actor, boneName, i + 1)
 											end
 										)
+										subItem:SetName("ik_control_chain_" == tostring(i + 1))
 										parent = parent:GetParent()
 									end
 									ikMenu:Update()
@@ -2046,22 +2105,26 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 							end
 							pContext:SetPos(input.get_cursor_pos())
 
-							pContext:AddItem(locale.get_text("pfm_go_to_driver_property"), function()
-								local elDriver, actorData, uuidDriver, propNameDriver =
-									find_property_object_entry(elActor, "constraint", "driver")
-								if uuidDriver ~= nil then
-									local pm = pfm.get_project_manager()
-									local session = pm:GetSession()
-									local schema = session:GetSchema()
-									local actorDriver = udm.dereference(schema, tostring(uuidDriver))
-									if actorDriver ~= nil then
-										self:SelectActor(actorDriver, true, propNameDriver)
+							pContext
+								:AddItem(locale.get_text("pfm_go_to_driver_property"), function()
+									local elDriver, actorData, uuidDriver, propNameDriver =
+										find_property_object_entry(elActor, "constraint", "driver")
+									if uuidDriver ~= nil then
+										local pm = pfm.get_project_manager()
+										local session = pm:GetSession()
+										local schema = session:GetSchema()
+										local actorDriver = udm.dereference(schema, tostring(uuidDriver))
+										if actorDriver ~= nil then
+											self:SelectActor(actorDriver, true, propNameDriver)
+										end
 									end
-								end
-							end)
-							pContext:AddItem(locale.get_text("remove"), function()
-								self:RemoveActors({ tostring(actorData.actor:GetUniqueId()) })
-							end)
+								end)
+								:SetName("go_to_driver_property")
+							pContext
+								:AddItem(locale.get_text("remove"), function()
+									self:RemoveActors({ tostring(actorData.actor:GetUniqueId()) })
+								end)
+								:SetName("remove")
 							pContext:Update()
 						end
 						return util.EVENT_REPLY_HANDLED
@@ -2345,30 +2408,36 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end
 		if #existingComponents > 0 then
 			local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
+			pComponentsItem:SetName("add_component")
 			for _, nameInfo in ipairs(existingComponents) do
-				pComponentsMenu:AddItem(nameInfo[2], function()
-					local filmmaker = tool.get_filmmaker()
-					local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
-					if util.is_valid(actorEditor) == false then
-						return
-					end
-					actorEditor:CreateNewActorComponent(actor, nameInfo[1], true)
-				end)
+				pComponentsMenu
+					:AddItem(nameInfo[2], function()
+						local filmmaker = tool.get_filmmaker()
+						local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
+						if util.is_valid(actorEditor) == false then
+							return
+						end
+						actorEditor:CreateNewActorComponent(actor, nameInfo[1], true)
+					end)
+					:SetName(nameInfo[1])
 			end
 			pComponentsMenu:Update()
 		end
 		if #newComponents > 0 then
 			local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_new_component"))
+			pComponentsItem:SetName("add_new_component")
 			debug.start_profiling_task("pfm_populate_component_list")
 			for _, nameInfo in ipairs(newComponents) do
-				pComponentsMenu:AddItem(nameInfo[2], function()
-					local filmmaker = tool.get_filmmaker()
-					local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
-					if util.is_valid(actorEditor) == false then
-						return
-					end
-					actorEditor:CreateNewActorComponent(actor, nameInfo[1], true)
-				end)
+				pComponentsMenu
+					:AddItem(nameInfo[2], function()
+						local filmmaker = tool.get_filmmaker()
+						local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
+						if util.is_valid(actorEditor) == false then
+							return
+						end
+						actorEditor:CreateNewActorComponent(actor, nameInfo[1], true)
+					end)
+					:SetName(nameInfo[1])
 			end
 			pComponentsMenu:Update()
 			debug.stop_profiling_task()
@@ -2377,14 +2446,16 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 	--
 
 	local uniqueId = tostring(actor:GetUniqueId())
-	pContext:AddItem(locale.get_text("pfm_export_animation"), function()
-		local entActor = actor:FindEntity()
-		if util.is_valid(entActor) == false then
-			return
-		end
-		local filmmaker = tool.get_filmmaker()
-		filmmaker:ExportAnimation(entActor)
-	end)
+	pContext
+		:AddItem(locale.get_text("pfm_export_animation"), function()
+			local entActor = actor:FindEntity()
+			if util.is_valid(entActor) == false then
+				return
+			end
+			local filmmaker = tool.get_filmmaker()
+			filmmaker:ExportAnimation(entActor)
+		end)
+		:SetName("export_animation")
 
 	local entActor = actor:FindEntity()
 	local renderC = util.is_valid(entActor) and entActor:GetComponent(ents.COMPONENT_RENDER) or nil
@@ -2405,11 +2476,14 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 
 		if hasMaterials then
 			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
+			pItem:SetName("edit_material")
 			for matPath, _ in pairs(materials) do
 				local matName = file.get_file_name(matPath)
 				local item = pSubMenu:AddItem(matName, function()
 					tool.get_filmmaker():OpenMaterialEditor(matPath, mdl:GetName())
 				end)
+				local normMatPath = string.replace(matPath, "/", "_")
+				item:SetName(normMatPath)
 
 				if hitMaterial ~= nil and matPath == hitMaterial:GetName() then
 					local el = gui.create("WIOutlinedRect", item, 0, 0, item:GetWidth(), item:GetHeight(), 0, 0, 1, 1)
@@ -2419,132 +2493,152 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			pSubMenu:Update()
 		end
 
-		pContext:AddItem(locale.get_text("pfm_export_model"), function()
-			local exportInfo = game.Model.ExportInfo()
-			local result, err = mdl:Export(exportInfo)
-			if result then
-				print("Model exported successfully!")
-				local filePath = err
-				util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
-			else
-				console.print_warning("Unable to export model: ", err)
-			end
-		end)
+		pContext
+			:AddItem(locale.get_text("pfm_export_model"), function()
+				local exportInfo = game.Model.ExportInfo()
+				local result, err = mdl:Export(exportInfo)
+				if result then
+					print("Model exported successfully!")
+					local filePath = err
+					util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
+				else
+					console.print_warning("Unable to export model: ", err)
+				end
+			end)
+			:SetName("export_model")
 	end
 	local actors
 	if copyPasteSelected == nil then
 		actors = { actor }
 	end
-	pContext:AddItem(locale.get_text("pfm_copy_actors"), function()
-		local filmmaker = tool.get_filmmaker()
-		local actorEditor = filmmaker:GetActorEditor()
-		if util.is_valid(actorEditor) == false then
-			return
-		end
-		actorEditor:CopyToClipboard(actors)
-	end)
-	pContext:AddItem(locale.get_text("pfm_paste_actors"), function()
-		local filmmaker = tool.get_filmmaker()
-		local actorEditor = filmmaker:GetActorEditor()
-		if util.is_valid(actorEditor) == false then
-			return
-		end
-		actorEditor:PasteFromClipboard()
-	end)
-	local mdl = actor:GetModel()
-	if mdl ~= nil then
-		pContext:AddItem(locale.get_text("pfm_pack_model"), function()
-			pfm.pack_models({ mdl })
-		end)
-		pContext:AddItem(locale.get_text("pfm_copy_model_path_to_clipboard"), function()
-			util.set_clipboard_string(mdl)
-		end)
-		pContext:AddItem(locale.get_text("pfm_show_in_explorer"), function()
-			local filePath = asset.find_file(mdl, asset.TYPE_MODEL)
-			if filePath == nil then
-				return
-			end
-			util.open_path_in_explorer(
-				asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. file.get_file_path(filePath),
-				file.get_file_name(filePath)
-			)
-		end)
-	end
-	pContext:AddItem(locale.get_text("pfm_move_work_camera_to_actor"), function()
-		local filmmaker = tool.get_filmmaker()
-		local filmClip = filmmaker:GetActiveFilmClip()
-		if filmClip == nil then
-			return
-		end
-		local actor = filmClip:FindActorByUniqueId(uniqueId)
-		if actor == nil then
-			return
-		end
-		local pm = pfm.get_project_manager()
-		local vp = util.is_valid(pm) and pm:GetViewport() or nil
-		if util.is_valid(vp) == false then
-			return
-		end
-		vp:SetWorkCameraPose(actor:GetAbsolutePose())
-		tool.get_filmmaker():TagRenderSceneAsDirty()
-	end)
-	pContext:AddItem(locale.get_text("pfm_move_actor_to_work_camera"), function()
-		local filmmaker = tool.get_filmmaker()
-		local pm = pfm.get_project_manager()
-		local vp = util.is_valid(pm) and pm:GetViewport() or nil
-		if util.is_valid(vp) == false then
-			return
-		end
-		local ent = actor:FindEntity()
-		if ent == nil then
-			return
-		end
-		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-		if actorC == nil then
-			return
-		end
-		local pose = vp:GetWorkCameraPose()
-		if pose == nil then
-			return
-		end
-		filmmaker:SetActorTransformProperty(actorC, "position", pose:GetOrigin(), true)
-	end)
-	pContext:AddItem(locale.get_text("pfm_toggle_camera_link"), function()
-		local filmmaker = tool.get_filmmaker()
-		local actorEditor = filmmaker:GetActorEditor()
-		if util.is_valid(actorEditor) == false then
-			return
-		end
-		actorEditor:ToggleCameraLink(actor)
-	end)
-	pContext:AddItem(locale.get_text("pfm_retarget"), function()
-		local ent = actor:FindEntity()
-		if ent == nil then
-			return
-		end
-		local filmmaker = tool.get_filmmaker()
-		gui.open_model_dialog(function(dialogResult, mdlName)
-			if dialogResult ~= gui.DIALOG_RESULT_OK then
-				return
-			end
-			if util.is_valid(ent) == false then
-				return
-			end
+	pContext
+		:AddItem(locale.get_text("pfm_copy_actors"), function()
 			local filmmaker = tool.get_filmmaker()
 			local actorEditor = filmmaker:GetActorEditor()
 			if util.is_valid(actorEditor) == false then
 				return
 			end
-			filmmaker:RetargetActor(ent, mdlName)
-
-			local impostorC = actorEditor:CreateNewActorComponent(actor, "impersonatee", false)
-			impostorC:SetMemberValue("impostorModel", udm.TYPE_STRING, mdlName)
-			actorEditor:CreateNewActorComponent(actor, "retarget_rig", false)
-			actorEditor:CreateNewActorComponent(actor, "retarget_morph", false)
-			actorEditor:UpdateActorComponents(actor)
-			filmmaker:TagRenderSceneAsDirty()
+			actorEditor:CopyToClipboard(actors)
 		end)
-	end)
+		:SetName("copy_actors")
+	pContext
+		:AddItem(locale.get_text("pfm_paste_actors"), function()
+			local filmmaker = tool.get_filmmaker()
+			local actorEditor = filmmaker:GetActorEditor()
+			if util.is_valid(actorEditor) == false then
+				return
+			end
+			actorEditor:PasteFromClipboard()
+		end)
+		:SetName("paste_actors")
+	local mdl = actor:GetModel()
+	if mdl ~= nil then
+		pContext
+			:AddItem(locale.get_text("pfm_pack_model"), function()
+				pfm.pack_models({ mdl })
+			end)
+			:SetName("pack_model")
+		pContext
+			:AddItem(locale.get_text("pfm_copy_model_path_to_clipboard"), function()
+				util.set_clipboard_string(mdl)
+			end)
+			:SetName("copy_model_path_to_clipboard")
+		pContext
+			:AddItem(locale.get_text("pfm_show_in_explorer"), function()
+				local filePath = asset.find_file(mdl, asset.TYPE_MODEL)
+				if filePath == nil then
+					return
+				end
+				util.open_path_in_explorer(
+					asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. file.get_file_path(filePath),
+					file.get_file_name(filePath)
+				)
+			end)
+			:SetName("show_in_explorer")
+	end
+	pContext
+		:AddItem(locale.get_text("pfm_move_work_camera_to_actor"), function()
+			local filmmaker = tool.get_filmmaker()
+			local filmClip = filmmaker:GetActiveFilmClip()
+			if filmClip == nil then
+				return
+			end
+			local actor = filmClip:FindActorByUniqueId(uniqueId)
+			if actor == nil then
+				return
+			end
+			local pm = pfm.get_project_manager()
+			local vp = util.is_valid(pm) and pm:GetViewport() or nil
+			if util.is_valid(vp) == false then
+				return
+			end
+			vp:SetWorkCameraPose(actor:GetAbsolutePose())
+			tool.get_filmmaker():TagRenderSceneAsDirty()
+		end)
+		:SetName("move_work_camera_to_actor")
+	pContext
+		:AddItem(locale.get_text("pfm_move_actor_to_work_camera"), function()
+			local filmmaker = tool.get_filmmaker()
+			local pm = pfm.get_project_manager()
+			local vp = util.is_valid(pm) and pm:GetViewport() or nil
+			if util.is_valid(vp) == false then
+				return
+			end
+			local ent = actor:FindEntity()
+			if ent == nil then
+				return
+			end
+			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if actorC == nil then
+				return
+			end
+			local pose = vp:GetWorkCameraPose()
+			if pose == nil then
+				return
+			end
+			filmmaker:SetActorTransformProperty(actorC, "position", pose:GetOrigin(), true)
+		end)
+		:SetName("move_actor_to_work_camera")
+	pContext
+		:AddItem(locale.get_text("pfm_toggle_camera_link"), function()
+			local filmmaker = tool.get_filmmaker()
+			local actorEditor = filmmaker:GetActorEditor()
+			if util.is_valid(actorEditor) == false then
+				return
+			end
+			actorEditor:ToggleCameraLink(actor)
+		end)
+		:SetName("toggle_camera_link")
+	pContext
+		:AddItem(locale.get_text("pfm_retarget"), function()
+			local ent = actor:FindEntity()
+			if ent == nil then
+				return
+			end
+			local filmmaker = tool.get_filmmaker()
+			gui.open_model_dialog(function(dialogResult, mdlName)
+				if dialogResult ~= gui.DIALOG_RESULT_OK then
+					return
+				end
+				if util.is_valid(ent) == false then
+					return
+				end
+				local filmmaker = tool.get_filmmaker()
+				local actorEditor = filmmaker:GetActorEditor()
+				if util.is_valid(actorEditor) == false then
+					return
+				end
+				filmmaker:RetargetActor(ent, mdlName)
+
+				local impostorC = actorEditor:CreateNewActorComponent(actor, "impersonatee", false)
+				impostorC:SetMemberValue("impostorModel", udm.TYPE_STRING, mdlName)
+				actorEditor:CreateNewActorComponent(actor, "retarget_rig", false)
+				actorEditor:CreateNewActorComponent(actor, "retarget_morph", false)
+				actorEditor:UpdateActorComponents(actor)
+				filmmaker:TagRenderSceneAsDirty()
+			end)
+		end)
+		:SetName("retarget")
 
 	tool.get_filmmaker():CallCallbacks("PopulateActorContextMenu", pContext, actor)
 	if tool.get_filmmaker():IsDeveloperModeEnabled() then
@@ -2555,7 +2649,9 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			y = actor:FindEntity()
 		end)
 	end
-	pContext:AddItem(locale.get_text("pfm_copy_id"), function()
-		util.set_clipboard_string(tostring(actor:GetUniqueId()))
-	end)
+	pContext
+		:AddItem(locale.get_text("pfm_copy_id"), function()
+			util.set_clipboard_string(tostring(actor:GetUniqueId()))
+		end)
+		:SetName("copy_id")
 end
