@@ -82,6 +82,16 @@ function Element:OnInitialize()
 	end)
 	self.m_feModel = feModel
 
+	local pOptionMirrored = controls:AddToggleControl(
+		locale.get_text("mirrored"),
+		"mirrored",
+		true,
+		function(el, checked)
+			self:SetMirrored(checked)
+		end
+	)
+	self.m_mirrored = true
+
 	local el, wrapper = controls:AddDropDownMenu(
 		locale.get_text("pfm_show_bones"),
 		"show_bones",
@@ -115,13 +125,53 @@ function Element:OnInitialize()
 
 	controls:ResetControls()
 end
+function Element:SetMirrored(mirrored)
+	self.m_mirrored = mirrored
+end
+function Element:IsMirrored()
+	return self.m_mirrored
+end
+function Element:FindBoneItem(boneName)
+	return self.m_skelTree:GetRoot():GetItemByIdentifier(boneName, true)
+end
+function Element:DetermineMirroredBoneSibling(name)
+	local mdl = self:GetModel()
+	if mdl == nil then
+		return
+	end
+	local skeleton = mdl:GetSkeleton()
+	local lnameToActualName = {}
+	for _, bone in ipairs(skeleton:GetBones()) do
+		lnameToActualName[bone:GetName():lower()] = bone:GetName()
+	end
+
+	local lname = name:lower()
+	local function check_candidate(identifier, identifierOther)
+		local pos = lname:find(identifier)
+		if pos ~= nil then
+			local otherName = lname:sub(0, pos - 1) .. identifierOther .. lname:sub(pos + #identifier)
+			if lnameToActualName[otherName] ~= nil then
+				return lnameToActualName[otherName]
+			end
+		end
+	end
+	local candidate = check_candidate("left", "right")
+	candidate = candidate or check_candidate("right", "left")
+	candidate = candidate or check_candidate("_l_", "_r_")
+	candidate = candidate or check_candidate("_r_", "_l_")
+	candidate = candidate or check_candidate("_l", "_r")
+	candidate = candidate or check_candidate("r_", "l_")
+	return candidate
+end
 function Element:LoadRig(rig)
+	local isMirrored = self:IsMirrored()
+	self:SetMirrored(false)
 	self:Clear()
 	self:ReloadBoneList(self.m_feModel)
 
 	self.m_ikRig = rig
 	for _, c in ipairs(rig:GetConstraints()) do
-		local item = self.m_skelTree:GetRoot():GetItemByIdentifier(c.bone1, true)
+		local item = self:FindBoneItem(c.bone1)
 		if util.is_valid(item) then
 			if c.type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_FIXED then
 				self:AddFixedConstraint(item, c.bone1, c)
@@ -133,6 +183,7 @@ function Element:LoadRig(rig)
 		end
 	end
 	self:ReloadIkRig()
+	self:SetMirrored(isMirrored)
 end
 function Element:GetModel()
 	if util.is_valid(self.m_modelView) == false or self.m_mdl == nil then
@@ -263,11 +314,11 @@ function Element:FindSolverJoint(solver, boneName, type)
 	local numJoints = solver:GetJointCount()
 
 	local jointType
-	if type == "ballSocket" then
+	if type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_BALL_SOCKET then
 		jointType = ik.Joint.TYPE_BALL_SOCKET_JOINT
-	elseif type == "hinge" then
+	elseif type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_HINGE then
 		jointType = ik.Joint.TYPE_REVOLUTE_JOINT
-	elseif type == "fixed" then
+	elseif type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_FIXED then
 		jointType = ik.Joint.TYPE_ANGULAR_JOINT
 	end
 
@@ -301,6 +352,7 @@ function Element:ReloadIkRig()
 	if ikSolverC == nil then
 		return
 	end
+	pfmFbIkC:SetEnabled(true)
 	ikSolverC:ResetIkRig() -- Clear Rig
 	ikSolverC:AddIkSolverByRig(self.m_ikRig)
 

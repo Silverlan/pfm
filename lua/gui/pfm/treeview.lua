@@ -614,20 +614,25 @@ function gui.PFMTreeViewElement:GetItemByIdentifier(identifier, recursive)
 		end
 	end
 end
-function gui.PFMTreeViewElement:FindItemByText(text, recursive)
+function gui.PFMTreeViewElement:FindItem(condition, recursive)
 	for _, child in ipairs(self.m_items) do
 		if child:IsValid() then
-			if child:GetText() == text then
+			if condition(child) then
 				return child
 			end
 			if recursive then
-				local c = child:FindItemByText(text)
+				local c = child:FindItem(condition, recursive)
 				if c ~= nil then
 					return c
 				end
 			end
 		end
 	end
+end
+function gui.PFMTreeViewElement:FindItemByText(text, recursive)
+	return self:FindItem(function(el)
+		return el:GetText() == text
+	end, recursive)
 end
 function gui.PFMTreeViewElement:SetIdentifier(identifier)
 	self.m_identifier = identifier

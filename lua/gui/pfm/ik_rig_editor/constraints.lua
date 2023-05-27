@@ -7,6 +7,96 @@
 ]]
 
 local Element = gui.IkRigEditor
+function Element:RemoveConstraint(constraint)
+	self.m_ikRig:RemoveConstraint(constraint)
+
+	local item = self:GetConstraintItem(constraint)
+	if item ~= nil then
+		local parent = item:GetParentItem()
+		item:RemoveSafely()
+		if util.is_valid(parent) then
+			parent:ScheduleUpdate()
+		end
+	end
+
+	if self:IsMirrored() then
+		local mirrorConstraint = self:DetermineMirroredBoneSiblingConstraint(constraint)
+		if mirrorConstraint ~= nil then
+			self:SetMirrored(false)
+			self:RemoveConstraint(mirrorConstraint)
+			self:SetMirrored(true)
+			return
+		end
+	end
+	self:ReloadIkRig()
+end
+function Element:DetermineMirroredBoneSiblingConstraint(constraint)
+	local bone = constraint.bone1
+	local sibling = self:DetermineMirroredBoneSibling(bone)
+	if sibling == nil then
+		return
+	end
+	local siblingConstraint
+	for _, c in ipairs(self.m_ikRig:GetConstraints()) do
+		if c.bone1 == sibling and c.type == constraint.type then
+			siblingConstraint = c
+			break
+		end
+	end
+	return siblingConstraint
+end
+function Element:GetMirroredBoneSiblingConstraintControl(constraint, controlName)
+	local mirrorConstraint = self:DetermineMirroredBoneSiblingConstraint(constraint)
+	if mirrorConstraint == nil then
+		return
+	end
+	return self:GetConstraintControl(mirrorConstraint, controlName)
+end
+function Element:GetConstraintItem(constraint)
+	local item = self:FindBoneItem(constraint.bone1)
+	for _, child in ipairs(item:GetItems()) do
+		if child:IsValid() and child.__jointType == constraint.type then
+			return child
+		end
+	end
+end
+function Element:GetConstraintControl(constraint, controlName)
+	local item = self:FindBoneItem(constraint.bone1)
+	for _, child in ipairs(item:GetItems()) do
+		if child:IsValid() and child.__jointType == constraint.type then
+			return child.__sliders[controlName]
+		end
+	end
+end
+function Element:GetMirroredAngles(boneName, ang)
+	local ent = self.m_modelView:GetEntity(1)
+	if util.is_valid(ent) == false then
+		return
+	end
+	local mdl = ent:GetModel()
+	if mdl == nil then
+		return
+	end
+	local mirrorName = self:DetermineMirroredBoneSibling(boneName)
+	if mirrorName == nil then
+		return
+	end
+	local skel = mdl:GetSkeleton()
+	local boneId = skel:LookupBone(boneName)
+	local mirrorBoneId = skel:LookupBone(mirrorName)
+	if boneId == -1 or mirrorBoneId == -1 then
+		return
+	end
+	return -ang
+	--[[local ref = mdl:GetReferencePose()
+	local rot = ang:ToQuaternion()
+	local pose = ref:GetBonePose(boneId)
+	local mirrorPose = ref:GetBonePose(mirrorBoneId)
+	--rot = pose:GetRotation() * rot
+	--rot:MirrorAxis(math.AXIS_X)
+	--rot = mirrorPose:GetRotation():GetInverse() * rot
+	return rot:ToEulerAngles()]]
+end
 function Element:AddConstraint(item, boneName, type, constraint)
 	local ent = self.m_modelView:GetEntity(1)
 	if util.is_valid(ent) == false then
@@ -30,10 +120,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 			if util.is_valid(pContext) then
 				pContext:SetPos(input.get_cursor_pos())
 				pContext:AddItem("Remove", function()
-					self.m_ikRig:RemoveConstraint(constraint)
-					child:RemoveSafely()
-					item:ScheduleUpdate()
-					self:ReloadIkRig()
+					self:RemoveConstraint(constraint)
 				end)
 				pContext:Update()
 				return util.EVENT_REPLY_HANDLED
@@ -41,7 +128,6 @@ function Element:AddConstraint(item, boneName, type, constraint)
 			return util.EVENT_REPLY_HANDLED
 		end
 	end)
-	child.__jointType = type
 	local icon = child:AddIcon("gui/pfm/icon_item_visible_off")
 	local visualize = false
 	icon:SetMouseInputEnabled(true)
@@ -135,6 +221,11 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				constraint.maxLimits = maxLimits
 
 				self:UpdateDebugVisualization()
+
+				local fbIk = ent:GetComponent(ents.COMPONENT_PFM_FBIK)
+				if fbIk ~= nil then
+					fbIk:SetEnabled(false)
+				end
 			end
 		end, 1.0)
 	end
@@ -173,6 +264,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 			constraint = self.m_ikRig:AddBallSocketConstraint(parent:GetName(), bone:GetName(), -limits, limits)
 		end
 	end
+	child.__jointType = constraint.type
 	minLimits = constraint.minLimits
 	maxLimits = constraint.maxLimits
 
@@ -183,6 +275,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 			add_rotation_axis_slider(ctrl, "pfm_ik_rot_" .. name .. "_max", name .. " max", axisId, false, defMax)
 		return minSlider, maxSlider
 	end
+	child.__sliders = {}
 	if type == "ballSocket" then
 		local minP, maxP
 		local minY, maxY
@@ -206,7 +299,8 @@ function Element:AddConstraint(item, boneName, type, constraint)
 			maxR:SetValue(limits.r)
 		end
 
-		ctrl:AddDropDownMenu(
+		local axisMenu
+		axisMenu = ctrl:AddDropDownMenu(
 			locale.get_text("pfm_ik_twist_axis"),
 			"twist_axis",
 			{
@@ -221,8 +315,18 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				constraint.axis = twistAxis
 				update_axes()
 				self:UpdateDebugVisualization()
+
+				if self:IsMirrored() then
+					local mirrorAxisMenu = self:GetMirroredBoneSiblingConstraintControl(constraint, "axis")
+					if util.is_valid(mirrorAxisMenu) then
+						self:SetMirrored(false)
+						mirrorAxisMenu:SelectOption(axisMenu:GetSelectedOption())
+						self:SetMirrored(true)
+					end
+				end
 			end
 		)
+		child.__sliders["axis"] = axisMenu
 
 		local subSeparate
 		--[[local subUnidirectional
@@ -242,19 +346,44 @@ function Element:AddConstraint(item, boneName, type, constraint)
 		minY, maxY = add_rotation_axis(subSeparate, "yaw", 1, minLimits.y, maxLimits.y)
 		minR, maxR = add_rotation_axis(subSeparate, "roll", 2, minLimits.r, maxLimits.r)
 		local pairs = {
-			{ minP, maxP },
-			{ minY, maxY },
-			{ minR, maxR },
+			{ { "p_min", minP }, { "p_max", maxP } },
+			{ { "y_min", minY }, { "y_max", maxY } },
+			{ { "r_min", minR }, { "r_max", maxR } },
 		}
-		for _, p in ipairs(pairs) do
-			p[1]:AddCallback("OnLeftValueChanged", function()
+
+		for _, pdata in ipairs(pairs) do
+			local minId = pdata[1][1]
+			local minEl = pdata[1][2]
+			local maxId = pdata[2][1]
+			local maxEl = pdata[2][2]
+			child.__sliders[minId] = minEl
+			child.__sliders[maxId] = maxEl
+			minEl:AddCallback("OnLeftValueChanged", function(el, value)
 				if input.is_shift_key_down() then
-					p[2]:SetValue(-p[1]:GetValue())
+					maxEl:SetValue(-minEl:GetValue())
+				end
+
+				if self:IsMirrored() then
+					local mirrorSlider = self:GetMirroredBoneSiblingConstraintControl(constraint, minId)
+					if util.is_valid(mirrorSlider) then
+						self:SetMirrored(false)
+						mirrorSlider:SetValue(value)
+						self:SetMirrored(true)
+					end
 				end
 			end)
-			p[2]:AddCallback("OnLeftValueChanged", function()
+			maxEl:AddCallback("OnLeftValueChanged", function(el, value)
 				if input.is_shift_key_down() then
-					p[1]:SetValue(-p[2]:GetValue())
+					minEl:SetValue(-maxEl:GetValue())
+				end
+
+				if self:IsMirrored() then
+					local mirrorSlider = self:GetMirroredBoneSiblingConstraintControl(constraint, maxId)
+					if util.is_valid(mirrorSlider) then
+						self:SetMirrored(false)
+						mirrorSlider:SetValue(value)
+						self:SetMirrored(true)
+					end
 				end
 			end)
 		end
@@ -320,7 +449,8 @@ function Element:AddConstraint(item, boneName, type, constraint)
 		subSeparate:SizeToContents()
 	elseif type == "hinge" then
 		singleAxis = 0
-		ctrl:AddDropDownMenu(
+		local axisMenu
+		axisMenu = ctrl:AddDropDownMenu(
 			locale.get_text("pfm_ik_axis"),
 			"axis",
 			{
@@ -333,9 +463,41 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				singleAxis = el:GetSelectedOption()
 				constraint.axis = singleAxis
 				self:UpdateDebugVisualization()
+
+				if self:IsMirrored() then
+					local mirrorAxisMenu = self:GetMirroredBoneSiblingConstraintControl(constraint, "axis")
+					if util.is_valid(mirrorAxisMenu) then
+						self:SetMirrored(false)
+						mirrorAxisMenu:SelectOption(axisMenu:GetSelectedOption())
+						self:SetMirrored(true)
+					end
+				end
 			end
 		)
-		add_rotation_axis(ctrl, "angle", nil, minLimits.p, maxLimits.p)
+		local angleSliderMin, angleSliderMax = add_rotation_axis(ctrl, "angle", nil, minLimits.p, maxLimits.p)
+		child.__sliders["axis"] = axisMenu
+		child.__sliders["minAngle"] = angleSliderMin
+		child.__sliders["maxAngle"] = angleSliderMax
+		angleSliderMin:AddCallback("OnLeftValueChanged", function(el, value)
+			if self:IsMirrored() then
+				local mirrorMinAngle = self:GetMirroredBoneSiblingConstraintControl(constraint, "minAngle")
+				if util.is_valid(mirrorMinAngle) then
+					self:SetMirrored(false)
+					mirrorMinAngle:SetValue(self:GetMirroredAngles(constraint.bone1, value))
+					self:SetMirrored(true)
+				end
+			end
+		end)
+		angleSliderMax:AddCallback("OnLeftValueChanged", function(el, value)
+			if self:IsMirrored() then
+				local mirrorMaxAngle = self:GetMirroredBoneSiblingConstraintControl(constraint, "maxAngle")
+				if util.is_valid(mirrorMaxAngle) then
+					self:SetMirrored(false)
+					mirrorMaxAngle:SetValue(self:GetMirroredAngles(constraint.bone1, value))
+					self:SetMirrored(true)
+				end
+			end
+		end)
 	end
 	ctrl:ResetControls()
 	ctrl:Update()
@@ -345,6 +507,17 @@ function Element:AddConstraint(item, boneName, type, constraint)
 	toggle_constraint_visualization()
 	item:Expand()
 	child:ExpandAll()
+
+	if self:IsMirrored() then
+		local mirrorName = self:DetermineMirroredBoneSibling(boneName)
+		local mirrorItem = (mirrorName ~= nil) and self:FindBoneItem(mirrorName) or nil
+		if mirrorItem ~= nil then
+			self:SetMirrored(false)
+			self:AddConstraint(mirrorItem, mirrorName, type, nil, false)
+			self:SetMirrored(true)
+		end
+	end
+
 	return constraint
 end
 function Element:AddBallSocketConstraint(item, boneName, c)
