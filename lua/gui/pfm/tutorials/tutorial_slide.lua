@@ -36,11 +36,26 @@ function Element:OnThink()
 			table.insert(els, el)
 		end
 		if #els == #data.els then
+			local valid = true
+			if data.prevEls == nil or #els ~= #data.prevEls then
+				valid = false
+			else
+				for i = 1, #els do
+					if util.is_same_object(els[i], data.prevEls[i]) == false then
+						valid = false
+						break
+					end
+				end
+			end
+			if valid == false then
+				util.remove(data.elOutline)
+			end
 			if util.is_valid(data.elOutline) == false then
 				local elOutline = gui.create("WIElementSelectionOutline")
 				elOutline:SetTargetElement(els)
 				elOutline:Update()
 				data.elOutline = elOutline
+				data.prevEls = els
 			end
 		else
 			util.remove(data.elOutline)
