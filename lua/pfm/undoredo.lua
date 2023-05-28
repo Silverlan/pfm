@@ -14,9 +14,14 @@ pfm = pfm or {}
 pfm.undoredo = pfm.undoredo or {}
 pfm.undoredo.stack = pfm.undoredo.stack or {}
 pfm.undoredo.detail = pfm.undoredo.detail or {}
+pfm.undoredo.detail.callback_handler = pfm.undoredo.detail.callback_handler or util.CallbackHandler()
 pfm.undoredo.action_position = 0
 pfm.undoredo.is_empty = function()
 	return pfm.undoredo.stack[1] == nil
+end
+
+pfm.undoredo.add_callback = function(name, f)
+	return pfm.undoredo.detail.callback_handler:AddCallback(name, f)
 end
 
 pfm.undoredo.push = function(name, actionDo, undo)
@@ -43,6 +48,8 @@ pfm.undoredo.push = function(name, actionDo, undo)
 		table.remove(pfm.undoredo.stack, 1)
 		pfm.undoredo.action_position = pfm.undoredo.action_position - 1
 	end
+	pfm.undoredo.detail.callback_handler:CallCallbacks("OnPush", name)
+	pfm.undoredo.detail.callback_handler:CallCallbacks("OnChange")
 	return actionDo
 end
 
@@ -50,6 +57,8 @@ pfm.undoredo.clear = function()
 	pfm.log("Clearing undoredo stack.", pfm.LOG_CATEGORY_PFM_UNDOREDO)
 	pfm.undoredo.stack = {}
 	pfm.undoredo.action_position = 0
+	pfm.undoredo.detail.callback_handler:CallCallbacks("OnClear")
+	pfm.undoredo.detail.callback_handler:CallCallbacks("OnChange")
 end
 
 pfm.undo = function()
@@ -63,6 +72,8 @@ pfm.undo = function()
 	pfm.undoredo.action_position = pos - 1
 
 	pfm.tag_render_scene_as_dirty()
+	pfm.undoredo.detail.callback_handler:CallCallbacks("OnUndo", data.name)
+	pfm.undoredo.detail.callback_handler:CallCallbacks("OnChange")
 end
 
 pfm.redo = function()
@@ -76,6 +87,8 @@ pfm.redo = function()
 	pfm.undoredo.action_position = pos
 
 	pfm.tag_render_scene_as_dirty()
+	pfm.undoredo.detail.callback_handler:CallCallbacks("OnRedo", data.name)
+	pfm.undoredo.detail.callback_handler:CallCallbacks("OnChange")
 end
 
 pfm.undoredo.detail.print = function()

@@ -110,7 +110,11 @@ function Element:InitializeMenuBar()
 				if util.is_valid(self) == false then
 					return
 				end
-				self:Save()
+				self:Save(nil, nil, nil, nil, function(res)
+					if res then
+						self:ResetEditState()
+					end
+				end)
 			end)
 			itemSave:SetName("save")
 			local session = self:GetSession()
@@ -122,7 +126,11 @@ function Element:InitializeMenuBar()
 				if util.is_valid(self) == false then
 					return
 				end
-				self:Save(nil, true, true)
+				self:Save(nil, true, true, nil, function(res)
+					if res then
+						self:ResetEditState()
+					end
+				end)
 			end)
 			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_save_as"))
 			pSubItem:SetName("save_as")

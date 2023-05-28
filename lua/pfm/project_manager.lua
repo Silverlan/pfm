@@ -322,6 +322,7 @@ function pfm.ProjectManager:CloseProject()
 		self.m_project = nil
 	end
 	pfm.undoredo.clear()
+	self:ResetEditState()
 	collectgarbage()
 	self:OnProjectClosed()
 end
@@ -374,6 +375,7 @@ function pfm.ProjectManager:InitializeProject(project)
 
 	self.m_animManager:Reset()
 	pfm.undoredo.clear()
+	self:ResetEditState()
 	local session = self:GetSession()
 	local filmTrack = (session ~= nil) and session:GetFilmTrack() or nil
 

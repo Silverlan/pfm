@@ -102,7 +102,11 @@ function Element:KeyboardCallback(key, scanCode, state, mods)
 	if input.is_ctrl_key_down() then
 		if key == input.KEY_S then
 			if state == input.STATE_PRESS then
-				self:Save()
+				self:Save(nil, nil, nil, nil, function(res)
+					if res then
+						self:ResetEditState()
+					end
+				end)
 			end
 			return util.EVENT_REPLY_HANDLED
 		elseif key == input.KEY_C then

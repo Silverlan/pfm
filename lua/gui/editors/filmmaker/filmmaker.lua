@@ -429,9 +429,20 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched", self)
 end
+function gui.WIFilmmaker:ResetEditState()
+	self.m_hasBeenEdited = false
+	if util.is_valid(self.m_cbOnUndoRedoChanged) == false then
+		self.m_cbOnUndoRedoChanged = pfm.undoredo.add_callback("OnChange", function()
+			self.m_hasBeenEdited = true
+		end)
+	end
+end
+function gui.WIFilmmaker:IsProjectEdited()
+	return self.m_hasBeenEdited or false
+end
 function gui.WIFilmmaker:ShowCloseConfirmation(action, callActionOnCancel)
 	callActionOnCancel = callActionOnCancel or false
-	if pfm.undoredo.is_empty() then
+	if self:IsProjectEdited() == false then
 		-- Nothing has been changed in the project, no reason to show the save prompt
 		action(true)
 		return
@@ -775,6 +786,7 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_cbOnWindowShouldClose)
 	util.remove(self.m_cbPreRenderScenes)
 	util.remove(self.m_overlaySceneCallback)
+	util.remove(self.m_cbOnUndoRedoChanged)
 	if util.is_valid(self.m_overlayScene) then
 		self.m_overlayScene:GetEntity():Remove()
 	end
