@@ -396,7 +396,7 @@ function gui.WIFilmmaker:OnInitialize()
 
 	local udmNotifications = self.m_settings:Get("notifications")
 	if (udmNotifications:GetValue("initial_tutorial_message", udm.TYPE_BOOLEAN) or false) == false then
-		time.create_simple_timer(10.0, function()
+		time.create_simple_timer(5.0, function()
 			if self:IsValid() == false then
 				return
 			end
