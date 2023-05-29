@@ -324,11 +324,6 @@ function gui.PFMActorEditor:OnInitialize()
 	local treeScrollContainerBg = gui.create("WIRect", self.m_contents, 0, 0, 64, 128)
 	treeScrollContainerBg:SetColor(Color(38, 38, 38))
 	local treeScrollContainer = gui.create("WIScrollContainer", treeScrollContainerBg, 0, 0, 64, 128, 0, 0, 1, 1)
-	treeScrollContainerBg:AddCallback("SetSize", function(el)
-		if self:IsValid() and util.is_valid(self.m_tree) then
-			self.m_tree:SetWidth(el:GetWidth())
-		end
-	end)
 	self.m_treeScrollContainer = treeScrollContainer
 	--treeScrollContainer:SetFixedSize(true)
 	--[[local bg = gui.create("WIRect",treeScrollContainer,0,0,treeScrollContainer:GetWidth(),treeScrollContainer:GetHeight(),0,0,1,1)
@@ -406,6 +401,18 @@ function gui.PFMActorEditor:OnInitialize()
 			self:InitializeDirtyActorComponents(uniqueId)
 		end
 		self:ScheduleUpdateSelectedEntities()
+	end)
+	self.m_tree:AddCallback("OnContentsWidthDirty", function()
+		time.create_simple_timer(0.0, function()
+			if self:IsValid() and util.is_valid(self.m_tree) then
+				local w = self.m_tree:CalcContentsWidth()
+				local scrollBar = treeScrollContainer:GetVerticalScrollBar()
+				if util.is_valid(scrollBar) and scrollBar:IsVisible() then
+					w = w + 20
+				end
+				self.m_tree:SetWidth(w)
+			end
+		end)
 	end)
 	--[[self.m_data = gui.create("WITable",dataVBox,0,0,dataVBox:GetWidth(),dataVBox:GetHeight(),0,0,1,1)
 

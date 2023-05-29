@@ -25,10 +25,29 @@ function gui.PFMTreeView:OnInitialize()
 	self.m_rootElement.m_treeView = self
 	self.m_rootElement.m_collapsed = false
 	self.m_selectedElements = {}
+	self.m_contentsWidth = 0
 
 	self:SetAutoSizeToContents(false, true)
 	self:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 	self:SetAutoSelectChildren(true)
+end
+function gui.PFMTreeView:SetContentsWidthDirty()
+	if self.m_contentsWidth == nil then
+		return
+	end
+	self.m_contentsWidth = nil
+	self:CallCallbacks("OnContentsWidthDirty")
+end
+function gui.PFMTreeView:CalcContentsWidth()
+	if self.m_contentsWidth ~= nil then
+		return self.m_contentsWidth
+	end
+	if util.is_valid(self.m_rootElement) == false then
+		self.m_contentsWidth = 0
+		return self.m_contentsWidth
+	end
+	self.m_contentsWidth = self.m_rootElement:CalcContentsWidth()
+	return self.m_contentsWidth
 end
 function gui.PFMTreeView:GetItemHeight()
 	return util.is_valid(self.m_rootElement) and self.m_rootElement:GetHeight() or 0
@@ -196,6 +215,24 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self:SetMouseInputEnabled(true)
 	self:SetAutoSizeToContents(false, true)
 	self:SetSelected(false)
+end
+function gui.PFMTreeViewElement:CalcContentsWidth()
+	local w = 0
+	local elText = self:GetTextElement()
+	if util.is_valid(elText) then
+		local offset = self.m_vBox:GetX() + self.m_header:GetX()
+		w = math.max(w, offset + elText:GetRight())
+	end
+	if util.is_valid(self.m_childHBox) and self.m_childHBox:IsVisible() then
+		local offset = self.m_vBox:GetX() + self.m_vBoxChildren:GetX() + self.m_childHBox:GetX()
+		for _, item in ipairs(self:GetItems()) do
+			if item:IsValid() then
+				local wChild = offset + item:GetX() + item:CalcContentsWidth()
+				w = math.max(w, wChild)
+			end
+		end
+	end
+	return w
 end
 function gui.PFMTreeViewElement:SetAutoSelectChildren(autoSelected)
 	self.m_autoSelectChildren = autoSelected
@@ -404,6 +441,7 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 			item.m_childHBox:SetVisible(true)
 		end
 		itemParent:UpdateChildBoxBounds()
+		item:GetTreeView():SetContentsWidthDirty()
 		item:CallCallbacks("OnExpand")
 
 		itemParent:FullUpdate()
@@ -426,6 +464,7 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 		if util.is_valid(item.m_childHBox) then
 			item.m_childHBox:SetVisible(false)
 		end
+		item:GetTreeView():SetContentsWidthDirty()
 		item:CallCallbacks("OnCollapse")
 
 		itemParent:FullUpdate()
@@ -558,6 +597,10 @@ function gui.PFMTreeViewElement:SetText(text)
 	self.m_text:CenterToParentY()
 
 	self:SetName(text)
+	local treeView = self:GetTreeView()
+	if util.is_valid(treeView) then
+		treeView:SetContentsWidthDirty()
+	end
 end
 function gui.PFMTreeViewElement:IsSelected()
 	return self.m_selected
@@ -675,6 +718,7 @@ function gui.PFMTreeViewElement:DetachItem(item)
 	item.m_treeView = nil
 	item.m_parent = nil
 
+	self:GetTreeView():SetContentsWidthDirty()
 	self:ScheduleUpdate()
 	self.m_treeView:GetRoot():ScheduleUpdate()
 end
@@ -710,6 +754,7 @@ function gui.PFMTreeViewElement:AttachItem(item, insertIndex)
 		item.m_expandIcon:SetParent(self.m_childPrefix)
 	end
 
+	self:GetTreeView():SetContentsWidthDirty()
 	self:ScheduleUpdate()
 	self.m_treeView:GetRoot():ScheduleUpdate()
 end
