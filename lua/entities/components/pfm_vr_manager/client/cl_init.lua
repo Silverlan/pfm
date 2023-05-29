@@ -170,7 +170,7 @@ function Component:SetAnimationTarget(ent)
 	local entCam = cam:GetEntity()
 	local povC = entCam:AddComponent("pov_camera")
 
-	local headData = rig.determine_head_bones(ent:GetModel())
+	local headData = util.rig.determine_head_bones(ent:GetModel())
 	if headData == nil or headData.headBoneId == nil then
 		return
 	end

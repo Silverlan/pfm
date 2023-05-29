@@ -317,6 +317,7 @@ function Element:InitializeBoneControls(mdl)
 	self.m_skelTree = tree
 	tree:SetSelectable(gui.Table.SELECTABLE_MODE_SINGLE)
 
+	self.m_cbOnAnimsUpdated = {}
 	local bones = get_bones_in_hierarchical_order(mdl)
 	for _, boneInfo in ipairs(bones) do
 		local boneDst = boneInfo[1]
@@ -327,6 +328,7 @@ function Element:InitializeBoneControls(mdl)
 		item:SetIdentifier(boneDst:GetName())
 		item:AddCallback("OnSelectionChanged", function(pItem, selected)
 			util.remove(self.m_cbOnAnimsUpdated)
+			self.m_cbOnAnimsUpdated = {}
 			self:ReloadIkRig()
 			self:CreateTransformGizmo()
 			self:UpdateDebugVisualization()

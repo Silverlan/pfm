@@ -7,7 +7,7 @@
 ]]
 
 include("pfm/controls_menu.lua")
-include("/util/rig.lua")
+include("/util/util_rig_helper.lua")
 include_component("retarget_rig")
 
 locale.load("pfm_retarget.txt")
@@ -156,7 +156,7 @@ function gui.BoneRetargeting:UpdateMode()
 		self.m_modelView:PlayAnimation("reference", 1)
 		self.m_modelView:PlayAnimation("reference", 2)
 		local function get_bounds(mdl)
-			local head = rig.determine_head_bones(mdl)
+			local head = util.rig.determine_head_bones(mdl)
 			if head == nil then
 				return Vector(), mdl:GetRenderBounds()
 			end

@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/util/util_rig_helper.lua")
+
 local Element = gui.IkRigEditor
 function Element:RemoveConstraint(constraint)
 	self.m_ikRig:RemoveConstraint(constraint)
@@ -68,34 +70,30 @@ function Element:GetConstraintControl(constraint, controlName)
 		end
 	end
 end
-function Element:GetMirroredAngles(boneName, ang)
+function Element:ShouldFlipAxis(boneName, axis)
 	local ent = self.m_modelView:GetEntity(1)
 	if util.is_valid(ent) == false then
-		return
+		return false
 	end
 	local mdl = ent:GetModel()
 	if mdl == nil then
-		return
+		return false
 	end
 	local mirrorName = self:DetermineMirroredBoneSibling(boneName)
 	if mirrorName == nil then
-		return
+		return false
 	end
 	local skel = mdl:GetSkeleton()
 	local boneId = skel:LookupBone(boneName)
 	local mirrorBoneId = skel:LookupBone(mirrorName)
 	if boneId == -1 or mirrorBoneId == -1 then
-		return
+		return false
 	end
-	return -ang
-	--[[local ref = mdl:GetReferencePose()
-	local rot = ang:ToQuaternion()
-	local pose = ref:GetBonePose(boneId)
-	local mirrorPose = ref:GetBonePose(mirrorBoneId)
-	--rot = pose:GetRotation() * rot
-	--rot:MirrorAxis(math.AXIS_X)
-	--rot = mirrorPose:GetRotation():GetInverse() * rot
-	return rot:ToEulerAngles()]]
+	local flipFactors = util.rig.determine_mirrored_bone_flip_factors(mdl, boneName, mirrorName)
+	if flipFactors == nil then
+		return false
+	end
+	return (flipFactors:Get(axis) < 0.0) and true or false
 end
 function Element:AddConstraint(item, boneName, type, constraint)
 	local ent = self.m_modelView:GetEntity(1)
@@ -202,12 +200,16 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				-- ent:RemoveComponent(ents.COMPONENT_IK_SOLVER)
 				-- ent:RemoveComponent(ents.COMPONENT_PFM_FBIK)
 
-				util.remove(self.m_cbOnAnimsUpdated)
-				self.m_cbOnAnimsUpdated = ent:GetComponent(ents.COMPONENT_ANIMATED):AddEventCallback(
-					ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED,
-					function()
-						animatedC:SetBonePose(boneId, pose)
-					end
+				if self.m_dontClearAnimCallbacks ~= true then
+					util.remove(self.m_cbOnAnimsUpdated)
+					self.m_cbOnAnimsUpdated = {}
+				end
+				table.insert(
+					self.m_cbOnAnimsUpdated,
+					ent:GetComponent(ents.COMPONENT_ANIMATED)
+						:AddEventCallback(ents.AnimatedComponent.EVENT_ON_ANIMATIONS_UPDATED, function()
+							animatedC:SetBonePose(boneId, pose)
+						end)
 				)
 
 				self.m_mdlView:Render()
@@ -284,7 +286,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 		local axes
 		local function update_axes()
 			if twistAxis == math.AXIS_X then
-				axes = { math.AXIS_X, math.AXIS_Z, math.AXIS_Y }
+				axes = { math.AXIS_Z, math.AXIS_X, math.AXIS_Y }
 			elseif twistAxis == math.AXIS_Y then
 				axes = { math.AXIS_Z, math.AXIS_Y, math.AXIS_X }
 			else
@@ -351,7 +353,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 			{ { "r_min", minR }, { "r_max", maxR } },
 		}
 
-		for _, pdata in ipairs(pairs) do
+		for i, pdata in ipairs(pairs) do
 			local minId = pdata[1][1]
 			local minEl = pdata[1][2]
 			local maxId = pdata[2][1]
@@ -364,10 +366,16 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				end
 
 				if self:IsMirrored() then
-					local mirrorSlider = self:GetMirroredBoneSiblingConstraintControl(constraint, minId)
+					print(axes[i])
+					local flipAxis = self:ShouldFlipAxis(constraint.bone1, axes[i])
+					local flipFactor = flipAxis and -1.0 or 1.0
+					local mirrorSlider =
+						self:GetMirroredBoneSiblingConstraintControl(constraint, flipAxis and maxId or minId)
 					if util.is_valid(mirrorSlider) then
 						self:SetMirrored(false)
-						mirrorSlider:SetValue(value)
+						self.m_dontClearAnimCallbacks = true
+						mirrorSlider:SetValue(value * flipFactor)
+						self.m_dontClearAnimCallbacks = nil
 						self:SetMirrored(true)
 					end
 				end
@@ -378,10 +386,16 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				end
 
 				if self:IsMirrored() then
-					local mirrorSlider = self:GetMirroredBoneSiblingConstraintControl(constraint, maxId)
+					print(axes[i])
+					local flipAxis = self:ShouldFlipAxis(constraint.bone1, axes[i])
+					local flipFactor = flipAxis and -1.0 or 1.0
+					local mirrorSlider =
+						self:GetMirroredBoneSiblingConstraintControl(constraint, flipAxis and minId or maxId)
 					if util.is_valid(mirrorSlider) then
 						self:SetMirrored(false)
-						mirrorSlider:SetValue(value)
+						self.m_dontClearAnimCallbacks = true
+						mirrorSlider:SetValue(value * flipFactor)
+						self.m_dontClearAnimCallbacks = nil
 						self:SetMirrored(true)
 					end
 				end
@@ -480,20 +494,30 @@ function Element:AddConstraint(item, boneName, type, constraint)
 		child.__sliders["maxAngle"] = angleSliderMax
 		angleSliderMin:AddCallback("OnLeftValueChanged", function(el, value)
 			if self:IsMirrored() then
-				local mirrorMinAngle = self:GetMirroredBoneSiblingConstraintControl(constraint, "minAngle")
+				local flipAxis = self:ShouldFlipAxis(constraint.bone1, singleAxis)
+				local flipFactor = flipAxis and -1.0 or 1.0
+				local mirrorMinAngle =
+					self:GetMirroredBoneSiblingConstraintControl(constraint, flipAxis and "maxAngle" or "minAngle")
 				if util.is_valid(mirrorMinAngle) then
 					self:SetMirrored(false)
-					mirrorMinAngle:SetValue(self:GetMirroredAngles(constraint.bone1, value))
+					self.m_dontClearAnimCallbacks = true
+					mirrorMinAngle:SetValue(value * flipFactor)
+					self.m_dontClearAnimCallbacks = nil
 					self:SetMirrored(true)
 				end
 			end
 		end)
 		angleSliderMax:AddCallback("OnLeftValueChanged", function(el, value)
 			if self:IsMirrored() then
-				local mirrorMaxAngle = self:GetMirroredBoneSiblingConstraintControl(constraint, "maxAngle")
+				local flipAxis = self:ShouldFlipAxis(constraint.bone1, singleAxis)
+				local flipFactor = flipAxis and -1.0 or 1.0
+				local mirrorMaxAngle =
+					self:GetMirroredBoneSiblingConstraintControl(constraint, flipAxis and "minAngle" or "maxAngle")
 				if util.is_valid(mirrorMaxAngle) then
 					self:SetMirrored(false)
-					mirrorMaxAngle:SetValue(self:GetMirroredAngles(constraint.bone1, value))
+					self.m_dontClearAnimCallbacks = true
+					mirrorMaxAngle:SetValue(value * flipFactor)
+					self.m_dontClearAnimCallbacks = nil
 					self:SetMirrored(true)
 				end
 			end

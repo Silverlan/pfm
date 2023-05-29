@@ -10,7 +10,7 @@ include("/gui/wiviewport.lua")
 include("/gui/wimodelview.lua")
 include("/gui/wiimageicon.lua")
 include("/sfm/project_converter/particle_systems.lua")
-include("/util/rig.lua")
+include("/util/util_rig_helper.lua")
 
 util.register_class("gui.AssetIcon", gui.ImageIcon)
 
@@ -46,7 +46,7 @@ local function is_character_model(model)
 		return false
 	end
 	-- If the model is a character, we'll zoom in on the head
-	local headData = rig.determine_head_bones(mdl)
+	local headData = util.rig.determine_head_bones(mdl)
 	if
 		headData == nil
 		or headData.headBoneId == nil
