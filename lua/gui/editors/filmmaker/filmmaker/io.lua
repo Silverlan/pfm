@@ -164,6 +164,7 @@ function Element:KeyboardCallback(key, scanCode, state, mods)
 end
 
 function Element:AddInputBindingLayer(name, bindingLayer)
+	self:RemoveInputBindingLayer(name)
 	self.m_inputBindingLayers[name] = bindingLayer
 
 	input.add_input_binding_layer(bindingLayer)
