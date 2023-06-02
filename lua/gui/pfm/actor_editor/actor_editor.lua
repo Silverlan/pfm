@@ -1812,6 +1812,7 @@ function gui.PFMActorEditor:AddControl(
 		if(item ~= nil) then subPath = subPath .. "bone/" table.remove(propertyPathComponents,1) baseItem = item end
 	end]]
 
+	local iPathPropName = 2
 	if isBone then
 		-- We want the bones to show in a hierarchical order.
 		-- This is currently not possible with the component property system, so
@@ -1827,6 +1828,7 @@ function gui.PFMActorEditor:AddControl(
 			if item ~= nil then
 				subPath = subPath .. "bone/"
 				table.remove(propertyPathComponents, 1)
+				iPathPropName = iPathPropName - 1
 				baseItem = item
 			end
 		end
@@ -1845,8 +1847,7 @@ function gui.PFMActorEditor:AddControl(
 		end
 		baseItem = childItem
 		subPath = subPath .. "/"
-
-		if isBone and i == 2 then
+		if isBone and i == iPathPropName then
 			childItem.__boneMouseEvent = childItem.__boneMouseEvent
 				or childItem:AddCallback("OnMouseEvent", function(tex, button, state, mods)
 					if button == input.MOUSE_BUTTON_RIGHT then
@@ -1887,7 +1888,7 @@ function gui.PFMActorEditor:AddControl(
 												self:AddIkController(actor, boneName, i + 1)
 											end
 										)
-										subItem:SetName("ik_control_chain_" == tostring(i + 1))
+										subItem:SetName("ik_control_chain_" .. tostring(i + 1))
 										parent = parent:GetParent()
 									end
 									ikMenu:Update()
