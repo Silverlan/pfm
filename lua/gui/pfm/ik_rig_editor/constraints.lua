@@ -187,11 +187,11 @@ function Element:AddConstraint(item, boneName, type, constraint)
 					end
 				end
 
-				if twistAxis == math.AXIS_X then
+				if twistAxis == math.AXIS_X or twistAxis == math.AXIS_SIGNED_X then
 					localRot = EulerAngles(localRot.y, localRot.r, localRot.p)
-				elseif twistAxis == math.AXIS_Y then
+				elseif twistAxis == math.AXIS_Y or twistAxis == math.AXIS_SIGNED_Y then
 					localRot = EulerAngles(localRot.r, localRot.p, localRot.y)
-				elseif twistAxis == math.AXIS_Z then
+				elseif twistAxis == math.AXIS_Z or twistAxis == math.AXIS_SIGNED_Z then
 				end
 				localRot = localRot:ToQuaternion()
 
@@ -235,9 +235,9 @@ function Element:AddConstraint(item, boneName, type, constraint)
 	local getDefaultLimits = function()
 		local limits = EulerAngles(45, 45, 45)
 		-- Set the rotation around the twist axis to -1/1
-		if twistAxis == math.AXIS_X then
+		if twistAxis == math.AXIS_X or twistAxis == math.AXIS_SIGNED_X then
 			limits.y = 1
-		elseif twistAxis == math.AXIS_Y then
+		elseif twistAxis == math.AXIS_Y or twistAxis == math.AXIS_SIGNED_Y then
 			limits.p = 1
 		else
 			limits.r = 1
@@ -285,9 +285,9 @@ function Element:AddConstraint(item, boneName, type, constraint)
 
 		local axes
 		local function update_axes()
-			if twistAxis == math.AXIS_X then
+			if twistAxis == math.AXIS_X or twistAxis == math.AXIS_SIGNED_X then
 				axes = { math.AXIS_Z, math.AXIS_X, math.AXIS_Y }
-			elseif twistAxis == math.AXIS_Y then
+			elseif twistAxis == math.AXIS_Y or twistAxis == math.AXIS_SIGNED_Y then
 				axes = { math.AXIS_Z, math.AXIS_Y, math.AXIS_X }
 			else
 				axes = { math.AXIS_X, math.AXIS_Y, math.AXIS_Z }
@@ -309,6 +309,9 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				{ tostring(math.AXIS_X), "X" },
 				{ tostring(math.AXIS_Y), "Y" },
 				{ tostring(math.AXIS_Z), "Z" },
+				{ tostring(math.AXIS_SIGNED_X), "-X" },
+				{ tostring(math.AXIS_SIGNED_Y), "-Y" },
+				{ tostring(math.AXIS_SIGNED_Z), "-Z" },
 			},
 			twistAxis,
 			function(el, option)
