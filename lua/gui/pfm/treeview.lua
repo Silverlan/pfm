@@ -762,6 +762,7 @@ function gui.PFMTreeViewElement:AddItem(text, fPopulate, insertIndex, identifier
 	self:InitializeChildBox()
 	local item = gui.create("WIPFMTreeViewElement")
 	item:SetText(text)
+	item.m_fPopulate = fPopulate
 	self:AttachItem(item, insertIndex)
 
 	if identifier ~= nil then
