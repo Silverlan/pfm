@@ -182,7 +182,13 @@ function Element:LoadRig(rig)
 			end
 		end
 	end
-	self:ReloadIkRig()
+	for _, c in ipairs(rig:GetControls()) do
+		local item = self:FindBoneItem(c.bone)
+		if util.is_valid(item) then
+			self:AddControl(item, c.bone, c.type)
+		end
+	end
+	self:ScheduleReloadIkRig()
 	self:SetMirrored(isMirrored)
 end
 function Element:GetModel()
@@ -473,11 +479,27 @@ end
 function Element:UpdateModelView()
 	self.m_tUpdateModelView = time.real_time()
 end
+function Element:ScheduleReloadIkRig()
+	self.m_ikRigReloadScheduled = true
+	self:ScheduleUpdateDebugVisualization()
+end
+function Element:ScheduleUpdateDebugVisualization()
+	self.m_updateDebugVisScheduled = true
+end
 function Element:OnThink()
 	if time.real_time() - self.m_tUpdateModelView < 0.25 then
 		if util.is_valid(self.m_modelView) then
 			self.m_modelView:Render()
 		end
+	end
+	if self.m_updateDebugVisScheduled then
+		self.m_updateDebugVisScheduled = nil
+		self:UpdateDebugVisualization()
+	end
+	if self.m_ikRigReloadScheduled then
+		self.m_ikRigReloadScheduled = nil
+		self:ReloadIkRig()
+		self:UpdateBoneEntityStates()
 	end
 end
 function Element:SetModelView(mdlView)

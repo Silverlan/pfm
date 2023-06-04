@@ -30,7 +30,7 @@ function Element:RemoveConstraint(constraint)
 			return
 		end
 	end
-	self:ReloadIkRig()
+	self:ScheduleReloadIkRig()
 end
 function Element:DetermineMirroredBoneSiblingConstraint(constraint)
 	local bone = constraint.bone1
@@ -136,12 +136,12 @@ function Element:AddConstraint(item, boneName, type, constraint)
 			visualize = false
 			icon:SetMaterial("gui/pfm/icon_item_visible_off")
 			child.__visualizationEnabled = visualize
-			self:UpdateDebugVisualization()
+			self:ScheduleUpdateDebugVisualization()
 		else
 			visualize = true
 			icon:SetMaterial("gui/pfm/icon_item_visible_on")
 			child.__visualizationEnabled = visualize
-			self:UpdateDebugVisualization()
+			self:ScheduleUpdateDebugVisualization()
 		end
 	end
 	icon:AddCallback("OnMouseEvent", function(icon, button, state, mods)
@@ -222,7 +222,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				constraint.minLimits = minLimits
 				constraint.maxLimits = maxLimits
 
-				self:UpdateDebugVisualization()
+				self:ScheduleUpdateDebugVisualization()
 
 				local fbIk = ent:GetComponent(ents.COMPONENT_PFM_FBIK)
 				if fbIk ~= nil then
@@ -319,7 +319,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				twistAxis = tonumber(axis)
 				constraint.axis = twistAxis
 				update_axes()
-				self:UpdateDebugVisualization()
+				self:ScheduleUpdateDebugVisualization()
 
 				if self:IsMirrored() then
 					local mirrorAxisMenu = self:GetMirroredBoneSiblingConstraintControl(constraint, "axis")
@@ -369,7 +369,6 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				end
 
 				if self:IsMirrored() then
-					print(axes[i])
 					local flipAxis = self:ShouldFlipAxis(constraint.bone1, axes[i])
 					local flipFactor = flipAxis and -1.0 or 1.0
 					local mirrorSlider =
@@ -479,7 +478,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 			function(el, option)
 				singleAxis = el:GetSelectedOption()
 				constraint.axis = singleAxis
-				self:UpdateDebugVisualization()
+				self:ScheduleUpdateDebugVisualization()
 
 				if self:IsMirrored() then
 					local mirrorAxisMenu = self:GetMirroredBoneSiblingConstraintControl(constraint, "axis")
@@ -530,7 +529,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 	ctrl:Update()
 	ctrl:SizeToContents()
 
-	self:ReloadIkRig()
+	self:ScheduleReloadIkRig()
 	toggle_constraint_visualization()
 	item:Expand()
 	child:ExpandAll()

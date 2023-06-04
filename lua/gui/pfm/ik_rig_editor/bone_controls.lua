@@ -192,12 +192,11 @@ local function get_bones_in_hierarchical_order(mdl)
 end
 function Element:SetBoneLocked(boneName, locked)
 	self.m_ikRig:SetBoneLocked(boneName, locked)
-	self:ReloadIkRig()
+	self:ScheduleReloadIkRig()
 	self:UpdateBoneColor(boneName)
 
 	self:SetBoneEntityColor(boneName, locked and Color.Red or Color.White)
 	self:SetBoneEntityPersistent(boneName, locked)
-	self:UpdateBoneEntityStates()
 end
 function Element:UpdateBoneEntityStates()
 	local ent = self.m_mdlView:GetEntity(1)
@@ -266,14 +265,12 @@ function Element:PopulateBoneContextMenu(pContext, boneName)
 	if self.m_ikRig:HasBone(boneName) then
 		pContext:AddItem(locale.get_text("pfm_remove_bone"), function()
 			self:RemoveBone(boneName)
-			self:ReloadIkRig()
-			self:UpdateBoneEntityStates()
+			self:ScheduleReloadIkRig()
 		end)
 	else
 		pContext:AddItem(locale.get_text("pfm_add_bone"), function()
 			self:AddBone(boneName)
-			self:ReloadIkRig()
-			self:UpdateBoneEntityStates()
+			self:ScheduleReloadIkRig()
 		end)
 	end
 	if self.m_ikRig:IsBoneLocked(boneName) then
@@ -288,21 +285,50 @@ function Element:PopulateBoneContextMenu(pContext, boneName)
 	if self.m_ikRig:HasControl(boneName) then
 		pContext:AddItem(locale.get_text("pfm_remove_control"), function()
 			self.m_ikRig:RemoveControl(boneName)
-			self:ReloadIkRig()
-			self:UpdateBoneEntityStates()
+			self:ScheduleReloadIkRig()
 		end)
 	else
 		pContext:AddItem(locale.get_text("pfm_add_drag_control"), function()
-			self.m_ikRig:AddControl(boneName, ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG)
-			self:ReloadIkRig()
-			self:UpdateBoneEntityStates()
+			self:AddControl(item, boneName, ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG)
 		end)
 		pContext:AddItem(locale.get_text("pfm_add_state_control"), function()
-			self.m_ikRig:AddControl(boneName, ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
-			self:ReloadIkRig()
-			self:UpdateBoneEntityStates()
+			self:AddControl(item, boneName, ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
 		end)
 	end
+end
+function Element:AddControl(item, boneName, controlType)
+	local control = self.m_ikRig:AddControl(boneName, controlType)
+
+	local child = item:AddItem(locale.get_text("pfm_drag_control")) -- TODO: Control type
+	child:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
+		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
+			local pContext = gui.open_context_menu()
+			if util.is_valid(pContext) then
+				pContext:SetPos(input.get_cursor_pos())
+				pContext:AddItem("Remove", function()
+					self:RemoveConstraint(constraint)
+				end)
+				pContext:Update()
+				return util.EVENT_REPLY_HANDLED
+			end
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
+	local ctrlsParent = child:AddItem("")
+	local ctrl = gui.create("WIPFMControlsMenu", ctrlsParent, 0, 0, ctrlsParent:GetWidth(), ctrlsParent:GetHeight())
+	ctrl:SetAutoAlignToParent(true, false)
+	ctrl:SetAutoFillContentsToHeight(false)
+	ctrl:AddSliderControl("Rigidity", "rigidity", 1.0, 1.0, 100.0, function(el, value)
+		control.rigidity = value
+	end, 1.0)
+	ctrl:ResetControls()
+	ctrl:Update()
+	ctrl:SizeToContents()
+
+	self:ScheduleReloadIkRig()
+
+	item:Expand()
+	child:ExpandAll()
 end
 function Element:InitializeBoneControls(mdl)
 	local options = {}
@@ -329,7 +355,7 @@ function Element:InitializeBoneControls(mdl)
 		item:AddCallback("OnSelectionChanged", function(pItem, selected)
 			util.remove(self.m_cbOnAnimsUpdated)
 			self.m_cbOnAnimsUpdated = {}
-			self:ReloadIkRig()
+			self:ScheduleReloadIkRig()
 			self:CreateTransformGizmo()
 			self:UpdateDebugVisualization()
 		end)
