@@ -1412,7 +1412,7 @@ function gui.PFMActorEditor:AddIkController(actor, boneName, chainLength)
 	ikSolverC:AddIkSolverByChain(boneName, chainLength)
 
 	local udmRigData = solverC:GetMemberValue("rigConfig")
-	udmRigData:Clear()
+	-- udmRigData:Clear()
 	udmRigData:Merge(ikSolverC:GetMemberValue("rigConfig"):Get(), udm.MERGE_FLAG_BIT_DEEP_COPY)
 
 	local memberId = ikSolverC:GetMemberIndex("IkRig")
