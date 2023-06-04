@@ -662,6 +662,33 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 							trC:SetScaleEnabled(false)
 							if memberInfo.type == udm.TYPE_VECTOR3 then
 								if self:IsMoveManipulatorMode(manipMode) then
+									local dbgLineC
+									local onPosChanged
+									if componentName == "ik_solver" then
+										if pathName:GetFront() == "control" then
+											-- Ik control, we'll add a dotted line from the control position
+											-- to the bone position
+											dbgLineC = entTransform:AddComponent("debug_dotted_line")
+											if dbgLineC ~= nil then
+												dbgLineC:SetStartPosition(Vector(0, 0, 0))
+												dbgLineC:SetEndPosition(Vector(20, 20, 20))
+
+												onPosChanged = function(pos)
+													if util.is_valid(dbgLineC) then
+														local skelBoneId = c:GetControlBoneId(pathName:GetString())
+														local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
+														dbgLineC:SetEndPosition(pos)
+														local bonePose = (animC ~= nil and skelBoneId ~= nil)
+																and animC:GetGlobalBonePose(skelBoneId)
+															or nil
+														if bonePose ~= nil then
+															dbgLineC:SetStartPosition(bonePose:GetOrigin())
+														end
+													end
+												end
+											end
+										end
+									end
 									trC:AddEventCallback(
 										ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,
 										function(pos)
@@ -669,6 +696,9 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 											if actorC ~= nil then
 												if c:IsValid() then
 													c:SetTransformMemberPos(idx, math.COORDINATE_SPACE_WORLD, pos)
+													if onPosChanged ~= nil then
+														onPosChanged(pos)
+													end
 												end
 											end
 										end
