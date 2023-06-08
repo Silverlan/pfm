@@ -284,8 +284,7 @@ function Element:PopulateBoneContextMenu(pContext, boneName)
 	end
 	if self.m_ikRig:HasControl(boneName) then
 		pContext:AddItem(locale.get_text("pfm_remove_control"), function()
-			self.m_ikRig:RemoveControl(boneName)
-			self:ScheduleReloadIkRig()
+			self:RemoveControl(boneName)
 		end)
 	else
 		pContext:AddItem(locale.get_text("pfm_add_drag_control"), function()
@@ -295,6 +294,19 @@ function Element:PopulateBoneContextMenu(pContext, boneName)
 			self:AddControl(item, boneName, ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
 		end)
 	end
+end
+function Element:GetControlItem(boneName)
+	local item = self:FindBoneItem(boneName)
+	for _, child in ipairs(item:GetItems()) do
+		if child:IsValid() and child.__controlType ~= nil then
+			return child
+		end
+	end
+end
+function Element:RemoveControl(boneName)
+	self.m_ikRig:RemoveControl(boneName)
+	self:ScheduleReloadIkRig()
+	util.remove(self:GetControlItem(boneName))
 end
 function Element:AddControl(item, boneName, controlType)
 	local control = self.m_ikRig:AddControl(boneName, controlType)
@@ -306,7 +318,7 @@ function Element:AddControl(item, boneName, controlType)
 			if util.is_valid(pContext) then
 				pContext:SetPos(input.get_cursor_pos())
 				pContext:AddItem("Remove", function()
-					self:RemoveConstraint(constraint)
+					self:RemoveControl(boneName)
 				end)
 				pContext:Update()
 				return util.EVENT_REPLY_HANDLED
@@ -314,6 +326,7 @@ function Element:AddControl(item, boneName, controlType)
 			return util.EVENT_REPLY_HANDLED
 		end
 	end)
+	child.__controlType = controlType
 	local ctrlsParent = child:AddItem("")
 	local ctrl = gui.create("WIPFMControlsMenu", ctrlsParent, 0, 0, ctrlsParent:GetWidth(), ctrlsParent:GetHeight())
 	ctrl:SetAutoAlignToParent(true, false)
