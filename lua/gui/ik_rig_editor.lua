@@ -484,6 +484,7 @@ function Element:ScheduleReloadIkRig()
 	self:ScheduleUpdateDebugVisualization()
 end
 function Element:ScheduleUpdateDebugVisualization()
+	self.m_ikRigReloadScheduled = true
 	self.m_updateDebugVisScheduled = true
 end
 function Element:OnThink()
@@ -492,14 +493,14 @@ function Element:OnThink()
 			self.m_modelView:Render()
 		end
 	end
-	if self.m_updateDebugVisScheduled then
-		self.m_updateDebugVisScheduled = nil
-		self:UpdateDebugVisualization()
-	end
 	if self.m_ikRigReloadScheduled then
 		self.m_ikRigReloadScheduled = nil
 		self:ReloadIkRig()
 		self:UpdateBoneEntityStates()
+	end
+	if self.m_updateDebugVisScheduled then
+		self.m_updateDebugVisScheduled = nil
+		self:UpdateDebugVisualization()
 	end
 end
 function Element:SetModelView(mdlView)
