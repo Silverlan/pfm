@@ -95,7 +95,7 @@ function Element:ShouldFlipAxis(boneName, axis)
 	end
 	return (flipFactors:Get(axis) < 0.0) and true or false
 end
-function Element:AddConstraint(item, boneName, type, constraint)
+function Element:AddConstraint(item, boneName, type)
 	local ent = self.m_modelView:GetEntity(1)
 	if util.is_valid(ent) == false then
 		return
@@ -111,6 +111,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 	self:AddBone(boneName)
 	self:AddBone(parent:GetName())
 
+	local constraint
 	local child = item:AddItem(locale.get_text("pfm_" .. string.camel_case_to_snake_case(type) .. "_constraint"))
 	child:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
@@ -244,37 +245,37 @@ function Element:AddConstraint(item, boneName, type, constraint)
 		end
 		return limits
 	end
-	if constraint == nil then
-		pfm.log(
-			"Adding "
-				.. type
-				.. " constraint from bone '"
-				.. parent:GetName()
-				.. "' to '"
-				.. bone:GetName()
-				.. "' of actor with model '"
-				.. mdl:GetName()
-				.. "'...",
-			pfm.LOG_CATEGORY_PFM
-		)
-		if type == "fixed" then
-			constraint = self.m_ikRig:AddFixedConstraint(parent:GetName(), bone:GetName())
-		elseif type == "hinge" then
-			constraint = self.m_ikRig:AddHingeConstraint(parent:GetName(), bone:GetName(), -45.0, 45.0, Quaternion())
-		elseif type == "ballSocket" then
-			local limits = getDefaultLimits()
-			constraint = self.m_ikRig:AddBallSocketConstraint(parent:GetName(), bone:GetName(), -limits, limits)
-		end
+
+	pfm.log(
+		"Adding "
+			.. type
+			.. " constraint from bone '"
+			.. parent:GetName()
+			.. "' to '"
+			.. bone:GetName()
+			.. "' of actor with model '"
+			.. mdl:GetName()
+			.. "'...",
+		pfm.LOG_CATEGORY_PFM
+	)
+	if type == "fixed" then
+		constraint = self.m_ikRig:AddFixedConstraint(parent:GetName(), bone:GetName())
+	elseif type == "hinge" then
+		constraint = self.m_ikRig:AddHingeConstraint(parent:GetName(), bone:GetName(), -45.0, 45.0, Quaternion())
+	elseif type == "ballSocket" then
+		local limits = getDefaultLimits()
+		constraint = self.m_ikRig:AddBallSocketConstraint(parent:GetName(), bone:GetName(), -limits, limits)
 	end
+
 	child.__jointType = constraint.type
 	minLimits = constraint.minLimits
 	maxLimits = constraint.maxLimits
 
 	local function add_rotation_axis(ctrl, name, axisId, defMin, defMax)
 		local minSlider =
-			add_rotation_axis_slider(ctrl, "pfm_ik_rot_" .. name .. "_min", name .. " min", axisId, true, defMin)
+			add_rotation_axis_slider(ctrl, "pfm_ik_rot_" .. name .. "_min", name .. "_min", axisId, true, defMin)
 		local maxSlider =
-			add_rotation_axis_slider(ctrl, "pfm_ik_rot_" .. name .. "_max", name .. " max", axisId, false, defMax)
+			add_rotation_axis_slider(ctrl, "pfm_ik_rot_" .. name .. "_max", name .. "_max", axisId, false, defMax)
 		return minSlider, maxSlider
 	end
 	child.__sliders = {}
@@ -344,7 +345,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 
 			useUnidirectionalSpan = checked
 		end)]]
-		subSeparate = ctrl:AddSubMenu()
+		subSeparate = ctrl:AddSubMenu("rotation_axes")
 		--subUnidirectional = ctrl:AddSubMenu()
 
 		minP, maxP = add_rotation_axis(subSeparate, "pitch", 0, minLimits.p, maxLimits.p)
@@ -388,7 +389,6 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				end
 
 				if self:IsMirrored() then
-					print(axes[i])
 					local flipAxis = self:ShouldFlipAxis(constraint.bone1, axes[i])
 					local flipFactor = flipAxis and -1.0 or 1.0
 					local mirrorSlider =
@@ -464,7 +464,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 		subSeparate:Update()
 		subSeparate:SizeToContents()
 	elseif type == "hinge" then
-		singleAxis = 0
+		singleAxis = singleAxis or 0
 		local axisMenu
 		axisMenu = ctrl:AddDropDownMenu(
 			locale.get_text("pfm_ik_axis"),
@@ -474,7 +474,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 				{ "y", "Y" },
 				{ "z", "Z" },
 			},
-			0,
+			singleAxis,
 			function(el, option)
 				singleAxis = el:GetSelectedOption()
 				constraint.axis = singleAxis
@@ -544,7 +544,7 @@ function Element:AddConstraint(item, boneName, type, constraint)
 		end
 	end
 
-	return constraint
+	return constraint, ctrl
 end
 function Element:AddBallSocketConstraint(item, boneName, c)
 	return self:AddConstraint(item, boneName, "ballSocket", c)

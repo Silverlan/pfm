@@ -18,7 +18,9 @@ function gui.PFMControlsMenu:OnInitialize()
 	gui.VBox.OnInitialize(self)
 
 	self.m_controls = {}
+	self.m_orderedControlNames = {}
 	self.m_subMenus = {}
+	self.m_subMenuNameIndices = {}
 	self:SetAutoFillContents(true)
 end
 function gui.PFMControlsMenu:AddControl(name, ctrl, wrapper, default)
@@ -27,6 +29,7 @@ function gui.PFMControlsMenu:AddControl(name, ctrl, wrapper, default)
 		wrapper = wrapper,
 		default = default,
 	}
+	table.insert(self.m_orderedControlNames, name)
 	if default ~= nil then
 		self:SetDefault(name, default)
 	end
@@ -38,10 +41,15 @@ function gui.PFMControlsMenu:ClearControls()
 		util.remove(data.element)
 	end
 	self.m_controls = {}
+	self.m_orderedControlNames = {}
 	util.remove(self.m_subMenus)
 	self.m_subMenus = {}
+	self.m_subMenuNameIndices = {}
 end
 function gui.PFMControlsMenu:GetControl(name)
+	if self.m_subMenuNameIndices[name] ~= nil then
+		return self.m_subMenus[self.m_subMenuNameIndices[name]]
+	end
 	return (self.m_controls[name] ~= nil) and self.m_controls[name].element or nil
 end
 function gui.PFMControlsMenu:SetControlVisible(identifier, visible)
@@ -282,7 +290,7 @@ function gui.PFMControlsMenu:AddHeader(title)
 	header:SetCategory(title)
 	return header
 end
-function gui.PFMControlsMenu:AddSubMenu()
+function gui.PFMControlsMenu:AddSubMenu(identifier)
 	local el = gui.create("WIPFMControlsMenu", self)
 	el:SetAutoSizeToContents(true)
 	el:SetAutoFillContentsToHeight(false)
@@ -293,13 +301,15 @@ function gui.PFMControlsMenu:AddSubMenu()
 	el:SetBackgroundElement(o)
 
 	table.insert(self.m_subMenus, el)
+	if identifier ~= nil then
+		el:SetName(identifier)
+		self.m_subMenuNameIndices[identifier] = #self.m_subMenus
+	end
 	return el
 end
 function gui.PFMControlsMenu:ResetControls()
-	for _, el in ipairs(self.m_subMenus) do
-		el:ResetControls()
-	end
-	for name, ctrl in pairs(self.m_controls) do
+	for _, name in ipairs(self.m_orderedControlNames) do
+		local ctrl = self.m_controls[name]
 		if ctrl.element:IsValid() then
 			if ctrl.default ~= nil then
 				self:SetValue(name, ctrl.default)
@@ -308,6 +318,9 @@ function gui.PFMControlsMenu:ResetControls()
 				end
 			end
 		end
+	end
+	for _, el in ipairs(self.m_subMenus) do
+		el:ResetControls()
 	end
 end
 gui.register("WIPFMControlsMenu", gui.PFMControlsMenu)

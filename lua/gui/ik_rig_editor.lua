@@ -174,18 +174,30 @@ function Element:LoadRig(rig)
 		local item = self:FindBoneItem(c.bone1)
 		if util.is_valid(item) then
 			if c.type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_FIXED then
-				self:AddFixedConstraint(item, c.bone1, c)
+				local constraint, ctrl = self:AddFixedConstraint(item, c.bone1, c)
 			elseif c.type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_HINGE then
-				self:AddHingeConstraint(item, c.bone1, c)
+				local constraint, ctrl = self:AddHingeConstraint(item, c.bone1, c)
+				ctrl:GetControl("axis"):SelectOption(c.axis)
+				ctrl:GetControl("angle_min"):SetValue(c.minLimits.p)
+				ctrl:GetControl("angle_max"):SetValue(c.maxLimits.p)
 			elseif c.type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_BALL_SOCKET then
-				self:AddBallSocketConstraint(item, c.bone1, c)
+				local constraint, ctrl = self:AddBallSocketConstraint(item, c.bone1, c)
+				ctrl:GetControl("twist_axis"):SelectOption(c.axis)
+				ctrl:GetControl("rotation_axes"):GetControl("pitch_min"):SetValue(c.minLimits.p)
+				ctrl:GetControl("rotation_axes"):GetControl("yaw_min"):SetValue(c.minLimits.y)
+				ctrl:GetControl("rotation_axes"):GetControl("roll_min"):SetValue(c.minLimits.r)
+
+				ctrl:GetControl("rotation_axes"):GetControl("pitch_max"):SetValue(c.maxLimits.p)
+				ctrl:GetControl("rotation_axes"):GetControl("yaw_max"):SetValue(c.maxLimits.y)
+				ctrl:GetControl("rotation_axes"):GetControl("roll_max"):SetValue(c.maxLimits.r)
 			end
 		end
 	end
 	for _, c in ipairs(rig:GetControls()) do
 		local item = self:FindBoneItem(c.bone)
 		if util.is_valid(item) then
-			self:AddControl(item, c.bone, c.type)
+			local control, ctrl = self:AddControl(item, c.bone, c.type)
+			ctrl:GetControl("rigidity"):SetValue(c.rigidity)
 		end
 	end
 	self:ScheduleReloadIkRig()

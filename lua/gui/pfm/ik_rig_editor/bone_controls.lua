@@ -342,6 +342,7 @@ function Element:AddControl(item, boneName, controlType)
 
 	item:Expand()
 	child:ExpandAll()
+	return control, ctrl
 end
 function Element:InitializeBoneControls(mdl)
 	local options = {}
