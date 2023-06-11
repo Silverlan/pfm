@@ -94,7 +94,7 @@ function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId, entActor)
 				self:AddActorComponent(entActor, actorData.itemActor, actorData, component)
 			end
 		else
-			debug.print("Unknown component " .. componentName)
+			pfm.log("Unknown component " .. componentName, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
 		end
 	end
 	actorData.componentsEntry:Update()
