@@ -372,6 +372,7 @@ function Element:ReloadIkRig()
 	end
 	pfmFbIkC:SetEnabled(true)
 	ikSolverC:ResetIkRig() -- Clear Rig
+	ikSolverC:SetResetSolver(false)
 	ikSolverC:AddIkSolverByRig(self.m_ikRig)
 
 	util.remove(self.m_entDebugVisualizer)
