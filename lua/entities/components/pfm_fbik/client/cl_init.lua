@@ -20,7 +20,7 @@ function Component:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
 	self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS, "MaintainAnimations")
 
-	self.m_cbUpdateIk = ikSolverC:AddEventCallback(ents.IkSolverComponent.EVENT_UPDATE_IK, function()
+	self.m_cbUpdateIk = ikSolverC:AddEventCallback(ents.IkSolverComponent.EVENT_ON_IK_UPDATED, function()
 		self:UpdateIk()
 	end)
 end
@@ -41,6 +41,9 @@ function Component:UpdateIk()
 	if ikSolverC == nil then
 		return
 	end
+	local entPose = self:GetEntity():GetPose()
+	-- This assumes that the bones in the solver are in hierarchical order!
+	-- If that is not the case, this may cause weird twitching issues between frames.
 	for i = 1, ikSolverC:GetBoneCount() do
 		local boneId = ikSolverC:GetSkeletalBoneId(i - 1)
 		local bone = ikSolverC:GetBone(boneId)
@@ -50,7 +53,7 @@ function Component:UpdateIk()
 		else
 			local pos = bone:GetPos()
 			local rot = bone:GetRot()
-			local pose = self:GetEntity():GetPose() * math.ScaledTransform(pos, rot)
+			local pose = entPose * math.ScaledTransform(pos, rot)
 			--local pose = animC:GetGlobalBonePose(boneId)
 			--pose:SetOrigin(pos)
 			animC:SetGlobalBonePose(boneId, pose)
