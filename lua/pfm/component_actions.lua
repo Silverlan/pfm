@@ -428,6 +428,46 @@ pfm.register_component_action(
 	end
 )
 
+pfm.register_component_action(
+	"pfm_vr_manager",
+	"pfm_start_recording",
+	"vr_start_recording",
+	function(controls, actorData, entActor, actionData)
+		local bt = gui.create("WIPFMActionButton", controls)
+		bt:SetText(locale.get_text("vr_start_recording"))
+		bt:AddCallback("OnPressed", function()
+			if util.is_valid(entActor) == false then
+				return
+			end
+			local c = entActor:GetComponent(ents.COMPONENT_PFM_VR_MANAGER)
+			if c ~= nil then
+				c:StartRecording()
+			end
+		end)
+		return bt
+	end
+)
+
+pfm.register_component_action(
+	"pfm_vr_manager",
+	"pfm_stop_recording",
+	"vr_stop_recording",
+	function(controls, actorData, entActor, actionData)
+		local bt = gui.create("WIPFMActionButton", controls)
+		bt:SetText(locale.get_text("vr_stop_recording"))
+		bt:AddCallback("OnPressed", function()
+			if util.is_valid(entActor) == false then
+				return
+			end
+			local c = entActor:GetComponent(ents.COMPONENT_PFM_VR_MANAGER)
+			if c ~= nil then
+				c:EndRecording()
+			end
+		end)
+		return bt
+	end
+)
+
 -- View bloom map
 local function view_bloom_map(ent, onInit)
 	pfm.util.open_simple_window(locale.get_text("pfm_bloom_map"), function(windowHandle, contents, controls)

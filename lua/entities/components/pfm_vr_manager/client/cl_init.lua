@@ -12,20 +12,24 @@ pfm.register_log_category("pfm_vr")
 
 local Component = util.register_class("ents.PFMVrManager", BaseEntityComponent)
 
+include("recording.lua")
+
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self.m_trackedDevices = {}
+	self:InitializeRecordingData()
+end
+function Component:GetTrackedDevices()
+	return self.m_trackedDevices
 end
 function Component:OnEntitySpawn()
-	local entHmd = ents.create("vr_hmd")
-	if entHmd == nil then
+	self.m_hmdC = self:AddEntityComponent("vr_hmd")
+	if self.m_hmdC == nil then
 		return
 	end
-	entHmd:Spawn()
-	self.m_entHmd = entHmd
 
-	local hmdC = entHmd:GetComponent(ents.COMPONENT_VR_HMD)
+	local hmdC = self.m_hmdC
 	if hmdC ~= nil then
 		hmdC:SetOwner(ents.get_local_player():GetEntity())
 		self.m_cbOnTrackedDeviceAdded = hmdC:AddEventCallback(ents.VRHMD.EVENT_ON_TRACKED_DEVICE_ADDED, function(tdC)
@@ -57,10 +61,7 @@ function Component:OnEntitySpawn()
 	console.run("vr_hide_primary_game_scene", "0")
 end
 function Component:GetHmd()
-	if util.is_valid(self.m_entHmd) == false then
-		return
-	end
-	return self.m_entHmd:GetComponent(ents.COMPONENT_VR_HMD)
+	return self.m_hmdC
 end
 function Component:InitializeTrackedDevice(tdC)
 	local serialNumber = tdC:GetSerialNumber()
@@ -123,7 +124,6 @@ function Component:InitializeTrackedDevice(tdC)
 	end
 end
 function Component:OnRemove()
-	util.remove(self.m_entHmd)
 	util.remove(self.m_cbPopulateActorContextMenu)
 	util.remove(self.m_cbUpdateCameraPose)
 	util.remove(self.m_cbOnTrackedDeviceAdded)
@@ -162,6 +162,73 @@ end
 	vrBodyC:SetPovCamera(cc)
 end]]
 
+function Component:TestX(ent)
+	local hmdC = self:GetHmd()
+	if util.is_valid(hmdC) == false then
+		return
+	end
+
+	local ikC = ent:GetComponent(ents.COMPONENT_IK_SOLVER)
+	if ikC == nil then
+		return
+	end
+	for _, pfmTdC in ipairs(self.m_trackedDevices) do
+		if pfmTdC:IsValid() and pfmTdC:GetSerialNumber() == "LHR-FFC9F940" then
+			local idx = ikC:GetMemberIndex("control/ValveBiped.Bip01_L_Hand/position")
+			if idx ~= nil then
+				--print(pfmTdC:GetEntity():GetPos())
+
+				local hmdPose = hmdC:GetReferencePose()
+				local devPose = pfmTdC:GetTrackedDevice():GetDevicePose()
+				local pose = hmdPose * devPose
+
+				local drawInfo = debug.DrawInfo()
+				drawInfo:SetColor(util.Color.Lime)
+				drawInfo:SetDuration(0.1)
+				debug.draw_line(pose:GetOrigin(), pose:GetOrigin() + pose:GetForward() * 100, drawInfo)
+
+				--ikC:SetTransformMemberPos(idx, math.COORDINATE_SPACE_WORLD, pose:GetOrigin())
+				--ikC:SetTransformMemberRot(idx, math.COORDINATE_SPACE_WORLD, pose:GetRotation())
+
+				--[[local hmdPose = hmdC:GetReferencePose()
+				hmdPose = hmdPose:Copy()
+			
+				local ent = ents.get_local_player():GetEntity():GetComponent(ents.COMPONENT_CHARACTER)
+			
+				local ang = rot:ToEulerAngles()
+			
+				pos.z = pos.z
+				pos.y = pos.y
+				rot = EulerAngles(0, 180, 0):ToQuaternion() * EulerAngles(-ang.p, ang.y, -ang.r):ToQuaternion() --ctrlPose:GetRotation()
+				local ctrlPose = math.Transform(pos, rot)
+				ctrlPose = hmdPose * ctrlPose]]
+
+				--ikC:SetTransformMemberPos(idx, math.COORDINATE_SPACE_WORLD, Vector(18.8134, 44.2499, 70.8808))
+			end
+		end
+	end
+	--[[
+	if(ikC ~= nil) then
+
+	end
+	]]
+	--[[
+	if idx ~= nil then
+		
+	end]]
+
+	--[[local pose = self:CalcBaseCameraPose()
+	if(pose == nil) then return end
+	pose = pose *self.m_relPose
+	if(self.m_staticRotation ~= nil) then pose:SetRotation(self.m_staticRotation) end
+	self:GetEntity():SetPose(pose)
+
+	local animC = self.m_target.entity:GetAnimatedComponent()
+	if(self.m_target.neckBoneId ~= nil) then animC:SetBoneScale(self.m_target.neckBoneId,BONE_ZERO_SCALE) end -- Hide the neck
+	if(self.m_target.headBoneId ~= nil) then animC:SetBoneScale(self.m_target.headBoneId,BONE_ZERO_SCALE) end -- Hide the head
+	]]
+end
+
 function Component:SetAnimationTarget(ent)
 	local pm = tool.get_filmmaker()
 	local vm = pm:GetViewport()
@@ -184,6 +251,7 @@ function Component:SetAnimationTarget(ent)
 	util.remove(self.m_cbUpdateCameraPose)
 	self.m_cbUpdateCameraPose = game.add_callback("Think", function()
 		povC:UpdateCameraPose()
+		self:TestX(ent)
 	end)
 
 	local vrBodyC = ent:AddComponent("vr_body")
@@ -208,7 +276,7 @@ function Component:SetAnimationTarget(ent)
 	18 = Bone[Name:Bind_LeftForeArm][Id:][Children:1][Parent:Bind_LeftArm]
 	19 = Bone[Name:Bind_LeftHand][Id:][Children:5][Parent:Bind_LeftForeArm]]
 
-	vrBodyC:SetHmd(self.m_entHmd:GetComponent(ents.COMPONENT_VR_HMD))
+	vrBodyC:SetHmd(self.m_hmdC)
 	--[[if(#upperBodyBoneChain > 2) then vrBody:SetUpperBody(upperBodyBoneChain) end
 	if(#leftArmBoneChain > 2) then vrBody:SetLeftArm(leftArmBoneChain) end
 	if(#rightArmBoneChain > 2) then vrBody:SetRightArm(rightArmBoneChain) end
