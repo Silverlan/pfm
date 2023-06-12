@@ -729,6 +729,18 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 									end
 								)
 							end
+							trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START, function(scale)
+								local panimaC = c:GetEntity():GetComponent(ents.COMPONENT_PANIMA)
+								if panimaC ~= nil then
+									panimaC:SetPropertyEnabled(targetPath, false)
+								end
+							end)
+							trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, function(scale)
+								local panimaC = c:GetEntity():GetComponent(ents.COMPONENT_PANIMA)
+								if panimaC ~= nil then
+									panimaC:SetPropertyEnabled(targetPath, true)
+								end
+							end)
 							self:InitializeTransformWidget(trC, ent)
 						end
 					end
