@@ -32,13 +32,6 @@ console.register_variable(
 	"The resolution to use for generated asset icons of character models."
 )
 console.register_variable(
-	"pfm_experimental_enable_panima_for_flex_and_skeletal_animations",
-	udm.TYPE_BOOLEAN,
-	true,
-	bit.bor(console.FLAG_BIT_ARCHIVE),
-	"If enabled, the new panima animation system will be used for flex and skeletal animations."
-)
-console.register_variable(
 	"pfm_animation_min_curve_sample_deviation_angle",
 	udm.TYPE_FLOAT,
 	0.25,

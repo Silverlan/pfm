@@ -19,7 +19,6 @@ Component:RegisterMember("MaterialOverrides", ents.MEMBER_TYPE_ELEMENT, "", {
 	end,
 }, bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT))
 
-local cvPanima = console.get_convar("pfm_experimental_enable_panima_for_flex_and_skeletal_animations")
 function ents.PFMModel:Initialize()
 	BaseEntityComponent.Initialize(self)
 
@@ -34,9 +33,7 @@ function ents.PFMModel:Initialize()
 
 	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED, "UpdateModel")
 	self:BindEvent(ents.BaseStaticBvhUserComponent.EVENT_ON_ACTIVATION_STATE_CHANGED, "OnStaticBvhStatusChanged")
-	if cvPanima:GetBool() then
-		self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS, "MaintainAnimations")
-	end
+	self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS, "MaintainAnimations")
 	self.m_listeners = {}
 end
 function ents.PFMModel:OnEntitySpawn()

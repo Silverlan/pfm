@@ -23,9 +23,8 @@ function pfm.AnimationManager:SetFilmClip(filmClip)
 	end
 end
 
-local cvPanima = console.get_convar("pfm_experimental_enable_panima_for_flex_and_skeletal_animations")
 function pfm.AnimationManager:PlayActorAnimation(ent)
-	if self.m_filmClip == nil or cvPanima:GetBool() == false then
+	if self.m_filmClip == nil then
 		return
 	end
 	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
