@@ -65,6 +65,9 @@ function Component:EndRecording(syncAnims)
 	if recorderC == nil then
 		return 0
 	end
+	if recorderC:IsRecording() == false then
+		return
+	end
 	local n = recorderC:EndRecording()
 	pfm.log(
 		"Ending VR recording. "

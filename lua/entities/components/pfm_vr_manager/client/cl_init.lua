@@ -18,6 +18,7 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self.m_trackedDevices = {}
+	self.m_trackedDeviceCallbacks = {}
 	self:InitializeRecordingData()
 end
 function Component:GetTrackedDevices()
@@ -63,6 +64,29 @@ end
 function Component:GetHmd()
 	return self.m_hmdC
 end
+function Component:InitializeVrController(pfmTdc)
+	local tdC = pfmTdc:GetTrackedDevice()
+	local vrC = util.is_valid(tdC) and tdC:GetEntity():GetComponent(ents.COMPONENT_VR_CONTROLLER) or nil
+	if vrC == nil then
+		return
+	end
+	local cb = vrC:AddEventCallback(ents.VRController.EVENT_ON_BUTTON_INPUT, function(buttonId, state)
+		return self:OnVrControllerButtonInput(vrC, buttonId, state)
+	end)
+	table.insert(self.m_trackedDeviceCallbacks, cb)
+end
+function Component:OnVrControllerButtonInput(vrC, buttonId, state)
+	if buttonId == openvr.BUTTON_ID_AXIS1 then
+		if state == input.STATE_PRESS then
+			if self:IsRecording() then
+				self:EndRecording()
+			else
+				self:StartRecording()
+			end
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
+end
 function Component:InitializeTrackedDevice(tdC)
 	local serialNumber = tdC:GetSerialNumber()
 	pfm.log("Initializing tracked device " .. tostring(serialNumber) .. "...", pfm.LOG_CATEGORY_PFM_VR)
@@ -79,6 +103,7 @@ function Component:InitializeTrackedDevice(tdC)
 			pfm.log("Found tracked device as existing actor.", pfm.LOG_CATEGORY_PFM_VR)
 			table.insert(self.m_trackedDevices, c)
 			c:SetTrackedDevice(tdC)
+			self:InitializeVrController(c)
 			return
 		end
 	end
@@ -121,6 +146,7 @@ function Component:InitializeTrackedDevice(tdC)
 	if pfmTdc ~= nil then
 		table.insert(self.m_trackedDevices, pfmTdc)
 		pfmTdc:SetTrackedDevice(tdC)
+		self:InitializeVrController(pfmTdc)
 	end
 end
 function Component:OnRemove()
@@ -128,6 +154,7 @@ function Component:OnRemove()
 	util.remove(self.m_cbUpdateCameraPose)
 	util.remove(self.m_cbOnTrackedDeviceAdded)
 	util.remove(self.m_trackedDevices)
+	util.remove(self.m_trackedDeviceCallbacks)
 
 	-- Restore defaults
 	console.run("vr_hide_primary_game_scene", "1")
@@ -183,11 +210,18 @@ function Component:TestX(ent)
 				local pose = hmdPose * devPose
 
 				local drawInfo = debug.DrawInfo()
-				drawInfo:SetColor(util.Color.Lime)
-				drawInfo:SetDuration(0.1)
-				debug.draw_line(pose:GetOrigin(), pose:GetOrigin() + pose:GetForward() * 100, drawInfo)
+				drawInfo:SetDuration(0.05)
 
-				--ikC:SetTransformMemberPos(idx, math.COORDINATE_SPACE_WORLD, pose:GetOrigin())
+				--print(pose:GetOrigin())
+				drawInfo:SetColor(util.Color.Red)
+				debug.draw_line(pose:GetOrigin(), pose:GetOrigin() + pose:GetForward() * 10, drawInfo)
+				drawInfo:SetColor(util.Color.Lime)
+				debug.draw_line(pose:GetOrigin(), pose:GetOrigin() + pose:GetRight() * 10, drawInfo)
+				drawInfo:SetColor(util.Color.Aqua)
+				debug.draw_line(pose:GetOrigin(), pose:GetOrigin() + pose:GetUp() * 10, drawInfo)
+
+				--pose = ikC:GetEntity():GetPose():GetInverse() * pose
+				ikC:SetTransformMemberPos(idx, math.COORDINATE_SPACE_WORLD, pose:GetOrigin())
 				--ikC:SetTransformMemberRot(idx, math.COORDINATE_SPACE_WORLD, pose:GetRotation())
 
 				--[[local hmdPose = hmdC:GetReferencePose()
