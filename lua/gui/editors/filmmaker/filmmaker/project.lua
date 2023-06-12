@@ -187,6 +187,7 @@ function Element:InitializeProjectUI(layoutName)
 	end
 
 	local playhead = pfmTimeline:GetPlayhead()
+	playhead:SetFrameRate(self:GetFrameRate())
 	self.m_playhead = playhead
 	playhead:GetTimeOffsetProperty():AddCallback(function(oldOffset, offset)
 		if self.m_updatingProjectTimeOffset ~= true then

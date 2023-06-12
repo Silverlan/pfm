@@ -292,6 +292,14 @@ function gui.PFMViewport:InitializeControls()
 	self.m_playControls:SetAnchor(0.5, 0, 0.5, 0)
 	self.m_playControls:LinkToPFMProject(tool.get_filmmaker())
 	self.m_btPlay = self.m_playControls:GetPlayButton()
+
+	self.m_btPlay:AddCallback("OnStateChanged", function(btPlay, oldState, state)
+		if state == gui.PFMPlayButton.STATE_PAUSED then
+			-- On pause, move to the closest whole frame
+			tool.get_filmmaker():ClampTimeOffsetToFrame()
+		end
+	end)
+
 	controls:SizeToContents()
 	self:InitializeManipulatorControls()
 	self:InitializeCameraControls()

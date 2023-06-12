@@ -48,9 +48,27 @@ end
 function gui.Playhead:GetTimeOffsetProperty()
 	return self.m_timeOffset
 end
+function gui.Playhead:SetFrameRate(frameRate)
+	self.m_frameRate = frameRate
+end
+function gui.Playhead:ClampTimeOffsetToFrameRate(offset)
+	if self.m_frameRate ~= nil then
+		-- Clamp to frame rate
+		offset = offset * self.m_frameRate
+		offset = math.round(offset)
+		offset = offset / self.m_frameRate
+	end
+	return offset
+end
 function gui.Playhead:UpdateTimeOffset()
 	local pos = self:GetParent():GetCursorPos()
-	self:SetTimeOffset(self:GetAxis():XOffsetToValue(pos.x))
+	local offset = self:GetAxis():XOffsetToValue(pos.x)
+
+	if not input.is_alt_key_down() then
+		offset = self:ClampTimeOffsetToFrameRate(offset)
+	end
+
+	self:SetTimeOffset(offset)
 end
 function gui.Playhead:SetCursorMoveModeEnabled(enabled)
 	if enabled then

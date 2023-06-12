@@ -492,6 +492,23 @@ end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()
 end
+function gui.WIFilmmaker:OnProjectInitialized(project)
+	local session = self:GetSession()
+	if session == nil then
+		return
+	end
+	local settings = session:GetSettings():GetRenderSettings()
+	settings:AddChangeListener("frameRate", function(renderSettings, frameRate)
+		if util.is_valid(self.m_playhead) then
+			self.m_playhead:SetFrameRate(frameRate)
+			local offset = self.m_playhead:ClampTimeOffsetToFrameRate(self.m_playhead:GetTimeOffset())
+			self.m_playhead:SetTimeOffset(offset)
+		end
+	end)
+	if util.is_valid(self.m_playhead) then
+		self.m_playhead:SetFrameRate(settings:GetFrameRate())
+	end
+end
 function gui.WIFilmmaker:RestoreWorkCamera()
 	local session = self:GetSession()
 	local vp = self:GetViewport()
