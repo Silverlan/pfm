@@ -201,6 +201,9 @@ function Element:LoadRig(rig)
 			ctrl:GetControl("rigidity"):SetValue(c.rigidity)
 		end
 	end
+	for _, bone in ipairs(rig:GetBones()) do
+		self:SetBoneLocked(bone.name, bone.locked)
+	end
 	self:ScheduleReloadIkRig()
 	self:SetMirrored(isMirrored)
 end
