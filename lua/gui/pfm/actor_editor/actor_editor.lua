@@ -2514,6 +2514,17 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 				end
 			end)
 			:SetName("export_model")
+
+		pContext
+			:AddItem(locale.get_text("pfm_edit_ik_rig"), function()
+				local filmmaker = tool.get_filmmaker()
+				local tab, el = filmmaker:OpenWindow("ik_rig_editor")
+				filmmaker:GoToWindow("ik_rig_editor")
+				if util.is_valid(el) then
+					el:SetReferenceModel(mdl:GetName())
+				end
+			end)
+			:SetName("edit_ik_rig")
 	end
 	local actors
 	if copyPasteSelected == nil then

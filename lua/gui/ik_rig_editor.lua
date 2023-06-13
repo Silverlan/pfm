@@ -125,6 +125,9 @@ function Element:OnInitialize()
 
 	controls:ResetControls()
 end
+function Element:SetReferenceModel(mdl)
+	self.m_feModel:SetValue(mdl)
+end
 function Element:SetMirrored(mirrored)
 	self.m_mirrored = mirrored
 end
