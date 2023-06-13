@@ -220,7 +220,9 @@ function Element:UpdateBoneEntityStates()
 			if bone ~= nil then
 				local boneId = skeleton:LookupBone(bone:GetName())
 				if boneId ~= -1 then
-					local col = (ikControl:GetType() == ik.Control.TYPE_DRAG) and Color.Lime or Color.Aqua
+					local type = ikControl:GetType()
+					local col = (type == ik.Control.TYPE_DRAG or type == ik.Control.TYPE_ORIENTED_DRAG) and Color.Lime
+						or Color.Aqua
 					boneStates[boneId] = { col, true }
 				end
 			end
@@ -293,6 +295,9 @@ function Element:PopulateBoneContextMenu(pContext, boneName)
 		pContext:AddItem(locale.get_text("pfm_add_state_control"), function()
 			self:AddControl(item, boneName, ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
 		end)
+		pContext:AddItem(locale.get_text("pfm_add_oriented_drag_control"), function()
+			self:AddControl(item, boneName, ents.IkSolverComponent.RigConfig.Control.TYPE_ORIENTED_DRAG)
+		end)
 	end
 end
 function Element:GetControlItem(boneName)
@@ -311,7 +316,10 @@ end
 function Element:AddControl(item, boneName, controlType)
 	local control = self.m_ikRig:AddControl(boneName, controlType)
 
-	local child = item:AddItem(locale.get_text("pfm_drag_control")) -- TODO: Control type
+	local locName = (controlType == ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG) and "drag"
+		or (controlType == ents.IkSolverComponent.RigConfig.Control.TYPE_STATE) and "state"
+		or (controlType == ents.IkSolverComponent.RigConfig.Control.TYPE_ORIENTED_DRAG) and "oriented_drag"
+	local child = item:AddItem(locale.get_text("pfm_" .. locName .. "_control"))
 	child:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 			local pContext = gui.open_context_menu()
