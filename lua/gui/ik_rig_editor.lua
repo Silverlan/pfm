@@ -169,7 +169,8 @@ function Element:LoadRig(rig)
 	self:Clear()
 	self:ReloadBoneList(self.m_feModel)
 
-	self.m_ikRig = rig
+	-- We don't actually use the loaded rig, we just use it to re-create it
+	self.m_ikRig = ents.IkSolverComponent.RigConfig()
 	for _, c in ipairs(rig:GetConstraints()) do
 		local item = self:FindBoneItem(c.bone1)
 		if util.is_valid(item) then
