@@ -86,8 +86,24 @@ console.register_variable(
 	"Keep the current layout when opening a project."
 )
 
+local loadedSubAddons = false
+local function load_sub_addons()
+	if loadedSubAddons then
+		return
+	end
+	loadedSubAddons = true
+
+	for _, subAddon in ipairs({ "debug_ik" }) do
+		local res = engine.mount_sub_addon(subAddon)
+		if res == false then
+			pfm.log("Failed to mount addon '" .. subAddon .. "'!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
+		end
+	end
+end
+
 function gui.WIFilmmaker:__init()
 	gui.WIBaseFilmmaker.__init(self)
+	load_sub_addons()
 end
 include("/pfm/bake/ibl.lua")
 function gui.WIFilmmaker:OnInitialize()
