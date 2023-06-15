@@ -670,6 +670,12 @@ function Element:InitializeMenuBar()
 		pSubItem:SetTooltip(locale.get_text("pfm_menu_context_restore_default_layout_state"))
 		pSubItem:SetName("restore_default_layout_state")
 
+		local pSubItem = pContext:AddItem(locale.get_text("pfm_toggle_console"), function(pItem)
+			engine.toggle_console()
+		end)
+		pSubItem:SetTooltip(locale.get_text("pfm_menu_context_toggle_console"))
+		pSubItem:SetName("toggle_console")
+
 		pContext:ScheduleUpdate()
 	end)
 	pMenuBar
