@@ -80,8 +80,7 @@ function Element:CheckForUpdates(verbose)
 	end
 
 	local curVersion = engine.get_info().version
-	-- TODO: if(highestVersion > curVersion) then
-	if true then --highestVersion > curVersion) then
+	if highestVersion > curVersion then
 		-- New version available!
 		local updateUrl = "https://github.com/Silverlan/pragma/releases/download/v" .. highestVersion:ToString()
 		local fileName
