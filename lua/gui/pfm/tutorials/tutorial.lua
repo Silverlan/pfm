@@ -81,6 +81,7 @@ function Element:StartSlide(identifier)
 		element = gui.create("WITutorialSlide", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1),
 		data = {},
 	}
+	self.m_curSlide.element:SetIdentifier(identifier)
 	self.m_curSlide.element:SetTutorial(self)
 	local slideData = self.m_slides[identifier]
 	self.m_curSlide.data.autoContinue = slideData.autoContinue
@@ -142,14 +143,21 @@ function Element:PreviousSlide()
 end
 gui.register("WITutorial", Element)
 
-Element.registered_tutorials = {}
+Element.registered_tutorials = Element.registered_tutorials or {}
+Element.preregister_tutorial = function(identifier, path, udmData)
+	Element.registered_tutorials[identifier] = Element.registered_tutorials[identifier] or {}
+	Element.registered_tutorials[identifier].path = path
+end
 Element.register_tutorial = function(identifier, fc)
-	Element.registered_tutorials[identifier] = fc
+	locale.load("pfm_tut_" .. identifier .. ".txt")
+	Element.registered_tutorials[identifier] = Element.registered_tutorials[identifier] or {}
+	Element.registered_tutorials[identifier].start = fc
 end
 
 Element.start_tutorial = function(identifier)
 	pfm.log("Starting tutorial '" .. identifier .. "'...", pfm.LOG_CATEGORY_PFM)
-	if Element.registered_tutorials[identifier] == nil then
+	local tutorial = Element.registered_tutorials[identifier]
+	if tutorial == nil or tutorial.start == nil then
 		pfm.log(
 			"Failed to start tutorial '" .. identifier .. "': Unknown tutorial!",
 			pfm.LOG_CATEGORY_PFM,
@@ -157,7 +165,7 @@ Element.start_tutorial = function(identifier)
 		)
 		return
 	end
-	local fc = Element.registered_tutorials[identifier]
+	local fc = Element.registered_tutorials[identifier].start
 	local pm = tool.get_filmmaker()
 	if util.is_valid(pm) == false then
 		pfm.log(

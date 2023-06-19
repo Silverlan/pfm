@@ -27,6 +27,7 @@ end
 function Element:OnThink()
 	for _, data in ipairs(self.m_namedHighlights) do
 		local els = {}
+		local elsPaths = {}
 		local elRoot = gui.get_base_element()
 		for _, path in ipairs(data.els) do
 			local el = self:FindElementByPath(path, elRoot)
@@ -34,6 +35,7 @@ function Element:OnThink()
 				break
 			end
 			table.insert(els, el)
+			table.insert(elsPaths, path)
 		end
 		if #els == #data.els then
 			local valid = true
@@ -52,10 +54,15 @@ function Element:OnThink()
 			end
 			if util.is_valid(data.elOutline) == false then
 				local elOutline = gui.create("WIElementSelectionOutline")
+				elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
 				elOutline:SetTargetElement(els)
 				elOutline:Update()
 				data.elOutline = elOutline
 				data.prevEls = els
+
+				if elsPaths[#els] == self.m_primaryHighlightItem then
+					self:SetPrimaryHighlightItem(self.m_primaryHighlightItem, elOutline)
+				end
 			end
 		else
 			util.remove(data.elOutline)
@@ -91,7 +98,7 @@ function Element:FindElementByPath(path, baseElement)
 	local function find_descendant(elBase)
 		local el = elBase
 		for _, c in ipairs(pathComponents) do
-			local children = elBase:FindDescendantsByName(c)
+			local children = el:FindDescendantsByName(c)
 			for i = #children, 1, -1 do
 				local child = children[i]
 				if child:IsVisible() == false then
@@ -149,6 +156,21 @@ function Element:AddLocationMarker(pos)
 	end
 	return ent
 end
+function Element:GetPrimaryHighlightItem()
+	return self.m_primaryHighlightItem
+end
+function Element:SetPrimaryHighlightItem(item, el)
+	local elCur = self:GetPrimaryHighlightItem()
+	if type(elCur) ~= "string" and util.is_valid(elCur) then
+		elCur:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
+	end
+
+	local itemOutline = el or item
+	if type(itemOutline) ~= "string" then
+		itemOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MAJOR)
+	end
+	self.m_primaryHighlightItem = itemOutline
+end
 function Element:AddHighlight(el)
 	local els = el
 	if type(els) ~= "table" then
@@ -161,6 +183,7 @@ function Element:AddHighlight(el)
 		table.insert(self.m_namedHighlights, {
 			els = els,
 		})
+		self:SetPrimaryHighlightItem(els[#els])
 		return
 	end
 	local elFirst = els[1]
@@ -168,9 +191,12 @@ function Element:AddHighlight(el)
 		return
 	end
 	local elOutline = gui.create("WIElementSelectionOutline", self)
+	elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
 	elOutline:SetTargetElement(els)
 	elOutline:Update()
 	table.insert(self.m_highlights, elOutline)
+
+	self:SetPrimaryHighlightItem(elOutline)
 	return elFirst
 end
 function Element:SetFocusElement(el)
@@ -196,6 +222,16 @@ function Element:CreateButton(parent, text, f)
 	bt:SetText(text)
 	bt:SetZPos(1)
 	return bt
+end
+function Element:SetIdentifier(identifier)
+	self.m_identifier = identifier
+end
+function Element:AddGenericMessageBox(locArgs)
+	local identifier = gui.Tutorial.tutorial_identifier .. "_" .. self.m_identifier
+	local tutorialData = gui.Tutorial.registered_tutorials[gui.Tutorial.tutorial_identifier]
+	local audioFile = "pfm/" .. tutorialData.path .. "/" .. self.m_identifier .. ".mp3"
+	print(audioFile)
+	self:AddMessageBox(locale.get_text("pfm_tut_" .. identifier, locArgs), audioFile)
 end
 function Element:AddMessageBox(msg, audioFile)
 	local elTgt

@@ -596,7 +596,6 @@ function gui.PFMTreeViewElement:SetText(text)
 	self.m_text:SizeToContents()
 	self.m_text:CenterToParentY()
 
-	self:SetName(text)
 	local treeView = self:GetTreeView()
 	if util.is_valid(treeView) then
 		treeView:SetContentsWidthDirty()
@@ -767,6 +766,7 @@ function gui.PFMTreeViewElement:AddItem(text, fPopulate, insertIndex, identifier
 
 	if identifier ~= nil then
 		item:SetIdentifier(identifier)
+		item:SetName(identifier:replace("/", "_"))
 	end
 	return item
 end

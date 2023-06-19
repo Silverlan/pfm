@@ -9,23 +9,30 @@
 local Element = util.register_class("gui.ElementSelectionOutline", gui.Base)
 Element.OUTLINE_TYPE_MAJOR = 0
 Element.OUTLINE_TYPE_MINOR = 1
+Element.OUTLINE_TYPE_MEDIUM = 2
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(64, 64)
 
 	local elOutline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	elOutline:SetColor(Color.Red)
+	elOutline:SetColor(pfm.get_color_scheme_color("red"))
 	elOutline:SetOutlineWidth(2)
 	self.m_elOutline = elOutline
 
 	self.m_targetElements = {}
 	self.m_elCallbacks = {}
+
+	self:SetAlwaysUpdate(true)
 end
 function Element:SetOutlineType(type)
 	if type == Element.OUTLINE_TYPE_MINOR then
 		self.m_elOutline:SetOutlineWidth(1)
-		self.m_elOutline:SetColor(Color.Gray)
+		self.m_elOutline:SetColor(pfm.get_color_scheme_color("grey"))
+	elseif type == Element.OUTLINE_TYPE_MEDIUM then
+		self.m_elOutline:SetColor(pfm.get_color_scheme_color("orange"))
+	else
+		self.m_elOutline:SetColor(pfm.get_color_scheme_color("red"))
 	end
 end
 function Element:OnRemove()
@@ -51,6 +58,14 @@ function Element:SetTargetElement(el)
 				self:ScheduleUpdate()
 			end)
 		)
+		table.insert(
+			self.m_elCallbacks,
+			el:GetVisibilityProperty():AddCallback(function(wasVisible, isVisible)
+				if self:IsValid() then
+					self:ScheduleUpdate()
+				end
+			end)
+		)
 		local parent = el:GetParent()
 		while parent ~= nil do
 			table.insert(
@@ -63,6 +78,14 @@ function Element:SetTargetElement(el)
 				self.m_elCallbacks,
 				parent:AddCallback("SetPos", function()
 					self:ScheduleUpdate()
+				end)
+			)
+			table.insert(
+				self.m_elCallbacks,
+				parent:GetVisibilityProperty():AddCallback(function(wasVisible, isVisible)
+					if self:IsValid() then
+						self:ScheduleUpdate()
+					end
 				end)
 			)
 			parent = parent:GetParent()
@@ -117,7 +140,7 @@ function Element:OnInitialize()
 	self:SetSize(64, 64)
 
 	local elOutline = gui.create("WIOutlinedRect", self)
-	elOutline:SetColor(Color.Aqua)
+	elOutline:SetColor(pfm.get_color_scheme_color("blue"))
 	elOutline:SetOutlineWidth(1)
 	elOutline:SetVisible(false)
 	self.m_elOutline = elOutline
@@ -129,7 +152,11 @@ end
 function Element:SetOutlineType(type)
 	if type == Element.OUTLINE_TYPE_MINOR then
 		self.m_elOutline:SetOutlineWidth(1)
-		self.m_elOutline:SetColor(Color.Gray)
+		self.m_elOutline:SetColor(pfm.get_color_scheme_color("grey"))
+	elseif type == Element.OUTLINE_TYPE_MEDIUM then
+		self.m_elOutline:SetColor(pfm.get_color_scheme_color("orange"))
+	else
+		self.m_elOutline:SetColor(pfm.get_color_scheme_color("red"))
 	end
 end
 function Element:OnRemove()

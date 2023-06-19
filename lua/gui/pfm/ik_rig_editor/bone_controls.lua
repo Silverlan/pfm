@@ -373,6 +373,7 @@ function Element:InitializeBoneControls(mdl)
 		local name = string.rep("  ", depth) .. boneDst:GetName()
 
 		local item = tree:AddItem(name)
+		item:SetName(boneDst:GetName())
 		item:SetIdentifier(boneDst:GetName())
 		item:AddCallback("OnSelectionChanged", function(pItem, selected)
 			util.remove(self.m_cbOnAnimsUpdated)

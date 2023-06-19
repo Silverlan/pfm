@@ -1844,6 +1844,7 @@ function gui.PFMActorEditor:AddControl(
 			childItem = cnameItem
 		else
 			childItem = baseItem:AddItem(cname, nil, nil, subPath)
+			childItem:SetName(util.Path.CreateFilePath(subPath):GetBack())
 		end
 		baseItem = childItem
 		subPath = subPath .. "/"
@@ -1922,6 +1923,7 @@ function gui.PFMActorEditor:AddControl(
 	end
 
 	local child = baseItem:AddItem(displayName, nil, nil, identifier)
+	child:SetName(util.Path.CreateFilePath(identifier):GetBack())
 	if description ~= nil then
 		child:SetTooltip(description)
 	end
