@@ -50,6 +50,9 @@ function Element:OnThink()
 	if slideData ~= nil and slideData.clearCondition ~= nil then
 		local bt = self.m_curSlide.element:GetContinueButton()
 		local enabled = slideData.clearCondition(self.m_tutorialData, self.m_curSlide.data, self.m_curSlide.element)
+		if enabled and bt:IsEnabled() == false then
+			sound.play("ui/tutorial_success", sound.TYPE_EFFECT, sound.FCREATE_MONO, 0.5, 1.0)
+		end
 		bt:SetEnabled(enabled)
 		if enabled and self.m_curSlide.data.autoContinue then
 			self:NextSlide()
