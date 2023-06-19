@@ -1868,7 +1868,7 @@ function gui.PFMActorEditor:AddControl(
 									parent = parent:GetParent()
 								end
 
-								if numParents > 2 then
+								if numParents >= 2 then
 									local pContext = gui.open_context_menu()
 									if util.is_valid(pContext) == false then
 										return
@@ -1878,18 +1878,18 @@ function gui.PFMActorEditor:AddControl(
 									local ikItem, ikMenu =
 										pContext:AddSubMenu(locale.get_text("pfm_actor_editor_add_ik_control"))
 									ikItem:SetName("add_ik_control")
-									parent = bone:GetParent()
-									for i = 3, numParents do
+									parent = bone:GetParent():GetParent()
+									for i = 2, numParents do
 										local subItem = ikMenu:AddItem(
 											locale.get_text(
 												"pfm_actor_editor_add_ik_control_chain",
-												{ i, parent:GetName() }
+												{ i + 1, parent:GetName() }
 											),
 											function()
-												self:AddIkController(actor, boneName, i)
+												self:AddIkController(actor, boneName, i + 1)
 											end
 										)
-										subItem:SetName("ik_control_chain_" .. tostring(i))
+										subItem:SetName("ik_control_chain_" .. tostring(i + 1))
 										parent = parent:GetParent()
 									end
 									ikMenu:Update()
