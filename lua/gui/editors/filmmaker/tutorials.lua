@@ -18,14 +18,12 @@ function Element:LoadTutorial(tutorial)
 	end
 	udmData = udmData:GetAssetData():GetData()
 	local udmTutorial = udmData:Get("tutorial")
-	local name = udmTutorial:GetValue("name", udm.TYPE_STRING) or ""
-	gui.Tutorial.preregister_tutorial(name, tutorial, udmTutorial)
 	local scriptFile = udmTutorial:GetValue("script_file", udm.TYPE_STRING)
 	if scriptFile ~= nil then
 		pfm.log("Loading script '" .. scriptFile .. "' for tutorial '" .. tutorial .. "'...", pfm.LOG_CATEGORY_PFM)
 		include(scriptFile)
 
-		gui.Tutorial.start_tutorial(name)
+		gui.Tutorial.start_tutorial(udmTutorial:GetValue("name", udm.TYPE_STRING) or "")
 	else
 		local projectFile = udmTutorial:GetValue("project_file", udm.TYPE_STRING)
 		if projectFile ~= nil then

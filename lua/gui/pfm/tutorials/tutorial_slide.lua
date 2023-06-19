@@ -53,7 +53,7 @@ function Element:OnThink()
 				util.remove(data.elOutline)
 			end
 			if util.is_valid(data.elOutline) == false then
-				local elOutline = gui.create("WIElementSelectionOutline")
+				local elOutline = gui.create("WIElementSelectionOutline", self)
 				elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
 				elOutline:SetTargetElement(els)
 				elOutline:Update()
@@ -235,7 +235,8 @@ function Element:AddGenericMessageBox(locArgs)
 end
 function Element:AddMessageBox(msg, audioFile)
 	local elTgt
-	if #self.m_highlights > 1 then
+	local numHighlights = #self.m_highlights + #self.m_namedHighlights
+	if numHighlights > 1 then
 		elTgt = self.m_elFocus
 	end
 	elTgt = elTgt or self.m_highlights[1] or self
@@ -247,6 +248,7 @@ function Element:AddMessageBox(msg, audioFile)
 	el:SetResizable(true)
 	el:SetSize(400, 128)
 	el:SetMouseInputEnabled(true)
+	el:SetZPos(100)
 	el:GetDragArea():SetAutoAlignToParent(true)
 
 	local vbox = gui.create("WIVBox", el)

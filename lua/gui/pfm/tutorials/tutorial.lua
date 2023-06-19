@@ -144,14 +144,13 @@ end
 gui.register("WITutorial", Element)
 
 Element.registered_tutorials = Element.registered_tutorials or {}
-Element.preregister_tutorial = function(identifier, path, udmData)
-	Element.registered_tutorials[identifier] = Element.registered_tutorials[identifier] or {}
-	Element.registered_tutorials[identifier].path = path
-end
-Element.register_tutorial = function(identifier, fc)
+Element.register_tutorial = function(identifier, infoFileLocation, fc)
 	locale.load("pfm_tut_" .. identifier .. ".txt")
+
 	Element.registered_tutorials[identifier] = Element.registered_tutorials[identifier] or {}
-	Element.registered_tutorials[identifier].start = fc
+	local tutorial = Element.registered_tutorials[identifier]
+	tutorial.start = fc
+	tutorial.path = infoFileLocation
 end
 
 Element.start_tutorial = function(identifier)
