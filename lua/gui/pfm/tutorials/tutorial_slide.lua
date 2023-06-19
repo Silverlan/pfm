@@ -18,6 +18,7 @@ function Element:OnInitialize()
 	self.m_highlights = {}
 	self.m_namedHighlights = {}
 	self.m_messageBoxes = {}
+	self.m_viewportTargets = {}
 
 	self.m_cbAudioEnabled = console.add_change_callback("pfm_tutorial_audio_enabled", function(old, new)
 		self:UpdateAudio()
@@ -53,15 +54,14 @@ function Element:OnThink()
 				util.remove(data.elOutline)
 			end
 			if util.is_valid(data.elOutline) == false then
-				local elOutline = gui.create("WIElementSelectionOutline", self)
+				local elOutline = gui.create("WIElementSelectionOutline")
 				elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
 				elOutline:SetTargetElement(els)
 				elOutline:Update()
 				data.elOutline = elOutline
 				data.prevEls = els
-
-				if elsPaths[#els] == self.m_primaryHighlightItem then
-					self:SetPrimaryHighlightItem(self.m_primaryHighlightItem, elOutline)
+				if elsPaths[#els] == self.m_primaryHighlightItemIdentifier then
+					self:SetPrimaryHighlightItem(self.m_primaryHighlightItemIdentifier, elOutline)
 				end
 			end
 		else
@@ -75,9 +75,60 @@ function Element:OnRemove()
 	end
 	util.remove(self.m_cbAudioEnabled)
 
+	for _, t in ipairs(self.m_viewportTargets) do
+		util.remove(t.resources)
+	end
+
 	for _, data in ipairs(self.m_namedHighlights) do
 		util.remove(data.elOutline)
 	end
+end
+function Element:AddViewportTarget(pos, fGetSourcePos, successDistance)
+	local ent = ents.create("env_sprite")
+	ent:SetKeyValue("texture", "effects/target_indicator")
+	ent:SetKeyValue("scale", "2.0")
+	ent:SetKeyValue("bloom_scale", "1.0")
+	ent:SetKeyValue("color", "255 255 255 255")
+	ent:SetPos(pos)
+	ent:Spawn()
+
+	local t = { ent }
+
+	local isInRange = false
+	if fGetSourcePos ~= nil then
+		local entLine = ents.create("debug_dotted_line")
+		local ddlC = entLine:GetComponent(ents.COMPONENT_DEBUG_DOTTED_LINE)
+		if ddlC ~= nil then
+			ddlC:SetStartPosition(pos)
+			ddlC:SetEndPosition(fGetSourcePos())
+		end
+		entLine:Spawn()
+
+		local cb = game.add_callback("Think", function()
+			if util.is_valid(ddlC) then
+				ddlC:SetEndPosition(fGetSourcePos())
+
+				isInRange = (ddlC:GetStartPosition():Distance(ddlC:GetEndPosition()) <= successDistance)
+				local col = isInRange and Color.Lime or Color.Red
+				if ent:IsValid() then
+					ent:SetColor(col)
+				end
+				ddlC:GetEntity():SetColor(col)
+			end
+		end)
+
+		table.insert(t, entLine)
+		table.insert(t, cb)
+	end
+	table.insert(self.m_viewportTargets, {
+		resources = t,
+	})
+	return {
+		spriteEntity = ent,
+		isInRange = function()
+			return isInRange
+		end,
+	}
 end
 function Element:SetTutorial(t)
 	self.m_tutorial = t
@@ -126,7 +177,7 @@ function Element:FindElementByPath(path, baseElement)
 			end
 		end
 	end
-	return elChild or root
+	return elChild or (baseElement ~= false and root) or nil
 end
 function Element:GetBackButton()
 	return self.m_buttonPrev
@@ -169,6 +220,7 @@ function Element:SetPrimaryHighlightItem(item, el)
 	if type(itemOutline) ~= "string" then
 		itemOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MAJOR)
 	end
+	self.m_primaryHighlightItemIdentifier = (type(item) == "string") and item or nil
 	self.m_primaryHighlightItem = itemOutline
 end
 function Element:AddHighlight(el)
