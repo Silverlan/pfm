@@ -343,11 +343,13 @@ function gui.PFMActorEditor:OnInitialize()
 
 	local propertiesLabelsVBox = gui.create("WIVBox", propertiesHBox)
 	propertiesLabelsVBox:SetAutoFillContentsToWidth(true)
+	propertiesLabelsVBox:SetName("property_labels")
 	self.m_propertiesLabelsVBox = propertiesLabelsVBox
 
 	gui.create("WIResizer", propertiesHBox)
 
 	local propertiesElementsVBox = gui.create("WIVBox", propertiesHBox)
+	propertiesElementsVBox:SetName("base_property_controls")
 	propertiesElementsVBox:SetAutoFillContentsToWidth(true)
 	self.m_propertiesElementsVBox = propertiesElementsVBox
 
@@ -363,6 +365,7 @@ function gui.PFMActorEditor:OnInitialize()
 
 	animSetControls =
 		gui.create("WIPFMControlsMenu", scrollContainer, 0, 0, scrollContainer:GetWidth(), scrollContainer:GetHeight())
+	animSetControls:SetName("property_controls")
 	animSetControls:SetAutoFillContentsToWidth(true)
 	animSetControls:SetAutoFillContentsToHeight(false)
 	animSetControls:SetFixedHeight(false)
@@ -775,6 +778,7 @@ function gui.PFMActorEditor:AddProperty(name, child, fInitPropertyEl)
 	elLabelContainer:SetHeight(elHeight)
 
 	local elLabel = gui.create("WIText", elLabelContainer)
+	elLabel:SetName(name)
 	elLabel:SetText(name)
 	elLabel:SetColor(Color(200, 200, 200))
 	elLabel:SetFont("pfm_medium")
@@ -1331,6 +1335,9 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 		ctrl:AddCallback("PopulateContextMenu", function(ctrl, context)
 			self:PopulatePropertyContextMenu(context, actorData, controlData)
 		end)
+
+		local identifier = memberInfo.name:replace("/", "_")
+		ctrl:SetName(identifier)
 	end
 	self:SetPropertyAnimationOverlaysDirty()
 	self:UpdateControlValue(controlData)

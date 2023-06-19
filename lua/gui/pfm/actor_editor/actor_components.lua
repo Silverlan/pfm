@@ -243,6 +243,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 
 	if util.is_valid(componentData.itemBaseProps) == false then
 		componentData.itemBaseProps = itemComponent:AddItem(locale.get_text("pfm_base_properties"))
+		componentData.itemBaseProps:SetName("base_properties")
 		componentData.itemBaseProps:SetTooltip("pfm_base_properties_desc")
 		componentData.itemBaseProps:SetIdentifier("base_properties")
 	end

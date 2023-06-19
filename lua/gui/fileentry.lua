@@ -17,6 +17,7 @@ function gui.FileEntry:OnInitialize()
 	self:SetSize(256, 28)
 
 	local browseButton = gui.create("WIButton", self)
+	browseButton:SetName("browse_button")
 	browseButton:SetText("...")
 	browseButton:SetX(self:GetWidth() - browseButton:GetWidth())
 	browseButton:SetHeight(self:GetHeight())
@@ -32,6 +33,7 @@ function gui.FileEntry:OnInitialize()
 	self.m_browseButton = browseButton
 
 	local textEntry = gui.create("WITextEntry", self)
+	textEntry:SetName("entry_field")
 	textEntry:SetHeight(self:GetHeight())
 	textEntry:SetWidth(browseButton:GetX() - 5)
 	textEntry:SetAnchor(0, 0, 1, 1)
