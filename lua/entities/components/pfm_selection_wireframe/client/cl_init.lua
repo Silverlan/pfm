@@ -27,7 +27,7 @@ function Component:OnEntitySpawn()
 		end
 	)
 	mdlC:SetRenderMeshesDirty()
-	mdlC:UpdateRenderMeshes()
+	mdlC:UpdateRenderMeshes(false)
 end
 function Component:SetPersistent(persistent)
 	self.m_persistent = persistent
@@ -38,7 +38,7 @@ function Component:SetPersistent(persistent)
 		return
 	end
 	mdlC:SetRenderMeshesDirty()
-	mdlC:UpdateRenderMeshes()
+	mdlC:UpdateRenderMeshes(false)
 end
 function Component:IsPersistent()
 	return self.m_persistent or false
@@ -52,7 +52,7 @@ function Component:OnRemove()
 		return
 	end
 	mdlC:SetRenderMeshesDirty()
-	mdlC:UpdateRenderMeshes()
+	mdlC:UpdateRenderMeshes(false)
 end
 function Component:UpdateEffect()
 	local ent = self:GetEntity()
@@ -67,7 +67,11 @@ function Component:UpdateEffect()
 	local renderMeshes = mdlC:GetRenderMeshes()
 	for _, mesh in ipairs(renderMeshes) do
 		if mesh:GetGeometryType() == game.Model.Mesh.Sub.GEOMETRY_TYPE_TRIANGLES then
-			mdlC:AddRenderMesh(mesh, mat, false)
+			mdlC:AddRenderMesh(
+				mesh,
+				mat,
+				ents.ModelComponent.RenderBufferData.STATE_FLAG_EXCLUDE_FROM_ACCELERATION_STRUCTURES_BIT
+			)
 		end
 	end
 end

@@ -90,7 +90,11 @@ function Component:UpdateWireframe()
 	local renderMeshes = mdlC:GetRenderMeshes()
 	for _, mesh in ipairs(renderMeshes) do
 		if mesh:GetGeometryType() == game.Model.Mesh.Sub.GEOMETRY_TYPE_TRIANGLES then
-			mdlC:AddRenderMesh(mesh, mat, false)
+			mdlC:AddRenderMesh(
+				mesh,
+				mat,
+				ents.ModelComponent.RenderBufferData.STATE_FLAG_EXCLUDE_FROM_ACCELERATION_STRUCTURES_BIT
+			)
 		end
 	end
 end

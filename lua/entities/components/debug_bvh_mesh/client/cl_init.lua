@@ -22,9 +22,11 @@ function Component:OnEntitySpawn()
 		return
 	end
 	local numTris = bvhC:GetTriangleCount()
+	local pose = self:GetEntity():GetPose()
 	local dbgVerts = {}
 	for i = 1, numTris * 3 do
 		local v = bvhC:GetVertex(i - 1)
+		v = pose * v
 		table.insert(dbgVerts, v)
 		if #dbgVerts == 1872457 then
 			break
