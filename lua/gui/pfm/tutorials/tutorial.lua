@@ -16,6 +16,8 @@ function Element:OnInitialize()
 
 	self:SetSize(64, 64)
 
+	self.m_curSlideIndex = 0
+	self.m_totalSlideCount = 0
 	self.m_slides = {}
 	self.m_prevSlides = {}
 	self.m_tutorialData = {}
@@ -42,6 +44,12 @@ function Element:OnRemove()
 		pm:RemoveInputBindingLayer(self.m_bindingLayer)
 	end
 end
+function Element:GetCurrentSlideIndex()
+	return self.m_curSlideIndex
+end
+function Element:GetTotalSlideCount()
+	return self.m_totalSlideCount
+end
 function Element:OnThink()
 	if self.m_curSlide == nil then
 		return
@@ -61,6 +69,7 @@ function Element:OnThink()
 end
 function Element:RegisterSlide(identifier, data)
 	self.m_slides[identifier] = data
+	self.m_totalSlideCount = self.m_totalSlideCount + 1
 end
 function Element:ClearSlide()
 	if self.m_curSlide == nil then
@@ -89,6 +98,7 @@ function Element:StartSlide(identifier)
 	local slideData = self.m_slides[identifier]
 	self.m_curSlide.data.autoContinue = slideData.autoContinue
 	slideData.init(self.m_tutorialData, self.m_curSlide.data, self.m_curSlide.element)
+	self.m_curSlide.element:UpdateCurrentSlideText(self:GetCurrentSlideIndex(), self:GetTotalSlideCount())
 
 	local bt = self.m_curSlide.element:GetContinueButton()
 	if util.is_valid(bt) then
@@ -129,6 +139,7 @@ function Element:NextSlide()
 		self:EndTutorial()
 		return
 	end
+	self.m_curSlideIndex = self.m_curSlideIndex + 1
 	self:StartSlide(self.m_slides[self.m_curSlide.identifier].nextSlide)
 end
 function Element:PreviousSlide()
@@ -139,6 +150,7 @@ function Element:PreviousSlide()
 	if #self.m_prevSlides < 2 then
 		return
 	end
+	self.m_curSlideIndex = self.m_curSlideIndex - 1
 	local identifier = self.m_prevSlides[#self.m_prevSlides - 1]
 	self.m_prevSlides[#self.m_prevSlides] = nil
 	self.m_prevSlides[#self.m_prevSlides] = nil

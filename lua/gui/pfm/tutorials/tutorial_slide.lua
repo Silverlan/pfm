@@ -223,6 +223,9 @@ function Element:SetPrimaryHighlightItem(item, el)
 	self.m_primaryHighlightItemIdentifier = (type(item) == "string") and item or nil
 	self.m_primaryHighlightItem = itemOutline
 end
+function Element:SetArrowTarget(tgt)
+	self.m_arrowTarget = tgt
+end
 function Element:AddHighlight(el)
 	local els = el
 	if type(els) ~= "table" then
@@ -285,6 +288,13 @@ function Element:AddGenericMessageBox(locArgs)
 	print(audioFile)
 	self:AddMessageBox(locale.get_text("pfm_tut_" .. identifier, locArgs), audioFile)
 end
+function Element:UpdateCurrentSlideText(currentSlideIndex, totalSlideCount)
+	if util.is_valid(self.m_elCurSlide) == false then
+		return
+	end
+	self.m_elCurSlide:SetText(tostring(currentSlideIndex + 1) .. "/" .. tostring(totalSlideCount))
+	self.m_elCurSlide:SizeToContents()
+end
 function Element:AddMessageBox(msg, audioFile)
 	local elTgt
 	local numHighlights = #self.m_highlights + #self.m_namedHighlights
@@ -309,6 +319,16 @@ function Element:AddMessageBox(msg, audioFile)
 	elBox:SetAlpha(220)
 	elBox:SetSize(el:GetSize())
 	table.insert(self.m_messageBoxes, vbox)
+
+	local elCurSlide = gui.create("WIText", elBox)
+	elCurSlide:SetText("")
+	elCurSlide:SetFont("pfm_small")
+	elCurSlide:SetColor(Color.White)
+	elCurSlide:SetPos(elBox:GetWidth() - 70, 4)
+	elCurSlide:SizeToContents()
+	elCurSlide:SetAnchor(1, 0, 1, 0)
+	elCurSlide:SetColor(Color.LightGrey)
+	self.m_elCurSlide = elCurSlide
 
 	local buttonContainer = gui.create("WIBase", vbox)
 	local hbox = gui.create("WIHBox", buttonContainer)
@@ -355,7 +375,7 @@ function Element:AddMessageBox(msg, audioFile)
 		local l = gui.create("WIElementConnectorLine", self)
 		l:SetSize(self:GetSize())
 		l:SetAnchor(0, 0, 1, 1)
-		l:Setup(el, elTgt)
+		l:Setup(el, util.is_valid(self.m_arrowTarget) and self.m_arrowTarget or elTgt)
 
 		local posAbs = elTgt:GetAbsolutePos()
 		local posAbsEnd = posAbs + elTgt:GetSize()
