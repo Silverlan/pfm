@@ -740,6 +740,81 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 								if panimaC ~= nil then
 									panimaC:SetPropertyEnabled(targetPath, true)
 								end
+
+								local oldPose = pose:Copy()
+								local newPose = c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD)
+
+								local get_pose_value
+								local set_pose_value
+								local get_transform_member_value
+								local set_transform_member_value
+								if memberInfo.type == udm.TYPE_VECTOR3 then
+									get_pose_value = function(pose)
+										return pose:GetOrigin()
+									end
+									set_pose_value = function(pose, value)
+										pose:SetOrigin(value)
+									end
+									get_transform_member_value = function(c, idx, space)
+										return c:GetTransformMemberPos(idx, space)
+									end
+									set_transform_member_value = function(c, idx, space, value)
+										c:SetTransformMemberPos(idx, space, value)
+									end
+								else
+									get_pose_value = function(pose)
+										return pose:GetRotation()
+									end
+									set_pose_value = function(pose, value)
+										pose:SetRotation(value)
+									end
+									get_transform_member_value = function(c, idx, space)
+										return c:GetTransformMemberRot(idx, space)
+									end
+									set_transform_member_value = function(c, idx, space, value)
+										c:SetTransformMemberRot(idx, space, value)
+									end
+								end
+
+								local newVal = get_pose_value(newPose)
+								pfm.undoredo.push("pfm_undoredo_bone_transform", function()
+									local entActor = ents.find_by_uuid(uuid)
+									if entActor == nil then
+										return
+									end
+									set_transform_member_value(c, idx, math.COORDINATE_SPACE_WORLD, newVal)
+
+									local value = get_transform_member_value(c, idx, c:GetTransformMemberSpace(idx))
+									tool.get_filmmaker():SetActorGenericProperty(
+										entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),
+										targetPath,
+										value,
+										memberInfo.type
+									)
+
+									set_pose_value(pose, newVal)
+								end, function()
+									local entActor = ents.find_by_uuid(uuid)
+									if entActor == nil then
+										return
+									end
+									set_transform_member_value(
+										c,
+										idx,
+										math.COORDINATE_SPACE_WORLD,
+										get_pose_value(oldPose)
+									)
+
+									local value = get_transform_member_value(c, idx, c:GetTransformMemberSpace(idx))
+									tool.get_filmmaker():SetActorGenericProperty(
+										entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),
+										targetPath,
+										value,
+										memberInfo.type
+									)
+
+									set_pose_value(pose, get_pose_value(oldPose))
+								end)()
 							end)
 							self:InitializeTransformWidget(trC, ent)
 						end
