@@ -149,6 +149,17 @@ end
 function gui.PFMActorEditor:DeselectAllActors()
 	self.m_tree:DeselectAll()
 end
+function gui.PFMActorEditor:IsActorSelected(actor)
+	for el, _ in pairs(self.m_tree:GetSelectedElements()) do
+		if el:IsValid() then
+			local actorData = self.m_treeElementToActorData[el]
+			if actorData ~= nil and util.is_same_object(actor, actorData.actor) then
+				return true
+			end
+		end
+	end
+	return false
+end
 function gui.PFMActorEditor:DeselectActor(actor)
 	local elTgt = self.m_actorUniqueIdToTreeElement[tostring(actor:GetUniqueId())]
 	for el, _ in pairs(self.m_tree:GetSelectedElements()) do

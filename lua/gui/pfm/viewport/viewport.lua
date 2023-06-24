@@ -210,7 +210,10 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 					if input.is_alt_key_down() then
 						filmmaker:DeselectActor(actor)
 					else
-						local bone, hitPosBone = self:FindBoneUnderCursor(entActor)
+						local bone
+						if self:IsActorSelected(entActor) then
+							bone = self:FindBoneUnderCursor(entActor)
+						end
 						local deselectCurrent = not input.is_ctrl_key_down()
 						self:SelectActor(entActor, bone, deselectCurrent)
 					end

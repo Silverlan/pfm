@@ -1066,6 +1066,12 @@ function gui.WIFilmmaker:DeselectAllActors()
 	end
 	self:GetActorEditor():DeselectAllActors()
 end
+function gui.WIFilmmaker:IsActorSelected(actor)
+	if util.is_valid(self:GetActorEditor()) == false then
+		return false
+	end
+	return self:GetActorEditor():IsActorSelected(actor)
+end
 function gui.WIFilmmaker:DeselectActor(actor)
 	if util.is_valid(self:GetActorEditor()) == false then
 		return

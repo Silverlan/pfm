@@ -38,6 +38,14 @@ function gui.PFMViewport:FindBoneUnderCursor(entActor)
 	local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
 	return bone, hitPosBone
 end
+function gui.PFMViewport:IsActorSelected(entActor)
+	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+	local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+	if actor == nil then
+		return false
+	end
+	return tool.get_filmmaker():IsActorSelected(actor)
+end
 function gui.PFMViewport:SelectActor(entActor, bone, deselectCurrent)
 	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	local actor = (actorC ~= nil) and actorC:GetActorData() or nil
