@@ -1831,7 +1831,8 @@ function gui.PFMActorEditor:AddControl(
 		local parent = (bone ~= nil) and bone:GetParent() or nil
 		if parent ~= nil then
 			local id = "ec/animated/bone/" .. parent:GetName()
-			local item = self.m_tree:GetRoot():GetItemByIdentifier(id, true)
+			local itemActor = self:GetActorEntry(tostring(entActor:GetUuid()))
+			local item = util.is_valid(itemActor) and itemActor:GetItemByIdentifier(id, true) or nil
 			if item ~= nil then
 				subPath = subPath .. "bone/"
 				table.remove(propertyPathComponents, 1)
