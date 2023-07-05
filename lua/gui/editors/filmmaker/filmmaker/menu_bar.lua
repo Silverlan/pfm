@@ -456,6 +456,13 @@ function Element:InitializeMenuBar()
 			pItem:SetTooltip(locale.get_text("pfm_menu_change_language"))
 			pSubMenu:ScheduleUpdate()
 
+			pContext:AddItem(locale.get_text("settings"), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				self:OpenEscapeMenu()
+			end)
+
 			pContext:ScheduleUpdate()
 		end)
 		:SetName("preferences")
@@ -555,9 +562,14 @@ function Element:InitializeMenuBar()
 					return
 				end
 				debug.start_debugger_server()
-				pfm.create_popup_message(locale.get_text("pfm_lua_debugger_server_active"), 10, gui.InfoBox.TYPE_WARNING, {
-					url = "https://wiki.pragma-engine.com/books/lua-api/page/visual-studio-code",
-				})
+				pfm.create_popup_message(
+					locale.get_text("pfm_lua_debugger_server_active"),
+					10,
+					gui.InfoBox.TYPE_WARNING,
+					{
+						url = "https://wiki.pragma-engine.com/books/lua-api/page/visual-studio-code",
+					}
+				)
 			end)
 			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_start_lua_debugger_server"))
 			pSubItem:SetName("start_lua_debugger_server")
