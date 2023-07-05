@@ -86,6 +86,10 @@ function Element:OnProjectFileNameChanged(projectFileName)
 		else
 			title = title .. " - " .. locale.get_text("untitled")
 		end
+		local session = self:GetSession()
+		if session ~= nil and session:GetSettings():IsReadOnly() then
+			title = title .. " (" .. locale.get_text("read_only") .. ")"
+		end
 		window:SetWindowTitle(title)
 	end
 end
