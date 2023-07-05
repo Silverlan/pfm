@@ -264,7 +264,12 @@ function Element:ConvertStaticActorsToMap()
 					end
 
 					apply_key_value(cLight, ent, "intensityType", "light_intensity_type")
-					apply_key_value(cLight, ent, "intensity")
+					apply_key_value(cLight, ent, "intensity", "light_intensity")
+					ent:SetKeyValue(
+						"light_flags",
+						tostring(ents.BaseEnvLightComponent.LIGHT_FLAG_BAKED_LIGHT_SOURCE_BIT)
+					)
+					ent:SetKeyValue("spawnflags", tostring(ents.BaseToggleComponent.SPAWN_FLAG_START_ON_BIT))
 					worldData:AddEntity(ent)
 				end
 			end
