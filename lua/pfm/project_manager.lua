@@ -123,8 +123,8 @@ function pfm.ProjectManager:MakeProjectPersistent()
 	}
 end
 function pfm.ProjectManager:RestorePersistentProject(data)
-	self:SetProjectFileName(data.fileName)
 	self.m_project = data.project
+	self:SetProjectFileName(data.fileName)
 	return util.is_valid(self:InitializeProject(self.m_project))
 end
 function pfm.ProjectManager:SetProjectFileName(fileName)
@@ -165,8 +165,8 @@ function pfm.ProjectManager:LoadProject(fileName, ignoreMap)
 	if session ~= nil then
 		self.m_animationCache = pfm.SceneAnimationCache(session)
 	end
-	self:SetProjectFileName(fileName)
 	self.m_project = project
+	self:SetProjectFileName(fileName)
 	-- self:LoadAnimationCache(fileName)
 	self:OnProjectLoaded(fileName, project)
 	return util.is_valid(self:InitializeProject(project))

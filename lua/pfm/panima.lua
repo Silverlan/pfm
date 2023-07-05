@@ -479,6 +479,11 @@ function pfm.AnimationManager:SetChannelValue(actor, path, time, value, udmType,
 
 	assert(channel ~= nil)
 	if channel == nil then
+		pfm.log(
+			"Unable to apply channel value: No channel for property '" .. path .. "'!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_WARNING
+		)
 		return
 	end
 

@@ -873,7 +873,7 @@ function gui.PFMViewport:InitializeManipulatorControls()
 		end
 	)
 	self.m_btSelect:SetTooltip(
-		locale.get_text("pfm_viewport_tool_select", { pfm.get_key_binding("pfm_action transform select") })
+		locale.get_text("pfm_viewport_tool_select") .. " (" .. pfm.get_key_binding("pfm_action transform select") .. ")"
 	)
 	self.m_btSelect:SetName("manip_select")
 
@@ -887,7 +887,10 @@ function gui.PFMViewport:InitializeManipulatorControls()
 		end
 	)
 	self.m_btMove:SetTooltip(
-		locale.get_text("pfm_viewport_tool_move", { pfm.get_key_binding("pfm_action transform translate") })
+		locale.get_text("pfm_viewport_tool_move")
+			.. " ("
+			.. pfm.get_key_binding("pfm_action transform translate")
+			.. ")"
 	)
 	self.m_btMove:AddCallback("OnMouseEvent", function(pFilmClip, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
@@ -950,7 +953,7 @@ function gui.PFMViewport:InitializeManipulatorControls()
 		end
 	)
 	self.m_btRotate:SetTooltip(
-		locale.get_text("pfm_viewport_tool_rotate", { pfm.get_key_binding("pfm_action transform rotate") })
+		locale.get_text("pfm_viewport_tool_rotate") .. " (" .. pfm.get_key_binding("pfm_action transform rotate") .. ")"
 	)
 	self.m_btRotate:AddCallback("OnMouseEvent", function(pFilmClip, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
@@ -1030,7 +1033,7 @@ function gui.PFMViewport:InitializeManipulatorControls()
 		end
 	)
 	self.m_btScreen:SetTooltip(
-		locale.get_text("pfm_viewport_tool_scale", { pfm.get_key_binding("pfm_action transform scale") })
+		locale.get_text("pfm_viewport_tool_scale") .. " (" .. pfm.get_key_binding("pfm_action transform scale") .. ")"
 	)
 	self.m_btScreen:SetName("manip_screen")
 

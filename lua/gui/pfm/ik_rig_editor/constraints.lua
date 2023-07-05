@@ -164,7 +164,7 @@ function Element:AddConstraint(item, boneName, type)
 	local includeUnidirectionalLimit = false
 	local twistAxis = math.AXIS_Z
 	if type == "ballSocket" then
-		twistAxis = ents.IkSolverComponent.find_forward_axis(mdl, boneId) or twistAxis
+		twistAxis = mdl:FindBoneTwistAxis(boneId) or twistAxis
 	end
 	local function add_rotation_axis_slider(ctrl, name, id, axisId, min, defVal)
 		return ctrl:AddSliderControl(locale.get_text(name), id, defVal, -180.0, 180.0, function(el, value)

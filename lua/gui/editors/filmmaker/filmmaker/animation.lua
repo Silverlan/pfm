@@ -20,9 +20,9 @@ function Element:UpdateKeyframe(actor, targetPath, panimaChannel, keyIdx, time, 
 		actorEditor:UpdateActorProperty(actor, targetPath)
 	end
 end
-function Element:SetActorAnimationComponentProperty(actor, targetPath, time, value, valueType, baseIndex)
+function Element:SetActorAnimationComponentProperty(actor, targetPath, time, value, valueType, baseIndex, addKey)
 	local animManager = self:GetAnimationManager()
-	animManager:SetChannelValue(actor, targetPath, time, value, valueType, nil, baseIndex)
+	animManager:SetChannelValue(actor, targetPath, time, value, valueType, addKey, baseIndex)
 
 	animManager:SetAnimationDirty(actor)
 	pfm.tag_render_scene_as_dirty()

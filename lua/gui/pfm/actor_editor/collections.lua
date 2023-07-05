@@ -32,6 +32,7 @@ gui.PFMActorEditor.COLLECTION_TYPES = {
 
 function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 	local itemGroup = parentItem:AddItem(parent:GetName(), nil, nil, tostring(parent:GetUniqueId()))
+	itemGroup:SetName(parent:GetName())
 	itemGroup:SetAutoSelectChildren(false)
 	itemGroup:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT then
@@ -191,6 +192,7 @@ function gui.PFMActorEditor:GetCollectionTreeItem(uuid)
 	return self.m_tree:GetRoot():GetItemByIdentifier(uuid, true)
 end
 function gui.PFMActorEditor:AddCollection(name, parentGroup)
+	pfm.log("Adding collection '" .. name .. "'...", pfm.LOG_CATEGORY_PFM)
 	local root
 	if parentGroup ~= nil then
 		root = self:GetCollectionTreeItem(tostring(parentGroup:GetUniqueId()))
