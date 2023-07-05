@@ -273,6 +273,11 @@ function Component:SetAnimationTarget(ent)
 
 	local headData = util.rig.determine_head_bones(ent:GetModel())
 	if headData == nil or headData.headBoneId == nil then
+		pfm.log(
+			"Failed to determine head bone for VR animation target '" .. tostring(ent) .. "'!",
+			pfm.LOG_CATEGORY_PFM_VR,
+			pfm.LOG_CATEGORY_ERROR
+		)
 		return
 	end
 	--if(headData == nil or headData.headBoneId == nil or headData.headBoneId == -1 or headData.headParentBoneId == nil or headData.headParentBoneId == -1) then return false end

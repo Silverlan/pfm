@@ -35,17 +35,31 @@ function Component:OnTick()
 end
 
 function Component:UpdateEffector()
-	--[[local tdC = self:GetTrackedDevice()
-	if(util.is_valid(self.m_ikSolverC) == false or util.is_valid(tdC) == false) then return end
-	local pose = tdC:GetEntity():GetPose()
-	local poseLocal = self.m_ikSolverC:GetEntity():GetPose():GetInverse() *pose
-	self.m_ikSolverC:SetMemberValue(self.m_controlPropertyIdx,poseLocal:GetOrigin())
+	local tdC = self:GetTrackedDevice()
+	if util.is_valid(self.m_ikSolverC) == false or util.is_valid(tdC) == false then
+		return
+	end
+	local pose = tdC:GetDevicePose() --tdC:GetEntity():GetPose()
+	pose:SetOrigin(tdC:GetEntity():GetPos())
 
-	local pos = pose:GetOrigin()
+	local poseLocal = self.m_ikSolverC:GetEntity():GetPose():GetInverse() * pose
+	self.m_ikSolverC:SetMemberValue(self.m_controlPropertyIdx, poseLocal:GetOrigin())
+
+	if self.m_rotControlPropertyIdx ~= nil and self.m_controlBoneId ~= nil then
+		local twistAxis = self:GetTargetActor():GetModel():FindBoneTwistAxis(self.m_controlBoneId)
+		if twistAxis ~= nil then
+			local rotOffset = game.Model.get_twist_axis_rotation_offset(twistAxis)
+			local poseRot = pose:GetRotation() * rotOffset
+
+			self.m_ikSolverC:SetMemberValue(self.m_rotControlPropertyIdx, poseRot)
+		end
+	end
+
+	--[[local pos = pose:GetOrigin()
 	local dbgInfo = debug.DrawInfo()
 	dbgInfo:SetColor(Color.Lime)
 	dbgInfo:SetDuration(0.1)
-	debug.draw_line(pos,pos +Vector(20,0,0),dbgInfo)]]
+	debug.draw_line(pos, pos + Vector(20, 0, 0), dbgInfo)]]
 end
 
 function Component:GetControlPropertyIndex()
@@ -67,13 +81,24 @@ function Component:GetTargetData()
 	if memberIdx == nil then
 		return
 	end
-	return targetActor, ikSolverC, memberIdx
+	local memberIndices = { memberIdx }
+
+	propertyName = "control/" .. ikControl .. "/rotation"
+	memberIdx = ikSolverC:GetMemberIndex(propertyName)
+	if memberIdx ~= nil then
+		table.insert(memberIndices, memberIdx)
+	end
+
+	return targetActor, ikSolverC, memberIndices
 end
 
 function Component:UpdateIkControl()
 	pfm.log("Updating tracked device ik control...", pfm.LOG_CATEGORY_PFM_VR)
 	self.m_ikSolverC = nil
 	self.m_controlPropertyIdx = nil
+	self.m_rotControlPropertyIdx = nil
+	self.m_controlBoneId = nil
+	self.m_refPose = math.ScaledTransform()
 	self:SetTickPolicy(ents.TICK_POLICY_NEVER)
 
 	local targetActor = self:GetTargetActor()
@@ -107,40 +132,34 @@ function Component:UpdateIkControl()
 	end
 	self.m_ikSolverC = ikSolverC
 	self.m_controlPropertyIdx = memberIdx
+
+	local rotPropertyName = "control/" .. ikControl .. "/rotation"
+	memberIdx = ikSolverC:GetMemberIndex(rotPropertyName)
+	self.m_rotControlPropertyIdx = memberIdx
+
+	local mdl = targetActor:GetModel()
+	if mdl ~= nil then
+		local ref = mdl:GetReferencePose()
+		local boneId = mdl:GetSkeleton():LookupBone(ikControl)
+		if boneId ~= -1 then
+			self.m_refPose = ref:GetBonePose(boneId)
+			self.m_controlBoneId = boneId
+		end
+	end
+
+	if memberIdx == nil then
+		pfm.log(
+			"Ik rotation control property '"
+				.. rotPropertyName
+				.. "' not found in target actor '"
+				.. tostring(targetActor)
+				.. "'!",
+			pfm.LOG_CATEGORY_PFM_VR,
+			pfm.LOG_SEVERITY_WARNING
+		)
+	end
+
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
-
-	-- Test POV
-	local vrBody = targetActor:AddComponent("vr_body")
-	local upperBodyBoneChain = { 10, 11, 12 }
-	local leftArmBoneChain = { 16, 17, 18 }
-	local rightArmBoneChain = { 35, 36, 37 }
-	local headBone = 14
-	if #upperBodyBoneChain > 2 then
-		vrBody:SetUpperBody(upperBodyBoneChain)
-	end
-	if #leftArmBoneChain > 2 then
-		vrBody:SetLeftArm(leftArmBoneChain)
-	end
-	if #rightArmBoneChain > 2 then
-		vrBody:SetRightArm(rightArmBoneChain)
-	end
-	if headBone ~= -1 then
-		vrBody:SetHeadBone(headBone)
-	end
-
-	local ent, vrManagerC = ents.citerator(ents.COMPONENT_PFM_VR_MANAGER)()
-	vrBody:SetHmd(vrManagerC:GetHmd())
-
-	--[[local vrCameraPovC = targetActor:GetComponent("vr_camera_pov")
-	if(#upperBodyBoneChain > 2) then vrCameraPovC:SetUpperBody(upperBodyBoneChain) end
-	if(#leftArmBoneChain > 2) then vrCameraPovC:SetLeftArm(leftArmBoneChain) end
-	if(#rightArmBoneChain > 2) then vrCameraPovC:SetRightArm(rightArmBoneChain) end
-	if(headBone ~= -1) then vrCameraPovC:SetHeadBone(headBone) end
-	--vrBody:SetHmd(entHmd:GetComponent(ents.COMPONENT_VR_HMD))
-
-	local povCameraC = targetActor:AddComponent("pov_camera")
-	povCameraC:SetHeadEntity(entActor,headBone,neckBone,targetBone)
-	povCameraC:SetEnabled(true)]]
 end
 
 function Component:SetTrackedDevice(tdC)

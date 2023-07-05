@@ -38,19 +38,22 @@ function Component:StartRecording()
 	recorderC:Reset()
 	for _, pfmTdC in ipairs(self:GetTrackedDevices()) do
 		if pfmTdC:IsValid() then
-			local targetActor, ikSolverC, ctrlPropIdx = pfmTdC:GetTargetData()
-			if ctrlPropIdx ~= nil then
-				local info = ikSolverC:GetMemberInfo(ctrlPropIdx)
-				if info ~= nil then
-					local componentType = ikSolverC:GetComponentName()
-					pfm.log(
-						"Adding property '" .. ikSolverC:GetMemberUri(ctrlPropIdx) .. "' to recording list...",
-						pfm.LOG_CATEGORY_PFM_VR
-					)
-					recorderC:AddEntity(targetActor, {
-						[componentType] = { info.name },
-					})
+			local targetActor, ikSolverC, ctrlPropIndices = pfmTdC:GetTargetData()
+			if ctrlPropIndices ~= nil and #ctrlPropIndices > 0 then
+				local componentType = ikSolverC:GetComponentName()
+				local properties = {}
+				properties[componentType] = {}
+				for _, ctrlPropIdx in ipairs(ctrlPropIndices) do
+					local info = ikSolverC:GetMemberInfo(ctrlPropIdx)
+					if info ~= nil then
+						pfm.log(
+							"Adding property '" .. ikSolverC:GetMemberUri(ctrlPropIdx) .. "' to recording list...",
+							pfm.LOG_CATEGORY_PFM_VR
+						)
+						table.insert(properties[componentType], info.name)
+					end
 				end
+				recorderC:AddEntity(targetActor, properties)
 			end
 		end
 	end
@@ -66,7 +69,7 @@ function Component:EndRecording(syncAnims)
 		return 0
 	end
 	if recorderC:IsRecording() == false then
-		return
+		return 0
 	end
 	local n = recorderC:EndRecording()
 	pfm.log(
@@ -100,6 +103,7 @@ function Component:SyncAnimations()
 		return
 	end
 	local numProps = 0
+	local animManager = pm:GetAnimationManager()
 	for uuid, animData in pairs(recorderC:GetAnimations()) do
 		if animData.entity:IsValid() then
 			local actorC = animData.entity:GetComponent(ents.COMPONENT_PFM_ACTOR)
@@ -108,15 +112,35 @@ function Component:SyncAnimations()
 				for componentType, componentAnimData in pairs(animData.channels) do
 					for propName, propAnimData in pairs(componentAnimData) do
 						if propAnimData.component:IsValid() then
-							local path = propName
+							local path = "ec/" .. componentType .. "/" .. propName
 							local channel = propAnimData.channel
 							local times = channel:GetTimes()
 							local values = channel:GetValues()
 							local valueType = channel:GetValueType()
+							if #times > 1 then
+								local anim, actorChannel, animClip = animManager:FindAnimationChannel(actorData, path)
+								if actorChannel ~= nil then
+									-- Clear all previous values for the recorded time range
+									local tFirst = times[1]
+									local tLast = times[#times]
+									local idxStart, idxEnd = actorChannel:FindIndexRangeInTimeRange(tFirst, tLast)
+									if idxStart ~= nil and idxEnd > idxStart then
+										local n = (idxEnd - idxStart) + 1
+										animManager:SetCurveChannelValueCount(
+											actorData,
+											path,
+											idxStart,
+											idxEnd,
+											0,
+											true
+										)
+									end
+								end
+							end
 							for i = 1, #times do
 								local t = times[i]
 								local v = values[i]
-								pm:SetActorAnimationComponentProperty(actorData, path, t, v, valueType)
+								pm:SetActorAnimationComponentProperty(actorData, path, t, v, valueType, nil, false)
 							end
 							numProps = numProps + 1
 						end
