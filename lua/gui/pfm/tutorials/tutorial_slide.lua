@@ -95,8 +95,9 @@ function Element:AddViewportTarget(pos, fGetSourcePos, successDistance)
 	local t = { ent }
 
 	local isInRange = false
+	local entLine
 	if fGetSourcePos ~= nil then
-		local entLine = ents.create("debug_dotted_line")
+		entLine = ents.create("debug_dotted_line")
 		local ddlC = entLine:GetComponent(ents.COMPONENT_DEBUG_DOTTED_LINE)
 		if ddlC ~= nil then
 			ddlC:SetStartPosition(pos)
@@ -125,6 +126,7 @@ function Element:AddViewportTarget(pos, fGetSourcePos, successDistance)
 	})
 	return {
 		spriteEntity = ent,
+		lineEntity = entLine,
 		isInRange = function()
 			return isInRange
 		end,
