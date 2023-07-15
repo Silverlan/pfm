@@ -29,7 +29,7 @@ function Element:Save(fileName, setAsProjectName, saveAs, withProjectsPrefix, re
 		end
 		return
 	end
-	if self:IsDeveloperModeEnabled() == false then
+	if self:IsDeveloperModeEnabled() == false and saveAs ~= true then
 		local session = self:GetSession()
 		if session ~= nil and session:GetSettings():IsReadOnly() then
 			pfm.log("Failed to save project: Project is read-only!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
