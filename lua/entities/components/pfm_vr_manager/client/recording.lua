@@ -36,13 +36,15 @@ function Component:StartRecording()
 	end
 
 	recorderC:Reset()
+	local targetActors = {}
 	for _, pfmTdC in ipairs(self:GetTrackedDevices()) do
 		if pfmTdC:IsValid() then
 			local targetActor, ikSolverC, ctrlPropIndices = pfmTdC:GetTargetData()
 			if ctrlPropIndices ~= nil and #ctrlPropIndices > 0 then
 				local componentType = ikSolverC:GetComponentName()
-				local properties = {}
-				properties[componentType] = {}
+				targetActors[targetActor] = targetActors[targetActor] or {}
+				local properties = targetActors[targetActor]
+				properties[componentType] = properties[componentType] or {}
 				for _, ctrlPropIdx in ipairs(ctrlPropIndices) do
 					local info = ikSolverC:GetMemberInfo(ctrlPropIdx)
 					if info ~= nil then
