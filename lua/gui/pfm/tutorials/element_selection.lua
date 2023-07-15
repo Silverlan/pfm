@@ -261,6 +261,12 @@ function Element:OnThink()
 		max2d.y = math.max(max2d.y, p.y)
 	end
 
+	local center = (min2d + max2d) / 2.0
+	local extent = max2d - center
+	extent = extent * 0.75
+	min2d = center - extent
+	max2d = center + extent
+
 	self.m_elOutline:SetPos(min2d)
 	self.m_elOutline:SetSize(max2d - min2d)
 	--local min,max = renderC:GetRenderBounds()
