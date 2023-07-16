@@ -743,7 +743,12 @@ function gui.ModelAssetIcon:SetModelAsset(mdl, importAsset)
 			self:CallCallbacks("OnIconReloaded")
 		end, iconPath, settings)
 	else
-		self:SetMaterial("third_party/source_engine", 100, 30)
+		local ext = file.get_file_extension(self:GetAssetName())
+		local matName = "gui/pfm/external_asset"
+		if ext == "mdl" or ext == "vmdl" or ext == "vmdl_c" then
+			matName = "third_party/source_engine"
+		end
+		self:SetMaterial(matName, 100, 30)
 	end
 end
 gui.register("WIModelAssetIcon", gui.ModelAssetIcon)
@@ -803,9 +808,12 @@ function gui.MaterialAssetIcon:SetMaterialAsset(mat, importAsset)
 			)
 		end
 	else
-		self:SetMaterial("third_party/source_engine", 100, 30)
-		-- TODO: We need a way to determine which game the asset is from!
-		-- self:SetMaterial("third_party/gamebryo_logo",100,41)
+		local ext = file.get_file_extension(self:GetAssetName())
+		local matName = "gui/pfm/external_asset"
+		if ext == "vmt" or ext == "vmat" or ext == "vmat_c" then
+			matName = "third_party/source_engine"
+		end
+		self:SetMaterial(matName, 100, 30)
 	end
 end
 gui.register("WIMaterialAssetIcon", gui.MaterialAssetIcon)
@@ -883,7 +891,12 @@ function gui.ParticleAssetIcon:SetParticleAsset(pt, importAsset)
 			}
 		)
 	else
-		self:SetMaterial("third_party/source_engine", 100, 30)
+		local ext = file.get_file_extension(self:GetAssetName())
+		local matName = "gui/pfm/external_asset"
+		if ext == "pcf" then
+			matName = "third_party/source_engine"
+		end
+		self:SetMaterial(matName, 100, 30)
 	end
 end
 function gui.ParticleAssetIcon:GetParticleSystemFileName()
