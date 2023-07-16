@@ -57,6 +57,7 @@ function Element:OnThink()
 				local elOutline = gui.create("WIElementSelectionOutline")
 				elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
 				elOutline:SetTargetElement(els)
+				elOutline:SetZPos(100000) -- Make sure the outline is visible over drop-down menues
 				elOutline:Update()
 				data.elOutline = elOutline
 				data.prevEls = els
@@ -154,7 +155,7 @@ function Element:FindElementByPath(path, baseElement)
 			local children = el:FindDescendantsByName(c)
 			for i = #children, 1, -1 do
 				local child = children[i]
-				if child:IsVisible() == false then
+				if child:IsHidden() then
 					table.remove(children, i)
 				end
 			end
@@ -254,7 +255,7 @@ function Element:AddHighlight(el)
 	table.insert(self.m_highlights, elOutline)
 
 	self:SetPrimaryHighlightItem(elOutline)
-	return elFirst
+	return elFirst, elOutline
 end
 function Element:SetFocusElement(el)
 	if util.is_valid(el) == false then
@@ -515,7 +516,7 @@ function Element:SetWindowFrameDividerFraction(windowIdentifier, fraction, dontC
 	if preDivider ~= nil then
 		fraction = 1.0 - fraction
 		if
-			dontChangeIfLargerFraction == nil
+			dontChangeIfLargerFraction ~= true
 			or (dontChangeIfLargerFraction == true and preDivider:GetFraction() < fraction)
 		then
 			preDivider:SetFraction(fraction)
@@ -523,7 +524,7 @@ function Element:SetWindowFrameDividerFraction(windowIdentifier, fraction, dontC
 		return preDivider
 	elseif postDivider ~= nil then
 		if
-			dontChangeIfLargerFraction == nil
+			dontChangeIfLargerFraction ~= true
 			or (dontChangeIfLargerFraction == true and postDivider:GetFraction() < fraction)
 		then
 			postDivider:SetFraction(fraction)
