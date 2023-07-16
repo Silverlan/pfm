@@ -23,12 +23,12 @@ function gui.PFMFrame:OnInitialize()
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_bg:SetColor(Color(41, 41, 41))
 
-	self.m_btClose = gui.PFMButton.create(self, "gui/pfm/icon_clear", "gui/pfm/icon_clear_activated", function()
+	--[[self.m_btClose = gui.PFMButton.create(self, "gui/pfm/icon_clear", "gui/pfm/icon_clear_activated", function()
 		print("TODO")
 	end)
 	self.m_btClose:SetSize(11, 11)
 	self.m_btClose:SetPos(self:GetWidth() - self.m_btClose:GetWidth() - 7, 10)
-	self.m_btClose:SetAnchor(1, 0, 1, 0)
+	self.m_btClose:SetAnchor(1, 0, 1, 0)]]
 
 	self.m_contents = gui.create("WIBase", self, 0, 28, self:GetWidth(), self:GetHeight() - 28, 0, 0, 1, 1)
 	self.m_tabs = {}
