@@ -101,19 +101,19 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 		end
 		if #tSelectedFiles == 1 then
 			local path = tSelectedFiles[1]:GetRelativeAsset()
-			pContext
-				:AddItem(locale.get_text("pfm_show_in_model_viewer"), function()
-					local pDialog, frame, el = gui.open_model_dialog()
-					el:SetModel(path)
-				end)
-				:SetTooltip(locale.get_text("pfm_model_context_model_viewer"))
+			local pItem = pContext:AddItem(locale.get_text("pfm_show_in_model_viewer"), function()
+				local pDialog, frame, el = gui.open_model_dialog()
+				el:SetModel(path)
+			end)
+			pItem:SetName("show_in_model_viewer")
+			pItem:SetTooltip(locale.get_text("pfm_model_context_model_viewer"))
 
 			if asset.is_loaded(path, asset.TYPE_MODEL) == false then
-				pContext
-					:AddItem(locale.get_text("pfm_load"), function()
-						game.load_model(path)
-					end)
-					:SetTooltip(locale.get_text("pfm_model_context_load"))
+				local pItem = pContext:AddItem(locale.get_text("pfm_load"), function()
+					game.load_model(path)
+				end)
+				pItem:SetName("load")
+				pItem:SetTooltip(locale.get_text("pfm_model_context_load"))
 			else
 				local mdl = game.load_model(path)
 				local materials = mdl:GetMaterials()
@@ -140,8 +140,9 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 						local formatType, err = udm.get_format_type(filePath)
 						if formatType ~= false then
 							if formatType == udm.FORMAT_TYPE_BINARY then
-								pContext
-									:AddItem(locale.get_text("pfm_convert_to_ascii_format"), function()
+								local pItem = pContext:AddItem(
+									locale.get_text("pfm_convert_to_ascii_format"),
+									function()
 										local newFileName, err = udm.convert_udm_file_to_ascii(filePath)
 										if newFileName == false then
 											console.print_warning("Failed to convert asset to ASCII format: " .. err)
@@ -151,11 +152,14 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 												file.get_file_name(newFileName)
 											)
 										end
-									end)
-									:SetTooltip(locale.get_text("pfm_model_context_convert_to_ascii"))
+									end
+								)
+								pItem:SetName("convert_to_ascii")
+								pItem:SetTooltip(locale.get_text("pfm_model_context_convert_to_ascii"))
 							else
-								pContext
-									:AddItem(locale.get_text("pfm_convert_to_binary_format"), function()
+								local pItem = pContext:AddItem(
+									locale.get_text("pfm_convert_to_binary_format"),
+									function()
 										local newFileName, err = udm.convert_udm_file_to_binary(filePath)
 										if newFileName == false then
 											console.print_warning("Failed to convert asset to binary format: " .. err)
@@ -165,8 +169,10 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 												file.get_file_name(newFileName)
 											)
 										end
-									end)
-									:SetTooltip(locale.get_text("pfm_model_context_convert_to_binary"))
+									end
+								)
+								pItem:SetName("convert_to_binary")
+								pItem:SetTooltip(locale.get_text("pfm_model_context_convert_to_binary"))
 							end
 						end
 					end
@@ -175,15 +181,15 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 		end
 
 		if #tSelectedFiles > 0 then
-			pContext
-				:AddItem(locale.get_text("pfm_pack_model"), function()
-					local mdls = {}
-					for _, f in ipairs(tSelectedFiles) do
-						table.insert(mdls, f:GetRelativeAsset())
-					end
-					pfm.pack_models(mdls)
-				end)
-				:SetTooltip(locale.get_text("pfm_model_context_pack_model"))
+			local pItem = pContext:AddItem(locale.get_text("pfm_pack_model"), function()
+				local mdls = {}
+				for _, f in ipairs(tSelectedFiles) do
+					table.insert(mdls, f:GetRelativeAsset())
+				end
+				pfm.pack_models(mdls)
+			end)
+			pItem:SetName("pack_model")
+			pItem:SetTooltip(locale.get_text("pfm_model_context_pack_model"))
 		end
 	end)
 	explorer:AddCallback("OnIconAdded", function(explorer, icon)
@@ -322,16 +328,16 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 		if asset.exists(path, asset.TYPE_MODEL) == false then
 			return
 		end
-		pContext
-			:AddItem(locale.get_text("pfm_edit_retarget_rig"), function()
-				gui.open_model_dialog(function(result, mdlName)
-					if result ~= gui.DIALOG_RESULT_OK then
-						return
-					end
-					pm:OpenBoneRetargetWindow(path, mdlName)
-				end)
+		local pItem = pContext:AddItem(locale.get_text("pfm_edit_retarget_rig"), function()
+			gui.open_model_dialog(function(result, mdlName)
+				if result ~= gui.DIALOG_RESULT_OK then
+					return
+				end
+				pm:OpenBoneRetargetWindow(path, mdlName)
 			end)
-			:SetTooltip(locale.get_text("pfm_model_context_retarget_rig"))
+		end)
+		pItem:SetName("edit_retarget_rig")
+		pItem:SetTooltip(locale.get_text("pfm_model_context_retarget_rig"))
 	end)
 	return mdlCatalog
 end)

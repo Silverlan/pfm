@@ -145,15 +145,10 @@ function Element:UpdateInfoBox()
 			)
 		)
 	elseif parts.host == "lordaardvark.com" then
-		self.m_infoBox:SetText(
-			locale.get_text(
-				"pfm_web_browser_bookmark_info",
-				{
-					"This Website",
-					'{[l:url "https://www.patreon.com/lordaardvarksfm"]}https://www.patreon.com/lordaardvarksfm{[/l]}',
-				}
-			)
-		)
+		self.m_infoBox:SetText(locale.get_text("pfm_web_browser_bookmark_info", {
+			"This Website",
+			'{[l:url "https://www.patreon.com/lordaardvarksfm"]}https://www.patreon.com/lordaardvarksfm{[/l]}',
+		}))
 	elseif parts.host == "wiki.pragma-engine.com" then
 		self.m_infoBox:SetText("Placeholder")
 	else
@@ -197,7 +192,7 @@ function Element:UpdateBookmarks()
 	self.m_linkMap = linkMap
 	self.m_bookmarkMenu:ClearOptions()
 	for _, linkData in ipairs(links) do
-		self.m_bookmarkMenu:AddOption(linkData.name, linkData.id)
+		self.m_bookmarkMenu:AddOption(linkData.name, linkData.id):SetName(linkData.id)
 	end
 end
 function Element:OnFocusGained()

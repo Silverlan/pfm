@@ -28,18 +28,20 @@ function gui.AssetExplorer:OnInitialize()
 		self:CallCallbacks("OnFileClicked", icon:GetText())
 	end)
 	self:AddCallback("PopulateContextMenu", function(self, pContext)
-		pContext:AddItem(locale.get_text("pfm_asset_import_all"), function()
-			for _, icon in ipairs(self:GetIcons()) do
-				if icon:IsValid() and icon:IsDirectory() == false then
-					local assetPath = util.Path(icon:GetAsset())
-					assetPath:PopFront()
-					if asset.exists(assetPath:GetString(), self:GetAssetType()) == false then
-						icon:Reload(true)
+		pContext
+			:AddItem(locale.get_text("pfm_asset_import_all"), function()
+				for _, icon in ipairs(self:GetIcons()) do
+					if icon:IsValid() and icon:IsDirectory() == false then
+						local assetPath = util.Path(icon:GetAsset())
+						assetPath:PopFront()
+						if asset.exists(assetPath:GetString(), self:GetAssetType()) == false then
+							icon:Reload(true)
+						end
 					end
 				end
-			end
-			self:Refresh()
-		end)
+				self:Refresh()
+			end)
+			:SetName("import_all_assets")
 		self:PopulateContextMenu(pContext, {}, {})
 	end)
 
@@ -355,25 +357,31 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 
 			local hasExternalFiles = (#tExternalFiles > 0)
 			if hasExternalFiles then
-				pContext:AddItem(locale.get_text("pfm_asset_import"), function()
-					for _, el in ipairs(tExternalFiles) do
-						if el:IsValid() then
-							el:Reload(true)
+				pContext
+					:AddItem(locale.get_text("pfm_asset_import"), function()
+						for _, el in ipairs(tExternalFiles) do
+							if el:IsValid() then
+								el:Reload(true)
+							end
 						end
-					end
-				end)
-			else
-				pContext:AddItem(locale.get_text("pfm_asset_icon_reload"), function()
-					for _, el in ipairs(tSelectedFiles) do
-						if el:IsValid() then
-							el:Reload()
-						end
-					end
-				end)
-				if #tSelected == 1 then
-					pContext:AddItem(locale.get_text("pfm_asset_icon_copy_path_to_clipboard"), function()
-						util.set_clipboard_string(tSelectedFiles[1]:GetIconLocation())
 					end)
+					:SetName("import_asset")
+			else
+				pContext
+					:AddItem(locale.get_text("pfm_asset_icon_reload"), function()
+						for _, el in ipairs(tSelectedFiles) do
+							if el:IsValid() then
+								el:Reload()
+							end
+						end
+					end)
+					:SetName("reload_icon")
+				if #tSelected == 1 then
+					pContext
+						:AddItem(locale.get_text("pfm_asset_icon_copy_path_to_clipboard"), function()
+							util.set_clipboard_string(tSelectedFiles[1]:GetIconLocation())
+						end)
+						:SetName("copy_icon_path_to_clipboard")
 				end
 			end
 
@@ -385,75 +393,85 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 					end
 				end
 				if #exportable > 0 then
-					pContext:AddItem(locale.get_text("pfm_asset_export"), function()
-						local exportSuccessful = false
-						for _, el in ipairs(exportable) do
-							if el:IsValid() then
-								local path = el:GetRelativeAsset()
-								if asset.exists(path, self:GetAssetType()) == false then
-									el:Reload(true)
-								end
+					pContext
+						:AddItem(locale.get_text("pfm_asset_export"), function()
+							local exportSuccessful = false
+							for _, el in ipairs(exportable) do
+								if el:IsValid() then
+									local path = el:GetRelativeAsset()
+									if asset.exists(path, self:GetAssetType()) == false then
+										el:Reload(true)
+									end
 
-								local success, errMsg = el:Export(path)
-								if success then
-									exportSuccessful = true
-								else
-									console.print_warning("Unable to export asset: ", errMsg)
+									local success, errMsg = el:Export(path)
+									if success then
+										exportSuccessful = true
+									else
+										console.print_warning("Unable to export asset: ", errMsg)
+									end
 								end
 							end
-						end
-						if exportSuccessful then
-							if #exportable == 1 then
-								local path = exportable[1]:GetRelativeAsset()
-								util.open_path_in_explorer("export/" .. file.remove_file_extension(path))
-							else
-								util.open_path_in_explorer("export/")
+							if exportSuccessful then
+								if #exportable == 1 then
+									local path = exportable[1]:GetRelativeAsset()
+									util.open_path_in_explorer("export/" .. file.remove_file_extension(path))
+								else
+									util.open_path_in_explorer("export/")
+								end
 							end
-						end
-					end)
+						end)
+						:SetName("export_asset")
 				end
 			end
 
 			if self:IsSpecialDirectoryEnabled("favorites") then
 				if numInFavorites == #tSelected then
-					pContext:AddItem(locale.get_text("pfm_asset_icon_remove_from_favorites"), function()
-						for _, el in ipairs(tSelected) do
-							if el:IsValid() then
-								local path = el:GetRelativeAsset()
-								self:RemoveFromFavorites(path)
+					pContext
+						:AddItem(locale.get_text("pfm_asset_icon_remove_from_favorites"), function()
+							for _, el in ipairs(tSelected) do
+								if el:IsValid() then
+									local path = el:GetRelativeAsset()
+									self:RemoveFromFavorites(path)
+								end
 							end
-						end
-					end)
+						end)
+						:SetName("remove_from_favorites")
 				else
-					pContext:AddItem(locale.get_text("pfm_asset_icon_add_to_favorites"), function()
-						for _, el in ipairs(tSelected) do
-							if el:IsValid() then
-								local path = el:GetRelativeAsset()
-								self:AddToFavorites(path)
+					pContext
+						:AddItem(locale.get_text("pfm_asset_icon_add_to_favorites"), function()
+							for _, el in ipairs(tSelected) do
+								if el:IsValid() then
+									local path = el:GetRelativeAsset()
+									self:AddToFavorites(path)
+								end
 							end
-						end
-					end)
+						end)
+						:SetName("add_to_favorites")
 				end
 			end
 			if #tSelectedFiles == 1 then
 				local assetPath = tSelectedFiles[1]:GetAsset()
-				pContext:AddItem(locale.get_text("pfm_copy_path"), function()
-					local path = file.remove_file_extension(assetPath)
-					util.set_clipboard_string(path .. "." .. self.m_extensions[1])
-				end)
+				pContext
+					:AddItem(locale.get_text("pfm_copy_path"), function()
+						local path = file.remove_file_extension(assetPath)
+						util.set_clipboard_string(path .. "." .. self.m_extensions[1])
+					end)
+					:SetName("copy_path")
 
 				local path = tSelectedFiles[1]:GetRelativeAsset()
 				if asset.exists(path, self:GetAssetType()) then
-					pContext:AddItem(locale.get_text("pfm_open_in_explorer"), function()
-						local filePath = util.Path.CreateFilePath(assetPath)
-						filePath:PopFront()
-						filePath = asset.find_file(filePath:GetString(), asset.TYPE_MODEL)
-						if filePath == nil then
-							return
-						end
-						filePath = asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. filePath
-						util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
-					end)
+					pContext
+						:AddItem(locale.get_text("pfm_open_in_explorer"), function()
+							local filePath = util.Path.CreateFilePath(assetPath)
+							filePath:PopFront()
+							filePath = asset.find_file(filePath:GetString(), asset.TYPE_MODEL)
+							if filePath == nil then
+								return
+							end
+							filePath = asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. filePath
+							util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
+						end)
+						:SetName("open_in_explorer")
 
 					--[[if(self:GetAssetType() == asset.TYPE_MODEL) then
 						pContext:AddItem(locale.get_text("pfm_open_in_model_editor"),function()
