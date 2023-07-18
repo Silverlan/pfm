@@ -171,6 +171,7 @@ function gui.WIFilmmaker:OnInitialize()
 	infoBar:AddIcon("wgui/patreon_logo", pfm.PATREON_JOIN_URL, "Patreon")
 	-- infoBar:AddIcon("third_party/twitter_logo",engineInfo.twitterURL,"Twitter")
 	-- infoBar:AddIcon("third_party/reddit_logo",engineInfo.redditURL,"Reddit")
+	infoBar:AddIcon("third_party/github_logo", engineInfo.gitHubURL, "GitHub")
 	infoBar:AddIcon("third_party/discord_logo", engineInfo.discordURL, "Discord")
 
 	local gap = gui.create("WIBase")
