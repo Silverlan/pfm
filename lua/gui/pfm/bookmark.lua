@@ -8,9 +8,6 @@
 
 util.register_class("gui.PFMBookmark", gui.Base)
 
-function gui.PFMBookmark:__init()
-	gui.Base.__init(self)
-end
 function gui.PFMBookmark:OnInitialize()
 	gui.Base.OnInitialize(self)
 

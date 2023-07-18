@@ -267,6 +267,18 @@ function gui.Timeline:AddBookmarkSet(bms, timeFrame)
 		table.insert(t.elements, el)
 	end
 end
+function gui.Timeline:FindBookmark(t)
+	for _, elBlm in ipairs(self:GetBookmarks()) do
+		if elBlm:IsValid() then
+			local bm = elBlm:GetBookmark()
+			local tBm = bm:GetTime()
+			if math.abs(tBm - t) < pfm.udm.Bookmark.TIME_EPSILON then
+				-- Bookmark already exists at this timestamp
+				return elBlm
+			end
+		end
+	end
+end
 function gui.Timeline:GetBookmarks()
 	return self.m_bookmarks
 end

@@ -980,13 +980,25 @@ function gui.WIFilmmaker:UpdateBookmarks()
 		self.m_timeline:GetActiveEditor():InitializeBookmarks()
 	end
 end
-function gui.WIFilmmaker:AddBookmark()
+function gui.WIFilmmaker:RemoveBookmark(t)
 	local filmClip = self:GetActiveFilmClip()
 	if filmClip == nil then
 		return
 	end
-	local t = self:GetTimeOffset() - filmClip:GetTimeFrame():GetStart()
-	if self.m_timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH then
+	local bmSetId = filmClip:GetActiveBookmarkSet()
+	local bmSet = filmClip:GetBookmarkSet(bmSetId)
+	if bmSet == nil then
+		return
+	end
+	bmSet:RemoveBookmarkAtTimestamp(t)
+end
+function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
+	local filmClip = self:GetActiveFilmClip()
+	if filmClip == nil then
+		return
+	end
+	t = t or (self:GetTimeOffset() - filmClip:GetTimeFrame():GetStart())
+	if self.m_timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH and noKeyframe ~= true then
 		self.m_timeline:GetGraphEditor():AddKeyframe(t)
 		return
 	end
@@ -1001,9 +1013,10 @@ function gui.WIFilmmaker:AddBookmark()
 	pfm.log("Adding bookmark at timestamp " .. t, pfm.LOG_CATEGORY_PFM)
 	local bm, newBookmark = bmSet:AddBookmarkAtTimestamp(t)
 	if newBookmark == false then
-		return
+		return bm
 	end
 	self.m_timeline:AddBookmark(bm)
+	return bm
 end
 function gui.WIFilmmaker:SetTimeOffset(offset)
 	gui.WIBaseFilmmaker.SetTimeOffset(self, offset)
