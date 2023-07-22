@@ -98,6 +98,7 @@ function gui.PFMTimelineGraph:OnInitialize()
 		self.m_scrollContainer:GetWidth(),
 		self.m_scrollContainer:GetHeight()
 	)
+	self.m_transformList:SetName("properties")
 	self.m_transformList:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 
 	local dataAxisStrip =
@@ -335,6 +336,10 @@ function gui.PFMTimelineGraph:RemoveKeyframe(actor, targetPath, typeComponentInd
 	self:ReloadGraphCurveSegment(graphIdx, (keyIndex > 0) and (keyIndex - 1) or 0)
 	self.m_skipOnChannelValueChangedCallback = nil
 end
+function gui.PFMTimelineGraph:RemoveDataPoint(dp)
+	local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+	self:RemoveKeyframe(actor, targetPath, dp:GetTypeComponentIndex(), keyIndex)
+end
 function gui.PFMTimelineGraph:KeyboardCallback(key, scanCode, state, mods)
 	if key == input.KEY_DELETE then
 		if state == input.STATE_PRESS then
@@ -344,8 +349,7 @@ function gui.PFMTimelineGraph:KeyboardCallback(key, scanCode, state, mods)
 				return a:GetKeyIndex() > b:GetKeyIndex()
 			end)
 			for _, dp in ipairs(dps) do
-				local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
-				self:RemoveKeyframe(actor, targetPath, dp:GetTypeComponentIndex(), keyIndex)
+				self:RemoveDataPoint(dp)
 			end
 		end
 		return util.EVENT_REPLY_HANDLED
@@ -530,6 +534,7 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 				:SetName("fit_view_to_data")
 
 			local pItem, pSubMenuInterp = pContext:AddSubMenu(locale.get_text("pfm_graph_editor_interpolation"))
+			pItem:SetName("interpolation")
 			local esInterpolation = get_enum_set("Interpolation")
 			for val, name in ipairs(esInterpolation) do
 				val = val - 1
@@ -541,6 +546,7 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 			pSubMenuInterp:Update()
 
 			local pItem, pSubMenuInterp = pContext:AddSubMenu(locale.get_text("pfm_graph_editor_easing_mode"))
+			pItem:SetName("easing_mode")
 			local esEasing = get_enum_set("EasingMode")
 			for val, name in ipairs(esEasing) do
 				val = val - 1
@@ -549,16 +555,33 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 					timeline:SetEasingMode(val)
 				end)
 			end
+
+			pSubMenuInterp
+				:AddItem(locale.get_text("pfm_overview"), function()
+					if self:IsValid() then
+						local pm = tool.get_filmmaker()
+						local webBrowser = pm:OpenWindow(pfm.WINDOW_WEB_BROWSER)
+						pm:GoToWindow(pfm.WINDOW_WEB_BROWSER)
+						if util.is_valid(webBrowser) then
+							webBrowser:GetBrowser():SetUrl("https://easings.net/")
+						end
+					end
+				end)
+				:SetName("overview")
+
 			pSubMenuInterp:Update()
 
 			local pItem, pSubMenuHandleMode = pContext:AddSubMenu(locale.get_text("pfm_graph_editor_handle_type"))
+			pItem:SetName("handle_type")
 			local esHandleMode = get_enum_set("KeyframeHandleType")
 			for val, name in ipairs(esHandleMode) do
 				val = val - 1
-				pSubMenuHandleMode:AddItem(locale.get_text("pfm_graph_editor_handle_type_" .. name), function()
-					local timeline = self:GetTimeline()
-					timeline:SetHandleType(val)
-				end)
+				pSubMenuHandleMode
+					:AddItem(locale.get_text("pfm_graph_editor_handle_type_" .. name), function()
+						local timeline = self:GetTimeline()
+						timeline:SetHandleType(val)
+					end)
+					:SetName(name)
 			end
 			pSubMenuHandleMode:Update()
 
@@ -1659,37 +1682,26 @@ function gui.PFMTimelineGraph:GetDataRange()
 	end
 	return minTime, maxTime, minValue, maxValue
 end
+function gui.PFMTimelineGraph:SetTimeRange(startTime, endTime, margin)
+	self.m_timeline:SetTimeRange(startTime, endTime, margin, self.m_dataAxisStrip:GetRight())
+end
+function gui.PFMTimelineGraph:SetDataRange(startVal, endVal, margin)
+	self.m_timeline:SetDataRange(startVal, endVal, margin)
+end
 function gui.PFMTimelineGraph:FitViewToDataRange()
 	local minTime, maxTime, minVal, maxVal = self:GetDataRange()
-	if minTime == maxTime then
-		return
+	if math.abs(maxTime - minTime) < 0.001 then
+		-- Time interval is 0, so we add an arbitrary amount of time
+		minTime = maxTime - 0.5
+		maxTime = maxTime + 0.5
 	end
-	local timeLine = self.m_timeline:GetTimeline()
-	local w = self.m_graphContainer:GetWidth()
-	local h = self.m_graphContainer:GetHeight()
-	local xOffset = self.m_dataAxisStrip:GetRight()
-	w = w - xOffset
-
-	local axisTime = timeLine:GetTimeAxis():GetAxis()
-	local axisData = timeLine:GetDataAxis():GetAxis()
-
-	axisTime:SetRange(minTime, maxTime, w)
-	axisData:SetRange(minVal, maxVal, h)
-
-	local margin = 20.0
-	local marginT = axisTime:XDeltaToValue(margin)
-	local marginV = axisData:XDeltaToValue(margin)
-	minTime = minTime - marginT
-	maxTime = maxTime + marginT
-	minVal = minVal - marginV
-	maxVal = maxVal + marginV
-
-	-- Need to update a second time to account for the margin
-	axisTime:SetRange(minTime, maxTime, w)
-	axisData:SetRange(minVal, maxVal, h)
-
-	axisTime:SetStartOffset(axisTime:GetStartOffset() - axisTime:XDeltaToValue(xOffset))
-	timeLine:Update()
+	if math.abs(maxVal - minVal) < 0.001 then
+		-- Value delta is 0, so we add an arbitrary value
+		minVal = maxVal - 5
+		maxVal = maxVal + 5
+	end
+	self:SetTimeRange(minTime, maxTime, 20.0)
+	self:SetDataRange(minVal, maxVal, 20.0)
 end
 function gui.PFMTimelineGraph:SetupControl(
 	filmClip,
@@ -1765,6 +1777,7 @@ function gui.PFMTimelineGraph:GetPropertyList()
 end
 function gui.PFMTimelineGraph:AddControl(filmClip, actor, controlData, memberInfo, valueTranslator)
 	local itemCtrl = self.m_transformList:AddItem(controlData.name, nil, nil, controlData.name)
+	itemCtrl:SetName(controlData.path:replace("/", "_"))
 	local function addChannel(item, fValueTranslator, color, typeComponentIndex)
 		self:SetupControl(
 			filmClip,
@@ -1813,7 +1826,9 @@ function gui.PFMTimelineGraph:AddControl(filmClip, actor, controlData, memberInf
 		}
 		for i = 0, n - 1 do
 			local vc = vectorComponents[i + 1]
-			addChannel(itemCtrl:AddItem(vc[1]), nil, vc[2], i)
+			local item = itemCtrl:AddItem(vc[1])
+			item:SetName(vc[1]:lower())
+			addChannel(item, nil, vc[2], i)
 		end
 	elseif udm.is_matrix_type(memberInfo.type) then
 		local nRows = udm.get_matrix_row_count(memberInfo.type)

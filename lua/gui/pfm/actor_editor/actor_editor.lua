@@ -48,9 +48,12 @@ function gui.PFMActorEditor:OnInitialize()
 	end)
 	self.m_btTools:SetName("new_actor_button")
 	self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())
-	local function addPresetActorOption(id, subMenu, type, locId)
+	local function addPresetActorOption(id, subMenu, type, locId, callback)
 		local subItem = subMenu:AddItem(locale.get_text(locId), function()
 			self:CreatePresetActor(type)
+			if callback ~= nil then
+				callback()
+			end
 		end)
 		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
 		subItem:SetName(id)
@@ -195,7 +198,15 @@ function gui.PFMActorEditor:OnInitialize()
 				pVrMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_MANAGER,
 				"pfm_create_vr_manager",
-				pVrMenu
+				function()
+					local actor = self:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA, {
+						name = "vr_camera",
+						collection = gui.PFMActorEditor.COLLECTION_VR,
+						updateActorComponents = false,
+					})
+					self:CreateNewActorComponent(actor, "pfm_vr_camera", false)
+					self:UpdateActorComponents(actor)
+				end
 			)
 		end
 		pVrMenu:Update()

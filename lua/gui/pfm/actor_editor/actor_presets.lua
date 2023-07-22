@@ -40,12 +40,14 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 	local mdlName = args["modelName"]
 	local updateActorComponents = args["updateActorComponents"]
 	local nameOverride = args["name"]
+	local collectionOverride = args["collection"]
 
 	if updateActorComponents == nil then
 		updateActorComponents = true
 	end
 	local newActor = (actor == nil)
 	local function create_new_actor(name, collection, pose)
+		collection = collectionOverride or collection
 		if collection ~= nil then
 			collection = self:FindCollection(collection, true)
 		end

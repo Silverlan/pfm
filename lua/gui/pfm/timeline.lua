@@ -74,6 +74,44 @@ function gui.PFMTimeline:OnInitialize()
 	self.m_editorType = gui.PFMTimeline.EDITOR_GRAPH
 	self:SetEditor(gui.PFMTimeline.EDITOR_CLIP)
 end
+function gui.PFMTimeline:SetTimeRange(startTime, endTime, margin, offset)
+	local contents = self.m_timeline:GetContents()
+	local w = contents:GetWidth()
+	offset = offset or 0
+	w = w - offset
+	local timeLine = self:GetTimeline()
+	local axisTime = timeLine:GetTimeAxis():GetAxis()
+	axisTime:SetRange(startTime, endTime, w)
+
+	margin = margin or 0.0
+	local marginT = axisTime:XDeltaToValue(margin)
+	startTime = startTime - marginT
+	endTime = endTime + marginT
+
+	-- Need to update a second time to account for the margin
+	axisTime:SetRange(startTime, endTime, w)
+
+	axisTime:SetStartOffset(axisTime:GetStartOffset() - axisTime:XDeltaToValue(offset))
+	timeLine:Update()
+end
+function gui.PFMTimeline:SetDataRange(startVal, endVal, margin)
+	local contents = self.m_timeline:GetContents()
+	local h = contents:GetHeight()
+	local timeLine = self:GetTimeline()
+	local axisData = timeLine:GetDataAxis():GetAxis()
+
+	axisData:SetRange(startVal, endVal, h)
+
+	margin = margin or 0.0
+	local marginV = axisData:XDeltaToValue(margin)
+	startVal = startVal - marginV
+	endVal = endVal + marginV
+
+	-- Need to update a second time to account for the margin
+	axisData:SetRange(startVal, endVal, h)
+
+	timeLine:Update()
+end
 function gui.PFMTimeline:GetSelectedClip()
 	return self.m_selectedClip
 end

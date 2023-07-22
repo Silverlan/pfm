@@ -57,7 +57,6 @@ function Element:OnThink()
 				local elOutline = gui.create("WIElementSelectionOutline")
 				elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
 				elOutline:SetTargetElement(els)
-				elOutline:SetZPos(100000) -- Make sure the outline is visible over drop-down menues
 				elOutline:Update()
 				data.elOutline = elOutline
 				data.prevEls = els
