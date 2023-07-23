@@ -320,6 +320,7 @@ function Element:AddMessageBox(msg, audioFile)
 	local elBox = gui.create_info_box(vbox, msg)
 	elBox:SetAlpha(220)
 	elBox:SetWidth(el:GetWidth())
+	elBox:SetShowCloseButton(false)
 	--elBox:SetSize(el:GetSize())
 	table.insert(self.m_messageBoxes, vbox)
 
