@@ -1,5 +1,5 @@
 pfm_popup_create_actor_no_film_clip = "Akteur kann nicht erzeugt werden: Es ist kein Filmausschnitt selektiert!"
 pfm_popup_failed_to_import_lightmaps = "Lightmaps konnten nicht importiert werden: {0} konnte nicht gefunden werden!"
-pfm_popup_failed_to_transform_keyframe = "Konnte Keyframe für Eigenschaft {0} nicht transformieren"
-pfm_popup_no_lightmap = "Keine Lightmap gefunden! Beleuchtung wird unvollst„ndig sein"
+pfm_popup_failed_to_transform_keyframe = "Konnte Keyframe fÃ¼r Eigenschaft {0} nicht transformieren"
+pfm_popup_no_lightmap = "Keine Lightmap gefunden! Beleuchtung wird unvollstâ€žndig sein"
 pfm_popup_no_reflection_probe = "No reflection probe found! Reflektionen werden nicht korrekt sein."
