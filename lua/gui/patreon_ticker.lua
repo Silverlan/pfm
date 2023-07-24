@@ -113,7 +113,8 @@ function gui.PatreonTicker:SetQueryUrl(uri, args)
 	self:EnableThinking()
 end
 function gui.PatreonTicker:AddCurlRequest(id, uri)
-	local req = curl.request(uri, {})
+	local requestData = curl.RequestData()
+	local req = curl.request(uri, requestData)
 	req:Start()
 	self.m_curlRequests[id] = req
 end
@@ -151,7 +152,7 @@ function gui.PatreonTicker:OnThink()
 	local query = self.m_curlRequests["supporters"]
 	local queryCount = self.m_curlRequests["supporter_count"]
 	if query ~= nil and query:IsSuccessful() then
-		local patrons = string.split(query:GetResult(), ";")
+		local patrons = string.split(query:GetResult():ReadString(), ";")
 		local text = ""
 		for i, patron in ipairs(patrons) do
 			if i > 1 then
@@ -171,7 +172,7 @@ function gui.PatreonTicker:OnThink()
 		local numPatrons = #patrons
 
 		if queryCount ~= nil and queryCount:IsSuccessful() then
-			local count = toint(queryCount:GetResult())
+			local count = toint(queryCount:GetResult():ReadString())
 			count = math.max(count - numPatrons, 0)
 			--[[if(count > 0) then
 				local numAnonymous = count

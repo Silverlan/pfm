@@ -17,7 +17,8 @@ function Class:__init(url, callback)
 		return
 	end
 
-	local request = curl.request(url, {})
+	local requestData = curl.RequestData()
+	local request = curl.request(url, requestData)
 	request:Start()
 	self.m_checkForUpdatesQuery = request
 	self.m_checkForUpdatesVerbose = verbose or false
@@ -42,7 +43,7 @@ function Class:Update()
 		return
 	end
 	if self.m_checkForUpdatesQuery:IsSuccessful() then
-		local data = string.split(self.m_checkForUpdatesQuery:GetResult(), ";")
+		local data = string.split(self.m_checkForUpdatesQuery:GetResult():ReadString(), ";")
 		if #data > 0 then
 			local version = util.Version(data[1])
 			self.m_callback(version)
