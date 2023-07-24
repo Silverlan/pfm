@@ -12,6 +12,13 @@ pfm.register_log_category("pfm_vr")
 
 local Component = util.register_class("ents.PFMVrManager", BaseEntityComponent)
 
+Component:RegisterMember("IkTrackingEnabled", udm.TYPE_BOOLEAN, false, {
+	onChange = function(self)
+		self:UpdateIkTrackingState()
+	end,
+	flags = ents.ComponentInfo.MemberInfo.FLAG_HIDE_IN_INTERFACE_BIT,
+}, bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT, ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
+
 include("recording.lua")
 
 function Component:Initialize()
@@ -23,6 +30,9 @@ function Component:Initialize()
 end
 function Component:GetTrackedDevices()
 	return self.m_trackedDevices
+end
+function Component:UpdateIkTrackingState()
+	self:BroadcastEvent(Component.EVENT_ON_IK_TRACKING_STATE_CHANGED, { self:IsIkTrackingEnabled() })
 end
 function Component:OnEntitySpawn()
 	self.m_hmdC = self:AddEntityComponent("vr_hmd")
@@ -51,7 +61,16 @@ function Component:OnEntitySpawn()
 			pSubMenu:AddItem(locale.get_text("set_animation_target"), function()
 				local entActor = actor:FindEntity()
 				if entActor ~= nil then
-					self:SetAnimationTarget(entActor)
+					local entCam, c = ents.citerator(ents.COMPONENT_PFM_VR_CAMERA)()
+					if c ~= nil then
+						c:SetAnimationTarget(entActor)
+					end
+				end
+			end)
+			pSubMenu:AddItem(locale.get_text("clear_animation_target"), function()
+				local entCam, c = ents.citerator(ents.COMPONENT_PFM_VR_CAMERA)()
+				if c ~= nil then
+					c:ClearAnimationTarget()
 				end
 			end)
 
@@ -73,6 +92,7 @@ function Component:InitializeVrController(pfmTdc)
 	local cb = vrC:AddEventCallback(ents.VRController.EVENT_ON_BUTTON_INPUT, function(buttonId, state)
 		return self:OnVrControllerButtonInput(vrC, buttonId, state)
 	end)
+	pfmTdc:SetManager(self)
 	table.insert(self.m_trackedDeviceCallbacks, cb)
 end
 function Component:OnVrControllerButtonInput(vrC, buttonId, state)
@@ -151,7 +171,6 @@ function Component:InitializeTrackedDevice(tdC)
 end
 function Component:OnRemove()
 	util.remove(self.m_cbPopulateActorContextMenu)
-	util.remove(self.m_cbUpdateCameraPose)
 	util.remove(self.m_cbOnTrackedDeviceAdded)
 	util.remove(self.m_trackedDevices)
 	util.remove(self.m_trackedDeviceCallbacks)
@@ -262,104 +281,6 @@ function Component:TestX(ent)
 	if(self.m_target.headBoneId ~= nil) then animC:SetBoneScale(self.m_target.headBoneId,BONE_ZERO_SCALE) end -- Hide the head
 	]]
 end
-
-function Component:SetAnimationTarget(ent)
-	local pm = tool.get_filmmaker()
-	local vm = pm:GetViewport()
-	vm:SwitchToWorkCamera()
-	local cam = vm:GetWorkCamera()
-	local entCam = cam:GetEntity()
-	local povC = entCam:AddComponent("pov_camera")
-
-	local headData = util.rig.determine_head_bones(ent:GetModel())
-	if headData == nil or headData.headBoneId == nil then
-		pfm.log(
-			"Failed to determine head bone for VR animation target '" .. tostring(ent) .. "'!",
-			pfm.LOG_CATEGORY_PFM_VR,
-			pfm.LOG_CATEGORY_ERROR
-		)
-		return
-	end
-	--if(headData == nil or headData.headBoneId == nil or headData.headBoneId == -1 or headData.headParentBoneId == nil or headData.headParentBoneId == -1) then return false end
-
-	console.print_table(headData)
-	povC:SetHeadEntity(ent, headData.headBoneId, nil, headData.headBoneId)
-
-	game.clear_gameplay_control_camera()
-
-	util.remove(self.m_cbUpdateCameraPose)
-	self.m_cbUpdateCameraPose = game.add_callback("Think", function()
-		povC:UpdateCameraPose()
-		self:TestX(ent)
-	end)
-
-	local vrBodyC = ent:AddComponent("vr_body")
-
-	if headData.headBoneId ~= -1 then
-		vrBodyC:SetHeadBone(headData.headBoneId)
-	end
-
-	local mdl = ent:GetModel()
-	local skeleton = mdl:GetSkeleton()
-	local armChain = {
-		skeleton:LookupBone("Bind_LeftShoulder"),
-		skeleton:LookupBone("Bind_LeftArm"),
-		skeleton:LookupBone("Bind_LeftForeArm"),
-		skeleton:LookupBone("Bind_LeftHand"),
-	}
-	vrBodyC:SetLeftArm(armChain)
-
-	ent:PlayAnimation("reference")
-	--[[16 = Bone[Name:Bind_LeftShoulder][Id:][Children:1][Parent:Bind_Spine2]
-	17 = Bone[Name:Bind_LeftArm][Id:][Children:1][Parent:Bind_LeftShoulder]
-	18 = Bone[Name:Bind_LeftForeArm][Id:][Children:1][Parent:Bind_LeftArm]
-	19 = Bone[Name:Bind_LeftHand][Id:][Children:5][Parent:Bind_LeftForeArm]]
-
-	vrBodyC:SetHmd(self.m_hmdC)
-	--[[if(#upperBodyBoneChain > 2) then vrBody:SetUpperBody(upperBodyBoneChain) end
-	if(#leftArmBoneChain > 2) then vrBody:SetLeftArm(leftArmBoneChain) end
-	if(#rightArmBoneChain > 2) then vrBody:SetRightArm(rightArmBoneChain) end
-	if(headBone ~= -1) then vrBody:SetHeadBone(headBone) end
-
-	vrBody:SetHmd(entHmd:GetComponent(ents.COMPONENT_VR_HMD))]]
-
-	--function Component:SetHeadEntity(actor,headBoneId,neckBoneId,targetBoneId)
-
-	--function Component:SetHeadBone(boneId)
-	--[[local entCam = self:GetActiveCamera()
-	if(util.is_valid(entCam) == false) then return end
-	local vrBody = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_VR_BODY)})()
-	if(vrBody == nil) then return end
-	local cc = entCam:GetComponent(ents.COMPONENT_POV_CAMERA)]]
-	--[[if(util.is_valid(self.m_entVrBody) == false) then
-		self.m_entVrBody = 
-	end
-
-	local entCam = self:GetActiveCamera()
-	if(util.is_valid(entCam) == false) then return end
-	local vrBody = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_VR_BODY)})()
-	if(vrBody == nil) then return end
-	local cc = entCam:GetComponent(ents.COMPONENT_POV_CAMERA)
-	local vrBodyC = vrBody:GetComponent(ents.COMPONENT_VR_BODY)
-	if(cc ~= nil) then
-		local headBoneId = vrBodyC:GetHeadBoneId()
-		local offset = math.Transform()
-		if(headBoneId ~= nil) then
-			offset = calc_pov_camera_offset(vrBody:GetModel(),vrBodyC:GetHeadBoneId())
-			offset:SetOrigin(offset:GetOrigin() *vrBody:GetScale())
-			offset:SetRotation(Quaternion())
-		end
-
-		local udmPov = self:GetConfigData():Get("cameras"):Get(self.m_activeCameraIdentifier):Get("pov")
-		if(udmPov:IsValid()) then
-			local relPose = udmPov:GetValue("relativePose",udm.TYPE_TRANSFORM) or math.Transform()
-			offset = offset *relPose
-		end
-
-		pfm.log("Applying pov camera offset " .. tostring(offset),pfm.LOG_CATEGORY_VRP)
-		cc:SetRelativePose(offset)
-	end
-
-	vrBodyC:SetPovCamera(cc)]]
-end
 ents.COMPONENT_PFM_VR_MANAGER = ents.register_component("pfm_vr_manager", Component)
+Component.EVENT_ON_IK_TRACKING_STATE_CHANGED =
+	ents.register_component_event(ents.COMPONENT_PFM_VR_MANAGER, "on_ik_tracking_state_changed")

@@ -283,10 +283,20 @@ end
 function gui.PFMViewport:SwitchToCamera(cam)
 	local scene = self.m_viewport:GetScene()
 	if util.is_valid(scene) then
+		local curCam = scene:GetActiveCamera()
+		local pfmCamC = util.is_valid(curCam) and curCam:GetEntity():GetComponent(ents.COMPONENT_PFM_CAMERA) or nil
+		if pfmCamC ~= nil then
+			pfmCamC:BroadcastEvent(ents.PFMCamera.EVENT_ON_ACTIVE_STATE_CHANGED, { false })
+		end
 		scene:SetActiveCamera(cam)
 
 		cam:SetAspectRatio(self.m_aspectRatioWrapper:GetAspectRatio())
 		cam:UpdateMatrices()
+
+		local pfmCamC = cam:GetEntity():GetComponent(ents.COMPONENT_PFM_CAMERA)
+		if pfmCamC ~= nil then
+			pfmCamC:BroadcastEvent(ents.PFMCamera.EVENT_ON_ACTIVE_STATE_CHANGED, { true })
+		end
 	end
 	pfm.tag_render_scene_as_dirty()
 end

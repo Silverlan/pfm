@@ -26,11 +26,16 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 end
 
-function Component:OnRemove() end
+function Component:OnRemove()
+	util.remove(self.m_cbOnTrackingStateChanged)
+end
 
 function Component:OnEntitySpawn() end
 
 function Component:OnTick()
+	if util.is_valid(self.m_managerC) == false or self.m_managerC:IsIkTrackingEnabled() == false then
+		return
+	end
 	self:UpdateEffector()
 end
 
@@ -92,6 +97,36 @@ function Component:GetTargetData()
 	return targetActor, ikSolverC, memberIndices
 end
 
+function Component:SetManager(managerC)
+	self.m_managerC = managerC
+	util.remove(self.m_cbOnTrackingStateChanged)
+	self.m_cbOnTrackingStateChanged = managerC:AddEventCallback(
+		ents.PFMVrManager.EVENT_ON_IK_TRACKING_STATE_CHANGED,
+		function()
+			self:UpdateTrackingState()
+		end
+	)
+	self:UpdateTrackingState()
+end
+
+function Component:UpdateTrackingState()
+	local targetActor = self:GetTargetActor()
+	if util.is_valid(self.m_managerC) == false or util.is_valid(targetActor) == false then
+		return
+	end
+
+	local enableProperties = not self.m_managerC:IsIkTrackingEnabled()
+	local panimaC = targetActor:GetComponent(ents.COMPONENT_PANIMA)
+	if panimaC ~= nil then
+		if self.m_controlPropertyName ~= nil then
+			panimaC:SetPropertyEnabled("ec/ik_solver/" .. self.m_controlPropertyName, enableProperties)
+		end
+		if self.m_rotControlPropertyName ~= nil then
+			panimaC:SetPropertyEnabled("ec/ik_solver/" .. self.m_rotControlPropertyName, enableProperties)
+		end
+	end
+end
+
 function Component:UpdateIkControl()
 	pfm.log("Updating tracked device ik control...", pfm.LOG_CATEGORY_PFM_VR)
 	self.m_ikSolverC = nil
@@ -132,10 +167,20 @@ function Component:UpdateIkControl()
 	end
 	self.m_ikSolverC = ikSolverC
 	self.m_controlPropertyIdx = memberIdx
+	self.m_controlPropertyName = propertyName
 
 	local rotPropertyName = "control/" .. ikControl .. "/rotation"
 	memberIdx = ikSolverC:GetMemberIndex(rotPropertyName)
 	self.m_rotControlPropertyIdx = memberIdx
+	self.m_rotControlPropertyName = (memberIdx ~= nil) and rotPropertyName or nil
+
+	local pm = tool.get_filmmaker()
+	local actorC = targetActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+	if util.is_valid(pm) and actorC ~= nil then
+		-- Make the ik properties animated
+		pm:MakeActorPropertyAnimated(actorC, "ec/ik_solver/" .. propertyName)
+		pm:MakeActorPropertyAnimated(actorC, "ec/ik_solver/" .. rotPropertyName)
+	end
 
 	local mdl = targetActor:GetModel()
 	if mdl ~= nil then
@@ -158,6 +203,7 @@ function Component:UpdateIkControl()
 			pfm.LOG_SEVERITY_WARNING
 		)
 	end
+	self:UpdateTrackingState()
 
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end

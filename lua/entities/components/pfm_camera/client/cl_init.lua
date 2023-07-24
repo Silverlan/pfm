@@ -36,6 +36,7 @@ Component.set_active_camera = function(cam)
 	if util.is_valid(Component.impl.activeCamera) then
 		local toggleC = Component.impl.activeCamera:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
 		-- if(toggleC ~= nil) then toggleC:TurnOff() end
+		local prevActiveCamera = Component.impl.activeCamera
 		Component.impl.activeCamera = nil
 	end
 	if util.is_valid(cam) == false then
@@ -114,11 +115,11 @@ function Component:OnRemove()
 	end
 end
 function Component:UpdateVRView()
-	if Component.is_vr_view_enabled() then
+	--[[if Component.is_vr_view_enabled() then
 		self:GetEntity():AddComponent("pfm_vr_camera")
 	else
 		self:GetEntity():RemoveComponent("pfm_vr_camera")
-	end
+	end]]
 end
 function Component:UpdateAspectRatio()
 	local camC = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
@@ -385,3 +386,5 @@ function Component:OnEntitySpawn()
 	end
 end
 ents.COMPONENT_PFM_CAMERA = ents.register_component("pfm_camera", Component)
+Component.EVENT_ON_ACTIVE_STATE_CHANGED =
+	ents.register_component_event(ents.COMPONENT_PFM_CAMERA, "on_active_state_changed")

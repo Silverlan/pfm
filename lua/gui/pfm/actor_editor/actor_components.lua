@@ -617,13 +617,30 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 		end
 		-- Static members have to be initialized first, because dynamic members may be dependent on static members
 		local staticMemberIndices = {}
-		for i = 0, c:GetStaticMemberCount() - 1 do
-			table.insert(staticMemberIndices, i)
+		if c ~= nil then
+			for i = 0, c:GetStaticMemberCount() - 1 do
+				table.insert(staticMemberIndices, i)
+			end
+		else
+			pfm.log(
+				"Missing component '"
+					.. componentType
+					.. "' ("
+					.. componentId
+					.. ")"
+					.. " in actor '"
+					.. tostring(entActor)
+					.. "'!",
+				pfm.LOG_CATEGORY_PFM,
+				pfm.LOG_SEVERITY_ERROR
+			)
 		end
 		initializeMembers(staticMemberIndices)
 
-		-- Initialize dynamic members next. Dynamic members must not have any dependencies to other dynamic members
-		initializeMembers(c:GetDynamicMemberIndices())
+		if c ~= nil then
+			-- Initialize dynamic members next. Dynamic members must not have any dependencies to other dynamic members
+			initializeMembers(c:GetDynamicMemberIndices())
+		end
 	end
 
 	if util.is_valid(componentData.itemBaseProps) then
