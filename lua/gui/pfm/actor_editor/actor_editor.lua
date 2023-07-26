@@ -989,7 +989,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 			colField:AddCallback("OnUserInputEnded", function()
 				local col = colField:GetColor()
 				if controlData.set ~= nil then
-					controlData.set(udmComponent, newCol, nil, nil, true)
+					controlData.set(udmComponent, col, nil, nil, true)
 				end
 			end)
 			if controlData.getValue ~= nil then

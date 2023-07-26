@@ -42,7 +42,7 @@ function gui.PFMBrightnessSlider:OnInitialize()
 	self.m_cursor = cursor
 	self:SetMouseInputEnabled(true)
 end
-function gui.PFMBrightnessSlider:OnMouseEvent(button, state, mods)
+function gui.PFMBrightnessSlider:MouseCallback(button, state, mods)
 	local cursorPos = self.m_locator:GetCursorPos()
 	self.m_cursor:InjectMouseInput(cursorPos, button, state, mods)
 	self.m_cursor:CallCallbacks("OnCursorMoved", cursorPos.x, cursorPos.y)

@@ -60,7 +60,7 @@ function gui.PFMColorWheel:OnInitialize()
 	self:SetCursorPos(0, 0)
 	self:SelectColor(Color.White)
 end
-function gui.PFMColorWheel:OnMouseEvent(button, state, mods)
+function gui.PFMColorWheel:MouseCallback(button, state, mods)
 	local cursorPos = self:GetCursorPos()
 	self.m_locator:InjectMouseInput(cursorPos, button, state, mods)
 	self.m_locator:CallCallbacks("OnCursorMoved", cursorPos.x, cursorPos.y)
