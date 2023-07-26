@@ -1660,20 +1660,15 @@ function gui.PFMTimelineGraph:GetDataRange()
 	for _, graph in ipairs(self.m_graphs) do
 		if graph.curve:IsValid() then
 			local dataPoints = graph.curve:GetDataPoints()
-			if #dataPoints > 0 then
-				local dp0 = dataPoints[1]
-				local t0 = dp0:GetTime()
-				local v0 = dp0:GetValue()
+			for _, dp in ipairs(dataPoints) do
+				local t = dp:GetTime()
+				local v = dp:GetValue()
 
-				local dp1 = dataPoints[#dataPoints]
-				local t1 = dp1:GetTime()
-				local v1 = dp1:GetValue()
+				minTime = math.min(minTime, t)
+				maxTime = math.max(maxTime, t)
 
-				minTime = math.min(minTime, t0)
-				maxTime = math.max(maxTime, t1)
-
-				minValue = math.min(minValue, v0)
-				maxValue = math.max(maxValue, v1)
+				minValue = math.min(minValue, v)
+				maxValue = math.max(maxValue, v)
 			end
 		end
 	end
