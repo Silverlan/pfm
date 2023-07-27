@@ -1,0 +1,5 @@
+pfm_bone_retargeting = "Animation Retargeting"
+pfm_edit_retarget_rig = "Modifier la cible de rig"
+pfm_impostee_model = "Modèle imposteur"
+pfm_imposter_model = "Mannequin imposteur"
+pfm_retarget_auto = "Auto-Retarget translates to \"Auto-Redirection\" in French."

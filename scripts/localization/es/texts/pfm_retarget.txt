@@ -1,0 +1,5 @@
+pfm_bone_retargeting = "Animación de reorientación"
+pfm_edit_retarget_rig = "Editar Redirigir Esqueleto"
+pfm_impostee_model = "Modelo Impostor"
+pfm_imposter_model = "Modelo de Impostor"
+pfm_retarget_auto = "Auto-Retarget"

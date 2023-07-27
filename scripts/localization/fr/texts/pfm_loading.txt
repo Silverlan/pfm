@@ -1,0 +1,2 @@
+pfm_loading = "Chargement..."
+pfm_loading_map = "Chargement de la carte '{0}'..."

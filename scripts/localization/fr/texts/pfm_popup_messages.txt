@@ -1,0 +1,5 @@
+pfm_popup_create_actor_no_film_clip = "Impossible de créer l'acteur : Aucun extrait de film n'a été sélectionné !"
+pfm_popup_failed_to_import_lightmaps = "Impossible d'importer les lightmaps : {0} introuvable !"
+pfm_popup_failed_to_transform_keyframe = "Impossible de transformer la trame clé pour la propriété {0}"
+pfm_popup_no_lightmap = "Aucune lightmap trouvée ! L'éclairage sera incomplet."
+pfm_popup_no_reflection_probe = "Aucune sonde de réflexion trouvée ! Les réflexions seront incorrectes."
