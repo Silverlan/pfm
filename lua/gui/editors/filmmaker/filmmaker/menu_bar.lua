@@ -444,7 +444,7 @@ function Element:InitializeMenuBar()
 			pItem:SetName("language")
 			pSubMenu:SetName("language_menu")
 			for lan, lanLoc in pairs(locale.get_languages()) do
-				pSubMenu:AddItem(lanLoc, function(pItem)
+				local pItemLan = pSubMenu:AddItem(lanLoc, function(pItem)
 					if util.is_valid(self) == false then
 						return
 					end
@@ -452,6 +452,23 @@ function Element:InitializeMenuBar()
 					console.run("cl_language", lan)
 					self:ReloadInterface()
 				end)
+
+				local matPath = "gui/pfm/languages/" .. lan
+				if asset.exists(matPath, asset.TYPE_MATERIAL) then
+					-- Some languages (like Japanese) use characters that don't exist in the standard font
+					-- so we display those language names as image instead
+					local el = gui.create("WITexturedRect", pItemLan)
+					el:SetMaterial(matPath)
+					el:SizeToTexture()
+					local aspectRatio = el:GetWidth() / el:GetHeight()
+					local h = 14
+					el:SetSize(h * aspectRatio, h)
+					el:SetColor(Color.Gray)
+					el:CenterToParentY()
+					el:SetX(10)
+					el:SetY(el:GetY() + 2)
+					pItemLan:GetTextElement():SetVisible(false)
+				end
 			end
 			pItem:SetTooltip(locale.get_text("pfm_menu_change_language"))
 			pSubMenu:ScheduleUpdate()
