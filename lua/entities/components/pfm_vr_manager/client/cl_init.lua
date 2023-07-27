@@ -84,6 +84,8 @@ function Component:GetHmd()
 	return self.m_hmdC
 end
 function Component:InitializeVrController(pfmTdc)
+	pfmTdc:SetManager(self)
+
 	local tdC = pfmTdc:GetTrackedDevice()
 	local vrC = util.is_valid(tdC) and tdC:GetEntity():GetComponent(ents.COMPONENT_VR_CONTROLLER) or nil
 	if vrC == nil then
@@ -92,7 +94,6 @@ function Component:InitializeVrController(pfmTdc)
 	local cb = vrC:AddEventCallback(ents.VRController.EVENT_ON_BUTTON_INPUT, function(buttonId, state)
 		return self:OnVrControllerButtonInput(vrC, buttonId, state)
 	end)
-	pfmTdc:SetManager(self)
 	table.insert(self.m_trackedDeviceCallbacks, cb)
 end
 function Component:OnVrControllerButtonInput(vrC, buttonId, state)
