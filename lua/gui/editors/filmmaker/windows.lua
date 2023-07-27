@@ -353,10 +353,10 @@ pfm.register_window("tutorial_catalog", "catalogs", locale.get_text("pfm_tutoria
 	local el = gui.create("WIPFMTutorialCatalog")
 	return el
 end)
-pfm.register_window("actor_catalog", "catalogs", locale.get_text("pfm_actor_catalog"), function(pm)
+--[[pfm.register_window("actor_catalog", "catalogs", locale.get_text("pfm_actor_catalog"), function(pm)
 	local el = gui.create("WIPFMActorCatalog")
 	return el
-end)
+end)]]
 pfm.register_window("element_viewer", "editors", locale.get_text("pfm_element_viewer"), function(pm)
 	local el = gui.create("WIPFMElementViewer")
 	return el
@@ -458,12 +458,12 @@ pfm.register_window("render", "viewers", locale.get_text("pfm_render"), function
 	end)
 	return el
 end)
-pfm.register_window("post_processing", "viewers", locale.get_text("pfm_post_processing"), function(pm)
+--[[pfm.register_window("post_processing", "viewers", locale.get_text("pfm_post_processing"), function(pm)
 	return gui.create("WIPFMPostProcessing")
 end)
 pfm.register_window("video_player", "viewers", locale.get_text("pfm_video_player"), function(pm)
 	return gui.create("WIPFMVideoPlayer")
-end)
+end)]]
 
 pfm.register_window("timeline", "timeline", locale.get_text("pfm_timeline"), function(pm)
 	local pfmTimeline = gui.create("WIPFMTimeline")
