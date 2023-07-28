@@ -242,7 +242,7 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
 		self:ApplyToneMappingSettings(self.m_rt:GetToneMapping())
 	end
 	self.m_ctrlExposure = p:AddSliderControl(
-		locale.get_text("pfm_exposure"),
+		pfm.LocStr("pfm_exposure"),
 		"exposure",
 		settings:GetExposure(),
 		0,
@@ -254,37 +254,31 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
 
 	-- Max luminance capability of the display
 	self.m_ctrlLdMax =
-		p:AddSliderControl(locale.get_text("pfm_tone_mapping_ldmax"), nil, 100, 0, 200, fApplyToneMappingSettings)
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_ldmax"), nil, 100, 0, 200, fApplyToneMappingSettings)
 
 	-- Maximum contrast ratio between on-screen luminances
 	self.m_ctrlCMax =
-		p:AddSliderControl(locale.get_text("pfm_tone_mapping_cmax"), nil, 50, 1, 500, fApplyToneMappingSettings)
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_cmax"), nil, 50, 1, 500, fApplyToneMappingSettings)
 
 	-- Rational mapping curve parameter
-	self.m_ctrlCurveParam = p:AddSliderControl(
-		locale.get_text("pfm_tone_mapping_curve_param"),
-		nil,
-		200,
-		1,
-		1000,
-		fApplyToneMappingSettings
-	)
+	self.m_ctrlCurveParam =
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_curve_param"), nil, 200, 1, 1000, fApplyToneMappingSettings)
 
 	-- Gamma slope
 	self.m_ctrlGammaSlope =
-		p:AddSliderControl(locale.get_text("pfm_tone_mapping_gamma_slope"), nil, 4.5, 0, 10, fApplyToneMappingSettings)
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_gamma_slope"), nil, 4.5, 0, 10, fApplyToneMappingSettings)
 
 	-- Gamma start
 	self.m_ctrlGammaStart =
-		p:AddSliderControl(locale.get_text("pfm_tone_mapping_gamma_start"), nil, 0.018, 0, 2, fApplyToneMappingSettings)
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_gamma_start"), nil, 0.018, 0, 2, fApplyToneMappingSettings)
 
 	-- Bias
 	self.m_ctrlBias =
-		p:AddSliderControl(locale.get_text("pfm_tone_mapping_bias"), nil, 0.85, 0, 1, fApplyToneMappingSettings)
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_bias"), nil, 0.85, 0, 1, fApplyToneMappingSettings)
 
 	-- Compression curve adjustment parameter
 	self.m_ctrlCompressionCurveParam = p:AddSliderControl(
-		locale.get_text("pfm_tone_mapping_compression_curve_adjustment_param"),
+		pfm.LocStr("pfm_tone_mapping_compression_curve_adjustment_param"),
 		nil,
 		0.5,
 		0,
@@ -294,7 +288,7 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
 
 	-- Compression curve adjustment parameter
 	self.m_ctrlIntensityAdjustmentParam = p:AddSliderControl(
-		locale.get_text("pfm_tone_mapping_intensity_adjustment_param_desc"),
+		pfm.LocStr("pfm_tone_mapping_intensity_adjustment_param_desc"),
 		nil,
 		1,
 		0,
@@ -303,60 +297,36 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
 	)
 
 	-- Chromatic adaptation
-	self.m_ctrlChromaticAdapation = p:AddSliderControl(
-		locale.get_text("pfm_tone_mapping_chromatic_adaptation"),
-		nil,
-		0,
-		0,
-		1,
-		fApplyToneMappingSettings
-	)
+	self.m_ctrlChromaticAdapation =
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_chromatic_adaptation"), nil, 0, 0, 1, fApplyToneMappingSettings)
 
 	-- Light adaptation
-	self.m_ctrlLightAdaptation = p:AddSliderControl(
-		locale.get_text("pfm_tone_mapping_light_adaptation"),
-		nil,
-		1,
-		0,
-		1,
-		fApplyToneMappingSettings
-	)
+	self.m_ctrlLightAdaptation =
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_light_adaptation"), nil, 1, 0, 1, fApplyToneMappingSettings)
 
 	-- Cutoff
 	self.m_ctrlCutoff =
-		p:AddSliderControl(locale.get_text("pfm_tone_mapping_cutoff"), nil, 0.025, 0, 0.5, fApplyToneMappingSettings)
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_cutoff"), nil, 0.025, 0, 0.5, fApplyToneMappingSettings)
 
 	-- White point
 	self.m_ctrlWhitePoint =
-		p:AddSliderControl(locale.get_text("pfm_tone_mapping_white_point"), nil, 10, 0, 20, fApplyToneMappingSettings)
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_white_point"), nil, 10, 0, 20, fApplyToneMappingSettings)
 
 	-- Black point
 	self.m_ctrlBlackPoint =
-		p:AddSliderControl(locale.get_text("pfm_tone_mapping_black_point"), nil, 0.1, 0, 2, fApplyToneMappingSettings)
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_black_point"), nil, 0.1, 0, 2, fApplyToneMappingSettings)
 
 	-- Toe strength
 	self.m_ctrlToeStrength =
-		p:AddSliderControl(locale.get_text("pfm_tone_mapping_toe_strength"), nil, 0.7, 0, 1, fApplyToneMappingSettings)
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_toe_strength"), nil, 0.7, 0, 1, fApplyToneMappingSettings)
 
 	-- Shoulder strength
-	self.m_ctrlShoulderStrength = p:AddSliderControl(
-		locale.get_text("pfm_tone_mapping_shoulder_strength"),
-		nil,
-		0.8,
-		0,
-		1,
-		fApplyToneMappingSettings
-	)
+	self.m_ctrlShoulderStrength =
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_shoulder_strength"), nil, 0.8, 0, 1, fApplyToneMappingSettings)
 
 	-- Cross-over point
-	self.m_ctrlCrossOverPoint = p:AddSliderControl(
-		locale.get_text("pfm_tone_mapping_cross_over_point"),
-		nil,
-		2,
-		0,
-		10,
-		fApplyToneMappingSettings
-	)
+	self.m_ctrlCrossOverPoint =
+		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_cross_over_point"), nil, 2, 0, 10, fApplyToneMappingSettings)
 
 	toneMapping:SelectOption(4)
 end
@@ -445,7 +415,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	local settings = tool.get_filmmaker():GetSettings()
 	settings = (settings ~= nil) and settings:GetRenderSettings()
 		or udm.create_property_from_schema(pfm.udm.SCHEMA, "RenderSettings")
-	local ctrl, wrapper = p:AddDropDownMenu(locale.get_text("preset"), "preset", {
+	local ctrl, wrapper = p:AddDropDownMenu(pfm.LocStr("preset"), "preset", {
 		{ "standard", locale.get_text("pfm_rt_preset_standard") },
 		-- {"cinematic",locale.get_text("pfm_rt_preset_cinematic")},
 		{ "vr", locale.get_text("pfm_rt_preset_vr") },
@@ -457,7 +427,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	local pragmaRendererOptions
 	-- Render Engine
 	ctrl, wrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_render_engine"),
+		pfm.LocStr("pfm_render_engine"),
 		"render_engine",
 		{
 			{ "cycles", locale.get_text("pfm_render_engine_cycles") },
@@ -483,7 +453,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:LinkToUDMProperty("render_engine", settings, "renderEngine")
 
 	-- Render Mode
-	ctrl, wrapper = p:AddDropDownMenu(locale.get_text("pfm_render_mode"), "render_mode", {
+	ctrl, wrapper = p:AddDropDownMenu(pfm.LocStr("pfm_render_mode"), "render_mode", {
 		{
 			tostring(pfm.RaytracingRenderJob.Settings.RENDER_MODE_COMBINED),
 			locale.get_text("pfm_cycles_bake_type_combined"),
@@ -539,7 +509,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	-- Camera type
 	ctrl, wrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_cycles_cam_type"),
+		pfm.LocStr("pfm_cycles_cam_type"),
 		"cam_type",
 		{
 			{
@@ -568,7 +538,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:LinkToUDMProperty("cam_type", settings, "cameraType")
 
 	ctrl, wrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_cycles_cam_panorama"),
+		pfm.LocStr("pfm_cycles_cam_panorama"),
 		"panorama_type",
 		{
 			{
@@ -603,7 +573,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:SetControlVisible("panorama_type", false)
 
 	ctrl, wrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_cycles_cam_equirect_mode"),
+		pfm.LocStr("pfm_cycles_cam_equirect_mode"),
 		"equirect_mode",
 		{
 			{ "mono", locale.get_text("mono") },
@@ -624,7 +594,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:SetControlVisible("equirect_mode", false)
 
 	ctrl, wrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_cycles_preview_mode"),
+		pfm.LocStr("pfm_cycles_preview_mode"),
 		"preview_mode",
 		{
 			{ tostring(gui.PFMRenderPreview.VIEWPORT_MODE_FLAT), locale.get_text("pfm_cycles_preview_mode_flat") },
@@ -648,7 +618,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:SetControlVisible("preview_mode", false)
 
 	-- Horizontal panorama range
-	ctrl, wrapper = p:AddDropDownMenu(locale.get_text("pfm_cycles_cam_panorama_range"), "panorama_range", {
+	ctrl, wrapper = p:AddDropDownMenu(pfm.LocStr("pfm_cycles_cam_panorama_range"), "panorama_range", {
 		{ tostring(360), locale.get_text("pfm_cycles_degrees", { 360 }) },
 		{ tostring(180), locale.get_text("pfm_cycles_degrees", { 180 }) },
 	}, tostring(settings:GetPanoramaRange()))
@@ -701,13 +671,13 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	end
 
 	local qualityPreset, wrapper =
-		p:AddDropDownMenu(locale.get_text("pfm_cycles_quality_preset"), "quality_preset", options, 0)
+		p:AddDropDownMenu(pfm.LocStr("pfm_cycles_quality_preset"), "quality_preset", options, 0)
 	wrapper:SetTooltip(locale.get_text("pfm_render_setting_quality_preset"))
 
 	-- Resolution
 	local skipResolutionAttrCallbacks = false
 	local ctrlResolution, ctrlResolutionWrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_resolution"),
+		pfm.LocStr("pfm_resolution"),
 		"resolution",
 		{
 			{ "1280x720", locale.get_text("pfm_resolution_hd_ready") },
@@ -752,7 +722,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 
 	-- Number of frames
 	ctrl = p:AddSliderControl(
-		locale.get_text("pfm_number_of_frames_to_render"),
+		pfm.LocStr("pfm_number_of_frames_to_render"),
 		"frame_count",
 		settings:GetNumberOfFrames(),
 		1,
@@ -798,7 +768,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		table.insert(colorTransformOptions, { ct, ct })
 	end
 	ctrl, wrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_color_transform"),
+		pfm.LocStr("pfm_color_transform"),
 		"color_transform",
 		colorTransformOptions,
 		settings:GetColorTransform()
@@ -808,7 +778,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:LinkToUDMProperty("color_transform", settings, "colorTransform")
 
 	-- TODO: Allow custom looks for custom color transforms!
-	ctrl, wrapper = p:AddDropDownMenu(locale.get_text("pfm_color_transform_look"), "color_transform_look", {
+	ctrl, wrapper = p:AddDropDownMenu(pfm.LocStr("pfm_color_transform_look"), "color_transform_look", {
 		{ "None", locale.get_text("none") },
 		{ "Very High Contrast", locale.get_text("pfm_color_transform_filmic_blender_very_high_contrast") },
 		{ "High Contrast", locale.get_text("pfm_color_transform_filmic_blender_high_contrast") },
@@ -825,7 +795,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	-- Output format
 	local gammaCorrection = 2.2
 	ctrl, wrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_cycles_output_format"),
+		pfm.LocStr("pfm_cycles_output_format"),
 		"output_format",
 		{
 			{ tostring(util.IMAGE_FORMAT_HDR), "HDR" },
@@ -857,7 +827,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	p:LinkToUDMProperty("output_format", settings, "outputFormat")
 
 	-- Preview quality
-	ctrl, wrapper = p:AddDropDownMenu(locale.get_text("pfm_cycles_preview_quality"), "preview_quality", {
+	ctrl, wrapper = p:AddDropDownMenu(pfm.LocStr("pfm_cycles_preview_quality"), "preview_quality", {
 		{ tostring(gui.PFMRenderPreview.PREVIEW_QUALITY_LOW), locale.get_text("low") },
 		{ tostring(gui.PFMRenderPreview.PREVIEW_QUALITY_MEDIUM), locale.get_text("medium") },
 		{ tostring(gui.PFMRenderPreview.PREVIEW_QUALITY_HIGH), locale.get_text("high") },
@@ -885,30 +855,28 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	outputDir:Wrap("WIEditableEntry"):SetText(locale.get_text("pfm_output_directory"))]]
 
 	-- self.m_ctrlPreStage = p:AddToggleControl(locale.get_text("pfm_prestage_only","prestage",false)
-	ctrl, wrapper =
-		p:AddToggleControl(locale.get_text("pfm_render_world"), "render_world", settings:ShouldRenderWorld())
+	ctrl, wrapper = p:AddToggleControl(pfm.LocStr("pfm_render_world"), "render_world", settings:ShouldRenderWorld())
 	self.m_ctrlRenderWorld = ctrl
 	ctrl:SetTooltip(locale.get_text("pfm_render_setting_render_world"))
 	ctrl, wrapper = p:AddToggleControl(
-		locale.get_text("pfm_render_game_objects"),
+		pfm.LocStr("pfm_render_game_objects"),
 		"render_game_entities",
 		settings:ShouldRenderGameObjects()
 	)
 	self.m_ctrlRenderGameEntities = ctrl
 	ctrl:SetTooltip(locale.get_text("pfm_render_setting_render_game_entities"))
-	ctrl, wrapper =
-		p:AddToggleControl(locale.get_text("pfm_render_player"), "render_player", settings:ShouldRenderPlayer())
+	ctrl, wrapper = p:AddToggleControl(pfm.LocStr("pfm_render_player"), "render_player", settings:ShouldRenderPlayer())
 	self.m_ctrlRenderPlayer = ctrl
 	ctrl:SetTooltip(locale.get_text("pfm_render_setting_render_player"))
 	ctrl, wrapper = p:AddToggleControl(
-		locale.get_text("pfm_render_frustum_culling"),
+		pfm.LocStr("pfm_render_frustum_culling"),
 		"frustum_culling",
 		settings:IsCameraFrustumCullingEnabled()
 	)
 	self.m_ctrlFrustumCulling = ctrl
 	ctrl:SetTooltip(locale.get_text("pfm_render_setting_frustum_culling"))
 	ctrl, wrapper =
-		p:AddToggleControl(locale.get_text("pfm_render_pvs_culling"), "pvs_culling", settings:IsPvsCullingEnabled())
+		p:AddToggleControl(pfm.LocStr("pfm_render_pvs_culling"), "pvs_culling", settings:IsPvsCullingEnabled())
 	self.m_ctrlPVSCulling = ctrl
 	ctrl:SetTooltip(locale.get_text("pfm_render_setting_pvs_culling"))
 
@@ -970,7 +938,7 @@ end
 function gui.PFMRenderPreview:InitializePragmaRendererControls(p, settings)
 	local pragmaRendererOptions = p:AddSubMenu()
 	local ctrl, wrapper = pragmaRendererOptions:AddDropDownMenu(
-		locale.get_text("pfm_supersampling_factor"),
+		pfm.LocStr("pfm_supersampling_factor"),
 		"super_sampling_factor",
 		{
 			{ "1", locale.get_text("disabled") },
@@ -986,42 +954,51 @@ function gui.PFMRenderPreview:InitializePragmaRendererControls(p, settings)
 	)
 	self.m_ctrlSsFactor = ctrl
 	wrapper:SetTooltip(locale.get_text("pfm_render_setting_supersampling_factor"))
-	if tool.get_filmmaker():IsDeveloperModeEnabled() then
-		local elText, wrapper = pragmaRendererOptions:AddTextEntry(
-			locale.get_text("pfm_tile_size_pragma"),
-			"tile_size",
-			tostring(settings:GetTileSize()),
-			function(el) end
-		)
-		wrapper:SetTooltip(locale.get_text("pfm_render_setting_tile_size"))
-		pragmaRendererOptions:LinkToUDMProperty("tile_size", settings, "tileSize")
-		self.m_ctrlTileSize = elText
 
-		--self.m_ctrlRenderFramerate = p:AddSliderControl(locale.get_text("pfm_render_framerate"),"render_framerate",settings:GetRenderFramerate(),1,200,nil,1.0,true)
-		--p:LinkToUDMProperty("render_framerate",settings,"render_framerate")
+	local elText, wrapper = pragmaRendererOptions:AddTextEntry(
+		pfm.LocStr("pfm_tile_size_pragma"),
+		"tile_size",
+		tostring(settings:GetTileSize()),
+		function(el) end
+	)
+	wrapper:SetTooltip(locale.get_text("pfm_render_setting_tile_size"))
+	pragmaRendererOptions:LinkToUDMProperty("tile_size", settings, "tileSize")
+	self.m_ctrlTileSize = elText
+
+	--self.m_ctrlRenderFramerate = p:AddSliderControl(locale.get_text("pfm_render_framerate"),"render_framerate",settings:GetRenderFramerate(),1,200,nil,1.0,true)
+	--p:LinkToUDMProperty("render_framerate",settings,"render_framerate")
+	if not tool.get_filmmaker():IsDeveloperModeEnabled() then
+		wrapper:SetVisible(false)
 	end
+
+	ctrl, wrapper = pragmaRendererOptions:AddToggleControl(
+		pfm.LocStr("pfm_render_settings_tiled_rendering"),
+		"tiled_rendering",
+		false
+	)
+	self.m_ctrlEnableTiledRendering = ctrl
+
 	return pragmaRendererOptions
 end
 function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
 	local offlineRendererOptions = p:AddSubMenu()
 	-- Device Type
-	local ctrl, wrapper =
-		offlineRendererOptions:AddDropDownMenu(locale.get_text("pfm_cycles_device_type"), "device_type", {
-			{
-				tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU),
-				locale.get_text("pfm_cycles_device_type_gpu"),
-			},
-			{
-				tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU),
-				locale.get_text("pfm_cycles_device_type_cpu"),
-			},
-		}, tostring(settings:GetDeviceType()))
+	local ctrl, wrapper = offlineRendererOptions:AddDropDownMenu(pfm.LocStr("pfm_cycles_device_type"), "device_type", {
+		{
+			tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU),
+			locale.get_text("pfm_cycles_device_type_gpu"),
+		},
+		{
+			tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU),
+			locale.get_text("pfm_cycles_device_type_cpu"),
+		},
+	}, tostring(settings:GetDeviceType()))
 	self.m_ctrlDeviceType = ctrl
 	wrapper:SetTooltip(locale.get_text("pfm_render_setting_device_type"))
 	offlineRendererOptions:LinkToUDMProperty("device_type", settings, "deviceType")
 
 	-- Denoise Mode
-	ctrl, wrapper = offlineRendererOptions:AddDropDownMenu(locale.get_text("pfm_denoise_mode"), "denoise_mode", {
+	ctrl, wrapper = offlineRendererOptions:AddDropDownMenu(pfm.LocStr("pfm_denoise_mode"), "denoise_mode", {
 		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_NONE), locale.get_text("disabled") },
 		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_FAST), locale.get_text("fast") },
 		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_DETAILED), locale.get_text("detailed") },
@@ -1035,7 +1012,7 @@ function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
 	-- Sample count
 	--function gui.PFMControlsMenu:AddSliderControl(name,identifier,default,min,max,onChange,stepSize,integer)
 	ctrl, wrapper = offlineRendererOptions:AddSliderControl(
-		locale.get_text("pfm_samples_per_pixel"),
+		pfm.LocStr("pfm_samples_per_pixel"),
 		"samples_per_pixel",
 		settings:GetSamples(),
 		1,
@@ -1050,7 +1027,7 @@ function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
 
 	-- Max transparency bounces
 	ctrl, wrapper = offlineRendererOptions:AddSliderControl(
-		locale.get_text("pfm_max_transparency_bounces"),
+		pfm.LocStr("pfm_max_transparency_bounces"),
 		"max_transparency_bounces",
 		settings:GetMaxTransparencyBounces(),
 		0,
@@ -1065,7 +1042,7 @@ function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
 
 	-- Light intensity factor
 	ctrl, wrapper = offlineRendererOptions:AddSliderControl(
-		locale.get_text("pfm_light_intensity_factor"),
+		pfm.LocStr("pfm_light_intensity_factor"),
 		"light_intensity_factor",
 		settings:GetLightIntensityFactor(),
 		0,
@@ -1077,7 +1054,7 @@ function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
 
 	-- Emission strength
 	ctrl = offlineRendererOptions:AddSliderControl(
-		locale.get_text("pfm_emission_strength"),
+		pfm.LocStr("pfm_emission_strength"),
 		"emission_strength",
 		settings:GetEmissionStrength(),
 		0,
@@ -1092,7 +1069,7 @@ function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
 	offlineRendererOptions:LinkToUDMProperty("emission_strength", settings, "emissionStrength")
 
 	ctrl, wrapper = offlineRendererOptions:AddToggleControl(
-		locale.get_text("pfm_render_progressive"),
+		pfm.LocStr("pfm_render_progressive"),
 		"progressive",
 		settings:IsProgressive(),
 		function()
@@ -1102,13 +1079,13 @@ function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
 	ctrl:SetTooltip(locale.get_text("pfm_render_setting_progressive"))
 	self.m_ctrlProgressive = ctrl
 	self.m_ctrlPreCalcLight = offlineRendererOptions:AddToggleControl(
-		locale.get_text("pfm_render_precalc_light"),
+		pfm.LocStr("pfm_render_precalc_light"),
 		"precalc_light",
 		settings:ShouldPreCalculateLight()
 	)
 	self.m_ctrlPreCalcLight:SetTooltip(locale.get_text("pfm_render_setting_precalc_light"))
 	self.m_ctrlProgressiveRefinement = offlineRendererOptions:AddToggleControl(
-		locale.get_text("pfm_render_progressive_refinement"),
+		pfm.LocStr("pfm_render_progressive_refinement"),
 		"progressive_refine",
 		settings:IsProgressiveRefinementEnabled()
 	)
@@ -1467,9 +1444,12 @@ function gui.PFMRenderPreview:GetRenderSettings(preview, prepareOnly)
 			== util.IMAGE_FORMAT_HDR
 	)
 	settings:SetUseOptix(self.m_ctrlOptix:IsChecked())
-	if util.is_valid(self.m_ctrlTileSize) then
-		settings:SetTileSize(tonumber(self.m_ctrlTileSize:GetText()))
+
+	local tileSize = tonumber(self.m_ctrlTileSize:GetText())
+	if self.m_ctrlEnableTiledRendering:IsChecked() == false then
+		tileSize = 0
 	end
+	settings:SetTileSize(tileSize)
 
 	settings:SetColorTransform(self.m_ctrlColorTransform:GetOptionValue(self.m_ctrlColorTransform:GetSelectedOption()))
 	settings:SetColorTransformLook(

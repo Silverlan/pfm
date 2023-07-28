@@ -562,3 +562,15 @@ end
 pfm.get_color_scheme_color = function(name)
 	return colScheme:GetColor(name)
 end
+
+util.register_class("pfm.LocStr")
+function pfm.LocStr:__init(locId, args)
+	self.m_localeId = locId
+	self.m_localeArgs = args
+end
+function pfm.LocStr:GetLocaleIdentifier()
+	return self.m_localeId
+end
+function pfm.LocStr:GetText(args)
+	return locale.get_text(self.m_localeId, args or self.m_localeArgs or {})
+end

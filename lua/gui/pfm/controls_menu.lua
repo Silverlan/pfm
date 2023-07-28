@@ -63,6 +63,24 @@ function gui.PFMControlsMenu:SetControlVisible(identifier, visible)
 	end
 	el:SetVisible(visible)
 end
+local function apply_tooltip(el, loc)
+	if util.get_type_name(loc) ~= "LocStr" then
+		return
+	end
+	local locId = loc:GetLocaleIdentifier() .. "_desc"
+	local result, str = locale.get_text(locId, true)
+	if result == false then
+		return
+	end
+	el:SetTooltip(str)
+end
+local function apply_text(el, loc)
+	if util.get_type_name(loc) ~= "LocStr" then
+		el:SetText(loc)
+		return
+	end
+	el:SetText(loc:GetText())
+end
 function gui.PFMControlsMenu:AddFileEntry(name, identifier, default, callback)
 	local el = gui.create("WIFileEntry", self)
 	el:AddCallback("OnValueChanged", function(...)
@@ -71,9 +89,9 @@ function gui.PFMControlsMenu:AddFileEntry(name, identifier, default, callback)
 	if callback ~= nil then
 		el:SetBrowseHandler(callback)
 	end
-	el:SetTooltip(name .. "_desc")
+	apply_tooltip(el, name)
 	local wrapper = el:Wrap("WIEditableEntry")
-	wrapper:SetText(name)
+	apply_text(wrapper, name)
 	if identifier ~= nil then
 		wrapper:SetName(identifier)
 		self:AddControl(identifier, el, wrapper, default)
@@ -82,12 +100,12 @@ function gui.PFMControlsMenu:AddFileEntry(name, identifier, default, callback)
 end
 function gui.PFMControlsMenu:AddText(name, identifier, default)
 	local el = gui.create("WIText", self)
-	el:SetTooltip(name .. "_desc")
+	apply_tooltip(el, name)
 	el:SetText(default)
 	el:SizeToContents()
 	el:SetHeight(32)
 	local wrapper = el:Wrap("WIEditableEntry")
-	wrapper:SetText(name)
+	apply_text(wrapper, name)
 	if identifier ~= nil then
 		wrapper:SetName(identifier)
 		self:AddControl(identifier, el, wrapper, default)
@@ -102,9 +120,9 @@ function gui.PFMControlsMenu:AddTextEntry(name, identifier, default, callback)
 			callback(...)
 		end
 	end)
-	el:SetTooltip(name .. "_desc")
+	apply_tooltip(el, name)
 	local wrapper = el:Wrap("WIEditableEntry")
-	wrapper:SetText(name)
+	apply_text(wrapper, name)
 	if identifier ~= nil then
 		wrapper:SetName(identifier)
 		self:AddControl(identifier, el, wrapper, default)
@@ -113,12 +131,12 @@ function gui.PFMControlsMenu:AddTextEntry(name, identifier, default, callback)
 end
 function gui.PFMControlsMenu:AddToggleControl(name, identifier, checked, onChange)
 	local el = gui.create("WIToggleOption", self)
-	el:SetText(name)
+	apply_text(el, name)
 	el:SetChecked(checked)
-	el:SetTooltip(name .. "_desc")
+	apply_tooltip(el, name)
 
 	local wrapper = el:Wrap("WIEditableEntry")
-	wrapper:SetText(name)
+	apply_text(wrapper, name)
 	el:GetCheckbox():AddCallback("OnChange", function(...)
 		self:OnValueChanged(identifier, el:IsChecked())
 		if onChange ~= nil then
@@ -133,7 +151,7 @@ function gui.PFMControlsMenu:AddToggleControl(name, identifier, checked, onChang
 end
 function gui.PFMControlsMenu:AddSliderControl(name, identifier, default, min, max, onChange, stepSize, integer)
 	local slider = gui.create("WIPFMSlider", self)
-	slider:SetText(name)
+	apply_text(slider, name)
 	slider:SetRange(min, max)
 	if integer ~= nil then
 		slider:SetInteger(integer)
@@ -159,7 +177,7 @@ function gui.PFMControlsMenu:AddDropDownMenu(name, identifier, options, defaultO
 		menu:AddOption(option[2], option[1])
 	end
 	local wrapper = menu:Wrap("WIEditableEntry")
-	wrapper:SetText(name)
+	apply_text(wrapper, name)
 	menu:AddCallback("OnOptionSelected", function(...)
 		self:OnValueChanged(identifier, menu:GetOptionValue(menu:GetSelectedOption()))
 		if onChange ~= nil then
@@ -181,7 +199,7 @@ function gui.PFMControlsMenu:AddColorField(name, identifier, defaultOption, onCh
 		end
 	end)
 	local colorEntryWrapper = colorEntry:Wrap("WIEditableEntry")
-	colorEntryWrapper:SetText(name)
+	apply_text(colorEntryWrapper, name)
 	if identifier ~= nil then
 		colorEntryWrapper:SetName(identifier)
 		self:AddControl(identifier, colorEntry, colorEntryWrapper, defaultOption)
@@ -191,7 +209,7 @@ function gui.PFMControlsMenu:AddColorField(name, identifier, defaultOption, onCh
 end
 function gui.PFMControlsMenu:AddButton(name, identifier, onPress)
 	local bt = gui.create("WIPFMButton", self)
-	bt:SetText(name)
+	apply_text(bt, name)
 	if onPress ~= nil then
 		bt:AddCallback("OnPressed", onPress)
 	end

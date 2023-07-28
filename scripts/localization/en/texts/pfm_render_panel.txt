@@ -31,4 +31,6 @@ pfm_render_setting_resolution = "The resolution to use for the render. To use a 
 pfm_render_setting_ssp = "The number of samples per pixel used for rendering, higher sample counts will improve the quality of the render at the cost of increased render times."
 pfm_render_setting_supersampling_factor = "A higher supesampling factor will decrease aliasing, at the cost of increased render times."
 pfm_render_setting_tile_size = "The tile size to use for tiled rendering. A smaller tile size with reduce the amount of GPU memory required for rendering, at the cost of increased render times. Set to 0 to disable tiled rendering."
+pfm_render_settings_tiled_rendering = "Enable Tiled Rendering (Experimental)"
+pfm_render_settings_tiled_rendering_desc = "Tiled rendering allows for rendering at significantly higher resolutions, but may result with render artifacts in some cases."
 pfm_render_setting_tone_mapping = "The method used to map or adjust the tonal range of the rendered image."
