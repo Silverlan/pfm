@@ -120,6 +120,32 @@ function Element:ApplyAsset(path, importAsset)
 				self:SetText(text)
 			end
 		end
+
+		local difficulty = udmData:GetValue("difficulty", udm.TYPE_STRING)
+		if difficulty ~= nil then
+			local color = "green"
+			if difficulty == "intermediate" then
+				color = "yellow"
+			elseif difficulty == "advanced" then
+				color = "darkOrange"
+			elseif difficulty == "expert" then
+				color = "red"
+			else
+				difficulty = "beginner"
+				color = "green"
+			end
+			local elIcon = gui.create("WITexturedRect", self)
+			elIcon:SetMaterial("gui/pfm/tutorial_difficulty")
+			elIcon:SetSize(10, 10)
+			elIcon:SetColor(pfm.get_color_scheme_color(color))
+			elIcon:SetTooltip(
+				locale.get_text(
+					"pfm_tutorial_difficulty_level",
+					{ locale.get_text("pfm_tutorial_difficulty_level_" .. difficulty) }
+				)
+			)
+			self:AddIconElement("difficulty", elIcon, false)
+		end
 	else
 		self:SetMaterial("error", self:GetWidth(), self:GetHeight())
 	end

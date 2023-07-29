@@ -548,6 +548,7 @@ colScheme:SetColor("lightRed", Color.CreateFromHexColor("fca3b0"))
 colScheme:SetColor("lightGreen", Color.CreateFromHexColor("badf7b"))
 colScheme:SetColor("lightBlue", Color.CreateFromHexColor("8bc3ff"))
 colScheme:SetColor("orange", Color.CreateFromHexColor("ffc343"))
+colScheme:SetColor("darkOrange", Color.CreateFromHexColor("ff8c00"))
 
 colScheme:SetColor("turquoise", Color.CreateFromHexColor("00ffff"))
 colScheme:SetColor("yellow", Color.CreateFromHexColor("ffff00"))

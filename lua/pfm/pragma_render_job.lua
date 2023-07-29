@@ -119,6 +119,9 @@ end
 function pfm.PragmaRenderScene:GetRenderer()
 	return self.m_renderer
 end
+function pfm.get_pragma_renderer_scene()
+	return pfm.g_pragmaRendererRenderScene
+end
 function pfm.clear_pragma_renderer_scene()
 	if pfm.g_pragmaRendererRenderScene == nil then
 		return

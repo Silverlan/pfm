@@ -426,8 +426,19 @@ function gui.AssetIcon:OnRemove()
 	end
 end
 function gui.AssetIcon:RemoveIcon(identifier)
-	util.remove(self.m_icons[identifier])
+	if self.m_icons[identifier] == nil then
+		return
+	end
+	util.remove(self.m_icons[identifier].element)
 	self.m_icons[identifier] = nil
+	self:UpdateIcons()
+end
+function gui.AssetIcon:AddIconElement(identifier, el, bottomRow)
+	self:RemoveIcon(identifier)
+	self.m_icons[identifier] = {
+		element = el,
+		bottomRow = bottomRow or false,
+	}
 	self:UpdateIcons()
 end
 function gui.AssetIcon:AddIcon(identifier, icon, tooltip, clickCallback)
@@ -448,18 +459,24 @@ function gui.AssetIcon:AddIcon(identifier, icon, tooltip, clickCallback)
 			end
 		end)
 	end
-	self.m_icons[identifier] = elIcon
-	self:UpdateIcons()
+	self:AddIconElement(identifier, elIcon, true)
 	return elIcon
 end
 function gui.AssetIcon:UpdateIcons()
-	local x
-	for id, icon in pairs(self.m_icons) do
+	local x = {}
+	for id, iconData in pairs(self.m_icons) do
+		local icon = iconData.element
 		if icon:IsValid() then
-			x = x or (self:GetWidth() - icon:GetWidth() - 5)
-			icon:SetX(x)
-			icon:SetY(self:GetHeight() - icon:GetHeight() - 22)
-			x = icon:GetX() - icon:GetWidth() - 5
+			local i = iconData.bottomRow and 1 or 0
+
+			x[i] = x[i] or (self:GetWidth() - icon:GetWidth() - 5)
+			icon:SetX(x[i])
+			if iconData.bottomRow then
+				icon:SetY(self:GetHeight() - icon:GetHeight() - 22)
+			else
+				icon:SetY(4)
+			end
+			x[i] = icon:GetX() - icon:GetWidth() - 5
 		end
 	end
 end
