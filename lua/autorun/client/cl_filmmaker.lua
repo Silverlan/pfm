@@ -78,7 +78,14 @@ console.register_variable(
 	udm.TYPE_BOOLEAN,
 	true,
 	bit.bor(console.FLAG_BIT_HIDDEN),
-	"If enabled, PFM will ceck for updates on startup."
+	"If enabled, PFM will check for updates on startup."
+)
+console.register_variable(
+	"pfm_developer_mode_enabled",
+	udm.TYPE_BOOLEAN,
+	false,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"If enabled, developer features will be enabled."
 )
 
 console.register_command("pfm_bind", function(pl, key, cmd)
@@ -147,7 +154,7 @@ local function start_pfm(...)
 	local logCategories = 0
 	local logCategoriesDefined = false
 	local reload = false
-	local dev = false
+	local dev = console.get_convar_bool("pfm_developer_mode_enabled")
 	local project
 	for cmd, args in pairs(console.parse_command_arguments({ ... })) do
 		if cmd == "log" then
@@ -240,7 +247,7 @@ end)
 if console.get_convar_bool("pfm_restore") then
 	console.run("pfm_restore", "0")
 	time.create_simple_timer(0.0, function()
-		local pm = tool.open_filmmaker()
+		local pm = tool.open_filmmaker(console.get_convar_bool("pfm_developer_mode_enabled"))
 		if util.is_valid(pm) then
 			pm:RestoreProject()
 		end
