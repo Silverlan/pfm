@@ -156,6 +156,7 @@ skin["menu_item"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetColor(t.TEXT_COLOR)
 				pElement:SetFont("pfm_medium")
+				pElement:SizeToContents()
 			end,
 		},
 	},
