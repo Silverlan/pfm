@@ -533,6 +533,42 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 				end)
 				:SetName("fit_view_to_data")
 
+			local pm = tool.get_filmmaker()
+			if pm:IsDeveloperModeEnabled() then
+				pContext
+					:AddItem("Copy graph editor channel data to clipboard", function()
+						if self:IsValid() then
+							for _, graphData in ipairs(self.m_graphs) do
+								local curve = graphData.curve
+								local editorChannel = curve:GetEditorChannel()
+								util.set_clipboard_string(editorChannel:GetUdmData():ToAscii())
+							end
+						end
+					end)
+					:SetName("copy_editor_channel_data")
+
+				pContext
+					:AddItem("Copy panima channel data to clipboard", function()
+						if self:IsValid() then
+							for _, graphData in ipairs(self.m_graphs) do
+								local curve = graphData.curve
+								local panimaChannel = curve:GetPanimaChannel()
+
+								local udmData, err = udm.create("PANIMAC", 1)
+								if udmData == false then
+									return false
+								end
+
+								local assetData = udmData:GetAssetData():GetData()
+								panimaChannel:Save(assetData)
+
+								util.set_clipboard_string(udmData:GetAssetData():ToAscii())
+							end
+						end
+					end)
+					:SetName("copy_panima_channel_data")
+			end
+
 			local pItem, pSubMenuInterp = pContext:AddSubMenu(locale.get_text("pfm_graph_editor_interpolation"))
 			pItem:SetName("interpolation")
 			local esInterpolation = get_enum_set("Interpolation")
