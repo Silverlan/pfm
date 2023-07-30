@@ -8,6 +8,9 @@
 
 local Component = util.register_class("ents.PFMVrTrackedDevice", BaseEntityComponent)
 
+Component.IK_CONTROL_TYPE_HEAD = 0
+Component.IK_CONTROL_TYPE_EXTREMITY = 1
+
 Component:RegisterMember("SerialNumber", ents.MEMBER_TYPE_STRING, "", {
 	flags = ents.ComponentInfo.MemberInfo.FLAG_READ_ONLY_BIT,
 })
@@ -19,6 +22,17 @@ Component:RegisterMember("TargetActor", ents.MEMBER_TYPE_ENTITY, "", {
 Component:RegisterMember("IkControl", ents.MEMBER_TYPE_STRING, "", {
 	onChange = function(c)
 		c:UpdateIkControl()
+	end,
+})
+Component:RegisterMember("IkControlType", udm.TYPE_UINT32, 1, {
+	enumValues = {
+		["Head"] = Component.IK_CONTROL_TYPE_HEAD,
+		["Extremity"] = Component.IK_CONTROL_TYPE_EXTREMITY,
+	},
+})
+Component:RegisterMember("Offset", udm.TYPE_VECTOR3, Vector(0, 0, 0), {
+	onChange = function(self)
+		self:UpdateIkControl()
 	end,
 })
 
@@ -48,16 +62,14 @@ function Component:UpdateEffector()
 	pose:SetOrigin(tdC:GetEntity():GetPos())
 
 	local poseLocal = self.m_ikSolverC:GetEntity():GetPose():GetInverse() * pose
+	poseLocal:TranslateLocal(self.m_posOffset)
 	self.m_ikSolverC:SetMemberValue(self.m_controlPropertyIdx, poseLocal:GetOrigin())
 
 	if self.m_rotControlPropertyIdx ~= nil and self.m_controlBoneId ~= nil then
-		local twistAxis = self:GetTargetActor():GetModel():FindBoneTwistAxis(self.m_controlBoneId)
-		if twistAxis ~= nil then
-			local rotOffset = game.Model.get_twist_axis_rotation_offset(twistAxis)
-			local poseRot = pose:GetRotation() * rotOffset
+		local rotOffset = self.m_rotOffset
+		local poseRot = pose:GetRotation() * rotOffset
 
-			self.m_ikSolverC:SetMemberValue(self.m_rotControlPropertyIdx, poseRot)
-		end
+		self.m_ikSolverC:SetMemberValue(self.m_rotControlPropertyIdx, poseRot)
 	end
 
 	--[[local pos = pose:GetOrigin()
@@ -131,7 +143,11 @@ function Component:UpdateIkControl()
 	pfm.log("Updating tracked device ik control...", pfm.LOG_CATEGORY_PFM_VR)
 	self.m_ikSolverC = nil
 	self.m_controlPropertyIdx = nil
+	self.m_controlPropertyName = nil
 	self.m_rotControlPropertyIdx = nil
+	self.m_rotControlPropertyName = nil
+	self.m_posOffset = Vector()
+	self.m_rotOffset = Quaternion()
 	self.m_controlBoneId = nil
 	self.m_refPose = math.ScaledTransform()
 	self:SetTickPolicy(ents.TICK_POLICY_NEVER)
@@ -172,7 +188,9 @@ function Component:UpdateIkControl()
 	local rotPropertyName = "control/" .. ikControl .. "/rotation"
 	memberIdx = ikSolverC:GetMemberIndex(rotPropertyName)
 	self.m_rotControlPropertyIdx = memberIdx
-	self.m_rotControlPropertyName = (memberIdx ~= nil) and rotPropertyName or nil
+	if memberIdx ~= nil then
+		self.m_rotControlPropertyName = rotPropertyName
+	end
 
 	local pm = tool.get_filmmaker()
 	local actorC = targetActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
@@ -182,6 +200,7 @@ function Component:UpdateIkControl()
 		pm:MakeActorPropertyAnimated(actorC, "ec/ik_solver/" .. rotPropertyName)
 	end
 
+	self.m_posOffset = self:GetOffset()
 	local mdl = targetActor:GetModel()
 	if mdl ~= nil then
 		local ref = mdl:GetReferencePose()
@@ -189,6 +208,18 @@ function Component:UpdateIkControl()
 		if boneId ~= -1 then
 			self.m_refPose = ref:GetBonePose(boneId)
 			self.m_controlBoneId = boneId
+
+			if memberIdx ~= nil then
+				local isHead = (self:GetIkControlType() == Component.IK_CONTROL_TYPE_HEAD)
+				if isHead then
+					self.m_rotOffset = self.m_refPose:GetRotation()
+				else
+					local twistAxis = mdl:FindBoneTwistAxis(self.m_controlBoneId)
+					if twistAxis ~= nil then
+						self.m_rotOffset = game.Model.get_twist_axis_rotation_offset(twistAxis)
+					end
+				end
+			end
 		end
 	end
 
