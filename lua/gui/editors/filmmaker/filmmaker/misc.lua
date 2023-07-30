@@ -33,7 +33,7 @@ function Element:SetBuildKernels(buildKernels)
 	util.remove(self.m_kernelProgressBar)
 	if buildKernels == false then
 		util.remove(self.m_rtBuildKernels)
-		pfm.create_popup_message(locale.get_text("pfm_render_kernels_built_msg"), false)
+		-- pfm.create_popup_message(locale.get_text("pfm_render_kernels_built_msg"), false)
 	end
 	if buildKernels == false then
 		return
@@ -57,14 +57,14 @@ function Element:SetBuildKernels(buildKernels)
 		self.m_kernelProgressBar:SetProgress(f)
 	end)
 
-	pfm.create_popup_message(locale.get_text("pfm_building_render_kernels_msg"), 16)
+	-- pfm.create_popup_message(locale.get_text("pfm_building_render_kernels_msg"), 16)
 end
 function Element:CheckBuildKernels()
 	local buildingKernels = self.m_buildingKernels or false
 	if buildingKernels == false then
 		return false
 	end
-	pfm.create_popup_message(locale.get_text("pfm_wait_for_kernels"), 16)
+	-- pfm.create_popup_message(locale.get_text("pfm_wait_for_kernels"), 16)
 	return true
 end
 function Element:OpenUrlInBrowser(url)
