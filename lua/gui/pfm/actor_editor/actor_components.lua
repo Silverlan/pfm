@@ -391,7 +391,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 							-- For displaying the value in the actor editor, we want the raw
 							-- value, without any influences like math expressions.
 							local panimaC = entActor:GetComponent(ents.COMPONENT_PANIMA)
-							if panimaC ~= nil then
+							if panimaC ~= nil and ents.is_member_type_udm_type(controlData.type) then
 								local manager = panimaC:GetAnimationManager("pfm")
 								if manager ~= nil then
 									local val = panimaC:GetRawPropertyValue(manager, path, controlData.type)
