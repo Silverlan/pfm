@@ -388,6 +388,19 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 									return
 								end
 							end
+							-- For displaying the value in the actor editor, we want the raw
+							-- value, without any influences like math expressions.
+							local panimaC = entActor:GetComponent(ents.COMPONENT_PANIMA)
+							if panimaC ~= nil then
+								local manager = panimaC:GetAnimationManager("pfm")
+								if manager ~= nil then
+									local val = panimaC:GetRawPropertyValue(manager, path, controlData.type)
+									if val ~= nil then
+										return val
+									end
+								end
+							end
+							-- Property isn't animated? Just retrieve it's current value.
 							return c:GetMemberValue(memberName)
 						end
 						controlData.getMemberInfo = function()
@@ -561,7 +574,20 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 												pfm.LOG_SEVERITY_DEBUG
 											)
 										end
-										c:SetMemberValue(memberName, memberValue)
+
+										local isAnimated = false
+										local panimaC = entActor:GetComponent(ents.COMPONENT_PANIMA)
+										if panimaC ~= nil then
+											local manager = panimaC:GetAnimationManager("pfm")
+											if manager ~= nil then
+												isAnimated = panimaC:IsPropertyAnimated(manager, path)
+											end
+										end
+										-- If the property is animated, the current value will already be updated
+										-- through the animation the next time it is updated
+										if not isAnimated then
+											c:SetMemberValue(memberName, memberValue)
+										end
 										self:OnActorPropertyChanged(entActor)
 									end
 								end
