@@ -106,6 +106,12 @@ function Component:OnVrControllerButtonInput(vrC, buttonId, state)
 			end
 		end
 		return util.EVENT_REPLY_HANDLED
+	elseif buttonId == openvr.BUTTON_ID_GRIP then
+		if state == input.STATE_PRESS then
+			pfm.log("Resetting zero pose...", pfm.LOG_CATEGORY_PFM_VR)
+			openvr.reset_zero_pose(openvr.TRACKING_UNIVERSE_ORIGIN_SEATED)
+		end
+		return util.EVENT_REPLY_HANDLED
 	end
 end
 function Component:InitializeTrackedDevice(tdC)
