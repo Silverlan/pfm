@@ -38,6 +38,7 @@ function Element:OnInitialize()
 		{
 			{ "0", locale.get_text("no") },
 			{ "1", locale.get_text("yes") },
+			{ "2", locale.get_text("full") },
 		},
 		"0",
 		function()
@@ -162,6 +163,9 @@ end
 function Element:IsNsfwContentEnabled()
 	return toboolean(self.m_enableNsfwMenu:GetOptionValue(self.m_enableNsfwMenu:GetSelectedOption()))
 end
+function Element:IsFullNsfwContentEnabled()
+	return toint(self.m_enableNsfwMenu:GetOptionValue(self.m_enableNsfwMenu:GetSelectedOption())) > 1
+end
 function Element:UpdateBookmarks()
 	local enableNsfw = self:IsNsfwContentEnabled()
 
@@ -244,24 +248,26 @@ function Element:InitializeBrowser(parent, w, h)
 		if parts == nil or parts.host ~= "sfmlab.com" then
 			return
 		end
-		-- Enable "18+" and "Furry" content
-		for _, button in ipairs({ "nsfw", "furry" }) do
-			el:ExecuteJavaScript(
-				"var el = document.querySelector('[adultcontent=\"0\"]').shadowRoot.querySelector('[identifier=\""
-					.. button
-					.. "\"]');"
-					.. "var event = new MouseEvent('click', {});"
-					.. "var toggleState = el.getAttribute('togglestate');"
-					.. "if(toggleState == '0')"
-					.. "{"
-					.. "	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
-					.. "}"
-					.. "else if(toggleState == '2')"
-					.. "{"
-					.. "	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
-					.. "	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
-					.. "}"
-			)
+		if self:IsFullNsfwContentEnabled() then
+			-- Enable "18+" and "Furry" content
+			for _, button in ipairs({ "nsfw", "furry" }) do
+				el:ExecuteJavaScript(
+					"var el = document.querySelector('[adultcontent=\"0\"]').shadowRoot.querySelector('[identifier=\""
+						.. button
+						.. "\"]');"
+						.. "var event = new MouseEvent('click', {});"
+						.. "var toggleState = el.getAttribute('togglestate');"
+						.. "if(toggleState == '0')"
+						.. "{"
+						.. "	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
+						.. "}"
+						.. "else if(toggleState == '2')"
+						.. "{"
+						.. "	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
+						.. "	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
+						.. "}"
+				)
+			end
 		end
 	end)
 	el:AddCallback("OnDownloadUpdate", function(el, id, state, percentage)
