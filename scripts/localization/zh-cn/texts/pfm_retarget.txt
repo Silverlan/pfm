@@ -1,0 +1,5 @@
+pfm_bone_retargeting = "动画重定向"
+pfm_edit_retarget_rig = "编辑重定向骨骼"
+pfm_impostee_model = "模型冒牌者"
+pfm_imposter_model = "骗子模型"
+pfm_retarget_auto = "自动重新定位"

@@ -1,0 +1,2 @@
+pfm_loading = "加载中..."
+pfm_loading_map = "加载地图 '{0}'..."

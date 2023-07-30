@@ -1,0 +1,5 @@
+pfm_popup_create_actor_no_film_clip = "无法创建角色：未选择任何电影剪辑！"
+pfm_popup_failed_to_import_lightmaps = "无法导入光照贴图：{0} 未找到！"
+pfm_popup_failed_to_transform_keyframe = "无法转换属性{0}的关键帧"
+pfm_popup_no_lightmap = "未找到光照贴图！光照将不完整。"
+pfm_popup_no_reflection_probe = "找不到反射探针！反射效果将不正确。"
