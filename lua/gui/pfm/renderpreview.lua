@@ -954,6 +954,7 @@ function gui.PFMRenderPreview:InitializePragmaRendererControls(p, settings)
 	)
 	self.m_ctrlSsFactor = ctrl
 	wrapper:SetTooltip(locale.get_text("pfm_render_setting_supersampling_factor"))
+	pragmaRendererOptions:LinkToUDMProperty("super_sampling_factor", settings, "supersamplingFactor")
 
 	local elText, wrapper = pragmaRendererOptions:AddTextEntry(
 		pfm.LocStr("pfm_tile_size_pragma"),
