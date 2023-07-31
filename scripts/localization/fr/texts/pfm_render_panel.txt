@@ -32,3 +32,5 @@ pfm_render_setting_ssp = "Le nombre d'échantillons par pixel utilisés pour le 
 pfm_render_setting_supersampling_factor = "Un facteur de suréchantillonnage plus élevé réduira l'aliasing, au prix d'un temps de rendu accru."
 pfm_render_setting_tile_size = "La taille de la tuile à utiliser pour le rendu en mosaïque. Une taille de tuile plus petite réduira la quantité de mémoire GPU requise pour le rendu, au détriment d'un temps de rendu accru. Réglez sur 0 pour désactiver le rendu en mosaïque."
 pfm_render_setting_tone_mapping = "La méthode utilisée pour cartographier ou ajuster la gamme tonale de l'image rendue."
+pfm_render_settings_tiled_rendering = "Activer le Rendu en Tuiles (Expérimental)"
+pfm_render_settings_tiled_rendering_desc = "Le rendu par tuiles permet de réaliser des rendus à des résolutions beaucoup plus élevées, mais cela peut entraîner des artefacts de rendu dans certains cas."

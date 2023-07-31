@@ -32,3 +32,5 @@ pfm_render_setting_ssp = "Die Anzahl der Proben pro Pixel, die für das Rendern 
 pfm_render_setting_supersampling_factor = "Ein höherer Supersampling-Faktor verringert das Aliasing, erhöht jedoch die Renderzeit."
 pfm_render_setting_tile_size = "Die Kachelgröße, die für das kachelbasierte Rendern verwendet wird. Eine kleinere Kachelgröße verringert den benötigten GPU-Speicher für das Rendern, erhöht jedoch die Renderzeit. Setzen Sie den Wert auf 0, um das kachelbasierte Rendern zu deaktivieren."
 pfm_render_setting_tone_mapping = "Die Methode, die zur Zuordnung oder Anpassung des Tonwertbereichs des gerenderten Bildes verwendet wird."
+pfm_render_settings_tiled_rendering = "Aktivieren Sie kachelbasiertes Rendern (Experimentell)"
+pfm_render_settings_tiled_rendering_desc = "Fliesenbasiertes Rendern ermöglicht das Rendern mit deutlich höheren Auflösungen, kann aber in einigen Fällen zu Rendierartefakten führen."

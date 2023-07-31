@@ -32,3 +32,5 @@ pfm_render_setting_ssp = "レンダリングに使用されるピクセルあた
 pfm_render_setting_supersampling_factor = "スーパーサンプリングファクターを高く設定すると、エイリアシングが減少しますが、レンダリング時間が増加します。"
 pfm_render_setting_tile_size = "タイルレンダリングに使用するタイルのサイズです。タイルサイズを小さくすると、レンダリングに必要なGPUメモリの量が減少しますが、レンダリング時間が増加します。タイルレンダリングを無効にするには、0に設定します。"
 pfm_render_setting_tone_mapping = "レンダリングされたイメージのトーン範囲をマップまたは調整するために使用される方法。"
+pfm_render_settings_tiled_rendering = "タイルレンダリングを有効にする（実験的）"
+pfm_render_settings_tiled_rendering_desc = "タイルレンダリングは、非常に高い解像度でレンダリングすることができますが、場合によってはレンダーアーティファクトが生じる可能性があります。"

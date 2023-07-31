@@ -32,3 +32,5 @@ pfm_render_setting_ssp = "El número de muestras por píxel utilizadas para el r
 pfm_render_setting_supersampling_factor = "Un factor de supersampling más alto disminuirá el aliasing, a costa de incrementar los tiempos de renderización."
 pfm_render_setting_tile_size = "El tamaño del azulejo para usar en la representación en mosaico. Un tamaño de azulejo más pequeño reducirá la cantidad de memoria de GPU requerida para la representación, a costa de tiempos de renderizado más largos. Establecer en 0 para desactivar la representación en mosaico."
 pfm_render_setting_tone_mapping = "El método utilizado para mapear o ajustar el rango tonal de la imagen renderizada."
+pfm_render_settings_tiled_rendering = "Habilitar Renderizado en Mosaico (Experimental)"
+pfm_render_settings_tiled_rendering_desc = "El renderizado en mosaico permite renderizar a resoluciones significativamente más altas, pero puede resultar en artefactos de renderizado en algunos casos."
