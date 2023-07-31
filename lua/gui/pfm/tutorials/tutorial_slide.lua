@@ -14,11 +14,11 @@ local Element = util.register_class("gui.TutorialSlide", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 64)
 	self.m_highlights = {}
 	self.m_namedHighlights = {}
 	self.m_messageBoxes = {}
 	self.m_viewportTargets = {}
+	self:SetSize(64, 64)
 
 	self.m_cbAudioEnabled = console.add_change_callback("pfm_tutorial_audio_enabled", function(old, new)
 		self:UpdateAudio()
@@ -297,6 +297,19 @@ function Element:UpdateCurrentSlideText(currentSlideIndex, totalSlideCount)
 	self.m_elCurSlide:SetText(tostring(currentSlideIndex + 1) .. "/" .. tostring(totalSlideCount))
 	self.m_elCurSlide:SizeToContents()
 end
+function Element:OnSizeChanged(w, h)
+	for _, msgBoxInfo in ipairs(self.m_messageBoxes) do
+		if msgBoxInfo.element:IsValid() then
+			local fw = (msgBoxInfo.frameSize.x > 0) and (w / msgBoxInfo.frameSize.x) or 0
+			local fh = (msgBoxInfo.frameSize.y > 0) and (h / msgBoxInfo.frameSize.y) or 0
+			local pos = msgBoxInfo.element:GetPos()
+			pos.x = pos.x * fw
+			pos.y = pos.y * fh
+			msgBoxInfo.element:SetPos(pos)
+			msgBoxInfo.frameSize = Vector2i(w, h)
+		end
+	end
+end
 function Element:AddMessageBox(msg, audioFile)
 	local elTgt
 	local numHighlights = #self.m_highlights + #self.m_namedHighlights
@@ -322,7 +335,11 @@ function Element:AddMessageBox(msg, audioFile)
 	elBox:SetWidth(el:GetWidth())
 	elBox:SetShowCloseButton(false)
 	--elBox:SetSize(el:GetSize())
-	table.insert(self.m_messageBoxes, vbox)
+	table.insert(self.m_messageBoxes, {
+		vbox = vbox,
+		element = el,
+		frameSize = self:GetSize(),
+	})
 
 	elBox:SetSkinCallbacksEnabled(true)
 	elBox:AddCallback("OnSkinApplied", function()

@@ -194,6 +194,7 @@ Element.start_tutorial = function(identifier)
 	Element.tutorial_element = elTut
 	Element.tutorial_identifier = identifier
 	elTut:SetSize(pm:GetWidth(), pm:GetHeight())
+	elTut:SetAnchor(0, 0, 1, 1)
 	elTut:SetZPos(10000)
 	fc(elTut, pm)
 end
