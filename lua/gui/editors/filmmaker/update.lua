@@ -10,61 +10,40 @@ local Element = gui.WIFilmmaker
 
 pfm.register_log_category("update")
 
-function Element:CheckForUpdates(verbose)
+pfm.UPDATE_CHECK_RESULT_NO_UPDATE_AVAILABLE = 0
+pfm.UPDATE_CHECK_RESULT_UPDATE_AVAILABLE = 1
+pfm.UPDATE_CHECK_RESULT_FAILED = 2
+pfm.check_for_updates = function(callback)
 	local r = engine.load_library("git/pr_git")
 	if r ~= true then
-		pfm.log("Failed to load pr_git module: " .. r, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		callback(pfm.UPDATE_CHECK_RESULT_FAILED, "Failed to load pr_git module: " .. r)
 		return
 	end
 
 	local res, err = git.get_remote_tags("https://github.com/Silverlan/pragma.git")
 	if res == false then
-		pfm.log("Failed to retrieve remote tags: " .. err, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		callback(pfm.UPDATE_CHECK_RESULT_FAILED, "Failed to retrieve remote tags: " .. err)
 		return
-	end
-
-	local function download_update(updateUrl, fileName)
-		pfm.open_message_prompt(
-			locale.get_text("pfm_new_update_available"),
-			locale.get_text("pfm_update_available_download_now"),
-			bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
-			function(bt)
-				if bt == gui.PfmPrompt.BUTTON_YES then
-					self:DownloadUpdate(updateUrl .. "/" .. fileName)
-					pfm.create_popup_message(locale.get_text("pfm_update_info"), 6)
-				end
-			end
-		)
 	end
 
 	local enableExperimental = console.get_convar_bool("pfm_enable_experimental_updates")
 	if enableExperimental then
 		local gitInfo = engine.get_git_info()
 		local newVersionAvailable = false
+		local versionSha
 		for _, tagInfo in ipairs(res) do
 			if tagInfo.tagName == "nightly" then
 				if gitInfo == nil or tagInfo.sha ~= gitInfo.commitSha then
 					newVersionAvailable = true
+					versionSha = tagInfo.sha
 				end
 				break
 			end
 		end
 		if newVersionAvailable then
-			local updateUrl = "https://github.com/Silverlan/pragma/releases/download/nightly"
-			local fileName = "pragma"
-			if os.SYSTEM_WINDOWS then
-				fileName = fileName .. ".zip"
-			else
-				fileName = fileName .. ".tar.gz"
-			end
-			download_update(updateUrl, fileName)
-		elseif verbose then
-			pfm.create_popup_message(
-				locale.get_text(
-					"pfm_up_to_date",
-					{ (gitInfo ~= nil) and gitInfo.commitSha or locale.get_text("unknown") }
-				)
-			)
+			callback(pfm.UPDATE_CHECK_RESULT_UPDATE_AVAILABLE, true, versionSha)
+		else
+			callback(pfm.UPDATE_CHECK_RESULT_NO_UPDATE_AVAILABLE, true, (gitInfo ~= nil) and gitInfo.commitSha or nil)
 		end
 		return
 	end
@@ -81,18 +60,64 @@ function Element:CheckForUpdates(verbose)
 
 	local curVersion = engine.get_info().version
 	if highestVersion > curVersion then
-		-- New version available!
-		local updateUrl = "https://github.com/Silverlan/pragma/releases/download/v" .. highestVersion:ToString()
-		local fileName
-		if os.SYSTEM_WINDOWS then
-			fileName = "pragma-v" .. highestVersion:ToString() .. "-win64.zip"
-		else
-			fileName = "pragma-v" .. highestVersion:ToString() .. "-lin64.tar.gz"
-		end
-		download_update(updateUrl, fileName)
-	elseif verbose then
-		pfm.create_popup_message(locale.get_text("pfm_up_to_date", { pfm.VERSION:ToString() }))
+		callback(pfm.UPDATE_CHECK_RESULT_UPDATE_AVAILABLE, false, highestVersion)
+	else
+		callback(pfm.UPDATE_CHECK_RESULT_NO_UPDATE_AVAILABLE)
 	end
+end
+
+function Element:CheckForUpdates(verbose)
+	local function download_update(updateUrl, fileName)
+		pfm.open_message_prompt(
+			locale.get_text("pfm_new_update_available"),
+			locale.get_text("pfm_update_available_download_now"),
+			bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
+			function(bt)
+				if bt == gui.PfmPrompt.BUTTON_YES then
+					self:DownloadUpdate(updateUrl .. "/" .. fileName)
+					pfm.create_popup_message(locale.get_text("pfm_update_info"), 6)
+				end
+			end
+		)
+	end
+	pfm.check_for_updates(function(resultCode, ...)
+		if resultCode == pfm.UPDATE_CHECK_RESULT_NO_UPDATE_AVAILABLE then
+			local experimental, sha = ...
+			if verbose then
+				if experimental then
+					pfm.create_popup_message(locale.get_text("pfm_up_to_date", { sha or locale.get_text("unknown") }))
+				else
+					pfm.create_popup_message(locale.get_text("pfm_up_to_date", { pfm.VERSION:ToString() }))
+				end
+			end
+		elseif resultCode == pfm.UPDATE_CHECK_RESULT_UPDATE_AVAILABLE then
+			local experimental = ...
+			if experimental then
+				local updateUrl = "https://github.com/Silverlan/pragma/releases/download/nightly"
+				local fileName = "pragma"
+				if os.SYSTEM_WINDOWS then
+					fileName = fileName .. ".zip"
+				else
+					fileName = fileName .. ".tar.gz"
+				end
+				download_update(updateUrl, fileName)
+			else
+				local newVersion = select(2, ...)
+				-- New version available!
+				local updateUrl = "https://github.com/Silverlan/pragma/releases/download/v" .. newVersion:ToString()
+				local fileName
+				if os.SYSTEM_WINDOWS then
+					fileName = "pragma-v" .. newVersion:ToString() .. "-win64.zip"
+				else
+					fileName = "pragma-v" .. newVersion:ToString() .. "-lin64.tar.gz"
+				end
+				download_update(updateUrl, fileName)
+			end
+		elseif resultCode == pfm.UPDATE_CHECK_RESULT_FAILED then
+			local msg = ...
+			pfm.log(msg, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		end
+	end)
 end
 
 local function download_file(url, resultHandler, progressHandler, timeout)
