@@ -422,7 +422,8 @@ function pfm.AnimationManager:UpdateKeyframe(actor, path, panimaChannel, keyIdx,
 	end
 end
 
-function pfm.AnimationManager:SetChannelValue(actor, path, time, value, udmType, addKey, baseIndex, keyframeValue)
+function pfm.AnimationManager:SetChannelValue(actor, path, time, value, udmType, addKey, baseIndex, keyframeValue, data)
+	data = data or {}
 	if addKey == nil then
 		addKey = true
 	end
@@ -438,7 +439,7 @@ function pfm.AnimationManager:SetChannelValue(actor, path, time, value, udmType,
 			end
 		end
 		for i = 0, numComponents - 1 do
-			self:SetChannelValue(actor, path, time, value, udmType, addKey, i, keyframeValue)
+			self:SetChannelValue(actor, path, time, value, udmType, addKey, i, keyframeValue, data)
 		end
 		return
 	end
@@ -490,19 +491,37 @@ function pfm.AnimationManager:SetChannelValue(actor, path, time, value, udmType,
 	local idx = channel:AddValue(time, value)
 	anim:UpdateDuration()
 
-	local keyIdx
+	local keyIndex
 	if addKey then
 		local editorData = animClip:GetEditorData()
 		local editorChannel = editorData:FindChannel(path, true)
 
 		local keyData
-		keyData, keyIndex = editorChannel:AddKey(time, baseIndex)
-		keyData:SetValue(keyIndex, udm.get_numeric_component(keyframeValue or value, baseIndex))
+		keyData, keyIndex = editorChannel:AddKey(time, baseIndex or 0)
+		keyData:SetValue(keyIndex, udm.get_numeric_component(keyframeValue or value, baseIndex or 0))
 
-		keyData:SetInTime(keyIndex, -0.5)
-		keyData:SetInDelta(keyIndex, 0.0)
-		keyData:SetOutTime(keyIndex, 0.5)
-		keyData:SetOutDelta(keyIndex, 0.0)
+		local function get_dt(key, ref)
+			if data[key] == nil then
+				return
+			end
+			return data[key] - ref
+		end
+		local inTime = get_dt("inTime", time) or -0.5
+		local inDelta = get_dt("inDelta", value) or 0.0
+		local outTime = get_dt("outTime", time) or 0.5
+		local outDelta = get_dt("outDelta", value) or 0.0
+
+		if data["inHandleType"] ~= nil then
+			keyData:SetInHandleType(keyIndex, data["inHandleType"])
+		end
+		if data["outHandleType"] ~= nil then
+			keyData:SetOutHandleType(keyIndex, data["outHandleType"])
+		end
+
+		keyData:SetInTime(keyIndex, inTime)
+		keyData:SetInDelta(keyIndex, inDelta)
+		keyData:SetOutTime(keyIndex, outTime)
+		keyData:SetOutDelta(keyIndex, outDelta)
 	end
 
 	local udmChannel = animClip:GetChannel(path, udmType)
@@ -639,4 +658,114 @@ function pfm.AnimationManager:SetCurveRangeChannelValueCount(
 	end
 
 	return self:SetCurveChannelValueCount(actor, path, startIndex, endIndex, numValues, suppressCallback, true)
+end
+
+function pfm.AnimationManager:SetRawAnimationData(actor, path, times, values, valueType)
+	if #times > 1 then
+		local anim, actorChannel, animClip = self:FindAnimationChannel(actor, path)
+		if actorChannel ~= nil then
+			-- Clear all previous values for the recorded time range
+			local tFirst = times[1]
+			local tLast = times[#times]
+			local idxStart, idxEnd = actorChannel:FindIndexRangeInTimeRange(tFirst, tLast)
+			if idxStart ~= nil and idxEnd > idxStart then
+				local n = (idxEnd - idxStart) + 1
+				self:SetCurveChannelValueCount(actor, path, idxStart, idxEnd, 0, true)
+			end
+		end
+	end
+	for i = 1, #times do
+		local t = times[i]
+		local v = values[i]
+		self:SetChannelValue(actor, path, t, v, valueType, false, nil)
+	end
+	self:SetAnimationDirty(actor)
+	self:CallCallbacks("OnActorPropertyChanged", actor, path)
+end
+
+function pfm.AnimationManager:TestSetRawAnimationData(actor, path, times, values, valueType)
+	local t = {}
+	local minTime = math.huge
+	local maxTime = -math.huge
+	local minVal = math.huge
+	local maxVal = -math.huge
+	for i = 1, #times do
+		local v = Vector2(times[i], values[i])
+		minTime = math.min(minTime, times[i])
+		maxTime = math.max(maxTime, times[i])
+		minVal = math.min(minVal, values[i])
+		maxVal = math.max(maxVal, values[i])
+		table.insert(t, v)
+	end
+
+	t = {
+		Vector2(0, 92.537322998047),
+		Vector2(1.9304947853088, 74.62686920166),
+		Vector2(5.0193061828613, 61.194026947021),
+		Vector2(11.196907997131, 50.746265411377),
+		Vector2(18.146718978882, 47.761192321777),
+		Vector2(25.868721008301, 47.761192321777),
+		Vector2(33.204639434814, 49.253719329834),
+		Vector2(45.173748016357, 59.70149230957),
+		Vector2(50.965244293213, 65.671646118164),
+		Vector2(55.598457336426, 74.62686920166),
+		Vector2(59.845546722412, 85.07462310791),
+		Vector2(65.637069702148, 94.029846191406),
+		Vector2(69.884162902832, 97.014923095703),
+		Vector2(79.922775268555, 100),
+		Vector2(86.100395202637, 97.014923095703),
+		Vector2(90.733581542969, 86.567169189453),
+		Vector2(94.98070526123, 73.134315490723),
+		Vector2(97.297294616699, 52.238796234131),
+		Vector2(98.455596923828, 40.298503875732),
+		Vector2(99.227783203125, 4.4776029586792),
+		Vector2(100, 0),
+	}
+	local minTime = math.huge
+	local maxTime = -math.huge
+	local minVal = math.huge
+	local maxVal = -math.huge
+	for _, v in ipairs(t) do
+		minTime = math.min(minTime, v.x)
+		maxTime = math.max(maxTime, v.x)
+		minVal = math.min(minVal, v.y)
+		maxVal = math.max(maxVal, v.y)
+	end
+
+	-- math.test only works properly in large value ranges, so we temporarily remap
+	local remapScale = 100.0
+	for i, v in ipairs(t) do
+		v.x = math.remap(v.x, minTime, maxTime, 0.0, remapScale)
+		v.y = math.remap(v.y, minVal, maxVal, 0.0, remapScale)
+	end
+	print("t = {")
+	for _, x in ipairs(t) do
+		print("Vector2(" .. x.x .. "," .. x.y .. "),")
+	end
+	print("}")
+
+	local error = 8
+	local result = math.test(t, error)
+	for i, bc in ipairs(result) do
+		for j = 1, 4 do
+			bc[j].x = math.remap(bc[j].x, 0.0, remapScale, minTime, maxTime)
+			bc[j].y = math.remap(bc[j].y, 0.0, remapScale, minVal, maxVal)
+		end
+	end
+	for _, bc in ipairs(result) do
+		local p0 = bc[1]
+		local h0 = bc[2]
+		local h1 = bc[3]
+		local p1 = bc[4]
+		self:SetChannelValue(actor, path, p0.x, p0.y, valueType, true, nil, nil, {
+			["outTime"] = h0.x,
+			["outDelta"] = h0.y,
+			["outHandleType"] = pfm.udm.KEYFRAME_HANDLE_TYPE_FREE,
+		})
+		self:SetChannelValue(actor, path, p1.x, p1.y, valueType, true, nil, nil, {
+			["inTime"] = h1.x,
+			["inDelta"] = h1.y,
+			["inHandleType"] = pfm.udm.KEYFRAME_HANDLE_TYPE_FREE,
+		})
+	end
 end

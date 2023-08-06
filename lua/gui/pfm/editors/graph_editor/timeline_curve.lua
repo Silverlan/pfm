@@ -87,7 +87,7 @@ function gui.PFMTimelineCurve:BuildCurve(curveValues, animClip, channel, curveIn
 					el:SetSelected(true)
 					self.m_selectedDataPoint = el
 				end
-				el:SetMoveModeEnabled(state == input.STATE_PRESS, 5)
+				self:GetTimelineGraph():SetDataPointMoveModeEnabled({ el }, state == input.STATE_PRESS, 5)
 				return util.EVENT_REPLY_HANDLED
 			end
 		end)
@@ -142,7 +142,17 @@ end
 function gui.PFMTimelineCurve:GetDataPoints()
 	return self.m_dataPoints
 end
-function gui.PFMTimelineCurve:UpdateCurveValue(i, xVal, yVal)
+function gui.PFMTimelineCurve:FindDataPoint(t)
+	for _, dp in ipairs(self.m_dataPoints) do
+		if dp:IsValid() then
+			local dt = math.abs(dp:GetTime() - t)
+			if dt <= pfm.udm.EditorChannelData.TIME_EPSILON then
+				return dp
+			end
+		end
+	end
+end
+function gui.PFMTimelineCurvefUpdateCurveValue(i, xVal, yVal)
 	self.m_curve:UpdateCurveValue(i, xVal, yVal)
 	self:UpdateDataPoints(i + 1)
 end

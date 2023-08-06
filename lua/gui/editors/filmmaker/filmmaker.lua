@@ -410,6 +410,14 @@ function gui.WIFilmmaker:OnInitialize()
 			actorEditor:SetPropertyAnimationOverlaysDirty()
 		end
 	end)
+	self:GetAnimationManager():AddCallback("OnActorPropertyChanged", function(actor, path)
+		pfm.tag_render_scene_as_dirty()
+
+		local actorEditor = self:GetActorEditor()
+		if util.is_valid(actorEditor) then
+			actorEditor:UpdateActorProperty(actor, path)
+		end
+	end)
 
 	local udmNotifications = self.m_settings:Get("notifications")
 	if (udmNotifications:GetValue("initial_tutorial_message", udm.TYPE_BOOLEAN) or false) == false then
@@ -1016,7 +1024,7 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 		return bm
 	end
 	self.m_timeline:AddBookmark(bm)
-	return bm
+	return bm, newBookmark
 end
 function gui.WIFilmmaker:SetTimeOffset(offset)
 	gui.WIBaseFilmmaker.SetTimeOffset(self, offset)

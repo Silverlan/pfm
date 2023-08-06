@@ -156,18 +156,16 @@ function gui.PFMTimelineDataPoint:SetKeyIndex(index)
 	self.m_graphData.keyIndex = index
 end
 function gui.PFMTimelineDataPoint:GetTime()
-	local graphData = self.m_graphData
-	local timelineCurve = graphData.timelineCurve
-	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
-	local editorKeys = timelineCurve:GetEditorKeys()
+	local editorKeys, keyIndex = self:GetEditorKeys()
 	return editorKeys:GetTime(keyIndex)
 end
 function gui.PFMTimelineDataPoint:GetValue()
-	local graphData = self.m_graphData
-	local timelineCurve = graphData.timelineCurve
-	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
-	local editorKeys = timelineCurve:GetEditorKeys()
+	local editorKeys, keyIndex = self:GetEditorKeys()
 	return editorKeys:GetValue(keyIndex)
+end
+function gui.PFMTimelineDataPoint:GetValueType()
+	local editorKeys, keyIndex = self:GetEditorKeys()
+	return editorKeys:GetValueArrayValueType()
 end
 function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
 	local graphData = self.m_graphData
@@ -216,7 +214,7 @@ end
 function gui.PFMTimelineDataPoint:GetGraphCurve()
 	return self.m_graphData.timelineCurve
 end
-function gui.PFMTimelineDataPoint:OnMoved(newPos)
+function gui.PFMTimelineDataPoint:MoveToPosition(time, value)
 	local graphData = self.m_graphData
 	local timelineCurve = graphData.timelineCurve
 	local pm = pfm.get_project_manager()
@@ -224,9 +222,7 @@ function gui.PFMTimelineDataPoint:OnMoved(newPos)
 
 	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
 	-- TODO: Merge this with PFMTimelineDataPoint:UpdateTextFields()
-	local newValue = timelineCurve
-		:GetCurve()
-		:CoordinatesToValues(newPos.x + self:GetWidth() / 2.0, newPos.y + self:GetHeight() / 2.0)
+	local newValue = Vector2(time, value)
 	newValue = { newValue.x, newValue.y }
 	newValue[1] = math.snap_to_gridf(newValue[1], 1.0 / pm:GetFrameRate()) -- TODO: Only if snap-to-grid is enabled
 	newValue[2] = math.round(newValue[2] * 100.0) / 100.0 -- TODO: Make round precision dependent on animation property
@@ -253,6 +249,15 @@ function gui.PFMTimelineDataPoint:OnMoved(newPos)
 		self:GetTypeComponentIndex()
 	)
 end
+function gui.PFMTimelineDataPoint:MoveToCoordinates(x, y)
+	local graphData = self.m_graphData
+	local timelineCurve = graphData.timelineCurve
+	local v = timelineCurve:GetCurve():CoordinatesToValues(x + self:GetWidth() / 2.0, y + self:GetHeight() / 2.0)
+	self:MoveToPosition(v.x, v.y)
+end
+function gui.PFMTimelineDataPoint:OnMoved(newPos)
+	self:MoveToCoordinates(newPos.x, newPos.y)
+end
 function gui.PFMTimelineDataPoint:GetChannelValueData()
 	local graphData = self.m_graphData
 	local timelineCurve = graphData.timelineCurve
@@ -269,6 +274,10 @@ function gui.PFMTimelineDataPoint:SetSelected(selected, keepTangentControlSelect
 		util.remove(self.m_tangentControl)
 	end
 	gui.PFMDataPointControl.SetSelected(self, selected)
+end
+function gui.PFMTimelineDataPoint:OnMoveStarted(startData)
+	startData.startTime = self:GetTime()
+	startData.startValue = self:GetValue()
 end
 function gui.PFMTimelineDataPoint:GetTypeComponentIndex()
 	return self.m_graphData.timelineCurve:GetTypeComponentIndex()
@@ -302,3 +311,38 @@ function gui.PFMTimelineDataPoint:UpdateSelection(elSelectionRect)
 	return hasSelection
 end
 gui.register("WIPFMTimelineDataPoint", gui.PFMTimelineDataPoint)
+
+util.register_class("gui.PFMTimelineDataPointReference")
+function gui.PFMTimelineDataPointReference:__init(dp)
+	local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+	self.m_actor = actor:GetUniqueId()
+	self.m_targetPath = targetPath
+	self.m_time = dp:GetTime()
+	self.m_value = dp:GetValue()
+	self.m_valueType = dp:GetValueType()
+	self.m_typeComponentIndex = dp:GetTypeComponentIndex()
+end
+
+function gui.PFMTimelineDataPointReference:GetActorUuid()
+	return self.m_actor
+end
+
+function gui.PFMTimelineDataPointReference:GetPropertyPath()
+	return self.m_targetPath
+end
+
+function gui.PFMTimelineDataPointReference:GetTime()
+	return self.m_time
+end
+
+function gui.PFMTimelineDataPointReference:GetValue()
+	return self.m_value
+end
+
+function gui.PFMTimelineDataPointReference:GetValueType()
+	return self.m_valueType
+end
+
+function gui.PFMTimelineDataPointReference:GetTypeComponentIndex()
+	return self.m_typeComponentIndex
+end

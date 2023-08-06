@@ -14,7 +14,6 @@ include("/gui/pfm/cursor_tracker.lua")
 include("/gui/selectionrect.lua")
 include("/gui/timelinestrip.lua")
 include("/graph_axis.lua")
-include("graph_editor")
 include("key.lua")
 include("easing.lua")
 
@@ -42,6 +41,8 @@ end
 ----------------
 
 util.register_class("gui.PFMTimelineGraph", gui.Base)
+
+include("graph_editor")
 
 gui.PFMTimelineGraph.CURSOR_MODE_SELECT = 0
 gui.PFMTimelineGraph.CURSOR_MODE_MOVE = 1
@@ -340,17 +341,103 @@ function gui.PFMTimelineGraph:RemoveDataPoint(dp)
 	local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
 	self:RemoveKeyframe(actor, targetPath, dp:GetTypeComponentIndex(), keyIndex)
 end
+function gui.PFMTimelineGraph:GetFilmClip()
+	local pm = tool.get_filmmaker()
+	local actorEditor = pm:GetActorEditor()
+	return actorEditor:GetFilmClip()
+end
 function gui.PFMTimelineGraph:KeyboardCallback(key, scanCode, state, mods)
 	if key == input.KEY_DELETE then
 		if state == input.STATE_PRESS then
 			local dps = self:GetSelectedDataPoints(false, true)
-			-- Need to delete in reverse order (with highest index first), otherwise the value indices could change while we're deleting
-			table.sort(dps, function(a, b)
-				return a:GetKeyIndex() > b:GetKeyIndex()
-			end)
+			local dpsData = {}
 			for _, dp in ipairs(dps) do
-				self:RemoveDataPoint(dp)
+				table.insert(dpsData, gui.PFMTimelineDataPointReference(dp))
 			end
+			pfm.undoredo.push("pfm_undoredo_delete_keyframes", function()
+				local session = tool.get_filmmaker():GetSession()
+				local filmClip = session:GetActiveClip()
+				pfm.log("Deleting " .. #dpsData .. " keyframes...", pfm.LOG_CATEGORY_PFM)
+				for _, dpRef in ipairs(dpsData) do
+					local actor = filmClip:FindActorByUniqueId(tostring(dpRef:GetActorUuid()))
+					if actor ~= nil then
+						local graphData =
+							self:FindGraphData(actor, dpRef:GetPropertyPath(), dpRef:GetTypeComponentIndex())
+						if graphData ~= nil and util.is_valid(graphData.curve) then
+							local dp = graphData.curve:FindDataPoint(dpRef:GetTime())
+							if util.is_valid(dp) then
+								self:RemoveDataPoint(dp)
+							else
+								pfm.log(
+									"Failed to delete keyframe for '"
+										.. dpRef:GetPropertyPath()
+										.. "' of actor '"
+										.. tostring(dpRef:GetActorUuid())
+										.. "' at timestamp '"
+										.. dpRef:GetTime()
+										.. "': No keyframe found at this timestamp!",
+									pfm.LOG_CATEGORY_PFM,
+									pfm.LOG_SEVERITY_WARNING
+								)
+							end
+						else
+							pfm.log(
+								"Failed to delete keyframe for '"
+									.. dpRef:GetPropertyPath()
+									.. "' of actor '"
+									.. tostring(dpRef:GetActorUuid())
+									.. "' at timestamp '"
+									.. dpRef:GetTime()
+									.. "': Graph for type component index "
+									.. dpRef:GetTypeComponentIndex()
+									.. " not found!",
+								pfm.LOG_CATEGORY_PFM,
+								pfm.LOG_SEVERITY_WARNING
+							)
+						end
+					else
+						pfm.log(
+							"Failed to delete keyframe for '"
+								.. dpRef:GetPropertyPath()
+								.. "' at timestamp '"
+								.. dpRef:GetTime()
+								.. "': Actor '"
+								.. tostring(dpRef:GetActorUuid())
+								.. "' not found!",
+							pfm.LOG_CATEGORY_PFM,
+							pfm.LOG_SEVERITY_WARNING
+						)
+					end
+				end
+			end, function()
+				local session = tool.get_filmmaker():GetSession()
+				local filmClip = session:GetActiveClip()
+				for _, dpRef in ipairs(dpsData) do
+					local actor = filmClip:FindActorByUniqueId(tostring(dpRef:GetActorUuid()))
+					if actor ~= nil then
+						pfm.get_project_manager():SetActorAnimationComponentProperty(
+							actor,
+							dpRef:GetPropertyPath(),
+							dpRef:GetTime(),
+							dpRef:GetValue(),
+							dpRef:GetValueType(),
+							dpRef:GetTypeComponentIndex()
+						)
+					else
+						pfm.log(
+							"Failed to create keyframe for '"
+								.. dpRef:GetPropertyPath()
+								.. "' at timestamp '"
+								.. dpRef:GetTime()
+								.. "': Actor '"
+								.. tostring(dpRef:GetActorUuid())
+								.. "' not found!",
+							pfm.LOG_CATEGORY_PFM,
+							pfm.LOG_SEVERITY_WARNING
+						)
+					end
+				end
+			end)()
 		end
 		return util.EVENT_REPLY_HANDLED
 	elseif key == input.KEY_1 then
@@ -435,18 +522,93 @@ function gui.PFMTimelineGraph:SetCursorTrackerEnabled(enabled)
 		self:DisableThinking()
 	end
 end
+function gui.PFMTimelineGraph:SetDataPointMoveModeEnabled(dataPoints, enabled, moveThreshold)
+	local filmClip = self:GetFilmClip()
+	if enabled then
+		self.m_dataPointMoveInfo = {}
+		for _, dp in ipairs(dataPoints) do
+			dp:SetMoveModeEnabled(enabled, moveThreshold)
+			table.insert(self.m_dataPointMoveInfo, {
+				filmClip = pfm.reference(filmClip),
+				keyIndex = dp:GetKeyIndex(),
+				time = dp:GetTime(),
+				value = dp:GetValue(),
+				dpRef = gui.PFMTimelineDataPointReference(dp),
+				dataPoint = dp,
+			})
+		end
+	else
+		local initialDataPointPositions = table.copy(self.m_dataPointMoveInfo)
+		self.m_dataPointMoveInfo = nil
+		for i = #initialDataPointPositions, 1, -1 do
+			local dpInfo = initialDataPointPositions[i]
+			if dpInfo.dataPoint:IsValid() then
+				dpInfo.newTime = dpInfo.dataPoint:GetTime()
+				dpInfo.newValue = dpInfo.dataPoint:GetValue()
+			else
+				table.remove(initialDataPointPositions, i)
+			end
+		end
+		local function move_keyframes(dataPointPositions, new)
+			for _, dpInfo in ipairs(dataPointPositions) do
+				local pm = pfm.get_project_manager()
+				local animManager = pm:GetAnimationManager()
+				local dpRef = dpInfo.dpRef
+				local filmClip = pfm.dereference(dpInfo.filmClip)
+				local track = filmClip:FindAnimationChannelTrack()
+				local actor = pfm.dereference(dpRef:GetActorUuid())
+				local animClip = track:FindActorAnimationClip(actor)
+				local path = dpRef:GetPropertyPath()
+				local channel = animClip:FindChannel(path)
+				local time = new and dpInfo["newTime"] or dpInfo["time"]
+				local value = new and dpInfo["newValue"] or dpInfo["value"]
+				local panimaChannel =
+					panima.Channel(channel:GetUdmData():Get("times"), channel:GetUdmData():Get("values"))
+
+				local editorData = animClip:GetEditorData()
+				local editorChannel = editorData:FindChannel(path)
+				local baseIndex = dpRef:GetTypeComponentIndex()
+				local keyIdx = (editorChannel ~= nil)
+						and editorChannel:FindKeyIndexByTime(new and dpInfo["time"] or dpInfo["newTime"], baseIndex)
+					or nil
+				if keyIdx ~= nil then
+					animManager:UpdateKeyframe(actor, path, panimaChannel, keyIdx, time, value, baseIndex)
+				end
+			end
+		end
+		pfm.undoredo.push("pfm_undoredo_move_keyframes", function()
+			move_keyframes(initialDataPointPositions, true)
+		end, function()
+			move_keyframes(initialDataPointPositions, false)
+		end)
+	end
+
+	for _, dp in ipairs(dataPoints) do
+		dp:SetMoveModeEnabled(enabled, moveThreshold)
+	end
+end
 function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 	self:RequestFocus()
 
 	local isCtrlDown = input.is_ctrl_key_down()
 	local isAltDown = input.is_alt_key_down()
+	local isShiftDown = input.is_shift_key_down()
 	local cursorMode = self:GetCursorMode()
+	if self:IsInDrawingMode() and state == input.STATE_RELEASE then
+		self:EndCanvasDrawing()
+		return util.EVENT_REPLY_HANDLED
+	end
+	if isShiftDown and cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT then
+		if state == input.STATE_PRESS then
+			self:StartCanvasDrawing()
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
 	if button == input.MOUSE_BUTTON_LEFT then
 		if cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_MOVE then
 			local moveEnabled = (state == input.STATE_PRESS)
-			for _, dp in ipairs(self:GetSelectedDataPoints()) do
-				dp:SetMoveModeEnabled(moveEnabled)
-			end
+			local dataPoints = self:GetSelectedDataPoints()
+			self:SetDataPointMoveModeEnabled(dataPoints, moveEnabled)
 		elseif state == input.STATE_PRESS then
 			self:SetCursorTrackerEnabled(true)
 			if cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT then
@@ -1588,6 +1750,20 @@ function gui.PFMTimelineGraph:RemoveGraphCurve(i)
 end
 function gui.PFMTimelineGraph:GetGraphCurve(i)
 	return self.m_graphs[i]
+end
+function gui.PFMTimelineGraph:ReloadGraphView()
+	local list = self:GetPropertyList()
+	local selected = {}
+	for el, b in pairs(list:GetSelectedElements()) do
+		if el:IsValid() then
+			table.insert(selected, el)
+		end
+	end
+	for _, el in ipairs(selected) do
+		-- TODO: This is not a good way to handle it
+		el:SetSelected(false)
+		el:SetSelected(true)
+	end
 end
 function gui.PFMTimelineGraph:AddGraph(
 	filmClip,

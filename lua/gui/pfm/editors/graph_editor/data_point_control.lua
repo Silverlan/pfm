@@ -18,6 +18,9 @@ function gui.PFMDataPointControl:OnInitialize()
 	self.m_selected = false
 	self:SetMouseInputEnabled(true)
 end
+function gui.PFMDataPointControl:OnRemove()
+	self:SetMoveModeEnabled(false)
+end
 function gui.PFMDataPointControl:IsSelected()
 	return self.m_selected
 end
@@ -33,44 +36,55 @@ function gui.PFMDataPointControl:SetSelected(selected)
 end
 function gui.PFMDataPointControl:OnSelectionChanged(selected) end
 function gui.PFMDataPointControl:OnThink()
-	if self.m_cursorTracker == nil then
+	if self.m_moveData == nil then
 		return
 	end
-	local dt = self.m_cursorTracker:Update()
+	local dt = self.m_moveData.cursorTracker:Update()
 	if dt.x == 0 and dt.y == 0 then
 		return
 	end
-	if self.m_moveThreshold ~= nil then
-		if not self.m_cursorTracker:HasExceededMoveThreshold(self.m_moveThreshold) then
+	if self.m_moveData.moveThreshold ~= nil then
+		if not self.m_moveData.cursorTracker:HasExceededMoveThreshold(self.m_moveData.moveThreshold) then
 			return
 		end
-		self.m_moveThreshold = nil
+		self.m_moveData.moveThreshold = nil
 	end
-	local newPos = self.m_moveModeStartPos + self.m_cursorTracker:GetTotalDeltaPosition()
+	local newPos = self.m_moveData.startPos + self.m_moveData.cursorTracker:GetTotalDeltaPosition()
 	if input.is_shift_key_down() then
-		newPos.x = self.m_moveModeStartPos.x
+		newPos.x = self.m_moveData.startPos.x
 	end
 	if input.is_alt_key_down() then
-		newPos.y = self.m_moveModeStartPos.y
+		newPos.y = self.m_moveData.startPos.y
 	end
 	self:OnMoved(newPos)
 	self:CallCallbacks("OnMoved", newPos)
 end
 function gui.PFMDataPointControl:OnMoved(newPos) end
+function gui.PFMDataPointControl:OnMoveStarted() end
+function gui.PFMDataPointControl:OnMoveComplete() end
 function gui.PFMDataPointControl:IsMoveModeEnabled()
-	return self.m_cursorTracker ~= nil
+	return self.m_moveData ~= nil
 end
 function gui.PFMDataPointControl:SetMoveModeEnabled(enabled, moveThreshold)
+	if enabled == self:IsMoveModeEnabled() then
+		return
+	end
 	if enabled then
-		self.m_cursorTracker = gui.CursorTracker()
-		self.m_moveModeStartPos = self:GetPos()
-		self.m_moveThreshold = moveThreshold
+		self.m_moveData = {
+			cursorTracker = gui.CursorTracker(),
+			startPos = self:GetPos(),
+			moveThreshold = moveThreshold,
+			startData = {},
+		}
 		self:EnableThinking()
+		self:OnMoveStarted(self.m_moveData.startData)
+		self:CallCallbacks("OnMoveStarted", self.m_moveData.startData)
 	else
-		self.m_cursorTracker = nil
-		self.m_moveModeStartPos = nil
-		self.m_moveThreshold = nil
+		local startData = self.m_moveData.startData
+		self.m_moveData = nil
 		self:DisableThinking()
+		self:OnMoveComplete()
+		self:CallCallbacks("OnMoveComplete", startData)
 	end
 end
 gui.register("WIPFMDataPointControl", gui.PFMDataPointControl)

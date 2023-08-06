@@ -131,8 +131,12 @@ function gui.Curve:BuildCurve(curveValues)
 	end
 
 	local verts = {}
-	for _, v in ipairs(curveValues) do
-		table.insert(verts, Vector2(v[1], v[2]))
+	if #curveValues > 0 and util.get_type_name(curveValues[1]) == "Vector2" then
+		verts = table.copy(curveValues)
+	else
+		for _, v in ipairs(curveValues) do
+			table.insert(verts, Vector2(v[1], v[2]))
+		end
 	end
 
 	local ds = util.DataStream(util.SIZEOF_VECTOR2 * #verts)

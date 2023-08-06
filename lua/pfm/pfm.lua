@@ -43,6 +43,16 @@ end
 pfm.udm.SCHEMA = schema
 pfm.udm.SCHEMA:SetLibrary(pfm.udm)
 
+pfm.reference = function(o)
+	return tostring(o:GetUniqueId())
+end
+
+pfm.dereference = function(uuid)
+	local pm = pfm.get_project_manager()
+	local session = (pm ~= nil) and pm:GetSession() or nil
+	return udm.dereference(session:GetSchema(), tostring(uuid))
+end
+
 local res, err = udm.generate_lua_api_from_schema(pfm.udm.SCHEMA, pfm.udm)
 if res ~= true then
 	console.print_warning("Failed to generate PFM UDM API: " .. err)
