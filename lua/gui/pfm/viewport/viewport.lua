@@ -360,27 +360,28 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 			end
 
 			if handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor) and state == input.STATE_PRESS then
-				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
-				if actor then
-					local bone, hitPosBone = self:FindBoneUnderCursor(entActor)
-					if bone ~= nil then
-						self:SelectActor(entActor, bone, true)
-						filmmaker:GetActorEditor():UpdateSelectedEntities()
+				if self:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_SELECT or input.is_ctrl_key_down() then
+					local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+					local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+					if actor then
+						local bone, hitPosBone = self:FindBoneUnderCursor(entActor)
+						if bone ~= nil then
+							self:SelectActor(entActor, bone, true)
+							filmmaker:GetActorEditor():UpdateSelectedEntities()
 
-						local transformC = util.is_valid(self.m_entTransform)
-								and self.m_entTransform:GetComponent(ents.COMPONENT_UTIL_TRANSFORM)
-							or nil
-						if transformC ~= nil then
-							transformC:StartTransform(
-								"xyz",
-								ents.UtilTransformArrowComponent.AXIS_XYZ,
-								ents.UtilTransformArrowComponent.TYPE_TRANSLATION,
-								hitPosBone
-							)
+							local transformC = util.is_valid(self.m_entTransform)
+									and self.m_entTransform:GetComponent(ents.COMPONENT_UTIL_TRANSFORM)
+								or nil
+							if transformC ~= nil then
+								transformC:StartTransform(
+									"xyz",
+									ents.UtilTransformArrowComponent.AXIS_XYZ,
+									ents.UtilTransformArrowComponent.TYPE_TRANSLATION,
+									hitPosBone
+								)
+							end
 						end
-					end
-					--[[if(self:IsMoveManipulatorMode(self:GetManipulatorMode())) then
+						--[[if(self:IsMoveManipulatorMode(self:GetManipulatorMode())) then
 						if(state == input.STATE_PRESS) then
 							self.m_rtMoverActor = entActor
 							entActor:AddComponent("pfm_rt_mover")
@@ -394,6 +395,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 							filmmaker:SelectActor(actor,deselectCurrent)
 						end
 					end]]
+					end
 				end
 			end
 		end
