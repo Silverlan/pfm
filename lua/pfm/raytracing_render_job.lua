@@ -539,6 +539,8 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		scene:SetLightIntensityFactor(renderSettings:GetLightIntensityFactor())
 		scene:SetResolution(w, h)
 
+		self:CallCallbacks("InitializeScene", scene)
+
 		local camType = renderSettings:GetCamType()
 		local panoramaTypeToClType = {
 			[pfm.RaytracingRenderJob.Settings.PANORAMA_TYPE_EQUIRECTANGULAR] = unirender.Camera.PANORAMA_TYPE_EQUIRECTANGULAR,

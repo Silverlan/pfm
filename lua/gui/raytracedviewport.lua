@@ -41,10 +41,17 @@ function gui.RaytracedViewport:OnInitialize()
 	self.m_renderSettings:SetPanoramaType(pfm.RaytracingRenderJob.Settings.CAM_TYPE_PANORAMA)
 
 	self.m_state = gui.RaytracedViewport.STATE_INITIAL
+	self.m_adaptiveSamplingEnabled = true
 
 	self:SetToneMapping(shader.TONE_MAPPING_GAMMA_CORRECTION)
 
 	self.m_threadPool = util.ThreadPool(4, "rendered_image_saver")
+end
+function gui.RaytracedViewport:SetAdaptiveSamplingEnabled(enabled)
+	self.m_adaptiveSamplingEnabled = enabled
+end
+function gui.RaytracedViewport:IsAdaptiveSamplingEnabled()
+	return self.m_adaptiveSamplingEnabled
 end
 function gui.RaytracedViewport:SetTextureFromImageBuffer(imgBuf)
 	-- Test:
@@ -229,7 +236,7 @@ function gui.RaytracedViewport:OnThink()
 	if newProgress ~= progress then
 		self:CallCallbacks("OnProgressChanged", newProgress)
 	end
-	if (state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE) then
+	if state == pfm.RaytracingRenderJob.STATE_COMPLETE or state == pfm.RaytracingRenderJob.STATE_FRAME_COMPLETE then
 		local preStageScene = self.m_rtJob:GetPreStageScene()
 		if preStageScene ~= nil then
 			self:CallCallbacks("OnSceneComplete", preStageScene)
@@ -354,6 +361,11 @@ function gui.RaytracedViewport:Refresh(preview, rtJobCallback, startFrame, frame
 		local tex = self.m_rtJob:GetProgressiveTexture()
 		self.m_tex:SetTexture(tex)
 	end)
+	if self:IsAdaptiveSamplingEnabled() == false then
+		self.m_rtJob:AddCallback("InitializeScene", function(scene)
+			scene:SetAdaptiveSampling(false, 0.0001, 0)
+		end)
+	end
 	if rtJobCallback ~= nil then
 		rtJobCallback(self.m_rtJob)
 	end
@@ -393,6 +405,9 @@ function gui.RealtimeRaytracedViewport:OnInitialize()
 	self:SetRenderer("cycles")
 	self.m_dirtyActors = {}
 	self.m_hasDirtyActors = false
+
+	-- The render should never stop, so we'll disable adaptive sampling
+	self:SetAdaptiveSamplingEnabled(false)
 end
 function gui.RealtimeRaytracedViewport:SetRenderer(renderer)
 	self.m_renderer = renderer
