@@ -265,7 +265,18 @@ function gui.PFMActorEditor:RemoveActor(uniqueId, updateUi)
 			parent:RemoveItem(itemActor, updateUi)
 		end
 
-		util.remove(ents.find_by_uuid(uniqueId))
+		local ent = ents.find_by_uuid(uniqueId)
+		if ent ~= nil then
+			local pm = pfm.get_project_manager()
+			local vp = util.is_valid(pm) and pm:GetViewport() or nil
+			local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+			if rt ~= nil then
+				rt:MarkActorAsDirty(ent, true)
+				rt:FlushDirtyActorChanges()
+			end
+
+			util.remove(ent)
+		end
 		self:TagRenderSceneAsDirty()
 	end
 	removeActor(actor)
