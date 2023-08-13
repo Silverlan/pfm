@@ -358,7 +358,10 @@ function gui.PFMTimeline:InitializeToolbar()
 		"gui/pfm/icon_mode_timeline",
 		"gui/pfm/icon_mode_timeline_activated",
 		function()
-			self:SetEditor(gui.PFMTimeline.EDITOR_CLIP)
+			pfm.undoredo.push(
+				"pfm_set_timeline_editor",
+				pfm.create_command("set_timeline_editor", self:GetEditor(), gui.PFMTimeline.EDITOR_CLIP)
+			)()
 			return true
 		end
 	)
@@ -376,7 +379,10 @@ function gui.PFMTimeline:InitializeToolbar()
 		"gui/pfm/icon_mode_grapheditor",
 		"gui/pfm/icon_mode_grapheditor_activated",
 		function()
-			self:SetEditor(gui.PFMTimeline.EDITOR_GRAPH)
+			pfm.undoredo.push(
+				"pfm_set_timeline_editor",
+				pfm.create_command("set_timeline_editor", self:GetEditor(), gui.PFMTimeline.EDITOR_GRAPH)
+			)()
 			return true
 		end
 	)
