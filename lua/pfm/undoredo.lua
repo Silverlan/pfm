@@ -7,6 +7,7 @@
 ]]
 
 include("/util/log.lua")
+include("commands.lua")
 
 pfm.register_log_category("pfm_undoredo")
 
@@ -25,16 +26,27 @@ pfm.undoredo.add_callback = function(name, f)
 end
 
 pfm.undoredo.push = function(name, actionDo, undo)
+	if actionDo == nil then
+		return function() end
+	end
 	local pos = pfm.undoredo.action_position + 1
 	pfm.log(
 		"Pushing action '" .. locale.get_text(name) .. "' to undoredo stack (#" .. pos .. ").",
 		pfm.LOG_CATEGORY_PFM_UNDOREDO
 	)
-	pfm.undoredo.stack[pos] = {
-		name = name,
-		action = actionDo,
-		undo = undo,
-	}
+	local isCommand = (undo == nil)
+	if isCommand then
+		pfm.undoredo.stack[pos] = {
+			name = name,
+			command = actionDo,
+		}
+	else
+		pfm.undoredo.stack[pos] = {
+			name = name,
+			action = actionDo,
+			undo = undo,
+		}
+	end
 	pfm.undoredo.action_position = pos
 	while #pfm.undoredo.stack > pos do
 		pfm.undoredo.stack[#pfm.undoredo.stack] = nil
@@ -50,7 +62,12 @@ pfm.undoredo.push = function(name, actionDo, undo)
 	end
 	pfm.undoredo.detail.callback_handler:CallCallbacks("OnPush", name)
 	pfm.undoredo.detail.callback_handler:CallCallbacks("OnChange")
-	return actionDo
+	if not isCommand then
+		return actionDo
+	end
+	return function()
+		return actionDo:Execute()
+	end
 end
 
 pfm.undoredo.clear = function()
@@ -68,7 +85,11 @@ pfm.undo = function()
 		return
 	end
 	pfm.log("Undoing action #" .. pos .. " '" .. locale.get_text(data.name) .. "'...", pfm.LOG_CATEGORY_PFM_UNDOREDO)
-	data.undo()
+	if data.command ~= nil then
+		data.command:Undo()
+	else
+		data.undo()
+	end
 	pfm.undoredo.action_position = pos - 1
 
 	pfm.tag_render_scene_as_dirty()
@@ -83,7 +104,11 @@ pfm.redo = function()
 		return
 	end
 	pfm.log("Redoing action #" .. pos .. " '" .. locale.get_text(data.name) .. "'...", pfm.LOG_CATEGORY_PFM_UNDOREDO)
-	data.action()
+	if data.command ~= nil then
+		data.command:Execute()
+	else
+		data.action()
+	end
 	pfm.undoredo.action_position = pos
 
 	pfm.tag_render_scene_as_dirty()
