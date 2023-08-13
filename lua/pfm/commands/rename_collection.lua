@@ -30,3 +30,4 @@ function Command:DoUndo(data)
 	group:SetName(data:GetValue("oldName", udm.TYPE_STRING))
 end
 pfm.register_command("rename_collection", Command)
+pfm.register_command("rename_actor", Command)

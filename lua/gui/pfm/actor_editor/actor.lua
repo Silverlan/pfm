@@ -231,6 +231,15 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 	local itemActor = parentItem:AddItem(actor:GetName(), nil, nil, tostring(actor:GetUniqueId()))
 	itemActor:SetAutoSelectChildren(false)
 
+	local nameChangeListener = actor:AddChangeListener("name", function(c, newName)
+		if itemActor:IsValid() then
+			itemActor:SetText(newName)
+		end
+	end)
+	itemActor:AddCallback("OnRemove", function()
+		util.remove(nameChangeListener)
+	end)
+
 	local uniqueId = tostring(actor:GetUniqueId())
 	itemActor:AddCallback("OnSelectionChanged", function(el, selected)
 		local entActor = actor:FindEntity()
@@ -256,8 +265,11 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 				te:SetText(actor:GetName())
 				te:RequestFocus()
 				te:AddCallback("OnFocusKilled", function()
-					actor:SetName(te:GetText())
-					itemActor:SetText(te:GetText())
+					pfm.undoredo.push(
+						"pfm_rename_actor",
+						pfm.create_command("rename_actor", actor, actor:GetName(), te:GetText())
+					)()
+
 					te:RemoveSafely()
 				end)
 			end)
