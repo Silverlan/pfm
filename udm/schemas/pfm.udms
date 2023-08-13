@@ -34,6 +34,7 @@
 			"children"
 			{
 				"uniqueId" {$string type "Uuid"}
+				"name" {$string default "default"}
 				"bookmarks" {
 					$string type "array"
 					$string valueType "Bookmark"

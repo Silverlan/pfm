@@ -533,6 +533,16 @@ function gui.WIFilmmaker:OnProjectInitialized(project)
 	if util.is_valid(self.m_playhead) then
 		self.m_playhead:SetFrameRate(settings:GetFrameRate())
 	end
+
+	local activeClip = session:GetActiveClip()
+	if activeClip ~= nil then
+		activeClip:AddChangeListener("bookmarkSets", function(c, i, ev, oldVal)
+			if ev == udm.BaseSchemaType.ARRAY_EVENT_ADD or ev == udm.BaseSchemaType.ARRAY_EVENT_REMOVE then
+				self:UpdateBookmarks()
+			end
+		end)
+	end
+	self:UpdateBookmarks()
 end
 function gui.WIFilmmaker:RestoreWorkCamera()
 	local session = self:GetSession()
@@ -974,27 +984,31 @@ function gui.WIFilmmaker:UpdateBookmarks()
 	end
 	self.m_timeline:ClearBookmarks()
 
-	local filmClip = self:GetActiveFilmClip()
-	if filmClip == nil then
-		return
-	end
-	local tbms = {}
-	if self.m_timeline:GetEditor() ~= gui.PFMTimeline.EDITOR_GRAPH then
-		local bms = filmClip:GetBookmarkSet(filmClip:GetActiveBookmarkSet())
-		if bms ~= nil then
-			self.m_timeline:AddBookmarkSet(bms)
+	if self.m_timeline:GetEditor() == gui.PFMTimeline.EDITOR_CLIP then
+		local mainClip = self:GetMainFilmClip()
+		if mainClip ~= nil then
+			local activeSet = mainClip:GetActiveBookmarkSet()
+			if activeSet ~= nil then
+				self.m_timeline:AddBookmarkSet(activeSet)
+			end
 		end
 	else
-		self.m_timeline:GetActiveEditor():InitializeBookmarks()
+		local filmClip = self:GetActiveFilmClip()
+		if filmClip ~= nil then
+			local bms = filmClip:GetBookmarkSet("keyframe")
+			if bms ~= nil then
+				self.m_timeline:AddBookmarkSet(bms)
+			end
+		end
 	end
+	-- self.m_timeline:GetActiveEditor():InitializeBookmarks()
 end
 function gui.WIFilmmaker:RemoveBookmark(t)
 	local filmClip = self:GetActiveFilmClip()
 	if filmClip == nil then
 		return
 	end
-	local bmSetId = filmClip:GetActiveBookmarkSet()
-	local bmSet = filmClip:GetBookmarkSet(bmSetId)
+	local bmSet = filmClip:GetActiveBookmarkSet()
 	if bmSet == nil then
 		return
 	end
@@ -1007,24 +1021,69 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 	end
 	t = t or (self:GetTimeOffset() - filmClip:GetTimeFrame():GetStart())
 	if self.m_timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH and noKeyframe ~= true then
-		self.m_timeline:GetGraphEditor():AddKeyframe(t)
+		local graphEditor = self.m_timeline:GetGraphEditor()
+		for _, graph in ipairs(graphEditor:GetGraphs()) do
+			if graph.curve:IsValid() then
+				local actorUuid = tostring(graph.actor:GetUniqueId())
+				local propertyPath = graph.targetPath
+				local valueType = graph.valueType
+				local timestamp = graphEditor:InterfaceTimeToDataTime(graph, t)
+				local baseIndex = graph.typeComponentIndex
+				pfm.undoredo.push(
+					"pfm_create_keyframe",
+					pfm.create_command("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
+				)()
+			end
+		end
+		--[[
+	for _, graph in ipairs(self.m_graphs) do
+		if graph.curve:IsValid() then
+			local value = get_default_value(graph.valueType)
+			local valueType = graph.valueType
+			local channel = graph.curve:GetPanimaChannel()
+			if channel ~= nil then
+				local idx0, idx1, factor = channel:FindInterpolationIndices(self:InterfaceTimeToDataTime(graph, time))
+				if idx0 ~= nil then
+					local v0 = channel:GetValue(idx0)
+					local v1 = channel:GetValue(idx1)
+					value = udm.lerp(v0, v1, factor)
+				end
+			end
+
+			pfm.get_project_manager():SetActorAnimationComponentProperty(
+				graph.actor,
+				graph.targetPath,
+				self:InterfaceTimeToDataTime(graph, time),
+				value,
+				valueType,
+				graph.typeComponentIndex
+			)
+		end
+	end
+]]
+		--self.m_timeline:GetGraphEditor():AddKeyframe(t)
+		--[[local actorUuid = TODO
+		local propertyPath = TODO
+		local valueType = TODO
+		local timestamp = TODO
+		local baseIndex = TODO
+		pfm.undoredo.push(
+			"pfm_create_keyframe",
+			pfm.create_command("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
+		)]]
+		--actorUuid, propertyPath, valueType, timestamp, baseIndex
+
 		return
 	end
-	local bmSetId = filmClip:GetActiveBookmarkSet()
-	local bmSet = filmClip:GetBookmarkSet(bmSetId)
-	if bmSet == nil and bmSetId == 0 then
-		bmSet = filmClip:AddBookmarkSet()
-	end
-	if bmSet == nil then
+
+	local mainClip = self:GetMainFilmClip()
+	if mainClip == nil then
 		return
 	end
-	pfm.log("Adding bookmark at timestamp " .. t, pfm.LOG_CATEGORY_PFM)
-	local bm, newBookmark = bmSet:AddBookmarkAtTimestamp(t)
-	if newBookmark == false then
-		return bm
-	end
-	self.m_timeline:AddBookmark(bm)
-	return bm, newBookmark
+	return pfm.undoredo.push(
+		"pfm_create_bookmark",
+		pfm.create_command("create_bookmark", mainClip, pfm.Project.DEFAULT_BOOKMARK_SET_NAME, t)
+	)()
 end
 function gui.WIFilmmaker:SetTimeOffset(offset)
 	gui.WIBaseFilmmaker.SetTimeOffset(self, offset)
@@ -1054,10 +1113,16 @@ end
 function gui.WIFilmmaker:GetActiveCamera()
 	return game.get_render_scene_camera()
 end
-function gui.WIFilmmaker:GetActiveFilmClip()
+function gui.WIFilmmaker:GetMainFilmClip()
 	local session = self:GetSession()
-	local filmClip = (session ~= nil) and session:GetActiveClip() or nil
-	return (filmClip ~= nil) and filmClip:GetChildFilmClip(self:GetTimeOffset()) or nil
+	return (session ~= nil) and session:GetActiveClip() or nil
+end
+function gui.WIFilmmaker:GetActiveFilmClip()
+	local mainClip = self:GetMainFilmClip()
+	if mainClip == nil then
+		return
+	end
+	return mainClip:GetChildFilmClip(self:GetTimeOffset())
 end
 function gui.WIFilmmaker:ShowInElementViewer(el)
 	if util.is_valid(self:GetElementViewer()) == false then

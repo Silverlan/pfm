@@ -53,6 +53,27 @@ pfm.dereference = function(uuid)
 	return udm.dereference(session:GetSchema(), tostring(uuid))
 end
 
+util.register_class("pfm.Reference")
+function pfm.Reference:__init(val)
+	local t = util.get_type_name(val)
+	if t == "string" then
+		self.m_uniqueId = val
+	elseif t == "Reference" then
+		self.m_uniqueId = val:GetUniqueId()
+	elseif t == "Uuid" then
+		self.m_uniqueId = tostring(val)
+	else
+		self.m_uniqueId = tostring(val:GetUniqueId())
+	end
+end
+function pfm.Reference:GetUniqueId()
+	return self.m_uniqueId
+end
+function pfm.Reference:GetValue() end
+pfm.get_unique_id = function(val)
+	return pfm.Reference(val):GetUniqueId()
+end
+
 local res, err = udm.generate_lua_api_from_schema(pfm.udm.SCHEMA, pfm.udm)
 if res ~= true then
 	console.print_warning("Failed to generate PFM UDM API: " .. err)
@@ -69,6 +90,7 @@ include("/udm/pfm_util")
 util.register_class("pfm.Project")
 pfm.Project.FORMAT_EXTENSION_BINARY = "pfmp_b"
 pfm.Project.FORMAT_EXTENSION_ASCII = "pfmp"
+pfm.Project.DEFAULT_BOOKMARK_SET_NAME = "default"
 pfm.Project.get_format_extensions = function()
 	return { pfm.Project.FORMAT_EXTENSION_ASCII, pfm.Project.FORMAT_EXTENSION_BINARY }
 end
@@ -366,6 +388,12 @@ pfm.create_empty_project = function()
 
 	local filmClip = session:AddClip()
 	filmClip:SetName("new_project")
+
+	-- Default bookmark set
+	local bms = filmClip:AddBookmarkSet()
+	bms:SetName(pfm.Project.DEFAULT_BOOKMARK_SET_NAME)
+	filmClip:SetActiveBookmarkSet(bms)
+
 	session:SetActiveClip(filmClip)
 
 	local trackGroup = filmClip:AddTrackGroup()

@@ -287,14 +287,6 @@ function Element:InitializeProjectUI(layoutName)
 			end
 		end
 		self.m_trackGroupOverlay = groupOverlay
-
-		local activeBookmarkSet = filmClip:GetActiveBookmarkSet()
-		local bookmarkSet = filmClip:GetBookmarkSet(activeBookmarkSet)
-		if bookmarkSet ~= nil then
-			for _, bookmark in ipairs(bookmarkSet:GetBookmarks()) do
-				-- timeline:AddBookmark(bookmark:GetTimeRange():GetTimeAttr())
-			end
-		end
 	end
 
 	if util.is_valid(self.m_trackGroupPicture) then

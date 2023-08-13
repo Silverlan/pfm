@@ -9,13 +9,13 @@
 function pfm.udm.EditorAnimationData:FindChannel(targetPath, addIfNotExists)
 	for _, channel in ipairs(self:GetChannels()) do
 		if channel:GetTargetPath() == targetPath then
-			return channel
+			return channel, false
 		end
 	end
 	if addIfNotExists then
 		local channel = self:AddChannel()
 		channel:SetTargetPath(targetPath)
-		return channel
+		return channel, true
 	end
 end
 

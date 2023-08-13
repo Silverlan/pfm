@@ -81,6 +81,13 @@ function pfm.udm.FilmClip:FindActorByUniqueId(uuid)
 		end
 	end
 end
+function pfm.udm.FilmClip:FindBookmarkSet(setName)
+	for _, bmSet in ipairs(self:GetBookmarkSets()) do
+		if bmSet:GetName() == setName then
+			return bmSet
+		end
+	end
+end
 function pfm.udm.FilmClip:FindActorAnimationClip(actor, addIfNotExists)
 	if type(actor) ~= "string" then
 		actor = tostring(actor:GetUniqueId())

@@ -486,6 +486,7 @@ pfm.register_window("timeline", "timeline", locale.get_text("pfm_timeline"), fun
 		end)
 		userInteractionTimeStart = nil
 	end)
+	pm:UpdateBookmarks()
 
 	return pfmTimeline
 end)
