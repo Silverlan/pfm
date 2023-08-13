@@ -109,7 +109,8 @@ function pfm.udm.FilmClip:GetChildFilmClip(offset)
 		end
 	end
 end
-function pfm.udm.FilmClip:RemoveActor(actor)
+function pfm.udm.FilmClip:RemoveActor(actor, batch)
+	local uuid = tostring(actor:GetUniqueId())
 	local track = self:FindAnimationChannelTrack()
 	if track ~= nil then
 		local animClip = self:FindActorAnimationClip(actor, false)
@@ -119,11 +120,21 @@ function pfm.udm.FilmClip:RemoveActor(actor)
 		end
 	end
 
-	local _, group = self:FindActorByUniqueId(tostring(actor:GetUniqueId()))
+	local _, group = self:FindActorByUniqueId(uuid)
 	if group ~= nil then
 		group:RemoveActor(actor)
 		-- group:Reinitialize(group:GetUdmData())
 	end
+
+	self:CallChangeListeners("OnActorRemoved", uuid, batch or false)
+end
+function pfm.udm.FilmClip:RemoveActors(actors)
+	local uuids = {}
+	for _, actor in ipairs(actors) do
+		table.insert(uuids, tostring(actor:GetUniqueId()))
+		self:RemoveActor(actor, true)
+	end
+	self:CallChangeListeners("OnActorsRemoved", uuids)
 end
 function pfm.udm.FilmClip:RemoveActorComponent(actor, component)
 	local c = actor:FindComponent(component)

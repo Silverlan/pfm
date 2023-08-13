@@ -561,113 +561,10 @@ function gui.PFMActorEditor:OnActorPropertyChanged(entActor)
 	end
 	rt:MarkActorAsDirty(entActor)
 end
-function gui.PFMActorEditor:WriteActorsToUdmElement(actors, el)
-	local pfmCopy = el:Add("pfm_copy")
-
-	local filmClip = self:GetFilmClip()
-	local track = filmClip:FindAnimationChannelTrack()
-	local animationData = {}
-	for _, actor in ipairs(actors) do
-		local channelClip = track:FindActorAnimationClip(actor)
-		if channelClip ~= nil then
-			table.insert(animationData, channelClip:GetUdmData())
-		end
-	end
-	pfmCopy:AddArray("data", #actors + #animationData, udm.TYPE_ELEMENT)
-	local data = pfmCopy:Get("data")
-	for i, actor in ipairs(actors) do
-		local udmData = data:Get(i - 1)
-		udmData:SetValue("type", udm.TYPE_STRING, "actor")
-		udmData:Add("data"):Merge(actor:GetUdmData())
-	end
-	local offset = #actors
-	for i, animData in ipairs(animationData) do
-		local udmData = data:Get(offset + i - 1)
-		udmData:SetValue("type", udm.TYPE_STRING, "animation")
-		udmData:Add("data"):Merge(animData)
-	end
-end
-function gui.PFMActorEditor:RestoreActorsFromUdmElement(data, keepOriginalUuids)
-	local pfmCopy = data:Get("pfm_copy")
-	local data = pfmCopy:Get("data")
-	if data:IsValid() == false then
-		console.print_warning("No copy data found in clipboard UDM string!")
-		return
-	end
-	local filmClip = self:GetFilmClip()
-	local track = filmClip:FindAnimationChannelTrack()
-
-	-- Assign new unique ids to prevent id collisions
-	local oldIdToNewId = {}
-	local function iterate_elements(udmData, f)
-		f(udmData)
-
-		for _, udmChild in pairs(udmData:GetChildren()) do
-			iterate_elements(udmChild, f)
-		end
-
-		if udm.is_array_type(udmData:GetType()) and udmData:GetValueType() == udm.TYPE_ELEMENT then
-			local n = udmData:GetSize()
-			for i = 1, n do
-				iterate_elements(udmData:Get(i - 1), f)
-			end
-		end
-	end
-	if keepOriginalUuids ~= true then
-		iterate_elements(data, function(udmData)
-			if udmData:HasValue("uniqueId") then
-				local oldUniqueId = udmData:GetValue("uniqueId", udm.TYPE_STRING)
-				local newUniqueId = tostring(util.generate_uuid_v4())
-				udmData:SetValue("uniqueId", udm.TYPE_STRING, newUniqueId)
-				oldIdToNewId[oldUniqueId] = newUniqueId
-			end
-		end)
-		iterate_elements(data, function(udmData)
-			for name, udmChild in pairs(udmData:GetChildren()) do
-				if udmChild:GetType() == udm.TYPE_STRING then
-					local val = udmData:GetValue(name, udm.TYPE_STRING)
-					if oldIdToNewId[val] ~= nil then
-						udmData:SetValue(name, udm.TYPE_STRING, oldIdToNewId[val])
-					end
-				end
-			end
-		end)
-	end
-	--
-
-	local n = data:GetSize()
-	for i = 1, n do
-		local udmData = data:Get(i - 1)
-		local type = udmData:GetValue("type", udm.TYPE_STRING)
-		if type == "actor" then
-			local actor = self:CreateNewActor(nil, nil, nil, nil, true)
-			actor:Reinitialize(udmData:Get("data"))
-		elseif type == "animation" then
-			local animData = udmData:Get("data")
-			local actorUniqueId = animData:GetValue("actor", udm.TYPE_STRING)
-			local actor = filmClip:FindActorByUniqueId(actorUniqueId)
-			if actor == nil then
-				console.print_warning(
-					"Animation data refers to unknown actor with unique id " .. actorUniqueId .. "! Ignoring..."
-				)
-			else
-				local channelClip = track:FindActorAnimationClip(actor, true)
-				channelClip:Reinitialize(animData)
-			end
-		else
-			console.print_warning("Copy type " .. type .. " is not compatible!")
-		end
-	end
-
-	local pm = tool.get_filmmaker()
-	pm:ReloadGameView()
-
-	self:Reload()
-end
 function gui.PFMActorEditor:CopyToClipboard(actors)
 	actors = actors or self:GetSelectedActors()
 	local el = udm.create_element()
-	self:WriteActorsToUdmElement(actors, el)
+	self:WriteActorsToUdmElement(self:GetFilmClip(), actors, el)
 	util.set_clipboard_string(el:ToAscii(udm.ASCII_SAVE_FLAG_NONE))
 end
 function gui.PFMActorEditor:PasteFromClipboard(keepOriginalUuids)
@@ -677,7 +574,13 @@ function gui.PFMActorEditor:PasteFromClipboard(keepOriginalUuids)
 		return
 	end
 	local data = res:GetAssetData():GetData()
-	self:RestoreActorsFromUdmElement(data, keepOriginalUuids)
+	self:RestoreActorsFromUdmElement(self:GetFilmClip(), data, keepOriginalUuids)
+end
+function gui.PFMActorEditor:WriteActorsToUdmElement(...)
+	return pfm.get_project_manager():WriteActorsToUdmElement(...)
+end
+function gui.PFMActorEditor:RestoreActorsFromUdmElement(...)
+	return pfm.get_project_manager():RestoreActorsFromUdmElement(...)
 end
 function gui.PFMActorEditor:MouseCallback(button, state, mods)
 	if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
@@ -709,6 +612,7 @@ function gui.PFMActorEditor:Reload()
 end
 function gui.PFMActorEditor:Setup(filmClip)
 	-- if(util.is_same_object(filmClip,self.m_filmClip)) then return end
+	util.remove(self.m_filmClipCallbacks)
 
 	debug.start_profiling_task("pfm_populate_actor_editor")
 	asset.clear_unused()
@@ -716,8 +620,24 @@ function gui.PFMActorEditor:Setup(filmClip)
 	self.m_tree:Clear()
 	self.m_treeElementToActorData = {}
 	self.m_actorUniqueIdToTreeElement = {}
+	self.m_filmClipCallbacks = {}
 	-- TODO: Include groups the actors belong to!
 
+	table.insert(
+		self.m_filmClipCallbacks,
+		filmClip:AddChangeListener("OnActorRemoved", function(filmClip, uuid, partOfBatch)
+			if partOfBatch then
+				return
+			end
+			self:OnActorsRemoved(filmClip, { uuid })
+		end)
+	)
+	table.insert(
+		self.m_filmClipCallbacks,
+		filmClip:AddChangeListener("OnActorsRemoved", function(filmClip, uuids)
+			self:OnActorsRemoved(filmClip, uuids)
+		end)
+	)
 	local function add_actors(parent, parentItem, root)
 		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree, parent, root)
 		if root then
@@ -2404,6 +2324,7 @@ function gui.PFMActorEditor:OnRemove()
 	util.remove(self.m_cbCamLinkGameplayCb)
 	util.remove(self.m_cameraLinkOutlineElement)
 	util.remove(self.m_callbacks)
+	util.remove(self.m_filmClipCallbacks)
 end
 gui.register("WIPFMActorEditor", gui.PFMActorEditor)
 

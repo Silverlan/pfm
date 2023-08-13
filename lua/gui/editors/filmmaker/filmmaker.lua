@@ -1243,4 +1243,154 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 		end
 	end
 end
+function gui.WIFilmmaker:WriteActorsToUdmElement(filmClip, actors, el, name)
+	actors = pfm.dereference(actors)
+
+	local pfmCopy = el:Add(name or "pfm_copy")
+
+	local track = filmClip:FindAnimationChannelTrack()
+	local animationData = {}
+	for _, actor in ipairs(actors) do
+		local channelClip = track:FindActorAnimationClip(actor)
+		if channelClip ~= nil then
+			table.insert(animationData, channelClip:GetUdmData())
+		end
+	end
+	pfmCopy:AddArray("data", #actors + #animationData, udm.TYPE_ELEMENT)
+	local data = pfmCopy:Get("data")
+	for i, actor in ipairs(actors) do
+		local udmData = data:Get(i - 1)
+		udmData:SetValue("type", udm.TYPE_STRING, "actor")
+		udmData:Add("data"):Merge(actor:GetUdmData())
+
+		local parentCollections = {}
+		local parent = actor:GetParent()
+		while parent ~= nil and util.get_type_name(parent) == "Group" do
+			table.insert(parentCollections, parent:GetName())
+			parent = parent:GetParent()
+		end
+		parentCollections[#parentCollections] = nil
+
+		local a = udmData:AddArray("parentCollections", #parentCollections, udm.TYPE_STRING)
+		for i, name in ipairs(parentCollections) do
+			a:SetValue(i - 1, udm.TYPE_STRING, name)
+		end
+	end
+	local offset = #actors
+	for i, animData in ipairs(animationData) do
+		local udmData = data:Get(offset + i - 1)
+		udmData:SetValue("type", udm.TYPE_STRING, "animation")
+		udmData:Add("data"):Merge(animData)
+	end
+end
+function gui.WIFilmmaker:RestoreActorsFromUdmElement(filmClip, data, keepOriginalUuids, name)
+	local pfmCopy = data:Get(name or "pfm_copy")
+	local data = pfmCopy:Get("data")
+	if data:IsValid() == false then
+		console.print_warning("No copy data found in clipboard UDM string!")
+		return
+	end
+	local track = filmClip:FindAnimationChannelTrack()
+
+	-- Assign new unique ids to prevent id collisions
+	local oldIdToNewId = {}
+	local function iterate_elements(udmData, f)
+		f(udmData)
+
+		for _, udmChild in pairs(udmData:GetChildren()) do
+			iterate_elements(udmChild, f)
+		end
+
+		if udm.is_array_type(udmData:GetType()) and udmData:GetValueType() == udm.TYPE_ELEMENT then
+			local n = udmData:GetSize()
+			for i = 1, n do
+				iterate_elements(udmData:Get(i - 1), f)
+			end
+		end
+	end
+	if keepOriginalUuids ~= true then
+		iterate_elements(data, function(udmData)
+			if udmData:HasValue("uniqueId") then
+				local oldUniqueId = udmData:GetValue("uniqueId", udm.TYPE_STRING)
+				local newUniqueId = tostring(util.generate_uuid_v4())
+				udmData:SetValue("uniqueId", udm.TYPE_STRING, newUniqueId)
+				oldIdToNewId[oldUniqueId] = newUniqueId
+			end
+		end)
+		iterate_elements(data, function(udmData)
+			for name, udmChild in pairs(udmData:GetChildren()) do
+				if udmChild:GetType() == udm.TYPE_STRING then
+					local val = udmData:GetValue(name, udm.TYPE_STRING)
+					if oldIdToNewId[val] ~= nil then
+						udmData:SetValue(name, udm.TYPE_STRING, oldIdToNewId[val])
+					end
+				end
+			end
+		end)
+	end
+	--
+
+	local actorEditor = self:GetActorEditor()
+	local n = data:GetSize()
+	local filmClipUniqueId = tostring(filmClip:GetUniqueId())
+	local filmClips = {}
+	local actors = {}
+	for i = 1, n do
+		local udmData = data:Get(i - 1)
+		local type = udmData:GetValue("type", udm.TYPE_STRING)
+		if type == "actor" then
+			local parentCollections = udmData:GetArrayValues("parentCollections", udm.TYPE_STRING)
+
+			local group = filmClip:GetScene()
+			group = actorEditor:FindCollection(parentCollections, true, group)
+			local actor = group:AddActor()
+			actor:Reinitialize(udmData:Get("data"))
+			for ent, c in ents.citerator(ents.COMPONENT_PFM_FILM_CLIP) do
+				if tostring(c:GetClipData():GetUniqueId()) == filmClipUniqueId then
+					filmClips[c] = true
+				end
+			end
+
+			table.insert(actors, {
+				actor = actor,
+				parentCollections = parentCollections,
+			})
+		elseif type == "animation" then
+			local animData = udmData:Get("data")
+			local actorUniqueId = animData:GetValue("actor", udm.TYPE_STRING)
+			local actor = filmClip:FindActorByUniqueId(actorUniqueId)
+			if actor == nil then
+				console.print_warning(
+					"Animation data refers to unknown actor with unique id " .. actorUniqueId .. "! Ignoring..."
+				)
+			else
+				local channelClip = track:FindActorAnimationClip(actor, true)
+				channelClip:Reinitialize(animData)
+			end
+		else
+			console.print_warning("Copy type " .. type .. " is not compatible!")
+		end
+	end
+	for c, _ in pairs(filmClips) do
+		c:InitializeActors()
+	end
+	local root = actorEditor:GetTree():GetRoot()
+	for _, actor in ipairs(actors) do
+		local item = root
+		if #actor.parentCollections > 0 then
+			item = item:FindItemByText("Scene")
+			for _, colName in ipairs(actor.parentCollections) do
+				if util.is_valid(item) then
+					item = item:FindItemByText(colName)
+				else
+					break
+				end
+			end
+			if util.is_valid(item) == false then
+				item = nil
+			end
+		end
+		actorEditor:AddActor(actor.actor, item)
+	end
+end
 gui.register("WIFilmmaker", gui.WIFilmmaker)

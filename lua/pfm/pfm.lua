@@ -47,10 +47,19 @@ pfm.reference = function(o)
 	return tostring(o:GetUniqueId())
 end
 
-pfm.dereference = function(uuid)
+pfm.dereference = function(val)
+	if type(val) == "table" then
+		for i, v in ipairs(val) do
+			val[i] = pfm.dereference(v)
+		end
+		return val
+	end
+	local ref = pfm.Reference(val)
+	local uuid = ref:GetUniqueId()
+
 	local pm = pfm.get_project_manager()
 	local session = (pm ~= nil) and pm:GetSession() or nil
-	return udm.dereference(session:GetSchema(), tostring(uuid))
+	return udm.dereference(session:GetSchema(), uuid)
 end
 
 util.register_class("pfm.Reference")

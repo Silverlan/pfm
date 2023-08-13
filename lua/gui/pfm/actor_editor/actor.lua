@@ -184,102 +184,47 @@ function gui.PFMActorEditor:IterateActors(f)
 	iterate_actors(self.m_tree:GetRoot())
 end
 function gui.PFMActorEditor:RemoveActors(ids)
-	local filmmaker = tool.get_filmmaker()
-	local filmClip = filmmaker:GetActiveFilmClip()
-	if filmClip == nil then
-		return
-	end
-	local el = udm.create_element()
-	local actors = {}
-	for _, uniqueId in ipairs(ids) do
-		local actor = filmClip:FindActorByUniqueId(uniqueId)
-		if actor ~= nil then
-			table.insert(actors, actor)
-		end
-	end
-	self:WriteActorsToUdmElement(actors, el)
-
-	pfm.undoredo.push("pfm_undoredo_remove_actor", function()
-		local filmmaker = tool.get_filmmaker()
-		local filmClip = filmmaker:GetActiveFilmClip()
-		if filmClip == nil then
-			return
-		end
-		local pm = pfm.get_project_manager()
-		local session = pm:GetSession()
-		local items = {}
-		for _, uniqueId in ipairs(ids) do
-			local item = self:GetActorEntry(uniqueId)
-			if util.is_valid(item) then
-				table.insert(items, item:GetParentItem())
-			end
-
-			local actor = filmClip:FindActorByUniqueId(uniqueId)
-			if actor ~= nil then
-				self:RemoveActor(uniqueId, false)
-			end
-		end
-
-		for _, item in ipairs(items) do
-			item:UpdateUi()
-		end
-	end, function()
-		self:RestoreActorsFromUdmElement(el)
-	end)
-	local pm = pfm.get_project_manager()
-	local session = pm:GetSession()
+	local filmClip = self:GetFilmClip()
+	pfm.undoredo.push("pfm_delete_actors", pfm.create_command("delete_actors", filmClip, ids))()
+end
+function gui.PFMActorEditor:OnActorsRemoved(filmClip, uuids)
 	local items = {}
-	for _, uniqueId in ipairs(ids) do
+	for _, uniqueId in ipairs(uuids) do
 		local item = self:GetActorEntry(uniqueId)
 		if util.is_valid(item) then
 			table.insert(items, item:GetParentItem())
 		end
 
-		local actor = filmClip:FindActorByUniqueId(uniqueId)
-		if actor ~= nil then
-			self:RemoveActor(uniqueId, false)
-		end
+		self:ClearActor(uniqueId, false)
 	end
+
 	for _, item in ipairs(items) do
 		item:UpdateUi()
 	end
 end
-function gui.PFMActorEditor:RemoveActor(uniqueId, updateUi)
+function gui.PFMActorEditor:ClearActor(uniqueId, updateUi)
 	if updateUi == nil then
 		updateUi = true
 	end
-	local filmmaker = tool.get_filmmaker()
-	local filmClip = filmmaker:GetActiveFilmClip()
-	if filmClip == nil then
-		return
-	end
-	local actor = filmClip:FindActorByUniqueId(uniqueId)
-	if actor == nil then
-		return
+
+	local itemActor, parent = self.m_tree:GetRoot():GetItemByIdentifier(uniqueId, true)
+	if itemActor ~= nil then
+		parent:RemoveItem(itemActor, updateUi)
 	end
 
-	local function removeActor(actor)
-		filmClip:RemoveActor(actor)
-		local itemActor, parent = self.m_tree:GetRoot():GetItemByIdentifier(uniqueId, true)
-		if itemActor ~= nil then
-			parent:RemoveItem(itemActor, updateUi)
+	local ent = ents.find_by_uuid(uniqueId)
+	if ent ~= nil then
+		local pm = pfm.get_project_manager()
+		local vp = util.is_valid(pm) and pm:GetViewport() or nil
+		local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+		if rt ~= nil then
+			rt:MarkActorAsDirty(ent, true)
+			rt:FlushDirtyActorChanges()
 		end
 
-		local ent = ents.find_by_uuid(uniqueId)
-		if ent ~= nil then
-			local pm = pfm.get_project_manager()
-			local vp = util.is_valid(pm) and pm:GetViewport() or nil
-			local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
-			if rt ~= nil then
-				rt:MarkActorAsDirty(ent, true)
-				rt:FlushDirtyActorChanges()
-			end
-
-			util.remove(ent)
-		end
-		self:TagRenderSceneAsDirty()
+		util.remove(ent)
 	end
-	removeActor(actor)
+	self:TagRenderSceneAsDirty()
 end
 function gui.PFMActorEditor:AddActor(actor, parentItem)
 	parentItem = parentItem or self.m_tree

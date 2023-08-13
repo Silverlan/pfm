@@ -220,6 +220,24 @@ function gui.PFMActorEditor:FindCollection(name, createIfNotExists, parentGroup)
 	else
 		root = self.m_tree:GetRoot():GetItems()[1]
 	end
+	if type(name) == "table" then
+		local collections = name
+		if #collections == 0 then
+			return root
+		end
+		local item = root
+		for _, colName in ipairs(collections) do
+			local parentGroup = pfm.dereference(item:GetIdentifier())
+			if parentGroup == nil then
+				break
+			end
+			item = self:FindCollection(colName, createIfNotExists, parentGroup)
+			if util.is_valid(item) == false then
+				break
+			end
+		end
+		return item or root
+	end
 	if util.is_valid(root) == false then
 		return
 	end
