@@ -91,5 +91,7 @@ function pfm.udm.Group:MoveActorTo(actor, targetGroup)
 	-- Old UDM data has been invalidated, so we have to re-assign
 	-- UDM data recursively
 	child:ReloadUdmData(udmDst:Get(udmDst:GetSize() - 1))
+
+	actor:CallChangeListeners("OnMoved", self, targetGroup)
 	return true
 end

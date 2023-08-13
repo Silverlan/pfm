@@ -236,8 +236,19 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 			itemActor:SetText(newName)
 		end
 	end)
+
+	local onMovedListener = actor:AddChangeListener("OnMoved", function(actor, oldGroup, newGroup)
+		local elActor = self:GetActorItem(actor)
+		local itemGroupTarget = self.m_tree:GetRoot():GetItemByIdentifier(tostring(newGroup:GetUniqueId()), true)
+		if util.is_valid(elActor) == false or util.is_valid(itemGroupTarget) == false then
+			return
+		end
+
+		itemGroupTarget:AttachItem(elActor)
+	end)
+
 	itemActor:AddCallback("OnRemove", function()
-		util.remove(nameChangeListener)
+		util.remove({ nameChangeListener, onMovedListener })
 	end)
 
 	local uniqueId = tostring(actor:GetUniqueId())
@@ -344,17 +355,9 @@ end
 function gui.PFMActorEditor:MoveActorToCollection(actor, col)
 	pfm.log("Moving actor '" .. tostring(actor) .. "' to collection '" .. tostring(col) .. "'...", pfm.LOG_CATEGORY_PFM)
 
-	local elActor = self:GetActorItem(actor)
-	local itemGroupTarget = self.m_tree:GetRoot():GetItemByIdentifier(tostring(col:GetUniqueId()), true)
-	if util.is_valid(elActor) == false or util.is_valid(itemGroupTarget) == false then
-		return
-	end
-
 	local srcGroup = actor:GetParent()
-	if srcGroup:MoveActorTo(actor, col) == false then
-		return false
-	end
-
-	itemGroupTarget:AttachItem(elActor)
-	return true
+	return pfm.undoredo.push(
+		"pfm_move_actor_to_collection",
+		pfm.create_command("move_actor_to_collection", actor, srcGroup, col)
+	)()
 end
