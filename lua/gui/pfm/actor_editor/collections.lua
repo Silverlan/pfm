@@ -32,6 +32,16 @@ gui.PFMActorEditor.COLLECTION_TYPES = {
 
 function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 	local itemGroup = parentItem:AddItem(parent:GetName(), nil, nil, tostring(parent:GetUniqueId()))
+
+	local nameChangeListener = parent:AddChangeListener("name", function(c, newName)
+		if itemGroup:IsValid() then
+			itemGroup:SetText(newName)
+		end
+	end)
+	itemGroup:AddCallback("OnRemove", function()
+		util.remove(nameChangeListener)
+	end)
+
 	itemGroup:SetName(parent:GetName())
 	itemGroup:SetAutoSelectChildren(false)
 	itemGroup:AddCallback("OnMouseEvent", function(el, button, state, mods)
@@ -126,8 +136,11 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 						te:SetText(parent:GetName())
 						te:RequestFocus()
 						te:AddCallback("OnFocusKilled", function()
-							parent:SetName(te:GetText())
-							itemGroup:SetText(te:GetText())
+							pfm.undoredo.push(
+								"pfm_rename_collection",
+								pfm.create_command("rename_collection", parent, parent:GetName(), te:GetText())
+							)()
+
 							te:RemoveSafely()
 						end)
 					end)
