@@ -85,6 +85,10 @@ pfm.undo = function()
 		return
 	end
 	pfm.log("Undoing action #" .. pos .. " '" .. locale.get_text(data.name) .. "'...", pfm.LOG_CATEGORY_PFM_UNDOREDO)
+	local pm = pfm.get_project_manager()
+	if util.is_valid(pm) then
+		pm:AddUndoMessage(locale.get_text("undo") .. ": " .. locale.get_text(data.name))
+	end
 	if data.command ~= nil then
 		data.command:Undo()
 	else
@@ -104,6 +108,10 @@ pfm.redo = function()
 		return
 	end
 	pfm.log("Redoing action #" .. pos .. " '" .. locale.get_text(data.name) .. "'...", pfm.LOG_CATEGORY_PFM_UNDOREDO)
+	local pm = pfm.get_project_manager()
+	if util.is_valid(pm) then
+		pm:AddUndoMessage(locale.get_text("redo") .. ": " .. locale.get_text(data.name))
+	end
 	if data.command ~= nil then
 		data.command:Execute()
 	else

@@ -490,6 +490,40 @@ function gui.WIFilmmaker:ShowCloseConfirmation(action, callActionOnCancel)
 		end
 	)
 end
+function gui.WIFilmmaker:AddUndoMessage(msg)
+	util.remove({ self.m_undoMessageElement, self.m_undoMessageTimer })
+	local infoBar = self:GetInfoBar()
+
+	local msgEl = gui.create("WIRect")
+	msgEl:SetHeight(infoBar:GetHeight())
+	msgEl:SetColor(Color(54, 54, 54))
+	self.m_undoMessageElement = msgEl
+	msgEl:AddCallback("OnRemove", function()
+		if infoBar:IsValid() then
+			infoBar:ScheduleUpdate()
+		end
+	end)
+
+	local elText = gui.create("WIText", msgEl)
+	elText:SetText(msg)
+	elText:SetColor(Color(200, 200, 200))
+	elText:SizeToContents()
+	elText:CenterToParentY()
+	elText:SetX(10)
+	msgEl:SetWidth(elText:GetWidth() + 20)
+	infoBar:AddRightElement(msgEl, 0)
+	infoBar:Update()
+
+	self.m_undoMessageTimer = time.create_timer(5, 0, function()
+		if self:IsValid() == false then
+			return
+		end
+		util.remove(self.m_undoMessageElement)
+	end)
+	self.m_undoMessageTimer:Start()
+
+	return msgEl
+end
 function gui.WIFilmmaker:AddProgressStatusBar(identifier, text)
 	local infoBar = self:GetInfoBar()
 
