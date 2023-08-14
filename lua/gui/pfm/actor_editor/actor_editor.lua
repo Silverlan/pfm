@@ -50,10 +50,12 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())
 	local function addPresetActorOption(id, subMenu, type, locId, callback)
 		local subItem = subMenu:AddItem(locale.get_text(locId), function()
-			self:CreatePresetActor(type)
+			local actor = self:CreatePresetActor(type)
 			if callback ~= nil then
 				callback()
 			end
+
+			pfm.undoredo.push("pfm_add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
 		end)
 		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
 		subItem:SetName(id)
@@ -68,6 +70,7 @@ function gui.PFMActorEditor:OnInitialize()
 					return
 				end
 				local actor = self:CreatePresetActor(type, { ["modelName"] = mdlName })
+				pfm.undoredo.push("pfm_add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
 			end)
 		end)
 		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
@@ -2406,7 +2409,10 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 						if util.is_valid(actorEditor) == false then
 							return
 						end
-						actorEditor:CreateNewActorComponent(actor, nameInfo[1], true)
+						pfm.undoredo.push(
+							"pfm_create_component",
+							pfm.create_command("create_component", actor, nameInfo[1])
+						)()
 					end)
 					:SetName(nameInfo[1])
 			end
