@@ -725,6 +725,19 @@ function Element:InitializeMenuBar()
 			end)
 			pSubItem:SetName("wiki")
 			local pSubItem = pContext:AddItem(locale.get_text("pfm_report_a_bug"), function(pItem)
+				file.create_path("temp")
+
+				-- Delete existing engine info dumps
+				local tFiles = file.find("temp/engine_info_dump*.zip")
+				for _, f in ipairs(tFiles) do
+					file.delete("temp/" .. f)
+				end
+
+				local fileName = engine.generate_info_dump("temp/engine_info_dump")
+				if fileName ~= nil then
+					util.open_path_in_explorer(file.get_file_path(fileName), file.get_file_name(fileName))
+					pfm.create_popup_message(locale.get_text("pfm_report_a_bug_message"), false, gui.InfoBox.TYPE_INFO)
+				end
 				util.open_url_in_browser("https://github.com/Silverlan/pfm/issues")
 			end)
 			pSubItem:SetName("report_a_bug")
