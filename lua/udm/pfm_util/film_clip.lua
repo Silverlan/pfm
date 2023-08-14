@@ -81,6 +81,19 @@ function pfm.udm.FilmClip:FindActorByUniqueId(uuid)
 		end
 	end
 end
+function pfm.udm.FilmClip:RemoveGroup(group)
+	local uuid = tostring(group:GetUniqueId())
+	local parentCollection = group:GetParent()
+	parentCollection:RemoveGroup(group)
+	self:CallChangeListeners("OnGroupRemoved", uuid)
+end
+function pfm.udm.FilmClip:AddGroup(parentCollection, name, uuid)
+	local childGroup = parentCollection:AddGroup()
+	childGroup:ChangeUniqueId(uuid)
+	childGroup:SetName(name)
+	self:CallChangeListeners("OnGroupAdded", childGroup)
+	return childGroup
+end
 function pfm.udm.FilmClip:FindBookmarkSet(setName)
 	for _, bmSet in ipairs(self:GetBookmarkSets()) do
 		if bmSet:GetName() == setName then

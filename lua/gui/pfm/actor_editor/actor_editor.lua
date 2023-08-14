@@ -638,6 +638,18 @@ function gui.PFMActorEditor:Setup(filmClip)
 			self:OnActorsRemoved(filmClip, uuids)
 		end)
 	)
+	table.insert(
+		self.m_filmClipCallbacks,
+		filmClip:AddChangeListener("OnGroupAdded", function(filmClip, group)
+			self:OnCollectionAdded(group)
+		end)
+	)
+	table.insert(
+		self.m_filmClipCallbacks,
+		filmClip:AddChangeListener("OnGroupRemoved", function(filmClip, groupUuid)
+			self:OnCollectionRemoved(groupUuid)
+		end)
+	)
 	local function add_actors(parent, parentItem, root)
 		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree, parent, root)
 		if root then

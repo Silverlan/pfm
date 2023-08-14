@@ -204,27 +204,43 @@ end
 function gui.PFMActorEditor:GetCollectionTreeItem(uuid)
 	return self.m_tree:GetRoot():GetItemByIdentifier(uuid, true)
 end
+function gui.PFMActorEditor:OnCollectionRemoved(groupUuid)
+	local itemGroup = self:GetCollectionTreeItem(groupUuid)
+	if util.is_valid(itemGroup) == false then
+		return
+	end
+	local itemParent = itemGroup:GetParentItem()
+	if util.is_valid(itemParent) == false then
+		return
+	end
+	itemGroup:RemoveSafely()
+	itemParent:FullUpdate()
+end
+function gui.PFMActorEditor:OnCollectionAdded(group)
+	local parentGroup = group:GetParent()
+	if parentGroup == nil then
+		return
+	end
+	local parentItem = self:GetCollectionTreeItem(tostring(parentGroup:GetUniqueId()))
+	if util.is_valid(parentItem) == false then
+		return
+	end
+	local item = self:AddCollectionItem(parentItem, group)
+	return group, item
+end
 function gui.PFMActorEditor:AddCollection(name, parentGroup)
 	pfm.log("Adding collection '" .. name .. "'...", pfm.LOG_CATEGORY_PFM)
-	local root
-	if parentGroup ~= nil then
-		root = self:GetCollectionTreeItem(tostring(parentGroup:GetUniqueId()))
-	else
-		root = self.m_tree:GetRoot():GetItems()[1]
+
+	if parentGroup == nil then
+		local filmClip = self:GetFilmClip()
+		parentGroup = filmClip:GetScene()
 	end
-	if util.is_valid(root) == false then
+	local childGroup =
+		pfm.undoredo.push("pfm_add_collection", pfm.create_command("add_collection", parentGroup, name))()
+	if childGroup == nil then
 		return
 	end
-
-	local parent = self:GetCollectionUdmObject(root)
-	if parent == nil then
-		return
-	end
-
-	local childGroup = parent:AddGroup()
-	childGroup:SetName(name)
-	local item = self:AddCollectionItem(root, childGroup)
-	return childGroup, item
+	return childGroup, self:GetCollectionTreeItem(tostring(childGroup:GetUniqueId()))
 end
 function gui.PFMActorEditor:FindCollection(name, createIfNotExists, parentGroup)
 	local root
