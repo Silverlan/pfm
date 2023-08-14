@@ -52,6 +52,7 @@ function Command:DoExecute(data)
 	end
 
 	filmClip:RemoveGroup(collection)
+	return true
 end
 function Command:DoUndo(data)
 	local collectionUuid = data:GetValue("collection", udm.TYPE_STRING)

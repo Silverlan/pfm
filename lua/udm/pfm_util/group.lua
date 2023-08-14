@@ -6,6 +6,14 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+function pfm.udm.Group:GetFilmClip()
+	local parent = self:GetParent()
+	while util.get_type_name(parent) == "Group" do
+		parent = parent:GetParent()
+	end
+	return parent
+end
+
 function pfm.udm.Group:GetActorList(list)
 	list = list or {}
 	for _, actor in ipairs(self:GetActors()) do

@@ -650,6 +650,24 @@ function gui.PFMActorEditor:Setup(filmClip)
 			self:OnCollectionRemoved(groupUuid)
 		end)
 	)
+	table.insert(
+		self.m_filmClipCallbacks,
+		filmClip:AddChangeListener("OnActorComponentAdded", function(filmClip, actor, componentType)
+			if self.m_skipComponentCallbacks then
+				return
+			end
+			self:OnActorComponentAdded(filmClip, actor, componentType)
+		end)
+	)
+	table.insert(
+		self.m_filmClipCallbacks,
+		filmClip:AddChangeListener("OnActorComponentRemoved", function(filmClip, actor, componentType)
+			if self.m_skipComponentCallbacks then
+				return
+			end
+			self:OnActorComponentRemoved(filmClip, actor, componentType)
+		end)
+	)
 	local function add_actors(parent, parentItem, root)
 		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree, parent, root)
 		if root then
@@ -2406,7 +2424,10 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 						if util.is_valid(actorEditor) == false then
 							return
 						end
-						actorEditor:CreateNewActorComponent(actor, nameInfo[1], true)
+						pfm.undoredo.push(
+							"pfm_create_component",
+							pfm.create_command("create_component", actor, nameInfo[1])
+						)()
 					end)
 					:SetName(nameInfo[1])
 			end

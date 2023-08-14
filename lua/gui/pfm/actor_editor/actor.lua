@@ -109,45 +109,13 @@ function gui.PFMActorEditor:CreateNewActor(actorName, pose, uniqueId, group, don
 	return actor
 end
 function gui.PFMActorEditor:CreateNewActorComponent(actor, componentType, updateActorAndUi, initComponent)
-	if updateActorAndUi == nil then
-		updateActorAndUi = true
-	end
-	local itemActor
-	for elTree, data in pairs(self.m_treeElementToActorData) do
-		if util.is_same_object(actor, data.actor) then
-			itemActor = elTree
-			break
-		end
-	end
-
-	if itemActor == nil then
-		return
-	end
-
-	local componentId = ents.find_component_id(componentType)
-	if componentId == nil then
-		include_component(componentType)
-	end
-	componentId = ents.find_component_id(componentType)
-	if componentId == nil then
-		pfm.log(
-			"Attempted to add unknown entity component '" .. componentType .. "' to actor '" .. tostring(actor) .. "'!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
-		return
-	end
-
+	self.m_skipComponentCallbacks = true
 	local component = actor:AddComponentType(componentType)
+	self.m_skipComponentCallbacks = nil
 	if initComponent ~= nil then
 		initComponent(component)
 	end
-
-	if updateActorAndUi == true then
-		self:UpdateActorComponents(actor)
-	end
-
-	return component
+	return self:InitializeNewComponent(actor, component, componentType, updateActorAndUi)
 end
 function gui.PFMActorEditor:UpdateActorComponents(actor)
 	tool.get_filmmaker():UpdateActor(actor, self:GetFilmClip(), true)

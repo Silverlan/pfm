@@ -71,7 +71,7 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 						end
 
 						if itemText ~= initialText then
-							child = self:AddCollection(itemText, parent)
+							child = self:AddCollection(itemText, parent, true)
 						end
 					end)
 				end)
@@ -196,15 +196,20 @@ function gui.PFMActorEditor:OnCollectionAdded(group)
 	local item = self:AddCollectionItem(parentItem, group)
 	return group, item
 end
-function gui.PFMActorEditor:AddCollection(name, parentGroup)
+function gui.PFMActorEditor:AddCollection(name, parentGroup, addUndo)
 	pfm.log("Adding collection '" .. name .. "'...", pfm.LOG_CATEGORY_PFM)
 
 	if parentGroup == nil then
 		local filmClip = self:GetFilmClip()
 		parentGroup = filmClip:GetScene()
 	end
-	local childGroup =
-		pfm.undoredo.push("pfm_add_collection", pfm.create_command("add_collection", parentGroup, name))()
+	local childGroup
+	local cmd = pfm.create_command("add_collection", parentGroup, name)
+	if addUndo then
+		childGroup = pfm.undoredo.push("pfm_add_collection", cmd)()
+	else
+		childGroup = cmd:Execute()
+	end
 	if childGroup == nil then
 		return
 	end

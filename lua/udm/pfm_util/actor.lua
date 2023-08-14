@@ -84,13 +84,22 @@ function pfm.udm.Actor:HasComponent(name)
 	return false
 end
 
-function pfm.udm.Actor:AddComponentType(componentType)
+function pfm.udm.Actor:GetFilmClip()
+	return self:GetParent():GetFilmClip()
+end
+
+function pfm.udm.Actor:AddComponentType(componentType, uuid)
 	local component = self:FindComponent(componentType)
 	if component ~= nil then
 		return component
 	end
 	component = self:AddComponent()
+	if uuid ~= nil then
+		component:ChangeUniqueId(uuid)
+	end
 	component:SetType(componentType)
+
+	self:GetFilmClip():CallChangeListeners("OnActorComponentAdded", self, componentType)
 	return component
 end
 
@@ -100,6 +109,8 @@ function pfm.udm.Actor:RemoveComponentType(componentType)
 		return
 	end
 	self:RemoveComponent(component)
+
+	self:GetFilmClip():CallChangeListeners("OnActorComponentRemoved", self, componentType)
 end
 
 function pfm.udm.Actor:ChangeModel(mdlName)
