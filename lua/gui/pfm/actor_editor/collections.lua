@@ -83,42 +83,10 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 				end)
 				if isRoot ~= true then
 					pContext:AddItem(locale.get_text("pfm_remove_collection"), function()
-						local actorIds = {}
-						local pm = pfm.get_project_manager()
-						local session = pm:GetSession()
-						local schema = session:GetSchema()
-						local function find_actors(itemGroup)
-							for _, item in ipairs(itemGroup:GetItems()) do
-								local id = item:GetIdentifier()
-								local el = udm.dereference(schema, id)
-								if util.get_type_name(el) == "Group" then
-									find_actors(item)
-								elseif util.get_type_name(el) == "Actor" then
-									table.insert(actorIds, id)
-								end
-							end
-						end
-						find_actors(itemGroup)
-
-						local itemParent = itemGroup:GetParentItem()
-						local groupUuid = itemGroup:GetIdentifier()
-						local parentUuid
-						if util.is_valid(itemParent) then
-							parentUuid = itemParent:GetIdentifier()
-						end
-						self:RemoveActors(actorIds)
-
-						itemParent = self:GetCollectionTreeItem(parentUuid)
-						itemGroup = self:GetCollectionTreeItem(groupUuid)
-						if util.is_valid(groupUuid) and util.is_valid(itemParent) then
-							local group = self:GetCollectionUdmObject(itemGroup)
-							local groupParent = self:GetCollectionUdmObject(itemParent)
-							if group ~= nil and groupParent ~= nil and groupParent.RemoveGroup ~= nil then
-								groupParent:RemoveGroup(group)
-								itemGroup:RemoveSafely()
-								itemParent:FullUpdate()
-							end
-						end
+						pfm.undoredo.push(
+							"pfm_delete_collection",
+							pfm.create_command("delete_collection", self:GetFilmClip(), parent)
+						)()
 					end)
 					pContext:AddItem(locale.get_text("rename"), function()
 						local te = gui.create(
@@ -271,7 +239,7 @@ function gui.PFMActorEditor:FindCollection(name, createIfNotExists, parentGroup)
 		return
 	end
 	for _, item in ipairs(root:GetItems()) do
-		if item:GetName() == name then
+		if item:IsValid() and item:GetName() == name then
 			local elUdm = self:GetCollectionUdmObject(item)
 			if elUdm ~= nil then
 				return elUdm, item
