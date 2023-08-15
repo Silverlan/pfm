@@ -59,12 +59,10 @@ function Element:InsertFilmClipBefore(filmClip, name)
 	pfm.undoredo.push("pfm_add_film_clip", pfm.create_command("add_film_clip", name or "shot", filmClip, true))()
 end
 function Element:MoveFilmClipToLeft(filmClip)
-	local track = filmClip:GetParent()
-	track:MoveFilmClipToLeft(filmClip)
+	pfm.undoredo.push("pfm_move_film_clip", pfm.create_command("move_film_clip", filmClip, true))()
 end
 function Element:MoveFilmClipToRight(filmClip)
-	local track = filmClip:GetParent()
-	track:MoveFilmClipToRight(filmClip)
+	pfm.undoredo.push("pfm_move_film_clip", pfm.create_command("move_film_clip", filmClip, false))()
 end
 function Element:RemoveFilmClip(filmClip)
 	pfm.undoredo.push("pfm_delete_film_clip", pfm.create_command("delete_film_clip", filmClip))()
