@@ -390,6 +390,94 @@ function Element:InitializeMenuBar()
 	pMenuBar:AddItem(locale.get_text("view"),function(pContext)
 
 	end)]]
+
+	pMenuBar
+		:AddItem(locale.get_text("edit"), function(pContext)
+			local undoText = pfm.get_undo_text()
+			if undoText ~= nil then
+				undoText = " (" .. undoText .. ")"
+			end
+			local pItemUndo = pContext:AddItem(locale.get_text("undo") .. (undoText or ""), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				pfm.undo()
+			end)
+			pItemUndo:SetName("undo")
+			if pfm.has_undo() == false then
+				pItemUndo:SetEnabled(false)
+			end
+
+			local redoText = pfm.get_redo_text()
+			if redoText ~= nil then
+				redoText = " (" .. redoText .. ")"
+			end
+			local pItemRedo = pContext:AddItem(locale.get_text("redo") .. (redoText or ""), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				pfm.redo()
+			end)
+			pItemRedo:SetName("redo")
+			if pfm.has_redo() == false then
+				pItemRedo:SetEnabled(false)
+			end
+
+			local pItemCopy = pContext:AddItem(locale.get_text("copy"), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				local actorEditor = self:GetActorEditor()
+				if util.is_valid(actorEditor) == false then
+					return
+				end
+				actorEditor:CopyToClipboard()
+			end)
+			pItemCopy:SetName("copy")
+
+			local actorEditor = self:GetActorEditor()
+			local numSelectedActors = 0
+			if util.is_valid(actorEditor) then
+				numSelectedActors = #actorEditor:GetSelectedActors()
+			end
+
+			local pItemPaste = pContext:AddItem(locale.get_text("paste"), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				local actorEditor = self:GetActorEditor()
+				if util.is_valid(actorEditor) == false then
+					return
+				end
+				actorEditor:PasteFromClipboard()
+			end)
+			pItemPaste:SetName("paste")
+
+			local clipboardString = util.get_clipboard_string()
+			if #clipboardString == 0 then
+				pItemPaste:SetEnabled(false)
+			end
+
+			local pItemDelete = pContext:AddItem(locale.get_text("delete"), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				local actorEditor = self:GetActorEditor()
+				if util.is_valid(actorEditor) == false then
+					return
+				end
+				actorEditor:DeleteSelectedActors()
+			end)
+			pItemDelete:SetName("delete")
+
+			if numSelectedActors == 0 then
+				pItemCopy:SetEnabled(false)
+				pItemDelete:SetEnabled(false)
+			end
+
+			pContext:ScheduleUpdate()
+		end)
+		:SetName("edit")
 	if self:IsDeveloperModeEnabled() then
 		pMenuBar
 			:AddItem(locale.get_text("render"), function(pContext)

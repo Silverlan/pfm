@@ -78,6 +78,24 @@ pfm.undoredo.clear = function()
 	pfm.undoredo.detail.callback_handler:CallCallbacks("OnChange")
 end
 
+pfm.has_undo = function()
+	local pos = pfm.undoredo.action_position
+	local data = pfm.undoredo.stack[pos]
+	if data == nil then
+		return false
+	end
+	return true
+end
+
+pfm.get_undo_text = function()
+	local pos = pfm.undoredo.action_position
+	local data = pfm.undoredo.stack[pos]
+	if data == nil then
+		return
+	end
+	return locale.get_text(data.name)
+end
+
 pfm.undo = function()
 	local pos = pfm.undoredo.action_position
 	local data = pfm.undoredo.stack[pos]
@@ -99,6 +117,24 @@ pfm.undo = function()
 	pfm.tag_render_scene_as_dirty()
 	pfm.undoredo.detail.callback_handler:CallCallbacks("OnUndo", data.name)
 	pfm.undoredo.detail.callback_handler:CallCallbacks("OnChange")
+end
+
+pfm.has_redo = function()
+	local pos = pfm.undoredo.action_position + 1
+	local data = pfm.undoredo.stack[pos]
+	if data == nil then
+		return false
+	end
+	return true
+end
+
+pfm.get_redo_text = function()
+	local pos = pfm.undoredo.action_position + 1
+	local data = pfm.undoredo.stack[pos]
+	if data == nil then
+		return
+	end
+	return locale.get_text(data.name)
 end
 
 pfm.redo = function()

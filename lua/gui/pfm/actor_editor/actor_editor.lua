@@ -564,6 +564,16 @@ function gui.PFMActorEditor:OnActorPropertyChanged(entActor)
 	end
 	rt:MarkActorAsDirty(entActor)
 end
+function gui.PFMActorEditor:DeleteSelectedActors()
+	local ids = {}
+	for _, actor in ipairs(self:GetSelectedActors()) do
+		if actor:IsValid() then
+			table.insert(ids, tostring(actor:GetUniqueId()))
+		end
+	end
+
+	self:RemoveActors(ids)
+end
 function gui.PFMActorEditor:CopyToClipboard(actors)
 	actors = actors or self:GetSelectedActors()
 	local el = udm.create_element()
