@@ -475,6 +475,15 @@ function Element:InitializeMenuBar()
 				pItemDelete:SetEnabled(false)
 			end
 
+			pContext
+				:AddItem(locale.get_text("pfm_menu_reload_game_view"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					self:ReloadGameView()
+				end)
+				:SetName("reload_game_view")
+
 			pContext:ScheduleUpdate()
 		end)
 		:SetName("edit")
