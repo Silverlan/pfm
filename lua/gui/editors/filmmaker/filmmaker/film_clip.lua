@@ -50,37 +50,13 @@ function Element:AddFilmClip()
 	local lastFilmClip
 	local sortedClips = trackFilm:GetSortedFilmClips()
 	lastFilmClip = sortedClips[#sortedClips]
-	self:InsertFilmClipAfter(lastFilmClip, name)
+	self:InsertFilmClipAfter(lastFilmClip)
 end
 function Element:InsertFilmClipAfter(filmClip, name)
-	name = name or "shot"
-	local track = filmClip:GetParent()
-	local newFc = track:InsertFilmClipAfter(filmClip)
-	newFc:SetName(name)
-
-	local channelTrackGroup = newFc:AddTrackGroup()
-	channelTrackGroup:SetName("channelTrackGroup")
-
-	local animSetEditorChannelsTrack = channelTrackGroup:AddTrack()
-	animSetEditorChannelsTrack:SetName("animSetEditorChannels")
-
-	local elFc = self:AddFilmClipElement(newFc)
-	self.m_timeline:GetTimeline():AddTimelineItem(elFc, newFc:GetTimeFrame())
+	pfm.undoredo.push("pfm_add_film_clip", pfm.create_command("add_film_clip", name or "shot", filmClip, false))()
 end
 function Element:InsertFilmClipBefore(filmClip, name)
-	name = name or "shot"
-	local track = filmClip:GetParent()
-	local newFc = track:InsertFilmClipBefore(filmClip)
-	newFc:SetName(name)
-
-	local channelTrackGroup = newFc:AddTrackGroup()
-	channelTrackGroup:SetName("channelTrackGroup")
-
-	local animSetEditorChannelsTrack = channelTrackGroup:AddTrack()
-	animSetEditorChannelsTrack:SetName("animSetEditorChannels")
-
-	local elFc = self:AddFilmClipElement(newFc)
-	self.m_timeline:GetTimeline():AddTimelineItem(elFc, newFc:GetTimeFrame())
+	pfm.undoredo.push("pfm_add_film_clip", pfm.create_command("add_film_clip", name or "shot", filmClip, true))()
 end
 function Element:MoveFilmClipToLeft(filmClip)
 	local track = filmClip:GetParent()
@@ -111,7 +87,7 @@ function Element:UpdateTrackCallbacks()
 	if util.is_valid(self.m_filmStrip) then
 		for _, elFilmClip in ipairs(self.m_filmStrip:GetFilmClips()) do
 			if elFilmClip:IsValid() then
-				local filmClip = elFilmClip:GetFilmClip()
+				local filmClip = elFilmClip:GetFilmClipData()
 				newTracks[filmClip:GetParent()] = true
 			end
 		end
@@ -143,8 +119,25 @@ function Element:AddTrackCallbacks(track)
 			end
 		end
 	end)
+	local cbNewFc = track:AddChangeListener("OnFilmClipAdded", function(c, newFc)
+		if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
+			return
+		end
+		local elFc = self:AddFilmClipElement(newFc)
+		self.m_timeline:GetTimeline():AddTimelineItem(elFc, newFc:GetTimeFrame())
+	end)
+	local cbFcRem = track:AddChangeListener("OnFilmClipRemoved", function(c, filmClip)
+		local el = self.m_filmStrip:FindFilmClipElement(filmClip)
+		if util.is_valid(el) == false then
+			return
+		end
+		-- TODO: This probably requires some cleanup
+		el:Remove()
+
+		self:UpdateTrackCallbacks()
+	end)
 	self.m_tracks[track] = {
-		callbacks = { cb },
+		callbacks = { cb, cbNewFc, cbFcRem },
 	}
 end
 function Element:AddFilmClipElement(filmClip)

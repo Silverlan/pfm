@@ -39,9 +39,27 @@ function pfm.udm.Track:GetSortedFilmClips()
 	return sorted
 end
 
-function pfm.udm.Track:InsertFilmClipAfter(target)
-	local clips = self:GetSortedFilmClips()
+function pfm.udm.Track:ClearFilmClip(filmClip)
+	self:RemoveFilmClip(filmClip)
+	self:CallChangeListeners("OnFilmClipRemoved", filmClip)
+end
+
+function pfm.udm.Track:AddGenericFilmClip()
 	local newFc = self:AddFilmClip()
+	local channelTrackGroup = newFc:AddTrackGroup()
+	channelTrackGroup:SetName("channelTrackGroup")
+
+	local animSetEditorChannelsTrack = channelTrackGroup:AddTrack()
+	animSetEditorChannelsTrack:SetName("animSetEditorChannels")
+	return newFc
+end
+
+function pfm.udm.Track:InsertFilmClipAfter(target, uuid)
+	local clips = self:GetSortedFilmClips()
+	local newFc = self:AddGenericFilmClip()
+	if uuid ~= nil then
+		newFc:ChangeUniqueId(uuid)
+	end
 	newFc:GetTimeFrame():SetDuration(10)
 	local targetIndex
 	for i, fc in ipairs(clips) do
@@ -59,13 +77,17 @@ function pfm.udm.Track:InsertFilmClipAfter(target)
 			tStart = timeFrame:GetEnd()
 		end
 	end
+	self:CallChangeListeners("OnFilmClipAdded", newFc)
 	self:UpdateFilmClipTimeFrames()
 	return newFc
 end
 
-function pfm.udm.Track:InsertFilmClipBefore(target)
+function pfm.udm.Track:InsertFilmClipBefore(target, uuid)
 	local clips = self:GetSortedFilmClips()
-	local newFc = self:AddFilmClip()
+	local newFc = self:AddGenericFilmClip()
+	if uuid ~= nil then
+		newFc:ChangeUniqueId(uuid)
+	end
 	newFc:GetTimeFrame():SetDuration(10)
 	local targetIndex
 	for i, fc in ipairs(clips) do
@@ -85,6 +107,7 @@ function pfm.udm.Track:InsertFilmClipBefore(target)
 			end
 		end
 	end
+	self:CallChangeListeners("OnFilmClipAdded", newFc)
 	self:UpdateFilmClipTimeFrames()
 	return newFc
 end
