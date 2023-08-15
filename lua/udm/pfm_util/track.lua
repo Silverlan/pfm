@@ -126,4 +126,5 @@ function pfm.udm.Track:UpdateFilmClipTimeFrames()
 		timeFrame:SetStart(tStart)
 		tStart = timeFrame:GetEnd()
 	end
+	self:CallChangeListeners("OnFilmClipTimeFramesUpdated")
 end

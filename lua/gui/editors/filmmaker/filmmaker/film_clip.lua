@@ -22,14 +22,11 @@ function Element:SelectFilmClip(filmClip)
 	actorEditor:Setup(filmClip)
 end
 function Element:ChangeFilmClipDuration(filmClip, dur)
-	local el = self.m_filmStrip:FindFilmClipElement(filmClip)
-	if util.is_valid(el) == false then
-		return
-	end
-	filmClip:GetTimeFrame():SetDuration(dur)
-	local track = filmClip:GetParent()
-	track:UpdateFilmClipTimeFrames()
-	el:UpdateFilmClipData()
+	local timeFrame = filmClip:GetTimeFrame()
+	pfm.undoredo.push(
+		"pfm_set_film_clip_duration",
+		pfm.create_command("set_film_clip_duration", filmClip, timeFrame:GetDuration(), dur)
+	)()
 end
 function Element:ChangeFilmClipOffset(filmClip, offset)
 	local el = self.m_filmStrip:FindFilmClipElement(filmClip)
@@ -40,12 +37,10 @@ function Element:ChangeFilmClipOffset(filmClip, offset)
 	el:UpdateFilmClipData()
 end
 function Element:ChangeFilmClipName(filmClip, name)
-	local el = self.m_filmStrip:FindFilmClipElement(filmClip)
-	if util.is_valid(el) == false then
-		return
-	end
-	filmClip:SetName(name)
-	el:UpdateFilmClipData()
+	pfm.undoredo.push(
+		"pfm_rename_film_clip",
+		pfm.create_command("rename_film_clip", filmClip, filmClip:GetName(), name)
+	)()
 end
 function Element:AddFilmClip()
 	local session = self:GetSession()
@@ -106,6 +101,52 @@ function Element:RemoveFilmClip(filmClip)
 	-- TODO: This probably requires some cleanup
 	el:Remove()
 	track:UpdateFilmClipTimeFrames()
+
+	self:UpdateTrackCallbacks()
+end
+function Element:UpdateTrackCallbacks()
+	if self.m_tracks == nil then
+		return
+	end
+	local newTracks = {}
+	if util.is_valid(self.m_filmStrip) then
+		for _, elFilmClip in ipairs(self.m_filmStrip:GetFilmClips()) do
+			if elFilmClip:IsValid() then
+				local filmClip = elFilmClip:GetFilmClip()
+				newTracks[filmClip:GetParent()] = true
+			end
+		end
+	end
+
+	local rem = {}
+	for track, trackData in pairs(self.m_tracks) do
+		if newTracks[track] ~= true then
+			util.remove(trackData.callbacks)
+			self.m_tracks[track] = nil
+		end
+	end
+	for _, track in ipairs(rem) do
+		self.m_tracks[track] = nil
+	end
+end
+function Element:AddTrackCallbacks(track)
+	self.m_tracks = self.m_tracks or {}
+	if self.m_tracks[track] ~= nil then
+		return
+	end
+	local cb = track:AddChangeListener("OnFilmClipTimeFramesUpdated", function(c)
+		if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
+			return
+		end
+		for _, elFilmClip in ipairs(self.m_filmStrip:GetFilmClips()) do
+			if elFilmClip:IsValid() then
+				elFilmClip:UpdateFilmClipData()
+			end
+		end
+	end)
+	self.m_tracks[track] = {
+		callbacks = { cb },
+	}
 end
 function Element:AddFilmClipElement(filmClip)
 	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip, filmClip, function(elFilmClip)
@@ -114,6 +155,24 @@ function Element:AddFilmClipElement(filmClip)
 			self:SelectFilmClip(filmClipData)
 		end
 	end)
+	local listeners = {}
+	pFilmClip:AddCallback("OnRemove", function()
+		util.remove(listeners)
+	end)
+	table.insert(
+		listeners,
+		filmClip:AddChangeListener("name", function(c)
+			if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
+				return
+			end
+			local el = self.m_filmStrip:FindFilmClipElement(filmClip)
+			if util.is_valid(el) == false then
+				return
+			end
+			el:UpdateFilmClipData()
+		end)
+	)
+	self:AddTrackCallbacks(filmClip:GetParent())
 	pFilmClip:AddCallback("OnMouseEvent", function(pFilmClip, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 			local pContext = gui.open_context_menu()
