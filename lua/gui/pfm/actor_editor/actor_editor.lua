@@ -623,17 +623,20 @@ function gui.PFMActorEditor:Reload()
 	end
 	self:Setup(self.m_filmClip)
 end
-function gui.PFMActorEditor:Setup(filmClip)
+function gui.PFMActorEditor:Clear()
 	-- if(util.is_same_object(filmClip,self.m_filmClip)) then return end
 	util.remove(self.m_filmClipCallbacks)
 
 	debug.start_profiling_task("pfm_populate_actor_editor")
 	asset.clear_unused()
-	self.m_filmClip = filmClip
 	self.m_tree:Clear()
 	self.m_treeElementToActorData = {}
 	self.m_actorUniqueIdToTreeElement = {}
 	self.m_filmClipCallbacks = {}
+end
+function gui.PFMActorEditor:Setup(filmClip)
+	self:Clear()
+	self.m_filmClip = filmClip
 	-- TODO: Include groups the actors belong to!
 
 	table.insert(

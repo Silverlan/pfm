@@ -67,78 +67,7 @@ function Element:MoveFilmClipToRight(filmClip)
 	track:MoveFilmClipToRight(filmClip)
 end
 function Element:RemoveFilmClip(filmClip)
-	local el = self.m_filmStrip:FindFilmClipElement(filmClip)
-	if util.is_valid(el) == false then
-		return
-	end
-	local track = filmClip:GetParent()
-	track:RemoveFilmClip(filmClip)
-	-- TODO: This probably requires some cleanup
-	el:Remove()
-	track:UpdateFilmClipTimeFrames()
-
-	self:UpdateTrackCallbacks()
-end
-function Element:UpdateTrackCallbacks()
-	if self.m_tracks == nil then
-		return
-	end
-	local newTracks = {}
-	if util.is_valid(self.m_filmStrip) then
-		for _, elFilmClip in ipairs(self.m_filmStrip:GetFilmClips()) do
-			if elFilmClip:IsValid() then
-				local filmClip = elFilmClip:GetFilmClipData()
-				newTracks[filmClip:GetParent()] = true
-			end
-		end
-	end
-
-	local rem = {}
-	for track, trackData in pairs(self.m_tracks) do
-		if newTracks[track] ~= true then
-			util.remove(trackData.callbacks)
-			self.m_tracks[track] = nil
-		end
-	end
-	for _, track in ipairs(rem) do
-		self.m_tracks[track] = nil
-	end
-end
-function Element:AddTrackCallbacks(track)
-	self.m_tracks = self.m_tracks or {}
-	if self.m_tracks[track] ~= nil then
-		return
-	end
-	local cb = track:AddChangeListener("OnFilmClipTimeFramesUpdated", function(c)
-		if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
-			return
-		end
-		for _, elFilmClip in ipairs(self.m_filmStrip:GetFilmClips()) do
-			if elFilmClip:IsValid() then
-				elFilmClip:UpdateFilmClipData()
-			end
-		end
-	end)
-	local cbNewFc = track:AddChangeListener("OnFilmClipAdded", function(c, newFc)
-		if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
-			return
-		end
-		local elFc = self:AddFilmClipElement(newFc)
-		self.m_timeline:GetTimeline():AddTimelineItem(elFc, newFc:GetTimeFrame())
-	end)
-	local cbFcRem = track:AddChangeListener("OnFilmClipRemoved", function(c, filmClip)
-		local el = self.m_filmStrip:FindFilmClipElement(filmClip)
-		if util.is_valid(el) == false then
-			return
-		end
-		-- TODO: This probably requires some cleanup
-		el:Remove()
-
-		self:UpdateTrackCallbacks()
-	end)
-	self.m_tracks[track] = {
-		callbacks = { cb, cbNewFc, cbFcRem },
-	}
+	pfm.undoredo.push("pfm_delete_film_clip", pfm.create_command("delete_film_clip", filmClip))()
 end
 function Element:AddFilmClipElement(filmClip)
 	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip, filmClip, function(elFilmClip)
@@ -164,7 +93,6 @@ function Element:AddFilmClipElement(filmClip)
 	table.insert(listeners, filmClip:AddChangeListener("name", update_film_clip_data))
 	table.insert(listeners, filmClip:AddChangeListener("duration", update_film_clip_data))
 	table.insert(listeners, filmClip:AddChangeListener("offset", update_film_clip_data))
-	self:AddTrackCallbacks(filmClip:GetParent())
 	pFilmClip:AddCallback("OnMouseEvent", function(pFilmClip, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 			local pContext = gui.open_context_menu()

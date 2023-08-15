@@ -120,7 +120,7 @@ function gui.PFMTimeline:InitializeClip(clip, fOnSelected)
 		if self:IsValid() == false then
 			return
 		end
-		if util.is_valid(self.m_selectedClip and self.m_selectedClip ~= clip) then
+		if util.is_valid(self.m_selectedClip) and self.m_selectedClip ~= clip then
 			self.m_selectedClip:SetSelected(false)
 		end
 		self.m_selectedClip = clip

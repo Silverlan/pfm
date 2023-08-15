@@ -74,6 +74,9 @@ function Element:CreateEmptyProject()
 end
 function Element:OnProjectClosed()
 	pfm.ProjectManager.OnProjectClosed(self)
+	if self.m_trackCallbacks ~= nil then
+		util.remove(self.m_trackCallbacks)
+	end
 	self:UpdateAutosave(true)
 	self:CallCallbacks("OnProjectClosed")
 end

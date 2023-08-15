@@ -369,6 +369,9 @@ function pfm.ProjectManager:OnFilmClipAdded(el) end
 function pfm.ProjectManager:GetAnimationCache()
 	return self.m_animationCache
 end
+function pfm.ProjectManager:ClearActiveGameViewFilmClip()
+	self.m_activeGameViewFilmClip = nil
+end
 function pfm.ProjectManager:InitializeProject(project)
 	pfm.log("Initializing PFM project...", pfm.LOG_CATEGORY_PFM)
 	debug.start_profiling_task("pfm_initialize_project")
@@ -418,6 +421,9 @@ function pfm.ProjectManager:InitializeProject(project)
 	self:OnProjectInitialized(project)
 	debug.stop_profiling_task()
 	return entScene
+end
+function pfm.ProjectManager:GetFilmTrack()
+	return self:GetSession():GetFilmTrack()
 end
 function pfm.ProjectManager:CacheAnimations()
 	if console.get_convar_bool("pfm_animation_cache_enabled") == false or self.m_projectFileName == nil then

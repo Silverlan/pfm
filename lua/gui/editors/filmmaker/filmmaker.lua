@@ -551,6 +551,10 @@ end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()
 end
+function gui.WIFilmmaker:ClearActiveGameViewFilmClip()
+	pfm.ProjectManager.ClearActiveGameViewFilmClip(self)
+	self:GetAnimationManager():Reset()
+end
 function gui.WIFilmmaker:OnProjectInitialized(project)
 	local session = self:GetSession()
 	if session == nil then
@@ -567,6 +571,43 @@ function gui.WIFilmmaker:OnProjectInitialized(project)
 	if util.is_valid(self.m_playhead) then
 		self.m_playhead:SetFrameRate(settings:GetFrameRate())
 	end
+
+	local track = session:GetFilmTrack()
+	local cb = track:AddChangeListener("OnFilmClipTimeFramesUpdated", function(c)
+		if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
+			return
+		end
+		for _, elFilmClip in ipairs(self.m_filmStrip:GetFilmClips()) do
+			if elFilmClip:IsValid() then
+				elFilmClip:UpdateFilmClipData()
+			end
+		end
+	end)
+	local cbNewFc = track:AddChangeListener("OnFilmClipAdded", function(c, newFc)
+		if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
+			return
+		end
+		local elFc = self:AddFilmClipElement(newFc)
+		self.m_timeline:GetTimeline():AddTimelineItem(elFc, newFc:GetTimeFrame())
+	end)
+	local cbFcRem = track:AddChangeListener("OnFilmClipRemoved", function(c, filmClip)
+		if util.is_same_object(self:GetActiveGameViewFilmClip(), filmClip) then
+			self:ClearActiveGameViewFilmClip()
+		end
+
+		local actorEditor = self:GetActorEditor()
+		if util.is_valid(actorEditor) and util.is_same_object(actorEditor:GetFilmClip(), filmClip) then -- TODO: Game view film clip should be independent of actor editor film clip
+			actorEditor:Clear()
+		end
+
+		local el = self.m_filmStrip:FindFilmClipElement(filmClip)
+		if util.is_valid(el) == false then
+			return
+		end
+		-- TODO: This probably requires some cleanup
+		el:Remove()
+	end)
+	self.m_trackCallbacks = { cb, cbNewFc, cbFcRem }
 
 	local activeClip = session:GetActiveClip()
 	if activeClip ~= nil then
