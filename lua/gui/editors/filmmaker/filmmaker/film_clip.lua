@@ -29,12 +29,11 @@ function Element:ChangeFilmClipDuration(filmClip, dur)
 	)()
 end
 function Element:ChangeFilmClipOffset(filmClip, offset)
-	local el = self.m_filmStrip:FindFilmClipElement(filmClip)
-	if util.is_valid(el) == false then
-		return
-	end
-	filmClip:GetTimeFrame():SetOffset(offset)
-	el:UpdateFilmClipData()
+	local timeFrame = filmClip:GetTimeFrame()
+	pfm.undoredo.push(
+		"pfm_set_film_clip_offset",
+		pfm.create_command("set_film_clip_offset", filmClip, timeFrame:GetOffset(), offset)
+	)()
 end
 function Element:ChangeFilmClipName(filmClip, name)
 	pfm.undoredo.push(
@@ -159,19 +158,19 @@ function Element:AddFilmClipElement(filmClip)
 	pFilmClip:AddCallback("OnRemove", function()
 		util.remove(listeners)
 	end)
-	table.insert(
-		listeners,
-		filmClip:AddChangeListener("name", function(c)
-			if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
-				return
-			end
-			local el = self.m_filmStrip:FindFilmClipElement(filmClip)
-			if util.is_valid(el) == false then
-				return
-			end
-			el:UpdateFilmClipData()
-		end)
-	)
+	local function update_film_clip_data()
+		if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
+			return
+		end
+		local el = self.m_filmStrip:FindFilmClipElement(filmClip)
+		if util.is_valid(el) == false then
+			return
+		end
+		el:UpdateFilmClipData()
+	end
+	table.insert(listeners, filmClip:AddChangeListener("name", update_film_clip_data))
+	table.insert(listeners, filmClip:AddChangeListener("duration", update_film_clip_data))
+	table.insert(listeners, filmClip:AddChangeListener("offset", update_film_clip_data))
 	self:AddTrackCallbacks(filmClip:GetParent())
 	pFilmClip:AddCallback("OnMouseEvent", function(pFilmClip, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
