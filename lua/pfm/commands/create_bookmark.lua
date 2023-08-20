@@ -23,6 +23,7 @@ function Command:Initialize(filmClip, bmSetName, timestamp)
 	if bmSet ~= nil then
 		local bm = bmSet:FindBookmark(timestamp)
 		if bm ~= nil then
+			-- Bookmark already exists
 			return pfm.Command.RESULT_NO_OP
 		end
 	end

@@ -127,10 +127,10 @@ function Command:ApplyValue(key)
 	-- Mark actor and property as dirty
 	self:SetActorPropertyDirty(actor, propertyPath)
 end
-function Command:DoExecute()
+function Command:DoExecute(data)
 	self:ApplyValue("newValue")
 end
-function Command:DoUndo()
+function Command:DoUndo(data)
 	self:ApplyValue("oldValue")
 end
 pfm.register_command("set_actor_property", Command)

@@ -12,14 +12,14 @@ function Command:Initialize(newTimeOffset, oldTimeOffset)
 	local data = self:GetData()
 	data:SetValue("newTimeOffset", udm.TYPE_FLOAT, newTimeOffset)
 	data:SetValue("oldTimeOffset", udm.TYPE_FLOAT, oldTimeOffset)
-	return true
+	return pfm.Command.RESULT_SUCCESS
 end
-function Command:DoExecute()
+function Command:DoExecute(data)
 	local pm = self:GetProjectManager()
-	pm:SetTimeOffset(self:GetData():GetValue("newTimeOffset", udm.TYPE_FLOAT))
+	pm:SetTimeOffset(data:GetValue("newTimeOffset", udm.TYPE_FLOAT))
 end
-function Command:DoUndo()
+function Command:DoUndo(data)
 	local pm = self:GetProjectManager()
-	pm:SetTimeOffset(self:GetData():GetValue("oldTimeOffset", udm.TYPE_FLOAT))
+	pm:SetTimeOffset(data:GetValue("oldTimeOffset", udm.TYPE_FLOAT))
 end
 pfm.register_command("set_time_offset", Command)

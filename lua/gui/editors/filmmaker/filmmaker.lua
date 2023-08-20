@@ -1070,7 +1070,7 @@ function gui.WIFilmmaker:UpdateBookmarks()
 	else
 		local filmClip = self:GetActiveFilmClip()
 		if filmClip ~= nil then
-			local bms = filmClip:GetBookmarkSet("keyframe")
+			local bms = filmClip:FindBookmarkSet("keyframe")
 			if bms ~= nil then
 				self.m_timeline:AddBookmarkSet(bms)
 			end

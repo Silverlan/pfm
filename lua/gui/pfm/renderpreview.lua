@@ -1011,7 +1011,6 @@ function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
 	offlineRendererOptions:LinkToUDMProperty("denoise_mode", settings, "denoiseMode")
 
 	-- Sample count
-	--function gui.PFMControlsMenu:AddSliderControl(name,identifier,default,min,max,onChange,stepSize,integer)
 	ctrl, wrapper = offlineRendererOptions:AddSliderControl(
 		pfm.LocStr("pfm_samples_per_pixel"),
 		"samples_per_pixel",

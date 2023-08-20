@@ -213,6 +213,9 @@ function WIBakeButton:ClearBaker()
 	util.remove(self.m_bakerCallbacks)
 	self.m_bakerCallbacks = {}
 end
+function WIBakeButton:GetBaker()
+	return self.m_baker
+end
 function WIBakeButton:SetBaker(baker)
 	self:ClearBaker()
 	self.m_baker = baker
