@@ -157,23 +157,22 @@ function pfm.udm.FilmClip:RemoveActorComponent(actor, component)
 	if c == nil then
 		return
 	end
-	actor:RemoveComponentType(component)
 	local animClip = self:FindActorAnimationClip(actor, false)
-	if animClip == nil then
-		return
-	end
-	local anim = animClip:GetAnimation()
-	local removeChannelIndices = {}
-	for i, channel in ipairs(anim:GetChannels()) do
-		local targetPath = channel:GetTargetPath()
-		local componentName, componentPath =
-			ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
-		if componentName == component then
-			table.insert(removeChannelIndices, 1, i)
+	if animClip ~= nil then
+		local anim = animClip:GetAnimation()
+		local removeChannelIndices = {}
+		for i, channel in ipairs(anim:GetChannels()) do
+			local targetPath = channel:GetTargetPath()
+			local componentName, componentPath =
+				ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
+			if componentName == component then
+				table.insert(removeChannelIndices, 1, i)
+			end
 		end
+		for _, idx in ipairs(removeChannelIndices) do
+			anim:RemoveChannel(idx)
+		end
+		animClip:SetPanimaAnimationDirty()
 	end
-	for _, idx in ipairs(removeChannelIndices) do
-		anim:RemoveChannel(idx)
-	end
-	animClip:SetPanimaAnimationDirty()
+	actor:RemoveComponentType(component)
 end

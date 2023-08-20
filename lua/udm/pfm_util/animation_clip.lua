@@ -7,6 +7,11 @@
 ]]
 
 function pfm.udm.AnimationClip:OnInitialize() end
+
+function pfm.udm.AnimationClip:GetAnimationTrack()
+	return self:GetParent()
+end
+
 function pfm.udm.AnimationClip:FindChannel(path)
 	for _, channel in ipairs(self:GetAnimation():GetChannels()) do
 		if channel:GetTargetPath() == path then
@@ -204,6 +209,31 @@ function pfm.udm.EditorChannelData:FindLowerKeyIndex(t, baseIndex)
 	end
 	return idx
 end
+function pfm.udm.EditorChannelData:SetKeyframeValue(keyIndex, value, valueBaseIndex)
+	local graphCurve = self:GetGraphCurve()
+	local keyData = graphCurve:GetKey(valueBaseIndex)
+	if keyData == nil then
+		return false
+	end
+	local oldValue = keyData:GetValue(keyIndex)
+	keyData:SetValue(keyIndex, value)
+
+	local animationClip = self:GetAnimationClip()
+	local track = animationClip:GetAnimationTrack()
+	local filmClip = track:GetFilmClip()
+	filmClip:CallChangeListeners(
+		"OnEditorChannelKeyframeValueChanged",
+		track,
+		animationClip,
+		self,
+		keyData,
+		keyIndex,
+		valueBaseIndex,
+		oldValue,
+		value
+	)
+	return true
+end
 
 local function swap_property(keyData, i0, i1, get, set)
 	local tmp = get(keyData, i0)
@@ -264,9 +294,15 @@ function pfm.udm.EditorChannelData:SetKeyTime(keyIndex, newTime, baseIndex)
 	return (iTarget ~= keyIndex) and iTarget or nil
 end
 
+function pfm.udm.EditorChannelData:GetEditorAnimationData()
+	return self:GetParent()
+end
+function pfm.udm.EditorChannelData:GetAnimationClip()
+	return self:GetEditorAnimationData():GetParent()
+end
+
 function pfm.udm.EditorChannelData:AddKey(t, baseIndex)
 	baseIndex = baseIndex or 0
-
 	local graphCurve = self:GetGraphCurve()
 	local keyData = graphCurve:GetKey(baseIndex)
 	if keyData == nil then
@@ -309,6 +345,11 @@ function pfm.udm.EditorChannelData:AddKey(t, baseIndex)
 	keyData:SetOutHandleType(i, pfm.udm.KEYFRAME_HANDLE_TYPE_ALIGNED)
 
 	self:GetBookmarkSet():AddBookmarkAtTimestamp(t)
+
+	local animationClip = self:GetAnimationClip()
+	local track = animationClip:GetAnimationTrack()
+	local filmClip = track:GetFilmClip()
+	filmClip:CallChangeListeners("OnEditorChannelKeyframeAdded", track, animationClip, self, keyData, i)
 	return keyData, i
 end
 
@@ -335,5 +376,10 @@ function pfm.udm.EditorChannelData:RemoveKey(t, baseIndex)
 	keyData:RemoveOutTimeRange(i, 1)
 	keyData:RemoveOutDeltaRange(i, 1)
 	keyData:RemoveOutHandleTypeRange(i, 1)
+
+	local animationClip = self:GetAnimationClip()
+	local track = animationClip:GetAnimationTrack()
+	local filmClip = track:GetFilmClip()
+	filmClip:CallChangeListeners("OnEditorChannelKeyframeRemoved", track, animationClip, self, keyData, i)
 	return i
 end

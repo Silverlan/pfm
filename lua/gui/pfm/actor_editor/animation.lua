@@ -197,7 +197,7 @@ function gui.PFMActorEditor:GetAnimationChannel(actor, path, addIfNotExists)
 	local channel = channelClip:GetChannel(path, varType, addIfNotExists)
 	return channel, channelClip
 end
-function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, value, baseIndex) -- For internal use only
+function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, oldValue, value, baseIndex) -- For internal use only
 	-- If the property is animated, we'll defer the assignment of the value to the animation manager.
 	-- If the channel for the property only has a single animation value, and we're not in the graph editor, special behavior is triggered:
 	-- In this case we will set both the base value of the property, as well as the animation value.
@@ -237,7 +237,39 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, v
 		if inGraphEditor == false then
 			time = (channel:GetValueCount() > 0) and channel:GetTime(0) or 0.0
 		end
-		self:SetAnimationChannelValue(actorData, targetPath, value, baseIndex, time)
+		time = time or fm:GetTimeOffset()
+
+		local cmd = pfm.create_command("composition")
+		local actorUuid = tostring(actorData:GetUniqueId())
+		local animData, propData = self:GetAnimatedPropertyData(actorData, targetPath, time)
+		if animData ~= false then
+			if
+				pfm.CommandCreateKeyframe.does_keyframe_exist(animManager, actorUuid, targetPath, time, baseIndex)
+				== false
+			then
+				cmd:AddSubCommand("create_keyframe", actorUuid, animData.path, animData.valueType, time, baseIndex)
+			end
+		else
+			-- TODO
+			debug.print("ERROR")
+		end
+
+		cmd:AddSubCommand(
+			"set_keyframe_value",
+			actorUuid,
+			targetPath,
+			animData.valueType,
+			time,
+			self:ToChannelValue(oldValue),
+			self:ToChannelValue(value),
+			baseIndex
+		)
+
+		pfm.undoredo.push("pfm_change_animation_value", cmd)()
+		-- TODO: Add main property action from return value
+		--
+
+		-- self:SetAnimationChannelValue(actorData, targetPath, value, baseIndex, time)
 		if inGraphEditor then
 			return false
 		end
@@ -256,14 +288,14 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, v
 	end
 	return true -- Returning true will ensure the base value will be changed
 end
-function gui.PFMActorEditor:SetAnimationChannelValue(actor, path, value, baseIndex, forceAtTime)
-	local fm = tool.get_filmmaker()
-
-	local filmClip = self:GetFilmClip()
-	local track = filmClip:FindAnimationChannelTrack()
-
-	local animManager = fm:GetAnimationManager()
-	local channelClip = track:FindActorAnimationClip(actor, true)
+function gui.PFMActorEditor:ToChannelValue(value)
+	local channelValue = value
+	if util.get_type_name(channelValue) == "Color" then
+		channelValue = channelValue:ToVector()
+	end
+	return channelValue
+end
+function gui.PFMActorEditor:GetAnimatedPropertyData(actor, path)
 	local path = panima.Channel.Path(path)
 	local componentName, memberName = ents.PanimaComponent.parse_component_channel_path(path)
 	local componentId = componentName and ents.get_component_id(componentName)
@@ -283,41 +315,69 @@ function gui.PFMActorEditor:SetAnimationChannelValue(actor, path, value, baseInd
 		end
 		memberInfo = memberInfo or componentInfo:GetMemberInfo(memberName:GetString())
 	end
-	if memberInfo ~= nil then
-		local type = memberInfo.type
-		path = path:ToUri(false)
+	local propertyData = {
+		path = path,
+		componentName = componentName,
+		componentId = componentId,
+		memberName = memberName,
+	}
+	if memberInfo == nil then
+		return false, propertyData
+	end
+	local type = memberInfo.type
+	path = path:ToUri(false)
 
-		local time = forceAtTime or fm:GetTimeOffset()
-		local localTime = channelClip:LocalizeOffsetAbs(time)
-		local channelValue = value
-		if util.get_type_name(channelValue) == "Color" then
-			channelValue = channelValue:ToVector()
-		end
-		if baseIndex ~= nil then
-			fm:SetActorAnimationComponentProperty(actor, path, localTime, channelValue, type, baseIndex)
-		else
-			fm:SetActorAnimationComponentProperty(actor, path, localTime, channelValue, type)
-		end
-	else
-		local baseMsg = "Unable to apply animation channel value with channel path '" .. path.path:GetString() .. "': "
-		if componentName == nil then
+	return {
+		path = path,
+		valueType = type,
+	}, propertyData
+end
+function gui.PFMActorEditor:SetAnimationChannelValue(actor, path, value, baseIndex, forceAtTime)
+	local fm = tool.get_filmmaker()
+	local animData, propData = self:GetAnimatedPropertyData(actor, path)
+
+	local filmClip = self:GetFilmClip()
+	local track = filmClip:FindAnimationChannelTrack()
+	local channelClip = track:FindActorAnimationClip(actor, true)
+	local localTime = channelClip:LocalizeOffsetAbs(forceAtTime or fm:GetTimeOffset())
+
+	if animData == false then
+		local baseMsg = "Unable to apply animation channel value with channel path '"
+			.. propData.path:GetString()
+			.. "': "
+		if propData.componentName == nil then
 			pfm.log(
 				baseMsg .. "Unable to determine component type from animation channel path '" .. path .. "'!",
 				pfm.LOG_CATEGORY_PFM,
 				pfm.LOG_SEVERITY_WARNING
 			)
-		elseif componentId == nil then
+		elseif propData.componentId == nil then
 			pfm.log(
-				baseMsg .. "Component '" .. componentName .. "' is unknown!",
+				baseMsg .. "Component '" .. propData.componentName .. "' is unknown!",
 				pfm.LOG_CATEGORY_PFM,
 				pfm.LOG_SEVERITY_WARNING
 			)
 		else
 			pfm.log(
-				baseMsg .. "Component '" .. componentName .. "' has no known member '" .. memberName:GetString() .. "'!",
+				baseMsg
+					.. "Component '"
+					.. propData.componentName
+					.. "' has no known member '"
+					.. propData.memberName:GetString()
+					.. "'!",
 				pfm.LOG_CATEGORY_PFM,
 				pfm.LOG_SEVERITY_WARNING
 			)
 		end
+		return
 	end
+	local fm = tool.get_filmmaker()
+	fm:SetActorAnimationComponentProperty(
+		actor,
+		animData.path,
+		localTime,
+		self:ToChannelValue(value),
+		animData.valueType,
+		baseIndex
+	)
 end

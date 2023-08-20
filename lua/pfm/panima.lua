@@ -237,7 +237,7 @@ end
 
 function pfm.AnimationManager:RemoveChannel(actor, path)
 	if self.m_filmClip == nil or self.m_filmClip == nil then
-		return
+		return false
 	end
 	self:SetAnimationDirty(actor)
 	local anim, channel, animClip = self:FindAnimationChannel(actor, path)
@@ -245,10 +245,11 @@ function pfm.AnimationManager:RemoveChannel(actor, path)
 		animClip:RemoveChannel(path)
 	end
 	if channel == nil then
-		return
+		return false
 	end
 	anim:RemoveChannel(path)
 	self:CallCallbacks("OnChannelRemoved", actor, path)
+	return true
 end
 
 function pfm.AnimationManager:RemoveKeyframe(actor, path, keyIdx, baseIndex)

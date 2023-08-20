@@ -7,6 +7,26 @@
 ]]
 
 local Command = util.register_class("pfm.CommandCreateKeyframe", pfm.Command)
+function Command.does_keyframe_exist(animManager, actorUuid, propertyPath, timestamp, baseIndex)
+	local actor = pfm.dereference(actorUuid)
+	if actor == nil then
+		return false
+	end
+
+	local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
+	if animClip ~= nil then
+		local editorData = animClip:GetEditorData()
+		local editorChannel = editorData:FindChannel(propertyPath)
+		if editorChannel ~= nil then
+			local keyIdx = editorChannel:FindKeyIndexByTime(timestamp, baseIndex)
+			if keyIdx ~= nil then
+				-- Keyframe already exists
+				return true
+			end
+		end
+	end
+	return false
+end
 function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseIndex)
 	pfm.Command.Initialize(self)
 	local actor = pfm.dereference(actorUuid)
@@ -18,19 +38,10 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 	self:AddSubCommand("add_animation_channel", actorUuid, propertyPath, valueType)
 	self:AddSubCommand("add_editor_channel", actorUuid, propertyPath)
 
-	local animManager = self:GetAnimationManager()
-	local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
-	if animClip ~= nil then
-		local editorData = animClip:GetEditorData()
-		local editorChannel = editorData:FindChannel(propertyPath)
-		if editorChannel ~= nil then
-			local keyIdx = editorChannel:FindKeyIndexByTime(timestamp, baseIndex)
-			if keyIdx ~= nil then
-				-- Keyframe already exists
-				self:LogFailure("Keyframe already exists!")
-				return pfm.Command.RESULT_FAILURE
-			end
-		end
+	if Command.does_keyframe_exist(self:GetAnimationManager(), actorUuid, propertyPath, timestamp, baseIndex) then
+		-- Keyframe already exists
+		self:LogFailure("Keyframe already exists!")
+		return pfm.Command.RESULT_FAILURE
 	end
 
 	local data = self:GetData()
@@ -38,11 +49,15 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
 	data:SetValue("propertyType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	data:SetValue("timestamp", udm.TYPE_FLOAT, timestamp)
-	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex)
+	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex or 0)
 	return pfm.Command.RESULT_SUCCESS
 end
-function Command:DoExecute()
+function Command:GetLocalTime(channelClip)
 	local data = self:GetData()
+	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
+	return channelClip:LocalizeOffsetAbs(time)
+end
+function Command:DoExecute(data)
 	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
@@ -58,7 +73,6 @@ function Command:DoExecute()
 		return
 	end
 
-	local timestamp = data:GetValue("timestamp", udm.TYPE_FLOAT)
 	local valueBaseIndex = data:GetValue("valueBaseIndex", udm.TYPE_UINT8)
 
 	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
@@ -76,6 +90,7 @@ function Command:DoExecute()
 	local graphCurve = editorChannel:GetGraphCurve()
 	local keyData = graphCurve:GetKey(valueBaseIndex)
 
+	local timestamp = self:GetLocalTime(animClip)
 	if keyData ~= nil then
 		local keyIdx = editorChannel:FindKeyIndexByTime(timestamp, valueBaseIndex)
 		if keyIdx ~= nil then
@@ -84,11 +99,9 @@ function Command:DoExecute()
 			return false
 		end
 	end
-
 	editorChannel:AddKey(timestamp, valueBaseIndex)
 end
-function Command:DoUndo()
-	local data = self:GetData()
+function Command:DoUndo(data)
 	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
@@ -97,7 +110,6 @@ function Command:DoUndo()
 	end
 
 	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-	local timestamp = data:GetValue("timestamp", udm.TYPE_FLOAT)
 	local valueBaseIndex = data:GetValue("valueBaseIndex", udm.TYPE_UINT8)
 
 	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
@@ -113,6 +125,7 @@ function Command:DoUndo()
 		return
 	end
 
+	local timestamp = self:GetLocalTime(animClip)
 	editorChannel:RemoveKey(timestamp, valueBaseIndex)
 end
 pfm.register_command("create_keyframe", Command)

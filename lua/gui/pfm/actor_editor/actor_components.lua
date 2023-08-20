@@ -641,7 +641,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 											pfm.LOG_SEVERITY_DEBUG
 										)
 									end
-									self:ApplyComponentChannelValue(self, component, controlData, memberValue)
+									self:ApplyComponentChannelValue(self, component, controlData, oldValue, memberValue)
 								end
 							else
 								c:InvokeElementMemberChangeCallback(memberIdx)

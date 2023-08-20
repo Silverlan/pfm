@@ -27,6 +27,18 @@ function pfm.udm.Actor:IsVisible()
 	return visible
 end
 
+pfm.udm.Actor.POSE_CHANGE_FLAG_NONE = 0
+pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_POSITION = 1
+pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_ROTATION = 2
+pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_SCALE = 4
+function pfm.udm.Actor:ChangePose(pose, changeFlags)
+	local oldPose = self:GetTransform():Copy()
+	self:SetTransform(pose)
+
+	local filmClip = self:GetFilmClip()
+	filmClip:CallChangeListeners("OnActorPoseChanged", self, oldPose, pose, changeFlags)
+end
+
 function pfm.udm.Actor:GetMemberValue(path)
 	local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
 	if componentName == nil then

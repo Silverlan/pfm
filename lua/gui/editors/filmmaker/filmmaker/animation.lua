@@ -67,7 +67,7 @@ function Element:UpdateActorAnimatedPropertyValue(actorData, targetPath, value) 
 	if util.is_valid(actorEditor) == false then
 		return true
 	end
-	return actorEditor:UpdateAnimationChannelValue(actorData, targetPath, value)
+	return actorEditor:UpdateAnimationChannelValue(actorData, targetPath, nil, value)
 end
 function Element:SetActorGenericProperty(actor, targetPath, value, udmType)
 	local actorData = actor:GetActorData()

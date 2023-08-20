@@ -6,6 +6,14 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+function pfm.udm.Track:GetTrackGroup()
+	return self:GetParent()
+end
+
+function pfm.udm.Track:GetFilmClip()
+	return self:GetTrackGroup():GetParent()
+end
+
 function pfm.udm.Track:FindActorAnimationClip(actor, addIfNotExists)
 	if type(actor) ~= "string" then
 		actor = tostring(actor:GetUniqueId())

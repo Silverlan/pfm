@@ -634,56 +634,118 @@ function gui.PFMActorEditor:Clear()
 	self.m_actorUniqueIdToTreeElement = {}
 	self.m_filmClipCallbacks = {}
 end
+function gui.PFMActorEditor:OnEditorChannelKeyframeRemoved(actor, targetPath)
+	-- TODO
+end
+function gui.PFMActorEditor:OnEditorChannelKeyframeAdded(actor, targetPath)
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+
+	animManager:SetAnimationDirty(actor)
+	pfm.tag_render_scene_as_dirty()
+
+	self:UpdateActorProperty(actor, targetPath)
+end
+function gui.PFMActorEditor:OnEditorChannelKeyframeValueChanged(
+	animationClip,
+	editorChannel,
+	editorKeyData,
+	editorKeyIndex,
+	valueBaseIndex,
+	oldValue,
+	newValue
+)
+	-- TODO: Move this callback to graph editor
+	local timeline = tool.get_filmmaker():GetTimeline()
+	if util.is_valid(timeline) == false then
+		return
+	end
+	local graphEditor = timeline:GetGraphEditor()
+	if util.is_valid(graphEditor) == false then
+		return
+	end
+
+	local actor = animationClip:GetActor()
+	local panimaAnim = animationClip:GetPanimaAnimation()
+	local path = editorChannel:GetTargetPath()
+	local panimaChannel = panimaAnim:FindChannel(path)
+	local udmType = panimaChannel:GetValueType()
+	local udmChannel = animationClip:GetChannel(path, udmType)
+	local idx = panimaChannel:FindIndex(editorKeyData:GetTime(editorKeyIndex))
+	local typeComponentIndex = valueBaseIndex
+	graphEditor:UpdateChannelValue({
+		actor = actor,
+		animation = panimaAnim,
+		channel = panimaChannel,
+		udmChannel = udmChannel,
+		index = idx,
+		oldIndex = idx,
+		keyIndex = editorKeyIndex,
+		typeComponentIndex = typeComponentIndex,
+	})
+end
 function gui.PFMActorEditor:Setup(filmClip)
 	self:Clear()
 	self.m_filmClip = filmClip
 	-- TODO: Include groups the actors belong to!
 
-	table.insert(
-		self.m_filmClipCallbacks,
-		filmClip:AddChangeListener("OnActorRemoved", function(filmClip, uuid, partOfBatch)
-			if partOfBatch then
-				return
-			end
-			self:OnActorsRemoved(filmClip, { uuid })
-		end)
+	local function add_change_listener(identifier, fc)
+		table.insert(self.m_filmClipCallbacks, filmClip:AddChangeListener(identifier, fc))
+	end
+	add_change_listener("OnActorRemoved", function(filmClip, uuid, partOfBatch)
+		if partOfBatch then
+			return
+		end
+		self:OnActorsRemoved(filmClip, { uuid })
+	end)
+	add_change_listener("OnActorsRemoved", function(filmClip, uuids)
+		self:OnActorsRemoved(filmClip, uuids)
+	end)
+	add_change_listener("OnGroupAdded", function(filmClip, group)
+		self:OnCollectionAdded(group)
+	end)
+	add_change_listener("OnGroupRemoved", function(filmClip, groupUuid)
+		self:OnCollectionRemoved(groupUuid)
+	end)
+	add_change_listener("OnActorComponentAdded", function(filmClip, actor, componentType)
+		if self.m_skipComponentCallbacks then
+			return
+		end
+		self:OnActorComponentAdded(filmClip, actor, componentType)
+	end)
+	add_change_listener("OnActorComponentRemoved", function(filmClip, actor, componentType)
+		if self.m_skipComponentCallbacks then
+			return
+		end
+		self:OnActorComponentRemoved(filmClip, actor, componentType)
+	end)
+	add_change_listener(
+		"OnEditorChannelKeyframeAdded",
+		function(filmClip, track, animationClip, editorChannel, keyData, keyframeIndex)
+			self:OnEditorChannelKeyframeAdded(animationClip:GetActor(), editorChannel:GetTargetPath())
+		end
 	)
-	table.insert(
-		self.m_filmClipCallbacks,
-		filmClip:AddChangeListener("OnActorsRemoved", function(filmClip, uuids)
-			self:OnActorsRemoved(filmClip, uuids)
-		end)
+	add_change_listener(
+		"OnEditorChannelKeyframeRemoved",
+		function(filmClip, track, animationClip, editorChannel, keyData, keyframeIndex)
+			self:OnEditorChannelKeyframeRemoved(animationClip:GetActor(), editorChannel:GetTargetPath())
+		end
 	)
-	table.insert(
-		self.m_filmClipCallbacks,
-		filmClip:AddChangeListener("OnGroupAdded", function(filmClip, group)
-			self:OnCollectionAdded(group)
-		end)
+	add_change_listener(
+		"OnEditorChannelKeyframeValueChanged",
+		function(filmClip, track, animationClip, editorChannel, keyData, keyIndex, valueBaseIndex, oldValue, newValue)
+			self:OnEditorChannelKeyframeValueChanged(
+				animationClip,
+				editorChannel,
+				keyData,
+				keyIndex,
+				valueBaseIndex,
+				oldValue,
+				newValue
+			)
+		end
 	)
-	table.insert(
-		self.m_filmClipCallbacks,
-		filmClip:AddChangeListener("OnGroupRemoved", function(filmClip, groupUuid)
-			self:OnCollectionRemoved(groupUuid)
-		end)
-	)
-	table.insert(
-		self.m_filmClipCallbacks,
-		filmClip:AddChangeListener("OnActorComponentAdded", function(filmClip, actor, componentType)
-			if self.m_skipComponentCallbacks then
-				return
-			end
-			self:OnActorComponentAdded(filmClip, actor, componentType)
-		end)
-	)
-	table.insert(
-		self.m_filmClipCallbacks,
-		filmClip:AddChangeListener("OnActorComponentRemoved", function(filmClip, actor, componentType)
-			if self.m_skipComponentCallbacks then
-				return
-			end
-			self:OnActorComponentRemoved(filmClip, actor, componentType)
-		end)
-	)
+
 	local function add_actors(parent, parentItem, root)
 		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree, parent, root)
 		if root then
@@ -802,10 +864,10 @@ function gui.PFMActorEditor:UpdateControlValues()
 		end
 	end
 end
-function gui.PFMActorEditor:ApplyComponentChannelValue(actorEditor, component, controlData, value)
+function gui.PFMActorEditor:ApplyComponentChannelValue(actorEditor, component, controlData, oldValue, value)
 	local actor = component:GetActor()
 	if actor ~= nil and controlData.path ~= nil then
-		actorEditor:UpdateAnimationChannelValue(actor, controlData.path, value)
+		actorEditor:UpdateAnimationChannelValue(actor, controlData.path, oldValue, value)
 	end
 end
 function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, controlData)
@@ -1299,7 +1361,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 	if util.is_valid(ctrl) == false then
 		if controlData.addControl then
 			ctrl = controlData.addControl(self.m_animSetControls, function(value)
-				self:ApplyComponentChannelValue(self, udmComponent, controlData, value)
+				self:ApplyComponentChannelValue(self, udmComponent, controlData, nil, value)
 			end)
 		else
 			ctrl = self:AddSliderControl(udmComponent, controlData)

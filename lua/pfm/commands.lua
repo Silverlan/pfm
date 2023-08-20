@@ -47,6 +47,7 @@ local BaseCommand = util.register_class("pfm.Command")
 BaseCommand.RESULT_SUCCESS = 0
 BaseCommand.RESULT_FAILURE = 1
 BaseCommand.RESULT_NO_OP = 2
+BaseCommand.RESULT_INVALID_COMMAND = 3
 
 function BaseCommand:__init()
 	self.m_data = udm.create("PFMCMD", 1)
@@ -104,7 +105,7 @@ function BaseCommand:AddSubCommand(identifier, ...)
 		local cmd = pfm.impl.commands[identifier]
 		if cmd == nil then
 			self:LogFailure("Failed to create sub-command '" .. identifier .. "': No such command found!")
-			return
+			return pfm.Command.RESULT_INVALID_COMMAND
 		end
 		o = cmd.class()
 	else
@@ -115,18 +116,20 @@ function BaseCommand:AddSubCommand(identifier, ...)
 	local res = o:Initialize(...)
 	if res == pfm.Command.RESULT_FAILURE then
 		self:LogFailure("Failed to create sub-command '" .. identifier .. "'!")
-		return
+		return res
 	elseif res == pfm.Command.RESULT_NO_OP then
-		return
+		return res
 	end
 	table.insert(self.m_subCommands, o)
+	return res
 end
 
 local CommandComposition = util.register_class("pfm.CommandComposition", pfm.Command)
 function CommandComposition:Initialize(cmds)
-	for _, cmd in ipairs(cmds) do
+	for _, cmd in ipairs(cmds or {}) do
 		self:AddSubCommand(cmd)
 	end
 end
+pfm.register_command("composition", CommandComposition)
 
 include("commands")
