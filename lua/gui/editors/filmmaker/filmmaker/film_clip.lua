@@ -91,6 +91,37 @@ function Element:AddFilmClipElement(filmClip)
 	table.insert(listeners, filmClip:AddChangeListener("name", update_film_clip_data))
 	table.insert(listeners, filmClip:AddChangeListener("duration", update_film_clip_data))
 	table.insert(listeners, filmClip:AddChangeListener("offset", update_film_clip_data))
+	table.insert(
+		listeners,
+		filmClip:AddChangeListener("OnActorPoseChanged", function(filmClip, actor, oldPose, newPose, changeFlags)
+			local vp = self:GetViewport()
+			local ent = actor:FindEntity()
+			if util.is_valid(vp) and util.is_valid(ent) then
+				local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+				if util.is_valid(rt) then
+					rt:MarkActorAsDirty(ent)
+				end
+				self:TagRenderSceneAsDirty()
+
+				self:GetAnimationManager():SetAnimationDirty(actor)
+				local prefixPath = "ec/pfm_actor/"
+				if bit.band(changeFlags, pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_POSITION) ~= 0 then
+					ent:SetMemberValue(prefixPath .. "position", newPose:GetOrigin())
+					self:GetActorEditor():UpdateActorProperty(actor, prefixPath .. "position")
+				end
+				if bit.band(changeFlags, pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_ROTATION) ~= 0 then
+					ent:SetMemberValue(prefixPath .. "rotation", newPose:GetRotation())
+					self:GetActorEditor():UpdateActorProperty(actor, prefixPath .. "rotation")
+				end
+				if bit.band(changeFlags, pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_SCALE) ~= 0 then
+					ent:SetMemberValue(prefixPath .. "scale", newPose:GetScale())
+					self:GetActorEditor():UpdateActorProperty(actor, prefixPath .. "scale")
+				end
+
+				vp:OnActorTransformChanged(ent)
+			end
+		end)
+	)
 	pFilmClip:AddCallback("OnMouseEvent", function(pFilmClip, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 			local pContext = gui.open_context_menu()
