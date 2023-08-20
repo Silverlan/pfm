@@ -43,3 +43,4 @@ pfm_menu_context_simple_project = "创建一个新项目，其中包含一些基
 pfm_menu_context_start_lua_debugger_server = "这使得使用Visual Studio Code对Lua脚本进行断点调试和逐行代码执行成为可能。"
 pfm_menu_generate_ao = "为当前项目中所有没有环境光遮蔽贴图的动态物体生成环境光遮蔽贴图。"
 pfm_menu_pack_project = "将当前项目及其使用的所有资产打包成一个归档文件，可与其他人分享。"
+pfm_menu_reload_game_view = "重新加载游戏视图"

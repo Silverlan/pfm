@@ -43,3 +43,4 @@ pfm_menu_context_simple_project = "Crea un nuevo proyecto poblado con algunos ac
 pfm_menu_context_start_lua_debugger_server = "Esto permite depurar con puntos de interrupción y ejecución de código paso a paso para scripts de Lua utilizando Visual Studio Code."
 pfm_menu_generate_ao = "Genera mapas de oclusión ambiental para todos los actores dinámicos en el proyecto actual que no los tengan."
 pfm_menu_pack_project = "Empaqueta el proyecto actual, incluyendo todos los recursos utilizados en él, en un archivo que se puede compartir con otras personas."
+pfm_menu_reload_game_view = "Recargar Vista de Juego"

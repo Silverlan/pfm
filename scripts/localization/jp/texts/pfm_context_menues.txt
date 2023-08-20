@@ -43,3 +43,4 @@ pfm_menu_context_simple_project = "スカイやカメラなど、一部の基本
 pfm_menu_context_start_lua_debugger_server = "これにより、Visual Studio Codeを使用してLuaスクリプトのブレークポイントとステップ実行が可能なデバッグが可能になります。"
 pfm_menu_generate_ao = "現在のプロジェクト内のすべての動的アクターに対して環境遮蔽マップを生成します（まだ存在しない場合）。"
 pfm_menu_pack_project = "現在のプロジェクトとそれに使用されているすべてのアセットをアーカイブにまとめて、他の人と共有できるようにします。"
+pfm_menu_reload_game_view = "ゲームビューを再読み込み"
