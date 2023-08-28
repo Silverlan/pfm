@@ -143,17 +143,21 @@ end
 function gui.PFMTimelineDataPoint:OnRemove()
 	util.remove(self.m_tangentControl)
 end
-function gui.PFMTimelineDataPoint:SetGraphData(timelineCurve, keyIndex)
+function gui.PFMTimelineDataPoint:SetGraphData(timelineCurve, keyframeInfo)
 	self.m_graphData = {
 		timelineCurve = timelineCurve,
-		keyIndex = keyIndex,
+		keyframeInfo = keyframeInfo,
 	}
 end
 function gui.PFMTimelineDataPoint:GetKeyIndex()
-	return self.m_graphData.keyIndex
+	return self.m_graphData.keyframeInfo:GetIndex()
+end
+function gui.PFMTimelineDataPoint:GetKeyframeInfo()
+	return self.m_graphData.keyframeInfo
 end
 function gui.PFMTimelineDataPoint:SetKeyIndex(index)
-	self.m_graphData.keyIndex = index
+	-- TODO: Remove
+	-- self.m_graphData.keyIndex = index
 end
 function gui.PFMTimelineDataPoint:GetTime()
 	local editorKeys, keyIndex = self:GetEditorKeys()

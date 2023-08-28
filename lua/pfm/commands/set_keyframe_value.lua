@@ -28,6 +28,36 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, oldVa
 	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex or 0)
 	return pfm.Command.RESULT_SUCCESS
 end
+function Command:RebuildDirtyGraphCurveSegments()
+	local animClip = self:GetAnimationClip()
+	if animClip == nil then
+		return
+	end
+	local data = self:GetData()
+	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
+	local editorData = animClip:GetEditorData()
+	local editorChannel = editorData:FindChannel(propertyPath)
+	local graphCurve = editorChannel:GetGraphCurve()
+	graphCurve:RebuildDirtyGraphCurveSegments()
+end
+function Command:GetAnimationClip()
+	local data = self:GetData()
+	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
+	local actor = pfm.dereference(actorUuid)
+	if actor == nil then
+		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
+		return
+	end
+
+	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
+
+	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
+	if animClip == nil then
+		self:LogFailure("Missing animation channel!")
+		return
+	end
+	return animClip
+end
 function Command:GetLocalTime(channelClip)
 	local data = self:GetData()
 	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
@@ -77,6 +107,7 @@ function Command:ApplyValue(data, keyNewValue)
 		self:LogFailure("Failed to apply keyframe value!")
 		return
 	end
+	self:RebuildDirtyGraphCurveSegments()
 end
 function Command:DoExecute(data)
 	return self:ApplyValue(data, "newValue")

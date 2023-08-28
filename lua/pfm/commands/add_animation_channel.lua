@@ -25,8 +25,6 @@ function Command:Initialize(actorUuid, propertyPath, valueType)
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
 	data:SetValue("propertyType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	return pfm.Command.RESULT_SUCCESS
-
-	--function pfm.udm.EditorAnimationData:FindChannel(targetPath, addIfNotExists)
 end
 function Command:DoExecute()
 	local data = self:GetData()

@@ -6,10 +6,16 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("animation_clip_graph_curve.lua")
+
 function pfm.udm.AnimationClip:OnInitialize() end
 
 function pfm.udm.AnimationClip:GetAnimationTrack()
 	return self:GetParent()
+end
+
+function pfm.udm.AnimationClip:GetFilmClip()
+	return self:GetAnimationTrack():GetFilmClip()
 end
 
 function pfm.udm.AnimationClip:FindChannel(path)
@@ -51,6 +57,12 @@ end
 
 function pfm.udm.AnimationClip:SetPanimaAnimationDirty()
 	self.m_panimaAnim = nil
+end
+
+function pfm.udm.AnimationClip:UpdateAnimationChannel(channel)
+	local track = self:GetAnimationTrack()
+	local filmClip = track:GetFilmClip()
+	filmClip:CallChangeListeners("OnAnimationChannelChanged", channel, self)
 end
 
 function pfm.udm.AnimationClip:GetPanimaAnimation()
@@ -254,6 +266,8 @@ local function swap(keyData, i0, i1)
 	swap_property(keyData, i0, i1, keyData.GetOutTime, keyData.SetOutTime)
 	swap_property(keyData, i0, i1, keyData.GetOutDelta, keyData.SetOutDelta)
 	swap_property(keyData, i0, i1, keyData.GetOutHandleType, keyData.SetOutHandleType)
+
+	keyData:SwapKeyframeIndices(i0, i1)
 end
 function pfm.udm.EditorChannelData:SetKeyTime(keyIndex, newTime, baseIndex)
 	baseIndex = baseIndex or 0
@@ -275,7 +289,23 @@ function pfm.udm.EditorChannelData:SetKeyTime(keyIndex, newTime, baseIndex)
 		or (keyIndex == numTimes - 1 and iTarget > (numTimes - 1))
 	then
 		-- Changing the time will not change the value order in the array, so we can just apply it directly
+		local oldTime = keyData:GetTime(keyIndex)
 		keyData:SetTime(keyIndex, newTime)
+
+		local animationClip = self:GetAnimationClip()
+		local track = animationClip:GetAnimationTrack()
+		local filmClip = track:GetFilmClip()
+		filmClip:CallChangeListeners(
+			"OnEditorChannelKeyframeTimeChanged",
+			track,
+			animationClip,
+			self,
+			keyData,
+			keyIndex,
+			baseIndex,
+			oldTime,
+			newTime
+		)
 		return
 	end
 
@@ -290,7 +320,24 @@ function pfm.udm.EditorChannelData:SetKeyTime(keyIndex, newTime, baseIndex)
 			swap(keyData, j, j + 1)
 		end
 	end
+	local oldTime = keyData:GetTime(iTarget)
 	keyData:SetTime(iTarget, newTime)
+
+	local animationClip = self:GetAnimationClip()
+	local track = animationClip:GetAnimationTrack()
+	local filmClip = track:GetFilmClip()
+	filmClip:CallChangeListeners(
+		"OnEditorChannelKeyframeTimeChanged",
+		track,
+		animationClip,
+		self,
+		keyData,
+		iTarget,
+		baseIndex,
+		oldTime,
+		newTime
+	)
+
 	return (iTarget ~= keyIndex) and iTarget or nil
 end
 
@@ -299,6 +346,10 @@ function pfm.udm.EditorChannelData:GetEditorAnimationData()
 end
 function pfm.udm.EditorChannelData:GetAnimationClip()
 	return self:GetEditorAnimationData():GetParent()
+end
+
+function pfm.udm.EditorChannelData:GetFilmClip()
+	return self:GetAnimationClip():GetFilmClip()
 end
 
 function pfm.udm.EditorChannelData:AddKey(t, baseIndex)
@@ -349,7 +400,7 @@ function pfm.udm.EditorChannelData:AddKey(t, baseIndex)
 	local animationClip = self:GetAnimationClip()
 	local track = animationClip:GetAnimationTrack()
 	local filmClip = track:GetFilmClip()
-	filmClip:CallChangeListeners("OnEditorChannelKeyframeAdded", track, animationClip, self, keyData, i)
+	filmClip:CallChangeListeners("OnEditorChannelKeyframeAdded", track, animationClip, self, keyData, i, baseIndex)
 	return keyData, i
 end
 
@@ -380,6 +431,6 @@ function pfm.udm.EditorChannelData:RemoveKey(t, baseIndex)
 	local animationClip = self:GetAnimationClip()
 	local track = animationClip:GetAnimationTrack()
 	local filmClip = track:GetFilmClip()
-	filmClip:CallChangeListeners("OnEditorChannelKeyframeRemoved", track, animationClip, self, keyData, i)
+	filmClip:CallChangeListeners("OnEditorChannelKeyframeRemoved", track, animationClip, self, keyData, i, baseIndex)
 	return i
 end

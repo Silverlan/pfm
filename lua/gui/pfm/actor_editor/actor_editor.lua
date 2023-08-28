@@ -634,10 +634,27 @@ function gui.PFMActorEditor:Clear()
 	self.m_actorUniqueIdToTreeElement = {}
 	self.m_filmClipCallbacks = {}
 end
-function gui.PFMActorEditor:OnEditorChannelKeyframeRemoved(actor, targetPath)
-	-- TODO
+function gui.PFMActorEditor:OnEditorChannelAdded(actor, channel, targetPath)
+	local timeline = tool.get_filmmaker():GetTimeline()
+	local graphEditor = timeline:GetGraphEditor()
+	if util.is_valid(graphEditor) == false then
+		return
+	end
+	graphEditor:ReloadGraphCurve(targetPath)
 end
-function gui.PFMActorEditor:OnEditorChannelKeyframeAdded(actor, targetPath)
+function gui.PFMActorEditor:OnEditorChannelKeyframeRemoved(actor, targetPath, valueBaseIndex)
+	local timeline = tool.get_filmmaker():GetTimeline()
+	local graphEditor = timeline:GetGraphEditor()
+	if util.is_valid(graphEditor) == false then
+		return
+	end
+	local curve = graphEditor:FindGraphCurve(actor, targetPath, valueBaseIndex)
+	if util.is_valid(curve) == false then
+		return
+	end
+	curve:UpdateKeyframes()
+end
+function gui.PFMActorEditor:OnEditorChannelKeyframeAdded(actor, targetPath, valueBaseIndex)
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
 
@@ -645,6 +662,66 @@ function gui.PFMActorEditor:OnEditorChannelKeyframeAdded(actor, targetPath)
 	pfm.tag_render_scene_as_dirty()
 
 	self:UpdateActorProperty(actor, targetPath)
+
+	-- TODO
+	local timeline = tool.get_filmmaker():GetTimeline()
+	local graphEditor = timeline:GetGraphEditor()
+	if util.is_valid(graphEditor) == false then
+		return
+	end
+	local curve = graphEditor:FindGraphCurve(actor, targetPath, valueBaseIndex)
+	if util.is_valid(curve) == false then
+		return
+	end
+	curve:UpdateKeyframes()
+end
+function gui.PFMActorEditor:OnAnimationChannelChanged(filmClip, channel, animClip)
+	local timeline = tool.get_filmmaker():GetTimeline()
+	local graphEditor = timeline:GetGraphEditor()
+	if util.is_valid(graphEditor) == false then
+		return
+	end
+	graphEditor:ReloadGraphCurve(channel:GetTargetPath())
+end
+function gui.PFMActorEditor:OnGraphCurveAnimationDataChanged(filmClip, graphCurve, animClip, channel, valueBaseIndex)
+	local timeline = tool.get_filmmaker():GetTimeline()
+	local graphEditor = timeline:GetGraphEditor()
+	if util.is_valid(graphEditor) == false then
+		return
+	end
+	graphEditor:ReloadGraphCurve(channel:GetTargetPath())
+end
+function gui.PFMActorEditor:OnEditorChannelKeyframeTimeChanged(
+	animationClip,
+	editorChannel,
+	editorKeyData,
+	editorKeyIndex,
+	valueBaseIndex,
+	oldTime,
+	newTime
+)
+	print("OnEditorChannelKeyframeTimeChanged: ", editorKeyIndex)
+	-- TODO: Move this callback to graph editor
+	local timeline = tool.get_filmmaker():GetTimeline()
+	if util.is_valid(timeline) == false then
+		return
+	end
+	local graphEditor = timeline:GetGraphEditor()
+	if util.is_valid(graphEditor) == false then
+		return
+	end
+
+	local actor = animationClip:GetActor()
+	local path = editorChannel:GetTargetPath()
+
+	local curve = graphEditor:FindGraphCurve(actor, path, valueBaseIndex)
+	if util.is_valid(curve) == false then
+		return
+	end
+	local dp = curve:FindDataPointByKeyframeInfo(editorKeyData:GetKeyframeInfo(editorKeyIndex))
+	if util.is_valid(dp) then
+		curve:UpdateDataPoint(dp)
+	end
 end
 function gui.PFMActorEditor:OnEditorChannelKeyframeValueChanged(
 	animationClip,
@@ -673,7 +750,26 @@ function gui.PFMActorEditor:OnEditorChannelKeyframeValueChanged(
 	local udmChannel = animationClip:GetChannel(path, udmType)
 	local idx = panimaChannel:FindIndex(editorKeyData:GetTime(editorKeyIndex))
 	local typeComponentIndex = valueBaseIndex
-	graphEditor:UpdateChannelValue({
+
+	-- Test
+	--[[local i = 0
+	local keyIndex = 0
+	local typeComponentIndex = 0
+	local rebuildCurve = true
+	editorChannel:RebuildGraphCurveSegment(keyIndex, typeComponentIndex)]]
+
+	--
+
+	local curve = graphEditor:FindGraphCurve(actor, path, valueBaseIndex)
+	if util.is_valid(curve) == false then
+		return
+	end
+	local dp = curve:FindDataPointByKeyframeInfo(editorKeyData:GetKeyframeInfo(editorKeyIndex))
+	if util.is_valid(dp) then
+		curve:UpdateDataPoint(dp)
+	end
+
+	self:UpdateChannelValue({
 		actor = actor,
 		animation = panimaAnim,
 		channel = panimaChannel,
@@ -682,7 +778,45 @@ function gui.PFMActorEditor:OnEditorChannelKeyframeValueChanged(
 		oldIndex = idx,
 		keyIndex = editorKeyIndex,
 		typeComponentIndex = typeComponentIndex,
-	})
+	}, editorChannel)
+end
+function gui.PFMActorEditor:UpdateChannelValue(data, editorChannel)
+	-- TODO: Mark as dirty, then update lazily?
+	--[[local udmChannel = data.udmChannel
+	local rebuildGraphCurves = false
+	local curve = editorChannel:GetGraphCurve()
+	local editorKeys = curve:GetEditorKeys()
+	if editorKeys == nil or graphData.numValues ~= editorKeys:GetTimeCount() then
+		-- Number of keyframe keys has changed, we'll have to rebuild the entire curve
+		self:RebuildGraphCurve(graphIdx, graphData)
+	elseif data.fullUpdateRequired then
+		rebuildGraphCurves = true
+	elseif data.keyIndex ~= nil then
+		-- We only have to rebuild the two curve segments connected to the key
+		self:ReloadGraphCurveSegment(graphIdx, data.keyIndex)
+		rebuildGraphCurves = true
+
+		-- Also update key data point position
+		if data.oldKeyIndex ~= nil then
+			self:ReloadGraphCurveSegment(graphIdx, data.oldKeyIndex)
+			rebuildGraphCurves = true
+			graphData.curve:SwapDataPoints(data.oldKeyIndex, data.keyIndex)
+			graphData.curve:UpdateDataPoints()
+		else
+			graphData.curve:UpdateDataPoint(data.keyIndex + 1)
+		end
+	elseif data.oldKeyIndex ~= nil then
+		-- Key was deleted; Perform full update
+		-- TODO: If multiple keys are deleted at once, only do this once instead of for every single key
+		self:RebuildGraphCurve(graphIdx, graphData)
+	end
+
+	if rebuildGraphCurves then
+		local indices = self:FindGraphDataIndices(data.actor, udmChannel:GetTargetPath(), data.typeComponentIndex)
+		for _, graphIdx in ipairs(indices) do
+			self:RebuildGraphCurve(graphIdx, self.m_graphs[graphIdx], true)
+		end
+	end]]
 end
 function gui.PFMActorEditor:Setup(filmClip)
 	self:Clear()
@@ -719,16 +853,19 @@ function gui.PFMActorEditor:Setup(filmClip)
 		end
 		self:OnActorComponentRemoved(filmClip, actor, componentType)
 	end)
+	add_change_listener("OnEditorChannelAdded", function(filmClip, track, animationClip, channel, targetPath)
+		self:OnEditorChannelAdded(animationClip:GetActor(), channel, targetPath)
+	end)
 	add_change_listener(
 		"OnEditorChannelKeyframeAdded",
-		function(filmClip, track, animationClip, editorChannel, keyData, keyframeIndex)
-			self:OnEditorChannelKeyframeAdded(animationClip:GetActor(), editorChannel:GetTargetPath())
+		function(filmClip, track, animationClip, editorChannel, keyData, keyframeIndex, valueBaseIndex)
+			self:OnEditorChannelKeyframeAdded(animationClip:GetActor(), editorChannel:GetTargetPath(), valueBaseIndex)
 		end
 	)
 	add_change_listener(
 		"OnEditorChannelKeyframeRemoved",
-		function(filmClip, track, animationClip, editorChannel, keyData, keyframeIndex)
-			self:OnEditorChannelKeyframeRemoved(animationClip:GetActor(), editorChannel:GetTargetPath())
+		function(filmClip, track, animationClip, editorChannel, keyData, keyframeIndex, valueBaseIndex)
+			self:OnEditorChannelKeyframeRemoved(animationClip:GetActor(), editorChannel:GetTargetPath(), valueBaseIndex)
 		end
 	)
 	add_change_listener(
@@ -745,6 +882,29 @@ function gui.PFMActorEditor:Setup(filmClip)
 			)
 		end
 	)
+	add_change_listener(
+		"OnEditorChannelKeyframeTimeChanged",
+		function(filmClip, track, animationClip, editorChannel, keyData, keyIndex, valueBaseIndex, oldTime, newTime)
+			self:OnEditorChannelKeyframeTimeChanged(
+				animationClip,
+				editorChannel,
+				keyData,
+				keyIndex,
+				valueBaseIndex,
+				oldTime,
+				newTime
+			)
+		end
+	)
+	add_change_listener(
+		"OnGraphCurveAnimationDataChanged",
+		function(filmClip, graphCurve, animClip, channel, valueBaseIndex)
+			self:OnGraphCurveAnimationDataChanged(filmClip, graphCurve, animClip, channel, valueBaseIndex)
+		end
+	)
+	add_change_listener("OnAnimationChannelChanged", function(filmClip, channel, animClip)
+		self:OnAnimationChannelChanged(filmClip, channel, animClip)
+	end)
 
 	local function add_actors(parent, parentItem, root)
 		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree, parent, root)

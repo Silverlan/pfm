@@ -52,12 +52,8 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex or 0)
 	return pfm.Command.RESULT_SUCCESS
 end
-function Command:GetLocalTime(channelClip)
+function Command:GetChannelData()
 	local data = self:GetData()
-	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
-	return channelClip:LocalizeOffsetAbs(time)
-end
-function Command:DoExecute(data)
 	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
@@ -66,13 +62,6 @@ function Command:DoExecute(data)
 	end
 
 	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-	local strType = data:GetValue("propertyType", udm.TYPE_STRING)
-	local valueType = udm.string_to_type(strType)
-	if valueType == nil then
-		self:LogFailure("Invalid value type '" .. strType .. "'!")
-		return
-	end
-
 	local valueBaseIndex = data:GetValue("valueBaseIndex", udm.TYPE_UINT8)
 
 	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
@@ -87,6 +76,13 @@ function Command:DoExecute(data)
 		self:LogFailure("Missing editor channel!")
 		return
 	end
+	return actor, animClip, valueBaseIndex, editorChannel
+end
+function Command:CreateKeyframe(data)
+	local actor, animClip, valueBaseIndex, editorChannel = self:GetChannelData()
+	if actor == nil then
+		return false
+	end
 	local graphCurve = editorChannel:GetGraphCurve()
 	local keyData = graphCurve:GetKey(valueBaseIndex)
 
@@ -100,32 +96,27 @@ function Command:DoExecute(data)
 		end
 	end
 	editorChannel:AddKey(timestamp, valueBaseIndex)
+	return true
 end
-function Command:DoUndo(data)
-	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
-	local actor = pfm.dereference(actorUuid)
+function Command:RemoveKeyframe(data)
+	local actor, animClip, valueBaseIndex, editorChannel = self:GetChannelData()
 	if actor == nil then
-		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
-		return
-	end
-
-	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-	local valueBaseIndex = data:GetValue("valueBaseIndex", udm.TYPE_UINT8)
-
-	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
-	if animClip == nil then
-		self:LogFailure("Missing animation channel!")
-		return
-	end
-
-	local editorData = animClip:GetEditorData()
-	local editorChannel = editorData:FindChannel(propertyPath)
-	if editorChannel == nil then
-		self:LogFailure("Missing editor channel for property '" .. propertyPath .. "'!")
-		return
+		return false
 	end
 
 	local timestamp = self:GetLocalTime(animClip)
 	editorChannel:RemoveKey(timestamp, valueBaseIndex)
+	return true
+end
+function Command:GetLocalTime(channelClip)
+	local data = self:GetData()
+	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
+	return channelClip:LocalizeOffsetAbs(time)
+end
+function Command:DoExecute(data)
+	return self:CreateKeyframe(data)
+end
+function Command:DoUndo(data)
+	return self:RemoveKeyframe(data)
 end
 pfm.register_command("create_keyframe", Command)

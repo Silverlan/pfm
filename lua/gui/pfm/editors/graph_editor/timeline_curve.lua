@@ -57,48 +57,96 @@ end
 function gui.PFMTimelineCurve:UpdateCurveData(curveValues)
 	self.m_curve:BuildCurve(curveValues)
 end
+function gui.PFMTimelineCurve:ClearKeyframes()
+	util.remove(self.m_dataPoints)
+	self.m_dataPoints = {}
+end
+function gui.PFMTimelineCurve:UpdateKeyframes()
+	local editorChannel = self:GetEditorChannel()
+	if editorChannel == nil then
+		self:ClearKeyframes()
+		return
+	end
+	local typeComponentIndex = self:GetTypeComponentIndex()
+	local editorGraphCurve = (editorChannel ~= nil) and editorChannel:GetGraphCurve() or nil
+	local editorKeys = (editorGraphCurve ~= nil) and editorGraphCurve:GetKey(typeComponentIndex) or nil
+	local numKeys = (editorKeys ~= nil) and editorKeys:GetKeyframeCount() or 0
+	local curKeyframeInfos = {}
+	if editorKeys ~= nil then
+		for _, kfInfo in ipairs(editorKeys:GetKeyframeInfos()) do
+			curKeyframeInfos[kfInfo] = true
+		end
+	end
+
+	-- Clear all obsolete datapoints
+	local newDatapoints = {}
+	local kfInfoToDataPoint = {}
+	for _, elDp in ipairs(self.m_dataPoints) do
+		if elDp:IsValid() then
+			local kfInfo = elDp:GetKeyframeInfo()
+			if curKeyframeInfos[kfInfo] == true then
+				table.insert(newDatapoints, elDp)
+				kfInfoToDataPoint[kfInfo] = elDp
+			else
+				elDp:Remove()
+			end
+		end
+	end
+	self.m_dataPoints = newDatapoints
+	for i = 0, numKeys - 1 do
+		local kfInfo = editorKeys:GetKeyframeInfo(i)
+		if kfInfoToDataPoint[kfInfo] == nil then
+			local el = gui.create("WIPFMTimelineDataPoint", self)
+			el:SetGraphData(self, kfInfo)
+
+			el:AddCallback("OnMouseEvent", function(el, button, state, mods)
+				if self.m_timelineGraph:GetCursorMode() ~= gui.PFMTimelineGraph.CURSOR_MODE_SELECT then
+					return util.EVENT_REPLY_UNHANDLED
+				end
+				if button == input.MOUSE_BUTTON_LEFT then
+					if state == input.STATE_PRESS then
+						if util.is_valid(self.m_selectedDataPoint) then
+							self.m_selectedDataPoint:SetSelected(false)
+						end
+						el:SetSelected(true)
+						self.m_selectedDataPoint = el
+					end
+					self:GetTimelineGraph():SetDataPointMoveModeEnabled({ el }, state == input.STATE_PRESS, 5)
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+			self.m_selectedDataPoint = el
+			table.insert(self.m_dataPoints, el)
+		end
+	end
+	self:UpdateDataPoints()
+end
+function gui.PFMTimelineCurve:InitializeCurve(editorChannel, typeComponentIndex, curveIndex)
+	self:ClearKeyframes()
+
+	self.m_editorChannel = editorChannel
+	self.m_typeComponentIndex = typeComponentIndex
+	self.m_curveIndex = curveIndex
+
+	self:UpdateKeyframes()
+end
 function gui.PFMTimelineCurve:BuildCurve(curveValues, animClip, channel, curveIndex, editorChannel, typeComponentIndex)
 	self.m_channel = channel
 	self.m_animClip = animClip
-	self.m_panimaChannel = panima.Channel(channel:GetUdmData():Get("times"), channel:GetUdmData():Get("values"))
+	-- self.m_panimaChannel = panima.Channel(channel:GetUdmData():Get("times"), channel:GetUdmData():Get("values"))
 	self.m_editorChannel = editorChannel
 	self.m_curveIndex = curveIndex
 	self.m_typeComponentIndex = typeComponentIndex
 	self:UpdateCurveData(curveValues)
-
-	util.remove(self.m_dataPoints)
-	self.m_dataPoints = {}
-
-	local editorGraphCurve = (editorChannel ~= nil) and editorChannel:GetGraphCurve() or nil
-	local editorKeys = (editorGraphCurve ~= nil) and editorGraphCurve:GetKey(typeComponentIndex) or nil
-	local numKeys = (editorKeys ~= nil) and editorKeys:GetValueCount() or 0
-	for i = 0, numKeys - 1 do
-		local el = gui.create("WIPFMTimelineDataPoint", self)
-		el:SetGraphData(self, i)
-		el:AddCallback("OnMouseEvent", function(el, button, state, mods)
-			if self.m_timelineGraph:GetCursorMode() ~= gui.PFMTimelineGraph.CURSOR_MODE_SELECT then
-				return util.EVENT_REPLY_UNHANDLED
-			end
-			if button == input.MOUSE_BUTTON_LEFT then
-				if state == input.STATE_PRESS then
-					if util.is_valid(self.m_selectedDataPoint) then
-						self.m_selectedDataPoint:SetSelected(false)
-					end
-					el:SetSelected(true)
-					self.m_selectedDataPoint = el
-				end
-				self:GetTimelineGraph():SetDataPointMoveModeEnabled({ el }, state == input.STATE_PRESS, 5)
-				return util.EVENT_REPLY_HANDLED
-			end
-		end)
-		self.m_selectedDataPoint = el
-
-		table.insert(self.m_dataPoints, el)
-	end
-	self:UpdateDataPoints()
 end
+
 function gui.PFMTimelineCurve:UpdateDataPoint(i)
-	local el = self.m_dataPoints[i]
+	local el
+	if type(i) == "number" then
+		el = self.m_dataPoints[i]
+	else
+		el = i
+	end
 	if util.is_valid(el) == false then
 		return
 	end
@@ -141,6 +189,13 @@ function gui.PFMTimelineCurve:GetDataPoint(idx)
 end
 function gui.PFMTimelineCurve:GetDataPoints()
 	return self.m_dataPoints
+end
+function gui.PFMTimelineCurve:FindDataPointByKeyframeInfo(kfInfo)
+	for _, dp in ipairs(self.m_dataPoints) do
+		if dp:IsValid() and util.is_same_object(dp:GetKeyframeInfo(), kfInfo) then
+			return dp
+		end
+	end
 end
 function gui.PFMTimelineCurve:FindDataPoint(t)
 	for _, dp in ipairs(self.m_dataPoints) do

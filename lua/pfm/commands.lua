@@ -49,6 +49,9 @@ BaseCommand.RESULT_FAILURE = 1
 BaseCommand.RESULT_NO_OP = 2
 BaseCommand.RESULT_INVALID_COMMAND = 3
 
+BaseCommand.ACTION_DO = 0
+BaseCommand.ACTION_UNDO = 1
+
 function BaseCommand:__init()
 	self.m_data = udm.create("PFMCMD", 1)
 	self.m_subCommands = {}

@@ -6,6 +6,34 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+util.register_class("pfm.udm.EditorAnimationData.KeyframeInfo")
+function pfm.udm.EditorAnimationData.KeyframeInfo:__init(kfIndex)
+	self.m_dirty = true
+	self:SetIndex(kfIndex)
+end
+function pfm.udm.EditorAnimationData.KeyframeInfo:__tostring()
+	return "KeyframeInfo[" .. tostring(self:GetIndex()) .. "]"
+end
+function pfm.udm.EditorAnimationData.KeyframeInfo:SetIndex(idx)
+	self.m_keyframeIndex = idx
+end
+function pfm.udm.EditorAnimationData.KeyframeInfo:GetIndex()
+	return self.m_keyframeIndex
+end
+function pfm.udm.EditorAnimationData.KeyframeInfo:IsDirty()
+	return self.m_dirt
+end
+function pfm.udm.EditorAnimationData.KeyframeInfo:SetDirty(dirty)
+	if dirty == nil then
+		dirty = true
+	end
+	self.m_dirt = dirty
+end
+
+function pfm.udm.EditorAnimationData:GetAnimationClip()
+	return self:GetParent()
+end
+
 function pfm.udm.EditorAnimationData:FindChannel(targetPath, addIfNotExists)
 	for _, channel in ipairs(self:GetChannels()) do
 		if channel:GetTargetPath() == targetPath then
@@ -15,6 +43,12 @@ function pfm.udm.EditorAnimationData:FindChannel(targetPath, addIfNotExists)
 	if addIfNotExists then
 		local channel = self:AddChannel()
 		channel:SetTargetPath(targetPath)
+
+		local animationClip = self:GetAnimationClip()
+		local track = animationClip:GetAnimationTrack()
+		local filmClip = track:GetFilmClip()
+		filmClip:CallChangeListeners("OnEditorChannelAdded", track, animationClip, self, targetPath)
+
 		return channel, true
 	end
 end
@@ -27,17 +61,141 @@ local function get_other_handle(handle)
 	end
 	return pfm.udm.EditorGraphCurveKeyData.HANDLE_IN
 end
+function pfm.udm.EditorGraphCurveKeyData:ResizeDirtyKeyframes()
+	local numKeyframes = self:GetKeyframeCount()
+	local n = #self.m_keyframeInfos
+
+	if numKeyframes > n then
+		for i = n + 1, numKeyframes do
+			self.m_keyframeInfos[i] = pfm.udm.EditorAnimationData.KeyframeInfo(i - 1)
+		end
+	else
+		for i = numKeyframes + 1, n do
+			self.m_keyframeInfos[i] = nil
+		end
+	end
+end
+function pfm.udm.EditorGraphCurveKeyData:UpdateKeyframeIndices(startIndex)
+	for i = startIndex, #self.m_keyframeInfos do
+		self.m_keyframeInfos[i]:SetIndex(i - 1)
+	end
+end
+function pfm.udm.EditorGraphCurveKeyData:SwapKeyframeIndices(i0, i1)
+	local info0 = self:GetKeyframeInfo(i0)
+	local info1 = self:GetKeyframeInfo(i1)
+	local idx1 = info0:GetIndex()
+	local idx0 = info1:GetIndex()
+	info0:SetIndex(idx0)
+	info1:SetIndex(idx1)
+	self.m_keyframeInfos[idx0 + 1] = info0
+	self.m_keyframeInfos[idx1 + 1] = info1
+end
+function pfm.udm.EditorGraphCurveKeyData:GetKeyframeInfo(idx)
+	return self.m_keyframeInfos[idx + 1]
+end
+function pfm.udm.EditorGraphCurveKeyData:GetKeyframeInfos()
+	return self.m_keyframeInfos
+end
+function pfm.udm.EditorGraphCurveKeyData:OnArrayValueChanged(name, idx)
+	if name == "times" then
+		self.m_keyframeInfos[idx + 1]:SetDirty()
+	end
+end
+function pfm.udm.EditorGraphCurveKeyData:OnArrayValueAdded(name, idx)
+	if name == "times" then
+		table.insert(self.m_keyframeInfos, idx + 1, pfm.udm.EditorAnimationData.KeyframeInfo())
+		self:UpdateKeyframeIndices(idx + 1)
+	end
+end
+function pfm.udm.EditorGraphCurveKeyData:OnArrayValueRangeAdded(name, startIndex, count)
+	if name == "times" then
+		for i = 1, count do
+			table.insert(self.m_keyframeInfos, startIndex + 1, pfm.udm.EditorAnimationData.KeyframeInfo())
+		end
+		self:UpdateKeyframeIndices(startIndex + 1)
+	end
+end
+function pfm.udm.EditorGraphCurveKeyData:OnArrayValueRangeRemoved(name, startIndex, count)
+	if name == "times" then
+		for i = 1, count do
+			table.remove(self.m_keyframeInfos, startIndex + 1)
+		end
+		if self.m_keyframeInfos[startIndex + 1] ~= nil then
+			self.m_keyframeInfos[startIndex + 1]:SetDirty()
+			self:UpdateKeyframeIndices(startIndex + 1)
+		end
+	end
+end
+function pfm.udm.EditorGraphCurveKeyData:OnArrayValueRemoved(name, idx)
+	if name == "times" then
+		table.remove(self.m_keyframeInfos, idx + 1)
+		if self.m_keyframeInfos[idx + 1] ~= nil then
+			self.m_keyframeInfos[idx + 1]:SetDirty()
+			self:UpdateKeyframeIndices(idx + 1)
+		end
+	end
+end
+function pfm.udm.EditorGraphCurveKeyData:GetGraphCurve()
+	return self:GetParent()
+end
+function pfm.udm.EditorGraphCurveKeyData:RebuildDirtyGraphCurveSegments(baseIndex)
+	local dirtyKeyframes = self:GetDirtyKeyframes()
+	self:ClearDirtyKeyframes()
+
+	local keyframeIndices = {}
+	for keyframeIdx, dirty in ipairs(dirtyKeyframes) do
+		if dirty then
+			if keyframeIdx > 1 and (dirtyKeyframes[keyframeIdx - 1] == false) then
+				-- We need to update both the previous and the next curve segment around each keyframe.
+				-- RebuildGraphCurveSegment rebuilds the segment *after* the keyframe, so we need to add the previous keyframes to the list as well.
+				table.insert(keyframeIndices, keyframeIdx - 2)
+			end
+			table.insert(keyframeIndices, keyframeIdx - 1)
+		end
+	end
+
+	local graphCurve = self:GetGraphCurve()
+	local editorChannelData = graphCurve:GetEditorChannelData()
+	for _, keyframeIdx in ipairs(keyframeIndices) do
+		print("Rebuilding " .. keyframeIdx .. "...")
+		editorChannelData:RebuildGraphCurveSegment(
+			keyframeIdx,
+			baseIndex,
+			self.m_dirtyKeyframeTimeRange[1], -- TODO
+			self.m_dirtyKeyframeTimeRange[2]
+		)
+	end
+end
+function pfm.udm.EditorGraphCurveKeyData:GetKeyframeCount()
+	return self:GetTimeCount()
+end
+function pfm.udm.EditorGraphCurveKeyData:HasDirtyKeyframes()
+	return #self.m_keyframeInfos > 0
+end
+function pfm.udm.EditorGraphCurveKeyData:GetDirtyKeyframes()
+	return self.m_keyframeInfos
+end
+function pfm.udm.EditorGraphCurveKeyData:ClearDirtyKeyframes()
+	for _, kf in ipairs(self.m_keyframeInfos) do
+		kf:SetDirty(false)
+	end
+end
+function pfm.udm.EditorGraphCurveKeyData:OnInitialize()
+	self.m_keyframeInfos = {}
+	self.m_dirtyKeyframeTimeRange = { math.huge, -math.huge }
+	self:ResizeDirtyKeyframes()
+end
 function pfm.udm.EditorGraphCurveKeyData:GetHandleDelta(keyIndex, handle)
 	if handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_IN then
 		return self:GetInDelta(keyIndex)
 	end
 	return self:GetOutDelta(keyIndex)
 end
-function pfm.udm.EditorGraphCurveKeyData:SetHandleDelta(keyIndex, handle, dela)
+function pfm.udm.EditorGraphCurveKeyData:SetHandleDelta(keyIndex, handle, delta)
 	if handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_IN then
-		return self:SetInDelta(keyIndex, dela)
+		return self:SetInDelta(keyIndex, delta)
 	end
-	return self:SetOutDelta(keyIndex, dela)
+	return self:SetOutDelta(keyIndex, delta)
 end
 function pfm.udm.EditorGraphCurveKeyData:GetHandleTimeOffset(keyIndex, handle)
 	if handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_IN then
