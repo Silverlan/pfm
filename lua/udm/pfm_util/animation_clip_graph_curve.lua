@@ -84,10 +84,7 @@ local function get_interpolation_mode(pathKeys, keyIndex, valueType)
 end
 
 local function get_default_value(valueType)
-	if udm.is_numeric_type(valueType) then
-		return 0.0
-	end
-	return udm.get_class_type(valueType)()
+	return udm.get_default_value(valueType)
 end
 
 local function set_value_component_value(value, valueType, typeComponentIndex, vc)
@@ -431,14 +428,16 @@ local function find_closest_equivalence_euler_angles(ang, angRef)
 	return candidates[bestCandidate]
 end
 
+function pfm.udm.EditorChannelData:GetActor()
+	return self:FindAnimationClip():GetActor()
+end
+
 function pfm.udm.EditorChannelData:FindAnimationClip()
-	local filmClip = self:GetFilmClip()
-	local animClip = filmClip:FindActorAnimationClip(self:GetActor())
+	local animClip = self:GetAnimationClip()
 	if animClip == nil then
 		return
 	end
-
-	return animClip:GetPanimaAnimation(), animClip
+	return animClip, animClip:GetPanimaAnimation()
 end
 
 function pfm.udm.EditorChannelData:FindAnimationChannel(path)

@@ -37,10 +37,10 @@ function gui.PFMTimelineCurve:GetChannel()
 	return self.m_channel
 end
 function gui.PFMTimelineCurve:GetPanimaChannel()
-	return self.m_panimaChannel
+	return self:GetAnimationClip():GetPanimaAnimation():FindChannel(self.m_editorChannel:GetTargetPath())
 end
 function gui.PFMTimelineCurve:GetAnimationClip()
-	return self.m_animClip
+	return self.m_editorChannel:FindAnimationClip()
 end
 function gui.PFMTimelineCurve:GetEditorChannel()
 	return self.m_editorChannel
