@@ -6,9 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("create_keyframe.lua")
-
-local Command = util.register_class("pfm.CommandDeleteAnimationChannelRange", pfm.CommandCreateKeyframe)
+local Command = util.register_class("pfm.CommandDeleteAnimationChannelRange", pfm.Command)
 function Command:Initialize(actorUuid, propertyPath, startTime, endTime)
 	pfm.Command.Initialize(self)
 	local actor = pfm.dereference(actorUuid)

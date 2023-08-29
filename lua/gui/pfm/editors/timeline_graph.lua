@@ -306,12 +306,25 @@ function gui.PFMTimelineGraph:KeyboardCallback(key, scanCode, state, mods)
 	if key == input.KEY_DELETE then
 		if state == input.STATE_PRESS then
 			local dps = self:GetSelectedDataPoints(false, true)
-			local dpsData = {}
+			local cmd = pfm.create_command("composition")
 			for _, dp in ipairs(dps) do
-				table.insert(dpsData, gui.PFMTimelineDataPointReference(dp))
+				local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+				if actor ~= nil then
+					local baseIndex = dp:GetTypeComponentIndex()
+
+					local editorChannel = curveData.curve:GetEditorChannel()
+					if editorChannel == nil then
+						return
+					end
+
+					local editorGraphCurve = editorChannel:GetGraphCurve()
+					local editorKeys = editorGraphCurve:GetKey(baseIndex)
+					local keyIndex = dp:GetKeyIndex()
+					local time = editorKeys:GetTime(keyIndex)
+					cmd:AddSubCommand("delete_keyframe", tostring(actor:GetUniqueId()), targetPath, time, baseIndex)
+				end
 			end
-			-- TODO: Command
-			pfm.undoredo.push("pfm_undoredo_delete_keyframes", function() end, function() end)()
+			pfm.undoredo.push("pfm_delete_keyframes", cmd)()
 		end
 		return util.EVENT_REPLY_HANDLED
 	elseif key == input.KEY_1 then

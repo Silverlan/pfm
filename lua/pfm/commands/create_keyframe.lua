@@ -14,18 +14,19 @@ function Command.does_keyframe_exist(animManager, actorUuid, propertyPath, times
 	end
 
 	local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
+	local editorChannel
 	if animClip ~= nil then
 		local editorData = animClip:GetEditorData()
-		local editorChannel = editorData:FindChannel(propertyPath)
+		editorChannel = editorData:FindChannel(propertyPath)
 		if editorChannel ~= nil then
 			local keyIdx = editorChannel:FindKeyIndexByTime(timestamp, baseIndex)
 			if keyIdx ~= nil then
 				-- Keyframe already exists
-				return true
+				return true, editorChannel, keyIdx
 			end
 		end
 	end
-	return false
+	return false, editorChannel
 end
 function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseIndex)
 	pfm.Command.Initialize(self)
@@ -38,10 +39,32 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 	self:AddSubCommand("add_animation_channel", actorUuid, propertyPath, valueType)
 	self:AddSubCommand("add_editor_channel", actorUuid, propertyPath)
 
-	if Command.does_keyframe_exist(self:GetAnimationManager(), actorUuid, propertyPath, timestamp, baseIndex) then
+	local kfExists, editorChannel, keyIdx =
+		Command.does_keyframe_exist(self:GetAnimationManager(), actorUuid, propertyPath, timestamp, baseIndex)
+	if kfExists then
 		-- Keyframe already exists
 		self:LogFailure("Keyframe already exists!")
 		return pfm.Command.RESULT_FAILURE
+	end
+
+	if editorChannel ~= nil then
+		local graphCurve = editorChannel:GetGraphCurve()
+		local keyData = graphCurve:GetKey(baseIndex)
+		if keyData ~= nil then
+			local t0 = keyData:GetTime(0)
+			if t0 ~= nil and timestamp < t0 - pfm.udm.EditorChannelData.TIME_EPSILON then
+				-- New keyframe will be the first keyframe in the graph, we'll have to delete the animation data between
+				-- the first two keyframes
+				self:AddSubCommand("delete_animation_channel_range", actorUuid, propertyPath, timestamp, t0)
+			else
+				local t1 = keyData:GetTime(keyData:GetKeyframeCount() - 1)
+				if t1 ~= nil and timestamp > t1 + pfm.udm.EditorChannelData.TIME_EPSILON then
+					-- New keyframe will be the last keyframe in the graph, we'll have to delete the animation data between
+					-- the last two keyframes
+					self:AddSubCommand("delete_animation_channel_range", actorUuid, propertyPath, t1, timestamp)
+				end
+			end
+		end
 	end
 
 	local data = self:GetData()
