@@ -1099,15 +1099,36 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 		local graphEditor = self.m_timeline:GetGraphEditor()
 		for _, graph in ipairs(graphEditor:GetGraphs()) do
 			if graph.curve:IsValid() then
+				local valueType = graph.valueType
+				local value = udm.get_default_value(valueType)
+				local timestamp = graphEditor:InterfaceTimeToDataTime(graph, t)
+				local channel = graph.curve:GetPanimaChannel()
+				if channel ~= nil then
+					local idx0, idx1, factor = channel:FindInterpolationIndices(timestamp)
+					if idx0 ~= nil then
+						local v0 = channel:GetValue(idx0)
+						local v1 = channel:GetValue(idx1)
+						value = udm.lerp(v0, v1, factor)
+					end
+				end
+
 				local actorUuid = tostring(graph.actor:GetUniqueId())
 				local propertyPath = graph.targetPath
-				local valueType = graph.valueType
-				local timestamp = graphEditor:InterfaceTimeToDataTime(graph, t)
 				local baseIndex = graph.typeComponentIndex
-				pfm.undoredo.push(
-					"pfm_create_keyframe",
-					pfm.create_command("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
-				)()
+
+				local cmd = pfm.create_command("composition")
+				cmd:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
+				cmd:AddSubCommand(
+					"set_keyframe_value",
+					actorUuid,
+					propertyPath,
+					valueType,
+					timestamp,
+					0.0,
+					value,
+					baseIndex
+				)
+				pfm.undoredo.push("pfm_create_keyframe", cmd)()
 			end
 		end
 		--[[

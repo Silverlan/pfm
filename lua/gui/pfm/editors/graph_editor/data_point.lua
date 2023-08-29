@@ -172,34 +172,48 @@ function gui.PFMTimelineDataPoint:GetValueType()
 	return editorKeys:GetValueArrayValueType()
 end
 function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
-	local graphData = self.m_graphData
-	local timelineCurve = graphData.timelineCurve
-
-	local pm = pfm.get_project_manager()
-	local animManager = pm:GetAnimationManager()
 	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
-	local panimaChannel = timelineCurve:GetPanimaChannel()
-	if v ~= nil and curveData.valueTranslator ~= nil then
-		local curTime, curVal = animManager:GetChannelValueByKeyframeIndex(
-			actor,
-			targetPath,
-			panimaChannel,
-			keyIndex,
-			self:GetTypeComponentIndex()
-		)
-		v = curveData.valueTranslator[2](v, curVal)
+	if actor == nil then
+		return
 	end
 
-	if t == nil then
-		t = self:GetTime()
-		local graphData = self.m_graphData
-		local timelineCurve = graphData.timelineCurve
-		local timelineGraph = timelineCurve:GetTimelineGraph()
-		local curveData = timelineGraph:GetGraphCurve(timelineCurve:GetCurveIndex())
-		t = timelineGraph:DataTimeToInterfaceTime(curveData, t)
+	local kfInfo = self:GetKeyframeInfo()
+	local keyIndex = kfInfo:GetIndex()
+	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
+	local editorKeys, keyIndex = self:GetEditorKeys()
+
+	local cmd = pfm.create_command("composition")
+	if t ~= nil then
+		local timestamp = editorKeys:GetTime(keyIndex)
+		local oldTime = timestamp
+		local newTime = t
+		local baseIndex = self:GetTypeComponentIndex()
+		cmd:AddSubCommand(
+			"set_keyframe_time",
+			tostring(actor:GetUniqueId()),
+			targetPath,
+			timestamp,
+			oldTime,
+			newTime,
+			baseIndex
+		)
 	end
-	v = v or self:GetValue()
-	pm:UpdateKeyframe(actor, targetPath, panimaChannel, keyIndex, t, v, self:GetTypeComponentIndex())
+	if v ~= nil then
+		local t = editorKeys:GetTime(keyIndex)
+		local oldValue = editorKeys:GetValue(keyIndex)
+		local baseIndex = self:GetTypeComponentIndex()
+		cmd:AddSubCommand(
+			"set_keyframe_value",
+			tostring(actor:GetUniqueId()),
+			targetPath,
+			editorKeys:GetValueArrayValueType(),
+			t,
+			udm.get_numeric_component(oldValue, baseIndex),
+			v,
+			baseIndex
+		)
+	end
+	pfm.undoredo.push("pfm_create_keyframe", cmd)()
 end
 function gui.PFMTimelineDataPoint:UpdateTextFields()
 	local graphData = self.m_graphData
