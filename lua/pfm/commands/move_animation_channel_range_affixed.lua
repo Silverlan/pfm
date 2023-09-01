@@ -6,6 +6,84 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+pfm = pfm or {}
+pfm.util = pfm.util or {}
+local AnimationDataBuffer = util.register_class("pfm.util.AnimationDataBuffer")
+function AnimationDataBuffer:__init(data)
+	if data == nil then
+		self.m_rootData = udm.create("PFMADB", 1)
+		data = self.m_data:GetAssetData():GetData()
+	end
+	self.m_data = data
+end
+function AnimationDataBuffer:GetData()
+	return self.m_data
+end
+function AnimationDataBuffer:StoreAnimationData(animManager, actor, propertyPath, startTime, endTime)
+	local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
+	if animClip == nil then
+		return false, "Animation clip not found!"
+	end
+	local idxStart, idxEnd = channel:FindIndexRangeInTimeRange(startTime, endTime)
+	if idxEnd < idxStart then
+		return false, "End time index precedes start time index!"
+	end
+
+	local data = self:GetData()
+	local numIndices = (idxEnd - idxStart + 1)
+	local valueType = channel:GetValueType()
+	local udmAnimData = data:Add("animationData")
+	udmAnimData:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueType))
+	udmAnimData:SetValue("startTime", udm.TYPE_FLOAT, startTime)
+	udmAnimData:SetValue("endTime", udm.TYPE_FLOAT, endTime)
+	local udmTimes = udmAnimData:AddArray("times", numIndices, udm.TYPE_FLOAT)
+	local udmValues = udmAnimData:AddArray("values", numIndices, valueType)
+	local idx = 0
+	for i = idxStart, idxStart + (numIndices - 1) do
+		udmTimes:SetValue(idx, udm.TYPE_FLOAT, channel:GetTime(i))
+		udmValues:SetValue(idx, valueType, channel:GetValue(i))
+		idx = idx + 1
+	end
+	return true, idxStart
+end
+function AnimationDataBuffer:RestoreAnimationData(animManager, actor, propertyPath, timeOffset, valueOffset)
+	local anim, panimaChannel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
+	if animClip == nil then
+		return false, "Animation clip not found!"
+	end
+
+	local data = self:GetData()
+	local udmAnimData = data:Get("animationData")
+	local strValueType = udmAnimData:GetValue("valueType", udm.TYPE_STRING)
+	local valueType = udm.string_to_type(strValueType)
+	if valueType == nil then
+		return "Unknown value type '" .. strValueType .. "'!"
+	end
+
+	local targetPath = panimaChannel:GetTargetPath():ToUri(false)
+	local channel = animClip:FindChannel(targetPath)
+	if channel == nil then
+		return false, "Channel with target path '" .. targetPath .. "' not found!"
+	end
+
+	local times = udmAnimData:GetArrayValues("times", udm.TYPE_FLOAT)
+	local values = udmAnimData:GetArrayValues("values", valueType)
+	local startTime = udmAnimData:GetValue("startTime", udm.TYPE_FLOAT)
+	local endTime = udmAnimData:GetValue("endTime", udm.TYPE_FLOAT)
+
+	if timeOffset ~= nil then
+		local tmpValues = {}
+		for _, v in ipairs(values) do
+			table.insert(tmpValues, v + valueOffset)
+		end
+		panimaChannel:InsertValues(times, tmpValues, timeOffset)
+	else
+		panimaChannel:InsertValues(times, values)
+	end
+	animClip:UpdateAnimationChannel(channel)
+	return true
+end
+
 local Command = util.register_class("pfm.CommandMoveAnimationChannelRangeAffixed", pfm.Command)
 function Command:Initialize(actorUuid, propertyPath, baseIndex, startTime, preStartTime, timeOffset, valueOffset)
 	if preStartTime == nil then
@@ -19,6 +97,7 @@ function Command:Initialize(actorUuid, propertyPath, baseIndex, startTime, preSt
 	end
 
 	local data = self:GetData()
+	self.m_animDataBuffer = pfm.util.AnimationDataBuffer(data)
 	data:SetValue("actor", udm.TYPE_STRING, tostring(actor:GetUniqueId()))
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
 	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex or 0)
@@ -38,68 +117,27 @@ function Command:StoreAnimationData(startTime, endTime)
 	end
 
 	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-
-	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
-	if animClip == nil then
-		return false
+	local res, err =
+		self.m_animDataBuffer:StoreAnimationData(self:GetAnimationManager(), actor, propertyPath, startTime, endTime)
+	if res == false then
+		self:LogFailure(err)
 	end
-	local idxStart, idxEnd = channel:FindIndexRangeInTimeRange(startTime, endTime)
-	if idxEnd < idxStart then
-		return false
-	end
-
-	local numIndices = (idxEnd - idxStart + 1)
-	local data = self:GetData()
-	local valueType = channel:GetValueType()
-	local udmAnimData = data:Add("animationData")
-	udmAnimData:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueType))
-	udmAnimData:SetValue("startTime", udm.TYPE_FLOAT, startTime)
-	udmAnimData:SetValue("endTime", udm.TYPE_FLOAT, endTime)
-	local udmTimes = udmAnimData:AddArray("times", numIndices, udm.TYPE_FLOAT)
-	local udmValues = udmAnimData:AddArray("values", numIndices, valueType)
-	local idx = 0
-	for i = idxStart, idxStart + (numIndices - 1) do
-		udmTimes:SetValue(idx, udm.TYPE_FLOAT, channel:GetTime(i))
-		udmValues:SetValue(idx, valueType, channel:GetValue(i))
-		idx = idx + 1
-	end
-	return true
+	return res
 end
 function Command:RestoreAnimationData()
 	local data = self:GetData()
 	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
-		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
-		return
+		return false, "Actor '" .. actorUuid .. "' not found!"
 	end
 
 	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-
-	local anim, panimaChannel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
-	if animClip == nil then
-		return
+	local res, err = self.m_animDataBuffer:RestoreAnimationData(self:GetAnimationManager(), actor, propertyPath)
+	if res == false then
+		self:LogFailure(err)
 	end
-
-	local udmAnimData = data:Get("animationData")
-	local strValueType = udmAnimData:GetValue("valueType", udm.TYPE_STRING)
-	local valueType = udm.string_to_type(strValueType)
-	if valueType == nil then
-		return
-	end
-
-	local channel = animClip:FindChannel(panimaChannel:GetTargetPath():ToUri(false))
-	if channel == nil then
-		return
-	end
-
-	local times = udmAnimData:GetArrayValues("times", udm.TYPE_FLOAT)
-	local values = udmAnimData:GetArrayValues("values", valueType)
-	local startTime = udmAnimData:GetValue("startTime", udm.TYPE_FLOAT)
-	local endTime = udmAnimData:GetValue("endTime", udm.TYPE_FLOAT)
-
-	panimaChannel:InsertValues(times, values)
-	animClip:UpdateAnimationChannel(channel)
+	return res
 end
 function Command:DoExecute(data)
 	local data = self:GetData()
@@ -130,7 +168,6 @@ function Command:DoExecute(data)
 	return true
 end
 function Command:DoUndo(data)
-	self:RestoreAnimationData()
-	return true
+	return self:RestoreAnimationData()
 end
 pfm.register_command("move_animation_channel_range_affixed", Command)

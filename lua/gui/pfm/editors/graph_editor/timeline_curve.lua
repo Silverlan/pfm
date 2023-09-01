@@ -122,7 +122,9 @@ function gui.PFMTimelineCurve:UpdateKeyframes()
 	self:UpdateDataPoints()
 end
 function gui.PFMTimelineCurve:InitializeCurve(editorChannel, typeComponentIndex, curveIndex)
-	self:ClearKeyframes()
+	if util.is_same_object(editorChannel, self.m_editorChannel) == false then
+		self:ClearKeyframes()
+	end
 
 	self.m_editorChannel = editorChannel
 	self.m_typeComponentIndex = typeComponentIndex

@@ -398,6 +398,8 @@ function gui.PFMTimeline:InitializeToolbar()
 		"gui/pfm/icon_bookmark",
 		"gui/pfm/icon_bookmark_activated",
 		function()
+			-- TODO: Check keyframe at timestamp, copy state, restore state on undo
+			-- Same with bookmark
 			tool.get_filmmaker():AddBookmark()
 		end
 	)
@@ -800,38 +802,81 @@ function gui.PFMTimeline:GetControlButton(identifier)
 end
 function gui.PFMTimeline:SetInterpolationMode(mode)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
+	local cmd = pfm.create_command("composition")
 	for _, dp in ipairs(dps) do
 		local editorKey, keyIndex = dp:GetEditorKeys()
 		if editorKey == nil then
 			return
 		end
-		editorKey:SetInterpolationMode(keyIndex, mode)
-		dp:ReloadGraphCurveSegment()
+
+		local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+		local keyIndex = dp:GetKeyIndex()
+		local baseIndex = dp:GetTypeComponentIndex()
+		cmd:AddSubCommand(
+			"set_keyframe_interpolation_mode",
+			tostring(actor:GetUniqueId()),
+			targetPath,
+			editorKey:GetTime(keyIndex),
+			editorKey:GetInterpolationMode(keyIndex),
+			mode,
+			baseIndex
+		)
 	end
+	pfm.undoredo.push("pfm_set_keyframe_interpolation_mode", cmd)()
 end
 function gui.PFMTimeline:SetEasingMode(mode)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
+	local cmd = pfm.create_command("composition")
 	for _, dp in ipairs(dps) do
-		local editorKey, keyIndex = dp:GetEditorKeys()
+		local editorKey = dp:GetEditorKeys()
 		if editorKey == nil then
 			return
 		end
-		editorKey:SetEasingMode(keyIndex, mode)
-		dp:ReloadGraphCurveSegment()
+
+		local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+		local keyIndex = dp:GetKeyIndex()
+		local baseIndex = dp:GetTypeComponentIndex()
+		cmd:AddSubCommand(
+			"set_keyframe_easing_mode",
+			tostring(actor:GetUniqueId()),
+			targetPath,
+			editorKey:GetTime(keyIndex),
+			editorKey:GetEasingMode(keyIndex),
+			mode,
+			baseIndex
+		)
 	end
+	pfm.undoredo.push("pfm_set_keyframe_easing_mode", cmd)()
 end
 function gui.PFMTimeline:SetHandleType(type)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
+	local cmd = pfm.create_command("composition")
 	for _, dp in ipairs(dps) do
 		local editorKey, keyIndex = dp:GetEditorKeys()
 		if editorKey == nil then
 			return
 		end
-		editorKey:SetHandleType(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN, type)
-		editorKey:SetHandleType(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT, type)
-		self.m_timelineGraph:UpdateSelectedDataPointHandles()
-		dp:ReloadGraphCurveSegment()
+
+		local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+		local keyIndex = dp:GetKeyIndex()
+		local baseIndex = dp:GetTypeComponentIndex()
+		for _, handleId in ipairs({
+			pfm.udm.EditorGraphCurveKeyData.HANDLE_IN,
+			pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT,
+		}) do
+			cmd:AddSubCommand(
+				"set_keyframe_handle_type",
+				tostring(actor:GetUniqueId()),
+				targetPath,
+				editorKey:GetTime(keyIndex),
+				editorKey:GetHandleType(keyIndex, handleId),
+				type,
+				baseIndex,
+				handleId
+			)
+		end
 	end
+	pfm.undoredo.push("pfm_set_keyframe_handle_type", cmd)()
 end
 function gui.PFMTimeline:SetDataValue(t, v)
 	self.m_entryFrame:SetText(tostring(t))

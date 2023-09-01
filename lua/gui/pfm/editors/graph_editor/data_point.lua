@@ -213,7 +213,7 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
 			baseIndex
 		)
 	end
-	pfm.undoredo.push("pfm_create_keyframe", cmd)()
+	pfm.undoredo.push("pfm_move_keyframe", cmd)()
 end
 function gui.PFMTimelineDataPoint:UpdateTextFields()
 	local graphData = self.m_graphData
@@ -246,18 +246,37 @@ function gui.PFMTimelineDataPoint:MoveToPosition(time, value)
 	newValue[2] = math.round(newValue[2] * 100.0) / 100.0 -- TODO: Make round precision dependent on animation property
 
 	local panimaChannel = timelineCurve:GetPanimaChannel()
+	local baseIndex = self:GetTypeComponentIndex()
 	if curveData.valueTranslator ~= nil then
-		local curTime, curVal = animManager:GetChannelValueByKeyframeIndex(
-			actor,
-			targetPath,
-			panimaChannel,
-			keyIndex,
-			self:GetTypeComponentIndex()
-		)
 		newValue[2] = curveData.valueTranslator[2](newValue[2], curVal)
 	end
 
-	pm:UpdateKeyframe(
+	local cmd = pfm.create_command("composition")
+	if t ~= nil then
+		local curTime, curVal =
+			animManager:GetChannelValueByKeyframeIndex(actor, targetPath, panimaChannel, keyIndex, baseIndex)
+		--[[local timestamp = editorKeys:GetTime(keyIndex)
+		local oldTime = timestamp
+		local newTime = t
+		local baseIndex = self:GetTypeComponentIndex()
+
+		]]
+	end
+
+	keyIndex = self:GetKeyIndex()
+	local graphCurve = curveData.editorChannel:GetGraphCurve()
+	local keyData = graphCurve:GetKey(baseIndex)
+	local curVal = keyData:GetValue(keyIndex)
+	local curTime = keyData:GetTime(keyIndex)
+	local valueType = keyData:GetValueArrayValueType()
+	local uuid = tostring(actor:GetUniqueId())
+	cmd:AddSubCommand("set_keyframe_value", uuid, targetPath, valueType, curTime, curVal, value, baseIndex)
+	cmd:AddSubCommand("set_keyframe_time", uuid, targetPath, curTime, curTime, time, baseIndex)
+
+	cmd:Execute()
+	--pfm.undoredo.push("pfm_move_keyframe", cmd)()
+
+	--[[pm:UpdateKeyframe(
 		actor,
 		targetPath,
 		panimaChannel,
@@ -265,7 +284,7 @@ function gui.PFMTimelineDataPoint:MoveToPosition(time, value)
 		newValue[1],
 		newValue[2],
 		self:GetTypeComponentIndex()
-	)
+	)]]
 end
 function gui.PFMTimelineDataPoint:MoveToCoordinates(x, y)
 	local graphData = self.m_graphData
