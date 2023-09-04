@@ -8,9 +8,9 @@
 
 include("set_keyframe_property.lua")
 
-local Command = util.register_class("pfm.CommandSetKeyframeTime", pfm.CommandSetKeyframeProperty)
-function Command:Initialize(actorUuid, propertyPath, timestamp, oldTime, newTime, baseIndex)
-	local res = pfm.CommandSetKeyframeProperty.Initialize(self, actorUuid, propertyPath, timestamp, baseIndex)
+local Command = util.register_class("pfm.CommandSetKeyframeDataBase", pfm.CommandSetKeyframeProperty)
+function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, oldValue, newValue, baseIndex)
+	local res = pfm.CommandSetKeyframeProperty.Initialize(self, actorUuid, propertyPath, oldTime, baseIndex)
 
 	if res ~= pfm.Command.RESULT_SUCCESS then
 		return res
@@ -25,7 +25,7 @@ function Command:Initialize(actorUuid, propertyPath, timestamp, oldTime, newTime
 	local editorChannel = editorData:FindChannel(propertyPath)
 	if editorChannel == nil then
 		self:LogFailure("Missing editor channel!")
-		return
+		return pfm.Command.RESULT_FAILURE
 	end
 
 	local graphCurve = editorChannel:GetGraphCurve()
@@ -87,6 +87,8 @@ function Command:Initialize(actorUuid, propertyPath, timestamp, oldTime, newTime
 
 	data:SetValue("oldTime", udm.TYPE_FLOAT, oldTime)
 	data:SetValue("newTime", udm.TYPE_FLOAT, newTime)
+	data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
+	data:SetValue("newValue", udm.TYPE_FLOAT, newValue)
 	return pfm.Command.RESULT_SUCCESS
 end
 function Command:GetLocalTime(channelClip, action)
@@ -116,14 +118,25 @@ function Command:ApplyProperty(data, action, editorChannel, keyIdx, timestamp, v
 
 	--------------------------
 
-	local keyName
+	local keyNameTime
+	local keyNameValue
 	if action == pfm.Command.ACTION_DO then
-		keyName = "newTime"
+		keyNameTime = "newTime"
+		keyNameValue = "newValue"
 	elseif action == pfm.Command.ACTION_UNDO then
-		keyName = "oldTime"
+		keyNameTime = "oldTime"
+		keyNameValue = "oldValue"
 	end
 
-	local time = data:GetValue(keyName, udm.TYPE_FLOAT)
+	local time = data:GetValue(keyNameTime, udm.TYPE_FLOAT)
+	local value = data:GetValue(keyNameValue, udm.TYPE_FLOAT)
+
+	local res = editorChannel:SetKeyframeValue(keyIdx, value, valueBaseIndex)
+	if res == false then
+		self:LogFailure("Failed to apply keyframe value!")
+		return
+	end
+
 	local res = editorChannel:SetKeyTime(keyIdx, time, valueBaseIndex)
 	if res == false then
 		self:LogFailure("Failed to apply keyframe time!")
@@ -178,4 +191,34 @@ function Command:ApplyProperty(data, action, editorChannel, keyIdx, timestamp, v
 		end
 	end
 end
-pfm.register_command("set_keyframe_time", Command)
+pfm.register_command("set_keyframe_data_base", Command)
+
+local Command = util.register_class("pfm.CommandSetKeyframeData", pfm.Command)
+function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, oldValue, newValue, baseIndex)
+	pfm.Command.Initialize(self)
+
+	local actor = pfm.dereference(actorUuid)
+	actorUuid = tostring(actor:GetUniqueId())
+
+	self:AddSubCommand(
+		"set_keyframe_data_base",
+		actorUuid,
+		propertyPath,
+		oldTime,
+		newTime,
+		oldValue,
+		newValue,
+		baseIndex
+	)
+
+	-- self:AddSubCommand("set_animation_value", actorUuid, propertyPath, newTime, oldValue, newValue)
+
+	return pfm.Command.RESULT_SUCCESS
+end
+function Command:DoExecute(data)
+	return true
+end
+function Command:DoUndo(data)
+	return true
+end
+pfm.register_command("set_keyframe_data", Command)

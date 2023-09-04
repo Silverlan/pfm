@@ -121,6 +121,49 @@ function gui.PFMTimelineCurve:UpdateKeyframes()
 	end
 	self:UpdateDataPoints()
 end
+function gui.PFMTimelineCurve:SetMoveDirty()
+	self.m_moveDirty = true
+	self:SetThinkingEnabled(true)
+end
+function gui.PFMTimelineCurve:OnThink()
+	self:UpdateDataPointMove()
+end
+function gui.PFMTimelineCurve:UpdateDataPointMove()
+	if self.m_moveDirty ~= true then
+		return
+	end
+	self.m_moveDirty = nil
+	self:SetThinkingEnabled(false)
+
+	local moveDps = {}
+	for _, elDp in ipairs(self.m_dataPoints) do
+		if elDp:IsValid() then
+			if elDp:IsSelected() then
+				table.insert(moveDps, elDp)
+			end
+		end
+	end
+	if #moveDps == 0 then
+		return
+	end
+	local cmd = pfm.create_command("composition")
+	--cmd:AddSubCommand("restore_animation_data")
+	for _, elDp in ipairs(moveDps) do
+		local posMove = elDp:GetMovePos()
+		elDp:MoveToPosition(cmd, posMove.x, posMove.y)
+
+		elDp:SetMoveDirty(false)
+	end
+	local animClip = self:GetAnimationClip()
+	local actor = animClip:GetActor()
+	cmd:AddSubCommand(
+		"restore_animation_data",
+		actor,
+		self.m_editorChannel:GetTargetPath(),
+		self:GetTypeComponentIndex()
+	)
+	cmd:Execute()
+end
 function gui.PFMTimelineCurve:InitializeCurve(editorChannel, typeComponentIndex, curveIndex)
 	if util.is_same_object(editorChannel, self.m_editorChannel) == false then
 		self:ClearKeyframes()

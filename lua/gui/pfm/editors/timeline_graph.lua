@@ -149,8 +149,7 @@ function gui.PFMTimelineGraph:ReloadGraphCurveSegment(i, keyIndex, rebuildCurve)
 
 		local editorGraphCurve = editorChannel:GetGraphCurve()
 		local numKeys = editorGraphCurve:GetKeyCount()
-		local startTimeBoundary, endTimeBoundary =
-			get_editor_channel_keyframe_time_boundaries(editorChannel, startTime, endTime)
+		local startTimeBoundary, endTimeBoundary = editorChannel:GetKeyframeTimeBoundaries(startTime, endTime)
 
 		self:InitializeCurveSegmentAnimationData(actor0, targetPath0, graphData, startTimeBoundary, endTimeBoundary)
 	end

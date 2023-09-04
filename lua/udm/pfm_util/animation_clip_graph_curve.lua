@@ -6,24 +6,24 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local function get_editor_channel_keyframe_time_boundaries(editorChannel, startTime, endTime)
+function pfm.udm.EditorChannelData:GetKeyframeTimeBoundaries(startTime, endTime)
 	startTime = startTime or math.huge
 	endTime = endTime or -math.huge
-	local editorGraphCurve = editorChannel:GetGraphCurve()
+	local editorGraphCurve = self:GetGraphCurve()
 	local numKeys = editorGraphCurve:GetKeyCount()
 	local startTimeBoundary = startTime
 	local endTimeBoundary = endTime
 	for i = 0, numKeys - 1 do
 		local pathKeys = editorGraphCurve:GetKey(i)
 
-		local keyIndexStart = editorChannel:FindLowerKeyIndex(startTime, i) or 0
+		local keyIndexStart = self:FindLowerKeyIndex(startTime, i) or 0
 		local t = pathKeys:GetTime(keyIndexStart)
 		if t ~= nil then
 			startTimeBoundary = math.min(startTimeBoundary, t)
 		end
 
 		-- TODO: Make FindLowerKeyIndex return 0 on lower bounds?
-		local keyIndexEnd = (editorChannel:FindLowerKeyIndex(endTime, i) or 0) + 1
+		local keyIndexEnd = (self:FindLowerKeyIndex(endTime, i) or 0) + 1
 		t = pathKeys:GetTime(keyIndexEnd)
 		if t ~= nil then
 			endTimeBoundary = math.max(endTimeBoundary, t)
@@ -51,7 +51,7 @@ function pfm.udm.EditorChannelData:RebuildGraphCurveSegment(keyIndex, typeCompon
 	local startTime = editorKeys:GetTime(keyIndexStart)
 	local endTime = editorKeys:GetTime(keyIndexEnd)
 
-	local startTimeBoundary, endTimeBoundary = get_editor_channel_keyframe_time_boundaries(self, startTime, endTime)
+	local startTimeBoundary, endTimeBoundary = self:GetKeyframeTimeBoundaries(startTime, endTime)
 	editorGraphCurve:InitializeCurveSegmentAnimationData(startTimeBoundary, endTimeBoundary)
 end
 
@@ -785,159 +785,72 @@ function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime,
 		end
 	end
 
-	-- Create the space for all of the data values (this will also clear any previous values in this time range)
-	local numValues = #timestampData
-
-	local t = channel:GetTime(valueIndex0)
-	while
-		valueIndex0 > 0 and (math.abs(channel:GetTime(valueIndex0 - 1) - t) <= pfm.udm.EditorChannelData.TIME_EPSILON)
-	do
-		valueIndex0 = valueIndex0 - 1
-	end
-	while
-		valueIndex1 < (channel:GetValueCount() - 1)
-		and (math.abs(channel:GetTime(valueIndex1 + 1) - t) <= pfm.udm.EditorChannelData.TIME_EPSILON)
-	do
-		valueIndex1 = valueIndex1 + 1
-	end
-
-	local result, valueIndex1 = self:SetCurveRangeChannelValueCount(startTime, endTime, numValues)
-	if result then
-		-- Go through each timestamp and calculate actual time and data values
-		local tmpVals = {}
-		for i, td in ipairs(timestampData) do
-			channel:SetTime(valueIndex0 + i - 1, td)
-			local v = channel_value_to_editor_value(get_default_value(valueType), valueType)
-			for typeComponentIndex, keyframeIndices in pairs(keyframesInTimeframePerKey) do
-				local pathKeys = self:GetKey(typeComponentIndex)
-				local foundCurveInRange = false
-				for _, keyIndex in ipairs(keyframeIndices) do
-					local tEnd = pathKeys:GetTime(keyIndex + 1)
-					if tEnd ~= nil then
-						if
-							td >= pathKeys:GetTime(keyIndex) - pfm.udm.EditorChannelData.TIME_EPSILON
-							and td <= pathKeys:GetTime(keyIndex + 1) + pfm.udm.EditorChannelData.TIME_EPSILON
-						then
-							local interpMethod = get_interpolation_mode(pathKeys, keyIndex, valueType)
-							local easingMode = pathKeys:GetEasingMode(keyIndex)
+	-- Go through each timestamp and calculate actual time and data values
+	local insertTimes = {}
+	local insertValues = {}
+	for i, td in ipairs(timestampData) do
+		table.insert(insertTimes, td)
+		local v = channel_value_to_editor_value(get_default_value(valueType), valueType)
+		for typeComponentIndex, keyframeIndices in pairs(keyframesInTimeframePerKey) do
+			local pathKeys = self:GetKey(typeComponentIndex)
+			local foundCurveInRange = false
+			for _, keyIndex in ipairs(keyframeIndices) do
+				local tEnd = pathKeys:GetTime(keyIndex + 1)
+				if tEnd ~= nil then
+					if
+						td >= pathKeys:GetTime(keyIndex) - pfm.udm.EditorChannelData.TIME_EPSILON
+						and td <= pathKeys:GetTime(keyIndex + 1) + pfm.udm.EditorChannelData.TIME_EPSILON
+					then
+						local interpMethod = get_interpolation_mode(pathKeys, keyIndex, valueType)
+						local easingMode = pathKeys:GetEasingMode(keyIndex)
+						v = set_value_component_value(
+							v,
+							valueType,
+							typeComponentIndex,
+							calc_graph_curve_data_point_value(
+								interpMethod,
+								easingMode,
+								pathKeys,
+								keyIndex,
+								keyIndex + 1,
+								td
+							)
+						)
+						foundCurveInRange = true
+						break
+					end
+					--else
+					--	foundCurveInRange = false
+					--	break
+				end
+			end
+			if foundCurveInRange == false then
+				-- No curve found, point has to be out of bounds of the curve, so we'll
+				-- clamp the value to the value of the highest/lowest keyframe.
+				local numKeyframes = pathKeys:GetTimeCount()
+				if numKeyframes > 0 then
+					if numKeyframes == 1 then
+						v = set_value_component_value(v, valueType, typeComponentIndex, pathKeys:GetValue(0))
+					else
+						local lastKfTime = pathKeys:GetTime(pathKeys:GetTimeCount() - 1)
+						if td >= lastKfTime - pfm.udm.EditorChannelData.TIME_EPSILON then
 							v = set_value_component_value(
 								v,
 								valueType,
 								typeComponentIndex,
-								calc_graph_curve_data_point_value(
-									interpMethod,
-									easingMode,
-									pathKeys,
-									keyIndex,
-									keyIndex + 1,
-									td
-								)
+								pathKeys:GetValue(numKeyframes - 1)
 							)
-							foundCurveInRange = true
-							break
-						end
-						--else
-						--	foundCurveInRange = false
-						--	break
-					end
-				end
-				if foundCurveInRange == false then
-					-- No curve found, point has to be out of bounds of the curve, so we'll
-					-- clamp the value to the value of the highest/lowest keyframe.
-					local numKeyframes = pathKeys:GetTimeCount()
-					if numKeyframes > 0 then
-						if numKeyframes == 1 then
-							v = set_value_component_value(v, valueType, typeComponentIndex, pathKeys:GetValue(0))
 						else
-							local lastKfTime = pathKeys:GetTime(pathKeys:GetTimeCount() - 1)
-							if td >= lastKfTime - pfm.udm.EditorChannelData.TIME_EPSILON then
-								v = set_value_component_value(
-									v,
-									valueType,
-									typeComponentIndex,
-									pathKeys:GetValue(numKeyframes - 1)
-								)
-							else
-								v = set_value_component_value(v, valueType, typeComponentIndex, pathKeys:GetValue(0))
-							end
+							v = set_value_component_value(v, valueType, typeComponentIndex, pathKeys:GetValue(0))
 						end
 					end
 				end
 			end
-			if isQuatType then
-				tmpVals[valueIndex0 + i - 1] = v
-			end
-			channel:SetValue(valueIndex0 + i - 1, editor_value_to_channel_value(v, valueType))
 		end
-
-		local getChannelValue
-		if isQuatType then
-			getChannelValue = function(channel, j)
-				local val = tmpVals[j]
-				if val == nil then
-					val = calc_value_at_timestamp(editorChannel, channel:GetTime(j), valueType)
-					tmpVals[j] = val
-				end
-				return val
-			end
-		else
-			getChannelValue = function(channel, j)
-				return channel_value_to_editor_value(channel:GetValue(j), valueType)
-			end
-		end
-
-		-- If either of the keyframes for this curve segment is the very first
-		-- or final keyframe of the curve, we have to clamp all of the sample values beyond
-		-- the boundary (up to the highest or lowest keyframe timestamp) to the value of the keyframe.
-
-		-- Clamp postfix samples
-		for i = 0, self:GetKeyCount() - 1 do
-			local pathKeys = self:GetKey(i)
-			local keyIndex = editorChannelData:FindLowerKeyIndex(localEndTime, i)
-			if keyIndex == nil and pathKeys:GetTimeCount() > 0 then
-				keyIndex = 0
-			end
-			if keyIndex == pathKeys:GetTimeCount() - 1 then
-				local valueIndex = panimaChannel:FindIndex(pathKeys:GetTime(keyIndex))
-				if valueIndex ~= nil then
-					local lastValue = udm.get_numeric_component(getChannelValue(channel, valueIndex), i)
-					local n = channel:GetValueCount()
-					for j = valueIndex + 1, n - 1 do
-						local ct = channel:GetTime(j)
-						if ct > localEndTime then
-							break
-						end
-						local val = getChannelValue(channel, j)
-						val = set_value_component_value(val, valueType, i, lastValue)
-						channel:SetValue(j, editor_value_to_channel_value(val, valueType))
-					end
-				end
-			end
-		end
-
-		-- Clamp prefix samples
-		for i = 0, self:GetKeyCount() - 1 do
-			local pathKeys = self:GetKey(i)
-			local keyIndex = editorChannelData:FindLowerKeyIndex(localStartTime, i)
-			if keyIndex == nil and pathKeys:GetTimeCount() > 0 then
-				keyIndex = 0
-			end
-			if keyIndex == 0 then
-				local valueIndex = panimaChannel:FindIndex(pathKeys:GetTime(keyIndex))
-				if valueIndex ~= nil then
-					local firstValue = udm.get_numeric_component(getChannelValue(channel, valueIndex), i)
-					for j = 0, valueIndex - 1 do
-						local ct = channel:GetTime(j)
-						if ct < localStartTime then
-							break
-						end
-						local val = getChannelValue(channel, j)
-						val = set_value_component_value(val, valueType, i, firstValue)
-						channel:SetValue(j, editor_value_to_channel_value(val, valueType))
-					end
-				end
-			end
-		end
+		table.insert(insertValues, editor_value_to_channel_value(v, valueType))
 	end
+	assert(#insertTimes == #insertValues)
+
+	channel:GetPanimaChannel():InsertValues(insertTimes, insertValues) -- This will clear all previous data in this range
 	debug.stop_profiling_task()
 end

@@ -61,6 +61,7 @@ function Command:ApplyValue(data, keyNewValue)
 
 	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
 	local value = data:GetValue(keyNewValue, udm.TYPE_FLOAT)
+
 	local idx = channel:AddValue(time, value)
 	anim:UpdateDuration()
 	return idx

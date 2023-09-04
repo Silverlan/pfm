@@ -232,14 +232,13 @@ end
 function gui.PFMTimelineDataPoint:GetGraphCurve()
 	return self.m_graphData.timelineCurve
 end
-function gui.PFMTimelineDataPoint:MoveToPosition(time, value)
+function gui.PFMTimelineDataPoint:MoveToPosition(cmd, time, value)
 	local graphData = self.m_graphData
 	local timelineCurve = graphData.timelineCurve
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
 
 	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
-	-- TODO: Merge this with PFMTimelineDataPoint:UpdateTextFields()
 	local newValue = Vector2(time, value)
 	newValue = { newValue.x, newValue.y }
 	newValue[1] = math.snap_to_gridf(newValue[1], 1.0 / pm:GetFrameRate()) -- TODO: Only if snap-to-grid is enabled
@@ -251,7 +250,6 @@ function gui.PFMTimelineDataPoint:MoveToPosition(time, value)
 		newValue[2] = curveData.valueTranslator[2](newValue[2], curVal)
 	end
 
-	local cmd = pfm.create_command("composition")
 	if t ~= nil then
 		local curTime, curVal =
 			animManager:GetChannelValueByKeyframeIndex(actor, targetPath, panimaChannel, keyIndex, baseIndex)
@@ -270,10 +268,10 @@ function gui.PFMTimelineDataPoint:MoveToPosition(time, value)
 	local curTime = keyData:GetTime(keyIndex)
 	local valueType = keyData:GetValueArrayValueType()
 	local uuid = tostring(actor:GetUniqueId())
-	cmd:AddSubCommand("set_keyframe_value", uuid, targetPath, valueType, curTime, curVal, value, baseIndex)
-	cmd:AddSubCommand("set_keyframe_time", uuid, targetPath, curTime, curTime, time, baseIndex)
+	cmd:AddSubCommand("set_keyframe_data", uuid, targetPath, curTime, time, curVal, value, baseIndex)
+	--cmd:AddSubCommand("set_keyframe_time", uuid, targetPath, curTime, curTime, time, baseIndex)
+	--cmd:AddSubCommand("set_keyframe_value", uuid, targetPath, valueType, time, curVal, value, baseIndex)
 
-	cmd:Execute()
 	--pfm.undoredo.push("pfm_move_keyframe", cmd)()
 
 	--[[pm:UpdateKeyframe(
@@ -287,13 +285,35 @@ function gui.PFMTimelineDataPoint:MoveToPosition(time, value)
 	)]]
 end
 function gui.PFMTimelineDataPoint:MoveToCoordinates(x, y)
-	local graphData = self.m_graphData
+	--[[local graphData = self.m_graphData
 	local timelineCurve = graphData.timelineCurve
 	local v = timelineCurve:GetCurve():CoordinatesToValues(x + self:GetWidth() / 2.0, y + self:GetHeight() / 2.0)
-	self:MoveToPosition(v.x, v.y)
+	self:MoveToPosition(v.x, v.y)]]
 end
 function gui.PFMTimelineDataPoint:OnMoved(newPos)
-	self:MoveToCoordinates(newPos.x, newPos.y)
+	local graphData = self.m_graphData
+	local timelineCurve = graphData.timelineCurve
+	self.m_movePos = timelineCurve
+		:GetCurve()
+		:CoordinatesToValues(newPos.x + self:GetWidth() / 2.0, newPos.y + self:GetHeight() / 2.0)
+	self:SetMoveDirty(true)
+end
+function gui.PFMTimelineDataPoint:GetMovePos()
+	return self.m_movePos
+end
+function gui.PFMTimelineDataPoint:SetMoveDirty(dirty)
+	dirty = dirty or false
+	self.m_moveDirty = dirty
+	if dirty == true then
+		local graphData = self.m_graphData
+		local timelineCurve = graphData.timelineCurve
+		if timelineCurve:IsValid() then
+			timelineCurve:SetMoveDirty()
+		end
+	end
+end
+function gui.PFMTimelineDataPoint:IsMoveDirty()
+	return self.m_moveDirty or false
 end
 function gui.PFMTimelineDataPoint:GetChannelValueData()
 	local graphData = self.m_graphData
@@ -315,6 +335,7 @@ end
 function gui.PFMTimelineDataPoint:OnMoveStarted(startData)
 	startData.startTime = self:GetTime()
 	startData.startValue = self:GetValue()
+	self.m_movePos = nil
 end
 function gui.PFMTimelineDataPoint:GetTypeComponentIndex()
 	return self.m_graphData.timelineCurve:GetTypeComponentIndex()

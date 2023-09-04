@@ -700,7 +700,6 @@ function gui.PFMActorEditor:OnEditorChannelKeyframeTimeChanged(
 	oldTime,
 	newTime
 )
-	print("OnEditorChannelKeyframeTimeChanged: ", editorKeyIndex)
 	-- TODO: Move this callback to graph editor
 	local timeline = tool.get_filmmaker():GetTimeline()
 	if util.is_valid(timeline) == false then

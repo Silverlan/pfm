@@ -140,30 +140,26 @@ function pfm.udm.EditorGraphCurveKeyData:GetGraphCurve()
 end
 function pfm.udm.EditorGraphCurveKeyData:RebuildDirtyGraphCurveSegments(baseIndex)
 	local dirtyKeyframes = self:GetDirtyKeyframes()
-	self:ClearDirtyKeyframes()
 
 	local keyframeIndices = {}
-	for keyframeIdx, dirty in ipairs(dirtyKeyframes) do
-		if dirty then
-			if keyframeIdx > 1 and (dirtyKeyframes[keyframeIdx - 1] == false) then
+	for i, kf in ipairs(dirtyKeyframes) do
+		if kf:IsDirty() then
+			local keyframeIdx = kf:GetIndex()
+			if i > 1 and (dirtyKeyframes[i - 1]:IsDirty() == false) then
 				-- We need to update both the previous and the next curve segment around each keyframe.
 				-- RebuildGraphCurveSegment rebuilds the segment *after* the keyframe, so we need to add the previous keyframes to the list as well.
-				table.insert(keyframeIndices, keyframeIdx - 2)
+				table.insert(keyframeIndices, keyframeIdx - 1)
 			end
-			table.insert(keyframeIndices, keyframeIdx - 1)
+			table.insert(keyframeIndices, keyframeIdx)
 		end
 	end
+	self:ClearDirtyKeyframes()
 
 	local graphCurve = self:GetGraphCurve()
 	local editorChannelData = graphCurve:GetEditorChannelData()
 	for _, keyframeIdx in ipairs(keyframeIndices) do
-		print("Rebuilding " .. keyframeIdx .. "...")
-		editorChannelData:RebuildGraphCurveSegment(
-			keyframeIdx,
-			baseIndex,
-			self.m_dirtyKeyframeTimeRange[1], -- TODO
-			self.m_dirtyKeyframeTimeRange[2]
-		)
+		-- print("Rebuilding " .. keyframeIdx .. "...")
+		editorChannelData:RebuildGraphCurveSegment(keyframeIdx, baseIndex)
 	end
 end
 function pfm.udm.EditorGraphCurveKeyData:GetKeyframeCount()
@@ -182,7 +178,6 @@ function pfm.udm.EditorGraphCurveKeyData:ClearDirtyKeyframes()
 end
 function pfm.udm.EditorGraphCurveKeyData:OnInitialize()
 	self.m_keyframeInfos = {}
-	self.m_dirtyKeyframeTimeRange = { math.huge, -math.huge }
 	self:ResizeDirtyKeyframes()
 end
 function pfm.udm.EditorGraphCurveKeyData:GetHandleDelta(keyIndex, handle)

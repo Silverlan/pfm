@@ -11,3 +11,7 @@ function pfm.udm.Channel:OnInitialize() end
 function pfm.udm.Channel:GetAnimation()
 	return self:GetParent()
 end
+
+function pfm.udm.Channel:GetPanimaChannel()
+	return self:GetAnimation():GetAnimationClip():GetPanimaAnimation():FindChannel(self:GetTargetPath())
+end
