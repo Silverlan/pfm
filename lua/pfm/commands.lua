@@ -124,7 +124,7 @@ function BaseCommand:AddSubCommand(identifier, ...)
 		return res
 	end
 	table.insert(self.m_subCommands, o)
-	return res
+	return res, o
 end
 
 local CommandComposition = util.register_class("pfm.CommandComposition", pfm.Command)

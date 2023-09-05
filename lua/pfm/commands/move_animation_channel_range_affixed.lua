@@ -84,6 +84,62 @@ function AnimationDataBuffer:RestoreAnimationData(animManager, actor, propertyPa
 	return true
 end
 
+--
+
+local AffixedAnimationData = util.register_class("pfm.util.AffixedAnimationData")
+function AffixedAnimationData:__init(data, animManager, actor, propertyPath, channel, keyData)
+	local firstKeyframeIndex = 0
+	local firstAnimDataTime = channel:GetTime(0)
+	local firstKeyframeTime = keyData:GetTime(firstKeyframeIndex)
+	local firstAnimDataValue = channel:GetValue(0)
+	local firstKeyframeValue = keyData:GetValue(firstKeyframeIndex)
+
+	local numKeyframes = keyData:GetKeyframeCount()
+	local lastKeyframeIndex = numKeyframes - 1
+	local lastAnimDataTime = channel:GetTime(channel:GetValueCount() - 1)
+	local lastKeyframeTime = keyData:GetTime(lastKeyframeIndex)
+	local lastKeyframeValue = keyData:GetValue(lastKeyframeIndex)
+
+	local animDataInfo = {
+		{
+			identifier = "preAnimationData",
+			animDataTime = firstAnimDataTime,
+			keyframeTime = firstKeyframeTime,
+			keyframeValue = firstKeyframeValue,
+			prefix = true,
+		},
+		{
+			identifier = "postAnimationData",
+			animDataTime = lastAnimDataTime,
+			keyframeTime = lastKeyframeTime,
+			keyframeValue = lastKeyframeValue,
+			prefix = false,
+		},
+	}
+	for _, udmAnimDataInfo in ipairs(animDataInfo) do
+		local animDataBuffer = pfm.util.AnimationDataBuffer(data:Add(udmAnimDataInfo.identifier))
+		local startTime = udmAnimDataInfo.prefix and udmAnimDataInfo.animDataTime or udmAnimDataInfo.keyframeTime
+		local endTime = udmAnimDataInfo.prefix and udmAnimDataInfo.keyframeTime or udmAnimDataInfo.animDataTime
+		local res, startIdx = animDataBuffer:StoreAnimationData(animManager, actor, propertyPath, startTime, endTime)
+		if res then
+			local animDataTimeStart = channel:GetTime(startIdx)
+			local animDataValueStart = channel:GetValue(startIdx)
+
+			-- This will move the time and data from absolute time to relative (to the keyframe)
+			animDataBuffer:GetData():SetValue(
+				"timeOffset",
+				udm.TYPE_FLOAT,
+				-animDataTimeStart + (animDataTimeStart - udmAnimDataInfo.keyframeTime)
+			)
+			animDataBuffer:GetData():SetValue(
+				"dataOffset",
+				udm.TYPE_FLOAT,
+				-animDataValueStart + (animDataValueStart - udmAnimDataInfo.keyframeValue)
+			)
+		end
+	end
+end
+
 local Command = util.register_class("pfm.CommandMoveAnimationChannelRangeAffixed", pfm.Command)
 function Command:Initialize(actorUuid, propertyPath, baseIndex, startTime, preStartTime, timeOffset, valueOffset)
 	if preStartTime == nil then

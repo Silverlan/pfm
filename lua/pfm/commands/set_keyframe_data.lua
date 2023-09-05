@@ -9,7 +9,16 @@
 include("set_keyframe_property.lua")
 
 local Command = util.register_class("pfm.CommandSetKeyframeDataBase", pfm.CommandSetKeyframeProperty)
-function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, oldValue, newValue, baseIndex)
+function Command:Initialize(
+	actorUuid,
+	propertyPath,
+	oldTime,
+	newTime,
+	oldValue,
+	newValue,
+	baseIndex,
+	affixedAnimationData
+)
 	local res = pfm.CommandSetKeyframeProperty.Initialize(self, actorUuid, propertyPath, oldTime, baseIndex)
 
 	if res ~= pfm.Command.RESULT_SUCCESS then
@@ -17,7 +26,7 @@ function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, oldValue,
 	end
 
 	-- Test
-	local actor = pfm.dereference(actorUuid)
+	--[[local actor = pfm.dereference(actorUuid)
 	local animManager = self:GetAnimationManager()
 	local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
 
@@ -30,61 +39,14 @@ function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, oldValue,
 
 	local graphCurve = editorChannel:GetGraphCurve()
 	local keyData = graphCurve:GetKey(baseIndex)
-	local numKeyframes = keyData:GetKeyframeCount()
 	local data = self:GetData()
-	if numKeyframes > 0 and channel:GetValueCount() > 0 then
-		local firstKeyframeIndex = 0
-		local firstAnimDataTime = channel:GetTime(0)
-		local firstKeyframeTime = keyData:GetTime(firstKeyframeIndex)
-		local firstAnimDataValue = channel:GetValue(0)
-		local firstKeyframeValue = keyData:GetValue(firstKeyframeIndex)
+	if affixedAnimationData ~= nil then
+		data:Merge(affixedAnimationData, udm.MERGE_FLAG_BIT_DEEP_COPY)
+	else
+		pfm.util.AffixedAnimationData(data, animManager, actor, propertyPath, channel, keyData)
+	end]]
 
-		local lastKeyframeIndex = numKeyframes - 1
-		local lastAnimDataTime = channel:GetTime(channel:GetValueCount() - 1)
-		local lastKeyframeTime = keyData:GetTime(lastKeyframeIndex)
-		local lastKeyframeValue = keyData:GetValue(lastKeyframeIndex)
-
-		local animDataInfo = {
-			{
-				identifier = "preAnimationData",
-				animDataTime = firstAnimDataTime,
-				keyframeTime = firstKeyframeTime,
-				keyframeValue = firstKeyframeValue,
-				prefix = true,
-			},
-			{
-				identifier = "postAnimationData",
-				animDataTime = lastAnimDataTime,
-				keyframeTime = lastKeyframeTime,
-				keyframeValue = lastKeyframeValue,
-				prefix = false,
-			},
-		}
-		for _, udmAnimDataInfo in ipairs(animDataInfo) do
-			local animDataBuffer = pfm.util.AnimationDataBuffer(data:Add(udmAnimDataInfo.identifier))
-			local startTime = udmAnimDataInfo.prefix and udmAnimDataInfo.animDataTime or udmAnimDataInfo.keyframeTime
-			local endTime = udmAnimDataInfo.prefix and udmAnimDataInfo.keyframeTime or udmAnimDataInfo.animDataTime
-			local res, startIdx =
-				animDataBuffer:StoreAnimationData(animManager, actor, propertyPath, startTime, endTime)
-			if res then
-				local animDataTimeStart = channel:GetTime(startIdx)
-				local animDataValueStart = channel:GetValue(startIdx)
-
-				-- This will move the time and data from absolute time to relative (to the keyframe)
-				animDataBuffer:GetData():SetValue(
-					"timeOffset",
-					udm.TYPE_FLOAT,
-					-animDataTimeStart + (animDataTimeStart - udmAnimDataInfo.keyframeTime)
-				)
-				animDataBuffer:GetData():SetValue(
-					"dataOffset",
-					udm.TYPE_FLOAT,
-					-animDataValueStart + (animDataValueStart - udmAnimDataInfo.keyframeValue)
-				)
-			end
-		end
-	end
-
+	local data = self:GetData()
 	data:SetValue("oldTime", udm.TYPE_FLOAT, oldTime)
 	data:SetValue("newTime", udm.TYPE_FLOAT, newTime)
 	data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
@@ -144,7 +106,7 @@ function Command:ApplyProperty(data, action, editorChannel, keyIdx, timestamp, v
 	end
 
 	-- TEST
-	local data = self:GetData()
+	--[[local data = self:GetData()
 	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
@@ -189,12 +151,21 @@ function Command:ApplyProperty(data, action, editorChannel, keyIdx, timestamp, v
 			end
 			local x = animDataBuffer:RestoreAnimationData(animManager, actor, propertyPath, timeOffset, dataOffset)
 		end
-	end
+	end]]
 end
 pfm.register_command("set_keyframe_data_base", Command)
 
 local Command = util.register_class("pfm.CommandSetKeyframeData", pfm.Command)
-function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, oldValue, newValue, baseIndex)
+function Command:Initialize(
+	actorUuid,
+	propertyPath,
+	oldTime,
+	newTime,
+	oldValue,
+	newValue,
+	baseIndex,
+	affixedAnimationData
+)
 	pfm.Command.Initialize(self)
 
 	local actor = pfm.dereference(actorUuid)
@@ -208,7 +179,8 @@ function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, oldValue,
 		newTime,
 		oldValue,
 		newValue,
-		baseIndex
+		baseIndex,
+		affixedAnimationData
 	)
 
 	-- self:AddSubCommand("set_animation_value", actorUuid, propertyPath, newTime, oldValue, newValue)

@@ -7,7 +7,7 @@
 ]]
 
 local Command = util.register_class("pfm.CommandStoreAnimationData", pfm.Command)
-function Command:Initialize(actorUuid, propertyPath, valueBaseIndex)
+function Command:Initialize(actorUuid, propertyPath, valueBaseIndex, animData)
 	pfm.Command.Initialize(self)
 	local actor = pfm.dereference(actorUuid)
 	local animManager = self:GetAnimationManager()
@@ -21,35 +21,8 @@ function Command:Initialize(actorUuid, propertyPath, valueBaseIndex)
 	end
 
 	local data = self:GetData()
-	local graphCurve = editorChannel:GetGraphCurve()
-	local keyData = graphCurve:GetKey(valueBaseIndex)
-	local numKeyframes = keyData:GetKeyframeCount()
-	if numKeyframes > 0 and channel:GetValueCount() > 0 then
-		local firstKeyframeIndex = 0
-		local firstAnimDataTime = channel:GetTime(0)
-		local firstKeyframeTime = keyData:GetTime(firstKeyframeIndex) - panima.TIME_EPSILON
-		local firstKeyframeValue = keyData:GetValue(firstKeyframeIndex)
-
-		local animDataBufferPre = pfm.util.AnimationDataBuffer(data:Add("preAnimationData"))
-		local res, startIdx =
-			animDataBufferPre:StoreAnimationData(animManager, actor, propertyPath, firstAnimDataTime, firstKeyframeTime)
-		if res then
-			animDataBufferPre:GetData():SetValue("timeOffset", udm.TYPE_FLOAT, -firstKeyframeTime)
-			animDataBufferPre:GetData():SetValue("dataOffset", udm.TYPE_FLOAT, -firstKeyframeValue)
-		end
-
-		local lastKeyframeIndex = numKeyframes - 1
-		local lastAnimDataTime = channel:GetTime(channel:GetValueCount() - 1)
-		local lastKeyframeTime = keyData:GetTime(lastKeyframeIndex) + panima.TIME_EPSILON
-		local lastKeyframeValue = keyData:GetValue(lastKeyframeIndex)
-
-		local animDataBufferPost = pfm.util.AnimationDataBuffer(data:Add("postAnimationData"))
-		local res, startIdx =
-			animDataBufferPost:StoreAnimationData(animManager, actor, propertyPath, lastKeyframeTime, lastAnimDataTime)
-		if res then
-			animDataBufferPost:GetData():SetValue("timeOffset", udm.TYPE_FLOAT, -lastKeyframeTime)
-			animDataBufferPost:GetData():SetValue("dataOffset", udm.TYPE_FLOAT, -lastKeyframeValue)
-		end
+	if animData ~= nil then
+		data:Merge(animData, udm.MERGE_FLAG_BIT_DEEP_COPY)
 	end
 
 	data:SetValue("actor", udm.TYPE_STRING, tostring(actor:GetUniqueId()))
@@ -68,44 +41,56 @@ function Command:RestoreAnimationData()
 	end
 
 	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-	local valueBaseIndex = data:GetValue("valueBaseIndex", udm.TYPE_UINT8)
+	local udmPreAnimationData = data:Get("preAnimationData")
+	local udmPostAnimationData = data:Get("postAnimationData")
+	local animDataInfo = {
+		{
+			data = udmPreAnimationData,
+			prefix = true,
+		},
+		{
+			data = udmPostAnimationData,
+			prefix = false,
+		},
+	}
+
 	local animManager = self:GetAnimationManager()
 	local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
+	local valueBaseIndex = data:GetValue("valueBaseIndex", udm.TYPE_UINT8)
 
 	local editorData = animClip:GetEditorData()
 	local editorChannel = editorData:FindChannel(propertyPath)
 
-	local udmPreAnimationData = data:Get("preAnimationData")
-	local count = 0
-	if udmPreAnimationData ~= nil then
-		local animManager = self:GetAnimationManager()
-		local animDataBufferPre = pfm.util.AnimationDataBuffer(udmPreAnimationData)
-		local keyData = editorChannel:GetGraphCurve():GetKey(valueBaseIndex)
-		local kfTime = keyData:GetTime(0) - panima.TIME_EPSILON
-		local kfValue = keyData:GetValue(0)
-		local timeOffset = kfTime + udmPreAnimationData:GetValue("timeOffset", udm.TYPE_FLOAT)
-		local dataOffset = kfValue + udmPreAnimationData:GetValue("dataOffset", udm.TYPE_FLOAT)
-		local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
-		channel:ClearRange(-math.huge, kfTime, false)
-		local x = animDataBufferPre:RestoreAnimationData(animManager, actor, propertyPath, timeOffset, dataOffset)
-		-- TODO: Verify that keyframe value has not been overwritten (should be excluded because of panima.TIME_EPSILON)
-		count = count + 1
-	end
-
-	local udmPostAnimationData = data:Get("postAnimationData")
-	if udmPostAnimationData ~= nil then
-		local animManager = self:GetAnimationManager()
-		local animDataBufferPost = pfm.util.AnimationDataBuffer(udmPostAnimationData)
-		local keyData = editorChannel:GetGraphCurve():GetKey(valueBaseIndex)
-		local kfTime = keyData:GetTime(keyData:GetKeyframeCount() - 1) + panima.TIME_EPSILON
-		local kfValue = keyData:GetValue(keyData:GetKeyframeCount() - 1)
-		local timeOffset = kfTime + udmPostAnimationData:GetValue("timeOffset", udm.TYPE_FLOAT)
-		local dataOffset = kfValue + udmPostAnimationData:GetValue("dataOffset", udm.TYPE_FLOAT)
-		local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
-		channel:ClearRange(kfTime, math.huge, false)
-		local x = animDataBufferPost:RestoreAnimationData(animManager, actor, propertyPath, timeOffset, dataOffset)
-		-- TODO: Verify that keyframe value has not been overwritten (should be excluded because of panima.TIME_EPSILON)
-		count = count + 1
+	for _, udmAnimDataInfo in ipairs(animDataInfo) do
+		local udmAnimData = udmAnimDataInfo.data
+		if udmAnimData ~= nil then
+			local animManager = self:GetAnimationManager()
+			local animDataBuffer = pfm.util.AnimationDataBuffer(udmAnimData)
+			local keyData = editorChannel:GetGraphCurve():GetKey(valueBaseIndex)
+			local idx
+			if udmAnimDataInfo.prefix then
+				idx = 0
+			else
+				idx = keyData:GetKeyframeCount() - 1
+			end
+			local kfTime = keyData:GetTime(idx)
+			local kfValue = keyData:GetValue(idx)
+			local timeOffset = kfTime + udmAnimData:GetValue("timeOffset", udm.TYPE_FLOAT)
+			local dataOffset = kfValue + udmAnimData:GetValue("dataOffset", udm.TYPE_FLOAT)
+			local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
+			if udmAnimDataInfo.prefix then
+				channel:ClearRange(-math.huge, kfTime - pfm.udm.EditorChannelData.TIME_EPSILON, false)
+			else
+				channel:ClearRange(kfTime + pfm.udm.EditorChannelData.TIME_EPSILON, math.huge, false)
+			end
+			local x = animDataBuffer:RestoreAnimationData(
+				animManager,
+				actor,
+				propertyPath,
+				timeOffset + pfm.udm.EditorChannelData.TIME_EPSILON,
+				dataOffset
+			)
+		end
 	end
 end
 function Command:DoExecute(data)

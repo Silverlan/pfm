@@ -121,6 +121,54 @@ function gui.PFMTimelineCurve:UpdateKeyframes()
 	end
 	self:UpdateDataPoints()
 end
+function gui.PFMTimelineCurve:SetMoveModeEnabled(enabled, ...)
+	if enabled then
+		local filmClip, moveThreshold, animData, elDps = ...
+
+		local dataPointInfo = {}
+		for _, dp in ipairs(elDps) do
+			dp:SetMoveModeEnabled(enabled, moveThreshold)
+			table.insert(dataPointInfo, {
+				filmClip = pfm.reference(filmClip),
+				keyIndex = dp:GetKeyIndex(),
+				time = dp:GetTime(),
+				value = dp:GetValue(),
+				dpRef = gui.PFMTimelineDataPointReference(dp),
+				dataPoint = dp,
+			})
+		end
+
+		self.m_moveModeInfo = {
+			animData = animData,
+			dataPointInfo = dataPointInfo,
+		}
+	elseif self.m_moveModeInfo ~= nil then
+		local cmd = ...
+
+		local animClip = self:GetAnimationClip()
+		local actor = animClip:GetActor()
+		local res, subCmd = cmd:AddSubCommand(
+			"move_keyframes",
+			actor,
+			self.m_editorChannel:GetTargetPath(),
+			self:GetTypeComponentIndex(),
+			self.m_moveModeInfo.animData
+		)
+
+		for _, dpInfo in ipairs(self.m_moveModeInfo.dataPointInfo) do
+			local elDp = dpInfo.dataPoint
+			if elDp:IsValid() then
+				local oldTime = dpInfo.time
+				local oldVal = dpInfo.value
+				local posMove = elDp:GetMovePos()
+				elDp:MoveToPosition(subCmd, posMove.x, posMove.y, oldTime, oldVal)
+
+				elDp:SetMoveDirty(false)
+				elDp:SetMoveModeEnabled(enabled)
+			end
+		end
+	end
+end
 function gui.PFMTimelineCurve:SetMoveDirty()
 	self.m_moveDirty = true
 	self:SetThinkingEnabled(true)
@@ -135,33 +183,27 @@ function gui.PFMTimelineCurve:UpdateDataPointMove()
 	self.m_moveDirty = nil
 	self:SetThinkingEnabled(false)
 
-	local moveDps = {}
-	for _, elDp in ipairs(self.m_dataPoints) do
-		if elDp:IsValid() then
-			if elDp:IsSelected() then
-				table.insert(moveDps, elDp)
-			end
-		end
-	end
-	if #moveDps == 0 then
+	if self.m_moveModeInfo == nil then
 		return
-	end
-	local cmd = pfm.create_command("composition")
-	--cmd:AddSubCommand("restore_animation_data")
-	for _, elDp in ipairs(moveDps) do
-		local posMove = elDp:GetMovePos()
-		elDp:MoveToPosition(cmd, posMove.x, posMove.y)
-
-		elDp:SetMoveDirty(false)
 	end
 	local animClip = self:GetAnimationClip()
 	local actor = animClip:GetActor()
-	cmd:AddSubCommand(
-		"restore_animation_data",
+	local cmd = pfm.create_command(
+		"move_keyframes",
 		actor,
 		self.m_editorChannel:GetTargetPath(),
-		self:GetTypeComponentIndex()
+		self:GetTypeComponentIndex(),
+		self.m_moveModeInfo.animData
 	)
+	for _, dpInfo in ipairs(self.m_moveModeInfo.dataPointInfo) do
+		local elDp = dpInfo.dataPoint
+		if elDp:IsValid() then
+			local posMove = elDp:GetMovePos()
+			elDp:MoveToPosition(cmd, posMove.x, posMove.y)
+
+			elDp:SetMoveDirty(false)
+		end
+	end
 	cmd:Execute()
 end
 function gui.PFMTimelineCurve:InitializeCurve(editorChannel, typeComponentIndex, curveIndex)

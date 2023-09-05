@@ -232,7 +232,7 @@ end
 function gui.PFMTimelineDataPoint:GetGraphCurve()
 	return self.m_graphData.timelineCurve
 end
-function gui.PFMTimelineDataPoint:MoveToPosition(cmd, time, value)
+function gui.PFMTimelineDataPoint:MoveToPosition(cmd, time, value, curTime, curVal)
 	local graphData = self.m_graphData
 	local timelineCurve = graphData.timelineCurve
 	local pm = pfm.get_project_manager()
@@ -264,25 +264,11 @@ function gui.PFMTimelineDataPoint:MoveToPosition(cmd, time, value)
 	keyIndex = self:GetKeyIndex()
 	local graphCurve = curveData.editorChannel:GetGraphCurve()
 	local keyData = graphCurve:GetKey(baseIndex)
-	local curVal = keyData:GetValue(keyIndex)
-	local curTime = keyData:GetTime(keyIndex)
+	curVal = curVal or keyData:GetValue(keyIndex)
+	curTime = curTime or keyData:GetTime(keyIndex)
 	local valueType = keyData:GetValueArrayValueType()
 	local uuid = tostring(actor:GetUniqueId())
 	cmd:AddSubCommand("set_keyframe_data", uuid, targetPath, curTime, time, curVal, value, baseIndex)
-	--cmd:AddSubCommand("set_keyframe_time", uuid, targetPath, curTime, curTime, time, baseIndex)
-	--cmd:AddSubCommand("set_keyframe_value", uuid, targetPath, valueType, time, curVal, value, baseIndex)
-
-	--pfm.undoredo.push("pfm_move_keyframe", cmd)()
-
-	--[[pm:UpdateKeyframe(
-		actor,
-		targetPath,
-		panimaChannel,
-		keyIndex,
-		newValue[1],
-		newValue[2],
-		self:GetTypeComponentIndex()
-	)]]
 end
 function gui.PFMTimelineDataPoint:MoveToCoordinates(x, y)
 	--[[local graphData = self.m_graphData
