@@ -800,80 +800,109 @@ end
 function gui.PFMTimeline:GetControlButton(identifier)
 	return self.m_controlButtons[identifier]
 end
+function gui.PFMTimeline:GroupDataPointsByCurve(dps)
+	local map = {}
+	for _, dp in ipairs(dps) do
+		local curve = dp:GetGraphCurve()
+		if curve:IsValid() then
+			local curveIndex = curve:GetCurveIndex()
+			if map[curveIndex] == nil then
+				map[curveIndex] = {
+					curve = curve,
+					dataPoints = {},
+				}
+			end
+			table.insert(map[curveIndex].dataPoints, dp)
+		end
+	end
+	return map
+end
+function gui.PFMTimeline:CreateCurveCompositionCommand(cmd, curve)
+	local animClip = curve:GetAnimationClip()
+	local actor = animClip:GetActor()
+	local propertyPath = curve:GetTargetPath()
+	local baseIndex = curve:GetTypeComponentIndex()
+	local res, subCmd =
+		cmd:AddSubCommand("keyframe_property_composition", tostring(actor:GetUniqueId()), propertyPath, baseIndex)
+	return subCmd
+end
 function gui.PFMTimeline:SetInterpolationMode(mode)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
 	local cmd = pfm.create_command("composition")
-	for _, dp in ipairs(dps) do
-		local editorKey, keyIndex = dp:GetEditorKeys()
-		if editorKey == nil then
-			return
+	for curveIndex, curveInfo in pairs(self:GroupDataPointsByCurve(dps)) do
+		local subCmd = self:CreateCurveCompositionCommand(cmd, curveInfo.curve)
+		for _, dp in ipairs(curveInfo.dataPoints) do
+			local editorKey, keyIndex = dp:GetEditorKeys()
+			if editorKey ~= nil then
+				local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+				local keyIndex = dp:GetKeyIndex()
+				local baseIndex = dp:GetTypeComponentIndex()
+				subCmd:AddSubCommand(
+					"set_keyframe_interpolation_mode",
+					tostring(actor:GetUniqueId()),
+					targetPath,
+					editorKey:GetTime(keyIndex),
+					editorKey:GetInterpolationMode(keyIndex),
+					mode,
+					baseIndex
+				)
+			end
 		end
-
-		local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
-		local keyIndex = dp:GetKeyIndex()
-		local baseIndex = dp:GetTypeComponentIndex()
-		cmd:AddSubCommand(
-			"set_keyframe_interpolation_mode",
-			tostring(actor:GetUniqueId()),
-			targetPath,
-			editorKey:GetTime(keyIndex),
-			editorKey:GetInterpolationMode(keyIndex),
-			mode,
-			baseIndex
-		)
 	end
 	pfm.undoredo.push("pfm_set_keyframe_interpolation_mode", cmd)()
 end
 function gui.PFMTimeline:SetEasingMode(mode)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
 	local cmd = pfm.create_command("composition")
-	for _, dp in ipairs(dps) do
-		local editorKey = dp:GetEditorKeys()
-		if editorKey == nil then
-			return
+	for curveIndex, curveInfo in pairs(self:GroupDataPointsByCurve(dps)) do
+		local subCmd = self:CreateCurveCompositionCommand(cmd, curveInfo.curve)
+		for _, dp in ipairs(curveInfo.dataPoints) do
+			local editorKey, keyIndex = dp:GetEditorKeys()
+			if editorKey ~= nil then
+				local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+				local keyIndex = dp:GetKeyIndex()
+				local baseIndex = dp:GetTypeComponentIndex()
+				subCmd:AddSubCommand(
+					"set_keyframe_easing_mode",
+					tostring(actor:GetUniqueId()),
+					targetPath,
+					editorKey:GetTime(keyIndex),
+					editorKey:GetEasingMode(keyIndex),
+					mode,
+					baseIndex
+				)
+			end
 		end
-
-		local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
-		local keyIndex = dp:GetKeyIndex()
-		local baseIndex = dp:GetTypeComponentIndex()
-		cmd:AddSubCommand(
-			"set_keyframe_easing_mode",
-			tostring(actor:GetUniqueId()),
-			targetPath,
-			editorKey:GetTime(keyIndex),
-			editorKey:GetEasingMode(keyIndex),
-			mode,
-			baseIndex
-		)
 	end
 	pfm.undoredo.push("pfm_set_keyframe_easing_mode", cmd)()
 end
 function gui.PFMTimeline:SetHandleType(type)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
 	local cmd = pfm.create_command("composition")
-	for _, dp in ipairs(dps) do
-		local editorKey, keyIndex = dp:GetEditorKeys()
-		if editorKey == nil then
-			return
-		end
-
-		local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
-		local keyIndex = dp:GetKeyIndex()
-		local baseIndex = dp:GetTypeComponentIndex()
-		for _, handleId in ipairs({
-			pfm.udm.EditorGraphCurveKeyData.HANDLE_IN,
-			pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT,
-		}) do
-			cmd:AddSubCommand(
-				"set_keyframe_handle_type",
-				tostring(actor:GetUniqueId()),
-				targetPath,
-				editorKey:GetTime(keyIndex),
-				editorKey:GetHandleType(keyIndex, handleId),
-				type,
-				baseIndex,
-				handleId
-			)
+	for curveIndex, curveInfo in pairs(self:GroupDataPointsByCurve(dps)) do
+		local subCmd = self:CreateCurveCompositionCommand(cmd, curveInfo.curve)
+		for _, dp in ipairs(curveInfo.dataPoints) do
+			local editorKey, keyIndex = dp:GetEditorKeys()
+			if editorKey ~= nil then
+				local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+				local keyIndex = dp:GetKeyIndex()
+				local baseIndex = dp:GetTypeComponentIndex()
+				for _, handleId in ipairs({
+					pfm.udm.EditorGraphCurveKeyData.HANDLE_IN,
+					pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT,
+				}) do
+					subCmd:AddSubCommand(
+						"set_keyframe_handle_type",
+						tostring(actor:GetUniqueId()),
+						targetPath,
+						editorKey:GetTime(keyIndex),
+						editorKey:GetHandleType(keyIndex, handleId),
+						type,
+						baseIndex,
+						handleId
+					)
+				end
+			end
 		end
 	end
 	pfm.undoredo.push("pfm_set_keyframe_handle_type", cmd)()

@@ -96,6 +96,9 @@ end
 function pfm.udm.EditorGraphCurveKeyData:GetKeyframeInfos()
 	return self.m_keyframeInfos
 end
+function pfm.udm.EditorGraphCurveKeyData:SetKeyframeDirty(idx)
+	self.m_keyframeInfos[idx + 1]:SetDirty()
+end
 function pfm.udm.EditorGraphCurveKeyData:OnArrayValueChanged(name, idx)
 	if name == "times" then
 		self.m_keyframeInfos[idx + 1]:SetDirty()

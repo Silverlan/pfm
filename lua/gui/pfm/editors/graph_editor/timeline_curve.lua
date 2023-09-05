@@ -121,6 +121,9 @@ function gui.PFMTimelineCurve:UpdateKeyframes()
 	end
 	self:UpdateDataPoints()
 end
+function gui.PFMTimelineCurve:GetTargetPath()
+	return self.m_editorChannel:GetTargetPath()
+end
 function gui.PFMTimelineCurve:SetMoveModeEnabled(enabled, ...)
 	if enabled then
 		local filmClip, moveThreshold, animData, elDps = ...
@@ -161,7 +164,9 @@ function gui.PFMTimelineCurve:SetMoveModeEnabled(enabled, ...)
 				local oldTime = dpInfo.time
 				local oldVal = dpInfo.value
 				local posMove = elDp:GetMovePos()
-				elDp:MoveToPosition(subCmd, posMove.x, posMove.y, oldTime, oldVal)
+				if posMove ~= nil then
+					elDp:MoveToPosition(subCmd, posMove.x, posMove.y, oldTime, oldVal)
+				end
 
 				elDp:SetMoveDirty(false)
 				elDp:SetMoveModeEnabled(enabled)

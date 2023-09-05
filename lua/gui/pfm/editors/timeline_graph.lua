@@ -412,65 +412,53 @@ function gui.PFMTimelineGraph:SetDataPointMoveModeEnabled(dataPoints, enabled, m
 	local filmClip = self:GetFilmClip()
 	if enabled then
 		self.m_dataPointMoveInfo = {}
+		local pm = pfm.get_project_manager()
+		local animManager = pm:GetAnimationManager()
+		local curves = {}
 		for _, dp in ipairs(dataPoints) do
-			dp:SetMoveModeEnabled(enabled, moveThreshold)
-			table.insert(self.m_dataPointMoveInfo, {
-				filmClip = pfm.reference(filmClip),
-				keyIndex = dp:GetKeyIndex(),
-				time = dp:GetTime(),
-				value = dp:GetValue(),
-				dpRef = gui.PFMTimelineDataPointReference(dp),
-				dataPoint = dp,
-			})
+			local timelineCurve = dp:GetGraphCurve()
+			local timelineGraph = timelineCurve:GetTimelineGraph()
+			local curveIndex = timelineCurve:GetCurveIndex()
+			curves[curveIndex] = curves[curveIndex] or {}
+			table.insert(curves[curveIndex], dp)
+		end
+		self.m_dataPointMoveInfo.curves = {}
+		local curveInfo = {}
+		for curveIndex, elDps in pairs(curves) do
+			local curveData = self.m_graphs[curveIndex]
+			local curve = curveData.curve
+			local editorChannel = curve:GetEditorChannel()
+
+			local animClip = editorChannel:GetAnimationClip()
+			local actor = editorChannel:GetActor()
+			local propertyPath = editorChannel:GetTargetPath()
+			local graphCurve = editorChannel:GetGraphCurve()
+			local typeComponentIndex = curveData.typeComponentIndex
+			local keyData = editorChannel:GetGraphCurve():GetKey(typeComponentIndex)
+			local channel = animClip:FindChannel(propertyPath)
+
+			local udmData, err = udm.create()
+			local data = udmData:GetAssetData():GetData()
+			pfm.util.AffixedAnimationData(data, animManager, actor, propertyPath, channel, keyData)
+			curveInfo[curveIndex] = {
+				udmData = udmData,
+				curve = curve,
+			}
+
+			curve:SetMoveModeEnabled(enabled, filmClip, moveThreshold, data, elDps) -- TODO: Disable on disable
+		end
+		self.m_dataPointMoveInfo.curveInfo = curveInfo
+		for curveIndex, _ in pairs(curveInfo) do
+			table.insert(self.m_dataPointMoveInfo.curves, curveIndex)
 		end
 	else
-		local initialDataPointPositions = table.copy(self.m_dataPointMoveInfo)
-		self.m_dataPointMoveInfo = nil
-		for i = #initialDataPointPositions, 1, -1 do
-			local dpInfo = initialDataPointPositions[i]
-			if dpInfo.dataPoint:IsValid() then
-				dpInfo.newTime = dpInfo.dataPoint:GetTime()
-				dpInfo.newValue = dpInfo.dataPoint:GetValue()
-			else
-				table.remove(initialDataPointPositions, i)
+		local cmd = pfm.create_command("composition")
+		for _, curveInfo in ipairs(self.m_dataPointMoveInfo.curveInfo) do
+			if curveInfo.curve:IsValid() then
+				curveInfo.curve:SetMoveModeEnabled(false, cmd)
 			end
 		end
-		local function move_keyframes(dataPointPositions, new)
-			for _, dpInfo in ipairs(dataPointPositions) do
-				local pm = pfm.get_project_manager()
-				local animManager = pm:GetAnimationManager()
-				local dpRef = dpInfo.dpRef
-				local filmClip = pfm.dereference(dpInfo.filmClip)
-				local track = filmClip:FindAnimationChannelTrack()
-				local actor = pfm.dereference(dpRef:GetActorUuid())
-				local animClip = track:FindActorAnimationClip(actor)
-				local path = dpRef:GetPropertyPath()
-				local channel = animClip:FindChannel(path)
-				local time = new and dpInfo["newTime"] or dpInfo["time"]
-				local value = new and dpInfo["newValue"] or dpInfo["value"]
-				local panimaChannel =
-					panima.Channel(channel:GetUdmData():Get("times"), channel:GetUdmData():Get("values"))
-
-				local editorData = animClip:GetEditorData()
-				local editorChannel = editorData:FindChannel(path)
-				local baseIndex = dpRef:GetTypeComponentIndex()
-				local keyIdx = (editorChannel ~= nil)
-						and editorChannel:FindKeyIndexByTime(new and dpInfo["time"] or dpInfo["newTime"], baseIndex)
-					or nil
-				if keyIdx ~= nil then
-					animManager:UpdateKeyframe(actor, path, panimaChannel, keyIdx, time, value, baseIndex)
-				end
-			end
-		end
-		pfm.undoredo.push("pfm_undoredo_move_keyframes", function()
-			move_keyframes(initialDataPointPositions, true)
-		end, function()
-			move_keyframes(initialDataPointPositions, false)
-		end)
-	end
-
-	for _, dp in ipairs(dataPoints) do
-		dp:SetMoveModeEnabled(enabled, moveThreshold)
+		pfm.undoredo.push("pfm_move_keyframes", cmd)()
 	end
 end
 function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
@@ -486,7 +474,15 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 	end
 	if isShiftDown and cursorMode == gui.PFMTimelineGraph.CURSOR_MODE_SELECT then
 		if state == input.STATE_PRESS then
-			self:StartCanvasDrawing()
+			if #self.m_graphs == 1 then
+				local graphData = self.m_graphs[1]
+				local curve = graphData.curve
+				self:StartCanvasDrawing(
+					curve:GetEditorChannel():GetAnimationClip():GetActor(),
+					graphData.targetPath,
+					graphData.typeComponentIndex
+				)
+			end
 		end
 		return util.EVENT_REPLY_HANDLED
 	end

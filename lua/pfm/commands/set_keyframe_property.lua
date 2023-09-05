@@ -19,7 +19,9 @@ function Command:Initialize(actorUuid, propertyPath, timestamp, baseIndex, handl
 	local data = self:GetData()
 	data:SetValue("actor", udm.TYPE_STRING, actorUuid)
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
-	data:SetValue("timestamp", udm.TYPE_FLOAT, timestamp)
+	if timestamp ~= nil then
+		data:SetValue("timestamp", udm.TYPE_FLOAT, timestamp)
+	end
 	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex or 0)
 
 	if handleId ~= nil then
@@ -27,18 +29,6 @@ function Command:Initialize(actorUuid, propertyPath, timestamp, baseIndex, handl
 	end
 
 	return pfm.Command.RESULT_SUCCESS
-end
-function Command:RebuildDirtyGraphCurveSegments()
-	local animClip = self:GetAnimationClip()
-	if animClip == nil then
-		return
-	end
-	local data = self:GetData()
-	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-	local editorData = animClip:GetEditorData()
-	local editorChannel = editorData:FindChannel(propertyPath)
-	local graphCurve = editorChannel:GetGraphCurve()
-	graphCurve:RebuildDirtyGraphCurveSegments()
 end
 function Command:GetAnimationClip()
 	local data = self:GetData()
@@ -57,6 +47,18 @@ function Command:GetAnimationClip()
 		return
 	end
 	return animClip
+end
+function Command:RebuildDirtyGraphCurveSegments()
+	local animClip = self:GetAnimationClip()
+	if animClip == nil then
+		return
+	end
+	local data = self:GetData()
+	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
+	local editorData = animClip:GetEditorData()
+	local editorChannel = editorData:FindChannel(propertyPath)
+	local graphCurve = editorChannel:GetGraphCurve()
+	graphCurve:RebuildDirtyGraphCurveSegments()
 end
 function Command:GetLocalTime(channelClip, action)
 	local data = self:GetData()
@@ -102,7 +104,6 @@ function Command:ApplyValue(data, action)
 	end
 
 	local res = self:ApplyProperty(data, action, editorChannel, keyIdx, timestamp, valueBaseIndex)
-	self:RebuildDirtyGraphCurveSegments()
 	return res
 end
 function Command:ApplyProperty(data, action, editorChannel, keyIdx, timestamp, valueBaseIndex) end
@@ -112,6 +113,34 @@ end
 function Command:DoUndo(data)
 	return self:ApplyValue(data, pfm.Command.ACTION_UNDO)
 end
+
+local Command = util.register_class("pfm.CommandKeyframePropertyComposition", pfm.CommandSetKeyframeProperty)
+function Command:Initialize(actorUuid, propertyPath, baseIndex, handleId)
+	return pfm.CommandSetKeyframeProperty.Initialize(self, actorUuid, propertyPath, nil, baseIndex, handleId)
+end
+function Command:DoExecute(data)
+	return pfm.Command.DoExecute(self, data)
+end
+function Command:DoUndo(data)
+	return pfm.Command.DoUndo(self, data)
+end
+function Command:Execute(...)
+	local res = pfm.CommandSetKeyframeProperty.Execute(self, ...)
+	if res == false then
+		return false
+	end
+	self:RebuildDirtyGraphCurveSegments()
+	return true
+end
+function Command:Undo(...)
+	local res = pfm.CommandSetKeyframeProperty.Undo(self, ...)
+	if res == false then
+		return false
+	end
+	self:RebuildDirtyGraphCurveSegments()
+	return true
+end
+pfm.register_command("keyframe_property_composition", Command)
 
 local function register_command(className, cmdName, oldKeyName, newKeyName, valueType, callback)
 	local Command = util.register_class("pfm." .. className, pfm.CommandSetKeyframeProperty)
@@ -151,6 +180,7 @@ register_command(
 	udm.TYPE_UINT8,
 	function(keyData, keyIdx, val, handleId)
 		keyData:SetEasingMode(keyIdx, val)
+		keyData:SetKeyframeDirty(keyIdx)
 	end
 )
 register_command(
@@ -161,6 +191,7 @@ register_command(
 	udm.TYPE_UINT8,
 	function(keyData, keyIdx, val, handleId)
 		keyData:SetInterpolationMode(keyIdx, val)
+		keyData:SetKeyframeDirty(keyIdx)
 	end
 )
 register_command(
@@ -171,6 +202,7 @@ register_command(
 	udm.TYPE_FLOAT,
 	function(keyData, keyIdx, val, handleId)
 		keyData:SetHandleTimeOffset(keyIdx, handleId, val)
+		keyData:SetKeyframeDirty(keyIdx)
 	end
 )
 register_command(
@@ -181,6 +213,7 @@ register_command(
 	udm.TYPE_FLOAT,
 	function(keyData, keyIdx, val, handleId)
 		keyData:SetHandleDelta(keyIdx, handleId, val)
+		keyData:SetKeyframeDirty(keyIdx)
 	end
 )
 register_command(
@@ -191,5 +224,6 @@ register_command(
 	udm.TYPE_UINT8,
 	function(keyData, keyIdx, val, handleId)
 		keyData:SetHandleType(keyIdx, handleId, val)
+		keyData:SetKeyframeDirty(keyIdx)
 	end
 )
