@@ -138,6 +138,15 @@ function pfm.udm.EditorGraphCurveKeyData:OnArrayValueRemoved(name, idx)
 		end
 	end
 end
+function pfm.udm.EditorGraphCurveKeyData:GetTypeComponentIndex()
+	local graphCurve = self:GetGraphCurve()
+	for i, keyData in ipairs(graphCurve:GetKeys()) do
+		if util.is_same_object(keyData, self) then
+			return i - 1
+		end
+	end
+	assert(false)
+end
 function pfm.udm.EditorGraphCurveKeyData:GetGraphCurve()
 	return self:GetParent()
 end
@@ -161,7 +170,7 @@ function pfm.udm.EditorGraphCurveKeyData:RebuildDirtyGraphCurveSegments(baseInde
 	local graphCurve = self:GetGraphCurve()
 	local editorChannelData = graphCurve:GetEditorChannelData()
 	for _, keyframeIdx in ipairs(keyframeIndices) do
-		-- print("Rebuilding " .. keyframeIdx .. "...")
+		print("Rebuilding " .. keyframeIdx .. "...")
 		editorChannelData:RebuildGraphCurveSegment(keyframeIdx, baseIndex)
 	end
 end
@@ -293,6 +302,11 @@ function pfm.udm.EditorGraphCurveKeyData:SetHandleData(keyIndex, handle, time, d
 		handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT,
 		affectedKeyframeHandles
 	)
+
+	local graphCurve = self:GetGraphCurve()
+	local filmClip = graphCurve:GetFilmClip()
+	filmClip:CallChangeListeners("OnKeyframeHandleDataChanged", self, keyIndex, handle, time, delta)
+
 	return affectedKeyframeHandles
 end
 function pfm.udm.EditorGraphCurveKeyData:UpdateVectorHandle(keyIndex, handle)

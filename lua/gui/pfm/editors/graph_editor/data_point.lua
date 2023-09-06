@@ -42,7 +42,6 @@ function gui.PFMTimelineDataPoint:UpdateHandleType(handle)
 end
 function gui.PFMTimelineDataPoint:GetEditorKeys()
 	local curve = self:GetGraphCurve()
-	local graph = curve:GetTimelineGraph()
 
 	local editorChannel = curve:GetEditorChannel()
 	if editorChannel == nil then
@@ -84,6 +83,18 @@ function gui.PFMTimelineDataPoint:InitializeHandleControl()
 	el:AddCallback("OnOutControlMoved", function(el, newPos)
 		self:OnHandleMoved(newPos, false)
 	end)
+	el:AddCallback("OnInControlMoveStarted", function(el, ctrl, startPos)
+		self:OnHandleControlMoveStarted()
+	end)
+	el:AddCallback("OnOutControlMoveStarted", function(el, ctrl, startPos)
+		self:OnHandleControlMoveStarted()
+	end)
+	el:AddCallback("OnInControlMoveComplete", function(el, ctrl, startPos)
+		self:OnHandleControlMoveComplete()
+	end)
+	el:AddCallback("OnOutControlMoveComplete", function(el, ctrl, startPos)
+		self:OnHandleControlMoveComplete()
+	end)
 
 	local onMouseEvent = function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT then
@@ -124,21 +135,105 @@ function gui.PFMTimelineDataPoint:GetKeyTimeDelta(pos)
 	local delta = -dataAxis:GetAxis():XDeltaToValue(val.y)
 	return editorKeys, keyIndex, time, delta
 end
-function gui.PFMTimelineDataPoint:OnHandleMoved(newPos, inHandle)
-	local editorKeys, keyIndex, time, delta = self:GetKeyTimeDelta(newPos)
-	local handle = inHandle and pfm.udm.EditorGraphCurveKeyData.HANDLE_IN or pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT
-	if editorKeys:GetHandleType(keyIndex) == pfm.udm.KEYFRAME_HANDLE_TYPE_VECTOR then
-		editorKeys:SetHandleType(keyIndex, handle, pfm.udm.KEYFRAME_HANDLE_TYPE_FREE)
+function gui.PFMTimelineDataPoint:OnHandleControlMoveComplete()
+	if self.m_handleMoveData == nil then
+		return
 	end
-	local affectedKeys = editorKeys:SetHandleData(keyIndex, handle, time, delta)
 
 	local curve = self:GetGraphCurve()
-	local timelineGraph = curve:GetTimelineGraph()
-	for _, af in ipairs(affectedKeys) do
-		timelineGraph:ReloadGraphCurveSegment(curve:GetCurveIndex(), af[1])
+	local editorChannel = curve:GetEditorChannel()
+	if editorChannel == nil then
+		return
 	end
 
-	curve:GetTimelineGraph():UpdateSelectedDataPointHandles()
+	local editorGraphCurve = editorChannel:GetGraphCurve()
+	local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
+	local keyIndex = self:GetKeyIndex()
+	local deltaIn = editorKeys:GetHandleDelta(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
+	local timeIn = editorKeys:GetHandleTimeOffset(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
+	local deltaOut = editorKeys:GetHandleDelta(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
+	local timeOut = editorKeys:GetHandleTimeOffset(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
+
+	local cmd = pfm.create_command("composition")
+	self:CreateHandleMoveCommand(
+		cmd,
+		pfm.udm.EditorGraphCurveKeyData.HANDLE_IN,
+		self.m_handleMoveData.timeIn,
+		timeIn,
+		self.m_handleMoveData.deltaIn,
+		deltaIn
+	)
+	self:CreateHandleMoveCommand(
+		cmd,
+		pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT,
+		self.m_handleMoveData.timeOut,
+		timeOut,
+		self.m_handleMoveData.deltaOut,
+		deltaOut
+	)
+	cmd:Execute()
+	pfm.undoredo.push("pfm_move_keyframe_handles", cmd)()
+
+	self.m_handleMoveData = nil
+end
+function gui.PFMTimelineDataPoint:OnHandleControlMoveStarted()
+	self.m_handleMoveData = nil
+	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
+	if actor == nil then
+		return
+	end
+
+	local curve = self:GetGraphCurve()
+	local editorChannel = curve:GetEditorChannel()
+	if editorChannel == nil then
+		return
+	end
+
+	local editorGraphCurve = editorChannel:GetGraphCurve()
+	local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
+
+	local keyIndex = self:GetKeyIndex()
+	self.m_handleMoveData = {
+		deltaIn = editorKeys:GetHandleDelta(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN),
+		timeIn = editorKeys:GetHandleTimeOffset(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN),
+		deltaOut = editorKeys:GetHandleDelta(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT),
+		timeOut = editorKeys:GetHandleTimeOffset(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT),
+	}
+end
+function gui.PFMTimelineDataPoint:CreateHandleMoveCommand(cmd, handle, oldTime, time, oldDelta, delta)
+	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
+	if actor == nil then
+		return
+	end
+	local curve = self:GetGraphCurve()
+	local editorChannel = curve:GetEditorChannel()
+	local baseIndex = self:GetTypeComponentIndex()
+	local timestamp = self:GetTime()
+	cmd:AddSubCommand(
+		"move_keyframe_handle",
+		tostring(actor:GetUniqueId()),
+		targetPath,
+		timestamp,
+		baseIndex,
+		handle,
+		oldTime,
+		time,
+		oldDelta,
+		delta
+	)
+end
+function gui.PFMTimelineDataPoint:OnHandleMoved(newPos, inHandle)
+	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
+	if actor == nil then
+		return
+	end
+	local editorKeys, keyIndex, time, delta = self:GetKeyTimeDelta(newPos)
+	local timestamp = editorKeys:GetTime(keyIndex)
+	local baseIndex = self:GetTypeComponentIndex()
+	local handle = inHandle and pfm.udm.EditorGraphCurveKeyData.HANDLE_IN or pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT
+	local cmd = pfm.create_command("composition")
+	self:CreateHandleMoveCommand(cmd, handle, time, time, delta, delta)
+	cmd:Execute()
 end
 function gui.PFMTimelineDataPoint:OnRemove()
 	util.remove(self.m_tangentControl)
