@@ -14,13 +14,7 @@ function Element:OnFilmClipAdded(el)
 	end
 	self:AddFilmClipElement(newEl)
 end
-function Element:SelectFilmClip(filmClip)
-	local actorEditor = self:GetActorEditor()
-	if util.is_valid(actorEditor) == false then
-		return
-	end
-	actorEditor:Setup(filmClip)
-end
+function Element:SelectFilmClip(filmClip) end -- TODO: Remove?
 function Element:ChangeFilmClipDuration(filmClip, dur)
 	local timeFrame = filmClip:GetTimeFrame()
 	pfm.undoredo.push(

@@ -1269,6 +1269,13 @@ end
 function gui.WIFilmmaker:GetTimeline()
 	return self.m_timeline
 end
+function gui.WIFilmmaker:GetGraphEditor()
+	local timeline = self:GetTimeline()
+	if util.is_valid(timeline) == false then
+		return
+	end
+	return timeline:GetGraphEditor()
+end
 function gui.WIFilmmaker:GetFilmStrip()
 	return self.m_filmStrip
 end

@@ -213,6 +213,7 @@ function gui.PFMTimelineGraph:OnRemove()
 	util.remove(self.m_cbOnChannelValueChanged)
 	util.remove(self.m_cbOnKeyframeUpdated)
 	util.remove(self.m_cbDataAxisPropertiesChanged)
+	self:ClearKeyframeListeners()
 end
 function gui.PFMTimelineGraph:FindGraphDataIndices(actor, targetPath)
 	local uuid = tostring(actor:GetUniqueId())
@@ -297,9 +298,12 @@ function gui.PFMTimelineGraph:RemoveDataPoint(dp)
 	self:RemoveKeyframe(actor, targetPath, dp:GetTypeComponentIndex(), keyIndex)
 end
 function gui.PFMTimelineGraph:GetFilmClip()
-	local pm = tool.get_filmmaker()
-	local actorEditor = pm:GetActorEditor()
-	return actorEditor:GetFilmClip()
+	return self.m_filmClip
+end
+function gui.PFMTimelineGraph:Setup(filmClip)
+	self:ClearKeyframeListeners()
+	self.m_filmClip = filmClip
+	self:InitializeKeyframeListeners(filmClip)
 end
 function gui.PFMTimelineGraph:KeyboardCallback(key, scanCode, state, mods)
 	if key == input.KEY_DELETE then
