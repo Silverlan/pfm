@@ -7,7 +7,7 @@
 ]]
 
 local Command = util.register_class("pfm.CommandSetAnimationValue", pfm.Command)
-function Command:Initialize(actorUuid, propertyPath, timestamp, oldValue, newValue)
+function Command:Initialize(actorUuid, propertyPath, timestamp, valueType, oldValue, newValue)
 	pfm.Command.Initialize(self)
 	local actor = pfm.dereference(actorUuid)
 	actorUuid = tostring(actor:GetUniqueId())
@@ -29,9 +29,10 @@ function Command:Initialize(actorUuid, propertyPath, timestamp, oldValue, newVal
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
 	data:SetValue("timestamp", udm.TYPE_FLOAT, timestamp)
 	if oldValue ~= nil then
-		data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
+		data:SetValue("oldValue", valueType, oldValue)
 	end
-	data:SetValue("newValue", udm.TYPE_FLOAT, newValue)
+	data:SetValue("newValue", valueType, newValue)
+	data:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	return pfm.Command.RESULT_SUCCESS
 end
 function Command:GetAnimationChannel(actor, propertyPath)

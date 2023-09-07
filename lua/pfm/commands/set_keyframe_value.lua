@@ -8,6 +8,7 @@
 
 local Command = util.register_class("pfm.CommandSetKeyframeValue", pfm.Command)
 function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, oldValue, newValue, baseIndex)
+	baseIndex = baseIndex or 0
 	pfm.Command.Initialize(self)
 	local actor = pfm.dereference(actorUuid)
 	actorUuid = tostring(actor:GetUniqueId())
@@ -16,7 +17,7 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, oldVa
 		return pfm.Command.RESULT_FAILURE
 	end
 
-	self:AddSubCommand("set_animation_value", actorUuid, propertyPath, timestamp, oldValue, newValue)
+	self:AddSubCommand("set_animation_value", actorUuid, propertyPath, timestamp, valueType, oldValue, newValue)
 
 	local data = self:GetData()
 	data:SetValue("actor", udm.TYPE_STRING, actorUuid)
@@ -26,8 +27,8 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, oldVa
 	if oldValue ~= nil then
 		data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
 	end
-	data:SetValue("newValue", udm.TYPE_FLOAT, newValue)
-	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex or 0)
+	data:SetValue("newValue", udm.TYPE_FLOAT, udm.get_numeric_component(newValue, baseIndex))
+	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex)
 	return pfm.Command.RESULT_SUCCESS
 end
 function Command:RebuildDirtyGraphCurveSegments()

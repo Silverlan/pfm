@@ -54,7 +54,7 @@ function Command:StoreAnimationDataInTimeRange(keyName, actor, propertyPath, sta
 		return false
 	end
 	local idxStart, idxEnd = channel:FindIndexRangeInTimeRange(startTime, endTime)
-	if idxEnd < idxStart then
+	if idxStart == nil or idxEnd < idxStart then
 		return false
 	end
 

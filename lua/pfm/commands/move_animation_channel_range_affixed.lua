@@ -25,7 +25,7 @@ function AnimationDataBuffer:StoreAnimationData(animManager, actor, propertyPath
 		return false, "Animation clip not found!"
 	end
 	local idxStart, idxEnd = channel:FindIndexRangeInTimeRange(startTime, endTime)
-	if idxEnd < idxStart then
+	if idxStart == nil or idxEnd < idxStart then
 		return false, "End time index precedes start time index!"
 	end
 
@@ -87,7 +87,7 @@ end
 --
 
 local AffixedAnimationData = util.register_class("pfm.util.AffixedAnimationData")
-function AffixedAnimationData:__init(data, animManager, actor, propertyPath, channel, keyData)
+function AffixedAnimationData:__init(data, animManager, actor, propertyPath, channel, keyData, baseIndex)
 	local firstKeyframeIndex = 0
 	local firstAnimDataTime = channel:GetTime(0)
 	local firstKeyframeTime = keyData:GetTime(firstKeyframeIndex)
@@ -123,7 +123,7 @@ function AffixedAnimationData:__init(data, animManager, actor, propertyPath, cha
 		local res, startIdx = animDataBuffer:StoreAnimationData(animManager, actor, propertyPath, startTime, endTime)
 		if res then
 			local animDataTimeStart = channel:GetTime(startIdx)
-			local animDataValueStart = channel:GetValue(startIdx)
+			local animDataValueStart = udm.get_numeric_component(channel:GetValue(startIdx), baseIndex)
 
 			-- This will move the time and data from absolute time to relative (to the keyframe)
 			animDataBuffer:GetData():SetValue(
@@ -131,6 +131,7 @@ function AffixedAnimationData:__init(data, animManager, actor, propertyPath, cha
 				udm.TYPE_FLOAT,
 				-animDataTimeStart + (animDataTimeStart - udmAnimDataInfo.keyframeTime)
 			)
+
 			animDataBuffer:GetData():SetValue(
 				"dataOffset",
 				udm.TYPE_FLOAT,

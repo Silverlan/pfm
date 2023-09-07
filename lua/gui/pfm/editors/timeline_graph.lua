@@ -436,14 +436,13 @@ function gui.PFMTimelineGraph:SetDataPointMoveModeEnabled(dataPoints, enabled, m
 			local animClip = editorChannel:GetAnimationClip()
 			local actor = editorChannel:GetActor()
 			local propertyPath = editorChannel:GetTargetPath()
-			local graphCurve = editorChannel:GetGraphCurve()
 			local typeComponentIndex = curveData.typeComponentIndex
 			local keyData = editorChannel:GetGraphCurve():GetKey(typeComponentIndex)
 			local channel = animClip:FindChannel(propertyPath)
 
 			local udmData, err = udm.create()
 			local data = udmData:GetAssetData():GetData()
-			pfm.util.AffixedAnimationData(data, animManager, actor, propertyPath, channel, keyData)
+			pfm.util.AffixedAnimationData(data, animManager, actor, propertyPath, channel, keyData, typeComponentIndex)
 			curveInfo[curveIndex] = {
 				udmData = udmData,
 				curve = curve,
