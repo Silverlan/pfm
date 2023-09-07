@@ -95,8 +95,10 @@ function Command:RestoreAnimationData()
 	local startTime = udmAnimData:GetValue("startTime", udm.TYPE_FLOAT)
 	local endTime = udmAnimData:GetValue("endTime", udm.TYPE_FLOAT)
 
+	panimaChannel:ClearRange(startTime, endTime, false)
 	panimaChannel:InsertValues(times, values)
 	animClip:UpdateAnimationChannel(channel)
+	panimaChannel:Validate()
 end
 function Command:DoExecute(data)
 	local data = self:GetData()

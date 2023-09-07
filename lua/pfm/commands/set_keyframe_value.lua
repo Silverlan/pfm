@@ -23,7 +23,9 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, oldVa
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
 	data:SetValue("propertyType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	data:SetValue("timestamp", udm.TYPE_FLOAT, timestamp)
-	data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
+	if oldValue ~= nil then
+		data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
+	end
 	data:SetValue("newValue", udm.TYPE_FLOAT, newValue)
 	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex or 0)
 	return pfm.Command.RESULT_SUCCESS
@@ -102,10 +104,12 @@ function Command:ApplyValue(data, keyNewValue)
 	end
 
 	local value = data:GetValue(keyNewValue, udm.TYPE_FLOAT)
-	local res = editorChannel:SetKeyframeValue(keyIdx, value, valueBaseIndex)
-	if res == false then
-		self:LogFailure("Failed to apply keyframe value!")
-		return
+	if value ~= nil then
+		local res = editorChannel:SetKeyframeValue(keyIdx, value, valueBaseIndex)
+		if res == false then
+			self:LogFailure("Failed to apply keyframe value!")
+			return
+		end
 	end
 	self:RebuildDirtyGraphCurveSegments()
 end

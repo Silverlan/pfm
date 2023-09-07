@@ -28,7 +28,9 @@ function Command:Initialize(actorUuid, propertyPath, timestamp, oldValue, newVal
 	data:SetValue("actor", udm.TYPE_STRING, actorUuid)
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
 	data:SetValue("timestamp", udm.TYPE_FLOAT, timestamp)
-	data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
+	if oldValue ~= nil then
+		data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
+	end
 	data:SetValue("newValue", udm.TYPE_FLOAT, newValue)
 	return pfm.Command.RESULT_SUCCESS
 end
@@ -61,8 +63,15 @@ function Command:ApplyValue(data, keyNewValue)
 
 	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
 	local value = data:GetValue(keyNewValue, udm.TYPE_FLOAT)
-
-	local idx = channel:AddValue(time, value)
+	local idx
+	if value == nil then
+		idx = channel:FindIndex(time)
+		if idx ~= nil then
+			channel:RemoveValue(idx)
+		end
+	else
+		idx = channel:AddValue(time, value)
+	end
 	anim:UpdateDuration()
 	return idx
 end
