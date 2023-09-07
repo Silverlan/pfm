@@ -331,7 +331,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 							self:OnActorTransformChanged(self.m_rtMoverActor)
 						end
 					end
-					pfm.undoredo.push("pfm_undoredo_transform", function()
+					pfm.undoredo.push("transform", function()
 						apply_pos(newPos)
 					end, function()
 						apply_pos(curPos)

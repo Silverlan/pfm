@@ -1097,6 +1097,7 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 	t = t or (self:GetTimeOffset() - filmClip:GetTimeFrame():GetStart())
 	if self.m_timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH and noKeyframe ~= true then
 		local graphEditor = self.m_timeline:GetGraphEditor()
+		local cmd = pfm.create_command("composition")
 		for _, graph in ipairs(graphEditor:GetGraphs()) do
 			if graph.curve:IsValid() then
 				local valueType = graph.valueType
@@ -1116,7 +1117,6 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 				local propertyPath = graph.targetPath
 				local baseIndex = graph.typeComponentIndex
 
-				local cmd = pfm.create_command("composition")
 				cmd:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
 				cmd:AddSubCommand(
 					"set_keyframe_value",
@@ -1124,13 +1124,13 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 					propertyPath,
 					valueType,
 					timestamp,
-					0.0,
+					nil,
 					value,
 					baseIndex
 				)
-				pfm.undoredo.push("pfm_create_keyframe", cmd)()
 			end
 		end
+		pfm.undoredo.push("create_keyframe", cmd)()
 		--[[
 	for _, graph in ipairs(self.m_graphs) do
 		if graph.curve:IsValid() then
@@ -1164,7 +1164,7 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 		local timestamp = TODO
 		local baseIndex = TODO
 		pfm.undoredo.push(
-			"pfm_create_keyframe",
+			"create_keyframe",
 			pfm.create_command("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
 		)]]
 		--actorUuid, propertyPath, valueType, timestamp, baseIndex
@@ -1177,7 +1177,7 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 		return
 	end
 	return pfm.undoredo.push(
-		"pfm_create_bookmark",
+		"create_bookmark",
 		pfm.create_command("create_bookmark", mainClip, pfm.Project.DEFAULT_BOOKMARK_SET_NAME, t)
 	)()
 end

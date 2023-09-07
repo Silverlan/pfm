@@ -265,7 +265,7 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, o
 			baseIndex
 		)
 
-		pfm.undoredo.push("pfm_change_animation_value", cmd)()
+		pfm.undoredo.push("change_animation_value", cmd)()
 		-- TODO: Add main property action from return value
 		--
 

@@ -18,22 +18,19 @@ function Element:SelectFilmClip(filmClip) end -- TODO: Remove?
 function Element:ChangeFilmClipDuration(filmClip, dur)
 	local timeFrame = filmClip:GetTimeFrame()
 	pfm.undoredo.push(
-		"pfm_set_film_clip_duration",
+		"set_film_clip_duration",
 		pfm.create_command("set_film_clip_duration", filmClip, timeFrame:GetDuration(), dur)
 	)()
 end
 function Element:ChangeFilmClipOffset(filmClip, offset)
 	local timeFrame = filmClip:GetTimeFrame()
 	pfm.undoredo.push(
-		"pfm_set_film_clip_offset",
+		"set_film_clip_offset",
 		pfm.create_command("set_film_clip_offset", filmClip, timeFrame:GetOffset(), offset)
 	)()
 end
 function Element:ChangeFilmClipName(filmClip, name)
-	pfm.undoredo.push(
-		"pfm_rename_film_clip",
-		pfm.create_command("rename_film_clip", filmClip, filmClip:GetName(), name)
-	)()
+	pfm.undoredo.push("rename_film_clip", pfm.create_command("rename_film_clip", filmClip, filmClip:GetName(), name))()
 end
 function Element:AddFilmClip()
 	local session = self:GetSession()
@@ -47,19 +44,19 @@ function Element:AddFilmClip()
 	self:InsertFilmClipAfter(lastFilmClip)
 end
 function Element:InsertFilmClipAfter(filmClip, name)
-	pfm.undoredo.push("pfm_add_film_clip", pfm.create_command("add_film_clip", name or "shot", filmClip, false))()
+	pfm.undoredo.push("add_film_clip", pfm.create_command("add_film_clip", name or "shot", filmClip, false))()
 end
 function Element:InsertFilmClipBefore(filmClip, name)
-	pfm.undoredo.push("pfm_add_film_clip", pfm.create_command("add_film_clip", name or "shot", filmClip, true))()
+	pfm.undoredo.push("add_film_clip", pfm.create_command("add_film_clip", name or "shot", filmClip, true))()
 end
 function Element:MoveFilmClipToLeft(filmClip)
-	pfm.undoredo.push("pfm_move_film_clip", pfm.create_command("move_film_clip", filmClip, true))()
+	pfm.undoredo.push("move_film_clip", pfm.create_command("move_film_clip", filmClip, true))()
 end
 function Element:MoveFilmClipToRight(filmClip)
-	pfm.undoredo.push("pfm_move_film_clip", pfm.create_command("move_film_clip", filmClip, false))()
+	pfm.undoredo.push("move_film_clip", pfm.create_command("move_film_clip", filmClip, false))()
 end
 function Element:RemoveFilmClip(filmClip)
-	pfm.undoredo.push("pfm_delete_film_clip", pfm.create_command("delete_film_clip", filmClip))()
+	pfm.undoredo.push("delete_film_clip", pfm.create_command("delete_film_clip", filmClip))()
 end
 function Element:AddFilmClipElement(filmClip)
 	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip, filmClip, function(elFilmClip)

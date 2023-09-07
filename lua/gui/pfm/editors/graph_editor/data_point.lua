@@ -172,7 +172,7 @@ function gui.PFMTimelineDataPoint:OnHandleControlMoveComplete()
 		deltaOut
 	)
 	cmd:Execute()
-	pfm.undoredo.push("pfm_move_keyframe_handles", cmd)()
+	pfm.undoredo.push("move_keyframe_handles", cmd)()
 
 	self.m_handleMoveData = nil
 end
@@ -308,7 +308,7 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
 			baseIndex
 		)
 	end
-	pfm.undoredo.push("pfm_move_keyframe", cmd)()
+	pfm.undoredo.push("move_keyframe", cmd)()
 end
 function gui.PFMTimelineDataPoint:UpdateTextFields()
 	local graphData = self.m_graphData

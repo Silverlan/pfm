@@ -479,7 +479,7 @@ pfm.register_window("timeline", "timeline", locale.get_text("pfm_timeline"), fun
 		end
 		local tOld = userInteractionTimeStart
 		local tNew = pm:GetTimeOffset()
-		pfm.undoredo.push("pfm_undoredo_time_offset", pfm.create_command("set_time_offset", tNew, tOld))
+		pfm.undoredo.push("time_offset", pfm.create_command("set_time_offset", tNew, tOld))
 		userInteractionTimeStart = nil
 	end)
 	pm:UpdateBookmarks()

@@ -312,7 +312,7 @@ function gui.PFMViewport:UpdateManipulationMode()
 				self:SetBoneTransformProperty(ent, boneId, "scale", pose.scale, udm.TYPE_VECTOR3)
 			end
 		end
-		pfm.undoredo.push("pfm_undoredo_bone_transform", function()
+		pfm.undoredo.push("bone_transform", function()
 			apply_pose(newPose)
 		end, function()
 			apply_pose(curPose)
@@ -429,7 +429,7 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 			end
 		end
 		-- TODO
-		-- pfm.undoredo.push("pfm_undoredo_transform",function() apply_pose(newPose) end,function() apply_pose(curPose) end)()
+		-- pfm.undoredo.push("undoredo_transform",function() apply_pose(newPose) end,function() apply_pose(curPose) end)()
 	end)
 	self:InitializeTransformWidget(trC, nil, self:GetTransformSpace() == ents.UtilTransformComponent.SPACE_VIEW)
 	self.m_transformComponent = trC
@@ -555,7 +555,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 						newScale = newPose.scale
 					end
 					pfm.undoredo.push(
-						"pfm_change_actor_pose",
+						"change_actor_pose",
 						pfm.create_command(
 							"change_actor_pose",
 							actorData,
@@ -791,7 +791,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 								end
 
 								local newVal = get_pose_value(newPose)
-								pfm.undoredo.push("pfm_undoredo_bone_transform", function()
+								pfm.undoredo.push("bone_transform", function()
 									local entActor = ents.find_by_uuid(uuid)
 									if entActor == nil then
 										return

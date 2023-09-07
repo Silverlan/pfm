@@ -228,7 +228,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 
 			pContext:AddItem(locale.get_text("remove"), function()
 				pfm.undoredo.push(
-					"pfm_delete_component",
+					"delete_component",
 					pfm.create_command("delete_component", actorData.actor, componentType)
 				)()
 			end)

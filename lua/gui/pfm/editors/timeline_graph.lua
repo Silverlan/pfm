@@ -327,7 +327,7 @@ function gui.PFMTimelineGraph:KeyboardCallback(key, scanCode, state, mods)
 					cmd:AddSubCommand("delete_keyframe", tostring(actor:GetUniqueId()), targetPath, time, baseIndex)
 				end
 			end
-			pfm.undoredo.push("pfm_delete_keyframes", cmd)()
+			pfm.undoredo.push("delete_keyframes", cmd)()
 		end
 		return util.EVENT_REPLY_HANDLED
 	elseif key == input.KEY_1 then
@@ -461,7 +461,7 @@ function gui.PFMTimelineGraph:SetDataPointMoveModeEnabled(dataPoints, enabled, m
 				curveInfo.curve:SetMoveModeEnabled(false, cmd)
 			end
 		end
-		pfm.undoredo.push("pfm_move_keyframes", cmd)()
+		pfm.undoredo.push("move_keyframes", cmd)()
 	end
 end
 function gui.PFMTimelineGraph:MouseCallback(button, state, mods)

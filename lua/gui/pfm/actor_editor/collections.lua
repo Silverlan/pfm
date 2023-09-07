@@ -84,7 +84,7 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 				if isRoot ~= true then
 					pContext:AddItem(locale.get_text("pfm_remove_collection"), function()
 						pfm.undoredo.push(
-							"pfm_delete_collection",
+							"delete_collection",
 							pfm.create_command("delete_collection", self:GetFilmClip(), parent)
 						)()
 					end)
@@ -105,7 +105,7 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 						te:RequestFocus()
 						te:AddCallback("OnFocusKilled", function()
 							pfm.undoredo.push(
-								"pfm_rename_collection",
+								"rename_collection",
 								pfm.create_command("rename_collection", parent, parent:GetName(), te:GetText())
 							)()
 
@@ -206,7 +206,7 @@ function gui.PFMActorEditor:AddCollection(name, parentGroup, addUndo)
 	local childGroup
 	local cmd = pfm.create_command("add_collection", parentGroup, name)
 	if addUndo then
-		childGroup = pfm.undoredo.push("pfm_add_collection", cmd)()
+		childGroup = pfm.undoredo.push("add_collection", cmd)()
 	else
 		childGroup = cmd:Execute()
 	end

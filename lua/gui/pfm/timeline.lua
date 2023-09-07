@@ -359,7 +359,7 @@ function gui.PFMTimeline:InitializeToolbar()
 		"gui/pfm/icon_mode_timeline_activated",
 		function()
 			pfm.undoredo.push(
-				"pfm_set_timeline_editor",
+				"set_timeline_editor",
 				pfm.create_command("set_timeline_editor", self:GetEditor(), gui.PFMTimeline.EDITOR_CLIP)
 			)()
 			return true
@@ -380,7 +380,7 @@ function gui.PFMTimeline:InitializeToolbar()
 		"gui/pfm/icon_mode_grapheditor_activated",
 		function()
 			pfm.undoredo.push(
-				"pfm_set_timeline_editor",
+				"set_timeline_editor",
 				pfm.create_command("set_timeline_editor", self:GetEditor(), gui.PFMTimeline.EDITOR_GRAPH)
 			)()
 			return true
@@ -849,7 +849,7 @@ function gui.PFMTimeline:SetInterpolationMode(mode)
 			end
 		end
 	end
-	pfm.undoredo.push("pfm_set_keyframe_interpolation_mode", cmd)()
+	pfm.undoredo.push("set_keyframe_interpolation_mode", cmd)()
 end
 function gui.PFMTimeline:SetEasingMode(mode)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
@@ -874,7 +874,7 @@ function gui.PFMTimeline:SetEasingMode(mode)
 			end
 		end
 	end
-	pfm.undoredo.push("pfm_set_keyframe_easing_mode", cmd)()
+	pfm.undoredo.push("set_keyframe_easing_mode", cmd)()
 end
 function gui.PFMTimeline:SetHandleType(type)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
@@ -905,7 +905,7 @@ function gui.PFMTimeline:SetHandleType(type)
 			end
 		end
 	end
-	pfm.undoredo.push("pfm_set_keyframe_handle_type", cmd)()
+	pfm.undoredo.push("set_keyframe_handle_type", cmd)()
 end
 function gui.PFMTimeline:SetDataValue(t, v)
 	self.m_entryFrame:SetText(tostring(t))

@@ -9,6 +9,8 @@
 include("/util/log.lua")
 include("commands.lua")
 
+locale.load("pfm_undoredo.txt")
+
 pfm.register_log_category("pfm_undoredo")
 
 pfm = pfm or {}
@@ -26,6 +28,7 @@ pfm.undoredo.add_callback = function(name, f)
 end
 
 pfm.undoredo.push = function(name, actionDo, undo)
+	name = "pfm_undoredo_" .. name
 	if actionDo == nil then
 		return function() end
 	end

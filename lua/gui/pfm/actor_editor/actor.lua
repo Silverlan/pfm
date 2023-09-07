@@ -153,7 +153,7 @@ function gui.PFMActorEditor:IterateActors(f)
 end
 function gui.PFMActorEditor:RemoveActors(ids)
 	local filmClip = self:GetFilmClip()
-	pfm.undoredo.push("pfm_delete_actors", pfm.create_command("delete_actors", filmClip, ids))()
+	pfm.undoredo.push("delete_actors", pfm.create_command("delete_actors", filmClip, ids))()
 end
 function gui.PFMActorEditor:OnActorsRemoved(filmClip, uuids)
 	local items = {}
@@ -245,7 +245,7 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 				te:RequestFocus()
 				te:AddCallback("OnFocusKilled", function()
 					pfm.undoredo.push(
-						"pfm_rename_actor",
+						"rename_actor",
 						pfm.create_command("rename_actor", actor, actor:GetName(), te:GetText())
 					)()
 
@@ -325,7 +325,7 @@ function gui.PFMActorEditor:MoveActorToCollection(actor, col)
 
 	local srcGroup = actor:GetParent()
 	return pfm.undoredo.push(
-		"pfm_move_actor_to_collection",
+		"move_actor_to_collection",
 		pfm.create_command("move_actor_to_collection", actor, srcGroup, col)
 	)()
 end

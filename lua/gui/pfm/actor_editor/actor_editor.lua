@@ -55,7 +55,7 @@ function gui.PFMActorEditor:OnInitialize()
 				callback()
 			end
 
-			pfm.undoredo.push("pfm_add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
+			pfm.undoredo.push("add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
 		end)
 		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
 		subItem:SetName(id)
@@ -70,7 +70,7 @@ function gui.PFMActorEditor:OnInitialize()
 					return
 				end
 				local actor = self:CreatePresetActor(type, { ["modelName"] = mdlName })
-				pfm.undoredo.push("pfm_add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
+				pfm.undoredo.push("add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
 			end)
 		end)
 		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
@@ -2461,7 +2461,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 							return
 						end
 						pfm.undoredo.push(
-							"pfm_create_component",
+							"create_component",
 							pfm.create_command("create_component", actor, nameInfo[1])
 						)()
 					end)
@@ -2482,7 +2482,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 							return
 						end
 						pfm.undoredo.push(
-							"pfm_create_component",
+							"create_component",
 							pfm.create_command("create_component", actor, nameInfo[1])
 						)()
 					end)
