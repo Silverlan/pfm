@@ -111,21 +111,16 @@ function gui.PFMActorEditor:OpenPropertyExpressionWindow(actorData, controlData)
 	local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_expression"), function(ok)
 		util.remove(timer)
 		if ok then
-			local res =
-				animManager:SetValueExpression(actorData.actor, controlData.path, te:GetText(), controlData.type)
-			if res then
-				local anim, channel, animClip =
-					animManager:FindAnimationChannel(actorData.actor, controlData.path, true, controlData.type)
-				if animClip ~= nil then
-					local channel = animClip:GetChannel(controlData.path)
-					if channel ~= nil then
-						channel:SetExpression(te:GetText())
-					end
-				end
-				self:DoUpdatePropertyIcons(actorData, controlData)
-			else
-				self:ClearPropertyExpression(actorData, controlData)
-			end
+			pfm.undoredo.push(
+				"set_property_expression",
+				pfm.create_command(
+					"set_property_expression",
+					tostring(actorData.actor:GetUniqueId()),
+					controlData.path,
+					te:GetText(),
+					controlData.type
+				)
+			)()
 		end
 	end)
 	local expr = animManager:GetValueExpression(actorData.actor, controlData.path)

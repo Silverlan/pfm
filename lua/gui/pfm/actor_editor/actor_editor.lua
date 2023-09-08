@@ -643,6 +643,16 @@ function gui.PFMActorEditor:OnEditorChannelKeyframeAdded(actor, targetPath, valu
 
 	self:UpdateActorProperty(actor, targetPath)
 end
+function gui.PFMActorEditor:OnAnimationChannelMathExpressionChanged(channel, track, animationClip, self, oldExpr, expr)
+	local actor = animationClip:GetActor()
+	local targetPath = channel:GetTargetPath()
+	local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
+	local componentId = (componentName ~= nil) and ents.get_component_id(componentName) or nil
+	if componentId == nil then
+		return
+	end
+	self:UpdatePropertyIcons(tostring(actor:GetUniqueId()), componentId, targetPath)
+end
 function gui.PFMActorEditor:UpdateChannelValue(data, editorChannel)
 	-- TODO: Mark as dirty, then update lazily?
 	--[[local udmChannel = data.udmChannel
@@ -719,6 +729,12 @@ function gui.PFMActorEditor:Setup(filmClip)
 		"OnEditorChannelKeyframeAdded",
 		function(filmClip, track, animationClip, editorChannel, keyData, keyframeIndex, valueBaseIndex)
 			self:OnEditorChannelKeyframeAdded(animationClip:GetActor(), editorChannel:GetTargetPath(), valueBaseIndex)
+		end
+	)
+	add_change_listener(
+		"OnAnimationChannelMathExpressionChanged",
+		function(filmClip, track, animationClip, channel, oldExpr, expr)
+			self:OnAnimationChannelMathExpressionChanged(channel, track, animationClip, self, oldExpr, expr)
 		end
 	)
 
@@ -1462,21 +1478,16 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 		local exprIcon
 		local enable_expr_icon
 		local function clear_expression()
-			local pm = pfm.get_project_manager()
-			local animManager = pm:GetAnimationManager()
-			if animManager == nil then
-				return
-			end
-			animManager:SetValueExpression(actorData.actor, controlData.path)
-
-			local anim, channel, animClip = animManager:FindAnimationChannel(actorData.actor, controlData.path)
-			if animClip ~= nil then
-				local channel = animClip:GetChannel(controlData.path)
-				if channel ~= nil then
-					channel:SetExpression()
-				end
-			end
-			enable_expr_icon(false)
+			pfm.undoredo.push(
+				"set_property_expression",
+				pfm.create_command(
+					"set_property_expression",
+					tostring(actorData.actor:GetUniqueId()),
+					controlData.path,
+					nil,
+					controlData.type
+				)
+			)()
 		end
 		enable_expr_icon = function(enabled)
 			self:DoUpdatePropertyIcons(actorData, controlData)

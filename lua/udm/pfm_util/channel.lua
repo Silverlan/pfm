@@ -15,3 +15,13 @@ end
 function pfm.udm.Channel:GetPanimaChannel()
 	return self:GetAnimation():GetAnimationClip():GetPanimaAnimation():FindChannel(self:GetTargetPath())
 end
+
+function pfm.udm.Channel:ChangeExpression(expr)
+	local oldExpr = self:GetExpression()
+	self:SetExpression(expr)
+
+	local animationClip = self:GetAnimation():GetAnimationClip()
+	local track = animationClip:GetAnimationTrack()
+	local filmClip = track:GetFilmClip()
+	filmClip:CallChangeListeners("OnAnimationChannelMathExpressionChanged", track, animationClip, self, oldExpr, expr)
+end
