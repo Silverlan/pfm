@@ -43,3 +43,4 @@ pfm_menu_context_simple_project = "Crée un nouveau projet peuplé de certains a
 pfm_menu_context_start_lua_debugger_server = "Cela permet de déboguer avec des points d'arrêt et d'exécuter le code pas à pas pour les scripts Lua en utilisant Visual Studio Code."
 pfm_menu_generate_ao = "Génère des cartes d'occlusion ambiante pour tous les acteurs dynamiques du projet en cours qui n'en ont pas déjà une."
 pfm_menu_pack_project = "Emballer le projet actuel, y compris tous les éléments utilisés par celui-ci, dans une archive, qui peut être partagée avec d'autres personnes."
+pfm_menu_reload_game_view = "Recharger la Vue de Jeu"

@@ -52,7 +52,10 @@
 					$string type "array"
 					$string valueType "BookmarkSet"
 				}
-				"activeBookmarkSet" {$int32 default 0}
+				"activeBookmarkSet" {
+					$string type "Reference"
+					$string referenceType "BookmarkSet"
+				}
 				"trackGroups"
 				{
 					$string type "array"

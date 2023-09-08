@@ -27,6 +27,18 @@ function pfm.udm.Actor:IsVisible()
 	return visible
 end
 
+pfm.udm.Actor.POSE_CHANGE_FLAG_NONE = 0
+pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_POSITION = 1
+pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_ROTATION = 2
+pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_SCALE = 4
+function pfm.udm.Actor:ChangePose(pose, changeFlags)
+	local oldPose = self:GetTransform():Copy()
+	self:SetTransform(pose)
+
+	local filmClip = self:GetFilmClip()
+	filmClip:CallChangeListeners("OnActorPoseChanged", self, oldPose, pose, changeFlags)
+end
+
 function pfm.udm.Actor:GetMemberValue(path)
 	local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
 	if componentName == nil then
@@ -84,13 +96,22 @@ function pfm.udm.Actor:HasComponent(name)
 	return false
 end
 
-function pfm.udm.Actor:AddComponentType(componentType)
+function pfm.udm.Actor:GetFilmClip()
+	return self:GetParent():GetFilmClip()
+end
+
+function pfm.udm.Actor:AddComponentType(componentType, uuid)
 	local component = self:FindComponent(componentType)
 	if component ~= nil then
 		return component
 	end
 	component = self:AddComponent()
+	if uuid ~= nil then
+		component:ChangeUniqueId(uuid)
+	end
 	component:SetType(componentType)
+
+	self:GetFilmClip():CallChangeListeners("OnActorComponentAdded", self, componentType)
 	return component
 end
 
@@ -100,6 +121,8 @@ function pfm.udm.Actor:RemoveComponentType(componentType)
 		return
 	end
 	self:RemoveComponent(component)
+
+	self:GetFilmClip():CallChangeListeners("OnActorComponentRemoved", self, componentType)
 end
 
 function pfm.udm.Actor:ChangeModel(mdlName)

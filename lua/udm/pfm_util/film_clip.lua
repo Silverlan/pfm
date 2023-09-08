@@ -81,6 +81,29 @@ function pfm.udm.FilmClip:FindActorByUniqueId(uuid)
 		end
 	end
 end
+function pfm.udm.FilmClip:RemoveGroup(group)
+	local uuid = tostring(group:GetUniqueId())
+	local parentCollection = group:GetParent()
+	parentCollection:RemoveGroup(group)
+	self:CallChangeListeners("OnGroupRemoved", uuid)
+end
+function pfm.udm.FilmClip:AddGroup(parentCollection, name, uuid)
+	local childGroup = parentCollection:AddGroup()
+	childGroup:ChangeUniqueId(uuid)
+	childGroup:SetName(name)
+	self:CallChangeListeners("OnGroupAdded", childGroup)
+	return childGroup
+end
+function pfm.udm.FilmClip:FindBookmarkSet(setName)
+	for _, bmSet in ipairs(self:GetBookmarkSets()) do
+		if bmSet:GetName() == setName then
+			return bmSet
+		end
+	end
+end
+function pfm.udm.FilmClip:GetTrack()
+	return self:GetParent()
+end
 function pfm.udm.FilmClip:FindActorAnimationClip(actor, addIfNotExists)
 	if type(actor) ~= "string" then
 		actor = tostring(actor:GetUniqueId())
@@ -102,7 +125,8 @@ function pfm.udm.FilmClip:GetChildFilmClip(offset)
 		end
 	end
 end
-function pfm.udm.FilmClip:RemoveActor(actor)
+function pfm.udm.FilmClip:RemoveActor(actor, batch)
+	local uuid = tostring(actor:GetUniqueId())
 	local track = self:FindAnimationChannelTrack()
 	if track ~= nil then
 		local animClip = self:FindActorAnimationClip(actor, false)
@@ -112,34 +136,43 @@ function pfm.udm.FilmClip:RemoveActor(actor)
 		end
 	end
 
-	local _, group = self:FindActorByUniqueId(tostring(actor:GetUniqueId()))
+	local _, group = self:FindActorByUniqueId(uuid)
 	if group ~= nil then
 		group:RemoveActor(actor)
 		-- group:Reinitialize(group:GetUdmData())
 	end
+
+	self:CallChangeListeners("OnActorRemoved", uuid, batch or false)
+end
+function pfm.udm.FilmClip:RemoveActors(actors)
+	local uuids = {}
+	for _, actor in ipairs(actors) do
+		table.insert(uuids, tostring(actor:GetUniqueId()))
+		self:RemoveActor(actor, true)
+	end
+	self:CallChangeListeners("OnActorsRemoved", uuids)
 end
 function pfm.udm.FilmClip:RemoveActorComponent(actor, component)
 	local c = actor:FindComponent(component)
 	if c == nil then
 		return
 	end
-	actor:RemoveComponentType(component)
 	local animClip = self:FindActorAnimationClip(actor, false)
-	if animClip == nil then
-		return
-	end
-	local anim = animClip:GetAnimation()
-	local removeChannelIndices = {}
-	for i, channel in ipairs(anim:GetChannels()) do
-		local targetPath = channel:GetTargetPath()
-		local componentName, componentPath =
-			ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
-		if componentName == component then
-			table.insert(removeChannelIndices, 1, i)
+	if animClip ~= nil then
+		local anim = animClip:GetAnimation()
+		local removeChannelIndices = {}
+		for i, channel in ipairs(anim:GetChannels()) do
+			local targetPath = channel:GetTargetPath()
+			local componentName, componentPath =
+				ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
+			if componentName == component then
+				table.insert(removeChannelIndices, 1, i)
+			end
 		end
+		for _, idx in ipairs(removeChannelIndices) do
+			anim:RemoveChannel(idx)
+		end
+		animClip:SetPanimaAnimationDirty()
 	end
-	for _, idx in ipairs(removeChannelIndices) do
-		anim:RemoveChannel(idx)
-	end
-	animClip:SetPanimaAnimationDirty()
+	actor:RemoveComponentType(component)
 end

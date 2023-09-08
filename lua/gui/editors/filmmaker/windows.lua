@@ -49,7 +49,7 @@ pfm.register_window("ik_rig_editor", "editors", locale.get_text("pfm_ik_rig_edit
 	p:SetModelView(pm.m_mdlView)
 	return p
 end)
-pfm.register_window("model_viewer", "viewers", locale.get_text("vrp_model_viewer"), function(pm)
+pfm.register_window("model_viewer", "viewers", locale.get_text("pfm_model_viewer"), function(pm)
 	local playerBox = gui.create("WIVBox")
 	playerBox:SetAutoFillContents(true)
 
@@ -479,13 +479,10 @@ pfm.register_window("timeline", "timeline", locale.get_text("pfm_timeline"), fun
 		end
 		local tOld = userInteractionTimeStart
 		local tNew = pm:GetTimeOffset()
-		pfm.undoredo.push("pfm_undoredo_time_offset", function()
-			pm:SetTimeOffset(tNew)
-		end, function()
-			pm:SetTimeOffset(tOld)
-		end)
+		pfm.undoredo.push("time_offset", pfm.create_command("set_time_offset", tNew, tOld))
 		userInteractionTimeStart = nil
 	end)
+	pm:UpdateBookmarks()
 
 	return pfmTimeline
 end)

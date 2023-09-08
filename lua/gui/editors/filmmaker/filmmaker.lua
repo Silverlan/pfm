@@ -490,6 +490,40 @@ function gui.WIFilmmaker:ShowCloseConfirmation(action, callActionOnCancel)
 		end
 	)
 end
+function gui.WIFilmmaker:AddUndoMessage(msg)
+	util.remove({ self.m_undoMessageElement, self.m_undoMessageTimer })
+	local infoBar = self:GetInfoBar()
+
+	local msgEl = gui.create("WIRect")
+	msgEl:SetHeight(infoBar:GetHeight())
+	msgEl:SetColor(Color(54, 54, 54))
+	self.m_undoMessageElement = msgEl
+	msgEl:AddCallback("OnRemove", function()
+		if infoBar:IsValid() then
+			infoBar:ScheduleUpdate()
+		end
+	end)
+
+	local elText = gui.create("WIText", msgEl)
+	elText:SetText(msg)
+	elText:SetColor(Color(200, 200, 200))
+	elText:SizeToContents()
+	elText:CenterToParentY()
+	elText:SetX(10)
+	msgEl:SetWidth(elText:GetWidth() + 20)
+	infoBar:AddRightElement(msgEl, 0)
+	infoBar:Update()
+
+	self.m_undoMessageTimer = time.create_timer(5, 0, function()
+		if self:IsValid() == false then
+			return
+		end
+		util.remove(self.m_undoMessageElement)
+	end)
+	self.m_undoMessageTimer:Start()
+
+	return msgEl
+end
 function gui.WIFilmmaker:AddProgressStatusBar(identifier, text)
 	local infoBar = self:GetInfoBar()
 
@@ -517,6 +551,10 @@ end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()
 end
+function gui.WIFilmmaker:ClearActiveGameViewFilmClip()
+	pfm.ProjectManager.ClearActiveGameViewFilmClip(self)
+	self:GetAnimationManager():Reset()
+end
 function gui.WIFilmmaker:OnProjectInitialized(project)
 	local session = self:GetSession()
 	if session == nil then
@@ -533,6 +571,53 @@ function gui.WIFilmmaker:OnProjectInitialized(project)
 	if util.is_valid(self.m_playhead) then
 		self.m_playhead:SetFrameRate(settings:GetFrameRate())
 	end
+
+	local track = session:GetFilmTrack()
+	local cb = track:AddChangeListener("OnFilmClipTimeFramesUpdated", function(c)
+		if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
+			return
+		end
+		for _, elFilmClip in ipairs(self.m_filmStrip:GetFilmClips()) do
+			if elFilmClip:IsValid() then
+				elFilmClip:UpdateFilmClipData()
+			end
+		end
+	end)
+	local cbNewFc = track:AddChangeListener("OnFilmClipAdded", function(c, newFc)
+		if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
+			return
+		end
+		local elFc = self:AddFilmClipElement(newFc)
+		self.m_timeline:GetTimeline():AddTimelineItem(elFc, newFc:GetTimeFrame())
+	end)
+	local cbFcRem = track:AddChangeListener("OnFilmClipRemoved", function(c, filmClip)
+		if util.is_same_object(self:GetActiveGameViewFilmClip(), filmClip) then
+			self:ClearActiveGameViewFilmClip()
+		end
+
+		local actorEditor = self:GetActorEditor()
+		if util.is_valid(actorEditor) and util.is_same_object(actorEditor:GetFilmClip(), filmClip) then -- TODO: Game view film clip should be independent of actor editor film clip
+			actorEditor:Clear()
+		end
+
+		local el = self.m_filmStrip:FindFilmClipElement(filmClip)
+		if util.is_valid(el) == false then
+			return
+		end
+		-- TODO: This probably requires some cleanup
+		el:Remove()
+	end)
+	self.m_trackCallbacks = { cb, cbNewFc, cbFcRem }
+
+	local activeClip = session:GetActiveClip()
+	if activeClip ~= nil then
+		activeClip:AddChangeListener("bookmarkSets", function(c, i, ev, oldVal)
+			if ev == udm.BaseSchemaType.ARRAY_EVENT_ADD or ev == udm.BaseSchemaType.ARRAY_EVENT_REMOVE then
+				self:UpdateBookmarks()
+			end
+		end)
+	end
+	self:UpdateBookmarks()
 end
 function gui.WIFilmmaker:RestoreWorkCamera()
 	local session = self:GetSession()
@@ -974,27 +1059,31 @@ function gui.WIFilmmaker:UpdateBookmarks()
 	end
 	self.m_timeline:ClearBookmarks()
 
-	local filmClip = self:GetActiveFilmClip()
-	if filmClip == nil then
-		return
-	end
-	local tbms = {}
-	if self.m_timeline:GetEditor() ~= gui.PFMTimeline.EDITOR_GRAPH then
-		local bms = filmClip:GetBookmarkSet(filmClip:GetActiveBookmarkSet())
-		if bms ~= nil then
-			self.m_timeline:AddBookmarkSet(bms)
+	if self.m_timeline:GetEditor() == gui.PFMTimeline.EDITOR_CLIP then
+		local mainClip = self:GetMainFilmClip()
+		if mainClip ~= nil then
+			local activeSet = mainClip:GetActiveBookmarkSet()
+			if activeSet ~= nil then
+				self.m_timeline:AddBookmarkSet(activeSet)
+			end
 		end
 	else
-		self.m_timeline:GetActiveEditor():InitializeBookmarks()
+		local filmClip = self:GetActiveFilmClip()
+		if filmClip ~= nil then
+			local bms = filmClip:FindBookmarkSet("keyframe")
+			if bms ~= nil then
+				self.m_timeline:AddBookmarkSet(bms)
+			end
+		end
 	end
+	-- self.m_timeline:GetActiveEditor():InitializeBookmarks()
 end
 function gui.WIFilmmaker:RemoveBookmark(t)
 	local filmClip = self:GetActiveFilmClip()
 	if filmClip == nil then
 		return
 	end
-	local bmSetId = filmClip:GetActiveBookmarkSet()
-	local bmSet = filmClip:GetBookmarkSet(bmSetId)
+	local bmSet = filmClip:GetActiveBookmarkSet()
 	if bmSet == nil then
 		return
 	end
@@ -1007,24 +1096,81 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 	end
 	t = t or (self:GetTimeOffset() - filmClip:GetTimeFrame():GetStart())
 	if self.m_timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH and noKeyframe ~= true then
-		self.m_timeline:GetGraphEditor():AddKeyframe(t)
+		local graphEditor = self.m_timeline:GetGraphEditor()
+		local cmd = pfm.create_command("composition")
+		for _, graph in ipairs(graphEditor:GetGraphs()) do
+			if graph.curve:IsValid() then
+				local valueType = graph.valueType
+				local value = udm.get_default_value(valueType)
+				local timestamp = graphEditor:InterfaceTimeToDataTime(graph, t)
+				local channel = graph.curve:GetPanimaChannel()
+				if channel ~= nil then
+					local idx0, idx1, factor = channel:FindInterpolationIndices(timestamp)
+					if idx0 ~= nil then
+						local v0 = channel:GetValue(idx0)
+						local v1 = channel:GetValue(idx1)
+						value = udm.lerp(v0, v1, factor)
+					end
+				end
+
+				local actorUuid = tostring(graph.actor:GetUniqueId())
+				local propertyPath = graph.targetPath
+				local baseIndex = graph.typeComponentIndex
+
+				cmd:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
+				cmd:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, timestamp, nil, value, baseIndex)
+			end
+		end
+		pfm.undoredo.push("create_keyframe", cmd)()
+		--[[
+	for _, graph in ipairs(self.m_graphs) do
+		if graph.curve:IsValid() then
+			local value = get_default_value(graph.valueType)
+			local valueType = graph.valueType
+			local channel = graph.curve:GetPanimaChannel()
+			if channel ~= nil then
+				local idx0, idx1, factor = channel:FindInterpolationIndices(self:InterfaceTimeToDataTime(graph, time))
+				if idx0 ~= nil then
+					local v0 = channel:GetValue(idx0)
+					local v1 = channel:GetValue(idx1)
+					value = udm.lerp(v0, v1, factor)
+				end
+			end
+
+			pfm.get_project_manager():SetActorAnimationComponentProperty(
+				graph.actor,
+				graph.targetPath,
+				self:InterfaceTimeToDataTime(graph, time),
+				value,
+				valueType,
+				graph.typeComponentIndex
+			)
+		end
+	end
+]]
+		--self.m_timeline:GetGraphEditor():AddKeyframe(t)
+		--[[local actorUuid = TODO
+		local propertyPath = TODO
+		local valueType = TODO
+		local timestamp = TODO
+		local baseIndex = TODO
+		pfm.undoredo.push(
+			"create_keyframe",
+			pfm.create_command("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
+		)]]
+		--actorUuid, propertyPath, valueType, timestamp, baseIndex
+
 		return
 	end
-	local bmSetId = filmClip:GetActiveBookmarkSet()
-	local bmSet = filmClip:GetBookmarkSet(bmSetId)
-	if bmSet == nil and bmSetId == 0 then
-		bmSet = filmClip:AddBookmarkSet()
-	end
-	if bmSet == nil then
+
+	local mainClip = self:GetMainFilmClip()
+	if mainClip == nil then
 		return
 	end
-	pfm.log("Adding bookmark at timestamp " .. t, pfm.LOG_CATEGORY_PFM)
-	local bm, newBookmark = bmSet:AddBookmarkAtTimestamp(t)
-	if newBookmark == false then
-		return bm
-	end
-	self.m_timeline:AddBookmark(bm)
-	return bm, newBookmark
+	return pfm.undoredo.push(
+		"create_bookmark",
+		pfm.create_command("create_bookmark", mainClip, pfm.Project.DEFAULT_BOOKMARK_SET_NAME, t)
+	)()
 end
 function gui.WIFilmmaker:SetTimeOffset(offset)
 	gui.WIBaseFilmmaker.SetTimeOffset(self, offset)
@@ -1054,10 +1200,16 @@ end
 function gui.WIFilmmaker:GetActiveCamera()
 	return game.get_render_scene_camera()
 end
-function gui.WIFilmmaker:GetActiveFilmClip()
+function gui.WIFilmmaker:GetMainFilmClip()
 	local session = self:GetSession()
-	local filmClip = (session ~= nil) and session:GetActiveClip() or nil
-	return (filmClip ~= nil) and filmClip:GetChildFilmClip(self:GetTimeOffset()) or nil
+	return (session ~= nil) and session:GetActiveClip() or nil
+end
+function gui.WIFilmmaker:GetActiveFilmClip()
+	local mainClip = self:GetMainFilmClip()
+	if mainClip == nil then
+		return
+	end
+	return mainClip:GetChildFilmClip(self:GetTimeOffset())
 end
 function gui.WIFilmmaker:ShowInElementViewer(el)
 	if util.is_valid(self:GetElementViewer()) == false then
@@ -1107,6 +1259,13 @@ function gui.WIFilmmaker:GetSelectedClip()
 end
 function gui.WIFilmmaker:GetTimeline()
 	return self.m_timeline
+end
+function gui.WIFilmmaker:GetGraphEditor()
+	local timeline = self:GetTimeline()
+	if util.is_valid(timeline) == false then
+		return
+	end
+	return timeline:GetGraphEditor()
 end
 function gui.WIFilmmaker:GetFilmStrip()
 	return self.m_filmStrip
@@ -1176,6 +1335,156 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 				table.insert(self.m_quickAxisTransformAxes, v)
 			end
 		end
+	end
+end
+function gui.WIFilmmaker:WriteActorsToUdmElement(filmClip, actors, el, name)
+	actors = pfm.dereference(actors)
+
+	local pfmCopy = el:Add(name or "pfm_copy")
+
+	local track = filmClip:FindAnimationChannelTrack()
+	local animationData = {}
+	for _, actor in ipairs(actors) do
+		local channelClip = track:FindActorAnimationClip(actor)
+		if channelClip ~= nil then
+			table.insert(animationData, channelClip:GetUdmData())
+		end
+	end
+	pfmCopy:AddArray("data", #actors + #animationData, udm.TYPE_ELEMENT)
+	local data = pfmCopy:Get("data")
+	for i, actor in ipairs(actors) do
+		local udmData = data:Get(i - 1)
+		udmData:SetValue("type", udm.TYPE_STRING, "actor")
+		udmData:Add("data"):Merge(actor:GetUdmData())
+
+		local parentCollections = {}
+		local parent = actor:GetParent()
+		while parent ~= nil and util.get_type_name(parent) == "Group" do
+			table.insert(parentCollections, parent:GetName())
+			parent = parent:GetParent()
+		end
+		parentCollections[#parentCollections] = nil
+
+		local a = udmData:AddArray("parentCollections", #parentCollections, udm.TYPE_STRING)
+		for i, name in ipairs(parentCollections) do
+			a:SetValue(i - 1, udm.TYPE_STRING, name)
+		end
+	end
+	local offset = #actors
+	for i, animData in ipairs(animationData) do
+		local udmData = data:Get(offset + i - 1)
+		udmData:SetValue("type", udm.TYPE_STRING, "animation")
+		udmData:Add("data"):Merge(animData)
+	end
+end
+function gui.WIFilmmaker:RestoreActorsFromUdmElement(filmClip, data, keepOriginalUuids, name)
+	local pfmCopy = data:Get(name or "pfm_copy")
+	local data = pfmCopy:Get("data")
+	if data:IsValid() == false then
+		console.print_warning("No copy data found in clipboard UDM string!")
+		return
+	end
+	local track = filmClip:FindAnimationChannelTrack()
+
+	-- Assign new unique ids to prevent id collisions
+	local oldIdToNewId = {}
+	local function iterate_elements(udmData, f)
+		f(udmData)
+
+		for _, udmChild in pairs(udmData:GetChildren()) do
+			iterate_elements(udmChild, f)
+		end
+
+		if udm.is_array_type(udmData:GetType()) and udmData:GetValueType() == udm.TYPE_ELEMENT then
+			local n = udmData:GetSize()
+			for i = 1, n do
+				iterate_elements(udmData:Get(i - 1), f)
+			end
+		end
+	end
+	if keepOriginalUuids ~= true then
+		iterate_elements(data, function(udmData)
+			if udmData:HasValue("uniqueId") then
+				local oldUniqueId = udmData:GetValue("uniqueId", udm.TYPE_STRING)
+				local newUniqueId = tostring(util.generate_uuid_v4())
+				udmData:SetValue("uniqueId", udm.TYPE_STRING, newUniqueId)
+				oldIdToNewId[oldUniqueId] = newUniqueId
+			end
+		end)
+		iterate_elements(data, function(udmData)
+			for name, udmChild in pairs(udmData:GetChildren()) do
+				if udmChild:GetType() == udm.TYPE_STRING then
+					local val = udmData:GetValue(name, udm.TYPE_STRING)
+					if oldIdToNewId[val] ~= nil then
+						udmData:SetValue(name, udm.TYPE_STRING, oldIdToNewId[val])
+					end
+				end
+			end
+		end)
+	end
+	--
+
+	local actorEditor = self:GetActorEditor()
+	local n = data:GetSize()
+	local filmClipUniqueId = tostring(filmClip:GetUniqueId())
+	local filmClips = {}
+	local actors = {}
+	for i = 1, n do
+		local udmData = data:Get(i - 1)
+		local type = udmData:GetValue("type", udm.TYPE_STRING)
+		if type == "actor" then
+			local parentCollections = udmData:GetArrayValues("parentCollections", udm.TYPE_STRING)
+
+			local group = filmClip:GetScene()
+			group = actorEditor:FindCollection(parentCollections, true, group)
+			local actor = group:AddActor()
+			actor:Reinitialize(udmData:Get("data"))
+			for ent, c in ents.citerator(ents.COMPONENT_PFM_FILM_CLIP) do
+				if tostring(c:GetClipData():GetUniqueId()) == filmClipUniqueId then
+					filmClips[c] = true
+				end
+			end
+
+			table.insert(actors, {
+				actor = actor,
+				parentCollections = parentCollections,
+			})
+		elseif type == "animation" then
+			local animData = udmData:Get("data")
+			local actorUniqueId = animData:GetValue("actor", udm.TYPE_STRING)
+			local actor = filmClip:FindActorByUniqueId(actorUniqueId)
+			if actor == nil then
+				console.print_warning(
+					"Animation data refers to unknown actor with unique id " .. actorUniqueId .. "! Ignoring..."
+				)
+			else
+				local channelClip = track:FindActorAnimationClip(actor, true)
+				channelClip:Reinitialize(animData)
+			end
+		else
+			console.print_warning("Copy type " .. type .. " is not compatible!")
+		end
+	end
+	for c, _ in pairs(filmClips) do
+		c:InitializeActors()
+	end
+	local root = actorEditor:GetTree():GetRoot()
+	for _, actor in ipairs(actors) do
+		local item = root
+		if #actor.parentCollections > 0 then
+			item = item:FindItemByText("Scene")
+			for _, colName in ipairs(actor.parentCollections) do
+				if util.is_valid(item) then
+					item = item:FindItemByText(colName)
+				else
+					break
+				end
+			end
+			if util.is_valid(item) == false then
+				item = nil
+			end
+		end
+		actorEditor:AddActor(actor.actor, item)
 	end
 end
 gui.register("WIFilmmaker", gui.WIFilmmaker)

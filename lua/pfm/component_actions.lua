@@ -120,6 +120,7 @@ pfm.register_component_action(
 
 		local baker = add_baker("lightmap", pfm.LightmapBaker, actorData, entActor)
 		local el = gui.create("WIBakeButton", controls)
+		el:SetName("bake_lightmaps")
 		el:SetBakeText(locale.get_text("pfm_bake_lightmaps"))
 		el:SetBaker(baker)
 		actionData.baker = el

@@ -11,13 +11,6 @@ function gui.PFMActorEditor:AddSliderControl(component, controlData)
 		return
 	end
 
-	local function applyValue(value)
-		local actor = component:GetActor()
-		if actor ~= nil and controlData.path ~= nil then
-			self:UpdateAnimationChannelValue(actor, controlData.path, value)
-		end
-	end
-
 	local slider = self.m_animSetControls:AddSliderControl(
 		controlData.name,
 		controlData.identifier,

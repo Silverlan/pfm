@@ -109,45 +109,13 @@ function gui.PFMActorEditor:CreateNewActor(actorName, pose, uniqueId, group, don
 	return actor
 end
 function gui.PFMActorEditor:CreateNewActorComponent(actor, componentType, updateActorAndUi, initComponent)
-	if updateActorAndUi == nil then
-		updateActorAndUi = true
-	end
-	local itemActor
-	for elTree, data in pairs(self.m_treeElementToActorData) do
-		if util.is_same_object(actor, data.actor) then
-			itemActor = elTree
-			break
-		end
-	end
-
-	if itemActor == nil then
-		return
-	end
-
-	local componentId = ents.find_component_id(componentType)
-	if componentId == nil then
-		include_component(componentType)
-	end
-	componentId = ents.find_component_id(componentType)
-	if componentId == nil then
-		pfm.log(
-			"Attempted to add unknown entity component '" .. componentType .. "' to actor '" .. tostring(actor) .. "'!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
-		return
-	end
-
+	self.m_skipComponentCallbacks = true
 	local component = actor:AddComponentType(componentType)
+	self.m_skipComponentCallbacks = nil
 	if initComponent ~= nil then
 		initComponent(component)
 	end
-
-	if updateActorAndUi == true then
-		self:UpdateActorComponents(actor)
-	end
-
-	return component
+	return self:InitializeNewComponent(actor, component, componentType, updateActorAndUi)
 end
 function gui.PFMActorEditor:UpdateActorComponents(actor)
 	tool.get_filmmaker():UpdateActor(actor, self:GetFilmClip(), true)
@@ -184,107 +152,72 @@ function gui.PFMActorEditor:IterateActors(f)
 	iterate_actors(self.m_tree:GetRoot())
 end
 function gui.PFMActorEditor:RemoveActors(ids)
-	local filmmaker = tool.get_filmmaker()
-	local filmClip = filmmaker:GetActiveFilmClip()
-	if filmClip == nil then
-		return
-	end
-	local el = udm.create_element()
-	local actors = {}
-	for _, uniqueId in ipairs(ids) do
-		local actor = filmClip:FindActorByUniqueId(uniqueId)
-		if actor ~= nil then
-			table.insert(actors, actor)
-		end
-	end
-	self:WriteActorsToUdmElement(actors, el)
-
-	pfm.undoredo.push("pfm_undoredo_remove_actor", function()
-		local filmmaker = tool.get_filmmaker()
-		local filmClip = filmmaker:GetActiveFilmClip()
-		if filmClip == nil then
-			return
-		end
-		local pm = pfm.get_project_manager()
-		local session = pm:GetSession()
-		local items = {}
-		for _, uniqueId in ipairs(ids) do
-			local item = self:GetActorEntry(uniqueId)
-			if util.is_valid(item) then
-				table.insert(items, item:GetParentItem())
-			end
-
-			local actor = filmClip:FindActorByUniqueId(uniqueId)
-			if actor ~= nil then
-				self:RemoveActor(uniqueId, false)
-			end
-		end
-
-		for _, item in ipairs(items) do
-			item:UpdateUi()
-		end
-	end, function()
-		self:RestoreActorsFromUdmElement(el)
-	end)
-	local pm = pfm.get_project_manager()
-	local session = pm:GetSession()
+	local filmClip = self:GetFilmClip()
+	pfm.undoredo.push("delete_actors", pfm.create_command("delete_actors", filmClip, ids))()
+end
+function gui.PFMActorEditor:OnActorsRemoved(filmClip, uuids)
 	local items = {}
-	for _, uniqueId in ipairs(ids) do
+	for _, uniqueId in ipairs(uuids) do
 		local item = self:GetActorEntry(uniqueId)
 		if util.is_valid(item) then
 			table.insert(items, item:GetParentItem())
 		end
 
-		local actor = filmClip:FindActorByUniqueId(uniqueId)
-		if actor ~= nil then
-			self:RemoveActor(uniqueId, false)
-		end
+		self:ClearActor(uniqueId, false)
 	end
+
 	for _, item in ipairs(items) do
 		item:UpdateUi()
 	end
 end
-function gui.PFMActorEditor:RemoveActor(uniqueId, updateUi)
+function gui.PFMActorEditor:ClearActor(uniqueId, updateUi)
 	if updateUi == nil then
 		updateUi = true
 	end
-	local filmmaker = tool.get_filmmaker()
-	local filmClip = filmmaker:GetActiveFilmClip()
-	if filmClip == nil then
-		return
-	end
-	local actor = filmClip:FindActorByUniqueId(uniqueId)
-	if actor == nil then
-		return
+
+	local itemActor, parent = self.m_tree:GetRoot():GetItemByIdentifier(uniqueId, true)
+	if itemActor ~= nil then
+		parent:RemoveItem(itemActor, updateUi)
 	end
 
-	local function removeActor(actor)
-		filmClip:RemoveActor(actor)
-		local itemActor, parent = self.m_tree:GetRoot():GetItemByIdentifier(uniqueId, true)
-		if itemActor ~= nil then
-			parent:RemoveItem(itemActor, updateUi)
+	local ent = ents.find_by_uuid(uniqueId)
+	if ent ~= nil then
+		local pm = pfm.get_project_manager()
+		local vp = util.is_valid(pm) and pm:GetViewport() or nil
+		local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+		if rt ~= nil then
+			rt:MarkActorAsDirty(ent, true)
+			rt:FlushDirtyActorChanges()
 		end
 
-		local ent = ents.find_by_uuid(uniqueId)
-		if ent ~= nil then
-			local pm = pfm.get_project_manager()
-			local vp = util.is_valid(pm) and pm:GetViewport() or nil
-			local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
-			if rt ~= nil then
-				rt:MarkActorAsDirty(ent, true)
-				rt:FlushDirtyActorChanges()
-			end
-
-			util.remove(ent)
-		end
-		self:TagRenderSceneAsDirty()
+		util.remove(ent)
 	end
-	removeActor(actor)
+	self:TagRenderSceneAsDirty()
 end
 function gui.PFMActorEditor:AddActor(actor, parentItem)
 	parentItem = parentItem or self.m_tree
 	local itemActor = parentItem:AddItem(actor:GetName(), nil, nil, tostring(actor:GetUniqueId()))
 	itemActor:SetAutoSelectChildren(false)
+
+	local nameChangeListener = actor:AddChangeListener("name", function(c, newName)
+		if itemActor:IsValid() then
+			itemActor:SetText(newName)
+		end
+	end)
+
+	local onMovedListener = actor:AddChangeListener("OnMoved", function(actor, oldGroup, newGroup)
+		local elActor = self:GetActorItem(actor)
+		local itemGroupTarget = self.m_tree:GetRoot():GetItemByIdentifier(tostring(newGroup:GetUniqueId()), true)
+		if util.is_valid(elActor) == false or util.is_valid(itemGroupTarget) == false then
+			return
+		end
+
+		itemGroupTarget:AttachItem(elActor)
+	end)
+
+	itemActor:AddCallback("OnRemove", function()
+		util.remove({ nameChangeListener, onMovedListener })
+	end)
 
 	local uniqueId = tostring(actor:GetUniqueId())
 	itemActor:AddCallback("OnSelectionChanged", function(el, selected)
@@ -311,8 +244,11 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 				te:SetText(actor:GetName())
 				te:RequestFocus()
 				te:AddCallback("OnFocusKilled", function()
-					actor:SetName(te:GetText())
-					itemActor:SetText(te:GetText())
+					pfm.undoredo.push(
+						"rename_actor",
+						pfm.create_command("rename_actor", actor, actor:GetName(), te:GetText())
+					)()
+
 					te:RemoveSafely()
 				end)
 			end)
@@ -387,17 +323,9 @@ end
 function gui.PFMActorEditor:MoveActorToCollection(actor, col)
 	pfm.log("Moving actor '" .. tostring(actor) .. "' to collection '" .. tostring(col) .. "'...", pfm.LOG_CATEGORY_PFM)
 
-	local elActor = self:GetActorItem(actor)
-	local itemGroupTarget = self.m_tree:GetRoot():GetItemByIdentifier(tostring(col:GetUniqueId()), true)
-	if util.is_valid(elActor) == false or util.is_valid(itemGroupTarget) == false then
-		return
-	end
-
 	local srcGroup = actor:GetParent()
-	if srcGroup:MoveActorTo(actor, col) == false then
-		return false
-	end
-
-	itemGroupTarget:AttachItem(elActor)
-	return true
+	return pfm.undoredo.push(
+		"move_actor_to_collection",
+		pfm.create_command("move_actor_to_collection", actor, srcGroup, col)
+	)()
 end

@@ -78,13 +78,14 @@ function gui.PFMDataPointControl:SetMoveModeEnabled(enabled, moveThreshold)
 		}
 		self:EnableThinking()
 		self:OnMoveStarted(self.m_moveData.startData)
-		self:CallCallbacks("OnMoveStarted", self.m_moveData.startData)
+		self:CallCallbacks("OnMoveStarted", self.m_moveData.startData, self.m_moveData.startPos)
 	else
 		local startData = self.m_moveData.startData
+		local startPos = self.m_moveData.startPos
 		self.m_moveData = nil
 		self:DisableThinking()
 		self:OnMoveComplete()
-		self:CallCallbacks("OnMoveComplete", startData)
+		self:CallCallbacks("OnMoveComplete", startData, startPos)
 	end
 end
 gui.register("WIPFMDataPointControl", gui.PFMDataPointControl)

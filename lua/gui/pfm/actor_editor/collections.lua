@@ -32,6 +32,16 @@ gui.PFMActorEditor.COLLECTION_TYPES = {
 
 function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 	local itemGroup = parentItem:AddItem(parent:GetName(), nil, nil, tostring(parent:GetUniqueId()))
+
+	local nameChangeListener = parent:AddChangeListener("name", function(c, newName)
+		if itemGroup:IsValid() then
+			itemGroup:SetText(newName)
+		end
+	end)
+	itemGroup:AddCallback("OnRemove", function()
+		util.remove(nameChangeListener)
+	end)
+
 	itemGroup:SetName(parent:GetName())
 	itemGroup:SetAutoSelectChildren(false)
 	itemGroup:AddCallback("OnMouseEvent", function(el, button, state, mods)
@@ -61,7 +71,7 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 						end
 
 						if itemText ~= initialText then
-							child = self:AddCollection(itemText, parent)
+							child = self:AddCollection(itemText, parent, true)
 						end
 					end)
 				end)
@@ -73,42 +83,10 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 				end)
 				if isRoot ~= true then
 					pContext:AddItem(locale.get_text("pfm_remove_collection"), function()
-						local actorIds = {}
-						local pm = pfm.get_project_manager()
-						local session = pm:GetSession()
-						local schema = session:GetSchema()
-						local function find_actors(itemGroup)
-							for _, item in ipairs(itemGroup:GetItems()) do
-								local id = item:GetIdentifier()
-								local el = udm.dereference(schema, id)
-								if util.get_type_name(el) == "Group" then
-									find_actors(item)
-								elseif util.get_type_name(el) == "Actor" then
-									table.insert(actorIds, id)
-								end
-							end
-						end
-						find_actors(itemGroup)
-
-						local itemParent = itemGroup:GetParentItem()
-						local groupUuid = itemGroup:GetIdentifier()
-						local parentUuid
-						if util.is_valid(itemParent) then
-							parentUuid = itemParent:GetIdentifier()
-						end
-						self:RemoveActors(actorIds)
-
-						itemParent = self:GetCollectionTreeItem(parentUuid)
-						itemGroup = self:GetCollectionTreeItem(groupUuid)
-						if util.is_valid(groupUuid) and util.is_valid(itemParent) then
-							local group = self:GetCollectionUdmObject(itemGroup)
-							local groupParent = self:GetCollectionUdmObject(itemParent)
-							if group ~= nil and groupParent ~= nil and groupParent.RemoveGroup ~= nil then
-								groupParent:RemoveGroup(group)
-								itemGroup:RemoveSafely()
-								itemParent:FullUpdate()
-							end
-						end
+						pfm.undoredo.push(
+							"delete_collection",
+							pfm.create_command("delete_collection", self:GetFilmClip(), parent)
+						)()
 					end)
 					pContext:AddItem(locale.get_text("rename"), function()
 						local te = gui.create(
@@ -126,8 +104,11 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 						te:SetText(parent:GetName())
 						te:RequestFocus()
 						te:AddCallback("OnFocusKilled", function()
-							parent:SetName(te:GetText())
-							itemGroup:SetText(te:GetText())
+							pfm.undoredo.push(
+								"rename_collection",
+								pfm.create_command("rename_collection", parent, parent:GetName(), te:GetText())
+							)()
+
 							te:RemoveSafely()
 						end)
 					end)
@@ -191,27 +172,48 @@ end
 function gui.PFMActorEditor:GetCollectionTreeItem(uuid)
 	return self.m_tree:GetRoot():GetItemByIdentifier(uuid, true)
 end
-function gui.PFMActorEditor:AddCollection(name, parentGroup)
+function gui.PFMActorEditor:OnCollectionRemoved(groupUuid)
+	local itemGroup = self:GetCollectionTreeItem(groupUuid)
+	if util.is_valid(itemGroup) == false then
+		return
+	end
+	local itemParent = itemGroup:GetParentItem()
+	if util.is_valid(itemParent) == false then
+		return
+	end
+	itemGroup:RemoveSafely()
+	itemParent:FullUpdate()
+end
+function gui.PFMActorEditor:OnCollectionAdded(group)
+	local parentGroup = group:GetParent()
+	if parentGroup == nil then
+		return
+	end
+	local parentItem = self:GetCollectionTreeItem(tostring(parentGroup:GetUniqueId()))
+	if util.is_valid(parentItem) == false then
+		return
+	end
+	local item = self:AddCollectionItem(parentItem, group)
+	return group, item
+end
+function gui.PFMActorEditor:AddCollection(name, parentGroup, addUndo)
 	pfm.log("Adding collection '" .. name .. "'...", pfm.LOG_CATEGORY_PFM)
-	local root
-	if parentGroup ~= nil then
-		root = self:GetCollectionTreeItem(tostring(parentGroup:GetUniqueId()))
+
+	if parentGroup == nil then
+		local filmClip = self:GetFilmClip()
+		parentGroup = filmClip:GetScene()
+	end
+	local childGroup
+	local cmd = pfm.create_command("add_collection", parentGroup, name)
+	if addUndo then
+		childGroup = pfm.undoredo.push("add_collection", cmd)()
 	else
-		root = self.m_tree:GetRoot():GetItems()[1]
+		childGroup = cmd:Execute()
 	end
-	if util.is_valid(root) == false then
+	if childGroup == nil then
 		return
 	end
-
-	local parent = self:GetCollectionUdmObject(root)
-	if parent == nil then
-		return
-	end
-
-	local childGroup = parent:AddGroup()
-	childGroup:SetName(name)
-	local item = self:AddCollectionItem(root, childGroup)
-	return childGroup, item
+	return childGroup, self:GetCollectionTreeItem(tostring(childGroup:GetUniqueId()))
 end
 function gui.PFMActorEditor:FindCollection(name, createIfNotExists, parentGroup)
 	local root
@@ -220,11 +222,29 @@ function gui.PFMActorEditor:FindCollection(name, createIfNotExists, parentGroup)
 	else
 		root = self.m_tree:GetRoot():GetItems()[1]
 	end
+	if type(name) == "table" then
+		local collections = name
+		if #collections == 0 then
+			return root
+		end
+		local item = root
+		for _, colName in ipairs(collections) do
+			local parentGroup = pfm.dereference(item:GetIdentifier())
+			if parentGroup == nil then
+				break
+			end
+			item = self:FindCollection(colName, createIfNotExists, parentGroup)
+			if util.is_valid(item) == false then
+				break
+			end
+		end
+		return item or root
+	end
 	if util.is_valid(root) == false then
 		return
 	end
 	for _, item in ipairs(root:GetItems()) do
-		if item:GetName() == name then
+		if item:IsValid() and item:GetName() == name then
 			local elUdm = self:GetCollectionUdmObject(item)
 			if elUdm ~= nil then
 				return elUdm, item

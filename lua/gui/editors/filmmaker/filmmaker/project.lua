@@ -74,6 +74,9 @@ function Element:CreateEmptyProject()
 end
 function Element:OnProjectClosed()
 	pfm.ProjectManager.OnProjectClosed(self)
+	if self.m_trackCallbacks ~= nil then
+		util.remove(self.m_trackCallbacks)
+	end
 	self:UpdateAutosave(true)
 	self:CallCallbacks("OnProjectClosed")
 end
@@ -213,8 +216,16 @@ function Element:InitializeProjectUI(layoutName)
 	end)
 
 	pfmTimeline:AddCallback("OnClipSelected", function(el, clip)
-		if util.is_valid(self:GetActorEditor()) and util.get_type_name(clip) == "PFMFilmClip" then
-			self:GetActorEditor():Setup(clip)
+		clip = clip:GetFilmClipData()
+		if util.get_type_name(clip) == "FilmClip" then
+			local actorEditor = self:GetActorEditor()
+			if util.is_valid(actorEditor) then
+				actorEditor:Setup(clip)
+			end
+			local graphEditor = self:GetGraphEditor()
+			if util.is_valid(graphEditor) then
+				graphEditor:Setup(clip)
+			end
 		end
 	end)
 
@@ -287,14 +298,6 @@ function Element:InitializeProjectUI(layoutName)
 			end
 		end
 		self.m_trackGroupOverlay = groupOverlay
-
-		local activeBookmarkSet = filmClip:GetActiveBookmarkSet()
-		local bookmarkSet = filmClip:GetBookmarkSet(activeBookmarkSet)
-		if bookmarkSet ~= nil then
-			for _, bookmark in ipairs(bookmarkSet:GetBookmarks()) do
-				-- timeline:AddBookmark(bookmark:GetTimeRange():GetTimeAttr())
-			end
-		end
 	end
 
 	if util.is_valid(self.m_trackGroupPicture) then

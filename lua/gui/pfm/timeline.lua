@@ -120,7 +120,7 @@ function gui.PFMTimeline:InitializeClip(clip, fOnSelected)
 		if self:IsValid() == false then
 			return
 		end
-		if util.is_valid(self.m_selectedClip and self.m_selectedClip ~= clip) then
+		if util.is_valid(self.m_selectedClip) and self.m_selectedClip ~= clip then
 			self.m_selectedClip:SetSelected(false)
 		end
 		self.m_selectedClip = clip
@@ -358,7 +358,10 @@ function gui.PFMTimeline:InitializeToolbar()
 		"gui/pfm/icon_mode_timeline",
 		"gui/pfm/icon_mode_timeline_activated",
 		function()
-			self:SetEditor(gui.PFMTimeline.EDITOR_CLIP)
+			pfm.undoredo.push(
+				"set_timeline_editor",
+				pfm.create_command("set_timeline_editor", self:GetEditor(), gui.PFMTimeline.EDITOR_CLIP)
+			)()
 			return true
 		end
 	)
@@ -376,7 +379,10 @@ function gui.PFMTimeline:InitializeToolbar()
 		"gui/pfm/icon_mode_grapheditor",
 		"gui/pfm/icon_mode_grapheditor_activated",
 		function()
-			self:SetEditor(gui.PFMTimeline.EDITOR_GRAPH)
+			pfm.undoredo.push(
+				"set_timeline_editor",
+				pfm.create_command("set_timeline_editor", self:GetEditor(), gui.PFMTimeline.EDITOR_GRAPH)
+			)()
 			return true
 		end
 	)
@@ -392,6 +398,8 @@ function gui.PFMTimeline:InitializeToolbar()
 		"gui/pfm/icon_bookmark",
 		"gui/pfm/icon_bookmark_activated",
 		function()
+			-- TODO: Check keyframe at timestamp, copy state, restore state on undo
+			-- Same with bookmark
 			tool.get_filmmaker():AddBookmark()
 		end
 	)
@@ -792,40 +800,112 @@ end
 function gui.PFMTimeline:GetControlButton(identifier)
 	return self.m_controlButtons[identifier]
 end
+function gui.PFMTimeline:GroupDataPointsByCurve(dps)
+	local map = {}
+	for _, dp in ipairs(dps) do
+		local curve = dp:GetGraphCurve()
+		if curve:IsValid() then
+			local curveIndex = curve:GetCurveIndex()
+			if map[curveIndex] == nil then
+				map[curveIndex] = {
+					curve = curve,
+					dataPoints = {},
+				}
+			end
+			table.insert(map[curveIndex].dataPoints, dp)
+		end
+	end
+	return map
+end
+function gui.PFMTimeline:CreateCurveCompositionCommand(cmd, curve)
+	local animClip = curve:GetAnimationClip()
+	local actor = animClip:GetActor()
+	local propertyPath = curve:GetTargetPath()
+	local baseIndex = curve:GetTypeComponentIndex()
+	local res, subCmd =
+		cmd:AddSubCommand("keyframe_property_composition", tostring(actor:GetUniqueId()), propertyPath, baseIndex)
+	return subCmd
+end
 function gui.PFMTimeline:SetInterpolationMode(mode)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
-	for _, dp in ipairs(dps) do
-		local editorKey, keyIndex = dp:GetEditorKeys()
-		if editorKey == nil then
-			return
+	local cmd = pfm.create_command("composition")
+	for curveIndex, curveInfo in pairs(self:GroupDataPointsByCurve(dps)) do
+		local subCmd = self:CreateCurveCompositionCommand(cmd, curveInfo.curve)
+		for _, dp in ipairs(curveInfo.dataPoints) do
+			local editorKey, keyIndex = dp:GetEditorKeys()
+			if editorKey ~= nil then
+				local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+				local keyIndex = dp:GetKeyIndex()
+				local baseIndex = dp:GetTypeComponentIndex()
+				subCmd:AddSubCommand(
+					"set_keyframe_interpolation_mode",
+					tostring(actor:GetUniqueId()),
+					targetPath,
+					editorKey:GetTime(keyIndex),
+					editorKey:GetInterpolationMode(keyIndex),
+					mode,
+					baseIndex
+				)
+			end
 		end
-		editorKey:SetInterpolationMode(keyIndex, mode)
-		dp:ReloadGraphCurveSegment()
 	end
+	pfm.undoredo.push("set_keyframe_interpolation_mode", cmd)()
 end
 function gui.PFMTimeline:SetEasingMode(mode)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
-	for _, dp in ipairs(dps) do
-		local editorKey, keyIndex = dp:GetEditorKeys()
-		if editorKey == nil then
-			return
+	local cmd = pfm.create_command("composition")
+	for curveIndex, curveInfo in pairs(self:GroupDataPointsByCurve(dps)) do
+		local subCmd = self:CreateCurveCompositionCommand(cmd, curveInfo.curve)
+		for _, dp in ipairs(curveInfo.dataPoints) do
+			local editorKey, keyIndex = dp:GetEditorKeys()
+			if editorKey ~= nil then
+				local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+				local keyIndex = dp:GetKeyIndex()
+				local baseIndex = dp:GetTypeComponentIndex()
+				subCmd:AddSubCommand(
+					"set_keyframe_easing_mode",
+					tostring(actor:GetUniqueId()),
+					targetPath,
+					editorKey:GetTime(keyIndex),
+					editorKey:GetEasingMode(keyIndex),
+					mode,
+					baseIndex
+				)
+			end
 		end
-		editorKey:SetEasingMode(keyIndex, mode)
-		dp:ReloadGraphCurveSegment()
 	end
+	pfm.undoredo.push("set_keyframe_easing_mode", cmd)()
 end
 function gui.PFMTimeline:SetHandleType(type)
 	local dps = self.m_timelineGraph:GetSelectedDataPoints(false, true)
-	for _, dp in ipairs(dps) do
-		local editorKey, keyIndex = dp:GetEditorKeys()
-		if editorKey == nil then
-			return
+	local cmd = pfm.create_command("composition")
+	for curveIndex, curveInfo in pairs(self:GroupDataPointsByCurve(dps)) do
+		local subCmd = self:CreateCurveCompositionCommand(cmd, curveInfo.curve)
+		for _, dp in ipairs(curveInfo.dataPoints) do
+			local editorKey, keyIndex = dp:GetEditorKeys()
+			if editorKey ~= nil then
+				local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
+				local keyIndex = dp:GetKeyIndex()
+				local baseIndex = dp:GetTypeComponentIndex()
+				for _, handleId in ipairs({
+					pfm.udm.EditorGraphCurveKeyData.HANDLE_IN,
+					pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT,
+				}) do
+					subCmd:AddSubCommand(
+						"set_keyframe_handle_type",
+						tostring(actor:GetUniqueId()),
+						targetPath,
+						editorKey:GetTime(keyIndex),
+						editorKey:GetHandleType(keyIndex, handleId),
+						type,
+						baseIndex,
+						handleId
+					)
+				end
+			end
 		end
-		editorKey:SetHandleType(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN, type)
-		editorKey:SetHandleType(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT, type)
-		self.m_timelineGraph:UpdateSelectedDataPointHandles()
-		dp:ReloadGraphCurveSegment()
 	end
+	pfm.undoredo.push("set_keyframe_handle_type", cmd)()
 end
 function gui.PFMTimeline:SetDataValue(t, v)
 	self.m_entryFrame:SetText(tostring(t))

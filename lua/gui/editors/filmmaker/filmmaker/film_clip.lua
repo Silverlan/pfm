@@ -14,38 +14,23 @@ function Element:OnFilmClipAdded(el)
 	end
 	self:AddFilmClipElement(newEl)
 end
-function Element:SelectFilmClip(filmClip)
-	local actorEditor = self:GetActorEditor()
-	if util.is_valid(actorEditor) == false then
-		return
-	end
-	actorEditor:Setup(filmClip)
-end
+function Element:SelectFilmClip(filmClip) end -- TODO: Remove?
 function Element:ChangeFilmClipDuration(filmClip, dur)
-	local el = self.m_filmStrip:FindFilmClipElement(filmClip)
-	if util.is_valid(el) == false then
-		return
-	end
-	filmClip:GetTimeFrame():SetDuration(dur)
-	local track = filmClip:GetParent()
-	track:UpdateFilmClipTimeFrames()
-	el:UpdateFilmClipData()
+	local timeFrame = filmClip:GetTimeFrame()
+	pfm.undoredo.push(
+		"set_film_clip_duration",
+		pfm.create_command("set_film_clip_duration", filmClip, timeFrame:GetDuration(), dur)
+	)()
 end
 function Element:ChangeFilmClipOffset(filmClip, offset)
-	local el = self.m_filmStrip:FindFilmClipElement(filmClip)
-	if util.is_valid(el) == false then
-		return
-	end
-	filmClip:GetTimeFrame():SetOffset(offset)
-	el:UpdateFilmClipData()
+	local timeFrame = filmClip:GetTimeFrame()
+	pfm.undoredo.push(
+		"set_film_clip_offset",
+		pfm.create_command("set_film_clip_offset", filmClip, timeFrame:GetOffset(), offset)
+	)()
 end
 function Element:ChangeFilmClipName(filmClip, name)
-	local el = self.m_filmStrip:FindFilmClipElement(filmClip)
-	if util.is_valid(el) == false then
-		return
-	end
-	filmClip:SetName(name)
-	el:UpdateFilmClipData()
+	pfm.undoredo.push("rename_film_clip", pfm.create_command("rename_film_clip", filmClip, filmClip:GetName(), name))()
 end
 function Element:AddFilmClip()
 	local session = self:GetSession()
@@ -56,56 +41,22 @@ function Element:AddFilmClip()
 	local lastFilmClip
 	local sortedClips = trackFilm:GetSortedFilmClips()
 	lastFilmClip = sortedClips[#sortedClips]
-	self:InsertFilmClipAfter(lastFilmClip, name)
+	self:InsertFilmClipAfter(lastFilmClip)
 end
 function Element:InsertFilmClipAfter(filmClip, name)
-	name = name or "shot"
-	local track = filmClip:GetParent()
-	local newFc = track:InsertFilmClipAfter(filmClip)
-	newFc:SetName(name)
-
-	local channelTrackGroup = newFc:AddTrackGroup()
-	channelTrackGroup:SetName("channelTrackGroup")
-
-	local animSetEditorChannelsTrack = channelTrackGroup:AddTrack()
-	animSetEditorChannelsTrack:SetName("animSetEditorChannels")
-
-	local elFc = self:AddFilmClipElement(newFc)
-	self.m_timeline:GetTimeline():AddTimelineItem(elFc, newFc:GetTimeFrame())
+	pfm.undoredo.push("add_film_clip", pfm.create_command("add_film_clip", name or "shot", filmClip, false))()
 end
 function Element:InsertFilmClipBefore(filmClip, name)
-	name = name or "shot"
-	local track = filmClip:GetParent()
-	local newFc = track:InsertFilmClipBefore(filmClip)
-	newFc:SetName(name)
-
-	local channelTrackGroup = newFc:AddTrackGroup()
-	channelTrackGroup:SetName("channelTrackGroup")
-
-	local animSetEditorChannelsTrack = channelTrackGroup:AddTrack()
-	animSetEditorChannelsTrack:SetName("animSetEditorChannels")
-
-	local elFc = self:AddFilmClipElement(newFc)
-	self.m_timeline:GetTimeline():AddTimelineItem(elFc, newFc:GetTimeFrame())
+	pfm.undoredo.push("add_film_clip", pfm.create_command("add_film_clip", name or "shot", filmClip, true))()
 end
 function Element:MoveFilmClipToLeft(filmClip)
-	local track = filmClip:GetParent()
-	track:MoveFilmClipToLeft(filmClip)
+	pfm.undoredo.push("move_film_clip", pfm.create_command("move_film_clip", filmClip, true))()
 end
 function Element:MoveFilmClipToRight(filmClip)
-	local track = filmClip:GetParent()
-	track:MoveFilmClipToRight(filmClip)
+	pfm.undoredo.push("move_film_clip", pfm.create_command("move_film_clip", filmClip, false))()
 end
 function Element:RemoveFilmClip(filmClip)
-	local el = self.m_filmStrip:FindFilmClipElement(filmClip)
-	if util.is_valid(el) == false then
-		return
-	end
-	local track = filmClip:GetParent()
-	track:RemoveFilmClip(filmClip)
-	-- TODO: This probably requires some cleanup
-	el:Remove()
-	track:UpdateFilmClipTimeFrames()
+	pfm.undoredo.push("delete_film_clip", pfm.create_command("delete_film_clip", filmClip))()
 end
 function Element:AddFilmClipElement(filmClip)
 	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip, filmClip, function(elFilmClip)
@@ -114,6 +65,54 @@ function Element:AddFilmClipElement(filmClip)
 			self:SelectFilmClip(filmClipData)
 		end
 	end)
+	local listeners = {}
+	pFilmClip:AddCallback("OnRemove", function()
+		util.remove(listeners)
+	end)
+	local function update_film_clip_data()
+		if self:IsValid() == false or self.m_filmStrip:IsValid() == false then
+			return
+		end
+		local el = self.m_filmStrip:FindFilmClipElement(filmClip)
+		if util.is_valid(el) == false then
+			return
+		end
+		el:UpdateFilmClipData()
+	end
+	table.insert(listeners, filmClip:AddChangeListener("name", update_film_clip_data))
+	table.insert(listeners, filmClip:AddChangeListener("duration", update_film_clip_data))
+	table.insert(listeners, filmClip:AddChangeListener("offset", update_film_clip_data))
+	table.insert(
+		listeners,
+		filmClip:AddChangeListener("OnActorPoseChanged", function(filmClip, actor, oldPose, newPose, changeFlags)
+			local vp = self:GetViewport()
+			local ent = actor:FindEntity()
+			if util.is_valid(vp) and util.is_valid(ent) then
+				local rt = util.is_valid(vp) and vp:GetRealtimeRaytracedViewport() or nil
+				if util.is_valid(rt) then
+					rt:MarkActorAsDirty(ent)
+				end
+				self:TagRenderSceneAsDirty()
+
+				self:GetAnimationManager():SetAnimationDirty(actor)
+				local prefixPath = "ec/pfm_actor/"
+				if bit.band(changeFlags, pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_POSITION) ~= 0 then
+					ent:SetMemberValue(prefixPath .. "position", newPose:GetOrigin())
+					self:GetActorEditor():UpdateActorProperty(actor, prefixPath .. "position")
+				end
+				if bit.band(changeFlags, pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_ROTATION) ~= 0 then
+					ent:SetMemberValue(prefixPath .. "rotation", newPose:GetRotation())
+					self:GetActorEditor():UpdateActorProperty(actor, prefixPath .. "rotation")
+				end
+				if bit.band(changeFlags, pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_SCALE) ~= 0 then
+					ent:SetMemberValue(prefixPath .. "scale", newPose:GetScale())
+					self:GetActorEditor():UpdateActorProperty(actor, prefixPath .. "scale")
+				end
+
+				vp:OnActorTransformChanged(ent)
+			end
+		end)
+	)
 	pFilmClip:AddCallback("OnMouseEvent", function(pFilmClip, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 			local pContext = gui.open_context_menu()

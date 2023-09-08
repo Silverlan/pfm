@@ -390,6 +390,103 @@ function Element:InitializeMenuBar()
 	pMenuBar:AddItem(locale.get_text("view"),function(pContext)
 
 	end)]]
+
+	pMenuBar
+		:AddItem(locale.get_text("edit"), function(pContext)
+			local undoText = pfm.get_undo_text()
+			if undoText ~= nil then
+				undoText = " (" .. undoText .. ")"
+			end
+			local pItemUndo = pContext:AddItem(locale.get_text("undo") .. (undoText or ""), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				pfm.undo()
+			end)
+			pItemUndo:SetName("undo")
+			if pfm.has_undo() == false then
+				pItemUndo:SetEnabled(false)
+			end
+
+			local redoText = pfm.get_redo_text()
+			if redoText ~= nil then
+				redoText = " (" .. redoText .. ")"
+			end
+			local pItemRedo = pContext:AddItem(locale.get_text("redo") .. (redoText or ""), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				pfm.redo()
+			end)
+			pItemRedo:SetName("redo")
+			if pfm.has_redo() == false then
+				pItemRedo:SetEnabled(false)
+			end
+
+			local pItemCopy = pContext:AddItem(locale.get_text("copy"), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				local actorEditor = self:GetActorEditor()
+				if util.is_valid(actorEditor) == false then
+					return
+				end
+				actorEditor:CopyToClipboard()
+			end)
+			pItemCopy:SetName("copy")
+
+			local actorEditor = self:GetActorEditor()
+			local numSelectedActors = 0
+			if util.is_valid(actorEditor) then
+				numSelectedActors = #actorEditor:GetSelectedActors()
+			end
+
+			local pItemPaste = pContext:AddItem(locale.get_text("paste"), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				local actorEditor = self:GetActorEditor()
+				if util.is_valid(actorEditor) == false then
+					return
+				end
+				actorEditor:PasteFromClipboard()
+			end)
+			pItemPaste:SetName("paste")
+
+			local clipboardString = util.get_clipboard_string()
+			if #clipboardString == 0 then
+				pItemPaste:SetEnabled(false)
+			end
+
+			local pItemDelete = pContext:AddItem(locale.get_text("delete"), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				local actorEditor = self:GetActorEditor()
+				if util.is_valid(actorEditor) == false then
+					return
+				end
+				actorEditor:DeleteSelectedActors()
+			end)
+			pItemDelete:SetName("delete")
+
+			if numSelectedActors == 0 then
+				pItemCopy:SetEnabled(false)
+				pItemDelete:SetEnabled(false)
+			end
+
+			pContext
+				:AddItem(locale.get_text("pfm_menu_reload_game_view"), function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					self:ReloadGameView()
+				end)
+				:SetName("reload_game_view")
+
+			pContext:ScheduleUpdate()
+		end)
+		:SetName("edit")
 	if self:IsDeveloperModeEnabled() then
 		pMenuBar
 			:AddItem(locale.get_text("render"), function(pContext)
@@ -725,6 +822,19 @@ function Element:InitializeMenuBar()
 			end)
 			pSubItem:SetName("wiki")
 			local pSubItem = pContext:AddItem(locale.get_text("pfm_report_a_bug"), function(pItem)
+				file.create_path("temp")
+
+				-- Delete existing engine info dumps
+				local tFiles = file.find("temp/engine_info_dump*.zip")
+				for _, f in ipairs(tFiles) do
+					file.delete("temp/" .. f)
+				end
+
+				local fileName = engine.generate_info_dump("temp/engine_info_dump")
+				if fileName ~= nil then
+					util.open_path_in_explorer(file.get_file_path(fileName), file.get_file_name(fileName))
+					pfm.create_popup_message(locale.get_text("pfm_report_a_bug_message"), false, gui.InfoBox.TYPE_INFO)
+				end
 				util.open_url_in_browser("https://github.com/Silverlan/pfm/issues")
 			end)
 			pSubItem:SetName("report_a_bug")

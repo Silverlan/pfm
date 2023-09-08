@@ -127,6 +127,9 @@ function gui.Curve:UpdateCurveValue(i, xVal, yVal)
 end
 function gui.Curve:BuildCurve(curveValues)
 	if #curveValues == 0 then
+		self.m_lineBuffer = nil
+		self.m_vertexCount = 0
+		self:RebuildRenderCommandBuffer()
 		return
 	end
 

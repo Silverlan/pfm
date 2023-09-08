@@ -42,7 +42,6 @@ function gui.PFMTimelineDataPoint:UpdateHandleType(handle)
 end
 function gui.PFMTimelineDataPoint:GetEditorKeys()
 	local curve = self:GetGraphCurve()
-	local graph = curve:GetTimelineGraph()
 
 	local editorChannel = curve:GetEditorChannel()
 	if editorChannel == nil then
@@ -84,6 +83,18 @@ function gui.PFMTimelineDataPoint:InitializeHandleControl()
 	el:AddCallback("OnOutControlMoved", function(el, newPos)
 		self:OnHandleMoved(newPos, false)
 	end)
+	el:AddCallback("OnInControlMoveStarted", function(el, ctrl, startPos)
+		self:OnHandleControlMoveStarted()
+	end)
+	el:AddCallback("OnOutControlMoveStarted", function(el, ctrl, startPos)
+		self:OnHandleControlMoveStarted()
+	end)
+	el:AddCallback("OnInControlMoveComplete", function(el, ctrl, startPos)
+		self:OnHandleControlMoveComplete()
+	end)
+	el:AddCallback("OnOutControlMoveComplete", function(el, ctrl, startPos)
+		self:OnHandleControlMoveComplete()
+	end)
 
 	local onMouseEvent = function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT then
@@ -124,36 +135,124 @@ function gui.PFMTimelineDataPoint:GetKeyTimeDelta(pos)
 	local delta = -dataAxis:GetAxis():XDeltaToValue(val.y)
 	return editorKeys, keyIndex, time, delta
 end
-function gui.PFMTimelineDataPoint:OnHandleMoved(newPos, inHandle)
-	local editorKeys, keyIndex, time, delta = self:GetKeyTimeDelta(newPos)
-	local handle = inHandle and pfm.udm.EditorGraphCurveKeyData.HANDLE_IN or pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT
-	if editorKeys:GetHandleType(keyIndex) == pfm.udm.KEYFRAME_HANDLE_TYPE_VECTOR then
-		editorKeys:SetHandleType(keyIndex, handle, pfm.udm.KEYFRAME_HANDLE_TYPE_FREE)
+function gui.PFMTimelineDataPoint:OnHandleControlMoveComplete()
+	if self.m_handleMoveData == nil then
+		return
 	end
-	local affectedKeys = editorKeys:SetHandleData(keyIndex, handle, time, delta)
 
 	local curve = self:GetGraphCurve()
-	local timelineGraph = curve:GetTimelineGraph()
-	for _, af in ipairs(affectedKeys) do
-		timelineGraph:ReloadGraphCurveSegment(curve:GetCurveIndex(), af[1])
+	local editorChannel = curve:GetEditorChannel()
+	if editorChannel == nil then
+		return
 	end
 
-	curve:GetTimelineGraph():UpdateSelectedDataPointHandles()
+	local editorGraphCurve = editorChannel:GetGraphCurve()
+	local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
+	local keyIndex = self:GetKeyIndex()
+	local deltaIn = editorKeys:GetHandleDelta(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
+	local timeIn = editorKeys:GetHandleTimeOffset(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
+	local deltaOut = editorKeys:GetHandleDelta(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
+	local timeOut = editorKeys:GetHandleTimeOffset(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
+
+	local cmd = pfm.create_command("composition")
+	self:CreateHandleMoveCommand(
+		cmd,
+		pfm.udm.EditorGraphCurveKeyData.HANDLE_IN,
+		self.m_handleMoveData.timeIn,
+		timeIn,
+		self.m_handleMoveData.deltaIn,
+		deltaIn
+	)
+	self:CreateHandleMoveCommand(
+		cmd,
+		pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT,
+		self.m_handleMoveData.timeOut,
+		timeOut,
+		self.m_handleMoveData.deltaOut,
+		deltaOut
+	)
+	cmd:Execute()
+	pfm.undoredo.push("move_keyframe_handles", cmd)()
+
+	self.m_handleMoveData = nil
+end
+function gui.PFMTimelineDataPoint:OnHandleControlMoveStarted()
+	self.m_handleMoveData = nil
+	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
+	if actor == nil then
+		return
+	end
+
+	local curve = self:GetGraphCurve()
+	local editorChannel = curve:GetEditorChannel()
+	if editorChannel == nil then
+		return
+	end
+
+	local editorGraphCurve = editorChannel:GetGraphCurve()
+	local editorKeys = editorGraphCurve:GetKey(self:GetTypeComponentIndex())
+
+	local keyIndex = self:GetKeyIndex()
+	self.m_handleMoveData = {
+		deltaIn = editorKeys:GetHandleDelta(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN),
+		timeIn = editorKeys:GetHandleTimeOffset(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN),
+		deltaOut = editorKeys:GetHandleDelta(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT),
+		timeOut = editorKeys:GetHandleTimeOffset(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT),
+	}
+end
+function gui.PFMTimelineDataPoint:CreateHandleMoveCommand(cmd, handle, oldTime, time, oldDelta, delta)
+	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
+	if actor == nil then
+		return
+	end
+	local curve = self:GetGraphCurve()
+	local editorChannel = curve:GetEditorChannel()
+	local baseIndex = self:GetTypeComponentIndex()
+	local timestamp = self:GetTime()
+	cmd:AddSubCommand(
+		"move_keyframe_handle",
+		tostring(actor:GetUniqueId()),
+		targetPath,
+		timestamp,
+		baseIndex,
+		handle,
+		oldTime,
+		time,
+		oldDelta,
+		delta
+	)
+end
+function gui.PFMTimelineDataPoint:OnHandleMoved(newPos, inHandle)
+	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
+	if actor == nil then
+		return
+	end
+	local editorKeys, keyIndex, time, delta = self:GetKeyTimeDelta(newPos)
+	local timestamp = editorKeys:GetTime(keyIndex)
+	local baseIndex = self:GetTypeComponentIndex()
+	local handle = inHandle and pfm.udm.EditorGraphCurveKeyData.HANDLE_IN or pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT
+	local cmd = pfm.create_command("composition")
+	self:CreateHandleMoveCommand(cmd, handle, time, time, delta, delta)
+	cmd:Execute()
 end
 function gui.PFMTimelineDataPoint:OnRemove()
 	util.remove(self.m_tangentControl)
 end
-function gui.PFMTimelineDataPoint:SetGraphData(timelineCurve, keyIndex)
+function gui.PFMTimelineDataPoint:SetGraphData(timelineCurve, keyframeInfo)
 	self.m_graphData = {
 		timelineCurve = timelineCurve,
-		keyIndex = keyIndex,
+		keyframeInfo = keyframeInfo,
 	}
 end
 function gui.PFMTimelineDataPoint:GetKeyIndex()
-	return self.m_graphData.keyIndex
+	return self.m_graphData.keyframeInfo:GetIndex()
+end
+function gui.PFMTimelineDataPoint:GetKeyframeInfo()
+	return self.m_graphData.keyframeInfo
 end
 function gui.PFMTimelineDataPoint:SetKeyIndex(index)
-	self.m_graphData.keyIndex = index
+	-- TODO: Remove
+	-- self.m_graphData.keyIndex = index
 end
 function gui.PFMTimelineDataPoint:GetTime()
 	local editorKeys, keyIndex = self:GetEditorKeys()
@@ -168,34 +267,47 @@ function gui.PFMTimelineDataPoint:GetValueType()
 	return editorKeys:GetValueArrayValueType()
 end
 function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
-	local graphData = self.m_graphData
-	local timelineCurve = graphData.timelineCurve
-
-	local pm = pfm.get_project_manager()
-	local animManager = pm:GetAnimationManager()
 	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
-	local panimaChannel = timelineCurve:GetPanimaChannel()
-	if v ~= nil and curveData.valueTranslator ~= nil then
-		local curTime, curVal = animManager:GetChannelValueByKeyframeIndex(
-			actor,
-			targetPath,
-			panimaChannel,
-			keyIndex,
-			self:GetTypeComponentIndex()
-		)
-		v = curveData.valueTranslator[2](v, curVal)
+	if actor == nil then
+		return
 	end
 
-	if t == nil then
-		t = self:GetTime()
-		local graphData = self.m_graphData
-		local timelineCurve = graphData.timelineCurve
-		local timelineGraph = timelineCurve:GetTimelineGraph()
-		local curveData = timelineGraph:GetGraphCurve(timelineCurve:GetCurveIndex())
-		t = timelineGraph:DataTimeToInterfaceTime(curveData, t)
+	local kfInfo = self:GetKeyframeInfo()
+	local keyIndex = kfInfo:GetIndex()
+	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
+	local editorKeys, keyIndex = self:GetEditorKeys()
+
+	local cmd = pfm.create_command("composition")
+	if t ~= nil then
+		local timestamp = editorKeys:GetTime(keyIndex)
+		local oldTime = timestamp
+		local newTime = t
+		local baseIndex = self:GetTypeComponentIndex()
+		cmd:AddSubCommand(
+			"set_keyframe_time",
+			tostring(actor:GetUniqueId()),
+			targetPath,
+			timestamp,
+			oldTime,
+			newTime,
+			baseIndex
+		)
 	end
-	v = v or self:GetValue()
-	pm:UpdateKeyframe(actor, targetPath, panimaChannel, keyIndex, t, v, self:GetTypeComponentIndex())
+	if v ~= nil then
+		local t = editorKeys:GetTime(keyIndex)
+		local oldValue = editorKeys:GetValue(keyIndex)
+		local baseIndex = self:GetTypeComponentIndex()
+		cmd:AddSubCommand(
+			"set_keyframe_value",
+			tostring(actor:GetUniqueId()),
+			targetPath,
+			t,
+			udm.get_numeric_component(oldValue, baseIndex),
+			v,
+			baseIndex
+		)
+	end
+	pfm.undoredo.push("move_keyframe", cmd)()
 end
 function gui.PFMTimelineDataPoint:UpdateTextFields()
 	local graphData = self.m_graphData
@@ -214,49 +326,74 @@ end
 function gui.PFMTimelineDataPoint:GetGraphCurve()
 	return self.m_graphData.timelineCurve
 end
-function gui.PFMTimelineDataPoint:MoveToPosition(time, value)
+function gui.PFMTimelineDataPoint:MoveToPosition(cmd, time, value, curTime, curVal)
 	local graphData = self.m_graphData
 	local timelineCurve = graphData.timelineCurve
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
 
 	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
-	-- TODO: Merge this with PFMTimelineDataPoint:UpdateTextFields()
 	local newValue = Vector2(time, value)
 	newValue = { newValue.x, newValue.y }
 	newValue[1] = math.snap_to_gridf(newValue[1], 1.0 / pm:GetFrameRate()) -- TODO: Only if snap-to-grid is enabled
 	newValue[2] = math.round(newValue[2] * 100.0) / 100.0 -- TODO: Make round precision dependent on animation property
 
 	local panimaChannel = timelineCurve:GetPanimaChannel()
+	local baseIndex = self:GetTypeComponentIndex()
 	if curveData.valueTranslator ~= nil then
-		local curTime, curVal = animManager:GetChannelValueByKeyframeIndex(
-			actor,
-			targetPath,
-			panimaChannel,
-			keyIndex,
-			self:GetTypeComponentIndex()
-		)
 		newValue[2] = curveData.valueTranslator[2](newValue[2], curVal)
 	end
 
-	pm:UpdateKeyframe(
-		actor,
-		targetPath,
-		panimaChannel,
-		keyIndex,
-		newValue[1],
-		newValue[2],
-		self:GetTypeComponentIndex()
-	)
+	if t ~= nil then
+		local curTime, curVal =
+			animManager:GetChannelValueByKeyframeIndex(actor, targetPath, panimaChannel, keyIndex, baseIndex)
+		--[[local timestamp = editorKeys:GetTime(keyIndex)
+		local oldTime = timestamp
+		local newTime = t
+		local baseIndex = self:GetTypeComponentIndex()
+
+		]]
+	end
+
+	keyIndex = self:GetKeyIndex()
+	local graphCurve = curveData.editorChannel:GetGraphCurve()
+	local keyData = graphCurve:GetKey(baseIndex)
+	curVal = curVal or keyData:GetValue(keyIndex)
+	curTime = curTime or keyData:GetTime(keyIndex)
+	local valueType = keyData:GetValueArrayValueType()
+	local uuid = tostring(actor:GetUniqueId())
+	cmd:AddSubCommand("set_keyframe_data", uuid, targetPath, curTime, time, curVal, value, baseIndex)
 end
 function gui.PFMTimelineDataPoint:MoveToCoordinates(x, y)
-	local graphData = self.m_graphData
+	--[[local graphData = self.m_graphData
 	local timelineCurve = graphData.timelineCurve
 	local v = timelineCurve:GetCurve():CoordinatesToValues(x + self:GetWidth() / 2.0, y + self:GetHeight() / 2.0)
-	self:MoveToPosition(v.x, v.y)
+	self:MoveToPosition(v.x, v.y)]]
 end
 function gui.PFMTimelineDataPoint:OnMoved(newPos)
-	self:MoveToCoordinates(newPos.x, newPos.y)
+	local graphData = self.m_graphData
+	local timelineCurve = graphData.timelineCurve
+	self.m_movePos = timelineCurve
+		:GetCurve()
+		:CoordinatesToValues(newPos.x + self:GetWidth() / 2.0, newPos.y + self:GetHeight() / 2.0)
+	self:SetMoveDirty(true)
+end
+function gui.PFMTimelineDataPoint:GetMovePos()
+	return self.m_movePos
+end
+function gui.PFMTimelineDataPoint:SetMoveDirty(dirty)
+	dirty = dirty or false
+	self.m_moveDirty = dirty
+	if dirty == true then
+		local graphData = self.m_graphData
+		local timelineCurve = graphData.timelineCurve
+		if timelineCurve:IsValid() then
+			timelineCurve:SetMoveDirty()
+		end
+	end
+end
+function gui.PFMTimelineDataPoint:IsMoveDirty()
+	return self.m_moveDirty or false
 end
 function gui.PFMTimelineDataPoint:GetChannelValueData()
 	local graphData = self.m_graphData
@@ -278,6 +415,7 @@ end
 function gui.PFMTimelineDataPoint:OnMoveStarted(startData)
 	startData.startTime = self:GetTime()
 	startData.startValue = self:GetValue()
+	self.m_movePos = nil
 end
 function gui.PFMTimelineDataPoint:GetTypeComponentIndex()
 	return self.m_graphData.timelineCurve:GetTypeComponentIndex()

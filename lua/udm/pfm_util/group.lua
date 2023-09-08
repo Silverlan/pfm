@@ -6,6 +6,14 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+function pfm.udm.Group:GetFilmClip()
+	local parent = self:GetParent()
+	while util.get_type_name(parent) == "Group" do
+		parent = parent:GetParent()
+	end
+	return parent
+end
+
 function pfm.udm.Group:GetActorList(list)
 	list = list or {}
 	for _, actor in ipairs(self:GetActors()) do
@@ -91,5 +99,7 @@ function pfm.udm.Group:MoveActorTo(actor, targetGroup)
 	-- Old UDM data has been invalidated, so we have to re-assign
 	-- UDM data recursively
 	child:ReloadUdmData(udmDst:Get(udmDst:GetSize() - 1))
+
+	actor:CallChangeListeners("OnMoved", self, targetGroup)
 	return true
 end

@@ -312,7 +312,7 @@ function gui.PFMViewport:UpdateManipulationMode()
 				self:SetBoneTransformProperty(ent, boneId, "scale", pose.scale, udm.TYPE_VECTOR3)
 			end
 		end
-		pfm.undoredo.push("pfm_undoredo_bone_transform", function()
+		pfm.undoredo.push("bone_transform", function()
 			apply_pose(newPose)
 		end, function()
 			apply_pose(curPose)
@@ -429,7 +429,7 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 			end
 		end
 		-- TODO
-		-- pfm.undoredo.push("pfm_undoredo_transform",function() apply_pose(newPose) end,function() apply_pose(curPose) end)()
+		-- pfm.undoredo.push("undoredo_transform",function() apply_pose(newPose) end,function() apply_pose(curPose) end)()
 	end)
 	self:InitializeTransformWidget(trC, nil, self:GetTransformSpace() == ents.UtilTransformComponent.SPACE_VIEW)
 	self.m_transformComponent = trC
@@ -533,27 +533,41 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 			then
 				self:ApplyPoseToKeyframeAnimation(actorData, origPose, newPose)
 			else
-				local function apply_pose(pose)
-					local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-					if actorC ~= nil then
-						if pose.position ~= nil then
-							tool.get_filmmaker():SetActorTransformProperty(actorC, "position", pose.position)
-						end
-						if pose.rotation ~= nil then
-							tool.get_filmmaker():SetActorTransformProperty(actorC, "rotation", pose.rotation)
-						end
-						if pose.scale ~= nil then
-							tool.get_filmmaker():SetActorTransformProperty(actorC, "scale", pose.scale)
-						end
+				if actorData ~= nil then
+					local oldPos, newPos, oldRot, newRot, oldScale, newScale
+					if curPose.position ~= nil then
+						oldPos = curPose.position
+					end
+					if curPose.rotation ~= nil then
+						oldRot = curPose.rotation
+					end
+					if curPose.scale ~= nil then
+						oldScale = curPose.scale
 					end
 
-					self:OnActorTransformChanged(ent)
+					if newPose.position ~= nil then
+						newPos = newPose.position
+					end
+					if newPose.rotation ~= nil then
+						newRot = newPose.rotation
+					end
+					if newPose.scale ~= nil then
+						newScale = newPose.scale
+					end
+					pfm.undoredo.push(
+						"change_actor_pose",
+						pfm.create_command(
+							"change_actor_pose",
+							actorData,
+							oldPos,
+							newPos,
+							oldRot,
+							newRot,
+							oldScale,
+							newScale
+						)
+					)()
 				end
-				pfm.undoredo.push("pfm_undoredo_transform", function()
-					apply_pose(newPose)
-				end, function()
-					apply_pose(curPose)
-				end)()
 			end
 		end)
 		return trC
@@ -777,7 +791,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 								end
 
 								local newVal = get_pose_value(newPose)
-								pfm.undoredo.push("pfm_undoredo_bone_transform", function()
+								pfm.undoredo.push("bone_transform", function()
 									local entActor = ents.find_by_uuid(uuid)
 									if entActor == nil then
 										return

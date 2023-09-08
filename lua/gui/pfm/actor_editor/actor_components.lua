@@ -41,6 +41,64 @@ function gui.PFMActorEditor:UpdateActorComponentEntries(actorData)
 		self:InitializeDirtyActorComponents(tostring(actorData.actor:GetUniqueId()), entActor)
 	end
 end
+
+function gui.PFMActorEditor:OnActorComponentAdded(filmClip, actor, componentType)
+	self:InitializeNewComponent(actor, actor:FindComponent(componentType), componentType)
+end
+function gui.PFMActorEditor:OnActorComponentRemoved(filmClip, actor, componentType)
+	local uniqueId = tostring(actor:GetUniqueId())
+	local itemComponent, componentData, actorData = self:GetComponentEntry(uniqueId, componentType)
+	if util.is_valid(itemComponent) then
+		local itemParent = itemComponent:GetParentItem()
+		if util.is_valid(itemParent) then
+			itemParent:RemoveItem(itemComponent)
+			itemParent:FullUpdate()
+		end
+	end
+	self:UpdateActorComponentEntries(actorData)
+	local entActor = ents.find_by_uuid(uniqueId)
+	if util.is_valid(entActor) then
+		entActor:RemoveComponent(componentType)
+		self:OnActorPropertyChanged(entActor)
+	end
+	self:TagRenderSceneAsDirty()
+end
+function gui.PFMActorEditor:InitializeNewComponent(actor, component, componentType, updateActorAndUi)
+	if updateActorAndUi == nil then
+		updateActorAndUi = true
+	end
+	local itemActor
+	for elTree, data in pairs(self.m_treeElementToActorData) do
+		if util.is_same_object(actor, data.actor) then
+			itemActor = elTree
+			break
+		end
+	end
+
+	if itemActor == nil then
+		return
+	end
+
+	local componentId = ents.find_component_id(componentType)
+	if componentId == nil then
+		include_component(componentType)
+	end
+	componentId = ents.find_component_id(componentType)
+	if componentId == nil then
+		pfm.log(
+			"Attempted to add unknown entity component '" .. componentType .. "' to actor '" .. tostring(actor) .. "'!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_WARNING
+		)
+		return
+	end
+
+	if updateActorAndUi == true then
+		self:UpdateActorComponents(actor)
+	end
+
+	return component
+end
 function gui.PFMActorEditor:RemoveActorComponentEntry(uniqueId, componentId)
 	if type(uniqueId) ~= "string" then
 		uniqueId = tostring(uniqueId)
@@ -169,30 +227,10 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 			pContext:SetPos(input.get_cursor_pos())
 
 			pContext:AddItem(locale.get_text("remove"), function()
-				local filmmaker = tool.get_filmmaker()
-				local filmClip = filmmaker:GetActiveFilmClip()
-				if filmClip == nil then
-					return
-				end
-				local actor = filmClip:FindActorByUniqueId(uniqueId)
-				if actor == nil then
-					return
-				end
-				filmClip:RemoveActorComponent(actor, componentType)
-				if util.is_valid(itemComponent) then
-					local itemParent = itemComponent:GetParentItem()
-					if util.is_valid(itemParent) then
-						itemParent:RemoveItem(itemComponent)
-						itemParent:FullUpdate()
-					end
-				end
-				self:UpdateActorComponentEntries(actorData)
-				local entActor = ents.find_by_uuid(uniqueId)
-				if util.is_valid(entActor) then
-					entActor:RemoveComponent(componentType)
-					self:OnActorPropertyChanged(entActor)
-				end
-				self:TagRenderSceneAsDirty()
+				pfm.undoredo.push(
+					"delete_component",
+					pfm.create_command("delete_component", actorData.actor, componentType)
+				)()
 			end)
 			if tool.get_filmmaker():IsDeveloperModeEnabled() then
 				pContext:AddItem("Assign component to x", function()
@@ -603,7 +641,15 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 											pfm.LOG_SEVERITY_DEBUG
 										)
 									end
-									self:ApplyComponentChannelValue(self, component, controlData, memberValue)
+
+									self:ApplyComponentChannelValue(
+										self,
+										component,
+										controlData,
+										oldValue,
+										memberValue,
+										final
+									)
 								end
 							else
 								c:InvokeElementMemberChangeCallback(memberIdx)

@@ -50,10 +50,12 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())
 	local function addPresetActorOption(id, subMenu, type, locId, callback)
 		local subItem = subMenu:AddItem(locale.get_text(locId), function()
-			self:CreatePresetActor(type)
+			local actor = self:CreatePresetActor(type)
 			if callback ~= nil then
 				callback()
 			end
+
+			pfm.undoredo.push("add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
 		end)
 		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
 		subItem:SetName(id)
@@ -68,6 +70,7 @@ function gui.PFMActorEditor:OnInitialize()
 					return
 				end
 				local actor = self:CreatePresetActor(type, { ["modelName"] = mdlName })
+				pfm.undoredo.push("add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
 			end)
 		end)
 		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
@@ -561,113 +564,20 @@ function gui.PFMActorEditor:OnActorPropertyChanged(entActor)
 	end
 	rt:MarkActorAsDirty(entActor)
 end
-function gui.PFMActorEditor:WriteActorsToUdmElement(actors, el)
-	local pfmCopy = el:Add("pfm_copy")
-
-	local filmClip = self:GetFilmClip()
-	local track = filmClip:FindAnimationChannelTrack()
-	local animationData = {}
-	for _, actor in ipairs(actors) do
-		local channelClip = track:FindActorAnimationClip(actor)
-		if channelClip ~= nil then
-			table.insert(animationData, channelClip:GetUdmData())
-		end
-	end
-	pfmCopy:AddArray("data", #actors + #animationData, udm.TYPE_ELEMENT)
-	local data = pfmCopy:Get("data")
-	for i, actor in ipairs(actors) do
-		local udmData = data:Get(i - 1)
-		udmData:SetValue("type", udm.TYPE_STRING, "actor")
-		udmData:Add("data"):Merge(actor:GetUdmData())
-	end
-	local offset = #actors
-	for i, animData in ipairs(animationData) do
-		local udmData = data:Get(offset + i - 1)
-		udmData:SetValue("type", udm.TYPE_STRING, "animation")
-		udmData:Add("data"):Merge(animData)
-	end
-end
-function gui.PFMActorEditor:RestoreActorsFromUdmElement(data, keepOriginalUuids)
-	local pfmCopy = data:Get("pfm_copy")
-	local data = pfmCopy:Get("data")
-	if data:IsValid() == false then
-		console.print_warning("No copy data found in clipboard UDM string!")
-		return
-	end
-	local filmClip = self:GetFilmClip()
-	local track = filmClip:FindAnimationChannelTrack()
-
-	-- Assign new unique ids to prevent id collisions
-	local oldIdToNewId = {}
-	local function iterate_elements(udmData, f)
-		f(udmData)
-
-		for _, udmChild in pairs(udmData:GetChildren()) do
-			iterate_elements(udmChild, f)
-		end
-
-		if udm.is_array_type(udmData:GetType()) and udmData:GetValueType() == udm.TYPE_ELEMENT then
-			local n = udmData:GetSize()
-			for i = 1, n do
-				iterate_elements(udmData:Get(i - 1), f)
-			end
-		end
-	end
-	if keepOriginalUuids ~= true then
-		iterate_elements(data, function(udmData)
-			if udmData:HasValue("uniqueId") then
-				local oldUniqueId = udmData:GetValue("uniqueId", udm.TYPE_STRING)
-				local newUniqueId = tostring(util.generate_uuid_v4())
-				udmData:SetValue("uniqueId", udm.TYPE_STRING, newUniqueId)
-				oldIdToNewId[oldUniqueId] = newUniqueId
-			end
-		end)
-		iterate_elements(data, function(udmData)
-			for name, udmChild in pairs(udmData:GetChildren()) do
-				if udmChild:GetType() == udm.TYPE_STRING then
-					local val = udmData:GetValue(name, udm.TYPE_STRING)
-					if oldIdToNewId[val] ~= nil then
-						udmData:SetValue(name, udm.TYPE_STRING, oldIdToNewId[val])
-					end
-				end
-			end
-		end)
-	end
-	--
-
-	local n = data:GetSize()
-	for i = 1, n do
-		local udmData = data:Get(i - 1)
-		local type = udmData:GetValue("type", udm.TYPE_STRING)
-		if type == "actor" then
-			local actor = self:CreateNewActor(nil, nil, nil, nil, true)
-			actor:Reinitialize(udmData:Get("data"))
-		elseif type == "animation" then
-			local animData = udmData:Get("data")
-			local actorUniqueId = animData:GetValue("actor", udm.TYPE_STRING)
-			local actor = filmClip:FindActorByUniqueId(actorUniqueId)
-			if actor == nil then
-				console.print_warning(
-					"Animation data refers to unknown actor with unique id " .. actorUniqueId .. "! Ignoring..."
-				)
-			else
-				local channelClip = track:FindActorAnimationClip(actor, true)
-				channelClip:Reinitialize(animData)
-			end
-		else
-			console.print_warning("Copy type " .. type .. " is not compatible!")
+function gui.PFMActorEditor:DeleteSelectedActors()
+	local ids = {}
+	for _, actor in ipairs(self:GetSelectedActors()) do
+		if actor:IsValid() then
+			table.insert(ids, tostring(actor:GetUniqueId()))
 		end
 	end
 
-	local pm = tool.get_filmmaker()
-	pm:ReloadGameView()
-
-	self:Reload()
+	self:RemoveActors(ids)
 end
 function gui.PFMActorEditor:CopyToClipboard(actors)
 	actors = actors or self:GetSelectedActors()
 	local el = udm.create_element()
-	self:WriteActorsToUdmElement(actors, el)
+	self:WriteActorsToUdmElement(self:GetFilmClip(), actors, el)
 	util.set_clipboard_string(el:ToAscii(udm.ASCII_SAVE_FLAG_NONE))
 end
 function gui.PFMActorEditor:PasteFromClipboard(keepOriginalUuids)
@@ -677,7 +587,13 @@ function gui.PFMActorEditor:PasteFromClipboard(keepOriginalUuids)
 		return
 	end
 	local data = res:GetAssetData():GetData()
-	self:RestoreActorsFromUdmElement(data, keepOriginalUuids)
+	self:RestoreActorsFromUdmElement(self:GetFilmClip(), data, keepOriginalUuids)
+end
+function gui.PFMActorEditor:WriteActorsToUdmElement(...)
+	return pfm.get_project_manager():WriteActorsToUdmElement(...)
+end
+function gui.PFMActorEditor:RestoreActorsFromUdmElement(...)
+	return pfm.get_project_manager():RestoreActorsFromUdmElement(...)
 end
 function gui.PFMActorEditor:MouseCallback(button, state, mods)
 	if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
@@ -707,16 +623,104 @@ function gui.PFMActorEditor:Reload()
 	end
 	self:Setup(self.m_filmClip)
 end
-function gui.PFMActorEditor:Setup(filmClip)
+function gui.PFMActorEditor:Clear()
 	-- if(util.is_same_object(filmClip,self.m_filmClip)) then return end
+	util.remove(self.m_filmClipCallbacks)
 
 	debug.start_profiling_task("pfm_populate_actor_editor")
 	asset.clear_unused()
-	self.m_filmClip = filmClip
 	self.m_tree:Clear()
 	self.m_treeElementToActorData = {}
 	self.m_actorUniqueIdToTreeElement = {}
-	-- TODO: Include groups the actors belong to!
+	self.m_filmClipCallbacks = {}
+end
+function gui.PFMActorEditor:OnEditorChannelKeyframeAdded(actor, targetPath, valueBaseIndex)
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+
+	animManager:SetAnimationDirty(actor) -- TODO: Move this to core filmmaker
+	pfm.tag_render_scene_as_dirty()
+
+	self:UpdateActorProperty(actor, targetPath)
+end
+function gui.PFMActorEditor:UpdateChannelValue(data, editorChannel)
+	-- TODO: Mark as dirty, then update lazily?
+	--[[local udmChannel = data.udmChannel
+	local rebuildGraphCurves = false
+	local curve = editorChannel:GetGraphCurve()
+	local editorKeys = curve:GetEditorKeys()
+	if editorKeys == nil or graphData.numValues ~= editorKeys:GetTimeCount() then
+		-- Number of keyframe keys has changed, we'll have to rebuild the entire curve
+		self:RebuildGraphCurve(graphIdx, graphData)
+	elseif data.fullUpdateRequired then
+		rebuildGraphCurves = true
+	elseif data.keyIndex ~= nil then
+		-- We only have to rebuild the two curve segments connected to the key
+		self:ReloadGraphCurveSegment(graphIdx, data.keyIndex)
+		rebuildGraphCurves = true
+
+		-- Also update key data point position
+		if data.oldKeyIndex ~= nil then
+			self:ReloadGraphCurveSegment(graphIdx, data.oldKeyIndex)
+			rebuildGraphCurves = true
+			graphData.curve:SwapDataPoints(data.oldKeyIndex, data.keyIndex)
+			graphData.curve:UpdateDataPoints()
+		else
+			graphData.curve:UpdateDataPoint(data.keyIndex + 1)
+		end
+	elseif data.oldKeyIndex ~= nil then
+		-- Key was deleted; Perform full update
+		-- TODO: If multiple keys are deleted at once, only do this once instead of for every single key
+		self:RebuildGraphCurve(graphIdx, graphData)
+	end
+
+	if rebuildGraphCurves then
+		local indices = self:FindGraphDataIndices(data.actor, udmChannel:GetTargetPath(), data.typeComponentIndex)
+		for _, graphIdx in ipairs(indices) do
+			self:RebuildGraphCurve(graphIdx, self.m_graphs[graphIdx], true)
+		end
+	end]]
+end
+function gui.PFMActorEditor:Setup(filmClip)
+	self:Clear()
+	self.m_filmClip = filmClip
+
+	local function add_change_listener(identifier, fc)
+		table.insert(self.m_filmClipCallbacks, filmClip:AddChangeListener(identifier, fc))
+	end
+	add_change_listener("OnActorRemoved", function(filmClip, uuid, partOfBatch)
+		if partOfBatch then
+			return
+		end
+		self:OnActorsRemoved(filmClip, { uuid })
+	end)
+	add_change_listener("OnActorsRemoved", function(filmClip, uuids)
+		self:OnActorsRemoved(filmClip, uuids)
+	end)
+	add_change_listener("OnGroupAdded", function(filmClip, group)
+		self:OnCollectionAdded(group)
+	end)
+	add_change_listener("OnGroupRemoved", function(filmClip, groupUuid)
+		self:OnCollectionRemoved(groupUuid)
+	end)
+	add_change_listener("OnActorComponentAdded", function(filmClip, actor, componentType)
+		if self.m_skipComponentCallbacks then
+			return
+		end
+		self:OnActorComponentAdded(filmClip, actor, componentType)
+	end)
+	add_change_listener("OnActorComponentRemoved", function(filmClip, actor, componentType)
+		if self.m_skipComponentCallbacks then
+			return
+		end
+		self:OnActorComponentRemoved(filmClip, actor, componentType)
+	end)
+	add_change_listener(
+		"OnEditorChannelKeyframeAdded",
+		function(filmClip, track, animationClip, editorChannel, keyData, keyframeIndex, valueBaseIndex)
+			self:OnEditorChannelKeyframeAdded(animationClip:GetActor(), editorChannel:GetTargetPath(), valueBaseIndex)
+		end
+	)
 
 	local function add_actors(parent, parentItem, root)
 		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree, parent, root)
@@ -836,10 +840,10 @@ function gui.PFMActorEditor:UpdateControlValues()
 		end
 	end
 end
-function gui.PFMActorEditor:ApplyComponentChannelValue(actorEditor, component, controlData, value)
+function gui.PFMActorEditor:ApplyComponentChannelValue(actorEditor, component, controlData, oldValue, value, final)
 	local actor = component:GetActor()
 	if actor ~= nil and controlData.path ~= nil then
-		actorEditor:UpdateAnimationChannelValue(actor, controlData.path, value)
+		actorEditor:UpdateAnimationChannelValue(actor, controlData.path, oldValue, value, nil, final)
 	end
 end
 function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, controlData)
@@ -1333,7 +1337,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 	if util.is_valid(ctrl) == false then
 		if controlData.addControl then
 			ctrl = controlData.addControl(self.m_animSetControls, function(value)
-				self:ApplyComponentChannelValue(self, udmComponent, controlData, value)
+				self:ApplyComponentChannelValue(self, udmComponent, controlData, nil, value)
 			end)
 		else
 			ctrl = self:AddSliderControl(udmComponent, controlData)
@@ -2404,6 +2408,7 @@ function gui.PFMActorEditor:OnRemove()
 	util.remove(self.m_cbCamLinkGameplayCb)
 	util.remove(self.m_cameraLinkOutlineElement)
 	util.remove(self.m_callbacks)
+	util.remove(self.m_filmClipCallbacks)
 end
 gui.register("WIPFMActorEditor", gui.PFMActorEditor)
 
@@ -2455,7 +2460,10 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 						if util.is_valid(actorEditor) == false then
 							return
 						end
-						actorEditor:CreateNewActorComponent(actor, nameInfo[1], true)
+						pfm.undoredo.push(
+							"create_component",
+							pfm.create_command("create_component", actor, nameInfo[1])
+						)()
 					end)
 					:SetName(nameInfo[1])
 			end
@@ -2473,7 +2481,10 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 						if util.is_valid(actorEditor) == false then
 							return
 						end
-						actorEditor:CreateNewActorComponent(actor, nameInfo[1], true)
+						pfm.undoredo.push(
+							"create_component",
+							pfm.create_command("create_component", actor, nameInfo[1])
+						)()
 					end)
 					:SetName(nameInfo[1])
 			end
