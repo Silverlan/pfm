@@ -196,7 +196,7 @@ function pfm.AnimationManager:InitChannelWithBaseValue(actor, path, addIfNotExis
 	channel:AddValue(0.0, value)
 end
 
-function pfm.AnimationManager:SetValueExpression(actor, path, expr, type, testOnly)
+function pfm.AnimationManager:SetValueExpression(actor, path, expr, type)
 	local anim, channel = self:FindAnimationChannel(actor, path, (type ~= nil), type)
 	if channel == nil then
 		return false
@@ -206,23 +206,13 @@ function pfm.AnimationManager:SetValueExpression(actor, path, expr, type, testOn
 		channel:ClearValueExpression()
 		return false
 	end
-	local r
-	if testOnly then
-		r = channel:TestValueExpression(expr)
-	else
-		r = channel:SetValueExpression(expr)
-		if r ~= true then
-			pfm.log(
-				"Unable to apply channel value expression '"
-					.. expr
-					.. "' for channel with path '"
-					.. path
-					.. "': "
-					.. r,
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_WARNING
-			)
-		end
+	local r = channel:SetValueExpression(expr)
+	if r ~= true then
+		pfm.log(
+			"Unable to apply channel value expression '" .. expr .. "' for channel with path '" .. path .. "': " .. r,
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_WARNING
+		)
 	end
 	return r == true, (r ~= true) and r or nil
 end

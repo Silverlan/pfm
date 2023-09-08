@@ -127,6 +127,7 @@ function gui.PFMActorEditor:OpenPropertyExpressionWindow(actorData, controlData)
 	te = p:AddTextField(locale.get_text("pfm_expression") .. ":", expr or "")
 	te:GetTextElement():SetFont("pfm_medium")
 
+	local tmpChannel
 	local elMsg = p:AddText(locale.get_text("evaluation"), locale.get_text("pfm_no_error"))
 	elMsg:SetColor(Color.Green)
 	elMsg:SetFont("pfm_small")
@@ -136,8 +137,13 @@ function gui.PFMActorEditor:OpenPropertyExpressionWindow(actorData, controlData)
 			if te:IsValid() == false then
 				return
 			end
-			local res, msg =
-				animManager:SetValueExpression(actorData.actor, controlData.path, te:GetText(), controlData.type, true)
+			if tmpChannel == nil then
+				-- Create temporary channel
+				tmpChannel = panima.Channel()
+				tmpChannel:GetValueArray():SetValueType(controlData.type)
+			end
+			local res = tmpChannel:TestValueExpression(te:GetText())
+			local res, msg = res == true, (res ~= true) and res or nil
 			if res then
 				elMsg:SetText(locale.get_text("pfm_no_error"))
 				elMsg:SetColor(Color.Green)
