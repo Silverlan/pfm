@@ -545,9 +545,22 @@ function Element:InitializeMenuBar()
 					if util.is_valid(self) == false then
 						return
 					end
-					locale.change_language(lan)
-					console.run("cl_language", lan)
-					self:ReloadInterface()
+					pfm.open_message_prompt(
+						locale.get_text("pfm_prompt_change_language"),
+						locale.get_text("pfm_prompt_change_language_message"),
+						bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
+						function(bt)
+							if bt == gui.PfmPrompt.BUTTON_YES then
+								self:ShowCloseConfirmation(function(res)
+									locale.change_language(lan)
+									console.run("cl_language", lan)
+
+									tool.close_filmmaker()
+									engine.shutdown()
+								end)
+							end
+						end
+					)
 				end)
 
 				local matPath = "gui/pfm/languages/" .. lan
