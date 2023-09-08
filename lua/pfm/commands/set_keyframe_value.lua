@@ -6,118 +6,20 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Command = util.register_class("pfm.CommandSetKeyframeValue", pfm.Command)
-function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, oldValue, newValue, baseIndex)
-	baseIndex = baseIndex or 0
-	pfm.Command.Initialize(self)
-	local actor = pfm.dereference(actorUuid)
-	actorUuid = tostring(actor:GetUniqueId())
-	if actor == nil then
-		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
-		return pfm.Command.RESULT_FAILURE
-	end
+include("set_keyframe_data.lua")
 
-	self:AddSubCommand("set_animation_value", actorUuid, propertyPath, timestamp, valueType, oldValue, newValue)
-
-	local data = self:GetData()
-	data:SetValue("actor", udm.TYPE_STRING, actorUuid)
-	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
-	data:SetValue("propertyType", udm.TYPE_STRING, udm.type_to_string(valueType))
-	data:SetValue("timestamp", udm.TYPE_FLOAT, timestamp)
-	if oldValue ~= nil then
-		data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
-	end
-	data:SetValue("newValue", udm.TYPE_FLOAT, udm.get_numeric_component(newValue, baseIndex))
-	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex)
-	return pfm.Command.RESULT_SUCCESS
-end
-function Command:RebuildDirtyGraphCurveSegments()
-	local animClip = self:GetAnimationClip()
-	if animClip == nil then
-		return
-	end
-	local data = self:GetData()
-	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-	local editorData = animClip:GetEditorData()
-	local editorChannel = editorData:FindChannel(propertyPath)
-	local graphCurve = editorChannel:GetGraphCurve()
-	graphCurve:RebuildDirtyGraphCurveSegments()
-end
-function Command:GetAnimationClip()
-	local data = self:GetData()
-	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
-	local actor = pfm.dereference(actorUuid)
-	if actor == nil then
-		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
-		return
-	end
-
-	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-
-	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
-	if animClip == nil then
-		self:LogFailure("Missing animation channel!")
-		return
-	end
-	return animClip
-end
-function Command:GetLocalTime(channelClip)
-	local data = self:GetData()
-	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
-	return channelClip:LocalizeOffsetAbs(time)
-end
-function Command:ApplyValue(data, keyNewValue)
-	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
-	local actor = pfm.dereference(actorUuid)
-	if actor == nil then
-		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
-		return
-	end
-
-	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-	local strType = data:GetValue("propertyType", udm.TYPE_STRING)
-	local valueType = udm.string_to_type(strType)
-	if valueType == nil then
-		self:LogFailure("Invalid value type '" .. strType .. "'!")
-		return
-	end
-
-	local valueBaseIndex = data:GetValue("valueBaseIndex", udm.TYPE_UINT8)
-
-	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
-	if animClip == nil then
-		self:LogFailure("Missing animation channel!")
-		return
-	end
-
-	local editorData = animClip:GetEditorData()
-	local editorChannel = editorData:FindChannel(propertyPath)
-	if editorChannel == nil then
-		self:LogFailure("Missing editor channel!")
-		return
-	end
-
-	local timestamp = self:GetLocalTime(animClip)
-	local keyIdx = editorChannel:FindKeyIndexByTime(timestamp, valueBaseIndex)
-	if keyIdx == nil then
-		self:LogFailure("Keyframe doesn't exist!")
-		return
-	end
-
-	local value = data:GetValue(keyNewValue, udm.TYPE_FLOAT)
-	if value ~= nil then
-		local res = editorChannel:SetKeyframeValue(keyIdx, value, valueBaseIndex)
-		if res == false then
-			self:LogFailure("Failed to apply keyframe value!")
-			return
-		end
-	end
-	self:RebuildDirtyGraphCurveSegments()
-end
-function Command:DoExecute(data)
-	return self:ApplyValue(data, "newValue")
-end
-function Command:DoUndo(data)
-	return self:ApplyValue(data, "oldValue")
+local Command = util.register_class("pfm.CommandSetKeyframeValue", pfm.CommandSetKeyframeData)
+function Command:Initialize(actorUuid, propertyPath, timestamp, oldValue, newValue, baseIndex, affixedAnimationData)
+	return pfm.CommandSetKeyframeData.Initialize(
+		self,
+		actorUuid,
+		propertyPath,
+		timestamp,
+		nil,
+		oldValue,
+		newValue,
+		baseIndex,
+		affixedAnimationData
+	)
 end
 pfm.register_command("set_keyframe_value", Command)

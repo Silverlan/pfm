@@ -6,176 +6,20 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("set_keyframe_property.lua")
+include("set_keyframe_data.lua")
 
-local Command = util.register_class("pfm.CommandSetKeyframeTime", pfm.CommandSetKeyframeProperty)
-function Command:Initialize(actorUuid, propertyPath, timestamp, oldTime, newTime, baseIndex)
-	local res = pfm.CommandSetKeyframeProperty.Initialize(self, actorUuid, propertyPath, timestamp, baseIndex)
-
-	if res ~= pfm.Command.RESULT_SUCCESS then
-		return res
-	end
-
-	-- Test
-	local actor = pfm.dereference(actorUuid)
-	local animManager = self:GetAnimationManager()
-	local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
-
-	local editorData = animClip:GetEditorData()
-	local editorChannel = editorData:FindChannel(propertyPath)
-	if editorChannel == nil then
-		self:LogFailure("Missing editor channel!")
-		return
-	end
-
-	local graphCurve = editorChannel:GetGraphCurve()
-	local keyData = graphCurve:GetKey(baseIndex)
-	local numKeyframes = keyData:GetKeyframeCount()
-	local data = self:GetData()
-	if numKeyframes > 0 and channel:GetValueCount() > 0 then
-		local firstKeyframeIndex = 0
-		local firstAnimDataTime = channel:GetTime(0)
-		local firstKeyframeTime = keyData:GetTime(firstKeyframeIndex)
-		local firstAnimDataValue = channel:GetValue(0)
-		local firstKeyframeValue = keyData:GetValue(firstKeyframeIndex)
-
-		local lastKeyframeIndex = numKeyframes - 1
-		local lastAnimDataTime = channel:GetTime(channel:GetValueCount() - 1)
-		local lastKeyframeTime = keyData:GetTime(lastKeyframeIndex)
-		local lastKeyframeValue = keyData:GetValue(lastKeyframeIndex)
-
-		local animDataInfo = {
-			{
-				identifier = "preAnimationData",
-				animDataTime = firstAnimDataTime,
-				keyframeTime = firstKeyframeTime,
-				keyframeValue = firstKeyframeValue,
-				prefix = true,
-			},
-			{
-				identifier = "postAnimationData",
-				animDataTime = lastAnimDataTime,
-				keyframeTime = lastKeyframeTime,
-				keyframeValue = lastKeyframeValue,
-				prefix = false,
-			},
-		}
-		for _, udmAnimDataInfo in ipairs(animDataInfo) do
-			local animDataBuffer = pfm.util.AnimationDataBuffer(data:Add(udmAnimDataInfo.identifier))
-			local startTime = udmAnimDataInfo.prefix and udmAnimDataInfo.animDataTime or udmAnimDataInfo.keyframeTime
-			local endTime = udmAnimDataInfo.prefix and udmAnimDataInfo.keyframeTime or udmAnimDataInfo.animDataTime
-			local res, startIdx =
-				animDataBuffer:StoreAnimationData(animManager, actor, propertyPath, startTime, endTime)
-			if res then
-				local animDataTimeStart = channel:GetTime(startIdx)
-				local animDataValueStart = channel:GetValue(startIdx)
-
-				-- This will move the time and data from absolute time to relative (to the keyframe)
-				animDataBuffer:GetData():SetValue(
-					"timeOffset",
-					udm.TYPE_FLOAT,
-					-animDataTimeStart + (animDataTimeStart - udmAnimDataInfo.keyframeTime)
-				)
-				animDataBuffer:GetData():SetValue(
-					"dataOffset",
-					udm.TYPE_FLOAT,
-					-animDataValueStart + (animDataValueStart - udmAnimDataInfo.keyframeValue)
-				)
-			end
-		end
-	end
-
-	data:SetValue("oldTime", udm.TYPE_FLOAT, oldTime)
-	data:SetValue("newTime", udm.TYPE_FLOAT, newTime)
-	return pfm.Command.RESULT_SUCCESS
-end
-function Command:GetLocalTime(channelClip, action)
-	local keyName
-	if action == pfm.Command.ACTION_DO then
-		keyName = "oldTime"
-	elseif action == pfm.Command.ACTION_UNDO then
-		keyName = "newTime"
-	end
-
-	local data = self:GetData()
-	local time = data:GetValue(keyName, udm.TYPE_FLOAT)
-	return channelClip:LocalizeOffsetAbs(time)
-end
-function Command:ApplyProperty(data, action, editorChannel, keyIdx, timestamp, valueBaseIndex)
-	local data = self:GetData()
-	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
-	local actor = pfm.dereference(actorUuid)
-	if actor == nil then
-		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
-		return false
-	end
-
-	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-	local animManager = self:GetAnimationManager()
-	local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
-
-	--------------------------
-
-	local keyName
-	if action == pfm.Command.ACTION_DO then
-		keyName = "newTime"
-	elseif action == pfm.Command.ACTION_UNDO then
-		keyName = "oldTime"
-	end
-
-	local time = data:GetValue(keyName, udm.TYPE_FLOAT)
-	local res = editorChannel:SetKeyTime(keyIdx, time, valueBaseIndex)
-	if res == false then
-		self:LogFailure("Failed to apply keyframe time!")
-		return
-	end
-
-	-- TEST
-	local data = self:GetData()
-	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
-	local actor = pfm.dereference(actorUuid)
-	if actor == nil then
-		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
-		return false
-	end
-
-	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
-	local udmPreAnimationData = data:Get("preAnimationData")
-	local udmPostAnimationData = data:Get("postAnimationData")
-	local animDataInfo = {
-		{
-			data = udmPreAnimationData,
-			prefix = true,
-		},
-		{
-			data = udmPostAnimationData,
-			prefix = false,
-		},
-	}
-	for _, udmAnimDataInfo in ipairs(animDataInfo) do
-		local udmAnimData = udmAnimDataInfo.data
-		if udmAnimData ~= nil then
-			local animManager = self:GetAnimationManager()
-			local animDataBuffer = pfm.util.AnimationDataBuffer(udmAnimData)
-			local keyData = editorChannel:GetGraphCurve():GetKey(valueBaseIndex)
-			local idx
-			if udmAnimDataInfo.prefix then
-				idx = 0
-			else
-				idx = keyData:GetKeyframeCount() - 1
-			end
-			local kfTime = keyData:GetTime(idx)
-			local kfValue = keyData:GetValue(idx)
-			local timeOffset = kfTime + udmAnimData:GetValue("timeOffset", udm.TYPE_FLOAT)
-			local dataOffset = kfValue + udmAnimData:GetValue("dataOffset", udm.TYPE_FLOAT)
-			local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
-			if udmAnimDataInfo.prefix then
-				channel:ClearRange(-math.huge, kfTime, false)
-			else
-				channel:ClearRange(kfTime, math.huge, false)
-			end
-			local x = animDataBuffer:RestoreAnimationData(animManager, actor, propertyPath, timeOffset, dataOffset)
-		end
-	end
+local Command = util.register_class("pfm.CommandSetKeyframeTime", pfm.CommandSetKeyframeData)
+function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, baseIndex, affixedAnimationData)
+	return pfm.CommandSetKeyframeData.Initialize(
+		self,
+		actorUuid,
+		propertyPath,
+		oldTime,
+		newTime,
+		nil,
+		nil,
+		baseIndex,
+		affixedAnimationData
+	)
 end
 pfm.register_command("set_keyframe_time", Command)

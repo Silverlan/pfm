@@ -197,7 +197,7 @@ function gui.PFMActorEditor:GetAnimationChannel(actor, path, addIfNotExists)
 	local channel = channelClip:GetChannel(path, varType, addIfNotExists)
 	return channel, channelClip
 end
-function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, oldValue, value, baseIndex) -- For internal use only
+function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, oldValue, value, baseIndex, final) -- For internal use only
 	-- If the property is animated, we'll defer the assignment of the value to the animation manager.
 	-- If the channel for the property only has a single animation value, and we're not in the graph editor, special behavior is triggered:
 	-- In this case we will set both the base value of the property, as well as the animation value.
@@ -258,14 +258,17 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, o
 			"set_keyframe_value",
 			actorUuid,
 			targetPath,
-			animData.valueType,
 			time,
 			self:ToChannelValue(oldValue),
 			self:ToChannelValue(value),
 			baseIndex
 		)
+		if final then
+			pfm.undoredo.push("change_animation_value", cmd)()
+		else
+			cmd:Execute()
+		end
 
-		pfm.undoredo.push("change_animation_value", cmd)()
 		-- TODO: Add main property action from return value
 		--
 

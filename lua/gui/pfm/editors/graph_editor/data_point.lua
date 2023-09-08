@@ -301,7 +301,6 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
 			"set_keyframe_value",
 			tostring(actor:GetUniqueId()),
 			targetPath,
-			editorKeys:GetValueArrayValueType(),
 			t,
 			udm.get_numeric_component(oldValue, baseIndex),
 			v,

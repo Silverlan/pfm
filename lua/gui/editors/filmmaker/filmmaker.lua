@@ -1118,16 +1118,7 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 				local baseIndex = graph.typeComponentIndex
 
 				cmd:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
-				cmd:AddSubCommand(
-					"set_keyframe_value",
-					actorUuid,
-					propertyPath,
-					valueType,
-					timestamp,
-					nil,
-					value,
-					baseIndex
-				)
+				cmd:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, timestamp, nil, value, baseIndex)
 			end
 		end
 		pfm.undoredo.push("create_keyframe", cmd)()

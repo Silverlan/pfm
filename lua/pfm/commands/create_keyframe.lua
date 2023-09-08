@@ -29,6 +29,7 @@ function Command.does_keyframe_exist(animManager, actorUuid, propertyPath, times
 	return false, editorChannel
 end
 function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseIndex)
+	baseIndex = baseIndex or 0
 	pfm.Command.Initialize(self)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
