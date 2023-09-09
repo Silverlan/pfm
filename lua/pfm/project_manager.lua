@@ -51,6 +51,7 @@ end
 function pfm.ProjectManager:OnRemove()
 	util.remove(self.m_cbDisableEscapeMenu)
 	util.remove(self.m_cbDisableDefaultConsoleInput)
+	util.remove(self.m_cbOnUndoRedoChanged)
 end
 function pfm.ProjectManager:OpenEscapeMenu() end
 function pfm.ProjectManager:CreateInitialProject()
@@ -328,6 +329,17 @@ function pfm.ProjectManager:CloseProject()
 end
 function pfm.ProjectManager:OnProjectLoaded(fileName, project) end
 function pfm.ProjectManager:OnProjectClosed() end
+function pfm.ProjectManager:ResetEditState()
+	self.m_hasBeenEdited = false
+	if util.is_valid(self.m_cbOnUndoRedoChanged) == false then
+		self.m_cbOnUndoRedoChanged = pfm.undoredo.add_callback("OnChange", function()
+			self.m_hasBeenEdited = true
+		end)
+	end
+end
+function pfm.ProjectManager:IsProjectEdited()
+	return self.m_hasBeenEdited or false
+end
 function pfm.ProjectManager:ImportSFMProject(projectFilePath)
 	self:CloseProject()
 	pfm.log("Converting SFM project '" .. projectFilePath .. "' to PFM...", pfm.LOG_CATEGORY_SFM)

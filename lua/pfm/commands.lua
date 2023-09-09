@@ -17,17 +17,27 @@ console.register_variable(
 pfm = pfm or {}
 pfm.impl = pfm.impl or {}
 pfm.impl.commands = pfm.impl.commands or {}
+pfm.impl.commandToIdentifier = pfm.impl.commandToIdentifier or {}
 function pfm.register_command(identifier, class)
 	pfm.impl.commands[identifier] = {
 		class = class,
 	}
+	pfm.impl.commandToIdentifier[class] = identifier
 end
-function pfm.create_command(identifier, ...)
+function pfm.create_command_object(identifier, ...)
 	local cmd = pfm.impl.commands[identifier]
 	if cmd == nil then
 		return
 	end
 	local o = cmd.class()
+	o.m_identifier = identifier
+	return o
+end
+function pfm.create_command(identifier, ...)
+	local o = pfm.create_command_object(identifier, ...)
+	if o == nil then
+		return
+	end
 	local res = o:Initialize(...)
 	if res == pfm.Command.RESULT_FAILURE or res == pfm.Command.RESULT_NO_OP then
 		return
@@ -60,7 +70,7 @@ function BaseCommand:Initialize()
 	return false
 end
 function BaseCommand:GetIdentifier()
-	return util.get_type_name(self)
+	return self.m_identifier or ""
 end
 function BaseCommand:GetData()
 	return self.m_data:GetAssetData():GetData()
@@ -102,15 +112,20 @@ function BaseCommand:LogFailure(msg)
 		pfm.LOG_SEVERITY_WARNING
 	)
 end
+function BaseCommand:GetSubCommands()
+	return self.m_subCommands
+end
+function BaseCommand:AddSubCommandObject(o)
+	table.insert(self.m_subCommands, o)
+end
 function BaseCommand:AddSubCommand(identifier, ...)
 	local o
 	if type(identifier) == "string" then
-		local cmd = pfm.impl.commands[identifier]
-		if cmd == nil then
+		o = pfm.create_command_object(identifier, ...)
+		if o == nil then
 			self:LogFailure("Failed to create sub-command '" .. identifier .. "': No such command found!")
 			return pfm.Command.RESULT_INVALID_COMMAND
 		end
-		o = cmd.class()
 	else
 		o = identifier
 		identifier = o:GetIdentifier()
@@ -123,7 +138,7 @@ function BaseCommand:AddSubCommand(identifier, ...)
 	elseif res == pfm.Command.RESULT_NO_OP then
 		return res
 	end
-	table.insert(self.m_subCommands, o)
+	self:AddSubCommandObject(o)
 	return res, o
 end
 

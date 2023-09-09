@@ -27,8 +27,16 @@ pfm.undoredo.add_callback = function(name, f)
 	return pfm.undoredo.detail.callback_handler:AddCallback(name, f)
 end
 
+pfm.undoredo.get_undo_position = function()
+	return pfm.undoredo.action_position
+end
+
+pfm.undoredo.get_locale_identifier = function(baseName)
+	return "pfm_undoredo_" .. baseName
+end
+
 pfm.undoredo.push = function(name, actionDo, undo)
-	name = "pfm_undoredo_" .. name
+	name = pfm.undoredo.get_locale_identifier(name)
 	if actionDo == nil then
 		return function() end
 	end
@@ -161,6 +169,15 @@ pfm.redo = function()
 	pfm.tag_render_scene_as_dirty()
 	pfm.undoredo.detail.callback_handler:CallCallbacks("OnRedo", data.name)
 	pfm.undoredo.detail.callback_handler:CallCallbacks("OnChange")
+end
+
+pfm.undoredo.get_stack = function()
+	return pfm.undoredo.stack
+end
+
+pfm.undoredo.set_stack = function(stack, undoPosition)
+	pfm.undoredo.stack = stack
+	pfm.undoredo.action_position = undoPosition
 end
 
 pfm.undoredo.detail.print = function()
