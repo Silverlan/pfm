@@ -653,6 +653,17 @@ function gui.PFMActorEditor:OnAnimationChannelMathExpressionChanged(channel, tra
 	end
 	self:UpdatePropertyIcons(tostring(actor:GetUniqueId()), componentId, targetPath)
 end
+function gui.PFMActorEditor:OnGraphCurveAnimationDataChanged(filmClip, graphCurve, animClip, channel, valueBaseIndex)
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+
+	local actor = animClip:GetActor()
+	local targetPath = channel:GetTargetPath()
+	animManager:SetAnimationDirty(actor) -- TODO: Move this to core filmmaker
+	pfm.tag_render_scene_as_dirty()
+
+	self:UpdateActorProperty(actor, targetPath)
+end
 function gui.PFMActorEditor:UpdateChannelValue(data, editorChannel)
 	-- TODO: Mark as dirty, then update lazily?
 	--[[local udmChannel = data.udmChannel
@@ -735,6 +746,12 @@ function gui.PFMActorEditor:Setup(filmClip)
 		"OnAnimationChannelMathExpressionChanged",
 		function(filmClip, track, animationClip, channel, oldExpr, expr)
 			self:OnAnimationChannelMathExpressionChanged(channel, track, animationClip, self, oldExpr, expr)
+		end
+	)
+	add_change_listener(
+		"OnGraphCurveAnimationDataChanged",
+		function(filmClip, graphCurve, animClip, channel, valueBaseIndex)
+			self:OnGraphCurveAnimationDataChanged(filmClip, graphCurve, animClip, channel, valueBaseIndex)
 		end
 	)
 

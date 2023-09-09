@@ -240,8 +240,8 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, o
 		end
 		time = time or fm:GetTimeOffset()
 
-		local cmd = pfm.create_command("composition")
 		local actorUuid = tostring(actorData:GetUniqueId())
+		local cmd = pfm.create_command("keyframe_property_composition", actorUuid, targetPath, baseIndex)
 		local animData, propData = self:GetAnimatedPropertyData(actorData, targetPath, time)
 		if animData ~= false then
 			if

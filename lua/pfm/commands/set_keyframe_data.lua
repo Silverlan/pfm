@@ -26,10 +26,9 @@ function Command:Initialize(
 	end
 
 	local data = self:GetData()
+	newTime = newTime or oldTime
 	data:SetValue("oldTime", udm.TYPE_FLOAT, oldTime)
-	if newTime ~= nil then
-		data:SetValue("newTime", udm.TYPE_FLOAT, newTime)
-	end
+	data:SetValue("newTime", udm.TYPE_FLOAT, newTime)
 	if newValue ~= nil then
 		if oldValue ~= nil then
 			data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
