@@ -1054,8 +1054,7 @@ function gui.WIFilmmaker:OnRemove()
 	self:UpdateInputBindings()
 
 	if self.m_runUpdaterOnShutdown then
-		debug.print("run_updater")
-		--util.run_updater()
+		util.run_updater()
 	end
 
 	gui.set_context_menu_skin()
