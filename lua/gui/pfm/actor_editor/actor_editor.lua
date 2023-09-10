@@ -873,10 +873,18 @@ function gui.PFMActorEditor:UpdateControlValues()
 		end
 	end
 end
-function gui.PFMActorEditor:ApplyComponentChannelValue(actorEditor, component, controlData, oldValue, value, final)
+function gui.PFMActorEditor:ApplyComponentChannelValue(
+	actorEditor,
+	component,
+	controlData,
+	udmType,
+	oldValue,
+	value,
+	final
+)
 	local actor = component:GetActor()
 	if actor ~= nil and controlData.path ~= nil then
-		actorEditor:UpdateAnimationChannelValue(actor, controlData.path, oldValue, value, nil, final)
+		actorEditor:UpdateAnimationChannelValue(actor, controlData.path, udmType, oldValue, value, nil, final)
 	end
 end
 function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, controlData)

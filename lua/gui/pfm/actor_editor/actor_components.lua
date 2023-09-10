@@ -646,6 +646,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 										self,
 										component,
 										controlData,
+										udmType,
 										oldValue,
 										memberValue,
 										final

@@ -470,36 +470,8 @@ function gui.WIFilmmaker:SaveUndoRedoStack()
 	if not console.get_convar_bool("pfm_save_undo_stack") then
 		return
 	end
-
-	local stack = pfm.undoredo.get_stack()
 	local udmUndoRedo = udmSession:Add("undoredo")
-	udmUndoRedo:SetValue("undoPosition", udm.TYPE_UINT32, pfm.undoredo.get_undo_position())
-
-	udmUndoRedo:RemoveValue("stack")
-	udmUndoRedo:AddArray("stack", #stack, udm.TYPE_ELEMENT)
-
-	pfm.log("Saving undo/redo stack with " .. #stack .. " items...", pfm.LOG_CATEGORY_PFM)
-	local udmStack = udmUndoRedo:Get("stack")
-	udmStack:Resize(#stack)
-	local function write_command(udmData, cmd, name)
-		udmData:Clear()
-		udmData:SetValue("command", udm.TYPE_STRING, cmd:GetIdentifier())
-		if name ~= nil then
-			udmData:SetValue("name", udm.TYPE_STRING, name)
-		end
-		local subCommands = cmd:GetSubCommands()
-		udmData:AddArray("subCommands", #subCommands, udm.TYPE_ELEMENT)
-		local udmSubCmds = udmData:Get("subCommands")
-		for i, subCmd in ipairs(subCommands) do
-			write_command(udmSubCmds:Get(i - 1), subCmd)
-		end
-		local udmCmdData = udmData:Add("data")
-		local data = cmd:GetData()
-		udmCmdData:Merge(data, udm.MERGE_FLAG_BIT_DEEP_COPY)
-	end
-	for i, cmdData in ipairs(stack) do
-		write_command(udmStack:Get(i - 1), cmdData.command, cmdData.command:GetIdentifier())
-	end
+	pfm.undoredo.serialize(udmUndoRedo)
 end
 function gui.WIFilmmaker:LoadUndoRedoStack()
 	pfm.undoredo.clear()
@@ -514,47 +486,7 @@ function gui.WIFilmmaker:LoadUndoRedoStack()
 	if udmUndoRedo:IsValid() == false then
 		return
 	end
-	local udmStack = udmUndoRedo:Get("stack")
-	local undoPosition = udmUndoRedo:GetValue("undoPosition", udm.TYPE_UINT32)
-
-	pfm.log("Restoring undo/redo stack with " .. udmStack:GetSize() .. " items...", pfm.LOG_CATEGORY_PFM)
-	local stack = {}
-	local function read_command(udmData)
-		local identifier = udmData:GetValue("command", udm.TYPE_STRING)
-		local udmCmdData = udmData:Get("data")
-		local cmd = pfm.create_command_object(identifier)
-		if cmd ~= nil then
-			cmd:GetData():Merge(udmCmdData, udm.MERGE_FLAG_BIT_DEEP_COPY)
-
-			local udmSubCmds = udmData:Get("subCommands")
-			for i = 0, udmSubCmds:GetSize() - 1 do
-				local udmSubCmd = udmSubCmds:Get(i)
-				local subCmd = read_command(udmSubCmd)
-				if subCmd ~= nil then
-					cmd:AddSubCommandObject(subCmd)
-				end
-			end
-			return cmd
-		else
-			pfm.log(
-				"Failed to restore undo/redo command '" .. identifier .. "' from project: Command not found!",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_ERROR
-			)
-		end
-	end
-	for i = 0, udmStack:GetSize() - 1 do
-		local udmData = udmStack:Get(i)
-		local cmd = read_command(udmData)
-		if cmd ~= nil then
-			local name = udmData:GetValue("name", udm.TYPE_STRING)
-			table.insert(stack, {
-				name = pfm.undoredo.get_locale_identifier(name),
-				command = cmd,
-			})
-		end
-	end
-	pfm.undoredo.set_stack(stack, undoPosition)
+	pfm.undoredo.deserialize(udmUndoRedo)
 end
 function gui.WIFilmmaker:ShowCloseConfirmation(action, callActionOnCancel)
 	callActionOnCancel = callActionOnCancel or false

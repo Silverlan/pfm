@@ -58,22 +58,28 @@ end
 -- Quaternions are represented as euler angles in the interface and have to be
 -- converted accordingly
 local function channel_value_to_editor_value(val, channelValueType)
-	if channelValueType ~= udm.TYPE_QUATERNION then
-		return val
+	if channelValueType == udm.TYPE_QUATERNION then
+		return val:ToEulerAngles()
+	elseif channelValueType == udm.TYPE_BOOLEAN then
+		return val and 1.0 or 0.0
 	end
-	return val:ToEulerAngles()
+	return val
 end
 local function channel_value_type_to_editor_value_type(channelValueType)
-	if channelValueType ~= udm.TYPE_QUATERNION then
+	if channelValueType == udm.TYPE_QUATERNION then
 		return udm.TYPE_EULER_ANGLES
+	elseif channelValueType == udm.TYPE_BOOLEAN then
+		return udm.TYPE_FLOAT
 	end
 	return channelValueType
 end
 local function editor_value_to_channel_value(val, channelValueType)
-	if channelValueType ~= udm.TYPE_QUATERNION then
-		return val
+	if channelValueType == udm.TYPE_QUATERNION then
+		return val:ToQuaternion()
+	elseif channelValueType == udm.TYPE_BOOLEAN then
+		return (val >= 0.5) and true or false
 	end
-	return val:ToQuaternion()
+	return val
 end
 
 local function get_interpolation_mode(pathKeys, keyIndex, valueType)

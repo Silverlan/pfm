@@ -63,11 +63,11 @@ function Element:SetActorAnimationComponentProperty(actor, targetPath, time, val
 end
 
 function Element:UpdateActorAnimatedPropertyValue(actorData, targetPath, value) -- For internal use only
-	local actorEditor = self:GetActorEditor()
+	--[[local actorEditor = self:GetActorEditor()
 	if util.is_valid(actorEditor) == false then
 		return true
 	end
-	return actorEditor:UpdateAnimationChannelValue(actorData, targetPath, nil, value)
+	return actorEditor:UpdateAnimationChannelValue(actorData, targetPath, nil, value)]]
 end
 function Element:SetActorGenericProperty(actor, targetPath, value, udmType)
 	local actorData = actor:GetActorData()

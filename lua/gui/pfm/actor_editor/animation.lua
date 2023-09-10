@@ -198,7 +198,15 @@ function gui.PFMActorEditor:GetAnimationChannel(actor, path, addIfNotExists)
 	local channel = channelClip:GetChannel(path, varType, addIfNotExists)
 	return channel, channelClip
 end
-function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, oldValue, value, baseIndex, final) -- For internal use only
+function gui.PFMActorEditor:UpdateAnimationChannelValue(
+	actorData,
+	targetPath,
+	udmType,
+	oldValue,
+	value,
+	baseIndex,
+	final
+) -- For internal use only
 	-- If the property is animated, we'll defer the assignment of the value to the animation manager.
 	-- If the channel for the property only has a single animation value, and we're not in the graph editor, special behavior is triggered:
 	-- In this case we will set both the base value of the property, as well as the animation value.
@@ -245,16 +253,27 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, o
 		local animData, propData = self:GetAnimatedPropertyData(actorData, targetPath, time)
 		if animData ~= false then
 			if
-				pfm.CommandCreateKeyframe.does_keyframe_exist(animManager, actorUuid, targetPath, time, baseIndex)
-				== false
+				not pfm.CommandCreateKeyframe.does_keyframe_exist(animManager, actorUuid, targetPath, time, baseIndex)
 			then
-				cmd:AddSubCommand("create_keyframe", actorUuid, animData.path, animData.valueType, time, baseIndex)
+				local cmd =
+					pfm.create_command("create_keyframe", actorUuid, animData.path, animData.valueType, time, baseIndex)
+				pfm.undoredo.push("create_keyframe", cmd)()
 			end
 		else
 			-- TODO
 			debug.print("ERROR")
 		end
 
+		if not inGraphEditor then
+			cmd:AddSubCommand(
+				"set_actor_property",
+				tostring(actorData:GetUniqueId()),
+				targetPath,
+				oldValue,
+				value,
+				udmType
+			)
+		end
 		cmd:AddSubCommand(
 			"set_keyframe_value",
 			actorUuid,
@@ -270,13 +289,7 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, o
 			cmd:Execute()
 		end
 
-		-- TODO: Add main property action from return value
-		--
-
-		-- self:SetAnimationChannelValue(actorData, targetPath, value, baseIndex, time)
-		if inGraphEditor then
-			return false
-		end
+		return
 	else
 		if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
 			pfm.log(
@@ -290,7 +303,20 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(actorData, targetPath, o
 			)
 		end
 	end
-	return true -- Returning true will ensure the base value will be changed
+
+	local cmd = pfm.create_command(
+		"set_actor_property",
+		tostring(actorData:GetUniqueId()),
+		targetPath,
+		oldValue,
+		value,
+		udmType
+	)
+	if final then
+		pfm.undoredo.push("property", cmd)()
+	else
+		cmd:Execute()
+	end
 end
 function gui.PFMActorEditor:ToChannelValue(value)
 	local channelValue = value
