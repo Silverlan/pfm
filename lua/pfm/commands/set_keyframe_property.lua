@@ -153,7 +153,9 @@ local function register_command(className, cmdName, oldKeyName, newKeyName, valu
 		end
 
 		local data = self:GetData()
-		data:SetValue(oldKeyName, valueType, oldVal)
+		if oldVal ~= nil then
+			data:SetValue(oldKeyName, valueType, oldVal)
+		end
 		data:SetValue(newKeyName, valueType, newVal)
 		return pfm.Command.RESULT_SUCCESS
 	end
@@ -165,6 +167,9 @@ local function register_command(className, cmdName, oldKeyName, newKeyName, valu
 			keyName = oldKeyName
 		end
 		local val = data:GetValue(keyName, udm.TYPE_FLOAT)
+		if val == nil then
+			return
+		end
 
 		local graphCurve = editorChannel:GetGraphCurve()
 		local keyData = graphCurve:GetKey(valueBaseIndex)
