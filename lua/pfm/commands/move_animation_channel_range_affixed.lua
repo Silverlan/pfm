@@ -36,14 +36,16 @@ function AnimationDataBuffer:StoreAnimationData(animManager, actor, propertyPath
 	udmAnimData:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	udmAnimData:SetValue("startTime", udm.TYPE_FLOAT, startTime)
 	udmAnimData:SetValue("endTime", udm.TYPE_FLOAT, endTime)
-	local udmTimes = udmAnimData:AddArray("times", numIndices, udm.TYPE_FLOAT)
-	local udmValues = udmAnimData:AddArray("values", numIndices, valueType)
+	local udmTimes = udmAnimData:AddArray("times", numIndices, udm.TYPE_FLOAT, udm.ARRAY_TYPE_COMPRESSED)
+	local udmValues = udmAnimData:AddArray("values", numIndices, valueType, udm.ARRAY_TYPE_COMPRESSED)
 	local idx = 0
 	for i = idxStart, idxStart + (numIndices - 1) do
 		udmTimes:SetValue(idx, udm.TYPE_FLOAT, channel:GetTime(i))
 		udmValues:SetValue(idx, valueType, channel:GetValue(i))
 		idx = idx + 1
 	end
+	udmTimes:ClearUncompressedMemory()
+	udmValues:ClearUncompressedMemory()
 	return true, idxStart
 end
 function AnimationDataBuffer:RestoreAnimationData(animManager, actor, propertyPath, timeOffset, valueOffset)
@@ -81,6 +83,9 @@ function AnimationDataBuffer:RestoreAnimationData(animManager, actor, propertyPa
 		panimaChannel:InsertValues(times, values)
 	end
 	animClip:UpdateAnimationChannel(channel)
+
+	udmAnimData:Get("times"):ClearUncompressedMemory()
+	udmAnimData:Get("values"):ClearUncompressedMemory()
 	return true
 end
 
