@@ -32,11 +32,11 @@ console.register_variable(
 	"The resolution to use for generated asset icons of character models."
 )
 console.register_variable(
-	"pfm_animation_min_curve_sample_deviation_angle",
+	"pfm_animation_rdp_decimation_error",
 	udm.TYPE_FLOAT,
-	0.25,
+	0.03,
 	bit.bor(console.FLAG_BIT_ARCHIVE),
-	"The minimum curve angle (in degrees) at which to create new curve animation data samples."
+	"The error value for decimating animation curves using Ramer–Douglas–Peucker."
 )
 console.register_variable(
 	"pfm_animation_max_curve_sample_count",

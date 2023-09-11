@@ -304,12 +304,6 @@ local function calc_graph_curve_data_points(interpMethod, easingMode, pathKeys, 
 			)
 		end
 
-		--
-		-- We want to take a bunch of data samples on the bezier curve
-		-- to fill our animation channel with. The more samples we use, the more accurately it will match
-		-- the path of the original curve, but at the cost of memory. To reduce the number of samples we need, we create
-		-- a sparse distribution at straight curve segments, and a tight distribution at segments with steep angles.
-		local minDevAngle = console.get_convar_float("pfm_animation_min_curve_sample_deviation_angle")
 		local maxStepCount = console.get_convar_int("pfm_animation_max_curve_sample_count") -- Number of samples will never exceed this value
 		local dt = 1.0 / (maxStepCount - 1)
 		local timeValues = { calc_point(0.0, dt) }
@@ -317,19 +311,14 @@ local function calc_graph_curve_data_points(interpMethod, easingMode, pathKeys, 
 		local endPoint = calc_point(1.0, dt)
 		local prevPoint = startPoint
 		local n = (endPoint - startPoint):GetNormal()
-		local deviation = 0.0
 		for i = 1, maxStepCount - 2 do
 			local t = i * dt
 			local point = calc_point(t, dt)
 			local nToPoint = (point - prevPoint):GetNormal()
 			local ang = math.deg(n:GetAngle(nToPoint))
-			deviation = deviation + ang
-			if deviation >= minDevAngle then -- Only create a sample for this point if it deviates from a straight line to the previous sample (i.e. if linear interpolation would be insufficient)
-				table.insert(timeValues, point)
-				n = nToPoint
 
-				deviation = 0
-			end
+			table.insert(timeValues, point)
+			n = nToPoint
 
 			prevPoint = point
 		end
@@ -351,6 +340,27 @@ local function calc_graph_curve_data_points(interpMethod, easingMode, pathKeys, 
 			)
 		end
 	end
+
+	-- Reduce points
+	local points = {}
+	for i = 1, #timestamps do
+		table.insert(points, Vector2(timestamps[i], dataValues[i]))
+	end
+	local numOriginalPoints = #points
+	points = math.reduce_curve_points(points, console.get_convar_float("pfm_animation_rdp_decimation_error"))
+	pfm.log(
+		"Number of points in curve segment has been reduced from " .. numOriginalPoints .. " to " .. #points,
+		pfm.LOG_CATEGORY_PFM
+	)
+
+	timestamps = {}
+	dataValues = {}
+	for _, p in ipairs(points) do
+		table.insert(timestamps, p.x)
+		table.insert(dataValues, p.x)
+	end
+	--
+
 	return timestamps, dataValues
 end
 
