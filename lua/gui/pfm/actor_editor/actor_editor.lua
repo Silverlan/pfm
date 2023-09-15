@@ -2651,6 +2651,25 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 				)
 			end)
 			:SetName("show_in_explorer")
+
+		local mdlObj = game.get_model(mdl)
+		if mdlObj ~= nil then
+			local pSeqItem, pSeqMenu = pContext:AddSubMenu(
+				locale.get_text("pfm_import_sequence"),
+				nil,
+				function(pItem, pMenu)
+					local animNames = mdlObj:GetAnimationNames()
+					table.sort(animNames)
+					for _, animName in ipairs(animNames) do
+						pMenu:AddItem(animName, function()
+							tool.get_filmmaker():ImportSequence(actor, animName)
+						end)
+					end
+					pMenu:Update()
+				end
+			)
+			pSeqItem:SetName("import_sequence")
+		end
 	end
 	pContext
 		:AddItem(locale.get_text("pfm_move_work_camera_to_actor"), function()
