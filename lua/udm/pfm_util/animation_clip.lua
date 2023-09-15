@@ -204,6 +204,24 @@ function pfm.udm.EditorChannelData:FindKeyIndexByTime(t, baseIndex)
 	end
 	return findTimeIndex(keyData, keyData.GetTime, keyData:GetTimeCount(), t)
 end
+function pfm.udm.EditorChannelData:FindUpperKeyIndex(t, baseIndex)
+	local graphCurve = self:GetGraphCurve()
+	local keyData = graphCurve:GetKey(baseIndex)
+	if keyData == nil then
+		return
+	end
+
+	local idx = self:FindLowerKeyIndex(t, baseIndex)
+	if idx ~= nil then
+		idx = idx + 1
+	else
+		idx = 0
+	end
+	if idx >= keyData:GetTimeCount() then
+		return
+	end
+	return idx
+end
 function pfm.udm.EditorChannelData:FindLowerKeyIndex(t, baseIndex)
 	baseIndex = baseIndex or 0
 

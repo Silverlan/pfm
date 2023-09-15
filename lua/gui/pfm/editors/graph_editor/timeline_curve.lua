@@ -34,7 +34,14 @@ function gui.PFMTimelineCurve:GetCurve()
 	return self.m_curve
 end
 function gui.PFMTimelineCurve:GetChannel()
-	return self.m_channel
+	if self.m_editorChannel == nil then
+		return
+	end
+	local animClip = self.m_editorChannel:GetAnimationClip()
+	if animClip == nil then
+		return
+	end
+	return animClip:GetChannel(self.m_editorChannel:GetTargetPath())
 end
 function gui.PFMTimelineCurve:GetPanimaChannel()
 	local animClip = self:GetAnimationClip()

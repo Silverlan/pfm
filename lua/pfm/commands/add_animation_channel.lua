@@ -21,7 +21,7 @@ function Command:Initialize(actorUuid, propertyPath, valueType)
 		return pfm.Command.RESULT_NO_OP
 	end
 	local data = self:GetData()
-	data:SetValue("actor", udm.TYPE_STRING, actorUuid)
+	data:SetValue("actor", udm.TYPE_STRING, tostring(actor:GetUniqueId()))
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
 	data:SetValue("propertyType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	return pfm.Command.RESULT_SUCCESS

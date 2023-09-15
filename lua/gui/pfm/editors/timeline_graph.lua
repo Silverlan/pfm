@@ -678,6 +678,77 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
+function gui.PFMTimelineGraph:ApplyCurveFittingToRange(actorUuid, propertyPath, baseIndex, channel, tStart, tEnd)
+	local keyframes = channel:CalculateCurveFittingKeyframes(channel, tStart, tEnd)
+	if keyframes == nil then
+		return
+	end
+	local panimaChannel = channel:GetPanimaChannel()
+	local cmd = pfm.create_command("keyframe_property_composition", actorUuid, propertyPath, baseIndex)
+	cmd:AddSubCommand(
+		"apply_curve_fitting",
+		actorUuid,
+		propertyPath,
+		keyframes,
+		panimaChannel:GetValueType(),
+		baseIndex
+	)
+	pfm.undoredo.push("apply_curve_fitting", cmd)()
+end
+function gui.PFMTimelineGraph:ApplyCurveFitting()
+	for _, graphData in ipairs(self.m_graphs) do
+		local curve = graphData.curve
+		local editorChannel = curve:GetEditorChannel()
+
+		local animClip = editorChannel:GetAnimationClip()
+		local actor = editorChannel:GetActor()
+		local propertyPath = editorChannel:GetTargetPath()
+		local typeComponentIndex = graphData.typeComponentIndex
+		local channel = animClip:FindChannel(propertyPath)
+		if channel:GetValueCount() > 0 then
+			local tStartAnim = channel:GetTime(0)
+			local tEndAnim = channel:GetTime(channel:GetTimeCount() - 1)
+			local keyData = editorChannel:GetGraphCurve():GetKey(typeComponentIndex)
+			if keyData ~= nil then
+				local tStartKf = keyData:GetTime(0)
+				local tEndKf = keyData:GetTime(keyData:GetTimeCount() - 1)
+
+				self:ApplyCurveFittingToRange(actor, propertyPath, typeComponentIndex, channel, tStartAnim, tStartKf)
+				self:ApplyCurveFittingToRange(actor, propertyPath, typeComponentIndex, channel, tEndKf, tEndAnim)
+			else
+				-- No keyframes exist, just apply curve fitting to entire range
+				self:ApplyCurveFittingToRange(actor, propertyPath, typeComponentIndex, channel, tStartAnim, tEndAnim)
+			end
+		end
+	end
+end
+function gui.PFMTimelineGraph:ImportSequence()
+	local mdl = game.load_model("player/soldier")
+	local anim = mdl:GetAnimation(mdl:LookupAnimation("walk"))
+
+	local actor = pfm.dereference("293dd58c-f4f2-42a5-9ddd-ae01ecd98849")
+	local panimaAnim = game.Model.to_panima_animation(
+		mdl:GetSkeleton(),
+		anim,
+		mdl:GetReferencePose() -- mdl:GetAnimation(mdl:LookupAnimation("reference")):GetFrame(0)
+	)
+	local cmd = pfm.create_command("composition")
+	for _, channel in ipairs(panimaAnim:GetChannels()) do
+		local propertyPath = channel:GetTargetPath():ToUri(false)
+		local valueType = channel:GetValueType()
+		cmd:AddSubCommand("add_animation_channel", actor, propertyPath, valueType)
+		cmd:AddSubCommand("add_editor_channel", actor, propertyPath)
+		cmd:AddSubCommand(
+			"set_animation_channel_range_data",
+			actor,
+			propertyPath,
+			channel:GetTimes(),
+			channel:GetValues(),
+			valueType
+		)
+	end
+	pfm.undoredo.push("import_sequence", cmd)()
+end
 function gui.PFMTimelineGraph:ZoomAxes(am, updateDataAxis, updateTimeAxis, useCenterAsPivot, cursorPos)
 	useCenterAsPivot = useCenterAsPivot or false
 	local timeLine = self.m_timeline:GetTimeline()
@@ -867,6 +938,9 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i, graphData, updateCurveOnly)
 	graphData.curve:InitializeCurve(graphData.editorChannel, graphData.typeComponentIndex, i)
 
 	local editorChannel = graphData.curve:GetEditorChannel()
+	if editorChannel == nil then
+		return
+	end
 	local curve = editorChannel:GetGraphCurve()
 	local curveValues = curve:CalcUiCurveValues(graphData.typeComponentIndex, function(t)
 		return self:DataTimeToInterfaceTime(graphData, t)

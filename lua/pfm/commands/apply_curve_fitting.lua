@@ -41,8 +41,10 @@ function Command:Initialize(actorUuid, propertyPath, keyframeData, valueType, ba
 		local h0 = bc[2]
 		local h1 = bc[3]
 		local p1 = bc[4]
+
 		local t0 = p0.x
 		local v0 = p0.y
+
 		self:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, t0, baseIndex)
 		self:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, t0, nil, v0, baseIndex)
 
@@ -54,12 +56,13 @@ function Command:Initialize(actorUuid, propertyPath, keyframeData, valueType, ba
 		set_handle_type(t0, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
 		set_handle_type(t1, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
 
-		set_handle_property("time", t0, h0.x, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
-		set_handle_property("delta", t0, h0.y, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
+		set_handle_property("time", t0, h0.x - t0, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
+		set_handle_property("delta", t0, h0.y - v0, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
 
-		set_handle_property("time", t1, h1.x, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
-		set_handle_property("delta", t1, h1.y, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
+		set_handle_property("time", t1, h1.x - t1, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
+		set_handle_property("delta", t1, h1.y - v1, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
 	end
+
 	return pfm.Command.RESULT_SUCCESS
 end
 function Command:DoExecute(data)

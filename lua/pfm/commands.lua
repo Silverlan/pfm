@@ -76,17 +76,37 @@ function BaseCommand:GetData()
 	return self.m_data:GetAssetData():GetData()
 end
 function BaseCommand:DoExecute() end
-function BaseCommand:Execute()
+function BaseCommand:StartExecute(depth)
+	pfm.log(
+		string.rep(" ", depth) .. 'Executing command "' .. tostring(self:GetIdentifier() .. '"...'),
+		pfm.LOG_CATEGORY_PFM,
+		pfm.LOG_SEVERITY_WARNING
+	)
+end
+function BaseCommand:Execute(depth)
+	depth = depth or 0
+	self:StartExecute(depth)
+
 	for _, subCmd in ipairs(self.m_subCommands) do
-		subCmd:Execute()
+		subCmd:Execute(depth + 1)
 	end
 	return self:DoExecute(self:GetData())
 end
 function BaseCommand:DoUndo() end
-function BaseCommand:Undo()
+function BaseCommand:StartUndo(depth)
+	pfm.log(
+		string.rep(" ", depth) .. 'Undoing command "' .. tostring(self:GetIdentifier() .. '"...'),
+		pfm.LOG_CATEGORY_PFM,
+		pfm.LOG_SEVERITY_WARNING
+	)
+end
+function BaseCommand:Undo(depth)
+	depth = depth or 0
+	self:StartUndo(depth)
+
 	local results = { self:DoUndo(self:GetData()) }
 	for _, subCmd in ipairs(self.m_subCommands) do
-		subCmd:Undo()
+		subCmd:Undo(depth + 1)
 	end
 	return unpack(results)
 end

@@ -6,14 +6,14 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function pfm.udm.EditorChannelData:GetKeyframeTimeBoundaries(startTime, endTime)
+function pfm.udm.EditorChannelData:GetKeyframeTimeBoundaries(startTime, endTime, baseIndex)
 	startTime = startTime or math.huge
 	endTime = endTime or -math.huge
 	local editorGraphCurve = self:GetGraphCurve()
 	local numKeys = editorGraphCurve:GetKeyCount()
 	local startTimeBoundary = startTime
 	local endTimeBoundary = endTime
-	for i = 0, numKeys - 1 do
+	local function find_boundaries(i)
 		local pathKeys = editorGraphCurve:GetKey(i)
 
 		local keyIndexStart = self:FindLowerKeyIndex(startTime, i) or 0
@@ -27,6 +27,13 @@ function pfm.udm.EditorChannelData:GetKeyframeTimeBoundaries(startTime, endTime)
 		t = pathKeys:GetTime(keyIndexEnd)
 		if t ~= nil then
 			endTimeBoundary = math.max(endTimeBoundary, t)
+		end
+	end
+	if baseIndex ~= nil then
+		find_boundaries(baseIndex)
+	else
+		for i = 0, numKeys - 1 do
+			find_boundaries(i)
 		end
 	end
 	if startTimeBoundary == math.huge or endTimeBoundary == math.huge then

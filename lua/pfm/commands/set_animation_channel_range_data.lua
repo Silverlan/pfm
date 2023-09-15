@@ -11,7 +11,7 @@ function Command:Initialize(actorUuid, propertyPath, times, values, valueType)
 	pfm.Command.Initialize(self)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
-		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
+		self:LogFailure("Actor '" .. tostring(actor:GetUniqueId()) .. "' not found!")
 		return pfm.Command.RESULT_FAILURE
 	end
 
@@ -30,7 +30,8 @@ function Command:Initialize(actorUuid, propertyPath, times, values, valueType)
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
 	data:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	if
-		self:StoreAnimationDataInTimeRange("originalAnimationData", actor, propertyPath, startTime, endTime) == false
+		self:StoreAnimationDataInTimeRange("originalAnimationData", actor, propertyPath, valueType, startTime, endTime)
+		== false
 	then
 		data:Clear()
 		self:LogFailure("Failed to write original animation data!")
@@ -45,17 +46,17 @@ function Command:StoreAnimationData(keyName, startTime, endTime, times, values, 
 	udmAnimData:SetValue("startTime", udm.TYPE_FLOAT, startTime)
 	udmAnimData:SetValue("endTime", udm.TYPE_FLOAT, endTime)
 	udmAnimData:SetArrayValues("times", udm.TYPE_FLOAT, times)
-	udmAnimData:SetArrayValues("values", udm.TYPE_FLOAT, values)
+	udmAnimData:SetArrayValues("values", valueType, values)
 	return true
 end
-function Command:StoreAnimationDataInTimeRange(keyName, actor, propertyPath, startTime, endTime)
+function Command:StoreAnimationDataInTimeRange(keyName, actor, propertyPath, valueType, startTime, endTime)
 	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
 	if animClip == nil then
-		return false
+		return self:StoreAnimationData(keyName, startTime, endTime, {}, {}, valueType)
 	end
 	local idxStart, idxEnd = channel:FindIndexRangeInTimeRange(startTime, endTime)
 	if idxStart == nil or idxEnd < idxStart then
-		return false
+		return self:StoreAnimationData(keyName, startTime, endTime, {}, {}, valueType)
 	end
 
 	local numIndices = (idxEnd - idxStart + 1)
@@ -83,7 +84,7 @@ function Command:RestoreAnimationData(keyName)
 	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
 
 	local anim, panimaChannel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
-	if animClip == nil then
+	if animClip == nil or panimaChannel == nil then
 		return
 	end
 

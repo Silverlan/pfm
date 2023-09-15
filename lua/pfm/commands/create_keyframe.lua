@@ -48,6 +48,7 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 		return pfm.Command.RESULT_FAILURE
 	end
 
+	--[[ Commented because we animation data will automatically be removed anyway when the keyframe curve segments are updated.
 	if editorChannel ~= nil then
 		local graphCurve = editorChannel:GetGraphCurve()
 		local keyData = graphCurve:GetKey(baseIndex)
@@ -66,7 +67,7 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 				end
 			end
 		end
-	end
+	end]]
 
 	local data = self:GetData()
 	data:SetValue("actor", udm.TYPE_STRING, actorUuid)

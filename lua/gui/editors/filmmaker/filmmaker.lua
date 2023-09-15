@@ -1127,12 +1127,12 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 				local valueType = graph.valueType
 				local value = udm.get_default_value(valueType)
 				local timestamp = graphEditor:InterfaceTimeToDataTime(graph, t)
-				local channel = graph.curve:GetPanimaChannel()
-				if channel ~= nil then
-					local idx0, idx1, factor = channel:FindInterpolationIndices(timestamp)
+				local panimaChannel = graph.curve:GetPanimaChannel()
+				if panimaChannel ~= nil then
+					local idx0, idx1, factor = panimaChannel:FindInterpolationIndices(timestamp)
 					if idx0 ~= nil then
-						local v0 = channel:GetValue(idx0)
-						local v1 = channel:GetValue(idx1)
+						local v0 = panimaChannel:GetValue(idx0)
+						local v1 = panimaChannel:GetValue(idx1)
 						value = udm.lerp(v0, v1, factor)
 					end
 				end
@@ -1141,8 +1141,48 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 				local propertyPath = graph.targetPath
 				local baseIndex = graph.typeComponentIndex
 
-				cmd:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
-				cmd:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, timestamp, nil, value, baseIndex)
+				local res, subCmd =
+					cmd:AddSubCommand("keyframe_property_composition", actorUuid, propertyPath, baseIndex)
+
+				local curve = graph.curve
+				local editorChannel = curve:GetEditorChannel()
+				local channel = curve:GetChannel()
+				if editorChannel ~= nil and channel ~= nil then
+					local graphCurve = editorChannel:GetGraphCurve()
+					local prevKeyframeIdx = editorChannel:FindLowerKeyIndex(timestamp, baseIndex)
+					local nextKeyframeIdx = editorChannel:FindUpperKeyIndex(timestamp, baseIndex)
+
+					local prevKfTime, nextKfTime
+					if prevKeyframeIdx ~= nil then
+						prevKfTime = graphCurve:GetKey(baseIndex):GetTime(prevKeyframeIdx)
+					end
+					if nextKeyframeIdx ~= nil then
+						nextKfTime = graphCurve:GetKey(baseIndex):GetTime(nextKeyframeIdx)
+					end
+
+					local function add_fitting_keyframes(tStart, tEnd)
+						local keyframes = channel:CalculateCurveFittingKeyframes(tStart, tEnd)
+						if #keyframes > 1 then
+							subCmd:AddSubCommand(
+								"apply_curve_fitting",
+								actorUuid,
+								propertyPath,
+								keyframes,
+								panimaChannel:GetValueType(),
+								baseIndex
+							)
+						end
+					end
+					if prevKfTime ~= nil then
+						add_fitting_keyframes(prevKfTime, timestamp)
+					end
+					if nextKfTime ~= nil then
+						add_fitting_keyframes(timestamp, nextKfTime)
+					end
+				end
+
+				subCmd:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
+				subCmd:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, timestamp, nil, value, baseIndex)
 			end
 		end
 		pfm.undoredo.push("create_keyframe", cmd)()

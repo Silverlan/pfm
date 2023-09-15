@@ -16,6 +16,7 @@ function gui.PFMTimelineTangentControl:OnInitialize()
 	self.m_inLine = lineIn
 
 	local ctrlIn = gui.create("WIPFMDataPointControl", self:GetParent())
+	ctrlIn:SetTangentControl(self)
 	ctrlIn:SetColor(Color.Black)
 	self.m_inCtrl = ctrlIn
 
@@ -25,6 +26,7 @@ function gui.PFMTimelineTangentControl:OnInitialize()
 	self.m_outLine = lineOut
 
 	local ctrlOut = gui.create("WIPFMDataPointControl", self:GetParent())
+	ctrlOut:SetTangentControl(self)
 	ctrlOut:SetColor(Color.Black)
 	self.m_outCtrl = ctrlOut
 

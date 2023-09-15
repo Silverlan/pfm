@@ -35,6 +35,12 @@ function gui.PFMDataPointControl:SetSelected(selected)
 	self:CallCallbacks("OnSelectionChanged", selected)
 end
 function gui.PFMDataPointControl:OnSelectionChanged(selected) end
+function gui.PFMDataPointControl:GetTangentControl()
+	return self.m_tangentControl
+end
+function gui.PFMDataPointControl:SetTangentControl(el)
+	self.m_tangentControl = el
+end
 function gui.PFMDataPointControl:OnThink()
 	if self.m_moveData == nil then
 		return
