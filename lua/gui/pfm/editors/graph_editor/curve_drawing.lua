@@ -71,17 +71,105 @@ function gui.PFMTimelineGraph:EndCanvasDrawing()
 		self.m_canvasData.canvas:EndDrawing()
 
 		local points = self.m_canvasData.canvas:GetPoints()
-		local times = {}
-		local values = {}
-		for _, p in ipairs(points) do
-			table.insert(times, p.x)
-			table.insert(values, p.y)
-		end
-		local actor = pfm.dereference(self.m_canvasData.actor)
-		if actor ~= nil then
-			pfm.undoredo.push(
-				"set_animation_channel_range_data",
-				pfm.create_command(
+		if #points > 0 then
+			local times = {}
+			local values = {}
+			for _, p in ipairs(points) do
+				table.insert(times, p.x)
+				table.insert(values, p.y)
+			end
+			local actor = pfm.dereference(self.m_canvasData.actor)
+			if actor ~= nil then
+				local cmd = pfm.create_command(
+					"keyframe_property_composition",
+					actor,
+					self.m_canvasData.propertyPath,
+					self.m_canvasData.valueBaseIndex
+				)
+				local editorChannel, editorData, animClip = actor:FindEditorChannel(self.m_canvasData.propertyPath)
+				if editorChannel ~= nil then
+					local graphCurve = editorChannel:GetGraphCurve()
+					local keyData = graphCurve:GetKey(self.m_canvasData.valueBaseIndex)
+					local numKeyframes = keyData:GetTimeCount()
+					if numKeyframes > 0 then
+						-- Delete all keyframes within range of new animation data
+						local tStart = points[1].x
+						local tEnd = points[#points].x
+
+						local preKeyframeOutside
+						local preKeyframeInside
+						local postKeyframeInside
+						local postKeyframeOutside
+						for i = 0, numKeyframes - 1 do
+							local kfTime = keyData:GetTime(i)
+							if kfTime <= tStart then
+								preKeyframeOutside = i
+							end
+
+							if kfTime >= tStart and kfTime <= tEnd then
+								preKeyframeInside = preKeyframeInside or i
+								postKeyframeInside = i
+							end
+							if kfTime >= tEnd then
+								postKeyframeOutside = postKeyframeOutside or i
+							end
+						end
+
+						-- Delete inner keyframes
+						if preKeyframeInside ~= nil and postKeyframeInside ~= nil then
+							for i = preKeyframeInside, postKeyframeInside do
+								local t = keyData:GetTime(i)
+								cmd:AddSubCommand(
+									"delete_keyframe",
+									actor,
+									self.m_canvasData.propertyPath,
+									t,
+									self.m_canvasData.valueBaseIndex
+								)
+							end
+						end
+
+						-- If the new animation data intersects the segment between two keyframes, we'll apply
+						-- curve fitting automatically.
+						local curveFittingStartIdx = preKeyframeOutside or preKeyframeInside
+						local curveFittingEndIdx = postKeyframeOutside or postKeyframeInside
+						if
+							curveFittingStartIdx ~= nil
+							and curveFittingEndIdx ~= nil
+							and curveFittingStartIdx ~= curveFittingEndIdx
+						then
+							local channel = actor:FindAnimationChannel(self.m_canvasData.propertyPath)
+							if channel ~= nil then
+								local tLowerKf = keyData:GetTime(curveFittingStartIdx)
+								local tUpperKf = keyData:GetTime(curveFittingEndIdx)
+								local oldTimes, oldValues =
+									channel:GetPanimaChannel():GetDataInRange(tLowerKf, tUpperKf)
+								local tmpChannel = panima.Channel()
+								tmpChannel:GetValueArray():SetValueType(udm.TYPE_FLOAT)
+								tmpChannel:InsertValues(oldTimes, oldValues)
+								tmpChannel:InsertValues(times, values)
+								print("Key fitting in time range ", tLowerKf, tUpperKf)
+								local keyframes = pfm.udm.Channel.calculate_curve_fitting_keyframes(
+									tmpChannel:GetTimes(),
+									tmpChannel:GetValues()
+								)
+
+								if #keyframes > 0 then
+									cmd:AddSubCommand(
+										"apply_curve_fitting",
+										actor,
+										self.m_canvasData.propertyPath,
+										keyframes,
+										udm.TYPE_FLOAT,
+										self.m_canvasData.valueBaseIndex
+									)
+								end
+							end
+						end
+					end
+				end
+
+				cmd:AddSubCommand(
 					"set_animation_channel_range_data",
 					actor,
 					self.m_canvasData.propertyPath,
@@ -89,7 +177,9 @@ function gui.PFMTimelineGraph:EndCanvasDrawing()
 					values,
 					udm.TYPE_FLOAT
 				)
-			)()
+
+				pfm.undoredo.push("set_animation_channel_range_data", cmd)()
+			end
 		end
 	end
 	util.remove(self.m_canvasData.canvas)

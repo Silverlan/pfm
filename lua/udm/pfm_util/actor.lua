@@ -27,6 +27,36 @@ function pfm.udm.Actor:IsVisible()
 	return visible
 end
 
+function pfm.udm.Actor:FindAnimationClip()
+	local filmClip = self:GetFilmClip()
+	local track = filmClip:FindAnimationChannelTrack()
+	return track:FindActorAnimationClip(self, false)
+end
+
+function pfm.udm.Actor:FindAnimationChannel(path)
+	local animClip = self:FindAnimationClip()
+	if animClip == nil then
+		return
+	end
+	return animClip:FindChannel(path), animClip
+end
+
+function pfm.udm.Actor:FindEditorAnimationData()
+	local animClip = self:FindAnimationClip()
+	if animClip == nil then
+		return
+	end
+	return animClip:GetEditorData(), animClip
+end
+
+function pfm.udm.Actor:FindEditorChannel(path)
+	local editorData, animClip = self:FindEditorAnimationData()
+	if editorData == nil then
+		return
+	end
+	return editorData:FindChannel(path, false), editorData, animClip
+end
+
 pfm.udm.Actor.POSE_CHANGE_FLAG_NONE = 0
 pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_POSITION = 1
 pfm.udm.Actor.POSE_CHANGE_FLAG_BIT_ROTATION = 2

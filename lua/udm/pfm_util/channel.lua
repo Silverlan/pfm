@@ -26,15 +26,7 @@ function pfm.udm.Channel:ChangeExpression(expr)
 	filmClip:CallChangeListeners("OnAnimationChannelMathExpressionChanged", track, animationClip, self, oldExpr, expr)
 end
 
-function pfm.udm.Channel:CalculateCurveFittingKeyframes(tStart, tEnd)
-	if math.abs(tEnd - tStart) <= panima.VALUE_EPSILON then
-		return
-	end
-	local n = self:GetValueCount()
-	local panimaChannel = self:GetPanimaChannel()
-
-	local times, values = panimaChannel:GetDataInRange(tStart, tEnd)
-
+function pfm.udm.Channel.calculate_curve_fitting_keyframes(times, values)
 	local error = 8
 	local t = {}
 	-- Curve fitting algorithm expects a table of Vector2 values
@@ -70,4 +62,15 @@ function pfm.udm.Channel:CalculateCurveFittingKeyframes(tStart, tEnd)
 	end
 
 	return keyframes
+end
+
+function pfm.udm.Channel:CalculateCurveFittingKeyframes(tStart, tEnd)
+	if math.abs(tEnd - tStart) <= panima.VALUE_EPSILON then
+		return
+	end
+	local n = self:GetValueCount()
+	local panimaChannel = self:GetPanimaChannel()
+
+	local times, values = panimaChannel:GetDataInRange(tStart, tEnd)
+	return pfm.udm.Channel.calculate_curve_fitting_keyframes(times, values)
 end

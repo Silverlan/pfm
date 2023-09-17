@@ -11,6 +11,7 @@ include("create_keyframe.lua")
 local Command = util.register_class("pfm.CommandDeleteKeyframe", pfm.CommandCreateKeyframe)
 function Command:Initialize(actorUuid, propertyPath, timestamp, baseIndex)
 	pfm.Command.Initialize(self)
+	actorUuid = pfm.get_unique_id(actorUuid)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
 		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
