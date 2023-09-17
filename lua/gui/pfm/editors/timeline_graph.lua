@@ -722,33 +722,6 @@ function gui.PFMTimelineGraph:ApplyCurveFitting()
 		end
 	end
 end
-function gui.PFMTimelineGraph:ImportSequence()
-	local mdl = game.load_model("player/soldier")
-	local anim = mdl:GetAnimation(mdl:LookupAnimation("walk"))
-
-	local actor = pfm.dereference("293dd58c-f4f2-42a5-9ddd-ae01ecd98849")
-	local panimaAnim = game.Model.to_panima_animation(
-		mdl:GetSkeleton(),
-		anim,
-		mdl:GetReferencePose() -- mdl:GetAnimation(mdl:LookupAnimation("reference")):GetFrame(0)
-	)
-	local cmd = pfm.create_command("composition")
-	for _, channel in ipairs(panimaAnim:GetChannels()) do
-		local propertyPath = channel:GetTargetPath():ToUri(false)
-		local valueType = channel:GetValueType()
-		cmd:AddSubCommand("add_animation_channel", actor, propertyPath, valueType)
-		cmd:AddSubCommand("add_editor_channel", actor, propertyPath)
-		cmd:AddSubCommand(
-			"set_animation_channel_range_data",
-			actor,
-			propertyPath,
-			channel:GetTimes(),
-			channel:GetValues(),
-			valueType
-		)
-	end
-	pfm.undoredo.push("import_sequence", cmd)()
-end
 function gui.PFMTimelineGraph:ZoomAxes(am, updateDataAxis, updateTimeAxis, useCenterAsPivot, cursorPos)
 	useCenterAsPivot = useCenterAsPivot or false
 	local timeLine = self.m_timeline:GetTimeline()
