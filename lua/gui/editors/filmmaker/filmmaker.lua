@@ -1077,6 +1077,15 @@ function gui.WIFilmmaker:OnGameViewReloaded()
 	apply_viewport(self:GetSecondaryViewport())
 	apply_viewport(self:GetTertiaryViewport())
 end
+function gui.WIFilmmaker:OpenFileInUdmEditor(filePath)
+	self:OpenWindow("element_viewer")
+	self:GoToWindow("element_viewer")
+	local udmEditor = self:GetWindow("element_viewer")
+	if util.is_valid(udmEditor) == false then
+		return
+	end
+	udmEditor:OpenUdmFile(filePath)
+end
 function gui.WIFilmmaker:UpdateBookmarks()
 	if util.is_valid(self.m_timeline) == false then
 		return

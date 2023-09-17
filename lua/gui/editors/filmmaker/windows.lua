@@ -108,6 +108,16 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 			pItem:SetName("show_in_model_viewer")
 			pItem:SetTooltip(locale.get_text("pfm_model_context_model_viewer"))
 
+			local filePath = asset.find_file(path, asset.TYPE_MODEL)
+			if filePath ~= nil then
+				filePath = asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. filePath
+				local pItem = pContext:AddItem(locale.get_text("pfm_edit_udm_data"), function()
+					local filmmaker = tool.get_filmmaker()
+					filmmaker:OpenFileInUdmEditor(filePath)
+				end)
+				pItem:SetName("edit_udm_data")
+			end
+
 			if asset.is_loaded(path, asset.TYPE_MODEL) == false then
 				local pItem = pContext:AddItem(locale.get_text("pfm_load"), function()
 					game.load_model(path)
