@@ -56,9 +56,7 @@ function unirender.GenericShader:ApplyEyeColor(desc, mat, uv, sphereUv)
 	local irisTesPath = unirender.get_texture_path(irisMap:GetName())
 	local nodeIris = desc:AddTextureNode(irisTesPath)
 
-	-- TODO: Max() and Min() are being used because of strange results with Clamp(), find out cause!
-	local clamped = desc:CombineRGB(sphereUv.x:Max(0.0):Min(1.0), sphereUv.y:Max(0.0):Min(1.0), sphereUv.z)
-	clamped:Link(nodeIris, unirender.Node.image_texture.IN_VECTOR)
+	sphereUv:Link(nodeIris, unirender.Node.image_texture.IN_VECTOR)
 
 	local scleraMap = mat:GetTextureInfo("sclera_map")
 	local irisTesPath = unirender.get_texture_path(scleraMap:GetName())
@@ -77,6 +75,15 @@ function unirender.GenericShader:ApplyEye(desc, mat, uv)
 		return uv
 	end
 	local sphereUv = self:ApplyEyeUv(desc, mat, uv)
+	if shaderName ~= "eye_legacy" then
+		-- Clamp UV coordinates to range [0,1]
+		-- TODO: Max() and Min() are being used because of strange results with Clamp(), find out cause!
+		sphereUv = desc:CombineRGB(sphereUv.x:Max(0.0):Min(1.0), sphereUv.y:Max(0.0):Min(1.0), sphereUv.z)
+	else
+		-- TODO: Why does it have to be flipped for the legacy shader?
+		sphereUv.y = -sphereUv.y
+	end
+
 	local eyeColor = self:ApplyEyeColor(desc, mat, uv, sphereUv)
 	return sphereUv, eyeColor
 end
