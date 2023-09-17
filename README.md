@@ -1,7 +1,3 @@
 # PFM
 
-The Pragma Filmmaker is a software for creating and rendering 3D animated movies and images. It requires a copy of the Pragma game engine to run and is currently in a very early alpha version.
-
-------
-
-TODO
+The Pragma Filmmaker is a software for creating and rendering 3D animated movies and images and runs on the Pragma Game Engine. Please see the repository for [Pragma](https://github.com/Silverlan/pragma#readme) for more information.
