@@ -35,9 +35,9 @@ pfm.undoredo.get_locale_identifier = function(baseName)
 	return "pfm_undoredo_" .. baseName
 end
 
-pfm.undoredo.push = function(name, actionDo, undo)
+pfm.undoredo.push = function(name, command)
 	name = pfm.undoredo.get_locale_identifier(name)
-	if actionDo == nil then
+	if command == nil then
 		return function() end
 	end
 	local pos = pfm.undoredo.action_position + 1
@@ -45,17 +45,11 @@ pfm.undoredo.push = function(name, actionDo, undo)
 		"Pushing action '" .. locale.get_text(name) .. "' to undoredo stack (#" .. pos .. ").",
 		pfm.LOG_CATEGORY_PFM_UNDOREDO
 	)
-	local isCommand = (undo == nil)
+	local isCommand = true
 	if isCommand then
 		pfm.undoredo.stack[pos] = {
 			name = name,
-			command = actionDo,
-		}
-	else
-		pfm.undoredo.stack[pos] = {
-			name = name,
-			action = actionDo,
-			undo = undo,
+			command = command,
 		}
 	end
 	pfm.undoredo.action_position = pos
@@ -73,11 +67,8 @@ pfm.undoredo.push = function(name, actionDo, undo)
 	end
 	pfm.undoredo.detail.callback_handler:CallCallbacks("OnPush", name)
 	pfm.undoredo.detail.callback_handler:CallCallbacks("OnChange")
-	if not isCommand then
-		return actionDo
-	end
 	return function()
-		return actionDo:Execute()
+		return command:Execute()
 	end
 end
 

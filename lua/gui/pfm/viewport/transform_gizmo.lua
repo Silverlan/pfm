@@ -312,11 +312,12 @@ function gui.PFMViewport:UpdateManipulationMode()
 				self:SetBoneTransformProperty(ent, boneId, "scale", pose.scale, udm.TYPE_VECTOR3)
 			end
 		end
-		pfm.undoredo.push("bone_transform", function()
+		-- TODO
+		--[[pfm.undoredo.push("bone_transform", function()
 			apply_pose(newPose)
 		end, function()
 			apply_pose(curPose)
-		end)()
+		end)()]]
 	end)
 	self.m_transformComponent = trC
 end
@@ -791,7 +792,8 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 								end
 
 								local newVal = get_pose_value(newPose)
-								pfm.undoredo.push("bone_transform", function()
+								-- TODO
+								--[[pfm.undoredo.push("bone_transform", function()
 									local entActor = ents.find_by_uuid(uuid)
 									if entActor == nil then
 										return
@@ -828,7 +830,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 									)
 
 									set_pose_value(pose, get_pose_value(oldPose))
-								end)()
+								end)()]]
 							end)
 							self:InitializeTransformWidget(trC, ent)
 						end
