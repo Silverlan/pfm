@@ -35,6 +35,29 @@ function gui.PFMControlsMenu:AddControl(name, ctrl, wrapper, default)
 	end
 	self:CallCallbacks("OnControlAdded", name, ctrl, wrapper)
 end
+function gui.PFMControlsMenu:SetControlEnabled(name, enabled)
+	if self.m_controls[name] == nil then
+		return
+	end
+	local wrapper = self.m_controls[name].wrapper
+	if util.is_valid(wrapper) == false then
+		return
+	end
+	if enabled then
+		util.remove(self.m_controls[name].disabledOverlay)
+		return
+	end
+	if util.is_valid(self.m_controls[name].disabledOverlay) then
+		return
+	end
+	local el = gui.create("WIRect", wrapper, 0, 0, wrapper:GetWidth(), wrapper:GetHeight(), 0, 0, 1, 1)
+	el:SetColor(Color(20, 20, 20, 200))
+	el:SetMouseInputEnabled(true)
+	el:AddCallback("OnMouseEvent", function()
+		return util.EVENT_REPLY_HANDLED
+	end) -- Trap mouse input
+	self.m_controls[name].disabledOverlay = el
+end
 function gui.PFMControlsMenu:ClearControls()
 	for identifier, data in pairs(self.m_controls) do
 		util.remove(data.wrapper)

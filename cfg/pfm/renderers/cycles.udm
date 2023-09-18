@@ -1,0 +1,11 @@
+"renderer"
+{
+	$string name "Cycles X"
+	$string class "CyclesRendererInfo"
+	$string script "pfm/renderers/cycles.lua"
+	capabilities
+	{
+		$bool renderJobs 1
+		$bool optix 0
+	}
+}

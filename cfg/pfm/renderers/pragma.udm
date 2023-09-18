@@ -1,0 +1,6 @@
+"renderer"
+{
+    $string name "Pragma"
+    $string class "PragmaRendererInfo"
+    $string script "pfm/renderers/pragma.lua"
+}

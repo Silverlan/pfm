@@ -17,6 +17,7 @@ include("/gui/editableentry.lua")
 include("/gui/wifiledialog.lua")
 include("/gui/toggleoption.lua")
 include("/gui/pfm/raytracedanimationviewport.lua")
+include("/pfm/renderers.lua")
 
 util.register_class("gui.PFMRenderPreview", gui.PFMBaseViewport)
 
@@ -423,28 +424,31 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlPreset = ctrl
 	wrapper:SetTooltip(locale.get_text("pfm_render_setting_preset"))
 
-	local offlineRendererOptions
-	local pragmaRendererOptions
+	local rendererSettingsEl
 	-- Render Engine
+	local rendererOptions = {}
+	for _, rendererInfo in ipairs(pfm.get_renderers()) do
+		local identifier = rendererInfo:GetIdentifier()
+		table.insert(rendererOptions, {
+			identifier,
+			rendererInfo:GetName(),
+		})
+	end
 	ctrl, wrapper = p:AddDropDownMenu(
 		pfm.LocStr("pfm_render_engine"),
 		"render_engine",
-		{
-			{ "cycles", locale.get_text("pfm_render_engine_cycles") },
-			{ "luxcorerender", locale.get_text("pfm_render_engine_luxcorerender") },
-			{ "pragma", "Pragma" },
-		},
+		rendererOptions,
 		"cycles",
 		function()
-			local val = self.m_ctrlRenderEngine:GetOptionValue(self.m_ctrlRenderEngine:GetSelectedOption())
-			if val == "pragma" then
-				offlineRendererOptions:SetVisible(false)
-				pragmaRendererOptions:SetVisible(true)
-				self.m_btPrepare:SetEnabled(false)
-			else
-				offlineRendererOptions:SetVisible(true)
-				pragmaRendererOptions:SetVisible(false)
-				self.m_btPrepare:SetEnabled(true)
+			util.remove(rendererSettingsEl)
+			local rendererInfo = self:GetRendererInfo()
+			if rendererInfo ~= nil then
+				rendererSettingsEl = rendererInfo:InitializeUIRenderSettingControls(p, settings)
+				if util.is_valid(rendererSettingsEl) then
+					rendererSettingsEl:ResetControls()
+					self.m_rendererSettingsElement = rendererSettingsEl
+				end
+				self.m_btPrepare:SetEnabled(rendererInfo:HasCapability("renderJobs"))
 			end
 		end
 	)
@@ -892,23 +896,12 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		if preset == nil then
 			return
 		end
-		if preset.samples ~= nil then
-			self.m_ctrlSamplesPerPixel:SetValue(preset.samples)
-		end
-		if preset.max_transparency_bounces ~= nil then
-			self.m_ctrlMaxTransparencyBounces:SetValue(preset.max_transparency_bounces)
-		end
-		if preset.emission_strength ~= nil then
-			self.m_ctrlEmissionStrength:SetValue(preset.emission_strength)
-		end
-		if preset.supersampling ~= nil then
-			self.m_ctrlSsFactor:SelectOption(tostring(preset.supersampling))
+		local rendererInfo = self:GetRendererInfo()
+		if rendererInfo ~= nil and util.is_valid(self.m_rendererSettingsElement) then
+			rendererInfo:ApplyUIRenderSettingsPreset(self.m_rendererSettingsElement, settings, preset)
 		end
 	end)
 	-- qualityPreset:SelectOption(2)
-
-	pragmaRendererOptions = self:InitializePragmaRendererControls(p, settings)
-	offlineRendererOptions = self:InitializeOfflineRendererControls(p, settings)
 
 	self.m_ctrlPreset:AddCallback("OnOptionSelected", function(el, option)
 		local opt = self.m_ctrlPreset:GetOptionValue(option)
@@ -935,167 +928,9 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	skipResolutionAttrCallbacks = false
 	update_resolution()
 end
-function gui.PFMRenderPreview:InitializePragmaRendererControls(p, settings)
-	local pragmaRendererOptions = p:AddSubMenu()
-	local ctrl, wrapper = pragmaRendererOptions:AddDropDownMenu(
-		pfm.LocStr("pfm_supersampling_factor"),
-		"super_sampling_factor",
-		{
-			{ "1", locale.get_text("disabled") },
-			{ "2", "x2" },
-			{ "4", "x4" },
-		},
-		1,
-		function()
-			settings:SetSupersamplingFactor(
-				tonumber(self.m_ctrlSsFactor:GetOptionValue(self.m_ctrlSsFactor:GetSelectedOption()))
-			)
-		end
-	)
-	self.m_ctrlSsFactor = ctrl
-	wrapper:SetTooltip(locale.get_text("pfm_render_setting_supersampling_factor"))
-	pragmaRendererOptions:LinkToUDMProperty("super_sampling_factor", settings, "supersamplingFactor")
-
-	local elText, wrapper = pragmaRendererOptions:AddTextEntry(
-		pfm.LocStr("pfm_tile_size_pragma"),
-		"tile_size",
-		tostring(settings:GetTileSize()),
-		function(el) end
-	)
-	wrapper:SetTooltip(locale.get_text("pfm_render_setting_tile_size"))
-	pragmaRendererOptions:LinkToUDMProperty("tile_size", settings, "tileSize")
-	self.m_ctrlTileSize = elText
-
-	--self.m_ctrlRenderFramerate = p:AddSliderControl(locale.get_text("pfm_render_framerate"),"render_framerate",settings:GetRenderFramerate(),1,200,nil,1.0,true)
-	--p:LinkToUDMProperty("render_framerate",settings,"render_framerate")
-	if not tool.get_filmmaker():IsDeveloperModeEnabled() then
-		wrapper:SetVisible(false)
-	end
-
-	ctrl, wrapper = pragmaRendererOptions:AddToggleControl(
-		pfm.LocStr("pfm_render_settings_tiled_rendering"),
-		"tiled_rendering",
-		false
-	)
-	self.m_ctrlEnableTiledRendering = ctrl
-
-	return pragmaRendererOptions
-end
-function gui.PFMRenderPreview:InitializeOfflineRendererControls(p, settings)
-	local offlineRendererOptions = p:AddSubMenu()
-	-- Device Type
-	local ctrl, wrapper = offlineRendererOptions:AddDropDownMenu(pfm.LocStr("pfm_cycles_device_type"), "device_type", {
-		{
-			tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU),
-			locale.get_text("pfm_cycles_device_type_gpu"),
-		},
-		{
-			tostring(pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_CPU),
-			locale.get_text("pfm_cycles_device_type_cpu"),
-		},
-	}, tostring(settings:GetDeviceType()))
-	self.m_ctrlDeviceType = ctrl
-	wrapper:SetTooltip(locale.get_text("pfm_render_setting_device_type"))
-	offlineRendererOptions:LinkToUDMProperty("device_type", settings, "deviceType")
-
-	-- Denoise Mode
-	ctrl, wrapper = offlineRendererOptions:AddDropDownMenu(pfm.LocStr("pfm_denoise_mode"), "denoise_mode", {
-		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_NONE), locale.get_text("disabled") },
-		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_FAST), locale.get_text("fast") },
-		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_AUTO_DETAILED), locale.get_text("detailed") },
-		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_OPTIX), "Optix" },
-		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_OPEN_IMAGE), "Intel Open Image Denoise" },
-	}, tostring(settings:GetDenoiseMode()))
-	self.m_ctrlDenoiseMode = ctrl
-	wrapper:SetTooltip(locale.get_text("pfm_render_setting_denoise_mode"))
-	offlineRendererOptions:LinkToUDMProperty("denoise_mode", settings, "denoiseMode")
-
-	-- Sample count
-	ctrl, wrapper = offlineRendererOptions:AddSliderControl(
-		pfm.LocStr("pfm_samples_per_pixel"),
-		"samples_per_pixel",
-		settings:GetSamples(),
-		1,
-		500,
-		nil,
-		1.0,
-		true
-	)
-	self.m_ctrlSamplesPerPixel = ctrl
-	ctrl:SetTooltip(locale.get_text("pfm_render_setting_ssp"))
-	offlineRendererOptions:LinkToUDMProperty("samples_per_pixel", settings, "samples")
-
-	-- Max transparency bounces
-	ctrl, wrapper = offlineRendererOptions:AddSliderControl(
-		pfm.LocStr("pfm_max_transparency_bounces"),
-		"max_transparency_bounces",
-		settings:GetMaxTransparencyBounces(),
-		0,
-		200,
-		nil,
-		1.0,
-		true
-	)
-	self.m_ctrlMaxTransparencyBounces = ctrl
-	ctrl:SetTooltip(locale.get_text("pfm_render_setting_max_transparency_bounces"))
-	offlineRendererOptions:LinkToUDMProperty("max_transparency_bounces", settings, "maxTransparencyBounces")
-
-	-- Light intensity factor
-	ctrl, wrapper = offlineRendererOptions:AddSliderControl(
-		pfm.LocStr("pfm_light_intensity_factor"),
-		"light_intensity_factor",
-		settings:GetLightIntensityFactor(),
-		0,
-		20
-	)
-	self.m_ctrlLightIntensityFactor = ctrl
-	ctrl:SetTooltip(locale.get_text("pfm_render_setting_light_intensity_factor"))
-	offlineRendererOptions:LinkToUDMProperty("light_intensity_factor", settings, "lightIntensityFactor")
-
-	-- Emission strength
-	ctrl = offlineRendererOptions:AddSliderControl(
-		pfm.LocStr("pfm_emission_strength"),
-		"emission_strength",
-		settings:GetEmissionStrength(),
-		0,
-		20,
-		function()
-			pfm.load_unirender()
-			unirender.PBRShader.set_global_emission_strength(self.m_ctrlEmissionStrength:GetValue())
-		end
-	)
-	self.m_ctrlEmissionStrength = ctrl
-	ctrl:SetTooltip(locale.get_text("pfm_render_setting_emission_strength"))
-	offlineRendererOptions:LinkToUDMProperty("emission_strength", settings, "emissionStrength")
-
-	ctrl, wrapper = offlineRendererOptions:AddToggleControl(
-		pfm.LocStr("pfm_render_progressive"),
-		"progressive",
-		settings:IsProgressive(),
-		function()
-			self.m_ctrlProgressiveRefinement:SetVisible(self.m_ctrlProgressive:IsChecked())
-		end
-	)
-	ctrl:SetTooltip(locale.get_text("pfm_render_setting_progressive"))
-	self.m_ctrlProgressive = ctrl
-	self.m_ctrlPreCalcLight = offlineRendererOptions:AddToggleControl(
-		pfm.LocStr("pfm_render_precalc_light"),
-		"precalc_light",
-		settings:ShouldPreCalculateLight()
-	)
-	self.m_ctrlPreCalcLight:SetTooltip(locale.get_text("pfm_render_setting_precalc_light"))
-	self.m_ctrlProgressiveRefinement = offlineRendererOptions:AddToggleControl(
-		pfm.LocStr("pfm_render_progressive_refinement"),
-		"progressive_refine",
-		settings:IsProgressiveRefinementEnabled()
-	)
-	self.m_ctrlProgressiveRefinement:SetTooltip(locale.get_text("pfm_render_setting_progressive_refinement"))
-	self.m_ctrlOptix = offlineRendererOptions:AddToggleControl(locale.get_text("pfm_use_optix"), "use_optix", true)
-	self.m_ctrlOptix:SetTooltip(locale.get_text("pfm_render_setting_optix"))
-
-	offlineRendererOptions:LinkToUDMProperty("progressive", settings, "progressive")
-	offlineRendererOptions:LinkToUDMProperty("progressive_refine", settings, "progressiveRefinementEnabled")
-	return offlineRendererOptions
+function gui.PFMRenderPreview:GetRendererInfo()
+	local renderer = self.m_ctrlRenderEngine:GetOptionValue(self.m_ctrlRenderEngine:GetSelectedOption())
+	return pfm.get_renderer_info(renderer)
 end
 function gui.PFMRenderPreview:GetResolution()
 	local width, height
@@ -1359,10 +1194,6 @@ function gui.PFMRenderPreview:GetRenderSettings(preview, prepareOnly)
 	local selectedRenderMode = tonumber(self.m_ctrlRenderMode:GetValue())
 	renderMode = selectedRenderMode
 
-	local deviceType = pfm.RaytracingRenderJob.Settings.DEVICE_TYPE_GPU
-	local selectedDeviceType = tonumber(self.m_ctrlDeviceType:GetValue())
-	deviceType = selectedDeviceType
-
 	local width, height = self:GetResolution()
 
 	local previewQuality =
@@ -1406,28 +1237,24 @@ function gui.PFMRenderPreview:GetRenderSettings(preview, prepareOnly)
 		end
 	end
 
-	local progressiveRefinement = self.m_ctrlProgressiveRefinement:IsChecked()
+	settings:SetUseProgressiveRefinement(false)
+
+	local rendererInfo = self:GetRendererInfo()
+	if rendererInfo ~= nil then
+		rendererInfo:ApplyRenderSettings(self.m_rendererSettingsElement, settings, preview)
+		if samples ~= nil then
+			settings:SetSamples(samples)
+		end
+	end
 	settings:SetRenderMode(renderMode)
 	settings:SetRenderEngine(self.m_ctrlRenderEngine:GetValue())
-	settings:SetSamples(samples or self.m_ctrlSamplesPerPixel:GetValue())
-	settings:SetEmissionStrength(self.m_ctrlEmissionStrength:GetValue())
-	settings:SetMaxTransparencyBounces(self.m_ctrlMaxTransparencyBounces:GetValue())
-	settings:SetSupersamplingFactor(
-		preview and 1 or tonumber(self.m_ctrlSsFactor:GetOptionValue(self.m_ctrlSsFactor:GetSelectedOption()))
-	)
-	settings:SetLightIntensityFactor(self.m_ctrlLightIntensityFactor:GetValue())
 	settings:SetFrameCount(preview and 1 or self.m_ctrlFrameCount:GetValue())
 	settings:SetPreStageOnly(prepareOnly == true)
-	settings:SetDenoiseMode(tonumber(self.m_ctrlDenoiseMode:GetValue()))
-	settings:SetDeviceType(deviceType)
 	settings:SetRenderWorld(self.m_ctrlRenderWorld:IsChecked())
 	settings:SetRenderGameEntities(self.m_ctrlRenderGameEntities:IsChecked())
 	settings:SetRenderPlayer(self.m_ctrlRenderPlayer:IsChecked())
 	settings:SetCameraFrustumCullingEnabled(self.m_ctrlFrustumCulling:IsChecked())
 	settings:SetPVSCullingEnabled(self.m_ctrlPVSCulling:IsChecked())
-	settings:SetProgressive(self.m_ctrlProgressive:IsChecked())
-	settings:SetUseProgressiveRefinement(progressiveRefinement)
-	settings:SetPreCalculateLight(self.m_ctrlPreCalcLight:IsChecked())
 	settings:SetCamType(tonumber(self.m_ctrlCamType:GetValue()))
 	settings:SetPanoramaType(tonumber(self.m_ctrlPanoramaType:GetValue()))
 	settings:SetPanoramaHorizontalRange(
@@ -1443,13 +1270,6 @@ function gui.PFMRenderPreview:GetRenderSettings(preview, prepareOnly)
 		tonumber(self.m_ctrlOutputFormat:GetOptionValue(self.m_ctrlOutputFormat:GetSelectedOption()))
 			== util.IMAGE_FORMAT_HDR
 	)
-	settings:SetUseOptix(self.m_ctrlOptix:IsChecked())
-
-	local tileSize = tonumber(self.m_ctrlTileSize:GetText())
-	if self.m_ctrlEnableTiledRendering:IsChecked() == false then
-		tileSize = 0
-	end
-	settings:SetTileSize(tileSize)
 
 	settings:SetColorTransform(self.m_ctrlColorTransform:GetOptionValue(self.m_ctrlColorTransform:GetSelectedOption()))
 	settings:SetColorTransformLook(
@@ -1510,7 +1330,7 @@ function gui.PFMRenderPreview:Refresh(preview, prepareOnly)
 	preview = preview or false
 	local settings = self:GetRenderSettings(preview, prepareOnly)
 
-	if progressiveRefinement then
+	if settings:ShouldUseProgressiveRefinement() then
 		self.m_btStop:SetVisible(true)
 	end
 

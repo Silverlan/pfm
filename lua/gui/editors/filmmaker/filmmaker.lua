@@ -1195,44 +1195,6 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 			end
 		end
 		pfm.undoredo.push("create_keyframe", cmd)()
-		--[[
-	for _, graph in ipairs(self.m_graphs) do
-		if graph.curve:IsValid() then
-			local value = get_default_value(graph.valueType)
-			local valueType = graph.valueType
-			local channel = graph.curve:GetPanimaChannel()
-			if channel ~= nil then
-				local idx0, idx1, factor = channel:FindInterpolationIndices(self:InterfaceTimeToDataTime(graph, time))
-				if idx0 ~= nil then
-					local v0 = channel:GetValue(idx0)
-					local v1 = channel:GetValue(idx1)
-					value = udm.lerp(v0, v1, factor)
-				end
-			end
-
-			pfm.get_project_manager():SetActorAnimationComponentProperty(
-				graph.actor,
-				graph.targetPath,
-				self:InterfaceTimeToDataTime(graph, time),
-				value,
-				valueType,
-				graph.typeComponentIndex
-			)
-		end
-	end
-]]
-		--self.m_timeline:GetGraphEditor():AddKeyframe(t)
-		--[[local actorUuid = TODO
-		local propertyPath = TODO
-		local valueType = TODO
-		local timestamp = TODO
-		local baseIndex = TODO
-		pfm.undoredo.push(
-			"create_keyframe",
-			pfm.create_command("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
-		)]]
-		--actorUuid, propertyPath, valueType, timestamp, baseIndex
-
 		return
 	end
 
