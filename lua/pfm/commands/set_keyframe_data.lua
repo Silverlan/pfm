@@ -9,16 +9,7 @@
 include("set_keyframe_property.lua")
 
 local Command = util.register_class("pfm.CommandSetKeyframeDataBase", pfm.CommandSetKeyframeProperty)
-function Command:Initialize(
-	actorUuid,
-	propertyPath,
-	oldTime,
-	newTime,
-	oldValue,
-	newValue,
-	baseIndex,
-	affixedAnimationData
-)
+function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, valueType, oldValue, newValue, baseIndex)
 	local res = pfm.CommandSetKeyframeProperty.Initialize(self, actorUuid, propertyPath, oldTime, baseIndex)
 
 	if res ~= pfm.Command.RESULT_SUCCESS then
@@ -29,11 +20,12 @@ function Command:Initialize(
 	newTime = newTime or oldTime
 	data:SetValue("oldTime", udm.TYPE_FLOAT, oldTime)
 	data:SetValue("newTime", udm.TYPE_FLOAT, newTime)
+	data:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	if newValue ~= nil then
 		if oldValue ~= nil then
-			data:SetValue("oldValue", udm.TYPE_FLOAT, oldValue)
+			data:SetValue("oldValue", valueType, oldValue)
 		end
-		data:SetValue("newValue", udm.TYPE_FLOAT, newValue)
+		data:SetValue("newValue", valueType, newValue)
 	end
 	return pfm.Command.RESULT_SUCCESS
 end
@@ -96,16 +88,7 @@ end
 pfm.register_command("set_keyframe_data_base", Command)
 
 local Command = util.register_class("pfm.CommandSetKeyframeData", pfm.Command)
-function Command:Initialize(
-	actorUuid,
-	propertyPath,
-	oldTime,
-	newTime,
-	oldValue,
-	newValue,
-	baseIndex,
-	affixedAnimationData
-)
+function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, oldValue, newValue, baseIndex)
 	pfm.Command.Initialize(self)
 
 	local actor = pfm.dereference(actorUuid)
@@ -119,8 +102,7 @@ function Command:Initialize(
 		newTime,
 		oldValue,
 		newValue,
-		baseIndex,
-		affixedAnimationData
+		baseIndex
 	)
 
 	-- self:AddSubCommand("set_animation_value", actorUuid, propertyPath, newTime, oldValue, newValue)
