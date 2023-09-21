@@ -17,11 +17,19 @@ function pfm.udm.EntityComponent:SetMemberValue(memberName, type, value)
 	end
 	if type == ents.MEMBER_TYPE_ELEMENT then
 		type = udm.TYPE_ELEMENT
-		local child = props:Add(memberName)
-		child:Clear()
-		child:Merge(udm.LinkedPropertyWrapper(value), udm.MERGE_FLAG_BIT_DEEP_COPY)
+		if value == nil then
+			props:Remove(memberName)
+		else
+			local child = props:Add(memberName)
+			child:Clear()
+			child:Merge(udm.LinkedPropertyWrapper(value), udm.MERGE_FLAG_BIT_DEEP_COPY)
+		end
 	else
-		props:SetValue(memberName, type, value)
+		if value ~= nil then
+			props:SetValue(memberName, type, value)
+		else
+			props:RemoveValue(memberName)
+		end
 	end
 	self:CallChangeListeners(fullMemberPath, value)
 end
