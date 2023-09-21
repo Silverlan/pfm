@@ -187,13 +187,6 @@ function Element:AddConstraint(item, boneName, type)
 						localRot = (minLimits + maxLimits) * 0.5
 					end
 				end
-
-				if twistAxis == math.AXIS_X or twistAxis == math.AXIS_SIGNED_X then
-					localRot = EulerAngles(localRot.y, localRot.r, localRot.p)
-				elseif twistAxis == math.AXIS_Y or twistAxis == math.AXIS_SIGNED_Y then
-					localRot = EulerAngles(localRot.r, localRot.p, localRot.y)
-				elseif twistAxis == math.AXIS_Z or twistAxis == math.AXIS_SIGNED_Z then
-				end
 				localRot = localRot:ToQuaternion()
 
 				rot = rot * localRot
