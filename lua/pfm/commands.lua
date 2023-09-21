@@ -79,8 +79,7 @@ function BaseCommand:DoExecute() end
 function BaseCommand:StartExecute(depth)
 	pfm.log(
 		string.rep(" ", depth) .. 'Executing command "' .. tostring(self:GetIdentifier() .. '"...'),
-		pfm.LOG_CATEGORY_PFM,
-		pfm.LOG_SEVERITY_WARNING
+		pfm.LOG_CATEGORY_PFM
 	)
 end
 function BaseCommand:Execute(depth)
@@ -96,8 +95,7 @@ function BaseCommand:DoUndo() end
 function BaseCommand:StartUndo(depth)
 	pfm.log(
 		string.rep(" ", depth) .. 'Undoing command "' .. tostring(self:GetIdentifier() .. '"...'),
-		pfm.LOG_CATEGORY_PFM,
-		pfm.LOG_SEVERITY_WARNING
+		pfm.LOG_CATEGORY_PFM
 	)
 end
 function BaseCommand:Undo(depth)
