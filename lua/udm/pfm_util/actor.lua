@@ -27,6 +27,69 @@ function pfm.udm.Actor:IsVisible()
 	return visible
 end
 
+function pfm.udm.Actor:DissolveSingleValueAnimationChannels(cmd)
+	local animClip = self:FindAnimationClip()
+	if animClip == nil then
+		return
+	end
+	local animatedProperties = {}
+	local editorData = animClip:GetEditorData()
+	--[[for _, editorChannelData in ipairs(editorData) do
+		local targetPath = editorChannelData:GetTargetPath()
+		animatedProperties[targetPath] = animatedProperties[targetPath] or {}
+		animatedProperties[targetPath].editorChannel = editorChannelData
+	end]]
+
+	local anim = animClip:GetAnimation()
+	for _, channel in ipairs(anim:GetChannels()) do
+		local targetPath = channel:GetTargetPath()
+		animatedProperties[targetPath] = animatedProperties[targetPath] or {}
+		animatedProperties[targetPath].channel = channel
+	end
+
+	local singleValueChannelPaths = {}
+	for targetPath, channelData in pairs(animatedProperties) do
+		local isSingleValueChannel = true
+		if channelData.editorChannel ~= nil then
+			for i = 0, channelData.editorChannel:GetKeyCount() - 1 do
+				if channelData.editorChannel:GetKey(i):GetTimeCount() > 1 then
+					isSingleValueChannel = false
+					break
+				end
+			end
+		end
+		if isSingleValueChannel and channelData.channel ~= nil and channelData.channel:GetValueCount() > 1 then
+			isSingleValueChannel = false
+		end
+		if isSingleValueChannel then
+			table.insert(singleValueChannelPaths, targetPath)
+		end
+	end
+
+	local externalCmd = (cmd ~= nil)
+	if externalCmd == false then
+		cmd = pfm.create_command("composition")
+	end
+	for _, targetPath in ipairs(singleValueChannelPaths) do
+		print("Dissolving: ", targetPath)
+		local channelData = animatedProperties[targetPath]
+		local value
+		local valueType
+		if channelData.channel ~= nil then
+			value = channelData.channel:GetValue(0)
+			valueType = channelData.channel:GetPanimaChannel():GetValueType()
+		end
+		local oldValue = self:GetMemberValue(targetPath)
+		-- cmd = pfm.create_command("keyframe_property_composition", self, targetPath, baseIndex)
+		cmd:AddSubCommand("delete_editor_channel", self, targetPath)
+		cmd:AddSubCommand("delete_animation_channel", self, targetPath, valueType)
+		cmd:AddSubCommand("set_actor_property", self, targetPath, oldValue, value, valueType)
+	end
+	if externalCmd == false then
+		cmd:Execute()
+	end
+end
+
 function pfm.udm.Actor:FindAnimationClip()
 	local filmClip = self:GetFilmClip()
 	local track = filmClip:FindAnimationChannelTrack()

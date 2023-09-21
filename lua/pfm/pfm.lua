@@ -43,6 +43,10 @@ end
 pfm.udm.SCHEMA = schema
 pfm.udm.SCHEMA:SetLibrary(pfm.udm)
 
+pfm.set_target_session = function(session)
+	pfm.impl.targetSession = session
+end
+
 pfm.reference = function(o)
 	return tostring(o:GetUniqueId())
 end
@@ -58,7 +62,7 @@ pfm.dereference = function(val)
 	local uuid = ref:GetUniqueId()
 
 	local pm = pfm.get_project_manager()
-	local session = (pm ~= nil) and pm:GetSession() or nil
+	local session = pfm.impl.targetSession or ((pm ~= nil) and pm:GetSession() or nil)
 	return udm.dereference(session:GetSchema(), uuid)
 end
 

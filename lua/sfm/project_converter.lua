@@ -1655,6 +1655,27 @@ function sfm.ProjectConverter:ApplyPostProcessing()
 			end
 		end
 	end
+
+	local function iterate_film_clip(filmClip)
+		for _, actor in ipairs(filmClip:GetActorList()) do
+			-- TODO: This is causing weird issues
+			actor:DissolveSingleValueAnimationChannels() -- Remove animation channels we don't actually need
+		end
+		for _, trackGroup in ipairs(filmClip:GetTrackGroups()) do
+			for _, track in ipairs(trackGroup:GetTracks()) do
+				for _, filmClipOther in ipairs(track:GetFilmClips()) do
+					iterate_film_clip(filmClipOther)
+				end
+			end
+		end
+	end
+	--[[for _, session in ipairs({ self.m_pfmProject:GetSession() }) do
+		pfm.set_target_session(session)
+		for _, clip in ipairs(session:GetClips()) do
+			iterate_film_clip(clip)
+		end
+		pfm.set_target_session(nil)
+	end]]
 end
 
 sfm.get_pfm_conversion_data = function(sfmType)
