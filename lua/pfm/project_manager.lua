@@ -581,8 +581,9 @@ function pfm.ProjectManager:GetPlayheadClipRange()
 	if clip == nil then
 		return
 	end
-	return self:TimeOffsetToFrameOffset(clip:GetTimeFrame():GetStart()),
-		self:TimeOffsetToFrameOffset(clip:GetTimeFrame():GetEnd())
+	local lastFrame = self:TimeOffsetToFrameOffset(clip:GetTimeFrame():GetEnd())
+	lastFrame = lastFrame - 1
+	return self:TimeOffsetToFrameOffset(clip:GetTimeFrame():GetStart()), lastFrame
 end
 function pfm.ProjectManager:GoToFrame(frame)
 	self:SetFrameOffset(frame)
