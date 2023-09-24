@@ -12,9 +12,11 @@ function Command:Initialize(actorUuid, propertyPath, oldValue, newValue, memberT
 	local data = self:GetData()
 	local oldValue, type = self:ToUdmValue(oldValue, memberType)
 	local newValue, type = self:ToUdmValue(newValue, memberType)
-	data:SetValue("actor", udm.TYPE_STRING, actorUuid)
+	data:SetValue("actor", udm.TYPE_STRING, pfm.get_unique_id(actorUuid))
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
-	data:SetValue("oldValue", type, oldValue)
+	if oldValue ~= nil then
+		data:SetValue("oldValue", type, oldValue)
+	end
 	data:SetValue("newValue", type, newValue)
 	data:SetValue("udmValueType", udm.TYPE_STRING, ents.member_type_to_string(type))
 	data:SetValue("entityValueType", udm.TYPE_STRING, ents.member_type_to_string(memberType))
@@ -78,15 +80,16 @@ function Command:ApplyValue(key)
 	end
 
 	local value = data:GetValue(key, type)
-	if value == nil then
+	--[[if value == nil then
 		self:LogFailure("Invalid value for '" .. key .. "'!")
 		return
-	end
+	end]]
 
 	-- Apply value to UDM component
 	c:SetMemberValue(memberName:GetString(), type, value)
 
-	if type ~= udm.TYPE_ELEMENT then
+	if type ~= udm.TYPE_ELEMENT and value ~= nil then
+		-- TODO: If value is nil, we should restore the default value
 		local ent = actor:FindEntity()
 		if util.is_valid(ent) then
 			-- Apply value directly to entity
