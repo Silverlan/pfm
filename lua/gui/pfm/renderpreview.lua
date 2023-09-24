@@ -744,13 +744,11 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 				return
 			end
 			local pfm = tool.get_filmmaker()
-			local numFrames
+			local numFrames = 0
 			local startFrame, endFrame = pfm:GetPlayheadClipRange()
 			startFrame = pfm:GetFrameOffset()
-			if startFrame ~= nil then
+			if startFrame ~= nil and endFrame ~= nil then
 				numFrames = math.max(endFrame - startFrame + 1, 1)
-			else
-				numFrames = 0
 			end
 			self.m_ctrlFrameCount:GrowRangeToValue(numFrames)
 			self.m_ctrlFrameCount:SetValue(numFrames)
