@@ -152,7 +152,7 @@ function gui.PFMButton:MouseCallback(button, state, mods)
 		if state == input.STATE_PRESS then
 			self:SetActivated(true)
 		elseif state == input.STATE_RELEASE then
-			if self:OnPressed() ~= true and self:CallCallbacks("OnPressed") ~= true then
+			if self:OnPressed() ~= true and self:CallCallbacks("OnPressed") ~= true and self:IsValid() then
 				self:SetActivated(false)
 			end
 		end
@@ -160,3 +160,85 @@ function gui.PFMButton:MouseCallback(button, state, mods)
 	return util.EVENT_REPLY_HANDLED
 end
 gui.register("WIPFMButton", gui.PFMButton)
+
+----------
+
+util.register_class("gui.PFMGenericButton", gui.PFMButton)
+function gui.PFMGenericButton:__init()
+	gui.PFMButton.__init(self)
+	self.m_segments = {}
+end
+function gui.PFMGenericButton:ReallocateMiddleSegments(requestSize)
+	local szUnit = 24 -- Width of "gui/pfm/bt_middle"
+	local size = requestSize
+	local m = requestSize % szUnit
+	if m > 0 then
+		size = size + (szUnit - m)
+	end
+
+	local count = size / szUnit
+
+	for i = #self.m_segments, count + 1 do
+		util.remove(self.m_segments[i])
+		self.m_segments[i] = nil
+	end
+
+	for i = 1, count do
+		local btM = gui.create("WITexturedRect", self)
+		btM:SetMaterial("gui/pfm/bt_middle")
+		btM:SizeToTexture()
+		table.insert(self.m_segments, btM)
+	end
+	return size
+end
+function gui.PFMGenericButton:OnInitialize()
+	gui.PFMButton.OnInitialize(self)
+
+	local btL = gui.create("WITexturedRect", self)
+	btL:SetMaterial("gui/pfm/bt_left")
+	btL:SizeToTexture()
+	self.m_elLeft = btL
+
+	local btR = gui.create("WITexturedRect", self)
+	btR:SetMaterial("gui/pfm/bt_right")
+	btR:SizeToTexture()
+	self.m_elRight = btR
+
+	self:SetPressedMaterial("gui/pfm/bt_middle_activated")
+	self:SetUnpressedMaterial("gui/pfm/bt_middle")
+	self:SetText("")
+	self.m_text:ClearAnchor()
+	self.m_text:SetZPos(1)
+end
+function gui.PFMGenericButton:SetMaterial(mat)
+	local matLeft = "gui/pfm/bt_left"
+	local matRight = "gui/pfm/bt_right"
+	if self:IsActivated() then
+		matLeft = matLeft .. "_activated"
+		matRight = matRight .. "_activated"
+	end
+	self.m_elLeft:SetMaterial(matLeft)
+	self.m_elRight:SetMaterial(matRight)
+
+	for _, el in ipairs(self.m_segments) do
+		el:SetMaterial(mat)
+	end
+end
+function gui.PFMGenericButton:OnUpdate()
+	local sz = self.m_text:GetWidth()
+	local margin = 20
+	local middleSize = sz + margin
+	middleSize = self:ReallocateMiddleSegments(middleSize)
+	local totalSize = self.m_elLeft:GetWidth() + self.m_elRight:GetWidth() + middleSize
+	local x = self.m_elLeft:GetRight()
+	for _, el in ipairs(self.m_segments) do
+		el:SetX(x)
+		x = el:GetRight()
+	end
+	self.m_elRight:SetX(x)
+
+	self.m_text:CenterToParentX()
+	self.m_text:SetY(5)
+	self:SetWidth(totalSize)
+end
+gui.register("WIPFMGenericButton", gui.PFMGenericButton)
