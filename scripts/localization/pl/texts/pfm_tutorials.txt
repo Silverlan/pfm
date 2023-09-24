@@ -1,0 +1,3 @@
+pfm_continue = "Kontynuuj"
+pfm_end_tutorial = "Zakończ samouczek"
+pfm_go_back = "Cofnij"

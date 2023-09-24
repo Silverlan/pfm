@@ -1,0 +1,2 @@
+pfm_loading = "Caricamento..."
+pfm_loading_map = "Caricamento mappa '{0}'..."

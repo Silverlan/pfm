@@ -1,0 +1,5 @@
+pfm_popup_create_actor_no_film_clip = "Nie można utworzyć aktora: Nie został wybrany żaden klip filmowy!"
+pfm_popup_failed_to_import_lightmaps = "Nie można zaimportować lightmap: {0} nie znaleziono!"
+pfm_popup_failed_to_transform_keyframe = "Nie udało się przekształcić klatki kluczowej dla właściwości {0}"
+pfm_popup_no_lightmap = "Nie znaleziono mapy światła! Oświetlenie będzie niekompletne."
+pfm_popup_no_reflection_probe = "Nie znaleziono sondy odbicia! Odbicia będą niepoprawne."
