@@ -53,6 +53,9 @@ function Element:CreateSimpleProject()
 	if filmClip ~= nil then
 		filmClip:SetCamera(cam)
 	end
+
+	pfm.undoredo.clear()
+	self:ResetEditState()
 end
 function Element:CreateEmptyProject()
 	self:CreateNewProject()
@@ -71,6 +74,9 @@ function Element:CreateEmptyProject()
 	end
 
 	self:SelectFilmClip(filmClip)
+
+	pfm.undoredo.clear()
+	self:ResetEditState()
 end
 function Element:OnProjectClosed()
 	pfm.ProjectManager.OnProjectClosed(self)
