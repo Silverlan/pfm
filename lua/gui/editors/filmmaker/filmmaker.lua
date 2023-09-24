@@ -425,12 +425,13 @@ function gui.WIFilmmaker:OnInitialize()
 			if self:IsValid() == false then
 				return
 			end
-			local msg = pfm.create_popup_message(
+			local msg = pfm.open_message_prompt(
+				locale.get_text("pfm_initial_tutorial_title"),
 				locale.get_text("pfm_initial_tutorial_message"),
-				false,
-				gui.InfoBox.TYPE_INFO,
-				{
-					onClick = function()
+				gui.PfmPrompt.BUTTON_NONE,
+				function(bt)
+					udmNotifications:SetValue("initial_tutorial_message", udm.TYPE_BOOLEAN, true)
+					if bt == "start_tutorial" then
 						udmNotifications:SetValue("initial_tutorial_message", udm.TYPE_BOOLEAN, true)
 						time.create_simple_timer(0.0, function()
 							if self:IsValid() then
@@ -439,15 +440,11 @@ function gui.WIFilmmaker:OnInitialize()
 								end)
 							end
 						end)
-					end,
-				}
+					end
+				end
 			)
-			local infoBox = msg:GetInfoBox()
-			local cbOnClose
-			cbOnClose = infoBox:AddCallback("OnClose", function()
-				util.remove(cbOnClose)
-				udmNotifications:SetValue("initial_tutorial_message", udm.TYPE_BOOLEAN, true)
-			end)
+			msg:AddButton("start_tutorial", locale.get_text("pfm_initial_tutorial_start_tutorial"))
+			msg:AddButton("skip_tutorial", locale.get_text("pfm_initial_tutorial_skip_tutorial"))
 		end)
 	end
 
