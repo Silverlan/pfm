@@ -11,36 +11,24 @@ local Component = util.register_class("ents.DebugIkVisualizer", BaseEntityCompon
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
+	self.m_dottedLines = {}
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 function Component:SetSolver(solver)
 	self.m_solver = solver
 end
-function Component:DrawDottedLine(startPos, endPos, color)
-	local drawInfo = debug.DrawInfo()
-	drawInfo:SetColor(color)
-	drawInfo:SetDuration(0.1)
-
-	local dir = endPos - startPos
-	local len = dir:Length()
-	dir:Normalize()
-
-	local segmentLength = 0.5
-	local clearSegmentLength = 0.25
-	local f = 0.0
-	local i = 0
-	while true do
-		local fNext = f + (i % 2 == 0 and segmentLength or clearSegmentLength)
-		fNext = math.min(fNext, len)
-		if i % 2 == 0 then
-			debug.draw_line(startPos + dir * f, startPos + dir * fNext, drawInfo)
-		end
-		f = fNext
-		i = i + 1
-		if f >= len then
-			break
-		end
+function Component:GetDottedLine(i)
+	if util.is_valid(self.m_dottedLines[i]) then
+		return self.m_dottedLines[i]
 	end
+	local ent = ents.create("debug_dotted_line")
+	ent:Spawn()
+	ent:SetColor(Color.Red)
+	self.m_dottedLines[i] = ent
+	return ent
+end
+function Component:OnRemove()
+	util.remove(self.m_dottedLines)
 end
 function Component:OnTick()
 	if self.m_solver == nil then
@@ -51,10 +39,19 @@ function Component:OnTick()
 	drawInfo:SetColor(Color.Red)
 	drawInfo:SetDuration(0.1)
 	local numControls = self.m_solver:GetControlCount()
+	-- Remove excess dotted lines
+	for i = #self.m_dottedLines, numControls + 1 do
+		util.remove(self.m_dottedLines[i])
+		self.m_dottedLines[i] = nil
+	end
 	for i = 0, numControls - 1 do
 		local ctrl = self.m_solver:GetControl(i)
 		local bone = ctrl:GetTargetBone()
-		self:DrawDottedLine(bone:GetPos(), ctrl:GetTargetPosition(), Color.Red)
+		local entLine = self:GetDottedLine(i + 1)
+		local lineC = entLine:GetComponent(ents.COMPONENT_DEBUG_DOTTED_LINE)
+		assert(lineC ~= nil)
+		lineC:SetStartPosition(bone:GetPos())
+		lineC:SetEndPosition(ctrl:GetTargetPosition())
 
 		drawInfo:SetOrigin(ctrl:GetTargetPosition())
 		debug.draw_point(drawInfo)
