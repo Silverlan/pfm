@@ -291,6 +291,14 @@ function gui.WIFilmmaker:OnInitialize()
 	elVersion:SetAnchor(1, 0, 1, 0)
 	log.info("PFM Version: " .. versionString)
 
+	local elBeta = gui.create("WIText", pMenuBar)
+	elBeta:SetColor(Color.Red)
+	elBeta:SetText("BETA | ")
+	elBeta:SetFont("pfm_medium")
+	elBeta:SetY(3)
+	elBeta:SizeToContents()
+	elBeta:SetX(elVersion:GetLeft() - elBeta:GetWidth())
+
 	if console.get_convar_bool("pfm_should_check_for_updates") then
 		console.run("pfm_should_check_for_updates", "0") -- Only auto-check once per session
 		time.create_simple_timer(5.0, function()
