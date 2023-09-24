@@ -48,6 +48,9 @@ function Component:DrawDottedLine(startPos, endPos, color)
 		fNext = math.min(fNext, len)
 		if i % 2 == 0 then
 			table.insert(lines, { startPos + dir * f, startPos + dir * fNext })
+			if #lines > 1000 then
+				break
+			end
 		end
 		f = fNext
 		i = i + 1
