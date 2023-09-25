@@ -235,6 +235,9 @@ function gui.WIFilmmaker:OnInitialize()
 		end
 		return true
 	end)
+	self.m_cbOnLuaError = game.add_callback("OnLuaError", function(err)
+		self:OnLuaError(err)
+	end)
 	game.set_default_game_render_enabled(false)
 
 	self:EnableThinking()
@@ -459,6 +462,17 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched", self)
+end
+function gui.WIFilmmaker:OnLuaError(err)
+	local t = time.real_time()
+	if self.m_lastLuaError ~= nil then
+		if t - self.m_lastLuaError < 5.0 then
+			return
+		end
+	end
+	self.m_lastLuaError = t
+
+	pfm.create_popup_message(locale.get_text("pfm_script_error_occurred"), 4, gui.InfoBox.TYPE_ERROR)
 end
 function gui.WIFilmmaker:SaveProject(...)
 	self:SaveUndoRedoStack()
@@ -942,6 +956,7 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_pfmManager)
 	util.remove(self.m_cbDisableDefaultSceneDraw)
 	util.remove(self.m_cbOnWindowShouldClose)
+	util.remove(self.m_cbOnLuaError)
 	util.remove(self.m_cbPreRenderScenes)
 	util.remove(self.m_overlaySceneCallback)
 	if util.is_valid(self.m_overlayScene) then
