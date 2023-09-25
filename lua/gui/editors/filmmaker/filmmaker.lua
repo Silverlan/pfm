@@ -298,6 +298,7 @@ function gui.WIFilmmaker:OnInitialize()
 	elBeta:SetY(3)
 	elBeta:SizeToContents()
 	elBeta:SetX(elVersion:GetLeft() - elBeta:GetWidth())
+	elBeta:SetAnchor(1, 0, 1, 0)
 
 	if console.get_convar_bool("pfm_should_check_for_updates") then
 		console.run("pfm_should_check_for_updates", "0") -- Only auto-check once per session
