@@ -11,6 +11,14 @@ require("modules/json")
 
 locale.load("pfm_misc.txt")
 
+console.register_variable(
+	"pfm_supporter_ticker_show_all",
+	udm.TYPE_BOOLEAN,
+	false,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"If disabled, only active supporters will be shown in the ticker."
+)
+
 local Element = util.register_class("gui.SupporterTicker", gui.Base)
 function Element:__init()
 	gui.Base.__init(self)
@@ -79,7 +87,10 @@ function gui.PatreonTicker:OnInitialize()
 	icon:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT then
 			if state == input.STATE_PRESS then
-				self:SetShowInactiveSupporters(not self:ShouldShowInactiveSupporters())
+				console.run(
+					"pfm_supporter_ticker_show_all",
+					console.get_convar_bool("pfm_supporter_ticker_show_all") and "0" or "1"
+				)
 			end
 			return util.EVENT_REPLY_HANDLED
 		end
@@ -99,7 +110,11 @@ function gui.PatreonTicker:OnInitialize()
 
 	self.m_curlRequests = {}
 
-	self:SetShowInactiveSupporters(false)
+	self.m_cbShowAll = console.add_change_callback("pfm_supporter_ticker_show_all", function(old, new)
+		self:SetShowInactiveSupporters(new)
+	end)
+
+	self:SetShowInactiveSupporters(console.get_convar_bool("pfm_supporter_ticker_show_all"))
 
 	local r = engine.load_library("curl/pr_curl")
 	if r ~= true then
@@ -155,6 +170,7 @@ function gui.PatreonTicker:AddCurlRequest(id, uri)
 	self.m_curlRequests[id] = req
 end
 function gui.PatreonTicker:OnRemove()
+	util.remove(self.m_cbShowAll)
 	for _, req in pairs(self.m_curlRequests) do
 		req:Cancel()
 	end
