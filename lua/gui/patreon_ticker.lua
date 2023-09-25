@@ -7,6 +7,7 @@
 ]]
 
 include("hbox.lua")
+require("modules/json")
 
 locale.load("pfm_misc.txt")
 
@@ -20,6 +21,9 @@ function Element:OnInitialize()
 
 	self.m_marquee = gui.create("WIMarquee", self)
 	self.m_marquee:SetMoveSpeed(20)
+end
+function Element:Clear()
+	self.m_marquee:Clear()
 end
 function Element:AddSupporter(name, color, priority)
 	local elText = gui.create("WIText")
@@ -63,7 +67,24 @@ function gui.PatreonTicker:OnInitialize()
 	patronTickerLabel:SizeToContents()
 	patronTickerLabel:AddStyleClass("input_field_text")
 	patronTickerLabel:SetY(5)
+	patronTickerLabel:SetX(5)
 	self.m_patronTickerLabel = patronTickerLabel
+
+	local icon = gui.create("WITexturedRect", self)
+	icon:SetSize(14, 14)
+	icon:SetMaterial("gui/pfm/icon_item_visible_off")
+	icon:SetMouseInputEnabled(true)
+	icon:SetCursor(gui.CURSOR_SHAPE_HAND)
+	icon:SetMouseInputEnabled(true)
+	icon:AddCallback("OnMouseEvent", function(el, button, state, mods)
+		if button == input.MOUSE_BUTTON_LEFT then
+			if state == input.STATE_PRESS then
+				self:SetShowInactiveSupporters(not self:ShouldShowInactiveSupporters())
+			end
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
+	self.m_icon = icon
 
 	local patronTicker = gui.create(
 		"WISupporterTicker",
@@ -77,6 +98,8 @@ function gui.PatreonTicker:OnInitialize()
 	self.m_patronTicker = patronTicker
 
 	self.m_curlRequests = {}
+
+	self:SetShowInactiveSupporters(false)
 
 	local r = engine.load_library("curl/pr_curl")
 	if r ~= true then
@@ -98,9 +121,22 @@ local function table_to_url_parameters(t)
 	end
 	return params
 end
+function gui.PatreonTicker:SetShowInactiveSupporters(shouldShow)
+	if shouldShow == self.m_shouldShowInactiveSupporters then
+		return
+	end
+	self.m_shouldShowInactiveSupporters = shouldShow
+	local sf = shouldShow and "on" or "off"
+	self.m_icon:SetMaterial("gui/pfm/icon_item_visible_" .. sf)
+	self.m_icon:SetTooltip(locale.get_text("pfm_supporter_ticker_show_" .. (shouldShow and "active" or "inactive")))
+	self:UpdateSupporterList()
+end
+function gui.PatreonTicker:ShouldShowInactiveSupporters()
+	return self.m_shouldShowInactiveSupporters or false
+end
 function gui.PatreonTicker:SetQueryUrl(uri, args)
 	args = args or {}
-	args["version"] = "2"
+	args["version"] = "3"
 	for _, req in pairs(self.m_curlRequests) do
 		req:Cancel()
 	end
@@ -108,8 +144,8 @@ function gui.PatreonTicker:SetQueryUrl(uri, args)
 
 	self.m_queryUri = uri
 	self:AddCurlRequest("supporters", uri .. table_to_url_parameters(args))
-	args["query"] = "get_total_supporter_count"
-	self:AddCurlRequest("supporter_count", uri .. table_to_url_parameters(args))
+	--args["query"] = "get_total_supporter_count"
+	--self:AddCurlRequest("supporter_count", uri .. table_to_url_parameters(args))
 	self:EnableThinking()
 end
 function gui.PatreonTicker:AddCurlRequest(id, uri)
@@ -137,11 +173,52 @@ function gui.PatreonTicker:UpdateTicker()
 	self.m_patronTicker:Update()
 
 	self.m_patronTickerLabel:SizeToContents()
+	self.m_icon:SetX(self.m_patronTickerLabel:GetRight() + 6)
+	self.m_icon:CenterToParentY()
 	local offset = 10
-	self.m_patronTicker:SetX(self.m_patronTickerLabel:GetWidth() + offset)
-	self.m_patronTicker:SetWidth(self:GetWidth() - self.m_patronTickerLabel:GetWidth() - offset)
+	self.m_patronTicker:SetX(self.m_icon:GetRight() + offset)
+	self.m_patronTicker:SetWidth(self:GetWidth() - self.m_patronTicker:GetX())
 
 	self.m_patronTicker:SetY(5)
+end
+function gui.PatreonTicker:OnSizeChanged(w, h)
+	self:UpdateTicker()
+end
+function gui.PatreonTicker:UpdateSupporterList()
+	if self.m_supporterList == nil then
+		return
+	end
+	self.m_patronTicker:Clear()
+	local filtered = {}
+	local showInactive = self:ShouldShowInactiveSupporters()
+	for _, patron in ipairs(self.m_supporterList) do
+		if patron.active or showInactive then
+			table.insert(filtered, patron)
+		end
+	end
+	filtered = table.randomize(filtered)
+	local n = #filtered
+	local i = 1
+	while n < 50 do
+		table.insert(filtered, filtered[i])
+		i = i + 1
+		n = #filtered
+	end
+	local text = ""
+	local color = Color(220, 220, 220)
+	for i, patronInfo in ipairs(filtered) do
+		--[[if patronInfo[2] ~= nil then
+			color = Color.CreateFromHexColor(patronInfo[2]:sub(2))
+		end]]
+		self.m_patronTicker:AddSupporter(patronInfo.name, color)
+	end
+
+	self.m_patronTicker:Update()
+	time.create_simple_timer(0.05, function()
+		if self:IsValid() then
+			self:UpdateTicker()
+		end
+	end)
 end
 function gui.PatreonTicker:OnThink()
 	for _, req in pairs(self.m_curlRequests) do
@@ -150,43 +227,11 @@ function gui.PatreonTicker:OnThink()
 		end
 	end
 	local query = self.m_curlRequests["supporters"]
-	local queryCount = self.m_curlRequests["supporter_count"]
 	if query ~= nil and query:IsSuccessful() then
-		local patrons = string.split(query:GetResult():ReadString(), ";")
-		local text = ""
-		for i, patron in ipairs(patrons) do
-			if i > 1 then
-				text = text .. ", "
-			else
-				text = text .. " "
-			end
-			text = text .. patron
-			local patronInfo = string.split(patron, ":")
-			local color
-			if patronInfo[2] ~= nil then
-				color = Color.CreateFromHexColor(patronInfo[2]:sub(2))
-			end
-			self.m_patronTicker:AddSupporter(patronInfo[1], color)
-		end
-		patrons = table.randomize(patrons)
-		local numPatrons = #patrons
-
-		if queryCount ~= nil and queryCount:IsSuccessful() then
-			local count = toint(queryCount:GetResult():ReadString())
-			count = math.max(count - numPatrons, 0)
-			--[[if(count > 0) then
-				local numAnonymous = count
-				if(numAnonymous > 0) then text = text .. " and " .. numAnonymous .. " anonymous." end
-			end]]
-		end
-		-- self.m_patronTicker:SetText(text)
+		local patrons = json.parse(query:GetResult():ReadString())
+		self.m_supporterList = patrons
+		self:UpdateSupporterList()
 	end
-	self.m_patronTicker:Update()
-	time.create_simple_timer(0.0, function()
-		if self:IsValid() then
-			self:UpdateTicker()
-		end
-	end)
 	self.m_curlRequests = {}
 	self:DisableThinking()
 end

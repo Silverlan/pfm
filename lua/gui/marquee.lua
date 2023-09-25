@@ -49,6 +49,10 @@ function gui.Marquee:AddElement(el)
 	el:SetX(offset)
 	table.insert(self.m_elements, el)
 end
+function gui.Marquee:Clear()
+	util.remove(self.m_elements)
+	self.m_elements = {}
+end
 function gui.Marquee:OnUpdate()
 	self.m_contents:SizeToContents()
 	self.m_contents:SetHeight(self:GetHeight())
