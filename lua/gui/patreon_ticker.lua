@@ -7,7 +7,7 @@
 ]]
 
 include("hbox.lua")
-require("modules/json")
+include("/modules/json.lua")
 
 locale.load("pfm_misc.txt")
 
