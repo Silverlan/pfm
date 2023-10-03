@@ -8,7 +8,7 @@
 
 util.register_class("pfm.udm.EditorAnimationData.KeyframeInfo")
 function pfm.udm.EditorAnimationData.KeyframeInfo:__init(kfIndex)
-	self.m_dirty = true
+	self.m_dirty = false
 	self:SetIndex(kfIndex)
 end
 function pfm.udm.EditorAnimationData.KeyframeInfo:__tostring()
