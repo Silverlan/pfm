@@ -11,7 +11,7 @@ include("/gui/pfm/curve_canvas.lua")
 function gui.PFMTimelineGraph:IsInDrawingMode()
 	return self.m_canvasData ~= nil
 end
-function gui.PFMTimelineGraph:StartCanvasDrawing(actor, propertyPath, valueBaseIndex)
+function gui.PFMTimelineGraph:StartCanvasDrawing(actor, propertyPath, valueBaseIndex, valueType)
 	self:EndCanvasDrawing()
 	local el = gui.create(
 		"WICurveCanvas",
@@ -31,6 +31,7 @@ function gui.PFMTimelineGraph:StartCanvasDrawing(actor, propertyPath, valueBaseI
 	canvasData.actor = actor
 	canvasData.propertyPath = propertyPath
 	canvasData.valueBaseIndex = valueBaseIndex
+	canvasData.valueType = valueType
 	local function update_canvas()
 		if el:IsValid() == false then
 			return
@@ -81,6 +82,11 @@ function gui.PFMTimelineGraph:EndCanvasDrawing()
 			local actor = pfm.dereference(self.m_canvasData.actor)
 			if actor ~= nil then
 				local channel, animClip = actor:FindAnimationChannel(self.m_canvasData.propertyPath)
+				if channel == nil then
+					tool.get_filmmaker()
+						:MakeActorPropertyAnimated(actor, self.m_canvasData.propertyPath, self.m_canvasData.valueType)
+					channel, animClip = actor:FindAnimationChannel(self.m_canvasData.propertyPath)
+				end
 				if channel ~= nil then
 					local cmd = pfm.create_command(
 						"keyframe_property_composition",

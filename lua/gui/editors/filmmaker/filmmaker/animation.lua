@@ -20,34 +20,28 @@ function Element:UpdateKeyframe(actor, targetPath, panimaChannel, keyIdx, time, 
 		actorEditor:UpdateActorProperty(actor, targetPath)
 	end
 end
-function Element:MakeActorPropertyAnimated(actor, targetPath)
-	local actorData = actor:GetActorData()
-	if actorData == nil then
-		return
+function Element:MakeActorPropertyAnimated(actor, targetPath, valueType, pushUndo)
+	if pushUndo == nil then
+		pushUndo = true
 	end
 	local componentName, memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
 	if componentName == nil then
 		return
 	end
-	local c = actorData:FindComponent(componentName)
-	if c == nil then
-		return
-	end
-	local value = c:GetMemberValue(memberName:GetString())
-	if value == nil then
-		return
-	end
-	local animManager = self:GetAnimationManager()
-	local anim, channel = animManager:FindAnimationChannel(actorData, targetPath, false)
-	if channel ~= nil then
-		return
+
+	local cmd = pfm.create_command("composition")
+	cmd:AddSubCommand("add_animation_channel", actor, targetPath, valueType)
+	cmd:AddSubCommand("add_editor_channel", actor, targetPath)
+	if pushUndo then
+		pfm.undoredo.push("make_property_animated", cmd)()
+	else
+		cmd:Execute()
 	end
 
 	local actorEditor = self:GetActorEditor()
-	if util.is_valid(actorEditor) == false then
-		return
+	if util.is_valid(actorEditor) then
+		actorEditor:SetPropertyAnimationOverlaysDirty()
 	end
-	actorEditor:SetAnimationChannelValue(actorData, targetPath, value, nil, 0.0)
 end
 function Element:SetActorAnimationComponentProperty(actor, targetPath, time, value, valueType, baseIndex, addKey)
 	local animManager = self:GetAnimationManager()

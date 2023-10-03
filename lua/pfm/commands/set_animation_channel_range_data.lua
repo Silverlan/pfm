@@ -51,7 +51,7 @@ function Command:StoreAnimationData(keyName, startTime, endTime, times, values, 
 end
 function Command:StoreAnimationDataInTimeRange(keyName, actor, propertyPath, valueType, startTime, endTime)
 	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
-	if animClip == nil then
+	if animClip == nil or channel == nil then
 		return self:StoreAnimationData(keyName, startTime, endTime, {}, {}, valueType)
 	end
 	local idxStart, idxEnd = channel:FindIndexRangeInTimeRange(startTime, endTime)

@@ -481,9 +481,10 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 				local graphData = self.m_graphs[1]
 				local curve = graphData.curve
 				self:StartCanvasDrawing(
-					curve:GetEditorChannel():GetAnimationClip():GetActor(),
+					graphData.actor,
 					graphData.targetPath,
-					graphData.typeComponentIndex
+					graphData.typeComponentIndex,
+					graphData.valueType
 				)
 			end
 		end

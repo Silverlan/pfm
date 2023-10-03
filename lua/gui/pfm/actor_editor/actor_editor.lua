@@ -1570,15 +1570,12 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 					self:SetPropertyAnimationOverlaysDirty()
 				end)
 				:SetName("clear_animation")
-			if tool.get_filmmaker():IsDeveloperModeEnabled() then
-				context
-					:AddItem("Make Animated", function()
-						tool.get_filmmaker():MakeActorPropertyAnimated(actorData.actor, controlData.path)
-
-						self:SetPropertyAnimationOverlaysDirty()
-					end)
-					:SetName("make_animated")
-			end
+		else
+			context
+				:AddItem(locale.get_text("pfm_make_animated"), function()
+					tool.get_filmmaker():MakeActorPropertyAnimated(actorData.actor, controlData.path, controlData.type)
+				end)
+				:SetName("make_animated")
 		end
 	end
 

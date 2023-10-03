@@ -1260,7 +1260,6 @@ function gui.WIFilmmaker:ImportSequence(actor, animName)
 	local anim = mdl:GetAnimation(animId)
 
 	local panimaAnim = anim:ToPanimaAnimation(mdl:GetSkeleton(), mdl:GetReferencePose())
-	_panimaAnim = panimaAnim
 	local cmd = pfm.create_command("composition")
 	for _, channel in ipairs(panimaAnim:GetChannels()) do
 		local propertyPath = channel:GetTargetPath():ToUri(false)
