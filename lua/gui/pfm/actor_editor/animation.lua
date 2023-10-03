@@ -252,11 +252,23 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(
 		local cmd = pfm.create_command("keyframe_property_composition", actorUuid, targetPath, baseIndex)
 		local animData, propData = self:GetAnimatedPropertyData(actorData, targetPath, time)
 		if animData ~= false then
-			if
-				not pfm.CommandCreateKeyframe.does_keyframe_exist(animManager, actorUuid, targetPath, time, baseIndex)
-			then
-				local cmd =
-					pfm.create_command("create_keyframe", actorUuid, animData.path, animData.valueType, time, baseIndex)
+			local cmd = pfm.create_command("composition")
+			local function add_keyframe_cmd(baseIndex)
+				local res, o =
+					cmd:AddSubCommand("create_keyframe", actorUuid, animData.path, animData.valueType, time, baseIndex)
+				return res == pfm.Command.RESULT_SUCCESS and o ~= nil
+			end
+			local hasValidSubCmd = false
+			if baseIndex ~= nil then
+				hasValidSubCmd = hasValidSubCmd or add_keyframe_cmd(baseIndex)
+			else
+				-- Create a new keyframe for each value type component
+				for i = 0, udm.get_numeric_component_count(animData.valueType) - 1 do
+					hasValidSubCmd = hasValidSubCmd or add_keyframe_cmd(i)
+				end
+			end
+
+			if hasValidSubCmd then
 				pfm.undoredo.push("create_keyframe", cmd)()
 			end
 		else
@@ -279,6 +291,7 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(
 			actorUuid,
 			targetPath,
 			time,
+			udmType,
 			self:ToChannelValue(oldValue),
 			self:ToChannelValue(value),
 			baseIndex

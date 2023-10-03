@@ -9,13 +9,24 @@
 include("set_keyframe_data.lua")
 
 local Command = util.register_class("pfm.CommandSetKeyframeValue", pfm.CommandSetKeyframeData)
-function Command:Initialize(actorUuid, propertyPath, timestamp, oldValue, newValue, baseIndex, affixedAnimationData)
+function Command:Initialize(
+	actorUuid,
+	propertyPath,
+	timestamp,
+	valueType,
+	oldValue,
+	newValue,
+	baseIndex,
+	affixedAnimationData
+)
+	assert(valueType == udm.TYPE_FLOAT)
 	return pfm.CommandSetKeyframeData.Initialize(
 		self,
 		actorUuid,
 		propertyPath,
 		timestamp,
-		nil,
+		timestamp,
+		valueType,
 		oldValue,
 		newValue,
 		baseIndex,

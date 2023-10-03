@@ -157,6 +157,7 @@ function pfm.udm.EditorGraphCurveKeyData:RebuildDirtyGraphCurveSegments(baseInde
 	for i, kf in ipairs(dirtyKeyframes) do
 		if kf:IsDirty() then
 			local keyframeIdx = kf:GetIndex()
+			-- Is keyframeIdx different from i ???
 			if i > 1 and (dirtyKeyframes[i - 1]:IsDirty() == false) then
 				-- We need to update both the previous and the next curve segment around each keyframe.
 				-- RebuildGraphCurveSegment rebuilds the segment *after* the keyframe, so we need to add the previous keyframes to the list as well.
@@ -170,7 +171,7 @@ function pfm.udm.EditorGraphCurveKeyData:RebuildDirtyGraphCurveSegments(baseInde
 	local graphCurve = self:GetGraphCurve()
 	local editorChannelData = graphCurve:GetEditorChannelData()
 	for _, keyframeIdx in ipairs(keyframeIndices) do
-		print("Rebuilding " .. keyframeIdx .. "...")
+		print("Rebuilding curve for keyframe " .. keyframeIdx .. "...")
 		editorChannelData:RebuildGraphCurveSegment(keyframeIdx, baseIndex)
 	end
 end

@@ -20,8 +20,8 @@ function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, valueType
 	newTime = newTime or oldTime
 	data:SetValue("oldTime", udm.TYPE_FLOAT, oldTime)
 	data:SetValue("newTime", udm.TYPE_FLOAT, newTime)
-	data:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	if newValue ~= nil then
+		data:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueType))
 		if oldValue ~= nil then
 			data:SetValue("oldValue", valueType, oldValue)
 		end
@@ -88,7 +88,7 @@ end
 pfm.register_command("set_keyframe_data_base", Command)
 
 local Command = util.register_class("pfm.CommandSetKeyframeData", pfm.Command)
-function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, oldValue, newValue, baseIndex)
+function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, valueType, oldValue, newValue, baseIndex)
 	pfm.Command.Initialize(self)
 
 	local actor = pfm.dereference(actorUuid)
@@ -100,6 +100,7 @@ function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, oldValue,
 		propertyPath,
 		oldTime,
 		newTime,
+		valueType,
 		oldValue,
 		newValue,
 		baseIndex

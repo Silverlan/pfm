@@ -8,6 +8,7 @@
 
 local Command = util.register_class("pfm.CommandApplyCurveFitting", pfm.Command)
 function Command:Initialize(actorUuid, propertyPath, keyframeData, valueType, baseIndex)
+	assert(valueType == udm.TYPE_FLOAT)
 	pfm.Command.Initialize(self)
 
 	actorUuid = pfm.get_unique_id(actorUuid)
@@ -46,12 +47,12 @@ function Command:Initialize(actorUuid, propertyPath, keyframeData, valueType, ba
 		local v0 = p0.y
 
 		self:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, t0, baseIndex)
-		self:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, t0, nil, v0, baseIndex)
+		self:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, t0, udm.TYPE_FLOAT, nil, v0, baseIndex)
 
 		local t1 = p1.x
 		local v1 = p1.y
 		self:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, t1, baseIndex)
-		self:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, t1, nil, v1, baseIndex)
+		self:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, t1, udm.TYPE_FLOAT, nil, v1, baseIndex)
 
 		set_handle_type(t0, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
 		set_handle_type(t1, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)

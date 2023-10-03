@@ -30,7 +30,7 @@ function Command:Initialize(actorUuid, propertyPath, timestamp, baseIndex)
 	local keyData = graphCurve:GetKey(baseIndex)
 
 	local curVal = keyData:GetValue(keyIdx)
-	self:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, timestamp, curVal, 0.0, baseIndex) -- Need this to restore the value
+	self:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, timestamp, udm.TYPE_FLOAT, curVal, 0.0, baseIndex) -- Need this to restore the value
 
 	if keyIdx == 0 then
 		local t0 = keyData:GetTime(keyIdx)

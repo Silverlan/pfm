@@ -9,7 +9,7 @@
 include("set_keyframe_data.lua")
 
 local Command = util.register_class("pfm.CommandSetKeyframeTime", pfm.CommandSetKeyframeData)
-function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, baseIndex, affixedAnimationData)
+function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, baseIndex)
 	return pfm.CommandSetKeyframeData.Initialize(
 		self,
 		actorUuid,
@@ -18,8 +18,8 @@ function Command:Initialize(actorUuid, propertyPath, oldTime, newTime, baseIndex
 		newTime,
 		nil,
 		nil,
-		baseIndex,
-		affixedAnimationData
+		nil,
+		baseIndex
 	)
 end
 pfm.register_command("set_keyframe_time", Command)

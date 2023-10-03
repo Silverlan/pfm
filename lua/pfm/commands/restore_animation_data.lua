@@ -75,15 +75,32 @@ function Command:RestoreAnimationData()
 			end
 			local kfTime = keyData:GetTime(idx)
 			local kfValue = keyData:GetValue(idx)
-			local timeOffset = kfTime + udmAnimData:GetValue("timeOffset", udm.TYPE_FLOAT)
-			local dataOffset = kfValue + udmAnimData:GetValue("dataOffset", udm.TYPE_FLOAT)
+			local timeOffset = kfTime + (udmAnimData:GetValue("timeOffset", udm.TYPE_FLOAT) or 0.0)
+			local dataOffset = kfValue + (udmAnimData:GetValue("dataOffset", udm.TYPE_FLOAT) or 0.0)
 			local anim, channel, animClip = animManager:FindAnimationChannel(actor, propertyPath, false)
-			if udmAnimDataInfo.prefix then
-				channel:ClearRange(-math.huge, kfTime - pfm.udm.EditorChannelData.TIME_EPSILON, false)
-			else
-				channel:ClearRange(kfTime + pfm.udm.EditorChannelData.TIME_EPSILON, math.huge, false)
+			local function clear_range(startTime, endTime)
+				local valueType = channel:GetValueType()
+				local n = udm.get_numeric_component_count(valueType)
+				if n > 1 then
+					local clearValue = kfValue
+					local curTimes, curValues = channel:GetDataInRange(startTime, endTime)
+					for i, t in ipairs(curTimes) do
+						local v = curValues[i]
+						v = udm.set_numeric_component(v, valueBaseIndex, valueType, clearValue)
+						channel:InsertValue(t, v)
+					end
+				else
+					channel:ClearRange(startTime, endTime, false)
+				end
 			end
-			local x = animDataBuffer:RestoreAnimationData(
+			if udmAnimDataInfo.prefix then
+				local endTime = kfTime - pfm.udm.EditorChannelData.TIME_EPSILON * 2
+				clear_range(-math.huge, endTime)
+			else
+				local startTime = kfTime + pfm.udm.EditorChannelData.TIME_EPSILON * 2
+				clear_range(startTime, math.huge)
+			end
+			animDataBuffer:RestoreAnimationData(
 				animManager,
 				actor,
 				propertyPath,

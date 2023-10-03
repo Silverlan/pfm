@@ -22,9 +22,13 @@ function pfm.udm.EditorChannelData:GetKeyframeTimeBoundaries(startTime, endTime,
 			startTimeBoundary = math.min(startTimeBoundary, t)
 		end
 
-		-- TODO: Make FindLowerKeyIndex return 0 on lower bounds?
-		local keyIndexEnd = (self:FindLowerKeyIndex(endTime, i) or 0) + 1
+		local keyIndexEnd = self:FindLowerKeyIndex(endTime, i) or 0
 		t = pathKeys:GetTime(keyIndexEnd)
+		if math.abs(t - endTime) > pfm.udm.EditorChannelData.TIME_EPSILON then
+			-- endTime lies beyond keyframe, so we use the next keyframe instead
+			keyIndexEnd = keyIndexEnd + 1
+			t = pathKeys:GetTime(keyIndexEnd)
+		end
 		if t ~= nil then
 			endTimeBoundary = math.max(endTimeBoundary, t)
 		end
@@ -708,11 +712,17 @@ function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime,
 	local isQuatType = (valueType == udm.TYPE_QUATERNION) -- Some special considerations are required for quaternions
 	if valueIndex0 == nil then
 		-- Value doesn't matter and will get overwritten further below
-		valueIndex0 = panimaChannel:AddValue(localStartTime, get_default_value(valueType))
+		valueIndex0 = panimaChannel:AddValue(
+			localStartTime,
+			panimaChannel:GetInterpolatedValue(localStartTime, false) or get_default_value(valueType)
+		)
 	end
 	if valueIndex1 == nil then
 		-- Value doesn't matter and will get overwritten further below
-		valueIndex1 = panimaChannel:AddValue(localEndTime, get_default_value(valueType))
+		valueIndex1 = panimaChannel:AddValue(
+			localEndTime,
+			panimaChannel:GetInterpolatedValue(localEndTime, false) or get_default_value(valueType)
+		)
 	end
 
 	--[[if valueIndex0 == nil or valueIndex1 == nil then
@@ -744,6 +754,7 @@ function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime,
 	for i = 0, numPaths - 1 do
 		local pathKeys = self:GetKey(i)
 		local idx = editorChannelData:FindLowerKeyIndex(localStartTime, i)
+		local hasLowerIndex = (idx ~= nil)
 		if idx == nil and pathKeys:GetTimeCount() > 0 then
 			idx = 0
 		end
@@ -787,6 +798,22 @@ function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime,
 				table.insert(keyframesInTimeframePerKey[i], idx)
 				table.insert(timestampData, t0)
 			end
+		end
+
+		local firstKeyframeTime = pathKeys:GetTime(0)
+		local lastKeyframeTime = pathKeys:GetTime(pathKeys:GetTimeCount() - 1)
+
+		-- Our time range may exceed the range of the keyframes for this component,
+		-- in which case we have to consider the raw animation values before the first keyframe
+		-- and/or after the last keyframe
+		local timesPre = panimaChannel:GetDataInRange(localStartTime, firstKeyframeTime)
+		for _, t in ipairs(timesPre) do
+			table.insert(timestampData, t)
+		end
+
+		local timesPost = panimaChannel:GetDataInRange(lastKeyframeTime, localEndTime)
+		for _, t in ipairs(timesPost) do
+			table.insert(timestampData, t)
 		end
 	end
 
@@ -849,25 +876,13 @@ function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime,
 			end
 			if foundCurveInRange == false then
 				-- No curve found, point has to be out of bounds of the curve, so we'll
-				-- clamp the value to the value of the highest/lowest keyframe.
-				local numKeyframes = pathKeys:GetTimeCount()
-				if numKeyframes > 0 then
-					if numKeyframes == 1 then
-						v = set_value_component_value(v, valueType, typeComponentIndex, pathKeys:GetValue(0))
-					else
-						local lastKfTime = pathKeys:GetTime(pathKeys:GetTimeCount() - 1)
-						if td >= lastKfTime - pfm.udm.EditorChannelData.TIME_EPSILON then
-							v = set_value_component_value(
-								v,
-								valueType,
-								typeComponentIndex,
-								pathKeys:GetValue(numKeyframes - 1)
-							)
-						else
-							v = set_value_component_value(v, valueType, typeComponentIndex, pathKeys:GetValue(0))
-						end
-					end
-				end
+				-- use the raw animation value instead
+				local vBase = udm.get_numeric_component(
+					panimaChannel:GetInterpolatedValue(td, false),
+					typeComponentIndex,
+					valueType
+				)
+				v = set_value_component_value(v, valueType, typeComponentIndex, vBase)
 			end
 		end
 		table.insert(insertValues, editor_value_to_channel_value(v, valueType))

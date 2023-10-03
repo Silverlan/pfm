@@ -72,7 +72,7 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 	local data = self:GetData()
 	data:SetValue("actor", udm.TYPE_STRING, actorUuid)
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
-	data:SetValue("propertyType", udm.TYPE_STRING, udm.type_to_string(valueType))
+	data:SetValue("propertyType", udm.TYPE_STRING, udm.type_to_string(udm.TYPE_FLOAT))
 	data:SetValue("timestamp", udm.TYPE_FLOAT, timestamp)
 	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex or 0)
 	return pfm.Command.RESULT_SUCCESS

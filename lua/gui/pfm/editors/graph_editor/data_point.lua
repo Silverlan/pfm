@@ -274,22 +274,36 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
 
 	local kfInfo = self:GetKeyframeInfo()
 	local keyIndex = kfInfo:GetIndex()
-	local actor, targetPath, keyIndex, curveData = self:GetChannelValueData()
 	local editorKeys, keyIndex = self:GetEditorKeys()
 
 	local baseIndex = self:GetTypeComponentIndex()
 	local cmd =
 		pfm.create_command("keyframe_property_composition", tostring(actor:GetUniqueId()), targetPath, baseIndex)
 	if t ~= nil then
+		local curve = curveData.curve
+		local editorChannel = curve:GetEditorChannel()
+
+		local animClip = editorChannel:GetAnimationClip()
+		local actor = editorChannel:GetActor()
+		local propertyPath = editorChannel:GetTargetPath()
+		local typeComponentIndex = curveData.typeComponentIndex
+		local keyData = editorChannel:GetGraphCurve():GetKey(typeComponentIndex)
+		local channel = animClip:FindChannel(propertyPath)
+
+		local udmData, err = udm.create()
+		local data = udmData:GetAssetData():GetData()
+		local animManager = pfm.get_project_manager():GetAnimationManager()
+		pfm.util.AffixedAnimationData(data, animManager, actor, targetPath, channel, keyData, typeComponentIndex)
+
+		local res, subCmd = cmd:AddSubCommand("move_keyframes", actor, targetPath, typeComponentIndex, data)
+
 		local timestamp = editorKeys:GetTime(keyIndex)
-		local oldTime = timestamp
 		local newTime = t
-		cmd:AddSubCommand(
+		subCmd:AddSubCommand(
 			"set_keyframe_time",
 			tostring(actor:GetUniqueId()),
 			targetPath,
 			timestamp,
-			oldTime,
 			newTime,
 			baseIndex
 		)
@@ -302,6 +316,7 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
 			tostring(actor:GetUniqueId()),
 			targetPath,
 			t,
+			udm.TYPE_FLOAT,
 			udm.get_numeric_component(oldValue, baseIndex),
 			v,
 			baseIndex
@@ -344,17 +359,6 @@ function gui.PFMTimelineDataPoint:MoveToPosition(cmd, time, value, curTime, curV
 		newValue[2] = curveData.valueTranslator[2](newValue[2], curVal)
 	end
 
-	if t ~= nil then
-		local curTime, curVal =
-			animManager:GetChannelValueByKeyframeIndex(actor, targetPath, panimaChannel, keyIndex, baseIndex)
-		--[[local timestamp = editorKeys:GetTime(keyIndex)
-		local oldTime = timestamp
-		local newTime = t
-		local baseIndex = self:GetTypeComponentIndex()
-
-		]]
-	end
-
 	keyIndex = self:GetKeyIndex()
 	local graphCurve = curveData.editorChannel:GetGraphCurve()
 	local keyData = graphCurve:GetKey(baseIndex)
@@ -362,7 +366,7 @@ function gui.PFMTimelineDataPoint:MoveToPosition(cmd, time, value, curTime, curV
 	curTime = curTime or keyData:GetTime(keyIndex)
 	local valueType = keyData:GetValueArrayValueType()
 	local uuid = tostring(actor:GetUniqueId())
-	cmd:AddSubCommand("set_keyframe_data", uuid, targetPath, curTime, time, curVal, value, baseIndex)
+	cmd:AddSubCommand("set_keyframe_data", uuid, targetPath, curTime, time, valueType, curVal, value, baseIndex)
 end
 function gui.PFMTimelineDataPoint:MoveToCoordinates(x, y)
 	--[[local graphData = self.m_graphData

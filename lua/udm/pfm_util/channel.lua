@@ -64,7 +64,7 @@ function pfm.udm.Channel.calculate_curve_fitting_keyframes(times, values)
 	return keyframes
 end
 
-function pfm.udm.Channel:CalculateCurveFittingKeyframes(tStart, tEnd)
+function pfm.udm.Channel:CalculateCurveFittingKeyframes(tStart, tEnd, baseIndex)
 	if math.abs(tEnd - tStart) <= panima.VALUE_EPSILON then
 		return
 	end
@@ -72,5 +72,13 @@ function pfm.udm.Channel:CalculateCurveFittingKeyframes(tStart, tEnd)
 	local panimaChannel = self:GetPanimaChannel()
 
 	local times, values = panimaChannel:GetDataInRange(tStart, tEnd)
+	local n = udm.get_numeric_component_count(panimaChannel:GetValueType())
+	if n > 1 then
+		local tmpValues = {}
+		for _, v in ipairs(values) do
+			table.insert(tmpValues, udm.get_numeric_component(v, baseIndex))
+		end
+		values = tmpValues
+	end
 	return pfm.udm.Channel.calculate_curve_fitting_keyframes(times, values)
 end

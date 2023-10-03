@@ -1191,14 +1191,14 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 					end
 
 					local function add_fitting_keyframes(tStart, tEnd)
-						local keyframes = channel:CalculateCurveFittingKeyframes(tStart, tEnd)
-						if #keyframes > 1 then
+						local keyframes = channel:CalculateCurveFittingKeyframes(tStart, tEnd, baseIndex)
+						if keyframes ~= nil and #keyframes > 1 then
 							subCmd:AddSubCommand(
 								"apply_curve_fitting",
 								actorUuid,
 								propertyPath,
 								keyframes,
-								panimaChannel:GetValueType(),
+								udm.TYPE_FLOAT,
 								baseIndex
 							)
 						end
@@ -1212,7 +1212,16 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 				end
 
 				subCmd:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
-				subCmd:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, timestamp, nil, value, baseIndex)
+				subCmd:AddSubCommand(
+					"set_keyframe_value",
+					actorUuid,
+					propertyPath,
+					timestamp,
+					udm.TYPE_FLOAT,
+					nil,
+					udm.get_numeric_component(value, baseIndex),
+					baseIndex
+				)
 			end
 		end
 		pfm.undoredo.push("create_keyframe", cmd)()

@@ -129,9 +129,10 @@ local function binsearch(o, fget, len, value, fcompval, feqval, reversed)
 		end
 	end
 end
-local function findInsertIndex(o, fget, len, value)
+local function findInsertIndex(o, fget, len, value, epsilon)
+	epsilon = epsilon or 0.0001
 	if len == 1 then
-		if value >= fget(o, 0) then
+		if value >= fget(o, 0) - epsilon then
 			return 1
 		end
 		return 0
@@ -142,11 +143,11 @@ local function findInsertIndex(o, fget, len, value)
 		if b == nil then
 			return false
 		end
-		return v0 >= a and v0 < b
+		return v0 >= a - epsilon and v0 < b + epsilon
 	end)
 	if i ~= nil then
 		i = i + 1
-	elseif len > 0 and value < fget(o, 0) then
+	elseif len > 0 and value < fget(o, 0) + epsilon then
 		i = 0
 	else
 		i = len
@@ -193,7 +194,7 @@ local function findTimeIndex(o, fget, len, value)
 end
 
 -- TODO: The editor should ensure that the delta value between keys / bookmarks is always larger than 0.0005 to avoid collisions
-pfm.udm.EditorChannelData.TIME_EPSILON = 0.0001
+pfm.udm.EditorChannelData.TIME_EPSILON = panima.TIME_EPSILON
 function pfm.udm.EditorChannelData:FindKeyIndexByTime(t, baseIndex)
 	baseIndex = baseIndex or 0
 
@@ -230,7 +231,8 @@ function pfm.udm.EditorChannelData:FindLowerKeyIndex(t, baseIndex)
 	if keyData == nil then
 		return
 	end
-	local idx = findInsertIndex(keyData, keyData.GetTime, keyData:GetTimeCount(), t)
+	local idx =
+		findInsertIndex(keyData, keyData.GetTime, keyData:GetTimeCount(), t, pfm.udm.EditorChannelData.TIME_EPSILON)
 	if idx ~= nil then
 		if idx == 0 then
 			return nil
