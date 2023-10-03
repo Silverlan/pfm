@@ -279,11 +279,12 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
 	local baseIndex = self:GetTypeComponentIndex()
 	local cmd =
 		pfm.create_command("keyframe_property_composition", tostring(actor:GetUniqueId()), targetPath, baseIndex)
-	if t ~= nil then
-		local curve = curveData.curve
-		local editorChannel = curve:GetEditorChannel()
 
-		local animClip = editorChannel:GetAnimationClip()
+	local curve = curveData.curve
+	local editorChannel = curve:GetEditorChannel()
+
+	local animClip = editorChannel:GetAnimationClip()
+	if t ~= nil then
 		local actor = editorChannel:GetActor()
 		local propertyPath = editorChannel:GetTargetPath()
 		local typeComponentIndex = curveData.typeComponentIndex
@@ -297,7 +298,7 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
 
 		local res, subCmd = cmd:AddSubCommand("move_keyframes", actor, targetPath, typeComponentIndex, data)
 
-		local timestamp = editorKeys:GetTime(keyIndex)
+		local timestamp = animClip:ToClipTime(editorKeys:GetTime(keyIndex))
 		local newTime = t
 		subCmd:AddSubCommand(
 			"set_keyframe_time",
@@ -309,7 +310,7 @@ function gui.PFMTimelineDataPoint:ChangeDataValue(t, v)
 		)
 	end
 	if v ~= nil then
-		local t = editorKeys:GetTime(keyIndex)
+		local t = animClip:ToClipTime(editorKeys:GetTime(keyIndex))
 		local oldValue = editorKeys:GetValue(keyIndex)
 		cmd:AddSubCommand(
 			"set_keyframe_value",

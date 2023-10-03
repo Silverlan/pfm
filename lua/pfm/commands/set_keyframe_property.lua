@@ -63,7 +63,7 @@ end
 function Command:GetLocalTime(channelClip, action)
 	local data = self:GetData()
 	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
-	return channelClip:LocalizeOffsetAbs(time)
+	return channelClip:ToDataTime(time)
 end
 function Command:GetHandleId()
 	return self:GetData():GetValue("handle", udm.TYPE_UINT8)
@@ -93,6 +93,9 @@ function Command:ApplyValue(data, action)
 	end
 
 	local timestamp = self:GetLocalTime(animClip, action)
+
+	local data = self:GetData()
+	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
 	local keyIdx = editorChannel:FindKeyIndexByTime(timestamp, valueBaseIndex)
 
 	local graphCurve = editorChannel:GetGraphCurve()

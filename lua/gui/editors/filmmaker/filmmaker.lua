@@ -1143,6 +1143,13 @@ function gui.WIFilmmaker:RemoveBookmark(t)
 	end
 	bmSet:RemoveBookmarkAtTimestamp(t)
 end
+function gui.WIFilmmaker:AbsoluteTimeToFilmClipTime(t)
+	local filmClip = self:GetActiveFilmClip()
+	if filmClip == nil then
+		return t
+	end
+	return t - filmClip:GetTimeFrame():GetStart()
+end
 function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 	local filmClip = self:GetActiveFilmClip()
 	if filmClip == nil then

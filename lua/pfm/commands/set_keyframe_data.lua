@@ -78,6 +78,7 @@ function Command:ApplyProperty(data, action, editorChannel, keyIdx, timestamp, v
 	end
 
 	if time ~= nil then
+		time = animClip:ToDataTime(time)
 		local res = editorChannel:SetKeyTime(keyIdx, time, valueBaseIndex)
 		if res == false then
 			self:LogFailure("Failed to apply keyframe time!")

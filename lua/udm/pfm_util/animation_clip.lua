@@ -92,6 +92,13 @@ function pfm.udm.AnimationClip:GlobalizeOffsetAbs(offset)
 	return self:GetTimeFrame():GlobalizeOffsetAbs(offset)
 end
 
+function pfm.udm.AnimationClip:ToDataTime(offset)
+	return self:LocalizeOffsetAbs(offset)
+end
+function pfm.udm.AnimationClip:ToClipTime(offset)
+	return self:GlobalizeOffsetAbs(offset)
+end
+
 -- See http://lua-users.org/files/wiki_insecure/users/chill/table.binsearch-0.3.lua
 local default_fcompval = function(value)
 	return value
