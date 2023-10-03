@@ -580,6 +580,14 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 				end)
 				:SetName("fit_view_to_data")
 
+			pContext
+				:AddItem(locale.get_text("pfm_generate_keyframes"), function()
+					if self:IsValid() then
+						self:ApplyCurveFitting()
+					end
+				end)
+				:SetName("apply_curve_fitting")
+
 			local pm = tool.get_filmmaker()
 			if pm:IsDeveloperModeEnabled() then
 				pContext
@@ -679,7 +687,7 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.PFMTimelineGraph:ApplyCurveFittingToRange(actorUuid, propertyPath, baseIndex, channel, tStart, tEnd)
-	local keyframes = channel:CalculateCurveFittingKeyframes(channel, tStart, tEnd)
+	local keyframes = channel:CalculateCurveFittingKeyframes(tStart, tEnd)
 	if keyframes == nil then
 		return
 	end
