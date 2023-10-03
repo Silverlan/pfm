@@ -144,8 +144,20 @@ function gui.PFMTimelineGraph:EndCanvasDrawing()
 								if channel ~= nil then
 									local tLowerKf = keyData:GetTime(curveFittingStartIdx)
 									local tUpperKf = keyData:GetTime(curveFittingEndIdx)
-									local oldTimes, oldValues =
-										channel:GetPanimaChannel():GetDataInRange(tLowerKf, tUpperKf)
+									local panimaChannel = channel:GetPanimaChannel()
+									local valueType = panimaChannel:GetValueType()
+									local oldTimes, oldValues = panimaChannel:GetDataInRange(tLowerKf, tUpperKf)
+									if udm.get_numeric_component_count(valueType) > 1 then
+										local tmpValues = {}
+										for _, val in ipairs(oldValues) do
+											table.insert(
+												tmpValues,
+												udm.get_numeric_component(self.m_canvasData.valueBaseIndex, valueType)
+											)
+										end
+										oldValues = tmpValues
+									end
+
 									local tmpChannel = panima.Channel()
 									tmpChannel:GetValueArray():SetValueType(udm.TYPE_FLOAT)
 									tmpChannel:InsertValues(oldTimes, oldValues)

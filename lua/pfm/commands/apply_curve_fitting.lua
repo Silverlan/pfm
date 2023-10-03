@@ -8,7 +8,6 @@
 
 local Command = util.register_class("pfm.CommandApplyCurveFitting", pfm.Command)
 function Command:Initialize(actorUuid, propertyPath, keyframeData, valueType, baseIndex)
-	assert(valueType == udm.TYPE_FLOAT)
 	pfm.Command.Initialize(self)
 
 	actorUuid = pfm.get_unique_id(actorUuid)

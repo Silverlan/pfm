@@ -686,13 +686,14 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
-function gui.PFMTimelineGraph:ApplyCurveFittingToRange(actorUuid, propertyPath, baseIndex, channel, tStart, tEnd)
-	local keyframes = channel:CalculateCurveFittingKeyframes(tStart, tEnd)
+function gui.PFMTimelineGraph:ApplyCurveFittingToRange(actorUuid, propertyPath, baseIndex, channel, tStart, tEnd, cmd)
+	local keyframes = channel:CalculateCurveFittingKeyframes(tStart, tEnd, baseIndex)
 	if keyframes == nil then
 		return
 	end
 	local panimaChannel = channel:GetPanimaChannel()
-	local cmd = pfm.create_command("keyframe_property_composition", actorUuid, propertyPath, baseIndex)
+	local hasParentCmd = (cmd ~= nil)
+	cmd = cmd or pfm.create_command("keyframe_property_composition", actorUuid, propertyPath, baseIndex)
 	cmd:AddSubCommand(
 		"apply_curve_fitting",
 		actorUuid,
@@ -701,9 +702,12 @@ function gui.PFMTimelineGraph:ApplyCurveFittingToRange(actorUuid, propertyPath, 
 		panimaChannel:GetValueType(),
 		baseIndex
 	)
-	pfm.undoredo.push("apply_curve_fitting", cmd)()
+	if hasParentCmd == false then
+		pfm.undoredo.push("apply_curve_fitting", cmd)()
+	end
 end
 function gui.PFMTimelineGraph:ApplyCurveFitting()
+	local cmd = pfm.create_command("composition")
 	for _, graphData in ipairs(self.m_graphs) do
 		local curve = graphData.curve
 		local editorChannel = curve:GetEditorChannel()
@@ -721,14 +725,31 @@ function gui.PFMTimelineGraph:ApplyCurveFitting()
 				local tStartKf = keyData:GetTime(0)
 				local tEndKf = keyData:GetTime(keyData:GetTimeCount() - 1)
 
-				self:ApplyCurveFittingToRange(actor, propertyPath, typeComponentIndex, channel, tStartAnim, tStartKf)
-				self:ApplyCurveFittingToRange(actor, propertyPath, typeComponentIndex, channel, tEndKf, tEndAnim)
+				self:ApplyCurveFittingToRange(
+					actor,
+					propertyPath,
+					typeComponentIndex,
+					channel,
+					tStartAnim,
+					tStartKf,
+					cmd
+				)
+				self:ApplyCurveFittingToRange(actor, propertyPath, typeComponentIndex, channel, tEndKf, tEndAnim, cmd)
 			else
 				-- No keyframes exist, just apply curve fitting to entire range
-				self:ApplyCurveFittingToRange(actor, propertyPath, typeComponentIndex, channel, tStartAnim, tEndAnim)
+				self:ApplyCurveFittingToRange(
+					actor,
+					propertyPath,
+					typeComponentIndex,
+					channel,
+					tStartAnim,
+					tEndAnim,
+					cmd
+				)
 			end
 		end
 	end
+	pfm.undoredo.push("apply_curve_fitting", cmd)()
 end
 function gui.PFMTimelineGraph:ZoomAxes(am, updateDataAxis, updateTimeAxis, useCenterAsPivot, cursorPos)
 	useCenterAsPivot = useCenterAsPivot or false
