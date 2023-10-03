@@ -1,0 +1,14 @@
+"volume"
+{
+	properties
+	{
+		volumetric
+		{
+			$string type "homogeneous"
+			$vec3 absorption [0,0,0]
+			$vec3 scattering_factor [0.4,0.4,0.4]
+			$vec3 asymmetry_factor [0,0,0]
+			$bool multiscattering 0
+		}
+	}
+}
