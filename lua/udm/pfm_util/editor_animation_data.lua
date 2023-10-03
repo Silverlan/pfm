@@ -21,13 +21,13 @@ function pfm.udm.EditorAnimationData.KeyframeInfo:GetIndex()
 	return self.m_keyframeIndex
 end
 function pfm.udm.EditorAnimationData.KeyframeInfo:IsDirty()
-	return self.m_dirt
+	return self.m_dirty
 end
 function pfm.udm.EditorAnimationData.KeyframeInfo:SetDirty(dirty)
 	if dirty == nil then
 		dirty = true
 	end
-	self.m_dirt = dirty
+	self.m_dirty = dirty
 end
 
 function pfm.udm.EditorAnimationData:GetAnimationClip()
