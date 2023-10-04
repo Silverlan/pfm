@@ -196,8 +196,8 @@ function Component:UpdateIkControl()
 	local actorC = targetActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	if util.is_valid(pm) and actorC ~= nil then
 		-- Make the ik properties animated
-		pm:MakeActorPropertyAnimated(actorC, "ec/ik_solver/" .. propertyName)
-		pm:MakeActorPropertyAnimated(actorC, "ec/ik_solver/" .. rotPropertyName)
+		pm:MakeActorPropertyAnimated(actorC, "ec/ik_solver/" .. propertyName, udm.TYPE_VECTOR3, true, false)
+		pm:MakeActorPropertyAnimated(actorC, "ec/ik_solver/" .. rotPropertyName, udm.TYPE_QUATERNION, true, false)
 	end
 
 	self.m_posOffset = self:GetOffset()

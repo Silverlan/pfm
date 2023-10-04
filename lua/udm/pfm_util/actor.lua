@@ -81,8 +81,10 @@ function pfm.udm.Actor:DissolveSingleValueAnimationChannels(cmd)
 		end
 		local oldValue = self:GetMemberValue(targetPath)
 		-- cmd = pfm.create_command("keyframe_property_composition", self, targetPath, baseIndex)
-		cmd:AddSubCommand("delete_editor_channel", self, targetPath)
-		cmd:AddSubCommand("delete_animation_channel", self, targetPath, valueType)
+		local res, subCmd = cmd:AddSubCommand("delete_animation_channel", self, targetPath, valueType)
+		if res == pfm.Command.RESULT_SUCCESS then
+			subCmd:AddSubCommand("delete_editor_channel", self, targetPath, valueType)
+		end
 		cmd:AddSubCommand("set_actor_property", self, targetPath, oldValue, value, valueType)
 	end
 	if externalCmd == false then

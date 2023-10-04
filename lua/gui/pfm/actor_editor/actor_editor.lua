@@ -1552,22 +1552,8 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 		if channel ~= nil then
 			context
 				:AddItem(locale.get_text("pfm_clear_animation"), function()
-					animManager:RemoveChannel(actorData.actor, controlData.path)
-					local entActor = actorData.actor:FindEntity()
-					if util.is_valid(entActor) == false then
-						return
-					end
-					local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-					if actorC ~= nil then
-						actorC:ApplyComponentMemberValue(controlData.path)
-					end
-
-					local animC = entActor:GetComponent(ents.COMPONENT_PANIMA)
-					if animC ~= nil then
-						animC:ReloadAnimation()
-					end
-
-					self:SetPropertyAnimationOverlaysDirty()
+					tool.get_filmmaker()
+						:MakeActorPropertyAnimated(actorData.actor, controlData.path, controlData.type, false)
 				end)
 				:SetName("clear_animation")
 		else

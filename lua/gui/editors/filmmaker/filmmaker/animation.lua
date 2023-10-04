@@ -20,7 +20,10 @@ function Element:UpdateKeyframe(actor, targetPath, panimaChannel, keyIdx, time, 
 		actorEditor:UpdateActorProperty(actor, targetPath)
 	end
 end
-function Element:MakeActorPropertyAnimated(actor, targetPath, valueType, pushUndo)
+function Element:MakeActorPropertyAnimated(actor, targetPath, valueType, makeAnimated, pushUndo)
+	if makeAnimated == nil then
+		makeAnimated = true
+	end
 	if pushUndo == nil then
 		pushUndo = true
 	end
@@ -30,10 +33,21 @@ function Element:MakeActorPropertyAnimated(actor, targetPath, valueType, pushUnd
 	end
 
 	local cmd = pfm.create_command("composition")
-	cmd:AddSubCommand("add_animation_channel", actor, targetPath, valueType)
-	cmd:AddSubCommand("add_editor_channel", actor, targetPath)
+
+	if makeAnimated == false then
+		local res, subCmd = cmd:AddSubCommand("delete_animation_channel", actor, targetPath, valueType)
+		if res == pfm.Command.RESULT_SUCCESS then
+			subCmd:AddSubCommand("delete_editor_channel", actor, targetPath, valueType)
+		end
+	else
+		local res, subCmd = cmd:AddSubCommand("add_editor_channel", actor, targetPath, valueType)
+		if res == pfm.Command.RESULT_SUCCESS then
+			subCmd:AddSubCommand("add_animation_channel", actor, targetPath, valueType)
+		end
+	end
+
 	if pushUndo then
-		pfm.undoredo.push("make_property_animated", cmd)()
+		pfm.undoredo.push(makeAnimated and "make_property_animated" or "clear_property_animation", cmd)()
 	else
 		cmd:Execute()
 	end

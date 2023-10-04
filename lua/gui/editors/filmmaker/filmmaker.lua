@@ -1264,8 +1264,10 @@ function gui.WIFilmmaker:ImportSequence(actor, animName)
 	for _, channel in ipairs(panimaAnim:GetChannels()) do
 		local propertyPath = channel:GetTargetPath():ToUri(false)
 		local valueType = channel:GetValueType()
-		cmd:AddSubCommand("add_animation_channel", actor, propertyPath, valueType)
-		cmd:AddSubCommand("add_editor_channel", actor, propertyPath)
+		local res, subCmd = cmd:AddSubCommand("add_editor_channel", actor, propertyPath, valueType)
+		if res == pfm.Command.RESULT_SUCCESS then
+			subCmd:AddSubCommand("add_animation_channel", actor, propertyPath, valueType)
+		end
 		cmd:AddSubCommand(
 			"set_animation_channel_range_data",
 			actor,

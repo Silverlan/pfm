@@ -7,7 +7,7 @@
 ]]
 
 local Command = util.register_class("pfm.CommandDeleteEditorChannel", pfm.CommandAddEditorChannel)
-function Command:Initialize(actorUuid, propertyPath)
+function Command:Initialize(actorUuid, propertyPath, valueType)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
 		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
@@ -37,6 +37,7 @@ function Command:Initialize(actorUuid, propertyPath)
 	local data = self:GetData()
 	data:SetValue("actor", udm.TYPE_STRING, tostring(actor:GetUniqueId()))
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
+	data:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	return pfm.Command.RESULT_SUCCESS
 end
 function Command:DoExecute(...)

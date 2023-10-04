@@ -499,6 +499,12 @@ function pfm.udm.EditorGraphCurve:GetFilmClip()
 	return self:GetEditorChannelData():GetFilmClip()
 end
 
+function pfm.udm.EditorGraphCurve:InitializeKeys(baseIndex)
+	for i = self:GetKeyCount(), baseIndex do
+		self:AddKey(i)
+	end
+end
+
 function pfm.udm.EditorGraphCurve:RebuildDirtyGraphCurveSegments()
 	local editorChannelData = self:GetEditorChannelData()
 	local editorAnimData = editorChannelData:GetEditorAnimationData()

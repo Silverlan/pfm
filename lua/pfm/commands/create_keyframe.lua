@@ -37,8 +37,10 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 		return pfm.Command.RESULT_FAILURE
 	end
 
-	self:AddSubCommand("add_animation_channel", actorUuid, propertyPath, valueType)
-	self:AddSubCommand("add_editor_channel", actorUuid, propertyPath)
+	local res, subCmd = self:AddSubCommand("add_editor_channel", actor, propertyPath, valueType)
+	if res == pfm.Command.RESULT_SUCCESS then
+		subCmd:AddSubCommand("add_animation_channel", actor, propertyPath, valueType)
+	end
 
 	local kfExists, editorChannel, keyIdx =
 		Command.does_keyframe_exist(self:GetAnimationManager(), actorUuid, propertyPath, timestamp, baseIndex)

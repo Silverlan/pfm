@@ -382,13 +382,8 @@ end
 function pfm.udm.EditorChannelData:AddKey(t, baseIndex)
 	baseIndex = baseIndex or 0
 	local graphCurve = self:GetGraphCurve()
+	graphCurve:InitializeKeys(baseIndex)
 	local keyData = graphCurve:GetKey(baseIndex)
-	if keyData == nil then
-		for i = graphCurve:GetKeyCount(), baseIndex do
-			graphCurve:AddKey(baseIndex)
-		end
-		keyData = graphCurve:GetKey(baseIndex)
-	end
 
 	local i = self:FindKeyIndexByTime(t, baseIndex)
 	if i ~= nil then

@@ -7,7 +7,7 @@
 ]]
 
 local Command = util.register_class("pfm.CommandAddEditorChannel", pfm.Command)
-function Command:Initialize(actorUuid, propertyPath)
+function Command:Initialize(actorUuid, propertyPath, valueType)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
 		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
@@ -27,6 +27,7 @@ function Command:Initialize(actorUuid, propertyPath)
 	local data = self:GetData()
 	data:SetValue("actor", udm.TYPE_STRING, tostring(actor:GetUniqueId()))
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
+	data:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	return pfm.Command.RESULT_SUCCESS
 end
 function Command:DoExecute()
@@ -35,6 +36,12 @@ function Command:DoExecute()
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
 		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
+		return
+	end
+
+	local strValueType = data:GetValue("valueType", udm.TYPE_STRING)
+	local valueType = udm.string_to_type(strValueType)
+	if valueType == nil then
 		return
 	end
 
@@ -48,7 +55,11 @@ function Command:DoExecute()
 	end
 
 	local editorData = animClip:GetEditorData()
-	editorData:FindChannel(propertyPath, true)
+	local editorChannel, newChannel = editorData:FindChannel(propertyPath, true)
+	if newChannel then
+		local graphCurve = editorChannel:GetGraphCurve()
+		graphCurve:InitializeKeys(udm.get_numeric_component_count(valueType))
+	end
 end
 function Command:DoUndo()
 	local data = self:GetData()
