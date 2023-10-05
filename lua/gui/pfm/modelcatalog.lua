@@ -11,10 +11,21 @@ include("/gui/draganddrop.lua")
 include("/gui/editableentry.lua")
 include("/pfm/file_index_table.lua")
 
+console.register_variable(
+	"pfm_show_external_assets",
+	udm.TYPE_BOOLEAN,
+	true,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"If enabled, the asset browsers will show assets that are not native to Pragma and have been found in external locations."
+)
+
 util.register_class("gui.PFMModelCatalog", gui.Base)
 
 function gui.PFMModelCatalog:__init()
 	gui.Base.__init(self)
+end
+function gui.PFMModelCatalog:OnRemove()
+	util.remove(self.m_cbShowExternalAssets)
 end
 function gui.PFMModelCatalog:OnInitialize()
 	gui.Base.OnInitialize(self)
@@ -56,12 +67,17 @@ function gui.PFMModelCatalog:OnInitialize()
 			{ "0", locale.get_text("no") },
 			{ "1", locale.get_text("yes") },
 		},
-		"1",
+		console.get_convar_bool("pfm_show_external_assets") and "1" or "0",
 		function()
 			local b = toboolean(self.m_showExternalAssets:GetOptionValue(self.m_showExternalAssets:GetSelectedOption()))
+			console.run("pfm_show_external_assets", b and "1" or "0")
+
 			self.m_explorer:SetShowExternalAssets(b)
 		end
 	)
+	self.m_cbShowExternalAssets = console.add_change_callback("pfm_show_external_assets", function(old, new)
+		elShowExternalAssets:SelectOption(new and "1" or "0")
+	end)
 	self.m_showExternalAssets = elShowExternalAssets
 	p:Update()
 	p:SizeToContents()
