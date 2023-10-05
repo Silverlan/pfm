@@ -834,6 +834,7 @@ function Element:InitializeMenuBar()
 				self:OpenUrlInBrowser("https://wiki.pragma-engine.com/books/pragma-filmmaker")
 			end)
 			pSubItem:SetName("wiki")
+
 			local pSubItem = pContext:AddItem(locale.get_text("pfm_report_a_bug"), function(pItem)
 				file.create_path("temp")
 
@@ -858,6 +859,19 @@ function Element:InitializeMenuBar()
 				)
 			end)
 			pSubItem:SetName("report_a_bug")
+
+			local pSubItem = pContext:AddItem(locale.get_text("pfm_request_a_feature"), function(pItem)
+				util.open_url_in_browser("https://github.com/Silverlan/pfm/issues")
+
+				pfm.open_message_prompt(
+					locale.get_text("pfm_request_a_feature"),
+					locale.get_text("pfm_request_a_feature_message"),
+					gui.PfmPrompt.BUTTON_OK,
+					function(bt) end
+				)
+			end)
+			pSubItem:SetName("request_a_feature")
+
 			local pSubItem = pContext:AddItem(locale.get_text("pfm_check_for_updates"), function(pItem)
 				self:CheckForUpdates(true)
 			end)
