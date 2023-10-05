@@ -266,19 +266,15 @@ function Element:SetFocusElement(el)
 	elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MINOR)
 end
 function Element:CreateButton(parent, text, f)
-	local bt = gui.PFMButton.create(
-		parent,
-		"gui/pfm/icon_cp_generic_button_large",
-		"gui/pfm/icon_cp_generic_button_large_activated",
-		function()
-			f()
-			return util.EVENT_REPLY_HANDLED
-		end
-	)
-	bt:SetSize(100, 32)
-	bt:SetText(text)
-	bt:SetZPos(1)
-	return bt
+	local elBt = gui.create("WIPFMGenericButton", parent)
+	elBt:SetText(text)
+	elBt:ScheduleUpdate()
+	elBt:AddCallback("OnPressed", function()
+		f()
+		return util.EVENT_REPLY_HANDLED
+	end)
+	elBt:Update()
+	return elBt
 end
 function Element:SetIdentifier(identifier)
 	self.m_identifier = identifier
