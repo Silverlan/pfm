@@ -32,6 +32,16 @@ function Element:OnInitialize()
 		self.m_webBrowser:SetSize(self:GetWidth(), self:GetHeight())
 		self.m_webBrowser:SetAnchor(0, 0, 1, 1)
 	end
+
+	local pm = tool.get_filmmaker()
+	if pm:ShouldDisplayNotification("initial_code_editor_message", true) then
+		pfm.open_message_prompt(
+			locale.get_text("pfm_code_editor"),
+			locale.get_text("pfm_initial_code_editor_message"),
+			gui.PfmPrompt.BUTTON_OK,
+			function(bt) end
+		)
+	end
 end
 function Element:OnFocusGained()
 	if util.is_valid(self.m_webBrowser) then

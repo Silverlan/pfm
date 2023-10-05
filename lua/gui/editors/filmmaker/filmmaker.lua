@@ -431,8 +431,7 @@ function gui.WIFilmmaker:OnInitialize()
 		end
 	end)
 
-	local udmNotifications = self.m_settings:Get("notifications")
-	if (udmNotifications:GetValue("initial_tutorial_message", udm.TYPE_BOOLEAN) or false) == false then
+	if self:ShouldDisplayNotification("initial_tutorial_message") then
 		time.create_simple_timer(5.0, function()
 			if self:IsValid() == false then
 				return
@@ -442,9 +441,8 @@ function gui.WIFilmmaker:OnInitialize()
 				locale.get_text("pfm_initial_tutorial_message"),
 				gui.PfmPrompt.BUTTON_NONE,
 				function(bt)
-					udmNotifications:SetValue("initial_tutorial_message", udm.TYPE_BOOLEAN, true)
+					self:SetNotificationAsDisplayed("initial_tutorial_message")
 					if bt == "start_tutorial" then
-						udmNotifications:SetValue("initial_tutorial_message", udm.TYPE_BOOLEAN, true)
 						time.create_simple_timer(0.0, function()
 							if self:IsValid() then
 								self:ShowCloseConfirmation(function(res)
@@ -462,6 +460,19 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:SetSkinCallbacksEnabled(true)
 	game.call_callbacks("OnFilmmakerLaunched", self)
+end
+function gui.WIFilmmaker:ShouldDisplayNotification(id, markAsDisplayed)
+	markAsDisplayed = markAsDisplayed or false
+	local udmNotifications = self.m_settings:Get("notifications")
+	local res = (udmNotifications:GetValue(id, udm.TYPE_BOOLEAN) or false) == false
+	if res and markAsDisplayed then
+		self:SetNotificationAsDisplayed(id)
+	end
+	return res
+end
+function gui.WIFilmmaker:SetNotificationAsDisplayed(id)
+	local udmNotifications = self.m_settings:Get("notifications")
+	udmNotifications:SetValue(id, udm.TYPE_BOOLEAN, true)
 end
 function gui.WIFilmmaker:OnLuaError(err)
 	local t = time.real_time()
