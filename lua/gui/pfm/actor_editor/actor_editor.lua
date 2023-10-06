@@ -1031,10 +1031,15 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 					end
 				end
 			)
+			local oldCol
+			colField:AddCallback("OnUserInputStarted", function()
+				local col = colField:GetColor()
+				oldCol = col
+			end)
 			colField:AddCallback("OnUserInputEnded", function()
 				local col = colField:GetColor()
 				if controlData.set ~= nil then
-					controlData.set(udmComponent, col, nil, nil, true)
+					controlData.set(udmComponent, col, nil, nil, true, oldCol)
 				end
 			end)
 			if controlData.getValue ~= nil then
