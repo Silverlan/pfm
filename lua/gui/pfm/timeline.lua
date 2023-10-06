@@ -398,8 +398,6 @@ function gui.PFMTimeline:InitializeToolbar()
 		"gui/pfm/icon_bookmark",
 		"gui/pfm/icon_bookmark_activated",
 		function()
-			-- TODO: Check keyframe at timestamp, copy state, restore state on undo
-			-- Same with bookmark
 			tool.get_filmmaker():AddBookmark()
 		end
 	)

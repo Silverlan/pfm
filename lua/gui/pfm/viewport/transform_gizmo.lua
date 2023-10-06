@@ -513,11 +513,6 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 			origPose = ent:GetPose()
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, function(scale)
-			local curPose = {
-				position = actorC ~= nil and (newPos ~= nil) and actorC:GetMemberValue("position") or nil,
-				rotation = actorC ~= nil and (newRot ~= nil) and actorC:GetMemberValue("rotation") or nil,
-				scale = actorC ~= nil and (newScale ~= nil) and actorC:GetMemberValue("scale") or nil,
-			}
 			local newPose = {
 				position = newPos,
 				rotation = newRot,
@@ -534,40 +529,38 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 			then
 				self:ApplyPoseToKeyframeAnimation(actorData, origPose, newPose)
 			else
-				if actorData ~= nil then
-					local oldPos, newPos, oldRot, newRot, oldScale, newScale
-					if curPose.position ~= nil then
-						oldPos = curPose.position
-					end
-					if curPose.rotation ~= nil then
-						oldRot = curPose.rotation
-					end
-					if curPose.scale ~= nil then
-						oldScale = curPose.scale
-					end
-
-					if newPose.position ~= nil then
-						newPos = newPose.position
-					end
-					if newPose.rotation ~= nil then
-						newRot = newPose.rotation
-					end
-					if newPose.scale ~= nil then
-						newScale = newPose.scale
-					end
-					pfm.undoredo.push(
-						"change_actor_pose",
-						pfm.create_command(
-							"change_actor_pose",
+				local propInfo = {
+					{
+						path = "ec/pfm_actor/position",
+						type = udm.TYPE_VECTOR3,
+						oldValue = origPose:GetOrigin(),
+						newValue = newPos,
+					},
+					{
+						path = "ec/pfm_actor/rotation",
+						type = udm.TYPE_QUATERNION,
+						oldValue = origPose:GetRotation(),
+						newValue = newRot,
+					},
+					{
+						path = "ec/pfm_actor/scale",
+						type = udm.TYPE_VECTOR3,
+						oldValue = origPose:GetScale(),
+						newValue = newScale,
+					},
+				}
+				for _, info in ipairs(propInfo) do
+					if info.newValue ~= nil then
+						tool.get_filmmaker():GetActorEditor():UpdateAnimationChannelValue(
 							actorData,
-							oldPos,
-							newPos,
-							oldRot,
-							newRot,
-							oldScale,
-							newScale
+							info.path,
+							info.type,
+							info.oldValue,
+							info.newValue,
+							nil,
+							true
 						)
-					)()
+					end
 				end
 			end
 		end)
@@ -760,77 +753,40 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 								local newPose = c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD)
 
 								local get_pose_value
-								local set_pose_value
-								local get_transform_member_value
-								local set_transform_member_value
+								local to_property_space
 								if memberInfo.type == udm.TYPE_VECTOR3 then
 									get_pose_value = function(pose)
 										return pose:GetOrigin()
 									end
-									set_pose_value = function(pose, value)
-										pose:SetOrigin(value)
-									end
-									get_transform_member_value = function(c, idx, space)
-										return c:GetTransformMemberPos(idx, space)
-									end
-									set_transform_member_value = function(c, idx, space, value)
-										c:SetTransformMemberPos(idx, space, value)
+									to_property_space = function(value, space)
+										return c:ConvertPosToMemberSpace(idx, space, value)
 									end
 								else
 									get_pose_value = function(pose)
 										return pose:GetRotation()
 									end
-									set_pose_value = function(pose, value)
-										pose:SetRotation(value)
-									end
-									get_transform_member_value = function(c, idx, space)
-										return c:GetTransformMemberRot(idx, space)
-									end
-									set_transform_member_value = function(c, idx, space, value)
-										c:SetTransformMemberRot(idx, space, value)
+									to_property_space = function(value, space)
+										return c:ConvertRotToMemberSpace(idx, space, value)
 									end
 								end
 
+								local actorEditor = tool.get_filmmaker():GetActorEditor()
+
+								local oldVal = get_pose_value(oldPose)
 								local newVal = get_pose_value(newPose)
-								-- TODO
-								--[[pfm.undoredo.push("bone_transform", function()
-									local entActor = ents.find_by_uuid(uuid)
-									if entActor == nil then
-										return
-									end
-									set_transform_member_value(c, idx, math.COORDINATE_SPACE_WORLD, newVal)
-
-									local value = get_transform_member_value(c, idx, c:GetTransformMemberSpace(idx))
-									tool.get_filmmaker():SetActorGenericProperty(
-										entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),
+								oldVal = to_property_space(oldVal, math.COORDINATE_SPACE_WORLD)
+								newVal = to_property_space(newVal, math.COORDINATE_SPACE_WORLD)
+								if oldVal ~= nil and newVal ~= nil then
+									actorEditor:UpdateAnimationChannelValue(
+										pfm.dereference(uuid),
 										targetPath,
-										value,
-										memberInfo.type
+										memberInfo.type,
+										oldVal,
+										newVal,
+										nil,
+										true
 									)
-
-									set_pose_value(pose, newVal)
-								end, function()
-									local entActor = ents.find_by_uuid(uuid)
-									if entActor == nil then
-										return
-									end
-									set_transform_member_value(
-										c,
-										idx,
-										math.COORDINATE_SPACE_WORLD,
-										get_pose_value(oldPose)
-									)
-
-									local value = get_transform_member_value(c, idx, c:GetTransformMemberSpace(idx))
-									tool.get_filmmaker():SetActorGenericProperty(
-										entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),
-										targetPath,
-										value,
-										memberInfo.type
-									)
-
-									set_pose_value(pose, get_pose_value(oldPose))
-								end)()]]
+								end
 							end)
 							self:InitializeTransformWidget(trC, ent)
 						end

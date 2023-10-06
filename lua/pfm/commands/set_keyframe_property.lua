@@ -57,6 +57,9 @@ function Command:RebuildDirtyGraphCurveSegments()
 	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
 	local editorData = animClip:GetEditorData()
 	local editorChannel = editorData:FindChannel(propertyPath)
+	if editorChannel == nil then
+		return
+	end
 	local graphCurve = editorChannel:GetGraphCurve()
 	graphCurve:RebuildDirtyGraphCurveSegments()
 end

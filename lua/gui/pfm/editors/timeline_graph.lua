@@ -594,10 +594,13 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 				pContext
 					:AddItem("Copy graph editor channel data to clipboard", function()
 						if self:IsValid() then
+							-- TODO: Store all channels in clipboard
 							for _, graphData in ipairs(self.m_graphs) do
 								local curve = graphData.curve
 								local editorChannel = curve:GetEditorChannel()
-								util.set_clipboard_string(editorChannel:GetUdmData():ToAscii())
+								if editorChannel ~= nil then
+									util.set_clipboard_string(editorChannel:GetUdmData():ToAscii())
+								end
 							end
 						end
 					end)

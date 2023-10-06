@@ -522,10 +522,17 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 							end
 							if dontTranslateValue ~= true then
 								value = controlData.translateFromInterface(value)
+								if oldValue ~= nil then
+									oldValue = controlData.translateFromInterface(oldValue)
+								end
 							end
 							local memberValue = value
+							local oldMemberValue = oldValue
 							if util.get_type_name(memberValue) == "Color" then
 								memberValue = memberValue:ToVector()
+							end
+							if oldMemberValue ~= nil and util.get_type_name(oldMemberValue) == "Color" then
+								oldMemberValue = oldMemberValue:ToVector()
 							end
 
 							local udmValue = memberValue
@@ -543,39 +550,9 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 								udmType = udm.TYPE_STRING
 							end
 
+							oldValue = oldValue or component:GetMemberValue(memberName)
 							if final then
-								oldValue = oldValue or component:GetMemberValue(memberName)
 								if oldValue ~= nil then
-									if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-										pfm.log(
-											"Adding undo/redo for value change...",
-											pfm.LOG_CATEGORY_PFM,
-											pfm.LOG_SEVERITY_DEBUG
-										)
-									end
-									pfm.undoredo.push("pfm_undoredo_property", function()
-										local entActor = ents.find_by_uuid(uniqueId)
-										if entActor == nil then
-											return
-										end
-										tool.get_filmmaker():SetActorGenericProperty(
-											entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),
-											controlData.path,
-											memberValue,
-											memberType
-										)
-									end, function()
-										local entActor = ents.find_by_uuid(uniqueId)
-										if entActor == nil then
-											return
-										end
-										tool.get_filmmaker():SetActorGenericProperty(
-											entActor:GetComponent(ents.COMPONENT_PFM_ACTOR),
-											controlData.path,
-											oldValue,
-											memberType
-										)
-									end)
 								else
 									if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
 										pfm.log(
@@ -647,7 +624,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 										component,
 										controlData,
 										udmType,
-										oldValue,
+										oldMemberValue,
 										memberValue,
 										final
 									)

@@ -29,7 +29,6 @@ function Command.does_keyframe_exist(animManager, actorUuid, propertyPath, times
 	return false, editorChannel
 end
 function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseIndex)
-	baseIndex = baseIndex or 0
 	pfm.Command.Initialize(self)
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
@@ -42,10 +41,19 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 		subCmd:AddSubCommand("add_animation_channel", actor, propertyPath, valueType)
 	end
 
-	local kfExists, editorChannel, keyIdx =
-		Command.does_keyframe_exist(self:GetAnimationManager(), actorUuid, propertyPath, timestamp, baseIndex)
-	if kfExists then
-		-- Keyframe already exists
+	local baseIndices = self:GetBaseIndices(baseIndex, valueType)
+	local allExist = true
+	for _, baseIndex in ipairs(baseIndices) do
+		local kfExists, editorChannel, keyIdx =
+			Command.does_keyframe_exist(self:GetAnimationManager(), actorUuid, propertyPath, timestamp, baseIndex)
+		if not kfExists then
+			allExist = false
+			break
+		end
+	end
+
+	if allExist then
+		-- Keyframes already exists
 		self:LogFailure("Keyframe already exists!")
 		return pfm.Command.RESULT_FAILURE
 	end
@@ -74,10 +82,24 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 	local data = self:GetData()
 	data:SetValue("actor", udm.TYPE_STRING, actorUuid)
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
-	data:SetValue("propertyType", udm.TYPE_STRING, udm.type_to_string(udm.TYPE_FLOAT))
+	data:SetValue("propertyType", udm.TYPE_STRING, udm.type_to_string(valueType))
 	data:SetValue("timestamp", udm.TYPE_FLOAT, timestamp)
-	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex or 0)
+	if baseIndex ~= nil then
+		data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex)
+	end
 	return pfm.Command.RESULT_SUCCESS
+end
+function Command:GetBaseIndices(baseIndex, valueType)
+	local baseIndices = {}
+	if baseIndex ~= nil then
+		table.insert(baseIndices, baseIndex)
+	else
+		local n = udm.get_numeric_component_count(valueType)
+		for i = 0, n - 1 do
+			table.insert(baseIndices, i)
+		end
+	end
+	return baseIndices
 end
 function Command:GetChannelData()
 	local data = self:GetData()
@@ -85,6 +107,12 @@ function Command:GetChannelData()
 	local actor = pfm.dereference(actorUuid)
 	if actor == nil then
 		self:LogFailure("Actor '" .. actorUuid .. "' not found!")
+		return
+	end
+
+	local strValueType = data:GetValue("propertyType", udm.TYPE_STRING)
+	local valueType = udm.string_to_type(strValueType)
+	if valueType == nil then
 		return
 	end
 
@@ -103,37 +131,42 @@ function Command:GetChannelData()
 		self:LogFailure("Missing editor channel!")
 		return
 	end
-	return actor, animClip, valueBaseIndex, editorChannel
+	local baseIndices = self:GetBaseIndices(valueBaseIndex, valueType)
+	return actor, animClip, baseIndices, editorChannel
 end
 function Command:CreateKeyframe(data)
-	local actor, animClip, valueBaseIndex, editorChannel = self:GetChannelData()
+	local actor, animClip, baseIndices, editorChannel = self:GetChannelData()
 	if actor == nil then
 		return false
 	end
 	local graphCurve = editorChannel:GetGraphCurve()
-	local keyData = graphCurve:GetKey(valueBaseIndex)
-
 	local timestamp = self:GetLocalTime(animClip)
-	if keyData ~= nil then
-		local keyIdx = editorChannel:FindKeyIndexByTime(timestamp, valueBaseIndex)
-		if keyIdx ~= nil then
-			-- Keyframe already exists
-			self:LogFailure("Keyframe already exists!")
-			return false
+
+	for _, valueBaseIndex in ipairs(baseIndices) do
+		local keyData = graphCurve:GetKey(valueBaseIndex)
+		if keyData ~= nil then
+			local keyIdx = editorChannel:FindKeyIndexByTime(timestamp, valueBaseIndex)
+			if keyIdx ~= nil then
+				-- Keyframe already exists
+				self:LogFailure("Keyframe already exists!")
+				return false
+			end
 		end
+		editorChannel:AddKey(timestamp, valueBaseIndex)
 	end
-	editorChannel:AddKey(timestamp, valueBaseIndex)
 	self:RebuildDirtyGraphCurveSegments()
 	return true
 end
 function Command:RemoveKeyframe(data)
-	local actor, animClip, valueBaseIndex, editorChannel = self:GetChannelData()
+	local actor, animClip, baseIndices, editorChannel = self:GetChannelData()
 	if actor == nil then
 		return false
 	end
 
 	local timestamp = self:GetLocalTime(animClip)
-	editorChannel:RemoveKey(timestamp, valueBaseIndex)
+	for _, valueBaseIndex in ipairs(baseIndices) do
+		editorChannel:RemoveKey(timestamp, valueBaseIndex)
+	end
 	self:RebuildDirtyGraphCurveSegments()
 	return true
 end

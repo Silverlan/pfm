@@ -42,19 +42,20 @@ function Command:DoExecute()
 		self:LogFailure("Invalid value type '" .. strType .. "'!")
 		return
 	end
-
 	local anim, channel, animClip, newChannel = self:GetAnimationManager()
 		:FindAnimationChannel(actor, propertyPath, true, valueType)
 	if newChannel == false then
-		self:LogFailure(
-			"Failed to add animation channel for property '"
-				.. propertyPath
-				.. "' for actor '"
-				.. actorUuid
-				.. "' with value type '"
-				.. strType
-				.. "'!"
-		)
+		if channel == nil then
+			self:LogFailure(
+				"Failed to add animation channel for property '"
+					.. propertyPath
+					.. "' for actor '"
+					.. actorUuid
+					.. "' with value type '"
+					.. strType
+					.. "'!"
+			)
+		end
 		return
 	end
 end

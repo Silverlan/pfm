@@ -249,32 +249,45 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(
 		time = time or fm:GetTimeOffset()
 
 		local actorUuid = tostring(actorData:GetUniqueId())
-		local cmd = pfm.create_command("keyframe_property_composition", actorUuid, targetPath, baseIndex)
-		local animData, propData = self:GetAnimatedPropertyData(actorData, targetPath, time)
-		if animData ~= false then
-			local cmd = pfm.create_command("composition")
-			local function add_keyframe_cmd(baseIndex)
-				local res, o =
-					cmd:AddSubCommand("create_keyframe", actorUuid, animData.path, animData.valueType, time, baseIndex)
-				return res == pfm.Command.RESULT_SUCCESS and o ~= nil
-			end
-			local hasValidSubCmd = false
-			if baseIndex ~= nil then
-				hasValidSubCmd = hasValidSubCmd or add_keyframe_cmd(baseIndex)
-			else
-				-- Create a new keyframe for each value type component
-				for i = 0, udm.get_numeric_component_count(animData.valueType) - 1 do
-					hasValidSubCmd = hasValidSubCmd or add_keyframe_cmd(i)
-				end
-			end
 
-			if hasValidSubCmd then
+		local animData, propData = self:GetAnimatedPropertyData(actorData, targetPath, time)
+		local underlyingType = udm.get_underlying_numeric_type(animData.valueType)
+		local function set_keyframe_value(cmd, oldVal, newVal)
+			local n = baseIndex or (udm.get_numeric_component_count(animData.valueType) - 1)
+			for i = 0, n do
+				cmd:AddSubCommand(
+					"set_keyframe_value",
+					actorUuid,
+					targetPath,
+					time,
+					underlyingType,
+					(oldVal ~= nil) and udm.get_numeric_component(self:ToChannelValue(oldVal), i) or nil,
+					udm.get_numeric_component(self:ToChannelValue(newVal), i),
+					i
+				)
+			end
+		end
+
+		if animData ~= false then
+			-- We have to create the keyframe as a separate command. This is because if the value is changed
+			-- using a slider, we need the keyframe immediately, even though the final undo/redo command for the value change
+			-- isn't created until the user lets go of the slider.
+			-- TODO: The user expects one undo command to be created when changing a slider value, not two. How should this be handled?
+			local cmd = pfm.create_command("keyframe_property_composition", actorUuid, targetPath, baseIndex)
+			local res, o =
+				cmd:AddSubCommand("create_keyframe", actorUuid, animData.path, animData.valueType, time, baseIndex)
+			if res == pfm.Command.RESULT_SUCCESS and o ~= nil then
+				set_keyframe_value(cmd, oldValue, oldValue) -- Required to restore value on redo
 				pfm.undoredo.push("create_keyframe", cmd)()
 			end
 		else
-			-- TODO
-			debug.print("ERROR")
+			pfm.log(
+				"Missing animation data for property path '" .. targetPath .. "'!",
+				pfm.LOG_CATEGORY_PFM,
+				pfm.LOG_SEVERITY_ERROR
+			)
 		end
+		local cmd = pfm.create_command("keyframe_property_composition", actorUuid, targetPath, baseIndex)
 
 		if not inGraphEditor then
 			cmd:AddSubCommand(
@@ -286,16 +299,7 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(
 				udmType
 			)
 		end
-		cmd:AddSubCommand(
-			"set_keyframe_value",
-			actorUuid,
-			targetPath,
-			time,
-			udmType,
-			self:ToChannelValue(oldValue),
-			self:ToChannelValue(value),
-			baseIndex
-		)
+		set_keyframe_value(cmd, oldValue, value)
 		if final then
 			pfm.undoredo.push("change_animation_value", cmd)()
 		else

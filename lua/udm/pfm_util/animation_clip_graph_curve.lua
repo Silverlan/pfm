@@ -24,13 +24,15 @@ function pfm.udm.EditorChannelData:GetKeyframeTimeBoundaries(startTime, endTime,
 
 		local keyIndexEnd = self:FindLowerKeyIndex(endTime, i) or 0
 		t = pathKeys:GetTime(keyIndexEnd)
-		if math.abs(t - endTime) > pfm.udm.EditorChannelData.TIME_EPSILON then
-			-- endTime lies beyond keyframe, so we use the next keyframe instead
-			keyIndexEnd = keyIndexEnd + 1
-			t = pathKeys:GetTime(keyIndexEnd)
-		end
 		if t ~= nil then
-			endTimeBoundary = math.max(endTimeBoundary, t)
+			if math.abs(t - endTime) > pfm.udm.EditorChannelData.TIME_EPSILON then
+				-- endTime lies beyond keyframe, so we use the next keyframe instead
+				keyIndexEnd = keyIndexEnd + 1
+				t = pathKeys:GetTime(keyIndexEnd)
+			end
+			if t ~= nil then
+				endTimeBoundary = math.max(endTimeBoundary, t)
+			end
 		end
 	end
 	if baseIndex ~= nil then
@@ -113,7 +115,7 @@ local function set_value_component_value(value, valueType, typeComponentIndex, v
 end
 
 local function calc_graph_curve_data_point_value(interpMethod, easingMode, pathKeys, keyIndex0, keyIndex1, time)
-	assert(keyIndex1 == keyIndex0 + 1)
+	-- assert(keyIndex1 == keyIndex0 + 1)
 
 	local cp0Time = pathKeys:GetTime(keyIndex0)
 	local cp0Val = pathKeys:GetValue(keyIndex0)
@@ -812,14 +814,18 @@ function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime,
 		-- Our time range may exceed the range of the keyframes for this component,
 		-- in which case we have to consider the raw animation values before the first keyframe
 		-- and/or after the last keyframe
-		local timesPre = panimaChannel:GetDataInRange(localStartTime, firstKeyframeTime)
-		for _, t in ipairs(timesPre) do
-			table.insert(timestampData, t)
+		if localStartTime ~= nil and firstKeyframeTime ~= nil then
+			local timesPre = panimaChannel:GetDataInRange(localStartTime, firstKeyframeTime)
+			for _, t in ipairs(timesPre) do
+				table.insert(timestampData, t)
+			end
 		end
 
-		local timesPost = panimaChannel:GetDataInRange(lastKeyframeTime, localEndTime)
-		for _, t in ipairs(timesPost) do
-			table.insert(timestampData, t)
+		if lastKeyframeTime ~= nil and localEndTime ~= nil then
+			local timesPost = panimaChannel:GetDataInRange(lastKeyframeTime, localEndTime)
+			for _, t in ipairs(timesPost) do
+				table.insert(timestampData, t)
+			end
 		end
 	end
 
@@ -851,11 +857,17 @@ function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime,
 			local pathKeys = self:GetKey(typeComponentIndex)
 			local foundCurveInRange = false
 			for _, keyIndex in ipairs(keyframeIndices) do
-				local tEnd = pathKeys:GetTime(keyIndex + 1)
+				local keyIndexNext
+				if math.abs(td - pathKeys:GetTime(keyIndex)) <= pfm.udm.EditorChannelData.TIME_EPSILON then
+					keyIndexNext = keyIndex
+				else
+					keyIndexNext = keyIndex + 1
+				end
+				local tEnd = pathKeys:GetTime(keyIndexNext)
 				if tEnd ~= nil then
 					if
 						td >= pathKeys:GetTime(keyIndex) - pfm.udm.EditorChannelData.TIME_EPSILON
-						and td <= pathKeys:GetTime(keyIndex + 1) + pfm.udm.EditorChannelData.TIME_EPSILON
+						and td <= pathKeys:GetTime(keyIndexNext) + pfm.udm.EditorChannelData.TIME_EPSILON
 					then
 						local interpMethod = get_interpolation_mode(pathKeys, keyIndex, valueType)
 						local easingMode = pathKeys:GetEasingMode(keyIndex)
@@ -868,7 +880,7 @@ function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime,
 								easingMode,
 								pathKeys,
 								keyIndex,
-								keyIndex + 1,
+								keyIndexNext,
 								td
 							)
 						)
