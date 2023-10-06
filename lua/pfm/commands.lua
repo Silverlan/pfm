@@ -103,7 +103,8 @@ function BaseCommand:Undo(depth)
 	self:StartUndo(depth)
 
 	local results = { self:DoUndo(self:GetData()) }
-	for _, subCmd in ipairs(self.m_subCommands) do
+	for i = #self.m_subCommands, 1, -1 do
+		local subCmd = self.m_subCommands[i]
 		subCmd:Undo(depth + 1)
 	end
 	return unpack(results)
