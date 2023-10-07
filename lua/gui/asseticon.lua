@@ -658,10 +658,14 @@ gui.register("WIDirectoryAssetIcon", gui.DirectoryAssetIcon)
 -----------------
 
 util.register_class("gui.ModelAssetIcon", gui.AssetIcon)
-function gui.ModelAssetIcon:__init()
-	gui.AssetIcon.__init(self)
+function gui.ModelAssetIcon:OnInitialize()
+	gui.AssetIcon.OnInitialize(self)
 	self.m_skin = 0
 	self.m_bodyGroups = {}
+
+	self:AddCallback("OnShowTooltip", function(el, elTooltip)
+		self:UpdateTooltip(elTooltip)
+	end)
 end
 function gui.ModelAssetIcon:IsExportable()
 	return true
@@ -686,6 +690,39 @@ function gui.ModelAssetIcon:Export()
 	exportInfo.saveAsBinary = false
 	exportInfo.embedAnimations = true
 	return mdl:Export(exportInfo)
+end
+function gui.ModelAssetIcon:UpdateTooltip(elTooltip)
+	local tooltip = ""
+	local function add_tooltip_line(l)
+		if #tooltip > 0 then
+			tooltip = tooltip .. "\n"
+		end
+		tooltip = tooltip .. l
+	end
+	local f = asset.find_file(self:GetRelativeAsset(), asset.TYPE_MODEL)
+	if f ~= nil then
+		f = asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. f
+		local udmFile = udm.open(f)
+		if udmFile ~= false then
+			local udmData, err = udmFile:LoadProperty("meta")
+			if udmData ~= false then
+				local author = udmData:GetValue("author", udm.TYPE_STRING)
+				if author ~= nil then
+					add_tooltip_line(locale.get_text("author") .. ": " .. author)
+				end
+
+				local license = udmData:GetValue("license", udm.TYPE_STRING)
+				if license ~= nil then
+					add_tooltip_line(locale.get_text("license") .. ": " .. license)
+				end
+			end
+		end
+	end
+
+	local assetPath = self:GetAsset()
+	add_tooltip_line(locale.get_text("path") .. ": " .. assetPath)
+
+	elTooltip:SetText(tooltip)
 end
 function gui.ModelAssetIcon:ApplyAsset(path, importAsset)
 	self:SetModelAsset(path, importAsset)
