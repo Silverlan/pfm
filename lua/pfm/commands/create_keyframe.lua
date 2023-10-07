@@ -38,7 +38,7 @@ function Command:Initialize(actorUuid, propertyPath, valueType, timestamp, baseI
 
 	local res, subCmd = self:AddSubCommand("add_editor_channel", actor, propertyPath, valueType)
 	if res == pfm.Command.RESULT_SUCCESS then
-		subCmd:AddSubCommand("add_animation_channel", actor, propertyPath, valueType)
+		subCmd:AddSubCommand("add_animation_channel", actor, propertyPath, pfm.to_animation_channel_type(valueType))
 	end
 
 	local baseIndices = self:GetBaseIndices(baseIndex, valueType)

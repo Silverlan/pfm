@@ -85,3 +85,28 @@ function pfm.get_bone_index_from_hit_data(hitData)
 	end
 	return boneId
 end
+
+pfm.to_editor_channel_value = function(val, udmType)
+	local type = util.get_type_name(val)
+	if type == "Color" then
+		return val:ToVector(), udm.TYPE_VECTOR3
+	end
+	if type == "Quaternion" then
+		return val:ToEulerAngles(), udm.TYPE_EULER_ANGLES
+	end
+	return val, udmType
+end
+
+pfm.to_editor_channel_type = function(udmType)
+	if udmType == udm.TYPE_QUATERNION then
+		return udm.TYPE_EULER_ANGLES
+	end
+	return udmType
+end
+
+pfm.to_animation_channel_type = function(udmType)
+	if udmType == udm.TYPE_EULER_ANGLES then
+		return udm.TYPE_QUATERNION
+	end
+	return udmType
+end

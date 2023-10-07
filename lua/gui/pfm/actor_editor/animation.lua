@@ -251,9 +251,11 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(
 		local actorUuid = tostring(actorData:GetUniqueId())
 
 		local animData, propData = self:GetAnimatedPropertyData(actorData, targetPath, time)
-		local underlyingType = udm.get_underlying_numeric_type(animData.valueType)
+		local oldValueChannel, valueTypeChannel = self:ToChannelValue(oldValue, animData.valueType)
+		local newValueChannel = self:ToChannelValue(value, animData.valueType)
+		local underlyingType = udm.get_underlying_numeric_type(valueTypeChannel)
 		local function set_keyframe_value(cmd, oldVal, newVal)
-			local n = baseIndex or (udm.get_numeric_component_count(animData.valueType) - 1)
+			local n = baseIndex or (udm.get_numeric_component_count(valueTypeChannel) - 1)
 			for i = 0, n do
 				cmd:AddSubCommand(
 					"set_keyframe_value",
@@ -261,8 +263,8 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(
 					targetPath,
 					time,
 					underlyingType,
-					(oldVal ~= nil) and udm.get_numeric_component(self:ToChannelValue(oldVal), i) or nil,
-					udm.get_numeric_component(self:ToChannelValue(newVal), i),
+					(oldVal ~= nil) and udm.get_numeric_component(oldVal, i) or nil,
+					udm.get_numeric_component(newVal, i),
 					i
 				)
 			end
@@ -275,9 +277,9 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(
 			-- TODO: The user expects one undo command to be created when changing a slider value, not two. How should this be handled?
 			local cmd = pfm.create_command("keyframe_property_composition", actorUuid, targetPath, baseIndex)
 			local res, o =
-				cmd:AddSubCommand("create_keyframe", actorUuid, animData.path, animData.valueType, time, baseIndex)
+				cmd:AddSubCommand("create_keyframe", actorUuid, animData.path, valueTypeChannel, time, baseIndex)
 			if res == pfm.Command.RESULT_SUCCESS and o ~= nil then
-				set_keyframe_value(cmd, oldValue, oldValue) -- Required to restore value on redo
+				set_keyframe_value(cmd, oldValueChannel, oldValueChannel) -- Required to restore value on redo
 				pfm.undoredo.push("create_keyframe", cmd)()
 			end
 		else
@@ -299,7 +301,7 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(
 				udmType
 			)
 		end
-		set_keyframe_value(cmd, oldValue, value)
+		set_keyframe_value(cmd, oldValueChannel, newValueChannel)
 		if final then
 			pfm.undoredo.push("change_animation_value", cmd)()
 		else
@@ -335,12 +337,8 @@ function gui.PFMActorEditor:UpdateAnimationChannelValue(
 		cmd:Execute()
 	end
 end
-function gui.PFMActorEditor:ToChannelValue(value)
-	local channelValue = value
-	if util.get_type_name(channelValue) == "Color" then
-		channelValue = channelValue:ToVector()
-	end
-	return channelValue
+function gui.PFMActorEditor:ToChannelValue(value, valueType)
+	return pfm.to_editor_channel_value(value, valueType)
 end
 function gui.PFMActorEditor:GetAnimatedPropertyData(actor, path)
 	local path = panima.Channel.Path(path)
@@ -378,53 +376,4 @@ function gui.PFMActorEditor:GetAnimatedPropertyData(actor, path)
 		path = path,
 		valueType = type,
 	}, propertyData
-end
-function gui.PFMActorEditor:SetAnimationChannelValue(actor, path, value, baseIndex, forceAtTime)
-	local fm = tool.get_filmmaker()
-	local animData, propData = self:GetAnimatedPropertyData(actor, path)
-
-	local filmClip = self:GetFilmClip()
-	local track = filmClip:FindAnimationChannelTrack()
-	local channelClip = track:FindActorAnimationClip(actor, true)
-	local localTime = channelClip:LocalizeOffsetAbs(forceAtTime or fm:GetTimeOffset())
-
-	if animData == false then
-		local baseMsg = "Unable to apply animation channel value with channel path '"
-			.. propData.path:GetString()
-			.. "': "
-		if propData.componentName == nil then
-			pfm.log(
-				baseMsg .. "Unable to determine component type from animation channel path '" .. path .. "'!",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_WARNING
-			)
-		elseif propData.componentId == nil then
-			pfm.log(
-				baseMsg .. "Component '" .. propData.componentName .. "' is unknown!",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_WARNING
-			)
-		else
-			pfm.log(
-				baseMsg
-					.. "Component '"
-					.. propData.componentName
-					.. "' has no known member '"
-					.. propData.memberName:GetString()
-					.. "'!",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_WARNING
-			)
-		end
-		return
-	end
-	local fm = tool.get_filmmaker()
-	fm:SetActorAnimationComponentProperty(
-		actor,
-		animData.path,
-		localTime,
-		self:ToChannelValue(value),
-		animData.valueType,
-		baseIndex
-	)
 end
