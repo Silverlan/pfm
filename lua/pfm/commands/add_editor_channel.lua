@@ -58,7 +58,7 @@ function Command:DoExecute()
 	local editorChannel, newChannel = editorData:FindChannel(propertyPath, true)
 	if newChannel then
 		local graphCurve = editorChannel:GetGraphCurve()
-		graphCurve:InitializeKeys(udm.get_numeric_component_count(valueType))
+		graphCurve:InitializeKeys(udm.get_numeric_component_count(valueType) - 1)
 	end
 end
 function Command:DoUndo()
