@@ -41,9 +41,9 @@ function Command:Initialize(actorUuid, propertyPath, valueType)
 	return pfm.Command.RESULT_SUCCESS
 end
 function Command:DoExecute(...)
-	return pfm.CommandAddEditorChannel.DoExecute(self, ...)
+	return pfm.CommandAddEditorChannel.DoUndo(self, ...)
 end
 function Command:DoUndo(...)
-	return pfm.CommandAddEditorChannel.DoUndo(self, ...)
+	return pfm.CommandAddEditorChannel.DoExecute(self, ...)
 end
 pfm.register_command("delete_editor_channel", Command)
