@@ -715,6 +715,11 @@ function gui.ModelAssetIcon:UpdateTooltip(elTooltip)
 				if license ~= nil then
 					add_tooltip_line(locale.get_text("license") .. ": " .. license)
 				end
+
+				local url = udmData:GetValue("url", udm.TYPE_STRING)
+				if url ~= nil then
+					add_tooltip_line(locale.get_text("url") .. ": " .. url)
+				end
 			end
 		end
 	end
