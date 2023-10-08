@@ -314,6 +314,10 @@ function Element:InitializeMenuBar()
 						return
 					end
 					local map = el:GetFilePath(true)
+					map = file.remove_file_extension(
+						map,
+						asset.get_supported_extensions(asset.TYPE_MAP, asset.FORMAT_TYPE_ALL)
+					)
 					self:ChangeMap(map)
 				end)
 				initMapDialog(pFileDialog)
