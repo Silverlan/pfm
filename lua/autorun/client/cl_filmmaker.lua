@@ -88,6 +88,14 @@ console.register_variable(
 	"If enabled, developer features will be enabled."
 )
 
+console.register_command("pfm_debug_dump_undo_stack", function(pl, key, cmd)
+	local udmFile = udm.create()
+	local udmData = udmFile:GetAssetData():GetData()
+	pfm.undoredo.serialize(udmData)
+	print("Undo/Redo Stack Data:")
+	print(udmData:ToAscii())
+	print("\n\n")
+end)
 console.register_command("pfm_bind", function(pl, key, cmd)
 	local pm = tool.get_filmmaker()
 	if util.is_valid(pm) == false or key == nil or cmd == nil then
