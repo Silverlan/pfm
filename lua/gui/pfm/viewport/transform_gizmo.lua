@@ -347,7 +347,8 @@ function gui.PFMViewport:OnActorTransformChanged(ent)
 	self:MarkActorAsDirty(ent)
 end
 function gui.PFMViewport:CreateMultiActorTransformWidget()
-	tool.get_filmmaker():TagRenderSceneAsDirty()
+	local pm = tool.get_filmmaker()
+	pm:TagRenderSceneAsDirty()
 
 	util.remove(self.m_entTransform)
 	local manipMode = self:GetManipulatorMode()
@@ -355,7 +356,7 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 		return
 	end
 
-	local actors = tool.get_filmmaker():GetSelectionManager():GetSelectedActors()
+	local actors = pm:GetSelectionManager():GetSelectedActors()
 
 	local posAvg = Vector()
 	local initialActorPoses = {}
@@ -384,14 +385,28 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 	local trC = entTransform:GetComponent("util_transform")
 	local newPos = {}
 	local newRot = {}
+	local keyframeCmds = {}
+	local function apply_property_value(ent, propName, type, value)
+		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+		local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+		if actor == nil then
+			return
+		end
+		local keyframeCmd = pm:ChangeActorPropertyValue(actor, "ec/pfm_actor/" .. propName, type, nil, value)
+		if keyframeCmd ~= nil then
+			local uuid = tostring(actor:GetUniqueId())
+			keyframeCmds[uuid] = keyframeCmds[uuid] or {}
+			keyframeCmds[uuid][propName] = keyframeCmd
+		end
+	end
 	trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED, function(pos)
 		local dtPos = pos - initialTransformPose:GetOrigin()
 		for ent, origPose in pairs(initialActorPoses) do
 			if ent:IsValid() then
-				ent:SetPos(origPose:GetOrigin() + dtPos)
+				local pos = origPose:GetOrigin() + dtPos
+				newPos[ent] = pos
 
-				newPos[ent] = ent:GetPos()
-				self:MarkActorAsDirty(ent)
+				apply_property_value(ent, "position", udm.TYPE_VECTOR3, pos)
 			end
 		end
 	end)
@@ -404,33 +419,56 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 				origin:RotateAround(initialTransformPose:GetOrigin(), dtRot)
 				pose:SetOrigin(origin)
 				pose:SetRotation(dtRot * pose:GetRotation())
-				ent:SetPose(pose)
 
-				newPos[ent] = ent:GetPos()
-				newRot[ent] = ent:GetRotation()
-				self:MarkActorAsDirty(ent)
+				newPos[ent] = pose:GetOrigin()
+				newRot[ent] = pose:GetRotation()
+
+				apply_property_value(ent, "position", udm.TYPE_VECTOR3, newPos[ent])
+				apply_property_value(ent, "rotation", udm.TYPE_QUATERNION, newRot[ent])
 			end
 		end
 	end)
 	trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, function()
+		local cmd = pfm.create_command("composition")
 		for ent, origPose in pairs(initialActorPoses) do
 			if ent:IsValid() then
+				local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+				local actor = actorC:GetActorData()
+
+				local keyframeCmds = keyframeCmds[tostring(actor:GetUniqueId())]
+
 				local pos = newPos[ent]
 				if pos ~= nil then
-					tool.get_filmmaker()
-						:SetActorTransformProperty(ent:GetComponent(ents.COMPONENT_PFM_ACTOR), "position", pos)
+					pm:ChangeActorPropertyValue(
+						actor,
+						"ec/pfm_actor/position",
+						udm.TYPE_VECTOR3,
+						origPose:GetOrigin(),
+						pos,
+						nil,
+						true,
+						cmd,
+						(keyframeCmds ~= nil) and keyframeCmds.position or nil
+					)
 				end
 
 				local rot = newRot[ent]
 				if rot ~= nil then
-					tool.get_filmmaker()
-						:SetActorTransformProperty(ent:GetComponent(ents.COMPONENT_PFM_ACTOR), "rotation", rot)
+					pm:ChangeActorPropertyValue(
+						actor,
+						"ec/pfm_actor/rotation",
+						udm.TYPE_QUATERNION,
+						origPose:GetRotation(),
+						rot,
+						nil,
+						true,
+						cmd,
+						(keyframeCmds ~= nil) and keyframeCmds.rotation or nil
+					)
 				end
-				self:OnActorTransformChanged(ent)
 			end
 		end
-		-- TODO
-		-- pfm.undoredo.push("undoredo_transform",function() apply_pose(newPose) end,function() apply_pose(curPose) end)()
+		pfm.undoredo.push("move_actors", cmd)()
 	end)
 	self:InitializeTransformWidget(trC, nil, self:GetTransformSpace() == ents.UtilTransformComponent.SPACE_VIEW)
 	self.m_transformComponent = trC

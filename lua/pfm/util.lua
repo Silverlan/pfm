@@ -87,6 +87,9 @@ function pfm.get_bone_index_from_hit_data(hitData)
 end
 
 pfm.to_editor_channel_value = function(val, udmType)
+	if val == nil then
+		return nil, pfm.to_editor_channel_type(udmType)
+	end
 	local type = util.get_type_name(val)
 	if type == "Color" then
 		return val:ToVector(), udm.TYPE_VECTOR3

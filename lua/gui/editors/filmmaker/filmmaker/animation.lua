@@ -321,7 +321,7 @@ function Element:ChangeActorPropertyValue(
 				)
 			end
 		end
-		local cmd = pfm.create_command("keyframe_property_composition", actorUuid, targetPath, baseIndex)
+		local cmd = pfm.create_command(parentCmd, "keyframe_property_composition", actorUuid, targetPath, baseIndex)
 		if cmdKeyframe ~= nil then
 			-- This is required so that the original property is restored properly on undo after the keyframe
 			-- is removed
@@ -334,10 +334,12 @@ function Element:ChangeActorPropertyValue(
 			cmd:AddSubCommand("set_actor_property", tostring(actor:GetUniqueId()), targetPath, oldValue, value, udmType)
 		end
 		set_keyframe_value(cmd, oldValueChannel, newValueChannel)
-		if final then
-			pfm.undoredo.push("change_animation_value", cmd)()
-		else
-			cmd:Execute()
+		if parentCmd == nil then
+			if final then
+				pfm.undoredo.push("change_animation_value", cmd)()
+			else
+				cmd:Execute()
+			end
 		end
 
 		return newCmdKeyframe
@@ -364,9 +366,11 @@ function Element:ChangeActorPropertyValue(
 		value,
 		udmType
 	)
-	if final then
-		pfm.undoredo.push("property", cmd)()
-	else
-		cmd:Execute()
+	if parentCmd == nil then
+		if final then
+			pfm.undoredo.push("property", cmd)()
+		else
+			cmd:Execute()
+		end
 	end
 end
