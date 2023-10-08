@@ -808,14 +808,13 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 									end
 								end
 
-								local actorEditor = tool.get_filmmaker():GetActorEditor()
-
+								local pm = tool.get_filmmaker()
 								local oldVal = get_pose_value(oldPose)
 								local newVal = get_pose_value(newPose)
 								oldVal = to_property_space(oldVal, math.COORDINATE_SPACE_WORLD)
 								newVal = to_property_space(newVal, math.COORDINATE_SPACE_WORLD)
 								if oldVal ~= nil and newVal ~= nil then
-									actorEditor:UpdateAnimationChannelValue(
+									pm:ChangeActorPropertyValue(
 										pfm.dereference(uuid),
 										targetPath,
 										memberInfo.type,

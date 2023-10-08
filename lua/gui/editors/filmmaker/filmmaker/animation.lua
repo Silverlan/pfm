@@ -312,6 +312,9 @@ function Element:ChangeActorPropertyValue(
 					set_keyframe_value(cmd, oldValueChannel, oldValueChannel) -- Required to restore value on redo
 					cmd:Execute()
 					newCmdKeyframe = cmd
+					if final then
+						cmdKeyframe = newCmdKeyframe
+					end
 				end
 			else
 				pfm.log(
