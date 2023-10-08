@@ -128,9 +128,11 @@ function gui.PFMActorEditor:AddSliderControl(component, controlData)
 			end
 		end)
 	end
-	local initialValue
+	local inputData
 	slider:AddCallback("OnUserInputStarted", function(el, value)
-		initialValue = value
+		inputData = {
+			initialValue = value,
+		}
 	end)
 	slider:AddCallback("OnUserInputEnded", function(el, value)
 		if self.m_skipUpdateCallback then
@@ -140,9 +142,9 @@ function gui.PFMActorEditor:AddSliderControl(component, controlData)
 			value = toboolean(value)
 		end
 		if controlData.set ~= nil then
-			controlData.set(component, value, nil, nil, true, initialValue)
+			controlData.set(component, value, nil, nil, true, inputData)
 		end
-		initialValue = nil
+		inputData = nil
 	end)
 	slider:AddCallback("OnLeftValueChanged", function(el, value)
 		if self.m_skipUpdateCallback then
@@ -152,7 +154,7 @@ function gui.PFMActorEditor:AddSliderControl(component, controlData)
 			value = toboolean(value)
 		end
 		if controlData.set ~= nil then
-			controlData.set(component, value)
+			controlData.set(component, value, nil, nil, nil, inputData)
 		end
 		--[[if(controlData.property ~= nil) then
 			component:GetProperty(controlData.property):SetValue(controlData.translateFromInterface(value))
@@ -171,7 +173,7 @@ function gui.PFMActorEditor:AddSliderControl(component, controlData)
 			value = toboolean(value)
 		end
 		if controlData.setRight ~= nil then
-			controlData.setRight(component, value)
+			controlData.setRight(component, value, nil, nil, nil, inputData)
 		end
 	end)
 	--[[slider:AddCallback("PopulateContextMenu",function(el,pContext)

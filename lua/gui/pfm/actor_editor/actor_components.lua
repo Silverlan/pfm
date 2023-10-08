@@ -498,7 +498,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 							dontTranslateValue,
 							updateAnimationValue,
 							final,
-							oldValue
+							inputData
 						)
 							if updateAnimationValue == nil then
 								updateAnimationValue = true
@@ -519,6 +519,10 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 									pfm.LOG_CATEGORY_PFM,
 									pfm.LOG_SEVERITY_DEBUG
 								)
+							end
+							local oldValue
+							if inputData ~= nil then
+								oldValue = inputData.initialValue
 							end
 							if dontTranslateValue ~= true then
 								value = controlData.translateFromInterface(value)
@@ -619,15 +623,23 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 										)
 									end
 
-									self:ApplyComponentChannelValue(
-										self,
-										component,
-										controlData,
-										udmType,
-										oldMemberValue,
-										memberValue,
-										final
-									)
+									local actor = component:GetActor()
+									if actor ~= nil and controlData.path ~= nil then
+										local keyframeCmd = tool.get_filmmaker():ChangeActorPropertyValue(
+											actor,
+											controlData.path,
+											udmType,
+											oldMemberValue,
+											memberValue,
+											nil,
+											final,
+											nil,
+											(inputData ~= nil) and inputData.keyframeCmd or nil
+										)
+										if inputData ~= nil and keyframeCmd ~= nil then
+											inputData.keyframeCmd = keyframeCmd
+										end
+									end
 								end
 							else
 								c:InvokeElementMemberChangeCallback(memberIdx)

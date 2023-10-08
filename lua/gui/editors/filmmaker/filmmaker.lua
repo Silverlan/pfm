@@ -1161,6 +1161,13 @@ function gui.WIFilmmaker:AbsoluteTimeToFilmClipTime(t)
 	end
 	return t - filmClip:GetTimeFrame():GetStart()
 end
+function gui.WIFilmmaker:GetTimelineMode()
+	local timeline = self:GetTimeline()
+	if util.is_valid(timeline) == false then
+		return gui.PFMTimeline.EDITOR_CLIP
+	end
+	return timeline:GetEditor()
+end
 function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 	local filmClip = self:GetActiveFilmClip()
 	if filmClip == nil then

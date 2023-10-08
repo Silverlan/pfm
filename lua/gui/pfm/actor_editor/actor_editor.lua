@@ -496,11 +496,7 @@ function gui.PFMActorEditor:TagRenderSceneAsDirty(dirty)
 	tool.get_filmmaker():TagRenderSceneAsDirty(dirty)
 end
 function gui.PFMActorEditor:GetTimelineMode()
-	local timeline = tool.get_filmmaker():GetTimeline()
-	if util.is_valid(timeline) == false then
-		return gui.PFMTimeline.EDITOR_CLIP
-	end
-	return timeline:GetEditor()
+	return tool.get_filmmaker():GetTimelineMode()
 end
 function gui.PFMActorEditor:GetMemberInfo(actor, path)
 	return pfm.get_member_info(path, actor:FindEntity())
@@ -1018,6 +1014,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 			)
 			ctrl = bt
 		elseif memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR then
+			local inputData
 			local colField, wrapper = self.m_animSetControls:AddColorField(
 				baseMemberName,
 				memberInfo.name,
@@ -1027,20 +1024,22 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 						return
 					end
 					if controlData.set ~= nil then
-						controlData.set(udmComponent, newCol)
+						controlData.set(udmComponent, newCol, nil, nil, nil, inputData)
 					end
 				end
 			)
-			local oldCol
 			colField:AddCallback("OnUserInputStarted", function()
 				local col = colField:GetColor()
-				oldCol = col
+				inputData = {
+					initialValue = col,
+				}
 			end)
 			colField:AddCallback("OnUserInputEnded", function()
 				local col = colField:GetColor()
 				if controlData.set ~= nil then
-					controlData.set(udmComponent, col, nil, nil, true, oldCol)
+					controlData.set(udmComponent, col, nil, nil, true, inputData)
 				end
+				inputData = nil
 			end)
 			if controlData.getValue ~= nil then
 				controlData.updateControlValue = function()

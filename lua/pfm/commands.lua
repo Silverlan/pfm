@@ -34,6 +34,17 @@ function pfm.create_command_object(identifier, ...)
 	return o
 end
 function pfm.create_command(identifier, ...)
+	if type(identifier) ~= "string" then
+		if identifier == nil then
+			return pfm.create_command(...)
+		end
+		local parentCmd = identifier
+		local res, o = parentCmd:AddSubCommand(...)
+		if res ~= pfm.Command.RESULT_SUCCESS then
+			return
+		end
+		return o
+	end
 	local o = pfm.create_command_object(identifier, ...)
 	if o == nil then
 		return
