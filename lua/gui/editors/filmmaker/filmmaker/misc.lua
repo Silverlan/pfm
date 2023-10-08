@@ -141,8 +141,11 @@ function Element:ChangeMap(map, projectFileName)
 		end
 
 		tool.close_filmmaker()
-		pfm.show_loading_screen(true, mapName)
-		console.run("pfm_restore", "1")
-		console.run("map", mapName)
+
+		pfm.show_loading_screen(true, locale.get_text("pfm_loading_map", { mapName }))
+		time.create_simple_timer(0.1, function()
+			console.run("pfm_restore", "1")
+			console.run("map", mapName)
+		end)
 	end)
 end
