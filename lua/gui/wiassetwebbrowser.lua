@@ -10,6 +10,14 @@ include("/gui/vbox.lua")
 include("/gui/info_box.lua")
 include("/util/util_asset_import.lua")
 
+console.register_variable(
+	"pfm_web_browser_enable_mature_content",
+	udm.TYPE_BOOLEAN,
+	false,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"If enabled, no message prompt will be shown when visiting bookmarks with adult content."
+)
+
 local Element = util.register_class("gui.AssetWebBrowser", gui.Base)
 
 function Element:OnInitialize()
@@ -32,21 +40,8 @@ function Element:OnInitialize()
 	p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
 
-	local elNsfw, wrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_web_browser_enable_nsfw_content"),
-		"enable_nsfw_content",
-		{
-			{ "0", locale.get_text("no") },
-			{ "1", locale.get_text("yes") },
-			{ "2", locale.get_text("full") },
-		},
-		"0",
-		function()
-			self:UpdateBookmarks()
-		end
-	)
-	self.m_enableNsfwMenu = elNsfw
-	local elBookmarks, wrapper = p:AddDropDownMenu("Bookmarks", "bookmark", {}, "pfm_wiki", function(menu, option)
+	local elBookmarks, wrapper
+	elBookmarks, wrapper = p:AddDropDownMenu("Bookmarks", "bookmark", {}, "pfm_wiki", function(menu, option)
 		local id = menu:GetOptionValue(option)
 		local i = self.m_linkMap[id]
 		if i == nil then
@@ -54,7 +49,42 @@ function Element:OnInitialize()
 		end
 		local linkData = self.m_links[i]
 		if util.is_valid(self.m_webBrowser) then
-			self.m_webBrowser:LoadUrl(linkData.url)
+			if
+				linkData.hasAdultContent
+				and console.get_convar_bool("pfm_web_browser_enable_mature_content") == false
+			then
+				local ctrl, wrapper
+				local msg = pfm.open_message_prompt(
+					locale.get_text("pfm_content_warning"),
+					locale.get_text("pfm_content_warning_website"),
+					bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
+					function(bt)
+						if bt == gui.PfmPrompt.BUTTON_YES then
+							if ctrl:IsChecked() then
+								console.run("pfm_web_browser_enable_mature_content", "1")
+							end
+							self.m_webBrowser:LoadUrl(linkData.url)
+						elseif bt == gui.PfmPrompt.BUTTON_NO then
+							elBookmarks:SelectOption("pfm_wiki")
+						end
+					end
+				)
+				local userContents = msg:GetUserContents()
+
+				local p = gui.create("WIPFMControlsMenu", userContents)
+				p:SetAutoFillContentsToWidth(true)
+				p:SetAutoFillContentsToHeight(false)
+
+				ctrl, wrapper = p:AddToggleControl(pfm.LocStr("pfm_remember_my_choice"), "remember_my_choice", false)
+				p:SetWidth(200)
+				p:Update()
+				p:SizeToContents()
+				p:ResetControls()
+
+				gui.create("WIBase", userContents, 0, 0, 1, 12) -- Gap
+			else
+				self.m_webBrowser:LoadUrl(linkData.url)
+			end
 		end
 	end)
 	self.m_bookmarkMenu = elBookmarks
@@ -157,38 +187,26 @@ function Element:UpdateInfoBox()
 	end
 	self.m_infoBox:SizeToContents()
 end
-function Element:SetNsfwContentEnabled(enabled)
-	self.m_enableNsfwMenu:SelectOption(enabled and "1" or "0")
-end
-function Element:IsNsfwContentEnabled()
-	return toboolean(self.m_enableNsfwMenu:GetOptionValue(self.m_enableNsfwMenu:GetSelectedOption()))
-end
-function Element:IsFullNsfwContentEnabled()
-	return toint(self.m_enableNsfwMenu:GetOptionValue(self.m_enableNsfwMenu:GetSelectedOption())) > 1
-end
 function Element:UpdateBookmarks()
-	local enableNsfw = self:IsNsfwContentEnabled()
-
 	local p = self.m_settingsBox
 	local links = {}
 	local linkMap = {}
-	local function addLink(id, name, url)
-		table.insert(links, { id = id, name = name, url = url })
+	local function addLink(id, name, url, hasAdultContent)
+		table.insert(links, { id = id, name = name, url = url, hasAdultContent = hasAdultContent })
 		linkMap[id] = #links
 	end
 	addLink("pfm_wiki", "PFM Wiki", "https://wiki.pragma-engine.com/books/pragma-filmmaker")
 	addLink("lua_api", "Lua API", "https://wiki.pragma-engine.com/api/docs")
 	addLink("supporter_hub", "Supporter Hub", "https://supporter.pragma-engine.com")
-	if enableNsfw then
-		addLink("sfm_lab", "SFM Lab", "https://sfmlab.com/")
-		addLink("open3d_lab", "Open3DLab", "https://open3dlab.com/")
-		addLink("smut_base", "SmutBase", "https://smutba.se/")
-		addLink(
-			"lord_aardvark",
-			"Lord Aardvark",
-			"https://lordaardvark.com/html/assets.html?cat=Models&sect=Characters"
-		)
-	end
+	addLink("sfm_lab", "SFM Lab", "https://sfmlab.com/", true)
+	addLink("open3d_lab", "Open3DLab", "https://open3dlab.com/", true)
+	addLink("smut_base", "SmutBase", "https://smutba.se/", true)
+	addLink(
+		"lord_aardvark",
+		"Lord Aardvark",
+		"https://lordaardvark.com/html/assets.html?cat=Models&sect=Characters",
+		true
+	)
 	-- addLink("sfm_workshop","SFM Workshop","https://steamcommunity.com/workshop/browse/?appid=1840sour")
 	-- addLink("pragma_workshop","Pragma Workshop","https://steamcommunity.com/app/947100/workshop/")
 
@@ -240,7 +258,7 @@ function Element:InitializeBrowser(parent, w, h)
 	end)
 	el:AddCallback("OnLoadingStateChange", function(el, isLoading, canGoBack, canGoForward)
 		self:UpdateInfoBox()
-		if isLoading == true then
+		--[[if isLoading == true then
 			return
 		end
 		local url = el:GetUrl()
@@ -268,7 +286,7 @@ function Element:InitializeBrowser(parent, w, h)
 						.. "}"
 				)
 			end
-		end
+		end]]
 	end)
 	el:AddCallback("OnDownloadUpdate", function(el, id, state, percentage)
 		if util.is_valid(self.m_log) == false or self.m_downloads[id] == nil then

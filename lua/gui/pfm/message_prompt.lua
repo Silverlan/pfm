@@ -31,10 +31,16 @@ function PfmPrompt:OnInitialize()
 
 	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap
 
+	local userContents = gui.create("WIVBox", contents) -- Space for custom content
+	self.m_userContents = userContents
+
 	local boxButtons = gui.create("WIHBox", contents)
 	self.m_boxButtons = boxButtons
 
 	boxButtons:SetX(contents:GetWidth() - boxButtons:GetWidth())
+end
+function PfmPrompt:GetUserContents()
+	return self.m_userContents
 end
 local buttonData = {
 	[PfmPrompt.BUTTON_OK] = { text = locale.get_text("ok") },
@@ -81,7 +87,7 @@ function PfmPrompt:OnUpdate()
 	self.m_message:UpdateSubLines()
 	local w = math.max(self.m_message:GetTextWidth(), self.m_boxButtons:GetWidth())
 
-	self:SetWindowSize(Vector2i(w + 20, self.m_message:GetHeight() + 95))
+	self:SetWindowSize(Vector2i(w + 20, self.m_message:GetHeight() + self.m_userContents:GetHeight() + 95))
 end
 gui.register("WIPFMPrompt", PfmPrompt)
 
