@@ -46,7 +46,7 @@ function gui.PFMInfobar:AddRightElement(el, index)
 		el:SetParent(self.m_iconContainer)
 	end
 end
-function gui.PFMInfobar:AddIcon(material, url, tooltip)
+function gui.PFMInfobar:AddIcon(material, url, tooltip, onClick)
 	local icon = gui.create("WITexturedRect", self.m_iconContainer)
 	icon:SetSize(self:GetHeight(), self:GetHeight())
 	icon:SetMaterial(material)
@@ -55,7 +55,11 @@ function gui.PFMInfobar:AddIcon(material, url, tooltip)
 	icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 	icon:AddCallback("OnMouseEvent", function(icon, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
-			util.open_url_in_browser(url)
+			if onClick ~= nil then
+				onClick(url)
+			else
+				util.open_url_in_browser(url)
+			end
 			return util.EVENT_REPLY_HANDLED
 		end
 		return util.EVENT_REPLY_UNHANDLED

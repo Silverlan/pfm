@@ -49,39 +49,12 @@ function Element:OnInitialize()
 		end
 		local linkData = self.m_links[i]
 		if util.is_valid(self.m_webBrowser) then
-			if
-				linkData.hasAdultContent
-				and console.get_convar_bool("pfm_web_browser_enable_mature_content") == false
-			then
-				local ctrl, wrapper
-				local msg = pfm.open_message_prompt(
-					locale.get_text("pfm_content_warning"),
-					locale.get_text("pfm_content_warning_website"),
-					bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
-					function(bt)
-						if bt == gui.PfmPrompt.BUTTON_YES then
-							if ctrl:IsChecked() then
-								console.run("pfm_web_browser_enable_mature_content", "1")
-							end
-							self.m_webBrowser:LoadUrl(linkData.url)
-						elseif bt == gui.PfmPrompt.BUTTON_NO then
-							elBookmarks:SelectOption("pfm_wiki")
-						end
-					end
-				)
-				local userContents = msg:GetUserContents()
-
-				local p = gui.create("WIPFMControlsMenu", userContents)
-				p:SetAutoFillContentsToWidth(true)
-				p:SetAutoFillContentsToHeight(false)
-
-				ctrl, wrapper = p:AddToggleControl(pfm.LocStr("pfm_remember_my_choice"), "remember_my_choice", false)
-				p:SetWidth(200)
-				p:Update()
-				p:SizeToContents()
-				p:ResetControls()
-
-				gui.create("WIBase", userContents, 0, 0, 1, 12) -- Gap
+			if linkData.hasAdultContent then
+				tool.get_filmmaker():ShowMatureContentPrompt(function()
+					self.m_webBrowser:LoadUrl(linkData.url)
+				end, function()
+					elBookmarks:SelectOption("pfm_wiki")
+				end)
 			else
 				self.m_webBrowser:LoadUrl(linkData.url)
 			end

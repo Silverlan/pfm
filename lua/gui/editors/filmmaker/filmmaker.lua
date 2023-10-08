@@ -168,7 +168,12 @@ function gui.WIFilmmaker:OnInitialize()
 	)
 	patronTickerContainer:SetQueryUrl("http://pragma-engine.com/patreon/request_patrons.php")
 	local engineInfo = engine.get_info()
-	infoBar:AddIcon("third_party/patreon_logo_small", pfm.PATREON_JOIN_URL, "Patreon")
+	infoBar:AddIcon("third_party/patreon_logo_small", pfm.PATREON_JOIN_URL, "Patreon", function(url)
+		self:ShowMatureContentPrompt(function()
+			util.open_url_in_browser(url)
+		end)
+	end)
+
 	-- infoBar:AddIcon("third_party/twitter_logo",engineInfo.twitterURL,"Twitter")
 	-- infoBar:AddIcon("third_party/reddit_logo",engineInfo.redditURL,"Reddit")
 	infoBar:AddIcon("third_party/github_logo_small", engineInfo.gitHubURL, "GitHub")
@@ -473,6 +478,43 @@ end
 function gui.WIFilmmaker:SetNotificationAsDisplayed(id)
 	local udmNotifications = self.m_settings:Get("notifications")
 	udmNotifications:SetValue(id, udm.TYPE_BOOLEAN, true)
+end
+function gui.WIFilmmaker:ShowMatureContentPrompt(onYes, onNo)
+	if console.get_convar_bool("pfm_web_browser_enable_mature_content") then
+		onYes()
+		return
+	end
+	local ctrl, wrapper
+	local msg = pfm.open_message_prompt(
+		locale.get_text("pfm_content_warning"),
+		locale.get_text("pfm_content_warning_website"),
+		bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
+		function(bt)
+			if bt == gui.PfmPrompt.BUTTON_YES then
+				if ctrl:IsChecked() then
+					console.run("pfm_web_browser_enable_mature_content", "1")
+				end
+				onYes()
+			elseif bt == gui.PfmPrompt.BUTTON_NO then
+				if onNo ~= nil then
+					onNo()
+				end
+			end
+		end
+	)
+	local userContents = msg:GetUserContents()
+
+	local p = gui.create("WIPFMControlsMenu", userContents)
+	p:SetAutoFillContentsToWidth(true)
+	p:SetAutoFillContentsToHeight(false)
+
+	ctrl, wrapper = p:AddToggleControl(pfm.LocStr("pfm_remember_my_choice"), "remember_my_choice", false)
+	p:SetWidth(200)
+	p:Update()
+	p:SizeToContents()
+	p:ResetControls()
+
+	gui.create("WIBase", userContents, 0, 0, 1, 12) -- Gap
 end
 function gui.WIFilmmaker:OnLuaError(err)
 	local t = time.real_time()
