@@ -154,7 +154,8 @@ function Command:CreateKeyframe(data)
 		end
 		editorChannel:AddKey(timestamp, valueBaseIndex)
 	end
-	self:RebuildDirtyGraphCurveSegments()
+	-- Commented, because this command should be wrapped in a keyframe_property_composition, which already rebuilds dirty graph curve segments
+	-- self:RebuildDirtyGraphCurveSegments()
 	return true
 end
 function Command:RemoveKeyframe(data)
@@ -167,7 +168,8 @@ function Command:RemoveKeyframe(data)
 	for _, valueBaseIndex in ipairs(baseIndices) do
 		editorChannel:RemoveKey(timestamp, valueBaseIndex)
 	end
-	self:RebuildDirtyGraphCurveSegments()
+	-- Commented, because this command should be wrapped in a keyframe_property_composition, which already rebuilds dirty graph curve segments
+	-- self:RebuildDirtyGraphCurveSegments()
 	return true
 end
 function Command:GetAnimationClip()
