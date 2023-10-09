@@ -17,9 +17,6 @@ gui.PFMButton.create = function(parent, matUnpressed, matPressed, onPressed)
 	return bt
 end
 
-function gui.PFMButton:__init()
-	gui.Base.__init(self)
-end
 function gui.PFMButton:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -164,9 +161,27 @@ gui.register("WIPFMButton", gui.PFMButton)
 ----------
 
 util.register_class("gui.PFMGenericButton", gui.PFMButton)
-function gui.PFMGenericButton:__init()
-	gui.PFMButton.__init(self)
+function gui.PFMGenericButton:OnInitialize()
+	gui.PFMButton.OnInitialize(self)
 	self.m_segments = {}
+
+	local btL = gui.create("WITexturedRect", self)
+	btL:SetMaterial("gui/pfm/bt_left")
+	btL:SizeToTexture()
+	btL:GetColorProperty():Link(self:GetColorProperty())
+	self.m_elLeft = btL
+
+	local btR = gui.create("WITexturedRect", self)
+	btR:SetMaterial("gui/pfm/bt_right")
+	btR:SizeToTexture()
+	btR:GetColorProperty():Link(self:GetColorProperty())
+	self.m_elRight = btR
+
+	self:SetPressedMaterial("gui/pfm/bt_middle_activated")
+	self:SetUnpressedMaterial("gui/pfm/bt_middle")
+	self:SetText("")
+	self.m_text:ClearAnchor()
+	self.m_text:SetZPos(1)
 end
 function gui.PFMGenericButton:ReallocateMiddleSegments(requestSize)
 	local szUnit = 24 -- Width of "gui/pfm/bt_middle"
@@ -187,28 +202,10 @@ function gui.PFMGenericButton:ReallocateMiddleSegments(requestSize)
 		local btM = gui.create("WITexturedRect", self)
 		btM:SetMaterial("gui/pfm/bt_middle")
 		btM:SizeToTexture()
+		btM:GetColorProperty():Link(self:GetColorProperty())
 		table.insert(self.m_segments, btM)
 	end
 	return size
-end
-function gui.PFMGenericButton:OnInitialize()
-	gui.PFMButton.OnInitialize(self)
-
-	local btL = gui.create("WITexturedRect", self)
-	btL:SetMaterial("gui/pfm/bt_left")
-	btL:SizeToTexture()
-	self.m_elLeft = btL
-
-	local btR = gui.create("WITexturedRect", self)
-	btR:SetMaterial("gui/pfm/bt_right")
-	btR:SizeToTexture()
-	self.m_elRight = btR
-
-	self:SetPressedMaterial("gui/pfm/bt_middle_activated")
-	self:SetUnpressedMaterial("gui/pfm/bt_middle")
-	self:SetText("")
-	self.m_text:ClearAnchor()
-	self.m_text:SetZPos(1)
 end
 function gui.PFMGenericButton:SetMaterial(mat)
 	local matLeft = "gui/pfm/bt_left"
