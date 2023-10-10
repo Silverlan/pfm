@@ -442,6 +442,7 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 		end
 		itemParent:UpdateChildBoxBounds()
 		item:GetTreeView():SetContentsWidthDirty()
+		item.m_collapsed = false
 		item:CallCallbacks("OnExpand")
 
 		itemParent:FullUpdate()
@@ -465,6 +466,7 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 			item.m_childHBox:SetVisible(false)
 		end
 		item:GetTreeView():SetContentsWidthDirty()
+		item.m_collapsed = true
 		item:CallCallbacks("OnCollapse")
 
 		itemParent:FullUpdate()
@@ -501,6 +503,9 @@ end
 function gui.PFMTreeViewElement:GetItemCount()
 	return #self.m_items
 end
+function gui.PFMTreeViewElement:IsExpanded()
+	return not self:IsCollapsed()
+end
 function gui.PFMTreeViewElement:IsCollapsed()
 	return self.m_collapsed
 end
@@ -535,7 +540,6 @@ function gui.PFMTreeViewElement:Collapse()
 	if self:IsRoot() then
 		return
 	end -- Root item can never be collapsed
-	self.m_collapsed = true
 	if util.is_valid(self.m_expandIcon) then
 		self.m_expandIcon:Collapse()
 	end
@@ -556,7 +560,6 @@ function gui.PFMTreeViewElement:FullUpdate()
 	end
 end
 function gui.PFMTreeViewElement:Expand(expandParents)
-	self.m_collapsed = false
 	if util.is_valid(self.m_expandIcon) then
 		self.m_expandIcon:Expand()
 	end
@@ -775,10 +778,6 @@ gui.register("WIPFMTreeViewElement", gui.PFMTreeViewElement)
 ------------------------
 
 util.register_class("gui.PFMTreeExpandIcon", gui.Base)
-
-function gui.PFMTreeExpandIcon:__init()
-	gui.Base.__init(self)
-end
 function gui.PFMTreeExpandIcon:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -793,10 +792,10 @@ function gui.PFMTreeExpandIcon:OnInitialize()
 	self.m_tex = tex
 
 	self:SetMouseInputEnabled(true)
-	self:Collapse()
+	self:Collapse(true)
 end
 function gui.PFMTreeExpandIcon:IsCollapsed()
-	return self.m_collapsed
+	return self.m_collapsed or false
 end
 function gui.PFMTreeExpandIcon:Expand()
 	if self:IsCollapsed() == false then
@@ -808,8 +807,8 @@ function gui.PFMTreeExpandIcon:Expand()
 	self.m_collapsed = false
 	self:CallCallbacks("OnExpand")
 end
-function gui.PFMTreeExpandIcon:Collapse()
-	if self:IsCollapsed() then
+function gui.PFMTreeExpandIcon:Collapse(force)
+	if self:IsCollapsed() and not force then
 		return
 	end
 	if util.is_valid(self.m_tex) then
