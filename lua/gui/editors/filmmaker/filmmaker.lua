@@ -529,7 +529,53 @@ function gui.WIFilmmaker:OnLuaError(err)
 end
 function gui.WIFilmmaker:SaveProject(...)
 	self:SaveUndoRedoStack()
+	self:SaveUiState()
 	return gui.WIBaseFilmmaker.SaveProject(self, ...)
+end
+function gui.WIFilmmaker:SaveUiState()
+	local session = self:GetSession()
+	if session == nil then
+		return
+	end
+
+	local udmData = session:GetUdmData()
+	udmData:RemoveValue("uiState")
+
+	local udmUiState = udmData:Add("uiState")
+	udmUiState:RemoveValue("windows")
+	local udmWindows = udmUiState:Add("windows")
+
+	for id, elWindow in pairs(self:GetWindows()) do
+		if elWindow.SaveUiState ~= nil then
+			local udmWindow = udmWindows:Add(id)
+			elWindow:SaveUiState(udmWindow)
+		end
+	end
+end
+function gui.WIFilmmaker:RestoreUiState()
+	local session = self:GetSession()
+	if session == nil then
+		return
+	end
+
+	local udmData = session:GetUdmData()
+	local udmUiState = udmData:Get("uiState")
+	if udmUiState:IsValid() == false then
+		return
+	end
+	local udmWindows = udmUiState:Get("windows")
+	if udmWindows:IsValid() == false then
+		return
+	end
+
+	for id, elWindow in pairs(self:GetWindows()) do
+		if elWindow.RestoreUiState ~= nil then
+			local udmWindow = udmWindows:Get(id)
+			if udmWindow:IsValid() then
+				elWindow:RestoreUiState(udmWindow)
+			end
+		end
+	end
 end
 function gui.WIFilmmaker:SaveUndoRedoStack()
 	local session = self:GetSession()
@@ -714,8 +760,6 @@ function gui.WIFilmmaker:OnProjectInitialized(project)
 		end)
 	end
 	self:UpdateBookmarks()
-
-	self:LoadUndoRedoStack()
 end
 function gui.WIFilmmaker:RestoreWorkCamera()
 	local session = self:GetSession()

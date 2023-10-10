@@ -154,6 +154,13 @@ function Element:InitializeProject(project)
 	self:SetTimeOffset(0)
 	self:RestoreWorkCamera()
 	self:RestoreWindowLayoutState(udmLayout or settings:GetLayoutState():GetUdmData(), udmLayout == nil)
+
+	self:LoadUndoRedoStack()
+	time.create_simple_timer(0.1, function()
+		if self:IsValid() then
+			self:RestoreUiState()
+		end
+	end)
 	return entScene
 end
 function Element:ClearProjectUI()

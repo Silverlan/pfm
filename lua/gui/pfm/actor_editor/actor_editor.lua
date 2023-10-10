@@ -755,7 +755,6 @@ function gui.PFMActorEditor:Setup(filmClip)
 		local itemGroup = self:AddCollectionItem(parentItem or self.m_tree, parent, root)
 		if root then
 			itemGroup:SetText("Scene")
-			itemGroup:Expand()
 		end
 		for _, group in ipairs(parent:GetGroups()) do
 			add_actors(group, itemGroup)
@@ -780,6 +779,14 @@ function gui.PFMActorEditor:Setup(filmClip)
 		end
 	end
 	add_film_clip(filmClip, true)
+
+	local elRoot = self.m_tree:GetRoot()
+	local el = elRoot:GetItems()[1]
+	elRoot:Update()
+	if util.is_valid(el) then
+		-- Expand top-most item
+		el:Expand()
+	end
 
 	--[[for _,actor in ipairs(filmClip:GetActorList()) do
 		self:AddActor(actor)
@@ -2426,6 +2433,64 @@ function gui.PFMActorEditor:ToggleCameraLink(actor)
 			end)
 		end
 	end
+end
+function gui.PFMActorEditor:SaveUiState(data)
+	local udmTree = data:Add("tree")
+	local function get_items(parent)
+		local t = {}
+		for _, item in ipairs(parent:GetItems()) do
+			if item:IsValid() and (item:IsExpanded() or item:IsSelected()) then
+				local tChildren = get_items(item)
+				table.insert(t, {
+					item = item,
+					children = tChildren,
+				})
+			end
+		end
+		return t
+	end
+
+	local function write_items(t, udmParent)
+		for _, itemInfo in ipairs(t) do
+			local item = itemInfo.item
+			local identifier = item:GetIdentifier()
+			local udmItem = udmParent:Add(identifier)
+			if item:IsExpanded() then
+				udmItem:SetValue("expanded", udm.TYPE_BOOLEAN, true)
+			end
+			if item:IsSelected() then
+				udmItem:SetValue("selected", udm.TYPE_BOOLEAN, true)
+			end
+			if item:IsExpanded() and #itemInfo.children > 0 then
+				local udmChild = udmItem:Add("children")
+				write_items(itemInfo.children, udmChild)
+			end
+		end
+	end
+	local targetItems = get_items(self.m_tree:GetRoot())
+	write_items(targetItems, udmTree)
+end
+function gui.PFMActorEditor:RestoreUiState(data)
+	local udmTree = data:Get("tree")
+	if udmTree:IsValid() == false then
+		return
+	end
+	local function read_items(parent, udmParent)
+		for name, udmChild in pairs(udmParent:GetChildren()) do
+			local child = parent:GetItemByIdentifier(name, false)
+			if util.is_valid(child) then
+				if udmChild:GetValue("expanded") then
+					child:Expand()
+					child:Update()
+				end
+				if udmChild:GetValue("selected") then
+					child:Select(false)
+				end
+				read_items(child, udmChild:Get("children"))
+			end
+		end
+	end
+	read_items(self.m_tree:GetRoot(), udmTree)
 end
 function gui.PFMActorEditor:OnRemove()
 	util.remove(self.m_cbCamLinkGameplayCb)
