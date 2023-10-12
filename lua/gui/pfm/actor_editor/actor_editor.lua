@@ -1616,52 +1616,62 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 					and type ~= udm.TYPE_STRING
 			end
 			if is_valid_constraint_type(prop0.controlData.type) then
-				table.insert(
-					constraintTypes,
-					{ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION, "limit_location", false }
-				)
-				table.insert(
-					constraintTypes,
-					{ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE, "limit_scale", false }
-				)
+				table.insert(constraintTypes, {
+					type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,
+					name = "limit_location",
+					requiresDriver = false,
+				})
+				table.insert(constraintTypes, {
+					type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,
+					name = "limit_scale",
+					requiresDriver = false,
+				})
 
 				if
 					#constraintProps > 1
 					and udm.is_convertible(prop1.controlData.type, udm.TYPE_VECTOR3)
 					and udm.is_numeric_type(prop1.controlData.type) == false
 				then
-					table.insert(
-						constraintTypes,
-						{ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION, "copy_location", true }
-					)
-					table.insert(
-						constraintTypes,
-						{ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE, "copy_scale", true }
-					)
-					table.insert(
-						constraintTypes,
-						{ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE, "limit_distance", true }
-					)
-					table.insert(
-						constraintTypes,
-						{ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF, "child_of", true }
-					)
+					table.insert(constraintTypes, {
+						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION,
+						name = "copy_location",
+						requiresDriver = true,
+					})
+					table.insert(constraintTypes, {
+						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE,
+						name = "copy_scale",
+						requiresDriver = true,
+					})
+					table.insert(constraintTypes, {
+						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE,
+						name = "limit_distance",
+						requiresDriver = true,
+					})
+					table.insert(constraintTypes, {
+						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF,
+						name = "child_of",
+						requiresDriver = true,
+						affectsRotation = true,
+					})
 				end
 			end
 			if prop0.controlData.type == udm.TYPE_EULER_ANGLES or prop0.controlData.type == udm.TYPE_QUATERNION then
-				table.insert(
-					constraintTypes,
-					{ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION, "limit_rotation", false }
-				)
+				table.insert(constraintTypes, {
+					type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,
+					name = "limit_rotation",
+					requiresDriver = false,
+				})
 				if #constraintProps > 1 and is_valid_constraint_type(prop1.controlData.type) then
-					table.insert(
-						constraintTypes,
-						{ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION, "copy_rotation", true }
-					)
-					table.insert(
-						constraintTypes,
-						{ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT, "look_at", true }
-					) -- TODO: Only add look_at constraint to list if rotation property has associated position property
+					table.insert(constraintTypes, {
+						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION,
+						name = "copy_rotation",
+						requiresDriver = true,
+					})
+					table.insert(constraintTypes, {
+						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT,
+						name = "look_at",
+						requiresDriver = true,
+					}) -- TODO: Only add look_at constraint to list if rotation property has associated position property
 				end
 			end
 
@@ -1670,8 +1680,8 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 				ctItem:SetName("add_constraint")
 				for _, typeInfo in ipairs(constraintTypes) do
 					ctMenu
-						:AddItem(locale.get_text("c_constraint_" .. typeInfo[2]), function()
-							local actor = self:CreatePresetActor(typeInfo[1], {
+						:AddItem(locale.get_text("c_constraint_" .. typeInfo.name), function()
+							local actor = self:CreatePresetActor(typeInfo.type, {
 								["updateActorComponents"] = false,
 							})
 							local ctC = actor:FindComponent("constraint")
@@ -1681,7 +1691,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 									udm.TYPE_STRING,
 									ents.create_uri(prop0.actorData.actor:GetUniqueId(), prop0.controlData.path)
 								)
-								if typeInfo[3] == true and prop1.controlData ~= nil then
+								if typeInfo.requiresDriver == true and prop1.controlData ~= nil then
 									ctC:SetMemberValue(
 										"driver",
 										udm.TYPE_STRING,
@@ -1696,15 +1706,59 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 							if animManager == nil then
 								return
 							end
+
 							-- Constraints require there to be an animation channel with at least one animation value
-							animManager:InitChannelWithBaseValue(
+							local cmd = pfm.create_command("composition")
+
+							local baseValue = prop0.actorData.actor:GetMemberValue(prop0.controlData.path)
+
+							pm:MakeActorPropertyAnimated(
 								prop0.actorData.actor,
 								prop0.controlData.path,
+								prop0.controlData.type,
 								true,
-								prop0.controlData.type
+								nil,
+								cmd,
+								baseValue
 							)
+							if typeInfo.affectsRotation then
+								-- This constraint affects both the position and rotation, so we need to ensure there
+								-- is an animation channel for the rotation as well
+								local ent = prop0.actorData.actor:FindEntity()
+								local memberInfo = pfm.get_member_info(prop0.controlData.path, ent)
+								if memberInfo ~= nil then
+									local componentName, memberName = ents.PanimaComponent.parse_component_channel_path(
+										panima.Channel.Path(prop0.controlData.path)
+									)
+									local metaInfo = memberInfo:FindTypeMetaData(
+										ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE_COMPONENT
+									)
+									if metaInfo ~= nil and componentName ~= nil then
+										local posePath = "ec/" .. componentName .. "/" .. metaInfo.poseProperty
+										local memberInfoPose = pfm.get_member_info(posePath, ent)
+										local metaInfo = memberInfoPose:FindTypeMetaData(
+											ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE
+										)
+										if metaInfo ~= nil then
+											local rotPath = "ec/" .. componentName .. "/" .. metaInfo.rotProperty
+											local memberInfoRot = pfm.get_member_info(rotPath, ent)
+											local baseValue = prop0.actorData.actor:GetMemberValue(rotPath)
+											pm:MakeActorPropertyAnimated(
+												prop0.actorData.actor,
+												rotPath,
+												(memberInfoRot ~= nil) and memberInfoRot.type or udm.TYPE_QUATERNION,
+												true,
+												nil,
+												cmd,
+												baseValue
+											)
+										end
+									end
+								end
+							end
+							pfm.undoredo.push("initialize_constraint", cmd)()
 						end)
-						:SetName("constraint_" .. typeInfo[2])
+						:SetName("constraint_" .. typeInfo.name)
 				end
 				ctMenu:Update()
 			end
