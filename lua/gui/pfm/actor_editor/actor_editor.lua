@@ -427,6 +427,7 @@ function gui.PFMActorEditor:OnInitialize()
 				if util.is_valid(scrollBar) and scrollBar:IsVisible() then
 					w = w + 20
 				end
+				w = math.max(w, treeScrollContainerBg:GetWidth())
 				self.m_tree:SetWidth(w)
 			end
 		end)
