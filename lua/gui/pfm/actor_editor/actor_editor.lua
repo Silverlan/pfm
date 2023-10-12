@@ -781,13 +781,18 @@ function gui.PFMActorEditor:Setup(filmClip)
 	end
 	add_film_clip(filmClip, true)
 
-	local elRoot = self.m_tree:GetRoot()
-	local el = elRoot:GetItems()[1]
-	elRoot:Update()
-	if util.is_valid(el) then
-		-- Expand top-most item
-		el:Expand()
-	end
+	-- TODO: Get rid of this timer
+	time.create_simple_timer(0.1, function()
+		if self:IsValid() then
+			local elRoot = self.m_tree:GetRoot()
+			local el = elRoot:GetItems()[1]
+			elRoot:Update()
+			if util.is_valid(el) then
+				-- Expand top-most item
+				el:Expand()
+			end
+		end
+	end)
 
 	--[[for _,actor in ipairs(filmClip:GetActorList()) do
 		self:AddActor(actor)
