@@ -107,9 +107,19 @@ function Element:OnInitialize()
 			local tMatches, similarities = string.find_similar_elements(filter, self.m_fit:GetFileNames(), 60)
 			tFiles = {}
 			tDirs = {}
+			local threshold = -60
+			-- If the filter is very short (3 characters or less), we need to increase the threshold value,
+			-- otherwise we won't get any results at all
+			if #filter == 3 then
+				threshold = -50
+			elseif #filter == 2 then
+				threshold = -20
+			elseif #filter == 1 then
+				threshold = -5
+			end
 			for i, idx in ipairs(tMatches) do
 				local sim = similarities[i]
-				if sim < -60 then
+				if sim < threshold then
 					table.insert(tFiles, "/" .. self.m_fit:GetFilePath(idx) .. self.m_fit:GetFileName(idx))
 				end
 			end
