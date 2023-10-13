@@ -62,8 +62,14 @@ function Command:ApplyValue(data, keyNewValue)
 		return false
 	end
 
+	local strValueType = data:GetValue("valueType", udm.TYPE_STRING)
+	local valueType = udm.string_to_type(strValueType)
+	if valueType == nil then
+		return
+	end
+
 	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
-	local value = data:GetValue(keyNewValue, udm.TYPE_FLOAT)
+	local value = data:GetValue(keyNewValue, valueType)
 	local idx
 	if value == nil then
 		idx = channel:FindIndex(time)
