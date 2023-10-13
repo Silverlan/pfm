@@ -542,7 +542,6 @@ function gui.WIFilmmaker:SaveUiState()
 	udmData:RemoveValue("uiState")
 
 	local udmUiState = udmData:Add("uiState")
-	udmUiState:RemoveValue("windows")
 	local udmWindows = udmUiState:Add("windows")
 
 	for id, elWindow in pairs(self:GetWindows()) do

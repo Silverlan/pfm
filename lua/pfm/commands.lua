@@ -78,7 +78,7 @@ function BaseCommand:__init()
 	self.m_subCommands = {}
 end
 function BaseCommand:Initialize()
-	return false
+	return pfm.Command.RESULT_FAILURE
 end
 function BaseCommand:GetIdentifier()
 	return self.m_identifier or ""
