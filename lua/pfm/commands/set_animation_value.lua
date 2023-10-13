@@ -16,13 +16,13 @@ function Command:Initialize(actorUuid, propertyPath, timestamp, valueType, oldVa
 		return pfm.Command.RESULT_FAILURE
 	end
 
-	local channel = self:GetAnimationChannel(actor, propertyPath)
+	--[[local channel = self:GetAnimationChannel(actor, propertyPath)
 	if channel == nil then
 		self:LogFailure(
 			"Animation channel for property '" .. propertyPath .. "' of actor '" .. actorUuid .. "' not found!"
 		)
 		return pfm.Command.RESULT_FAILURE
-	end
+	end]]
 
 	local data = self:GetData()
 	data:SetValue("actor", udm.TYPE_STRING, actorUuid)
