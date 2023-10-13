@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("add_editor_channel.lua")
+
 local Command = util.register_class("pfm.CommandDeleteEditorChannel", pfm.CommandAddEditorChannel)
 function Command:Initialize(actorUuid, propertyPath, valueType)
 	local actor = pfm.dereference(actorUuid)
