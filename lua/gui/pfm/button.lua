@@ -161,6 +161,7 @@ gui.register("WIPFMButton", gui.PFMButton)
 ----------
 
 util.register_class("gui.PFMGenericButton", gui.PFMButton)
+local MIDDLE_SEGMENT_WIDTH = 24 -- Width of "gui/pfm/bt_middle"
 function gui.PFMGenericButton:OnInitialize()
 	gui.PFMButton.OnInitialize(self)
 	self.m_segments = {}
@@ -183,29 +184,33 @@ function gui.PFMGenericButton:OnInitialize()
 	self.m_text:ClearAnchor()
 	self.m_text:SetZPos(1)
 end
-function gui.PFMGenericButton:ReallocateMiddleSegments(requestSize)
-	local szUnit = 24 -- Width of "gui/pfm/bt_middle"
+function gui.PFMGenericButton:CalcWidthWithMargin(requestSize)
 	local size = requestSize
-	local m = requestSize % szUnit
+	local m = requestSize % MIDDLE_SEGMENT_WIDTH
 	if m > 0 then
-		size = size + (szUnit - m)
+		size = size + (MIDDLE_SEGMENT_WIDTH - m)
 	end
+	return size, MIDDLE_SEGMENT_WIDTH
+end
+function gui.PFMGenericButton:ReallocateMiddleSegments()
+	if util.is_valid(self.m_elLeft) == false then
+		return
+	end
+	local w = self:GetWidth() - (self.m_elLeft:GetWidth() + self.m_elRight:GetWidth())
+	local count = math.ceil(w / MIDDLE_SEGMENT_WIDTH)
 
-	local count = size / szUnit
-
-	for i = #self.m_segments, count + 1 do
+	for i = #self.m_segments, count + 1, -1 do
 		util.remove(self.m_segments[i])
 		self.m_segments[i] = nil
 	end
 
-	for i = 1, count do
+	for i = #self.m_segments + 1, count do
 		local btM = gui.create("WITexturedRect", self)
 		btM:SetMaterial("gui/pfm/bt_middle")
 		btM:SizeToTexture()
 		btM:GetColorProperty():Link(self:GetColorProperty())
 		table.insert(self.m_segments, btM)
 	end
-	return size
 end
 function gui.PFMGenericButton:SetMaterial(mat)
 	local matLeft = "gui/pfm/bt_left"
@@ -221,21 +226,36 @@ function gui.PFMGenericButton:SetMaterial(mat)
 		el:SetMaterial(mat)
 	end
 end
-function gui.PFMGenericButton:OnUpdate()
-	local sz = self.m_text:GetWidth()
-	local margin = 20
-	local middleSize = sz + margin
-	middleSize = self:ReallocateMiddleSegments(middleSize)
-	local totalSize = self.m_elLeft:GetWidth() + self.m_elRight:GetWidth() + middleSize
+function gui.PFMGenericButton:UpdateSegmentPositions()
+	if util.is_valid(self.m_elLeft) == false then
+		return
+	end
 	local x = self.m_elLeft:GetRight()
 	for _, el in ipairs(self.m_segments) do
 		el:SetX(x)
 		x = el:GetRight()
 	end
-	self.m_elRight:SetX(x)
+	local elLastSegment = self.m_segments[#self.m_segments]
+	if elLastSegment ~= nil then
+		-- This may cause the last segment to overlap with the one before, but since they
+		-- look the same it doesn't matter
+		elLastSegment:SetX(self:GetWidth() - elLastSegment:GetWidth() - self.m_elRight:GetWidth())
+	end
+	self.m_elRight:SetX(self:GetWidth() - self.m_elRight:GetWidth())
 
 	self.m_text:CenterToParentX()
 	self.m_text:SetY(5)
+end
+function gui.PFMGenericButton:OnSizeChanged()
+	self:ReallocateMiddleSegments()
+	self:UpdateSegmentPositions()
+end
+function gui.PFMGenericButton:SizeToContents()
+	local sz = self.m_text:GetWidth()
+	local margin = 20
+	local middleSize = sz + margin
+	middleSize = self:CalcWidthWithMargin(middleSize)
+	local totalSize = self.m_elLeft:GetWidth() + self.m_elRight:GetWidth() + middleSize
 	self:SetWidth(totalSize)
 end
 gui.register("WIPFMGenericButton", gui.PFMGenericButton)
