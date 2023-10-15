@@ -374,10 +374,19 @@ pfm.register_component_action(
 			if util.is_valid(entActor) == false then
 				return
 			end
-			local c = entActor:GetComponent(ents.COMPONENT_PFM_REGION_CARVER)
-			if c ~= nil then
-				c:Carve()
-			end
+			pfm.open_message_prompt(
+				locale.get_text("pfm_prompt_continue"),
+				locale.get_text("pfm_prompt_action_cannot_be_undone"),
+				bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
+				function(bt)
+					if bt == gui.PfmPrompt.BUTTON_YES and entActor:IsValid() then
+						local c = entActor:GetComponent(ents.COMPONENT_PFM_REGION_CARVER)
+						if c ~= nil then
+							c:Carve()
+						end
+					end
+				end
+			)
 		end)
 		return bt
 	end
@@ -392,9 +401,11 @@ pfm.register_component_action(
 		bt:SetText(locale.get_text("pfm_remove_outside"))
 		bt:AddCallback("OnPressed", function()
 			local tRemove = {}
-			for ent, c in ents.citerator(ents.COMPONENT_PFM_REGION_CARVE_TARGET) do
-				if ent:HasComponent(ents.COMPONENT_PFM_ACTOR) and c:GetCarvedModel() == "empty" then
-					table.insert(tRemove, tostring(ent:GetUuid()))
+			if ents.COMPONENT_PFM_REGION_CARVE_TARGET ~= nil then
+				for ent, c in ents.citerator(ents.COMPONENT_PFM_REGION_CARVE_TARGET) do
+					if ent:HasComponent(ents.COMPONENT_PFM_ACTOR) and c:GetCarvedModel() == "empty" then
+						table.insert(tRemove, tostring(ent:GetUuid()))
+					end
 				end
 			end
 			local actorEditor = tool.get_filmmaker():GetActorEditor()
