@@ -166,11 +166,11 @@ end
 
 -----------
 
-local WIPFMActionButton = util.register_class("WIPFMActionButton", gui.PFMButton)
+local WIPFMActionButton = util.register_class("WIPFMActionButton", gui.PFMGenericButton)
 function WIPFMActionButton:OnInitialize()
-	gui.PFMButton.OnInitialize(self)
+	gui.PFMGenericButton.OnInitialize(self)
 
-	self:SetSize(64, 24)
+	self:SetSize(64, 26)
 	self:SetMouseInputEnabled(true)
 	self:SetCursor(gui.CURSOR_SHAPE_HAND)
 end
@@ -182,7 +182,7 @@ local WIBakeButton = util.register_class("WIBakeButton", WIPFMActionButton)
 function WIBakeButton:OnInitialize()
 	WIPFMActionButton.OnInitialize(self)
 
-	self:SetSize(64, 24)
+	self:SetSize(64, 26)
 	self:InitializeProgressBar()
 	self:SetMouseInputEnabled(true)
 	self:SetCursor(gui.CURSOR_SHAPE_HAND)
@@ -261,7 +261,7 @@ function WIBakeButton:SetBaker(baker)
 	end
 end
 function WIBakeButton:SetBakingState()
-	self.m_progressBar:SetColor(pfm.get_color_scheme_color("darkGrey"))
+	self.m_progressBar:SetColor(pfm.get_color_scheme_color("darkOrange"))
 	self:SetText(locale.get_text("cancel"))
 	self:SetThinkingEnabled(true)
 end
@@ -281,11 +281,10 @@ function WIBakeButton:OnThink()
 end
 function WIBakeButton:InitializeProgressBar()
 	local progressBar = gui.create("WIProgressBar", self)
-	progressBar:SetSize(self:GetWidth(), self:GetHeight())
-	progressBar:SetPos(0, 0)
-	progressBar:SetColor(Color.Gray)
+	progressBar:SetSize(self:GetWidth() - 8, 6)
+	progressBar:SetPos(4, self:GetHeight() - 6)
 	progressBar:SetAnchor(0, 0, 1, 1)
-	progressBar:SetZPos(-2)
+	progressBar:SetZPos(10)
 	progressBar:SetLabelVisible(false)
 	self.m_progressBar = progressBar
 end

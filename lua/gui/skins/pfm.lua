@@ -73,6 +73,24 @@ skin["timeline_clip_overlay"] = {
 	end,
 }
 -----------------------------------------
+------------- WIProgressBar -------------
+skin["wiprogressbar"] = {
+	children = {
+		["progressbar_label_overlay"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColorRGB(GUI.PROGRESS_BAR_LABEL_OVERLAY_COLOR)
+			end,
+		},
+		["progressbar_label_background"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColorRGB(GUI.PROGRESS_BAR_LABEL_BACKGROUND_COLOR)
+			end,
+		},
+	},
+	Initialize = function(GUI, pElement) end,
+}
+skin["wislider"] = skin["wiprogressbar"]
+-----------------------------------------
 ------------ Input fields ------------
 skin["input_field"] = {
 	Initialize = function(GUI, pElement)
