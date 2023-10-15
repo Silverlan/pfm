@@ -58,6 +58,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 			if util.is_valid(self.m_ctrlViewportWrapper) then
 				self.m_ctrlViewportWrapper:SetVisible(false)
 			end
+			self.m_refreshRtView:SetVisible(false)
 		else
 			val = "cycles"
 			local pfm = tool.get_filmmaker()
@@ -68,6 +69,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 			if util.is_valid(self.m_ctrlViewportWrapper) then
 				self.m_ctrlViewportWrapper:SetVisible(true)
 			end
+			self.m_refreshRtView:SetVisible(true)
 		end
 		self:SetRtViewportRenderer(val)
 	end)
@@ -278,6 +280,12 @@ function gui.PFMViewport:InitializeSettings(parent)
 		end
 		pfm.tag_render_scene_as_dirty()
 	end)
+
+	self.m_refreshRtView = p:AddButton(locale.get_text("pfm_refresh_rt_view"), "refresh_rt_view", function()
+		self.m_ctrlRt:SelectOption(0)
+		self.m_ctrlRt:SelectOption(1)
+	end)
+	self.m_refreshRtView:SetVisible(false)
 end
 function gui.PFMViewport:InitializeControls()
 	gui.PFMBaseViewport.InitializeControls(self)
