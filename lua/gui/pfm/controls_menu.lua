@@ -231,8 +231,9 @@ function gui.PFMControlsMenu:AddColorField(name, identifier, defaultOption, onCh
 	return colorEntry, colorEntryWrapper
 end
 function gui.PFMControlsMenu:AddButton(name, identifier, onPress)
-	local bt = gui.create("WIPFMButton", self)
+	local bt = gui.create("WIPFMGenericButton", self)
 	apply_text(bt, name)
+	bt:ScheduleUpdate()
 	if onPress ~= nil then
 		bt:AddCallback("OnPressed", onPress)
 	end
