@@ -36,24 +36,26 @@ function Element:OnInitialize()
 
 	local rootPath = "scripts/ik_rigs/"
 	local fe = controls:AddFileEntry(locale.get_text("pfm_ik_rig_file"), "ik_rig", "", function(resultHandler)
+		local path = tool.get_filmmaker():GetFileDialogPath("ik_rig_path")
 		local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
 			if fileName == nil then
 				return
 			end
-			local rig = ents.IkSolverComponent.RigConfig.load(rootPath .. fileName)
+			local rigPath = rootPath .. fileName
+			local rig = ents.IkSolverComponent.RigConfig.load(rigPath)
 			if rig == nil then
-				pfm.log(
-					"Failed to load ik rig '" .. rootPath .. fileName .. "'!",
-					pfm.LOG_CATEGORY_PFM,
-					pfm.LOG_SEVERITY_ERROR
-				)
+				pfm.log("Failed to load ik rig '" .. rigPath .. "'!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
 				return
 			end
 
 			self:LoadRig(rig)
+			tool.get_filmmaker():SetFileDialogPath("ik_rig_path", file.get_file_path(rigPath))
 		end)
 		pFileDialog:SetRootPath(rootPath)
 		pFileDialog:SetExtensions(ents.IkSolverComponent.RigConfig.get_supported_extensions())
+		if path ~= nil then
+			pFileDialog:SetPath(path)
+		end
 		pFileDialog:Update()
 	end)
 

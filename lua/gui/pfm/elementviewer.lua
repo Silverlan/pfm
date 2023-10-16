@@ -51,13 +51,18 @@ function gui.PFMElementViewer:OnInitialize()
 			pFileDialog:Update()
 		end)
 		pContext:AddItem(locale.get_text("open"), function()
+			local path = tool.get_filmmaker():GetFileDialogPath("udm_path")
 			local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
 				if fileName == nil then
 					return
 				end
 				self:OpenUdmFile(fileName)
+				tool.get_filmmaker():SetFileDialogPath("udm_path", file.get_file_path(fileName))
 			end)
 			pFileDialog:SetRootPath(self.m_rootPath or "")
+			if path ~= nil then
+				pFileDialog:SetPath(path)
+			end
 			pFileDialog:Update()
 		end)
 		pContext:AddItem(locale.get_text("save_as"), function()

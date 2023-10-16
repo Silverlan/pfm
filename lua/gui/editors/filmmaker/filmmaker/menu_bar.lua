@@ -67,6 +67,7 @@ function Element:InitializeMenuBar()
 				self:ShowCloseConfirmation(function(res)
 					util.remove(self.m_openDialogue)
 					local pOptionKeepCurrentLayout
+					local path = tool.get_filmmaker():GetFileDialogPath("project_path")
 					self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
 						fileName = "projects/" .. fileName
 
@@ -76,8 +77,12 @@ function Element:InitializeMenuBar()
 						end
 
 						self:LoadProject(fileName)
+						tool.get_filmmaker():SetFileDialogPath("project_path", file.get_file_path(fileName))
 					end)
 					self.m_openDialogue:SetRootPath("projects")
+					if path ~= nil then
+						self.m_openDialogue:SetPath(path)
+					end
 					self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
 
 					local pOptions = self.m_openDialogue:GetOptionsPanel()
@@ -218,12 +223,18 @@ function Element:InitializeMenuBar()
 				if util.is_valid(self) == false then
 					return
 				end
+				local path = tool.get_filmmaker():GetFileDialogPath("map_path")
 				local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
 					if fileName == nil then
 						return
 					end
-					self:ImportMap(el:GetFilePath(true))
+					local mapPath = el:GetFilePath(true)
+					self:ImportMap(mapPath)
+					tool.get_filmmaker():SetFileDialogPath("map_path", file.get_file_path(mapPath))
 				end)
+				if path ~= nil then
+					pFileDialog:SetPath(path)
+				end
 				initMapDialog(pFileDialog)
 			end)
 			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_import_map"))
@@ -236,9 +247,11 @@ function Element:InitializeMenuBar()
 					return
 				end
 				util.remove(self.m_openDialogue)
+				local path = tool.get_filmmaker():GetFileDialogPath("sfm_project_path")
 				self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
 					self:ShowCloseConfirmation(function(res)
 						self:ImportSFMProject(fileName)
+						tool.get_filmmaker():SetFileDialogPath("sfm_project_path", file.get_file_path(fileName))
 					end)
 				end)
 				self.m_openDialogue:SetExtensions({ "dmx" })
@@ -280,7 +293,11 @@ function Element:InitializeMenuBar()
 					table.sort(tDirs)
 					return tFiles, tDirs
 				end)
-				self.m_openDialogue:SetPath("elements/sessions")
+				if path ~= nil then
+					self.m_openDialogue:SetPath(path)
+				else
+					self.m_openDialogue:SetPath("elements/sessions")
+				end
 				self.m_openDialogue:Update()
 			end)
 			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_import_sfm_project"))
@@ -291,11 +308,17 @@ function Element:InitializeMenuBar()
 						return
 					end
 					util.remove(self.m_openDialogue)
+					local path = tool.get_filmmaker():GetFileDialogPath("project_path")
 					self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
 						self:ImportPFMProject(fileName)
+						tool.get_filmmaker():SetFileDialogPath("project_path", file.get_file_path(fileName))
 					end)
 					self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
-					self.m_openDialogue:SetPath("projects")
+					if path ~= nil then
+						self.m_openDialogue:SetPath(path)
+					else
+						self.m_openDialogue:SetPath("projects")
+					end
 					self.m_openDialogue:Update()
 				end)
 				pSubItem:SetName("pfm_project")
@@ -309,6 +332,7 @@ function Element:InitializeMenuBar()
 				if self:CheckBuildKernels() then
 					return
 				end
+				local path = tool.get_filmmaker():GetFileDialogPath("map_path")
 				local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
 					if fileName == nil then
 						return
@@ -319,7 +343,11 @@ function Element:InitializeMenuBar()
 						asset.get_supported_extensions(asset.TYPE_MAP, asset.FORMAT_TYPE_ALL)
 					)
 					self:ChangeMap(map)
+					tool.get_filmmaker():SetFileDialogPath("map_path", file.get_file_path(map))
 				end)
+				if path ~= nil then
+					pFileDialog:SetPath(path)
+				end
 				initMapDialog(pFileDialog)
 			end)
 			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_change_map"))

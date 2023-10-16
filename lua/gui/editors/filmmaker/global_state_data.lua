@@ -40,3 +40,19 @@ end
 function Element:GetGlobalStateData()
 	return self.m_globalStateData
 end
+
+function Element:SetFileDialogPath(id, path)
+	local gsd = self:GetGlobalStateData()
+	local udmPreferences = gsd:Get("preferences")
+	udmPreferences:SetValue(id, udm.TYPE_STRING, path)
+	self:SaveGlobalStateData()
+end
+
+function Element:GetFileDialogPath(id)
+	local gsd = self:GetGlobalStateData()
+	local udmPreferences = gsd:Get("preferences")
+	if udmPreferences:IsValid() == false then
+		return
+	end
+	return udmPreferences:GetValue(id, udm.TYPE_STRING)
+end

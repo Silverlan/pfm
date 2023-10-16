@@ -82,14 +82,19 @@ function Element:Save(fileName, setAsProjectName, saveAs, withProjectsPrefix, re
 		end
 	else
 		util.remove(self.m_openDialogue)
+		local path = tool.get_filmmaker():GetFileDialogPath("project_path")
 		self.m_openDialogue = gui.create_file_save_dialog(function(pDialog, fileName)
 			local res = saveProject(fileName)
 			if resultCallback then
 				resultCallback(res)
+				tool.get_filmmaker():SetFileDialogPath("project_path", file.get_file_path(fileName))
 			end
 		end)
 		self.m_openDialogue:SetRootPath("projects")
 		self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
+		if path ~= nil then
+			self.m_openDialogue:SetPath(path)
+		end
 		self.m_openDialogue:Update()
 	end
 end
