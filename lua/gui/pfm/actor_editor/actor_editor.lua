@@ -168,16 +168,14 @@ function gui.PFMActorEditor:OnInitialize()
 				"lightmapper",
 				pBakingMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER,
-				"pfm_create_lightmapper",
-				pBakingMenu
+				"pfm_create_lightmapper"
 			)
 		end
 		addPresetActorOption(
 			"reflection_probe",
 			pBakingMenu,
 			gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE,
-			"pfm_create_reflection_probe",
-			pBakingMenu
+			"pfm_create_reflection_probe"
 		)
 		pBakingMenu:Update()
 		if hasSkyComponent == false then
@@ -221,64 +219,55 @@ function gui.PFMActorEditor:OnInitialize()
 				"copy_location_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION,
-				"pfm_create_copy_location_constraint",
-				pConstraintMenu
+				"pfm_create_copy_location_constraint"
 			)
 			addPresetActorOption(
 				"copy_rotation_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION,
-				"pfm_create_copy_rotation_constraint",
-				pConstraintMenu
+				"pfm_create_copy_rotation_constraint"
 			)
 			addPresetActorOption(
 				"copy_scale_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE,
-				"pfm_create_copy_scale_constraint",
-				pConstraintMenu
+				"pfm_create_copy_scale_constraint"
 			)
 			addPresetActorOption(
 				"limit_distance_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE,
-				"pfm_create_limit_distance_constraint",
-				pConstraintMenu
+				"pfm_create_limit_distance_constraint"
 			)
 			addPresetActorOption(
 				"limit_location_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,
-				"pfm_create_limit_location_constraint",
-				pConstraintMenu
+				"pfm_create_limit_location_constraint"
 			)
 			addPresetActorOption(
 				"limit_rotation_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,
-				"pfm_create_limit_rotation_constraint",
-				pConstraintMenu
+				"pfm_create_limit_rotation_constraint"
 			)
 			addPresetActorOption(
 				"limit_scale_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,
-				"pfm_create_limit_scale_constraint",
-				pConstraintMenu
+				"pfm_create_limit_scale_constraint"
 			)
 			addPresetActorOption(
 				"look_at_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT,
-				"pfm_create_look_at_constraint",
-				pConstraintMenu
+				"pfm_create_look_at_constraint"
 			)
 			addPresetActorOption(
 				"child_of_constraint",
 				pConstraintMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF,
-				"pfm_create_child_of_constraint",
-				pConstraintMenu
+				"pfm_create_child_of_constraint"
 			)
 			pConstraintMenu:Update()
 
