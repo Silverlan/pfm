@@ -72,15 +72,15 @@ function gui.PFMTreeView:Clear()
 end
 function gui.PFMTreeView:RemoveItem(item, updateUi)
 	if util.is_valid(item) == false then
-		return
+		return false
 	end
 	local parentItem = item:GetParentItem()
 	if util.is_valid(parentItem) then
-		parentItem:RemoveItem(item, updateUi)
-		return
+		return parentItem:RemoveItem(item, updateUi)
 	end
 	item:Remove()
 	self:ScheduleUpdate()
+	return true
 end
 function gui.PFMTreeView:AddItem(text, fPopulate, insertIndex, identifier)
 	if util.is_valid(self.m_rootElement) == false then
@@ -280,7 +280,7 @@ function gui.PFMTreeViewElement:RemoveItem(item, updateUi)
 		updateUi = true
 	end
 	if util.is_valid(item) == false then
-		return
+		return false
 	end
 	for i, itemOther in ipairs(self.m_items) do
 		if util.is_same_object(itemOther, item) then
@@ -288,17 +288,20 @@ function gui.PFMTreeViewElement:RemoveItem(item, updateUi)
 			break
 		end
 	end
+	local found = false
 	for i, itemElements in ipairs(self.m_itemElements) do
 		if util.is_same_object(itemElements[1], item) then
+			found = true
 			util.remove(itemElements)
 			table.remove(self.m_itemElements, i)
 			break
 		end
 	end
 	if updateUi == false then
-		return
+		return found
 	end
 	self:UpdateUi()
+	return found
 end
 function gui.PFMTreeViewElement:UpdateUi()
 	self.m_childHBox:Update()
@@ -724,6 +727,13 @@ function gui.PFMTreeViewElement:DetachItem(item)
 	self:ScheduleUpdate()
 	self.m_treeView:GetRoot():ScheduleUpdate()
 end
+function gui.PFMTreeViewElement:FindItemIndex(item)
+	for i, itemOther in ipairs(self.m_items) do
+		if util.is_same_object(itemOther, item) then
+			return i - 1
+		end
+	end
+end
 function gui.PFMTreeViewElement:AttachItem(item, insertIndex)
 	local parent = item:GetParentItem()
 	if util.is_valid(parent) then
@@ -745,6 +755,8 @@ function gui.PFMTreeViewElement:AttachItem(item, insertIndex)
 	item:RemoveElementOnRemoval(hLine)
 
 	if insertIndex ~= nil then
+		assert(insertIndex + 1 <= #self.m_itemElements + 1)
+		assert(insertIndex + 1 <= #self.m_items + 1)
 		table.insert(self.m_itemElements, insertIndex + 1, { item, hLine })
 		table.insert(self.m_items, insertIndex + 1, item)
 	else
