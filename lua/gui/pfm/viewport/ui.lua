@@ -285,6 +285,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 		self.m_ctrlRt:SelectOption(0)
 		self.m_ctrlRt:SelectOption(1)
 	end)
+	self.m_refreshRtView:SetHeight(26)
 	self.m_refreshRtView:SetVisible(false)
 end
 function gui.PFMViewport:InitializeControls()
