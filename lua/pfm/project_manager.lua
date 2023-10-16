@@ -333,7 +333,9 @@ function pfm.ProjectManager:ResetEditState()
 	self.m_hasBeenEdited = false
 	if util.is_valid(self.m_cbOnUndoRedoChanged) == false then
 		self.m_cbOnUndoRedoChanged = pfm.undoredo.add_callback("OnChange", function()
-			self.m_hasBeenEdited = true
+			if pfm.has_undo() then
+				self.m_hasBeenEdited = true
+			end
 		end)
 	end
 end
