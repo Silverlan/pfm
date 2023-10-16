@@ -639,7 +639,7 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 	local itemParent = self.m_treeElementToDataElement[elTreePrevious]
 	local insertIndex
 	if util.is_valid(itemParent) then
-		insertIndex = itemParent:GetParent():FindChildIndex(itemParent)
+		insertIndex = itemParent:GetParentItem():FindItemIndex(itemParent)
 		if insertIndex ~= nil then
 			insertIndex = insertIndex + 1
 		end
