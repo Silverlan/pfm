@@ -77,7 +77,10 @@ function Element:InitializeMenuBar()
 						end
 
 						self:LoadProject(fileName)
-						tool.get_filmmaker():SetFileDialogPath("project_path", file.get_file_path(fileName))
+						tool.get_filmmaker():SetFileDialogPath(
+							"project_path",
+							file.get_file_path(self.m_openDialogue:MakePathRelative(fileName))
+						)
 					end)
 					self.m_openDialogue:SetRootPath("projects")
 					if path ~= nil then
@@ -224,13 +227,15 @@ function Element:InitializeMenuBar()
 					return
 				end
 				local path = tool.get_filmmaker():GetFileDialogPath("map_path")
-				local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+				local pFileDialog
+				pFileDialog = gui.create_file_open_dialog(function(el, fileName)
 					if fileName == nil then
 						return
 					end
 					local mapPath = el:GetFilePath(true)
 					self:ImportMap(mapPath)
-					tool.get_filmmaker():SetFileDialogPath("map_path", file.get_file_path(mapPath))
+					tool.get_filmmaker()
+						:SetFileDialogPath("map_path", file.get_file_path(pFileDialog:MakePathRelative(mapPath)))
 				end)
 				if path ~= nil then
 					pFileDialog:SetPath(path)
@@ -251,7 +256,10 @@ function Element:InitializeMenuBar()
 				self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
 					self:ShowCloseConfirmation(function(res)
 						self:ImportSFMProject(fileName)
-						tool.get_filmmaker():SetFileDialogPath("sfm_project_path", file.get_file_path(fileName))
+						tool.get_filmmaker():SetFileDialogPath(
+							"sfm_project_path",
+							file.get_file_path(self.m_openDialogue:MakePathRelative(fileName))
+						)
 					end)
 				end)
 				self.m_openDialogue:SetExtensions({ "dmx" })
@@ -311,7 +319,10 @@ function Element:InitializeMenuBar()
 					local path = tool.get_filmmaker():GetFileDialogPath("project_path")
 					self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
 						self:ImportPFMProject(fileName)
-						tool.get_filmmaker():SetFileDialogPath("project_path", file.get_file_path(fileName))
+						tool.get_filmmaker():SetFileDialogPath(
+							"project_path",
+							file.get_file_path(self.m_openDialogue:MakePathRelative(fileName))
+						)
 					end)
 					self.m_openDialogue:SetExtensions(pfm.Project.get_format_extensions())
 					if path ~= nil then
@@ -333,7 +344,8 @@ function Element:InitializeMenuBar()
 					return
 				end
 				local path = tool.get_filmmaker():GetFileDialogPath("map_path")
-				local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+				local pFileDialog
+				pFileDialog = gui.create_file_open_dialog(function(el, fileName)
 					if fileName == nil then
 						return
 					end
@@ -343,7 +355,8 @@ function Element:InitializeMenuBar()
 						asset.get_supported_extensions(asset.TYPE_MAP, asset.FORMAT_TYPE_ALL)
 					)
 					self:ChangeMap(map)
-					tool.get_filmmaker():SetFileDialogPath("map_path", file.get_file_path(map))
+					tool.get_filmmaker()
+						:SetFileDialogPath("map_path", file.get_file_path(self.m_openDialogue:MakePathRelative(map)))
 				end)
 				if path ~= nil then
 					pFileDialog:SetPath(path)

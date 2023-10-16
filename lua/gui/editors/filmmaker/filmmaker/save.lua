@@ -87,7 +87,11 @@ function Element:Save(fileName, setAsProjectName, saveAs, withProjectsPrefix, re
 			local res = saveProject(fileName)
 			if resultCallback then
 				resultCallback(res)
-				tool.get_filmmaker():SetFileDialogPath("project_path", file.get_file_path(fileName))
+				tool.get_filmmaker()
+					:SetFileDialogPath(
+						"project_path",
+						file.get_file_path(self.m_openDialogue:MakePathRelative(fileName))
+					)
 			end
 		end)
 		self.m_openDialogue:SetRootPath("projects")

@@ -37,7 +37,8 @@ function Element:OnInitialize()
 	local rootPath = "scripts/ik_rigs/"
 	local fe = controls:AddFileEntry(locale.get_text("pfm_ik_rig_file"), "ik_rig", "", function(resultHandler)
 		local path = tool.get_filmmaker():GetFileDialogPath("ik_rig_path")
-		local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+		local pFileDialog
+		pFileDialog = gui.create_file_open_dialog(function(el, fileName)
 			if fileName == nil then
 				return
 			end
@@ -49,7 +50,8 @@ function Element:OnInitialize()
 			end
 
 			self:LoadRig(rig)
-			tool.get_filmmaker():SetFileDialogPath("ik_rig_path", file.get_file_path(rigPath))
+			tool.get_filmmaker()
+				:SetFileDialogPath("ik_rig_path", file.get_file_path(pFileDialog:MakePathRelative(rigPath)))
 		end)
 		pFileDialog:SetRootPath(rootPath)
 		pFileDialog:SetExtensions(ents.IkSolverComponent.RigConfig.get_supported_extensions())

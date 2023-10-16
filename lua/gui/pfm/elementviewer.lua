@@ -52,12 +52,14 @@ function gui.PFMElementViewer:OnInitialize()
 		end)
 		pContext:AddItem(locale.get_text("open"), function()
 			local path = tool.get_filmmaker():GetFileDialogPath("udm_path")
-			local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+			local pFileDialog
+			pFileDialog = gui.create_file_open_dialog(function(el, fileName)
 				if fileName == nil then
 					return
 				end
 				self:OpenUdmFile(fileName)
-				tool.get_filmmaker():SetFileDialogPath("udm_path", file.get_file_path(fileName))
+				tool.get_filmmaker()
+					:SetFileDialogPath("udm_path", file.get_file_path(pFileDialog:MakePathRelative(fileName)))
 			end)
 			pFileDialog:SetRootPath(self.m_rootPath or "")
 			if path ~= nil then
@@ -299,7 +301,12 @@ function gui.PFMElementViewer:InitializeFromUdmElement(el, elRoot, onSave, rootP
 	self:MakeElementRoot(el)
 	local elRoot = self.m_tree:GetRoot():FindItemByText("root")
 	if elRoot ~= nil then
-		elRoot:Expand()
+		-- TODO: Would be better to do this without the timer
+		time.create_simple_timer(0.1, function()
+			if self:IsValid() then
+				elRoot:Expand()
+			end
+		end)
 	end
 	self.m_rootPath = rootPath
 end
