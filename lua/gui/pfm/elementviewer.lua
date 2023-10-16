@@ -275,7 +275,10 @@ function gui.PFMElementViewer:Save(asFile)
 	if isBinary then
 		res, err = udmData:Save(f)
 	else
-		res, err = udmData:SaveAscii(f)
+		res, err = udmData:SaveAscii(
+			f,
+			bit.bor(udm.ASCII_SAVE_FLAG_BIT_DONT_COMPRESS_LZ4_ARRAYS, udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER)
+		)
 	end
 	f:Close()
 	if res == false then
