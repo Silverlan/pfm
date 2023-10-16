@@ -60,6 +60,7 @@ pfm.register_component_action(
 
 		local baker = add_baker("reflection_probe", pfm.ReflectionProbeBaker, actorData, entActor)
 		local el = gui.create("WIBakeButton", controls)
+		el:SetName("bake_reflection_probe")
 		el:SetBakeText(locale.get_text("pfm_bake_reflection_probe"))
 		el:SetBaker(baker)
 		actionData.baker = el
@@ -76,6 +77,7 @@ pfm.register_component_action(
 		end
 		util.remove(actionData.windowHandle)
 		local bt = gui.create("WIPFMActionButton", controls)
+		bt:SetName("view_reflection_probe")
 		bt:SetText(locale.get_text("pfm_view_reflection_probe"))
 		bt:AddCallback("OnPressed", function()
 			pfm.util.open_reflection_probe_view_window(entActor, function(windowHandle, contents, controls)
@@ -140,6 +142,7 @@ pfm.register_component_action(
 		baker:SetGenerateRenderJob(true)
 
 		local el = gui.create("WIBakeButton", controls)
+		el:SetName("create_lightmap_render_job")
 		el:SetBakeText(locale.get_text("pfm_generate_render_job"))
 		el:SetBaker(baker)
 		actionData.baker = el
@@ -220,6 +223,7 @@ pfm.register_component_action(
 	"import_render_tool_lightmaps",
 	function(controls, actorData, entActor, actionData)
 		local bt = gui.create("WIPFMActionButton", controls)
+		bt:SetName("import_lightmaps")
 		bt:SetText(locale.get_text("pfm_import_render_tool_lightmaps"))
 		bt:AddCallback("OnPressed", function()
 			local c = entActor:GetComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)
