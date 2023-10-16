@@ -235,7 +235,16 @@ function gui.PFMElementViewer:Save(asFile)
 	if isBinary then
 		flags = bit.bor(flags, file.OPEN_MODE_BINARY)
 	end
-	local f = file.open(fileName, flags)
+	local absPath = file.find_absolute_path(fileName)
+	if absPath == nil then
+		pfm.log(
+			"Failed to determine absolute path for file '" .. fileName .. "'!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_WARNING
+		)
+		return false
+	end
+	local f = file.open(absPath, flags)
 	if f == nil then
 		pfm.log(
 			"Unable to open UDM file '" .. fileName .. "' for writing!",
