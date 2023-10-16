@@ -356,7 +356,7 @@ function Element:InitializeMenuBar()
 					)
 					self:ChangeMap(map)
 					tool.get_filmmaker()
-						:SetFileDialogPath("map_path", file.get_file_path(self.m_openDialogue:MakePathRelative(map)))
+						:SetFileDialogPath("map_path", file.get_file_path(pFileDialog:MakePathRelative(map)))
 				end)
 				if path ~= nil then
 					pFileDialog:SetPath(path)
