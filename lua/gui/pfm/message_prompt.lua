@@ -54,13 +54,13 @@ end
 function PfmPrompt:AddButton(id, text)
 	local elBt = gui.create("WIPFMGenericButton", self.m_boxButtons)
 	elBt:SetText(text)
-	elBt:ScheduleUpdate()
 	elBt:AddCallback("OnPressed", function()
 		if self:CallCallbacks("OnButtonPressed", id) == util.EVENT_REPLY_HANDLED then
 			return
 		end
 		self:GetFrame():Remove()
 	end)
+	elBt:SizeToContents()
 	gui.create("WIBase", self.m_boxButtons, 0, 0, 8, 1) -- Gap
 	self.m_boxButtons:ScheduleUpdate()
 

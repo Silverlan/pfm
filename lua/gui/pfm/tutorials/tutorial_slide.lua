@@ -268,11 +268,11 @@ end
 function Element:CreateButton(parent, text, f)
 	local elBt = gui.create("WIPFMGenericButton", parent)
 	elBt:SetText(text)
-	elBt:ScheduleUpdate()
 	elBt:AddCallback("OnPressed", function()
 		f()
 		return util.EVENT_REPLY_HANDLED
 	end)
+	elBt:SizeToContents()
 	elBt:Update()
 	return elBt
 end
