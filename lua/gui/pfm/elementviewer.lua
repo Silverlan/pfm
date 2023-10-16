@@ -38,7 +38,9 @@ function gui.PFMElementViewer:OnInitialize()
 	self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())
 	self.m_btTools:SetupContextMenu(function(pContext)
 		pContext:AddItem(locale.get_text("new"), function()
-			local pFileDialog = gui.create_file_save_dialog(function(pDialoge, fileName)
+			local path = tool.get_filmmaker():GetFileDialogPath("udm_path")
+			local pFileDialog
+			pFileDialog = gui.create_file_save_dialog(function(pDialoge, fileName)
 				if fileName == nil then
 					return
 				end
@@ -46,8 +48,13 @@ function gui.PFMElementViewer:OnInitialize()
 					file.write(fileName, "")
 				end
 				self:OpenUdmFile(fileName)
+				tool.get_filmmaker()
+					:SetFileDialogPath("udm_path", file.get_file_path(pFileDialog:MakePathRelative(fileName)))
 			end)
 			pFileDialog:SetRootPath(self.m_rootPath or "")
+			if path ~= nil then
+				pFileDialog:SetPath(path)
+			end
 			pFileDialog:Update()
 		end)
 		pContext:AddItem(locale.get_text("open"), function()
@@ -68,14 +75,21 @@ function gui.PFMElementViewer:OnInitialize()
 			pFileDialog:Update()
 		end)
 		pContext:AddItem(locale.get_text("save_as"), function()
-			local pFileDialog = gui.create_file_save_dialog(function(pDialoge, fileName)
+			local path = tool.get_filmmaker():GetFileDialogPath("udm_path")
+			local pFileDialog
+			pFileDialog = gui.create_file_save_dialog(function(pDialoge, fileName)
 				if fileName == nil then
 					return
 				end
 				self.m_fileName = fileName
 				self:Save(true)
+				tool.get_filmmaker()
+					:SetFileDialogPath("udm_path", file.get_file_path(pFileDialog:MakePathRelative(fileName)))
 			end)
 			pFileDialog:SetRootPath(self.m_rootPath or "")
+			if path ~= nil then
+				pFileDialog:SetPath(path)
+			end
 			pFileDialog:Update()
 		end)
 	end, true)

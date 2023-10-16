@@ -113,17 +113,25 @@ function Element:OnInitialize()
 		if rig == nil then
 			return
 		end
-		local pFileDialog = gui.create_file_save_dialog(function(pDialoge, fileName)
+		local path = tool.get_filmmaker():GetFileDialogPath("ik_rig_path")
+		local pFileDialog
+		pFileDialog = gui.create_file_save_dialog(function(pDialoge, fileName)
 			if fileName == nil then
 				return
 			end
 			fileName = file.remove_file_extension(fileName, { "pikr", "pikr_b" })
-			local res, err = rig:Save("scripts/ik_rigs/" .. fileName .. ".pikr")
+			local ikRigPath = "scripts/ik_rigs/" .. fileName .. ".pikr"
+			local res, err = rig:Save(ikRigPath)
 			if res == false then
 				pfm.log("Failed to save ik rig: " .. err, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
 			end
+			tool.get_filmmaker()
+				:SetFileDialogPath("ik_rig_path", file.get_file_path(pFileDialog:MakePathRelative(ikRigPath)))
 		end)
 		pFileDialog:SetRootPath("scripts/ik_rigs/")
+		if path ~= nil then
+			pFileDialog:SetPath(path)
+		end
 		pFileDialog:Update()
 	end)
 
