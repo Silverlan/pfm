@@ -258,12 +258,8 @@ function gui.PFMElementViewer:Save(asFile)
 	end
 	local absPath = file.find_absolute_path(fileName)
 	if absPath == nil then
-		pfm.log(
-			"Failed to determine absolute path for file '" .. fileName .. "'!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
-		return false
+		file.create_path(file.get_file_path(fileName))
+		absPath = fileName
 	end
 	local f = file.open(absPath, flags)
 	if f == nil then
