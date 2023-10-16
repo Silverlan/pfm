@@ -368,7 +368,7 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 	end
 
 	if node:GetType() == udm.TYPE_ELEMENT or udm.is_array_type(node:GetType()) then
-		elTreeChild = elTreeParent:AddItem(name, function(elTree)
+		elTreeChild = elTreeParent:AddItem(tostring(name), function(elTree)
 			local elTreePrevious = elTree
 			if node:GetChildCount() > 0 then
 				local children = node:GetChildren()
@@ -385,7 +385,7 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 			elseif node:GetSize() < 1000 then
 				local items = node:GetArrayValues()
 				for i, item in ipairs(items) do
-					elTreePrevious = self:AddUDMNode(node, node:Get(i - 1), tostring(i), elTree, elTreePrevious)
+					elTreePrevious = self:AddUDMNode(node, node:Get(i - 1), i - 1, elTree, elTreePrevious)
 				end
 			end
 			self:UpdateDataElementPositions()
@@ -569,7 +569,7 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 			text = (node:GetType() == udm.TYPE_ELEMENT) and "Element" or "Array"
 		end
 	else
-		elTreeChild = elTreeParent:AddItem(name)
+		elTreeChild = elTreeParent:AddItem(tostring(name))
 
 		elTreeChild:AddCallback("OnMouseEvent", function(elTreeChild, button, state, mods)
 			if button == input.MOUSE_BUTTON_RIGHT then
