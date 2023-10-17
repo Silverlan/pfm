@@ -203,6 +203,11 @@ function pfm.Project:SaveLegacy(fileName)
 end
 
 function pfm.Project:Save(fileName, legacy)
+	local absPath = file.find_absolute_path(fileName)
+	if absPath ~= nil then
+		fileName = absPath
+	end
+
 	local saveAsAscii = (file.get_file_extension(fileName) == pfm.Project.FORMAT_EXTENSION_ASCII)
 	if legacy then
 		return self:SaveLegacy(fileName)
