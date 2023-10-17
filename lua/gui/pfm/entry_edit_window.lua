@@ -28,27 +28,29 @@ function PfmEditEntryWindow:OnInitialize()
 
 	local boxButtons = gui.create("WIHBox", contents)
 
-	local btOk = gui.create("WIButton", boxButtons)
-	btOk:SetSize(73, 21)
+	local btOk = gui.create("WIPFMGenericButton", boxButtons)
+	btOk:SetWidth(73)
 	btOk:SetText(locale.get_text("ok"))
-	btOk:AddCallback("OnMousePressed", function()
+	btOk:AddCallback("OnPressed", function()
 		if self:CallCallbacks("OnOk") == util.EVENT_REPLY_HANDLED then
 			return
 		end
 		self:GetFrame():Remove()
 	end)
+	btOk:SizeToContents()
 
 	gui.create("WIBase", boxButtons, 0, 0, 8, 1) -- Gap
 
-	local btCancel = gui.create("WIButton", boxButtons)
-	btCancel:SetSize(73, 21)
+	local btCancel = gui.create("WIPFMGenericButton", boxButtons)
+	btCancel:SetWidth(73)
 	btCancel:SetText(locale.get_text("cancel"))
-	btCancel:AddCallback("OnMousePressed", function()
+	btCancel:AddCallback("OnPressed", function()
 		if self:CallCallbacks("OnCancel") == util.EVENT_REPLY_HANDLED then
 			return
 		end
 		self:GetFrame():Remove()
 	end)
+	btCancel:SizeToContents()
 
 	boxButtons:Update()
 	boxButtons:SetX(contents:GetWidth() - boxButtons:GetWidth())
