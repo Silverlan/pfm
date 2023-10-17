@@ -68,6 +68,7 @@ function Element:OnThink()
 			util.remove(data.elOutline)
 		end
 	end
+	self:UpdateConnectorLine()
 end
 function Element:OnRemove()
 	if self.m_sound ~= nil then
@@ -306,6 +307,63 @@ function Element:OnSizeChanged(w, h)
 		end
 	end
 end
+function Element:FindConnectorLineTarget()
+	if type(self.m_arrowTarget) == "string" then
+		local elRoot = gui.get_base_element()
+		local el = self:FindElementByPath(self.m_arrowTarget, elRoot)
+		if util.is_valid(el) and util.is_same_object(el, elRoot) then
+			el = nil
+		end
+		local function get_highlight_name(i)
+			local t = self.m_namedHighlights[i]
+			if t == nil then
+				return
+			end
+			return t.els[#t.els]
+		end
+		if util.is_valid(el) == false and self.m_arrowTarget == get_highlight_name(#self.m_namedHighlights) then
+			-- If the arrow target is the same as the last highlighted item, we'll assume that the highlighted item is a child of the
+			-- previous highlight items, and we'll use one of them as the arrow target instead.
+			for i = #self.m_namedHighlights - 1, 1, -1 do
+				local name = get_highlight_name(i)
+				el = self:FindElementByPath(name, elRoot)
+				if util.is_valid(el) and util.is_same_object(el, elRoot) then
+					el = nil
+				end
+				if util.is_valid(el) then
+					break
+				end
+			end
+		end
+		return el
+	end
+	return util.is_valid(self.m_arrowTarget) and self.m_arrowTarget or self.m_focusElement
+end
+function Element:UpdateConnectorLine()
+	local el = self:FindConnectorLineTarget()
+	if util.is_valid(self.m_connectorLine) then
+		if util.is_valid(el) == false then
+			util.remove(self.m_connectorLine)
+			return
+		end
+		if util.is_same_object(el, self.m_connectorLineTarget) then
+			return
+		end
+		util.remove(self.m_connectorLine)
+	end
+	if util.is_valid(el) == false then
+		self.m_connectorLine = nil
+		self.m_connectorLineTarget = nil
+		return
+	end
+
+	local l = gui.create("WIElementConnectorLine", self)
+	l:SetSize(self:GetSize())
+	l:SetAnchor(0, 0, 1, 1)
+	l:Setup(self.m_messageBox, el)
+	self.m_connectorLine = l
+	self.m_connectorLineTarget = el
+end
 function Element:AddMessageBox(msg, audioFile)
 	local elTgt
 	local numHighlights = #self.m_highlights + #self.m_namedHighlights
@@ -314,6 +372,7 @@ function Element:AddMessageBox(msg, audioFile)
 	end
 	elTgt = elTgt or self.m_highlights[1] or self
 	local elFocus = util.is_valid(self.m_elFocus) and self.m_elFocus or elTgt
+	self.m_focusElement = elFocus
 	local overlay = gui.create("WIModalOverlay", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 
 	local el = gui.create("WITransformable", self)
@@ -323,6 +382,7 @@ function Element:AddMessageBox(msg, audioFile)
 	el:SetMouseInputEnabled(true)
 	el:SetZPos(100)
 	el:GetDragArea():SetAutoAlignToParent(true)
+	self.m_messageBox = el
 
 	local vbox = gui.create("WIVBox", el)
 
@@ -395,11 +455,6 @@ function Element:AddMessageBox(msg, audioFile)
 	el:SetSize(vbox:GetSize())
 
 	if elTgt ~= self then
-		local l = gui.create("WIElementConnectorLine", self)
-		l:SetSize(self:GetSize())
-		l:SetAnchor(0, 0, 1, 1)
-		l:Setup(el, util.is_valid(self.m_arrowTarget) and self.m_arrowTarget or elTgt)
-
 		local posAbs = elTgt:GetAbsolutePos()
 		local posAbsEnd = posAbs + elTgt:GetSize()
 		local spaceLeft = posAbs.x

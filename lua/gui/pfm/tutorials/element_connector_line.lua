@@ -25,6 +25,7 @@ function Element:OnInitialize()
 	self.m_lineTunnel:SetVisible(false)
 
 	self.m_elCallbacks = {}
+	self:SetThinkingEnabled(true)
 end
 function Element:Setup(src, tgt)
 	util.remove(self.m_elCallbacks)
@@ -60,6 +61,15 @@ end
 function Element:OnRemove()
 	util.remove(self.m_elCallbacks)
 end
+function Element:OnThink()
+	if util.is_valid(self.m_elTgt) == false then
+		return
+	end
+	local absTgt = self.m_elTgt:GetAbsolutePos()
+	if self.m_lastAbsTgtPos == nil or self.m_lastAbsTgtPos:Distance(absTgt) > 0.001 then
+		self:ScheduleUpdate()
+	end
+end
 function Element:OnUpdate()
 	if util.is_valid(self.m_elSrc) == false or util.is_valid(self.m_elTgt) == false then
 		return
@@ -68,6 +78,13 @@ function Element:OnUpdate()
 	local absTgt = self.m_elTgt:GetAbsolutePos()
 	local absSrcEnd = absSrc + self.m_elSrc:GetSize()
 	local absTgtEnd = absTgt + self.m_elTgt:GetSize()
+	self.m_lastAbsTgtPos = absTgt
+
+	local absVisPos, absVisSize = self.m_elTgt:GetAbsoluteVisibleBounds()
+	absTgt.x = math.clamp(absTgt.x, absVisPos.x, absVisPos.x + absVisSize.x)
+	absTgt.y = math.clamp(absTgt.y, absVisPos.y, absVisPos.y + absVisSize.y)
+	absTgtEnd.x = math.clamp(absTgtEnd.x, absVisPos.x, absVisPos.x + absVisSize.x)
+	absTgtEnd.y = math.clamp(absTgtEnd.y, absVisPos.y, absVisPos.y + absVisSize.y)
 
 	local startPoint
 	local endPoint
