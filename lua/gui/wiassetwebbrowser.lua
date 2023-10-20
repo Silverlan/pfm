@@ -180,6 +180,7 @@ function Element:UpdateBookmarks()
 		"https://lordaardvark.com/html/assets.html?cat=Models&sect=Characters",
 		true
 	)
+	addLink("rainwave", "Rainwave", "https://rainwave.cc/")
 	-- addLink("sfm_workshop","SFM Workshop","https://steamcommunity.com/workshop/browse/?appid=1840sour")
 	-- addLink("pragma_workshop","Pragma Workshop","https://steamcommunity.com/app/947100/workshop/")
 
