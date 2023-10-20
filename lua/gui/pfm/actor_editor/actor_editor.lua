@@ -2445,6 +2445,7 @@ function gui.PFMActorEditor:ToggleCameraLink(actor)
 			self.m_camLinkOrigPose = nil
 		end
 		self:TagRenderSceneAsDirty()
+		self:CallCallbacks("OnCameraLinkModeEnded", actor)
 	else
 		local c = cam:GetEntity():AddComponent("pfm_camera_actor_link")
 
@@ -2481,6 +2482,7 @@ function gui.PFMActorEditor:ToggleCameraLink(actor)
 				end
 			end)
 		end
+		self:CallCallbacks("OnCameraLinkModeEntered", actor)
 	end
 end
 function gui.PFMActorEditor:SaveUiState(data)
