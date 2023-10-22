@@ -228,7 +228,7 @@ function Command:ApplyValue(key)
 	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
 	local actor = pfm.dereference(actorUuid)
 
-	local value = get_transform_member_value(c, idx, c:GetTransformMemberSpace(idx))
+	local value = get_transform_member_value(c, idx, c:GetTransformMemberSpace(idx) or math.COORDINATE_SPACE_WORLD)
 	self:SetPropertyValue(actor, propertyPath, value, type)
 
 	-- Mark actor and property as dirty
