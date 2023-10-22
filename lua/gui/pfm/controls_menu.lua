@@ -215,12 +215,6 @@ function gui.PFMControlsMenu:AddDropDownMenu(name, identifier, options, defaultO
 end
 function gui.PFMControlsMenu:AddColorField(name, identifier, defaultOption, onChange)
 	local colorEntry = gui.create("WIPFMColorEntry", self)
-	colorEntry:GetColorProperty():AddCallback(function(...)
-		self:OnValueChanged(identifier, colorEntry:GetValue())
-		if onChange ~= nil then
-			onChange(...)
-		end
-	end)
 	local colorEntryWrapper = colorEntry:Wrap("WIEditableEntry")
 	apply_text(colorEntryWrapper, name)
 	if identifier ~= nil then
@@ -228,6 +222,12 @@ function gui.PFMControlsMenu:AddColorField(name, identifier, defaultOption, onCh
 		self:AddControl(identifier, colorEntry, colorEntryWrapper, defaultOption)
 	end
 	colorEntry:SetColor(defaultOption)
+	colorEntry:GetColorProperty():AddCallback(function(...)
+		self:OnValueChanged(identifier, colorEntry:GetValue())
+		if onChange ~= nil then
+			onChange(...)
+		end
+	end)
 	return colorEntry, colorEntryWrapper
 end
 function gui.PFMControlsMenu:AddButton(name, identifier, onPress)
