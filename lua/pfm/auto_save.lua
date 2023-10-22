@@ -73,7 +73,17 @@ function pfm.AutoSave:Save()
 		return
 	end
 
-	local fileName = fm:GetProjectFileName() or "unnamed"
+	local fileName = fm:GetProjectFileName()
+	if fileName ~= nil then
+		local path = util.Path.CreateFilePath(fileName)
+		path:PopFront() -- Pop "projects/" prefix
+		local fname = path:GetBack()
+		path:PopBack()
+
+		fileName = path:GetString() .. "autosaves/" .. fname
+	else
+		fileName = "autosaves/unnamed"
+	end
 	local autoSaveFileName = self:DetermineName(fileName)
 	fm:Save(autoSaveFileName, false)
 end
