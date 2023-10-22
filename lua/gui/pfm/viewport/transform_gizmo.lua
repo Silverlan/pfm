@@ -507,6 +507,20 @@ function gui.PFMViewport:RemoveActorTransformWidget(ent)
 	ent:RemoveComponent("util_transform")
 	util.remove(self.m_entTransform)
 end
+function gui.PFMViewport:OnStartTransform(ent)
+	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+	if actorC == nil then
+		return
+	end
+	actorC:OnStartTransform()
+end
+function gui.PFMViewport:OnEndTransform(ent)
+	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+	if actorC == nil then
+		return
+	end
+	actorC:OnEndTransform()
+end
 function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 	if enabled == nil then
 		enabled = true
@@ -549,6 +563,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START, function()
 			origPose = ent:GetPose()
+			self:OnStartTransform(ent)
 		end)
 		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, function(scale)
 			local newPose = {
@@ -601,6 +616,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 					end
 				end
 			end
+			self:OnEndTransform(ent)
 		end)
 		return trC
 	end
@@ -780,6 +796,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 								if panimaC ~= nil then
 									panimaC:SetPropertyEnabled(targetPath, false)
 								end
+								self:OnStartTransform(ent)
 							end)
 							trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, function(scale)
 								local panimaC = c:GetEntity():GetComponent(ents.COMPONENT_PANIMA)
@@ -824,6 +841,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 										true
 									)
 								end
+								self:OnEndTransform(ent)
 							end)
 							self:InitializeTransformWidget(trC, ent)
 						end
