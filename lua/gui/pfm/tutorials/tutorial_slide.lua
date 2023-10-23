@@ -284,7 +284,6 @@ function Element:AddGenericMessageBox(locArgs)
 	local identifier = gui.Tutorial.tutorial_identifier .. "_" .. self.m_identifier
 	local tutorialData = gui.Tutorial.registered_tutorials[gui.Tutorial.tutorial_identifier]
 	local audioFile = "pfm/" .. tutorialData.path .. "/" .. self.m_identifier .. ".mp3"
-	print(audioFile)
 	self:AddMessageBox(locale.get_text("pfm_tut_" .. identifier, locArgs), audioFile)
 end
 function Element:UpdateCurrentSlideText(currentSlideIndex, totalSlideCount)
@@ -446,6 +445,7 @@ function Element:AddMessageBox(msg, audioFile)
 		end)
 		iconAudio:SetSize(20, 20)
 		iconAudio:SetPos(5, 0)
+		iconAudio:SetTooltip(locale.get_text("pfm_toggle_audio"))
 		self.m_iconAudio = iconAudio
 	end
 
