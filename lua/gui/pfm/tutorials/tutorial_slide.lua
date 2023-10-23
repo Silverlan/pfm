@@ -15,6 +15,7 @@ function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self.m_highlights = {}
+	self.m_highlightItems = {}
 	self.m_namedHighlights = {}
 	self.m_messageBoxes = {}
 	self.m_viewportTargets = {}
@@ -54,10 +55,11 @@ function Element:OnThink()
 				util.remove(data.elOutline)
 			end
 			if util.is_valid(data.elOutline) == false then
-				local elOutline = gui.create("WIElementSelectionOutline")
+				local elOutline = gui.create("WIElementSelectionOutline", self:DetermineHighlightItemParent(els))
 				elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
 				elOutline:SetTargetElement(els)
 				elOutline:Update()
+				table.insert(self.m_highlightItems, elOutline)
 				data.elOutline = elOutline
 				data.prevEls = els
 				if elsPaths[#els] == self.m_primaryHighlightItemIdentifier then
@@ -75,6 +77,7 @@ function Element:OnRemove()
 		self.m_sound:Stop()
 	end
 	util.remove(self.m_cbAudioEnabled)
+	util.remove(self.m_highlightItems)
 
 	for _, t in ipairs(self.m_viewportTargets) do
 		util.remove(t.resources)
@@ -83,6 +86,44 @@ function Element:OnRemove()
 	for _, data in ipairs(self.m_namedHighlights) do
 		util.remove(data.elOutline)
 	end
+end
+-- If the target element(s) are attached to the same root (e.g. the filmmaker) as the tutorial slide, we can just use the slide as the parent.
+-- However in some cases the target element(s) may have a different root, e.g. if the target element is a context menu, in which case we need to create the highlight item
+-- without a parent, because otherwise it will be rendered behind the target element(s) and therefore be invisible.
+function Element:DetermineHighlightItemParent(els)
+	if type(els) ~= "table" then
+		els = { els }
+	end
+	if util.is_valid(self.m_tutorial) == false then
+		return
+	end
+	local root = self.m_tutorial:GetParent()
+	if root == nil then
+		return
+	end
+	local allSharesParent = true
+	for _, el in ipairs(els) do
+		if el:IsValid() then
+			local sharesParent = false
+			local p = el:GetParent()
+			while p ~= nil do
+				if util.is_same_object(p, root) then
+					sharesParent = true
+					break
+				end
+				p = p:GetParent()
+			end
+			if sharesParent == false then
+				allSharesParent = false
+				break
+			end
+		end
+	end
+
+	if allSharesParent then
+		return self
+	end
+	return nil
 end
 function Element:AddViewportTarget(pos, fGetSourcePos, successDistance)
 	local ent = ents.create("env_sprite")
@@ -231,7 +272,7 @@ function Element:SetArrowTarget(tgt)
 end
 function Element:AddHighlight(el, setAsArrowTarget)
 	if type(el) == "string" then
-		local o = self:FindElementByPath(el)
+		local o = self:FindElementByPath(el, false)
 		if o ~= nil then
 			self:AddHighlight(o)
 		end
@@ -260,10 +301,11 @@ function Element:AddHighlight(el, setAsArrowTarget)
 		end
 		return
 	end
-	local elOutline = gui.create("WIElementSelectionOutline", self)
+	local elOutline = gui.create("WIElementSelectionOutline", self:DetermineHighlightItemParent(els))
 	elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
 	elOutline:SetTargetElement(els)
 	elOutline:Update()
+	table.insert(self.m_highlightItems, elOutline)
 	table.insert(self.m_highlights, elOutline)
 
 	self:SetPrimaryHighlightItem(elOutline)
@@ -277,9 +319,11 @@ function Element:SetFocusElement(el)
 		return
 	end
 	self.m_elFocus = el
-	local elOutline = gui.create("WIElementSelectionOutline", self)
+	local elOutline = gui.create("WIElementSelectionOutline", self:DetermineHighlightItemParent(el))
 	elOutline:SetTargetElement(el)
 	elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MINOR)
+	table.insert(self.m_highlightItems, elOutline)
+	table.insert(self.m_highlights, elOutline)
 end
 function Element:CreateButton(parent, text, f)
 	local elBt = gui.create("WIPFMGenericButton", parent)
