@@ -24,6 +24,7 @@ function Element:OnInitialize()
 	self.m_elCallbacks = {}
 
 	self:SetAlwaysUpdate(true)
+	self:SetThinkingEnabled(true)
 end
 function Element:SetOutlineType(type)
 	if type == Element.OUTLINE_TYPE_MINOR then
@@ -37,6 +38,17 @@ function Element:SetOutlineType(type)
 end
 function Element:OnRemove()
 	util.remove(self.m_elCallbacks)
+end
+function Element:OnThink()
+	local isValid = false
+	for _, el in ipairs(self.m_targetElements) do
+		if el:IsValid() then
+			isValid = true
+		end
+	end
+	if isValid == false then
+		self:RemoveSafely()
+	end
 end
 function Element:SetTargetElement(el)
 	local els = el
