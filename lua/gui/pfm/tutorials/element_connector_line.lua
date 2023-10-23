@@ -90,8 +90,8 @@ function Element:OnUpdate()
 	local endPoint
 	local hwSrc = self.m_elSrc:GetHalfWidth()
 	local hhSrc = self.m_elSrc:GetHalfHeight()
-	local hwTgt = self.m_elTgt:GetHalfWidth()
-	local hhTgt = self.m_elTgt:GetHalfHeight()
+	local hwTgt = (absTgtEnd.x - absTgt.x) * 0.5
+	local hhTgt = (absTgtEnd.y - absTgt.y) * 0.5
 
 	startPoint = Vector2()
 	endPoint = Vector2()
@@ -181,7 +181,7 @@ function Element:OnUpdate()
 	end
 
 	local sz = self.m_elTgt:GetSize()
-	local showTunnel = (sz.x == 0 or sz.y == 0)
+	local showTunnel = (hwTgt == 0 or hhTgt == 0)
 	self.m_lineTunnel:SetVisible(showTunnel)
 	if showTunnel then
 		if horizontal then
