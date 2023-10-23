@@ -739,29 +739,33 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	ctrl:SetTooltip(locale.get_text("pfm_render_setting_frame_count"))
 	p:LinkToUDMProperty("frame_count", settings, "numberOfFrames")
 	self.m_ctrlFrameCount:AddCallback("PopulateContextMenu", function(p, pContext)
-		pContext:AddItem(locale.get_text("pfm_number_of_frames_set_to_end_of_clip"), function()
-			if self:IsValid() == false then
-				return
-			end
-			local pfm = tool.get_filmmaker()
-			local numFrames = 0
-			local startFrame, endFrame = pfm:GetPlayheadClipRange()
-			startFrame = pfm:GetFrameOffset()
-			if startFrame ~= nil and endFrame ~= nil then
-				numFrames = math.max(endFrame - startFrame + 1, 1)
-			end
-			self.m_ctrlFrameCount:GrowRangeToValue(numFrames)
-			self.m_ctrlFrameCount:SetValue(numFrames)
-		end)
-		pContext:AddItem(locale.get_text("pfm_number_of_frames_set_to_end_of_session"), function()
-			if self:IsValid() == false then
-				return
-			end
-			local pfm = tool.get_filmmaker()
-			local numFrames = math.max(pfm:GetLastFrameIndex() - pfm:GetFrameOffset() + 1, 1)
-			self.m_ctrlFrameCount:GrowRangeToValue(numFrames)
-			self.m_ctrlFrameCount:SetValue(numFrames)
-		end)
+		pContext
+			:AddItem(locale.get_text("pfm_number_of_frames_set_to_end_of_clip"), function()
+				if self:IsValid() == false then
+					return
+				end
+				local pfm = tool.get_filmmaker()
+				local numFrames = 0
+				local startFrame, endFrame = pfm:GetPlayheadClipRange()
+				startFrame = pfm:GetFrameOffset()
+				if startFrame ~= nil and endFrame ~= nil then
+					numFrames = math.max(endFrame - startFrame + 1, 1)
+				end
+				self.m_ctrlFrameCount:GrowRangeToValue(numFrames)
+				self.m_ctrlFrameCount:SetValue(numFrames)
+			end)
+			:SetName("to_end_of_clip")
+		pContext
+			:AddItem(locale.get_text("pfm_number_of_frames_set_to_end_of_session"), function()
+				if self:IsValid() == false then
+					return
+				end
+				local pfm = tool.get_filmmaker()
+				local numFrames = math.max(pfm:GetLastFrameIndex() - pfm:GetFrameOffset() + 1, 1)
+				self.m_ctrlFrameCount:GrowRangeToValue(numFrames)
+				self.m_ctrlFrameCount:SetValue(numFrames)
+			end)
+			:SetName("to_end_of_session")
 	end)
 
 	local _, colorTransforms = file.find("modules/open_color_io/configs/*")

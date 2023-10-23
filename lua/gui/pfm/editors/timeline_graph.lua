@@ -952,30 +952,6 @@ function gui.PFMTimelineGraph:RebuildGraphCurve(i, graphData, updateCurveOnly)
 		return self:DataTimeToInterfaceTime(graphData, t)
 	end, (graphData.valueTranslator ~= nil) and graphData.valueTranslator[1] or nil)
 	graphData.curve:UpdateCurveData(curveValues)
-
-	--[[
-	self.m_editorChannel = editorChannel
-	self.m_typeComponentIndex = typeComponentIndex
-	self.m_curveIndex = curveIndex
-]]
-
-	--[[
-function gui.PFMTimelineCurve:UpdateCurveData(curveValues)
-	self.m_curve:BuildCurve(curveValues)
-end
-]]
-
-	--function pfm.udm.EditorGraphCurve:CalcUiCurveValues(typeComponentIndex, translateTime, valueTranslator)
-
-	--[[if updateCurveOnly then
-		graphData.curve:UpdateCurveData(curveValues)
-		return
-	end
-
-	self:InitializeBookmarks()
-	graphData.curve:BuildCurve(curveValues, animClip, channel, i, graphData.editorChannel, graphData.typeComponentIndex)
-	local editorKeys = graphData.curve:GetEditorKeys()
-	graphData.numValues = (editorKeys ~= nil) and editorKeys:GetTimeCount() or 0]]
 end
 function gui.PFMTimelineGraph:InitializeBookmarks(graphData)
 	if graphData == nil then

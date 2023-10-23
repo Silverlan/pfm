@@ -271,18 +271,20 @@ function gui.PFMSlider:MouseCallback(button, state, mods)
 				self:SetValue(self:GetDefault())
 			end)
 		end
-		pContext:AddItem(locale.get_text("pfm_remap_slider_range"), function()
-			self:CreateSliderRangeEditWindow(
-				self:GetMin(),
-				self:GetMax(),
-				self:GetDefault(),
-				function(ok, min, max, default)
-					if ok == true then
-						self:SetRange(min, max, default)
+		pContext
+			:AddItem(locale.get_text("pfm_remap_slider_range"), function()
+				self:CreateSliderRangeEditWindow(
+					self:GetMin(),
+					self:GetMax(),
+					self:GetDefault(),
+					function(ok, min, max, default)
+						if ok == true then
+							self:SetRange(min, max, default)
+						end
 					end
-				end
-			)
-		end)
+				)
+			end)
+			:SetName("remap_slider_range")
 		pContext:AddItem(locale.get_text("copy_to_clipboard"), function()
 			util.set_clipboard_string(tostring(self:GetValue()))
 		end)
