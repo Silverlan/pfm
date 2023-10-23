@@ -418,8 +418,11 @@ function Element:InitializeMenuBar()
 					return
 				end
 				self:ShowCloseConfirmation(function(res)
-					tool.close_filmmaker()
-					engine.shutdown()
+					pfm.show_loading_screen(true, locale.get_text("exiting"))
+					time.create_simple_timer(5.0, function()
+						tool.close_filmmaker()
+						engine.shutdown()
+					end)
 				end)
 			end)
 			pSubItem:SetName("exit")
