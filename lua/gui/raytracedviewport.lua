@@ -446,24 +446,26 @@ function gui.RealtimeRaytracedViewport:FlushDirtyActorChanges()
 	if self.m_hasDirtyActors then
 		self.m_hasDirtyActors = false
 
-		local renderer = self.m_rtJob:GetRenderer()
-		if renderer:BeginSceneEdit() then
-			for ent, isActive in pairs(self.m_dirtyActors) do
-				if ent:IsValid() then
-					if not isActive then
-						-- This is a bit of a hack. We can't actually delete actors from an active RT scene, so if this is a light source
-						-- we just turn it off by setting its intensity to 0.
-						local lightC = ent:GetComponent(ents.COMPONENT_LIGHT)
-						if lightC ~= nil then
-							lightC:SetLightIntensity(0.0)
+		if self.m_rtJob ~= nil then
+			local renderer = self.m_rtJob:GetRenderer()
+			if renderer:BeginSceneEdit() then
+				for ent, isActive in pairs(self.m_dirtyActors) do
+					if ent:IsValid() then
+						if not isActive then
+							-- This is a bit of a hack. We can't actually delete actors from an active RT scene, so if this is a light source
+							-- we just turn it off by setting its intensity to 0.
+							local lightC = ent:GetComponent(ents.COMPONENT_LIGHT)
+							if lightC ~= nil then
+								lightC:SetLightIntensity(0.0)
+							end
 						end
+						renderer:SyncActor(ent)
 					end
-					renderer:SyncActor(ent)
 				end
-			end
-			self.m_dirtyActors = {}
+				self.m_dirtyActors = {}
 
-			renderer:EndSceneEdit()
+				renderer:EndSceneEdit()
+			end
 		end
 	end
 end
