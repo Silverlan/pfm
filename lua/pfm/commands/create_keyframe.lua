@@ -153,6 +153,14 @@ function Command:CreateKeyframe(data)
 			end
 		end
 		editorChannel:AddKey(timestamp, valueBaseIndex)
+
+		--[[pfm.create_command(
+			"create_bookmark",
+			self:GetActiveFilmClip(),
+			pfm.Project.KEYFRAME_BOOKMARK_SET_NAME,
+			timestamp
+		)
+			:Execute()]]
 	end
 	-- Commented, because this command should be wrapped in a keyframe_property_composition, which already rebuilds dirty graph curve segments
 	-- self:RebuildDirtyGraphCurveSegments()
@@ -167,6 +175,13 @@ function Command:RemoveKeyframe(data)
 	local timestamp = self:GetLocalTime(animClip)
 	for _, valueBaseIndex in ipairs(baseIndices) do
 		editorChannel:RemoveKey(timestamp, valueBaseIndex)
+		--[[pfm.create_command(
+			"delete_bookmark",
+			self:GetActiveFilmClip(),
+			pfm.Project.KEYFRAME_BOOKMARK_SET_NAME,
+			timestamp
+		)
+			:Execute()]]
 	end
 	-- Commented, because this command should be wrapped in a keyframe_property_composition, which already rebuilds dirty graph curve segments
 	-- self:RebuildDirtyGraphCurveSegments()

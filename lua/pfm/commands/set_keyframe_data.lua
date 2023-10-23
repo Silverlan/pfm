@@ -79,11 +79,22 @@ function Command:ApplyProperty(data, action, editorChannel, keyIdx, timestamp, v
 
 	if time ~= nil then
 		time = animClip:ToDataTime(time)
+		-- local curTime = editorChannel:GetKeyTime(keyIdx)
 		local res = editorChannel:SetKeyTime(keyIdx, time, valueBaseIndex)
 		if res == false then
 			self:LogFailure("Failed to apply keyframe time!")
 			return
 		end
+
+		-- Move a bookmark along with the keyframe
+		--[[pfm.create_command(
+			"move_bookmark",
+			self:GetActiveFilmClip(),
+			pfm.Project.KEYFRAME_BOOKMARK_SET_NAME,
+			curTime,
+			time
+		)
+			:Execute()]]
 	end
 end
 pfm.register_command("set_keyframe_data_base", Command)

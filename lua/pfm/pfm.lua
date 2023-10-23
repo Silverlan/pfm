@@ -104,6 +104,7 @@ util.register_class("pfm.Project")
 pfm.Project.FORMAT_EXTENSION_BINARY = "pfmp_b"
 pfm.Project.FORMAT_EXTENSION_ASCII = "pfmp"
 pfm.Project.DEFAULT_BOOKMARK_SET_NAME = "default"
+pfm.Project.KEYFRAME_BOOKMARK_SET_NAME = "keyframe"
 pfm.Project.get_format_extensions = function()
 	return { pfm.Project.FORMAT_EXTENSION_ASCII, pfm.Project.FORMAT_EXTENSION_BINARY }
 end

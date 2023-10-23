@@ -126,6 +126,12 @@ end
 function BaseCommand:GetAnimationManager()
 	return self:GetProjectManager():GetAnimationManager()
 end
+function BaseCommand:GetMainFilmClip()
+	return self:GetProjectManager():GetMainFilmClip()
+end
+function BaseCommand:GetActiveFilmClip()
+	return self:GetProjectManager():GetActiveFilmClip()
+end
 function BaseCommand:SetActorPropertyDirty(actor, property)
 	self:GetAnimationManager():SetAnimationDirty(actor)
 	local pm = self:GetProjectManager()

@@ -1220,13 +1220,15 @@ function gui.WIFilmmaker:UpdateBookmarks()
 	else
 		local filmClip = self:GetActiveFilmClip()
 		if filmClip ~= nil then
-			local bms = filmClip:FindBookmarkSet("keyframe")
-			if bms ~= nil then
-				self.m_timeline:AddBookmarkSet(bms)
+			local bms = filmClip:FindBookmarkSet(pfm.Project.KEYFRAME_BOOKMARK_SET_NAME)
+			if bms == nil then
+				bms = filmClip:AddBookmarkSet()
+				bms:SetName(pfm.Project.KEYFRAME_BOOKMARK_SET_NAME)
 			end
+			self.m_timeline:AddBookmarkSet(bms)
 		end
+		self.m_timeline:GetActiveEditor():InitializeBookmarks()
 	end
-	-- self.m_timeline:GetActiveEditor():InitializeBookmarks()
 end
 function gui.WIFilmmaker:RemoveBookmark(t)
 	local filmClip = self:GetActiveFilmClip()

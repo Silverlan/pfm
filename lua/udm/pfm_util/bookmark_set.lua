@@ -18,10 +18,10 @@ function pfm.udm.BookmarkSet:FindBookmark(t)
 end
 
 function pfm.udm.BookmarkSet:AddBookmarkAtTimestamp(t)
-	local bm = self:FindBookmark(t)
+	--[[local bm = self:FindBookmark(t)
 	if bm ~= nil then
 		return bm, false
-	end
+	end]]
 
 	local bm = self:AddBookmark()
 	bm:SetTime(t)
