@@ -229,7 +229,13 @@ end
 function Element:SetArrowTarget(tgt)
 	self.m_arrowTarget = tgt
 end
-function Element:AddHighlight(el)
+function Element:AddHighlight(el, setAsArrowTarget)
+	if type(el) == "string" then
+		local o = self:FindElementByPath(el)
+		if o ~= nil then
+			self:AddHighlight(o)
+		end
+	end
 	local els = el
 	if type(els) ~= "table" then
 		els = { els }
@@ -242,10 +248,16 @@ function Element:AddHighlight(el)
 			els = els,
 		})
 		self:SetPrimaryHighlightItem(els[#els])
+		if setAsArrowTarget == true then
+			self:SetArrowTarget(el)
+		end
 		return
 	end
 	local elFirst = els[1]
 	if util.is_valid(elFirst) == false then
+		if setAsArrowTarget == true then
+			self:SetArrowTarget(el)
+		end
 		return
 	end
 	local elOutline = gui.create("WIElementSelectionOutline", self)
@@ -255,6 +267,9 @@ function Element:AddHighlight(el)
 	table.insert(self.m_highlights, elOutline)
 
 	self:SetPrimaryHighlightItem(elOutline)
+	if setAsArrowTarget == true then
+		self:SetArrowTarget(el)
+	end
 	return elFirst, elOutline
 end
 function Element:SetFocusElement(el)
