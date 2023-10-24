@@ -60,6 +60,7 @@ function Command:DoExecute()
 		local graphCurve = editorChannel:GetGraphCurve()
 		graphCurve:InitializeKeys(udm.get_numeric_component_count(valueType) - 1)
 	end
+	self:GetProjectManager():UpdateBookmarks()
 end
 function Command:DoUndo()
 	local data = self:GetData()
@@ -86,5 +87,6 @@ function Command:DoUndo()
 		return
 	end
 	editorData:RemoveChannel(channel)
+	self:GetProjectManager():UpdateBookmarks()
 end
 pfm.register_command("add_editor_channel", Command)
