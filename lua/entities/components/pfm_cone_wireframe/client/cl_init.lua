@@ -114,7 +114,8 @@ function Component:SetConeModelVisible(visible)
 
 	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 	if renderC ~= nil then
-		renderC:SetSceneRenderPass(visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE)
+		local shouldDraw = (visible or self:GetEntity():HasComponent(ents.COMPONENT_LIGHT_SPOT_VOLUME))
+		renderC:SetSceneRenderPass(shouldDraw and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE)
 	end
 
 	if visible == false then
