@@ -96,6 +96,14 @@ function Command:ApplyProperty(data, action, editorChannel, keyIdx, timestamp, v
 		)
 			:Execute()]]
 	end
+
+	local graphCurve = editorChannel:GetGraphCurve()
+	local keyData = graphCurve:GetKey(valueBaseIndex)
+	if keyData ~= nil then
+		keyData:UpdateKeyframeDependencies(keyIdx)
+		keyData:UpdateKeyframeDependencies(keyIdx + 1, true, false)
+		keyData:UpdateKeyframeDependencies(keyIdx - 1, false, true)
+	end
 end
 pfm.register_command("set_keyframe_data_base", Command)
 
