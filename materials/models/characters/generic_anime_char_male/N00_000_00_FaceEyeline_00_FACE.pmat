@@ -1,0 +1,16 @@
+"pbr"
+{
+	"textures"
+	{
+		$string normal_map "models/characters/generic_anime_char_male/n00_000_00_faceeyeline_00_face_normal"
+		$string albedo_map "models/characters/generic_anime_char_male/n00_000_00_faceeyeline_00_face_albedo"
+	}
+	"properties"
+	{
+		$int32 alpha_mode 2
+		$float alpha_cutoff 0.5
+		$float roughness_factor 0.9
+		$float metalness_factor 0
+		$vec3 emission_factor [0,0,0]
+	}
+}
