@@ -144,7 +144,13 @@ local function calc_graph_curve_data_point_value(interpMethod, easingMode, pathK
 		return cp0Val
 	end
 
-	local normalizedTime = (time - cp0Time) / (cp1Time - cp0Time)
+	local tdiff = (cp1Time - cp0Time)
+	local normalizedTime
+	if tdiff < 0.0001 then
+		normalizedTime = 0.0
+	else
+		normalizedTime = (time - cp0Time) / tdiff
+	end
 	if interpMethod == pfm.udm.INTERPOLATION_BEZIER then
 		return math.calc_bezier_point(
 			time,
