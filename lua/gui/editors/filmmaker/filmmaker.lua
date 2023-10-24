@@ -1323,16 +1323,15 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 					end
 				end
 
-				subCmd:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
+				local componentValue = udm.get_numeric_component(value, baseIndex)
 				subCmd:AddSubCommand(
-					"set_keyframe_value",
+					"create_keyframe",
 					actorUuid,
 					propertyPath,
+					valueType,
 					timestamp,
-					udm.TYPE_FLOAT,
-					nil,
-					udm.get_numeric_component(value, baseIndex),
-					baseIndex
+					baseIndex,
+					componentValue
 				)
 			end
 		end
