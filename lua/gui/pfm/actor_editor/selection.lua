@@ -120,16 +120,23 @@ function gui.PFMActorEditor:SelectActor(actor, deselectCurrent, property)
 							parent:GetItemByIdentifier("ec/" .. componentName .. "/" .. memberName:GetString(), true)
 						if child ~= nil then
 							local p = child:GetParentItem()
+							local parentItems = {}
 							while p ~= nil do
-								p:Expand()
-								p:Select(false)
+								table.insert(parentItems, p)
 								p = p:GetParentItem()
 								if p == parent then
 									break
 								end
 							end
+							for i = #parentItems, 1, -1 do -- Need to expand parents in reverse order
+								local p = parentItems[i]
+								p:Expand()
+								p:Select(false)
+								p:Update()
+							end
 							child:Expand()
 							child:Select(true)
+							child:Update()
 
 							-- Expanding elements in the tree is not immediate. If we want to scroll to a specific item, we
 							-- have to delay it slightly to make sure the tree was updated.
