@@ -86,7 +86,11 @@ function Element:OnThink()
 			end
 		end
 
-		if self.m_arrowTarget ~= nil and util.is_valid(self.m_arrowTargetElement) == false then
+		if
+			self.m_arrowTarget ~= nil
+			and type(self.m_arrowTarget) == "string"
+			and util.is_valid(self.m_arrowTargetElement) == false
+		then
 			local elRoot = gui.get_base_element()
 			local el = self:FindElementByPath(self.m_arrowTarget, elRoot)
 			if util.is_valid(el) and util.is_same_object(el, elRoot) then
