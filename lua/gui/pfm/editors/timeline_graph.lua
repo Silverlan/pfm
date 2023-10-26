@@ -633,10 +633,12 @@ function gui.PFMTimelineGraph:MouseCallback(button, state, mods)
 			local esInterpolation = get_enum_set("Interpolation")
 			for val, name in ipairs(esInterpolation) do
 				val = val - 1
-				pSubMenuInterp:AddItem(locale.get_text("pfm_graph_editor_interpolation_" .. name), function()
-					local timeline = self:GetTimeline()
-					timeline:SetInterpolationMode(val)
-				end)
+				pSubMenuInterp
+					:AddItem(locale.get_text("pfm_graph_editor_interpolation_" .. name), function()
+						local timeline = self:GetTimeline()
+						timeline:SetInterpolationMode(val)
+					end)
+					:SetName(name)
 			end
 			pSubMenuInterp:Update()
 
