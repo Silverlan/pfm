@@ -100,27 +100,24 @@ function ents.PFMTrack:OnOffsetChanged(offset, gameViewFlags)
 		table.insert(clipSets, trackData:GetAudioClips())
 	end
 	for _, clipSet in ipairs(clipSets) do
+		local activeClipSetOutOfRange
+		local newClipSet
 		for _, clip in ipairs(clipSet) do
 			local timeFrame = clip:GetTimeFrame()
-			if timeFrame:IsInTimeFrame(offset) then
-				if util.is_valid(self.m_activeClips[clip]) == false then
-					if clip.TypeName == "FilmClip" then
-						self.m_activeClips[clip] = self:CreateFilmClip(clip)
-					elseif clip.TypeName == "AnimationClip" then
-						-- self.m_activeClips[clip] = self:CreateChannelClip(clip) -- Obsolete?
-					elseif clip.TypeName == "AudioClip" then
-						self.m_activeClips[clip] = self:CreateAudioClip(clip)
-					elseif clip.TypeName == "OverlayClip" then
-						self.m_activeClips[clip] = self:CreateOverlayClip(clip)
-					else
-						pfm.log(
-							"Unsupported clip type '" .. clip.TypeName .. "'! Ignoring...",
-							pfm.LOG_CATEGORY_PFM_GAME
-						)
-					end
-				end
-			elseif util.is_valid(self.m_activeClips[clip]) then
+			local inTimeFrame = timeFrame:IsInTimeFrame(offset)
+			local isActiveClip = util.is_valid(self.m_activeClips[clip])
+			if not isActiveClip and inTimeFrame then
+				newClipSet = clip
+			end
+			if isActiveClip and inTimeFrame == false then
+				activeClipSetOutOfRange = clip
+			end
+		end
+
+		if newClipSet ~= nil then
+			if activeClipSetOutOfRange ~= nil then
 				-- New offset is out of the range of this film clip; Remove it
+				local clip = activeClipSetOutOfRange
 				local ent = self.m_activeClips[clip]
 				if self.m_keepClipsAlive then
 					self.m_inactiveClips[clip] = ent
@@ -131,6 +128,20 @@ function ents.PFMTrack:OnOffsetChanged(offset, gameViewFlags)
 					ent:Remove()
 				end
 				self.m_activeClips[clip] = nil
+			end
+
+			-- Initialize the new film clip
+			local clip = newClipSet
+			if clip.TypeName == "FilmClip" then
+				self.m_activeClips[clip] = self:CreateFilmClip(clip)
+			elseif clip.TypeName == "AnimationClip" then
+				-- self.m_activeClips[clip] = self:CreateChannelClip(clip) -- Obsolete?
+			elseif clip.TypeName == "AudioClip" then
+				self.m_activeClips[clip] = self:CreateAudioClip(clip)
+			elseif clip.TypeName == "OverlayClip" then
+				self.m_activeClips[clip] = self:CreateOverlayClip(clip)
+			else
+				pfm.log("Unsupported clip type '" .. clip.TypeName .. "'! Ignoring...", pfm.LOG_CATEGORY_PFM_GAME)
 			end
 		end
 	end
