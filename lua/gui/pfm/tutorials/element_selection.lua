@@ -41,13 +41,19 @@ function Element:OnRemove()
 end
 function Element:OnThink()
 	local isValid = false
+	local allHidden = true
 	for _, el in ipairs(self.m_targetElements) do
 		if el:IsValid() then
 			isValid = true
+			if el:IsHidden() == false then
+				allHidden = false
+			end
 		end
 	end
 	if isValid == false then
 		self:RemoveSafely()
+	else
+		self:SetVisible(not allHidden)
 	end
 end
 function Element:SetTargetElement(el)

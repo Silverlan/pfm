@@ -27,47 +27,72 @@ function Element:OnInitialize()
 	self:SetThinkingEnabled(true)
 end
 function Element:OnThink()
-	for _, data in ipairs(self.m_namedHighlights) do
-		local els = {}
-		local elsPaths = {}
-		local elRoot = gui.get_base_element()
-		for _, path in ipairs(data.els) do
-			local el = self:FindElementByPath(path, elRoot)
-			if el == nil or el == elRoot then
-				break
-			end
-			table.insert(els, el)
-			table.insert(elsPaths, path)
-		end
-		if #els == #data.els then
-			local valid = true
-			if data.prevEls == nil or #els ~= #data.prevEls then
-				valid = false
-			else
-				for i = 1, #els do
-					if util.is_same_object(els[i], data.prevEls[i]) == false then
-						valid = false
+	if self.m_lastNextUiElementIndex ~= gui.get_next_gui_element_index() then
+		self.m_lastNextUiElementIndex = gui.get_next_gui_element_index()
+		for _, data in ipairs(self.m_namedHighlights) do
+			local els = {}
+			local elsPaths = {}
+			local elRoot = gui.get_base_element()
+			data.targetElements = data.targetElements or {}
+			for i, path in ipairs(data.els) do
+				local te = data.targetElements[i]
+				if te ~= nil and te.element:IsValid() then
+					-- if te.element:IsHidden() == false then
+					table.insert(els, te.element)
+					table.insert(elsPaths, te.path)
+				-- end
+				else
+					local el = self:FindElementByPath(path, elRoot, true)
+					if el == nil or el == elRoot then
 						break
 					end
+					table.insert(els, el)
+					table.insert(elsPaths, path)
+					data.targetElements[i] = {
+						element = el,
+						path = path,
+					}
 				end
 			end
-			if valid == false then
+			if #els == #data.els then
+				local valid = true
+				if data.prevEls == nil or #els ~= #data.prevEls then
+					valid = false
+				else
+					for i = 1, #els do
+						if util.is_same_object(els[i], data.prevEls[i]) == false then
+							valid = false
+							break
+						end
+					end
+				end
+				if valid == false then
+					util.remove(data.elOutline)
+				end
+				if util.is_valid(data.elOutline) == false then
+					local elOutline = gui.create("WIElementSelectionOutline", self:DetermineHighlightItemParent(els))
+					elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
+					elOutline:SetTargetElement(els)
+					elOutline:Update()
+					table.insert(self.m_highlightItems, elOutline)
+					data.elOutline = elOutline
+					data.prevEls = els
+					if elsPaths[#els] == self.m_primaryHighlightItemIdentifier then
+						self:SetPrimaryHighlightItem(self.m_primaryHighlightItemIdentifier, elOutline)
+					end
+				end
+			else
 				util.remove(data.elOutline)
 			end
-			if util.is_valid(data.elOutline) == false then
-				local elOutline = gui.create("WIElementSelectionOutline", self:DetermineHighlightItemParent(els))
-				elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
-				elOutline:SetTargetElement(els)
-				elOutline:Update()
-				table.insert(self.m_highlightItems, elOutline)
-				data.elOutline = elOutline
-				data.prevEls = els
-				if elsPaths[#els] == self.m_primaryHighlightItemIdentifier then
-					self:SetPrimaryHighlightItem(self.m_primaryHighlightItemIdentifier, elOutline)
-				end
+		end
+
+		if self.m_arrowTarget ~= nil and util.is_valid(self.m_arrowTargetElement) == false then
+			local elRoot = gui.get_base_element()
+			local el = self:FindElementByPath(self.m_arrowTarget, elRoot)
+			if util.is_valid(el) and util.is_same_object(el, elRoot) then
+				el = nil
 			end
-		else
-			util.remove(data.elOutline)
+			self.m_arrowTargetElement = el
 		end
 	end
 	self:UpdateConnectorLine()
@@ -184,7 +209,7 @@ function Element:FindPanelByWindow(identifier)
 	end
 	return pm:GetWindowFrame(identifier)
 end
-function Element:FindElementByPath(path, baseElement)
+function Element:FindElementByPath(path, baseElement, includeHidden)
 	if type(path) == "string" then
 		path = util.Path.CreateFilePath(path)
 	end
@@ -196,7 +221,7 @@ function Element:FindElementByPath(path, baseElement)
 			local children = el:FindDescendantsByName(c)
 			for i = #children, 1, -1 do
 				local child = children[i]
-				if child:IsHidden() then
+				if child:IsHidden() and includeHidden ~= true then
 					table.remove(children, i)
 				end
 			end
@@ -367,11 +392,6 @@ function Element:OnSizeChanged(w, h)
 end
 function Element:FindConnectorLineTarget()
 	if type(self.m_arrowTarget) == "string" then
-		local elRoot = gui.get_base_element()
-		local el = self:FindElementByPath(self.m_arrowTarget, elRoot)
-		if util.is_valid(el) and util.is_same_object(el, elRoot) then
-			el = nil
-		end
 		local function get_highlight_name(i)
 			local t = self.m_namedHighlights[i]
 			if t == nil then
@@ -379,17 +399,29 @@ function Element:FindConnectorLineTarget()
 			end
 			return t.els[#t.els]
 		end
+		local function get_highlight_element(i)
+			local t = self.m_namedHighlights[i]
+			if t == nil then
+				return
+			end
+			local tEl = t.targetElements[#t.targetElements]
+			if tEl == nil then
+				return
+			end
+			return tEl.element
+		end
+		local el = self.m_arrowTargetElement
 		if util.is_valid(el) == false and self.m_arrowTarget == get_highlight_name(#self.m_namedHighlights) then
 			-- If the arrow target is the same as the last highlighted item, we'll assume that the highlighted item is a child of the
 			-- previous highlight items, and we'll use one of them as the arrow target instead.
 			for i = #self.m_namedHighlights - 1, 1, -1 do
-				local name = get_highlight_name(i)
-				el = self:FindElementByPath(name, elRoot)
-				if util.is_valid(el) and util.is_same_object(el, elRoot) then
-					el = nil
-				end
+				el = get_highlight_element(i)
 				if util.is_valid(el) then
-					break
+					if el:IsHidden() then
+						el = nil
+					else
+						break
+					end
 				end
 			end
 		end
