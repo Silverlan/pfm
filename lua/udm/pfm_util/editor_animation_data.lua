@@ -248,34 +248,24 @@ function pfm.udm.EditorGraphCurveKeyData:UpdateKeyframeDependencies(
 		updateOut = true
 	end
 	if updateIn then
-		local neighborKeyIndex = keyIndex - 1
 		if
-			self:GetHandleType(neighborKeyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
+			self:GetHandleType(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
 			== pfm.udm.KEYFRAME_HANDLE_TYPE_VECTOR
 		then
-			self:UpdateVectorHandle(neighborKeyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
+			self:UpdateVectorHandle(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
 			if affectedKeyframeHandles ~= nil then
-				table.insert(
-					affectedKeyframeHandles,
-					1,
-					{ neighborKeyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT }
-				)
+				table.insert(affectedKeyframeHandles, 1, { keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN })
 			end
 		end
 	end
 	if updateOut then
-		local neighborKeyIndex = keyIndex + 1
 		if
-			self:GetHandleType(neighborKeyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
+			self:GetHandleType(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
 			== pfm.udm.KEYFRAME_HANDLE_TYPE_VECTOR
 		then
-			self:UpdateVectorHandle(neighborKeyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN)
+			self:UpdateVectorHandle(keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT)
 			if affectedKeyframeHandles ~= nil then
-				table.insert(
-					affectedKeyframeHandles,
-					1,
-					{ neighborKeyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_IN }
-				)
+				table.insert(affectedKeyframeHandles, 1, { keyIndex, pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT })
 			end
 		end
 	end
@@ -297,6 +287,13 @@ function pfm.udm.EditorGraphCurveKeyData:SetHandleData(keyIndex, handle, time, d
 		table.insert(affectedKeyframeHandles, { keyIndex, get_other_handle(handle) })
 	end
 
+	if handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_IN then
+		self:UpdateKeyframeDependencies(keyIndex - 1, false, true, affectedKeyframeHandles)
+	end
+	if handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT then
+		self:UpdateKeyframeDependencies(keyIndex + 1, true, false, affectedKeyframeHandles)
+	end
+
 	self:UpdateKeyframeDependencies(
 		keyIndex,
 		handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_IN,
@@ -316,7 +313,6 @@ function pfm.udm.EditorGraphCurveKeyData:UpdateVectorHandle(keyIndex, handle)
 	if otherIndex < 0 or otherIndex >= self:GetTimeCount() then
 		return false
 	end
-
 	local pos = Vector2(self:GetTime(keyIndex), self:GetValue(keyIndex))
 	local posTgt = Vector2(
 		self:GetTime(otherIndex) + self:GetHandleTimeOffset(otherIndex, get_other_handle(handle)),
