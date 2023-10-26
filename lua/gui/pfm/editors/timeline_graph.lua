@@ -420,11 +420,13 @@ function gui.PFMTimelineGraph:SetDataPointMoveModeEnabled(dataPoints, enabled, m
 		local animManager = pm:GetAnimationManager()
 		local curves = {}
 		for _, dp in ipairs(dataPoints) do
-			local timelineCurve = dp:GetGraphCurve()
-			local timelineGraph = timelineCurve:GetTimelineGraph()
-			local curveIndex = timelineCurve:GetCurveIndex()
-			curves[curveIndex] = curves[curveIndex] or {}
-			table.insert(curves[curveIndex], dp)
+			if dp.GetGraphCurve ~= nil then
+				local timelineCurve = dp:GetGraphCurve()
+				local timelineGraph = timelineCurve:GetTimelineGraph()
+				local curveIndex = timelineCurve:GetCurveIndex()
+				curves[curveIndex] = curves[curveIndex] or {}
+				table.insert(curves[curveIndex], dp)
+			end
 		end
 		self.m_dataPointMoveInfo.curves = {}
 		local curveInfo = {}
