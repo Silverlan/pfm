@@ -418,7 +418,7 @@ function Element:FindConnectorLineTarget()
 		if util.is_valid(el) == false and self.m_arrowTarget == get_highlight_name(#self.m_namedHighlights) then
 			-- If the arrow target is the same as the last highlighted item, we'll assume that the highlighted item is a child of the
 			-- previous highlight items, and we'll use one of them as the arrow target instead.
-			for i = #self.m_namedHighlights - 1, 1, -1 do
+			for i = #self.m_namedHighlights, 1, -1 do
 				el = get_highlight_element(i)
 				if util.is_valid(el) then
 					if el:IsHidden() then
