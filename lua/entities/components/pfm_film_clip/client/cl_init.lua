@@ -235,7 +235,7 @@ function ents.PFMFilmClip:InitializeActors()
 		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 		actorDataToEnt[actorC:GetActorData()] = ent
 	end
-	for _, actorData in ipairs(self.m_filmClipData:GetActorList()) do
+	for _, actorData in ipairs(self.m_filmClipData:GetActorList(nil, false)) do
 		if actorDataToEnt[actorData] == nil then
 			local ent = self:CreateActor(actorData)
 			table.insert(newActors, ent)

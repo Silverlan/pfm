@@ -47,12 +47,17 @@ function pfm.udm.FilmClip:FindEntity()
 		end
 	end
 end
-function pfm.udm.FilmClip:GetActorList(list)
+function pfm.udm.FilmClip:GetActorList(list, recursive)
+	if recursive == nil then
+		recursive = true
+	end
 	list = self:GetScene():GetActorList(list)
-	for _, trackGroup in ipairs(self:GetTrackGroups()) do
-		for _, track in ipairs(trackGroup:GetTracks()) do
-			for _, filmClip in ipairs(track:GetFilmClips()) do
-				filmClip:GetActorList(list)
+	if recursive then
+		for _, trackGroup in ipairs(self:GetTrackGroups()) do
+			for _, track in ipairs(trackGroup:GetTracks()) do
+				for _, filmClip in ipairs(track:GetFilmClips()) do
+					filmClip:GetActorList(list)
+				end
 			end
 		end
 	end
