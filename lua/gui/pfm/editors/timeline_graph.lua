@@ -729,7 +729,7 @@ function gui.PFMTimelineGraph:ApplyCurveFitting()
 			local tStartAnim = channel:GetTime(0)
 			local tEndAnim = channel:GetTime(channel:GetTimeCount() - 1)
 			local keyData = editorChannel:GetGraphCurve():GetKey(typeComponentIndex)
-			if keyData ~= nil then
+			if keyData ~= nil and keyData:GetTimeCount() > 0 then
 				local tStartKf = keyData:GetTime(0)
 				local tEndKf = keyData:GetTime(keyData:GetTimeCount() - 1)
 
