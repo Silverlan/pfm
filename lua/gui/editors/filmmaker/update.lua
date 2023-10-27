@@ -96,9 +96,9 @@ function Element:CheckForUpdates(verbose)
 				local updateUrl = "https://github.com/Silverlan/pragma/releases/download/nightly"
 				local fileName = "pragma"
 				if os.SYSTEM_WINDOWS then
-					fileName = fileName .. ".zip"
+					fileName = fileName .. "-win64.zip"
 				else
-					fileName = fileName .. ".tar.gz"
+					fileName = fileName .. "-lin64.tar.gz"
 				end
 				download_update(updateUrl, fileName)
 			else
