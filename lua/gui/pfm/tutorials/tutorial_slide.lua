@@ -372,7 +372,7 @@ function Element:AddGenericMessageBox(locArgs)
 	local identifier = gui.Tutorial.tutorial_identifier .. "_" .. self.m_identifier
 	local tutorialData = gui.Tutorial.registered_tutorials[gui.Tutorial.tutorial_identifier]
 	local audioFile = "pfm/" .. tutorialData.path .. "/" .. self.m_identifier .. ".mp3"
-	self:AddMessageBox(locale.get_text("pfm_tut_" .. identifier, locArgs), audioFile)
+	self:AddMessageBox(pfm.LocStr("pfm_tut_" .. identifier, locArgs), audioFile)
 end
 function Element:UpdateCurrentSlideText(currentSlideIndex, totalSlideCount)
 	if util.is_valid(self.m_elCurSlide) == false then
@@ -480,22 +480,52 @@ function Element:AddMessageBox(msg, audioFile)
 
 	local vbox = gui.create("WIVBox", el)
 
-	local elBox = gui.create_info_box(vbox, msg)
+	local msgText = msg
+	if util.get_type_name(msgText) == "LocStr" then
+		msgText = msgText:GetText()
+	end
+	local elBox = gui.create_info_box(vbox, msgText)
 	elBox:SetAlpha(220)
 	elBox:SetWidth(el:GetWidth())
 	elBox:SetShowCloseButton(false)
 	--elBox:SetSize(el:GetSize())
 	table.insert(self.m_messageBoxes, {
+		infoBox = elBox,
 		vbox = vbox,
 		element = el,
 		frameSize = self:GetSize(),
+		message = message,
 	})
+	local msgBoxInfo = self.m_messageBoxes[#self.m_messageBoxes]
 
 	elBox:SetSkinCallbacksEnabled(true)
 	elBox:AddCallback("OnSkinApplied", function()
 		elBox:SizeToContents()
 		el:SetHeight(elBox:GetHeight() + 28)
 	end)
+
+	if tool.get_filmmaker():IsDeveloperModeEnabled() then
+		elBox:SetMouseInputEnabled(true)
+		elBox:AddCallback("OnMouseEvent", function(el, button, state, mods)
+			if button == input.MOUSE_BUTTON_RIGHT then
+				if state == input.STATE_PRESS then
+					local pContext = gui.open_context_menu()
+					if util.is_valid(pContext) then
+						pContext:SetPos(input.get_cursor_pos())
+						pContext:AddItem("Translate to " .. locale.get_language(), function()
+							self:Translate(msgBoxInfo, msg)
+						end)
+						pContext:AddItem("Generate Audio for " .. locale.get_language(), function()
+							self:GenerateAudio(msgBoxInfo, msg)
+						end)
+						pContext:Update()
+						return util.EVENT_REPLY_HANDLED
+					end
+				end
+				return util.EVENT_REPLY_HANDLED
+			end
+		end)
+	end
 
 	local elCurSlide = gui.create("WIText", elBox)
 	elCurSlide:SetText("")
@@ -610,6 +640,34 @@ function Element:AddMessageBox(msg, audioFile)
 	end
 
 	return el
+end
+function Element:Translate(msgBoxInfo, msg)
+	if util.is_valid(msgBoxInfo.infoBox) == false then
+		return
+	end
+	include("/util/locale/localization_helper.lua")
+	include("/util/locale/localization_cache.lua")
+	local text = msgBoxInfo.infoBox:GetText()
+	local id = msg:GetLocaleIdentifier()
+	local locCache = util.locale.LocaleCache("en")
+	local englishText = locCache:GetRawText(id)
+	local cat = locCache:GetCategory(id)
+	if englishText == nil or cat == nil then
+		return
+	end
+	local batchTranslator = util.ai.BatchTranslator()
+	batchTranslator:Add(cat, id, englishText, locale.get_language())
+end
+function Element:GenerateAudio(msgBoxInfo, msg)
+	if util.is_valid(msgBoxInfo.infoBox) == false then
+		return
+	end
+	include("/util/ai/batch_tutorial_audio_generator.lua")
+	local text = msgBoxInfo.infoBox:GetText()
+	local id = msg:GetLocaleIdentifier()
+	local tutorial = gui.Tutorial.get_current_tutorial_identifier()
+	local batchAudioGenerator = util.ai.TutorialAudioGenerator(tutorial, locale.get_language(), id)
+	batchAudioGenerator:Add(id)
 end
 function Element:GetWindow(window)
 	return tool.get_filmmaker():GetWindow(window)
