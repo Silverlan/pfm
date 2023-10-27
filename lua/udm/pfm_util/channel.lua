@@ -73,6 +73,18 @@ function pfm.udm.Channel:CalculateCurveFittingKeyframes(tStart, tEnd, baseIndex)
 
 	local times, values = panimaChannel:GetDataInRange(tStart, tEnd)
 	local valueType = panimaChannel:GetValueType()
+
+	local editorValueType = pfm.to_editor_channel_type(valueType)
+	if editorValueType ~= valueType then
+		local tmpValues = {}
+		for _, v in ipairs(values) do
+			local newVal = pfm.to_editor_channel_value(v, valueType)
+			table.insert(tmpValues, newVal)
+		end
+		values = tmpValues
+		valueType = editorValueType
+	end
+
 	local n = udm.get_numeric_component_count(valueType)
 	if n > 1 then
 		local tmpValues = {}
