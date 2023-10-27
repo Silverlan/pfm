@@ -218,7 +218,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 					path:PopFront()
 					local mdlPath = path:GetString()
 					if icon:IsValid() and asset.exists(mdlPath, asset.TYPE_MODEL) == false then
-						icon:Reload(true)
+						explorer:ImportAsset(icon)
 					end -- Import the asset and generate the icon
 					entGhost = ents.create("pfm_ghost")
 

@@ -32,14 +32,9 @@ function gui.AssetExplorer:OnInitialize()
 			:AddItem(locale.get_text("pfm_asset_import_all"), function()
 				for _, icon in ipairs(self:GetIcons()) do
 					if icon:IsValid() and icon:IsDirectory() == false then
-						local assetPath = util.Path(icon:GetAsset())
-						assetPath:PopFront()
-						if asset.exists(assetPath:GetString(), self:GetAssetType()) == false then
-							icon:Reload(true)
-						end
+						self:ImportAsset(icon)
 					end
 				end
-				self:Refresh()
 			end)
 			:SetName("import_all_assets")
 		self:PopulateContextMenu(pContext, {}, {})
@@ -49,66 +44,79 @@ function gui.AssetExplorer:OnInitialize()
 		return gui.create("WIAssetIcon", parent)
 	end)
 	self:SetFileFinder(function(path)
-		local tFiles, tDirs = file.find(path)
-		local rootPath = path:sub(1, #path - 1)
-
-		-- If assets were imported and converted to a native format, there may be more than one version of it.
-		-- We don't want to clutter the explorer to much, so we'll only list it if the import-file lie somewhere other
-		-- than "addons/imported/", if no native version of the asset exists or if it's a native type to begin with.
-		local tFilesExtUnique = {}
-		for _, f in ipairs(tFiles) do
-			local ext = file.get_file_extension(f)
-			if self.m_extensionMap[ext] then
-				-- f = file.remove_file_extension(f) .. "." .. self.m_extension
-				if
-					file.exists("addons/imported/" .. rootPath .. f) == false
-					or asset.exists(file.remove_file_extension(f), self:GetAssetType()) == false
-				then
-					tFilesExtUnique[f] = true
-				end
-			end
-		end
-
-		local tDirsExtUnique = {}
-		if self.m_showExternalAssets then
-			local tFilesExt, tDirsExt = file.find_external_game_asset_files(path .. "*")
-
-			local function add_files(tFiles)
-				for _, f in ipairs(tFiles) do
-					if self.m_extensions[1] ~= nil then
-						f = file.remove_file_extension(f) .. "." .. self.m_extensions[1]
-					end
-					tFilesExtUnique[f] = true
-				end
-			end
-			for _, ext in ipairs(self.m_extExtensions) do
-				add_files(file.find_external_game_asset_files(path .. "." .. ext))
-			end
-			for _, f in ipairs(tDirsExt) do
-				tDirsExtUnique[f] = true
-			end
-		end
-
-		for _, f in ipairs(tDirs) do
-			tDirsExtUnique[f] = true
-		end
-
-		tFiles = {}
-		tDirs = {}
-		for f, _ in pairs(tFilesExtUnique) do
-			table.insert(tFiles, f)
-		end
-		table.sort(tFiles)
-
-		for d, _ in pairs(tDirsExtUnique) do
-			if self.m_showExternalAssets or file.is_empty(rootPath .. d) == false then
-				table.insert(tDirs, d)
-			end
-		end
-		table.sort(tDirs)
-		return tFiles, tDirs
+		return self:CollectFiles(path)
 	end)
 	self:SetShowExternalAssets(true)
+end
+function gui.AssetExplorer:CollectFiles(path)
+	local tFiles, tDirs = file.find(path)
+	local rootPath = path:sub(1, #path - 1)
+
+	local relRootPath = util.Path.CreatePath(rootPath)
+	relRootPath:MakeRelative(self:GetRootPath())
+	relRootPath = relRootPath:GetString()
+
+	-- In some cases there may be multiple files with the same name for the same asset, but each file with a different type.
+	-- In this case we'll only show the version that has a native type and hide the others.
+	-- If there is no native version, we'll show all available versions.
+	local tFilesExtUnique = {}
+	local tNativeFilesNoExt = {}
+	for _, f in ipairs(tFiles) do
+		local ext = file.get_file_extension(f)
+		if self.m_extensionMap[ext] then
+			-- f = file.remove_file_extension(f) .. "." .. self.m_extension
+			--local filePath = util.Path.CreateFilePath(rootPath .. file.remove_file_extension(f))
+			--filePath:PopFront()
+			if
+				self.m_nativeExtensionMap[ext]
+				or asset.exists(relRootPath .. file.remove_file_extension(f), self:GetAssetType()) == false
+			then
+				tFilesExtUnique[f] = true
+				if self.m_nativeExtensionMap[ext] then
+					tNativeFilesNoExt[file.remove_file_extension(f, self.m_nativeExtensions)] = true
+				end
+			end
+		end
+	end
+
+	local tDirsExtUnique = {}
+	if self.m_showExternalAssets then
+		local tFilesExt, tDirsExt = file.find_external_game_asset_files(path .. "*")
+
+		local function add_files(tFiles)
+			for _, f in ipairs(tFiles) do
+				local fNoExt = file.remove_file_extension(f)
+				if tNativeFilesNoExt[fNoExt] == nil then
+					tFilesExtUnique[f] = true
+				end
+			end
+		end
+		for _, ext in ipairs(self.m_extExtensions) do
+			add_files(file.find_external_game_asset_files(path .. "." .. ext))
+		end
+		for _, f in ipairs(tDirsExt) do
+			tDirsExtUnique[f] = true
+		end
+	end
+
+	for _, f in ipairs(tDirs) do
+		tDirsExtUnique[f] = true
+	end
+
+	tFiles = {}
+	tDirs = {}
+	for f, _ in pairs(tFilesExtUnique) do
+		table.insert(tFiles, f)
+	end
+	table.sort(tFiles)
+
+	for d, _ in pairs(tDirsExtUnique) do
+		if self.m_showExternalAssets or file.is_empty(rootPath .. d) == false then
+			table.insert(tDirs, d)
+		end
+	end
+	table.sort(tDirs)
+	return tFiles, tDirs
 end
 function gui.AssetExplorer:Setup()
 	local gsd = tool.get_filmmaker():GetGlobalStateData()
@@ -130,16 +138,21 @@ end
 function gui.AssetExplorer:GetAssetType()
 	return self.m_assetType
 end
-function gui.AssetExplorer:SetFileExtensions(extensions, extExtensions)
+function gui.AssetExplorer:SetFileExtensions(extensions, extExtensions, nativeExtensions)
 	if type(extensions) ~= "table" then
 		extensions = { extensions }
 	end
 	self.m_extensions = extensions
 	self.m_extExtensions = extExtensions
+	self.m_nativeExtensions = nativeExtensions
 
 	self.m_extensionMap = {}
+	self.m_nativeExtensionMap = {}
 	for _, ext in ipairs(extensions) do
 		self.m_extensionMap[ext] = true
+	end
+	for _, ext in ipairs(nativeExtensions) do
+		self.m_nativeExtensionMap[ext] = true
 	end
 end
 local function find_in_gsd_favorites(udmCatalog, assetName)
@@ -280,6 +293,20 @@ function gui.AssetExplorer:CreateAssetIcon(path, assetName, isDirectory, importA
 	return el
 end
 function gui.AssetExplorer:OnAssetIconCreated(path, assetName, el) end
+function gui.AssetExplorer:ImportAsset(el)
+	local assetPath = el:GetAsset()
+	assetPath = file.get_file_path(assetPath)
+
+	local assetName = el:GetAssetName()
+	assetName = file.remove_file_extension(assetName, self.m_extExtensions)
+	assetName = assetName .. "." .. self.m_extensions[1]
+
+	local nativePath = file.remove_file_extension(el:GetRelativeAsset(), self.m_extExtensions)
+	if asset.exists(nativePath, self:GetAssetType()) == false then
+		-- Re-apply asset with import-flag
+		el:SetAsset(assetPath, assetName, true, el:GetAttributeData(), true)
+	end
+end
 function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 	if #assetName == 0 then
 		return
@@ -361,7 +388,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 					:AddItem(locale.get_text("pfm_asset_import"), function()
 						for _, el in ipairs(tExternalFiles) do
 							if el:IsValid() then
-								el:Reload(true)
+								self:ImportAsset(el)
 							end
 						end
 					end)

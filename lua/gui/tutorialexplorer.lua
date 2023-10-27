@@ -12,7 +12,7 @@ local Element = util.register_class("gui.TutorialExplorer", gui.AssetExplorer)
 function Element:OnInitialize()
 	gui.AssetExplorer.OnInitialize(self)
 
-	self:SetFileExtensions({ "udm" }, {})
+	self:SetFileExtensions({ "udm" }, {}, { "udm" })
 
 	self:AddCallback("OnIconAdded", function(self, el)
 		if el.InitializeVideo == nil then

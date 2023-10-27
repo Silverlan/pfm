@@ -20,7 +20,10 @@ function gui.ModelExplorer:OnInitialize()
 	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
 	table.insert(extensions, 1, asset.FORMAT_MODEL_ASCII)
 	table.insert(extensions, 1, asset.FORMAT_MODEL_BINARY)
-	self:SetFileExtensions(extensions, asset.get_supported_import_file_extensions(asset.TYPE_MODEL))
+	self:SetFileExtensions(extensions, asset.get_supported_import_file_extensions(asset.TYPE_MODEL), {
+		asset.FORMAT_MODEL_ASCII,
+		asset.FORMAT_MODEL_BINARY,
+	})
 
 	self:AddCallback("OnFilesDropped", function(el, tFiles)
 		local basePath = util.Path.CreatePath(self:GetPath())
@@ -55,12 +58,16 @@ function gui.ModelExplorer:OnInitialize()
 				local pContext = gui.open_context_menu()
 				if util.is_valid(pContext) then
 					pContext:SetPos(input.get_cursor_pos())
-					pContext:AddItem(locale.get_text("pfm_import_as_single_model"), function()
-						import_model(true)
-					end)
-					pContext:AddItem(locale.get_text("pfm_import_as_collection"), function()
-						import_model(false)
-					end)
+					pContext
+						:AddItem(locale.get_text("pfm_import_as_single_model"), function()
+							import_model(true)
+						end)
+						:SetName("import_as_single_model")
+					pContext
+						:AddItem(locale.get_text("pfm_import_as_collection"), function()
+							import_model(false)
+						end)
+						:SetName("import_as_collection")
 					pContext:Update()
 					return util.EVENT_REPLY_HANDLED
 				end

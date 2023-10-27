@@ -27,20 +27,17 @@ function Element:OnInitialize()
 	self:SetThinkingEnabled(true)
 end
 function Element:OnThink()
-	if self.m_lastNextUiElementIndex ~= gui.get_next_gui_element_index() then
-		self.m_lastNextUiElementIndex = gui.get_next_gui_element_index()
+	if self.m_shouldUpdate then
+		self.m_shouldUpdate = false
 		for _, data in ipairs(self.m_namedHighlights) do
 			local els = {}
 			local elsPaths = {}
 			local elRoot = gui.get_base_element()
-			data.targetElements = data.targetElements or {}
 			for i, path in ipairs(data.els) do
 				local te = data.targetElements[i]
 				if te ~= nil and te.element:IsValid() then
-					-- if te.element:IsHidden() == false then
 					table.insert(els, te.element)
 					table.insert(elsPaths, te.path)
-				-- end
 				else
 					local el = self:FindElementByPath(path, elRoot, true)
 					if el == nil or el == elRoot then
@@ -98,6 +95,11 @@ function Element:OnThink()
 			end
 			self.m_arrowTargetElement = el
 		end
+	end
+	if self.m_lastNextUiElementIndex ~= gui.get_next_gui_element_index() then
+		self.m_lastNextUiElementIndex = gui.get_next_gui_element_index()
+		-- We'll delay the update by one tick to make sure UI element initialization is complete
+		self.m_shouldUpdate = true
 	end
 	self:UpdateConnectorLine()
 end
@@ -316,6 +318,7 @@ function Element:AddHighlight(el, setAsArrowTarget)
 	if type(els[1]) == "string" then
 		table.insert(self.m_namedHighlights, {
 			els = els,
+			targetElements = {},
 		})
 		self:SetPrimaryHighlightItem(els[#els])
 		if setAsArrowTarget == true then

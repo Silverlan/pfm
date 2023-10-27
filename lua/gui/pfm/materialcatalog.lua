@@ -25,6 +25,9 @@ function Element:InitializeExplorer(baseElement)
 	explorer:SetRootPath("materials")
 
 	local extensions = asset.get_supported_extensions(asset.TYPE_MATERIAL)
+	for _, ext in ipairs(asset.get_supported_import_file_extensions(asset.TYPE_MATERIAL)) do
+		table.insert(extensions, ext)
+	end
 	explorer:SetExtensions(extensions)
 	return explorer
 end

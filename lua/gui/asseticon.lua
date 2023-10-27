@@ -577,10 +577,13 @@ end
 function gui.AssetIcon:SetNativeAsset(nativeAsset)
 	self.m_isNativeAsset = nativeAsset
 end
+function gui.AssetIcon:GetAttributeData()
+	return self.m_attrData
+end
 function gui.AssetIcon:ReloadFromCache(importAsset)
 	self:SetAsset(self.m_assetPath, self.m_assetName, importAsset, self.m_attrData)
 end
-function gui.AssetIcon:SetAsset(path, assetName, importAsset, attrData)
+function gui.AssetIcon:SetAsset(path, assetName, importAsset, attrData, clearIcon)
 	attrData = attrData or {}
 
 	local identifier = path .. assetName
@@ -598,6 +601,9 @@ function gui.AssetIcon:SetAsset(path, assetName, importAsset, attrData)
 	local root = path:GetFront()
 	path:PopFront()
 	path = path + assetName
+	if clearIcon then
+		self:ClearIcon()
+	end
 	self:ApplyAsset(path:GetString(), importAsset)
 end
 function gui.AssetIcon:ApplyAsset(path, importAsset)

@@ -22,6 +22,7 @@ function Element:InitializeFileIndexTable()
 end
 function Element:InitializeExplorer(baseElement)
 	local explorer = gui.create("WIModelExplorer", baseElement, 0, 0, self:GetWidth(), self:GetHeight())
+	explorer:SetName("model_explorer")
 	explorer:SetRootPath("models")
 
 	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)

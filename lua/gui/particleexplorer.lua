@@ -19,7 +19,10 @@ function gui.ParticleExplorer:OnInitialize()
 	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_PARTICLE_SYSTEM)
 	table.insert(extensions, 1, asset.FORMAT_PARTICLE_SYSTEM_BINARY)
 	table.insert(extensions, 1, asset.FORMAT_PARTICLE_SYSTEM_ASCII)
-	self:SetFileExtensions(extensions, asset.get_supported_import_file_extensions(asset.TYPE_PARTICLE_SYSTEM))
+	self:SetFileExtensions(extensions, asset.get_supported_import_file_extensions(asset.TYPE_PARTICLE_SYSTEM), {
+		asset.FORMAT_PARTICLE_SYSTEM_BINARY,
+		asset.FORMAT_PARTICLE_SYSTEM_ASCII,
+	})
 end
 function gui.ParticleExplorer:GetIdentifier()
 	return "particle_explorer"
@@ -193,81 +196,3 @@ function gui.ParticleExplorer:PopulateContextMenu(pContext, tSelectedFiles)
 	end
 end
 gui.register("WIParticleExplorer", gui.ParticleExplorer)
-
---[[
-"particleSystemDefinitions"
-{
-	"fire_3"
-	{
-		"assetData"
-		{
-			$array children [element;0][]
-			$array operators [element;0][]
-			"keyValues"
-			{
-				$string maxparticles "500"
-				$string  "particles/fire_sprites_v3"
-				$string  "10"
-				$string  "0.8"
-				$string  "1"
-			}
-			$array initializers [element;6][
-				{
-					$string name "rotation_random"
-					"keyValues"
-					{
-						$string rotation_min "-45"
-						$string rotation_max "45"
-					}
-				},
-				{
-					$string name "radius_random"
-					"keyValues"
-					{
-						$string radius_max "50"
-						$string radius_min "25"
-					}
-				},
-				{
-					$string name "lifetime_random"
-					"keyValues"
-					{
-						$string lifetime_max "2.66"
-						$string lifetime_min "2.66"
-					}
-				},
-				{
-					$string name "initial_velocity"
-					"keyValues"
-					{
-						$string velocity "0 20 0"
-						$string spread_min "-0.3 0 -0.3"
-						$string spread_max "0.3 0 0.3"
-					}
-				},
-				{$string name "initial_animation_frame"}
-			]
-			$array operators [element;2][
-				{
-					$string name "color_fade"
-					"keyValues"
-					{
-						$string fade_end "2.66"
-						$string fade_start "2"
-						$string color "255 255 255 0"
-					}
-				},
-				{
-					$string name "animation_playback"
-					"keyValues"
-					{
-						$string playbackSpeed 0.7
-					}
-				}
-			]
-			$array renderers [element;0][]
-		}
-		$string assetType "PPTSYS"
-		$uint32 assetVersion 1
-	}
-]]

@@ -18,8 +18,12 @@ function gui.MaterialExplorer:OnInitialize()
 
 	self:SetAssetType(asset.TYPE_MATERIAL)
 	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_MATERIAL)
+	table.insert(extensions, 1, asset.FORMAT_MATERIAL_BINARY)
 	table.insert(extensions, 1, asset.FORMAT_MATERIAL_ASCII)
-	self:SetFileExtensions(extensions, asset.get_supported_import_file_extensions(asset.TYPE_MATERIAL))
+	self:SetFileExtensions(extensions, asset.get_supported_import_file_extensions(asset.TYPE_MATERIAL), {
+		asset.FORMAT_MATERIAL_ASCII,
+		asset.FORMAT_MATERIAL_BINARY,
+	})
 end
 function gui.MaterialExplorer:PopulateContextMenu(pContext, tSelectedFiles)
 	if #tSelectedFiles == 1 then
