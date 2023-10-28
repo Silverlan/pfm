@@ -218,6 +218,12 @@ function gui.WIFilmmaker:OnInitialize()
 	self.m_cbPreRenderScenes = game.add_callback("PreRenderScenes", function(drawSceneInfo)
 		self:PreRenderScenes(drawSceneInfo)
 	end)
+	self.m_cbOnRenderTargetResized = game.add_callback("OnRenderTargetResized", function()
+		local vp = self:GetViewport()
+		if util.is_valid(vp) then
+			vp:UpdateAspectRatio()
+		end
+	end)
 	self.m_cbDisableDefaultSceneDraw = game.add_callback("RenderScenes", function(drawSceneInfo)
 		if self.m_renderSceneDirty == nil then
 			game.set_default_game_render_enabled(false)
@@ -1054,6 +1060,7 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_cbOnWindowShouldClose)
 	util.remove(self.m_cbOnLuaError)
 	util.remove(self.m_cbPreRenderScenes)
+	util.remove(self.m_cbOnRenderTargetResized)
 	util.remove(self.m_overlaySceneCallback)
 	if util.is_valid(self.m_overlayScene) then
 		self.m_overlayScene:GetEntity():Remove()

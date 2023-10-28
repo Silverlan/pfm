@@ -41,20 +41,7 @@ function gui.PFMViewport:OnInitialize()
 	self.m_gameplayEnabled = true
 	self.m_cameraView = gui.PFMViewport.CAMERA_VIEW_GAME
 	self.m_aspectRatioWrapper:AddCallback("OnAspectRatioChanged", function(el, aspectRatio)
-		if util.is_valid(self.m_viewport) then
-			local scene = self.m_viewport:GetScene()
-			if scene ~= nil then
-				local cam = scene:GetActiveCamera()
-				if cam ~= nil then
-					cam:SetAspectRatio(aspectRatio)
-					cam:UpdateMatrices()
-				end
-			end
-		end
-		--[[local maxResolution = engine.get_window_resolution()
-		local w,h = util.clamp_resolution_to_aspect_ratio(maxResolution.x,maxResolution.y,aspectRatio)
-		self.m_viewport:SetupScene(maxResolution.x,maxResolution.y)]]
-		--self:Update()
+		self:UpdateAspectRatio()
 	end)
 
 	local function create_text_element(font, pos, color)
@@ -96,6 +83,21 @@ function gui.PFMViewport:OnInitialize()
 			end
 		end
 	end)
+end
+function gui.PFMViewport:UpdateAspectRatio()
+	if util.is_valid(self.m_viewport) == false or util.is_valid(self.m_aspectRatioWrapper) == false then
+		return
+	end
+	local scene = self.m_viewport:GetScene()
+	if scene == nil then
+		return
+	end
+	local cam = scene:GetActiveCamera()
+	if cam == nil then
+		return
+	end
+	cam:SetAspectRatio(self.m_aspectRatioWrapper:GetAspectRatio())
+	cam:UpdateMatrices()
 end
 function gui.PFMViewport:ShowAnimationOutline(show)
 	if show == false then
