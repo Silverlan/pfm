@@ -232,6 +232,10 @@ pfm.register_component_action(
 				local directPath = basePath .. "lightmap.png_direct.dds"
 				local indirectPath = basePath .. "lightmap.png_indirect.dds"
 				for _, path in ipairs({ directPath, indirectPath }) do
+					-- Files may have been written by render tool in the background, so we
+					-- need to update the file index cache
+					file.update_file_index_cache(path)
+
 					if file.exists(path) == false then
 						pfm.create_popup_message(
 							locale.get_text("pfm_popup_failed_to_import_lightmaps", { path }),
