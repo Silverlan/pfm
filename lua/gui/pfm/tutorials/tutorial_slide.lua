@@ -521,6 +521,9 @@ function Element:AddMessageBox(msg, audioFile)
 						pContext:AddItem("Generate Audio for " .. locale.get_language(), function()
 							self:GenerateAudio(msgBoxInfo, msg)
 						end)
+						pContext:AddItem("Copy text to clipboard", function()
+							util.set_clipboard_string(msgText)
+						end)
 						pContext:Update()
 						return util.EVENT_REPLY_HANDLED
 					end
