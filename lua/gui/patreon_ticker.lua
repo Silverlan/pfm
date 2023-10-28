@@ -201,10 +201,10 @@ function gui.PatreonTicker:OnSizeChanged(w, h)
 	self:UpdateTicker()
 end
 function gui.PatreonTicker:UpdateSupporterList()
-	if self.m_supporterList == nil then
+	self.m_patronTicker:Clear()
+	if self.m_supporterList == nil or #self.m_supporterList == 0 then
 		return
 	end
-	self.m_patronTicker:Clear()
 	local filtered = {}
 	local showInactive = self:ShouldShowInactiveSupporters()
 	for _, patron in ipairs(self.m_supporterList) do
@@ -222,11 +222,19 @@ function gui.PatreonTicker:UpdateSupporterList()
 	end
 	local text = ""
 	local color = Color(220, 220, 220)
+	local colorSpecial = Color.Orange
 	for i, patronInfo in ipairs(filtered) do
 		--[[if patronInfo[2] ~= nil then
 			color = Color.CreateFromHexColor(patronInfo[2]:sub(2))
 		end]]
-		self.m_patronTicker:AddSupporter(patronInfo.name, color)
+		if patronInfo.name ~= nil then
+			local supporterColor = color
+			local flags = patronInfo.flags or 0
+			if bit.band(flags, 1) ~= 0 then
+				supporterColor = colorSpecial
+			end
+			self.m_patronTicker:AddSupporter(patronInfo.name, supporterColor)
+		end
 	end
 
 	self.m_patronTicker:Update()
@@ -244,7 +252,10 @@ function gui.PatreonTicker:OnThink()
 	end
 	local query = self.m_curlRequests["supporters"]
 	if query ~= nil and query:IsSuccessful() then
-		local patrons = json.parse(query:GetResult():ReadString())
+		local success, patrons = pcall(json.parse, query:GetResult():ReadString())
+		if success == false then
+			patrons = {}
+		end
 		self.m_supporterList = patrons
 		self:UpdateSupporterList()
 	end
