@@ -681,11 +681,11 @@ end
 function Element:OpenWindow(window)
 	return tool.get_filmmaker():OpenWindow(window)
 end
-function Element:GoToWindow(window, minDividerFraction)
+function Element:GoToWindow(windowIdentifier, minDividerFraction)
 	minDividerFraction = minDividerFraction or 0.4
-	local window = tool.get_filmmaker():OpenWindow(window)
-	tool.get_filmmaker():GoToWindow(window)
-	self:SetMinWindowFrameDividerFraction(window, minDividerFraction)
+	local window = tool.get_filmmaker():OpenWindow(windowIdentifier)
+	tool.get_filmmaker():GoToWindow(windowIdentifier)
+	self:SetMinWindowFrameDividerFraction(windowIdentifier, minDividerFraction)
 	return window
 end
 function Element:SetMinWindowFrameDividerFraction(windowIdentifier, fraction)
