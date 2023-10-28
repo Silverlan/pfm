@@ -340,7 +340,7 @@ function LightmapBaker:FinalizeBaker()
 end
 
 function LightmapBaker:OnComplete()
-	if self:IsBakerSuccessful() then
+	if self:IsBakerSuccessful() and self.m_generateRenderJob ~= true then
 		self:OpenWindow("Lightmap Atlas View")
 	end
 	self:Reset()
