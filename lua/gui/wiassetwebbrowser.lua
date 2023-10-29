@@ -170,7 +170,7 @@ function Element:UpdateBookmarks()
 	end
 	addLink("pfm_wiki", "PFM Wiki", "https://wiki.pragma-engine.com/books/pragma-filmmaker")
 	addLink("lua_api", "Lua API", "https://wiki.pragma-engine.com/api/docs")
-	addLink("supporter_hub", "Supporter Hub", "https://supporter.pragma-engine.com")
+	addLink("supporter_hub", "Supporter Hub", "https://supporter.pragma-engine.com", true)
 	addLink("sfm_lab", "SFM Lab", "https://sfmlab.com/", true)
 	addLink("open3d_lab", "Open3DLab", "https://open3dlab.com/", true)
 	addLink("smut_base", "SmutBase", "https://smutba.se/", true)
