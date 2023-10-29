@@ -1130,18 +1130,36 @@ function gui.PFMTimelineGraph:GetDataRange()
 	local maxTime = -math.huge
 	local minValue = math.huge
 	local maxValue = -math.huge
+	local function apply_time(t)
+		minTime = math.min(minTime, t)
+		maxTime = math.max(maxTime, t)
+	end
+	local function apply_value(v)
+		minValue = math.min(minValue, v)
+		maxValue = math.max(maxValue, v)
+	end
 	for _, graph in ipairs(self.m_graphs) do
 		if graph.curve:IsValid() then
 			local dataPoints = graph.curve:GetDataPoints()
 			for _, dp in ipairs(dataPoints) do
-				local t = dp:GetTime()
-				local v = dp:GetValue()
+				apply_time(dp:GetTime())
+				apply_value(dp:GetValue())
+			end
 
-				minTime = math.min(minTime, t)
-				maxTime = math.max(maxTime, t)
+			local channel = graph.curve:GetPanimaChannel()
+			if channel ~= nil and channel:GetSize() > 0 then
+				apply_time(channel:GetTime(0))
+				apply_time(channel:GetTime(channel:GetSize() - 1))
 
-				minValue = math.min(minValue, v)
-				maxValue = math.max(maxValue, v)
+				local valueType = channel:GetValueType()
+				for _, v in ipairs(channel:GetValues()) do
+					local vNew, newType = pfm.to_editor_channel_value(v, valueType)
+
+					local n = udm.get_numeric_component_count(newType)
+					for i = 0, n - 1 do
+						apply_value(udm.get_numeric_component(vNew, i))
+					end
+				end
 			end
 		end
 	end
