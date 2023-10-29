@@ -58,6 +58,9 @@ end
 function Element:OnRemove()
 	util.remove(self.m_elCallbacks)
 end
+function Element:OnSizeChanged()
+	self:Update()
+end
 function Element:OnUpdate()
 	if util.is_valid(self.m_elTarget) == false then
 		self.m_bgEls[1]:SetWidth(self:GetWidth())
