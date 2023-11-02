@@ -32,6 +32,7 @@ include("message_popup.lua")
 include("tree/pfm_tree.lua")
 include("project_packer.lua")
 include("undoredo.lua")
+include("events.lua")
 
 -- Load and initialize schema
 pfm.udm = pfm.udm or {}

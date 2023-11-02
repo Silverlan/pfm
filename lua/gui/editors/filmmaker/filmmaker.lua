@@ -424,6 +424,7 @@ function gui.WIFilmmaker:OnInitialize()
 		entReflectionProbe:Spawn()
 		self.m_reflectionProbe = entReflectionProbe
 	end]]
+	pfm.call_event_listeners("OnFilmmakerLaunched", self)
 	pfm.ProjectManager.OnInitialize(self)
 	self:SetCachedMode(false)
 
@@ -470,7 +471,7 @@ function gui.WIFilmmaker:OnInitialize()
 	end
 
 	self:SetSkinCallbacksEnabled(true)
-	game.call_callbacks("OnFilmmakerLaunched", self)
+	pfm.call_event_listeners("OnFilmmakerInitialized", self)
 end
 function gui.WIFilmmaker:ShouldDisplayNotification(id, markAsDisplayed)
 	markAsDisplayed = markAsDisplayed or false

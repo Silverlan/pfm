@@ -132,6 +132,7 @@ function gui.PFMButton:OpenContextMenu()
 	local pos = self:GetAbsolutePos()
 	pContext:SetPos(pos.x, pos.y + self:GetHeight())
 	self.m_fPopulateContextMenu(pContext)
+	self:CallCallbacks("PopulateContextMenu", pContext)
 	pContext:Update()
 
 	pContext:AddCallback("OnRemove", function()
