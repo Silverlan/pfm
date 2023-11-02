@@ -1015,104 +1015,95 @@ end
 function gui.PFMRenderPreview:InitializeControls()
 	gui.PFMBaseViewport.InitializeControls(self)
 
-	local controls = gui.create("WIHBox", self.m_vpContents)
+	local controlsWrapper = gui.create("WIBase", self.m_vpContents)
+	controlsWrapper:SetSize(64, 30)
+	local controls = gui.create("WIHBox", controlsWrapper)
 	--controls:SetHeight(self:GetHeight() -self.m_aspectRatioWrapper:GetBottom())
 	self.m_controls = controls
 
-	self.m_btCancel = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_generic_button_large",
-		"gui/pfm/icon_cp_generic_button_large_activated",
-		function()
-			if self.m_rt:GetState() == gui.RaytracedViewport.STATE_RENDERING then
-				self:CancelRendering()
-			end
-			self.m_btCancel:SetVisible(false)
-			self.m_btStop:SetVisible(false)
-			self.m_renderBtContainer:SetVisible(true)
+	local function create_button(parent, id, text, onPress)
+		local bt = gui.create("WIPFMGenericButton", parent)
+		bt:AddCallback("OnPressed", onPress)
+		bt:SetName(id)
+		bt:SetText(text)
+		bt:SetHeight(28)
+		bt:SizeToContents()
+		return bt
+	end
+
+	self.m_btCancel = create_button(controls, "bt_cancel", locale.get_text("pfm_cancel_rendering"), function()
+		if self.m_rt:GetState() == gui.RaytracedViewport.STATE_RENDERING then
+			self:CancelRendering()
 		end
-	)
-	self.m_btCancel:SetName("bt_cancel")
-	self.m_btCancel:SetText(locale.get_text("pfm_cancel_rendering"))
-	-- self.m_btCancel:SetTooltip(locale.get_text("pfm_refresh_preview"))
+		self.m_btCancel:SetVisible(false)
+		self.m_btStop:SetVisible(false)
+		self.m_renderBtContainer:SetVisible(true)
+	end)
 	self.m_btCancel:SetVisible(false)
 
-	self.m_btStop = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_generic_button_large",
-		"gui/pfm/icon_cp_generic_button_large_activated",
-		function()
-			local scene = self.m_rt:GetRenderScene()
-			if scene == nil or scene:IsValid() == false then
-				return
-			end
-			scene:StopRendering()
-			self.m_btCancel:SetVisible(false)
-			self.m_btStop:SetVisible(false)
+	self.m_btStop = create_button(controls, "bt_stop", locale.get_text("pfm_stop_rendering"), function()
+		local scene = self.m_rt:GetRenderScene()
+		if scene == nil or scene:IsValid() == false then
+			return
 		end
-	)
-	self.m_btStop:SetName("bt_stop")
-	self.m_btStop:SetText(locale.get_text("pfm_stop_rendering"))
+		scene:StopRendering()
+		self.m_btCancel:SetVisible(false)
+		self.m_btStop:SetVisible(false)
+	end)
 	self.m_btStop:SetVisible(false)
 
 	local btContainer = gui.create("WIHBox", controls)
 	self.m_renderBtContainer = btContainer
-	self.m_btRefreshPreview = gui.PFMButton.create(
+	self.m_btRefreshPreview = create_button(
 		btContainer,
-		"gui/pfm/icon_cp_generic_button_large",
-		"gui/pfm/icon_cp_generic_button_large_activated",
+		"bt_render_preview",
+		locale.get_text("pfm_render_preview"),
 		function()
 			self:Refresh(true)
 		end
 	)
-	self.m_btRefreshPreview:SetName("bt_render_preview")
-	self.m_btRefreshPreview:SetText(locale.get_text("pfm_render_preview"))
 	self.m_btRefreshPreview:SetTooltip(locale.get_text("pfm_refresh_preview"))
 
 	gui.create("WIBase", btContainer, 0, 0, 5, 1) -- Gap
 
-	self.m_btRefresh = gui.PFMButton.create(
-		btContainer,
-		"gui/pfm/icon_cp_generic_button_large",
-		"gui/pfm/icon_cp_generic_button_large_activated",
-		function()
-			self:Refresh()
-		end
-	)
-	self.m_btRefresh:SetName("bt_render_image")
-	self.m_btRefresh:SetText(locale.get_text("pfm_render_image"))
+	self.m_btRefresh = create_button(btContainer, "bt_render_image", locale.get_text("pfm_render_image"), function()
+		self:Refresh()
+	end)
 	self.m_btRefresh:SetTooltip(locale.get_text("pfm_render_frame"))
 
 	gui.create("WIBase", btContainer, 0, 0, 5, 1) -- Gap
 
-	self.m_btPrepare = gui.PFMButton.create(
+	self.m_btPrepare = create_button(
 		btContainer,
-		"gui/pfm/icon_cp_generic_button_large",
-		"gui/pfm/icon_cp_generic_button_large_activated",
+		"bt_create_render_job",
+		locale.get_text("pfm_create_render_job"),
 		function()
 			self:Refresh(false, true)
 		end
 	)
-	self.m_btPrepare:SetName("bt_create_render_job")
-	self.m_btPrepare:SetText(locale.get_text("pfm_create_render_job"))
 	self.m_btPrepare:SetTooltip(locale.get_text("pfm_create_render_job_desc"))
 
 	gui.create("WIBase", controls, 0, 0, 5, 1) -- Gap
 
-	self.m_btOpenOutputDir = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_generic_button_large",
-		"gui/pfm/icon_cp_generic_button_large_activated",
-		function()
+	local btTools = gui.PFMButton.create(
+		controlsWrapper,
+		"gui/pfm/icon_gear",
+		"gui/pfm/icon_gear_activated",
+		function() end
+	)
+	self.m_btTools = btTools
+	btTools:SetName("misc_options")
+	btTools:SetX(controlsWrapper:GetWidth() - btTools:GetWidth())
+	btTools:SetAnchor(1, 0, 1, 0)
+	btTools:SetupContextMenu(function(pContext)
+		pContext:AddItem(locale.get_text("pfm_open_output_dir"), function()
 			local path = util.Path(util.get_addon_path() .. "render/" .. self:GetCurrentFrameFilePath())
 			util.open_path_in_explorer(
 				path:GetPath(),
 				path:GetFileName() .. "." .. util.get_image_format_file_extension(self.m_rt:GetImageSaveFormat())
 			)
-		end
-	)
-	self.m_btOpenOutputDir:SetName("bt_open_output_dir")
-	self.m_btOpenOutputDir:SetText(locale.get_text("pfm_open_output_dir"))
+		end)
+	end, true)
 
 	--[[self.m_btApplyPostProcessing = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
 		local filmmaker = tool.get_filmmaker()
@@ -1130,6 +1121,9 @@ function gui.PFMRenderPreview:InitializeControls()
 	self.m_btApplyPostProcessing:SetText(locale.get_text("pfm_apply_post_processing"))]]
 
 	controls:Update()
+end
+function gui.PFMRenderPreview:GetMiscOptionsButton()
+	return self.m_btTools
 end
 function gui.PFMRenderPreview:OnThink()
 	gui.PFMBaseViewport.OnThink(self)
