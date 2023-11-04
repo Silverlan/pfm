@@ -542,7 +542,14 @@ function gui.AssetIcon:MouseCallback(button, state, mods)
 					local mdl = p:GetModel() or p:GetParticleSystemName()
 					if mdl ~= nil then
 						save_model_icon(mdl, p, self:GetIconLocation())
-						self:ReloadFromCache()
+
+						-- Wait for the material to be reloaded before we reload the icon
+						-- TODO: Should probably use a callback/event listener here?
+						time.create_simple_timer(0.75, function()
+							if self:IsValid() then
+								self:ReloadFromCache()
+							end
+						end)
 					end
 
 					pBg:RemoveSafely()
