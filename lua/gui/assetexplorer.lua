@@ -403,6 +403,21 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 						end
 					end)
 					:SetName("reload_icon")
+				if pfm.get_project_manager():IsDeveloperModeEnabled() then
+					pContext:AddItem("Reset Icon", function()
+						for _, el in ipairs(tSelectedFiles) do
+							if el:IsValid() then
+								local iconLocation = el:GetIconLocation()
+								local mat = game.load_material(iconLocation)
+								if util.is_valid(mat) then
+									mat:GetData():RemoveValue("pfm_model_view")
+									mat:Save()
+								end
+								el:Reload()
+							end
+						end
+					end)
+				end
 				if #tSelected == 1 then
 					pContext
 						:AddItem(locale.get_text("pfm_asset_icon_copy_path_to_clipboard"), function()

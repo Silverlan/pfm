@@ -107,7 +107,7 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 				eyeC:SetBlinkingEnabled(false)
 			end
 			local isCharModel, headData = is_character_model(model)
-			if isCharModel then
+			if isCharModel and headData.headBounds[1]:DistanceSqr(headData.headBounds[2]) > 0.001 then
 				local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 				if animC ~= nil then
 					-- If the model is a character, we'll zoom in on the head
@@ -125,6 +125,26 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 							vc:SetRotation(0.0, 0.0)
 							vc:Rotate(-25, 10)
 							vc:FitZoomToExtents(min, max)
+
+							-- Zoom out a little bit
+							vc:SetZoom(vc:GetZoom() + math.abs(max.z - min.z))
+
+							local mdl = ent:GetModel()
+							if mdl ~= nil then
+								local mdlMin, mdlMax = mdl:GetRenderBounds()
+								local isYDominant = math.abs(mdlMax.y - mdlMin.y)
+									> math.max(math.abs(mdlMax.x - mdlMin.x), math.abs(mdlMax.z - mdlMin.z))
+								if isYDominant then
+									-- If the model is larger on the y axis, we'll assume it's a humanoid character model.
+									-- In this case we'll move the camera slightly downwards and adjust the camera angle
+									-- to get a nicer perspective.
+									local lt = vc:GetLookAtTarget()
+									lt.y = lt.y - math.abs(max.y - min.y) * 0.35
+									vc:SetLookAtTarget(lt)
+									vc:Rotate(0, 10)
+									vc:UpdatePosition()
+								end
+							end
 						end
 					end
 				end
