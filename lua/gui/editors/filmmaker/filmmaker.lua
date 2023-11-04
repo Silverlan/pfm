@@ -473,6 +473,9 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetSkinCallbacksEnabled(true)
 	pfm.call_event_listeners("OnFilmmakerInitialized", self)
 end
+function gui.WIFilmmaker:GetRenderOutputPath()
+	return util.Path(util.get_addon_path() .. "render/"):GetString()
+end
 function gui.WIFilmmaker:ShouldDisplayNotification(id, markAsDisplayed)
 	markAsDisplayed = markAsDisplayed or false
 	local udmNotifications = self.m_settings:Get("notifications")

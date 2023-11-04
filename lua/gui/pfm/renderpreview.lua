@@ -78,7 +78,7 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 		-- Save the image if it's not a preview render
 		local renderSettings = self.m_rt:GetRenderSettings()
 		if renderSettings:IsRenderPreview() == false and renderSettings:IsPreStageOnly() == false then
-			local outputPath = self:GetOutputPath()
+			local outputPath = self:GetRTOutputPath()
 
 			file.create_path(util.Path(outputPath):GetPath())
 			print("Saving image as " .. outputPath .. "...")
@@ -92,7 +92,7 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 		util.remove(self.m_renderProgressBar)
 	end)
 	self.m_rt:AddCallback("OnSceneComplete", function(rt, scene)
-		local outputPath = self:GetOutputPath()
+		local outputPath = self:GetRTOutputPath()
 		if outputPath == nil then
 			return
 		end
@@ -120,7 +120,7 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 			and renderSettings:IsPreStageOnly()
 			and self.m_sceneFiles ~= nil
 		then
-			local outputPath = self:GetOutputPath()
+			local outputPath = self:GetRTOutputPath()
 			if outputPath ~= nil then
 				outputPath = util.Path(outputPath)
 				pfm.RaytracingRenderJob.generate_job_batch_script(self.m_sceneFiles)
@@ -387,8 +387,10 @@ function gui.PFMRenderPreview:UpdateVRMode()
 	self.m_rt:GetToneMappedImageElement():SetVRView(enableVrView, tool.get_filmmaker())
 end
 function gui.PFMRenderPreview:GetOutputPath()
+	return pfm.get_project_manager():GetRenderOutputPath()
+end
+function gui.PFMRenderPreview:GetRTOutputPath()
 	local rtJob = self.m_rt:GetRTJob()
-
 	local renderSettings = self.m_rt:GetRenderSettings()
 	if renderSettings:IsRenderPreview() == true then
 		return
@@ -1097,7 +1099,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	btTools:SetAnchor(1, 0, 1, 0)
 	btTools:SetupContextMenu(function(pContext)
 		pContext:AddItem(locale.get_text("pfm_open_output_dir"), function()
-			local path = util.Path(util.get_addon_path() .. "render/" .. self:GetCurrentFrameFilePath())
+			local path = util.Path(self:GetOutputPath()) + self:GetCurrentFrameFilePath()
 			util.open_path_in_explorer(
 				path:GetPath(),
 				path:GetFileName() .. "." .. util.get_image_format_file_extension(self.m_rt:GetImageSaveFormat())
