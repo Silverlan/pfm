@@ -20,6 +20,19 @@ function Command:Initialize(actorUuid, propertyPath, valueType)
 		-- Channel already existed, nothing to be done
 		return pfm.Command.RESULT_NO_OP
 	end
+
+	if
+		propertyPath == "ec/pfm_actor/position"
+		or propertyPath == "ec/pfm_actor/rotation"
+		or propertyPath == "ec/pfm_actor/scale"
+	then
+		-- If we're animating any of the actor's transform properties, we need to make sure the actor is not static
+		local isStatic = actor:GetMemberValue("ec/pfm_actor/static")
+		if isStatic == true then
+			self:AddSubCommand("set_actor_property", actor, "ec/pfm_actor/static", true, false, udm.TYPE_BOOLEAN)
+		end
+	end
+
 	local data = self:GetData()
 	data:SetValue("actor", udm.TYPE_STRING, tostring(actor:GetUniqueId()))
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
