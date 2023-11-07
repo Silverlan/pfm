@@ -2275,6 +2275,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 				"limit_rotation",
 				"limit_scale",
 				"look_at",
+				"child_of",
 			}) do
 				if actorData.actor:HasComponent("constraint_" .. ctName) then
 					constraintType = ctName
