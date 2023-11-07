@@ -1699,51 +1699,86 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 							-- Constraints require there to be an animation channel with at least one animation value
 							local cmd = pfm.create_command("composition")
 
-							local baseValue = prop0.actorData.actor:GetMemberValue(prop0.controlData.path)
-
-							pm:MakeActorPropertyAnimated(
-								prop0.actorData.actor,
-								prop0.controlData.path,
-								prop0.controlData.type,
-								true,
-								nil,
-								cmd,
-								baseValue
-							)
+							local baseValuePos = prop0.actorData.actor:GetMemberValue(prop0.controlData.path)
+							local function make_pos_animated()
+								pm:MakeActorPropertyAnimated(
+									prop0.actorData.actor,
+									prop0.controlData.path,
+									prop0.controlData.type,
+									true,
+									nil,
+									cmd,
+									baseValuePos
+								)
+							end
 							if typeInfo.affectsRotation then
 								-- This constraint affects both the position and rotation, so we need to ensure there
 								-- is an animation channel for the rotation as well
 								local ent = prop0.actorData.actor:FindEntity()
-								local memberInfo = pfm.get_member_info(prop0.controlData.path, ent)
-								if memberInfo ~= nil then
-									local componentName, memberName = ents.PanimaComponent.parse_component_channel_path(
-										panima.Channel.Path(prop0.controlData.path)
-									)
+
+								local function find_pose_meta_info(ent, path)
+									local memberInfo = pfm.get_member_info(path, ent)
+									if memberInfo == nil then
+										return
+									end
+									local componentName, memberName =
+										ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
 									local metaInfo = memberInfo:FindTypeMetaData(
 										ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE_COMPONENT
 									)
-									if metaInfo ~= nil and componentName ~= nil then
-										local posePath = "ec/" .. componentName .. "/" .. metaInfo.poseProperty
-										local memberInfoPose = pfm.get_member_info(posePath, ent)
-										local metaInfo = memberInfoPose:FindTypeMetaData(
-											ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE
-										)
-										if metaInfo ~= nil then
-											local rotPath = "ec/" .. componentName .. "/" .. metaInfo.rotProperty
-											local memberInfoRot = pfm.get_member_info(rotPath, ent)
-											local baseValue = prop0.actorData.actor:GetMemberValue(rotPath)
-											pm:MakeActorPropertyAnimated(
-												prop0.actorData.actor,
-												rotPath,
-												(memberInfoRot ~= nil) and memberInfoRot.type or udm.TYPE_QUATERNION,
-												true,
-												nil,
-												cmd,
-												baseValue
-											)
+									if metaInfo == nil or componentName == nil then
+										return
+									end
+									local posePath = "ec/" .. componentName .. "/" .. metaInfo.poseProperty
+									local memberInfoPose = pfm.get_member_info(posePath, ent)
+									local metaInfoPose = memberInfoPose:FindTypeMetaData(
+										ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE
+									)
+									return metaInfoPose, componentName, metaInfo.poseProperty
+								end
+								local metaInfo, componentName, poseProperty =
+									find_pose_meta_info(ent, prop0.controlData.path)
+								if metaInfo ~= nil then
+									local rotPath = "ec/" .. componentName .. "/" .. metaInfo.rotProperty
+									local memberInfoRot = pfm.get_member_info(rotPath, ent)
+									local baseValueRot = prop0.actorData.actor:GetMemberValue(rotPath)
+
+									local c0 = ent:GetComponent(componentName)
+									local idx0 = (c0 ~= nil) and c0:GetMemberIndex(poseProperty) or nil
+									local pose0 = (idx0 ~= nil)
+											and c0:GetTransformMemberPose(idx0, math.COORDINATE_SPACE_WORLD)
+										or nil
+									local ent1 = prop1.actorData.actor:FindEntity()
+									if pose0 ~= nil and util.is_valid(ent1) then
+										local metaInfo1, componentName1, poseProperty1 =
+											find_pose_meta_info(ent1, prop1.controlData.path)
+										if metaInfo1 ~= nil then
+											local c1 = ent1:GetComponent(componentName1)
+											local idx1 = (c1 ~= nil) and c1:GetMemberIndex(poseProperty1) or nil
+											local pose1 = (idx1 ~= nil)
+													and c1:GetTransformMemberPose(idx1, math.COORDINATE_SPACE_WORLD)
+												or nil
+											if pose0 ~= nil and pose1 ~= nil then
+												local relPose = pose1:GetInverse() * pose0
+												baseValuePos = relPose:GetOrigin()
+												baseValueRot = relPose:GetRotation()
+											end
 										end
 									end
+
+									make_pos_animated()
+									pm:MakeActorPropertyAnimated(
+										prop0.actorData.actor,
+										rotPath,
+										(memberInfoRot ~= nil) and memberInfoRot.type or udm.TYPE_QUATERNION,
+										true,
+										nil,
+										cmd,
+										baseValueRot
+									)
 								end
+							else
+								make_pos_animated()
 							end
 							pfm.undoredo.push("initialize_constraint", cmd)()
 						end)
