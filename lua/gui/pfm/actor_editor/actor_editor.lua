@@ -1700,7 +1700,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 							local cmd = pfm.create_command("composition")
 
 							local baseValuePos = prop0.actorData.actor:GetMemberValue(prop0.controlData.path)
-							local function make_pos_animated()
+							local function make_prop_animated()
 								pm:MakeActorPropertyAnimated(
 									prop0.actorData.actor,
 									prop0.controlData.path,
@@ -1766,7 +1766,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 										end
 									end
 
-									make_pos_animated()
+									make_prop_animated()
 									pm:MakeActorPropertyAnimated(
 										prop0.actorData.actor,
 										rotPath,
@@ -1776,9 +1776,12 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 										cmd,
 										baseValueRot
 									)
+								else
+									-- Property is positional or rotational only
+									make_prop_animated()
 								end
 							else
-								make_pos_animated()
+								make_prop_animated()
 							end
 							pfm.undoredo.push("initialize_constraint", cmd)()
 						end)
