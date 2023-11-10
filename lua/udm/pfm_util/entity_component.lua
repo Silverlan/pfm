@@ -6,6 +6,36 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+function pfm.udm.EntityComponent:GetEffectiveMemberValue(propertyName, type)
+	local actor = self:GetActor()
+	local entActor = actor:FindEntity()
+	if util.is_valid(entActor) == false then
+		return
+	end
+	local panimaC = entActor:GetComponent(ents.COMPONENT_PANIMA)
+	if panimaC ~= nil and ents.is_member_type_udm_type(type) then
+		local manager = panimaC:GetAnimationManager("pfm")
+		if manager ~= nil then
+			-- Animated property value (for the current timestamp) without math expression
+			local val = panimaC:GetRawPropertyValue(manager, "ec/" .. self:GetType() .. "/" .. propertyName, type)
+			if val ~= nil then
+				return val
+			end
+		end
+	end
+
+	-- Property isn't animated? Just retrieve it's current value.
+	local val = self:GetMemberValue(propertyName)
+	if val == nil then
+		-- No value has been set, maybe we can still retrieve it from the entity component
+		local component = entActor:GetComponent(self:GetType())
+		if component ~= nil then
+			return component:GetMemberValue(propertyName)
+		end
+	end
+	return val
+end
+
 function pfm.udm.EntityComponent:SetMemberValue(memberName, type, value)
 	local path = util.Path.CreateFilePath(memberName)
 	local props = self:GetProperties()

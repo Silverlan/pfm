@@ -372,7 +372,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 			elseif info.type == ents.MEMBER_TYPE_ELEMENT then
 			else
 				pfm.log(
-					"Unsupported component member type " .. info.type .. "!",
+					"Unsupported component member type '" .. udm.type_to_string(info.type) .. "'!",
 					pfm.LOG_CATEGORY_PFM,
 					pfm.LOG_SEVERITY_WARNING
 				)
@@ -406,40 +406,23 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 						controlData.type = info.type
 						controlData.componentId = componentId
 						controlData.getValue = function()
-							if util.is_valid(c) == false then
-								if util.is_valid(entActor) == false then
-									entActor = ents.find_by_uuid(uniqueId)
-								end
-								if util.is_valid(entActor) == false then
-									console.print_warning("No actor with UUID '" .. uniqueId .. "' found!")
-									return
-								end
-								c = entActor:GetComponent(componentId)
-								if util.is_valid(c) == false then
-									console.print_warning(
-										"No component "
-											.. componentId
-											.. " found in actor with UUID '"
-											.. uniqueId
-											.. "'!"
-									)
-									return
-								end
+							local actor = pfm.dereference(uniqueId)
+							if actor == nil then
+								return
 							end
-							-- For displaying the value in the actor editor, we want the raw
-							-- value, without any influences like math expressions.
-							local panimaC = entActor:GetComponent(ents.COMPONENT_PANIMA)
-							if panimaC ~= nil and ents.is_member_type_udm_type(controlData.type) then
-								local manager = panimaC:GetAnimationManager("pfm")
-								if manager ~= nil then
-									local val = panimaC:GetRawPropertyValue(manager, path, controlData.type)
-									if val ~= nil then
-										return val
-									end
-								end
+							local component = actor:FindComponent(componentType)
+							if component == nil then
+								return
 							end
-							-- Property isn't animated? Just retrieve it's current value.
-							return c:GetMemberValue(memberName)
+							local res = component:GetEffectiveMemberValue(memberName, controlData.type)
+							if
+								res ~= nil
+								and type(res) == "string"
+								and memberInfo.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY
+							then
+								return ents.UniversalMemberReference(res)
+							end
+							return res
 						end
 						controlData.getMemberInfo = function()
 							if util.is_valid(c) == false then
