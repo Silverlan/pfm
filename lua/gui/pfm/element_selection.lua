@@ -18,6 +18,7 @@ function Element:OnInitialize()
 	local elOutline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	elOutline:SetColor(pfm.get_color_scheme_color("red"))
 	elOutline:SetOutlineWidth(2)
+	elOutline:SetZPos(1)
 	self.m_elOutline = elOutline
 
 	self.m_targetElements = {}
@@ -25,6 +26,17 @@ function Element:OnInitialize()
 
 	self:SetAlwaysUpdate(true)
 	self:SetThinkingEnabled(true)
+end
+function Element:SetFilledIn(filledInColor)
+	if filledInColor ~= false then
+		if util.is_valid(self.m_elFilledIn) == false then
+			local el = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+			el:SetColor(filledInColor)
+			self.m_elFilledIn = el
+		end
+	else
+		util.remove(self.m_elFilledIn)
+	end
 end
 function Element:SetOutlineType(type)
 	if type == Element.OUTLINE_TYPE_MINOR then

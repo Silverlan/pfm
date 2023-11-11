@@ -7,8 +7,8 @@
 ]]
 
 include("element_connector_line.lua")
-include("element_selection.lua")
 include("modal_overlay.lua")
+include("/gui/pfm/element_selection.lua")
 
 local Element = util.register_class("gui.TutorialSlide", gui.Base)
 function Element:OnInitialize()
