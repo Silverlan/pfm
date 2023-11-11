@@ -143,7 +143,7 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		local componentName, memberName =
 			ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(posPropertyPath))
 		assert(componentName ~= nil)
-		local component = actor:FindComponent(componentName)
+		local component = actor0:FindComponent(componentName)
 		assert(component ~= nil)
 		baseValuePos = component:GetEffectiveMemberValue(posMemberInfo.name, posMemberInfo.type)
 		assert(baseValuePos ~= nil)
@@ -153,18 +153,104 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		local componentName, memberName =
 			ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(rotPropertyPath))
 		assert(componentName ~= nil)
-		local component = actor:FindComponent(componentName)
+		local component = actor0:FindComponent(componentName)
 		assert(component ~= nil)
 		baseValueRot = component:GetEffectiveMemberValue(rotMemberInfo.name, rotMemberInfo.type)
 		assert(baseValueRot ~= nil)
 	end
 
+	-- TODO: Check these for validity
+	local componentName0, memberName0 =
+		ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(propertyPath0))
+	local c0 = ent0:GetComponent(componentName0)
+	local idx0 = (c0 ~= nil) and c0:GetMemberIndex(memberName0:GetString()) or nil
+
+	local idxPos
+	if posPropertyPath ~= nil then
+		local componentNamePos, memberNamePos =
+			ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(posPropertyPath))
+		local cPos = ent0:GetComponent(componentNamePos)
+		idxPos = (cPos ~= nil) and cPos:GetMemberIndex(memberNamePos:GetString()) or nil
+	end
+
+	local idxRot
+	if rotPropertyPath ~= nil then
+		local componentNameRot, memberNameRot =
+			ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(rotPropertyPath))
+		local cRot = ent0:GetComponent(componentNameRot)
+		idxRot = (cRot ~= nil) and cRot:GetMemberIndex(memberNameRot:GetString()) or nil
+	end
+
+	if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
+		-- We need to put the property value into parent space
+		local ent1 = actor1:FindEntity()
+		local memberInfo1 = util.is_valid(ent1) and pfm.get_member_info(propertyPath1, ent1) or nil
+		if memberInfo1 == nil then
+			return
+		end
+
+		local componentName1, memberName1 =
+			ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(propertyPath1))
+		local c1 = ent1:GetComponent(componentName1)
+		local idx1 = (c1 ~= nil) and c1:GetMemberIndex(memberName1:GetString()) or nil
+
+		local component = actor1:FindComponent(componentName1)
+		local parentPose = math.ScaledTransform()
+		-- Get parent pose and convert it to world space
+		if is_pose_property_type(memberInfo1.type) then
+			parentPose = component:GetEffectiveMemberValue(memberInfo1.name, memberInfo1.type)
+			parentPose = c1:ConvertTransformMemberPoseToTargetSpace(idx1, math.COORDINATE_SPACE_WORLD, parentPose)
+		elseif is_property_type_positional(memberInfo1.type) then
+			local pos = component:GetEffectiveMemberValue(memberInfo1.name, memberInfo1.type)
+			pos = c1:ConvertTransformMemberPosToTargetSpace(idx1, math.COORDINATE_SPACE_WORLD, pos)
+			parentPose:SetOrigin(pos)
+		elseif is_property_type_rotational(memberInfo1.type) then
+			local rot = component:GetEffectiveMemberValue(memberInfo1.name, memberInfo1.type)
+			rot = c1:ConvertTransformMemberRotToTargetSpace(idx1, math.COORDINATE_SPACE_WORLD, rot)
+			parentPose:SetRotation(rot)
+		end
+
+		local childPose = math.ScaledTransform()
+		if baseValuePos ~= nil then
+			childPose:SetOrigin(baseValuePos)
+		end
+		if baseValueRot ~= nil then
+			childPose:SetRotation(baseValueRot)
+		end
+
+		-- Convert child pose to world space
+		if is_pose_property_type(memberInfo0.type) then
+			childPose = c0:ConvertTransformMemberPoseToTargetSpace(idx0, math.COORDINATE_SPACE_WORLD, childPose)
+		elseif is_property_type_positional(memberInfo0.type) then
+			local pos = childPose:GetOrigin()
+			pos = c0:ConvertTransformMemberPosToTargetSpace(idx0, math.COORDINATE_SPACE_WORLD, pos)
+			childPose:SetOrigin(pos)
+		elseif is_property_type_rotational(memberInfo0.type) then
+			local rot = childPose:GetRotation()
+			rot = c0:ConvertTransformMemberRotToTargetSpace(idx0, math.COORDINATE_SPACE_WORLD, rot)
+			childPose:SetRotation(rot)
+		end
+
+		-- Put child pose relative to parent pose
+		childPose = parentPose:GetInverse() * childPose
+		if baseValuePos ~= nil then
+			baseValuePos = childPose:GetOrigin()
+		end
+		if baseValueRot ~= nil then
+			baseValueRot = childPose:GetRotation()
+		end
+	end
+
 	-- Constraints require there to be an animation channel with at least one animation value
 	if posMemberInfo ~= nil then
-		pm:MakeActorPropertyAnimated(actor0, posPropertyPath, posMemberInfo.type, true, nil, cmd, baseValuePos)
+		local pos = baseValuePos
+		pos = c0:ConvertPosToMemberSpace(idxPos, math.COORDINATE_SPACE_WORLD, pos)
+		pm:MakeActorPropertyAnimated(actor0, posPropertyPath, posMemberInfo.type, true, nil, cmd, pos)
 	end
 	if rotMemberInfo ~= nil then
-		pm:MakeActorPropertyAnimated(actor0, rotPropertyPath, rotMemberInfo.type, true, nil, cmd, baseValueRot)
+		local rot = baseValueRot
+		rot = c0:ConvertRotToMemberSpace(idxRot, math.COORDINATE_SPACE_WORLD, rot)
+		pm:MakeActorPropertyAnimated(actor0, rotPropertyPath, rotMemberInfo.type, true, nil, cmd, rot)
 	end
 	pfm.undoredo.push("initialize_constraint", cmd)()
 end
