@@ -263,7 +263,12 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 			return util.EVENT_REPLY_HANDLED
 		end
 		if button == input.MOUSE_BUTTON_LEFT then
-			if state ~= input.STATE_PRESS then
+			if state == input.STATE_PRESS then
+				self:StartConstraintDragAndDropMode(itemActor, actor)
+			else
+				self:EndConstraintDragAndDropMode()
+			end
+			--[[if state ~= input.STATE_PRESS then
 				local elItem = gui.get_element_under_cursor(function(el)
 					return el:GetClass() == "wipfmtreeviewelement"
 				end)
@@ -297,7 +302,7 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 						end)
 					end
 				end
-			end
+			end]]
 			return util.EVENT_REPLY_UNHANDLED
 		end
 	end)

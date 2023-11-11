@@ -34,6 +34,20 @@ function gui.PFMActorEditor:GetActorComponentItem(actor, componentName)
 	end
 	return item:GetItemByIdentifier(componentName)
 end
+function gui.PFMActorEditor:GetActorComponentItems(actor)
+	local item = self:GetActorItem(actor)
+	if item == nil then
+		return
+	end
+	if self.m_treeElementToActorData == nil or self.m_treeElementToActorData[item] == nil then
+		return
+	end
+	local item = self.m_treeElementToActorData[item].componentsEntry
+	if util.is_valid(item) == false then
+		return
+	end
+	return item:GetItems()
+end
 function gui.PFMActorEditor:UpdateActorComponentEntries(actorData)
 	self:SetActorDirty(tostring(actorData.actor:GetUniqueId()))
 	local entActor = actorData.actor:FindEntity()

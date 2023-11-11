@@ -14,13 +14,16 @@ function gui.DragGhost:__init()
 	gui.Base.__init(self)
 end
 function gui.DragGhost:OnInitialize()
+	self.m_cursorTracker = gui.CursorTracker()
+	self.m_isDragging = false
+	self:SetSize(128, 128)
 	self:EnableThinking()
 
-	self:SetSize(128, 128)
-	local el = gui.create("WIRect", self, 0, 0, 128, 128, 0, 0, 1, 1)
-	el:SetColor(Color.Gray)
-
 	self.m_cbOnMouseRelease = input.add_callback("OnMouseInput", function(mouseButton, state, mods)
+		if self:IsDragging() == false then
+			self:RemoveSafely()
+			return util.EVENT_REPLY_UNHANDLED
+		end
 		if self.m_complete == true then
 			return util.EVENT_REPLY_UNHANDLED
 		end
@@ -31,10 +34,27 @@ function gui.DragGhost:OnInitialize()
 				self:CallCallbacks("OnDragDropped", self.m_hoverElement)
 				self.m_targetElement:CallCallbacks("OnDragDropped", self.m_hoverElement)
 			end
+			self:CallCallbacks("OnDragStopped")
+			self.m_targetElement:CallCallbacks("OnDragStopped")
 			return util.EVENT_REPLY_HANDLED
 		end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
+end
+function gui.DragGhost:IsDragging()
+	return self.m_isDragging
+end
+function gui.DragGhost:StartDragging()
+	if self:IsDragging() then
+		return
+	end
+	self.m_isDragging = true
+	self.m_cursorTracker = nil
+
+	local el = gui.create("WIRect", self, 0, 0, 128, 128, 0, 0, 1, 1)
+	el:SetColor(Color.Gray)
+
+	self:CallCallbacks("OnDragStarted")
 end
 function gui.DragGhost:OnRemove()
 	if util.is_valid(self.m_cbOnMouseRelease) then
@@ -43,12 +63,23 @@ function gui.DragGhost:OnRemove()
 	self:ClearHover()
 end
 function gui.DragGhost:OnThink()
+	if not self:IsDragging() then
+		local dt = self.m_cursorTracker:Update()
+		if dt.x == 0 and dt.y == 0 then
+			return
+		end
+		self:StartDragging()
+	end
+
 	local pos = input.get_cursor_pos()
 	self:SetPos(pos)
 
 	local elCursor = gui.get_element_under_cursor(function(el)
 		local els = gui.DragGhost.impl.dragTargets[self.m_catName]
-		return els ~= nil and els[el] == true
+		if els ~= nil and els[el] == true then
+			return true
+		end
+		return self:CallCallbacks("OnHoverElement", el) or false
 	end)
 	if util.is_valid(elCursor) then
 		if self.m_hoverElement ~= elCursor then
@@ -75,7 +106,7 @@ function gui.DragGhost:ClearHover()
 	if self.m_hoverElement == nil then
 		return
 	end
-	self:CallCallbacks("OnDragTargetHoverStop")
+	self:CallCallbacks("OnDragTargetHoverStop", self.m_hoverElement)
 	self.m_targetElement:CallCallbacks("OnDragTargetHoverStop", self.m_hoverElement)
 	self.m_hoverElement = nil
 end

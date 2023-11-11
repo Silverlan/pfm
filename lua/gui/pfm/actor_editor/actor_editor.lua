@@ -27,6 +27,7 @@ include("ui.lua")
 include("util.lua")
 include("animation.lua")
 include("actor_components.lua")
+include("draganddrop.lua")
 
 function gui.PFMActorEditor:OnInitialize()
 	gui.Base.OnInitialize(self)
@@ -481,6 +482,15 @@ function gui.PFMActorEditor:GetActorItem(actor)
 			return item
 		end
 	end
+end
+function gui.PFMActorEditor:GetActorItems()
+	local t = {}
+	for item, actorData in pairs(self.m_treeElementToActorData) do
+		if item:IsValid() then
+			table.insert(t, item)
+		end
+	end
+	return t
 end
 function gui.PFMActorEditor:TagRenderSceneAsDirty(dirty)
 	tool.get_filmmaker():TagRenderSceneAsDirty(dirty)
@@ -2087,6 +2097,12 @@ function gui.PFMActorEditor:AddControl(
 			self:PopulatePropertyContextMenu(pContext, actorData, controlData)
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
+		elseif button == input.MOUSE_BUTTON_LEFT then
+			if state == input.STATE_PRESS then
+				self:StartConstraintDragAndDropMode(child, actor, controlData.path)
+			else
+				self:EndConstraintDragAndDropMode()
+			end
 		end
 	end)
 
@@ -2175,6 +2191,17 @@ function gui.PFMActorEditor:GetActorData(uuid)
 		return
 	end
 	return self.m_treeElementToActorData[el]
+end
+function gui.PFMActorEditor:GetPropertyEntries(uuid, componentType)
+	local elComponent, componentData, actorData = self:GetComponentEntry(uuid, componentType)
+	if elComponent == nil then
+		return
+	end
+	local t = {}
+	for _, itemData in pairs(componentData.items) do
+		table.insert(t, itemData.treeElement)
+	end
+	return t
 end
 function gui.PFMActorEditor:GetPropertyEntry(uuid, componentType, propertyName)
 	local elComponent, componentData, actorData = self:GetComponentEntry(uuid, componentType)

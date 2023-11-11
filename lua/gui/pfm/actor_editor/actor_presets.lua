@@ -34,6 +34,24 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT = 24
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF = 25
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER = 26
 
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_START = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_END = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF
+
+local constraintTypeToName = {
+	[gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION] = "copy_location",
+	[gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION] = "copy_rotation",
+	[gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE] = "copy_scale",
+	[gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE] = "limit_distance",
+	[gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION] = "limit_location",
+	[gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION] = "limit_rotation",
+	[gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE] = "limit_scale",
+	[gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT] = "look_at",
+	[gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF] = "child_of",
+}
+gui.PFMActorEditor.constraint_type_to_name = function(type)
+	return constraintTypeToName[type]
+end
+
 function gui.PFMActorEditor:CreatePresetActor(type, args)
 	args = args or {}
 	local actor = args["actor"]
