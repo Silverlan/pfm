@@ -44,8 +44,9 @@ local function is_constraint_type_applicable(type, memberInfo0, memberInfo1)
 		if memberInfo1 == nil then
 			return false
 		end
-		local metaInfoPose = memberInfo0:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
-		return (metaInfoPose ~= nil or is_pose_property_type(memberInfo0.type))
+		local metaInfoPoseComponent =
+			memberInfo0:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE_COMPONENT)
+		return (metaInfoPoseComponent ~= nil or is_pose_property_type(memberInfo0.type))
 			and (is_property_type_positional(memberInfo1.type) or is_pose_property_type(memberInfo1.type))
 	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
 		if memberInfo1 == nil then
