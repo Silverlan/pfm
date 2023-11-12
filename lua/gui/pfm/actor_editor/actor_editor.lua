@@ -2237,32 +2237,75 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 	end
 	self.m_specialPropertyIcons["constraints"] = {}
 
-	local function find_property_object_entry(elActor, componentType, propName)
-		local actorData = self.m_treeElementToActorData[elActor]
-		if actorData == nil then
-			return
-		end
-		local c = actorData.actor:FindComponent(componentType)
-		if c == nil then
-			return
-		end
-		local drivenObject = c:GetMemberValue(propName)
-		if drivenObject == nil then
-			return
-		end
-		local ref = ents.parse_uri(drivenObject)
-		if ref == nil then
-			return
-		end
-		local uuid = ref:GetUuid()
-		local componentType = ref:GetComponentName()
-		local propName = ref:GetMemberName()
+	local function get_property_entry_data(uuid, componentType, propName)
 		propName = "ec/" .. componentType .. "/" .. propName
 		local el, ctrlData, componentDataDriven, actorDataDriven = self:GetPropertyEntry(uuid, componentType, propName)
 		if util.is_valid(el) == false then
 			return
 		end
-		return el, actorData, uuid, propName
+		return {
+			element = el,
+			actorUuid = uuid,
+			propertyName = propName,
+		}
+	end
+	local function find_property_object_entry(elActor, componentType, propName)
+		local actorData = self.m_treeElementToActorData[elActor]
+		if actorData == nil then
+			return {}
+		end
+		local c = actorData.actor:FindComponent(componentType)
+		if c == nil then
+			return {}
+		end
+		local drivenObject = c:GetMemberValue(propName)
+		if drivenObject == nil then
+			return {}
+		end
+		local ref = ents.parse_uri(drivenObject)
+		if ref == nil then
+			return {}
+		end
+		local uuid = ref:GetUuid()
+		local componentType = ref:GetComponentName()
+		local propName = ref:GetMemberName()
+
+		local t = {}
+		local ent = actorData.actor:FindEntity()
+		if util.is_valid(ent) then
+			local c = ent:GetComponent(componentType)
+			if c ~= nil then
+				local propertyPath = "ec/" .. componentType .. "/" .. propName
+				local memberInfo = pfm.get_member_info(propertyPath, ent)
+				if memberInfo ~= nil then
+					local metaInfoPose = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
+					if metaInfoPose ~= nil then
+						local tPos = get_property_entry_data(uuid, componentType, metaInfoPose.posProperty)
+						local tRot = get_property_entry_data(uuid, componentType, metaInfoPose.rotProperty)
+						if tPos ~= nil then
+							tPos.actorData = actorData
+							tPos.originalProperty = propertyPath
+							table.insert(t, tPos)
+						end
+						if tRot ~= nil then
+							tRot.actorData = actorData
+							tRot.originalProperty = propertyPath
+							table.insert(t, tRot)
+						end
+						return t
+					end
+				end
+			end
+		end
+
+		local tEntry = get_property_entry_data(uuid, componentType, propName)
+		if tEntry == nil then
+			return {}
+		end
+		tEntry.actorData = actorData
+		tEntry.originalProperty = tEntry.propertyName
+		table.insert(t, tEntry)
+		return t
 	end
 
 	local function find_driven_object_entry(elActor, componentType)
@@ -2270,66 +2313,79 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 	end
 
 	local function add_icon(elActor, componentType, icon)
-		local el, actorData, uuid, propName = find_driven_object_entry(elActor, componentType)
-		if el ~= nil then
-			local icon = el:AddIcon(icon)
-			if util.is_valid(icon) then
-				icon:SetName(componentType)
-				icon:SetCursor(gui.CURSOR_SHAPE_HAND)
-				icon:SetMouseInputEnabled(true)
-				icon:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
-					if button == input.MOUSE_BUTTON_LEFT then
-						if state == input.STATE_PRESS then
-							self:SelectActor(actorData.actor, true, "ec/" .. componentType .. "/drivenObject")
-						end
-						return util.EVENT_REPLY_HANDLED
-					elseif button == input.MOUSE_BUTTON_RIGHT then
-						if state == input.STATE_PRESS then
-							local pContext = gui.open_context_menu()
-							if util.is_valid(pContext) == false then
-								return
+		local tIcons = {}
+		local tDriven = find_driven_object_entry(elActor, componentType)
+		if #tDriven > 0 then
+			for _, drivenData in ipairs(tDriven) do
+				local icon = drivenData.element:AddIcon(icon)
+				if util.is_valid(icon) then
+					icon:SetName(componentType)
+					icon:SetCursor(gui.CURSOR_SHAPE_HAND)
+					icon:SetMouseInputEnabled(true)
+					icon:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
+						if button == input.MOUSE_BUTTON_LEFT then
+							if state == input.STATE_PRESS then
+								self:SelectActor(
+									drivenData.actorData.actor,
+									true,
+									"ec/" .. componentType .. "/drivenObject"
+								)
 							end
-							pContext:SetPos(input.get_cursor_pos())
+							return util.EVENT_REPLY_HANDLED
+						elseif button == input.MOUSE_BUTTON_RIGHT then
+							if state == input.STATE_PRESS then
+								local pContext = gui.open_context_menu()
+								if util.is_valid(pContext) == false then
+									return
+								end
+								pContext:SetPos(input.get_cursor_pos())
 
-							pContext
-								:AddItem(locale.get_text("pfm_go_to_driver_property"), function()
-									local elDriver, actorData, uuidDriver, propNameDriver =
-										find_property_object_entry(elActor, "constraint", "driver")
-									if uuidDriver ~= nil then
-										local pm = pfm.get_project_manager()
-										local session = pm:GetSession()
-										local schema = session:GetSchema()
-										local actorDriver = udm.dereference(schema, tostring(uuidDriver))
-										if actorDriver ~= nil then
-											self:SelectActor(actorDriver, true, propNameDriver)
+								pContext
+									:AddItem(locale.get_text("pfm_go_to_driver_property"), function()
+										local tDriver = find_property_object_entry(elActor, "constraint", "driver")
+										if #tDriver > 0 then
+											local driverData = tDriver[1]
+											local pm = pfm.get_project_manager()
+											local session = pm:GetSession()
+											local schema = session:GetSchema()
+											local actorDriver = udm.dereference(schema, tostring(driverData.actorUuid))
+											if actorDriver ~= nil then
+												self:SelectActor(actorDriver, true, driverData.propertyName)
+											end
 										end
-									end
-								end)
-								:SetName("go_to_driver_property")
-							pContext
-								:AddItem(locale.get_text("remove"), function()
-									self:RemoveActors({ tostring(actorData.actor:GetUniqueId()) })
-								end)
-								:SetName("remove")
-							pContext:Update()
+									end)
+									:SetName("go_to_driver_property")
+								pContext
+									:AddItem(locale.get_text("remove"), function()
+										self:RemoveActors({ tostring(drivenData.actorData.actor:GetUniqueId()) })
+									end)
+									:SetName("remove")
+								pContext:Update()
+							end
+							return util.EVENT_REPLY_HANDLED
 						end
-						return util.EVENT_REPLY_HANDLED
-					end
-				end)
-				table.insert(self.m_specialPropertyIcons["constraints"], {
-					icon = icon,
-					actorUuid = uuid,
-					componentType = componentType,
-					property = propName,
-				})
-				return icon, actorData, el
+					end)
+					table.insert(self.m_specialPropertyIcons["constraints"], {
+						icon = icon,
+						actorUuid = drivenData.actorUuid,
+						componentType = componentType,
+						property = drivenData.propertName,
+					})
+					table.insert(tIcons, {
+						icon = icon,
+						actorData = drivenData.actorData,
+						element = drivenData.element,
+						property = drivenData.propertyName,
+					})
+				end
 			end
 		end
+		return tIcons
 	end
 
 	self:IterateActors(function(el)
-		local icon, actorData, elDrivenObject = add_icon(el, "constraint", "gui/pfm/icon_constraint")
-		if icon ~= nil then
+		local tIcons = add_icon(el, "constraint", "gui/pfm/icon_constraint")
+		for _, iconData in ipairs(tIcons) do
 			local constraintType
 			for _, ctName in ipairs({
 				"copy_location",
@@ -2342,7 +2398,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 				"look_at",
 				"child_of",
 			}) do
-				if actorData.actor:HasComponent("constraint_" .. ctName) then
+				if iconData.actorData.actor:HasComponent("constraint_" .. ctName) then
 					constraintType = ctName
 					break
 				end
@@ -2358,23 +2414,26 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 
 			constraintName = constraintName or locale.get_text("unknown")
 
-			local elDriver, actorData, uuidDriver, propNameDriver =
-				find_property_object_entry(el, "constraint", "driver")
+			local tDriver = find_property_object_entry(el, "constraint", "driver")
 			local actorDriver
-			if uuidDriver ~= nil then
+			if #tDriver > 0 then
 				local pm = pfm.get_project_manager()
 				local session = pm:GetSession()
 				local schema = session:GetSchema()
-				actorDriver = udm.dereference(schema, tostring(uuidDriver))
+				actorDriver = udm.dereference(schema, tostring(tDriver[1].actorUuid))
 			end
 			if actorDriver ~= nil then
-				icon:SetTooltip(
-					locale.get_text("pfm_constraint_to", { constraintName, propNameDriver, actorDriver:GetName() })
+				iconData.icon:SetTooltip(
+					locale.get_text(
+						"pfm_constraint_to",
+						{ constraintName, tDriver[1].originalProperty, actorDriver:GetName() }
+					)
 				)
 			else
-				icon:SetTooltip(locale.get_text("pfm_constraint", { constraintName }))
+				iconData.icon:SetTooltip(locale.get_text("pfm_constraint", { constraintName }))
 			end
 
+			local elDrivenObject = iconData.element
 			elDrivenObject.__elConstraintActorData = elDrivenObject.__elConstraintActorData or {}
 			for i = #elDrivenObject.__elConstraintActorData, 1, -1 do
 				local data = elDrivenObject.__elConstraintActorData[i]
@@ -2384,16 +2443,16 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 			end
 
 			table.insert(elDrivenObject.__elConstraintActorData, {
-				icon = icon,
+				icon = iconData.icon,
 				constraintActorElement = el,
 			})
 		end
 
-		local icon, actorData, elDrivenObject = add_icon(el, "animation_driver", "gui/pfm/icon_driver")
-		if icon ~= nil then
-			icon:SetTooltip(locale.get_text("pfm_animation_driver"))
-			elDrivenObject.__elDriverActorData = {
-				icon = icon,
+		local tIcons = add_icon(el, "animation_driver", "gui/pfm/icon_driver")
+		for _, iconData in ipairs(tIcons) do
+			iconData.icon:SetTooltip(locale.get_text("pfm_animation_driver"))
+			iconData.element.__elDriverActorData = {
+				icon = iconData.icon,
 				driverActorElement = el,
 			}
 		end
