@@ -754,6 +754,14 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 								end
 							end
 
+							local function update_animation_channel_subsitute_value()
+								if tmpAnimChannel == nil then
+									return
+								end
+								local val = panimaC:GetRawPropertyValue(animManager, targetPath, memberInfo.type)
+								tmpAnimChannel:InsertValue(0.0, val)
+							end
+
 							local function restore_animation_channel()
 								if restoreAnimChannel == nil then
 									return
@@ -915,6 +923,9 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 									)
 								end
 								self:OnEndTransform(ent)
+								update_animation_channel_subsitute_value()
+								pose = c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD)
+								origDataPose = nil
 							end)
 							self:InitializeTransformWidget(trC, ent)
 						end

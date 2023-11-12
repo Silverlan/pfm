@@ -328,7 +328,9 @@ function Component:SetTransformScale(scale)
 	if(self.m_relativeToParent == true) then
 		pos = self:GetParentPose():GetInverse() *pos
 	end]]
-	self:BroadcastEvent(Component.EVENT_ON_SCALE_CHANGED, { scale })
+	if self.m_transformStarted then
+		self:BroadcastEvent(Component.EVENT_ON_SCALE_CHANGED, { scale })
+	end
 end
 
 function Component:SetAbsTransformPosition(pos)
@@ -350,7 +352,9 @@ function Component:SetAbsTransformPosition(pos)
 	if self.m_relativeToParent == true then
 		pos = self:GetParentPose():GetInverse() * pos
 	end
-	self:BroadcastEvent(Component.EVENT_ON_POSITION_CHANGED, { pos })
+	if self.m_transformStarted then
+		self:BroadcastEvent(Component.EVENT_ON_POSITION_CHANGED, { pos })
+	end
 end
 
 function Component:GetTransformRotation()
@@ -375,7 +379,9 @@ function Component:SetTransformRotation(rot) --ang)
 	--if(ang:Equals(self.m_angles)) then return end
 	self:GetEntity():SetRotation(rot)
 	--self.m_angles = ang
-	self:BroadcastEvent(Component.EVENT_ON_ROTATION_CHANGED, { rot })
+	if self.m_transformStarted then
+		self:BroadcastEvent(Component.EVENT_ON_ROTATION_CHANGED, { rot })
+	end
 
 	for _, ent in ipairs(self:GetArrowEntities()) do
 		local arrowC = ent:IsValid() and ent:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW) or nil
@@ -477,6 +483,7 @@ function Component:CreateTransformUtility(id, axis, type)
 				end
 			end
 		end
+		self.m_transformStarted = true
 		self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_START)
 	end)
 	arrowC:AddEventCallback(ents.UtilTransformArrowComponent.EVENT_ON_TRANSFORM_END, function()
@@ -488,6 +495,7 @@ function Component:CreateTransformUtility(id, axis, type)
 		end
 
 		self:UpdateSpace()
+		self.m_transformStarted = false
 		self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_END)
 	end)
 
