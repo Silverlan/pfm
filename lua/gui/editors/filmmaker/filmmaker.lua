@@ -1334,16 +1334,21 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 					end
 				end
 
-				local componentValue = udm.get_numeric_component(value, baseIndex)
-				subCmd:AddSubCommand(
-					"create_keyframe",
-					actorUuid,
-					propertyPath,
-					valueType,
-					timestamp,
-					baseIndex,
-					componentValue
-				)
+				local res, o =
+					subCmd:AddSubCommand("create_keyframe", actorUuid, propertyPath, valueType, timestamp, baseIndex)
+				if res == pfm.Command.RESULT_SUCCESS and o ~= nil then
+					local underlyingType = udm.get_underlying_numeric_type(valueType)
+					subCmd:AddSubCommand(
+						"set_keyframe_value",
+						actorUuid,
+						propertyPath,
+						timestamp,
+						underlyingType,
+						nil,
+						udm.get_numeric_component(value, baseIndex),
+						baseIndex
+					)
+				end
 			end
 		end
 		pfm.undoredo.push("create_keyframe", cmd)()
