@@ -299,15 +299,13 @@ function pfm.util.find_applicable_constraint_types(memberInfo0, actor1, property
 		return t
 	end
 
-	local ent1 = actor1:FindEntity()
+	local ent1 = (actor1 ~= nil) and actor1:FindEntity() or nil
 	local memberInfo1 = util.is_valid(ent1) and pfm.get_member_info(propertyPath1, ent1) or nil
 	if
-		memberInfo1 == nil
-		or (
-			pfm.util.is_pose_property_type(memberInfo1.type) == false
-			and pfm.util.is_property_type_positional(memberInfo1.type) == false
-			and pfm.util.is_property_type_rotational(memberInfo1.type) == false
-		)
+		memberInfo1 ~= nil
+		and pfm.util.is_pose_property_type(memberInfo1.type) == false
+		and pfm.util.is_property_type_positional(memberInfo1.type) == false
+		and pfm.util.is_property_type_rotational(memberInfo1.type) == false
 	then
 		return t
 	end
