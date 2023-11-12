@@ -81,13 +81,17 @@ local function find_pose_meta_info(ent, path)
 		return
 	end
 	local componentName, memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+	local metaInfoPose = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
+	if metaInfoPose ~= nil then
+		return metaInfoPose, componentName, path
+	end
 	local metaInfo = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE_COMPONENT)
 	if metaInfo == nil or componentName == nil then
 		return
 	end
 	local posePath = "ec/" .. componentName .. "/" .. metaInfo.poseProperty
 	local memberInfoPose = pfm.get_member_info(posePath, ent)
-	local metaInfoPose = memberInfoPose:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
+	metaInfoPose = memberInfoPose:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
 	return metaInfoPose, componentName, metaInfo.poseProperty
 end
 
@@ -128,14 +132,14 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		rotMemberInfo = memberInfo0
 		rotPropertyPath = propertyPath0
 	else
-		local poseMetaInfo = find_pose_meta_info(ent0, propertyPath0)
+		local poseMetaInfo, component = find_pose_meta_info(ent0, propertyPath0)
 		if poseMetaInfo == nil then
 			return
 		end
-		posPropertyPath = poseMetaInfo.posProperty
-		rotPropertyPath = poseMetaInfo.rotProperty
-		posMemberInfo = pfm.get_member_info(poseMetaInfo.posProperty, ent0)
-		rotMemberInfo = pfm.get_member_info(poseMetaInfo.rotProperty, ent0)
+		posPropertyPath = "ec/" .. component .. "/" .. poseMetaInfo.posProperty
+		rotPropertyPath = "ec/" .. component .. "/" .. poseMetaInfo.rotProperty
+		posMemberInfo = pfm.get_member_info(posPropertyPath, ent0)
+		rotMemberInfo = pfm.get_member_info(rotPropertyPath, ent0)
 	end
 
 	local baseValuePos
@@ -337,11 +341,70 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 				end
 				pContext:SetPos(input.get_cursor_pos())
 
-				for _, type in ipairs(elData.constraintTypes) do
+				local constraintTypes = elData.constraintTypes
+
+				-- Make sure the child-of constraint is the first in the list
+				-- (Since it's the most commonly used one)
+				for i, type in ipairs(constraintTypes) do
+					if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
+						table.remove(constraintTypes, i)
+						table.insert(constraintTypes, 1, type)
+						break
+					end
+				end
+
+				for _, type in ipairs(constraintTypes) do
 					local name = gui.PFMActorEditor.constraint_type_to_name(type)
 					name = locale.get_text("c_constraint_" .. name)
 					name = locale.get_text("pfm_add_constraint_type", { name })
-					pContext:AddItem(name, function()
+
+					local nameNonPose = name
+					if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
+						if is_property_type_positional(memberInfo.type) then
+							nameNonPose = nameNonPose
+								.. " ("
+								.. locale.get_text("pfm_add_constraint_type_pos_only")
+								.. ")"
+						else
+							nameNonPose = nameNonPose
+								.. " ("
+								.. locale.get_text("pfm_add_constraint_type_rot_only")
+								.. ")"
+						end
+					end
+
+					if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
+						-- The child-of constraint can be either added so it only affects either the position or rotation, or both.
+						-- To make it affect both, we'll add a separate option.
+						local actor1 = (elData.actorUuid ~= nil) and pfm.dereference(elData.actorUuid) or nil
+						local ent1 = (actor1 ~= nil) and actor1:FindEntity() or nil
+						if util.is_valid(ent1) then
+							local poseMetaInfo0, poseComponent0, posePropertyName0 =
+								find_pose_meta_info(ent, propertyPath)
+							local poseMetaInfo1, poseComponent1, posePropertyName1 =
+								find_pose_meta_info(ent1, elData.propertyPath)
+							if poseMetaInfo0 ~= nil and poseMetaInfo1 ~= nil then
+								local posePropertyPath0 = "ec/" .. poseComponent0 .. "/" .. posePropertyName0
+								local posePropertyPath1 = "ec/" .. poseComponent1 .. "/" .. posePropertyName1
+								pContext:AddItem(name, function()
+									if self:IsValid() then
+										local actor1 = (elData.actorUuid ~= nil) and pfm.dereference(elData.actorUuid)
+											or nil
+										if actor1 ~= nil then
+											self:AddConstraint(
+												type,
+												actor,
+												posePropertyPath0,
+												actor1,
+												posePropertyPath1
+											)
+										end
+									end
+								end)
+							end
+						end
+					end
+					pContext:AddItem(nameNonPose, function()
 						if self:IsValid() then
 							local actor1 = (elData.actorUuid ~= nil) and pfm.dereference(elData.actorUuid) or nil
 							self:AddConstraint(type, actor, propertyPath, actor1, elData.propertyPath)
