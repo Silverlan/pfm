@@ -1613,95 +1613,36 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 		local prop0 = constraintProps[1]
 		local prop1 = constraintProps[2]
 		if prop0.controlData == controlData then
-			local constraintTypes = {}
-			local function is_valid_constraint_type(type)
-				return udm.is_convertible(type, udm.TYPE_VECTOR3)
-					and udm.is_numeric_type(type) == false
-					and type ~= udm.TYPE_STRING
-			end
-			if is_valid_constraint_type(prop0.controlData.type) then
-				table.insert(constraintTypes, {
-					type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION,
-					name = "limit_location",
-					requiresDriver = false,
-				})
-				table.insert(constraintTypes, {
-					type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE,
-					name = "limit_scale",
-					requiresDriver = false,
-				})
-
-				if
-					#constraintProps > 1
-					and udm.is_convertible(prop1.controlData.type, udm.TYPE_VECTOR3)
-					and udm.is_numeric_type(prop1.controlData.type) == false
-				then
-					table.insert(constraintTypes, {
-						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION,
-						name = "copy_location",
-						requiresDriver = true,
-					})
-					table.insert(constraintTypes, {
-						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE,
-						name = "copy_scale",
-						requiresDriver = true,
-					})
-					table.insert(constraintTypes, {
-						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE,
-						name = "limit_distance",
-						requiresDriver = true,
-					})
-					table.insert(constraintTypes, {
-						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF,
-						name = "child_of",
-						requiresDriver = true,
-						affectsRotation = true,
-					})
-				end
-			end
-			if prop0.controlData.type == udm.TYPE_EULER_ANGLES or prop0.controlData.type == udm.TYPE_QUATERNION then
-				table.insert(constraintTypes, {
-					type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION,
-					name = "limit_rotation",
-					requiresDriver = false,
-				})
-				if #constraintProps > 1 and is_valid_constraint_type(prop1.controlData.type) then
-					table.insert(constraintTypes, {
-						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION,
-						name = "copy_rotation",
-						requiresDriver = true,
-					})
-					table.insert(constraintTypes, {
-						type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT,
-						name = "look_at",
-						requiresDriver = true,
-					}) -- TODO: Only add look_at constraint to list if rotation property has associated position property
-				end
+			local actor1
+			local propertyPath1
+			if prop1 ~= nil then
+				actor1 = prop1.actorData.actor
+				propertyPath1 = prop1.controlData.path
 			end
 
-			if #constraintTypes > 0 then
-				local ctItem, ctMenu = context:AddSubMenu(locale.get_text("pfm_add_constraint"))
-				ctItem:SetName("add_constraint")
-				for _, typeInfo in ipairs(constraintTypes) do
-					ctMenu
-						:AddItem(locale.get_text("c_constraint_" .. typeInfo.name), function()
-							local actor1
-							local propertyPath1
-							if prop1 ~= nil then
-								actor1 = prop1.actorData.actor
-								propertyPath1 = prop1.controlData.path
-							end
-							self:AddConstraint(
-								typeInfo.type,
-								prop0.actorData.actor,
-								prop0.controlData.path,
-								actor1,
-								propertyPath1
-							)
-						end)
-						:SetName("constraint_" .. typeInfo.name)
+			local ent = prop0.actorData.actor:FindEntity()
+			local memberInfo = util.is_valid(ent) and pfm.get_member_info(prop0.controlData.path, ent) or nil
+			if memberInfo ~= nil then
+				local constraintTypes = pfm.util.find_applicable_constraint_types(memberInfo, actor1, propertyPath1)
+				if #constraintTypes > 0 then
+					local ctItem, ctMenu = context:AddSubMenu(locale.get_text("pfm_add_constraint"))
+					ctItem:SetName("add_constraint")
+					for _, type in ipairs(constraintTypes) do
+						local name = gui.PFMActorEditor.constraint_type_to_name(type)
+						ctMenu
+							:AddItem(locale.get_text("c_constraint_" .. name), function()
+								self:AddConstraint(
+									type,
+									prop0.actorData.actor,
+									prop0.controlData.path,
+									actor1,
+									propertyPath1
+								)
+							end)
+							:SetName("constraint_" .. name)
+					end
+					ctMenu:Update()
 				end
-				ctMenu:Update()
 			end
 		end
 	end

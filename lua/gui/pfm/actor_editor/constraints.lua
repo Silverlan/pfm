@@ -218,3 +218,85 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 	end
 	pfm.undoredo.push("initialize_constraint", cmd)()
 end
+
+local function is_constraint_type_applicable(type, memberInfo0, memberInfo1)
+	if
+		type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION
+		or type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE
+		or type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE
+	then
+		return memberInfo1 ~= nil
+			and pfm.util.is_property_type_positional(memberInfo0.type)
+			and pfm.util.is_property_type_positional(memberInfo1.type)
+	elseif
+		type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION
+		or type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE
+	then
+		return memberInfo1 == nil and pfm.util.is_property_type_positional(memberInfo0.type)
+	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION then
+		return memberInfo1 == nil and pfm.util.is_property_type_rotational(memberInfo0.type)
+	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION then
+		return memberInfo1 ~= nil
+			and pfm.util.is_property_type_rotational(memberInfo0.type)
+			and pfm.util.is_property_type_rotational(memberInfo1.type)
+	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT then
+		if memberInfo1 == nil then
+			return false
+		end
+		local metaInfoPoseComponent =
+			memberInfo0:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE_COMPONENT)
+		return (metaInfoPoseComponent ~= nil or pfm.util.is_pose_property_type(memberInfo0.type))
+			and (
+				pfm.util.is_property_type_positional(memberInfo1.type)
+				or pfm.util.is_pose_property_type(memberInfo1.type)
+			)
+	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
+		if memberInfo1 == nil then
+			return false
+		end
+		if pfm.util.is_property_type_positional(memberInfo0.type) then
+			return pfm.util.is_property_type_positional(memberInfo1.type)
+				or pfm.util.is_pose_property_type(memberInfo1.type)
+		end
+		if pfm.util.is_property_type_rotational(memberInfo0.type) then
+			return pfm.util.is_property_type_rotational(memberInfo1.type)
+				or pfm.util.is_pose_property_type(memberInfo1.type)
+		end
+		if pfm.util.is_pose_property_type(memberInfo0.type) then
+			return pfm.util.is_property_type_positional(memberInfo1.type)
+				or pfm.util.is_property_type_rotational(memberInfo1.type)
+				or pfm.util.is_pose_property_type(memberInfo1.type)
+		end
+	end
+	return false
+end
+
+function pfm.util.find_applicable_constraint_types(memberInfo0, actor1, propertyPath1)
+	local t = {}
+	if
+		pfm.util.is_pose_property_type(memberInfo0.type) == false
+		and pfm.util.is_property_type_positional(memberInfo0.type) == false
+		and pfm.util.is_property_type_rotational(memberInfo0.type) == false
+	then
+		return t
+	end
+
+	local ent1 = actor1:FindEntity()
+	local memberInfo1 = util.is_valid(ent1) and pfm.get_member_info(propertyPath1, ent1) or nil
+	if
+		memberInfo1 == nil
+		or (
+			pfm.util.is_pose_property_type(memberInfo1.type) == false
+			and pfm.util.is_property_type_positional(memberInfo1.type) == false
+			and pfm.util.is_property_type_rotational(memberInfo1.type) == false
+		)
+	then
+		return t
+	end
+	for type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_START, gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_END do
+		if is_constraint_type_applicable(type, memberInfo0, memberInfo1) then
+			table.insert(t, type)
+		end
+	end
+	return t
+end
