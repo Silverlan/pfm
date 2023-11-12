@@ -47,6 +47,24 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 	if memberInfo0 == nil then
 		return
 	end
+
+	if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT then
+		if pfm.util.is_pose_property_type(memberInfo0.type) == false then
+			local poseMetaInfo0, poseComponent0, posePropertyName0 =
+				pfm.util.find_property_pose_meta_info(ent0, propertyPath0)
+			if poseMetaInfo0 == nil then
+				return
+			end
+			return self:AddConstraint(
+				type,
+				actor0,
+				"ec/" .. poseComponent0 .. "/" .. posePropertyName0,
+				actor1,
+				propertyPath1
+			)
+		end
+	end
+
 	local constraintActorName = actor0:GetName()
 		.. "["
 		.. memberInfo0.name
