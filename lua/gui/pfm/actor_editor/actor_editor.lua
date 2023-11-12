@@ -1685,120 +1685,19 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 				for _, typeInfo in ipairs(constraintTypes) do
 					ctMenu
 						:AddItem(locale.get_text("c_constraint_" .. typeInfo.name), function()
-							local actor = self:CreatePresetActor(typeInfo.type, {
-								["updateActorComponents"] = false,
-							})
-							local ctC = actor:FindComponent("constraint")
-							if ctC ~= nil then
-								ctC:SetMemberValue(
-									"drivenObject",
-									udm.TYPE_STRING,
-									ents.create_uri(prop0.actorData.actor:GetUniqueId(), prop0.controlData.path)
-								)
-								if typeInfo.requiresDriver == true and prop1.controlData ~= nil then
-									ctC:SetMemberValue(
-										"driver",
-										udm.TYPE_STRING,
-										ents.create_uri(prop1.actorData.actor:GetUniqueId(), prop1.controlData.path)
-									)
-								end
-								self:UpdateActorComponents(actor)
+							local actor1
+							local propertyPath1
+							if prop1 ~= nil then
+								actor1 = prop1.actorData.actor
+								propertyPath1 = prop1.controlData.path
 							end
-
-							local pm = pfm.get_project_manager()
-							local animManager = pm:GetAnimationManager()
-							if animManager == nil then
-								return
-							end
-
-							-- Constraints require there to be an animation channel with at least one animation value
-							local cmd = pfm.create_command("composition")
-
-							local baseValuePos = prop0.actorData.actor:GetMemberValue(prop0.controlData.path)
-							local function make_prop_animated()
-								pm:MakeActorPropertyAnimated(
-									prop0.actorData.actor,
-									prop0.controlData.path,
-									prop0.controlData.type,
-									true,
-									nil,
-									cmd,
-									baseValuePos
-								)
-							end
-							if typeInfo.affectsRotation then
-								-- This constraint affects both the position and rotation, so we need to ensure there
-								-- is an animation channel for the rotation as well
-								local ent = prop0.actorData.actor:FindEntity()
-
-								local function find_pose_meta_info(ent, path)
-									local memberInfo = pfm.get_member_info(path, ent)
-									if memberInfo == nil then
-										return
-									end
-									local componentName, memberName =
-										ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
-									local metaInfo = memberInfo:FindTypeMetaData(
-										ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE_COMPONENT
-									)
-									if metaInfo == nil or componentName == nil then
-										return
-									end
-									local posePath = "ec/" .. componentName .. "/" .. metaInfo.poseProperty
-									local memberInfoPose = pfm.get_member_info(posePath, ent)
-									local metaInfoPose = memberInfoPose:FindTypeMetaData(
-										ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE
-									)
-									return metaInfoPose, componentName, metaInfo.poseProperty
-								end
-								local metaInfo, componentName, poseProperty =
-									find_pose_meta_info(ent, prop0.controlData.path)
-								if metaInfo ~= nil then
-									local rotPath = "ec/" .. componentName .. "/" .. metaInfo.rotProperty
-									local memberInfoRot = pfm.get_member_info(rotPath, ent)
-									local baseValueRot = prop0.actorData.actor:GetMemberValue(rotPath)
-
-									local c0 = ent:GetComponent(componentName)
-									local idx0 = (c0 ~= nil) and c0:GetMemberIndex(poseProperty) or nil
-									local pose0 = (idx0 ~= nil)
-											and c0:GetTransformMemberPose(idx0, math.COORDINATE_SPACE_WORLD)
-										or nil
-									local ent1 = prop1.actorData.actor:FindEntity()
-									if pose0 ~= nil and util.is_valid(ent1) then
-										local metaInfo1, componentName1, poseProperty1 =
-											find_pose_meta_info(ent1, prop1.controlData.path)
-										if metaInfo1 ~= nil then
-											local c1 = ent1:GetComponent(componentName1)
-											local idx1 = (c1 ~= nil) and c1:GetMemberIndex(poseProperty1) or nil
-											local pose1 = (idx1 ~= nil)
-													and c1:GetTransformMemberPose(idx1, math.COORDINATE_SPACE_WORLD)
-												or nil
-											if pose0 ~= nil and pose1 ~= nil then
-												local relPose = pose1:GetInverse() * pose0
-												baseValuePos = relPose:GetOrigin()
-												baseValueRot = relPose:GetRotation()
-											end
-										end
-									end
-
-									make_prop_animated()
-									pm:MakeActorPropertyAnimated(
-										prop0.actorData.actor,
-										rotPath,
-										(memberInfoRot ~= nil) and memberInfoRot.type or udm.TYPE_QUATERNION,
-										true,
-										nil,
-										cmd,
-										baseValueRot
-									)
-								else
-									-- Property is positional or rotational only
-									make_prop_animated()
-								end
-							else
-								make_prop_animated()
-							end
-							pfm.undoredo.push("initialize_constraint", cmd)()
+							self:AddConstraint(
+								typeInfo.type,
+								prop0.actorData.actor,
+								prop0.controlData.path,
+								actor1,
+								propertyPath1
+							)
 						end)
 						:SetName("constraint_" .. typeInfo.name)
 				end
@@ -2956,6 +2855,13 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			actorEditor:ToggleCameraLink(actor)
 		end)
 		:SetName("toggle_camera_link")
+	pContext
+		:AddItem("Dissolve Anim", function()
+			local cmd = pfm.create_command("composition")
+			actor:DissolveSingleValueAnimationChannels(cmd)
+			pfm.undoredo.push("dissolve", cmd)()
+		end)
+		:SetName("dissolve_single_value_channels")
 	pContext
 		:AddItem(locale.get_text("pfm_retarget"), function()
 			local ent = actor:FindEntity()
