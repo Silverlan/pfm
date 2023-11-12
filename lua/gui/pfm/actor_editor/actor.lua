@@ -169,6 +169,7 @@ function gui.PFMActorEditor:OnActorsRemoved(filmClip, uuids)
 	for _, item in ipairs(items) do
 		item:UpdateUi()
 	end
+	self:SetConstraintPropertyIconsDirty()
 end
 function gui.PFMActorEditor:ClearActor(uniqueId, updateUi)
 	if updateUi == nil then

@@ -532,6 +532,10 @@ function gui.PFMActorEditor:OnThink()
 	end
 	self:DisableThinking()
 end
+function gui.PFMActorEditor:SetConstraintPropertyIconsDirty()
+	self.m_updatePropertyIcons = true
+	self:EnableThinking()
+end
 function gui.PFMActorEditor:GetFilmClip()
 	return self.m_filmClip
 end
@@ -2541,8 +2545,7 @@ function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData, controlData)
 		end
 	end
 
-	self.m_updatePropertyIcons = true
-	self:EnableThinking()
+	self:SetConstraintPropertyIconsDirty()
 end
 function gui.PFMActorEditor:ToggleCameraLink(actor)
 	util.remove(self.m_cameraLinkOutlineElement)
