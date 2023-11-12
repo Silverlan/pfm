@@ -724,31 +724,6 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 							local component = actor:FindComponent(componentName)
 
 							local origDataPose
-							if
-								memberInfo.type == ents.MEMBER_TYPE_TRANSFORM
-								or memberInfo.type == ents.MEMBER_TYPE_SCALED_TRANSFORM
-							then
-								origDataPose = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
-								origDataPose = c:ConvertTransformMemberPoseToTargetSpace(
-									idx,
-									math.COORDINATE_SPACE_WORLD,
-									origDataPose
-								)
-							elseif
-								memberInfo.type == ents.MEMBER_TYPE_QUATERNION
-								or memberInfo.type == ents.MEMBER_TYPE_EULER_ANGLES
-							then
-								origDataPose = math.ScaledTransform()
-								local rot = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
-								rot = c:ConvertTransformMemberRotToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, rot)
-								origDataPose:SetRotation(rot)
-							else
-								origDataPose = math.ScaledTransform()
-								local pos = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
-								pos = c:ConvertTransformMemberPosToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, pos)
-								origDataPose:SetOrigin(pos)
-							end
-
 							local restoreAnimChannel
 							local tmpAnimChannel
 							local panimaC = ent:GetComponent(ents.COMPONENT_PANIMA)
@@ -874,6 +849,34 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 								end)
 							end
 							trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START, function(scale)
+								if
+									memberInfo.type == ents.MEMBER_TYPE_TRANSFORM
+									or memberInfo.type == ents.MEMBER_TYPE_SCALED_TRANSFORM
+								then
+									origDataPose =
+										component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
+									origDataPose = c:ConvertTransformMemberPoseToTargetSpace(
+										idx,
+										math.COORDINATE_SPACE_WORLD,
+										origDataPose
+									)
+								elseif
+									memberInfo.type == ents.MEMBER_TYPE_QUATERNION
+									or memberInfo.type == ents.MEMBER_TYPE_EULER_ANGLES
+								then
+									origDataPose = math.ScaledTransform()
+									local rot = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
+									rot =
+										c:ConvertTransformMemberRotToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, rot)
+									origDataPose:SetRotation(rot)
+								else
+									origDataPose = math.ScaledTransform()
+									local pos = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
+									pos =
+										c:ConvertTransformMemberPosToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, pos)
+									origDataPose:SetOrigin(pos)
+								end
+
 								init_animation_channel_substitute()
 								self:OnStartTransform(ent)
 							end)
