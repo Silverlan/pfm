@@ -20,9 +20,7 @@ local function is_property_type_rotational(type)
 	return type == udm.TYPE_EULER_ANGLES or type == udm.TYPE_QUATERNION
 end
 
-local function is_constraint_type_applicable(type, memberInfo0, actor1, propertyPath1)
-	local ent1 = actor1:FindEntity()
-	local memberInfo1 = util.is_valid(ent1) and pfm.get_member_info(propertyPath1, ent1) or nil
+local function is_constraint_type_applicable(type, memberInfo0, memberInfo1)
 	if
 		type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION
 		or type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE
@@ -43,9 +41,12 @@ local function is_constraint_type_applicable(type, memberInfo0, actor1, property
 			and is_property_type_rotational(memberInfo0.type)
 			and is_property_type_rotational(memberInfo1.type)
 	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT then
-		return memberInfo1 ~= nil
-			and is_pose_property_type(memberInfo0.type)
-			and is_property_type_positional(memberInfo1.type)
+		if memberInfo1 == nil then
+			return false
+		end
+		local metaInfoPose = memberInfo0:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
+		return (metaInfoPose ~= nil or is_pose_property_type(memberInfo0.type))
+			and (is_property_type_positional(memberInfo1.type) or is_pose_property_type(memberInfo1.type))
 	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
 		if memberInfo1 == nil then
 			return false
@@ -67,8 +68,28 @@ end
 
 local function get_applicable_constraint_types(memberInfo0, actor1, propertyPath1)
 	local t = {}
+	if
+		is_pose_property_type(memberInfo0.type) == false
+		and is_property_type_positional(memberInfo0.type) == false
+		and is_property_type_rotational(memberInfo0.type) == false
+	then
+		return t
+	end
+
+	local ent1 = actor1:FindEntity()
+	local memberInfo1 = util.is_valid(ent1) and pfm.get_member_info(propertyPath1, ent1) or nil
+	if
+		memberInfo1 == nil
+		or (
+			is_pose_property_type(memberInfo1.type) == false
+			and is_property_type_positional(memberInfo1.type) == false
+			and is_property_type_rotational(memberInfo1.type) == false
+		)
+	then
+		return t
+	end
 	for type = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_START, gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_END do
-		if is_constraint_type_applicable(type, memberInfo0, actor1, propertyPath1) then
+		if is_constraint_type_applicable(type, memberInfo0, memberInfo1) then
 			table.insert(t, type)
 		end
 	end
@@ -453,17 +474,17 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 		)
 
 		for _, item in ipairs(self:GetActorItems()) do
-			if item:IsValid() then
+			if item:IsValid() and item:IsHidden() == false then
 				local uuid = item:GetName()
 				local actor = pfm.dereference(uuid)
 				if actor ~= nil then
 					local componentItems = self:GetActorComponentItems(actor)
 					for _, cItem in ipairs(componentItems) do
-						if cItem:IsValid() then
+						if cItem:IsValid() and cItem:IsHidden() == false then
 							local componentType = cItem:GetName()
 							local propertyItems = self:GetPropertyEntries(uuid, componentType)
 							for _, propItem in ipairs(propertyItems) do
-								if propItem:IsValid() then
+								if propItem:IsValid() and propItem:IsHidden() == false then
 									local header = propItem:GetHeader()
 									if util.is_valid(header) and propItem ~= elItem then
 										local itemPropertyPath = propItem:GetIdentifier()
