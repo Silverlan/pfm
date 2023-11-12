@@ -28,6 +28,7 @@ include("util.lua")
 include("animation.lua")
 include("actor_components.lua")
 include("draganddrop.lua")
+include("constraints.lua")
 
 function gui.PFMActorEditor:OnInitialize()
 	gui.Base.OnInitialize(self)
