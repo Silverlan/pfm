@@ -101,8 +101,22 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 	if memberInfo0 == nil then
 		return
 	end
+	local constraintActorName = actor0:GetName()
+		.. "["
+		.. memberInfo0.name
+		.. "] > "
+		.. gui.PFMActorEditor.constraint_type_to_name(type)
+
+	if actor1 ~= nil then
+		local ent1 = actor1:FindEntity()
+		local memberInfo1 = util.is_valid(ent1) and pfm.get_member_info(propertyPath1, ent1) or nil
+		if memberInfo1 ~= nil then
+			constraintActorName = constraintActorName .. " > " .. actor1:GetName() .. "[" .. memberInfo1.name .. "]"
+		end
+	end
 	local actor = self:CreatePresetActor(type, {
 		["updateActorComponents"] = false,
+		["name"] = constraintActorName,
 	})
 	local ctC = actor:FindComponent("constraint")
 	if ctC ~= nil then
