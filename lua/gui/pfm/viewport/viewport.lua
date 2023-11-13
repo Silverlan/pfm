@@ -193,13 +193,14 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 		if state == input.STATE_PRESS then
 			self.m_leftMouseInput = true
 			self.m_cursorTracker = gui.CursorTracker()
-			self:EnableThinking()
+			self:UpdateThinkState()
 			return util.EVENT_REPLY_HANDLED
 		end
 		local selectionApplied = self:ApplySelection()
 
 		self.m_leftMouseInput = nil
 		self.m_cursorTracker = nil
+		self:UpdateThinkState()
 
 		if selectionApplied == false then
 			local handled, entActor, hitPos, startPos, hitData =
@@ -275,12 +276,12 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 		if mouseButton == input.MOUSE_BUTTON_RIGHT then
 			if state == input.STATE_PRESS then
 				self.m_cursorTracker = gui.CursorTracker()
-				self:EnableThinking()
+				self:UpdateThinkState()
 				return util.EVENT_REPLY_HANDLED
 			else
 				if self.m_cursorTracker ~= nil then
 					self.m_cursorTracker = nil
-					self:DisableThinking()
+					self:UpdateThinkState()
 					tool.get_filmmaker():TagRenderSceneAsDirty()
 
 					local handled, entActor, hitPos, startPos, hitData = findActor(true, nil, input.ACTION_ATTACK2)
@@ -407,7 +408,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.PFMViewport:OnRemove()
-	util.remove(self.m_entTransform)
+	self:ClearTransformGizmo()
 	if util.is_valid(self.m_scene) then
 		self.m_scene:GetEntity():Remove()
 	end
@@ -579,7 +580,44 @@ function gui.PFMViewport:ApplyPoseToKeyframeAnimation(actorData, origPose, newPo
 		pfm.tag_render_scene_as_dirty()
 	end
 end
+function gui.PFMViewport:UpdateTransformGizmoPose()
+	if self.m_transformGizmoInfo == nil then
+		return
+	end
+	local ent = self.m_transformGizmoInfo.targetEntity
+	local componentName = self.m_transformGizmoInfo.componentName
+	local propertyName = self.m_transformGizmoInfo.propertyName
+	local lastPose = self.m_transformGizmoInfo.lastPose
+	local c = (componentName ~= nil and util.is_valid(ent)) and ent:GetComponent(componentName) or nil
+	local idx = (c ~= nil) and c:GetMemberIndex(propertyName) or nil
+	local pose = (idx ~= nil) and c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD) or nil
+	if pose == nil or pose == lastPose then
+		return
+	end
+	self.m_entTransform:SetPose(pose)
+	self.m_transformGizmoInfo.lastPose = pose
+end
+function gui.PFMViewport:UpdateThinkState()
+	local shouldThink = false
+	if self.m_transformGizmoInfo ~= nil and not self.m_transformGizmoInfo.isTransforming then
+		shouldThink = true
+	end
+	if self.m_cursorTracker ~= nil then
+		shouldThink = true
+	end
+	if self.m_cameraMode ~= gui.PFMViewport.CAMERA_MODE_PLAYBACK then
+		shouldThink = true
+	end
+	if shouldThink then
+		self:EnableThinking()
+	else
+		self:DisableThinking()
+	end
+end
 function gui.PFMViewport:OnThink()
+	if self.m_transformGizmoInfo ~= nil and self.m_transformGizmoInfo.isTransforming ~= true then
+		self:UpdateTransformGizmoPose()
+	end
 	if self.m_cursorTracker ~= nil then
 		self.m_cursorTracker:Update()
 		if not self.m_cursorTracker:HasExceededMoveThreshold(2) then
@@ -595,7 +633,7 @@ function gui.PFMViewport:OnThink()
 		end
 
 		self.m_cursorTracker = nil
-		self:DisableThinking()
+		self:UpdateThinkState()
 
 		local targetPose
 		if self:IsSceneCamera() then

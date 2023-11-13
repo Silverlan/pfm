@@ -33,8 +33,12 @@ end
 function gui.PFMViewport:GetManipulatorMode()
 	return self.m_manipulatorMode
 end
-function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
+function gui.PFMViewport:ClearTransformGizmo()
 	util.remove(self.m_entTransform)
+	self.m_transformGizmoInfo = nil
+end
+function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
+	self:ClearTransformGizmo()
 	self.m_manipulatorMode = manipulatorMode
 	self.m_btSelect:SetActivated(manipulatorMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT)
 	self.m_btMove:SetActivated(self:IsMoveManipulatorMode(manipulatorMode))
@@ -232,7 +236,7 @@ function gui.PFMViewport:UpdateManipulationMode()
 		end
 	end
 	ent:RemoveComponent("util_transform")
-	util.remove(self.m_entTransform)
+	self:ClearTransformGizmo()
 	local trBone = ent:AddComponent("util_bone_transform")
 	if trBone == nil then
 		return
@@ -353,7 +357,7 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 	local pm = tool.get_filmmaker()
 	pm:TagRenderSceneAsDirty()
 
-	util.remove(self.m_entTransform)
+	self:ClearTransformGizmo()
 	local manipMode = self:GetManipulatorMode()
 	if manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT or manipMode == gui.PFMViewport.MANIPULATOR_MODE_SCALE then
 		return
@@ -508,7 +512,7 @@ end
 function gui.PFMViewport:RemoveActorTransformWidget(ent)
 	ent:RemoveComponent("util_bone_transform")
 	ent:RemoveComponent("util_transform")
-	util.remove(self.m_entTransform)
+	self:ClearTransformGizmo()
 end
 function gui.PFMViewport:OnStartTransform(ent)
 	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
@@ -524,6 +528,9 @@ function gui.PFMViewport:OnEndTransform(ent)
 	end
 	actorC:OnEndTransform()
 end
+function gui.PFMViewport:RefreshTransformWidget()
+	self:ReloadManipulatorMode()
+end
 function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 	if enabled == nil then
 		enabled = true
@@ -535,94 +542,6 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 		return
 	end
 
-	local function add_transform_component()
-		local trC = ent:GetComponent("util_transform")
-		if trC ~= nil then
-			return trC
-		end
-		trC = ent:AddComponent("util_transform")
-		if trC == nil then
-			return trC
-		end
-		ent:AddComponent("pfm_transform_gizmo")
-		local newPos
-		local newRot
-		local newScale
-		local origPose
-		local pfmActorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-		local actorData = (pfmActorC ~= nil) and pfmActorC:GetActorData() or nil
-		local actorC = (actorData ~= nil) and actorData:FindComponent("pfm_actor") or nil
-		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED, function(pos)
-			newPos = pos:Copy()
-			self:MarkActorAsDirty(ent)
-		end)
-		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED, function(rot)
-			newRot = rot:Copy()
-			self:MarkActorAsDirty(ent)
-		end)
-		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED, function(scale)
-			newScale = scale:Copy()
-			self:MarkActorAsDirty(ent)
-		end)
-		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START, function()
-			origPose = ent:GetPose()
-			self:OnStartTransform(ent)
-		end)
-		trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, function(scale)
-			local newPose = {
-				position = newPos,
-				rotation = newRot,
-				scale = newScale,
-			}
-			for k, v in pairs(newPose) do
-				newPose[k] = v:Copy()
-			end
-
-			if
-				toboolean(
-					self.m_ctrlTransformKeyframes:GetOptionValue(self.m_ctrlTransformKeyframes:GetSelectedOption())
-				)
-			then
-				self:ApplyPoseToKeyframeAnimation(actorData, origPose, newPose)
-			else
-				local propInfo = {
-					{
-						path = "ec/pfm_actor/position",
-						type = udm.TYPE_VECTOR3,
-						oldValue = origPose:GetOrigin(),
-						newValue = newPos,
-					},
-					{
-						path = "ec/pfm_actor/rotation",
-						type = udm.TYPE_QUATERNION,
-						oldValue = origPose:GetRotation(),
-						newValue = newRot,
-					},
-					{
-						path = "ec/pfm_actor/scale",
-						type = udm.TYPE_VECTOR3,
-						oldValue = origPose:GetScale(),
-						newValue = newScale,
-					},
-				}
-				for _, info in ipairs(propInfo) do
-					if info.newValue ~= nil then
-						tool.get_filmmaker():GetActorEditor():UpdateAnimationChannelValue(
-							actorData,
-							info.path,
-							info.type,
-							info.oldValue,
-							info.newValue,
-							nil,
-							true
-						)
-					end
-				end
-			end
-			self:OnEndTransform(ent)
-		end)
-		return trC
-	end
 	local manipMode = manipMode or self.m_manipulatorMode
 	if enabled then
 		local pm = tool.get_filmmaker()
@@ -726,8 +645,13 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 					entTransform:AddComponent("pfm_transform_gizmo")
 					entTransform:Spawn()
 
-					entTransform:SetPose(pose)
 					self.m_entTransform = entTransform
+					self.m_transformGizmoInfo = {
+						targetEntity = ent,
+						componentName = componentName,
+						propertyName = pathName:GetString(),
+					}
+					self:UpdateTransformGizmoPose()
 
 					--[[if(objectSpace) then
 								entTransform:GetComponent("util_transform"):SetParent(ent,true)
@@ -789,7 +713,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 
 					local trC = entTransform:GetComponent("util_transform")
 					local function calc_new_data_pose()
-						local oldPose = pose:Copy()
+						local oldPose = self.m_transformGizmoInfo.lastPose
 						local newPose = trC:GetEntity():GetPose()
 						local dtPos = newPose:GetOrigin() - oldPose:GetOrigin()
 						local dtRot = oldPose:GetRotation():GetInverse() * newPose:GetRotation()
@@ -868,8 +792,10 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 						end)
 					end
 					trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START, function(scale)
+						self.m_transformGizmoInfo.isTransforming = true
+						self:UpdateThinkState()
 						update_animation_channel_subsitute_value()
-						pose = c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD)
+						self:UpdateTransformGizmoPose()
 						if
 							memberInfo.type == ents.MEMBER_TYPE_TRANSFORM
 							or memberInfo.type == ents.MEMBER_TYPE_SCALED_TRANSFORM
@@ -899,6 +825,8 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 						self:OnStartTransform(ent)
 					end)
 					trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, function(scale)
+						self.m_transformGizmoInfo.isTransforming = false
+						self:UpdateThinkState()
 						restore_animation_channel()
 
 						local get_pose_value
@@ -933,7 +861,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 							)
 						end
 						self:OnEndTransform(ent)
-						pose = nil
+						self.m_transformGizmoInfo.lastPose = nil
 						origDataPose = nil
 					end)
 					self:InitializeTransformWidget(trC, ent)

@@ -36,7 +36,6 @@ function gui.PFMViewport:SetCameraMode(camMode)
 
 	-- ents.PFMCamera.set_camera_enabled(camMode == gui.PFMViewport.CAMERA_MODE_PLAYBACK)
 	local rtUpdateEnabled = (camMode ~= gui.PFMViewport.CAMERA_MODE_PLAYBACK)
-	self:SetThinkingEnabled(rtUpdateEnabled)
 	if rtUpdateEnabled then
 		self.m_camStartPose = math.Transform()
 		local cam = game.get_render_scene_camera()
@@ -48,6 +47,7 @@ function gui.PFMViewport:SetCameraMode(camMode)
 	else
 		self.m_camStartPose = nil
 	end
+	self:UpdateThinkState()
 
 	-- We need to notify the server to change the player's movement mode (i.e. noclip/walk)
 	local packet = net.Packet()

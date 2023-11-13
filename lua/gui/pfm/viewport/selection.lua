@@ -143,6 +143,5 @@ function gui.PFMViewport:ApplySelection()
 	end
 
 	util.remove(self.m_selectionRect)
-	self:DisableThinking()
 	return true
 end
