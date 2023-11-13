@@ -104,9 +104,11 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 				end
 
 				for _, type in ipairs(constraintTypes) do
-					local name = gui.PFMActorEditor.constraint_type_to_name(type)
+					local constraintName = gui.PFMActorEditor.constraint_type_to_name(type)
+					local name = constraintName
 					name = locale.get_text("c_constraint_" .. name)
 					name = locale.get_text("pfm_add_constraint_type", { name })
+					local tooltip = locale.get_text("pfm_create_" .. constraintName .. "_constraint_desc")
 
 					if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
 						-- The child-of constraint can be either added to affect either the position or rotation, or both.
@@ -121,7 +123,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 							if poseMetaInfo0 ~= nil and poseMetaInfo1 ~= nil then
 								local posePropertyPath0 = "ec/" .. poseComponent0 .. "/" .. posePropertyName0
 								local posePropertyPath1 = "ec/" .. poseComponent1 .. "/" .. posePropertyName1
-								pContext:AddItem(name, function()
+								local item = pContext:AddItem(name, function()
 									if self:IsValid() then
 										local actor1 = (droppedActorUuid ~= nil) and pfm.dereference(droppedActorUuid)
 											or nil
@@ -136,6 +138,8 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 										end
 									end
 								end)
+								item:SetName("child_of")
+								item:SetTooltip(tooltip)
 
 								local memberInfo1 = pfm.get_member_info(elData.propertyPath, ent1)
 								if memberInfo1 ~= nil then
@@ -148,7 +152,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 									then
 										local propertyPath = "ec/" .. poseComponent0 .. "/" .. poseMetaInfo0.posProperty
 
-										pContext:AddItem(
+										local item = pContext:AddItem(
 											name
 												.. " ("
 												.. locale.get_text("pfm_create_child_of_constraint_type_positional")
@@ -168,6 +172,10 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 												end
 											end
 										)
+										item:SetName("child_of_positional")
+										item:SetTooltip(
+											locale.get_text("pfm_create_child_of_constraint_type_positional_desc")
+										)
 
 										local translationalPropertyPath
 										if pfm.util.is_pose_property_type(memberInfo1.type) then
@@ -181,7 +189,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 										local memberInfo1 = pfm.get_member_info(translationalPropertyPath, ent1)
 										if memberInfo1 ~= nil then
 											if pfm.util.is_property_type_positional(memberInfo1.type) then
-												pContext:AddItem(
+												local item = pContext:AddItem(
 													name
 														.. " ("
 														.. locale.get_text(
@@ -203,6 +211,12 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 														end
 													end
 												)
+												item:SetName("child_of_translational")
+												item:SetTooltip(
+													locale.get_text(
+														"pfm_create_child_of_constraint_type_translational_desc"
+													)
+												)
 											end
 										end
 									end
@@ -214,7 +228,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 										)
 									then
 										local propertyPath = "ec/" .. poseComponent0 .. "/" .. poseMetaInfo0.rotProperty
-										pContext:AddItem(
+										local item = pContext:AddItem(
 											name
 												.. " ("
 												.. locale.get_text("pfm_create_child_of_constraint_type_rotational")
@@ -234,17 +248,23 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 												end
 											end
 										)
+										item:SetName("child_of_rotational")
+										item:SetTooltip(
+											locale.get_text("pfm_create_child_of_constraint_type_rotational_desc")
+										)
 									end
 								end
 							end
 						end
 					else
-						pContext:AddItem(name, function()
+						local item = pContext:AddItem(name, function()
 							if self:IsValid() then
 								local actor1 = (droppedActorUuid ~= nil) and pfm.dereference(droppedActorUuid) or nil
 								self:AddConstraint(type, actor, propertyPath, actor1, elData.propertyPath)
 							end
 						end)
+						item:SetName(constraintName)
+						item:SetTooltip(tooltip)
 					end
 				end
 				pContext:Update()
