@@ -20,6 +20,9 @@ end
 function gui.PFMViewport:IsScaleManipulatorMode(mode)
 	return mode == gui.PFMViewport.MANIPULATOR_MODE_SCALE
 end
+function gui.PFMViewport:IsTransformManipulatorMode(mode)
+	return self:IsMoveManipulatorMode(mode) or self:IsRotationManipulatorMode(mode) or self:IsScaleManipulatorMode(mode)
+end
 function gui.PFMViewport:GetTransformEntity()
 	local c = self:GetTransformWidgetComponent()
 	if util.is_valid(c) == false then
@@ -626,319 +629,325 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 		local actorEditor = pm:GetActorEditor()
 		local activeControls = actorEditor:GetActiveControls()
 		local uuid = tostring(ent:GetUuid())
-		if activeControls[uuid] ~= nil then
-			local targetPath
-			local i = 0
+		--if activeControls[uuid] ~= nil then
+		local targetPath
+		local i = 0
 
-			local poseMembers = {}
-			for path, data in pairs(activeControls[uuid]) do
-				local memberInfo, c = ent:FindMemberInfo(path)
-				if memberInfo ~= nil then
+		local poseMembers = {}
+		for path, data in pairs(activeControls[uuid] or {}) do
+			local memberInfo, c = ent:FindMemberInfo(path)
+			if memberInfo ~= nil then
+				if self:IsMoveManipulatorMode(manipMode) then
+					if memberInfo.type == udm.TYPE_VECTOR3 then
+						i = i + 1
+						targetPath = path
+					end
+				elseif self:IsRotationManipulatorMode(manipMode) then
+					if memberInfo.type == udm.TYPE_QUATERNION then
+						i = i + 1
+						targetPath = path
+					end
+				elseif self:IsScaleManipulatorMode(manipMode) then
+					if memberInfo.type == udm.TYPE_VECTOR3 then
+						i = i + 1
+						targetPath = path
+					end
+				end
+				local metaInfo =
+					memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE_COMPONENT)
+				if metaInfo ~= nil then
+					table.insert(poseMembers, { c, metaInfo.poseProperty })
+				end
+				if i == 2 then
+					-- If multiple properties of the same type are selected (e.g. multiple position properties),
+					-- we'll fall back to the actor position/rotation
+					targetPath = nil
+					break
+				end
+			end
+		end
+
+		if targetPath == nil and #poseMembers == 1 then
+			-- No property is selected that would correspond to the manipulator mode, but we
+			-- may still be able to select an appropriate property through association.
+			local c = poseMembers[1][1]
+			local idx = c:GetMemberIndex(poseMembers[1][2])
+			local memberInfo = (idx ~= nil) and poseMembers[1][1]:GetMemberInfo(idx) or nil
+			if memberInfo ~= nil then
+				local metaInfo = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
+				if metaInfo ~= nil then
 					if self:IsMoveManipulatorMode(manipMode) then
-						if memberInfo.type == udm.TYPE_VECTOR3 then
-							i = i + 1
-							targetPath = path
+						if #metaInfo.posProperty > 0 then
+							targetPath = "ec/" .. c:GetComponentName() .. "/" .. metaInfo.posProperty
 						end
 					elseif self:IsRotationManipulatorMode(manipMode) then
-						if memberInfo.type == udm.TYPE_QUATERNION then
-							i = i + 1
-							targetPath = path
+						if #metaInfo.rotProperty > 0 then
+							targetPath = "ec/" .. c:GetComponentName() .. "/" .. metaInfo.rotProperty
 						end
 					elseif self:IsScaleManipulatorMode(manipMode) then
-						if memberInfo.type == udm.TYPE_VECTOR3 then
-							i = i + 1
-							targetPath = path
-						end
-					end
-					local metaInfo =
-						memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE_COMPONENT)
-					if metaInfo ~= nil then
-						table.insert(poseMembers, { c, metaInfo.poseProperty })
-					end
-					if i == 2 then
-						-- If multiple properties of the same type are selected (e.g. multiple position properties),
-						-- we'll fall back to the actor position/rotation
-						targetPath = nil
-						break
-					end
-				end
-			end
-
-			if targetPath == nil and #poseMembers == 1 then
-				-- No property is selected that would correspond to the manipulator mode, but we
-				-- may still be able to select an appropriate property through association.
-				local c = poseMembers[1][1]
-				local idx = c:GetMemberIndex(poseMembers[1][2])
-				local memberInfo = (idx ~= nil) and poseMembers[1][1]:GetMemberInfo(idx) or nil
-				if memberInfo ~= nil then
-					local metaInfo = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
-					if metaInfo ~= nil then
-						if self:IsMoveManipulatorMode(manipMode) then
-							if #metaInfo.posProperty > 0 then
-								targetPath = "ec/" .. c:GetComponentName() .. "/" .. metaInfo.posProperty
-							end
-						elseif self:IsRotationManipulatorMode(manipMode) then
-							if #metaInfo.rotProperty > 0 then
-								targetPath = "ec/" .. c:GetComponentName() .. "/" .. metaInfo.rotProperty
-							end
-						elseif self:IsScaleManipulatorMode(manipMode) then
-							if #metaInfo.scaleProperty > 0 then
-								targetPath = "ec/" .. c:GetComponentName() .. "/" .. metaInfo.scaleProperty
-							end
+						if #metaInfo.scaleProperty > 0 then
+							targetPath = "ec/" .. c:GetComponentName() .. "/" .. metaInfo.scaleProperty
 						end
 					end
 				end
 			end
+		end
 
-			if
+		if targetPath == nil then
+			if self:IsMoveManipulatorMode(manipMode) then
+				targetPath = "ec/pfm_actor/position"
+			elseif self:IsRotationManipulatorMode(manipMode) then
+				targetPath = "ec/pfm_actor/rotation"
+			elseif self:IsScaleManipulatorMode(manipMode) then
+				targetPath = "ec/pfm_actor/scale"
+			end
+		end
+
+		--[[if
 				targetPath ~= nil
 				--and targetPath ~= "ec/pfm_actor/position"
 				--and targetPath ~= "ec/pfm_actor/rotation"
 			then -- Actor translation and rotation are handled differently (see bottom of this function)
-				local memberInfo = ent:FindMemberInfo(targetPath)
-				if memberInfo ~= nil then
-					if
-						(memberInfo.type == udm.TYPE_VECTOR3 and self:IsMoveManipulatorMode(manipMode))
-						or (memberInfo.type == udm.TYPE_QUATERNION and self:IsRotationManipulatorMode(manipMode))
-						or (memberInfo.type == udm.TYPE_VECTOR3 and self:IsScaleManipulatorMode(manipMode))
-					then
-						local componentName, pathName =
-							ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
-						local c = (componentName ~= nil) and ent:GetComponent(componentName) or nil
-						local idx = (c ~= nil) and c:GetMemberIndex(pathName:GetString()) or nil
-						local pose = (idx ~= nil) and c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD) or nil
-						if pose ~= nil then
-							local entTransform = ents.create("util_transform")
-							entTransform:AddComponent("pfm_transform_gizmo")
-							entTransform:Spawn()
+			]]
+		local memberInfo = ent:FindMemberInfo(targetPath)
+		if memberInfo ~= nil then
+			if
+				(memberInfo.type == udm.TYPE_VECTOR3 and self:IsMoveManipulatorMode(manipMode))
+				or (memberInfo.type == udm.TYPE_QUATERNION and self:IsRotationManipulatorMode(manipMode))
+				or (memberInfo.type == udm.TYPE_VECTOR3 and self:IsScaleManipulatorMode(manipMode))
+			then
+				local componentName, pathName =
+					ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
+				local c = (componentName ~= nil) and ent:GetComponent(componentName) or nil
+				local idx = (c ~= nil) and c:GetMemberIndex(pathName:GetString()) or nil
+				local pose = (idx ~= nil) and c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD) or nil
+				if pose ~= nil then
+					local entTransform = ents.create("util_transform")
+					entTransform:AddComponent("pfm_transform_gizmo")
+					entTransform:Spawn()
 
-							entTransform:SetPose(pose)
-							self.m_entTransform = entTransform
+					entTransform:SetPose(pose)
+					self.m_entTransform = entTransform
 
-							--[[if(objectSpace) then
+					--[[if(objectSpace) then
 								entTransform:GetComponent("util_transform"):SetParent(ent,true)
 								entTransform:SetPose(pose)
 							end]]
 
-							local actor = pfm.dereference(uuid)
-							local component = actor:FindComponent(componentName)
+					local actor = pfm.dereference(uuid)
+					local component = actor:FindComponent(componentName)
 
-							local origDataPose
-							local restoreAnimChannel
-							local tmpAnimChannel
-							local panimaC = ent:GetComponent(ents.COMPONENT_PANIMA)
-							local animManager = (panimaC ~= nil) and panimaC:GetAnimationManager("pfm") or nil
-							local player = (animManager ~= nil) and animManager:GetPlayer() or nil
-							local anim = (player ~= nil) and player:GetAnimation() or nil
-							local function init_animation_channel_substitute()
-								if restoreAnimChannel ~= nil then
-									return
-								end
-								local channel = (anim ~= nil) and anim:FindChannel(targetPath) or nil
-								if channel ~= nil then
-									-- The property is animated. In this case, we'll have to replace the animation channel with
-									-- a temporary one containing only one animation value as long as the object is being transformed.
-									-- This is because, while the object is being moved, we want to update it continuously, but we
-									-- don't want to do a full update of the property value yet, because that would be too
-									-- expensive. We can perform a cheap update by replacing the animation value in the channel, and
-									-- then we'll do the full update once the transformation has stopped.
-									local val = panimaC:GetRawPropertyValue(animManager, targetPath, memberInfo.type)
-									local cpy = panima.Channel(channel)
-									cpy:ClearAnimationData()
-									cpy:InsertValue(0.0, val)
-									anim:RemoveChannel(channel)
-									anim:AddChannel(cpy)
-									panimaC:UpdateAnimationChannelSubmitters()
-									restoreAnimChannel = channel
-									tmpAnimChannel = cpy
-								end
-							end
-
-							local function update_animation_channel_subsitute_value()
-								if tmpAnimChannel == nil then
-									return
-								end
-								local val = panimaC:GetRawPropertyValue(animManager, targetPath, memberInfo.type)
-								tmpAnimChannel:InsertValue(0.0, val)
-							end
-
-							local function restore_animation_channel()
-								if restoreAnimChannel == nil then
-									return
-								end
-								anim:RemoveChannel(tmpAnimChannel)
-								anim:AddChannel(restoreAnimChannel)
-								panimaC:UpdateAnimationChannelSubmitters()
-								restoreAnimChannel = nil
-								tmpAnimChannel = nil
-							end
-
-							local trC = entTransform:GetComponent("util_transform")
-							local function calc_new_data_pose()
-								local oldPose = pose:Copy()
-								local newPose = trC:GetEntity():GetPose()
-								local dtPos = newPose:GetOrigin() - oldPose:GetOrigin()
-								local dtRot = oldPose:GetRotation():GetInverse() * newPose:GetRotation()
-								local dtScale = newPose:GetScale() - oldPose:GetScale()
-								return math.ScaledTransform(
-									origDataPose:GetOrigin() + dtPos,
-									origDataPose:GetRotation() * dtRot,
-									origDataPose:GetScale() + dtScale
-								)
-							end
-							trC:SetScaleEnabled(false)
-							if memberInfo.type == udm.TYPE_VECTOR3 then
-								if self:IsMoveManipulatorMode(manipMode) then
-									local dbgLineC
-									local onPosChanged
-									if componentName == "ik_solver" then
-										if pathName:GetFront() == "control" then
-											-- Ik control, we'll add a dotted line from the control position
-											-- to the bone position
-											dbgLineC = entTransform:AddComponent("debug_dotted_line")
-											if dbgLineC ~= nil then
-												dbgLineC:SetStartPosition(Vector(0, 0, 0))
-												dbgLineC:SetEndPosition(Vector(20, 20, 20))
-
-												onPosChanged = function(pos)
-													if util.is_valid(dbgLineC) then
-														local skelBoneId = c:GetControlBoneId(pathName:GetString())
-														local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
-														dbgLineC:SetEndPosition(pos)
-														local bonePose = (animC ~= nil and skelBoneId ~= nil)
-																and animC:GetGlobalBonePose(skelBoneId)
-															or nil
-														if bonePose ~= nil then
-															dbgLineC:SetStartPosition(bonePose:GetOrigin())
-														end
-													end
-												end
-											end
-										end
-									end
-									trC:AddEventCallback(
-										ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED,
-										function(posTr)
-											if c:IsValid() then
-												local pos = calc_new_data_pose():GetOrigin()
-												if tmpAnimChannel ~= nil then
-													tmpAnimChannel:InsertValue(0.0, pos)
-												else
-													c:SetTransformMemberPos(idx, math.COORDINATE_SPACE_WORLD, pos)
-												end
-												if onPosChanged ~= nil then
-													onPosChanged(pos)
-												end
-											end
-										end
-									)
-								else
-									trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED, function()
-										if c:IsValid() then
-											local scale = calc_new_data_pose():GetScale()
-											if tmpAnimChannel ~= nil then
-												tmpAnimChannel:InsertValue(0.0, scale)
-											else
-												c:SetTransformMemberScale(idx, math.COORDINATE_SPACE_LOCAL, scale)
-											end
-										end
-									end)
-								end
-							elseif memberInfo.type == udm.TYPE_QUATERNION then
-								trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED, function()
-									if c:IsValid() then
-										local rot = calc_new_data_pose():GetRotation()
-										if tmpAnimChannel ~= nil then
-											tmpAnimChannel:InsertValue(0.0, rot)
-										else
-											c:SetTransformMemberRot(idx, math.COORDINATE_SPACE_WORLD, rot)
-										end
-									end
-								end)
-							end
-							trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START, function(scale)
-								if
-									memberInfo.type == ents.MEMBER_TYPE_TRANSFORM
-									or memberInfo.type == ents.MEMBER_TYPE_SCALED_TRANSFORM
-								then
-									origDataPose =
-										component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
-									origDataPose = c:ConvertTransformMemberPoseToTargetSpace(
-										idx,
-										math.COORDINATE_SPACE_WORLD,
-										origDataPose
-									)
-								elseif
-									memberInfo.type == ents.MEMBER_TYPE_QUATERNION
-									or memberInfo.type == ents.MEMBER_TYPE_EULER_ANGLES
-								then
-									origDataPose = math.ScaledTransform()
-									local rot = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
-									rot =
-										c:ConvertTransformMemberRotToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, rot)
-									origDataPose:SetRotation(rot)
-								else
-									origDataPose = math.ScaledTransform()
-									local pos = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
-									pos =
-										c:ConvertTransformMemberPosToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, pos)
-									origDataPose:SetOrigin(pos)
-								end
-
-								init_animation_channel_substitute()
-								self:OnStartTransform(ent)
-							end)
-							trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, function(scale)
-								restore_animation_channel()
-
-								local get_pose_value
-								if memberInfo.type == udm.TYPE_VECTOR3 then
-									get_pose_value = function(pose)
-										local pos = pose:GetOrigin()
-										pos = c:ConvertPosToMemberSpace(idx, math.COORDINATE_SPACE_WORLD, pos)
-										return pos
-									end
-								else
-									get_pose_value = function(pose)
-										local rot = pose:GetRotation()
-										rot = c:ConvertRotToMemberSpace(idx, math.COORDINATE_SPACE_WORLD, rot)
-										return rot
-									end
-								end
-
-								local pm = tool.get_filmmaker()
-								local newDataPose = calc_new_data_pose()
-								local oldVal = get_pose_value(origDataPose)
-								local newVal = get_pose_value(newDataPose)
-
-								if oldVal ~= nil and newVal ~= nil then
-									pm:ChangeActorPropertyValue(
-										pfm.dereference(uuid),
-										targetPath,
-										memberInfo.type,
-										oldVal,
-										newVal,
-										nil,
-										true
-									)
-								end
-								self:OnEndTransform(ent)
-								update_animation_channel_subsitute_value()
-								pose = c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD)
-								origDataPose = nil
-							end)
-							self:InitializeTransformWidget(trC, ent)
+					local origDataPose
+					local restoreAnimChannel
+					local tmpAnimChannel
+					local panimaC = ent:GetComponent(ents.COMPONENT_PANIMA)
+					local animManager = (panimaC ~= nil) and panimaC:GetAnimationManager("pfm") or nil
+					local player = (animManager ~= nil) and animManager:GetPlayer() or nil
+					local anim = (player ~= nil) and player:GetAnimation() or nil
+					local function init_animation_channel_substitute()
+						if restoreAnimChannel ~= nil then
+							return
+						end
+						local channel = (anim ~= nil) and anim:FindChannel(targetPath) or nil
+						if channel ~= nil then
+							-- The property is animated. In this case, we'll have to replace the animation channel with
+							-- a temporary one containing only one animation value as long as the object is being transformed.
+							-- This is because, while the object is being moved, we want to update it continuously, but we
+							-- don't want to do a full update of the property value yet, because that would be too
+							-- expensive. We can perform a cheap update by replacing the animation value in the channel, and
+							-- then we'll do the full update once the transformation has stopped.
+							local val = panimaC:GetRawPropertyValue(animManager, targetPath, memberInfo.type)
+							local cpy = panima.Channel(channel)
+							cpy:ClearAnimationData()
+							cpy:InsertValue(0.0, val)
+							anim:RemoveChannel(channel)
+							anim:AddChannel(cpy)
+							panimaC:UpdateAnimationChannelSubmitters()
+							restoreAnimChannel = channel
+							tmpAnimChannel = cpy
 						end
 					end
+
+					local function update_animation_channel_subsitute_value()
+						if tmpAnimChannel == nil then
+							return
+						end
+						local val = panimaC:GetRawPropertyValue(animManager, targetPath, memberInfo.type)
+						tmpAnimChannel:InsertValue(0.0, val)
+					end
+
+					local function restore_animation_channel()
+						if restoreAnimChannel == nil then
+							return
+						end
+						anim:RemoveChannel(tmpAnimChannel)
+						anim:AddChannel(restoreAnimChannel)
+						panimaC:UpdateAnimationChannelSubmitters()
+						restoreAnimChannel = nil
+						tmpAnimChannel = nil
+					end
+
+					local trC = entTransform:GetComponent("util_transform")
+					local function calc_new_data_pose()
+						local oldPose = pose:Copy()
+						local newPose = trC:GetEntity():GetPose()
+						local dtPos = newPose:GetOrigin() - oldPose:GetOrigin()
+						local dtRot = oldPose:GetRotation():GetInverse() * newPose:GetRotation()
+						local dtScale = newPose:GetScale() - oldPose:GetScale()
+						return math.ScaledTransform(
+							origDataPose:GetOrigin() + dtPos,
+							origDataPose:GetRotation() * dtRot,
+							origDataPose:GetScale() + dtScale
+						)
+					end
+					trC:SetScaleEnabled(false)
+					if memberInfo.type == udm.TYPE_VECTOR3 then
+						if self:IsMoveManipulatorMode(manipMode) then
+							local dbgLineC
+							local onPosChanged
+							if componentName == "ik_solver" then
+								if pathName:GetFront() == "control" then
+									-- Ik control, we'll add a dotted line from the control position
+									-- to the bone position
+									dbgLineC = entTransform:AddComponent("debug_dotted_line")
+									if dbgLineC ~= nil then
+										dbgLineC:SetStartPosition(Vector(0, 0, 0))
+										dbgLineC:SetEndPosition(Vector(20, 20, 20))
+
+										onPosChanged = function(pos)
+											if util.is_valid(dbgLineC) then
+												local skelBoneId = c:GetControlBoneId(pathName:GetString())
+												local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
+												dbgLineC:SetEndPosition(pos)
+												local bonePose = (animC ~= nil and skelBoneId ~= nil)
+														and animC:GetGlobalBonePose(skelBoneId)
+													or nil
+												if bonePose ~= nil then
+													dbgLineC:SetStartPosition(bonePose:GetOrigin())
+												end
+											end
+										end
+									end
+								end
+							end
+							trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED, function(posTr)
+								if c:IsValid() then
+									local pos = calc_new_data_pose():GetOrigin()
+									if tmpAnimChannel ~= nil then
+										tmpAnimChannel:InsertValue(0.0, pos)
+									else
+										c:SetTransformMemberPos(idx, math.COORDINATE_SPACE_WORLD, pos)
+									end
+									if onPosChanged ~= nil then
+										onPosChanged(pos)
+									end
+								end
+							end)
+						else
+							trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED, function()
+								if c:IsValid() then
+									local scale = calc_new_data_pose():GetScale()
+									if tmpAnimChannel ~= nil then
+										tmpAnimChannel:InsertValue(0.0, scale)
+									else
+										c:SetTransformMemberScale(idx, math.COORDINATE_SPACE_LOCAL, scale)
+									end
+								end
+							end)
+						end
+					elseif memberInfo.type == udm.TYPE_QUATERNION then
+						trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED, function()
+							if c:IsValid() then
+								local rot = calc_new_data_pose():GetRotation()
+								if tmpAnimChannel ~= nil then
+									tmpAnimChannel:InsertValue(0.0, rot)
+								else
+									c:SetTransformMemberRot(idx, math.COORDINATE_SPACE_WORLD, rot)
+								end
+							end
+						end)
+					end
+					trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START, function(scale)
+						update_animation_channel_subsitute_value()
+						pose = c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD)
+						if
+							memberInfo.type == ents.MEMBER_TYPE_TRANSFORM
+							or memberInfo.type == ents.MEMBER_TYPE_SCALED_TRANSFORM
+						then
+							origDataPose = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
+							origDataPose = c:ConvertTransformMemberPoseToTargetSpace(
+								idx,
+								math.COORDINATE_SPACE_WORLD,
+								origDataPose
+							)
+						elseif
+							memberInfo.type == ents.MEMBER_TYPE_QUATERNION
+							or memberInfo.type == ents.MEMBER_TYPE_EULER_ANGLES
+						then
+							origDataPose = math.ScaledTransform()
+							local rot = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
+							rot = c:ConvertTransformMemberRotToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, rot)
+							origDataPose:SetRotation(rot)
+						else
+							origDataPose = math.ScaledTransform()
+							local pos = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
+							pos = c:ConvertTransformMemberPosToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, pos)
+							origDataPose:SetOrigin(pos)
+						end
+
+						init_animation_channel_substitute()
+						self:OnStartTransform(ent)
+					end)
+					trC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, function(scale)
+						restore_animation_channel()
+
+						local get_pose_value
+						if memberInfo.type == udm.TYPE_VECTOR3 then
+							get_pose_value = function(pose)
+								local pos = pose:GetOrigin()
+								pos = c:ConvertPosToMemberSpace(idx, math.COORDINATE_SPACE_WORLD, pos)
+								return pos
+							end
+						else
+							get_pose_value = function(pose)
+								local rot = pose:GetRotation()
+								rot = c:ConvertRotToMemberSpace(idx, math.COORDINATE_SPACE_WORLD, rot)
+								return rot
+							end
+						end
+
+						local pm = tool.get_filmmaker()
+						local newDataPose = calc_new_data_pose()
+						local oldVal = get_pose_value(origDataPose)
+						local newVal = get_pose_value(newDataPose)
+
+						if oldVal ~= nil and newVal ~= nil then
+							pm:ChangeActorPropertyValue(
+								pfm.dereference(uuid),
+								targetPath,
+								memberInfo.type,
+								oldVal,
+								newVal,
+								nil,
+								true
+							)
+						end
+						self:OnEndTransform(ent)
+						pose = nil
+						origDataPose = nil
+					end)
+					self:InitializeTransformWidget(trC, ent)
 				end
 			end
 		end
+		--end
+		--end
 
-		if util.is_valid(self.m_entTransform) == false then
+		--[[if util.is_valid(self.m_entTransform) == false then
 			local tc = add_transform_component()
 			self.m_transformComponent = tc
 			self:InitializeTransformWidget(tc, ent)
-		end
+		end]]
 	end
 	tool.get_filmmaker():TagRenderSceneAsDirty()
 end
