@@ -383,6 +383,10 @@ function Component:SetTransformRotation(rot) --ang)
 		self:BroadcastEvent(Component.EVENT_ON_ROTATION_CHANGED, { rot })
 	end
 
+	self:UpdateRotation()
+end
+
+function Component:UpdateRotation()
 	for _, ent in ipairs(self:GetArrowEntities()) do
 		local arrowC = ent:IsValid() and ent:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW) or nil
 		if arrowC ~= nil then

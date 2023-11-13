@@ -591,21 +591,41 @@ function gui.PFMViewport:UpdateTransformGizmoPose()
 	local c = (componentName ~= nil and util.is_valid(ent)) and ent:GetComponent(componentName) or nil
 	local idx = (c ~= nil) and c:GetMemberIndex(propertyName) or nil
 	local pose = (idx ~= nil) and c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD) or nil
+	local function update_view_rotation()
+		if
+			(
+				self:IsRotationManipulatorMode(self:GetManipulatorMode()) == false
+				and self:IsMoveManipulatorMode(self:GetManipulatorMode()) == false
+			) or self:GetTransformSpace() ~= ents.UtilTransformComponent.SPACE_VIEW
+		then
+			return
+		end
+		local transformC = self.m_entTransform:GetComponent(ents.COMPONENT_UTIL_TRANSFORM)
+		if transformC ~= nil then
+			transformC:UpdateRotation()
+		end
+	end
 	if pose == nil or pose == lastPose then
+		update_view_rotation()
 		return
 	end
 	self.m_entTransform:SetPose(pose)
+	update_view_rotation()
 	self.m_transformGizmoInfo.lastPose = pose
 end
 function gui.PFMViewport:UpdateThinkState()
 	local shouldThink = false
 	if self.m_transformGizmoInfo ~= nil and not self.m_transformGizmoInfo.isTransforming then
 		shouldThink = true
-	end
-	if self.m_cursorTracker ~= nil then
+	elseif self.m_cursorTracker ~= nil then
 		shouldThink = true
-	end
-	if self.m_cameraMode ~= gui.PFMViewport.CAMERA_MODE_PLAYBACK then
+	elseif self.m_cameraMode ~= gui.PFMViewport.CAMERA_MODE_PLAYBACK then
+		shouldThink = true
+	elseif
+		self:IsRotationManipulatorMode(self:GetManipulatorMode())
+		or self:IsMoveManipulatorMode(self:GetManipulatorMode())
+			and self:GetTransformSpace() == ents.UtilTransformComponent.SPACE_VIEW
+	then
 		shouldThink = true
 	end
 	if shouldThink then

@@ -109,6 +109,7 @@ function gui.PFMViewport:SetTransformSpace(transformSpace)
 end
 function gui.PFMViewport:ReloadManipulatorMode()
 	self:SetManipulatorMode(self:GetManipulatorMode())
+	self:UpdateThinkState()
 end
 function gui.PFMViewport:InitializeTransformWidget(tc, ent, applySpace)
 	if applySpace == nil then
@@ -149,6 +150,9 @@ function gui.PFMViewport:InitializeTransformWidget(tc, ent, applySpace)
 			if util.is_valid(camC) then
 				tc:SetReferenceEntity(camC:GetEntity())
 			end
+			tc:SetTranslationAxisEnabled(math.AXIS_Z, false)
+			tc:SetRotationAxisEnabled(math.AXIS_X, false)
+			tc:SetRotationAxisEnabled(math.AXIS_Y, false)
 		end
 	end
 	tc:UpdateAxes()
