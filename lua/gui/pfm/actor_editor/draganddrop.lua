@@ -137,18 +137,22 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 									end
 								end)
 
-								local memberInfoPose1 = pfm.get_member_info(posePropertyPath1, ent)
-								if memberInfoPose1 ~= nil then
+								local memberInfo1 = pfm.get_member_info(elData.propertyPath, ent1)
+								if memberInfo1 ~= nil then
 									if
-										not pfm.util.is_property_type_rotational(memberInfoPose1.type)
+										not pfm.util.is_property_type_rotational(memberInfo1.type)
 										and (
 											pfm.util.is_property_type_positional(memberInfo.type)
 											or pfm.util.is_pose_property_type(memberInfo.type)
 										)
 									then
 										local propertyPath = "ec/" .. poseComponent0 .. "/" .. poseMetaInfo0.posProperty
+
 										pContext:AddItem(
-											name .. " (" .. locale.get_text("pfm_add_constraint_type_pos_only") .. ")",
+											name
+												.. " ("
+												.. locale.get_text("pfm_create_child_of_constraint_type_positional")
+												.. ")",
 											function()
 												if self:IsValid() then
 													local actor1 = (droppedActorUuid ~= nil)
@@ -159,14 +163,51 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 														actor,
 														propertyPath,
 														actor1,
-														elData.propertyPath
+														posePropertyPath1
 													)
 												end
 											end
 										)
+
+										local translationalPropertyPath
+										if pfm.util.is_pose_property_type(memberInfo1.type) then
+											translationalPropertyPath = "ec/"
+												.. poseComponent1
+												.. "/"
+												.. poseMetaInfo1.posProperty
+										else
+											translationalPropertyPath = elData.propertyPath
+										end
+										local memberInfo1 = pfm.get_member_info(translationalPropertyPath, ent1)
+										if memberInfo1 ~= nil then
+											if pfm.util.is_property_type_positional(memberInfo1.type) then
+												pContext:AddItem(
+													name
+														.. " ("
+														.. locale.get_text(
+															"pfm_create_child_of_constraint_type_translational"
+														)
+														.. ")",
+													function()
+														if self:IsValid() then
+															local actor1 = (droppedActorUuid ~= nil)
+																	and pfm.dereference(droppedActorUuid)
+																or nil
+															self:AddConstraint(
+																type,
+																actor,
+																propertyPath,
+																actor1,
+																translationalPropertyPath
+															)
+														end
+													end
+												)
+											end
+										end
 									end
 									if
-										not pfm.util.is_property_type_positional(memberInfoPose1.type)
+										not pfm.util.is_property_type_positional(memberInfo1.type)
 										and (
 											pfm.util.is_property_type_rotational(memberInfo.type)
 											or pfm.util.is_pose_property_type(memberInfo.type)
@@ -174,7 +215,10 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 									then
 										local propertyPath = "ec/" .. poseComponent0 .. "/" .. poseMetaInfo0.rotProperty
 										pContext:AddItem(
-											name .. " (" .. locale.get_text("pfm_add_constraint_type_rot_only") .. ")",
+											name
+												.. " ("
+												.. locale.get_text("pfm_create_child_of_constraint_type_rotational")
+												.. ")",
 											function()
 												if self:IsValid() then
 													local actor1 = (droppedActorUuid ~= nil)
