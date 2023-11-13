@@ -29,7 +29,7 @@ function pfm.util.find_property_pose_meta_info(ent, path)
 	local componentName, memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
 	local metaInfoPose = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
 	if metaInfoPose ~= nil then
-		return metaInfoPose, componentName, path
+		return metaInfoPose, componentName, memberName:GetString()
 	end
 	local metaInfo = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE_COMPONENT)
 	if metaInfo == nil or componentName == nil then
@@ -42,9 +42,27 @@ function pfm.util.find_property_pose_meta_info(ent, path)
 end
 
 function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, propertyPath1)
+	local logMsg = "Adding constraint of type '" .. gui.PFMActorEditor.constraint_type_to_name(type) .. "'"
+	if actor1 == nil then
+		logMsg = logMsg .. " to "
+	else
+		logMsg = logMsg .. " from "
+	end
+	logMsg = logMsg .. "property '" .. propertyPath0 .. "' of actor '" .. actor0:GetName()
+	if actor1 ~= nil then
+		logMsg = logMsg .. "' to property '" .. propertyPath1 .. "' of actor '" .. actor1:GetName() .. "'"
+	end
+	logMsg = logMsg .. "..."
+	pfm.log(logMsg)
+
 	local ent0 = actor0:FindEntity()
 	local memberInfo0 = util.is_valid(ent0) and pfm.get_member_info(propertyPath0, ent0) or nil
 	if memberInfo0 == nil then
+		pfm.log(
+			"Unable to find member info for property '" .. propertyPath0 .. "'!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_WARNING
+		)
 		return
 	end
 
@@ -53,6 +71,11 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 			local poseMetaInfo0, poseComponent0, posePropertyName0 =
 				pfm.util.find_property_pose_meta_info(ent0, propertyPath0)
 			if poseMetaInfo0 == nil then
+				pfm.log(
+					"Unable to find pose meta info for property '" .. propertyPath0 .. "'!",
+					pfm.LOG_CATEGORY_PFM,
+					pfm.LOG_SEVERITY_WARNING
+				)
 				return
 			end
 			return self:AddConstraint(
@@ -94,6 +117,7 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
 	if animManager == nil then
+		pfm.log("Animation Manager not found!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
 		return
 	end
 
@@ -112,6 +136,11 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 	else
 		local poseMetaInfo, component = pfm.util.find_property_pose_meta_info(ent0, propertyPath0)
 		if poseMetaInfo == nil then
+			pfm.log(
+				"Unable to find pose meta info for property '" .. propertyPath0 .. "'!",
+				pfm.LOG_CATEGORY_PFM,
+				pfm.LOG_SEVERITY_WARNING
+			)
 			return
 		end
 		posPropertyPath = "ec/" .. component .. "/" .. poseMetaInfo.posProperty
@@ -168,6 +197,11 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		local ent1 = actor1:FindEntity()
 		local memberInfo1 = util.is_valid(ent1) and pfm.get_member_info(propertyPath1, ent1) or nil
 		if memberInfo1 == nil then
+			pfm.log(
+				"Unable to find member info for property '" .. propertyPath1 .. "'!",
+				pfm.LOG_CATEGORY_PFM,
+				pfm.LOG_SEVERITY_WARNING
+			)
 			return
 		end
 

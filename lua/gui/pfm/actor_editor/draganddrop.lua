@@ -88,6 +88,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 				if util.is_valid(pContext) == false then
 					return
 				end
+				local droppedActorUuid = elData.actorUuid
 				pContext:SetPos(input.get_cursor_pos())
 
 				local constraintTypes = elData.constraintTypes
@@ -107,25 +108,10 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 					name = locale.get_text("c_constraint_" .. name)
 					name = locale.get_text("pfm_add_constraint_type", { name })
 
-					local nameNonPose = name
 					if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
-						if pfm.util.is_property_type_positional(memberInfo.type) then
-							nameNonPose = nameNonPose
-								.. " ("
-								.. locale.get_text("pfm_add_constraint_type_pos_only")
-								.. ")"
-						else
-							nameNonPose = nameNonPose
-								.. " ("
-								.. locale.get_text("pfm_add_constraint_type_rot_only")
-								.. ")"
-						end
-					end
-
-					if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
-						-- The child-of constraint can be either added so it only affects either the position or rotation, or both.
+						-- The child-of constraint can be either added to affect either the position or rotation, or both.
 						-- To make it affect both, we'll add a separate option.
-						local actor1 = (elData.actorUuid ~= nil) and pfm.dereference(elData.actorUuid) or nil
+						local actor1 = (droppedActorUuid ~= nil) and pfm.dereference(droppedActorUuid) or nil
 						local ent1 = (actor1 ~= nil) and actor1:FindEntity() or nil
 						if util.is_valid(ent1) then
 							local poseMetaInfo0, poseComponent0, posePropertyName0 =
@@ -137,7 +123,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 								local posePropertyPath1 = "ec/" .. poseComponent1 .. "/" .. posePropertyName1
 								pContext:AddItem(name, function()
 									if self:IsValid() then
-										local actor1 = (elData.actorUuid ~= nil) and pfm.dereference(elData.actorUuid)
+										local actor1 = (droppedActorUuid ~= nil) and pfm.dereference(droppedActorUuid)
 											or nil
 										if actor1 ~= nil then
 											self:AddConstraint(
@@ -150,15 +136,72 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 										end
 									end
 								end)
+
+								local memberInfoPose1 = pfm.get_member_info(posePropertyPath1, ent)
+								if memberInfoPose1 ~= nil then
+									if
+										not pfm.util.is_property_type_rotational(memberInfoPose1.type)
+										and (
+											pfm.util.is_property_type_positional(memberInfo.type)
+											or pfm.util.is_pose_property_type(memberInfo.type)
+										)
+									then
+										local propertyPath = "ec/" .. poseComponent0 .. "/" .. poseMetaInfo0.posProperty
+										pContext:AddItem(
+											name .. " (" .. locale.get_text("pfm_add_constraint_type_pos_only") .. ")",
+											function()
+												if self:IsValid() then
+													local actor1 = (droppedActorUuid ~= nil)
+															and pfm.dereference(droppedActorUuid)
+														or nil
+													self:AddConstraint(
+														type,
+														actor,
+														propertyPath,
+														actor1,
+														elData.propertyPath
+													)
+												end
+											end
+										)
+									end
+									if
+										not pfm.util.is_property_type_positional(memberInfoPose1.type)
+										and (
+											pfm.util.is_property_type_rotational(memberInfo.type)
+											or pfm.util.is_pose_property_type(memberInfo.type)
+										)
+									then
+										local propertyPath = "ec/" .. poseComponent0 .. "/" .. poseMetaInfo0.rotProperty
+										pContext:AddItem(
+											name .. " (" .. locale.get_text("pfm_add_constraint_type_rot_only") .. ")",
+											function()
+												if self:IsValid() then
+													local actor1 = (droppedActorUuid ~= nil)
+															and pfm.dereference(droppedActorUuid)
+														or nil
+													self:AddConstraint(
+														type,
+														actor,
+														propertyPath,
+														actor1,
+														elData.propertyPath
+													)
+												end
+											end
+										)
+									end
+								end
 							end
 						end
+					else
+						pContext:AddItem(name, function()
+							if self:IsValid() then
+								local actor1 = (droppedActorUuid ~= nil) and pfm.dereference(droppedActorUuid) or nil
+								self:AddConstraint(type, actor, propertyPath, actor1, elData.propertyPath)
+							end
+						end)
 					end
-					pContext:AddItem(nameNonPose, function()
-						if self:IsValid() then
-							local actor1 = (elData.actorUuid ~= nil) and pfm.dereference(elData.actorUuid) or nil
-							self:AddConstraint(type, actor, propertyPath, actor1, elData.propertyPath)
-						end
-					end)
 				end
 				pContext:Update()
 				dropped = true
@@ -187,39 +230,42 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 			end)
 		)
 
+		local function add_target(uuid, propertyPath, header)
+			local t = pfm.util.find_applicable_constraint_types(memberInfo, actor, propertyPath)
+			if #t > 0 then
+				local elOutline = gui.create("WIElementSelectionOutline", self)
+				table.insert(self.m_constraintDragAndDropItems, elOutline)
+				elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
+				elOutline:SetTargetElement({ header })
+				elOutline:Update()
+				tItems[header] = {
+					outline = elOutline,
+					constraintTypes = t,
+					actorUuid = uuid,
+					propertyPath = propertyPath,
+				}
+			end
+		end
+		local uuid = tostring(actor:GetUniqueId())
 		for _, item in ipairs(self:GetActorItems()) do
 			if item:IsValid() and item:IsHidden() == false then
-				local uuid = item:GetName()
-				local actor = pfm.dereference(uuid)
+				local uuidItem = item:GetName()
+				local actor = pfm.dereference(uuidItem)
 				if actor ~= nil then
+					if uuidItem ~= uuid then
+						add_target(uuidItem, "ec/pfm_actor/pose", item:GetHeader())
+					end
 					local componentItems = self:GetActorComponentItems(actor)
 					for _, cItem in ipairs(componentItems) do
 						if cItem:IsValid() and cItem:IsHidden() == false then
 							local componentType = cItem:GetName()
-							local propertyItems = self:GetPropertyEntries(uuid, componentType)
+							local propertyItems = self:GetPropertyEntries(uuidItem, componentType)
 							for _, propItem in ipairs(propertyItems) do
 								if propItem:IsValid() and propItem:IsHidden() == false then
 									local header = propItem:GetHeader()
 									if util.is_valid(header) and propItem ~= elItem then
 										local itemPropertyPath = propItem:GetIdentifier()
-										local t = pfm.util.find_applicable_constraint_types(
-											memberInfo,
-											actor,
-											itemPropertyPath
-										)
-										if #t > 0 then
-											local elOutline = gui.create("WIElementSelectionOutline", self)
-											table.insert(self.m_constraintDragAndDropItems, elOutline)
-											elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
-											elOutline:SetTargetElement({ header })
-											elOutline:Update()
-											tItems[header] = {
-												outline = elOutline,
-												constraintTypes = t,
-												actorUuid = uuid,
-												propertyPath = itemPropertyPath,
-											}
-										end
+										add_target(uuidItem, itemPropertyPath, header)
 									end
 								end
 							end
