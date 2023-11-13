@@ -286,44 +286,62 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 						pm:SetActorTransformProperty(actorC, "position", entGhost:GetPos(), true)
 						pm:SetActorTransformProperty(actorC, "rotation", entGhost:GetRotation(), true)
 					end
-					local tc = entActor:AddComponent("util_transform")
-					if tc ~= nil then
-						entActor:AddComponent("pfm_transform_gizmo")
-						tc:SetTranslationEnabled(false)
-						tc:SetRotationAxisEnabled(math.AXIS_X, false)
-						tc:SetRotationAxisEnabled(math.AXIS_Z, false)
-						tc:UpdateAxes()
-						local trUtil = tc:GetTransformUtility(
-							ents.UtilTransformArrowComponent.TYPE_ROTATION,
-							math.AXIS_Y,
-							"rotation"
-						)
-						local arrowC = util.is_valid(trUtil)
-								and trUtil:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
-							or nil
-						if arrowC ~= nil then
-							arrowC:StartTransform()
-							local cb
-							cb = input.add_callback("OnMouseInput", function(mouseButton, state, mods)
-								if mouseButton == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
-									if util.is_valid(entActor) then
-										entActor:RemoveComponent("util_transform")
 
-										if actorC:IsValid() then
-											pm:SetActorTransformProperty(actorC, "position", entActor:GetPos(), true)
-											pm:SetActorTransformProperty(
-												actorC,
-												"rotation",
-												entActor:GetRotation(),
-												true
-											)
-											pm:SelectActor(actorC:GetActorData(), true, nil, false)
+					local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
+					local srcBone, attachmentActor, attachmentBone = ghostC:GetAttachmentTarget()
+					if srcBone ~= nil then
+						actorEditor:AddConstraint(
+							gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF,
+							actor,
+							"ec/pfm_actor/pose",
+							attachmentActor,
+							"ec/animated/bone/" .. attachmentBone .. "/pose"
+						)
+					else
+						local tc = entActor:AddComponent("util_transform")
+						if tc ~= nil then
+							entActor:AddComponent("pfm_transform_gizmo")
+							tc:SetTranslationEnabled(false)
+							tc:SetRotationAxisEnabled(math.AXIS_X, false)
+							tc:SetRotationAxisEnabled(math.AXIS_Z, false)
+							tc:UpdateAxes()
+							local trUtil = tc:GetTransformUtility(
+								ents.UtilTransformArrowComponent.TYPE_ROTATION,
+								math.AXIS_Y,
+								"rotation"
+							)
+							local arrowC = util.is_valid(trUtil)
+									and trUtil:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
+								or nil
+							if arrowC ~= nil then
+								arrowC:StartTransform()
+								local cb
+								cb = input.add_callback("OnMouseInput", function(mouseButton, state, mods)
+									if mouseButton == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
+										if util.is_valid(entActor) then
+											entActor:RemoveComponent("util_transform")
+
+											if actorC:IsValid() then
+												pm:SetActorTransformProperty(
+													actorC,
+													"position",
+													entActor:GetPos(),
+													true
+												)
+												pm:SetActorTransformProperty(
+													actorC,
+													"rotation",
+													entActor:GetRotation(),
+													true
+												)
+												pm:SelectActor(actorC:GetActorData(), true, nil, false)
+											end
 										end
+										cb:Remove()
+										return util.EVENT_REPLY_HANDLED
 									end
-									cb:Remove()
-									return util.EVENT_REPLY_HANDLED
-								end
-							end)
+								end)
+							end
 						end
 					end
 				end

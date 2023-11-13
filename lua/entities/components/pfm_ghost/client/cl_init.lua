@@ -67,6 +67,71 @@ function ents.PFMGhost:SetViewport(vp)
 	self.m_viewport = vp
 end
 
+function ents.PFMGhost:GetAttachmentTarget()
+	if self.m_lastHitActorData == nil or util.is_valid(self.m_lastHitActorData.hitActorAnimC) == false then
+		return
+	end
+	local actorC = self.m_lastHitActorData.hitActorAnimC:GetEntity():GetComponent(ents.COMPONENT_PFM_ACTOR)
+	if actorC == nil then
+		return
+	end
+	local mdlTarget = actorC:GetEntity():GetModel()
+	if mdlTarget == nil then
+		return
+	end
+	local boneTarget = mdlTarget:GetSkeleton():GetBone(self.m_lastHitActorData.hitActorBone)
+	if boneTarget == nil then
+		return
+	end
+	local mdlSelf = self:GetEntity():GetModel()
+	if mdlSelf == nil then
+		return
+	end
+	local boneSelf = mdlSelf:GetSkeleton():GetBone(self.m_lastHitActorData.selfBone)
+	if boneSelf == nil then
+		return
+	end
+	return boneSelf:GetName(), actorC:GetActorData(), boneSelf:GetName()
+end
+
+function ents.PFMGhost:UpdateAttachmentActor(hitActor)
+	if self.m_lastHitActorData == nil or hitActor ~= self.m_lastHitActorData.hitActor then
+		local data = {}
+		data.hitActor = hitActor
+		if hitActor ~= nil then
+			local animC = hitActor:GetComponent(ents.COMPONENT_ANIMATED)
+			local ent = self:GetEntity()
+			local mdl = ent:GetModel()
+			local mdlHitActor = hitActor:GetModel()
+			if animC ~= nil and mdl ~= nil and mdlHitActor ~= nil then
+				local skeleton = mdl:GetSkeleton()
+				for _, rootBone in pairs(skeleton:GetRootBones()) do
+					local boneId = mdlHitActor:LookupBone(rootBone:GetName())
+					if boneId ~= -1 then
+						local ref = mdl:GetReferencePose()
+						local pose = ref:GetBonePose(rootBone:GetID())
+						data.selfBone = rootBone:GetID()
+						data.selfRootBonePose = pose
+						data.hitActorBone = boneId
+						data.hitActorAnimC = animC
+						break
+					end
+				end
+			end
+		end
+		self.m_lastHitActorData = data
+	end
+
+	local data = self.m_lastHitActorData
+	if data ~= nil and util.is_valid(data.hitActorAnimC) then
+		local pose = data.hitActorAnimC:GetGlobalBonePose(data.hitActorBone)
+		if pose ~= nil then
+			pose = pose * data.selfRootBonePose
+			return pose:GetOrigin(), pose:GetRotation()
+		end
+	end
+end
+
 function ents.PFMGhost:OnTick()
 	if util.is_valid(self.m_viewport) == false then
 		return
@@ -83,6 +148,7 @@ function ents.PFMGhost:OnTick()
 
 	local maxDist = 2048.0
 	local actor, hitPos, pos, hitData = pfm.raycast(startPos, dir, maxDist)
+	local mainActor = actor
 	local hasHit = (hitPos ~= nil)
 	local posDst = hitPos
 	if posDst == nil and util.is_valid(vpData.camera) then
@@ -171,6 +237,25 @@ function ents.PFMGhost:OnTick()
 			end
 			local rot = Quaternion(forward, dir)
 			ent:SetRotation(rot)
+		end
+	end
+
+	if self.m_isArticulatedModel == nil then
+		local mdl = self:GetEntity():GetModel()
+		if mdl ~= nil then
+			self.m_isArticulatedModel = pfm.is_articulated_model(mdl)
+		end
+	end
+	if self.m_isArticulatedModel == false then
+		-- Attachment preview
+		local hitActor = mainActor
+		if util.is_valid(mainActor) == false or input.is_alt_key_down() then
+			hitActor = nil
+		end
+		local newPos, newRot = self:UpdateAttachmentActor(hitActor)
+		if newPos ~= nil then
+			ent:SetPos(newPos)
+			ent:SetRotation(newRot)
 		end
 	end
 end
