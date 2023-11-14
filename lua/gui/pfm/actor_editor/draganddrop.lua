@@ -295,6 +295,10 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 		)
 
 		local function add_target(uuid, propertyPath, header)
+			local actor = pfm.dereference(uuid)
+			if actor == nil then
+				return
+			end
 			local t = pfm.util.find_applicable_constraint_types(memberInfo, actor, propertyPath)
 			if #t > 0 then
 				local elOutline = gui.create("WIElementSelectionOutline", self)
