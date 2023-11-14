@@ -51,8 +51,11 @@ function pfm.udm.EntityComponent:SetMemberValue(memberName, type, value)
 			props:Remove(memberName)
 		else
 			local child = props:Add(memberName)
-			child:Clear()
-			child:Merge(udm.LinkedPropertyWrapper(value), udm.MERGE_FLAG_BIT_DEEP_COPY)
+			local valueWrapped = udm.LinkedPropertyWrapper(value)
+			if udm.is_same_element(child, valueWrapped) == false then
+				child:Clear()
+				child:Merge(valueWrapped, udm.MERGE_FLAG_BIT_DEEP_COPY)
+			end
 		end
 	else
 		if value ~= nil then
