@@ -255,6 +255,13 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		if baseValueRot ~= nil then
 			baseValueRot = childPose:GetRotation()
 		end
+	else
+		if baseValuePos ~= nil then
+			baseValuePos = c0:ConvertTransformMemberPosToTargetSpace(idxPos, math.COORDINATE_SPACE_WORLD, baseValuePos)
+		end
+		if baseValueRot ~= nil then
+			baseValueRot = c0:ConvertTransformMemberRotToTargetSpace(idxRot, math.COORDINATE_SPACE_WORLD, baseValueRot)
+		end
 	end
 
 	-- Constraints require there to be an animation channel with at least one animation value
