@@ -918,6 +918,16 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 	local t = string.split(baseMemberName, "/")
 	baseMemberName = t[#t]
 
+	local function get_translated_value(controlData)
+		local val = controlData.getValue()
+		if val ~= nil then
+			if controlData.translateToInterface ~= nil then
+				val = controlData.translateToInterface(val)
+			end
+		end
+		return val
+	end
+
 	local ctrl
 	if controlData.path ~= nil then
 		if memberInfo:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_READ_ONLY_BIT) then
@@ -928,7 +938,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 					if elText:IsValid() == false then
 						return
 					end
-					local val = controlData.getValue()
+					local val = get_translated_value(controlData)
 					if val ~= nil then
 						elText:SetText(val)
 					end
@@ -1063,7 +1073,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 					if colField:IsValid() == false then
 						return
 					end
-					local val = controlData.getValue()
+					local val = get_translated_value(controlData)
 					if val ~= nil then
 						colField:SetColor(Color(val))
 					end
@@ -1082,7 +1092,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 									if el:IsValid() == false then
 										return
 									end
-									local val = controlData.getValue()
+									local val = get_translated_value(controlData)
 									if val ~= nil then
 										el:SetValue(val)
 									end
@@ -1116,7 +1126,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 								if el:IsValid() == false then
 									return
 								end
-								local val = controlData.getValue()
+								local val = get_translated_value(controlData)
 								if val ~= nil then
 									el:SetValue(val)
 								end
@@ -1170,7 +1180,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 						if elText:IsValid() == false then
 							return
 						end
-						local val = controlData.getValue()
+						local val = get_translated_value(controlData)
 						if val ~= nil then
 							elText:SetText(val)
 						end
@@ -1197,7 +1207,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 					if elToggle:IsValid() == false then
 						return
 					end
-					local val = controlData.getValue()
+					local val = get_translated_value(controlData)
 					if val ~= nil then
 						elToggle:SetChecked(val)
 					end
@@ -1299,7 +1309,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 					if ctrl:IsValid() == false then
 						return
 					end
-					local val = controlData.getValue()
+					local val = get_translated_value(controlData)
 					if val ~= nil then
 						ctrl:SetValue(val)
 					end
@@ -1327,7 +1337,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 					if el:IsValid() == false then
 						return
 					end
-					local val = controlData.getValue() or EulerAngles()
+					local val = get_translated_value(controlData) or EulerAngles()
 					if val ~= nil then
 						el:SetText(tostring(val))
 					end
@@ -1354,7 +1364,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 					if el:IsValid() == false then
 						return
 					end
-					local val = controlData.getValue() or Quaternion()
+					local val = get_translated_value(controlData) or Quaternion()
 					if val ~= nil then
 						el:SetText(tostring(val:ToEulerAngles()))
 					end
@@ -1385,7 +1395,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 					if el:IsValid() == false then
 						return
 					end
-					local val = controlData.getValue() or type()
+					local val = get_translated_value(controlData) or type()
 					if val ~= nil then
 						el:SetText(tostring(val))
 					end
