@@ -19,7 +19,9 @@ function Shader:InitializePipeline(pipelineInfo, pipelineIdx)
 	shader.BaseTexturedLit3D.InitializePipeline(self, pipelineInfo, pipelineIdx)
 	pipelineInfo:SetFrontFace(prosper.FRONT_FACE_CLOCKWISE)
 end
-function Shader:InitializeGfxPipelinePushConstantRanges(pipelineInfo, pipelineIdx) end
+function Shader:InitializeGfxPipelinePushConstantRanges(pipelineInfo, pipelineIdx)
+	shader.BaseTexturedLit3D.InitializeGfxPipelinePushConstantRanges(self, pipelineInfo, pipelineIdx)
+end
 function Shader:InitializeMaterialDescriptorSet(mat)
 	local descSet = self:GetShader():CreateDescriptorSet(self:GetShader():GetMaterialDescriptorSetIndex())
 	self:InitializeMaterialBuffer(descSet, mat)

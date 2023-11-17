@@ -19,7 +19,11 @@ function shader.PFMCurve:InitializePipeline(pipelineInfo, pipelineIdx)
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 	})
 
-	pipelineInfo:AttachPushConstantRange(0, PUSH_CONSTANT_SIZE, prosper.SHADER_STAGE_VERTEX_BIT)
+	pipelineInfo:AttachPushConstantRange(
+		0,
+		PUSH_CONSTANT_SIZE,
+		bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT, prosper.SHADER_STAGE_VERTEX_BIT)
+	)
 
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_STRIP)
