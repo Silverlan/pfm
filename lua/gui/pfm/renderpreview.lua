@@ -1163,20 +1163,20 @@ function gui.PFMRenderPreview:GetFrameFilePath(frameIndex)
 	end
 	frameOffset = filmmaker:GetClampedFrameOffset(frameOffset)
 
-	local project = filmmaker:GetProject()
-	local filmClip = filmmaker:GetActiveFilmClip()
-	if filmClip == nil then
+	local mainFilmClip = filmmaker:GetMainFilmClip()
+	local activeFilmClip = filmmaker:GetActiveFilmClip()
+	if mainFilmClip == nil or activeFilmClip == nil then
 		return
 	end
-	local projectName = project:GetName()
-	local filmClipName = filmClip:GetName()
-	if #projectName == 0 then
-		projectName = "unnamed"
-	end
+	local filmClipName = mainFilmClip:GetName()
 	if #filmClipName == 0 then
 		filmClipName = "unnamed"
 	end
-	return projectName .. "/" .. filmClipName .. "/frame" .. string.fill_zeroes(tostring(frameOffset + 1), 4)
+	local activeFilmClipName = activeFilmClip:GetName()
+	if #activeFilmClipName == 0 then
+		activeFilmClipName = "unnamed"
+	end
+	return filmClipName .. "/" .. activeFilmClipName .. "/frame" .. string.fill_zeroes(tostring(frameOffset + 1), 4)
 end
 function gui.PFMRenderPreview:GetCurrentFrameFilePath()
 	return self:GetFrameFilePath(tool.get_filmmaker():GetFrameOffset())
