@@ -10,6 +10,7 @@ local Element = util.register_class("gui.ElementSelectionOutline", gui.Base)
 Element.OUTLINE_TYPE_MAJOR = 0
 Element.OUTLINE_TYPE_MINOR = 1
 Element.OUTLINE_TYPE_MEDIUM = 2
+Element.OUTLINE_TYPE_CLEAR = 3
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -44,8 +45,10 @@ function Element:SetOutlineType(type)
 		self.m_elOutline:SetColor(pfm.get_color_scheme_color("grey"))
 	elseif type == Element.OUTLINE_TYPE_MEDIUM then
 		self.m_elOutline:SetColor(pfm.get_color_scheme_color("orange"))
-	else
+	elseif type == Element.OUTLINE_TYPE_MAJOR then
 		self.m_elOutline:SetColor(pfm.get_color_scheme_color("red"))
+	elseif type == Element.OUTLINE_TYPE_CLEAR then
+		self.m_elOutline:SetColor(Color.Clear)
 	end
 end
 function Element:OnRemove()

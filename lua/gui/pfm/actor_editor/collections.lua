@@ -30,8 +30,19 @@ gui.PFMActorEditor.COLLECTION_TYPES = {
 	gui.PFMActorEditor.COLLECTION_CONSTRAINTS,
 }
 
+function gui.PFMActorEditor:GetCollectionItems()
+	return self.m_collectionItems
+end
 function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 	local itemGroup = parentItem:AddItem(parent:GetName(), nil, nil, tostring(parent:GetUniqueId()))
+	-- Remove stale items
+	for i = #self.m_collectionItems, 1, -1 do
+		local item = self.m_collectionItems[i]
+		if item:IsValid() == false then
+			table.remove(self.m_collectionItems, i)
+		end
+	end
+	table.insert(self.m_collectionItems, itemGroup)
 
 	local nameChangeListener = parent:AddChangeListener("name", function(c, newName)
 		if itemGroup:IsValid() then
@@ -121,6 +132,8 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 				pContext:Update()
 			end
 			return util.EVENT_REPLY_HANDLED
+		else
+			-- TODO: Implement moving collections
 		end
 
 		if root ~= true then

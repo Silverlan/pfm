@@ -269,41 +269,6 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 			else
 				self:EndConstraintDragAndDropMode()
 			end
-			--[[if state ~= input.STATE_PRESS then
-				local elItem = gui.get_element_under_cursor(function(el)
-					return el:GetClass() == "wipfmtreeviewelement"
-				end)
-				if elItem ~= nil then
-					local groupUuid = elItem:GetIdentifier()
-					local group = self:GetCollectionUdmObject(elItem)
-					local curGroup = tostring(actor:GetParent():GetUniqueId())
-					if
-						group ~= nil
-						and util.get_type_name(group) == "Group"
-						and util.is_same_object(group, actor:GetParent()) == false
-					then
-						time.create_simple_timer(0.0, function()
-							if self:IsValid() == false then
-								return
-							end
-							local actors = self:GetSelectedActors()
-							for _, actor in ipairs(actors) do
-								if self:MoveActorToCollection(actor, group) == false then
-									pfm.log(
-										"Failed to move actor '"
-											.. tostring(actor)
-											.. "' to collection '"
-											.. tostring(group)
-											.. "'...",
-										pfm.LOG_CATEGORY_PFM,
-										pfm.LOG_SEVERITY_WARNING
-									)
-								end
-							end
-						end)
-					end
-				end
-			end]]
 			return util.EVENT_REPLY_UNHANDLED
 		end
 	end)

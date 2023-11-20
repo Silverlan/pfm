@@ -397,6 +397,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 	self.m_tree:SetName("actor_tree")
 	self.m_treeElementToActorData = {}
+	self.m_collectionItems = {}
 	self.m_actorUniqueIdToTreeElement = {}
 	self.m_tree:AddCallback("OnItemSelectChanged", function(tree, el, selected)
 		local queue = {}
@@ -632,6 +633,7 @@ function gui.PFMActorEditor:Clear()
 	asset.clear_unused()
 	self.m_tree:Clear()
 	self.m_treeElementToActorData = {}
+	self.m_collectionItems = {}
 	self.m_actorUniqueIdToTreeElement = {}
 	self.m_filmClipCallbacks = {}
 end

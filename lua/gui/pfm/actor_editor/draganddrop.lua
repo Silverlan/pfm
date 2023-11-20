@@ -8,8 +8,14 @@
 
 include("/gui/pfm/element_selection.lua")
 
+function gui.PFMActorEditor:SetActorDragAndDropFilter(filter)
+	self.m_actorDragAndDropFilter = filter
+end
 function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, propertyPath)
-	propertyPath = propertyPath or "ec/pfm_actor/pose"
+	local isActorDragAndDrop = (propertyPath == nil)
+	if isActorDragAndDrop then
+		propertyPath = "ec/pfm_actor/pose"
+	end
 	self:EndConstraintDragAndDropMode()
 	self.m_constraintDragAndDropItems = {}
 
@@ -84,11 +90,55 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 				if elData == nil then
 					return
 				end
+
+				local function clear()
+					dropped = true
+					for elHeader, elDataItem in pairs(tItems) do
+						if elDataItem ~= elData then
+							util.remove(elDataItem.outline)
+						end
+					end
+					elData.outline:SetFilledIn(Color(255, 255, 255, 60))
+				end
+
+				local droppedActorUuid = elData.actorUuid
+				if elData.isCollection then
+					-- It's a collection
+					clear()
+					time.create_simple_timer(0.0, function()
+						if self:IsValid() == false then
+							return
+						end
+						self:EndConstraintDragAndDropMode()
+						local group = pfm.dereference(droppedActorUuid)
+						if
+							group ~= nil
+							and util.get_type_name(group) == "Group"
+							and util.is_same_object(group, actor:GetParent()) == false
+						then
+							local actors = { actor }
+							for _, actor in ipairs(actors) do
+								if self:MoveActorToCollection(actor, group) == false then
+									pfm.log(
+										"Failed to move actor '"
+											.. tostring(actor)
+											.. "' to collection '"
+											.. tostring(group)
+											.. "'...",
+										pfm.LOG_CATEGORY_PFM,
+										pfm.LOG_SEVERITY_WARNING
+									)
+								end
+							end
+						end
+					end)
+					return
+				end
+
 				local pContext = gui.open_context_menu()
 				if util.is_valid(pContext) == false then
 					return
 				end
-				local droppedActorUuid = elData.actorUuid
 				pContext:SetPos(input.get_cursor_pos())
 
 				local constraintTypes = elData.constraintTypes
@@ -268,13 +318,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 					end
 				end
 				pContext:Update()
-				dropped = true
-				for elHeader, elDataItem in pairs(tItems) do
-					if elDataItem ~= elData then
-						util.remove(elDataItem.outline)
-					end
-				end
-				elData.outline:SetFilledIn(Color(255, 255, 255, 60))
+				clear()
 				pContext:AddEventListener("OnRemove", function()
 					if self:IsValid() then
 						self:EndConstraintDragAndDropMode()
@@ -295,15 +339,28 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 		)
 
 		local function add_target(uuid, propertyPath, header)
-			local actor = pfm.dereference(uuid)
-			if actor == nil then
+			local t
+			local isCollection = (propertyPath == nil)
+			if
+				self.m_actorDragAndDropFilter ~= nil
+				and self.m_actorDragAndDropFilter(uuid, propertyPath, header, isCollection) == false
+			then
 				return
 			end
-			local t = pfm.util.find_applicable_constraint_types(memberInfo, actor, propertyPath)
-			if #t > 0 then
+			if isCollection == false then
+				local actor = pfm.dereference(uuid)
+				if actor == nil then
+					return
+				end
+				t = pfm.util.find_applicable_constraint_types(memberInfo, actor, propertyPath)
+			end
+			if isCollection or #t > 0 then
 				local elOutline = gui.create("WIElementSelectionOutline", self)
 				table.insert(self.m_constraintDragAndDropItems, elOutline)
-				elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
+				elOutline:SetOutlineType(
+					isCollection and gui.ElementSelectionOutline.OUTLINE_TYPE_CLEAR
+						or gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM
+				)
 				elOutline:SetTargetElement({ header })
 				elOutline:Update()
 				tItems[header] = {
@@ -311,10 +368,46 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 					constraintTypes = t,
 					actorUuid = uuid,
 					propertyPath = propertyPath,
+					isCollection = isCollection,
 				}
 			end
 		end
 		local uuid = tostring(actor:GetUniqueId())
+		for _, item in ipairs(self:GetActorItems()) do
+			if item:IsValid() and item:IsHidden() == false then
+				local uuidItem = item:GetName()
+				local actor = pfm.dereference(uuidItem)
+				if actor ~= nil then
+					if uuidItem ~= uuid then
+						add_target(uuidItem, "ec/pfm_actor/pose", item:GetHeader())
+					end
+					local componentItems = self:GetActorComponentItems(actor)
+					for _, cItem in ipairs(componentItems) do
+						if cItem:IsValid() and cItem:IsHidden() == false then
+							local componentType = cItem:GetName()
+							local propertyItems = self:GetPropertyEntries(uuidItem, componentType)
+							for _, propItem in ipairs(propertyItems) do
+								if propItem:IsValid() and propItem:IsHidden() == false then
+									local header = propItem:GetHeader()
+									if util.is_valid(header) and propItem ~= elItem then
+										local itemPropertyPath = propItem:GetIdentifier()
+										add_target(uuidItem, itemPropertyPath, header)
+									end
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+		if isActorDragAndDrop then
+			for _, item in ipairs(self:GetCollectionItems()) do
+				if item:IsValid() and item:IsHidden() == false then
+					local uuidItem = item:GetIdentifier()
+					add_target(uuidItem, nil, item:GetHeader())
+				end
+			end
+		end
 		for _, item in ipairs(self:GetActorItems()) do
 			if item:IsValid() and item:IsHidden() == false then
 				local uuidItem = item:GetName()
