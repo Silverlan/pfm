@@ -1098,13 +1098,15 @@ function gui.PFMRenderPreview:InitializeControls()
 	btTools:SetX(controlsWrapper:GetWidth() - btTools:GetWidth())
 	btTools:SetAnchor(1, 0, 1, 0)
 	btTools:SetupContextMenu(function(pContext)
-		pContext:AddItem(locale.get_text("pfm_open_output_dir"), function()
-			local path = util.Path(self:GetOutputPath()) + self:GetCurrentFrameFilePath()
-			util.open_path_in_explorer(
-				path:GetPath(),
-				path:GetFileName() .. "." .. util.get_image_format_file_extension(self.m_rt:GetImageSaveFormat())
-			)
-		end)
+		pContext
+			:AddItem(locale.get_text("pfm_open_output_dir"), function()
+				local path = util.Path(self:GetOutputPath()) + self:GetCurrentFrameFilePath()
+				util.open_path_in_explorer(
+					path:GetPath(),
+					path:GetFileName() .. "." .. util.get_image_format_file_extension(self.m_rt:GetImageSaveFormat())
+				)
+			end)
+			:SetName("open_output_dir")
 	end, true)
 
 	--[[self.m_btApplyPostProcessing = gui.PFMButton.create(controls,"gui/pfm/icon_cp_generic_button_large","gui/pfm/icon_cp_generic_button_large_activated",function()
