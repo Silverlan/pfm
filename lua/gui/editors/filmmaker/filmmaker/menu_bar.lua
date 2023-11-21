@@ -8,6 +8,19 @@
 
 local Element = gui.WIFilmmaker
 
+function Element:RegisterMenuOption(identifier, action)
+	self.m_customMenuOptions = {}
+	self.m_customMenuOptions[identifier] = self.m_customMenuOptions[identifier] or {}
+	table.insert(self.m_customMenuOptions[identifier], action)
+end
+function Element:PopulateCustomMenuOptions(identifier, pContextMenu)
+	if self.m_customMenuOptions == nil or self.m_customMenuOptions[identifier] == nil then
+		return
+	end
+	for _, action in ipairs(self.m_customMenuOptions[identifier]) do
+		action(pContextMenu)
+	end
+end
 function Element:InitializeMenuBar()
 	self.m_cbDropped = game.add_callback("OnFilesDropped", function(tFiles)
 		local foundElement = false
@@ -334,6 +347,12 @@ function Element:InitializeMenuBar()
 				end)
 				pSubItem:SetName("pfm_project")
 			end
+			pSubMenu:ScheduleUpdate()
+
+			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("export"))
+			pItem:SetName("export")
+			pSubMenu:SetName("export_menu")
+			self:PopulateCustomMenuOptions("export", pSubMenu)
 			pSubMenu:ScheduleUpdate()
 
 			local pSubItem = pContext:AddItem(locale.get_text("pfm_change_map"), function(pItem)

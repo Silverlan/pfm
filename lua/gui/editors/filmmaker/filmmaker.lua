@@ -93,7 +93,8 @@ local function load_sub_addons()
 	end
 	loadedSubAddons = true
 
-	for _, subAddon in ipairs({ "debug_ik" }) do
+	local _, dirs = file.find("addons/filmmaker/addons/*")
+	for _, subAddon in ipairs(dirs) do
 		local res = engine.mount_sub_addon(subAddon)
 		if res == false then
 			pfm.log("Failed to mount addon '" .. subAddon .. "'!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)

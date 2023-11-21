@@ -593,7 +593,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlEquirectMode = ctrl
 	wrapper:SetTooltip(locale.get_text("pfm_render_setting_equirect_mode"))
 	p:LinkToUDMProperty("equirect_mode", settings, "stereoscopic", function(value)
-		return value == "stereo"
+		return (value == "stereo") and true or false
 	end, function(value)
 		return value and "stereo" or "mono"
 	end)

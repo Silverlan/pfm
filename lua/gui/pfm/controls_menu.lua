@@ -308,7 +308,9 @@ function gui.PFMControlsMenu:OnValueChanged(identifier, value)
 	if udmType == udm.TYPE_INVALID and udm.Schema.is_enum_type(parent:GetPropertyType(propName)) then
 		udmType = udm.TYPE_INT32
 	end
-	if udmType ~= udm.TYPE_INVALID then
+	if self.m_controls[identifier].controlValueToPropertyValue then
+		value = self.m_controls[identifier].controlValueToPropertyValue(value)
+	elseif udmType ~= udm.TYPE_INVALID then
 		if udmType == udm.TYPE_BOOLEAN then
 			value = toboolean(value)
 		elseif udm.is_integral_type(udmType) then
@@ -320,9 +322,6 @@ function gui.PFMControlsMenu:OnValueChanged(identifier, value)
 
 	self.m_skipPropCallback = self.m_skipPropCallback or {}
 	self.m_skipPropCallback[identifier] = true
-	if self.m_controls[identifier].controlValueToPropertyValue then
-		value = self.m_controls[identifier].controlValueToPropertyValue(value)
-	end
 	parent:SetPropertyValue(propName, value)
 	self.m_skipPropCallback[identifier] = nil
 end
