@@ -68,7 +68,7 @@ function ents.PFMModel:UpdateMaterialOverrides()
 					-- TODO: Update shader
 					local cpy = matRef:Copy()
 					cpy:MergeData(properties)
-					cpy:UpdateTextures()
+					cpy:LoadTextures()
 					cpy:InitializeShaderDescriptorSet(true)
 					matOverride = cpy
 				end
@@ -195,7 +195,6 @@ function ents.PFMModel:InitModel()
 			local fcId = mdl:LookupFlexController(flexNames[i]:GetValue())
 			if(fcId ~= -1) then
 				local weight = fc:GetFlexWeightAttr()
-				--debug.print("FLEX CON: ",fcId,flexNames[i],weight:GetValue())
 				animSetC:SetFlexController(fcId,weight:GetValue())
 				table.insert(self.m_listeners,weight:AddChangeListener(function(newValue)
 					if(animSetC:IsValid()) then
