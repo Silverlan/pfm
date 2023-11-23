@@ -68,7 +68,7 @@ function ents.PFMModel:UpdateMaterialOverrides()
 					-- TODO: Update shader
 					local cpy = matRef:Copy()
 					cpy:MergeData(properties)
-					cpy:LoadTextures()
+					cpy:ReloadTextures()
 					cpy:InitializeShaderDescriptorSet(true)
 					matOverride = cpy
 				end
