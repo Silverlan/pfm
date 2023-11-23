@@ -1034,6 +1034,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 							end
 							if controlData.set ~= nil then
 								controlData.set(udmComponent, elUdm)
+								udmComponent:SyncUdmPropertyToEntity(memberInfo.name, true)
 							end
 							-- c:OnMemberValueChanged(memberIdx)
 							return true
