@@ -352,6 +352,48 @@ function Element:InitializeMenuBar()
 			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("export"))
 			pItem:SetName("export")
 			pSubMenu:SetName("export_menu")
+
+			local pSubItem = pSubMenu:AddItem(locale.get_text("map"), function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				local mapName = game.get_map_name()
+				local exportInfo = game.Model.ExportInfo()
+				exportInfo.exportAnimations = false
+				exportInfo.exportSkinnedMeshData = false
+				exportInfo.exportMorphTargets = false
+				exportInfo.exportImages = true
+				exportInfo.saveAsBinary = true
+				exportInfo.verbose = true
+				exportInfo.generateAo = false
+				exportInfo.mergeMeshesByMaterial = true
+				exportInfo.imageFormat = game.Model.ExportInfo.IMAGE_FORMAT_PNG
+				exportInfo.scale = util.units_to_metres(1)
+
+				local mapExportInfo = asset.MapExportInfo()
+				local vp = self:GetViewport()
+				if util.is_valid(vp) then
+					local cam = vp:GetCamera()
+					if util.is_valid(cam) then
+						mapExportInfo:AddCamera(cam)
+					end
+				end
+				mapExportInfo.includeMapLightSources = false
+				for light in ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_LIGHT) }) do
+					local lightC = light:GetComponent(ents.COMPONENT_LIGHT)
+					mapExportInfo:AddLightSource(lightC)
+				end
+
+				local success, errMsg = asset.export_map(mapName, exportInfo, mapExportInfo)
+				if success then
+					util.open_path_in_explorer("export/maps/" .. mapName .. "/" .. mapName .. "/", mapName .. ".glb")
+					return
+				end
+				pfm.log("Unable to export map: " .. errMsg, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+			end)
+			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_export_map"))
+			pSubItem:SetName("export_map")
+
 			self:PopulateCustomMenuOptions("export", pSubMenu)
 			pSubMenu:ScheduleUpdate()
 
@@ -662,46 +704,6 @@ function Element:InitializeMenuBar()
 		:SetName("preferences")
 	pMenuBar
 		:AddItem(locale.get_text("tools"), function(pContext)
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_export_map"), function(pItem)
-				if util.is_valid(self) == false then
-					return
-				end
-				local mapName = game.get_map_name()
-				local exportInfo = game.Model.ExportInfo()
-				exportInfo.exportAnimations = false
-				exportInfo.exportSkinnedMeshData = false
-				exportInfo.exportMorphTargets = false
-				exportInfo.exportImages = true
-				exportInfo.saveAsBinary = true
-				exportInfo.verbose = true
-				exportInfo.generateAo = false
-				exportInfo.mergeMeshesByMaterial = true
-				exportInfo.imageFormat = game.Model.ExportInfo.IMAGE_FORMAT_PNG
-				exportInfo.scale = util.units_to_metres(1)
-
-				local mapExportInfo = asset.MapExportInfo()
-				local vp = self:GetViewport()
-				if util.is_valid(vp) then
-					local cam = vp:GetCamera()
-					if util.is_valid(cam) then
-						mapExportInfo:AddCamera(cam)
-					end
-				end
-				mapExportInfo.includeMapLightSources = false
-				for light in ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_LIGHT) }) do
-					local lightC = light:GetComponent(ents.COMPONENT_LIGHT)
-					mapExportInfo:AddLightSource(lightC)
-				end
-
-				local success, errMsg = asset.export_map(mapName, exportInfo, mapExportInfo)
-				if success then
-					util.open_path_in_explorer("export/maps/" .. mapName .. "/" .. mapName .. "/", mapName .. ".glb")
-					return
-				end
-				pfm.log("Unable to export map: " .. errMsg, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
-			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_export_map"))
-			pSubItem:SetName("export_map")
 			local pSubItem = pContext:AddItem(locale.get_text("pfm_convert_map_to_actors"), function(pItem)
 				if util.is_valid(self) == false then
 					return
