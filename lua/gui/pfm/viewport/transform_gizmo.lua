@@ -668,14 +668,20 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 					local origDataPose
 					local restoreAnimChannel
 					local tmpAnimChannel
-					local panimaC = ent:GetComponent(ents.COMPONENT_PANIMA)
-					local animManager = (panimaC ~= nil) and panimaC:GetAnimationManager("pfm") or nil
-					local player = (animManager ~= nil) and animManager:GetPlayer() or nil
-					local anim = (player ~= nil) and player:GetAnimation() or nil
+					local panimaC
+					local animManager
+					local player
+					local anim
 					local function init_animation_channel_substitute()
 						if restoreAnimChannel ~= nil then
 							return
 						end
+
+						panimaC = ent:GetComponent(ents.COMPONENT_PANIMA)
+						animManager = (panimaC ~= nil) and panimaC:GetAnimationManager("pfm") or nil
+						player = (animManager ~= nil) and animManager:GetPlayer() or nil
+						anim = (player ~= nil) and player:GetAnimation() or nil
+
 						local channel = (anim ~= nil) and anim:FindChannel(targetPath) or nil
 						if channel ~= nil then
 							-- The property is animated. In this case, we'll have to replace the animation channel with
