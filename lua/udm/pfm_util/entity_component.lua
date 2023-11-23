@@ -6,6 +6,53 @@
 	file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+function pfm.udm.EntityComponent:SyncUdmPropertyFromEntity(propertyName, clear)
+	local udmData = self:GetMemberValue(propertyName)
+	if udmData == nil then
+		return
+	end
+	if clear then
+		udmData:Clear()
+	end
+	local entC = self:FindEntityComponent()
+	if entC ~= nil then
+		local udmDataEnt = entC:GetMemberValue(propertyName):Get()
+		if udmDataEnt ~= nil then
+			udmData:Merge(udmDataEnt, udm.MERGE_FLAG_BIT_DEEP_COPY)
+		end
+	end
+end
+function pfm.udm.EntityComponent:SyncUdmPropertyToEntity(propertyName, clear)
+	local entC = self:FindEntityComponent()
+	if entC == nil then
+		return
+	end
+	local udmDataEnt = entC:GetMemberValue(propertyName):Get()
+	if udmDataEnt == nil then
+		return
+	end
+	if clear then
+		udmDataEnt:Clear()
+	end
+	local udmData = self:GetMemberValue(propertyName)
+	if udmData == nil then
+		return
+	end
+	udmDataEnt:Merge(udmData, udm.MERGE_FLAG_BIT_DEEP_COPY)
+
+	local memberId = entC:GetMemberIndex(propertyName)
+	if memberId ~= nil then
+		entC:OnMemberValueChanged(memberId)
+	end
+end
+function pfm.udm.EntityComponent:FindEntityComponent()
+	local actor = self:GetActor()
+	local entActor = actor:FindEntity()
+	if util.is_valid(entActor) == false then
+		return
+	end
+	return entActor:GetComponent(self:GetType())
+end
 function pfm.udm.EntityComponent:GetEffectiveMemberValue(propertyName, type)
 	local actor = self:GetActor()
 	local entActor = actor:FindEntity()

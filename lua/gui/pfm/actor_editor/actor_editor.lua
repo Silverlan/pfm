@@ -1506,10 +1506,7 @@ function gui.PFMActorEditor:AddIkController(actor, boneName, chainLength)
 	local bone = skeleton:GetBone(boneId)
 
 	ikSolverC:AddIkSolverByChain(boneName, chainLength)
-
-	local udmRigData = solverC:GetMemberValue("rigConfig")
-	-- udmRigData:Clear()
-	udmRigData:Merge(ikSolverC:GetMemberValue("rigConfig"):Get(), udm.MERGE_FLAG_BIT_DEEP_COPY)
+	solverC:SyncUdmPropertyFromEntity("rigConfig", false)
 
 	local memberId = ikSolverC:GetMemberIndex("IkRig")
 	if memberId ~= nil then
