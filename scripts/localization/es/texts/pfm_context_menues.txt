@@ -22,6 +22,7 @@ pfm_menu_context_convert_map_to_actors = "Convierte todos los objetos de mapa en
 pfm_menu_context_convert_static_actors_to_map = "Elimina todos los actores estáticos del proyecto actual y los fusiona en un mapa. El mapa resultante puede luego ser reutilizado para diferentes proyectos como una escena."
 pfm_menu_context_empty_project = "Crea un proyecto vacío sin ningún actor."
 pfm_menu_context_export_map = "Exporta el mapa actual al formato glTF, que se puede importar en un programa de modelado como Blender."
+pfm_menu_context_export_timeline_fcpxml = "Exporta la línea de tiempo como FCPXML, la cual luego puede ser importada en un software de edición de video como DaVinci Resolve. La exportación incluye información sobre las imágenes renderizadas, así como el audio."
 pfm_menu_context_getting_started = "Comienza el tutorial introductorio."
 pfm_menu_context_import_map = "Importa los objetos del mapa especificado como actores en el proyecto actual. El mapa actual no será cambiado."
 pfm_menu_context_import_sfm_project = "Esto importará la sesión SFM especificada como un nuevo proyecto PFM."

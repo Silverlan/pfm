@@ -22,6 +22,7 @@ pfm_menu_context_convert_map_to_actors = "将当前项目中的所有地图对�
 pfm_menu_context_convert_static_actors_to_map = "从当前项目中删除所有静态角色并将它们合并到地图中。然后可以将生成的地图重新用于不同的项目作为场景构建。"
 pfm_menu_context_empty_project = "创建一个没有任何角色的空项目。"
 pfm_menu_context_export_map = "将当前地图导出为 glTF 格式，可以在像 Blender 这样的建模程序中导入。"
+pfm_menu_context_export_timeline_fcpxml = "将时间轴导出为FCPXML，然后可以导入到视频编辑软件中，如DaVinci Resolve。\n导出包括渲染图像和音频的信息。"
 pfm_menu_context_getting_started = "开始介绍教程。"
 pfm_menu_context_import_map = "将指定地图中的对象导入为当前项目中的角色。当前地图不会被更改。"
 pfm_menu_context_import_sfm_project = "这将导入指定的SFM会话作为新的PFM项目。"

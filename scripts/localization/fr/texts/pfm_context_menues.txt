@@ -22,6 +22,7 @@ pfm_menu_context_convert_map_to_actors = "Convertit tous les objets de carte en 
 pfm_menu_context_convert_static_actors_to_map = "Supprime tous les acteurs statiques du projet actuel et les fusionne dans une carte. La carte résultante peut ensuite être réutilisée pour différents projets en tant que scène préfabriquée."
 pfm_menu_context_empty_project = "Crée un projet vide sans aucun acteur."
 pfm_menu_context_export_map = "Exporte la carte actuelle dans le format glTF, qui peut être importé dans un programme de modélisation comme Blender."
+pfm_menu_context_export_timeline_fcpxml = "Exporte la timeline en FCPXML, qui peut ensuite être importée dans un logiciel de montage vidéo tel que DaVinci Resolve.\nL'exportation inclut des informations sur les images rendues, ainsi que l'audio."
 pfm_menu_context_getting_started = "Commence le tutoriel d'introduction."
 pfm_menu_context_import_map = "Importe les objets de la carte spécifiée en tant qu'acteurs dans le projet en cours. La carte actuelle ne sera pas modifiée."
 pfm_menu_context_import_sfm_project = "Ceci importera la session SFM spécifiée en tant que nouveau projet PFM."

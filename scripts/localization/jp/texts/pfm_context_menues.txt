@@ -22,6 +22,7 @@ pfm_menu_context_convert_map_to_actors = "現在のプロジェクトのすべ�
 pfm_menu_context_convert_static_actors_to_map = "現在のプロジェクトからすべての静的アクターを取り除き、マップにマージします。結果のマップは、シーンビルドとして別のプロジェクトで再利用することができます。"
 pfm_menu_context_empty_project = "アクターのない空のプロジェクトを作成します。"
 pfm_menu_context_export_map = "現在のマップをglTF形式でエクスポートし、Blenderなどのモデリングプログラムにインポートできるようにします。"
+pfm_menu_context_export_timeline_fcpxml = "タイムラインをFCPXMLとしてエクスポートします。その後、DaVinci Resolveなどのビデオ編集ソフトウェアにインポートすることができます。\nエクスポートには、レンダリングされた画像や音声の情報も含まれます。"
 pfm_menu_context_getting_started = "イントロチュートリアルを開始します。"
 pfm_menu_context_import_map = "指定したマップのオブジェクトをアクターとして現在のプロジェクトにインポートします。現在のマップは変更されません。"
 pfm_menu_context_import_sfm_project = "指定したSFMセッションを新しいPFMプロジェクトとしてインポートします。"
