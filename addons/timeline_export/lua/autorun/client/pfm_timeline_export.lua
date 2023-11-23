@@ -8,7 +8,7 @@
 
 pfm = pfm or {}
 pfm.util = pfm.util or {}
-function pfm.util.export_xml_timeline(pm)
+function pfm.util.export_xml_timeline(pm, fileName)
 	local session = pm:GetSession()
 
 	local settings = session:GetSettings()
@@ -136,13 +136,21 @@ function pfm.util.export_xml_timeline(pm)
 			end
 		end
 	end
-	return exporter:GenerateXML()
+	local xml = exporter:GenerateXML()
+	xml = '<?xml version="1.0" encoding="UTF-8"?>\n' .. "<!DOCTYPE fcpxml>\n" .. xml
+	if fileName ~= nil then
+		fileName = file.remove_file_extension(fileName, { "fcpxml" })
+		fileName = fileName .. ".fcpxml"
+
+		file.write(fileName, xml)
+	end
+	return xml
 end
 
 pfm.add_event_listener("OnFilmmakerLaunched", function(pm)
 	include("/pfm/timeline_export/xml_timeline_exporter.lua")
 	pm:RegisterMenuOption("export", function(pContextMenu)
-		local pSubItem = pContextMenu:AddItem(locale.get_text("pfm_timeline"), function(pItem)
+		local pSubItem = pContextMenu:AddItem(locale.get_text("pfm_timeline") .. " (FCPXML)", function(pItem)
 			if util.is_valid(pm) == false then
 				return
 			end
@@ -156,10 +164,8 @@ pfm.add_event_listener("OnFilmmakerLaunched", function(pm)
 				if fileName == nil then
 					return
 				end
-				fileName = file.remove_file_extension(fileName, { "xml" })
-				fileName = fileName .. ".xml"
-
-				xml = '<?xml version="1.0" encoding="UTF-8"?>\n' .. "<!DOCTYPE fcpxml>\n" .. xml
+				fileName = file.remove_file_extension(fileName, { "fcpxml" })
+				fileName = fileName .. ".fcpxml"
 
 				if file.write(fileName, xml) then
 					util.open_path_in_explorer(file.get_file_path(fileName), file.get_file_name(fileName))
@@ -169,5 +175,6 @@ pfm.add_event_listener("OnFilmmakerLaunched", function(pm)
 			pFileDialog:Update()
 		end)
 		pSubItem:SetName("export_timeline")
+		pSubItem:SetTooltip(locale.get_text("pfm_menu_context_export_timeline_fcpxml"))
 	end)
 end)
