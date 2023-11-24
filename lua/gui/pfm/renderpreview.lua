@@ -1028,10 +1028,22 @@ function gui.PFMRenderPreview:InitializeControls()
 	gui.PFMBaseViewport.InitializeControls(self)
 
 	local controlsWrapper = gui.create("WIBase", self.m_vpContents)
-	controlsWrapper:SetSize(64, 30)
-	local controls = gui.create("WIHBox", controlsWrapper)
-	--controls:SetHeight(self:GetHeight() -self.m_aspectRatioWrapper:GetBottom())
-	self.m_controls = controls
+	controlsWrapper:SetSize(64, 35)
+
+	self.m_playControls = gui.create("PlaybackControls", controlsWrapper)
+	self.m_playControls:SetName("playback_controls")
+	self.m_playControls:CenterToParentX()
+	self.m_playControls:SetAnchor(0.5, 0, 0.5, 0)
+	self.m_playControls:LinkToPFMProject(tool.get_filmmaker())
+
+	local controlsLeft = gui.create("WIHBox", controlsWrapper)
+	self.m_controlsLeft = controlsLeft
+
+	local controlsRight = gui.create("WIHBox", controlsWrapper)
+	self.m_controlsRight = controlsRight
+	controlsWrapper:AddCallback("SetSize", function()
+		controlsRight:SetX(controlsWrapper:GetWidth() - controlsRight:GetWidth())
+	end)
 
 	local function create_button(parent, id, text, onPress)
 		local bt = gui.create("WIPFMGenericButton", parent)
@@ -1043,7 +1055,7 @@ function gui.PFMRenderPreview:InitializeControls()
 		return bt
 	end
 
-	self.m_btCancel = create_button(controls, "bt_cancel", locale.get_text("pfm_cancel_rendering"), function()
+	self.m_btCancel = create_button(controlsLeft, "bt_cancel", locale.get_text("pfm_cancel_rendering"), function()
 		if self.m_rt:GetState() == gui.RaytracedViewport.STATE_RENDERING then
 			self:CancelRendering()
 		end
@@ -1053,7 +1065,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	end)
 	self.m_btCancel:SetVisible(false)
 
-	self.m_btStop = create_button(controls, "bt_stop", locale.get_text("pfm_stop_rendering"), function()
+	self.m_btStop = create_button(controlsLeft, "bt_stop", locale.get_text("pfm_stop_rendering"), function()
 		local scene = self.m_rt:GetRenderScene()
 		if scene == nil or scene:IsValid() == false then
 			return
@@ -1064,7 +1076,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	end)
 	self.m_btStop:SetVisible(false)
 
-	local btContainer = gui.create("WIHBox", controls)
+	local btContainer = gui.create("WIHBox", controlsLeft)
 	self.m_renderBtContainer = btContainer
 	self.m_btRefreshPreview = create_button(
 		btContainer,
@@ -1086,7 +1098,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	gui.create("WIBase", btContainer, 0, 0, 5, 1) -- Gap
 
 	self.m_btPrepare = create_button(
-		btContainer,
+		controlsRight,
 		"bt_create_render_job",
 		locale.get_text("pfm_create_render_job"),
 		function()
@@ -1095,18 +1107,16 @@ function gui.PFMRenderPreview:InitializeControls()
 	)
 	self.m_btPrepare:SetTooltip(locale.get_text("pfm_create_render_job_desc"))
 
-	gui.create("WIBase", controls, 0, 0, 5, 1) -- Gap
+	gui.create("WIBase", controlsRight, 0, 0, 5, 1) -- Gap
 
 	local btTools = gui.PFMButton.create(
-		controlsWrapper,
+		controlsRight,
 		"gui/pfm/icon_gear",
 		"gui/pfm/icon_gear_activated",
 		function() end
 	)
 	self.m_btTools = btTools
 	btTools:SetName("misc_options")
-	btTools:SetX(controlsWrapper:GetWidth() - btTools:GetWidth())
-	btTools:SetAnchor(1, 0, 1, 0)
 	btTools:SetupContextMenu(function(pContext)
 		pContext
 			:AddItem(locale.get_text("pfm_open_output_dir"), function()
@@ -1130,7 +1140,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	end)
 	self.m_btApplyPostProcessing:SetText(locale.get_text("pfm_apply_post_processing"))]]
 
-	controls:Update()
+	controlsLeft:Update()
 end
 function gui.PFMRenderPreview:OpenOutputDirectory()
 	local frameFilePath = self:GetFrameRenderOutputPath()
