@@ -40,11 +40,11 @@ function gui.PFMRenderPreview:OnInitialize()
 	gui.PFMBaseViewport.OnInitialize(self)
 
 	self.m_cbOnTimeOffsetChanged = tool.get_filmmaker():AddCallback("OnTimeOffsetChanged", function(fm, offset)
-		local imgFilePath = self:GetCurrentFrameFilePath()
+		local imgFilePath = self:GetFrameRenderOutputPath()
 		if imgFilePath == nil then
 			return
 		end
-		self.m_rt:LoadPreviewImage("render/" .. imgFilePath)
+		self.m_rt:SetPreviewImage(imgFilePath)
 		--self:UpdateDepthOfField()
 		-- self.m_test = true
 		self:EnableThinking()
@@ -79,10 +79,14 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 		local renderSettings = self.m_rt:GetRenderSettings()
 		if renderSettings:IsRenderPreview() == false and renderSettings:IsPreStageOnly() == false then
 			local outputPath = self:GetRTOutputPath()
-
-			file.create_path(util.Path(outputPath):GetPath())
+			if outputPath == nil then
+				return
+			end
+			local path = file.get_file_path(outputPath)
+			if file.exists(path) == false then
+				file.create_path(path)
+			end
 			print("Saving image as " .. outputPath .. "...")
-			local framePath = self:GetFrameFilePath(rtJob:GetRenderResultFrameIndex())
 			self.m_rt:ClearCachedPreview()
 			self.m_rt:SaveImage(outputPath, self.m_rt:GetImageSaveFormat(), renderSettings:GetHDROutput())
 			-- TODO
@@ -96,8 +100,11 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 		if outputPath == nil then
 			return
 		end
-		outputPath = util.Path(outputPath)
-		file.create_path(outputPath:GetPath())
+		local path = file.get_file_path(outputPath)
+		if file.exists(path) == false then
+			file.create_path(path)
+		end
+		outputPath = util.Path.CreateFilePath(outputPath)
 		local f = file.open(outputPath:GetString() .. ".prt", bit.bor(file.OPEN_MODE_WRITE, file.OPEN_MODE_BINARY))
 		if f == nil then
 			return
@@ -386,17 +393,13 @@ function gui.PFMRenderPreview:UpdateVRMode()
 	)
 	self.m_rt:GetToneMappedImageElement():SetVRView(enableVrView, tool.get_filmmaker())
 end
-function gui.PFMRenderPreview:GetOutputPath()
-	return pfm.get_project_manager():GetRenderOutputPath()
-end
 function gui.PFMRenderPreview:GetRTOutputPath()
 	local rtJob = self.m_rt:GetRTJob()
 	local renderSettings = self.m_rt:GetRenderSettings()
 	if renderSettings:IsRenderPreview() == true then
 		return
 	end
-	local framePath = self:GetFrameFilePath(rtJob:GetRenderResultFrameIndex())
-	local outputPath = "render/" .. framePath
+	local outputPath = tool.get_filmmaker():GetFrameRenderOutputPath(rtJob:GetRenderResultFrameIndex())
 	local remainingSubStages = rtJob:GetRenderResultRemainingSubStages()
 	if remainingSubStages > 0 then
 		outputPath = outputPath .. "_" .. remainingSubStages
@@ -1014,6 +1017,13 @@ function gui.PFMRenderPreview:UpdateVROptions()
 	end
 	self.m_ctrlResolution:SelectOption(selectedOption)
 end
+function gui.PFMRenderPreview:GetFrameRenderOutputPath(frameIndex)
+	local path = tool.get_filmmaker():GetFrameRenderOutputPath(frameIndex)
+	if path == nil then
+		return
+	end
+	return path .. "." .. util.get_image_format_file_extension(self.m_rt:GetImageSaveFormat())
+end
 function gui.PFMRenderPreview:InitializeControls()
 	gui.PFMBaseViewport.InitializeControls(self)
 
@@ -1100,11 +1110,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	btTools:SetupContextMenu(function(pContext)
 		pContext
 			:AddItem(locale.get_text("pfm_open_output_dir"), function()
-				local path = util.Path(self:GetOutputPath()) + self:GetCurrentFrameFilePath()
-				util.open_path_in_explorer(
-					path:GetPath(),
-					path:GetFileName() .. "." .. util.get_image_format_file_extension(self.m_rt:GetImageSaveFormat())
-				)
+				self:OpenOutputDirectory()
 			end)
 			:SetName("open_output_dir")
 	end, true)
@@ -1126,6 +1132,18 @@ function gui.PFMRenderPreview:InitializeControls()
 
 	controls:Update()
 end
+function gui.PFMRenderPreview:OpenOutputDirectory()
+	local frameFilePath = self:GetFrameRenderOutputPath()
+	if frameFilePath == nil then
+		return
+	end
+	local path = util.Path.CreateFilePath(frameFilePath)
+	if file.exists(frameFilePath) then
+		util.open_path_in_explorer(path:GetPath(), path:GetFileName())
+	else
+		util.open_path_in_explorer(path:GetPath())
+	end
+end
 function gui.PFMRenderPreview:GetMiscOptionsButton()
 	return self.m_btTools
 end
@@ -1144,8 +1162,7 @@ function gui.PFMRenderPreview:OnThink()
 
 	-- self:UpdateDepthOfField()
 	local filmmaker = tool.get_filmmaker()
-	local framePath = self:GetFrameFilePath(filmmaker:GetClampedFrameOffset())
-	local outputPath = "render/" .. framePath
+	local outputPath = filmmaker:GetFrameRenderOutputPath(filmmaker:GetClampedFrameOffset())
 	self.m_rt:SaveImage(outputPath)
 
 	local nextFrame = self.m_applyPostProcessing.curFrame + 1
@@ -1156,32 +1173,6 @@ function gui.PFMRenderPreview:OnThink()
 		return
 	end
 	filmmaker:GoToFrame(nextFrame)
-end
-function gui.PFMRenderPreview:GetFrameFilePath(frameIndex)
-	local filmmaker = tool.get_filmmaker()
-	local frameOffset = filmmaker:GetActiveFilmClipFrameOffset(frameIndex)
-	if frameOffset == nil then
-		return
-	end
-	frameOffset = filmmaker:GetClampedFrameOffset(frameOffset)
-
-	local mainFilmClip = filmmaker:GetMainFilmClip()
-	local activeFilmClip = filmmaker:GetActiveFilmClip()
-	if mainFilmClip == nil or activeFilmClip == nil then
-		return
-	end
-	local filmClipName = mainFilmClip:GetName()
-	if #filmClipName == 0 then
-		filmClipName = "unnamed"
-	end
-	local activeFilmClipName = activeFilmClip:GetName()
-	if #activeFilmClipName == 0 then
-		activeFilmClipName = "unnamed"
-	end
-	return filmClipName .. "/" .. activeFilmClipName .. "/frame" .. string.fill_zeroes(tostring(frameOffset + 1), 4)
-end
-function gui.PFMRenderPreview:GetCurrentFrameFilePath()
-	return self:GetFrameFilePath(tool.get_filmmaker():GetFrameOffset())
 end
 function gui.PFMRenderPreview:IsRendering()
 	return self.m_rt:IsRendering()

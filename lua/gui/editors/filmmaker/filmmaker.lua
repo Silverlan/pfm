@@ -474,7 +474,45 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetSkinCallbacksEnabled(true)
 	pfm.call_event_listeners("OnFilmmakerInitialized", self)
 end
-function gui.WIFilmmaker:GetRenderOutputPath()
+function gui.WIFilmmaker:GetFrameRenderOutputFileName(frameIndex)
+	frameIndex = frameIndex or self:GetFrameOffset()
+	local frameOffset = self:GetActiveFilmClipFrameOffset(frameIndex)
+	if frameOffset == nil then
+		return
+	end
+	frameOffset = self:GetClampedFrameOffset(frameOffset)
+	return "frame" .. string.fill_zeroes(tostring(frameOffset + 1), 4)
+end
+function gui.WIFilmmaker:GetFrameRenderOutputPath(frameIndex)
+	local path = self:GetRenderOutputPath()
+	if path == nil then
+		return
+	end
+	return path .. self:GetFrameRenderOutputFileName(frameIndex)
+end
+function gui.WIFilmmaker:GetRenderOutputPath(mainFilmClip, activeFilmClip)
+	mainFilmClip = mainFilmClip or self:GetMainFilmClip()
+	activeFilmClip = activeFilmClip or self:GetActiveFilmClip()
+	if mainFilmClip == nil or activeFilmClip == nil then
+		return
+	end
+	local filmClipName = mainFilmClip:GetName()
+	if #filmClipName == 0 then
+		filmClipName = "unnamed"
+	end
+	local activeFilmClipName = activeFilmClip:GetName()
+	if #activeFilmClipName == 0 then
+		activeFilmClipName = "unnamed"
+	end
+	local path = "render/" .. filmClipName .. "/" .. activeFilmClipName .. "/"
+	if file.exists(path) then
+		-- Render location already exists, maybe in an addon other than "filmmaker", so we'll prioritize that.
+		return file.find_absolute_path(path)
+	end
+	-- If the path doesn't exist, we'll default to "addons/filmmaker/<path>"
+	return util.get_addon_path() .. path
+end
+function gui.WIFilmmaker:GetMainRenderOutputPath()
 	return util.Path(util.get_addon_path() .. "render/"):GetString()
 end
 function gui.WIFilmmaker:ShouldDisplayNotification(id, markAsDisplayed)

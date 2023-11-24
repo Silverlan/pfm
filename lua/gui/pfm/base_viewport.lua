@@ -23,6 +23,7 @@ function gui.PFMBaseViewport:OnInitialize()
 
 	self.m_vpContents = gui.create("WIVBox", self.m_contents)
 	self.m_vpContents:SetAutoFillContents(true)
+	self.m_vpContents:SetName("left_contents")
 
 	local titleBar = gui.create("WIBase", self.m_vpContents)
 	titleBar:SetWidth(self.m_vpContents:GetWidth())
