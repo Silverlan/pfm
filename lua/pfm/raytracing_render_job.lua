@@ -332,6 +332,7 @@ function pfm.RaytracingRenderJob:GenerateResult()
 	else
 		self.m_currentImageBuffer = util.ImageBuffer.CreateCubemap(self.m_imageBuffers)
 	end
+	self.m_imageBuffers = {}
 	self.m_renderResult = pfm.util.generate_thumbnail_texture(self.m_currentImageBuffer, imgCreateInfo)
 	self.m_renderResult:SetDebugName("raytracing_render_job_result_tex")
 end
