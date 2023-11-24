@@ -7,6 +7,7 @@
 ]]
 
 include("/gui/raytracedviewport.lua")
+include("thumbnail_image.lua")
 
 util.register_class("gui.PFMRaytracedAnimationViewport", gui.RaytracedViewport)
 function gui.PFMRaytracedAnimationViewport:__init()
@@ -63,8 +64,15 @@ function gui.PFMRaytracedAnimationViewport:OnInitialize()
 		end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
+
+	local elThumbnail = gui.create("WIPFMThumbnailImage", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_elThumbnail = elThumbnail
+
 	self:SetParticleSystemColorFactor(Vector4(1, 1, 1, 1))
 	self:SetImageSaveFormat(util.IMAGE_FORMAT_HDR)
+end
+function gui.PFMRaytracedAnimationViewport:SetPreviewImage(imgFilePath)
+	self.m_elThumbnail:LoadImage(imgFilePath)
 end
 function gui.PFMRaytracedAnimationViewport:SetSaveAsHDR(saveAsHdr)
 	self.m_saveAsHdr = saveAsHdr
@@ -91,301 +99,6 @@ function gui.PFMRaytracedAnimationViewport:GetImageSaveFormat()
 end
 function gui.PFMRaytracedAnimationViewport:GetRTJob()
 	return self.m_rtJob
-end
-function gui.PFMRaytracedAnimationViewport:LoadPreviewMaterial(reload)
-	if self.m_curImagePath == nil then
-		return
-	end
-	local thumbnailLocation = "render_previews/" .. util.get_string_hash(self.m_curImagePath)
-	local matPath = thumbnailLocation
-	if asset.exists(matPath, asset.TYPE_MATERIAL) == false then
-		return
-	end
-	return game.load_material(thumbnailLocation, reload or false, true)
-end
-function gui.PFMRaytracedAnimationViewport:LoadPreviewImage(filePath, reload, dontGenerate)
-	if self.m_imgJob ~= nil then
-		self.m_imgJob:Cancel()
-	end
-	self.m_imgJob = nil
-
-	local displayTex = self:GetToneMappedImageElement()
-	displayTex:SetTexture()
-
-	self.m_curImagePath = filePath
-	self.m_highDefImageLoaded = false
-
-	local thumbnailLocation = "render_previews/" .. util.get_string_hash(filePath)
-	local matPath = thumbnailLocation
-	if asset.exists(matPath, asset.TYPE_MATERIAL) == false then
-		if dontGenerate == true then
-			return false
-		end
-		if self:GeneratePreviewImage(filePath) == false then
-			return false
-		end
-	end
-	local mat = self:LoadPreviewMaterial(reload)
-	if mat == nil or mat:IsError() then
-		return false
-	end
-
-	local luminance = util.Luminance.get_material_luminance(mat) or util.Luminance()
-	displayTex:SetLuminance(luminance)
-
-	local tex = mat:GetTextureInfo("albedo_map")
-	tex = (tex ~= nil) and tex:GetTexture() or nil
-	tex = (tex ~= nil) and tex:GetVkTexture() or nil
-	if tex == nil then
-		return false
-	end
-	displayTex:SetTexture(tex)
-
-	self.m_tLoadHighDefImageDelay = time.real_time() + 0.2
-	self:UpdateThinkState()
-	return true
-end
-function gui.PFMRaytracedAnimationViewport:LoadHighDefImage(waitForCompletion, reload)
-	if self.m_highDefImageLoaded == true and reload ~= true then
-		return true
-	end
-	if self.m_imgJob ~= nil then
-		if waitForCompletion then
-			self.m_imgJob:Wait()
-			self:InitializeHighDefImage()
-			return true
-		end
-		return false
-	end
-	self.m_tLoadHighDefImageDelay = nil
-	if self.m_curImagePath == nil then
-		return false
-	end
-	local path = self.m_curImagePath
-	if self.m_imgJob ~= nil then
-		self.m_imgJob:Cancel()
-	end
-	-- Loading the image may take some time, so we'll do it on a separate thread in the background.
-	-- Once loaded, the algorithm continues in :OnThink
-	print(path .. ".hdr")
-	self.m_imgJob = util.load_image(path .. ".hdr", true, util.ImageBuffer.FORMAT_RGBA_HDR)
-	if self.m_imgJob == nil then
-		return false
-	end
-	self.m_imgJob:Start()
-
-	self:UpdateThinkState()
-	if waitForCompletion then
-		return self:LoadHighDefImage(true)
-	end
-	return false
-end
-function gui.PFMRaytracedAnimationViewport:InitializeHighDefImage()
-	if true then
-		return
-	end -- TODO
-	if self.m_imgJob:IsSuccessful() then
-		-- HDR image has been loaded; Apply it instead of the preview image
-		local imgBuf = self.m_imgJob:GetResult()
-		local texHdr = self:InitializeSceneTexture(imgBuf:GetWidth(), imgBuf:GetHeight())
-		if texHdr == nil then
-			return
-		end
-		local buf = prosper.util.allocate_temporary_buffer(imgBuf:GetSize())
-		buf:WriteMemory(0, imgBuf:GetData())
-
-		local drawCmd = game.get_setup_command_buffer()
-		drawCmd:RecordImageBarrier(
-			texHdr:GetImage(),
-			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			prosper.ACCESS_SHADER_READ_BIT,
-			prosper.ACCESS_TRANSFER_WRITE_BIT
-		)
-		drawCmd:RecordBufferBarrier(
-			buf,
-			prosper.PIPELINE_STAGE_ALL_COMMANDS,
-			prosper.PIPELINE_STAGE_ALL_COMMANDS,
-			prosper.ACCESS_MEMORY_WRITE_BIT,
-			prosper.ACCESS_SHADER_READ_BIT
-		)
-		drawCmd:RecordCopyBufferToImage(buf, texHdr:GetImage())
-		drawCmd:RecordBufferBarrier(
-			buf,
-			prosper.PIPELINE_STAGE_ALL_COMMANDS,
-			prosper.PIPELINE_STAGE_ALL_COMMANDS,
-			prosper.ACCESS_SHADER_READ_BIT,
-			prosper.ACCESS_MEMORY_WRITE_BIT
-		)
-		drawCmd:RecordImageBarrier(
-			texHdr:GetImage(),
-			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			prosper.ACCESS_TRANSFER_WRITE_BIT,
-			prosper.ACCESS_SHADER_READ_BIT
-		)
-		game.flush_setup_command_buffer()
-		self:GetToneMappedImageElement():SetTexture(texHdr)
-		buf = nil
-		collectgarbage()
-	else
-		-- Clear to black
-		local drawCmd = game.get_setup_command_buffer()
-		drawCmd:RecordImageBarrier(
-			texHdr:GetImage(),
-			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			prosper.ACCESS_SHADER_READ_BIT,
-			prosper.ACCESS_TRANSFER_WRITE_BIT
-		)
-		drawCmd:RecordClearImage(texHdr:GetImage(), Color.Black)
-		drawCmd:RecordImageBarrier(
-			texHdr:GetImage(),
-			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			prosper.PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			prosper.ACCESS_TRANSFER_WRITE_BIT,
-			prosper.ACCESS_SHADER_READ_BIT
-		)
-		game.flush_setup_command_buffer()
-	end
-	self.m_highDefImageLoaded = true
-	self.m_imgJob = nil
-	self:UpdateThinkState()
-end
-function gui.PFMRaytracedAnimationViewport:GeneratePreviewImage(path, renderSettings)
-	local imgTonemapped = self:ApplyToneMapping(shader.TONE_MAPPING_GAMMA_CORRECTION)
-	if imgTonemapped == nil then
-		return false
-	end
-
-	-- Update luminance
-	local drawCmd = game.get_setup_command_buffer()
-	local buf = self:ComputeLuminance(drawCmd)
-	game.flush_setup_command_buffer()
-	self:SetLuminance(shader.PFMCalcImageLuminance.read_luminance(buf))
-
-	-- TODO: Downscale image
-	local thumbnailLocation = "render_previews/" .. util.get_string_hash(path)
-	local texInfo = util.TextureInfo()
-	texInfo.inputFormat = util.TextureInfo.INPUT_FORMAT_R16G16B16A16_FLOAT
-	texInfo.outputFormat = util.TextureInfo.OUTPUT_FORMAT_COLOR_MAP
-	texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
-	result = util.save_image(imgTonemapped, "materials/" .. thumbnailLocation, texInfo)
-	if result then
-		local mat = game.create_material(thumbnailLocation, "wguitextured")
-		mat:SetTexture("albedo_map", thumbnailLocation)
-
-		local luminance = self:GetLuminance()
-		util.Luminance.set_material_luminance(mat, luminance)
-		local db = mat:GetDataBlock()
-
-		if renderSettings ~= nil then
-			local dbRenderSettings = db:AddBlock("pfm_render_settings")
-			dbRenderSettings:SetValue("int", "render_mode", tostring(renderSettings:GetRenderMode()))
-			dbRenderSettings:SetValue("int", "samples", tostring(renderSettings:GetSamples()))
-			dbRenderSettings:SetValue("string", "sky", renderSettings:GetSky())
-			dbRenderSettings:SetValue("float", "sky_strength", tostring(renderSettings:GetSkyStrength()))
-			dbRenderSettings:SetValue("float", "sky_yaw", tostring(renderSettings:GetSkyYaw()))
-			dbRenderSettings:SetValue("float", "emission_strength", tostring(renderSettings:GetEmissionStrength()))
-			dbRenderSettings:SetValue(
-				"int",
-				"max_transparency_bounces",
-				tostring(renderSettings:GetMaxTransparencyBounces())
-			)
-			dbRenderSettings:SetValue(
-				"float",
-				"light_intensity_factor",
-				tostring(renderSettings:GetLightIntensityFactor())
-			)
-			dbRenderSettings:SetValue("bool", "denoise", renderSettings:GetDenoise() and "1" or "0")
-			dbRenderSettings:SetValue("bool", "render_world", renderSettings:GetRenderWorld() and "1" or "0")
-			dbRenderSettings:SetValue(
-				"bool",
-				"render_game_entities",
-				renderSettings:GetRenderGameEntities() and "1" or "0"
-			)
-			dbRenderSettings:SetValue("int", "cam_type", tostring(renderSettings:GetCamType()))
-			dbRenderSettings:SetValue("int", "panorama_type", tostring(renderSettings:GetPanoramaType()))
-			dbRenderSettings:SetValue("int", "width", tostring(renderSettings:GetWidth()))
-			dbRenderSettings:SetValue("int", "height", tostring(renderSettings:GetHeight()))
-			dbRenderSettings:SetValue(
-				"bool",
-				"camera_frustum_culling_enabled",
-				renderSettings:IsCameraFrustumCullingEnabled() and "1" or "0"
-			)
-			dbRenderSettings:SetValue(
-				"bool",
-				"pvs_culling_enabled",
-				renderSettings:IsPVSCullingEnabled() and "1" or "0"
-			)
-		end
-
-		mat:Save(thumbnailLocation)
-	end
-	self:LoadPreviewImage(path, true)
-	return true
-end
-function gui.PFMRaytracedAnimationViewport:ApplyRenderSettings(renderSettings)
-	local renderTab = tool.get_filmmaker():GetRenderTab()
-	if renderSettings:HasValue("render_mode") then
-		renderTab:GetControl("render_mode"):SelectOption(tostring(renderSettings:GetInt("render_mode")))
-	end
-	if renderSettings:HasValue("samples") then
-		renderTab:GetControl("samples"):SetValue(renderSettings:GetInt("samples"))
-	end
-	if renderSettings:HasValue("sky") then
-		renderTab:GetControl("sky"):SetValue(renderSettings:GetString("sky"))
-	end
-	if renderSettings:HasValue("sky_strength") then
-		renderTab:GetControl("sky_strength"):SetValue(renderSettings:GetFloat("sky_strength"))
-	end
-	if renderSettings:HasValue("sky_yaw") then
-		renderTab:GetControl("sky_yaw"):SetValue(renderSettings:GetFloat("sky_yaw"))
-	end
-	if renderSettings:HasValue("emission_strength") then
-		renderTab:GetControl("emission_strength"):SetValue(renderSettings:GetFloat("emission_strength"))
-	end
-	if renderSettings:HasValue("max_transparency_bounces") then
-		renderTab:GetControl("max_transparency_bounces"):SetValue(renderSettings:GetInt("max_transparency_bounces"))
-	end
-	if renderSettings:HasValue("light_intensity_factor") then
-		renderTab:GetControl("light_intensity_factor"):SetValue(renderSettings:GetFloat("light_intensity_factor"))
-	end
-	if renderSettings:HasValue("denoise") then
-		renderTab:GetControl("denoise"):SetChecked(renderSettings:GetBool("denoise"))
-	end
-	if renderSettings:HasValue("render_world") then
-		renderTab:GetControl("render_world"):SetChecked(renderSettings:GetBool("render_world"))
-	end
-	if renderSettings:HasValue("render_game_entities") then
-		renderTab:GetControl("render_game_entities"):SetChecked(renderSettings:GetBool("render_game_entities"))
-	end
-	if renderSettings:HasValue("cam_type") then
-		renderTab:GetControl("cam_type"):SelectOption(tostring(renderSettings:GetInt("cam_type")))
-	end
-	if renderSettings:HasValue("panorama_type") then
-		renderTab:GetControl("panorama_type"):SelectOption(tostring(renderSettings:GetInt("panorama_type")))
-	end
-	if renderSettings:HasValue("width") and renderSettings:HasValue("height") then
-		renderTab:GetControl("resolution"):ClearSelectedOption()
-		renderTab
-			:GetControl("resolution")
-			:SetText(renderSettings:GetInt("width") .. "x" .. renderSettings:GetInt("height"))
-	end
-	if renderSettings:HasValue("camera_frustum_culling_enabled") then
-		renderTab:GetControl("frustum_culling"):SetChecked(renderSettings:GetBool("camera_frustum_culling_enabled"))
-	end
-	if renderSettings:HasValue("pvs_culling_enabled") then
-		renderTab:GetControl("pvs_culling"):SetChecked(renderSettings:GetBool("pvs_culling_enabled"))
-	end
 end
 function gui.PFMRaytracedAnimationViewport:ClearCachedPreview()
 	if self.m_curImagePath == nil then
@@ -522,25 +235,10 @@ function gui.PFMRaytracedAnimationViewport:RenderPragmaParticleSystems(tex, draw
 	return rtOutput
 end
 function gui.PFMRaytracedAnimationViewport:UpdateThinkState()
-	if self.m_imgJob ~= nil or self.m_tLoadHighDefImageDelay ~= nil then
-		self:EnableThinking()
-		self:SetAlwaysUpdate(true)
-		return
-	end
 	gui.RaytracedViewport.UpdateThinkState(self)
 end
 function gui.PFMRaytracedAnimationViewport:OnThink()
 	gui.RaytracedViewport.OnThink(self)
-
-	if self.m_tLoadHighDefImageDelay ~= nil and time.real_time() >= self.m_tLoadHighDefImageDelay then
-		self.m_tLoadHighDefImageDelay = nil
-		self:LoadHighDefImage()
-	end
-
-	if self.m_imgJob == nil or self.m_imgJob:IsComplete() == false then
-		return
-	end
-	self:InitializeHighDefImage()
 end
 function gui.PFMRaytracedAnimationViewport:InitializeStagingTexture(w, h)
 	if

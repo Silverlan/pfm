@@ -325,53 +325,14 @@ function pfm.RaytracingRenderJob:GenerateResult()
 	if #self.m_imageBuffers == 0 then
 		return
 	end
-	local img
 	local cubemap = (#self.m_imageBuffers > 1)
 	local imgCreateInfo = prosper.create_image_create_info(self.m_imageBuffers[1], cubemap)
-	imgCreateInfo.usageFlags = bit.bor(
-		imgCreateInfo.usageFlags,
-		prosper.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-		prosper.IMAGE_USAGE_TRANSFER_SRC_BIT,
-		prosper.IMAGE_USAGE_TRANSFER_DST_BIT
-	)
 	if cubemap == false then
 		self.m_currentImageBuffer = self.m_imageBuffers[1]
 	else
 		self.m_currentImageBuffer = util.ImageBuffer.CreateCubemap(self.m_imageBuffers)
 	end
-	local w = self.m_currentImageBuffer:GetWidth()
-	local h = self.m_currentImageBuffer:GetHeight()
-
-	-- Maximum extent for preview image
-	-- TODO: Make this dependent on the resolution
-	local maxPreviewExtent = 1600
-	if w > maxPreviewExtent then
-		local f = maxPreviewExtent / w
-		w = maxPreviewExtent
-		h = math.round(h * f)
-	end
-	if h > maxPreviewExtent then
-		local f = maxPreviewExtent / h
-		h = maxPreviewExtent
-		w = math.round(w * f)
-	end
-
-	local downscaled = self.m_currentImageBuffer:Copy()
-	if opencv ~= nil then
-		downscaled = opencv.resize(self.m_currentImageBuffer, w, h)
-	end
-	imgCreateInfo.width = downscaled:GetWidth()
-	imgCreateInfo.height = downscaled:GetHeight()
-	img = prosper.create_image(downscaled, imgCreateInfo)
-	self.m_imageBuffers = {}
-
-	local imgViewCreateInfo = prosper.ImageViewCreateInfo()
-	imgViewCreateInfo.swizzleAlpha = prosper.COMPONENT_SWIZZLE_ONE -- We'll ignore the alpha value
-	local samplerCreateInfo = prosper.SamplerCreateInfo()
-	samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors
-	samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
-	samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
-	self.m_renderResult = prosper.create_texture(img, prosper.TextureCreateInfo(), imgViewCreateInfo, samplerCreateInfo)
+	self.m_renderResult = pfm.util.generate_thumbnail_texture(self.m_currentImageBuffer, imgCreateInfo)
 	self.m_renderResult:SetDebugName("raytracing_render_job_result_tex")
 end
 function pfm.RaytracingRenderJob:Update()
