@@ -10,6 +10,7 @@ include("/shaders/pfm/pfm_tonemapping.lua")
 include("/shaders/pfm/pfm_calc_image_luminance.lua")
 include("/util/image_processor.lua")
 include("/gui/vr_view.lua")
+include("/gui/pfm/thumbnail_image.lua")
 
 util.register_class("gui.RenderImage", gui.Base, gui.VRView)
 
@@ -29,7 +30,7 @@ function gui.RenderImage:OnInitialize()
 	self:SetLuminance(util.Luminance())
 	self:SetVRCamera(game.get_scene():GetActiveCamera())
 
-	local elTex = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	local elTex = gui.create("WIPFMThumbnailImage", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_elTex = elTex
 
 	--self.m_dofSettings = shader.PFMDepthOfField.DOFSettings()
@@ -315,8 +316,17 @@ function gui.RenderImage:RenderDOF(drawCmd)
 	)
 	self:RenderParticleSystems()
 end
+function gui.RenderImage:ApplyTexture(tex)
+	self.m_elTex:SetTexture(tex)
+end
 function gui.RenderImage:GetTexture()
 	return self.m_elTex:GetTexture()
+end
+function gui.RenderImage:ClearTexture()
+	self.m_elTex:ClearTexture()
+end
+function gui.RenderImage:SetImage(imgPath)
+	self.m_elTex:LoadImage(imgPath)
 end
 function gui.RenderImage:GetDescriptorSet()
 	return self.m_dsTonemapping

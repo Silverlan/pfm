@@ -65,14 +65,15 @@ function gui.PFMRaytracedAnimationViewport:OnInitialize()
 		return util.EVENT_REPLY_UNHANDLED
 	end)
 
-	local elThumbnail = gui.create("WIPFMThumbnailImage", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_elThumbnail = elThumbnail
-
 	self:SetParticleSystemColorFactor(Vector4(1, 1, 1, 1))
 	self:SetImageSaveFormat(util.IMAGE_FORMAT_HDR)
 end
 function gui.PFMRaytracedAnimationViewport:SetPreviewImage(imgFilePath)
-	self.m_elThumbnail:LoadImage(imgFilePath)
+	if imgFilePath == nil then
+		self.m_tex:ClearTexture()
+	else
+		self.m_tex:SetImage(imgFilePath)
+	end
 end
 function gui.PFMRaytracedAnimationViewport:SetSaveAsHDR(saveAsHdr)
 	self.m_saveAsHdr = saveAsHdr

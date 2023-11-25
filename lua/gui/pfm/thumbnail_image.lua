@@ -6,6 +6,16 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+local function get_thumbnail_material(imgPath)
+	return "render_previews/" .. util.get_string_hash(imgPath)
+end
+
+function pfm.util.delete_thumbnail_image(imgPath)
+	pfm.log("Deleting thumbnail material and texture '" .. imgPath .. "'...", pfm.LOG_CATEGORY_PFM)
+	local matPath = get_thumbnail_material(imgPath)
+	asset.delete(matPath, asset.TYPE_MATERIAL)
+	asset.delete(matPath, asset.TYPE_TEXTURE)
+end
 function pfm.util.downscale_thumbnail_image(imgBuf, width)
 	local w = imgBuf:GetWidth()
 	local h = imgBuf:GetHeight()
@@ -60,6 +70,17 @@ function Element:OnInitialize()
 	local elTex = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_elTex = elTex
 end
+function Element:SetTexture(tex)
+	self:Reset()
+	self.m_elTex:SetTexture(tex)
+end
+function Element:GetTexture()
+	return self.m_elTex:GetTexture()
+end
+function Element:ClearTexture()
+	self:Reset()
+	return self.m_elTex:ClearTexture()
+end
 function Element:LoadImage(imgPath)
 	self:Reset()
 	if self:IsHidden() then
@@ -69,6 +90,7 @@ function Element:LoadImage(imgPath)
 	end
 
 	if self:LoadPreviewImage(imgPath) == false then
+		self:ClearTexture()
 		return
 	end
 	self.m_curImgPath = imgPath
@@ -131,13 +153,23 @@ function Element:Reset()
 end
 
 function Element:LoadPreviewImage(filePath, reload, dontGenerate)
-	local thumbnailLocation = "render_previews/" .. util.get_string_hash(filePath)
+	local thumbnailLocation = get_thumbnail_material(filePath)
+	pfm.log("Loading thumbnail '" .. thumbnailLocation .. "' for image '" .. filePath .. "'...", pfm.LOG_CATEGORY_PFM)
 	local matPath = thumbnailLocation
 	if asset.exists(matPath, asset.TYPE_MATERIAL) == false then
 		if dontGenerate == true then
 			return false
 		end
+		pfm.log(
+			"Generating thumbnail '" .. thumbnailLocation .. "' for image '" .. filePath .. "'...",
+			pfm.LOG_CATEGORY_PFM
+		)
 		if self:GeneratePreviewImage(filePath) == false then
+			pfm.log(
+				"Failed to generate thumbnail '" .. thumbnailLocation .. "' for image '" .. filePath .. "'...",
+				pfm.LOG_CATEGORY_PFM,
+				pfm.LOG_SEVERITY_WARNING
+			)
 			return false
 		end
 	end
@@ -164,6 +196,11 @@ function Element:InitializeHighDefImage(imgBuf)
 	self.m_imgJob = nil
 end
 function Element:GeneratePreviewImage(path)
+	-- We need to make sure the frame has been written to disk before we generate the preview image.
+	-- We can ensure this by running the garbage collector twice
+	collectgarbage()
+	collectgarbage()
+
 	local imgBuf = util.load_image(path, false)
 	if imgBuf == nil then
 		return false
@@ -174,7 +211,7 @@ function Element:GeneratePreviewImage(path)
 	-- Create texture
 	local imgCreateInfo = prosper.create_image_create_info(imgBuf)
 	local img = prosper.create_image(imgBuf, imgCreateInfo)
-	local thumbnailLocation = "render_previews/" .. util.get_string_hash(path)
+	local thumbnailLocation = get_thumbnail_material(path)
 	local texInfo = util.TextureInfo()
 	texInfo.inputFormat = util.TextureInfo.INPUT_FORMAT_R8G8B8A8_UINT
 	texInfo.outputFormat = util.TextureInfo.OUTPUT_FORMAT_COLOR_MAP

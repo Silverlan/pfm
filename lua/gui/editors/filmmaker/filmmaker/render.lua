@@ -29,7 +29,7 @@ function Element:StopLiveRaytracing()
 end
 function Element:IsRendering()
 	local vp = self:GetRenderTab()
-	return util.is_valid(vp) and vp:IsRendering()
+	return util.is_valid(vp) and vp:IsRenderingFrame()
 end
 function Element:PreRenderScenes(drawSceneInfo)
 	if self.m_overlaySceneEnabled ~= true or self.m_nonOverlayRtTexture == nil then

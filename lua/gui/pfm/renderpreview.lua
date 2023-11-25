@@ -40,16 +40,24 @@ function gui.PFMRenderPreview:OnInitialize()
 	gui.PFMBaseViewport.OnInitialize(self)
 
 	self.m_cbOnTimeOffsetChanged = tool.get_filmmaker():AddCallback("OnTimeOffsetChanged", function(fm, offset)
-		local imgFilePath = self:GetFrameRenderOutputPath()
-		if imgFilePath == nil then
-			return
+		if self:IsRendering() == false then
+			self:LoadPreviewImage()
 		end
-		self.m_rt:SetPreviewImage(imgFilePath)
 		--self:UpdateDepthOfField()
 		-- self.m_test = true
 		self:EnableThinking()
 	end)
 	self.m_settingsBox:ResetControls()
+
+	self:LoadPreviewImage()
+end
+function gui.PFMRenderPreview:LoadPreviewImage()
+	local imgFilePath = self:GetFrameRenderOutputPath()
+	if imgFilePath == nil then
+		self.m_rt:ClearTexture()
+		return
+	end
+	self.m_rt:SetPreviewImage(imgFilePath)
 end
 function gui.PFMRenderPreview:InitializeViewport(parent)
 	gui.PFMBaseViewport.InitializeViewport(self, parent)
@@ -88,9 +96,12 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 			end
 			print("Saving image as " .. outputPath .. "...")
 			self.m_rt:ClearCachedPreview()
-			self.m_rt:SaveImage(outputPath, self.m_rt:GetImageSaveFormat(), renderSettings:GetHDROutput())
-			-- TODO
-			-- self.m_rt:GeneratePreviewImage("render/" .. framePath,self.m_rt:GetRenderResultRenderSettings())
+			local res, fileName =
+				self.m_rt:SaveImage(outputPath, self.m_rt:GetImageSaveFormat(), renderSettings:GetHDROutput())
+
+			if fileName ~= nil then
+				pfm.util.delete_thumbnail_image(fileName)
+			end
 		end
 
 		util.remove(self.m_renderProgressBar)

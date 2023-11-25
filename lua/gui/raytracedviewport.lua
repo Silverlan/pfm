@@ -94,15 +94,15 @@ function gui.RaytracedViewport:SaveImage(path, imgFormat, hdr)
 	path = path .. ".hdr"
 	file.create_path(file.get_file_path(path))
 	--local result,err = opencv.save(imgBuf,path) -- TODO: Doesn't save HDR for some reason
-	local result = util.save_image(imgBuf, path, imgFormat, 1.0, task)
+	local result, fileName = util.save_image(imgBuf, path, imgFormat, 1.0, task)
 	self.m_threadPool:AddTask(task)
-	if result == nil then
+	if result == false then
 		pfm.log("Unable to save image as '" .. path .. "'!", pfm.LOG_CATEGORY_PFM_RENDER, pfm.LOG_SEVERITY_WARNING)
 	else
-		pfm.log("Saving image as '" .. path .. "'...!", pfm.LOG_CATEGORY_PFM_RENDER)
+		pfm.log("Saving image as '" .. fileName .. "'...!", pfm.LOG_CATEGORY_PFM_RENDER)
 	end
 	collectgarbage()
-	return result
+	return result, fileName
 end
 function gui.RaytracedViewport:ApplyToneMapping(toneMapping)
 	if true then
@@ -196,6 +196,9 @@ function gui.RaytracedViewport:OnRemove()
 	self:CancelRendering()
 	self:ClearJob()
 end
+function gui.RaytracedViewport:IsRendering()
+	return self.m_state == gui.RaytracedViewport.STATE_RENDERING
+end
 function gui.RaytracedViewport:ClearJob()
 	self.m_rendering = false
 	self.m_rtJob = nil
@@ -210,7 +213,7 @@ function gui.RaytracedViewport:CancelRendering()
 	self:UpdateThinkState()
 	-- self.m_rtJob = nil
 end
-function gui.RaytracedViewport:IsRendering()
+function gui.RaytracedViewport:IsRenderingFrame()
 	return (self.m_rtJob ~= nil) and self.m_rtJob:IsRendering() or false
 end
 function gui.RaytracedViewport:UpdateThinkState()
@@ -248,7 +251,11 @@ function gui.RaytracedViewport:OnThink()
 				-- particles. Particle effects are rendered in post-processing with Pragma.
 				self.m_renderResultSettings = self.m_rtJob:GetSettings():Copy()
 
-				self.m_tex:SetTexture(tex)
+				pfm.log(
+					"Applying rendered texture '" .. tostring(tex) .. "' to render panel image...",
+					pfm.LOG_CATEGORY_PFM
+				)
+				self.m_tex:ApplyTexture(tex)
 				-- self:ApplyPostProcessing(tex)
 			end
 
@@ -316,7 +323,7 @@ function gui.RaytracedViewport:GetRenderResultRenderSettings()
 	return self.m_renderResultSettings
 end
 function gui.RaytracedViewport:GetRenderScene()
-	if self.m_rtJob == nil or self:IsRendering() == false then
+	if self.m_rtJob == nil or self:IsRenderingFrame() == false then
 		return
 	end
 	local scene = self.m_rtJob:GetRenderScene()
