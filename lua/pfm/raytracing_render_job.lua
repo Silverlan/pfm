@@ -236,11 +236,10 @@ function pfm.RaytracingRenderJob:__init(settings, frameHandler)
 	self.m_gameScene = game.get_scene()
 	self:SetAutoAdvanceSequence(false)
 end
-pfm.RaytracingRenderJob.generate_job_batch_script = function(jobFiles, wd, addonPath)
+pfm.RaytracingRenderJob.generate_job_batch_script = function(jobFiles)
 	if #jobFiles == 0 then
 		return
 	end
-	addonPath = addonPath or util.get_addon_path()
 	local shellFileName
 	local toolName
 	if os.SYSTEM_WINDOWS then
@@ -252,21 +251,23 @@ pfm.RaytracingRenderJob.generate_job_batch_script = function(jobFiles, wd, addon
 	end
 
 	local path = file.get_file_path(jobFiles[1])
-	file.create_path(path)
-	local f = file.open(addonPath .. path .. shellFileName, bit.bor(file.OPEN_MODE_BINARY, file.OPEN_MODE_WRITE))
+	if file.exists(path) == false then
+		file.create_path(path)
+	end
+	local f = file.open(path .. shellFileName, bit.bor(file.OPEN_MODE_BINARY, file.OPEN_MODE_WRITE))
 	if f ~= nil then
-		local workingPath = wd or engine.get_working_directory()
+		local workingPath = engine.get_working_directory()
 		local files = {}
 		for _, f in ipairs(jobFiles) do
 			table.insert(files, file.get_file_name(f))
 		end
-		file.write(addonPath .. path .. "job_list.txt", string.join(files, "\n"))
+		file.write(path .. "job_list.txt", string.join(files, "\n"))
 
-		local cmd = '"' .. workingPath .. toolName .. '" -job="' .. workingPath .. addonPath .. path .. 'job_list.txt"'
+		local cmd = '"' .. workingPath .. toolName .. '" -job="' .. workingPath .. path .. 'job_list.txt"'
 		f:WriteString(cmd)
 		f:Close()
 
-		util.open_path_in_explorer(addonPath .. path, shellFileName)
+		util.open_path_in_explorer(path, shellFileName)
 	end
 end
 function pfm.RaytracingRenderJob:GetPreStageScene()
