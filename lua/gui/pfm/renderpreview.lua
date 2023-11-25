@@ -1319,18 +1319,24 @@ function gui.PFMRenderPreview:Refresh(preview, prepareOnly)
 		end
 
 		if hasProbe == false then
-			local url =
-				"https://wiki.pragma-engine.com/books/pragma-filmmaker/page/rendering-animations#bkmrk-reflection-probe"
-			pfm.create_popup_message(
-				'{[l:url "' .. url .. '"]}' .. locale.get_text("pfm_popup_no_reflection_probe") .. "{[/l]}"
-			)
+			if self.m_printedBakedProbeNotification ~= true then
+				self.m_printedBakedProbeNotification = true
+				local url =
+					"https://wiki.pragma-engine.com/books/pragma-filmmaker/page/rendering-animations#bkmrk-reflection-probe"
+				pfm.create_popup_message(
+					'{[l:url "' .. url .. '"]}' .. locale.get_text("pfm_popup_no_reflection_probe") .. "{[/l]}"
+				)
+			end
 		end
 		if hasBakedLighting == false then
-			local url =
-				"https://wiki.pragma-engine.com/books/pragma-filmmaker/page/rendering-animations#bkmrk-lightmaps"
-			pfm.create_popup_message(
-				'{[l:url "' .. url .. '"]}' .. locale.get_text("pfm_popup_no_lightmap") .. "{[/l]}"
-			)
+			if self.m_printedBakedLightingNotification ~= true then
+				self.m_printedBakedLightingNotification = true
+				local url =
+					"https://wiki.pragma-engine.com/books/pragma-filmmaker/page/rendering-animations#bkmrk-lightmaps"
+				pfm.create_popup_message(
+					'{[l:url "' .. url .. '"]}' .. locale.get_text("pfm_popup_no_lightmap") .. "{[/l]}"
+				)
+			end
 		end
 	end
 
