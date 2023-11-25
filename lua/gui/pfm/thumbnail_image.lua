@@ -62,6 +62,11 @@ function Element:OnInitialize()
 end
 function Element:LoadImage(imgPath)
 	self:Reset()
+	if self:IsHidden() then
+		self.m_loadImageWhenVisible = imgPath
+		self:SetThinkingEnabled(true)
+		return
+	end
 
 	if self:LoadPreviewImage(imgPath) == false then
 		return
@@ -72,6 +77,14 @@ function Element:LoadImage(imgPath)
 	self.m_tLoadHighDefImage = time.real_time() + 0.2
 end
 function Element:OnThink()
+	if self.m_loadImageWhenVisible ~= nil then
+		if self:IsHidden() then
+			return
+		end
+		local imgPath = self.m_loadImageWhenVisible
+		self.m_loadImageWhenVisible = nil
+		self:LoadImage(imgPath)
+	end
 	if self.m_tLoadHighDefImage ~= nil then
 		if time.real_time() < self.m_tLoadHighDefImage then
 			return
