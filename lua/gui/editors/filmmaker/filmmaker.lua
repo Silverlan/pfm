@@ -576,14 +576,16 @@ function gui.WIFilmmaker:OnLuaError(err)
 
 	pfm.create_popup_message(locale.get_text("pfm_script_error_occurred"), 4, gui.InfoBox.TYPE_ERROR)
 end
-function gui.WIFilmmaker:SaveProject(...)
+function gui.WIFilmmaker:UpdateProjectName(fileName)
 	local filmClip = self:GetMainFilmClip()
+
 	if filmClip ~= nil and filmClip:GetName() == "new_project" then
-		local fileName = ...
 		fileName = file.get_file_name(fileName)
 		fileName = file.remove_file_extension(fileName, pfm.Project.get_format_extensions())
 		filmClip:SetName(fileName)
 	end
+end
+function gui.WIFilmmaker:SaveProject(...)
 	self:SaveUndoRedoStack()
 	self:SaveUiState()
 	return gui.WIBaseFilmmaker.SaveProject(self, ...)

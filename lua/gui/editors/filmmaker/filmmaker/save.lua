@@ -56,6 +56,9 @@ function Element:Save(fileName, setAsProjectName, saveAs, withProjectsPrefix, re
 		local saveAsAscii = (ext == pfm.Project.FORMAT_EXTENSION_ASCII)
 		fileName = file.remove_file_extension(fileName, pfm.Project.get_format_extensions())
 		fileName = pfm.Project.get_full_project_file_name(fileName, withProjectsPrefix, saveAsAscii)
+		if setAsProjectName then
+			self:UpdateProjectName(fileName)
+		end
 		local res = self:SaveProject(fileName, setAsProjectName and fileName or nil)
 		if res then
 			pfm.create_popup_message(locale.get_text("pfm_save_success", { fileName }), 1)
