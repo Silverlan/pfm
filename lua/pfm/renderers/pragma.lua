@@ -47,6 +47,7 @@ function PragmaInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 		end
 	)
 	elSettings.m_ctrlSsFactor = ctrl
+	wrapper:SetName("ss_factor")
 	wrapper:SetTooltip(locale.get_text("pfm_render_setting_supersampling_factor"))
 	elSettings:LinkToUDMProperty("super_sampling_factor", renderSettings, "supersamplingFactor")
 
@@ -57,6 +58,7 @@ function PragmaInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 		function(el) end
 	)
 	wrapper:SetTooltip(locale.get_text("pfm_render_setting_tile_size"))
+	wrapper:SetName("tile_size")
 	elSettings:LinkToUDMProperty("tile_size", renderSettings, "tileSize")
 	elSettings.m_ctrlTileSize = elText
 

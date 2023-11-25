@@ -45,6 +45,7 @@ end
 function gui.PFMBaseViewport:InitializeViewport(parent) end
 function gui.PFMBaseViewport:InitializeSettings(parent)
 	local p = gui.create("WIPFMControlsMenu", parent)
+	p:SetName("controls_menu")
 	p:SetAutoFillContentsToWidth(true)
 	p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
