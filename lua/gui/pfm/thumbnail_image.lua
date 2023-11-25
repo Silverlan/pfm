@@ -149,6 +149,7 @@ function Element:Reset()
 	end
 	self.m_curImgPath = nil
 	self.m_highDefImageLoaded = false
+	self.m_tLoadHighDefImage = nil
 	self:SetThinkingEnabled(false)
 end
 

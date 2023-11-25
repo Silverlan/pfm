@@ -68,6 +68,9 @@ function gui.PFMRaytracedAnimationViewport:OnInitialize()
 	self:SetParticleSystemColorFactor(Vector4(1, 1, 1, 1))
 	self:SetImageSaveFormat(util.IMAGE_FORMAT_HDR)
 end
+function gui.PFMRaytracedAnimationViewport:ClearTexture()
+	self.m_tex:ClearTexture()
+end
 function gui.PFMRaytracedAnimationViewport:SetPreviewImage(imgFilePath)
 	if imgFilePath == nil then
 		self.m_tex:ClearTexture()
