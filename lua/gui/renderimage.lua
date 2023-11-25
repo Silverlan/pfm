@@ -317,7 +317,9 @@ function gui.RenderImage:RenderDOF(drawCmd)
 	self:RenderParticleSystems()
 end
 function gui.RenderImage:ApplyTexture(tex)
-	self.m_elTex:SetTexture(tex)
+	self.m_outputTexture = nil
+	self:UpdateDescriptorSets()
+	self:InitializeImageProcessor(tex)
 end
 function gui.RenderImage:GetTexture()
 	return self.m_elTex:GetTexture()
