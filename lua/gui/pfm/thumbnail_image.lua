@@ -35,7 +35,7 @@ function pfm.util.downscale_thumbnail_image(imgBuf, width)
 	end
 
 	local downscaled = imgBuf:Copy()
-	if opencv ~= nil then
+	if pfm.util.init_opencv() then
 		downscaled = opencv.resize(imgBuf, w, h)
 	end
 	return downscaled

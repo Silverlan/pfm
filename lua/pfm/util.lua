@@ -113,3 +113,19 @@ pfm.to_animation_channel_type = function(udmType)
 	end
 	return udmType
 end
+
+pfm.util = pfm.util or {}
+
+local openCvLoadState
+pfm.util.init_opencv = function()
+	if openCvLoadState == nil then
+		local r = engine.load_library("opencv/pr_opencv")
+		if r ~= true then
+			console.print_warning("An error occured trying to load the 'pr_opencv' module: ", r)
+			openCvLoadState = false
+		else
+			openCvLoadState = true
+		end
+	end
+	return openCvLoadState
+end

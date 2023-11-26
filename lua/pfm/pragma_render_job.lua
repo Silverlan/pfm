@@ -6,11 +6,6 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local r = engine.load_library("opencv/pr_opencv")
-if r ~= true then
-	console.print_warning("An error occured trying to load the 'pr_opencv' module: ", r)
-end
-
 pfm.register_log_category("pragma_renderer")
 
 util.register_class("pfm.PragmaRenderScene")
@@ -475,7 +470,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 			self.m_imageBuffer = self.m_tileCompositeImgBuf
 			local x, y = self:GetTileOffsets()
 
-			if opencv then
+			if pfm.util.init_opencv() then
 				opencv.copy(imgBuf, self.m_tileCompositeImgBuf, x, y, imgBuf:GetWidth(), imgBuf:GetHeight())
 			else
 				self.m_tileCompositeImgBuf:Insert(imgBuf, x, y)
