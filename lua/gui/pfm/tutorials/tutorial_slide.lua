@@ -104,6 +104,10 @@ function Element:OnThink()
 	self:UpdateConnectorLine()
 end
 function Element:OnRemove()
+	if self.m_feedbackCurlRequest ~= nil then
+		self.m_feedbackCurlRequest:Cancel()
+		self.m_feedbackCurlRequest = nil
+	end
 	if self.m_sound ~= nil then
 		self.m_sound:Stop()
 	end
@@ -461,6 +465,86 @@ function Element:UpdateConnectorLine()
 	self.m_connectorLine = l
 	self.m_connectorLineTarget = el
 end
+function Element:SendSlideFeedback(message)
+	if pfm.util.init_curl() == false then
+		return false
+	end
+	local tutId = gui.Tutorial.get_current_tutorial_identifier()
+	if tutId == nil or self.m_identifier == nil then
+		return false
+	end
+	if self.m_feedbackCurlRequest ~= nil then
+		self.m_feedbackCurlRequest:Cancel()
+		self.m_feedbackCurlRequest = nil
+	end
+	local requestData = curl.RequestData()
+	requestData:SetPostKeyValues({
+		["tutorial"] = tutId,
+		["slide"] = self.m_identifier,
+		["message"] = message,
+	})
+	requestData.timeoutMs = 30 * 1000
+	local request = curl.request("https://wiki.pragma-engine.com/pfm/tutorial_feedback.php", requestData)
+	request:Start()
+	self.m_feedbackCurlRequest = request
+	return true
+end
+function Element:OpenFeedbackPrompt()
+	local messageEntry
+	local maxCharacters = 200
+	local messageChanged = false
+	local msg = pfm.open_message_prompt(
+		locale.get_text("pfm_feedback"),
+		locale.get_text("pfm_tutorial_feedback", { tostring(maxCharacters) }),
+		bit.bor(gui.PfmPrompt.BUTTON_OK, gui.PfmPrompt.BUTTON_CANCEL),
+		function(bt)
+			if bt == gui.PfmPrompt.BUTTON_OK then
+				if messageChanged == false then
+					return
+				end
+				local text = messageEntry:GetText()
+				if #text > 0 then
+					if self:SendSlideFeedback(text:sub(0, maxCharacters)) then
+						pfm.create_popup_message(locale.get_text("pfm_tutorial_feedback_submitted"), 5)
+					else
+						pfm.create_popup_message(
+							locale.get_text("pfm_tutorial_feedback_submission_failed"),
+							5,
+							gui.InfoBox.TYPE_WARNING
+						)
+					end
+				end
+			end
+		end
+	)
+	local userContents = msg:GetUserContents()
+
+	local p = gui.create("WIPFMControlsMenu", userContents)
+	p:SetAutoFillContentsToWidth(true)
+	p:SetAutoFillContentsToHeight(false)
+
+	messageEntry = gui.create("WITextEntry", p)
+	messageEntry:SetSize(512, 64)
+	messageEntry:SetMultiLine(true)
+	messageEntry:SetText(locale.get_text("pfm_tutorial_feedback_enter_message_here"))
+	messageEntry:SetMaxLength(maxCharacters)
+	local cb
+	cb = messageEntry:AddCallback("OnFocusGained", function()
+		util.remove(cb)
+		messageEntry:SetText("")
+		messageChanged = true
+	end)
+
+	gui.create("WIBase", userContents, 0, 0, 1, 12) -- Gap
+	p:Update()
+	p:SizeToContents()
+
+	msg:Update()
+	p:SetWidth(msg:GetContents():GetWidth() - 19)
+	p:Update()
+	p:SizeToContents()
+	p:ResetControls()
+end
 function Element:AddMessageBox(msg, audioFile)
 	local elTgt
 	local numHighlights = #self.m_highlights + #self.m_namedHighlights
@@ -569,16 +653,33 @@ function Element:AddMessageBox(msg, audioFile)
 	buttonContainer:SizeToContents()
 
 	local hasAudio = (audioFile ~= nil and asset.exists(audioFile, asset.TYPE_AUDIO))
+	local xOffset = 5
 	if hasAudio then
 		local iconAudio = gui.PFMButton.create(el, "gui/pfm/icon_mute", "gui/pfm/icon_mute_activated", function()
 			self:ToggleAudio()
 			return true
 		end)
 		iconAudio:SetSize(20, 20)
-		iconAudio:SetPos(5, 0)
+		iconAudio:SetPos(xOffset, 0)
 		iconAudio:SetTooltip(locale.get_text("pfm_toggle_audio"))
 		self.m_iconAudio = iconAudio
+
+		xOffset = iconAudio:GetRight() + 5
 	end
+
+	local iconFeedback = gui.PFMButton.create(el, "gui/pfm/icon_blank", "gui/pfm/icon_blank_activated", function()
+		self:OpenFeedbackPrompt()
+	end)
+	iconFeedback:SetSize(20, 20)
+	iconFeedback:SetPos(xOffset, 0)
+	iconFeedback:SetTooltip(locale.get_text("pfm_toggle_audio"))
+	local elText = gui.create("WIText", iconFeedback)
+	elText:SetText("F")
+	elText:SetFont("pfm_small")
+	elText:SetPos(7, 4)
+	elText:SetColor(Color.LightGrey)
+	elText:SizeToContents()
+	self.m_iconFeedback = iconFeedback
 
 	elBox:SizeToContents()
 	elBox:Update()
