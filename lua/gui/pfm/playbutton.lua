@@ -8,18 +8,10 @@
 
 include("/gui/pfm/button.lua")
 
-util.register_class("gui.PFMPlayButton", gui.Base)
-
-gui.PFMPlayButton.STATE_INITIAL = 0
-gui.PFMPlayButton.STATE_PLAYING = 1
-gui.PFMPlayButton.STATE_PAUSED = 2
-function gui.PFMPlayButton:__init()
-	gui.Base.__init(self)
-end
-function gui.PFMPlayButton:OnInitialize()
+local Element = util.register_class("gui.PFMPlayButton", gui.Base)
+function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self.m_state = gui.PFMPlayButton.STATE_INITIAL
 	self.m_btPlay = gui.PFMButton.create(
 		self,
 		"gui/pfm/icon_cp_play_single",
@@ -30,16 +22,30 @@ function gui.PFMPlayButton:OnInitialize()
 	)
 	self:GetSizeProperty():Link(self.m_btPlay:GetSizeProperty())
 end
-function gui.PFMPlayButton:OnRemove()
-	if util.is_valid(self.m_cbThink) then
-		self.m_cbThink:Remove()
-	end
+function Element:SetPlaybackState(playbackState)
+	util.remove(self.m_cbOnStateChanged)
+	self.m_cbOnStateChanged = playbackState:AddCallback("OnStateChanged", function(oldState, newState)
+		if newState == pfm.util.PlaybackState.STATE_PLAYING then
+			if util.is_valid(self.m_btPlay) then
+				self.m_btPlay:SetMaterials("gui/pfm/icon_cp_pause_single", "gui/pfm/icon_cp_pause_single_activated")
+			end
+		elseif newState == pfm.util.PlaybackState.STATE_PAUSED then
+			if util.is_valid(self.m_btPlay) then
+				self.m_btPlay:SetMaterials("gui/pfm/icon_cp_play_single", "gui/pfm/icon_cp_play_single_activated")
+			end
+		end
+		self:CallCallbacks("OnStateChanged", oldState, newState)
+	end)
+	self.m_playbackState = playbackState
 end
-function gui.PFMPlayButton:SetActivated(activated)
+function Element:OnRemove()
+	util.remove(self.m_cbOnStateChanged)
+end
+function Element:SetActivated(activated)
 	if util.is_valid(self.m_btPlay) == false then
 		return
 	end
-	if self:GetState() == gui.PFMPlayButton.STATE_PLAYING then
+	if self:GetState() == pfm.util.PlaybackState.STATE_PLAYING then
 		self.m_btPlay:SetMaterial(
 			activated and "gui/pfm/icon_cp_pause_single_activated" or "gui/pfm/icon_cp_pause_single"
 		)
@@ -49,64 +55,22 @@ function gui.PFMPlayButton:SetActivated(activated)
 		)
 	end
 end
-function gui.PFMPlayButton:SetState(state)
-	if state == self:GetState() then
-		return
-	end
-	local oldState = self:GetState()
-	self.m_state = state
-	if util.is_valid(self.m_cbThink) then
-		self.m_cbThink:Remove()
-	end
-	if state == gui.PFMPlayButton.STATE_PLAYING then
-		local tStart = time.real_time()
-		self.m_cbThink = game.add_callback("DrawFrame", function()
-			if self:IsPlaying() == false then
-				return
-			end
-			local dt = time.real_time() - tStart
-			tStart = time.real_time()
-			self:CallCallbacks("OnTimeAdvance", dt)
-		end)
-		if util.is_valid(self.m_btPlay) then
-			self.m_btPlay:SetMaterials("gui/pfm/icon_cp_pause_single", "gui/pfm/icon_cp_pause_single_activated")
-		end
-	elseif state == gui.PFMPlayButton.STATE_PAUSED then
-		if util.is_valid(self.m_btPlay) then
-			self.m_btPlay:SetMaterials("gui/pfm/icon_cp_play_single", "gui/pfm/icon_cp_play_single_activated")
-		end
-	end
-	self:CallCallbacks("OnStateChanged", oldState, state)
+function Element:GetState()
+	return self.m_playbackState:GetState()
 end
-function gui.PFMPlayButton:GetState()
-	return self.m_state
+function Element:IsPlaying()
+	return self.m_playbackState:IsPlaying()
 end
-function gui.PFMPlayButton:IsPlaying()
-	return self.m_state == gui.PFMPlayButton.STATE_PLAYING
+function Element:Play()
+	self.m_playbackState:Play()
 end
-function gui.PFMPlayButton:Play()
-	local playButton = self.m_btPlay
-	if util.is_valid(playButton) then
-		playButton:SetMaterial("gui/pfm/icon_cp_pause_single")
-	end
-	self:SetState(gui.PFMPlayButton.STATE_PLAYING)
+function Element:Pause()
+	self.m_playbackState:Pause()
 end
-function gui.PFMPlayButton:Pause()
-	local playButton = self.m_btPlay
-	if util.is_valid(playButton) then
-		playButton:SetMaterial("gui/pfm/icon_cp_play_single")
-	end
-	self:SetState(gui.PFMPlayButton.STATE_PAUSED)
+function Element:TogglePlay()
+	self.m_playbackState:TogglePlay()
 end
-function gui.PFMPlayButton:TogglePlay()
-	if self:IsPlaying() then
-		self:Pause()
-		return
-	end
-	self:Play()
+function Element:Stop()
+	self.m_playbackState:Stop()
 end
-function gui.PFMPlayButton:Stop()
-	self:Pause()
-	self:SetOffset(0.0)
-end
-gui.register("WIPFMPlayButton", gui.PFMPlayButton)
+gui.register("WIPFMPlayButton", Element)

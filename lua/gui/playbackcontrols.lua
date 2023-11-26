@@ -72,14 +72,11 @@ function gui.PlaybackControls:OnInitialize()
 	self.m_btPlay = gui.create("WIPFMPlayButton", controls)
 	self.m_btPlay:SetTooltip(locale.get_text("pfm_playback_play"))
 	self.m_btPlay:AddCallback("OnStateChanged", function(btPlay, oldState, newState)
-		if newState == gui.PFMPlayButton.STATE_PLAYING then
+		if newState == pfm.util.PlaybackState.STATE_PLAYING then
 			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_PLAY)
-		elseif newState == gui.PFMPlayButton.STATE_PAUSED then
+		elseif newState == pfm.util.PlaybackState.STATE_PAUSED then
 			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_PAUSE)
 		end
-	end)
-	self.m_btPlay:AddCallback("OnTimeAdvance", function(el, dt)
-		self:CallCallbacks("OnTimeAdvance", dt)
 	end)
 	self.m_btPlay:SetName("pc_player")
 
@@ -153,6 +150,7 @@ function gui.PlaybackControls:HandleKeyboardInput(key, state, mods)
 	return util.EVENT_REPLY_UNHANDLED
 end
 function gui.PlaybackControls:LinkToPFMProject(projectManager)
+	self.m_btPlay:SetPlaybackState(projectManager:GetPlaybackState())
 	if util.is_valid(self.m_cbButtonPressed) then
 		self.m_cbButtonPressed:Remove()
 	end

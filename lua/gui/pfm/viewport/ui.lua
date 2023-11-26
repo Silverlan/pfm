@@ -140,9 +140,9 @@ function gui.PFMViewport:InitializeSettings(parent)
 								if util.is_valid(btPlay) == false then
 									return
 								end
-								if state == gui.PFMPlayButton.STATE_PLAYING then
+								if state == pfm.util.PlaybackState.STATE_PLAYING then
 									btPlay:Pause()
-								elseif state == gui.PFMPlayButton.STATE_PAUSED then
+								elseif state == pfm.util.PlaybackState.STATE_PAUSED then
 									btPlay:Play()
 								end
 							end)
@@ -301,13 +301,6 @@ function gui.PFMViewport:InitializeControls()
 	self.m_playControls:SetAnchor(0.5, 0, 0.5, 0)
 	self.m_playControls:LinkToPFMProject(tool.get_filmmaker())
 	self.m_btPlay = self.m_playControls:GetPlayButton()
-
-	self.m_btPlay:AddCallback("OnStateChanged", function(btPlay, oldState, state)
-		if state == gui.PFMPlayButton.STATE_PAUSED then
-			-- On pause, move to the closest whole frame
-			tool.get_filmmaker():ClampTimeOffsetToFrame()
-		end
-	end)
 
 	controls:SizeToContents()
 	self:InitializeManipulatorControls()

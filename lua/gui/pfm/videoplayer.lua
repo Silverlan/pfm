@@ -49,8 +49,8 @@ function gui.PFMVideoPlayer:OnInitialize()
 		--self:SetTimeOffset(self:GetTimeOffset() +dt)
 	end)
 	playControls:AddCallback("OnStateChanged", function(el, oldState, state)
-		--[[ents.PFMSoundSource.set_audio_enabled(state == gui.PFMPlayButton.STATE_PLAYING)
-		if(state == gui.PFMPlayButton.STATE_PAUSED) then
+		--[[ents.PFMSoundSource.set_audio_enabled(state == pfm.util.PlaybackState.STATE_PLAYING)
+		if(state == pfm.util.PlaybackState.STATE_PAUSED) then
 			self:ClampTimeOffsetToFrame()
 		end]]
 	end)

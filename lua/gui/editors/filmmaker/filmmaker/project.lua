@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/pfm/playback_state.lua")
+
 local Element = gui.WIFilmmaker
 
 function Element:OnProjectLoaded(fileName, project)
@@ -150,6 +152,7 @@ function Element:InitializeProject(project)
 	end
 
 	local settings = session:GetSettings()
+	self:InitializePlaybackState()
 	self:InitializeProjectUI(layout or settings:GetLayout())
 	self:SetTimeOffset(0)
 	self:RestoreWorkCamera()
@@ -165,6 +168,27 @@ function Element:InitializeProject(project)
 end
 function Element:ClearProjectUI()
 	self:ClearLayout()
+end
+function Element:GetPlaybackState()
+	return self.m_playbackState
+end
+function Element:InitializePlaybackState()
+	self.m_playbackState = pfm.util.PlaybackState()
+	self.m_playbackState:AddCallback("OnTimeAdvance", function(dt)
+		-- TODO: Handle this without ui elements
+		local pfmTimeline = self.m_timeline
+		local playhead = util.is_valid(pfmTimeline) and pfmTimeline:GetPlayhead() or nil
+		if util.is_valid(playhead) then
+			playhead:SetTimeOffset(playhead:GetTimeOffset() + dt)
+		end
+	end)
+	self.m_playbackState:AddCallback("OnStateChanged", function(oldState, state)
+		ents.PFMSoundSource.set_audio_enabled(state == pfm.util.PlaybackState.STATE_PLAYING)
+		if state == pfm.util.PlaybackState.STATE_PAUSED then
+			-- On pause, move to the closest whole frame
+			self:ClampTimeOffsetToFrame()
+		end
+	end)
 end
 function Element:InitializeProjectUI(layoutName)
 	self:ClearProjectUI()
@@ -212,19 +236,6 @@ function Element:InitializeProjectUI(layoutName)
 	playhead:GetTimeOffsetProperty():AddCallback(function(oldOffset, offset)
 		if self.m_updatingProjectTimeOffset ~= true then
 			self:SetTimeOffset(offset)
-		end
-	end)
-
-	local playButton = self:GetViewport():GetPlayButton()
-	playButton:AddCallback("OnTimeAdvance", function(el, dt)
-		if playhead:IsValid() then
-			playhead:SetTimeOffset(playhead:GetTimeOffset() + dt)
-		end
-	end)
-	playButton:AddCallback("OnStateChanged", function(el, oldState, state)
-		ents.PFMSoundSource.set_audio_enabled(state == gui.PFMPlayButton.STATE_PLAYING)
-		if state == gui.PFMPlayButton.STATE_PAUSED then
-			self:ClampTimeOffsetToFrame()
 		end
 	end)
 
