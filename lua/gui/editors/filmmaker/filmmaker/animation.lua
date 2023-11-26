@@ -301,6 +301,7 @@ function Element:ChangeActorPropertyValue(
 					udm.get_numeric_component(newVal, i),
 					i
 				)
+				cmd:AddSubCommand("reset_keyframe_handles", actorUuid, targetPath, underlyingType, time, i)
 			end
 		end
 

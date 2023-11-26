@@ -207,6 +207,7 @@ function Command:ApplyHandleValues(
 	local keyData = graphCurve:GetKey(baseIndex)
 	local hOut = pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT
 	local hIn = pfm.udm.EditorGraphCurveKeyData.HANDLE_IN
+
 	if componentValue ~= nil then
 		local timeCur = timestamp
 		local valCur = componentValue
@@ -217,7 +218,6 @@ function Command:ApplyHandleValues(
 		local valNext = keyData:GetValue(nextKeyframeIdx)
 
 		if timePrev ~= nil and timeNext ~= nil then
-			-- The new
 			local handleTimePrev = timePrev + keyData:GetHandleTimeOffset(prevKeyframeIdx, hOut)
 			local handleTimeNext = timeNext + keyData:GetHandleTimeOffset(nextKeyframeIdx, hIn)
 			local handleDeltaPrev = valPrev + keyData:GetHandleDelta(prevKeyframeIdx, hOut)
@@ -234,7 +234,6 @@ function Command:ApplyHandleValues(
 				{ input[4], input[3], input[2], input[1] },
 				1.0 - ((timeCur - timePrev) / (timeNext - timePrev))
 			)
-
 			set_handle_property("time", sliced0[2].x - timePrev, baseIndex, hOut, timePrev)
 			set_handle_property("delta", sliced0[2].y - valPrev, baseIndex, hOut, timePrev)
 			set_handle_property("time", sliced0[3].x - timeCur, baseIndex, hIn)

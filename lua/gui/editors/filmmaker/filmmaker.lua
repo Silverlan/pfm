@@ -1396,6 +1396,14 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 						udm.get_numeric_component(value, baseIndex),
 						baseIndex
 					)
+					subCmd:AddSubCommand(
+						"reset_keyframe_handles",
+						actorUuid,
+						propertyPath,
+						underlyingType,
+						timestamp,
+						baseIndex
+					)
 				end
 			end
 		end
