@@ -129,3 +129,17 @@ pfm.util.init_opencv = function()
 	end
 	return openCvLoadState
 end
+
+local curlLoadState
+pfm.util.init_curl = function()
+	if curlLoadState == nil then
+		local r = engine.load_library("curl/pr_curl")
+		if r ~= true then
+			console.print_warning("An error occured trying to load the 'pr_curl' module: ", r)
+			curlLoadState = false
+		else
+			curlLoadState = true
+		end
+	end
+	return curlLoadState
+end

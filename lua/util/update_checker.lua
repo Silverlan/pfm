@@ -11,9 +11,7 @@ util = util or {}
 util.register_class("util.UpdateChecker")
 local Class = util.UpdateChecker
 function Class:__init(url, callback)
-	local r = engine.load_library("curl/pr_curl")
-	if r ~= true then
-		print("WARNING: An error occured trying to load the 'pr_curl' module: ", r)
+	if pfm.util.init_curl() == false then
 		return
 	end
 

@@ -116,11 +116,7 @@ function gui.PatreonTicker:OnInitialize()
 
 	self:SetShowInactiveSupporters(console.get_convar_bool("pfm_supporter_ticker_show_all"))
 
-	local r = engine.load_library("curl/pr_curl")
-	if r ~= true then
-		print("WARNING: An error occured trying to load the 'pr_curl' module: ", r)
-		return
-	end
+	pfm.util.init_curl()
 end
 local function table_to_url_parameters(t)
 	local params = ""
