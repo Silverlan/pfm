@@ -393,7 +393,9 @@ function unirender.PBRShader:InitializeCombinedPass(desc, outputNode)
 		if emissionTex ~= nil then
 			local nEmissionMap = desc:AddNode(unirender.NODE_EMISSION_TEXTURE)
 			nEmissionMap:SetProperty(unirender.Node.emission_texture.IN_TEXTURE, emissionTex)
-			unirender.Socket(emissionFactor):Link(nEmissionMap, unirender.Node.emission_texture.IN_COLOR_FACTOR)
+			if emissionFactor ~= nil then
+				unirender.Socket(emissionFactor):Link(nEmissionMap, unirender.Node.emission_texture.IN_COLOR_FACTOR)
+			end
 			local col, alpha = unirender.apply_image_view_swizzling(desc, nEmissionMap, emissionMap)
 			col:Link(bsdf, unirender.Node.principled_bsdf.IN_EMISSION)
 		end
