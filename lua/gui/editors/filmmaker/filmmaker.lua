@@ -167,7 +167,7 @@ function gui.WIFilmmaker:OnInitialize()
 		1,
 		1
 	)
-	patronTickerContainer:SetQueryUrl("http://pragma-engine.com/patreon/request_patrons.php")
+	patronTickerContainer:SetQueryUrl("https://pragma-engine.com/patreon/request_patrons.php")
 	local engineInfo = engine.get_info()
 	infoBar:AddIcon("third_party/patreon_logo_small", pfm.PATREON_JOIN_URL, "Patreon", function(url)
 		self:ShowMatureContentPrompt(function()

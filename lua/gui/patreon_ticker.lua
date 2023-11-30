@@ -226,7 +226,10 @@ function gui.PatreonTicker:UpdateSupporterList()
 		if patronInfo.name ~= nil then
 			local supporterColor = color
 			local flags = patronInfo.flags or 0
-			if bit.band(flags, 1) ~= 0 then
+			if patronInfo.color ~= nil then
+				supporterColor = Color.CreateFromHexColor(patronInfo.color:sub(2))
+				supporterColor.a = 255
+			elseif bit.band(flags, 1) ~= 0 then
 				supporterColor = colorSpecial
 			end
 			self.m_patronTicker:AddSupporter(patronInfo.name, supporterColor)
