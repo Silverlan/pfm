@@ -527,6 +527,11 @@ function gui.PFMActorEditor:OnThink()
 			self:InitializeDirtyActorComponents(uniqueId)
 		end
 		self.m_dirtyActorComponents = nil
+		self:ResolveConstraintItems()
+	end
+	if self.m_constraintItemsDirty ~= nil then
+		self.m_constraintItemsDirty = nil
+		self:ResolveConstraintItems()
 	end
 	if self.m_updatePropertyIcons then
 		self.m_updatePropertyIcons = nil
@@ -797,6 +802,7 @@ function gui.PFMActorEditor:Setup(filmClip)
 				-- Expand top-most item
 				el:Expand()
 			end
+			self:ResolveConstraintItems()
 		end
 	end)
 
@@ -1525,6 +1531,59 @@ function gui.PFMActorEditor:ReloadActorComponentEntries(actor, componentId)
 	self:RemoveActorComponentEntry(tostring(actor:GetUniqueId()), componentId)
 	self:SetActorDirty(tostring(actor:GetUniqueId()))
 	self:InitializeDirtyActorComponents(tostring(actor:GetUniqueId()))
+end
+-- This will move all constraint items in the actor editor to the
+-- (driven) property items they are associated with.
+function gui.PFMActorEditor:ResolveConstraintItems()
+	local constraintItems = {}
+	for _, itemConstraint in ipairs(self:GetActorItems()) do
+		if itemConstraint:IsValid() then
+			table.insert(constraintItems, itemConstraint)
+		end
+	end
+	for _, itemConstraint in ipairs(constraintItems) do
+		local uuidItem = itemConstraint:GetName()
+		local actor = pfm.dereference(uuidItem)
+		if actor ~= nil then
+			local constraint = actor:FindComponent("constraint")
+			if constraint ~= nil then
+				local drivenObject = constraint:GetMemberValue("drivenObject")
+				local ref = (drivenObject ~= nil) and ents.parse_uri(drivenObject) or nil
+				if ref == nil then
+					return {}
+				end
+				local uuid = tostring(ref:GetUuid())
+				local componentType = ref:GetComponentName()
+				local propName = ref:GetMemberName()
+				local drivenObjectActor = pfm.dereference(uuid)
+				if drivenObjectActor ~= nil then
+					local itemDriven = self:GetActorComponentItem(drivenObjectActor, componentType)
+					if util.is_valid(itemDriven) then
+						local drivenComponent = drivenObjectActor:FindComponent(componentType)
+						if drivenComponent ~= nil then
+							local identifierPropName = propName
+							if identifierPropName == "pose" then
+								-- If the constraint refers to a pose property, we'll just defer it to the position
+								-- (Otherwise we'd have to duplicate it for the rotation as well)
+								identifierPropName = "position"
+							end
+							local identifier = "ec/" .. componentType .. "/" .. identifierPropName
+							for _, childItem in ipairs(itemDriven:GetItems()) do
+								if childItem:GetIdentifier() == identifier then
+									if util.is_same_object(childItem, itemConstraint) == false then
+										childItem:AttachItem(itemConstraint)
+										itemConstraint:ScheduleUpdate()
+										childItem:ScheduleUpdate()
+									end
+									break
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
 end
 function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, controlData)
 	local pm = pfm.get_project_manager()

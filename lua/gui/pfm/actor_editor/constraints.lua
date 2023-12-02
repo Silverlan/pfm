@@ -88,11 +88,7 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		end
 	end
 
-	local constraintActorName = actor0:GetName()
-		.. "["
-		.. memberInfo0.name
-		.. "] > "
-		.. gui.PFMActorEditor.constraint_type_to_name(type)
+	local constraintActorName = "[" .. gui.PFMActorEditor.constraint_type_to_name(type) .. "]"
 
 	if actor1 ~= nil then
 		local ent1 = actor1:FindEntity()

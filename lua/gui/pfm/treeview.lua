@@ -696,9 +696,13 @@ function gui.PFMTreeViewElement:DetachItem(item)
 		return
 	end
 
+	local identifier = item:GetIdentifier()
 	if util.is_valid(item.m_parent) then
 		for i, itemOther in ipairs(item.m_parent.m_items) do
 			if itemOther:IsValid() and itemOther == item then
+				if identifier ~= nil then
+					item.m_parent.m_identifierToItem[identifier] = nil
+				end
 				table.remove(item.m_parent.m_items, i)
 				break
 			end
@@ -762,6 +766,10 @@ function gui.PFMTreeViewElement:AttachItem(item, insertIndex)
 	else
 		table.insert(self.m_itemElements, { item, hLine })
 		table.insert(self.m_items, item)
+	end
+	local identifier = item:GetIdentifier()
+	if identifier ~= nil then
+		self.m_identifierToItem[identifier] = item
 	end
 
 	if util.is_valid(item.m_expandIcon) then

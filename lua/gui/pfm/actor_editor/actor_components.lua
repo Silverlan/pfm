@@ -109,6 +109,9 @@ function gui.PFMActorEditor:InitializeNewComponent(actor, component, componentTy
 
 	if updateActorAndUi == true then
 		self:UpdateActorComponents(actor)
+
+		self.m_constraintItemsDirty = true
+		self:SetThinkingEnabled(true)
 	end
 
 	return component

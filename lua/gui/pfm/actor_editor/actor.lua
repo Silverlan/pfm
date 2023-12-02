@@ -106,6 +106,8 @@ function gui.PFMActorEditor:CreateNewActor(actorName, pose, uniqueId, group, don
 	if scale ~= nil then
 		pfmActorC:SetMemberValue("scale", udm.TYPE_VECTOR3, scale)
 	end
+	self.m_constraintItemsDirty = true
+	self:SetThinkingEnabled(true)
 	return actor
 end
 function gui.PFMActorEditor:CreateNewActorComponent(actor, componentType, updateActorAndUi, initComponent)
@@ -136,20 +138,11 @@ function gui.PFMActorEditor:UpdateActorComponents(actor)
 	self:UpdateActorComponentEntries(actorData)
 end
 function gui.PFMActorEditor:IterateActors(f)
-	local pm = pfm.get_project_manager()
-	local session = pm:GetSession()
-	local schema = session:GetSchema()
-	local function iterate_actors(parent)
-		for _, el in ipairs(parent:GetItems()) do
-			local elUdm = udm.dereference(schema, el:GetIdentifier())
-			if util.get_type_name(elUdm) == "Group" then
-				iterate_actors(el)
-			else
-				f(el)
-			end
+	for item, actorData in pairs(self.m_treeElementToActorData) do
+		if item:IsValid() then
+			f(item)
 		end
 	end
-	iterate_actors(self.m_tree:GetRoot())
 end
 function gui.PFMActorEditor:RemoveActors(ids)
 	local filmClip = self:GetFilmClip()
