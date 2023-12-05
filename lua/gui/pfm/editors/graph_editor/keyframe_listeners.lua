@@ -6,27 +6,27 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function gui.PFMTimelineGraph:OnEditorChannelAdded(actor, channel, targetPath)
+function gui.PFMTimelineGraphBase:OnEditorChannelAdded(actor, channel, targetPath)
 	self:ReloadGraphCurve(targetPath)
 end
-function gui.PFMTimelineGraph:OnEditorChannelKeyframeRemoved(actor, targetPath, valueBaseIndex)
+function gui.PFMTimelineGraphBase:OnEditorChannelKeyframeRemoved(actor, targetPath, valueBaseIndex)
 	local curve = self:FindGraphCurve(actor, targetPath, valueBaseIndex)
 	if util.is_valid(curve) == false then
 		return
 	end
 	curve:UpdateKeyframes()
 end
-function gui.PFMTimelineGraph:OnEditorChannelKeyframeAdded(actor, targetPath, valueBaseIndex)
+function gui.PFMTimelineGraphBase:OnEditorChannelKeyframeAdded(actor, targetPath, valueBaseIndex)
 	local curve = self:FindGraphCurve(actor, targetPath, valueBaseIndex)
 	if util.is_valid(curve) == false then
 		return
 	end
 	curve:UpdateKeyframes()
 end
-function gui.PFMTimelineGraph:OnAnimationChannelChanged(filmClip, channel, animClip)
+function gui.PFMTimelineGraphBase:OnAnimationChannelChanged(filmClip, channel, animClip)
 	self:ReloadGraphCurve(channel:GetTargetPath())
 end
-function gui.PFMTimelineGraph:OnKeyframeHandleDataChanged(filmClip, keyData, keyIndex, handle, time, delta)
+function gui.PFMTimelineGraphBase:OnKeyframeHandleDataChanged(filmClip, keyData, keyIndex, handle, time, delta)
 	local valueBaseIndex = keyData:GetTypeComponentIndex()
 	local graphCurve = keyData:GetGraphCurve()
 	local editorChannelData = graphCurve:GetEditorChannelData()
@@ -40,10 +40,16 @@ function gui.PFMTimelineGraph:OnKeyframeHandleDataChanged(filmClip, keyData, key
 		dp:UpdateHandles()
 	end
 end
-function gui.PFMTimelineGraph:OnGraphCurveAnimationDataChanged(filmClip, graphCurve, animClip, channel, valueBaseIndex)
+function gui.PFMTimelineGraphBase:OnGraphCurveAnimationDataChanged(
+	filmClip,
+	graphCurve,
+	animClip,
+	channel,
+	valueBaseIndex
+)
 	self:ReloadGraphCurve(channel:GetTargetPath())
 end
-function gui.PFMTimelineGraph:OnEditorChannelKeyframeTimeChanged(
+function gui.PFMTimelineGraphBase:OnEditorChannelKeyframeTimeChanged(
 	animationClip,
 	editorChannel,
 	editorKeyData,
@@ -64,7 +70,7 @@ function gui.PFMTimelineGraph:OnEditorChannelKeyframeTimeChanged(
 		curve:UpdateDataPoint(dp)
 	end
 end
-function gui.PFMTimelineGraph:OnEditorChannelKeyframeValueChanged(
+function gui.PFMTimelineGraphBase:OnEditorChannelKeyframeValueChanged(
 	animationClip,
 	editorChannel,
 	editorKeyData,
@@ -102,10 +108,10 @@ function gui.PFMTimelineGraph:OnEditorChannelKeyframeValueChanged(
 		typeComponentIndex = typeComponentIndex,
 	}, editorChannel)
 end
-function gui.PFMTimelineGraph:ClearKeyframeListeners()
+function gui.PFMTimelineGraphBase:ClearKeyframeListeners()
 	util.remove(self.m_filmClipCallbacks)
 end
-function gui.PFMTimelineGraph:InitializeKeyframeListeners(filmClip)
+function gui.PFMTimelineGraphBase:InitializeKeyframeListeners(filmClip)
 	self.m_filmClipCallbacks = {}
 	local function add_change_listener(identifier, fc)
 		table.insert(self.m_filmClipCallbacks, filmClip:AddChangeListener(identifier, fc))

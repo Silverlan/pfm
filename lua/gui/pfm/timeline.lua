@@ -52,11 +52,19 @@ function gui.PFMTimeline:OnInitialize()
 	self.m_timelineClips = {}
 
 	local contents = self.m_timeline:GetContents()
+
 	self.m_timelineClip =
 		gui.create("WIPFMTimelineClip", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
 	self.m_timelineClip:SetName("timeline_clip_editor")
-	-- self.m_timelineMotion = gui.create("WIPFMTimelineMotion",contents,0,0,contents:GetWidth(),contents:GetHeight(),0,0,1,1)
-	-- self.m_timelineMotion:SetName("timeline_motion_editor")
+
+	self.m_timelineMotion =
+		gui.create("WIPFMTimelineMotion", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
+	self.m_timelineMotion:SetName("timeline_motion_editor")
+	self.m_timelineMotion:SetTimelineContents(self.m_timeline)
+	self.m_timelineMotion:SetTimeAxis(self.m_timeline:GetTimeAxis())
+	self.m_timelineMotion:SetDataAxis(self.m_timeline:GetDataAxis())
+	self.m_timelineMotion:SetTimeline(self)
+
 	self.m_timelineGraph =
 		gui.create("WIPFMTimelineGraph", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
 	self.m_timelineGraph:SetName("timeline_graph_editor")
@@ -369,11 +377,20 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btClipEditor:SetTooltip(
 		locale.get_text("pfm_clip_editor", { pfm.get_key_binding("pfm_action select_editor clip") })
 	)
-	--[[self.m_btMotionEditor = gui.PFMButton.create(toolbarLeft,"gui/pfm/icon_mode_motioneditor","gui/pfm/icon_mode_motioneditor_activated",function()
-		self:SetEditor(gui.PFMTimeline.EDITOR_MOTION)
-		return true
-	end)
-	self.m_btMotionEditor:SetTooltip(locale.get_text("pfm_motion_editor",{pfm.get_key_binding("pfm_action select_editor motion")}))]]
+	if tool.get_filmmaker():IsDeveloperModeEnabled() then
+		self.m_btMotionEditor = gui.PFMButton.create(
+			toolbarLeft,
+			"gui/pfm/icon_mode_motioneditor",
+			"gui/pfm/icon_mode_motioneditor_activated",
+			function()
+				self:SetEditor(gui.PFMTimeline.EDITOR_MOTION)
+				return true
+			end
+		)
+		self.m_btMotionEditor:SetTooltip(
+			locale.get_text("pfm_motion_editor", { pfm.get_key_binding("pfm_action select_editor motion") })
+		)
+	end
 	self.m_btGraphEditor = gui.PFMButton.create(
 		toolbarLeft,
 		"gui/pfm/icon_mode_grapheditor",
