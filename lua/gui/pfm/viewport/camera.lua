@@ -131,7 +131,7 @@ function gui.PFMViewport:InitializeCameraControls()
 					return
 				end
 				local actor = actorC:GetActorData()
-				tool.get_filmmaker():SelectActor(actor)
+				pfm.get_project_manager():SelectActor(actor)
 			end)
 
 			pContext:AddLine()
@@ -141,7 +141,7 @@ function gui.PFMViewport:InitializeCameraControls()
 				if util.is_valid(camC) == false then
 					return
 				end
-				tool.get_filmmaker():ShowInElementViewer(camC:GetCameraData())
+				pfm.get_project_manager():ShowInElementViewer(camC:GetCameraData())
 			end)
 		end
 		pContext:AddItem(locale.get_text("pfm_auto_aim_work_camera"), function() end) -- TODO
@@ -177,7 +177,7 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 		local window = self:GetRootWindow()
 		gui.set_focus_enabled(window, false)
 
-		local filmmaker = tool.get_filmmaker()
+		local filmmaker = pfm.get_project_manager()
 		-- filmmaker:TrapFocus(false)
 		-- filmmaker:KillFocus()
 		filmmaker:TagRenderSceneAsDirty(true)
@@ -200,7 +200,7 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 			local workPose = self.m_cameraLinkModeWorkPose
 			self.m_cameraLinkModeWorkPose = nil
 
-			local filmmaker = tool.get_filmmaker()
+			local filmmaker = pfm.get_project_manager()
 			local actorEditor = filmmaker:GetActorEditor()
 			local actor = self:GetSceneCameraActorData()
 			if actor ~= nil and util.is_valid(actorEditor) then
@@ -219,7 +219,7 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 		local window = self:GetRootWindow()
 		gui.set_focus_enabled(window, true)
 
-		local filmmaker = tool.get_filmmaker()
+		local filmmaker = pfm.get_project_manager()
 		-- filmmaker:TrapFocus(true)
 		-- filmmaker:RequestFocus()
 		filmmaker:TagRenderSceneAsDirty(false)
@@ -309,7 +309,7 @@ function gui.PFMViewport:RefreshCamera()
 end
 function gui.PFMViewport:SetCameraView(cameraView)
 	if self:IsWorkCamera() then
-		tool.get_filmmaker():UpdateWorkCamera(cameraView)
+		pfm.get_project_manager():UpdateWorkCamera(cameraView)
 	end
 	self.m_cameraView = cameraView
 end

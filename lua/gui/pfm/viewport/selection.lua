@@ -44,7 +44,7 @@ function gui.PFMViewport:IsActorSelected(entActor)
 	if actor == nil then
 		return false
 	end
-	return tool.get_filmmaker():IsActorSelected(actor)
+	return pfm.get_project_manager():IsActorSelected(actor)
 end
 function gui.PFMViewport:SelectActor(entActor, bone, deselectCurrent)
 	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
@@ -64,10 +64,10 @@ function gui.PFMViewport:SelectActor(entActor, bone, deselectCurrent)
 		property = property or ("ec/animated/bone/" .. bone:GetName() .. "/position")
 	end
 
-	tool.get_filmmaker():SelectActor(actor, deselectCurrent, property)
+	pfm.get_project_manager():SelectActor(actor, deselectCurrent, property)
 end
 function gui.PFMViewport:UpdateMultiActorSelection()
-	local actors = tool.get_filmmaker():GetSelectionManager():GetSelectedActors()
+	local actors = pfm.get_project_manager():GetSelectionManager():GetSelectedActors()
 	local n = 0
 	for ent, _ in pairs(actors) do
 		if ent:IsValid() then
@@ -125,7 +125,7 @@ function gui.PFMViewport:ApplySelection()
 
 	local results = ents.ClickComponent.find_entities_in_kdop(planes)
 
-	local pm = tool.get_filmmaker()
+	local pm = pfm.get_project_manager()
 	if input.is_ctrl_key_down() == false and input.is_alt_key_down() == false then
 		pm:DeselectAllActors()
 	end

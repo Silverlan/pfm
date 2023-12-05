@@ -169,27 +169,6 @@ end
 function Element:ClearProjectUI()
 	self:ClearLayout()
 end
-function Element:GetPlaybackState()
-	return self.m_playbackState
-end
-function Element:InitializePlaybackState()
-	self.m_playbackState = pfm.util.PlaybackState()
-	self.m_playbackState:AddCallback("OnTimeAdvance", function(dt)
-		-- TODO: Handle this without ui elements
-		local pfmTimeline = self.m_timeline
-		local playhead = util.is_valid(pfmTimeline) and pfmTimeline:GetPlayhead() or nil
-		if util.is_valid(playhead) then
-			playhead:SetTimeOffset(playhead:GetTimeOffset() + dt)
-		end
-	end)
-	self.m_playbackState:AddCallback("OnStateChanged", function(oldState, state)
-		ents.PFMSoundSource.set_audio_enabled(state == pfm.util.PlaybackState.STATE_PLAYING)
-		if state == pfm.util.PlaybackState.STATE_PAUSED then
-			-- On pause, move to the closest whole frame
-			self:ClampTimeOffsetToFrame()
-		end
-	end)
-end
 function Element:InitializeProjectUI(layoutName)
 	self:ClearProjectUI()
 	if util.is_valid(self.m_menuBar) == false or util.is_valid(self.m_infoBar) == false then
@@ -198,12 +177,7 @@ function Element:InitializeProjectUI(layoutName)
 	self:InitializeGenericLayout()
 
 	self:InitializeLayout(layoutName)
-
-	for _, windowData in ipairs(pfm.get_registered_windows()) do
-		self:RegisterWindow(windowData.category, windowData.name, windowData.localizedName, function()
-			return windowData.factory(self)
-		end)
-	end
+	self:RegisterWindows()
 
 	self:OpenWindow("actor_editor")
 	-- self:OpenWindow("element_viewer")

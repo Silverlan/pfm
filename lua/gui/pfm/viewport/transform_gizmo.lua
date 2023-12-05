@@ -46,7 +46,7 @@ function gui.PFMViewport:SetManipulatorMode(manipulatorMode)
 	self.m_btScreen:SetActivated(self:IsScaleManipulatorMode(manipulatorMode))
 
 	if self:UpdateMultiActorSelection() == false then
-		local pfm = tool.get_filmmaker()
+		local pfm = pfm.get_project_manager()
 		local selectionManager = pfm:GetSelectionManager()
 		local selectedActors = selectionManager:GetSelectedActors()
 		local selectedActorList = {}
@@ -166,7 +166,7 @@ function gui.PFMViewport:UpdateManipulationMode()
 	then
 		return
 	end
-	local pm = tool.get_filmmaker()
+	local pm = pfm.get_project_manager()
 	local selectionManager = pm:GetSelectionManager()
 	local selectedActors = selectionManager:GetSelectedActors()
 	local selectedActorList = {}
@@ -286,17 +286,17 @@ function gui.PFMViewport:UpdateManipulationMode()
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_POSITION_CHANGED, function(boneId, pos, localPos)
 		newPos = localPos
 		--update_channel_value(boneId,localPos,"position")
-		--tool.get_filmmaker():TagRenderSceneAsDirty()
+		--pfm.get_project_manager():TagRenderSceneAsDirty()
 	end)
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_ROTATION_CHANGED, function(boneId, rot, localRot)
 		newRot = localRot
 		--update_channel_value(boneId,localRot,"rotation")
-		--tool.get_filmmaker():TagRenderSceneAsDirty()
+		--pfm.get_project_manager():TagRenderSceneAsDirty()
 	end)
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_SCALE_CHANGED, function(boneId, scale, localScale)
 		newScale = localScale
 		--update_channel_value(boneId,localScale,"scale")
-		--tool.get_filmmaker():TagRenderSceneAsDirty()
+		--pfm.get_project_manager():TagRenderSceneAsDirty()
 	end)
 	trBone:AddEventCallback(ents.UtilBoneTransformComponent.EVENT_ON_TRANSFORM_END, function(scale)
 		local animC = actorData:FindComponent("animated")
@@ -344,7 +344,7 @@ function gui.PFMViewport:SetBoneTransformProperty(ent, boneId, propName, value, 
 	end
 	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	if actorC ~= nil then
-		tool.get_filmmaker():SetActorBoneTransformProperty(actorC, bone:GetName() .. "/" .. propName, value, type)
+		pfm.get_project_manager():SetActorBoneTransformProperty(actorC, bone:GetName() .. "/" .. propName, value, type)
 	end
 end
 function gui.PFMViewport:GetTransformWidgetComponent()
@@ -358,7 +358,7 @@ function gui.PFMViewport:OnActorTransformChanged(ent)
 	self:MarkActorAsDirty(ent)
 end
 function gui.PFMViewport:CreateMultiActorTransformWidget()
-	local pm = tool.get_filmmaker()
+	local pm = pfm.get_project_manager()
 	pm:TagRenderSceneAsDirty()
 
 	self:ClearTransformGizmo()
@@ -485,7 +485,7 @@ function gui.PFMViewport:CreateMultiActorTransformWidget()
 	self.m_transformComponent = trC
 end
 function gui.PFMViewport:ScaleSelectedActors(scale)
-	local actors = tool.get_filmmaker():GetSelectionManager():GetSelectedActors()
+	local actors = pfm.get_project_manager():GetSelectionManager():GetSelectedActors()
 	local center = Vector()
 	local numActors = 0
 	for actor, _ in pairs(actors) do
@@ -501,9 +501,9 @@ function gui.PFMViewport:ScaleSelectedActors(scale)
 			pos = pos - center
 			pos = pos * scale
 			pos = pos + center
-			tool.get_filmmaker()
+			pfm.get_project_manager()
 				:SetActorTransformProperty(actor:GetComponent(ents.COMPONENT_PFM_ACTOR), "position", pos)
-			tool.get_filmmaker()
+			pfm.get_project_manager()
 				:SetActorTransformProperty(
 					actor:GetComponent(ents.COMPONENT_PFM_ACTOR),
 					"scale",
@@ -542,13 +542,13 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 	self:RemoveActorTransformWidget(ent)
 
 	if manipMode == gui.PFMViewport.MANIPULATOR_MODE_SELECT then
-		tool.get_filmmaker():TagRenderSceneAsDirty()
+		pfm.get_project_manager():TagRenderSceneAsDirty()
 		return
 	end
 
 	local manipMode = manipMode or self.m_manipulatorMode
 	if enabled then
-		local pm = tool.get_filmmaker()
+		local pm = pfm.get_project_manager()
 		local actorEditor = pm:GetActorEditor()
 		local activeControls = actorEditor:GetActiveControls()
 		local uuid = tostring(ent:GetUuid())
@@ -854,7 +854,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 							end
 						end
 
-						local pm = tool.get_filmmaker()
+						local pm = pfm.get_project_manager()
 						local newDataPose = calc_new_data_pose()
 						local oldVal = get_pose_value(origDataPose)
 						local newVal = get_pose_value(newDataPose)
@@ -887,7 +887,7 @@ function gui.PFMViewport:CreateActorTransformWidget(ent, manipMode, enabled)
 			self:InitializeTransformWidget(tc, ent)
 		end]]
 	end
-	tool.get_filmmaker():TagRenderSceneAsDirty()
+	pfm.get_project_manager():TagRenderSceneAsDirty()
 end
 function gui.PFMViewport:UpdateActorManipulation(ent, selected)
 	self:CreateActorTransformWidget(ent, self.m_manipulatorMode, selected)

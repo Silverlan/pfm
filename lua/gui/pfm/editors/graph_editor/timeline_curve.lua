@@ -111,7 +111,7 @@ function gui.PFMTimelineCurve:UpdateKeyframes()
 			el:SetGraphData(self, kfInfo)
 
 			el:AddCallback("OnMouseEvent", function(el, button, state, mods)
-				if self.m_timelineGraph:GetCursorMode() ~= gui.PFMTimelineGraph.CURSOR_MODE_SELECT then
+				if self.m_timelineGraph:GetCursorMode() ~= gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT then
 					return util.EVENT_REPLY_UNHANDLED
 				end
 				if button == input.MOUSE_BUTTON_LEFT then
@@ -310,7 +310,7 @@ function gui.PFMTimelineCurve:FindDataPoint(t)
 		end
 	end
 end
-function gui.PFMTimelineCurvefUpdateCurveValue(i, xVal, yVal)
+function gui.PFMTimelineCurve:UpdateCurveValue(i, xVal, yVal)
 	self.m_curve:UpdateCurveValue(i, xVal, yVal)
 	self:UpdateDataPoints(i + 1)
 end

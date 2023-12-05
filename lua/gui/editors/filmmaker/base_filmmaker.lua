@@ -9,21 +9,59 @@
 include("../base_editor.lua")
 include("/pfm/project_manager.lua")
 
-util.register_class("gui.WIBaseFilmmaker", gui.WIBaseEditor, pfm.ProjectManager)
-function gui.WIBaseFilmmaker:__init()
+local Element = util.register_class("gui.WIBaseFilmmaker", gui.WIBaseEditor, pfm.ProjectManager)
+
+include("global_state_data.lua")
+include("layout.lua")
+include("misc.lua")
+
+function Element:__init()
 	gui.WIBaseEditor.__init(self)
 	pfm.ProjectManager.__init(self)
 
 	pfm.set_project_manager(self)
 end
-function gui.WIBaseFilmmaker:OnRemove()
+function Element:OnRemove()
 	gui.WIBaseEditor.OnRemove(self)
 	pfm.ProjectManager.OnRemove(self)
+	self.m_selectionManager:Remove()
 end
-function gui.WIBaseFilmmaker:OnInitialize()
+function Element:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
+	self:LoadGlobalStateData()
 end
-function gui.WIBaseFilmmaker:OpenBoneRetargetWindow(mdlSrc, mdlDst)
+function Element:InitializeSelectionManager()
+	self.m_selectionManager = pfm.ActorSelectionManager()
+	self.m_selectionManager:AddChangeListener(function(ent, selected)
+		self:OnActorSelectionChanged(ent, selected)
+	end)
+end
+function Element:GetSelectionManager()
+	return self.m_selectionManager
+end
+function Element:SetOverlaySceneEnabled(enabled) end
+function Element:GetPlaybackState()
+	return self.m_playbackState
+end
+function Element:InitializePlaybackState()
+	self.m_playbackState = pfm.util.PlaybackState()
+	self.m_playbackState:AddCallback("OnTimeAdvance", function(dt)
+		-- TODO: Handle this without ui elements
+		local pfmTimeline = self.m_timeline
+		local playhead = util.is_valid(pfmTimeline) and pfmTimeline:GetPlayhead() or nil
+		if util.is_valid(playhead) then
+			playhead:SetTimeOffset(playhead:GetTimeOffset() + dt)
+		end
+	end)
+	self.m_playbackState:AddCallback("OnStateChanged", function(oldState, state)
+		ents.PFMSoundSource.set_audio_enabled(state == pfm.util.PlaybackState.STATE_PLAYING)
+		if state == pfm.util.PlaybackState.STATE_PAUSED then
+			-- On pause, move to the closest whole frame
+			self:ClampTimeOffsetToFrame()
+		end
+	end)
+end
+function Element:OpenBoneRetargetWindow(mdlSrc, mdlDst)
 	local mdlSrcPath = (type(mdlSrc) == "string") and mdlSrc or mdlSrc:GetName()
 	mdlSrc = (type(mdlSrc) == "string") and game.load_model(mdlSrc) or mdlSrc
 	mdlDst = (type(mdlDst) == "string") and game.load_model(mdlDst) or mdlDst
@@ -76,7 +114,7 @@ function gui.WIBaseFilmmaker:OpenBoneRetargetWindow(mdlSrc, mdlDst)
 		el:SetModelTargets(mdlSrc, mdlDst)
 	end
 end
-function gui.WIBaseFilmmaker:GetAvailableRetargetImpostorModels(actor)
+function Element:GetAvailableRetargetImpostorModels(actor)
 	local targetActor = actor
 	local imposterC = actor:GetComponent("impostor")
 	if imposterC ~= nil then
@@ -90,7 +128,7 @@ function gui.WIBaseFilmmaker:GetAvailableRetargetImpostorModels(actor)
 	end
 	return ents.RetargetRig.Rig.find_available_retarget_impostor_models(targetActor:GetModel())
 end
-function gui.WIBaseFilmmaker:GetImpersonatee(actor)
+function Element:GetImpersonatee(actor)
 	local targetActor = actor
 	local imposterC = actor:GetComponent("impostor")
 	if imposterC ~= nil then
@@ -101,7 +139,7 @@ function gui.WIBaseFilmmaker:GetImpersonatee(actor)
 	end
 	return targetActor
 end
-function gui.WIBaseFilmmaker:ChangeActorModel(actorC, mdlName)
+function Element:ChangeActorModel(actorC, mdlName)
 	console.run("asset_clear_unused") -- Clear all unused assets, so we don't run into memory issues
 	actorC:SetDefaultRenderMode(game.SCENE_RENDER_PASS_WORLD)
 
@@ -146,8 +184,8 @@ function gui.WIBaseFilmmaker:ChangeActorModel(actorC, mdlName)
 	end
 	return entImpostor
 end
-function gui.WIBaseFilmmaker:OnActorModelChanged(entActor, entImpostor) end
-function gui.WIBaseFilmmaker:RetargetActor(targetActor, mdlName)
+function Element:OnActorModelChanged(entActor, entImpostor) end
+function Element:RetargetActor(targetActor, mdlName)
 	targetActor = self:GetImpersonatee(targetActor)
 	if util.is_valid(targetActor) == false then
 		return

@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Element = gui.WIFilmmaker
+local Element = gui.WIBaseFilmmaker
 
 function Element:BuildKernels()
 	if util.is_valid(self.m_rtBuildKernels) then

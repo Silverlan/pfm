@@ -119,7 +119,7 @@ function gui.AssetExplorer:CollectFiles(path)
 	return tFiles, tDirs
 end
 function gui.AssetExplorer:Setup()
-	local gsd = tool.get_filmmaker():GetGlobalStateData()
+	local gsd = pfm.get_project_manager():GetGlobalStateData()
 	local udmCatalog = gsd:Get("catalogs"):Get(self:GetIdentifier())
 	for _, fav in ipairs(udmCatalog:GetArrayValues("favorites", udm.TYPE_STRING)) do
 		self:AddToFavorites(fav, false)
@@ -174,7 +174,7 @@ function gui.AssetExplorer:AddToSpecial(id, mdl, addToGlobalState)
 	v[mdl] = true
 
 	if addToGlobalState and id == "fav" then
-		local gsd = tool.get_filmmaker():GetGlobalStateData()
+		local gsd = pfm.get_project_manager():GetGlobalStateData()
 
 		local identifier = self:GetIdentifier()
 		local udmCatalog = gsd:Get("catalogs"):Get(identifier)
@@ -187,7 +187,7 @@ function gui.AssetExplorer:AddToSpecial(id, mdl, addToGlobalState)
 			local udmFavorites = udmCatalog:Get("favorites")
 			udmFavorites:Resize(udmFavorites:GetSize() + 1)
 			udmFavorites:SetValue(udmFavorites:GetSize() - 1, udm.TYPE_STRING, mdl)
-			tool.get_filmmaker():SaveGlobalStateData()
+			pfm.get_project_manager():SaveGlobalStateData()
 		end
 
 		local el = self:GetAssetIcon(mdl)
@@ -216,14 +216,14 @@ function gui.AssetExplorer:RemoveFromSpecial(id, mdl)
 	v[mdl] = nil
 
 	if id == "fav" then
-		local gsd = tool.get_filmmaker():GetGlobalStateData()
+		local gsd = pfm.get_project_manager():GetGlobalStateData()
 		local identifier = self:GetIdentifier()
 		local udmCatalog = gsd:Get("catalogs"):Get(identifier)
 		local i = find_in_gsd_favorites(udmCatalog, mdl)
 		if i ~= nil then
 			local udmFavorites = udmCatalog:Get("favorites")
 			udmFavorites:RemoveValue(i)
-			tool.get_filmmaker():SaveGlobalStateData()
+			pfm.get_project_manager():SaveGlobalStateData()
 		end
 
 		local el = self:GetAssetIcon(mdl)

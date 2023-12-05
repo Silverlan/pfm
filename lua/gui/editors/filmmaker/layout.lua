@@ -6,16 +6,16 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Element = gui.WIFilmmaker
+local Element = gui.WIBaseFilmmaker
 
 pfm.register_log_category("layout")
 
-local Layout = util.register_class("gui.WIFilmmaker.Layout")
+local Layout = util.register_class("gui.WIBaseFilmmaker.Layout")
 function Layout:__init()
 	self.m_frameContainers = {}
 end
 function Layout:AddFrameContainer(identifier)
-	local container = gui.WIFilmmaker.Layout.FrameContainer()
+	local container = gui.WIBaseFilmmaker.Layout.FrameContainer()
 	self.m_frameContainers[identifier] = {
 		container = container,
 	}
@@ -37,7 +37,7 @@ Layout.load = function(fileName)
 	local udmLayout = udmData:ClaimOwnership()
 	udmLayout = udmLayout:Get("layout")
 
-	local layout = gui.WIFilmmaker.Layout()
+	local layout = gui.WIBaseFilmmaker.Layout()
 	local iContainer = 0
 	local function addContainer(udmContainer, parent)
 		local defaultRatio = udmContainer:GetValue("defaultFrameSizeRatio", udm.TYPE_FLOAT)
@@ -74,7 +74,7 @@ Layout.load = function(fileName)
 	return layout
 end
 
-local FrameContainer = util.register_class("gui.WIFilmmaker.Layout.FrameContainer")
+local FrameContainer = util.register_class("gui.WIBaseFilmmaker.Layout.FrameContainer")
 function FrameContainer:__init()
 	self.m_frames = {}
 	self.m_horizontal = true
@@ -92,7 +92,7 @@ function FrameContainer:IsVertical()
 	return not self.m_horizontal
 end
 function FrameContainer:AddFrame(frameName, defaultRatio)
-	local frame = gui.WIFilmmaker.Layout.Frame()
+	local frame = gui.WIBaseFilmmaker.Layout.Frame()
 	table.insert(self.m_frames, {
 		type = "frame",
 		frame = frame,
@@ -102,7 +102,7 @@ function FrameContainer:AddFrame(frameName, defaultRatio)
 	return frame
 end
 function FrameContainer:AddFrameContainer(frameName, defaultRatio)
-	local frameContainer = gui.WIFilmmaker.Layout.FrameContainer()
+	local frameContainer = gui.WIBaseFilmmaker.Layout.FrameContainer()
 	table.insert(self.m_frames, {
 		type = "frameContainer",
 		container = frameContainer,
@@ -118,7 +118,7 @@ function FrameContainer:GetFrames()
 	return self.m_frames
 end
 
-local Frame = util.register_class("gui.WIFilmmaker.Layout.Frame")
+local Frame = util.register_class("gui.WIBaseFilmmaker.Layout.Frame")
 function Frame:__init()
 	self.m_categories = {}
 end
@@ -137,14 +137,14 @@ function Element:InitializeLayout(layoutFileName)
 		pfm.LOG_CATEGORY_LAYOUT,
 		pfm.LOG_SEVERITY_INFO
 	)
-	local layout, err = gui.WIFilmmaker.Layout.load(layoutFileName)
+	local layout, err = gui.WIBaseFilmmaker.Layout.load(layoutFileName)
 	if layout == false then
 		pfm.log(
 			"Unable to load layout configuration '" .. layoutFileName .. "': " .. err,
 			pfm.LOG_CATEGORY_LAYOUT,
 			pfm.LOG_SEVERITY_WARNING
 		)
-		layout = gui.WIFilmmaker.Layout()
+		layout = gui.WIBaseFilmmaker.Layout()
 		layout:AddFrameContainer("default"):AddFrame("default")
 	end
 
@@ -416,7 +416,7 @@ function Element:SaveWindowLayoutState(assetData, saveLayout)
 	return true
 end
 
-function gui.WIFilmmaker:UpdateWindowLayoutState()
+function gui.WIBaseFilmmaker:UpdateWindowLayoutState()
 	local session = self:GetSession()
 	if session == nil then
 		return

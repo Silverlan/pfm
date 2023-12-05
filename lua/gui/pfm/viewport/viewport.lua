@@ -143,7 +143,7 @@ function gui.PFMViewport:SetRtViewportRenderer(renderer)
 	local enabled = (renderer ~= nil)
 	console.run("cl_max_fps", enabled and "24" or tostring(console.get_convar_int("pfm_max_fps"))) -- Clamp max fps to make more resources available for the renderer
 	util.remove(self.m_rtViewport)
-	tool.get_filmmaker():SetOverlaySceneEnabled(false)
+	pfm.get_project_manager():SetOverlaySceneEnabled(false)
 	if enabled ~= true then
 		return
 	end
@@ -165,7 +165,7 @@ function gui.PFMViewport:SetRtViewportRenderer(renderer)
 		rtViewport:SetGameScene(scene)
 	end
 	self.m_rtViewport = rtViewport
-	tool.get_filmmaker():SetOverlaySceneEnabled(true)
+	pfm.get_project_manager():SetOverlaySceneEnabled(true)
 
 	self:UpdateRenderSettings()
 end
@@ -176,7 +176,7 @@ function gui.PFMViewport:StopLiveRaytracing()
 	self.m_ctrlRt:SelectOption(0)
 end
 function gui.PFMViewport:UpdateRenderSettings()
-	local pfm = tool.get_filmmaker()
+	local pfm = pfm.get_project_manager()
 	local renderTab = pfm:GetRenderTab()
 	if util.is_valid(self.m_rtViewport) == false or util.is_valid(renderTab) == false then
 		return
@@ -189,7 +189,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 		mouseButton == input.MOUSE_BUTTON_LEFT
 		and self:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_SELECT
 	then
-		tool.get_filmmaker():TagRenderSceneAsDirty()
+		pfm.tag_render_scene_as_dirty()
 		if state == input.STATE_PRESS then
 			self.m_leftMouseInput = true
 			self.m_cursorTracker = gui.CursorTracker()
@@ -209,7 +209,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
 				if actor then
-					local filmmaker = tool.get_filmmaker()
+					local filmmaker = pfm.get_project_manager()
 					if input.is_alt_key_down() then
 						filmmaker:DeselectActor(actor)
 					else
@@ -256,7 +256,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 		return util.EVENT_REPLY_HANDLED
 	end]]
 
-	local filmmaker = tool.get_filmmaker()
+	local filmmaker = pfm.get_project_manager()
 	if
 		self.m_inCameraControlMode
 		and mouseButton == input.MOUSE_BUTTON_RIGHT
@@ -282,7 +282,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 				if self.m_cursorTracker ~= nil then
 					self.m_cursorTracker = nil
 					self:UpdateThinkState()
-					tool.get_filmmaker():TagRenderSceneAsDirty()
+					pfm.tag_render_scene_as_dirty()
 
 					local handled, entActor, hitPos, startPos, hitData = findActor(true, nil, input.ACTION_ATTACK2)
 					if handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor) then
@@ -321,7 +321,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 		elseif mouseButton == input.MOUSE_BUTTON_LEFT then
 			if util.is_valid(self.m_rtMoverActor) then
 				self.m_rtMoverActor:RemoveComponent("pfm_rt_mover")
-				tool.get_filmmaker():TagRenderSceneAsDirty()
+				pfm.tag_render_scene_as_dirty()
 				local actorC = util.is_valid(self.m_rtMoverActor)
 						and self.m_rtMoverActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 					or nil
@@ -329,7 +329,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 					local curPos = actorC:GetMemberValue("position")
 					local newPos = self.m_rtMoverActor:GetPos()
 					local function apply_pos(pos)
-						tool.get_filmmaker():SetActorTransformProperty(actorC, "position", pos)
+						pfm.get_project_manager():SetActorTransformProperty(actorC, "position", pos)
 						if util.is_valid(self.m_rtMoverActor) then
 							self:OnActorTransformChanged(self.m_rtMoverActor)
 						end
@@ -353,7 +353,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 				self:IsMoveManipulatorMode(self:GetManipulatorMode())
 				and (entActor == nil or entActor:HasComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW) == false)
 			then
-				local pm = tool.get_filmmaker()
+				local pm = pfm.get_project_manager()
 				local selectionManager = pm:GetSelectionManager()
 				local objs = selectionManager:GetSelectedObjects()
 				local obj = pairs(objs)(objs)
@@ -389,7 +389,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 						if(state == input.STATE_PRESS) then
 							self.m_rtMoverActor = entActor
 							entActor:AddComponent("pfm_rt_mover")
-							tool.get_filmmaker():TagRenderSceneAsDirty(true)
+							pfm.get_project_manager():TagRenderSceneAsDirty(true)
 						end
 					else
 						if(input.is_alt_key_down()) then
@@ -657,7 +657,7 @@ function gui.PFMViewport:OnThink()
 
 		local targetPose
 		if self:IsSceneCamera() then
-			local filmmaker = tool.get_filmmaker()
+			local filmmaker = pfm.get_project_manager()
 			local actorEditor = filmmaker:GetActorEditor()
 			if util.is_valid(actorEditor) then
 				local actor = self:GetSceneCameraActorData()

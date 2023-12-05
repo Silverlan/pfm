@@ -45,7 +45,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 	self.m_ctrlRt = ctrlRt
 	-- wrapper:SetUseAltMode(true)
 	self.m_ctrlRt:AddCallback("OnOptionSelected", function(el, idx)
-		local pm = tool.get_filmmaker()
+		local pm = pfm.get_project_manager()
 		if util.is_valid(pm) and pm:CheckBuildKernels() then
 			return
 		end
@@ -61,7 +61,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 			self.m_refreshRtView:SetVisible(false)
 		else
 			val = "cycles"
-			local pfm = tool.get_filmmaker()
+			local pfm = pfm.get_project_manager()
 			local renderTab = pfm:GetRenderTab()
 			if util.is_valid(renderTab) then
 				val = renderTab:GetRenderSettings():GetRenderEngine()
@@ -102,10 +102,10 @@ function gui.PFMViewport:InitializeSettings(parent)
 
 		if vpMode == "realtime" then
 			self.m_rtViewport:SetZPos(-10)
-			tool.get_filmmaker():SetOverlaySceneEnabled(false)
+			pfm.get_project_manager():SetOverlaySceneEnabled(false)
 		else
 			self.m_rtViewport:SetZPos(10)
-			tool.get_filmmaker():SetOverlaySceneEnabled(true)
+			pfm.get_project_manager():SetOverlaySceneEnabled(true)
 		end
 	end)
 	self.m_ctrlViewportWrapper:SetVisible(false)
@@ -170,7 +170,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 	}, "uncharted")
 	self.m_ctrlToneMapping:AddCallback("OnOptionSelected", function(el, idx)
 		console.run("cl_render_tone_mapping " .. tostring(idx))
-		tool.get_filmmaker():TagRenderSceneAsDirty()
+		pfm.tag_render_scene_as_dirty()
 	end)
 
 	self.m_ctrlTransformSpace = p:AddDropDownMenu(locale.get_text("pfm_transform_space"), "transform_space", {
@@ -251,7 +251,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 	}, 1)
 	self.m_ctrlShowBones:AddCallback("OnOptionSelected", function(el, idx)
 		local enabled = toboolean(self.m_ctrlShowBones:GetOptionValue(self.m_ctrlShowBones:GetSelectedOption()))
-		tool.get_filmmaker():GetSelectionManager():SetShowBones(enabled)
+		pfm.get_project_manager():GetSelectionManager():SetShowBones(enabled)
 		pfm.tag_render_scene_as_dirty()
 	end)
 
@@ -264,7 +264,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 		local enabled = toboolean(
 			self.m_ctrlShowSelectionWireframe:GetOptionValue(self.m_ctrlShowSelectionWireframe:GetSelectedOption())
 		)
-		tool.get_filmmaker():GetSelectionManager():SetSelectionWireframeEnabled(enabled)
+		pfm.get_project_manager():GetSelectionManager():SetSelectionWireframeEnabled(enabled)
 		pfm.tag_render_scene_as_dirty()
 	end)
 
@@ -274,7 +274,7 @@ function gui.PFMViewport:InitializeSettings(parent)
 	}, 1)
 	self.m_ctrlShowAxes:AddCallback("OnOptionSelected", function(el, idx)
 		local enabled = toboolean(self.m_ctrlShowAxes:GetOptionValue(self.m_ctrlShowAxes:GetSelectedOption()))
-		local ent = tool.get_filmmaker():GetWorldAxesGizmo()
+		local ent = pfm.get_project_manager():GetWorldAxesGizmo()
 		if util.is_valid(ent) then
 			ent:SetEnabled(enabled)
 		end
@@ -299,7 +299,7 @@ function gui.PFMViewport:InitializeControls()
 	self.m_playControls:SetName("playback_controls")
 	self.m_playControls:CenterToParentX()
 	self.m_playControls:SetAnchor(0.5, 0, 0.5, 0)
-	self.m_playControls:LinkToPFMProject(tool.get_filmmaker())
+	self.m_playControls:LinkToPFMProject(pfm.get_project_manager())
 	self.m_btPlay = self.m_playControls:GetPlayButton()
 
 	controls:SizeToContents()

@@ -60,11 +60,9 @@ include("windows")
 include("video_recorder.lua")
 include("selection_manager.lua")
 include("animation_export.lua")
-include("layout.lua")
 include("update.lua")
 include("windows.lua")
 include("tutorials.lua")
-include("global_state_data.lua")
 
 include_component("pfm_camera")
 include_component("pfm_sound_source")
@@ -149,7 +147,6 @@ function gui.WIFilmmaker:OnInitialize()
 		self.m_settings = udm.create_element()
 	end
 
-	self:LoadGlobalStateData()
 	self:InitializeBindingLayers()
 
 	local infoBar = self:GetInfoBar()
@@ -255,10 +252,7 @@ function gui.WIFilmmaker:OnInitialize()
 	self:EnableThinking()
 	self:SetSize(1280, 1024)
 	self:SetSkin("pfm")
-	self.m_selectionManager = pfm.ActorSelectionManager()
-	self.m_selectionManager:AddChangeListener(function(ent, selected)
-		self:OnActorSelectionChanged(ent, selected)
-	end)
+	self:InitializeSelectionManager()
 	local pMenuBar = self:GetMenuBar()
 	self.m_menuBar = pMenuBar
 
@@ -1049,9 +1043,6 @@ end
 function gui.WIFilmmaker:GoToPreviousBookmark()
 	self:GoToNeighborBookmark(false)
 end
-function gui.WIFilmmaker:GetSelectionManager()
-	return self.m_selectionManager
-end
 function gui.WIFilmmaker:OnThink()
 	local cursorPos = input.get_cursor_pos()
 	if cursorPos ~= self.m_lastCursorPos then
@@ -1125,7 +1116,6 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_previewWindow)
 	util.remove(self.m_renderResultWindow)
 	util.remove(self.m_updateProgressBar)
-	self.m_selectionManager:Remove()
 
 	local window = gui.get_primary_window()
 	if util.is_valid(window) then
