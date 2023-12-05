@@ -8,11 +8,6 @@
 
 local Component = util.register_class("ents.PFMModel", BaseEntityComponent)
 
-Component:RegisterMember("flexControllerScale", udm.TYPE_FLOAT, 1.0, {
-	min = 0.0,
-	max = 100.0,
-})
-Component:RegisterMember("flexControllerLimitsEnabled", udm.TYPE_BOOLEAN, true)
 Component:RegisterMember("MaterialOverrides", ents.MEMBER_TYPE_ELEMENT, "", {
 	onChange = function(self)
 		self:UpdateMaterialOverrides()
