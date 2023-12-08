@@ -50,7 +50,7 @@ function Element:OnInitialize()
 		local linkData = self.m_links[i]
 		if util.is_valid(self.m_webBrowser) then
 			if linkData.hasAdultContent then
-				tool.get_filmmaker():ShowMatureContentPrompt(function()
+				pfm.get_project_manager():ShowMatureContentPrompt(function()
 					self.m_webBrowser:LoadUrl(linkData.url)
 				end, function()
 					elBookmarks:SelectOption("pfm_wiki")

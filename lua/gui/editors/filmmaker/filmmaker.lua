@@ -132,8 +132,6 @@ function gui.WIFilmmaker:OnInitialize()
 	self.m_originalWindowTitle = windowTitle
 
 	self.m_editorOverlayRenderMask = game.register_render_mask("pfm_editor_overlay", false)
-	self.m_worldAxesGizmo = ents.create("pfm_world_axes_gizmo")
-	self.m_worldAxesGizmo:Spawn()
 
 	self.m_pfmManager = ents.create("entity")
 	self.m_pfmManager:AddComponent("pfm_manager")
@@ -146,8 +144,6 @@ function gui.WIFilmmaker:OnInitialize()
 	else
 		self.m_settings = udm.create_element()
 	end
-
-	self:InitializeBindingLayers()
 
 	local infoBar = self:GetInfoBar()
 
@@ -522,43 +518,6 @@ function gui.WIFilmmaker:SetNotificationAsDisplayed(id)
 	local udmNotifications = self.m_settings:Get("notifications")
 	udmNotifications:SetValue(id, udm.TYPE_BOOLEAN, true)
 end
-function gui.WIFilmmaker:ShowMatureContentPrompt(onYes, onNo)
-	if console.get_convar_bool("pfm_web_browser_enable_mature_content") then
-		onYes()
-		return
-	end
-	local ctrl, wrapper
-	local msg = pfm.open_message_prompt(
-		locale.get_text("pfm_content_warning"),
-		locale.get_text("pfm_content_warning_website"),
-		bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
-		function(bt)
-			if bt == gui.PfmPrompt.BUTTON_YES then
-				if ctrl:IsChecked() then
-					console.run("pfm_web_browser_enable_mature_content", "1")
-				end
-				onYes()
-			elseif bt == gui.PfmPrompt.BUTTON_NO then
-				if onNo ~= nil then
-					onNo()
-				end
-			end
-		end
-	)
-	local userContents = msg:GetUserContents()
-
-	local p = gui.create("WIPFMControlsMenu", userContents)
-	p:SetAutoFillContentsToWidth(true)
-	p:SetAutoFillContentsToHeight(false)
-
-	ctrl, wrapper = p:AddToggleControl(pfm.LocStr("pfm_remember_my_choice"), "remember_my_choice", false)
-	p:SetWidth(200)
-	p:Update()
-	p:SizeToContents()
-	p:ResetControls()
-
-	gui.create("WIBase", userContents, 0, 0, 1, 12) -- Gap
-end
 function gui.WIFilmmaker:OnLuaError(err)
 	local t = time.real_time()
 	if self.m_lastLuaError ~= nil then
@@ -738,9 +697,6 @@ end
 function gui.WIFilmmaker:GetManagerEntity()
 	return self.m_pfmManager
 end
-function gui.WIFilmmaker:GetWorldAxesGizmo()
-	return self.m_worldAxesGizmo
-end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()
 end
@@ -850,6 +806,9 @@ function gui.WIFilmmaker:UpdateWorkCamera(cameraView)
 		settings:SetCameraView(cameraView)
 	end
 end
+function gui.WIFilmmaker:IsEditor()
+	return true
+end
 function gui.WIFilmmaker:SaveSettings()
 	local udmData, err = udm.create("PFMST", 1)
 	local assetData = udmData:GetAssetData()
@@ -929,13 +888,6 @@ function gui.WIFilmmaker:TagRenderSceneAsDirty(dirty)
 		return
 	end
 	self.m_renderSceneDirty = dirty and math.huge or nil
-end
-function gui.WIFilmmaker:ReloadInterface()
-	local projectData = self:MakeProjectPersistent()
-	self:Close()
-
-	local interface = tool.open_filmmaker()
-	interface:RestorePersistentProject(projectData)
 end
 function gui.WIFilmmaker:GetGameScene()
 	return self:GetRenderTab():GetGameScene()
@@ -1097,7 +1049,6 @@ function gui.WIFilmmaker:OnRemove()
 	self:CloseProject()
 	pfm.clear_pragma_renderer_scene()
 	game.set_default_game_render_enabled(true)
-	util.remove(self.m_worldAxesGizmo)
 	util.remove(self.m_pfmManager)
 	util.remove(self.m_cbDisableDefaultSceneDraw)
 	util.remove(self.m_cbOnWindowShouldClose)

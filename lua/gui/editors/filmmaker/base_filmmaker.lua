@@ -14,6 +14,7 @@ local Element = util.register_class("gui.WIBaseFilmmaker", gui.WIBaseEditor, pfm
 include("global_state_data.lua")
 include("layout.lua")
 include("misc.lua")
+include("io.lua")
 
 function Element:__init()
 	gui.WIBaseEditor.__init(self)
@@ -21,14 +22,26 @@ function Element:__init()
 
 	pfm.set_project_manager(self)
 end
+function Element:GetWorldAxesGizmo()
+	return self.m_worldAxesGizmo
+end
 function Element:OnRemove()
 	gui.WIBaseEditor.OnRemove(self)
 	pfm.ProjectManager.OnRemove(self)
 	self.m_selectionManager:Remove()
+	util.remove(self.m_worldAxesGizmo)
 end
 function Element:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
 	self:LoadGlobalStateData()
+
+	self.m_worldAxesGizmo = ents.create("pfm_world_axes_gizmo")
+	self.m_worldAxesGizmo:Spawn()
+
+	self:InitializeBindingLayers()
+end
+function Element:IsEditor()
+	return false
 end
 function Element:InitializeSelectionManager()
 	self.m_selectionManager = pfm.ActorSelectionManager()
@@ -225,4 +238,41 @@ function Element:RetargetActor(targetActor, mdlName)
 			ent:PlayAnimation(targetActor:GetAnimation())
 		end
 	end
+end
+function Element:ShowMatureContentPrompt(onYes, onNo)
+	if console.get_convar_bool("pfm_web_browser_enable_mature_content") then
+		onYes()
+		return
+	end
+	local ctrl, wrapper
+	local msg = pfm.open_message_prompt(
+		locale.get_text("pfm_content_warning"),
+		locale.get_text("pfm_content_warning_website"),
+		bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
+		function(bt)
+			if bt == gui.PfmPrompt.BUTTON_YES then
+				if ctrl:IsChecked() then
+					console.run("pfm_web_browser_enable_mature_content", "1")
+				end
+				onYes()
+			elseif bt == gui.PfmPrompt.BUTTON_NO then
+				if onNo ~= nil then
+					onNo()
+				end
+			end
+		end
+	)
+	local userContents = msg:GetUserContents()
+
+	local p = gui.create("WIPFMControlsMenu", userContents)
+	p:SetAutoFillContentsToWidth(true)
+	p:SetAutoFillContentsToHeight(false)
+
+	ctrl, wrapper = p:AddToggleControl(pfm.LocStr("pfm_remember_my_choice"), "remember_my_choice", false)
+	p:SetWidth(200)
+	p:Update()
+	p:SizeToContents()
+	p:ResetControls()
+
+	gui.create("WIBase", userContents, 0, 0, 1, 12) -- Gap
 end

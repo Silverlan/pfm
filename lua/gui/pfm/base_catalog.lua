@@ -49,27 +49,32 @@ function Element:OnInitialize()
 	p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
 
-	local elShowExternalAssets, wrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_show_external_assets"),
-		"show_external_assets",
-		{
-			{ "0", locale.get_text("no") },
-			{ "1", locale.get_text("yes") },
-		},
-		console.get_convar_bool("pfm_show_external_assets") and "1" or "0",
-		function()
-			local b = toboolean(self.m_showExternalAssets:GetOptionValue(self.m_showExternalAssets:GetSelectedOption()))
-			console.run("pfm_show_external_assets", b and "1" or "0")
+	if self.m_externalAssetsEnabled ~= false then
+		local elShowExternalAssets, wrapper = p:AddDropDownMenu(
+			locale.get_text("pfm_show_external_assets"),
+			"show_external_assets",
+			{
+				{ "0", locale.get_text("no") },
+				{ "1", locale.get_text("yes") },
+			},
+			console.get_convar_bool("pfm_show_external_assets") and "1" or "0",
+			function()
+				local b = toboolean(
+					self.m_elShowExternalAssets:GetOptionValue(self.m_elShowExternalAssets:GetSelectedOption())
+				)
+				console.run("pfm_show_external_assets", b and "1" or "0")
 
-			self.m_explorer:SetShowExternalAssets(b)
-		end
-	)
-	self.m_cbShowExternalAssets = console.add_change_callback("pfm_show_external_assets", function(old, new)
-		elShowExternalAssets:SelectOption(new and "1" or "0")
-	end)
-	self.m_showExternalAssets = elShowExternalAssets
-	p:Update()
-	p:SizeToContents()
+				self.m_explorer:SetShowExternalAssets(b)
+			end
+		)
+		self.m_cbShowExternalAssets = console.add_change_callback("pfm_show_external_assets", function(old, new)
+			elShowExternalAssets:SelectOption(new and "1" or "0")
+		end)
+		self.m_elShowExternalAssets = elShowExternalAssets
+		self.m_elShowExternalAssetsWrapper = wrapper
+		p:Update()
+		p:SizeToContents()
+	end
 
 	local scrollContainer =
 		gui.create("WIScrollContainer", self.m_contents, 0, 0, self:GetWidth(), self:GetHeight() - 72)
@@ -139,6 +144,9 @@ function Element:OnInitialize()
 
 	self:EnableThinking()
 	p:ResetControls()
+end
+function Element:SetExternalAssetsEnabled(enabled)
+	self.m_externalAssetsEnabled = enabled
 end
 function Element:GetFilterElement()
 	return self.m_teFilter

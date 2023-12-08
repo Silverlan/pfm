@@ -10,9 +10,6 @@ include("assetexplorer.lua")
 include("/gui/vr_player/video_player.lua")
 
 util.register_class("gui.VideoExplorer", gui.AssetExplorer)
-function gui.VideoExplorer:__init()
-	gui.AssetExplorer.__init(self)
-end
 function gui.VideoExplorer:OnInitialize()
 	gui.AssetExplorer.OnInitialize(self)
 

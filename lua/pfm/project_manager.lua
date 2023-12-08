@@ -128,6 +128,13 @@ function pfm.ProjectManager:RestorePersistentProject(data)
 	self:SetProjectFileName(data.fileName)
 	return util.is_valid(self:InitializeProject(self.m_project))
 end
+function pfm.ProjectManager:ReloadInterface()
+	local projectData = self:MakeProjectPersistent()
+	self:Close()
+
+	local interface = pfm.get_project_manager()
+	interface:RestorePersistentProject(projectData)
+end
 function pfm.ProjectManager:SetProjectFileName(fileName)
 	self.m_projectFileName = fileName
 	self:OnProjectFileNameChanged(fileName)

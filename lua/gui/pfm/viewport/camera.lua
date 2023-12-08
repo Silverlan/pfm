@@ -177,13 +177,12 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 		local window = self:GetRootWindow()
 		gui.set_focus_enabled(window, false)
 
-		local filmmaker = pfm.get_project_manager()
 		-- filmmaker:TrapFocus(false)
 		-- filmmaker:KillFocus()
-		filmmaker:TagRenderSceneAsDirty(true)
+		pfm.tag_render_scene_as_dirty(true)
 
 		self.m_oldInputLayerStates = {}
-		local inputLayers = filmmaker:GetInputBindingLayers()
+		local inputLayers = pfm.get_project_manager():GetInputBindingLayers()
 		for id, layer in pairs(inputLayers) do
 			if id ~= "pfm_viewport" then
 				self.m_oldInputLayerStates[id] = input.is_binding_layer_enabled(id)
@@ -309,7 +308,10 @@ function gui.PFMViewport:RefreshCamera()
 end
 function gui.PFMViewport:SetCameraView(cameraView)
 	if self:IsWorkCamera() then
-		pfm.get_project_manager():UpdateWorkCamera(cameraView)
+		local pm = pfm.get_project_manager()
+		if pm:IsEditor() then
+			pm:UpdateWorkCamera(cameraView)
+		end
 	end
 	self.m_cameraView = cameraView
 end

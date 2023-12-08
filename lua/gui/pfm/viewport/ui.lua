@@ -288,6 +288,12 @@ function gui.PFMViewport:InitializeSettings(parent)
 	self.m_refreshRtView:SetHeight(26)
 	self.m_refreshRtView:SetVisible(false)
 end
+function gui.PFMViewport:SetManipulatorControlsEnabled(enabled)
+	self.m_manipulatorControlsEnabled = enabled
+end
+function gui.PFMViewport:SetCameraControlsEnabled(enabled)
+	self.m_cameraControlsEnabled = enabled
+end
 function gui.PFMViewport:InitializeControls()
 	gui.PFMBaseViewport.InitializeControls(self)
 
@@ -303,8 +309,14 @@ function gui.PFMViewport:InitializeControls()
 	self.m_btPlay = self.m_playControls:GetPlayButton()
 
 	controls:SizeToContents()
-	self:InitializeManipulatorControls()
-	self:InitializeCameraControls()
+	if self.m_manipulatorControlsEnabled ~= false then
+		self:InitializeManipulatorControls()
+	end
+	if self.m_cameraControlsEnabled ~= false then
+		self:InitializeCameraControls()
+	end
 
-	self.m_settingsBox:ResetControls()
+	if util.is_valid(self.m_settingsBox) then
+		self.m_settingsBox:ResetControls()
+	end
 end

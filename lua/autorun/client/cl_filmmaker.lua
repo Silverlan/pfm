@@ -87,6 +87,13 @@ console.register_variable(
 	bit.bor(console.FLAG_BIT_ARCHIVE),
 	"If enabled, developer features will be enabled."
 )
+console.register_variable(
+	"pfm_debug_dump_graph_editor_edit_log",
+	udm.TYPE_BOOLEAN,
+	false,
+	bit.bor(console.FLAG_BIT_HIDDEN),
+	"If enabled, debug information will be dumped into the console when editing animation data in the graph editor."
+)
 
 console.register_command("pfm_debug_dump_undo_stack", function(pl, key, cmd)
 	local udmFile = udm.create()
@@ -157,33 +164,36 @@ tool.open_filmmaker = function(devMode)
 	return tool.editor
 end
 
-local function start_pfm(...)
+local function start_pfm(launchData, ...)
 	tool.load_filmmaker_scripts()
 	local logCategories = 0
 	local logCategoriesDefined = false
 	local reload = false
 	local dev = console.get_convar_bool("pfm_developer_mode_enabled")
 	local project
-	for cmd, args in pairs(console.parse_command_arguments({ ... })) do
-		if cmd == "log" then
-			logCategoriesDefined = true
-			for _, catName in ipairs(args) do
-				if catName:lower() == "all" then
-					logCategories = bit.lshift(1, pfm.MAX_LOG_CATEGORIES) - 1
-					break
+	local args = console.parse_command_arguments({ ... })
+	for cmd, args in pairs(args) do
+		if launchData.parseArgument == nil or launchData.parseArgument(cmd, args) ~= util.EVENT_REPLY_HANDLED then
+			if cmd == "log" then
+				logCategoriesDefined = true
+				for _, catName in ipairs(args) do
+					if catName:lower() == "all" then
+						logCategories = bit.lshift(1, pfm.MAX_LOG_CATEGORIES) - 1
+						break
+					end
+					if pfm["LOG_CATEGORY_" .. catName:upper()] ~= nil then
+						logCategories = bit.bor(logCategories, pfm["LOG_CATEGORY_" .. catName:upper()])
+					else
+						console.print_warning("Unknown pfm log category '" .. catName .. "'! Ignoring...")
+					end
 				end
-				if pfm["LOG_CATEGORY_" .. catName:upper()] ~= nil then
-					logCategories = bit.bor(logCategories, pfm["LOG_CATEGORY_" .. catName:upper()])
-				else
-					console.print_warning("Unknown pfm log category '" .. catName .. "'! Ignoring...")
-				end
+			elseif cmd == "reload" then
+				reload = true
+			elseif cmd == "dev" then
+				dev = true
+			elseif cmd == "project" then
+				project = args[1]
 			end
-		elseif cmd == "reload" then
-			reload = true
-		elseif cmd == "dev" then
-			dev = true
-		elseif cmd == "project" then
-			project = args[1]
 		end
 	end
 	if logCategoriesDefined == false then
@@ -195,11 +205,11 @@ local function start_pfm(...)
 		if reload then
 			-- Fast way of reloading the editor without having to reload the project as well.
 			-- Mainly used for developing and testing the interface.
-			local pfm = tool.get_filmmaker()
-			if util.is_valid(pfm) then
-				pfm:SetDeveloperModeEnabled(dev)
+			local pm = pfm.get_project_manager()
+			if util.is_valid(pm) then
+				pm:SetDeveloperModeEnabled(dev)
 			end
-			pfm:ReloadInterface()
+			pm:ReloadInterface()
 			return
 		end
 		tool.close_filmmaker()
@@ -230,23 +240,32 @@ local function start_pfm(...)
 		if(toggleC ~= nil) then toggleC:TurnOn() end
 	end]]
 	--
-	local pfm = tool.open_filmmaker(dev)
+	local pfm = launchData.launchTool(dev)
 	if project ~= nil then
 		pfm:LoadProject(project)
 	end
+	return pfm
+end
+
+pfm.launch = function(launchData, ...)
+	launchData = launchData or {}
+	launchData.launchTool = launchData.launchTool or function(dev)
+		return tool.open_filmmaker(dev)
+	end
+	return start_pfm(launchData, ...)
 end
 
 local cbOnGameReady
 console.register_command("pfm", function(pl, ...)
 	if game.is_game_ready() then
-		start_pfm(...)
+		pfm.launch(nil, ...)
 	else
 		util.remove(cbOnGameReady)
 		local args = { ... }
 		cbOnGameReady = game.add_callback("OnGameReady", function()
 			util.remove(cbOnGameReady)
 			time.create_simple_timer(0.0, function()
-				start_pfm(unpack(args))
+				pfm.launch(nil, unpack(args))
 			end)
 		end)
 	end

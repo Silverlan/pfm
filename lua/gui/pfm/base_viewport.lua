@@ -37,10 +37,15 @@ function gui.PFMBaseViewport:OnInitialize()
 		gui.create("WIAspectRatio", self.m_rtBox, 0, 0, self.m_rtBox:GetWidth(), self.m_rtBox:GetHeight(), 0, 0, 1, 1)
 	self:InitializeViewport(self.m_aspectRatioWrapper)
 
-	gui.create("WIResizer", self.m_contents):SetFraction(0.85)
+	if self.m_settingsEnabled ~= false then
+		gui.create("WIResizer", self.m_contents):SetFraction(0.85)
 
-	self:InitializeSettings(self.m_contents)
+		self:InitializeSettings(self.m_contents)
+	end
 	self:InitializeControls()
+end
+function gui.PFMBaseViewport:SetSettingsEnabled(enabled)
+	self.m_settingsEnabled = enabled
 end
 function gui.PFMBaseViewport:InitializeViewport(parent) end
 function gui.PFMBaseViewport:InitializeSettings(parent)
