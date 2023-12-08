@@ -432,12 +432,16 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 								return
 							end
 							local res = component:GetEffectiveMemberValue(memberName, controlData.type)
-							if
-								res ~= nil
-								and type(res) == "string"
-								and memberInfo.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY
-							then
-								return ents.UniversalMemberReference(res)
+							if res ~= nil then
+								if memberInfo.type == ents.MEMBER_TYPE_ENTITY then
+									if type(res) == "string" then
+										return ents.UniversalEntityReference(res)
+									end
+								elseif memberInfo.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY then
+									if type(res) == "string" then
+										return ents.UniversalMemberReference(res)
+									end
+								end
 							end
 							return res
 						end
@@ -543,7 +547,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 							local udmType = info.type
 							if memberType == ents.MEMBER_TYPE_ENTITY then
 								local uuid = udmValue:GetUuid()
-								if uuid:IsValid() then
+								if uuid ~= nil then
 									udmValue = tostring(uuid)
 								else
 									udmValue = ""
