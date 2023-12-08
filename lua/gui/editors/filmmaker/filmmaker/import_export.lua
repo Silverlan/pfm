@@ -175,12 +175,15 @@ function Element:ImportMap(map)
 		end
 	end
 end
-function Element:ConvertStaticActorsToMap()
+function Element:ConvertStaticActorsToMap(fcOnSaved)
 	local filmClip = self:GetActiveGameViewFilmClip()
 	if filmClip == nil then
-		return
+		return {}
 	end
+	local entUuids = {}
 	local function add_entity(actor, className)
+		pfm.log("Adding actor '" .. actor:GetName() .. "' to scenebuild map...", pfm.LOG_CATEGORY_PFM)
+		table.insert(entUuids, tostring(actor:GetUniqueId()))
 		local ent = util.WorldData.EntityData()
 		ent:SetFlags(bit.bor(ent:GetFlags(), util.WorldData.EntityData.FLAG_CLIENTSIDE_ONLY_BIT))
 		ent:SetClassName(className)
@@ -326,6 +329,9 @@ function Element:ConvertStaticActorsToMap()
 					)
 				else
 					pfm.log("Successfully saved map file as '" .. fileName .. "'!", pfm.LOG_CATEGORY_PFM)
+					if fcOnSaved ~= nil then
+						fcOnSaved(fileName, entUuids)
+					end
 				end
 			end
 		end
@@ -333,6 +339,7 @@ function Element:ConvertStaticActorsToMap()
 	dialogue:SetRootPath("maps")
 	dialogue:SetExtensions(asset.get_supported_extensions(asset.TYPE_MAP))
 	dialogue:Update()
+	return entUuids
 end
 function Element:ImportPFMProject(projectFilePath)
 	local project, err = pfm.load_project(projectFilePath, true)

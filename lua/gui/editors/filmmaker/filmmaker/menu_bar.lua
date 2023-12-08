@@ -741,7 +741,22 @@ function Element:InitializeMenuBar()
 				if util.is_valid(self) == false then
 					return
 				end
-				self:ConvertStaticActorsToMap()
+				self:ConvertStaticActorsToMap(function(fileName, entUuids)
+					pfm.open_message_prompt(
+						locale.get_text("pfm_scenebuild_remove_actors_title"),
+						locale.get_text("pfm_scenebuild_remove_actors_message", { fileName }),
+						bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
+						function(bt)
+							if bt == gui.PfmPrompt.BUTTON_YES then
+								local actorEditor = self:GetActorEditor()
+								if util.is_valid(actorEditor) == false then
+									return
+								end
+								actorEditor:RemoveActors(entUuids)
+							end
+						end
+					)
+				end)
 			end)
 			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_convert_static_actors_to_map"))
 			pSubItem:SetName("convert_static_actors_to_map")
