@@ -221,7 +221,7 @@ function gui.PFMViewport:SetGameplayMode(enabled)
 		local filmmaker = pfm.get_project_manager()
 		-- filmmaker:TrapFocus(true)
 		-- filmmaker:RequestFocus()
-		filmmaker:TagRenderSceneAsDirty(false)
+		pfm.tag_render_scene_as_dirty(false)
 		input.set_cursor_pos(self.m_oldCursorPos)
 
 		if self.m_oldInputLayerStates ~= nil then
