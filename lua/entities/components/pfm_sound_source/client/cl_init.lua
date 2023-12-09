@@ -82,8 +82,8 @@ function ents.PFMSoundSource:OnOffsetChanged(offset)
 	if snd == nil then
 		return
 	end
-	if math.abs(offset - snd:GetTimeOffset()) > 0.05 then
-		snd:SetTimeOffset(offset)
+	if math.abs(offset - snd:GetOffset()) > 0.05 then
+		snd:SetOffset(offset)
 	end
 end
 ents.COMPONENT_PFM_SOUND_SOURCE = ents.register_component("pfm_sound_source", ents.PFMSoundSource)
