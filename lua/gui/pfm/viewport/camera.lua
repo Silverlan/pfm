@@ -327,7 +327,9 @@ function gui.PFMViewport:SwitchToSceneCamera()
 		if #name == 0 then
 			name = locale.get_text("pfm_scene_camera")
 		end
-		self.m_btCamera:SetText(name)
+		if util.is_valid(self.m_btCamera) then
+			self.m_btCamera:SetText(name)
+		end
 
 		self:SetCameraView(gui.PFMViewport.CAMERA_VIEW_SCENE)
 		game.clear_gameplay_control_camera()

@@ -83,6 +83,14 @@ function Element:OpenUrlInBrowser(url)
 		w:LoadUrl(url)
 	end)
 end
+function Element:DoChangeMap(mapName)
+	tool.close_filmmaker()
+	pfm.show_loading_screen(true, locale.get_text("pfm_loading_map", { mapName }))
+	time.create_simple_timer(0.1, function()
+		console.run("pfm_restore", "1")
+		console.run("map", mapName)
+	end)
+end
 function Element:ChangeMap(map, projectFileName)
 	pfm.log("Changing map to '" .. map .. "'...", pfm.LOG_CATEGORY_PFM)
 	time.create_simple_timer(0.0, function()
@@ -140,12 +148,6 @@ function Element:ChangeMap(map, projectFileName)
 			return
 		end
 
-		tool.close_filmmaker()
-
-		pfm.show_loading_screen(true, locale.get_text("pfm_loading_map", { mapName }))
-		time.create_simple_timer(0.1, function()
-			console.run("pfm_restore", "1")
-			console.run("map", mapName)
-		end)
+		self:DoChangeMap(mapName)
 	end)
 end
