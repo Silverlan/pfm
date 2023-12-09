@@ -632,12 +632,12 @@ function gui.WIFilmmaker:ShowCloseConfirmation(action, callActionOnCancel)
 		function(bt)
 			if bt == gui.PfmPrompt.BUTTON_YES then
 				self:Save(nil, nil, nil, nil, function(res)
-					action(true)
+					action(true, bt)
 				end)
 			elseif bt == gui.PfmPrompt.BUTTON_NO then
-				action(true)
+				action(true, bt)
 			elseif bt == gui.PfmPrompt.BUTTON_NO and callActionOnCancel then
-				action(false)
+				action(false, bt)
 			end
 		end
 	)
