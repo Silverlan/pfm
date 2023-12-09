@@ -48,6 +48,9 @@ end
 function gui.Playhead:GetTimeOffsetProperty()
 	return self.m_timeOffset
 end
+function gui.Playhead:SetTimeOffsetProperty(prop)
+	self.m_timeOffset = prop
+end
 function gui.Playhead:SetFrameRate(frameRate)
 	self.m_frameRate = frameRate
 end

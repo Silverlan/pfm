@@ -67,7 +67,7 @@ function pfm.AnimationManager:SetTime(t)
 				local animClip = (pfmActorC ~= nil) and self.m_filmClip:FindActorAnimationClip(pfmActorC:GetActorData())
 					or nil
 				if animClip ~= nil then
-					local start = animClip:GetTimeFrame():GetStart()
+					local start = animClip:GetAbsStart()
 					lt = lt - start
 				end
 			end

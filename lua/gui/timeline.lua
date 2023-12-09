@@ -76,7 +76,8 @@ function gui.Timeline:OnInitialize()
 
 	self.m_playhead = gui.create("WIPlayhead", self, 0, self.m_bookmarkBar:GetBottom())
 	self.m_playhead:SetHeight(self:GetHeight())
-	self.m_playhead:GetTimeOffsetProperty():AddCallback(function()
+	self.m_playhead:SetTimeOffsetProperty(pfm.get_project_manager():GetTimeProperty())
+	self.m_cbOnTimelinePropertiesChanged = self.m_playhead:GetTimeOffsetProperty():AddCallback(function()
 		self:OnTimelinePropertiesChanged(true, true)
 	end)
 
@@ -95,9 +96,7 @@ function gui.Timeline:OnInitialize()
 	self:SetMouseInputEnabled(true)
 end
 function gui.Timeline:OnRemove()
-	if util.is_valid(self.m_cbTimeAxisPropertiesChanged) then
-		self.m_cbTimeAxisPropertiesChanged:Remove()
-	end
+	util.remove({ self.m_cbOnTimelinePropertiesChanged, self.m_cbTimeAxisPropertiesChanged })
 end
 function gui.Timeline:SetTimeAxis(axis)
 	self.m_timeAxis:SetAxis(axis, true)

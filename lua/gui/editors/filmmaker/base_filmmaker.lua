@@ -15,6 +15,7 @@ include("global_state_data.lua")
 include("layout.lua")
 include("misc.lua")
 include("io.lua")
+include("restore.lua")
 
 function Element:__init()
 	gui.WIBaseEditor.__init(self)
@@ -56,15 +57,20 @@ function Element:SetOverlaySceneEnabled(enabled) end
 function Element:GetPlaybackState()
 	return self.m_playbackState
 end
+function Element:GetTimeProperty()
+	return self.m_timeOffset
+end
 function Element:InitializePlaybackState()
+	self.m_timeOffset = util.FloatProperty(0.0)
+	self.m_timeOffset:AddCallback(function(oldOffset, offset)
+		if self.m_updatingProjectTimeOffset ~= true then
+			self:SetTimeOffset(offset)
+		end
+	end)
+
 	self.m_playbackState = pfm.util.PlaybackState()
 	self.m_playbackState:AddCallback("OnTimeAdvance", function(dt)
-		-- TODO: Handle this without ui elements
-		local pfmTimeline = self.m_timeline
-		local playhead = util.is_valid(pfmTimeline) and pfmTimeline:GetPlayhead() or nil
-		if util.is_valid(playhead) then
-			playhead:SetTimeOffset(playhead:GetTimeOffset() + dt)
-		end
+		self:SetTimeOffset(self:GetTimeOffset() + dt)
 	end)
 	self.m_playbackState:AddCallback("OnStateChanged", function(oldState, state)
 		ents.PFMSoundSource.set_audio_enabled(state == pfm.util.PlaybackState.STATE_PLAYING)

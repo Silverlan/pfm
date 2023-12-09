@@ -18,6 +18,11 @@ function pfm.udm.AnimationClip:GetFilmClip()
 	return self:GetAnimationTrack():GetFilmClip()
 end
 
+function pfm.udm.AnimationClip:GetAbsStart()
+	local filmClip = self:GetFilmClip()
+	return filmClip:GetTimeFrame():GetStart() + self:GetTimeFrame():GetStart()
+end
+
 function pfm.udm.AnimationClip:FindChannel(path)
 	for _, channel in ipairs(self:GetAnimation():GetChannels()) do
 		if channel:GetTargetPath() == path then
