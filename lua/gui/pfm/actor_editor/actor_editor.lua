@@ -2632,7 +2632,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			for _, nameInfo in ipairs(existingComponents) do
 				pComponentsMenu
 					:AddItem(nameInfo[2], function()
-						local filmmaker = tool.get_filmmaker()
+						local filmmaker = pfm.get_project_manager()
 						local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
 						if util.is_valid(actorEditor) == false then
 							return
@@ -2653,7 +2653,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			for _, nameInfo in ipairs(newComponents) do
 				pComponentsMenu
 					:AddItem(nameInfo[2], function()
-						local filmmaker = tool.get_filmmaker()
+						local filmmaker = pfm.get_project_manager()
 						local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
 						if util.is_valid(actorEditor) == false then
 							return
@@ -2678,7 +2678,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			if util.is_valid(entActor) == false then
 				return
 			end
-			local filmmaker = tool.get_filmmaker()
+			local filmmaker = pfm.get_project_manager()
 			filmmaker:ExportAnimation(entActor)
 		end)
 		:SetName("export_animation")
@@ -2706,7 +2706,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			for matPath, _ in pairs(materials) do
 				local matName = file.get_file_name(matPath)
 				local item = pSubMenu:AddItem(matName, function()
-					tool.get_filmmaker():OpenMaterialEditor(matPath, mdl:GetName())
+					pfm.get_project_manager():OpenMaterialEditor(matPath, mdl:GetName())
 				end)
 				local normMatPath = string.replace(matPath, "/", "_")
 				item:SetName(normMatPath)
@@ -2735,7 +2735,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 
 		pContext
 			:AddItem(locale.get_text("pfm_edit_ik_rig"), function()
-				local filmmaker = tool.get_filmmaker()
+				local filmmaker = pfm.get_project_manager()
 				local tab, el = filmmaker:OpenWindow("ik_rig_editor")
 				filmmaker:GoToWindow("ik_rig_editor")
 				if util.is_valid(el) then
@@ -2750,7 +2750,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 	end
 	pContext
 		:AddItem(locale.get_text("pfm_copy_actors"), function()
-			local filmmaker = tool.get_filmmaker()
+			local filmmaker = pfm.get_project_manager()
 			local actorEditor = filmmaker:GetActorEditor()
 			if util.is_valid(actorEditor) == false then
 				return
@@ -2760,7 +2760,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		:SetName("copy_actors")
 	pContext
 		:AddItem(locale.get_text("pfm_paste_actors"), function()
-			local filmmaker = tool.get_filmmaker()
+			local filmmaker = pfm.get_project_manager()
 			local actorEditor = filmmaker:GetActorEditor()
 			if util.is_valid(actorEditor) == false then
 				return
@@ -2803,7 +2803,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 					table.sort(animNames)
 					for _, animName in ipairs(animNames) do
 						pMenu:AddItem(animName, function()
-							tool.get_filmmaker():ImportSequence(actor, animName)
+							pfm.get_project_manager():ImportSequence(actor, animName)
 						end)
 					end
 					pMenu:Update()
@@ -2814,7 +2814,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 	end
 	pContext
 		:AddItem(locale.get_text("pfm_move_work_camera_to_actor"), function()
-			local filmmaker = tool.get_filmmaker()
+			local filmmaker = pfm.get_project_manager()
 			local filmClip = filmmaker:GetActiveFilmClip()
 			if filmClip == nil then
 				return
@@ -2829,12 +2829,12 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 				return
 			end
 			vp:SetWorkCameraPose(actor:GetAbsolutePose())
-			tool.get_filmmaker():TagRenderSceneAsDirty()
+			pfm.get_project_manager():TagRenderSceneAsDirty()
 		end)
 		:SetName("move_work_camera_to_actor")
 	pContext
 		:AddItem(locale.get_text("pfm_move_actor_to_work_camera"), function()
-			local filmmaker = tool.get_filmmaker()
+			local filmmaker = pfm.get_project_manager()
 			local pm = pfm.get_project_manager()
 			local vp = util.is_valid(pm) and pm:GetViewport() or nil
 			if util.is_valid(vp) == false then
@@ -2857,7 +2857,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		:SetName("move_actor_to_work_camera")
 	pContext
 		:AddItem(locale.get_text("pfm_toggle_camera_link"), function()
-			local filmmaker = tool.get_filmmaker()
+			local filmmaker = pfm.get_project_manager()
 			local actorEditor = filmmaker:GetActorEditor()
 			if util.is_valid(actorEditor) == false then
 				return
@@ -2878,7 +2878,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			if ent == nil then
 				return
 			end
-			local filmmaker = tool.get_filmmaker()
+			local filmmaker = pfm.get_project_manager()
 			gui.open_model_dialog(function(dialogResult, mdlName)
 				if dialogResult ~= gui.DIALOG_RESULT_OK then
 					return
@@ -2886,7 +2886,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 				if util.is_valid(ent) == false then
 					return
 				end
-				local filmmaker = tool.get_filmmaker()
+				local filmmaker = pfm.get_project_manager()
 				local actorEditor = filmmaker:GetActorEditor()
 				if util.is_valid(actorEditor) == false then
 					return
@@ -2903,8 +2903,8 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end)
 		:SetName("retarget")
 
-	tool.get_filmmaker():CallCallbacks("PopulateActorContextMenu", pContext, actor)
-	if tool.get_filmmaker():IsDeveloperModeEnabled() then
+	pfm.get_project_manager():CallCallbacks("PopulateActorContextMenu", pContext, actor)
+	if pfm.get_project_manager():IsDeveloperModeEnabled() then
 		pContext:AddItem("Assign entity to x", function()
 			x = actor:FindEntity()
 		end)

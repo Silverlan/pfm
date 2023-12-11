@@ -232,35 +232,6 @@ function Element:InitializeBrowser(parent, w, h)
 	end)
 	el:AddCallback("OnLoadingStateChange", function(el, isLoading, canGoBack, canGoForward)
 		self:UpdateInfoBox()
-		--[[if isLoading == true then
-			return
-		end
-		local url = el:GetUrl()
-		local parts = chromium.parse_url(url)
-		if parts == nil or parts.host ~= "sfmlab.com" then
-			return
-		end
-		if self:IsFullNsfwContentEnabled() then
-			-- Enable "18+" and "Furry" content
-			for _, button in ipairs({ "nsfw", "furry" }) do
-				el:ExecuteJavaScript(
-					"var el = document.querySelector('[adultcontent=\"0\"]').shadowRoot.querySelector('[identifier=\""
-						.. button
-						.. "\"]');"
-						.. "var event = new MouseEvent('click', {});"
-						.. "var toggleState = el.getAttribute('togglestate');"
-						.. "if(toggleState == '0')"
-						.. "{"
-						.. "	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
-						.. "}"
-						.. "else if(toggleState == '2')"
-						.. "{"
-						.. "	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
-						.. "	el.shadowRoot.querySelector('.toggle-switch-element').dispatchEvent(event);"
-						.. "}"
-				)
-			end
-		end]]
 	end)
 	el:AddCallback("OnDownloadUpdate", function(el, id, state, percentage)
 		if util.is_valid(self.m_log) == false or self.m_downloads[id] == nil then

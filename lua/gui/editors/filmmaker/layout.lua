@@ -416,7 +416,7 @@ function Element:SaveWindowLayoutState(assetData, saveLayout)
 	return true
 end
 
-function gui.WIBaseFilmmaker:UpdateWindowLayoutState()
+function Element:UpdateWindowLayoutState()
 	local session = self:GetSession()
 	if session == nil then
 		return

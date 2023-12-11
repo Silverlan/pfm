@@ -73,7 +73,7 @@ function gui.PFMPopup:DisplayNextText()
 		return
 	end
 	local item = self.m_queue[1]
-	local infoBox = gui.create_info_box(tool.get_filmmaker(), item.text, item.type)
+	local infoBox = gui.create_info_box(pfm.get_project_manager(), item.text, item.type)
 	infoBox:SetWidth(400)
 	infoBox:SetMouseInputEnabled(true)
 	infoBox:SetRemoveOnClose(true)
@@ -90,7 +90,7 @@ function gui.PFMPopup:DisplayNextText()
 					if settings.openUrlInSystemBrowser then
 						util.open_url_in_browser(settings.url)
 					else
-						tool.get_filmmaker():OpenUrlInBrowser(settings.url)
+						pfm.get_project_manager():OpenUrlInBrowser(settings.url)
 					end
 				end
 				util.remove(self.m_infoBox, true)

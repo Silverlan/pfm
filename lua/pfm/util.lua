@@ -116,30 +116,28 @@ end
 
 pfm.util = pfm.util or {}
 
-local openCvLoadState
-pfm.util.init_opencv = function()
-	if openCvLoadState == nil then
-		local r = engine.load_library("opencv/pr_opencv")
+local moduleLoadStates = {}
+local function load_module(identifier, modulePath)
+	if moduleLoadStates[identifier] == nil then
+		local r = engine.load_library(modulePath)
 		if r ~= true then
-			console.print_warning("An error occured trying to load the 'pr_opencv' module: ", r)
-			openCvLoadState = false
+			console.print_warning("An error occured trying to load the '" .. identifier .. "' module: ", r)
+			moduleLoadStates[identifier] = false
 		else
-			openCvLoadState = true
+			moduleLoadStates[identifier] = true
 		end
 	end
-	return openCvLoadState
+	return moduleLoadStates[identifier]
 end
 
-local curlLoadState
+pfm.util.init_opencv = function()
+	return load_module("pr_opencv", "opencv/pr_opencv")
+end
+
 pfm.util.init_curl = function()
-	if curlLoadState == nil then
-		local r = engine.load_library("curl/pr_curl")
-		if r ~= true then
-			console.print_warning("An error occured trying to load the 'pr_curl' module: ", r)
-			curlLoadState = false
-		else
-			curlLoadState = true
-		end
-	end
-	return curlLoadState
+	return load_module("pr_curl", "curl/pr_curl")
+end
+
+pfm.util.init_openvr = function()
+	return load_module("pr_openvr", "openvr/pr_openvr")
 end

@@ -91,36 +91,16 @@ function Element:DoChangeMap(mapName)
 		console.run("map", mapName)
 	end)
 end
+function Element:SaveRestoreData(el, map, projectFileName) end
 function Element:ChangeMap(map, projectFileName)
 	pfm.log("Changing map to '" .. map .. "'...", pfm.LOG_CATEGORY_PFM)
 	time.create_simple_timer(0.0, function()
 		local elBase = gui.get_base_element()
 		local mapName = asset.get_normalized_path(map, asset.TYPE_MAP)
+		file.create_path("temp/pfm/restore")
 
 		local el = udm.create_element()
-		local writeNewMapName = (projectFileName == nil)
-		local restoreProjectName = projectFileName
-		projectFileName = projectFileName or self:GetProjectFileName()
-		if projectFileName ~= nil then
-			el:SetValue("originalProjectFileName", udm.TYPE_STRING, projectFileName)
-		end
-
-		file.create_path("temp/pfm/restore")
-		if restoreProjectName == nil then
-			restoreProjectName = "temp/pfm/restore/project"
-			if self:Save(restoreProjectName, false, nil, false) == false then
-				pfm.log(
-					"Failed to save restore project. Map will not be changed!",
-					pfm.LOG_CATEGORY_PFM,
-					pfm.LOG_SEVERITY_ERROR
-				)
-				return
-			end
-		end
-		el:SetValue("restoreProjectFileName", udm.TYPE_STRING, restoreProjectName)
-		if writeNewMapName then
-			el:SetValue("newProjectMapName", udm.TYPE_STRING, map)
-		end
+		self:SaveRestoreData(el, map, projectFileName)
 
 		local udmData, err = udm.create("PFMRST", 1)
 		local assetData = udmData:GetAssetData()
@@ -133,7 +113,7 @@ function Element:ChangeMap(map, projectFileName)
 
 			if res == false then
 				pfm.log(
-					"Failed to write restore file. Map will not be changed!",
+					"Failed to write UDM data to restore file. Map will not be changed!",
 					pfm.LOG_CATEGORY_PFM,
 					pfm.LOG_SEVERITY_ERROR
 				)

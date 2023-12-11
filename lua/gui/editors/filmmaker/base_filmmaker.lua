@@ -1,11 +1,3 @@
---[[
-    Copyright (C) 2020  Florian Weischer
-
-    This Source Code Form is subject to the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with this
-    file, You can obtain one at http://mozilla.org/MPL/2.0/.
-]]
-
 include("../base_editor.lua")
 include("/pfm/project_manager.lua")
 
@@ -23,6 +15,59 @@ function Element:__init()
 
 	pfm.set_project_manager(self)
 end
+function Element:AddVersionInfo(identifier, version, gitInfoPath)
+	local pMenuBar = self:GetMenuBar()
+	-- Version Info
+	local engineInfo = engine.get_info()
+	local versionString = "v" .. version
+	local sha = pfm.get_git_sha(gitInfoPath)
+	if sha ~= nil then
+		versionString = versionString .. ", " .. sha
+	end
+	versionString = versionString .. " [P " .. engineInfo.prettyVersion
+	local gitInfo = engine.get_git_info()
+	if gitInfo ~= nil then
+		-- Pragma SHA
+		versionString = versionString .. ", " .. gitInfo.commitSha:sub(0, 7)
+	end
+	versionString = versionString .. "]"
+	local elVersion = gui.create("WIText", pMenuBar)
+	elVersion:SetColor(Color.White)
+	elVersion:SetText(versionString)
+	elVersion:SetFont("pfm_medium")
+	elVersion:SetColor(Color(200, 200, 200))
+	elVersion:SetY(5)
+	elVersion:SizeToContents()
+	elVersion:SetCursor(gui.CURSOR_SHAPE_HAND)
+	elVersion:SetMouseInputEnabled(true)
+	elVersion:AddCallback("OnMouseEvent", function(el, button, state, mods)
+		if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
+			util.set_clipboard_string(elVersion:GetText())
+			pfm.create_popup_message(locale.get_text("pfm_version_copied_to_clipboard"), 3)
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
+	elVersion:AddCallback("OnCursorEntered", function()
+		elVersion:SetColor(Color.White)
+	end)
+	elVersion:AddCallback("OnCursorExited", function()
+		elVersion:SetColor(Color(200, 200, 200))
+	end)
+
+	elVersion:SetX(pMenuBar:GetWidth() - elVersion:GetWidth() - 4)
+	elVersion:SetY(3)
+	elVersion:SetAnchor(1, 0, 1, 0)
+	log.info(identifier .. " Version: " .. versionString)
+
+	local elBeta = gui.create("WIText", pMenuBar)
+	elBeta:SetColor(Color.Red)
+	elBeta:SetText("BETA | ")
+	elBeta:SetFont("pfm_medium")
+	elBeta:SetY(3)
+	elBeta:SizeToContents()
+	elBeta:SetX(elVersion:GetLeft() - elBeta:GetWidth())
+	elBeta:SetAnchor(1, 0, 1, 0)
+end
 function Element:GetWorldAxesGizmo()
 	return self.m_worldAxesGizmo
 end
@@ -31,7 +76,9 @@ function Element:OnRemove()
 	pfm.ProjectManager.OnRemove(self)
 	self.m_selectionManager:Remove()
 	util.remove(self.m_worldAxesGizmo)
+	util.remove(self.m_cbOnRenderTargetResized)
 end
+function Element:GetViewport() end
 function Element:OnInitialize()
 	gui.WIBaseEditor.OnInitialize(self)
 	self:LoadGlobalStateData()
@@ -40,6 +87,13 @@ function Element:OnInitialize()
 	self.m_worldAxesGizmo:Spawn()
 
 	self:InitializeBindingLayers()
+
+	self.m_cbOnRenderTargetResized = game.add_callback("OnRenderTargetResized", function()
+		local vp = self:GetViewport()
+		if util.is_valid(vp) then
+			vp:UpdateAspectRatio()
+		end
+	end)
 end
 function Element:IsEditor()
 	return false

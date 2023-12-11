@@ -22,9 +22,7 @@ function Component:Initialize()
 	self:AddEntityComponent("pfm_camera")
 	if g_vrModuleLoaded == false then -- Lazy initialization
 		g_vrModuleLoaded = true
-		local r = engine.load_library("openvr/pr_openvr")
-		if r ~= true then
-			console.print_warning("Unable to load openvr module: " .. r)
+		if pfm.util.init_openvr() == false then
 			return
 		end
 

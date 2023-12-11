@@ -212,12 +212,6 @@ function gui.WIFilmmaker:OnInitialize()
 	self.m_cbPreRenderScenes = game.add_callback("PreRenderScenes", function(drawSceneInfo)
 		self:PreRenderScenes(drawSceneInfo)
 	end)
-	self.m_cbOnRenderTargetResized = game.add_callback("OnRenderTargetResized", function()
-		local vp = self:GetViewport()
-		if util.is_valid(vp) then
-			vp:UpdateAspectRatio()
-		end
-	end)
 	self.m_cbDisableDefaultSceneDraw = game.add_callback("RenderScenes", function(drawSceneInfo)
 		if self.m_renderSceneDirty == nil then
 			game.set_default_game_render_enabled(false)
@@ -253,57 +247,7 @@ function gui.WIFilmmaker:OnInitialize()
 	self.m_menuBar = pMenuBar
 
 	self:InitializeMenuBar()
-
-	-- Version Info
-	local engineInfo = engine.get_info()
-	local versionString = "v" .. pfm.VERSION:ToString()
-	local sha = pfm.get_git_sha("addons/filmmaker/git_info.txt")
-	if sha ~= nil then
-		versionString = versionString .. ", " .. sha
-	end
-	versionString = versionString .. " [P " .. engineInfo.prettyVersion
-	local gitInfo = engine.get_git_info()
-	if gitInfo ~= nil then
-		-- Pragma SHA
-		versionString = versionString .. ", " .. gitInfo.commitSha:sub(0, 7)
-	end
-	versionString = versionString .. "]"
-	local elVersion = gui.create("WIText", pMenuBar)
-	elVersion:SetColor(Color.White)
-	elVersion:SetText(versionString)
-	elVersion:SetFont("pfm_medium")
-	elVersion:SetColor(Color(200, 200, 200))
-	elVersion:SetY(5)
-	elVersion:SizeToContents()
-	elVersion:SetCursor(gui.CURSOR_SHAPE_HAND)
-	elVersion:SetMouseInputEnabled(true)
-	elVersion:AddCallback("OnMouseEvent", function(el, button, state, mods)
-		if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
-			util.set_clipboard_string(elVersion:GetText())
-			pfm.create_popup_message(locale.get_text("pfm_version_copied_to_clipboard"), 3)
-			return util.EVENT_REPLY_HANDLED
-		end
-	end)
-	elVersion:AddCallback("OnCursorEntered", function()
-		elVersion:SetColor(Color.White)
-	end)
-	elVersion:AddCallback("OnCursorExited", function()
-		elVersion:SetColor(Color(200, 200, 200))
-	end)
-
-	elVersion:SetX(pMenuBar:GetWidth() - elVersion:GetWidth() - 4)
-	elVersion:SetY(3)
-	elVersion:SetAnchor(1, 0, 1, 0)
-	log.info("PFM Version: " .. versionString)
-
-	local elBeta = gui.create("WIText", pMenuBar)
-	elBeta:SetColor(Color.Red)
-	elBeta:SetText("BETA | ")
-	elBeta:SetFont("pfm_medium")
-	elBeta:SetY(3)
-	elBeta:SizeToContents()
-	elBeta:SetX(elVersion:GetLeft() - elBeta:GetWidth())
-	elBeta:SetAnchor(1, 0, 1, 0)
+	self:AddVersionInfo("PFM", pfm.VERSION:ToString(), "addons/filmmaker/git_info.txt")
 
 	if console.get_convar_bool("pfm_should_check_for_updates") then
 		console.run("pfm_should_check_for_updates", "0") -- Only auto-check once per session
@@ -463,6 +407,58 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:SetSkinCallbacksEnabled(true)
 	pfm.call_event_listeners("OnFilmmakerInitialized", self)
+end
+function gui.WIFilmmaker:SaveRestoreData(el, map, projectFileName)
+	local writeNewMapName = (projectFileName == nil)
+	local restoreProjectName = projectFileName
+	projectFileName = projectFileName or self:GetProjectFileName()
+	if projectFileName ~= nil then
+		el:SetValue("originalProjectFileName", udm.TYPE_STRING, projectFileName)
+	end
+
+	if restoreProjectName == nil then
+		restoreProjectName = "temp/pfm/restore/project"
+		if self:Save(restoreProjectName, false, nil, false) == false then
+			pfm.log(
+				"Failed to save restore project. Map will not be changed!",
+				pfm.LOG_CATEGORY_PFM,
+				pfm.LOG_SEVERITY_ERROR
+			)
+			return
+		end
+	end
+	el:SetValue("restoreProjectFileName", udm.TYPE_STRING, restoreProjectName)
+	if writeNewMapName then
+		el:SetValue("newProjectMapName", udm.TYPE_STRING, map)
+	end
+end
+function gui.WIFilmmaker:RestoreStateFromData(restoreData)
+	local originalProjectFileName = restoreData:GetValue("originalProjectFileName", udm.TYPE_STRING)
+	local restoreProjectFileName = restoreData:GetValue("restoreProjectFileName", udm.TYPE_STRING)
+	if restoreProjectFileName == nil then
+		pfm.log("Failed to restore project: Invalid restore data!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
+		return false
+	end
+	local fileName = restoreProjectFileName
+	if self:LoadProject(fileName, true) == false then
+		pfm.log(
+			"Failed to restore project: Unable to load restore project!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_ERROR
+		)
+		self:CloseProject()
+		self:CreateEmptyProject()
+		return false
+	end
+	local newProjectMapName = restoreData:GetValue("newProjectMapName")
+	if newProjectMapName ~= nil then
+		local session = self:GetSession()
+		if session ~= nil then
+			local settings = session:GetSettings()
+			settings:SetMapName(asset.get_normalized_path(newProjectMapName, asset.TYPE_MAP))
+		end
+	end
+	self:SetProjectFileName(originalProjectFileName)
 end
 function gui.WIFilmmaker:GetFrameRenderOutputFileName(frameIndex)
 	frameIndex = frameIndex or self:GetFrameOffset()
@@ -1054,7 +1050,6 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_cbOnWindowShouldClose)
 	util.remove(self.m_cbOnLuaError)
 	util.remove(self.m_cbPreRenderScenes)
-	util.remove(self.m_cbOnRenderTargetResized)
 	util.remove(self.m_overlaySceneCallback)
 	if util.is_valid(self.m_overlayScene) then
 		self.m_overlayScene:GetEntity():Remove()

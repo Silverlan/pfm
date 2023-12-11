@@ -20,9 +20,6 @@ console.register_variable(
 )
 
 local Element = util.register_class("gui.SupporterTicker", gui.Base)
-function Element:__init()
-	gui.Base.__init(self)
-end
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 	self:SetSize(256, 64)
@@ -60,9 +57,6 @@ gui.register("WISupporterTicker", Element)
 -----------------
 
 util.register_class("gui.PatreonTicker", gui.HBox)
-function gui.PatreonTicker:__init()
-	gui.HBox.__init(self)
-end
 function gui.PatreonTicker:OnInitialize()
 	gui.HBox.OnInitialize(self)
 

@@ -44,7 +44,11 @@ function gui.PFMViewport:IsActorSelected(entActor)
 	if actor == nil then
 		return false
 	end
-	return pfm.get_project_manager():IsActorSelected(actor)
+	local pm = pfm.get_project_manager()
+	if pm.IsActorSelected == nil then
+		return false
+	end
+	return pm:IsActorSelected(actor)
 end
 function gui.PFMViewport:SelectActor(entActor, bone, deselectCurrent)
 	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
@@ -64,7 +68,11 @@ function gui.PFMViewport:SelectActor(entActor, bone, deselectCurrent)
 		property = property or ("ec/animated/bone/" .. bone:GetName() .. "/position")
 	end
 
-	pfm.get_project_manager():SelectActor(actor, deselectCurrent, property)
+	local pm = pfm.get_project_manager()
+	if pm.SelectActor == nil then
+		return
+	end
+	pm:SelectActor(actor, deselectCurrent, property)
 end
 function gui.PFMViewport:UpdateMultiActorSelection()
 	local actors = pfm.get_project_manager():GetSelectionManager():GetSelectedActors()
