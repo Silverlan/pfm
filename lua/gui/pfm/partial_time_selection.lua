@@ -118,19 +118,38 @@ gui.register("WIPFMPartialTimeSelectionBar", Element)
 local Element = util.register_class("gui.PFMPartialTimeSelection", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
-
 	self:SetSize(256, 256)
+
+	local function add_drag_callback(el, i, getTargetMarkers)
+		el:SetMouseInputEnabled(true)
+		el:SetCursor(gui.CURSOR_SHAPE_CROSSHAIR)
+		el:AddCallback("OnMouseEvent", function(el, button, state, mods)
+			if self:MouseCallback(button, state, mods) == util.EVENT_REPLY_HANDLED then
+				return util.EVENT_REPLY_HANDLED
+			end
+			if button == input.MOUSE_BUTTON_LEFT then
+				if state == input.STATE_PRESS then
+					self:StartDragMode(i, (getTargetMarkers ~= nil) and getTargetMarkers() or { i + 1 })
+				else
+					self:StopDragMode()
+				end
+				return util.EVENT_REPLY_HANDLED
+			end
+		end)
+	end
 
 	self.m_leftBar = gui.create("WIPFMPartialTimeSelectionBar", self)
 	self.m_leftBar:SetBarPosition(gui.PFMPartialTimeSelectionBar.POSITION_LEFT)
 	self.m_leftBar:SetSize(64, self:GetHeight())
-	self.m_leftBar:SetAnchor(0, 0, 0, 1)
+	--self.m_leftBar:SetAnchor(0, 0, 0, 1)
+	add_drag_callback(self.m_leftBar, 0)
 
 	self.m_rightBar = gui.create("WIPFMPartialTimeSelectionBar", self)
 	self.m_rightBar:SetBarPosition(gui.PFMPartialTimeSelectionBar.POSITION_RIGHT)
 	self.m_rightBar:SetSize(64, self:GetHeight())
 	self.m_rightBar:SetX(self:GetWidth() - 64)
-	self.m_rightBar:SetAnchor(1, 0, 1, 1)
+	--self.m_rightBar:SetAnchor(1, 0, 1, 1)
+	add_drag_callback(self.m_rightBar, 2)
 
 	self.m_centerBar = gui.create(
 		"WIRect",
@@ -141,20 +160,212 @@ function Element:OnInitialize()
 		self:GetHeight()
 	)
 	self.m_centerBar:SetAnchor(0, 0, 1, 1)
+	add_drag_callback(self.m_centerBar, 1, function()
+		local targetMarkers = { 2 }
+		if self:IsInnerStartPositionLocked() then
+			table.insert(targetMarkers, 0)
+		end
+		if self:IsInnerEndPositionLocked() then
+			table.insert(targetMarkers, 3)
+		end
+		return targetMarkers
+	end)
 
 	local col = Color(0, 64, 0, 255)
 	self.m_leftBar:SetColor(col)
 	self.m_rightBar:SetColor(col)
 	self.m_centerBar:SetColor(col)
 	self:SetAlpha(128)
+
+	self.m_timelineMarkers = {}
+
+	self:SetMouseInputEnabled(true)
+end
+function Element:MouseCallback(button, state, mods)
+	if button == input.MOUSE_BUTTON_LEFT then
+		if state == input.STATE_PRESS then
+			if input.is_shift_key_down() then
+				if util.is_valid(self.m_timeline) == false then
+					return
+				end
+				self.m_creatingInnerSelection = true
+				local axis = self.m_timeline:GetTimeAxis():GetAxis()
+				local pos = self.m_timeline:GetCursorPos()
+				local t = axis:XOffsetToValue(pos.x)
+				self:SetInnerStartTime(t)
+				self.m_timelineMarkers[3]:SetCursorMoveModeEnabled(true)
+				return util.EVENT_REPLY_HANDLED
+			end
+		elseif self.m_creatingInnerSelection then
+			self.m_creatingInnerSelection = false
+			self.m_timelineMarkers[3]:SetCursorMoveModeEnabled(false)
+			return util.EVENT_REPLY_HANDLED
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
+	return gui.PFMTimelineGraphBase.MouseCallback(self, button, state, mods)
+end
+function Element:StartDragMode(i, targetMarkers)
+	if util.is_valid(self.m_timelineMarkers[i + 1]) == false then
+		return
+	end
+	self.m_timelineMarkers[i + 1]:SetCursorMoveModeEnabled(true, true)
+	self.m_dragMarker = i
+	self.m_dragTargetMarkers = targetMarkers
+end
+function Element:StopDragMode()
+	if self.m_dragMarker == nil then
+		return
+	end
+	if util.is_valid(self.m_timelineMarkers[self.m_dragMarker + 1]) then
+		self.m_timelineMarkers[self.m_dragMarker + 1]:SetCursorMoveModeEnabled(false)
+	end
+	self.m_dragTargetMarkers = nil
+	self.m_dragMarker = nil
+end
+function Element:OnRemove()
+	util.remove({ self.m_timelineMarkers, self.m_cbOnTimelineSizeChanged })
+end
+function Element:OnMarkerDragUpdate(i)
+	if self.m_dragTargetMarkers == nil then
+		return
+	end
+	local marker = self.m_timelineMarkers[self.m_dragMarker + 1]
+	if util.is_valid(marker) == false then
+		return
+	end
+	local function update_relative_position(isrc, idst)
+		local offset = self.m_dragTimelineMarkerTimes[idst] - self.m_dragTimelineMarkerTimes[isrc]
+		local t = self.m_timelineMarkers[isrc]:GetTimeOffset() + offset
+		self.m_timelineMarkers[idst]:SetTimeOffset(t)
+	end
+	for _, iTargetMarker in ipairs(self.m_dragTargetMarkers) do
+		update_relative_position(self.m_dragMarker + 1, iTargetMarker + 1)
+	end
+end
+function Element:SetupTimelineMarkers(timeline)
+	local function add_marker(i)
+		local el = gui.create("WITimelineMarker", timeline)
+		el:SetWidth(10)
+		el:SetHeight(timeline:GetHeight())
+		el:SetAxis(timeline:GetTimeAxis():GetAxis())
+		timeline:AddTimelineElement(el)
+
+		el:AddCallback("OnAxisPositionUpdated", function()
+			self:UpdateSelectionBounds()
+		end)
+		el:AddCallback("OnDragStart", function()
+			self.m_dragTimelineMarkerTimes = {}
+			for _, el in ipairs(self.m_timelineMarkers) do
+				local t = 0
+				if el:IsValid() then
+					t = el:GetTimeOffset()
+				end
+				table.insert(self.m_dragTimelineMarkerTimes, t)
+			end
+		end)
+		el:AddCallback("OnDragUpdate", function()
+			self:OnMarkerDragUpdate(i)
+		end)
+		return el
+	end
+
+	self.m_timeline = timeline
+	util.remove({ self.m_timelineMarkers, self.m_cbOnTimelineSizeChanged })
+	self.m_cbOnTimelineSizeChanged = timeline:AddCallback("SetSize", function(timeline)
+		for _, el in ipairs(self.m_timelineMarkers) do
+			el:SetHeight(timeline:GetHeight())
+		end
+	end)
+	self.m_timelineMarkers = {}
+	for i = 1, 4 do
+		table.insert(self.m_timelineMarkers, add_marker(i - 1))
+	end
+end
+function Element:ClampTimes()
+	local m0 = self.m_timelineMarkers[1]
+	local m1 = self.m_timelineMarkers[2]
+	local m2 = self.m_timelineMarkers[3]
+	local m3 = self.m_timelineMarkers[4]
+	local t0 = m0:GetTimeOffset()
+	local t1 = m1:GetTimeOffset()
+	local t2 = m2:GetTimeOffset()
+	local t3 = m3:GetTimeOffset()
+
+	if t3 < t0 then
+		m3:SetTimeOffset(t0)
+	end
+	if t1 < t0 then
+		m1:SetTimeOffset(t0)
+	end
+	if t2 < t1 then
+		m2:SetTimeOffset(t1)
+	end
+	if t2 > t3 then
+		m2:SetTimeOffset(t3)
+	end
+end
+function Element:GetStartTime()
+	return self.m_timelineMarkers[1]:GetTimeOffset()
+end
+function Element:GetInnerStartTime()
+	return self.m_timelineMarkers[2]:GetTimeOffset()
+end
+function Element:GetInnerEndTime()
+	return self.m_timelineMarkers[3]:GetTimeOffset()
+end
+function Element:GetEndTime()
+	return self.m_timelineMarkers[4]:GetTimeOffset()
+end
+function Element:SetStartTime(t)
+	self.m_timelineMarkers[1]:SetTimeOffset(t)
+end
+function Element:SetInnerStartTime(t)
+	self.m_timelineMarkers[2]:SetTimeOffset(t)
+end
+function Element:SetInnerEndTime(t)
+	self.m_timelineMarkers[3]:SetTimeOffset(t)
+end
+function Element:SetEndTime(t)
+	self.m_timelineMarkers[4]:SetTimeOffset(t)
+end
+function Element:UpdateSelectionBounds()
+	if self.m_dragTimelineMarkerTimes == nil or #self.m_dragTimelineMarkerTimes == 0 then
+		return
+	end
+	self:ClampTimes()
+	if util.is_valid(self.m_timeline) == false then
+		return
+	end
+	local axis = self.m_timeline:GetTimeAxis():GetAxis()
+	local xValues = {
+		math.round(axis:ValueToXOffset(self:GetStartTime())),
+		math.round(axis:ValueToXOffset(self:GetInnerStartTime())),
+		math.round(axis:ValueToXOffset(self:GetInnerEndTime())),
+		math.round(axis:ValueToXOffset(self:GetEndTime())),
+	}
+	self:SetX(xValues[1])
+	self:SetInnerStartPosition(xValues[2] - xValues[1])
+	self:SetInnerEndPosition(xValues[4] - xValues[3])
+	self:SetWidth(xValues[4] - xValues[1])
+
+	self:UpdateCenterBar()
 end
 function Element:SetInnerStartPosition(pos)
+	pos = math.max(pos, 0)
 	self.m_leftBar:SetWidth(pos)
 	self:UpdateCenterBar()
 end
 function Element:SetInnerEndPosition(pos)
+	pos = math.max(pos, 0)
 	self.m_rightBar:SetWidth(pos)
 	self:UpdateCenterBar()
+end
+function Element:IsInnerStartPositionLocked()
+	return self.m_leftBar:GetWidth() == 0
+end
+function Element:IsInnerEndPositionLocked()
+	return self.m_rightBar:GetWidth() == 0
 end
 function Element:UpdateCenterBar()
 	self.m_centerBar:SetX(self.m_leftBar:GetRight())

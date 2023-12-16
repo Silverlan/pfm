@@ -74,12 +74,14 @@ function gui.Timeline:OnInitialize()
 		1
 	)
 
+	self.m_timelineItems = {}
+	self.m_cbOnTimelinePropertiesChanged = pfm.get_project_manager():GetTimeProperty():AddCallback(function()
+		self:OnTimelinePropertiesChanged(true, true)
+	end)
+
 	self.m_playhead = gui.create("WIPlayhead", self, 0, self.m_bookmarkBar:GetBottom())
 	self.m_playhead:SetHeight(self:GetHeight())
 	self.m_playhead:SetTimeOffsetProperty(pfm.get_project_manager():GetTimeProperty())
-	self.m_cbOnTimelinePropertiesChanged = self.m_playhead:GetTimeOffsetProperty():AddCallback(function()
-		self:OnTimelinePropertiesChanged(true, true)
-	end)
 
 	self.m_timeAxis = gui.create("WIAxis", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_dataAxis = gui.create("WIAxis", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
@@ -94,6 +96,9 @@ function gui.Timeline:OnInitialize()
 
 	-- TODO
 	self:SetMouseInputEnabled(true)
+end
+function gui.Timeline:AddTimelineElement(item)
+	table.insert(self.m_timelineItems, item)
 end
 function gui.Timeline:OnRemove()
 	util.remove({ self.m_cbOnTimelinePropertiesChanged, self.m_cbTimeAxisPropertiesChanged })
@@ -179,6 +184,12 @@ function gui.Timeline:GetEndOffset()
 	return self:GetTimeAxis():GetAxis():XOffsetToValue(self:GetRight())
 end
 function gui.Timeline:OnTimelinePropertiesChanged(updatePlayhead, updateAxis)
+	for _, item in ipairs(self.m_timelineItems) do
+		if item:IsValid() then
+			item:UpdateAxisPosition()
+		end
+	end
+
 	if self.m_skipPlayheadUpdate then
 		return
 	end

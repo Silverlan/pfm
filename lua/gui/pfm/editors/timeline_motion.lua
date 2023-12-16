@@ -22,75 +22,55 @@ function gui.PFMTimelineMotion:OnRemove()
 	util.remove(self.m_cbSelectionSizeUpdate)
 end
 function gui.PFMTimelineMotion:SetSelectionStart(t)
-	self.m_selectionStart = t
+	self.m_elSelection:SetStartTime(t)
 end
 function gui.PFMTimelineMotion:SetSelectionEnd(t)
-	self.m_selectionEnd = t
-	self:UpdateSelectionItem()
+	self.m_elSelection:SetEndTime(t)
+end
+function gui.PFMTimelineMotion:SetInnerSelectionStart(t)
+	self.m_elSelection:SetInnerStartTime(t)
+end
+function gui.PFMTimelineMotion:SetInnerSelectionEnd(t)
+	self.m_elSelection:SetInnerEndTime(t)
 end
 function gui.PFMTimelineMotion:UpdateCursorTracker(trackerData, tracker, timeLine)
 	gui.PFMTimelineGraphBase.UpdateCursorTracker(self, trackerData, tracker, timeLine)
 
-	local dtPos = tracker:GetTotalDeltaPosition()
-	local cursorMode = self:GetCursorMode()
 	local pos = self:GetCursorPos()
 	local t = self:GetTimeAxis():GetAxis():XOffsetToValue(pos.x)
 	self:SetSelectionEnd(t)
-	self:UpdateSelectionItem()
-	--[[if self.m_middleMouseDrag or cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_PAN then
-		timeLine
-			:GetTimeAxis()
-			:GetAxis()
-			:SetStartOffset(trackerData.timeAxisStartOffset - timeLine:GetTimeAxis():GetAxis():XDeltaToValue(dtPos).x)
-		timeLine
-			:GetDataAxis()
-			:GetAxis()
-			:SetStartOffset(trackerData.dataAxisStartOffset + timeLine:GetDataAxis():GetAxis():XDeltaToValue(dtPos).y)
-		timeLine:Update()
-	elseif self.m_rightClickZoom or cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_ZOOM then
-		local dt = (dtPos.x + dtPos.y) / 20.0
-		self:ZoomAxes(dt, true, true, true, tracker:GetStartPos())
-		input.set_cursor_pos(tracker:GetStartPos())
-		tracker:ResetCurPos()
-	elseif cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT then
-	elseif cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_MOVE then
-	elseif cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_SCALE then
-	end]]
+	self:SetInnerSelectionEnd(t)
 end
 function gui.PFMTimelineMotion:MouseCallback(button, state, mods)
 	if button == input.MOUSE_BUTTON_LEFT then
 		local pos = self:GetCursorPos()
 		local t = self:GetTimeAxis():GetAxis():XOffsetToValue(pos.x)
 		if state == input.STATE_PRESS then
-			self:SetSelectionStart(t)
-			self:SetCursorTrackerEnabled(true)
-		else
+			if input.is_shift_key_down() then
+				self.m_creatingSelection = true
+				self:SetSelectionStart(t)
+				self:SetInnerSelectionStart(t)
+				self:SetCursorTrackerEnabled(true)
+				return util.EVENT_REPLY_HANDLED
+			end
+		elseif self.m_creatingSelection then
+			self.m_creatingSelection = false
 			self:SetSelectionEnd(t)
+			self:SetInnerSelectionEnd(t)
 			self:SetCursorTrackerEnabled(false)
+			return util.EVENT_REPLY_HANDLED
 		end
-		return util.EVENT_REPLY_HANDLED
 	end
-	return gui.PFMTimelineGraphBase.MouseCallback(self, button, state, mods)
-end
-function gui.PFMTimelineMotion:UpdateSelectionItem()
-	if self.m_selectionStart == nil or self.m_selectionEnd == nil then
-		return
-	end
-	local t0 = self.m_timeAxis:GetAxis():ValueToXOffset(self.m_selectionStart)
-	self.m_elSelection:SetX(t0)
-
-	local t1 = self.m_timeAxis:GetAxis():ValueToXOffset(self.m_selectionEnd)
-	self.m_elSelection:SetWidth(t1 - t0)
-
-	self.m_elSelection:UpdateCenterBar()
+	return gui.Base.MouseCallback(self, button, state, mods)
 end
 function gui.PFMTimelineMotion:SetTimelineContents(contents)
 	util.remove(self.m_elSelection)
 	local selection = gui.create("WIPFMPartialTimeSelection", contents)
+	selection:SetupTimelineMarkers(contents)
 	selection:SetY(contents:GetUpperTimelineStrip():GetTop())
 	selection:SetHeight(contents:GetHeight() - selection:GetY())
-	selection:SetInnerStartPosition(15)
-	selection:SetInnerEndPosition(15)
+	selection:SetInnerStartPosition(0)
+	selection:SetInnerEndPosition(0)
 	self.m_cbSelectionSizeUpdate = contents:AddCallback("SetSize", function()
 		self.m_elSelection:SetHeight(contents:GetHeight() - selection:GetY())
 	end)
