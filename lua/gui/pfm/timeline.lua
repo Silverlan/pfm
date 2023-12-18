@@ -191,17 +191,19 @@ function gui.PFMTimeline:OnTimelineUpdate()
 	if util.is_valid(self.m_timeline) == false then
 		return
 	end
-	if util.is_valid(self.m_timelineGraph) then
-		local posTimeline = self.m_timeline:GetAbsolutePos()
-		local posGraph = self.m_timelineGraph:GetAbsolutePos()
-		local timeAxis = self.m_timeline:GetTimeAxis():GetAxis()
-		local dataAxis = self.m_timeline:GetDataAxis():GetAxis()
-		self.m_timelineGraph:UpdateAxisRanges(
-			timeAxis:GetStartOffset(),
-			timeAxis:GetZoomLevel(),
-			dataAxis:GetStartOffset(),
-			dataAxis:GetZoomLevel()
-		)
+	for _, graph in ipairs({ self.m_timelineGraph, self.m_timelineMotion }) do
+		if util.is_valid(graph) then
+			local posTimeline = self.m_timeline:GetAbsolutePos()
+			local posGraph = graph:GetAbsolutePos()
+			local timeAxis = self.m_timeline:GetTimeAxis():GetAxis()
+			local dataAxis = self.m_timeline:GetDataAxis():GetAxis()
+			graph:UpdateAxisRanges(
+				timeAxis:GetStartOffset(),
+				timeAxis:GetZoomLevel(),
+				dataAxis:GetStartOffset(),
+				dataAxis:GetZoomLevel()
+			)
+		end
 	end
 end
 function gui.PFMTimeline:GetEditor()

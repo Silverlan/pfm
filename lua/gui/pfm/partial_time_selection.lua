@@ -130,6 +130,10 @@ function Element:OnInitialize()
 			if button == input.MOUSE_BUTTON_LEFT then
 				if state == input.STATE_PRESS then
 					self:StartDragMode(i, (getTargetMarkers ~= nil) and getTargetMarkers() or { i + 1 })
+
+					if input.is_alt_key_down() and i == 2 then
+						self:StartRescaleMode()
+					end
 				else
 					self:StopDragMode()
 				end
@@ -201,9 +205,8 @@ function Element:MouseCallback(button, state, mods)
 			self.m_timelineMarkers[3]:SetCursorMoveModeEnabled(false)
 			return util.EVENT_REPLY_HANDLED
 		end
-		return util.EVENT_REPLY_HANDLED
 	end
-	return gui.PFMTimelineGraphBase.MouseCallback(self, button, state, mods)
+	return gui.Base.MouseCallback(self, button, state, mods)
 end
 function Element:StartDragMode(i, targetMarkers)
 	if util.is_valid(self.m_timelineMarkers[i + 1]) == false then
@@ -242,6 +245,28 @@ function Element:OnMarkerDragUpdate(i)
 	for _, iTargetMarker in ipairs(self.m_dragTargetMarkers) do
 		update_relative_position(self.m_dragMarker + 1, iTargetMarker + 1)
 	end
+
+	if i == 2 and self.m_rescaleData ~= nil then
+		local tOrig = self.m_rescaleData.markerTimes[4] - self.m_rescaleData.markerTimes[1]
+		local tNew = self.m_timelineMarkers[4]:GetTimeOffset() - self.m_timelineMarkers[1]:GetTimeOffset()
+		local scaleFactor = tNew / tOrig
+		local startTime = self:GetStartTime()
+		local endTime = self.m_rescaleData.endTime
+		self:CallCallbacks("OnTransformUpdate", startTime, endTime, scaleFactor)
+	end
+end
+function Element:StartRescaleMode()
+	self.m_rescaleData = {}
+	self.m_rescaleData.markerTimes = {}
+	for _, t in ipairs(self.m_dragTimelineMarkerTimes) do
+		table.insert(self.m_rescaleData.markerTimes, t)
+	end
+	self.m_rescaleData.startTime = self:GetStartTime()
+	self.m_rescaleData.endTime = self:GetEndTime()
+	self:CallCallbacks("OnStartTransform")
+end
+function Element:EndRescaleMode()
+	self:CallCallbacks("OnEndTransform")
 end
 function Element:SetupTimelineMarkers(timeline)
 	local function add_marker(i)
@@ -249,6 +274,7 @@ function Element:SetupTimelineMarkers(timeline)
 		el:SetWidth(10)
 		el:SetHeight(timeline:GetHeight())
 		el:SetAxis(timeline:GetTimeAxis():GetAxis())
+		el:GetVisibilityProperty():Link(self:GetVisibilityProperty())
 		timeline:AddTimelineElement(el)
 
 		el:AddCallback("OnAxisPositionUpdated", function()

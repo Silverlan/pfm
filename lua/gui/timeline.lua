@@ -198,9 +198,8 @@ function gui.Timeline:OnTimelinePropertiesChanged(updatePlayhead, updateAxis)
 			self.m_skipUpdatePlayOffset = true
 			local timeOffset = self.m_playhead:GetTimeOffset()
 			local axis = self:GetTimeAxis():GetAxis()
-			local x = axis:ValueToXOffset(timeOffset)
 			if updatePlayhead then
-				self.m_playhead:SetPlayOffset(x)
+				self.m_playhead:UpdateAxisPosition()
 			end
 			self.m_skipUpdatePlayOffset = nil
 
@@ -319,9 +318,7 @@ function gui.Timeline:SetZoomLevel(zoomLevel)
 		return
 	end
 
-	local axis = self:GetTimeAxis():GetAxis()
 	local timeOffset = self.m_playhead:GetTimeOffset()
-	local newXOffset = axis:SetZoomLevel(zoomLevel, timeOffset)
 
 	-- Changing the start offset can change the playhead offset if it's out of range,
 	-- so we'll reset its position here.
@@ -329,7 +326,7 @@ function gui.Timeline:SetZoomLevel(zoomLevel)
 	self.m_playhead:SetTimeOffset(timeOffset)
 	self.m_skipPlayheadUpdate = nil
 
-	self.m_playhead:SetPlayOffset(newXOffset)
+	self.m_playhead:UpdateAxisPosition()
 end
 function gui.Timeline:SetStartOffset(offset)
 	local axis = self:GetTimeAxis():GetAxis()

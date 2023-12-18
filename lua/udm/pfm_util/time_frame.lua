@@ -6,6 +6,12 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+function pfm.udm.TimeFrame.localize_offset(tfStart, tfOffset, tfScale, offset)
+	return (offset - tfStart + tfOffset) * tfScale
+end
+function pfm.udm.TimeFrame.globalize_offset(tfStart, tfOffset, tfScale, offset)
+	return (tfStart + offset - tfOffset) / tfScale
+end
 function pfm.udm.TimeFrame:GetEnd()
 	return self:GetStart() + self:GetDuration()
 end
@@ -39,10 +45,10 @@ function pfm.udm.TimeFrame:Min(timeFrameOther)
 	return result
 end
 function pfm.udm.TimeFrame:LocalizeOffset(offset)
-	return (offset - self:GetStart() + self:GetOffset()) * self:GetScale()
+	return pfm.udm.TimeFrame.localize_offset(self:GetStart(), self:GetOffset(), self:GetScale(), offset)
 end
 function pfm.udm.TimeFrame:GlobalizeOffset(offset)
-	return (self:GetStart() + offset - self:GetOffset()) / self:GetScale()
+	return pfm.udm.TimeFrame.globalize_offset(self:GetStart(), self:GetOffset(), self:GetScale(), offset)
 end
 function pfm.udm.TimeFrame:LocalizeTimeOffset(offset)
 	return offset - self:GetStart()

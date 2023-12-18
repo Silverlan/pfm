@@ -211,13 +211,10 @@ function Element:InitializeProjectUI(layoutName)
 	pfmTimeline:AddCallback("OnClipSelected", function(el, clip)
 		clip = clip:GetFilmClipData()
 		if util.get_type_name(clip) == "FilmClip" then
-			local actorEditor = self:GetActorEditor()
-			if util.is_valid(actorEditor) then
-				actorEditor:Setup(clip)
-			end
-			local graphEditor = self:GetGraphEditor()
-			if util.is_valid(graphEditor) then
-				graphEditor:Setup(clip)
+			for _, editor in ipairs({ self:GetActorEditor(), self:GetGraphEditor(), self:GetMotionEditor() }) do
+				if util.is_valid(editor) then
+					editor:Setup(clip)
+				end
 			end
 		end
 	end)

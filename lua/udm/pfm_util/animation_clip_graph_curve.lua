@@ -530,6 +530,17 @@ function pfm.udm.EditorGraphCurve:RebuildDirtyGraphCurveSegments()
 	end
 end
 
+function pfm.udm.EditorGraphCurve:CallAnimationDataChangedListener(keyIdx)
+	local editorChannelData = self:GetEditorChannelData()
+	local editorAnimData = editorChannelData:GetEditorAnimationData()
+	local animationClip = editorAnimData:GetAnimationClip()
+	local track = animationClip:GetAnimationTrack()
+	local filmClip = track:GetFilmClip()
+	local animClip = editorAnimData:GetAnimationClip()
+	local channel = animClip:FindChannel(editorChannelData:GetTargetPath())
+	filmClip:CallChangeListeners("OnGraphCurveAnimationDataChanged", self, animClip, channel, keyIdx)
+end
+
 function pfm.udm.EditorGraphCurve:SetCurveChannelValueCount(startIndex, endIndex, numValues, removeBoundaryPoints)
 	local editorChannelData = self:GetEditorChannelData()
 	local editorAnimData = editorChannelData:GetEditorAnimationData()

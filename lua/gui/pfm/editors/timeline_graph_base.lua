@@ -97,6 +97,21 @@ function gui.PFMTimelineGraphBase:OnInitialize()
 		end
 		self:UpdateChannelValue(data)
 	end)
+	self.m_cbOnActorControlSelected = tool.get_filmmaker():AddCallback(
+		"OnActorControlSelected",
+		function(pm, actorEditor, filmClip, actor, component, controlData, memberInfo, slider)
+			local graphEditor = self
+			local itemCtrl = graphEditor:AddControl(filmClip, actor, controlData, memberInfo)
+
+			local fRemoveCtrl = function()
+				if util.is_valid(itemCtrl) then
+					itemCtrl:Remove()
+				end
+			end
+			slider:AddCallback("OnDeselected", fRemoveCtrl)
+			slider:AddCallback("OnRemove", fRemoveCtrl)
+		end
+	)
 end
 function gui.PFMTimelineGraphBase:ReloadGraphCurveSegment(i, keyIndex, rebuildCurve)
 	if rebuildCurve == nil then
@@ -115,7 +130,7 @@ function gui.PFMTimelineGraphBase:ReloadGraphCurveSegment(i, keyIndex, rebuildCu
 	updateSegment(keyIndex -1)
 	updateSegment(keyIndex)]]
 
-	local dpStart = graphData.curve.m_dataPoints[keyIndex] or graphData.curve.m_dataPoints[keyIndex + 1]
+	--[[local dpStart = graphData.curve.m_dataPoints[keyIndex] or graphData.curve.m_dataPoints[keyIndex + 1]
 	local dpEnd = graphData.curve.m_dataPoints[keyIndex + 2] or graphData.curve.m_dataPoints[keyIndex + 1]
 	if dpStart ~= nil and dpEnd ~= nil then
 		local editorKeys = dpStart:GetEditorKeys()
@@ -132,8 +147,7 @@ function gui.PFMTimelineGraphBase:ReloadGraphCurveSegment(i, keyIndex, rebuildCu
 		local startTimeBoundary, endTimeBoundary = editorChannel:GetKeyframeTimeBoundaries(startTime, endTime)
 
 		self:InitializeCurveSegmentAnimationData(actor0, targetPath0, graphData, startTimeBoundary, endTimeBoundary)
-	end
-
+	end]]
 	if rebuildCurve then
 		self:RebuildGraphCurve(i, graphData, true)
 	end
@@ -193,6 +207,7 @@ function gui.PFMTimelineGraphBase:OnRemove()
 	util.remove(self.m_cbOnChannelValueChanged)
 	util.remove(self.m_cbOnKeyframeUpdated)
 	util.remove(self.m_cbDataAxisPropertiesChanged)
+	util.remove(self.m_cbOnActorControlSelected)
 	self:ClearKeyframeListeners()
 end
 function gui.PFMTimelineGraphBase:FindGraphDataIndices(actor, targetPath)
@@ -457,7 +472,11 @@ function gui.PFMTimelineGraphBase:MouseCallback(button, state, mods)
 		self:EndCanvasDrawing()
 		return util.EVENT_REPLY_HANDLED
 	end
-	if isShiftDown and cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT then
+	if
+		isShiftDown
+		and button == input.MOUSE_BUTTON_LEFT
+		and cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT
+	then
 		if state == input.STATE_PRESS then
 			if #self.m_graphs == 1 then
 				local graphData = self.m_graphs[1]
@@ -952,8 +971,14 @@ function gui.PFMTimelineGraphBase:RebuildGraphCurve(i, graphData, updateCurveOnl
 		return
 	end
 	local curve = editorChannel:GetGraphCurve()
+
+	local animClip = graphData.animClip()
+	local tf = animClip:GetTimeFrame()
+	local tfStart = tf:GetStart()
+	local tfOffset = tf:GetOffset()
+	local tfScale = tf:GetScale()
 	local curveValues = curve:CalcUiCurveValues(graphData.typeComponentIndex, function(t)
-		return self:DataTimeToInterfaceTime(graphData, t)
+		return pfm.udm.TimeFrame.globalize_offset(tfStart, tfOffset, tfScale, t)
 	end, (graphData.valueTranslator ~= nil) and graphData.valueTranslator[1] or nil)
 	graphData.curve:UpdateCurveData(curveValues)
 end

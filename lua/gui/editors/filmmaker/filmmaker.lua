@@ -1154,16 +1154,16 @@ function gui.WIFilmmaker:OnActorControlSelected(actorEditor, actor, component, c
 	if filmClip == nil then
 		return
 	end
-	local graphEditor = self:GetTimeline():GetGraphEditor()
-	local itemCtrl = graphEditor:AddControl(filmClip, actor, controlData, memberInfo)
-
-	local fRemoveCtrl = function()
-		if util.is_valid(itemCtrl) then
-			itemCtrl:Remove()
-		end
-	end
-	slider:AddCallback("OnDeselected", fRemoveCtrl)
-	slider:AddCallback("OnRemove", fRemoveCtrl)
+	self:CallCallbacks(
+		"OnActorControlSelected",
+		actorEditor,
+		filmClip,
+		actor,
+		component,
+		controlData,
+		memberInfo,
+		slider
+	)
 end
 function gui.WIFilmmaker:OpenEscapeMenu()
 	self:OpenWindow("settings")
@@ -1485,6 +1485,13 @@ function gui.WIFilmmaker:GetGraphEditor()
 		return
 	end
 	return timeline:GetGraphEditor()
+end
+function gui.WIFilmmaker:GetMotionEditor()
+	local timeline = self:GetTimeline()
+	if util.is_valid(timeline) == false then
+		return
+	end
+	return timeline:GetMotionEditor()
 end
 function gui.WIFilmmaker:GetFilmStrip()
 	return self.m_filmStrip
