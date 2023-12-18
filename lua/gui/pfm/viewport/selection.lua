@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function gui.PFMViewport:FindBoneUnderCursor(entActor)
+function gui.PFMCoreViewportBase:FindBoneUnderCursor(entActor)
 	local handled, entBone, hitPosBone, startPos, hitDataBone = ents.ClickComponent.inject_click_input(
 		input.ACTION_ATTACK,
 		true,
@@ -38,7 +38,7 @@ function gui.PFMViewport:FindBoneUnderCursor(entActor)
 	local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
 	return bone, hitPosBone
 end
-function gui.PFMViewport:IsActorSelected(entActor)
+function gui.PFMCoreViewportBase:IsActorSelected(entActor)
 	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	local actor = (actorC ~= nil) and actorC:GetActorData() or nil
 	if actor == nil then
@@ -50,7 +50,7 @@ function gui.PFMViewport:IsActorSelected(entActor)
 	end
 	return pm:IsActorSelected(actor)
 end
-function gui.PFMViewport:SelectActor(entActor, bone, deselectCurrent)
+function gui.PFMCoreViewportBase:SelectActor(entActor, bone, deselectCurrent)
 	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	local actor = (actorC ~= nil) and actorC:GetActorData() or nil
 	if actor == nil then
@@ -74,7 +74,7 @@ function gui.PFMViewport:SelectActor(entActor, bone, deselectCurrent)
 	end
 	pm:SelectActor(actor, deselectCurrent, property)
 end
-function gui.PFMViewport:UpdateMultiActorSelection()
+function gui.PFMCoreViewportBase:UpdateMultiActorSelection()
 	local actors = pfm.get_project_manager():GetSelectionManager():GetSelectedActors()
 	local n = 0
 	for ent, _ in pairs(actors) do
@@ -92,14 +92,14 @@ function gui.PFMViewport:UpdateMultiActorSelection()
 	end
 	return false
 end
-function gui.PFMViewport:OnActorSelectionChanged(ent, selected)
+function gui.PFMCoreViewportBase:OnActorSelectionChanged(ent, selected)
 	if self:UpdateMultiActorSelection() then
 		return
 	end
 	self:UpdateActorManipulation(ent, selected)
 	self:UpdateManipulationMode()
 end
-function gui.PFMViewport:ApplySelection()
+function gui.PFMCoreViewportBase:ApplySelection()
 	if util.is_valid(self.m_selectionRect) == false then
 		return false
 	end

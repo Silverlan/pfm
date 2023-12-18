@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function gui.PFMViewport:InitializeViewport(parent)
+function gui.PFMCoreViewportBase:InitializeViewport(parent)
 	gui.PFMBaseViewport.InitializeViewport(self, parent)
 	local vpContainer = gui.create("WIBase", parent)
 	self.m_vpContainer = vpContainer
@@ -23,11 +23,11 @@ function gui.PFMViewport:InitializeViewport(parent)
 	self.m_cbClickMouseInput = self.m_viewport:AddCallback("OnMouseEvent", function(el, mouseButton, state, mods)
 		return self:OnViewportMouseEvent(el, mouseButton, state, mods)
 	end)
-	self:SetCameraMode(gui.PFMViewport.CAMERA_MODE_PLAYBACK)
+	self:SetCameraMode(gui.PFMCoreViewportBase.CAMERA_MODE_PLAYBACK)
 
 	gui.mark_as_drag_and_drop_target(self.m_viewport, "ModelCatalog")
 end
-function gui.PFMViewport:InitializeSettings(parent)
+function gui.PFMCoreViewportBase:InitializeSettings(parent)
 	gui.PFMBaseViewport.InitializeSettings(self, parent)
 	local p = self.m_settingsBox
 	p:SetName("vp_settings")
@@ -288,13 +288,13 @@ function gui.PFMViewport:InitializeSettings(parent)
 	self.m_refreshRtView:SetHeight(26)
 	self.m_refreshRtView:SetVisible(false)
 end
-function gui.PFMViewport:SetManipulatorControlsEnabled(enabled)
+function gui.PFMCoreViewportBase:SetManipulatorControlsEnabled(enabled)
 	self.m_manipulatorControlsEnabled = enabled
 end
-function gui.PFMViewport:SetCameraControlsEnabled(enabled)
+function gui.PFMCoreViewportBase:SetCameraControlsEnabled(enabled)
 	self.m_cameraControlsEnabled = enabled
 end
-function gui.PFMViewport:InitializeControls()
+function gui.PFMCoreViewportBase:InitializeControls()
 	gui.PFMBaseViewport.InitializeControls(self)
 
 	local controls = gui.create("WIBase", self.m_vpContents)

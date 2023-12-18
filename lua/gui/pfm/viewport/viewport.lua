@@ -23,23 +23,23 @@ include_component("click")
 include_component("util_transform")
 include_component("pfm_bone")
 
-util.register_class("gui.PFMViewport", gui.PFMBaseViewport)
+util.register_class("gui.PFMCoreViewportBase", gui.PFMBaseViewport)
 
 include("transform_gizmo.lua")
 include("camera.lua")
 include("selection.lua")
 include("ui.lua")
 
-function gui.PFMViewport:OnInitialize()
+function gui.PFMCoreViewportBase:OnInitialize()
 	self.m_vrControllers = {}
-	self.m_manipulatorMode = gui.PFMViewport.MANIPULATOR_MODE_SELECT
+	self.m_manipulatorMode = gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT
 
 	gui.PFMBaseViewport.OnInitialize(self)
 
 	self.m_titleBar:SetHeight(37)
 
 	self.m_gameplayEnabled = true
-	self.m_cameraView = gui.PFMViewport.CAMERA_VIEW_GAME
+	self.m_cameraView = gui.PFMCoreViewportBase.CAMERA_VIEW_GAME
 	self.m_aspectRatioWrapper:AddCallback("OnAspectRatioChanged", function(el, aspectRatio)
 		self:UpdateAspectRatio()
 	end)
@@ -76,7 +76,7 @@ function gui.PFMViewport:OnInitialize()
 		if self:IsValid() then
 			local camView = self.m_cameraView
 			self.m_cameraView = nil
-			if camView == gui.PFMViewport.CAMERA_VIEW_GAME then
+			if camView == gui.PFMCoreViewportBase.CAMERA_VIEW_GAME then
 				self:SwitchToWorkCamera()
 			else
 				self:SwitchToSceneCamera()
@@ -84,7 +84,7 @@ function gui.PFMViewport:OnInitialize()
 		end
 	end)
 end
-function gui.PFMViewport:UpdateAspectRatio()
+function gui.PFMCoreViewportBase:UpdateAspectRatio()
 	if util.is_valid(self.m_viewport) == false or util.is_valid(self.m_aspectRatioWrapper) == false then
 		return
 	end
@@ -99,7 +99,7 @@ function gui.PFMViewport:UpdateAspectRatio()
 	cam:SetAspectRatio(self.m_aspectRatioWrapper:GetAspectRatio())
 	cam:UpdateMatrices()
 end
-function gui.PFMViewport:ShowAnimationOutline(show)
+function gui.PFMCoreViewportBase:ShowAnimationOutline(show)
 	if show == false then
 		util.remove(self.m_animOutline)
 		return
@@ -113,7 +113,7 @@ function gui.PFMViewport:ShowAnimationOutline(show)
 	el:SetZPos(10)
 	self.m_animOutline = el
 end
-function gui.PFMViewport:InitializeCustomScene()
+function gui.PFMCoreViewportBase:InitializeCustomScene()
 	local sceneCreateInfo = ents.SceneComponent.CreateInfo()
 	sceneCreateInfo.sampleCount = prosper.SAMPLE_COUNT_1_BIT
 	local gameScene = game.get_scene()
@@ -139,7 +139,7 @@ function gui.PFMViewport:InitializeCustomScene()
 		return game.is_default_game_render_enabled()
 	end)
 end
-function gui.PFMViewport:SetRtViewportRenderer(renderer)
+function gui.PFMCoreViewportBase:SetRtViewportRenderer(renderer)
 	local enabled = (renderer ~= nil)
 	console.run("cl_max_fps", enabled and "24" or tostring(console.get_convar_int("pfm_max_fps"))) -- Clamp max fps to make more resources available for the renderer
 	util.remove(self.m_rtViewport)
@@ -169,13 +169,13 @@ function gui.PFMViewport:SetRtViewportRenderer(renderer)
 
 	self:UpdateRenderSettings()
 end
-function gui.PFMViewport:GetRealtimeRaytracedViewport()
+function gui.PFMCoreViewportBase:GetRealtimeRaytracedViewport()
 	return self.m_rtViewport
 end
-function gui.PFMViewport:StopLiveRaytracing()
+function gui.PFMCoreViewportBase:StopLiveRaytracing()
 	self.m_ctrlRt:SelectOption(0)
 end
-function gui.PFMViewport:UpdateRenderSettings()
+function gui.PFMCoreViewportBase:UpdateRenderSettings()
 	local pfm = pfm.get_project_manager()
 	local renderTab = pfm:GetRenderTab()
 	if util.is_valid(self.m_rtViewport) == false or util.is_valid(renderTab) == false then
@@ -184,65 +184,12 @@ function gui.PFMViewport:UpdateRenderSettings()
 	self.m_rtViewport:SetRenderSettings(renderTab:GetRenderSettings())
 	self.m_rtViewport:Refresh(true)
 end
-function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
-	if
-		mouseButton == input.MOUSE_BUTTON_LEFT
-		and self:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_SELECT
-	then
-		pfm.tag_render_scene_as_dirty()
-		if state == input.STATE_PRESS then
-			self.m_leftMouseInput = true
-			self.m_cursorTracker = gui.CursorTracker()
-			self:UpdateThinkState()
-			return util.EVENT_REPLY_HANDLED
-		end
-		local selectionApplied = self:ApplySelection()
-
-		self.m_leftMouseInput = nil
-		self.m_cursorTracker = nil
-		self:UpdateThinkState()
-
-		if selectionApplied == false then
-			local handled, entActor, hitPos, startPos, hitData =
-				ents.ClickComponent.inject_click_input(input.ACTION_ATTACK, true)
-			if handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor) then
-				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
-				if actor then
-					local filmmaker = pfm.get_project_manager()
-					if input.is_alt_key_down() then
-						filmmaker:DeselectActor(actor)
-					else
-						local bone
-						if self:IsActorSelected(entActor) then
-							bone = self:FindBoneUnderCursor(entActor)
-						end
-						local deselectCurrent = not input.is_ctrl_key_down()
-						self:SelectActor(entActor, bone, deselectCurrent)
-					end
-				end
-			end
-		end
-		return util.EVENT_REPLY_HANDLED
-	end
-
+function gui.PFMCoreViewportBase:OnViewportMouseEvent(el, mouseButton, state, mods)
 	if mouseButton ~= input.MOUSE_BUTTON_LEFT and mouseButton ~= input.MOUSE_BUTTON_RIGHT then
 		return util.EVENT_REPLY_UNHANDLED
 	end
 	if state ~= input.STATE_PRESS and state ~= input.STATE_RELEASE then
 		return util.EVENT_REPLY_UNHANDLED
-	end
-
-	local function findActor(pressed, filter, action)
-		if pressed == nil then
-			pressed = state == input.STATE_PRESS
-		end
-		--[[if(self.m_manipulatorMode ~= gui.PFMViewport.MANIPULATOR_MODE_SELECT) then
-			filter = function(ent,mdlC)
-				return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
-			end
-		end]]
-		return ents.ClickComponent.inject_click_input(action or input.ACTION_ATTACK, pressed, filter)
 	end
 
 	--[[if(mouseButton == input.MOUSE_BUTTON_RIGHT) then
@@ -265,6 +212,18 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 	then
 		self:SetGameplayMode(false)
 		return util.EVENT_REPLY_HANDLED
+	end
+
+	local function findActor(pressed, filter, action)
+		if pressed == nil then
+			pressed = state == input.STATE_PRESS
+		end
+		--[[if(self.m_manipulatorMode ~= gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT) then
+			filter = function(ent,mdlC)
+				return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
+			end
+		end]]
+		return ents.ClickComponent.inject_click_input(action or input.ACTION_ATTACK, pressed, filter)
 	end
 
 	local root = self:GetRootWindow()
@@ -318,96 +277,12 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 					end
 				end
 			end
-		elseif mouseButton == input.MOUSE_BUTTON_LEFT then
-			if util.is_valid(self.m_rtMoverActor) then
-				self.m_rtMoverActor:RemoveComponent("pfm_rt_mover")
-				pfm.tag_render_scene_as_dirty()
-				local actorC = util.is_valid(self.m_rtMoverActor)
-						and self.m_rtMoverActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-					or nil
-				if actorC ~= nil then
-					local curPos = actorC:GetMemberValue("position")
-					local newPos = self.m_rtMoverActor:GetPos()
-					local function apply_pos(pos)
-						pfm.get_project_manager():SetActorTransformProperty(actorC, "position", pos)
-						if util.is_valid(self.m_rtMoverActor) then
-							self:OnActorTransformChanged(self.m_rtMoverActor)
-						end
-					end
-					-- TODO
-					--[[pfm.undoredo.push("transform", function()
-						apply_pos(newPos)
-					end, function()
-						apply_pos(curPos)
-					end)()]]
-					apply_pos(newPos)
-				end
-				self.m_rtMoverActor = nil
-				if state == input.STATE_RELEASE then
-					return util.EVENT_REPLY_HANDLED
-				end
-			end
-
-			local handled, entActor = findActor()
-			if
-				self:IsMoveManipulatorMode(self:GetManipulatorMode())
-				and (entActor == nil or entActor:HasComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW) == false)
-			then
-				local pm = pfm.get_project_manager()
-				local selectionManager = pm:GetSelectionManager()
-				local objs = selectionManager:GetSelectedObjects()
-				local obj = pairs(objs)(objs)
-				if util.is_valid(obj) then
-					handled = util.EVENT_REPLY_UNHANDLED
-					entActor = obj
-				end
-			end
-
-			if handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor) and state == input.STATE_PRESS then
-				if self:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_SELECT or input.is_ctrl_key_down() then
-					local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-					local actor = (actorC ~= nil) and actorC:GetActorData() or nil
-					if actor then
-						local bone, hitPosBone = self:FindBoneUnderCursor(entActor)
-						if bone ~= nil then
-							self:SelectActor(entActor, bone, true)
-							filmmaker:GetActorEditor():UpdateSelectedEntities()
-
-							local transformC = util.is_valid(self.m_entTransform)
-									and self.m_entTransform:GetComponent(ents.COMPONENT_UTIL_TRANSFORM)
-								or nil
-							if transformC ~= nil then
-								transformC:StartTransform(
-									"xyz",
-									ents.UtilTransformArrowComponent.AXIS_XYZ,
-									ents.UtilTransformArrowComponent.TYPE_TRANSLATION,
-									hitPosBone
-								)
-							end
-						end
-						--[[if(self:IsMoveManipulatorMode(self:GetManipulatorMode())) then
-						if(state == input.STATE_PRESS) then
-							self.m_rtMoverActor = entActor
-							entActor:AddComponent("pfm_rt_mover")
-							pfm.get_project_manager():TagRenderSceneAsDirty(true)
-						end
-					else
-						if(input.is_alt_key_down()) then
-							filmmaker:DeselectActor(actor)
-						else
-							local deselectCurrent = not input.is_ctrl_key_down()
-							filmmaker:SelectActor(actor,deselectCurrent)
-						end
-					end]]
-					end
-				end
-			end
+			return util.EVENT_REPLY_HANDLED
 		end
-		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
-function gui.PFMViewport:OnRemove()
+function gui.PFMCoreViewportBase:OnRemove()
 	self:ClearTransformGizmo()
 	if util.is_valid(self.m_scene) then
 		self.m_scene:GetEntity():Remove()
@@ -424,19 +299,19 @@ function gui.PFMViewport:OnRemove()
 		end
 	end
 end
-function gui.PFMViewport:SetGlobalTime(time)
+function gui.PFMCoreViewportBase:SetGlobalTime(time)
 	if util.is_valid(self.m_timeGlobal) then
 		self.m_timeGlobal:SetText(util.get_pretty_time(time))
 		self.m_timeGlobal:SizeToContents()
 	end
 end
-function gui.PFMViewport:SetLocalTime(time)
+function gui.PFMCoreViewportBase:SetLocalTime(time)
 	if util.is_valid(self.m_timeLocal) then
 		self.m_timeLocal:SetText(util.get_pretty_time(time))
 		self.m_timeLocal:SizeToContents()
 	end
 end
-function gui.PFMViewport:SetFilmClipName(name)
+function gui.PFMCoreViewportBase:SetFilmClipName(name)
 	if util.is_valid(self.m_filmClip) then
 		if name == self.m_filmClip:GetText() then
 			return
@@ -447,7 +322,7 @@ function gui.PFMViewport:SetFilmClipName(name)
 		self:UpdateFilmLabelPositions()
 	end
 end
-function gui.PFMViewport:SetFilmClipParentName(name)
+function gui.PFMCoreViewportBase:SetFilmClipParentName(name)
 	if util.is_valid(self.m_filmClipParent) then
 		if name == self.m_filmClipParent:GetText() then
 			return
@@ -458,7 +333,7 @@ function gui.PFMViewport:SetFilmClipParentName(name)
 		self:UpdateFilmLabelPositions()
 	end
 end
-function gui.PFMViewport:UpdateFilmLabelPositions()
+function gui.PFMCoreViewportBase:UpdateFilmLabelPositions()
 	if util.is_valid(self.m_filmClipParent) then
 		self.m_filmClipParent:SetX(self.m_titleBar:GetWidth() * 0.5 - self.m_filmClipParent:GetWidth() * 0.5)
 	end
@@ -466,13 +341,13 @@ function gui.PFMViewport:UpdateFilmLabelPositions()
 		self.m_filmClip:SetX(self.m_titleBar:GetWidth() * 0.5 - self.m_filmClip:GetWidth() * 0.5)
 	end
 end
-function gui.PFMViewport:MarkActorAsDirty(ent)
+function gui.PFMCoreViewportBase:MarkActorAsDirty(ent)
 	local rt = self:GetRealtimeRaytracedViewport() or nil
 	if util.is_valid(rt) then
 		rt:MarkActorAsDirty(ent)
 	end
 end
-function gui.PFMViewport:ApplyPoseToKeyframeAnimation(actorData, origPose, newPose)
+function gui.PFMCoreViewportBase:ApplyPoseToKeyframeAnimation(actorData, origPose, newPose)
 	local offsetPose = math.Transform()
 	if newPose.position ~= nil then
 		offsetPose:SetOrigin(newPose.position - origPose:GetOrigin())
@@ -580,7 +455,7 @@ function gui.PFMViewport:ApplyPoseToKeyframeAnimation(actorData, origPose, newPo
 		pfm.tag_render_scene_as_dirty()
 	end
 end
-function gui.PFMViewport:UpdateTransformGizmoPose()
+function gui.PFMCoreViewportBase:UpdateTransformGizmoPose()
 	if self.m_transformGizmoInfo == nil then
 		return
 	end
@@ -613,13 +488,13 @@ function gui.PFMViewport:UpdateTransformGizmoPose()
 	update_view_rotation()
 	self.m_transformGizmoInfo.lastPose = pose
 end
-function gui.PFMViewport:UpdateThinkState()
+function gui.PFMCoreViewportBase:UpdateThinkState()
 	local shouldThink = false
 	if self.m_transformGizmoInfo ~= nil and not self.m_transformGizmoInfo.isTransforming then
 		shouldThink = true
 	elseif self.m_cursorTracker ~= nil then
 		shouldThink = true
-	elseif self.m_cameraMode ~= gui.PFMViewport.CAMERA_MODE_PLAYBACK then
+	elseif self.m_cameraMode ~= gui.PFMCoreViewportBase.CAMERA_MODE_PLAYBACK then
 		shouldThink = true
 	elseif
 		self:IsRotationManipulatorMode(self:GetManipulatorMode())
@@ -634,7 +509,7 @@ function gui.PFMViewport:UpdateThinkState()
 		self:DisableThinking()
 	end
 end
-function gui.PFMViewport:OnThink()
+function gui.PFMCoreViewportBase:OnThink()
 	if self.m_transformGizmoInfo ~= nil and self.m_transformGizmoInfo.isTransforming ~= true then
 		self:UpdateTransformGizmoPose()
 	end
@@ -667,6 +542,8 @@ function gui.PFMViewport:OnThink()
 					if util.is_valid(workCam) then
 						self.m_cameraLinkModeWorkPose = workCam:GetEntity():GetPose()
 					end
+					self.m_cameraLinkOriginalActorPose = actor:GetTransform()
+
 					local cam = self:GetSceneCamera()
 					targetPose = cam:GetEntity():GetPose()
 					self:SwitchToWorkCamera()
@@ -697,23 +574,169 @@ function gui.PFMViewport:OnThink()
 	end
 	self.m_camStartPose = pose:Copy()
 end
-function gui.PFMViewport:GetPlayButton()
+function gui.PFMCoreViewportBase:GetPlayButton()
 	return self.m_btPlay
 end
-function gui.PFMViewport:GetPlayState()
+function gui.PFMCoreViewportBase:GetPlayState()
 	return self.m_btPlay:GetState()
 end
-function gui.PFMViewport:GetViewport()
+function gui.PFMCoreViewportBase:GetViewport()
 	return self.m_viewport
 end
-function gui.PFMViewport:OnSizeChanged(w, h)
+function gui.PFMCoreViewportBase:OnSizeChanged(w, h)
 	self:Update()
 end
-function gui.PFMViewport:OnUpdate()
+function gui.PFMCoreViewportBase:OnUpdate()
 	if util.is_valid(self.m_timeLocal) then
 		self.m_timeLocal:SetX(self.m_titleBar:GetWidth() - self.m_timeLocal:GetWidth() - 20)
 	end
 	self:UpdateFilmLabelPositions()
+end
+
+util.register_class("gui.PFMViewport", gui.PFMCoreViewportBase)
+function gui.PFMViewport:OnInitialize()
+	gui.PFMCoreViewportBase.OnInitialize(self)
+end
+function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
+	if
+		mouseButton == input.MOUSE_BUTTON_LEFT
+		and self:GetManipulatorMode() == gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT
+	then
+		pfm.tag_render_scene_as_dirty()
+		if state == input.STATE_PRESS then
+			self.m_leftMouseInput = true
+			self.m_cursorTracker = gui.CursorTracker()
+			self:UpdateThinkState()
+			return util.EVENT_REPLY_HANDLED
+		end
+		local selectionApplied = self:ApplySelection()
+
+		self.m_leftMouseInput = nil
+		self.m_cursorTracker = nil
+		self:UpdateThinkState()
+
+		if selectionApplied == false then
+			local handled, entActor, hitPos, startPos, hitData =
+				ents.ClickComponent.inject_click_input(input.ACTION_ATTACK, true)
+			if handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor) then
+				local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+				local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+				if actor then
+					local filmmaker = pfm.get_project_manager()
+					if input.is_alt_key_down() then
+						filmmaker:DeselectActor(actor)
+					else
+						local bone
+						if self:IsActorSelected(entActor) then
+							bone = self:FindBoneUnderCursor(entActor)
+						end
+						local deselectCurrent = not input.is_ctrl_key_down()
+						self:SelectActor(entActor, bone, deselectCurrent)
+					end
+				end
+			end
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
+
+	local root = self:GetRootWindow()
+	if root == gui.get_primary_window() then
+		root = filmmaker:GetContentsElement()
+	end
+	local el = gui.get_element_under_cursor(root)
+	if util.is_valid(el) and (el == self or el:IsDescendantOf(self)) then
+		if mouseButton == input.MOUSE_BUTTON_LEFT then
+			if util.is_valid(self.m_rtMoverActor) then
+				self.m_rtMoverActor:RemoveComponent("pfm_rt_mover")
+				pfm.tag_render_scene_as_dirty()
+				local actorC = util.is_valid(self.m_rtMoverActor)
+						and self.m_rtMoverActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+					or nil
+				if actorC ~= nil then
+					local curPos = actorC:GetMemberValue("position")
+					local newPos = self.m_rtMoverActor:GetPos()
+					local function apply_pos(pos)
+						pfm.get_project_manager():SetActorTransformProperty(actorC, "position", pos)
+						if util.is_valid(self.m_rtMoverActor) then
+							self:OnActorTransformChanged(self.m_rtMoverActor)
+						end
+					end
+					-- TODO
+					--[[pfm.undoredo.push("transform", function()
+						apply_pos(newPos)
+					end, function()
+						apply_pos(curPos)
+					end)()]]
+					apply_pos(newPos)
+				end
+				self.m_rtMoverActor = nil
+				if state == input.STATE_RELEASE then
+					return util.EVENT_REPLY_HANDLED
+				end
+			end
+
+			local handled, entActor = findActor()
+			pfm.log("Click target in viewport: " .. tostring(entActor), pfm.LOG_CATEGORY_PFM)
+			if
+				self:IsMoveManipulatorMode(self:GetManipulatorMode())
+				and (entActor == nil or entActor:HasComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW) == false)
+			then
+				local pm = pfm.get_project_manager()
+				local selectionManager = pm:GetSelectionManager()
+				local objs = selectionManager:GetSelectedObjects()
+				local obj = pairs(objs)(objs)
+				if util.is_valid(obj) then
+					handled = util.EVENT_REPLY_UNHANDLED
+					entActor = obj
+				end
+			end
+
+			if handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor) and state == input.STATE_PRESS then
+				if
+					self:GetManipulatorMode() == gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT
+					or input.is_ctrl_key_down()
+				then
+					local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+					local actor = (actorC ~= nil) and actorC:GetActorData() or nil
+					if actor then
+						local bone, hitPosBone = self:FindBoneUnderCursor(entActor)
+						if bone ~= nil then
+							self:SelectActor(entActor, bone, true)
+							filmmaker:GetActorEditor():UpdateSelectedEntities()
+
+							local transformC = util.is_valid(self.m_entTransform)
+									and self.m_entTransform:GetComponent(ents.COMPONENT_UTIL_TRANSFORM)
+								or nil
+							if transformC ~= nil then
+								transformC:StartTransform(
+									"xyz",
+									ents.UtilTransformArrowComponent.AXIS_XYZ,
+									ents.UtilTransformArrowComponent.TYPE_TRANSLATION,
+									hitPosBone
+								)
+							end
+						end
+						--[[if(self:IsMoveManipulatorMode(self:GetManipulatorMode())) then
+						if(state == input.STATE_PRESS) then
+							self.m_rtMoverActor = entActor
+							entActor:AddComponent("pfm_rt_mover")
+							pfm.get_project_manager():TagRenderSceneAsDirty(true)
+						end
+					else
+						if(input.is_alt_key_down()) then
+							filmmaker:DeselectActor(actor)
+						else
+							local deselectCurrent = not input.is_ctrl_key_down()
+							filmmaker:SelectActor(actor,deselectCurrent)
+						end
+					end]]
+					end
+				end
+			end
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
+	return gui.PFMCoreViewportBase.OnViewportMouseEvent(self, el, mouseButton, state, mods)
 end
 gui.register("WIPFMViewport", gui.PFMViewport)
 
