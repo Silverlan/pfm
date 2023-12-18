@@ -523,7 +523,9 @@ function gui.WIFilmmaker:OnLuaError(err)
 	end
 	self.m_lastLuaError = t
 
-	pfm.create_popup_message(locale.get_text("pfm_script_error_occurred"), 4, gui.InfoBox.TYPE_ERROR)
+	-- Don't print error immediately to prevent potential issues where printing the error
+	-- could cause another error
+	self.m_printError = true
 end
 function gui.WIFilmmaker:UpdateProjectName(fileName)
 	local filmClip = self:GetMainFilmClip()
@@ -992,6 +994,11 @@ function gui.WIFilmmaker:GoToPreviousBookmark()
 	self:GoToNeighborBookmark(false)
 end
 function gui.WIFilmmaker:OnThink()
+	if self.m_printError then
+		self.m_printError = nil
+		pfm.create_popup_message(locale.get_text("pfm_script_error_occurred"), 4, gui.InfoBox.TYPE_ERROR)
+	end
+
 	local cursorPos = input.get_cursor_pos()
 	if cursorPos ~= self.m_lastCursorPos then
 		self.m_lastCursorPos = cursorPos
