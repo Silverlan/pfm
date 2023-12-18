@@ -66,6 +66,15 @@ pfm.check_for_updates = function(callback)
 	end
 end
 
+pfm.util = pfm.util or {}
+pfm.util.get_release_archive_postfix = function()
+	if os.SYSTEM_WINDOWS then
+		return "-win64.zip"
+	else
+		return "-lin64.tar.gz"
+	end
+end
+
 function Element:CheckForUpdates(verbose)
 	local function download_update(updateUrl, fileName)
 		pfm.open_message_prompt(
@@ -94,23 +103,13 @@ function Element:CheckForUpdates(verbose)
 			local experimental = ...
 			if experimental then
 				local updateUrl = "https://github.com/Silverlan/pragma/releases/download/nightly"
-				local fileName = "pragma"
-				if os.SYSTEM_WINDOWS then
-					fileName = fileName .. "-win64.zip"
-				else
-					fileName = fileName .. "-lin64.tar.gz"
-				end
+				local fileName = "pragma" .. pfm.util.get_release_archive_postfix()
 				download_update(updateUrl, fileName)
 			else
 				local newVersion = select(2, ...)
 				-- New version available!
 				local updateUrl = "https://github.com/Silverlan/pragma/releases/download/v" .. newVersion:ToString()
-				local fileName
-				if os.SYSTEM_WINDOWS then
-					fileName = "pragma-v" .. newVersion:ToString() .. "-win64.zip"
-				else
-					fileName = "pragma-v" .. newVersion:ToString() .. "-lin64.tar.gz"
-				end
+				local fileName = "pragma-v" .. newVersion:ToString() .. pfm.util.get_release_archive_postfix()
 				download_update(updateUrl, fileName)
 			end
 		elseif resultCode == pfm.UPDATE_CHECK_RESULT_FAILED then
