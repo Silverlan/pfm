@@ -15,6 +15,9 @@ function Element:__init()
 
 	pfm.set_project_manager(self)
 end
+function Element:ShowLoadingScreen(enabled, loadText)
+	return pfm.show_loading_screen(enabled, loadText)
+end
 function Element:AddVersionInfo(identifier, version, gitInfoPath)
 	local pMenuBar = self:GetMenuBar()
 	-- Version Info

@@ -28,9 +28,6 @@ pfm.show_base_loading_screen = function(enabled, title, logo, loadingText)
 	el:SetMaterial("pfm/logo/bg_gradient")
 
 	local elLogo = gui.create("WITexturedRect", elBase)
-	elLogo:SetSize(220, 220)
-	elLogo:SetPos(120, 256)
-	elLogo:SetAnchor(0.5, 0.5, 0.5, 0.5)
 
 	local elTitle = gui.create("WIText", elBase)
 	elTitle:SetColor(Color.White)
@@ -54,6 +51,13 @@ pfm.show_base_loading_screen = function(enabled, title, logo, loadingText)
 	elBase:SetZPos(10000)
 	elBase:SetName("loading_screen")
 
+	elLogo:SetMaterial(logo)
+	local texSize = elLogo:GetTextureSize()
+	local aspectRatio = texSize.y / texSize.x
+	elLogo:SetSize(220, 220 * aspectRatio)
+	elLogo:SetPos(120, 256)
+	elLogo:SetAnchor(0.5, 0.5, 0.5, 0.5)
+
 	local b = gui.get_base_element()
 	elBase:SetSize(b:GetWidth(), b:GetHeight())
 	elBase:SetAnchor(0, 0, 1, 1)
@@ -62,7 +66,6 @@ pfm.show_base_loading_screen = function(enabled, title, logo, loadingText)
 	elTitle:SetText(title)
 	elTitle:SizeToContents()
 	elTitle:SetHeight(elTitle:GetHeight() + 20)
-	elLogo:SetMaterial(logo)
 
 	if loadingText ~= nil then
 		elText:SetText(loadingText)
