@@ -639,6 +639,19 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 		return util.EVENT_REPLY_HANDLED
 	end
 
+	local function findActor(pressed, filter, action)
+		if pressed == nil then
+			pressed = state == input.STATE_PRESS
+		end
+		--[[if(self.m_manipulatorMode ~= gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT) then
+			filter = function(ent,mdlC)
+				return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
+			end
+		end]]
+		return ents.ClickComponent.inject_click_input(action or input.ACTION_ATTACK, pressed, filter)
+	end
+
+	local filmmaker = pfm.get_project_manager()
 	local root = self:GetRootWindow()
 	if root == gui.get_primary_window() then
 		root = filmmaker:GetContentsElement()
@@ -733,8 +746,8 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 					end
 				end
 			end
+			return util.EVENT_REPLY_HANDLED
 		end
-		return util.EVENT_REPLY_HANDLED
 	end
 	return gui.PFMCoreViewportBase.OnViewportMouseEvent(self, el, mouseButton, state, mods)
 end
