@@ -555,13 +555,19 @@ function gui.BoneRetargeting:InitializeBoneControls(mdlSrc, mdlDst)
 		local boneDst = boneInfo[1]
 		local depth = boneInfo[2]
 		local name = string.rep("  ", depth) .. boneDst:GetName()
-		local el, wrapper = self.m_boneControlMenu:AddDropDownMenu(name, boneDst:GetID(), options, 0, function(el)
-			if self.m_skipCallbacks then
-				return
+		local el, wrapper = self.m_boneControlMenu:AddDropDownMenu(
+			name,
+			tostring(boneDst:GetID()),
+			options,
+			0,
+			function(el)
+				if self.m_skipCallbacks then
+					return
+				end
+				self.m_lastSelectedBoneOption = el:GetSelectedOption()
+				self:ApplyBoneTranslation(el, boneDst)
 			end
-			self.m_lastSelectedBoneOption = el:GetSelectedOption()
-			self:ApplyBoneTranslation(el, boneDst)
-		end)
+		)
 		el:AddCallback("OnMenuOpened", function(el)
 			if self.m_lastSelectedBoneOption ~= nil then
 				el:ScrollToOption(self.m_lastSelectedBoneOption)
