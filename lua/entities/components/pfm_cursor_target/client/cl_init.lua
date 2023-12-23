@@ -16,6 +16,9 @@ end
 function Component:GetLastRayInfo()
 	return self.m_lastRayInfo
 end
+function Component:SetRaycastSourceFunction(f)
+	self.m_fRaycastSource = f
+end
 local function is_same_entity(ent0, ent1)
 	if util.is_valid(ent0) == false then
 		if util.is_valid(ent1) == false then
@@ -28,7 +31,8 @@ local function is_same_entity(ent0, ent1)
 	return ent0 == ent1
 end
 function Component:OnTick(dt)
-	local startPos, dir, vpData = ents.ClickComponent.get_ray_data()
+	local fGetRaycastSource = self.m_fRaycastSource or ents.ClickComponent.get_ray_data
+	local startPos, dir, vpData = fGetRaycastSource()
 	if startPos == nil then
 		self:SetNextTick(time.cur_time() + 0.2)
 		return
@@ -36,7 +40,7 @@ function Component:OnTick(dt)
 	local filter = function(ent)
 		return ent:HasComponent(ents.COMPONENT_CLICK)
 	end
-	if util.is_valid(vpData.viewport) then
+	if vpData ~= nil and util.is_valid(vpData.viewport) then
 		local scene = vpData.viewport:GetScene()
 		if util.is_valid(scene) then
 			local preFilter = filter
