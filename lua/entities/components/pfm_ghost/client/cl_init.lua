@@ -111,7 +111,7 @@ function ents.PFMGhost:UpdateAttachmentActor(hitActor)
 						local ref = mdl:GetReferencePose()
 						local pose = ref:GetBonePose(rootBone:GetID())
 						data.selfBone = rootBone:GetID()
-						data.selfRootBonePose = pose
+						data.selfRootBonePose = pose:GetInverse()
 						data.hitActorBone = boneId
 						data.hitActorAnimC = animC
 						break
