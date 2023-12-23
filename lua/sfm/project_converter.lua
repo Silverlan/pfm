@@ -669,6 +669,7 @@ sfm.register_element_type_conversion(sfm.Channel, function(converter, sfmC, pfmC
 		return
 	end
 
+	local times = sfmLayer:GetTimes()
 	local values = sfmLayer:GetValues()
 	local toAttr = sfmC:GetToAttribute()
 
@@ -678,6 +679,15 @@ sfm.register_element_type_conversion(sfm.Channel, function(converter, sfmC, pfmC
 	else
 		if toElement:GetType() == "DmeExpressionOperator" then
 			local sfmOperator = toElement
+
+			if #times == 0 then
+				-- Expression operators apply to values in a channel clip.
+				-- In some cases the channel clip may be empty however, in which case there is no value
+				-- we can apply it to (Not sure under which circumstances this happens).
+				-- In this case we'll just add the operator's currently set value as a channel value.
+				table.insert(times, 0)
+				table.insert(values, sfmOperator:GetValue())
+			end
 
 			-- Translate toElement/toAttribute to that of the expression operator
 			for _, p in ipairs(sfmC:GetParents()) do
@@ -914,7 +924,7 @@ sfm.register_element_type_conversion(sfm.Channel, function(converter, sfmC, pfmC
 		end
 		pfmC:SetTargetPath(pfmPropPath)
 	end
-	pfmC:GetUdmData():SetArrayValues("times", udm.TYPE_FLOAT, sfmLayer:GetTimes(), udm.TYPE_ARRAY_LZ4)
+	pfmC:GetUdmData():SetArrayValues("times", udm.TYPE_FLOAT, times, udm.TYPE_ARRAY_LZ4)
 	pfmC:GetUdmData():SetArrayValues("values", type, values, udm.TYPE_ARRAY_LZ4)
 end)
 
