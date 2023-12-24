@@ -137,6 +137,7 @@ function gui.VideoAssetIcon:ApplyAsset(path, importAsset)
 		local icon = udmData:GetValue("icon", udm.TYPE_STRING) or ""
 		if #icon > 0 then
 			icon = file.get_file_path(assetPath) .. icon
+			icon = "materials/" .. icon
 		end
 		if file.exists(icon) then
 			local imgBuf = util.load_image(icon) -- TODO: Load asynchronously
