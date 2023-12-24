@@ -581,7 +581,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 								)
 							end
 							component:SetMemberValue(memberName, udmType, udmValue)
-							if memberType ~= ents.MEMBER_TYPE_ELEMENT then
+							if ents.is_member_type_animatable(memberType) then
 								local entActor = actorData.actor:FindEntity()
 								if entActor ~= nil then
 									local c = entActor:GetComponent(componentId)
