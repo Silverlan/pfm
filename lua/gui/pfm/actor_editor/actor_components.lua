@@ -435,7 +435,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 							if res ~= nil then
 								if memberInfo.type == ents.MEMBER_TYPE_ENTITY then
 									if type(res) == "string" then
-										return ents.UniversalEntityReference(res)
+										return ents.UniversalEntityReference(util.Uuid(res))
 									end
 								elseif memberInfo.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY then
 									if type(res) == "string" then
@@ -581,7 +581,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 								)
 							end
 							component:SetMemberValue(memberName, udmType, udmValue)
-							if ents.is_member_type_animatable(memberType) then
+							if memberType ~= ents.MEMBER_TYPE_ELEMENT then
 								local entActor = actorData.actor:FindEntity()
 								if entActor ~= nil then
 									local c = entActor:GetComponent(componentId)
@@ -614,7 +614,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 										self:OnActorPropertyChanged(entActor)
 									end
 								end
-								if updateAnimationValue then
+								if ents.is_member_type_animatable(memberType) and updateAnimationValue then
 									if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
 										pfm.log(
 											"Updating animation value for property '"
