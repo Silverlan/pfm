@@ -536,9 +536,17 @@ function gui.WIFilmmaker:UpdateProjectName(fileName)
 		filmClip:SetName(fileName)
 	end
 end
+function gui.WIFilmmaker:GetProjectName()
+	local filmClip = self:GetMainFilmClip()
+	if filmClip == nil then
+		return
+	end
+	return filmClip:GetName()
+end
 function gui.WIFilmmaker:SaveProject(...)
 	self:SaveUndoRedoStack()
 	self:SaveUiState()
+	self:CallCallbacks("OnSaveProject", self:GetProject())
 	return gui.WIBaseFilmmaker.SaveProject(self, ...)
 end
 function gui.WIFilmmaker:SaveUiState()
