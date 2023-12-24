@@ -138,9 +138,9 @@ function Component:SetAnimationTarget(ent)
 
 	ent:PlayAnimation("reference")
 
-	local entManager, managerC = ents.citerator(ents.COMPONENT_PFM_VR_MANAGER)()
-	if managerC ~= nil then
-		vrBodyC:SetHmd(managerC:GetHmd())
+	local entHmd, hmdC = ents.citerator(ents.COMPONENT_VR_HMD)()
+	if hmdC ~= nil then
+		vrBodyC:SetHmd(hmdC)
 	end
 	--[[16 = Bone[Name:Bind_LeftShoulder][Id:][Children:1][Parent:Bind_Spine2]
 	17 = Bone[Name:Bind_LeftArm][Id:][Children:1][Parent:Bind_LeftShoulder]
