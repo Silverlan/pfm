@@ -176,7 +176,7 @@ function Component:UpdateBones()
 			for _, bone in ipairs(skeleton:GetBones()) do
 				local boneId = bone:GetID()
 				local tEnts = self.m_bones[boneId]
-				for boneDstId, ent in pairs(tEnts) do
+				for boneDstId, ent in pairs(tEnts or {}) do
 					if ent:IsValid() and (dirtyBones[boneId] or dirtyBones[boneDstId]) then
 						local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
 						if renderC == nil or renderC:GetSceneRenderPass() == game.SCENE_RENDER_PASS_NONE then
