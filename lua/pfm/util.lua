@@ -55,6 +55,26 @@ function pfm.get_member_info(path, actor)
 	return componentInfo:GetMemberInfo(memberName:GetString())
 end
 
+function pfm.set_actor_property_value(actor, propertyPath, valueType, value)
+	local uuid
+	local t = util.get_type_name(actor)
+	if t == "Uuid" then
+		uuid = tostring(actor)
+	elseif t == "Actor" then
+		uuid = tostring(actor:GetUniqueId())
+	elseif t == "string" then
+		uuid = actor
+	else
+		uuid = actor:GetUuid()
+	end
+	actor = pfm.dereference(uuid)
+	if actor == nil then
+		return false
+	end
+	actor:SetMemberValue(propertyPath, valueType, value)
+	return true
+end
+
 function pfm.get_bone_index_from_hit_data(hitData)
 	-- Try to determine bone by vertex weight of selected triangle
 	local vws = {
