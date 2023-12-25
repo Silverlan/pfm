@@ -79,6 +79,7 @@ function gui.PFMActorEditor:OnInitialize()
 		subItem:SetName(id)
 	end
 	self.m_btTools:SetupContextMenu(function(pContext)
+		pfm.get_project_manager():CallCallbacks("PopulateActorCreationMenu", self, pContext)
 		addPresetModelActorOption(
 			"static_prop",
 			pContext,
@@ -2590,6 +2591,8 @@ end
 gui.register("WIPFMActorEditor", gui.PFMActorEditor)
 
 pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, hitMaterial)
+	pfm.get_project_manager():CallCallbacks("PopulateActorContextMenu", pContext, actor)
+
 	-- Components
 	local entActor = actor:FindEntity()
 	if util.is_valid(entActor) then
@@ -2903,7 +2906,6 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end)
 		:SetName("retarget")
 
-	pfm.get_project_manager():CallCallbacks("PopulateActorContextMenu", pContext, actor)
 	if pfm.get_project_manager():IsDeveloperModeEnabled() then
 		pContext:AddItem("Assign entity to x", function()
 			x = actor:FindEntity()
