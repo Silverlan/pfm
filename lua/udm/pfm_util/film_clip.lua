@@ -47,6 +47,27 @@ function pfm.udm.FilmClip:FindEntity()
 		end
 	end
 end
+function pfm.udm.FilmClip:DoesComponentTypeExist(componentType)
+	for _, actor in ipairs(self:GetActorList()) do
+		local c = actor:FindComponent(componentType)
+		if c ~= nil then
+			return true
+		end
+	end
+	return false
+end
+function pfm.udm.FilmClip:FindComponentsByType(componentType)
+	local components = {}
+	local actors = {}
+	for _, actor in ipairs(self:GetActorList()) do
+		local c = actor:FindComponent(componentType)
+		if c ~= nil then
+			table.insert(components, c)
+			table.insert(actors, actor)
+		end
+	end
+	return components, actors
+end
 function pfm.udm.FilmClip:GetActorList(list, recursive)
 	if recursive == nil then
 		recursive = true

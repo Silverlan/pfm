@@ -52,7 +52,28 @@ gui.PFMActorEditor.constraint_type_to_name = function(type)
 	return constraintTypeToName[type]
 end
 
-function gui.PFMActorEditor:CreatePresetActor(type, args)
+function gui.PFMActorEditor:CreateGenericActor(name, collection, fInitComponents)
+	local function create_new_actor(name, collection, pose)
+		if collection ~= nil then
+			collection = self:FindCollection(collection, true)
+		end
+		return self:CreateNewActor(name, pose, nil, collection)
+	end
+	local actor = create_new_actor(name, collection)
+	if actor == nil then
+		return
+	end
+	fInitComponents(actor)
+
+	local newActor = true
+	local updateActorComponents = true
+	if newActor and updateActorComponents then
+		self:UpdateActorComponents(actor)
+	end
+	return actor
+end
+
+function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 	args = args or {}
 	local actor = args["actor"]
 	local mdlName = args["modelName"]
@@ -71,7 +92,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		end
 		return self:CreateNewActor(nameOverride or name, pose, nil, collection)
 	end
-	if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP then
+	if actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP then
 		actor = actor or create_new_actor("static_prop", gui.PFMActorEditor.COLLECTION_SCENEBUILD)
 		if actor == nil then
 			return
@@ -88,7 +109,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 			pfmActorC:SetMemberValue("static", udm.TYPE_BOOLEAN, true)
 		end
 		-- self:CreateNewActorComponent(actor,"transform",false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP then
 		actor = actor or create_new_actor("dynamic_prop", gui.PFMActorEditor.COLLECTION_ACTORS)
 		if actor == nil then
 			return
@@ -99,7 +120,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		self:CreateNewActorComponent(actor, "model", false)
 		self:CreateNewActorComponent(actor, "render", false)
 		-- self:CreateNewActorComponent(actor,"transform",false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR then
 		actor = actor or create_new_actor("articulated_actor", gui.PFMActorEditor.COLLECTION_ACTORS)
 		if actor == nil then
 			return
@@ -113,7 +134,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		self:CreateNewActorComponent(actor, "eye", false)
 		self:CreateNewActorComponent(actor, "flex", false)
 		-- self:CreateNewActorComponent(actor,"transform",false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA then
 		actor = actor or create_new_actor("camera", gui.PFMActorEditor.COLLECTION_CAMERAS)
 		if actor == nil then
 			return
@@ -122,14 +143,14 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		-- self:CreateNewActorComponent(actor,"toggle",false)
 		self:CreateNewActorComponent(actor, "camera", false)
 		-- self:CreateNewActorComponent(actor,"transform",false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_PARTICLE_SYSTEM then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_PARTICLE_SYSTEM then
 		actor = actor or create_new_actor("particle_system", gui.PFMActorEditor.COLLECTION_EFFECTS)
 		if actor == nil then
 			return
 		end
 		self:CreateNewActorComponent(actor, "pfm_particle_system", false)
 		self:CreateNewActorComponent(actor, "particle_system", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT then
 		actor = actor or create_new_actor("spot_light", gui.PFMActorEditor.COLLECTION_LIGHTS)
 		if actor == nil then
 			return
@@ -145,7 +166,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		lightC:SetMemberValue("intensity", udm.TYPE_FLOAT, 100)
 		lightC:SetMemberValue("castShadows", udm.TYPE_BOOLEAN, false)
 		radiusC:SetMemberValue("radius", udm.TYPE_FLOAT, 1000)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT then
 		actor = actor or create_new_actor("point_light", gui.PFMActorEditor.COLLECTION_LIGHTS)
 		if actor == nil then
 			return
@@ -159,7 +180,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		lightC:SetMemberValue("intensity", udm.TYPE_FLOAT, 50)
 		lightC:SetMemberValue("castShadows", udm.TYPE_BOOLEAN, false)
 		radiusC:SetMemberValue("radius", udm.TYPE_FLOAT, 800)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DIRECTIONAL_LIGHT then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DIRECTIONAL_LIGHT then
 		actor = actor or create_new_actor("dir_light", gui.PFMActorEditor.COLLECTION_LIGHTS)
 		if actor == nil then
 			return
@@ -182,7 +203,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 				cActor:SetMemberValue("rotation", udm.TYPE_QUATERNION, rot:ToQuaternion())
 			end
 		end
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME then
 		actor = actor or create_new_actor("volume", gui.PFMActorEditor.COLLECTION_ENVIRONMENT)
 		if actor == nil then
 			return
@@ -213,12 +234,12 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		end
 		boundsC:SetMemberValue("minBounds", udm.TYPE_VECTOR3, min)
 		boundsC:SetMemberValue("maxBounds", udm.TYPE_VECTOR3, max)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR then
 		if self:IsValid() == false then
 			return
 		end
 		actor = actor or create_new_actor("actor", gui.PFMActorEditor.COLLECTION_MISC)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER then
 		actor = actor or create_new_actor("lightmapper", gui.PFMActorEditor.COLLECTION_BAKING)
 		if actor == nil then
 			return
@@ -228,7 +249,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		self:CreateNewActorComponent(actor, "light_map", false)
 		self:CreateNewActorComponent(actor, "pfm_cuboid_bounds", false)
 		self:CreateNewActorComponent(actor, "pfm_region_carver", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE then
 		actor = actor or create_new_actor("reflection_probe", gui.PFMActorEditor.COLLECTION_BAKING)
 		if actor == nil then
 			return
@@ -236,7 +257,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		local c = self:CreateNewActorComponent(actor, "reflection_probe", false)
 		c:SetMemberValue("iblStrength", udm.TYPE_FLOAT, 1.4)
 		c:SetMemberValue("iblMaterial", udm.TYPE_STRING, "pbr/ibl/venice_sunset")
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY then
 		actor = actor or create_new_actor("sky", gui.PFMActorEditor.COLLECTION_ENVIRONMENT)
 		if actor == nil then
 			return
@@ -246,7 +267,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		self:CreateNewActorComponent(actor, "pfm_model", false, function(mdlC)
 			actor:ChangeModel("maps/empty_sky/skybox_3")
 		end)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG then
 		actor = actor or create_new_actor("fog", gui.PFMActorEditor.COLLECTION_ENVIRONMENT)
 		if actor == nil then
 			return
@@ -255,7 +276,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		self:CreateNewActorComponent(actor, "color", false)
 		local toggleC = self:CreateNewActorComponent(actor, "toggle", false)
 		toggleC:SetMemberValue("enabled", udm.TYPE_BOOLEAN, true)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL then
 		local pm = pfm.get_project_manager()
 		local vp = util.is_valid(pm) and pm:GetViewport() or nil
 		local cam = util.is_valid(vp) and vp:GetActiveCamera() or nil
@@ -272,19 +293,19 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		local decalC = self:CreateNewActorComponent(actor, "decal", false)
 		decalC:SetMemberValue("size", udm.TYPE_FLOAT, 20.0)
 		decalC:SetMemberValue("material", udm.TYPE_STRING, "logo/test_spray")
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_MANAGER then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_MANAGER then
 		actor = actor or create_new_actor("vr_manager", gui.PFMActorEditor.COLLECTION_VR)
 		if actor == nil then
 			return
 		end
 		self:CreateNewActorComponent(actor, "pfm_vr_manager", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_TRACKED_DEVICE then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_VR_TRACKED_DEVICE then
 		actor = actor or create_new_actor("vr_tracked_device", gui.PFMActorEditor.COLLECTION_VR)
 		if actor == nil then
 			return
 		end
 		self:CreateNewActorComponent(actor, "pfm_vr_tracked_device", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION then
 		actor = actor or create_new_actor("ct_copy_location", gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if actor == nil then
 			return
@@ -292,7 +313,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		self:CreateNewActorComponent(actor, "constraint_copy_location", false)
 		self:CreateNewActorComponent(actor, "constraint", false)
 		self:CreateNewActorComponent(actor, "constraint_space", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_ROTATION then
 		actor = actor or create_new_actor("ct_copy_rotation", gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if actor == nil then
 			return
@@ -300,7 +321,7 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		self:CreateNewActorComponent(actor, "constraint_copy_rotation", false)
 		self:CreateNewActorComponent(actor, "constraint", false)
 		self:CreateNewActorComponent(actor, "constraint_space", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_SCALE then
 		actor = actor or create_new_actor("ct_copy_scale", gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if actor == nil then
 			return
@@ -308,49 +329,49 @@ function gui.PFMActorEditor:CreatePresetActor(type, args)
 		self:CreateNewActorComponent(actor, "constraint_copy_scale", false)
 		self:CreateNewActorComponent(actor, "constraint", false)
 		self:CreateNewActorComponent(actor, "constraint_space", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_DISTANCE then
 		actor = actor or create_new_actor("ct_limit_distance", gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if actor == nil then
 			return
 		end
 		self:CreateNewActorComponent(actor, "constraint_limit_distance", false)
 		self:CreateNewActorComponent(actor, "constraint", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_LOCATION then
 		actor = actor or create_new_actor("ct_limit_location", gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if actor == nil then
 			return
 		end
 		self:CreateNewActorComponent(actor, "constraint_limit_location", false)
 		self:CreateNewActorComponent(actor, "constraint", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_ROTATION then
 		actor = actor or create_new_actor("ct_limit_rotation", gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if actor == nil then
 			return
 		end
 		self:CreateNewActorComponent(actor, "constraint_limit_rotation", false)
 		self:CreateNewActorComponent(actor, "constraint", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE then
 		actor = actor or create_new_actor("ct_limit_scale", gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if actor == nil then
 			return
 		end
 		self:CreateNewActorComponent(actor, "constraint_limit_scale", false)
 		self:CreateNewActorComponent(actor, "constraint", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT then
 		actor = actor or create_new_actor("ct_look_at", gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if actor == nil then
 			return
 		end
 		self:CreateNewActorComponent(actor, "constraint_look_at", false)
 		self:CreateNewActorComponent(actor, "constraint", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
 		actor = actor or create_new_actor("ct_child_of", gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if actor == nil then
 			return
 		end
 		self:CreateNewActorComponent(actor, "constraint_child_of", false)
 		self:CreateNewActorComponent(actor, "constraint", false)
-	elseif type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER then
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER then
 		actor = actor or create_new_actor("ct_driver", gui.PFMActorEditor.COLLECTION_CONSTRAINTS)
 		if actor == nil then
 			return
