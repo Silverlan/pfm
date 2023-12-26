@@ -372,6 +372,7 @@ function pfm.ProjectManager:SetTimeOffset(offset)
 	if session == nil then
 		return
 	end
+	offset = self:TranslateGameViewOffset(offset)
 	local settings = session:GetSettings()
 	settings:SetPlayheadOffset(offset)
 	self.m_animManager:SetTime(offset)
