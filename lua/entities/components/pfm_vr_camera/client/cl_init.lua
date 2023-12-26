@@ -48,9 +48,11 @@ function Component:Initialize()
 	end
 end
 function Component:OnActiveStateChanged(active)
-	local entManager, managerC = ents.citerator(ents.COMPONENT_PFM_VR_MANAGER)()
-	if managerC ~= nil then
-		managerC:SetIkTrackingEnabled(active)
+	if ents.COMPONENT_PFM_VR_MANAGER ~= nil then
+		local entManager, managerC = ents.citerator(ents.COMPONENT_PFM_VR_MANAGER)()
+		if managerC ~= nil then
+			managerC:SetIkTrackingEnabled(active)
+		end
 	end
 	local povC = self:GetEntity():AddComponent("pov_camera")
 	if povC ~= nil then
