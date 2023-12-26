@@ -482,6 +482,14 @@ pfm.set_project_manager = function(pm)
 	pfm.impl.projectManager = pm
 end
 
+pfm.is_editor = function()
+	local pm = pfm.get_project_manager()
+	if util.is_valid(pm) == false then
+		return false
+	end
+	return pm:IsEditor()
+end
+
 pfm.tag_render_scene_as_dirty = function(dirty)
 	local pm = pfm.get_project_manager()
 	if util.is_valid(pm) == false or pm.TagRenderSceneAsDirty == nil then
