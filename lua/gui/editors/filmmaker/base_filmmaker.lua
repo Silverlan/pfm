@@ -309,6 +309,7 @@ function Element:RetargetActor(targetActor, mdlName)
 
 			local animManagerTarget = animCTarget:AddAnimationManager("pfm")
 			animCTarget:PlayAnimation(animManagerTarget, anim)
+			animManagerTarget:GetPlayer():SetLooping(true)
 		end
 	end
 end
