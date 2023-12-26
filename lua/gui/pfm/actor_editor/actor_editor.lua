@@ -2896,12 +2896,19 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 				end
 				filmmaker:RetargetActor(ent, mdlName)
 
-				local impostorC = actorEditor:CreateNewActorComponent(actor, "impersonatee", false)
-				impostorC:SetMemberValue("impostorModel", udm.TYPE_STRING, mdlName)
-				actorEditor:CreateNewActorComponent(actor, "retarget_rig", false)
-				actorEditor:CreateNewActorComponent(actor, "retarget_morph", false)
-				actorEditor:UpdateActorComponents(actor)
-				filmmaker:TagRenderSceneAsDirty()
+				local cmd = pfm.create_command("composition")
+				cmd:AddSubCommand("create_component", actor, "impersonatee")
+				cmd:AddSubCommand("create_component", actor, "retarget_rig")
+				cmd:AddSubCommand("create_component", actor, "retarget_morph")
+				cmd:AddSubCommand(
+					"set_actor_property",
+					actor,
+					"ec/impersonatee/impostorModel",
+					nil,
+					mdlName,
+					udm.TYPE_STRING
+				)
+				pfm.undoredo.push("retarget", cmd)()
 			end)
 		end)
 		:SetName("retarget")
