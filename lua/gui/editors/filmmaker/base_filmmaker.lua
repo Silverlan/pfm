@@ -298,7 +298,17 @@ function Element:RetargetActor(targetActor, mdlName)
 	if util.is_valid(self.m_mdlView) then
 		local ent = self.m_mdlView:GetEntity(1)
 		if util.is_valid(ent) then
-			ent:PlayAnimation(targetActor:GetAnimation())
+			local entActor = targetActor
+			local entTarget = ent
+
+			local animCActor = entActor:GetComponent(ents.COMPONENT_PANIMA)
+			local animCTarget = entTarget:AddComponent(ents.COMPONENT_PANIMA)
+
+			local animManagerActor = animCActor:GetAnimationManager("pfm")
+			local anim = animManagerActor:GetCurrentAnimation()
+
+			local animManagerTarget = animCTarget:AddAnimationManager("pfm")
+			animCTarget:PlayAnimation(animManagerTarget, anim)
 		end
 	end
 end
