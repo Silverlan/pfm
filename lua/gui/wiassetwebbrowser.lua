@@ -31,72 +31,16 @@ function Element:OnInitialize()
 		return
 	end
 
-	self.m_contents = gui.create("WIVBox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_contents:SetFixedSize(true)
-	self.m_contents:SetAutoFillContents(true)
-
-	local p = gui.create("WIPFMControlsMenu", self.m_contents)
-	p:SetAutoFillContentsToWidth(true)
-	p:SetAutoFillContentsToHeight(false)
-	self.m_settingsBox = p
-
-	local elBookmarks, wrapper
-	elBookmarks, wrapper = p:AddDropDownMenu("Bookmarks", "bookmark", {}, "pfm_wiki", function(menu, option)
-		local id = menu:GetOptionValue(option)
-		local i = self.m_linkMap[id]
-		if i == nil then
-			return
-		end
-		local linkData = self.m_links[i]
-		if util.is_valid(self.m_webBrowser) then
-			if linkData.hasAdultContent then
-				pfm.get_project_manager():ShowMatureContentPrompt(function()
-					self.m_webBrowser:LoadUrl(linkData.url)
-				end, function()
-					elBookmarks:SelectOption("pfm_wiki")
-				end)
-			else
-				self.m_webBrowser:LoadUrl(linkData.url)
-			end
-		end
-	end)
-	self.m_bookmarkMenu = elBookmarks
-	wrapper:SetUseAltMode(true)
-	local elUrl, wrapper = p:AddTextEntry("URL", "url", "", function(el)
-		if util.is_valid(self.m_webBrowser) == false then
-			return
-		end
-		self.m_webBrowser:LoadUrl(el:GetText())
-	end)
-	p:Update()
-	p:SizeToContents()
-
-	self.m_infoBox = gui.create_info_box(self.m_contents, "", gui.InfoBox.TYPE_WARNING)
-
-	self.m_webBrowser = self:InitializeBrowser(self.m_contents, self:GetWidth(), self:GetHeight())
+	self.m_webBrowser = self:InitializeBrowser(self, self:GetWidth(), self:GetHeight())
 	if util.is_valid(self.m_webBrowser) then
+		self.m_webBrowser:SetAnchor(0, 0, 1, 1)
 		self.m_webBrowser:AddCallback("SetSize", function()
 			-- We don't want to reload the texture constantly if the element is being resized by a user,
 			-- so we'll only update after the element hasn't been resized for at least 0.25 seconds
 			self.m_tNextBrowserResize = time.real_time() + 0.25
 			self:SetThinkingEnabled(true)
 		end)
-		self.m_webBrowser:AddCallback("OnAddressChanged", function(el, addr)
-			elUrl:SetText(addr)
-		end)
-		self.m_webBrowser:SetSize(self:GetWidth(), 400)
-
-		local log = self:InitializeLog(self.m_contents)
-		log:SetName("log")
-		log:SetSize(self:GetWidth(), 80)
-		self.m_contents:SetAutoFillTarget(self.m_webBrowser)
 	end
-
-	self:UpdateBookmarks()
-	p:ResetControls()
-end
-function Element:OnRemove()
-	util.remove(self.m_downloadProgressBar)
 end
 function Element:ReloadURL()
 	if util.is_valid(self.m_webBrowser) == false then
@@ -116,80 +60,6 @@ function Element:SetUrl(url)
 		return
 	end
 	self.m_webBrowser:LoadUrl(url)
-end
-function Element:UpdateInfoBox()
-	if util.is_valid(self.m_webBrowser) == false then
-		return
-	end
-	local url = self.m_webBrowser:GetUrl()
-	local parts = chromium.parse_url(url)
-	if parts == nil then
-		return
-	end
-	self.m_infoBox:SetVisible(true)
-	if parts.host == "sfmlab.com" then
-		self.m_infoBox:SetText(
-			locale.get_text(
-				"pfm_web_browser_bookmark_info",
-				{ "SFM Lab", '{[l:url "https://patreon.com/sfmlab/"]}https://patreon.com/sfmlab/{[/l]}' }
-			)
-		)
-	elseif parts.host == "open3dlab.com" then
-		self.m_infoBox:SetText(
-			locale.get_text(
-				"pfm_web_browser_bookmark_info",
-				{ "Open3DLab", '{[l:url "https://patreon.com/sfmlab/"]}https://patreon.com/sfmlab/{[/l]}' }
-			)
-		)
-	elseif parts.host == "smutba.se" then
-		self.m_infoBox:SetText(
-			locale.get_text(
-				"pfm_web_browser_bookmark_info",
-				{ "SmutBase", '{[l:url "https://patreon.com/sfmlab/"]}https://patreon.com/sfmlab/{[/l]}' }
-			)
-		)
-	elseif parts.host == "lordaardvark.com" then
-		self.m_infoBox:SetText(locale.get_text("pfm_web_browser_bookmark_info", {
-			"This Website",
-			'{[l:url "https://www.patreon.com/lordaardvarksfm"]}https://www.patreon.com/lordaardvarksfm{[/l]}',
-		}))
-	elseif parts.host == "wiki.pragma-engine.com" then
-		self.m_infoBox:SetText("Placeholder")
-	else
-		self.m_infoBox:SetVisible(false)
-	end
-	self.m_infoBox:SizeToContents()
-end
-function Element:UpdateBookmarks()
-	local p = self.m_settingsBox
-	local links = {}
-	local linkMap = {}
-	local function addLink(id, name, url, hasAdultContent)
-		table.insert(links, { id = id, name = name, url = url, hasAdultContent = hasAdultContent })
-		linkMap[id] = #links
-	end
-	addLink("pfm_wiki", "PFM Wiki", "https://wiki.pragma-engine.com/books/pragma-filmmaker")
-	addLink("lua_api", "Lua API", "https://wiki.pragma-engine.com/api/docs")
-	addLink("supporter_hub", "Supporter Hub", "https://supporter.pragma-engine.com", true)
-	addLink("sfm_lab", "SFM Lab", "https://sfmlab.com/", true)
-	addLink("open3d_lab", "Open3DLab", "https://open3dlab.com/", true)
-	addLink("smut_base", "SmutBase", "https://smutba.se/", true)
-	addLink(
-		"lord_aardvark",
-		"Lord Aardvark",
-		"https://lordaardvark.com/html/assets.html?cat=Models&sect=Characters",
-		true
-	)
-	addLink("rainwave", "Rainwave", "https://rainwave.cc/")
-	-- addLink("sfm_workshop","SFM Workshop","https://steamcommunity.com/workshop/browse/?appid=1840sour")
-	-- addLink("pragma_workshop","Pragma Workshop","https://steamcommunity.com/app/947100/workshop/")
-
-	self.m_links = links
-	self.m_linkMap = linkMap
-	self.m_bookmarkMenu:ClearOptions()
-	for _, linkData in ipairs(links) do
-		self.m_bookmarkMenu:AddOption(linkData.name, linkData.id):SetName(linkData.id)
-	end
 end
 function Element:OnFocusGained()
 	if util.is_valid(self.m_webBrowser) then
@@ -230,75 +100,30 @@ function Element:InitializeBrowser(parent, w, h)
 		end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
-	el:AddCallback("OnLoadingStateChange", function(el, isLoading, canGoBack, canGoForward)
-		self:UpdateInfoBox()
-	end)
 	el:AddCallback("OnDownloadUpdate", function(el, id, state, percentage)
-		if util.is_valid(self.m_log) == false or self.m_downloads[id] == nil then
+		if self.m_downloads[id] == nil then
 			return
 		end
-		self:CallCallbacks("OnDownloadUpdate", id, state, percentage)
 		local path = self.m_downloads[id]
-		if state == chromium.DOWNLOAD_STATE_CANCELLED then
-			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been cancelled!")
-			self.m_downloads[id] = nil
+		self:CallCallbacks("OnDownloadUpdate", id, state, percentage, path)
 
-			if id == self.m_downloadProgressBarDownloadId then
-				util.remove(self.m_downloadProgressBar)
-			end
-		elseif state == chromium.DOWNLOAD_STATE_COMPLETE then
-			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been completed!")
-			self:ImportDownloadAssets(path)
-			file.delete(path:GetString())
+		if
+			state == chromium.DOWNLOAD_STATE_CANCELLED
+			or state == chromium.DOWNLOAD_STATE_COMPLETE
+			or state == chromium.DOWNLOAD_STATE_INVALIDATED
+		then
 			self.m_downloads[id] = nil
-
-			if id == self.m_downloadProgressBarDownloadId then
-				util.remove(self.m_downloadProgressBar)
-			end
-		elseif state == chromium.DOWNLOAD_STATE_INVALIDATED then
-			self.m_log:AppendText("\nDownload '" .. file.get_file_name(path:GetString()) .. "' has been invalidated!")
-			self.m_downloads[id] = nil
-
-			if id == self.m_downloadProgressBarDownloadId then
-				util.remove(self.m_downloadProgressBar)
-			end
-		else
-			self.m_log:AppendText(
-				"\nDownload progress for '" .. file.get_file_name(path:GetString()) .. "': " .. percentage .. "%"
-			)
-			if util.is_valid(self.m_downloadProgressBar) and id == self.m_downloadProgressBarDownloadId then
-				self.m_downloadProgressBar:SetProgress(percentage / 100.0)
-			end
 		end
 	end)
 	el:AddCallback("OnDownloadStarted", function(el, id, path)
-		if util.is_valid(self.m_log) == false then
-			return
-		end
-		self.m_log:AppendText("\nDownload started: " .. file.get_file_name(path:GetString()))
 		self.m_downloads[id] = path
-
-		local pm = tool.get_filmmaker()
-		if util.is_valid(pm) then
-			util.remove(self.m_downloadProgressBar)
-			self.m_downloadProgressBar = pm:AddProgressStatusBar("download", locale.get_text("pfm_downloading_file"))
-			self.m_downloadProgressBarDownloadId = id
-		end
-
 		self:CallCallbacks("OnDownloadStarted", id, path)
 	end)
 	return el
 end
+
 function Element:ImportDownloadAssets(path)
 	util.import_assets(path:GetString(), {
-		modelImportCallback = function(msg, severity)
-			if severity ~= log.SEVERITY_INFO then
-				msg = "\n{[c:ff0000]}" .. msg .. "{[/c]}"
-			else
-				msg = "\n" .. msg
-			end
-			self.m_log:AppendText(msg)
-		end,
 		onComplete = function()
 			self:CallCallbacks("OnDownloadAssetsImported")
 		end,

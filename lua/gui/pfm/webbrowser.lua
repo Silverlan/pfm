@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/gui/wiassetwebbrowser.lua")
+include("/gui/wipfmassetwebbrowser.lua")
 
 local Element = util.register_class("gui.PFMWebBrowser", gui.Base)
 
@@ -42,7 +42,7 @@ function Element:OnInitialize()
 		return util.EVENT_REPLY_HANDLED
 	end)
 
-	self.m_browser = gui.create("WIAssetWebBrowser", self.m_contents)
+	self.m_browser = gui.create("WIPFMAssetWebBrowser", self.m_contents)
 	infoBox:SizeToContents()
 	self.m_infoBox = infoBox
 
