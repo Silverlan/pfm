@@ -7,9 +7,9 @@
 ]]
 
 util.register_class("gui.CursorTracker", util.CallbackHandler)
-function gui.CursorTracker:__init()
+function gui.CursorTracker:__init(cursorPos)
 	util.CallbackHandler.__init(self)
-	self.m_startPos = input.get_cursor_pos()
+	self.m_startPos = cursorPos or input.get_cursor_pos()
 	self.m_curPos = self.m_startPos:Copy()
 end
 
@@ -19,6 +19,9 @@ end
 function gui.CursorTracker:GetStartPos()
 	return self.m_startPos
 end
+function gui.CursorTracker:GetCurPos()
+	return self.m_curPos
+end
 function gui.CursorTracker:ResetCurPos()
 	self.m_curPos = self.m_startPos:Copy()
 end
@@ -27,8 +30,8 @@ function gui.CursorTracker:HasExceededMoveThreshold(threshold)
 	local dtAbs = self:GetTotalDeltaPosition()
 	return math.abs(dtAbs.x) >= threshold or math.abs(dtAbs.y) >= threshold
 end
-function gui.CursorTracker:Update()
-	local pos = input.get_cursor_pos()
+function gui.CursorTracker:Update(pos)
+	pos = pos or input.get_cursor_pos()
 	local dt = pos - self.m_curPos
 	if dt.x == 0 and dt.y == 0 then
 		return dt
