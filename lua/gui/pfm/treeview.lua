@@ -717,13 +717,13 @@ function gui.PFMTreeViewElement:DetachItem(item)
 		end
 
 		if util.is_valid(item.m_expandIcon) then
-			item.m_expandIcon:ClearParent()
+			item.m_expandIcon:ResetParent()
 		end
 
 		item.m_parent:ScheduleUpdate()
 	end
 
-	item:ClearParent()
+	item:ResetParent()
 	item.m_treeView = nil
 	item.m_parent = nil
 
