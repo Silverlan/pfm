@@ -185,7 +185,7 @@ function gui.PatreonTicker:UpdateTicker()
 	self.m_patronTicker:SetX(self.m_icon:GetRight() + offset)
 	self.m_patronTicker:SetWidth(self:GetWidth() - self.m_patronTicker:GetX())
 
-	self.m_patronTicker:SetY(5)
+	self.m_patronTicker:SetAnchor(0, 0, 1, 1)
 end
 function gui.PatreonTicker:OnSizeChanged(w, h)
 	self:UpdateTicker()
