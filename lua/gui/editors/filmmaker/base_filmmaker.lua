@@ -18,8 +18,20 @@ end
 function Element:ShowLoadingScreen(enabled, loadText)
 	return pfm.show_loading_screen(enabled, loadText)
 end
+function Element:GetRightMenuBarContents()
+	return self.m_menuBarRightContents
+end
 function Element:AddVersionInfo(identifier, version, gitInfoPath)
 	local pMenuBar = self:GetMenuBar()
+
+	local elRightContents = gui.create("WIHBox", pMenuBar)
+	self.m_menuBarRightContents = elRightContents
+	local function update_size()
+		elRightContents:SetX(pMenuBar:GetWidth() - elRightContents:GetWidth())
+	end
+	pMenuBar:AddCallback("SetSize", update_size)
+	elRightContents:AddCallback("SetSize", update_size)
+
 	-- Version Info
 	local engineInfo = engine.get_info()
 	local versionString = "v" .. version
@@ -34,12 +46,11 @@ function Element:AddVersionInfo(identifier, version, gitInfoPath)
 		versionString = versionString .. ", " .. gitInfo.commitSha:sub(0, 7)
 	end
 	versionString = versionString .. "]"
-	local elVersion = gui.create("WIText", pMenuBar)
+	local elVersion = gui.create("WIText", elRightContents)
 	elVersion:SetColor(Color.White)
 	elVersion:SetText(versionString)
 	elVersion:SetFont("pfm_medium")
 	elVersion:SetColor(Color(200, 200, 200))
-	elVersion:SetY(5)
 	elVersion:SizeToContents()
 	elVersion:SetCursor(gui.CURSOR_SHAPE_HAND)
 	elVersion:SetMouseInputEnabled(true)
@@ -57,19 +68,19 @@ function Element:AddVersionInfo(identifier, version, gitInfoPath)
 		elVersion:SetColor(Color(200, 200, 200))
 	end)
 
-	elVersion:SetX(pMenuBar:GetWidth() - elVersion:GetWidth() - 4)
 	elVersion:SetY(3)
-	elVersion:SetAnchor(1, 0, 1, 0)
 	log.info(identifier .. " Version: " .. versionString)
 
-	local elBeta = gui.create("WIText", pMenuBar)
+	local elGap = gui.create("WIBase", elRightContents)
+	elGap:SetSize(5, 1)
+
+	local elBeta = gui.create("WIText")
+	elBeta:SetParent(elRightContents, 0)
 	elBeta:SetColor(Color.Red)
 	elBeta:SetText("BETA | ")
 	elBeta:SetFont("pfm_medium")
 	elBeta:SetY(3)
 	elBeta:SizeToContents()
-	elBeta:SetX(elVersion:GetLeft() - elBeta:GetWidth())
-	elBeta:SetAnchor(1, 0, 1, 0)
 end
 function Element:GetWorldAxesGizmo()
 	return self.m_worldAxesGizmo
