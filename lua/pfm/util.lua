@@ -161,3 +161,47 @@ end
 pfm.util.init_openvr = function()
 	return load_module("pr_openvr", "openvr/pr_openvr")
 end
+
+pfm.util.download_file = function(url, fileName)
+	if pfm.util.init_curl() == false then
+		return false, "Failed to initialize curl module."
+	end
+
+	if fileName:sub(#fileName, #fileName) == "/" then
+		fileName = fileName .. url:match(".+/([^/]+)$")
+	end
+
+	local job = util.create_parallel_job("download_file", function(worker)
+		local requestData = curl.RequestData()
+		local request = curl.request(url, requestData)
+		request:Start()
+		worker:AddTask(request, function(worker)
+			local result = request:GetResult()
+			file.create_path(file.get_file_path(fileName))
+			local f = file.open(fileName, bit.bor(file.OPEN_MODE_WRITE, file.OPEN_MODE_BINARY))
+			if f == nil then
+				local msg = "Failed to write file '" .. fileName .. "'!"
+				worker:SetStatus(util.ParallelJob.JOB_STATUS_FAILED, msg)
+				return
+			end
+			f:Write(result)
+			f:Close()
+
+			worker:SetStatus(util.ParallelJob.JOB_STATUS_SUCCESSFUL)
+			return true
+		end, 1.0)
+		return true
+	end, function(worker) end)
+	job:Start()
+	return job, fileName
+end
+
+pfm.util.extract_archive = function(zipFile, extractLocation)
+	if type(zipFile) == "string" then
+		zipFile = util.ZipFile.open(zipFile, util.ZipFile.OPEN_MODE_READ)
+	end
+	if zipFile == nil then
+		return false
+	end
+	return zipFile:ExtractFiles(extractLocation, true)
+end
