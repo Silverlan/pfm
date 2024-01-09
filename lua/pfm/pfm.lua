@@ -448,7 +448,8 @@ pfm.get_projects = function()
 	return pfm.impl.projects
 end
 
-pfm.get_git_sha = function(gitInfoFileName)
+pfm.get_git_sha = function(gitInfoFileName, len)
+	len = len or 7
 	local gitInfo = file.read(gitInfoFileName)
 	if gitInfo == nil then
 		return
@@ -457,7 +458,7 @@ pfm.get_git_sha = function(gitInfoFileName)
 	if pos == nil then
 		return
 	end
-	local sha = gitInfo:sub(pos + 7, pos + 14)
+	local sha = gitInfo:sub(pos + 7, pos + (7 + len))
 	sha = string.remove_whitespace(sha)
 	return sha
 end
