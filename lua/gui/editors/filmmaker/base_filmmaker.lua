@@ -22,14 +22,14 @@ function Element:GetRightMenuBarContents()
 	return self.m_menuBarRightContents
 end
 function Element:AddVersionInfo(identifier, version, gitInfoPath)
-	local pMenuBar = self:GetMenuBar()
+	local pMenuBarContents = self:GetMenuBarContainer()
 
-	local elRightContents = gui.create("WIHBox", pMenuBar)
+	local elRightContents = gui.create("WIHBox", pMenuBarContents)
 	self.m_menuBarRightContents = elRightContents
 	local function update_size()
-		elRightContents:SetX(pMenuBar:GetWidth() - elRightContents:GetWidth())
+		elRightContents:SetX(pMenuBarContents:GetWidth() - elRightContents:GetWidth())
 	end
-	pMenuBar:AddCallback("SetSize", update_size)
+	pMenuBarContents:AddCallback("SetSize", update_size)
 	elRightContents:AddCallback("SetSize", update_size)
 
 	-- Version Info
