@@ -361,3 +361,21 @@ function Element:ShowMatureContentPrompt(onYes, onNo)
 
 	gui.create("WIBase", userContents, 0, 0, 1, 12) -- Gap
 end
+function Element:AddProgressStatusBar(identifier, text)
+	local infoBar = self:GetInfoBar()
+
+	local statusBar = gui.create("WIProgressStatusInfo")
+	statusBar:SetName("status_info_" .. identifier)
+	statusBar:SetText(text)
+	statusBar:SetProgress(0.0)
+	statusBar:SetHeight(infoBar:GetHeight())
+	statusBar:AddCallback("OnRemove", function()
+		if infoBar:IsValid() then
+			infoBar:ScheduleUpdate()
+		end
+	end)
+	infoBar:AddRightElement(statusBar, 0)
+
+	infoBar:Update()
+	return statusBar
+end

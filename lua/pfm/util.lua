@@ -182,15 +182,15 @@ pfm.util.download_file = function(url, fileName)
 			if f == nil then
 				local msg = "Failed to write file '" .. fileName .. "'!"
 				worker:SetStatus(util.ParallelJob.JOB_STATUS_FAILED, msg)
-				return
+				return util.Worker.TASK_STATUS_COMPLETE
 			end
 			f:Write(result)
 			f:Close()
 
 			worker:SetStatus(util.ParallelJob.JOB_STATUS_SUCCESSFUL)
-			return true
+			return util.Worker.TASK_STATUS_COMPLETE
 		end, 1.0)
-		return true
+		return util.Worker.TASK_STATUS_COMPLETE
 	end, function(worker) end)
 	job:Start()
 	return job, fileName

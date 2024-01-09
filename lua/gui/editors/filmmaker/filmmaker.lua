@@ -682,24 +682,6 @@ function gui.WIFilmmaker:AddUndoMessage(msg)
 
 	return msgEl
 end
-function gui.WIFilmmaker:AddProgressStatusBar(identifier, text)
-	local infoBar = self:GetInfoBar()
-
-	local statusBar = gui.create("WIProgressStatusInfo")
-	statusBar:SetName("status_info_" .. identifier)
-	statusBar:SetText(text)
-	statusBar:SetProgress(0.0)
-	statusBar:SetHeight(infoBar:GetHeight())
-	statusBar:AddCallback("OnRemove", function()
-		if infoBar:IsValid() then
-			infoBar:ScheduleUpdate()
-		end
-	end)
-	infoBar:AddRightElement(statusBar, 0)
-
-	infoBar:Update()
-	return statusBar
-end
 function gui.WIFilmmaker:GetManagerEntity()
 	return self.m_pfmManager
 end
