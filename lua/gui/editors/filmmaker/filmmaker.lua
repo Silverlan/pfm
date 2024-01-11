@@ -161,6 +161,7 @@ function gui.WIFilmmaker:OnInitialize()
 		1
 	)
 	patronTickerContainer:SetQueryUrl("https://pragma-engine.com/patreon/request_patrons.php")
+	self.m_supporterTicker = patronTickerContainer
 	local engineInfo = engine.get_info()
 	infoBar:AddIcon("third_party/patreon_logo_small", pfm.PATREON_JOIN_URL, "Patreon", function(url)
 		self:ShowMatureContentPrompt(function()
@@ -410,6 +411,9 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:SetSkinCallbacksEnabled(true)
 	pfm.call_event_listeners("OnFilmmakerInitialized", self)
+end
+function gui.WIFilmmaker:GetSupporterTicker()
+	return self.m_supporterTicker
 end
 function gui.WIFilmmaker:AreAutomaticUpdatesEnabled()
 	return console.get_convar_bool("pfm_automatic_updates_enabled")
