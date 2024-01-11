@@ -38,6 +38,11 @@ local function extract_update_files(filePath)
 				-- until Windows is restarted, so we'll exempt it from the update (It's unlikely to ever be updated anyway).
 				file.delete("update/fonts/ubuntu/UbuntuMono-R.ttf")
 			end
+			-- These may have been modified by the user, so we don't want to overwrite them
+			file.delete("update/cfg/client.cfg")
+			file.delete("update/cfg/engine.cfg")
+			file.delete("update/cfg/mounted_games.udm")
+			file.delete("update/cfg/server.cfg")
 			worker:SetStatus(util.ParallelJob.JOB_STATUS_SUCCESSFUL)
 			return util.Worker.TASK_STATUS_COMPLETE
 		end, 1.0)
