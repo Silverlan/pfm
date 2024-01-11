@@ -95,7 +95,7 @@ function gui.PatreonTicker:OnInitialize()
 		"WISupporterTicker",
 		self,
 		patronTickerLabel:GetWidth(),
-		0,
+		5,
 		self:GetWidth() - patronTickerLabel:GetWidth(),
 		self:GetHeight()
 	)
