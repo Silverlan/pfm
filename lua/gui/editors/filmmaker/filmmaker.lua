@@ -1048,6 +1048,9 @@ function gui.WIFilmmaker:OnRemove()
 	self:CloseProject()
 	pfm.clear_pragma_renderer_scene()
 	game.set_default_game_render_enabled(true)
+	if self.m_packProjectJob ~= nil then
+		self.m_packProjectJob:Cancel()
+	end
 	util.remove(self.m_pfmManager)
 	util.remove(self.m_cbDisableDefaultSceneDraw)
 	util.remove(self.m_cbOnWindowShouldClose)

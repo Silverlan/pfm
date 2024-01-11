@@ -196,7 +196,11 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 				for _, f in ipairs(tSelectedFiles) do
 					table.insert(mdls, f:GetRelativeAsset())
 				end
-				pfm.pack_models(mdls)
+				local job = pfm.pack_models(mdls)
+				if job ~= false then
+					job:Start()
+					job:Wait()
+				end
 			end)
 			pItem:SetName("pack_model")
 			pItem:SetTooltip(locale.get_text("pfm_model_context_pack_model"))

@@ -2775,7 +2775,11 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 	if mdl ~= nil then
 		pContext
 			:AddItem(locale.get_text("pfm_pack_model"), function()
-				pfm.pack_models({ mdl })
+				local job = pfm.pack_models({ mdl })
+				if job ~= false then
+					job:Start()
+					job:Wait()
+				end
 			end)
 			:SetName("pack_model")
 		pContext

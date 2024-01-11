@@ -40,7 +40,17 @@ function Element:PackProject(fileName)
 		local rootPath = "addons/pfmp_" .. projName .. "/"
 		finalAssetFiles[rootPath .. fZip] = f
 	end
-	pfm.save_asset_files_as_archive(finalAssetFiles, fileName)
+	self.m_packProjectJob = pfm.save_asset_files_as_archive(finalAssetFiles, fileName, function()
+		util.remove(self.m_packProjectProgressBar)
+	end)
+	if self.m_packProjectJob == false then
+		return
+	end
+	self.m_packProjectJob:Start()
+	self.m_packProjectProgressBar = self:AddProgressStatusBar("pack_project", locale.get_text("pfm_packing_project"))
+	self.m_packProjectJob:SetProgressCallback(function(worker, progress)
+		self.m_packProjectProgressBar:SetProgress(progress)
+	end)
 end
 function Element:ImportMap(map)
 	map = file.remove_file_extension(map, asset.get_supported_extensions(asset.TYPE_MAP, asset.FORMAT_TYPE_ALL))

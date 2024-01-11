@@ -8,10 +8,27 @@
 
 include("project_packer.lua")
 
-function pfm.save_asset_files_as_archive(assetFiles, fileName)
+function pfm.save_asset_files_as_archive(assetFiles, fileName, onComplete)
 	fileName = file.remove_file_extension(fileName) .. ".zip"
-	util.pack_zip_archive(fileName, assetFiles)
-	util.open_path_in_explorer(util.get_addon_path(), fileName)
+	local job = util.pack_zip_archive(fileName, assetFiles)
+	if job == false then
+		pfm.log("Failed to pack zip archive '" .. fileName .. "'!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		return
+	end
+	job:CallOnComplete(function(worker)
+		if worker:IsSuccessful() == false then
+			console.print_warning("Could not pack zip archive '" .. fileName .. "'!")
+			return
+		end
+		local tFilesNotFound = worker:GetResult()
+		if #tFilesNotFound > 0 then
+			console.print_warning("Failed to pack " .. #tFilesNotFound .. " to zip-archive:")
+			console.print_table(tFilesNotFound)
+		end
+		util.open_path_in_explorer(util.get_addon_path(), fileName)
+		onComplete()
+	end)
+	return job
 end
 
 function pfm.pack_models(mdls)
@@ -31,7 +48,7 @@ function pfm.pack_models(mdls)
 	file.create_directory("export")
 	local fileName = file.get_file_name(mdlName)
 	fileName = file.remove_file_extension(fileName, asset.get_supported_extensions(asset.TYPE_MODEL))
-	pfm.save_asset_files_as_archive(packer:GetFiles(), "export/" .. fileName .. "_packed.zip")
+	return pfm.save_asset_files_as_archive(packer:GetFiles(), "export/" .. fileName .. "_packed.zip")
 end
 
 function pfm.get_member_info(path, actor)

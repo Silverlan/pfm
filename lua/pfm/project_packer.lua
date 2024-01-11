@@ -242,14 +242,23 @@ function pfm.ProjectPacker:GetFiles()
 end
 function pfm.ProjectPacker:Pack(fileName)
 	local fileName = file.remove_file_extension(fileName) .. ".zip"
-	local result, tFilesNotFound = util.pack_zip_archive(fileName, self.m_assetFileMap)
-	if result == false then
+	local job = util.pack_zip_archive(fileName, self.m_assetFileMap)
+	if job == false then
 		console.print_warning("Could not pack zip archive '" .. fileName .. "'!")
 		return
 	end
-	if #tFilesNotFound > 0 then
-		console.print_warning("Failed to pack " .. #tFilesNotFound .. " to zip-archive:")
-		console.print_table(tFilesNotFound)
-	end
-	util.open_path_in_explorer(util.get_addon_path(), fileName)
+	job:CallOnComplete(function(worker)
+		if worker:IsSuccessful() == false then
+			console.print_warning("Could not pack zip archive '" .. fileName .. "'!")
+			return
+		end
+		local tFilesNotFound = worker:GetResult()
+		if #tFilesNotFound > 0 then
+			console.print_warning("Failed to pack " .. #tFilesNotFound .. " to zip-archive:")
+			console.print_table(tFilesNotFound)
+		end
+		util.open_path_in_explorer(util.get_addon_path(), fileName)
+	end)
+	job:Start()
+	return job
 end
