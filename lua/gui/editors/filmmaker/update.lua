@@ -78,6 +78,9 @@ pfm.util.get_release_archive_postfix = function()
 end
 
 function Element:CheckForUpdates(verbose)
+	if self:AreAutomaticUpdatesEnabled() == false then
+		return
+	end
 	local function download_update(updateUrl, fileName)
 		pfm.open_message_prompt(
 			locale.get_text("pfm_new_update_available"),

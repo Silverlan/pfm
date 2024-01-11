@@ -249,7 +249,10 @@ function gui.WIFilmmaker:OnInitialize()
 	self:InitializeMenuBar()
 	self:AddVersionInfo("PFM", pfm.VERSION:ToString(), "addons/filmmaker/git_info.txt")
 
-	if console.get_convar_bool("pfm_should_check_for_updates") then
+	if
+		console.get_convar_bool("pfm_should_check_for_updates")
+		and console.get_convar_bool("pfm_automatic_updates_enabled")
+	then
 		console.run("pfm_should_check_for_updates", "0") -- Only auto-check once per session
 		time.create_simple_timer(5.0, function()
 			if self:IsValid() == false then
@@ -407,6 +410,9 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:SetSkinCallbacksEnabled(true)
 	pfm.call_event_listeners("OnFilmmakerInitialized", self)
+end
+function gui.WIFilmmaker:AreAutomaticUpdatesEnabled()
+	return console.get_convar_bool("pfm_automatic_updates_enabled")
 end
 function gui.WIFilmmaker:SaveRestoreData(el, map, projectFileName)
 	local writeNewMapName = (projectFileName == nil)

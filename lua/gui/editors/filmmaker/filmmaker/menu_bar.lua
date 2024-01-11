@@ -960,10 +960,12 @@ function Element:InitializeMenuBar()
 			end)
 			pSubItem:SetName("request_a_feature")
 
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_check_for_updates"), function(pItem)
-				self:CheckForUpdates(true)
-			end)
-			pSubItem:SetName("check_for_updates")
+			if self:AreAutomaticUpdatesEnabled() then
+				local pSubItem = pContext:AddItem(locale.get_text("pfm_check_for_updates"), function(pItem)
+					self:CheckForUpdates(true)
+				end)
+				pSubItem:SetName("check_for_updates")
+			end
 			local pSubItem = pContext:AddItem(locale.get_text("pfm_community"), function(pItem)
 				local engineInfo = engine.get_info()
 				self:OpenUrlInBrowser(engineInfo.discordURL)
