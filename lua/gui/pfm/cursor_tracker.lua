@@ -26,8 +26,17 @@ function gui.CursorTracker:ResetCurPos()
 	self.m_curPos = self.m_startPos:Copy()
 end
 
-function gui.CursorTracker:HasExceededMoveThreshold(threshold)
+function gui.CursorTracker:HasExceededMoveThreshold(threshold, axis)
 	local dtAbs = self:GetTotalDeltaPosition()
+	if axis ~= nil then
+		if axis == math.AXIS_X then
+			return math.abs(dtAbs.x) >= threshold
+		end
+		if axis == math.AXIS_Y then
+			return math.abs(dtAbs.y) >= threshold
+		end
+		return false
+	end
 	return math.abs(dtAbs.x) >= threshold or math.abs(dtAbs.y) >= threshold
 end
 function gui.CursorTracker:Update(pos)
