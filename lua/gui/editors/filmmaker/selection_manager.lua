@@ -81,7 +81,9 @@ function pfm.SelectionManager:SetSelectedObjects(tSelected)
 		t[obj] = true
 	end
 	for obj, selected in pairs(t) do
-		self:SetSelected(obj, selected)
+		if util.is_valid(obj) then
+			self:SetSelected(obj, selected)
+		end
 	end
 end
 
