@@ -72,6 +72,19 @@ function pfm.SelectionManager:Remove()
 	self:ClearSelections()
 end
 
+function pfm.SelectionManager:SetSelectedObjects(tSelected)
+	local t = {}
+	for obj, _ in pairs(self.m_selectionData) do
+		t[obj] = false
+	end
+	for _, obj in ipairs(tSelected) do
+		t[obj] = true
+	end
+	for obj, selected in pairs(t) do
+		self:SetSelected(obj, selected)
+	end
+end
+
 function pfm.SelectionManager:ClearSelections()
 	local selections = self.m_selectionData
 	self.m_selectionData = {}
@@ -87,6 +100,9 @@ function pfm.SelectionManager:ClearSelections()
 end
 
 function pfm.SelectionManager:SetSelected(obj, selected)
+	if selected == self:IsSelected(obj) then
+		return
+	end
 	if selected == false then
 		if self.m_selectionData[obj] ~= nil then
 			obj:RemoveComponent("pfm_selection_wireframe")

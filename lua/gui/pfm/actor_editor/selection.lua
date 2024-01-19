@@ -66,18 +66,19 @@ function gui.PFMActorEditor:UpdateSelectedEntities()
 		return
 	end
 	local selectionManager = tool.get_filmmaker():GetSelectionManager()
-	selectionManager:ClearSelections()
+	local tSelected = {}
 	self:IterateActors(function(el)
 		if el:IsSelected() then
 			local actorData = self.m_treeElementToActorData[el]
 			if actorData ~= nil then
 				local ent = actorData.actor:FindEntity()
 				if ent ~= nil then
-					selectionManager:Select(ent)
+					table.insert(tSelected, ent)
 				end
 			end
 		end
 	end)
+	selectionManager:SetSelectedObjects(tSelected)
 end
 function gui.PFMActorEditor:SelectActor(actor, deselectCurrent, property)
 	if deselectCurrent == nil then
