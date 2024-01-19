@@ -92,12 +92,17 @@ function gui.PFMSliderCursor:GetValue()
 	return value
 end
 function gui.PFMSliderCursor:SetFraction(fraction, inputOrigin)
+	if self.m_skipSetFraction then
+		return
+	end
 	local stepSize = self:GetStepSize()
 	if stepSize > 0.0 then
 		fraction = math.round(fraction, stepSize)
 	end
+	self.m_skipSetFraction = true -- Prevent callbacks from changing fraction while we're still doing our thing
 	self.m_fraction:Set(math.clamp(fraction, 0.0, 1.0))
 	self:UpdateFraction(inputOrigin)
+	self.m_skipSetFraction = nil
 end
 function gui.PFMSliderCursor:UpdateFraction(inputOrigin)
 	local v = self:GetFraction() * (self:GetBounds(self:GetParent()) - self:GetBounds())
