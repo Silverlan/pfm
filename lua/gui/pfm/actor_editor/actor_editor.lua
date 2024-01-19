@@ -2919,10 +2919,15 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 
 	if pfm.get_project_manager():IsDeveloperModeEnabled() then
 		pContext:AddItem("Assign entity to x", function()
-			x = actor:FindEntity()
+			_G.x = actor:FindEntity()
 		end)
 		pContext:AddItem("Assign entity to y", function()
-			y = actor:FindEntity()
+			_G.y = actor:FindEntity()
+		end)
+		pContext:AddItem("Assign animation to a", function()
+			local animManager = tool.get_filmmaker():GetAnimationManager()
+			local anim = animManager:FindAnimation(actor)
+			_G.a = anim
 		end)
 	end
 	pContext
