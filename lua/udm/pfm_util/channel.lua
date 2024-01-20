@@ -12,8 +12,12 @@ function pfm.udm.Channel:GetAnimation()
 	return self:GetParent()
 end
 
+function pfm.udm.Channel:GetPanimaAnimation()
+	return self:GetAnimation():GetAnimationClip():GetPanimaAnimation()
+end
+
 function pfm.udm.Channel:GetPanimaChannel()
-	return self:GetAnimation():GetAnimationClip():GetPanimaAnimation():FindChannel(self:GetTargetPath())
+	return self:GetPanimaAnimation():FindChannel(self:GetTargetPath())
 end
 
 function pfm.udm.Channel:ChangeExpression(expr)

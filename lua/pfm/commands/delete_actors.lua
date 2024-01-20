@@ -29,10 +29,12 @@ function Command:DoExecute(data)
 	local actors = {}
 	for i = 1, numActors do
 		local udmActor = udmActors:Get(i - 1)
-		local uniqueId = udmActor:Get("data"):GetValue("uniqueId", udm.TYPE_STRING)
-		local actor = pfm.dereference(uniqueId)
-		if actor ~= nil then
-			table.insert(actors, actor)
+		if udmActor:GetValue("type", udm.TYPE_STRING) == "actor" then
+			local uniqueId = udmActor:Get("data"):GetValue("uniqueId", udm.TYPE_STRING)
+			local actor = pfm.dereference(uniqueId)
+			if actor ~= nil then
+				table.insert(actors, actor)
+			end
 		end
 	end
 	filmClip:RemoveActors(actors)
