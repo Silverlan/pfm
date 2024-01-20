@@ -30,7 +30,7 @@ function pfm.udm.Track:FindActorAnimationClip(actor, addIfNotExists)
 	if actor == nil then
 		return
 	end
-	channelClip = self:AddAnimationClip()
+	local channelClip = self:AddAnimationClip()
 	channelClip:SetName(actor:GetName())
 	channelClip:SetActor(actor:GetUniqueId())
 	return channelClip, true
