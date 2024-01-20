@@ -11,6 +11,8 @@ pfm.optimize = function(project)
 	local session = project:GetSession()
 
 	local function cleanup_film_clip(filmClip)
+		local constrainedProperties = pfm.udm.Actor.get_constrained_properties(filmClip)
+
 		local scene = filmClip:GetScene()
 		-- These may still exist from an older version but are no longer needed
 		pfm.log("Removing remnant film clip data...", pfm.LOG_CATEGORY_PFM)
@@ -20,7 +22,7 @@ pfm.optimize = function(project)
 		scene:GetUdmData():RemoveValue("filmClips")
 
 		for _, actor in ipairs(filmClip:GetActorList()) do
-			local n = actor:DissolveSingleValueAnimationChannels()
+			local n = actor:DissolveSingleValueAnimationChannels(nil, constrainedProperties)
 			if n > 0 then
 				pfm.log(
 					"Collapsed " .. n .. " single-value animation channels for actor '" .. tostring(actor) .. "'...",

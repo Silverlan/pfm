@@ -27,7 +27,40 @@ function pfm.udm.Actor:IsVisible()
 	return visible
 end
 
-function pfm.udm.Actor:DissolveSingleValueAnimationChannels(cmd)
+function pfm.udm.Actor.get_constrained_properties(filmClip)
+	local constrainedProperties = {}
+	for _, actor in ipairs(filmClip:GetActorList()) do
+		local constraint = actor:FindComponent("constraint")
+		if constraint ~= nil then
+			local drivenObject = constraint:GetMemberValue("drivenObject")
+			local ref = (drivenObject ~= nil) and ents.parse_uri(drivenObject) or nil
+			if ref == nil then
+				return {}
+			end
+			local uuid = tostring(ref:GetUuid())
+			local componentType = ref:GetComponentName()
+			local propName = ref:GetMemberName()
+			local drivenObjectActor = pfm.dereference(uuid)
+			if drivenObjectActor ~= nil then
+				local props = { propName }
+				if propName == "pose" then
+					-- TODO: We should be getting these from the pose meta information instead
+					table.insert(props, "position")
+					table.insert(props, "rotation")
+				end
+				for _, propName in ipairs(props) do
+					local targetPath = "ec/" .. componentType .. "/" .. propName
+					constrainedProperties[drivenObjectActor] = constrainedProperties[drivenObjectActor] or {}
+					constrainedProperties[drivenObjectActor][targetPath] = true
+				end
+			end
+		end
+	end
+	return constrainedProperties
+end
+
+function pfm.udm.Actor:DissolveSingleValueAnimationChannels(cmd, constrainedProperties)
+	constrainedProperties = constrainedProperties or {}
 	local animClip = self:FindAnimationClip()
 	if animClip == nil then
 		return 0
@@ -70,6 +103,7 @@ function pfm.udm.Actor:DissolveSingleValueAnimationChannels(cmd)
 	if externalCmd == false then
 		cmd = pfm.create_command("composition")
 	end]]
+	local actorConstrainedProperties = constrainedProperties[self] or {}
 	local editorData = animClip:GetEditorData()
 	local pm = tool.get_filmmaker()
 	local animManager = pm:GetAnimationManager()
@@ -78,7 +112,11 @@ function pfm.udm.Actor:DissolveSingleValueAnimationChannels(cmd)
 		local channelData = animatedProperties[targetPath]
 		local value
 		local valueType
-		if channelData.channel ~= nil then
+		if
+			channelData.channel ~= nil
+			and channelData.channel:GetExpression() == nil
+			and actorConstrainedProperties[targetPath] == nil
+		then
 			local panimaChannel = channelData.channel:GetPanimaChannel()
 			value = panimaChannel:GetValue(0)
 			valueType = panimaChannel:GetValueType()
