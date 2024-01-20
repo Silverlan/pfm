@@ -64,7 +64,8 @@ function pfm.udm.EntityComponent:GetEffectiveMemberValue(propertyName, type)
 		local manager = panimaC:GetAnimationManager("pfm")
 		if manager ~= nil then
 			-- Animated property value (for the current timestamp) without math expression
-			local val = panimaC:GetRawPropertyValue(manager, "ec/" .. self:GetType() .. "/" .. propertyName, type)
+			local val =
+				panimaC:GetRawAnimatedPropertyValue(manager, "ec/" .. self:GetType() .. "/" .. propertyName, type)
 			if val ~= nil then
 				return val
 			end
