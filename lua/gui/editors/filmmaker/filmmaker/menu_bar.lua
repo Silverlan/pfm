@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/pfm/optimize.lua")
+
 local Element = gui.WIFilmmaker
 
 function Element:RegisterMenuOption(identifier, action)
@@ -852,6 +854,23 @@ function Element:InitializeMenuBar()
 					console.run("pfm -log all -dev -reload")
 				end)
 				pSubItem:SetName("reload_in_dev_mode")
+
+				local pSubItem = pContext:AddItem(locale.get_text("pfm_optimize_project"), function(pItem)
+					pfm.open_message_prompt(
+						locale.get_text("pfm_prompt_continue"),
+						locale.get_text("pfm_prompt_action_cannot_be_undone"),
+						bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
+						function(bt)
+							if bt == gui.PfmPrompt.BUTTON_YES then
+								local project = tool.get_filmmaker():GetProject()
+								if project ~= nil then
+									pfm.optimize(project)
+								end
+							end
+						end
+					)
+				end)
+				pSubItem:SetName("optimize_project")
 			end
 
 			pContext:ScheduleUpdate()

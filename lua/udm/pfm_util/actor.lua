@@ -30,7 +30,7 @@ end
 function pfm.udm.Actor:DissolveSingleValueAnimationChannels(cmd)
 	local animClip = self:FindAnimationClip()
 	if animClip == nil then
-		return
+		return 0
 	end
 	local animatedProperties = {}
 	local editorData = animClip:GetEditorData()
@@ -66,30 +66,71 @@ function pfm.udm.Actor:DissolveSingleValueAnimationChannels(cmd)
 		end
 	end
 
-	local externalCmd = (cmd ~= nil)
+	--[[local externalCmd = (cmd ~= nil)
 	if externalCmd == false then
 		cmd = pfm.create_command("composition")
-	end
+	end]]
+	local editorData = animClip:GetEditorData()
+	local pm = tool.get_filmmaker()
+	local animManager = pm:GetAnimationManager()
+	local t = {}
 	for _, targetPath in ipairs(singleValueChannelPaths) do
-		print("Dissolving: ", targetPath)
 		local channelData = animatedProperties[targetPath]
 		local value
 		local valueType
 		if channelData.channel ~= nil then
-			value = channelData.channel:GetValue(0)
-			valueType = channelData.channel:GetPanimaChannel():GetValueType()
+			local panimaChannel = channelData.channel:GetPanimaChannel()
+			value = panimaChannel:GetValue(0)
+			valueType = panimaChannel:GetValueType()
+			table.insert(t, {
+				targetPath = targetPath,
+				value = value,
+				valueType = valueType,
+			})
 		end
-		local oldValue = self:GetMemberValue(targetPath)
-		-- cmd = pfm.create_command("keyframe_property_composition", self, targetPath, baseIndex)
-		local res, subCmd = cmd:AddSubCommand("delete_animation_channel", self, targetPath, valueType)
-		if res == pfm.Command.RESULT_SUCCESS then
-			subCmd:AddSubCommand("delete_editor_channel", self, targetPath, valueType)
-		end
-		cmd:AddSubCommand("set_actor_property", self, targetPath, oldValue, value, valueType)
 	end
-	if externalCmd == false then
+
+	for _, propInfo in ipairs(t) do
+		local targetPath = propInfo.targetPath
+		local channelData = animatedProperties[targetPath]
+		local value = propInfo.value
+		local valueType = propInfo.valueType
+		if valueType == self:GetMemberType(targetPath) then
+			--[[local oldValue = self:GetMemberValue(targetPath)
+			local res, subCmd = cmd:AddSubCommand("delete_animation_channel", self, targetPath, valueType)
+			if res == pfm.Command.RESULT_SUCCESS then
+				subCmd:AddSubCommand("delete_editor_channel", self, targetPath, valueType)
+			end
+			cmd:AddSubCommand("set_actor_property", self, targetPath, oldValue, value, valueType)]]
+
+			if channelData.channel ~= nil then
+				channelData.channel:GetPanimaAnimation():RemoveChannel(targetPath)
+			end
+			animManager:RemoveChannel(self, targetPath)
+
+			local channel = editorData:FindChannel(targetPath)
+			if channel ~= nil then
+				editorData:RemoveChannel(channel)
+			end
+
+			if valueType ~= nil then
+				self:SetMemberValue(targetPath, valueType, value)
+				pm:GetActorEditor():UpdateActorProperty(self, targetPath)
+			end
+		end
+	end
+
+	--[[if externalCmd == false then
 		cmd:Execute()
+	end]]
+	pm:UpdateBookmarks()
+
+	local ent = self:FindEntity()
+	local panimaC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_PANIMA) or nil
+	if panimaC ~= nil then
+		panimaC:UpdateAnimationChannelSubmitters()
 	end
+	return #t
 end
 
 function pfm.udm.Actor:FindAnimationClip()
