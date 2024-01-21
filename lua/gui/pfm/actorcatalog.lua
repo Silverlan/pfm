@@ -30,6 +30,7 @@ function gui.PFMActorCatalog:OnInitialize()
 		end
 	end)
 
+	local entGhost
 	local explorer = gui.create("WIIconGridView", scrollContainer, 0, 0, self:GetWidth(), self:GetHeight())
 	explorer:AddCallback("OnIconAdded", function(explorer, icon)
 		icon:AddCallback("OnIconClicked", function(icon) end)

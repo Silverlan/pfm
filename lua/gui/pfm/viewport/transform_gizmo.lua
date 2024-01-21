@@ -52,8 +52,10 @@ function gui.PFMCoreViewportBase:SetManipulatorMode(manipulatorMode)
 		local selectedActorList = {}
 		local num = 0
 		for ent, b in pairs(selectedActors) do
-			table.insert(selectedActorList, ent)
-			num = num + 1
+			if ent:IsValid() then
+				table.insert(selectedActorList, ent)
+				num = num + 1
+			end
 		end
 
 		for _, ent in ipairs(selectedActorList) do
@@ -171,7 +173,9 @@ function gui.PFMCoreViewportBase:UpdateManipulationMode()
 	local selectedActors = selectionManager:GetSelectedActors()
 	local selectedActorList = {}
 	for ent, b in pairs(selectedActors) do
-		table.insert(selectedActorList, ent)
+		if ent:IsValid() then
+			table.insert(selectedActorList, ent)
+		end
 	end
 	if #selectedActorList ~= 1 or util.is_valid(selectedActorList[1]) == false then
 		return
