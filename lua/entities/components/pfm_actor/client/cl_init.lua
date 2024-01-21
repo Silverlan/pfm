@@ -60,8 +60,6 @@ function Component:Initialize()
 		table.insert(self.m_listeners, cb)
 	end
 
-	self.m_cvAnimCache = console.get_convar("pfm_animation_cache_enabled")
-
 	self.m_boneChannels = {}
 	self.m_flexControllerChannels = {}
 	self.m_selected = false

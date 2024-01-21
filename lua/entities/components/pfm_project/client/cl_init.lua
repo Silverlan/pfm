@@ -10,14 +10,6 @@ include_component("pfm_model")
 include_component("pfm_actor")
 include_component("pfm_film_clip")
 
-local cvAnimCache = console.register_variable(
-	"pfm_animation_cache_enabled",
-	udm.TYPE_BOOLEAN,
-	true,
-	bit.bor(console.FLAG_BIT_ARCHIVE),
-	"Enables caching for actor animations to speed up performance."
-)
-
 local Component = util.register_class("ents.PFMProject", BaseEntityComponent)
 
 Component:RegisterMember("PlaybackOffset", ents.MEMBER_TYPE_FLOAT, math.huge, {
@@ -28,10 +20,6 @@ Component:RegisterMember("PlaybackOffset", ents.MEMBER_TYPE_FLOAT, math.huge, {
 
 ents.PFMProject.GAME_VIEW_FLAG_NONE = 0
 ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE = 1
-
-function ents.PFMProject:__init(ent)
-	BaseEntityComponent.__init(self, ent)
-end
 
 function ents.PFMProject:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -179,48 +167,6 @@ function ents.PFMProject:ChangePlaybackOffset(offset, gameViewFlags)
 		local trackC = self.m_entRootTrack:GetComponent(ents.COMPONENT_PFM_TRACK)
 		if trackC ~= nil then
 			trackC:OnOffsetChanged(offset, gameViewFlags)
-		end
-	end
-
-	if cvAnimCache:GetBool() == false then
-		return
-	end
-	-- if(bit.band(gameViewFlags,ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE) == ents.PFMProject.GAME_VIEW_FLAG_NONE) then return end
-
-	local pm = self.m_projectManager
-	local animCache = pm:GetAnimationCache()
-	local frameIndex = pm:TimeOffsetToFrameOffset(offset)
-	if animCache == nil then
-		return
-	end
-	-- animCache:UpdateCache(offset)
-	local filmClip = animCache:GetFilmClip(frameIndex)
-	if filmClip == nil then
-		return
-	end
-	-- TODO: Ensure that the entity actually belongs to this project
-	for ent in ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_PFM_MODEL) }) do
-		local mdlC = ent:GetComponent(ents.COMPONENT_PFM_MODEL)
-		local mdl = ent:GetModel()
-		local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
-		local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-		if mdl ~= nil and animC ~= nil and actorC ~= nil and mdlC:IsAnimationFrozen() == false then
-			local animName = animCache:GetAnimationName(filmClip, actorC:GetActorData())
-
-			local flexC = ent:GetComponent(ents.COMPONENT_FLEX)
-			local anim = animC:GetAnimationObject()
-			if anim ~= nil then
-				local numFrames = anim:GetFrameCount()
-				local cycle = (numFrames >= 2) and (frameIndex / (numFrames - 1)) or 0
-				animC:SetCycle(cycle)
-				if flexC ~= nil then
-					flexC:SetFlexAnimationCycle(animName, cycle)
-				end
-			end
-			animC:SetPlaybackRate(0.0)
-			if flexC ~= nil then
-				flexC:SetFlexAnimationPlaybackRate(animName, 0.0)
-			end
 		end
 	end
 

@@ -439,33 +439,12 @@ function pfm.ProjectManager:InitializeProject(project)
 			self:OnTimeOffsetChanged(newOffset)
 		end)
 	end
-	-- self:CacheAnimations()
 	self:OnProjectInitialized(project)
 	debug.stop_profiling_task()
 	return entScene
 end
 function pfm.ProjectManager:GetFilmTrack()
 	return self:GetSession():GetFilmTrack()
-end
-function pfm.ProjectManager:CacheAnimations()
-	if console.get_convar_bool("pfm_animation_cache_enabled") == false or self.m_projectFileName == nil then
-		return
-	end
-	if self:IsAnimationCacheValid() then
-		self:LoadAnimationCache()
-	end
-	local hasDirtyFrame = false
-	local firstFrame, lastFrame = self:GetFrameIndexRange()
-	for i = firstFrame, lastFrame do
-		if self.m_animationCache:IsFrameDirty(i) then
-			self:GoToFrame(i)
-			hasDirtyFrame = true
-		end
-	end
-	if hasDirtyFrame == false then
-		return
-	end
-	self:SaveAnimationCache()
 end
 function pfm.ProjectManager:OnTimeOffsetChanged(offset) end
 function pfm.ProjectManager:SetCachedMode(useCache)
@@ -483,45 +462,20 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 		return
 	end
 	offset = tOffset or offset
-	local isAnimCacheEnabled = false --console.get_convar_bool("pfm_animation_cache_enabled")
 	local frameIndex = self:TimeOffsetToFrameOffset(offset)
 	local isInterpFrame = (math.round(frameIndex) - frameIndex >= 0.001) -- If we're not exactly at a frame, we'll have to interpolate (and can't save to the cache)
 	if isInterpFrame == false then
 		frameIndex = math.round(frameIndex)
 	end
 
-	local updateCache = isAnimCacheEnabled and isInterpFrame == false and self.m_animationCache:IsFrameDirty(frameIndex)
 	local session = self:GetSession()
 	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
 	local gameViewFlags = ents.PFMProject.GAME_VIEW_FLAG_NONE
-	if activeClip ~= nil then
-		local filter
-		if
-			isAnimCacheEnabled
-			and self.m_animationCache:IsFrameDirty(math.floor(frameIndex)) == false
-			and (isInterpFrame == false or self.m_animationCache:IsFrameDirty(math.ceil(frameIndex)) == false)
-		then
-			gameViewFlags = bit.bor(gameViewFlags, ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE)
-			filter = function(channel)
-				return channel:IsBoneTransformChannel() == false and channel:IsFlexControllerChannel() == false
-			end
-		end
-		local curFilmClip = activeClip:GetChildFilmClip(offset)
-		if util.is_same_object(curFilmClip, self.m_activeGameViewFilmClip) == false then
-			--self.m_activeGameViewFilmClip = curFilmClip
-			--self:OnGameViewFilmClipChanged(curFilmClip)
-		end
-		-- if(self.m_cachedMode == false or updateCache) then activeClip:SetPlaybackOffset(offset,filter)
-		-- elseif(self.m_activeGameViewFilmClip ~= nil) then self.m_performanceCache:SetOffset(self.m_activeGameViewFilmClip,offset) end
-	else
+	if activeClip == nil then
 		self.m_activeGameViewFilmClip = nil
 	end
 
 	pfm.GameView.SetGameViewOffset(self, offset, gameViewFlags)
-
-	if updateCache then
-		self.m_animationCache:UpdateCache(math.round(frameIndex))
-	end
 end
 function pfm.ProjectManager:GetSession()
 	local project = self:GetProject()
