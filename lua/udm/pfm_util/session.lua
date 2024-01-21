@@ -21,7 +21,7 @@ function pfm.udm.Session:GetFilmTrack()
 	for _, track in ipairs(trackGroup:GetTracks()) do
 		if track:GetName() == "Film" then
 			self.m_cachedFilmTrack = track
-			return
+			return track
 		end
 	end
 end
