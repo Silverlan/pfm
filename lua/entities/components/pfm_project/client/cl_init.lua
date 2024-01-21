@@ -157,7 +157,7 @@ function ents.PFMProject:GetProjectManager()
 end
 
 function ents.PFMProject:ChangePlaybackOffset(offset, gameViewFlags)
-	if offset == self.m_prevPlaybackOffset or self.m_projectManager == nil then
+	if offset == self.m_prevPlaybackOffset then
 		return
 	end
 	self.m_prevPlaybackOffset = offset

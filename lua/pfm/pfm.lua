@@ -106,6 +106,9 @@ pfm.Project.FORMAT_EXTENSION_BINARY = "pfmp_b"
 pfm.Project.FORMAT_EXTENSION_ASCII = "pfmp"
 pfm.Project.DEFAULT_BOOKMARK_SET_NAME = "default"
 pfm.Project.KEYFRAME_BOOKMARK_SET_NAME = "keyframe"
+pfm.Project.get_project_root_path = function()
+	return "projects/"
+end
 pfm.Project.get_format_extensions = function()
 	return { pfm.Project.FORMAT_EXTENSION_ASCII, pfm.Project.FORMAT_EXTENSION_BINARY }
 end
