@@ -10,8 +10,15 @@ pfm.optimize = function(project)
 	pfm.log("Optimizing PFM project...", pfm.LOG_CATEGORY_PFM)
 	local session = project:GetSession()
 
+	local actors = {}
+	local constrainedProperties = {}
 	local function cleanup_film_clip(filmClip)
-		local constrainedProperties = pfm.udm.Actor.get_constrained_properties(filmClip)
+		for actor, data in pairs(pfm.udm.Actor.get_constrained_properties(filmClip)) do
+			constrainedProperties[actor] = constrainedProperties[actor] or {}
+			for targetPath, data in pairs(data) do
+				constrainedProperties[actor][targetPath] = data
+			end
+		end
 
 		local scene = filmClip:GetScene()
 		-- These may still exist from an older version but are no longer needed
@@ -22,13 +29,7 @@ pfm.optimize = function(project)
 		scene:GetUdmData():RemoveValue("filmClips")
 
 		for _, actor in ipairs(filmClip:GetActorList()) do
-			local n = actor:DissolveSingleValueAnimationChannels(nil, constrainedProperties)
-			if n > 0 then
-				pfm.log(
-					"Collapsed " .. n .. " single-value animation channels for actor '" .. tostring(actor) .. "'...",
-					pfm.LOG_CATEGORY_PFM
-				)
-			end
+			actors[actor] = true
 		end
 	end
 
@@ -43,6 +44,17 @@ pfm.optimize = function(project)
 			end
 		end
 	end
+
+	for actor, _ in pairs(actors) do
+		local n = actor:DissolveSingleValueAnimationChannels(nil, constrainedProperties)
+		if n > 0 then
+			pfm.log(
+				"Collapsed " .. n .. " single-value animation channels for actor '" .. tostring(actor) .. "'...",
+				pfm.LOG_CATEGORY_PFM
+			)
+		end
+	end
+
 	pfm.undoredo.clear()
 	pfm.log("Optimization complete!", pfm.LOG_CATEGORY_PFM)
 
