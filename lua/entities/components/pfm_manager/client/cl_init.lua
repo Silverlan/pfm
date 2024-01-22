@@ -22,6 +22,9 @@ function Component:Initialize()
 	cursorTargetC:AddEventCallback(ents.PFMCursorTarget.EVENT_ON_TARGET_ACTOR_CHANGED, function(...)
 		self:OnCursorTargetActorChanged(...)
 	end)
+	cursorTargetC:SetRaycastFilter(function(ent)
+		return ent:HasComponent(ents.COMPONENT_PFM_EDITOR_ACTOR)
+	end)
 end
 function Component:GetHoverTextElement()
 	if util.is_valid(self.m_elTextHover) == false then

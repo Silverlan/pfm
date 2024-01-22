@@ -9,6 +9,7 @@
 include_component("pfm_model")
 include_component("pfm_actor")
 include_component("pfm_film_clip")
+include_component("pfm_editor_actor")
 
 local Component = util.register_class("ents.PFMProject", BaseEntityComponent)
 
@@ -38,6 +39,13 @@ function Component:OnEntityCreated(ent)
 	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	if actorC ~= nil then
 		actorC:SetProject(self)
+	end
+
+	local pm = self:GetProjectManager()
+	if util.is_valid(pm) then
+		-- This project is running in an editor, we'll add a special component to the actors
+		-- to mark them as editor actors.
+		ent:AddComponent(ents.COMPONENT_PFM_EDITOR_ACTOR)
 	end
 
 	local filmClipC = ent:GetComponent(ents.COMPONENT_PFM_FILM_CLIP)

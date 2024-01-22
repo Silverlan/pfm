@@ -19,6 +19,9 @@ end
 function Component:SetRaycastSourceFunction(f)
 	self.m_fRaycastSource = f
 end
+function Component:SetRaycastFilter(f)
+	self.m_fRaycastFilter = f
+end
 local function is_same_entity(ent0, ent1)
 	if util.is_valid(ent0) == false then
 		if util.is_valid(ent1) == false then
@@ -38,7 +41,7 @@ function Component:OnTick(dt)
 		return
 	end
 	local filter = function(ent)
-		return ent:HasComponent(ents.COMPONENT_CLICK)
+		return ent:HasComponent(ents.COMPONENT_CLICK) and (self.m_fRaycastFilter == nil or self.m_fRaycastFilter(ent))
 	end
 	if vpData ~= nil and util.is_valid(vpData.viewport) then
 		local scene = vpData.viewport:GetScene()

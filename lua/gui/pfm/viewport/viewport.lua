@@ -214,16 +214,11 @@ function gui.PFMCoreViewportBase:OnViewportMouseEvent(el, mouseButton, state, mo
 		return util.EVENT_REPLY_HANDLED
 	end
 
-	local function findActor(pressed, filter, action)
+	local function findActor(pressed, action)
 		if pressed == nil then
 			pressed = state == input.STATE_PRESS
 		end
-		--[[if(self.m_manipulatorMode ~= gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT) then
-			filter = function(ent,mdlC)
-				return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
-			end
-		end]]
-		return ents.ClickComponent.inject_click_input(action or input.ACTION_ATTACK, pressed, filter)
+		return ents.ClickComponent.inject_click_input(action or input.ACTION_ATTACK, pressed)
 	end
 
 	local root = self:GetRootWindow()
@@ -243,7 +238,7 @@ function gui.PFMCoreViewportBase:OnViewportMouseEvent(el, mouseButton, state, mo
 					self:UpdateThinkState()
 					pfm.tag_render_scene_as_dirty()
 
-					local handled, entActor, hitPos, startPos, hitData = findActor(true, nil, input.ACTION_ATTACK2)
+					local handled, entActor, hitPos, startPos, hitData = findActor(true, input.ACTION_ATTACK2)
 					if handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor) then
 						local pContext = gui.open_context_menu()
 						if util.is_valid(pContext) == false then
@@ -262,6 +257,9 @@ function gui.PFMCoreViewportBase:OnViewportMouseEvent(el, mouseButton, state, mo
 						end
 
 						local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+						if actorC ~= nil and entActor:HasComponent(ents.COMPONENT_PFM_EDITOR_ACTOR) == false then
+							actorC = nil
+						end
 						local actor = (actorC ~= nil) and actorC:GetActorData() or nil
 						if actor ~= nil then
 							pfm.populate_actor_context_menu(pContext, actor, nil, hitMaterial)
@@ -639,16 +637,11 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 		return util.EVENT_REPLY_HANDLED
 	end
 
-	local function findActor(pressed, filter, action)
+	local function findActor(pressed, action)
 		if pressed == nil then
 			pressed = state == input.STATE_PRESS
 		end
-		--[[if(self.m_manipulatorMode ~= gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT) then
-			filter = function(ent,mdlC)
-				return not ent:HasComponent(ents.COMPONENT_PFM_ACTOR)
-			end
-		end]]
-		return ents.ClickComponent.inject_click_input(action or input.ACTION_ATTACK, pressed, filter)
+		return ents.ClickComponent.inject_click_input(action or input.ACTION_ATTACK, pressed)
 	end
 
 	local filmmaker = pfm.get_project_manager()
@@ -710,6 +703,9 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 					or input.is_ctrl_key_down()
 				then
 					local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
+					if actorC ~= nil and entActor:HasComponent(ents.COMPONENT_PFM_EDITOR_ACTOR) == false then
+						actorC = nil
+					end
 					local actor = (actorC ~= nil) and actorC:GetActorData() or nil
 					if actor then
 						local bone, hitPosBone = self:FindBoneUnderCursor(entActor)
