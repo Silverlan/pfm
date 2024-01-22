@@ -18,21 +18,21 @@ Component:RegisterMember("PlaybackOffset", ents.MEMBER_TYPE_FLOAT, math.huge, {
 	end,
 }, "def")
 
-ents.PFMProject.GAME_VIEW_FLAG_NONE = 0
-ents.PFMProject.GAME_VIEW_FLAG_BIT_USE_CACHE = 1
+Component.GAME_VIEW_FLAG_NONE = 0
+Component.GAME_VIEW_FLAG_BIT_USE_CACHE = 1
 
-function ents.PFMProject:Initialize()
+function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self.m_timeFrame = udm.create_property_from_schema(pfm.udm.SCHEMA, "TimeFrame")
-	self:AddEventCallback(ents.PFMProject.EVENT_ON_ENTITY_CREATED, function(ent)
+	self:AddEventCallback(Component.EVENT_ON_ENTITY_CREATED, function(ent)
 		self:OnEntityCreated(ent)
 	end)
 
 	self:AddEntityComponent(ents.COMPONENT_STATIC_BVH_CACHE)
 end
 
-function ents.PFMProject:OnEntityCreated(ent)
+function Component:OnEntityCreated(ent)
 	local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	if actorC ~= nil then
 		actorC:SetProject(self)
@@ -51,14 +51,25 @@ function ents.PFMProject:OnEntityCreated(ent)
 	if parent == nil or parent.TypeName == "Session" then
 		return
 	end
-	self:BroadcastEvent(ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED, { filmClipC })
+
+	self.m_activeGameViewFilmClip = filmClipC:GetClipData()
+	local animManager = self:GetAnimationManager()
+	if animManager ~= nil then
+		animManager:SetFilmClip(self.m_activeGameViewFilmClip)
+	end
+
+	self:BroadcastEvent(Component.EVENT_ON_FILM_CLIP_CREATED, { filmClipC })
 end
 
-function ents.PFMProject:OnRemove()
+function Component:GetActiveGameViewFilmClip()
+	return self.m_activeGameViewFilmClip
+end
+
+function Component:OnRemove()
 	self:Reset()
 end
 
-function ents.PFMProject:SetProjectData(project, projectManager)
+function Component:SetProjectData(project, projectManager)
 	self.m_project = project
 	self:SetProjectManager(projectManager)
 
@@ -95,7 +106,7 @@ local function collect_clips(trackC, clips)
 		end
 	end
 end
-function ents.PFMProject:GetClips()
+function Component:GetClips()
 	local trackC = util.is_valid(self.m_entRootTrack) and self.m_entRootTrack:GetComponent(ents.COMPONENT_PFM_TRACK)
 		or nil
 	if trackC == nil then
@@ -105,8 +116,20 @@ function ents.PFMProject:GetClips()
 	collect_clips(trackC, clips)
 	return clips
 end
-
-function ents.PFMProject:GetActors()
+function Component:GetActorIterator(animatedOnly)
+	local filters = { ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR) }
+	if animatedOnly then
+		table.insert(filters, ents.IteratorFilterComponent(ents.COMPONENT_PANIMA))
+	end
+	table.insert(
+		filters,
+		ents.IteratorFilterFunction(function(ent, c)
+			return util.is_same_object(c:GetProject(), self)
+		end)
+	)
+	return ents.iterator(filters)
+end
+function Component:GetActors()
 	local clips = self:GetClips()
 	local actors = {}
 	for _, clip in ipairs(clips) do
@@ -123,7 +146,7 @@ function ents.PFMProject:GetActors()
 	return actors
 end
 
-function ents.PFMProject:Start()
+function Component:Start()
 	self:Reset()
 
 	debug.start_profiling_task("pfm_start_game_view")
@@ -133,15 +156,24 @@ function ents.PFMProject:Start()
 	trackC:Setup(self.m_project:GetSession(), nil, self)
 	ent:Spawn()
 	self.m_entRootTrack = ent
-	self:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED, { ent })
+
+	local track = self.m_project:GetSession():GetFilmTrack()
+	util.remove(self.m_cbOnFilmClipRemoved)
+	self.m_cbOnFilmClipRemoved = track:AddChangeListener("OnFilmClipRemoved", function(c, filmClip)
+		if util.is_same_object(self:GetActiveGameViewFilmClip(), filmClip) then
+			self:ClearActiveGameViewFilmClip()
+		end
+	end)
+
+	self:BroadcastEvent(Component.EVENT_ON_ENTITY_CREATED, { ent })
 	debug.stop_profiling_task()
 end
 
-function ents.PFMProject:GetProject()
+function Component:GetProject()
 	return self.m_project
 end
 
-function ents.PFMProject:OnOffsetChanged()
+function Component:OnOffsetChanged()
 	if self.m_skipOffsetOnChangeCallback then
 		return
 	end
@@ -150,20 +182,34 @@ function ents.PFMProject:OnOffsetChanged()
 	self.m_skipOffsetOnChangeCallback = nil
 end
 
-function ents.PFMProject:SetProjectManager(pm)
+function Component:SetProjectManager(pm)
 	self.m_projectManager = pm
 end
-function ents.PFMProject:GetProjectManager()
+function Component:GetProjectManager()
 	return self.m_projectManager
 end
-function ents.PFMProject:GetAnimationManager()
+function Component:GetAnimationManager()
 	return self:GetEntityComponent(ents.COMPONENT_PFM_ANIMATION_MANAGER)
 end
-
-function ents.PFMProject:ChangePlaybackOffset(offset, gameViewFlags)
+function Component:ClearActiveGameViewFilmClip()
+	self.m_activeGameViewFilmClip = nil
+	local animManager = self:GetAnimationManager()
+	if animManager ~= nil then
+		animManager:Reset()
+	end
+end
+function Component:ChangePlaybackOffset(offset, gameViewFlags)
 	if offset == self.m_prevPlaybackOffset then
 		return
 	end
+
+	local session = self.m_project:GetSession()
+	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
+	local gameViewFlags = ents.PFMProject.GAME_VIEW_FLAG_NONE
+	if activeClip == nil then
+		self:ClearActiveGameViewFilmClip()
+	end
+
 	self.m_prevPlaybackOffset = offset
 	self:SetPlaybackOffset(offset)
 
@@ -174,22 +220,27 @@ function ents.PFMProject:ChangePlaybackOffset(offset, gameViewFlags)
 		end
 	end
 
-	self:InvokeEventCallbacks(ents.PFMProject.EVENT_ON_PLAYBACK_OFFSET_CHANGED, { offset })
+	local animManager = self:GetAnimationManager()
+	if animManager ~= nil then
+		animManager:SetTime(offset)
+	end
+
+	self:InvokeEventCallbacks(Component.EVENT_ON_PLAYBACK_OFFSET_CHANGED, { offset })
 end
 
-function ents.PFMProject:Reset()
+function Component:Reset()
 	self:GetEntity():RemoveComponent("pfm_animation_manager")
+	util.remove(self.m_cbOnFilmClipRemoved)
 	util.remove(self.m_entRootTrack)
 	self:SetPlaybackOffset(math.huge)
 end
 
-function ents.PFMProject:GetTimeFrame()
+function Component:GetTimeFrame()
 	return self.m_timeFrame
 end
-ents.COMPONENT_PFM_PROJECT = ents.register_component("pfm_project", ents.PFMProject)
-ents.PFMProject.EVENT_ON_ACTOR_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT, "on_actor_created")
-ents.PFMProject.EVENT_ON_ENTITY_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT, "on_entity_created")
-ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED =
-	ents.register_component_event(ents.COMPONENT_PFM_PROJECT, "on_film_clip_created")
-ents.PFMProject.EVENT_ON_PLAYBACK_OFFSET_CHANGED =
+ents.COMPONENT_PFM_PROJECT = ents.register_component("pfm_project", Component)
+Component.EVENT_ON_ACTOR_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT, "on_actor_created")
+Component.EVENT_ON_ENTITY_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT, "on_entity_created")
+Component.EVENT_ON_FILM_CLIP_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT, "on_film_clip_created")
+Component.EVENT_ON_PLAYBACK_OFFSET_CHANGED =
 	ents.register_component_event(ents.COMPONENT_PFM_PROJECT, "on_playback_offset_changed")

@@ -683,10 +683,6 @@ end
 function gui.WIFilmmaker:OnSkinApplied()
 	self:GetMenuBar():Update()
 end
-function gui.WIFilmmaker:ClearActiveGameViewFilmClip()
-	pfm.ProjectManager.ClearActiveGameViewFilmClip(self)
-	self:GetAnimationManager():Reset()
-end
 function gui.WIFilmmaker:OnProjectInitialized(project)
 	local session = self:GetSession()
 	if session == nil then
@@ -723,10 +719,6 @@ function gui.WIFilmmaker:OnProjectInitialized(project)
 		self.m_timeline:GetTimeline():AddTimelineItem(elFc, newFc:GetTimeFrame())
 	end)
 	local cbFcRem = track:AddChangeListener("OnFilmClipRemoved", function(c, filmClip)
-		if util.is_same_object(self:GetActiveGameViewFilmClip(), filmClip) then
-			self:ClearActiveGameViewFilmClip()
-		end
-
 		local actorEditor = self:GetActorEditor()
 		if util.is_valid(actorEditor) and util.is_same_object(actorEditor:GetFilmClip(), filmClip) then -- TODO: Game view film clip should be independent of actor editor film clip
 			actorEditor:Clear()

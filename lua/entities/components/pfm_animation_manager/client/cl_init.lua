@@ -16,11 +16,26 @@ function Component:Reset()
 	self.m_filmClip = nil
 end
 
+function Component:GetProjectComponent()
+	return self:GetEntity():GetComponent(ents.COMPONENT_PFM_PROJECT)
+end
+
+function Component:GetActorIterator(animatedOnly)
+	local c = self:GetProjectComponent()
+	if c == nil then
+		return
+	end
+	return c:GetActorIterator(animatedOnly)
+end
+
 function Component:SetFilmClip(filmClip)
 	self.m_filmClip = filmClip
 
-	for ent in ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR) }) do
-		self:PlayActorAnimation(ent)
+	local it = self:GetActorIterator()
+	if it ~= nil then
+		for ent in it do
+			self:PlayActorAnimation(ent)
+		end
 	end
 end
 
@@ -52,43 +67,40 @@ function Component:SetTime(t)
 		return
 	end
 	self.m_time = t
-	for ent in
-		ents.iterator({
-			ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),
-			ents.IteratorFilterComponent(ents.COMPONENT_PANIMA),
-		})
-	do
-		local animC = ent:GetComponent(ents.COMPONENT_PANIMA)
-		local manager = animC:GetAnimationManager("pfm")
-		if manager ~= nil then
-			local player = manager:GetPlayer()
-			local lt = t
-			if lt then
-				local pfmActorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-				local animClip = (pfmActorC ~= nil) and self.m_filmClip:FindActorAnimationClip(pfmActorC:GetActorData())
-					or nil
-				if animClip ~= nil then
-					local start = animClip:GetAbsStart()
-					lt = lt - start
+	local it = self:GetActorIterator(true)
+	if it ~= nil then
+		for ent in it do
+			local animC = ent:GetComponent(ents.COMPONENT_PANIMA)
+			local manager = animC:GetAnimationManager("pfm")
+			if manager ~= nil then
+				local player = manager:GetPlayer()
+				local lt = t
+				if lt then
+					local pfmActorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+					local animClip = (pfmActorC ~= nil)
+							and self.m_filmClip:FindActorAnimationClip(pfmActorC:GetActorData())
+						or nil
+					if animClip ~= nil then
+						local start = animClip:GetAbsStart()
+						lt = lt - start
+					end
 				end
+				player:SetCurrentTime(lt or player:GetCurrentTime())
 			end
-			player:SetCurrentTime(lt or player:GetCurrentTime())
 		end
 	end
 end
 
 function Component:SetAnimationsDirty()
-	for ent in
-		ents.iterator({
-			ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),
-			ents.IteratorFilterComponent(ents.COMPONENT_PANIMA),
-		})
-	do
-		local animC = ent:GetComponent(ents.COMPONENT_PANIMA)
-		local animManager = (animC ~= nil) and animC:GetAnimationManager("pfm") or nil
-		if animManager ~= nil then
-			local player = animManager:GetPlayer()
-			player:SetAnimationDirty()
+	local it = self:GetActorIterator(true)
+	if it ~= nil then
+		for ent in it do
+			local animC = ent:GetComponent(ents.COMPONENT_PANIMA)
+			local animManager = (animC ~= nil) and animC:GetAnimationManager("pfm") or nil
+			if animManager ~= nil then
+				local player = animManager:GetPlayer()
+				player:SetAnimationDirty()
+			end
 		end
 	end
 	game.update_animations(0.0)

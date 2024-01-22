@@ -318,7 +318,6 @@ function pfm.ProjectManager:CloseProject()
 	if util.is_valid(self.m_cbPlayOffset) then
 		self.m_cbPlayOffset:Remove()
 	end
-	self.m_activeGameViewFilmClip = nil
 	if self.m_animationCache ~= nil then
 		self.m_animationCache:Clear()
 	end
@@ -377,10 +376,6 @@ function pfm.ProjectManager:SetTimeOffset(offset)
 	offset = self:TranslateGameViewOffset(offset)
 	local settings = session:GetSettings()
 	settings:SetPlayheadOffset(offset)
-	local animManager = self:GetAnimationManager()
-	if animManager ~= nil then
-		animManager:SetTime(offset)
-	end
 end
 function pfm.ProjectManager:GetSettings()
 	local session = self:GetSession()
@@ -395,9 +390,6 @@ end
 function pfm.ProjectManager:OnFilmClipAdded(el) end
 function pfm.ProjectManager:GetAnimationCache()
 	return self.m_animationCache
-end
-function pfm.ProjectManager:ClearActiveGameViewFilmClip()
-	self.m_activeGameViewFilmClip = nil
 end
 function pfm.ProjectManager:InitializeProject(project)
 	pfm.log("Initializing PFM project...", pfm.LOG_CATEGORY_PFM)
@@ -418,11 +410,6 @@ function pfm.ProjectManager:InitializeProject(project)
 	end
 	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
 	projectC:AddEventCallback(ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED, function(filmClipC)
-		self.m_activeGameViewFilmClip = filmClipC:GetClipData()
-		local animManager = self:GetAnimationManager()
-		if animManager ~= nil then
-			animManager:SetFilmClip(self.m_activeGameViewFilmClip)
-		end
 		self:OnGameViewFilmClipChanged(filmClipC:GetClipData())
 	end)
 	self.m_project = project
@@ -464,7 +451,12 @@ function pfm.ProjectManager:IsCachedMode()
 	return self.m_cachedMode
 end
 function pfm.ProjectManager:GetActiveGameViewFilmClip()
-	return self.m_activeGameViewFilmClip
+	local ent = self:GetGameView()
+	local projectC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_PFM_PROJECT) or nil
+	if projectC == nil then
+		return
+	end
+	return projectC:GetActiveGameViewFilmClip()
 end
 function pfm.ProjectManager:SetGameViewOffset(offset)
 	local tOffset = self:TranslateGameViewOffset(offset)
@@ -472,18 +464,6 @@ function pfm.ProjectManager:SetGameViewOffset(offset)
 		return
 	end
 	offset = tOffset or offset
-	local frameIndex = self:TimeOffsetToFrameOffset(offset)
-	local isInterpFrame = (math.round(frameIndex) - frameIndex >= 0.001) -- If we're not exactly at a frame, we'll have to interpolate (and can't save to the cache)
-	if isInterpFrame == false then
-		frameIndex = math.round(frameIndex)
-	end
-
-	local session = self:GetSession()
-	local activeClip = (session ~= nil) and session:GetActiveClip() or nil
-	local gameViewFlags = ents.PFMProject.GAME_VIEW_FLAG_NONE
-	if activeClip == nil then
-		self.m_activeGameViewFilmClip = nil
-	end
 
 	pfm.GameView.SetGameViewOffset(self, offset, gameViewFlags)
 end
