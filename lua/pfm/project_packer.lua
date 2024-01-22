@@ -157,14 +157,41 @@ function pfm.ProjectPacker:AddFilmClip(filmClip)
 								end
 								local ext = (extensions ~= nil) and file.get_file_extension(filePath, extensions)
 									or file.get_file_extension(filePath)
+								local targetFilePath
 								if ext ~= nil then
-									self:AddFile(filePath)
+									targetFilePath = filePath
 								else
 									for _, ext in ipairs(extensions) do
 										local extPath = filePath .. "." .. ext
 										if file.exists(extPath) then
-											self:AddFile(extPath)
+											targetFilePath = extPath
 											break
+										end
+									end
+								end
+								if targetFilePath ~= nil then
+									self:AddFile(targetFilePath)
+
+									if componentId == ents.COMPONENT_PFM_SCENE and memberInfo.name == "project" then
+										-- This is a sub-project, pack its assets as well
+										local projectPath =
+											pfm.Project.get_full_project_file_name(targetFilePath, false)
+										local project, err = pfm.load_project(projectPath, true)
+										if project == false then
+											pfm.log(
+												"Unable to load project '"
+													.. projectPath
+													.. "': "
+													.. (err or "Unknown error")
+													.. "!",
+												pfm.LOG_CATEGORY_PFM,
+												pfm.LOG_SEVERITY_WARNING
+											)
+										else
+											local session = project:GetSession()
+											if session ~= nil then
+												self:AddSession(session)
+											end
 										end
 									end
 								end

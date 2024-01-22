@@ -33,6 +33,7 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LIMIT_SCALE = 23
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT = 24
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF = 25
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER = 26
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_SCENEBUILD = 27
 
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_START = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_END = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF
@@ -239,6 +240,13 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 			return
 		end
 		actor = actor or create_new_actor("actor", gui.PFMActorEditor.COLLECTION_MISC)
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SCENEBUILD then
+		actor = actor or create_new_actor("scenebuild", gui.PFMActorEditor.COLLECTION_ENVIRONMENT)
+		if actor == nil then
+			return
+		end
+		local sceneC = self:CreateNewActorComponent(actor, "pfm_scene", false)
+		sceneC:SetMemberValue("scenebuild", udm.TYPE_BOOLEAN, true)
 	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER then
 		actor = actor or create_new_actor("lightmapper", gui.PFMActorEditor.COLLECTION_BAKING)
 		if actor == nil then

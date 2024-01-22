@@ -345,7 +345,6 @@ function pfm.ProjectManager:InitializeProject(project)
 	pfm.undoredo.clear()
 	self:ResetEditState()
 	local session = self:GetSession()
-	local filmTrack = (session ~= nil) and session:GetFilmTrack() or nil
 
 	if session ~= nil then
 		ents.PFMProject.wait_for_session_assets(session)

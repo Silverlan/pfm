@@ -27,7 +27,6 @@ function Element:PackProject(fileName)
 		pfm.Project.get_format_extensions()
 	)
 	local project = self:GetProject()
-	local session = self:GetSession()
 
 	local assetFiles = project:CollectAssetFiles()
 	local projectFileName = self:GetProjectFileName()
