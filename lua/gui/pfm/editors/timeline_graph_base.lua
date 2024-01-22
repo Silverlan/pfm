@@ -84,19 +84,12 @@ function gui.PFMTimelineGraphBase:OnInitialize()
 	self:SetScrollInputEnabled(true)
 	-- gui.set_mouse_selection_enabled(self,true)
 
-	local animManager = pfm.get_project_manager():GetAnimationManager()
-	self.m_cbOnChannelValueChanged = animManager:AddCallback("OnChannelValueChanged", function(data)
-		if self.m_skipOnChannelValueChangedCallback == true then
-			return
-		end
-		self:UpdateChannelValue(data)
+	local pm = pfm.get_project_manager()
+	pm:AddCallback("OnGameViewReloaded", function()
+		self:InitAnimManagerListeners()
 	end)
-	self.m_cbOnKeyframeUpdated = animManager:AddCallback("OnKeyframeUpdated", function(data)
-		if self.m_skipOnChannelValueChangedCallback == true then
-			return
-		end
-		self:UpdateChannelValue(data)
-	end)
+	self:InitAnimManagerListeners()
+
 	self.m_cbOnActorControlSelected = tool.get_filmmaker():AddCallback(
 		"OnActorControlSelected",
 		function(pm, actorEditor, filmClip, actor, component, controlData, memberInfo, slider)
@@ -111,6 +104,41 @@ function gui.PFMTimelineGraphBase:OnInitialize()
 			slider:AddCallback("OnDeselected", fRemoveCtrl)
 			slider:AddCallback("OnRemove", fRemoveCtrl)
 		end
+	)
+end
+function gui.PFMTimelineGraphBase:ClearAnimManagerListeners()
+	if self.m_animManagerListeners == nil then
+		return
+	end
+	util.remove(self.m_animManagerListeners)
+	self.m_animManagerListeners = nil
+end
+function gui.PFMTimelineGraphBase:InitAnimManagerListeners()
+	self:ClearAnimManagerListeners()
+
+	self.m_animManagerListeners = {}
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+	if animManager == nil then
+		return
+	end
+	table.insert(
+		self.m_animManagerListeners,
+		animManager:AddEventListener(ents.PFMAnimationManager.EVENT_ON_CHANNEL_VALUE_CHANGED, function(data)
+			if self.m_skipOnChannelValueChangedCallback == true then
+				return
+			end
+			self:UpdateChannelValue(data)
+		end)
+	)
+	table.insert(
+		self.m_animManagerListeners,
+		animManager:AddEventListener(ents.PFMAnimationManager.EVENT_ON_KEYFRAME_UPDATED, function(data)
+			if self.m_skipOnChannelValueChangedCallback == true then
+				return
+			end
+			self:UpdateChannelValue(data)
+		end)
 	)
 end
 function gui.PFMTimelineGraphBase:ReloadGraphCurveSegment(i, keyIndex, rebuildCurve)
@@ -204,10 +232,9 @@ function gui.PFMTimelineGraphBase:GetDataAxisExtents()
 end
 function gui.PFMTimelineGraphBase:OnRemove()
 	util.remove(self.m_cbUpdateFrameRate)
-	util.remove(self.m_cbOnChannelValueChanged)
-	util.remove(self.m_cbOnKeyframeUpdated)
 	util.remove(self.m_cbDataAxisPropertiesChanged)
 	util.remove(self.m_cbOnActorControlSelected)
+	self:ClearAnimManagerListeners()
 	self:ClearKeyframeListeners()
 end
 function gui.PFMTimelineGraphBase:FindGraphDataIndices(actor, targetPath)

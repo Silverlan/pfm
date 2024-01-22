@@ -1,21 +1,22 @@
 --[[
-    Copyright (C) 2021 Silverlan
+    Copyright (C) 2024 Silverlan
 
     This Source Code Form is subject to the terms of the Mozilla Public
     License, v. 2.0. If a copy of the MPL was not distributed with this
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-pfm = pfm or {}
+local Component = util.register_class("ents.PFMAnimationManager", BaseEntityComponent)
 
-util.register_class("pfm.AnimationManager", util.CallbackHandler)
-function pfm.AnimationManager:Initialize(track) end
+function Component:Initialize()
+	BaseEntityComponent.Initialize(self)
+end
 
-function pfm.AnimationManager:Reset()
+function Component:Reset()
 	self.m_filmClip = nil
 end
 
-function pfm.AnimationManager:SetFilmClip(filmClip)
+function Component:SetFilmClip(filmClip)
 	self.m_filmClip = filmClip
 
 	for ent in ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR) }) do
@@ -23,7 +24,7 @@ function pfm.AnimationManager:SetFilmClip(filmClip)
 	end
 end
 
-function pfm.AnimationManager:PlayActorAnimation(ent)
+function Component:PlayActorAnimation(ent)
 	if self.m_filmClip == nil then
 		return
 	end
@@ -46,7 +47,7 @@ function pfm.AnimationManager:PlayActorAnimation(ent)
 	animC:PlayAnimation(animManager, anim)
 end
 
-function pfm.AnimationManager:SetTime(t)
+function Component:SetTime(t)
 	if self.m_filmClip == nil then
 		return
 	end
@@ -76,7 +77,7 @@ function pfm.AnimationManager:SetTime(t)
 	end
 end
 
-function pfm.AnimationManager:SetAnimationsDirty()
+function Component:SetAnimationsDirty()
 	for ent in
 		ents.iterator({
 			ents.IteratorFilterComponent(ents.COMPONENT_PFM_ACTOR),
@@ -93,7 +94,7 @@ function pfm.AnimationManager:SetAnimationsDirty()
 	game.update_animations(0.0)
 end
 
-function pfm.AnimationManager:SetAnimationDirty(actor)
+function Component:SetAnimationDirty(actor)
 	local ent = actor:FindEntity()
 	if util.is_valid(ent) == false then
 		return
@@ -107,7 +108,7 @@ function pfm.AnimationManager:SetAnimationDirty(actor)
 	player:SetAnimationDirty()
 end
 
-function pfm.AnimationManager:AddChannel(anim, channelClip, channelPath, type)
+function Component:AddChannel(anim, channelClip, channelPath, type)
 	pfm.log(
 		"Adding animation channel of type '"
 			.. udm.enum_type_to_ascii(type)
@@ -141,7 +142,7 @@ function pfm.AnimationManager:AddChannel(anim, channelClip, channelPath, type)
 	return animChannel
 end
 
-function pfm.AnimationManager:FindAnimation(actor, addIfNotExists)
+function Component:FindAnimation(actor, addIfNotExists)
 	if self.m_filmClip == nil or self.m_filmClip == nil then
 		return
 	end
@@ -159,7 +160,7 @@ function pfm.AnimationManager:FindAnimation(actor, addIfNotExists)
 	return animClip:GetPanimaAnimation(), animClip, newAnim
 end
 
-function pfm.AnimationManager:FindAnimationChannel(actor, path, addIfNotExists, type)
+function Component:FindAnimationChannel(actor, path, addIfNotExists, type)
 	local anim, animClip, newAnim = self:FindAnimation(actor, addIfNotExists)
 	if anim == nil then
 		return
@@ -178,13 +179,13 @@ function pfm.AnimationManager:FindAnimationChannel(actor, path, addIfNotExists, 
 		anim = animClip:GetPanimaAnimation()
 
 		if newChannel then
-			self:CallCallbacks("OnChannelAdded", actor, path)
+			self:InvokeEventCallbacks(Component.EVENT_ON_CHANNEL_ADDED, { actor, path })
 		end
 	end
 	return anim, anim:FindChannel(path), animClip, newChannel
 end
 
-function pfm.AnimationManager:InitChannelWithBaseValue(actor, path, addIfNotExists, type)
+function Component:InitChannelWithBaseValue(actor, path, addIfNotExists, type)
 	local anim, channel = self:FindAnimationChannel(actor, path, addIfNotExists, type)
 	if channel == nil or channel:GetValueCount() > 0 then
 		return
@@ -196,7 +197,7 @@ function pfm.AnimationManager:InitChannelWithBaseValue(actor, path, addIfNotExis
 	channel:AddValue(0.0, value)
 end
 
-function pfm.AnimationManager:SetValueExpression(actor, path, expr, type)
+function Component:SetValueExpression(actor, path, expr, type)
 	local anim, channel = self:FindAnimationChannel(actor, path, (type ~= nil), type)
 	if channel == nil then
 		return false
@@ -217,7 +218,7 @@ function pfm.AnimationManager:SetValueExpression(actor, path, expr, type)
 	return r == true, (r ~= true) and r or nil
 end
 
-function pfm.AnimationManager:GetValueExpression(actor, path)
+function Component:GetValueExpression(actor, path)
 	local anim, channel = self:FindAnimationChannel(actor, path)
 	if channel == nil then
 		return
@@ -225,7 +226,7 @@ function pfm.AnimationManager:GetValueExpression(actor, path)
 	return channel:GetValueExpression()
 end
 
-function pfm.AnimationManager:RemoveChannel(actor, path)
+function Component:RemoveChannel(actor, path)
 	if self.m_filmClip == nil or self.m_filmClip == nil then
 		return false
 	end
@@ -238,11 +239,11 @@ function pfm.AnimationManager:RemoveChannel(actor, path)
 		return false
 	end
 	anim:RemoveChannel(path)
-	self:CallCallbacks("OnChannelRemoved", actor, path)
+	self:InvokeEventCallbacks(Component.EVENT_ON_CHANNEL_REMOVED, { actor, path })
 	return true
 end
 
-function pfm.AnimationManager:RemoveKeyframe(actor, path, keyIdx, baseIndex)
+function Component:RemoveKeyframe(actor, path, keyIdx, baseIndex)
 	if self.m_filmClip == nil or self.m_filmClip == nil then
 		pfm.log(
 			"Unable to apply channel value: No active film clip selected, or film clip has no animations!",
@@ -267,17 +268,19 @@ function pfm.AnimationManager:RemoveKeyframe(actor, path, keyIdx, baseIndex)
 	local keyData = graphCurve:GetKey(baseIndex)
 	editorChannel:RemoveKey(keyData:GetTime(keyIdx), baseIndex)
 
-	self:CallCallbacks("OnKeyframeUpdated", {
-		actor = actor,
-		animation = anim,
-		channel = channel,
-		udmChannel = udmChannel,
-		oldKeyIndex = keyIdx,
-		typeComponentIndex = baseIndex,
+	self:InvokeEventCallbacks(Component.EVENT_ON_KEYFRAME_UPDATED, {
+		{
+			actor = actor,
+			animation = anim,
+			channel = channel,
+			udmChannel = udmChannel,
+			oldKeyIndex = keyIdx,
+			typeComponentIndex = baseIndex,
+		},
 	})
 end
 
-function pfm.AnimationManager:GetChannelValueByIndex(actor, path, idx)
+function Component:GetChannelValueByIndex(actor, path, idx)
 	if self.m_filmClip == nil then
 		return
 	end
@@ -288,7 +291,7 @@ function pfm.AnimationManager:GetChannelValueByIndex(actor, path, idx)
 	return channel:GetTime(idx), channel:GetValue(idx)
 end
 
-function pfm.AnimationManager:GetChannelValueByKeyframeIndex(actor, path, panimaChannel, keyIdx, baseIndex)
+function Component:GetChannelValueByKeyframeIndex(actor, path, panimaChannel, keyIdx, baseIndex)
 	if self.m_filmClip == nil then
 		return
 	end
@@ -314,7 +317,7 @@ function pfm.AnimationManager:GetChannelValueByKeyframeIndex(actor, path, panima
 	return channel:GetTime(valueIdx), channel:GetValue(valueIdx)
 end
 
-function pfm.AnimationManager:UpdateKeyframe(actor, path, panimaChannel, keyIdx, time, value, baseIndex)
+function Component:UpdateKeyframe(actor, path, panimaChannel, keyIdx, time, value, baseIndex)
 	local anim, channel, animClip = self:FindAnimationChannel(actor, path)
 	if channel == nil then
 		return
@@ -400,20 +403,22 @@ function pfm.AnimationManager:UpdateKeyframe(actor, path, panimaChannel, keyIdx,
 			oldKeyIndex = nil
 		end
 
-		self:CallCallbacks("OnKeyframeUpdated", {
-			actor = actor,
-			animation = anim,
-			channel = channel,
-			udmChannel = udmChannel,
-			keyIndex = newKeyIdx or keyIdx,
-			oldKeyIndex = oldKeyIndex,
-			typeComponentIndex = baseIndex,
+		self:InvokeEventCallbacks(Component.EVENT_ON_KEYFRAME_UPDATED, {
+			{
+				actor = actor,
+				animation = anim,
+				channel = channel,
+				udmChannel = udmChannel,
+				keyIndex = newKeyIdx or keyIdx,
+				oldKeyIndex = oldKeyIndex,
+				typeComponentIndex = baseIndex,
+			},
 		})
 		--
 	end
 end
 
-function pfm.AnimationManager:SetChannelValue(actor, path, time, value, udmType, addKey, baseIndex, keyframeValue, data)
+function Component:SetChannelValue(actor, path, time, value, udmType, addKey, baseIndex, keyframeValue, data)
 	data = data or {}
 	if addKey == nil then
 		addKey = true
@@ -462,11 +467,7 @@ function pfm.AnimationManager:SetChannelValue(actor, path, time, value, udmType,
 	local anim, channel, animClip, isNewChannel = self:FindAnimationChannel(actor, path, true, udmType)
 
 	if isNewChannel then
-		self:CallCallbacks("OnAnimationChannelAdded", {
-			actor = actor,
-			animation = anim,
-			channel = channel,
-		})
+		self:InvokeEventCallbacks(Component.EVENT_ON_ANIMATION_CHANNEL_ADDED, { actor, anim, channel })
 	end
 
 	assert(channel ~= nil)
@@ -516,19 +517,21 @@ function pfm.AnimationManager:SetChannelValue(actor, path, time, value, udmType,
 	end
 
 	local udmChannel = animClip:GetChannel(path, udmType)
-	self:CallCallbacks("OnChannelValueChanged", {
-		actor = actor,
-		animation = anim,
-		channel = channel,
-		udmChannel = udmChannel,
-		index = idx,
-		oldIndex = idx,
-		keyIndex = keyIndex,
-		typeComponentIndex = baseIndex,
+	self:InvokeEventCallbacks(Component.EVENT_ON_CHANNEL_VALUE_CHANGED, {
+		{
+			actor = actor,
+			animation = anim,
+			channel = channel,
+			udmChannel = udmChannel,
+			index = idx,
+			oldIndex = idx,
+			keyIndex = keyIndex,
+			typeComponentIndex = baseIndex,
+		},
 	})
 end
 
-function pfm.AnimationManager:SetCurveChannelValueCount(
+function Component:SetCurveChannelValueCount(
 	actor,
 	path,
 	startIndex,
@@ -599,19 +602,19 @@ function pfm.AnimationManager:SetCurveChannelValueCount(
 
 	local udmChannel = animClip:GetChannel(path, type)
 	if suppressCallback ~= true then
-		self:CallCallbacks("OnChannelValueChanged", actor, anim, channel, udmChannel)
+		self:InvokeEventCallbacks(Component.EVENT_ON_CHANNEL_VALUE_CHANGED, {
+			{
+				actor = actor,
+				animation = anim,
+				channel = channel,
+				udmChannel = udmChannel,
+			},
+		})
 	end
 	return true, endIndex
 end
 
-function pfm.AnimationManager:SetCurveRangeChannelValueCount(
-	actor,
-	path,
-	startTime,
-	endTime,
-	numValues,
-	suppressCallback
-)
+function Component:SetCurveRangeChannelValueCount(actor, path, startTime, endTime, numValues, suppressCallback)
 	if self.m_filmClip == nil or self.m_filmClip == nil then
 		pfm.log(
 			"Unable to apply channel value: No active film clip selected, or film clip has no animations!",
@@ -651,7 +654,7 @@ function pfm.AnimationManager:SetCurveRangeChannelValueCount(
 	return self:SetCurveChannelValueCount(actor, path, startIndex, endIndex, numValues, suppressCallback, true)
 end
 
-function pfm.AnimationManager:SetRawAnimationData(actor, path, times, values, valueType)
+function Component:SetRawAnimationData(actor, path, times, values, valueType)
 	if #times > 1 then
 		local anim, actorChannel, animClip = self:FindAnimationChannel(actor, path)
 		if actorChannel ~= nil then
@@ -671,10 +674,10 @@ function pfm.AnimationManager:SetRawAnimationData(actor, path, times, values, va
 		self:SetChannelValue(actor, path, t, v, valueType, false, nil)
 	end
 	self:SetAnimationDirty(actor)
-	self:CallCallbacks("OnActorPropertyChanged", actor, path)
+	self:InvokeEventCallbacks(Component.EVENT_ON_ACTOR_PROPERTY_CHANGED, { actor, path })
 end
 
-function pfm.AnimationManager:TestSetRawAnimationData(actor, path, times, values, valueType)
+function Component:TestSetRawAnimationData(actor, path, times, values, valueType)
 	local t = {}
 	local minTime = math.huge
 	local maxTime = -math.huge
@@ -760,3 +763,16 @@ function pfm.AnimationManager:TestSetRawAnimationData(actor, path, times, values
 		})
 	end
 end
+ents.COMPONENT_PFM_ANIMATION_MANAGER = ents.register_component("pfm_animation_manager", Component)
+Component.EVENT_ON_ACTOR_PROPERTY_CHANGED =
+	ents.register_component_event(ents.COMPONENT_PFM_ANIMATION_MANAGER, "on_actor_property_changed")
+Component.EVENT_ON_ANIMATION_CHANNEL_ADDED =
+	ents.register_component_event(ents.COMPONENT_PFM_ANIMATION_MANAGER, "on_animation_channel_added")
+Component.EVENT_ON_CHANNEL_ADDED =
+	ents.register_component_event(ents.COMPONENT_PFM_ANIMATION_MANAGER, "on_channel_added")
+Component.EVENT_ON_CHANNEL_REMOVED =
+	ents.register_component_event(ents.COMPONENT_PFM_ANIMATION_MANAGER, "on_channel_removed")
+Component.EVENT_ON_CHANNEL_VALUE_CHANGED =
+	ents.register_component_event(ents.COMPONENT_PFM_ANIMATION_MANAGER, "on_channel_value_changed")
+Component.EVENT_ON_KEYFRAME_UPDATED =
+	ents.register_component_event(ents.COMPONENT_PFM_ANIMATION_MANAGER, "on_keyframe_updated")

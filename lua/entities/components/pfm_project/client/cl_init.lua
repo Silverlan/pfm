@@ -127,6 +127,7 @@ function ents.PFMProject:Start()
 	self:Reset()
 
 	debug.start_profiling_task("pfm_start_game_view")
+	self:AddEntityComponent("pfm_animation_manager")
 	local ent = ents.create("pfm_track")
 	local trackC = ent:GetComponent(ents.COMPONENT_PFM_TRACK)
 	trackC:Setup(self.m_project:GetSession(), nil, self)
@@ -155,6 +156,9 @@ end
 function ents.PFMProject:GetProjectManager()
 	return self.m_projectManager
 end
+function ents.PFMProject:GetAnimationManager()
+	return self:GetEntityComponent(ents.COMPONENT_PFM_ANIMATION_MANAGER)
+end
 
 function ents.PFMProject:ChangePlaybackOffset(offset, gameViewFlags)
 	if offset == self.m_prevPlaybackOffset then
@@ -174,6 +178,7 @@ function ents.PFMProject:ChangePlaybackOffset(offset, gameViewFlags)
 end
 
 function ents.PFMProject:Reset()
+	self:GetEntity():RemoveComponent("pfm_animation_manager")
 	util.remove(self.m_entRootTrack)
 	self:SetPlaybackOffset(math.huge)
 end

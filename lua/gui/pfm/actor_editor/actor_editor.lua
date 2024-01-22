@@ -435,40 +435,60 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_leftRightWeightSlider = gui.create("WIPFMWeightSlider", self.m_animSetControls)
 	self.m_specialPropertyIcons = {}
 
-	local animManager = tool.get_filmmaker():GetAnimationManager()
-	self.m_callbacks = {}
-	table.insert(
-		self.m_callbacks,
-		animManager:AddCallback("OnChannelAdded", function(actor, path)
-			local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
-			local componentId = (componentName ~= nil) and ents.get_component_id(componentName) or nil
-			if componentId == nil then
-				return
-			end
-			self:UpdatePropertyIcons(
-				actor:GetUniqueId(),
-				componentId,
-				"ec/" .. componentName .. "/" .. pathName:GetString()
-			)
-		end)
-	)
-	table.insert(
-		self.m_callbacks,
-		animManager:AddCallback("OnChannelRemoved", function(actor, path)
-			local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
-			local componentId = (componentName ~= nil) and ents.get_component_id(componentName) or nil
-			if componentId == nil then
-				return
-			end
-			self:UpdatePropertyIcons(
-				actor:GetUniqueId(),
-				componentId,
-				"ec/" .. componentName .. "/" .. pathName:GetString()
-			)
-		end)
-	)
+	local pm = tool.get_filmmaker()
+	pm:AddCallback("OnGameViewReloaded", function()
+		self:InitAnimManagerListeners()
+	end)
+	self:InitAnimManagerListeners()
 
 	self:SetMouseInputEnabled(true)
+end
+function gui.PFMActorEditor:ClearAnimManagerListeners()
+	if self.m_animManagerListeners == nil then
+		return
+	end
+	util.remove(self.m_animManagerListeners)
+	self.m_animManagerListeners = nil
+end
+function gui.PFMActorEditor:InitAnimManagerListeners()
+	self:ClearAnimManagerListeners()
+
+	self.m_animManagerListeners = {}
+	local pm = pfm.get_project_manager()
+	local animManager = pm:GetAnimationManager()
+	if animManager == nil then
+		return
+	end
+	table.insert(
+		self.m_animManagerListeners,
+		animManager:AddEventListener(ents.PFMAnimationManager.EVENT_ON_CHANNEL_ADDED, function(actor, path)
+			local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+			local componentId = (componentName ~= nil) and ents.get_component_id(componentName) or nil
+			if componentId == nil then
+				return
+			end
+			self:UpdatePropertyIcons(
+				actor:GetUniqueId(),
+				componentId,
+				"ec/" .. componentName .. "/" .. pathName:GetString()
+			)
+		end)
+	)
+	table.insert(
+		self.m_animManagerListeners,
+		animManager:AddEventListener(ents.PFMAnimationManager.EVENT_ON_CHANNEL_REMOVED, function(actor, path)
+			local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+			local componentId = (componentName ~= nil) and ents.get_component_id(componentName) or nil
+			if componentId == nil then
+				return
+			end
+			self:UpdatePropertyIcons(
+				actor:GetUniqueId(),
+				componentId,
+				"ec/" .. componentName .. "/" .. pathName:GetString()
+			)
+		end)
+	)
 end
 function gui.PFMActorEditor:GetToolIconElement()
 	return self.m_btTools
@@ -2585,8 +2605,8 @@ end
 function gui.PFMActorEditor:OnRemove()
 	util.remove(self.m_cbCamLinkGameplayCb)
 	util.remove(self.m_cameraLinkOutlineElement)
-	util.remove(self.m_callbacks)
 	util.remove(self.m_filmClipCallbacks)
+	self:ClearAnimManagerListeners()
 end
 gui.register("WIPFMActorEditor", gui.PFMActorEditor)
 

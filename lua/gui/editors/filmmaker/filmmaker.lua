@@ -367,21 +367,6 @@ function gui.WIFilmmaker:OnInitialize()
 	pfm.ProjectManager.OnInitialize(self)
 	self:SetCachedMode(false)
 
-	self:GetAnimationManager():AddCallback("OnAnimationChannelAdded", function()
-		local actorEditor = self:GetActorEditor()
-		if util.is_valid(actorEditor) then
-			actorEditor:SetPropertyAnimationOverlaysDirty()
-		end
-	end)
-	self:GetAnimationManager():AddCallback("OnActorPropertyChanged", function(actor, path)
-		pfm.tag_render_scene_as_dirty()
-
-		local actorEditor = self:GetActorEditor()
-		if util.is_valid(actorEditor) then
-			actorEditor:UpdateActorProperty(actor, path)
-		end
-	end)
-
 	if self:ShouldDisplayNotification("initial_tutorial_message") then
 		time.create_simple_timer(5.0, function()
 			if self:IsValid() == false then
@@ -1194,6 +1179,34 @@ function gui.WIFilmmaker:OnGameViewReloaded()
 	apply_viewport(self:GetViewport())
 	apply_viewport(self:GetSecondaryViewport())
 	apply_viewport(self:GetTertiaryViewport())
+
+	local animManager = self:GetAnimationManager()
+	if animManager ~= nil then
+		util.remove(self.m_cbOnAnimChannelAdded)
+		self.m_cbOnAnimChannelAdded = animManager:AddEventListener(
+			ents.PFMAnimationManager.EVENT_ON_ANIMATION_CHANNEL_ADDED,
+			function()
+				local actorEditor = self:GetActorEditor()
+				if util.is_valid(actorEditor) then
+					actorEditor:SetPropertyAnimationOverlaysDirty()
+				end
+			end
+		)
+		util.remove(self.m_cbOnActorPropertyChanged)
+		self.m_cbOnActorPropertyChanged = animManager:AddEventListener(
+			ents.PFMAnimationManager.EVENT_ON_ACTOR_PROPERTY_CHANGED,
+			function(actor, path)
+				pfm.tag_render_scene_as_dirty()
+
+				local actorEditor = self:GetActorEditor()
+				if util.is_valid(actorEditor) then
+					actorEditor:UpdateActorProperty(actor, path)
+				end
+			end
+		)
+	end
+
+	self:CallCallbacks("OnGameViewReloaded")
 end
 function gui.WIFilmmaker:OpenFileInUdmEditor(filePath)
 	self:OpenWindow("element_viewer")

@@ -295,12 +295,9 @@ function ents.PFMFilmClip:CreateActor(actor)
 	actorC:OnOffsetChanged(self:GetOffset(), ents.PFMProject.GAME_VIEW_FLAG_NONE)
 
 	local projectC = self:GetProject()
-	local pm = util.is_valid(projectC) and projectC:GetProjectManager() or nil
-	if pm ~= nil then
-		local animManager = pm:GetAnimationManager()
-		if animManager ~= nil then
-			animManager:PlayActorAnimation(entActor)
-		end
+	local animManager = self:GetAnimationManager()
+	if animManager ~= nil then
+		animManager:PlayActorAnimation(entActor)
 	end
 
 	self:BroadcastEvent(ents.PFMFilmClip.EVENT_ON_ACTOR_CREATED, { actorC })
@@ -326,6 +323,14 @@ function ents.PFMFilmClip:GetProject()
 		return
 	end
 	return trackGroupC:GetProject()
+end
+
+function ents.PFMFilmClip:GetAnimationManager()
+	local projectC = self:GetProject()
+	if util.is_valid(projectC) == false then
+		return
+	end
+	return projectC:GetAnimationManager()
 end
 
 function ents.PFMFilmClip:GetProjectManager()

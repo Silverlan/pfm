@@ -9,7 +9,6 @@
 include("game_view.lua")
 include("/pfm/animation_cache.lua")
 include("/pfm/performance_cache.lua")
-include("/pfm/panima.lua")
 
 pfm = pfm or {}
 
@@ -21,7 +20,6 @@ end
 function pfm.ProjectManager:OnInitialize()
 	self.m_gameScene = game.get_scene()
 	self.m_performanceCache = pfm.PerformanceCache()
-	self.m_animManager = pfm.AnimationManager()
 
 	gui.close_main_menu()
 	self.m_cbDisableDefaultConsoleInput = input.add_callback("OnCharInput", function(c)
@@ -58,7 +56,11 @@ function pfm.ProjectManager:CreateInitialProject()
 	self:CreateNewProject()
 end
 function pfm.ProjectManager:GetAnimationManager()
-	return self.m_animManager
+	local ent = self:GetGameView()
+	if util.is_valid(ent) == false then
+		return
+	end
+	return ent:GetComponent(ents.COMPONENT_PFM_ANIMATION_MANAGER)
 end
 function pfm.ProjectManager:LoadMap(mapName)
 	pfm.log("Loading map '" .. mapName .. "'...", pfm.LOG_CATEGORY_PFM)
@@ -375,7 +377,10 @@ function pfm.ProjectManager:SetTimeOffset(offset)
 	offset = self:TranslateGameViewOffset(offset)
 	local settings = session:GetSettings()
 	settings:SetPlayheadOffset(offset)
-	self.m_animManager:SetTime(offset)
+	local animManager = self:GetAnimationManager()
+	if animManager ~= nil then
+		animManager:SetTime(offset)
+	end
 end
 function pfm.ProjectManager:GetSettings()
 	local session = self:GetSession()
@@ -398,7 +403,6 @@ function pfm.ProjectManager:InitializeProject(project)
 	pfm.log("Initializing PFM project...", pfm.LOG_CATEGORY_PFM)
 	debug.start_profiling_task("pfm_initialize_project")
 
-	self.m_animManager:Reset()
 	pfm.undoredo.clear()
 	self:ResetEditState()
 	local session = self:GetSession()
@@ -415,7 +419,10 @@ function pfm.ProjectManager:InitializeProject(project)
 	local projectC = entScene:GetComponent(ents.COMPONENT_PFM_PROJECT)
 	projectC:AddEventCallback(ents.PFMProject.EVENT_ON_FILM_CLIP_CREATED, function(filmClipC)
 		self.m_activeGameViewFilmClip = filmClipC:GetClipData()
-		self.m_animManager:SetFilmClip(self.m_activeGameViewFilmClip)
+		local animManager = self:GetAnimationManager()
+		if animManager ~= nil then
+			animManager:SetFilmClip(self.m_activeGameViewFilmClip)
+		end
 		self:OnGameViewFilmClipChanged(filmClipC:GetClipData())
 	end)
 	self.m_project = project
@@ -428,7 +435,10 @@ function pfm.ProjectManager:InitializeProject(project)
 	if session ~= nil then
 		local filmTrack = session:GetFilmTrack()
 		if filmTrack ~= nil then
-			self.m_animManager:Initialize(filmTrack)
+			local animManager = self:GetAnimationManager()
+			if animManager ~= nil then
+				animManager:Initialize(filmTrack)
+			end
 			--[[filmTrack:GetFilmClipsAttr():AddChangeListener(function(newEl)
 				self:OnFilmClipAdded(newEl)
 				self:ReloadGameView() -- TODO: We don't really need to refresh the entire game view, just the current film clip would be sufficient.
