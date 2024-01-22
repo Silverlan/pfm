@@ -59,6 +59,7 @@ function Component:GetProjectData()
 	return self.m_udmProject
 end
 function Component:Clear()
+	self.m_updatePlaybackOffset = nil
 	util.remove(self.m_entScene)
 	self:GetEntity():RemoveComponent("pfm_project")
 	util.remove(self.m_cbOnParentPlaybackOffsetChanged)
@@ -70,6 +71,33 @@ end
 function Component:OnEntitySpawn()
 	self:InitializeProject()
 end
+function Component:OnTick(dt)
+	self:SetTickPolicy(ents.TICK_POLICY_NEVER)
+
+	if self.m_updatePlaybackOffset then
+		-- This scene may be a child of another scene/project, in which case we'll
+		-- link our playback offset to it.
+		local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
+		local projectCParent = (actorC ~= nil) and actorC:GetProject() or nil
+		if util.is_valid(projectCParent) then
+			util.remove(self.m_cbOnParentPlaybackOffsetChanged)
+			self.m_cbOnParentPlaybackOffsetChanged = projectCParent:AddEventCallback(
+				ents.PFMProject.EVENT_ON_PLAYBACK_OFFSET_CHANGED,
+				function(offset)
+					local projectC = self:GetEntityComponent(ents.COMPONENT_PFM_PROJECT)
+					if projectC == nil then
+						return
+					end
+					projectC:ChangePlaybackOffset(offset)
+				end
+			)
+			local projectC = self:GetEntityComponent(ents.COMPONENT_PFM_PROJECT)
+			if projectC ~= nil then
+				projectC:ChangePlaybackOffset(projectCParent:GetPlaybackOffset())
+			end
+		end
+	end
+end
 function Component:InitializeProject()
 	local ent = self:GetEntity()
 	if ent:IsSpawned() == false or self.m_udmProject == nil then
@@ -80,21 +108,9 @@ function Component:InitializeProject()
 	projectC:SetProjectData(self.m_udmProject)
 	projectC:Start()
 
-	-- This scene may be a child of another scene/project, in which case we'll
-	-- link our playback offset to it.
-	local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
-	local projectCParent = (actorC ~= nil) and actorC:GetProject() or nil
-	if util.is_valid(projectCParent) then
-		self.m_cbOnParentPlaybackOffsetChanged = projectCParent:AddEventCallback(
-			ents.PFMProject.EVENT_ON_PLAYBACK_OFFSET_CHANGED,
-			function(offset)
-				local projectC = self:GetEntityComponent(ents.COMPONENT_PFM_PROJECT)
-				if projectC == nil then
-					return
-				end
-				projectC:ChangePlaybackOffset(offset)
-			end
-		)
-	end
+	-- Changing the playback offset immediately here may cause a crash for an unknown reason.
+	-- We'll delay it to the next tick instead.
+	self.m_updatePlaybackOffset = true
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 ents.COMPONENT_PFM_SCENE = ents.register_component("pfm_scene", Component)
