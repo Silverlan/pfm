@@ -171,7 +171,7 @@ function pfm.ProjectManager:LoadProject(fileName, ignoreMap)
 		self:CloseProject()
 		return self:CreateNewProject()
 	end
-	self:PrecacheSessionAssets(session)
+	ents.PFMProject.precache_session_assets(session)
 	if session ~= nil then
 		self.m_animationCache = pfm.SceneAnimationCache(session)
 	end
@@ -239,59 +239,6 @@ function pfm.ProjectManager:ClearAnimationCache(projectFileName)
 		return
 	end
 	file.delete(self:GetAnimationCacheFilePath())
-end
-function pfm.ProjectManager:PrecacheSessionAssets(session)
-	debug.start_profiling_task("pfm_precache_session_assets")
-	pfm.log("Precaching session assets...", pfm.LOG_CATEGORY_PFM)
-	local track = session:GetFilmTrack()
-	if track ~= nil then
-		for _, filmClip in ipairs(track:GetFilmClips()) do
-			pfm.log("Precaching assets for film clip '" .. tostring(filmClip) .. "'...", pfm.LOG_CATEGORY_PFM)
-			local actors = filmClip:GetActorList()
-			for _, actor in ipairs(actors) do
-				local component = actor:FindComponent("model")
-				if component ~= nil then
-					local mdlName =
-						asset.normalize_asset_name(component:GetMemberValue("model") or "", asset.TYPE_MODEL)
-					if #mdlName > 0 then
-						pfm.log(
-							"Precaching model '" .. mdlName .. "' for actor '" .. tostring(actor) .. "'...",
-							pfm.LOG_CATEGORY_PFM
-						)
-						if game.precache_model(mdlName) == false then
-							pfm.log(
-								"Unable to precache model '" .. mdlName .. "'!",
-								pfm.LOG_CATEGORY_PFM,
-								pfm.LOG_SEVERITY_WARNING
-							)
-						end
-					end
-				end
-			end
-		end
-	end
-	debug.stop_profiling_task()
-end
-function pfm.ProjectManager:WaitForSessionAssets(session)
-	debug.start_profiling_task("pfm_wait_for_session_assets")
-	pfm.log("Waiting for session assets...", pfm.LOG_CATEGORY_PFM)
-	local track = session:GetFilmTrack()
-	if track ~= nil then
-		for _, filmClip in ipairs(track:GetFilmClips()) do
-			local actors = filmClip:GetActorList()
-			for _, actor in ipairs(actors) do
-				local component = actor:FindComponent("model")
-				if component ~= nil then
-					local mdlName =
-						asset.normalize_asset_name(component:GetMemberValue("model") or "", asset.TYPE_MODEL)
-					if #mdlName > 0 then
-						asset.wait_until_loaded(mdlName, asset.TYPE_MODEL)
-					end
-				end
-			end
-		end
-	end
-	debug.stop_profiling_task()
 end
 function pfm.ProjectManager:LoadAnimationCache(projectFileName)
 	if self.m_animationCacheLoaded then
@@ -401,7 +348,7 @@ function pfm.ProjectManager:InitializeProject(project)
 	local filmTrack = (session ~= nil) and session:GetFilmTrack() or nil
 
 	if session ~= nil then
-		self:WaitForSessionAssets(session)
+		ents.PFMProject.wait_for_session_assets(session)
 	end
 	local entScene = self:StartGameView(project)
 	if entScene == nil then

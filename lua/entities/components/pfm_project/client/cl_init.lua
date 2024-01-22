@@ -12,6 +12,8 @@ include_component("pfm_film_clip")
 
 local Component = util.register_class("ents.PFMProject", BaseEntityComponent)
 
+include("precache.lua")
+
 Component:RegisterMember("PlaybackOffset", ents.MEMBER_TYPE_FLOAT, math.huge, {
 	onChange = function(self)
 		self:OnOffsetChanged()
@@ -173,6 +175,10 @@ function Component:GetProject()
 	return self.m_project
 end
 
+function Component:GetSession()
+	return (self.m_project ~= nil) and self.m_project:GetSession() or nil
+end
+
 function Component:OnOffsetChanged()
 	if self.m_skipOffsetOnChangeCallback then
 		return
@@ -199,7 +205,7 @@ function Component:ClearActiveGameViewFilmClip()
 	end
 end
 function Component:ChangePlaybackOffset(offset, gameViewFlags)
-	if offset == self.m_prevPlaybackOffset then
+	if offset == self.m_prevPlaybackOffset or self.m_project == nil then
 		return
 	end
 
