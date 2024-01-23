@@ -530,22 +530,24 @@ function gui.PFMCoreViewportBase:OnThink()
 
 		local targetPose
 		if self:IsSceneCamera() then
-			local filmmaker = pfm.get_project_manager()
-			local actorEditor = filmmaker:GetActorEditor()
-			if util.is_valid(actorEditor) then
-				local actor = self:GetSceneCameraActorData()
-				if actor ~= nil then
-					self.m_inCameraLinkMode = true
-					local workCam = self:GetWorkCamera()
-					if util.is_valid(workCam) then
-						self.m_cameraLinkModeWorkPose = workCam:GetEntity():GetPose()
-					end
-					self.m_cameraLinkOriginalActorPose = actor:GetTransform()
+			local pm = pfm.get_project_manager()
+			if util.is_valid(pm) and pm:IsEditor() then
+				local actorEditor = pm:GetActorEditor()
+				if util.is_valid(actorEditor) then
+					local actor = self:GetSceneCameraActorData()
+					if actor ~= nil then
+						self.m_inCameraLinkMode = true
+						local workCam = self:GetWorkCamera()
+						if util.is_valid(workCam) then
+							self.m_cameraLinkModeWorkPose = workCam:GetEntity():GetPose()
+						end
+						self.m_cameraLinkOriginalActorPose = actor:GetTransform()
 
-					local cam = self:GetSceneCamera()
-					targetPose = cam:GetEntity():GetPose()
-					self:SwitchToWorkCamera()
-					actorEditor:ToggleCameraLink(actor)
+						local cam = self:GetSceneCamera()
+						targetPose = cam:GetEntity():GetPose()
+						self:SwitchToWorkCamera()
+						actorEditor:ToggleCameraLink(actor)
+					end
 				end
 			end
 		end
