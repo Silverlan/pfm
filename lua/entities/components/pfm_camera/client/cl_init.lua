@@ -290,13 +290,17 @@ function Component:UpdateModel(updateBuffers)
 	end
 end
 function Component:SetFrustumModelVisible(visible)
+	local actorC = self:GetEntity():GetComponent(ents.COMPONENT_PFM_ACTOR)
+	if actorC ~= nil and actorC:IsInEditor() then
+		-- Don't display wireframe model if we're not in the editor
+		return
+	end
 	if visible then
 		local renderC = self:GetEntity():AddComponent(ents.COMPONENT_RENDER)
 		renderC:SetCastShadows(false)
 		renderC:AddToRenderGroup("pfm_editor_overlay")
 	end
 
-	local actorC = self:GetEntity():GetComponent("pfm_actor")
 	if actorC ~= nil then
 		actorC:SetDefaultRenderMode(visible and game.SCENE_RENDER_PASS_WORLD or game.SCENE_RENDER_PASS_NONE, true)
 	end

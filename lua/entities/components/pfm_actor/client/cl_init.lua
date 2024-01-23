@@ -64,6 +64,9 @@ function Component:Initialize()
 	self.m_flexControllerChannels = {}
 	self.m_selected = false
 end
+function Component:IsInEditor()
+	return self:GetEntity():HasComponent(ents.COMPONENT_PFM_EDITOR_ACTOR)
+end
 function Component:OnComponentMembersChanged(c)
 	local pm = tool.get_filmmaker()
 	local actorEditor = util.is_valid(pm) and pm:GetActorEditor() or nil
