@@ -650,7 +650,21 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 							end
 							self:TagRenderSceneAsDirty()
 						end
-						controlData.set(component, value, true, false)
+						if value == nil then
+							-- This may happen if the component property definition has
+							-- been changed after the project has been saved
+							pfm.log(
+								"Value for property '"
+									.. path
+									.. "' of actor '"
+									.. tostring(actorData.actor:GetUniqueId())
+									.. "' is nil!",
+								pfm.LOG_CATEGORY_PFM,
+								pfm.LOG_SEVERITY_WARNING
+							)
+						else
+							controlData.set(component, value, true, false)
+						end
 						local ctrl, elChild = self:AddControl(
 							entActor,
 							c,
