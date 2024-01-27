@@ -15,7 +15,7 @@ Component:RegisterMember("ImpostorModel", udm.TYPE_STRING, "", {
 		local pm = pfm.get_project_manager()
 		local mdlName = c:GetImpostorModel()
 		if actorC ~= nil and util.is_valid(pm) and #mdlName > 0 then
-			pm:ChangeActorModel(actorC, mdlName)
+			util.retarget.change_actor_model(actorC, mdlName)
 		end
 	end,
 	metaData = {
@@ -84,7 +84,8 @@ end
 
 function Component:SetImpostor(impostorC)
 	if
-		util.is_valid(impostorC) == util.is_valid(self.m_impostorC) and util.is_same_object(impostorC, self.m_impostorC)
+		util.is_valid(impostorC) == util.is_valid(self.m_impostorC)
+		and util.is_same_object(impostorC, self.m_impostorC)
 	then
 		return
 	end
