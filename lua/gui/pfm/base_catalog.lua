@@ -146,6 +146,10 @@ function Element:OnInitialize()
 	self:EnableThinking()
 	p:ResetControls()
 end
+function Element:SetPath(path)
+	self.m_explorer:SetPath(path)
+	self.m_explorer:Update()
+end
 function Element:SetExternalAssetsEnabled(enabled)
 	self.m_externalAssetsEnabled = enabled
 end
