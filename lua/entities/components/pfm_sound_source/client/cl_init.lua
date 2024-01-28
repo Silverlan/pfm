@@ -82,6 +82,15 @@ function ents.PFMSoundSource:OnOffsetChanged(offset)
 	if snd == nil then
 		return
 	end
+	if snd:IsPlaying() == false then
+		-- Sound has probably reached its end, but we may have changed its offset to before
+		-- its end time, so we'll restart it here
+		-- TODO: Find a better solution
+		snd:Play()
+		snd:SetOffset(offset)
+		return
+	end
+
 	if math.abs(offset - snd:GetOffset()) > 0.05 then
 		snd:SetOffset(offset)
 	end
