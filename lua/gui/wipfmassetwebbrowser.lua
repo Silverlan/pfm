@@ -320,8 +320,8 @@ function Element:ImportDownloadAssets(path)
 			end
 			self.m_log:AppendText(msg)
 		end,
-		onComplete = function()
-			self:CallCallbacks("OnDownloadAssetsImported")
+		onComplete = function(importedAssets)
+			self:CallCallbacks("OnDownloadAssetsImported", importedAssets)
 		end,
 	})
 end

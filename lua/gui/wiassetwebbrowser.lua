@@ -124,8 +124,8 @@ end
 
 function Element:ImportDownloadAssets(path)
 	util.import_assets(path:GetString(), {
-		onComplete = function()
-			self:CallCallbacks("OnDownloadAssetsImported")
+		onComplete = function(importedAssets)
+			self:CallCallbacks("OnDownloadAssetsImported", importedAssets)
 		end,
 	})
 end
