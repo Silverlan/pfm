@@ -31,13 +31,13 @@ function PlaybackState:SetState(state)
 		self.m_cbThink:Remove()
 	end
 	if state == PlaybackState.STATE_PLAYING then
-		local tStart = time.real_time()
+		local tStart = time.cur_time()
 		self.m_cbThink = game.add_callback("DrawFrame", function()
 			if self:IsPlaying() == false then
 				return
 			end
-			local dt = time.real_time() - tStart
-			tStart = time.real_time()
+			local dt = time.cur_time() - tStart
+			tStart = time.cur_time()
 			self:CallCallbacks("OnTimeAdvance", dt)
 		end)
 	end
