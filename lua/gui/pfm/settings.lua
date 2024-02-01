@@ -8,11 +8,7 @@
 
 include("controls_menu.lua")
 
-local Element = util.register_class("gui.PFMSettings", gui.Base)
-
-function Element:__init()
-	gui.Base.__init(self)
-end
+local Element = util.register_class("gui.PFMBaseSettings", gui.Base)
 function Element:OnRemove()
 	util.remove(self.m_cvarCallbacks)
 end
@@ -26,8 +22,43 @@ function Element:OnInitialize()
 	p:SetAutoFillContentsToWidth(true)
 	p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
+end
+function Element:AddToggleControl(name, identifier, conVar, defaultValue, callback)
+	local p = self.m_settingsBox:AddToggleControl(name, identifier, defaultValue, function(el, checked)
+		console.run(conVar, checked and "1" or "0")
+	end)
+	local cb = console.add_change_callback(conVar, function(old, new)
+		if self.m_skipConsoleCallbacks then
+			return
+		end
+		p:SetChecked(new)
+	end)
+	table.insert(self.m_cvarCallbacks, cb)
+	return p
+end
+function Element:AddSliderControl(name, identifier, conVar, defaultValue, min, max, callback, stepSize, integer)
+	local p = self.m_settingsBox:AddSliderControl(name, identifier, defaultValue, min, max, callback, stepSize, integer)
+	local cb = console.add_change_callback(conVar, function(old, new)
+		if self.m_skipConsoleCallbacks then
+			return
+		end
+		p:SetValue(new)
+	end)
+	table.insert(self.m_cvarCallbacks, cb)
+	return p
+end
+function Element:SetConVar(cmd, val)
+	self.m_skipConsoleCallbacks = true
+	console.run(cmd, val)
+	self.m_skipConsoleCallbacks = nil
+end
+
+local Element = util.register_class("gui.PFMSettings", gui.PFMBaseSettings)
+function Element:OnInitialize()
+	gui.PFMBaseSettings.OnInitialize(self)
 
 	local skipCallbacks = true
+	local p = self.m_settingsBox
 	local elWindowMode, wrapper
 	elWindowMode, wrapper = p:AddDropDownMenu(
 		locale.get_text("window_mode"),
@@ -193,40 +224,5 @@ function Element:OnInitialize()
 
 	p:ResetControls()
 	skipCallbacks = false
-end
-function Element:AddToggleControl(name, identifier, conVar, defaultValue, callback)
-	local p = self.m_settingsBox:AddToggleControl(name, identifier, defaultValue, function(el, checked)
-		console.run(conVar, checked and "1" or "0")
-	end)
-	local cb = console.add_change_callback(conVar, function(old, new)
-		if self.m_skipConsoleCallbacks then
-			return
-		end
-		p:SetChecked(new)
-	end)
-	table.insert(self.m_cvarCallbacks, cb)
-	return p
-end
-function Element:AddSliderControl(name, identifier, conVar, defaultValue, min, max, callback, stepSize, integer)
-	local p = self.m_settingsBox:AddSliderControl(name, identifier, defaultValue, min, max, callback, stepSize, integer)
-	local cb = console.add_change_callback(conVar, function(old, new)
-		if self.m_skipConsoleCallbacks then
-			return
-		end
-		p:SetValue(new)
-	end)
-	table.insert(self.m_cvarCallbacks, cb)
-	return p
-end
-function Element:SetConVar(cmd, val)
-	self.m_skipConsoleCallbacks = true
-	console.run(cmd, val)
-	self.m_skipConsoleCallbacks = nil
-end
-function Element:GetPlayControls()
-	return self.m_playbackControls
-end
-function Element:GetVideoPlayerElement()
-	return self.m_videoPlayer
 end
 gui.register("WIPFMSettings", Element)
