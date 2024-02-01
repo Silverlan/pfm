@@ -1460,7 +1460,7 @@ function gui.WIFilmmaker:SelectActor(actor, deselectCurrent, property, goToActor
 	else
 		local actorEditor = self:GetActorEditor()
 		if util.is_valid(actorEditor) then
-			actorEditor:InvokeThink()
+			actorEditor:InvokeThink(game.get_draw_command_buffer())
 		end
 	end
 end
