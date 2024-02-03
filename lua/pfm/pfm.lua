@@ -14,9 +14,6 @@ pfm.impl.projects = pfm.impl.projects or {}
 pfm.PROJECT_FILE_IDENTIFIER = "PFM"
 pfm.PROJECT_FILE_FORMAT_VERSION = 2
 
-pfm.PATREON_JOIN_URL = "https://www.patreon.com/silverlan/join"
-pfm.PATREON_SETTINGS_URL = "https://wiki.pragma-engine.com/supporter/login.php"
-
 pfm.VERSION = util.Version(0, 8, 1)
 pfm.VERSION_DATE = "23-11-26"
 pfm.PROJECT_TITLE = "PFM"

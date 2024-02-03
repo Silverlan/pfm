@@ -163,11 +163,6 @@ function gui.WIFilmmaker:OnInitialize()
 	patronTickerContainer:SetQueryUrl("https://pragma-engine.com/patreon/request_patrons.php")
 	self.m_supporterTicker = patronTickerContainer
 	local engineInfo = engine.get_info()
-	infoBar:AddIcon("third_party/patreon_logo_small", pfm.PATREON_JOIN_URL, "Patreon", function(url)
-		self:ShowMatureContentPrompt(function()
-			util.open_url_in_browser(url)
-		end)
-	end)
 
 	-- infoBar:AddIcon("third_party/twitter_logo",engineInfo.twitterURL,"Twitter")
 	-- infoBar:AddIcon("third_party/reddit_logo",engineInfo.redditURL,"Reddit")
