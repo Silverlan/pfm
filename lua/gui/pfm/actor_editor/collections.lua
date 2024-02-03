@@ -238,7 +238,7 @@ function gui.PFMActorEditor:FindCollection(name, createIfNotExists, parentGroup)
 	if type(name) == "table" then
 		local collections = name
 		if #collections == 0 then
-			return root
+			return self:GetCollectionUdmObject(root), root
 		end
 		local item = root
 		for _, colName in ipairs(collections) do
@@ -246,12 +246,14 @@ function gui.PFMActorEditor:FindCollection(name, createIfNotExists, parentGroup)
 			if parentGroup == nil then
 				break
 			end
-			item = self:FindCollection(colName, createIfNotExists, parentGroup)
+			local _, itemSub = self:FindCollection(colName, createIfNotExists, parentGroup)
+			item = itemSub
 			if util.is_valid(item) == false then
 				break
 			end
 		end
-		return item or root
+		item = item or root
+		return self:GetCollectionUdmObject(item), item
 	end
 	if util.is_valid(root) == false then
 		return
