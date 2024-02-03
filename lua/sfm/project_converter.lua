@@ -301,7 +301,7 @@ sfm.register_element_type_conversion(sfm.ProjectedLight, function(converter, sfm
 
 	local cL = pfmActor:AddComponentType("light")
 	cL:SetMemberValue("intensity", udm.TYPE_FLOAT, sfmLight:GetIntensity())
-	cL:SetMemberValue("intensityType", udm.TYPE_STRING, "Candela")
+	cL:SetMemberValue("intensityType", udm.TYPE_UINT8, ents.LightComponent.INTENSITY_TYPE_CANDELA)
 	cL:SetMemberValue("castShadows", udm.TYPE_BOOLEAN, sfmLight:ShouldCastShadows())
 
 	local cLs = pfmActor:AddComponentType("light_spot")
