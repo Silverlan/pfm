@@ -6,6 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+pfm.udm.TimeFrame.EPSILON = 0.001
 function pfm.udm.TimeFrame.localize_offset(tfStart, tfOffset, tfScale, offset)
 	return (offset - tfStart + tfOffset) * tfScale
 end
@@ -16,12 +17,12 @@ function pfm.udm.TimeFrame:GetEnd()
 	return self:GetStart() + self:GetDuration()
 end
 function pfm.udm.TimeFrame:IsInTimeFrame(t, e)
-	e = e or 0.001
+	e = e or pfm.udm.TimeFrame.EPSILON
 	-- Note: -e for both start and end is on purpose
 	return t >= self:GetStart() - e and t <= self:GetEnd() - e
 end
 function pfm.udm.TimeFrame:ClampToTimeFrame(t, e)
-	e = e or 0.001
+	e = e or pfm.udm.TimeFrame.EPSILON
 	local tStart = self:GetStart() + e
 	local tEnd = self:GetEnd() - e
 	return math.clamp(t, tStart, tEnd)

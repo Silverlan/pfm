@@ -202,6 +202,9 @@ end
 function Component:GetProjectManager()
 	return self.m_projectManager
 end
+function Component:IsInEditor()
+	return util.is_valid(self.m_projectManager) and self.m_projectManager:IsEditor()
+end
 function Component:GetAnimationManager()
 	return self:GetEntityComponent(ents.COMPONENT_PFM_ANIMATION_MANAGER)
 end

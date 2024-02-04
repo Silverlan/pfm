@@ -82,29 +82,84 @@ function ents.PFMTrack:Setup(trackData, trackGroup, projectC)
 	self.m_timeFrame = udm.create_property_from_schema(pfm.udm.SCHEMA, "TimeFrame")
 	self.m_timeFrame:SetStart(startTime)
 	self.m_timeFrame:SetDuration(endTime - startTime)
+
+	self:UpdateUpdateCacheInfo()
 end
 
 function ents.PFMTrack:SetKeepClipsAlive(keepAlive)
 	self.m_keepClipsAlive = keepAlive
 end
 
-function ents.PFMTrack:OnOffsetChanged(offset, gameViewFlags)
-	-- Update film and channel clips
+-- Generate update cache to slightly improve performance
+function ents.PFMTrack:UpdateUpdateCacheInfo()
 	local trackData = self:GetTrackData()
-	local clipSets = {}
+	local clipSets
 	if trackData.TypeName == "Session" then
-		table.insert(clipSets, trackData:GetClips())
+		clipSets = { trackData:GetClips() }
 	else
-		table.insert(clipSets, trackData:GetFilmClips())
-		table.insert(clipSets, trackData:GetAnimationClips())
-		table.insert(clipSets, trackData:GetAudioClips())
+		clipSets = {
+			trackData:GetFilmClips(),
+			trackData:GetAnimationClips(),
+			trackData:GetAudioClips(),
+		}
 	end
+	local clipSetInfos = {}
 	for _, clipSet in ipairs(clipSets) do
-		local activeClipSetOutOfRange
-		local newClipSet
+		local clipInfos = {}
 		for _, clip in ipairs(clipSet) do
 			local timeFrame = clip:GetTimeFrame()
-			local inTimeFrame = timeFrame:IsInTimeFrame(offset)
+			table.insert(clipInfos, {
+				clip = clip,
+				startTime = timeFrame:GetStart(),
+				endTime = timeFrame:GetEnd(),
+			})
+		end
+		table.insert(clipSetInfos, {
+			clipInfos = clipInfos,
+		})
+	end
+
+	local activeClipComponents = {}
+	for node, clip in pairs(self.m_activeClips) do
+		if clip:IsValid() then
+			local clipC = clip:GetComponent(ents.COMPONENT_PFM_FILM_CLIP)
+				or clip:GetComponent(ents.COMPONENT_PFM_CHANNEL_CLIP)
+				or clip:GetComponent(ents.COMPONENT_PFM_AUDIO_CLIP)
+				or nil
+			if clipC ~= nil then
+				table.insert(activeClipComponents, clipC)
+			end
+		end
+	end
+
+	self.m_cachedUpdateInfo = {
+		clipSetInfos = clipSetInfos,
+		activeClipComponents = activeClipComponents,
+	}
+end
+
+function ents.PFMTrack:OnOffsetChanged(offset, gameViewFlags)
+	local projectC = self:GetProject()
+	if projectC:IsValid() and projectC:IsInEditor() then
+		-- We need to update the cache every frame in case the clips or time frames have changed in the editor.
+		self:UpdateUpdateCacheInfo()
+	end
+
+	-- Update film and channel clips
+	for _, clipSet in ipairs(self.m_cachedUpdateInfo.clipSetInfos) do
+		local activeClipSetOutOfRange
+		local newClipSet
+		for _, clipInfo in ipairs(clipSet.clipInfos) do
+			local clip = clipInfo.clip
+
+			-- local timeFrame = clip:GetTimeFrame()
+			-- local inTimeFrame = timeFrame:IsInTimeFrame(offset)
+			-- Same as commented function above, but faster
+			local inTimeFrame = (
+				offset >= clipInfo.startTime - pfm.udm.TimeFrame.EPSILON
+				and offset <= clipInfo.endTime - pfm.udm.TimeFrame.EPSILON
+			)
+
 			local isActiveClip = util.is_valid(self.m_activeClips[clip])
 			if not isActiveClip and inTimeFrame then
 				newClipSet = clip
@@ -145,15 +200,10 @@ function ents.PFMTrack:OnOffsetChanged(offset, gameViewFlags)
 			end
 		end
 	end
-	for node, clip in pairs(self.m_activeClips) do
-		if clip:IsValid() then
-			local clipC = clip:GetComponent(ents.COMPONENT_PFM_FILM_CLIP)
-				or clip:GetComponent(ents.COMPONENT_PFM_CHANNEL_CLIP)
-				or clip:GetComponent(ents.COMPONENT_PFM_AUDIO_CLIP)
-				or nil
-			if clipC ~= nil then
-				clipC:SetOffset(offset, gameViewFlags)
-			end
+
+	for _, c in ipairs(self.m_cachedUpdateInfo.activeClipComponents) do
+		if c:IsValid() then
+			c:SetOffset(offset, gameViewFlags)
 		end
 	end
 end
