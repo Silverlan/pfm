@@ -10,6 +10,7 @@ local Component = util.register_class("ents.PFMAnimationManager", BaseEntityComp
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
+	self.m_animatedActors = {}
 end
 
 function Component:Reset()
@@ -60,6 +61,13 @@ function Component:PlayActorAnimation(ent)
 		pfm.LOG_CATEGORY_PFM
 	)
 	animC:PlayAnimation(animManager, anim)
+
+	local animClipTimeStart = clip:GetAbsStart()
+	table.insert(self.m_animatedActors, {
+		entity = ent,
+		player = player,
+		animClipTimeStart = animClipTimeStart,
+	})
 end
 
 function Component:SetTime(t)
@@ -67,26 +75,17 @@ function Component:SetTime(t)
 		return
 	end
 	self.m_time = t
-	local it = self:GetActorIterator(true)
-	if it ~= nil then
-		for ent in it do
-			local animC = ent:GetComponent(ents.COMPONENT_PANIMA)
-			local manager = animC:GetAnimationManager("pfm")
-			if manager ~= nil then
-				local player = manager:GetPlayer()
-				local lt = t
-				if lt then
-					local pfmActorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-					local animClip = (pfmActorC ~= nil)
-							and self.m_filmClip:FindActorAnimationClip(pfmActorC:GetActorData())
-						or nil
-					if animClip ~= nil then
-						local start = animClip:GetAbsStart()
-						lt = lt - start
-					end
-				end
-				player:SetCurrentTime(lt or player:GetCurrentTime())
+
+	for i = #self.m_animatedActors, 1, -1 do
+		local animActorInfo = self.m_animatedActors[i]
+		if animActorInfo.entity:IsValid() then
+			local lt = t
+			if lt and animActorInfo.animClipTimeStart ~= nil then
+				lt = lt - animActorInfo.animClipTimeStart
 			end
+			animActorInfo.player:SetCurrentTime(lt or animActorInfo.player:GetCurrentTime())
+		else
+			table.remove(self.m_animatedActors, i)
 		end
 	end
 end
