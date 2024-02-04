@@ -15,8 +15,6 @@ function ents.PFMParticleSystem:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_PARTICLE_SYSTEM)
 	self:AddEntityComponent("pfm_actor")
 
-	self:BindEvent(ents.PFMActorComponent.EVENT_ON_OFFSET_CHANGED, "OnOffsetChanged")
-
 	self.m_listeners = {}
 	self.m_lastSimulationOffset = 0.0
 	self.m_queuedSimOffset = 0

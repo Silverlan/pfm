@@ -16,6 +16,7 @@ function ents.PFMFilmClip:Initialize()
 	self.m_offset = 0.0
 
 	self.m_actors = {}
+	self.m_particles = {}
 	self.m_trackGroups = {}
 	self.m_actorChannels = {}
 	self.m_listeners = {}
@@ -61,6 +62,9 @@ end
 
 function ents.PFMFilmClip:GetActors()
 	return self.m_actors
+end
+function ents.PFMFilmClip:GetParticles()
+	return self.m_particles
 end
 function ents.PFMFilmClip:GetTrackGroups()
 	return self.m_trackGroups
@@ -188,12 +192,13 @@ function ents.PFMFilmClip:SetOffset(offset, gameViewFlags)
 	self.m_offset = offset
 	self:UpdateClip(gameViewFlags)
 
-	for _, actor in ipairs(self:GetActors()) do
-		if actor:IsValid() then
-			local actorC = actor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-			if actorC ~= nil then
-				actorC:OnOffsetChanged(offset, gameViewFlags)
-			end
+	local tParticles = self:GetParticles()
+	for i = #tParticles, 1, -1 do
+		local particleC = tParticles[i]
+		if particleC:IsValid() then
+			particleC:OnOffsetChanged(offset)
+		else
+			table.remove(tParticles, i)
 		end
 	end
 
@@ -264,6 +269,11 @@ function ents.PFMFilmClip:CreateActor(actor)
 	-- entActor:Spawn()
 	table.insert(self.m_actors, entActor)
 
+	local pfmParticleC = entActor:GetComponent(ents.COMPONENT_PFM_PARTICLE_SYSTEM)
+	if pfmParticleC ~= nil then
+		table.insert(self.m_particles, pfmParticleC)
+	end
+
 	local pos = entActor:GetPos()
 	local ang = entActor:GetRotation():ToEulerAngles()
 	local trC = entActor:GetComponent(ents.COMPONENT_TRANSFORM)
@@ -292,7 +302,6 @@ function ents.PFMFilmClip:CreateActor(actor)
 			.. ")...",
 		pfm.LOG_CATEGORY_PFM_GAME
 	)
-	actorC:OnOffsetChanged(self:GetOffset(), ents.PFMProject.GAME_VIEW_FLAG_NONE)
 
 	local projectC = self:GetProject()
 	local animManager = self:GetAnimationManager()
