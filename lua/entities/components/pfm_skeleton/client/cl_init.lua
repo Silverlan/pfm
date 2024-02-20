@@ -90,7 +90,7 @@ function ents.PFMSkeleton:OnBonesCreated()
 			if ent:IsValid() then
 				self.m_bones[boneId] = self.m_bones[boneId] or {}
 				self.m_bones[boneId][boneIdChild] = ent
-				ent:AddComponent(ents.COMPONENT_BVH)
+				ent:AddComponent(ents.COMPONENT_HITBOX_BVH)
 				local boneC = ent:AddComponent("pfm_bone")
 				boneC:SetBoneId(boneId)
 				local clickC = ent:AddComponent(ents.COMPONENT_CLICK)
