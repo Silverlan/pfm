@@ -70,5 +70,3 @@ function ents.PFMOverlayClip:SetOffset(offset)
 end
 
 ents.COMPONENT_PFM_OVERLAY_CLIP = ents.register_component("pfm_overlay_clip", ents.PFMOverlayClip)
-ents.PFMOverlayClip.EVENT_ON_OFFSET_CHANGED =
-	ents.register_component_event(ents.COMPONENT_PFM_OVERLAY_CLIP, "on_offset_changed")

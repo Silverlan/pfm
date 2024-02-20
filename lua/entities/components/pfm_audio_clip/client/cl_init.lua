@@ -64,9 +64,6 @@ function ents.PFMAudioClip:SetOffset(offset)
 			soundC:OnOffsetChanged(offset)
 		end
 	end
-	self:BroadcastEvent(ents.PFMAudioClip.EVENT_ON_OFFSET_CHANGED, { offset })
 end
 
 ents.COMPONENT_PFM_AUDIO_CLIP = ents.register_component("pfm_audio_clip", ents.PFMAudioClip)
-ents.PFMAudioClip.EVENT_ON_OFFSET_CHANGED =
-	ents.register_component_event(ents.COMPONENT_PFM_AUDIO_CLIP, "on_offset_changed")
