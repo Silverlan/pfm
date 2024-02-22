@@ -6,6 +6,14 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+console.register_variable(
+	"pfm_experimental_use_hitbox_bvh",
+	udm.TYPE_BOOLEAN,
+	false,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"Use hitbox BVH for PFM actors."
+)
+
 local Component = util.register_class("ents.PFMModel", BaseEntityComponent)
 
 Component:RegisterMember("MaterialOverrides", ents.MEMBER_TYPE_ELEMENT, "", {
@@ -19,7 +27,6 @@ function ents.PFMModel:Initialize()
 
 	self:AddEntityComponent(ents.COMPONENT_TRANSFORM)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
-	self:AddEntityComponent(ents.COMPONENT_BVH)
 	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent("pfm_actor")
 	if renderC ~= nil then
@@ -27,12 +34,13 @@ function ents.PFMModel:Initialize()
 	end
 
 	self:BindEvent(ents.ModelComponent.EVENT_ON_MODEL_CHANGED, "UpdateModel")
-	self:BindEvent(ents.BaseStaticBvhUserComponent.EVENT_ON_ACTIVATION_STATE_CHANGED, "OnStaticBvhStatusChanged")
+	self:BindEvent(ents.BaseStaticBvhUserComponent.EVENT_ON_ACTIVATION_STATE_CHANGED, "UpdateBvhState")
 	self:BindEvent(ents.AnimatedComponent.EVENT_MAINTAIN_ANIMATIONS, "MaintainAnimations")
 	self.m_listeners = {}
 end
 function ents.PFMModel:OnEntitySpawn()
 	self:UpdateMaterialOverrides()
+	self:UpdateBvhState()
 end
 function ents.PFMModel:UpdateMaterialOverrides()
 	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
@@ -86,12 +94,25 @@ function ents.PFMModel:UpdateMaterialOverrides()
 	end
 	mdlC:UpdateRenderMeshes()
 end
-function ents.PFMModel:OnStaticBvhStatusChanged()
+function ents.PFMModel:UpdateBvhState()
+	if self:GetEntity():IsSpawned() == false then
+		return
+	end
 	local c = self:GetEntityComponent(ents.COMPONENT_STATIC_BVH_USER)
-	if c:IsActive() then
-		c:GetEntity():RemoveComponent(ents.COMPONENT_BVH)
+	if
+		c ~= nil --[[and c:IsActive()]]
+	then
+		self:GetEntity():RemoveComponent(ents.COMPONENT_BVH)
+		self:GetEntity():RemoveComponent(ents.COMPONENT_HITBOX_BVH)
 	else
-		c:GetEntity():AddComponent(ents.COMPONENT_BVH)
+		local bvhType = ents.COMPONENT_HITBOX_BVH
+		local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_EDITOR_ACTOR)
+		if actorC ~= nil and console.get_convar_bool("pfm_experimental_use_hitbox_bvh") == false then
+			-- If we're in the editor, we'll use the regular BVH component, which is
+			-- much more accurate but also much slower.
+			bvhType = ents.COMPONENT_BVH
+		end
+		self:GetEntity():AddComponent(bvhType)
 	end
 end
 function ents.PFMModel:OnRemove()
