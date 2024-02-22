@@ -775,6 +775,7 @@ function gui.PFMCoreViewportBase:CreateActorTransformWidget(ent, manipMode, enab
 								if c:IsValid() then
 									local pos = calc_new_data_pose():GetOrigin()
 									if tmpAnimChannel ~= nil then
+										pos = c:ConvertPosToMemberSpace(idx, math.COORDINATE_SPACE_WORLD, pos)
 										tmpAnimChannel:InsertValue(0.0, pos)
 									else
 										c:SetTransformMemberPos(idx, math.COORDINATE_SPACE_WORLD, pos)
@@ -789,6 +790,7 @@ function gui.PFMCoreViewportBase:CreateActorTransformWidget(ent, manipMode, enab
 								if c:IsValid() then
 									local scale = calc_new_data_pose():GetScale()
 									if tmpAnimChannel ~= nil then
+										scale = c:ConvertScaleToMemberSpace(idx, math.COORDINATE_SPACE_WORLD, scale)
 										tmpAnimChannel:InsertValue(0.0, scale)
 									else
 										c:SetTransformMemberScale(idx, math.COORDINATE_SPACE_LOCAL, scale)
@@ -801,6 +803,7 @@ function gui.PFMCoreViewportBase:CreateActorTransformWidget(ent, manipMode, enab
 							if c:IsValid() then
 								local rot = calc_new_data_pose():GetRotation()
 								if tmpAnimChannel ~= nil then
+									rot = c:ConvertRotToMemberSpace(idx, math.COORDINATE_SPACE_WORLD, rot)
 									tmpAnimChannel:InsertValue(0.0, rot)
 								else
 									c:SetTransformMemberRot(idx, math.COORDINATE_SPACE_WORLD, rot)
