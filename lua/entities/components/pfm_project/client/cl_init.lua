@@ -42,7 +42,7 @@ function Component:OnEntityCreated(ent)
 	end
 
 	local pm = self:GetProjectManager()
-	if util.is_valid(pm) then
+	if util.is_valid(pm) and pm:IsEditor() then
 		-- This project is running in an editor, we'll add a special component to the actors
 		-- to mark them as editor actors.
 		ent:AddComponent(ents.COMPONENT_PFM_EDITOR_ACTOR)
