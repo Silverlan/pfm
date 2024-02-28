@@ -88,6 +88,9 @@ function gui.PFMTimelineGraphBase:EndCanvasDrawing()
 					channel, animClip = actor:FindAnimationChannel(self.m_canvasData.propertyPath)
 				end
 				if channel ~= nil then
+					for i, t in ipairs(times) do
+						times[i] = animClip:ToDataTime(t)
+					end
 					local cmd = pfm.create_command(
 						"keyframe_property_composition",
 						actor,
@@ -98,7 +101,7 @@ function gui.PFMTimelineGraphBase:EndCanvasDrawing()
 					if editorChannel ~= nil then
 						local graphCurve = editorChannel:GetGraphCurve()
 						local keyData = graphCurve:GetKey(self.m_canvasData.valueBaseIndex)
-						local numKeyframes = keyData:GetTimeCount()
+						local numKeyframes = (keyData ~= nil) and keyData:GetTimeCount() or 0
 						if numKeyframes > 0 then
 							-- Delete all keyframes within range of new animation data
 							local tStart = points[1].x
@@ -109,7 +112,7 @@ function gui.PFMTimelineGraphBase:EndCanvasDrawing()
 							local postKeyframeInside
 							local postKeyframeOutside
 							for i = 0, numKeyframes - 1 do
-								local kfTime = keyData:GetTime(i)
+								local kfTime = animClip:ToClipTime(keyData:GetTime(i))
 								if kfTime <= tStart then
 									preKeyframeOutside = i
 								end
@@ -126,7 +129,7 @@ function gui.PFMTimelineGraphBase:EndCanvasDrawing()
 							-- Delete inner keyframes
 							if preKeyframeInside ~= nil and postKeyframeInside ~= nil then
 								for i = preKeyframeInside, postKeyframeInside do
-									local t = keyData:GetTime(i)
+									local t = animClip:ToClipTime(keyData:GetTime(i))
 									cmd:AddSubCommand(
 										"delete_keyframe",
 										actor,
@@ -148,8 +151,8 @@ function gui.PFMTimelineGraphBase:EndCanvasDrawing()
 							then
 								local channel = actor:FindAnimationChannel(self.m_canvasData.propertyPath)
 								if channel ~= nil then
-									local tLowerKf = keyData:GetTime(curveFittingStartIdx)
-									local tUpperKf = keyData:GetTime(curveFittingEndIdx)
+									local tLowerKf = animClip:ToClipTime(keyData:GetTime(curveFittingStartIdx))
+									local tUpperKf = animClip:ToClipTime(keyData:GetTime(curveFittingEndIdx))
 									local panimaChannel = channel:GetPanimaChannel()
 									local valueType = panimaChannel:GetValueType()
 									local oldTimes, oldValues = panimaChannel:GetDataInRange(tLowerKf, tUpperKf)
@@ -168,7 +171,6 @@ function gui.PFMTimelineGraphBase:EndCanvasDrawing()
 									tmpChannel:GetValueArray():SetValueType(udm.TYPE_FLOAT)
 									tmpChannel:InsertValues(oldTimes, oldValues)
 									tmpChannel:InsertValues(times, values)
-									print("Key fitting in time range ", tLowerKf, tUpperKf)
 									local keyframes = pfm.udm.Channel.calculate_curve_fitting_keyframes(
 										tmpChannel:GetTimes(),
 										tmpChannel:GetValues()

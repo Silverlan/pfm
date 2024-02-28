@@ -19,7 +19,7 @@ function Command.does_keyframe_exist(animManager, actorUuid, propertyPath, times
 		local editorData = animClip:GetEditorData()
 		editorChannel = editorData:FindChannel(propertyPath)
 		if editorChannel ~= nil then
-			local keyIdx = editorChannel:FindKeyIndexByTime(timestamp, baseIndex)
+			local keyIdx = editorChannel:FindKeyIndexByTime(animClip:LocalizeOffsetAbs(timestamp), baseIndex)
 			if keyIdx ~= nil then
 				-- Keyframe already exists
 				return true, editorChannel, keyIdx
@@ -256,6 +256,7 @@ function Command:CreateKeyframe(data)
 	if actor == nil then
 		return false
 	end
+
 	local graphCurve = editorChannel:GetGraphCurve()
 	local timestamp = self:GetLocalTime(animClip)
 

@@ -36,11 +36,18 @@ function Command:Initialize(actorUuid, propertyPath, keyframeData, valueType, ba
 		)
 	end
 
+	local actor = pfm.dereference(actorUuid)
+	local anim, channel, animClip = self:GetAnimationManager():FindAnimationChannel(actor, propertyPath, false)
 	for _, bc in ipairs(keyframeData) do
 		local p0 = bc[1]
 		local h0 = bc[2]
 		local h1 = bc[3]
 		local p1 = bc[4]
+
+		p0.x = animClip:ToClipTime(p0.x)
+		h0.x = animClip:ToClipTime(h0.x)
+		h1.x = animClip:ToClipTime(h1.x)
+		p1.x = animClip:ToClipTime(p1.x)
 
 		local t0 = p0.x
 		local v0 = p0.y

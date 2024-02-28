@@ -68,6 +68,27 @@ function pfm.udm.Channel.calculate_curve_fitting_keyframes(times, values)
 	return keyframes
 end
 
+function pfm.udm.Channel:ApplyCurveFittingToRange(actorUuid, propertyPath, baseIndex, tStart, tEnd, cmd)
+	local keyframes = self:CalculateCurveFittingKeyframes(tStart, tEnd, baseIndex)
+	if keyframes == nil then
+		return
+	end
+	local panimaChannel = self:GetPanimaChannel()
+	local hasParentCmd = (cmd ~= nil)
+	cmd = cmd or pfm.create_command("keyframe_property_composition", actorUuid, propertyPath, baseIndex)
+	cmd:AddSubCommand(
+		"apply_curve_fitting",
+		actorUuid,
+		propertyPath,
+		keyframes,
+		panimaChannel:GetValueType(),
+		baseIndex
+	)
+	if hasParentCmd == false then
+		pfm.undoredo.push("apply_curve_fitting", cmd)()
+	end
+end
+
 function pfm.udm.Channel:CalculateCurveFittingKeyframes(tStart, tEnd, baseIndex)
 	if math.abs(tEnd - tStart) <= panima.VALUE_EPSILON then
 		return

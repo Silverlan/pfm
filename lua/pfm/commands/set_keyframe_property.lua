@@ -95,11 +95,11 @@ function Command:ApplyValue(data, action)
 		return
 	end
 
-	local timestamp = self:GetLocalTime(animClip, action)
-
 	local data = self:GetData()
+	local timestamp = data:GetValue("timestamp", udm.TYPE_FLOAT)
+
 	local time = data:GetValue("timestamp", udm.TYPE_FLOAT)
-	local keyIdx = editorChannel:FindKeyIndexByTime(timestamp, valueBaseIndex)
+	local keyIdx = editorChannel:FindKeyIndexByTime(animClip:ToDataTime(timestamp), valueBaseIndex)
 
 	local graphCurve = editorChannel:GetGraphCurve()
 	local keyData = graphCurve:GetKey(valueBaseIndex)

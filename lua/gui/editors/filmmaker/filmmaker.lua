@@ -1273,12 +1273,13 @@ function gui.WIFilmmaker:AddBookmark(t, noKeyframe)
 		local cmd = pfm.create_command("composition")
 		for _, graph in ipairs(graphEditor:GetGraphs()) do
 			if graph.curve:IsValid() then
+				local animClip = graph.animClip()
 				local valueType = graph.valueType
 				local value = udm.get_default_value(valueType)
-				local timestamp = graphEditor:InterfaceTimeToDataTime(graph, t)
+				local timestamp = t --graphEditor:InterfaceTimeToDataTime(graph, t)
 				local panimaChannel = graph.curve:GetPanimaChannel()
 				if panimaChannel ~= nil then
-					local idx0, idx1, factor = panimaChannel:FindInterpolationIndices(timestamp)
+					local idx0, idx1, factor = panimaChannel:FindInterpolationIndices(animClip:ToDataTime(timestamp))
 					if idx0 ~= nil then
 						local v0 = panimaChannel:GetValue(idx0)
 						local v1 = panimaChannel:GetValue(idx1)

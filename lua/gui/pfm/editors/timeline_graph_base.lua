@@ -346,7 +346,18 @@ function gui.PFMTimelineGraphBase:KeyboardCallback(key, scanCode, state, mods)
 					local editorKeys = editorGraphCurve:GetKey(baseIndex)
 					local keyIndex = dp:GetKeyIndex()
 					local time = editorKeys:GetTime(keyIndex)
-					cmd:AddSubCommand("delete_keyframe", tostring(actor:GetUniqueId()), targetPath, time, baseIndex)
+
+					local graphIdx = curveData.curve:GetCurveIndex()
+					local graphData = self.m_graphs[graphIdx]
+					time = self:DataTimeToInterfaceTime(graphData, time)
+
+					local res, subCmd = cmd:AddSubCommand(
+						"keyframe_property_composition",
+						tostring(actor:GetUniqueId()),
+						targetPath,
+						baseIndex
+					)
+					subCmd:AddSubCommand("delete_keyframe", tostring(actor:GetUniqueId()), targetPath, time, baseIndex)
 				end
 			end
 			pfm.undoredo.push("delete_keyframes", cmd)()
@@ -739,24 +750,7 @@ function gui.PFMTimelineGraphBase:ApplyCurveFittingToRange(
 	tEnd,
 	cmd
 )
-	local keyframes = channel:CalculateCurveFittingKeyframes(tStart, tEnd, baseIndex)
-	if keyframes == nil then
-		return
-	end
-	local panimaChannel = channel:GetPanimaChannel()
-	local hasParentCmd = (cmd ~= nil)
-	cmd = cmd or pfm.create_command("keyframe_property_composition", actorUuid, propertyPath, baseIndex)
-	cmd:AddSubCommand(
-		"apply_curve_fitting",
-		actorUuid,
-		propertyPath,
-		keyframes,
-		panimaChannel:GetValueType(),
-		baseIndex
-	)
-	if hasParentCmd == false then
-		pfm.undoredo.push("apply_curve_fitting", cmd)()
-	end
+	return channel:ApplyCurveFittingToRange(actorUuid, propertyPath, baseIndex, tStart, tEnd, cmd)
 end
 function gui.PFMTimelineGraphBase:ApplyCurveFitting()
 	local cmd = pfm.create_command("composition")
@@ -774,8 +768,8 @@ function gui.PFMTimelineGraphBase:ApplyCurveFitting()
 			local tEndAnim = channel:GetTime(channel:GetTimeCount() - 1)
 			local keyData = editorChannel:GetGraphCurve():GetKey(typeComponentIndex)
 			if keyData ~= nil and keyData:GetTimeCount() > 0 then
-				local tStartKf = keyData:GetTime(0)
-				local tEndKf = keyData:GetTime(keyData:GetTimeCount() - 1)
+				local tStartKf = animClip:ToDataTime(keyData:GetTime(0))
+				local tEndKf = animClip:ToDataTime(keyData:GetTime(keyData:GetTimeCount() - 1))
 
 				self:ApplyCurveFittingToRange(
 					actor,
@@ -1185,16 +1179,17 @@ function gui.PFMTimelineGraphBase:GetDataRange()
 	end
 	for _, graph in ipairs(self.m_graphs) do
 		if graph.curve:IsValid() then
+			local animClip = graph.animClip()
 			local dataPoints = graph.curve:GetDataPoints()
 			for _, dp in ipairs(dataPoints) do
-				apply_time(dp:GetTime())
+				apply_time(animClip:ToClipTime(dp:GetTime()))
 				apply_value(dp:GetValue())
 			end
 
 			local channel = graph.curve:GetPanimaChannel()
 			if channel ~= nil and channel:GetSize() > 0 then
-				apply_time(channel:GetTime(0))
-				apply_time(channel:GetTime(channel:GetSize() - 1))
+				apply_time(animClip:ToClipTime(channel:GetTime(0)))
+				apply_time(animClip:ToClipTime(channel:GetTime(channel:GetSize() - 1)))
 
 				local valueType = channel:GetValueType()
 				for _, v in ipairs(channel:GetValues()) do

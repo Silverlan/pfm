@@ -848,6 +848,7 @@ function gui.PFMTimeline:SetInterpolationMode(mode)
 	local cmd = pfm.create_command("composition")
 	for curveIndex, curveInfo in pairs(self:GroupDataPointsByCurve(dps)) do
 		local subCmd = self:CreateCurveCompositionCommand(cmd, curveInfo.curve)
+		local animClip = curveInfo.curve:GetAnimationClip()
 		for _, dp in ipairs(curveInfo.dataPoints) do
 			local editorKey, keyIndex = dp:GetEditorKeys()
 			if editorKey ~= nil then
@@ -858,7 +859,7 @@ function gui.PFMTimeline:SetInterpolationMode(mode)
 					"set_keyframe_interpolation_mode",
 					tostring(actor:GetUniqueId()),
 					targetPath,
-					editorKey:GetTime(keyIndex),
+					animClip:ToClipTime(editorKey:GetTime(keyIndex)),
 					editorKey:GetInterpolationMode(keyIndex),
 					mode,
 					baseIndex
@@ -873,6 +874,7 @@ function gui.PFMTimeline:SetEasingMode(mode)
 	local cmd = pfm.create_command("composition")
 	for curveIndex, curveInfo in pairs(self:GroupDataPointsByCurve(dps)) do
 		local subCmd = self:CreateCurveCompositionCommand(cmd, curveInfo.curve)
+		local animClip = curveInfo.curve:GetAnimationClip()
 		for _, dp in ipairs(curveInfo.dataPoints) do
 			local editorKey, keyIndex = dp:GetEditorKeys()
 			if editorKey ~= nil then
@@ -883,7 +885,7 @@ function gui.PFMTimeline:SetEasingMode(mode)
 					"set_keyframe_easing_mode",
 					tostring(actor:GetUniqueId()),
 					targetPath,
-					editorKey:GetTime(keyIndex),
+					animClip:ToClipTime(editorKey:GetTime(keyIndex)),
 					editorKey:GetEasingMode(keyIndex),
 					mode,
 					baseIndex
@@ -898,6 +900,7 @@ function gui.PFMTimeline:SetHandleType(type)
 	local cmd = pfm.create_command("composition")
 	for curveIndex, curveInfo in pairs(self:GroupDataPointsByCurve(dps)) do
 		local subCmd = self:CreateCurveCompositionCommand(cmd, curveInfo.curve)
+		local animClip = curveInfo.curve:GetAnimationClip()
 		for _, dp in ipairs(curveInfo.dataPoints) do
 			local editorKey, keyIndex = dp:GetEditorKeys()
 			if editorKey ~= nil then
@@ -912,7 +915,7 @@ function gui.PFMTimeline:SetHandleType(type)
 						"set_keyframe_handle_type",
 						tostring(actor:GetUniqueId()),
 						targetPath,
-						editorKey:GetTime(keyIndex),
+						animClip:ToClipTime(editorKey:GetTime(keyIndex)),
 						editorKey:GetHandleType(keyIndex, handleId),
 						type,
 						baseIndex,

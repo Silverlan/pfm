@@ -209,6 +209,8 @@ function gui.PFMTimelineDataPoint:CreateHandleMoveCommand(cmd, handle, oldTime, 
 	local editorChannel = curve:GetEditorChannel()
 	local baseIndex = self:GetTypeComponentIndex()
 	local timestamp = self:GetTime()
+	local animClip = editorChannel:GetAnimationClip()
+	timestamp = animClip:ToClipTime(timestamp)
 	cmd:AddSubCommand(
 		"move_keyframe_handle",
 		tostring(actor:GetUniqueId()),
@@ -365,6 +367,15 @@ function gui.PFMTimelineDataPoint:MoveToPosition(cmd, time, value, curTime, curV
 	local keyData = graphCurve:GetKey(baseIndex)
 	curVal = curVal or keyData:GetValue(keyIndex)
 	curTime = curTime or keyData:GetTime(keyIndex)
+
+	local timelineGraph = timelineCurve:GetTimelineGraph()
+	local curveData = timelineGraph:GetGraphCurve(timelineCurve:GetCurveIndex())
+	local globalCurTime = curTime
+	local animClip = curveData.animClip()
+	globalCurTime = animClip:GlobalizeOffset(globalCurTime)
+	globalCurTime = curveData.filmClip:GlobalizeOffset(globalCurTime)
+	curTime = globalCurTime
+
 	local valueType = keyData:GetValueArrayValueType()
 	local uuid = tostring(actor:GetUniqueId())
 	cmd:AddSubCommand("set_keyframe_data", uuid, targetPath, curTime, time, valueType, curVal, value, baseIndex)
