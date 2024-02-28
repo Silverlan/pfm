@@ -40,6 +40,14 @@ function Component:SetFilmClip(filmClip)
 	end
 end
 
+local function apply_player_time(t, animActorInfo)
+	local lt = t
+	if lt and animActorInfo.animClipTimeStart ~= nil then
+		lt = lt - animActorInfo.animClipTimeStart
+	end
+	animActorInfo.player:SetCurrentTime(lt or animActorInfo.player:GetCurrentTime())
+end
+
 function Component:PlayActorAnimation(ent)
 	if self.m_filmClip == nil then
 		return
@@ -68,6 +76,7 @@ function Component:PlayActorAnimation(ent)
 		player = player,
 		animClipTimeStart = animClipTimeStart,
 	})
+	apply_player_time(self.m_time, self.m_animatedActors[#self.m_animatedActors])
 end
 
 function Component:SetTime(t)
@@ -79,11 +88,7 @@ function Component:SetTime(t)
 	for i = #self.m_animatedActors, 1, -1 do
 		local animActorInfo = self.m_animatedActors[i]
 		if animActorInfo.entity:IsValid() then
-			local lt = t
-			if lt and animActorInfo.animClipTimeStart ~= nil then
-				lt = lt - animActorInfo.animClipTimeStart
-			end
-			animActorInfo.player:SetCurrentTime(lt or animActorInfo.player:GetCurrentTime())
+			apply_player_time(t, animActorInfo)
 		else
 			table.remove(self.m_animatedActors, i)
 		end
@@ -666,8 +671,8 @@ function Component:SetCurveRangeChannelValueCount(actor, path, startTime, endTim
 end
 
 function Component:SetRawAnimationData(actor, path, times, values, valueType)
+	local anim, actorChannel, animClip = self:FindAnimationChannel(actor, path)
 	if #times > 1 then
-		local anim, actorChannel, animClip = self:FindAnimationChannel(actor, path)
 		if actorChannel ~= nil then
 			-- Clear all previous values for the recorded time range
 			local tFirst = times[1]
@@ -686,6 +691,7 @@ function Component:SetRawAnimationData(actor, path, times, values, valueType)
 	end
 	self:SetAnimationDirty(actor)
 	self:InvokeEventCallbacks(Component.EVENT_ON_ACTOR_PROPERTY_CHANGED, { actor, path })
+	return anim, actorChannel, animClip
 end
 
 function Component:TestSetRawAnimationData(actor, path, times, values, valueType)
