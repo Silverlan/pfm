@@ -159,6 +159,16 @@ function Element:OnInitialize()
 	)
 
 	self:AddToggleControl(
+		locale.get_text("pfm_save_layout"),
+		"save_layout",
+		"pfm_save_layout",
+		console.get_convar_bool("pfm_save_layout"),
+		function(el, checked)
+			self:SetConVar("pfm_save_layout", checked and "1" or "0")
+		end
+	)
+
+	self:AddToggleControl(
 		locale.get_text("pfm_save_undo_stack"),
 		"save_undo_stack",
 		"pfm_save_undo_stack",

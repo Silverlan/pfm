@@ -548,6 +548,10 @@ function gui.WIFilmmaker:SaveUiState()
 	local udmData = session:GetUdmData()
 	udmData:RemoveValue("uiState")
 
+	if not console.get_convar_bool("pfm_save_layout") then
+		return
+	end
+
 	local udmUiState = udmData:Add("uiState")
 	local udmWindows = udmUiState:Add("windows")
 

@@ -14,6 +14,14 @@ console.register_variable(
 	"If enabled, the undo/redo stack will be saved with the project file and restored when the project is loaded."
 )
 
+console.register_variable(
+	"pfm_save_layout",
+	udm.TYPE_BOOLEAN,
+	true,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"If enabled, the PFM layout will be saved with the project file and restored when the project is loaded."
+)
+
 pfm = pfm or {}
 pfm.impl = pfm.impl or {}
 pfm.impl.commands = pfm.impl.commands or {}
