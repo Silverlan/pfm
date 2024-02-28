@@ -61,6 +61,14 @@ function Element:MakeActorPropertyAnimated(actor, targetPath, valueType, makeAni
 	if util.is_valid(actorEditor) then
 		actorEditor:SetPropertyAnimationOverlaysDirty()
 	end
+
+	if makeAnimated == false then
+		local animManager = self:GetAnimationManager()
+		if animManager ~= nil then
+			-- Need to update the actor animation immediately
+			animManager:PlayActorAnimation(actor:FindEntity())
+		end
+	end
 end
 function Element:SetActorAnimationComponentProperty(actor, targetPath, time, value, valueType, baseIndex, addKey)
 	local animManager = self:GetAnimationManager()
