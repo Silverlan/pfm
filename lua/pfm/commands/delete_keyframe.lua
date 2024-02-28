@@ -32,6 +32,61 @@ function Command:Initialize(actorUuid, propertyPath, timestamp, baseIndex)
 	local curVal = keyData:GetValue(keyIdx)
 	self:AddSubCommand("set_keyframe_value", actorUuid, propertyPath, timestamp, udm.TYPE_FLOAT, curVal, 0.0, baseIndex) -- Need this to restore the value
 
+	local inHandleType = keyData:GetInHandleType(keyIdx)
+	local inDelta = keyData:GetInDelta(keyIdx)
+	local inTime = keyData:GetInTime(keyIdx)
+	local outHandleType = keyData:GetOutHandleType(keyIdx)
+	local outDelta = keyData:GetOutDelta(keyIdx)
+	local outTime = keyData:GetOutTime(keyIdx)
+	-- Commands for restoring handle types and delta values/times
+	self:AddSubCommand(
+		"move_keyframe_handle",
+		actorUuid,
+		propertyPath,
+		timestamp,
+		baseIndex,
+		pfm.udm.EditorGraphCurveKeyData.HANDLE_IN,
+		inTime,
+		0.0,
+		inDelta,
+		0.0
+	)
+
+	self:AddSubCommand(
+		"move_keyframe_handle",
+		actorUuid,
+		propertyPath,
+		timestamp,
+		baseIndex,
+		pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT,
+		outTime,
+		0.0,
+		outDelta,
+		0.0
+	)
+
+	self:AddSubCommand(
+		"set_keyframe_handle_type",
+		actorUuid,
+		propertyPath,
+		timestamp,
+		inHandleType,
+		pfm.udm.KEYFRAME_HANDLE_TYPE_FREE,
+		baseIndex,
+		pfm.udm.EditorGraphCurveKeyData.HANDLE_IN
+	)
+
+	self:AddSubCommand(
+		"set_keyframe_handle_type",
+		actorUuid,
+		propertyPath,
+		timestamp,
+		outHandleType,
+		pfm.udm.KEYFRAME_HANDLE_TYPE_FREE,
+		baseIndex,
+		pfm.udm.EditorGraphCurveKeyData.HANDLE_OUT
+	)
+
 	if keyIdx == 0 then
 		local t0 = keyData:GetTime(keyIdx)
 		local t1 = keyData:GetTime(keyIdx + 1)
