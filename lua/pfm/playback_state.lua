@@ -64,5 +64,4 @@ function PlaybackState:TogglePlay()
 end
 function PlaybackState:Stop()
 	self:Pause()
-	self:SetOffset(0.0)
 end

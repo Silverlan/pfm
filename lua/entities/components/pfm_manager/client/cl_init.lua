@@ -124,4 +124,87 @@ function Component:OnCursorTargetActorChanged(hitData)
 	end
 	pfm.tag_render_scene_as_dirty()
 end
+function Component:SetProjectManager(pm)
+	self.m_projectManager = pm
+end
+function Component:GetProjectManager()
+	return self.m_projectManager
+end
+function Component:IsRecording()
+	return self:GetEntity():HasComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
+end
+function Component:StartRecording()
+	self:EndRecording()
+
+	local ent = self:GetEntity()
+	local pm = self.m_projectManager
+	local actorEditor = util.is_valid(pm) and pm:GetActorEditor() or nil
+	if util.is_valid(actorEditor) == false then
+		return
+	end
+
+	local actorProperties = {}
+	local props = actorEditor:GetSelectedProperties()
+	local hasSelectedProperties = false
+	for _, propData in ipairs(props) do
+		local path = propData.controlData.path
+		local actor = propData.actorData.actor
+		local entActor = (actor ~= nil) and actor:FindEntity() or nil
+		if util.is_valid(entActor) then
+			local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+			if componentName ~= nil then
+				actorProperties[entActor] = actorProperties[entActor] or {}
+				local actorProps = actorProperties[entActor]
+				actorProps[componentName] = actorProps[componentName] or {}
+				table.insert(actorProps[componentName], pathName:GetString())
+				hasSelectedProperties = true
+			end
+		end
+	end
+
+	if hasSelectedProperties == false then
+		pfm.log(
+			"Failed to start recording: No animatable properties selected!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_WARNING
+		)
+		return
+	end
+
+	local pfmRecorderC = ent:AddComponent("pfm_animation_recorder")
+	if pfmRecorderC ~= nil then
+		pfmRecorderC:SetProjectManager(pm)
+	end
+
+	self:BroadcastEvent(Component.EVENT_ON_START_RECORDING)
+
+	local recorderC = ent:GetComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
+	if recorderC ~= nil then
+		for actor, props in pairs(actorProperties) do
+			pfm.log("Recording properties of actor " .. tostring(actor:GetUuid()) .. "...", pfm.LOG_CATEGORY_PFM)
+			recorderC:AddEntity(actor, props)
+		end
+		recorderC:StartRecording()
+
+		local playbackState = pm:GetPlaybackState()
+		playbackState:Play()
+	end
+end
+function Component:EndRecording()
+	if self:IsRecording() == false then
+		return
+	end
+	local recorderC = self:GetEntity():GetComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
+	if recorderC ~= nil then
+		recorderC:EndRecording()
+
+		local playbackState = self.m_projectManager:GetPlaybackState()
+		playbackState:Pause()
+	end
+
+	self:GetEntity():RemoveComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
+	self:BroadcastEvent(Component.EVENT_ON_END_RECORDING)
+end
 ents.COMPONENT_PFM_MANAGER = ents.register_component("pfm_manager", Component)
+Component.EVENT_ON_START_RECORDING = ents.register_component_event(ents.COMPONENT_PFM_MANAGER, "on_start_recording")
+Component.EVENT_ON_END_RECORDING = ents.register_component_event(ents.COMPONENT_PFM_MANAGER, "on_end_recording")

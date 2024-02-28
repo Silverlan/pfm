@@ -134,7 +134,8 @@ function gui.WIFilmmaker:OnInitialize()
 	self.m_editorOverlayRenderMask = game.register_render_mask("pfm_editor_overlay", false)
 
 	self.m_pfmManager = ents.create("entity")
-	self.m_pfmManager:AddComponent("pfm_manager")
+	local pfmManagerC = self.m_pfmManager:AddComponent("pfm_manager")
+	pfmManagerC:SetProjectManager(self)
 	self.m_pfmManager:Spawn()
 
 	local udmData, err = udm.load("cfg/pfm/settings.udm")
@@ -1048,6 +1049,7 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_previewWindow)
 	util.remove(self.m_renderResultWindow)
 	util.remove(self.m_updateProgressBar)
+	util.remove(self.m_entAnimRecorder)
 
 	local window = gui.get_primary_window()
 	if util.is_valid(window) then
@@ -1721,6 +1723,18 @@ function gui.WIFilmmaker:RestoreActorsFromUdmElement(filmClip, data, keepOrigina
 			end
 		end
 		actorEditor:AddActor(actor.actor, item)
+	end
+end
+function gui.WIFilmmaker:ToggleRecording()
+	local ent = self:GetManagerEntity()
+	local managerC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_PFM_MANAGER) or nil
+	if util.is_valid(managerC) == false then
+		return
+	end
+	if managerC:IsRecording() then
+		managerC:EndRecording()
+	else
+		managerC:StartRecording()
 	end
 end
 gui.register("WIFilmmaker", gui.WIFilmmaker)

@@ -58,7 +58,7 @@ function gui.PlaybackControls:OnInitialize()
 	self.m_btPrevFrame:SetName("pc_prev_frame")
 
 	gui.create("WIBase", controls, 0, 0, 1, 1) -- Gap
-	--[[self.m_btRecord = gui.PFMButton.create(
+	self.m_btRecord = gui.PFMButton.create(
 		controls,
 		"gui/pfm/icon_cp_record",
 		"gui/pfm/icon_cp_record_activated",
@@ -67,7 +67,7 @@ function gui.PlaybackControls:OnInitialize()
 		end
 	)
 	self.m_btRecord:SetTooltip(locale.get_text("pfm_playback_record"))
-	self.m_btRecord:SetName("pc_record")]]
+	self.m_btRecord:SetName("pc_record")
 
 	self.m_btPlay = gui.create("WIPFMPlayButton", controls)
 	self.m_btPlay:SetTooltip(locale.get_text("pfm_playback_play"))
@@ -161,7 +161,8 @@ function gui.PlaybackControls:LinkToPFMProject(projectManager)
 			projectManager:GoToPreviousClip()
 		elseif button == gui.PlaybackControls.BUTTON_PREVIOUS_FRAME then
 			projectManager:GoToPreviousFrame()
-		elseif button == gui.PlaybackControls.BUTTON_RECORD then -- TODO
+		elseif button == gui.PlaybackControls.BUTTON_RECORD then
+			projectManager:ToggleRecording()
 		elseif button == gui.PlaybackControls.BUTTON_NEXT_FRAME then
 			projectManager:GoToNextFrame()
 		elseif button == gui.PlaybackControls.BUTTON_NEXT_CLIP then
