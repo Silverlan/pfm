@@ -571,6 +571,11 @@ function Element:InitializeMenuBar()
 				pItemPaste:SetEnabled(false)
 			end
 
+			local pItemClearUndoStack = pContext:AddItem(locale.get_text("pfm_clear_undo_stack"), function(pItem)
+				pfm.undoredo.clear()
+			end)
+			pItemClearUndoStack:SetName("clear_undo_stack")
+
 			local pItemDelete = pContext:AddItem(locale.get_text("delete"), function(pItem)
 				if util.is_valid(self) == false then
 					return
