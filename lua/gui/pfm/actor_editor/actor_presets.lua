@@ -34,6 +34,7 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_LOOK_AT = 24
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF = 25
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER = 26
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_SCENEBUILD = 27
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_GREENSCREEN = 28
 
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_START = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_END = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF
@@ -247,6 +248,21 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 		end
 		local sceneC = self:CreateNewActorComponent(actor, "pfm_scene", false)
 		sceneC:SetMemberValue("scenebuild", udm.TYPE_BOOLEAN, true)
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_GREENSCREEN then
+		actor = actor or create_new_actor("greenscreen", gui.PFMActorEditor.COLLECTION_EFFECTS)
+		if actor == nil then
+			return
+		end
+		local modelC = self:CreateNewActorComponent(actor, "model", false)
+		self:CreateNewActorComponent(actor, "render", false)
+		modelC:SetMemberValue("model", udm.TYPE_STRING, "rect_unlit")
+		local colorC = self:CreateNewActorComponent(actor, "color", false)
+		colorC:SetMemberValue("color", udm.TYPE_VECTOR3, Color.Lime:ToVector())
+
+		local pfmActorC = actor:FindComponent("pfm_actor")
+		if pfmActorC ~= nil then
+			pfmActorC:SetMemberValue("static", udm.TYPE_BOOLEAN, true)
+		end
 	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_LIGHTMAPPER then
 		actor = actor or create_new_actor("lightmapper", gui.PFMActorEditor.COLLECTION_BAKING)
 		if actor == nil then

@@ -138,6 +138,12 @@ function gui.PFMActorEditor:OnInitialize()
 		addPresetActorOption("volume", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME, "pfm_create_new_volume")
 		addPresetActorOption("actor", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR, "pfm_create_new_actor")
 		addPresetActorOption("scene", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_SCENEBUILD, "pfm_create_new_scene")
+		addPresetActorOption(
+			"greenscreen",
+			pContext,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_GREENSCREEN,
+			"pfm_create_greenscreen"
+		)
 
 		local filmClip = self:GetFilmClip()
 		local hasSkyComponent = false
