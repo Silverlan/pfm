@@ -234,6 +234,12 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 					entGhost:Spawn()
 					entGhost:SetModel(path:GetString())
 
+					local mdl = entGhost:GetModel()
+					local metaRig = (mdl ~= nil) and mdl:GetMetaRig() or nil
+					if metaRig ~= nil then
+						entGhost:SetRotation(metaRig.forwardFacingRotationOffset)
+					end
+
 					pm:TagRenderSceneAsDirty(true)
 				end)
 				elGhost:AddCallback("OnDragTargetHoverStop", function(elGhost)
