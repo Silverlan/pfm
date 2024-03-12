@@ -45,18 +45,34 @@ local function is_character_model(model)
 	if mdl == nil then
 		return false
 	end
-	-- If the model is a character, we'll zoom in on the head
-	local headData = util.rig.determine_head_bones(mdl)
-	if
-		headData == nil
-		or headData.headBoneId == nil
-		or headData.headBoneId == -1
-		or headData.headParentBoneId == nil
-		or headData.headParentBoneId == -1
-	then
+	local metaRig = mdl:GetMetaRig()
+	if metaRig == nil then
 		return false
 	end
-	return true, headData
+	local metaBoneHead = metaRig:GetBone(Model.MetaRig.BONE_TYPE_HEAD)
+	local metaBoneNeck = metaRig:GetBone(Model.MetaRig.BONE_TYPE_NECK)
+	if metaBoneHead == nil or metaBoneNeck == nil then
+		return false
+	end
+
+	local headBones = {}
+	local skeleton = mdl:GetSkeleton()
+	local headBone = skeleton:GetBone(metaBoneHead.boneId)
+	local addHeadBones
+	addHeadBones = function(bone)
+		for id, child in pairs(bone:GetChildren()) do
+			headBones[id] = true
+			addHeadBones(child)
+		end
+	end
+	addHeadBones(headBone)
+	return true,
+		{
+			headBounds = { metaBoneHead.min, metaBoneHead.max },
+			headBoneId = metaBoneHead.boneId,
+			headParentBoneId = metaBoneNeck.boneId,
+			headBones = headBones,
+		}
 end
 
 local function set_model_view_model(mdlView, model, settings, iconPath)
@@ -102,12 +118,18 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 		local playIdleAnim = true
 		local ent = mdlView:GetEntity()
 		if util.is_valid(ent) then
+			ent:SetRotation(Quaternion())
 			local eyeC = ent:GetComponent(ents.COMPONENT_EYE)
 			if eyeC ~= nil then
 				eyeC:SetBlinkingEnabled(false)
 			end
 			local isCharModel, headData = is_character_model(model)
 			if isCharModel and headData.headBounds[1]:DistanceSqr(headData.headBounds[2]) > 0.001 then
+				local mdl = ent:GetModel()
+				local metaRig = mdl:GetMetaRig()
+				if metaRig ~= nil then
+					ent:SetRotation(metaRig.forwardFacingRotationOffset)
+				end
 				local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 				if animC ~= nil then
 					-- If the model is a character, we'll zoom in on the head
@@ -558,9 +580,8 @@ function gui.AssetIcon:MouseCallback(button, state, mods)
 			end)
 			return util.EVENT_REPLY_HANDLED
 		end
-		local pContext = gui.open_context_menu()
+		local pContext = gui.open_context_menu(self)
 		if util.is_valid(pContext) then
-			pContext:SetPos(input.get_cursor_pos())
 			self:CallCallbacks("PopulateContextMenu", pContext)
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
