@@ -116,7 +116,7 @@ end
 
 local DRAW_LINES = false
 function Component:GetLines(animC, rootPose, bone, parentPose, lines)
-	local pose = rootPose * animC:GetEffectiveBoneTransform(bone:GetID())
+	local pose = rootPose * animC:GetEffectiveBonePose(bone:GetID())
 	if parentPose ~= nil then
 		table.insert(lines, parentPose:GetOrigin())
 		table.insert(lines, pose:GetOrigin())
@@ -155,7 +155,15 @@ function Component:UpdateBones()
 		debug.draw_lines(lines, Color.Red, 0.1)
 	else
 		local dirtyBones = {}
-		local poses = animC:GetEffectiveBoneTransforms()
+		local poses = animC:GetEffectiveBonePoses()
+		local scale = rootPose:GetScale()
+		if scale ~= Vector(1, 1, 1) then
+			for _, pose in ipairs(poses) do
+				local pos = pose:GetOrigin()
+				pos = pos * scale
+				pose:SetOrigin(pos)
+			end
+		end
 		local hasDirtyBones = false
 		local rootPoseChanged = rootPose ~= self.m_prevRootPose
 		for i, pose in ipairs(poses) do

@@ -761,7 +761,7 @@ function gui.PFMCoreViewportBase:CreateActorTransformWidget(ent, manipMode, enab
 												local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 												dbgLineC:SetEndPosition(pos)
 												local bonePose = (animC ~= nil and skelBoneId ~= nil)
-														and animC:GetGlobalBonePose(skelBoneId)
+														and animC:GetBonePose(skelBoneId, math.COORDINATE_SPACE_WORLD)
 													or nil
 												if bonePose ~= nil then
 													dbgLineC:SetStartPosition(bonePose:GetOrigin())

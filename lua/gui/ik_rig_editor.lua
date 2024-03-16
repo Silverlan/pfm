@@ -483,9 +483,9 @@ function Element:CreateTransformGizmo()
 		--[[utilTransformC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED,function(rot)
 			local localRot = rot:Copy()
 			if(animC ~= nil) then
-				local pose = animC:GetGlobalBonePose(boneId)
+				local pose = animC:GetBonePose(boneId,math.COORDINATE_SPACE_WORLD)
 				pose:SetRotation(rot)
-				animC:SetGlobalBonePose(boneId,pose)
+				animC:SetBonePose(boneId,posemath.COORDINATE_SPACE_WORLD)
 
 				localRot = animC:GetBoneRot(boneId)
 			end
@@ -493,9 +493,9 @@ function Element:CreateTransformGizmo()
 		end)
 		utilTransformC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED,function(scale)
 			if(animC ~= nil) then
-				local pose = animC:GetGlobalBonePose(boneId)
+				local pose = animC:GetBonePose(boneId,math.COORDINATE_SPACE_WORLD)
 				pose:SetScale(scale)
-				animC:SetGlobalBonePose(boneId,pose)
+				animC:SetBonePose(boneId,posemath.COORDINATE_SPACE_WORLD)
 			end
 			self:BroadcastEvent(ents.UtilBoneTransformComponent.EVENT_ON_SCALE_CHANGED,{boneId,scale,scale})
 		end)

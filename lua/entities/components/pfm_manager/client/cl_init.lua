@@ -80,7 +80,8 @@ function Component:OnCursorTargetChanged(rayInfo)
 			if c ~= nil then
 				if bone ~= nil and util.is_valid(rayInfo.vpData.viewport) then
 					local animC = rayInfo.actor:GetComponent(ents.COMPONENT_ANIMATED)
-					local pos = (animC ~= nil) and animC:GetGlobalBonePose(boneId):GetOrigin() or nil
+					local pos = (animC ~= nil) and animC:GetBonePose(boneId, math.COORDINATE_SPACE_WORLD):GetOrigin()
+						or nil
 					if pos ~= nil then
 						elHoverText:SetParent(rayInfo.vpData.viewport)
 						elHoverText:SetText(bone:GetName())

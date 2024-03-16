@@ -47,15 +47,15 @@ function Component:UpdateIk()
 		local boneId = ikSolverC:GetSkeletalBoneId(i - 1)
 		local bone = ikSolverC:GetBone(boneId)
 		if bone == nil then
-			--local pose = animC:GetGlobalBonePose(mdl:GetSkeleton():GetBone(boneId):GetParent():GetID()) *mdl:GetReferencePose():GetBonePose(boneId)
-			--animC:SetGlobalBonePose(boneId,pose)
+			--local pose = animC:GetBonePose(mdl:GetSkeleton():GetBone(boneId):GetParent():GetID(),math.COORDINATE_SPACE_WORLD) *mdl:GetReferencePose():GetBonePose(boneId)
+			--animC:SetBonePose(boneId,posemath.COORDINATE_SPACE_WORLD)
 		elseif bone:IsPinned() == false then -- Pinned bones are controlled by forward kinematics
 			local pos = bone:GetPos()
 			local rot = bone:GetRot()
-			local pose = math.ScaledTransform(pos, rot)
-			--local pose = animC:GetGlobalBonePose(boneId)
+			local pose = math.ScaledTransform(pos, rot, Vector(1, 1, 1))
+			--local pose = animC:GetBonePose(boneId,math.COORDINATE_SPACE_WORLD)
 			--pose:SetOrigin(pos)
-			animC:SetLocalBonePose(boneId, pose)
+			animC:SetBonePose(boneId, pose, math.COORDINATE_SPACE_OBJECT)
 		end
 	end
 end

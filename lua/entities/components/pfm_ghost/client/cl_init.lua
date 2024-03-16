@@ -124,7 +124,7 @@ function ents.PFMGhost:UpdateAttachmentActor(hitActor)
 
 	local data = self.m_lastHitActorData
 	if data ~= nil and util.is_valid(data.hitActorAnimC) then
-		local pose = data.hitActorAnimC:GetGlobalBonePose(data.hitActorBone)
+		local pose = data.hitActorAnimC:GetBonePose(data.hitActorBone, math.COORDINATE_SPACE_WORLD)
 		if pose ~= nil then
 			pose = pose * data.selfRootBonePose
 			return pose:GetOrigin(), pose:GetRotation()

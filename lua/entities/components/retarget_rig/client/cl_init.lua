@@ -336,7 +336,7 @@ function Component:UpdatePoseData()
 		if translationTable[boneId] ~= nil then
 			local data = translationTable[boneId]
 			local boneIdOther = data[1]
-			bindPosesOther[boneIdOther] = animDst:GetBoneBindPose(boneIdOther):GetInverse()
+			bindPosesOther[boneIdOther] = animDst:GetReferenceBonePose(boneIdOther):GetInverse()
 		end
 	end
 end
@@ -398,7 +398,7 @@ function Component:ApplyRig(dt)
 			-- Grab the animation pose from the target entity
 			local data = translationTable[boneId]
 			local boneIdOther = data[1]
-			local pose = animDst:GetEffectiveBoneTransform(boneIdOther)
+			local pose = animDst:GetEffectiveBonePose(boneIdOther)
 			local tmpPose1 = pose * bindPosesOther[boneIdOther]
 
 			local curPose = origBindPoses[boneId]:Copy()

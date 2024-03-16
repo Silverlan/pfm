@@ -40,7 +40,7 @@ function ents.UtilBoneTransformComponent:SetTransformEnabled(boneId)
 
 	local animC = self:GetEntity():GetComponent(ents.COMPONENT_ANIMATED)
 	if animC ~= nil then
-		local pose = animC:GetGlobalBonePose(boneId)
+		local pose = animC:GetBonePose(boneId, math.COORDINATE_SPACE_WORLD)
 		if pose ~= nil then
 			ent:SetPose(pose)
 		end
@@ -51,9 +51,9 @@ function ents.UtilBoneTransformComponent:SetTransformEnabled(boneId)
 		utilTransformC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED, function(pos)
 			local localPos = pos:Copy()
 			if animC ~= nil then
-				local pose = animC:GetGlobalBonePose(boneId)
+				local pose = animC:GetBonePose(boneId, math.COORDINATE_SPACE_WORLD)
 				pose:SetOrigin(pos)
-				animC:SetGlobalBonePose(boneId, pose)
+				animC:SetBonePose(boneId, posemath.COORDINATE_SPACE_WORLD)
 
 				localPos = animC:GetBonePos(boneId)
 			end
@@ -62,9 +62,9 @@ function ents.UtilBoneTransformComponent:SetTransformEnabled(boneId)
 		utilTransformC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED, function(rot)
 			local localRot = rot:Copy()
 			if animC ~= nil then
-				local pose = animC:GetGlobalBonePose(boneId)
+				local pose = animC:GetBonePose(boneId, math.COORDINATE_SPACE_WORLD)
 				pose:SetRotation(rot)
-				animC:SetGlobalBonePose(boneId, pose)
+				animC:SetBonePose(boneId, posemath.COORDINATE_SPACE_WORLD)
 
 				localRot = animC:GetBoneRot(boneId)
 			end
@@ -72,9 +72,9 @@ function ents.UtilBoneTransformComponent:SetTransformEnabled(boneId)
 		end)
 		utilTransformC:AddEventCallback(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED, function(scale)
 			if animC ~= nil then
-				local pose = animC:GetGlobalBonePose(boneId)
+				local pose = animC:GetBonePose(boneId, math.COORDINATE_SPACE_WORLD)
 				pose:SetScale(scale)
-				animC:SetGlobalBonePose(boneId, pose)
+				animC:SetBonePose(boneId, posemath.COORDINATE_SPACE_WORLD)
 			end
 			self:BroadcastEvent(ents.UtilBoneTransformComponent.EVENT_ON_SCALE_CHANGED, { boneId, scale, scale })
 		end)

@@ -133,8 +133,8 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 				local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
 				if animC ~= nil then
 					-- If the model is a character, we'll zoom in on the head
-					local pose = animC:GetGlobalBonePose(headData.headBoneId)
-					local poseParent = animC:GetGlobalBonePose(headData.headParentBoneId)
+					local pose = animC:GetBonePose(headData.headBoneId, math.COORDINATE_SPACE_WORLD)
+					local poseParent = animC:GetBonePose(headData.headParentBoneId, math.COORDINATE_SPACE_WORLD)
 					if pose ~= nil and poseParent ~= nil then
 						playIdleAnim = false
 						pose:SetOrigin(pose:GetOrigin() + (poseParent:GetOrigin() - pose:GetOrigin()) * 0.7)

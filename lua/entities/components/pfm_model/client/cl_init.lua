@@ -147,7 +147,7 @@ function ents.PFMModel:InitModel()
 			local boneId = mdl:LookupBone(boneName) -- TODO: Cache this
 			if(boneId ~= -1) then
 				local pose = entInvPose *bone:GetTransform():GetAbsolutePose()
-				animC:SetEffectiveBoneTransform(boneId,pose)
+				animC:SetEffectiveBonePose(boneId,pose)
 			end
 
 			for _,child in ipairs(bone:GetChildBones():GetTable()) do
