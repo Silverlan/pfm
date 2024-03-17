@@ -237,7 +237,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 					local mdl = entGhost:GetModel()
 					local metaRig = (mdl ~= nil) and mdl:GetMetaRig() or nil
 					if metaRig ~= nil then
-						entGhost:SetRotation(metaRig.forwardFacingRotationOffset)
+						ghostC:SetBaseRotation(metaRig.forwardFacingRotationOffset)
 					end
 
 					pm:TagRenderSceneAsDirty(true)

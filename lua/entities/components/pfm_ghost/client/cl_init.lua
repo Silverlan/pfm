@@ -132,6 +132,11 @@ function ents.PFMGhost:UpdateAttachmentActor(hitActor)
 	end
 end
 
+function ents.PFMGhost:SetBaseRotation(rot)
+	self:GetEntity():SetRotation(rot)
+	self.m_baseRotation = rot
+end
+
 function ents.PFMGhost:OnTick()
 	if util.is_valid(self.m_viewport) == false then
 		return
@@ -236,6 +241,9 @@ function ents.PFMGhost:OnTick()
 				forward = vector.RIGHT
 			end
 			local rot = Quaternion(forward, dir)
+			if self.m_baseRotation ~= nil then
+				rot = rot * self.m_baseRotation
+			end
 			ent:SetRotation(rot)
 		end
 	end
