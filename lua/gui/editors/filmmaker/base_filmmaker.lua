@@ -1,5 +1,6 @@
 include("../base_editor.lua")
 include("/pfm/project_manager.lua")
+include("/util/retarget.lua")
 
 local Element = util.register_class("gui.WIBaseFilmmaker", gui.WIBaseEditor, pfm.ProjectManager)
 
@@ -150,8 +151,18 @@ function Element:InitializePlaybackState()
 end
 function Element:OpenBoneRetargetWindow(mdlSrc, mdlDst)
 	local mdlSrcPath = (type(mdlSrc) == "string") and mdlSrc or mdlSrc:GetName()
-	mdlSrc = (type(mdlSrc) == "string") and game.load_model(mdlSrc) or mdlSrc
-	mdlDst = (type(mdlDst) == "string") and game.load_model(mdlDst) or mdlDst
+	if type(mdlSrc) == "string" then
+		mdlSrc = game.load_model(mdlSrc)
+		if mdlSrc == nil then
+			return
+		end
+	end
+	if type(mdlDst) == "string" then
+		mdlDst = game.load_model(mdlDst)
+		if mdlDst == nil then
+			return
+		end
+	end
 	if mdlSrc == nil or mdlDst == nil then
 		return
 	end
@@ -216,6 +227,10 @@ function Element:GetAvailableRetargetImpostorModels(actor)
 	return ents.RetargetRig.Rig.find_available_retarget_impostor_models(targetActor:GetModel())
 end
 function Element:RetargetActor(targetActor, mdlName)
+	if targetActor:GetComponent(ents.COMPONENT_PANIMA) == nil then
+		pfm.create_popup_message(locale.get_text("pfm_retarget_failed_not_animated"), 4, gui.InfoBox.TYPE_WARNING)
+		return
+	end
 	local res, targetActor, srcModelName = util.retarget.retarget_actor(targetActor, mdlName)
 	if res == true or targetActor == nil then
 		return
