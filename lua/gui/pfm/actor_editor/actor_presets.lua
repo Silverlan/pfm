@@ -248,6 +248,10 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 		end
 		local sceneC = self:CreateNewActorComponent(actor, "pfm_scene", false)
 		sceneC:SetMemberValue("scenebuild", udm.TYPE_BOOLEAN, true)
+		local project = args["project"]
+		if project ~= nil then
+			sceneC:SetMemberValue("project", udm.TYPE_STRING, project)
+		end
 	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_GREENSCREEN then
 		actor = actor or create_new_actor("greenscreen", gui.PFMActorEditor.COLLECTION_EFFECTS)
 		if actor == nil then

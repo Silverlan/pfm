@@ -137,7 +137,28 @@ function gui.PFMActorEditor:OnInitialize()
 		end)]]
 		addPresetActorOption("volume", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME, "pfm_create_new_volume")
 		addPresetActorOption("actor", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR, "pfm_create_new_actor")
-		addPresetActorOption("scene", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_SCENEBUILD, "pfm_create_new_scene")
+		local subItem = pContext:AddItem(locale.get_text("pfm_create_new_scene"), function()
+			local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+				if fileName == nil then
+					return
+				end
+				if self:IsValid() == false then
+					return
+				end
+				local actor = self:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_SCENEBUILD, {
+					["project"] = fileName,
+				})
+				pfm.undoredo.push("add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
+			end)
+			pFileDialog:SetRootPath("projects")
+			pFileDialog:SetExtensions({
+				pfm.Project.FORMAT_EXTENSION_BINARY,
+				pfm.Project.FORMAT_EXTENSION_ASCII,
+			})
+			pFileDialog:Update()
+		end)
+		subItem:SetTooltip(locale.get_text("pfm_create_new_scene_desc"))
+		subItem:SetName("scene")
 		addPresetActorOption(
 			"greenscreen",
 			pContext,
