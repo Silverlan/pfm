@@ -504,6 +504,9 @@ pfm.translate_flex_controller_value = function(fc, val)
 end
 
 pfm.is_articulated_model = function(mdl)
+	if mdl:GetMetaRig() ~= nil then
+		return true
+	end
 	local isArticulatedActor = (mdl:GetFlexCount() > 0)
 	if isArticulatedActor then
 		return true
