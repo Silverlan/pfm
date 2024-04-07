@@ -20,7 +20,7 @@ function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(64, 128)
-	self.m_ikRig = ents.IkSolverComponent.RigConfig()
+	self.m_ikRig = util.IkRigConfig()
 	self.m_constraintVisualizers = {}
 	self:UpdateModelView()
 
@@ -43,7 +43,7 @@ function Element:OnInitialize()
 				return
 			end
 			local rigPath = rootPath .. fileName
-			local rig = ents.IkSolverComponent.RigConfig.load(rigPath)
+			local rig = util.IkRigConfig.load(rigPath)
 			if rig == nil then
 				pfm.log("Failed to load ik rig '" .. rigPath .. "'!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
 				return
@@ -54,7 +54,7 @@ function Element:OnInitialize()
 				:SetFileDialogPath("ik_rig_path", file.get_file_path(pFileDialog:MakePathRelative(rigPath)))
 		end)
 		pFileDialog:SetRootPath(rootPath)
-		pFileDialog:SetExtensions(ents.IkSolverComponent.RigConfig.get_supported_extensions())
+		pFileDialog:SetExtensions(util.IkRigConfig.get_supported_extensions())
 		if path ~= nil then
 			pFileDialog:SetPath(path)
 		end
@@ -185,18 +185,18 @@ function Element:LoadRig(rig)
 	self:ReloadBoneList(self.m_feModel)
 
 	-- We don't actually use the loaded rig, we just use it to re-create it
-	self.m_ikRig = ents.IkSolverComponent.RigConfig()
+	self.m_ikRig = util.IkRigConfig()
 	for _, c in ipairs(rig:GetConstraints()) do
 		local item = self:FindBoneItem(c.bone1)
 		if util.is_valid(item) then
-			if c.type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_FIXED then
+			if c.type == util.IkRigConfig.Constraint.TYPE_FIXED then
 				local constraint, ctrl = self:AddFixedConstraint(item, c.bone1, c)
-			elseif c.type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_HINGE then
+			elseif c.type == util.IkRigConfig.Constraint.TYPE_HINGE then
 				local constraint, ctrl = self:AddHingeConstraint(item, c.bone1, c)
 				ctrl:GetControl("axis"):SelectOption(c.axis)
 				ctrl:GetControl("angle_min"):SetValue(c.minLimits.p)
 				ctrl:GetControl("angle_max"):SetValue(c.maxLimits.p)
-			elseif c.type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_BALL_SOCKET then
+			elseif c.type == util.IkRigConfig.Constraint.TYPE_BALL_SOCKET then
 				local constraint, ctrl = self:AddBallSocketConstraint(item, c.bone1, c)
 				ctrl:GetControl("twist_axis"):SelectOption(c.axis)
 				ctrl:GetControl("rotation_axes"):GetControl("pitch_min"):SetValue(c.minLimits.p)
@@ -351,11 +351,11 @@ function Element:FindSolverJoint(solver, boneName, type)
 	local numJoints = solver:GetJointCount()
 
 	local jointType
-	if type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_BALL_SOCKET then
+	if type == util.IkRigConfig.Constraint.TYPE_BALL_SOCKET then
 		jointType = ik.Joint.TYPE_BALL_SOCKET_JOINT
-	elseif type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_HINGE then
+	elseif type == util.IkRigConfig.Constraint.TYPE_HINGE then
 		jointType = ik.Joint.TYPE_REVOLUTE_JOINT
-	elseif type == ents.IkSolverComponent.RigConfig.Constraint.TYPE_FIXED then
+	elseif type == util.IkRigConfig.Constraint.TYPE_FIXED then
 		jointType = ik.Joint.TYPE_ANGULAR_JOINT
 	end
 
@@ -469,7 +469,7 @@ function Element:CreateTransformGizmo()
 		entTransform:SetPose(pose * localPose)
 
 		if useLocalSpace then
-			trC:SetSpace(ents.UtilTransformComponent.SPACE_LOCAL)
+			trC:SetSpace(ents.TransformController.SPACE_LOCAL)
 			trC:SetReferenceEntity(ent)
 		end
 

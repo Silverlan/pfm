@@ -453,51 +453,16 @@ function gui.PFMCoreViewportBase:ApplyPoseToKeyframeAnimation(actorData, origPos
 		pfm.tag_render_scene_as_dirty()
 	end
 end
-function gui.PFMCoreViewportBase:UpdateTransformGizmoPose()
-	if self.m_transformGizmoInfo == nil then
-		return
-	end
-	local ent = self.m_transformGizmoInfo.targetEntity
-	local componentName = self.m_transformGizmoInfo.componentName
-	local propertyName = self.m_transformGizmoInfo.propertyName
-	local lastPose = self.m_transformGizmoInfo.lastPose
-	local c = (componentName ~= nil and util.is_valid(ent)) and ent:GetComponent(componentName) or nil
-	local idx = (c ~= nil) and c:GetMemberIndex(propertyName) or nil
-	local pose = (idx ~= nil) and c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD) or nil
-	local function update_view_rotation()
-		if
-			(
-				self:IsRotationManipulatorMode(self:GetManipulatorMode()) == false
-				and self:IsMoveManipulatorMode(self:GetManipulatorMode()) == false
-			) or self:GetTransformSpace() ~= ents.UtilTransformComponent.SPACE_VIEW
-		then
-			return
-		end
-		local transformC = self.m_entTransform:GetComponent(ents.COMPONENT_UTIL_TRANSFORM)
-		if transformC ~= nil then
-			transformC:UpdateRotation()
-		end
-	end
-	if pose == nil or pose == lastPose then
-		update_view_rotation()
-		return
-	end
-	self.m_entTransform:SetPose(pose)
-	update_view_rotation()
-	self.m_transformGizmoInfo.lastPose = pose
-end
 function gui.PFMCoreViewportBase:UpdateThinkState()
 	local shouldThink = false
-	if self.m_transformGizmoInfo ~= nil and not self.m_transformGizmoInfo.isTransforming then
-		shouldThink = true
-	elseif self.m_cursorTracker ~= nil then
+	if self.m_cursorTracker ~= nil then
 		shouldThink = true
 	elseif self.m_cameraMode ~= gui.PFMCoreViewportBase.CAMERA_MODE_PLAYBACK then
 		shouldThink = true
 	elseif
 		self:IsRotationManipulatorMode(self:GetManipulatorMode())
 		or self:IsMoveManipulatorMode(self:GetManipulatorMode())
-			and self:GetTransformSpace() == ents.UtilTransformComponent.SPACE_VIEW
+			and self:GetTransformSpace() == ents.TransformController.SPACE_VIEW
 	then
 		shouldThink = true
 	end
@@ -508,9 +473,6 @@ function gui.PFMCoreViewportBase:UpdateThinkState()
 	end
 end
 function gui.PFMCoreViewportBase:OnThink()
-	if self.m_transformGizmoInfo ~= nil and self.m_transformGizmoInfo.isTransforming ~= true then
-		self:UpdateTransformGizmoPose()
-	end
 	if self.m_cursorTracker ~= nil then
 		self.m_cursorTracker:Update()
 		if not self.m_cursorTracker:HasExceededMoveThreshold(2) then
@@ -721,8 +683,8 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 							if transformC ~= nil then
 								transformC:StartTransform(
 									"xyz",
-									ents.UtilTransformArrowComponent.AXIS_XYZ,
-									ents.UtilTransformArrowComponent.TYPE_TRANSLATION,
+									ents.TransformController.AXIS_XYZ,
+									ents.TransformController.TYPE_TRANSLATION,
 									hitPosBone
 								)
 							end

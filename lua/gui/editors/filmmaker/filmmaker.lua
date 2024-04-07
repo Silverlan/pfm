@@ -1563,8 +1563,7 @@ function gui.WIFilmmaker:SetQuickAxisTransformMode(axes)
 		self.m_quickAxisTransformAxes = {}
 		for _, axis in ipairs(axes) do
 			local v = c:GetTransformUtility(
-				useRotationGizmo and ents.UtilTransformArrowComponent.TYPE_ROTATION
-					or ents.UtilTransformArrowComponent.TYPE_TRANSLATION,
+				useRotationGizmo and ents.TransformController.TYPE_ROTATION or ents.TransformController.TYPE_TRANSLATION,
 				axis,
 				useRotationGizmo and "rotation" or "translation"
 			)

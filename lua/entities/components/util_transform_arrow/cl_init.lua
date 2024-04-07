@@ -9,6 +9,7 @@
 include("/shaders/pfm/pfm_gizmo.lua")
 
 include_component("click")
+include_component("transform_controller")
 
 util.register_class("ents.UtilTransformArrowComponent", BaseEntityComponent)
 
@@ -16,17 +17,6 @@ include("model.lua")
 include("gizmo.lua")
 
 local Component = ents.UtilTransformArrowComponent
-Component.TYPE_TRANSLATION = 0
-Component.TYPE_ROTATION = 1
-Component.TYPE_SCALE = 2
-
-Component.AXIS_X = math.AXIS_X
-Component.AXIS_Y = math.AXIS_Y
-Component.AXIS_Z = math.AXIS_Z
-Component.AXIS_XY = 3
-Component.AXIS_XZ = 4
-Component.AXIS_YZ = 5
-Component.AXIS_XYZ = 6
 
 local defaultMemberFlags = bit.band(
 	ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT,
@@ -38,7 +28,7 @@ local defaultMemberFlags = bit.band(
 		)
 	)
 )
-Component:RegisterMember("Axis", udm.TYPE_UINT8, Component.AXIS_X, {
+Component:RegisterMember("Axis", udm.TYPE_UINT8, ents.TransformController.AXIS_X, {
 	onChange = function(self)
 		self:UpdateLine()
 	end,
@@ -57,12 +47,12 @@ Component:RegisterMember(
 	{},
 	bit.bor(defaultMemberFlags, ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER)
 )
-Component:RegisterMember("Type", udm.TYPE_UINT8, Component.TYPE_TRANSLATION, {
+Component:RegisterMember("Type", udm.TYPE_UINT8, ents.TransformController.TYPE_TRANSLATION, {
 	onChange = function(self)
 		self:UpdateLine()
 	end,
 }, ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT)
-Component:RegisterMember("Space", udm.TYPE_UINT8, ents.UtilTransformComponent.SPACE_WORLD, {}, defaultMemberFlags)
+Component:RegisterMember("Space", udm.TYPE_UINT8, ents.TransformController.SPACE_WORLD, {}, defaultMemberFlags)
 Component:RegisterMember("AxisGuidesEnabled", udm.TYPE_BOOLEAN, true, {
 	onChange = function(self)
 		self:UpdateAxisGuides()
@@ -79,7 +69,9 @@ function Component:Initialize()
 	local clickC = self:AddEntityComponent(ents.COMPONENT_CLICK)
 	self:AddEntityComponent(ents.COMPONENT_BVH)
 	self:AddEntityComponent("pfm_overlay_object")
-
+	self.m_transformController = self:AddEntityComponent("transform_controller")
+	self:BindEvent(ents.TransformController.EVENT_ON_TRANSFORM_START, "OnTransformStart")
+	self:BindEvent(ents.TransformController.EVENT_ON_TRANSFORM_END, "OnTransformEnd")
 	self:BindEvent(ents.ClickComponent.EVENT_ON_CLICK, "OnClick")
 	-- self:BindEvent(ents.RenderComponent.EVENT_ON_UPDATE_RENDER_DATA,"UpdateScale")
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
@@ -90,6 +82,8 @@ function Component:Initialize()
 
 	clickC:SetPriority(100)
 end
+function Component:OnTransformStart() end
+function Component:OnTransformEnd() end
 function Component:SetCamera(cam)
 	self.m_cam = cam
 end
@@ -137,8 +131,12 @@ function Component:UpdateLine()
 	end
 	local axis = self:GetAxis()
 	if
-		self:GetType() ~= Component.TYPE_TRANSLATION
-		or (axis ~= Component.AXIS_X and axis ~= Component.AXIS_Y and axis ~= Component.AXIS_Z)
+		self:GetType() ~= ents.TransformController.TYPE_TRANSLATION
+		or (
+			axis ~= ents.TransformController.AXIS_X
+			and axis ~= ents.TransformController.AXIS_Y
+			and axis ~= ents.TransformController.AXIS_Z
+		)
 	then
 		return
 	end
@@ -156,6 +154,7 @@ function Component:OnRemove()
 	util.remove(self.m_elLine)
 	util.remove(self.m_cbOnMouseRelease)
 	util.remove(self.m_debugLine)
+	util.remove(self.m_cbOnTransformChanged)
 end
 
 if util.get_class_value(Component, "SetAxisBase") == nil then
@@ -206,11 +205,11 @@ function Component:GetBasePose()
 
 	local pose = math.Transform()
 	local space = self:GetSpace()
-	if space == ents.UtilTransformComponent.SPACE_LOCAL or self:GetType() == Component.TYPE_SCALE then
+	if space == ents.TransformController.SPACE_LOCAL or self:GetType() == ents.TransformController.TYPE_SCALE then
 		pose = entParent:GetPose()
-	elseif space == ents.UtilTransformComponent.SPACE_WORLD then
+	elseif space == ents.TransformController.SPACE_WORLD then
 		pose:SetOrigin(entParent:GetPos())
-	elseif space == ents.UtilTransformComponent.SPACE_VIEW then
+	elseif space == ents.TransformController.SPACE_VIEW then
 		pose = entParent:GetPose()
 		pose:SetRotation(entRef:GetRotation())
 	end
@@ -227,23 +226,26 @@ function Component:UpdateRotation()
 	local rot = Quaternion()
 	local entParent = self:GetTargetEntity()
 
-	if self:GetType() == Component.TYPE_TRANSLATION or self:GetType() == Component.TYPE_SCALE then
-		if axis == Component.AXIS_X then
+	if
+		self:GetType() == ents.TransformController.TYPE_TRANSLATION
+		or self:GetType() == ents.TransformController.TYPE_SCALE
+	then
+		if axis == ents.TransformController.AXIS_X then
 			rot = rot * EulerAngles(0, 90, 0):ToQuaternion()
-		elseif axis == Component.AXIS_Y then
+		elseif axis == ents.TransformController.AXIS_Y then
 			rot = rot * EulerAngles(-90, 0, 0):ToQuaternion()
-		elseif axis == Component.AXIS_XY then
+		elseif axis == ents.TransformController.AXIS_XY then
 			rot = rot * EulerAngles(-90, 0, 0):ToQuaternion()
-		elseif axis == Component.AXIS_YZ then
+		elseif axis == ents.TransformController.AXIS_YZ then
 			rot = rot * EulerAngles(-90, -90, 0):ToQuaternion()
-		elseif axis == Component.AXIS_XZ then
+		elseif axis == ents.TransformController.AXIS_XZ then
 			rot = rot * EulerAngles(0, 0, 0):ToQuaternion()
 		end
 	else
-		--if(self:GetSpace() ~= ents.UtilTransformComponent.SPACE_WORLD) then rot = entParent:GetRotation() end
-		if axis == Component.AXIS_X then
+		--if(self:GetSpace() ~= ents.TransformController.SPACE_WORLD) then rot = entParent:GetRotation() end
+		if axis == ents.TransformController.AXIS_X then
 			rot = rot * EulerAngles(0, 0, 90):ToQuaternion()
-		elseif axis == Component.AXIS_Z then
+		elseif axis == ents.TransformController.AXIS_Z then
 			rot = rot * EulerAngles(90, 0, 0):ToQuaternion()
 		end
 	end
@@ -277,18 +279,20 @@ end
 function Component:SetUtilTransformComponent(c)
 	self.m_transformComponent = c
 	self:UpdatePose()
+
+	self.m_transformController:SetTargetEntity(self.m_transformComponent:GetEntity())
 end
 function Component:GetBaseUtilTransformComponent()
 	return util.is_valid(self.m_transformComponent) and self.m_transformComponent or nil
 end
 local axisColors = {
-	[Component.AXIS_X] = "intenseRed",
-	[Component.AXIS_Y] = "intenseGreen",
-	[Component.AXIS_Z] = "intenseBlue",
-	[Component.AXIS_XY] = "yellow",
-	[Component.AXIS_XZ] = "pink",
-	[Component.AXIS_YZ] = "turquoise",
-	[Component.AXIS_XYZ] = "white",
+	[ents.TransformController.AXIS_X] = "rawRed",
+	[ents.TransformController.AXIS_Y] = "rawGreen",
+	[ents.TransformController.AXIS_Z] = "rawBlue",
+	[ents.TransformController.AXIS_XY] = "yellow",
+	[ents.TransformController.AXIS_XZ] = "pink",
+	[ents.TransformController.AXIS_YZ] = "turquoise",
+	[ents.TransformController.AXIS_XYZ] = "white",
 }
 function Component:UpdateColor()
 	local axis = self:GetAxis()
@@ -320,16 +324,24 @@ function Component:UpdateModel()
 		return
 	end
 	local mdl
-	if self:GetType() == Component.TYPE_TRANSLATION then
+	if self:GetType() == ents.TransformController.TYPE_TRANSLATION then
 		local axis = self:GetAxis()
-		if axis == Component.AXIS_X or axis == Component.AXIS_Y or axis == Component.AXIS_Z then
+		if
+			axis == ents.TransformController.AXIS_X
+			or axis == ents.TransformController.AXIS_Y
+			or axis == ents.TransformController.AXIS_Z
+		then
 			mdl = self:GetArrowModel()
-		elseif axis == Component.AXIS_XY or axis == Component.AXIS_XZ or axis == Component.AXIS_YZ then
+		elseif
+			axis == ents.TransformController.AXIS_XY
+			or axis == ents.TransformController.AXIS_XZ
+			or axis == ents.TransformController.AXIS_YZ
+		then
 			mdl = self:GetPlaneModel()
 		else
 			mdl = self:GetBoxModel()
 		end
-	elseif self:GetType() == Component.TYPE_SCALE then
+	elseif self:GetType() == ents.TransformController.TYPE_SCALE then
 		mdl = self:GetScaleModel()
 	else
 		mdl = self:GetDiskModel()
@@ -343,6 +355,7 @@ function Component:GetReferenceAxis()
 	return self:GetAxis()
 end
 function Component:OnTick(dt)
+	self:UpdateTransformLine()
 	self:UpdateScale() -- TODO: This doesn't belong here, move it to a render callback
 	if self:IsSelected() ~= true then
 		return
@@ -353,7 +366,6 @@ function Component:OnTick(dt)
 	if util.is_valid(transformC) == false or util.is_valid(clickC) == false then
 		return
 	end
-	self:ApplyTransform()
 end
 function Component:ToLocalSpace(pos)
 	local transformC = self:GetBaseUtilTransformComponent()
@@ -382,32 +394,40 @@ function Component:OnClick(action, pressed, hitPos)
 end
 function Component:GetAffectedAxes()
 	local axis = self:GetAxis()
-	if axis == Component.AXIS_X or axis == Component.AXIS_Y or axis == Component.AXIS_Z then
+	if
+		axis == ents.TransformController.AXIS_X
+		or axis == ents.TransformController.AXIS_Y
+		or axis == ents.TransformController.AXIS_Z
+	then
 		return { axis }
 	end
-	if axis == Component.AXIS_XY then
-		return { Component.AXIS_X, Component.AXIS_Y }
+	if axis == ents.TransformController.AXIS_XY then
+		return { ents.TransformController.AXIS_X, ents.TransformController.AXIS_Y }
 	end
-	if axis == Component.AXIS_XZ then
-		return { Component.AXIS_X, Component.AXIS_Z }
+	if axis == ents.TransformController.AXIS_XZ then
+		return { ents.TransformController.AXIS_X, ents.TransformController.AXIS_Z }
 	end
-	if axis == Component.AXIS_YZ then
-		return { Component.AXIS_Y, Component.AXIS_Z }
+	if axis == ents.TransformController.AXIS_YZ then
+		return { ents.TransformController.AXIS_Y, ents.TransformController.AXIS_Z }
 	end
-	if axis == Component.AXIS_XYZ then
-		return { Component.AXIS_X, Component.AXIS_Y, Component.AXIS_Z }
+	if axis == ents.TransformController.AXIS_XYZ then
+		return { ents.TransformController.AXIS_X, ents.TransformController.AXIS_Y, ents.TransformController.AXIS_Z }
 	end
 end
 function Component:GetAxisVector()
 	local axis = self:GetReferenceAxis()
 	local vAxis = Vector()
-	if axis == Component.AXIS_X or axis == Component.AXIS_Y or axis == Component.AXIS_Z then
+	if
+		axis == ents.TransformController.AXIS_X
+		or axis == ents.TransformController.AXIS_Y
+		or axis == ents.TransformController.AXIS_Z
+	then
 		vAxis:Set(axis, 1.0)
-	elseif axis == Component.AXIS_XY then
+	elseif axis == ents.TransformController.AXIS_XY then
 		vAxis = Vector(0, 0, 1)
-	elseif axis == Component.AXIS_XZ then
+	elseif axis == ents.TransformController.AXIS_XZ then
 		vAxis = Vector(0, 1, 0)
-	elseif axis == Component.AXIS_YZ then
+	elseif axis == ents.TransformController.AXIS_YZ then
 		vAxis = Vector(1, 0, 0)
 	end
 	return vAxis
@@ -416,6 +436,8 @@ end
 function Component:SetReferenceEntity(ent, boneId)
 	self.m_refEnt = ent
 	self:UpdatePose()
+
+	self.m_transformController:SetReferenceEntity(self:GetReferenceEntity())
 end
 
 function Component:GetReferenceEntity()
@@ -424,7 +446,7 @@ end
 
 function Component.apply_distance_transform(factor)
 	for ent, c in ents.citerator(ents.COMPONENT_UTIL_TRANSFORM_ARROW) do
-		if c:IsActive() and c:GetAxis() == Component.AXIS_XYZ then
+		if c:IsActive() and c:GetAxis() == ents.TransformController.AXIS_XYZ then
 			local tgt = c:GetTargetEntity()
 			local cam = ents.ClickComponent.get_camera()
 			local transformC = c:GetBaseUtilTransformComponent()

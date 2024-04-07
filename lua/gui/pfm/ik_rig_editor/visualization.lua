@@ -10,7 +10,7 @@ local Element = gui.IkRigEditor
 function Element:UpdateDebugVisualization()
 	util.remove(self.m_constraintVisualizers)
 	local function iterate_items(item)
-		if item.__jointType ~= nil and item.__jointType ~= ents.IkSolverComponent.RigConfig.Constraint.TYPE_FIXED then
+		if item.__jointType ~= nil and item.__jointType ~= util.IkRigConfig.Constraint.TYPE_FIXED then
 			local icon = item:GetIcons()[1]
 			if util.is_valid(icon) then
 				local parent = item:GetParentItem()

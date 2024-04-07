@@ -17,7 +17,7 @@ function Element:ReloadBoneList(feModel)
 		return
 	end
 	self.m_mdl = mdl
-	self.m_ikRig = ents.IkSolverComponent.RigConfig()
+	self.m_ikRig = util.IkRigConfig()
 
 	self:AddBoneList()
 	if util.is_valid(self.m_mdlView) then
@@ -290,13 +290,13 @@ function Element:PopulateBoneContextMenu(pContext, boneName)
 		end)
 	else
 		pContext:AddItem(locale.get_text("pfm_add_drag_control"), function()
-			self:AddControl(item, boneName, ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG)
+			self:AddControl(item, boneName, util.IkRigConfig.Control.TYPE_DRAG)
 		end)
 		pContext:AddItem(locale.get_text("pfm_add_state_control"), function()
-			self:AddControl(item, boneName, ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
+			self:AddControl(item, boneName, util.IkRigConfig.Control.TYPE_STATE)
 		end)
 		pContext:AddItem(locale.get_text("pfm_add_oriented_drag_control"), function()
-			self:AddControl(item, boneName, ents.IkSolverComponent.RigConfig.Control.TYPE_ORIENTED_DRAG)
+			self:AddControl(item, boneName, util.IkRigConfig.Control.TYPE_ORIENTED_DRAG)
 		end)
 	end
 end
@@ -316,9 +316,9 @@ end
 function Element:AddControl(item, boneName, controlType)
 	local control = self.m_ikRig:AddControl(boneName, controlType)
 
-	local locName = (controlType == ents.IkSolverComponent.RigConfig.Control.TYPE_DRAG) and "drag"
-		or (controlType == ents.IkSolverComponent.RigConfig.Control.TYPE_STATE) and "state"
-		or (controlType == ents.IkSolverComponent.RigConfig.Control.TYPE_ORIENTED_DRAG) and "oriented_drag"
+	local locName = (controlType == util.IkRigConfig.Control.TYPE_DRAG) and "drag"
+		or (controlType == util.IkRigConfig.Control.TYPE_STATE) and "state"
+		or (controlType == util.IkRigConfig.Control.TYPE_ORIENTED_DRAG) and "oriented_drag"
 	local child = item:AddItem(locale.get_text("pfm_" .. locName .. "_control"))
 	child:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then

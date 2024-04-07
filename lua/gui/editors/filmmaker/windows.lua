@@ -315,11 +315,8 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 							tc:SetRotationAxisEnabled(math.AXIS_X, false)
 							tc:SetRotationAxisEnabled(math.AXIS_Z, false)
 							tc:UpdateAxes()
-							local trUtil = tc:GetTransformUtility(
-								ents.UtilTransformArrowComponent.TYPE_ROTATION,
-								math.AXIS_Y,
-								"rotation"
-							)
+							local trUtil =
+								tc:GetTransformUtility(ents.TransformController.TYPE_ROTATION, math.AXIS_Y, "rotation")
 							local arrowC = util.is_valid(trUtil)
 									and trUtil:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
 								or nil
