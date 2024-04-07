@@ -624,6 +624,10 @@ colScheme:SetColor("turquoise", Color.CreateFromHexColor("00ffff"))
 colScheme:SetColor("yellow", Color.CreateFromHexColor("ffff00"))
 colScheme:SetColor("pink", Color.CreateFromHexColor("ff00ff"))
 
+colScheme:SetColor("rawRed", Color.CreateFromHexColor("ff0000"))
+colScheme:SetColor("rawGreen", Color.CreateFromHexColor("00ff00"))
+colScheme:SetColor("rawBlue", Color.CreateFromHexColor("0000ff"))
+
 colScheme:SetColor("yellow2", Color.CreateFromHexColor("eec94b"))
 
 pfm.get_color_scheme = function()
