@@ -11,27 +11,69 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 	self:AddEntityComponent("transform_controller")
 
-	self:BindEvent(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START, "OnTransformStart")
-	self:BindEvent(ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, "OnTransformEnd")
-
-	self:BindEvent(ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED, "OnPositionChanged")
-	self:BindEvent(ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED, "OnRotationChanged")
-	self:BindEvent(ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED, "OnScaleChanged")
-
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 
-function Component:OnTick(dt)
-	if not self.m_transformGizmoInfo.isTransforming then
-		return
+function Component:SetTransformTarget(ent, targetPath)
+	local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
+	local component = (componentName ~= nil) and ent:GetComponent(componentName) or nil
+	local memberIndex = (component ~= nil) and component:GetMemberIndex(pathName:GetString()) or nil
+	self.m_transformGizmoInfo = {
+		targetEntity = ent,
+		targetPath = targetPath,
+		componentName = componentName,
+		propertyName = pathName:GetString(),
+		component = component,
+		memberIndex = memberIndex,
+	}
+	self:UpdateTransformGizmoPose(true)
+
+	local cbs = {}
+	local function add_event_callback(c, evId, fc)
+		local cb = c:AddEventCallback(evId, function(...)
+			fc(self, ...)
+		end)
+		table.insert(cbs, cb)
+	end
+	if self:GetEntity():HasComponent(ents.COMPONENT_UTIL_TRANSFORM) then
+		local utilTrC = self:GetEntity():GetComponent(ents.COMPONENT_UTIL_TRANSFORM)
+		add_event_callback(utilTrC, ents.UtilTransformComponent.EVENT_ON_TRANSFORM_START, Component.OnTransformStart)
+		add_event_callback(utilTrC, ents.UtilTransformComponent.EVENT_ON_TRANSFORM_END, Component.OnTransformEnd)
+
+		add_event_callback(utilTrC, ents.UtilTransformComponent.EVENT_ON_POSITION_CHANGED, Component.OnPositionChanged)
+		add_event_callback(utilTrC, ents.UtilTransformComponent.EVENT_ON_ROTATION_CHANGED, Component.OnRotationChanged)
+		add_event_callback(utilTrC, ents.UtilTransformComponent.EVENT_ON_SCALE_CHANGED, Component.OnScaleChanged)
+	else
+		local trC = self:GetEntity():GetComponent(ents.COMPONENT_TRANSFORM_CONTROLLER)
+		add_event_callback(trC, ents.TransformController.EVENT_ON_TRANSFORM_START, Component.OnTransformStart)
+		add_event_callback(trC, ents.TransformController.EVENT_ON_TRANSFORM_END, Component.OnTransformEnd)
+
+		add_event_callback(trC, ents.TransformController.EVENT_ON_TRANSFORM_CHANGED, Component.OnTransformChanged)
+	end
+	self.m_callbacks = cbs
+end
+
+function Component:OnTransformChanged(pos, rot, scale)
+	if pos ~= nil then
+		self:OnPositionChanged()
+	end
+	if rot ~= nil then
+		self:OnRotationChanged()
+	end
+	if scale ~= nil then
+		self:OnScaleChanged()
 	end
 end
 
-function Component:UpdateTransformGizmoPose()
-	local utilTransformC = self:GetEntity():GetComponent(ents.COMPONENT_UTIL_TRANSFORM)
-	if utilTransformC == nil then
+function Component:OnTick(dt)
+	if self.m_transformGizmoInfo.isTransforming then
 		return
 	end
+	self:UpdateTransformGizmoPose()
+end
+
+function Component:UpdateTransformGizmoPose(updateLastPose)
+	local utilTransformC = self:GetEntity():GetComponent(ents.COMPONENT_UTIL_TRANSFORM)
 	local ent = self.m_transformGizmoInfo.targetEntity
 	local componentName = self.m_transformGizmoInfo.componentName
 	local propertyName = self.m_transformGizmoInfo.propertyName
@@ -40,16 +82,16 @@ function Component:UpdateTransformGizmoPose()
 	local idx = (c ~= nil) and c:GetMemberIndex(propertyName) or nil
 	local pose = (idx ~= nil) and c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD) or nil
 	local function update_view_rotation()
+		if utilTransformC == nil then
+			return
+		end
 		if utilTransformC:GetSpace() ~= ents.TransformController.SPACE_VIEW then
 			return
 		end
 		if utilTransformC:IsRotationEnabled() == false and utilTransformC:IsTranslationEnabled() == false then
 			return
 		end
-		local transformC = self:GetEntity():GetComponent(ents.COMPONENT_UTIL_TRANSFORM)
-		if transformC ~= nil then
-			transformC:UpdateRotation()
-		end
+		utilTransformC:UpdateRotation()
 	end
 	if pose == nil or pose == lastPose then
 		update_view_rotation()
@@ -57,7 +99,9 @@ function Component:UpdateTransformGizmoPose()
 	end
 	self:GetEntity():SetPose(pose)
 	update_view_rotation()
-	self.m_transformGizmoInfo.lastPose = pose
+	if updateLastPose then
+		self.m_transformGizmoInfo.lastPose = pose
+	end
 end
 
 function Component:OnPositionChanged()
@@ -105,20 +149,6 @@ function Component:OnScaleChanged()
 	end
 end
 
-function Component:SetTransformTarget(ent, targetPath, propertyName, component, memberIndex)
-	local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
-	self.m_transformGizmoInfo = {
-		targetEntity = ent,
-		targetPath = targetPath,
-		componentName = componentName,
-		pathName = pathName,
-		propertyName = propertyName,
-		component = component,
-		memberIndex = memberIndex,
-	}
-	self:UpdateTransformGizmoPose()
-end
-
 function Component:OnTransformStart()
 	local ent = self.m_transformGizmoInfo.targetEntity
 	if util.is_valid(ent) == false then
@@ -136,27 +166,27 @@ function Component:OnTransformStart()
 
 	local component = self.m_transformData.component
 	local componentName = self.m_transformGizmoInfo.componentName
-	local pathName = self.m_transformGizmoInfo.pathName
+	local pathName = self.m_transformGizmoInfo.propertyName
 	local c = (componentName ~= nil) and ent:GetComponent(componentName) or nil
-	local idx = (c ~= nil) and c:GetMemberIndex(pathName:GetString()) or nil
+	local idx = (c ~= nil) and c:GetMemberIndex(pathName) or nil
 	local pose = (idx ~= nil) and c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD) or nil
 
 	self.m_transformGizmoInfo.isTransforming = true
 	self:UpdateAnimationChannelSubstituteValue()
-	self:UpdateTransformGizmoPose()
+	self:UpdateTransformGizmoPose(true)
 	local memberInfo = self:GetMemberInfo()
 	local pose = self.m_transformGizmoInfo.startPose
 	if memberInfo.type == ents.MEMBER_TYPE_TRANSFORM or memberInfo.type == ents.MEMBER_TYPE_SCALED_TRANSFORM then
-		pose = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
+		pose = component:GetEffectiveMemberValue(pathName, memberInfo.type)
 		pose = c:ConvertTransformMemberPoseToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, pose)
 	elseif memberInfo.type == ents.MEMBER_TYPE_QUATERNION or memberInfo.type == ents.MEMBER_TYPE_EULER_ANGLES then
 		pose = math.ScaledTransform()
-		local rot = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
+		local rot = component:GetEffectiveMemberValue(pathName, memberInfo.type)
 		rot = c:ConvertTransformMemberRotToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, rot)
 		pose:SetRotation(rot)
 	else
 		pose = math.ScaledTransform()
-		local pos = component:GetEffectiveMemberValue(pathName:GetString(), memberInfo.type)
+		local pos = component:GetEffectiveMemberValue(pathName, memberInfo.type)
 		pos = c:ConvertTransformMemberPosToTargetSpace(idx, math.COORDINATE_SPACE_WORLD, pos)
 		pose:SetOrigin(pos)
 	end
@@ -171,12 +201,12 @@ function Component:OnTransformEnd()
 	local ent = self.m_transformGizmoInfo.targetEntity
 	local targetPath = self.m_transformGizmoInfo.targetPath
 	local componentName = self.m_transformGizmoInfo.componentName
-	local pathName = self.m_transformGizmoInfo.pathName
+	local pathName = self.m_transformGizmoInfo.propertyName
 
 	local uuid = tostring(ent:GetUuid())
 
 	local c = (componentName ~= nil) and ent:GetComponent(componentName) or nil
-	local idx = (c ~= nil) and c:GetMemberIndex(pathName:GetString()) or nil
+	local idx = (c ~= nil) and c:GetMemberIndex(pathName) or nil
 
 	local get_pose_value
 	local memberInfo = self:GetMemberInfo()
@@ -201,7 +231,6 @@ function Component:OnTransformEnd()
 	local newVal = get_pose_value(newDataPose)
 
 	if oldVal ~= nil and newVal ~= nil then
-		print("ARGS: ", pfm.dereference(uuid), targetPath, memberInfo.type, oldVal, newVal, nil, true)
 		pm:ChangeActorPropertyValue(pfm.dereference(uuid), targetPath, memberInfo.type, oldVal, newVal, nil, true)
 	end
 	self.m_transformGizmoInfo.lastPose = nil
@@ -309,5 +338,7 @@ function Component:CalcNewDataPose()
 	)
 end
 
-function Component:OnRemove() end
+function Component:OnRemove()
+	util.remove(self.m_callbacks)
+end
 ents.COMPONENT_PFM_TRANSFORM_CONTROLLER = ents.register_component("pfm_transform_controller", Component)

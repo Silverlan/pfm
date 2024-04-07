@@ -659,10 +659,11 @@ function gui.PFMCoreViewportBase:CreateActorTransformWidget(ent, manipMode, enab
 
 					self.m_entTransform = entTransform
 					local trcC = entTransform:AddComponent("pfm_transform_controller")
-					trcC:SetTransformTarget(ent, targetPath, pathName:GetString(), c, idx)
 
 					local trC = entTransform:GetComponent("util_transform")
 					trC:SetScaleEnabled(false)
+
+					trcC:SetTransformTarget(ent, targetPath)
 
 					self:InitializeTransformWidget(trC, ent)
 				end

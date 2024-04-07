@@ -30,6 +30,8 @@ include("actor_components.lua")
 include("draganddrop.lua")
 include("constraints.lua")
 
+engine.load_library("pr_ik")
+
 function gui.PFMActorEditor:OnInitialize()
 	gui.Base.OnInitialize(self)
 
