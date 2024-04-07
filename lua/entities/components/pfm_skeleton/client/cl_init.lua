@@ -65,6 +65,7 @@ end
 function ents.PFMSkeleton:OnRemove()
 	util.remove(self.m_cbOnPropertSelected)
 	self:ClearCallbacks()
+	self:ClearIkControls()
 	self:GetEntity():RemoveComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
 end
 
@@ -75,6 +76,16 @@ function ents.PFMSkeleton:ClearCallbacks()
 	self.m_clickCallbacks = {}
 end
 
+function ents.PFMSkeleton:ClearIkControls()
+	if self.m_ikControls == nil then
+		return
+	end
+	for boneId, entCtrl in pairs(self.m_ikControls) do
+		util.remove(entCtrl)
+	end
+	self.m_ikControls = {}
+end
+
 function ents.PFMSkeleton:OnBoneClicked(boneId, ent) end
 
 function ents.PFMSkeleton:OnBonesCreated()
@@ -83,7 +94,9 @@ function ents.PFMSkeleton:OnBonesCreated()
 		return
 	end
 	self:ClearCallbacks()
+	self:ClearIkControls()
 	self.m_bones = {}
+	self.m_ikControls = {}
 	local solverC = self:GetEntity():GetComponent(ents.COMPONENT_IK_SOLVER)
 	for boneId, tEnts in pairs(c:GetBones()) do
 		for boneIdChild, ent in pairs(tEnts) do
@@ -104,10 +117,16 @@ function ents.PFMSkeleton:OnBonesCreated()
 				if solverC ~= nil then
 					local handle = solverC:GetControl(boneId)
 					if handle ~= nil then
-						local col = (handle.type == ents.IkSolverComponent.RigConfig.Control.TYPE_STATE)
-								and Color.Crimson
+						local col = (handle.type == util.IkRigConfig.Control.TYPE_STATE) and Color.Crimson
 							or Color.Orange
 						ent:SetColor(col)
+
+						util.remove(self.m_ikControls[boneId])
+						local entControl = ents.create("entity")
+						self.m_ikControls[boneId] = entControl
+						local c = entControl:AddComponent("pfm_ik_control")
+						entControl:Spawn()
+						c:SetIkControl(solverC, boneId)
 					end
 				end
 			end
