@@ -186,8 +186,8 @@ function Component:UpdateGizmo()
 				point:Set(axis, math.snap_to_grid(point:Get(axis), spacing))
 			end
 		end
-		self:InvokeEventCallbacks(Component.EVENT_ON_TRANSFORM_CHANGED, { point })
 		self:GetEntity():SetPos(point)
+		self:InvokeEventCallbacks(Component.EVENT_ON_TRANSFORM_CHANGED, { point })
 	elseif type == Component.TYPE_ROTATION then
 		local rot = self.m_gizmoPose:GetRotation()
 		rot = self.m_gizmo:AxisRotationDragger(vAxis, Vector(), startRotation, rot)
@@ -276,10 +276,10 @@ function Component:StartTransform(hitPos)
 			self.m_gizmoPose:GetScale()
 		)
 	)
-	self:UpdateGizmo()
 	gizmo:SetInteractionStart(false)
 
 	self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_START)
+	self:UpdateGizmo()
 
 	util.remove(self.m_cbOnMouseRelease)
 	self.m_cbOnMouseRelease = input.add_callback("OnMouseInput", function(mouseButton, state, mods)
