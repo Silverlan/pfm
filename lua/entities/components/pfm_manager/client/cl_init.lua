@@ -64,46 +64,65 @@ function Component:GetSelectedBones()
 	end
 	return bones
 end
+function Component:SetHoverBone(rayInfo, actor, boneId, curSelected)
+	local mdl = actor:GetModel()
+	local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
+	local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
+
+	local c = actor:GetComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
+	if c == nil then
+		return false
+	end
+	local showHoverText = false
+	if bone ~= nil and util.is_valid(rayInfo.vpData.viewport) then
+		local animC = actor:GetComponent(ents.COMPONENT_ANIMATED)
+		local pos = (animC ~= nil) and animC:GetBonePose(boneId, math.COORDINATE_SPACE_WORLD):GetOrigin() or nil
+		if pos ~= nil then
+			local elHoverText = self:GetHoverTextElement()
+			elHoverText:SetParent(rayInfo.vpData.viewport)
+			elHoverText:SetText(bone:GetName())
+			elHoverText:SetWorldSpacePosition(pos)
+			showHoverText = true
+		end
+	end
+
+	local tEnts = c:GetBoneEntities(boneId) or {}
+	for dstBoneId, ent in pairs(tEnts) do
+		if ent:IsValid() then
+			local boneC = ent:GetComponent(ents.COMPONENT_PFM_BONE)
+			if boneC ~= nil then
+				boneC:SetSelected(true)
+				curSelected[ent] = nil
+				self.m_curSelectedBones[ent] = true
+			end
+		end
+	end
+	return showHoverText
+end
 function Component:OnCursorTargetChanged(rayInfo)
 	local curSelected = self.m_curSelectedBones
 	self.m_curSelectedBones = {}
 	local showHoverText = false
 	local elHoverText = self:GetHoverTextElement()
-	if rayInfo.hitData ~= nil and rayInfo.hitData.mesh ~= nil then
-		local boneId = pfm.get_bone_index_from_hit_data(rayInfo.hitData)
-		if boneId ~= -1 then
-			local mdl = rayInfo.actor:GetModel()
-			local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
-			local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
-
-			local c = rayInfo.actor:GetComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
-			if c ~= nil then
-				if bone ~= nil and util.is_valid(rayInfo.vpData.viewport) then
-					local animC = rayInfo.actor:GetComponent(ents.COMPONENT_ANIMATED)
-					local pos = (animC ~= nil) and animC:GetBonePose(boneId, math.COORDINATE_SPACE_WORLD):GetOrigin()
-						or nil
-					if pos ~= nil then
-						elHoverText:SetParent(rayInfo.vpData.viewport)
-						elHoverText:SetText(bone:GetName())
-						elHoverText:SetWorldSpacePosition(pos)
-						showHoverText = true
-					end
-				end
-
-				local tEnts = c:GetBoneEntities(boneId) or {}
-				for dstBoneId, ent in pairs(tEnts) do
-					if ent:IsValid() then
-						local boneC = ent:GetComponent(ents.COMPONENT_PFM_BONE)
-						if boneC ~= nil then
-							boneC:SetSelected(true)
-							curSelected[ent] = nil
-							self.m_curSelectedBones[ent] = true
-						end
-					end
+	if rayInfo.hitData ~= nil then
+		if rayInfo.hitData.mesh ~= nil then
+			local boneId = pfm.get_bone_index_from_hit_data(rayInfo.hitData)
+			if boneId ~= -1 then
+				showHoverText = self:SetHoverBone(rayInfo, rayInfo.actor, boneId, curSelected)
+			end
+		end
+		if showHoverText == false then
+			local ikControlC = rayInfo.hitData.entity:GetComponent(ents.COMPONENT_PFM_IK_CONTROL)
+			if ikControlC ~= nil then
+				local boneId = ikControlC:GetBoneId()
+				local ikC = ikControlC:GetIkComponent()
+				if util.is_valid(ikC) then
+					showHoverText = self:SetHoverBone(rayInfo, ikC:GetEntity(), boneId, curSelected)
 				end
 			end
 		end
 	end
+
 	elHoverText:SetVisible(showHoverText)
 	for ent, _ in pairs(curSelected) do
 		if ent:IsValid() then

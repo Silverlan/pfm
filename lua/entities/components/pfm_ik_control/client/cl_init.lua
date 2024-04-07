@@ -14,6 +14,7 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
+	self:AddEntityComponent("pfm_editor_actor") -- Required so the ik control can be detected for mouse hover
 	self:AddEntityComponent("debug_dotted_line")
 
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
@@ -45,6 +46,13 @@ function Component:OnClicked(buttonDown, hitPos)
 
 	trC:StartTransform(hitPos)
 	return util.EVENT_REPLY_HANDLED
+end
+
+function Component:GetIkComponent()
+	return self.m_ikC
+end
+function Component:GetBoneId()
+	return self.m_boneId
 end
 
 function Component:SetIkControl(ikC, boneId)
