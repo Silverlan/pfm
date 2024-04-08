@@ -135,6 +135,24 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 		self:CreateNewActorComponent(actor, "animated", false)
 		self:CreateNewActorComponent(actor, "eye", false)
 		self:CreateNewActorComponent(actor, "flex", false)
+
+		-- Set up default IK if possible
+		if rig ~= nil or engine.load_library("pr_rig") then
+			local mdl = game.load_model(mdlName)
+			if mdl ~= nil then
+				local ikRigPath = rig.get_ik_rig_cache_path(mdl)
+				if file.exists("scripts/ik_rigs/" .. ikRigPath) == false then
+					rig.generate_cached_ik_rig(mdl)
+					ikRigPath = rig.get_ik_rig_cache_path(mdl)
+				end
+
+				if file.exists("scripts/ik_rigs/" .. ikRigPath) then
+					local ikSolverC = self:CreateNewActorComponent(actor, "ik_solver", false)
+					ikSolverC:SetMemberValue("rigConfigFile", udm.TYPE_STRING, ikRigPath)
+				end
+			end
+		end
+
 		-- self:CreateNewActorComponent(actor,"transform",false)
 	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA then
 		actor = actor or create_new_actor("camera", gui.PFMActorEditor.COLLECTION_CAMERAS)
