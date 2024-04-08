@@ -69,6 +69,7 @@ function Component:Initialize()
 	local clickC = self:AddEntityComponent(ents.COMPONENT_CLICK)
 	self:AddEntityComponent(ents.COMPONENT_BVH)
 	self:AddEntityComponent("pfm_overlay_object")
+	self.m_fixedSizeScaler = self:AddEntityComponent("fixed_size_scaler")
 	self.m_transformController = self:AddEntityComponent("transform_controller")
 	self:BindEvent(ents.TransformController.EVENT_ON_TRANSFORM_START, "OnTransformStart")
 	self:BindEvent(ents.TransformController.EVENT_ON_TRANSFORM_END, "OnTransformEnd")
@@ -85,37 +86,7 @@ end
 function Component:OnTransformStart() end
 function Component:OnTransformEnd() end
 function Component:SetCamera(cam)
-	self.m_cam = cam
-end
-function Component:UpdateScale()
-	local cam = self.m_cam
-	if util.is_valid(cam) == false then
-		cam = game.get_render_scene_camera()
-	end
-	if util.is_valid(cam) == false then
-		return
-	end
-	local entCam = cam:GetEntity()
-	local plane = math.Plane(entCam:GetForward(), 0)
-	plane:MoveToPos(entCam:GetPos())
-
-	local ent = self:GetEntity()
-	local pos = ent:GetPos()
-	local p = pos:ProjectToPlane(plane:GetNormal(), plane:GetDistance())
-	local d = pos:Distance(p)
-
-	d = d * cam:GetFOVRad() * 0.01 -- Resize according to distance to camera
-	ent:SetScale(Vector(d, d, d))
-
-	if util.is_valid(self.m_debugLine) == false then
-		return
-	end
-	local pose = self:GetBasePose()
-	if pose == nil then
-		return
-	end
-	self.m_debugLine:SetPos(self:GetEntity():GetPos())
-	self.m_debugLine:SetRotation(self:GetEntity():GetRotation() * EulerAngles(0, -90, 0):ToQuaternion())
+	self.m_fixedSizeScaler:SetCamera(cam)
 end
 function Component:UpdateAxisGuides()
 	if self:GetAxisGuidesEnabled() == false then
@@ -354,9 +325,20 @@ end
 function Component:GetReferenceAxis()
 	return self:GetAxis()
 end
+function Component:UpdateDebugLine()
+	if util.is_valid(self.m_debugLine) == false then
+		return
+	end
+	local pose = self:GetBasePose()
+	if pose == nil then
+		return
+	end
+	self.m_debugLine:SetPos(self:GetEntity():GetPos())
+	self.m_debugLine:SetRotation(self:GetEntity():GetRotation() * EulerAngles(0, -90, 0):ToQuaternion())
+end
 function Component:OnTick(dt)
 	self:UpdateTransformLine()
-	self:UpdateScale() -- TODO: This doesn't belong here, move it to a render callback
+	self:UpdateDebugLine() -- TODO: This doesn't belong here, move it to a render callback
 	if self:IsSelected() ~= true then
 		return
 	end
