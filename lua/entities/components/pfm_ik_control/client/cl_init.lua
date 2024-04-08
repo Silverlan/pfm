@@ -16,6 +16,8 @@ function Component:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent("pfm_editor_actor") -- Required so the ik control can be detected for mouse hover
 	self:AddEntityComponent("debug_dotted_line")
+	local scalerC = self:AddEntityComponent("fixed_size_scaler")
+	scalerC:SetBaseScale(1.5)
 
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
