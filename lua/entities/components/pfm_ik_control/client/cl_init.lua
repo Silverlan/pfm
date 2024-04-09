@@ -16,10 +16,26 @@ function Component:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent("pfm_editor_actor") -- Required so the ik control can be detected for mouse hover
 	self:AddEntityComponent("debug_dotted_line")
+	self:BindEvent(ents.TransformComponent.EVENT_ON_POSE_CHANGED, "OnPoseChanged")
+	self.m_debugBoxC = self:AddEntityComponent(ents.COMPONENT_DEBUG_BOX)
 	local scalerC = self:AddEntityComponent("fixed_size_scaler")
 	scalerC:SetBaseScale(1.5)
 
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
+
+	self:UpdateDebugBoxScale()
+end
+
+function Component:UpdateDebugBoxScale()
+	if util.is_valid(self.m_debugBoxC) == false then
+		return
+	end
+	local scale = self:GetEntity():GetScale()
+	self.m_debugBoxC:SetBounds(-scale, scale)
+end
+
+function Component:OnPoseChanged()
+	self:UpdateDebugBoxScale()
 end
 
 function Component:OnRemove()
@@ -60,6 +76,38 @@ end
 function Component:SetIkControl(ikC, boneId)
 	self.m_ikC = ikC
 	self.m_boneId = boneId
+
+	local baseColor = Color.White
+	if util.is_valid(self.m_ikC) then
+		local handle = self.m_ikC:GetControl(self.m_boneId)
+		if handle ~= nil then
+			local type = handle:GetType()
+			local colors = {
+				[ik.Control.TYPE_DRAG] = Color.Yellow,
+				[ik.Control.TYPE_ANGULAR_PLANE] = Color.Pink,
+				[ik.Control.TYPE_STATE] = Color.OrangeRed,
+				[ik.Control.TYPE_ORIENTED_DRAG] = Color.LimeGreen,
+			}
+			baseColor = colors[type] or baseColor
+		end
+	end
+	baseColor = baseColor:Copy()
+
+	self.m_debugBoxC:SetColorOverride(baseColor)
+	baseColor.a = 180
+	self:GetEntity():SetColor(baseColor)
+
+	--[[
+	-- Scale according to bone size
+	local ent = ikC:GetEntity()
+	local mdl = ent:GetModel()
+	if mdl == nil then
+		return
+	end
+	local len = mdl:CalcBoneLength(boneId)
+	len = len / 4.0
+	self:GetEntity():SetScale(Vector(len, len, len))
+	]]
 end
 
 function Component:OnTick()
