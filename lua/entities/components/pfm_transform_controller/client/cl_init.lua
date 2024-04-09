@@ -97,7 +97,7 @@ function Component:UpdateTransformGizmoPose(updateLastPose)
 		update_view_rotation()
 		return
 	end
-	self:GetEntity():SetPose(pose)
+	self:GetEntity():SetPose(math.Transform(pose:GetOrigin(), pose:GetRotation()))
 	update_view_rotation()
 	if updateLastPose then
 		self.m_transformGizmoInfo.lastPose = pose
