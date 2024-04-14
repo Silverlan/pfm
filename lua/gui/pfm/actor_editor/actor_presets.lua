@@ -141,12 +141,12 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 			local mdl = game.load_model(mdlName)
 			if mdl ~= nil then
 				local ikRigPath = rig.get_ik_rig_cache_path(mdl)
-				if file.exists("scripts/ik_rigs/" .. ikRigPath) == false then
+				if ikRigPath == nil or file.exists("scripts/ik_rigs/" .. ikRigPath) == false then
 					rig.generate_cached_ik_rig(mdl)
 					ikRigPath = rig.get_ik_rig_cache_path(mdl)
 				end
 
-				if file.exists("scripts/ik_rigs/" .. ikRigPath) then
+				if ikRigPath ~= nil and file.exists("scripts/ik_rigs/" .. ikRigPath) then
 					local ikSolverC = self:CreateNewActorComponent(actor, "ik_solver", false)
 					ikSolverC:SetMemberValue("rigConfigFile", udm.TYPE_STRING, ikRigPath)
 				end
