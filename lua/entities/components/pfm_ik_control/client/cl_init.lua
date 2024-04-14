@@ -60,9 +60,19 @@ function Component:OnClicked(buttonDown, hitPos)
 	trC:SetAxis(ents.TransformController.AXIS_XYZ)
 
 	local pTrC = self:AddEntityComponent("pfm_transform_controller")
-	pTrC:SetTransformTarget(entTgt, "ec/ik_solver/control/" .. bone:GetName() .. "/position")
+	local propName = "ec/ik_solver/control/" .. bone:GetName() .. "/position"
+	pTrC:SetTransformTarget(entTgt, propName)
 
 	trC:StartTransform(hitPos)
+
+	local pm = pfm.get_project_manager()
+	if util.is_valid(pm) and pm.SelectActor ~= nil then
+		local actor = pfm.dereference(entTgt:GetUuid())
+		if actor ~= nil then
+			pm:SelectActor(actor, true, propName)
+		end
+	end
+
 	return util.EVENT_REPLY_HANDLED
 end
 
