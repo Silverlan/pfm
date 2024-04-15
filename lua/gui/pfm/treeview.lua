@@ -682,6 +682,11 @@ function gui.PFMTreeViewElement:FindItemByText(text, recursive)
 		return el:GetText() == text
 	end, recursive)
 end
+function gui.PFMTreeViewElement:FindItemByIdentifier(identifier, recursive)
+	return self:FindItem(function(el)
+		return el:GetIdentifier() == identifier
+	end, recursive)
+end
 function gui.PFMTreeViewElement:SetIdentifier(identifier)
 	self.m_identifier = identifier
 	if util.is_valid(self.m_parent) then
