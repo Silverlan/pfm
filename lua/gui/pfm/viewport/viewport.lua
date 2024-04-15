@@ -83,6 +83,16 @@ function gui.PFMCoreViewportBase:OnInitialize()
 			end
 		end
 	end)
+
+	local pm = pfm.get_project_manager()
+	if util.is_valid(pm) then
+		self.m_cbOnActorControlSelected = pm:AddCallback("OnActorControlSelected", function()
+			if self:IsTransformManipulatorMode(self:GetManipulatorMode()) then
+				self.m_transformWidgetDirty = true
+				self:UpdateThinkState()
+			end
+		end)
+	end
 end
 function gui.PFMCoreViewportBase:UpdateAspectRatio()
 	if util.is_valid(self.m_viewport) == false or util.is_valid(self.m_aspectRatioWrapper) == false then
@@ -296,6 +306,7 @@ function gui.PFMCoreViewportBase:OnRemove()
 			ent:Remove()
 		end
 	end
+	util.remove(self.m_cbOnActorControlSelected)
 end
 function gui.PFMCoreViewportBase:SetGlobalTime(time)
 	if util.is_valid(self.m_timeGlobal) then
@@ -455,7 +466,7 @@ function gui.PFMCoreViewportBase:ApplyPoseToKeyframeAnimation(actorData, origPos
 end
 function gui.PFMCoreViewportBase:UpdateThinkState()
 	local shouldThink = false
-	if self.m_cursorTracker ~= nil then
+	if self.m_cursorTracker ~= nil or self.m_transformWidgetDirty ~= nil then
 		shouldThink = true
 	elseif self.m_cameraMode ~= gui.PFMCoreViewportBase.CAMERA_MODE_PLAYBACK then
 		shouldThink = true
@@ -473,6 +484,12 @@ function gui.PFMCoreViewportBase:UpdateThinkState()
 	end
 end
 function gui.PFMCoreViewportBase:OnThink()
+	if self.m_transformWidgetDirty then
+		self.m_transformWidgetDirty = nil
+		self:RefreshTransformWidget()
+		self:UpdateThinkState()
+	end
+
 	if self.m_cursorTracker ~= nil then
 		self.m_cursorTracker:Update()
 		if not self.m_cursorTracker:HasExceededMoveThreshold(2) then
