@@ -52,7 +52,7 @@ function Component:StartTransform(hitPos)
 	c:SetRelative(self:IsRelative())
 	c:SetType(self:GetType())
 	c:SetSpace(self:GetSpace())
-	c:StartTransform()
+	c:StartTransform(hitPos)
 	util.remove(self.m_cbOnTransformChanged)
 	self.m_cbOnTransformChanged = c:AddEventCallback(
 		ents.TransformController.EVENT_ON_TRANSFORM_CHANGED,

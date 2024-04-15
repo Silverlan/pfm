@@ -128,7 +128,10 @@ function Component:GetAxisVector()
 	return vAxis
 end
 
-function Component:UpdateGizmo()
+function Component:UpdateGizmo(apply)
+	if apply == nil then
+		apply = true
+	end
 	local camPos, camDir, vpData = ents.ClickComponent.get_ray_data()
 	local startRotation = Quaternion()
 	local space = self:GetSpace()
@@ -186,8 +189,10 @@ function Component:UpdateGizmo()
 				point:Set(axis, math.snap_to_grid(point:Get(axis), spacing))
 			end
 		end
-		self:GetEntity():SetPos(point)
-		self:InvokeEventCallbacks(Component.EVENT_ON_TRANSFORM_CHANGED, { point })
+		if apply then
+			self:GetEntity():SetPos(point)
+			self:InvokeEventCallbacks(Component.EVENT_ON_TRANSFORM_CHANGED, { point })
+		end
 	elseif type == Component.TYPE_ROTATION then
 		local rot = self.m_gizmoPose:GetRotation()
 		rot = self.m_gizmo:AxisRotationDragger(vAxis, Vector(), startRotation, rot)
@@ -207,15 +212,19 @@ function Component:UpdateGizmo()
 		if localToggle == false then
 			rot = rot * self.m_gizmo:GetInitialPose():GetRotation()
 		end
-		self:InvokeEventCallbacks(Component.EVENT_ON_TRANSFORM_CHANGED, { nil, rot })
-		-- transformC:SetTransformRotation(rot)
+		if apply then
+			self:InvokeEventCallbacks(Component.EVENT_ON_TRANSFORM_CHANGED, { nil, rot })
+			-- transformC:SetTransformRotation(rot)
+		end
 	elseif type == Component.TYPE_SCALE then
 		local uniform = false
 		local scale = self.m_gizmoPose:GetScale()
 		scale = self.m_gizmo:AxisScaleDragger(vAxis, self.m_gizmoPose:GetOrigin(), scale, uniform)
 		self.m_gizmoPose:SetScale(scale)
-		self:InvokeEventCallbacks(Component.EVENT_ON_TRANSFORM_CHANGED, { nil, nil, scale })
-		-- transformC:SetTransformScale(scale)
+		if apply then
+			self:InvokeEventCallbacks(Component.EVENT_ON_TRANSFORM_CHANGED, { nil, nil, scale })
+			-- transformC:SetTransformScale(scale)
+		end
 	end
 end
 
@@ -276,10 +285,10 @@ function Component:StartTransform(hitPos)
 			self.m_gizmoPose:GetScale()
 		)
 	)
+	self:UpdateGizmo(false)
 	gizmo:SetInteractionStart(false)
 
 	self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_START)
-	self:UpdateGizmo()
 
 	util.remove(self.m_cbOnMouseRelease)
 	self.m_cbOnMouseRelease = input.add_callback("OnMouseInput", function(mouseButton, state, mods)
