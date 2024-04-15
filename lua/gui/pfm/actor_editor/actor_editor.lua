@@ -1583,6 +1583,16 @@ function gui.PFMActorEditor:ReloadActorComponentEntries(actor, componentId)
 	self:SetActorDirty(tostring(actor:GetUniqueId()))
 	self:InitializeDirtyActorComponents(tostring(actor:GetUniqueId()))
 end
+local function get_constraint_interface_target_property_name(propName)
+	local identifierPropPath = util.Path.CreateFilePath(propName)
+	if identifierPropPath:GetBack() == "pose" then
+		-- If the constraint refers to a pose property, we'll just defer it to the position
+		-- (Otherwise we'd have to duplicate it for the rotation as well)
+		identifierPropPath:PopBack()
+		identifierPropPath = identifierPropPath + "position"
+	end
+	return identifierPropPath:GetString()
+end
 -- This will move all constraint items in the actor editor to the
 -- (driven) property items they are associated with.
 function gui.PFMActorEditor:ResolveConstraintItems()
@@ -1612,22 +1622,13 @@ function gui.PFMActorEditor:ResolveConstraintItems()
 					if util.is_valid(itemDriven) then
 						local drivenComponent = drivenObjectActor:FindComponent(componentType)
 						if drivenComponent ~= nil then
-							local identifierPropName = propName
-							if identifierPropName == "pose" then
-								-- If the constraint refers to a pose property, we'll just defer it to the position
-								-- (Otherwise we'd have to duplicate it for the rotation as well)
-								identifierPropName = "position"
-							end
-							local identifier = "ec/" .. componentType .. "/" .. identifierPropName
-							for _, childItem in ipairs(itemDriven:GetItems()) do
-								if childItem:GetIdentifier() == identifier then
-									if util.is_same_object(childItem, itemConstraint) == false then
-										childItem:AttachItem(itemConstraint)
-										itemConstraint:ScheduleUpdate()
-										childItem:ScheduleUpdate()
-									end
-									break
-								end
+							local identifierPropPath = get_constraint_interface_target_property_name(propName)
+							local identifier = "ec/" .. componentType .. "/" .. identifierPropPath
+							local itemTarget = itemDriven:FindItemByIdentifier(identifier, true)
+							if util.is_valid(itemTarget) then
+								itemTarget:AttachItem(itemConstraint)
+								itemConstraint:ScheduleUpdate()
+								itemTarget:ScheduleUpdate()
 							end
 						end
 					end
@@ -2202,8 +2203,12 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 	end
 	self.m_specialPropertyIcons["constraints"] = {}
 
-	local function get_property_entry_data(uuid, componentType, propName)
-		propName = "ec/" .. componentType .. "/" .. propName
+	local function get_property_entry_data(uuid, componentType, propName, resolvePoseProperty)
+		local identifierPropPath = propName
+		if resolvePoseProperty then
+			identifierPropPath = get_constraint_interface_target_property_name(identifierPropPath)
+		end
+		propName = "ec/" .. componentType .. "/" .. identifierPropPath
 		local el, ctrlData, componentDataDriven, actorDataDriven = self:GetPropertyEntry(uuid, componentType, propName)
 		if util.is_valid(el) == false then
 			return
@@ -2263,7 +2268,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 			end
 		end
 
-		local tEntry = get_property_entry_data(uuid, componentType, propName)
+		local tEntry = get_property_entry_data(uuid, componentType, propName, true)
 		if tEntry == nil then
 			return {}
 		end
