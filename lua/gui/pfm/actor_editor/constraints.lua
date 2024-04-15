@@ -107,6 +107,15 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		if actor1 ~= nil then
 			ctC:SetMemberValue("driver", udm.TYPE_STRING, ents.create_uri(actor1:GetUniqueId(), propertyPath1))
 		end
+
+		local componentName, memberName =
+			ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(propertyPath0))
+		if componentName == "ik_solver" then
+			-- The constraint target is an ik solver property.
+			-- The IK solver is also handled as a constraint internally, so we'll have to make sure
+			-- our new constraint is executed *before* the IK solver. To do so, we can use the order index.
+			ctC:SetMemberValue("orderIndex", udm.TYPE_INT32, -1)
+		end
 		self:UpdateActorComponents(actor)
 	end
 
