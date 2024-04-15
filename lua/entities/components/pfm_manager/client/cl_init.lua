@@ -7,6 +7,7 @@
 ]]
 
 include_component("pfm_selection_wireframe")
+include_component("pfm_skeleton")
 include("/gui/hover_text.lua")
 
 local Component = util.register_class("ents.PFMManager", BaseEntityComponent)
