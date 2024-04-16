@@ -282,26 +282,10 @@ function gui.PFMTreeViewElement:RemoveItem(item, updateUi)
 	if util.is_valid(item) == false then
 		return false
 	end
-	for i, itemOther in ipairs(self.m_items) do
-		if util.is_same_object(itemOther, item) then
-			table.remove(self.m_items, i)
-			break
-		end
-	end
-	local found = false
-	for i, itemElements in ipairs(self.m_itemElements) do
-		if util.is_same_object(itemElements[1], item) then
-			found = true
-			util.remove(itemElements)
-			table.remove(self.m_itemElements, i)
-			break
-		end
-	end
-	if updateUi == false then
-		return found
-	end
+	self:DetachItem(item)
+	util.remove(item)
 	self:UpdateUi()
-	return found
+	return true
 end
 function gui.PFMTreeViewElement:UpdateUi()
 	self.m_childHBox:Update()
@@ -696,7 +680,10 @@ end
 function gui.PFMTreeViewElement:GetIdentifier()
 	return self.m_identifier
 end
-function gui.PFMTreeViewElement:DetachItem(item)
+function gui.PFMTreeViewElement:DetachItem(item, updateUi)
+	if updateUi == nil then
+		updateUi = true
+	end
 	if util.is_valid(item.m_treeView) == false then
 		return
 	end
@@ -732,9 +719,11 @@ function gui.PFMTreeViewElement:DetachItem(item)
 	item.m_treeView = nil
 	item.m_parent = nil
 
-	self:GetTreeView():SetContentsWidthDirty()
-	self:ScheduleUpdate()
-	self.m_treeView:GetRoot():ScheduleUpdate()
+	if updateUi then
+		self:GetTreeView():SetContentsWidthDirty()
+		self:ScheduleUpdate()
+		self.m_treeView:GetRoot():ScheduleUpdate()
+	end
 end
 function gui.PFMTreeViewElement:FindItemIndex(item)
 	for i, itemOther in ipairs(self.m_items) do
