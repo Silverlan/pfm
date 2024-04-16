@@ -1626,6 +1626,10 @@ function gui.PFMActorEditor:ResolveConstraintItems()
 							local identifier = "ec/" .. componentType .. "/" .. identifierPropPath
 							local itemTarget = itemDriven:FindItemByIdentifier(identifier, true)
 							if util.is_valid(itemTarget) then
+								-- We don't want the constraint to be automatically selected when the
+								-- property is selected
+								itemTarget:SetAutoSelectChildren(false)
+
 								itemTarget:AttachItem(itemConstraint)
 								itemConstraint:ScheduleUpdate()
 								itemTarget:ScheduleUpdate()
