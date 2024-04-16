@@ -68,6 +68,7 @@ function gui.PFMCoreViewportBase:SetManipulatorMode(manipulatorMode)
 		end
 	end
 	self:UpdateManipulationMode()
+	self:CallCallbacks("OnManipulatorModeChanged", manipulatorMode)
 end
 function gui.PFMCoreViewportBase:GetTransformSpace()
 	local transformSpace = self.m_ctrlTransformSpace:GetOptionValue(self.m_ctrlTransformSpace:GetSelectedOption())

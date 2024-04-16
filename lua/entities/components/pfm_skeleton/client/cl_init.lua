@@ -15,17 +15,48 @@ function ents.PFMSkeleton:Initialize()
 
 	self.m_bones = {}
 	self.m_clickCallbacks = {}
+	self.m_bonesInitialized = false
 	self:BindEvent(ents.DebugSkeletonDraw.EVENT_ON_BONES_CREATED, "OnBonesCreated")
 	self:AddEntityComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
 
+	self.m_pmCallbacks = {}
 	local pm = tool.get_filmmaker()
 	if util.is_valid(pm) then
-		self.m_cbOnPropertSelected = pm:AddCallback(
-			"OnActorPropertySelected",
-			function(fm, udmComponent, item, path, selected)
+		table.insert(
+			self.m_pmCallbacks,
+			pm:AddCallback("OnActorPropertySelected", function(fm, udmComponent, item, path, selected)
 				self:OnActorPropertySelected(udmComponent, item, path, selected)
-			end
+			end)
 		)
+
+		table.insert(
+			self.m_pmCallbacks,
+			pm:AddCallback("OnManipulatorModeChanged", function(fm, manipMode)
+				self:OnManipulatorModeChanged(manipMode)
+			end)
+		)
+	end
+end
+
+function ents.PFMSkeleton:GetManipulatorMode()
+	local pm = tool.get_filmmaker()
+	local vp = util.is_valid(pm) and pm:GetViewport() or nil
+	if util.is_valid(vp) == false then
+		return
+	end
+	return vp:GetManipulatorMode()
+end
+
+function ents.PFMSkeleton:IsIkControlManipulatorMode(manipMode)
+	return manipMode == gui.PFMCoreViewportBase.MANIPULATOR_MODE_MOVE
+		or manipMode == gui.PFMCoreViewportBase.MANIPULATOR_MODE_ROTATE
+end
+
+function ents.PFMSkeleton:OnManipulatorModeChanged(manipMode)
+	if self:IsIkControlManipulatorMode(manipMode) == false then
+		self:ClearIkControls()
+	else
+		self:InitializeIkControls()
 	end
 end
 
@@ -63,7 +94,7 @@ function ents.PFMSkeleton:OnActorPropertySelected(udmComponent, item, path, sele
 end
 
 function ents.PFMSkeleton:OnRemove()
-	util.remove(self.m_cbOnPropertSelected)
+	util.remove(self.m_pmCallbacks)
 	self:ClearCallbacks()
 	self:ClearIkControls()
 	self:GetEntity():RemoveComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
@@ -88,6 +119,38 @@ end
 
 function ents.PFMSkeleton:OnBoneClicked(boneId, ent) end
 
+function ents.PFMSkeleton:InitializeIkControls()
+	if self.m_bonesInitialized == false then
+		return
+	end
+	local c = self:GetEntityComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
+	if c == nil then
+		return
+	end
+	local solverC = self:GetEntity():GetComponent(ents.COMPONENT_IK_SOLVER)
+	if solverC == nil then
+		return
+	end
+	for boneId, tEnts in pairs(c:GetBones()) do
+		for boneIdChild, ent in pairs(tEnts) do
+			if ent:IsValid() then
+				local handle = solverC:GetControl(boneId)
+				if handle ~= nil then
+					local col = (handle.type == util.IkRigConfig.Control.TYPE_STATE) and Color.Crimson or Color.Orange
+					ent:SetColor(col)
+
+					util.remove(self.m_ikControls[boneId])
+					local entControl = ents.create("entity")
+					self.m_ikControls[boneId] = entControl
+					local c = entControl:AddComponent("pfm_ik_control")
+					entControl:Spawn()
+					c:SetIkControl(solverC, boneId)
+				end
+			end
+		end
+	end
+end
+
 function ents.PFMSkeleton:OnBonesCreated()
 	local c = self:GetEntityComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
 	if c == nil then
@@ -97,7 +160,6 @@ function ents.PFMSkeleton:OnBonesCreated()
 	self:ClearIkControls()
 	self.m_bones = {}
 	self.m_ikControls = {}
-	local solverC = self:GetEntity():GetComponent(ents.COMPONENT_IK_SOLVER)
 	for boneId, tEnts in pairs(c:GetBones()) do
 		for boneIdChild, ent in pairs(tEnts) do
 			if ent:IsValid() then
@@ -113,24 +175,12 @@ function ents.PFMSkeleton:OnBonesCreated()
 						self:OnBoneClicked(boneId, ent)
 					end
 				end)
-
-				if solverC ~= nil then
-					local handle = solverC:GetControl(boneId)
-					if handle ~= nil then
-						local col = (handle.type == util.IkRigConfig.Control.TYPE_STATE) and Color.Crimson
-							or Color.Orange
-						ent:SetColor(col)
-
-						util.remove(self.m_ikControls[boneId])
-						local entControl = ents.create("entity")
-						self.m_ikControls[boneId] = entControl
-						local c = entControl:AddComponent("pfm_ik_control")
-						entControl:Spawn()
-						c:SetIkControl(solverC, boneId)
-					end
-				end
 			end
 		end
+	end
+	self.m_bonesInitialized = true
+	if self:IsIkControlManipulatorMode(self:GetManipulatorMode()) then
+		self:InitializeIkControls()
 	end
 end
 ents.COMPONENT_PFM_SKELETON = ents.register_component("pfm_skeleton", ents.PFMSkeleton)

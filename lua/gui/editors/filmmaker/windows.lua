@@ -449,6 +449,9 @@ pfm.register_window("primary_viewport", "viewers", locale.get_text("pfm_primary_
 	el:AddCallback("OnReattached", function(el, window)
 		pm:RequestFocus()
 	end)
+	el:AddCallback("OnManipulatorModeChanged", function(el, manipMode)
+		pm:CallCallbacks("OnManipulatorModeChanged", manipMode)
+	end)
 	return el
 end)
 pfm.register_window("secondary_viewport", "viewers", locale.get_text("pfm_secondary_viewport"), function(pm)
