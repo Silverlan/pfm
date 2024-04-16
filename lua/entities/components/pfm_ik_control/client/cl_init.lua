@@ -104,6 +104,7 @@ function Component:SetIkControl(ikC, boneId)
 	baseColor = baseColor:Copy()
 
 	self.m_debugBoxC:SetColorOverride(baseColor)
+	self.m_debugBoxC:SetIgnoreDepthBuffer(true)
 	baseColor.a = 180
 	self:GetEntity():SetColor(baseColor)
 
