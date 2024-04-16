@@ -194,6 +194,96 @@ function gui.PFMCoreViewportBase:UpdateRenderSettings()
 	self.m_rtViewport:SetRenderSettings(renderTab:GetRenderSettings())
 	self.m_rtViewport:Refresh(true)
 end
+function gui.PFMCoreViewportBase:AddConstraintContextMenuOptions(pContext, entActor, hitData)
+	local pm = pfm.get_project_manager()
+	if not util.is_valid(pm) or pm:IsEditor() == false then
+		return
+	end
+	local uuidTarget = tostring(entActor:GetUuid())
+	local actorTarget = pfm.dereference(uuidTarget)
+	local actorEditor = pm:GetActorEditor()
+	if util.is_valid(actorEditor) == false or actorTarget == nil then
+		return
+	end
+	local props = actorEditor:GetSelectedProperties()
+	if #props == 0 then
+		return
+	end
+	local function get_property_control_name(path)
+		local controlPath = util.Path.CreateFilePath(path)
+		controlPath:PopBack()
+		local name = controlPath:GetBack()
+		if name == nil or #name == 0 then
+			return
+		end
+		return name:sub(0, #name - 1)
+	end
+	local prop = props[1]
+	local actorSrc = prop.actorData.actor
+	local ikControlSrc = get_property_control_name(prop.controlData.path)
+	-- Make sure all selected properties refer to the same ik control
+	for _, propData in ipairs(props) do
+		if
+			propData.actorData.actor ~= actorSrc
+			or get_property_control_name(propData.controlData.path) ~= ikControlSrc
+		then
+			return
+		end
+	end
+	local componentName, memberName =
+		ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(prop.controlData.path))
+	if componentName ~= "ik_solver" then
+		return
+	end
+	local sourceProp = {
+		actor = actorSrc,
+		path = "ec/ik_solver/control/" .. ikControlSrc .. "/position",
+	}
+	local targetProp = {
+		actor = actorTarget,
+		path = "ec/pfm_actor/position",
+	}
+	-- Add actor constraint options
+	local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_constrain_to", { ikControlSrc }))
+	local pItemActor, pSubMenuActor =
+		pSubMenu:AddSubMenu(locale.get_text("pfm_constrain_to_actor", { actorTarget:GetName() }))
+	local hasSubMenu = false
+	if actorEditor:AddContextMenuConstraintOptions(pSubMenuActor, sourceProp, targetProp) then
+		hasSubMenu = true
+		pSubMenuActor:Update()
+	else
+		pSubMenu:RemoveSubMenu(pSubMenuActor)
+	end
+
+	-- Add bone constraint options
+	local mdl = entActor:GetModel()
+	if mdl ~= nil and pfm.is_articulated_model(mdl) then
+		local boneId = pfm.get_bone_index_from_hit_data(hitData)
+		if boneId ~= nil then
+			local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
+			local bone = (skel ~= nil) and skel:GetBone(boneId) or nil
+			if bone ~= nil then
+				local targetProp = {
+					actor = actorTarget,
+					path = "ec/animated/bone/" .. bone:GetName() .. "/position",
+				}
+				local pItemBone, pSubMenuBone =
+					pSubMenu:AddSubMenu(locale.get_text("pfm_constrain_to_bone", { bone:GetName() }))
+				if actorEditor:AddContextMenuConstraintOptions(pSubMenuBone, sourceProp, targetProp) then
+					hasSubMenu = true
+					pSubMenuBone:Update()
+				else
+					pSubMenu:RemoveSubMenu(pSubMenuBone)
+				end
+			end
+		end
+	end
+	if hasSubMenu == false then
+		pContext:RemoveSubMenu(pSubMenu)
+	else
+		pSubMenu:Update()
+	end
+end
 function gui.PFMCoreViewportBase:OnViewportMouseEvent(el, mouseButton, state, mods)
 	if mouseButton ~= input.MOUSE_BUTTON_LEFT and mouseButton ~= input.MOUSE_BUTTON_RIGHT then
 		return util.EVENT_REPLY_UNHANDLED
@@ -265,6 +355,8 @@ function gui.PFMCoreViewportBase:OnViewportMouseEvent(el, mouseButton, state, mo
 								hitMaterial = mat
 							end
 						end
+
+						self:AddConstraintContextMenuOptions(pContext, entActor, hitData)
 
 						local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 						if actorC ~= nil and entActor:HasComponent(ents.COMPONENT_PFM_EDITOR_ACTOR) == false then

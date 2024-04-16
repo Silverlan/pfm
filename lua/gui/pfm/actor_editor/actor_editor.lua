@@ -1637,6 +1637,32 @@ function gui.PFMActorEditor:ResolveConstraintItems()
 		end
 	end
 end
+function gui.PFMActorEditor:AddContextMenuConstraintOptions(context, prop0, prop1)
+	local actor1
+	local propertyPath1
+	if prop1 ~= nil then
+		actor1 = prop1.actor
+		propertyPath1 = prop1.path
+	end
+
+	local ent = prop0.actor:FindEntity()
+	local memberInfo = util.is_valid(ent) and pfm.get_member_info(prop0.path, ent) or nil
+	if memberInfo ~= nil then
+		local constraintTypes = pfm.util.find_applicable_constraint_types(memberInfo, actor1, propertyPath1)
+		if #constraintTypes > 0 then
+			for _, type in ipairs(constraintTypes) do
+				local name = gui.PFMActorEditor.constraint_type_to_name(type)
+				context
+					:AddItem(locale.get_text("c_constraint_" .. name), function()
+						self:AddConstraint(type, prop0.actor, prop0.path, actor1, propertyPath1)
+					end)
+					:SetName("constraint_" .. name)
+			end
+			return true
+		end
+	end
+	return false
+end
 function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, controlData)
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
@@ -1730,40 +1756,21 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 		if #constraintProps > 2 then
 			constraintProps = { { actorData = actorData, controlData = controlData } }
 		end -- If more than two properties are selected, we'll only show self-contained constraints for the property that was clicked
-
-		local prop0 = constraintProps[1]
-		local prop1 = constraintProps[2]
-		if prop0.controlData == controlData then
-			local actor1
-			local propertyPath1
-			if prop1 ~= nil then
-				actor1 = prop1.actorData.actor
-				propertyPath1 = prop1.controlData.path
+		if constraintProps[1].controlData == controlData then
+			local t = {}
+			for _, propData in ipairs(constraintProps) do
+				table.insert(t, {
+					actor = propData.actorData.actor,
+					path = propData.controlData.path,
+				})
 			end
 
-			local ent = prop0.actorData.actor:FindEntity()
-			local memberInfo = util.is_valid(ent) and pfm.get_member_info(prop0.controlData.path, ent) or nil
-			if memberInfo ~= nil then
-				local constraintTypes = pfm.util.find_applicable_constraint_types(memberInfo, actor1, propertyPath1)
-				if #constraintTypes > 0 then
-					local ctItem, ctMenu = context:AddSubMenu(locale.get_text("pfm_add_constraint"))
-					ctItem:SetName("add_constraint")
-					for _, type in ipairs(constraintTypes) do
-						local name = gui.PFMActorEditor.constraint_type_to_name(type)
-						ctMenu
-							:AddItem(locale.get_text("c_constraint_" .. name), function()
-								self:AddConstraint(
-									type,
-									prop0.actorData.actor,
-									prop0.controlData.path,
-									actor1,
-									propertyPath1
-								)
-							end)
-							:SetName("constraint_" .. name)
-					end
-					ctMenu:Update()
-				end
+			local ctItem, ctMenu = context:AddSubMenu(locale.get_text("pfm_add_constraint"))
+			ctItem:SetName("add_constraint")
+			if self:AddContextMenuConstraintOptions(context, t[1], t[2]) == false then
+				context:RemoveSubMenu(ctMenu)
+			else
+				ctMenu:Update()
 			end
 		end
 	end
