@@ -39,6 +39,7 @@ function gui.PFMCoreViewportBase:ClearTransformGizmo()
 end
 function gui.PFMCoreViewportBase:SetManipulatorMode(manipulatorMode)
 	self:ClearTransformGizmo()
+	local oldManipMode = self.m_manipulatorMode
 	self.m_manipulatorMode = manipulatorMode
 	self.m_btSelect:SetActivated(manipulatorMode == gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT)
 	self.m_btMove:SetActivated(self:IsMoveManipulatorMode(manipulatorMode))
@@ -68,7 +69,9 @@ function gui.PFMCoreViewportBase:SetManipulatorMode(manipulatorMode)
 		end
 	end
 	self:UpdateManipulationMode()
-	self:CallCallbacks("OnManipulatorModeChanged", manipulatorMode)
+	if manipulatorMode ~= oldManipMode then
+		self:CallCallbacks("OnManipulatorModeChanged", manipulatorMode)
+	end
 end
 function gui.PFMCoreViewportBase:GetTransformSpace()
 	local transformSpace = self.m_ctrlTransformSpace:GetOptionValue(self.m_ctrlTransformSpace:GetSelectedOption())
