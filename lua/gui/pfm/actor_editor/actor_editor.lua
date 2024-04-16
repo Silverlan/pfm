@@ -2338,7 +2338,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 									:SetName("go_to_driver_property")
 								pContext
 									:AddItem(locale.get_text("remove"), function()
-										self:RemoveActors({ tostring(drivenData.actorData.actor:GetUniqueId()) })
+										self:RemoveConstraint(drivenData.actorData.actor)
 									end)
 									:SetName("remove")
 								pContext:Update()

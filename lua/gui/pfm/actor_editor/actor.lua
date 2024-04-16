@@ -144,6 +144,82 @@ function gui.PFMActorEditor:IterateActors(f)
 		end
 	end
 end
+function gui.PFMActorEditor:RemoveConstraint(actor)
+	local filmClip = self:GetFilmClip()
+
+	local cmd = pfm.create_command("composition")
+
+	local childOfC = actor:FindComponent("constraint_child_of")
+	local addSubCmd
+	if childOfC ~= nil then
+		-- If the constraint is a child-of constraint, we have to convert the driven object's pose from local space
+		-- (relative to the driver) back to world space
+		local function get_property_pose_values()
+			local constraintC = actor:FindComponent("constraint")
+			if constraintC == nil then
+				return
+			end
+			local drivenObject = ents.parse_uri(constraintC:GetMemberValue("drivenObject", udm.TYPE_STRING))
+			local driver = ents.parse_uri(constraintC:GetMemberValue("driver", udm.TYPE_STRING))
+			if drivenObject == nil or driver == nil then
+				return
+			end
+			local actor0 = pfm.dereference(drivenObject:GetUuid())
+			local propertyPath0 = "ec/" .. drivenObject:GetComponentName() .. "/" .. drivenObject:GetMemberName()
+			local actor1 = pfm.dereference(driver:GetUuid())
+			local propertyPath1 = "ec/" .. driver:GetComponentName() .. "/" .. driver:GetMemberName()
+			if actor0 == nil or actor1 == nil then
+				return
+			end
+
+			local parentPose, childPose =
+				pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1, propertyPath1)
+			if parentPose == nil then
+				return
+			end
+			local absPose = parentPose * childPose
+
+			local memberInfo = pfm.get_member_info(propertyPath0, actor0:FindEntity())
+			if memberInfo == nil then
+				return
+			end
+			local oldValue
+			local newValue
+			if memberInfo.type == udm.TYPE_VECTOR3 then
+				oldValue = childPose:GetOrigin()
+				newValue = absPose:GetOrigin()
+			elseif memberInfo.type == udm.TYPE_QUATERNION then
+				oldValue = childPose:GetRotation()
+				newValue = absPose:GetRotation()
+			else
+				oldValue = childPose
+				newValue = absPose
+			end
+			return actor0, propertyPath0, memberInfo.type, oldValue, newValue
+		end
+		local actor, propertyPath, propertyType, oldValue, newValue = get_property_pose_values()
+		if actor ~= nil then
+			local pm = pfm.get_project_manager()
+			if util.is_valid(pm) then
+				addSubCmd = function()
+					pm:ChangeActorPropertyValue(actor, propertyPath, propertyType, oldValue, newValue, nil, true, cmd)
+				end
+			end
+		end
+	end
+	-- We need to reset the actor position after the constraint has been deleted, but
+	-- if the delete action is undone, the position has to be reset after the constraint
+	-- has been restored. To do so, we'll just add two sub-commands for resetting the position, one
+	-- after and one before. This is a bit hacky, but it works.
+	if addSubCmd ~= nil then
+		addSubCmd()
+	end
+	local res, subCmd = cmd:AddSubCommand("delete_actors", filmClip, { tostring(actor:GetUniqueId()) })
+	if addSubCmd ~= nil then
+		addSubCmd()
+	end
+	pfm.undoredo.push("delete_constraint", cmd)()
+end
 function gui.PFMActorEditor:RemoveActors(ids)
 	local filmClip = self:GetFilmClip()
 	pfm.undoredo.push("delete_actors", pfm.create_command("delete_actors", filmClip, ids))()
@@ -281,6 +357,9 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 		parentItem:FullUpdate()
 		parentItem:Expand()
 	end
+
+	self.m_constraintItemsDirty = true
+	self:SetThinkingEnabled(true)
 	return itemActor
 end
 
