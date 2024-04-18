@@ -6,11 +6,12 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("transform_animation_channel.lua")
+include("base_transform_animation_channel.lua")
 
-local Command = util.register_class("pfm.CommandTransformAnimationChannelScale", pfm.CommandTransformAnimationChannel)
+local Command = util.register_class("pfm.CommandScaleAnimationChannel", pfm.BaseCommandTransformAnimationChannel)
 function Command:Initialize(actorUuid, propertyPath, startTime, endTime, scale)
-	local result = pfm.CommandTransformAnimationChannel.Initialize(self, actorUuid, propertyPath, startTime, endTime)
+	local result =
+		pfm.BaseCommandTransformAnimationChannel.Initialize(self, actorUuid, propertyPath, startTime, endTime)
 	if result ~= pfm.Command.RESULT_SUCCESS then
 		return result
 	end

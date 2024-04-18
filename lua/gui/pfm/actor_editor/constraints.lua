@@ -244,6 +244,7 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 	end
 
 	local cmd = pfm.create_command("composition")
+	cmd:AddSubCommand("add_actor", self:GetFilmClip(), { actor })
 
 	local posMemberInfo, posPropertyPath, rotMemberInfo, rotPropertyPath =
 		pfm.util.get_transform_property_components(ent0, memberInfo0, propertyPath0)
@@ -272,6 +273,7 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 
 	local baseValuePos = pfm.util.get_actor_property_value(actor0, posMemberInfo, posPropertyPath)
 	local baseValueRot = pfm.util.get_actor_property_value(actor0, rotMemberInfo, rotPropertyPath)
+	local cmdUpdatePose = pfm.create_command("composition")
 	if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
 		local parentPose, childPose =
 			pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1, propertyPath1)
@@ -282,6 +284,23 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		end
 		if baseValueRot ~= nil then
 			baseValueRot = childPose:GetRotation()
+		end
+		-- Transform the animation channels if they exist
+		if posPropertyPath ~= nil then
+			cmdUpdatePose:AddSubCommand(
+				"transform_animation_channel",
+				tostring(actor0:GetUniqueId()),
+				posPropertyPath,
+				parentPose:GetInverse()
+			)
+		end
+		if rotPropertyPath ~= nil then
+			cmdUpdatePose:AddSubCommand(
+				"transform_animation_channel",
+				tostring(actor0:GetUniqueId()),
+				rotPropertyPath,
+				parentPose:GetInverse()
+			)
 		end
 	else
 		if baseValuePos ~= nil then
@@ -296,14 +315,16 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 	if posMemberInfo ~= nil then
 		local pos = baseValuePos
 		pos = c0:ConvertPosToMemberSpace(idxPos, math.COORDINATE_SPACE_WORLD, pos)
-		pm:MakeActorPropertyAnimated(actor0, posPropertyPath, posMemberInfo.type, true, nil, cmd, pos)
+		pm:MakeActorPropertyAnimated(actor0, posPropertyPath, posMemberInfo.type, true, nil, cmdUpdatePose, pos)
 	end
 	if rotMemberInfo ~= nil then
 		local rot = baseValueRot
 		rot = c0:ConvertRotToMemberSpace(idxRot, math.COORDINATE_SPACE_WORLD, rot)
-		pm:MakeActorPropertyAnimated(actor0, rotPropertyPath, rotMemberInfo.type, true, nil, cmd, rot)
+		pm:MakeActorPropertyAnimated(actor0, rotPropertyPath, rotMemberInfo.type, true, nil, cmdUpdatePose, rot)
 	end
-	pfm.undoredo.push("initialize_constraint", cmd)()
+	cmdUpdatePose:Execute()
+	cmd:AddSubCommand(cmdUpdatePose)
+	pfm.undoredo.push("initialize_constraint", cmd)
 end
 
 local function is_constraint_type_applicable(type, memberInfo0, memberInfo1)

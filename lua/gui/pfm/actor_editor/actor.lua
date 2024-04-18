@@ -195,6 +195,30 @@ function gui.PFMActorEditor:RemoveConstraint(actor)
 				oldValue = childPose
 				newValue = absPose
 			end
+
+			-- We need to move the animation channels from parent space back to world space
+			local ent0 = actor0:FindEntity()
+			local memberInfo0 = util.is_valid(ent0) and pfm.get_member_info(propertyPath0, ent0) or nil
+			if memberInfo0 ~= nil then
+				local posMemberInfo, posPropertyPath, rotMemberInfo, rotPropertyPath =
+					pfm.util.get_transform_property_components(ent0, memberInfo0, propertyPath0)
+				if posMemberInfo ~= nil then
+					cmd:AddSubCommand(
+						"transform_animation_channel",
+						tostring(actor0:GetUniqueId()),
+						posPropertyPath,
+						parentPose
+					)
+				end
+				if rotMemberInfo ~= nil then
+					cmd:AddSubCommand(
+						"transform_animation_channel",
+						tostring(actor0:GetUniqueId()),
+						rotPropertyPath,
+						parentPose
+					)
+				end
+			end
 			return actor0, propertyPath0, memberInfo.type, oldValue, newValue
 		end
 		local actor, propertyPath, propertyType, oldValue, newValue = get_property_pose_values()
