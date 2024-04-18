@@ -293,6 +293,11 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 				posPropertyPath,
 				parentPose:GetInverse()
 			)
+			cmdUpdatePose:AddSubCommand(
+				"fit_curve_keyframes_to_animation_curve",
+				tostring(actor0:GetUniqueId()),
+				posPropertyPath
+			)
 		end
 		if rotPropertyPath ~= nil then
 			cmdUpdatePose:AddSubCommand(
@@ -300,6 +305,11 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 				tostring(actor0:GetUniqueId()),
 				rotPropertyPath,
 				parentPose:GetInverse()
+			)
+			cmdUpdatePose:AddSubCommand(
+				"fit_curve_keyframes_to_animation_curve",
+				tostring(actor0:GetUniqueId()),
+				rotPropertyPath
 			)
 		end
 	else
