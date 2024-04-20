@@ -576,6 +576,20 @@ function Element:InitializeMenuBar()
 			end)
 			pItemClearUndoStack:SetName("clear_undo_stack")
 
+			local pItemSaveUndoStack = pContext:AddItem(
+				locale.get_text("pfm_save_undo_stack_to_clipboard"),
+				function(pItem)
+					local udmFile = udm.create()
+					local udmData = udmFile:GetAssetData():GetData()
+					local udmCopy = udmData:Get("pfm_copy")
+					udmCopy:SetValue("type", udm.TYPE_STRING, "command_list")
+					local udmCopyData = udmCopy:Get("data")
+					pfm.undoredo.serialize(udmCopyData)
+					util.set_clipboard_string(udmData:ToAscii())
+				end
+			)
+			pItemSaveUndoStack:SetName("save_undo_stack")
+
 			local pItemDelete = pContext:AddItem(locale.get_text("delete"), function(pItem)
 				if util.is_valid(self) == false then
 					return

@@ -1615,6 +1615,32 @@ function gui.WIFilmmaker:WriteActorsToUdmElement(filmClip, actors, el, name)
 		udmData:Add("data"):Merge(animData)
 	end
 end
+function gui.WIFilmmaker:PasteFromClipboard()
+	local res, err = udm.parse(util.get_clipboard_string())
+	if res == false then
+		console.print_warning("Failed to parse UDM: ", err)
+		return
+	end
+	local data = res:GetAssetData():GetData()
+	local pfmCopy = data:Get("pfm_copy")
+	local type = pfmCopy:GetValue("type", udm.TYPE_STRING)
+	if type == nil then
+		return
+	end
+	if type == "command" then
+		local udmData = pfmCopy:Get("data")
+		local cmd, cmdName = pfm.Command.load_command_from_udm_data(udmData)
+		if cmd ~= nil then
+			pfm.undoredo.push(cmdName, cmd)()
+		end
+	elseif type == "command_list" then
+		local udmData = pfmCopy:Get("data")
+		local cmds = pfm.Command.load_commands_from_udm_data(udmData)
+		for _, cmdData in ipairs(cmds) do
+			pfm.undoredo.push(cmdData.name, cmdData.command)()
+		end
+	end
+end
 function gui.WIFilmmaker:RestoreActorsFromUdmElement(filmClip, data, keepOriginalUuids, name)
 	local pfmCopy = data:Get(name or "pfm_copy")
 	local data = pfmCopy:Get("data")

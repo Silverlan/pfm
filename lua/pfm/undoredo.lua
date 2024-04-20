@@ -104,47 +104,10 @@ pfm.undoredo.serialize = function(udmUndoRedo)
 end
 
 pfm.undoredo.deserialize = function(udmUndoRedo)
-	local udmStack = udmUndoRedo:Get("stack")
 	local undoPosition = udmUndoRedo:GetValue("undoPosition", udm.TYPE_UINT32)
-
-	pfm.log("Restoring undo/redo stack with " .. udmStack:GetSize() .. " items...", pfm.LOG_CATEGORY_PFM)
-	local stack = {}
-	local function read_command(udmData)
-		local identifier = udmData:GetValue("command", udm.TYPE_STRING)
-		local udmCmdData = udmData:Get("data")
-		local cmd = pfm.create_command_object(identifier)
-		if cmd ~= nil then
-			cmd:GetData():Merge(udmCmdData, udm.MERGE_FLAG_BIT_DEEP_COPY)
-
-			local udmSubCmds = udmData:Get("subCommands")
-			for i = 0, udmSubCmds:GetSize() - 1 do
-				local udmSubCmd = udmSubCmds:Get(i)
-				local subCmd = read_command(udmSubCmd)
-				if subCmd ~= nil then
-					cmd:AddSubCommandObject(subCmd)
-				end
-			end
-			return cmd
-		else
-			pfm.log(
-				"Failed to restore undo/redo command '" .. identifier .. "' from project: Command not found!",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_ERROR
-			)
-		end
-	end
-	for i = 0, udmStack:GetSize() - 1 do
-		local udmData = udmStack:Get(i)
-		local cmd = read_command(udmData)
-		if cmd ~= nil then
-			local name = udmData:GetValue("name", udm.TYPE_STRING)
-			table.insert(stack, {
-				name = pfm.undoredo.get_locale_identifier(name),
-				command = cmd,
-			})
-		end
-	end
-	pfm.undoredo.set_stack(stack, undoPosition)
+	local cmds = pfm.Command.load_commands_from_udm_data(udmUndoRedo)
+	pfm.log("Restoring undo/redo stack with " .. #cmds .. " items...", pfm.LOG_CATEGORY_PFM)
+	pfm.undoredo.set_stack(cmds, undoPosition)
 end
 
 pfm.undoredo.clear = function()

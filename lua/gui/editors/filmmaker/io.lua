@@ -119,10 +119,7 @@ function Element:KeyboardCallback(key, scanCode, state, mods)
 			return util.EVENT_REPLY_HANDLED
 		elseif key == input.KEY_V then
 			if state == input.STATE_PRESS then
-				local actorEditor = self:GetActorEditor()
-				if util.is_valid(actorEditor) then
-					actorEditor:PasteFromClipboard()
-				end
+				self:PasteFromClipboard()
 			end
 			return util.EVENT_REPLY_HANDLED
 		elseif key == input.KEY_Z then

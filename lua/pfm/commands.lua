@@ -81,6 +81,48 @@ BaseCommand.RESULT_INVALID_COMMAND = 3
 BaseCommand.ACTION_DO = 0
 BaseCommand.ACTION_UNDO = 1
 
+function BaseCommand.load_command_from_udm_data(udmData)
+	local identifier = udmData:GetValue("command", udm.TYPE_STRING)
+	local udmCmdData = udmData:Get("data")
+	local cmd = pfm.create_command_object(identifier)
+	if cmd ~= nil then
+		cmd:GetData():Merge(udmCmdData, udm.MERGE_FLAG_BIT_DEEP_COPY)
+
+		local udmSubCmds = udmData:Get("subCommands")
+		for i = 0, udmSubCmds:GetSize() - 1 do
+			local udmSubCmd = udmSubCmds:Get(i)
+			local subCmd = BaseCommand.load_command_from_udm_data(udmSubCmd)
+			if subCmd ~= nil then
+				cmd:AddSubCommandObject(subCmd)
+			end
+		end
+		return cmd, udmData:GetValue("name", udm.TYPE_STRING)
+	else
+		pfm.log(
+			"Failed to load command '" .. (identifier or "INVALID") .. "': Command not found!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_ERROR
+		)
+	end
+end
+
+function BaseCommand.load_commands_from_udm_data(udmUndoRedo)
+	local udmStack = udmUndoRedo:Get("stack")
+
+	local stack = {}
+	for i = 0, udmStack:GetSize() - 1 do
+		local udmData = udmStack:Get(i)
+		local cmd, cmdName = pfm.Command.load_command_from_udm_data(udmData)
+		if cmd ~= nil then
+			table.insert(stack, {
+				name = pfm.undoredo.get_locale_identifier(cmdName),
+				command = cmd,
+			})
+		end
+	end
+	return stack
+end
+
 function BaseCommand:__init()
 	self.m_data = udm.create("PFMCMD", 1)
 	self.m_subCommands = {}
