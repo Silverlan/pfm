@@ -1579,6 +1579,7 @@ function gui.WIFilmmaker:WriteActorsToUdmElement(filmClip, actors, el, name)
 	actors = pfm.dereference(actors)
 
 	local pfmCopy = el:Add(name or "pfm_copy")
+	pfmCopy:SetValue("type", udm.TYPE_STRING, "actor_list")
 
 	local track = filmClip:FindAnimationChannelTrack()
 	local animationData = {}
@@ -1638,6 +1639,11 @@ function gui.WIFilmmaker:PasteFromClipboard()
 		local cmds = pfm.Command.load_commands_from_udm_data(udmData)
 		for _, cmdData in ipairs(cmds) do
 			pfm.undoredo.push(cmdData.name, cmdData.command)()
+		end
+	elseif type == "actor_list" then
+		local actorEditor = self:GetActorEditor()
+		if util.is_valid(actorEditor) then
+			self:RestoreActorsFromUdmElement(actorEditor:GetFilmClip(), data)
 		end
 	end
 end
