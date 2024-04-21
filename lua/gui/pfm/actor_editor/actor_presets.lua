@@ -137,7 +137,10 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 		self:CreateNewActorComponent(actor, "flex", false)
 
 		-- Set up default IK if possible
-		if rig ~= nil or engine.load_library("pr_rig") then
+		if rig == nil then
+			engine.load_library("pr_rig")
+		end
+		if rig ~= nil then
 			local mdl = game.load_model(mdlName)
 			if mdl ~= nil then
 				local ikRigPath = rig.get_ik_rig_cache_path(mdl)
