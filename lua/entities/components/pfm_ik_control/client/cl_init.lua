@@ -6,12 +6,18 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-game.precache_model("error")
-
 local Component = util.register_class("ents.PFMIkControl", BaseEntityComponent)
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
+
+	if ik == nil then
+		engine.load_library("pr_ik")
+		if ik == nil then
+			return -- IK not available
+		end
+	end
+
 	self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent("pfm_editor_actor") -- Required so the ik control can be detected for mouse hover
