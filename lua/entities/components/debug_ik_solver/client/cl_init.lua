@@ -22,6 +22,7 @@ function Component:OnRemove()
 	util.remove(self.m_boneLines)
 end
 
+local BONE_AXIS_LENGTH = 1.0
 function Component:InitializeDebugLines()
 	local ikSolverC = self:GetEntityComponent(ents.COMPONENT_IK_SOLVER)
 	if ikSolverC == nil then
@@ -62,15 +63,15 @@ function Component:InitializeDebugLines()
 		local rot = bone:GetRot()
 
 		drawInfo:SetColor(util.Color.Red)
-		local debugLine = debug.draw_line(pose * pos, pose * (pos + rot:GetRight() * 0.1), drawInfo)
+		local debugLine = debug.draw_line(pose * pos, pose * (pos + rot:GetRight() * BONE_AXIS_LENGTH), drawInfo)
 		table.insert(self.m_boneLines, debugLine)
 
 		drawInfo:SetColor(util.Color.Lime)
-		local debugLine = debug.draw_line(pose * pos, pose * (pos + rot:GetUp() * 0.1), drawInfo)
+		local debugLine = debug.draw_line(pose * pos, pose * (pos + rot:GetUp() * BONE_AXIS_LENGTH), drawInfo)
 		table.insert(self.m_boneLines, debugLine)
 
 		drawInfo:SetColor(util.Color.Blue)
-		local debugLine = debug.draw_line(pose * pos, pose * (pos + rot:GetForward() * 0.1), drawInfo)
+		local debugLine = debug.draw_line(pose * pos, pose * (pos + rot:GetForward() * BONE_AXIS_LENGTH), drawInfo)
 		table.insert(self.m_boneLines, debugLine)
 	end
 end
@@ -113,15 +114,15 @@ function Component:OnTick()
 			local rot = bone:GetRot()
 
 			l0:SetVertexPosition(0, pose * pos)
-			l0:SetVertexPosition(1, pose * (pos + rot:GetRight() * 0.1))
+			l0:SetVertexPosition(1, pose * (pos + rot:GetRight() * BONE_AXIS_LENGTH))
 			l0:UpdateVertexBuffer()
 
 			l1:SetVertexPosition(0, pose * pos)
-			l1:SetVertexPosition(1, pose * (pos + rot:GetUp() * 0.1))
+			l1:SetVertexPosition(1, pose * (pos + rot:GetUp() * BONE_AXIS_LENGTH))
 			l1:UpdateVertexBuffer()
 
 			l2:SetVertexPosition(0, pose * pos)
-			l2:SetVertexPosition(1, pose * (pos + rot:GetForward() * 0.1))
+			l2:SetVertexPosition(1, pose * (pos + rot:GetForward() * BONE_AXIS_LENGTH))
 			l2:UpdateVertexBuffer()
 		end
 	end
