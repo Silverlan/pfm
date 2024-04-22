@@ -218,9 +218,17 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		["updateActorComponents"] = false,
 		["name"] = constraintActorName,
 	})
+	local drivenSpace = math.COORDINATE_SPACE_WORLD
+	if type == gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF then
+		local coordMetaInfo = memberInfo0:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_COORDINATE)
+		if coordMetaInfo ~= nil then
+			drivenSpace = coordMetaInfo.space
+		end
+	end
 	local ctC = actor:FindComponent("constraint")
 	if ctC ~= nil then
 		ctC:SetMemberValue("drivenObject", udm.TYPE_STRING, ents.create_uri(actor0:GetUniqueId(), propertyPath0))
+		ctC:SetMemberValue("drivenObjectSpace", udm.TYPE_UINT8, drivenSpace)
 		if actor1 ~= nil then
 			ctC:SetMemberValue("driver", udm.TYPE_STRING, ents.create_uri(actor1:GetUniqueId(), propertyPath1))
 		end
@@ -324,12 +332,12 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 	-- Constraints require there to be an animation channel with at least one animation value
 	if posMemberInfo ~= nil then
 		local pos = baseValuePos
-		pos = c0:ConvertPosToMemberSpace(idxPos, math.COORDINATE_SPACE_WORLD, pos)
+		pos = c0:ConvertPosToMemberSpace(idxPos, drivenSpace, pos)
 		pm:MakeActorPropertyAnimated(actor0, posPropertyPath, posMemberInfo.type, true, nil, cmdUpdatePose, pos)
 	end
 	if rotMemberInfo ~= nil then
 		local rot = baseValueRot
-		rot = c0:ConvertRotToMemberSpace(idxRot, math.COORDINATE_SPACE_WORLD, rot)
+		rot = c0:ConvertRotToMemberSpace(idxRot, drivenSpace, rot)
 		pm:MakeActorPropertyAnimated(actor0, rotPropertyPath, rotMemberInfo.type, true, nil, cmdUpdatePose, rot)
 	end
 	cmdUpdatePose:Execute()
