@@ -51,6 +51,32 @@ function Component:SetTransformTarget(ent, targetPath)
 		add_event_callback(trC, ents.TransformController.EVENT_ON_TRANSFORM_CHANGED, Component.OnTransformChanged)
 	end
 	self.m_callbacks = cbs
+
+	-- If this (positional) property is driven by a child-of constraint, we have to use the driver's
+	-- rotation for our reference frame
+	for entConstraint, c in ents.citerator(ents.COMPONENT_CONSTRAINT_CHILD_OF) do
+		local constraintC = entConstraint:GetComponent(ents.COMPONENT_CONSTRAINT)
+		if constraintC ~= nil then
+			local part = constraintC:GetConstraintParticipants()
+			if
+				part ~= nil
+				and util.is_valid(part.drivenObject)
+				and util.is_valid(part.driver)
+				and part.drivenObject:GetEntity() == ent
+			then
+				local memberInfo = part.drivenObject:GetMemberInfo(part.drivenObjectPropertyIndex)
+				if memberInfo ~= nil then
+					local propPath = "ec/" .. part.drivenObject:GetComponentName() .. "/" .. memberInfo.name
+					local posMemberInfo, posPropertyPath, rotMemberInfo, rotPropertyPath =
+						pfm.util.get_transform_property_components(ent, memberInfo, propPath)
+					if targetPath == posPropertyPath then
+						-- Use the driver's rotation as base reference
+						self:SetParentRotation(part.driver:GetEntity():GetRotation())
+					end
+				end
+			end
+		end
+	end
 end
 
 function Component:OnTransformChanged(pos, rot, scale)
@@ -105,12 +131,12 @@ function Component:UpdateTransformGizmoPose(updateLastPose)
 end
 
 function Component:OnPositionChanged()
-	local pos = self:CalcNewDataPose():GetOrigin()
 	local c = self.m_transformGizmoInfo.component
 	if util.is_valid(c) == false then
 		return
 	end
 	local idx = self.m_transformGizmoInfo.memberIndex
+	local pos = self:CalcNewDataPose():GetOrigin()
 	if self.m_tmpAnimChannel ~= nil then
 		pos = c:ConvertPosToMemberSpace(idx, math.COORDINATE_SPACE_WORLD, pos)
 		self.m_tmpAnimChannel:InsertValue(0.0, pos)
@@ -169,7 +195,6 @@ function Component:OnTransformStart()
 	local pathName = self.m_transformGizmoInfo.propertyName
 	local c = (componentName ~= nil) and ent:GetComponent(componentName) or nil
 	local idx = (c ~= nil) and c:GetMemberIndex(pathName) or nil
-	local pose = (idx ~= nil) and c:GetTransformMemberPose(idx, math.COORDINATE_SPACE_WORLD) or nil
 
 	self.m_transformGizmoInfo.isTransforming = true
 	self:UpdateAnimationChannelSubstituteValue()
@@ -324,12 +349,20 @@ function Component:RestoreAnimationChannel()
 	self.m_tmpAnimChannel = nil
 end
 
+function Component:SetParentRotation(rot)
+	self.m_invParentRotation = rot:GetInverse()
+end
+
 function Component:CalcNewDataPose()
 	local oldPose = self.m_transformGizmoInfo.lastPose
 	local newPose = self:GetEntity():GetPose()
 	local dtPos = newPose:GetOrigin() - oldPose:GetOrigin()
 	local dtRot = oldPose:GetRotation():GetInverse() * newPose:GetRotation()
 	local dtScale = newPose:GetScale() - oldPose:GetScale()
+	if self.m_invParentRotation ~= nil then
+		dtPos:Rotate(self.m_invParentRotation)
+		dtRot = self.m_invParentRotation * dtRot
+	end
 	local origDataPose = self.m_transformGizmoInfo.startPose
 	return math.ScaledTransform(
 		origDataPose:GetOrigin() + dtPos,
