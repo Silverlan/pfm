@@ -4,3 +4,5 @@ export/
 cache/
 materials/render_previews/
 projects/
+/scripts/ik_rigs
+/elements
