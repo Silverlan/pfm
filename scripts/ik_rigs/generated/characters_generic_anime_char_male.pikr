@@ -1,0 +1,511 @@
+$array controls [element;10][
+	{
+		$string bone "J_Bip_C_Hips"
+		$string type "Drag"
+		$float rigidity 0.4
+		$float maxForce -1
+	},
+	{
+		$string bone "J_Bip_C_UpperChest"
+		$string type "Drag"
+		$float rigidity 0.4
+		$float maxForce -1
+	},
+	{
+		$string bone "J_Bip_L_LowerArm"
+		$string type "Drag"
+		$float rigidity 0
+		$float maxForce -1
+	},
+	{
+		$string bone "J_Bip_L_Hand"
+		$string type "State"
+		$float rigidity 4
+		$float maxForce -1
+	},
+	{
+		$string bone "J_Bip_R_LowerArm"
+		$string type "Drag"
+		$float rigidity 0
+		$float maxForce -1
+	},
+	{
+		$string bone "J_Bip_R_Hand"
+		$string type "State"
+		$float rigidity 4
+		$float maxForce -1
+	},
+	{
+		$string bone "J_Bip_L_LowerLeg"
+		$string type "Drag"
+		$float rigidity 0
+		$float maxForce -1
+	},
+	{
+		$string bone "J_Bip_L_Foot"
+		$string type "OrientedDrag"
+		$float rigidity 4
+		$float maxForce -1
+	},
+	{
+		$string bone "J_Bip_R_LowerLeg"
+		$string type "Drag"
+		$float rigidity 0
+		$float maxForce -1
+	},
+	{
+		$string bone "J_Bip_R_Foot"
+		$string type "OrientedDrag"
+		$float rigidity 4
+		$float maxForce -1
+	}
+]
+$string rootBone "J_Bip_C_Hips"
+$array joints [element;42][
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_C_Hips"
+		$string bone1 "J_Bip_C_UpperChest"
+		$float rigidity 1
+		$vec3 anchorPosition [0.02,40.5053,-0.506]
+	},
+	{
+		$string type "AngularJoint"
+		$string bone0 "J_Bip_C_Hips"
+		$string bone1 "J_Bip_C_UpperChest"
+		$float rigidity 1
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_C_UpperChest"
+		$string bone1 "J_Bip_L_UpperArm"
+		$float rigidity 1
+		$vec3 anchorPosition [-5.9372,56.5445,0.7795]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_C_UpperChest"
+		$vec3 axisB [-0.999,-0.0448,-0.0065]
+		$string bone1 "J_Bip_L_UpperArm"
+		$float rigidity 1
+		$float maxAngle 117
+		$vec3 axisA [-0.9578,0,-0.2873]
+	},
+	{
+		$string type "TwistLimit"
+		$string bone0 "J_Bip_C_UpperChest"
+		$vec3 axisB [-0.999,-0.0448,-0.0065]
+		$string bone1 "J_Bip_L_UpperArm"
+		$float rigidity 0.08
+		$float maxAngle 90
+		$vec3 axisA [-0.999,-0.0448,-0.0065]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_L_UpperArm"
+		$string bone1 "J_Bip_L_LowerArm"
+		$float rigidity 1
+		$vec3 anchorPosition [-14.7197,56.1504,0.7221]
+	},
+	{
+		$string type "SwivelHingeJoint"
+		$string bone0 "J_Bip_L_UpperArm"
+		$vec3 axisB [-0.9966,-0.0047,-0.0823]
+		$string bone1 "J_Bip_L_LowerArm"
+		$float rigidity 1
+		$vec3 axisA [-0.0047,1,-0.0004]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_L_UpperArm"
+		$vec3 axisB [-0.9966,-0.0047,-0.0823]
+		$string bone1 "J_Bip_L_LowerArm"
+		$float rigidity 1
+		$float maxAngle 78.3
+		$vec3 axisA [-0.2307,0,-0.973]
+	},
+	{
+		$string type "TwistLimit"
+		$string bone0 "J_Bip_L_UpperArm"
+		$vec3 axisB [-0.9966,-0.0047,-0.0823]
+		$string bone1 "J_Bip_L_LowerArm"
+		$float rigidity 0.08
+		$float maxAngle 45
+		$vec3 axisA [-0.9966,-0.0047,-0.0823]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_L_LowerArm"
+		$string bone1 "J_Bip_L_Hand"
+		$float rigidity 1
+		$vec3 anchorPosition [-24.6784,56.1034,-0.1008]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_L_LowerArm"
+		$vec3 axisB [-1,0,-0]
+		$string bone1 "J_Bip_L_Hand"
+		$float rigidity 1
+		$float maxAngle 90
+		$vec3 axisA [-1,0,0]
+	},
+	{
+		$string type "TwistLimit"
+		$string bone0 "J_Bip_L_LowerArm"
+		$vec3 axisB [-1,0,-0]
+		$string bone1 "J_Bip_L_Hand"
+		$float rigidity 0.08
+		$float maxAngle 45
+		$vec3 axisA [-1,0,-0]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_C_UpperChest"
+		$string bone1 "J_Bip_R_UpperArm"
+		$float rigidity 1
+		$vec3 anchorPosition [5.9773,56.5445,0.7795]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_C_UpperChest"
+		$vec3 axisB [0.999,-0.0448,-0.0065]
+		$string bone1 "J_Bip_R_UpperArm"
+		$float rigidity 1
+		$float maxAngle 117
+		$vec3 axisA [0.9578,0,-0.2873]
+	},
+	{
+		$string type "TwistLimit"
+		$string bone0 "J_Bip_C_UpperChest"
+		$vec3 axisB [0.999,-0.0448,-0.0065]
+		$string bone1 "J_Bip_R_UpperArm"
+		$float rigidity 0.08
+		$float maxAngle 90
+		$vec3 axisA [0.999,-0.0448,-0.0065]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_R_UpperArm"
+		$string bone1 "J_Bip_R_LowerArm"
+		$float rigidity 1
+		$vec3 anchorPosition [14.7598,56.1504,0.7221]
+	},
+	{
+		$string type "SwivelHingeJoint"
+		$string bone0 "J_Bip_R_UpperArm"
+		$vec3 axisB [0.9966,-0.0047,-0.0823]
+		$string bone1 "J_Bip_R_LowerArm"
+		$float rigidity 1
+		$vec3 axisA [0.0047,1,-0.0004]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_R_UpperArm"
+		$vec3 axisB [0.9966,-0.0047,-0.0823]
+		$string bone1 "J_Bip_R_LowerArm"
+		$float rigidity 1
+		$float maxAngle 78.3
+		$vec3 axisA [0.2307,0,-0.973]
+	},
+	{
+		$string type "TwistLimit"
+		$string bone0 "J_Bip_R_UpperArm"
+		$vec3 axisB [0.9966,-0.0047,-0.0823]
+		$string bone1 "J_Bip_R_LowerArm"
+		$float rigidity 0.08
+		$float maxAngle 45
+		$vec3 axisA [0.9966,-0.0047,-0.0823]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_R_LowerArm"
+		$string bone1 "J_Bip_R_Hand"
+		$float rigidity 1
+		$vec3 anchorPosition [24.7185,56.1034,-0.1007]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_R_LowerArm"
+		$vec3 axisB [1,0,-0]
+		$string bone1 "J_Bip_R_Hand"
+		$float rigidity 1
+		$float maxAngle 90
+		$vec3 axisA [1,0,0]
+	},
+	{
+		$string type "TwistLimit"
+		$string bone0 "J_Bip_R_LowerArm"
+		$vec3 axisB [1,0,-0]
+		$string bone1 "J_Bip_R_Hand"
+		$float rigidity 0.08
+		$float maxAngle 45
+		$vec3 axisA [1,0,-0]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_C_Hips"
+		$string bone1 "J_Bip_L_UpperLeg"
+		$float rigidity 1
+		$vec3 anchorPosition [-3.3943,38.7452,-0.3442]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_C_Hips"
+		$vec3 axisB [0.0185,-0.9997,0.0172]
+		$string bone1 "J_Bip_L_UpperLeg"
+		$float rigidity 1
+		$float maxAngle 108
+		$vec3 axisA [-0.2491,-0.8305,-0.4983]
+	},
+	{
+		$vec3 measurementAxisA [0.7071,0,0.7071]
+		$string type "TwistLimit"
+		$string bone0 "J_Bip_C_Hips"
+		$vec3 axisB [-0.0185,0.9997,-0.0172]
+		$string bone1 "J_Bip_L_UpperLeg"
+		$float rigidity 0.08
+		$float maxAngle 45
+		$vec3 axisA [-0.0185,0.9997,-0.0172]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_L_UpperLeg"
+		$string bone1 "J_Bip_L_LowerLeg"
+		$float rigidity 1
+		$vec3 anchorPosition [-3.1067,23.2088,-0.0772]
+	},
+	{
+		$string type "SwivelHingeJoint"
+		$string bone0 "J_Bip_L_UpperLeg"
+		$vec3 axisB [0.0261,-0.9983,0.0517]
+		$string bone1 "J_Bip_L_LowerLeg"
+		$float rigidity 1
+		$vec3 axisA [-0.9997,-0.0261,0]
+	},
+	{
+		$string type "TwistLimit"
+		$string bone0 "J_Bip_L_UpperLeg"
+		$vec3 axisB [-0.0261,0.9983,-0.0517]
+		$string bone1 "J_Bip_L_LowerLeg"
+		$float rigidity 0.08
+		$float maxAngle 18
+		$vec3 axisA [-0.0261,0.9983,-0.0517]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_L_UpperLeg"
+		$vec3 axisB [0.0261,-0.9983,0.0517]
+		$string bone1 "J_Bip_L_LowerLeg"
+		$float rigidity 1
+		$float maxAngle 78.3
+		$vec3 axisA [0,-0.2307,0.973]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_L_LowerLeg"
+		$string bone1 "J_Bip_L_Foot"
+		$float rigidity 1
+		$vec3 anchorPosition [-2.631,4.9822,0.8664]
+	},
+	{
+		$string type "TwistJoint"
+		$string bone0 "J_Bip_L_LowerLeg"
+		$vec3 axisB [-0.0075,0.0515,0.9986]
+		$string bone1 "J_Bip_L_Foot"
+		$float rigidity 0.08
+		$vec3 axisA [-0.0075,0.0515,0.9986]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_L_LowerLeg"
+		$vec3 axisB [-0.0075,0.0515,0.9986]
+		$string bone1 "J_Bip_L_Foot"
+		$float rigidity 1
+		$float maxAngle 39.6
+		$vec3 axisA [0,-0.9578,0.2873]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_C_Hips"
+		$string bone1 "J_Bip_R_UpperLeg"
+		$float rigidity 1
+		$vec3 anchorPosition [3.4344,38.7452,-0.3442]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_C_Hips"
+		$vec3 axisB [-0.0185,-0.9997,0.0172]
+		$string bone1 "J_Bip_R_UpperLeg"
+		$float rigidity 1
+		$float maxAngle 108
+		$vec3 axisA [0.2491,-0.8305,-0.4983]
+	},
+	{
+		$vec3 measurementAxisA [-0.7071,0,0.7071]
+		$string type "TwistLimit"
+		$string bone0 "J_Bip_C_Hips"
+		$vec3 axisB [0.0185,0.9997,-0.0172]
+		$string bone1 "J_Bip_R_UpperLeg"
+		$float rigidity 0.08
+		$float maxAngle 45
+		$vec3 axisA [0.0185,0.9997,-0.0172]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_R_UpperLeg"
+		$string bone1 "J_Bip_R_LowerLeg"
+		$float rigidity 1
+		$vec3 anchorPosition [3.1467,23.2088,-0.0772]
+	},
+	{
+		$string type "SwivelHingeJoint"
+		$string bone0 "J_Bip_R_UpperLeg"
+		$vec3 axisB [-0.0261,-0.9983,0.0517]
+		$string bone1 "J_Bip_R_LowerLeg"
+		$float rigidity 1
+		$vec3 axisA [0.9997,-0.0261,0]
+	},
+	{
+		$string type "TwistLimit"
+		$string bone0 "J_Bip_R_UpperLeg"
+		$vec3 axisB [0.0261,0.9983,-0.0517]
+		$string bone1 "J_Bip_R_LowerLeg"
+		$float rigidity 0.08
+		$float maxAngle 18
+		$vec3 axisA [0.0261,0.9983,-0.0517]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_R_UpperLeg"
+		$vec3 axisB [-0.0261,-0.9983,0.0517]
+		$string bone1 "J_Bip_R_LowerLeg"
+		$float rigidity 1
+		$float maxAngle 78.3
+		$vec3 axisA [0,-0.2307,0.973]
+	},
+	{
+		$string type "BallSocketJoint"
+		$string bone0 "J_Bip_R_LowerLeg"
+		$string bone1 "J_Bip_R_Foot"
+		$float rigidity 1
+		$vec3 anchorPosition [2.671,4.9822,0.8664]
+	},
+	{
+		$string type "TwistJoint"
+		$string bone0 "J_Bip_R_LowerLeg"
+		$vec3 axisB [0.0075,0.0515,0.9986]
+		$string bone1 "J_Bip_R_Foot"
+		$float rigidity 0.08
+		$vec3 axisA [0.0075,0.0515,0.9986]
+	},
+	{
+		$string type "SwingLimit"
+		$string bone0 "J_Bip_R_LowerLeg"
+		$vec3 axisB [0.0075,0.0515,0.9986]
+		$string bone1 "J_Bip_R_Foot"
+		$float rigidity 1
+		$float maxAngle 39.6
+		$vec3 axisA [0,-0.9578,0.2873]
+	}
+]
+$array bones [element;14][
+	{
+		$string name "J_Bip_C_Hips"
+		$float radius 6.7703
+		$bool locked 0
+		$float length 7.2216
+		$transform ikPose [[0.02,40.5053,-0.506][0,0,1,0]]
+	},
+	{
+		$string name "J_Bip_C_UpperChest"
+		$float radius 6.7703
+		$bool locked 0
+		$float length 7.2216
+		$transform ikPose [[0.02,52.5742,-0.5467][0,0,1,0]]
+	},
+	{
+		$string name "J_Bip_L_UpperArm"
+		$float radius 2.2568
+		$bool locked 0
+		$float length 9.027
+		$transform ikPose [[-10.3284,56.3475,0.7508][0,0.7071,0.7071,0]]
+	},
+	{
+		$string name "J_Bip_L_LowerArm"
+		$float radius 2.2568
+		$bool locked 0
+		$float length 9.027
+		$transform ikPose [[-19.6991,56.1269,0.3107][0,0.7071,0.7071,0]]
+	},
+	{
+		$string name "J_Bip_L_Hand"
+		$float radius 1.8054
+		$bool locked 0
+		$float length 4.5135
+		$transform ikPose [[-24.6784,56.1034,-0.1008][0,0.7071,0.7071,0]]
+	},
+	{
+		$string name "J_Bip_R_UpperArm"
+		$float radius 2.2568
+		$bool locked 0
+		$float length 9.027
+		$transform ikPose [[10.3685,56.3475,0.7508][0,0.7071,0.7071,0]]
+	},
+	{
+		$string name "J_Bip_R_LowerArm"
+		$float radius 2.2568
+		$bool locked 0
+		$float length 9.027
+		$transform ikPose [[19.7392,56.1269,0.3107][0,0.7071,0.7071,0]]
+	},
+	{
+		$string name "J_Bip_R_Hand"
+		$float radius 1.8054
+		$bool locked 0
+		$float length 4.5135
+		$transform ikPose [[24.7185,56.1034,-0.1007][0,0.7071,0.7071,0]]
+	},
+	{
+		$string name "J_Bip_L_UpperLeg"
+		$float radius 2.2568
+		$bool locked 0
+		$float length 11.7351
+		$transform ikPose [[-3.2505,30.977,-0.2107][0,0,1,0]]
+	},
+	{
+		$string name "J_Bip_L_LowerLeg"
+		$float radius 2.2568
+		$bool locked 0
+		$float length 11.7351
+		$transform ikPose [[-2.8688,14.0955,0.3946][0,0,1,0]]
+	},
+	{
+		$string name "J_Bip_L_Foot"
+		$float radius 2.2568
+		$bool locked 0
+		$float length 11.7351
+		$transform ikPose [[-2.631,4.9822,0.8664][0,0,1,0]]
+	},
+	{
+		$string name "J_Bip_R_UpperLeg"
+		$float radius 2.2568
+		$bool locked 0
+		$float length 11.7351
+		$transform ikPose [[3.2905,30.977,-0.2107][0,0,1,0]]
+	},
+	{
+		$string name "J_Bip_R_LowerLeg"
+		$float radius 2.2568
+		$bool locked 0
+		$float length 11.7351
+		$transform ikPose [[2.9088,14.0955,0.3946][0,0,1,0]]
+	},
+	{
+		$string name "J_Bip_R_Foot"
+		$float radius 2.2568
+		$bool locked 0
+		$float length 11.7351
+		$transform ikPose [[2.671,4.9822,0.8664][0,0,1,0]]
+	}
+]
+$array constraints [element;0][]
