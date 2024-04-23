@@ -95,6 +95,7 @@ end
 
 function ents.PFMSkeleton:OnRemove()
 	util.remove(self.m_pmCallbacks)
+	util.remove(self.onControlStrengthChanged)
 	self:ClearCallbacks()
 	self:ClearIkControls()
 	self:GetEntity():RemoveComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
@@ -119,6 +120,56 @@ end
 
 function ents.PFMSkeleton:OnBoneClicked(boneId, ent) end
 
+function ents.PFMSkeleton:OnControlStrengthChanged(boneId, strength)
+	self:UpdateIkControl(boneId)
+end
+
+function ents.PFMSkeleton:UpdateBoneColor(boneId, handle)
+	local c = self:GetEntityComponent(ents.COMPONENT_DEBUG_SKELETON_DRAW)
+	if c == nil then
+		return
+	end
+	local col = Color.White
+	if handle ~= nil then
+		col = (handle.type == util.IkRigConfig.Control.TYPE_STATE) and Color.Crimson or Color.Orange
+	end
+	local tEnts = c:GetBoneEntities(boneId)
+	for _, ent in ipairs(tEnts) do
+		if ent:IsValid() then
+			ent:SetColor(col)
+		end
+	end
+end
+
+function ents.PFMSkeleton:UpdateIkControl(boneId)
+	local solverC = self:GetEntity():GetComponent(ents.COMPONENT_IK_SOLVER)
+	if solverC == nil then
+		return
+	end
+	local handle = solverC:GetControl(boneId)
+	if handle == nil or handle:IsEnabled() == false then
+		if util.is_valid(self.m_ikControls[boneId]) then
+			util.remove(self.m_ikControls[boneId])
+			self.m_ikControls[boneId] = nil
+
+			self:UpdateBoneColor(boneId)
+		end
+		return
+	end
+
+	if util.is_valid(self.m_ikControls[boneId]) then
+		return
+	end
+
+	local entControl = ents.create("entity")
+	self.m_ikControls[boneId] = entControl
+	local c = entControl:AddComponent("pfm_ik_control")
+	entControl:Spawn()
+	c:SetIkControl(solverC, boneId)
+
+	self:UpdateBoneColor(boneId, handle)
+end
+
 function ents.PFMSkeleton:InitializeIkControls()
 	if self.m_bonesInitialized == false then
 		return
@@ -131,21 +182,17 @@ function ents.PFMSkeleton:InitializeIkControls()
 	if solverC == nil then
 		return
 	end
+	util.remove(self.onControlStrengthChanged)
+	self.onControlStrengthChanged = solverC:AddEventCallback(
+		ents.IkSolverComponent.EVENT_ON_CONTROL_STRENGTH_CHANGED,
+		function(boneId, strength)
+			self:OnControlStrengthChanged(boneId, strength)
+		end
+	)
 	for boneId, tEnts in pairs(c:GetBones()) do
 		for boneIdChild, ent in pairs(tEnts) do
 			if ent:IsValid() then
-				local handle = solverC:GetControl(boneId)
-				if handle ~= nil then
-					local col = (handle.type == util.IkRigConfig.Control.TYPE_STATE) and Color.Crimson or Color.Orange
-					ent:SetColor(col)
-
-					util.remove(self.m_ikControls[boneId])
-					local entControl = ents.create("entity")
-					self.m_ikControls[boneId] = entControl
-					local c = entControl:AddComponent("pfm_ik_control")
-					entControl:Spawn()
-					c:SetIkControl(solverC, boneId)
-				end
+				self:UpdateIkControl(boneId)
 			end
 		end
 	end
