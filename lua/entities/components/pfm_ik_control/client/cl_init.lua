@@ -76,6 +76,9 @@ function Component:OnClicked(buttonDown, hitPos)
 		local actor = pfm.dereference(entTgt:GetUuid())
 		if actor ~= nil then
 			pm:SelectActor(actor, true, propName)
+			-- Also select rotation property if available. This will make it faster to create constraints
+			-- that affect both the position and rotation.
+			pm:SelectActor(actor, false, "ec/ik_solver/control/" .. bone:GetName() .. "/rotation")
 		end
 	end
 
