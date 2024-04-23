@@ -623,7 +623,7 @@ function gui.PFMTreeViewElement:SetSelected(selected, selectChildren)
 	if selected == false or util.is_valid(treeView) == false or treeView:ShouldAutoSelectChildren() == false then
 		return
 	end
-	if selectChildren == false then
+	if selectChildren ~= true then
 		return
 	end
 	for _, item in ipairs(self:GetItems()) do
