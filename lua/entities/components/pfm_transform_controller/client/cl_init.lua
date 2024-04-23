@@ -71,7 +71,10 @@ function Component:SetTransformTarget(ent, targetPath)
 						pfm.util.get_transform_property_components(ent, memberInfo, propPath)
 					if targetPath == posPropertyPath then
 						-- Use the driver's rotation as base reference
-						self:SetParentRotation(part.driver:GetEntity():GetRotation())
+						self:SetParentRotation(
+							part.driver:GetEntity():GetRotation()
+								* part.drivenObject:GetEntity():GetRotation():GetInverse()
+						)
 					end
 				end
 			end
