@@ -21,6 +21,22 @@ function gui.PFMActorEditor:GetSelectedActors()
 	end)
 	return actors
 end
+function gui.PFMActorEditor:GetSelectedPoseProperties()
+	local props = self:GetSelectedProperties()
+	local poseProps = {}
+	for _, propData in ipairs(props) do
+		if
+			propData.controlData.type == udm.TYPE_VECTOR3
+			or propData.controlData.type == udm.TYPE_QUATERNION
+			or propData.controlData.type == udm.TYPE_EULER_ANGLES
+			or propData.controlData.type == udm.TYPE_TRANSFORM
+			or propData.controlData.type == udm.TYPE_SCALED_TRANSFORM
+		then
+			table.insert(poseProps, propData)
+		end
+	end
+	return poseProps
+end
 function gui.PFMActorEditor:GetSelectedProperties()
 	local props = {}
 	local function add_property(actorElement, actorData, componentElement, componentData, elParent)

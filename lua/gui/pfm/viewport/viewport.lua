@@ -205,29 +205,38 @@ function gui.PFMCoreViewportBase:AddConstraintContextMenuOptions(pContext, entAc
 	if util.is_valid(actorEditor) == false or actorTarget == nil then
 		return
 	end
-	local props = actorEditor:GetSelectedProperties()
+	local props = actorEditor:GetSelectedPoseProperties()
 	if #props == 0 then
 		return
 	end
 	local function get_property_control_name(path)
 		local controlPath = util.Path.CreateFilePath(path)
+		local propName = controlPath:GetBack()
 		controlPath:PopBack()
 		local name = controlPath:GetBack()
 		if name == nil or #name == 0 then
 			return
 		end
-		return name:sub(0, #name - 1)
+		return name:sub(0, #name - 1), propName
 	end
 	local prop = props[1]
 	local actorSrc = prop.actorData.actor
 	local ikControlSrc = get_property_control_name(prop.controlData.path)
 	-- Make sure all selected properties refer to the same ik control
+	local hasPos = false
+	local hasRot = false
 	for _, propData in ipairs(props) do
-		if
-			propData.actorData.actor ~= actorSrc
-			or get_property_control_name(propData.controlData.path) ~= ikControlSrc
-		then
+		if propData.actorData.actor ~= actorSrc then
 			return
+		end
+		local propIkControlName, propName = get_property_control_name(propData.controlData.path)
+		if propIkControlName ~= ikControlSrc then
+			return
+		end
+		if propName == "position" then
+			hasPos = true
+		elseif propName == "rotation" then
+			hasRot = true
 		end
 	end
 	local componentName, memberName =
@@ -235,13 +244,21 @@ function gui.PFMCoreViewportBase:AddConstraintContextMenuOptions(pContext, entAc
 	if componentName ~= "ik_solver" then
 		return
 	end
+	local targetPropName
+	if hasPos and hasRot then
+		targetPropName = "pose"
+	elseif hasRot then
+		targetPropName = "rotation"
+	else
+		targetPropName = "position"
+	end
 	local sourceProp = {
 		actor = actorSrc,
-		path = "ec/ik_solver/control/" .. ikControlSrc .. "/position",
+		path = "ec/ik_solver/control/" .. ikControlSrc .. "/" .. targetPropName,
 	}
 	local targetProp = {
 		actor = actorTarget,
-		path = "ec/pfm_actor/position",
+		path = "ec/pfm_actor/pose",
 	}
 	-- Add actor constraint options
 	local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_constrain_to", { ikControlSrc }))

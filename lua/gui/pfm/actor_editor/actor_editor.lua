@@ -1737,24 +1737,28 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 		end
 	end
 
-	local props = self:GetSelectedProperties()
-	local hasControlData = false
-	for i, propOther in ipairs(props) do
-		if propOther.controlData == controlData then
-			if i ~= 1 then
-				-- Make sure that the context menu property is the first in the list
-				local tmp = props[1]
-				props[1] = propOther
-				props[i] = tmp
+	local function init_props(props)
+		local hasControlData = false
+		for i, propOther in ipairs(props) do
+			if propOther.controlData == controlData then
+				if i ~= 1 then
+					-- Make sure that the context menu property is the first in the list
+					local tmp = props[1]
+					props[1] = propOther
+					props[i] = tmp
+				end
+				hasControlData = true
+				break
 			end
-			hasControlData = true
-			break
+		end
+
+		if hasControlData == false then
+			table.insert(props, 1, { actorData = actorData, controlData = controlData })
 		end
 	end
 
-	if hasControlData == false then
-		table.insert(props, 1, { actorData = actorData, controlData = controlData })
-	end
+	local props = self:GetSelectedPoseProperties()
+	init_props(props)
 	if #props > 0 then
 		local constraintProps = props
 		if #constraintProps > 2 then
@@ -1779,6 +1783,8 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 		end
 	end
 
+	props = self:GetSelectedProperties()
+	init_props(props)
 	if
 		util.is_valid(controlData.treeElement)
 		and controlData.treeElement.__elDriverActorData ~= nil
