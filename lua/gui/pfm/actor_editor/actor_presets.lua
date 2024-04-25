@@ -144,11 +144,12 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 			local mdl = game.load_model(mdlName)
 			if mdl ~= nil then
 				local ikRigPath = rig.get_ik_rig_cache_path(mdl)
-				local filePath = rig.get_ik_rig_base_path() .. ikRigPath
+				local filePath = (ikRigPath ~= nil) and (rig.get_ik_rig_base_path() .. ikRigPath) or nil
 				if ikRigPath == nil or file.exists(filePath) == false then
-					file.create_path(file.get_file_path(filePath))
+					file.create_path(file.get_file_path(rig.get_ik_rig_base_path()))
 					rig.generate_cached_ik_rig(mdl)
 					ikRigPath = rig.get_ik_rig_cache_path(mdl)
+					filePath = (ikRigPath ~= nil) and (rig.get_ik_rig_base_path() .. ikRigPath) or nil
 				end
 
 				if ikRigPath ~= nil and file.exists(filePath) then
