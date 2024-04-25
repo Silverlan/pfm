@@ -596,14 +596,12 @@ function gui.AssetExplorer:ListFiles()
 	if self:IsAtRoot() then
 		if self:IsSpecialDirectoryEnabled("favorites") then
 			self:AddAsset(locale.get_text("favorites"), true, function()
-				self.m_inSpecial = "fav"
-				self:Update()
+				self:GoToSpecialDirectory("fav")
 			end)
 		end
 		if self:IsSpecialDirectoryEnabled("new") then
 			self:AddAsset(locale.get_text("new"), true, function()
-				self.m_inSpecial = "new"
-				self:Update()
+				self:GoToSpecialDirectory("new")
 			end)
 		end
 	end
@@ -621,5 +619,9 @@ function gui.AssetExplorer:ListFiles()
 	self:OnPopulated()
 	self.m_iconContainer:Update()
 	debug.stop_profiling_task()
+end
+function gui.AssetExplorer:GoToSpecialDirectory(id)
+	self.m_inSpecial = id
+	self:Update()
 end
 gui.register("WIAssetExplorer", gui.AssetExplorer)

@@ -323,6 +323,38 @@ function Element:ImportDownloadAssets(path)
 		end,
 		onComplete = function(importedAssets)
 			self:CallCallbacks("OnDownloadAssetsImported", importedAssets)
+
+			if importedAssets[asset.TYPE_MODEL] ~= nil then
+				for _, mdlName in ipairs(importedAssets[asset.TYPE_MODEL]) do
+					local pm = pfm.get_project_manager()
+					if util.is_valid(pm) and pm:IsEditor() then
+						local window = pm:GetWindow("model_catalog")
+						local explorer = util.is_valid(window) and window:GetExplorer() or nil
+						if util.is_valid(explorer) then
+							explorer:AddToSpecial("new", mdlName)
+							explorer:GoToSpecialDirectory("new")
+							pm:GoToWindow("model_catalog")
+						end
+					end
+				end
+			end
+
+			local types = { asset.TYPE_MODEL, asset.TYPE_MAP, asset.TYPE_MATERIAL, asset.TYPE_TEXTURE }
+			local typeNames = { "models", "maps", "materials", "textures" }
+			local msg = ""
+			for i, type in ipairs(types) do
+				if importedAssets[type] ~= nil and #importedAssets[type] > 0 then
+					if #msg > 0 then
+						msg = msg .. ", "
+					end
+					msg = msg
+						.. locale.get_text("pfm_popup_asset_import_success_" .. typeNames[i], { #importedAssets[type] })
+				end
+			end
+
+			if #msg > 0 then
+				pfm.create_popup_message(locale.get_text("pfm_popup_asset_import_success", { msg }), 5)
+			end
 		end,
 	})
 end
