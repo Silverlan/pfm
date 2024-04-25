@@ -313,6 +313,18 @@ function Element:InitializeBrowser(parent, w, h)
 end
 function Element:ImportDownloadAssets(path)
 	util.import_assets(path:GetString(), {
+		logger = function(msg, severity)
+			if severity ~= log.SEVERITY_INFO then
+				console.print_warning(msg)
+
+				-- Bit of a hack
+				if msg:find("Unsupported archive format") ~= nil then
+					pfm.create_popup_message(msg, 5, gui.InfoBox.TYPE_ERROR)
+				end
+			else
+				print(msg)
+			end
+		end,
 		modelImportCallback = function(msg, severity)
 			if severity ~= log.SEVERITY_INFO then
 				msg = "\n{[c:ff0000]}" .. msg .. "{[/c]}"
