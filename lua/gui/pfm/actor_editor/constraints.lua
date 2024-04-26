@@ -158,7 +158,7 @@ function pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1
 	return parentPose, childPose
 end
 
-function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, propertyPath1)
+function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, propertyPath1, parentCmd)
 	local logMsg = "Adding constraint of type '" .. gui.PFMActorEditor.constraint_type_to_name(type) .. "'"
 	if actor1 == nil then
 		logMsg = logMsg .. " to "
@@ -251,7 +251,7 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		return
 	end
 
-	local cmd = pfm.create_command("composition")
+	local cmd = parentCmd or pfm.create_command("composition")
 	cmd:AddSubCommand("add_actor", self:GetFilmClip(), { actor })
 
 	local posMemberInfo, posPropertyPath, rotMemberInfo, rotPropertyPath =
@@ -342,6 +342,9 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 	end
 	cmdUpdatePose:Execute()
 	cmd:AddSubCommand(cmdUpdatePose)
+	if parentCmd ~= nil then
+		return
+	end
 	pfm.undoredo.push("initialize_constraint", cmd)
 end
 

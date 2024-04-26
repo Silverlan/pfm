@@ -29,6 +29,7 @@ include("animation.lua")
 include("actor_components.lua")
 include("draganddrop.lua")
 include("constraints.lua")
+include("bone_merge.lua")
 
 engine.load_library("pr_ik")
 

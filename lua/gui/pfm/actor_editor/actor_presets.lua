@@ -83,6 +83,13 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 	local nameOverride = args["name"]
 	local collectionOverride = args["collection"]
 
+	if nameOverride == nil and mdlName ~= nil then
+		local mdlFileName = util.Path.CreateFilePath(asset.get_normalized_path(mdlName, asset.TYPE_MODEL)):GetFileName()
+		if #mdlFileName > 0 then
+			nameOverride = mdlFileName
+		end
+	end
+
 	if updateActorComponents == nil then
 		updateActorComponents = true
 	end

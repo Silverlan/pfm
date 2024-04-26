@@ -266,26 +266,20 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 				if mdl == nil then
 					return
 				end
-				local name = util.Path
-					.CreateFilePath(asset.get_normalized_path(path:GetString(), asset.TYPE_MODEL))
-					:GetFileName()
-				if #name == 0 then
-					name = nil
-				end
 
 				local actor
 				if pfm.is_articulated_model(mdl) then
 					actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR, {
 						["modelName"] = path:GetString(),
-						["name"] = name,
 					})
 				else
 					actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP, {
 						["modelName"] = path:GetString(),
-						["name"] = name,
 					})
 				end
-				pm:UpdateActor(actor, filmClip)
+
+				local cmd = pfm.create_command("composition")
+				cmd:AddSubCommand("add_actor", actorEditor:GetFilmClip(), { actor })
 
 				-- filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
 
@@ -299,15 +293,21 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 
 					local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
 					local srcBone, attachmentActor, attachmentBone = ghostC:GetAttachmentTarget()
-					if srcBone ~= nil then
+					if ghostC:ShouldBoneMerge() then
+						actorEditor:BoneMerge(actor, attachmentActor, cmd)
+						pm:UpdateActor(actor, filmClip)
+					elseif srcBone ~= nil then
+						pm:UpdateActor(actor, filmClip)
 						actorEditor:AddConstraint(
 							gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF,
 							actor,
 							"ec/pfm_actor/pose",
 							attachmentActor,
-							"ec/animated/bone/" .. attachmentBone .. "/pose"
+							"ec/animated/bone/" .. attachmentBone .. "/pose",
+							cmd
 						)
 					else
+						pm:UpdateActor(actor, filmClip)
 						local tc = entActor:AddComponent("util_transform")
 						if tc ~= nil then
 							entActor:AddComponent("pfm_transform_gizmo")
@@ -351,6 +351,9 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 							end
 						end
 					end
+					pfm.undoredo.push("add_actor", cmd)
+				else
+					pm:UpdateActor(actor, filmClip)
 				end
 			end)
 		end

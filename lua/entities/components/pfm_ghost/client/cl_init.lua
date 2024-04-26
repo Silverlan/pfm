@@ -67,6 +67,13 @@ function ents.PFMGhost:SetViewport(vp)
 	self.m_viewport = vp
 end
 
+function ents.PFMGhost:ShouldBoneMerge()
+	if self.m_lastHitActorData == nil then
+		return false
+	end
+	return self.m_lastHitActorData.boneMergeTarget
+end
+
 function ents.PFMGhost:GetAttachmentTarget()
 	if self.m_lastHitActorData == nil or util.is_valid(self.m_lastHitActorData.hitActorAnimC) == false then
 		return
@@ -117,7 +124,17 @@ function ents.PFMGhost:UpdateAttachmentActor(hitActor)
 						break
 					end
 				end
+
+				if ents.BoneMergeComponent.can_merge(mdl, mdlHitActor) then
+					data.boneMergeTarget = true
+					self:GetEntity():AddComponent(ents.COMPONENT_ANIMATED)
+					self:GetEntity():PlayAnimation("reference")
+					local boneMergeC = self:GetEntity():AddComponent(ents.COMPONENT_BONE_MERGE)
+					boneMergeC:SetMemberValue("target", ents.UniversalEntityReference(util.Uuid(hitActor:GetUuid())))
+				end
 			end
+		else
+			self:GetEntity():RemoveComponent(ents.COMPONENT_BONE_MERGE)
 		end
 		self.m_lastHitActorData = data
 	end
@@ -248,13 +265,13 @@ function ents.PFMGhost:OnTick()
 		end
 	end
 
-	if self.m_isArticulatedModel == nil then
+	if self.isAnimatedModel == nil then
 		local mdl = self:GetEntity():GetModel()
 		if mdl ~= nil then
-			self.m_isArticulatedModel = pfm.is_articulated_model(mdl)
+			self.isAnimatedModel = pfm.is_character_model(mdl)
 		end
 	end
-	if self.m_isArticulatedModel == false then
+	if self.isAnimatedModel == false then
 		-- Attachment preview
 		local hitActor = mainActor
 		if util.is_valid(mainActor) == false or input.is_alt_key_down() then

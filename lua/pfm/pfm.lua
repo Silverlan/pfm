@@ -503,14 +503,8 @@ pfm.translate_flex_controller_value = function(fc, val)
 	return fc.min + val * (fc.max - fc.min)
 end
 
-pfm.is_articulated_model = function(mdl)
-	if mdl:GetMetaRig() ~= nil then
-		return true
-	end
-	local isArticulatedActor = (mdl:GetFlexCount() > 0)
-	if isArticulatedActor then
-		return true
-	end
+pfm.is_animated_model = function(mdl)
+	local isAnimatedActor = false
 	for _, meshGroup in ipairs(mdl:GetMeshGroups()) do
 		for _, mesh in ipairs(meshGroup:GetMeshes()) do
 			for _, subMesh in ipairs(mesh:GetSubMeshes()) do
@@ -525,24 +519,44 @@ pfm.is_articulated_model = function(mdl)
 							end
 						end
 						if n > 1 then
-							isArticulatedActor = true
+							isAnimatedActor = true
 							break
 						end
 					end
 				end
-				if isArticulatedActor then
+				if isAnimatedActor then
 					break
 				end
 			end
-			if isArticulatedActor then
+			if isAnimatedActor then
 				break
 			end
 		end
-		if isArticulatedActor then
+		if isAnimatedActor then
 			break
 		end
 	end
-	return isArticulatedActor
+	return isAnimatedActor
+end
+
+pfm.is_character_model = function(mdl)
+	if
+		mdl:GetEyeballCount() > 0 --[[or #mdl:GetPhonemes() > 0]]
+	then
+		return true
+	end
+	return false
+end
+
+pfm.is_articulated_model = function(mdl)
+	if mdl:GetMetaRig() ~= nil then
+		return true
+	end
+	local isArticulatedActor = (mdl:GetFlexCount() > 0)
+	if isArticulatedActor then
+		return true
+	end
+	return pfm.is_animated_model(mdl)
 end
 
 pfm.find_inanimate_actors = function(session)
