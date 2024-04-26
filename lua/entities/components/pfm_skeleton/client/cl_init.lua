@@ -212,16 +212,24 @@ function ents.PFMSkeleton:OnBonesCreated()
 			if ent:IsValid() then
 				self.m_bones[boneId] = self.m_bones[boneId] or {}
 				self.m_bones[boneId][boneIdChild] = ent
-				ent:AddComponent(ents.COMPONENT_HITBOX_BVH)
+
 				local boneC = ent:AddComponent("pfm_bone")
 				boneC:SetBoneId(boneId)
-				local clickC = ent:AddComponent(ents.COMPONENT_CLICK)
-				util.remove(self.m_clickCallbacks[boneId])
-				self.m_clickCallbacks[boneId] = clickC:AddEventCallback(ents.ClickComponent.EVENT_ON_CLICK, function()
-					if ent:IsValid() then
-						self:OnBoneClicked(boneId, ent)
-					end
-				end)
+
+				local enableBvh = false -- Disabled due to performance issues
+				if enableBvh then
+					ent:AddComponent(ents.COMPONENT_BVH)
+					local clickC = ent:AddComponent(ents.COMPONENT_CLICK)
+					util.remove(self.m_clickCallbacks[boneId])
+					self.m_clickCallbacks[boneId] = clickC:AddEventCallback(
+						ents.ClickComponent.EVENT_ON_CLICK,
+						function()
+							if ent:IsValid() then
+								self:OnBoneClicked(boneId, ent)
+							end
+						end
+					)
+				end
 			end
 		end
 	end
