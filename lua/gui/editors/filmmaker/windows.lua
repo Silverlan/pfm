@@ -267,8 +267,15 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 					return
 				end
 
+				local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
+				local shouldBoneMerge = ghostC:ShouldBoneMerge()
+
 				local actor
-				if pfm.is_articulated_model(mdl) then
+				if shouldBoneMerge then
+					actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP, {
+						["modelName"] = path:GetString(),
+					})
+				elseif pfm.is_articulated_model(mdl) then
 					actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR, {
 						["modelName"] = path:GetString(),
 					})
@@ -291,9 +298,8 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 						pm:SetActorTransformProperty(actorC, "rotation", entGhost:GetRotation(), true)
 					end
 
-					local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
 					local srcBone, attachmentActor, attachmentBone = ghostC:GetAttachmentTarget()
-					if ghostC:ShouldBoneMerge() then
+					if shouldBoneMerge then
 						actorEditor:BoneMerge(actor, attachmentActor, cmd)
 						pm:UpdateActor(actor, filmClip)
 					elseif srcBone ~= nil then
