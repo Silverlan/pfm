@@ -8,6 +8,27 @@
 
 local Component = ents.UtilTransformArrowComponent
 
+local function create_arrow_mesh(tex, cylinderWidth)
+	local scale = 1.2
+	scale = Vector(scale, scale, scale)
+	local mesh = game.Model.Mesh.Create()
+	local meshBase = game.Model.Mesh.Sub.create_cylinder(game.Model.CylinderCreateInfo(cylinderWidth, 16.0))
+	meshBase:SetSkinTextureIndex(tex or 0)
+	meshBase:Scale(scale)
+	mesh:AddSubMesh(meshBase)
+
+	local meshTip = game.Model.Mesh.Sub.create_cone(game.Model.ConeCreateInfo(
+		0.8, -- startRadius
+		5.0, -- length
+		0.0 -- endRadius
+	))
+	meshTip:SetSkinTextureIndex(tex or 0)
+	meshTip:Translate(Vector(0.0, 0.0, 16.0))
+	meshTip:Scale(scale)
+	mesh:AddSubMesh(meshTip)
+	return mesh
+end
+
 local arrowModel
 function Component:GetArrowModel()
 	if arrowModel ~= nil then
@@ -16,36 +37,26 @@ function Component:GetArrowModel()
 	local mdl = game.create_model()
 	local meshGroup = mdl:GetMeshGroup(0)
 
-	local scale = 1.2
-	scale = Vector(scale, scale, scale)
-	local mesh = game.Model.Mesh.Create()
-	local meshBase = game.Model.Mesh.Sub.create_cylinder(game.Model.CylinderCreateInfo(0.4, 16.0))
-	meshBase:SetSkinTextureIndex(0)
-	meshBase:Scale(scale)
-	mesh:AddSubMesh(meshBase)
-
-	local meshTip = game.Model.Mesh.Sub.create_cone(game.Model.ConeCreateInfo(
-		1.0, -- startRadius
-		5.0, -- length
-		0.0 -- endRadius
-	))
-	meshTip:SetSkinTextureIndex(0)
-	meshTip:Translate(Vector(0.0, 0.0, 16.0))
-	meshTip:Scale(scale)
-	mesh:AddSubMesh(meshTip)
+	local mesh = create_arrow_mesh(0, 0.2)
+	local meshInteract = create_arrow_mesh(1, 2)
 
 	meshGroup:AddMesh(mesh)
+	meshGroup:AddMesh(meshInteract)
 
 	mdl:Update(game.Model.FUPDATE_ALL)
 	mdl:AddMaterial(0, "pfm/gizmo")
+	mdl:AddMaterial(0, "tools/toolsnodraw")
 
 	arrowModel = mdl
 	return mdl
 end
 
-local function create_model(subMesh, scale)
+local function create_model(subMesh, subMeshInteract, scale)
 	if type(subMesh) ~= "table" then
 		subMesh = { subMesh }
+	end
+	if type(subMeshInteract) ~= "table" then
+		subMeshInteract = { subMeshInteract }
 	end
 	local mdl = game.create_model()
 	local meshGroup = mdl:GetMeshGroup(0)
@@ -59,10 +70,17 @@ local function create_model(subMesh, scale)
 		mesh:AddSubMesh(sm)
 	end
 
+	for _, sm in ipairs(subMeshInteract) do
+		sm:SetSkinTextureIndex(1)
+		sm:Scale(scale)
+		mesh:AddSubMesh(sm)
+	end
+
 	meshGroup:AddMesh(mesh)
 
 	mdl:Update(game.Model.FUPDATE_ALL)
 	mdl:AddMaterial(0, "pfm/gizmo")
+	mdl:AddMaterial(0, "tools/toolsnodraw")
 	return mdl
 end
 
@@ -72,8 +90,9 @@ function Component:GetDiskModel()
 		return diskModel
 	end
 	local scale = 2
-	local mesh = game.Model.Mesh.Sub.create_ring(game.Model.RingCreateInfo(9, 8, true))
-	diskModel = create_model(mesh, scale)
+	local mesh = game.Model.Mesh.Sub.create_ring(game.Model.RingCreateInfo(9, 8.5, true))
+	local meshInteract = game.Model.Mesh.Sub.create_ring(game.Model.RingCreateInfo(10, 7, true))
+	diskModel = create_model(mesh, meshInteract, scale)
 	return diskModel
 end
 
@@ -97,7 +116,7 @@ function Component:GetScaleModel()
 		v.z = v.z + 10 * meshScale + zOffset
 		mesh2:SetVertexPosition(i, v)
 	end
-	scaleModel = create_model({ mesh, mesh2 }, scale)
+	scaleModel = create_model({ mesh, mesh2 }, { mesh:Copy(true), mesh2:Copy(true) }, scale)
 	return scaleModel
 end
 
@@ -109,9 +128,12 @@ function Component:GetPlaneModel()
 	local scale = 1.2
 	local offset = Vector(5, 0, 5)
 	local meshBox = game.Model.Mesh.Sub.create_box(
-		game.Model.BoxCreateInfo(offset + Vector(-3, -0.1, -3), offset + Vector(3, 0.1, 3))
+		game.Model.BoxCreateInfo(offset + Vector(-1.5, -0.1, -1.5), offset + Vector(1.5, 0.1, 1.5))
 	)
-	planeModel = create_model(meshBox, scale)
+	local meshBoxInteract = game.Model.Mesh.Sub.create_box(
+		game.Model.BoxCreateInfo(offset + Vector(-5, -0.1, -5), offset + Vector(5, 0.1, 5))
+	)
+	planeModel = create_model(meshBox, meshBoxInteract, scale)
 	return planeModel
 end
 
@@ -120,8 +142,10 @@ function Component:GetBoxModel()
 	if boxModel ~= nil then
 		return boxModel
 	end
-	local scale = 1.2
+	local scale = 0.8
 	local meshBox = game.Model.Mesh.Sub.create_box(game.Model.BoxCreateInfo(Vector(-2, -2, -2), Vector(2, 2, 2)))
-	boxModel = create_model(meshBox, scale)
+	local meshBoxInteract =
+		game.Model.Mesh.Sub.create_box(game.Model.BoxCreateInfo(Vector(-4, -4, -4), Vector(4, 4, 4)))
+	boxModel = create_model(meshBox, meshBoxInteract, scale)
 	return boxModel
 end
