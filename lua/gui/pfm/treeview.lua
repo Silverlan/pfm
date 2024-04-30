@@ -619,8 +619,7 @@ function gui.PFMTreeViewElement:SetSelected(selected, selectChildren)
 	end
 	self:CallCallbacks("OnSelectionChanged", selected)
 
-	local treeView = self:GetTreeView()
-	if selected == false or util.is_valid(treeView) == false or treeView:ShouldAutoSelectChildren() == false then
+	if selected == false or self:ShouldAutoSelectChildren() == false then
 		return
 	end
 	if selectChildren ~= true then
