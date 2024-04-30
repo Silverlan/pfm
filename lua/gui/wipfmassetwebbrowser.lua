@@ -343,7 +343,11 @@ function Element:ImportDownloadAssets(path)
 						local window = pm:GetWindow("model_catalog")
 						local explorer = util.is_valid(window) and window:GetExplorer() or nil
 						if util.is_valid(explorer) then
-							explorer:AddToSpecial("new", mdlName)
+							local normMdlName = file.remove_file_extension(
+								mdlName,
+								asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
+							)
+							explorer:AddToSpecial("new", normMdlName)
 							explorer:GoToSpecialDirectory("new")
 							pm:GoToWindow("model_catalog")
 						end
