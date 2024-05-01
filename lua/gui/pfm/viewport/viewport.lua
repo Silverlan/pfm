@@ -282,7 +282,7 @@ function gui.PFMCoreViewportBase:AddConstraintContextMenuOptions(pContext, entAc
 			if bone ~= nil then
 				local targetProp = {
 					actor = actorTarget,
-					path = "ec/animated/bone/" .. bone:GetName() .. "/position",
+					path = "ec/animated/bone/" .. bone:GetName() .. "/pose",
 				}
 				local pItemBone, pSubMenuBone =
 					pSubMenu:AddSubMenu(locale.get_text("pfm_constrain_to_bone", { bone:GetName() }))
