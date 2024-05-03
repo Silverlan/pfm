@@ -119,7 +119,9 @@ function CyclesInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 		0,
 		20,
 		function()
-			pfm.load_unirender()
+			if pfm.load_unirender() == false then
+				return
+			end
 			unirender.PBRShader.set_global_emission_strength(elSettings.m_ctrlEmissionStrength:GetValue())
 		end
 	)
