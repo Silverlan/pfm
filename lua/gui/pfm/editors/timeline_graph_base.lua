@@ -29,6 +29,7 @@ gui.PFMTimelineGraphBase.CURSOR_MODE_ZOOM = 4
 function gui.PFMTimelineGraphBase:OnInitialize()
 	gui.Base.OnInitialize(self)
 
+	self:SetDataPointsSelectable(true)
 	self:SetSize(512, 256)
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_bg:SetColor(Color(128, 128, 128))
@@ -1072,6 +1073,12 @@ function gui.PFMTimelineGraphBase:ReloadGraphView()
 		el:SetSelected(true)
 	end
 end
+function gui.PFMTimelineGraphBase:SetDataPointsSelectable(selectable)
+	self.m_dataPointsSelectable = selectable
+end
+function gui.PFMTimelineGraphBase:AreDataPointsSelectable()
+	return self.m_dataPointsSelectable
+end
 function gui.PFMTimelineGraphBase:AddGraph(
 	filmClip,
 	track,
@@ -1098,6 +1105,7 @@ function gui.PFMTimelineGraphBase:AddGraph(
 		1,
 		1
 	)
+	graph:SetDataPointsSelectable(self:AreDataPointsSelectable())
 	graph:SetTimelineGraph(self)
 	graph:SetColor(colorCurve)
 	local animClip

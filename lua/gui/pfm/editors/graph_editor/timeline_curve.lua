@@ -15,6 +15,7 @@ function gui.PFMTimelineCurve:OnInitialize()
 	self.m_curve = curve
 
 	self.m_dataPoints = {}
+	self:SetDataPointsSelectable(true)
 
 	curve:GetColorProperty():Link(self:GetColorProperty())
 end
@@ -72,6 +73,12 @@ function gui.PFMTimelineCurve:ClearKeyframes()
 	util.remove(self.m_dataPoints)
 	self.m_dataPoints = {}
 end
+function gui.PFMTimelineCurve:SetDataPointsSelectable(selectable)
+	self.m_dataPointsSelectable = selectable
+end
+function gui.PFMTimelineCurve:AreDataPointsSelectable()
+	return self.m_dataPointsSelectable
+end
 function gui.PFMTimelineCurve:UpdateKeyframes()
 	local editorChannel = self:GetEditorChannel()
 	if editorChannel == nil then
@@ -108,6 +115,7 @@ function gui.PFMTimelineCurve:UpdateKeyframes()
 		local kfInfo = editorKeys:GetKeyframeInfo(i)
 		if kfInfoToDataPoint[kfInfo] == nil then
 			local el = gui.create("WIPFMTimelineDataPoint", self)
+			el:SetSelectable(self:AreDataPointsSelectable())
 			el:SetGraphData(self, kfInfo)
 
 			el:AddCallback("OnMouseEvent", function(el, button, state, mods)

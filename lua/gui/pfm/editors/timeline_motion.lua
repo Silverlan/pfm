@@ -13,6 +13,7 @@ util.register_class("gui.PFMTimelineMotion", gui.PFMTimelineGraphBase)
 
 function gui.PFMTimelineMotion:OnInitialize()
 	gui.PFMTimelineGraphBase.OnInitialize(self)
+	self:SetDataPointsSelectable(false)
 	--self.m_listContainer:SetVisible(false)
 	--self.m_dataAxisStrip:SetVisible(false)
 end

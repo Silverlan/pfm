@@ -97,6 +97,9 @@ function gui.PFMTimelineDataPoint:InitializeHandleControl()
 	end)
 
 	local onMouseEvent = function(el, button, state, mods)
+		if self:IsSelectable() == false then
+			return util.EVENT_REPLY_UNHANDLED
+		end
 		if button == input.MOUSE_BUTTON_LEFT then
 			if state == input.STATE_PRESS then
 				el:SetSelected(true)

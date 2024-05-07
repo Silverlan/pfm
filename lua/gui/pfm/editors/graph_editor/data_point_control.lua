@@ -15,16 +15,29 @@ function gui.PFMDataPointControl:OnInitialize()
 	self.m_elPoint = el
 	el:GetColorProperty():Link(self:GetColorProperty())
 
+	self:SetSelectable(true)
 	self.m_selected = false
 	self:SetMouseInputEnabled(true)
 end
 function gui.PFMDataPointControl:OnRemove()
 	self:SetMoveModeEnabled(false)
 end
+function gui.PFMDataPointControl:SetSelectable(selectable)
+	self.m_selectable = selectable
+	if selectable == false and self:IsSelected() then
+		self:SetSelected(false)
+	end
+end
+function gui.PFMDataPointControl:IsSelectable()
+	return self.m_selectable
+end
 function gui.PFMDataPointControl:IsSelected()
 	return self.m_selected
 end
 function gui.PFMDataPointControl:SetSelected(selected)
+	if self:IsSelectable() == false then
+		return
+	end
 	if selected == self.m_selected then
 		return
 	end
@@ -72,6 +85,9 @@ function gui.PFMDataPointControl:IsMoveModeEnabled()
 	return self.m_moveData ~= nil
 end
 function gui.PFMDataPointControl:SetMoveModeEnabled(enabled, moveThreshold)
+	if self:IsSelectable() == false then
+		return
+	end
 	if enabled == self:IsMoveModeEnabled() then
 		return
 	end
