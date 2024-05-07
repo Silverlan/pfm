@@ -240,6 +240,9 @@ function Element:StartDragMode(dragMarkers, limitMarkers)
 	if util.is_valid(self.m_timelineMarkers[iRef]) == false then
 		return
 	end
+	self.m_dragStartLocked = self:IsInnerStartPositionLocked()
+	self.m_dragEndLocked = self:IsInnerEndPositionLocked()
+
 	self.m_timelineMarkers[iRef]:SetCursorMoveModeEnabled(true, true)
 	self.m_dragMarker = iRef
 	self.m_dragTargetMarkers = dragMarkers
@@ -252,6 +255,7 @@ function Element:StartDragMode(dragMarkers, limitMarkers)
 		self:GetInnerEndTime(),
 		self:GetEndTime(),
 	}
+
 	self:CallCallbacks("OnDragStart", self.m_dragTransform)
 end
 function Element:IsDragging()
@@ -272,6 +276,8 @@ function Element:StopDragMode()
 	self:UpdateTransforms(true)
 	self.m_dragTransform = nil
 	self.m_dragStartTimes = nil
+	self.m_dragStartLocked = nil
+	self.m_dragEndLocked = nil
 
 	self:CallCallbacks("OnDragEnd")
 end
@@ -363,6 +369,13 @@ function Element:OnMarkerDragUpdate(i)
 		math.max(m[Element.MARKER_END_OUTER]:GetTimeOffset(), m[Element.MARKER_END_INNER]:GetTimeOffset())
 	)
 
+	if self.m_dragStartLocked and i ~= Element.MARKER_START_OUTER then
+		m[Element.MARKER_START_OUTER]:SetTimeOffset(m[Element.MARKER_START_INNER]:GetTimeOffset())
+	end
+	if self.m_dragEndLocked and i ~= Element.MARKER_END_OUTER then
+		m[Element.MARKER_END_OUTER]:SetTimeOffset(m[Element.MARKER_END_INNER]:GetTimeOffset())
+	end
+
 	self:UpdateSelectionBounds()
 	self:UpdateTransforms()
 end
@@ -381,23 +394,65 @@ function Element:SetupTimelineMarkers(timeline)
 			end
 		end)
 		el:AddCallback("OnDragStart", function()
+			local imarker = i
+			local unlockStart = false
+			-- If the outer and inner markers lie on top of each other, we'll employ some special behavior:
+			-- If the cursor is to the outside, we drag the outer marker, otherwise the inner one.
+			-- We'll also unlock the markers if the inner marker is dragged.
+			if imarker == Element.MARKER_START_OUTER or imarker == Element.MARKER_START_INNER then
+				if
+					self.m_timelineMarkers[Element.MARKER_START_OUTER]:GetX()
+					== self.m_timelineMarkers[Element.MARKER_START_INNER]:GetX()
+				then
+					if self:GetCursorPos().x > 0 then
+						imarker = Element.MARKER_START_INNER
+						unlockStart = true
+					else
+						imarker = Element.MARKER_START_OUTER
+					end
+				end
+			end
+			local unlockEnd = false
+			if imarker == Element.MARKER_END_OUTER or imarker == Element.MARKER_END_INNER then
+				if
+					self.m_timelineMarkers[Element.MARKER_END_OUTER]:GetX()
+					== self.m_timelineMarkers[Element.MARKER_END_INNER]:GetX()
+				then
+					if self:GetCursorPos().x < self:GetWidth() then
+						imarker = Element.MARKER_END_INNER
+						unlockEnd = true
+					else
+						imarker = Element.MARKER_END_OUTER
+					end
+				end
+			end
+
 			local limitMarkers = {}
-			if i == Element.MARKER_START_OUTER then
+			if imarker == Element.MARKER_START_OUTER then
 				limitMarkers = { nil, Element.MARKER_START_INNER }
-			elseif i == Element.MARKER_START_INNER then
+			elseif imarker == Element.MARKER_START_INNER then
 				limitMarkers = { nil, Element.MARKER_END_INNER }
-			elseif i == Element.MARKER_END_INNER then
+			elseif imarker == Element.MARKER_END_INNER then
 				limitMarkers = { Element.MARKER_START_INNER, nil }
-			elseif i == Element.MARKER_END_OUTER then
+			elseif imarker == Element.MARKER_END_OUTER then
 				limitMarkers = { Element.MARKER_END_INNER, nil }
 			end
 
-			self:StartDragMode({ i }, limitMarkers)
+			self:StartDragMode({ imarker }, limitMarkers)
+			if unlockStart then
+				self.m_dragStartLocked = false
+			end
+			if unlockEnd then
+				self.m_dragEndLocked = false
+			end
 		end)
 		el:AddCallback("OnDragEnd", function()
 			self:StopDragMode()
 		end)
 		el:AddCallback("OnDragUpdate", function()
+			if self:IsDragging() == false then
+				return
+			end
 			self:OnMarkerDragUpdate(i)
 		end)
 		return el

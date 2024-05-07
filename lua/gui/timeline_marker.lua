@@ -83,20 +83,39 @@ function Element:SetCursorMoveModeEnabled(enabled, relativeToCursor)
 				self:UpdateTimeOffset()
 				self:CallCallbacks("OnDragUpdate")
 			end)
-			self:CallCallbacks("OnDragStart")
 		end
 	else
 		self:SetCursorMovementCheckEnabled(false)
 		self.m_cursorMoveStartOffset = nil
 		if util.is_valid(self.m_cbMove) then
 			self.m_cbMove:Remove()
-			self:CallCallbacks("OnDragEnd")
 		end
 	end
 end
+function Element:IsDragging()
+	return util.is_valid(self.m_cbMove)
+end
+function Element:StartDrag()
+	if self:IsDragging() then
+		return
+	end
+	self:SetCursorMoveModeEnabled(true)
+	self:CallCallbacks("OnDragStart")
+end
+function Element:EndDrag()
+	if not self:IsDragging() then
+		return
+	end
+	self:SetCursorMoveModeEnabled(false)
+	self:CallCallbacks("OnDragEnd")
+end
 function Element:MouseCallback(mouseButton, state, mods)
 	if mouseButton == input.MOUSE_BUTTON_LEFT then
-		self:SetCursorMoveModeEnabled(state == input.STATE_PRESS)
+		if state == input.STATE_PRESS then
+			self:StartDrag()
+		else
+			self:EndDrag()
+		end
 		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED
