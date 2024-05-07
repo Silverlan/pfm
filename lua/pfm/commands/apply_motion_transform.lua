@@ -137,6 +137,14 @@ function Command:DoExecute(data)
 	end
 
 	local function calcNewTime(t)
+		if t < origBounds[Command.MARKER_START_OUTER] then
+			local shiftOffset = origBounds[Command.MARKER_START_OUTER] - newBounds[Command.MARKER_START_OUTER]
+			return t - shiftOffset
+		end
+		if t > origBounds[Command.MARKER_END_OUTER] then
+			local shiftOffset = origBounds[Command.MARKER_END_OUTER] - newBounds[Command.MARKER_END_OUTER]
+			return t - shiftOffset
+		end
 		for _, seg in ipairs(segments) do
 			if
 				t >= origBounds[seg.startMarker] - panima.TIME_EPSILON * 1.5
@@ -152,7 +160,7 @@ function Command:DoExecute(data)
 		return t
 	end
 
-	------------
+	-- Handle keyframes
 	local graphCurve = self:RestoreKeyframes(data, animClip, propertyPath)
 	if graphCurve ~= nil then
 		local numKeys = graphCurve:GetKeyCount()
@@ -173,7 +181,6 @@ function Command:DoExecute(data)
 			end
 		end
 	end
-	------------
 
 	-- Calculate new time values
 	local times = channel:GetTimesInRange(origBounds[Command.MARKER_START_OUTER], origBounds[Command.MARKER_END_OUTER])
