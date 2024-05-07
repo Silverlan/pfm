@@ -78,13 +78,28 @@ function gui.PFMTimelineMotion:MouseCallback(button, state, mods)
 end
 function gui.PFMTimelineMotion:OnDragStart(shouldTransform)
 	if shouldTransform then
-		self.m_transformChannelCopies = {}
+		local targetActorChannels = {}
 		for _, graphData in ipairs(self.m_graphs) do
-			local channel = graphData.channel()
-			channel = channel:GetPanimaChannel()
-			local channelCpy = panima.Channel(channel)
-			self.m_transformChannelCopies[graphData.targetPath] = channelCpy
+			-- Quaternion types are currently not supported
+			if graphData.valueType ~= udm.TYPE_QUATERNION then
+				local actor = graphData.actor
+				local targetPath = graphData.targetPath
+				targetActorChannels[actor] = targetActorChannels[actor] or {}
+				-- Target path may appear multiple times if this is a composite type (e.g. vec3),
+				-- but we only want one reference
+				if targetActorChannels[actor][targetPath] == nil then
+					local channel = graphData.channel()
+					channel = channel:GetPanimaChannel()
+					local channelCpy = panima.Channel(channel)
+
+					targetActorChannels[actor][targetPath] = {
+						channel = channel,
+						channelCopy = channelCpy,
+					}
+				end
+			end
 		end
+		self.m_targetActorChannels = targetActorChannels
 	end
 
 	self.m_selectionPreTransformBounds = self:GetSelectionBounds()
@@ -98,29 +113,23 @@ function gui.PFMTimelineMotion:GetSelectionBounds()
 	}
 end
 function gui.PFMTimelineMotion:OnDragEnd()
-	self.m_transformChannelCopies = nil
+	self.m_targetActorChannels = nil
 	self.m_selectionPreTransformBounds = nil
 end
 function gui.PFMTimelineMotion:OnDragUpdate(origSelTimes, newSelTimes, isFinal)
 	local cmd = pfm.create_command("composition")
-	if self.m_transformChannelCopies ~= nil then
-		for _, graphData in ipairs(self.m_graphs) do
-			local channelCpy = self.m_transformChannelCopies[graphData.targetPath]
-			if channelCpy ~= nil then
-				local channel = graphData.channel()
-				channel = channel:GetPanimaChannel()
-				if channel ~= nil then
-					channel:ClearAnimationData()
-					channel:MergeValues(channelCpy)
-				end
+	if self.m_targetActorChannels ~= nil then
+		for actor, channels in pairs(self.m_targetActorChannels) do
+			for targetPath, channelData in pairs(channels) do
+				local channel = channelData.channel
+				local channelCpy = channelData.channelCopy
 
-				local res, subCmd = cmd:AddSubCommand(
-					"apply_motion_transform",
-					graphData.actor,
-					graphData.targetPath,
-					origSelTimes,
-					newSelTimes
-				)
+				-- Reset vaues from copy
+				channel:ClearAnimationData()
+				channel:MergeValues(channelCpy)
+
+				local res, subCmd =
+					cmd:AddSubCommand("apply_motion_transform", actor, targetPath, origSelTimes, newSelTimes)
 			end
 		end
 	end
@@ -133,7 +142,7 @@ function gui.PFMTimelineMotion:OnDragUpdate(origSelTimes, newSelTimes, isFinal)
 			{ newBounds.startTime, newBounds.innerStartTime, newBounds.innerEndTime, newBounds.endTime }
 		)
 		local name
-		if self.m_transformChannelCopies ~= nil then
+		if self.m_targetActorChannels ~= nil then
 			name = "transform_animation_data"
 		else
 			name = "change_motion_editor_selection_bounds"

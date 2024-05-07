@@ -273,7 +273,7 @@ function Element:StopDragMode()
 	self.m_dragTransform = nil
 	self.m_dragStartTimes = nil
 
-	self:CallCallbacks("OnEndDrag")
+	self:CallCallbacks("OnDragEnd")
 end
 function Element:OnRemove()
 	util.remove({ self.m_timelineMarkers, self.m_cbOnTimelineSizeChanged })

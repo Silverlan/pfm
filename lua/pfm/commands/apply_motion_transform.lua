@@ -72,13 +72,13 @@ function Command:DoExecute(data)
 		return
 	end
 
-	local origTimes = {
+	local origBounds = {
 		data:GetValue("origStartTime", udm.TYPE_FLOAT),
 		data:GetValue("origInnerStartTime", udm.TYPE_FLOAT),
 		data:GetValue("origInnerEndTime", udm.TYPE_FLOAT),
 		data:GetValue("origEndTime", udm.TYPE_FLOAT),
 	}
-	local newTimes = {
+	local newBounds = {
 		data:GetValue("startTime", udm.TYPE_FLOAT),
 		data:GetValue("innerStartTime", udm.TYPE_FLOAT),
 		data:GetValue("innerEndTime", udm.TYPE_FLOAT),
@@ -91,13 +91,13 @@ function Command:DoExecute(data)
 			times[idx1] = times[idx0] + panima.TIME_EPSILON * 1.5
 		end
 	end
-	for i = 1, #origTimes - 1 do
-		ensure_min_dist(origTimes, i, i + 1)
-		ensure_min_dist(newTimes, i, i + 1)
+	for i = 1, #origBounds - 1 do
+		ensure_min_dist(origBounds, i, i + 1)
+		ensure_min_dist(newBounds, i, i + 1)
 	end
 
 	-- Make sure there are samples at the boundaries
-	for _, t in ipairs(origTimes) do
+	for _, t in ipairs(origBounds) do
 		channel:InsertSample(t)
 	end
 
@@ -107,26 +107,28 @@ function Command:DoExecute(data)
 	end
 
 	-- Calculate new time values
-	local times = channel:GetTimesInRange(origTimes[Command.MARKER_START_OUTER], origTimes[Command.MARKER_END_OUTER])
-	for _, t in ipairs(times) do
+	local times = channel:GetTimesInRange(origBounds[Command.MARKER_START_OUTER], origBounds[Command.MARKER_END_OUTER])
+	local newTimes = {}
+	for i, t in ipairs(times) do
 		for _, seg in ipairs(segments) do
 			if
-				t >= origTimes[seg.startMarker] - panima.TIME_EPSILON * 1.5
-				and t <= origTimes[seg.endMarker] + panima.TIME_EPSILON * 1.5
+				t >= origBounds[seg.startMarker] - panima.TIME_EPSILON * 1.5
+				and t <= origBounds[seg.endMarker] + panima.TIME_EPSILON * 1.5
 			then
-				t = t - origTimes[seg.startMarker]
-				t = t / (origTimes[seg.endMarker] - origTimes[seg.startMarker])
-				t = t * (newTimes[seg.endMarker] - newTimes[seg.startMarker])
-				t = t + newTimes[seg.startMarker]
+				t = t - origBounds[seg.startMarker]
+				t = t / (origBounds[seg.endMarker] - origBounds[seg.startMarker])
+				t = t * (newBounds[seg.endMarker] - newBounds[seg.startMarker])
+				t = t + newBounds[seg.startMarker]
 				break
 			end
 		end
+		table.insert(newTimes, t)
 	end
 
 	-- Shift at edges
 	local preShift = function()
-		local shiftAmount = newTimes[Command.MARKER_START_OUTER] - origTimes[Command.MARKER_START_OUTER]
-		local endTime = origTimes[Command.MARKER_START_OUTER] - panima.TIME_EPSILON * 2.5
+		local shiftAmount = newBounds[Command.MARKER_START_OUTER] - origBounds[Command.MARKER_START_OUTER]
+		local endTime = origBounds[Command.MARKER_START_OUTER] - panima.TIME_EPSILON * 2.5
 		if ENABLE_DEBUG_OUTPUT then
 			print("Shifting prefix values in range [" .. math.huge .. "," .. endTime .. "] by " .. shiftAmount)
 		end
@@ -139,8 +141,8 @@ function Command:DoExecute(data)
 	end
 
 	local postShift = function()
-		local shiftAmount = newTimes[Command.MARKER_END_OUTER] - origTimes[Command.MARKER_END_OUTER]
-		local startTime = origTimes[Command.MARKER_END_OUTER] + panima.TIME_EPSILON * 2.5
+		local shiftAmount = newBounds[Command.MARKER_END_OUTER] - origBounds[Command.MARKER_END_OUTER]
+		local startTime = origBounds[Command.MARKER_END_OUTER] + panima.TIME_EPSILON * 2.5
 		if ENABLE_DEBUG_OUTPUT then
 			print("Shifting postfix values in range [" .. startTime .. "," .. math.huge .. "] by " .. shiftAmount)
 		end
@@ -159,16 +161,16 @@ function Command:DoExecute(data)
 
 	-- If the new start time intersects with the pre-marker range, we have to shift before
 	-- updating the time values in the range, otherwise we have to do it after
-	if newTimes[Command.MARKER_START_OUTER] < origTimes[Command.MARKER_START_OUTER] then
+	if newBounds[Command.MARKER_START_OUTER] < origBounds[Command.MARKER_START_OUTER] then
 		preShift()
 	end
 	-- Likewise for the end time
-	if newTimes[Command.MARKER_END_OUTER] > origTimes[Command.MARKER_END_OUTER] then
+	if newBounds[Command.MARKER_END_OUTER] > origBounds[Command.MARKER_END_OUTER] then
 		postShift()
 	end
 
 	local timeIndices = {}
-	for _, t in ipairs(origTimes) do
+	for _, t in ipairs(times) do
 		local idx = channel:FindIndex(t)
 		if idx == nil then
 			self:LogFailure("No index found for timestamp" .. t .. " in animation channel " .. tostring(channel) .. "!")
@@ -181,12 +183,12 @@ function Command:DoExecute(data)
 	if ENABLE_DEBUG_OUTPUT then
 		channel:Validate()
 		print("Original Motion Times:")
-		console.print_table(origTimes)
+		console.print_table(origBounds)
 	end
 
 	if ENABLE_DEBUG_OUTPUT then
 		print("New Motion Times:")
-		console.print_table(newTimes)
+		console.print_table(newBounds)
 	end
 
 	if ENABLE_DEBUG_OUTPUT then
@@ -208,7 +210,10 @@ function Command:DoExecute(data)
 	table.sort(timeIndices)
 	for i = #timeIndices, 1, -1 do
 		local idx = timeIndices[i]
-		channel:ResolveDuplicates(channel:GetTime(idx))
+		local t = channel:GetTime(idx)
+		if t ~= nil then
+			channel:ResolveDuplicates(t)
+		end
 	end
 	if ENABLE_DEBUG_OUTPUT then
 		print("After resolving duplicate timestamps:")
@@ -216,10 +221,10 @@ function Command:DoExecute(data)
 		channel:Validate()
 	end
 
-	if newTimes[Command.MARKER_START_OUTER] > origTimes[Command.MARKER_START_OUTER] then
+	if newBounds[Command.MARKER_START_OUTER] > origBounds[Command.MARKER_START_OUTER] then
 		preShift()
 	end
-	if newTimes[Command.MARKER_END_OUTER] < origTimes[Command.MARKER_END_OUTER] then
+	if newBounds[Command.MARKER_END_OUTER] < origBounds[Command.MARKER_END_OUTER] then
 		postShift()
 	end
 
