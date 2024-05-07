@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("util/keyframe.lua")
+
 local Command = util.register_class("pfm.CommandApplyMotionTransform", pfm.Command)
 Command.MARKER_START_OUTER = 1
 Command.MARKER_START_INNER = 2
@@ -26,6 +28,27 @@ local segments = {
 		endMarker = Command.MARKER_END_OUTER,
 	},
 }
+Command.store_keyframe_data = function(data, graphCurve)
+	local numKeys = graphCurve:GetKeyCount()
+	local kfKeyData = data:AddArray("keyframes", numKeys, udm.TYPE_ELEMENT)
+	for baseIndex = 0, numKeys - 1 do
+		local keyData = graphCurve:GetKey(baseIndex)
+		local kfKeyframes = kfKeyData:Get(baseIndex)
+		pfm.util.store_keyframe_data(kfKeyframes, keyData)
+	end
+end
+Command.restore_keyframe_data = function(data, graphCurve)
+	local kfKeyData = data:Get("keyframes")
+	if kfKeyData == nil then
+		return
+	end
+	local numKeys = graphCurve:GetKeyCount()
+	for i = 0, numKeys - 1 do
+		local keyData = graphCurve:GetKey(i)
+		local kfKeyframes = kfKeyData:Get(i)
+		pfm.util.restore_keyframe_data(kfKeyframes, keyData)
+	end
+end
 function Command:Initialize(actorUuid, propertyPath, origTimes, newTimes)
 	pfm.Command.Initialize(self)
 
@@ -42,6 +65,13 @@ function Command:Initialize(actorUuid, propertyPath, origTimes, newTimes)
 	end
 
 	local data = self:GetData()
+	local editorData = animClip:GetEditorData()
+	local editorChannel = editorData:FindChannel(propertyPath)
+	local graphCurve = (editorChannel ~= nil) and editorChannel:GetGraphCurve() or nil
+	if graphCurve ~= nil then
+		Command.store_keyframe_data(data, graphCurve)
+	end
+
 	data:SetValue("actor", udm.TYPE_STRING, tostring(actor:GetUniqueId()))
 	data:SetValue("propertyPath", udm.TYPE_STRING, propertyPath)
 
@@ -106,10 +136,7 @@ function Command:DoExecute(data)
 		channel:Validate()
 	end
 
-	-- Calculate new time values
-	local times = channel:GetTimesInRange(origBounds[Command.MARKER_START_OUTER], origBounds[Command.MARKER_END_OUTER])
-	local newTimes = {}
-	for i, t in ipairs(times) do
+	local function calcNewTime(t)
 		for _, seg in ipairs(segments) do
 			if
 				t >= origBounds[seg.startMarker] - panima.TIME_EPSILON * 1.5
@@ -122,7 +149,37 @@ function Command:DoExecute(data)
 				break
 			end
 		end
-		table.insert(newTimes, t)
+		return t
+	end
+
+	------------
+	local graphCurve = self:RestoreKeyframes(data, animClip, propertyPath)
+	if graphCurve ~= nil then
+		local numKeys = graphCurve:GetKeyCount()
+		for baseIndex = 0, numKeys - 1 do
+			local keyData = graphCurve:GetKey(baseIndex)
+			local numKeyframes = keyData:GetTimeCount()
+			for i = 0, numKeyframes - 1 do
+				local time = keyData:GetTime(i)
+				local inTime = keyData:GetInTime(i)
+				local outTime = keyData:GetOutTime(i)
+				local newTime = calcNewTime(time)
+				local newInTime = calcNewTime(time + inTime) - newTime
+				local newOutTime = calcNewTime(time + outTime) - newTime
+
+				keyData:SetTime(i, newTime)
+				keyData:SetInTime(i, newInTime)
+				keyData:SetOutTime(i, newOutTime)
+			end
+		end
+	end
+	------------
+
+	-- Calculate new time values
+	local times = channel:GetTimesInRange(origBounds[Command.MARKER_START_OUTER], origBounds[Command.MARKER_END_OUTER])
+	local newTimes = {}
+	for i, t in ipairs(times) do
+		table.insert(newTimes, calcNewTime(t))
 	end
 
 	-- Shift at edges
@@ -233,6 +290,16 @@ function Command:DoExecute(data)
 		animClip:UpdateAnimationChannel(animClipChannel)
 	end
 end
+function Command:RestoreKeyframes(data, animClip, propertyPath)
+	local editorData = animClip:GetEditorData()
+	local editorChannel = editorData:FindChannel(propertyPath)
+	local graphCurve = editorChannel:GetGraphCurve()
+	if graphCurve == nil then
+		return
+	end
+	Command.restore_keyframe_data(data, graphCurve)
+	return graphCurve
+end
 function Command:DoUndo(data)
 	local actorUuid = data:GetValue("actor", udm.TYPE_STRING)
 	local actor = pfm.dereference(actorUuid)
@@ -245,6 +312,8 @@ function Command:DoUndo(data)
 	if channel == nil then
 		return
 	end
+
+	self:RestoreKeyframes(data, animClip, propertyPath)
 
 	-- Restore original animation data
 	local originalTimes = data:GetArrayValues("originalTimes", udm.TYPE_FLOAT)

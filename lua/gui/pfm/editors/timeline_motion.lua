@@ -92,9 +92,20 @@ function gui.PFMTimelineMotion:OnDragStart(shouldTransform)
 					channel = channel:GetPanimaChannel()
 					local channelCpy = panima.Channel(channel)
 
+					local originalKeyframeData
+					local animClip = graphData.animClip()
+					local editorData = animClip:GetEditorData()
+					local editorChannel = (editorData ~= nil) and editorData:FindChannel(targetPath) or nil
+					local graphCurve = (editorChannel ~= nil) and editorChannel:GetGraphCurve() or nil
+					if graphCurve ~= nil then
+						originalKeyframeData = udm.create_element()
+						pfm.CommandApplyMotionTransform.store_keyframe_data(originalKeyframeData, graphCurve)
+					end
+
 					targetActorChannels[actor][targetPath] = {
 						channel = channel,
 						channelCopy = channelCpy,
+						originalKeyframeData = originalKeyframeData,
 					}
 				end
 			end
@@ -124,7 +135,19 @@ function gui.PFMTimelineMotion:OnDragUpdate(origSelTimes, newSelTimes, isFinal)
 				local channel = channelData.channel
 				local channelCpy = channelData.channelCopy
 
-				-- Reset vaues from copy
+				-- Reset keyframes
+				if channelData.originalKeyframeData ~= nil then
+					local editorChannel, editorData, animClip = actor:FindEditorChannel(targetPath)
+					local graphCurve = (editorChannel ~= nil) and editorChannel:GetGraphCurve() or nil
+					if graphCurve ~= nil then
+						pfm.CommandApplyMotionTransform.restore_keyframe_data(
+							channelData.originalKeyframeData,
+							graphCurve
+						)
+					end
+				end
+
+				-- Reset values from copy
 				channel:ClearAnimationData()
 				channel:MergeValues(channelCpy)
 

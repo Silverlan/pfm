@@ -7,6 +7,7 @@
 ]]
 
 include("base_transform_animation_channel.lua")
+include("util/keyframe.lua")
 
 local Command = util.register_class("pfm.CommandFitKeyframesToAnimationCurve", pfm.BaseCommandTransformAnimationChannel)
 function Command:Initialize(actorUuid, propertyPath, baseIndex)
@@ -33,14 +34,7 @@ function Command:Initialize(actorUuid, propertyPath, baseIndex)
 		return pfm.Command.RESULT_NO_OP
 	end
 	local data = self:GetData()
-	data:SetArrayValues("times", udm.TYPE_FLOAT, key:GetTimes())
-	data:SetArrayValues("values", udm.TYPE_FLOAT, key:GetValues())
-	data:SetArrayValues("inTimes", udm.TYPE_FLOAT, key:GetInTimes())
-	data:SetArrayValues("inDeltas", udm.TYPE_FLOAT, key:GetInDeltas())
-	data:SetArrayValues("inHandleTypes", udm.TYPE_UINT8, key:GetInHandleTypes())
-	data:SetArrayValues("outTimes", udm.TYPE_FLOAT, key:GetOutTimes())
-	data:SetArrayValues("outDeltas", udm.TYPE_FLOAT, key:GetOutDeltas())
-	data:SetArrayValues("outHandleTypes", udm.TYPE_UINT8, key:GetOutHandleTypes())
+	pfm.util.store_keyframe_data(data, key)
 	data:SetValue("valueBaseIndex", udm.TYPE_UINT8, baseIndex)
 	return pfm.Command.RESULT_SUCCESS
 end
@@ -57,25 +51,8 @@ function Command:DoApplyTransform(undo, data, actor, propertyPath, anim, channel
 	if undo then
 		-- Restore original keyframe values
 		local baseIndex = data:GetValue("valueBaseIndex", udm.TYPE_UINT8)
-		local times = data:GetArrayValues("times", udm.TYPE_FLOAT)
-		local values = data:GetArrayValues("values", udm.TYPE_FLOAT)
-		local inTimes = data:GetArrayValues("inTimes", udm.TYPE_FLOAT)
-		local inDeltas = data:GetArrayValues("inDeltas", udm.TYPE_FLOAT)
-		local inHandleTypes = data:GetArrayValues("inHandleTypes", udm.TYPE_UINT8)
-		local outTimes = data:GetArrayValues("outTimes", udm.TYPE_FLOAT)
-		local outDeltas = data:GetArrayValues("outDeltas", udm.TYPE_FLOAT)
-		local outHandleTypes = data:GetArrayValues("outHandleTypes", udm.TYPE_UINT8)
 		local key = graphCurve:GetKey(baseIndex)
-		for i = 0, #times - 1 do
-			key:SetTime(i, times[i + 1])
-			key:SetValue(i, values[i + 1])
-			key:SetInTime(i, inTimes[i + 1])
-			key:SetInDelta(i, inDeltas[i + 1])
-			key:SetInHandleType(i, inHandleTypes[i + 1])
-			key:SetOutTime(i, outTimes[i + 1])
-			key:SetOutDelta(i, outDeltas[i + 1])
-			key:SetOutHandleType(i, outHandleTypes[i + 1])
-		end
+		pfm.util.restore_keyframe_data(data, key)
 		return
 	end
 
