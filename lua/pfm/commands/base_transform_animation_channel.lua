@@ -62,6 +62,11 @@ function Command:ApplyTransform(undo)
 	local startTime = data:GetValue("startTime", udm.TYPE_FLOAT)
 	local endTime = data:GetValue("endTime", udm.TYPE_FLOAT)
 	self:DoApplyTransform(undo, data, actor, propertyPath, anim, channel, startTime, endTime)
+
+	local animClipChannel = animClip:FindChannel(propertyPath)
+	if animClipChannel ~= nil then
+		animClip:UpdateAnimationChannel(animClipChannel)
+	end
 	return true
 end
 function Command:DoApplyTransform(undo, data, actor, propertyPath, anim, channel, startTime, endTime) end
