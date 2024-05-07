@@ -81,15 +81,14 @@ function gui.PFMTimelineMotion:OnDragStart(shouldTransform)
 	if shouldTransform then
 		local targetActorChannels = {}
 		for _, graphData in ipairs(self.m_graphs) do
-			-- Quaternion types are currently not supported
-			if graphData.valueType ~= udm.TYPE_QUATERNION then
-				local actor = graphData.actor
-				local targetPath = graphData.targetPath
-				targetActorChannels[actor] = targetActorChannels[actor] or {}
-				-- Target path may appear multiple times if this is a composite type (e.g. vec3),
-				-- but we only want one reference
-				if targetActorChannels[actor][targetPath] == nil then
-					local channel = graphData.channel()
+			local actor = graphData.actor
+			local targetPath = graphData.targetPath
+			targetActorChannels[actor] = targetActorChannels[actor] or {}
+			-- Target path may appear multiple times if this is a composite type (e.g. vec3),
+			-- but we only want one reference
+			if targetActorChannels[actor][targetPath] == nil then
+				local channel = graphData.channel()
+				if channel ~= nil then
 					channel = channel:GetPanimaChannel()
 					local channelCpy = panima.Channel(channel)
 
