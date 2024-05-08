@@ -1385,22 +1385,35 @@ function gui.WIFilmmaker:ImportSequence(actor, animName)
 	local anim = mdl:GetAnimation(animId)
 
 	local panimaAnim = anim:ToPanimaAnimation(mdl:GetSkeleton(), mdl:GetReferencePose())
+	local timeOffset = self:GetTimeOffset()
+	for _, channel in ipairs(panimaAnim:GetChannels()) do
+		local numTimes = channel:GetValueCount()
+		for i = 0, numTimes - 1 do
+			channel:SetTime(i, channel:GetTime(i) + timeOffset)
+		end
+	end
 	local cmd = pfm.create_command("composition")
 	for _, channel in ipairs(panimaAnim:GetChannels()) do
 		local propertyPath = channel:GetTargetPath():ToUri(false)
 		local valueType = channel:GetValueType()
-		local res, subCmd = cmd:AddSubCommand("add_editor_channel", actor, propertyPath, valueType)
-		if res == pfm.Command.RESULT_SUCCESS then
-			subCmd:AddSubCommand("add_animation_channel", actor, propertyPath, valueType)
+		if channel:GetValueCount() == 1 then
+			-- Channel only has 1 value, no need to make it animated
+			-- TODO: Retrive old value
+			cmd:AddSubCommand("set_actor_property", actor, propertyPath, nil, channel:GetValue(0), valueType)
+		else
+			local res, subCmd = cmd:AddSubCommand("add_editor_channel", actor, propertyPath, valueType)
+			if res == pfm.Command.RESULT_SUCCESS then
+				subCmd:AddSubCommand("add_animation_channel", actor, propertyPath, valueType)
+			end
+			cmd:AddSubCommand(
+				"set_animation_channel_range_data",
+				actor,
+				propertyPath,
+				channel:GetTimes(),
+				channel:GetValues(),
+				valueType
+			)
 		end
-		cmd:AddSubCommand(
-			"set_animation_channel_range_data",
-			actor,
-			propertyPath,
-			channel:GetTimes(),
-			channel:GetValues(),
-			valueType
-		)
 	end
 	pfm.undoredo.push("import_sequence", cmd)()
 end
