@@ -119,31 +119,7 @@ function Component:SyncAnimations()
 							local times = channel:GetTimes()
 							local values = channel:GetValues()
 							local valueType = channel:GetValueType()
-							if #times > 1 then
-								local anim, actorChannel, animClip = animManager:FindAnimationChannel(actorData, path)
-								if actorChannel ~= nil then
-									-- Clear all previous values for the recorded time range
-									local tFirst = times[1]
-									local tLast = times[#times]
-									local idxStart, idxEnd = actorChannel:FindIndexRangeInTimeRange(tFirst, tLast)
-									if idxStart ~= nil and idxEnd > idxStart then
-										local n = (idxEnd - idxStart) + 1
-										animManager:SetCurveChannelValueCount(
-											actorData,
-											path,
-											idxStart,
-											idxEnd,
-											0,
-											true
-										)
-									end
-								end
-							end
-							for i = 1, #times do
-								local t = times[i]
-								local v = values[i]
-								pm:SetActorAnimationComponentProperty(actorData, path, t, v, valueType, nil, false)
-							end
+							animManager:SetRawAnimationData(actorData, path, times, values, valueType)
 							numProps = numProps + 1
 						end
 					end
