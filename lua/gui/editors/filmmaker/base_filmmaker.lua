@@ -89,6 +89,9 @@ end
 function Element:OnRemove()
 	gui.WIBaseEditor.OnRemove(self)
 	pfm.ProjectManager.OnRemove(self)
+	if self.m_playbackState ~= nil then
+		self.m_playbackState:Reset()
+	end
 	self.m_selectionManager:Remove()
 	util.remove(self.m_worldAxesGizmo)
 	util.remove(self.m_cbOnRenderTargetResized)
@@ -137,6 +140,9 @@ function Element:InitializePlaybackState()
 		end
 	end)
 
+	if self.m_playbackState ~= nil then
+		self.m_playbackState:Reset()
+	end
 	self.m_playbackState = pfm.util.PlaybackState()
 	self.m_playbackState:AddCallback("OnTimeAdvance", function(dt)
 		self:SetTimeOffset(self:GetTimeOffset() + dt)

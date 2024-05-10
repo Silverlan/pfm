@@ -16,10 +16,14 @@ function PlaybackState:__init()
 	util.CallbackHandler.__init(self)
 	self.m_state = PlaybackState.STATE_INITIAL
 end
-function PlaybackState:OnRemove()
+function PlaybackState:__finalize()
+	self:Reset()
+end
+function PlaybackState:Reset()
 	if util.is_valid(self.m_cbThink) then
 		self.m_cbThink:Remove()
 	end
+	self.m_state = PlaybackState.STATE_INITIAL
 end
 function PlaybackState:SetState(state)
 	if state == self:GetState() then
