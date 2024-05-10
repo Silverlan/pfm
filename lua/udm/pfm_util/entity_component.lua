@@ -41,7 +41,7 @@ function pfm.udm.EntityComponent:SyncUdmPropertyToEntity(propertyName, clear)
 	udmDataEnt:Merge(udmData, udm.MERGE_FLAG_BIT_DEEP_COPY)
 
 	local memberId = entC:GetMemberIndex(propertyName)
-	if memberId ~= nil then
+	if memberId ~= nil and entC.OnMemberValueChanged ~= nil then
 		entC:OnMemberValueChanged(memberId)
 	end
 end
