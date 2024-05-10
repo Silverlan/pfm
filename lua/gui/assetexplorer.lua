@@ -201,6 +201,9 @@ end
 function gui.AssetExplorer:GetAssetIcon(id)
 	return self.m_pathToAssetIcon[id]
 end
+function gui.AssetExplorer:OnPathChanged(path)
+	self.m_inSpecial = nil
+end
 function gui.AssetExplorer:IsInSpecial(id, mdl)
 	local v = self.m_special[id]
 	if v == nil then
