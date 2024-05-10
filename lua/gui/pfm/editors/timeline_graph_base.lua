@@ -670,9 +670,32 @@ function gui.PFMTimelineGraphBase:MouseCallback(button, state, mods)
 					:SetName("copy_panima_channel_data")
 
 				pContext
-					:AddItem("Paste panima channel data to clipboard", function()
+					:AddItem("Paste panima channel data from clipboard", function()
 						if self:IsValid() then
-							-- TODO
+							local res, err = udm.parse(util.get_clipboard_string())
+							if res == false then
+								console.print_warning("Failed to parse UDM: ", err)
+								return
+							end
+							local data = res:GetAssetData():GetData()
+
+							local channel = panima.Channel()
+							channel:Load(data)
+
+							local times = channel:GetTimes()
+							local values = channel:GetValues()
+							print("Initializing " .. #times .. " values...")
+
+							local graphData = self.m_graphs[1]
+							local cmd = pfm.create_command(
+								"set_animation_channel_range_data",
+								graphData.actor,
+								graphData.targetPath,
+								times,
+								values,
+								graphData.valueType
+							)
+							pfm.undoredo.push("paste_animation_data", cmd)()
 						end
 					end)
 					:SetName("paste_panima_channel_data")
