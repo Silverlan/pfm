@@ -1387,10 +1387,7 @@ function gui.WIFilmmaker:ImportSequence(actor, animName)
 	local panimaAnim = anim:ToPanimaAnimation(mdl:GetSkeleton(), mdl:GetReferencePose())
 	local timeOffset = self:GetTimeOffset()
 	for _, channel in ipairs(panimaAnim:GetChannels()) do
-		local numTimes = channel:GetValueCount()
-		for i = 0, numTimes - 1 do
-			channel:SetTime(i, channel:GetTime(i) + timeOffset)
-		end
+		channel:ShiftTimeInRange(-math.huge, math.huge, timeOffset, false)
 	end
 	local cmd = pfm.create_command("composition")
 	for _, channel in ipairs(panimaAnim:GetChannels()) do
