@@ -455,7 +455,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 		imgBufInfo.includeLayers = false
 		imgBufInfo.includeMipmaps = false
 		imgBufInfo.targetFormat = util.ImageBuffer.FORMAT_RGBA16
-		imgBufInfo.inputImageLayout = prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+		imgBufInfo.inputImageLayout = prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 		imgBufInfo.stagingImage = self.m_imgOutputStagingImage
 		local imgBuf = imgOutput:ToImageBuffer(imgBufInfo)
 		local res = unirender.apply_color_transform(
