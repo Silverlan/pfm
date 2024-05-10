@@ -46,7 +46,7 @@ function Element:ReloadURL()
 	if util.is_valid(self.m_webBrowser) == false then
 		return
 	end
-	local url = self.m_webBrowser:GetUrl()
+	local url = self.m_lastUrl or self.m_webBrowser:GetUrl()
 	self.m_webBrowser:LoadUrl(url)
 end
 function Element:GetUrl()
@@ -59,6 +59,7 @@ function Element:SetUrl(url)
 	if util.is_valid(self.m_webBrowser) == false then
 		return
 	end
+	self.m_lastUrl = url
 	self.m_webBrowser:LoadUrl(url)
 end
 function Element:OnFocusGained()

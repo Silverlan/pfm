@@ -10,9 +10,6 @@ include("/gui/wipfmassetwebbrowser.lua")
 
 local Element = util.register_class("gui.PFMWebBrowser", gui.Base)
 
-function Element:__init()
-	gui.Base.__init(self)
-end
 function Element:OnFocusGained()
 	if util.is_valid(self.m_browser) then
 		self.m_browser:RequestFocus()
