@@ -22,6 +22,7 @@ function Component:Initialize()
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent("pfm_editor_actor") -- Required so the ik control can be detected for mouse hover
 	self:AddEntityComponent("debug_dotted_line")
+	self:AddEntityComponent("pfm_overlay_object")
 	self:BindEvent(ents.TransformComponent.EVENT_ON_POSE_CHANGED, "OnPoseChanged")
 	self.m_debugBoxC = self:AddEntityComponent(ents.COMPONENT_DEBUG_BOX)
 	local scalerC = self:AddEntityComponent("fixed_size_scaler")
