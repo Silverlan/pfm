@@ -1735,6 +1735,27 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 					tool.get_filmmaker():MakeActorPropertyAnimated(actorData.actor, controlData.path, controlData.type)
 				end)
 				:SetName("make_animated")
+
+			local memberInfo = self:GetMemberInfo(actorData.actor, controlData.path)
+			if memberInfo ~= nil and memberInfo.default ~= nil then
+				context
+					:AddItem(locale.get_text("pfm_set_to_default"), function()
+						memberInfo = self:GetMemberInfo(actorData.actor, controlData.path)
+						if memberInfo == nil or memberInfo.default == nil then
+							return
+						end
+						tool.get_filmmaker():ChangeActorPropertyValue(
+							actorData.actor,
+							controlData.path,
+							memberInfo.type,
+							controlData.getValue(),
+							memberInfo.default,
+							nil,
+							true
+						)
+					end)
+					:SetName("reset_to_base_value")
+			end
 		end
 	end
 
