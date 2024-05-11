@@ -1,4 +1,6 @@
 c_debug_skeleton_draw = "Debug Skeleton Draw"
+c_ik_solver_p_strength = "Strength"
+c_ik_solver_p_strength_desc = "Determines how much influence this control has on the IK rig. A strength of 0 disables the control."
 c_impersonatee = "Impersonatee"
 c_impersonatee_p_impostor_model = "Impostor Model"
 c_impostor = "Impostor"
