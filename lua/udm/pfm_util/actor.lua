@@ -238,6 +238,15 @@ function pfm.udm.Actor:SetMemberValue(path, type, value)
 	return true
 end
 
+function pfm.udm.Actor:GetPanimaAnimation()
+	local pm = pfm.get_project_manager()
+	local animManager = util.is_valid(pm) and pm:GetAnimationManager() or nil
+	if animManager == nil then
+		return
+	end
+	return animManager:GetActorAnimation(self)
+end
+
 function pfm.udm.Actor:GetMemberType(path)
 	local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
 	if componentName == nil then

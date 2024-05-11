@@ -264,7 +264,7 @@ function gui.PFMSlider:MouseCallback(button, state, mods)
 		pContext:SetPos(input.get_cursor_pos())
 		local default = self:GetDefault()
 		if default ~= nil then
-			pContext:AddItem(locale.get_text("pfm_set_to_default"), function()
+			pContext:AddItem(locale.get_text("reset"), function()
 				if self:IsValid() == false then
 					return
 				end

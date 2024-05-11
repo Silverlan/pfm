@@ -2682,6 +2682,105 @@ function gui.PFMActorEditor:OnRemove()
 	util.remove(self.m_filmClipCallbacks)
 	self:ClearAnimManagerListeners()
 end
+function gui.PFMActorEditor:CopyAnimationData(actor)
+	local panimaAnim = actor:GetPanimaAnimation()
+	if panimaAnim == nil then
+		return
+	end
+	local udmEl = udm.create_element()
+	local pfmCopy = udmEl:Add("pfm_copy")
+	pfmCopy:SetValue("type", udm.TYPE_STRING, "animation")
+
+	local udmData = pfmCopy:Add("data")
+	local udmAnimation = udmData:Add("animation")
+	panimaAnim:Save(udmAnimation)
+
+	local ent = actor:FindEntity()
+	local mdl = util.is_valid(ent) and ent:GetModel() or nil
+	if mdl ~= nil then
+		local baseValues = {}
+		local function addBaseValue(propertyPath, valueType)
+			local val = actor:GetMemberValue(propertyPath)
+			if val == nil then
+				return
+			end
+			table.insert(baseValues, {
+				targetPath = propertyPath,
+				value = val,
+				valueType = valueType,
+			})
+		end
+		local skel = mdl:GetSkeleton()
+		for _, bone in ipairs(skel:GetBones()) do
+			local basePath = "ec/animated/bone/" .. bone:GetName() .. "/"
+			addBaseValue(basePath .. "position", udm.TYPE_VECTOR3)
+			addBaseValue(basePath .. "rotation", udm.TYPE_QUATERNION)
+			addBaseValue(basePath .. "scale", udm.TYPE_VECTOR3)
+		end
+
+		for _, flexC in ipairs(mdl:GetFlexControllers()) do
+			addBaseValue("ec/flex/" .. flexC.name, udm.TYPE_FLOAT)
+		end
+
+		local udmBaseValues = udmData:AddArray("baseValues", #baseValues, udm.TYPE_ELEMENT)
+		for i, valueData in ipairs(baseValues) do
+			local udmBaseValue = udmBaseValues:Get(i - 1)
+			udmBaseValue:SetValue("targetPath", udm.TYPE_STRING, valueData.targetPath)
+			udmBaseValue:SetValue("valueType", udm.TYPE_STRING, udm.type_to_string(valueData.valueType))
+			udmBaseValue:SetValue("value", valueData.valueType, valueData.value)
+		end
+	end
+
+	util.set_clipboard_string(udmEl:ToAscii(udm.ASCII_SAVE_FLAG_NONE))
+end
+function gui.PFMActorEditor:PasteAnimationData(actor)
+	local res, err = udm.parse(util.get_clipboard_string())
+	if res == false then
+		console.print_warning("Failed to parse UDM: ", err)
+		return
+	end
+	local data = res:GetAssetData():GetData()
+	local pfmCopy = data:Get("pfm_copy")
+	local type = pfmCopy:GetValue("type", udm.TYPE_STRING)
+	if type ~= "animation" then
+		console.print_warning("Incorrect type: " .. tostring(type))
+		return
+	end
+	local udmData = pfmCopy:Get("data")
+	local udmAnimation = udmData:Get("animation")
+
+	local anim = panima.Animation.load(udmAnimation)
+	if anim == nil then
+		console.print_warning("Failed to load animation data!")
+		return
+	end
+	local cmd = pfm.create_command("composition")
+	for _, channel in ipairs(anim:GetChannels()) do
+		local times = channel:GetTimes()
+		local values = channel:GetValues()
+		local propertyPath = channel:GetTargetPath():ToUri(false)
+		local valueType = channel:GetValueType()
+		local res, subCmd = cmd:AddSubCommand("add_editor_channel", actor, propertyPath, valueType)
+		if res == pfm.Command.RESULT_SUCCESS then
+			subCmd:AddSubCommand("add_animation_channel", actor, propertyPath, valueType)
+		end
+		cmd:AddSubCommand("set_animation_channel_range_data", actor, propertyPath, times, values, valueType)
+	end
+
+	local udmBaseValues = udmData:Get("baseValues")
+	local n = udmBaseValues:GetSize()
+	for i = 0, n - 1 do
+		local udmBaseValue = udmBaseValues:Get(i)
+		local targetPath = udmBaseValue:GetValue("targetPath", udm.TYPE_STRING)
+		local strValueType = udmBaseValue:GetValue("valueType", udm.TYPE_STRING)
+		local valueType = udm.string_to_type(strValueType)
+		if valueType ~= nil then
+			local value = udmBaseValue:GetValue("value", valueType)
+			cmd:AddSubCommand("set_actor_property", actor, targetPath, nil, value, valueType)
+		end
+	end
+	pfm.undoredo.push("init_anim", cmd)()
+end
 gui.register("WIPFMActorEditor", gui.PFMActorEditor)
 
 pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, hitMaterial)
@@ -2840,6 +2939,27 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 				end
 			end)
 			:SetName("edit_ik_rig")
+
+		pContext
+			:AddItem(locale.get_text("pfm_copy_animation_data"), function()
+				local filmmaker = pfm.get_project_manager()
+				local actorEditor = filmmaker:GetActorEditor()
+				if util.is_valid(actorEditor) == false then
+					return
+				end
+				actorEditor:CopyAnimationData(actor)
+			end)
+			:SetName("copy_animation_data")
+		pContext
+			:AddItem(locale.get_text("pfm_paste_animation_data"), function()
+				local filmmaker = pfm.get_project_manager()
+				local actorEditor = filmmaker:GetActorEditor()
+				if util.is_valid(actorEditor) == false then
+					return
+				end
+				actorEditor:PasteAnimationData(actor)
+			end)
+			:SetName("paste_animation_data")
 	end
 	local actors
 	if copyPasteSelected == nil then

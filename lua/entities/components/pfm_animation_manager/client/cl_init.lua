@@ -110,6 +110,20 @@ function Component:SetAnimationsDirty()
 	game.update_animations(0.0)
 end
 
+function Component:GetActorAnimation(actor)
+	local ent = actor:FindEntity()
+	if util.is_valid(ent) == false then
+		return
+	end
+	local animC = ent:GetComponent(ents.COMPONENT_PANIMA)
+	local animManager = (animC ~= nil) and animC:GetAnimationManager("pfm") or nil
+	if animManager == nil then
+		return
+	end
+	local player = animManager:GetPlayer()
+	return player:GetAnimation()
+end
+
 function Component:SetAnimationDirty(actor)
 	local ent = actor:FindEntity()
 	if util.is_valid(ent) == false then
