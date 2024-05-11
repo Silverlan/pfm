@@ -23,6 +23,7 @@ function Element:OnInitialize()
 	self.m_tutorialData = {}
 
 	self:SetThinkingEnabled(true)
+	self:SetAudioEnabled(true)
 
 	self.m_bindingLayer = "pfm_tutorial"
 	local bindingLayer = input.InputBindingLayer("pfm_tutorial")
@@ -43,6 +44,12 @@ function Element:OnRemove()
 	if util.is_valid(pm) then
 		pm:RemoveInputBindingLayer(self.m_bindingLayer)
 	end
+end
+function Element:IsAudioEnabled()
+	return self.m_audioEnabled
+end
+function Element:SetAudioEnabled(enabled)
+	self.m_audioEnabled = enabled
 end
 function Element:GetCurrentSlideIndex()
 	return self.m_curSlideIndex

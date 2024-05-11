@@ -652,7 +652,8 @@ function Element:AddMessageBox(msg, audioFile)
 	self.m_buttonEnd:SetX(elBox:GetWidth() - self.m_buttonEnd:GetWidth())
 	buttonContainer:SizeToContents()
 
-	local hasAudio = (audioFile ~= nil and asset.exists(audioFile, asset.TYPE_AUDIO))
+	local hasAudio = self.m_tutorial:IsAudioEnabled()
+		and (audioFile ~= nil and asset.exists(audioFile, asset.TYPE_AUDIO))
 	local xOffset = 5
 	if hasAudio then
 		local iconAudio = gui.PFMButton.create(el, "gui/pfm/icon_mute", "gui/pfm/icon_mute_activated", function()
