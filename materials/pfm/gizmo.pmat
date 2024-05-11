@@ -1,0 +1,7 @@
+"pfm_gizmo"
+{
+	"textures"
+	{
+		$string albedo_map "white"
+	}
+}
