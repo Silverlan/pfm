@@ -12,14 +12,9 @@ local Element = util.register_class("gui.PFMPlayButton", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self.m_btPlay = gui.PFMButton.create(
-		self,
-		"gui/pfm/icon_cp_play_single",
-		"gui/pfm/icon_cp_play_single_activated",
-		function()
-			self:TogglePlay()
-		end
-	)
+	self.m_btPlay = gui.PFMButton.create(self, "gui/pfm/icon_cp_play", "gui/pfm/icon_cp_play_activated", function()
+		self:TogglePlay()
+	end)
 	self:GetSizeProperty():Link(self.m_btPlay:GetSizeProperty())
 end
 function Element:SetPlaybackState(playbackState)
@@ -27,11 +22,11 @@ function Element:SetPlaybackState(playbackState)
 	self.m_cbOnStateChanged = playbackState:AddCallback("OnStateChanged", function(oldState, newState)
 		if newState == pfm.util.PlaybackState.STATE_PLAYING then
 			if util.is_valid(self.m_btPlay) then
-				self.m_btPlay:SetMaterials("gui/pfm/icon_cp_pause_single", "gui/pfm/icon_cp_pause_single_activated")
+				self.m_btPlay:SetMaterials("gui/pfm/icon_cp_pause", "gui/pfm/icon_cp_pause_activated")
 			end
 		elseif newState == pfm.util.PlaybackState.STATE_PAUSED then
 			if util.is_valid(self.m_btPlay) then
-				self.m_btPlay:SetMaterials("gui/pfm/icon_cp_play_single", "gui/pfm/icon_cp_play_single_activated")
+				self.m_btPlay:SetMaterials("gui/pfm/icon_cp_play", "gui/pfm/icon_cp_play_activated")
 			end
 		end
 		self:CallCallbacks("OnStateChanged", oldState, newState)
@@ -46,13 +41,9 @@ function Element:SetActivated(activated)
 		return
 	end
 	if self:GetState() == pfm.util.PlaybackState.STATE_PLAYING then
-		self.m_btPlay:SetMaterial(
-			activated and "gui/pfm/icon_cp_pause_single_activated" or "gui/pfm/icon_cp_pause_single"
-		)
+		self.m_btPlay:SetMaterial(activated and "gui/pfm/icon_cp_pause_activated" or "gui/pfm/icon_cp_pause")
 	else
-		self.m_btPlay:SetMaterial(
-			activated and "gui/pfm/icon_cp_play_single_activated" or "gui/pfm/icon_cp_play_single"
-		)
+		self.m_btPlay:SetMaterial(activated and "gui/pfm/icon_cp_play_activated" or "gui/pfm/icon_cp_play")
 	end
 end
 function Element:GetState()
