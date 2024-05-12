@@ -379,20 +379,18 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btClipEditor:SetTooltip(
 		locale.get_text("pfm_clip_editor", { pfm.get_key_binding("pfm_action select_editor clip") })
 	)
-	if tool.get_filmmaker():IsDeveloperModeEnabled() then
-		self.m_btMotionEditor = gui.PFMButton.create(
-			toolbarLeft,
-			"gui/pfm/icon_mode_motioneditor",
-			"gui/pfm/icon_mode_motioneditor_activated",
-			function()
-				self:SetEditor(gui.PFMTimeline.EDITOR_MOTION)
-				return true
-			end
-		)
-		self.m_btMotionEditor:SetTooltip(
-			locale.get_text("pfm_motion_editor", { pfm.get_key_binding("pfm_action select_editor motion") })
-		)
-	end
+	self.m_btMotionEditor = gui.PFMButton.create(
+		toolbarLeft,
+		"gui/pfm/icon_mode_motioneditor",
+		"gui/pfm/icon_mode_motioneditor_activated",
+		function()
+			self:SetEditor(gui.PFMTimeline.EDITOR_MOTION)
+			return true
+		end
+	)
+	self.m_btMotionEditor:SetTooltip(
+		locale.get_text("pfm_motion_editor", { pfm.get_key_binding("pfm_action select_editor motion") })
+	)
 	self.m_btGraphEditor = gui.PFMButton.create(
 		toolbarLeft,
 		"gui/pfm/icon_mode_grapheditor",
