@@ -14,8 +14,8 @@ pfm.impl.projects = pfm.impl.projects or {}
 pfm.PROJECT_FILE_IDENTIFIER = "PFM"
 pfm.PROJECT_FILE_FORMAT_VERSION = 2
 
-pfm.VERSION = util.Version(0, 8, 1)
-pfm.VERSION_DATE = "23-11-26"
+pfm.VERSION = util.Version(0, 8, 3)
+pfm.VERSION_DATE = "24-05-12"
 pfm.PROJECT_TITLE = "PFM"
 
 include("/util/log.lua")
