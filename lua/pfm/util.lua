@@ -26,7 +26,9 @@ function pfm.save_asset_files_as_archive(assetFiles, fileName, onComplete)
 			console.print_table(tFilesNotFound)
 		end
 		util.open_path_in_explorer(util.get_addon_path(), fileName)
-		onComplete()
+		if onComplete ~= nil then
+			onComplete()
+		end
 	end)
 	return job
 end
