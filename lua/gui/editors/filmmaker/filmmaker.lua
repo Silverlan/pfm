@@ -465,7 +465,11 @@ function gui.WIFilmmaker:GetFrameRenderOutputPath(frameIndex)
 	if path == nil then
 		return
 	end
-	return path .. self:GetFrameRenderOutputFileName(frameIndex)
+	local frameRenderOutputFileName = self:GetFrameRenderOutputFileName(frameIndex)
+	if frameRenderOutputFileName == nil then
+		return
+	end
+	return path .. frameRenderOutputFileName
 end
 function gui.WIFilmmaker:GetRenderOutputPath(mainFilmClip, activeFilmClip)
 	mainFilmClip = mainFilmClip or self:GetMainFilmClip()
@@ -1648,13 +1652,13 @@ function gui.WIFilmmaker:PasteFromClipboard()
 	local res, err = udm.parse(util.get_clipboard_string())
 	if res == false then
 		console.print_warning("Failed to parse UDM: ", err)
-		return
+		return util.EVENT_REPLY_UNHANDLED
 	end
 	local data = res:GetAssetData():GetData()
 	local pfmCopy = data:Get("pfm_copy")
 	local type = pfmCopy:GetValue("type", udm.TYPE_STRING)
 	if type == nil then
-		return
+		return util.EVENT_REPLY_UNHANDLED
 	end
 	if type == "command" then
 		local udmData = pfmCopy:Get("data")
@@ -1673,7 +1677,10 @@ function gui.WIFilmmaker:PasteFromClipboard()
 		if util.is_valid(actorEditor) then
 			self:RestoreActorsFromUdmElement(actorEditor:GetFilmClip(), data)
 		end
+	else
+		return util.EVENT_REPLY_UNHANDLED
 	end
+	return util.EVENT_REPLY_HANDLED
 end
 function gui.WIFilmmaker:RestoreActorsFromUdmElement(filmClip, data, keepOriginalUuids, name)
 	local pfmCopy = data:Get(name or "pfm_copy")
