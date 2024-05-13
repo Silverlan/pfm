@@ -62,16 +62,17 @@ function pfm.get_member_info(path, actor)
 		return
 	end
 
+	local c
 	if util.is_valid(actor) then
-		local c = actor:GetComponent(componentId)
+		c = actor:GetComponent(componentId)
 		if c ~= nil then
 			local memberId = c:GetMemberIndex(memberName:GetString())
 			if memberId ~= nil then
-				return c:GetMemberInfo(memberId)
+				return c:GetMemberInfo(memberId), c, memberId
 			end
 		end
 	end
-	return componentInfo:GetMemberInfo(memberName:GetString())
+	return componentInfo:GetMemberInfo(memberName:GetString()), c, componentInfo:FindMemberIndex(memberName:GetString())
 end
 
 function pfm.set_actor_property_value(actor, propertyPath, valueType, value)
