@@ -14,6 +14,14 @@ function pfm.udm.Group:GetFilmClip()
 	return parent
 end
 
+function pfm.udm.Group:FindCollection(name)
+	for _, group in ipairs(self:GetGroups()) do
+		if group:GetName():lower() == name:lower() then
+			return group
+		end
+	end
+end
+
 function pfm.udm.Group:GetActorList(list)
 	list = list or {}
 	for _, actor in ipairs(self:GetActors()) do

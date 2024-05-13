@@ -223,48 +223,40 @@ function gui.PFMActorEditor:AddCollection(name, parentGroup, addUndo)
 	else
 		childGroup = cmd:Execute()
 	end
-	if childGroup == nil then
+	if childGroup == nil or childGroup == false then
 		return
 	end
 	return childGroup, self:GetCollectionTreeItem(tostring(childGroup:GetUniqueId()))
 end
 function gui.PFMActorEditor:FindCollection(name, createIfNotExists, parentGroup)
-	local root
-	if parentGroup ~= nil then
-		root = self:GetCollectionTreeItem(tostring(parentGroup:GetUniqueId()))
-	else
-		root = self.m_tree:GetRoot():GetItems()[1]
+	if parentGroup == nil then
+		local pm = pfm.get_project_manager()
+		local filmClip = pm:GetActiveFilmClip()
+		parentGroup = filmClip:GetScene()
 	end
+
+	if parentGroup == nil then
+		return
+	end
+
 	if type(name) == "table" then
 		local collections = name
 		if #collections == 0 then
-			return self:GetCollectionUdmObject(root), root
+			return parentGroup, root
 		end
-		local item = root
+		local curGroup = parentGroup
 		for _, colName in ipairs(collections) do
-			local parentGroup = pfm.dereference(item:GetIdentifier())
-			if parentGroup == nil then
-				break
-			end
-			local _, itemSub = self:FindCollection(colName, createIfNotExists, parentGroup)
-			item = itemSub
-			if util.is_valid(item) == false then
+			curGroup = self:FindCollection(colName, createIfNotExists, curGroup)
+			if curGroup == nil then
 				break
 			end
 		end
-		item = item or root
-		return self:GetCollectionUdmObject(item), item
+		curGroup = curGroup or parentGroup
+		return curGroup, self:GetCollectionTreeItem(tostring(curGroup:GetUniqueId()))
 	end
-	if util.is_valid(root) == false then
-		return
-	end
-	for _, item in ipairs(root:GetItems()) do
-		if item:IsValid() and item:GetName() == name then
-			local elUdm = self:GetCollectionUdmObject(item)
-			if elUdm ~= nil then
-				return elUdm, item
-			end
-		end
+	local childGroup = parentGroup:FindCollection(name)
+	if childGroup ~= nil then
+		return childGroup, self:GetCollectionTreeItem(tostring(childGroup:GetUniqueId()))
 	end
 	if createIfNotExists == false then
 		return
