@@ -120,6 +120,7 @@ function Component:InitializeTrackedDevice(tdC)
 	if serialNumber == nil then
 		return
 	end
+
 	for ent, c in
 		ents.citerator(
 			ents.COMPONENT_PFM_VR_TRACKED_DEVICE,
@@ -136,10 +137,29 @@ function Component:InitializeTrackedDevice(tdC)
 	end
 
 	local pm = tool.get_filmmaker()
+
+	local filmClip = util.is_valid(pm) and pm:GetActiveFilmClip() or nil
+	if filmClip == nil then
+		return
+	end
+	for _, actor in ipairs(filmClip:GetActorList()) do
+		local c = actor:FindComponent("pfm_vr_tracked_device")
+		if c ~= nil and c:GetMemberValue("serialNumber") == serialNumber then
+			pfm.log(
+				"Actor exists for VR tracked device with serial number '"
+					.. serialNumber
+					.. "', but has no entity? Ignoring...",
+				pfm.LOG_CATEGORY_PFM_VR
+			)
+			return
+		end
+	end
+
 	local actorEditor = util.is_valid(pm) and pm:GetActorEditor() or nil
 	if util.is_valid(actorEditor) == false then
 		return
 	end
+
 	pfm.log("No existing actor found for tracked device, creating new one...", pfm.LOG_CATEGORY_PFM_VR)
 	local name
 	local role = tdC:GetRole()
