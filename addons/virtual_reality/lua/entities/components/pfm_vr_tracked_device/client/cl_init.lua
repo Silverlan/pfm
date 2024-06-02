@@ -19,16 +19,10 @@ Component:RegisterMember("TargetActor", ents.MEMBER_TYPE_ENTITY, "", {
 		c:UpdateIkControl()
 	end,
 })
-Component:RegisterMember("IkControl", ents.MEMBER_TYPE_STRING, "", {
+Component:RegisterMember("TargetProperty", ents.MEMBER_TYPE_STRING, "", {
 	onChange = function(c)
 		c:UpdateIkControl()
 	end,
-})
-Component:RegisterMember("IkControlType", udm.TYPE_UINT32, 1, {
-	enumValues = {
-		["Head"] = Component.IK_CONTROL_TYPE_HEAD,
-		["Extremity"] = Component.IK_CONTROL_TYPE_EXTREMITY,
-	},
 })
 Component:RegisterMember("Offset", udm.TYPE_VECTOR3, Vector(0, 0, 0), {
 	onChange = function(self)
@@ -47,7 +41,9 @@ end
 function Component:OnEntitySpawn() end
 
 function Component:OnTick()
-	if util.is_valid(self.m_managerC) == false or self.m_managerC:IsIkTrackingEnabled() == false then
+	if
+		util.is_valid(self.m_managerC) == false--[[ or self.m_managerC:IsIkTrackingEnabled() == false]]
+	then
 		return
 	end
 	self:UpdateEffector()
@@ -55,21 +51,21 @@ end
 
 function Component:UpdateEffector()
 	local tdC = self:GetTrackedDevice()
-	if util.is_valid(self.m_ikSolverC) == false or util.is_valid(tdC) == false then
+	if util.is_valid(self.m_targetComponent) == false or util.is_valid(tdC) == false then
 		return
 	end
 	local pose = tdC:GetDevicePose() --tdC:GetEntity():GetPose()
 	pose:SetOrigin(tdC:GetEntity():GetPos())
+	pose:TranslateLocal(self.m_posOffset)
+	self.m_targetComponent:SetTransformMemberPos(self.m_posPropertyIdx, math.COORDINATE_SPACE_WORLD, pose:GetOrigin())
 
-	local poseLocal = self.m_ikSolverC:GetEntity():GetPose():GetInverse() * pose
-	poseLocal:TranslateLocal(self.m_posOffset)
-	self.m_ikSolverC:SetMemberValue(self.m_controlPropertyIdx, poseLocal:GetOrigin())
-
-	if self.m_rotControlPropertyIdx ~= nil and self.m_controlBoneId ~= nil then
+	if self.m_rotPropertyIdx ~= nil then
 		local rotOffset = self.m_rotOffset
+		rotOffset = EulerAngles(0, 0, 90):ToQuaternion()
+		pose:SetRotation(tdC:GetEntity():GetRotation())
 		local poseRot = pose:GetRotation() * rotOffset
-
-		self.m_ikSolverC:SetMemberValue(self.m_rotControlPropertyIdx, poseRot)
+		--poseRot = Quaternion()
+		self.m_targetComponent:SetTransformMemberRot(self.m_rotPropertyIdx, math.COORDINATE_SPACE_WORLD, poseRot)
 	end
 
 	--[[local pos = pose:GetOrigin()
@@ -80,7 +76,7 @@ function Component:UpdateEffector()
 end
 
 function Component:GetControlPropertyIndex()
-	return self.m_controlPropertyIdx
+	return self.m_posPropertyIdx
 end
 
 function Component:GetTargetData()
@@ -88,25 +84,35 @@ function Component:GetTargetData()
 	if util.is_valid(targetActor) == false then
 		return
 	end
-	local ikSolverC = targetActor:GetComponent(ents.COMPONENT_IK_SOLVER)
-	if ikSolverC == nil then
+	local targetProperty = self:GetTargetProperty()
+	local poseMetaInfo, component = pfm.util.find_property_pose_meta_info(targetActor, targetProperty)
+	if poseMetaInfo == nil then
+		pfm.log(
+			"Unable to find pose meta info for property '" .. targetProperty .. "'!",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_WARNING
+		)
 		return
 	end
-	local ikControl = self:GetIkControl()
-	local propertyName = "control/" .. ikControl .. "/position"
-	local memberIdx = ikSolverC:GetMemberIndex(propertyName)
-	if memberIdx == nil then
+	local posPropertyPath = "ec/" .. component .. "/" .. poseMetaInfo.posProperty
+	local rotPropertyPath = "ec/" .. component .. "/" .. poseMetaInfo.rotProperty
+	local posMemberInfo, component = pfm.get_member_info(posPropertyPath, targetActor)
+
+	if posMemberInfo == nil then
 		return
 	end
-	local memberIndices = { memberIdx }
+	local idxPos = component:GetMemberInfo(posPropertyPath)
+	if idxPos == nil then
+		return
+	end
+	local memberIndices = { idxPos }
 
-	propertyName = "control/" .. ikControl .. "/rotation"
-	memberIdx = ikSolverC:GetMemberIndex(propertyName)
-	if memberIdx ~= nil then
-		table.insert(memberIndices, memberIdx)
+	local idxRot = component:GetMemberIndex(rotPropertyPath)
+	if idxRot ~= nil then
+		table.insert(memberIndices, idxRot)
 	end
 
-	return targetActor, ikSolverC, memberIndices
+	return targetActor, component, memberIndices
 end
 
 function Component:SetManager(managerC)
@@ -130,31 +136,29 @@ function Component:UpdateTrackingState()
 	local enableProperties = not self.m_managerC:IsIkTrackingEnabled()
 	local panimaC = targetActor:GetComponent(ents.COMPONENT_PANIMA)
 	if panimaC ~= nil then
-		if self.m_controlPropertyName ~= nil then
-			panimaC:SetPropertyEnabled("ec/ik_solver/" .. self.m_controlPropertyName, enableProperties)
+		if self.m_posPropertyName ~= nil then
+			panimaC:SetPropertyEnabled("ec/ik_solver/" .. self.m_posPropertyName, enableProperties)
 		end
-		if self.m_rotControlPropertyName ~= nil then
-			panimaC:SetPropertyEnabled("ec/ik_solver/" .. self.m_rotControlPropertyName, enableProperties)
+		if self.m_rotPropertyName ~= nil then
+			panimaC:SetPropertyEnabled("ec/ik_solver/" .. self.m_rotPropertyName, enableProperties)
 		end
 	end
 end
 
 function Component:UpdateIkControl()
 	pfm.log("Updating tracked device ik control...", pfm.LOG_CATEGORY_PFM_VR)
-	self.m_ikSolverC = nil
-	self.m_controlPropertyIdx = nil
-	self.m_controlPropertyName = nil
-	self.m_rotControlPropertyIdx = nil
-	self.m_rotControlPropertyName = nil
+	self.m_targetComponent = nil
+	self.m_posPropertyIdx = nil
+	self.m_posPropertyName = nil
+	self.m_rotPropertyIdx = nil
+	self.m_rotPropertyName = nil
 	self.m_posOffset = Vector()
 	self.m_rotOffset = Quaternion()
-	self.m_controlBoneId = nil
-	self.m_refPose = math.ScaledTransform()
 	self:SetTickPolicy(ents.TICK_POLICY_NEVER)
 
 	local targetActor = self:GetTargetActor()
-	local ikControl = self:GetIkControl()
-	if util.is_valid(targetActor) == false or ikControl == nil then
+	local targetProperty = self:GetTargetProperty()
+	if util.is_valid(targetActor) == false or targetProperty == nil then
 		pfm.log(
 			"Failed to locate target actor '" .. tostring(self:GetTargetActorReference()) .. "'!",
 			pfm.LOG_CATEGORY_PFM_VR,
@@ -162,39 +166,57 @@ function Component:UpdateIkControl()
 		)
 		return
 	end
-	local ikSolverC = targetActor:GetComponent(ents.COMPONENT_IK_SOLVER)
-	if ikSolverC == nil then
-		pfm.log(
-			"Target actor '" .. tostring(targetActor) .. "' has no ik solver component!",
-			pfm.LOG_CATEGORY_PFM_VR,
-			pfm.LOG_SEVERITY_WARNING
-		)
-		return
-	end
-	local propertyName = "control/" .. ikControl .. "/position"
-	local memberIdx = ikSolverC:GetMemberIndex(propertyName)
-	if memberIdx == nil then
-		pfm.log(
-			"Ik control property '" .. propertyName .. "' not found in target actor '" .. tostring(targetActor) .. "'!",
-			pfm.LOG_CATEGORY_PFM_VR,
-			pfm.LOG_SEVERITY_WARNING
-		)
-		return
-	end
-	self.m_ikSolverC = ikSolverC
-	self.m_controlPropertyIdx = memberIdx
-	self.m_controlPropertyName = propertyName
 
-	local rotPropertyName = "control/" .. ikControl .. "/rotation"
-	memberIdx = ikSolverC:GetMemberIndex(rotPropertyName)
-	self.m_rotControlPropertyIdx = memberIdx
-	if memberIdx ~= nil then
-		self.m_rotControlPropertyName = rotPropertyName
+	local poseMetaInfo, componentName = pfm.util.find_property_pose_meta_info(targetActor, targetProperty)
+	if componentName == nil then
+		pfm.log(
+			"Target actor '"
+				.. tostring(targetActor)
+				.. "' has has no component for property '"
+				.. targetProperty
+				.. "'!",
+			pfm.LOG_CATEGORY_PFM_VR,
+			pfm.LOG_SEVERITY_WARNING
+		)
+		return
+	end
+	local component = targetActor:GetComponent(componentName)
+	if component == nil then
+		pfm.log(
+			"Target actor '"
+				.. tostring(targetActor)
+				.. "' has has no component for property '"
+				.. targetProperty
+				.. "'!",
+			pfm.LOG_CATEGORY_PFM_VR,
+			pfm.LOG_SEVERITY_WARNING
+		)
+		return
+	end
+	local posPropertyPath = "ec/" .. componentName .. "/" .. poseMetaInfo.posProperty
+	local posMemberInfo, _, posMemberIdx = pfm.get_member_info(posPropertyPath, targetActor)
+	if posMemberIdx == nil then
+		pfm.log(
+			"Property '" .. poseMetaInfo.posProperty .. "' not found in target actor '" .. tostring(targetActor) .. "'!",
+			pfm.LOG_CATEGORY_PFM_VR,
+			pfm.LOG_SEVERITY_WARNING
+		)
+		return
+	end
+	self.m_targetComponent = component
+	self.m_posPropertyIdx = posMemberIdx
+	self.m_posPropertyName = posPropertyPath
+
+	local rotPropertyName = "ec/" .. componentName .. "/" .. poseMetaInfo.rotProperty
+	local rotMemberInfo, _, rotMemberIdx = pfm.get_member_info(rotPropertyName, targetActor)
+	self.m_rotPropertyIdx = rotMemberIdx
+	if rotMemberInfo ~= nil then
+		self.m_rotPropertyName = rotPropertyName
 	end
 
 	local pm = tool.get_filmmaker()
 	local actorC = targetActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
-	if util.is_valid(pm) and actorC ~= nil then
+	--[[if util.is_valid(pm) and actorC ~= nil then
 		-- Make the ik properties animated
 		pm:MakeActorPropertyAnimated(
 			actorC:GetActorData(),
@@ -210,42 +232,8 @@ function Component:UpdateIkControl()
 			true,
 			false
 		)
-	end
+	end]]
 
-	self.m_posOffset = self:GetOffset()
-	local mdl = targetActor:GetModel()
-	if mdl ~= nil then
-		local ref = mdl:GetReferencePose()
-		local boneId = mdl:GetSkeleton():LookupBone(ikControl)
-		if boneId ~= -1 then
-			self.m_refPose = ref:GetBonePose(boneId)
-			self.m_controlBoneId = boneId
-
-			if memberIdx ~= nil then
-				local isHead = (self:GetIkControlType() == Component.IK_CONTROL_TYPE_HEAD)
-				if isHead then
-					self.m_rotOffset = self.m_refPose:GetRotation()
-				else
-					local twistAxis = mdl:FindBoneTwistAxis(self.m_controlBoneId)
-					if twistAxis ~= nil then
-						self.m_rotOffset = game.Model.get_twist_axis_rotation_offset(twistAxis)
-					end
-				end
-			end
-		end
-	end
-
-	if memberIdx == nil then
-		pfm.log(
-			"Ik rotation control property '"
-				.. rotPropertyName
-				.. "' not found in target actor '"
-				.. tostring(targetActor)
-				.. "'!",
-			pfm.LOG_CATEGORY_PFM_VR,
-			pfm.LOG_SEVERITY_WARNING
-		)
-	end
 	self:UpdateTrackingState()
 
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
