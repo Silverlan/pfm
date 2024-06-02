@@ -155,17 +155,19 @@ function gui.BoneRetargeting:UpdateMode()
 		self.m_lastSkeletalAnim = self.m_lastSkeletalAnim or ent0:GetAnimation()
 		self.m_modelView:PlayAnimation("reference", 1)
 		self.m_modelView:PlayAnimation("reference", 2)
-		local function get_bounds(mdl)
-			local head = util.rig.determine_head_bones(mdl)
-			if head == nil then
+		local function get_bounds(ent, mdl)
+			local metaRig = mdl:GetMetaRig()
+			local bone = (metaRig ~= nil) and metaRig:GetBone(game.Model.MetaRig.BONE_TYPE_HEAD) or nil
+			local ref = mdl:GetReferencePose()
+			local pose = (bone ~= nil) and ref:GetBonePose(bone.boneId) or nil
+			if pose == nil then
 				return Vector(), mdl:GetRenderBounds()
 			end
-			local ref = mdl:GetReferencePose()
-			local pose = ref:GetBonePose(head.headBoneId)
-			return pose:GetOrigin(), head.headBounds[1], head.headBounds[2]
+			pose = ent:GetPose() * pose
+			return pose:GetOrigin(), bone.min, bone.max
 		end
-		local relPos0, min0, max0 = get_bounds(mdl0)
-		local relPos1, min1, max1 = get_bounds(mdl1)
+		local relPos0, min0, max0 = get_bounds(ent0, mdl0)
+		local relPos1, min1, max1 = get_bounds(ent1, mdl1)
 		local pos0 = ent0:GetPos() + relPos0
 		local pos1 = ent1:GetPos() + relPos1
 		local offset = pos1 - pos0 - Vector(max0.x - min1.x, 0, 0)
@@ -303,6 +305,15 @@ function gui.BoneRetargeting:SetModelTargets(mdlSrc, mdlDst)
 		self:InitializeModelView()
 		local entSrc = self.m_mdlView:GetEntity(1)
 		local entDst = self.m_mdlView:GetEntity(2)
+		for _, ent in ipairs({ entSrc, entDst }) do
+			if util.is_valid(ent) then
+				local mdl = ent:GetModel()
+				local metaRig = (mdl ~= nil) and mdl:GetMetaRig() or nil
+				if metaRig ~= nil then
+					ent:SetRotation(metaRig.forwardFacingRotationOffset)
+				end
+			end
+		end
 		if util.is_valid(entSrc) and util.is_valid(entDst) then
 			local retargetC = entDst:AddComponent("retarget_rig")
 			local animSrc = entSrc:GetComponent(ents.COMPONENT_ANIMATED)
