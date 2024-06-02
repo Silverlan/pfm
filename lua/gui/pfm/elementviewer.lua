@@ -277,7 +277,11 @@ function gui.PFMElementViewer:Save(asFile)
 	else
 		res, err = udmData:SaveAscii(
 			f,
-			bit.bor(udm.ASCII_SAVE_FLAG_BIT_DONT_COMPRESS_LZ4_ARRAYS, udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER)
+			bit.bor(
+				udm.ASCII_SAVE_FLAG_DEFAULT,
+				udm.ASCII_SAVE_FLAG_BIT_DONT_COMPRESS_LZ4_ARRAYS,
+				udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER
+			)
 		)
 	end
 	f:Close()

@@ -230,7 +230,11 @@ function pfm.Project:Save(fileName, legacy)
 	if saveAsAscii then
 		res, err = udmData:SaveAscii(
 			f,
-			bit.bor(udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER, udm.ASCII_SAVE_FLAG_BIT_DONT_COMPRESS_LZ4_ARRAYS)
+			bit.bor(
+				udm.ASCII_SAVE_FLAG_DEFAULT,
+				udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER,
+				udm.ASCII_SAVE_FLAG_BIT_DONT_COMPRESS_LZ4_ARRAYS
+			)
 		)
 	else
 		res, err = udmData:Save(f)
