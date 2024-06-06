@@ -25,7 +25,7 @@ function gui.AssetExplorer:OnInitialize()
 		["new"] = {},
 	} -- TODO: Load/Save from/to file
 	self:AddCallback("OnIconSelected", function(self, icon)
-		self:CallCallbacks("OnFileClicked", icon:GetText())
+		self:CallCallbacks("OnFileClicked", icon:GetText(), icon:IsDirectory())
 	end)
 	self:AddCallback("PopulateContextMenu", function(self, pContext)
 		pContext
