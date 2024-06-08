@@ -24,9 +24,7 @@ Component:RegisterMember("Enabled", udm.TYPE_BOOLEAN, true, {
 	end,
 }, "def+is")
 function Component:OnRemove()
-	if util.is_valid(self.m_impostorC) then
-		self.m_impostorC:GetEntity():Remove()
-	end
+	util.remove(self.m_ownedImpostor)
 	util.remove(self.m_onImpostorModelChanged)
 end
 
@@ -38,6 +36,36 @@ function Component:UpdateAvailability()
 		return
 	end
 	retargetRigC:SetEnabled(self:IsEnabled())
+end
+
+function Component:InitializeImpostor()
+	if util.is_valid(self.m_impostorC) then
+		return self.m_impostorC
+	end
+	local entThis = self:GetEntity()
+	local ent = ents.create("impostor")
+	if util.is_valid(ent) == false then
+		return
+	end
+	local impostorC = ent:GetComponent(ents.COMPONENT_IMPOSTOR)
+	if impostorC == nil then
+		util.remove(ent)
+		return
+	end
+	ent:Spawn()
+	self.m_ownedImpostor = ent
+	self:SetImpostor(impostorC)
+	return impostorC
+end
+
+function Component:SetImpostorModel(mdlName)
+	local impostorC = self:InitializeImpostor()
+	if util.is_valid(impostorC) == false then
+		return
+	end
+	impostorC:GetEntity():SetPose(self:GetEntity():GetPose() * impostorC:GetRelativePose())
+	impostorC:GetEntity():SetModel(mdlName)
+	impostorC:OnAnimationReset()
 end
 
 function Component:UpdateVisibility(updateIfDisabled)
