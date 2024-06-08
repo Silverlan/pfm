@@ -3112,21 +3112,39 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 				if util.is_valid(actorEditor) == false then
 					return
 				end
-				filmmaker:RetargetActor(ent, mdlName)
+				-- filmmaker:RetargetActor(ent, mdlName)
+
+				local collection = gui.PFMActorEditor.COLLECTION_ACTORS
+				local group = actor:GetParent()
+				if group ~= nil and group.TypeName == "Group" then
+					collection = group:GetName()
+				end
+				local impostor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR, {
+					name = actor:GetName() .. "_retarget",
+					collection = collection,
+					updateActorComponents = false,
+					modelName = mdlName,
+					enableIk = false,
+				})
+				actorEditor:CreateNewActorComponent(impostor, "impostor", false)
+				actorEditor:UpdateActorComponents(impostor)
 
 				local cmd = pfm.create_command("composition")
-				cmd:AddSubCommand("create_component", actor, "impersonatee")
-				cmd:AddSubCommand("create_component", actor, "retarget_rig")
-				cmd:AddSubCommand("create_component", actor, "retarget_morph")
-				cmd:AddSubCommand(
+				cmd:AddSubCommand("add_actor", actorEditor:GetFilmClip(), { impostor })
+				local res, subCmd = cmd:AddSubCommand("composition")
+				subCmd:AddSubCommand("create_component", actor, "impersonatee")
+				subCmd:AddSubCommand("create_component", actor, "retarget_rig")
+				subCmd:AddSubCommand("create_component", actor, "retarget_morph")
+				subCmd:AddSubCommand(
 					"set_actor_property",
 					actor,
-					"ec/impersonatee/impostorModel",
+					"ec/impersonatee/impostorTarget",
 					nil,
-					mdlName,
-					udm.TYPE_STRING
+					ents.UniversalEntityReference(impostor:GetUniqueId()),
+					ents.MEMBER_TYPE_ENTITY
 				)
-				pfm.undoredo.push("retarget", cmd)()
+				subCmd:Execute()
+				pfm.undoredo.push("retarget", cmd)
 			end)
 		end)
 		:SetName("retarget")
