@@ -144,24 +144,30 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 		self:CreateNewActorComponent(actor, "flex", false)
 
 		-- Set up default IK if possible
-		if rig == nil then
-			engine.load_library("pr_rig")
+		local enableIk = args["enableIk"]
+		if enableIk == nil then
+			enableIk = true
 		end
-		if rig ~= nil then
-			local mdl = game.load_model(mdlName)
-			if mdl ~= nil then
-				local ikRigPath = rig.get_ik_rig_cache_path(mdl)
-				local filePath = (ikRigPath ~= nil) and (rig.get_ik_rig_base_path() .. ikRigPath) or nil
-				if ikRigPath == nil or file.exists(filePath) == false then
-					file.create_path(file.get_file_path(rig.get_ik_rig_base_path()))
-					rig.generate_cached_ik_rig(mdl)
-					ikRigPath = rig.get_ik_rig_cache_path(mdl)
-					filePath = (ikRigPath ~= nil) and (rig.get_ik_rig_base_path() .. ikRigPath) or nil
-				end
+		if enableIk then
+			if rig == nil then
+				engine.load_library("pr_rig")
+			end
+			if rig ~= nil then
+				local mdl = game.load_model(mdlName)
+				if mdl ~= nil then
+					local ikRigPath = rig.get_ik_rig_cache_path(mdl)
+					local filePath = (ikRigPath ~= nil) and (rig.get_ik_rig_base_path() .. ikRigPath) or nil
+					if ikRigPath == nil or file.exists(filePath) == false then
+						file.create_path(file.get_file_path(rig.get_ik_rig_base_path()))
+						rig.generate_cached_ik_rig(mdl)
+						ikRigPath = rig.get_ik_rig_cache_path(mdl)
+						filePath = (ikRigPath ~= nil) and (rig.get_ik_rig_base_path() .. ikRigPath) or nil
+					end
 
-				if ikRigPath ~= nil and file.exists(filePath) then
-					local ikSolverC = self:CreateNewActorComponent(actor, "ik_solver", false)
-					ikSolverC:SetMemberValue("rigConfigFile", udm.TYPE_STRING, ikRigPath)
+					if ikRigPath ~= nil and file.exists(filePath) then
+						local ikSolverC = self:CreateNewActorComponent(actor, "ik_solver", false)
+						ikSolverC:SetMemberValue("rigConfigFile", udm.TYPE_STRING, ikRigPath)
+					end
 				end
 			end
 		end
