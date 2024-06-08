@@ -534,6 +534,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 									oldValue = controlData.translateFromInterface(oldValue)
 								end
 							end
+							oldValue = oldValue or component:GetMemberValue(memberName)
 							local memberValue = value
 							local oldMemberValue = oldValue
 							if util.get_type_name(memberValue) == "Color" then
@@ -558,7 +559,6 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 								udmType = udm.TYPE_STRING
 							end
 
-							oldValue = oldValue or component:GetMemberValue(memberName)
 							if final then
 								if oldValue ~= nil then
 								else
@@ -614,37 +614,37 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 										self:OnActorPropertyChanged(entActor)
 									end
 								end
-								if ents.is_member_type_animatable(memberType) and updateAnimationValue then
-									if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-										pfm.log(
-											"Updating animation value for property '"
-												.. controlData.path
-												.. "' with value "
-												.. tostring(memberValue)
-												.. ".",
-											pfm.LOG_CATEGORY_PFM,
-											pfm.LOG_SEVERITY_DEBUG
-										)
-									end
+								-- if ents.is_member_type_animatable(memberType) and updateAnimationValue then
+								if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
+									pfm.log(
+										"Updating animation value for property '"
+											.. controlData.path
+											.. "' with value "
+											.. tostring(memberValue)
+											.. ".",
+										pfm.LOG_CATEGORY_PFM,
+										pfm.LOG_SEVERITY_DEBUG
+									)
+								end
 
-									local actor = component:GetActor()
-									if actor ~= nil and controlData.path ~= nil then
-										local keyframeCmd = tool.get_filmmaker():ChangeActorPropertyValue(
-											actor,
-											controlData.path,
-											udmType,
-											oldMemberValue,
-											memberValue,
-											nil,
-											final,
-											nil,
-											(inputData ~= nil) and inputData.keyframeCmd or nil
-										)
-										if inputData ~= nil and keyframeCmd ~= nil then
-											inputData.keyframeCmd = keyframeCmd
-										end
+								local actor = component:GetActor()
+								if actor ~= nil and controlData.path ~= nil then
+									local keyframeCmd = tool.get_filmmaker():ChangeActorPropertyValue(
+										actor,
+										controlData.path,
+										memberType,
+										oldMemberValue,
+										memberValue,
+										nil,
+										final,
+										nil,
+										(inputData ~= nil) and inputData.keyframeCmd or nil
+									)
+									if inputData ~= nil and keyframeCmd ~= nil then
+										inputData.keyframeCmd = keyframeCmd
 									end
 								end
+								-- end
 							else
 								c:InvokeElementMemberChangeCallback(memberIdx)
 							end
