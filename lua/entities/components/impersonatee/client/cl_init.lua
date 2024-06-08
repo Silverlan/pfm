@@ -53,8 +53,8 @@ function Component:InitializeImpostor()
 		return
 	end
 	ent:Spawn()
-	self.m_ownedImpostor = ent
 	self:SetImpostor(impostorC)
+	self.m_ownedImpostor = ent
 	return impostorC
 end
 
@@ -125,6 +125,7 @@ function Component:SetImpostor(impostorC)
 		return
 	end
 	util.remove(self.m_onImpostorModelChanged)
+	util.remove(self.m_ownedImpostor)
 	self.m_impostorC = impostorC
 	if util.is_valid(impostorC) == false then
 		self:BroadcastEvent(Component.EVENT_ON_IMPOSTOR_MODEL_CHANGED, {})
