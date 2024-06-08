@@ -23,6 +23,9 @@ function Command:Initialize(actorUuid, propertyPath, oldValue, newValue, memberT
 	return pfm.Command.RESULT_SUCCESS
 end
 function Command:ToUdmValue(value, valueType)
+	if value == nil then
+		return
+	end
 	local udmValue = value
 	local udmType = valueType
 	if valueType == ents.MEMBER_TYPE_ENTITY then
