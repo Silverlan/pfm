@@ -273,8 +273,9 @@ function ents.PFMModel:UpdateModel()
 		return
 	end
 	local mdlInfo = self.m_mdlInfo
-	mdlC:SetSkin(mdlInfo:GetMemberValue("skin") or 0)
-
+	if mdlInfo ~= nil then
+		mdlC:SetSkin(mdlInfo:GetMemberValue("skin") or 0)
+	end
 	local mdl = mdlC:GetModel()
 	if mdl == nil then
 		return
