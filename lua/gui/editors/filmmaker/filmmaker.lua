@@ -44,6 +44,7 @@ include("/gui/pfm/progress_status_info.lua")
 include("/pfm/util_particle_system.lua")
 include("/pfm/auto_save.lua")
 include("/pfm/util.lua")
+include("/pfm/addons.lua")
 include("/util/table_bininsert.lua")
 include("filmmaker")
 
@@ -84,21 +85,7 @@ console.register_variable(
 	"Keep the current layout when opening a project."
 )
 
-local loadedSubAddons = false
-local function load_sub_addons()
-	if loadedSubAddons then
-		return
-	end
-	loadedSubAddons = true
-
-	local _, dirs = file.find("addons/filmmaker/addons/*")
-	for _, subAddon in ipairs(dirs) do
-		local res = engine.mount_sub_addon(subAddon)
-		if res == false then
-			pfm.log("Failed to mount addon '" .. subAddon .. "'!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
-		end
-	end
-end
+pfm.util.mount_sub_addons()
 
 function gui.WIFilmmaker:__init()
 	gui.WIBaseFilmmaker.__init(self)
