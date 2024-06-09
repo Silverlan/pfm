@@ -90,6 +90,7 @@ function Component:ClearAnimationTarget()
 	end
 	if util.is_valid(self.m_animationTarget) then
 		self.m_animationTarget:RemoveComponent("vr_body")
+		self.m_animationTarget:RemoveComponent("vr_pov_controller")
 	end
 end
 
