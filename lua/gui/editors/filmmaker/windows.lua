@@ -418,6 +418,30 @@ pfm.register_window("web_browser", "editors", locale.get_text("pfm_web_browser")
 	el:AddCallback("OnDetached", function(el, window)
 		window:Maximize()
 	end)
+	el:AddCallback("OnDownloadAssetsImported", function(el, importedAssets)
+		if importedAssets[asset.TYPE_MODEL] ~= nil then
+			local pm = pfm.get_project_manager()
+			if util.is_valid(pm) and pm:IsEditor() then
+				local window = pm:GetWindow("model_catalog")
+				local explorer = util.is_valid(window) and window:GetExplorer() or nil
+				if util.is_valid(explorer) then
+					local hasNewModels = false
+					for _, mdlName in ipairs(importedAssets[asset.TYPE_MODEL]) do
+						local normMdlName = file.remove_file_extension(
+							mdlName,
+							asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
+						)
+						explorer:AddToSpecial("new", normMdlName)
+						hasNewModels = true
+					end
+					if hasNewModels then
+						explorer:GoToSpecialDirectory("new")
+						pm:GoToWindow("model_catalog")
+					end
+				end
+			end
+		end
+	end)
 	return el
 end)
 pfm.register_window("code_editor", "editors", locale.get_text("pfm_code_editor"), function(pm)

@@ -40,6 +40,9 @@ function Element:OnInitialize()
 	end)
 
 	self.m_browser = gui.create("WIPFMAssetWebBrowser", self.m_contents)
+	self.m_browser:AddCallback("OnDownloadAssetsImported", function(el, importedAssets)
+		self:CallCallbacks("OnDownloadAssetsImported", importedAssets)
+	end)
 	infoBox:SizeToContents()
 	self.m_infoBox = infoBox
 
