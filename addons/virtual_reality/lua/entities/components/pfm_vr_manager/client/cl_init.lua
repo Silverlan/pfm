@@ -108,7 +108,7 @@ function Component:OnVrControllerButtonInput(vrC, buttonId, state)
 		return util.EVENT_REPLY_HANDLED
 	elseif buttonId == openvr.BUTTON_ID_GRIP then
 		if state == input.STATE_PRESS then
-			pfm.log("Resetting zero pose...", pfm.LOG_CATEGORY_PFM_VR)
+			self:LogInfo("Resetting zero pose...")
 			openvr.reset_zero_pose(openvr.TRACKING_UNIVERSE_ORIGIN_SEATED)
 		end
 		return util.EVENT_REPLY_HANDLED
@@ -116,7 +116,7 @@ function Component:OnVrControllerButtonInput(vrC, buttonId, state)
 end
 function Component:InitializeTrackedDevice(tdC)
 	local serialNumber = tdC:GetSerialNumber()
-	pfm.log("Initializing tracked device " .. tostring(serialNumber) .. "...", pfm.LOG_CATEGORY_PFM_VR)
+	self:LogInfo("Initializing tracked device " .. tostring(serialNumber) .. "...")
 	if serialNumber == nil then
 		return
 	end
@@ -128,7 +128,7 @@ function Component:InitializeTrackedDevice(tdC)
 		)
 	do
 		if c:GetSerialNumber() == serialNumber then
-			pfm.log("Found tracked device as existing actor.", pfm.LOG_CATEGORY_PFM_VR)
+			self:LogInfo("Found tracked device as existing actor.")
 			table.insert(self.m_trackedDevices, c)
 			c:SetTrackedDevice(tdC)
 			self:InitializeVrController(c)
@@ -145,11 +145,10 @@ function Component:InitializeTrackedDevice(tdC)
 	for _, actor in ipairs(filmClip:GetActorList()) do
 		local c = actor:FindComponent("pfm_vr_tracked_device")
 		if c ~= nil and c:GetMemberValue("serialNumber") == serialNumber then
-			pfm.log(
+			self:LogInfo(
 				"Actor exists for VR tracked device with serial number '"
 					.. serialNumber
-					.. "', but has no entity? Ignoring...",
-				pfm.LOG_CATEGORY_PFM_VR
+					.. "', but has no entity? Ignoring..."
 			)
 			return
 		end
@@ -160,7 +159,7 @@ function Component:InitializeTrackedDevice(tdC)
 		return
 	end
 
-	pfm.log("No existing actor found for tracked device, creating new one...", pfm.LOG_CATEGORY_PFM_VR)
+	self:LogInfo("No existing actor found for tracked device, creating new one...")
 	local name
 	local role = tdC:GetRole()
 	if role == openvr.TRACKED_CONTROLLER_ROLE_LEFT_HAND then

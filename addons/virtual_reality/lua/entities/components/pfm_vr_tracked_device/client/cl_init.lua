@@ -87,11 +87,7 @@ function Component:GetTargetData()
 	local targetProperty = self:GetTargetProperty()
 	local poseMetaInfo, component = pfm.util.find_property_pose_meta_info(targetActor, targetProperty)
 	if poseMetaInfo == nil then
-		pfm.log(
-			"Unable to find pose meta info for property '" .. targetProperty .. "'!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to find pose meta info for property '" .. targetProperty .. "'!")
 		return
 	end
 	local posPropertyPath = "ec/" .. component .. "/" .. poseMetaInfo.posProperty
@@ -146,7 +142,7 @@ function Component:UpdateTrackingState()
 end
 
 function Component:UpdateIkControl()
-	pfm.log("Updating tracked device ik control...", pfm.LOG_CATEGORY_PFM_VR)
+	self:LogInfo("Updating tracked device ik control...")
 	self.m_targetComponent = nil
 	self.m_posPropertyIdx = nil
 	self.m_posPropertyName = nil
@@ -159,47 +155,37 @@ function Component:UpdateIkControl()
 	local targetActor = self:GetTargetActor()
 	local targetProperty = self:GetTargetProperty()
 	if util.is_valid(targetActor) == false or targetProperty == nil then
-		pfm.log(
-			"Failed to locate target actor '" .. tostring(self:GetTargetActorReference()) .. "'!",
-			pfm.LOG_CATEGORY_PFM_VR,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Failed to locate target actor '" .. tostring(self:GetTargetActorReference()) .. "'!")
 		return
 	end
 
 	local poseMetaInfo, componentName = pfm.util.find_property_pose_meta_info(targetActor, targetProperty)
 	if componentName == nil then
-		pfm.log(
+		self:LogWarn(
 			"Target actor '"
 				.. tostring(targetActor)
 				.. "' has has no component for property '"
 				.. targetProperty
-				.. "'!",
-			pfm.LOG_CATEGORY_PFM_VR,
-			pfm.LOG_SEVERITY_WARNING
+				.. "'!"
 		)
 		return
 	end
 	local component = targetActor:GetComponent(componentName)
 	if component == nil then
-		pfm.log(
+		self:LogWarn(
 			"Target actor '"
 				.. tostring(targetActor)
 				.. "' has has no component for property '"
 				.. targetProperty
-				.. "'!",
-			pfm.LOG_CATEGORY_PFM_VR,
-			pfm.LOG_SEVERITY_WARNING
+				.. "'!"
 		)
 		return
 	end
 	local posPropertyPath = "ec/" .. componentName .. "/" .. poseMetaInfo.posProperty
 	local posMemberInfo, _, posMemberIdx = pfm.get_member_info(posPropertyPath, targetActor)
 	if posMemberIdx == nil then
-		pfm.log(
-			"Property '" .. poseMetaInfo.posProperty .. "' not found in target actor '" .. tostring(targetActor) .. "'!",
-			pfm.LOG_CATEGORY_PFM_VR,
-			pfm.LOG_SEVERITY_WARNING
+		self:LogWarn(
+			"Property '" .. poseMetaInfo.posProperty .. "' not found in target actor '" .. tostring(targetActor) .. "'!"
 		)
 		return
 	end

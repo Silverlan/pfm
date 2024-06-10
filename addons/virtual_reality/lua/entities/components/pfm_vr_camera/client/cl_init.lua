@@ -35,7 +35,7 @@ function Component:Initialize()
 		local result = openvr.initialize()
 		debug.stop_profiling_task()
 		if result ~= openvr.INIT_ERROR_NONE then
-			console.print_warning("Unable to initialize openvr library: " .. openvr.init_error_to_string(result))
+			self:LogErr("Unable to initialize openvr library: " .. openvr.init_error_to_string(result))
 			return
 		end
 		g_vrModuleReady = true
@@ -112,6 +112,7 @@ function Component:SetAnimationTarget(ent)
 
 	local cam = self:GetEntity():GetComponent(ents.COMPONENT_CAMERA)
 	if cam == nil then
+		self:LogErr("Cannot apply animation target: Component is not part of a camera!")
 		return
 	end
 	local povC = self:GetEntity():AddComponent("pov_camera")
