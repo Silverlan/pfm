@@ -85,11 +85,9 @@ console.register_variable(
 	"Keep the current layout when opening a project."
 )
 
-pfm.util.mount_sub_addons()
-
 function gui.WIFilmmaker:__init()
 	gui.WIBaseFilmmaker.__init(self)
-	load_sub_addons()
+	pfm.util.mount_sub_addons()
 end
 include("/pfm/bake/ibl.lua")
 function gui.WIFilmmaker:OnInitialize()
