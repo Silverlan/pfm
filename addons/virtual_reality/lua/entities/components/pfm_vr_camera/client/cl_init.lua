@@ -52,6 +52,11 @@ function Component:Initialize()
 		self:OnTurnOn()
 	end
 end
+-- If enabled, the VR body will be simulated even if the camera isn't active. For debugging
+-- purpose only.
+function Component:SetVrBodyEnabledWhenDisabled(enabled)
+	self.m_vrBodyEnabledWhenDisabled = enabled
+end
 function Component:OnActiveStateChanged(active)
 	if ents.COMPONENT_PFM_VR_MANAGER ~= nil then
 		local entManager, managerC = ents.citerator(ents.COMPONENT_PFM_VR_MANAGER)()
@@ -60,6 +65,9 @@ function Component:OnActiveStateChanged(active)
 		end
 	end
 
+	if self.m_vrBodyEnabledWhenDisabled then
+		active = true
+	end
 	if util.is_valid(self.m_vrBodyC) then
 		self.m_vrBodyC:SetEnabled(active)
 	end

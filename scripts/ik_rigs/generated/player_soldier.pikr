@@ -1,511 +1,549 @@
-$array controls [element;10][
+$array bones [element;15][
 	{
-		$string bone "Bind_Hips"
-		$string type "Drag"
-		$float rigidity 0.4
-		$float maxForce -1
-	},
-	{
-		$string bone "Bind_Spine2"
-		$string type "Drag"
-		$float rigidity 0.4
-		$float maxForce -1
-	},
-	{
-		$string bone "Bind_LeftForeArm"
-		$string type "Drag"
-		$float rigidity 0
-		$float maxForce -1
-	},
-	{
-		$string bone "Bind_LeftHand"
-		$string type "State"
-		$float rigidity 4
-		$float maxForce -1
-	},
-	{
-		$string bone "Bind_RightForeArm"
-		$string type "Drag"
-		$float rigidity 0
-		$float maxForce -1
-	},
-	{
-		$string bone "Bind_RightHand"
-		$string type "State"
-		$float rigidity 4
-		$float maxForce -1
-	},
-	{
-		$string bone "Bind_LeftLeg"
-		$string type "Drag"
-		$float rigidity 0
-		$float maxForce -1
-	},
-	{
-		$string bone "Bind_LeftFoot"
-		$string type "OrientedDrag"
-		$float rigidity 4
-		$float maxForce -1
-	},
-	{
-		$string bone "Bind_RightLeg"
-		$string type "Drag"
-		$float rigidity 0
-		$float maxForce -1
-	},
-	{
-		$string bone "Bind_RightFoot"
-		$string type "OrientedDrag"
-		$float rigidity 4
-		$float maxForce -1
-	}
-]
-$string rootBone "Bind_Hips"
-$array joints [element;42][
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_Hips"
-		$string bone1 "Bind_Spine2"
-		$float rigidity 1
-		$vec3 anchorPosition [0,40.6869,0]
-	},
-	{
-		$string type "AngularJoint"
-		$string bone0 "Bind_Hips"
-		$string bone1 "Bind_Spine2"
-		$float rigidity 1
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_Spine2"
-		$string bone1 "Bind_LeftArm"
-		$float rigidity 1
-		$vec3 anchorPosition [7.2114,54.8106,1.4007]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_Spine2"
-		$vec3 axisB [0.4989,-0.7895,-0.3576]
-		$string bone1 "Bind_LeftArm"
-		$float rigidity 1
-		$float maxAngle 117
-		$vec3 axisA [0.9578,0,0.2873]
-	},
-	{
-		$string type "TwistLimit"
-		$string bone0 "Bind_Spine2"
-		$vec3 axisB [0.4989,-0.7895,-0.3576]
-		$string bone1 "Bind_LeftArm"
-		$float rigidity 0.08
-		$float maxAngle 90
-		$vec3 axisA [0.4989,-0.7895,-0.3576]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_LeftArm"
-		$string bone1 "Bind_LeftForeArm"
-		$float rigidity 1
-		$vec3 anchorPosition [11.5907,47.8802,-1.7383]
-	},
-	{
-		$string type "SwivelHingeJoint"
-		$string bone0 "Bind_LeftArm"
-		$vec3 axisB [0.2428,-0.9113,0.3324]
-		$string bone1 "Bind_LeftForeArm"
-		$float rigidity 1
-		$vec3 axisA [0.9466,0.2976,0.1242]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_LeftArm"
-		$vec3 axisB [0.2428,-0.9113,0.3324]
-		$string bone1 "Bind_LeftForeArm"
-		$float rigidity 1
-		$float maxAngle 78.3
-		$vec3 axisA [0.2307,0,0.973]
-	},
-	{
-		$string type "TwistLimit"
-		$string bone0 "Bind_LeftArm"
-		$vec3 axisB [0.2428,-0.9113,0.3324]
-		$string bone1 "Bind_LeftForeArm"
-		$float rigidity 0.08
-		$float maxAngle 45
-		$vec3 axisA [0.2428,-0.9113,0.3324]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_LeftForeArm"
-		$string bone1 "Bind_LeftHand"
-		$float rigidity 1
-		$vec3 anchorPosition [14.2021,38.0804,1.8359]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_LeftForeArm"
-		$vec3 axisB [0.1614,-0.9536,0.2543]
-		$string bone1 "Bind_LeftHand"
-		$float rigidity 1
-		$float maxAngle 90
-		$vec3 axisA [1,0,0]
-	},
-	{
-		$string type "TwistLimit"
-		$string bone0 "Bind_LeftForeArm"
-		$vec3 axisB [0.1614,-0.9536,0.2543]
-		$string bone1 "Bind_LeftHand"
-		$float rigidity 0.08
-		$float maxAngle 45
-		$vec3 axisA [0.1614,-0.9536,0.2543]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_Spine2"
-		$string bone1 "Bind_RightArm"
-		$float rigidity 1
-		$vec3 anchorPosition [-7.66,56.0071,0.972]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_Spine2"
-		$vec3 axisB [-0.5185,-0.8376,-0.1718]
-		$string bone1 "Bind_RightArm"
-		$float rigidity 1
-		$float maxAngle 117
-		$vec3 axisA [-0.9578,0,0.2873]
-	},
-	{
-		$string type "TwistLimit"
-		$string bone0 "Bind_Spine2"
-		$vec3 axisB [-0.5185,-0.8376,-0.1718]
-		$string bone1 "Bind_RightArm"
-		$float rigidity 0.08
-		$float maxAngle 90
-		$vec3 axisA [-0.5185,-0.8376,-0.1718]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_RightArm"
-		$string bone1 "Bind_RightForeArm"
-		$float rigidity 1
-		$vec3 anchorPosition [-12.2059,48.6634,-0.5346]
-	},
-	{
-		$string type "SwivelHingeJoint"
-		$string bone0 "Bind_RightArm"
-		$vec3 axisB [-0.3242,-0.9089,0.2622]
-		$string bone1 "Bind_RightForeArm"
-		$float rigidity 1
-		$vec3 axisA [-0.9378,0.3451,0.0367]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_RightArm"
-		$vec3 axisB [-0.3242,-0.9089,0.2622]
-		$string bone1 "Bind_RightForeArm"
-		$float rigidity 1
-		$float maxAngle 78.3
-		$vec3 axisA [-0.2307,0,0.973]
-	},
-	{
-		$string type "TwistLimit"
-		$string bone0 "Bind_RightArm"
-		$vec3 axisB [-0.3242,-0.9089,0.2622]
-		$string bone1 "Bind_RightForeArm"
-		$float rigidity 0.08
-		$float maxAngle 45
-		$vec3 axisA [-0.3242,-0.9089,0.2622]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_RightForeArm"
-		$string bone1 "Bind_RightHand"
-		$float rigidity 1
-		$vec3 anchorPosition [-15.6969,38.8777,2.2884]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_RightForeArm"
-		$vec3 axisB [-0.2392,-0.9513,0.1947]
-		$string bone1 "Bind_RightHand"
-		$float rigidity 1
-		$float maxAngle 90
-		$vec3 axisA [-1,0,0]
-	},
-	{
-		$string type "TwistLimit"
-		$string bone0 "Bind_RightForeArm"
-		$vec3 axisB [-0.2392,-0.9513,0.1947]
-		$string bone1 "Bind_RightHand"
-		$float rigidity 0.08
-		$float maxAngle 45
-		$vec3 axisA [-0.2392,-0.9513,0.1947]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_Hips"
-		$string bone1 "Bind_LeftUpLeg"
-		$float rigidity 1
-		$vec3 anchorPosition [3.7991,38.6909,-0.0164]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_Hips"
-		$vec3 axisB [0.2763,-0.9305,0.2404]
-		$string bone1 "Bind_LeftUpLeg"
-		$float rigidity 1
-		$float maxAngle 108
-		$vec3 axisA [0.2491,-0.8305,0.4983]
-	},
-	{
-		$vec3 measurementAxisA [0.7071,0,0.7071]
-		$string type "TwistLimit"
-		$string bone0 "Bind_Hips"
-		$vec3 axisB [-0.2763,0.9305,-0.2404]
-		$string bone1 "Bind_LeftUpLeg"
-		$float rigidity 0.08
-		$float maxAngle 45
-		$vec3 axisA [-0.2763,0.9305,-0.2404]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_LeftUpLeg"
-		$string bone1 "Bind_LeftLeg"
-		$float rigidity 1
-		$vec3 anchorPosition [8.8505,21.6798,4.3781]
-	},
-	{
-		$string type "SwivelHingeJoint"
-		$string bone0 "Bind_LeftUpLeg"
-		$vec3 axisB [0.219,-0.973,-0.0732]
-		$string bone1 "Bind_LeftLeg"
-		$float rigidity 1
-		$vec3 axisA [0.9756,0.2196,-0]
-	},
-	{
-		$string type "TwistLimit"
-		$string bone0 "Bind_LeftUpLeg"
-		$vec3 axisB [-0.219,0.973,0.0732]
-		$string bone1 "Bind_LeftLeg"
-		$float rigidity 0.08
-		$float maxAngle 18
-		$vec3 axisA [-0.219,0.973,0.0732]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_LeftUpLeg"
-		$vec3 axisB [0.219,-0.973,-0.0732]
-		$string bone1 "Bind_LeftLeg"
-		$float rigidity 1
-		$float maxAngle 78.3
-		$vec3 axisA [0,-0.2307,-0.973]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_LeftLeg"
-		$string bone1 "Bind_LeftFoot"
-		$float rigidity 1
-		$vec3 anchorPosition [12.9607,3.4221,3.0053]
-	},
-	{
-		$string type "TwistJoint"
-		$string bone0 "Bind_LeftLeg"
-		$vec3 axisB [-0.078,0.0573,-0.9953]
-		$string bone1 "Bind_LeftFoot"
-		$float rigidity 0.08
-		$vec3 axisA [-0.078,0.0573,-0.9953]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_LeftLeg"
-		$vec3 axisB [-0.078,0.0573,-0.9953]
-		$string bone1 "Bind_LeftFoot"
-		$float rigidity 1
-		$float maxAngle 39.6
-		$vec3 axisA [0,-0.9578,-0.2873]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_Hips"
-		$string bone1 "Bind_RightUpLeg"
-		$float rigidity 1
-		$vec3 anchorPosition [-3.8127,38.6909,-0.006]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_Hips"
-		$vec3 axisB [-0.2763,-0.9305,0.2404]
-		$string bone1 "Bind_RightUpLeg"
-		$float rigidity 1
-		$float maxAngle 108
-		$vec3 axisA [-0.2491,-0.8305,0.4983]
-	},
-	{
-		$vec3 measurementAxisA [-0.7071,0,0.7071]
-		$string type "TwistLimit"
-		$string bone0 "Bind_Hips"
-		$vec3 axisB [0.2763,0.9305,-0.2404]
-		$string bone1 "Bind_RightUpLeg"
-		$float rigidity 0.08
-		$float maxAngle 45
-		$vec3 axisA [0.2763,0.9305,-0.2404]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_RightUpLeg"
-		$string bone1 "Bind_RightLeg"
-		$float rigidity 1
-		$vec3 anchorPosition [-8.864,21.6803,4.3882]
-	},
-	{
-		$string type "SwivelHingeJoint"
-		$string bone0 "Bind_RightUpLeg"
-		$vec3 axisB [-0.219,-0.973,-0.0732]
-		$string bone1 "Bind_RightLeg"
-		$float rigidity 1
-		$vec3 axisA [-0.9756,0.2196,0]
-	},
-	{
-		$string type "TwistLimit"
-		$string bone0 "Bind_RightUpLeg"
-		$vec3 axisB [0.219,0.973,0.0732]
-		$string bone1 "Bind_RightLeg"
-		$float rigidity 0.08
-		$float maxAngle 18
-		$vec3 axisA [0.219,0.973,0.0732]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_RightUpLeg"
-		$vec3 axisB [-0.219,-0.973,-0.0732]
-		$string bone1 "Bind_RightLeg"
-		$float rigidity 1
-		$float maxAngle 78.3
-		$vec3 axisA [0,-0.2307,-0.973]
-	},
-	{
-		$string type "BallSocketJoint"
-		$string bone0 "Bind_RightLeg"
-		$string bone1 "Bind_RightFoot"
-		$float rigidity 1
-		$vec3 anchorPosition [-12.9749,3.42,3.0151]
-	},
-	{
-		$string type "TwistJoint"
-		$string bone0 "Bind_RightLeg"
-		$vec3 axisB [0.078,0.0573,-0.9953]
-		$string bone1 "Bind_RightFoot"
-		$float rigidity 0.08
-		$vec3 axisA [0.078,0.0573,-0.9953]
-	},
-	{
-		$string type "SwingLimit"
-		$string bone0 "Bind_RightLeg"
-		$vec3 axisB [0.078,0.0573,-0.9953]
-		$string bone1 "Bind_RightFoot"
-		$float rigidity 1
-		$float maxAngle 39.6
-		$vec3 axisA [0,-0.9578,-0.2873]
-	}
-]
-$array bones [element;14][
-	{
-		$string name "Bind_Hips"
-		$float radius 6.9048
-		$bool locked 0
-		$float length 7.3651
 		$transform ikPose [[0,40.6869,0][1,0,0,0]]
+		$float length 8.0991
+		$bool locked 0
+		$string name "Bind_Hips"
+		$float radius 7.5929
 	},
 	{
-		$string name "Bind_Spine2"
-		$float radius 6.9048
-		$bool locked 0
-		$float length 7.3651
 		$transform ikPose [[-0.0047,53.238,0.8349][1,0,0,0]]
+		$float length 8.0991
+		$bool locked 0
+		$string name "Bind_Spine2"
+		$float radius 7.5929
 	},
 	{
+		$transform ikPose [[-0.0047,61.2476,3.5957][1,0,0,0]]
+		$float length 8.0991
+		$bool locked 0
+		$string name "Bind_Head"
+		$float radius 4.0496
+	},
+	{
+		$transform ikPose [[9.4011,51.3454,-0.1688][0.5205,0.4655,0.6798,-0.2243]]
+		$float length 10.1239
+		$bool locked 0
 		$string name "Bind_LeftArm"
-		$float radius 2.3016
-		$bool locked 0
-		$float length 9.2064
-		$transform ikPose [[9.4011,51.3454,-0.1688][0.7071,0,0,0.7071]]
+		$float radius 2.531
 	},
 	{
+		$transform ikPose [[12.8964,42.9803,0.0488][0.6786,0.3815,0.4339,-0.4535]]
+		$float length 10.1239
+		$bool locked 0
 		$string name "Bind_LeftForeArm"
-		$float radius 2.3016
-		$bool locked 0
-		$float length 9.2064
-		$transform ikPose [[12.8964,42.9803,0.0488][0.7071,0,0,0.7071]]
+		$float radius 2.531
 	},
 	{
+		$transform ikPose [[14.2021,38.0804,1.8359][0.751,0.5386,0.2877,-0.2513]]
+		$float length 5.0619
+		$bool locked 0
 		$string name "Bind_LeftHand"
-		$float radius 1.8413
-		$bool locked 0
-		$float length 4.6032
-		$transform ikPose [[14.2021,38.0804,1.8359][0.7071,0,0,0.7071]]
+		$float radius 2.0248
 	},
 	{
+		$transform ikPose [[-9.933,52.3353,0.2187][0.5694,0.3883,-0.6596,0.2997]]
+		$float length 10.1239
+		$bool locked 0
 		$string name "Bind_RightArm"
-		$float radius 2.3016
-		$bool locked 0
-		$float length 9.2064
-		$transform ikPose [[-9.933,52.3353,0.2187][0.7071,0,0,0.7071]]
+		$float radius 2.531
 	},
 	{
+		$transform ikPose [[-13.9514,43.7705,0.8769][0.6579,0.3593,-0.4897,0.4453]]
+		$float length 10.1239
+		$bool locked 0
 		$string name "Bind_RightForeArm"
-		$float radius 2.3016
-		$bool locked 0
-		$float length 9.2064
-		$transform ikPose [[-13.9514,43.7705,0.8769][0.7071,0,0,0.7071]]
+		$float radius 2.531
 	},
 	{
+		$transform ikPose [[-15.6969,38.8777,2.2884][0.7289,0.5288,-0.3507,0.2572]]
+		$float length 5.0619
+		$bool locked 0
 		$string name "Bind_RightHand"
-		$float radius 1.8413
-		$bool locked 0
-		$float length 4.6032
-		$transform ikPose [[-15.6969,38.8777,2.2884][0.7071,0,0,0.7071]]
+		$float radius 2.0248
 	},
 	{
+		$transform ikPose [[6.3248,30.1853,2.1808][0.7793,0.6099,0.0886,0.1133]]
+		$float length 13.161
+		$bool locked 0
 		$string name "Bind_LeftUpLeg"
-		$float radius 2.3016
-		$bool locked 0
-		$float length 11.9684
-		$transform ikPose [[6.3248,30.1853,2.1808][1,0,0,0]]
+		$float radius 2.531
 	},
 	{
+		$transform ikPose [[10.9056,12.551,3.6917][0.6766,0.728,0.0809,0.0752]]
+		$float length 13.161
+		$bool locked 0
 		$string name "Bind_LeftLeg"
-		$float radius 2.3016
-		$bool locked 0
-		$float length 11.9684
-		$transform ikPose [[10.9056,12.551,3.6917][1,0,0,0]]
+		$float radius 2.531
 	},
 	{
+		$transform ikPose [[12.9607,3.4221,3.0053][0.9988,0.0286,0.0391,-0.0011]]
+		$float length 13.161
+		$bool locked 0
 		$string name "Bind_LeftFoot"
-		$float radius 2.3016
-		$bool locked 0
-		$float length 11.9684
-		$transform ikPose [[12.9607,3.4221,3.0053][1,0,0,0]]
+		$float radius 2.531
 	},
 	{
+		$transform ikPose [[-6.3384,30.1856,2.1911][0.7793,0.6099,-0.0886,-0.1133]]
+		$float length 13.161
+		$bool locked 0
 		$string name "Bind_RightUpLeg"
-		$float radius 2.3016
-		$bool locked 0
-		$float length 11.9684
-		$transform ikPose [[-6.3384,30.1856,2.1911][1,0,0,0]]
+		$float radius 2.531
 	},
 	{
+		$transform ikPose [[-10.9195,12.5501,3.7016][0.6766,0.728,-0.0809,-0.0752]]
+		$float length 13.161
+		$bool locked 0
 		$string name "Bind_RightLeg"
-		$float radius 2.3016
-		$bool locked 0
-		$float length 11.9684
-		$transform ikPose [[-10.9195,12.5501,3.7016][1,0,0,0]]
+		$float radius 2.531
 	},
 	{
-		$string name "Bind_RightFoot"
-		$float radius 2.3016
+		$transform ikPose [[-12.9749,3.42,3.0151][0.9988,0.0286,-0.0391,0.0011]]
+		$float length 13.161
 		$bool locked 0
-		$float length 11.9684
-		$transform ikPose [[-12.9749,3.42,3.0151][1,0,0,0]]
+		$string name "Bind_RightFoot"
+		$float radius 2.531
 	}
 ]
 $array constraints [element;0][]
+$array controls [element;11][
+	{
+		$string bone "Bind_Hips"
+		$float maxForce -1
+		$float rigidity 0.4
+		$string type "Drag"
+	},
+	{
+		$string bone "Bind_Spine2"
+		$float maxForce -1
+		$float rigidity 0.4
+		$string type "Drag"
+	},
+	{
+		$string bone "Bind_Head"
+		$float maxForce -1
+		$float rigidity 0
+		$string type "State"
+	},
+	{
+		$string bone "Bind_LeftForeArm"
+		$float maxForce -1
+		$float rigidity 0
+		$string type "Drag"
+	},
+	{
+		$string bone "Bind_LeftHand"
+		$float maxForce -1
+		$float rigidity 4
+		$string type "State"
+	},
+	{
+		$string bone "Bind_RightForeArm"
+		$float maxForce -1
+		$float rigidity 0
+		$string type "Drag"
+	},
+	{
+		$string bone "Bind_RightHand"
+		$float maxForce -1
+		$float rigidity 4
+		$string type "State"
+	},
+	{
+		$string bone "Bind_LeftLeg"
+		$float maxForce -1
+		$float rigidity 0
+		$string type "Drag"
+	},
+	{
+		$string bone "Bind_LeftFoot"
+		$float maxForce -1
+		$float rigidity 4
+		$string type "OrientedDrag"
+	},
+	{
+		$string bone "Bind_RightLeg"
+		$float maxForce -1
+		$float rigidity 0
+		$string type "Drag"
+	},
+	{
+		$string bone "Bind_RightFoot"
+		$float maxForce -1
+		$float rigidity 4
+		$string type "OrientedDrag"
+	}
+]
+$array joints [element;45][
+	{
+		$vec3 anchorPosition [0,40.6869,0]
+		$string bone0 "Bind_Hips"
+		$string bone1 "Bind_Spine2"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$string bone0 "Bind_Hips"
+		$string bone1 "Bind_Spine2"
+		$float rigidity 1
+		$string type "AngularJoint"
+	},
+	{
+		$vec3 anchorPosition [-0.0047,61.2476,3.5957]
+		$string bone0 "Bind_Spine2"
+		$string bone1 "Bind_Head"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [0,1,0]
+		$vec3 axisB [0,1,0]
+		$string bone0 "Bind_Spine2"
+		$string bone1 "Bind_Head"
+		$float maxAngle 90
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 axisA [0,1,0]
+		$vec3 axisB [0,1,0]
+		$string bone0 "Bind_Spine2"
+		$string bone1 "Bind_Head"
+		$float maxAngle 90
+		$float rigidity 1
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 anchorPosition [7.2114,54.8106,1.4007]
+		$string bone0 "Bind_Spine2"
+		$string bone1 "Bind_LeftArm"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [0.9578,0,0.2873]
+		$vec3 axisB [0.4989,-0.7895,-0.3576]
+		$string bone0 "Bind_Spine2"
+		$string bone1 "Bind_LeftArm"
+		$float maxAngle 117
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 axisA [0.4989,-0.7895,-0.3576]
+		$vec3 axisB [0.4989,-0.7895,-0.3576]
+		$string bone0 "Bind_Spine2"
+		$string bone1 "Bind_LeftArm"
+		$float maxAngle 90
+		$float rigidity 0.08
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 anchorPosition [11.5907,47.8802,-1.7383]
+		$string bone0 "Bind_LeftArm"
+		$string bone1 "Bind_LeftForeArm"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [0.9466,0.2976,0.1242]
+		$vec3 axisB [0.2428,-0.9113,0.3324]
+		$string bone0 "Bind_LeftArm"
+		$string bone1 "Bind_LeftForeArm"
+		$float rigidity 1
+		$string type "SwivelHingeJoint"
+	},
+	{
+		$vec3 axisA [0.2307,0,0.973]
+		$vec3 axisB [0.2428,-0.9113,0.3324]
+		$string bone0 "Bind_LeftArm"
+		$string bone1 "Bind_LeftForeArm"
+		$float maxAngle 78.3
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 axisA [0.2428,-0.9113,0.3324]
+		$vec3 axisB [0.2428,-0.9113,0.3324]
+		$string bone0 "Bind_LeftArm"
+		$string bone1 "Bind_LeftForeArm"
+		$float maxAngle 45
+		$float rigidity 0.08
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 anchorPosition [14.2021,38.0804,1.8359]
+		$string bone0 "Bind_LeftForeArm"
+		$string bone1 "Bind_LeftHand"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [1,0,0]
+		$vec3 axisB [0.1614,-0.9536,0.2543]
+		$string bone0 "Bind_LeftForeArm"
+		$string bone1 "Bind_LeftHand"
+		$float maxAngle 90
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 axisA [0.1614,-0.9536,0.2543]
+		$vec3 axisB [0.1614,-0.9536,0.2543]
+		$string bone0 "Bind_LeftForeArm"
+		$string bone1 "Bind_LeftHand"
+		$float maxAngle 45
+		$float rigidity 0.08
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 anchorPosition [-7.66,56.0071,0.972]
+		$string bone0 "Bind_Spine2"
+		$string bone1 "Bind_RightArm"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [-0.9578,0,0.2873]
+		$vec3 axisB [-0.5185,-0.8376,-0.1718]
+		$string bone0 "Bind_Spine2"
+		$string bone1 "Bind_RightArm"
+		$float maxAngle 117
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 axisA [-0.5185,-0.8376,-0.1718]
+		$vec3 axisB [-0.5185,-0.8376,-0.1718]
+		$string bone0 "Bind_Spine2"
+		$string bone1 "Bind_RightArm"
+		$float maxAngle 90
+		$float rigidity 0.08
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 anchorPosition [-12.2059,48.6634,-0.5346]
+		$string bone0 "Bind_RightArm"
+		$string bone1 "Bind_RightForeArm"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [-0.9378,0.3451,0.0367]
+		$vec3 axisB [-0.3242,-0.9089,0.2622]
+		$string bone0 "Bind_RightArm"
+		$string bone1 "Bind_RightForeArm"
+		$float rigidity 1
+		$string type "SwivelHingeJoint"
+	},
+	{
+		$vec3 axisA [-0.2307,0,0.973]
+		$vec3 axisB [-0.3242,-0.9089,0.2622]
+		$string bone0 "Bind_RightArm"
+		$string bone1 "Bind_RightForeArm"
+		$float maxAngle 78.3
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 axisA [-0.3242,-0.9089,0.2622]
+		$vec3 axisB [-0.3242,-0.9089,0.2622]
+		$string bone0 "Bind_RightArm"
+		$string bone1 "Bind_RightForeArm"
+		$float maxAngle 45
+		$float rigidity 0.08
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 anchorPosition [-15.6969,38.8777,2.2884]
+		$string bone0 "Bind_RightForeArm"
+		$string bone1 "Bind_RightHand"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [-1,0,0]
+		$vec3 axisB [-0.2392,-0.9513,0.1947]
+		$string bone0 "Bind_RightForeArm"
+		$string bone1 "Bind_RightHand"
+		$float maxAngle 90
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 axisA [-0.2392,-0.9513,0.1947]
+		$vec3 axisB [-0.2392,-0.9513,0.1947]
+		$string bone0 "Bind_RightForeArm"
+		$string bone1 "Bind_RightHand"
+		$float maxAngle 45
+		$float rigidity 0.08
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 anchorPosition [3.7991,38.6909,-0.0164]
+		$string bone0 "Bind_Hips"
+		$string bone1 "Bind_LeftUpLeg"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [0.2491,-0.8305,0.4983]
+		$vec3 axisB [0.2763,-0.9305,0.2404]
+		$string bone0 "Bind_Hips"
+		$string bone1 "Bind_LeftUpLeg"
+		$float maxAngle 108
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 axisA [-0.2763,0.9305,-0.2404]
+		$vec3 axisB [-0.2763,0.9305,-0.2404]
+		$string bone0 "Bind_Hips"
+		$string bone1 "Bind_LeftUpLeg"
+		$float maxAngle 45
+		$vec3 measurementAxisA [0.7071,0,0.7071]
+		$float rigidity 0.08
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 anchorPosition [8.8505,21.6798,4.3781]
+		$string bone0 "Bind_LeftUpLeg"
+		$string bone1 "Bind_LeftLeg"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [0.9756,0.2196,-0]
+		$vec3 axisB [0.219,-0.973,-0.0732]
+		$string bone0 "Bind_LeftUpLeg"
+		$string bone1 "Bind_LeftLeg"
+		$float rigidity 1
+		$string type "SwivelHingeJoint"
+	},
+	{
+		$vec3 axisA [-0.219,0.973,0.0732]
+		$vec3 axisB [-0.219,0.973,0.0732]
+		$string bone0 "Bind_LeftUpLeg"
+		$string bone1 "Bind_LeftLeg"
+		$float maxAngle 18
+		$float rigidity 0.08
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 axisA [0,-0.2307,-0.973]
+		$vec3 axisB [0.219,-0.973,-0.0732]
+		$string bone0 "Bind_LeftUpLeg"
+		$string bone1 "Bind_LeftLeg"
+		$float maxAngle 78.3
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 anchorPosition [12.9607,3.4221,3.0053]
+		$string bone0 "Bind_LeftLeg"
+		$string bone1 "Bind_LeftFoot"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [-0.078,0.0573,-0.9953]
+		$vec3 axisB [-0.078,0.0573,-0.9953]
+		$string bone0 "Bind_LeftLeg"
+		$string bone1 "Bind_LeftFoot"
+		$float rigidity 0.08
+		$string type "TwistJoint"
+	},
+	{
+		$vec3 axisA [0,-0.9578,-0.2873]
+		$vec3 axisB [-0.078,0.0573,-0.9953]
+		$string bone0 "Bind_LeftLeg"
+		$string bone1 "Bind_LeftFoot"
+		$float maxAngle 39.6
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 anchorPosition [-3.8127,38.6909,-0.006]
+		$string bone0 "Bind_Hips"
+		$string bone1 "Bind_RightUpLeg"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [-0.2491,-0.8305,0.4983]
+		$vec3 axisB [-0.2763,-0.9305,0.2404]
+		$string bone0 "Bind_Hips"
+		$string bone1 "Bind_RightUpLeg"
+		$float maxAngle 108
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 axisA [0.2763,0.9305,-0.2404]
+		$vec3 axisB [0.2763,0.9305,-0.2404]
+		$string bone0 "Bind_Hips"
+		$string bone1 "Bind_RightUpLeg"
+		$float maxAngle 45
+		$vec3 measurementAxisA [-0.7071,0,0.7071]
+		$float rigidity 0.08
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 anchorPosition [-8.864,21.6803,4.3882]
+		$string bone0 "Bind_RightUpLeg"
+		$string bone1 "Bind_RightLeg"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [-0.9756,0.2196,0]
+		$vec3 axisB [-0.219,-0.973,-0.0732]
+		$string bone0 "Bind_RightUpLeg"
+		$string bone1 "Bind_RightLeg"
+		$float rigidity 1
+		$string type "SwivelHingeJoint"
+	},
+	{
+		$vec3 axisA [0.219,0.973,0.0732]
+		$vec3 axisB [0.219,0.973,0.0732]
+		$string bone0 "Bind_RightUpLeg"
+		$string bone1 "Bind_RightLeg"
+		$float maxAngle 18
+		$float rigidity 0.08
+		$string type "TwistLimit"
+	},
+	{
+		$vec3 axisA [0,-0.2307,-0.973]
+		$vec3 axisB [-0.219,-0.973,-0.0732]
+		$string bone0 "Bind_RightUpLeg"
+		$string bone1 "Bind_RightLeg"
+		$float maxAngle 78.3
+		$float rigidity 1
+		$string type "SwingLimit"
+	},
+	{
+		$vec3 anchorPosition [-12.9749,3.42,3.0151]
+		$string bone0 "Bind_RightLeg"
+		$string bone1 "Bind_RightFoot"
+		$float rigidity 1
+		$string type "BallSocketJoint"
+	},
+	{
+		$vec3 axisA [0.078,0.0573,-0.9953]
+		$vec3 axisB [0.078,0.0573,-0.9953]
+		$string bone0 "Bind_RightLeg"
+		$string bone1 "Bind_RightFoot"
+		$float rigidity 0.08
+		$string type "TwistJoint"
+	},
+	{
+		$vec3 axisA [0,-0.9578,-0.2873]
+		$vec3 axisB [0.078,0.0573,-0.9953]
+		$string bone0 "Bind_RightLeg"
+		$string bone1 "Bind_RightFoot"
+		$float maxAngle 39.6
+		$float rigidity 1
+		$string type "SwingLimit"
+	}
+]
+$string rootBone "Bind_Hips"
