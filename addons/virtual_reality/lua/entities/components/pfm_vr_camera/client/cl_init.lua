@@ -94,6 +94,19 @@ function Component:ClearAnimationTarget()
 	end
 end
 
+function Component:GetBodyTarget()
+	local ent = self.m_animationTarget
+	if util.is_valid(ent) == false then
+		return
+	end
+	local imposteeC = ent:GetComponent("impersonatee")
+	if imposteeC == nil then
+		return ent
+	end
+	local impostorC = imposteeC:GetImpostor()
+	return util.is_valid(impostorC) and impostorC:GetEntity() or ent
+end
+
 function Component:SetAnimationTarget(ent)
 	self:ClearAnimationTarget()
 
@@ -116,10 +129,9 @@ function Component:SetAnimationTarget(ent)
 	if hmdC ~= nil then
 		vrBodyC:SetHmd(hmdC)
 
-		local vrPovControllerC = ent:AddComponent("vr_pov_controller")
-		vrPovControllerC:SetEnabled(true)
-		vrPovControllerC:SetTargetActor(ent)
+		local vrPovControllerC = self:GetBodyTarget():AddComponent("vr_pov_controller")
 		vrPovControllerC:SetHMD(entHmd)
+		vrPovControllerC:SetEnabled(true)
 		vrPovControllerC:SetCamera(self:GetEntity())
 		vrPovControllerC:SetPov(self:IsPov())
 		self.m_vrPovControllerC = vrPovControllerC
