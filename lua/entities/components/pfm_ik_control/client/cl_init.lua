@@ -47,6 +47,7 @@ end
 
 function Component:OnRemove()
 	util.remove(self.m_cbOnClick)
+	util.remove(self.m_entLine2)
 end
 
 function Component:OnClicked(buttonDown, hitPos)
@@ -96,6 +97,7 @@ end
 function Component:SetIkControl(ikC, boneId)
 	self.m_ikC = ikC
 	self.m_boneId = boneId
+	util.remove(self.m_entLine2)
 
 	local baseColor = Color.White
 	if util.is_valid(self.m_ikC) then
@@ -107,8 +109,17 @@ function Component:SetIkControl(ikC, boneId)
 				[ik.Control.TYPE_ANGULAR_PLANE] = Color.Pink,
 				[ik.Control.TYPE_STATE] = Color.OrangeRed,
 				[ik.Control.TYPE_ORIENTED_DRAG] = Color.LimeGreen,
+				[ik.Control.TYPE_POLE_TARGET] = Color.Blue,
 			}
 			baseColor = colors[type] or baseColor
+
+			if type == ik.Control.TYPE_POLE_TARGET then
+				local ent = ents.create("entity")
+				ent:AddComponent("debug_dotted_line")
+				ent:Spawn()
+				ent:SetColor(Color.Aqua)
+				self.m_entLine2 = ent
+			end
 		end
 	end
 	baseColor = baseColor:Copy()
@@ -145,10 +156,31 @@ function Component:OnTick()
 
 	local lineC = self:GetEntity():GetComponent(ents.COMPONENT_DEBUG_DOTTED_LINE)
 	if lineC ~= nil then
-		local bone = handle:GetTargetBone()
-		local bonePose = pose * math.Transform(bone:GetPos(), bone:GetRot())
-		lineC:SetStartPosition(bonePose:GetOrigin())
-		lineC:SetEndPosition(handlePos)
+		if handle:GetType() ~= util.IkRigConfig.Control.TYPE_POLE_TARGET then
+			local bone = handle:GetTargetBone()
+			local bonePose = pose * math.Transform(bone:GetPos(), bone:GetRot())
+			lineC:SetStartPosition(bonePose:GetOrigin())
+			lineC:SetEndPosition(handlePos)
+		else
+			local bone = handle:GetBaseBone()
+			local anchorPos = handle:GetTargetAnchor()
+
+			local startPos = pose * anchorPos
+			local endPos = handlePos
+			local len = startPos:Distance(endPos)
+			if util.is_valid(self.m_entLine2) then
+				local line2C = self.m_entLine2:GetComponent(ents.COMPONENT_DEBUG_DOTTED_LINE)
+				if line2C ~= nil then
+					local halfEndPos = pose * (anchorPos + handle:GetBaseAnchorPoleAxis() * len * 0.5)
+					line2C:SetStartPosition(startPos)
+					line2C:SetEndPosition(halfEndPos)
+					startPos = halfEndPos
+				end
+			end
+
+			lineC:SetStartPosition(startPos)
+			lineC:SetEndPosition(endPos)
+		end
 	end
 end
 
