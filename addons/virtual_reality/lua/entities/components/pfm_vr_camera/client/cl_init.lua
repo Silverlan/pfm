@@ -68,9 +68,6 @@ function Component:OnActiveStateChanged(active)
 	if self.m_vrBodyEnabledWhenDisabled then
 		active = true
 	end
-	if util.is_valid(self.m_vrBodyC) then
-		self.m_vrBodyC:SetEnabled(active)
-	end
 	if util.is_valid(self.m_vrPovControllerC) then
 		self.m_vrPovControllerC:SetEnabled(active)
 	end
@@ -90,14 +87,10 @@ function Component:ClearAnimationTarget()
 	if povC ~= nil then
 		povC:SetEnabled(false)
 	end
-	if util.is_valid(self.m_vrBodyC) then
-		self.m_vrBodyC:SetEnabled(false)
-	end
 	if util.is_valid(self.m_vrPovControllerC) then
 		self.m_vrPovControllerC:SetEnabled(false)
 	end
 	if util.is_valid(self.m_animationTarget) then
-		self.m_animationTarget:RemoveComponent("vr_body")
 		self.m_animationTarget:RemoveComponent("vr_pov_controller")
 	end
 end
@@ -128,16 +121,10 @@ function Component:SetAnimationTarget(ent)
 
 	self.m_animationTarget = ent
 
-	local vrBodyC = ent:AddComponent("vr_body")
-	vrBodyC:SetEnabled(true)
-	self.m_vrBodyC = vrBodyC
-
 	ent:PlayAnimation("reference")
 
 	local entHmd, hmdC = ents.citerator(ents.COMPONENT_VR_HMD)()
 	if hmdC ~= nil then
-		vrBodyC:SetHmd(hmdC)
-
 		local vrPovControllerC = self:GetBodyTarget():AddComponent("vr_pov_controller")
 		vrPovControllerC:SetHMD(entHmd)
 		vrPovControllerC:SetEnabled(true)
