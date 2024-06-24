@@ -8,6 +8,11 @@
 
 local Component = util.register_class("ents.PFMIkControl", BaseEntityComponent)
 
+Component:RegisterMember("Selected", udm.TYPE_BOOLEAN, false, {
+	onChange = function(self)
+		self:UpdateSelection()
+	end,
+}, bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT, ents.BaseEntityComponent.MEMBER_FLAG_BIT_USE_IS_GETTER))
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
@@ -31,6 +36,53 @@ function Component:Initialize()
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 
 	self:UpdateDebugBoxScale()
+end
+
+function Component:UpdateSelection()
+	local type = self:GetIkHandleType()
+	local selected = self:IsSelected()
+	local showBaseLine = true
+	if type == ik.Control.TYPE_POLE_TARGET and selected then
+		if util.is_valid(self.m_entLine2) == false then
+			local ent = ents.create("entity")
+			ent:AddComponent("debug_dotted_line")
+			ent:Spawn()
+			ent:SetColor(Color.Aqua)
+			self.m_entLine2 = ent
+		end
+	else
+		if type == ik.Control.TYPE_POLE_TARGET then
+			showBaseLine = false
+		end
+		util.remove(self.m_entLine2)
+	end
+	if showBaseLine then
+		self:AddEntityComponent("debug_dotted_line")
+	else
+		self:GetEntity():RemoveComponent("debug_dotted_line")
+	end
+	self:UpdateColor()
+end
+
+function Component:UpdateColor()
+	local baseColor = Color.White
+	local handleType = self:GetIkHandleType()
+	if handleType ~= nil then
+		local colors = {
+			[ik.Control.TYPE_DRAG] = Color.Yellow,
+			[ik.Control.TYPE_ANGULAR_PLANE] = Color.Pink,
+			[ik.Control.TYPE_STATE] = Color.OrangeRed,
+			[ik.Control.TYPE_ORIENTED_DRAG] = Color.LimeGreen,
+			[ik.Control.TYPE_POLE_TARGET] = Color.Blue,
+		}
+		baseColor = colors[handleType] or baseColor
+	end
+	baseColor = baseColor:Copy()
+
+	self.m_debugBoxC:SetColorOverride(baseColor)
+	self.m_debugBoxC:SetIgnoreDepthBuffer(true)
+	baseColor.a = self:IsSelected() and 200 or 100
+	self:GetEntity():SetColor(baseColor)
 end
 
 function Component:UpdateDebugBoxScale()
@@ -93,41 +145,25 @@ end
 function Component:GetBoneId()
 	return self.m_boneId
 end
+function Component:GetIkHandle()
+	if util.is_valid(self.m_ikC) == false then
+		return
+	end
+	return self.m_ikC:GetControl(self.m_boneId)
+end
+function Component:GetIkHandleType()
+	local ikHandle = self:GetIkHandle()
+	if ikHandle == nil then
+		return
+	end
+	return ikHandle:GetType()
+end
 
 function Component:SetIkControl(ikC, boneId)
 	self.m_ikC = ikC
 	self.m_boneId = boneId
-	util.remove(self.m_entLine2)
 
-	local baseColor = Color.White
-	if util.is_valid(self.m_ikC) then
-		local handle = self.m_ikC:GetControl(self.m_boneId)
-		if handle ~= nil then
-			local type = handle:GetType()
-			local colors = {
-				[ik.Control.TYPE_DRAG] = Color.Yellow,
-				[ik.Control.TYPE_ANGULAR_PLANE] = Color.Pink,
-				[ik.Control.TYPE_STATE] = Color.OrangeRed,
-				[ik.Control.TYPE_ORIENTED_DRAG] = Color.LimeGreen,
-				[ik.Control.TYPE_POLE_TARGET] = Color.Blue,
-			}
-			baseColor = colors[type] or baseColor
-
-			if type == ik.Control.TYPE_POLE_TARGET then
-				local ent = ents.create("entity")
-				ent:AddComponent("debug_dotted_line")
-				ent:Spawn()
-				ent:SetColor(Color.Aqua)
-				self.m_entLine2 = ent
-			end
-		end
-	end
-	baseColor = baseColor:Copy()
-
-	self.m_debugBoxC:SetColorOverride(baseColor)
-	self.m_debugBoxC:SetIgnoreDepthBuffer(true)
-	baseColor.a = 180
-	self:GetEntity():SetColor(baseColor)
+	self:UpdateSelection()
 
 	--[[
 	-- Scale according to bone size

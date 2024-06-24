@@ -91,6 +91,13 @@ function ents.PFMSkeleton:OnActorPropertySelected(udmComponent, item, path, sele
 			end
 		end
 	end
+
+	if util.is_valid(self.m_ikControls[boneId]) then
+		local ikControlC = self.m_ikControls[boneId]:GetComponent(ents.COMPONENT_PFM_IK_CONTROL)
+		if ikControlC ~= nil then
+			ikControlC:SetSelected(selected)
+		end
+	end
 end
 
 function ents.PFMSkeleton:OnRemove()
