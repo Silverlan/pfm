@@ -18,6 +18,7 @@ Component:RegisterMember("Pov", ents.MEMBER_TYPE_BOOLEAN, true, {
 		self:UpdatePovState()
 	end,
 }, "def+is")
+Component:RegisterMember("UpperBodyOnly", udm.TYPE_BOOLEAN, true, {}, "def+is")
 
 local g_vrModuleLoaded = false
 local g_vrModuleReady = false
@@ -130,6 +131,7 @@ function Component:SetAnimationTarget(ent)
 		vrPovControllerC:SetEnabled(true)
 		vrPovControllerC:SetCamera(self:GetEntity())
 		vrPovControllerC:SetPov(self:IsPov())
+		vrPovControllerC:SetUpperBodyOnly(self:IsUpperBodyOnly())
 		self.m_vrPovControllerC = vrPovControllerC
 	end
 end
