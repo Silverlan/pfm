@@ -60,12 +60,49 @@ function Component:Initialize()
 		table.insert(self.m_listeners, cb)
 	end
 
+	self:BindEvent(ents.AnimatedComponent.EVENT_ON_RESET_POSE, "OnResetPose")
+
 	self.m_boneChannels = {}
 	self.m_flexControllerChannels = {}
 	self.m_selected = false
 end
 function Component:IsInEditor()
 	return self:GetEntity():HasComponent(ents.COMPONENT_PFM_EDITOR_ACTOR)
+end
+function Component:OnResetPose()
+	local ent = self:GetEntity()
+	local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
+	if animC == nil then
+		return
+	end
+	local actor = self:GetActorData()
+	local anim = actor:FindComponent("animated")
+	if anim ~= nil then
+		local mdl = ent:GetModel()
+		local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
+		if skel ~= nil then
+			for i = 0, skel:GetBoneCount() - 1 do
+				local bone = skel:GetBone(i)
+				local boneName = bone:GetName()
+
+				local pos = anim:GetMemberValue("bone/" .. boneName .. "/position")
+				if pos ~= nil then
+					animC:SetBonePos(boneName, pos)
+				end
+
+				local rot = anim:GetMemberValue("bone/" .. boneName .. "/rotation")
+				if rot ~= nil then
+					animC:SetBoneRot(boneName, rot)
+				end
+
+				local scale = anim:GetMemberValue("bone/" .. boneName .. "/scale")
+				if scale ~= nil then
+					animC:SetBoneScale(boneName, scale)
+				end
+			end
+		end
+	end
+	game.update_animations(0.0)
 end
 function Component:OnComponentMembersChanged(c)
 	local pm = tool.get_filmmaker()
