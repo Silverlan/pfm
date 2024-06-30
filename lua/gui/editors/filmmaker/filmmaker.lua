@@ -1446,6 +1446,66 @@ end
 function gui.WIFilmmaker:GetActiveCamera()
 	return game.get_render_scene_camera()
 end
+function gui.WIFilmmaker:RandomizeUuids(ignoreActors)
+	if ignoreActors == nil then
+		ignoreActors = true
+	end
+	local session = self:GetSession()
+	local schema = session:GetSchema()
+	local lib = schema:GetLibrary()
+	local referenceables = table.copy(lib.detail.referenceables)
+	local oldUuidToNew = {}
+	local num = 0
+	local filter
+	if ignoreActors then
+		filter = function(o)
+			local t = util.get_type_name(o)
+			return t ~= "Actor" and t ~= "EntityComponent"
+		end
+	end
+	filter = filter or function()
+		return true
+	end
+	for uuid, o in pairs(referenceables) do
+		if filter(o) then
+			local newUuid = tostring(util.generate_uuid_v4())
+			print("Changing uuid of object " .. tostring(o) .. " from " .. uuid .. " to " .. newUuid .. "...")
+			o:ChangeUniqueId(newUuid)
+			oldUuidToNew[uuid] = newUuid
+			num = num + 1
+		end
+	end
+
+	local udmData = session:GetUdmData()
+	local function iterate_udm_data(udmData, parent, key)
+		local type = udmData:GetType()
+		if type == udm.TYPE_ELEMENT then
+			for name, child in pairs(udmData:GetChildren()) do
+				iterate_udm_data(child, udmData, name)
+			end
+		elseif udm.is_array_type(type) then
+			local childType = udmData:GetValueType()
+			if childType == udm.TYPE_ELEMENT then
+				for _, el in ipairs(udmData:GetArrayValues()) do
+					iterate_udm_data(el)
+				end
+			elseif childType == udm.TYPE_STRING then
+				for i, val in ipairs(udmData:GetArrayValues()) do
+					if oldUuidToNew[val] ~= nil then
+						parent:SetValue(i - 1, udm.TYPE_STRING, oldUuidToNew[val])
+					end
+				end
+			end
+		elseif type == udm.TYPE_STRING then
+			local curVal = udmData:GetValue()
+			if oldUuidToNew[curVal] ~= nil then
+				parent:SetValue(key, udm.TYPE_STRING, oldUuidToNew[curVal])
+			end
+		end
+	end
+	iterate_udm_data(udmData)
+	return num
+end
 function gui.WIFilmmaker:GetMainFilmClip()
 	local session = self:GetSession()
 	return (session ~= nil) and session:GetActiveClip() or nil

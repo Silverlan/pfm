@@ -853,21 +853,17 @@ function Element:InitializeMenuBar()
 						end
 					end
 				end)
-				local pSubItem = pContext:AddItem("Test build lightmaps High", function(pItem)
-					local actorEditor = self:GetActorEditor()
-					if util.is_valid(actorEditor) == false then
-						return
-					end
-					for _, actor in ipairs(actorEditor:GetSelectedActors()) do
-						local ent = actor:FindEntity()
-						if util.is_valid(ent) then
-							ent:AddComponent(ents.COMPONENT_LIGHT_MAP_RECEIVER)
-							ent:AddComponent(ents.COMPONENT_LIGHT_MAP)
-							local bakedC = ent:AddComponent("pfm_baked_lighting")
-							bakedC:GenerateLightmaps(false, 10)
-						end
-					end
+
+				local pSubItem = pContext:AddItem("Randomize Uuids", function(pItem)
+					local num = self:RandomizeUuids()
+					pfm.create_popup_message(num .. " UUIDs have been randomized", 10)
 				end)
+				pSubItem:SetName("randomize_uuids")
+
+				local pSubItem = pContext:AddItem(locale.get_text("pfm_reload_in_dev_mode"), function(pItem)
+					console.run("pfm -log all -dev -reload")
+				end)
+				pSubItem:SetName("reload_in_dev_mode")
 
 				local pSubItem = pContext:AddItem(locale.get_text("pfm_reload_in_dev_mode"), function(pItem)
 					console.run("pfm -log all -dev -reload")
