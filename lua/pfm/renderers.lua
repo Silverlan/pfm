@@ -52,6 +52,11 @@ local function load_renderers()
 
 			local script = udmRenderer:GetValue("script", udm.TYPE_STRING)
 			if script ~= nil then
+				-- The script path should always be absolute, so
+				-- we'll ensure the script path starts with a leading slash
+				if script:sub(1, 1) ~= "/" then
+					script = "/" .. script
+				end
 				include(script)
 			end
 
