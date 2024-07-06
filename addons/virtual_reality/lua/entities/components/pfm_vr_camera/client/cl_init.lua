@@ -48,13 +48,15 @@ function Component:Initialize()
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF, "OnTurnOff")
 	self:BindEvent(ents.PFMCamera.EVENT_ON_ACTIVE_STATE_CHANGED, "OnActiveStateChanged")
 
+	self.m_isActive = false
 	local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
 	if toggleC == nil or toggleC:IsTurnedOn() then
 		self:OnTurnOn()
+		self:OnActiveStateChanged(true)
 	end
 end
 -- If enabled, the VR body will be simulated even if the camera isn't active. For debugging
--- purpose only.
+-- purposes only.
 function Component:SetVrBodyEnabledWhenDisabled(enabled)
 	self.m_vrBodyEnabledWhenDisabled = enabled
 end
@@ -66,12 +68,18 @@ function Component:OnActiveStateChanged(active)
 		end
 	end
 
+	self.m_active = active
+	self:UpdatePovControllerAvailability()
+end
+function Component:UpdatePovControllerAvailability()
+	if util.is_valid(self.m_vrPovControllerC) == false or self.m_vrPovControllerC:IsEnabled() == false then
+		return
+	end
+	local active = self.m_active
 	if self.m_vrBodyEnabledWhenDisabled then
 		active = true
 	end
-	if util.is_valid(self.m_vrPovControllerC) then
-		self.m_vrPovControllerC:SetEnabled(active)
-	end
+	self.m_vrPovControllerC:SetEnabled(active)
 end
 function Component:UpdateTargetActor()
 	local targetActor = self:GetTargetActor()
@@ -83,6 +91,7 @@ function Component:UpdateTargetActor()
 end
 function Component:ClearAnimationTarget()
 	util.remove(self.m_cbUpdateCameraPose)
+	util.remove(self.m_cbPovControllerAvail)
 
 	local povC = self:GetEntity():AddComponent("pov_camera")
 	if povC ~= nil then
@@ -132,6 +141,12 @@ function Component:SetAnimationTarget(ent)
 		vrPovControllerC:SetCamera(self:GetEntity())
 		vrPovControllerC:SetPov(self:IsPov())
 		vrPovControllerC:SetUpperBodyOnly(self:IsUpperBodyOnly())
+		self.m_cbPovControllerAvail = vrPovControllerC:AddEventCallback(
+			ents.VrPovController.EVENT_ON_UPDATE_AVAILABILITY,
+			function()
+				self:UpdatePovControllerAvailability()
+			end
+		)
 		self.m_vrPovControllerC = vrPovControllerC
 	end
 end
