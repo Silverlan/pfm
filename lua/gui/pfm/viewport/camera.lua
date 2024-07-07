@@ -427,6 +427,10 @@ function gui.PFMCoreViewportBase:SwitchToWorkCamera(ignoreGameplay)
 		self.m_btCamera:SetText(locale.get_text("pfm_work_camera"))
 	end
 
+	for ent, c in ents.citerator(ents.COMPONENT_PFM_CAMERA) do
+		ent:TurnOff()
+	end
+
 	self:SetCameraView(gui.PFMCoreViewportBase.CAMERA_VIEW_GAME)
 	self:UpdateWorkCamera()
 

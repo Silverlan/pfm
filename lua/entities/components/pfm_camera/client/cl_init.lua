@@ -80,18 +80,21 @@ function Component:Initialize()
 		camC:UpdateProjectionMatrix()
 	end
 
-	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON, "OnTurnOn")
-	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF, "OnTurnOff")
+	if pfm.is_editor() then
+		-- Show frustum model in editor
+		self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON, "OnTurnOn")
+		self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF, "OnTurnOff")
 
-	camC:GetFOVProperty():AddCallback(function()
-		self:SetFrustumModelDirty()
-	end)
-	camC:GetNearZProperty():AddCallback(function()
-		self:SetFrustumModelDirty()
-	end)
-	camC:GetFarZProperty():AddCallback(function()
-		self:SetFrustumModelDirty()
-	end)
+		camC:GetFOVProperty():AddCallback(function()
+			self:SetFrustumModelDirty()
+		end)
+		camC:GetNearZProperty():AddCallback(function()
+			self:SetFrustumModelDirty()
+		end)
+		camC:GetFarZProperty():AddCallback(function()
+			self:SetFrustumModelDirty()
+		end)
+	end
 
 	self.m_listeners = {}
 end
@@ -291,7 +294,7 @@ function Component:UpdateModel(updateBuffers)
 end
 function Component:SetFrustumModelVisible(visible)
 	local actorC = self:GetEntity():GetComponent(ents.COMPONENT_PFM_ACTOR)
-	if actorC ~= nil and actorC:IsInEditor() then
+	if actorC ~= nil and not actorC:IsInEditor() then
 		-- Don't display wireframe model if we're not in the editor
 		return
 	end
