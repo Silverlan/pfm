@@ -26,6 +26,7 @@ function ents.PFMSoundSource:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self:AddEntityComponent(ents.COMPONENT_SOUND)
+	self.m_playing = false
 end
 
 function ents.PFMSoundSource:OnRemove()
@@ -60,6 +61,7 @@ function ents.PFMSoundSource:Setup(clipC, sndInfo)
 end
 
 function ents.PFMSoundSource:Play()
+	self.m_playing = true
 	local sndC = self:GetEntity():GetComponent(ents.COMPONENT_SOUND)
 	if sndC ~= nil then
 		sndC:Play()
@@ -67,6 +69,7 @@ function ents.PFMSoundSource:Play()
 end
 
 function ents.PFMSoundSource:Pause()
+	self.m_playing = false
 	local sndC = self:GetEntity():GetComponent(ents.COMPONENT_SOUND)
 	if sndC ~= nil then
 		sndC:Pause()
@@ -82,7 +85,7 @@ function ents.PFMSoundSource:OnOffsetChanged(offset)
 	if snd == nil then
 		return
 	end
-	if snd:IsPlaying() == false then
+	if snd:IsPlaying() == false and self.m_playing then
 		-- Sound has probably reached its end, but we may have changed its offset to before
 		-- its end time, so we'll restart it here
 		-- TODO: Find a better solution
