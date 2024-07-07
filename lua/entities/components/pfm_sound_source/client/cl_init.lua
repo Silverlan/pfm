@@ -64,6 +64,7 @@ function ents.PFMSoundSource:Play()
 	self.m_playing = true
 	local sndC = self:GetEntity():GetComponent(ents.COMPONENT_SOUND)
 	if sndC ~= nil then
+		sndC:SetOffset(self.m_clipComponent:GetOffset())
 		sndC:Play()
 	end
 end
