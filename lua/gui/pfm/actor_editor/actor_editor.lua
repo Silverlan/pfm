@@ -1481,7 +1481,8 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 	end
 	if ctrl ~= nil then
 		ctrl:AddCallback("PopulateContextMenu", function(ctrl, context)
-			self:PopulatePropertyContextMenu(context, actorData, controlData)
+			local propData = { actorData = actorData, controlData = controlData }
+			self:PopulatePropertyContextMenu(context, { propData }, propData)
 		end)
 
 		local identifier = memberInfo.name:replace("/", "_")
@@ -1668,91 +1669,163 @@ function gui.PFMActorEditor:AddContextMenuConstraintOptions(context, prop0, prop
 	end
 	return false
 end
-function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, controlData)
+function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clickedPropData)
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
 	if animManager ~= nil then
-		local type = controlData.type
-		local exprIcon
-		local enable_expr_icon
-		local function clear_expression()
-			pfm.undoredo.push(
-				"set_property_expression",
-				pfm.create_command(
-					"set_property_expression",
-					tostring(actorData.actor:GetUniqueId()),
-					controlData.path,
-					nil,
-					controlData.type
-				)
-			)()
-		end
+		--[[local enable_expr_icon
 		enable_expr_icon = function(enabled)
-			self:DoUpdatePropertyIcons(actorData, controlData)
+			self:DoUpdatePropertyIcons(actorData, clickedControlData)
 		end
 		local pm = pfm.get_project_manager()
 		local animManager = pm:GetAnimationManager()
-		if animManager ~= nil and animManager:GetValueExpression(actorData.actor, controlData.path) ~= nil then
+		if animManager ~= nil and animManager:GetValueExpression(actorData.actor, clickedControlData.path) ~= nil then
 			enable_expr_icon(true)
-		end
+		end]]
 
-		local expr = animManager:GetValueExpression(actorData.actor, controlData.path)
-		if expr ~= nil then
+		local hasExpr = false
+		for _, pd in ipairs(propDatas) do
+			if animManager:GetValueExpression(pd.actorData.actor, pd.controlData.path) ~= nil then
+				hasExpr = true
+				break
+			end
+		end
+		if hasExpr then
 			context
 				:AddItem(locale.get_text("pfm_clear_expression"), function()
-					clear_expression()
+					local cmd = pfm.create_command("composition")
+					for _, pd in ipairs(propDatas) do
+						cmd:AddSubCommand(
+							"set_property_expression",
+							tostring(pd.actorData.actor:GetUniqueId()),
+							pd.controlData.path,
+							nil,
+							pd.controlData.type
+						)
+					end
+					pfm.undoredo.push("set_property_expression", cmd)()
 				end)
 				:SetName("clear_expression")
-			context
-				:AddItem(locale.get_text("pfm_copy_expression"), function()
-					util.set_clipboard_string(expr)
-				end)
-				:SetName("copy_expression")
+			if #propDatas == 1 then
+				context
+					:AddItem(locale.get_text("pfm_copy_expression"), function()
+						local expr = animManager:GetValueExpression(
+							clickedPropData.actorData.actor,
+							clickedPropData.controlData.path
+						)
+						if expr == nil then
+							return
+						end
+						util.set_clipboard_string(expr)
+					end)
+					:SetName("copy_expression")
+			end
 		end
-		context
-			:AddItem(locale.get_text("pfm_set_expression"), function()
-				self:OpenPropertyExpressionWindow(actorData, controlData)
-			end)
-			:SetName("set_expression")
-		if controlData.path ~= nil then
+		if #propDatas == 1 then
+			context
+				:AddItem(locale.get_text("pfm_set_expression"), function()
+					self:OpenPropertyExpressionWindow(clickedPropData.actorData, clickedPropData.controlData)
+				end)
+				:SetName("set_expression")
+		end
+		if #propDatas == 1 and clickedPropData.controlData.path ~= nil then
 			context
 				:AddItem(locale.get_text("pfm_copy_property_path"), function()
-					util.set_clipboard_string(ents.create_uri(actorData.actor:GetUniqueId(), controlData.path))
+					util.set_clipboard_string(
+						ents.create_uri(clickedPropData.actorData.actor:GetUniqueId(), clickedPropData.controlData.path)
+					)
 				end)
 				:SetName("copy_property_path")
 		end
-		local anim, channel = animManager:FindAnimationChannel(actorData.actor, controlData.path, false)
-		if channel ~= nil then
+		local cdsWithAnimData = {}
+		local cdsWithoutAnimData = {}
+		for _, pd in ipairs(propDatas) do
+			local anim, channel = animManager:FindAnimationChannel(pd.actorData.actor, pd.controlData.path, false)
+			if channel ~= nil then
+				table.insert(cdsWithAnimData, {
+					actorData = pd.actorData,
+					controlData = pd.controlData,
+					anim = anim,
+					channel = channel,
+				})
+			else
+				table.insert(cdsWithoutAnimData, {
+					actorData = pd.actorData,
+					controlData = pd.controlData,
+				})
+			end
+		end
+		if #cdsWithAnimData > 0 then
 			context
 				:AddItem(locale.get_text("pfm_clear_animation"), function()
 					tool.get_filmmaker()
-						:MakeActorPropertyAnimated(actorData.actor, controlData.path, controlData.type, false)
+					local cmd = pfm.create_command("composition")
+					for _, cdData in ipairs(cdsWithAnimData) do
+						local controlData = cdData.controlData
+						tool.get_filmmaker():MakeActorPropertyAnimated(
+							cdData.actorData.actor,
+							controlData.path,
+							controlData.type,
+							false,
+							nil,
+							cmd
+						)
+					end
+					pfm.undoredo.push("clear_property_animation", cmd)()
 				end)
 				:SetName("clear_animation")
-		else
+		end
+		if #cdsWithoutAnimData > 0 then
 			context
 				:AddItem(locale.get_text("pfm_make_animated"), function()
-					tool.get_filmmaker():MakeActorPropertyAnimated(actorData.actor, controlData.path, controlData.type)
+					local cmd = pfm.create_command("composition")
+					for _, cdData in ipairs(cdsWithoutAnimData) do
+						tool.get_filmmaker():MakeActorPropertyAnimated(
+							cdData.actorData.actor,
+							cdData.controlData.path,
+							cdData.controlData.type,
+							nil,
+							nil,
+							cmd
+						)
+					end
+					pfm.undoredo.push("make_property_animated", cmd)()
 				end)
 				:SetName("make_animated")
 
-			local memberInfo = self:GetMemberInfo(actorData.actor, controlData.path)
-			if memberInfo ~= nil and memberInfo.default ~= nil then
+			local controlDataMemberInfos = {}
+			for _, pd in ipairs(propDatas) do
+				local memberInfo = self:GetMemberInfo(pd.actorData.actor, pd.controlData.path)
+				if memberInfo ~= nil and memberInfo.default ~= nil then
+					table.insert(controlDataMemberInfos, {
+						memberInfo = memberInfo,
+						actorData = pd.actorData,
+						controlData = pd.controlData,
+					})
+				end
+			end
+
+			if #controlDataMemberInfos > 0 then
 				context
 					:AddItem(locale.get_text("pfm_set_to_default"), function()
-						memberInfo = self:GetMemberInfo(actorData.actor, controlData.path)
-						if memberInfo == nil or memberInfo.default == nil then
-							return
+						local cmd = pfm.create_command("composition")
+						for _, cdInfo in ipairs(controlDataMemberInfos) do
+							local controlData = cdInfo.controlData
+							local memberInfo = self:GetMemberInfo(cdInfo.actorData.actor, controlData.path)
+							if memberInfo ~= nil and memberInfo.default ~= nil then
+								tool.get_filmmaker():ChangeActorPropertyValue(
+									cdInfo.actorData.actor,
+									controlData.path,
+									memberInfo.type,
+									controlData.getValue(),
+									memberInfo.default,
+									nil,
+									nil,
+									cmd
+								)
+							end
 						end
-						tool.get_filmmaker():ChangeActorPropertyValue(
-							actorData.actor,
-							controlData.path,
-							memberInfo.type,
-							controlData.getValue(),
-							memberInfo.default,
-							nil,
-							true
-						)
+						pfm.undoredo.push("change_animation_value", cmd)()
 					end)
 					:SetName("reset_to_base_value")
 			end
@@ -1762,7 +1835,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 	local function init_props(props)
 		local hasControlData = false
 		for i, propOther in ipairs(props) do
-			if propOther.controlData == controlData then
+			if propOther.controlData == clickedPropData.controlData then
 				if i ~= 1 then
 					-- Make sure that the context menu property is the first in the list
 					local tmp = props[1]
@@ -1775,7 +1848,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 		end
 
 		if hasControlData == false then
-			table.insert(props, 1, { actorData = actorData, controlData = controlData })
+			table.insert(props, 1, { actorData = clickedPropData.actorData, controlData = clickedPropData.controlData })
 		end
 	end
 
@@ -1784,9 +1857,9 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 	if #props > 0 then
 		local constraintProps = props
 		if #constraintProps > 2 then
-			constraintProps = { { actorData = actorData, controlData = controlData } }
+			constraintProps = { { actorData = clickedPropData.actorData, controlData = clickedPropData.controlData } }
 		end -- If more than two properties are selected, we'll only show self-contained constraints for the property that was clicked
-		if constraintProps[1].controlData == controlData then
+		if constraintProps[1].controlData == clickedPropData.controlData then
 			local t = {}
 			for _, propData in ipairs(constraintProps) do
 				table.insert(t, {
@@ -1808,14 +1881,15 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 	props = self:GetSelectedProperties()
 	init_props(props)
 	if
-		util.is_valid(controlData.treeElement)
-		and controlData.treeElement.__elDriverActorData ~= nil
-		and util.is_valid(controlData.treeElement.__elDriverActorData.icon)
+		#propDatas == 1
+		and util.is_valid(clickedPropData.controlData.treeElement)
+		and clickedPropData.controlData.treeElement.__elDriverActorData ~= nil
+		and util.is_valid(clickedPropData.controlData.treeElement.__elDriverActorData.icon)
 	then
 		-- Don't allow adding driver if there already is one
 	elseif #props > 0 then
 		local prop = props[1]
-		if controlData.type < udm.TYPE_COUNT then
+		if clickedPropData.controlData.type < udm.TYPE_COUNT then
 			context
 				:AddItem(locale.get_text("pfm_add_driver"), function()
 					local actor = self:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER, {
@@ -1891,7 +1965,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 								end
 							end
 
-							if controlData.set ~= nil then
+							if clickedPropData.controlData.set ~= nil then
 								elUdm:Clear()
 								elUdm:Merge(params, udm.MERGE_FLAG_BIT_DEEP_COPY)
 
@@ -1904,10 +1978,10 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, actorData, cont
 		end
 	end
 
-	if controlData.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY then
+	if #propDatas == 1 and clickedPropData.controlData.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY then
 		context
 			:AddItem(locale.get_text("pfm_go_to_property"), function()
-				local val = controlData.getValue()
+				local val = clickedPropData.controlData.getValue()
 				if val == nil then
 					return
 				end
@@ -2099,7 +2173,10 @@ function gui.PFMActorEditor:AddControl(
 			end
 			pContext:SetPos(input.get_cursor_pos())
 
-			self:PopulatePropertyContextMenu(pContext, actorData, controlData)
+			self:PopulatePropertyContextMenu(pContext, self:GetSelectedProperties(), {
+				actorData = actorData,
+				controlData = controlData,
+			})
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED
 		elseif button == input.MOUSE_BUTTON_LEFT then
