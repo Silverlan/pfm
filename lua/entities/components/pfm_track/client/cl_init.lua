@@ -146,6 +146,7 @@ function ents.PFMTrack:OnOffsetChanged(offset, gameViewFlags)
 	end
 
 	-- Update film and channel clips
+	local activeClipsChanged = false
 	for _, clipSet in ipairs(self.m_cachedUpdateInfo.clipSetInfos) do
 		local activeClipSetOutOfRange
 		local newClipSet
@@ -183,22 +184,30 @@ function ents.PFMTrack:OnOffsetChanged(offset, gameViewFlags)
 					ent:Remove()
 				end
 				self.m_activeClips[clip] = nil
+				activeClipsChanged = true
 			end
 
 			-- Initialize the new film clip
 			local clip = newClipSet
 			if clip.TypeName == "FilmClip" then
 				self.m_activeClips[clip] = self:CreateFilmClip(clip)
+				activeClipsChanged = true
 			elseif clip.TypeName == "AnimationClip" then
 				-- self.m_activeClips[clip] = self:CreateChannelClip(clip) -- Obsolete?
 			elseif clip.TypeName == "AudioClip" then
 				self.m_activeClips[clip] = self:CreateAudioClip(clip)
+				activeClipsChanged = true
 			elseif clip.TypeName == "OverlayClip" then
 				self.m_activeClips[clip] = self:CreateOverlayClip(clip)
+				activeClipsChanged = true
 			else
 				pfm.log("Unsupported clip type '" .. clip.TypeName .. "'! Ignoring...", pfm.LOG_CATEGORY_PFM_GAME)
 			end
 		end
+	end
+
+	if activeClipsChanged then
+		self:UpdateUpdateCacheInfo()
 	end
 
 	for _, c in ipairs(self.m_cachedUpdateInfo.activeClipComponents) do
