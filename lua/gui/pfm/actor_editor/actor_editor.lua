@@ -1760,6 +1760,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 				:AddItem(locale.get_text("pfm_clear_animation"), function()
 					tool.get_filmmaker()
 					local cmd = pfm.create_command("composition")
+					local actors = {}
 					for _, cdData in ipairs(cdsWithAnimData) do
 						local controlData = cdData.controlData
 						tool.get_filmmaker():MakeActorPropertyAnimated(
@@ -1770,8 +1771,12 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 							nil,
 							cmd
 						)
+						actors[cdData.actorData.actor] = true
 					end
 					pfm.undoredo.push("clear_property_animation", cmd)()
+					for actor, _ in pairs(actors) do
+						tool.get_filmmaker():UpdateActorAnimationState(actor, false)
+					end
 				end)
 				:SetName("clear_animation")
 		end
@@ -1779,6 +1784,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 			context
 				:AddItem(locale.get_text("pfm_make_animated"), function()
 					local cmd = pfm.create_command("composition")
+					local actors = {}
 					for _, cdData in ipairs(cdsWithoutAnimData) do
 						tool.get_filmmaker():MakeActorPropertyAnimated(
 							cdData.actorData.actor,
@@ -1788,8 +1794,12 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 							nil,
 							cmd
 						)
+						actors[cdData.actorData.actor] = true
 					end
 					pfm.undoredo.push("make_property_animated", cmd)()
+					for actor, _ in pairs(actors) do
+						tool.get_filmmaker():UpdateActorAnimationState(actor, true)
+					end
 				end)
 				:SetName("make_animated")
 
