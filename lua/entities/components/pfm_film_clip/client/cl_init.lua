@@ -202,7 +202,7 @@ function ents.PFMFilmClip:SetOffset(offset, gameViewFlags)
 		end
 	end
 
-	self:BroadcastEvent(ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED, { offset, absOffset })
+	self:InvokeEventCallbacks(ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED, { offset, absOffset })
 end
 
 function ents.PFMFilmClip:UpdateClip(gameViewFlags)
