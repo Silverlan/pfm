@@ -225,7 +225,7 @@ function Component:OnTick(dt)
 end
 
 function Component:CreateEffector(ikControllerIdx, effectorIdx)
-	local entEffector = ents.create("entity")
+	local entEffector = self:GetEntity():CreateChild("entity")
 	--local ikC = entEffector:AddComponent("pfm_ik_effector_target")
 	--if(ikC ~= nil) then ikC:SetTargetActor(self:GetEntity(),ikControllerIdx,effectorIdx) end -- TODO
 	if self:GetEntity():IsSpawned() then

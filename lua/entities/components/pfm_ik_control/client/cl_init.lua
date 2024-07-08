@@ -44,7 +44,7 @@ function Component:UpdateSelection()
 	local showBaseLine = true
 	if type == ik.Control.TYPE_POLE_TARGET and selected then
 		if util.is_valid(self.m_entLine2) == false then
-			local ent = ents.create("entity")
+			local ent = self:GetEntity():CreateChild("entity")
 			ent:AddComponent("debug_dotted_line")
 			ent:Spawn()
 			ent:SetColor(Color.Aqua)

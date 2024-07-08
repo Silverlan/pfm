@@ -237,7 +237,7 @@ function ents.PFMTrack:CreateFilmClip(filmClipData)
 		return ent
 	end
 	pfm.log("Creating film clip '" .. filmClipData:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
-	local ent = ents.create("pfm_film_clip")
+	local ent = self:GetEntity():CreateChild("pfm_film_clip")
 	ent:GetComponent(ents.COMPONENT_PFM_FILM_CLIP):Setup(filmClipData, self)
 	ent:Spawn()
 
@@ -254,7 +254,7 @@ function ents.PFMTrack:CreateChannelClip(channelClipData)
 		return
 	end
 	pfm.log("Creating channel clip '" .. channelClipData:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
-	local ent = ents.create("pfm_channel_clip")
+	local ent = self:GetEntity():CreateChild("pfm_channel_clip")
 	ent:GetComponent(ents.COMPONENT_PFM_CHANNEL_CLIP):Setup(channelClipData, self)
 	ent:Spawn()
 
@@ -271,7 +271,7 @@ function ents.PFMTrack:CreateAudioClip(audioClipData)
 		return
 	end
 	pfm.log("Creating audio clip '" .. audioClipData:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
-	local ent = ents.create("pfm_audio_clip")
+	local ent = self:GetEntity():CreateChild("pfm_audio_clip")
 	ent:GetComponent(ents.COMPONENT_PFM_AUDIO_CLIP):Setup(audioClipData, self)
 	ent:Spawn()
 
@@ -288,7 +288,7 @@ function ents.PFMTrack:CreateOverlayClip(overlayClipData)
 		return
 	end
 	pfm.log("Creating overlay clip '" .. overlayClipData:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
-	local ent = ents.create("pfm_overlay_clip")
+	local ent = self:GetEntity():CreateChild("pfm_overlay_clip")
 	ent:GetComponent(ents.COMPONENT_PFM_OVERLAY_CLIP):Setup(overlayClipData, self)
 	ent:Spawn()
 

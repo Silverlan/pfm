@@ -21,7 +21,7 @@ function Component:GetDottedLine(i)
 	if util.is_valid(self.m_dottedLines[i]) then
 		return self.m_dottedLines[i]
 	end
-	local ent = ents.create("debug_dotted_line")
+	local ent = self:GetEntity():CreateChild("debug_dotted_line")
 	ent:Spawn()
 	ent:SetColor(Color.Red)
 	self.m_dottedLines[i] = ent

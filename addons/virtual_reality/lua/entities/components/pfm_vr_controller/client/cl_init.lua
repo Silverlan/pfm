@@ -52,7 +52,7 @@ function ents.PFMVRController:InitializeInterface()
 	self.m_guiInterface:SetAlwaysUpdate(true) -- The element will not be drawn on screen, but we need it to update anyway
 	self.m_guiInterface:SetVisible(false)
 
-	self.m_guiEnt = ents.create("entity")
+	self.m_guiEnt = self:GetEntity():CreateChild("entity")
 	local mdlC = self.m_guiEnt:AddComponent(ents.COMPONENT_MODEL)
 	self.m_guiEnt:AddComponent(ents.COMPONENT_RENDER)
 	self.m_guiEnt:AddComponent(ents.COMPONENT_TRANSFORM)

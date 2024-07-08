@@ -43,7 +43,7 @@ function Component:InitializeImpostor()
 		return self.m_impostorC
 	end
 	local entThis = self:GetEntity()
-	local ent = ents.create("impostor")
+	local ent = self:GetEntity():CreateChild("impostor")
 	if util.is_valid(ent) == false then
 		return
 	end

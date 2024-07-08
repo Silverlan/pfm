@@ -31,7 +31,7 @@ function ents.PFMOverlayClip:Setup(overlayClip, trackC)
 	self.m_track = trackC
 
 	local overlayData = overlayClip:GetSound() -- MaterialOverlayFXClip,fadeInTime,fadeOutTime
-	local ent = ents.create("pfm_material_overlay")
+	local ent = self:GetEntity():CreateChild("pfm_material_overlay")
 	local overlayC = ent:GetComponent(ents.COMPONENT_PFM_MATERIAL_OVERLAY)
 	if(overlayC ~= nil) then overlayC:Setup(self,overlayData) end
 	--Setup(filmClipC,matOverlayData,fadeInTime,fadeOutTime)

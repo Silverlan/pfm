@@ -168,7 +168,7 @@ function ents.PFMSkeleton:UpdateIkControl(boneId)
 		return
 	end
 
-	local entControl = ents.create("entity")
+	local entControl = self:GetEntity():CreateChild("entity")
 	self.m_ikControls[boneId] = entControl
 	local c = entControl:AddComponent("pfm_ik_control")
 	entControl:Spawn()

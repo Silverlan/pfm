@@ -37,7 +37,7 @@ function Component:OnEntitySpawn()
 	self.m_boneDistance = len
 
 	local mdl = self:CreateHingeModel(len, swingLimit:GetMaxAngle() * 2.0)
-	local ent = ents.create("prop_dynamic")
+	local ent = self:GetEntity():CreateChild("prop_dynamic")
 	ent:SetModel(mdl)
 	ent:SetColor(Color(255, 255, 255, 20))
 	ent:SyncScenes(self:GetEntity())

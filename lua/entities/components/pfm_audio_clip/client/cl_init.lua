@@ -30,7 +30,7 @@ function ents.PFMAudioClip:Setup(audioClip, trackC)
 	self.m_track = trackC
 
 	local soundData = audioClip:GetSound()
-	local ent = ents.create("pfm_sound_source")
+	local ent = self:GetEntity():CreateChild("pfm_sound_source")
 	local sndC = ent:GetComponent(ents.COMPONENT_PFM_SOUND_SOURCE)
 	if sndC ~= nil then
 		sndC:Setup(self, soundData)

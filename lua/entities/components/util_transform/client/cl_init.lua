@@ -430,7 +430,7 @@ function Component:CreateTransformUtility(id, axis, type)
 		return
 	end
 	local trC = self:GetEntity():GetComponent(ents.COMPONENT_TRANSFORM)
-	local entArrow = ents.create("entity")
+	local entArrow = self:GetEntity():CreateChild("entity")
 	local arrowC = entArrow:AddComponent("util_transform_arrow")
 	entArrow:Spawn()
 	arrowC:SetAxis(axis)

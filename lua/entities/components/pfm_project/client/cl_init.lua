@@ -161,7 +161,7 @@ function Component:Start()
 
 	debug.start_profiling_task("pfm_start_game_view")
 	self:AddEntityComponent("pfm_animation_manager")
-	local ent = ents.create("pfm_track")
+	local ent = self:GetEntity():CreateChild("pfm_track")
 	local trackC = ent:GetComponent(ents.COMPONENT_PFM_TRACK)
 	trackC:Setup(self.m_project:GetSession(), nil, self)
 	ent:Spawn()

@@ -45,7 +45,7 @@ function Component:OnEntitySpawn()
 		maxAngleY = swingLimit:GetMaxAngleY()
 	end
 	local mdl = self:CreateConeModel(len, maxAngleX, maxAngleY)
-	local ent = ents.create("prop_dynamic")
+	local ent = self:GetEntity():CreateChild("prop_dynamic")
 	ent:SetModel(mdl)
 	ent:SetColor(Color(255, 255, 255, 20))
 	ent:SyncScenes(self:GetEntity())

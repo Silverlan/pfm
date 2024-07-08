@@ -33,7 +33,7 @@ function Component:OnEntitySpawn()
 				local bone = ctrl:GetTargetBone()
 				local boneId = (bone ~= nil) and skel:LookupBone(bone:GetName()) or -1
 				if boneId ~= -1 then
-					local ent = ents.create("entity")
+					local ent = self:GetEntity():CreateChild("entity")
 					table.insert(self.m_controlEnts, ent)
 					local ikControlC = ent:AddComponent("pfm_ik_control")
 					if ikControlC ~= nil then

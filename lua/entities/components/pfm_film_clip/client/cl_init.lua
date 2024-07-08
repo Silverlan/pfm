@@ -86,7 +86,7 @@ function ents.PFMFilmClip:Setup(filmClip, trackC)
 	-- TODO
 	--[[local matOverlay = filmClip:GetMaterialOverlay()
 	if(matOverlay ~= nil and #matOverlay:GetMaterial() > 0) then
-		local entActor = ents.create("pfm_material_overlay")
+		local entActor = self:GetEntity():CreateChild("pfm_material_overlay")
 		entActor:GetComponent("pfm_material_overlay"):Setup(self,matOverlay)
 		entActor:Spawn()
 		table.insert(self.m_actors,entActor)
@@ -99,7 +99,7 @@ function ents.PFMFilmClip:Setup(filmClip, trackC)
 		matOverlayData:SetTimeFrame(filmClip:GetTimeFrame())
 		matOverlayData:SetMaterial("black")
 		matOverlayData:SetFullscreen(true)
-		local entActor = ents.create("pfm_material_overlay")
+		local entActor = self:GetEntity():CreateChild("pfm_material_overlay")
 		entActor:GetComponent("pfm_material_overlay"):Setup(self,matOverlayData,fadeIn,fadeOut)
 		entActor:Spawn()
 		table.insert(self.m_actors,entActor)
@@ -216,7 +216,7 @@ end
 
 function ents.PFMFilmClip:CreateTrackGroup(trackGroup)
 	pfm.log("Creating track group '" .. trackGroup:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
-	local ent = ents.create("pfm_track_group")
+	local ent = self:GetEntity():CreateChild("pfm_track_group")
 	ent:Spawn()
 	table.insert(self.m_trackGroups, ent)
 
@@ -254,7 +254,7 @@ function ents.PFMFilmClip:InitializeActors()
 end
 
 function ents.PFMFilmClip:CreateActor(actor)
-	local entActor = ents.create("pfm_actor")
+	local entActor = self:GetEntity():CreateChild("pfm_actor")
 	local actorC = entActor:GetComponent(ents.COMPONENT_PFM_ACTOR)
 	actorC:Setup(actor)
 	local channels = self.m_actorChannels[actor]

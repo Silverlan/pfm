@@ -133,7 +133,7 @@ function ents.PFMLight:Setup(actorData, pfmLightData)
 		ent:SetKeyValue("cone_start_offset","0.0")
 		ent:SetKeyValue("spotlight_target",ent:GetName())]]
 
-	--[[local entVol = ents.create("env_light_spot_vol")
+	--[[local entVol = self:GetEntity():CreateChild("env_light_spot_vol")
 		entVol:SetKeyValue("cone_angle","15")
 		entVol:SetKeyValue("cone_color","355 355 300 5")
 		entVol:SetKeyValue("cone_height","400")
