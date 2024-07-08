@@ -32,6 +32,7 @@ function Component:InitializeDebugLines()
 	if ikSolver == nil then
 		return
 	end
+	ikSolverC:Flush()
 	local numJoints = ikSolver:GetJointCount()
 	util.remove(self.m_jointLines)
 	self.m_jointLines = {}
@@ -85,6 +86,7 @@ function Component:OnTick()
 	if ikSolver == nil then
 		return
 	end
+	ikSolver:Flush()
 
 	local pose = self:GetEntity():GetPose()
 	local numJoints = ikSolver:GetJointCount()
