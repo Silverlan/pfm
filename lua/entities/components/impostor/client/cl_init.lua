@@ -77,12 +77,12 @@ function Component:Impersonate(ent)
 		end
 	end
 
-	local attC = entThis:AddComponent(ents.COMPONENT_ATTACHABLE)
+	local attC = entThis:AddComponent(ents.COMPONENT_ATTACHMENT)
 	if attC ~= nil then
-		local attInfo = ents.AttachableComponent.AttachmentInfo()
+		local attInfo = ents.AttachmentComponent.AttachmentInfo()
 		attInfo.flags = bit.bor(
-			ents.AttachableComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME,
-			ents.AttachableComponent.FATTACHMENT_MODE_SNAP_TO_ORIGIN
+			ents.AttachmentComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME,
+			ents.AttachmentComponent.FATTACHMENT_MODE_SNAP_TO_ORIGIN
 		)
 		attC:AttachToEntity(entImpersonatee)
 	end

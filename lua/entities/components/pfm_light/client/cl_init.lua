@@ -144,9 +144,9 @@ function ents.PFMLight:Setup(actorData, pfmLightData)
 		entVol:SetPose(ent:GetPose())
 		ent:RemoveEntityOnRemoval(entVol)
 
-		local attInfo = ents.AttachableComponent.AttachmentInfo()
-		attInfo.flags =  ents.AttachableComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME
-		entVol:AddComponent(ents.COMPONENT_ATTACHABLE):AttachToEntity(ent,attInfo)]]
+		local attInfo = ents.AttachmentComponent.AttachmentInfo()
+		attInfo.flags =  ents.AttachmentComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME
+		entVol:AddComponent(ents.COMPONENT_ATTACHMENT):AttachToEntity(ent,attInfo)]]
 	-- end
 end
 ents.COMPONENT_PFM_LIGHT = ents.register_component("pfm_light", ents.PFMLight)

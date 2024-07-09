@@ -68,9 +68,9 @@ function ents.PFMVRController:InitializeInterface()
 	self.m_guiEnt:SetPos(origin)
 	self.m_guiEnt:SetRotation(EulerAngles(0, 90, -90):ToQuaternion() * ent:GetRotation())
 
-	local attInfo = ents.AttachableComponent.AttachmentInfo()
-	attInfo.flags = ents.AttachableComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME
-	self.m_guiEnt:AddComponent(ents.COMPONENT_ATTACHABLE):AttachToEntity(ent, attInfo)
+	local attInfo = ents.AttachmentComponent.AttachmentInfo()
+	attInfo.flags = ents.AttachmentComponent.FATTACHMENT_MODE_UPDATE_EACH_FRAME
+	self.m_guiEnt:AddComponent(ents.COMPONENT_ATTACHMENT):AttachToEntity(ent, attInfo)
 end
 
 function ents.PFMVRController:OnEntitySpawn()

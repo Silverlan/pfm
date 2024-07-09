@@ -241,9 +241,9 @@ function Component:SetParent(parent, relative)
 	self.m_relativeToParent = relative or false
 
 	--[[if(relative) then
-		local attC = self:AddEntityComponent(ents.COMPONENT_ATTACHABLE)
-		local attInfo = ents.AttachableComponent.AttachmentInfo()
-		attInfo.flags = ents.AttachableComponent.FATTACHMENT_MODE_SNAP_TO_ORIGIN
+		local attC = self:AddEntityComponent(ents.COMPONENT_ATTACHMENT)
+		local attInfo = ents.AttachmentComponent.AttachmentInfo()
+		attInfo.flags = ents.AttachmentComponent.FATTACHMENT_MODE_SNAP_TO_ORIGIN
 		attC:AttachToEntity(parent,attInfo)
 	end]]
 end
