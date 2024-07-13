@@ -502,7 +502,8 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 							dontTranslateValue,
 							updateAnimationValue,
 							final,
-							inputData
+							inputData,
+							initial
 						)
 							if updateAnimationValue == nil then
 								updateAnimationValue = true
@@ -614,34 +615,36 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 										self:OnActorPropertyChanged(entActor)
 									end
 								end
-								-- if ents.is_member_type_animatable(memberType) and updateAnimationValue then
-								if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-									pfm.log(
-										"Updating animation value for property '"
-											.. controlData.path
-											.. "' with value "
-											.. tostring(memberValue)
-											.. ".",
-										pfm.LOG_CATEGORY_PFM,
-										pfm.LOG_SEVERITY_DEBUG
-									)
-								end
+								if initial ~= true then
+									-- if ents.is_member_type_animatable(memberType) and updateAnimationValue then
+									if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
+										pfm.log(
+											"Updating animation value for property '"
+												.. controlData.path
+												.. "' with value "
+												.. tostring(memberValue)
+												.. ".",
+											pfm.LOG_CATEGORY_PFM,
+											pfm.LOG_SEVERITY_DEBUG
+										)
+									end
 
-								local actor = component:GetActor()
-								if actor ~= nil and controlData.path ~= nil then
-									local keyframeCmd = tool.get_filmmaker():ChangeActorPropertyValue(
-										actor,
-										controlData.path,
-										memberType,
-										oldMemberValue,
-										memberValue,
-										nil,
-										final,
-										nil,
-										(inputData ~= nil) and inputData.keyframeCmd or nil
-									)
-									if inputData ~= nil and keyframeCmd ~= nil then
-										inputData.keyframeCmd = keyframeCmd
+									local actor = component:GetActor()
+									if actor ~= nil and controlData.path ~= nil then
+										local keyframeCmd = tool.get_filmmaker():ChangeActorPropertyValue(
+											actor,
+											controlData.path,
+											memberType,
+											oldMemberValue,
+											memberValue,
+											nil,
+											final,
+											nil,
+											(inputData ~= nil) and inputData.keyframeCmd or nil
+										)
+										if inputData ~= nil and keyframeCmd ~= nil then
+											inputData.keyframeCmd = keyframeCmd
+										end
 									end
 								end
 								-- end
@@ -663,7 +666,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 								pfm.LOG_SEVERITY_WARNING
 							)
 						else
-							controlData.set(component, value, true, false)
+							controlData.set(component, value, true, false, nil, nil, true)
 						end
 						local ctrl, elChild = self:AddControl(
 							entActor,
