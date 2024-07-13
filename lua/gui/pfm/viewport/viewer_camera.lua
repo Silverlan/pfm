@@ -22,6 +22,7 @@ function Element:ScrollCallback(xoffset, yoffset)
 	end
 	local vc = self:GetViewerCamera()
 	if vc ~= nil then
+		pfm.tag_render_scene_as_dirty()
 		vc:SetZoom(math.max(vc:GetZoom() - yoffset * 10.0, 1))
 	end
 end
@@ -62,6 +63,7 @@ function Element:UpdateViewerCamera()
 	if self.m_rotateCamera ~= true and self.m_panCamera ~= true then
 		return
 	end
+	pfm.tag_render_scene_as_dirty()
 	local cursorPos = self:GetCursorPos()
 	local offset = cursorPos - self.m_tLastCursorPos
 	if self.m_rotateCamera == true then
