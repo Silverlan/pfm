@@ -888,19 +888,30 @@ function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime,
 					then
 						local interpMethod = get_interpolation_mode(pathKeys, keyIndex, valueType)
 						local easingMode = pathKeys:GetEasingMode(keyIndex)
-						v = set_value_component_value(
-							v,
-							valueType,
-							typeComponentIndex,
-							calc_graph_curve_data_point_value(
-								interpMethod,
-								easingMode,
-								pathKeys,
-								keyIndex,
-								keyIndexNext,
-								td
-							)
+						local dpVal = calc_graph_curve_data_point_value(
+							interpMethod,
+							easingMode,
+							pathKeys,
+							keyIndex,
+							keyIndexNext,
+							td
 						)
+						if math.is_nan(dpVal) or math.is_inf(dpVal) then
+							error(
+								'Invalid channel value "'
+									.. tostring(dpVal)
+									.. '" at timestamp '
+									.. tostring(td)
+									.. " with interpolation method "
+									.. interpMethod
+									.. " and easing mode "
+									.. easingMode
+									.. "!"
+							)
+						end
+
+						v = set_value_component_value(v, valueType, typeComponentIndex, dpVal)
+
 						foundCurveInRange = true
 						break
 					end
