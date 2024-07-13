@@ -97,3 +97,17 @@ console.register_variable(
 	bit.bor(console.FLAG_BIT_HIDDEN),
 	"If enabled, debug information will be dumped into the console when editing animation data in the graph editor."
 )
+console.register_variable(
+	"pfm_camera_speed",
+	udm.TYPE_FLOAT,
+	200,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"The movement speed of the camera."
+)
+console.register_variable(
+	"pfm_camera_speed_shift_multiplier",
+	udm.TYPE_FLOAT,
+	4.0,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"Multiplier for the camera speed if the shift-key is held."
+)

@@ -8,6 +8,7 @@
 
 net.register("sv_pfm_camera_mode")
 net.register("sv_pfm_load_map")
+net.register("sv_pfm_set_player_movement_enabled")
 
 local CAMERA_MODE_PLAYBACK = 0
 local CAMERA_MODE_FLY = 1
@@ -48,4 +49,13 @@ end)
 net.receive("sv_pfm_load_map", function(packet, pl)
 	local mapName = packet:ReadString()
 	game.load_map(mapName, Vector(0, 0, 0), true)
+end)
+
+net.receive("sv_pfm_set_player_movement_enabled", function(packet, pl)
+	local enabled = packet:ReadBool()
+	local ent = pl:GetEntity()
+	local inputControllerC = ent:GetComponent(ents.COMPONENT_INPUT_MOVEMENT_CONTROLLER)
+	if inputControllerC ~= nil then
+		inputControllerC:SetActive(enabled)
+	end
 end)

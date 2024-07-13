@@ -29,6 +29,7 @@ include("transform_gizmo.lua")
 include("camera.lua")
 include("selection.lua")
 include("ui.lua")
+include("viewer_camera.lua")
 
 function gui.PFMCoreViewportBase:OnInitialize()
 	self.m_vrControllers = {}
@@ -43,6 +44,7 @@ function gui.PFMCoreViewportBase:OnInitialize()
 	self.m_aspectRatioWrapper:AddCallback("OnAspectRatioChanged", function(el, aspectRatio)
 		self:UpdateAspectRatio()
 	end)
+	self:SetScrollInputEnabled(true)
 
 	local function create_text_element(font, pos, color)
 		local textColor = Color(182, 182, 182)
@@ -416,6 +418,7 @@ function gui.PFMCoreViewportBase:OnRemove()
 		end
 	end
 	util.remove(self.m_cbOnActorControlSelected)
+	util.remove(self.m_dbgViewerCameraPivot)
 end
 function gui.PFMCoreViewportBase:SetGlobalTime(time)
 	if util.is_valid(self.m_timeGlobal) then
@@ -585,6 +588,8 @@ function gui.PFMCoreViewportBase:UpdateThinkState()
 			and self:GetTransformSpace() == ents.TransformController.SPACE_VIEW
 	then
 		shouldThink = true
+	elseif self.m_rotateCamera or self.m_panCamera then
+		shouldThink = true
 	end
 	if shouldThink then
 		self:EnableThinking()
@@ -598,6 +603,8 @@ function gui.PFMCoreViewportBase:OnThink()
 		self:RefreshTransformWidget()
 		self:UpdateThinkState()
 	end
+
+	self:UpdateViewerCamera()
 
 	if self.m_cursorTracker ~= nil then
 		self.m_cursorTracker:Update()
@@ -686,6 +693,17 @@ function gui.PFMViewport:OnInitialize()
 	gui.PFMCoreViewportBase.OnInitialize(self)
 end
 function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
+	if mouseButton == input.MOUSE_BUTTON_MIDDLE then
+		if input.is_shift_key_down() then
+			self:SetPanningModeEnabled(state == input.STATE_PRESS)
+		else
+			self:SetRotationModeEnabled(state == input.STATE_PRESS)
+		end
+		self.m_tLastCursorPos = self:GetCursorPos()
+		self:UpdateThinkState()
+		return util.EVENT_REPLY_HANDLED
+	end
+
 	if
 		mouseButton == input.MOUSE_BUTTON_LEFT
 		and self:GetManipulatorMode() == gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT

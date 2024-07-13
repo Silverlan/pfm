@@ -282,14 +282,8 @@ function gui.PFMCoreViewportBase:SwitchToGameplay(enabled)
 	if enabled then
 		self:SwitchToWorkCamera(true)
 		self:SetCameraMode(gui.PFMCoreViewportBase.CAMERA_MODE_WALK)
-		if pl ~= nil then
-			pl:SetObserverMode(ents.PlayerComponent.OBSERVERMODE_THIRDPERSON)
-		end
 	else
 		self:SetCameraMode(gui.PFMCoreViewportBase.CAMERA_MODE_PLAYBACK)
-		if pl ~= nil then
-			pl:SetObserverMode(ents.PlayerComponent.OBSERVERMODE_FIRSTPERSON)
-		end
 	end
 end
 function gui.PFMCoreViewportBase:GetWorkCamera()
@@ -403,7 +397,10 @@ function gui.PFMCoreViewportBase:SetWorkCameraPose(pose)
 	local pl = ents.get_local_player()
 	cam:GetEntity():SetPose(math.Transform(pos, ang))
 	if util.is_valid(pl) then
-		pos = pos - pl:GetViewOffset()
+		local observableC = pl:GetEntity():GetComponent(ents.COMPONENT_OBSERVABLE) or nil
+		if observableC ~= nil then
+			pos = pos - observableC:GetViewOffset()
+		end
 	end
 	console.run("setpos", tostring(pos.x), tostring(pos.y), tostring(pos.z))
 	console.run("setang", tostring(ang.p), tostring(ang.y), 0.0)

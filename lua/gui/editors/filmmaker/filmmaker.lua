@@ -121,6 +121,7 @@ function gui.WIFilmmaker:OnInitialize()
 	self.m_pfmManager = ents.create("entity")
 	local pfmManagerC = self.m_pfmManager:AddComponent("pfm_manager")
 	pfmManagerC:SetProjectManager(self)
+	self.m_pfmManager:AddComponent("pfm_editor")
 	self.m_pfmManager:Spawn()
 
 	local udmData, err = udm.load("cfg/pfm/settings.udm")
@@ -246,8 +247,6 @@ function gui.WIFilmmaker:OnInitialize()
 	--
 
 	console.run("cl_max_fps", tostring(console.get_convar_int("pfm_max_fps")))
-	-- Smooth camera acceleration
-	console.run("sv_acceleration_ramp_up_time", tostring(0.5))
 
 	--[[local framePlaybackControls = gui.create("WIFrame",self)
 	framePlaybackControls:SetCloseButtonEnabled(false)
