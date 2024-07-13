@@ -47,7 +47,11 @@ function Command:DoExecute(data)
 				local hOther = (handle == hIn) and hOut or hIn
 				local th0 = keyData:GetHandleTimeOffset(otherKeyframeIdx, hOther)
 				local dh0 = keyData:GetHandleDelta(otherKeyframeIdx, hOther)
-				local ratio = d3 / math.abs(th0)
+				local div = math.abs(th0)
+				local ratio = 1.0
+				if div > 0.001 then
+					ratio = d3 / div
+				end
 				local v = Vector2((handle == hIn) and d3 or -d3, dh0 * ratio)
 				keyData:SetHandleTimeOffset(otherKeyframeIdx, hOther, v.x)
 				keyData:SetHandleDelta(otherKeyframeIdx, hOther, v.y)
