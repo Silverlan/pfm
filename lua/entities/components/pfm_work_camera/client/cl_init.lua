@@ -7,7 +7,7 @@
 ]]
 
 local Component = util.register_class("ents.PFMWorkCamera", BaseEntityComponent)
-Component:RegisterMember("PivotDistance", udm.TYPE_FLOAT, 100.0, {
+Component:RegisterMember("PivotDistance", udm.TYPE_FLOAT, 50.0, {
 	onChange = function(self)
 		self:UpdatePivotDistance()
 	end,
