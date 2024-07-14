@@ -24,6 +24,7 @@ function Element:ScrollCallback(xoffset, yoffset)
 	local workCameraC = (vc ~= nil) and vc:GetEntity():GetComponent(ents.COMPONENT_PFM_WORK_CAMERA)
 	if workCameraC ~= nil then
 		pfm.tag_render_scene_as_dirty()
+		self:UpdateViewerCameraPose()
 		workCameraC:SetPivotDistance(math.max(workCameraC:GetPivotDistance() - yoffset * 10.0, 0.0))
 	end
 end
