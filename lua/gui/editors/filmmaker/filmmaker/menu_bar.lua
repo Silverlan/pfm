@@ -118,6 +118,7 @@ function Element:InitializeMenuBar()
 			end)
 			pSubItem:SetName("open")
 			if self:IsDeveloperModeEnabled() then
+				local projectFileName = self:GetProjectFileName()
 				local pSubItem = pContext:AddItem(locale.get_text("reopen"), function(pItem)
 					if util.is_valid(self) == false then
 						return
@@ -125,9 +126,12 @@ function Element:InitializeMenuBar()
 					if self:CheckBuildKernels() then
 						return
 					end
-					self:LoadProject(self:GetProjectFileName())
+					self:LoadProject(projectFileName)
 				end)
 				pSubItem:SetName("reopen")
+				if projectFileName == nil then
+					pSubItem:SetEnabled(false)
+				end
 			end
 			local itemSave = pContext:AddItem(locale.get_text("save") .. "...", function(pItem)
 				if util.is_valid(self) == false then
