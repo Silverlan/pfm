@@ -141,6 +141,7 @@
 			{
 				"pose" {$transform default [[0,0,0][1,0,0,0]]}
 				"fov" {$float default 90}
+				"pivotDistance" {$float default 100}
 			}
 		}
 
