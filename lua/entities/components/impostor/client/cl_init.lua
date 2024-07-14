@@ -36,10 +36,16 @@ end
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 	self:SetRelativePose(math.Transform())
-	self:AddEntityComponent(ents.COMPONENT_RENDER)
+	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent(ents.COMPONENT_ANIMATED)
 	self:BindEvent(ents.AnimatedComponent.EVENT_ON_ANIMATION_RESET, "OnAnimationReset")
+
+	if renderC ~= nil then
+		-- TODO: We only want to ignore the parent visibility, but still be affected
+		-- by earlier ancestors (e.g. the scene).
+		renderC:SetIgnoreAncestorVisibility(true)
+	end
 end
 
 function Component:Impersonate(ent)
@@ -123,13 +129,13 @@ function Component:UpdateModel(mdl)
 	for _, ent in ipairs(tEnts) do
 		local renderC = ent:GetComponent(ents.COMPONENT_RENDER)
 		if renderC ~= nil then
-			renderC:SetSceneRenderPass(renderModeImpostee)
+			renderC:SetVisible(renderModeImpostee == game.SCENE_RENDER_PASS_WORLD)
 		end
 	end
 
 	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 	if renderC ~= nil then
-		renderC:SetSceneRenderPass(renderModeImpostor)
+		renderC:SetVisible(renderModeImpostor == game.SCENE_RENDER_PASS_WORLD)
 	end
 
 	local shouldRig = (mdl ~= nil)

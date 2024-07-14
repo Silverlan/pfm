@@ -42,7 +42,6 @@ function Component:InitializeImpostor()
 	if util.is_valid(self.m_impostorC) then
 		return self.m_impostorC
 	end
-	local entThis = self:GetEntity()
 	local ent = self:GetEntity():CreateChild("impostor")
 	if util.is_valid(ent) == false then
 		return
@@ -54,6 +53,7 @@ function Component:InitializeImpostor()
 	end
 	ent:Spawn()
 	self:SetImpostor(impostorC)
+
 	self.m_ownedImpostor = ent
 	return impostorC
 end
@@ -72,24 +72,28 @@ function Component:UpdateVisibility(updateIfDisabled)
 	if updateIfDisabled == nil then
 		updateIfDisabled = true
 	end
-	local vis = game.SCENE_RENDER_PASS_NONE
+	local vis = false
 	local renderC = self:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 	local impostorC = self:GetImpostor()
 	local renderCImpostor = util.is_valid(impostorC) and impostorC:GetEntity():GetComponent(ents.COMPONENT_RENDER)
 		or nil
 	if self:IsEnabled() then
 		if renderC ~= nil then
-			vis = renderC:GetSceneRenderPass()
-			renderC:SetSceneRenderPass(game.SCENE_RENDER_PASS_NONE)
+			vis = renderC:IsVisible()
+			renderC:SetVisible(false)
 		end
 	elseif renderC ~= nil and updateIfDisabled then
-		renderC:SetSceneRenderPass((renderCImpostor ~= nil) and renderCImpostor:GetSceneRenderPass() or vis)
+		if renderCImpostor ~= nil then
+			renderC:SetVisible(renderCImpostor:IsVisible())
+		else
+			renderC:SetVisible(vis)
+		end
 	end
 
 	if renderCImpostor == nil then
 		return
 	end
-	renderCImpostor:SetSceneRenderPass(vis)
+	renderCImpostor:SetVisible(vis)
 end
 
 function Component:Initialize()
