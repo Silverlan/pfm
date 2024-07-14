@@ -96,12 +96,15 @@ function ents.PFMPlayer:Taunt()
 	end
 	local pl = ent:GetComponent(ents.COMPONENT_PLAYER)
 	if pl ~= nil then
-		self.m_cbHandleActionInput = pl:AddEventCallback(
-			ents.PlayerComponent.EVENT_HANDLE_ACTION_INPUT,
-			function(action, pressed, magnitude)
-				return util.EVENT_REPLY_HANDLED
-			end
-		)
+		local actionInputC = pl:GetEntity():GetComponent(ents.COMPONENT_ACTION_INPUT_CONTROLLER)
+		if actionInputC ~= nil then
+			self.m_cbHandleActionInput = actionInputC:AddEventCallback(
+				ents.ActionInputControllerComponent.EVENT_HANDLE_ACTION_INPUT,
+				function(action, pressed, magnitude)
+					return util.EVENT_REPLY_HANDLED
+				end
+			)
+		end
 	end
 	self.m_cbOnAnimationComplete = animC:AddEventCallback(
 		ents.AnimatedComponent.EVENT_ON_ANIMATION_COMPLETE,
