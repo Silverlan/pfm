@@ -7,8 +7,22 @@
 ]]
 
 local Component = util.register_class("ents.PFMWorkCamera", BaseEntityComponent)
+Component:RegisterMember("PivotDistance", udm.TYPE_FLOAT, 100.0, {
+	onChange = function(self)
+		self:UpdatePivotDistance()
+	end,
+	min = 0.0,
+	max = 100000,
+})
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
+end
+function Component:UpdatePivotDistance()
+	local viewerCameraC = self:GetEntity():GetComponent(ents.COMPONENT_VIEWER_CAMERA)
+	if viewerCameraC == nil then
+		return
+	end
+	viewerCameraC:SetZoom(math.max(self:GetPivotDistance(), 1))
 end
 function Component:OnRemove()
 	util.remove(self.m_cbOnUpdateMovement)

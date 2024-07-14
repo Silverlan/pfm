@@ -12,14 +12,17 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 end
 function Component:OnEntitySpawn()
-	local cam = game.get_primary_camera()
+	local cam = self:GetWorkCamera()
 	if util.is_valid(cam) then
 		cam:GetEntity():AddComponent("pfm_work_camera")
 	end
 	self:SetPlayerEnabled(false)
 end
+function Component:GetWorkCamera()
+	return game.get_primary_camera()
+end
 function Component:OnRemove()
-	local cam = game.get_primary_camera()
+	local cam = self:GetWorkCamera()
 	if util.is_valid(cam) then
 		cam:GetEntity():RemoveComponent(ents.COMPONENT_PFM_WORK_CAMERA)
 	end

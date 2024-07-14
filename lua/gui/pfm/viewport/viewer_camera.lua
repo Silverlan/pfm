@@ -21,9 +21,10 @@ function Element:ScrollCallback(xoffset, yoffset)
 		return
 	end
 	local vc = self:GetViewerCamera()
-	if vc ~= nil then
+	local workCameraC = (vc ~= nil) and vc:GetEntity():GetComponent(ents.COMPONENT_PFM_WORK_CAMERA)
+	if workCameraC ~= nil then
 		pfm.tag_render_scene_as_dirty()
-		vc:SetZoom(math.max(vc:GetZoom() - yoffset * 10.0, 1))
+		workCameraC:SetPivotDistance(workCameraC:GetPivotDistance() - yoffset * 10.0)
 	end
 end
 function Element:SetRotationModeEnabled(enabled)
