@@ -753,7 +753,7 @@ function gui.WIFilmmaker:RestoreWorkCamera()
 					and workCamera:GetEntity():GetComponent(ents.COMPONENT_PFM_WORK_CAMERA)
 				or nil
 			if workCameraC ~= nil then
-				workCameraC:SetPivotDistance(workCameraSettings:GetPivotDistance())
+				workCameraC:SetPivotDistance(workCameraSettings:GetPivotDistance() or workCameraC:GetPivotDistance())
 			end
 		end
 	end
