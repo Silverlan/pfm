@@ -21,7 +21,7 @@ function Element:ScrollCallback(xoffset, yoffset)
 		return
 	end
 	local vc = self:GetViewerCamera()
-	local workCameraC = (vc ~= nil) and vc:GetEntity():GetComponent(ents.COMPONENT_PFM_WORK_CAMERA)
+	local workCameraC = (vc ~= nil) and vc:GetEntity():GetComponent(ents.COMPONENT_PFM_WORK_CAMERA) or nil
 	if workCameraC ~= nil then
 		pfm.tag_render_scene_as_dirty()
 		self:UpdateViewerCameraPose()
