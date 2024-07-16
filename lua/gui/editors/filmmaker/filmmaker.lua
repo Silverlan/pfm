@@ -739,11 +739,6 @@ function gui.WIFilmmaker:RestoreWorkCamera()
 	end
 	local settings = session:GetSettings()
 	local workCameraSettings = settings:GetWorkCamera()
-	vp:SetWorkCameraPose(workCameraSettings:GetPose())
-	local workCamera = vp:GetWorkCamera()
-	if util.is_valid(workCamera) then
-		workCamera:SetFOV(workCameraSettings:GetFov())
-	end
 
 	if util.is_valid(self.m_pfmManager) then
 		local editorC = self.m_pfmManager:GetComponent(ents.COMPONENT_PFM_EDITOR)
@@ -756,6 +751,12 @@ function gui.WIFilmmaker:RestoreWorkCamera()
 				workCameraC:SetPivotDistance(workCameraSettings:GetPivotDistance() or workCameraC:GetPivotDistance())
 			end
 		end
+	end
+
+	vp:SetWorkCameraPose(workCameraSettings:GetPose())
+	local workCamera = vp:GetWorkCamera()
+	if util.is_valid(workCamera) then
+		workCamera:SetFOV(workCameraSettings:GetFov())
 	end
 
 	local camView = settings:GetCameraView()
