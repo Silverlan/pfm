@@ -82,6 +82,7 @@ function pfm.ProjectPacker:AddModel(mdl)
 	end
 end
 function pfm.ProjectPacker:AddSound(snd)
+	pfm.log("Adding sound '" .. snd .. "'...", pfm.LOG_CATEGORY_PFM)
 	self:AddAsset(snd, asset.TYPE_AUDIO, true)
 end
 function pfm.ProjectPacker:AddFilmClip(filmClip)
