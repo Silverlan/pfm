@@ -82,6 +82,7 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 	local updateActorComponents = args["updateActorComponents"]
 	local nameOverride = args["name"]
 	local collectionOverride = args["collection"]
+	local poseOverride = args["pose"]
 
 	if nameOverride == nil and mdlName ~= nil then
 		local mdlFileName = util.Path.CreateFilePath(asset.get_normalized_path(mdlName, asset.TYPE_MODEL)):GetFileName()
@@ -99,7 +100,7 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 		if collection ~= nil then
 			collection = self:FindCollection(collection, true)
 		end
-		return self:CreateNewActor(nameOverride or name, pose, nil, collection)
+		return self:CreateNewActor(nameOverride or name, pose or poseOverride or nil, nil, collection)
 	end
 	if actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP then
 		actor = actor or create_new_actor("static_prop", gui.PFMActorEditor.COLLECTION_SCENEBUILD)
