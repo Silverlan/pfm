@@ -950,6 +950,9 @@ function gui.PFMRenderPreview:GetRendererInfo()
 	local renderer = self.m_ctrlRenderEngine:GetOptionValue(self.m_ctrlRenderEngine:GetSelectedOption())
 	return pfm.get_renderer_info(renderer)
 end
+function gui.PFMRenderPreview:SetRenderer(renderer)
+	self.m_ctrlRenderEngine:SelectOption(renderer)
+end
 function gui.PFMRenderPreview:GetResolution()
 	local width, height
 	local selectedOption = self.m_ctrlResolution:GetSelectedOption()
