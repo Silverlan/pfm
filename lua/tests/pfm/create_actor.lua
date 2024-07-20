@@ -1,31 +1,32 @@
-include("/tests/base.lua")
+include("/tests/pfm/base.lua")
 
-tests.queue("pfm_create_actor", function()
-	include("/pfm/pfm.lua")
-	pfm.add_event_listener("OnFilmmakerLaunched", function(pm)
-		game.wait_for_frames(1, function()
-			local actorEditor = pm:GetActorEditor()
-			if util.is_valid(actorEditor) == false then
-				tests.complete(false, "Actor Editor is not valid!")
+tests.launch_pfm(function(pm)
+	local actorEditor = pm:GetActorEditor()
+	if util.is_valid(actorEditor) == false then
+		tests.complete(false, "Actor Editor is not valid!")
+	else
+		local modelName = "player/soldier"
+		local actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR, {
+			["modelName"] = modelName,
+			["pose"] = math.Transform(),
+		})
+		if actor == nil then
+			tests.complete(false, "Failed to create actor with model '" .. modelName .. "'!")
+		else
+			tests.log_info("Actor has been created: {}", actor)
+			local ent = actor:FindEntity()
+			if util.is_valid(ent) == false then
+				tests.complete(false, "Actor '" .. tostring(actor) .. "' has no entity!")
 			else
-				local modelName = "player/soldier"
-				local actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR, {
-					["modelName"] = modelName,
-				})
-				if actor == nil then
-					tests.complete(false, "Failed to create actor with model '" .. modelName .. "'!")
-				else
-					print("Actor has been created: ", actor)
-					local ent = actor:FindEntity()
-					if util.is_valid(ent) == false then
-						tests.complete(false, "Actor '" .. tostring(actor) .. "' has no entity!")
-					else
-						print("Actor Entity: ", ent)
-						tests.complete(true)
-					end
+				tests.log_info("Actor Entity: {}", ent)
+
+				local vp = pm:GetViewport()
+				if util.is_valid(vp) then
+					vp:SetWorkCameraPose(math.Transform(Vector(0, 40, 40), EulerAngles(0, 180, 0):ToQuaternion()))
 				end
+
+				tests.complete(true, { screenshot = true })
 			end
-		end, true)
-	end)
-	pfm.launch(nil)
+		end
+	end
 end)

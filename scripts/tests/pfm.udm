@@ -1,0 +1,23 @@
+"launch_pfm"
+{
+	$string scriptFile "tests/pfm/launch_pfm.lua"
+}
+
+"create_actor"
+{
+	$string scriptFile "tests/pfm/create_actor.lua"
+}
+
+"render_image"
+{
+	$string scriptFile "tests/pfm/render_image.lua"
+}
+
+"pfm"
+{
+	$array children [string][
+		"launch_pfm",
+		"create_actor",
+		"render_image"
+	]
+}

@@ -1,6 +1,7 @@
-include("/tests/base.lua")
+include("/pfm/pfm.lua")
 
-tests.queue("pfm_launch", function()
+if tool.is_filmmaker_open() == false then
 	pfm.launch(nil)
-	return true
-end)
+end
+
+return true
