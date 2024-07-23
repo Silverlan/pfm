@@ -70,6 +70,7 @@ function Component:OnRemove()
 end
 function Component:OnEntitySpawn()
 	self:InitializeProject()
+	pfm.clear_static_geometry_cache()
 end
 function Component:OnTick(dt)
 	self:SetTickPolicy(ents.TICK_POLICY_NEVER)

@@ -418,8 +418,6 @@ function pfm.RaytracingRenderJob:Start()
 	self:RenderNextImage()
 end
 function pfm.RaytracingRenderJob:OnRenderEnd() end
--- TODO: Implement this in a better way
-local g_staticGeometryCache
 function pfm.RaytracingRenderJob:RenderCurrentFrame()
 	self.m_tRenderStart = nil
 
@@ -557,12 +555,26 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		end
 
 		local function is_static_cache_entity(ent)
-			return ent:IsMapEntity()
+			if ent:IsMapEntity() then
+				return true
+			end
+			local pfmActorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if pfmActorC ~= nil and pfmActorC:IsStatic() then
+				return true
+			end
+			return false
 		end
 
-		if g_staticGeometryCache == nil and renderSettings:GetRenderWorld() then
-			g_staticGeometryCache = unirender.create_cache()
-			g_staticGeometryCache:InitializeFromGameScene(self.m_gameScene, is_static_cache_entity)
+		local pm = tool.get_filmmaker()
+		local staticGeometryCache
+		if util.is_valid(pm) then
+			staticGeometryCache = pm:GetStaticGeometryCache()
+			if staticGeometryCache == nil and renderSettings:GetRenderWorld() then
+				staticGeometryCache = unirender.create_cache()
+				staticGeometryCache:InitializeFromGameScene(self.m_gameScene, is_static_cache_entity)
+
+				pm:SetStaticGeometryCache(staticGeometryCache)
+			end
 		end
 
 		scene:InitializeFromGameScene(self.m_gameScene, pos, rot, vp, nearZ, farZ, fov, sceneFlags, function(ent)
@@ -592,8 +604,8 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		end, function(ent)
 			return true
 		end)
-		if renderSettings:GetRenderWorld() and g_staticGeometryCache ~= nil then
-			scene:AddCache(g_staticGeometryCache)
+		if renderSettings:GetRenderWorld() and staticGeometryCache ~= nil then
+			scene:AddCache(staticGeometryCache)
 		end
 
 		-- We want particle effects with bloom to emit light, so we'll add a light source for each particle.

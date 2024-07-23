@@ -1864,4 +1864,13 @@ function gui.WIFilmmaker:ToggleRecording()
 		managerC:StartRecording()
 	end
 end
+function gui.WIFilmmaker:GetStaticGeometryCache()
+	return self.m_staticGeometryCache
+end
+function gui.WIFilmmaker:SetStaticGeometryCache(cache)
+	self.m_staticGeometryCache = cache
+end
+function gui.WIFilmmaker:ClearStaticGeometryCache()
+	self.m_staticGeometryCache = nil
+end
 gui.register("WIFilmmaker", gui.WIFilmmaker)

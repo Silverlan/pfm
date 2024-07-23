@@ -395,7 +395,6 @@ function pfm.Project:CollectAssetFiles()
 	packer:AddSession(self:GetSession())
 	packer:AddMap(game.get_map_name())
 	-- TODO: Pack project file
-	-- TODO: Pack audio files
 	return packer:GetFiles()
 end
 
@@ -450,6 +449,13 @@ end
 
 pfm.get_projects = function()
 	return pfm.impl.projects
+end
+
+pfm.clear_static_geometry_cache = function()
+	local pm = tool.get_filmmaker()
+	if util.is_valid(pm) then
+		pm:ClearStaticGeometryCache()
+	end
 end
 
 pfm.get_git_sha = function(gitInfoFileName, len)
