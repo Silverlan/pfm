@@ -723,15 +723,13 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		self.m_renderEngine = renderSettings:GetRenderEngine()
 		local renderer, err = unirender.create_renderer(scene, self.m_renderEngine, flags)
 		if renderer == false then
-			pfm.log(
-				"Unable to create renderer for render engine '"
-					.. renderSettings:GetRenderEngine()
-					.. "': "
-					.. err
-					.. "!",
-				pfm.LOG_CATEGORY_PFM_RENDER,
-				pfm.LOG_SEVERITY_WARNING
-			)
+			local msg = "Unable to create renderer for render engine '"
+				.. renderSettings:GetRenderEngine()
+				.. "': "
+				.. err
+				.. "!"
+			pfm.log(msg, pfm.LOG_CATEGORY_PFM_RENDER, pfm.LOG_SEVERITY_WARNING)
+			error(msg)
 			return
 		end
 
