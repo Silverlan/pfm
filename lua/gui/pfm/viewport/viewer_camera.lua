@@ -60,6 +60,7 @@ function Element:UpdateViewerCameraPose()
 		return
 	end
 	vc:SetPose(vc:GetEntity():GetPose())
+	self:MarkActorAsDirty(vc:GetEntity())
 end
 function Element:UpdateViewerCamera()
 	if self.m_rotateCamera ~= true and self.m_panCamera ~= true then
@@ -72,6 +73,7 @@ function Element:UpdateViewerCamera()
 		local vc = self:GetViewerCamera()
 		if vc ~= nil then
 			vc:Rotate(offset.x, offset.y)
+			self:MarkActorAsDirty(vc:GetEntity())
 			self.m_updateCamera = true
 			self.m_bRenderScheduled = true
 		end
@@ -81,6 +83,7 @@ function Element:UpdateViewerCamera()
 		if vc ~= nil then
 			local speed = 60.0
 			vc:Pan(offset.x * speed, offset.y * speed)
+			self:MarkActorAsDirty(vc:GetEntity())
 			self.m_updateCamera = true
 			self.m_bRenderScheduled = true
 		end
