@@ -730,6 +730,7 @@ function gui.WIFilmmaker:OnProjectInitialized(project)
 		end)
 	end
 	self:UpdateBookmarks()
+	self:ClearStaticGeometryCache()
 end
 function gui.WIFilmmaker:RestoreWorkCamera()
 	local session = self:GetSession()
@@ -801,6 +802,11 @@ function gui.WIFilmmaker:SaveSettings()
 		udmData:SaveAscii(f)
 		f:Close()
 	end
+end
+
+function gui.WIFilmmaker:OnProjectClosed()
+	gui.WIBaseFilmmaker.OnProjectClosed(self)
+	self:ClearStaticGeometryCache()
 end
 
 function gui.WIFilmmaker:GetOverlayScene()
