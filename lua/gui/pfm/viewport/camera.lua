@@ -257,6 +257,17 @@ function gui.PFMCoreViewportBase:SetGameplayMode(enabled)
 		pfm.tag_render_scene_as_dirty(false)
 		input.set_cursor_pos(self.m_oldCursorPos)
 
+		local pl = ents.get_local_player()
+		local actionInputC = util.is_valid(pl) and pl:GetEntity():GetComponent(ents.COMPONENT_ACTION_INPUT_CONTROLLER)
+			or nil
+		if actionInputC ~= nil then
+			-- Cancel all action inputs
+			local i = 1
+			while i <= input.ACTION_LAST do
+				actionInputC:SetActionInput(i, false)
+				i = bit.lshift(i, 1)
+			end
+		end
 		if self.m_oldInputLayerStates ~= nil then
 			for id, state in pairs(self.m_oldInputLayerStates) do
 				input.set_binding_layer_enabled(id, state)
