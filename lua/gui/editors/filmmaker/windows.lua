@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+local init_model_asset_drag_and_drop
+
 local g_registeredWindows = {}
 pfm.get_registered_windows = function()
 	return g_registeredWindows
@@ -93,7 +95,7 @@ pfm.register_window("model_viewer", "viewers", locale.get_text("pfm_model_viewer
 end)
 pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_catalog"), function(pm)
 	local mdlCatalog = gui.create("WIPFMModelCatalog")
-	local explorer = mdlCatalog:GetExplorer()
+	local explorer = mdlCatalog:GetIconExplorer()
 	explorer:AddCallback("PopulateIconContextMenu", function(explorer, pContext, tSelectedFiles, tExternalFiles)
 		local hasExternalFiles = (#tExternalFiles > 0)
 		if hasExternalFiles == true then
@@ -208,159 +210,8 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 	end)
 	explorer:AddCallback("OnIconAdded", function(explorer, icon)
 		if icon:IsDirectory() == false then
-			local entGhost
-			gui.enable_drag_and_drop(icon, "ModelCatalog", function(elGhost)
-				elGhost:SetAlpha(128)
-				elGhost:AddCallback("OnDragTargetHoverStart", function(elGhost, elTgt)
-					elGhost:SetAlpha(0)
-					elGhost:SetAlwaysUpdate(true)
-
-					if util.is_valid(entGhost) then
-						entGhost:Remove()
-					end
-					local path = util.Path(icon:GetAsset())
-					path:PopFront()
-					local mdlPath = path:GetString()
-					if icon:IsValid() and asset.exists(mdlPath, asset.TYPE_MODEL) == false then
-						explorer:ImportAsset(icon)
-					end -- Import the asset and generate the icon
-					entGhost = ents.create("pfm_ghost")
-
-					local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
-					if string.compare(elTgt:GetClass(), "WIViewport", false) and ghostC ~= nil then
-						ghostC:SetViewport(elTgt)
-					end
-
-					entGhost:Spawn()
-					entGhost:SetModel(path:GetString())
-
-					local mdl = entGhost:GetModel()
-					local metaRig = (mdl ~= nil) and mdl:GetMetaRig() or nil
-					if metaRig ~= nil then
-						ghostC:SetBaseRotation(metaRig.forwardFacingRotationOffset)
-					end
-
-					pm:TagRenderSceneAsDirty(true)
-				end)
-				elGhost:AddCallback("OnDragTargetHoverStop", function(elGhost)
-					elGhost:SetAlpha(128)
-					elGhost:SetAlwaysUpdate(false)
-					util.remove(entGhost)
-					pm:TagRenderSceneAsDirty()
-				end)
-			end)
-			icon:AddCallback("OnDragDropped", function(elIcon, elDrop)
-				if util.is_valid(entGhost) == false then
-					return
-				end
-				local filmClip = pm:GetActiveFilmClip()
-				if filmClip == nil then
-					return
-				end
-				local filmmaker = tool.get_filmmaker()
-				local actorEditor = pm:GetActorEditor()
-
-				local path = util.Path(elIcon:GetAsset())
-				path:PopFront()
-				local mdl = game.load_model(path:GetString())
-				if mdl == nil then
-					return
-				end
-
-				local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
-				local shouldBoneMerge = ghostC:ShouldBoneMerge()
-
-				local actor
-				if shouldBoneMerge then
-					actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP, {
-						["modelName"] = path:GetString(),
-					})
-				elseif pfm.is_articulated_model(mdl) then
-					actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR, {
-						["modelName"] = path:GetString(),
-					})
-				else
-					actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP, {
-						["modelName"] = path:GetString(),
-					})
-				end
-
-				local cmd = pfm.create_command("composition")
-				cmd:AddSubCommand("add_actor", actorEditor:GetFilmClip(), { actor })
-
-				-- filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
-
-				local entActor = actor:FindEntity()
-				if util.is_valid(entActor) then
-					local actorC = entActor:AddComponent("pfm_actor")
-					if actorC ~= nil then
-						pm:SetActorTransformProperty(actorC, "position", entGhost:GetPos(), true)
-						pm:SetActorTransformProperty(actorC, "rotation", entGhost:GetRotation(), true)
-					end
-
-					local srcBone, attachmentActor, attachmentBone = ghostC:GetAttachmentTarget()
-					if shouldBoneMerge then
-						actorEditor:BoneMerge(actor, attachmentActor, cmd)
-						pm:UpdateActor(actor, filmClip)
-					elseif srcBone ~= nil then
-						pm:UpdateActor(actor, filmClip)
-						actorEditor:AddConstraint(
-							gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF,
-							actor,
-							"ec/pfm_actor/pose",
-							attachmentActor,
-							"ec/animated/bone/" .. attachmentBone .. "/pose",
-							cmd
-						)
-					else
-						pm:UpdateActor(actor, filmClip)
-						local tc = entActor:AddComponent("util_transform")
-						if tc ~= nil then
-							entActor:AddComponent("pfm_transform_gizmo")
-							tc:SetTranslationEnabled(false)
-							tc:SetRotationAxisEnabled(math.AXIS_X, false)
-							tc:SetRotationAxisEnabled(math.AXIS_Z, false)
-							tc:UpdateAxes()
-							local trUtil =
-								tc:GetTransformUtility(ents.TransformController.TYPE_ROTATION, math.AXIS_Y, "rotation")
-							local arrowC = util.is_valid(trUtil)
-									and trUtil:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
-								or nil
-							if arrowC ~= nil then
-								arrowC:StartTransform()
-								local cb
-								cb = input.add_callback("OnMouseInput", function(mouseButton, state, mods)
-									if mouseButton == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
-										if util.is_valid(entActor) then
-											entActor:RemoveComponent("util_transform")
-
-											if actorC:IsValid() then
-												pm:SetActorTransformProperty(
-													actorC,
-													"position",
-													entActor:GetPos(),
-													true
-												)
-												pm:SetActorTransformProperty(
-													actorC,
-													"rotation",
-													entActor:GetRotation(),
-													true
-												)
-												pm:SelectActor(actorC:GetActorData(), true, nil, false)
-											end
-										end
-										cb:Remove()
-										return util.EVENT_REPLY_HANDLED
-									end
-								end)
-							end
-						end
-					end
-					pfm.undoredo.push("add_actor", cmd)
-				else
-					pm:UpdateActor(actor, filmClip)
-				end
+			init_model_asset_drag_and_drop(explorer, icon, icon:GetAsset(), function(icon, mdlPath)
+				explorer:ImportAsset(icon)
 			end)
 		end
 	end)
@@ -382,6 +233,12 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 		end)
 		pItem:SetName("edit_retarget_rig")
 		pItem:SetTooltip(locale.get_text("pfm_model_context_retarget_rig"))
+	end)
+	local listExplorer = mdlCatalog:GetListExplorer()
+	listExplorer:AddCallback("OnFileRowAdded", function(listExplorer, row, filePath)
+		init_model_asset_drag_and_drop(listExplorer, row, filePath, function(icon, mdlPath)
+			asset.import(mdlPath, asset.TYPE_MODEL)
+		end)
 	end)
 	return mdlCatalog
 end)
@@ -557,3 +414,150 @@ pfm.register_window("timeline", "timeline", locale.get_text("pfm_timeline"), fun
 
 	return pfmTimeline
 end)
+
+init_model_asset_drag_and_drop = function(explorer, icon, mdlPath, importAsset)
+	local pm = tool.get_filmmaker()
+	local entGhost
+	gui.enable_drag_and_drop(icon, "ModelCatalog", function(elGhost)
+		elGhost:SetAlpha(128)
+		elGhost:AddCallback("OnDragTargetHoverStart", function(elGhost, elTgt)
+			elGhost:SetAlpha(0)
+			elGhost:SetAlwaysUpdate(true)
+
+			if util.is_valid(entGhost) then
+				entGhost:Remove()
+			end
+			local path = util.Path(mdlPath)
+			path:PopFront()
+			local mdlPath = path:GetString()
+			if asset.exists(mdlPath, asset.TYPE_MODEL) == false then
+				importAsset(icon, mdlPath)
+			end -- Import the asset and generate the icon
+			entGhost = ents.create("pfm_ghost")
+
+			local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
+			if string.compare(elTgt:GetClass(), "WIViewport", false) and ghostC ~= nil then
+				ghostC:SetViewport(elTgt)
+			end
+
+			entGhost:Spawn()
+			entGhost:SetModel(path:GetString())
+
+			local mdl = entGhost:GetModel()
+			local metaRig = (mdl ~= nil) and mdl:GetMetaRig() or nil
+			if metaRig ~= nil then
+				ghostC:SetBaseRotation(metaRig.forwardFacingRotationOffset)
+			end
+
+			pm:TagRenderSceneAsDirty(true)
+		end)
+		elGhost:AddCallback("OnDragTargetHoverStop", function(elGhost)
+			elGhost:SetAlpha(128)
+			elGhost:SetAlwaysUpdate(false)
+			util.remove(entGhost)
+			pm:TagRenderSceneAsDirty()
+		end)
+	end)
+	icon:AddCallback("OnDragDropped", function(elIcon, elDrop)
+		if util.is_valid(entGhost) == false then
+			return
+		end
+		local filmClip = pm:GetActiveFilmClip()
+		if filmClip == nil then
+			return
+		end
+		local filmmaker = tool.get_filmmaker()
+		local actorEditor = pm:GetActorEditor()
+
+		local path = util.Path(mdlPath)
+		path:PopFront()
+		local mdl = game.load_model(path:GetString())
+		if mdl == nil then
+			return
+		end
+
+		local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
+		local shouldBoneMerge = ghostC:ShouldBoneMerge()
+
+		local actor
+		if shouldBoneMerge then
+			actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP, {
+				["modelName"] = path:GetString(),
+			})
+		elseif pfm.is_articulated_model(mdl) then
+			actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR, {
+				["modelName"] = path:GetString(),
+			})
+		else
+			actor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP, {
+				["modelName"] = path:GetString(),
+			})
+		end
+
+		local cmd = pfm.create_command("composition")
+		cmd:AddSubCommand("add_actor", actorEditor:GetFilmClip(), { actor })
+
+		-- filmmaker:ReloadGameView() -- TODO: No need to reload the entire game view
+
+		local entActor = actor:FindEntity()
+		if util.is_valid(entActor) then
+			local actorC = entActor:AddComponent("pfm_actor")
+			if actorC ~= nil then
+				pm:SetActorTransformProperty(actorC, "position", entGhost:GetPos(), true)
+				pm:SetActorTransformProperty(actorC, "rotation", entGhost:GetRotation(), true)
+			end
+
+			local srcBone, attachmentActor, attachmentBone = ghostC:GetAttachmentTarget()
+			if shouldBoneMerge then
+				actorEditor:BoneMerge(actor, attachmentActor, cmd)
+				pm:UpdateActor(actor, filmClip)
+			elseif srcBone ~= nil then
+				pm:UpdateActor(actor, filmClip)
+				actorEditor:AddConstraint(
+					gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF,
+					actor,
+					"ec/pfm_actor/pose",
+					attachmentActor,
+					"ec/animated/bone/" .. attachmentBone .. "/pose",
+					cmd
+				)
+			else
+				pm:UpdateActor(actor, filmClip)
+				local tc = entActor:AddComponent("util_transform")
+				if tc ~= nil then
+					entActor:AddComponent("pfm_transform_gizmo")
+					tc:SetTranslationEnabled(false)
+					tc:SetRotationAxisEnabled(math.AXIS_X, false)
+					tc:SetRotationAxisEnabled(math.AXIS_Z, false)
+					tc:UpdateAxes()
+					local trUtil =
+						tc:GetTransformUtility(ents.TransformController.TYPE_ROTATION, math.AXIS_Y, "rotation")
+					local arrowC = util.is_valid(trUtil) and trUtil:GetComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW)
+						or nil
+					if arrowC ~= nil then
+						arrowC:StartTransform()
+						local cb
+						cb = input.add_callback("OnMouseInput", function(mouseButton, state, mods)
+							if mouseButton == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
+								if util.is_valid(entActor) then
+									entActor:RemoveComponent("util_transform")
+
+									if actorC:IsValid() then
+										pm:SetActorTransformProperty(actorC, "position", entActor:GetPos(), true)
+										pm:SetActorTransformProperty(actorC, "rotation", entActor:GetRotation(), true)
+										pm:SelectActor(actorC:GetActorData(), true, nil, false)
+									end
+								end
+								cb:Remove()
+								return util.EVENT_REPLY_HANDLED
+							end
+						end)
+					end
+				end
+			end
+			pfm.undoredo.push("add_actor", cmd)
+		else
+			pm:UpdateActor(actor, filmClip)
+		end
+	end)
+end

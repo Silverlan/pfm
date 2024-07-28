@@ -217,4 +217,15 @@ skin["context_menu_arrow"] = {
 		pElement:SetColor(t.TEXT_COLOR)
 	end,
 }
+skin["witable"] = {
+	children = {
+		["witext"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColor(t.TEXT_COLOR)
+				pElement:SetFont("pfm_medium")
+				pElement:SizeToContents()
+			end,
+		},
+	},
+}
 gui.register_skin("pfm", t, skin, "default")

@@ -20,14 +20,15 @@ function Element:InitializeFileIndexTable()
 		asset.get_supported_import_file_extensions(asset.TYPE_PARTICLE_SYSTEM)
 	)
 end
-function Element:InitializeExplorer(baseElement)
-	local explorer = gui.create("WIParticleExplorer", baseElement, 0, 0, self:GetWidth(), self:GetHeight())
+function Element:InitializeExplorer(explorer)
 	explorer:SetRootPath("particles")
 
 	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_PARTICLE_SYSTEM)
 	table.insert(extensions, asset.FORMAT_PARTICLE_SYSTEM_ASCII)
 	table.insert(extensions, asset.FORMAT_PARTICLE_SYSTEM_BINARY)
 	explorer:SetExtensions(extensions)
-	return explorer
+end
+function Element:CreateIconExplorer(baseElement)
+	return gui.create("WIParticleExplorer", baseElement, 0, 0, self:GetWidth(), self:GetHeight())
 end
 gui.register("WIPFMParticleCatalog", Element)

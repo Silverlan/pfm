@@ -20,11 +20,11 @@ function Element:InitializeFileIndexTable()
 		asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
 	)
 end
-function Element:InitializeExplorer(baseElement)
-	local explorer = gui.create("WIModelExplorer", baseElement, 0, 0, self:GetWidth(), self:GetHeight())
-	explorer:SetName("model_explorer")
+function Element:OnInitialize()
+	gui.PFMBaseCatalog.OnInitialize(self)
+end
+function Element:InitializeExplorer(explorer)
 	explorer:SetRootPath("models")
-
 	local extensions = asset.get_supported_import_file_extensions(asset.TYPE_MODEL)
 	table.insert(extensions, asset.FORMAT_MODEL_BINARY)
 	table.insert(extensions, asset.FORMAT_MODEL_ASCII)
@@ -51,6 +51,10 @@ function Element:InitializeExplorer(baseElement)
 		end
 		return util.EVENT_REPLY_HANDLED
 	end)
+end
+function Element:CreateIconExplorer(baseElement)
+	local explorer = gui.create("WIModelExplorer", baseElement, 0, 0, self:GetWidth(), self:GetHeight())
+	explorer:SetName("model_explorer")
 	return explorer
 end
 gui.register("WIPFMModelCatalog", Element)

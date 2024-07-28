@@ -10,10 +10,11 @@ include("/gui/tutorialexplorer.lua")
 include("/gui/pfm/base_catalog.lua")
 
 local Element = util.register_class("gui.PFMTutorialCatalog", gui.PFMBaseCatalog)
-function Element:InitializeExplorer(baseElement)
-	local explorer = gui.create("WITutorialExplorer", baseElement, 0, 0, self:GetWidth(), self:GetHeight())
+function Element:InitializeExplorer(explorer)
 	explorer:SetRootPath("tutorials")
 	explorer:SetExtensions({ "udm" })
-	return explorer
+end
+function Element:CreateIconExplorer(baseElement)
+	return gui.create("WITutorialExplorer", baseElement, 0, 0, self:GetWidth(), self:GetHeight())
 end
 gui.register("WIPFMTutorialCatalog", Element)

@@ -20,8 +20,7 @@ function Element:InitializeFileIndexTable()
 		{ "vmt", "vmat_c" }
 	)
 end
-function Element:InitializeExplorer(baseElement)
-	local explorer = gui.create("WIMaterialExplorer", baseElement, 0, 0, self:GetWidth(), self:GetHeight())
+function Element:InitializeExplorer(explorer)
 	explorer:SetRootPath("materials")
 
 	local extensions = asset.get_supported_extensions(asset.TYPE_MATERIAL)
@@ -29,6 +28,8 @@ function Element:InitializeExplorer(baseElement)
 		table.insert(extensions, ext)
 	end
 	explorer:SetExtensions(extensions)
-	return explorer
+end
+function Element:CreateIconExplorer(baseElement)
+	return gui.create("WIMaterialExplorer", baseElement, 0, 0, self:GetWidth(), self:GetHeight())
 end
 gui.register("WIPFMMaterialCatalog", Element)

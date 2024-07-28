@@ -266,7 +266,7 @@ end
 function gui.AssetExplorer:OnUpdate()
 	self:ListFiles()
 end
-function gui.AssetExplorer:CreateAssetIcon(path, assetName, isDirectory, importAsset)
+function gui.AssetExplorer:CreateAssetIconElement(path, assetName, isDirectory, importAsset)
 	local oPath = util.Path(path)
 	local front = oPath:GetFront()
 	local el
@@ -283,6 +283,13 @@ function gui.AssetExplorer:CreateAssetIcon(path, assetName, isDirectory, importA
 		return
 	end
 	el:SetAsset(path, assetName, importAsset)
+	return el
+end
+function gui.AssetExplorer:CreateAssetIcon(path, assetName, isDirectory, importAsset)
+	local el = self:CreateAssetIconElement(path, assetName, isDirectory, importAsset)
+	if el == nil then
+		return
+	end
 	self:OnAssetIconCreated(path, assetName, el)
 
 	local relPath = el:GetRelativeAsset()
@@ -296,6 +303,7 @@ function gui.AssetExplorer:CreateAssetIcon(path, assetName, isDirectory, importA
 	return el
 end
 function gui.AssetExplorer:OnAssetIconCreated(path, assetName, el) end
+
 function gui.AssetExplorer:ImportAsset(el)
 	local assetPath = el:GetAsset()
 	assetPath = file.get_file_path(assetPath)
