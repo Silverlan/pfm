@@ -25,6 +25,7 @@ end
 function Component:AddEntity(actor, props)
 	local recorderC = self:GetEntityComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
 	if recorderC == nil then
+		self:LogErr("Failed to add entity {}: Game animation recorder component not found!", actor)
 		return
 	end
 	recorderC:AddEntity(actor, props)
@@ -32,10 +33,21 @@ end
 
 function Component:StartRecording()
 	local recorderC = self:GetEntityComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
-	if recorderC == nil or recorderC:IsRecording() then
+	if recorderC == nil then
+		self:LogErr("Unable to start recording: Game animation recorder component not found!")
 		return
 	end
-	pfm.log("Starting recording...", pfm.LOG_CATEGORY_PFM)
+	if recorderC:IsRecording() then
+		self:LogWarn("Unable to start recording: Recording already in progress!")
+		return
+	end
+	local pm = tool.get_filmmaker()
+	local animManager = util.is_valid(pm) and pm:GetAnimationManager() or nil
+	if util.is_valid(animManager) == false then
+		return
+	end
+	self.m_startTime = animManager:GetTime()
+	self:LogInfo("Starting recording...")
 	recorderC:StartRecording()
 end
 
@@ -44,23 +56,24 @@ function Component:EndRecording()
 	if recorderC == nil or recorderC:IsRecording() == false then
 		return
 	end
-	pfm.log("Ending recording...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Ending recording...")
 	recorderC:EndRecording()
 	self:SyncAnimations()
 	recorderC:Reset()
+	self.m_startTime = nil
 end
 
 function Component:SyncAnimations()
-	pfm.log("Syncing recorded animation with PFM...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Syncing recorded animation with PFM...")
 	local recorderC = self:GetEntityComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
 	if recorderC == nil then
-		pfm.log("No game animation recorder component found!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		self:LogErr("No game animation recorder component found!")
 		return
 	end
 
 	local pm = tool.get_filmmaker()
 	if util.is_valid(pm) == false then
-		pfm.log("Filmmaker is not running!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		self:LogErr("Filmmaker is not running!")
 		return
 	end
 	local applyCurveFitting = true
@@ -99,6 +112,10 @@ function Component:SyncAnimations()
 									cmd:Execute()
 								end
 
+								for i, t in ipairs(times) do
+									times[i] = self.m_startTime + times[i]
+								end
+
 								tool.get_filmmaker():MakeActorPropertyAnimated(actorData, path, valueType, true, false)
 								local anim, actorChannel, animClip =
 									animManager:SetRawAnimationData(actorData, path, times, values, valueType)
@@ -132,7 +149,7 @@ function Component:SyncAnimations()
 		end
 	end
 	--pfm.undoredo.push("init_animation_channels", cmd)()
-	pfm.log(numProps .. " properties have been synchronized!", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo(numProps .. " properties have been synchronized!")
 end
 
 function Component:OnRemove() end

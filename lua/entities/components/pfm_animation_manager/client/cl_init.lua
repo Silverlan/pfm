@@ -79,6 +79,10 @@ function Component:PlayActorAnimation(ent)
 	apply_player_time(self.m_time, self.m_animatedActors[#self.m_animatedActors])
 end
 
+function Component:GetTime()
+	return self.m_time
+end
+
 function Component:SetTime(t)
 	if self.m_filmClip == nil then
 		return
