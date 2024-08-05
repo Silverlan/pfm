@@ -168,8 +168,22 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 					if ikRigPath ~= nil and file.exists(filePath) then
 						local ikSolverC = self:CreateNewActorComponent(actor, "ik_solver", false)
 						ikSolverC:SetMemberValue("rigConfigFile", udm.TYPE_STRING, ikRigPath)
+					else
+						pfm.log("No IK rig found for model '" .. mdlName .. "'.", pfm.LOG_CATEGORY_PFM)
 					end
+				else
+					pfm.log(
+						"Unable to set up IK for actor with model '" .. mdlName .. "': Failed to load model!",
+						pfm.LOG_CATEGORY_PFM,
+						pfm.LOG_SEVERITY_WARNING
+					)
 				end
+			else
+				pfm.log(
+					"Unable to set up IK for actor with model '" .. mdlName .. "': Failed to load pr_rig module!",
+					pfm.LOG_CATEGORY_PFM,
+					pfm.LOG_SEVERITY_WARNING
+				)
 			end
 		end
 
