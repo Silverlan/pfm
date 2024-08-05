@@ -102,8 +102,11 @@ function ents.PFMModel:UpdateBvhState()
 	if
 		c ~= nil --[[and c:IsActive()]]
 	then
-		self:GetEntity():RemoveComponent(ents.COMPONENT_BVH)
-		self:GetEntity():RemoveComponent(ents.COMPONENT_HITBOX_BVH)
+		-- Remove the BVH component, but only if it's managed by us (static bvh may manage BVH component separately)
+		if util.is_valid(self.m_bvhC) then
+			self:GetEntity():RemoveComponent(ents.COMPONENT_BVH)
+			self:GetEntity():RemoveComponent(ents.COMPONENT_HITBOX_BVH)
+		end
 	else
 		local bvhType = ents.COMPONENT_HITBOX_BVH
 		local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_EDITOR_ACTOR)
@@ -112,7 +115,7 @@ function ents.PFMModel:UpdateBvhState()
 			-- much more accurate but also much slower.
 			bvhType = ents.COMPONENT_BVH
 		end
-		self:GetEntity():AddComponent(bvhType)
+		self.m_bvhC = self:GetEntity():AddComponent(bvhType)
 	end
 end
 function ents.PFMModel:OnRemove()
