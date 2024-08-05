@@ -99,9 +99,9 @@ function Component:SyncAnimations()
 									cmd:Execute()
 								end
 
+								tool.get_filmmaker():MakeActorPropertyAnimated(actorData, path, valueType, true, false)
 								local anim, actorChannel, animClip =
 									animManager:SetRawAnimationData(actorData, path, times, values, valueType)
-
 								if applyCurveFitting then
 									local channel = animClip:FindChannel(path)
 									if channel ~= nil then

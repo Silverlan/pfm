@@ -684,8 +684,8 @@ function Component:SetCurveRangeChannelValueCount(actor, path, startTime, endTim
 	return self:SetCurveChannelValueCount(actor, path, startIndex, endIndex, numValues, suppressCallback, true)
 end
 
-function Component:SetRawAnimationData(actor, path, times, values, valueType)
-	local anim, actorChannel, animClip = self:FindAnimationChannel(actor, path)
+function Component:SetRawAnimationData(actor, path, times, values, valueType, addIfNotExists)
+	local anim, actorChannel, animClip = self:FindAnimationChannel(actor, path, addIfNotExists, valueType)
 	if #times > 1 then
 		if actorChannel ~= nil then
 			-- Clear all previous values for the recorded time range
