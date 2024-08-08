@@ -53,7 +53,7 @@ function Component:OnEntitySpawn()
 		end
 	end
 
-	local pm = tool.get_filmmaker()
+	--[[local pm = tool.get_filmmaker()
 	if util.is_valid(pm) then
 		self.m_cbPopulateActorContextMenu = pm:AddCallback("PopulateActorContextMenu", function(pm, pContext, actor)
 			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("virtual_reality"))
@@ -76,7 +76,7 @@ function Component:OnEntitySpawn()
 
 			pSubMenu:Update()
 		end)
-	end
+	end]]
 
 	console.run("vr_hide_primary_game_scene", "0")
 end
