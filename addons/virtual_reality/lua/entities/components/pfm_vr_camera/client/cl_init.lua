@@ -72,14 +72,14 @@ function Component:OnActiveStateChanged(active)
 	self:UpdatePovControllerAvailability()
 end
 function Component:UpdatePovControllerAvailability()
-	if util.is_valid(self.m_vrPovControllerC) == false or self.m_vrPovControllerC:IsEnabled() == false then
+	if util.is_valid(self.m_vrPovControllerC) == false then
 		return
 	end
 	local active = self.m_active
 	if self.m_vrBodyEnabledWhenDisabled then
 		active = true
 	end
-	self.m_vrPovControllerC:SetEnabled(active)
+	self.m_vrPovControllerC:SetActive(active)
 end
 function Component:UpdateTargetActor()
 	local targetActor = self:GetTargetActor()
@@ -98,7 +98,7 @@ function Component:ClearAnimationTarget()
 		povC:SetEnabled(false)
 	end
 	if util.is_valid(self.m_vrPovControllerC) then
-		self.m_vrPovControllerC:SetEnabled(false)
+		self.m_vrPovControllerC:SetActive(false)
 	end
 	if util.is_valid(self.m_animationTarget) then
 		self.m_animationTarget:RemoveComponent("vr_pov_controller")
@@ -137,7 +137,7 @@ function Component:SetAnimationTarget(ent)
 	if hmdC ~= nil then
 		local vrPovControllerC = self:GetBodyTarget():AddComponent("vr_pov_controller")
 		vrPovControllerC:SetHMD(entHmd)
-		vrPovControllerC:SetEnabled(true)
+		vrPovControllerC:SetActive(true)
 		vrPovControllerC:SetCamera(self:GetEntity())
 		vrPovControllerC:SetPov(self:IsPov())
 		vrPovControllerC:SetUpperBodyOnly(self:IsUpperBodyOnly())
