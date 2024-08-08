@@ -20,30 +20,17 @@ Component:RegisterMember("Pov", ents.MEMBER_TYPE_BOOLEAN, true, {
 }, "def+is")
 Component:RegisterMember("UpperBodyOnly", udm.TYPE_BOOLEAN, true, {}, "def+is")
 
-local g_vrModuleLoaded = false
-local g_vrModuleReady = false
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
 	self:AddEntityComponent("pfm_camera")
-	if g_vrModuleLoaded == false then -- Lazy initialization
-		g_vrModuleLoaded = true
-		if pfm.util.init_openvr() == false then
-			return
-		end
-
-		debug.start_profiling_task("vr_initialize_openvr")
-		local result = openvr.initialize()
-		debug.stop_profiling_task()
-		if result ~= openvr.INIT_ERROR_NONE then
-			self:LogErr("Unable to initialize openvr library: " .. openvr.init_error_to_string(result))
-			return
-		end
-		g_vrModuleReady = true
-	end
-	if g_vrModuleReady ~= true then
+	local result, msg = util.initialize_vr()
+	if result == false then
+		self:LogErr("Failed to initialize vr: {}", msg)
+		self:GetEntity():RemoveSafely()
 		return
 	end
+
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_ON, "OnTurnOn")
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF, "OnTurnOff")
 	self:BindEvent(ents.PFMCamera.EVENT_ON_ACTIVE_STATE_CHANGED, "OnActiveStateChanged")
