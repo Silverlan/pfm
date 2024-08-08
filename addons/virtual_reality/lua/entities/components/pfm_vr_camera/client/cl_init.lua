@@ -79,7 +79,7 @@ function Component:UpdatePovControllerAvailability()
 	if self.m_vrBodyEnabledWhenDisabled then
 		active = true
 	end
-	self.m_vrPovControllerC:SetActive(active)
+	self.m_vrPovControllerC:SetActive(active or false)
 end
 function Component:UpdateTargetActor()
 	local targetActor = self:GetTargetActor()
