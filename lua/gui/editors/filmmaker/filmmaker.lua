@@ -1867,7 +1867,9 @@ function gui.WIFilmmaker:ToggleRecording()
 	if managerC:IsRecording() then
 		managerC:EndRecording()
 	else
-		managerC:StartRecording()
+		if managerC:PopulateFromSelectedProperties() then
+			managerC:StartRecording()
+		end
 	end
 end
 function gui.WIFilmmaker:GetStaticGeometryCache()

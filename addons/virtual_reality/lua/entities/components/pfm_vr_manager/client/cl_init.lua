@@ -96,6 +96,10 @@ function Component:InitializeVrController(pfmTdc)
 	end)
 	table.insert(self.m_trackedDeviceCallbacks, cb)
 end
+function Component:GetPfmManager()
+	local ent, c = ents.citerator(ents.COMPONENT_PFM_MANAGER)()
+	return c
+end
 function Component:OnVrControllerButtonInput(vrC, buttonId, state)
 	if buttonId == openvr.BUTTON_ID_AXIS1 then
 		if state == input.STATE_PRESS then
@@ -110,6 +114,20 @@ function Component:OnVrControllerButtonInput(vrC, buttonId, state)
 		if state == input.STATE_PRESS then
 			self:LogInfo("Resetting zero pose...")
 			openvr.reset_zero_pose(openvr.TRACKING_UNIVERSE_ORIGIN_SEATED)
+
+			local hmdTdc = util.is_valid(self.m_hmdC)
+					and self.m_hmdC:GetEntity():GetComponent(ents.COMPONENT_VR_TRACKED_DEVICE)
+				or nil
+			if hmdTdc ~= nil then
+				local hmdDeviceId = hmdTdc:GetTrackedDeviceIndex()
+				local curPose = openvr.get_raw_pose(hmdDeviceId)
+				if curPose ~= nil then
+					-- Resetting origin is already covered by reset_zero_pose,
+					-- we only want to reset the rotation here
+					curPose:SetOrigin(Vector())
+					openvr.set_device_zero_pose(hmdDeviceId, curPose)
+				end
+			end
 		end
 		return util.EVENT_REPLY_HANDLED
 	end

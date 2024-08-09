@@ -9,11 +9,23 @@
 local Component = ents.PFMVrManager
 
 function Component:InitializeRecordingData()
-	self:AddEntityComponent("game_animation_recorder")
+	local pfmManagerC = self:GetPfmManager()
+	if util.is_valid(pfmManagerC) == false then
+		return
+	end
+	pfmManagerC:AddEntityComponent("game_animation_recorder")
+end
+
+function Component:GetGameAnimationRecorder()
+	local pfmManagerC = self:GetPfmManager()
+	if util.is_valid(pfmManagerC) == false then
+		return
+	end
+	return pfmManagerC:GetEntity():GetComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
 end
 
 function Component:IsRecording()
-	local recorderC = self:GetEntityComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
+	local recorderC = self:GetGameAnimationRecorder()
 	if recorderC == nil then
 		return false
 	end
@@ -22,21 +34,97 @@ end
 
 function Component:StartRecording()
 	self:EndRecording(false)
-	pfm.log("Starting VR recording...", pfm.LOG_CATEGORY_PFM_VR)
+	self:LogInfo("Starting VR recording...")
 
 	local hmdC = self:GetEntityComponent("vr_hmd")
 	if hmdC == nil then
-		pfm.log("No vr hmd component found!", pfm.LOG_CATEGORY_PFM_VR, pfm.LOG_SEVERITY_WARNING)
+		self:LogWarn("No vr hmd component found!")
 		return
 	end
 
-	local recorderC = self:GetEntityComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
-	if recorderC == nil then
+	local pfmManagerC = self:GetPfmManager()
+	local recorderC = self:GetGameAnimationRecorder()
+	if pfmManagerC == nil or recorderC == nil then
 		return
 	end
 
 	recorderC:Reset()
-	local targetActors = {}
+
+	for ent, c in ents.citerator(ents.COMPONENT_VR_POV_CONTROLLER) do
+		local ikSolverC = ent:GetComponent(ents.COMPONENT_IK_SOLVER)
+		if c:IsActive() and ikSolverC ~= nil then
+			local properties = {}
+			local propsIk = {}
+			properties["ik_solver"] = propsIk
+
+			local mdl = ent:GetModel()
+			local skel = (mdl ~= nil) and mdl:GetSkeleton() or nil
+			if skel ~= nil then
+				local indices = c:GetIkControllerIndices()
+				for _, idx in ipairs(indices) do
+					local memberInfo = ikSolverC:GetMemberInfo(idx)
+					if memberInfo ~= nil then
+						local metaInfoPose =
+							memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
+						if metaInfoPose ~= nil then
+							if metaInfoPose.posProperty ~= nil then
+								self:LogInfo(
+									"Adding property '{}' of actor '{}' to recording list...",
+									metaInfoPose.posProperty,
+									ent
+								)
+								table.insert(propsIk, metaInfoPose.posProperty)
+							end
+							if metaInfoPose.rotProperty ~= nil then
+								self:LogInfo(
+									"Adding property '{}' of actor '{}' to recording list...",
+									metaInfoPose.rotProperty,
+									ent
+								)
+								table.insert(propsIk, metaInfoPose.rotProperty)
+							end
+						end
+
+						--[[function pfm.util.find_property_pose_meta_info(ent, path)
+							local memberInfo = pfm.get_member_info(path, ent)
+							if memberInfo == nil then
+								return
+							end
+							local componentName, memberName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+							local metaInfoPose = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
+							if metaInfoPose ~= nil then
+								return metaInfoPose, componentName, memberName:GetString()
+							end
+							local metaInfo = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE_COMPONENT)
+							if metaInfo == nil or componentName == nil then
+								return
+							end
+							local posePath = "ec/" .. componentName .. "/" .. metaInfo.poseProperty
+							local memberInfoPose = pfm.get_member_info(posePath, ent)
+							metaInfoPose = memberInfoPose:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_POSE)
+							return metaInfoPose, componentName, metaInfo.poseProperty
+						end]]
+
+						--[[local boneName = memberInfo.name
+
+						local ctrlNamePos = "control/" .. boneName .. "/position"
+						if ctrlNamePos ~= nil then
+							self:LogInfo("Adding property '{}' of actor '{}' to recording list...", ctrlNamePos, ent)
+							table.insert(propsIk, ctrlNamePos)
+						end
+
+						local ctrlNameRot = "control/" .. boneName .. "/rotation"
+						if ctrlNameRot ~= nil then
+							self:LogInfo("Adding property '{}' of actor '{}' to recording list...", ctrlNameRot, ent)
+							table.insert(propsIk, ctrlNameRot)
+						end]]
+					end
+				end
+				recorderC:AddEntity(ent, properties)
+			end
+		end
+	end
+	--[[local targetActors = {}
 	for _, pfmTdC in ipairs(self:GetTrackedDevices()) do
 		if pfmTdC:IsValid() then
 			local targetActor, ikSolverC, ctrlPropIndices = pfmTdC:GetTargetData()
@@ -48,9 +136,8 @@ function Component:StartRecording()
 				for _, ctrlPropIdx in ipairs(ctrlPropIndices) do
 					local info = ikSolverC:GetMemberInfo(ctrlPropIdx)
 					if info ~= nil then
-						pfm.log(
-							"Adding property '" .. ikSolverC:GetMemberUri(ctrlPropIdx) .. "' to recording list...",
-							pfm.LOG_CATEGORY_PFM_VR
+						self:LogInfo(
+							"Adding property '" .. ikSolverC:GetMemberUri(ctrlPropIdx) .. "' to recording list..."
 						)
 						table.insert(properties[componentType], info.name)
 					end
@@ -58,29 +145,26 @@ function Component:StartRecording()
 				recorderC:AddEntity(targetActor, properties)
 			end
 		end
-	end
-
-	-- TODO: Play PFM animation, sync with timeframe
-
-	recorderC:StartRecording()
+	end]]
+	pfmManagerC:StartRecording()
 end
 
 function Component:EndRecording(syncAnims)
-	local recorderC = self:GetEntityComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
-	if recorderC == nil then
+	local pfmManagerC = self:GetPfmManager()
+	local recorderC = self:GetGameAnimationRecorder()
+	if pfmManagerC == nil or recorderC == nil then
 		return 0
 	end
-	if recorderC:IsRecording() == false then
+	if pfmManagerC:IsRecording() == false then
 		return 0
 	end
-	local n = recorderC:EndRecording()
-	pfm.log(
+	local n = pfmManagerC:EndRecording()
+	self:LogInfo(
 		"Ending VR recording. "
 			.. recorderC:GetRecordedFrameCount()
 			.. " frames have been recorded with "
 			.. n
-			.. " properties.",
-		pfm.LOG_CATEGORY_PFM_VR
+			.. " properties."
 	)
 	if syncAnims == nil then
 		syncAnims = true
@@ -92,16 +176,16 @@ function Component:EndRecording(syncAnims)
 end
 
 function Component:SyncAnimations()
-	pfm.log("Syncing recorded animation with PFM...", pfm.LOG_CATEGORY_PFM_VR)
-	local recorderC = self:GetEntityComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
+	self:LogInfo("Syncing recorded animation with PFM...")
+	local recorderC = self:GetGameAnimationRecorder()
 	if recorderC == nil then
-		pfm.log("No game animation recorder component found!", pfm.LOG_CATEGORY_PFM_VR, pfm.LOG_SEVERITY_WARNING)
+		self:LogWarn("No game animation recorder component found!")
 		return
 	end
 
 	local pm = tool.get_filmmaker()
 	if util.is_valid(pm) == false then
-		pfm.log("Filmmaker is not running!", pfm.LOG_CATEGORY_PFM_VR, pfm.LOG_SEVERITY_WARNING)
+		self:LogWarn("Filmmaker is not running!")
 		return
 	end
 	local numProps = 0
@@ -127,5 +211,5 @@ function Component:SyncAnimations()
 			end
 		end
 	end
-	pfm.log(numProps .. " properties have been synchronized!", pfm.LOG_CATEGORY_PFM_VR)
+	self:LogInfo(numProps .. " properties have been synchronized!")
 end

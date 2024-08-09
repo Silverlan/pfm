@@ -54,13 +54,14 @@ end
 function Component:EndRecording()
 	local recorderC = self:GetEntityComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
 	if recorderC == nil or recorderC:IsRecording() == false then
-		return
+		return 0
 	end
 	self:LogInfo("Ending recording...")
-	recorderC:EndRecording()
+	local n = recorderC:EndRecording()
 	self:SyncAnimations()
 	recorderC:Reset()
 	self.m_startTime = nil
+	return n
 end
 
 function Component:SyncAnimations()

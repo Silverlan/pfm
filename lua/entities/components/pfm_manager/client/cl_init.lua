@@ -154,17 +154,15 @@ end
 function Component:IsRecording()
 	return self:GetEntity():HasComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
 end
-function Component:StartRecording()
-	self:EndRecording()
-
+function Component:PopulateFromSelectedProperties()
 	local ent = self:GetEntity()
 	local pm = self.m_projectManager
 	local actorEditor = util.is_valid(pm) and pm:GetActorEditor() or nil
 	if util.is_valid(actorEditor) == false then
-		return
+		return false
 	end
 
-	local actorProperties = {}
+	local actorProperties
 	local props = actorEditor:GetSelectedProperties()
 	local hasSelectedProperties = false
 	for _, propData in ipairs(props) do
@@ -184,11 +182,25 @@ function Component:StartRecording()
 	end
 
 	if hasSelectedProperties == false then
-		pfm.log(
-			"Failed to start recording: No animatable properties selected!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Failed to start recording: No animatable properties selected!")
+		return false
+	end
+
+	local recorderC = ent:GetComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
+	if recorderC == nil then
+		return false
+	end
+	for actor, props in pairs(actorProperties) do
+		self:LogInfo("Recording properties of actor " .. tostring(actor:GetUuid()) .. "...")
+		recorderC:AddEntity(actor, props)
+	end
+	return true
+end
+function Component:StartRecording()
+	local ent = self:GetEntity()
+	local pm = self.m_projectManager
+	local actorEditor = util.is_valid(pm) and pm:GetActorEditor() or nil
+	if util.is_valid(actorEditor) == false then
 		return
 	end
 
@@ -201,10 +213,6 @@ function Component:StartRecording()
 
 	local recorderC = ent:GetComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
 	if recorderC ~= nil then
-		for actor, props in pairs(actorProperties) do
-			pfm.log("Recording properties of actor " .. tostring(actor:GetUuid()) .. "...", pfm.LOG_CATEGORY_PFM)
-			recorderC:AddEntity(actor, props)
-		end
 		recorderC:StartRecording()
 
 		local playbackState = pm:GetPlaybackState()
@@ -213,11 +221,12 @@ function Component:StartRecording()
 end
 function Component:EndRecording()
 	if self:IsRecording() == false then
-		return
+		return 0
 	end
+	local n = 0
 	local recorderC = self:GetEntity():GetComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
 	if recorderC ~= nil then
-		recorderC:EndRecording()
+		n = recorderC:EndRecording()
 
 		local playbackState = self.m_projectManager:GetPlaybackState()
 		playbackState:Pause()
@@ -225,6 +234,7 @@ function Component:EndRecording()
 
 	self:GetEntity():RemoveComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
 	self:BroadcastEvent(Component.EVENT_ON_END_RECORDING)
+	return n
 end
 ents.COMPONENT_PFM_MANAGER = ents.register_component("pfm_manager", Component)
 Component.EVENT_ON_START_RECORDING = ents.register_component_event(ents.COMPONENT_PFM_MANAGER, "on_start_recording")
