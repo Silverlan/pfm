@@ -64,10 +64,7 @@ function Component:PlayActorAnimation(ent)
 	local player = animManager:GetPlayer()
 	player:SetPlaybackRate(0.0)
 	local anim = clip:GetPanimaAnimation()
-	pfm.log(
-		"Playing actor animation '" .. tostring(anim) .. "' for actor '" .. tostring(ent) .. "'...",
-		pfm.LOG_CATEGORY_PFM
-	)
+	self:LogInfo("Playing actor animation '" .. tostring(anim) .. "' for actor '" .. tostring(ent) .. "'...")
 	animC:PlayAnimation(animManager, anim)
 
 	local animClipTimeStart = clip:GetAbsStart()
@@ -143,28 +140,25 @@ function Component:SetAnimationDirty(actor)
 end
 
 function Component:AddChannel(anim, channelClip, channelPath, type)
-	pfm.log(
+	self:LogInfo(
 		"Adding animation channel of type '"
 			.. udm.enum_type_to_ascii(type)
 			.. "' with path '"
 			.. channelPath
 			.. "' to animation '"
 			.. tostring(anim)
-			.. "'...",
-		pfm.LOG_CATEGORY_PFM
+			.. "'..."
 	)
 	local animChannel = anim:AddChannel(channelPath, type)
 	if animChannel == nil then
-		pfm.log(
+		self:LogWarn(
 			"Failed to add animation channel of type '"
 				.. udm.enum_type_to_ascii(type)
 				.. "' with path '"
 				.. channelPath
 				.. "' to animation '"
 				.. tostring(anim)
-				.. "'...",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
+				.. "'..."
 		)
 		return
 	end
@@ -243,10 +237,8 @@ function Component:SetValueExpression(actor, path, expr, type)
 	end
 	local r = channel:SetValueExpression(expr)
 	if r ~= true then
-		pfm.log(
-			"Unable to apply channel value expression '" .. expr .. "' for channel with path '" .. path .. "': " .. r,
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
+		self:LogWarn(
+			"Unable to apply channel value expression '" .. expr .. "' for channel with path '" .. path .. "': " .. r
 		)
 	end
 	return r == true, (r ~= true) and r or nil
@@ -279,11 +271,7 @@ end
 
 function Component:RemoveKeyframe(actor, path, keyIdx, baseIndex)
 	if self.m_filmClip == nil or self.m_filmClip == nil then
-		pfm.log(
-			"Unable to apply channel value: No active film clip selected, or film clip has no animations!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to apply channel value: No active film clip selected, or film clip has no animations!")
 		return
 	end
 	local anim, channel, animClip = self:FindAnimationChannel(actor, path)
@@ -291,9 +279,8 @@ function Component:RemoveKeyframe(actor, path, keyIdx, baseIndex)
 	if channel == nil or udmChannel == nil then
 		return
 	end
-	pfm.log(
-		"Removing keyframe " .. keyIdx .. " with channel path '" .. path .. "' of actor '" .. tostring(actor) .. "'...",
-		pfm.LOG_CATEGORY_PFM
+	self:LogInfo(
+		"Removing keyframe " .. keyIdx .. " with channel path '" .. path .. "' of actor '" .. tostring(actor) .. "'..."
 	)
 
 	local editorData = animClip:GetEditorData()
@@ -356,7 +343,7 @@ function Component:UpdateKeyframe(actor, path, panimaChannel, keyIdx, time, valu
 	if channel == nil then
 		return
 	end
-	pfm.log(
+	self:LogInfo(
 		"Updating keyframe index "
 			.. keyIdx
 			.. " with value "
@@ -367,8 +354,7 @@ function Component:UpdateKeyframe(actor, path, panimaChannel, keyIdx, time, valu
 			.. path
 			.. "' of actor '"
 			.. tostring(actor)
-			.. "'...",
-		pfm.LOG_CATEGORY_PFM
+			.. "'..."
 	)
 
 	time = animClip:LocalizeOffsetAbs(time)
@@ -475,14 +461,10 @@ function Component:SetChannelValue(actor, path, time, value, udmType, addKey, ba
 	end
 
 	if self.m_filmClip == nil or self.m_filmClip == nil then
-		pfm.log(
-			"Unable to apply channel value: No active film clip selected, or film clip has no animations!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to apply channel value: No active film clip selected, or film clip has no animations!")
 		return
 	end
-	pfm.log(
+	self:LogInfo(
 		"Setting channel value "
 			.. tostring(value)
 			.. " (base index "
@@ -495,8 +477,7 @@ function Component:SetChannelValue(actor, path, time, value, udmType, addKey, ba
 			.. path
 			.. "' to actor '"
 			.. tostring(actor)
-			.. "'...",
-		pfm.LOG_CATEGORY_PFM
+			.. "'..."
 	)
 	local anim, channel, animClip, isNewChannel = self:FindAnimationChannel(actor, path, true, udmType)
 
@@ -506,11 +487,7 @@ function Component:SetChannelValue(actor, path, time, value, udmType, addKey, ba
 
 	assert(channel ~= nil)
 	if channel == nil then
-		pfm.log(
-			"Unable to apply channel value: No channel for property '" .. path .. "'!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to apply channel value: No channel for property '" .. path .. "'!")
 		return
 	end
 
@@ -575,11 +552,7 @@ function Component:SetCurveChannelValueCount(
 	removeBoundaryPoints
 )
 	if self.m_filmClip == nil or self.m_filmClip == nil then
-		pfm.log(
-			"Unable to apply channel value: No active film clip selected, or film clip has no animations!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to apply channel value: No active film clip selected, or film clip has no animations!")
 		return false
 	end
 
@@ -650,11 +623,7 @@ end
 
 function Component:SetCurveRangeChannelValueCount(actor, path, startTime, endTime, numValues, suppressCallback)
 	if self.m_filmClip == nil or self.m_filmClip == nil then
-		pfm.log(
-			"Unable to apply channel value: No active film clip selected, or film clip has no animations!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to apply channel value: No active film clip selected, or film clip has no animations!")
 		return false
 	end
 
