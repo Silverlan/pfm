@@ -356,9 +356,9 @@ end
 function gui.PFMCoreViewportBase:GetCameraView()
 	return self.m_cameraView
 end
-function gui.PFMCoreViewportBase:SwitchToSceneCamera()
+function gui.PFMCoreViewportBase:SwitchToSceneCamera(camOverride)
 	self:SwitchToGameplay(false)
-	local cam = self:GetSceneCamera()
+	local cam = camOverride or self:GetSceneCamera()
 	if util.is_valid(cam) then
 		self:SwitchToCamera(cam)
 		local name = cam:GetEntity():GetName()

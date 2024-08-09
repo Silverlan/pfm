@@ -130,6 +130,70 @@ function Component:OnVrControllerButtonInput(vrC, buttonId, state)
 			end
 		end
 		return util.EVENT_REPLY_HANDLED
+	elseif buttonId == openvr.BUTTON_ID_A then
+		if state == input.STATE_PRESS then
+			self:SetVrCameraActive(not self:IsVrCameraActive())
+		end
+		return util.EVENT_REPLY_HANDLED
+	elseif buttonId == openvr.BUTTON_ID_APPLICATION_MENU then
+		if state == input.STATE_PRESS then
+			self:SetPov(not self:IsPov())
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
+end
+function Component:IsPov()
+	local ent, c = ents.citerator(ents.COMPONENT_PFM_VR_CAMERA)()
+	if c == nil then
+		return false
+	end
+	return c:IsPov()
+end
+function Component:SetPov(pov)
+	local ent, c = ents.citerator(ents.COMPONENT_PFM_VR_CAMERA)()
+	if c == nil then
+		return
+	end
+
+	local actor = pfm.dereference(tostring(ent:GetUuid()))
+	if actor == nil then
+		return
+	end
+	local cmd = pfm.create_command("set_actor_property", actor, "ec/pfm_vr_camera/pov", nil, pov, udm.TYPE_BOOLEAN)
+	cmd:Execute()
+end
+function Component:IsVrCameraActive()
+	local ent, pfmVrCameraC = ents.citerator(ents.COMPONENT_PFM_VR_CAMERA)()
+	if pfmVrCameraC == nil then
+		return
+	end
+	local camC = pfmVrCameraC:GetEntityComponent(ents.COMPONENT_CAMERA)
+	if camC == nil then
+		return
+	end
+	local pm = tool.get_filmmaker()
+	local vp = pm:GetViewport()
+	local curSceneCam = vp:GetSceneCamera()
+	if vp:IsSceneCamera() and util.is_valid(curSceneCam) and util.is_same_object(curSceneCam, camC) then
+		return true
+	end
+	return false
+end
+function Component:SetVrCameraActive(active)
+	local ent, pfmVrCameraC = ents.citerator(ents.COMPONENT_PFM_VR_CAMERA)()
+	if pfmVrCameraC == nil then
+		return
+	end
+	local camC = pfmVrCameraC:GetEntityComponent(ents.COMPONENT_CAMERA)
+	if camC == nil then
+		return
+	end
+	local pm = tool.get_filmmaker()
+	local vp = pm:GetViewport()
+	if active then
+		vp:SwitchToSceneCamera(camC)
+	else
+		vp:SwitchToWorkCamera()
 	end
 end
 function Component:InitializeTrackedDevice(tdC)
