@@ -492,7 +492,7 @@ function gui.PFMTimelineGraphBase:SetDataPointMoveModeEnabled(dataPoints, enable
 		end
 	else
 		local cmd = pfm.create_command("composition")
-		for _, curveInfo in ipairs(self.m_dataPointMoveInfo.curveInfo) do
+		for curveIdx, curveInfo in pairs(self.m_dataPointMoveInfo.curveInfo) do
 			if curveInfo.curve:IsValid() then
 				curveInfo.curve:SetMoveModeEnabled(false, cmd)
 			end
