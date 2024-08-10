@@ -173,7 +173,7 @@ pfm.register_component_action(
 		bt:AddCallback("OnPressed", function()
 			local c = entActor:GetComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)
 			if c ~= nil then
-				local dialogue = gui.create_file_open_dialog(function(pDialog, fileName)
+				local dialogue = pfm.create_file_open_dialog(function(pDialog, fileName)
 					if c:IsValid() == false then
 						return
 					end
@@ -200,7 +200,7 @@ pfm.register_component_action(
 		bt:AddCallback("OnPressed", function()
 			local c = entActor:GetComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)
 			if c ~= nil then
-				local dialogue = gui.create_file_open_dialog(function(pDialog, fileName)
+				local dialogue = pfm.create_file_open_dialog(function(pDialog, fileName)
 					if c:IsValid() == false then
 						return
 					end

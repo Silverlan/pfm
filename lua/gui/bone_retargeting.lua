@@ -57,7 +57,7 @@ function gui.BoneRetargeting:OnInitialize()
 		"impostee_model",
 		"",
 		function(resultHandler)
-			local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+			local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 				if fileName == nil then
 					return
 				end
@@ -79,7 +79,7 @@ function gui.BoneRetargeting:OnInitialize()
 		"imposter_model",
 		"",
 		function(resultHandler)
-			local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+			local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 				if fileName == nil then
 					return
 				end

@@ -314,7 +314,7 @@ function Element:ConvertStaticActorsToMap(fcOnSaved)
 		end
 	end
 
-	local dialogue = gui.create_file_save_dialog(function(pDialog, fileName)
+	local dialogue = pfm.create_file_save_dialog(function(pDialog, fileName)
 		if fileName == nil then
 			return
 		end

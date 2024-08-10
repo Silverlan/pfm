@@ -141,7 +141,7 @@ function gui.PFMActorEditor:OnInitialize()
 		addPresetActorOption("volume", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME, "pfm_create_new_volume")
 		addPresetActorOption("actor", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR, "pfm_create_new_actor")
 		local subItem = pContext:AddItem(locale.get_text("pfm_create_new_scene"), function()
-			local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+			local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 				if fileName == nil then
 					return
 				end
@@ -1194,7 +1194,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 							end
 						end
 						el:SetBrowseHandler(function(resultHandler)
-							local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+							local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 								if fileName == nil then
 									return
 								end

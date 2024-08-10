@@ -47,7 +47,7 @@ end
 end]]
 
 local skin = {}
------------- WIButton ------------
+------------ Timeline ------------
 skin["timeline_clip_film"] = {
 	Initialize = function(GUI, pElement)
 		local elBg = pElement:FindChildByName("background")
@@ -88,6 +88,19 @@ skin["wiprogressbar"] = {
 		},
 	},
 	Initialize = function(GUI, pElement) end,
+}
+skin["wislider"] = skin["wiprogressbar"]
+-----------------------------------------
+------------- WIFileDialog -------------
+skin["wifiledialog"] = {
+	children = {
+		["witext"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetFont("pfm_medium")
+				pElement:SizeToContents()
+			end,
+		},
+	},
 }
 skin["wislider"] = skin["wiprogressbar"]
 -----------------------------------------

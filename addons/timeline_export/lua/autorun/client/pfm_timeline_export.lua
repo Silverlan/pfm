@@ -160,7 +160,7 @@ pfm.add_event_listener("OnFilmmakerLaunched", function(pm)
 			end
 
 			local pFileDialog
-			pFileDialog = gui.create_file_save_dialog(function(pDialoge, fileName)
+			pFileDialog = pfm.create_file_save_dialog(function(pDialoge, fileName)
 				if fileName == nil then
 					return
 				end

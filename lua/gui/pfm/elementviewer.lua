@@ -40,7 +40,7 @@ function gui.PFMElementViewer:OnInitialize()
 		pContext:AddItem(locale.get_text("new"), function()
 			local path = tool.get_filmmaker():GetFileDialogPath("udm_path")
 			local pFileDialog
-			pFileDialog = gui.create_file_save_dialog(function(pDialoge, fileName)
+			pFileDialog = pfm.create_file_save_dialog(function(pDialoge, fileName)
 				if fileName == nil then
 					return
 				end
@@ -60,7 +60,7 @@ function gui.PFMElementViewer:OnInitialize()
 		pContext:AddItem(locale.get_text("open"), function()
 			local path = tool.get_filmmaker():GetFileDialogPath("udm_path")
 			local pFileDialog
-			pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+			pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 				if fileName == nil then
 					return
 				end
@@ -77,7 +77,7 @@ function gui.PFMElementViewer:OnInitialize()
 		pContext:AddItem(locale.get_text("save_as"), function()
 			local path = tool.get_filmmaker():GetFileDialogPath("udm_path")
 			local pFileDialog
-			pFileDialog = gui.create_file_save_dialog(function(pDialoge, fileName)
+			pFileDialog = pfm.create_file_save_dialog(function(pDialoge, fileName)
 				if fileName == nil then
 					return
 				end
@@ -451,7 +451,7 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 							self:CopyToClipboard(el)
 						end)
 						pContext:AddItem(locale.get_text("import"), function()
-							local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+							local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 								if fileName == nil then
 									return
 								end

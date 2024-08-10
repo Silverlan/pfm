@@ -861,7 +861,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	-- Output directory
 	--[[local outputDir = gui.create("WIFileEntry",p)
 	outputDir:SetBrowseHandler(function(resultHandler)
-		local pFileDialog = gui.create_file_open_dialog(function(el,fileName)
+		local pFileDialog = pfm.create_file_open_dialog(function(el,fileName)
 			if(fileName == nil) then return end
 			resultHandler(fileName)
 		end)

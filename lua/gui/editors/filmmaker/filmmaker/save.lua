@@ -86,7 +86,7 @@ function Element:Save(fileName, setAsProjectName, saveAs, withProjectsPrefix, re
 	else
 		util.remove(self.m_openDialogue)
 		local path = tool.get_filmmaker():GetFileDialogPath("project_path")
-		self.m_openDialogue = gui.create_file_save_dialog(function(pDialog, fileName)
+		self.m_openDialogue = pfm.create_file_save_dialog(function(pDialog, fileName)
 			local res = saveProject(fileName)
 			if resultCallback then
 				resultCallback(res)

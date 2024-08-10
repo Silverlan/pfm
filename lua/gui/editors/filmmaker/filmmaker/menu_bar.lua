@@ -83,7 +83,7 @@ function Element:InitializeMenuBar()
 					util.remove(self.m_openDialogue)
 					local pOptionKeepCurrentLayout
 					local path = tool.get_filmmaker():GetFileDialogPath("project_path")
-					self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
+					self.m_openDialogue = pfm.create_file_open_dialog(function(pDialog, fileName)
 						fileName = "projects/" .. fileName
 
 						if console.get_convar_bool("pfm_keep_current_layout") then
@@ -247,7 +247,7 @@ function Element:InitializeMenuBar()
 				end
 				local path = tool.get_filmmaker():GetFileDialogPath("map_path")
 				local pFileDialog
-				pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+				pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 					if fileName == nil then
 						return
 					end
@@ -272,7 +272,7 @@ function Element:InitializeMenuBar()
 				end
 				util.remove(self.m_openDialogue)
 				local path = tool.get_filmmaker():GetFileDialogPath("sfm_project_path")
-				self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
+				self.m_openDialogue = pfm.create_file_open_dialog(function(pDialog, fileName)
 					self:ShowCloseConfirmation(function(res)
 						self:ImportSFMProject(fileName)
 						tool.get_filmmaker():SetFileDialogPath(
@@ -336,7 +336,7 @@ function Element:InitializeMenuBar()
 					end
 					util.remove(self.m_openDialogue)
 					local path = tool.get_filmmaker():GetFileDialogPath("project_path")
-					self.m_openDialogue = gui.create_file_open_dialog(function(pDialog, fileName)
+					self.m_openDialogue = pfm.create_file_open_dialog(function(pDialog, fileName)
 						self:ImportPFMProject(fileName)
 						tool.get_filmmaker():SetFileDialogPath(
 							"project_path",
@@ -412,7 +412,7 @@ function Element:InitializeMenuBar()
 				end
 				local path = tool.get_filmmaker():GetFileDialogPath("map_path")
 				local pFileDialog
-				pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+				pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 					if fileName == nil then
 						return
 					end
@@ -433,7 +433,7 @@ function Element:InitializeMenuBar()
 			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_change_map"))
 			pSubItem:SetName("change_map")
 			--[[pContext:AddItem(locale.get_text("pfm_export_blender_scene") .. "...",function(pItem)
-			local dialoge = gui.create_file_save_dialog(function(pDialoge)
+			local dialoge = pfm.create_file_save_dialog(function(pDialoge)
 				local fname = pDialoge:GetFilePath(true)
 				file.create_path(file.get_file_path(fname))
 
@@ -446,7 +446,7 @@ function Element:InitializeMenuBar()
 			local pSubItem = pContext:AddItem(locale.get_text("pfm_pack_project") .. "...", function(pItem)
 				self:ShowCloseConfirmation(function(res)
 					file.create_directory("export")
-					local dialoge = gui.create_file_save_dialog(function(pDialoge)
+					local dialoge = pfm.create_file_save_dialog(function(pDialoge)
 						local fname = pDialoge:GetFilePath(true)
 						self:PackProject(fname)
 					end)

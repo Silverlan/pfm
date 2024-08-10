@@ -225,3 +225,14 @@ pfm.util.extract_archive = function(zipFile, extractLocation)
 	end
 	return zipFile:ExtractFiles(extractLocation, true)
 end
+
+pfm.create_file_open_dialog = function(...)
+	local fileDialog = gui.create_file_open_dialog(...)
+	fileDialog:SetSkin("pfm")
+	return fileDialog
+end
+pfm.create_file_save_dialog = function(...)
+	local fileDialog = gui.create_file_save_dialog(...)
+	fileDialog:SetSkin("pfm")
+	return fileDialog
+end

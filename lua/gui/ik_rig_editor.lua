@@ -38,7 +38,7 @@ function Element:OnInitialize()
 	local fe = controls:AddFileEntry(locale.get_text("pfm_ik_rig_file"), "ik_rig", "", function(resultHandler)
 		local path = tool.get_filmmaker():GetFileDialogPath("ik_rig_path")
 		local pFileDialog
-		pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+		pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 			if fileName == nil then
 				return
 			end
@@ -67,7 +67,7 @@ function Element:OnInitialize()
 		"reference_model",
 		"",
 		function(resultHandler)
-			local pFileDialog = gui.create_file_open_dialog(function(el, fileName)
+			local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 				if fileName == nil then
 					return
 				end
@@ -115,7 +115,7 @@ function Element:OnInitialize()
 		end
 		local path = tool.get_filmmaker():GetFileDialogPath("ik_rig_path")
 		local pFileDialog
-		pFileDialog = gui.create_file_save_dialog(function(pDialoge, fileName)
+		pFileDialog = pfm.create_file_save_dialog(function(pDialoge, fileName)
 			if fileName == nil then
 				return
 			end

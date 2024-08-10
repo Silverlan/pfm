@@ -83,7 +83,7 @@ function gui.PFMRaytracedAnimationViewport:SetSaveAsHDR(saveAsHdr)
 end
 function gui.PFMRaytracedAnimationViewport:SaveAs(format, hdr)
 	format = format or self.m_imgSaveFormat
-	local dialoge = gui.create_file_save_dialog(function(pDialoge)
+	local dialoge = pfm.create_file_save_dialog(function(pDialoge)
 		local fname = pDialoge:GetFilePath(true)
 		file.create_path(file.get_file_path(fname))
 
