@@ -34,6 +34,59 @@ end
 function Component:UpdateIkTrackingState()
 	self:BroadcastEvent(Component.EVENT_ON_IK_TRACKING_STATE_CHANGED, { self:IsIkTrackingEnabled() })
 end
+function Component:OnVrEventsUpdated() end
+function Component:OnVrControllerTriggerStateChanged(vrC, axisId, state, axisState)
+	if axisId == 0 and vrC:IsPrimaryController() then
+		if state == ents.VRController.TRIGGER_STATE_TOUCH then
+			self:SetPlaybackEnabled(true, vrC)
+		elseif state == ents.VRController.TRIGGER_STATE_RELEASE then
+			self:SetPlaybackEnabled(false)
+		end
+	end
+end
+function Component:SetPlaybackEnabled(enabled, vrC)
+	self.m_playbackEnabled = enabled
+	self.m_playbackController = vrC
+
+	if enabled then
+		self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
+	else
+		self:SetTickPolicy(ents.TICK_POLICY_NEVER)
+	end
+
+	-- We're using a timer here because this function is called during a GUI draw-call, and
+	-- the playback state callbacks can cause changes to the GUI state (which is not
+	-- allowed during a draw call)
+	-- TODO: This is not a great solution
+	time.create_simple_timer(0.0, function()
+		local pm = tool.get_filmmaker()
+		if util.is_valid(pm) then
+			local playbackState = pm:GetPlaybackState()
+			if enabled then
+				playbackState:Play()
+			else
+				playbackState:Pause()
+				playbackState:SetPlaybackSpeed(1.0)
+			end
+		end
+	end)
+end
+function Component:OnTick()
+	if self.m_playbackEnabled then
+		if util.is_valid(self.m_playbackController) then
+			local state = self.m_playbackController:GetControllerState()
+			if state ~= nil then
+				local pm = tool.get_filmmaker()
+				if util.is_valid(pm) then
+					local playbackState = pm:GetPlaybackState()
+					playbackState:SetPlaybackSpeed(state.axis0.x)
+				end
+			end
+		else
+			self:SetPlaybackEnabled(false)
+		end
+	end
+end
 function Component:OnEntitySpawn()
 	self.m_hmdC = self:AddEntityComponent("vr_hmd")
 	if self.m_hmdC == nil then
@@ -45,6 +98,9 @@ function Component:OnEntitySpawn()
 		hmdC:SetOwner(ents.get_local_player():GetEntity())
 		self.m_cbOnTrackedDeviceAdded = hmdC:AddEventCallback(ents.VRHMD.EVENT_ON_TRACKED_DEVICE_ADDED, function(tdC)
 			self:InitializeTrackedDevice(tdC)
+		end)
+		self.m_cbOnEventsUpdated = hmdC:AddEventCallback(ents.VRHMD.EVENT_ON_EVENTS_UPDATED, function(tdC)
+			self:OnVrEventsUpdated()
 		end)
 		for _, tdC in pairs(hmdC:GetTrackedDevices()) do
 			if tdC:IsValid() then
@@ -93,6 +149,11 @@ function Component:InitializeVrController(pfmTdc)
 	end
 	local cb = vrC:AddEventCallback(ents.VRController.EVENT_ON_BUTTON_INPUT, function(buttonId, state)
 		return self:OnVrControllerButtonInput(vrC, buttonId, state)
+	end)
+	table.insert(self.m_trackedDeviceCallbacks, cb)
+
+	cb = vrC:AddEventCallback(ents.VRController.EVENT_ON_TRIGGER_STATE_CHANGED, function(axisId, state, axisState)
+		return self:OnVrControllerTriggerStateChanged(vrC, axisId, state, axisState)
 	end)
 	table.insert(self.m_trackedDeviceCallbacks, cb)
 end
@@ -280,6 +341,7 @@ end
 function Component:OnRemove()
 	util.remove(self.m_cbPopulateActorContextMenu)
 	util.remove(self.m_cbOnTrackedDeviceAdded)
+	util.remove(self.m_cbOnEventsUpdated)
 	util.remove(self.m_trackedDevices)
 	util.remove(self.m_trackedDeviceCallbacks)
 
