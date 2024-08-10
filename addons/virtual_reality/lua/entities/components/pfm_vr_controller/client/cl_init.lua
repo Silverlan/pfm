@@ -20,17 +20,19 @@ function ents.PFMVRController:Initialize()
 	self:BindEvent(ents.VRController.EVENT_ON_TRIGGER_STATE_CHANGED, "OnTriggerStateChanged")
 end
 
-function ents.PFMVRController:OnTriggerStateChanged(triggerState)
-	local playButton = util.is_valid(self.m_guiInterface) and self.m_guiInterface:GetPlayButton() or nil
-	if util.is_valid(playButton) == false then
-		return
-	end
-	if triggerState == ents.VRController.TRIGGER_STATE_RELEASE then
-		playButton:SetActivated(false)
-	elseif triggerState == ents.VRController.TRIGGER_STATE_TOUCH then
-		playButton:SetActivated(true)
-	else
-		playButton:TogglePlay()
+function ents.PFMVRController:OnTriggerStateChanged(axisId, triggerState)
+	if axisId == 1 then
+		local playButton = util.is_valid(self.m_guiInterface) and self.m_guiInterface:GetPlayButton() or nil
+		if util.is_valid(playButton) == false then
+			return
+		end
+		if triggerState == ents.VRController.TRIGGER_STATE_RELEASE then
+			playButton:SetActivated(false)
+		elseif triggerState == ents.VRController.TRIGGER_STATE_TOUCH then
+			playButton:SetActivated(true)
+		else
+			playButton:TogglePlay()
+		end
 	end
 end
 
