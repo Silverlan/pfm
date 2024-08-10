@@ -15,6 +15,7 @@ PlaybackState.STATE_PAUSED = 2
 function PlaybackState:__init()
 	util.CallbackHandler.__init(self)
 	self.m_state = PlaybackState.STATE_INITIAL
+	self:SetPlaybackSpeed(1.0)
 end
 function PlaybackState:__finalize()
 	self:Reset()
@@ -23,7 +24,14 @@ function PlaybackState:Reset()
 	if util.is_valid(self.m_cbThink) then
 		self.m_cbThink:Remove()
 	end
+	self.m_cbThink = nil
 	self.m_state = PlaybackState.STATE_INITIAL
+end
+function PlaybackState:GetPlaybackSpeed()
+	return self.m_playbackSpeed
+end
+function PlaybackState:SetPlaybackSpeed(speed)
+	self.m_playbackSpeed = speed
 end
 function PlaybackState:SetState(state)
 	if state == self:GetState() then
@@ -42,6 +50,7 @@ function PlaybackState:SetState(state)
 			end
 			local dt = time.cur_time() - tStart
 			tStart = time.cur_time()
+			dt = dt * self:GetPlaybackSpeed()
 			self:CallCallbacks("OnTimeAdvance", dt)
 		end)
 	end
