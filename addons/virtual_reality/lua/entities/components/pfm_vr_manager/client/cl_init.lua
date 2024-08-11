@@ -234,8 +234,12 @@ function Component:IsVrCameraActive()
 	end
 	local pm = tool.get_filmmaker()
 	local vp = pm:GetViewport()
-	local curSceneCam = vp:GetSceneCamera()
-	if vp:IsSceneCamera() and util.is_valid(curSceneCam) and util.is_same_object(curSceneCam, camC) then
+	local curSceneCam = vp:GetActiveCamera()
+	if
+		vp:IsSceneCamera()
+		and util.is_valid(curSceneCam)
+		and util.is_same_object(curSceneCam:GetEntity(), camC:GetEntity())
+	then
 		return true
 	end
 	return false

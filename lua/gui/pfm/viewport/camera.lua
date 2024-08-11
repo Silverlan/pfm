@@ -312,6 +312,12 @@ function gui.PFMCoreViewportBase:GetSceneCamera()
 	end
 	return ent:GetComponent(ents.COMPONENT_CAMERA)
 end
+function gui.PFMCoreViewportBase:GetActiveCamera()
+	local scene = self.m_viewport:GetScene()
+	if util.is_valid(scene) then
+		return scene:GetActiveCamera()
+	end
+end
 function gui.PFMCoreViewportBase:GetSceneCameraActorData()
 	local cam = self:GetSceneCamera()
 	local actorC = util.is_valid(cam) and cam:GetEntity():GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
