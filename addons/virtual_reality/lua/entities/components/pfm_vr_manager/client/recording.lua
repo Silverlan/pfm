@@ -33,7 +33,7 @@ function Component:IsRecording()
 end
 
 function Component:StartRecording()
-	self:EndRecording(false)
+	self:EndRecording()
 	self:LogInfo("Starting VR recording...")
 
 	local hmdC = self:GetEntityComponent("vr_hmd")
@@ -149,7 +149,7 @@ function Component:StartRecording()
 	pfmManagerC:StartRecording()
 end
 
-function Component:EndRecording(syncAnims)
+function Component:EndRecording()
 	local pfmManagerC = self:GetPfmManager()
 	local recorderC = self:GetGameAnimationRecorder()
 	if pfmManagerC == nil or recorderC == nil then
@@ -166,50 +166,5 @@ function Component:EndRecording(syncAnims)
 			.. n
 			.. " properties."
 	)
-	if syncAnims == nil then
-		syncAnims = true
-	end
-	if syncAnims then
-		self:SyncAnimations()
-	end
 	return n
-end
-
-function Component:SyncAnimations()
-	self:LogInfo("Syncing recorded animation with PFM...")
-	local recorderC = self:GetGameAnimationRecorder()
-	if recorderC == nil then
-		self:LogWarn("No game animation recorder component found!")
-		return
-	end
-
-	local pm = tool.get_filmmaker()
-	if util.is_valid(pm) == false then
-		self:LogWarn("Filmmaker is not running!")
-		return
-	end
-	local numProps = 0
-	local animManager = pm:GetAnimationManager()
-	for uuid, animData in pairs(recorderC:GetAnimations()) do
-		if animData.entity:IsValid() then
-			local actorC = animData.entity:GetComponent(ents.COMPONENT_PFM_ACTOR)
-			local actorData = (actorC ~= nil) and actorC:GetActorData() or nil
-			if actorData ~= nil then
-				for componentType, componentAnimData in pairs(animData.channels) do
-					for propName, propAnimData in pairs(componentAnimData) do
-						if propAnimData.component:IsValid() then
-							local path = "ec/" .. componentType .. "/" .. propName
-							local channel = propAnimData.channel
-							local times = channel:GetTimes()
-							local values = channel:GetValues()
-							local valueType = channel:GetValueType()
-							animManager:SetRawAnimationData(actorData, path, times, values, valueType)
-							numProps = numProps + 1
-						end
-					end
-				end
-			end
-		end
-	end
-	self:LogInfo(numProps .. " properties have been synchronized!")
 end
