@@ -11,6 +11,7 @@ include("/gui/wimodelview.lua")
 include("/gui/wiimageicon.lua")
 include("/sfm/project_converter/particle_systems.lua")
 include("/util/util_rig_helper.lua")
+include("/pfm/util/viewer_camera.lua")
 
 util.register_class("gui.AssetIcon", gui.ImageIcon)
 
@@ -35,44 +36,6 @@ local function create_model_view(width, height, parent)
 	el:SetFov(math.horizontal_fov_to_vertical_fov(45.0, width, height))
 	el:SetVisible(false)
 	return el
-end
-
-local function is_character_model(model)
-	local mdl = model
-	if type(mdl) == "string" then
-		mdl = game.load_model(mdl)
-	end
-	if mdl == nil then
-		return false
-	end
-	local metaRig = mdl:GetMetaRig()
-	if metaRig == nil then
-		return false
-	end
-	local metaBoneHead = metaRig:GetBone(Model.MetaRig.BONE_TYPE_HEAD)
-	local metaBoneNeck = metaRig:GetBone(Model.MetaRig.BONE_TYPE_NECK)
-	if metaBoneHead == nil or metaBoneNeck == nil then
-		return false
-	end
-
-	local headBones = {}
-	local skeleton = mdl:GetSkeleton()
-	local headBone = skeleton:GetBone(metaBoneHead.boneId)
-	local addHeadBones
-	addHeadBones = function(bone)
-		for id, child in pairs(bone:GetChildren()) do
-			headBones[id] = true
-			addHeadBones(child)
-		end
-	end
-	addHeadBones(headBone)
-	return true,
-		{
-			headBounds = { metaBoneHead.min, metaBoneHead.max },
-			headBoneId = metaBoneHead.boneId,
-			headParentBoneId = metaBoneNeck.boneId,
-			headBones = headBones,
-		}
 end
 
 local function set_model_view_model(mdlView, model, settings, iconPath)
@@ -123,54 +86,12 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 			if eyeC ~= nil then
 				eyeC:SetBlinkingEnabled(false)
 			end
-			local isCharModel, headData = is_character_model(model)
-			if isCharModel and headData.headBounds[1]:DistanceSqr(headData.headBounds[2]) > 0.001 then
-				local mdl = ent:GetModel()
-				local metaRig = mdl:GetMetaRig()
-				if metaRig ~= nil then
-					ent:SetRotation(metaRig.forwardFacingRotationOffset)
-				end
-				local animC = ent:GetComponent(ents.COMPONENT_ANIMATED)
-				if animC ~= nil then
-					-- If the model is a character, we'll zoom in on the head
-					local pose = animC:GetBonePose(headData.headBoneId, math.COORDINATE_SPACE_WORLD)
-					local poseParent = animC:GetBonePose(headData.headParentBoneId, math.COORDINATE_SPACE_WORLD)
-					if pose ~= nil and poseParent ~= nil then
-						playIdleAnim = false
-						pose:SetOrigin(pose:GetOrigin() + (poseParent:GetOrigin() - pose:GetOrigin()) * 0.7)
-						local min = pose * (headData.headBounds[1] * 1.2)
-						local max = pose * (headData.headBounds[2] * 1.2)
-						mdlView:FitCameraToScene(min, max)
 
-						local vc = mdlView:GetViewerCamera()
-						if util.is_valid(vc) then
-							vc:SetRotation(0.0, 0.0)
-							vc:Rotate(-25, 10)
-							vc:FitZoomToExtents(min, max)
-
-							-- Zoom out a little bit
-							vc:SetZoom(vc:GetZoom() + math.abs(max.z - min.z))
-
-							local mdl = ent:GetModel()
-							if mdl ~= nil then
-								local mdlMin, mdlMax = mdl:GetRenderBounds()
-								local isYDominant = math.abs(mdlMax.y - mdlMin.y)
-									> math.max(math.abs(mdlMax.x - mdlMin.x), math.abs(mdlMax.z - mdlMin.z))
-								if isYDominant then
-									-- If the model is larger on the y axis, we'll assume it's a humanoid character model.
-									-- In this case we'll move the camera slightly downwards and adjust the camera angle
-									-- to get a nicer perspective.
-									local lt = vc:GetLookAtTarget()
-									lt.y = lt.y - math.abs(max.y - min.y) * 0.35
-									vc:SetLookAtTarget(lt)
-									vc:Rotate(0, 10)
-									vc:UpdatePosition()
-								end
-							end
-						end
-					end
-				end
+			local vc = mdlView:GetViewerCamera()
+			if util.is_valid(vc) and pfm.util.align_viewer_camera_to_head(ent, vc, -25, 10) then
+				playIdleAnim = false
 			end
+
 			if playIdleAnim then
 				mdlView:PlayIdleAnimation()
 			end
@@ -275,7 +196,7 @@ local function save_model_icon(mdl, mdlView, iconPath, callback)
 		local mat = game.create_material(iconLocation, "wguitextured")
 		mat:SetTexture("albedo_map", iconLocation)
 
-		local isCharModel = is_character_model(mdl)
+		local isCharModel = pfm.util.is_character_model(mdl)
 		if isCharModel then
 			local db = mat:GetDataBlock()
 			local mv = db:AddBlock("pfm_model_view")
@@ -347,7 +268,7 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 	end
 	local data = self.m_mdlQueue[1]
 	if self.m_isCharacterModel == nil then
-		self.m_isCharacterModel = is_character_model(data.model)
+		self.m_isCharacterModel = pfm.util.is_character_model(data.model)
 	end
 	local mdlView = self.m_isCharacterModel and self.m_modelViewCharacter or self.m_modelView
 	local dtFrameIndex = mdlView:GetFrameIndex() - self.m_tStartFrameIndex
@@ -422,7 +343,7 @@ function gui.AssetIcon.IconGenerator:GenerateNextIcon()
 	print("Generating next icon for model " .. data.model .. "...")
 
 	local f = function()
-		local mdlView = is_character_model(data.model) and self.m_modelViewCharacter or self.m_modelView
+		local mdlView = pfm.util.is_character_model(data.model) and self.m_modelViewCharacter or self.m_modelView
 		mdlView:SetVisible(true)
 		set_model_view_model(mdlView, data.model, data.settings, data.iconPath)
 		self.m_tStartFrameIndex = mdlView:GetFrameIndex()
