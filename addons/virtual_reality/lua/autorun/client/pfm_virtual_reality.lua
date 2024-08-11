@@ -6,6 +6,40 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/pfm/util/viewer_camera.lua")
+
+local function open_button_mapping_window()
+	-- TODO: This is just a placeholder
+	include("/gui/pfm/vr/mapping_diagram.lua")
+	include("/gui/pfm/bake/base_baker.lua")
+	pfm.util.open_simple_window("VR Controller Button Mappings", function(windowHandle, contents, controls)
+		local el = gui.create("WIPFMVRMappingDiagram", contents)
+		el:SetButtonMapping(gui.PfmVrMappingDiagram.BUTTON_STEAMVR_TRIGGER, "Start/Stop Recording")
+		el:SetButtonMapping(gui.PfmVrMappingDiagram.BUTTON_APPLICATION_MENU, "Toggle First-Person")
+		el:SetButtonMapping(gui.PfmVrMappingDiagram.BUTTON_A, "Toggle VR Tracking/Animation Playback")
+		el:SetButtonMapping(gui.PfmVrMappingDiagram.BUTTON_STEAMVR_TOUCHPAD, "Change Timeline Position")
+		el:SetButtonMapping(gui.PfmVrMappingDiagram.BUTTON_GRIP, "Reset Zero Pose")
+		contents:SetAutoSizeToContents(true)
+		time.create_simple_timer(0.1, function()
+			if windowHandle:IsValid() then
+				windowHandle:SetSize(contents:GetSize())
+			end
+		end)
+
+		-- Keep a reference to the window somewhere
+		tool.get_filmmaker().vrMappingDiagramWindow = windowHandle
+	end)
+end
+
+local function align_vr_camera_to_character(entActor, entCam)
+	local viewerCameraC = entCam:AddComponent(ents.COMPONENT_VIEWER_CAMERA)
+	if viewerCameraC == nil then
+		return
+	end
+	pfm.util.align_viewer_camera_to_head(entActor, viewerCameraC, 0, 0, 3)
+	entCam:RemoveComponent(ents.COMPONENT_VIEWER_CAMERA)
+end
+
 local function set_vr_target(pm, targetActor)
 	local actorEditor = pm:GetActorEditor()
 	if util.is_valid(actorEditor) == false then
@@ -32,6 +66,7 @@ local function set_vr_target(pm, targetActor)
 			name = "vr_manager",
 			collection = gui.PFMActorEditor.COLLECTION_VR,
 		})
+		open_button_mapping_window()
 	end
 
 	if vrCameraActor == nil then
@@ -44,6 +79,17 @@ local function set_vr_target(pm, targetActor)
 		actorEditor:UpdateActorComponents(actorVrCamera)
 
 		vrCameraActor = actorVrCamera
+	end
+
+	local entActor = targetActor:FindEntity()
+	local entCam = vrCameraActor:FindEntity()
+	if util.is_valid(entActor) and util.is_valid(entCam) then
+		align_vr_camera_to_character(entActor, entCam)
+
+		local camC = entCam:GetComponent(ents.COMPONENT_CAMERA)
+		if camC ~= nil then
+			camC:SetFOV(70)
+		end
 	end
 
 	local cmd = pfm.create_command(
