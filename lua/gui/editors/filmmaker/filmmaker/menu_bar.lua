@@ -395,7 +395,7 @@ function Element:InitializeMenuBar()
 					util.open_path_in_explorer("export/maps/" .. mapName .. "/" .. mapName .. "/", mapName .. ".glb")
 					return
 				end
-				pfm.log("Unable to export map: " .. errMsg, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+				self:LogWarn("Unable to export map: " .. errMsg)
 			end)
 			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_export_map"))
 			pSubItem:SetName("export_map")

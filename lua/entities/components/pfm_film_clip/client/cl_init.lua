@@ -150,20 +150,14 @@ function ents.PFMFilmClip:UpdateCamera()
 	end
 	if util.is_valid(self.m_camera) == false then
 		if cam == nil then
-			pfm.log(
-				"Film clip '" .. self:GetEntity():GetName() .. "' has no camera!",
-				pfm.LOG_CATEGORY_PFM_GAME,
-				pfm.LOG_SEVERITY_WARNING
-			)
+			self:LogWarn("Film clip '" .. self:GetEntity():GetName() .. "' has no camera!")
 		else
-			pfm.log(
+			self:LogWarn(
 				"No camera by name '"
 					.. cam:GetName()
 					.. "' found for film clip ('"
 					.. self:GetEntity():GetName()
-					.. "')!",
-				pfm.LOG_CATEGORY_PFM_GAME,
-				pfm.LOG_SEVERITY_WARNING
+					.. "')!"
 			)
 		end
 	else
@@ -215,7 +209,7 @@ function ents.PFMFilmClip:UpdateClip(gameViewFlags)
 end
 
 function ents.PFMFilmClip:CreateTrackGroup(trackGroup)
-	pfm.log("Creating track group '" .. trackGroup:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
+	self:LogInfo("Creating track group '" .. trackGroup:GetName() .. "'...")
 	local ent = self:GetEntity():CreateChild("pfm_track_group")
 	ent:Spawn()
 	table.insert(self.m_trackGroups, ent)
@@ -278,7 +272,7 @@ function ents.PFMFilmClip:CreateActor(actor)
 	local ang = entActor:GetRotation():ToEulerAngles()
 	local trC = entActor:GetComponent(ents.COMPONENT_TRANSFORM)
 	local scale = (trC ~= nil) and trC:GetScale() or Vector(1, 1, 1)
-	pfm.log(
+	self:LogInfo(
 		"Created actor '"
 			.. actor:GetName()
 			.. "' at position ("
@@ -299,8 +293,7 @@ function ents.PFMFilmClip:CreateActor(actor)
 			.. util.round_string(scale.y, 2)
 			.. ","
 			.. util.round_string(scale.z, 2)
-			.. ")...",
-		pfm.LOG_CATEGORY_PFM_GAME
+			.. ")..."
 	)
 
 	local projectC = self:GetProject()

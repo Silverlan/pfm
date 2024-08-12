@@ -74,11 +74,7 @@ function Component:SaveConfig()
 	local filePath = util.Path.CreateFilePath(self:GetNormalizedConfigFilePath())
 	local udmData, err = udm.create("PIKC", 1)
 	if udmData == false then
-		pfm.log(
-			"Unable to save ik config '" .. filePath:GetString() .. "': " .. err,
-			pfm.LOG_CATEGORY_RETARGET,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to save ik config '" .. filePath:GetString() .. "': " .. err)
 		return false
 	end
 
@@ -105,21 +101,13 @@ function Component:SaveConfig()
 	end
 	local f = file.open(filePath:GetString(), file.OPEN_MODE_WRITE)
 	if f == nil then
-		pfm.log(
-			"Unable to open file '" .. filePath:GetString() .. "' for writing!",
-			pfm.LOG_CATEGORY_RETARGET,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to open file '" .. filePath:GetString() .. "' for writing!")
 		return false
 	end
 	local res, err = udmData:SaveAscii(f) -- ,udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER)
 	f:Close()
 	if res == false then
-		pfm.log(
-			"Failed to save ik config as '" .. filePath:GetString() .. "': " .. err,
-			pfm.LOG_CATEGORY_RETARGET,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Failed to save ik config as '" .. filePath:GetString() .. "': " .. err)
 		return false
 	end
 	return true

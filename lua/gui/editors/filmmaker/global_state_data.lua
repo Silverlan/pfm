@@ -27,13 +27,9 @@ function Element:SaveGlobalStateData()
 	file.create_path(file.get_file_path(fileName))
 	local res, err = udmData:SaveAscii(fileName)
 	if res == false then
-		pfm.log(
-			"Failed to save global state data as '" .. fileName .. "': " .. err,
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Failed to save global state data as '" .. fileName .. "': " .. err)
 	else
-		pfm.log("Successfully saved global state data as '" .. fileName .. "'!", pfm.LOG_CATEGORY_PFM)
+		self:LogInfo("Successfully saved global state data as '" .. fileName .. "'!")
 	end
 end
 

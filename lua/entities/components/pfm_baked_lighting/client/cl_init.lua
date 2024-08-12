@@ -125,9 +125,8 @@ function Component:ImportLightmapTexture(matIdentifier, texName, importTex)
 	local absPath = asset.get_asset_root_directory(asset.TYPE_MATERIAL) .. "/" .. texPath
 	local res = file.copy(importTex, absPath)
 
-	pfm.log(
-		"Baked texture '" .. texPath .. "' imported as '" .. matIdentifier .. "' for material '" .. matName .. "'!",
-		pfm.LOG_CATEGORY_PFM_BAKE
+	self:LogInfo(
+		"Baked texture '" .. texPath .. "' imported as '" .. matIdentifier .. "' for material '" .. matName .. "'!"
 	)
 	asset.reload(texPath, asset.TYPE_TEXTURE)
 	mat:SetTexture(matIdentifier, texPath)
@@ -191,7 +190,7 @@ function Component:SaveLightmapTexture(jobResult, resultIdentifier, matIdentifie
 		img = resultIdentifier
 	end
 	if img == nil then
-		pfm.log("Baked texture '" .. matIdentifier .. "' not found, ignoring...", pfm.LOG_CATEGORY_PFM_BAKE)
+		self:LogInfo("Baked texture '" .. matIdentifier .. "' not found, ignoring...")
 		return
 	end
 
@@ -199,15 +198,11 @@ function Component:SaveLightmapTexture(jobResult, resultIdentifier, matIdentifie
 	local texPath = path .. texName
 	local r = self:SaveLightmapImage(img, asset.get_asset_root_directory(asset.TYPE_MATERIAL) .. "/" .. texPath)
 	if r then
-		pfm.log("Baked texture '" .. matIdentifier .. "' saved as '" .. texPath .. "'!", pfm.LOG_CATEGORY_PFM_BAKE)
+		self:LogInfo("Baked texture '" .. matIdentifier .. "' saved as '" .. texPath .. "'!")
 		asset.reload(texPath, asset.TYPE_TEXTURE)
 		mat:SetTexture(matIdentifier, texPath)
 	else
-		pfm.log(
-			"Failed to save baked texture '" .. matIdentifier .. "' as '" .. texPath .. "'!",
-			pfm.LOG_CATEGORY_PFM_BAKE,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Failed to save baked texture '" .. matIdentifier .. "' as '" .. texPath .. "'!")
 	end
 	return mat
 end
@@ -244,11 +239,7 @@ function Component:OnTick(dt)
 					mat:InitializeShaderDescriptorSet()
 					mat:SetLoaded(true)
 					if mat:Save() == false then
-						pfm.log(
-							"Failed to save lightmap atlas material as '" .. mat:GetName() .. "'!",
-							pfm.LOG_CATEGORY_PFM_BAKE,
-							pfm.LOG_SEVERITY_WARNING
-						)
+						self:LogWarn("Failed to save lightmap atlas material as '" .. mat:GetName() .. "'!")
 					else
 						local lightmapC = self:GetEntity():AddComponent(ents.COMPONENT_LIGHT_MAP)
 						if lightmapC ~= nil then
@@ -284,11 +275,7 @@ function Component:OnTick(dt)
 					mat:InitializeShaderDescriptorSet()
 					mat:SetLoaded(true)
 					if mat:Save() == false then
-						pfm.log(
-							"Failed to save lightmap atlas material as '" .. mat:GetName() .. "'!",
-							pfm.LOG_CATEGORY_PFM_BAKE,
-							pfm.LOG_SEVERITY_WARNING
-						)
+						self:LogWarn("Failed to save lightmap atlas material as '" .. mat:GetName() .. "'!")
 					else
 						local lightmapC = self:GetEntity():AddComponent(ents.COMPONENT_LIGHT_MAP)
 						if lightmapC ~= nil then
@@ -392,11 +379,7 @@ include("/pfm/bake/lightmaps.lua")
 function Component:GenerateLightmapUvs()
 	local lmC = self:GetEntityComponent(ents.COMPONENT_LIGHT_MAP)
 	if lmC == nil then
-		pfm.log(
-			"Failed to generate lightmap uvs: No light map component!",
-			pfm.LOG_CATEGORY_PFM_BAKE,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Failed to generate lightmap uvs: No light map component!")
 		return
 	end
 
@@ -427,17 +410,13 @@ function Component:GenerateLightmapUvs()
 		end
 	end
 	if self.m_baker:BakeUvs(lmC:GetEntity(), util.get_addon_path() .. cachePath, meshFilter) == false then
-		pfm.log("Failed to bake lightmap uvs!", pfm.LOG_CATEGORY_PFM_BAKE, pfm.LOG_SEVERITY_WARNING)
+		self:LogWarn("Failed to bake lightmap uvs!")
 		return
 	end
 
 	local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
 	if actorC == nil then
-		pfm.log(
-			"Failed to generate lightmap uvs: No pfm actor component!",
-			pfm.LOG_CATEGORY_PFM_BAKE,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Failed to generate lightmap uvs: No pfm actor component!")
 		return
 	end
 

@@ -611,14 +611,10 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 			success = self.m_material:Save()
 		end
 		if success then
-			pfm.log("Successfully saved material '" .. self.m_material:GetName() .. "'!", pfm.LOG_CATEGORY_PFM)
+			self:LogInfo("Successfully saved material '" .. self.m_material:GetName() .. "'!")
 			self:UpdateSaveButton(true)
 		else
-			pfm.log(
-				"Failed to save material '" .. self.m_material:GetName() .. "'!",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_ERROR
-			)
+			self:LogErr("Failed to save material '" .. self.m_material:GetName() .. "'!")
 		end
 	end)
 	btSave:SetWidth(self.m_bg:GetWidth())

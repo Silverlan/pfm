@@ -264,10 +264,7 @@ function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
 			end
 		end
 		if validProperty == false then
-			pfm.log(
-				"Material property '" .. identifier .. "' not found in material '" .. mat .. "'!",
-				pfm.LOG_CATEGORY_PFM
-			)
+			self:LogInfo("Material property '" .. identifier .. "' not found in material '" .. mat .. "'!")
 		end
 	end
 

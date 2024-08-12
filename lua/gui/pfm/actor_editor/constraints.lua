@@ -170,16 +170,12 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 		logMsg = logMsg .. "' to property '" .. propertyPath1 .. "' of actor '" .. actor1:GetName() .. "'"
 	end
 	logMsg = logMsg .. "..."
-	pfm.log(logMsg)
+	self:LogInfo(logMsg)
 
 	local ent0 = actor0:FindEntity()
 	local memberInfo0 = util.is_valid(ent0) and pfm.get_member_info(propertyPath0, ent0) or nil
 	if memberInfo0 == nil then
-		pfm.log(
-			"Unable to find member info for property '" .. propertyPath0 .. "'!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to find member info for property '" .. propertyPath0 .. "'!")
 		return
 	end
 
@@ -188,11 +184,7 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 			local poseMetaInfo0, poseComponent0, posePropertyName0 =
 				pfm.util.find_property_pose_meta_info(ent0, propertyPath0)
 			if poseMetaInfo0 == nil then
-				pfm.log(
-					"Unable to find pose meta info for property '" .. propertyPath0 .. "'!",
-					pfm.LOG_CATEGORY_PFM,
-					pfm.LOG_SEVERITY_WARNING
-				)
+				self:LogWarn("Unable to find pose meta info for property '" .. propertyPath0 .. "'!")
 				return
 			end
 			return self:AddConstraint(
@@ -247,7 +239,7 @@ function gui.PFMActorEditor:AddConstraint(type, actor0, propertyPath0, actor1, p
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
 	if animManager == nil then
-		pfm.log("Animation Manager not found!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		self:LogWarn("Animation Manager not found!")
 		return
 	end
 

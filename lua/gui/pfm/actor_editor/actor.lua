@@ -388,7 +388,7 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 end
 
 function gui.PFMActorEditor:MoveActorToCollection(actor, col)
-	pfm.log("Moving actor '" .. tostring(actor) .. "' to collection '" .. tostring(col) .. "'...", pfm.LOG_CATEGORY_PFM)
+	self:Log("Moving actor '" .. tostring(actor) .. "' to collection '" .. tostring(col) .. "'...")
 
 	local srcGroup = actor:GetParent()
 	return pfm.undoredo.push(

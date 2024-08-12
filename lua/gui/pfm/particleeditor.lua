@@ -325,24 +325,16 @@ function gui.PFMParticleEditor:Save()
 
 	local f = file.open(fileName, bit.bor(file.OPEN_MODE_WRITE))
 	if f == nil then
-		pfm.log(
-			"Unable to open particle system file '" .. fileName .. "' for writing!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to open particle system file '" .. fileName .. "' for writing!")
 		return false
 	end
 	local res, err = udmData:SaveAscii(f)
 	f:Close()
 	if res == false then
-		pfm.log(
-			"Failed to save particle system as '" .. fileName .. "': " .. err,
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Failed to save particle system as '" .. fileName .. "': " .. err)
 		return false
 	end
-	pfm.log("Particle system has been saved as '" .. fileName .. "'...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Particle system has been saved as '" .. fileName .. "'...")
 	self:UpdateSaveButton(true)
 	return true
 end
@@ -586,24 +578,18 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType, opType, udmOpera
 				if etype ~= udm.TYPE_INVALID then
 					type = etype
 				else
-					pfm.log(
+					self:LogWarn(
 						"Unrecognized keyvalue type '"
 							.. strType
 							.. "' for keyvalue '"
 							.. key
 							.. "' of operator '"
 							.. opType
-							.. "'!",
-						pfm.LOG_CATEGORY_PFM,
-						pfm.LOG_SEVERITY_WARNING
+							.. "'!"
 					)
 				end
 			else
-				pfm.log(
-					"Missing keyvalue type for keyvalue '" .. key .. "' of operator '" .. opType .. "'!",
-					pfm.LOG_CATEGORY_PFM,
-					pfm.LOG_SEVERITY_WARNING
-				)
+				self:LogWarn("Missing keyvalue type for keyvalue '" .. key .. "' of operator '" .. opType .. "'!")
 			end
 			return type
 		end
@@ -793,14 +779,12 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType, opType, udmOpera
 					if val ~= nil then
 						udmKeyValues:SetValue(key, type, val)
 					else
-						pfm.log(
+						self:LogWarn(
 							"Failed to convert keyvalue '"
 								.. key
 								.. "' from type 'string' to '"
 								.. udm.enum_type_to_ascii(type)
-								.. "'!",
-							pfm.LOG_CATEGORY_PFM,
-							pfm.LOG_SEVERITY_WARNING
+								.. "'!"
 						)
 					end
 				end
@@ -1114,11 +1098,7 @@ function gui.PFMParticleEditor:ReloadParticleSystem(ptName)
 			ptC:InitializeFromParticleSystemDefinition(name)
 			ptC:Start()
 		else
-			pfm.log(
-				"Failed to register particle system '" .. name .. "': " .. err,
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_WARNING
-			)
+			self:LogWarn("Failed to register particle system '" .. name .. "': " .. err)
 		end
 	end
 end

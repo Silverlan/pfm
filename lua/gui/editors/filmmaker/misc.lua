@@ -93,7 +93,7 @@ function Element:DoChangeMap(mapName)
 end
 function Element:SaveRestoreData(el, map, projectFileName) end
 function Element:ChangeMap(map, projectFileName)
-	pfm.log("Changing map to '" .. map .. "'...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Changing map to '" .. map .. "'...")
 	time.create_simple_timer(0.0, function()
 		local elBase = gui.get_base_element()
 		local mapName = asset.get_normalized_path(map, asset.TYPE_MAP)
@@ -112,19 +112,11 @@ function Element:ChangeMap(map, projectFileName)
 			f:Close()
 
 			if res == false then
-				pfm.log(
-					"Failed to write UDM data to restore file. Map will not be changed!",
-					pfm.LOG_CATEGORY_PFM,
-					pfm.LOG_SEVERITY_ERROR
-				)
+				self:LogErr("Failed to write UDM data to restore file. Map will not be changed!")
 				return
 			end
 		else
-			pfm.log(
-				"Failed to write restore file. Map will not be changed!",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_ERROR
-			)
+			self:LogErr("Failed to write restore file. Map will not be changed!")
 			return
 		end
 

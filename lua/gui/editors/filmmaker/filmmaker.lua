@@ -336,7 +336,7 @@ function gui.WIFilmmaker:OnInitialize()
 
 	--[[local entProbe = ents.iterator({ents.IteratorFilterComponent(ents.COMPONENT_REFLECTION_PROBE)})()
 	if(entProbe == nil) then
-		pfm.log("No reflection probe found, creating default probe...",pfm.LOG_CATEGORY_PFM)
+		self:LogInfo("No reflection probe found, creating default probe...")
 		local entReflectionProbe = ents.create("env_reflection_probe")
 		entReflectionProbe:SetKeyValue("ibl_material","pbr/ibl/venice_sunset")
 		entReflectionProbe:SetKeyValue("ibl_strength","1.4")
@@ -394,11 +394,7 @@ function gui.WIFilmmaker:SaveRestoreData(el, map, projectFileName)
 	if restoreProjectName == nil then
 		restoreProjectName = "temp/pfm/restore/project"
 		if self:Save(restoreProjectName, false, nil, false) == false then
-			pfm.log(
-				"Failed to save restore project. Map will not be changed!",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_ERROR
-			)
+			self:LogErr("Failed to save restore project. Map will not be changed!")
 			return
 		end
 	end
@@ -411,16 +407,12 @@ function gui.WIFilmmaker:RestoreStateFromData(restoreData)
 	local originalProjectFileName = restoreData:GetValue("originalProjectFileName", udm.TYPE_STRING)
 	local restoreProjectFileName = restoreData:GetValue("restoreProjectFileName", udm.TYPE_STRING)
 	if restoreProjectFileName == nil then
-		pfm.log("Failed to restore project: Invalid restore data!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
+		self:LogErr("Failed to restore project: Invalid restore data!")
 		return false
 	end
 	local fileName = restoreProjectFileName
 	if self:LoadProject(fileName, true) == false then
-		pfm.log(
-			"Failed to restore project: Unable to load restore project!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_ERROR
-		)
+		self:LogErr("Failed to restore project: Unable to load restore project!")
 		self:CloseProject()
 		self:CreateEmptyProject()
 		return false

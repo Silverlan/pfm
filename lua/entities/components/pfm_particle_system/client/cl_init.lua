@@ -146,7 +146,7 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 			if string.compare(name, "render_animated_sprites", false) then
 				ptC:AddRenderer("sprite", {})
 			else
-				pfm.log("Unsupported particle system renderer '" .. name .. "'! Ignoring...", pfm.LOG_CATEGORY_PFM_GAME)
+				self:LogInfo("Unsupported particle system renderer '" .. name .. "'! Ignoring...")
 			end
 		end
 		-- TODO: These are just for testing purposes
@@ -200,7 +200,7 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 					fade_end = tostring(endFadeOut:GetValue())
 				})]]
 			else
-				pfm.log("Unsupported particle system renderer '" .. name .. "'! Ignoring...", pfm.LOG_CATEGORY_PFM_GAME)
+				self:LogInfo("Unsupported particle system renderer '" .. name .. "'! Ignoring...")
 			end
 		end
 		for _, initializerData in ipairs(def:GetInitializers():GetTable()) do
@@ -228,7 +228,7 @@ function ents.PFMParticleSystem:InitializeParticleSystem()
 					color2 = tostring(color2),
 				})
 			else
-				pfm.log("Unsupported particle system renderer '" .. name .. "'! Ignoring...", pfm.LOG_CATEGORY_PFM_GAME)
+				self:LogInfo("Unsupported particle system renderer '" .. name .. "'! Ignoring...")
 			end
 		end
 	end

@@ -239,7 +239,7 @@ function Element:AddConstraint(item, boneName, type)
 		return limits
 	end
 
-	pfm.log(
+	self:LogInfo(
 		"Adding "
 			.. type
 			.. " constraint from bone '"
@@ -248,8 +248,7 @@ function Element:AddConstraint(item, boneName, type)
 			.. bone:GetName()
 			.. "' of actor with model '"
 			.. mdl:GetName()
-			.. "'...",
-		pfm.LOG_CATEGORY_PFM
+			.. "'..."
 	)
 	if type == "fixed" then
 		constraint = self.m_ikRig:AddFixedConstraint(parent:GetName(), bone:GetName())

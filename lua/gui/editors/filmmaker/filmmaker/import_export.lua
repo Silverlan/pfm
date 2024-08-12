@@ -67,7 +67,7 @@ function Element:ImportMap(map)
 	local actorEditor = self:GetActorEditor()
 	local data, msg = udm.load("maps/" .. map)
 	if data == false then
-		pfm.log("Failed to import map '" .. map .. "': " .. msg, pfm.LOG_CATEGORY_PFM)
+		self:LogInfo("Failed to import map '" .. map .. "': " .. msg)
 		return
 	end
 
@@ -191,7 +191,7 @@ function Element:ConvertStaticActorsToMap(fcOnSaved)
 	end
 	local entUuids = {}
 	local function add_entity(actor, className)
-		pfm.log("Adding actor '" .. actor:GetName() .. "' to scenebuild map...", pfm.LOG_CATEGORY_PFM)
+		self:LogInfo("Adding actor '" .. actor:GetName() .. "' to scenebuild map...")
 		table.insert(entUuids, tostring(actor:GetUniqueId()))
 		local ent = util.WorldData.EntityData()
 		ent:SetFlags(bit.bor(ent:GetFlags(), util.WorldData.EntityData.FLAG_CLIENTSIDE_ONLY_BIT))
@@ -325,19 +325,15 @@ function Element:ConvertStaticActorsToMap(fcOnSaved)
 			local normalizedPath = asset.get_normalized_path(fileName, asset.TYPE_MAP)
 			local res, err = worldData:Save(udmData:GetAssetData(), file.get_file_name(normalizedPath))
 			if res == false then
-				pfm.log("Failed to save world data: " .. err, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+				self:LogWarn("Failed to save world data: " .. err)
 			else
 				local fileName = normalizedPath .. "." .. asset.get_udm_format_extension(asset.TYPE_MAP, true)
 				file.create_path(file.get_file_path(fileName))
 				res, err = udmData:Save(fileName)
 				if res == false then
-					pfm.log(
-						"Failed to save map file '" .. fileName .. "': " .. err,
-						pfm.LOG_CATEGORY_PFM,
-						pfm.LOG_SEVERITY_WARNING
-					)
+					self:LogWarn("Failed to save map file '" .. fileName .. "': " .. err)
 				else
-					pfm.log("Successfully saved map file as '" .. fileName .. "'!", pfm.LOG_CATEGORY_PFM)
+					self:LogInfo("Successfully saved map file as '" .. fileName .. "'!")
 					if fcOnSaved ~= nil then
 						fcOnSaved(fileName, entUuids)
 					end
@@ -353,11 +349,7 @@ end
 function Element:ImportPFMProject(projectFilePath)
 	local project, err = pfm.load_project(projectFilePath, true)
 	if project == false then
-		pfm.log(
-			"Failed to import PFM project '" .. projectFilePath .. "'!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_ERROR
-		)
+		self:LogErr("Failed to import PFM project '" .. projectFilePath .. "'!")
 		return false
 	end
 	-- TODO: Not yet implemented
@@ -366,11 +358,7 @@ end
 function Element:ImportSFMProject(projectFilePath)
 	local res = pfm.ProjectManager.ImportSFMProject(self, projectFilePath)
 	if res == false then
-		pfm.log(
-			"Failed to import SFM project '" .. projectFilePath .. "'!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_ERROR
-		)
+		self:LogErr("Failed to import SFM project '" .. projectFilePath .. "'!")
 		return false
 	end
 	local session = self:GetSession()

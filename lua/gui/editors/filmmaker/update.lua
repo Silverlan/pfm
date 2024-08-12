@@ -119,7 +119,7 @@ function Element:CheckForUpdates(verbose)
 			end
 		elseif resultCode == pfm.UPDATE_CHECK_RESULT_FAILED then
 			local msg = ...
-			pfm.log(msg, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+			self:LogWarn(msg)
 		end
 	end)
 end
@@ -136,11 +136,7 @@ function Element:DownloadUpdate(url)
 	self.m_updateJob = pfm.update(url, function(worker)
 		util.remove(self.m_updateProgressBar)
 		if worker:IsSuccessful() == false then
-			pfm.log(
-				"Failed to download update: " .. worker:GetResultMessage() .. "!",
-				pfm.LOG_CATEGORY_UPDATE,
-				pfm.LOG_SEVERITY_ERROR
-			)
+			self:LogErr("Failed to download update: " .. worker:GetResultMessage() .. "!")
 
 			pfm.create_popup_message(
 				locale.get_text("pfm_update_download_failed", { tostring(worker:GetResultMessage()) }),
@@ -148,7 +144,7 @@ function Element:DownloadUpdate(url)
 			)
 			return
 		end
-		pfm.log("Update downloaded successfully.", pfm.LOG_CATEGORY_UPDATE, pfm.LOG_SEVERITY_INFO)
+		self:LogInfo("Update downloaded successfully.")
 	end)
 	self.m_updateJob:SetProgressCallback(function(worker, progress)
 		if util.is_valid(self.m_updateProgressBar) then

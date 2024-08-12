@@ -210,7 +210,7 @@ function gui.PFMActorEditor:OnCollectionAdded(group)
 	return group, item
 end
 function gui.PFMActorEditor:AddCollection(name, parentGroup, addUndo)
-	pfm.log("Adding collection '" .. name .. "'...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Adding collection '" .. name .. "'...")
 
 	if parentGroup == nil then
 		local filmClip = self:GetFilmClip()

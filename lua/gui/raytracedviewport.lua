@@ -97,9 +97,9 @@ function gui.RaytracedViewport:SaveImage(path, imgFormat, hdr)
 	local result, fileName = util.save_image(imgBuf, path, imgFormat, 1.0, task)
 	self.m_threadPool:AddTask(task)
 	if result == false then
-		pfm.log("Unable to save image as '" .. path .. "'!", pfm.LOG_CATEGORY_PFM_RENDER, pfm.LOG_SEVERITY_WARNING)
+		self:LogWarn("Unable to save image as '" .. path .. "'!")
 	else
-		pfm.log("Saving image as '" .. fileName .. "'...!", pfm.LOG_CATEGORY_PFM_RENDER)
+		self:LogInfo("Saving image as '" .. fileName .. "'...!")
 	end
 	collectgarbage()
 	return result, fileName
@@ -251,10 +251,7 @@ function gui.RaytracedViewport:OnThink()
 				-- particles. Particle effects are rendered in post-processing with Pragma.
 				self.m_renderResultSettings = self.m_rtJob:GetSettings():Copy()
 
-				pfm.log(
-					"Applying rendered texture '" .. tostring(tex) .. "' to render panel image...",
-					pfm.LOG_CATEGORY_PFM
-				)
+				self:LogInfo("Applying rendered texture '" .. tostring(tex) .. "' to render panel image...")
 				self.m_tex:ApplyTexture(tex)
 				-- self:ApplyPostProcessing(tex)
 			end
@@ -380,15 +377,14 @@ function gui.RaytracedViewport:Refresh(preview, rtJobCallback, startFrame, frame
 		self.m_rtJob:SetGameScene(self.m_gameScene)
 	end
 
-	pfm.log(
+	self:LogInfo(
 		"Rendering image with resolution "
 			.. settings:GetWidth()
 			.. "x"
 			.. settings:GetHeight()
 			.. " and "
 			.. settings:GetSamples()
-			.. " samples...",
-		pfm.LOG_CATEGORY_PFM_INTERFACE
+			.. " samples..."
 	)
 	self.m_state = gui.RaytracedViewport.STATE_RENDERING
 	self.m_rtJob:Start()

@@ -32,7 +32,7 @@ function Element:Save(fileName, setAsProjectName, saveAs, withProjectsPrefix, re
 	if self:IsDeveloperModeEnabled() == false and saveAs ~= true then
 		local session = self:GetSession()
 		if session ~= nil and session:GetSettings():IsReadOnly() then
-			pfm.log("Failed to save project: Project is read-only!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
+			self:LogErr("Failed to save project: Project is read-only!")
 			local msgReadOnly = locale.get_text("pfm_project_read_only")
 			pfm.create_popup_message(
 				locale.get_text("pfm_save_failed_reason", { msgReadOnly }),

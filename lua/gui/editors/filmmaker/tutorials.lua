@@ -9,28 +9,25 @@
 local Element = gui.WIFilmmaker
 
 function Element:LoadTutorial(tutorial)
-	pfm.log("Loading tutorial '" .. tutorial .. "'...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Loading tutorial '" .. tutorial .. "'...")
 	local fileName = "tutorials/" .. file.remove_file_extension(tutorial, { "udm" }) .. ".udm"
 	local udmData, err = udm.load(fileName)
 	if udmData == false then
-		pfm.log("Failed to load tutorial '" .. tutorial .. "': " .. err, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		self:LogWarn("Failed to load tutorial '" .. tutorial .. "': " .. err)
 		return false, err
 	end
 	udmData = udmData:GetAssetData():GetData()
 	local udmTutorial = udmData:Get("tutorial")
 	local scriptFile = udmTutorial:GetValue("script_file", udm.TYPE_STRING)
 	if scriptFile ~= nil then
-		pfm.log("Loading script '" .. scriptFile .. "' for tutorial '" .. tutorial .. "'...", pfm.LOG_CATEGORY_PFM)
+		self:LogInfo("Loading script '" .. scriptFile .. "' for tutorial '" .. tutorial .. "'...")
 		include(scriptFile)
 
 		gui.Tutorial.start_tutorial(udmTutorial:GetValue("name", udm.TYPE_STRING) or "")
 	else
 		local projectFile = udmTutorial:GetValue("project_file", udm.TYPE_STRING)
 		if projectFile ~= nil then
-			pfm.log(
-				"Loading project '" .. projectFile .. "' for tutorial '" .. tutorial .. "'...",
-				pfm.LOG_CATEGORY_PFM
-			)
+			self:LogInfo("Loading project '" .. projectFile .. "' for tutorial '" .. tutorial .. "'...")
 			self:LoadProject(projectFile)
 		end
 	end

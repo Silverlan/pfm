@@ -264,26 +264,22 @@ function Element:ChangeActorPropertyValue(
 	if isInAnimMode or (channel ~= nil and channel:GetValueCount() < 2) then
 		if isInAnimMode then
 			if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-				pfm.log(
+				self:LogDebug(
 					"Graph editor is active. Value "
 						.. tostring(value)
 						.. " of property '"
 						.. targetPath
-						.. "' will be assigned as animation value...",
-					pfm.LOG_CATEGORY_PFM,
-					pfm.LOG_SEVERITY_DEBUG
+						.. "' will be assigned as animation value..."
 				)
 			end
 		else
 			if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-				pfm.log(
+				self:LogDebug(
 					"Animation channel for property '"
 						.. targetPath
 						.. "' contains less than two values. Value "
 						.. tostring(value)
-						.. " will be assigned as animation value, as well as base value...",
-					pfm.LOG_CATEGORY_PFM,
-					pfm.LOG_SEVERITY_DEBUG
+						.. " will be assigned as animation value, as well as base value..."
 				)
 			end
 		end
@@ -334,11 +330,7 @@ function Element:ChangeActorPropertyValue(
 					end
 				end
 			else
-				pfm.log(
-					"Missing animation data for property path '" .. targetPath .. "'!",
-					pfm.LOG_CATEGORY_PFM,
-					pfm.LOG_SEVERITY_ERROR
-				)
+				self:LogErr("Missing animation data for property path '" .. targetPath .. "'!")
 			end
 		end
 		local cmd = pfm.create_command(parentCmd, "keyframe_property_composition", actorUuid, targetPath, baseIndex)
@@ -365,14 +357,12 @@ function Element:ChangeActorPropertyValue(
 		return newCmdKeyframe
 	else
 		if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-			pfm.log(
+			self:LogDebug(
 				"Graph editor is not active. Value "
 					.. tostring(value)
 					.. " of property '"
 					.. targetPath
-					.. "' will be applied as base value only...",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_DEBUG
+					.. "' will be applied as base value only..."
 			)
 		end
 	end

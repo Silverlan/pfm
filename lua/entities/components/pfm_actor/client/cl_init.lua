@@ -245,13 +245,12 @@ end
 
 function Component:InitializeComponentProperties()
 	local actorData = self:GetActorData()
-	pfm.log(
+	self:LogInfo(
 		"Initializing "
 			.. #actorData:GetComponents()
 			.. " components for actor '"
 			.. self:GetEntity():GetName()
-			.. "'...",
-		pfm.LOG_CATEGORY_PFM_GAME
+			.. "'..."
 	)
 	for _, value in ipairs(actorData:GetComponents()) do
 		local componentData = value
@@ -260,14 +259,12 @@ function Component:InitializeComponentProperties()
 		if componentName ~= "pfm_actor" then
 			c = self:AddEntityComponent(componentName)
 			if c == nil then
-				pfm.log(
+				self:LogWarn(
 					"Attempted to add unknown component '"
 						.. componentName
 						.. "' to actor '"
 						.. self:GetEntity():GetName()
-						.. "'!",
-					pfm.LOG_CATEGORY_PFM_GAME,
-					pfm.LOG_SEVERITY_WARNING
+						.. "'!"
 				)
 			elseif c.Setup ~= nil then
 				c:Setup(actorData, componentData)
@@ -318,14 +315,12 @@ function Component:InitializeComponentProperties()
 							if isElementProperty then
 								local udmEl = c:GetMemberValue(childPath)
 								if udmEl == nil then
-									pfm.log(
+									self:LogWarn(
 										"Failed to apply member value for unknown member '"
 											.. childPath
 											.. "' of component '"
 											.. componentName
-											.. "'!",
-										pfm.LOG_CATEGORY_PFM_GAME,
-										pfm.LOG_SEVERITY_WARNING
+											.. "'!"
 									)
 								else
 									udmEl:Clear()
@@ -337,14 +332,12 @@ function Component:InitializeComponentProperties()
 						else
 							local val = udmVal:GetValue()
 							if val == nil then
-								pfm.log(
+								self:LogWarn(
 									"Attempted to apply member value for unknown member '"
 										.. childPath
 										.. "' of component '"
 										.. componentName
-										.. "'! Ignoring...",
-									pfm.LOG_CATEGORY_PFM_GAME,
-									pfm.LOG_SEVERITY_WARNING
+										.. "'! Ignoring..."
 								)
 							else
 								if info ~= nil then
@@ -355,14 +348,12 @@ function Component:InitializeComponentProperties()
 									end
 								end
 								if c:SetMemberValue(childPath, val) == false then
-									pfm.log(
+									self:LogWarn(
 										"Failed to apply member value for unknown member '"
 											.. childPath
 											.. "' of component '"
 											.. componentName
-											.. "'!",
-										pfm.LOG_CATEGORY_PFM_GAME,
-										pfm.LOG_SEVERITY_WARNING
+											.. "'!"
 									)
 								end
 							end

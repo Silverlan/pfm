@@ -99,10 +99,8 @@ function gui.PFMActorEditor:InitializeNewComponent(actor, component, componentTy
 	end
 	componentId = ents.find_component_id(componentType)
 	if componentId == nil then
-		pfm.log(
-			"Attempted to add unknown entity component '" .. componentType .. "' to actor '" .. tostring(actor) .. "'!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
+		self:LogWarn(
+			"Attempted to add unknown entity component '" .. componentType .. "' to actor '" .. tostring(actor) .. "'!"
 		)
 		return
 	end
@@ -169,7 +167,7 @@ function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId, entActor)
 				self:AddActorComponent(entActor, actorData.itemActor, actorData, component)
 			end
 		else
-			pfm.log("Unknown component " .. componentName, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+			self:LogWarn("Unknown component " .. componentName)
 		end
 	end
 	actorData.componentsEntry:Update()
@@ -388,11 +386,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 			elseif info.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY then
 			elseif info.type == ents.MEMBER_TYPE_ELEMENT then
 			else
-				pfm.log(
-					"Unsupported component member type '" .. udm.type_to_string(info.type) .. "'!",
-					pfm.LOG_CATEGORY_PFM,
-					pfm.LOG_SEVERITY_WARNING
-				)
+				self:LogWarn("Unsupported component member type '" .. udm.type_to_string(info.type) .. "'!")
 				valid = false
 			end
 			return valid
@@ -484,7 +478,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 							controlData.min = min
 							controlData.max = max
 						end
-						-- pfm.log("Adding control for member '" .. controlData.path .. "' with type = " .. memberInfo.type .. ", min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...",pfm.LOG_CATEGORY_PFM)
+						-- self:LogInfo("Adding control for member '" .. controlData.path .. "' with type = " .. memberInfo.type .. ", min = " .. (tostring(controlData.min) or "nil") .. ", max = " .. (tostring(controlData.max) or "nil") .. ", default = " .. (tostring(controlData.default) or "nil") .. ", value = " .. (tostring(value) or "nil") .. "...")
 						local memberType = memberInfo.type
 						controlData.getActor = function()
 							local entActor = ents.find_by_uuid(uniqueId)
@@ -513,16 +507,14 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 								return
 							end
 							if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-								pfm.log(
+								self:LogDebug(
 									"Setting value for property '"
 										.. controlData.path
 										.. "' of component '"
 										.. tostring(component)
 										.. "' to value '"
 										.. tostring(value)
-										.. "'...",
-									pfm.LOG_CATEGORY_PFM,
-									pfm.LOG_SEVERITY_DEBUG
+										.. "'..."
 								)
 							end
 							local oldValue
@@ -564,22 +556,16 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 								if oldValue ~= nil then
 								else
 									if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-										pfm.log(
+										self:LogDebug(
 											"Could not retrieve current value for property '"
 												.. controlData.path
-												.. "'. No undo/redo will be added.",
-											pfm.LOG_CATEGORY_PFM,
-											pfm.LOG_SEVERITY_DEBUG
+												.. "'. No undo/redo will be added."
 										)
 									end
 								end
 							end
 							if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-								pfm.log(
-									"Applying value " .. tostring(udmValue) .. " as type " .. udmType .. ".",
-									pfm.LOG_CATEGORY_PFM,
-									pfm.LOG_SEVERITY_DEBUG
-								)
+								self:LogDebug("Applying value " .. tostring(udmValue) .. " as type " .. udmType .. ".")
 							end
 							component:SetMemberValue(memberName, udmType, udmValue)
 							if memberType ~= ents.MEMBER_TYPE_ELEMENT then
@@ -588,14 +574,12 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 									local c = entActor:GetComponent(componentId)
 									if c ~= nil then
 										if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-											pfm.log(
+											self:LogDebug(
 												"Applying value "
 													.. tostring(memberValue)
 													.. " to entity component "
 													.. tostring(c)
-													.. ".",
-												pfm.LOG_CATEGORY_PFM,
-												pfm.LOG_SEVERITY_DEBUG
+													.. "."
 											)
 										end
 
@@ -618,14 +602,12 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 								if initial ~= true then
 									-- if ents.is_member_type_animatable(memberType) and updateAnimationValue then
 									if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-										pfm.log(
+										self:LogDebug(
 											"Updating animation value for property '"
 												.. controlData.path
 												.. "' with value "
 												.. tostring(memberValue)
-												.. ".",
-											pfm.LOG_CATEGORY_PFM,
-											pfm.LOG_SEVERITY_DEBUG
+												.. "."
 										)
 									end
 
@@ -656,14 +638,12 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 						if value == nil then
 							-- This may happen if the component property definition has
 							-- been changed after the project has been saved
-							pfm.log(
+							self:LogWarn(
 								"Value for property '"
 									.. path
 									.. "' of actor '"
 									.. tostring(actorData.actor:GetUniqueId())
-									.. "' is nil!",
-								pfm.LOG_CATEGORY_PFM,
-								pfm.LOG_SEVERITY_WARNING
+									.. "' is nil!"
 							)
 						else
 							controlData.set(component, value, true, false, nil, nil, true)
@@ -689,11 +669,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 						}
 						self:DoUpdatePropertyIcons(actorData, controlData)
 					else
-						pfm.log(
-							"Unable to add control for member '" .. path .. "'!",
-							pfm.LOG_CATEGORY_PFM,
-							pfm.LOG_SEVERITY_WARNING
-						)
+						self:LogWarn("Unable to add control for member '" .. path .. "'!")
 					end
 				end
 			end
@@ -705,7 +681,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 				table.insert(staticMemberIndices, i)
 			end
 		else
-			pfm.log(
+			self:LogErr(
 				"Missing component '"
 					.. componentType
 					.. "' ("
@@ -713,9 +689,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 					.. ")"
 					.. " in actor '"
 					.. tostring(entActor)
-					.. "'!",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_ERROR
+					.. "'!"
 			)
 		end
 		initializeMembers(staticMemberIndices)

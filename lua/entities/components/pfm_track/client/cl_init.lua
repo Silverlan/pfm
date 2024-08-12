@@ -201,7 +201,7 @@ function ents.PFMTrack:OnOffsetChanged(offset, gameViewFlags)
 				self.m_activeClips[clip] = self:CreateOverlayClip(clip)
 				activeClipsChanged = true
 			else
-				pfm.log("Unsupported clip type '" .. clip.TypeName .. "'! Ignoring...", pfm.LOG_CATEGORY_PFM_GAME)
+				self:LogInfo("Unsupported clip type '" .. clip.TypeName .. "'! Ignoring...")
 			end
 		end
 	end
@@ -236,7 +236,7 @@ function ents.PFMTrack:CreateFilmClip(filmClipData)
 	if ent ~= nil then
 		return ent
 	end
-	pfm.log("Creating film clip '" .. filmClipData:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
+	self:LogInfo("Creating film clip '" .. filmClipData:GetName() .. "'...")
 	local ent = self:GetEntity():CreateChild("pfm_film_clip")
 	ent:GetComponent(ents.COMPONENT_PFM_FILM_CLIP):Setup(filmClipData, self)
 	ent:Spawn()
@@ -253,7 +253,7 @@ function ents.PFMTrack:CreateChannelClip(channelClipData)
 	if ent ~= nil then
 		return
 	end
-	pfm.log("Creating channel clip '" .. channelClipData:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
+	self:LogInfo("Creating channel clip '" .. channelClipData:GetName() .. "'...")
 	local ent = self:GetEntity():CreateChild("pfm_channel_clip")
 	ent:GetComponent(ents.COMPONENT_PFM_CHANNEL_CLIP):Setup(channelClipData, self)
 	ent:Spawn()
@@ -270,7 +270,7 @@ function ents.PFMTrack:CreateAudioClip(audioClipData)
 	if ent ~= nil then
 		return
 	end
-	pfm.log("Creating audio clip '" .. audioClipData:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
+	self:LogInfo("Creating audio clip '" .. audioClipData:GetName() .. "'...")
 	local ent = self:GetEntity():CreateChild("pfm_audio_clip")
 	ent:GetComponent(ents.COMPONENT_PFM_AUDIO_CLIP):Setup(audioClipData, self)
 	ent:Spawn()
@@ -287,7 +287,7 @@ function ents.PFMTrack:CreateOverlayClip(overlayClipData)
 	if ent ~= nil then
 		return
 	end
-	pfm.log("Creating overlay clip '" .. overlayClipData:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
+	self:LogInfo("Creating overlay clip '" .. overlayClipData:GetName() .. "'...")
 	local ent = self:GetEntity():CreateChild("pfm_overlay_clip")
 	ent:GetComponent(ents.COMPONENT_PFM_OVERLAY_CLIP):Setup(overlayClipData, self)
 	ent:Spawn()

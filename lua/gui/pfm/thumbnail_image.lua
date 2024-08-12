@@ -155,22 +155,15 @@ end
 
 function Element:LoadPreviewImage(filePath, reload, dontGenerate)
 	local thumbnailLocation = get_thumbnail_material(filePath)
-	pfm.log("Loading thumbnail '" .. thumbnailLocation .. "' for image '" .. filePath .. "'...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Loading thumbnail '" .. thumbnailLocation .. "' for image '" .. filePath .. "'...")
 	local matPath = thumbnailLocation
 	if asset.exists(matPath, asset.TYPE_MATERIAL) == false then
 		if dontGenerate == true then
 			return false
 		end
-		pfm.log(
-			"Generating thumbnail '" .. thumbnailLocation .. "' for image '" .. filePath .. "'...",
-			pfm.LOG_CATEGORY_PFM
-		)
+		self:LogInfo("Generating thumbnail '" .. thumbnailLocation .. "' for image '" .. filePath .. "'...")
 		if self:GeneratePreviewImage(filePath) == false then
-			pfm.log(
-				"Failed to generate thumbnail '" .. thumbnailLocation .. "' for image '" .. filePath .. "'...",
-				pfm.LOG_CATEGORY_PFM,
-				pfm.LOG_SEVERITY_WARNING
-			)
+			self:LogWarn("Failed to generate thumbnail '" .. thumbnailLocation .. "' for image '" .. filePath .. "'...")
 			return false
 		end
 	end
@@ -188,7 +181,7 @@ function Element:LoadPreviewImage(filePath, reload, dontGenerate)
 	return true
 end
 function Element:InitializeHighDefImage(imgBuf)
-	pfm.log("Initializing high-definition thumbnail...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Initializing high-definition thumbnail...")
 	local tex = pfm.util.generate_thumbnail_texture(imgBuf, prosper.create_image_create_info(imgBuf))
 	self.m_elTex:SetTexture(tex)
 	self.m_elTex:SetVisible(true)
@@ -217,7 +210,7 @@ function Element:GeneratePreviewImage(path)
 	texInfo.inputFormat = util.TextureInfo.INPUT_FORMAT_R8G8B8A8_UINT
 	texInfo.outputFormat = util.TextureInfo.OUTPUT_FORMAT_COLOR_MAP
 	texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
-	pfm.log("Saving thumbnail image as '" .. thumbnailLocation .. "'...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Saving thumbnail image as '" .. thumbnailLocation .. "'...")
 	local result = util.save_image(img, "materials/" .. thumbnailLocation, texInfo)
 	if result then
 		local mat = game.create_material(thumbnailLocation, "wguitextured")
@@ -232,7 +225,7 @@ function Element:LoadPreviewMaterial(reload)
 	if self.m_curImagePath == nil then
 		return
 	end
-	pfm.log("Loading preview thumbnail '" .. self.m_curImagePath .. "'...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Loading preview thumbnail '" .. self.m_curImagePath .. "'...")
 	local thumbnailLocation = "render_previews/" .. util.get_string_hash(self.m_curImagePath)
 	local matPath = thumbnailLocation
 	if asset.exists(matPath, asset.TYPE_MATERIAL) == false then

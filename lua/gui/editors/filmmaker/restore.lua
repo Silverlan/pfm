@@ -12,7 +12,7 @@ function Element:RestoreStateFromData(restoreData) end
 function Element:RestoreProject()
 	local udmData, err = udm.load("temp/pfm/restore/restore.udm")
 	if udmData == false then
-		pfm.log("Failed to restore project: Unable to open restore file!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
+		self:LogErr("Failed to restore project: Unable to open restore file!")
 		return false
 	end
 	udmData = udmData:GetAssetData():GetData()

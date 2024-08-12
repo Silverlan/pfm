@@ -280,10 +280,7 @@ function gui.PFMFrame:DetachTab(identifier, width, height)
 	local createInfo = prosper.WindowCreateInfo()
 	createInfo.width = width or panel:GetWidth()
 	createInfo.height = height or panel:GetHeight()
-	pfm.log(
-		"Detaching frame " .. identifier .. " with size " .. createInfo.width .. "x" .. createInfo.height,
-		pfm.LOG_CATEGORY_PFM
-	)
+	self:LogInfo("Detaching frame " .. identifier .. " with size " .. createInfo.width .. "x" .. createInfo.height)
 	if util.is_valid(tabData.button) then
 		createInfo.title = tabData.button:GetText()
 	end
@@ -340,7 +337,7 @@ function gui.PFMFrame:AttachTab(identifier)
 	if tabData == nil or util.is_valid(tabData.panel) == false or tabData.window == nil then
 		return
 	end
-	pfm.log("Attaching frame " .. identifier, pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Attaching frame " .. identifier)
 	local windowHandle = tabData.window
 
 	local panel = tabData.panel

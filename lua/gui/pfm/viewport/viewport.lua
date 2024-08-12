@@ -790,7 +790,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 			end
 
 			local handled, entActor = findActor()
-			pfm.log("Click target in viewport: " .. tostring(entActor), pfm.LOG_CATEGORY_PFM)
+			self:LogInfo("Click target in viewport: " .. tostring(entActor))
 			if
 				self:IsMoveManipulatorMode(self:GetManipulatorMode())
 				and (entActor == nil or entActor:HasComponent(ents.COMPONENT_UTIL_TRANSFORM_ARROW) == false)

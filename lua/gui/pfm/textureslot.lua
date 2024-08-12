@@ -53,7 +53,7 @@ function gui.PFMTextureSlot:OnInitialize()
 		local tex = asset.load(f, asset.TYPE_TEXTURE)
 		tex = (tex ~= nil) and tex:GetVkTexture() or nil
 		if tex == nil then
-			pfm.log("Failed to import texture!", pfm.LOG_CATEGORY_PFM)
+			self:LogInfo("Failed to import texture!")
 			asset.unlock_asset_watchers()
 			return util.EVENT_REPLY_HANDLED
 		end
@@ -72,10 +72,10 @@ function gui.PFMTextureSlot:OnInitialize()
 			texPath = util.Path.CreateFilePath(tmpPath)
 		end
 
-		pfm.log("Saving texture as '" .. "materials/" .. texPath:GetString() .. "'...", pfm.LOG_CATEGORY_PFM)
+		self:LogInfo("Saving texture as '" .. "materials/" .. texPath:GetString() .. "'...")
 		local result = util.save_image(tex:GetImage(), "materials/" .. texPath:GetString(), texInfo)
 		if result == false then
-			pfm.log("Saving failed!", pfm.LOG_CATEGORY_PFM)
+			self:LogInfo("Saving failed!")
 		end
 
 		asset.unlock_asset_watchers()

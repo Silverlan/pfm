@@ -132,18 +132,10 @@ end
 function Element:InitializeLayout(layoutFileName)
 	layoutFileName = layoutFileName or "cfg/pfm/layouts/default.udm"
 	self.m_layoutFileName = layoutFileName
-	pfm.log(
-		"Loading layout configuration '" .. layoutFileName .. "'...",
-		pfm.LOG_CATEGORY_LAYOUT,
-		pfm.LOG_SEVERITY_INFO
-	)
+	self:LogInfo("Loading layout configuration '" .. layoutFileName .. "'...")
 	local layout, err = gui.WIBaseFilmmaker.Layout.load(layoutFileName)
 	if layout == false then
-		pfm.log(
-			"Unable to load layout configuration '" .. layoutFileName .. "': " .. err,
-			pfm.LOG_CATEGORY_LAYOUT,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to load layout configuration '" .. layoutFileName .. "': " .. err)
 		layout = gui.WIBaseFilmmaker.Layout()
 		layout:AddFrameContainer("default"):AddFrame("default")
 	end
@@ -214,11 +206,7 @@ end
 function Element:LoadWindowLayoutState(fileName)
 	local udmData, err = udm.load(fileName)
 	if udmData == false then
-		pfm.log(
-			"Unable to open layout state configuration '" .. fileName .. "': " .. err,
-			pfm.LOG_CATEGORY_LAYOUT,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to open layout state configuration '" .. fileName .. "': " .. err)
 		return
 	end
 	udmData = udmData:GetAssetData():GetData()
@@ -396,21 +384,13 @@ function Element:SaveWindowLayoutState(assetData, saveLayout)
 	end
 	local f = file.open(filePath:GetString(), file.OPEN_MODE_WRITE)
 	if f == nil then
-		pfm.log(
-			"Unable to open file '" .. filePath:GetString() .. "' for writing!",
-			pfm.LOG_CATEGORY_LAYOUT,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to open file '" .. filePath:GetString() .. "' for writing!")
 		return false
 	end
 	local res, err = udmData:SaveAscii(f) -- ,udm.ASCII_SAVE_FLAG_BIT_INCLUDE_HEADER)
 	f:Close()
 	if res == false then
-		pfm.log(
-			"Failed to save layout state as '" .. filePath:GetString() .. "': " .. err,
-			pfm.LOG_CATEGORY_LAYOUT,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Failed to save layout state as '" .. filePath:GetString() .. "': " .. err)
 		return false
 	end
 	return true

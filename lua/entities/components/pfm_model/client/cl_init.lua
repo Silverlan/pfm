@@ -82,12 +82,10 @@ function ents.PFMModel:UpdateMaterialOverrides()
 			if util.is_valid(matOverride) then
 				mdlC:SetMaterialOverride(srcMaterial, matOverride)
 			else
-				pfm.log(
+				self:LogWarn(
 					"Failed to apply material override for material '"
 						.. srcMaterial
-						.. "': Target material is not valid!",
-					pfm.LOG_CATEGORY_PFM,
-					pfm.LOG_SEVERITY_WARNING
+						.. "': Target material is not valid!"
 				)
 			end
 		end
@@ -200,7 +198,7 @@ function ents.PFMModel:InitModel()
 				animSetC:SetBoneRot(boneId,newRot)
 			end))
 		else
-			pfm.log("Unknown bone '" .. boneName .. "' for actor with model '" .. mdl:GetName() .. "'! Bone pose will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+			self:LogWarn("Unknown bone '" .. boneName .. "' for actor with model '" .. mdl:GetName() .. "'! Bone pose will be ignored...")
 		end
 	end
 
@@ -209,7 +207,7 @@ function ents.PFMModel:InitModel()
 	local globalFlexControllers = modelData:GetGlobalFlexControllers()
 	local flexNames = modelData:GetFlexControllerNames():GetTable()
 	for i,fc in ipairs(globalFlexControllers:GetTable()) do
-		if(flexNames[i] == nil) then pfm.log("Missing flex controller name for flex controller " .. i .. " for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+		if(flexNames[i] == nil) then self:LogWarn("Missing flex controller name for flex controller " .. i .. " for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...")
 		else
 			local fcId = mdl:LookupFlexController(flexNames[i]:GetValue())
 			if(fcId ~= -1) then
@@ -221,7 +219,7 @@ function ents.PFMModel:InitModel()
 					end
 				end))
 			else
-				pfm.log("Unknown flex controller '" .. fc:GetName() .. "' for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...",pfm.LOG_CATEGORY_PFM_GAME,pfm.LOG_SEVERITY_WARNING)
+				self:LogWarn("Unknown flex controller '" .. fc:GetName() .. "' for actor with model '" .. mdl:GetName() .. "'! Flex controller will be ignored...")
 			end
 		end
 	end

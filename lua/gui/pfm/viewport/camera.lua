@@ -24,7 +24,7 @@ function gui.PFMCoreViewportBase:GetAspectRatioProperty()
 	return util.is_valid(self.m_aspectRatioWrapper) and self.m_aspectRatioWrapper:GetAspectRatioProperty() or nil
 end
 function gui.PFMCoreViewportBase:SetCameraMode(camMode)
-	pfm.log(
+	self:LogInfo(
 		"Changing camera mode to "
 			.. (
 				(camMode == gui.PFMCoreViewportBase.CAMERA_MODE_PLAYBACK and "playback")

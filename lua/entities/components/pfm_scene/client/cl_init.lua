@@ -38,11 +38,7 @@ function Component:LoadProject()
 	local projectPath = pfm.Project.get_full_project_file_name(self:GetProject(), true)
 	local project, err = pfm.load_project(projectPath, true)
 	if project == false then
-		pfm.log(
-			"Unable to load project '" .. projectPath .. "': " .. (err or "Unknown error") .. "!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to load project '" .. projectPath .. "': " .. (err or "Unknown error") .. "!")
 		return
 	end
 	local session = project:GetSession()

@@ -119,14 +119,12 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 							local actors = { actor }
 							for _, actor in ipairs(actors) do
 								if self:MoveActorToCollection(actor, group) == false then
-									pfm.log(
+									self:LogWarn(
 										"Failed to move actor '"
 											.. tostring(actor)
 											.. "' to collection '"
 											.. tostring(group)
-											.. "'...",
-										pfm.LOG_CATEGORY_PFM,
-										pfm.LOG_SEVERITY_WARNING
+											.. "'..."
 									)
 								end
 							end

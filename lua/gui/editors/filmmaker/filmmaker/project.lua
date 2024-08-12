@@ -15,7 +15,7 @@ function Element:OnProjectLoaded(fileName, project)
 	self:CallCallbacks("OnProjectLoaded")
 end
 function Element:AddRecentProject(fileName)
-	pfm.log("Adding recent project '" .. fileName .. "'...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("Adding recent project '" .. fileName .. "'...")
 	local maxCount = 10
 	local udmRecentProjects = self.m_settings:Get("recent_projects")
 	if udmRecentProjects:IsValid() == false then
@@ -66,7 +66,7 @@ function Element:CreateEmptyProject()
 	if session ~= nil then
 		local settings = session:GetSettings()
 		local mapName = asset.get_normalized_path(game.get_map_name(), asset.TYPE_MAP)
-		pfm.log("Assigning map name '" .. mapName .. "' to new project.", pfm.LOG_CATEGORY_PFM)
+		self:LogInfo("Assigning map name '" .. mapName .. "' to new project.")
 		settings:SetMapName(mapName)
 	end
 

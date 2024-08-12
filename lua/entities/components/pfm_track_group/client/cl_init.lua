@@ -73,7 +73,7 @@ function ents.PFMTrackGroup:Setup(trackGroupData, filmClipC)
 end
 
 function ents.PFMTrackGroup:CreateTrack(trackData)
-	pfm.log("Creating track '" .. trackData:GetName() .. "'...", pfm.LOG_CATEGORY_PFM_GAME)
+	self:LogInfo("Creating track '" .. trackData:GetName() .. "'...")
 	local ent = self:GetEntity():CreateChild("pfm_track")
 	ent:GetComponent(ents.COMPONENT_PFM_TRACK):Setup(trackData, self, self:GetProject())
 	ent:Spawn()

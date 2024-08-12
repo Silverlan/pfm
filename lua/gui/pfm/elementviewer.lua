@@ -263,11 +263,7 @@ function gui.PFMElementViewer:Save(asFile)
 	end
 	local f = file.open(absPath, flags)
 	if f == nil then
-		pfm.log(
-			"Unable to open UDM file '" .. fileName .. "' for writing!",
-			pfm.LOG_CATEGORY_PFM,
-			pfm.LOG_SEVERITY_WARNING
-		)
+		self:LogWarn("Unable to open UDM file '" .. fileName .. "' for writing!")
 		return false
 	end
 
@@ -286,10 +282,10 @@ function gui.PFMElementViewer:Save(asFile)
 	end
 	f:Close()
 	if res == false then
-		pfm.log("Failed to UDM file as '" .. fileName .. "': " .. err, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		self:LogWarn("Failed to UDM file as '" .. fileName .. "': " .. err)
 		return false
 	end
-	pfm.log("UDM file has been saved as '" .. fileName .. "'...", pfm.LOG_CATEGORY_PFM)
+	self:LogInfo("UDM file has been saved as '" .. fileName .. "'...")
 	self:UpdateSaveButton(true)
 	return true
 end

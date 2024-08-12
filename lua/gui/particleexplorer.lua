@@ -172,11 +172,7 @@ function gui.ParticleExplorer:PopulateContextMenu(pContext, tSelectedFiles)
 
 						local f = file.open(filePath, file.OPEN_MODE_WRITE)
 						if f == nil then
-							pfm.log(
-								"Unable to open file '" .. filePath .. "' for writing!",
-								pfm.LOG_CATEGORY_PFM,
-								pfm.LOG_SEVERITY_WARNING
-							)
+							self:LogWarn("Unable to open file '" .. filePath .. "' for writing!")
 							return
 						end
 						local res, err = udmData:SaveAscii(f)
