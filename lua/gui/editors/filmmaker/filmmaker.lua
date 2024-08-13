@@ -1071,6 +1071,7 @@ function gui.WIFilmmaker:OnRemove()
 
 	self:SaveSettings()
 	self:SaveGlobalStateData()
+	self:ClearAutosave()
 
 	local layers = {}
 	for _, layer in pairs(self.m_inputBindingLayers) do

@@ -18,6 +18,9 @@ function Element:UpdateAutosave(clear)
 	end
 	self.m_autoSave = pfm.AutoSave()
 end
+function Element:ClearAutosave()
+	self:UpdateAutosave(true)
+end
 function Element:IsAutosaveEnabled()
 	return self.m_autoSave ~= nil
 end
