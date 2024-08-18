@@ -91,8 +91,11 @@ function pfm.udm.Actor:DissolveSingleValueAnimationChannels(cmd, constrainedProp
 				end
 			end
 		end
-		if isSingleValueChannel and channelData.channel ~= nil and channelData.channel:GetValueCount() > 1 then
-			isSingleValueChannel = false
+		if isSingleValueChannel and channelData.channel ~= nil then
+			channelData.channel:Optimize()
+			if channelData.channel:GetValueCount() > 1 then
+				isSingleValueChannel = false
+			end
 		end
 		if isSingleValueChannel then
 			table.insert(singleValueChannelPaths, targetPath)

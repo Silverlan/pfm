@@ -12,6 +12,10 @@ function pfm.udm.Channel:GetAnimation()
 	return self:GetParent()
 end
 
+function pfm.udm.Channel:Optimize()
+	self:GetPanimaChannel():Optimize()
+end
+
 function pfm.udm.Channel:GetPanimaAnimation()
 	return self:GetAnimation():GetAnimationClip():GetPanimaAnimation()
 end
