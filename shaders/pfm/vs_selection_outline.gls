@@ -18,7 +18,7 @@ void main()
 	float distance = length(vertexPos -camPos);
 
 	float fov = get_fov();
-	float scalingFactor = u_material.material.parallaxHeightScale;
+	float scalingFactor = get_parallax_height_scale();
 	if(u_material.material.aoFactor > 0.0)
 		scalingFactor *= distance *fov *u_material.material.aoFactor; // Scale to keep the same size regardless of the distance to the camera
 	else
