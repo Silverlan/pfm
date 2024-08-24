@@ -182,7 +182,8 @@ function util.SMDBuilder:AddFrame(skeleton, frame, anim)
 	end
 end
 function util.SMDBuilder:AddMesh(mdl, subMesh, mat)
-	local matName = file.get_file_name(file.remove_file_extension(mat:GetName()))
+	local matName = file.remove_file_extension(mat:GetName())
+	matName = file.get_file_name(matName)
 	self:AddLine("triangles")
 
 	local tris = subMesh:GetIndices()
