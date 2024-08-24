@@ -117,6 +117,7 @@ pfm.bake.lightmaps = function(
 	bakeCombined,
 	asJob
 )
+	pfm.load_unirender()
 	if bakeCombined == nil then
 		bakeCombined = true
 	end
@@ -209,19 +210,24 @@ local LightmapBaker = util.register_class("pfm.bake.LightmapBaker", util.Callbac
 function LightmapBaker:__init()
 	util.CallbackHandler.__init(self)
 end
-function LightmapBaker:BakeUvs(lmEntity, cachePath, meshFilter)
-	local lightmapReceivers = pfm.bake.find_bake_entities()
+function LightmapBaker:BakeUvs(lmEntity, lightmapReceivers, cachePath, meshFilter)
 	if util.bake_lightmap_uvs(lmEntity, lightmapReceivers, cachePath, nil, meshFilter) == false then
 		return false
 	end
 	return true
 end
-function LightmapBaker:Start(width, height, sampleCount, lightmapDataCache, initScene, bakeCombined, asJob)
-	local lightmapReceivers, influencers = pfm.bake.find_bake_entities()
-
-	-- Only include baked light sources
-	local lightSources = pfm.bake.find_bake_light_sources()
-
+function LightmapBaker:Start(
+	lightmapReceivers,
+	influencers,
+	lightSources,
+	width,
+	height,
+	sampleCount,
+	lightmapDataCache,
+	initScene,
+	bakeCombined,
+	asJob
+)
 	local job = pfm.bake.lightmaps(
 		game.get_scene(),
 		lightmapReceivers,

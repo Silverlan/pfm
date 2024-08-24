@@ -256,6 +256,7 @@ pfm.register_component_action(
 )
 
 -- View lightmap atlas
+include("/debug/lightmaps.lua")
 pfm.register_component_action(
 	"pfm_baked_lighting",
 	"pfm_view_lightmap_atlas",
@@ -268,7 +269,7 @@ pfm.register_component_action(
 		local bt = gui.create("WIPFMActionButton", controls)
 		bt:SetText(locale.get_text("pfm_view_lightmap_atlas"))
 		bt:AddCallback("OnPressed", function()
-			pfm.util.open_lightmap_atlas_view_window(entActor, function(windowHandle, contents, controls)
+			debug.open_lightmap_atlas_view(entActor, function(windowHandle, contents, controls)
 				actionData.windowHandle = windowHandle
 			end)
 		end)
