@@ -7,7 +7,6 @@
 ]]
 
 include("base_baker.lua")
-include("uv_atlas_mesh_overlay.lua")
 include("/debug/lightmaps.lua")
 
 local UvBaker = util.register_class("pfm.UvBaker", pfm.BaseBaker)
