@@ -456,7 +456,7 @@ function util.export_source_engine_material(mat, outputDir)
 			vmtBuilder:AddParameter(vmtIdentifier, '"' .. relPath .. '"')
 		else
 			log.msg(
-				"Failed export texture '"
+				"Failed to export texture '"
 					.. vmtIdentifier
 					.. "' for material '"
 					.. mat:GetName()
@@ -529,7 +529,7 @@ function util.export_source_engine_material(mat, outputDir)
 	return filePaths
 end
 
-function util.export_source_engine_models(models, gameIdentifier)
+function util.export_source_engine_models(models, gameIdentifier, openInHlmv, openArchiveInExplorer)
 	local r = engine.load_library("mount_external/pr_mount_external")
 	if r ~= true then
 		console.print("WARNING: An error occured trying to load the 'pr_mount_external' module: ", r)
@@ -584,7 +584,9 @@ function util.export_source_engine_models(models, gameIdentifier)
 		return result, err
 	end
 
-	source_engine.open_model_in_hlmv(data.modelPath, gameIdentifier)
+	if openInHlmv ~= false then
+		source_engine.open_model_in_hlmv(data.modelPath, gameIdentifier)
+	end
 
 	local extensions = { "dx80.vtx", "dx90.vtx", "mdl", "sw.vtx", "vvd" }
 	local zipFileName = data.outputDir .. file.remove_file_extension(file.get_file_name(data.modelPath)) .. ".zip"
@@ -598,15 +600,34 @@ function util.export_source_engine_models(models, gameIdentifier)
 		end
 	end
 	log.msg("Packing zip-archive...", pfm.LOG_CATEGORY_SE_MODEL_EXPORT)
-	local result, notFound = util.pack_zip_archive(zipFileName, zipFiles)
-	zipFileName = util.get_addon_path() .. zipFileName
-	if result then
-		util.open_path_in_explorer(file.get_file_path(zipFileName), file.get_file_name(zipFileName))
-		if #notFound > 0 then
-			print("The following files could not be packed because they couldn't be found:")
-			console.print_table(notFound)
-		end
+	local job = util.pack_zip_archive(zipFileName, zipFiles)
+	if job == false then
+		console.print_warning("Could not pack zip archive '" .. zipFileName .. "'!")
+		return
 	end
+	job:CallOnComplete(function(worker)
+		if worker:IsSuccessful() == false then
+			console.print_warning("Could not pack zip archive '" .. zipFileName .. "'!")
+			return
+		end
+		local tFilesNotFound = worker:GetResult()
+		if #tFilesNotFound > 0 then
+			print("The following files could not be packed because they couldn't be found:")
+			console.print_table(tFilesNotFound)
+		end
+		if openArchiveInExplorer ~= false then
+			util.open_path_in_explorer(file.get_file_path(zipFileName), file.get_file_name(zipFileName))
+		end
+	end)
+	job:Start()
+
+	-- Keep the job alive until completion
+	local cb
+	cb = game.add_callback("Think", function()
+		if job:IsComplete() then
+			util.remove(cb)
+		end
+	end)
 	log.msg("Done!", pfm.LOG_CATEGORY_SE_MODEL_EXPORT)
 	return true
 end
