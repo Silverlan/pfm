@@ -427,33 +427,35 @@ function util.export_source_engine_material(mat, outputDir)
 
 	local vmtBuilder = util.VmtBuilder(mat)
 	local filePaths = {}
-	local function add_texture(vmtIdentifier, identifier, isNormalMap, outputFormat)
+	local function add_texture_object(vmtIdentifier, texName, prTex, isNormalMap, outputFormat)
 		isNormalMap = isNormalMap or false
+		local img = prTex:GetImage()
+		local relPath = asset.get_normalized_path(texName, asset.TYPE_TEXTURE)
+		local texOutputDir = relPath .. ".vtf"
+		table.insert(filePaths, texOutputDir)
+		texOutputDir = outputDir .. texOutputDir
+		local srgb = true
+		if isNormalMap then
+			srgb = false
+		end
+		local generateMipmaps = false -- Mipmaps have already been generated during the compression stage
+		local result = asset.export_texture_as_vtf(texOutputDir, img, srgb, isNormalMap, generateMipmaps, outputFormat)
+		if result == false then
+			log.msg(
+				"Failed to export image '" .. tostring(img) .. "' as VTF to '" .. texOutputDir .. "'!",
+				pfm.LOG_CATEGORY_SE_MODEL_EXPORT,
+				pfm.LOG_SEVERITY_WARNING
+			)
+		end
+
+		vmtBuilder:AddParameter(vmtIdentifier, '"' .. relPath .. '"')
+	end
+	local function add_texture(vmtIdentifier, identifier, isNormalMap, outputFormat)
 		local texInfo = mat:GetTextureInfo(identifier)
 		local tex = (texInfo ~= nil) and texInfo:GetTexture() or nil
 		local prTex = (tex ~= nil) and tex:GetVkTexture() or nil
 		if prTex ~= nil then
-			local img = prTex:GetImage()
-			local relPath = asset.get_normalized_path(texInfo:GetName(), asset.TYPE_TEXTURE)
-			local texOutputDir = relPath .. ".vtf"
-			table.insert(filePaths, texOutputDir)
-			texOutputDir = outputDir .. texOutputDir
-			local srgb = true
-			if isNormalMap then
-				srgb = false
-			end
-			local generateMipmaps = false -- Mipmaps have already been generated during the compression stage
-			local result =
-				asset.export_texture_as_vtf(texOutputDir, img, srgb, isNormalMap, generateMipmaps, outputFormat)
-			if result == false then
-				log.msg(
-					"Failed to export image '" .. tostring(img) .. "' as VTF to '" .. texOutputDir .. "'!",
-					pfm.LOG_CATEGORY_SE_MODEL_EXPORT,
-					pfm.LOG_SEVERITY_WARNING
-				)
-			end
-
-			vmtBuilder:AddParameter(vmtIdentifier, '"' .. relPath .. '"')
+			add_texture_object(vmtIdentifier, texInfo:GetName(), prTex, isNormalMap, outputFormat)
 		else
 			log.msg(
 				"Failed to export texture '"
@@ -473,10 +475,21 @@ function util.export_source_engine_material(mat, outputDir)
 		file.create_path(outputDir .. file.get_file_path(tex))
 		file.copy("materials/" .. tex, outputDir .. tex)
 	end
+	local function add_env_map()
+		local texName = "models/cubemaps/cube_dithered_grey"
+		local envTex = asset.load(texName, asset.TYPE_TEXTURE)
+		if envTex ~= nil then
+			local vkTex = envTex:GetVkTexture()
+			if vkTex ~= nil then
+				add_texture_object("$envmap", texName, vkTex, false, prosper.FORMAT_BC1_RGB_UNORM_BLOCK)
+			end
+		end
+	end
 	if mat:GetShaderName() == "fake_pbr_base" then
 		add_texture("$basetexture", "basetexture", false, prosper.FORMAT_BC3_UNORM_BLOCK)
 		add_texture("$bumpmap", "bumpmap", true, prosper.FORMAT_BC3_UNORM_BLOCK)
 		add_texture("$phongexponenttexture", "phongexponenttexture", false, prosper.FORMAT_BC1_RGB_UNORM_BLOCK)
+		add_env_map()
 
 		vmtBuilder:AddParameter("$color2", '"[0 0 0]"')
 		vmtBuilder:AddParameter("$blendTintByBaseAlpha", "1")
@@ -484,16 +497,15 @@ function util.export_source_engine_material(mat, outputDir)
 		vmtBuilder:AddParameter("$phongboost", "9.9934895")
 		vmtBuilder:AddParameter("$phongfresnelranges", '"[0.05 0.115 0.945]"')
 		vmtBuilder:AddParameter("$phongdisablehalflambert", "1")
-		vmtBuilder:AddParameter("$envmap", '"models/cubemaps/fallout4cube_dithered_grey"')
 		vmtBuilder:AddParameter("$normalmapalphaenvmapmask", "1")
 		vmtBuilder:AddParameter("$envmapfresnel", "1")
 		vmtBuilder:AddParameter("$envmaptint", '"[.2 .2 .2]"')
-		copy_texture("models/cubemaps/fallout4cube_dithered_grey.vtf")
 	elseif mat:GetShaderName() == "fake_pbr_ch" then
 		vmtBuilder:SetShader("CustomHero")
 		add_texture("$basetexture", "basetexture", false, prosper.FORMAT_BC3_UNORM_BLOCK)
 		add_texture("$normalmap", "normalmap", true, prosper.FORMAT_BC3_UNORM_BLOCK)
 		add_texture("$maskmap2", "maskmap2", false, prosper.FORMAT_BC1_RGB_UNORM_BLOCK)
+		add_env_map()
 
 		vmtBuilder:AddParameter("$nocull", "0")
 		vmtBuilder:AddParameter("$additive", "1")
@@ -503,11 +515,9 @@ function util.export_source_engine_material(mat, outputDir)
 		vmtBuilder:AddParameter("$rimlightcolor", '"[1 1 1]"')
 		vmtBuilder:AddParameter("$rimlightscale", "0")
 		vmtBuilder:AddParameter("$ambientscale", "0")
-		vmtBuilder:AddParameter("$envmap", '"models/cubemaps/fallout4cube_dithered_grey"')
 		vmtBuilder:AddParameter("$maskenvbymetalness", "0")
 		vmtBuilder:AddParameter("$metalnessblendtofull", "1")
 		vmtBuilder:AddParameter("$envmapintensity", "0.225")
-		copy_texture("models/cubemaps/fallout4cube_dithered_grey.vtf")
 	elseif mat:GetShaderName() == "fake_pbr_spec" then
 		add_texture("$basetexture", "basetexture", false, prosper.FORMAT_BC3_UNORM_BLOCK)
 		add_texture("$bumpmap", "bumpmap", true, prosper.FORMAT_BC3_UNORM_BLOCK)
@@ -566,7 +576,6 @@ function util.export_source_engine_models(models, gameIdentifier, openInHlmv, op
 	local materialFiles = {}
 	for _, mat in ipairs(data.materials) do
 		local filePaths = util.export_source_engine_material(mat, data.outputDir .. "materials/")
-		console.print_table(filePaths)
 		for _, filePath in ipairs(filePaths) do
 			zipFiles["materials/" .. filePath] = data.outputDir .. "materials/" .. filePath
 			materialFiles[data.outputDir .. "materials/" .. filePath] = "materials/" .. filePath
@@ -582,6 +591,12 @@ function util.export_source_engine_models(models, gameIdentifier, openInHlmv, op
 	result, err = source_engine.extract_asset_files(materialFiles, gameIdentifier)
 	if result == false then
 		return result, err
+	end
+	local filesFailed = err
+	if #filesFailed > 0 then
+		console.print_warning("Failed to extract the following asset files:")
+		console.print_table(filesFailed)
+		print("")
 	end
 
 	if openInHlmv ~= false then
