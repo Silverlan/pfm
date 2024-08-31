@@ -546,7 +546,7 @@ function util.export_source_engine_models(models, gameIdentifier, openInHlmv, op
 		return false, 'Unable to load "pr_mount_external" module: ' .. r
 	end
 
-	if #gameIdentifier == 0 then
+	if gameIdentifier == nil or #gameIdentifier == 0 then
 		log.msg(
 			"No game specified, attempting to locate Source Engine game with SDK tools...",
 			pfm.LOG_CATEGORY_SE_MODEL_EXPORT

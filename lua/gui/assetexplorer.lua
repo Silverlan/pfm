@@ -446,8 +446,9 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 					end
 				end
 				if #exportable > 0 then
-					pContext
-						:AddItem(locale.get_text("pfm_asset_export"), function()
+					local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_asset_export"))
+					pSubMenu
+						:AddItem("glTF", function()
 							local exportSuccessful = false
 							for _, el in ipairs(exportable) do
 								if el:IsValid() then
@@ -473,7 +474,28 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 								end
 							end
 						end)
-						:SetName("export_asset")
+						:SetName("gltf")
+					pSubMenu:AddItem("Mdl (Source Engine)", function()
+						local models = {}
+						for _, el in ipairs(exportable) do
+							if el:IsValid() then
+								local path = el:GetRelativeAsset()
+								if asset.exists(path, self:GetAssetType()) == false then
+									el:Reload(true)
+								end
+
+								table.insert(models, path)
+							end
+						end
+
+						include("/util/source_model_exporter.lua")
+						local result, err = util.export_source_engine_models(models)
+						if result == false then
+							console.print_warning("Unable to export asset: ", err)
+						end
+					end)
+					pSubMenu:Update()
+					pItem:SetName("export_asset")
 				end
 			end
 
