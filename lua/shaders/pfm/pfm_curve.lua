@@ -8,22 +8,24 @@
 
 util.register_class("shader.PFMCurve", shader.BaseGUI)
 
-shader.PFMCurve.FragmentShader = "pfm/fs_curve"
-shader.PFMCurve.VertexShader = "pfm/vs_curve"
+shader.PFMCurve.FragmentShader = "programs/pfm/curve"
+shader.PFMCurve.VertexShader = "programs/pfm/curve"
 
 local PUSH_CONSTANT_SIZE = util.SIZEOF_MAT4 + util.SIZEOF_VECTOR4 + util.SIZEOF_VECTOR2 * 2 + util.SIZEOF_INT
 
-function shader.PFMCurve:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseGUI.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+function shader.PFMCurve:InitializeShaderResources()
+	shader.BaseGUI.InitializeShaderResources(self)
+	self:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 	})
-
-	pipelineInfo:AttachPushConstantRange(
+	self:AttachPushConstantRange(
 		0,
 		PUSH_CONSTANT_SIZE,
 		bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT, prosper.SHADER_STAGE_VERTEX_BIT)
 	)
+end
+function shader.PFMCurve:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGUI.InitializePipeline(self, pipelineInfo, pipelineIdx)
 
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_STRIP)

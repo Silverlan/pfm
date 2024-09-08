@@ -1,7 +1,7 @@
 local Shader = util.register_class("shader.PFMFlat", shader.BaseTexturedLit3D)
 
-Shader.FragmentShader = "pfm/flat/fs_flat"
-Shader.VertexShader = "pfm/flat/vs_flat"
+Shader.FragmentShader = "programs/pfm/flat/flat"
+Shader.VertexShader = "programs/pfm/flat/flat"
 function Shader:__init()
 	shader.BaseTexturedLit3D.__init(self)
 end

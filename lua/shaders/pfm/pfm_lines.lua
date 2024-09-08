@@ -8,8 +8,8 @@
 
 util.register_class("shader.PFMLines", shader.BaseGraphics)
 
-shader.PFMLines.FragmentShader = "pfm/lines/fs_pfm_lines"
-shader.PFMLines.VertexShader = "pfm/lines/vs_pfm_lines"
+shader.PFMLines.FragmentShader = "programs/pfm/lines/lines"
+shader.PFMLines.VertexShader = "programs/pfm/lines/lines"
 
 function shader.PFMLines:__init()
 	shader.BaseGraphics.__init(self)
@@ -18,18 +18,20 @@ end
 function shader.PFMLines:InitializeRenderPass(pipelineIdx)
 	return { shader.Scene3D.get_render_pass() }
 end
-function shader.PFMLines:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+function shader.PFMLines:InitializeShaderResources()
+	shader.BaseGraphics.InitializeShaderResources(self)
+	self:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32B32_SFLOAT), -- Position
 	})
 
-	pipelineInfo:AttachPushConstantRange(
+	self:AttachPushConstantRange(
 		0,
 		self.m_dsPushConstants:GetSize(),
 		bit.bor(prosper.SHADER_STAGE_VERTEX_BIT, prosper.SHADER_STAGE_FRAGMENT_BIT)
 	)
-
+end
+function shader.PFMLines:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_STRIP)
 	pipelineInfo:SetDepthTestEnabled(true)

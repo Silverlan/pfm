@@ -8,8 +8,8 @@
 
 util.register_class("shader.PFMTimeline", shader.BaseGUI)
 
-shader.PFMTimeline.FragmentShader = "pfm/fs_timeline"
-shader.PFMTimeline.VertexShader = "pfm/vs_timeline"
+shader.PFMTimeline.FragmentShader = "programs/pfm/timeline"
+shader.PFMTimeline.VertexShader = "programs/pfm/timeline"
 
 local PUSH_CONSTANT_SIZE = util.SIZEOF_MAT4
 	+ util.SIZEOF_VECTOR4
@@ -19,17 +19,20 @@ local PUSH_CONSTANT_SIZE = util.SIZEOF_MAT4
 	+ util.SIZEOF_INT
 	+ util.SIZEOF_INT
 
-function shader.PFMTimeline:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseGUI.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+function shader.PFMTimeline:InitializeShaderResources()
+	shader.BaseGUI.InitializeShaderResources(self)
+	self:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 	})
 
-	pipelineInfo:AttachPushConstantRange(
+	self:AttachPushConstantRange(
 		0,
 		PUSH_CONSTANT_SIZE,
 		bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT, prosper.SHADER_STAGE_VERTEX_BIT)
 	)
+end
+function shader.PFMTimeline:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGUI.InitializePipeline(self, pipelineInfo, pipelineIdx)
 
 	pipelineInfo:SetDynamicStateEnabled(prosper.DYNAMIC_STATE_SCISSOR_BIT, true)
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)

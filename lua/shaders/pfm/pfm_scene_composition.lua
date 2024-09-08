@@ -8,8 +8,8 @@
 
 util.register_class("shader.PFMSceneComposition", shader.BaseGraphics)
 
-shader.PFMSceneComposition.FragmentShader = "pfm/post_processing/fs_scene_composition"
-shader.PFMSceneComposition.VertexShader = "screen/vs_screen_uv"
+shader.PFMSceneComposition.FragmentShader = "programs/pfm/post_processing/scene_composition"
+shader.PFMSceneComposition.VertexShader = "programs/image/noop_uv"
 
 shader.PFMSceneComposition.DESCRIPTOR_SET_TEXTURE = 0
 shader.PFMSceneComposition.TEXTURE_BINDING_HDR_COLOR = 0
@@ -21,19 +21,33 @@ function shader.PFMSceneComposition:__init()
 
 	self.m_dsPushConstants = util.DataStream(util.SIZEOF_FLOAT * 2)
 end
-function shader.PFMSceneComposition:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+function shader.PFMSceneComposition:InitializeShaderResources()
+	shader.BaseGraphics.InitializeShaderResources(self)
+	self:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- UV
 	})
-	pipelineInfo:AttachDescriptorSetInfo(shader.DescriptorSetInfo({
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, prosper.SHADER_STAGE_FRAGMENT_BIT), -- Base HDR image
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, prosper.SHADER_STAGE_FRAGMENT_BIT), -- Bloom
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, prosper.SHADER_STAGE_FRAGMENT_BIT), -- Glow
+	self:AttachDescriptorSetInfo(shader.DescriptorSetInfo("TEXTURES", {
+		shader.DescriptorSetBinding(
+			"HDR_IMAGE",
+			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			prosper.SHADER_STAGE_FRAGMENT_BIT
+		),
+		shader.DescriptorSetBinding(
+			"BLOOM",
+			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			prosper.SHADER_STAGE_FRAGMENT_BIT
+		),
+		shader.DescriptorSetBinding(
+			"GLOW",
+			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			prosper.SHADER_STAGE_FRAGMENT_BIT
+		),
 	}))
-	pipelineInfo:AttachPushConstantRange(0, self.m_dsPushConstants:GetSize(), prosper.SHADER_STAGE_FRAGMENT_BIT)
-
+	self:AttachPushConstantRange(0, self.m_dsPushConstants:GetSize(), prosper.SHADER_STAGE_FRAGMENT_BIT)
+end
+function shader.PFMSceneComposition:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_FILL)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 	pipelineInfo:SetCommonAlphaBlendProperties()

@@ -8,8 +8,8 @@
 
 util.register_class("shader.PFMSprite", shader.BaseGraphics)
 
-shader.PFMSprite.FragmentShader = "pfm/sprite/fs_pfm_sprite"
-shader.PFMSprite.VertexShader = "pfm/sprite/vs_pfm_sprite"
+shader.PFMSprite.FragmentShader = "programs/pfm/sprite/sprite"
+shader.PFMSprite.VertexShader = "programs/pfm/sprite/sprite"
 
 function shader.PFMSprite:__init()
 	shader.BaseGraphics.__init(self)
@@ -18,22 +18,28 @@ end
 function shader.PFMSprite:InitializeRenderPass(pipelineIdx)
 	return { shader.Scene3D.get_render_pass() }
 end
-function shader.PFMSprite:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+function shader.PFMSprite:InitializeShaderResources()
+	shader.BaseGraphics.InitializeShaderResources(self)
+	self:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- UV
 	})
-	pipelineInfo:AttachDescriptorSetInfo(shader.DescriptorSetInfo({
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, prosper.SHADER_STAGE_FRAGMENT_BIT),
+	self:AttachDescriptorSetInfo(shader.DescriptorSetInfo("TEXTURE", {
+		shader.DescriptorSetBinding(
+			"TEXTURE",
+			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			prosper.SHADER_STAGE_FRAGMENT_BIT
+		),
 	}))
 
-	pipelineInfo:AttachPushConstantRange(
+	self:AttachPushConstantRange(
 		0,
 		self.m_dsPushConstants:GetSize(),
 		bit.bor(prosper.SHADER_STAGE_VERTEX_BIT, prosper.SHADER_STAGE_FRAGMENT_BIT)
 	)
-
+end
+function shader.PFMSprite:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_FILL)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 	pipelineInfo:SetDepthTestEnabled(true)

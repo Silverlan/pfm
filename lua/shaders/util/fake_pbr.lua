@@ -9,8 +9,8 @@
 util.register_class("shader.FakePbr", shader.BaseGraphics)
 local Shader = shader.FakePbr
 
-Shader.FragmentShader = "util/fs_pbr_to_fake_pbr"
-Shader.VertexShader = "screen/vs_screen_uv"
+Shader.FragmentShader = "programs/util/pbr_to_fake_pbr"
+Shader.VertexShader = "programs/image/noop_uv"
 
 Shader.DESCRIPTOR_SET_TEXTURE = 0
 Shader.TEXTURE_BINDING_ALBEDO_MAP = 0
@@ -25,18 +25,32 @@ Shader.RENDER_PASS_NORMAL_MAP_FORMAT = prosper.FORMAT_R32G32B32A32_SFLOAT
 function Shader:__init()
 	shader.BaseGraphics.__init(self)
 end
-function Shader:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+function Shader:InitializeShaderResources()
+	shader.BaseGraphics.InitializeShaderResources(self)
+	self:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- UV
 	})
-	pipelineInfo:AttachDescriptorSetInfo(shader.DescriptorSetInfo({
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, prosper.SHADER_STAGE_FRAGMENT_BIT), -- Albedo map
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, prosper.SHADER_STAGE_FRAGMENT_BIT), -- Normal map
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, prosper.SHADER_STAGE_FRAGMENT_BIT), -- RMA map
+	self:AttachDescriptorSetInfo(shader.DescriptorSetInfo("TEXTURES", {
+		shader.DescriptorSetBinding(
+			"ALBEDO_MAP",
+			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			prosper.SHADER_STAGE_FRAGMENT_BIT
+		),
+		shader.DescriptorSetBinding(
+			"NORMAL_MAP",
+			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			prosper.SHADER_STAGE_FRAGMENT_BIT
+		),
+		shader.DescriptorSetBinding(
+			"RMA_MAP",
+			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			prosper.SHADER_STAGE_FRAGMENT_BIT
+		),
 	}))
-
+end
+function Shader:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_FILL)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)
 	pipelineInfo:SetColorBlendAttachmentProperties(

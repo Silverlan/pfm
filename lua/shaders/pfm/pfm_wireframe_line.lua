@@ -1,7 +1,7 @@
 local Shader = util.register_class("shader.PFMWireframeLine", shader.BaseTexturedLit3D)
 
-Shader.FragmentShader = "pfm/selection/fs_selection"
-Shader.VertexShader = "pfm/selection/vs_selection"
+Shader.FragmentShader = "programs/pfm/selection/selection"
+Shader.VertexShader = "programs/pfm/selection/selection"
 Shader.LINE_COLOR = Color(0, 128, 255, 16):ToVector4()
 Shader.SetLineColor = function(color)
 	Shader.LINE_COLOR = color:ToVector4()
@@ -17,8 +17,8 @@ function Shader:InitializePipeline(pipelineInfo, pipelineIdx)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_LIST)
 	pipelineInfo:SetDepthWritesEnabled(true)
 end
-function Shader:InitializeGfxPipelinePushConstantRanges(pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachPushConstantRange(
+function Shader:InitializeGfxPipelinePushConstantRanges()
+	self:AttachPushConstantRange(
 		0,
 		shader.TexturedLit3D.PUSH_CONSTANTS_SIZE + self.m_dsPushConstants:GetSize(),
 		bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT, prosper.SHADER_STAGE_VERTEX_BIT)

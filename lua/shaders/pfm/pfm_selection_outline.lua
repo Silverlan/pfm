@@ -8,8 +8,8 @@
 
 local Shader = util.register_class("shader.PfmSelectionOutline", shader.BaseTexturedLit3D)
 
-Shader.FragmentShader = "pfm/fs_selection_outline"
-Shader.VertexShader = "pfm/vs_selection_outline"
+Shader.FragmentShader = "programs/pfm/selection_outline"
+Shader.VertexShader = "programs/pfm/selection_outline"
 
 function Shader:__init()
 	shader.BaseTexturedLit3D.__init(self)
@@ -19,8 +19,8 @@ function Shader:InitializePipeline(pipelineInfo, pipelineIdx)
 	shader.BaseTexturedLit3D.InitializePipeline(self, pipelineInfo, pipelineIdx)
 	pipelineInfo:SetFrontFace(prosper.FRONT_FACE_CLOCKWISE)
 end
-function Shader:InitializeGfxPipelinePushConstantRanges(pipelineInfo, pipelineIdx)
-	shader.BaseTexturedLit3D.InitializeGfxPipelinePushConstantRanges(self, pipelineInfo, pipelineIdx)
+function Shader:InitializeGfxPipelinePushConstantRanges()
+	shader.BaseTexturedLit3D.InitializeGfxPipelinePushConstantRanges(self)
 end
 function Shader:InitializeMaterialDescriptorSet(mat)
 	local descSet = self:GetShader():CreateDescriptorSet(self:GetShader():GetMaterialDescriptorSetIndex())

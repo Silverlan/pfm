@@ -8,8 +8,8 @@
 
 util.register_class("shader.TestColor", shader.BaseGraphics)
 
-shader.TestColor.FragmentShader = "test/fs_test_color"
-shader.TestColor.VertexShader = "screen/vs_screen"
+shader.TestColor.FragmentShader = "programs/test/test_color"
+shader.TestColor.VertexShader = "programs/image/noop"
 
 ------------------
 
@@ -18,16 +18,15 @@ function shader.TestColor:__init()
 
 	self.m_dsPushConstants = util.DataStream(util.SIZEOF_VECTOR4)
 end
-function shader.TestColor:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+function shader.TestColor:InitializeShaderResources()
+	shader.BaseGraphics.InitializeShaderResources(self)
+	self:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 	})
-	pipelineInfo:AttachPushConstantRange(
-		0,
-		self.m_dsPushConstants:GetSize(),
-		bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT)
-	)
+	self:AttachPushConstantRange(0, self.m_dsPushConstants:GetSize(), bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT))
+end
+function shader.TestColor:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
 
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_FILL)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)

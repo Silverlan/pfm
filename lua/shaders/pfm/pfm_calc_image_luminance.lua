@@ -87,7 +87,7 @@ end
 
 util.register_class("shader.PFMCalcImageLuminance", shader.BaseCompute)
 
-shader.PFMCalcImageLuminance.ComputeShader = "pfm/cs_calc_image_luminance"
+shader.PFMCalcImageLuminance.ComputeShader = "programs/pfm/calc_image_luminance"
 
 shader.PFMCalcImageLuminance.DESCRIPTOR_SET_DATA = 0
 shader.PFMCalcImageLuminance.DATA_BINDING_HDR_IMAGE = 0
@@ -108,13 +108,21 @@ function shader.PFMCalcImageLuminance:__init()
 
 	self.m_dsPushConstants = util.DataStream(util.SIZEOF_INT * 3)
 end
-function shader.PFMCalcImageLuminance:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseCompute.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachDescriptorSetInfo(shader.DescriptorSetInfo({
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, prosper.SHADER_STAGE_COMPUTE_BIT), -- HDR image
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_STORAGE_BUFFER, prosper.SHADER_STAGE_COMPUTE_BIT), -- Output data buffer
+function shader.PFMCalcImageLuminance:InitializeShaderResources()
+	shader.BaseCompute.InitializeShaderResources(self)
+	self:AttachDescriptorSetInfo(shader.DescriptorSetInfo("DATA", {
+		shader.DescriptorSetBinding(
+			"HDR_IMAGE",
+			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			prosper.SHADER_STAGE_COMPUTE_BIT
+		), -- HDR image
+		shader.DescriptorSetBinding(
+			"OUTPUT_BUFFER",
+			prosper.DESCRIPTOR_TYPE_STORAGE_BUFFER,
+			prosper.SHADER_STAGE_COMPUTE_BIT
+		), -- Output data buffer
 	}))
-	pipelineInfo:AttachPushConstantRange(0, self.m_dsPushConstants:GetSize(), prosper.SHADER_STAGE_COMPUTE_BIT)
+	self:AttachPushConstantRange(0, self.m_dsPushConstants:GetSize(), prosper.SHADER_STAGE_COMPUTE_BIT)
 end
 function shader.PFMCalcImageLuminance:CalcImageLuminance(tex, useBlackAsTransparency, drawCmd)
 	local computeAndFlush = (drawCmd == nil)

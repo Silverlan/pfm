@@ -1,7 +1,7 @@
 util.register_class("shader.PFMSelectionWireframe", shader.BaseTexturedLit3D)
 
-shader.PFMSelectionWireframe.FragmentShader = "pfm/selection/fs_selection"
-shader.PFMSelectionWireframe.VertexShader = "pfm/selection/vs_selection"
+shader.PFMSelectionWireframe.FragmentShader = "programs/pfm/selection/selection"
+shader.PFMSelectionWireframe.VertexShader = "programs/pfm/selection/selection"
 shader.PFMSelectionWireframe.SELECTION_COLOR = Color(255, 255, 0, 16):ToVector4()
 shader.PFMSelectionWireframe.SetSelectionColor = function(color)
 	shader.PFMSelectionWireframe.SELECTION_COLOR = color:ToVector4()
@@ -18,8 +18,8 @@ function shader.PFMSelectionWireframe:InitializePipeline(pipelineInfo, pipelineI
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
 	pipelineInfo:SetLineWidth(1)
 end
-function shader.PFMSelectionWireframe:InitializeGfxPipelinePushConstantRanges(pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachPushConstantRange(
+function shader.PFMSelectionWireframe:InitializeGfxPipelinePushConstantRanges()
+	self:AttachPushConstantRange(
 		0,
 		shader.TexturedLit3D.PUSH_CONSTANTS_SIZE + self.m_dsPushConstants:GetSize(),
 		bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT, prosper.SHADER_STAGE_VERTEX_BIT)

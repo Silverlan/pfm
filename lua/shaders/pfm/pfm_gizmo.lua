@@ -1,7 +1,7 @@
 util.register_class("shader.PFMGizmo", shader.BaseTexturedLit3D)
 
-shader.PFMGizmo.FragmentShader = "pfm/fs_gizmo"
-shader.PFMGizmo.VertexShader = "world/vs_textured"
+shader.PFMGizmo.FragmentShader = "programs/pfm/gizmo"
+shader.PFMGizmo.VertexShader = "programs/scene/textured"
 function shader.PFMGizmo:__init()
 	shader.BaseTexturedLit3D.__init(self)
 end

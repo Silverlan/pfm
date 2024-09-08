@@ -8,8 +8,8 @@
 
 util.register_class("shader.PFMTonemapping", shader.BaseGraphics)
 
-shader.PFMTonemapping.FragmentShader = "pfm/post_processing/fs_tonemapping"
-shader.PFMTonemapping.VertexShader = "screen/vs_screen_uv"
+shader.PFMTonemapping.FragmentShader = "programs/pfm/post_processing/tonemapping"
+shader.PFMTonemapping.VertexShader = "programs/image/noop_uv"
 
 shader.PFMTonemapping.DESCRIPTOR_SET_TEXTURE = 0
 shader.PFMTonemapping.TEXTURE_BINDING_HDR_COLOR = 0
@@ -47,20 +47,27 @@ function shader.PFMTonemapping:InitializeRenderPass(pipelineIdx)
 	)
 	return { prosper.create_render_pass(rpCreateInfo) }
 end
-function shader.PFMTonemapping:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+function shader.PFMTonemapping:InitializeShaderResources()
+	shader.BaseGraphics.InitializeShaderResources(self)
+	self:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- UV
 	})
-	pipelineInfo:AttachDescriptorSetInfo(shader.DescriptorSetInfo({
-		shader.DescriptorSetBinding(prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, prosper.SHADER_STAGE_FRAGMENT_BIT), -- HDR image
+	self:AttachDescriptorSetInfo(shader.DescriptorSetInfo("TEXTURE", {
+		shader.DescriptorSetBinding(
+			"TEXTURE",
+			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			prosper.SHADER_STAGE_FRAGMENT_BIT
+		), -- HDR image
 	}))
-	pipelineInfo:AttachPushConstantRange(
+	self:AttachPushConstantRange(
 		0,
 		self.m_dsPushConstants:GetSize(),
 		bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT, prosper.SHADER_STAGE_VERTEX_BIT)
 	)
+end
+function shader.PFMTonemapping:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
 
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_FILL)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)

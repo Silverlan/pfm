@@ -8,8 +8,8 @@
 
 util.register_class("shader.PFMGrid", shader.BaseGUI)
 
-shader.PFMGrid.FragmentShader = "pfm/fs_grid"
-shader.PFMGrid.VertexShader = "pfm/vs_grid"
+shader.PFMGrid.FragmentShader = "programs/pfm/grid"
+shader.PFMGrid.VertexShader = "programs/pfm/grid"
 
 local PUSH_CONSTANT_SIZE = util.SIZEOF_MAT4
 	+ util.SIZEOF_VECTOR4
@@ -19,18 +19,20 @@ local PUSH_CONSTANT_SIZE = util.SIZEOF_MAT4
 	+ util.SIZEOF_INT
 	+ util.SIZEOF_INT
 
-function shader.PFMGrid:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseGUI.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+function shader.PFMGrid:InitializeShaderResources()
+	shader.BaseGUI.InitializeShaderResources(self)
+	self:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32_SFLOAT), -- Position
 	})
 
-	pipelineInfo:AttachPushConstantRange(
+	self:AttachPushConstantRange(
 		0,
 		PUSH_CONSTANT_SIZE,
 		bit.bor(prosper.SHADER_STAGE_VERTEX_BIT, prosper.SHADER_STAGE_FRAGMENT_BIT)
 	)
-
+end
+function shader.PFMGrid:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGUI.InitializePipeline(self, pipelineInfo, pipelineIdx)
 	pipelineInfo:SetDynamicStateEnabled(prosper.DYNAMIC_STATE_SCISSOR_BIT, true)
 	pipelineInfo:SetDynamicStateEnabled(prosper.DYNAMIC_STATE_LINE_WIDTH_BIT, true)
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)

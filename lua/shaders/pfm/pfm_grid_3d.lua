@@ -11,54 +11,61 @@ util.register_class("shader.PFMGrid3D", shader.BaseGraphics)
 local SHADER_VERTEX_BUFFER_LOCATION = 0
 local SHADER_VERTEX_BUFFER_BINDING = 0
 
-shader.PFMGrid3D.FragmentShader = "pfm/grid/fs_grid"
-shader.PFMGrid3D.VertexShader = "pfm/grid/vs_grid"
+shader.PFMGrid3D.FragmentShader = "programs/pfm/grid"
+shader.PFMGrid3D.VertexShader = "programs/pfm/grid"
 
 function shader.PFMGrid3D:__init()
 	shader.BaseGraphics.__init(self)
 	self.m_dsPushConstants = util.DataStream(util.SIZEOF_MAT4 + util.SIZEOF_VECTOR4 + util.SIZEOF_FLOAT)
 end
-function shader.PFMGrid3D:InitializePipeline(pipelineInfo, pipelineIdx)
-	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
-	pipelineInfo:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
+function shader.PFMGrid3D:InitializeShaderResources()
+	shader.BaseGraphics.InitializeShaderResources(self)
+	self:AttachVertexAttribute(shader.VertexBinding(prosper.VERTEX_INPUT_RATE_VERTEX), {
 		shader.VertexAttribute(prosper.FORMAT_R32G32B32_SFLOAT), -- Position
 	})
-	pipelineInfo:AttachDescriptorSetInfo(shader.DescriptorSetInfo({
+	self:AttachDescriptorSetInfo(shader.DescriptorSetInfo("SCENE", {
 		shader.DescriptorSetBinding(
+			"CAMERA",
 			prosper.DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			bit.bor(
 				prosper.SHADER_STAGE_FRAGMENT_BIT,
 				prosper.SHADER_STAGE_VERTEX_BIT,
 				prosper.SHADER_STAGE_GEOMETRY_BIT
 			)
-		), -- Camera
+		),
 		shader.DescriptorSetBinding(
+			"RENDER_SETTINGS",
 			prosper.DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			bit.bor(
 				prosper.SHADER_STAGE_FRAGMENT_BIT,
 				prosper.SHADER_STAGE_VERTEX_BIT,
 				prosper.SHADER_STAGE_GEOMETRY_BIT
 			)
-		), -- Render settings
+		),
 		shader.DescriptorSetBinding(
+			"SSAO_MAP",
 			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT)
-		), -- SSAO Map
+		),
 		shader.DescriptorSetBinding(
+			"LIGHT_MAP",
 			prosper.DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT)
-		), -- Light Map
+		),
 	}))
+	self:AttachPushConstantRange(
+		0,
+		self.m_dsPushConstants:GetSize(),
+		bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT, prosper.SHADER_STAGE_VERTEX_BIT)
+	)
+end
+function shader.PFMGrid3D:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.BaseGraphics.InitializePipeline(self, pipelineInfo, pipelineIdx)
 
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_LIST)
 	pipelineInfo:SetDepthTestEnabled(true)
 	pipelineInfo:SetDepthWritesEnabled(true)
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
-	pipelineInfo:AttachPushConstantRange(
-		0,
-		self.m_dsPushConstants:GetSize(),
-		bit.bor(prosper.SHADER_STAGE_FRAGMENT_BIT, prosper.SHADER_STAGE_VERTEX_BIT)
-	)
 	pipelineInfo:SetDynamicStateEnabled(prosper.DYNAMIC_STATE_LINE_WIDTH_BIT, true)
 	pipelineInfo:SetCommonAlphaBlendProperties()
 end
