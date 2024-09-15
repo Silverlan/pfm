@@ -2,6 +2,7 @@ local Shader = util.register_class("shader.PFMWireframeLine", shader.BaseTexture
 
 Shader.FragmentShader = "programs/pfm/selection/selection"
 Shader.VertexShader = "programs/pfm/selection/selection"
+Shader.ShaderMaterial = "basic"
 Shader.LINE_COLOR = Color(0, 128, 255, 16):ToVector4()
 Shader.SetLineColor = function(color)
 	Shader.LINE_COLOR = color:ToVector4()

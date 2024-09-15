@@ -2,6 +2,7 @@ util.register_class("shader.PFMSelectionWireframe", shader.BaseTexturedLit3D)
 
 shader.PFMSelectionWireframe.FragmentShader = "programs/pfm/selection/selection"
 shader.PFMSelectionWireframe.VertexShader = "programs/pfm/selection/selection"
+shader.PFMSelectionWireframe.ShaderMaterial = "basic"
 shader.PFMSelectionWireframe.SELECTION_COLOR = Color(255, 255, 0, 16):ToVector4()
 shader.PFMSelectionWireframe.SetSelectionColor = function(color)
 	shader.PFMSelectionWireframe.SELECTION_COLOR = color:ToVector4()

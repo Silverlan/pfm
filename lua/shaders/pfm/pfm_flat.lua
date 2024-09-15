@@ -2,9 +2,7 @@ local Shader = util.register_class("shader.PFMFlat", shader.BaseTexturedLit3D)
 
 Shader.FragmentShader = "programs/pfm/flat/flat"
 Shader.VertexShader = "programs/pfm/flat/flat"
-function Shader:__init()
-	shader.BaseTexturedLit3D.__init(self)
-end
+Shader.ShaderMaterial = "albedo"
 function Shader:InitializePipeline(pipelineInfo, pipelineIdx)
 	shader.BaseTexturedLit3D.InitializePipeline(self, pipelineInfo, pipelineIdx)
 

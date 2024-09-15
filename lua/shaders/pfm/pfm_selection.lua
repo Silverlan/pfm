@@ -2,6 +2,7 @@ util.register_class("shader.PFMSelection", shader.BaseTexturedLit3D)
 
 shader.PFMSelection.FragmentShader = "programs/pfm/selection/selection"
 shader.PFMSelection.VertexShader = "programs/pfm/selection/selection"
+shader.PFMSelection.ShaderMaterial = "basic"
 shader.PFMSelection.SELECTION_COLOR = Color(0, 128, 255, 16):ToVector4()
 shader.PFMSelection.SetSelectionColor = function(color)
 	shader.PFMSelection.SELECTION_COLOR = color:ToVector4()
@@ -24,8 +25,6 @@ function shader.PFMSelection:InitializeGfxPipelinePushConstantRanges()
 	)
 end
 function shader.PFMSelection:OnBindEntity(ent)
-	local drawCmd = self:GetCurrentCommandBuffer()
-
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteVector4(shader.PFMSelection.SELECTION_COLOR)
 	self:RecordPushConstants(self.m_dsPushConstants, shader.TexturedLit3D.PUSH_CONSTANTS_USER_DATA_OFFSET)

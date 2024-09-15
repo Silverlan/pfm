@@ -8,6 +8,6 @@
 
 void main()
 {
-	fs_color = u_material.material.color;
-	extract_bright_color(fs_color *u_material.material.glowScale);
+	fs_color = vec4(get_mat_color_factor(), get_mat_alpha_factor());
+	extract_bright_color(fs_color *get_mat_glow_factor());
 }

@@ -2,6 +2,7 @@ util.register_class("shader.PFMGizmo", shader.BaseTexturedLit3D)
 
 shader.PFMGizmo.FragmentShader = "programs/pfm/gizmo"
 shader.PFMGizmo.VertexShader = "programs/scene/textured"
+shader.PFMGizmo.ShaderMaterial = "albedo"
 function shader.PFMGizmo:__init()
 	shader.BaseTexturedLit3D.__init(self)
 end

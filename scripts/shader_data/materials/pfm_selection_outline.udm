@@ -1,0 +1,21 @@
+"shader_material"
+{
+	$array properties [element][
+		{
+			$string type "float"
+			$string name "glow_factor"
+			$float default "0.0"
+		},
+		{
+			$string type "float"
+			$string name "outline_width"
+			$float default "0.005"
+		},
+		{
+			$string type "float"
+			$string name "scale_by_distance_factor"
+			$float default "1.0"
+		}
+	]
+	$array textures [element][]
+}
