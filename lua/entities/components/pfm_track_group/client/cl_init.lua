@@ -84,4 +84,4 @@ function ents.PFMTrackGroup:CreateTrack(trackData)
 		projectC:BroadcastEvent(ents.PFMProject.EVENT_ON_ENTITY_CREATED, { ent })
 	end
 end
-ents.COMPONENT_PFM_TRACK_GROUP = ents.register_component("pfm_track_group", ents.PFMTrackGroup)
+ents.register_component("pfm_track_group", ents.PFMTrackGroup, "pfm")

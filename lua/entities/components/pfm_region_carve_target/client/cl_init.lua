@@ -56,4 +56,4 @@ function Component:ApplyModel()
 		end
 	end
 end
-ents.COMPONENT_PFM_REGION_CARVE_TARGET = ents.register_component("pfm_region_carve_target", Component)
+ents.register_component("pfm_region_carve_target", Component, "pfm")

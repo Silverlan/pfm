@@ -447,7 +447,7 @@ function Component.apply_distance_transform(factor)
 	end
 end
 
-ents.COMPONENT_UTIL_TRANSFORM_ARROW = ents.register_component("util_transform_arrow", Component)
+ents.register_component("util_transform_arrow", Component, "util")
 Component.EVENT_ON_TRANSFORM_START =
 	ents.register_component_event(ents.COMPONENT_UTIL_TRANSFORM_ARROW, "on_transform_start")
 Component.EVENT_ON_TRANSFORM_END =

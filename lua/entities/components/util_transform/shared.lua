@@ -65,4 +65,4 @@ function ents.UtilTransformComponent:Initialize()
 		end)
 	end
 end
-ents.COMPONENT_UTIL_TRANSFORM = ents.register_component("util_transform", ents.UtilTransformComponent)
+ents.register_component("util_transform", ents.UtilTransformComponent, "util")

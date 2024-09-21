@@ -166,4 +166,4 @@ function Component:UpdateModel(mdl)
 		end
 	end
 end
-ents.COMPONENT_IMPOSTOR = ents.register_component("impostor", Component)
+ents.register_component("impostor", Component, "animation")

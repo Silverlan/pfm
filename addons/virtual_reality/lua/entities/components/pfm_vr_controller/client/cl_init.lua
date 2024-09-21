@@ -78,4 +78,4 @@ end
 function ents.PFMVRController:OnEntitySpawn()
 	self:InitializeInterface()
 end
-ents.COMPONENT_PFM_VR_CONTROLLER = ents.register_component("pfm_vr_controller", ents.PFMVRController)
+ents.register_component("pfm_vr_controller", ents.PFMVRController, "vr")

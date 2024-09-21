@@ -310,7 +310,7 @@ function Component:StopTransform()
 
 	self:BroadcastEvent(Component.EVENT_ON_TRANSFORM_END)
 end
-ents.COMPONENT_TRANSFORM_CONTROLLER = ents.register_component("transform_controller", Component)
+ents.register_component("transform_controller", Component, "pfm")
 Component.EVENT_ON_TRANSFORM_START =
 	ents.register_component_event(ents.COMPONENT_TRANSFORM_CONTROLLER, "on_transform_start")
 Component.EVENT_ON_TRANSFORM_END =

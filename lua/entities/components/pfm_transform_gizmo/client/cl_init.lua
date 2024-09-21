@@ -21,4 +21,4 @@ function Component:OnGizmoControlAdded(entCtrl)
 		renderC:AddToRenderGroup("pfm_editor_overlay")
 	end
 end
-ents.COMPONENT_PFM_TRANSFORM_GIZMO = ents.register_component("pfm_transform_gizmo", Component)
+ents.register_component("pfm_transform_gizmo", Component, "pfm")

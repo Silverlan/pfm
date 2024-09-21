@@ -149,6 +149,6 @@ function Component:SetImpostor(impostorC)
 		retargetRigC:SetEnabled(self:IsEnabled())
 	end
 end
-ents.COMPONENT_IMPERSONATEE = ents.register_component("impersonatee", Component)
+ents.register_component("impersonatee", Component, "animation")
 Component.EVENT_ON_IMPOSTOR_MODEL_CHANGED =
 	ents.register_component_event(ents.COMPONENT_IMPERSONATEE, "on_impostor_model_changed")

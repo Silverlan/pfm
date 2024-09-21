@@ -41,4 +41,4 @@ end
 function Component:OnRemove()
 	util.remove(self.m_dbgMesh)
 end
-ents.COMPONENT_DEBUG_BVH_MESH = ents.register_component("debug_bvh_mesh", Component)
+ents.register_component("debug_bvh_mesh", Component, "debug")

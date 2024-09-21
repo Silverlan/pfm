@@ -117,4 +117,4 @@ function Component:OnTick()
 		end
 	end
 end
-ents.COMPONENT_DEBUG_META_RIG = ents.register_component("debug_meta_rig", Component)
+ents.register_component("debug_meta_rig", Component, "debug")

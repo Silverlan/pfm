@@ -84,7 +84,7 @@ function Component:OnTick(dt)
 		self:InvokeEventCallbacks(Component.EVENT_ON_TARGET_CHANGED, { self.m_lastRayInfo })
 	end
 end
-ents.COMPONENT_PFM_CURSOR_TARGET = ents.register_component("pfm_cursor_target", Component)
+ents.register_component("pfm_cursor_target", Component, "pfm")
 Component.EVENT_ON_TARGET_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_CURSOR_TARGET, "on_target_changed")
 Component.EVENT_ON_TARGET_ACTOR_CHANGED =
 	ents.register_component_event(ents.COMPONENT_PFM_CURSOR_TARGET, "on_target_actor_changed")

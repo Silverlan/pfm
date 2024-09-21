@@ -63,4 +63,4 @@ function Component:OnEntitySpawn()
 	end
 	renderer:GetEntity():AddComponent(ents.COMPONENT_RENDERER_PP_GLOW)
 end
-ents.COMPONENT_PFM_GLOW = ents.register_component("pfm_glow", Component)
+ents.register_component("pfm_glow", Component, "rendering")

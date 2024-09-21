@@ -65,4 +65,4 @@ function Component:UpdateMotionBlurFactor()
 		end
 	end
 end
-ents.COMPONENT_PFM_MOTION_BLUR = ents.register_component("pfm_motion_blur", Component)
+ents.register_component("pfm_motion_blur", Component, "pfm")

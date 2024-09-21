@@ -387,6 +387,6 @@ function Component:OnEntitySpawn()
 	--local toggleC = self:GetEntity():GetComponent(ents.COMPONENT_TOGGLE)
 	--if(toggleC ~= nil) then toggleC:TurnOff() end
 end
-ents.COMPONENT_PFM_CAMERA = ents.register_component("pfm_camera", Component)
+ents.register_component("pfm_camera", Component, "rendering")
 Component.EVENT_ON_ACTIVE_STATE_CHANGED =
 	ents.register_component_event(ents.COMPONENT_PFM_CAMERA, "on_active_state_changed")

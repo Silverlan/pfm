@@ -87,4 +87,4 @@ function ents.PFMVolumetricSpot:GenerateModel()
 
 	ent:SetModel(mdl)
 end
-ents.COMPONENT_PFM_VOLUMETRIC_SPOT = ents.register_component("pfm_volumetric_spot", ents.PFMVolumetricSpot)
+ents.register_component("pfm_volumetric_spot", ents.PFMVolumetricSpot, "pfm")

@@ -45,4 +45,4 @@ function Component:OnEntitySpawn()
 		end
 	end
 end
-ents.COMPONENT_DEBUG_IK_CONTROLS = ents.register_component("debug_ik_controls", Component)
+ents.register_component("debug_ik_controls", Component, "debug")

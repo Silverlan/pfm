@@ -109,4 +109,4 @@ fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"toElement",fudm.An
 ]]
 	end
 end
-ents.COMPONENT_PFM_CHANNEL_CLIP = ents.register_component("pfm_channel_clip", ents.PFMChannelClip)
+ents.register_component("pfm_channel_clip", ents.PFMChannelClip, "pfm")

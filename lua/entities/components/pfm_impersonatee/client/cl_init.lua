@@ -64,4 +64,4 @@ function ents.PFMImpersonatee:Setup(actorData, cData)
 	)
 	self:ChangeModel(cData:GetModelName())
 end
-ents.COMPONENT_PFM_IMPERSONATEE = ents.register_component("pfm_impersonatee", ents.PFMImpersonatee)
+ents.register_component("pfm_impersonatee", ents.PFMImpersonatee, "pfm")

@@ -371,7 +371,7 @@ function ents.PFMFilmClip:PauseAudio()
 	end]]
 end
 
-ents.COMPONENT_PFM_FILM_CLIP = ents.register_component("pfm_film_clip", ents.PFMFilmClip)
+ents.register_component("pfm_film_clip", ents.PFMFilmClip, "pfm")
 ents.PFMFilmClip.EVENT_ON_OFFSET_CHANGED =
 	ents.register_component_event(ents.COMPONENT_PFM_FILM_CLIP, "on_offset_changed")
 ents.PFMFilmClip.EVENT_ON_ACTOR_CREATED =

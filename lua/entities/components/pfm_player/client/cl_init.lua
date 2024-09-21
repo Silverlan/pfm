@@ -115,4 +115,4 @@ function ents.PFMPlayer:Taunt()
 		end
 	)
 end
-ents.COMPONENT_PFM_PLAYER = ents.register_component("pfm_player", ents.PFMPlayer)
+ents.register_component("pfm_player", ents.PFMPlayer, "pfm")

@@ -99,4 +99,4 @@ function ents.PFMSoundSource:OnOffsetChanged(offset)
 		snd:SetOffset(offset)
 	end
 end
-ents.COMPONENT_PFM_SOUND_SOURCE = ents.register_component("pfm_sound_source", ents.PFMSoundSource)
+ents.register_component("pfm_sound_source", ents.PFMSoundSource, "pfm")

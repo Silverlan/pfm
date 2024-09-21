@@ -148,4 +148,4 @@ function Component:OnRemove()
 end
 function Component:OnTurnOn() end
 function Component:OnTurnOff() end
-ents.COMPONENT_PFM_VR_CAMERA = ents.register_component("pfm_vr_camera", Component)
+ents.register_component("pfm_vr_camera", Component, "vr")

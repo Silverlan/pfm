@@ -29,4 +29,4 @@ end
 function ents.PFMLightDirectional:Setup(actorData, lightData)
 	-- TODO
 end
-ents.COMPONENT_PFM_LIGHT_DIRECTIONAL = ents.register_component("pfm_light_directional", ents.PFMLightDirectional)
+ents.register_component("pfm_light_directional", ents.PFMLightDirectional, "pfm")

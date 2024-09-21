@@ -284,4 +284,4 @@ function ents.PFMGhost:OnTick()
 		end
 	end
 end
-ents.COMPONENT_PFM_GHOST = ents.register_component("pfm_ghost", ents.PFMGhost)
+ents.register_component("pfm_ghost", ents.PFMGhost, "pfm")

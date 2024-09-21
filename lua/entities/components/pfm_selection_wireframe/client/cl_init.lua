@@ -75,4 +75,4 @@ function Component:UpdateEffect()
 		end
 	end
 end
-ents.COMPONENT_PFM_SELECTION_WIREFRAME = ents.register_component("pfm_selection_wireframe", Component)
+ents.register_component("pfm_selection_wireframe", Component, "pfm")

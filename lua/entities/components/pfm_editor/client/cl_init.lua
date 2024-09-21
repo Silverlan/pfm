@@ -47,4 +47,4 @@ function Component:SetPlayerEnabled(enabled)
 		end
 	end
 end
-ents.COMPONENT_PFM_EDITOR = ents.register_component("pfm_editor", Component)
+ents.register_component("pfm_editor", Component, "pfm")

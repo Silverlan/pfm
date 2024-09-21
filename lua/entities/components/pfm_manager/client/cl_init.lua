@@ -236,6 +236,6 @@ function Component:EndRecording()
 	self:BroadcastEvent(Component.EVENT_ON_END_RECORDING)
 	return n
 end
-ents.COMPONENT_PFM_MANAGER = ents.register_component("pfm_manager", Component)
+ents.register_component("pfm_manager", Component, "pfm")
 Component.EVENT_ON_START_RECORDING = ents.register_component_event(ents.COMPONENT_PFM_MANAGER, "on_start_recording")
 Component.EVENT_ON_END_RECORDING = ents.register_component_event(ents.COMPONENT_PFM_MANAGER, "on_end_recording")

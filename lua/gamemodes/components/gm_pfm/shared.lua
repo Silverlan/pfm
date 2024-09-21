@@ -89,4 +89,4 @@ function Component:InitializePlayerModel(pl)
 		observerC:SetObserverMode(ents.ObserverComponent.OBSERVERMODE_THIRDPERSON)
 	end
 end
-ents.COMPONENT_GM_PFM = ents.register_component("gm_pfm", Component)
+ents.register_component("gm_pfm", Component, "pfm")

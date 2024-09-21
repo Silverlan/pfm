@@ -21,4 +21,4 @@ function Component:OnRender()
 		end
 	end
 end
-ents.COMPONENT_PFM_PRAGMA_RENDERER = ents.register_component("pfm_pragma_renderer", Component)
+ ents.register_component("pfm_pragma_renderer", Component,"pfm")

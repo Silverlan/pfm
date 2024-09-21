@@ -29,4 +29,4 @@ function Component:OnRemove()
 		self:GetEntity():RemoveFromScene(scene)
 	end
 end
-ents.COMPONENT_PFM_OVERLAY_OBJECT = ents.register_component("pfm_overlay_object", Component)
+ents.register_component("pfm_overlay_object", Component, "pfm")

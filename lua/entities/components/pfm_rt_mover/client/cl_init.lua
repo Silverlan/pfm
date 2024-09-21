@@ -216,4 +216,4 @@ function Component:OnTick(dt)
 
 	end]]
 end
-ents.COMPONENT_PFM_RT_MOVER = ents.register_component("pfm_rt_mover", Component)
+ ents.register_component("pfm_rt_mover", Component,"pfm")

@@ -13,5 +13,5 @@ function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 end
 function Component:OnRemove() end
-ents.COMPONENT_UNIRENDER = ents.register_component("unirender", Component)
+ents.register_component("unirender", Component, "pfm")
 Component.EVENT_INITIALIZE_SCENE = ents.register_component_event(ents.COMPONENT_UNIRENDER, "initialize_scene")

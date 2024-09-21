@@ -255,7 +255,7 @@ end
 function Component:GetTimeFrame()
 	return self.m_timeFrame
 end
-ents.COMPONENT_PFM_PROJECT = ents.register_component("pfm_project", Component)
+ents.register_component("pfm_project", Component, "pfm")
 Component.EVENT_ON_ACTOR_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT, "on_actor_created")
 Component.EVENT_ON_ENTITY_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT, "on_entity_created")
 Component.EVENT_ON_FILM_CLIP_CREATED = ents.register_component_event(ents.COMPONENT_PFM_PROJECT, "on_film_clip_created")

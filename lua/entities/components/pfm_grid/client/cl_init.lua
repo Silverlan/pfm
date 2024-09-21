@@ -87,4 +87,4 @@ function ents.PFMGrid:Draw()
 	m:Translate(gridOrigin)
 	self.m_shader:GetWrapper():Draw(game.get_draw_command_buffer(), origin, spacing, radius, scene, m)
 end
-ents.COMPONENT_PFM_GRID = ents.register_component("pfm_grid", ents.PFMGrid)
+ents.register_component("pfm_grid", ents.PFMGrid, "pfm")

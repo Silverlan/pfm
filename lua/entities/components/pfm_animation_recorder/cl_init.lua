@@ -156,4 +156,4 @@ end
 function Component:OnRemove() end
 
 function Component:OnEntitySpawn() end
-ents.COMPONENT_PFM_ANIMATION_RECORDER = ents.register_component("pfm_animation_recorder", Component)
+ents.register_component("pfm_animation_recorder", Component, "pfm")

@@ -389,7 +389,7 @@ function Component:OnEndTransform()
 	self:BroadcastEvent(Component.EVENT_ON_END_TRANSFORM)
 end
 
-ents.COMPONENT_PFM_ACTOR = ents.register_component("pfm_actor", Component)
+ents.register_component("pfm_actor", Component, "pfm")
 Component.EVENT_ON_VISIBILITY_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR, "on_visibility_changed")
 Component.EVENT_ON_SELECTION_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_ACTOR, "on_selection_changed")
 Component.EVENT_ON_START_TRANSFORM = ents.register_component_event(ents.COMPONENT_PFM_ACTOR, "on_start_transform")

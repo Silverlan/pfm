@@ -150,7 +150,6 @@ function Component:UpdateMaterial()
 	volData:SetValue("vector", "scattering_factor", tostring(self:GetScatteringFactor()))
 	volData:SetValue("vector", "asymmetry_factor", tostring(self:GetAsymmetryFactor()))
 	volData:SetValue("bool", "multiscattering", tostring(self:GetMultiScattering()))
-
 	local color = self:GetEntity():GetColor()
 	volData:SetValue("vector", "color", tostring(color:ToVector()))
 	volData:SetValue("float", "density", tostring(self:GetDensity()))
@@ -177,4 +176,4 @@ end
 function Component:OnEntitySpawn()
 	self:UpdateMaterial()
 end
-ents.COMPONENT_PFM_VOLUMETRIC = ents.register_component("pfm_volumetric", Component)
+ents.register_component("pfm_volumetric", Component, "pfm")

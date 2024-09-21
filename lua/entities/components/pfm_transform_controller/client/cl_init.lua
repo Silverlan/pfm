@@ -377,4 +377,4 @@ end
 function Component:OnRemove()
 	util.remove(self.m_callbacks)
 end
-ents.COMPONENT_PFM_TRANSFORM_CONTROLLER = ents.register_component("pfm_transform_controller", Component)
+ents.register_component("pfm_transform_controller", Component, "pfm")

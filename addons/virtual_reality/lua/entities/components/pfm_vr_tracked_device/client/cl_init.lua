@@ -231,4 +231,4 @@ end
 function Component:GetTrackedDevice()
 	return self.m_trackedDevice
 end
-ents.COMPONENT_PFM_VR_TRACKED_DEVICE = ents.register_component("pfm_vr_tracked_device", Component)
+ents.register_component("pfm_vr_tracked_device", Component, "vr")

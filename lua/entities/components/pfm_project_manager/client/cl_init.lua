@@ -143,4 +143,4 @@ function Component:OnRemove()
 	self:Clear()
 	self.m_projectManager = nil
 end
-ents.COMPONENT_PFM_PROJECT_MANAGER = ents.register_component("pfm_project_manager", Component)
+ents.register_component("pfm_project_manager", Component, "pfm")

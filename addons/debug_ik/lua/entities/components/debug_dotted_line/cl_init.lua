@@ -76,4 +76,4 @@ end
 function Component:OnTick()
 	self:DrawDottedLine(self:GetStartPosition(), self:GetEndPosition(), self:GetEntity():GetColor())
 end
-ents.COMPONENT_DEBUG_DOTTED_LINE = ents.register_component("debug_dotted_line", Component)
+ents.register_component("debug_dotted_line", Component, "debug")

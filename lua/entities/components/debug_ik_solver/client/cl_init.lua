@@ -129,4 +129,4 @@ function Component:OnTick()
 		end
 	end
 end
-ents.COMPONENT_DEBUG_IK_SOLVER = ents.register_component("debug_ik_solver", Component)
+ents.register_component("debug_ik_solver", Component, "debug")

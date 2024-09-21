@@ -42,4 +42,4 @@ function ents.PFMIKEffectorTarget:OnEntitySpawn()
 	ent:SetModel("pfm/texture_sphere")
 	ent:SetScale(Vector(0.02, 0.02, 0.02))
 end
-ents.COMPONENT_PFM_IK_EFFECTOR_TARGET = ents.register_component("pfm_ik_effector_target", ents.PFMIKEffectorTarget)
+ents.register_component("pfm_ik_effector_target", ents.PFMIKEffectorTarget, "pfm")

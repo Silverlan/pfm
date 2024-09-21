@@ -86,4 +86,4 @@ function Component:CreateTextElement(text, col)
 	table.insert(self.m_items, ent)
 	return ent
 end
-ents.COMPONENT_DEBUG_IK_CONSTRAINT_VISUALIZER = ents.register_component("debug_ik_constraint_visualizer", Component)
+ents.register_component("debug_ik_constraint_visualizer", Component, "debug")

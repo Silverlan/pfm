@@ -253,4 +253,4 @@ function Component:Carve()
 		end
 	end
 end
-ents.COMPONENT_PFM_REGION_CARVER = ents.register_component("pfm_region_carver", Component)
+ents.register_component("pfm_region_carver", Component, "pfm")

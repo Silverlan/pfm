@@ -234,4 +234,4 @@ function Component:OnEntitySpawn()
 		return self:OnClicked(pressed, hitPos)
 	end)
 end
-ents.COMPONENT_PFM_IK_CONTROL = ents.register_component("pfm_ik_control", Component)
+ents.register_component("pfm_ik_control", Component, "pfm")

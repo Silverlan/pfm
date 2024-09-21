@@ -42,4 +42,4 @@ function Component:UpdateSelection()
 		end
 	end
 end
-ents.COMPONENT_PFM_BONE = ents.register_component("pfm_bone", Component)
+ents.register_component("pfm_bone", Component, "pfm")

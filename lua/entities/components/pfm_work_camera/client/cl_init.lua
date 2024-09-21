@@ -99,4 +99,4 @@ function Component:UpdateMovementProperties()
 		self.m_actionInputC:GetActionInputAxisMagnitude(input.ACTION_MOVERIGHT)
 	)
 end
-ents.COMPONENT_PFM_WORK_CAMERA = ents.register_component("pfm_work_camera", Component)
+ents.register_component("pfm_work_camera", Component, "pfm")

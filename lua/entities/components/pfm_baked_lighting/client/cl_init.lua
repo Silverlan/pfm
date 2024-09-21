@@ -96,4 +96,4 @@ function Component:OnLightmapDataCacheChanged(cachePath)
 		pm:SetActorGenericProperty(actorC, "ec/light_map_data_cache/lightmapDataCache", cachePath, udm.TYPE_STRING)
 	end
 end
-ents.COMPONENT_PFM_BAKED_LIGHTING = ents.register_component("pfm_baked_lighting", Component)
+ents.register_component("pfm_baked_lighting", Component, "pfm")

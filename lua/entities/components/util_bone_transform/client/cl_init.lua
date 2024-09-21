@@ -85,7 +85,7 @@ function ents.UtilBoneTransformComponent:SetTransformEnabled(boneId)
 	end
 	return ent:GetComponent("util_transform")
 end
-ents.COMPONENT_UTIL_BONE_TRANSFORM = ents.register_component("util_bone_transform", ents.UtilBoneTransformComponent)
+ents.register_component("util_bone_transform", ents.UtilBoneTransformComponent, "pfm")
 ents.UtilBoneTransformComponent.EVENT_ON_POSITION_CHANGED =
 	ents.register_component_event(ents.COMPONENT_UTIL_BONE_TRANSFORM, "on_pos_changed")
 ents.UtilBoneTransformComponent.EVENT_ON_ROTATION_CHANGED =

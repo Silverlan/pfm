@@ -50,5 +50,5 @@ function Component:GetBounds()
 	minArea, maxArea = vector.to_min_max(minArea, maxArea)
 	return minArea, maxArea
 end
-ents.COMPONENT_PFM_CUBOID_BOUNDS = ents.register_component("pfm_cuboid_bounds", Component)
+ents.register_component("pfm_cuboid_bounds", Component, "pfm")
 Component.EVENT_ON_BOUNDS_CHANGED = ents.register_component_event(ents.COMPONENT_PFM_CUBOID_BOUNDS, "on_bounds_changed")

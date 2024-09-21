@@ -229,5 +229,5 @@ function Component:UpdateBones()
 		end
 	end
 end
-ents.COMPONENT_DEBUG_SKELETON_DRAW = ents.register_component("debug_skeleton_draw", Component)
+ents.register_component("debug_skeleton_draw", Component, "debug")
 Component.EVENT_ON_BONES_CREATED = ents.register_component_event(ents.COMPONENT_DEBUG_SKELETON_DRAW, "on_bones_created")

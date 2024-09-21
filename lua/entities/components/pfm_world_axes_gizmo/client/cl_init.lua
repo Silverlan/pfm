@@ -71,4 +71,4 @@ end
 function Component:OnEntitySpawn()
 	self:UpdateGizmo()
 end
-ents.COMPONENT_PFM_WORLD_AXES_GIZMO = ents.register_component("pfm_world_axes_gizmo", Component)
+ents.register_component("pfm_world_axes_gizmo", Component, "pfm")

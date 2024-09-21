@@ -14,4 +14,4 @@ end
 function Component:GetActor()
 	return self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
 end
-ents.COMPONENT_PFM_EDITOR_ACTOR = ents.register_component("pfm_editor_actor", Component)
+ents.register_component("pfm_editor_actor", Component, "pfm")

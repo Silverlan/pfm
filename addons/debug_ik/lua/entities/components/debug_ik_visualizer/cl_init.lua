@@ -57,4 +57,4 @@ function Component:OnTick()
 		debug.draw_point(drawInfo)
 	end
 end
-ents.COMPONENT_DEBUG_IK_VISUALIZER = ents.register_component("debug_ik_visualizer", Component)
+ents.register_component("debug_ik_visualizer", Component,"debug")

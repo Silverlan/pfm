@@ -71,4 +71,4 @@ function Component:OnEntitySpawn()
 	end
 	renderer:GetEntity():AddComponent(ents.COMPONENT_RENDERER_PP_BLOOM)
 end
-ents.COMPONENT_PFM_BLOOM = ents.register_component("pfm_bloom", Component)
+ents.register_component("pfm_bloom", Component, "rendering")

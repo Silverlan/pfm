@@ -316,4 +316,4 @@ end
 function ents.PFMTrack:GetTimeFrame()
 	return self.m_timeFrame
 end
-ents.COMPONENT_PFM_TRACK = ents.register_component("pfm_track", ents.PFMTrack)
+ents.register_component("pfm_track", ents.PFMTrack, "pfm")

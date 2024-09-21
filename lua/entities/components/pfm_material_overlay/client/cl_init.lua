@@ -78,4 +78,4 @@ function ents.PFMMaterialOverlay:OnEntitySpawn()
 	self.m_guiEl = el
 end
 
-ents.COMPONENT_PFM_MATERIAL_OVERLAY = ents.register_component("pfm_material_overlay", ents.PFMMaterialOverlay)
+ents.register_component("pfm_material_overlay", ents.PFMMaterialOverlay, "pfm")

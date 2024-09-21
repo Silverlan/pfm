@@ -767,7 +767,7 @@ function Component:TestSetRawAnimationData(actor, path, times, values, valueType
 		})
 	end
 end
-ents.COMPONENT_PFM_ANIMATION_MANAGER = ents.register_component("pfm_animation_manager", Component)
+ents.register_component("pfm_animation_manager", Component, "pfm")
 Component.EVENT_ON_ACTOR_PROPERTY_CHANGED =
 	ents.register_component_event(ents.COMPONENT_PFM_ANIMATION_MANAGER, "on_actor_property_changed")
 Component.EVENT_ON_ANIMATION_CHANNEL_ADDED =

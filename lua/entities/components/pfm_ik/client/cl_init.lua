@@ -668,4 +668,4 @@ function Component:InitializeIkTree(name, ikChain)
 	ikData.enabled = true
 	self:ResetIkTree(name)
 end
-ents.COMPONENT_PFM_IK = ents.register_component("pfm_ik", Component)
+ents.register_component("pfm_ik", Component, "pfm")
