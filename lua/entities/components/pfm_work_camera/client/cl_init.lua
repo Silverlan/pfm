@@ -99,4 +99,4 @@ function Component:UpdateMovementProperties()
 		self.m_actionInputC:GetActionInputAxisMagnitude(input.ACTION_MOVERIGHT)
 	)
 end
-ents.register_component("pfm_work_camera", Component, "pfm")
+ents.register_component("pfm_work_camera", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

@@ -73,4 +73,4 @@ function Component:OnPoseChanged()
 		pm:SetActorGenericProperty(actorC, "ec/camera/fov", camC:GetFOV(), udm.TYPE_FLOAT)
 	end
 end
-ents.register_component("pfm_camera_actor_link", Component, "pfm")
+ents.register_component("pfm_camera_actor_link", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

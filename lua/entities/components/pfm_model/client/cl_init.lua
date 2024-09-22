@@ -335,4 +335,4 @@ function ents.PFMModel:Setup(actorData, mdlInfo)
 	table.insert(self.m_listeners,self.m_mdlInfo:AddChangeListener("skin",function(c,newSkin) ent:SetSkin(newSkin) end))
 	mdlC:SetModel(self.m_mdlInfo:GetMemberValue("model") or "")]]
 end
-ents.register_component("pfm_model", ents.PFMModel, "pfm")
+ents.register_component("pfm_model", ents.PFMModel, "rendering/model")

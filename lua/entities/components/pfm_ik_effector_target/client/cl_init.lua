@@ -42,4 +42,9 @@ function ents.PFMIKEffectorTarget:OnEntitySpawn()
 	ent:SetModel("pfm/texture_sphere")
 	ent:SetScale(Vector(0.02, 0.02, 0.02))
 end
-ents.register_component("pfm_ik_effector_target", ents.PFMIKEffectorTarget, "pfm")
+ents.register_component(
+	"pfm_ik_effector_target",
+	ents.PFMIKEffectorTarget,
+	"pfm",
+	ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR
+)

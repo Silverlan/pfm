@@ -110,4 +110,4 @@ function Component:InitializeProject()
 	self.m_updatePlaybackOffset = true
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
-ents.register_component("pfm_scene", Component, "pfm")
+ents.register_component("pfm_scene", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

@@ -71,4 +71,4 @@ end
 function Component:OnEntitySpawn()
 	self:UpdateGizmo()
 end
-ents.register_component("pfm_world_axes_gizmo", Component, "pfm")
+ents.register_component("pfm_world_axes_gizmo", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

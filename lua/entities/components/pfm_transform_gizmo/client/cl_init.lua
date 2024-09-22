@@ -21,4 +21,4 @@ function Component:OnGizmoControlAdded(entCtrl)
 		renderC:AddToRenderGroup("pfm_editor_overlay")
 	end
 end
-ents.register_component("pfm_transform_gizmo", Component, "pfm")
+ents.register_component("pfm_transform_gizmo", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

@@ -352,6 +352,6 @@ function Component:OnRemove()
 	-- Restore defaults
 	console.run("vr_hide_primary_game_scene", "1")
 end
-ents.register_component("pfm_vr_manager", Component, "vr")
+ents.register_component("pfm_vr_manager", Component, "vr", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)
 Component.EVENT_ON_IK_TRACKING_STATE_CHANGED =
 	ents.register_component_event(ents.COMPONENT_PFM_VR_MANAGER, "on_ik_tracking_state_changed")

@@ -60,4 +60,4 @@ function ents.PFMLightSpot:Setup(actorData, lightData)
 		lightC:Setup(actorData, lightData)
 	end
 end
-ents.register_component("pfm_light_spot", ents.PFMLightSpot, "pfm")
+ents.register_component("pfm_light_spot", ents.PFMLightSpot, "rendering/lighting")

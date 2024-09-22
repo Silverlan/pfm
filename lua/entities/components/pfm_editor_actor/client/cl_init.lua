@@ -14,4 +14,4 @@ end
 function Component:GetActor()
 	return self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
 end
-ents.register_component("pfm_editor_actor", Component, "pfm")
+ents.register_component("pfm_editor_actor", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

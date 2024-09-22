@@ -245,4 +245,4 @@ function ents.PFMSkeleton:OnBonesCreated()
 		self:InitializeIkControls()
 	end
 end
-ents.register_component("pfm_skeleton", ents.PFMSkeleton, "pfm")
+ents.register_component("pfm_skeleton", ents.PFMSkeleton, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

@@ -109,4 +109,9 @@ fudm.register_element_property(fudm.ELEMENT_TYPE_PFM_CHANNEL,"toElement",fudm.An
 ]]
 	end
 end
-ents.register_component("pfm_channel_clip", ents.PFMChannelClip, "pfm")
+ents.register_component(
+	"pfm_channel_clip",
+	ents.PFMChannelClip,
+	"pfm",
+	ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR
+)

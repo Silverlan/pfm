@@ -231,4 +231,4 @@ end
 function Component:GetTrackedDevice()
 	return self.m_trackedDevice
 end
-ents.register_component("pfm_vr_tracked_device", Component, "vr")
+ents.register_component("pfm_vr_tracked_device", Component, "vr", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

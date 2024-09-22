@@ -234,4 +234,4 @@ function Component:OnEntitySpawn()
 		return self:OnClicked(pressed, hitPos)
 	end)
 end
-ents.register_component("pfm_ik_control", Component, "pfm")
+ents.register_component("pfm_ik_control", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

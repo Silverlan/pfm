@@ -165,4 +165,9 @@ function ents.PFMBoneAnimPath:Render()
 		self.m_shaderSprite:Draw(drawCmd, p[1], Vector2(scale / res.x, scale / res.y), color, mvp)
 	end
 end
-ents.register_component("pfm_bone_anim_path", ents.PFMBoneAnimPath, "pfm")
+ents.register_component(
+	"pfm_bone_anim_path",
+	ents.PFMBoneAnimPath,
+	"pfm",
+	ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR
+)

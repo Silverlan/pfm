@@ -216,4 +216,4 @@ function Component:OnTick(dt)
 
 	end]]
 end
- ents.register_component("pfm_rt_mover", Component,"pfm")
+ents.register_component("pfm_rt_mover", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

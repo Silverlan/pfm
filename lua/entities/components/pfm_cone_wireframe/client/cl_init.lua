@@ -153,4 +153,4 @@ function Component:OnTick(dt)
 	self:UpdateRenderData()
 	pfm.tag_render_scene_as_dirty()
 end
-ents.register_component("pfm_cone_wireframe", Component, "pfm")
+ents.register_component("pfm_cone_wireframe", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

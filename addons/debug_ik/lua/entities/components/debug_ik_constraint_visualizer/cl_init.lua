@@ -75,7 +75,7 @@ function Component:CreateTextElement(text, col)
 
 	local ent = self:GetEntity():CreateChild("gui_3d")
 	ent:SyncScenes(self:GetEntity())
-	local guiC = ent:GetComponent(ents.COMPONENT_GUI3D)
+	local guiC = ent:GetComponent(ents.COMPONENT_GUI_3D)
 	guiC:SetAutoCursorUpdateEnabled(false)
 	guiC:SetGUIElement(el)
 	guiC:SetUnlit(true)

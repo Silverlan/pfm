@@ -75,4 +75,4 @@ function Component:UpdateEffect()
 		end
 	end
 end
-ents.register_component("pfm_selection_wireframe", Component, "pfm")
+ents.register_component("pfm_selection_wireframe", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

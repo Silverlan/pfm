@@ -156,4 +156,4 @@ end
 function Component:OnRemove() end
 
 function Component:OnEntitySpawn() end
-ents.register_component("pfm_animation_recorder", Component, "pfm")
+ents.register_component("pfm_animation_recorder", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

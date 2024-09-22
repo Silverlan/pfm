@@ -41,4 +41,4 @@ function Component:UpdateScale()
 	d = d * (self.m_baseScale or 1.0)
 	ent:SetScale(Vector(d, d, d))
 end
-ents.register_component("fixed_size_scaler", Component, "util")
+ents.register_component("fixed_size_scaler", Component, "util", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

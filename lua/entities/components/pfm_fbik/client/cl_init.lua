@@ -67,4 +67,4 @@ function Component:AddBone(id)
 	return solverC:AddSimpleBone(id)
 end
 function Component:UpdateIkRig() end
-ents.register_component("pfm_fbik", Component, "pfm")
+ents.register_component("pfm_fbik", Component, "animation")

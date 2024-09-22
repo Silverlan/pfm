@@ -65,4 +65,9 @@ function ents.UtilTransformComponent:Initialize()
 		end)
 	end
 end
-ents.register_component("util_transform", ents.UtilTransformComponent, "util")
+ents.register_component(
+	"util_transform",
+	ents.UtilTransformComponent,
+	"util",
+	ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR
+)

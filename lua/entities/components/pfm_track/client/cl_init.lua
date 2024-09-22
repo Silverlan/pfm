@@ -316,4 +316,4 @@ end
 function ents.PFMTrack:GetTimeFrame()
 	return self.m_timeFrame
 end
-ents.register_component("pfm_track", ents.PFMTrack, "pfm")
+ents.register_component("pfm_track", ents.PFMTrack, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

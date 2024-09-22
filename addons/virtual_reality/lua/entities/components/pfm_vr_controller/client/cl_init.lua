@@ -78,4 +78,9 @@ end
 function ents.PFMVRController:OnEntitySpawn()
 	self:InitializeInterface()
 end
-ents.register_component("pfm_vr_controller", ents.PFMVRController, "vr")
+ents.register_component(
+	"pfm_vr_controller",
+	ents.PFMVRController,
+	"vr",
+	ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR
+)

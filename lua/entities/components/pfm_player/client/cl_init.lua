@@ -115,4 +115,4 @@ function ents.PFMPlayer:Taunt()
 		end
 	)
 end
-ents.register_component("pfm_player", ents.PFMPlayer, "pfm")
+ents.register_component("pfm_player", ents.PFMPlayer, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

@@ -69,4 +69,9 @@ function ents.PFMOverlayClip:SetOffset(offset)
 	end
 end
 
-ents.register_component("pfm_overlay_clip", ents.PFMOverlayClip, "pfm")
+ents.register_component(
+	"pfm_overlay_clip",
+	ents.PFMOverlayClip,
+	"pfm",
+	ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR
+)

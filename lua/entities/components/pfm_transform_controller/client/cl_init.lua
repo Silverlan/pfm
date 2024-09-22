@@ -377,4 +377,4 @@ end
 function Component:OnRemove()
 	util.remove(self.m_callbacks)
 end
-ents.register_component("pfm_transform_controller", Component, "pfm")
+ents.register_component("pfm_transform_controller", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

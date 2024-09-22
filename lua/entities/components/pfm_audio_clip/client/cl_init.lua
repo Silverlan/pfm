@@ -66,4 +66,4 @@ function ents.PFMAudioClip:SetOffset(offset)
 	end
 end
 
-ents.register_component("pfm_audio_clip", ents.PFMAudioClip, "pfm")
+ents.register_component("pfm_audio_clip", ents.PFMAudioClip, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

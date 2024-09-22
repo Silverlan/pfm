@@ -284,4 +284,4 @@ function ents.PFMGhost:OnTick()
 		end
 	end
 end
-ents.register_component("pfm_ghost", ents.PFMGhost, "pfm")
+ents.register_component("pfm_ghost", ents.PFMGhost, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

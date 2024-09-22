@@ -47,4 +47,4 @@ function Component:SetPlayerEnabled(enabled)
 		end
 	end
 end
-ents.register_component("pfm_editor", Component, "pfm")
+ents.register_component("pfm_editor", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)
