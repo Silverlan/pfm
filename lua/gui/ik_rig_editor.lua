@@ -45,7 +45,7 @@ function Element:OnInitialize()
 			local rigPath = rootPath .. fileName
 			local rig = util.IkRigConfig.load(rigPath)
 			if rig == nil then
-				pfm.log("Failed to load ik rig '" .. rigPath .. "'!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
+				self:LogErr("Failed to load ik rig '" .. rigPath .. "'!")
 				return
 			end
 
@@ -123,7 +123,7 @@ function Element:OnInitialize()
 			local ikRigPath = "scripts/ik_rigs/" .. fileName .. ".pikr"
 			local res, err = rig:Save(ikRigPath)
 			if res == false then
-				pfm.log("Failed to save ik rig: " .. err, pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_ERROR)
+				self:LogErr("Failed to save ik rig: " .. err)
 			end
 			tool.get_filmmaker()
 				:SetFileDialogPath("ik_rig_path", file.get_file_path(pFileDialog:MakePathRelative(ikRigPath)))
