@@ -93,6 +93,13 @@ include("/pfm/bake/ibl.lua")
 function gui.WIFilmmaker:OnInitialize()
 	self:SetDeveloperModeEnabled(tool.is_developer_mode_enabled())
 
+	-- Load all available entity component scripts.
+	-- We need to do this to get all of the meta information
+	-- (e.g. which category a component belongs to)
+	for _, name in ipairs(ents.find_installed_custom_components()) do
+		ents.load_component(name)
+	end
+
 	gui.WIBaseFilmmaker.OnInitialize(self)
 	tool.editor = self -- TODO: This doesn't really belong here (check lua/autorun/client/cl_filmmaker.lua)
 	tool.filmmaker = self
