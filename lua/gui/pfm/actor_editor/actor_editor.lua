@@ -2856,28 +2856,70 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 	-- Components
 	local entActor = actor:FindEntity()
 	if util.is_valid(entActor) then
-		local existingComponents = {}
-		local newComponentMap = {}
+		local componentMap = {}
+		local hiddenCategories = {
+			["gameplay"] = true,
+			["debug"] = true,
+			["util"] = true,
+			["physics"] = true,
+			["ui"] = true,
+			["editor"] = true,
+			["ai"] = true,
+		}
 		for _, componentId in ipairs(ents.get_registered_component_types()) do
 			local info = ents.get_component_info(componentId)
-			local name = info.name
-			if actor:HasComponent(name) == false then
-				if entActor:HasComponent(name) then
-					table.insert(existingComponents, name)
-				else
-					newComponentMap[name] = true
+			if bit.band(info.flags, ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR) == 0 and #info.category > 0 then
+				local t = componentMap
+				for _, name in ipairs(string.split(info.category, "/")) do
+					t.children = t.children or {}
+					t.children[name] = t.children[name] or {}
+					t = t.children[name]
+				end
+
+				local name = info.name
+				if actor:HasComponent(name) == false then
+					table.insert(t, name)
 				end
 			end
 		end
-		for _, name in ipairs(ents.find_installed_custom_components()) do
+		--[[for _, name in ipairs(ents.find_installed_custom_components()) do
 			newComponentMap[name] = true
-		end
-		local newComponents = {}
-		for name, _ in pairs(newComponentMap) do
-			table.insert(newComponents, name)
-		end
-		for _, list in ipairs({ existingComponents, newComponents }) do
-			for i, name in ipairs(list) do
+		end]]
+		local function add_components(pContext, t, localeId)
+			if t.children ~= nil then
+				local tChildren = {}
+				for name, sub in pairs(t.children) do
+					local childLocaleId = name
+					if localeId ~= nil then
+						childLocaleId = localeId .. "_" .. childLocaleId
+					end
+					local res, displayName = locale.get_text("c_category_" .. childLocaleId, true)
+					if res == false then
+						displayName = name
+					end
+
+					table.insert(tChildren, {
+						name = name,
+						displayName = displayName,
+						localeId = childLocaleId,
+						components = sub,
+					})
+				end
+				table.sort(tChildren, function(a, b)
+					return a.displayName < b.displayName
+				end)
+				for _, sub in ipairs(tChildren) do
+					if hiddenCategories[sub.name] ~= true then
+						local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(sub.displayName)
+						pComponentsItem:SetName(sub.name)
+						add_components(pComponentsMenu, sub.components, sub.localeId)
+						pComponentsMenu:Update()
+					end
+				end
+			end
+
+			local list = {}
+			for i, name in ipairs(t) do
 				local displayName = name
 				local valid, n = locale.get_text("c_" .. name, nil, true)
 				if valid then
@@ -2888,12 +2930,9 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			table.sort(list, function(a, b)
 				return a[2] < b[2]
 			end)
-		end
-		if #existingComponents > 0 then
-			local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
-			pComponentsItem:SetName("add_component")
-			for _, nameInfo in ipairs(existingComponents) do
-				pComponentsMenu
+
+			for _, nameInfo in ipairs(list) do
+				pContext
 					:AddItem(nameInfo[2], function()
 						local filmmaker = pfm.get_project_manager()
 						local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
@@ -2907,30 +2946,11 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 					end)
 					:SetName(nameInfo[1])
 			end
-			pComponentsMenu:Update()
 		end
-		if #newComponents > 0 then
-			local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_new_component"))
-			pComponentsItem:SetName("add_new_component")
-			debug.start_profiling_task("pfm_populate_component_list")
-			for _, nameInfo in ipairs(newComponents) do
-				pComponentsMenu
-					:AddItem(nameInfo[2], function()
-						local filmmaker = pfm.get_project_manager()
-						local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
-						if util.is_valid(actorEditor) == false then
-							return
-						end
-						pfm.undoredo.push(
-							"create_component",
-							pfm.create_command("create_component", actor, nameInfo[1])
-						)()
-					end)
-					:SetName(nameInfo[1])
-			end
-			pComponentsMenu:Update()
-			debug.stop_profiling_task()
-		end
+		local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
+		pComponentsItem:SetName("add_component")
+		add_components(pComponentsMenu, componentMap)
+		pComponentsMenu:Update()
 	end
 	--
 
