@@ -21,4 +21,4 @@ function Component:OnRender()
 		end
 	end
 end
- ents.register_component("pfm_pragma_renderer", Component,"pfm")
+ents.register_component("pfm_pragma_renderer", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

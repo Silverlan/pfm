@@ -298,4 +298,4 @@ end
 function ents.PFMParticleSystem:Setup(actorData, particleData)
 	self.m_particleData = particleData
 end
-ents.register_component("pfm_particle_system", ents.PFMParticleSystem, "pfm")
+ents.register_component("pfm_particle_system", ents.PFMParticleSystem, "rendering/effects")

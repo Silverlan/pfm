@@ -149,4 +149,4 @@ function ents.PFMLight:Setup(actorData, pfmLightData)
 		entVol:AddComponent(ents.COMPONENT_ATTACHMENT):AttachToEntity(ent,attInfo)]]
 	-- end
 end
-ents.register_component("pfm_light", ents.PFMLight, "pfm")
+ents.register_component("pfm_light", ents.PFMLight, "rendering/lighting")

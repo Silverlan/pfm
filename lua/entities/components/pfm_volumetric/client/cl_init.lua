@@ -176,4 +176,4 @@ end
 function Component:OnEntitySpawn()
 	self:UpdateMaterial()
 end
-ents.register_component("pfm_volumetric", Component, "pfm")
+ents.register_component("pfm_volumetric", Component, "rendering/lighting")

@@ -98,4 +98,4 @@ function Component:UpdateWireframe()
 		end
 	end
 end
-ents.register_component("pfm_outline", Component, "pfm")
+ents.register_component("pfm_outline", Component, "rendering/model")

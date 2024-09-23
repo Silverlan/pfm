@@ -89,4 +89,4 @@ function Component:OnRemove()
 	util.remove(self.m_callbacks)
 	self:UpdateSkyTexture(true)
 end
-ents.register_component("pfm_sky", Component, "pfm")
+ents.register_component("pfm_sky", Component, "rendering")
