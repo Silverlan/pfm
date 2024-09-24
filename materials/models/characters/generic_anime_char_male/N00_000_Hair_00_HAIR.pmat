@@ -1,12 +1,9 @@
-"pbr"
+"toon"
 {
 	"properties"
 	{
 		$int32 alpha_mode 1
-		$float roughness_factor 0.9
 		$float alpha_cutoff 0.5
-		$float metalness_factor 0
-		$vec3 emission_factor [0,0,0]
 		$vec3 color_factor [0.502,0.502,0.502]
 	}
 	"textures"
