@@ -447,6 +447,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 				end
 				if #exportable > 0 then
 					local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_asset_export"))
+					pItem:SetName("export_asset")
 					pSubMenu
 						:AddItem("glTF", function()
 							local exportSuccessful = false
@@ -475,27 +476,28 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 							end
 						end)
 						:SetName("gltf")
-					pSubMenu:AddItem("Mdl (Source Engine)", function()
-						local models = {}
-						for _, el in ipairs(exportable) do
-							if el:IsValid() then
-								local path = el:GetRelativeAsset()
-								if asset.exists(path, self:GetAssetType()) == false then
-									el:Reload(true)
+					pSubMenu
+						:AddItem("Mdl (Source Engine)", function()
+							local models = {}
+							for _, el in ipairs(exportable) do
+								if el:IsValid() then
+									local path = el:GetRelativeAsset()
+									if asset.exists(path, self:GetAssetType()) == false then
+										el:Reload(true)
+									end
+
+									table.insert(models, path)
 								end
-
-								table.insert(models, path)
 							end
-						end
 
-						include("/util/source_model_exporter.lua")
-						local result, err = util.export_source_engine_models(models)
-						if result == false then
-							console.print_warning("Unable to export asset: ", err)
-						end
-					end)
+							include("/util/source_model_exporter.lua")
+							local result, err = util.export_source_engine_models(models)
+							if result == false then
+								console.print_warning("Unable to export asset: ", err)
+							end
+						end)
+						:SetName("source_mdl")
 					pSubMenu:Update()
-					pItem:SetName("export_asset")
 				end
 			end
 
