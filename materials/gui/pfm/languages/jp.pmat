@@ -1,7 +1,0 @@
-"wguitextured"
-{
-	"textures"
-	{
-		$string diffuse_map "gui/pfm/languages/jp"
-	}
-}

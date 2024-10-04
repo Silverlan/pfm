@@ -698,23 +698,6 @@ function Element:InitializeMenuBar()
 						end
 					)
 				end)
-
-				local matPath = "gui/pfm/languages/" .. lan
-				if asset.exists(matPath, asset.TYPE_MATERIAL) then
-					-- Some languages (like Japanese) use characters that don't exist in the standard font
-					-- so we display those language names as image instead
-					local el = gui.create("WITexturedRect", pItemLan)
-					el:SetMaterial(matPath)
-					el:SizeToTexture()
-					local aspectRatio = el:GetWidth() / el:GetHeight()
-					local h = 14
-					el:SetSize(h * aspectRatio, h)
-					el:SetColor(Color.Gray)
-					el:CenterToParentY()
-					el:SetX(10)
-					el:SetY(el:GetY() + 2)
-					pItemLan:GetTextElement():SetVisible(false)
-				end
 			end
 			pItem:SetTooltip(locale.get_text("pfm_menu_change_language"))
 			pSubMenu:ScheduleUpdate()
