@@ -204,11 +204,13 @@ function gui.PatreonTicker:UpdateSupporterList()
 	end
 	filtered = table.randomize(filtered)
 	local n = #filtered
-	local i = 1
-	while n < 50 do
-		table.insert(filtered, filtered[i])
-		i = i + 1
-		n = #filtered
+	if n > 0 then
+		local i = 1
+		while n < 50 do
+			table.insert(filtered, filtered[i])
+			i = i + 1
+			n = #filtered
+		end
 	end
 	local text = ""
 	local color = Color(220, 220, 220)
