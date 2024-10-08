@@ -390,6 +390,26 @@ function gui.PFMCoreViewportBase:OnViewportMouseEvent(el, mouseButton, state, mo
 							pContext:AddItem(locale.get_text("pfm_copy_hit_position"), function()
 								util.set_clipboard_string(tostring(hitPos))
 							end)
+
+							if tool.is_developer_mode_enabled() then
+								pContext:AddItem("Open material in explorer", function()
+									local mdl = util.is_valid(hitData.entity) and hitData.entity:GetModel() or nil
+									local mat = (mdl ~= nil) and mdl:GetMaterial(hitData.mesh:GetSkinTextureIndex())
+										or nil
+									if mat ~= nil then
+										local filePath = asset.find_file(mat:GetName(), asset.TYPE_MATERIAL)
+										if filePath ~= nil then
+											filePath = asset.get_asset_root_directory(asset.TYPE_MATERIAL)
+												.. "/"
+												.. filePath
+											util.open_path_in_explorer(
+												file.get_file_path(filePath),
+												file.get_file_name(filePath)
+											)
+										end
+									end
+								end)
+							end
 						end
 
 						pContext:Update()
