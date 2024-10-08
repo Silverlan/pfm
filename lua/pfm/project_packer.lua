@@ -42,7 +42,12 @@ function pfm.ProjectPacker:AddAsset(f, type, skipAddFunc)
 end
 function pfm.ProjectPacker:AddMaterial(mat)
 	if type(mat) == "string" then
-		mat = game.load_material(mat)
+		local matName = mat
+		mat = game.load_material(matName)
+		if mat == nil then
+			pfm.log("Failed to load pack material '" .. matName .. "'!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+			return
+		end
 	end
 	local matName = util.Path(mat:GetName())
 	self:AddAsset(matName:GetString(), asset.TYPE_MATERIAL, true)
