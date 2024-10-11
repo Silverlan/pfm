@@ -681,9 +681,16 @@ function Element:InitializeMenuBar()
 					if util.is_valid(self) == false then
 						return
 					end
+					local t = locale.parse("pfm_misc.txt", lan)
+					local title = locale.get_text("pfm_prompt_change_language")
+					local msg = locale.get_text("pfm_prompt_change_language_message")
+					if t ~= nil and lan ~= locale.get_language() then
+						title = title .. " / " .. t["pfm_prompt_change_language"]
+						msg = msg .. "\n\n" .. t["pfm_prompt_change_language_message"]
+					end
 					pfm.open_message_prompt(
-						locale.get_text("pfm_prompt_change_language"),
-						locale.get_text("pfm_prompt_change_language_message"),
+						title,
+						msg,
 						bit.bor(gui.PfmPrompt.BUTTON_YES, gui.PfmPrompt.BUTTON_NO),
 						function(bt)
 							if bt == gui.PfmPrompt.BUTTON_YES then
