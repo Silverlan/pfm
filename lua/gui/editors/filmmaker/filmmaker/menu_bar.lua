@@ -84,8 +84,6 @@ function Element:InitializeMenuBar()
 					local pOptionKeepCurrentLayout
 					local path = tool.get_filmmaker():GetFileDialogPath("project_path")
 					self.m_openDialogue = pfm.create_file_open_dialog(function(pDialog, fileName)
-						fileName = "projects/" .. fileName
-
 						if console.get_convar_bool("pfm_keep_current_layout") then
 							file.create_path("temp/pfm/")
 							self:SaveWindowLayoutState("temp/pfm/restore_layout_state.udm", true)
