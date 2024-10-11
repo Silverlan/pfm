@@ -237,7 +237,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 	local listExplorer = mdlCatalog:GetListExplorer()
 	listExplorer:AddCallback("OnFileRowAdded", function(listExplorer, row, filePath)
 		init_model_asset_drag_and_drop(listExplorer, row, filePath, function(icon, mdlPath)
-			asset.import(mdlPath, asset.TYPE_MODEL)
+			asset.import(asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. mdlPath, asset.TYPE_MODEL)
 		end)
 	end)
 	return mdlCatalog

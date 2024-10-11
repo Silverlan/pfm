@@ -56,7 +56,9 @@ function Element:ImportMap(map)
 	local origMapName = map
 	map = asset.find_file(origMapName, asset.TYPE_MAP)
 	if map == nil then
-		if asset.import("maps/" .. origMapName, asset.TYPE_MAP) == false then
+		if
+			asset.import(asset.get_asset_root_directory(asset.TYPE_MAP) .. "/" .. origMapName, asset.TYPE_MAP) == false
+		then
 			return
 		end
 		map = asset.find_file(origMapName, asset.TYPE_MAP)
