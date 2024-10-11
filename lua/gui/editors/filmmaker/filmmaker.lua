@@ -20,6 +20,7 @@ include("/gui/editors/wieditorwindow.lua")
 include("/gui/patreon_ticker.lua")
 include("/gui/bone_retargeting.lua")
 include("/gui/ik_rig_editor.lua")
+include("/gui/draganddrop_overlay.lua")
 include("/gui/pfm/viewport/viewport.lua")
 include("/gui/pfm/message_prompt.lua")
 include("/gui/pfm/postprocessing.lua")
@@ -381,8 +382,36 @@ function gui.WIFilmmaker:OnInitialize()
 		end)
 	end
 
+	self:SetFileDropInputEnabled(true)
 	self:SetSkinCallbacksEnabled(true)
 	pfm.call_event_listeners("OnFilmmakerInitialized", self)
+end
+function gui.WIFilmmaker:OnFileDragEntered()
+	util.remove(self.m_dragOverlay)
+	self.m_dragOverlay = gui.create("WIDragAndDropOverlay", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_dragOverlay:SetZPos(100000)
+end
+function gui.WIFilmmaker:OnFileDragExited()
+	util.remove(self.m_dragOverlay)
+end
+function gui.WIFilmmaker:OnFilesDropped(files)
+	util.import_assets(files, {
+		modelImportCallback = function(assetType, assetPath)
+			if assetType == asset.TYPE_MODEL then
+				local mdlCatalog = self:GetWindow("model_catalog")
+				local explorer = util.is_valid(mdlCatalog) and mdlCatalog:GetExplorer() or nil
+				if util.is_valid(explorer) then
+					explorer:AddToSpecial("new", assetPath)
+				end
+			end
+		end,
+		onComplete = function()
+			if self:IsValid() then
+				self:ScheduleUpdate()
+			end
+		end,
+		dropped = true,
+	})
 end
 function gui.WIFilmmaker:GetSupporterTicker()
 	return self.m_supporterTicker
@@ -1050,6 +1079,7 @@ function gui.WIFilmmaker:OnRemove()
 	util.remove(self.m_cbOnLuaError)
 	util.remove(self.m_cbPreRenderScenes)
 	util.remove(self.m_overlaySceneCallback)
+	util.remove(self.m_dragOverlay)
 	if util.is_valid(self.m_overlayScene) then
 		self.m_overlayScene:GetEntity():Remove()
 	end
