@@ -11,7 +11,7 @@
 
 void main()
 {
-	vec4 albedoColor = texture(u_albedoMap,fs_in.vert_uv);
+	vec4 albedoColor = texture(u_albedoMap,get_vertex_uv());
 	fs_color = albedoColor;
 	vec4 colorMod = get_instance_color();
 	fs_color.r *= colorMod.r;
