@@ -1,5 +1,7 @@
 include("log.lua")
 
+local MAX_MESH_VERTEX_COUNT = 65536
+
 pfm.register_log_category("se_model_export")
 
 util.register_class("util.QC")
@@ -302,6 +304,37 @@ function util.SourceEngineModelBuilder:Generate()
 	end
 
 	local function export_mesh(subMesh, meshName, mat)
+		local numVerts = subMesh:GetVertexCount()
+		if numVerts > MAX_MESH_VERTEX_COUNT then
+			log.msg(
+				"Mesh vertex count ("
+					.. numVerts
+					.. ") exceeds allowed maximum of "
+					.. MAX_MESH_VERTEX_COUNT
+					.. ". Attempting to simplify...",
+				pfm.LOG_CATEGORY_SE_MODEL_EXPORT,
+				pfm.LOG_SEVERITY_INFO
+			)
+			local simplified = subMesh:Simplify(MAX_MESH_VERTEX_COUNT)
+			if simplified == nil then
+				log.msg("Mesh simplification has failed!", pfm.LOG_CATEGORY_SE_MODEL_EXPORT, pfm.LOG_SEVERITY_WARNING)
+			elseif subMesh:GetVertexCount() > MAX_MESH_VERTEX_COUNT then
+				log.msg(
+					"Failed to simplify mesh below maximum allowed vertex count! ("
+						.. simplified:GetVertexCount()
+						.. " vertices)",
+					pfm.LOG_CATEGORY_SE_MODEL_EXPORT,
+					pfm.LOG_SEVERITY_WARNING
+				)
+			else
+				subMesh = simplified
+				log.msg(
+					"Mesh vertex count has been decimated to " .. simplified:GetVertexCount() .. " vertices.",
+					pfm.LOG_CATEGORY_SE_MODEL_EXPORT,
+					pfm.LOG_SEVERITY_INFO
+				)
+			end
+		end
 		local smdBuilder = util.SMDBuilder()
 		smdBuilder:AddSkeleton(skeleton)
 		smdBuilder:AddReferencePose(skeleton, mdl:GetReferencePose())
