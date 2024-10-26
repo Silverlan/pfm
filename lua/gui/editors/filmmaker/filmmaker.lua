@@ -387,14 +387,37 @@ function gui.WIFilmmaker:OnInitialize()
 	pfm.call_event_listeners("OnFilmmakerInitialized", self)
 end
 function gui.WIFilmmaker:OnFileDragEntered()
+	util.remove(self.m_fileDragChildOverlays)
+	self.m_fileDragChildOverlays = {}
+	local function init_overlays(el)
+		for _, el in ipairs(el:GetChildren()) do
+			if el:IsValid() and el:IsHidden() == false then
+				if el:GetFileDropInputEnabled() and el.InitDragOverlay ~= nil then
+					local elOverlay = el:InitDragOverlay()
+					table.insert(self.m_fileDragChildOverlays, elOverlay)
+				end
+				init_overlays(el)
+			end
+		end
+	end
+	init_overlays(self)
+	if #self.m_fileDragChildOverlays > 0 then
+		return
+	end
 	util.remove(self.m_dragOverlay)
 	self.m_dragOverlay = gui.create("WIDragAndDropOverlay", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_dragOverlay:SetZPos(100000)
+	self.m_dragOverlay:SetText(locale.get_text("pfm_drop_here_to_install"), "pfm_large")
 end
 function gui.WIFilmmaker:OnFileDragExited()
 	util.remove(self.m_dragOverlay)
+	util.remove(self.m_fileDragChildOverlays)
+	self.m_fileDragChildOverlays = nil
 end
 function gui.WIFilmmaker:OnFilesDropped(files)
+	if self.m_fileDragChildOverlays ~= nil and #self.m_fileDragChildOverlays > 0 then
+		-- If a child element is expecting a drag-and-drop, we disable the global drag-and-drop
+		return
+	end
 	util.import_assets(files, {
 		modelImportCallback = function(assetType, assetPath)
 			if assetType == asset.TYPE_MODEL then

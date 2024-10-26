@@ -84,6 +84,7 @@ pfm_cycles_tone_mapping_desc = "Tone-mapping adjusts the dynamic range of the im
 pfm_debug_mode = "Debug Mode"
 pfm_developer_mode_enabled = "Enable developer mode"
 pfm_downloading_file = "Downloading file"
+pfm_drop_here = "Drop here"
 pfm_drop_here_to_install = "Drop here to install"
 pfm_edit_ik_rig = "Edit ik rig"
 pfm_enable_experimental_updates = "Enable experimental updates"

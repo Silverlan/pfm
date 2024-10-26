@@ -24,57 +24,64 @@ function gui.ModelExplorer:OnInitialize()
 		asset.FORMAT_MODEL_ASCII,
 		asset.FORMAT_MODEL_BINARY,
 	})
-
-	self:AddCallback("OnFilesDropped", function(el, tFiles)
-		local basePath = util.Path.CreatePath(self:GetPath())
-		for _, fname in ipairs(tFiles) do
-			local f = game.open_dropped_file(fname, true)
-			if f ~= nil then
-				local function import_model(importAsSingleModel)
-					if self:IsValid() == false then
-						return
-					end
-					local dirName = file.remove_file_extension(fname)
-					dirName = string.replace(dirName, ".", "_")
-					local outputPath = basePath + util.Path.CreatePath(dirName)
-					self:SetPath(outputPath:GetString())
-
-					util.import_assets(f, {
-						modelImportCallback = function(assetType, assetPath)
-							if assetType == asset.TYPE_MODEL then
-								self:AddToSpecial("new", assetPath)
-							end
-						end,
-						onComplete = function()
-							if self:IsValid() then
-								self:ScheduleUpdate()
-							end
-						end,
-						basePath = outputPath:GetString(),
-						dropped = true,
-						importAsCollection = not importAsSingleModel,
-					})
+	self:SetFileDropInputEnabled(true)
+end
+function gui.ModelExplorer:InitDragOverlay()
+	util.remove(self.m_dragOverlay)
+	local pos, size = self:GetVisibleBounds()
+	self.m_dragOverlay = gui.create("WIDragAndDropOverlay", self, pos.x, pos.y, size.x, size.y, 0, 0, 1, 1)
+	self.m_dragOverlay:SetZPos(100000)
+	return self.m_dragOverlay
+end
+function gui.ModelExplorer:OnFilesDropped(tFiles)
+	local basePath = util.Path.CreatePath(self:GetPath())
+	for _, fname in ipairs(tFiles) do
+		local f = game.open_dropped_file(fname, true)
+		if f ~= nil then
+			local function import_model(importAsSingleModel)
+				if self:IsValid() == false then
+					return
 				end
-				local pContext = gui.open_context_menu()
-				if util.is_valid(pContext) then
-					pContext:SetPos(input.get_cursor_pos())
-					pContext
-						:AddItem(locale.get_text("pfm_import_as_single_model"), function()
-							import_model(true)
-						end)
-						:SetName("import_as_single_model")
-					pContext
-						:AddItem(locale.get_text("pfm_import_as_collection"), function()
-							import_model(false)
-						end)
-						:SetName("import_as_collection")
-					pContext:Update()
-					return util.EVENT_REPLY_HANDLED
-				end
+				local dirName = file.remove_file_extension(fname)
+				dirName = string.replace(dirName, ".", "_")
+				local outputPath = basePath + util.Path.CreatePath(dirName)
+				self:SetPath(outputPath:GetString())
+
+				util.import_assets(f, {
+					modelImportCallback = function(assetType, assetPath)
+						if assetType == asset.TYPE_MODEL then
+							self:AddToSpecial("new", assetPath)
+						end
+					end,
+					onComplete = function()
+						if self:IsValid() then
+							self:ScheduleUpdate()
+						end
+					end,
+					basePath = outputPath:GetString(),
+					dropped = true,
+					importAsCollection = not importAsSingleModel,
+				})
+			end
+			local pContext = gui.open_context_menu()
+			if util.is_valid(pContext) then
+				pContext:SetPos(input.get_cursor_pos())
+				pContext
+					:AddItem(locale.get_text("pfm_import_as_single_model"), function()
+						import_model(true)
+					end)
+					:SetName("import_as_single_model")
+				pContext
+					:AddItem(locale.get_text("pfm_import_as_collection"), function()
+						import_model(false)
+					end)
+					:SetName("import_as_collection")
+				pContext:Update()
+				return util.EVENT_REPLY_HANDLED
 			end
 		end
-		return util.EVENT_REPLY_HANDLED
-	end)
+	end
+	return util.EVENT_REPLY_HANDLED
 end
 function gui.ModelExplorer:GetIdentifier()
 	return "model_explorer"

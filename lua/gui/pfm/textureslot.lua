@@ -21,78 +21,85 @@ function gui.PFMTextureSlot:OnInitialize()
 	self.m_outline:SetColor(Color.Black)
 
 	self:SetMouseInputEnabled(true)
-	self:AddCallback("OnFilesDropped", function(texSlot, tFiles)
-		if #tFiles == 0 then
-			return util.EVENT_REPLY_UNHANDLED
-		end
-		local f = game.open_dropped_file(tFiles[1], true)
-		if f == nil then
-			return util.EVENT_REPLY_UNHANDLED
-		end
-		if self.m_matPath == nil then
-			local tex = asset.load(f, asset.TYPE_TEXTURE)
-			tex = (tex ~= nil) and tex:GetVkTexture() or nil
-			if tex ~= nil then
-				self.m_texRect:SetTexture(tex)
-			else
-				self.m_texRect:ClearTexture()
-			end
-			return util.EVENT_REPLY_HANDLED
-		end
-		local texPath = util.Path(self.m_matPath) + tFiles[1]
-		texPath:RemoveFileExtension()
-		local texImportInfo = asset.TextureImportInfo()
-
-		-- TODO: Doesn't seem to work properly?
-		-- texImportInfo.normalMap = self.m_normalMap
-
-		-- Importing the texture could potentially trigger a material reload through the asset watchers, which we want to avoid,
-		-- so we'll lock them temporarily
-		asset.lock_asset_watchers()
-
+	self:SetFileDropInputEnabled(true)
+	self:SetNormalMap(false)
+end
+function gui.PFMTextureSlot:InitDragOverlay()
+	util.remove(self.m_dragOverlay)
+	self.m_dragOverlay = gui.create("WIDragAndDropOverlay", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_dragOverlay:SetZPos(100000)
+	return self.m_dragOverlay
+end
+function gui.PFMTextureSlot:OnFilesDropped(tFiles)
+	if #tFiles == 0 then
+		return util.EVENT_REPLY_UNHANDLED
+	end
+	local f = game.open_dropped_file(tFiles[1], true)
+	if f == nil then
+		return util.EVENT_REPLY_UNHANDLED
+	end
+	if self.m_matPath == nil then
 		local tex = asset.load(f, asset.TYPE_TEXTURE)
 		tex = (tex ~= nil) and tex:GetVkTexture() or nil
-		if tex == nil then
-			self:LogInfo("Failed to import texture!")
-			asset.unlock_asset_watchers()
-			return util.EVENT_REPLY_HANDLED
+		if tex ~= nil then
+			self.m_texRect:SetTexture(tex)
+		else
+			self.m_texRect:ClearTexture()
 		end
-		local texInfo = util.TextureInfo()
-		texInfo.flags = bit.bor(texInfo.flags, util.TextureInfo.FLAG_BIT_GENERATE_MIPMAPS)
-		texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
-
-		if asset.exists(texPath:GetString(), asset.TYPE_TEXTURE) then
-			-- A texture with the target name already exists, we'll add a postfix to make it unique
-			local tmpPath
-			local i = 2
-			repeat
-				tmpPath = texPath:GetString() .. "_" .. tostring(i)
-				i = i + 1
-			until not asset.exists(tmpPath, asset.TYPE_TEXTURE)
-			texPath = util.Path.CreateFilePath(tmpPath)
-		end
-
-		self:LogInfo("Saving texture as '" .. "materials/" .. texPath:GetString() .. "'...")
-		local result = util.save_image(tex:GetImage(), "materials/" .. texPath:GetString(), texInfo)
-		if result == false then
-			self:LogInfo("Saving failed!")
-		end
-
-		asset.unlock_asset_watchers()
-
-		-- Force texture reload
-		asset.reload(texPath:GetString(), asset.TYPE_TEXTURE)
-
-		if result == false then
-			console.print_warning("Unable to load texture '" .. tFiles[1] .. "': " .. errMsg)
-			return util.EVENT_REPLY_HANDLED
-		end
-		self:SetTexture(texPath:GetString())
-		self:ReloadTexture(true)
-		self:CallCallbacks("OnTextureImported")
 		return util.EVENT_REPLY_HANDLED
-	end)
-	self:SetNormalMap(false)
+	end
+	local texPath = util.Path(self.m_matPath) + tFiles[1]
+	texPath:RemoveFileExtension()
+	local texImportInfo = asset.TextureImportInfo()
+
+	-- TODO: Doesn't seem to work properly?
+	-- texImportInfo.normalMap = self.m_normalMap
+
+	-- Importing the texture could potentially trigger a material reload through the asset watchers, which we want to avoid,
+	-- so we'll lock them temporarily
+	asset.lock_asset_watchers()
+
+	local tex = asset.load(f, asset.TYPE_TEXTURE)
+	tex = (tex ~= nil) and tex:GetVkTexture() or nil
+	if tex == nil then
+		self:LogInfo("Failed to import texture!")
+		asset.unlock_asset_watchers()
+		return util.EVENT_REPLY_HANDLED
+	end
+	local texInfo = util.TextureInfo()
+	texInfo.flags = bit.bor(texInfo.flags, util.TextureInfo.FLAG_BIT_GENERATE_MIPMAPS)
+	texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
+
+	if asset.exists(texPath:GetString(), asset.TYPE_TEXTURE) then
+		-- A texture with the target name already exists, we'll add a postfix to make it unique
+		local tmpPath
+		local i = 2
+		repeat
+			tmpPath = texPath:GetString() .. "_" .. tostring(i)
+			i = i + 1
+		until not asset.exists(tmpPath, asset.TYPE_TEXTURE)
+		texPath = util.Path.CreateFilePath(tmpPath)
+	end
+
+	self:LogInfo("Saving texture as '" .. "materials/" .. texPath:GetString() .. "'...")
+	local result = util.save_image(tex:GetImage(), "materials/" .. texPath:GetString(), texInfo)
+	if result == false then
+		self:LogInfo("Saving failed!")
+	end
+
+	asset.unlock_asset_watchers()
+
+	-- Force texture reload
+	asset.reload(texPath:GetString(), asset.TYPE_TEXTURE)
+
+	if result == false then
+		console.print_warning("Unable to load texture '" .. tFiles[1] .. "': " .. errMsg)
+		return util.EVENT_REPLY_HANDLED
+	end
+	self:SetTexture(texPath:GetString())
+	self:ReloadTexture(true)
+	self:CallCallbacks("OnTextureImported")
+	return util.EVENT_REPLY_HANDLED
 end
 function gui.PFMTextureSlot:SetClearTexture(clearTex)
 	self.m_clearTex = clearTex
