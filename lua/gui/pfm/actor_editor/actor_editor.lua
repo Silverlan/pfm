@@ -374,24 +374,6 @@ function gui.PFMActorEditor:OnInitialize()
 	dataVBox:SetAutoFillContentsToWidth(true)
 	dataVBox:SetAutoFillContentsToHeight(true)
 
-	local propertiesHBox = gui.create("WIHBox", dataVBox)
-	propertiesHBox:SetAutoFillContents(true)
-	self.m_propertiesHBox = propertiesHBox
-
-	local propertiesLabelsVBox = gui.create("WIVBox", propertiesHBox)
-	propertiesLabelsVBox:SetAutoFillContentsToWidth(true)
-	propertiesLabelsVBox:SetName("property_labels")
-	self.m_propertiesLabelsVBox = propertiesLabelsVBox
-
-	gui.create("WIResizer", propertiesHBox)
-
-	local propertiesElementsVBox = gui.create("WIVBox", propertiesHBox)
-	propertiesElementsVBox:SetName("base_property_controls")
-	propertiesElementsVBox:SetAutoFillContentsToWidth(true)
-	self.m_propertiesElementsVBox = propertiesElementsVBox
-
-	gui.create("WIResizer", dataVBox)
-
 	local animSetControls
 	local scrollContainer = gui.create("WIScrollContainer", dataVBox)
 	scrollContainer:AddCallback("SetSize", function(el)
@@ -463,7 +445,7 @@ function gui.PFMActorEditor:OnInitialize()
 
 	self.m_componentManager = pfm.ComponentManager()
 
-	self.m_leftRightWeightSlider = gui.create("WIPFMWeightSlider", self.m_animSetControls)
+	-- self.m_leftRightWeightSlider = gui.create("WIPFMWeightSlider", self.m_animSetControls)
 	self.m_specialPropertyIcons = {}
 
 	local pm = tool.get_filmmaker()
