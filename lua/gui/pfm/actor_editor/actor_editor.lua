@@ -987,72 +987,6 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 				end
 			end
 			ctrl = wrapper
-		elseif memberInfo.type == ents.MEMBER_TYPE_ENTITY then
-			local elText, wrapper = self.m_animSetControls:AddTextEntry(
-				baseMemberName,
-				memberInfo.name,
-				controlData.default or "",
-				function(el)
-					if self.m_skipUpdateCallback then
-						return
-					end
-					if controlData.set ~= nil then
-						local ref = ents.UniversalEntityReference(util.Uuid(el:GetText()))
-						controlData.set(udmComponent, ref, nil, nil, true)
-					end
-				end
-			)
-			if controlData.getValue ~= nil then
-				controlData.updateControlValue = function()
-					if elText:IsValid() == false then
-						return
-					end
-					local val = controlData.getValue()
-					if val ~= nil then
-						local uuid = val:GetUuid()
-						if uuid ~= nil then
-							if uuid:IsValid() then
-								elText:SetText(tostring(uuid))
-							else
-								elText:SetText("-")
-							end
-						end
-					end
-				end
-			end
-			ctrl = wrapper
-		elseif memberInfo.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY then
-			local elText, wrapper = self.m_animSetControls:AddTextEntry(
-				baseMemberName,
-				memberInfo.name,
-				controlData.default or "",
-				function(el)
-					if self.m_skipUpdateCallback then
-						return
-					end
-					if controlData.set ~= nil then
-						local ref = ents.UniversalMemberReference(el:GetText())
-						controlData.set(udmComponent, ref, nil, nil, true)
-					end
-				end
-			)
-			if controlData.getValue ~= nil then
-				controlData.updateControlValue = function()
-					if elText:IsValid() == false then
-						return
-					end
-					local val = controlData.getValue()
-					if val ~= nil then
-						local path = val:GetPath()
-						if path ~= nil then
-							elText:SetText(path)
-						else
-							elText:SetText("-")
-						end
-					end
-				end
-			end
-			ctrl = wrapper
 		elseif memberInfo.type == ents.MEMBER_TYPE_ELEMENT then
 			local bt = self.m_animSetControls:AddButton(
 				locale.get_text("edit") .. " " .. baseMemberName,
@@ -1083,256 +1017,45 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 				end
 			)
 			ctrl = bt
-		elseif memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR then
-			local inputData
-			local colField, wrapper = self.m_animSetControls:AddColorField(
-				baseMemberName,
-				memberInfo.name,
-				(controlData.default and Color(controlData.default)) or Color.White,
-				function(oldCol, newCol)
-					if self.m_skipUpdateCallback then
-						return
-					end
-					if controlData.set ~= nil then
-						controlData.set(udmComponent, newCol, nil, nil, nil, inputData)
-					end
-				end
-			)
-			colField:AddCallback("OnUserInputStarted", function()
-				local col = colField:GetColor()
-				inputData = {
-					initialValue = col,
-				}
-			end)
-			colField:AddCallback("OnUserInputEnded", function()
-				local col = colField:GetColor()
-				if controlData.set ~= nil then
-					controlData.set(udmComponent, col, nil, nil, true, inputData)
-				end
-				inputData = nil
-			end)
-			if controlData.getValue ~= nil then
-				controlData.updateControlValue = function()
-					if colField:IsValid() == false then
-						return
-					end
-					local val = get_translated_value(controlData)
-					if val ~= nil then
-						colField:SetColor(Color(val))
-					end
-				end
-			end
-			ctrl = wrapper
-		elseif memberInfo.type == udm.TYPE_STRING then
-			if memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE then
-				local meta = memberInfo.metaData or udm.create_element()
-				if meta ~= nil then
-					if meta:GetValue("assetType") == "model" then
-						ctrl = self:AddProperty(memberInfo.name, child, function(parent)
-							local el = gui.create("WIFileEntry", parent)
-							if controlData.getValue ~= nil then
-								controlData.updateControlValue = function()
-									if el:IsValid() == false then
-										return
-									end
-									local val = get_translated_value(controlData)
-									if val ~= nil then
-										el:SetValue(val)
-									end
-								end
-							end
-							el:SetBrowseHandler(function(resultHandler)
-								gui.open_model_dialog(function(dialogResult, mdlName)
-									if dialogResult ~= gui.DIALOG_RESULT_OK then
-										return
-									end
-									resultHandler(mdlName)
-								end)
-							end)
-							el:AddCallback("OnValueChanged", function(el, value)
-								if self.m_skipUpdateCallback then
-									return
-								end
-								if controlData.set ~= nil then
-									controlData.set(udmComponent, value, nil, nil, true)
-								end
-							end)
-							return el
-						end)
-					end
-				end
-				if util.is_valid(ctrl) == false then
-					ctrl = self:AddProperty(memberInfo.name, child, function(parent)
-						local el = gui.create("WIFileEntry", parent)
-						if controlData.getValue ~= nil then
-							controlData.updateControlValue = function()
-								if el:IsValid() == false then
-									return
-								end
-								local val = get_translated_value(controlData)
-								if val ~= nil then
-									el:SetValue(val)
-								end
-							end
-						end
-						el:SetBrowseHandler(function(resultHandler)
-							local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
-								if fileName == nil then
-									return
-								end
-								local basePath = meta:GetValue("basePath") or ""
-								resultHandler(basePath .. el:GetFilePath(true))
-							end)
-							local rootPath = meta:GetValue("rootPath")
-							if rootPath ~= nil then
-								pFileDialog:SetRootPath(rootPath)
-							end
-							local extensions = meta:Get("extensions"):ToTable()
-							if #extensions > 0 then
-								pFileDialog:SetExtensions(extensions)
-							end
-							pFileDialog:Update()
-						end)
-						el:AddCallback("OnValueChanged", function(el, value)
-							if self.m_skipUpdateCallback then
-								return
-							end
-							if controlData.set ~= nil then
-								controlData.set(udmComponent, value, nil, nil, true)
-							end
-						end)
-						return el
-					end)
-				end
-			else
-				local elText, wrapper = self.m_animSetControls:AddTextEntry(
-					baseMemberName,
-					memberInfo.name,
-					controlData.default or "",
-					function(el)
-						if self.m_skipUpdateCallback then
-							return
-						end
-						if controlData.set ~= nil then
-							controlData.set(udmComponent, el:GetText(), nil, nil, true)
-						end
-					end
-				)
-				if controlData.getValue ~= nil then
-					controlData.updateControlValue = function()
-						if elText:IsValid() == false then
-							return
-						end
-						local val = get_translated_value(controlData)
-						if val ~= nil then
-							elText:SetText(val)
-						end
-					end
-				end
-				ctrl = wrapper
-			end
-		elseif memberInfo.type == udm.TYPE_BOOLEAN then
-			local elToggle, wrapper = self.m_animSetControls:AddToggleControl(
-				baseMemberName,
-				memberInfo.name,
-				controlData.default or false,
-				function(oldChecked, checked)
-					if self.m_skipUpdateCallback then
-						return
-					end
-					if controlData.set ~= nil then
-						controlData.set(udmComponent, checked, nil, nil, true)
-					end
-				end
-			)
-			if controlData.getValue ~= nil then
-				controlData.updateControlValue = function()
-					if elToggle:IsValid() == false then
-						return
-					end
-					local val = get_translated_value(controlData)
-					if val ~= nil then
-						elToggle:SetChecked(val)
-					end
-				end
-			else
-				elToggle:SetChecked(false)
-			end
-			ctrl = wrapper
-		elseif udm.is_numeric_type(memberInfo.type) then
+		else
+			local propInfo = {}
 			if memberInfo:IsEnum() then
 				local enumValues = {}
-				local defaultValueIndex
 				for i, v in ipairs(memberInfo:GetEnumValues()) do
 					local name = memberInfo:ValueToEnumName(v)
 					if name ~= "Count" then
 						table.insert(enumValues, { tostring(v), name })
-						if v == memberInfo.default then
-							defaultValueIndex = i - 1
-						end
 					end
 				end
-				local el, wrapper = self.m_animSetControls:AddDropDownMenu(
-					baseMemberName,
-					memberInfo.name,
-					enumValues,
-					tostring(defaultValueIndex),
-					function(el)
-						if self.m_skipUpdateCallback then
-							return
-						end
-						if controlData.set ~= nil then
-							controlData.set(
-								udmComponent,
-								tonumber(el:GetOptionValue(el:GetSelectedOption())),
-								nil,
-								nil,
-								true
-							)
-						end
-					end
-				)
-				ctrl = wrapper
-				controlData.updateControlValue = function()
-					if ctrl:IsValid() == false then
-						return
-					end
-					local val = controlData.getValue()
-					if val ~= nil then
-						local idx = el:FindOptionIndex(tostring(val))
-						if idx ~= nil then
-							el:SelectOption(idx)
-						else
-							el:SetText(tostring(val))
-						end
-					end
+				propInfo.enumValues = enumValues
+			end
+			propInfo.defaultValue = controlData.default
+			propInfo.minValue = memberInfo.minValue
+			propInfo.maxValue = memberInfo.maxValue
+			propInfo.unit = controlData.unit
+			propInfo.specializationType = memberInfo.specializationType
+			local translateToInterface = function(val)
+				if controlData.translateToInterface ~= nil then
+					val = controlData.translateToInterface(val)
 				end
-			else
-				if memberInfo.minValue ~= nil then
-					controlData.min = memberInfo.minValue
+				return val
+			end
+			local translateFromInterface = function(val)
+				if controlData.translateFromInterface ~= nil then
+					val = controlData.translateFromInterface(val)
 				end
-				if memberInfo.maxValue ~= nil then
-					controlData.max = memberInfo.maxValue
-				end
-				if memberInfo.default ~= nil then
-					controlData.default = memberInfo.default
-				end
-
-				if memberInfo.type == udm.TYPE_BOOLEAN then
-					controlData.min = controlData.min and 1 or 0
-					controlData.max = controlData.max and 1 or 0
-					controlData.default = controlData.default and 1 or 0
-				end
-
+				return val
+			end
+			if udm.is_numeric_type(memberInfo.type) then
 				local channel = self:GetAnimationChannel(actorData.actor, controlData.path, false)
 				local hasExpression = (channel ~= nil and channel:GetExpression() ~= nil)
 				if hasExpression == false then
 					if memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_DISTANCE then
-						controlData.unit = locale.get_text("symbol_meters")
-						controlData.translateToInterface = function(val)
+						propInfo.unit = locale.get_text("symbol_meters")
+						translateToInterface = function(val)
 							return util.units_to_metres(val)
 						end
-						controlData.translateFromInterface = function(val)
+						translateFromInterface = function(val)
 							return util.metres_to_units(val)
 						end
 					elseif
@@ -1340,113 +1063,50 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 						== ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_LIGHT_INTENSITY
 					then
 						-- TODO
-						controlData.unit = locale.get_text("symbol_lumen") --(self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
+						propInfo.unit = locale.get_text("symbol_lumen") --(self:GetIntensityType() == ents.LightComponent.INTENSITY_TYPE_CANDELA) and locale.get_text("symbol_candela") or locale.get_text("symbol_lumen")
 					end
 				end
-				ctrl = self:AddSliderControl(udmComponent, controlData)
-				if controlData.unit then
-					ctrl:SetUnit(controlData.unit)
+			end
+			if memberInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE then
+				local meta = memberInfo.metaData or udm.create_element()
+				propInfo.basePath = meta:GetValue("basePath")
+				propInfo.rootPath = meta:GetValue("rootPath")
+				propInfo.extensions = meta:Get("extensions"):ToTable()
+				propInfo.assetType = meta:GetValue("assetType")
+			end
+			local wrapper =
+				self.m_animSetControls:AddPropertyControl(memberInfo.type, memberInfo.name, baseMemberName, propInfo)
+			if wrapper ~= nil then
+				wrapper:SetValueTranslationFunctions(translateToInterface, translateFromInterface)
+
+				ctrl = wrapper:GetWrapperElement()
+				local val = false
+				if controlData.getValue ~= nil then
+					val = controlData.getValue()
 				end
+				wrapper:SetValue(val)
+				wrapper:SetOnChangeValueHandler(function(val, isFinal, initialValue)
+					if self.m_skipUpdateCallback then
+						return
+					end
+					if controlData.set ~= nil then
+						local inputData
+						if initialValue ~= nil then
+							inputData = {
+								initialValue = initialValue,
+							}
+						end
+						controlData.set(udmComponent, val, nil, nil, isFinal, inputData)
+					end
+				end)
 
 				controlData.updateControlValue = function()
-					if ctrl:IsValid() == false then
-						return
-					end
-					local val = get_translated_value(controlData)
+					local val = controlData.getValue()
 					if val ~= nil then
-						ctrl:SetValue(val)
-					end
-				end
-
-				-- self:LogWarn("Attempted to add control for member with path '" .. controlData.path .. "' of actor '" .. tostring(actor) .. "', but member type " .. tostring(memberInfo.specializationType) .. " is unknown!")
-			end
-		elseif memberInfo.type == udm.TYPE_EULER_ANGLES then
-			local val = EulerAngles()
-			local el, wrapper = self.m_animSetControls:AddTextEntry(
-				baseMemberName,
-				memberInfo.name,
-				tostring(val),
-				function(el)
-					if self.m_skipUpdateCallback then
-						return
-					end
-					if controlData.set ~= nil then
-						controlData.set(udmComponent, EulerAngles(el:GetText()), nil, nil, true)
-					end
-				end
-			)
-			if controlData.getValue ~= nil then
-				controlData.updateControlValue = function()
-					if el:IsValid() == false then
-						return
-					end
-					local val = get_translated_value(controlData) or EulerAngles()
-					if val ~= nil then
-						el:SetText(tostring(val))
+						wrapper:SetValue(val)
 					end
 				end
 			end
-			ctrl = wrapper
-		elseif memberInfo.type == udm.TYPE_QUATERNION then
-			local val = EulerAngles()
-			local el, wrapper = self.m_animSetControls:AddTextEntry(
-				baseMemberName,
-				memberInfo.name,
-				tostring(val),
-				function(el)
-					if self.m_skipUpdateCallback then
-						return
-					end
-					if controlData.set ~= nil then
-						controlData.set(udmComponent, EulerAngles(el:GetText()):ToQuaternion(), nil, nil, true)
-					end
-				end
-			)
-			if controlData.getValue ~= nil then
-				controlData.updateControlValue = function()
-					if el:IsValid() == false then
-						return
-					end
-					local val = get_translated_value(controlData) or Quaternion()
-					if val ~= nil then
-						el:SetText(tostring(val:ToEulerAngles()))
-					end
-				end
-			end
-			ctrl = wrapper
-		elseif udm.is_vector_type(memberInfo.type) or udm.is_matrix_type(memberInfo.type) then
-			local type = udm.get_class_type(memberInfo.type)
-			local val = type()
-			if controlData.getValue ~= nil then
-				val = controlData.getValue() or val
-			end
-			local el, wrapper = self.m_animSetControls:AddTextEntry(
-				baseMemberName,
-				memberInfo.name,
-				tostring(val),
-				function(el)
-					if self.m_skipUpdateCallback then
-						return
-					end
-					if controlData.set ~= nil then
-						controlData.set(udmComponent, type(el:GetText()), nil, nil, true)
-					end
-				end
-			)
-			if controlData.getValue ~= nil then
-				controlData.updateControlValue = function()
-					if el:IsValid() == false then
-						return
-					end
-					local val = get_translated_value(controlData) or type()
-					if val ~= nil then
-						el:SetText(tostring(val))
-					end
-				end
-			end
-			ctrl = wrapper
-		else
-			return ctrl
 		end
 	end
 	if util.is_valid(ctrl) == false then
