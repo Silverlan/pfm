@@ -11,17 +11,17 @@ function Wrapper:__init(elControls, identifier)
 	pfm.util.ControlWrapper.__init(self, elControls, identifier)
 end
 function Wrapper:SetControlElementValue(val)
-	self.m_controlElement:SetColor(tostring(val))
+	self.m_controlElement:SetColor(Color(val))
 end
 function Wrapper:GetControlElementValue()
-	return Color(self.m_controlElement:GetText())
+	return self.m_controlElement:GetColor():ToVector()
 end
 function Wrapper:InitializeElement()
 	local initialValue
 	local colField, wrapper = self.m_elControls:AddColorField(
 		self.m_localizedText,
 		self.m_identifier,
-		self:ToInterfaceValue(self.m_defaultValue or Color.White),
+		(self.m_defaultValue ~= nil) and Color(self.m_defaultValue) or Color.White,
 		function(oldCol, newCol)
 			self:OnControlValueChanged(self:GetControlElementValue(), false)
 		end

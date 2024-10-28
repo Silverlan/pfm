@@ -83,6 +83,8 @@ function gui.PFMControlsMenu:AddPropertyControl(propType, identifier, localizedT
 		wrapper:SetBasePath(propInfo.basePath)
 		wrapper:SetRootPath(propInfo.rootPath)
 		wrapper:SetExtensions(propInfo.extensions)
+	elseif propInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR then
+		wrapper = pfm.util.ControlWrapper.Color(animSetControls, identifier)
 	elseif propType == udm.TYPE_STRING then
 		wrapper = pfm.util.ControlWrapper.String(animSetControls, identifier)
 	elseif propType == udm.TYPE_EULER_ANGLES then
@@ -111,9 +113,6 @@ function gui.PFMControlsMenu:AddPropertyControl(propType, identifier, localizedT
 		wrapper:SetUdmType(propType)
 	elseif udm.is_matrix_type(propType) then
 		wrapper = pfm.util.ControlWrapper.MatrixProperty(animSetControls, identifier)
-		wrapper:SetUdmType(propType)
-	elseif propInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR then
-		wrapper = pfm.util.ControlWrapper.ColorProperty(animSetControls, identifier)
 		wrapper:SetUdmType(propType)
 	end
 	if wrapper == nil then
