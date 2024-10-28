@@ -9,7 +9,7 @@
 include("../slider.lua")
 include("../treeview.lua")
 include("../weightslider.lua")
-include("../controls_menu.lua")
+include("../controls_menu/controls_menu.lua")
 include("../entry_edit_window.lua")
 include("/gui/wimodeldialog.lua")
 include("/pfm/raycast.lua")

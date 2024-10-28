@@ -11,7 +11,7 @@ include("/gui/raytracedviewport.lua")
 include("/gui/pfm/colorentry.lua")
 include("/gui/pfm/colorslider.lua")
 include("rmacomposerdialog.lua")
-include("../controls_menu.lua")
+include("../controls_menu/controls_menu.lua")
 
 locale.load("pfm_editors.txt")
 

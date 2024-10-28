@@ -7,7 +7,7 @@
 ]]
 
 include("/shaders/pfm/pfm_tonemapping.lua")
-include("controls_menu.lua")
+include("controls_menu/controls_menu.lua")
 
 util.register_class("gui.PFMPostProcessing", gui.Base)
 

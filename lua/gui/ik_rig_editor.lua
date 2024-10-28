@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("pfm/controls_menu.lua")
+include("pfm/controls_menu/controls_menu.lua")
 
 locale.load("pfm_ik_rig_editor.txt")
 

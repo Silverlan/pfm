@@ -12,6 +12,9 @@ include("/gui/fileentry.lua")
 include("/gui/editableentry.lua")
 
 util.register_class("gui.PFMControlsMenu", gui.VBox)
+
+include("control_wrappers.lua")
+
 function gui.PFMControlsMenu:__init()
 	gui.VBox.__init(self)
 end
@@ -105,13 +108,16 @@ local function apply_text(el, loc)
 	end
 	el:SetText(loc:GetText())
 end
-function gui.PFMControlsMenu:AddFileEntry(name, identifier, default, callback)
+function gui.PFMControlsMenu:AddFileEntry(name, identifier, default, browseHandler, callback)
 	local el = gui.create("WIFileEntry", self)
 	el:AddCallback("OnValueChanged", function(...)
 		self:OnValueChanged(identifier, el:GetValue())
+		if callback ~= nil then
+			callback(...)
+		end
 	end)
-	if callback ~= nil then
-		el:SetBrowseHandler(callback)
+	if browseHandler ~= nil then
+		el:SetBrowseHandler(browseHandler)
 	end
 	apply_tooltip(el, name)
 	local wrapper = el:Wrap("WIEditableEntry")

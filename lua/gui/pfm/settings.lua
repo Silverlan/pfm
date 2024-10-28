@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("controls_menu.lua")
+include("controls_menu/controls_menu.lua")
 
 local Element = util.register_class("gui.PFMBaseSettings", gui.Base)
 function Element:OnRemove()

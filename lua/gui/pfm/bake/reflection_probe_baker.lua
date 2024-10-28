@@ -7,7 +7,7 @@
 ]]
 
 include("base_baker.lua")
-include("/gui/pfm/controls_menu.lua")
+include("/gui/pfm/controls_menu/controls_menu.lua")
 include("/gui/cubemap_view.lua")
 
 pfm = pfm or {}
