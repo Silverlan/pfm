@@ -12,6 +12,7 @@ include("../weightslider.lua")
 include("../controls_menu/controls_menu.lua")
 include("../entry_edit_window.lua")
 include("/gui/wimodeldialog.lua")
+include("/gui/collapsiblegroup.lua")
 include("/pfm/raycast.lua")
 include("/pfm/component_manager.lua")
 include("/pfm/component_actions.lua")
@@ -362,42 +363,24 @@ function gui.PFMActorEditor:OnInitialize()
 	treeScrollContainerBg:SetColor(Color(38, 38, 38))
 	local treeScrollContainer = gui.create("WIScrollContainer", treeScrollContainerBg, 0, 0, 64, 128, 0, 0, 1, 1)
 	self.m_treeScrollContainer = treeScrollContainer
-	--treeScrollContainer:SetFixedSize(true)
-	--[[local bg = gui.create("WIRect",treeScrollContainer,0,0,treeScrollContainer:GetWidth(),treeScrollContainer:GetHeight(),0,0,1,1)
-	bg:SetColor(Color(38,38,38))
-	treeScrollContainer:SetBackgroundElement(bg)]]
 
 	local resizer = gui.create("WIResizer", self.m_contents)
 	self.m_centralDivider = resizer
-	local dataVBox = gui.create("WIVBox", self.m_contents)
-	dataVBox:SetFixedSize(true)
-	dataVBox:SetAutoFillContentsToWidth(true)
-	dataVBox:SetAutoFillContentsToHeight(true)
 
-	local animSetControls
-	local scrollContainer = gui.create("WIScrollContainer", dataVBox)
+	local dataVBox
+	local scrollContainer =
+		gui.create("WIScrollContainer", self.m_contents, 0, 0, self.m_contents:GetWidth(), self.m_contents:GetHeight())
 	scrollContainer:AddCallback("SetSize", function(el)
-		if self:IsValid() and util.is_valid(animSetControls) then
-			animSetControls:SetWidth(el:GetWidth())
+		if self:IsValid() and util.is_valid(dataVBox) then
+			dataVBox:SetWidth(el:GetWidth())
 		end
 	end)
 
-	animSetControls =
-		gui.create("WIPFMControlsMenu", scrollContainer, 0, 0, scrollContainer:GetWidth(), scrollContainer:GetHeight())
-	animSetControls:SetName("property_controls")
-	animSetControls:SetAutoFillContentsToWidth(true)
-	animSetControls:SetAutoFillContentsToHeight(false)
-	animSetControls:SetFixedHeight(false)
-	animSetControls:AddCallback("OnControlAdded", function(el, name, ctrl, wrapper)
-		if wrapper ~= nil then
-			wrapper:AddCallback("OnValueChanged", function()
-				local filmmaker = tool.get_filmmaker()
-				filmmaker:TagRenderSceneAsDirty()
-			end)
-		end
-	end)
-	self.m_animSetControls = animSetControls
+	dataVBox = gui.create("WIVBox", scrollContainer, 0, 0, scrollContainer:GetWidth(), scrollContainer:GetHeight())
+	dataVBox:SetFixedWidth(true)
 
+	self.m_propertyContainer = dataVBox
+	self.m_componentPropertyGroups = {}
 	self.m_sliderControls = {}
 
 	self.m_tree = gui.create(
@@ -455,6 +438,80 @@ function gui.PFMActorEditor:OnInitialize()
 	self:InitAnimManagerListeners()
 
 	self:SetMouseInputEnabled(true)
+end
+function gui.PFMActorEditor:ClearEmptyComponentPropertyGroups()
+	local tNew = {}
+	for uuid, actorGroupData in pairs(self.m_componentPropertyGroups) do
+		local tNewGroups = {}
+		local n = 0
+		for ctype, group in pairs(actorGroupData.componentGroups) do
+			if not group.collapsibleGroup:IsValid() or group.controlElement:GetControlCount() == 0 then
+				util.remove(group.collapsibleGroup)
+			else
+				tNewGroups[ctype] = group
+				n = n + 1
+			end
+		end
+		if n == 0 then
+			util.remove(actorGroupData.collapsibleGroup)
+		else
+			actorGroupData.componentGroups = tNewGroups
+			tNew[uuid] = actorGroupData
+		end
+	end
+	self.m_componentPropertyGroups = tNew
+end
+function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
+	local uuid = tostring(actor:GetUniqueId())
+	local ctype = udmComponent:GetType()
+	if
+		self.m_componentPropertyGroups[uuid] ~= nil
+		and self.m_componentPropertyGroups[uuid].componentGroups[ctype] ~= nil
+	then
+		return self.m_componentPropertyGroups[uuid].componentGroups[ctype]
+	end
+	local actorGroup
+	if self.m_componentPropertyGroups[uuid] ~= nil then
+		actorGroup = self.m_componentPropertyGroups[uuid].collapsibleGroup
+	end
+	if util.is_valid(actorGroup) == false then
+		local collapsible = gui.create("WICollapsibleGroup", self.m_propertyContainer)
+		collapsible:SetAutoAlignToParent(true, false)
+		collapsible:SetGroupName(actor:GetName())
+		collapsible:Expand()
+		actorGroup = collapsible
+		self.m_componentPropertyGroups[uuid] = { collapsibleGroup = collapsible, componentGroups = {} }
+	end
+	local collapsible = actorGroup:AddGroup(locale.get_text("c_" .. ctype))
+	collapsible:Expand()
+	local collapsibleContents = collapsible:GetContents()
+
+	local animSetControls = gui.create(
+		"WIPFMControlsMenu",
+		collapsibleContents,
+		0,
+		0,
+		collapsibleContents:GetWidth(),
+		collapsibleContents:GetHeight()
+	)
+	animSetControls:SetName("property_controls")
+	animSetControls:SetAutoFillContentsToWidth(true)
+	animSetControls:SetAutoFillContentsToHeight(false)
+	animSetControls:SetAutoAlignToParent(true, false)
+	animSetControls:SetFixedHeight(false)
+	animSetControls:AddCallback("OnControlAdded", function(el, name, ctrl, wrapper)
+		if wrapper ~= nil then
+			wrapper:AddCallback("OnValueChanged", function()
+				local filmmaker = tool.get_filmmaker()
+				filmmaker:TagRenderSceneAsDirty()
+			end)
+		end
+	end)
+	self.m_componentPropertyGroups[uuid].componentGroups[ctype] = {
+		collapsibleGroup = collapsible,
+		controlElement = animSetControls,
+	}
+	return self.m_componentPropertyGroups[uuid].componentGroups[ctype]
 end
 function gui.PFMActorEditor:ClearAnimManagerListeners()
 	if self.m_animManagerListeners == nil then
@@ -551,6 +608,9 @@ function gui.PFMActorEditor:OnThink()
 	if self.m_controlOverlayUpdateRequired then
 		self.m_controlOverlayUpdateRequired = nil
 		self:UpdateAnimatedPropertyOverlays()
+	end
+	if self.m_clearEmptyComponentPropertyGroups then
+		self:ClearEmptyComponentPropertyGroups()
 	end
 	if self.m_dirtyActorComponents ~= nil then
 		for uniqueId, components in pairs(self.m_dirtyActorComponents) do
@@ -971,10 +1031,10 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 	end
 
 	local ctrl
+	local animSetControls = self:AddComponentPropertyGroup(actor, udmComponent).controlElement
 	if controlData.path ~= nil then
 		if memberInfo:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_READ_ONLY_BIT) then
-			local elText, wrapper =
-				self.m_animSetControls:AddText(baseMemberName, memberInfo.name, controlData.default or "")
+			local elText, wrapper = animSetControls:AddText(baseMemberName, memberInfo.name, controlData.default or "")
 			if controlData.getValue ~= nil then
 				controlData.updateControlValue = function()
 					if elText:IsValid() == false then
@@ -988,7 +1048,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 			end
 			ctrl = wrapper
 		elseif memberInfo.type == ents.MEMBER_TYPE_ELEMENT then
-			local bt = self.m_animSetControls:AddButton(
+			local bt = animSetControls:AddButton(
 				locale.get_text("edit") .. " " .. baseMemberName,
 				memberInfo.name,
 				function()
@@ -1075,7 +1135,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 				propInfo.assetType = meta:GetValue("assetType")
 			end
 			local wrapper =
-				self.m_animSetControls:AddPropertyControl(memberInfo.type, memberInfo.name, baseMemberName, propInfo)
+				animSetControls:AddPropertyControl(memberInfo.type, memberInfo.name, baseMemberName, propInfo)
 			if wrapper ~= nil then
 				wrapper:SetValueTranslationFunctions(translateToInterface, translateFromInterface)
 
@@ -1111,7 +1171,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 	end
 	if util.is_valid(ctrl) == false then
 		if controlData.addControl then
-			ctrl = controlData.addControl(self.m_animSetControls, function(value)
+			ctrl = controlData.addControl(animSetControls, function(value)
 				self:ApplyComponentChannelValue(self, udmComponent, controlData, nil, value)
 			end)
 		else
@@ -1131,9 +1191,14 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 		ctrl:SetName(identifier)
 	end
 	self:SetPropertyAnimationOverlaysDirty()
+	self:SetComponentPropertyGroupsDirty()
 	self:UpdateControlValue(controlData)
 	self:CallCallbacks("OnControlSelected", actor, udmComponent, controlData, ctrl)
 	return ctrl
+end
+function gui.PFMActorEditor:SetComponentPropertyGroupsDirty()
+	self.m_clearEmptyComponentPropertyGroups = true
+	self:EnableThinking()
 end
 function gui.PFMActorEditor:AddIkController(actor, boneName, chainLength)
 	self:LogDebug(

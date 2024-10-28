@@ -30,6 +30,10 @@ function gui.PFMTreeView:OnInitialize()
 	self:SetAutoSizeToContents(false, true)
 	self:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 	self:SetAutoSelectChildren(true)
+	self:ScheduleUpdate()
+end
+function gui.PFMTreeView:OnUpdate()
+	self:SetContentsWidthDirty()
 end
 function gui.PFMTreeView:SetContentsWidthDirty()
 	if self.m_contentsWidth == nil then
@@ -47,6 +51,7 @@ function gui.PFMTreeView:CalcContentsWidth()
 		return self.m_contentsWidth
 	end
 	self.m_contentsWidth = self.m_rootElement:CalcContentsWidth()
+	self.m_contentsWidth = self.m_contentsWidth + 10 -- Margin
 	return self.m_contentsWidth
 end
 function gui.PFMTreeView:GetItemHeight()

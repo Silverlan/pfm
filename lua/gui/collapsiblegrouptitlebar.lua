@@ -18,10 +18,12 @@ function gui.CollapsibleGroupTitleBar:OnInitialize()
 
 	self:SetSize(256, 20)
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_contents = gui.create("WIHBox", self, 0, 0, self:GetWidth(), 20, 0, 0, 1, 0)
+	self.m_contents = gui.create("WIHBox", self, 0, 0, self:GetWidth(), 20)
+	self.m_contents:SetAutoAlignToParent(true, false)
+	self.m_contents:SetFixedWidth(true)
 	self.m_bg:SetColor(Color(40, 40, 45))
 
-	gui.create("WIBase", self.m_contents, 0, 0, 7, 1) -- Gap
+	self.m_leftPadding = gui.create("WIBase", self.m_contents, 0, 0, 7, 1) -- Gap
 	self.m_collapsed = false
 	self.m_button = gui.PFMButton.create(self.m_contents, "gui/pfm/arrow_right", "gui/pfm/arrow_right", function()
 		self:Toggle()
@@ -29,10 +31,17 @@ function gui.CollapsibleGroupTitleBar:OnInitialize()
 	self.m_button:SetY(8)
 	self.m_button:SetMouseInputEnabled(true)
 
-	gui.create("WIBase", self.m_contents, 0, 0, 24, 1) -- Gap
-	self.m_name = gui.create("WIText", self.m_contents, 0, 6)
+	gui.create("WIBase", self.m_contents, 0, 0, 8, 1) -- Gap
+	self.m_name = gui.create("WIText", self.m_contents, 0, 3)
 	self.m_name:SetFont("pfm_medium")
 	self.m_name:SetColor(Color(152, 152, 152))
+end
+function gui.CollapsibleGroupTitleBar:GetLeftPadding()
+	return self.m_leftPaddingSz or 0
+end
+function gui.CollapsibleGroupTitleBar:SetLeftPadding(padding)
+	self.m_leftPaddingSz = padding
+	self.m_leftPadding:SetWidth(padding + 7)
 end
 function gui.CollapsibleGroupTitleBar:Collapse()
 	self.m_collapsed = true

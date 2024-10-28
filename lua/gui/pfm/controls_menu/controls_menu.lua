@@ -27,6 +27,15 @@ function gui.PFMControlsMenu:OnInitialize()
 	self.m_subMenuNameIndices = {}
 	self:SetAutoFillContents(true)
 end
+function gui.PFMControlsMenu:GetControlCount()
+	local n = 0
+	for name, data in pairs(self.m_controls) do
+		if data.element:IsValid() then
+			n = n + 1
+		end
+	end
+	return n
+end
 function gui.PFMControlsMenu:AddControl(name, ctrl, wrapper, default)
 	self.m_controls[name] = {
 		element = ctrl,

@@ -22,19 +22,10 @@ function gui.CollapsibleGroup:OnInitialize()
 	self:SetSize(256, 20)
 	self.m_base = gui.create("WIVBox", self, 0, 0, self:GetWidth(), self:GetHeight())
 	self.m_base:SetName("global_container")
+	self.m_base:SetFixedWidth(true)
 
-	self.m_titleBar = gui.create(
-		"WICollapsibleGroupTitleBar",
-		self.m_base,
-		0,
-		0,
-		self.m_base:GetWidth(),
-		self:GetHeight(),
-		0,
-		0,
-		1,
-		0
-	)
+	self.m_titleBar =
+		gui.create("WICollapsibleGroupTitleBar", self.m_base, 0, 0, self.m_base:GetWidth(), self:GetHeight())
 	self.m_titleBar:SetName("titlebar")
 	self.m_titleBar:AddCallback("OnCollapse", function()
 		self:OnCollapse()
@@ -45,6 +36,7 @@ function gui.CollapsibleGroup:OnInitialize()
 
 	self.m_contents = gui.create("WIVBox", self.m_base, 0, 0, self.m_base:GetWidth(), self:GetHeight())
 	self.m_contents:SetName("inner_contents")
+	self.m_contents:SetAutoAlignToParent(true, false)
 	--[[self.m_bgBottom = gui.create("WIRect",self.m_base,0,self.m_base:GetBottom() -5,self.m_base:GetWidth(),5)--,0,1,1,1)
 	local bgColor = Color(40,40,45)
 	self.m_bgBottom:SetColor(bgColor)]]
@@ -66,6 +58,12 @@ function gui.CollapsibleGroup:OnSizeChanged(w, h)
 	if util.is_valid(self.m_base) then
 		self.m_base:SetWidth(w)
 	end
+	if util.is_valid(self.m_contents) then
+		self.m_contents:SetWidth(w)
+	end
+	if util.is_valid(self.m_titleBar) then
+		self.m_titleBar:SetWidth(w)
+	end
 	--if(util.is_valid(self.m_contents)) then self.m_contents:SetWidth(w) end
 end
 function gui.CollapsibleGroup:AddGroup(groupName)
@@ -75,7 +73,9 @@ function gui.CollapsibleGroup:AddGroup(groupName)
 	local p = gui.create("WICollapsibleGroup", self.m_contents)
 	p:SetName("group_" .. groupName)
 	p:SetWidth(self.m_contents:GetWidth())
+	p:SetAutoAlignToParent(true, false)
 	p:SetGroupName(groupName)
+	p.m_titleBar:SetLeftPadding(self.m_titleBar:GetLeftPadding() + 8)
 	return p
 end
 function gui.CollapsibleGroup:Collapse()
@@ -107,6 +107,9 @@ function gui.CollapsibleGroup:AddElement(el)
 	if util.is_valid(self.m_contents) then
 		el:SetParent(self.m_contents)
 	end
+end
+function gui.CollapsibleGroup:GetContents()
+	return self.m_contents
 end
 function gui.CollapsibleGroup:SetGroupName(name)
 	if util.is_valid(self.m_titleBar) then
