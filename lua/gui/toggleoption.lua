@@ -16,7 +16,9 @@ function gui.ToggleOption:OnInitialize()
 
 	self:SetSize(128, 18)
 
-	self.m_contents = gui.create("WIHBox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_contents = gui.create("WIHBox", self, 0, 0, self:GetWidth(), self:GetHeight())
+	self.m_contents:SetFixedWidth(true)
+	self.m_contents:SetAutoAlignToParent(true, false)
 	self.m_checkbox = gui.create("WICheckbox", self.m_contents)
 	gui.create("WIBase", self.m_contents, 0, 0, 5, 1) -- Gap
 	self.m_label = gui.create("WIText", self.m_contents)
