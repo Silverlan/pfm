@@ -591,60 +591,83 @@ function util.export_source_engine_models(models, gameIdentifier, openInHlmv, op
 		log.msg("Found SDK tools in Source Engine game '" .. gameIdentifier .. "'!", pfm.LOG_CATEGORY_SE_MODEL_EXPORT)
 	end
 
-	local mdlName = models[1]
-	local mdl = game.load_model(mdlName)
-	if mdl == nil then
-		return
-	end -- TODO
-
-	local builder = util.SourceEngineModelBuilder(mdl)
-	local data = builder:Generate()
-
-	local result, err = source_engine.compile_model(data.qcPath, gameIdentifier)
-	if result == false then
-		return result, err
+	local numFailed = 0
+	local numModels = #models
+	if numModels > 1 then
+		openInHlmv = false
 	end
-
+	local builderData = {}
 	local zipFiles = {}
-	local materialFiles = {}
-	for _, mat in ipairs(data.materials) do
-		local filePaths = util.export_source_engine_material(mat, data.outputDir .. "materials/")
-		for _, filePath in ipairs(filePaths) do
-			zipFiles["materials/" .. filePath] = data.outputDir .. "materials/" .. filePath
-			materialFiles[data.outputDir .. "materials/" .. filePath] = "materials/" .. filePath
+	for _, mdlName in ipairs(models) do
+		local mdl = game.load_model(mdlName)
+		if mdl == nil and numModels == 1 then
+			return false, "Failed to load model '" .. mdlName .. "'..."
 		end
+		if mdl ~= nil then
+			local builder = util.SourceEngineModelBuilder(mdl)
+			local data = builder:Generate()
 
-		--[[if(data.tmpMaterials[mat:GetName()]) then
+			local result, err = source_engine.compile_model(data.qcPath, gameIdentifier)
+			if result == false then
+				if numModels == 1 then
+					return result, err
+				end
+				numFailed = numFailed + 1
+			else
+				local materialFiles = {}
+				for _, mat in ipairs(data.materials) do
+					local filePaths = util.export_source_engine_material(mat, data.outputDir .. "materials/")
+					for _, filePath in ipairs(filePaths) do
+						zipFiles["materials/" .. filePath] = data.outputDir .. "materials/" .. filePath
+						materialFiles[data.outputDir .. "materials/" .. filePath] = "materials/" .. filePath
+					end
+
+					--[[if(data.tmpMaterials[mat:GetName()]) then
 			-- The textures we use for fake pbr generation are fairly large, so we want to clear them from the cache asap...
 			log.msg("Clearing temporary material '" .. mat:GetName() .. "' from cache...",pfm.LOG_CATEGORY_SE_MODEL_EXPORT)
 			mat:Reset()
 		end]]
+				end
+
+				result, err = source_engine.extract_asset_files(materialFiles, gameIdentifier)
+				if result == false then
+					if numModels == 1 then
+						return result, err
+					end
+					numFailed = numFailed + 1
+				end
+				local filesFailed = err
+				if #filesFailed > 0 then
+					console.print_warning("Failed to extract the following asset files:")
+					console.print_table(filesFailed)
+					print("")
+				end
+
+				if openInHlmv ~= false then
+					source_engine.open_model_in_hlmv(data.modelPath, gameIdentifier)
+				end
+				table.insert(builderData, data)
+			end
+		end
 	end
 
-	result, err = source_engine.extract_asset_files(materialFiles, gameIdentifier)
-	if result == false then
-		return result, err
-	end
-	local filesFailed = err
-	if #filesFailed > 0 then
-		console.print_warning("Failed to extract the following asset files:")
-		console.print_table(filesFailed)
-		print("")
-	end
-
-	if openInHlmv ~= false then
-		source_engine.open_model_in_hlmv(data.modelPath, gameIdentifier)
+	if #builderData == 0 then
+		return false, "Failed to generate output models!"
 	end
 
 	local extensions = { "dx80.vtx", "dx90.vtx", "mdl", "sw.vtx", "vvd" }
-	local zipFileName = data.outputDir .. file.remove_file_extension(file.get_file_name(data.modelPath)) .. ".zip"
-	for _, ext in ipairs(extensions) do
-		local fname = "models/" .. file.remove_file_extension(data.modelPath) .. "." .. ext
-		local f = file.open_external_asset_file(fname, gameIdentifier)
-		if f ~= nil then
-			zipFiles[fname] = {
-				["contents"] = f:Read(f:Size()),
-			}
+	local zipFileName = builderData[1].outputDir
+		.. file.remove_file_extension(file.get_file_name(builderData[1].modelPath))
+		.. ".zip"
+	for _, data in ipairs(builderData) do
+		for _, ext in ipairs(extensions) do
+			local fname = "models/" .. file.remove_file_extension(data.modelPath) .. "." .. ext
+			local f = file.open_external_asset_file(fname, gameIdentifier)
+			if f ~= nil then
+				zipFiles[fname] = {
+					["contents"] = f:Read(f:Size()),
+				}
+			end
 		end
 	end
 	log.msg("Packing zip-archive...", pfm.LOG_CATEGORY_SE_MODEL_EXPORT)
