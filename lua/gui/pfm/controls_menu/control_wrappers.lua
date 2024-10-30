@@ -70,11 +70,17 @@ include("control_wrappers")
 -----------
 
 function gui.PFMControlsMenu:AddPropertyControl(propType, identifier, localizedText, propInfo)
+	if propType == udm.TYPE_HALF then
+		return
+	end -- Not yet supported
 	local animSetControls = self
 	local wrapper
 	if propType == udm.TYPE_BOOLEAN then
 		wrapper = pfm.util.ControlWrapper.Boolean(animSetControls, identifier)
-	elseif propInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE then
+	elseif
+		propInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_FILE
+		or propInfo.specializationType == "file"
+	then
 		if propInfo.assetType == "model" then
 			wrapper = pfm.util.ControlWrapper.ModelFile(animSetControls, identifier)
 		else
@@ -83,7 +89,10 @@ function gui.PFMControlsMenu:AddPropertyControl(propType, identifier, localizedT
 		wrapper:SetBasePath(propInfo.basePath)
 		wrapper:SetRootPath(propInfo.rootPath)
 		wrapper:SetExtensions(propInfo.extensions)
-	elseif propInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR then
+	elseif
+		propInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR
+		or propInfo.specializationType == "color"
+	then
 		wrapper = pfm.util.ControlWrapper.Color(animSetControls, identifier)
 	elseif propType == udm.TYPE_STRING then
 		wrapper = pfm.util.ControlWrapper.String(animSetControls, identifier)

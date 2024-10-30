@@ -641,6 +641,222 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	btOpenInExplorer:SetAnchor(0, 1, 1, 1)
 end
 
+function gui.PFMMaterialEditor:GetShaderMaterial()
+	local mat = self.m_material
+	if util.is_valid(mat) == false then
+		return
+	end
+	local matShader = mat:GetPrimaryShader()
+	if matShader == nil then
+		return
+	end
+	return matShader:GetShaderMaterial()
+end
+
+function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
+	self.m_matTexElements = {}
+	self.m_matPropElements = {}
+
+	local mapVbox = gui.create("WIVBox", self.m_controlBox)
+	mapVbox:SetAutoFillContentsToWidth(true)
+
+	-- Shader
+	--[[ctrlVbox:AddDropDownMenu("shader","shader",{
+		["pbr"] = "pbr",
+		["eye"] = "eye",
+		["nodraw"] = "nodraw"
+	},0,function(el,option)
+		-- TODO
+	end)]]
+
+	local shaderMat = self:GetShaderMaterial()
+	if shaderMat == nil then
+		return
+	end
+
+	local textures = shaderMat:GetTextures()
+	local fractionPerMap = 1.0 / #textures
+	local fraction = fractionPerMap
+	for _, texInfo in ipairs(textures) do
+		local localizedText = texInfo.name
+		local result, str = locale.get_text("mat_prop_" .. texInfo.name, true)
+		if result then
+			localizedText = str
+		end
+		local te, ts = self:AddTextureSlot(mapVbox, localizedText, texInfo.name, false, true)
+		if texInfo.specializationType ~= nil then
+			self.m_matTexElements[texInfo.specializationType] = {
+				textEntry = te,
+				textureSlot = ts,
+			}
+		end
+		ts:SetAlphaMode(game.Material.ALPHA_MODE_OPAQUE)
+		gui.create("WIResizer", mapVbox):SetFraction(fraction)
+		fraction = fraction + fractionPerMap
+
+		if texInfo.specializationType == "rma" then
+			ts:AddCallback("PopulateContextMenu", function(texSlotRMA, pContext)
+				local matIdx
+				if util.is_valid(self.m_model) then
+					for i, mat in ipairs(self.m_model:GetMaterials()) do
+						if mat:GetName() == self.m_material:GetName() then
+							matIdx = i - 1
+							break
+						end
+					end
+				end
+				if matIdx ~= nil then
+					pContext:AddItem(locale.get_text("pfm_mated_compose_rma"), function()
+						local dialog, frame, fileDialog = gui.create_dialog(function()
+							local el = gui.create("WIRMAComposerDialog")
+							if matIdx ~= nil then
+								el:SetModel(self.m_model, matIdx)
+							end
+							local rmaTex = texSlotRMA:GetTexture()
+							if rmaTex ~= nil then
+								el:SetRMAMap(rmaTex)
+							end
+							el:AddCallback("OnRMAComposed", function(el, rmaMap)
+								if util.is_valid(self.m_model) == false then
+									return
+								end
+								local matPath = self.m_model:GetMaterialPaths()[1]
+								if matPath == nil then
+									return
+								end
+								local mdlName = file.remove_file_extension(file.get_file_name(self.m_model:GetName()))
+								matPath = util.Path(matPath) + (mdlName .. "_rma")
+								asset.lock_asset_watchers()
+								local texInfo = util.TextureInfo()
+								texInfo.containerFormat = util.TextureInfo.CONTAINER_FORMAT_DDS
+								local result = util.save_image(rmaMap, "materials/" .. matPath:GetString(), texInfo)
+								-- TODO: Doesn't work properly?
+								-- local result,errMsg = asset.import_texture(rmaMap,asset.TextureImportInfo(),matPath:GetString())
+								asset.unlock_asset_watchers()
+								if result == false then
+									console.print_warning("Unable to save RMA texture: ", errMsg)
+									return
+								end
+								-- Force texture reload
+								asset.reload(matPath:GetString(), asset.TYPE_TEXTURE)
+								texSlotRMA:SetTexture(matPath:GetString())
+
+								if util.is_valid(self.m_material) == false then
+									return
+								end
+								self.m_material:SetTexture("rma_map", matPath:GetString())
+								self.m_material:UpdateTextures()
+								self:ReloadMaterialDescriptor()
+								self.m_viewport:Render()
+
+								teRMAMap:SetText(matPath:GetString())
+							end)
+							return el
+						end)
+						dialog:SetParent(tool.get_filmmaker())
+					end)
+				end
+			end)
+		elseif texInfo.specializationType == "albedo" then
+			self.m_teAlbedoMap = te
+			self.m_tsAlbedoMap = ts
+		end
+	end
+
+	mapVbox:Update()
+	mapVbox:SetFixedHeight(true)
+
+	local ctrlVbox = gui.create("WIPFMControlsMenu", self.m_controlBox)
+	ctrlVbox:SetAutoFillContentsToHeight(true)
+	ctrlVbox:SetFixedHeight(false)
+	self.m_ctrlVBox = ctrlVbox
+
+	for _, propInfo in ipairs(shaderMat:GetProperties()) do
+		if bit.band(propInfo.propertyFlags, shader.ShaderMaterial.Property.FLAG_HIDE_IN_EDITOR_BIT) == 0 then
+			local localizedText = propInfo.name
+			local result, str = locale.get_text("mat_prop_" .. propInfo.name, true)
+			if result then
+				localizedText = str
+			end
+			local propCtrlInfo = {
+				specializationType = propInfo.specializationType,
+				minValue = propInfo.minValue,
+				maxValue = propInfo.maxValue,
+			}
+			local opts = propInfo:GetOptions()
+			if opts ~= nil then
+				local evals = {}
+				for name, val in pairs(opts) do
+					table.insert(evals, { tostring(val), name })
+				end
+				propCtrlInfo.enumValues = evals
+			end
+			local wrapper = ctrlVbox:AddPropertyControl(propInfo.type, propInfo.name, localizedText, propCtrlInfo)
+			if wrapper ~= nil then
+				wrapper:SetOnChangeValueHandler(function(val, isFinal, initialValue)
+					self:SetMaterialParameter(propInfo.type, propInfo.name, val)
+
+					if
+						propInfo.name == "alpha_mode"
+						or propInfo.name == "alpha_cutoff"
+						or propInfo.name == "alpha_factor"
+					then
+						self:UpdateAlphaMode()
+					end
+				end)
+			end
+
+			self.m_matPropElements[propInfo.name] = {
+				wrapper = wrapper,
+			}
+		end
+	end
+
+	-- Save
+	local btSave = gui.create("WIPFMButton", self.m_bg)
+	local pBg = gui.create("WIRect", btSave, 0, 0, btSave:GetWidth(), btSave:GetHeight(), 0, 0, 1, 1)
+	pBg:SetVisible(false)
+	self.m_saveBg = pBg
+	btSave:SetText(locale.get_text("save"))
+	btSave:SetHeight(32)
+	btSave:AddCallback("OnPressed", function(btRaytracying)
+		local success = false
+		if util.is_valid(self.m_material) and self.m_material:IsError() == false then
+			success = self.m_material:Save()
+		end
+		if success then
+			self:LogInfo("Successfully saved material '" .. self.m_material:GetName() .. "'!")
+			self:UpdateSaveButton(true)
+		else
+			self:LogErr("Failed to save material '" .. self.m_material:GetName() .. "'!")
+		end
+	end)
+	btSave:SetWidth(self.m_bg:GetWidth())
+	btSave:SetY(self.m_bg:GetBottom() - btSave:GetHeight() - 32)
+	btSave:SetAnchor(0, 1, 1, 1)
+	self.m_btSave = btSave
+
+	local btOpenInExplorer = gui.create("WIPFMButton", self.m_bg)
+	btOpenInExplorer:SetText(locale.get_text("pfm_open_in_explorer"))
+	btOpenInExplorer:SetHeight(32)
+	btOpenInExplorer:AddCallback("OnPressed", function(btRaytracying)
+		if util.is_valid(self.m_material) == false then
+			return
+		end
+		local filePath = asset.find_file(self.m_material:GetName(), asset.TYPE_MATERIAL)
+		if filePath == nil then
+			return
+		end
+		filePath = asset.get_asset_root_directory(asset.TYPE_MATERIAL) .. "/" .. filePath
+		util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
+	end)
+	btOpenInExplorer:SetWidth(self.m_bg:GetWidth())
+	btOpenInExplorer:SetY(self.m_bg:GetBottom() - btOpenInExplorer:GetHeight())
+	btOpenInExplorer:SetAnchor(0, 1, 1, 1)
+
+	self:UpdateAlphaMode()
+end
+
 function gui.PFMMaterialEditor:UpdateSaveButton(saved)
 	self.m_saveBg:SetVisible(true)
 	if saved then
@@ -651,7 +867,26 @@ function gui.PFMMaterialEditor:UpdateSaveButton(saved)
 end
 
 function gui.PFMMaterialEditor:UpdateAlphaMode()
-	self.m_tsAlbedoMap:SetAlphaMode(tonumber(self.m_ctrlAlphaMode:GetValue()) or game.Material.ALPHA_MODE_OPAQUE)
-	self.m_tsAlbedoMap:SetAlphaCutoff(tonumber(self.m_ctrlAlphaCutoff:GetValue()) or 0.5)
-	self.m_tsAlbedoMap:SetAlphaFactor(tonumber(self.m_ctrlAlphaFactor:GetValue()) or 1.0)
+	local te, ts
+	local albedo = self.m_matTexElements["albedo"]
+	if albedo ~= nil then
+		te = albedo.textEntry
+		ts = albedo.textureSlot
+	end
+
+	local ctrlAlphaMode = self.m_matPropElements["alpha_mode"]
+	local ctrlAlphaCutoff = self.m_matPropElements["alpha_cutoff"]
+	local ctrlAlphaFactor = self.m_matPropElements["alpha_factor"]
+
+	if util.is_valid(ts) then
+		if ctrlAlphaMode ~= nil then
+			ts:SetAlphaMode(tonumber(ctrlAlphaMode.wrapper:GetValue()) or game.Material.ALPHA_MODE_OPAQUE)
+		end
+		if ctrlAlphaCutoff ~= nil then
+			ts:SetAlphaCutoff(tonumber(ctrlAlphaCutoff.wrapper:GetValue()) or 0.5)
+		end
+		if ctrlAlphaFactor ~= nil then
+			ts:SetAlphaFactor(tonumber(ctrlAlphaFactor.wrapper:GetValue()) or 1.0)
+		end
+	end
 end

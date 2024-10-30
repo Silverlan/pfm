@@ -23,9 +23,6 @@ include("shaders")
 gui.PFMMaterialEditor.RENDERER_REALTIME = 0
 gui.PFMMaterialEditor.RENDERER_RAYTRACING = 1
 
-function gui.PFMMaterialEditor:__init()
-	gui.Base.__init(self)
-end
 function gui.PFMMaterialEditor:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -56,7 +53,6 @@ function gui.PFMMaterialEditor:OnInitialize()
 	)
 	self.m_controlBox:SetAutoFillContentsToWidth(true)
 
-	self:InitializeControls()
 	gui.create("WIResizer", self.m_contents):SetFraction(0.5)
 
 	-- Viewport
@@ -164,7 +160,8 @@ function gui.PFMMaterialEditor:AddTextureSlot(parent, text, texIdentifier, norma
 	return te, texSlot
 end
 function gui.PFMMaterialEditor:InitializeControls()
-	self:InitializePBRControls()
+	self:InitializeShaderMaterialControls()
+	--self:InitializePBRControls()
 	--self:InitializeEyeControls()
 	--self:InitializeNodrawControls()
 end
@@ -182,7 +179,23 @@ function gui.PFMMaterialEditor:GetMaterialDataBlock()
 	end
 	return self.m_material:GetDataBlock()
 end
-function gui.PFMMaterialEditor:SetMaterialParameter(type, key, val, subBlocks)
+local udmTypeToMat = {
+	[udm.TYPE_STRING] = "string",
+	[udm.TYPE_BOOLEAN] = "bool",
+	[udm.TYPE_VECTOR2] = "vector2",
+	[udm.TYPE_VECTOR3] = "vector",
+	[udm.TYPE_VECTOR4] = "vector4",
+}
+local function udm_type_to_mat_type(udmType)
+	if udm.is_integral_type(udmType) then
+		return "int"
+	end
+	if udm.is_floating_point_type(udmType) then
+		return "float"
+	end
+	return udmTypeToMat[udmType]
+end
+function gui.PFMMaterialEditor:SetMaterialParameter(paramType, key, val, subBlocks)
 	local data = self:GetMaterialDataBlock()
 	if data == nil then
 		return
@@ -192,7 +205,10 @@ function gui.PFMMaterialEditor:SetMaterialParameter(type, key, val, subBlocks)
 			data = data:AddBlock(id)
 		end
 	end
-	data:SetValue(type, key, tostring(val))
+	if type(paramType) ~= "string" then
+		paramType = udm_type_to_mat_type(paramType)
+	end
+	data:SetValue(paramType, key, tostring(val))
 	self:ReloadMaterialDescriptor()
 
 	self:ScheduleRTPreviewUpdate()
@@ -203,13 +219,7 @@ function gui.PFMMaterialEditor:ReloadMaterialDescriptor()
 	self:UpdateViewport()
 end
 function gui.PFMMaterialEditor:ResetOptions()
-	self.m_ctrlVBox:ResetControls()
-
-	for texIdentifier, texSlotData in pairs(self.m_texSlots) do
-		if texSlotData.textureSlot:IsValid() then
-			texSlotData.textureSlot:ClearTexture()
-		end
-	end
+	util.remove(self.m_ctrlVBox)
 end
 function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
 	self.m_viewport:SetModel(mdl or "pfm/texture_sphere")
@@ -239,9 +249,7 @@ function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
 	local material = game.load_material(mat)
 	local data = material:GetDataBlock()
 
-	self:ResetOptions()
-
-	for _, pdata in ipairs(self.m_linkedMaterialParameterElements) do
+	--[[for _, pdata in ipairs(self.m_linkedMaterialParameterElements) do
 		local identifier = pdata.parameter
 		local block = data
 		if pdata.subBlocks ~= nil then
@@ -266,11 +274,25 @@ function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
 		if validProperty == false then
 			self:LogInfo("Material property '" .. identifier .. "' not found in material '" .. mat .. "'!")
 		end
-	end
+	end]]
 
 	-- We have to set the material AFTER the non-texture settings have been initialized, otherwise changing the settings may inadvertently affect the material as well
 	self.m_material = material
 
+	self:ResetOptions()
+	self:InitializeControls()
+	local shaderMat = self:GetShaderMaterial()
+	if shaderMat ~= nil then
+		local textures = shaderMat:GetTextures()
+		for _, texInfo in ipairs(textures) do
+			if data:HasValue(texInfo.name) then
+				local albedoMap = data:GetString(texInfo.name)
+				self:ApplyTexture(texInfo.name, albedoMap, true)
+			end
+		end
+	end
+
+	--[[
 	if data:HasValue("albedo_map") then
 		local albedoMap = data:GetString("albedo_map")
 		self:ApplyTexture("albedo_map", albedoMap, true)
@@ -300,7 +322,7 @@ function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
 		local wrinkleStretchMap = data:GetString("wrinkle_stretch_map")
 		self:ApplyTexture("wrinkle_stretch_map", wrinkleStretchMap, true)
 	end
-	self:UpdateAlphaMode()
+	self:UpdateAlphaMode()]]
 end
 function gui.PFMMaterialEditor:ScheduleRTPreviewUpdate(fullUpdateRequired)
 	self.m_rtPreviewUpdateRequired = fullUpdateRequired and 2 or 1
