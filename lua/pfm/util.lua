@@ -226,6 +226,32 @@ pfm.util.extract_archive = function(zipFile, extractLocation)
 	return zipFile:ExtractFiles(extractLocation, true)
 end
 
+pfm.util.get_localized_property_name = function(componentName, pathName)
+	if pathName == nil then
+		local path = componentName
+		componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(path))
+		if componentName == nil then
+			return util.Path.CreateFilePath(path):GetFileName()
+		end
+	else
+		pathName = util.Path.CreateFilePath(pathName)
+	end
+	local displayName = pathName:GetFileName()
+	local description
+	local propName = string.camel_case_to_snake_case(pathName:GetString())
+	local locId = "c_" .. componentName .. "_p_" .. propName
+	local res, text = locale.get_text(locId, true)
+	if res == true then
+		displayName = text
+	end
+
+	local res, textDesc = locale.get_text(locId .. "_desc", true)
+	if res == true then
+		description = textDesc
+	end
+	return displayName, description
+end
+
 pfm.create_file_open_dialog = function(...)
 	local fileDialog = gui.create_file_open_dialog(...)
 	fileDialog:SetSkin("pfm")

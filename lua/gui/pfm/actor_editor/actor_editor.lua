@@ -1033,8 +1033,9 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 	local ctrl
 	local animSetControls = self:AddComponentPropertyGroup(actor, udmComponent).controlElement
 	if controlData.path ~= nil then
+		local displayName, description = pfm.util.get_localized_property_name(udmComponent:GetType(), memberInfo.name)
 		if memberInfo:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_READ_ONLY_BIT) then
-			local elText, wrapper = animSetControls:AddText(baseMemberName, memberInfo.name, controlData.default or "")
+			local elText, wrapper = animSetControls:AddText(baseMemberName, displayName, controlData.default or "")
 			if controlData.getValue ~= nil then
 				controlData.updateControlValue = function()
 					if elText:IsValid() == false then
@@ -1049,7 +1050,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 			ctrl = wrapper
 		elseif memberInfo.type == ents.MEMBER_TYPE_ELEMENT then
 			local bt = animSetControls:AddButton(
-				locale.get_text("edit") .. " " .. baseMemberName,
+				locale.get_text("edit") .. " " .. displayName,
 				memberInfo.name,
 				function()
 					local filmmaker = tool.get_filmmaker()
@@ -1134,8 +1135,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 				propInfo.extensions = meta:Get("extensions"):ToTable()
 				propInfo.assetType = meta:GetValue("assetType")
 			end
-			local wrapper =
-				animSetControls:AddPropertyControl(memberInfo.type, memberInfo.name, baseMemberName, propInfo)
+			local wrapper = animSetControls:AddPropertyControl(memberInfo.type, memberInfo.name, displayName, propInfo)
 			if wrapper ~= nil then
 				wrapper:SetValueTranslationFunctions(translateToInterface, translateFromInterface)
 
@@ -1839,23 +1839,7 @@ function gui.PFMActorEditor:AddControl(
 		end
 	end
 
-	local displayName = propertyPathComponents[#propertyPathComponents]
-
-	local componentName, pathName = ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(identifier))
-	local description
-	if componentName ~= nil then
-		local propName = string.camel_case_to_snake_case(pathName:GetString())
-		local locId = "c_" .. componentName .. "_p_" .. propName
-		local res, text = locale.get_text(locId, true)
-		if res == true then
-			displayName = text
-		end
-
-		local res, textDesc = locale.get_text(locId .. "_desc", true)
-		if res == true then
-			description = textDesc
-		end
-	end
+	local displayName, description = pfm.util.get_localized_property_name(identifier)
 
 	local child = baseItem:AddItem(displayName, nil, nil, identifier)
 	child:SetName(util.Path.CreateFilePath(identifier):GetBack())
