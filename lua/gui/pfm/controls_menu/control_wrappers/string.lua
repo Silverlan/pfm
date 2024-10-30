@@ -11,10 +11,10 @@ function Wrapper:__init(elControls, identifier)
 	pfm.util.ControlWrapper.__init(self, elControls, identifier)
 end
 function Wrapper:SetControlElementValue(val)
-	self.m_controlElement:SetValue(tostring(val))
+	self.m_controlElement:SetText(tostring(val))
 end
 function Wrapper:GetControlElementValue()
-	return self.m_controlElement:GetValue()
+	return self.m_controlElement:GetText()
 end
 function Wrapper:InitializeElement()
 	local el, wrapper = self.m_elControls:AddTextEntry(

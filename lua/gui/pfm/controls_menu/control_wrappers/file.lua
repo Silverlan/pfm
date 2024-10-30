@@ -12,6 +12,12 @@ local Wrapper = util.register_class("pfm.util.ControlWrapper.File", pfm.util.Con
 function Wrapper:__init(elControls, identifier)
 	pfm.util.ControlWrapper.String.__init(self, elControls, identifier)
 end
+function Wrapper:SetControlElementValue(val)
+	self.m_controlElement:SetValue(tostring(val))
+end
+function Wrapper:GetControlElementValue()
+	return self.m_controlElement:GetValue()
+end
 function Wrapper:SetBasePath(basePath)
 	self.m_basePath = basePath
 end
