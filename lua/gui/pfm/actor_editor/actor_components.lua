@@ -276,15 +276,19 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 				for _, action in ipairs(actions) do
 					actorData.componentData[componentId].actionData[action.identifier] = {}
 					local entActor = ents.find_by_uuid(uniqueId)
-					if util.is_valid(entActor) then
-						local el = action.initialize(
-							self.m_animSetControls,
-							actorData.actor,
-							entActor,
-							actorData.componentData[componentId].actionData[action.identifier]
-						)
-						if util.is_valid(el) then
-							table.insert(actorData.componentData[componentId].actionItems, el)
+					local actor = pfm.dereference(uniqueId)
+					if util.is_valid(entActor) and actor ~= nil then
+						local animSetControls = self:AddComponentPropertyGroup(actor, componentType).controlElement
+						if animSetControls ~= nil then
+							local el = action.initialize(
+								animSetControls,
+								actorData.actor,
+								entActor,
+								actorData.componentData[componentId].actionData[action.identifier]
+							)
+							if util.is_valid(el) then
+								table.insert(actorData.componentData[componentId].actionItems, el)
+							end
 						end
 					end
 				end
@@ -294,12 +298,12 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 		end
 	end)
 
-	if util.is_valid(componentData.itemBaseProps) == false then
+	--[[if util.is_valid(componentData.itemBaseProps) == false then
 		componentData.itemBaseProps = itemComponent:AddItem(locale.get_text("pfm_base_properties"))
 		componentData.itemBaseProps:SetName("base_properties")
 		componentData.itemBaseProps:SetTooltip("pfm_base_properties_desc")
 		componentData.itemBaseProps:SetIdentifier("base_properties")
-	end
+	end]]
 	local componentInfo = (componentId ~= nil) and ents.get_component_info(componentId) or nil
 	if componentInfo ~= nil then
 		local uniqueId = entActor:GetUuid()
@@ -700,7 +704,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 		end
 	end
 
-	if util.is_valid(componentData.itemBaseProps) then
+	--[[if util.is_valid(componentData.itemBaseProps) then
 		componentData.itemBaseProps:SetVisible(componentData.itemBaseProps:GetItemCount() > 0)
-	end
+	end]]
 end

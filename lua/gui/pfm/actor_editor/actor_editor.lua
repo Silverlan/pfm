@@ -463,7 +463,7 @@ function gui.PFMActorEditor:ClearEmptyComponentPropertyGroups()
 end
 function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 	local uuid = tostring(actor:GetUniqueId())
-	local ctype = udmComponent:GetType()
+	local ctype = (type(udmComponent) == "string") and udmComponent or udmComponent:GetType()
 	if
 		self.m_componentPropertyGroups[uuid] ~= nil
 		and self.m_componentPropertyGroups[uuid].componentGroups[ctype] ~= nil
@@ -1722,8 +1722,8 @@ function gui.PFMActorEditor:AddControl(
 		return val
 	end
 
-	local isBaseProperty = not ents.is_member_type_animatable(memberInfo.type)
-	local baseItem = isBaseProperty and componentData.itemBaseProps or item
+	local isBaseProperty = false -- not ents.is_member_type_animatable(memberInfo.type)
+	local baseItem = item -- isBaseProperty and componentData.itemBaseProps or item
 
 	local componentName, memberName =
 		ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(controlData.path))
