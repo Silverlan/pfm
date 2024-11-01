@@ -249,7 +249,13 @@ function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
 	local material = game.load_material(mat)
 	local data = material:GetDataBlock()
 
-	--[[for _, pdata in ipairs(self.m_linkedMaterialParameterElements) do
+	-- We have to set the material AFTER the non-texture settings have been initialized, otherwise changing the settings may inadvertently affect the material as well
+	self.m_material = material
+
+	self:ResetOptions()
+	self:InitializeControls()
+
+	for _, pdata in ipairs(self.m_linkedMaterialParameterElements) do
 		local identifier = pdata.parameter
 		local block = data
 		if pdata.subBlocks ~= nil then
@@ -268,19 +274,14 @@ function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
 			else
 				local value = block:GetFloat(identifier)
 				pdata.element:SetValue(value)
-				pdata.element:SetDefault(value)
+				pdata.element:SetDefaultValue(value)
 			end
 		end
 		if validProperty == false then
 			self:LogInfo("Material property '" .. identifier .. "' not found in material '" .. mat .. "'!")
 		end
-	end]]
+	end
 
-	-- We have to set the material AFTER the non-texture settings have been initialized, otherwise changing the settings may inadvertently affect the material as well
-	self.m_material = material
-
-	self:ResetOptions()
-	self:InitializeControls()
 	local shaderMat = self:GetShaderMaterial()
 	if shaderMat ~= nil then
 		local textures = shaderMat:GetTextures()
@@ -292,37 +293,7 @@ function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
 		end
 	end
 
-	--[[
-	if data:HasValue("albedo_map") then
-		local albedoMap = data:GetString("albedo_map")
-		self:ApplyTexture("albedo_map", albedoMap, true)
-	end
-
-	if data:HasValue("normal_map") then
-		local normalMap = data:GetString("normal_map")
-		self:ApplyTexture("normal_map", normalMap, true)
-	end
-
-	if data:HasValue("rma_map") then
-		local rmaMap = data:GetString("rma_map")
-		self:ApplyTexture("rma_map", rmaMap, true)
-	end
-
-	if data:HasValue("emission_map") then
-		local emissionMap = data:GetString("emission_map")
-		self:ApplyTexture("emission_map", emissionMap, true)
-	end
-
-	if data:HasValue("wrinkle_compress_map") then
-		local wrinkleCompressMap = data:GetString("wrinkle_compress_map")
-		self:ApplyTexture("wrinkle_compress_map", wrinkleCompressMap, true)
-	end
-
-	if data:HasValue("wrinkle_stretch_map") then
-		local wrinkleStretchMap = data:GetString("wrinkle_stretch_map")
-		self:ApplyTexture("wrinkle_stretch_map", wrinkleStretchMap, true)
-	end
-	self:UpdateAlphaMode()]]
+	self:UpdateAlphaMode()
 end
 function gui.PFMMaterialEditor:ScheduleRTPreviewUpdate(fullUpdateRequired)
 	self.m_rtPreviewUpdateRequired = fullUpdateRequired and 2 or 1

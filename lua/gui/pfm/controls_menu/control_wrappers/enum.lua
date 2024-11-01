@@ -26,10 +26,12 @@ function Wrapper:SetEnumValues(values)
 end
 function Wrapper:InitializeElement()
 	local defaultValueIndex
-	for i, eval in ipairs(self.m_enumValues) do
-		if eval[1] == self.m_defaultValue then
-			defaultValueIndex = i - 1
-			break
+	if self.m_defaultValue ~= nil then
+		for i, eval in ipairs(self.m_enumValues) do
+			if eval[1] == tostring(self.m_defaultValue) then
+				defaultValueIndex = eval[1]
+				break
+			end
 		end
 	end
 	local el, wrapper = self.m_elControls:AddDropDownMenu(

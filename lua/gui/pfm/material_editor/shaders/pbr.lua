@@ -771,6 +771,7 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 	ctrlVbox:SetFixedHeight(false)
 	self.m_ctrlVBox = ctrlVbox
 
+	local shouldApplyMatParam = false
 	for _, propInfo in ipairs(shaderMat:GetProperties()) do
 		if bit.band(propInfo.propertyFlags, shader.ShaderMaterial.Property.FLAG_HIDE_IN_EDITOR_BIT) == 0 then
 			local localizedText = propInfo.name
@@ -782,6 +783,7 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 				specializationType = propInfo.specializationType,
 				minValue = propInfo.minValue,
 				maxValue = propInfo.maxValue,
+				defaultValue = propInfo.defaultValue,
 			}
 			local opts = propInfo:GetOptions()
 			if opts ~= nil then
@@ -794,6 +796,9 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 			local wrapper = ctrlVbox:AddPropertyControl(propInfo.type, propInfo.name, localizedText, propCtrlInfo)
 			if wrapper ~= nil then
 				wrapper:SetOnChangeValueHandler(function(val, isFinal, initialValue)
+					if not shouldApplyMatParam then
+						return
+					end
 					self:SetMaterialParameter(propInfo.type, propInfo.name, val)
 
 					if
@@ -804,6 +809,7 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 						self:UpdateAlphaMode()
 					end
 				end)
+				self:LinkControlToMaterialParameter(propInfo.name, wrapper)
 			end
 
 			self.m_matPropElements[propInfo.name] = {
@@ -854,7 +860,8 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 	btOpenInExplorer:SetY(self.m_bg:GetBottom() - btOpenInExplorer:GetHeight())
 	btOpenInExplorer:SetAnchor(0, 1, 1, 1)
 
-	self:UpdateAlphaMode()
+	ctrlVbox:ResetControls()
+	shouldApplyMatParam = true
 end
 
 function gui.PFMMaterialEditor:UpdateSaveButton(saved)
