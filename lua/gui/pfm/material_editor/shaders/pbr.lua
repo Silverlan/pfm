@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/util/game_shader_register.lua")
+
 function gui.PFMMaterialEditor:InitializePBRControls()
 	local mapVbox = gui.create("WIVBox", self.m_controlBox)
 	mapVbox:SetAutoFillContentsToWidth(true)
@@ -659,15 +661,54 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 
 	local mapVbox = gui.create("WIVBox", self.m_controlBox)
 	mapVbox:SetAutoFillContentsToWidth(true)
+	self.m_mapVbox = mapVbox
+
+	local mainCtrlMenu = gui.create("WIPFMControlsMenu", mapVbox)
+	mainCtrlMenu:SetAutoFillContentsToHeight(true)
+	mainCtrlMenu:SetFixedHeight(false)
+
+	local ctrlVbox = gui.create("WIPFMControlsMenu", self.m_controlBox)
+	ctrlVbox:SetAutoFillContentsToHeight(true)
+	ctrlVbox:SetFixedHeight(false)
+	self.m_ctrlVBox = ctrlVbox
 
 	-- Shader
-	--[[ctrlVbox:AddDropDownMenu("shader","shader",{
-		["pbr"] = "pbr",
-		["eye"] = "eye",
-		["nodraw"] = "nodraw"
-	},0,function(el,option)
-		-- TODO
-	end)]]
+	local shaders = {}
+	for _, shaderId in ipairs(pfm.util.get_game_shaders()) do
+		local shaderName = shaderId
+		local res, txt = locale.get_text("shader_material_" .. shaderName, true)
+		if res then
+			shaderName = txt
+		end
+		table.insert(shaders, { shaderId, shaderName })
+	end
+	table.sort(shaders, function(a, b)
+		return a[1] < b[1]
+	end)
+	local skipShaderSelection = true
+	local el, wrapper = mainCtrlMenu:AddDropDownMenu(
+		locale.get_text("shader"),
+		"shader",
+		shaders,
+		0,
+		function(el, option)
+			if skipShaderSelection then
+				return
+			end
+			-- We can't change the shader material in this callback so we have to delay it
+			time.create_simple_timer(0.0, function()
+				if self:IsValid() and el:IsValid() then
+					self:SetMaterialShader(el:GetOptionValue(el:GetSelectedOption()))
+				end
+			end)
+		end
+	)
+	wrapper:SetUseAltMode(true)
+	local matShader = self.m_material:GetPrimaryShader()
+	if matShader ~= nil then
+		el:SelectOption(matShader:GetIdentifier())
+	end
+	skipShaderSelection = false
 
 	local shaderMat = self:GetShaderMaterial()
 	if shaderMat == nil then
@@ -765,11 +806,6 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 
 	mapVbox:Update()
 	mapVbox:SetFixedHeight(true)
-
-	local ctrlVbox = gui.create("WIPFMControlsMenu", self.m_controlBox)
-	ctrlVbox:SetAutoFillContentsToHeight(true)
-	ctrlVbox:SetFixedHeight(false)
-	self.m_ctrlVBox = ctrlVbox
 
 	local shouldApplyMatParam = false
 	for _, propInfo in ipairs(shaderMat:GetProperties()) do

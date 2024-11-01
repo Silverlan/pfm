@@ -93,13 +93,15 @@ function gui.PFMMaterialEditor:UpdateViewport()
 	self.m_viewport:Render()
 	pfm.tag_render_scene_as_dirty()
 end
-function gui.PFMMaterialEditor:ApplyTexture(texIdentifier, texPath, updateTextureSlot)
+function gui.PFMMaterialEditor:ApplyTexture(texIdentifier, texPath, updateTextureSlot, textureSlotOnly)
 	if util.is_valid(self.m_material) == false then
 		return
 	end
-	self.m_material:SetTexture(texIdentifier, texPath)
-	self.m_material:UpdateTextures()
-	self:ReloadMaterialDescriptor()
+	if textureSlotOnly ~= true then
+		self.m_material:SetTexture(texIdentifier, texPath)
+		self.m_material:UpdateTextures()
+		self:ReloadMaterialDescriptor()
+	end
 	self:UpdateViewport()
 
 	if updateTextureSlot then
@@ -114,6 +116,12 @@ function gui.PFMMaterialEditor:ApplyTexture(texIdentifier, texPath, updateTextur
 	end
 
 	self:ScheduleRTPreviewUpdate(true)
+end
+function gui.PFMMaterialEditor:SetMaterialShader(shaderMat)
+	if util.is_valid(self.m_material) then
+		self.m_material:SetShader(shaderMat)
+	end
+	self:SetMaterial(self.m_materialName, self.m_model, self.m_material)
 end
 function gui.PFMMaterialEditor:AddTextureSlot(parent, text, texIdentifier, normalMap, enableTransparency)
 	local box = gui.create("WIBase", parent, 0, 0, 256, 128)
@@ -219,9 +227,10 @@ function gui.PFMMaterialEditor:ReloadMaterialDescriptor()
 	self:UpdateViewport()
 end
 function gui.PFMMaterialEditor:ResetOptions()
+	util.remove(self.m_mapVbox)
 	util.remove(self.m_ctrlVBox)
 end
-function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
+function gui.PFMMaterialEditor:SetMaterial(mat, mdl, matObj)
 	self.m_viewport:SetModel(mdl or "pfm/texture_sphere")
 	self.m_viewport:ScheduleUpdate()
 
@@ -246,11 +255,12 @@ function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
 	mdlC:UpdateRenderMeshes()
 	self:UpdateViewport()
 
-	local material = game.load_material(mat)
+	local material = matObj or game.load_material(mat)
 	local data = material:GetDataBlock()
 
 	-- We have to set the material AFTER the non-texture settings have been initialized, otherwise changing the settings may inadvertently affect the material as well
 	self.m_material = material
+	self.m_materialName = mat
 
 	self:ResetOptions()
 	self:InitializeControls()
@@ -288,7 +298,7 @@ function gui.PFMMaterialEditor:SetMaterial(mat, mdl)
 		for _, texInfo in ipairs(textures) do
 			if data:HasValue(texInfo.name) then
 				local albedoMap = data:GetString(texInfo.name)
-				self:ApplyTexture(texInfo.name, albedoMap, true)
+				self:ApplyTexture(texInfo.name, albedoMap, true, true)
 			end
 		end
 	end

@@ -1,0 +1,7 @@
+shader_material_eye = "Eye"
+shader_material_eye_legacy = "Eye (Legacy)"
+shader_material_pbr = "PBR"
+shader_material_pbr_blend = "PBR-Blend"
+shader_material_toon = "Toon"
+shader_material_unlit = "Unlit"
+shader_material_wireframe = "Wireframe"
