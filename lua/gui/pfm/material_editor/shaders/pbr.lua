@@ -676,7 +676,7 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 	local shaders = {}
 	for _, shaderId in ipairs(pfm.util.get_game_shaders()) do
 		local shaderName = shaderId
-		local res, txt = locale.get_text("shader_material_" .. shaderName, true)
+		local res, txt = locale.get_text("shader_" .. shaderName, true)
 		if res then
 			shaderName = txt
 		end
