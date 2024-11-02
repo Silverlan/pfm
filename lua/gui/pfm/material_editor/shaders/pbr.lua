@@ -897,6 +897,36 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 	btOpenInExplorer:SetAnchor(0, 1, 1, 1)
 
 	ctrlVbox:ResetControls()
+
+	for _, pdata in ipairs(self.m_linkedMaterialParameterElements) do
+		local identifier = pdata.parameter
+		local block = data
+		if pdata.subBlocks ~= nil then
+			for _, name in ipairs(pdata.subBlocks) do
+				block = block:FindBlock(name)
+				if block == nil then
+					break
+				end
+			end
+		end
+		local validProperty = false
+		if block ~= nil and block:HasValue(identifier) and util.is_valid(pdata.element) then
+			validProperty = true
+			if pdata.load ~= nil then
+				pdata.load(block)
+			else
+				local value = block:GetFloat(identifier)
+				pdata.element:SetValue(value)
+				pdata.element:SetDefaultValue(value)
+			end
+		end
+		if validProperty == false then
+			self:LogInfo(
+				"Material property '" .. identifier .. "' not found in material '" .. self.m_materialName .. "'!"
+			)
+		end
+	end
+
 	shouldApplyMatParam = true
 end
 

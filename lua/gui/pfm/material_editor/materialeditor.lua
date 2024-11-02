@@ -169,9 +169,6 @@ function gui.PFMMaterialEditor:AddTextureSlot(parent, text, texIdentifier, norma
 end
 function gui.PFMMaterialEditor:InitializeControls()
 	self:InitializeShaderMaterialControls()
-	--self:InitializePBRControls()
-	--self:InitializeEyeControls()
-	--self:InitializeNodrawControls()
 end
 function gui.PFMMaterialEditor:LinkControlToMaterialParameter(parameter, element, subBlocks, load)
 	table.insert(self.m_linkedMaterialParameterElements, {
@@ -230,14 +227,14 @@ function gui.PFMMaterialEditor:ResetOptions()
 	util.remove(self.m_mapVbox)
 	util.remove(self.m_ctrlVBox)
 end
-function gui.PFMMaterialEditor:SetMaterial(mat, mdl, matObj)
+function gui.PFMMaterialEditor:SetMaterial(matName, mdl, matObj)
 	self.m_viewport:SetModel(mdl or "pfm/texture_sphere")
 	self.m_viewport:ScheduleUpdate()
 
 	self.m_material = nil
 	self.m_model = nil
 
-	local matPath = util.Path.CreateFilePath(mat)
+	local matPath = util.Path.CreateFilePath(matName)
 	matPath:PopBack() -- Pop filename
 	for identifier, texSlotData in pairs(self.m_texSlots) do
 		if texSlotData.textureSlot:IsValid() then
@@ -245,52 +242,30 @@ function gui.PFMMaterialEditor:SetMaterial(mat, mdl, matObj)
 		end
 	end
 
+	local material = matObj
+	if material == nil then
+		material = game.load_material(matName)
+		if material ~= nil then
+			material = material:Copy()
+		end
+	end
+
 	local ent = self.m_viewport:GetEntity()
 	local mdlC = util.is_valid(ent) and ent:GetComponent(ents.COMPONENT_MODEL) or nil
 	if mdl ~= nil then
 		self.m_model = mdlC:GetModel()
-	else
-		mdlC:SetMaterialOverride(0, mat)
 	end
+	mdlC:SetMaterialOverride(0, material)
 	mdlC:UpdateRenderMeshes()
 	self:UpdateViewport()
 
-	local material = matObj or game.load_material(mat)
 	local data = material:GetDataBlock()
 
-	-- We have to set the material AFTER the non-texture settings have been initialized, otherwise changing the settings may inadvertently affect the material as well
 	self.m_material = material
-	self.m_materialName = mat
+	self.m_materialName = matName
 
 	self:ResetOptions()
 	self:InitializeControls()
-
-	for _, pdata in ipairs(self.m_linkedMaterialParameterElements) do
-		local identifier = pdata.parameter
-		local block = data
-		if pdata.subBlocks ~= nil then
-			for _, name in ipairs(pdata.subBlocks) do
-				block = block:FindBlock(name)
-				if block == nil then
-					break
-				end
-			end
-		end
-		local validProperty = false
-		if block ~= nil and block:HasValue(identifier) and util.is_valid(pdata.element) then
-			validProperty = true
-			if pdata.load ~= nil then
-				pdata.load(block)
-			else
-				local value = block:GetFloat(identifier)
-				pdata.element:SetValue(value)
-				pdata.element:SetDefaultValue(value)
-			end
-		end
-		if validProperty == false then
-			self:LogInfo("Material property '" .. identifier .. "' not found in material '" .. mat .. "'!")
-		end
-	end
 
 	local shaderMat = self:GetShaderMaterial()
 	if shaderMat ~= nil then
