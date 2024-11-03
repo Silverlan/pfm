@@ -628,10 +628,10 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	btOpenInExplorer:SetText(locale.get_text("pfm_open_in_explorer"))
 	btOpenInExplorer:SetHeight(32)
 	btOpenInExplorer:AddCallback("OnPressed", function(btRaytracying)
-		if util.is_valid(self.m_material) == false then
+		if self.m_materialName == nil then
 			return
 		end
-		local filePath = asset.find_file(self.m_material:GetName(), asset.TYPE_MATERIAL)
+		local filePath = asset.find_file(self.m_materialName, asset.TYPE_MATERIAL)
 		if filePath == nil then
 			return
 		end
@@ -658,6 +658,7 @@ end
 function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 	self.m_matTexElements = {}
 	self.m_matPropElements = {}
+	self.m_linkedMaterialParameterElements = {}
 
 	local mapVbox = gui.create("WIVBox", self.m_controlBox)
 	mapVbox:SetAutoFillContentsToWidth(true)
@@ -734,6 +735,49 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 		ts:SetAlphaMode(game.Material.ALPHA_MODE_OPAQUE)
 		gui.create("WIResizer", mapVbox):SetFraction(fraction)
 		fraction = fraction + fractionPerMap
+
+		if texInfo.specializationType == "matcap" then
+			ts:AddCallback("OnMouseEvent", function(el, button, state, mods)
+				if button == input.MOUSE_BUTTON_LEFT then
+					if state == input.STATE_PRESS then
+						local pContext = gui.open_context_menu()
+						if util.is_valid(pContext) then
+							pContext:SetPos(input.get_cursor_pos())
+
+							local identifierToElement = {}
+							for _, texName in ipairs(asset.find("matcaps/*", asset.TYPE_TEXTURE)) do
+								texName = file.remove_file_extension(
+									texName,
+									asset.get_supported_extensions(asset.TYPE_TEXTURE)
+								)
+								local el = pContext:AddItem(texName, function()
+									--self:MapFlexController(i - 1, -1)
+								end)
+								if el ~= nil then
+									local fullPath = "matcaps/" .. texName
+									el:AddCallback("OnCursorEntered", function()
+										ts:ChangeTexture(fullPath)
+									end)
+									identifierToElement[fullPath] = el
+								end
+							end
+							pContext:Update()
+
+							local curTex = ts:GetTexture()
+							if identifierToElement[curTex] ~= nil then
+								time.create_simple_timer(0.0, function()
+									if pContext:IsValid() and identifierToElement[curTex]:IsValid() then
+										pContext:ScrollToItem(identifierToElement[curTex])
+									end
+								end)
+							end
+							return util.EVENT_REPLY_HANDLED
+						end
+					end
+					return util.EVENT_REPLY_HANDLED
+				end
+			end)
+		end
 
 		if texInfo.specializationType == "rma" then
 			ts:AddCallback("PopulateContextMenu", function(texSlotRMA, pContext)
@@ -864,7 +908,13 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 	btSave:AddCallback("OnPressed", function(btRaytracying)
 		local success = false
 		if util.is_valid(self.m_material) and self.m_material:IsError() == false then
-			success = self.m_material:Save()
+			success = self.m_material:Save(self.m_materialName)
+			if success then
+				local mat = game.load_material(self.m_materialName)
+				if mat ~= nil then
+					mat:SetShader(self.m_material:GetShaderName())
+				end
+			end
 		end
 		if success then
 			self:LogInfo("Successfully saved material '" .. self.m_material:GetName() .. "'!")
@@ -882,10 +932,10 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 	btOpenInExplorer:SetText(locale.get_text("pfm_open_in_explorer"))
 	btOpenInExplorer:SetHeight(32)
 	btOpenInExplorer:AddCallback("OnPressed", function(btRaytracying)
-		if util.is_valid(self.m_material) == false then
+		if self.m_materialName == nil then
 			return
 		end
-		local filePath = asset.find_file(self.m_material:GetName(), asset.TYPE_MATERIAL)
+		local filePath = asset.find_file(self.m_materialName, asset.TYPE_MATERIAL)
 		if filePath == nil then
 			return
 		end
@@ -898,6 +948,7 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 
 	ctrlVbox:ResetControls()
 
+	local data = self:GetMaterialDataBlock()
 	for _, pdata in ipairs(self.m_linkedMaterialParameterElements) do
 		local identifier = pdata.parameter
 		local block = data
@@ -915,7 +966,7 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 			if pdata.load ~= nil then
 				pdata.load(block)
 			else
-				local value = block:GetFloat(identifier)
+				local value = block:GetValue(identifier)
 				pdata.element:SetValue(value)
 				pdata.element:SetDefaultValue(value)
 			end
@@ -924,6 +975,17 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 			self:LogInfo(
 				"Material property '" .. identifier .. "' not found in material '" .. self.m_materialName .. "'!"
 			)
+		end
+	end
+
+	local shaderMat = self:GetShaderMaterial()
+	if shaderMat ~= nil then
+		local textures = shaderMat:GetTextures()
+		for _, texInfo in ipairs(textures) do
+			if data:HasValue(texInfo.name) then
+				local mapName = data:GetString(texInfo.name)
+				self:ApplyTexture(texInfo.name, mapName, true, true)
+			end
 		end
 	end
 

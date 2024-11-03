@@ -96,9 +96,7 @@ function gui.PFMTextureSlot:OnFilesDropped(tFiles)
 		console.print_warning("Unable to load texture '" .. tFiles[1] .. "': " .. errMsg)
 		return util.EVENT_REPLY_HANDLED
 	end
-	self:SetTexture(texPath:GetString())
-	self:ReloadTexture(true)
-	self:CallCallbacks("OnTextureImported")
+	self:ChangeTexture(texPath:GetString())
 	return util.EVENT_REPLY_HANDLED
 end
 function gui.PFMTextureSlot:SetClearTexture(clearTex)
@@ -150,6 +148,11 @@ function gui.PFMTextureSlot:Flip()
 		end
 	end
 	-- TODO: Save the image in the original format
+end
+function gui.PFMTextureSlot:ChangeTexture(texName)
+	self:SetTexture(texName)
+	self:ReloadTexture(true)
+	self:CallCallbacks("OnTextureImported")
 end
 function gui.PFMTextureSlot:SetTexture(tex)
 	if type(tex) ~= "string" then

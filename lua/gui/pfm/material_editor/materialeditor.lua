@@ -121,7 +121,8 @@ function gui.PFMMaterialEditor:SetMaterialShader(shaderMat)
 	if util.is_valid(self.m_material) then
 		self.m_material:SetShader(shaderMat)
 	end
-	self:SetMaterial(self.m_materialName, self.m_model, self.m_material)
+	self:SetMaterial(self.m_materialName, self.m_model, true)
+	self:UpdateSaveButton(false)
 end
 function gui.PFMMaterialEditor:AddTextureSlot(parent, text, texIdentifier, normalMap, enableTransparency)
 	local box = gui.create("WIBase", parent, 0, 0, 256, 128)
@@ -227,10 +228,13 @@ function gui.PFMMaterialEditor:ResetOptions()
 	util.remove(self.m_mapVbox)
 	util.remove(self.m_ctrlVBox)
 end
-function gui.PFMMaterialEditor:SetMaterial(matName, mdl, matObj)
-	self.m_viewport:SetModel(mdl or "pfm/texture_sphere")
+function gui.PFMMaterialEditor:SetMaterial(matName, mdl, reload)
+	if reload ~= true then
+		self.m_viewport:SetModel(mdl or "pfm/texture_sphere")
+	end
 	self.m_viewport:ScheduleUpdate()
 
+	local oldMat = self.m_material
 	self.m_material = nil
 	self.m_model = nil
 
@@ -242,7 +246,10 @@ function gui.PFMMaterialEditor:SetMaterial(matName, mdl, matObj)
 		end
 	end
 
-	local material = matObj
+	local material
+	if reload then
+		material = oldMat
+	end
 	if material == nil then
 		material = game.load_material(matName)
 		if material ~= nil then
@@ -255,28 +262,15 @@ function gui.PFMMaterialEditor:SetMaterial(matName, mdl, matObj)
 	if mdl ~= nil then
 		self.m_model = mdlC:GetModel()
 	end
-	mdlC:SetMaterialOverride(0, material)
+	mdlC:SetMaterialOverride(matName, material)
 	mdlC:UpdateRenderMeshes()
 	self:UpdateViewport()
-
-	local data = material:GetDataBlock()
 
 	self.m_material = material
 	self.m_materialName = matName
 
 	self:ResetOptions()
 	self:InitializeControls()
-
-	local shaderMat = self:GetShaderMaterial()
-	if shaderMat ~= nil then
-		local textures = shaderMat:GetTextures()
-		for _, texInfo in ipairs(textures) do
-			if data:HasValue(texInfo.name) then
-				local albedoMap = data:GetString(texInfo.name)
-				self:ApplyTexture(texInfo.name, albedoMap, true, true)
-			end
-		end
-	end
 
 	self:UpdateAlphaMode()
 end
