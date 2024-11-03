@@ -246,6 +246,10 @@ pfm.register_window("material_catalog", "catalogs", locale.get_text("pfm_materia
 	local el = gui.create("WIPFMMaterialCatalog")
 	return el
 end)
+--[[pfm.register_window("texture_catalog", "catalogs", locale.get_text("pfm_texture_catalog"), function(pm)
+	local el = gui.create("WIPFMTextureCatalog")
+	return el
+end)]]
 pfm.register_window("particle_catalog", "catalogs", locale.get_text("pfm_particle_catalog"), function(pm)
 	local el = gui.create("WIPFMParticleCatalog")
 	return el

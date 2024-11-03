@@ -273,7 +273,11 @@ function gui.AssetExplorer:CreateAssetIconElement(path, assetName, isDirectory, 
 	if isDirectory then
 		el = gui.create("WIDirectoryAssetIcon", self) -- TODO
 	elseif string.compare(front, "materials", false) then
-		el = gui.create("WIMaterialAssetIcon")
+		if self:GetAssetType() == asset.TYPE_TEXTURE then
+			el = gui.create("WITextureAssetIcon")
+		else
+			el = gui.create("WIMaterialAssetIcon")
+		end
 	elseif string.compare(front, "models", false) then
 		el = gui.create("WIModelAssetIcon")
 	elseif string.compare(front, "particles", false) then

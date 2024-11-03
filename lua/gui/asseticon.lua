@@ -105,6 +105,8 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 				mdlC:UpdateRenderMeshes()
 			end
 
+			ent:SetRotation(settings.rotation or Quaternion())
+			ent:SetScale(settings.scale or Vector(1, 1, 1))
 			if settings.skin ~= nil then
 				ent:SetSkin(settings.skin)
 			end
@@ -851,6 +853,59 @@ function gui.MaterialAssetIcon:SetMaterialAsset(mat, importAsset)
 	end
 end
 gui.register("WIMaterialAssetIcon", gui.MaterialAssetIcon)
+
+-----------------
+
+util.register_class("gui.TextureAssetIcon", gui.MaterialAssetIcon)
+function gui.TextureAssetIcon:IsExportable()
+	return true
+end
+function gui.TextureAssetIcon:Export()
+	local path = util.Path(self:GetAsset())
+	path:PopFront()
+	return asset.export_material(path:GetString(), game.Model.ExportInfo.IMAGE_FORMAT_PNG, false)
+end
+function gui.TextureAssetIcon:ApplyAsset(path, importAsset)
+	self:SetTextureAsset(path, importAsset)
+end
+function gui.TextureAssetIcon:GetTypeIdentifier()
+	return "texture"
+end
+function gui.TextureAssetIcon:SetTextureAsset(mat, importAsset)
+	self.m_assetType = asset.TYPE_TEXTURE
+
+	self:SetNativeAsset(asset.exists(mat, asset.TYPE_TEXTURE))
+	local iconPath = self:GetIconLocation()
+	if asset.exists(iconPath, asset.TYPE_MATERIAL) then
+		self:SetMaterial(iconPath)
+		return
+	end
+	if gui.AssetIcon.impl.iconGenerator == nil then
+		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128, 128)
+	end
+
+	local matOverride = game.create_material("unlit")
+	local normTexPath = file.remove_file_extension(mat, asset.get_supported_extensions(asset.TYPE_TEXTURE))
+	matOverride:SetTexture("albedo_map", normTexPath)
+	matOverride:UpdateTextures()
+	matOverride:InitializeShaderDescriptorSet()
+	matOverride:SetLoaded(true)
+
+	local settings = {
+		materialOverride = matOverride,
+		modelView = {
+			rotation = Vector2(0.0, 0.0),
+		},
+	}
+	gui.AssetIcon.impl.iconGenerator:AddModelToQueue("flat_surface", function()
+		if self:IsValid() == false then
+			return
+		end
+		self:SetMaterial(iconPath)
+		self:CallCallbacks("OnIconReloaded")
+	end, iconPath, settings)
+end
+gui.register("WITextureAssetIcon", gui.TextureAssetIcon)
 
 -----------------
 
