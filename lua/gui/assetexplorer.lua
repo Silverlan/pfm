@@ -11,6 +11,14 @@ include("/gui/wibasefileexplorer.lua")
 include("/gui/asseticon.lua")
 include("/gui/icongridview.lua")
 
+console.register_variable(
+	"pfm_source_tools_game",
+	udm.TYPE_STRING,
+	"",
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"The path to the Source Engine game that contains the SDK tools."
+)
+
 util.register_class("gui.AssetExplorer", gui.IconGridView, gui.BaseFileExplorer)
 function gui.AssetExplorer:__init()
 	gui.IconGridView.__init(self)
@@ -495,7 +503,11 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 							end
 
 							include("/util/source_model_exporter.lua")
-							local result, err = util.export_source_engine_models(models)
+							local sourceGame = console.get_convar_string("pfm_source_tools_game")
+							if #sourceGame == 0 then
+								sourceGame = nil
+							end
+							local result, err = util.export_source_engine_models(models, sourceGame)
 							if result == false then
 								console.print_warning("Unable to export asset: ", err)
 							end
