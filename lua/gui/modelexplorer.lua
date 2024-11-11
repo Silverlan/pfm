@@ -39,27 +39,21 @@ function gui.ModelExplorer:OnFilesDropped(tFiles)
 		if self:IsValid() == false then
 			return
 		end
-		for _, fname in ipairs(tFiles) do
-			local dirName = file.remove_file_extension(fname)
-			dirName = string.replace(dirName, ".", "_")
-			local outputPath = basePath
-
-			util.import_assets(fname, {
-				modelImportCallback = function(assetType, assetPath)
-					if assetType == asset.TYPE_MODEL then
-						self:AddToSpecial("new", assetPath)
-					end
-				end,
-				onComplete = function()
-					if self:IsValid() then
-						self:ScheduleUpdate()
-					end
-				end,
-				basePath = outputPath:GetString(),
-				dropped = true,
-				importAsCollection = not importAsSingleModel,
-			})
-		end
+		util.import_assets(tFiles, {
+			modelImportCallback = function(assetType, assetPath)
+				if assetType == asset.TYPE_MODEL then
+					self:AddToSpecial("new", assetPath)
+				end
+			end,
+			onComplete = function()
+				if self:IsValid() then
+					self:ScheduleUpdate()
+				end
+			end,
+			basePath = self:GetPath(),
+			dropped = true,
+			importAsCollection = not importAsSingleModel,
+		})
 		self:SetPath(basePath:GetString())
 	end
 	local pContext = gui.open_context_menu()
