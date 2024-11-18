@@ -137,46 +137,53 @@ function Element:OnUpdate()
 		end
 	end
 
+	local posParent = self:GetParent():GetAbsolutePos()
+	local function toRelPos(pos)
+		pos.x = pos.x - posParent.x
+		pos.y = pos.y - posParent.y
+		return pos
+	end
+
 	local mid = (startPoint + endPoint) * 0.5
-	self.m_lines[1]:SetStartPos(Vector2(startPoint.x, startPoint.y))
+	self.m_lines[1]:SetStartPos(toRelPos(Vector2(startPoint.x, startPoint.y)))
 	if horizontal then
-		self.m_lines[1]:SetEndPos(Vector2(mid.x, startPoint.y))
+		self.m_lines[1]:SetEndPos(toRelPos(Vector2(mid.x, startPoint.y)))
 	else
-		self.m_lines[1]:SetEndPos(Vector2(startPoint.x, mid.y))
+		self.m_lines[1]:SetEndPos(toRelPos(Vector2(startPoint.x, mid.y)))
 	end
 	self.m_lines[1]:SizeToContents()
 
 	self.m_lines[2]:SetStartPos(self.m_lines[1]:GetEndPos())
 	if horizontal then
-		self.m_lines[2]:SetEndPos(Vector2(mid.x, endPoint.y))
+		self.m_lines[2]:SetEndPos(toRelPos(Vector2(mid.x, endPoint.y)))
 	else
-		self.m_lines[2]:SetEndPos(Vector2(endPoint.x, mid.y))
+		self.m_lines[2]:SetEndPos(toRelPos(Vector2(endPoint.x, mid.y)))
 	end
 	self.m_lines[2]:SizeToContents()
 
 	self.m_lines[3]:SetStartPos(self.m_lines[2]:GetEndPos())
-	self.m_lines[3]:SetEndPos(Vector2(endPoint.x, endPoint.y))
+	self.m_lines[3]:SetEndPos(toRelPos(Vector2(endPoint.x, endPoint.y)))
 	self.m_lines[3]:SizeToContents()
 
 	if horizontal then
 		local arrowPoint = invArrow and startPoint or endPoint
 		local sign = invArrow and -1 or 1
-		self.m_lines[4]:SetStartPos(Vector2(arrowPoint.x, arrowPoint.y))
-		self.m_lines[4]:SetEndPos(Vector2(arrowPoint.x + 20 * sign, arrowPoint.y + 10))
+		self.m_lines[4]:SetStartPos(toRelPos(Vector2(arrowPoint.x, arrowPoint.y)))
+		self.m_lines[4]:SetEndPos(toRelPos(Vector2(arrowPoint.x + 20 * sign, arrowPoint.y + 10)))
 		self.m_lines[4]:SizeToContents()
 
-		self.m_lines[5]:SetStartPos(Vector2(arrowPoint.x, arrowPoint.y))
-		self.m_lines[5]:SetEndPos(Vector2(arrowPoint.x + 20 * sign, arrowPoint.y - 10))
+		self.m_lines[5]:SetStartPos(toRelPos(Vector2(arrowPoint.x, arrowPoint.y)))
+		self.m_lines[5]:SetEndPos(toRelPos(Vector2(arrowPoint.x + 20 * sign, arrowPoint.y - 10)))
 		self.m_lines[5]:SizeToContents()
 	else
 		local arrowPoint = invArrow and startPoint or endPoint
 		local sign = invArrow and -1 or 1
-		self.m_lines[4]:SetStartPos(Vector2(arrowPoint.x, arrowPoint.y))
-		self.m_lines[4]:SetEndPos(Vector2(arrowPoint.x - 10, arrowPoint.y - 20 * sign))
+		self.m_lines[4]:SetStartPos(toRelPos(Vector2(arrowPoint.x, arrowPoint.y)))
+		self.m_lines[4]:SetEndPos(toRelPos(Vector2(arrowPoint.x - 10, arrowPoint.y - 20 * sign)))
 		self.m_lines[4]:SizeToContents()
 
-		self.m_lines[5]:SetStartPos(Vector2(arrowPoint.x, arrowPoint.y))
-		self.m_lines[5]:SetEndPos(Vector2(arrowPoint.x + 10, arrowPoint.y - 20 * sign))
+		self.m_lines[5]:SetStartPos(toRelPos(Vector2(arrowPoint.x, arrowPoint.y)))
+		self.m_lines[5]:SetEndPos(toRelPos(Vector2(arrowPoint.x + 10, arrowPoint.y - 20 * sign)))
 		self.m_lines[5]:SizeToContents()
 	end
 

@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("/gui/pfm/editors/shader_editor.lua")
+
 local init_model_asset_drag_and_drop
 
 local g_registeredWindows = {}
@@ -417,6 +419,10 @@ pfm.register_window("timeline", "timeline", locale.get_text("pfm_timeline"), fun
 	pm:UpdateBookmarks()
 
 	return pfmTimeline
+end)
+
+pfm.register_window("shader_editor", "timeline", locale.get_text("pfm_shader_editor"), function(pm)
+	return gui.create("WIPFMShaderEditor")
 end)
 
 init_model_asset_drag_and_drop = function(explorer, icon, mdlPath, importAsset)
