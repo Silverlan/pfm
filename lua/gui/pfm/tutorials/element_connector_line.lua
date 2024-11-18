@@ -62,12 +62,18 @@ function Element:OnRemove()
 	util.remove(self.m_elCallbacks)
 end
 function Element:OnThink()
-	if util.is_valid(self.m_elTgt) == false then
-		return
+	if util.is_valid(self.m_elTgt) then
+		local absTgt = self.m_elTgt:GetAbsolutePos()
+		if self.m_lastAbsTgtPos == nil or self.m_lastAbsTgtPos:Distance(absTgt) > 0.001 then
+			self:ScheduleUpdate()
+			return
+		end
 	end
-	local absTgt = self.m_elTgt:GetAbsolutePos()
-	if self.m_lastAbsTgtPos == nil or self.m_lastAbsTgtPos:Distance(absTgt) > 0.001 then
-		self:ScheduleUpdate()
+	if util.is_valid(self.m_elSrc) then
+		local absTgt = self.m_elSrc:GetAbsolutePos()
+		if self.m_lastAbsSrcPos == nil or self.m_lastAbsSrcPos:Distance(absTgt) > 0.001 then
+			self:ScheduleUpdate()
+		end
 	end
 end
 function Element:OnUpdate()
@@ -78,6 +84,7 @@ function Element:OnUpdate()
 	local absTgt = self.m_elTgt:GetAbsolutePos()
 	local absSrcEnd = absSrc + self.m_elSrc:GetSize()
 	local absTgtEnd = absTgt + self.m_elTgt:GetSize()
+	self.m_lastAbsSrcPos = absSrc
 	self.m_lastAbsTgtPos = absTgt
 
 	local absVisPos, absVisSize = self.m_elTgt:GetAbsoluteVisibleBounds()
