@@ -826,6 +826,7 @@ function gui.PFMTimelineGraphBase:ZoomAxes(am, updateDataAxis, updateTimeAxis, u
 	local timeLine = self.m_timeline:GetTimeline()
 	local dataAxis = timeLine:GetDataAxis():GetAxis()
 	local timeAxis = timeLine:GetTimeAxis():GetAxis()
+	local isAltDown = input.is_alt_key_down()
 	local useCenterAsPivot = (isAltDown == false)
 
 	cursorPos = cursorPos or input.get_cursor_pos()
