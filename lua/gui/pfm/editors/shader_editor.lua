@@ -11,6 +11,16 @@ include("/gui/pfm/editors/content_view.lua")
 
 local Element = util.register_class("gui.PFMShaderEditor", gui.Base)
 
+local function get_graph_identifier_from_file_path(filePath)
+	local graphIdentifier = util.FilePath(filePath)
+	graphIdentifier:RemoveFileExtension({
+		shader.ShaderGraph.EXTENSION_ASCII,
+		shader.ShaderGraph.EXTENSION_BINARY,
+	})
+	graphIdentifier = graphIdentifier:GetFileName()
+	return graphIdentifier
+end
+
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -26,6 +36,9 @@ function Element:OnInitialize()
 
 	local elGraph = gui.create("WIShaderGraph", elDrag, 0, 0)
 	self.m_elGraph = elGraph
+	elGraph:AddCallback("OnNodeSocketValueChanged", function(name, id, val)
+		self:SetShaderDirty()
+	end)
 	self:AddCallback("SetSize", function()
 		elGraph:SetSize(self:GetWidth(), self:GetHeight())
 	end)
@@ -48,11 +61,12 @@ function Element:OnInitialize()
 						return
 					end
 					local filePath = pDialoge:GetFilePath(true)
-					local graph, err = shader.ShaderGraph.load("object", filePath)
+					local graphIdentifier = get_graph_identifier_from_file_path(filePath)
+					local graph, err = shader.load_shader_graph(graphIdentifier)
 					if graph == nil then
-						self:LogWarn("Failed to load shader graph '" .. filePath .. "': " .. err)
+						self:LogWarn("Failed to load shader graph '" .. graphIdentifier .. "': " .. err)
 					else
-						self:LogInfo("Loaded shader graph '" .. filePath .. "'!")
+						self:LogInfo("Loaded shader graph '" .. graphIdentifier .. "'!")
 						elGraph:SetGraph(graph)
 						self:UpdatePath(filePath)
 					end
@@ -77,10 +91,38 @@ function Element:OnInitialize()
 				end
 				self:SaveAs()
 			end)
+			pContext:AddItem("Reload Shader", function()
+				if self:IsValid() == false or self.m_filePath == nil then
+					return
+				end
+				local graphIdentifier = get_graph_identifier_from_file_path(self.m_filePath)
+				shader.reload_graph_shader(graphIdentifier)
+			end)
+			pContext:AddItem("Debug Print", function()
+				if self:IsValid() == false then
+					return
+				end
+				self.m_elGraph:GetGraph():DebugPrint()
+			end)
 
 			pContext:ScheduleUpdate()
 		end)
 		:SetName("view")
+end
+function Element:SetShaderDirty()
+	self.m_shaderReloadTime = time.cur_time() + 0.1
+	self:SetThinkingEnabled(true)
+end
+function Element:OnThink()
+	if self.m_shaderReloadTime ~= nil and time.cur_time() >= self.m_shaderReloadTime then
+		self.m_shaderReloadTime = nil
+		local graphIdentifier = get_graph_identifier_from_file_path(self.m_filePath)
+		shader.reload_graph_shader(graphIdentifier)
+		pfm.tag_render_scene_as_dirty()
+	end
+	if self.m_shaderReloadTime == nil then
+		self:SetThinkingEnabled(false)
+	end
 end
 function Element:Save(filePath)
 	local graph = self.m_elGraph:GetGraph()
