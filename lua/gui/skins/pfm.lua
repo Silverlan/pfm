@@ -10,6 +10,7 @@ local t = {}
 t.BACKGROUND_COLOR_DEFAULT = Color(38, 38, 38, 255)
 t.BACKGROUND_COLOR_HOVER = Color(48, 48, 48, 255)
 t.BACKGROUND_COLOR_SELECTED = Color(58, 58, 58, 255)
+t.SLIDER_FILL_COLOR = Color.RoyalBlue
 t.TEXT_COLOR = Color(200, 200, 200)
 
 -------------------------------------------
@@ -163,6 +164,34 @@ skin["input_field_text"] = {
 		pElement:SetFont("pfm_medium")
 	end,
 }
+skin["input_field_overlay"] = {
+	Initialize = function(GUI, pElement)
+		local bg = gui.create("WIRect", pElement, 0, 0, pElement:GetWidth(), pElement:GetHeight(), 0, 0, 1, 1)
+		bg:SetColor(Color(50, 50, 50))
+		bg:SetZPos(-10000)
+		bg:SetBackgroundElement(true)
+		bg:SetName("background")
+		pElement.bg = bg
+
+		local outline =
+			gui.create("WIOutlinedRect", pElement, 0, 0, pElement:GetWidth(), pElement:GetHeight(), 0, 0, 1, 1)
+		outline:SetColor(Color(80, 80, 80))
+		outline:SetZPos(-9000)
+		outline:SetBackgroundElement(true)
+		outline:SetName("outline")
+	end,
+	Release = function(GUI, pElement)
+		local bg = pElement:FindChildByName("background")
+		if bg ~= nil then
+			bg:Remove()
+		end
+
+		local outline = pElement:FindChildByName("outline")
+		if outline ~= nil then
+			outline:Remove()
+		end
+	end,
+}
 skin["infobox"] = {
 	children = {
 		["witext"] = {
@@ -177,7 +206,7 @@ skin["menu_item"] = {
 	children = {
 		["menu_item_selected_background"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(t.BACKGROUND_COLOR_SELECTED)
+				pElement:SetColor(GUI.BACKGROUND_COLOR_SELECTED)
 			end,
 		},
 		["menu_item_selected_outline"] = {
@@ -185,7 +214,7 @@ skin["menu_item"] = {
 		},
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(t.TEXT_COLOR)
+				pElement:SetColor(GUI.TEXT_COLOR)
 				pElement:SetFont("pfm_medium")
 				pElement:SizeToContents()
 			end,
@@ -196,7 +225,7 @@ skin["context_menu"] = {
 	children = {
 		["context_menu_background"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(t.BACKGROUND_COLOR_DEFAULT)
+				pElement:SetColor(GUI.BACKGROUND_COLOR_DEFAULT)
 			end,
 		},
 		["context_menu_outline"] = {
@@ -208,7 +237,7 @@ skin["menu_bar"] = {
 	children = {
 		["menu_bar_background"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(t.BACKGROUND_COLOR_DEFAULT)
+				pElement:SetColor(GUI.BACKGROUND_COLOR_DEFAULT)
 			end,
 		},
 		["menu_item"] = {
@@ -227,18 +256,23 @@ skin["menu_bar"] = {
 }
 skin["context_menu_arrow"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(t.TEXT_COLOR)
+		pElement:SetColor(GUI.TEXT_COLOR)
 	end,
 }
 skin["witable"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(t.TEXT_COLOR)
+				pElement:SetColor(GUI.TEXT_COLOR)
 				pElement:SetFont("pfm_medium")
 				pElement:SizeToContents()
 			end,
 		},
 	},
+}
+skin["slider_filled"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.SLIDER_FILL_COLOR)
+	end,
 }
 gui.register_skin("pfm", t, skin, "default")

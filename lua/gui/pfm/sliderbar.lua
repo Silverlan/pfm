@@ -8,12 +8,12 @@
 
 include("slidercursor.lua")
 
-util.register_class("gui.PFMSliderBar", gui.Base)
+local Element = util.register_class("gui.PFMSliderBar", gui.Base)
 
-function gui.PFMSliderBar:__init()
+function Element:__init()
 	gui.Base.__init(self)
 end
-function gui.PFMSliderBar:OnInitialize()
+function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(128, 7)
@@ -21,13 +21,17 @@ function gui.PFMSliderBar:OnInitialize()
 	self.m_offsetFromDefaultIndicator = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_offsetFromDefaultIndicator:SetColor(Color(61, 61, 61))
 
+	local bgFilled = gui.create("WIRect", self)
+	bgFilled:AddStyleClass("slider_filled")
+	self.m_bgFilled = bgFilled
+
 	local cursorRect = gui.create("WIRect", self, 0, 0, 1, self:GetHeight())
 	cursorRect:SetColor(Color(131, 131, 131))
 	self.m_cursorRect = cursorRect
 
 	self.m_cursor = cursorRect:Wrap("WIPFMSliderCursor")
-	self.m_cursor:AddCallback("OnFractionChanged", function(el, fraction)
-		self:OnFractionChanged(fraction)
+	self.m_cursor:AddCallback("OnValueChanged", function(el, value, fraction)
+		self:OnValueChanged(value, fraction)
 	end)
 	self.m_cursor:AddCallback("OnUserInputStarted", function(el, fraction)
 		self:OnUserInputStarted(fraction)
@@ -39,80 +43,89 @@ function gui.PFMSliderBar:OnInitialize()
 	self:SetRange(0, 1)
 	self:ScheduleUpdate()
 end
-function gui.PFMSliderBar:GetCursor()
+function Element:GetCursor()
 	return self.m_cursor
 end
-function gui.PFMSliderBar:SetDefault(default)
+function Element:SetDefault(default)
 	self.m_default = default
 	self:SetValue(default)
 	self:Update()
 end
-function gui.PFMSliderBar:SetRange(min, max)
+function Element:SetStepSize(stepSize)
+	self.m_cursor:SetStepSize(stepSize)
+end
+function Element:GetStepSize()
+	return self.m_cursor:GetStepSize()
+end
+function Element:SetRange(min, max)
 	self.m_cursor:SetRange(min, max)
 end
-function gui.PFMSliderBar:SetWeight(weight)
+function Element:SetWeight(weight)
 	self.m_cursor:SetWeight(weight)
 end
-function gui.PFMSliderBar:GetMin()
+function Element:GetMin()
 	return self.m_cursor:GetMin()
 end
-function gui.PFMSliderBar:GetMax()
+function Element:GetMax()
 	return self.m_cursor:GetMax()
 end
-function gui.PFMSliderBar:SetMin(min)
+function Element:SetMin(min)
 	return self.m_cursor:SetMin(min)
 end
-function gui.PFMSliderBar:SetMax(max)
+function Element:SetMax(max)
 	return self.m_cursor:SetMax(max)
 end
-function gui.PFMSliderBar:SetValue(value)
+function Element:SetValue(value)
 	self.m_cursor:SetValue(value)
 end
-function gui.PFMSliderBar:SetInteger(b)
+function Element:SetInteger(b)
 	self.m_cursor:SetInteger(b)
 end
-function gui.PFMSliderBar:OnFractionChanged(fraction)
-	self:CallCallbacks("OnValueChanged", self:GetValue())
+function Element:OnValueChanged(value, fraction)
+	self:CallCallbacks("OnValueChanged", value)
 	self:Update()
 end
-function gui.PFMSliderBar:OnUserInputStarted(fraction)
+function Element:OnUserInputStarted(fraction)
 	self:CallCallbacks("OnUserInputStarted", self:GetValue())
 end
-function gui.PFMSliderBar:OnUserInputEnded(fraction)
+function Element:OnUserInputEnded(fraction)
 	self:CallCallbacks("OnUserInputEnded", self:GetValue())
 end
-function gui.PFMSliderBar:GetDefault()
+function Element:GetDefault()
 	return self.m_default
 end
-function gui.PFMSliderBar:GetValue()
+function Element:GetValue()
 	return self.m_cursor:GetValue()
 end
-function gui.PFMSliderBar:GetFraction(value)
+function Element:GetFraction(value)
 	return ((value or self:GetValue()) - self:GetMin()) / (self:GetMax() - self:GetMin())
 end
-function gui.PFMSliderBar:SetFraction(fraction)
+function Element:SetFraction(fraction)
 	self.m_cursor:SetFraction(fraction)
 end
-function gui.PFMSliderBar:FractionToOffset(fraction)
+function Element:FractionToOffset(fraction)
 	return fraction * self:GetWidth()
 end
-function gui.PFMSliderBar:ValueToOffset(value)
+function Element:ValueToOffset(value)
 	return self:FractionToOffset(self:GetFraction(value))
 end
-function gui.PFMSliderBar:OffsetToValue(x)
+function Element:OffsetToValue(x)
 	x = x / self:GetWidth()
 	return self:GetMin() + (self:GetMax() - self:GetMin()) * x
 end
-function gui.PFMSliderBar:OnSizeChanged()
+function Element:OnSizeChanged()
 	if util.is_valid(self.m_cursorRect) then
 		self.m_cursorRect:SetHeight(self:GetHeight())
 	end
 	if util.is_valid(self.m_cursor) then
 		self.m_cursor:SetHeight(self:GetHeight())
 	end
+	if util.is_valid(self.m_bgFilled) then
+		self.m_bgFilled:SetHeight(self:GetHeight())
+	end
 	self:ScheduleUpdate()
 end
-function gui.PFMSliderBar:OnUpdate()
+function Element:OnUpdate()
 	local value = self:GetValue()
 	if value == nil then
 		if util.is_valid(self.m_offsetFromDefaultIndicator) then
@@ -126,6 +139,10 @@ function gui.PFMSliderBar:OnUpdate()
 	if util.is_valid(self.m_cursor) then
 		--self.m_cursor:SetVisible(true)
 		self.m_cursor:SetX(x)
+	end
+
+	if util.is_valid(self.m_bgFilled) then
+		self.m_bgFilled:SetWidth(x)
 	end
 
 	local default = self:GetDefault()
@@ -142,4 +159,4 @@ function gui.PFMSliderBar:OnUpdate()
 	self.m_offsetFromDefaultIndicator:SetX(xMin)
 	self.m_offsetFromDefaultIndicator:SetWidth(xMax - xMin)
 end
-gui.register("WIPFMSliderBar", gui.PFMSliderBar)
+gui.register("WIPFMSliderBar", Element)

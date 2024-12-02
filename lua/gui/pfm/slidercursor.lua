@@ -6,135 +6,155 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("gui.PFMSliderCursor", gui.Base)
+local Element = util.register_class("gui.PFMSliderCursor", gui.Base)
 
-gui.PFMSliderCursor.TYPE_HORIZONTAL = 0
-gui.PFMSliderCursor.TYPE_VERTICAL = 1
-function gui.PFMSliderCursor:__init()
+Element.TYPE_HORIZONTAL = 0
+Element.TYPE_VERTICAL = 1
+function Element:__init()
 	gui.Base.__init(self)
 end
-function gui.PFMSliderCursor:OnInitialize()
+function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetMouseInputEnabled(true)
 	self:AddCallback("OnCursorMoved", function(el, x, y)
 		self:OnCursorMoved(x, y)
 	end)
-	self.m_fraction = util.FloatProperty(0.0)
-	self:SetType(gui.PFMSliderCursor.TYPE_HORIZONTAL)
+	self.m_value = util.FloatProperty(0.0)
+	self:SetType(Element.TYPE_HORIZONTAL)
+	self:SetRange(0.0, 1.0)
 	self:SetStepSize(0.0)
 	self:SetFraction(0.0)
 	self:SetWeight(1.0)
 end
-function gui.PFMSliderCursor:SetRange(min, max)
+function Element:SetStepSize(stepSize)
+	self.m_stepSize = stepSize
+end
+function Element:GetStepSize()
+	return self.m_stepSize
+end
+function Element:SetRange(min, max)
 	self.m_min = min
 	self.m_max = max
 	self:Update()
 end
-function gui.PFMSliderCursor:GetMin()
+function Element:GetMin()
 	return self.m_min
 end
-function gui.PFMSliderCursor:GetMax()
+function Element:GetMax()
 	return self.m_max
 end
-function gui.PFMSliderCursor:SetMin(min)
+function Element:SetMin(min)
 	self.m_min = min
 	self:Update()
 end
-function gui.PFMSliderCursor:SetMax(max)
+function Element:SetMax(max)
 	self.m_max = max
 	self:Update()
 end
-function gui.PFMSliderCursor:GetType()
+function Element:GetType()
 	return self.m_type
 end
-function gui.PFMSliderCursor:IsHorizontal()
-	return self:GetType() == gui.PFMSliderCursor.TYPE_HORIZONTAL
+function Element:IsHorizontal()
+	return self:GetType() == Element.TYPE_HORIZONTAL
 end
-function gui.PFMSliderCursor:IsVertical()
-	return self:GetType() == gui.PFMSliderCursor.TYPE_VERTICAL
+function Element:IsVertical()
+	return self:GetType() == Element.TYPE_VERTICAL
 end
-function gui.PFMSliderCursor:SetInteger(b)
+function Element:SetInteger(b)
 	self.m_intType = b
 end
-function gui.PFMSliderCursor:GetBounds(el)
+function Element:GetBounds(el)
 	el = el or self
 	return self:IsHorizontal() and el:GetWidth() or el:GetHeight()
 end
-function gui.PFMSliderCursor:OffsetToFraction(v)
+function Element:OffsetToFraction(v)
 	return (v - self:GetBounds() / 2) / (self:GetBounds(self:GetParent()) - self:GetBounds())
 end
-function gui.PFMSliderCursor:FractionToOffset(fraction)
+function Element:FractionToOffset(fraction)
 	fraction = fraction * (self:GetBounds(self:GetParent()) - self:GetBounds())
 	return fraction + self:GetBounds() / 2
 end
-function gui.PFMSliderCursor:SetStepSize(stepSize)
-	self.m_stepSize = stepSize
+function Element:GetRange()
+	return self:GetMax() - self:GetMin()
 end
-function gui.PFMSliderCursor:GetStepSize(stepSize)
-	return self.m_stepSize
+function Element:FractionToValue(fraction)
+	return self:GetMin() + fraction * self:GetRange()
 end
-function gui.PFMSliderCursor:GetFraction()
-	return self.m_fraction:Get()
-end
-function gui.PFMSliderCursor:GetFractionProperty()
-	return self.m_fraction
-end
-function gui.PFMSliderCursor:SetValue(value)
-	local fraction = (value - self:GetMin()) / (self:GetMax() - self:GetMin())
-	self:SetFraction(fraction)
-end
-function gui.PFMSliderCursor:GetValue()
-	local value = self:GetMin() + self:GetFraction() * (self:GetMax() - self:GetMin())
-	if self.m_intType == true then
-		value = math.round(value)
+function Element:ValueToFraction(value)
+	local range = self:GetRange()
+	if range == 0 then
+		return 0
 	end
-	return value
+	return (value - self:GetMin()) / range
 end
-function gui.PFMSliderCursor:SetFraction(fraction, inputOrigin)
-	if self.m_skipSetFraction then
+function Element:GetFraction()
+	return self:ValueToFraction(self:GetValue())
+end
+function Element:SetFraction(fraction, inputOrigin)
+	local val = self:FractionToValue(fraction)
+	self:SetValue(val, inputOrigin)
+end
+function Element:GetValueProperty()
+	return self.m_value
+end
+function Element:SetValue(value, inputOrigin)
+	if self.m_skipSetValue then
 		return
 	end
-	local stepSize = self:GetStepSize()
-	if stepSize > 0.0 then
-		fraction = math.round(fraction, stepSize)
-	end
-	self.m_skipSetFraction = true -- Prevent callbacks from changing fraction while we're still doing our thing
-	self.m_fraction:Set(math.clamp(fraction, 0.0, 1.0))
-	self:UpdateFraction(inputOrigin)
-	self.m_skipSetFraction = nil
+	self.m_skipSetValue = true -- Prevent callbacks from changing fraction while we're still doing our thing
+	self.m_value:Set(value)
+	self:UpdateValue(inputOrigin)
+	self.m_skipSetValue = nil
 end
-function gui.PFMSliderCursor:UpdateFraction(inputOrigin)
+function Element:GetValue()
+	return self.m_value:Get()
+end
+function Element:UpdateValue(inputOrigin)
 	local v = self:GetFraction() * (self:GetBounds(self:GetParent()) - self:GetBounds())
 	if self:IsHorizontal() then
 		self:SetX(v)
 	else
 		self:SetY(v)
 	end
-	self:CallCallbacks("OnFractionChanged", self:GetFraction(), inputOrigin)
+	self:CallCallbacks("OnValueChanged", self:GetValue(), self:GetFraction(), inputOrigin)
 end
-function gui.PFMSliderCursor:OnSizeChanged(w, h)
-	self:UpdateFraction()
+function Element:OnSizeChanged(w, h)
+	self:UpdateValue()
 end
-function gui.PFMSliderCursor:SetType(type)
+function Element:SetType(type)
 	self.m_type = type
 end
-function gui.PFMSliderCursor:IsActive()
+function Element:IsActive()
 	return self.m_cursorStartOffset ~= nil
 end
-function gui.PFMSliderCursor:SetCursorDragModeEnabled(enabled)
+function Element:SetCursorDragModeEnabled(enabled)
 	if enabled then
+		self.m_cursorTracker = gui.CursorTracker()
+		self.m_cursorTracker:SetSticky(true)
+		gui.set_cursor_input_mode(gui.CURSOR_MODE_HIDDEN)
+		self.m_dragStartValue = self:GetValue()
+		self:SetThinkingEnabled(true)
+
 		self:SetCursorMovementCheckEnabled(true)
 		self.m_cursorStartOffset = self:IsHorizontal() and self:GetParent():GetCursorPos().x
 			or self:GetParent():GetCursorPos().y
 		self:CallCallbacks("OnUserInputStarted", self:GetFraction())
 		return
 	end
+	if self.m_dragStartValue == nil then
+		return
+	end
+	self.m_cursorTracker = nil
+	gui.set_cursor_input_mode(gui.CURSOR_MODE_NORMAL)
+	self.m_dragStartValue = nil
+	self:SetThinkingEnabled(false)
+
 	self:SetCursorMovementCheckEnabled(false)
 	self.m_cursorStartOffset = nil
 	self:CallCallbacks("OnUserInputEnded", self:GetFraction())
 end
-function gui.PFMSliderCursor:MouseCallback(button, state, mods)
+function Element:MouseCallback(button, state, mods)
 	if button == input.MOUSE_BUTTON_LEFT then
 		if state == input.STATE_PRESS then
 			self:SetCursorDragModeEnabled(true)
@@ -144,63 +164,59 @@ function gui.PFMSliderCursor:MouseCallback(button, state, mods)
 	end
 	return util.EVENT_REPLY_HANDLED
 end
-function gui.PFMSliderCursor:SetWeight(weight)
+function Element:SetWeight(weight)
 	self.m_weight = weight
 end
-function gui.PFMSliderCursor:GetWeight()
+function Element:GetWeight()
 	return self.m_weight
 end
-function gui.PFMSliderCursor:OnCursorMoved(x, y)
+function Element:OnThink()
+	if self.m_cursorTracker ~= nil then
+		self.m_cursorTracker:Update()
+	end
+end
+function Element:OnRemove()
+	self:SetCursorDragModeEnabled(false)
+end
+function Element:GetDiscreteStepSize()
+	return math.get_largest_power_of_10(self:GetMax()) / 100.0
+end
+function Element:OnCursorMoved(x, y)
 	--print(self,self:GetParent():GetCursorPos().x)
 
 	local p = self:GetParent()
-	local value
+	local pos
 	local extent
 	if self:IsHorizontal() then
 		extent = p:GetWidth()
-		value = p:GetCursorPos().x
+		pos = p:GetCursorPos().x
 	else
 		extent = p:GetHeight()
-		value = p:GetCursorPos().y
+		pos = p:GetCursorPos().y
 	end
-	local fraction = (extent > 0) and (value / extent) or 0.0
-	local stepSize = self:GetStepSize()
-	if stepSize > 0.0 then
-		fraction = fraction - (fraction % stepSize)
-	end
-	self:SetFraction(fraction, "user")
-
-	--[[if(self.m_cursorStartOffset == nil) then return end
-	local v = self:IsHorizontal() and (self:GetX() +x) or (self:GetY() +y)
-	local vDelta = v -self.m_cursorStartOffset
-	vDelta = vDelta *self:GetWeight()
-	if(vDelta == 0.0) then return end
-	if(self:GetStepSize() == 0.0) then
-		self.m_cursorStartOffset = v
-		local sz = self:IsHorizontal() and (self:GetParent():GetWidth() -self:GetWidth()) or (self:GetParent():GetHeight() -self:GetHeight())
-		if(sz > 0) then
-			local step = vDelta /sz
-			self:SetFraction(self:GetFraction() +step)
-		end
+	self.m_cursorTracker:Update()
+	local dt = self.m_cursorTracker:GetTotalDeltaPosition()
+	if input.is_shift_key_down() then
+		local value = self.m_dragStartValue + math.floor(dt.x / 4) / 100.0
+		value = math.clamp(value, self:GetMin(), self:GetMax())
+		self:SetValue(value, "user")
 		return
 	end
-
-	-- Note: Our cursor element behaves slightly different than the actual mouse cursor.
-	-- When moving in the range [0,1], the cursor element will start at offset 0 and move to width -cursorWidth (if the slider is horizontal).
-	-- The mouse cursor, however, has to start at offset 0 and move all the way to width. This causes a visual disconnect between the mouse cursor
-	-- and the cursor element, so we scale the mouse cursor step size so that both of them match visually.
-	local cursorStepSize = (self:IsHorizontal() and self:GetParent():GetWidth() or self:GetParent():GetHeight()) /(1.0 /self:GetStepSize())
-	cursorStepSize = cursorStepSize -(cursorStepSize /self:FractionToOffset(self:GetStepSize()))
-
-	cursorStepSize = math.max(cursorStepSize,1.0) -- TODO: Something fishy with this, see resolution bars in Filmmaker Cycles render tab
-	if(cursorStepSize <= 0.0) then return end
-
-	local sign = math.sign(vDelta)
-	vDelta = math.abs(vDelta)
-	while(vDelta >= cursorStepSize) do
-		self:SetFraction(self:GetFraction() +self:GetStepSize() *sign)
-		self.m_cursorStartOffset = self.m_cursorStartOffset +cursorStepSize *sign
-		vDelta = vDelta -cursorStepSize
-	end]]
+	local stepSize = self:GetStepSize()
+	if stepSize == 0.0 then
+		stepSize = 0.001
+	end
+	if input.is_ctrl_key_down() then
+		stepSize = self:GetDiscreteStepSize()
+	end
+	local range = self:GetMax() - self:GetMin()
+	local changePerPixel = range / extent
+	local pixelsPerStep = stepSize / changePerPixel
+	local value = self.m_dragStartValue + math.floor(dt.x / pixelsPerStep) * stepSize
+	if input.is_ctrl_key_down() then
+		value = math.round(value / stepSize) * stepSize
+	end
+	value = math.clamp(value, self:GetMin(), self:GetMax())
+	self:SetValue(value, "user")
 end
-gui.register("WIPFMSliderCursor", gui.PFMSliderCursor)
+gui.register("WIPFMSliderCursor", Element)

@@ -10,11 +10,21 @@ util.register_class("gui.CursorTracker", util.CallbackHandler)
 function gui.CursorTracker:__init(cursorPos)
 	util.CallbackHandler.__init(self)
 	self.m_startPos = cursorPos or input.get_cursor_pos()
+	self.m_origCursorPos = input.get_cursor_pos()
+	self.m_accDelta = Vector2(0, 0)
 	self.m_curPos = self.m_startPos:Copy()
 end
 
+function gui.CursorTracker:SetSticky(sticky)
+	self.m_sticky = sticky
+end
+
+function gui.CursorTracker:IsSticky()
+	return self.m_sticky or false
+end
+
 function gui.CursorTracker:GetTotalDeltaPosition()
-	return self.m_curPos - self.m_startPos
+	return self.m_accDelta
 end
 function gui.CursorTracker:GetStartPos()
 	return self.m_startPos
@@ -45,7 +55,14 @@ function gui.CursorTracker:Update(pos)
 	if dt.x == 0 and dt.y == 0 then
 		return dt
 	end
-	self.m_curPos = pos
+	self.m_accDelta = self.m_accDelta + dt
+	if self:IsSticky() then
+		self.m_startPos = self.m_startPos + dt
+		input.set_cursor_pos(self.m_origCursorPos)
+		self.m_curPos = self.m_origCursorPos:Copy()
+	else
+		self.m_curPos = self.m_curPos + dt
+	end
 	self:CallCallbacks("OnCursorMoved", dt)
 	return dt
 end

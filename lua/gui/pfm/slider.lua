@@ -10,13 +10,14 @@ include("/pfm/fonts.lua")
 include("/gui/wicontextmenu.lua")
 include("/gui/pfm/entry_edit_window.lua")
 include("sliderbar.lua")
+include("sliderarrow.lua")
 
-util.register_class("gui.PFMSlider", gui.Base)
+local Element = util.register_class("gui.PFMSlider", gui.Base)
 
-function gui.PFMSlider:__init()
+function Element:__init()
 	gui.Base.__init(self)
 end
-function gui.PFMSlider:OnInitialize()
+function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(128, 20)
@@ -39,6 +40,31 @@ function gui.PFMSlider:OnInitialize()
 	self.m_sliderBarUpper:AddCallback("OnUserInputEnded", function(el, value)
 		self:CallCallbacks("OnUserInputEnded", value)
 	end)
+	self.m_sliderBarUpper:GetCursor():AddCallback("TranslateFraction", function(el, value)
+		return self:TranslateValue(value)
+	end)
+
+	local elArrow = gui.create("WIPFMSliderArrow", self)
+	elArrow:SetArrowType("left")
+	elArrow:SetVisible(false)
+	elArrow:AddCallback("OnClicked", function(el)
+		local val = self:GetValue() - self.m_sliderBarUpper:GetCursor():GetDiscreteStepSize()
+		self:SetValue(math.clamp(val, self:GetMin(), self:GetMax()))
+	end)
+	self.m_elArrowLeft = elArrow
+
+	local elArrow = gui.create("WIPFMSliderArrow", self)
+	elArrow:SetArrowType("right")
+	elArrow:SetVisible(false)
+	elArrow:AddCallback("OnClicked", function(el)
+		local val = self:GetValue() + self.m_sliderBarUpper:GetCursor():GetDiscreteStepSize()
+		self:SetValue(math.clamp(val, self:GetMin(), self:GetMax()))
+	end)
+	elArrow:SetX(self:GetWidth() - elArrow:GetWidth())
+	elArrow:SetAnchor(1, 0, 1, 1)
+	self.m_elArrowRight = elArrow
+
+	--self.m_sliderBarUpper:GetCursor():SetStepSize(stepSize / (self:GetMax() - self:GetMin()))
 
 	--[[self.m_sliderBarLower = gui.create("WIPFMSliderBar",self,0,self.m_sliderBarUpper:GetBottom())
 	self.m_sliderBarLower:SetWidth(self:GetWidth())
@@ -65,37 +91,53 @@ function gui.PFMSlider:OnInitialize()
 
 	self:AddStyleClass("input_field")
 end
-function gui.PFMSlider:OnSizeChanged(w, h)
+function Element:OnCursorEntered()
+	self.m_elArrowLeft:SetVisible(true)
+	self.m_elArrowRight:SetVisible(true)
+end
+function Element:OnCursorExited()
+	self.m_elArrowLeft:SetVisible(false)
+	self.m_elArrowRight:SetVisible(false)
+end
+function Element:TranslateValue(value)
+	local stepSize = self:GetStepSize()
+	local min = self:GetMin()
+	local max = self:GetMax()
+	local range = max - min
+	value = min + value * range
+	if input.is_alt_key_down() then
+		value = math.floor(value)
+	end
+	value = (value / range) - min
+
+	return value
+end
+function Element:OnSizeChanged(w, h)
 	if util.is_valid(self.m_sliderBarUpper) then
 		self.m_sliderBarUpper:Update()
 	end
 	--if(util.is_valid(self.m_sliderBarLower)) then self.m_sliderBarLower:Update() end
 end
-function gui.PFMSlider:SetStepSize(stepSize)
+function Element:SetStepSize(stepSize)
 	self.m_stepSize = stepSize
 	local strStepSize = tostring(stepSize)
 	local decimalPlacePos = strStepSize:find("%.")
 	self.m_numDecimalPlaces = 0
-	if decimalPlacePos ~= nil then
-		if stepSize == 0 then
-			self.m_numDecimalPlaces = 2
-		else
-			self.m_numDecimalPlaces = #strStepSize - decimalPlacePos - 1
-		end
+	if stepSize == 0 then
+		self.m_numDecimalPlaces = 2
+	elseif decimalPlacePos ~= nil then
+		self.m_numDecimalPlaces = #strStepSize - decimalPlacePos - 1
 	end
+	self.m_sliderBarUpper:SetStepSize(stepSize)
 	self:UpdateStepSize()
 end
-function gui.PFMSlider:GetStepSize()
+function Element:GetStepSize()
 	return self.m_stepSize
 end
-function gui.PFMSlider:UpdateStepSize()
-	local stepSize = self:GetStepSize()
-	if util.is_valid(self.m_sliderBarUpper) then
-		self.m_sliderBarUpper:GetCursor():SetStepSize(stepSize / (self:GetMax() - self:GetMin()))
-	end
+function Element:UpdateStepSize()
 	--if(util.is_valid(self.m_sliderBarLower)) then self.m_sliderBarLower:GetCursor():SetStepSize(stepSize /(self:GetMax() -self:GetMin())) end
 end
-function gui.PFMSlider:SetLeftRightValueRatio(ratio)
+function Element:SetLeftRightValueRatio(ratio)
 	self.m_leftRightRatio:Set(math.clamp(ratio, 0.0, 1.0))
 
 	local scaleRight = 0.0
@@ -112,102 +154,118 @@ function gui.PFMSlider:SetLeftRightValueRatio(ratio)
 	self.m_sliderBarUpper:SetWeight(scaleLeft)
 	--self.m_sliderBarLower:SetWeight(scaleRight)
 end
-function gui.PFMSlider:GetLeftRightValueRatio()
+function Element:GetLeftRightValueRatio()
 	return self.m_leftRightRatio:Get()
 end
-function gui.PFMSlider:GetLeftRightValueRatioProperty()
+function Element:GetLeftRightValueRatioProperty()
 	return self.m_leftRightRatio
 end
-function gui.PFMSlider:GetLeftSliderBar()
+function Element:GetLeftSliderBar()
 	return self.m_sliderBarUpper
 end
-function gui.PFMSlider:GetRightSliderBar()
+function Element:GetRightSliderBar()
 	return self.m_sliderBarLower
 end
-function gui.PFMSlider:SetLeftRange(min, max, optDefault)
+function Element:SetLeftRange(min, max, optDefault)
+	self.m_defaultMin = min
+	self.m_defaultMax = max
 	local bar = self:GetLeftSliderBar()
 	if util.is_valid(bar) then
 		bar:SetRange(min, max, optDefault)
 	end
 end
-function gui.PFMSlider:SetRightRange(min, max, optDefault)
+function Element:SetRightRange(min, max, optDefault)
 	local bar = self:GetRightSliderBar()
 	if util.is_valid(bar) then
 		bar:SetRange(min, max, optDefault)
 	end
 end
-function gui.PFMSlider:SetRange(min, max, optDefault)
+function Element:SetRange(min, max, optDefault)
 	self:SetLeftRange(min, max, optDefault)
 	self:SetRightRange(min, max, optDefault)
 	self:UpdateStepSize()
 end
-function gui.PFMSlider:GetRange()
+function Element:GetRange()
 	local bar = self:GetLeftSliderBar()
 	if util.is_valid(bar) then
 		return bar:GetMin(), bar:GetMax(), bar:GetDefault()
 	end
 	return 0.0, 0.0, 0.0
 end
-function gui.PFMSlider:SetDefault(default)
+function Element:SetDefault(default)
 	self:GetLeftSliderBar():SetDefault(default)
 	-- self:GetRightSliderBar():SetDefault(default)
 end
-function gui.PFMSlider:SetLeftValue(value)
+function Element:SetLeftValue(value)
 	local bar = self:GetLeftSliderBar()
 	if util.is_valid(bar) then
 		bar:SetValue(value)
 	end
 end
-function gui.PFMSlider:SetRightValue(value) end -- local bar = self:GetRightSliderBar() if(util.is_valid(bar)) then bar:SetValue(value) end end
-function gui.PFMSlider:SetValue(optValue)
+function Element:SetRightValue(value) end -- local bar = self:GetRightSliderBar() if(util.is_valid(bar)) then bar:SetValue(value) end end
+function Element:SetValueAndUpdateRange(val)
+	self:SetValue(val)
+	local max = self.m_defaultMax or val
+	max = math.max(max, val)
+
+	local min = self.m_defaultMin or val
+	min = math.min(min, val)
+
+	self:GetLeftSliderBar():SetMin(min)
+	self:GetLeftSliderBar():SetMax(max)
+	self:ScheduleUpdate()
+end
+function Element:SetValue(optValue)
 	self:SetLeftValue(optValue)
 	self:SetRightValue(optValue)
 end
-function gui.PFMSlider:SetInteger(b)
+function Element:SetInteger(b)
 	self:GetLeftSliderBar():SetInteger(b)
 	-- self:GetRightSliderBar():SetInteger(b)
 end
-function gui.PFMSlider:GetLeftMin(value)
+function Element:GetLeftMin(value)
 	local bar = self:GetLeftSliderBar()
 	return util.is_valid(bar) and bar:GetMin() or 0.0
 end
-function gui.PFMSlider:GetRightMin(value) end -- local bar = self:GetRightSliderBar() return util.is_valid(bar) and bar:GetMin() or 0.0 end
-function gui.PFMSlider:GetLeftMax(value)
+function Element:GetRightMin(value) end -- local bar = self:GetRightSliderBar() return util.is_valid(bar) and bar:GetMin() or 0.0 end
+function Element:GetLeftMax(value)
 	local bar = self:GetLeftSliderBar()
 	return util.is_valid(bar) and bar:GetMax() or 0.0
 end
-function gui.PFMSlider:GetRightMax(value) end -- local bar = self:GetRightSliderBar() return util.is_valid(bar) and bar:GetMax() or 0.0 end
-function gui.PFMSlider:GetLeftDefault(value)
+function Element:GetRightMax(value) end -- local bar = self:GetRightSliderBar() return util.is_valid(bar) and bar:GetMax() or 0.0 end
+function Element:GetLeftDefault(value)
 	local bar = self:GetLeftSliderBar()
 	return util.is_valid(bar) and bar:GetDefault() or 0.0
 end
-function gui.PFMSlider:GetRightDefault(value) end -- local bar = self:GetRightSliderBar() return util.is_valid(bar) and bar:GetDefault() or 0.0 end
-function gui.PFMSlider:GetLeftValue(value)
+function Element:GetRightDefault(value) end -- local bar = self:GetRightSliderBar() return util.is_valid(bar) and bar:GetDefault() or 0.0 end
+function Element:GetLeftValue(value)
 	local bar = self:GetLeftSliderBar()
 	return util.is_valid(bar) and bar:GetValue() or 0.0
 end
-function gui.PFMSlider:GetRightValue(value) end -- local bar = self:GetRightSliderBar() return util.is_valid(bar) and bar:GetValue() or 0.0 end
-function gui.PFMSlider:GetMin()
+function Element:GetRightValue(value) end -- local bar = self:GetRightSliderBar() return util.is_valid(bar) and bar:GetValue() or 0.0 end
+function Element:GetMin()
 	return self:GetLeftMin()
 end
-function gui.PFMSlider:GetMax()
+function Element:GetMax()
 	return self:GetLeftMax()
 end
-function gui.PFMSlider:SetMin(min)
+function Element:SetMin(min)
+	self.m_defaultMin = min
 	local bar = self:GetLeftSliderBar()
 	bar:SetMin(min)
 
 	-- bar = self:GetRightSliderBar()
 	-- bar:SetMin(min)
 end
-function gui.PFMSlider:SetMax(min)
+function Element:SetMax(max)
+	self.m_defaultMax = max
 	local bar = self:GetLeftSliderBar()
-	bar:SetMax(min)
+	bar:SetMax(max)
 
 	-- bar = self:GetRightSliderBar()
-	-- bar:SetMax(min)
+	-- bar:SetMax(max)
 end
-function gui.PFMSlider:GrowRangeToValue(value)
+function Element:GrowRangeToValue(value)
 	if value < self:GetMin() then
 		self:SetMin(value)
 	end
@@ -215,17 +273,17 @@ function gui.PFMSlider:GrowRangeToValue(value)
 		self:SetMax(value)
 	end
 end
-function gui.PFMSlider:GetDefault()
+function Element:GetDefault()
 	return self:GetLeftDefault()
 end
-function gui.PFMSlider:ResetToDefault()
+function Element:ResetToDefault()
 	self:SetLeftValue(self:GetLeftDefault())
 	self:SetRightValue(self:GetRightDefault())
 end
-function gui.PFMSlider:GetValue()
+function Element:GetValue()
 	return self:GetLeftValue()
 end
-function gui.PFMSlider:CreateSliderRangeEditWindow(min, max, default, fOnClose)
+function Element:CreateSliderRangeEditWindow(min, max, default, fOnClose)
 	local teMin
 	local teMax
 	local teDefault
@@ -247,13 +305,54 @@ function gui.PFMSlider:CreateSliderRangeEditWindow(min, max, default, fOnClose)
 	p:SetWindowSize(Vector2i(202, 160))
 	p:Update()
 end
-function gui.PFMSlider:MouseCallback(button, state, mods)
-	if button == input.MOUSE_BUTTON_LEFT then
-		if util.is_valid(self.m_sliderBarUpper) then
-			self.m_sliderBarUpper
-				:GetCursor()
-				:InjectMouseInput(self.m_sliderBarUpper:GetCursor():GetCursorPos(), button, state, mods)
+function Element:OnThink()
+	if self.m_cursorTracker ~= nil then
+		self.m_cursorTracker:Update()
+		local dt = self.m_cursorTracker:GetTotalDeltaPosition()
+		if math.abs(dt.x) > 3 or math.abs(dt.y) > 3 then
+			self.m_cursorTracker = nil
+			self:SetThinkingEnabled(false)
+
+			if util.is_valid(self.m_sliderBarUpper) then
+				self.m_sliderBarUpper:GetCursor():InjectMouseInput(
+					self.m_sliderBarUpper:GetCursor():GetCursorPos(),
+					input.MOUSE_BUTTON_LEFT,
+					input.STATE_PRESS,
+					input.MOD_NONE
+				)
+			end
 		end
+	end
+end
+function Element:OnUpdate()
+	local lb = self:GetLeftSliderBar()
+	if util.is_valid(lb) then
+		lb:Update()
+	end
+end
+function Element:MouseCallback(button, state, mods)
+	if state == input.STATE_RELEASE then
+		self.m_cursorTracker = nil
+		util.remove(self.m_elEntry)
+		local el = gui.create("WINumericEntry", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+		el:SetText(tostring(self:GetValue()))
+		el:AddCallback("OnTextEntered", function(...)
+			util.remove(el, true)
+			local val = tonumber(el:GetText()) or 0.0
+			self:SetValueAndUpdateRange(val)
+		end)
+		el:AddCallback("OnFocusKilled", function()
+			util.remove(el, true)
+		end)
+		-- el:SetMaxLength(2)
+		el:RequestFocus()
+		el:SetCaretPos(#el:GetText())
+		self.m_elEntry = el
+		return util.EVENT_REPLY_HANDLED
+	end
+	if button == input.MOUSE_BUTTON_LEFT then
+		self.m_cursorTracker = gui.CursorTracker()
+		self:SetThinkingEnabled(true)
 		-- if(util.is_valid(self.m_sliderBarLower)) then self.m_sliderBarLower:GetCursor():InjectMouseInput(self.m_sliderBarLower:GetCursor():GetCursorPos(),button,state,mods) end
 		return util.EVENT_REPLY_HANDLED
 	elseif button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE then
@@ -293,7 +392,7 @@ function gui.PFMSlider:MouseCallback(button, state, mods)
 	end
 	return util.EVENT_REPLY_HANDLED
 end
-function gui.PFMSlider:SetText(text)
+function Element:SetText(text)
 	if util.is_valid(self.m_text) == false then
 		return
 	end
@@ -301,11 +400,11 @@ function gui.PFMSlider:SetText(text)
 	self.m_baseText = text
 	self:UpdateText()
 end
-function gui.PFMSlider:SetUnit(unit)
+function Element:SetUnit(unit)
 	self.m_unit = unit
 	self:UpdateText()
 end
-function gui.PFMSlider:UpdateText()
+function Element:UpdateText()
 	if self.m_baseText == nil then
 		return
 	end
@@ -321,4 +420,4 @@ function gui.PFMSlider:UpdateText()
 	self.m_text:SizeToContents()
 	self.m_text:CenterToParent(true)
 end
-gui.register("WIPFMSlider", gui.PFMSlider)
+gui.register("WIPFMSlider", Element)
