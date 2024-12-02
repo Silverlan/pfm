@@ -111,7 +111,7 @@ function gui.PFMWeightSliderBar:OnInitialize()
 	cursorRect:SetColor(Color(126, 126, 126))
 
 	self.m_cursor = cursorRect:Wrap("WIPFMSliderCursor")
-	self.m_cursor:AddCallback("OnFractionChanged", function(el, fraction)
+	self.m_cursor:AddCallback("OnValueChanged", function(el, value, fraction)
 		self:CallCallbacks("OnFractionChanged", fraction)
 	end)
 
