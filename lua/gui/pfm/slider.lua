@@ -203,21 +203,35 @@ function Element:SetLeftValue(value)
 	end
 end
 function Element:SetRightValue(value) end -- local bar = self:GetRightSliderBar() if(util.is_valid(bar)) then bar:SetValue(value) end end
-function Element:SetValueAndUpdateRange(val)
-	self:SetValue(val)
-	local max = self.m_defaultMax or val
-	max = math.max(max, val)
-
-	local min = self.m_defaultMin or val
-	min = math.min(min, val)
-
-	self:GetLeftSliderBar():SetMin(min)
-	self:GetLeftSliderBar():SetMax(max)
-	self:ScheduleUpdate()
+function Element:SetValueAndUpdateRange(val, useDefaultRange)
+	self:SetValue(val, useDefaultRange)
 end
-function Element:SetValue(optValue)
+function Element:SetValue(optValue, useDefaultRange)
 	self:SetLeftValue(optValue)
 	self:SetRightValue(optValue)
+
+	if optValue ~= nil then
+		local val = optValue
+		local max = val
+		if useDefaultRange then
+			max = self.m_defaultMax or max
+		else
+			max = self:GetMax()
+		end
+		max = math.max(max, val)
+
+		local min = val
+		if useDefaultRange then
+			min = self.m_defaultMin or min
+		else
+			min = self:GetMin()
+		end
+		min = math.min(min, val)
+
+		self:GetLeftSliderBar():SetMin(min)
+		self:GetLeftSliderBar():SetMax(max)
+		self:ScheduleUpdate()
+	end
 end
 function Element:SetInteger(b)
 	self:GetLeftSliderBar():SetInteger(b)
@@ -339,7 +353,7 @@ function Element:MouseCallback(button, state, mods)
 		el:AddCallback("OnTextEntered", function(...)
 			util.remove(el, true)
 			local val = tonumber(el:GetText()) or 0.0
-			self:SetValueAndUpdateRange(val)
+			self:SetValueAndUpdateRange(val, true)
 		end)
 		el:AddCallback("OnFocusKilled", function()
 			util.remove(el, true)
