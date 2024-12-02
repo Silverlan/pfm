@@ -187,17 +187,19 @@ function Element:OnCursorMoved(x, y)
 	local p = self:GetParent()
 	local pos
 	local extent
+	local dt = self.m_cursorTracker:GetTotalDeltaPosition()
 	if self:IsHorizontal() then
 		extent = p:GetWidth()
 		pos = p:GetCursorPos().x
+		dt = dt.x
 	else
 		extent = p:GetHeight()
 		pos = p:GetCursorPos().y
+		dt = dt.y
 	end
 	self.m_cursorTracker:Update()
-	local dt = self.m_cursorTracker:GetTotalDeltaPosition()
 	if input.is_shift_key_down() then
-		local value = self.m_dragStartValue + math.floor(dt.x / 4) / 100.0
+		local value = self.m_dragStartValue + math.floor(dt / 4) / 100.0
 		value = math.clamp(value, self:GetMin(), self:GetMax())
 		self:SetValue(value, "user")
 		return
@@ -212,7 +214,7 @@ function Element:OnCursorMoved(x, y)
 	local range = self:GetMax() - self:GetMin()
 	local changePerPixel = range / extent
 	local pixelsPerStep = stepSize / changePerPixel
-	local value = self.m_dragStartValue + math.floor(dt.x / pixelsPerStep) * stepSize
+	local value = self.m_dragStartValue + math.floor(dt / pixelsPerStep) * stepSize
 	if input.is_ctrl_key_down() then
 		value = math.round(value / stepSize) * stepSize
 	end
