@@ -7,7 +7,6 @@
 ]]
 
 include("/gui/shader_graph/shader_graph.lua")
-include("/gui/pfm/editors/content_view.lua")
 
 local Element = util.register_class("gui.PFMShaderEditor", gui.Base)
 
