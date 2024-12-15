@@ -46,6 +46,7 @@ function Wrapper:InitializeElement()
 			end
 		end
 	)
+	wrapper:SetUseAltMode(true)
 	self.m_wrapper = wrapper
 	self.m_controlElement = el
 	return wrapper, el
