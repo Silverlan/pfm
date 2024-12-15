@@ -213,7 +213,7 @@ end
 function gui.PFMControlsMenu:AddDropDownMenu(name, identifier, options, defaultOption, onChange)
 	local menu = gui.create("WIDropDownMenu", self)
 	for _, option in pairs(options) do
-		menu:AddOption(option[2], option[1])
+		menu:AddOption(tostring(option[2]), tostring(option[1]))
 	end
 	local wrapper = menu:Wrap("WIEditableEntry")
 	apply_text(wrapper, name)
@@ -272,15 +272,16 @@ function gui.PFMControlsMenu:SetValue(identifier, value)
 	if util.is_valid(ctrl.element) == false then
 		return
 	end
-	if ctrl.element:GetClass() == "widropdownmenu" then
+	local class = ctrl.element:GetClass()
+	if class == "widropdownmenu" then
 		ctrl.element:SelectOption(value)
-	elseif ctrl.element:GetClass() == "wipfmslider" then
+	elseif class == "wipfmslider" then
 		ctrl.element:SetDefault(value)
-	elseif ctrl.element:GetClass() == "wipfmcolorentry" then
+	elseif class == "wipfmcolorentry" then
 		ctrl.element:SetColor(value)
-	elseif ctrl.element:GetClass() == "witextentry" then
+	elseif class == "witextentry" or class == "witext" then
 		ctrl.element:SetText(tostring(value))
-	elseif ctrl.element:GetClass() == "witoggleoption" then
+	elseif class == "witoggleoption" then
 		ctrl.element:SetChecked(value)
 	else
 		ctrl.element:SetValue(value)
