@@ -778,6 +778,7 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 				end
 			end)
 		end
+		self:UpdateTextureSlotPaths()
 
 		if texInfo.specializationType == "rma" then
 			ts:AddCallback("PopulateContextMenu", function(texSlotRMA, pContext)

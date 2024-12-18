@@ -228,6 +228,13 @@ function gui.PFMMaterialEditor:ResetOptions()
 	util.remove(self.m_mapVbox)
 	util.remove(self.m_ctrlVBox)
 end
+function gui.PFMMaterialEditor:UpdateTextureSlotPaths()
+	for identifier, texSlotData in pairs(self.m_texSlots) do
+		if texSlotData.textureSlot:IsValid() then
+			texSlotData.textureSlot:SetImportPath(self.m_texImportPath)
+		end
+	end
+end
 function gui.PFMMaterialEditor:SetMaterial(matName, mdl, reload)
 	if reload ~= true then
 		self.m_viewport:SetModel(mdl or "pfm/texture_sphere")
@@ -240,11 +247,7 @@ function gui.PFMMaterialEditor:SetMaterial(matName, mdl, reload)
 
 	local matPath = util.Path.CreateFilePath(matName)
 	matPath:PopBack() -- Pop filename
-	for identifier, texSlotData in pairs(self.m_texSlots) do
-		if texSlotData.textureSlot:IsValid() then
-			texSlotData.textureSlot:SetImportPath(matPath:GetString())
-		end
-	end
+	self.m_texImportPath = matPath:GetString()
 
 	local material
 	if reload then
@@ -273,6 +276,7 @@ function gui.PFMMaterialEditor:SetMaterial(matName, mdl, reload)
 	self:InitializeControls()
 
 	self:UpdateAlphaMode()
+	self:UpdateTextureSlotPaths()
 end
 function gui.PFMMaterialEditor:ScheduleRTPreviewUpdate(fullUpdateRequired)
 	self.m_rtPreviewUpdateRequired = fullUpdateRequired and 2 or 1
