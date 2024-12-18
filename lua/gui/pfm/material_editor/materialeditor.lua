@@ -137,7 +137,7 @@ function gui.PFMMaterialEditor:AddTextureSlot(parent, text, texIdentifier, norma
 		if util.is_valid(self.m_material) then
 			local data = self.m_material:GetDataBlock()
 			data:RemoveValue(texIdentifier)
-			self.m_material:UpdateTextures()
+			self.m_material:UpdateTextures(true)
 			self:ReloadMaterialDescriptor()
 		end
 		self:UpdateViewport()
