@@ -226,7 +226,9 @@ function gui.EditableEntry:StartEditMode(enabled)
 	if self.m_activeTarget then
 		return
 	end
-	if util.is_valid(self.m_target) and self.m_target:GetClass() == "witext" then
+	if
+		util.is_valid(self.m_target) and (self.m_target:GetClass() == "witext" or self.m_target:GetClass() == "wibase")
+	then
 		return
 	end
 	self:SetThinkingEnabled(enabled)
@@ -256,23 +258,28 @@ function gui.EditableEntry:UpdateText(value)
 	if value == nil then
 		self.m_curPresetOption = nil
 		if util.is_valid(self.m_target) then
-			text = text .. ": "
-			if self.m_target:GetClass() == "widropdownmenu" then
-				local selectedOption = self.m_target:GetSelectedOption()
-				if selectedOption ~= -1 then
-					value = self.m_target:GetOptionText(selectedOption)
-				else
+			local class = self.m_target:GetClass()
+			if class ~= "wibase" then
+				text = text .. ": "
+				if class == "widropdownmenu" then
+					local selectedOption = self.m_target:GetSelectedOption()
+					if selectedOption ~= -1 then
+						value = self.m_target:GetOptionText(selectedOption)
+					else
+						value = self.m_target:GetText()
+					end
+				elseif class == "witoggleoption" then
+					value = self.m_target:IsChecked() and "1" or "0"
+				elseif class == "witext" then
 					value = self.m_target:GetText()
+				else
+					value = tostring(self.m_target:GetValue())
 				end
-			elseif self.m_target:GetClass() == "witoggleoption" then
-				value = self.m_target:IsChecked() and "1" or "0"
-			elseif self.m_target:GetClass() == "witext" then
-				value = self.m_target:GetText()
+				if #value == 0 then
+					value = "-"
+				end
 			else
-				value = tostring(self.m_target:GetValue())
-			end
-			if #value == 0 then
-				value = "-"
+				value = ""
 			end
 		else
 			value = ""

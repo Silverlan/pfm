@@ -137,12 +137,26 @@ function gui.PFMControlsMenu:AddFileEntry(name, identifier, default, browseHandl
 	end
 	return el, wrapper
 end
+function gui.PFMControlsMenu:AddInfo(name, identifier)
+	local el = gui.create("WIBase", self)
+	apply_tooltip(el, name)
+	el:SetSize(1, 20)
+
+	local wrapper = el:Wrap("WIEditableEntry")
+	apply_text(wrapper, name)
+	if identifier ~= nil then
+		wrapper:SetName(identifier)
+		self:AddControl(identifier, el, wrapper)
+	end
+	return el, wrapper
+end
 function gui.PFMControlsMenu:AddText(name, identifier, default)
 	local el = gui.create("WIText", self)
 	apply_tooltip(el, name)
 	el:SetText(default)
 	el:SizeToContents()
-	el:SetHeight(32)
+	el:SetHeight(20)
+
 	local wrapper = el:Wrap("WIEditableEntry")
 	apply_text(wrapper, name)
 	if identifier ~= nil then

@@ -13,6 +13,9 @@ t.BACKGROUND_COLOR_HOVER = Color(48, 48, 48, 255)
 t.BACKGROUND_COLOR_SELECTED = Color(58, 58, 58, 255)
 t.SLIDER_FILL_COLOR = Color.RoyalBlue
 t.TEXT_COLOR = Color(200, 200, 200)
+t.shaderGraph = {
+	NODE_BACKGROUND_COLOR_SELECTED = Color(124, 20, 222),
+}
 
 -------------------------------------------
 ------------- END OF SETTINGS -------------
@@ -291,6 +294,15 @@ skin["background"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.BACKGROUND_COLOR_DEFAULT)
 	end,
+}
+skin["wishadergraph"] = {
+	children = {
+		["node_background_selected"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColor(GUI.shaderGraph.NODE_BACKGROUND_COLOR_SELECTED)
+			end,
+		},
+	},
 }
 skin["background2"] = {
 	Initialize = function(GUI, pElement)

@@ -7,6 +7,7 @@
 ]]
 
 include("/gui/shader_graph/shader_graph.lua")
+include("/gui/selectionrect.lua")
 
 local Element = util.register_class("gui.PFMShaderEditor", gui.Base)
 
@@ -30,19 +31,23 @@ function Element:OnInitialize()
 
 	local szDrag = 100000
 	local elDrag = gui.create("WITransformable", self, szDrag * -0.5, szDrag * -0.5, szDrag, szDrag)
-	elDrag:SetDraggable(true)
-	elDrag:GetDragArea():SetAutoAlignToParent(true)
+	--elDrag:SetDraggable(true)
+	--elDrag:GetDragArea():SetAutoAlignToParent(true)
+	self.m_transformable = elDrag
 
 	local elGraph = gui.create("WIShaderGraph", elDrag, 0, 0)
 	self.m_elGraph = elGraph
+	elGraph:SetShaderEditor(self)
 	elGraph:AddCallback("OnNodeSocketValueChanged", function(name, id, val)
 		self:SetShaderDirty()
 	end)
-	self:AddCallback("SetSize", function()
-		elGraph:SetSize(self:GetWidth(), self:GetHeight())
+	elGraph:AddCallback("OnLinksChanged", function()
+		self:SetShaderDirty()
 	end)
-	elGraph:SizeToContents()
-	elGraph:SetPos(szDrag * 0.5, szDrag * 0.5)
+	self:AddCallback("SetSize", function()
+		--elGraph:SetSize(self:GetWidth(), self:GetHeight())
+	end)
+	elGraph:SetPos(szDrag * 0.5 - elGraph:GetWidth() * 0.5, szDrag * 0.5 - elGraph:GetHeight() * 0.5)
 
 	local menuBar = gui.create("WIMenuBar", self, 0, 0, self:GetWidth(), 20, 0, 0, 1, 0)
 	menuBar
@@ -108,6 +113,9 @@ function Element:OnInitialize()
 		end)
 		:SetName("view")
 end
+function Element:GetTransformableElement()
+	return self.m_transformable
+end
 function Element:SetShaderDirty()
 	self.m_shaderReloadTime = time.cur_time() + 0.1
 	self:SetThinkingEnabled(true)
@@ -141,6 +149,8 @@ function Element:SaveAs()
 		end
 		local filePath = pDialoge:GetFilePath(true)
 		if self:Save(filePath) then
+		else
+			self:LogWarn("Failed to save shader graph '" .. filePath .. "'!")
 		end
 	end)
 	dialoge:SetRootPath(util.DirPath(shader.ShaderGraph.ROOT_PATH, "object"):GetString())
