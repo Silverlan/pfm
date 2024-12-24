@@ -133,6 +133,19 @@ function Element:OnThink()
 end
 function Element:Save(filePath)
 	local graph = self.m_elGraph:GetGraph()
+
+	-- Update node positions
+	local nodeData = self.m_elGraph:GetNodeData()
+	for _, data in pairs(nodeData) do
+		if data.frame:IsValid() then
+			local node = data.graphNode
+			local pos = data.frame:GetPos()
+			pos.x = pos.x - self.m_elGraph:GetHalfWidth()
+			pos.y = pos.y - self.m_elGraph:GetHalfHeight()
+			node:SetPos(pos)
+		end
+	end
+
 	local res, err = graph:Save("object", filePath)
 	if res == false then
 		self:LogWarn("Failed to save shader graph '" .. filePath .. "': " .. err)
