@@ -24,6 +24,7 @@ function Component:Initialize()
 end
 function Component:OnRemove()
 	self:Reset()
+	util.remove(self.m_onMovedListener)
 end
 function Component:Reset()
 	for _, ent in ipairs(self.m_entities) do
@@ -76,17 +77,15 @@ function Component:ApplyToEntity(ent)
 	table.insert(self.m_entities, ent)
 end
 function Component:Apply()
-	local childC = self:GetEntityComponent(ents.COMPONENT_CHILD)
-	if childC ~= nil then
-		local parent = childC:GetParent()
-		parent = (parent ~= nil) and parent:GetEntity() or nil
-		local parentC = (parent ~= nil) and parent:GetComponent(ents.COMPONENT_PARENT)
-		if parentC ~= nil then
-			for _, childC in ipairs(parentC:GetChildren()) do
-				local ent = childC:GetEntity()
-				if ent ~= nil then
-					self:ApplyToEntity(ent)
-				end
+	local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
+	if actorC ~= nil then
+		local actor = actorC:GetActorData()
+		local parent = actor:GetParent()
+		local actors = (parent ~= nil) and parent:GetActorList() or {}
+		for _, actor in ipairs(actors) do
+			local ent = actor:FindEntity()
+			if util.is_valid(ent) then
+				self:ApplyToEntity(ent)
 			end
 		end
 	end
@@ -104,5 +103,12 @@ function Component:Reapply()
 end
 function Component:OnEntitySpawn()
 	self:Apply()
+	local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
+	if actorC ~= nil then
+		local actor = actorC:GetActorData()
+		self.m_onMovedListener = actor:AddChangeListener("OnMoved", function(actor, oldGroup, newGroup)
+			self:Reapply()
+		end)
+	end
 end
 ents.register_component("pfm_global_shader_override", Component, "pfm")
