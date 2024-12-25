@@ -12,6 +12,16 @@ Component:RegisterMember("ApplyToMap", udm.TYPE_BOOLEAN, false, {
 		self:Reapply()
 	end,
 }, bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT))
+Component:RegisterMember("TargetShader", udm.TYPE_STRING, "", {
+	onChange = function(self)
+		self:Reapply()
+	end,
+}, bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT))
+Component:RegisterMember("ReplacementShader", udm.TYPE_STRING, "", {
+	onChange = function(self)
+		self:Reapply()
+	end,
+}, bit.bor(ents.BaseEntityComponent.MEMBER_FLAG_DEFAULT))
 
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
@@ -50,7 +60,12 @@ function Component:ApplyToEntity(ent)
 	if mdlC == nil then
 		return
 	end
-	local targetShader = "bw"
+	local replacementShader = self:GetReplacementShader()
+	if #replacementShader == 0 then
+		self:LogWarn("No replacement shader specified")
+		return
+	end
+	local targetShader = self:GetTargetShader()
 	local mdl = ent:GetModel()
 	local n = #mdl:GetTextureGroup(0)
 	local matOverrides = {}
@@ -58,15 +73,18 @@ function Component:ApplyToEntity(ent)
 		local mat = mdlC:GetRenderMaterial(matIdx)
 		if mat ~= nil then
 			local name = mat:GetName()
-			if #name > 0 and mat:GetShaderName() ~= targetShader then
-				local newMat = self.m_materialCache[name]
-				if newMat == nil then
-					newMat = mat:Copy()
-					newMat:SetShader(targetShader)
-					self.m_materialCache[name] = newMat
-					self.m_newMaterials[newMat:GetIndex()] = true
+			if #name > 0 then
+				local shaderName = mat:GetShaderName()
+				if shaderName ~= replacementShader and (#targetShader == 0 or shaderName == targetShader) then
+					local newMat = self.m_materialCache[name]
+					if newMat == nil then
+						newMat = mat:Copy()
+						newMat:SetShader(replacementShader)
+						self.m_materialCache[name] = newMat
+						self.m_newMaterials[newMat:GetIndex()] = true
+					end
+					matOverrides[name] = newMat
 				end
-				matOverrides[name] = newMat
 			end
 		end
 	end
@@ -77,6 +95,9 @@ function Component:ApplyToEntity(ent)
 	table.insert(self.m_entities, ent)
 end
 function Component:Apply()
+	if self:GetEntity():IsSpawned() == false then
+		return
+	end
 	local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
 	if actorC ~= nil then
 		local actor = actorC:GetActorData()
