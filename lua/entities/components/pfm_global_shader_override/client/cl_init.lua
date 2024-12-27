@@ -29,31 +29,45 @@ function Component:Initialize()
 	self.m_materialCache = {}
 	self.m_newMaterials = {}
 
-	self:AddEntityComponent("child")
-	self:BindEvent(ents.ChildComponent.EVENT_ON_PARENT_CHANGED, "Reapply")
+	-- self:AddEntityComponent("child")
+	-- self:BindEvent(ents.ChildComponent.EVENT_ON_PARENT_CHANGED, "UpdateParent")
 end
 function Component:OnRemove()
 	self:Reset()
 	util.remove(self.m_onMovedListener)
+	util.remove(self.m_cbOnChildAdded)
+	util.remove(self.m_cbOnChildRemoved)
 end
 function Component:Reset()
 	for _, ent in ipairs(self.m_entities) do
-		local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
-		if mdlC ~= nil then
-			local n = mdlC:GetMaterialOverrideCount()
-			for i = n - 1, 0, -1 do
-				local matOverride = mdlC:GetMaterialOverride(i)
-				if matOverride ~= nil and self.m_newMaterials[matOverride:GetIndex()] ~= nil then
-					mdlC:ClearMaterialOverride(i)
-				end
-			end
-			mdlC:UpdateRenderMeshes()
-		end
+		self:ResetEntity(ent)
 	end
 	self.m_entities = {}
 	self.m_materialCache = {}
 	self.m_newMaterials = {}
 	asset.clear_unused(asset.TYPE_MATERIAL)
+end
+function Component:ResetEntity(ent, removeFromList)
+	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
+	if mdlC ~= nil then
+		local n = mdlC:GetMaterialOverrideCount()
+		for i = n - 1, 0, -1 do
+			local matOverride = mdlC:GetMaterialOverride(i)
+			if matOverride ~= nil and self.m_newMaterials[matOverride:GetIndex()] ~= nil then
+				mdlC:ClearMaterialOverride(i)
+			end
+		end
+		mdlC:UpdateRenderMeshes()
+	end
+
+	if removeFromList then
+		for i, entOther in ipairs(self.m_entities) do
+			if util.is_same_object(entOther, ent) then
+				table.remove(self.m_entities, i)
+				break
+			end
+		end
+	end
 end
 function Component:ApplyToEntity(ent)
 	local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
@@ -118,17 +132,52 @@ function Component:Apply()
 		end
 	end
 end
+function Component:UpdateParent()
+	util.remove(self.m_cbOnChildAdded)
+	util.remove(self.m_cbOnChildRemoved)
+
+	local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
+	if actorC ~= nil then
+		local actor = actorC:GetActorData()
+		local parent = actor:GetParent()
+		self.m_cbOnChildAdded = parent:AddChangeListener("OnActorAdded", function(group, actor)
+			local ent = actor:FindEntity()
+			if util.is_valid(ent) then
+				self:ApplyToEntity(ent)
+			end
+		end)
+		self.m_cbOnChildRemoved = parent:AddChangeListener("OnActorRemoved", function(group, actor)
+			local ent = actor:FindEntity()
+			if util.is_valid(ent) then
+				self:ResetEntity(ent, true)
+			end
+		end)
+	end
+
+	self:Reapply()
+end
+function Component:SetDirty()
+	self.m_dirty = true
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
+end
+function Component:OnTick()
+	if self.m_dirty then
+		self:Reapply()
+		self.m_dirty = false
+	end
+	self:SetTickPolicy(ents.TICK_POLICY_NONE)
+end
 function Component:Reapply()
 	self:Reset()
 	self:Apply()
 end
 function Component:OnEntitySpawn()
-	self:Apply()
+	self:UpdateParent()
 	local actorC = self:GetEntityComponent(ents.COMPONENT_PFM_ACTOR)
 	if actorC ~= nil then
 		local actor = actorC:GetActorData()
 		self.m_onMovedListener = actor:AddChangeListener("OnMoved", function(actor, oldGroup, newGroup)
-			self:Reapply()
+			self:UpdateParent()
 		end)
 	end
 end

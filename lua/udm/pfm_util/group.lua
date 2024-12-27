@@ -108,6 +108,8 @@ function pfm.udm.Group:MoveActorTo(actor, targetGroup)
 	-- UDM data recursively
 	child:ReloadUdmData(udmDst:Get(udmDst:GetSize() - 1))
 
+	self:CallChangeListeners("OnActorRemoved", actor)
+	targetGroup:CallChangeListeners("OnActorAdded", actor)
 	actor:CallChangeListeners("OnMoved", self, targetGroup)
 	return true
 end
