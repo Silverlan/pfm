@@ -1862,7 +1862,7 @@ function gui.PFMActorEditor:AddControl(
 			return util.EVENT_REPLY_HANDLED
 		elseif button == input.MOUSE_BUTTON_LEFT then
 			if state == input.STATE_PRESS then
-				self:StartConstraintDragAndDropMode(child, actor, controlData.path)
+				self:StartConstraintDragAndDropMode(child, controlData.path)
 			else
 				self:EndConstraintDragAndDropMode()
 			end

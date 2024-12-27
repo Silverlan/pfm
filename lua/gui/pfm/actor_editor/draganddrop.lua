@@ -11,7 +11,13 @@ include("/gui/pfm/element_selection.lua")
 function gui.PFMActorEditor:SetActorDragAndDropFilter(filter)
 	self.m_actorDragAndDropFilter = filter
 end
-function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, propertyPath)
+function gui.PFMActorEditor:StartConstraintDragAndDropMode(selectedItems, propertyPath)
+	if type(selectedItems) ~= "table" then
+		selectedItems = { selectedItems }
+	end
+	if #selectedItems == 0 then
+		return
+	end
 	local isActorDragAndDrop = (propertyPath == nil)
 	if isActorDragAndDrop then
 		propertyPath = "ec/pfm_actor/pose"
@@ -23,6 +29,9 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 		return
 	end
 
+	local elItem = selectedItems[1]
+	local actorData = self.m_treeElementToActorData[elItem]
+	local actor = actorData.actor
 	local ent = actor:FindEntity()
 	local memberInfo = util.is_valid(ent) and pfm.get_member_info(propertyPath, ent) or nil
 	if
@@ -36,6 +45,12 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 		return
 	end
 
+	local actors = {}
+	for _, item in ipairs(selectedItems) do
+		local actorData = self.m_treeElementToActorData[item]
+		table.insert(actors, actorData.actor)
+	end
+
 	local elItemHeader = elItem:GetHeader()
 
 	local p = gui.create("WIDragGhost")
@@ -44,11 +59,14 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 
 	local callbacks = self.m_constraintDragAndDropItems
 	local function initialize_drag()
-		local elOutline = gui.create("WIElementSelectionOutline", self)
-		table.insert(self.m_constraintDragAndDropItems, elOutline)
-		elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MAJOR)
-		elOutline:SetTargetElement({ elItemHeader })
-		elOutline:Update()
+		for _, elItem in ipairs(selectedItems) do
+			local elItemHeader = elItem:GetHeader()
+			local elOutline = gui.create("WIElementSelectionOutline", self)
+			table.insert(self.m_constraintDragAndDropItems, elOutline)
+			elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MAJOR)
+			elOutline:SetTargetElement({ elItemHeader })
+			elOutline:Update()
+		end
 
 		local tItems = {}
 		local dropped = false
@@ -103,7 +121,6 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 
 				local droppedActorUuid = elData.actorUuid
 				if elData.isCollection then
-					-- It's a collection
 					clear()
 					time.create_simple_timer(0.0, function()
 						if self:IsValid() == false then
@@ -116,18 +133,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 							and util.get_type_name(group) == "Group"
 							and util.is_same_object(group, actor:GetParent()) == false
 						then
-							local actors = { actor }
-							for _, actor in ipairs(actors) do
-								if self:MoveActorToCollection(actor, group) == false then
-									self:LogWarn(
-										"Failed to move actor '"
-											.. tostring(actor)
-											.. "' to collection '"
-											.. tostring(group)
-											.. "'..."
-									)
-								end
-							end
+							self:MoveActorsToCollection(actors, group)
 						end
 					end)
 					return
@@ -371,25 +377,27 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 			end
 		end
 		local uuid = tostring(actor:GetUniqueId())
-		for _, item in ipairs(self:GetActorItems()) do
-			if item:IsValid() and item:IsHidden() == false then
-				local uuidItem = item:GetName()
-				local actor = pfm.dereference(uuidItem)
-				if actor ~= nil then
-					if uuidItem ~= uuid then
-						add_target(uuidItem, "ec/pfm_actor/pose", item:GetHeader())
-					end
-					local componentItems = self:GetActorComponentItems(actor)
-					for _, cItem in ipairs(componentItems) do
-						if cItem:IsValid() and cItem:IsHidden() == false then
-							local componentType = cItem:GetName()
-							local propertyItems = self:GetPropertyEntries(uuidItem, componentType)
-							for _, propItem in ipairs(propertyItems) do
-								if propItem:IsValid() and propItem:IsHidden() == false then
-									local header = propItem:GetHeader()
-									if util.is_valid(header) and propItem ~= elItem then
-										local itemPropertyPath = propItem:GetIdentifier()
-										add_target(uuidItem, itemPropertyPath, header)
+		if #selectedItems == 1 then
+			for _, item in ipairs(self:GetActorItems()) do
+				if item:IsValid() and item:IsHidden() == false then
+					local uuidItem = item:GetName()
+					local actor = pfm.dereference(uuidItem)
+					if actor ~= nil then
+						if uuidItem ~= uuid then
+							add_target(uuidItem, "ec/pfm_actor/pose", item:GetHeader())
+						end
+						local componentItems = self:GetActorComponentItems(actor)
+						for _, cItem in ipairs(componentItems) do
+							if cItem:IsValid() and cItem:IsHidden() == false then
+								local componentType = cItem:GetName()
+								local propertyItems = self:GetPropertyEntries(uuidItem, componentType)
+								for _, propItem in ipairs(propertyItems) do
+									if propItem:IsValid() and propItem:IsHidden() == false then
+										local header = propItem:GetHeader()
+										if util.is_valid(header) and propItem ~= elItem then
+											local itemPropertyPath = propItem:GetIdentifier()
+											add_target(uuidItem, itemPropertyPath, header)
+										end
 									end
 								end
 							end
@@ -406,25 +414,27 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(elItem, actor, proper
 				end
 			end
 		end
-		for _, item in ipairs(self:GetActorItems()) do
-			if item:IsValid() and item:IsHidden() == false then
-				local uuidItem = item:GetName()
-				local actor = pfm.dereference(uuidItem)
-				if actor ~= nil then
-					if uuidItem ~= uuid then
-						add_target(uuidItem, "ec/pfm_actor/pose", item:GetHeader())
-					end
-					local componentItems = self:GetActorComponentItems(actor)
-					for _, cItem in ipairs(componentItems) do
-						if cItem:IsValid() and cItem:IsHidden() == false then
-							local componentType = cItem:GetName()
-							local propertyItems = self:GetPropertyEntries(uuidItem, componentType)
-							for _, propItem in ipairs(propertyItems) do
-								if propItem:IsValid() and propItem:IsHidden() == false then
-									local header = propItem:GetHeader()
-									if util.is_valid(header) and propItem ~= elItem then
-										local itemPropertyPath = propItem:GetIdentifier()
-										add_target(uuidItem, itemPropertyPath, header)
+		if #selectedItems == 1 then
+			for _, item in ipairs(self:GetActorItems()) do
+				if item:IsValid() and item:IsHidden() == false then
+					local uuidItem = item:GetName()
+					local actor = pfm.dereference(uuidItem)
+					if actor ~= nil then
+						if uuidItem ~= uuid then
+							add_target(uuidItem, "ec/pfm_actor/pose", item:GetHeader())
+						end
+						local componentItems = self:GetActorComponentItems(actor)
+						for _, cItem in ipairs(componentItems) do
+							if cItem:IsValid() and cItem:IsHidden() == false then
+								local componentType = cItem:GetName()
+								local propertyItems = self:GetPropertyEntries(uuidItem, componentType)
+								for _, propItem in ipairs(propertyItems) do
+									if propItem:IsValid() and propItem:IsHidden() == false then
+										local header = propItem:GetHeader()
+										if util.is_valid(header) and propItem ~= elItem then
+											local itemPropertyPath = propItem:GetIdentifier()
+											add_target(uuidItem, itemPropertyPath, header)
+										end
 									end
 								end
 							end
