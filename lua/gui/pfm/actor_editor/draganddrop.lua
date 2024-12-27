@@ -18,6 +18,16 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(selectedItems, proper
 	if #selectedItems == 0 then
 		return
 	end
+	local validSelectedItems = {}
+	for _, item in ipairs(selectedItems) do
+		if item:IsValid() then
+			table.insert(validSelectedItems, item)
+		end
+	end
+	selectedItems = validSelectedItems
+	if #selectedItems == 0 then
+		return
+	end
 	local isActorDragAndDrop = (propertyPath == nil)
 	if isActorDragAndDrop then
 		propertyPath = "ec/pfm_actor/pose"
