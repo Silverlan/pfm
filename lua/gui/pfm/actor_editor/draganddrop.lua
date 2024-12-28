@@ -41,8 +41,8 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(selectedItems, proper
 
 	local elItem = selectedItems[1]
 	local actorData = self.m_treeElementToActorData[elItem]
-	local actor = actorData.actor
-	local ent = actor:FindEntity()
+	local actor = (actorData ~= nil) and actorData.actor or nil
+	local ent = (actor ~= nil) and actor:FindEntity() or nil
 	local memberInfo = util.is_valid(ent) and pfm.get_member_info(propertyPath, ent) or nil
 	if
 		memberInfo == nil
