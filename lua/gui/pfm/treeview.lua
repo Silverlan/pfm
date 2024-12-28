@@ -93,6 +93,9 @@ function gui.PFMTreeView:AddItem(text, fPopulate, insertIndex, identifier)
 	end
 	return self.m_rootElement:AddItem(text, fPopulate, insertIndex, identifier)
 end
+function gui.PFMTreeView:GetLastSelectedElement()
+	return self.m_lastSelectedElement
+end
 function gui.PFMTreeView:OnElementSelectionChanged(elTgt, selected)
 	self.m_selectedElements[elTgt] = selected or nil
 	self:CallCallbacks("OnItemSelectChanged", elTgt, selected)
@@ -221,6 +224,18 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self:SetAutoSizeToContents(false, true)
 	self:SetSelected(false)
 end
+function gui.PFMTreeViewElement:GetSelectedElements(selected)
+	selected = selected or {}
+	if self:IsSelected() then
+		table.insert(selected, self)
+	end
+	for _, item in ipairs(self:GetItems()) do
+		if item:IsValid() then
+			item:GetSelectedElements(selected)
+		end
+	end
+	return selected
+end
 function gui.PFMTreeViewElement:CalcContentsWidth()
 	local w = 0
 	local elText = self:GetTextElement()
@@ -263,6 +278,76 @@ function gui.PFMTreeViewElement:MouseCallback(button, state, mods)
 	if util.is_valid(treeView) == false or treeView:GetSelectableMode() == gui.Table.SELECTABLE_MODE_NONE then
 		return util.EVENT_REPLY_UNHANDLED
 	end
+	local isShiftDown = input.get_key_state(input.KEY_LEFT_SHIFT) ~= input.STATE_RELEASE
+		or input.get_key_state(input.KEY_RIGHT_SHIFT) ~= input.STATE_RELEASE
+	if isShiftDown and treeView:GetSelectableMode() == gui.Table.SELECTABLE_MODE_MULTI then
+		-- Get element that was last selected (without shift) and select all elements between that and this element
+		local treeView = self:GetTreeView()
+		local elStart = treeView:GetLastSelectedElement()
+		local elEnd = self
+
+		local function getIndices(el)
+			local indices = {}
+			local parent = el:GetParentItem()
+			while parent ~= nil do
+				local idx = parent:FindItemIndex(el)
+				if idx ~= nil then
+					table.insert(indices, 1, idx)
+				end
+				el = parent
+				parent = parent:GetParentItem()
+			end
+			return indices
+		end
+		-- If elEnd lies above elStart, swap them
+		local indicesStart = getIndices(elStart)
+		local indicesEnd = getIndices(elEnd)
+		for i = 1, #indicesStart do
+			local idxStart = indicesStart[i]
+			local idxEnd = indicesEnd[i]
+			if idxEnd == nil then
+				break
+			end
+			if idxStart < idxEnd then
+				break
+			elseif idxStart > idxEnd then
+				local tmp = elStart
+				elStart = elEnd
+				elEnd = tmp
+				break
+			end
+		end
+
+		local el0
+		local elementsToSelect = {}
+		local function traverse(el)
+			if el:IsValid() == false or el:IsHidden() then
+				return false
+			end
+			if el0 == nil and el == elStart then
+				el0 = el
+			end
+			if el0 ~= nil then
+				table.insert(elementsToSelect, el)
+				if el == elEnd then
+					return true
+				end
+			end
+			for _, item in ipairs(el:GetItems()) do
+				if traverse(item) then
+					return true
+				end
+			end
+			return false
+		end
+		traverse(treeView:GetRoot())
+
+		treeView:DeselectAll()
+		for _, el in ipairs(elementsToSelect) do
+			el:Select()
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
 	local isCtrlDown = input.get_key_state(input.KEY_LEFT_CONTROL) ~= input.STATE_RELEASE
 		or input.get_key_state(input.KEY_RIGHT_CONTROL) ~= input.STATE_RELEASE
 	if treeView:GetSelectableMode() == gui.Table.SELECTABLE_MODE_SINGLE or isCtrlDown == false then
@@ -275,6 +360,10 @@ function gui.PFMTreeViewElement:MouseCallback(button, state, mods)
 	end
 
 	self:SetSelected(select, self:ShouldAutoSelectChildren())
+	local treeView = self:GetTreeView()
+	if util.is_valid(treeView) then
+		treeView.m_lastSelectedElement = self
+	end
 	return util.EVENT_REPLY_HANDLED
 end
 function gui.PFMTreeViewElement:IsRoot()
