@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Component = util.register_class("ents.PFMGlobalShaderOverride", BaseEntityComponent)
+local Component = util.register_class("ents.PFMShaderOverride", BaseEntityComponent)
 Component:RegisterMember("ApplyToMap", udm.TYPE_BOOLEAN, false, {
 	onChange = function(self)
 		self:Reapply()
@@ -181,4 +181,4 @@ function Component:OnEntitySpawn()
 		end)
 	end
 end
-ents.register_component("pfm_global_shader_override", Component, "pfm")
+ents.register_component("pfm_shader_override", Component, "pfm")

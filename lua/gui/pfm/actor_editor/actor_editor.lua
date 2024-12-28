@@ -84,91 +84,6 @@ function gui.PFMActorEditor:OnInitialize()
 	end
 	self.m_btTools:SetupContextMenu(function(pContext)
 		pfm.get_project_manager():CallCallbacks("PopulateActorCreationMenu", self, pContext)
-		addPresetModelActorOption(
-			"static_prop",
-			pContext,
-			gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,
-			"pfm_create_new_static_prop"
-		)
-		addPresetModelActorOption(
-			"dynamic_prop",
-			pContext,
-			gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP,
-			"pfm_create_new_dynamic_prop"
-		)
-		addPresetModelActorOption(
-			"articulated_actor",
-			pContext,
-			gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR,
-			"pfm_create_new_articulated_actor"
-		)
-
-		addPresetActorOption("camera", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA, "pfm_create_new_camera")
-		addPresetActorOption(
-			"particle_system",
-			pContext,
-			gui.PFMActorEditor.ACTOR_PRESET_TYPE_PARTICLE_SYSTEM,
-			"pfm_create_new_particle_system"
-		)
-		addPresetActorOption(
-			"spot_light",
-			pContext,
-			gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT,
-			"pfm_create_new_spot_light"
-		)
-		addPresetActorOption(
-			"point_light",
-			pContext,
-			gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT,
-			"pfm_create_new_point_light"
-		)
-		addPresetActorOption(
-			"directional_light",
-			pContext,
-			gui.PFMActorEditor.ACTOR_PRESET_TYPE_DIRECTIONAL_LIGHT,
-			"pfm_create_new_directional_light"
-		)
-		--[[pContext:AddItem(locale.get_text("pfm_create_new_volume_simple"),function()
-			local actor = self:CreateNewActor()
-			if(actor == nil) then return end
-			local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube_volumetric") end)
-			self:CreateNewActorComponent(actor,"pfm_volumetric",false)
-
-			local transform = actor:GetTransform()
-			transform:SetScale(Vector(10,10,10))
-			actor:SetTransform(transform)
-			self:UpdateActorComponents(actor)
-		end)]]
-		addPresetActorOption("volume", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME, "pfm_create_new_volume")
-		addPresetActorOption("actor", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR, "pfm_create_new_actor")
-		local subItem = pContext:AddItem(locale.get_text("pfm_create_new_scene"), function()
-			local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
-				if fileName == nil then
-					return
-				end
-				if self:IsValid() == false then
-					return
-				end
-				local actor = self:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_SCENEBUILD, {
-					["project"] = fileName,
-				})
-				pfm.undoredo.push("add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
-			end)
-			pFileDialog:SetRootPath("projects")
-			pFileDialog:SetExtensions({
-				pfm.Project.FORMAT_EXTENSION_BINARY,
-				pfm.Project.FORMAT_EXTENSION_ASCII,
-			})
-			pFileDialog:Update()
-		end)
-		subItem:SetTooltip(locale.get_text("pfm_create_new_scene_desc"))
-		subItem:SetName("scene")
-		addPresetActorOption(
-			"greenscreen",
-			pContext,
-			gui.PFMActorEditor.ACTOR_PRESET_TYPE_GREENSCREEN,
-			"pfm_create_greenscreen"
-		)
 
 		local filmClip = self:GetFilmClip()
 		local hasSkyComponent = false
@@ -196,6 +111,128 @@ function gui.PFMActorEditor:OnInitialize()
 			end
 		end
 
+		-- Scene
+		local sceneItem, sceneMenu = pContext:AddSubMenu(locale.get_text("pfm_scene"))
+		sceneItem:SetName("scene")
+
+		addPresetModelActorOption(
+			"articulated_actor",
+			sceneMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR,
+			"pfm_create_new_articulated_actor"
+		)
+		addPresetActorOption("camera", sceneMenu, gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA, "pfm_create_new_camera")
+		if hasSkyComponent == false then
+			addPresetActorOption("sky", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY, "pfm_add_sky")
+		end
+
+		local subItem = sceneMenu:AddItem(locale.get_text("pfm_create_new_scene"), function()
+			local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
+				if fileName == nil then
+					return
+				end
+				if self:IsValid() == false then
+					return
+				end
+				local actor = self:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_SCENEBUILD, {
+					["project"] = fileName,
+				})
+				pfm.undoredo.push("add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
+			end)
+			pFileDialog:SetRootPath("projects")
+			pFileDialog:SetExtensions({
+				pfm.Project.FORMAT_EXTENSION_BINARY,
+				pfm.Project.FORMAT_EXTENSION_ASCII,
+			})
+			pFileDialog:Update()
+		end)
+		subItem:SetTooltip(locale.get_text("pfm_create_new_scene_desc"))
+		subItem:SetName("scene")
+
+		-- Props
+		local propItem, propMenu = pContext:AddSubMenu(locale.get_text("pfm_props"))
+		propItem:SetName("prop")
+
+		addPresetModelActorOption(
+			"static_prop",
+			propMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_STATIC_PROP,
+			"pfm_create_new_static_prop"
+		)
+		addPresetModelActorOption(
+			"dynamic_prop",
+			propMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_DYNAMIC_PROP,
+			"pfm_create_new_dynamic_prop"
+		)
+
+		-- Effects
+		local effectsItem, effectsMenu = pContext:AddSubMenu(locale.get_text("pfm_effects"))
+		effectsItem:SetName("effects")
+
+		addPresetActorOption(
+			"particle_system",
+			effectsMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_PARTICLE_SYSTEM,
+			"pfm_create_new_particle_system"
+		)
+		addPresetActorOption("decal", effectsMenu, gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL, "pfm_create_new_decal")
+		if hasFogComponent == false then
+			addPresetActorOption(
+				"fog_controller",
+				effectsMenu,
+				gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG,
+				"pfm_create_new_fog_controller"
+			)
+		end
+		addPresetActorOption(
+			"shader_override",
+			effectsMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_SHADER_OVERRIDE,
+			"pfm_create_new_shader_override"
+		)
+
+		--[[pContext:AddItem(locale.get_text("pfm_create_new_volume_simple"),function()
+			local actor = self:CreateNewActor()
+			if(actor == nil) then return end
+			local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube_volumetric") end)
+			self:CreateNewActorComponent(actor,"pfm_volumetric",false)
+
+			local transform = actor:GetTransform()
+			transform:SetScale(Vector(10,10,10))
+			actor:SetTransform(transform)
+			self:UpdateActorComponents(actor)
+		end)]]
+		addPresetActorOption(
+			"volume",
+			effectsMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_VOLUME,
+			"pfm_create_new_volume"
+		)
+
+		-- Lights
+		local lightsItem, lightsMenu = pContext:AddSubMenu(locale.get_text("pfm_lights"))
+		lightsItem:SetName("lights")
+
+		addPresetActorOption(
+			"spot_light",
+			lightsMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT,
+			"pfm_create_new_spot_light"
+		)
+		addPresetActorOption(
+			"point_light",
+			lightsMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_POINT_LIGHT,
+			"pfm_create_new_point_light"
+		)
+		addPresetActorOption(
+			"directional_light",
+			lightsMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_DIRECTIONAL_LIGHT,
+			"pfm_create_new_directional_light"
+		)
+
 		local pBakingItem, pBakingMenu = pContext:AddSubMenu(locale.get_text("pfm_baking"))
 		pBakingItem:SetName("baking")
 		if hasLightmapperComponent == false then
@@ -212,19 +249,6 @@ function gui.PFMActorEditor:OnInitialize()
 			gui.PFMActorEditor.ACTOR_PRESET_TYPE_REFLECTION_PROBE,
 			"pfm_create_reflection_probe"
 		)
-		pBakingMenu:Update()
-		if hasSkyComponent == false then
-			addPresetActorOption("sky", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY, "pfm_add_sky")
-		end
-		if hasFogComponent == false then
-			addPresetActorOption(
-				"fog_controller",
-				pContext,
-				gui.PFMActorEditor.ACTOR_PRESET_TYPE_FOG,
-				"pfm_create_new_fog_controller"
-			)
-		end
-		addPresetActorOption("decal", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_DECAL, "pfm_create_new_decal")
 
 		local pVrItem, pVrMenu = pContext:AddSubMenu(locale.get_text("virtual_reality"))
 		pVrItem:SetName("virtual_reality")
@@ -245,10 +269,22 @@ function gui.PFMActorEditor:OnInitialize()
 				end
 			)
 		end
-		pVrMenu:Update()
+
+		-- Misc
+		local miscItem, miscMenu = pContext:AddSubMenu(locale.get_text("pfm_misc"))
+		miscItem:SetName("misc")
+
+		addPresetActorOption("actor", miscMenu, gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR, "pfm_create_new_actor")
+
+		addPresetActorOption(
+			"greenscreen",
+			miscMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_GREENSCREEN,
+			"pfm_create_greenscreen"
+		)
 
 		if tool.get_filmmaker():IsDeveloperModeEnabled() then
-			local pConstraintItem, pConstraintMenu = pContext:AddSubMenu(locale.get_text("constraints"))
+			local pConstraintItem, pConstraintMenu = pContext:AddSubMenu(locale.get_text("pfm_constraints"))
 			pConstraintItem:SetName("constraints")
 			addPresetActorOption(
 				"copy_location_constraint",
@@ -308,11 +344,18 @@ function gui.PFMActorEditor:OnInitialize()
 
 			addPresetActorOption(
 				"animation_driver",
-				pContext,
+				miscMenu,
 				gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER,
 				"pfm_create_animation_driver"
 			)
 		end
+		sceneMenu:Update()
+		propMenu:Update()
+		effectsMenu:Update()
+		lightsMenu:Update()
+		pBakingMenu:Update()
+		pVrMenu:Update()
+		miscMenu:Update()
 
 		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
 		local types = ents.get_registered_entity_types()
