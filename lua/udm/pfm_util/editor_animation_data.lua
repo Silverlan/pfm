@@ -171,7 +171,7 @@ function pfm.udm.EditorGraphCurveKeyData:RebuildDirtyGraphCurveSegments(baseInde
 	local graphCurve = self:GetGraphCurve()
 	local editorChannelData = graphCurve:GetEditorChannelData()
 	for _, keyframeIdx in ipairs(keyframeIndices) do
-		print("Rebuilding curve for keyframe " .. keyframeIdx .. "...")
+		pfm.log("Rebuilding curve for keyframe " .. keyframeIdx .. "...", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_DEBUG)
 		editorChannelData:RebuildGraphCurveSegment(keyframeIdx, baseIndex)
 	end
 end

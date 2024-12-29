@@ -369,7 +369,8 @@ local function calc_graph_curve_data_points(interpMethod, easingMode, pathKeys, 
 	points = math.reduce_curve_points(points, console.get_convar_float("pfm_animation_rdp_decimation_error"))
 	pfm.log(
 		"Number of points in curve segment has been reduced from " .. numOriginalPoints .. " to " .. #points,
-		pfm.LOG_CATEGORY_PFM
+		pfm.LOG_CATEGORY_PFM,
+		pfm.LOG_SEVERITY_DEBUG
 	)
 
 	timestamps = {}
@@ -730,7 +731,11 @@ function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime,
 	local panimaAnimation = animClip:GetPanimaAnimation()
 	local panimaChannel = panimaAnimation:FindChannel(editorChannelData:GetTargetPath())
 
-	pfm.log("Initializing graph curve data in range [" .. startTime .. "," .. endTime .. "]...", pfm.LOG_CATEGORY_PFM)
+	pfm.log(
+		"Initializing graph curve data in range [" .. startTime .. "," .. endTime .. "]...",
+		pfm.LOG_CATEGORY_PFM,
+		pfm.LOG_SEVERITY_DEBUG
+	)
 	local valueIndex0 = panimaChannel:FindIndex(localStartTime, pfm.udm.EditorChannelData.TIME_EPSILON)
 	local valueIndex1 = panimaChannel:FindIndex(localEndTime, pfm.udm.EditorChannelData.TIME_EPSILON)
 	local valueType = panimaChannel:GetValueType()
