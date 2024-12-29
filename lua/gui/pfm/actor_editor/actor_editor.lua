@@ -123,7 +123,7 @@ function gui.PFMActorEditor:OnInitialize()
 		)
 		addPresetActorOption("camera", sceneMenu, gui.PFMActorEditor.ACTOR_PRESET_TYPE_CAMERA, "pfm_create_new_camera")
 		if hasSkyComponent == false then
-			addPresetActorOption("sky", pContext, gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY, "pfm_add_sky")
+			addPresetActorOption("sky", sceneMenu, gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY, "pfm_add_sky")
 		end
 
 		local subItem = sceneMenu:AddItem(locale.get_text("pfm_create_new_scene"), function()
