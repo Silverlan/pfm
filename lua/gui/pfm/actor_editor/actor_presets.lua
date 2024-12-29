@@ -36,6 +36,7 @@ gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER = 26
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_SCENEBUILD = 27
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_GREENSCREEN = 28
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_SHADER_OVERRIDE = 29
+gui.PFMActorEditor.ACTOR_PRESET_TYPE_SHADER_INPUT = 30
 
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_START = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_COPY_LOCATION
 gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_END = gui.PFMActorEditor.ACTOR_PRESET_TYPE_CONSTRAINT_CHILD_OF
@@ -205,6 +206,12 @@ function gui.PFMActorEditor:CreatePresetActor(actorType, args)
 			return
 		end
 		self:CreateNewActorComponent(actor, "pfm_shader_override", false)
+	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SHADER_INPUT then
+		actor = actor or create_new_actor("shader_input", gui.PFMActorEditor.COLLECTION_EFFECTS)
+		if actor == nil then
+			return
+		end
+		self:CreateNewActorComponent(actor, "global_shader_input", false)
 	elseif actorType == gui.PFMActorEditor.ACTOR_PRESET_TYPE_SPOT_LIGHT then
 		actor = actor or create_new_actor("spot_light", gui.PFMActorEditor.COLLECTION_LIGHTS)
 		if actor == nil then

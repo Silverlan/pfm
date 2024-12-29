@@ -191,6 +191,12 @@ function gui.PFMActorEditor:OnInitialize()
 			gui.PFMActorEditor.ACTOR_PRESET_TYPE_SHADER_OVERRIDE,
 			"pfm_create_new_shader_override"
 		)
+		addPresetActorOption(
+			"shader_input",
+			effectsMenu,
+			gui.PFMActorEditor.ACTOR_PRESET_TYPE_SHADER_INPUT,
+			"pfm_create_new_shader_input"
+		)
 
 		--[[pContext:AddItem(locale.get_text("pfm_create_new_volume_simple"),function()
 			local actor = self:CreateNewActor()
