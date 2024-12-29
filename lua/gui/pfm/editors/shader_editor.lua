@@ -146,12 +146,17 @@ function Element:Save(filePath)
 		end
 	end
 
-	local res, err = graph:Save("object", filePath)
+	local shaderType = "object"
+	local res, err = graph:Save(shaderType, filePath)
 	if res == false then
 		self:LogWarn("Failed to save shader graph '" .. filePath .. "': " .. err)
 	else
 		self:LogInfo("Saved shader graph '" .. filePath .. "'!")
 		self:UpdatePath(filePath)
+
+		local graphIdentifier = get_graph_identifier_from_file_path(filePath)
+		shader.set_shader_graph(shaderType, graphIdentifier, graph)
+		self:SetShaderDirty()
 	end
 	return res
 end
