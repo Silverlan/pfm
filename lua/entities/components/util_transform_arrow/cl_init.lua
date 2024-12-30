@@ -437,10 +437,12 @@ function Component.apply_distance_transform(factor)
 				pos = pos + cam:GetEntity():GetForward() * factor
 
 				local offset = cam:GetEntity():GetForward() * factor
-				c.m_gizmo.m_interaction.click_offset = c.m_gizmo.m_interaction.click_offset + offset
-				c.m_gizmo.m_interaction.initial_pose:SetOrigin(
-					c.m_gizmo.m_interaction.initial_pose:GetOrigin() + offset
-				)
+				if c.m_gizmo ~= nil then
+					c.m_gizmo.m_interaction.click_offset = c.m_gizmo.m_interaction.click_offset + offset
+					c.m_gizmo.m_interaction.initial_pose:SetOrigin(
+						c.m_gizmo.m_interaction.initial_pose:GetOrigin() + offset
+					)
+				end
 			end
 			break
 		end
