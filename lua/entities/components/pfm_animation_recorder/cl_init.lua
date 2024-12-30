@@ -31,6 +31,10 @@ function Component:AddEntity(actor, props)
 	recorderC:AddEntity(actor, props)
 end
 
+function Component:IsRecording()
+	local recorderC = self:GetEntityComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
+	return recorderC ~= nil and recorderC:IsRecording()
+end
 function Component:StartRecording()
 	local recorderC = self:GetEntityComponent(ents.COMPONENT_GAME_ANIMATION_RECORDER)
 	if recorderC == nil then
