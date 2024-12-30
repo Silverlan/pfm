@@ -40,7 +40,9 @@ function Component:OnRemove()
 end
 function Component:Reset()
 	for _, ent in ipairs(self.m_entities) do
-		self:ResetEntity(ent)
+		if(ent:IsValid()) then
+			self:ResetEntity(ent)
+		end
 	end
 	self.m_entities = {}
 	self.m_materialCache = {}
