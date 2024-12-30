@@ -140,8 +140,12 @@ function Component:OnCursorTargetActorChanged(hitData)
 		end
 	end
 	if util.is_valid(hitData.actor) then
-		self.m_prevActor = hitData.actor
-		self:AddOutline(hitData.actor)
+		local pm = self.m_projectManager
+		local vp = (util.is_valid(pm) and pm:GetViewport()) or nil
+		if util.is_valid(vp) and vp:GetManipulatorMode() == gui.PFMViewport.MANIPULATOR_MODE_SELECT then
+			self.m_prevActor = hitData.actor
+			self:AddOutline(hitData.actor)
+		end
 	end
 	pfm.tag_render_scene_as_dirty()
 end
@@ -152,7 +156,8 @@ function Component:GetProjectManager()
 	return self.m_projectManager
 end
 function Component:IsRecording()
-	return self:GetEntity():HasComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
+	local recorderC = self:GetEntity():GetComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
+	return recorderC ~= nil and recorderC:IsRecording()
 end
 function Component:PopulateFromSelectedProperties()
 	local ent = self:GetEntity()
@@ -162,7 +167,7 @@ function Component:PopulateFromSelectedProperties()
 		return false
 	end
 
-	local actorProperties
+	local actorProperties = {}
 	local props = actorEditor:GetSelectedProperties()
 	local hasSelectedProperties = false
 	for _, propData in ipairs(props) do
@@ -186,8 +191,9 @@ function Component:PopulateFromSelectedProperties()
 		return false
 	end
 
-	local recorderC = ent:GetComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
+	local recorderC = ent:AddComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
 	if recorderC == nil then
+		self:LogWarn("Failed to start recording: Animation recorder component not found!")
 		return false
 	end
 	for actor, props in pairs(actorProperties) do
