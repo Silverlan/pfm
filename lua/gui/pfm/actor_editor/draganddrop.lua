@@ -40,8 +40,20 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(selectedItems, proper
 	end
 
 	local elItem = selectedItems[1]
-	local actorData = self.m_treeElementToActorData[elItem]
-	local actor = (actorData ~= nil) and actorData.actor or nil
+	local function find_actor(item)
+		local actorData
+		local actor
+		while(elItem ~= nil) do
+			actorData = self.m_treeElementToActorData[elItem]
+			actor = (actorData ~= nil) and actorData.actor or nil
+			if actor ~= nil then
+				break
+			end
+			elItem = elItem:GetParentItem()
+		end
+		return actorData,actor
+	end
+	local actorData, actor = find_actor(elItem)
 	local ent = (actor ~= nil) and actor:FindEntity() or nil
 	local memberInfo = util.is_valid(ent) and pfm.get_member_info(propertyPath, ent) or nil
 	if
@@ -57,8 +69,10 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(selectedItems, proper
 
 	local actors = {}
 	for _, item in ipairs(selectedItems) do
-		local actorData = self.m_treeElementToActorData[item]
-		table.insert(actors, actorData.actor)
+		local actorData, actor = find_actor(elItem)
+		if(actor ~= nil) then
+			table.insert(actors, actor)
+		end
 	end
 
 	local elItemHeader = elItem:GetHeader()
