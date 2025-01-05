@@ -117,7 +117,7 @@ function pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1
 	local parentPose = math.ScaledTransform()
 	-- Get parent pose and convert it to world space
 	if pfm.util.is_pose_property_type(memberInfo1.type) then
-		parentPose = component:GetEffectiveMemberValue(memberInfo1.name, memberInfo1.type)
+		parentPose = math.ScaledTransform(component:GetEffectiveMemberValue(memberInfo1.name, memberInfo1.type))
 		parentPose = c1:ConvertTransformMemberPoseToTargetSpace(idx1, math.COORDINATE_SPACE_WORLD, parentPose)
 	elseif pfm.util.is_property_type_positional(memberInfo1.type) then
 		local pos = component:GetEffectiveMemberValue(memberInfo1.name, memberInfo1.type)
@@ -144,7 +144,7 @@ function pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1
 
 	-- Convert child pose to world space
 	if pfm.util.is_pose_property_type(memberInfo0.type) then
-		childPose = c0:ConvertTransformMemberPoseToTargetSpace(idx0, math.COORDINATE_SPACE_WORLD, childPose)
+		childPose = math.ScaledTransform(c0:ConvertTransformMemberPoseToTargetSpace(idx0, math.COORDINATE_SPACE_WORLD, childPose))
 	elseif pfm.util.is_property_type_positional(memberInfo0.type) then
 		local pos = childPose:GetOrigin()
 		pos = c0:ConvertTransformMemberPosToTargetSpace(idx0, math.COORDINATE_SPACE_WORLD, pos)
