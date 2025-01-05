@@ -23,6 +23,11 @@ Component:RegisterMember("Enabled", udm.TYPE_BOOLEAN, true, {
 		self:UpdateAvailability()
 	end,
 }, "def+is")
+Component:RegisterMember("HideModel", udm.TYPE_BOOLEAN, true, {
+	onChange = function(self)
+		self:UpdateVisibility()
+	end,
+}, "def")
 function Component:OnRemove()
 	util.remove(self.m_ownedImpostor)
 	util.remove(self.m_onImpostorModelChanged)
@@ -79,8 +84,13 @@ function Component:UpdateVisibility(updateIfDisabled)
 		or nil
 	if self:IsEnabled() then
 		if renderC ~= nil then
-			vis = renderC:IsVisible()
-			renderC:SetVisible(false)
+			local actorC = self:GetEntity():GetComponent(ents.COMPONENT_PFM_ACTOR)
+			if actorC ~= nil then
+				vis = actorC:IsVisible()
+			else
+				vis = true
+			end
+			renderC:SetVisible(not self:GetHideModel())
 		end
 	elseif renderC ~= nil and updateIfDisabled then
 		if renderCImpostor ~= nil then
