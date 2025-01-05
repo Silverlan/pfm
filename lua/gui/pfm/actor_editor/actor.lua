@@ -288,6 +288,31 @@ function gui.PFMActorEditor:ClearActor(uniqueId, updateUi)
 	end
 	self:TagRenderSceneAsDirty()
 end
+-- This function filters the selected elements in the tree to remove any elements that are children of other selected elements.
+function gui.PFMActorEditor:FilterSelectedElements()
+	local selected = self.m_tree:GetSelectedElements()
+	local filtered = {}
+	for el, _ in pairs(selected) do
+		local parent = el:GetParentItem()
+		local keep = true
+		while util.is_valid(parent) do
+			if selected[parent] then
+				keep = false
+				break
+			end
+			parent = parent:GetParentItem()
+		end
+		if keep then
+			filtered[el] = true
+		end
+	end
+
+	local list = {}
+	for el, _ in pairs(filtered) do
+		table.insert(list, el)
+	end
+	return list
+end
 function gui.PFMActorEditor:AddActor(actor, parentItem)
 	parentItem = parentItem or self.m_tree
 	local itemActor = parentItem:AddItem(actor:GetName(), nil, nil, tostring(actor:GetUniqueId()))
@@ -358,7 +383,10 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 		end
 		if button == input.MOUSE_BUTTON_LEFT then
 			if state == input.STATE_PRESS then
-				self:StartConstraintDragAndDropMode(itemActor, actor)
+				-- Wait for the selection to be updated before starting the drag-and-drop mode
+				time.create_simple_timer(0.0, function()
+					self:StartConstraintDragAndDropMode(self:FilterSelectedElements())
+				end)
 			else
 				self:EndConstraintDragAndDropMode()
 			end
@@ -387,12 +415,19 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 	return itemActor
 end
 
+function gui.PFMActorEditor:MoveActorsToCollection(actors, col)
+	self:LogInfo("Moving actor " .. #actors .. " to collection '" .. tostring(col) .. "'...")
+
+	local cmd = pfm.create_command("composition")
+	for _, actor in ipairs(actors) do
+		local srcGroup = actor:GetParent()
+		cmd:AddSubCommand("move_actor_to_collection", actor, srcGroup, col)
+	end
+
+	pfm.undoredo.push("move_actor_to_collection", cmd)()
+end
+
 function gui.PFMActorEditor:MoveActorToCollection(actor, col)
 	self:LogInfo("Moving actor '" .. tostring(actor) .. "' to collection '" .. tostring(col) .. "'...")
-
-	local srcGroup = actor:GetParent()
-	return pfm.undoredo.push(
-		"move_actor_to_collection",
-		pfm.create_command("move_actor_to_collection", actor, srcGroup, col)
-	)()
+	self:MoveActorsToCollection({ actor }, col)
 end
