@@ -151,6 +151,7 @@ function gui.PFMActorEditor:RemoveConstraint(actor)
 
 	local childOfC = actor:FindComponent("constraint_child_of")
 	local addSubCmd
+	local cmdUpdatePose = pfm.create_command("composition")
 	if childOfC ~= nil then
 		-- If the constraint is a child-of constraint, we have to convert the driven object's pose from local space
 		-- (relative to the driver) back to world space
@@ -173,11 +174,12 @@ function gui.PFMActorEditor:RemoveConstraint(actor)
 			end
 
 			local parentPose, childPose =
-				pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1, propertyPath1)
+				pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1, propertyPath1, false)
 			if parentPose == nil then
 				return
 			end
-			local absPose = parentPose * childPose
+			local oldPose = childPose
+			local newPose = parentPose * childPose
 
 			local memberInfo = pfm.get_member_info(propertyPath0, actor0:FindEntity())
 			if memberInfo == nil then
@@ -186,14 +188,14 @@ function gui.PFMActorEditor:RemoveConstraint(actor)
 			local oldValue
 			local newValue
 			if memberInfo.type == udm.TYPE_VECTOR3 then
-				oldValue = childPose:GetOrigin()
-				newValue = absPose:GetOrigin()
+				oldValue = oldPose:GetOrigin()
+				newValue = newPose:GetOrigin()
 			elseif memberInfo.type == udm.TYPE_QUATERNION then
-				oldValue = childPose:GetRotation()
-				newValue = absPose:GetRotation()
+				oldValue = oldPose:GetRotation()
+				newValue = newPose:GetRotation()
 			else
-				oldValue = childPose
-				newValue = absPose
+				oldValue = oldPose
+				newValue = newPose
 			end
 
 			-- We need to move the animation channels from parent space back to world space
@@ -203,30 +205,86 @@ function gui.PFMActorEditor:RemoveConstraint(actor)
 				local posMemberInfo, posPropertyPath, rotMemberInfo, rotPropertyPath =
 					pfm.util.get_transform_property_components(ent0, memberInfo0, propertyPath0)
 				if posMemberInfo ~= nil then
-					cmd:AddSubCommand(
+					cmdUpdatePose:AddSubCommand(
 						"transform_animation_channel",
 						tostring(actor0:GetUniqueId()),
 						posPropertyPath,
 						parentPose
 					)
+					cmdUpdatePose:AddSubCommand(
+						"fit_curve_keyframes_to_animation_curve",
+						tostring(actor0:GetUniqueId()),
+						posPropertyPath
+					)
 				end
 				if rotMemberInfo ~= nil then
-					cmd:AddSubCommand(
+					cmdUpdatePose:AddSubCommand(
 						"transform_animation_channel",
 						tostring(actor0:GetUniqueId()),
 						rotPropertyPath,
 						parentPose
 					)
+					cmdUpdatePose:AddSubCommand(
+						"fit_curve_keyframes_to_animation_curve",
+						tostring(actor0:GetUniqueId()),
+						rotPropertyPath
+					)
 				end
 			end
-			return actor0, propertyPath0, memberInfo.type, oldValue, newValue
+
+			local transformProperties = {}
+			if util.is_valid(ent0) then
+				local posMemberInfo, posPropertyPath, rotMemberInfo, rotPropertyPath =
+					pfm.util.get_transform_property_components(ent0, memberInfo, propertyPath0)
+				if posMemberInfo ~= nil then
+					table.insert(transformProperties, {
+						actor = actor0,
+						propertyPath = posPropertyPath,
+						memberInfo = posMemberInfo,
+						oldValue = oldPose:GetOrigin(),
+						newValue = newPose:GetOrigin(),
+					})
+				end
+				if rotMemberInfo ~= nil then
+					table.insert(transformProperties, {
+						actor = actor0,
+						propertyPath = rotPropertyPath,
+						memberInfo = rotMemberInfo,
+						oldValue = oldPose:GetRotation(),
+						newValue = newPose:GetRotation(),
+					})
+				end
+			end
+
+			if #transformProperties == 0 then
+				table.insert(transformProperties, {
+					actor = actor0,
+					propertyPath = propertyPath0,
+					memberInfo = memberInfo,
+					oldValue = oldValue,
+					newValue = newValue,
+				})
+			end
+
+			return transformProperties
 		end
-		local actor, propertyPath, propertyType, oldValue, newValue = get_property_pose_values()
-		if actor ~= nil then
+		local transformProperties = get_property_pose_values()
+		if transformProperties ~= nil then
 			local pm = pfm.get_project_manager()
 			if util.is_valid(pm) then
 				addSubCmd = function()
-					pm:ChangeActorPropertyValue(actor, propertyPath, propertyType, oldValue, newValue, nil, true, cmd)
+					for _, propInfo in ipairs(transformProperties) do
+						pm:ChangeActorPropertyValue(
+							propInfo.actor,
+							propInfo.propertyPath,
+							propInfo.memberInfo.type,
+							propInfo.oldValue,
+							propInfo.newValue,
+							nil,
+							true,
+							cmd
+						)
+					end
 				end
 			end
 		end
@@ -235,9 +293,9 @@ function gui.PFMActorEditor:RemoveConstraint(actor)
 	-- if the delete action is undone, the position has to be reset after the constraint
 	-- has been restored. To do so, we'll just add two sub-commands for resetting the position, one
 	-- after and one before. This is a bit hacky, but it works.
-	if addSubCmd ~= nil then
+	--[[if addSubCmd ~= nil then
 		addSubCmd()
-	end
+	end]]
 	local res, subCmd = cmd:AddSubCommand("delete_actors", filmClip, { tostring(actor:GetUniqueId()) })
 	if addSubCmd ~= nil then
 		addSubCmd()

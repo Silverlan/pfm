@@ -82,7 +82,7 @@ function pfm.util.get_transform_property_components(ent, memberInfo, propertyPat
 	return posMemberInfo, posPropertyPath, rotMemberInfo, rotPropertyPath
 end
 
-function pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1, propertyPath1)
+function pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1, propertyPath1, isConstrained)
 	local ent0 = actor0:FindEntity()
 	local memberInfo0 = util.is_valid(ent0) and pfm.get_member_info(propertyPath0, ent0) or nil
 	if memberInfo0 == nil then
@@ -144,7 +144,9 @@ function pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1
 
 	-- Convert child pose to world space
 	if pfm.util.is_pose_property_type(memberInfo0.type) then
-		childPose = math.ScaledTransform(c0:ConvertTransformMemberPoseToTargetSpace(idx0, math.COORDINATE_SPACE_WORLD, childPose))
+		childPose = math.ScaledTransform(
+			c0:ConvertTransformMemberPoseToTargetSpace(idx0, math.COORDINATE_SPACE_WORLD, childPose)
+		)
 	elseif pfm.util.is_property_type_positional(memberInfo0.type) then
 		local pos = childPose:GetOrigin()
 		pos = c0:ConvertTransformMemberPosToTargetSpace(idx0, math.COORDINATE_SPACE_WORLD, pos)
@@ -153,6 +155,9 @@ function pfm.util.get_constraint_participant_poses(actor0, propertyPath0, actor1
 		local rot = childPose:GetRotation()
 		rot = c0:ConvertTransformMemberRotToTargetSpace(idx0, math.COORDINATE_SPACE_WORLD, rot)
 		childPose:SetRotation(rot)
+	end
+	if isConstrained then
+		childPose = parentPose * childPose
 	end
 
 	return parentPose, childPose
