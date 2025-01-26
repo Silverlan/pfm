@@ -17,6 +17,7 @@ include("/pfm/raycast.lua")
 include("/pfm/component_manager.lua")
 include("/pfm/component_actions.lua")
 include("/pfm/util.lua")
+include("/gui/pfm/controls_menu/property_controls.lua")
 
 util.register_class("gui.PFMActorEditor", gui.Base)
 
@@ -536,19 +537,16 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 	local collapsibleContents = collapsible:GetContents()
 
 	local animSetControls = gui.create(
-		"WIPFMControlsMenu",
+		"WIPFMPropertyControls",
 		collapsibleContents,
 		0,
 		0,
 		collapsibleContents:GetWidth(),
 		collapsibleContents:GetHeight()
 	)
-	animSetControls:SetName("property_controls")
-	animSetControls:SetAutoFillContentsToWidth(true)
-	animSetControls:SetAutoFillContentsToHeight(false)
 	animSetControls:SetAutoAlignToParent(true, false)
-	animSetControls:SetFixedHeight(false)
-	animSetControls:AddCallback("OnControlAdded", function(el, name, ctrl, wrapper)
+	animSetControls:SetName("property_controls")
+	animSetControls:GetControlsMenu():AddCallback("OnControlAdded", function(el, name, ctrl, wrapper)
 		if wrapper ~= nil then
 			wrapper:AddCallback("OnValueChanged", function()
 				local filmmaker = tool.get_filmmaker()
@@ -556,9 +554,10 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 			end)
 		end
 	end)
+
 	self.m_componentPropertyGroups[uuid].componentGroups[ctype] = {
 		collapsibleGroup = collapsible,
-		controlElement = animSetControls,
+		controlElement = animSetControls:GetControlsMenu(),
 	}
 	return self.m_componentPropertyGroups[uuid].componentGroups[ctype]
 end
@@ -653,10 +652,6 @@ end
 function gui.PFMActorEditor:OnThink()
 	if self.m_updateSelectedEntities then
 		self:UpdateSelectedEntities()
-	end
-	if self.m_controlOverlayUpdateRequired then
-		self.m_controlOverlayUpdateRequired = nil
-		self:UpdateAnimatedPropertyOverlays()
 	end
 	if self.m_clearEmptyComponentPropertyGroups then
 		self:ClearEmptyComponentPropertyGroups()
@@ -1186,6 +1181,13 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 			end
 			local wrapper = animSetControls:AddPropertyControl(memberInfo.type, memberInfo.name, displayName, propInfo)
 			if wrapper ~= nil then
+				pfm.call_event_listeners(
+					"OnActorPropertyControlAdded",
+					actor,
+					controlData.path,
+					memberInfo.type,
+					wrapper
+				)
 				wrapper:SetValueTranslationFunctions(translateToInterface, translateFromInterface)
 
 				ctrl = wrapper:GetWrapperElement()
@@ -1239,7 +1241,6 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 		local identifier = memberInfo.name:replace("/", "_")
 		ctrl:SetName(identifier)
 	end
-	self:SetPropertyAnimationOverlaysDirty()
 	self:SetComponentPropertyGroupsDirty()
 	self:UpdateControlValue(controlData)
 	self:CallCallbacks("OnControlSelected", actor, udmComponent, controlData, ctrl)

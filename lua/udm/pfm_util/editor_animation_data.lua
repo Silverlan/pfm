@@ -150,7 +150,17 @@ end
 function pfm.udm.EditorGraphCurveKeyData:GetGraphCurve()
 	return self:GetParent()
 end
+function pfm.udm.EditorGraphCurveKeyData:ClearAnimationData()
+	local graphCurve = self:GetGraphCurve()
+	local editorChannelData = graphCurve:GetEditorChannelData()
+	editorChannelData:ClearAnimationData()
+	self:ClearDirtyKeyframes()
+end
 function pfm.udm.EditorGraphCurveKeyData:RebuildDirtyGraphCurveSegments(baseIndex)
+	if self:GetKeyframeCount() == 0 then
+		self:ClearAnimationData()
+		return
+	end
 	local dirtyKeyframes = self:GetDirtyKeyframes()
 
 	local keyframeIndices = {}

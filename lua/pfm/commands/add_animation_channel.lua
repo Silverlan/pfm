@@ -71,6 +71,7 @@ function Command:DoExecute()
 		end
 		return
 	end
+	tool.get_filmmaker():UpdateActorAnimationState(actor, true)
 end
 function Command:DoUndo()
 	local data = self:GetData()
@@ -93,5 +94,6 @@ function Command:DoUndo()
 		self:LogFailure("Failed to remove channel '" .. actorUuid .. "' of property '" .. propertyPath .. "'!")
 		return
 	end
+	tool.get_filmmaker():UpdateActorAnimationState(actor, false)
 end
 pfm.register_command("add_animation_channel", Command)

@@ -60,11 +60,6 @@ function Element:MakeActorPropertyAnimated(actor, targetPath, valueType, makeAni
 	end
 end
 function Element:UpdateActorAnimationState(actor, animated)
-	local actorEditor = self:GetActorEditor()
-	if util.is_valid(actorEditor) then
-		actorEditor:SetPropertyAnimationOverlaysDirty()
-	end
-
 	if animated == false then
 		local animManager = self:GetAnimationManager()
 		if animManager ~= nil then
@@ -190,9 +185,6 @@ end
 function Element:SetActorBoneTransformProperty(actor, propType, value, udmType) -- TODO: Obsolete?
 	self:SetActorGenericProperty(actor, "ec/animated/bone/" .. propType, value, udmType)
 end
-function Element:IsInAnimationMode()
-	return self:GetTimelineMode() == gui.PFMTimeline.EDITOR_GRAPH
-end
 function Element:GetAnimatedPropertyData(actor, path)
 	local path = panima.Channel.Path(path)
 	local componentName, memberName = ents.PanimaComponent.parse_component_channel_path(path)
@@ -234,137 +226,29 @@ function Element:ToChannelValue(value, valueType)
 	return pfm.to_editor_channel_value(value, valueType)
 end
 
--- For internal use only.
--- This function will change the value of the property of an actor. The value will be assigned differently depending on various factors:
--- 1) If the filmmaker is in animation mode, the value will always be assigned as an animated value
--- 2) Else:
---    2.1) If there is no animation channel for the property, the value will be assigned as the base value
---    2.2) Else:
---       2.2.1) If there is only one value present in the animation channel, that value will be overwritten
---       2.2.2) If there is more than one value present, this function will not do anything (in this case this function should never be called)
--- If the value is assigned as animated value, and no animation channel or keyframe exists for the current timestamp, they will be created.
--- In some cases the value may be changed continuously (e.g. by slider manipulation). In this case no undo/redo command is pushed onto
--- the stack until 'final' is set to true, which indicates that the manipulation has ended. The 'oldValue' in this case is the value from before the
--- manipulation has started.
-function Element:ChangeActorPropertyValue(
-	actor,
-	targetPath,
-	udmType,
-	oldValue,
-	value,
-	baseIndex,
-	final,
-	parentCmd,
-	cmdKeyframe
-)
-	local fm = tool.get_filmmaker()
-	local isInAnimMode = self:IsInAnimationMode()
-	local animManager = fm:GetAnimationManager()
-	local anim, channel = animManager:FindAnimationChannel(actor, targetPath, false)
-	if isInAnimMode or (channel ~= nil and channel:GetValueCount() < 2) then
-		if isInAnimMode then
-			if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-				self:LogDebug(
-					"Graph editor is active. Value "
-						.. tostring(value)
-						.. " of property '"
-						.. targetPath
-						.. "' will be assigned as animation value..."
-				)
-			end
-		else
-			if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-				self:LogDebug(
-					"Animation channel for property '"
-						.. targetPath
-						.. "' contains less than two values. Value "
-						.. tostring(value)
-						.. " will be assigned as animation value, as well as base value..."
-				)
-			end
-		end
-		local time
-		if isInAnimMode == false then
-			time = (channel:GetValueCount() > 0) and channel:GetTime(0) or 0.0
-		end
-		time = time or fm:GetTimeOffset()
+function Element:ChangeActorPropertyStaticValue(actor, targetPath, udmType, oldValue, value, final, parentCmd)
+	if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
+		self:LogDebug("Changing static value " .. tostring(value) .. " of property '" .. targetPath .. "'...")
+	end
 
-		local actorUuid = tostring(actor:GetUniqueId())
+	if oldValue == nil then
+		local componentName, memberName =
+			ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
 
-		local animData, propData = self:GetAnimatedPropertyData(actor, targetPath, time)
-		local oldValueChannel, valueTypeChannel = self:ToChannelValue(oldValue, animData.valueType)
-		local newValueChannel = self:ToChannelValue(value, animData.valueType)
-		local underlyingType = udm.get_underlying_numeric_type(valueTypeChannel)
-		local function set_keyframe_value(cmd, oldVal, newVal)
-			local n = baseIndex or (udm.get_numeric_component_count(valueTypeChannel) - 1)
-			for i = 0, n do
-				cmd:AddSubCommand(
-					"set_keyframe_value",
-					actorUuid,
-					targetPath,
-					time,
-					underlyingType,
-					(oldVal ~= nil) and udm.get_numeric_component(oldVal, i) or nil,
-					udm.get_numeric_component(newVal, i),
-					i
-				)
-				cmd:AddSubCommand("reset_keyframe_handles", actorUuid, targetPath, underlyingType, time, i)
-			end
+		if componentName == nil then
+			self:LogFailure("Failed to parse property path '" .. targetPath .. "'!")
+			return
 		end
 
-		local newCmdKeyframe
-		if cmdKeyframe == nil then
-			if animData ~= false then
-				-- We have to create the keyframe as a separate command. This is because if the value is changed
-				-- using a slider, we need the keyframe immediately, even though the final undo/redo command for the value change
-				-- isn't created until the user lets go of the slider.
-				local cmd = pfm.create_command("keyframe_property_composition", actorUuid, targetPath, baseIndex)
-				local res, o =
-					cmd:AddSubCommand("create_keyframe", actorUuid, animData.path, valueTypeChannel, time, baseIndex)
-				if res == pfm.Command.RESULT_SUCCESS and o ~= nil then
-					set_keyframe_value(cmd, oldValueChannel, oldValueChannel) -- Required to restore value on redo
-					cmd:Execute()
-					newCmdKeyframe = cmd
-					if final then
-						cmdKeyframe = newCmdKeyframe
-					end
-				end
-			else
-				self:LogErr("Missing animation data for property path '" .. targetPath .. "'!")
-			end
-		end
-		local cmd = pfm.create_command(parentCmd, "keyframe_property_composition", actorUuid, targetPath, baseIndex)
-		if cmdKeyframe ~= nil then
-			-- This is required so that the original property is restored properly on undo after the keyframe
-			-- is removed
-			cmd:AddSubCommand("set_actor_property", tostring(actor:GetUniqueId()), targetPath, oldValue, value, udmType)
-
-			-- We need this to undo the keyframe that was created
-			cmd:AddSubCommandObject(cmdKeyframe)
-		end
-		if not isInAnimMode then
-			cmd:AddSubCommand("set_actor_property", tostring(actor:GetUniqueId()), targetPath, oldValue, value, udmType)
-		end
-		set_keyframe_value(cmd, oldValueChannel, newValueChannel)
-		if parentCmd == nil then
-			if final then
-				pfm.undoredo.push("change_animation_value", cmd)()
-			else
-				cmd:Execute()
-			end
-		end
-
-		return newCmdKeyframe
-	else
-		if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
-			self:LogDebug(
-				"Graph editor is not active. Value "
-					.. tostring(value)
-					.. " of property '"
-					.. targetPath
-					.. "' will be applied as base value only..."
+		local c = actor:FindComponent(componentName)
+		if c == nil then
+			self:LogFailure(
+				"Could not find component '" .. componentName .. "' in actor '" .. tostring(actor:GetUniqueId()) .. "'!"
 			)
+			return
 		end
+
+		oldValue = c:GetMemberValue(memberName:GetString())
 	end
 
 	local cmd = pfm.create_command(
@@ -383,4 +267,163 @@ function Element:ChangeActorPropertyValue(
 			cmd:Execute()
 		end
 	end
+end
+
+function Element:ChangeActorPropertyKeyframeValue(
+	actor,
+	targetPath,
+	udmType,
+	oldValue,
+	value,
+	baseIndex,
+	final,
+	parentCmd,
+	cmdKeyframe,
+	time
+)
+	local fm = tool.get_filmmaker()
+	local animManager = fm:GetAnimationManager()
+	local anim, channel, animClip = animManager:FindAnimationChannel(actor, targetPath, false)
+	if log.is_log_level_enabled(log.SEVERITY_DEBUG) then
+		self:LogDebug("Changing keyframe value " .. tostring(value) .. " of property '" .. targetPath .. "'...")
+	end
+	time = time or fm:GetTimeOffset()
+
+	local actorUuid = tostring(actor:GetUniqueId())
+
+	if oldValue == nil then
+		if channel ~= nil and channel:GetValueCount() > 0 then
+			local idx0, idx1, factor = channel:FindInterpolationIndices(animClip:ToDataTime(time))
+			if idx0 ~= nil then
+				local v0 = channel:GetValue(idx0)
+				local v1 = channel:GetValue(idx1)
+				value = udm.lerp(v0, v1, factor)
+			end
+		else
+			local componentName, memberName =
+				ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(targetPath))
+
+			if componentName == nil then
+				self:LogFailure("Failed to parse property path '" .. targetPath .. "'!")
+				return
+			end
+
+			local c = actor:FindComponent(componentName)
+			if c == nil then
+				self:LogFailure(
+					"Could not find component '"
+						.. componentName
+						.. "' in actor '"
+						.. tostring(actor:GetUniqueId())
+						.. "'!"
+				)
+				return
+			end
+
+			oldValue = c:GetMemberValue(memberName:GetString())
+		end
+	end
+	if value == nil then
+		value = oldValue
+	end
+
+	local animData, propData = self:GetAnimatedPropertyData(actor, targetPath, time)
+	local oldValueChannel, valueTypeChannel = self:ToChannelValue(oldValue, udmType)
+	local newValueChannel = self:ToChannelValue(value, udmType)
+	local underlyingType = udm.get_underlying_numeric_type(valueTypeChannel)
+	local function set_keyframe_value(cmd, oldVal, newVal)
+		local n = baseIndex or (udm.get_numeric_component_count(valueTypeChannel) - 1)
+		for i = 0, n do
+			cmd:AddSubCommand(
+				"set_keyframe_value",
+				actorUuid,
+				targetPath,
+				time,
+				underlyingType,
+				(oldVal ~= nil) and udm.get_numeric_component(oldVal, i) or nil,
+				udm.get_numeric_component(newVal, i),
+				i
+			)
+			cmd:AddSubCommand("reset_keyframe_handles", actorUuid, targetPath, underlyingType, time, i)
+		end
+	end
+
+	local newCmdKeyframe
+	if cmdKeyframe == nil then
+		if animData ~= false then
+			-- We have to create the keyframe as a separate command. This is because if the value is changed
+			-- using a slider, we need the keyframe immediately, even though the final undo/redo command for the value change
+			-- isn't created until the user lets go of the slider.
+			local cmd = pfm.create_command("keyframe_property_composition", actorUuid, targetPath, baseIndex)
+			local res, o =
+				cmd:AddSubCommand("create_keyframe", actorUuid, animData.path, valueTypeChannel, time, baseIndex)
+			if res == pfm.Command.RESULT_SUCCESS and o ~= nil then
+				set_keyframe_value(cmd, oldValueChannel, oldValueChannel) -- Required to restore value on redo
+				cmd:Execute()
+				newCmdKeyframe = cmd
+				if final then
+					cmdKeyframe = newCmdKeyframe
+				end
+			end
+		else
+			self:LogErr("Missing animation data for property path '" .. targetPath .. "'!")
+		end
+	end
+	local cmd = pfm.create_command(parentCmd, "keyframe_property_composition", actorUuid, targetPath, baseIndex)
+	if cmdKeyframe ~= nil then
+		-- This is required so that the original property is restored properly on undo after the keyframe
+		-- is removed
+		cmd:AddSubCommand("set_actor_property", tostring(actor:GetUniqueId()), targetPath, oldValue, value, udmType)
+
+		-- We need this to undo the keyframe that was created
+		cmd:AddSubCommandObject(cmdKeyframe)
+	end
+	set_keyframe_value(cmd, oldValueChannel, newValueChannel)
+	if parentCmd == nil then
+		if final then
+			pfm.undoredo.push("change_animation_value", cmd)()
+		else
+			cmd:Execute()
+		end
+	end
+
+	return newCmdKeyframe
+end
+
+-- For internal use only.
+-- This function will change the value of the property of an actor.
+-- If the value is animated, and no animation channel or keyframe exists for the current timestamp, they will be created.
+-- In some cases the value may be changed continuously (e.g. by slider manipulation). In this case no undo/redo command is pushed onto
+-- the stack until 'final' is set to true, which indicates that the manipulation has ended. The 'oldValue' in this case is the value from before the
+-- manipulation has started.
+function Element:ChangeActorPropertyValue(
+	actor,
+	targetPath,
+	udmType,
+	oldValue,
+	value,
+	baseIndex,
+	final,
+	parentCmd,
+	cmdKeyframe
+)
+	local fm = tool.get_filmmaker()
+	local animManager = fm:GetAnimationManager()
+	local anim, channel = animManager:FindAnimationChannel(actor, targetPath, false)
+	local isStaticValue = (channel == nil or channel:GetValueCount() == 0)
+	if isStaticValue then
+		self:ChangeActorPropertyStaticValue(actor, targetPath, udmType, oldValue, value, final, parentCmd)
+		return
+	end
+	self:ChangeActorPropertyKeyframeValue(
+		actor,
+		targetPath,
+		udmType,
+		oldValue,
+		value,
+		baseIndex,
+		final,
+		parentCmd,
+		cmdKeyframe
+	)
 end

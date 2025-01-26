@@ -111,20 +111,6 @@ function gui.PFMCoreViewportBase:UpdateAspectRatio()
 	cam:SetAspectRatio(self.m_aspectRatioWrapper:GetAspectRatio())
 	cam:UpdateMatrices()
 end
-function gui.PFMCoreViewportBase:ShowAnimationOutline(show)
-	if show == false then
-		util.remove(self.m_animOutline)
-		return
-	end
-	if util.is_valid(self.m_animOutline) then
-		return
-	end
-	local vpInner = self:GetViewport()
-	local el = gui.create("WIOutlinedRect", vpInner, 0, 0, vpInner:GetWidth(), vpInner:GetHeight(), 0, 0, 1, 1)
-	el:SetColor(pfm.get_color_scheme_color("red"))
-	el:SetZPos(10)
-	self.m_animOutline = el
-end
 function gui.PFMCoreViewportBase:InitializeCustomScene()
 	local sceneCreateInfo = ents.SceneComponent.CreateInfo()
 	sceneCreateInfo.sampleCount = prosper.SAMPLE_COUNT_1_BIT

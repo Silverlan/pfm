@@ -309,4 +309,19 @@ skin["background2"] = {
 		pElement:SetColor(GUI.BACKGROUND_COLOR2)
 	end,
 }
+skin["keyframe_marker_static"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(Color.White)
+	end,
+}
+skin["keyframe_marker_animated"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(Color.White)
+	end,
+}
+skin["keyframe_marker_animated_frame"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(Color(230, 75, 61))
+	end,
+}
 gui.register_skin("pfm", t, skin, "default")

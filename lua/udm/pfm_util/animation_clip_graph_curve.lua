@@ -48,6 +48,11 @@ function pfm.udm.EditorChannelData:GetKeyframeTimeBoundaries(startTime, endTime,
 	return startTimeBoundary, endTimeBoundary
 end
 
+function pfm.udm.EditorChannelData:ClearAnimationData()
+	local editorGraphCurve = self:GetGraphCurve()
+	editorGraphCurve:ClearAnimationData()
+end
+
 function pfm.udm.EditorChannelData:RebuildGraphCurveSegment(keyIndex, typeComponentIndex, minTime, maxTime)
 	local keyIndexStart = keyIndex
 	local keyIndexEnd = keyIndex + 1
@@ -527,6 +532,8 @@ function pfm.udm.EditorGraphCurve:RebuildDirtyGraphCurveSegments()
 			keyData:RebuildDirtyGraphCurveSegments(i - 1)
 
 			filmClip:CallChangeListeners("OnGraphCurveAnimationDataChanged", self, animClip, channel, i - 1)
+		elseif keyData:GetKeyframeCount() == 0 then
+			keyData:ClearAnimationData()
 		end
 	end
 end
@@ -711,6 +718,17 @@ function pfm.udm.EditorGraphCurve:CalcUiCurveValues(typeComponentIndex, translat
 		table.insert(curveValues, { t, v })
 	end
 	return curveValues
+end
+
+function pfm.udm.EditorGraphCurve:ClearAnimationData()
+	local editorChannelData = self:GetEditorChannelData()
+	local editorAnimData = editorChannelData:GetEditorAnimationData()
+	local animClip = editorAnimData:GetAnimationClip()
+	local channel = animClip:FindChannel(editorChannelData:GetTargetPath())
+	if channel == nil then
+		return
+	end
+	channel:GetPanimaChannel():ClearAnimationData()
 end
 
 function pfm.udm.EditorGraphCurve:InitializeCurveSegmentAnimationData(startTime, endTime)

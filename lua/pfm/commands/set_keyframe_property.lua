@@ -136,6 +136,13 @@ function Command:Execute(...)
 		return false
 	end
 	self:RebuildDirtyGraphCurveSegments()
+
+	local data = self:GetData()
+	local actor = pfm.dereference(data:GetValue("actor", udm.TYPE_STRING))
+	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
+	if actor ~= nil then
+		pfm.call_event_listeners("OnKeyframePropertyChanged", actor, propertyPath)
+	end
 	return true
 end
 function Command:Undo(...)
@@ -144,6 +151,13 @@ function Command:Undo(...)
 		return false
 	end
 	self:RebuildDirtyGraphCurveSegments()
+
+	local data = self:GetData()
+	local actor = pfm.dereference(data:GetValue("actor", udm.TYPE_STRING))
+	local propertyPath = data:GetValue("propertyPath", udm.TYPE_STRING)
+	if actor ~= nil then
+		pfm.call_event_listeners("OnKeyframePropertyChanged", actor, propertyPath)
+	end
 	return true
 end
 pfm.register_command("keyframe_property_composition", Command)

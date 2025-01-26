@@ -260,12 +260,6 @@ function gui.PFMTimeline:SetEditor(type)
 		self.m_timelineGraph:SetVisible(type == gui.PFMTimeline.EDITOR_GRAPH)
 	end
 
-	local pm = tool.get_filmmaker()
-	local vp = pm:GetViewport()
-	if util.is_valid(vp) then
-		vp:ShowAnimationOutline(type == gui.PFMTimeline.EDITOR_GRAPH)
-	end
-
 	self:UpdateEditorButtonInactiveMaterial(
 		gui.PFMTimeline.EDITOR_CLIP,
 		"gui/pfm/icon_mode_timeline",
@@ -282,12 +276,8 @@ function gui.PFMTimeline:SetEditor(type)
 		"gui/pfm/icon_mode_grapheditor_preselected"
 	)
 
+	local pm = tool.get_filmmaker()
 	pm:UpdateBookmarks()
-
-	local actorEditor = pm:GetActorEditor()
-	if util.is_valid(actorEditor) then
-		actorEditor:UpdateAnimatedPropertyOverlays()
-	end
 end
 function gui.PFMTimeline:UpdateEditorButtonInactiveMaterial(editorType, matRegular, matPreselected)
 	local bt = ((editorType == gui.PFMTimeline.EDITOR_CLIP) and self.m_btClipEditor)

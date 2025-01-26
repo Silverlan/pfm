@@ -6,83 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-function gui.PFMActorEditor:UpdateAnimatedPropertyOverlay(uuid, controlData)
-	local pm = tool.get_filmmaker()
-	local timeline = pm:GetTimeline()
-	local inGraphEditor = (timeline:GetEditor() == gui.PFMTimeline.EDITOR_GRAPH)
+include("/gui/keyframe_marker.lua")
 
-	local filmClip = self:GetFilmClip()
-	local actor = (filmClip ~= nil) and filmClip:FindActorByUniqueId(uuid) or nil
-	local animManager = pm:GetAnimationManager()
-	local anim, channel, animClip
-	if actor ~= nil and animManager ~= nil then
-		anim, channel, animClip = animManager:FindAnimationChannel(actor, controlData.controlData.path)
-	end
-	util.remove(controlData.animatedPropertyOverlay)
-	if channel == nil then
-		-- Property is not animated
-		return
-	end
-
-	local ctrl = controlData.control
-	if util.is_valid(ctrl) == false then
-		return
-	end
-
-	controlData.animatedPropertyOverlay = nil
-	local outlineParent = ctrl
-	if channel:GetValueCount() >= 2 then -- Disable the field if there is more than one animation value
-		if inGraphEditor == false then
-			local elDisabled = gui.create("WIRect", ctrl, 0, 0, ctrl:GetWidth(), ctrl:GetHeight(), 0, 0, 1, 1)
-			elDisabled:SetColor(Color(0, 0, 0, 200))
-			elDisabled:SetZPos(10)
-			elDisabled:SetMouseInputEnabled(true)
-			elDisabled:SetCursor(gui.CURSOR_SHAPE_HAND)
-			elDisabled:SetTooltip(locale.get_text("pfm_animated_property_tooltip"))
-			elDisabled:AddCallback("OnMouseEvent", function(el, button, state, mods)
-				if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
-					-- We have to switch to the graph editor, but that changes the overlay state (which invalidates this callback),
-					-- so we have to delay it
-					local propertyName = controlData.controlData.name
-					time.create_simple_timer(0.0, function()
-						if self:IsValid() then
-							self:ShowPropertyInGraphEditor(propertyName)
-						end
-					end)
-					return util.EVENT_REPLY_HANDLED
-				end
-			end)
-			controlData.animatedPropertyOverlay = elDisabled
-			outlineParent = elDisabled
-		end
-	end
-
-	local elOutline = gui.create(
-		"WIOutlinedRect",
-		outlineParent,
-		0,
-		0,
-		outlineParent:GetWidth(),
-		outlineParent:GetHeight(),
-		0,
-		0,
-		1,
-		1
-	)
-	elOutline:SetColor(pfm.get_color_scheme_color("orange"))
-	controlData.animatedPropertyOverlay = controlData.animatedPropertyOverlay or elDisabled
-end
-function gui.PFMActorEditor:UpdateAnimatedPropertyOverlays()
-	for uuid, controls in pairs(self.m_activeControls) do
-		for path, ctrlData in pairs(controls) do
-			self:UpdateAnimatedPropertyOverlay(uuid, ctrlData)
-		end
-	end
-end
-function gui.PFMActorEditor:SetPropertyAnimationOverlaysDirty()
-	self.m_controlOverlayUpdateRequired = true
-	self:EnableThinking()
-end
 function gui.PFMActorEditor:ClearPropertyExpression(actorData, controlData)
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()

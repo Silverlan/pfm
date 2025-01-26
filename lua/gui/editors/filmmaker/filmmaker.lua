@@ -1099,6 +1099,7 @@ function gui.WIFilmmaker:OnRemove()
 		self.m_packProjectJob:Cancel()
 	end
 	util.remove(self.m_pfmManager)
+	util.remove(self.m_cbOnActorPropertyChanged)
 	util.remove(self.m_cbDisableDefaultSceneDraw)
 	util.remove(self.m_cbOnWindowShouldClose)
 	util.remove(self.m_cbOnLuaError)
@@ -1196,6 +1197,7 @@ function gui.WIFilmmaker:SetGameViewOffset(offset)
 	self.m_updatingProjectTimeOffset = false
 
 	self:CallCallbacks("OnTimeOffsetChanged", self:GetTimeOffset())
+	pfm.call_event_listeners("OnTimeOffsetChanged", self:GetTimeOffset())
 end
 function gui.WIFilmmaker:OnActorControlSelected(actorEditor, actor, component, controlData, slider)
 	local memberInfo = controlData.getMemberInfo(controlData.name)
@@ -1243,16 +1245,6 @@ function gui.WIFilmmaker:OnGameViewReloaded()
 
 	local animManager = self:GetAnimationManager()
 	if animManager ~= nil then
-		util.remove(self.m_cbOnAnimChannelAdded)
-		self.m_cbOnAnimChannelAdded = animManager:AddEventListener(
-			ents.PFMAnimationManager.EVENT_ON_ANIMATION_CHANNEL_ADDED,
-			function()
-				local actorEditor = self:GetActorEditor()
-				if util.is_valid(actorEditor) then
-					actorEditor:SetPropertyAnimationOverlaysDirty()
-				end
-			end
-		)
 		util.remove(self.m_cbOnActorPropertyChanged)
 		self.m_cbOnActorPropertyChanged = animManager:AddEventListener(
 			ents.PFMAnimationManager.EVENT_ON_ACTOR_PROPERTY_CHANGED,

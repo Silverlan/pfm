@@ -130,5 +130,7 @@ function gui.PFMControlsMenu:AddPropertyControl(propType, identifier, localizedT
 	wrapper:SetLocalizedText(localizedText)
 	wrapper:SetDefaultValue(propInfo.defaultValue)
 	wrapper:InitializeElement()
+
+	self:CallCallbacks("OnPropertyControlAdded", wrapper)
 	return wrapper
 end

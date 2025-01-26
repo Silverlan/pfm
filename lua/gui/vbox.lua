@@ -40,30 +40,35 @@ function gui.VBox:OnUpdate()
 	local curSize = size:Copy()
 	if self.m_fixedWidth ~= true then
 		size.x = w
+	else
+		size.x = self:GetWidth()
 	end
 	if self.m_fixedHeight ~= true then
 		size.y = y
-	elseif
-		self.m_autoFillHeight == true
-		and children[autoFillChild] ~= nil
-		and children[autoFillChild]:HasAnchor() == false
-	then
-		local height
-		local sizeAdd
-		if util.is_same_object(children[autoFillChild], children[lastChild]) then
-			height = size.y - children[autoFillChild]:GetTop()
-		else
-			sizeAdd = (size.y - children[lastChild]:GetBottom())
-			height = children[autoFillChild]:GetHeight() + sizeAdd
-		end
-		children[autoFillChild]:SetHeight(height)
-		children[autoFillChild]:Update()
+	else
+		size.y = self:GetHeight()
+		if
+			self.m_autoFillHeight == true
+			and children[autoFillChild] ~= nil
+			and children[autoFillChild]:HasAnchor() == false
+		then
+			local height
+			local sizeAdd
+			if util.is_same_object(children[autoFillChild], children[lastChild]) then
+				height = size.y - children[autoFillChild]:GetTop()
+			else
+				sizeAdd = (size.y - children[lastChild]:GetBottom())
+				height = children[autoFillChild]:GetHeight() + sizeAdd
+			end
+			children[autoFillChild]:SetHeight(height)
+			children[autoFillChild]:Update()
 
-		if sizeAdd ~= nil then
-			for i = autoFillChild + 1, #children do
-				local child = children[i]
-				if child:IsVisible() and self:IsBackgroundElement(child) == false then
-					child:SetY(child:GetY() + sizeAdd)
+			if sizeAdd ~= nil then
+				for i = autoFillChild + 1, #children do
+					local child = children[i]
+					if child:IsVisible() and self:IsBackgroundElement(child) == false then
+						child:SetY(child:GetY() + sizeAdd)
+					end
 				end
 			end
 		end
