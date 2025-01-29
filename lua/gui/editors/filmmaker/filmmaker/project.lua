@@ -282,20 +282,15 @@ function Element:InitializeProjectUI(layoutName)
 				return util.EVENT_REPLY_HANDLED
 			end
 		end)
+		self.m_trackGroupSound = groupSound
 		local trackGroupSound = filmClip:FindTrackGroup("Sound")
 		if trackGroupSound ~= nil then
 			for _, track in ipairs(trackGroupSound:GetTracks()) do
 				--if(track:GetName() == "Music") then
-				local subGroup = groupSound:AddGroup(track:GetName())
-				timeline:AddTimelineItem(subGroup, timeFrame)
-
-				for _, audioClip in ipairs(track:GetAudioClips()) do
-					pfmTimeline:AddAudioClip(subGroup, audioClip)
-				end
+				self:AddAudioTrack(track)
 				--end
 			end
 		end
-		self.m_trackGroupSound = groupSound
 
 		local groupOverlay = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_overlay"))
 		local trackGroupOverlay = filmClip:FindTrackGroup("Overlay")

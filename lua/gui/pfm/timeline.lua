@@ -174,6 +174,48 @@ function gui.PFMTimeline:AddAudioClip(group, audioClip, fOnSelected)
 	self.m_timeline:AddTimelineItem(elClip, audioClip:GetTimeFrame())
 
 	self:InitializeClip(elClip, fOnSelected)
+
+	local function update_clip_data()
+		elClip:UpdateClipData()
+	end
+	audioClip:AddChangeListener("name", update_clip_data)
+
+	elClip:SetMouseInputEnabled(true)
+	elClip:AddCallback("OnMouseEvent", function(subGroup, button, state, mods)
+		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
+			local pContext = gui.open_context_menu()
+			if util.is_valid(pContext) == false then
+				return
+			end
+			pContext:SetPos(input.get_cursor_pos())
+			pContext:AddItem("Remove", function()
+				pfm.undoredo.push("delete_audio_clip", pfm.create_command("delete_audio_clip", audioClip))()
+			end)
+			-- TODO: Move PopulateClipContextMenu to gui.PFMTimeline
+			tool.get_filmmaker():PopulateClipContextMenu(audioClip, pContext)
+			pContext:AddItem("Set Start", function()
+				local oldStart = audioClip:GetTimeFrame():GetStart()
+				local p = pfm.open_single_value_edit_window(locale.get_text("duration"), function(ok, val)
+					if self:IsValid() == false then
+						return
+					end
+					if ok then
+						local newStart = tonumber(val)
+						if newStart ~= nil then
+							pfm.undoredo.push(
+								"set_clip_start",
+								pfm.create_command("set_clip_start", audioClip, oldStart, newStart)
+							)()
+						end
+					end
+				end, tostring(oldStart))
+			end)
+			pContext:Update()
+			return util.EVENT_REPLY_HANDLED
+		end
+		return util.EVENT_REPLY_UNHANDLED
+	end)
+
 	return elClip
 end
 function gui.PFMTimeline:AddOverlayClip(group, overlayClip, fOnSelected)
