@@ -13,9 +13,6 @@ include("/gui/pfm/button.lua")
 
 util.register_class("gui.CollapsibleGroup", gui.Base)
 
-function gui.CollapsibleGroup:__init()
-	gui.Base.__init(self)
-end
 function gui.CollapsibleGroup:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -50,7 +47,7 @@ function gui.CollapsibleGroup:OnInitialize()
 			elWrapper:SetWidth(w)
 		end
 	end)]]
-
+	self.m_subGroups = {}
 	self:Collapse()
 	self:SetAutoSizeToContents(false, true)
 end
@@ -66,6 +63,15 @@ function gui.CollapsibleGroup:OnSizeChanged(w, h)
 	end
 	--if(util.is_valid(self.m_contents)) then self.m_contents:SetWidth(w) end
 end
+function gui.CollapsibleGroup:RemoveGroup(groupName)
+	for i, group in ipairs(self.m_subGroups) do
+		if group:IsValid() and group:GetGroupName() == groupName then
+			group:Remove()
+			table.remove(self.m_subGroups, i)
+			break
+		end
+	end
+end
 function gui.CollapsibleGroup:AddGroup(groupName)
 	if util.is_valid(self.m_contents) == false then
 		return
@@ -76,6 +82,7 @@ function gui.CollapsibleGroup:AddGroup(groupName)
 	p:SetAutoAlignToParent(true, false)
 	p:SetGroupName(groupName)
 	p.m_titleBar:SetLeftPadding(self.m_titleBar:GetLeftPadding() + 8)
+	table.insert(self.m_subGroups, p)
 	return p
 end
 function gui.CollapsibleGroup:Collapse()
@@ -111,7 +118,11 @@ end
 function gui.CollapsibleGroup:GetContents()
 	return self.m_contents
 end
+function gui.CollapsibleGroup:GetGroupName()
+	return self.m_groupName or ""
+end
 function gui.CollapsibleGroup:SetGroupName(name)
+	self.m_groupName = name
 	if util.is_valid(self.m_titleBar) then
 		self.m_titleBar:SetGroupName(name)
 	end

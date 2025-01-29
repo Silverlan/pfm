@@ -14,6 +14,29 @@ function pfm.udm.Track:GetFilmClip()
 	return self:GetTrackGroup():GetParent()
 end
 
+function pfm.udm.Track:AddGenericAudioClip(name, soundPath, startTime, duration, uuid)
+	if type(name) ~= "string" then
+		local audioClip = name
+		self:CallChangeListeners("OnAudioClipAdded", audioClip)
+		return audioClip
+	end
+	local audioClip = self:AddAudioClip()
+	audioClip:ChangeUniqueId(uuid)
+	audioClip:SetName(name)
+	audioClip:GetSound():SetSoundName(soundPath)
+
+	local tf = audioClip:GetTimeFrame()
+	tf:SetStart(startTime)
+	tf:SetDuration(duration)
+	self:CallChangeListeners("OnAudioClipAdded", audioClip)
+	return audioClip
+end
+
+function pfm.udm.Track:RemoveGenericAudioClip(audioClip)
+	self:CallChangeListeners("OnAudioClipRemoved", audioClip)
+	self:RemoveAudioClip(audioClip)
+end
+
 function pfm.udm.Track:FindActorAnimationClip(actor, addIfNotExists)
 	if type(actor) ~= "string" then
 		actor = tostring(actor:GetUniqueId())

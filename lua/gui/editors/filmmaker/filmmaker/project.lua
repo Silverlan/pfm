@@ -209,7 +209,7 @@ function Element:InitializeProjectUI(layoutName)
 	self.m_playhead = playhead
 
 	pfmTimeline:AddCallback("OnClipSelected", function(el, clip)
-		clip = clip:GetFilmClipData()
+		clip = clip:GetClipData()
 		if util.get_type_name(clip) == "FilmClip" then
 			for _, editor in ipairs({ self:GetActorEditor(), self:GetGraphEditor(), self:GetMotionEditor() }) do
 				if util.is_valid(editor) then
@@ -260,6 +260,28 @@ function Element:InitializeProjectUI(layoutName)
 
 		local timeFrame = filmClip:GetTimeFrame()
 		local groupSound = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_sound"))
+		groupSound:SetMouseInputEnabled(true)
+		groupSound:AddCallback("OnMouseEvent", function(groupSound, button, state, mods)
+			if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
+				local pContext = gui.open_context_menu()
+				if util.is_valid(pContext) == false then
+					return
+				end
+				pContext:SetPos(input.get_cursor_pos())
+				pContext:AddItem("Add Track", function()
+					local p = pfm.open_single_value_edit_window("Track Name", function(ok, val)
+						if self:IsValid() == false then
+							return
+						end
+						if ok then
+							pfm.undoredo.push("add_audio_track", pfm.create_command("add_audio_track", val, filmClip))()
+						end
+					end, "")
+				end)
+				pContext:Update()
+				return util.EVENT_REPLY_HANDLED
+			end
+		end)
 		local trackGroupSound = filmClip:FindTrackGroup("Sound")
 		if trackGroupSound ~= nil then
 			for _, track in ipairs(trackGroupSound:GetTracks()) do

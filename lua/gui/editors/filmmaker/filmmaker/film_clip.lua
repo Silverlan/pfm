@@ -15,22 +15,16 @@ function Element:OnFilmClipAdded(el)
 	self:AddFilmClipElement(newEl)
 end
 function Element:SelectFilmClip(filmClip) end -- TODO: Remove?
-function Element:ChangeFilmClipDuration(filmClip, dur)
-	local timeFrame = filmClip:GetTimeFrame()
-	pfm.undoredo.push(
-		"set_film_clip_duration",
-		pfm.create_command("set_film_clip_duration", filmClip, timeFrame:GetDuration(), dur)
-	)()
+function Element:ChangeClipDuration(clip, dur)
+	local timeFrame = clip:GetTimeFrame()
+	pfm.undoredo.push("set_clip_duration", pfm.create_command("set_clip_duration", clip, timeFrame:GetDuration(), dur))()
 end
-function Element:ChangeFilmClipOffset(filmClip, offset)
-	local timeFrame = filmClip:GetTimeFrame()
-	pfm.undoredo.push(
-		"set_film_clip_offset",
-		pfm.create_command("set_film_clip_offset", filmClip, timeFrame:GetOffset(), offset)
-	)()
+function Element:ChangeClipOffset(clip, offset)
+	local timeFrame = clip:GetTimeFrame()
+	pfm.undoredo.push("set_clip_offset", pfm.create_command("set_clip_offset", clip, timeFrame:GetOffset(), offset))()
 end
-function Element:ChangeFilmClipName(filmClip, name)
-	pfm.undoredo.push("rename_film_clip", pfm.create_command("rename_film_clip", filmClip, filmClip:GetName(), name))()
+function Element:ChangeClipName(clip, name)
+	pfm.undoredo.push("rename_clip", pfm.create_command("rename_clip", clip, clip:GetName(), name))()
 end
 function Element:AddFilmClip()
 	local session = self:GetSession()
@@ -58,9 +52,47 @@ end
 function Element:RemoveFilmClip(filmClip)
 	pfm.undoredo.push("delete_film_clip", pfm.create_command("delete_film_clip", filmClip))()
 end
+function Element:PopulateClipContextMenu(clip, pContext)
+	pContext:AddItem(locale.get_text("pfm_change_duration"), function()
+		local p = pfm.open_single_value_edit_window(locale.get_text("duration"), function(ok, val)
+			if self:IsValid() == false then
+				return
+			end
+			if ok then
+				local dur = tonumber(val)
+				if dur ~= nil then
+					self:ChangeClipDuration(clip, math.max(dur, 0.1))
+				end
+			end
+		end, tostring(clip:GetTimeFrame():GetDuration()))
+	end)
+	pContext:AddItem(locale.get_text("pfm_change_offset"), function()
+		local p = pfm.open_single_value_edit_window(locale.get_text("offset"), function(ok, val)
+			if self:IsValid() == false then
+				return
+			end
+			if ok then
+				local offset = tonumber(val)
+				if offset ~= nil then
+					self:ChangeClipOffset(clip, offset)
+				end
+			end
+		end, tostring(clip:GetTimeFrame():GetOffset()))
+	end)
+	pContext:AddItem(locale.get_text("pfm_change_name"), function()
+		local p = pfm.open_single_value_edit_window(locale.get_text("name"), function(ok, val)
+			if self:IsValid() == false then
+				return
+			end
+			if ok then
+				self:ChangeClipName(clip, val)
+			end
+		end, tostring(clip:GetName()))
+	end)
+end
 function Element:AddFilmClipElement(filmClip)
 	local pFilmClip = self.m_timeline:AddFilmClip(self.m_filmStrip, filmClip, function(elFilmClip)
-		local filmClipData = elFilmClip:GetFilmClipData()
+		local filmClipData = elFilmClip:GetClipData()
 		if util.is_valid(self:GetActorEditor()) then
 			self:SelectFilmClip(filmClipData)
 		end
@@ -77,7 +109,7 @@ function Element:AddFilmClipElement(filmClip)
 		if util.is_valid(el) == false then
 			return
 		end
-		el:UpdateFilmClipData()
+		el:UpdateClipData()
 	end
 	table.insert(listeners, filmClip:AddChangeListener("name", update_film_clip_data))
 	table.insert(listeners, filmClip:AddChangeListener("duration", update_film_clip_data))
@@ -120,42 +152,7 @@ function Element:AddFilmClipElement(filmClip)
 				return
 			end
 			pContext:SetPos(input.get_cursor_pos())
-			pContext:AddItem(locale.get_text("pfm_change_duration"), function()
-				local p = pfm.open_single_value_edit_window(locale.get_text("duration"), function(ok, val)
-					if self:IsValid() == false then
-						return
-					end
-					if ok then
-						local dur = tonumber(val)
-						if dur ~= nil then
-							self:ChangeFilmClipDuration(filmClip, math.max(dur, 0.1))
-						end
-					end
-				end, tostring(filmClip:GetTimeFrame():GetDuration()))
-			end)
-			pContext:AddItem(locale.get_text("pfm_change_offset"), function()
-				local p = pfm.open_single_value_edit_window(locale.get_text("offset"), function(ok, val)
-					if self:IsValid() == false then
-						return
-					end
-					if ok then
-						local offset = tonumber(val)
-						if offset ~= nil then
-							self:ChangeFilmClipOffset(filmClip, offset)
-						end
-					end
-				end, tostring(filmClip:GetTimeFrame():GetOffset()))
-			end)
-			pContext:AddItem(locale.get_text("pfm_change_name"), function()
-				local p = pfm.open_single_value_edit_window(locale.get_text("name"), function(ok, val)
-					if self:IsValid() == false then
-						return
-					end
-					if ok then
-						self:ChangeFilmClipName(filmClip, val)
-					end
-				end, tostring(filmClip:GetName()))
-			end)
+			self:PopulateClipContextMenu(filmClip, pContext)
 			pContext:AddItem(locale.get_text("pfm_add_clip_after"), function()
 				local p = pfm.open_single_value_edit_window(locale.get_text("name"), function(ok, val)
 					if self:IsValid() == false then

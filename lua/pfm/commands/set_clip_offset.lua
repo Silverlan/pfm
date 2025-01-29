@@ -6,24 +6,24 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Command = util.register_class("pfm.CommandSetFilmClipOffset", pfm.Command)
-function Command:Initialize(filmClip, oldOffset, newOffset)
+local Command = util.register_class("pfm.CommandSetClipOffset", pfm.Command)
+function Command:Initialize(clip, oldOffset, newOffset)
 	pfm.Command.Initialize(self)
 	local data = self:GetData()
-	data:SetValue("filmClip", udm.TYPE_STRING, pfm.get_unique_id(filmClip))
+	data:SetValue("clip", udm.TYPE_STRING, pfm.get_unique_id(clip))
 	data:SetValue("oldOffset", udm.TYPE_FLOAT, oldOffset)
 	data:SetValue("newOffset", udm.TYPE_FLOAT, newOffset)
 	return true
 end
 function Command:ApplyOffset(data, keyName)
-	local filmClipUuid = data:GetValue("filmClip", udm.TYPE_STRING)
-	local filmClip = pfm.dereference(filmClipUuid)
-	if filmClip == nil then
-		self:LogFailure("FilmClip '" .. filmClipUuid .. "' not found!")
+	local clipUuid = data:GetValue("clip", udm.TYPE_STRING)
+	local clip = pfm.dereference(clipUuid)
+	if clip == nil then
+		self:LogFailure("Clip '" .. clipUuid .. "' not found!")
 		return false
 	end
-	filmClip:GetTimeFrame():SetOffset(data:GetValue(keyName, udm.TYPE_FLOAT))
-	local track = filmClip:GetParent()
+	clip:GetTimeFrame():SetOffset(data:GetValue(keyName, udm.TYPE_FLOAT))
+	local track = clip:GetParent()
 	track:UpdateFilmClipTimeFrames()
 	return true
 end
@@ -33,4 +33,4 @@ end
 function Command:DoUndo(data)
 	return self:ApplyOffset(data, "oldOffset")
 end
-pfm.register_command("set_film_clip_offset", Command)
+pfm.register_command("set_clip_offset", Command)

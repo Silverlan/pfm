@@ -6,23 +6,23 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-local Command = util.register_class("pfm.CommandRenameFilmClip", pfm.Command)
-function Command:Initialize(filmClip, oldName, newName)
+local Command = util.register_class("pfm.CommandRenameClip", pfm.Command)
+function Command:Initialize(clip, oldName, newName)
 	pfm.Command.Initialize(self)
 	local data = self:GetData()
-	data:SetValue("filmClip", udm.TYPE_STRING, pfm.get_unique_id(filmClip))
+	data:SetValue("clip", udm.TYPE_STRING, pfm.get_unique_id(clip))
 	data:SetValue("oldName", udm.TYPE_STRING, oldName)
 	data:SetValue("newName", udm.TYPE_STRING, newName)
 	return true
 end
 function Command:ApplyName(data, keyName)
-	local filmClipUuid = data:GetValue("filmClip", udm.TYPE_STRING)
-	local filmClip = pfm.dereference(filmClipUuid)
-	if filmClip == nil then
-		self:LogFailure("FilmClip '" .. filmClipUuid .. "' not found!")
+	local clipUuid = data:GetValue("clip", udm.TYPE_STRING)
+	local clip = pfm.dereference(clipUuid)
+	if clip == nil then
+		self:LogFailure("Clip '" .. clipUuid .. "' not found!")
 		return false
 	end
-	filmClip:SetName(data:GetValue(keyName, udm.TYPE_STRING))
+	clip:SetName(data:GetValue(keyName, udm.TYPE_STRING))
 	return true
 end
 function Command:DoExecute(data)
@@ -31,4 +31,4 @@ end
 function Command:DoUndo(data)
 	return self:ApplyName(data, "oldName")
 end
-pfm.register_command("rename_film_clip", Command)
+pfm.register_command("rename_clip", Command)

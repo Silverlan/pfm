@@ -14,6 +14,35 @@ function pfm.udm.FilmClip:FindTrackGroup(name)
 	end
 end
 
+function pfm.udm.FilmClip:AddAudioTrack(name, uuid)
+	local trackGroupSound = self:FindTrackGroup("Sound")
+	if trackGroupSound == nil then
+		trackGroupSound = self:AddTrackGroup()
+		trackGroupSound:SetName("Sound")
+	end
+	if trackGroupSound == nil then
+		return
+	end
+
+	local newTrack = trackGroupSound:AddTrack()
+	if uuid ~= nil then
+		newTrack:ChangeUniqueId(uuid)
+	end
+	newTrack:SetName(name)
+	self:CallChangeListeners("OnAudioTrackAdded", newTrack)
+	return newTrack
+end
+
+function pfm.udm.FilmClip:RemoveAudioTrack(audioTrack)
+	local trackGroupSound = self:FindTrackGroup("Sound")
+	if trackGroupSound == nil then
+		return false
+	end
+
+	self:CallChangeListeners("OnAudioTrackRemoved", audioTrack)
+	trackGroupSound:RemoveTrack(audioTrack)
+end
+
 function pfm.udm.FilmClip:FindChannelTrackGroup()
 	return self:FindTrackGroup("channelTrackGroup")
 end

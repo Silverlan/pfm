@@ -33,10 +33,10 @@ function gui.FilmClip:OnInitialize()
 
 	self:AddStyleClass("timeline_clip_film")
 end
-function gui.FilmClip:UpdateFilmClipData()
-	self:SetFilmClipData(self.m_filmClip)
+function gui.FilmClip:UpdateClipData()
+	self:SetClipData(self.m_filmClip)
 end
-function gui.FilmClip:SetFilmClipData(filmClip)
+function gui.FilmClip:SetClipData(filmClip)
 	self.m_filmClip = filmClip
 	self:SetText(filmClip:GetName())
 
@@ -82,7 +82,7 @@ function gui.FilmClip:SetFilmClipData(filmClip)
 			.. timeFrame:GetScale()
 	)
 end
-function gui.FilmClip:GetFilmClipData()
+function gui.FilmClip:GetClipData()
 	return self.m_filmClip
 end
 function gui.FilmClip:GetTimeFrame()

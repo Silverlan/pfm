@@ -30,7 +30,7 @@ end
 function gui.FilmStrip:FindFilmClipElement(fc)
 	for _, el in ipairs(self.m_filmClips) do
 		if el:IsValid() then
-			local filmClipData = el:GetFilmClipData()
+			local filmClipData = el:GetClipData()
 			if util.is_same_object(filmClipData, fc) then
 				return el
 			end
@@ -42,7 +42,7 @@ function gui.FilmStrip:OnUpdate()
 	-- Calculate total time frame
 	for _, el in ipairs(self.m_filmClips) do
 		if el:IsValid() then
-			local filmClipData = el:GetFilmClipData()
+			local filmClipData = el:GetClipData()
 			local timeFrameClip = filmClipData:GetTimeFrame()
 			if timeFrame == nil then
 				timeFrame = timeFrameClip:Copy()

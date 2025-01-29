@@ -145,11 +145,20 @@ function gui.PFMTimeline:InitializeClip(clip, fOnSelected)
 	end)
 	table.insert(self.m_timelineClips, clip)
 end
+function gui.PFMTimeline:RemoveClip(clip)
+	for i, c in ipairs(self.m_timelineClips) do
+		if c:IsValid() and util.is_same_object(c:GetClipData(), clip) then
+			c:Remove()
+			table.remove(self.m_timelineClips, i)
+			break
+		end
+	end
+end
 function gui.PFMTimeline:AddFilmClip(filmStrip, filmClip, fOnSelected)
 	local elClip = gui.create("WIFilmClip", filmStrip.m_container)
 	table.insert(filmStrip.m_filmClips, elClip)
 
-	elClip:SetFilmClipData(filmClip)
+	elClip:SetClipData(filmClip)
 	filmStrip:ScheduleUpdate()
 
 	self:InitializeClip(elClip, fOnSelected)
@@ -157,6 +166,7 @@ function gui.PFMTimeline:AddFilmClip(filmStrip, filmClip, fOnSelected)
 end
 function gui.PFMTimeline:AddAudioClip(group, audioClip, fOnSelected)
 	local elClip = gui.create("WIGenericClip")
+	elClip:SetClipData(audioClip)
 	elClip:AddStyleClass("timeline_clip_audio")
 	group:AddElement(elClip)
 	elClip:SetText(audioClip:GetName())
@@ -168,6 +178,7 @@ function gui.PFMTimeline:AddAudioClip(group, audioClip, fOnSelected)
 end
 function gui.PFMTimeline:AddOverlayClip(group, overlayClip, fOnSelected)
 	local elClip = gui.create("WIGenericClip")
+	elClip:SetClipData(overlayClip)
 	elClip:AddStyleClass("timeline_clip_overlay")
 	group:AddElement(elClip)
 	elClip:SetText(overlayClip:GetName())

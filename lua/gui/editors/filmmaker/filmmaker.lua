@@ -748,7 +748,7 @@ function gui.WIFilmmaker:OnProjectInitialized(project)
 		end
 		for _, elFilmClip in ipairs(self.m_filmStrip:GetFilmClips()) do
 			if elFilmClip:IsValid() then
-				elFilmClip:UpdateFilmClipData()
+				elFilmClip:UpdateClipData()
 			end
 		end
 	end)
@@ -772,7 +772,99 @@ function gui.WIFilmmaker:OnProjectInitialized(project)
 		-- TODO: This probably requires some cleanup
 		el:Remove()
 	end)
-	self.m_trackCallbacks = { cb, cbNewFc, cbFcRem }
+
+	local mainClip = self:GetMainFilmClip()
+	local cbNewAt = mainClip:AddChangeListener("OnAudioTrackAdded", function(c, newTrack)
+		local subGroup = self.m_trackGroupSound:AddGroup(newTrack:GetName())
+		newTrack:AddChangeListener("OnAudioClipAdded", function(c, audioClip)
+			local elClip = self.m_timeline:AddAudioClip(subGroup, audioClip)
+			local function update_clip_data()
+				if subGroup:IsValid() then
+					elClip:UpdateClipData()
+				end
+			end
+			audioClip:AddChangeListener("name", update_clip_data)
+
+			elClip:SetMouseInputEnabled(true)
+			elClip:AddCallback("OnMouseEvent", function(subGroup, button, state, mods)
+				if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
+					local pContext = gui.open_context_menu()
+					if util.is_valid(pContext) == false then
+						return
+					end
+					pContext:SetPos(input.get_cursor_pos())
+					pContext:AddItem("Remove", function()
+						pfm.undoredo.push("delete_audio_clip", pfm.create_command("delete_audio_clip", audioClip))()
+					end)
+					self:PopulateClipContextMenu(audioClip, pContext)
+					pContext:AddItem("Set Start", function()
+						local oldStart = audioClip:GetTimeFrame():GetStart()
+						local p = pfm.open_single_value_edit_window(locale.get_text("duration"), function(ok, val)
+							if self:IsValid() == false then
+								return
+							end
+							if ok then
+								local newStart = tonumber(val)
+								if newStart ~= nil then
+									pfm.undoredo.push(
+										"set_clip_start",
+										pfm.create_command("set_clip_start", audioClip, oldStart, newStart)
+									)()
+								end
+							end
+						end, tostring(oldStart))
+					end)
+					pContext:Update()
+					return util.EVENT_REPLY_HANDLED
+				end
+				return util.EVENT_REPLY_UNHANDLED
+			end)
+		end)
+		newTrack:AddChangeListener("OnAudioClipRemoved", function(c, audioClip)
+			self.m_timeline:RemoveClip(audioClip)
+		end)
+
+		subGroup:SetMouseInputEnabled(true)
+		subGroup:AddCallback("OnMouseEvent", function(subGroup, button, state, mods)
+			if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
+				local pContext = gui.open_context_menu()
+				if util.is_valid(pContext) == false then
+					return
+				end
+				pContext:SetPos(input.get_cursor_pos())
+				pContext:AddItem("Add Audio Clip", function()
+					local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
+						if fileName == nil then
+							return
+						end
+						local tfMc = mainClip:GetTimeFrame()
+						local soundPath = el:GetFilePath(fileName)
+						local name = soundPath
+						local startTime = tfMc:GetStart()
+						local duration = sound.get_duration(soundPath) or 1.0
+
+						pfm.undoredo.push(
+							"add_audio_clip",
+							pfm.create_command("add_audio_clip", newTrack, name, soundPath, startTime, duration)
+						)()
+					end)
+					pFileDialog:SetRootPath(asset.get_asset_root_directory(asset.TYPE_AUDIO))
+					pFileDialog:SetExtensions(asset.get_supported_extensions(asset.TYPE_AUDIO))
+					pFileDialog:Update()
+				end)
+				pContext:Update()
+				return util.EVENT_REPLY_HANDLED
+			end
+			return util.EVENT_REPLY_UNHANDLED
+		end)
+		local timeFrame = mainClip:GetTimeFrame()
+		self.m_timeline:GetTimeline():AddTimelineItem(subGroup, timeFrame)
+	end)
+	local cbRemAt = mainClip:AddChangeListener("OnAudioTrackRemoved", function(c, track)
+		self.m_trackGroupSound:RemoveGroup(track:GetName())
+	end)
+
+	self.m_trackCallbacks = { cb, cbNewFc, cbFcRem, cbNewAt, cbRemAt }
 
 	local activeClip = session:GetActiveClip()
 	if activeClip ~= nil then

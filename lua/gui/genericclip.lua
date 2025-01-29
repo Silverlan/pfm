@@ -11,9 +11,6 @@ include("baseclip.lua")
 
 util.register_class("gui.GenericClip", gui.BaseClip)
 
-function gui.GenericClip:__init()
-	gui.BaseClip.__init(self)
-end
 function gui.GenericClip:OnInitialize()
 	gui.BaseClip.OnInitialize(self)
 
@@ -21,5 +18,15 @@ function gui.GenericClip:OnInitialize()
 	self:AddCallback("OnMousePressed", function()
 		self:SetSelected(true)
 	end)
+end
+function gui.GenericClip:UpdateClipData()
+	self:SetClipData(self.m_clipData)
+end
+function gui.GenericClip:SetClipData(clipData)
+	self.m_clipData = clipData
+	self:SetText(clipData:GetName())
+end
+function gui.GenericClip:GetClipData()
+	return self.m_clipData
 end
 gui.register("WIGenericClip", gui.GenericClip)
