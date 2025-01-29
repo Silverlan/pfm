@@ -14,11 +14,7 @@ ents.PFMSoundSource.set_audio_enabled = function(enabled)
 	for ent in ents.iterator({ ents.IteratorFilterComponent(ents.COMPONENT_PFM_SOUND_SOURCE) }) do
 		local sndC = ent:GetComponent(ents.COMPONENT_PFM_SOUND_SOURCE)
 		if sndC ~= nil then
-			if g_audioEnabled then
-				sndC:Play()
-			else
-				sndC:Pause()
-			end
+			sndC:UpdatePlayState()
 		end
 	end
 end
@@ -60,16 +56,57 @@ function ents.PFMSoundSource:Setup(clipC, sndInfo)
 	end
 end
 
+function ents.PFMSoundSource:UpdatePlayState()
+	local shouldPlay = false
+	if g_audioEnabled then
+		local offset = self.m_clipComponent:GetOffset()
+		if offset >= 0 then
+			local timeFrame = self.m_clipComponent:GetTimeFrame()
+			local endTime = timeFrame:GetEnd()
+				- timeFrame:GetStart()
+				+ timeFrame:GetOffset()
+				- self.m_clipComponent:GetTimeFrame():GetOffset()
+			if offset < endTime then
+				shouldPlay = true
+			end
+		end
+	end
+
+	if shouldPlay then
+		self:Play()
+	else
+		self:Pause()
+	end
+end
+
+function ents.PFMSoundSource:UpdateOffset()
+	local sndC = self:GetEntity():GetComponent(ents.COMPONENT_SOUND)
+	if sndC == nil or sndC:IsPlaying() == false then
+		return
+	end
+	local sndOffset = sndC:GetOffset()
+	local newOffset = self.m_clipComponent:GetOffset() + self.m_clipComponent:GetTimeFrame():GetOffset()
+	if math.abs(newOffset - sndOffset) > 0.05 then
+		sndC:SetOffset(newOffset)
+	end
+end
+
 function ents.PFMSoundSource:Play()
+	if self.m_playing then
+		return
+	end
 	self.m_playing = true
 	local sndC = self:GetEntity():GetComponent(ents.COMPONENT_SOUND)
 	if sndC ~= nil then
-		sndC:SetOffset(self.m_clipComponent:GetOffset())
 		sndC:Play()
+		self:UpdateOffset()
 	end
 end
 
 function ents.PFMSoundSource:Pause()
+	if self.m_playing == false then
+		return
+	end
 	self.m_playing = false
 	local sndC = self:GetEntity():GetComponent(ents.COMPONENT_SOUND)
 	if sndC ~= nil then
@@ -86,18 +123,9 @@ function ents.PFMSoundSource:OnOffsetChanged(offset)
 	if snd == nil then
 		return
 	end
-	if snd:IsPlaying() == false and self.m_playing then
-		-- Sound has probably reached its end, but we may have changed its offset to before
-		-- its end time, so we'll restart it here
-		-- TODO: Find a better solution
-		snd:Play()
-		snd:SetOffset(offset)
-		return
-	end
 
-	if math.abs(offset - snd:GetOffset()) > 0.05 then
-		snd:SetOffset(offset)
-	end
+	self:UpdatePlayState()
+	self:UpdateOffset()
 end
 ents.register_component(
 	"pfm_sound_source",

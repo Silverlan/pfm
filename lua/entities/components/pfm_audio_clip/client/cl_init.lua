@@ -52,7 +52,7 @@ function ents.PFMAudioClip:GetOffset()
 end
 function ents.PFMAudioClip:SetOffset(offset)
 	local timeFrame = self:GetTimeFrame()
-	offset = offset - timeFrame:GetStart() + timeFrame:GetOffset()
+	offset = offset - timeFrame:GetStart()
 	if offset == self.m_offset then
 		return
 	end
