@@ -157,7 +157,7 @@ function gui.WIFilmmaker:OnInitialize()
 		1,
 		1
 	)
-	patronTickerContainer:SetQueryUrl("https://pragma-engine.com/patreon/request_patrons.php")
+	patronTickerContainer:SetQueryUrl("https://pragma-engine.com/queries/get_supporters.php")
 	self.m_supporterTicker = patronTickerContainer
 	local engineInfo = engine.get_info()
 
