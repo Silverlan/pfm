@@ -35,6 +35,7 @@ function gui.PFMCoreViewportBase:GetManipulatorMode()
 end
 function gui.PFMCoreViewportBase:ClearTransformGizmo()
 	util.remove(self.m_entTransform)
+	util.remove(self.m_onRemTarget)
 	self.m_transformGizmoInfo = nil
 end
 function gui.PFMCoreViewportBase:SetManipulatorMode(manipulatorMode)
@@ -666,6 +667,10 @@ function gui.PFMCoreViewportBase:CreateActorTransformWidget(ent, manipMode, enab
 
 					local trC = entTransform:GetComponent("util_transform")
 					trC:SetScaleEnabled(false)
+
+					self.m_onRemTarget = ent:CallOnRemove(function()
+						self:ClearTransformGizmo()
+					end)
 
 					trcC:SetTransformTarget(ent, targetPath)
 
