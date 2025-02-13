@@ -373,6 +373,11 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 			local tSelectedFiles = {}
 			local tExternalFiles = {}
 
+			local assetType = self:GetAssetType()
+			local isAssetType = (assetType ~= nil)
+			if isAssetType == false then
+				return
+			end
 			local numInFavorites = 0
 			if self:IsIconSelected(el) == false then
 				tSelected = { el }
@@ -386,8 +391,8 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 					table.insert(tSelectedDirs, el)
 				else
 					table.insert(tSelectedFiles, el)
-					local exists = asset.exists(path, self:GetAssetType())
-					if exists == false and self:GetAssetType() == asset.TYPE_PARTICLE_SYSTEM then
+					local exists = asset.exists(path, assetType)
+					if exists == false and assetType == asset.TYPE_PARTICLE_SYSTEM then
 						local ptPath = util.Path(path)
 						local ptName = ptPath:GetBack()
 						ptPath:PopBack()
@@ -396,7 +401,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 						local ext = file.get_file_extension(ptFileName)
 						if ext ~= nil and asset.is_supported_extension(ext, asset.TYPE_PARTICLE_SYSTEM) then
 							ptFileName = file.remove_file_extension(ptFileName)
-							exists = asset.exists(ptFileName, self:GetAssetType())
+							exists = asset.exists(ptFileName, assetType)
 						end
 					end
 					if exists == false then
