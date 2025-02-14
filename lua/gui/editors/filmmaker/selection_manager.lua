@@ -75,14 +75,14 @@ end
 function pfm.SelectionManager:SetSelectedObjects(tSelected)
 	local t = {}
 	for obj, _ in pairs(self.m_selectionData) do
-		t[obj] = false
+		table.insert(t, {obj = obj, selected = false})
 	end
 	for _, obj in ipairs(tSelected) do
-		t[obj] = true
+		table.insert(t, {obj = obj, selected = true})
 	end
-	for obj, selected in pairs(t) do
-		if util.is_valid(obj) then
-			self:SetSelected(obj, selected)
+	for _, objSelectState in ipairs(t) do
+		if util.is_valid(objSelectState.obj) then
+			self:SetSelected(objSelectState.obj, objSelectState.selected)
 		end
 	end
 end
