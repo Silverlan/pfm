@@ -16,7 +16,8 @@ shader.PFMGrid3D.VertexShader = "programs/pfm/grid"
 
 function shader.PFMGrid3D:__init()
 	shader.BaseGraphics.__init(self)
-	self.m_dsPushConstants = util.DataStream(util.SIZEOF_MAT4 + util.SIZEOF_VECTOR4 + util.SIZEOF_FLOAT)
+	self.m_dsPushConstants =
+		util.DataStream(util.SIZEOF_MAT4 + util.SIZEOF_VECTOR4 + util.SIZEOF_INT32 * 3 + util.SIZEOF_FLOAT * 2)
 end
 function shader.PFMGrid3D:InitializeShaderResources()
 	shader.BaseGraphics.InitializeShaderResources(self)
