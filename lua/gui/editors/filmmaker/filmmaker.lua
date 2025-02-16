@@ -1568,10 +1568,11 @@ function gui.WIFilmmaker:OpenParticleEditor(ptFile, ptName)
 end
 function gui.WIFilmmaker:OnActorSelectionChanged(ent, selected)
 	self:TagRenderSceneAsDirty()
-	if util.is_valid(self:GetViewport()) == false then
+	local vp = self:GetViewport()
+	if util.is_valid(vp) == false then
 		return
 	end
-	self:GetViewport():OnActorSelectionChanged(ent, selected)
+	vp:SetActorSelectionDirty()
 end
 function gui.WIFilmmaker:GetActiveCamera()
 	return game.get_render_scene_camera()

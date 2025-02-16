@@ -74,6 +74,10 @@ function gui.PFMCoreViewportBase:SelectActor(entActor, bone, deselectCurrent)
 	end
 	pm:SelectActor(actor, deselectCurrent, property)
 end
+function gui.PFMCoreViewportBase:SetActorSelectionDirty()
+	self.m_transformWidgetDirty = true
+	self:UpdateThinkState()
+end
 function gui.PFMCoreViewportBase:UpdateMultiActorSelection()
 	local actors = pfm.get_project_manager():GetSelectionManager():GetSelectedActors()
 	local n = 0
@@ -91,13 +95,6 @@ function gui.PFMCoreViewportBase:UpdateMultiActorSelection()
 		return true
 	end
 	return false
-end
-function gui.PFMCoreViewportBase:OnActorSelectionChanged(ent, selected)
-	if self:UpdateMultiActorSelection() then
-		return
-	end
-	self:UpdateActorManipulation(ent, selected)
-	self:UpdateManipulationMode()
 end
 function gui.PFMCoreViewportBase:ApplySelection()
 	if util.is_valid(self.m_selectionRect) == false then
