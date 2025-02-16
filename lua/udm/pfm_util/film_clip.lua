@@ -113,6 +113,14 @@ function pfm.udm.FilmClip:GetActorList(list, recursive)
 	end
 	return list
 end
+function pfm.udm.FilmClip:FindComponent(componentType)
+	for _, actor in ipairs(self:GetActorList()) do
+		local c = actor:FindComponent(componentType)
+		if c ~= nil then
+			return c, actor
+		end
+	end
+end
 function pfm.udm.FilmClip:FindActor(name)
 	for _, actor in ipairs(self:GetActorList()) do
 		if actor:GetName() == name then
