@@ -118,6 +118,11 @@ function gui.RenderImage:InitializeImageProcessor(tex)
 		self.m_imgProcessor:AddStage("vr", function(drawCmd, dsTex, rtDst)
 			self:ApplyVR(drawCmd, dsTex)
 		end)
+		pfm.log(
+			"Adding staging image '" .. tostring(tex:GetImage()) .. "' to image processor",
+			pfm.LOG_CATEGORY_PFM,
+			pfm.LOG_SEVERITY_DEBUG
+		)
 		self.m_imgProcessor:AddStagingTexture(tex:GetImage():GetCreateInfo())
 		self.m_imgProcessor:AddStagingTexture(tex:GetImage():GetCreateInfo())
 		self.m_imgProcessor:SetStageEnabled("vr", self.m_vrViewEnabled or false)
@@ -221,12 +226,14 @@ function gui.RenderImage:SetDOFState(b)
 		createInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
 		createInfo.format = prosper.FORMAT_R8G8B8A8_UNORM
 		local img = prosper.create_image(createInfo)
+		img:SetDebugName("render_image_staging_img")
 		local samplerCreateInfo = prosper.SamplerCreateInfo()
 		samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors
 		samplerCreateInfo.addressModeV = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 		samplerCreateInfo.addressModeW = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE
 		local texStaging =
 			prosper.create_texture(img, prosper.TextureCreateInfo(), prosper.ImageViewCreateInfo(), samplerCreateInfo)
+		texStaging:SetDebugName("render_image_staging_tex")
 		self.m_rtStaging = prosper.create_render_target(
 			prosper.RenderTargetCreateInfo(),
 			{ texStaging },

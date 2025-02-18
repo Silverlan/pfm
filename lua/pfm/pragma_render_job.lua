@@ -58,7 +58,12 @@ function pfm.PragmaRenderScene:UpdateDownSampledRenderTexture()
 	imgCreateInfo.width = self.m_width
 	imgCreateInfo.height = self.m_height
 	imgCreateInfo.format = prosper.FORMAT_R16G16B16A16_SFLOAT
-	imgCreateInfo.usageFlags = bit.bor(prosper.IMAGE_USAGE_TRANSFER_SRC_BIT, prosper.IMAGE_USAGE_TRANSFER_DST_BIT)
+	imgCreateInfo.usageFlags = bit.bor(
+		prosper.IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		prosper.IMAGE_USAGE_SAMPLED_BIT,
+		prosper.IMAGE_USAGE_TRANSFER_SRC_BIT,
+		prosper.IMAGE_USAGE_TRANSFER_DST_BIT
+	)
 	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
 	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
 	imgCreateInfo.postCreateLayout = prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
@@ -70,8 +75,19 @@ function pfm.PragmaRenderScene:UpdateDownSampledRenderTexture()
 		prosper.SamplerCreateInfo()
 	)
 	self.m_downSampleTex = tex
-	self.m_downSampleRt =
-		prosper.create_render_target(prosper.RenderTargetCreateInfo(), { tex }, shader.Graphics.get_render_pass())
+
+	local rpCreateInfo = prosper.RenderPassCreateInfo()
+	rpCreateInfo:AddAttachment(
+		tex:GetImage():GetFormat(),
+		prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+		prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		prosper.ATTACHMENT_LOAD_OP_LOAD,
+		prosper.ATTACHMENT_STORE_OP_STORE
+	)
+	local rp = prosper.create_render_pass(rpCreateInfo)
+
+	self.m_downSampleRt = prosper.create_render_target(prosper.RenderTargetCreateInfo(), { tex }, rp)
+	self.m_downSampleRt:SetDebugName("pr_renderer_downsampled_render_target")
 	self.m_downSampleDs = prosper.util.create_generic_image_descriptor_set(self.m_renderer:GetHDRPresentationTexture())
 end
 function pfm.PragmaRenderScene:GetResolution()
@@ -283,8 +299,14 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate, finalize)
 	return false
 end
 function pfm.PragmaRenderJob:FinalizeFrame()
+	pfm.log("Finalizing frame...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
 	self.m_drawCommandBuffer:Flush()
 	local texOutput = self.m_renderer:GetHDRPresentationTexture()
+	pfm.log(
+		"Output image: " .. texOutput:GetImage():GetDebugName(),
+		pfm.LOG_CATEGORY_PRAGMA_RENDERER,
+		pfm.LOG_SEVERITY_DEBUG
+	)
 
 	local function finalize()
 		self:RestoreCamera()
@@ -334,18 +356,37 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 			blitInfo.srcSubresourceLayer.layerCount = 1
 			blitInfo.dstSubresourceLayer.baseArrayLayer = 0
 			blitInfo.dstSubresourceLayer.layerCount = 1
+
+			drawCmd:RecordImageBarrier(
+				imgOutput,
+				prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+			)
 			drawCmd:RecordBlitImage(imgOutput, downSampleRt:GetTexture():GetImage(), blitInfo)
+			drawCmd:RecordImageBarrier(
+				downSampleRt:GetTexture():GetImage(),
+				prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+			)
 		else
 			-- Downsample with Lanczos or Bicubic filtering
-			prosper.util.record_resize_image(
+			drawCmd:RecordImageBarrier(
+				downSampleRt:GetTexture():GetImage(),
+				prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+			)
+			local res = prosper.util.record_resize_image(
 				drawCmd,
 				pfm.g_pragmaRendererRenderScene:GetDownSampleDescriptorSet(),
 				downSampleRt
 			)
+			if res == false then
+				pfm.log("Failed to downsample image", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_ERROR)
+			end
 		end
 
-		game.flush_setup_command_buffer()
 		imgOutput = downSampleRt:GetTexture():GetImage()
+		game.flush_setup_command_buffer()
 	end
 
 	if self.m_renderPanorama then
@@ -370,10 +411,20 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 		blitInfo.srcSubresourceLayer.layerCount = 1
 		blitInfo.dstSubresourceLayer.baseArrayLayer = (self.m_curFrame % 6)
 		blitInfo.dstSubresourceLayer.layerCount = 1
+		drawCmd:RecordImageBarrier(
+			imgOutput,
+			prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+		)
 		drawCmd:RecordBlitImage(
 			imgOutput,
 			(self.m_curFrame < 6) and self.m_outputImages[1] or self.m_outputImages[2],
 			blitInfo
+		)
+		drawCmd:RecordImageBarrier(
+			imgOutput,
+			prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+			prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 		)
 		game.flush_setup_command_buffer()
 	end
@@ -384,6 +435,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 	pfm.log("Finalizing image buffer...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
 	if self.m_renderPanorama then
 		if self.m_curFrame == (self.m_numFrames - 1) then
+			pfm.log("Finalizing panorama image...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
 			local horizontalRange = self.m_renderSettings:GetPanoramaHorizontalRange()
 			local tex = prosper.create_texture(
 				self.m_outputImages[1],
@@ -391,45 +443,72 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 				prosper.ImageViewCreateInfo(),
 				prosper.SamplerCreateInfo()
 			)
-			local texEqui = shader.cubemap_to_equirectangular_texture(tex, width, height, horizontalRange)
+			local texEqui = shader.cubemap_to_equirectangular_texture(
+				tex,
+				width,
+				height,
+				horizontalRange,
+				prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+			)
 			local img = texEqui:GetImage()
 
 			if self.m_stereoscopic then
+				pfm.log("Finalizing stereo panorama image...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
 				local tex2 = prosper.create_texture(
 					self.m_outputImages[2],
 					prosper.TextureCreateInfo(),
 					prosper.ImageViewCreateInfo(),
 					prosper.SamplerCreateInfo()
 				)
-				local texEqui2 = shader.cubemap_to_equirectangular_texture(tex2, width, height, horizontalRange)
+				local texEqui2 = shader.cubemap_to_equirectangular_texture(
+					tex2,
+					width,
+					height,
+					horizontalRange,
+					prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+				)
 
 				local createInfo = texEqui:GetImage():GetCreateInfo()
 				createInfo.width = width
 				createInfo.height = height * 2
+				createInfo.postCreateLayout = prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
 
 				img = prosper.create_image(createInfo)
+				img:SetDebugName("pr_renderer_stereo_equi_img")
 
 				local drawCmd = game.get_setup_command_buffer()
 				local blitInfo = prosper.BlitInfo()
 				blitInfo.srcSubresourceLayer.baseArrayLayer = 0
 				blitInfo.srcSubresourceLayer.layerCount = 1
-				blitInfo.dstSubresourceLayer.baseArrayLayer = (self.m_curFrame % 6)
+				blitInfo.dstSubresourceLayer.baseArrayLayer = 0
 				blitInfo.dstSubresourceLayer.layerCount = 1
 				blitInfo.offsetSrc = Vector2i(0, 0)
 				blitInfo.extentsSrc = Vector2i(width, height)
 				blitInfo.offsetDst = Vector2i(0, 0)
 				blitInfo.extentsDst = Vector2i(width, height)
+				drawCmd:RecordImageBarrier(
+					texEqui:GetImage(),
+					prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+					prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+				)
 				drawCmd:RecordBlitImage(texEqui:GetImage(), img, blitInfo)
 				blitInfo.offsetDst = Vector2i(0, height)
+				drawCmd:RecordImageBarrier(
+					texEqui2:GetImage(),
+					prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+					prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL
+				)
 				drawCmd:RecordBlitImage(texEqui2:GetImage(), img, blitInfo)
 				game.flush_setup_command_buffer()
 			end
-			self.m_imageBuffer = img:ToImageBuffer(
-				false,
-				false,
-				util.ImageBuffer.FORMAT_RGBA16,
-				prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
-			)
+			local imgBufInfo = prosper.Image.ToImageBufferInfo()
+			imgBufInfo.includeLayers = false
+			imgBufInfo.includeMipmaps = false
+			imgBufInfo.targetFormat = util.ImageBuffer.FORMAT_RGBA16
+			imgBufInfo.inputImageLayout = prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+			-- imgBufInfo.finalImageLayout = prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+			self.m_imageBuffer = img:ToImageBuffer(imgBufInfo)
+			pfm.log("Applying color transform...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
 			local res = unirender.apply_color_transform(
 				self.m_imageBuffer,
 				nil,
@@ -437,8 +516,26 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 				self.m_renderSettings:GetColorTransform(),
 				self.m_renderSettings:GetColorTransformLook()
 			)
+			if res == false then
+				pfm.log("Failed to apply color transform", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_ERROR)
+			end
+		else
+			pfm.log("Panorama frame not yet complete...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
+			local drawCmd = game.get_setup_command_buffer()
+			drawCmd:RecordImageBarrier(
+				texOutput:GetImage(),
+				prosper.IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+				prosper.IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+			)
+			drawCmd:RecordImageBarrier(
+				pfm.g_pragmaRendererRenderScene.m_downSampleTex:GetImage(),
+				prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+			)
+			game.flush_setup_command_buffer()
 		end
 	else
+		pfm.log("Finalizing regular image...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
 		local createInfo = imgOutput:GetCreateInfo()
 		if
 			self.m_imgOutputStagingImage == nil
@@ -455,9 +552,10 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 		imgBufInfo.includeLayers = false
 		imgBufInfo.includeMipmaps = false
 		imgBufInfo.targetFormat = util.ImageBuffer.FORMAT_RGBA16
-		imgBufInfo.inputImageLayout = prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+		imgBufInfo.inputImageLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 		imgBufInfo.stagingImage = self.m_imgOutputStagingImage
 		local imgBuf = imgOutput:ToImageBuffer(imgBufInfo)
+		pfm.log("Applying color transform...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
 		local res = unirender.apply_color_transform(
 			imgBuf,
 			nil,
@@ -465,6 +563,9 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 			self.m_renderSettings:GetColorTransform(),
 			self.m_renderSettings:GetColorTransformLook()
 		)
+		if res == false then
+			pfm.log("Failed to apply color transform", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_ERROR)
+		end
 
 		if self.m_useTiledRendering then
 			self.m_imageBuffer = self.m_tileCompositeImgBuf
