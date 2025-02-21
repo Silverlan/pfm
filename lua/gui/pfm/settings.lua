@@ -68,7 +68,7 @@ function Element:OnInitialize()
 			{ "1", locale.get_text("windowmode_windowed") },
 			{ "2", locale.get_text("windowmode_noborder_window") },
 		},
-		"1",
+		console.get_convar_string("cl_render_window_mode"),
 		function()
 			if skipCallbacks then
 				return
