@@ -298,10 +298,34 @@ function pfm.PragmaRenderJob:RenderNextFrame(immediate, finalize)
 	end)
 	return false
 end
+function pfm.PragmaRenderJob:SaveDebugImage(img, name)
+	local debugDumpStages = console.get_convar_bool("pfm_debug_dump_render_image_stages")
+	if debugDumpStages == false then
+		return
+	end
+	local imgBuf
+	if util.get_type_name(img) == "ImageBuffer" then
+		imgBuf = img
+	else
+		local imgBufInfo = prosper.Image.ToImageBufferInfo()
+		imgBufInfo.includeLayers = false
+		imgBufInfo.includeMipmaps = false
+		imgBufInfo.targetFormat = (img:GetFormat() == prosper.FORMAT_R16G16B16A16_SFLOAT)
+				and util.ImageBuffer.FORMAT_RGBA16
+			or util.ImageBuffer.FORMAT_RGBA8
+		imgBufInfo.inputImageLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		imgBuf = img:ToImageBuffer(imgBufInfo)
+	end
+	file.create_path("temp/render_image_stages")
+	local path = "temp/render_image_stages/" .. name .. ".png"
+	util.save_image(imgBuf, path, util.IMAGE_FORMAT_PNG)
+end
 function pfm.PragmaRenderJob:FinalizeFrame()
 	pfm.log("Finalizing frame...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
 	self.m_drawCommandBuffer:Flush()
+
 	local texOutput = self.m_renderer:GetHDRPresentationTexture()
+	self:SaveDebugImage(texOutput:GetImage(), "hdr_presentation")
 	pfm.log(
 		"Output image: " .. texOutput:GetImage():GetDebugName(),
 		pfm.LOG_CATEGORY_PRAGMA_RENDERER,
@@ -387,6 +411,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 
 		imgOutput = downSampleRt:GetTexture():GetImage()
 		game.flush_setup_command_buffer()
+		self:SaveDebugImage(downSampleRt:GetTexture():GetImage(), "downsampled")
 	end
 
 	if self.m_renderPanorama then
@@ -500,6 +525,8 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 				)
 				drawCmd:RecordBlitImage(texEqui2:GetImage(), img, blitInfo)
 				game.flush_setup_command_buffer()
+				self:SaveDebugImage(texEqui:GetImage(), "equi")
+				self:SaveDebugImage(texEqui2:GetImage(), "equi2")
 			end
 			local imgBufInfo = prosper.Image.ToImageBufferInfo()
 			imgBufInfo.includeLayers = false
@@ -519,6 +546,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 			if res == false then
 				pfm.log("Failed to apply color transform", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_ERROR)
 			end
+			self:SaveDebugImage(self.m_imageBuffer, "final")
 		else
 			pfm.log("Panorama frame not yet complete...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
 			local drawCmd = game.get_setup_command_buffer()
@@ -554,6 +582,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 		imgBufInfo.targetFormat = util.ImageBuffer.FORMAT_RGBA16
 		imgBufInfo.inputImageLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 		imgBufInfo.stagingImage = self.m_imgOutputStagingImage
+
 		local imgBuf = imgOutput:ToImageBuffer(imgBufInfo)
 		pfm.log("Applying color transform...", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_DEBUG)
 		local res = unirender.apply_color_transform(
@@ -566,6 +595,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 		if res == false then
 			pfm.log("Failed to apply color transform", pfm.LOG_CATEGORY_PRAGMA_RENDERER, pfm.LOG_SEVERITY_ERROR)
 		end
+		self:SaveDebugImage(imgBuf, "final")
 
 		if self.m_useTiledRendering then
 			self.m_imageBuffer = self.m_tileCompositeImgBuf

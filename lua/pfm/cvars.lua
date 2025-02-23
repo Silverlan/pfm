@@ -98,6 +98,13 @@ console.register_variable(
 	"If enabled, debug information will be dumped into the console when editing animation data in the graph editor."
 )
 console.register_variable(
+	"pfm_debug_dump_render_image_stages",
+	udm.TYPE_BOOLEAN,
+	false,
+	bit.bor(console.FLAG_BIT_HIDDEN),
+	"If enabled, the render image stages will be dumped as image files to temp/render_image_stages/*.png."
+)
+console.register_variable(
 	"pfm_camera_speed",
 	udm.TYPE_FLOAT,
 	200,
