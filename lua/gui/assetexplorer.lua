@@ -669,6 +669,19 @@ function gui.AssetExplorer:ListFiles()
 			return a:lower() < b:lower()
 		end)
 	end
+
+	-- Precache icons for faster loading
+	local assetType = self:GetAssetType()
+	if assetType ~= nil then
+		for _, f in ipairs(tFiles) do
+			local iconPath = gui.AssetIcon.get_icon_location(f, assetType)
+			if iconPath ~= nil then
+				asset.precache(iconPath, asset.TYPE_MATERIAL)
+				asset.precache(iconPath, asset.TYPE_TEXTURE)
+			end
+		end
+	end
+
 	for _, f in ipairs(tFiles) do
 		self:AddAsset(f, false)
 	end
