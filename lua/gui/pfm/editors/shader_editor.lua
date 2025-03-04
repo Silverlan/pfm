@@ -108,6 +108,22 @@ function Element:OnInitialize()
 				end
 				self.m_elGraph:GetGraph():DebugPrint()
 			end)
+			pContext:AddItem("Go to shader file", function()
+				if self:IsValid() == false then
+					return
+				end
+				local graphIdentifier = get_graph_identifier_from_file_path(self.m_filePath)
+				local filePath = shader.ShaderGraph.get_shader_file_path("object", graphIdentifier)
+				util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
+			end)
+			pContext:AddItem("Go to graph file", function()
+				if self:IsValid() == false then
+					return
+				end
+				local graphIdentifier = get_graph_identifier_from_file_path(self.m_filePath)
+				local filePath = shader.ShaderGraph.get_file_path("object", graphIdentifier)
+				util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
+			end)
 
 			pContext:ScheduleUpdate()
 		end)
