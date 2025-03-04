@@ -29,6 +29,7 @@ function Element:OnInitialize()
 			local elWrapper = wrapper:GetWrapperElement()
 			if util.is_valid(elWrapper) and udm.is_animatable_type(type) then
 				local marker = gui.create("WIKeyframeMarker", self)
+				marker:SetName("keyframe_marker")
 				marker:SetX(self:GetWidth() - marker:GetWidth() - 2)
 				marker:SetY(elWrapper:GetY() + elWrapper:GetHeight() / 2 - marker:GetHeight() / 2)
 				marker:SetAnchor(1, 0, 1, 0)
