@@ -666,6 +666,14 @@ function gui.WIFilmmaker:ShowCloseConfirmation(action, callActionOnCancel)
 		action(true)
 		return
 	end
+
+	if self:IsDeveloperModeEnabled() == false then
+		local session = self:GetSession()
+		if session ~= nil and session:GetSettings():IsReadOnly() then
+			-- Project is read-only, we can't save it
+			return
+		end
+	end
 	local fileName = self:GetProjectFileName() or locale.get_text("untitled")
 	pfm.open_message_prompt(
 		locale.get_text("pfm_prompt_save_changes"),
