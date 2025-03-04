@@ -772,6 +772,10 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		apiData:GetFromPath("cycles/scene/actors/27707b26-1f7f-4829-a979-bb0df9a22450"):SetValue("maxBounces",udm.TYPE_UINT32,1)
 		]]
 
+		if console.get_convar_bool("pfm_debug_dump_render_image_stages") then
+			apiData:GetFromPath("debug"):SetValue("dumpRenderStageImages", udm.TYPE_BOOLEAN, true)
+		end
+
 		local job = renderer:StartRender()
 		job:Start()
 		self.m_rtScene = scene
