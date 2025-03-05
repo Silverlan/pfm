@@ -71,6 +71,7 @@ function Element:OnInitialize()
 						self:LogWarn("Failed to load shader graph '" .. graphIdentifier .. "': " .. err)
 					else
 						self:LogInfo("Loaded shader graph '" .. graphIdentifier .. "'!")
+						graph = graph:Copy()
 						elGraph:SetGraph(graph)
 						self:UpdatePath(filePath)
 					end
@@ -184,7 +185,7 @@ function Element:Save(filePath)
 		self:UpdatePath(filePath)
 
 		local graphIdentifier = get_graph_identifier_from_file_path(filePath)
-		shader.set_shader_graph(shaderType, graphIdentifier, graph)
+		shader.sync_shader_graph(shaderType, graphIdentifier, graph)
 		self:SetShaderDirty()
 	end
 	return res
