@@ -129,6 +129,19 @@ function Element:OnInitialize()
 		end)
 		:SetName("view")
 end
+function Element:OnRemove()
+	util.remove(self.m_cbRenderSceneDirty)
+end
+function Element:OnVisibilityChanged(visible)
+	util.remove(self.m_cbRenderSceneDirty)
+	if visible then
+		self.m_cbRenderSceneDirty = game.add_callback("Think", function()
+			-- Always tag the scene as dirty while the shader editor is active so that time-based
+			-- shader effects are visible immediately
+			pfm.tag_render_scene_as_dirty()
+		end)
+	end
+end
 function Element:GetTransformableElement()
 	return self.m_transformable
 end
