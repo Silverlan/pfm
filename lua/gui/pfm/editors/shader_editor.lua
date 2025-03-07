@@ -154,6 +154,9 @@ function Element:OnThink()
 	if self.m_shaderReloadTime ~= nil and time.cur_time() >= self.m_shaderReloadTime then
 		self.m_shaderReloadTime = nil
 		local graphIdentifier = get_graph_identifier_from_file_path(self.m_filePath)
+		local shaderType = "object"
+		local graph = self.m_elGraph:GetGraph()
+		shader.sync_shader_graph(shaderType, graphIdentifier, graph)
 		shader.reload_graph_shader(graphIdentifier)
 		pfm.tag_render_scene_as_dirty()
 	end
