@@ -1249,7 +1249,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 		local metaInfoOpt = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_OPTIONAL)
 		if metaInfoOpt ~= nil and util.is_valid(container) then
 			local elCheckbox = gui.create("WICheckbox")
-			elCheckbox:SetTooltip("Click to toggle property.")
+			elCheckbox:SetTooltip(locale.get_text("pfm_click_toggle_property"))
 			container:AddIcon(elCheckbox)
 
 			local componentName, memberName =
