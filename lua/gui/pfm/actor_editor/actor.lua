@@ -453,6 +453,25 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 	end)
 
 	local itemComponents = itemActor -- itemActor:AddItem(locale.get_text("components"))
+	local test = itemComponents:AddItem("+ " .. locale.get_text("pfm_add_component"), nil, nil, "add_component")
+	test:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
+		if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
+			test:SetSelected(true)
+			local pContext = gui.open_context_menu()
+			if util.is_valid(pContext) then
+				local pos = test:GetAbsolutePos()
+				pContext:SetPos(pos.x, pos.y + test:GetHeight())
+				pContext:AddCallback("OnRemove", function()
+					test:SetSelected(false)
+				end)
+				pfm.populate_actor_component_context_menu(pContext, actor)
+				pContext:Update()
+				return util.EVENT_REPLY_HANDLED
+			end
+			return util.EVENT_REPLY_HANDLED
+		end
+	end)
+
 	self.m_treeElementToActorData[itemActor] = {
 		actor = actor,
 		itemActor = itemActor,
