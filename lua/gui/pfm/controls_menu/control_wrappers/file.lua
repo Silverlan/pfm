@@ -28,7 +28,7 @@ function Wrapper:SetExtensions(exts)
 	self.m_extensions = exts
 end
 function Wrapper:InitializeElement()
-	local el, wrapper = self.m_elControls:AddFileEntry(
+	local el, wrapper, container = self.m_elControls:AddFileEntry(
 		self.m_localizedText,
 		self.m_identifier,
 		self:ToInterfaceValue(self.m_defaultValue or ""),
@@ -53,6 +53,7 @@ function Wrapper:InitializeElement()
 		end
 	)
 	self.m_wrapper = wrapper
+	self.m_container = container
 	self.m_controlElement = el
 	return wrapper, el
 end

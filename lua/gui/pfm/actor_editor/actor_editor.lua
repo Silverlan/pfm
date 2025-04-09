@@ -13,6 +13,7 @@ include("../controls_menu/controls_menu.lua")
 include("../entry_edit_window.lua")
 include("/gui/wimodeldialog.lua")
 include("/gui/collapsiblegroup.lua")
+include("/gui/optional_overlay.lua")
 include("/pfm/raycast.lua")
 include("/pfm/component_manager.lua")
 include("/pfm/component_actions.lua")
@@ -257,9 +258,9 @@ function gui.PFMActorEditor:OnInitialize()
 			"pfm_create_reflection_probe"
 		)
 
-		local pVrItem, pVrMenu = pContext:AddSubMenu(locale.get_text("virtual_reality"))
-		pVrItem:SetName("virtual_reality")
 		if hasVrManagerComponent == false then
+			local pVrItem, pVrMenu = pContext:AddSubMenu(locale.get_text("virtual_reality"))
+			pVrItem:SetName("virtual_reality")
 			addPresetActorOption(
 				"vr_manager",
 				pVrMenu,
@@ -275,6 +276,7 @@ function gui.PFMActorEditor:OnInitialize()
 					self:UpdateActorComponents(actor)
 				end
 			)
+			pVrMenu:Update()
 		end
 
 		-- Misc
@@ -361,7 +363,6 @@ function gui.PFMActorEditor:OnInitialize()
 		effectsMenu:Update()
 		lightsMenu:Update()
 		pBakingMenu:Update()
-		pVrMenu:Update()
 		miscMenu:Update()
 
 		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
@@ -1075,11 +1076,12 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 	end
 
 	local ctrl
+	local container
 	local animSetControls = self:AddComponentPropertyGroup(actor, udmComponent).controlElement
 	if controlData.path ~= nil then
 		local displayName, description = pfm.util.get_localized_property_name(udmComponent:GetType(), memberInfo.name)
 		if memberInfo:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_READ_ONLY_BIT) then
-			local elText, wrapper = animSetControls:AddText(baseMemberName, displayName, controlData.default or "")
+			local elText, wrapper, c = animSetControls:AddText(baseMemberName, displayName, controlData.default or "")
 			if controlData.getValue ~= nil then
 				controlData.updateControlValue = function()
 					if elText:IsValid() == false then
@@ -1092,8 +1094,9 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 				end
 			end
 			ctrl = wrapper
+			container = c
 		elseif memberInfo.type == ents.MEMBER_TYPE_ELEMENT then
-			local bt = animSetControls:AddButton(
+			local bt, wrapper, c = animSetControls:AddButton(
 				locale.get_text("edit") .. " " .. displayName,
 				memberInfo.name,
 				function()
@@ -1122,6 +1125,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 				end
 			)
 			ctrl = bt
+			container = c
 		else
 			local propInfo = {}
 			if memberInfo:IsEnum() then
@@ -1191,6 +1195,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 				wrapper:SetValueTranslationFunctions(translateToInterface, translateFromInterface)
 
 				ctrl = wrapper:GetWrapperElement()
+				container = wrapper:GetContainerElement()
 				local val = false
 				if controlData.getValue ~= nil then
 					val = controlData.getValue()
@@ -1240,11 +1245,63 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 
 		local identifier = memberInfo.name:replace("/", "_")
 		ctrl:SetName(identifier)
+
+		local metaInfoOpt = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_OPTIONAL)
+		if metaInfoOpt ~= nil and util.is_valid(container) then
+			local elCheckbox = gui.create("WICheckbox")
+			elCheckbox:SetTooltip("Click to toggle property.")
+			container:AddIcon(elCheckbox)
+
+			local componentName, memberName =
+				ents.PanimaComponent.parse_component_channel_path(panima.Channel.Path(controlData.path))
+			local optPropName = "ec/" .. componentName .. "/" .. metaInfoOpt.enabledProperty
+			local elOverlay
+			local cb
+			local function initCallback()
+				if cb ~= nil then
+					return
+				end
+				local c = actor:FindComponent(componentName)
+				cb = c:AddChangeListener(metaInfoOpt.enabledProperty, function(c, newVal)
+					elOverlay:SetVisible(not newVal)
+					elCheckbox:SetChecked(newVal)
+				end)
+			end
+			initCallback()
+
+			local toggling = false
+			local function toggle()
+				if toggling then
+					return
+				end
+				toggling = true
+				local curVal = actor:GetMemberValue(optPropName) or false
+				local cmd =
+					pfm.create_command("set_actor_property", actor, optPropName, curVal, not curVal, udm.TYPE_BOOLEAN)
+
+				cmd:Execute()
+
+				initCallback()
+				toggling = false
+			end
+
+			local curVal = actor:GetMemberValue(optPropName) or false
+			elOverlay = gui.create("WIOptionalOverlay", ctrl, 0, 0, ctrl:GetWidth(), ctrl:GetHeight(), 0, 0, 1, 1)
+			elOverlay:SetVisible(not curVal)
+			elCheckbox:SetChecked(curVal)
+			elOverlay:AddCallback("OnRemove", function()
+				util.remove(cb)
+			end)
+			elOverlay:AddCallback("OnClicked", toggle)
+			elOverlay:SetText(memberName:GetBack())
+
+			elCheckbox:AddCallback("OnChange", toggle)
+		end
 	end
 	self:SetComponentPropertyGroupsDirty()
 	self:UpdateControlValue(controlData)
-	self:CallCallbacks("OnControlSelected", actor, udmComponent, controlData, ctrl)
-	return ctrl
+	self:CallCallbacks("OnControlSelected", actor, udmComponent, controlData, ctrl, container)
+	return ctrl, container
 end
 function gui.PFMActorEditor:SetComponentPropertyGroupsDirty()
 	self.m_clearEmptyComponentPropertyGroups = true
@@ -1920,6 +1977,7 @@ function gui.PFMActorEditor:AddControl(
 	end)
 
 	local ctrl
+	local container
 	local selectedCount = 0
 	local fOnSelected = function(item)
 		self:CallCallbacks("OnPropertySelected", udmComponent, item, controlData.name, true)
@@ -1940,13 +1998,14 @@ function gui.PFMActorEditor:AddControl(
 		if selectedCount > 1 or util.is_valid(ctrl) then
 			return
 		end
-		ctrl = self:OnControlSelected(actor, actorData, udmComponent, controlData)
+		ctrl, container = self:OnControlSelected(actor, actorData, udmComponent, controlData)
 		if ctrl ~= nil then
 			local uid = tostring(actor:GetUniqueId())
 			self.m_activeControls[uid] = self.m_activeControls[uid] or {}
 			self.m_activeControls[uid][controlData.path] = {
 				actor = actor,
 				control = ctrl,
+				container = container,
 				controlData = controlData,
 			}
 		end
@@ -1967,10 +2026,10 @@ function gui.PFMActorEditor:AddControl(
 				end
 			end
 		end
-		if util.is_valid(ctrl) == false then
+		if util.is_valid(container) == false then
 			return
 		end
-		ctrl:Remove()
+		container:Remove()
 	end
 	if controlData.type == "bone" then
 		local function add_item(parent, name)
@@ -2591,22 +2650,9 @@ function gui.PFMActorEditor:PasteAnimationData(actor)
 end
 gui.register("WIPFMActorEditor", gui.PFMActorEditor)
 
-pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, hitMaterial)
-	pfm.get_project_manager():CallCallbacks("PopulateActorContextMenu", pContext, actor)
-
-	-- Components
-	local entActor = actor:FindEntity()
-	if util.is_valid(entActor) then
+pfm.populate_actor_component_context_menu = function(pContext, actor, t, localeId)
+	if t == nil then
 		local componentMap = {}
-		local hiddenCategories = {
-			["gameplay"] = true,
-			["debug"] = true,
-			["util"] = true,
-			["physics"] = true,
-			["ui"] = true,
-			["editor"] = true,
-			["ai"] = true,
-		}
 		for _, componentId in ipairs(ents.get_registered_component_types()) do
 			local info = ents.get_component_info(componentId)
 			if bit.band(info.flags, ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR) == 0 and #info.category > 0 then
@@ -2623,74 +2669,88 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 				end
 			end
 		end
+		t = componentMap
+	end
+	if t.children ~= nil then
+		local tChildren = {}
+		for name, sub in pairs(t.children) do
+			local childLocaleId = name
+			if localeId ~= nil then
+				childLocaleId = localeId .. "_" .. childLocaleId
+			end
+			local res, displayName = locale.get_text("c_category_" .. childLocaleId, true)
+			if res == false then
+				displayName = name
+			end
+
+			table.insert(tChildren, {
+				name = name,
+				displayName = displayName,
+				localeId = childLocaleId,
+				components = sub,
+			})
+		end
+		table.sort(tChildren, function(a, b)
+			return a.displayName < b.displayName
+		end)
+		local hiddenCategories = {
+			["gameplay"] = true,
+			["debug"] = true,
+			["util"] = true,
+			["physics"] = true,
+			["ui"] = true,
+			["editor"] = true,
+			["ai"] = true,
+		}
+		for _, sub in ipairs(tChildren) do
+			if hiddenCategories[sub.name] ~= true then
+				local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(sub.displayName)
+				pComponentsItem:SetName(sub.name)
+				pfm.populate_actor_component_context_menu(pComponentsMenu, actor, sub.components, sub.localeId)
+				pComponentsMenu:Update()
+			end
+		end
+	end
+
+	local list = {}
+	for i, name in ipairs(t) do
+		local displayName = name
+		local valid, n = locale.get_text("c_" .. name, nil, true)
+		if valid then
+			displayName = n
+		end
+		list[i] = { name, displayName }
+	end
+	table.sort(list, function(a, b)
+		return a[2] < b[2]
+	end)
+
+	for _, nameInfo in ipairs(list) do
+		pContext
+			:AddItem(nameInfo[2], function()
+				local filmmaker = pfm.get_project_manager()
+				local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
+				if util.is_valid(actorEditor) == false then
+					return
+				end
+				pfm.undoredo.push("create_component", pfm.create_command("create_component", actor, nameInfo[1]))()
+			end)
+			:SetName(nameInfo[1])
+	end
+end
+
+pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, hitMaterial)
+	pfm.get_project_manager():CallCallbacks("PopulateActorContextMenu", pContext, actor)
+
+	-- Components
+	local entActor = actor:FindEntity()
+	if util.is_valid(entActor) then
 		--[[for _, name in ipairs(ents.find_installed_custom_components()) do
 			newComponentMap[name] = true
 		end]]
-		local function add_components(pContext, t, localeId)
-			if t.children ~= nil then
-				local tChildren = {}
-				for name, sub in pairs(t.children) do
-					local childLocaleId = name
-					if localeId ~= nil then
-						childLocaleId = localeId .. "_" .. childLocaleId
-					end
-					local res, displayName = locale.get_text("c_category_" .. childLocaleId, true)
-					if res == false then
-						displayName = name
-					end
-
-					table.insert(tChildren, {
-						name = name,
-						displayName = displayName,
-						localeId = childLocaleId,
-						components = sub,
-					})
-				end
-				table.sort(tChildren, function(a, b)
-					return a.displayName < b.displayName
-				end)
-				for _, sub in ipairs(tChildren) do
-					if hiddenCategories[sub.name] ~= true then
-						local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(sub.displayName)
-						pComponentsItem:SetName(sub.name)
-						add_components(pComponentsMenu, sub.components, sub.localeId)
-						pComponentsMenu:Update()
-					end
-				end
-			end
-
-			local list = {}
-			for i, name in ipairs(t) do
-				local displayName = name
-				local valid, n = locale.get_text("c_" .. name, nil, true)
-				if valid then
-					displayName = n
-				end
-				list[i] = { name, displayName }
-			end
-			table.sort(list, function(a, b)
-				return a[2] < b[2]
-			end)
-
-			for _, nameInfo in ipairs(list) do
-				pContext
-					:AddItem(nameInfo[2], function()
-						local filmmaker = pfm.get_project_manager()
-						local actorEditor = util.is_valid(filmmaker) and filmmaker:GetActorEditor() or nil
-						if util.is_valid(actorEditor) == false then
-							return
-						end
-						pfm.undoredo.push(
-							"create_component",
-							pfm.create_command("create_component", actor, nameInfo[1])
-						)()
-					end)
-					:SetName(nameInfo[1])
-			end
-		end
 		local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
 		pComponentsItem:SetName("add_component")
-		add_components(pComponentsMenu, componentMap)
+		pfm.populate_actor_component_context_menu(pComponentsMenu, actor)
 		pComponentsMenu:Update()
 	end
 	--

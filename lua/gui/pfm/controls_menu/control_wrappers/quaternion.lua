@@ -17,7 +17,7 @@ function Wrapper:GetControlElementValue()
 	return EulerAngles(self.m_controlElement:GetText()):ToQuaternion()
 end
 function Wrapper:InitializeElement()
-	local el, wrapper = self.m_elControls:AddTextEntry(
+	local el, wrapper, container = self.m_elControls:AddTextEntry(
 		self.m_localizedText,
 		self.m_identifier,
 		self:ToInterfaceValue(self.m_defaultValue or Quaternion()),
@@ -26,6 +26,7 @@ function Wrapper:InitializeElement()
 		end
 	)
 	self.m_wrapper = wrapper
+	self.m_container = container
 	self.m_controlElement = el
 	return wrapper, el
 end

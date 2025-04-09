@@ -135,31 +135,32 @@ function Component:UpdateMaterial()
 		if mdlC == nil then
 			return
 		end
-		mdlC:SetMaterialOverride(0, matName)
+		local matOverrideC = self:GetEntity():GetComponent(ents.COMPONENT_MATERIAL_OVERRIDE)
+		if matOverrideC ~= nil then
+			matOverrideC:SetMaterialOverride(0, matName)
+		end
 		mdlC:UpdateRenderMeshes()
 
 		self.m_usingCustomMaterial = false
 		return
 	end
 	self.m_customMaterial = (self.m_customMaterial ~= nil) and self.m_customMaterial or game.create_material("volume")
-	local data = self.m_customMaterial:GetDataBlock()
+	local mat = self.m_customMaterial
 	local strType = (self:GetType() == Component.TYPE_HOMOGENEOUS) and "homogeneous" or "heterogeneous"
-	local volData = data:AddBlock("volumetric")
-	volData:SetValue("string", "type", strType)
-	volData:SetValue("vector", "absorption", tostring(self:GetAbsorption()))
-	volData:SetValue("vector", "scattering_factor", tostring(self:GetScatteringFactor()))
-	volData:SetValue("vector", "asymmetry_factor", tostring(self:GetAsymmetryFactor()))
-	volData:SetValue("bool", "multiscattering", tostring(self:GetMultiScattering()))
-	local color = self:GetEntity():GetColor()
-	volData:SetValue("vector", "color", tostring(color:ToVector()))
-	volData:SetValue("float", "density", tostring(self:GetDensity()))
-	volData:SetValue("float", "anisotropy", tostring(self:GetAnisotropy()))
-	volData:SetValue("vector", "absorption_color", tostring(self:GetAbsorptionColor()))
-	volData:SetValue("float", "emission_strength", tostring(self:GetEmissionStrength()))
-	volData:SetValue("vector", "emission_color", tostring(self:GetEmissionColor()))
-	volData:SetValue("float", "blackbody_intensity", tostring(self:GetBlackbodyIntensity()))
-	volData:SetValue("vector", "blackbody_tint", tostring(self:GetBlackbodyTint()))
-	volData:SetValue("float", "temperature", tostring(self:GetTemperature()))
+	mat:SetPropertyByPath("volumetric/type", udm.TYPE_STRING, strType)
+	mat:SetPropertyByPath("volumetric/absorption", udm.TYPE_VECTOR3, self:GetAbsorption())
+	mat:SetPropertyByPath("volumetric/scattering_factor", udm.TYPE_VECTOR3, self:GetScatteringFactor())
+	mat:SetPropertyByPath("volumetric/asymmetry_factor", udm.TYPE_VECTOR3, self:GetAsymmetryFactor())
+	mat:SetPropertyByPath("volumetric/multiscattering", udm.TYPE_BOOLEAN, self:GetMultiScattering())
+	mat:SetPropertyByPath("volumetric/color", udm.TYPE_VECTOR3, self:GetEntity():GetColor():ToVector())
+	mat:SetPropertyByPath("volumetric/density", udm.TYPE_FLOAT, self:GetDensity())
+	mat:SetPropertyByPath("volumetric/anisotropy", udm.TYPE_FLOAT, self:GetAnisotropy())
+	mat:SetPropertyByPath("volumetric/absorption_color", udm.TYPE_VECTOR3, self:GetAbsorptionColor())
+	mat:SetPropertyByPath("volumetric/emission_strength", udm.TYPE_FLOAT, self:GetEmissionStrength())
+	mat:SetPropertyByPath("volumetric/emission_color", udm.TYPE_VECTOR3, self:GetEmissionColor())
+	mat:SetPropertyByPath("volumetric/blackbody_intensity", udm.TYPE_FLOAT, self:GetBlackbodyIntensity())
+	mat:SetPropertyByPath("volumetric/blackbody_tint", udm.TYPE_VECTOR3, self:GetBlackbodyTint())
+	mat:SetPropertyByPath("volumetric/temperature", udm.TYPE_FLOAT, self:GetTemperature())
 
 	self.m_customMaterial:SetLoaded(true)
 	if self.m_usingCustomMaterial == true then
@@ -170,7 +171,10 @@ function Component:UpdateMaterial()
 	if mdlC == nil then
 		return
 	end
-	mdlC:SetMaterialOverride(0, self.m_customMaterial)
+	local matOverrideC = self:GetEntity():GetComponent(ents.COMPONENT_MATERIAL_OVERRIDE)
+	if matOverrideC ~= nil then
+		matOverrideC:SetMaterialOverride(0, self.m_customMaterial)
+	end
 	mdlC:UpdateRenderMeshes()
 end
 function Component:OnEntitySpawn()

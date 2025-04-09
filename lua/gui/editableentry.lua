@@ -8,10 +8,6 @@
 
 util.register_class("gui.EditableEntry", gui.Base)
 
-gui.get_delta_time = function()
-	return time.frame_time()
-end
-
 function gui.EditableEntry:__init()
 	gui.Base.__init(self)
 end

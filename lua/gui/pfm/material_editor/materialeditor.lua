@@ -135,7 +135,7 @@ function gui.PFMMaterialEditor:AddTextureSlot(parent, text, texIdentifier, norma
 	texSlot:SetTransparencyEnabled(enableTransparency or false)
 	texSlot:AddCallback("OnTextureCleared", function(texSlot)
 		if util.is_valid(self.m_material) then
-			local data = self.m_material:GetDataBlock()
+			local data = self.m_material:GetPropertyDataBlock()
 			data:RemoveValue(texIdentifier)
 			self.m_material:UpdateTextures(true)
 			self:ReloadMaterialDescriptor()
@@ -183,7 +183,7 @@ function gui.PFMMaterialEditor:GetMaterialDataBlock()
 	if util.is_valid(self.m_material) == false or self.m_material:IsError() then
 		return
 	end
-	return self.m_material:GetDataBlock()
+	return self.m_material:GetPropertyDataBlock()
 end
 local udmTypeToMat = {
 	[udm.TYPE_STRING] = "string",
@@ -265,7 +265,10 @@ function gui.PFMMaterialEditor:SetMaterial(matName, mdl, reload)
 	if mdl ~= nil then
 		self.m_model = mdlC:GetModel()
 	end
-	mdlC:SetMaterialOverride(matName, material)
+	local matOverrideC = ent:GetComponent(ents.COMPONENT_MATERIAL_OVERRIDE)
+	if matOverrideC ~= nil then
+		matOverrideC:SetMaterialOverride(matName, material)
+	end
 	mdlC:UpdateRenderMeshes()
 	self:UpdateViewport()
 

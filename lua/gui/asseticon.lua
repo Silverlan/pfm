@@ -97,10 +97,13 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 			end
 			local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 			if mdlC ~= nil then
-				if settings.materialOverride then
-					mdlC:SetMaterialOverride(0, settings.materialOverride)
-				else
-					mdlC:ClearMaterialOverride(0)
+				local matOverrideC = ent:GetComponent(ents.COMPONENT_MATERIAL_OVERRIDE)
+				if matOverrideC ~= nil then
+					if settings.materialOverride then
+						matOverrideC:SetMaterialOverride(0, settings.materialOverride)
+					else
+						matOverrideC:ClearMaterialOverride(0)
+					end
 				end
 				mdlC:UpdateRenderMeshes()
 			end
@@ -132,19 +135,9 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 	if asset.is_loaded(iconLocation, asset.TYPE_MATERIAL) then
 		local mat = game.load_material(iconLocation)
 		if mat ~= nil then
-			local db = mat:GetDataBlock()
-			local mv = db:FindBlock("pfm_model_view")
-			if mv ~= nil then
-				if mv:HasValue("look_at_target") then
-					lookAtTarget = mv:GetVector("look_at_target")
-				end
-				if mv:HasValue("rotation") then
-					rotation = mv:GetVector("rotation")
-				end
-				if mv:HasValue("zoom") then
-					zoom = mv:GetFloat("zoom")
-				end
-			end
+			lookAtTarget = mat:GetPropertyByPath("pfm_model_view/look_at_target", udm.TYPE_VECTOR3)
+			rotation = mat:GetPropertyByPath("pfm_model_view/rotation", udm.TYPE_VECTOR3)
+			zoom = mat:GetPropertyByPath("pfm_model_view/zoom", udm.TYPE_FLOAT)
 		end
 	end
 
@@ -200,13 +193,13 @@ local function save_model_icon(mdl, mdlView, iconPath, callback)
 
 		local isCharModel = pfm.util.is_character_model(mdl)
 		if isCharModel then
-			local db = mat:GetDataBlock()
+			local db = mat:GetPropertyDataBlock()
 			local mv = db:AddBlock("pfm_model_view")
 			mv:SetValue("bool", "character_model", "1")
 			mv:SetValue("float", "aspect_ratio", tostring(aspectRatio))
 		end
 
-		local db = mat:GetDataBlock()
+		local db = mat:GetPropertyDataBlock()
 		local mv = db:AddBlock("pfm_model_view")
 		mv:SetValue("vector", "look_at_target", tostring(lookAtTarget))
 		mv:SetValue("vector", "rotation", tostring(xRot) .. " " .. tostring(yRot) .. " 0")

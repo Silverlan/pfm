@@ -92,7 +92,6 @@ function unirender.GenericShader:AddTextureNode(desc, dbVolumetric, factorName, 
 	if mat == nil then
 		return
 	end
-	local data = mat:GetDataBlock()
 	local factor = dbVolumetric:GetVector(factorName, Vector(0, 0, 0))
 
 	local map = dbVolumetric:GetString(mapName)
@@ -112,8 +111,7 @@ function unirender.GenericShader:LinkDefaultVolume(desc, outputNode)
 	if mat == nil then
 		return
 	end
-	local data = mat:GetDataBlock()
-	local dbVolumetric = mat and mat:GetDataBlock():FindBlock("volumetric")
+	local dbVolumetric = mat and mat:GetPropertyDataBlock():FindBlock("volumetric")
 	if dbVolumetric ~= nil then
 		local enabled = true
 		if dbVolumetric:HasValue("enabled") then

@@ -18,7 +18,7 @@ function Wrapper:GetControlElementValue()
 end
 function Wrapper:InitializeElement()
 	local initialValue
-	local colField, wrapper = self.m_elControls:AddColorField(
+	local colField, wrapper, container = self.m_elControls:AddColorField(
 		self.m_localizedText,
 		self.m_identifier,
 		(self.m_defaultValue ~= nil) and Color(self.m_defaultValue) or Color.White,
@@ -35,6 +35,7 @@ function Wrapper:InitializeElement()
 	end)
 
 	self.m_wrapper = wrapper
+	self.m_container = container
 	self.m_controlElement = colField
 	return wrapper, colField
 end

@@ -40,7 +40,7 @@ function Component:OnRemove()
 end
 function Component:Reset()
 	for _, ent in ipairs(self.m_entities) do
-		if(ent:IsValid()) then
+		if ent:IsValid() then
 			self:ResetEntity(ent)
 		end
 	end
@@ -104,8 +104,11 @@ function Component:ApplyToEntity(ent)
 			end
 		end
 	end
-	for name, newMat in pairs(matOverrides) do
-		mdlC:SetMaterialOverride(name, newMat)
+	local matOverrideC = self:GetEntity():GetComponent(ents.COMPONENT_MATERIAL_OVERRIDE)
+	if matOverrideC ~= nil then
+		for name, newMat in pairs(matOverrides) do
+			matOverrideC:SetMaterialOverride(name, newMat)
+		end
 	end
 	mdlC:UpdateRenderMeshes()
 	table.insert(self.m_entities, ent)

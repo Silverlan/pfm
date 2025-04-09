@@ -408,7 +408,10 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 			for _, memberIdx in ipairs(memberIndices) do
 				local memberInfo = c:GetMemberInfo(memberIdx)
 				assert(memberInfo ~= nil)
-				if memberInfo:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_HIDE_IN_INTERFACE_BIT) == false then
+				if
+					memberInfo:HasFlag(ents.ComponentInfo.MemberInfo.FLAG_HIDE_IN_INTERFACE_BIT) == false
+					and memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_ENABLER) == nil
+				then
 					local controlData = {}
 					local info = memberInfo
 					local memberName = info.name

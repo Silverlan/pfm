@@ -19,7 +19,7 @@ function unirender.VolumeShader:InitializeCombinedPass(desc, outputNode)
 		if mat == nil then
 			return
 		end
-		local data = mat:GetDataBlock()
+		local data = mat:GetPropertyDataBlock()
 		local volData = data:FindBlock("volumetric")
 		if volData == nil then
 			return

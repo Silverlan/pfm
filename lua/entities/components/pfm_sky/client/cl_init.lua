@@ -45,7 +45,7 @@ function Component:Initialize()
 		end)
 	)
 
-	self:BindEvent(ents.ModelComponent.EVENT_ON_MATERIAL_OVERRIDES_CLEARED, "UpdateSkyTexture")
+	self:BindEvent(ents.MaterialOverrideComponent.EVENT_ON_MATERIAL_OVERRIDES_CLEARED, "UpdateSkyTexture")
 end
 function Component:ApplySceneSkySettings(scene)
 	scene:SetSkyAngles(self:GetEntity():GetAngles())

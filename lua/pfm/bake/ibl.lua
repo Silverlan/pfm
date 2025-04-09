@@ -155,7 +155,7 @@ function ReflectionProbeBaker:Start()
 	matPath:PopFront()
 	local curIblMaterial = game.load_material(matPath:GetString())
 	if util.is_valid(curIblMaterial) then
-		local data = curIblMaterial:GetDataBlock()
+		local data = curIblMaterial:GetPropertyDataBlock()
 		local generated = data:GetBool("generated", false)
 		if generated then
 			-- Delete old material and textures

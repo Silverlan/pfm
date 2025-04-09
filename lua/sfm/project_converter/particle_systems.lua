@@ -667,7 +667,7 @@ sfm.convert_particle_system = function(ptData)
 	local mat = game.load_material(material:GetString())
 	if mat ~= nil and mat:IsError() == false then
 		-- Disable bloom if the material doesn't have any
-		local db = mat:GetDataBlock()
+		local db = mat:GetPropertyDataBlock()
 		if db:HasValue("bloom_color_factor") then
 			ptData["bloom_color_factor"] = "1 1 1"
 		else

@@ -20,9 +20,9 @@ function unirender.GlassShader:InitializeCombinedPass(desc, outputNode)
 		return
 	end
 
-	local data = mat:GetDataBlock()
-	if data:HasValue("ior") then
-		glass:SetProperty(unirender.Node.glass_material.IN_IOR, data:GetFloat("ior"))
+	local ior = mat:GetProperty("ior", udm.TYPE_FLOAT)
+	if ior ~= nil then
+		glass:SetProperty(unirender.Node.glass_material.IN_IOR, ior)
 	end
 
 	glass:SetProperty(unirender.Node.glass_material.IN_COLOR, Vector(1, 1, 1))

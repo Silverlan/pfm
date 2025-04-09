@@ -20,7 +20,7 @@ function unirender.WaterShader:InitializeCombinedPass(desc, outputNode)
 
 	
 	
-	local data = mat:GetDataBlock()
+	local data = mat:GetPropertyDataBlock()
 	local ior = 1.3244 -- data:GetFloat("ior")
 	if(data:HasValue("ior")) then glass:SetProperty(unirender.Node.glass_material.IN_IOR,ior) end
 

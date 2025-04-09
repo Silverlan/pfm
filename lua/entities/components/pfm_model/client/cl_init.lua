@@ -44,10 +44,11 @@ function ents.PFMModel:OnEntitySpawn()
 end
 function ents.PFMModel:UpdateMaterialOverrides()
 	local mdlC = self:GetEntity():GetComponent(ents.COMPONENT_MODEL)
-	if mdlC == nil then
+	local matOverrideC = self:GetEntity():GetComponent(ents.COMPONENT_MATERIAL_OVERRIDE)
+	if mdlC == nil or matOverrideC == nil then
 		return
 	end
-	mdlC:ClearMaterialOverrides()
+	matOverrideC:ClearMaterialOverrides()
 	local udmMatOverrides = self:GetMaterialOverrides():Get("materialOverrides")
 	for _, udmMatOverride in ipairs(udmMatOverrides:GetArrayValues()) do
 		local srcMaterial = udmMatOverride:GetValue("srcMaterial", udm.TYPE_STRING)
@@ -70,7 +71,7 @@ function ents.PFMModel:UpdateMaterialOverrides()
 				if util.is_valid(matRef) then
 					-- TODO: Update shader
 					local cpy = matRef:Copy()
-					cpy:MergeData(properties)
+					cpy:MergePropertyDataBlock(properties)
 					cpy:ReloadTextures()
 					cpy:InitializeShaderDescriptorSet(true)
 					matOverride = cpy
@@ -80,7 +81,7 @@ function ents.PFMModel:UpdateMaterialOverrides()
 			end
 
 			if util.is_valid(matOverride) then
-				mdlC:SetMaterialOverride(srcMaterial, matOverride)
+				matOverrideC:SetMaterialOverride(srcMaterial, matOverride)
 			else
 				self:LogWarn(
 					"Failed to apply material override for material '"
@@ -295,7 +296,7 @@ function ents.PFMModel:UpdateModel()
 		local origMat = game.load_material(matName)
 		if(origMat ~= nil) then
 			local newMat = origMat:Copy()
-			local data = newMat:GetDataBlock()
+			local data = newMat:GetPropertyDataBlock()
 			for key,val in pairs(matOverride:GetOverrideValues():GetTable()) do
 				local type = data:GetValueType(key)
 				if(type ~= nil and val:GetType() == fudm.ATTRIBUTE_TYPE_STRING) then

@@ -51,7 +51,7 @@ function pfm.ProjectPacker:AddMaterial(mat)
 	end
 	local matName = util.Path(mat:GetName())
 	self:AddAsset(matName:GetString(), asset.TYPE_MATERIAL, true)
-	local db = mat:GetDataBlock()
+	local db = mat:GetPropertyDataBlock()
 	for _, key in ipairs(db:GetKeys()) do
 		if db:GetValueType(key) == "texture" then
 			local texInfo = mat:GetTextureInfo(key)

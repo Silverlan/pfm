@@ -51,7 +51,7 @@ function gui.PFMRaytracedAnimationViewport:OnInitialize()
 					if mat == nil then
 						return
 					end
-					local db = mat:GetDataBlock()
+					local db = mat:GetPropertyDataBlock()
 					local dbRenderSettings = db:FindBlock("pfm_render_settings")
 					if dbRenderSettings == nil then
 						return

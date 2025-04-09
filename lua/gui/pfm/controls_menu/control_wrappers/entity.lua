@@ -24,7 +24,7 @@ function Wrapper:GetControlElementValue()
 	return ents.UniversalEntityReference(util.Uuid(self.m_controlElement:GetText()))
 end
 function Wrapper:InitializeElement()
-	local el, wrapper = self.m_elControls:AddTextEntry(
+	local el, wrapper, container = self.m_elControls:AddTextEntry(
 		self.m_localizedText,
 		self.m_identifier,
 		self:ToInterfaceValue(self.m_defaultValue or ""),
@@ -33,6 +33,7 @@ function Wrapper:InitializeElement()
 		end
 	)
 	self.m_wrapper = wrapper
+	self.m_container = container
 	self.m_controlElement = el
 	return wrapper, el
 end

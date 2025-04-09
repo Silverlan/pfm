@@ -59,7 +59,7 @@ function util.Luminance:GetAvgIntensity()
 end
 
 function util.Luminance.get_material_luminance(mat)
-	local db = mat:GetDataBlock()
+	local db = mat:GetPropertyDataBlock()
 	local lum = db:FindBlock("luminance")
 	if lum == nil then
 		return
@@ -74,13 +74,11 @@ function util.Luminance.get_material_luminance(mat)
 end
 
 function util.Luminance.set_material_luminance(mat, luminance)
-	local db = mat:GetDataBlock()
-	local lum = db:AddBlock("luminance")
-	lum:SetValue("float", "average", tostring(luminance:GetAvgLuminance()))
-	lum:SetValue("float", "average_log", tostring(luminance:GetAvgLuminanceLog()))
-	lum:SetValue("float", "minimum", tostring(luminance:GetMinLuminance()))
-	lum:SetValue("float", "maximum", tostring(luminance:GetMaxLuminance()))
-	lum:SetValue("vector", "average_intensity", tostring(luminance:GetAvgIntensity()))
+	mat:SetPropertyByPath("luminance/average", udm.TYPE_FLOAT, luminance:GetAvgLuminance())
+	mat:SetPropertyByPath("luminance/average_log", udm.TYPE_FLOAT, luminance:GetAvgLuminanceLog())
+	mat:SetPropertyByPath("luminance/minimum", udm.TYPE_FLOAT, luminance:GetMinLuminance())
+	mat:SetPropertyByPath("luminance/maximum", udm.TYPE_FLOAT, luminance:GetMaxLuminance())
+	mat:SetPropertyByPath("luminance/average_intensity", udm.TYPE_VECTOR3, luminance:GetAvgIntensity())
 end
 
 ------------------

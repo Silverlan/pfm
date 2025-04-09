@@ -48,7 +48,7 @@ function unirender.PBRShader:__init()
 	unirender.GenericShader.__init(self)
 end
 function unirender.PBRShader:AddAlbedoNode(desc, mat)
-	local data = mat:GetDataBlock()
+	local data = mat:GetPropertyDataBlock()
 	local alphaMode = mat:GetAlphaMode()
 	local alphaCutoff = mat:GetAlphaCutoff()
 	local alphaFactor = data:GetFloat("alpha_factor", 1.0)
@@ -133,7 +133,7 @@ function unirender.PBRShader:AddAlbedoNode(desc, mat)
 	return col, alpha
 end
 function unirender.PBRShader:AddNormalNode(desc, mat) -- Result is in world space
-	local data = mat:GetDataBlock()
+	local data = mat:GetPropertyDataBlock()
 	local normalMap = mat:GetTextureInfo("normal_map")
 	local normalStrength = data:GetFloat("normal_strength", 1.0)
 	local normalTex = (normalMap ~= nil) and unirender.get_texture_path(normalMap:GetName()) or nil
@@ -145,7 +145,7 @@ function unirender.PBRShader:AddNormalNode(desc, mat) -- Result is in world spac
 	end
 end
 function unirender.PBRShader:AddMetalnessRoughnessNode(desc, mat)
-	local data = mat:GetDataBlock()
+	local data = mat:GetPropertyDataBlock()
 	-- Metalness / Roughness
 	local rmaMap = mat:GetTextureInfo("rma_map")
 	local rmaTex = (rmaMap ~= nil) and unirender.get_texture_path(rmaMap:GetName()) or nil
@@ -184,7 +184,7 @@ end
 function unirender.PBRShader:Initialize()
 	local mat = self:GetMaterial()
 
-	--[[local dbHair = mat and mat:GetDataBlock():FindBlock("hair")
+	--[[local dbHair = mat and mat:GetPropertyDataBlock():FindBlock("hair")
 	if(dbHair ~= nil) then
 		local enabled = true
 		if(dbHair:HasValue("enabled")) then enabled = dbHair:GetBool("enabled") end
@@ -201,7 +201,7 @@ function unirender.PBRShader:Initialize()
 		end
 	end]]
 
-	local dbSubdiv = mat and mat:GetDataBlock():FindBlock("subdivision")
+	local dbSubdiv = mat and mat:GetPropertyDataBlock():FindBlock("subdivision")
 	if dbSubdiv ~= nil then
 		local enabled = true
 		if dbSubdiv:HasValue("enabled") then
@@ -246,7 +246,7 @@ function unirender.PBRShader:InitializeCombinedPass(desc, outputNode)
 
 	-- TODO: If no albedo map, use white texture instead
 
-	local data = mat:GetDataBlock()
+	local data = mat:GetPropertyDataBlock()
 	local colorFactor = data:GetVector("color_factor", Vector(1, 1, 1))
 
 	-- Albedo

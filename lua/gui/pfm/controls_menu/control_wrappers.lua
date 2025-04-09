@@ -64,6 +64,12 @@ end
 function Wrapper:GetControlElement()
 	return self.m_controlElement
 end
+function Wrapper:SetContainerElement(container)
+	self.m_container = container
+end
+function Wrapper:GetContainerElement()
+	return self.m_container
+end
 
 include("control_wrappers")
 

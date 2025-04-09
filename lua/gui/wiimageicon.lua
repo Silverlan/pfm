@@ -79,7 +79,7 @@ function gui.ImageIcon:SetMaterial(mat, w, h)
 
 	mat = self.m_texture:GetMaterial()
 	if mat ~= nil then
-		local db = mat:GetDataBlock()
+		local db = mat:GetPropertyDataBlock()
 		local mv = (db ~= nil) and db:AddBlock("pfm_model_view") or nil
 		if mv ~= nil then
 			local aspectRatio = mv:GetFloat("aspect_ratio", 1.0)

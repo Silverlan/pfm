@@ -29,7 +29,7 @@ function Wrapper:SetUnit(unit)
 	self.m_unit = unit
 end
 function Wrapper:InitializeElement()
-	local slider = self.m_elControls:AddSliderControl(
+	local slider, wrapper, container = self.m_elControls:AddSliderControl(
 		self.m_localizedText,
 		self.m_identifier,
 		self:ToInterfaceValue(self.m_defaultValue or 0.0),
@@ -55,6 +55,7 @@ function Wrapper:InitializeElement()
 		slider:SetUnit(self.m_unit)
 	end
 	self.m_wrapper = wrapper
+	self.m_container = container
 	self.m_controlElement = slider
 	return wrapper, slider
 end

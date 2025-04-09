@@ -22,24 +22,18 @@ function Element:OnInitialize()
 		self:UpdateMarkers()
 	end)
 
-	self.m_controlItems = {}
 	self.m_cbPropertyControlAdded = pfm.add_event_listener(
 		"OnActorPropertyControlAdded",
 		function(actor, targetPath, type, wrapper)
-			local elWrapper = wrapper:GetWrapperElement()
-			if util.is_valid(elWrapper) and udm.is_animatable_type(type) then
-				local marker = gui.create("WIKeyframeMarker", self)
-				marker:SetName("keyframe_marker")
-				marker:SetX(self:GetWidth() - marker:GetWidth() - 2)
-				marker:SetY(elWrapper:GetY() + elWrapper:GetHeight() / 2 - marker:GetHeight() / 2)
-				marker:SetAnchor(1, 0, 1, 0)
-				self.m_markerManager:AddMarker(marker, actor, targetPath, type)
-				elWrapper:RemoveElementOnRemoval(marker)
-				table.insert(
-					self.m_controlItems,
-					{ wrapper = wrapper, wrapperElement = wrapper:GetWrapperElement(), marker = marker }
-				)
-				self:ScheduleUpdate()
+			local elContainer = wrapper:GetContainerElement()
+			if util.is_valid(elContainer) then
+				if udm.is_animatable_type(type) then
+					local marker = gui.create("WIKeyframeMarker", self)
+					marker:SetName("keyframe_marker")
+					self.m_markerManager:AddMarker(marker, actor, targetPath, type)
+					elContainer:AddIcon(marker)
+					marker:SetY(4)
+				end
 			end
 		end
 	)
@@ -55,16 +49,9 @@ end
 function Element:OnUpdate()
 	self:UpdateMarkers()
 end
-function Element:UpdateMarkers()
-	for _, item in ipairs(self.m_controlItems) do
-		local elWrapper = item.wrapperElement
-		if util.is_valid(elWrapper) then
-			item.marker:SetY(elWrapper:GetY() + elWrapper:GetHeight() / 2 - item.marker:GetHeight() / 2)
-		end
-	end
-end
+function Element:UpdateMarkers() end
 function Element:OnSizeChanged(w, h)
-	self.m_controls:SetWidth(w - 15)
+	self.m_controls:SetWidth(w)
 end
 function Element:GetControlsMenu()
 	return self.m_controls

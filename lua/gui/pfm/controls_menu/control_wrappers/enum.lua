@@ -34,7 +34,7 @@ function Wrapper:InitializeElement()
 			end
 		end
 	end
-	local el, wrapper = self.m_elControls:AddDropDownMenu(
+	local el, wrapper, container = self.m_elControls:AddDropDownMenu(
 		self.m_localizedText,
 		self.m_identifier,
 		self.m_enumValues,
@@ -48,6 +48,7 @@ function Wrapper:InitializeElement()
 	)
 	wrapper:SetUseAltMode(true)
 	self.m_wrapper = wrapper
+	self.m_container = container
 	self.m_controlElement = el
 	return wrapper, el
 end

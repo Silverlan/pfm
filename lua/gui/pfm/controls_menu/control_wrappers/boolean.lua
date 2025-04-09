@@ -17,7 +17,7 @@ function Wrapper:GetControlElementValue()
 	return self.m_controlElement:IsChecked()
 end
 function Wrapper:InitializeElement()
-	local elToggle, wrapper = self.m_elControls:AddToggleControl(
+	local elToggle, wrapper, container = self.m_elControls:AddToggleControl(
 		self.m_localizedText,
 		self.m_identifier,
 		self:ToInterfaceValue(self.m_defaultValue or false),
@@ -26,6 +26,7 @@ function Wrapper:InitializeElement()
 		end
 	)
 	self.m_wrapper = wrapper
+	self.m_container = container
 	self.m_controlElement = elToggle
 	return wrapper, elToggle
 end
