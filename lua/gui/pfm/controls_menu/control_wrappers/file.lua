@@ -27,6 +27,9 @@ end
 function Wrapper:SetExtensions(exts)
 	self.m_extensions = exts
 end
+function Wrapper:SetStripExtension(strip)
+	self.m_stripExtension = strip
+end
 function Wrapper:InitializeElement()
 	local el, wrapper, container = self.m_elControls:AddFileEntry(
 		self.m_localizedText,
@@ -38,7 +41,11 @@ function Wrapper:InitializeElement()
 					return
 				end
 				local basePath = self.m_basePath or ""
-				resultHandler(basePath .. el:GetFilePath(true))
+				local filePath = basePath .. el:GetFilePath(true)
+				if self.m_stripExtension and self.m_extensions ~= nil then
+					filePath = file.remove_file_extension(filePath, self.m_extensions)
+				end
+				resultHandler(filePath)
 			end)
 			if self.m_rootPath ~= nil then
 				pFileDialog:SetRootPath(self.m_rootPath)

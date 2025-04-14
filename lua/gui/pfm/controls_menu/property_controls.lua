@@ -10,8 +10,39 @@ include("controls_menu.lua")
 
 local Element = util.register_class("gui.PFMPropertyControls", gui.Base)
 
+Element.impl = Element.impl or { count = 0 }
+
+local function initialize_keyframe_marker_manager()
+	Element.impl.markerManager = gui.KeyframeMarkerManager()
+	Element.impl.cbPropertyControlAdded = pfm.add_event_listener(
+		"OnActorPropertyControlAdded",
+		function(actor, targetPath, type, wrapper, elPropertyControls)
+			local elContainer = wrapper:GetContainerElement()
+			if util.is_valid(elContainer) then
+				if udm.is_animatable_type(type) then
+					local marker = gui.create("WIKeyframeMarker", elPropertyControls)
+					marker:SetName("keyframe_marker")
+					Element.impl.markerManager:AddMarker(marker, actor, targetPath, type)
+					elContainer:AddIcon(marker)
+					marker:SetY(4)
+				end
+			end
+		end
+	)
+end
+
+local function clear_keyframe_marker_manager()
+	Element.impl.markerManager:Clear()
+	util.remove(Element.impl.cbPropertyControlAdded)
+end
+
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
+
+	if Element.impl.count == 0 then
+		initialize_keyframe_marker_manager()
+	end
+	Element.impl.count = Element.impl.count + 1
 
 	self:SetAutoSizeToContents(false, true)
 	local controls = gui.create("WIPFMControlsMenu", self)
@@ -22,29 +53,15 @@ function Element:OnInitialize()
 		self:UpdateMarkers()
 	end)
 
-	self.m_cbPropertyControlAdded = pfm.add_event_listener(
-		"OnActorPropertyControlAdded",
-		function(actor, targetPath, type, wrapper)
-			local elContainer = wrapper:GetContainerElement()
-			if util.is_valid(elContainer) then
-				if udm.is_animatable_type(type) then
-					local marker = gui.create("WIKeyframeMarker", self)
-					marker:SetName("keyframe_marker")
-					self.m_markerManager:AddMarker(marker, actor, targetPath, type)
-					elContainer:AddIcon(marker)
-					marker:SetY(4)
-				end
-			end
-		end
-	)
-
 	self.m_controls = controls
 
 	self.m_markerManager = gui.KeyframeMarkerManager()
 end
 function Element:OnRemove()
-	util.remove(self.m_cbPropertyControlAdded)
-	self.m_markerManager:Clear()
+	Element.impl.count = Element.impl.count - 1
+	if Element.impl.count == 0 then
+		clear_keyframe_marker_manager()
+	end
 end
 function Element:OnUpdate()
 	self:UpdateMarkers()

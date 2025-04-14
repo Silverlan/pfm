@@ -95,6 +95,7 @@ function gui.PFMControlsMenu:AddPropertyControl(propType, identifier, localizedT
 		wrapper:SetBasePath(propInfo.basePath)
 		wrapper:SetRootPath(propInfo.rootPath)
 		wrapper:SetExtensions(propInfo.extensions)
+		wrapper:SetStripExtension(propInfo.stripExtension)
 	elseif
 		propInfo.specializationType == ents.ComponentInfo.MemberInfo.SPECIALIZATION_TYPE_COLOR
 		or propInfo.specializationType == "color"

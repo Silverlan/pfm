@@ -1180,6 +1180,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 				local meta = memberInfo.metaData or udm.create_element()
 				propInfo.basePath = meta:GetValue("basePath")
 				propInfo.rootPath = meta:GetValue("rootPath")
+				propInfo.stripExtension = meta:GetValue("stripExtension")
 				propInfo.extensions = meta:Get("extensions"):ToTable()
 				propInfo.assetType = meta:GetValue("assetType")
 			end
@@ -1190,7 +1191,8 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 					actor,
 					controlData.path,
 					memberInfo.type,
-					wrapper
+					wrapper,
+					animSetControls
 				)
 				wrapper:SetValueTranslationFunctions(translateToInterface, translateFromInterface)
 
@@ -1287,6 +1289,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 
 			local curVal = actor:GetMemberValue(optPropName) or false
 			elOverlay = gui.create("WIOptionalOverlay", ctrl, 0, 0, ctrl:GetWidth(), ctrl:GetHeight(), 0, 0, 1, 1)
+			elOverlay:SetZPos(100)
 			elOverlay:SetVisible(not curVal)
 			elCheckbox:SetChecked(curVal)
 			elOverlay:AddCallback("OnRemove", function()
