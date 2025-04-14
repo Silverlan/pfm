@@ -2070,7 +2070,7 @@ end
 function gui.PFMActorEditor:GetPropertyEntries(uuid, componentType)
 	local elComponent, componentData, actorData = self:GetComponentEntry(uuid, componentType)
 	if elComponent == nil then
-		return
+		return {}
 	end
 	local t = {}
 	for _, itemData in pairs(componentData.items) do
