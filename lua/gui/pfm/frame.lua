@@ -21,7 +21,7 @@ function gui.PFMFrame:OnInitialize()
 
 	self:SetSize(256, 128)
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(41, 41, 41))
+	self.m_bg:AddStyleClass("background3")
 
 	--[[self.m_btClose = gui.PFMButton.create(self, "gui/pfm/icon_clear", "gui/pfm/icon_clear_activated", function()
 		print("TODO")
@@ -36,22 +36,19 @@ function gui.PFMFrame:OnInitialize()
 	self.m_tabButtonContainer:SetHeight(28)
 	self.m_tabButtonContainer:SetName("tab_button_container")
 
+	self.m_tbGroup = gui.PFMButtonGroup(self.m_tabButtonContainer, true)
+
 	gui.create("WIBase", self.m_tabButtonContainer):SetSize(5, 1) -- Gap
-	self.m_btAddPanel = gui.PFMButton.create(
-		self.m_tabButtonContainer,
-		"gui/pfm/icon_cp_add",
-		"gui/pfm/icon_cp_add_activated",
-		function()
-			local pContext = gui.open_context_menu()
-			if util.is_valid(pContext) == false then
-				return
-			end
-			local pos = self.m_btAddPanel:GetAbsolutePos()
-			pContext:SetPos(pos.x, pos.y + self.m_btAddPanel:GetHeight())
-			self:CallCallbacks("PopulateWindowMenu", pContext)
-			pContext:Update()
+	self.m_btAddPanel = gui.PFMButton.create(self.m_tabButtonContainer, "plus-lg", function()
+		local pContext = gui.open_context_menu()
+		if util.is_valid(pContext) == false then
+			return
 		end
-	)
+		local pos = self.m_btAddPanel:GetAbsolutePos()
+		pContext:SetPos(pos.x, pos.y + self.m_btAddPanel:GetHeight())
+		self:CallCallbacks("PopulateWindowMenu", pContext)
+		pContext:Update()
+	end)
 	self.m_btAddPanel:SetName("panel_add_button")
 	gui.create("WIBase", self.m_tabButtonContainer):SetSize(5, 1) -- Gap
 
@@ -239,6 +236,7 @@ function gui.PFMFrame:AddTab(identifier, name, panel)
 		end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
+	self.m_tbGroup:AddButton(bt)
 	panel:SetParent(self.m_contents)
 	panel:SetPos(0, 0)
 	panel:SetSize(self.m_contents:GetWidth(), self.m_contents:GetHeight())

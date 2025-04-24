@@ -20,7 +20,7 @@ function gui.Resizer:OnInitialize()
 	self:SetSize(8, 8)
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	bg:GetColorProperty():Link(self:GetColorProperty())
-	self:SetColor(Color(38, 38, 38))
+	self:AddStyleClass("background")
 
 	self.m_dotContainer = gui.create("WIBase", self)
 	self.m_dots = {}

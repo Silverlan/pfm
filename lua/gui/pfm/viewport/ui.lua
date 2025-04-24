@@ -110,56 +110,6 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 	end)
 	self.m_ctrlViewportWrapper:SetVisible(false)
 
-	self.m_ctrlVr = p:AddDropDownMenu(locale.get_text("pfm_viewport_vr_enabled"), "vr_enabled", {
-		{ "0", locale.get_text("disabled") },
-		{ "1", locale.get_text("enabled") },
-	}, 0)
-	self.m_ctrlVr:AddCallback("OnOptionSelected", function(el, idx)
-		local enabled = (idx == 1)
-		ents.PFMCamera.set_vr_view_enabled(enabled)
-		if ents.PFMCamera.is_vr_view_enabled() then
-			for i = 0, openvr.MAX_TRACKED_DEVICE_COUNT - 1 do
-				if openvr.get_tracked_device_class(i) == openvr.TRACKED_DEVICE_CLASS_CONTROLLER then
-					local ent = ents.create("pfm_vr_controller")
-					ent:Spawn()
-
-					table.insert(self.m_vrControllers, ent)
-
-					local vrC = ent:GetComponent(ents.COMPONENT_VR_CONTROLLER)
-					if vrC ~= nil then
-						vrC:SetControllerId(i)
-					end
-
-					local pfmVrC = ent:GetComponent(ents.COMPONENT_PFM_VR_CONTROLLER)
-					if pfmVrC ~= nil then
-						-- TODO: This is just a prototype implementation, do this properly!
-						local el = pfmVrC:GetGUIElement():GetPlayButton()
-						if util.is_valid(el) then
-							el:AddCallback("OnStateChanged", function(el, oldState, state)
-								local btPlay = self:GetPlayButton()
-								if util.is_valid(btPlay) == false then
-									return
-								end
-								if state == pfm.util.PlaybackState.STATE_PLAYING then
-									btPlay:Pause()
-								elseif state == pfm.util.PlaybackState.STATE_PAUSED then
-									btPlay:Play()
-								end
-							end)
-						end
-					end
-				end
-			end
-		else
-			for _, ent in ipairs(self.m_vrControllers) do
-				if ent:IsValid() then
-					ent:Remove()
-				end
-			end
-			self.m_vrControllers = {}
-		end
-	end)
-
 	self.m_ctrlToneMapping = p:AddDropDownMenu(locale.get_text("pfm_viewport_tonemapping"), "tonemapping", {
 		{ "gamma_correction", locale.get_text("gamma_correction") },
 		{ "reinhard", "Reinhard" },
@@ -287,6 +237,8 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 	end)
 	self.m_refreshRtView:SetHeight(26)
 	self.m_refreshRtView:SetVisible(false)
+
+	pfm.call_event_listeners("PopulateViewportSettings", self, p)
 end
 function gui.PFMCoreViewportBase:SetManipulatorControlsEnabled(enabled)
 	self.m_manipulatorControlsEnabled = enabled

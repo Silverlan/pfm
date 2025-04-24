@@ -70,22 +70,13 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 	local controls = gui.create("WIHBox", self.m_controls)
 	controls:SetName("cc_controls")
 
-	self.m_btAutoAim = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_viewport_autoaim",
-		"gui/pfm/icon_viewport_autoaim_activated",
-		function()
-			print("TODO")
-		end
-	)
-	self.m_btCamera = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_camera",
-		"gui/pfm/icon_cp_camera_activated",
-		function()
-			self:ToggleCamera()
-		end
-	)
+	local btGroup = gui.PFMButtonGroup(controls)
+	self.m_btAutoAim = btGroup:AddIconButton("crosshair2", function()
+		print("TODO")
+	end)
+	self.m_btCamera = btGroup:AddGenericButton("", function()
+		self:ToggleCamera()
+	end)
 	self.m_btCamera:SetName("cc_camera")
 	self.m_btCamera:SetupContextMenu(function(pContext)
 		local sceneCamera = self:IsSceneCamera()
@@ -147,7 +138,7 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 		pContext:AddItem(locale.get_text("pfm_auto_aim_work_camera"), function() end) -- TODO
 	end)
 	self:SwitchToSceneCamera()
-	self.m_btGear = gui.PFMButton.create(controls, "gui/pfm/icon_gear", "gui/pfm/icon_gear_activated", function()
+	self.m_btGear = btGroup:AddIconButton("gear-fill", function()
 		print("TODO")
 	end)
 	self.m_btGear:SetName("cc_options")

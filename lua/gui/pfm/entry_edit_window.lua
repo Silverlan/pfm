@@ -28,7 +28,7 @@ function PfmEditEntryWindow:OnInitialize()
 
 	local boxButtons = gui.create("WIHBox", contents)
 
-	local btOk = gui.create("WIPFMGenericButton", boxButtons)
+	local btOk = gui.create("WIPFMButton", boxButtons)
 	btOk:SetWidth(73)
 	btOk:SetText(locale.get_text("ok"))
 	btOk:AddCallback("OnPressed", function()
@@ -41,7 +41,7 @@ function PfmEditEntryWindow:OnInitialize()
 
 	gui.create("WIBase", boxButtons, 0, 0, 8, 1) -- Gap
 
-	local btCancel = gui.create("WIPFMGenericButton", boxButtons)
+	local btCancel = gui.create("WIPFMButton", boxButtons)
 	btCancel:SetWidth(73)
 	btCancel:SetText(locale.get_text("cancel"))
 	btCancel:AddCallback("OnPressed", function()

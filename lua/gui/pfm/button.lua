@@ -6,11 +6,158 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-util.register_class("gui.PFMButton", gui.Base)
+local ButtonGroup = util.register_class("gui.PFMButtonGroup")
+function ButtonGroup:__init(hbox, tabButtons)
+	self.m_hbox = hbox
+	self.m_tabButtons = tabButtons or false
+	self.m_buttons = {}
+end
+function ButtonGroup:AddIconButton(icon, onPressed)
+	local bt = gui.PFMButton.create(self.m_hbox, icon, onPressed)
+	self:AddButton(bt)
+	return bt
+end
+function ButtonGroup:AddGenericButton(text, onPressed)
+	local bt = gui.create("WIPFMButton", self.m_hbox)
+	bt:SetWidth(128)
+	bt:SetText(text)
+	bt:AddCallback("OnPressed", onPressed)
+	self:AddButton(bt)
+	return bt
+end
+function ButtonGroup:AddButton(bt)
+	if #self.m_buttons == 0 then
+		bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_NORMAL or gui.PFMButton.BUTTON_TYPE_TAB)
+	else
+		if #self.m_buttons == 1 then
+			self.m_buttons[1]:SetType(
+				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_LEFT or gui.PFMButton.BUTTON_TYPE_LEFT
+			)
+		end
+		bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_RIGHT or gui.PFMButton.BUTTON_TYPE_RIGHT)
+		if #self.m_buttons > 1 then
+			self.m_buttons[#self.m_buttons]:SetType(
+				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_MIDDLE or gui.PFMButton.BUTTON_TYPE_MIDDLE
+			)
+		end
+	end
+	table.insert(self.m_buttons, bt)
+	return bt
+end
+
+local Element = util.register_class("gui.PFMBaseButton", gui.Base)
+Element.BUTTON_TYPE_NORMAL = 0
+Element.BUTTON_TYPE_LEFT = 1
+Element.BUTTON_TYPE_RIGHT = 2
+Element.BUTTON_TYPE_MIDDLE = 3
+Element.BUTTON_TYPE_TAB_LEFT = 4
+Element.BUTTON_TYPE_TAB_RIGHT = 5
+Element.BUTTON_TYPE_TAB_MIDDLE = 6
+Element.BUTTON_TYPE_TAB = 7
+function Element:OnInitialize()
+	gui.Base.OnInitialize(self)
+
+	self:SetSize(32, 26)
+	local elBg = gui.create("WI9SliceRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	elBg:SetColor(Color(90, 90, 90))
+	self.m_elBg = elBg
+
+	--elBg:GetColorProperty():Link(self:GetColorProperty())
+	self:SetType(gui.PFMBaseButton.BUTTON_TYPE_NORMAL)
+end
+function Element:SetText(text)
+	if util.is_valid(self.m_text) == false then
+		self.m_text = gui.create("WIText", self)
+		self.m_text:SetFont("pfm_medium")
+		self.m_text:SetColor(Color(152, 152, 152))
+	end
+	self.m_text:SetText(text)
+	self.m_text:SizeToContents()
+	self.m_text:CenterToParent()
+	self.m_text:SetAnchor(0.5, 0.5, 0.5, 0.5)
+end
+function Element:SetType(type)
+	self.m_type = type
+	self:UpdateMaterial()
+end
+function Element:GetType()
+	return self.m_type or gui.PFMBaseButton.BUTTON_TYPE_NORMAL
+end
+function Element:SetIcon(icon)
+	if util.is_valid(self.m_icon) == false then
+		local elIcon = gui.create("WITexturedRect", self)
+		elIcon:SetSize(18, 18)
+		elIcon:SetMaterial("gui/pfm/cursor-fill")
+		elIcon:SetColor(Color(147, 147, 147))
+		elIcon:CenterToParent()
+		elIcon:SetAnchor(0.5, 0.5, 0.5, 0.5)
+		self.m_icon = elIcon
+	end
+	self.m_icon:SetMaterial("gui/pfm/icons/" .. icon)
+end
+function Element:UpdateMaterial()
+	local mat
+	local type = self:GetType()
+	if type == Element.BUTTON_TYPE_LEFT then
+		mat = "gui/pfm/button_left"
+	elseif type == Element.BUTTON_TYPE_RIGHT then
+		mat = "gui/pfm/button_right"
+	elseif type == Element.BUTTON_TYPE_MIDDLE then
+		mat = "gui/pfm/button_middle"
+	elseif type == Element.BUTTON_TYPE_TAB_LEFT then
+		mat = "gui/pfm/button_tab_left"
+	elseif type == Element.BUTTON_TYPE_TAB_RIGHT then
+		mat = "gui/pfm/button_tab_right"
+	elseif type == Element.BUTTON_TYPE_TAB_MIDDLE then
+		mat = "gui/pfm/button_tab_middle"
+	elseif type == Element.BUTTON_TYPE_TAB then
+		mat = "gui/pfm/button_tab"
+	else
+		mat = "gui/pfm/button"
+	end
+
+	self.m_elBg:SetMaterial(mat)
+end
+function Element:SetPressed(pressed)
+	self.m_pressed = pressed
+	if pressed then
+		self.m_elBg:SetColor(Color(60, 60, 60))
+	else
+		self.m_elBg:SetColor(Color(90, 90, 90))
+	end
+	self:OnActiveStateChanged(pressed)
+end
+function Element:OnActiveStateChanged(pressed) end
+function Element:IsPressed()
+	return self.m_pressed or false
+end
+local MIDDLE_SEGMENT_WIDTH = 24 -- Width of "gui/pfm/bt_middle"
+function Element:CalcWidthWithMargin(requestSize)
+	local size = requestSize
+	local m = requestSize % MIDDLE_SEGMENT_WIDTH
+	if m > 0 then
+		size = size + (MIDDLE_SEGMENT_WIDTH - m)
+	end
+	return size, MIDDLE_SEGMENT_WIDTH
+end
+function Element:SizeToContents()
+	local sz = self.m_text:GetWidth()
+	local margin = 20
+	local middleSize = sz + margin
+	middleSize = self:CalcWidthWithMargin(middleSize)
+	local totalSize = middleSize
+	self:SetWidth(totalSize)
+end
+util.register_class("gui.PFMButton", gui.PFMBaseButton)
 
 gui.PFMButton.create = function(parent, matUnpressed, matPressed, onPressed)
 	local bt = gui.create("WIPFMButton", parent)
-	bt:SetMaterials(matUnpressed, matPressed)
+	if type(matPressed) ~= "string" then
+		bt:SetIcon(matUnpressed)
+		onPressed = matPressed
+	else
+		bt:SetMaterials(matUnpressed, matPressed)
+	end
 	if onPressed ~= nil then
 		bt:AddCallback("OnPressed", onPressed)
 	end
@@ -18,26 +165,13 @@ gui.PFMButton.create = function(parent, matUnpressed, matPressed, onPressed)
 end
 
 function gui.PFMButton:OnInitialize()
-	gui.Base.OnInitialize(self)
+	gui.PFMBaseButton.OnInitialize(self)
 
 	self:SetMouseInputEnabled(true)
-	self:SetSize(64, 64)
-	self.m_icon = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_icon:GetColorProperty():Link(self:GetColorProperty())
+	self:SetSize(64, 30)
 
 	self.m_pressed = false
 	self.m_enabled = true
-end
-function gui.PFMButton:SetText(text)
-	if util.is_valid(self.m_text) == false then
-		self.m_text = gui.create("WIText", self)
-		self.m_text:SetFont("pfm_medium")
-		self.m_text:SetColor(Color(182, 182, 182))
-	end
-	self.m_text:SetText(text)
-	self.m_text:SizeToContents()
-	self.m_text:CenterToParent()
-	self.m_text:SetAnchor(0.5, 0.5, 0.5, 0.5)
 end
 function gui.PFMButton:SetEnabledColor(col)
 	self.m_enabledColor = col
@@ -67,6 +201,7 @@ function gui.PFMButton:SetActivated(activated)
 		return
 	end
 	self.m_pressed = activated
+	self:SetPressed(activated)
 	self:SetMaterial(activated and self.m_pressedMaterial or self.m_unpressedMaterial)
 end
 function gui.PFMButton:SetPressedMaterial(mat)
@@ -95,10 +230,14 @@ function gui.PFMButton:SetMaterials(unpressedMat, pressedMat)
 	end
 	self:SetSize(texInfo:GetWidth(), texInfo:GetHeight())
 end
+function gui.PFMButton:SetIcon(icon)
+	gui.PFMBaseButton.SetIcon(self, icon)
+	self:SetSize(30, 30)
+end
 function gui.PFMButton:SetMaterial(mat)
-	if mat ~= nil and util.is_valid(self.m_icon) then
-		self.m_icon:SetMaterial(mat)
-	end
+	--[[if mat ~= nil and util.is_valid(self.m_button) then
+		self.m_button:SetMaterial(mat)
+	end]]
 end
 function gui.PFMButton:SetupContextMenu(fPopulateContextMenu, openOnClick)
 	self.m_fPopulateContextMenu = fPopulateContextMenu
@@ -158,105 +297,3 @@ function gui.PFMButton:MouseCallback(button, state, mods)
 	return util.EVENT_REPLY_HANDLED
 end
 gui.register("WIPFMButton", gui.PFMButton)
-
-----------
-
-util.register_class("gui.PFMGenericButton", gui.PFMButton)
-local MIDDLE_SEGMENT_WIDTH = 24 -- Width of "gui/pfm/bt_middle"
-function gui.PFMGenericButton:OnInitialize()
-	gui.PFMButton.OnInitialize(self)
-	self.m_segments = {}
-
-	local btL = gui.create("WITexturedRect", self)
-	btL:SetMaterial("gui/pfm/bt_left")
-	btL:SizeToTexture()
-	btL:GetColorProperty():Link(self:GetColorProperty())
-	self.m_elLeft = btL
-
-	local btR = gui.create("WITexturedRect", self)
-	btR:SetMaterial("gui/pfm/bt_right")
-	btR:SizeToTexture()
-	btR:GetColorProperty():Link(self:GetColorProperty())
-	self.m_elRight = btR
-
-	self:SetPressedMaterial("gui/pfm/bt_middle_activated")
-	self:SetUnpressedMaterial("gui/pfm/bt_middle")
-	self:SetText("")
-	self.m_text:ClearAnchor()
-	self.m_text:SetZPos(1)
-end
-function gui.PFMGenericButton:CalcWidthWithMargin(requestSize)
-	local size = requestSize
-	local m = requestSize % MIDDLE_SEGMENT_WIDTH
-	if m > 0 then
-		size = size + (MIDDLE_SEGMENT_WIDTH - m)
-	end
-	return size, MIDDLE_SEGMENT_WIDTH
-end
-function gui.PFMGenericButton:ReallocateMiddleSegments()
-	if util.is_valid(self.m_elLeft) == false then
-		return
-	end
-	local w = self:GetWidth() - (self.m_elLeft:GetWidth() + self.m_elRight:GetWidth())
-	local count = math.ceil(w / MIDDLE_SEGMENT_WIDTH)
-
-	for i = #self.m_segments, count + 1, -1 do
-		util.remove(self.m_segments[i])
-		self.m_segments[i] = nil
-	end
-
-	for i = #self.m_segments + 1, count do
-		local btM = gui.create("WITexturedRect", self)
-		btM:SetMaterial("gui/pfm/bt_middle")
-		btM:SizeToTexture()
-		btM:GetColorProperty():Link(self:GetColorProperty())
-		table.insert(self.m_segments, btM)
-	end
-end
-function gui.PFMGenericButton:SetMaterial(mat)
-	local matLeft = "gui/pfm/bt_left"
-	local matRight = "gui/pfm/bt_right"
-	if self:IsActivated() then
-		matLeft = matLeft .. "_activated"
-		matRight = matRight .. "_activated"
-	end
-	self.m_elLeft:SetMaterial(matLeft)
-	self.m_elRight:SetMaterial(matRight)
-
-	for _, el in ipairs(self.m_segments) do
-		el:SetMaterial(mat)
-	end
-end
-function gui.PFMGenericButton:UpdateSegmentPositions()
-	if util.is_valid(self.m_elLeft) == false then
-		return
-	end
-	local x = self.m_elLeft:GetRight()
-	for _, el in ipairs(self.m_segments) do
-		el:SetX(x)
-		x = el:GetRight()
-	end
-	local elLastSegment = self.m_segments[#self.m_segments]
-	if elLastSegment ~= nil then
-		-- This may cause the last segment to overlap with the one before, but since they
-		-- look the same it doesn't matter
-		elLastSegment:SetX(self:GetWidth() - elLastSegment:GetWidth() - self.m_elRight:GetWidth())
-	end
-	self.m_elRight:SetX(self:GetWidth() - self.m_elRight:GetWidth())
-
-	self.m_text:CenterToParentX()
-	self.m_text:SetY(5)
-end
-function gui.PFMGenericButton:OnSizeChanged()
-	self:ReallocateMiddleSegments()
-	self:UpdateSegmentPositions()
-end
-function gui.PFMGenericButton:SizeToContents()
-	local sz = self.m_text:GetWidth()
-	local margin = 20
-	local middleSize = sz + margin
-	middleSize = self:CalcWidthWithMargin(middleSize)
-	local totalSize = self.m_elLeft:GetWidth() + self.m_elRight:GetWidth() + middleSize
-	self:SetWidth(totalSize)
-end
-gui.register("WIPFMGenericButton", gui.PFMGenericButton)

@@ -1060,7 +1060,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	end)
 
 	local function create_button(parent, id, text, onPress)
-		local bt = gui.create("WIPFMGenericButton", parent)
+		local bt = gui.create("WIPFMButton", parent)
 		bt:AddCallback("OnPressed", onPress)
 		bt:SetName(id)
 		bt:SetText(text)
@@ -1123,12 +1123,7 @@ function gui.PFMRenderPreview:InitializeControls()
 
 	gui.create("WIBase", controlsRight, 0, 0, 5, 1) -- Gap
 
-	local btTools = gui.PFMButton.create(
-		controlsRight,
-		"gui/pfm/icon_gear",
-		"gui/pfm/icon_gear_activated",
-		function() end
-	)
+	local btTools = gui.PFMButton.create(controlsRight, "gear-fill", function() end)
 	self.m_btTools = btTools
 	btTools:SetName("misc_options")
 	btTools:SetupContextMenu(function(pContext)

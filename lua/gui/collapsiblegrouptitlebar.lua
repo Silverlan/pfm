@@ -21,7 +21,7 @@ function gui.CollapsibleGroupTitleBar:OnInitialize()
 	self.m_contents = gui.create("WIHBox", self, 0, 0, self:GetWidth(), 20)
 	self.m_contents:SetAutoAlignToParent(true, false)
 	self.m_contents:SetFixedWidth(true)
-	self.m_bg:SetColor(Color(40, 40, 45))
+	self.m_bg:AddStyleClass("background")
 
 	self.m_leftPadding = gui.create("WIBase", self.m_contents, 0, 0, 7, 1) -- Gap
 	self.m_collapsed = false

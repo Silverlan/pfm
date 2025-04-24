@@ -721,29 +721,20 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 	local controls = gui.create("WIHBox", self.m_controls)
 	controls:SetName("manip_controls")
 
-	self.m_btSelect = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_manipulator_select",
-		"gui/pfm/icon_manipulator_select_activated",
-		function()
-			self:SetManipulatorMode(gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT)
-			return true
-		end
-	)
+	local btGroup = gui.PFMButtonGroup(controls)
+	self.m_btSelect = btGroup:AddIconButton("cursor-fill", function()
+		self:SetManipulatorMode(gui.PFMCoreViewportBase.MANIPULATOR_MODE_SELECT)
+		return true
+	end)
 	self.m_btSelect:SetTooltip(
 		locale.get_text("pfm_viewport_tool_select") .. " (" .. pfm.get_key_binding("pfm_action transform select") .. ")"
 	)
 	self.m_btSelect:SetName("manip_select")
 
-	self.m_btMove = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_manipulator_move",
-		"gui/pfm/icon_manipulator_move_activated",
-		function()
-			self:SetTranslationManipulatorMode()
-			return true
-		end
-	)
+	self.m_btMove = btGroup:AddIconButton("arrows-move", function()
+		self:SetTranslationManipulatorMode()
+		return true
+	end)
 	self.m_btMove:SetTooltip(
 		locale.get_text("pfm_viewport_tool_move")
 			.. " ("
@@ -801,15 +792,10 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 	end)
 	self.m_btMove:SetName("manip_move")
 
-	self.m_btRotate = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_manipulator_rotate",
-		"gui/pfm/icon_manipulator_rotate_activated",
-		function()
-			self:SetRotationManipulatorMode()
-			return true
-		end
-	)
+	self.m_btRotate = btGroup:AddIconButton("arrow-repeat", function()
+		self:SetRotationManipulatorMode()
+		return true
+	end)
 	self.m_btRotate:SetTooltip(
 		locale.get_text("pfm_viewport_tool_rotate") .. " (" .. pfm.get_key_binding("pfm_action transform rotate") .. ")"
 	)
@@ -881,15 +867,10 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 	end)
 	self.m_btRotate:SetName("manip_rotate")
 
-	self.m_btScreen = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_manipulator_screen",
-		"gui/pfm/icon_manipulator_screen_activated",
-		function()
-			self:SetScaleManipulatorMode()
-			return true
-		end
-	)
+	self.m_btScreen = btGroup:AddIconButton("arrows-move", function()
+		self:SetScaleManipulatorMode()
+		return true
+	end)
 	self.m_btScreen:SetTooltip(
 		locale.get_text("pfm_viewport_tool_scale") .. " (" .. pfm.get_key_binding("pfm_action transform scale") .. ")"
 	)

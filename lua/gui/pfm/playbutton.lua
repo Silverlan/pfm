@@ -12,21 +12,24 @@ local Element = util.register_class("gui.PFMPlayButton", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self.m_btPlay = gui.PFMButton.create(self, "gui/pfm/icon_cp_play", "gui/pfm/icon_cp_play_activated", function()
+	self.m_btPlay = gui.PFMButton.create(self, "play-fill", function()
 		self:TogglePlay()
 	end)
 	self:GetSizeProperty():Link(self.m_btPlay:GetSizeProperty())
+end
+function Element:SetType(type)
+	self.m_btPlay:SetType(type)
 end
 function Element:SetPlaybackState(playbackState)
 	util.remove(self.m_cbOnStateChanged)
 	self.m_cbOnStateChanged = playbackState:AddCallback("OnStateChanged", function(oldState, newState)
 		if newState == pfm.util.PlaybackState.STATE_PLAYING then
 			if util.is_valid(self.m_btPlay) then
-				self.m_btPlay:SetMaterials("gui/pfm/icon_cp_pause", "gui/pfm/icon_cp_pause_activated")
+				self.m_btPlay:SetIcon("pause-fill")
 			end
 		elseif newState == pfm.util.PlaybackState.STATE_PAUSED then
 			if util.is_valid(self.m_btPlay) then
-				self.m_btPlay:SetMaterials("gui/pfm/icon_cp_play", "gui/pfm/icon_cp_play_activated")
+				self.m_btPlay:SetIcon("play-fill")
 			end
 		end
 		self:CallCallbacks("OnStateChanged", oldState, newState)
@@ -41,9 +44,9 @@ function Element:SetActivated(activated)
 		return
 	end
 	if self:GetState() == pfm.util.PlaybackState.STATE_PLAYING then
-		self.m_btPlay:SetMaterial(activated and "gui/pfm/icon_cp_pause_activated" or "gui/pfm/icon_cp_pause")
+		self.m_btPlay:SetIcon(activated and "pause-fill" or "pause-fill")
 	else
-		self.m_btPlay:SetMaterial(activated and "gui/pfm/icon_cp_play_activated" or "gui/pfm/icon_cp_play")
+		self.m_btPlay:SetIcon(activated and "play-fill" or "play-fill")
 	end
 end
 function Element:GetState()

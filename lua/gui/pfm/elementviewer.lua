@@ -32,7 +32,7 @@ function gui.PFMElementViewer:OnInitialize()
 	self.navBar:SetHeight(32)
 	self.navBar:SetAnchor(0, 0, 1, 0)
 
-	self.m_btTools = gui.PFMButton.create(self, "gui/pfm/icon_gear", "gui/pfm/icon_gear_activated", function()
+	self.m_btTools = gui.PFMButton.create(self, "gear-fill", function()
 		print("TODO")
 	end)
 	self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())

@@ -42,7 +42,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self:SetSize(64, 128)
 
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(54, 54, 54))
+	self.m_bg:AddStyleClass("background3")
 
 	self.navBar = gui.create("WIHBox", self)
 	self:InitializeNavigationBar()
@@ -51,7 +51,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self.navBar:SetAnchor(0, 0, 1, 0)
 	self.m_activeControls = {}
 
-	self.m_btTools = gui.PFMButton.create(self, "gui/pfm/icon_gear", "gui/pfm/icon_gear_activated", function()
+	self.m_btTools = gui.PFMButton.create(self, "gear-fill", function()
 		print("TODO")
 	end)
 	self.m_btTools:SetName("new_actor_button")
@@ -411,7 +411,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_contents:SetAutoFillContents(true)
 
 	local treeScrollContainerBg = gui.create("WIRect", self.m_contents, 0, 0, 64, 128)
-	treeScrollContainerBg:SetColor(Color(38, 38, 38))
+	treeScrollContainerBg:AddStyleClass("background")
 	local treeScrollContainer = gui.create("WIScrollContainer", treeScrollContainerBg, 0, 0, 64, 128, 0, 0, 1, 1)
 	self.m_treeScrollContainer = treeScrollContainer
 

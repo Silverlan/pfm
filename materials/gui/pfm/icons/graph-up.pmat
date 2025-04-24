@@ -1,0 +1,7 @@
+"wguitextured"
+{
+	"textures"
+	{
+		$string albedo_map "gui/pfm/icons/graph-up"
+	}
+}

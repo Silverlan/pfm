@@ -1,0 +1,17 @@
+"wguitextured"
+{
+	"textures"
+	{
+		$string albedo_map "gui/pfm/button"
+	}
+	"properties"
+	{
+		9slice
+		{
+			$uint32 leftInset 10
+			$uint32 rightInset 10
+			$uint32 topInset 10
+			$uint32 bottomInset 10
+		}
+	}
+}

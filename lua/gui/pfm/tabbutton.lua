@@ -7,23 +7,15 @@
 ]]
 
 include("/gui/pfm/progressbar.lua")
+include("button.lua")
 
-util.register_class("gui.PFMTabButton", gui.Base)
-
-function gui.PFMTabButton:__init()
-	gui.Base.__init(self)
-end
-function gui.PFMTabButton:OnInitialize()
-	gui.Base.OnInitialize(self)
+local Element = util.register_class("gui.PFMTabButton", gui.PFMBaseButton)
+function Element:OnInitialize()
+	gui.PFMBaseButton.OnInitialize(self)
 
 	self:SetSize(128, 32)
-	self.m_bg = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetMaterial("gui/pfm/tab-selected")
-	self.m_bg:GetColorProperty():Link(self:GetColorProperty())
 
-	self.m_text = gui.create("WIText", self)
-	self.m_text:SetColor(Color(152, 152, 152))
-	self.m_text:SetFont("pfm_medium")
+	self:SetType(gui.PFMBaseButton.BUTTON_TYPE_TAB)
 
 	self.m_progressBar = gui.create("WIPFMProgressBar", self, 0, self:GetHeight() - 5, self:GetWidth(), 5, 0, 1, 1, 1)
 	self.m_progressBar:SetVisible(false)
@@ -69,26 +61,18 @@ function gui.PFMTabButton:OnInitialize()
 	self:SetActive(false)
 	self:EnableThinking()
 
-	local mat = self.m_bg:GetMaterial()
-	if mat == nil then
-		return
-	end
-	local texInfo = mat:GetTextureInfo("diffuse_map")
-	if texInfo == nil then
-		return
-	end
-	self:SetSize(texInfo:GetWidth(), texInfo:GetHeight())
+	self:SetSize(132, 28)
 end
-function gui.PFMTabButton:SetFrame(frame)
+function Element:SetFrame(frame)
 	self.m_frame = frame
 end
-function gui.PFMTabButton:GetFrame()
+function Element:GetFrame()
 	return self.m_frame
 end
-function gui.PFMTabButton:GetContents()
+function Element:GetContents()
 	return self.m_contentsPanel
 end
-function gui.PFMTabButton:SetContents(panel)
+function Element:SetContents(panel)
 	self.m_contentsPanel = panel
 	panel:SetVisible(false)
 
@@ -96,17 +80,17 @@ function gui.PFMTabButton:SetContents(panel)
 		self:SetProgress(progress)
 	end)
 end
-function gui.PFMTabButton:SetProgress(progress)
+function Element:SetProgress(progress)
 	if util.is_valid(self.m_progressBar) == false then
 		return
 	end
 	self.m_progressBar:SetProgress(progress)
 	self.m_progressBar:SetVisible(progress > 0.0)
 end
-function gui.PFMTabButton:GetProgress()
+function Element:GetProgress()
 	return util.is_valid(self.m_progressBar) and self.m_progressBar:GetProgress() or 0.0
 end
-function gui.PFMTabButton:MouseCallback(button, state, mods)
+function Element:MouseCallback(button, state, mods)
 	if button == input.MOUSE_BUTTON_LEFT then
 		if state == input.STATE_RELEASE then
 			self:CallCallbacks("OnPressed")
@@ -114,7 +98,7 @@ function gui.PFMTabButton:MouseCallback(button, state, mods)
 	end
 	return util.EVENT_REPLY_HANDLED
 end
-function gui.PFMTabButton:OnThink()
+function Element:OnThink()
 	if self:IsActive() == false then
 		return
 	end
@@ -122,32 +106,15 @@ function gui.PFMTabButton:OnThink()
 		self.m_progressBar:SetVisible(false)
 	end
 end
-function gui.PFMTabButton:IsActive()
-	return self.m_active
+function Element:IsActive()
+	return self:IsPressed()
 end
-function gui.PFMTabButton:SetActive(active)
-	self.m_active = active
-	if active then
-		self:SetColor(Color.White)
-	else
-		self:SetColor(Color(200, 200, 200))
-	end
+function Element:SetActive(active)
+	self:SetPressed(active)
+end
+function Element:OnActiveStateChanged(pressed)
 	if util.is_valid(self.m_contentsPanel) then
-		self.m_contentsPanel:SetVisible(active)
+		self.m_contentsPanel:SetVisible(pressed)
 	end
 end
-function gui.PFMTabButton:GetText()
-	return util.is_valid(self.m_text) and self.m_text:GetText() or ""
-end
-function gui.PFMTabButton:SetText(text)
-	if util.is_valid(self.m_text) then
-		self.m_text:SetText(text)
-		self.m_text:SizeToContents()
-		self.m_text:SetPos(
-			self:GetWidth() * 0.5 - self.m_text:GetWidth() * 0.5,
-			self:GetHeight() * 0.5 - self.m_text:GetHeight() * 0.5
-		)
-		self.m_text:SetAnchor(0.5, 0.5, 0.5, 0.5)
-	end
-end
-gui.register("WIPFMTabButton", gui.PFMTabButton)
+gui.register("WIPFMTabButton", Element)

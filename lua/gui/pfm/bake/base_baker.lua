@@ -129,9 +129,9 @@ end
 
 -----------
 
-local WIPFMActionButton = util.register_class("WIPFMActionButton", gui.PFMGenericButton)
+local WIPFMActionButton = util.register_class("WIPFMActionButton", gui.PFMButton)
 function WIPFMActionButton:OnInitialize()
-	gui.PFMGenericButton.OnInitialize(self)
+	gui.PFMButton.OnInitialize(self)
 
 	self:SetSize(64, 26)
 	self:SetMouseInputEnabled(true)

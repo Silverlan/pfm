@@ -6,6 +6,8 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
+include("pfm/button.lua")
+
 util.register_class("gui.PlaybackControls", gui.Base)
 gui.PlaybackControls.BUTTON_FIRST_FRAME = 0
 gui.PlaybackControls.BUTTON_PREVIOUS_CLIP = 1
@@ -23,49 +25,30 @@ function gui.PlaybackControls:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	local controls = gui.create("WIHBox", self)
+	local btGroup = gui.PFMButtonGroup(controls)
 
-	self.m_btFirstFrame = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_firstframe",
-		"gui/pfm/icon_cp_firstframe_activated",
-		function()
-			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_FIRST_FRAME)
-		end
-	)
+	self.m_btFirstFrame = btGroup:AddIconButton("skip-backward-fill", function()
+		self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_FIRST_FRAME)
+	end)
 	self.m_btFirstFrame:SetTooltip(locale.get_text("pfm_playback_first_frame"))
 	self.m_btFirstFrame:SetName("pc_first_frame")
 
-	self.m_btPrevClip = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_prevclip",
-		"gui/pfm/icon_cp_prevclip_activated",
-		function()
-			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_PREVIOUS_CLIP)
-		end
-	)
+	self.m_btPrevClip = btGroup:AddIconButton("chevron-compact-left", function()
+		self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_PREVIOUS_CLIP)
+	end)
 	self.m_btPrevClip:SetTooltip(locale.get_text("pfm_playback_previous_clip"))
 	self.m_btPrevClip:SetName("pc_prev_clip")
 
-	self.m_btPrevFrame = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_prevframe",
-		"gui/pfm/icon_cp_prevframe_activated",
-		function()
-			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_PREVIOUS_FRAME)
-		end
-	)
+	self.m_btPrevFrame = btGroup:AddIconButton("skip-start-fill", function()
+		self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_PREVIOUS_FRAME)
+	end)
 	self.m_btPrevFrame:SetTooltip(locale.get_text("pfm_playback_previous_frame"))
 	self.m_btPrevFrame:SetName("pc_prev_frame")
 
 	gui.create("WIBase", controls, 0, 0, 1, 1) -- Gap
-	self.m_btRecord = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_record",
-		"gui/pfm/icon_cp_record_activated",
-		function()
-			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_RECORD)
-		end
-	)
+	self.m_btRecord = btGroup:AddIconButton("record-fill", function()
+		self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_RECORD)
+	end)
 	self.m_btRecord:SetTooltip(locale.get_text("pfm_playback_record"))
 	self.m_btRecord:SetName("pc_record")
 
@@ -79,37 +62,23 @@ function gui.PlaybackControls:OnInitialize()
 		end
 	end)
 	self.m_btPlay:SetName("pc_player")
+	btGroup:AddButton(self.m_btPlay)
 
-	self.m_btNextFrame = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_nextframe",
-		"gui/pfm/icon_cp_nextframe_activated",
-		function()
-			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_NEXT_FRAME)
-		end
-	)
+	self.m_btNextFrame = btGroup:AddIconButton("skip-end-fill", function()
+		self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_NEXT_FRAME)
+	end)
 	self.m_btNextFrame:SetTooltip(locale.get_text("pfm_playback_next_frame"))
 	self.m_btNextFrame:SetName("pc_next_frame")
 
-	self.m_btNextClip = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_nextclip",
-		"gui/pfm/icon_cp_nextclip_activated",
-		function()
-			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_NEXT_CLIP)
-		end
-	)
+	self.m_btNextClip = btGroup:AddIconButton("chevron-compact-right", function()
+		self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_NEXT_CLIP)
+	end)
 	self.m_btNextClip:SetTooltip(locale.get_text("pfm_playback_next_clip"))
 	self.m_btNextClip:SetName("pc_next_clip")
 
-	self.m_btLastFrame = gui.PFMButton.create(
-		controls,
-		"gui/pfm/icon_cp_lastframe",
-		"gui/pfm/icon_cp_lastframe_activated",
-		function()
-			self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_LAST_FRAME)
-		end
-	)
+	self.m_btLastFrame = btGroup:AddIconButton("skip-forward-fill", function()
+		self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_LAST_FRAME)
+	end)
 	self.m_btLastFrame:SetTooltip(locale.get_text("pfm_playback_last_frame"))
 	self.m_btLastFrame:SetName("pc_last_frame")
 

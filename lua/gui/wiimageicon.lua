@@ -21,18 +21,20 @@ function gui.ImageIcon:OnInitialize()
 	self.m_texture = el
 
 	local textBg = gui.create("WIRect", self, 0, self:GetHeight() - 18, self:GetWidth(), 18, 0, 1, 1, 1)
-	textBg:SetColor(Color(16, 16, 16, 240))
+	textBg:AddStyleClass("label_background")
 	self.m_textBg = textBg
 
 	local elText = gui.create("WIText", self)
-	elText:SetColor(Color.White)
 	elText:SetFont("pfm_small")
+	elText:AddStyleClass("label")
 	self.m_text = elText
 
 	local outline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	outline:AddStyleClass("outline")
 	self.m_outline = outline
 
 	self:SetSelected(false)
+	self:AddStyleClass("image_icon")
 end
 function gui.ImageIcon:SetImageOnly(imageOnly)
 	self.m_textBg:SetVisible(not imageOnly)

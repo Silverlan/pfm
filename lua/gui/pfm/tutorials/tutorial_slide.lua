@@ -362,7 +362,7 @@ function Element:SetFocusElement(el)
 	table.insert(self.m_highlights, elOutline)
 end
 function Element:CreateButton(parent, text, f)
-	local elBt = gui.create("WIPFMGenericButton", parent)
+	local elBt = gui.create("WIPFMButton", parent)
 	elBt:SetText(text)
 	elBt:AddCallback("OnPressed", function()
 		f()

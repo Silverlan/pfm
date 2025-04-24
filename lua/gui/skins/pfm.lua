@@ -8,7 +8,9 @@ end
 
 local t = {}
 t.BACKGROUND_COLOR_DEFAULT = Color(38, 38, 38, 255)
+t.BACKGROUND_COLOR = t.BACKGROUND_COLOR_DEFAULT:Copy()
 t.BACKGROUND_COLOR2 = Color(20, 20, 20, 255)
+t.BACKGROUND_COLOR3 = Color(54, 54, 54, 255)
 t.BACKGROUND_COLOR_HOVER = Color(48, 48, 48, 255)
 t.BACKGROUND_COLOR_SELECTED = Color(58, 58, 58, 255)
 t.SLIDER_FILL_COLOR = Color.RoyalBlue
@@ -113,7 +115,7 @@ skin["wislider"] = skin["wiprogressbar"]
 skin["input_field"] = {
 	Initialize = function(GUI, pElement)
 		local bg = gui.create("WIRect", pElement, 0, 0, pElement:GetWidth(), pElement:GetHeight(), 0, 0, 1, 1)
-		bg:SetColor(Color(38, 38, 38))
+		bg:SetColor(GUI.BACKGROUND_COLOR_DEFAULT)
 		bg:SetZPos(-10000)
 		bg:SetBackgroundElement(true)
 		bg:SetName("background")
@@ -121,7 +123,7 @@ skin["input_field"] = {
 
 		local outline =
 			gui.create("WIOutlinedRect", pElement, 0, 0, pElement:GetWidth(), pElement:GetHeight(), 0, 0, 1, 1)
-		outline:SetColor(Color(57, 57, 57))
+		outline:SetColor(GUI.BACKGROUND_COLOR3)
 		outline:SetZPos(-9000)
 		outline:SetBackgroundElement(true)
 		outline:SetName("outline")
@@ -274,6 +276,27 @@ skin["witable"] = {
 		},
 	},
 }
+skin["image_icon"] = {
+	children = {
+		["label"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColor(GUI.TEXT_COLOR)
+			end,
+		},
+		["label_background"] = {
+			Initialize = function(GUI, pElement)
+				local col = GUI.BACKGROUND_COLOR:Copy()
+				col.a = 240
+				pElement:SetColor(col)
+			end,
+		},
+	},
+}
+skin["outline"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.BACKGROUND_COLOR)
+	end,
+}
 skin["slider_filled"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.SLIDER_FILL_COLOR)
@@ -307,6 +330,11 @@ skin["wishadergraph"] = {
 skin["background2"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.BACKGROUND_COLOR2)
+	end,
+}
+skin["background3"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.BACKGROUND_COLOR3)
 	end,
 }
 skin["keyframe_marker_static"] = {

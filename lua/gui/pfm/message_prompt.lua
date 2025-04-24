@@ -52,7 +52,7 @@ function PfmPrompt:AddStandardButton(bt)
 	self:AddButton(bt, buttonData[bt].text)
 end
 function PfmPrompt:AddButton(id, text)
-	local elBt = gui.create("WIPFMGenericButton", self.m_boxButtons)
+	local elBt = gui.create("WIPFMButton", self.m_boxButtons)
 	elBt:SetText(text)
 	elBt:AddCallback("OnPressed", function()
 		if self:CallCallbacks("OnButtonPressed", id) == util.EVENT_REPLY_HANDLED then

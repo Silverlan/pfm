@@ -31,7 +31,7 @@ function Element:OnInitialize()
 	self:SetSize(64, 128)
 
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(54, 54, 54))
+	self.m_bg:AddStyleClass("background3")
 
 	self.m_contents = gui.create("WIVBox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents:SetName("contents")
