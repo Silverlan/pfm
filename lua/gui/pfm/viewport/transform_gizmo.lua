@@ -743,7 +743,7 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 	)
 	self.m_btMove:AddCallback("OnMouseEvent", function(pFilmClip, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) == false then
 				return
 			end
@@ -801,7 +801,7 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 	)
 	self.m_btRotate:AddCallback("OnMouseEvent", function(pFilmClip, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) == false then
 				return
 			end

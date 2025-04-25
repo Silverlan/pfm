@@ -59,7 +59,7 @@ function Element:OnInitialize()
 
 	self:SetSize(32, 26)
 	local elBg = gui.create("WI9SliceRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	elBg:SetColor(Color(90, 90, 90))
+	elBg:AddStyleClass("button_background")
 	self.m_elBg = elBg
 
 	--elBg:GetColorProperty():Link(self:GetColorProperty())
@@ -88,9 +88,9 @@ function Element:SetIcon(icon)
 		local elIcon = gui.create("WITexturedRect", self)
 		elIcon:SetSize(18, 18)
 		elIcon:SetMaterial("gui/pfm/cursor-fill")
-		elIcon:SetColor(Color(147, 147, 147))
 		elIcon:CenterToParent()
 		elIcon:SetAnchor(0.5, 0.5, 0.5, 0.5)
+		elIcon:AddStyleClass("button_icon")
 		self.m_icon = elIcon
 	end
 	self.m_icon:SetMaterial("gui/pfm/icons/" .. icon)
@@ -121,9 +121,11 @@ end
 function Element:SetPressed(pressed)
 	self.m_pressed = pressed
 	if pressed then
-		self.m_elBg:SetColor(Color(60, 60, 60))
+		self.m_elBg:RemoveStyleClass("button_background")
+		self.m_elBg:AddStyleClass("button_background_pressed")
 	else
-		self.m_elBg:SetColor(Color(90, 90, 90))
+		self.m_elBg:RemoveStyleClass("button_background_pressed")
+		self.m_elBg:AddStyleClass("button_background")
 	end
 	self:OnActiveStateChanged(pressed)
 end
@@ -148,8 +150,8 @@ function Element:SizeToContents()
 	local totalSize = middleSize
 	self:SetWidth(totalSize)
 end
-util.register_class("gui.PFMButton", gui.PFMBaseButton)
 
+util.register_class("gui.PFMButton", gui.PFMBaseButton)
 gui.PFMButton.create = function(parent, matUnpressed, matPressed, onPressed)
 	local bt = gui.create("WIPFMButton", parent)
 	if type(matPressed) ~= "string" then
@@ -264,7 +266,7 @@ function gui.PFMButton:OpenContextMenu()
 		return
 	end
 	self:SetActivated(true)
-	local pContext = gui.open_context_menu()
+	local pContext = gui.open_context_menu(self)
 	if util.is_valid(pContext) == false then
 		return
 	end

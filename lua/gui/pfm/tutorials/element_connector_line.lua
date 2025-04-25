@@ -18,7 +18,7 @@ function Element:OnInitialize()
 	self.m_lines = { l0, l1, l2, l3, l4 }
 	for _, l in ipairs(self.m_lines) do
 		l:SetLineWidth(2)
-		l:SetColor(Color(200, 200, 200))
+		l:AddStyleClass("overlay")
 	end
 
 	self.m_lineTunnel = gui.create("WIRect", self)

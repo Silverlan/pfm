@@ -178,7 +178,7 @@ function gui.LabelledTimelineStrip:OnInitialize()
 
 	self:SetSize(128, 16)
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(80, 80, 80))
+	self.m_bg:AddStyleClass("timeline_background")
 
 	self.m_strip = gui.create("WITimelineStrip", self, 0, 0, self:GetWidth(), 6)
 	self.m_strip:AddCallback("OnTimelinePropertiesChanged", function()
@@ -270,7 +270,7 @@ function gui.LabelledTimelineStrip:OnUpdate()
 			if util.is_valid(pText) == false then
 				pText = gui.create("WIText", self)
 				pText:SetFont("pfm_small")
-				pText:SetColor(Color.Black)
+				pText:AddStyleClass("timeline_label")
 
 				self.m_textElements[i + 1] = pText
 			end

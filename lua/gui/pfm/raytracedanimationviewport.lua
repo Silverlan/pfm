@@ -23,7 +23,7 @@ function gui.PFMRaytracedAnimationViewport:OnInitialize()
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 			local imgBuf = (self.m_rtJob ~= nil) and self.m_rtJob:GetRenderResult()
 			if imgBuf ~= nil then
-				local pContext = gui.open_context_menu()
+				local pContext = gui.open_context_menu(self)
 				if util.is_valid(pContext) == false then
 					return
 				end

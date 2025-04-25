@@ -743,7 +743,7 @@ function gui.PFMActorEditor:RestoreActorsFromUdmElement(...)
 end
 function gui.PFMActorEditor:MouseCallback(button, state, mods)
 	if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
-		local pContext = gui.open_context_menu()
+		local pContext = gui.open_context_menu(self)
 		if util.is_valid(pContext) == false then
 			return
 		end
@@ -988,7 +988,6 @@ function gui.PFMActorEditor:AddProperty(name, child, fInitPropertyEl)
 	local elLabel = gui.create("WIText", elLabelContainer)
 	elLabel:SetName(name)
 	elLabel:SetText(name)
-	elLabel:SetColor(Color(200, 200, 200))
 	elLabel:SetFont("pfm_medium")
 	elLabel:SizeToContents()
 	elLabel:CenterToParentY()
@@ -1914,7 +1913,7 @@ function gui.PFMActorEditor:AddControl(
 								end
 
 								if numParents >= 2 then
-									local pContext = gui.open_context_menu()
+									local pContext = gui.open_context_menu(self)
 									if util.is_valid(pContext) == false then
 										return
 									end
@@ -1958,7 +1957,7 @@ function gui.PFMActorEditor:AddControl(
 	end
 	child:AddCallback("OnMouseEvent", function(tex, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) == false then
 				return
 			end
@@ -2213,7 +2212,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 							return util.EVENT_REPLY_HANDLED
 						elseif button == input.MOUSE_BUTTON_RIGHT then
 							if state == input.STATE_PRESS then
-								local pContext = gui.open_context_menu()
+								local pContext = gui.open_context_menu(self)
 								if util.is_valid(pContext) == false then
 									return
 								end

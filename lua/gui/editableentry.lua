@@ -98,7 +98,7 @@ function gui.EditableEntry:MouseCallback(button, state, mods)
 	end
 	if button == input.MOUSE_BUTTON_RIGHT then
 		if state == input.STATE_RELEASE then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) == false then
 				return
 			end

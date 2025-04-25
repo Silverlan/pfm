@@ -345,7 +345,7 @@ function gui.PFMCoreViewportBase:OnViewportMouseEvent(el, mouseButton, state, mo
 
 					local handled, entActor, hitPos, startPos, hitData = findActor(true, input.ACTION_ATTACK2)
 					if handled == util.EVENT_REPLY_UNHANDLED and util.is_valid(entActor) then
-						local pContext = gui.open_context_menu()
+						local pContext = gui.open_context_menu(self)
 						if util.is_valid(pContext) == false then
 							return
 						end

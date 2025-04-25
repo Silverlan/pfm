@@ -428,7 +428,7 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 			elTreeChild:AddCallback("OnMouseEvent", function(elTreeChild, button, state, mods)
 				if button == input.MOUSE_BUTTON_RIGHT then
 					if state == input.STATE_PRESS then
-						local pContext = gui.open_context_menu()
+						local pContext = gui.open_context_menu(self)
 						if util.is_valid(pContext) == false then
 							return
 						end
@@ -573,7 +573,7 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 			elTreeChild:AddCallback("OnMouseEvent", function(elTreeChild, button, state, mods)
 				if button == input.MOUSE_BUTTON_RIGHT then
 					if state == input.STATE_PRESS then
-						local pContext = gui.open_context_menu()
+						local pContext = gui.open_context_menu(self)
 						if util.is_valid(pContext) == false then
 							return
 						end
@@ -608,7 +608,7 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 		elTreeChild:AddCallback("OnMouseEvent", function(elTreeChild, button, state, mods)
 			if button == input.MOUSE_BUTTON_RIGHT then
 				if state == input.STATE_PRESS then
-					local pContext = gui.open_context_menu()
+					local pContext = gui.open_context_menu(self)
 					if util.is_valid(pContext) == false then
 						return
 					end

@@ -235,7 +235,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 	local uniqueId = entActor:GetUuid()
 	itemComponent:AddCallback("OnMouseEvent", function(tex, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) == false then
 				return
 			end

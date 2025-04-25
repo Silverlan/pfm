@@ -372,7 +372,7 @@ function Element:MouseCallback(button, state, mods)
 		-- if(util.is_valid(self.m_sliderBarLower)) then self.m_sliderBarLower:GetCursor():InjectMouseInput(self.m_sliderBarLower:GetCursor():GetCursorPos(),button,state,mods) end
 		return util.EVENT_REPLY_HANDLED
 	elseif button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_RELEASE then
-		local pContext = gui.open_context_menu()
+		local pContext = gui.open_context_menu(self)
 		if util.is_valid(pContext) == false then
 			return
 		end

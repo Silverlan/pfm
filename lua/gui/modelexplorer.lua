@@ -56,7 +56,7 @@ function gui.ModelExplorer:OnFilesDropped(tFiles)
 		})
 		self:SetPath(basePath:GetString())
 	end
-	local pContext = gui.open_context_menu()
+	local pContext = gui.open_context_menu(self)
 	if util.is_valid(pContext) then
 		pContext:SetPos(input.get_cursor_pos())
 		pContext

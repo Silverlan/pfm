@@ -408,7 +408,7 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 	end)
 	itemActor:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) == false then
 				return
 			end
@@ -459,7 +459,7 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 	itemAddComponent:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
 			itemAddComponent:SetSelected(true)
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) then
 				local pos = itemAddComponent:GetAbsolutePos()
 				pContext:SetPos(pos.x, pos.y + itemAddComponent:GetHeight())

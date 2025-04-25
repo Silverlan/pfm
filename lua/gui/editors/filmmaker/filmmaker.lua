@@ -108,7 +108,6 @@ function gui.WIFilmmaker:OnInitialize()
 	tool.filmmaker = self
 
 	self:SetName("pfm")
-	gui.set_context_menu_skin("pfm")
 	gui.get_primary_window():SetResizable(true)
 
 	-- Sleep mode is enabled by default, but will be disabled tempoarily if there is a continuous process going on (e.g. rendering).
@@ -708,7 +707,6 @@ function gui.WIFilmmaker:AddUndoMessage(msg)
 
 	local elText = gui.create("WIText", msgEl)
 	elText:SetText(msg)
-	elText:SetColor(Color(200, 200, 200))
 	elText:SizeToContents()
 	elText:CenterToParentY()
 	elText:SetX(10)
@@ -745,7 +743,7 @@ function gui.WIFilmmaker:AddAudioTrack(track)
 	subGroup:SetMouseInputEnabled(true)
 	subGroup:AddCallback("OnMouseEvent", function(subGroup, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) == false then
 				return
 			end
@@ -1221,7 +1219,6 @@ function gui.WIFilmmaker:OnRemove()
 	end
 	self:UpdateInputBindings()
 
-	gui.set_context_menu_skin()
 	collectgarbage()
 end
 function gui.WIFilmmaker:StartRecording(fileName)

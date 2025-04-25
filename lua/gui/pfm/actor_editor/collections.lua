@@ -58,7 +58,7 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 	itemGroup:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT then
 			if state == input.STATE_PRESS then
-				local pContext = gui.open_context_menu()
+				local pContext = gui.open_context_menu(self)
 				if util.is_valid(pContext) == false then
 					return util.EVENT_REPLY_HANDLED
 				end

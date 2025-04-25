@@ -115,7 +115,7 @@ function Element:AddConstraint(item, boneName, type)
 	local child = item:AddItem(locale.get_text("pfm_" .. string.camel_case_to_snake_case(type) .. "_constraint"))
 	child:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) then
 				pContext:SetPos(input.get_cursor_pos())
 				pContext:AddItem("Remove", function()

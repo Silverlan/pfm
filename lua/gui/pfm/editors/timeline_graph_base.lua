@@ -587,7 +587,7 @@ function gui.PFMTimelineGraphBase:MouseCallback(button, state, mods)
 		elseif isAltDown then
 			print("Not yet implemented!")
 		elseif state == input.STATE_PRESS then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) == false then
 				return
 			end

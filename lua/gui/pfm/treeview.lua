@@ -11,9 +11,6 @@ include("/pfm/fonts.lua")
 
 util.register_class("gui.PFMTreeView", gui.Base)
 
-function gui.PFMTreeView:__init()
-	gui.Base.__init(self)
-end
 function gui.PFMTreeView:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -183,10 +180,6 @@ gui.register("WIPFMTreeView", gui.PFMTreeView)
 ------------------------
 
 util.register_class("gui.PFMTreeViewElement", gui.Base)
-
-function gui.PFMTreeViewElement:__init()
-	gui.Base.__init(self)
-end
 function gui.PFMTreeViewElement:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -204,7 +197,7 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self.m_header = gui.create("WIHBox", self.m_vBox, 0, 0, self:GetWidth(), self:GetHeight())
 	self.m_selection =
 		gui.create("WIRect", self.m_header, 0, 0, self.m_header:GetWidth(), self.m_header:GetHeight(), 0, 0, 1, 1)
-	self.m_selection:SetColor(Color(79, 82, 89))
+	self.m_selection:AddStyleClass("selection")
 	self.m_header:SetFixedWidth(true)
 	self.m_header:SetFixedHeight(true)
 	self.m_header:SetBackgroundElement(self.m_selection)
@@ -673,7 +666,6 @@ end
 function gui.PFMTreeViewElement:SetText(text)
 	if util.is_valid(self.m_text) == false then
 		self.m_text = gui.create("WIText", self.m_header)
-		self.m_text:SetColor(Color(200, 200, 200))
 		self.m_text:SetFont("pfm_medium")
 	end
 	self.m_text:SetText(text)
@@ -890,10 +882,6 @@ function gui.PFMTreeExpandIcon:OnInitialize()
 
 	self:SetSize(9, 9)
 
-	local texBg = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	texBg:SetMaterial("gui/pfm/circle_filled")
-	texBg:SetColor(Color(38, 38, 38))
-
 	local tex = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	tex:GetColorProperty():Link(self:GetColorProperty())
 	self.m_tex = tex
@@ -909,7 +897,7 @@ function gui.PFMTreeExpandIcon:Expand()
 		return
 	end
 	if util.is_valid(self.m_tex) then
-		self.m_tex:SetMaterial("gui/pfm/tree_collapse")
+		self.m_tex:SetMaterial("gui/pfm/dash-circle")
 	end
 	self.m_collapsed = false
 	self:CallCallbacks("OnExpand")
@@ -919,7 +907,7 @@ function gui.PFMTreeExpandIcon:Collapse(force)
 		return
 	end
 	if util.is_valid(self.m_tex) then
-		self.m_tex:SetMaterial("gui/pfm/tree_expand")
+		self.m_tex:SetMaterial("gui/pfm/plus-circle")
 	end
 	self.m_collapsed = true
 	self:CallCallbacks("OnCollapse")

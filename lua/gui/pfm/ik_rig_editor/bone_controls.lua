@@ -322,7 +322,7 @@ function Element:AddControl(item, boneName, controlType)
 	local child = item:AddItem(locale.get_text("pfm_" .. locName .. "_control"))
 	child:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) then
 				pContext:SetPos(input.get_cursor_pos())
 				pContext:AddItem("Remove", function()
@@ -384,7 +384,7 @@ function Element:InitializeBoneControls(mdl)
 		end)
 		item:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
 			if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
-				local pContext = gui.open_context_menu()
+				local pContext = gui.open_context_menu(self)
 				if util.is_valid(pContext) then
 					pContext:SetPos(input.get_cursor_pos())
 					self:PopulateBoneContextMenu(pContext, boneDst:GetName())

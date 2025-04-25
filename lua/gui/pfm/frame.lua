@@ -40,7 +40,7 @@ function gui.PFMFrame:OnInitialize()
 
 	gui.create("WIBase", self.m_tabButtonContainer):SetSize(5, 1) -- Gap
 	self.m_btAddPanel = gui.PFMButton.create(self.m_tabButtonContainer, "plus-lg", function()
-		local pContext = gui.open_context_menu()
+		local pContext = gui.open_context_menu(self)
 		if util.is_valid(pContext) == false then
 			return
 		end
@@ -214,7 +214,7 @@ function gui.PFMFrame:AddTab(identifier, name, panel)
 	end)
 	bt:AddCallback("OnMouseEvent", function(bt, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
-			local pContext = gui.open_context_menu()
+			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) == false then
 				return
 			end

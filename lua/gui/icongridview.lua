@@ -105,7 +105,7 @@ function gui.IconGridView:IsIconSelected(el)
 end
 function gui.IconGridView:MouseCallback(button, action, mods)
 	if action == input.STATE_PRESS and button == input.MOUSE_BUTTON_RIGHT then
-		local pContext = gui.open_context_menu()
+		local pContext = gui.open_context_menu(self)
 		if util.is_valid(pContext) then
 			pContext:SetPos(input.get_cursor_pos())
 			self:CallCallbacks("PopulateContextMenu", pContext)
