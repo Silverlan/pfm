@@ -49,7 +49,7 @@ function ents.PFMFilmClip:OnRemove()
 	util.remove(self.m_trackGroups)
 	util.remove(self.m_listeners)
 
-	game.clear_unused_materials() -- Clear unused materials that may have been created through material overrides of actor model components
+	asset.clear_unused_materials() -- Clear unused materials that may have been created through material overrides of actor model components
 end
 
 function ents.PFMFilmClip:FindActorByName(name, filter)

@@ -74,7 +74,7 @@ function Component:UpdateSkyTexture(clear)
 	if clear ~= true then
 		local skyTex = self:GetSkyTexture()
 
-		mat = game.create_material("skybox")
+		mat = asset.create_material("skybox")
 		mat:SetTexture("skybox", skyTex)
 		mat:UpdateTextures()
 		mat:InitializeShaderDescriptorSet()

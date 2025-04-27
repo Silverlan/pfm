@@ -144,7 +144,7 @@ function Component:UpdateMaterial()
 		self.m_usingCustomMaterial = false
 		return
 	end
-	self.m_customMaterial = (self.m_customMaterial ~= nil) and self.m_customMaterial or game.create_material("volume")
+	self.m_customMaterial = (self.m_customMaterial ~= nil) and self.m_customMaterial or asset.create_material("volume")
 	local mat = self.m_customMaterial
 	local strType = (self:GetType() == Component.TYPE_HOMOGENEOUS) and "homogeneous" or "heterogeneous"
 	mat:SetPropertyByPath("volumetric/type", udm.TYPE_STRING, strType)

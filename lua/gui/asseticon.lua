@@ -188,7 +188,7 @@ local function save_model_icon(mdl, mdlView, iconPath, callback)
 	pfm.detail.asset_icon.finalizers[taskId] = function()
 		local res = asset.reload(iconLocation, asset.TYPE_TEXTURE)
 
-		local mat = game.create_material(iconLocation, "wguitextured")
+		local mat = asset.create_material(iconLocation, "wguitextured")
 		mat:SetTexture("albedo_map", iconLocation)
 
 		local isCharModel = pfm.util.is_character_model(mdl)
@@ -877,7 +877,7 @@ function gui.TextureAssetIcon:SetTextureAsset(mat, importAsset)
 		gui.AssetIcon.impl.iconGenerator = gui.AssetIcon.IconGenerator(128, 128)
 	end
 
-	local matOverride = game.create_material("unlit")
+	local matOverride = asset.create_material("unlit")
 	local normTexPath = file.remove_file_extension(mat, asset.get_supported_extensions(asset.TYPE_TEXTURE))
 	matOverride:SetTexture("albedo_map", normTexPath)
 	matOverride:UpdateTextures()

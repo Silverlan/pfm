@@ -29,7 +29,11 @@ function gui.PFMColorSelector:OnInitialize()
 	self:SetSize(192, 270)
 
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	bg:SetColor(Color(32, 32, 32))
+	bg:AddStyleClass("background")
+
+	local bgOutline = gui.create("WIOutlinedRect", bg)
+	bgOutline:SetAutoAlignToParent(true)
+	bgOutline:AddStyleClass("outline")
 
 	self.m_contents = gui.create("WIHBox", self)
 	gui.create("WIBase", self.m_contents, 0, 0, 10, 1) -- Gap

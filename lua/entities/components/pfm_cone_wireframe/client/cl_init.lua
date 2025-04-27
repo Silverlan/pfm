@@ -32,7 +32,7 @@ function Component:InitializeModel()
 	local subMesh = game.Model.Mesh.Sub.create()
 	subMesh:SetGeometryType(game.Model.Mesh.Sub.GEOMETRY_TYPE_LINES)
 
-	local mat = game.create_material("pfm_wireframe_line")
+	local mat = asset.create_material("pfm_wireframe_line")
 	mat:SetTexture("albedo_map", "white")
 	mat:UpdateTextures()
 	mat:InitializeShaderDescriptorSet()

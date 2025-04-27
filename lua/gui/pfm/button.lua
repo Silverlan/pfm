@@ -78,7 +78,7 @@ function Element:SetText(text)
 end
 function Element:SetType(type)
 	self.m_type = type
-	self:UpdateMaterial()
+	self:UpdateStyle()
 end
 function Element:GetType()
 	return self.m_type or gui.PFMBaseButton.BUTTON_TYPE_NORMAL
@@ -95,28 +95,38 @@ function Element:SetIcon(icon)
 	end
 	self.m_icon:SetMaterial("gui/pfm/icons/" .. icon)
 end
-function Element:UpdateMaterial()
-	local mat
-	local type = self:GetType()
-	if type == Element.BUTTON_TYPE_LEFT then
-		mat = "gui/pfm/button_left"
-	elseif type == Element.BUTTON_TYPE_RIGHT then
-		mat = "gui/pfm/button_right"
-	elseif type == Element.BUTTON_TYPE_MIDDLE then
-		mat = "gui/pfm/button_middle"
-	elseif type == Element.BUTTON_TYPE_TAB_LEFT then
-		mat = "gui/pfm/button_tab_left"
-	elseif type == Element.BUTTON_TYPE_TAB_RIGHT then
-		mat = "gui/pfm/button_tab_right"
-	elseif type == Element.BUTTON_TYPE_TAB_MIDDLE then
-		mat = "gui/pfm/button_tab_middle"
-	elseif type == Element.BUTTON_TYPE_TAB then
-		mat = "gui/pfm/button_tab"
-	else
-		mat = "gui/pfm/button"
+function Element:UpdateStyle()
+	for _, c in ipairs({
+		"button",
+		"button_left",
+		"button_right",
+		"button_middle",
+		"button_tab_left",
+		"button_tab_right",
+		"button_tab_middle",
+		"button_tab",
+	}) do
+		self.m_elBg:RemoveStyleClass(c)
 	end
 
-	self.m_elBg:SetMaterial(mat)
+	local type = self:GetType()
+	if type == Element.BUTTON_TYPE_LEFT then
+		self.m_elBg:AddStyleClass("button_left")
+	elseif type == Element.BUTTON_TYPE_RIGHT then
+		self.m_elBg:AddStyleClass("button_right")
+	elseif type == Element.BUTTON_TYPE_MIDDLE then
+		self.m_elBg:AddStyleClass("button_middle")
+	elseif type == Element.BUTTON_TYPE_TAB_LEFT then
+		self.m_elBg:AddStyleClass("button_tab_left")
+	elseif type == Element.BUTTON_TYPE_TAB_RIGHT then
+		self.m_elBg:AddStyleClass("button_tab_right")
+	elseif type == Element.BUTTON_TYPE_TAB_MIDDLE then
+		self.m_elBg:AddStyleClass("button_tab_middle")
+	elseif type == Element.BUTTON_TYPE_TAB then
+		self.m_elBg:AddStyleClass("button_tab")
+	else
+		self.m_elBg:AddStyleClass("button")
+	end
 end
 function Element:SetPressed(pressed)
 	self.m_pressed = pressed
@@ -127,6 +137,7 @@ function Element:SetPressed(pressed)
 		self.m_elBg:RemoveStyleClass("button_background_pressed")
 		self.m_elBg:AddStyleClass("button_background")
 	end
+	self.m_elBg:RefreshSkin()
 	self:OnActiveStateChanged(pressed)
 end
 function Element:OnActiveStateChanged(pressed) end

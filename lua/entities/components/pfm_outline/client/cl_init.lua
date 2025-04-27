@@ -37,7 +37,7 @@ Component:RegisterMember("ScaleByDistance", udm.TYPE_BOOLEAN, false, {
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
 
-	self.m_material = game.create_material("pfm_selection_outline")
+	self.m_material = asset.create_material("pfm_selection_outline")
 	self:UpdateSettings()
 end
 function Component:OnEntitySpawn()

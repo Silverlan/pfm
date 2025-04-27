@@ -15,7 +15,7 @@ function Element:OnInitialize()
 	self:SetSize(12, 12)
 
 	local el = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	el:SetMaterial("gui/pfm/icons/moon-fill")
+	el:AddStyleClass("theme_toggle_light")
 	self.m_icon = el
 
 	self:SetCursor(gui.CURSOR_SHAPE_HAND)
@@ -30,20 +30,16 @@ function Element:SetTheme(theme)
 	self.m_theme = theme
 
 	local skin
-	local icon
-	local col
 	if theme == Element.THEME_DARK then
 		skin = "pfm"
-		icon = "gui/pfm/icons/brightness-high-fill"
-		col = Color(255, 255, 255, 255)
+		self.m_icon:RemoveStyleClass("theme_toggle_dark")
+		self.m_icon:AddStyleClass("theme_toggle_light")
 	else
 		skin = "pfm_light"
-		icon = "gui/pfm/icons/moon-fill"
-		col = Color(0, 0, 0, 255)
+		self.m_icon:RemoveStyleClass("theme_toggle_light")
+		self.m_icon:AddStyleClass("theme_toggle_dark")
 	end
 	gui.load_skin(skin)
-	self.m_icon:SetMaterial(icon)
-	self.m_icon:SetColor(col)
 
 	local pm = tool.get_filmmaker()
 	if util.is_valid(pm) then

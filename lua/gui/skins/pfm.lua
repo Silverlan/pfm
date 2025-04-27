@@ -2,6 +2,8 @@ if gui.skin_exists("pfm") == true then
 	return
 end
 
+include("/gui/icon_cache.lua")
+
 -------------------------------------------
 ------------ START OF SETTINGS ------------
 -------------------------------------------
@@ -23,12 +25,73 @@ t.BUTTON_BACKGROUND_COLOR_PRESSED = Color(60, 60, 60)
 t.BUTTON_ICON_COLOR = Color(147, 147, 147)
 
 t.OVERLAY_COLOR = Color(255, 255, 255)
+t.OUTLINE_COLOR = Color.DodgerBlue:Copy()
 
 t.SLIDER_FILL_COLOR = Color.RoyalBlue
 t.TEXT_COLOR = Color(200, 200, 200)
 t.shaderGraph = {
 	NODE_BACKGROUND_COLOR_SELECTED = Color(124, 20, 222),
 }
+
+t.BUTTON_COLOR_TOP = Color(255, 0, 0, 255)
+t.BUTTON_COLOR_BOTTOM = Color(0, 0, 2555, 255)
+
+t.THEME_TOGGLE_LIGHT = Color.White:Copy()
+t.THEME_TOGGLE_DARK = Color.Black:Copy()
+
+t.ICON_CACHE = gui.PFMIconCache()
+
+t.STYLE_SHEETS = {}
+t.STYLE_SHEETS[".stop-top"] = {
+	["stop-color"] = "#" .. t.BUTTON_BACKGROUND_COLOR:ToHexColor(),
+}
+t.STYLE_SHEETS[".stop-bottom"] = {
+	["stop-color"] = "#" .. t.BACKGROUND_COLOR3:ToHexColor(),
+}
+
+t.ICONS = {}
+t.ICONS["button"] = {
+	material = "gui/pfm/button",
+}
+t.ICONS["button_left"] = {
+	material = "gui/pfm/button_left",
+}
+t.ICONS["button_right"] = {
+	material = "gui/pfm/button_right",
+}
+t.ICONS["button_middle"] = {
+	material = "gui/pfm/button_middle",
+}
+t.ICONS["button_tab_left"] = {
+	material = "gui/pfm/button_tab_left",
+}
+t.ICONS["button_tab_right"] = {
+	material = "gui/pfm/button_tab_right",
+}
+t.ICONS["button_tab_middle"] = {
+	material = "gui/pfm/button_tab_middle",
+}
+t.ICONS["button_tab"] = {
+	material = "gui/pfm/button_tab",
+}
+
+t.ICONS["theme-toggle-light"] = {
+	material = "gui/pfm/icons/brightness-high-fill",
+	iconData = {
+		width = 12,
+		height = 12,
+	},
+}
+t.ICONS["theme-toggle-dark"] = {
+	material = "gui/pfm/icons/moon-fill",
+	iconData = {
+		width = 12,
+		height = 12,
+	},
+}
+t.get_icon = function(GUI, name)
+	return GUI.ICON_CACHE:Load(GUI.ICONS[name].material, GUI.ICONS[name].iconData, GUI.STYLE_SHEETS)
+end
 
 -------------------------------------------
 ------------- END OF SETTINGS -------------
@@ -50,6 +113,10 @@ local function clear_element(GUI, pElement)
 		end
 		pElement.m_tSkinElements = nil
 	end
+end
+
+local function set_icon_material()
+	--
 end
 
 --[[t.BACKGROUND_GRADIENT = function(t)
@@ -466,7 +533,7 @@ skin["image_icon"] = {
 }
 skin["outline"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.BACKGROUND_COLOR)
+		pElement:SetColor(GUI.OUTLINE_COLOR)
 	end,
 }
 skin["slider_filled"] = {
@@ -524,13 +591,61 @@ skin["keyframe_marker_animated_frame"] = {
 		pElement:SetColor(Color(230, 75, 61))
 	end,
 }
-skin["button_background"] = {
+skin["theme_toggle_light"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.BUTTON_BACKGROUND_COLOR)
+		pElement:SetMaterial(GUI:get_icon("theme-toggle-light"))
+		pElement:SetColor(GUI.THEME_TOGGLE_LIGHT)
+	end,
+}
+skin["theme_toggle_dark"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("theme-toggle-dark"))
+		pElement:SetColor(GUI.THEME_TOGGLE_DARK)
+	end,
+}
+skin["button"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("button"))
+	end,
+}
+skin["button_left"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("button_left"))
+	end,
+}
+skin["button_right"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("button_right"))
+	end,
+}
+skin["button_middle"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("button_middle"))
+	end,
+}
+skin["button_tab_left"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("button_tab_left"))
+	end,
+}
+skin["button_tab_right"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("button_tab_right"))
+	end,
+}
+skin["button_tab_middle"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("button_tab_middle"))
+	end,
+}
+skin["button_tab"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("button_tab"))
 	end,
 }
 skin["button_background_pressed"] = {
 	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("button"))
 		pElement:SetColor(GUI.BUTTON_BACKGROUND_COLOR_PRESSED)
 	end,
 }

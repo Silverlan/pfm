@@ -33,7 +33,7 @@ function gui.PFMWindow:OnInitialize()
 	gui.create("WIBase", contents, 0, 0, 12, 1) -- Gap
 
 	local outline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	outline:SetColor(Color.DodgerBlue)
+	outline:AddStyleClass("outline")
 
 	-- Create frame
 	local parent = self:GetParent()

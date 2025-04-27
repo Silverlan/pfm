@@ -151,7 +151,7 @@ function pfm.ActorSelectionManager:__init()
 	self.m_callback = game.add_callback("PrepareRendering", function(renderer)
 		self:PrepareSelectionMeshesForRendering(renderer)
 	end)
-	self.m_material = game.load_material("white") -- game.get_error_material() -- We don't need any materials for the selection shaders, so we'll just use the error material
+	self.m_material = game.load_material("white") -- asset.get_error_material() -- We don't need any materials for the selection shaders, so we'll just use the error material
 	self.m_shader = shader.get("pfm_selection")
 	self.m_shaderWireframe = shader.get("pfm_selection_wireframe")
 	self.m_valid = (self.m_material ~= nil and self.m_shader ~= nil and self.m_shaderWireframe ~= nil)

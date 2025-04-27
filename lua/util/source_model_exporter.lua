@@ -362,26 +362,26 @@ function util.SourceEngineModelBuilder:Generate()
 							local matNameBase = matName .. "_base"
 							local matNameCh = matName .. "_ch"
 							local matNameSpec = matName .. "_spec"
-							local matBase = game.get_material(matNameBase)
-							local matCh = game.get_material(matNameCh)
-							local matSpec = game.get_material(matNameSpec)
+							local matBase = asset.get_material(matNameBase)
+							local matCh = asset.get_material(matNameCh)
+							local matSpec = asset.get_material(matNameSpec)
 							if matBase == nil then
 								local texAlbedo, texChMask, texExponentMap, texNormalMap =
 									util.convert_pbr_to_fake_pbr(mat)
 								if texAlbedo ~= false then
-									matBase = game.create_material(matNameBase, "fake_pbr_base")
+									matBase = asset.create_material(matNameBase, "fake_pbr_base")
 									matBase:SetTexture("basetexture", texAlbedo, baseTexName .. "_base")
 									matBase:SetTexture("bumpmap", texNormalMap, baseTexName .. "_n")
 									matBase:SetTexture("phongexponenttexture", texExponentMap, baseTexName .. "_e")
 									tmpMaterials[matBase:GetName()] = true
 
-									matCh = game.create_material(matNameCh, "fake_pbr_ch")
+									matCh = asset.create_material(matNameCh, "fake_pbr_ch")
 									matCh:SetTexture("basetexture", texAlbedo, baseTexName .. "_base")
 									matCh:SetTexture("normalmap", texNormalMap, baseTexName .. "_n")
 									matCh:SetTexture("maskmap2", texChMask, baseTexName .. "_ch")
 									tmpMaterials[matCh:GetName()] = true
 
-									matSpec = game.create_material(matNameSpec, "fake_pbr_spec")
+									matSpec = asset.create_material(matNameSpec, "fake_pbr_spec")
 									matSpec:SetTexture("basetexture", texAlbedo, baseTexName .. "_base")
 									matSpec:SetTexture("bumpmap", texNormalMap, baseTexName .. "_n")
 									matSpec:SetTexture("phongexponenttexture", texExponentMap, baseTexName .. "_e")

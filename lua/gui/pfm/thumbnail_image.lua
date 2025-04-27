@@ -213,7 +213,7 @@ function Element:GeneratePreviewImage(path)
 	self:LogInfo("Saving thumbnail image as '" .. thumbnailLocation .. "'...")
 	local result = util.save_image(img, "materials/" .. thumbnailLocation, texInfo)
 	if result then
-		local mat = game.create_material(thumbnailLocation, "wguitextured")
+		local mat = asset.create_material(thumbnailLocation, "wguitextured")
 		mat:SetTexture("albedo_map", thumbnailLocation)
 
 		mat:Save(thumbnailLocation)
