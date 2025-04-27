@@ -1,8 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="200" height="50" viewBox="0 0 200 50">
   <defs>
     <linearGradient id="btnGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#f9f9f9"/>
-      <stop offset="100%" stop-color="#949494"/>
+      <stop offset="0%" stop-color="#f9f9f9" class="stop-top"/>
+      <stop offset="100%" stop-color="#949494" class="stop-bottom"/>
     </linearGradient>
   </defs>
 
@@ -10,6 +10,7 @@
     x="1" y="1"
     width="198" height="48"
     fill="url(#btnGradient)"
+    class="rect"
     stroke="#3d3d3d"
     stroke-width="1"
     stroke-dasharray="198 48"
