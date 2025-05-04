@@ -945,6 +945,27 @@ function Element:InitializeMenuBar()
 		pItem:SetTooltip(locale.get_text("pfm_menu_theme"))
 		pSubMenu:ScheduleUpdate()
 
+		if self:IsDeveloperModeEnabled() then
+			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("font"))
+			pItem:SetName("font")
+			pSubMenu:SetName("font_menu")
+			for _, name in ipairs(engine.get_font_sets()) do
+				local pItemLan = pSubMenu:AddItem(name, function(pItem)
+					if util.is_valid(self) == false then
+						return
+					end
+					local fontSet = "source-han-sans" --engine.get_default_font_set_name()
+					local fontFeatures = bit.bor(engine.FONT_FEATURE_FLAG_SANS_BIT, engine.FONT_FEATURE_FLAG_MONO_BIT)
+					engine.create_font("pfm_small", fontSet, fontFeatures, 10, true)
+					engine.create_font("pfm_medium", fontSet, fontFeatures, 12, true)
+					engine.create_font("pfm_large", fontSet, fontFeatures, 20, true)
+					gui.reload_text_elements()
+				end)
+			end
+			pItem:SetTooltip(locale.get_text("pfm_menu_theme"))
+			pSubMenu:ScheduleUpdate()
+		end
+
 		local pSubItem = pContext:AddItem(locale.get_text("pfm_toggle_console"), function(pItem)
 			engine.toggle_console()
 		end)
