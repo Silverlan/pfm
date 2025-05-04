@@ -921,6 +921,36 @@ function Element:InitializeMenuBar()
 		pSubItem:SetTooltip(locale.get_text("pfm_menu_context_restore_default_layout_state"))
 		pSubItem:SetName("restore_default_layout_state")
 
+		local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_theme"))
+		pItem:SetName("theme")
+		pSubMenu:SetName("theme_menu")
+		local tFiles, tDirs = file.find("lua/gui/skins/*.lua")
+		local themes = {}
+		for _, f in ipairs(tFiles) do
+			f = file.remove_file_extension(f, { "lua" })
+			local name = locale.get_text("pfm_theme_" .. f)
+			table.insert(themes, { name, f })
+		end
+		table.sort(themes, function(a, b)
+			return a[1] < b[1]
+		end)
+		for _, themeInfo in ipairs(themes) do
+			local pItemLan = pSubMenu:AddItem(themeInfo[1], function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				local theme = themeInfo[2]
+				gui.load_skin(theme)
+
+				local pm = tool.get_filmmaker()
+				if util.is_valid(pm) then
+					tool.get_filmmaker():SetSkin(theme)
+				end
+			end)
+		end
+		pItem:SetTooltip(locale.get_text("pfm_menu_theme"))
+		pSubMenu:ScheduleUpdate()
+
 		local pSubItem = pContext:AddItem(locale.get_text("pfm_toggle_console"), function(pItem)
 			engine.toggle_console()
 		end)

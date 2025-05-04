@@ -24,6 +24,7 @@ t.text = {}
 t.text.body = Color(200, 200, 200)
 t.text.tab = Color.White:Copy()
 t.text.title = Color.White:Copy()
+t.text.highlight = Color(30, 144, 255, 255)
 
 t.icon = Color.White:Copy()
 
@@ -46,6 +47,9 @@ t.actor_editor.collection = Color(204, 204, 204)
 t.actor_editor.actor = Color(248, 128, 112)
 t.actor_editor.component = Color(204, 167, 0)
 t.actor_editor.property = Color(230, 230, 230)
+
+t.misc = {}
+t.misc.beta_info = Color.Red
 
 t.shaderGraph = {
 	NODE_BACKGROUND_COLOR_SELECTED = Color(124, 20, 222),
@@ -740,6 +744,16 @@ skin["act_ed_property"] = {
 skin["tab_title"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.text.tab)
+	end,
+}
+skin["beta_info"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.misc.beta_info)
+	end,
+}
+skin["text_highlight"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.text.highlight)
 	end,
 }
 gui.register_skin("pfm", t, skin, "default")

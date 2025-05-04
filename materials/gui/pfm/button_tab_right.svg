@@ -23,6 +23,7 @@
       fill="url(#btnGradient)"
       stroke="#3d3d3d"
       stroke-width="1"
+      class="rect"
     />
   </g>
 </svg>
