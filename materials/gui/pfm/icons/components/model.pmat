@@ -1,0 +1,17 @@
+"wguitextured"
+{
+	"textures"
+	{
+		albedo_map
+		{
+			$string texture "gui/pfm/icons/box"
+			$uint32 width 16
+			$uint32 height 16
+		}
+	}
+
+	"properties"
+	{
+		$vec4 color_factor [0.4, 0.87, 0.43, 1]
+	}
+}

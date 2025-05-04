@@ -176,15 +176,6 @@ function gui.PFMActorEditor:InitializeDirtyActorComponents(uniqueId, entActor)
 	self:EnableThinking()
 end
 
-local componentIcons = { -- TODO: Add a way for adding custom icons
-	["camera"] = "gui/pfm/icon_camera_item",
-	["particle_system"] = "gui/pfm/icon_particle_item",
-	["light"] = "gui/pfm/icon_light_item",
-	["light_spot"] = "gui/pfm/icon_light_item",
-	["light_point"] = "gui/pfm/icon_light_item",
-	["light_directional"] = "gui/pfm/icon_light",
-	["model"] = "gui/pfm/icon_model_item",
-}
 function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, component)
 	local componentType = component:GetType()
 	local componentId = ents.find_component_id(componentType)
@@ -227,9 +218,11 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 	if description ~= nil then
 		itemComponent:SetTooltip(description)
 	end
-	if componentIcons[componentType] ~= nil then
-		itemComponent:AddIcon(componentIcons[componentType])
-		itemActor:AddUniqueIcon(componentIcons[componentType])
+
+	local matPath = "gui/pfm/icons/components/" .. componentType
+	if asset.exists(matPath, asset.TYPE_MATERIAL) then
+		itemComponent:AddIcon(matPath)
+		itemActor:AddUniqueIcon(matPath)
 	end
 	actorData.treeElementToComponentId[itemComponent] = componentId
 	actorData.componentData[componentId].itemComponent = itemComponent

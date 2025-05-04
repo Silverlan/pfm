@@ -1,0 +1,17 @@
+"wguitextured"
+{
+	"textures"
+	{
+		albedo_map
+		{
+			$string texture "gui/pfm/icons/camera-fill"
+			$uint32 width 16
+			$uint32 height 16
+		}
+	}
+
+	"properties"
+	{
+		$vec4 color_factor [0.38, 0.5, 0.76, 1]
+	}
+}

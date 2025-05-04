@@ -1,0 +1,17 @@
+"wguitextured"
+{
+	"textures"
+	{
+		albedo_map
+		{
+			$string texture "gui/pfm/icons/atom"
+			$uint32 width 16
+			$uint32 height 16
+		}
+	}
+
+	"properties"
+	{
+		$vec4 color_factor [0.9, 0.29, 0.29, 1]
+	}
+}

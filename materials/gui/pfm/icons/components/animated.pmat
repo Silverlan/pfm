@@ -1,0 +1,17 @@
+"wguitextured"
+{
+	"textures"
+	{
+		albedo_map
+		{
+			$string texture "gui/pfm/icons/bone"
+			$uint32 width 16
+			$uint32 height 16
+		}
+	}
+
+	"properties"
+	{
+		$vec4 color_factor [1, 1, 1, 1]
+	}
+}
