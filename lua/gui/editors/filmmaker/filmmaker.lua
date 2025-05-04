@@ -233,7 +233,7 @@ function gui.WIFilmmaker:OnInitialize()
 
 	self:EnableThinking()
 	self:SetSize(1280, 1024)
-	self:SetSkin("pfm")
+	self:UpdateSkin()
 	self:InitializeSelectionManager()
 	local pMenuBar = self:GetMenuBar()
 	self.m_menuBar = pMenuBar
@@ -386,6 +386,18 @@ function gui.WIFilmmaker:OnInitialize()
 	self:SetFileDropInputEnabled(true)
 	self:SetSkinCallbacksEnabled(true)
 	pfm.call_event_listeners("OnFilmmakerInitialized", self)
+end
+function gui.WIFilmmaker:UpdateSkin()
+	local theme = console.get_convar_string("pfm_theme")
+	if theme == "" then
+		if os.is_dark_mode() then
+			theme = "pfm_dark"
+		else
+			theme = "pfm_light"
+		end
+	end
+	gui.load_skin(theme)
+	self:SetSkin(theme)
 end
 function gui.WIFilmmaker:OnFileDragEntered()
 	util.remove(self.m_fileDragChildOverlays)

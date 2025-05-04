@@ -118,3 +118,16 @@ console.register_variable(
 	bit.bor(console.FLAG_BIT_ARCHIVE),
 	"Multiplier for the camera speed if the shift-key is held."
 )
+console.register_variable(
+	"pfm_theme",
+	udm.TYPE_STRING,
+	"",
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"Theme to use for PFM. Leave empty to use system default dark/light theme."
+)
+console.add_change_callback("pfm_theme", function(old, new)
+	local pm = tool.get_filmmaker()
+	if util.is_valid(pm) then
+		tool.get_filmmaker():UpdateSkin()
+	end
+end)

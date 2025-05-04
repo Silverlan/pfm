@@ -939,13 +939,7 @@ function Element:InitializeMenuBar()
 				if util.is_valid(self) == false then
 					return
 				end
-				local theme = themeInfo[2]
-				gui.load_skin(theme)
-
-				local pm = tool.get_filmmaker()
-				if util.is_valid(pm) then
-					tool.get_filmmaker():SetSkin(theme)
-				end
+				console.run("pfm_theme", themeInfo[2])
 			end)
 		end
 		pItem:SetTooltip(locale.get_text("pfm_menu_theme"))
