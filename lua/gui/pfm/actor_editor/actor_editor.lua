@@ -42,7 +42,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self:SetSize(64, 128)
 
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("background3")
+	self.m_bg:AddStyleClass("background2")
 
 	self.navBar = gui.create("WIHBox", self)
 	self:InitializeNavigationBar()
@@ -527,6 +527,7 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 	end
 	if util.is_valid(actorGroup) == false then
 		local collapsible = gui.create("WICollapsibleGroup", self.m_propertyContainer)
+		collapsible:AddStyleClass("act_ed_actor")
 		collapsible:SetAutoAlignToParent(true, false)
 		collapsible:SetGroupName(actor:GetName())
 		collapsible:Expand()
@@ -534,6 +535,7 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 		self.m_componentPropertyGroups[uuid] = { collapsibleGroup = collapsible, componentGroups = {} }
 	end
 	local collapsible = actorGroup:AddGroup(locale.get_text("c_" .. ctype))
+	collapsible:AddStyleClass("act_ed_component")
 	collapsible:Expand()
 	local collapsibleContents = collapsible:GetContents()
 
@@ -545,6 +547,7 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 		collapsibleContents:GetWidth(),
 		collapsibleContents:GetHeight()
 	)
+	animSetControls:AddStyleClass("act_ed_property")
 	animSetControls:SetAutoAlignToParent(true, false)
 	animSetControls:SetName("property_controls")
 	animSetControls:GetControlsMenu():AddCallback("OnControlAdded", function(el, name, ctrl, wrapper)
@@ -1951,6 +1954,7 @@ function gui.PFMActorEditor:AddControl(
 	local displayName, description = pfm.util.get_localized_property_name(identifier)
 
 	local child = baseItem:AddItem(displayName, nil, nil, identifier)
+	child:AddStyleClass("act_ed_property")
 	child:SetName(util.Path.CreateFilePath(identifier):GetBack())
 	if description ~= nil then
 		child:SetTooltip(description)

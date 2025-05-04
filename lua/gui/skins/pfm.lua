@@ -1,7 +1,3 @@
-if gui.skin_exists("pfm") == true then
-	return
-end
-
 include("/gui/icon_cache.lua")
 
 -------------------------------------------
@@ -9,70 +5,103 @@ include("/gui/icon_cache.lua")
 -------------------------------------------
 
 local t = {}
-t.BACKGROUND_COLOR_DEFAULT = Color(38, 38, 38, 255)
-t.BACKGROUND_COLOR = t.BACKGROUND_COLOR_DEFAULT:Copy()
-t.BACKGROUND_COLOR2 = Color(20, 20, 20, 255)
-t.BACKGROUND_COLOR3 = Color(54, 54, 54, 255)
-t.BACKGROUND_COLOR_HOVER = Color(48, 48, 48, 255)
-t.BACKGROUND_COLOR_SELECTED = Color(58, 58, 58, 255)
-t.BACKGROUND_COLOR_OUTLINE = Color(58, 58, 58, 255)
+t.background = {}
+t.background.primary = Color(38, 38, 38, 255)
+t.background.secondary = Color(54, 54, 54, 255)
+t.background.tertiary = Color(20, 20, 20, 255)
+t.background.selected = Color(58, 58, 58, 255)
 
-t.TIMELINE_BACKGROUND_COLOR = Color(80, 80, 80)
-t.TIMELINE_LABEL_COLOR = Color.Black:Copy()
+t.button = {}
+t.button.background = Color(90, 90, 90)
+t.button.background_unpressed = Color.White:Copy()
+t.button.background_pressed = Color(150, 150, 150)
+t.button.icon = Color(147, 147, 147)
 
-t.BUTTON_BACKGROUND_COLOR = Color(90, 90, 90)
-t.BUTTON_BACKGROUND_COLOR_PRESSED = Color(60, 60, 60)
-t.BUTTON_ICON_COLOR = Color(147, 147, 147)
+t.slider = {}
+t.slider.color = Color.RoyalBlue
 
-t.OVERLAY_COLOR = Color(255, 255, 255)
-t.OUTLINE_COLOR = Color.DodgerBlue:Copy()
+t.text = {}
+t.text.body = Color(200, 200, 200)
+t.text.tab = Color.White:Copy()
+t.text.title = Color.White:Copy()
 
-t.SLIDER_FILL_COLOR = Color.RoyalBlue
-t.TEXT_COLOR = Color(200, 200, 200)
+t.icon = Color.White:Copy()
+
+t.outline = {}
+t.outline.color = Color(58, 58, 58, 255)
+t.outline.focus = Color.DodgerBlue:Copy()
+
+t.overlay = {}
+t.overlay.color = Color.White:Copy()
+
+t.graph = {}
+t.graph.line = Color(255, 255, 255)
+
+t.timeline = {}
+t.timeline.text = Color.Black:Copy()
+t.timeline.background = Color(80, 80, 80)
+
+t.actor_editor = {}
+t.actor_editor.collection = Color(204, 204, 204)
+t.actor_editor.actor = Color(248, 128, 112)
+t.actor_editor.component = Color(204, 167, 0)
+t.actor_editor.property = Color(230, 230, 230)
+
 t.shaderGraph = {
 	NODE_BACKGROUND_COLOR_SELECTED = Color(124, 20, 222),
 }
-
-t.BUTTON_COLOR_TOP = Color(255, 0, 0, 255)
-t.BUTTON_COLOR_BOTTOM = Color(0, 0, 2555, 255)
-
-t.THEME_TOGGLE_LIGHT = Color.White:Copy()
-t.THEME_TOGGLE_DARK = Color.Black:Copy()
 
 t.ICON_CACHE = gui.PFMIconCache()
 
 t.STYLE_SHEETS = {}
 t.STYLE_SHEETS[".stop-top"] = {
-	["stop-color"] = "#" .. t.BUTTON_BACKGROUND_COLOR:ToHexColor(),
+	["stop-color"] = "#" .. t.button.background:ToHexColor(),
 }
 t.STYLE_SHEETS[".stop-bottom"] = {
-	["stop-color"] = "#" .. t.BACKGROUND_COLOR3:ToHexColor(),
+	["stop-color"] = "#" .. t.background.secondary:ToHexColor(),
 }
 
 t.ICONS = {}
+local nineSlice = {
+	leftInset = 10,
+	rightInset = 10,
+	topInset = 10,
+	bottomInset = 10,
+}
+local buttonIconData = {
+	nineSlice = nineSlice,
+}
 t.ICONS["button"] = {
 	material = "gui/pfm/button",
+	iconData = buttonIconData,
 }
 t.ICONS["button_left"] = {
 	material = "gui/pfm/button_left",
+	iconData = buttonIconData,
 }
 t.ICONS["button_right"] = {
 	material = "gui/pfm/button_right",
+	iconData = buttonIconData,
 }
 t.ICONS["button_middle"] = {
 	material = "gui/pfm/button_middle",
+	iconData = buttonIconData,
 }
 t.ICONS["button_tab_left"] = {
 	material = "gui/pfm/button_tab_left",
+	iconData = buttonIconData,
 }
 t.ICONS["button_tab_right"] = {
 	material = "gui/pfm/button_tab_right",
+	iconData = buttonIconData,
 }
 t.ICONS["button_tab_middle"] = {
 	material = "gui/pfm/button_tab_middle",
+	iconData = buttonIconData,
 }
 t.ICONS["button_tab"] = {
 	material = "gui/pfm/button_tab",
+	iconData = buttonIconData,
 }
 
 t.ICONS["theme-toggle-light"] = {
@@ -185,7 +214,7 @@ skin["wislider"] = skin["wiprogressbar"]
 ------------- WIText -------------
 skin["witext"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.TEXT_COLOR)
+		pElement:SetColor(GUI.text.body)
 	end,
 }
 -----------------------------------------
@@ -205,7 +234,7 @@ skin["wislider"] = skin["wiprogressbar"]
 skin["wibutton"] = {
 	Initialize = function(GUI, pElement)
 		local bg = gui.create("WIRect", pElement)
-		bg:SetColor(GUI.BACKGROUND_COLOR3)
+		bg:SetColor(GUI.background.secondary)
 		bg:SetName("background")
 		bg:SetAutoAlignToParent(true)
 		bg:SetZPos(-2)
@@ -220,7 +249,7 @@ skin["wibutton"] = {
 			if pElement.m_pBackground == nil or not pElement.m_pBackground:IsValid() then
 				return
 			end
-			pElement.m_pBackground:SetColor(GUI.BACKGROUND_COLOR3)
+			pElement.m_pBackground:SetColor(GUI.background.secondary)
 		end
 		local cbCursorEntered = pElement:AddCallback("OnCursorEntered", fcCursorEntered)
 		add_skin_element(pElement, cbCursorEntered)
@@ -232,7 +261,7 @@ skin["wibutton"] = {
 			if pElement.m_pBackground == nil or not pElement.m_pBackground:IsValid() then
 				return
 			end
-			pElement.m_pBackground:SetColor(GUI.BACKGROUND_COLOR3)
+			pElement.m_pBackground:SetColor(GUI.background.secondary)
 		end)
 		add_skin_element(pElement, cbCursorExited)
 		local cbMousePressed = pElement:AddCallback("OnMousePressed", function()
@@ -244,7 +273,7 @@ skin["wibutton"] = {
 			if gradient == nil then
 				return
 			end
-			pElement.m_pBackground:SetColor(GUI.BACKGROUND_COLOR3)
+			pElement.m_pBackground:SetColor(GUI.background.secondary)
 		end)
 		add_skin_element(pElement, cbMousePressed)
 		local cbMouseReleased = pElement:AddCallback("OnMouseReleased", function()
@@ -260,7 +289,7 @@ skin["wibutton"] = {
 			if gradient == nil then
 				return
 			end
-			pElement.m_pBackground:SetColor(GUI.BACKGROUND_COLOR3)
+			pElement.m_pBackground:SetColor(GUI.background.secondary)
 		end)
 		add_skin_element(pElement, cbMouseReleased)
 
@@ -309,14 +338,14 @@ skin["witooltip"] = {
 		if pText == nil then
 			return
 		end
-		pText:SetColorRGB(GUI.TEXT_COLOR)
+		pText:SetColorRGB(GUI.text.body)
 		local pRect = gui.create("WIRect", pElement)
-		pRect:SetColor(GUI.BACKGROUND_COLOR)
+		pRect:SetColor(GUI.background.primary)
 		pRect:SetAutoAlignToParent(true)
 		pRect:SetZPos(0)
 
 		local pRectOutline = gui.create("WIOutlinedRect", pElement)
-		pRectOutline:SetColor(GUI.BACKGROUND_COLOR_OUTLINE)
+		pRectOutline:SetColor(GUI.outline.color)
 		pRectOutline:SetAutoAlignToParent(true)
 		pRectOutline:SetZPos(0)
 
@@ -347,7 +376,7 @@ skin["witooltip"] = {
 skin["input_field"] = {
 	Initialize = function(GUI, pElement)
 		local bg = gui.create("WIRect", pElement, 0, 0, pElement:GetWidth(), pElement:GetHeight(), 0, 0, 1, 1)
-		bg:SetColor(GUI.BACKGROUND_COLOR_DEFAULT)
+		bg:SetColor(GUI.background.primary)
 		bg:SetZPos(-10000)
 		bg:SetBackgroundElement(true)
 		bg:SetName("background")
@@ -355,7 +384,7 @@ skin["input_field"] = {
 
 		local outline =
 			gui.create("WIOutlinedRect", pElement, 0, 0, pElement:GetWidth(), pElement:GetHeight(), 0, 0, 1, 1)
-		outline:SetColor(GUI.BACKGROUND_COLOR3)
+		outline:SetColor(GUI.background.secondary)
 		outline:SetZPos(-9000)
 		outline:SetBackgroundElement(true)
 		outline:SetName("outline")
@@ -443,7 +472,7 @@ skin["menu_item"] = {
 	children = {
 		["menu_item_selected_background"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(GUI.BACKGROUND_COLOR_SELECTED)
+				pElement:SetColor(GUI.background.selected)
 			end,
 		},
 		["menu_item_selected_outline"] = {
@@ -451,7 +480,7 @@ skin["menu_item"] = {
 		},
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(GUI.TEXT_COLOR)
+				pElement:SetColor(GUI.text.body)
 				pElement:SetFont("pfm_medium")
 				pElement:SizeToContents()
 			end,
@@ -460,14 +489,14 @@ skin["menu_item"] = {
 }
 skin["selection"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.BACKGROUND_COLOR_SELECTED)
+		pElement:SetColor(GUI.background.selected)
 	end,
 }
 skin["context_menu"] = {
 	children = {
 		["context_menu_background"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(GUI.BACKGROUND_COLOR_DEFAULT)
+				pElement:SetColor(GUI.background.primary)
 			end,
 		},
 		["context_menu_outline"] = {
@@ -477,12 +506,12 @@ skin["context_menu"] = {
 }
 skin["menu_bar"] = {
 	Initialize = function(GUI, pElement)
-		gui.get_primary_window():SetTitleBarColor(GUI.BACKGROUND_COLOR)
+		gui.get_primary_window():SetTitleBarColor(GUI.background.primary)
 	end,
 	children = {
 		["menu_bar_background"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(GUI.BACKGROUND_COLOR_DEFAULT)
+				pElement:SetColor(GUI.background.primary)
 			end,
 		},
 		["menu_item"] = {
@@ -501,14 +530,14 @@ skin["menu_bar"] = {
 }
 skin["context_menu_arrow"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.TEXT_COLOR)
+		pElement:SetColor(GUI.text.body)
 	end,
 }
 skin["witable"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(GUI.TEXT_COLOR)
+				pElement:SetColor(GUI.text.body)
 				pElement:SetFont("pfm_medium")
 				pElement:SizeToContents()
 			end,
@@ -519,12 +548,12 @@ skin["image_icon"] = {
 	children = {
 		["label"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(GUI.TEXT_COLOR)
+				pElement:SetColor(GUI.text.body)
 			end,
 		},
 		["label_background"] = {
 			Initialize = function(GUI, pElement)
-				local col = GUI.BACKGROUND_COLOR:Copy()
+				local col = GUI.background.primary:Copy()
 				col.a = 240
 				pElement:SetColor(col)
 			end,
@@ -533,19 +562,19 @@ skin["image_icon"] = {
 }
 skin["outline"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.OUTLINE_COLOR)
+		pElement:SetColor(GUI.outline.focus)
 	end,
 }
 skin["slider_filled"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.SLIDER_FILL_COLOR)
+		pElement:SetColor(GUI.slider.color)
 	end,
 }
 skin["frame_titlebar"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetColor(GUI.TEXT_COLOR)
+				pElement:SetColor(GUI.text.body)
 				pElement:SetFont("pfm_medium")
 				pElement:SizeToContents()
 			end,
@@ -554,7 +583,7 @@ skin["frame_titlebar"] = {
 }
 skin["background"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.BACKGROUND_COLOR_DEFAULT)
+		pElement:SetColor(GUI.background.primary)
 	end,
 }
 skin["wishadergraph"] = {
@@ -568,12 +597,12 @@ skin["wishadergraph"] = {
 }
 skin["background2"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.BACKGROUND_COLOR2)
+		pElement:SetColor(GUI.background.secondary)
 	end,
 }
 skin["background3"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.BACKGROUND_COLOR3)
+		pElement:SetColor(GUI.background.tertiary)
 	end,
 }
 skin["keyframe_marker_static"] = {
@@ -591,16 +620,10 @@ skin["keyframe_marker_animated_frame"] = {
 		pElement:SetColor(Color(230, 75, 61))
 	end,
 }
-skin["theme_toggle_light"] = {
+skin["theme_toggle"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetMaterial(GUI:get_icon("theme-toggle-light"))
-		pElement:SetColor(GUI.THEME_TOGGLE_LIGHT)
-	end,
-}
-skin["theme_toggle_dark"] = {
-	Initialize = function(GUI, pElement)
-		pElement:SetMaterial(GUI:get_icon("theme-toggle-dark"))
-		pElement:SetColor(GUI.THEME_TOGGLE_DARK)
+		pElement:SetColor(GUI.icon)
 	end,
 }
 skin["button"] = {
@@ -643,30 +666,80 @@ skin["button_tab"] = {
 		pElement:SetMaterial(GUI:get_icon("button_tab"))
 	end,
 }
+skin["button_background_unpressed"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.button.background_unpressed)
+	end,
+}
 skin["button_background_pressed"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetMaterial(GUI:get_icon("button"))
-		pElement:SetColor(GUI.BUTTON_BACKGROUND_COLOR_PRESSED)
+		pElement:SetColor(GUI.button.background_pressed)
 	end,
 }
 skin["button_icon"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.BUTTON_ICON_COLOR)
+		pElement:SetColor(GUI.button.icon)
 	end,
 }
 skin["timeline_background"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.TIMELINE_BACKGROUND_COLOR)
+		pElement:SetColor(GUI.timeline.background)
 	end,
 }
 skin["timeline_label"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.TIMELINE_LABEL_COLOR)
+		pElement:SetColor(GUI.timeline.text)
+	end,
+}
+skin["graph_line"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.graph.line)
 	end,
 }
 skin["overlay"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetColor(GUI.OVERLAY_COLOR)
+		pElement:SetColor(GUI.overlay.color)
+	end,
+}
+skin["act_ed_collection"] = {
+	children = {
+		["witext"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColor(GUI.actor_editor.collection)
+			end,
+		},
+	},
+}
+skin["act_ed_actor"] = {
+	children = {
+		["witext"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColor(GUI.actor_editor.actor)
+			end,
+		},
+	},
+}
+skin["act_ed_component"] = {
+	children = {
+		["witext"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColor(GUI.actor_editor.component)
+			end,
+		},
+	},
+}
+skin["act_ed_property"] = {
+	children = {
+		["witext"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColor(GUI.actor_editor.property)
+			end,
+		},
+	},
+}
+skin["tab_title"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.text.tab)
 	end,
 }
 gui.register_skin("pfm", t, skin, "default")

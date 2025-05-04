@@ -374,6 +374,7 @@ end
 function gui.PFMActorEditor:AddActor(actor, parentItem)
 	parentItem = parentItem or self.m_tree
 	local itemActor = parentItem:AddItem(actor:GetName(), nil, nil, tostring(actor:GetUniqueId()))
+	itemActor:AddStyleClass("act_ed_actor")
 	itemActor:SetAutoSelectChildren(false)
 
 	local nameChangeListener = actor:AddChangeListener("name", function(c, newName)
@@ -455,6 +456,7 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 	local itemComponents = itemActor -- itemActor:AddItem(locale.get_text("components"))
 	local itemAddComponent =
 		itemComponents:AddItem("+ " .. locale.get_text("pfm_add_component"), nil, nil, "add_component")
+	itemAddComponent:AddStyleClass("act_ed_component")
 	itemAddComponent:SetCursor(gui.CURSOR_SHAPE_HAND)
 	itemAddComponent:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then

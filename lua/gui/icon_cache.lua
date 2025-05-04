@@ -21,7 +21,6 @@ function IconCache:GenerateMaterial(iconPath, iconData, styleSheet)
 	local albedoMap = textures:Add("albedo_map")
 	albedoMap:SetValue("texture", udm.TYPE_STRING, iconPath)
 	albedoMap:SetValue("cache", udm.TYPE_BOOLEAN, false)
-
 	if iconData ~= nil then
 		if iconData.width ~= nil then
 			albedoMap:SetValue("width", udm.TYPE_UINT32, iconData.width)
@@ -29,7 +28,25 @@ function IconCache:GenerateMaterial(iconPath, iconData, styleSheet)
 		if iconData.height ~= nil then
 			albedoMap:SetValue("height", udm.TYPE_UINT32, iconData.height)
 		end
+		local nineSliceData = iconData.nineSlice
+		if nineSliceData ~= nil then
+			local properties = shaderData:Add("properties")
+			local nineSlice = properties:Add("9slice")
+			if nineSliceData.leftInset ~= nil then
+				nineSlice:SetValue("leftInset", udm.TYPE_UINT32, nineSliceData.leftInset)
+			end
+			if nineSliceData.rightInset ~= nil then
+				nineSlice:SetValue("rightInset", udm.TYPE_UINT32, nineSliceData.rightInset)
+			end
+			if nineSliceData.topInset ~= nil then
+				nineSlice:SetValue("topInset", udm.TYPE_UINT32, nineSliceData.topInset)
+			end
+			if nineSliceData.bottomInset ~= nil then
+				nineSlice:SetValue("bottomInset", udm.TYPE_UINT32, nineSliceData.bottomInset)
+			end
+		end
 	end
+
 	if styleSheet ~= nil then
 		local styleSheetData = albedoMap:Add("styleSheet")
 		for k, vars in pairs(styleSheet) do

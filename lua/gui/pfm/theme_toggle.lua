@@ -15,7 +15,7 @@ function Element:OnInitialize()
 	self:SetSize(12, 12)
 
 	local el = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	el:AddStyleClass("theme_toggle_light")
+	el:AddStyleClass("theme_toggle")
 	self.m_icon = el
 
 	self:SetCursor(gui.CURSOR_SHAPE_HAND)
@@ -32,12 +32,8 @@ function Element:SetTheme(theme)
 	local skin
 	if theme == Element.THEME_DARK then
 		skin = "pfm"
-		self.m_icon:RemoveStyleClass("theme_toggle_dark")
-		self.m_icon:AddStyleClass("theme_toggle_light")
 	else
-		skin = "pfm_light"
-		self.m_icon:RemoveStyleClass("theme_toggle_light")
-		self.m_icon:AddStyleClass("theme_toggle_dark")
+		skin = "pfm_halloween"
 	end
 	gui.load_skin(skin)
 

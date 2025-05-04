@@ -25,7 +25,7 @@ function gui.PFMTimeline:OnInitialize()
 
 	self:SetSize(256, 128)
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("background3")
+	self.m_bg:AddStyleClass("background2")
 	self.m_bg:SetName("timeline_background")
 
 	self.m_contents = gui.create("WIVBox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)

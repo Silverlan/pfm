@@ -59,7 +59,6 @@ function Element:OnInitialize()
 
 	self:SetSize(32, 26)
 	local elBg = gui.create("WI9SliceRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	elBg:AddStyleClass("button_background")
 	self.m_elBg = elBg
 
 	--elBg:GetColorProperty():Link(self:GetColorProperty())
@@ -127,15 +126,16 @@ function Element:UpdateStyle()
 	else
 		self.m_elBg:AddStyleClass("button")
 	end
+	self:RefreshSkin()
 end
 function Element:SetPressed(pressed)
 	self.m_pressed = pressed
 	if pressed then
-		self.m_elBg:RemoveStyleClass("button_background")
+		self.m_elBg:RemoveStyleClass("button_background_unpressed")
 		self.m_elBg:AddStyleClass("button_background_pressed")
 	else
 		self.m_elBg:RemoveStyleClass("button_background_pressed")
-		self.m_elBg:AddStyleClass("button_background")
+		self.m_elBg:AddStyleClass("button_background_unpressed")
 	end
 	self.m_elBg:RefreshSkin()
 	self:OnActiveStateChanged(pressed)

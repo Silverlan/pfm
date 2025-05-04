@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="50">
+  <defs>
+    <linearGradient id="btnGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f9f9f9" class="stop-top"/>
+      <stop offset="100%" stop-color="#949494" class="stop-bottom"/>
+    </linearGradient>
+
+    <clipPath id="clipToButton">
+      <rect x="0" y="0" width="200" height="50"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#clipToButton)">
+    <rect
+      x="-4" y="1"
+      width="203" height="48"
+      rx="5" ry="5"
+      fill="url(#btnGradient)"
+      stroke="#3d3d3d"
+      class="rect"
+      stroke-width="1"
+    />
+  </g>
+</svg>

@@ -223,6 +223,7 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 
 	local componentData = actorData.componentData[componentId]
 	local itemComponent = actorData.componentsEntry:AddItem(displayName, nil, nil, componentType)
+	itemComponent:AddStyleClass("act_ed_component")
 	if description ~= nil then
 		itemComponent:SetTooltip(description)
 	end
