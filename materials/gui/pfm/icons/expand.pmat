@@ -1,0 +1,12 @@
+"wguitextured"
+{
+	"textures"
+	{
+		albedo_map
+		{
+			$string texture "gui/pfm/plus-circle"
+			$uint32 width 9
+			$uint32 height 9
+		}
+	}
+}

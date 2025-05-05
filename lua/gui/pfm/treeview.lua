@@ -897,7 +897,7 @@ function gui.PFMTreeExpandIcon:Expand()
 		return
 	end
 	if util.is_valid(self.m_tex) then
-		self.m_tex:SetMaterial("gui/pfm/dash-circle")
+		self.m_tex:SetMaterial("gui/pfm/icons/collapse")
 	end
 	self.m_collapsed = false
 	self:CallCallbacks("OnExpand")
@@ -907,7 +907,7 @@ function gui.PFMTreeExpandIcon:Collapse(force)
 		return
 	end
 	if util.is_valid(self.m_tex) then
-		self.m_tex:SetMaterial("gui/pfm/plus-circle")
+		self.m_tex:SetMaterial("gui/pfm/icons/expand")
 	end
 	self.m_collapsed = true
 	self:CallCallbacks("OnCollapse")
