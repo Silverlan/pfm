@@ -75,6 +75,9 @@ function Element:SetText(text)
 	self.m_text:CenterToParent()
 	self.m_text:SetAnchor(0.5, 0.5, 0.5, 0.5)
 end
+function Element:GetText()
+	return self.m_text:GetText()
+end
 function Element:SetType(type)
 	self.m_type = type
 	self:UpdateStyle()
