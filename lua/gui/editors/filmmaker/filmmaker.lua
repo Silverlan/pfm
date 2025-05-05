@@ -398,6 +398,19 @@ function gui.WIFilmmaker:UpdateSkin()
 	end
 	gui.load_skin(theme)
 	self:SetSkin(theme)
+
+	-- Give it a second for the theme to be applied before we apply it to
+	-- secondary windows
+	time.create_simple_timer(0.1, function()
+		if self:IsValid() == false then
+			return
+		end
+		for name, frame in pairs(self:GetFrames()) do
+			if frame:IsValid() then
+				frame:UpdateWindowSkins(theme)
+			end
+		end
+	end)
 end
 function gui.WIFilmmaker:OnFileDragEntered()
 	util.remove(self.m_fileDragChildOverlays)

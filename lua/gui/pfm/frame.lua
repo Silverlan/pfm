@@ -293,18 +293,7 @@ function gui.PFMFrame:DetachTab(identifier, width, height)
 
 	local skin = panel:GetSkinName()
 	if skin ~= nil then
-		el:SetSkin(skin)
-	end
-	local windowPrimary = gui.get_primary_window()
-	if util.is_valid(windowPrimary) then
-		local borderColor = windowPrimary:GetBorderColor()
-		if borderColor ~= nil then
-			windowHandle:SetBorderColor(borderColor)
-		end
-		local titleBarColor = windowPrimary:GetTitleBarColor()
-		if titleBarColor ~= nil then
-			windowHandle:SetTitleBarColor(titleBarColor)
-		end
+		self:UpdateWindowSkin(windowHandle, skin)
 	end
 
 	local elBg = gui.create("WIRect", el, 0, 0, el:GetWidth(), el:GetHeight(), 0, 0, 1, 1)
@@ -338,6 +327,33 @@ function gui.PFMFrame:DetachTab(identifier, width, height)
 		panel:CallCallbacks("OnDetached", windowHandle)
 	end
 	return windowHandle
+end
+
+function gui.PFMFrame:UpdateWindowSkin(windowHandle, theme)
+	local windowPrimary = gui.get_primary_window()
+	if util.is_valid(windowPrimary) then
+		local borderColor = windowPrimary:GetBorderColor()
+		if borderColor ~= nil then
+			windowHandle:SetBorderColor(borderColor)
+		end
+		local titleBarColor = windowPrimary:GetTitleBarColor()
+		if titleBarColor ~= nil then
+			windowHandle:SetTitleBarColor(titleBarColor)
+		end
+	end
+
+	local el = gui.get_base_element(windowHandle)
+	if util.is_valid(el) then
+		el:SetSkin(theme)
+	end
+end
+
+function gui.PFMFrame:UpdateWindowSkins(theme)
+	for _, tab in ipairs(self:GetTabs()) do
+		if util.is_valid(tab.window) then
+			self:UpdateWindowSkin(tab.window, theme)
+		end
+	end
 end
 
 function gui.PFMFrame:AttachTab(identifier)
