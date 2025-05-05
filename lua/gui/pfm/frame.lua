@@ -295,6 +295,17 @@ function gui.PFMFrame:DetachTab(identifier, width, height)
 	if skin ~= nil then
 		el:SetSkin(skin)
 	end
+	local windowPrimary = gui.get_primary_window()
+	if util.is_valid(windowPrimary) then
+		local borderColor = windowPrimary:GetBorderColor()
+		if borderColor ~= nil then
+			windowHandle:SetBorderColor(borderColor)
+		end
+		local titleBarColor = windowPrimary:GetTitleBarColor()
+		if titleBarColor ~= nil then
+			windowHandle:SetTitleBarColor(titleBarColor)
+		end
+	end
 
 	local elBg = gui.create("WIRect", el, 0, 0, el:GetWidth(), el:GetHeight(), 0, 0, 1, 1)
 	elBg:AddStyleClass("background")
