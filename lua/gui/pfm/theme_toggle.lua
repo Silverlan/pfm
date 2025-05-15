@@ -33,7 +33,7 @@ function Element:SetTheme(theme)
 	if theme == Element.THEME_DARK then
 		skin = "pfm"
 	else
-		skin = "pfm_halloween"
+		skin = "pfm_light"
 	end
 	gui.load_skin(skin)
 
