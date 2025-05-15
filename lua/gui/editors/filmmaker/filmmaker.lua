@@ -391,7 +391,7 @@ function gui.WIFilmmaker:UpdateSkin()
 	local theme = console.get_convar_string("pfm_theme")
 	if theme == "" then
 		if os.is_dark_mode() then
-			theme = "pfm_dark"
+			theme = "pfm"
 		else
 			theme = "pfm_light"
 		end
