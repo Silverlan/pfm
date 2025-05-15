@@ -656,9 +656,8 @@ function Element:AddMessageBox(msg, audioFile)
 		and (audioFile ~= nil and asset.exists(audioFile, asset.TYPE_AUDIO))
 	local xOffset = 5
 	if hasAudio then
-		local iconAudio = gui.PFMButton.create(el, "gui/pfm/icon_mute", "gui/pfm/icon_mute_activated", function()
+		local iconAudio = gui.PFMButton.create(el, "volume-up-fill", function()
 			self:ToggleAudio()
-			return true
 		end)
 		iconAudio:SetSize(20, 20)
 		iconAudio:SetPos(xOffset, 0)
@@ -874,7 +873,7 @@ function Element:IsAudioEnabled()
 end
 function Element:UpdateAudio()
 	local enabled = self:IsAudioEnabled()
-	self.m_iconAudio:SetActivated(not enabled)
+	self.m_iconAudio:SetIcon(enabled and "volume-up-fill" or "volume-mute-fill", false)
 
 	if enabled == false then
 		if self.m_sound ~= nil then

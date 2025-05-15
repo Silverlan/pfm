@@ -246,9 +246,11 @@ function gui.PFMButton:SetMaterials(unpressedMat, pressedMat)
 	end
 	self:SetSize(texInfo:GetWidth(), texInfo:GetHeight())
 end
-function gui.PFMButton:SetIcon(icon)
+function gui.PFMButton:SetIcon(icon, updateSize)
 	gui.PFMBaseButton.SetIcon(self, icon)
-	self:SetSize(30, 30)
+	if updateSize ~= false then
+		self:SetSize(30, 30)
+	end
 end
 function gui.PFMButton:SetMaterial(mat)
 	--[[if mat ~= nil and util.is_valid(self.m_button) then
