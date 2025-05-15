@@ -768,4 +768,20 @@ skin["text_highlight"] = {
 		pElement:SetColor(GUI.text.highlight)
 	end,
 }
+------------- InfoBox -------------
+skin["infobox"] = {
+	children = {
+		["bg_info"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColor(GUI.background.primary)
+			end,
+		},
+		["fg_info"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColor(GUI.text.body)
+			end,
+		},
+	},
+}
+-----------------------------------
 gui.register_skin("pfm", t, skin, "default")
