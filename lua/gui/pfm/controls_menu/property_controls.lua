@@ -19,7 +19,8 @@ local function initialize_keyframe_marker_manager()
 		function(actor, targetPath, type, wrapper, elPropertyControls)
 			local elContainer = wrapper:GetContainerElement()
 			if util.is_valid(elContainer) then
-				if udm.is_animatable_type(type) then
+				-- Boolean types are currently not supported
+				if udm.is_animatable_type(type) and type ~= udm.TYPE_BOOLEAN then
 					local marker = gui.create("WIKeyframeMarker", elPropertyControls)
 					marker:SetName("keyframe_marker")
 					Element.impl.markerManager:AddMarker(marker, actor, targetPath, type)
