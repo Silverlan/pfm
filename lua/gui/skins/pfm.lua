@@ -630,6 +630,18 @@ skin["theme_toggle"] = {
 		pElement:SetColor(GUI.icon)
 	end,
 }
+skin["theme_toggle_light"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("theme-toggle-light"))
+		pElement:SetColor(GUI.icon)
+	end,
+}
+skin["theme_toggle_dark"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetMaterial(GUI:get_icon("theme-toggle-dark"))
+		pElement:SetColor(GUI.icon)
+	end,
+}
 skin["button"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetMaterial(GUI:get_icon("button"))

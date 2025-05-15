@@ -15,7 +15,7 @@ function Element:OnInitialize()
 	self:SetSize(12, 12)
 
 	local el = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	el:AddStyleClass("theme_toggle")
+	el:AddStyleClass("theme_toggle_light")
 	self.m_icon = el
 
 	self:SetCursor(gui.CURSOR_SHAPE_HAND)
@@ -27,13 +27,17 @@ function Element:SetTheme(theme)
 	if theme == self.m_theme then
 		return
 	end
+	self.m_icon:RemoveStyleClass("theme_toggle_light")
+	self.m_icon:RemoveStyleClass("theme_toggle_dark")
 	self.m_theme = theme
 
 	local skin
 	if theme == Element.THEME_DARK then
 		skin = "pfm"
+		self.m_icon:AddStyleClass("theme_toggle_light")
 	else
 		skin = "pfm_light"
+		self.m_icon:AddStyleClass("theme_toggle_dark")
 	end
 	gui.load_skin(skin)
 
