@@ -22,6 +22,7 @@ function Element:OnInitialize()
 	self:SetMouseInputEnabled(true)
 
 	self.m_theme = Element.THEME_DARK
+	self:SetTooltip(locale.get_text("pfm_toggle_theme"))
 end
 function Element:SetTheme(theme)
 	if theme == self.m_theme then
