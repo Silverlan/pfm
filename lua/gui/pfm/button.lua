@@ -90,10 +90,10 @@ function Element:SetIcon(icon)
 		local elIcon = gui.create("WITexturedRect", self)
 		elIcon:SetSize(18, 18)
 		elIcon:SetMaterial("gui/pfm/cursor-fill")
-		elIcon:CenterToParent()
-		elIcon:SetAnchor(0.5, 0.5, 0.5, 0.5)
 		elIcon:AddStyleClass("button_icon")
 		self.m_icon = elIcon
+
+		self:UpdateIconPosition()
 	end
 	self.m_icon:SetMaterial("gui/pfm/icons/" .. icon)
 end
@@ -255,9 +255,38 @@ function gui.PFMButton:SetMaterial(mat)
 		self.m_button:SetMaterial(mat)
 	end]]
 end
+function gui.PFMButton:UpdateIconPosition()
+	if util.is_valid(self.m_icon) == false then
+		return
+	end
+	self.m_icon:ClearAnchor()
+	self.m_icon:CenterToParent()
+	if util.is_valid(self.m_elCaret) then
+		local maxX = self:GetWidth() - 26
+		local right = self.m_icon:GetRight()
+		if right > maxX then
+			self.m_icon:SetX(maxX - self.m_icon:GetWidth())
+		end
+	end
+	local xAnchor = self.m_icon:GetCenter().x / self:GetWidth()
+	self.m_icon:SetAnchor(xAnchor, 0.5, xAnchor, 0.5)
+end
 function gui.PFMButton:SetupContextMenu(fPopulateContextMenu, openOnClick)
+	if util.is_valid(self.m_elCaret) == false then
+		self:SetWidth(self:GetWidth() + 22)
+		local caret = gui.create("WITexturedRect", self, 0, 0, 16, 16)
+		caret:SetMaterial("gui/pfm/icons/caret-down-fill")
+		caret:AddStyleClass("button_icon")
+		caret:SetX(self:GetWidth() - 22)
+		caret:CenterToParentY()
+		caret:SetAnchor(1, 0, 1, 0)
+		self.m_elCaret = caret
+
+		self:UpdateIconPosition()
+	end
+
 	self.m_fPopulateContextMenu = fPopulateContextMenu
-	local w = 12
+	local w = 22
 	self.m_contextTrigger = gui.create("WIBase", self, self:GetWidth() - w, 0, w, self:GetHeight(), 1, 0, 1, 0)
 	self.m_contextTrigger:SetMouseInputEnabled(true)
 	self.m_contextTrigger:AddCallback("OnMouseEvent", function(el, button, state, mods)
