@@ -32,8 +32,8 @@ t.text.highlight = Color(38, 139, 210, 255)
 -- Icons & outlines
 t.icon = Color(101, 123, 131, 255) -- #657b83 (base00)
 t.outline = {}
-t.outline.color = Color(238, 232, 213, 255) -- #eee8d5 (base2)
-t.outline.focus = Color(181, 137, 0, 255) -- #b58900 (yellow)
+t.outline.color = Color(147, 161, 161, 255) -- #eee8d5 (base2)
+t.outline.focus = Color(255, 200, 80, 255) -- #b58900 (yellow)
 
 -- Overlay (e.g. modal scrim)
 t.overlay = {}

@@ -29,7 +29,7 @@ t.text.highlight = Color(30, 144, 255, 255)
 t.icon = Color.White:Copy()
 
 t.outline = {}
-t.outline.color = Color(58, 58, 58, 255)
+t.outline.color = Color(30, 30, 30, 255)
 t.outline.focus = Color.DodgerBlue:Copy()
 
 t.overlay = {}
@@ -565,6 +565,11 @@ skin["image_icon"] = {
 	},
 }
 skin["outline"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.outline.color)
+	end,
+}
+skin["outline_focus"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.outline.focus)
 	end,

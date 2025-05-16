@@ -24,6 +24,10 @@ t.actor_editor.actor = Color(255, 140, 0, 255)
 t.actor_editor.component = Color(160, 80, 226, 255)
 t.actor_editor.property = Color(230, 230, 230)
 
+t.outline = {}
+t.outline.color = Color(17, 17, 17, 255)
+t.outline.focus = Color.DodgerBlue:Copy()
+
 t.ICON_CACHE = gui.PFMIconCache()
 
 t.STYLE_SHEETS = {}

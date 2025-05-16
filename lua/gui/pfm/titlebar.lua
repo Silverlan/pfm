@@ -20,7 +20,7 @@ function gui.PFMTitlebar:OnInitialize()
 	self:SetSize(256, 31)
 
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	bg:SetColor(Color.White)
+	bg:AddStyleClass("background")
 
 	self.m_text = gui.create("WIText", self, 11, 8)
 	self.m_text:SetColor(Color.Black)

@@ -46,7 +46,10 @@ function gui.ImageIcon:SetSelected(selected)
 		return
 	end
 	self.m_selected = selected
-	self.m_outline:SetColor(selected and Color(191, 191, 191) or Color(38, 38, 38))
+	self.m_outline:RemoveStyleClass("outline")
+	self.m_outline:RemoveStyleClass("outline_focus")
+	self.m_outline:AddStyleClass(selected and "outline_focus" or "outline")
+	self.m_outline:RefreshSkin()
 	self:CallCallbacks("OnSelectionChanged", selected)
 end
 function gui.ImageIcon:IsSelected()
