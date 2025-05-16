@@ -91,7 +91,7 @@ end
 gui.register("WIPFMPrompt", PfmPrompt)
 
 pfm.open_message_prompt = function(title, message, buttons, cb)
-	local p = gui.create("WIPFMPrompt")
+	local p = gui.create("WIPFMPrompt", tool.get_filmmaker())
 	p:SetTitle(title)
 	p:SetMessage(message)
 	p:AddStandardButtons(buttons)

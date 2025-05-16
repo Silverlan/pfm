@@ -19,7 +19,7 @@ function gui.PFMWindow:OnInitialize()
 	self:SetSize(256, 128)
 
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	bg:SetColor(Color(54, 54, 54))
+	bg:AddStyleClass("background2")
 
 	local mainBox = gui.create("WIVBox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	mainBox:SetFixedSize(true)
@@ -47,6 +47,7 @@ function gui.PFMWindow:OnInitialize()
 	local pFrame = gui.create("WITransformable", parent)
 	pFrame:SetDraggable(true)
 	pFrame:SetResizable(false)
+	pFrame:SetZPos(200000)
 	self:RemoveElementOnRemoval(pFrame)
 
 	self:SetParent(pFrame)
