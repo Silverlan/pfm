@@ -135,9 +135,9 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 	if asset.is_loaded(iconLocation, asset.TYPE_MATERIAL) then
 		local mat = game.load_material(iconLocation)
 		if mat ~= nil then
-			lookAtTarget = mat:GetPropertyByPath("pfm_model_view/look_at_target", udm.TYPE_VECTOR3)
-			rotation = mat:GetPropertyByPath("pfm_model_view/rotation", udm.TYPE_VECTOR3)
-			zoom = mat:GetPropertyByPath("pfm_model_view/zoom", udm.TYPE_FLOAT)
+			lookAtTarget = mat:GetProperty("pfm_model_view/look_at_target", udm.TYPE_VECTOR3)
+			rotation = mat:GetProperty("pfm_model_view/rotation", udm.TYPE_VECTOR3)
+			zoom = mat:GetProperty("pfm_model_view/zoom", udm.TYPE_FLOAT)
 		end
 	end
 
