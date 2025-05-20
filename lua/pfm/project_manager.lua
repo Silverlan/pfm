@@ -193,9 +193,9 @@ function pfm.ProjectManager:SaveProject(fileName, newInternalName)
 	end
 	pfm.log("Saving project as '" .. fileName .. "'...", pfm.LOG_CATEGORY_PFM)
 	local t = time.time_since_epoch()
-	local success = project:Save(fileName, nil)
+	local success, errMsg = project:Save(fileName, nil)
 	if success == false then
-		pfm.log("Failed to save project as '" .. fileName .. "'!", pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
+		pfm.log("Failed to save project as '" .. fileName .. "': " .. tostring(errMsg), pfm.LOG_CATEGORY_PFM, pfm.LOG_SEVERITY_WARNING)
 		return success
 	end
 	if newInternalName ~= nil then

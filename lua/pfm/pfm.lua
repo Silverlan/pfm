@@ -220,9 +220,9 @@ function pfm.Project:Save(fileName, legacy)
 	if saveAsAscii == false then
 		fileMode = bit.bor(fileMode, file.OPEN_MODE_BINARY)
 	end
-	local f = file.open(fileName, fileMode)
+	local f, err = file.open(fileName, fileMode)
 	if f == nil then
-		return false
+		return false, err
 	end
 	local udmData = udm.create("PFMP", 1)
 	udmData:GetAssetData():GetData():SetValue("session", self:GetSession():GetRootUdmData())
@@ -242,7 +242,7 @@ function pfm.Project:Save(fileName, legacy)
 	f:Close()
 	if res == false then
 		console.print_warning("Failed to save PFM project: " .. err)
-		return false
+		return false, err
 	end
 
 	return true
