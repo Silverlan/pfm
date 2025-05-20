@@ -25,7 +25,7 @@ function Component.precache_session_assets(session)
 							"Precaching model '" .. mdlName .. "' for actor '" .. tostring(actor) .. "'...",
 							pfm.LOG_CATEGORY_PFM
 						)
-						if game.precache_model(mdlName) == false then
+						if asset.precache(mdlName, asset.TYPE_MODEL) == false then
 							pfm.log(
 								"Unable to precache model '" .. mdlName .. "'!",
 								pfm.LOG_CATEGORY_PFM,
