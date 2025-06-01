@@ -61,7 +61,7 @@ function Element:OnInitialize()
 	local elBg = gui.create("WI9SliceRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_elBg = elBg
 
-	--elBg:GetColorProperty():Link(self:GetColorProperty())
+	elBg:GetColorProperty():Link(self:GetColorProperty())
 	self:SetType(gui.PFMBaseButton.BUTTON_TYPE_NORMAL)
 end
 function Element:SetText(text)
@@ -129,7 +129,7 @@ function Element:UpdateStyle()
 	else
 		self.m_elBg:AddStyleClass("button")
 	end
-	self:RefreshSkin()
+	self.m_elBg:RefreshSkin()
 end
 function Element:SetPressed(pressed)
 	self.m_pressed = pressed
@@ -217,7 +217,7 @@ function gui.PFMButton:SetActivated(activated)
 		return
 	end
 	self.m_pressed = activated
-	self:SetPressed(activated)
+	self:SetPressed(not activated)
 	self:SetMaterial(activated and self.m_pressedMaterial or self.m_unpressedMaterial)
 end
 function gui.PFMButton:SetPressedMaterial(mat)
