@@ -563,6 +563,7 @@ function Element:AddMessageBox(msg, audioFile)
 	el:SetMouseInputEnabled(true)
 	el:SetZPos(100)
 	el:GetDragArea():SetAutoAlignToParent(true)
+	el:SetCursor(gui.CURSOR_SHAPE_CROSSHAIR)
 	self.m_messageBox = el
 
 	local vbox = gui.create("WIVBox", el)
