@@ -113,6 +113,27 @@ function Component:GetBasePose()
 	return pose
 end
 
+function Component:GetAffectedAxes()
+	local axis = self:GetAxis()
+	if
+		axis == ents.TransformController.AXIS_X
+		or axis == ents.TransformController.AXIS_Y
+		or axis == ents.TransformController.AXIS_Z
+	then
+		return { axis }
+	end
+	if axis == ents.TransformController.AXIS_XY then
+		return { ents.TransformController.AXIS_X, ents.TransformController.AXIS_Y }
+	end
+	if axis == ents.TransformController.AXIS_XZ then
+		return { ents.TransformController.AXIS_X, ents.TransformController.AXIS_Z }
+	end
+	if axis == ents.TransformController.AXIS_YZ then
+		return { ents.TransformController.AXIS_Y, ents.TransformController.AXIS_Z }
+	end
+	return { ents.TransformController.AXIS_X, ents.TransformController.AXIS_Y, ents.TransformController.AXIS_Z }
+end
+
 function Component:GetAxisVector()
 	local axis = self:GetReferenceAxis()
 	local vAxis = Vector()
@@ -185,6 +206,7 @@ function Component:UpdateGizmo(apply)
 
 		local spacing = pfm.get_snap_to_grid_spacing()
 		if spacing ~= 0 then
+			
 			for _, axis in ipairs(self:GetAffectedAxes()) do
 				point:Set(axis, math.snap_to_grid(point:Get(axis), spacing))
 			end
