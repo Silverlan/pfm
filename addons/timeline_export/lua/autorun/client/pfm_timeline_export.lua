@@ -49,7 +49,6 @@ function pfm.util.export_xml_timeline(pm, fileName)
 				filmTrackGroup = trackGroup
 			end
 		end
-		local absRootPath = util.get_program_path()
 		if soundTrackGroup ~= nil then
 			for _, track in ipairs(soundTrackGroup:GetTracks()) do
 				for _, audioClip in ipairs(track:GetAudioClips()) do
@@ -69,7 +68,7 @@ function pfm.util.export_xml_timeline(pm, fileName)
 								local pitch = soundObject:GetPitch()
 								local volume = soundObject:GetVolume()
 								-- TODO: Can we apply pitch and volume somehow?
-								local absSoundPath = absRootPath .. soundPath
+								local absSoundPath = file.find_path_on_disk(soundPath)
 								if absSoundPath ~= nil then
 									exporter:AddAudio(
 										absSoundPath,
