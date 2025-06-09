@@ -17,6 +17,7 @@ function Element:OnInitialize()
 	elTextShadow:SetColor(Color.Black)
 	elTextShadow:SetPos(2, 2)
 	elTextShadow:SetFont("pfm_small")
+	elTextShadow:AddStyleClass("text_shadow")
 
 	local elText = gui.create("WIText", self)
 	elText:SetColor(Color.White)

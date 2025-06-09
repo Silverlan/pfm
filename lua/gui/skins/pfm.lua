@@ -25,6 +25,7 @@ t.text.body = Color(200, 200, 200)
 t.text.tab = Color.White:Copy()
 t.text.title = Color.White:Copy()
 t.text.highlight = Color(30, 144, 255, 255)
+t.text.shadow = Color.Black:Copy()
 
 t.icon = Color.White:Copy()
 
@@ -771,6 +772,11 @@ skin["beta_info"] = {
 skin["text_highlight"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.text.highlight)
+	end,
+}
+skin["text_shadow"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.text.shadow)
 	end,
 }
 ------------- InfoBox -------------
