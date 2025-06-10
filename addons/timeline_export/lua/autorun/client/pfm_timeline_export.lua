@@ -121,9 +121,12 @@ function pfm.util.export_xml_timeline(pm, fileName)
 							local path = renderRootPath .. frameToFile[i]
 							local absPath = file.find_absolute_path(path)
 							if absPath ~= nil then
-								validFrame = true
-								sequenceStart = sequenceStart or i
-								table.insert(sequencePaths, absRootPath .. absPath)
+								local diskPath = file.find_path_on_disk(absPath)
+								if(diskPath ~= nil) then
+									validFrame = true
+									sequenceStart = sequenceStart or i
+									table.insert(sequencePaths, diskPath)
+								end
 							end
 						end
 						if validFrame == false then
