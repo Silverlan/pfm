@@ -26,6 +26,14 @@ function ButtonGroup:AddGenericButton(text, onPressed)
 	return bt
 end
 function ButtonGroup:AddButton(bt)
+	local newButtons = {}
+	for _,bt in ipairs(self.m_buttons) do
+		if(bt:IsValid()) then
+			table.insert(newButtons, bt)
+		end
+	end
+	self.m_buttons = newButtons
+
 	if #self.m_buttons == 0 then
 		bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_NORMAL or gui.PFMButton.BUTTON_TYPE_TAB)
 	else
