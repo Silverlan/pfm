@@ -515,6 +515,11 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 							local result, err = util.export_source_engine_models(models, sourceGame)
 							if result == false then
 								console.print_warning("Unable to export asset: ", err)
+								pfm.create_popup_message(
+									locale.get_text("pfm_popup_failed_to_export", { err }),
+									nil,
+									gui.InfoBox.TYPE_ERROR
+								)
 							end
 						end)
 						:SetName("source_mdl")

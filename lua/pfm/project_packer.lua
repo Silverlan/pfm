@@ -287,7 +287,7 @@ function pfm.ProjectPacker:Pack(fileName)
 		end
 		local tFilesNotFound = worker:GetResult()
 		if #tFilesNotFound > 0 then
-			console.print_warning("Failed to pack " .. #tFilesNotFound .. " to zip-archive:")
+			console.print_warning("Failed to pack " .. #tFilesNotFound .. " files to zip-archive:")
 			console.print_table(tFilesNotFound)
 		end
 		util.open_path_in_explorer(util.get_addon_path(), fileName)
