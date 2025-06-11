@@ -30,7 +30,7 @@ function PragmaInfo:ApplyUIRenderSettingsPreset(elSettings, renderSettings, pres
 	end
 end
 function PragmaInfo:InitializeUIRenderSettingControls(elParentSettings, renderSettings)
-	local elSettings = elParentSettings:AddSubMenu()
+	local elSettings, collapsible = elParentSettings:AddCollapsibleSubMenu(locale.get_text("pfm_renderer_pragma"), "pragma")
 	local ctrl, wrapper = elSettings:AddDropDownMenu(
 		pfm.LocStr("pfm_supersampling_factor"),
 		"super_sampling_factor",
@@ -72,5 +72,5 @@ function PragmaInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 		elSettings:AddToggleControl(pfm.LocStr("pfm_render_settings_tiled_rendering"), "tiled_rendering", false)
 	elSettings.m_ctrlEnableTiledRendering = ctrl
 
-	return elSettings
+	return elSettings, collapsible
 end

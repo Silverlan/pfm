@@ -41,7 +41,7 @@ function CyclesInfo:ApplyUIRenderSettingsPreset(elSettings, renderSettings, pres
 	end
 end
 function CyclesInfo:InitializeUIRenderSettingControls(elParentSettings, renderSettings)
-	local elSettings = elParentSettings:AddCollapsibleSubMenu(locale.get_text("pfm_render_engine_cycles"), "cycles")
+	local elSettings, collapsible = elParentSettings:AddCollapsibleSubMenu(locale.get_text("pfm_render_engine_cycles"), "cycles")
 	-- Device Type
 	local ctrl, wrapper = elSettings:AddDropDownMenu(pfm.LocStr("pfm_cycles_device_type"), "device_type", {
 		{
@@ -162,5 +162,5 @@ function CyclesInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 
 	elSettings:LinkToUDMProperty("progressive", renderSettings, "progressive")
 	elSettings:LinkToUDMProperty("progressive_refine", renderSettings, "progressiveRefinementEnabled")
-	return elSettings
+	return elSettings, collapsible
 end

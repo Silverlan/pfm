@@ -440,7 +440,7 @@ function gui.PFMControlsMenu:AddCollapsibleSubMenu(title, identifier)
 	collapsible:Expand()
 	local elSubMenu = self:AddSubMenu(identifier, collapsible:GetContents())
 	elSubMenu:SetAutoAlignToParent(true, false)
-	return elSubMenu
+	return elSubMenu, collapsible
 end
 function gui.PFMControlsMenu:AddSubMenu(identifier, parent)
 	parent = parent or self

@@ -441,7 +441,7 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 	self.m_ctrlPreset = ctrl
 	wrapper:SetTooltip(locale.get_text("pfm_render_setting_preset"))
 
-	local rendererSettingsEl
+	local rendererSettingsEl, renderSettingsCollapsible
 	-- Render Engine
 	local rendererOptions = {}
 	for _, rendererInfo in ipairs(pfm.get_renderers()) do
@@ -457,12 +457,13 @@ function gui.PFMRenderPreview:InitializeSettings(parent)
 		rendererOptions,
 		"cycles",
 		function()
-			util.remove(rendererSettingsEl)
+			util.remove(renderSettingsCollapsible)
 			local rendererInfo = self:GetRendererInfo()
 			if rendererInfo ~= nil then
-				rendererSettingsEl = rendererInfo:InitializeUIRenderSettingControls(p, settings)
+				rendererSettingsEl, renderSettingsCollapsible = rendererInfo:InitializeUIRenderSettingControls(p, settings)
 				if util.is_valid(rendererSettingsEl) then
 					rendererSettingsEl:ResetControls()
+					rendererSettingsEl:SetWidth(renderSettingsCollapsible:GetWidth())
 					self.m_rendererSettingsElement = rendererSettingsEl
 				end
 				self.m_btPrepare:SetEnabled(rendererInfo:HasCapability("renderJobs"))
