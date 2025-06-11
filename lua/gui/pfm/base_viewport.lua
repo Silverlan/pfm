@@ -40,7 +40,12 @@ function gui.PFMBaseViewport:OnInitialize()
 	if self.m_settingsEnabled ~= false then
 		gui.create("WIResizer", self.m_contents):SetFraction(0.85)
 
-		self:InitializeSettings(self.m_contents)
+		local scrollContainer = gui.create("WIScrollContainer", self.m_contents, 0, 0, self.m_contents:GetWidth(), self.m_contents:GetHeight())
+		scrollContainer:SetContentsWidthFixed(true)
+		scrollContainer:GetVerticalScrollBar():SetScrollAmount(1)
+		self.m_scrollContainer = scrollContainer
+
+		self:InitializeSettings(self.m_scrollContainer)
 	end
 	self:InitializeControls()
 end
@@ -51,8 +56,8 @@ function gui.PFMBaseViewport:InitializeViewport(parent) end
 function gui.PFMBaseViewport:InitializeSettings(parent)
 	local p = gui.create("WIPFMControlsMenu", parent)
 	p:SetName("controls_menu")
-	p:SetAutoFillContentsToWidth(true)
-	p:SetAutoFillContentsToHeight(false)
+	p:SetAutoAlignToParent(true, false)
+	p:SetAutoSizeToContents(false, true)
 	self.m_settingsBox = p
 end
 function gui.PFMBaseViewport:InitializeControls() end

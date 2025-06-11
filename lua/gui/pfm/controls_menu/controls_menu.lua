@@ -143,7 +143,7 @@ function gui.PFMControlsMenu:SetControlVisible(identifier, visible)
 	if elData == nil then
 		return
 	end
-	local el = (elData.wrapper ~= nil) and elData.wrapper or elData.element
+	local el = elData.container or elData.wrapper or elData.element
 	if util.is_valid(el) == false then
 		return
 	end

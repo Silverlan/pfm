@@ -159,7 +159,8 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 	end)
 end
 function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
-	local toneMapping, wrapper = p:AddDropDownMenu("tonemapping", "tonemapping", {
+	local pTm = p:AddCollapsibleSubMenu(locale.get_text("tone_mapping"), "tm")
+	local toneMapping, wrapper, container = pTm:AddDropDownMenu("tonemapping", "tonemapping", {
 		-- {"-1",toneMapping:AddOption(locale.get_text("pfm_cycles_tone_mapping_none_hdr")},
 		{ tostring(shader.TONE_MAPPING_NONE), locale.get_text("none") },
 		{ tostring(shader.TONE_MAPPING_GAMMA_CORRECTION), locale.get_text("gamma_correction") },
@@ -179,26 +180,26 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
 		{ tostring(shader.PFMTonemapping.TONE_MAPPING_FILMLIC2), "Filmic 2" },
 		{ tostring(shader.PFMTonemapping.TONE_MAPPING_INSOMNIAC), "Insomniac" },
 	}, 0)
-	toneMapping:SetVisible(false)
+	container:SetVisible(false)
 	wrapper:SetTooltip(locale.get_text("pfm_cycles_tone_mapping_desc"))
 	toneMapping:AddCallback("OnOptionSelected", function(el, option)
-		self.m_ctrlExposure:SetVisible(false)
-		self.m_ctrlLdMax:SetVisible(false)
-		self.m_ctrlCMax:SetVisible(false)
-		self.m_ctrlCurveParam:SetVisible(false)
-		self.m_ctrlGammaSlope:SetVisible(false)
-		self.m_ctrlGammaStart:SetVisible(false)
-		self.m_ctrlBias:SetVisible(false)
-		self.m_ctrlCompressionCurveParam:SetVisible(false)
-		self.m_ctrlIntensityAdjustmentParam:SetVisible(false)
-		self.m_ctrlChromaticAdapation:SetVisible(false)
-		self.m_ctrlLightAdaptation:SetVisible(false)
-		self.m_ctrlCutoff:SetVisible(false)
-		self.m_ctrlWhitePoint:SetVisible(false)
-		self.m_ctrlBlackPoint:SetVisible(false)
-		self.m_ctrlToeStrength:SetVisible(false)
-		self.m_ctrlShoulderStrength:SetVisible(false)
-		self.m_ctrlCrossOverPoint:SetVisible(false)
+		pTm:SetControlVisible("exposure", false)
+		pTm:SetControlVisible("tm_ldmax", false)
+		pTm:SetControlVisible("tm_cmax", false)
+		pTm:SetControlVisible("tm_curve_param", false)
+		pTm:SetControlVisible("tm_gamma_slope", false)
+		pTm:SetControlVisible("tm_gamma_start", false)
+		pTm:SetControlVisible("tm_bias", false)
+		pTm:SetControlVisible("tm_compression_curve_adjustment_param", false)
+		pTm:SetControlVisible("tm_intensity_adjustment_param_desc", false)
+		pTm:SetControlVisible("tm_chromatic_adaptation", false)
+		pTm:SetControlVisible("tm_light_adaptation", false)
+		pTm:SetControlVisible("tm_cutoff", false)
+		pTm:SetControlVisible("tm_white_point", false)
+		pTm:SetControlVisible("tm_black_point", false)
+		pTm:SetControlVisible("tm_toe_strength", false)
+		pTm:SetControlVisible("tm_shoulder_strength", false)
+		pTm:SetControlVisible("tm_cross_over_point", false)
 
 		option = tonumber(toneMapping:GetOptionValue(option))
 		self:ApplyToneMappingSettings(option)
@@ -207,52 +208,52 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
 			return
 		end
 
-		self.m_ctrlExposure:SetVisible(true)
+		pTm:SetControlVisible("exposure", true)
 		if option == shader.PFMTonemapping.TONE_MAPPING_WARD then
-			self.m_ctrlLdMax:SetVisible(true)
+			pTm:SetControlVisible("tm_ldmax", true)
 
 			self.m_ctrlLdMax:SetRange(0, 200)
 			self.m_ctrlLdMax:SetDefault(100)
 		elseif option == shader.PFMTonemapping.TONE_MAPPING_FERWERDA then
-			self.m_ctrlLdMax:SetVisible(true)
+			pTm:SetControlVisible("tm_ldmax", true)
 
 			self.m_ctrlLdMax:SetRange(0, 160)
 			self.m_ctrlLdMax:SetDefault(80)
 		elseif option == shader.PFMTonemapping.TONE_MAPPING_SCHLICK then
-			self.m_ctrlCurveParam:SetVisible(true)
+			pTm:SetControlVisible("tm_curve_param", true)
 		elseif option == shader.PFMTonemapping.TONE_MAPPING_TUMBLIN_RUSHMEIER then
-			self.m_ctrlLdMax:SetVisible(true)
-			self.m_ctrlCMax:SetVisible(true)
+			pTm:SetControlVisible("tm_ldmax", true)
+			pTm:SetControlVisible("tm_cmax", true)
 
 			self.m_ctrlLdMax:SetRange(1, 200)
 			self.m_ctrlLdMax:SetDefault(86)
 		elseif option == shader.PFMTonemapping.TONE_MAPPING_DRAGO then
-			self.m_ctrlLdMax:SetVisible(true)
+			pTm:SetControlVisible("tm_ldmax", true)
 
 			self.m_ctrlLdMax:SetRange(0, 200)
 			self.m_ctrlLdMax:SetDefault(100)
 
-			self.m_ctrlGammaSlope:SetVisible(true)
-			self.m_ctrlGammaStart:SetVisible(true)
-			self.m_ctrlBias:SetVisible(true)
+			pTm:SetControlVisible("tm_gamma_slope", true)
+			pTm:SetControlVisible("tm_gamma_start", true)
+			pTm:SetControlVisible("tm_bias", true)
 		elseif option == shader.PFMTonemapping.TONE_MAPPING_REINHARD_DEVLIN then
-			self.m_ctrlCompressionCurveParam:SetVisible(true)
-			self.m_ctrlIntensityAdjustmentParam:SetVisible(true)
-			self.m_ctrlChromaticAdapation:SetVisible(true)
-			self.m_ctrlLightAdaptation:SetVisible(true)
+			pTm:SetControlVisible("tm_compression_curve_adjustment_param", true)
+			pTm:SetControlVisible("tm_intensity_adjustment_param_desc", true)
+			pTm:SetControlVisible("tm_chromatic_adaptation", true)
+			pTm:SetControlVisible("tm_light_adaptation", true)
 		elseif option == shader.PFMTonemapping.TONE_MAPPING_FILMLIC1 then
 		elseif option == shader.PFMTonemapping.TONE_MAPPING_FILMLIC2 then
-			self.m_ctrlCutoff:SetVisible(true)
+			pTm:SetControlVisible("tm_cutoff", true)
 		elseif option == shader.PFMTonemapping.TONE_MAPPING_INSOMNIAC then
-			self.m_ctrlWhitePoint:SetVisible(true)
-			self.m_ctrlBlackPoint:SetVisible(true)
-			self.m_ctrlToeStrength:SetVisible(true)
-			self.m_ctrlShoulderStrength:SetVisible(true)
-			self.m_ctrlCrossOverPoint:SetVisible(true)
+			pTm:SetControlVisible("tm_white_point", true)
+			pTm:SetControlVisible("tm_black_point", true)
+			pTm:SetControlVisible("tm_toe_strength", true)
+			pTm:SetControlVisible("tm_shoulder_strength", true)
+			pTm:SetControlVisible("tm_cross_over_point", true)
 		end
 	end)
 	if tool.get_filmmaker():IsDeveloperModeEnabled() == false then
-		p:SetControlVisible("tonemapping", false)
+		pTm:SetControlVisible("tonemapping", false)
 	end -- Tonemapping currently disabled, since Cycles now handles tonemapping internally. This may be re-enabled in the future to allow a wider variety of tonemapping algorithms to be used.
 	self.m_ctrlToneMapping = toneMapping
 
@@ -260,7 +261,7 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
 	local fApplyToneMappingSettings = function()
 		self:ApplyToneMappingSettings(self.m_rt:GetToneMapping())
 	end
-	self.m_ctrlExposure = p:AddSliderControl(
+	self.m_ctrlExposure = pTm:AddSliderControl(
 		pfm.LocStr("pfm_exposure"),
 		"exposure",
 		settings:GetExposure(),
@@ -269,36 +270,36 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
 		fApplyToneMappingSettings
 	)
 	self.m_ctrlExposure:SetTooltip(locale.get_text("pfm_render_setting_exposure"))
-	p:LinkToUDMProperty("exposure", settings, "exposure")
+	pTm:LinkToUDMProperty("exposure", settings, "exposure")
 
 	-- Max luminance capability of the display
 	self.m_ctrlLdMax =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_ldmax"), nil, 100, 0, 200, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_ldmax"), "tm_ldmax", 100, 0, 200, fApplyToneMappingSettings)
 
 	-- Maximum contrast ratio between on-screen luminances
 	self.m_ctrlCMax =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_cmax"), nil, 50, 1, 500, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_cmax"), "tm_cmax", 50, 1, 500, fApplyToneMappingSettings)
 
 	-- Rational mapping curve parameter
 	self.m_ctrlCurveParam =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_curve_param"), nil, 200, 1, 1000, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_curve_param"), "tm_curve_param", 200, 1, 1000, fApplyToneMappingSettings)
 
 	-- Gamma slope
 	self.m_ctrlGammaSlope =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_gamma_slope"), nil, 4.5, 0, 10, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_gamma_slope"), "tm_gamma_slope", 4.5, 0, 10, fApplyToneMappingSettings)
 
 	-- Gamma start
 	self.m_ctrlGammaStart =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_gamma_start"), nil, 0.018, 0, 2, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_gamma_start"), "tm_gamma_start", 0.018, 0, 2, fApplyToneMappingSettings)
 
 	-- Bias
 	self.m_ctrlBias =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_bias"), nil, 0.85, 0, 1, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_bias"), "tm_bias", 0.85, 0, 1, fApplyToneMappingSettings)
 
 	-- Compression curve adjustment parameter
-	self.m_ctrlCompressionCurveParam = p:AddSliderControl(
+	self.m_ctrlCompressionCurveParam = pTm:AddSliderControl(
 		pfm.LocStr("pfm_tone_mapping_compression_curve_adjustment_param"),
-		nil,
+		"tm_compression_curve_adjustment_param",
 		0.5,
 		0,
 		1,
@@ -306,9 +307,9 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
 	)
 
 	-- Compression curve adjustment parameter
-	self.m_ctrlIntensityAdjustmentParam = p:AddSliderControl(
+	self.m_ctrlIntensityAdjustmentParam = pTm:AddSliderControl(
 		pfm.LocStr("pfm_tone_mapping_intensity_adjustment_param_desc"),
-		nil,
+		"tm_intensity_adjustment_param_desc",
 		1,
 		0,
 		1000,
@@ -317,35 +318,35 @@ function gui.PFMRenderPreview:InitializeToneMapControls(p, settings)
 
 	-- Chromatic adaptation
 	self.m_ctrlChromaticAdapation =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_chromatic_adaptation"), nil, 0, 0, 1, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_chromatic_adaptation"), "tm_chromatic_adaptation", 0, 0, 1, fApplyToneMappingSettings)
 
 	-- Light adaptation
 	self.m_ctrlLightAdaptation =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_light_adaptation"), nil, 1, 0, 1, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_light_adaptation"), "tm_light_adaptation", 1, 0, 1, fApplyToneMappingSettings)
 
 	-- Cutoff
 	self.m_ctrlCutoff =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_cutoff"), nil, 0.025, 0, 0.5, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_cutoff"), "tm_cutoff", 0.025, 0, 0.5, fApplyToneMappingSettings)
 
 	-- White point
 	self.m_ctrlWhitePoint =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_white_point"), nil, 10, 0, 20, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_white_point"), "tm_white_point", 10, 0, 20, fApplyToneMappingSettings)
 
 	-- Black point
 	self.m_ctrlBlackPoint =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_black_point"), nil, 0.1, 0, 2, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_black_point"), "tm_black_point", 0.1, 0, 2, fApplyToneMappingSettings)
 
 	-- Toe strength
 	self.m_ctrlToeStrength =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_toe_strength"), nil, 0.7, 0, 1, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_toe_strength"), "tm_toe_strength", 0.7, 0, 1, fApplyToneMappingSettings)
 
 	-- Shoulder strength
 	self.m_ctrlShoulderStrength =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_shoulder_strength"), nil, 0.8, 0, 1, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_shoulder_strength"), "tm_shoulder_strength", 0.8, 0, 1, fApplyToneMappingSettings)
 
 	-- Cross-over point
 	self.m_ctrlCrossOverPoint =
-		p:AddSliderControl(pfm.LocStr("pfm_tone_mapping_cross_over_point"), nil, 2, 0, 10, fApplyToneMappingSettings)
+		pTm:AddSliderControl(pfm.LocStr("pfm_tone_mapping_cross_over_point"), "tm_cross_over_point", 2, 0, 10, fApplyToneMappingSettings)
 
 	toneMapping:SelectOption(4)
 end

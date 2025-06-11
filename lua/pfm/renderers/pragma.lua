@@ -51,7 +51,7 @@ function PragmaInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 	wrapper:SetTooltip(locale.get_text("pfm_render_setting_supersampling_factor"))
 	elSettings:LinkToUDMProperty("super_sampling_factor", renderSettings, "supersamplingFactor")
 
-	local elText, wrapper = elSettings:AddTextEntry(
+	local elText, wrapper, container = elSettings:AddTextEntry(
 		pfm.LocStr("pfm_tile_size_pragma"),
 		"tile_size",
 		tostring(renderSettings:GetTileSize()),
@@ -65,7 +65,7 @@ function PragmaInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 	--elSettings.m_ctrlRenderFramerate = elSettings:AddSliderControl(locale.get_text("pfm_render_framerate"),"render_framerate",renderSettings:GetRenderFramerate(),1,200,nil,1.0,true)
 	--elSettings:LinkToUDMProperty("render_framerate",renderSettings,"render_framerate")
 	if not tool.get_filmmaker():IsDeveloperModeEnabled() then
-		wrapper:SetVisible(false)
+		container:SetVisible(false)
 	end
 
 	ctrl, wrapper =
