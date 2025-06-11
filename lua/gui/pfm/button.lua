@@ -225,7 +225,7 @@ function gui.PFMButton:SetActivated(activated)
 		return
 	end
 	self.m_pressed = activated
-	self:SetPressed(not activated)
+	self:SetPressed(activated)
 	self:SetMaterial(activated and self.m_pressedMaterial or self.m_unpressedMaterial)
 end
 function gui.PFMButton:SetPressedMaterial(mat)
