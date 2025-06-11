@@ -55,8 +55,8 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 			if util.is_valid(self.m_ctrlViewportMode) then
 				self.m_ctrlViewportMode:SelectOption("auto")
 			end
-			if util.is_valid(self.m_ctrlViewportWrapper) then
-				self.m_ctrlViewportWrapper:SetVisible(false)
+			if util.is_valid(self.m_ctrlViewportContainer) then
+				self.m_ctrlViewportContainer:SetVisible(false)
 			end
 			self.m_refreshRtView:SetVisible(false)
 		else
@@ -66,8 +66,8 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 			if util.is_valid(renderTab) then
 				val = renderTab:GetRenderSettings():GetRenderEngine()
 			end
-			if util.is_valid(self.m_ctrlViewportWrapper) then
-				self.m_ctrlViewportWrapper:SetVisible(true)
+			if util.is_valid(self.m_ctrlViewportContainer) then
+				self.m_ctrlViewportContainer:SetVisible(true)
 			end
 			self.m_refreshRtView:SetVisible(true)
 		end
@@ -79,11 +79,11 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 		{ "realtime", "Realtime" },
 		{ "render", "Render" },
 	}
-	local ctrlViewportMode, wrapper
-	ctrlViewportMode, wrapper =
+	local ctrlViewportMode, wrapper, container
+	ctrlViewportMode, wrapper, container =
 		p:AddDropDownMenu(locale.get_text("pfm_viewport_mode"), "viewport_mode", options, "auto")
 	self.m_ctrlViewportMode = ctrlViewportMode
-	self.m_ctrlViewportWrapper = wrapper
+	self.m_ctrlViewportContainer = container
 	self.m_ctrlViewportMode:AddCallback("OnOptionSelected", function(el, idx)
 		local vpMode = self.m_ctrlViewportMode:GetOptionValue(self.m_ctrlViewportMode:GetSelectedOption())
 		if util.is_valid(self.m_rtViewport) == false then
@@ -108,7 +108,7 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 			pfm.get_project_manager():SetOverlaySceneEnabled(true)
 		end
 	end)
-	self.m_ctrlViewportWrapper:SetVisible(false)
+	self.m_ctrlViewportContainer:SetVisible(false)
 
 	self.m_ctrlToneMapping = p:AddDropDownMenu(locale.get_text("pfm_viewport_tonemapping"), "tonemapping", {
 		{ "gamma_correction", locale.get_text("gamma_correction") },
