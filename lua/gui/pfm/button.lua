@@ -197,11 +197,11 @@ function gui.PFMButton:OnInitialize()
 	self.m_pressed = false
 	self.m_enabled = true
 end
-function gui.PFMButton:SetEnabledColor(col)
-	self.m_enabledColor = col
+function gui.PFMButton:SetEnabledStyleClass(styleClass)
+	self.m_enabledStyleClass = styleClass
 end
-function gui.PFMButton:SetDisabledColor(col)
-	self.m_disabledColor = col
+function gui.PFMButton:SetDisabledStyleClass(styleClass)
+	self.m_disabledStyleClass = styleClass
 end
 function gui.PFMButton:SetEnabled(enabled)
 	if enabled == self:IsEnabled() then
@@ -211,8 +211,18 @@ function gui.PFMButton:SetEnabled(enabled)
 		self:SetActivated(false)
 	end
 	self.m_enabled = enabled
-	local color = enabled and (self.m_enabledColor or Color.White) or (self.m_disabledColor or Color(128, 128, 128))
-	self:SetColor(color)
+	if(enabled)  then
+		if(self.m_enabledStyleClass ~= nil) then
+			self.m_elBg:AddStyleClass(self.m_enabledStyleClass)
+		end
+		self.m_elBg:RemoveStyleClass(self.m_disabledStyleClass or "button_disabled")
+	else
+		if(self.m_enabledStyleClass ~= nil) then
+			self.m_elBg:RemoveStyleClass(self.m_enabledStyleClass)
+		end
+		self.m_elBg:AddStyleClass(self.m_disabledStyleClass or "button_disabled")
+	end
+	self.m_elBg:RefreshSkin()
 end
 function gui.PFMButton:IsEnabled()
 	return self.m_enabled

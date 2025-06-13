@@ -16,6 +16,7 @@ t.button.background = Color(90, 90, 90)
 t.button.background_unpressed = Color.White:Copy()
 t.button.background_pressed = Color(150, 150, 150)
 t.button.icon = Color(147, 147, 147)
+t.button.disabled = Color(128, 128, 128)
 
 t.slider = {}
 t.slider.color = Color.RoyalBlue
@@ -51,6 +52,11 @@ t.actor_editor.property = Color(230, 230, 230)
 
 t.misc = {}
 t.misc.beta_info = Color.Red
+
+t.tutorial = {}
+t.tutorial.button = {}
+t.tutorial.button.enabled = Color.Lime:Copy()
+t.tutorial.button.disabled = Color.Red:Copy()
 
 t.shaderGraph = {
 	NODE_BACKGROUND_COLOR_SELECTED = Color(124, 20, 222),
@@ -703,6 +709,11 @@ skin["button_icon"] = {
 		pElement:SetColor(GUI.button.icon)
 	end,
 }
+skin["button_disabled"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.button.disabled)
+	end,
+}
 skin["timeline_background"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.timeline.background)
@@ -795,4 +806,16 @@ skin["infobox"] = {
 	},
 }
 -----------------------------------
+--- Tutorial
+skin["tutorial_button_enabled"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.tutorial.button.enabled)
+	end,
+}
+skin["tutorial_button_disabled"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.tutorial.button.disabled)
+	end,
+}
+---
 gui.register_skin("pfm", t, skin, "default")
