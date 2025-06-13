@@ -141,11 +141,15 @@ function Element:DetermineHighlightItemParent(els)
 		if el:IsValid() then
 			local sharesParent = false
 			local p = el:GetParent()
+			local lastZPos
 			while p ~= nil do
-				if util.is_same_object(p, root) then
+				-- Make sure the z-pos doesn't make the element draw over the tutorial, or we revert to
+				-- drawing the outline on top of everything
+				if util.is_same_object(p, root) and (lastZPos == nil or lastZPos < self.m_tutorial:GetZPos()) then
 					sharesParent = true
 					break
 				end
+				lastZPos = p:GetZPos()
 				p = p:GetParent()
 			end
 			if sharesParent == false then
