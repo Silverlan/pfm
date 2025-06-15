@@ -256,7 +256,6 @@ pfm.RaytracingRenderJob.generate_job_batch_script = function(jobFiles)
 	end
 	local f = file.open(path .. shellFileName, bit.bor(file.OPEN_MODE_BINARY, file.OPEN_MODE_WRITE))
 	if f ~= nil then
-		local workingPath = engine.get_working_directory()
 		local files = {}
 		for _, f in ipairs(jobFiles) do
 			table.insert(files, file.get_file_name(f))
@@ -264,10 +263,18 @@ pfm.RaytracingRenderJob.generate_job_batch_script = function(jobFiles)
 		local jobListPath = path .. "job_list.txt"
 		file.write(jobListPath, string.join(files, "\n"))
 
-		local absJobListPath = file.find_absolute_path(jobListPath) or jobListPath
-
-		local cmd = '"' .. workingPath .. toolName .. '" -job="' .. workingPath .. absJobListPath .. '"'
-		f:WriteString(cmd)
+		local absToolPath = file.find_path_on_disk(toolName)
+		local absJobListPath = file.find_path_on_disk(jobListPath)
+		if(absToolPath == nil) then console.print_error("Failed to determine absolute path to '" .. toolName .. "'!")
+		elseif(absJobListPath == nil) then console.print_error("Failed to determine absolute path to '" .. jobListPath .. "'!")
+		else
+			local cmd = '"' .. absToolPath .. '" -job="' .. absJobListPath .. '"'
+			cmd = cmd .. " -user_data_dir=\"" .. engine.get_user_data_dir():GetString() .. "\""
+			for _,resDir in ipairs(engine.get_resource_dirs()) do
+				cmd = cmd .. " -resource_dir=\"" .. resDir:GetString() .. "\""
+			end
+			f:WriteString(cmd)
+		end
 		f:Close()
 
 		util.open_path_in_explorer(path, shellFileName)
