@@ -163,9 +163,11 @@ function gui.PFMCoreViewportBase:SetGameplayMode(enabled)
 		if self:IsGameplayEnabled() == false then
 			self:SetCameraMode(gui.PFMCoreViewportBase.CAMERA_MODE_FLY)
 		end
-		input.center_cursor()
 
 		local window = self:GetRootWindow()
+		window:SetCursorInputMode(gui.CURSOR_MODE_DISABLED)
+		window:SetCursorShape(gui.CURSOR_SHAPE_HIDDEN)
+		input.center_cursor()
 		gui.set_focus_enabled(window, false)
 
 		-- filmmaker:TrapFocus(false)
@@ -240,6 +242,8 @@ function gui.PFMCoreViewportBase:SetGameplayMode(enabled)
 		end
 
 		local window = self:GetRootWindow()
+		window:SetCursorInputMode(gui.CURSOR_MODE_NORMAL)
+		window:SetCursorShape(gui.CURSOR_SHAPE_DEFAULT)
 		gui.set_focus_enabled(window, true)
 
 		local filmmaker = pfm.get_project_manager()
