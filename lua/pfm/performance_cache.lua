@@ -1,10 +1,5 @@
---[[
-    Copyright (C) 2021 Silverlan
-
-    This Source Code Form is subject to the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with this
-    file, You can obtain one at http://mozilla.org/MPL/2.0/.
-]]
+-- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
 
 -- Note: Actor animations are currently cached through a separate system, however cameras don't have animation support yet, so we have to handle them
 -- separately for now, which we'll do here. Once camera animations are supported, this class can be removed.

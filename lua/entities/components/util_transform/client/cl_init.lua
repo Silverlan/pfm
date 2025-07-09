@@ -1,3 +1,6 @@
+-- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
+
 include("../shared.lua")
 include_component("util_transform_arrow")
 include_component("transform_controller")

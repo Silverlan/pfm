@@ -1,3 +1,6 @@
+-- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
+
 util.register_class("shader.PFMSelection", shader.BaseTexturedLit3D)
 
 shader.PFMSelection.FragmentShader = "programs/pfm/selection/selection"

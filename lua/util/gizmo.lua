@@ -1,3 +1,5 @@
+-- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
 -- Implementation based on https://github.com/ddiakopoulos/tinygizmo
 
 local Gizmo = util.register_class("util.Gizmo")

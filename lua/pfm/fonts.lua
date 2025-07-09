@@ -1,10 +1,5 @@
---[[
-    Copyright (C) 2021 Silverlan
-
-    This Source Code Form is subject to the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with this
-    file, You can obtain one at http://mozilla.org/MPL/2.0/.
-]]
+-- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
 
 local fontSet = engine.get_default_font_set_name()
 local fontFeatures = bit.bor(engine.FONT_FEATURE_FLAG_SANS_BIT, engine.FONT_FEATURE_FLAG_MONO_BIT)

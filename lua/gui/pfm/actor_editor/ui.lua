@@ -1,10 +1,5 @@
---[[
-    Copyright (C) 2023 Silverlan
-
-    This Source Code Form is subject to the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with this
-    file, You can obtain one at http://mozilla.org/MPL/2.0/.
-]]
+-- SPDX-FileCopyrightText: (c) 2023 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
 
 function gui.PFMActorEditor:InitializeNavigationBar()
 	--[[self.m_btHome = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_home","gui/pfm/icon_nav_home_activated",function()

@@ -1,4 +1,6 @@
--- This script will instantiate and start the specified project in the game world
+-- SPDX-FileCopyrightText: (c) 2023 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
+
 local projectFileName = "projects/test_project.pfmp_b" -- Replace this with your PFM project
 
 local ent = ents.create("pfm_project_manager")

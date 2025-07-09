@@ -1,3 +1,6 @@
+-- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
+
 include("../base_editor.lua")
 include("/pfm/project_manager.lua")
 include("/util/retarget.lua")

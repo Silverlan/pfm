@@ -1,3 +1,6 @@
+-- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
+
 util.register_class("shader.PFMGizmo", shader.BaseTexturedLit3D)
 
 shader.PFMGizmo.FragmentShader = "programs/pfm/gizmo"

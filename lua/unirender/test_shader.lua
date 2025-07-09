@@ -1,3 +1,5 @@
+-- SPDX-FileCopyrightText: (c) 2021 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
 
 function EmissionBSDF:Initialize()
 	self.inColor = self:AddInputSocket("color",Color.White)
