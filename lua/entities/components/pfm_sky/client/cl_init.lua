@@ -47,7 +47,7 @@ function Component:ApplySceneSkySettings(scene)
 	scene:SetSkyStrength(self:GetStrength())
 	local tex = self:GetSkyTexture()
 	if #tex > 0 then
-		scene:SetSky(tex)
+		scene:SetSky(util.FilePath("materials", tex):GetString())
 	end
 	scene:SetSkyTransparent(self:GetTransparent())
 	-- settings:SetSkyYaw(self.m_ctrlSkyYaw:GetValue())

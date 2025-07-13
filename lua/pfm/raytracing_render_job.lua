@@ -549,7 +549,7 @@ function pfm.RaytracingRenderJob:RenderCurrentFrame()
 		clCam:SetEquirectangularHorizontalRange(renderSettings:GetPanoramaHorizontalRange())
 		clCam:SetStereoscopic(renderSettings:IsStereoscopic())
 		if #renderSettings:GetSky() > 0 then
-			scene:SetSky(renderSettings:GetSky())
+			scene:SetSky(util.FilePath("materials", renderSettings:GetSky()):GetString())
 		end
 
 		unirenderC:InvokeEventCallbacks(ents.UnirenderComponent.EVENT_INITIALIZE_SCENE, { scene, renderSettings })
