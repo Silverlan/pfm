@@ -253,7 +253,9 @@ pfm.RaytracingRenderJob.generate_job_batch_script = function(jobFiles)
 	if f ~= nil then
 		local files = {}
 		for _, f in ipairs(jobFiles) do
-			table.insert(files, file.get_file_name(f))
+            f = file.get_file_name(f)
+            f = file.remove_file_extension(f, {unirender.PRT_EXTENSION_BINARY, unirender.PRT_EXTENSION_ASCII})
+			table.insert(files, f)
 		end
 		local jobListPath = path .. "job_list.txt"
 		file.write(jobListPath, string.join(files, "\n"))

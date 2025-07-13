@@ -111,20 +111,16 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 			file.create_path(path)
 		end
 		outputPath = util.Path.CreateFilePath(outputPath)
-		local f = file.open(outputPath:GetString() .. ".prt", bit.bor(file.OPEN_MODE_WRITE, file.OPEN_MODE_BINARY))
-		if f == nil then
-			return
-		end
-		local ds = util.DataStream()
+
+		local udmData, err = udm.create(unirender.PRT_IDENTIFIER, unirender.PRT_VERSION)
 		local serializationData = unirender.Scene.SerializationData()
 		serializationData.outputFileName = outputPath:GetString()
-		scene:Save(ds, outputPath:GetPath(), serializationData)
-		ds:Seek(0)
-		f:Write(ds)
-		f:Close()
+		scene:Save(udmData:GetAssetData(), outputPath:GetPath(), serializationData)
+		local res, err = udmData:Save(outputPath:GetString() .. "." .. unirender.PRT_EXTENSION_BINARY)
+		if(res == false) then return end
 
 		self.m_sceneFiles = self.m_sceneFiles or {}
-		table.insert(self.m_sceneFiles, outputPath:GetString() .. ".prt")
+		table.insert(self.m_sceneFiles, outputPath:GetString() .. "." .. unirender.PRT_EXTENSION_BINARY)
 	end)
 	self.m_rt:AddCallback("OnComplete", function(rt, state)
 		local renderSettings = self.m_rt:GetRenderSettings()
