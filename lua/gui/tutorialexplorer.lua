@@ -141,6 +141,11 @@ function Element:ApplyAsset(path, importAsset)
 			)
 			self:AddIconElement("difficulty", elIcon, false)
 		end
+
+		local containsSensitiveContent = udmData:GetValue("contains_sensitive_content", udm.TYPE_BOOLEAN)
+		if(containsSensitiveContent and console.get_convar_bool("pfm_sensitive_content_enabled") == false) then
+			self:RemoveSafely()
+		end
 	else
 		self:SetMaterial("error", self:GetWidth(), self:GetHeight())
 	end

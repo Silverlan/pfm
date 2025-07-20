@@ -164,7 +164,7 @@ function Element:UpdateInfoBox()
 	end
 	local url = self.m_webBrowser:GetWebBrowser():GetUrl()
 	local parts = chromium.parse_url(url)
-	if parts == nil then
+	if parts == nil or util.is_valid(self.m_infoBox) == false then
 		return
 	end
 	self.m_infoBox:SetVisible(true)
@@ -211,16 +211,19 @@ function Element:UpdateBookmarks()
 	end
 	addLink("pfm_wiki", "PFM Wiki", "https://wiki.pragma-engine.com/books/pragma-filmmaker")
 	addLink("lua_api", "Lua API", "https://wiki.pragma-engine.com/api/docs")
-	addLink("supporter_hub", "Supporter Hub", "https://supporter.pragma-engine.com", true)
-	addLink("sfm_lab", "SFM Lab", "https://sfmlab.com/", true)
-	addLink("open3d_lab", "Open3DLab", "https://open3dlab.com/", true)
-	addLink("smut_base", "SmutBase", "https://smutba.se/", true)
-	addLink(
-		"lord_aardvark",
-		"Lord Aardvark",
-		"https://lordaardvark.com/html/assets.html?cat=Models&sect=Characters",
-		true
-	)
+
+	if(console.get_convar_bool("pfm_sensitive_content_enabled")) then
+		addLink("supporter_hub", "Supporter Hub", "https://supporter.pragma-engine.com", true)
+		addLink("sfm_lab", "SFM Lab", "https://sfmlab.com/", true)
+		addLink("open3d_lab", "Open3DLab", "https://open3dlab.com/", true)
+		addLink("smut_base", "SmutBase", "https://smutba.se/", true)
+		addLink(
+			"lord_aardvark",
+			"Lord Aardvark",
+			"https://lordaardvark.com/html/assets.html?cat=Models&sect=Characters",
+			true
+		)
+	end
 	addLink("bowlroll", "BowlRoll", "https://bowlroll.net/file/tag/MikuMikuDance")
 	addLink("rainwave", "Rainwave", "https://rainwave.cc/")
 	-- addLink("sfm_workshop","SFM Workshop","https://steamcommunity.com/workshop/browse/?appid=1840sour")

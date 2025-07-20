@@ -120,6 +120,13 @@ console.register_variable(
 	bit.bor(console.FLAG_BIT_ARCHIVE),
 	"Theme to use for PFM. Leave empty to use system default dark/light theme."
 )
+console.register_variable(
+	"pfm_sensitive_content_enabled",
+	udm.TYPE_BOOLEAN,
+	false,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"Enable sensitive content?"
+)
 console.add_change_callback("pfm_theme", function(old, new)
 	local pm = tool.get_filmmaker()
 	if util.is_valid(pm) then
