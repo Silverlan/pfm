@@ -20,9 +20,16 @@ function gui.CollapsibleGroupTitleBar:OnInitialize()
 
 	self.m_leftPadding = gui.create("WIBase", self.m_contents, 0, 0, 7, 1) -- Gap
 	self.m_collapsed = false
-	self.m_button = gui.PFMButton.create(self.m_contents, "gui/pfm/arrow_right", "gui/pfm/arrow_right", function()
-		self:Toggle()
+	self.m_button = gui.create("WITexturedRect", self.m_contents)
+	self.m_button:SetMouseInputEnabled(true)
+	self.m_button:AddCallback("OnMouseEvent", function(el, button, state, mods)
+		if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
+			self:Toggle()
+			return util.EVENT_REPLY_HANDLED
+		end
 	end)
+	self.m_button:SetMaterial("gui/pfm/arrow_right")
+	self.m_button:SetSize(5, 7)
 	self.m_button:SetY(8)
 	self.m_button:SetMouseInputEnabled(true)
 
@@ -41,14 +48,16 @@ end
 function gui.CollapsibleGroupTitleBar:Collapse()
 	self.m_collapsed = true
 	if util.is_valid(self.m_button) then
-		self.m_button:SetMaterials("gui/pfm/arrow_right", "gui/pfm/arrow_right")
+		self.m_button:SetMaterial("gui/pfm/arrow_right")
+		self.m_button:SetSize(5, 7)
 	end
 	self:CallCallbacks("OnCollapse")
 end
 function gui.CollapsibleGroupTitleBar:Expand()
 	self.m_collapsed = false
 	if util.is_valid(self.m_button) then
-		self.m_button:SetMaterials("gui/pfm/arrow_down", "gui/pfm/arrow_down")
+		self.m_button:SetMaterial("gui/pfm/arrow_down")
+		self.m_button:SetSize(7, 5)
 	end
 	self:CallCallbacks("OnExpand")
 end
