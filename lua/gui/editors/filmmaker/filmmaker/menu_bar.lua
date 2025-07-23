@@ -1030,6 +1030,12 @@ function Element:InitializeMenuBar()
 				end)
 				pSubItem:SetName("check_for_updates")
 			end
+
+			local pSubItem = pContext:AddItem(locale.get_text("pfm_open_user_data_directory"), function(pItem)
+				engine.open_user_data_dir_in_explorer()
+			end)
+			pSubItem:SetName("open_user_data_directory")
+
 			local pSubItem = pContext:AddItem(locale.get_text("pfm_community"), function(pItem)
 				local engineInfo = engine.get_info()
 				self:OpenUrlInBrowser(engineInfo.discordURL)
