@@ -64,17 +64,24 @@ console.register_variable(
 	bit.bor(console.FLAG_BIT_ARCHIVE),
 	"If enabled, voiced audio will be played during tutorials if available."
 )
+local shouldCheckForUpdates = true
+local automaticUpdatesEnabled = true
+if(engine.is_managed_by_package_manager()) then
+	-- Updates are handled by package manager
+	shouldCheckForUpdates = false
+	automaticUpdatesEnabled = false
+end
 console.register_variable(
 	"pfm_should_check_for_updates",
 	udm.TYPE_BOOLEAN,
-	true,
+	shouldCheckForUpdates,
 	bit.bor(console.FLAG_BIT_HIDDEN),
 	"If enabled, PFM will check for updates on startup."
 )
 console.register_variable(
 	"pfm_automatic_updates_enabled",
 	udm.TYPE_BOOLEAN,
-	true,
+	automaticUpdatesEnabled,
 	bit.bor(console.FLAG_BIT_HIDDEN),
 	"Determines whether automatic updates are enabled."
 )

@@ -238,7 +238,7 @@ function gui.WIFilmmaker:OnInitialize()
 
 	if
 		console.get_convar_bool("pfm_should_check_for_updates")
-		and console.get_convar_bool("pfm_automatic_updates_enabled")
+		and self:AreAutomaticUpdatesEnabled()
 	then
 		console.run("pfm_should_check_for_updates", "0") -- Only auto-check once per session
 		time.create_simple_timer(5.0, function()
@@ -461,7 +461,7 @@ function gui.WIFilmmaker:GetSupporterTicker()
 	return self.m_supporterTicker
 end
 function gui.WIFilmmaker:AreAutomaticUpdatesEnabled()
-	return console.get_convar_bool("pfm_automatic_updates_enabled")
+	return console.get_convar_bool("pfm_automatic_updates_enabled") and engine.is_managed_by_package_manager() == false
 end
 function gui.WIFilmmaker:SaveRestoreData(el, map, projectFileName)
 	local writeNewMapName = (projectFileName == nil)
