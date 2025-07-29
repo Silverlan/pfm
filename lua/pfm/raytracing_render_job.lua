@@ -235,46 +235,25 @@ pfm.RaytracingRenderJob.generate_job_batch_script = function(jobFiles)
 	if #jobFiles == 0 then
 		return
 	end
-	local shellFileName
-	local toolName
-	if os.SYSTEM_WINDOWS then
-		shellFileName = "render.bat"
-		toolName = "bin/render_raytracing.exe"
-	else
-		shellFileName = "render.sh"
-		toolName = "lib/render_raytracing"
-	end
-
 	local path = file.get_file_path(jobFiles[1])
 	if file.exists(path) == false then
 		file.create_path(path)
 	end
-	local f = file.open(path .. shellFileName, bit.bor(file.OPEN_MODE_BINARY, file.OPEN_MODE_WRITE))
-	if f ~= nil then
-		local files = {}
-		for _, f in ipairs(jobFiles) do
-            f = file.get_file_name(f)
-            f = file.remove_file_extension(f, {unirender.PRT_EXTENSION_BINARY, unirender.PRT_EXTENSION_ASCII})
-			table.insert(files, f)
-		end
-		local jobListPath = path .. "job_list.txt"
-		file.write(jobListPath, string.join(files, "\n"))
 
-		local absToolPath = file.find_path_on_disk(toolName)
-		local absJobListPath = file.find_path_on_disk(jobListPath)
-		if(absToolPath == nil) then console.print_error("Failed to determine absolute path to '" .. toolName .. "'!")
-		elseif(absJobListPath == nil) then console.print_error("Failed to determine absolute path to '" .. jobListPath .. "'!")
-		else
-			local cmd = '"' .. absToolPath .. '" -job="' .. absJobListPath .. '"'
-			cmd = cmd .. " -user_data_dir=\"" .. engine.get_user_data_dir():GetString() .. "\""
-			for _,resDir in ipairs(engine.get_resource_dirs()) do
-				cmd = cmd .. " -resource_dir=\"" .. resDir:GetString() .. "\""
-			end
-			f:WriteString(cmd)
-		end
-		f:Close()
+	local files = {}
+	for _, f in ipairs(jobFiles) do
+		f = file.get_file_name(f)
+		f = file.remove_file_extension(f, {unirender.PRT_EXTENSION_BINARY, unirender.PRT_EXTENSION_ASCII})
+		table.insert(files, f)
+	end
+	local jobListPath = path .. "job_list.txt"
+	file.write(jobListPath, string.join(files, "\n"))
 
-		util.open_path_in_explorer(path, shellFileName)
+	local res, errOrShellFilePath = unirender.write_render_job_script(jobListPath, util.FilePath(path, "render"):GetString())
+	if(res == false) then
+		console.print_error("Failed to create render job script: " .. err)
+	else
+		util.open_path_in_explorer(file.get_file_path(errOrShellFilePath), file.get_file_name(errOrShellFilePath))
 	end
 end
 function pfm.RaytracingRenderJob:GetPreStageScene()
