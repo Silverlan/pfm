@@ -103,25 +103,27 @@ function Element:OnInitialize()
 	)
 	wrapper:SetUseAltMode(true)
 
-	local pEnableExperimentalUpdates = self:AddToggleControl(
-		locale.get_text("pfm_enable_experimental_updates"),
-		"enable_experimental_updates",
-		"pfm_enable_experimental_updates",
-		console.get_convar_bool("pfm_enable_experimental_updates"),
-		function(el, checked)
-			self:SetConVar("pfm_enable_experimental_updates", checked and "1" or "0")
-		end
-	)
+	if(engine.is_managed_by_package_manager() == false) then
+		self:AddToggleControl(
+			locale.get_text("pfm_enable_experimental_updates"),
+			"enable_experimental_updates",
+			"pfm_enable_experimental_updates",
+			console.get_convar_bool("pfm_enable_experimental_updates"),
+			function(el, checked)
+				self:SetConVar("pfm_enable_experimental_updates", checked and "1" or "0")
+			end
+		)
 
-	self:AddToggleControl(
-		locale.get_text("pfm_should_check_for_updates"),
-		"should_check_for_updates",
-		"pfm_should_check_for_updates",
-		console.get_convar_bool("pfm_should_check_for_updates"),
-		function(el, checked)
-			self:SetConVar("pfm_should_check_for_updates", checked and "1" or "0")
-		end
-	)
+		self:AddToggleControl(
+			locale.get_text("pfm_should_check_for_updates"),
+			"should_check_for_updates",
+			"pfm_should_check_for_updates",
+			console.get_convar_bool("pfm_should_check_for_updates"),
+			function(el, checked)
+				self:SetConVar("pfm_should_check_for_updates", checked and "1" or "0")
+			end
+		)
+	end
 
 	self:AddToggleControl(
 		locale.get_text("pfm_tutorial_audio_enabled"),
