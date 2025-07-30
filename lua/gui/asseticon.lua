@@ -92,7 +92,12 @@ local function set_model_view_model(mdlView, model, settings, iconPath)
 			end
 			local mdlC = ent:GetComponent(ents.COMPONENT_MODEL)
 			if mdlC ~= nil then
-				local matOverrideC = ent:GetComponent(ents.COMPONENT_MATERIAL_OVERRIDE)
+				local matOverrideC
+				if(settings.materialOverride ~= nil) then
+					matOverrideC = ent:AddComponent(ents.COMPONENT_MATERIAL_OVERRIDE)
+				else
+					matOverrideC = ent:GetComponent(ents.COMPONENT_MATERIAL_OVERRIDE)
+				end
 				if matOverrideC ~= nil then
 					if settings.materialOverride then
 						matOverrideC:SetMaterialOverride(0, settings.materialOverride)
