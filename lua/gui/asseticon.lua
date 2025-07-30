@@ -30,6 +30,7 @@ local function create_model_view(width, height, parent)
 	el:InitializeViewport(width, height)
 	el:SetFov(math.horizontal_fov_to_vertical_fov(45.0, width, height))
 	el:SetVisible(false)
+	el:SetRenderWhenInvisible(true)
 	return el
 end
 
@@ -276,7 +277,7 @@ function gui.AssetIcon.IconGenerator:ProcessIcon()
 	self.m_isCharacterModel = nil
 	self.m_saveImage = false
 	save_model_icon(data.model, mdlView, data.iconPath, data.callback)
-	mdlView:SetVisible(false)
+	mdlView:SetRenderWhenInvisible(false)
 
 	data = nil
 	asset.clear_unused(asset.TYPE_MODEL)
@@ -339,7 +340,7 @@ function gui.AssetIcon.IconGenerator:GenerateNextIcon()
 
 	local f = function()
 		local mdlView = pfm.util.is_character_model(data.model) and self.m_modelViewCharacter or self.m_modelView
-		mdlView:SetVisible(true)
+		mdlView:SetRenderWhenInvisible(true)
 		set_model_view_model(mdlView, data.model, data.settings, data.iconPath)
 		self.m_tStartFrameIndex = mdlView:GetFrameIndex()
 	end
