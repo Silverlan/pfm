@@ -71,11 +71,10 @@ function Element:OpenUrlInBrowser(url)
 		end
 		local w = self:GetWindow("web_browser")
 		w = util.is_valid(w) and w:GetBrowser() or nil
-		w = util.is_valid(w) and w:GetWebBrowser() or nil
 		if util.is_valid(w) == false then
 			return
 		end
-		w:LoadUrl(url)
+		w:SetUrl(url)
 	end)
 end
 function Element:DoChangeMap(mapName)
