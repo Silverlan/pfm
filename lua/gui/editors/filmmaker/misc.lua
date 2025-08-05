@@ -42,7 +42,7 @@ function Element:SetBuildKernels(buildKernels)
 		return
 	end
 	self.m_kernelsBuildMessage = gui.create("WIKernelsBuildMessage", tabContainer)
-	self.m_kernelProgressBar = self:AddProgressStatusBar("kernel", locale.get_text("pfm_building_kernels"))
+	self.m_kernelProgressBar = self:AddProgressStatusBar("kernel", locale.get_text("pfm_building_kernels"), locale.get_text("pfm_notify_build_kernels_complete"))
 	local tStart = time.real_time()
 	self.m_cbKernelProgress = game.add_callback("Think", function()
 		-- There's no way to get the actual kernel progress, so we'll just

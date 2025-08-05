@@ -41,7 +41,7 @@ function Element:PackProject(fileName)
 		return
 	end
 	self.m_packProjectJob:Start()
-	self.m_packProjectProgressBar = self:AddProgressStatusBar("pack_project", locale.get_text("pfm_packing_project"))
+	self.m_packProjectProgressBar = self:AddProgressStatusBar("pack_project", locale.get_text("pfm_packing_project"), locale.get_text("pfm_notify_project_packing_complete"))
 	self.m_packProjectJob:SetProgressCallback(function(worker, progress)
 		self.m_packProjectProgressBar:SetProgress(progress)
 	end)

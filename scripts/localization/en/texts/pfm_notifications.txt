@@ -1,0 +1,6 @@
+pfm_notify_baking_complete = "Baking complete"
+pfm_notify_build_kernels_complete = "Kernel building complete"
+pfm_notify_download_complete = "Download complete"
+pfm_notify_project_packing_complete "Project packing completed"
+pfm_notify_render_complete = "Render complete"
+pfm_notify_update_ready = "Update ready for installation"

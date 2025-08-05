@@ -64,7 +64,7 @@ function gui.PFMRenderPreview:InitializeViewport(parent)
 		local pm = tool.get_filmmaker()
 		if util.is_valid(pm) then
 			util.remove(self.m_renderProgressBar)
-			self.m_renderProgressBar = pm:AddProgressStatusBar("render", locale.get_text("render"))
+			self.m_renderProgressBar = pm:AddProgressStatusBar("render", locale.get_text("render"), locale.get_text("pfm_notify_render_complete"))
 		end
 	end)
 	self.m_rt:AddCallback("OnProgressChanged", function(rt, progress)

@@ -70,7 +70,7 @@ function BaseBaker:StartBake()
 	if util.is_valid(pm) then
 		util.remove(self.m_progressBar)
 		self.m_progressBar =
-			pm:AddProgressStatusBar("bake_" .. self.m_name, locale.get_text("pfm_bake", { self.m_name }))
+			pm:AddProgressStatusBar("bake_" .. self.m_name, locale.get_text("pfm_bake", { self.m_name }), locale.get_text("pfm_notify_baking_complete"))
 	end
 end
 function BaseBaker:Poll()

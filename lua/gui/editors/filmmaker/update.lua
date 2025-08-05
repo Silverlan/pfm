@@ -126,7 +126,7 @@ function Element:DownloadUpdate(url)
 	self.m_updateScheduled = true
 
 	util.remove(self.m_updateProgressBar)
-	self.m_updateProgressBar = self:AddProgressStatusBar("update", locale.get_text("pfm_updating"))
+	self.m_updateProgressBar = self:AddProgressStatusBar("update", locale.get_text("pfm_updating"), locale.get_text("pfm_notify_update_ready"))
 
 	self.m_updateJob = pfm.update(url, function(worker)
 		util.remove(self.m_updateProgressBar)

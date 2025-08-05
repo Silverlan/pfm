@@ -79,7 +79,7 @@ function Element:OnInitialize()
 			if util.is_valid(pm) then
 				util.remove(self.m_downloadProgressBar)
 				self.m_downloadProgressBar =
-					pm:AddProgressStatusBar("download", locale.get_text("pfm_downloading_file"))
+					pm:AddProgressStatusBar("download", locale.get_text("pfm_downloading_file"), locale.get_text("pfm_notify_download_complete"))
 				self.m_downloadProgressBarDownloadId = id
 			end
 

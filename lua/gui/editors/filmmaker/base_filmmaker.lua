@@ -309,7 +309,7 @@ function Element:ShowMatureContentPrompt(onYes, onNo)
 
 	gui.create("WIBase", userContents, 0, 0, 1, 12) -- Gap
 end
-function Element:AddProgressStatusBar(identifier, text)
+function Element:AddProgressStatusBar(identifier, text, notifyText)
 	local infoBar = self:GetInfoBar()
 
 	local statusBar = gui.create("WIProgressStatusInfo")
@@ -320,6 +320,10 @@ function Element:AddProgressStatusBar(identifier, text)
 	statusBar:AddCallback("OnRemove", function()
 		if infoBar:IsValid() then
 			infoBar:ScheduleUpdate()
+		end
+
+		if(notifyText ~= nil) then
+			os.show_notification(notifyText)
 		end
 	end)
 	infoBar:AddRightElement(statusBar, 0)
