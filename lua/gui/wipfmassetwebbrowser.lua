@@ -56,11 +56,10 @@ function Element:OnInitialize()
 	if util.is_valid(self.m_webBrowser) then
 		local webBrowser = self.m_webBrowser:GetWebBrowser()
 		if(util.is_valid(webBrowser)) then
-			webBrowser:GetWebBrowser():AddCallback("OnAddressChanged", function(el, addr)
+			webBrowser:AddCallback("OnAddressChanged", function(el, addr)
 				elUrl:SetText(addr)
 			end)
 			webBrowser
-				:GetWebBrowser()
 				:AddCallback("OnLoadingStateChange", function(el, isLoading, canGoBack, canGoForward)
 					self:UpdateInfoBox()
 				end)
