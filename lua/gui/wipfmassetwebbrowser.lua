@@ -30,12 +30,12 @@ function Element:OnInitialize()
 		if util.is_valid(self.m_webBrowser) then
 			if linkData.hasAdultContent then
 				pfm.get_project_manager():ShowMatureContentPrompt(function()
-					self.m_webBrowser:GetWebBrowser():LoadUrl(linkData.url)
+					self.m_webBrowser:SetUrl(linkData.url)
 				end, function()
 					elBookmarks:SelectOption("pfm_wiki")
 				end)
 			else
-				self.m_webBrowser:GetWebBrowser():LoadUrl(linkData.url)
+				self.m_webBrowser:SetUrl(linkData.url)
 			end
 		end
 	end)
@@ -45,7 +45,7 @@ function Element:OnInitialize()
 		if util.is_valid(self.m_webBrowser) == false then
 			return
 		end
-		self.m_webBrowser:GetWebBrowser():LoadUrl(el:GetText())
+		self.m_webBrowser:SetUrl(el:GetText())
 	end)
 	p:Update()
 	p:SizeToContents()
@@ -54,14 +54,17 @@ function Element:OnInitialize()
 
 	self.m_webBrowser = gui.create("WIAssetWebBrowser", self.m_contents)
 	if util.is_valid(self.m_webBrowser) then
-		self.m_webBrowser:GetWebBrowser():AddCallback("OnAddressChanged", function(el, addr)
-			elUrl:SetText(addr)
-		end)
-		self.m_webBrowser
-			:GetWebBrowser()
-			:AddCallback("OnLoadingStateChange", function(el, isLoading, canGoBack, canGoForward)
-				self:UpdateInfoBox()
+		local webBrowser = self.m_webBrowser:GetWebBrowser()
+		if(util.is_valid(webBrowser)) then
+			webBrowser:GetWebBrowser():AddCallback("OnAddressChanged", function(el, addr)
+				elUrl:SetText(addr)
 			end)
+			webBrowser
+				:GetWebBrowser()
+				:AddCallback("OnLoadingStateChange", function(el, isLoading, canGoBack, canGoForward)
+					self:UpdateInfoBox()
+				end)
+		end
 		self.m_webBrowser:SetSize(self:GetWidth(), 400)
 
 		local log = self:InitializeLog(self.m_contents)
@@ -162,7 +165,7 @@ function Element:UpdateInfoBox()
 	if util.is_valid(self.m_webBrowser) == false then
 		return
 	end
-	local url = self.m_webBrowser:GetWebBrowser():GetUrl()
+	local url = self.m_webBrowser:GetUrl()
 	local parts = chromium.parse_url(url)
 	if parts == nil or util.is_valid(self.m_infoBox) == false then
 		return
