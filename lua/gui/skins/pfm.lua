@@ -13,6 +13,8 @@ t.background.primary = Color(38, 38, 38, 255)
 t.background.secondary = Color(54, 54, 54, 255)
 t.background.tertiary = Color(20, 20, 20, 255)
 t.background.selected = Color(58, 58, 58, 255)
+t.background.selected_hover = Color(68, 68, 68, 255)
+t.background.hover = Color(58, 58, 58, 255)
 
 t.button = {}
 t.button.background = Color(90, 90, 90)
@@ -504,6 +506,16 @@ skin["menu_item"] = {
 skin["selection"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.background.selected)
+	end,
+}
+skin["selection_hover"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.background.selected_hover)
+	end,
+}
+skin["hover"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.background.hover)
 	end,
 }
 skin["context_menu"] = {

@@ -190,6 +190,12 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self.m_vBox:SetName("contents_wrapper")
 
 	self.m_header = gui.create("WIHBox", self.m_vBox, 0, 0, self:GetWidth(), self:GetHeight())
+	self.m_header:AddCallback("OnCursorEntered",function()
+		self:OnCursorEnteredItem()
+	end)
+	self.m_header:AddCallback("OnCursorExited",function()
+		self:OnCursorExitedItem()
+	end)
 	self.m_selection =
 		gui.create("WIRect", self.m_header, 0, 0, self.m_header:GetWidth(), self.m_header:GetHeight(), 0, 0, 1, 1)
 	self.m_selection:AddStyleClass("selection")
@@ -211,6 +217,26 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self:SetMouseInputEnabled(true)
 	self:SetAutoSizeToContents(false, true)
 	self:SetSelected(false)
+end
+function gui.PFMTreeViewElement:UpdateHoverStyle()
+	local visible = self.m_cursorHover or self:IsSelected()
+	self.m_selection:SetVisible(visible)
+
+	if(self.m_cursorHover) then
+		self.m_selection:AddStyleClass(self:IsSelected() and "selection_hover" or "hover")
+	else
+		self.m_selection:RemoveStyleClass("hover")
+		self.m_selection:RemoveStyleClass("selection_hover")
+	end
+	self.m_selection:RefreshSkin()
+end
+function gui.PFMTreeViewElement:OnCursorEnteredItem()
+	self.m_cursorHover = true
+	self:UpdateHoverStyle()
+end
+function gui.PFMTreeViewElement:OnCursorExitedItem()
+	self.m_cursorHover = false
+	self:UpdateHoverStyle()
 end
 function gui.PFMTreeViewElement:GetSelectedElements(selected)
 	selected = selected or {}
@@ -673,7 +699,7 @@ function gui.PFMTreeViewElement:SetText(text)
 	end
 end
 function gui.PFMTreeViewElement:IsSelected()
-	return self.m_selected
+	return self.m_selected or false
 end
 function gui.PFMTreeViewElement:Select(selectChildren)
 	self:SetSelected(true, selectChildren)
@@ -686,6 +712,7 @@ function gui.PFMTreeViewElement:SetSelected(selected, selectChildren)
 		return
 	end
 	self.m_selected = selected
+	self:UpdateHoverStyle()
 	local treeView = self:GetTreeView()
 	if util.is_valid(treeView) then
 		treeView:OnElementSelectionChanged(self, selected)
