@@ -274,11 +274,6 @@ end
 function gui.PFMTreeViewElement:ShouldAutoSelectChildren()
 	return self.m_autoSelectChildren or false
 end
-function gui.PFMTreeViewElement:OnRemove()
-	if self:IsSelected() then
-		self:Deselect()
-	end
-end
 function gui.PFMTreeViewElement:MouseCallback(button, state, mods)
 	if
 		button ~= input.MOUSE_BUTTON_LEFT
