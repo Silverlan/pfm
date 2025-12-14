@@ -703,7 +703,7 @@ function gui.PFMTreeViewElement:Deselect()
 	self:SetSelected(false)
 end
 function gui.PFMTreeViewElement:SetSelected(selected, selectChildren)
-	if selected == self:IsSelected() then
+	if selected == self.m_selected then
 		return
 	end
 	self.m_selected = selected
