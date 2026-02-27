@@ -225,4 +225,4 @@ function Element:OnUpdate()
 		end
 	end
 end
-gui.register("WIElementConnectorLine", Element)
+gui.register("element_connector_line", Element)

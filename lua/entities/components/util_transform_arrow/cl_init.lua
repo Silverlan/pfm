@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/shaders/pfm/pfm_gizmo.lua")
+include("/shaders/pfm/gizmo.lua")
 
 include_component("click")
 include_component("transform_controller")

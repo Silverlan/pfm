@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2024 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/shaders/pfm/pfm_flat.lua")
+include("/shaders/pfm/flat.lua")
 
 local Component = util.register_class("ents.DebugMetaRig", BaseEntityComponent)
 function Component:Initialize()

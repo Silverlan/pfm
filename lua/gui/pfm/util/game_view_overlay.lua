@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/shaders/pfm/pfm_scene_composition.lua")
+include("/shaders/pfm/scene_composition.lua")
 
 util.register_class("util.ImagePostProcessor")
 function util.ImagePostProcessor:__init() end

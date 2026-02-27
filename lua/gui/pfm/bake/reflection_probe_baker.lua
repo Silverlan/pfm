@@ -3,7 +3,7 @@
 
 include("base_baker.lua")
 include("/gui/pfm/controls_menu/controls_menu.lua")
-include("/gui/cubemap_view.lua")
+include("/gui/viewport/cubemap_view.lua")
 
 pfm = pfm or {}
 pfm.util = pfm.util or {}
@@ -20,7 +20,7 @@ pfm.util.open_reflection_probe_view_window = function(ent, onInit)
 		local matPath = util.Path.CreateFilePath(reflC:GetIBLMaterialFilePath())
 		matPath:PopFront()
 
-		local el = gui.create("WICubemapView", contents)
+		local el = gui.create("cubemap_view", contents)
 		local mat = game.load_material(matPath:GetString())
 		if util.is_valid(mat) then
 			local elCubemap

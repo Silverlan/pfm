@@ -142,9 +142,9 @@ function Element:InitializeLayout(layoutFileName)
 	local function addFrameContainer(fcId, container, parent)
 		local elContents
 		if container:IsHorizontal() then
-			elContents = gui.create("WIHBox", parent)
+			elContents = gui.create("hbox", parent)
 		else
-			elContents = gui.create("WIVBox", parent)
+			elContents = gui.create("vbox", parent)
 		end
 		local frameContainerId = "frame_container_" .. fcId
 		elContents:SetName(frameContainerId)
@@ -158,7 +158,7 @@ function Element:InitializeLayout(layoutFileName)
 			if first then
 				first = false
 			else
-				local resizer = gui.create("WIResizer", elContents)
+				local resizer = gui.create("resizer", elContents)
 				resizer:SetFraction(resizerRatio)
 				resizer:SetName(frameContainerId .. "_divider_" .. (i - 1))
 				table.insert(dividers, resizer)

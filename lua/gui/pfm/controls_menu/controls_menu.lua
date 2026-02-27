@@ -1,10 +1,10 @@
 -- SPDX-FileCopyrightText: (c) 2024 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/vbox.lua")
-include("/gui/pfm/slider.lua")
-include("/gui/fileentry.lua")
-include("/gui/editableentry.lua")
+include("/gui/layout/vbox.lua")
+include("/gui/pfm/controls/slider.lua")
+include("/gui/controls/file_entry.lua")
+include("/gui/controls/editable_entry.lua")
 
 local Element = util.register_class("gui.PFMControlContainer", gui.Base)
 function Element:OnInitialize()
@@ -15,7 +15,7 @@ function Element:InitializeIconContainer()
 	if util.is_valid(self.m_iconContainer) then
 		return
 	end
-	local el = gui.create("WIHBox", self)
+	local el = gui.create("hbox", self)
 	el:SetHeight(self:GetHeight())
 	el:AddCallback("SetSize", function()
 		self:UpdateSize()
@@ -52,7 +52,7 @@ end
 function Element:OnSizeChanged(w, h)
 	self:UpdateSize()
 end
-gui.register("WIPFMControlContainer", Element)
+gui.register("pfm_control_container", Element)
 
 util.register_class("gui.PFMControlsMenu", gui.VBox)
 
@@ -163,12 +163,12 @@ local function apply_text(el, loc)
 	el:SetText(loc:GetText())
 end
 function gui.PFMControlsMenu:AddContainer(el)
-	local container = gui.create("WIPFMControlContainer", self)
+	local container = gui.create("pfm_control_container", self)
 	container:SetTargetElement(el)
 	return container
 end
 function gui.PFMControlsMenu:AddFileEntry(name, identifier, default, browseHandler, callback)
-	local el = gui.create("WIFileEntry")
+	local el = gui.create("file_entry")
 	local c = self:AddContainer(el)
 	el:AddCallback("OnValueChanged", function(...)
 		self:OnValueChanged(identifier, el:GetValue())
@@ -180,7 +180,7 @@ function gui.PFMControlsMenu:AddFileEntry(name, identifier, default, browseHandl
 		el:SetBrowseHandler(browseHandler)
 	end
 	apply_tooltip(el, name)
-	local wrapper = el:Wrap("WIEditableEntry")
+	local wrapper = el:Wrap("editable_entry")
 	c:SetTargetElement(wrapper)
 	apply_text(wrapper, name)
 	if identifier ~= nil then
@@ -195,7 +195,7 @@ function gui.PFMControlsMenu:AddInfo(name, identifier)
 	apply_tooltip(el, name)
 	el:SetSize(1, 20)
 
-	local wrapper = el:Wrap("WIEditableEntry")
+	local wrapper = el:Wrap("editable_entry")
 	c:SetTargetElement(wrapper)
 	apply_text(wrapper, name)
 	if identifier ~= nil then
@@ -212,7 +212,7 @@ function gui.PFMControlsMenu:AddText(name, identifier, default)
 	el:SizeToContents()
 	el:SetHeight(20)
 
-	local wrapper = el:Wrap("WIEditableEntry")
+	local wrapper = el:Wrap("editable_entry")
 	c:SetTargetElement(wrapper)
 	apply_text(wrapper, name)
 	if identifier ~= nil then
@@ -231,7 +231,7 @@ function gui.PFMControlsMenu:AddTextEntry(name, identifier, default, callback)
 		end
 	end)
 	apply_tooltip(el, name)
-	local wrapper = el:Wrap("WIEditableEntry")
+	local wrapper = el:Wrap("editable_entry")
 	c:SetTargetElement(wrapper)
 	apply_text(wrapper, name)
 	if identifier ~= nil then
@@ -241,13 +241,13 @@ function gui.PFMControlsMenu:AddTextEntry(name, identifier, default, callback)
 	return el, wrapper, c
 end
 function gui.PFMControlsMenu:AddToggleControl(name, identifier, checked, onChange)
-	local el = gui.create("WIToggleOption")
+	local el = gui.create("toggle_option")
 	local c = self:AddContainer(el)
 	apply_text(el, name)
 	el:SetChecked(checked)
 	apply_tooltip(el, name)
 
-	local wrapper = el:Wrap("WIEditableEntry")
+	local wrapper = el:Wrap("editable_entry")
 	c:SetTargetElement(wrapper)
 	apply_text(wrapper, name)
 	el:GetCheckbox():AddCallback("OnChange", function(...)
@@ -263,7 +263,7 @@ function gui.PFMControlsMenu:AddToggleControl(name, identifier, checked, onChang
 	return el, wrapper, c
 end
 function gui.PFMControlsMenu:AddSliderControl(name, identifier, default, min, max, onChange, stepSize, integer)
-	local slider = gui.create("WIPFMSlider")
+	local slider = gui.create("pfm_slider")
 	local c = self:AddContainer(slider)
 	apply_text(slider, name)
 	slider:SetRange(min, max)
@@ -291,7 +291,7 @@ function gui.PFMControlsMenu:AddDropDownMenu(name, identifier, options, defaultO
 	for _, option in pairs(options) do
 		menu:AddOption(tostring(option[2]), tostring(option[1]))
 	end
-	local wrapper = menu:Wrap("WIEditableEntry")
+	local wrapper = menu:Wrap("editable_entry")
 	c:SetTargetElement(wrapper)
 	apply_text(wrapper, name)
 	menu:AddCallback("OnOptionSelected", function(...)
@@ -307,9 +307,9 @@ function gui.PFMControlsMenu:AddDropDownMenu(name, identifier, options, defaultO
 	return menu, wrapper, c
 end
 function gui.PFMControlsMenu:AddColorField(name, identifier, defaultOption, onChange)
-	local colorEntry = gui.create("WIPFMColorEntry")
+	local colorEntry = gui.create("pfm_color_entry")
 	local c = self:AddContainer(colorEntry)
-	local colorEntryWrapper = colorEntry:Wrap("WIEditableEntry")
+	local colorEntryWrapper = colorEntry:Wrap("editable_entry")
 	c:SetTargetElement(colorEntryWrapper)
 	apply_text(colorEntryWrapper, name)
 	if identifier ~= nil then
@@ -326,7 +326,7 @@ function gui.PFMControlsMenu:AddColorField(name, identifier, defaultOption, onCh
 	return colorEntry, colorEntryWrapper, c
 end
 function gui.PFMControlsMenu:AddButton(name, identifier, onPress)
-	local bt = gui.create("WIPFMButton")
+	local bt = gui.create("pfm_button")
 	local c = self:AddContainer(bt)
 	apply_text(bt, name)
 	bt:ScheduleUpdate()
@@ -345,23 +345,22 @@ function gui.PFMControlsMenu:SetDefault(identifier, default)
 	end
 	self.m_controls[identifier].default = default
 	-- local el = self.m_controls[identifier].element
-	-- if(util.is_valid(el) and el:GetClass() == "wipfmslider") then el:SetDefault(default) end
+	-- if(util.is_valid(el) and el:IsType(gui.TYPE_PFM_SLIDER)) then el:SetDefault(default) end
 end
 function gui.PFMControlsMenu:SetValue(identifier, value)
 	local ctrl = self.m_controls[identifier]
 	if util.is_valid(ctrl.element) == false then
 		return
 	end
-	local class = ctrl.element:GetClass()
-	if class == "widropdownmenu" then
+	if ctrl.element:IsType(gui.TYPE_WIDROPDOWNMENU) then
 		ctrl.element:SelectOption(value)
-	elseif class == "wipfmslider" then
+	elseif ctrl.element:IsType(gui.TYPE_PFM_SLIDER) then
 		ctrl.element:SetDefault(value)
-	elseif class == "wipfmcolorentry" then
+	elseif ctrl.element:IsType(gui.TYPE_PFM_COLOR_ENTRY) then
 		ctrl.element:SetColor(value)
-	elseif class == "witextentry" or class == "witext" then
+	elseif ctrl.element:IsType(gui.TYPE_WITEXTENTRY) or ctrl.element:IsType(gui.TYPE_WITEXT) then
 		ctrl.element:SetText(tostring(value))
-	elseif class == "witoggleoption" then
+	elseif ctrl.element:IsType(gui.TYPE_TOGGLE_OPTION) then
 		ctrl.element:SetChecked(value)
 	else
 		ctrl.element:SetValue(value)
@@ -371,7 +370,7 @@ function gui.PFMControlsMenu:LinkToUDMProperty(identifier, o, propName, translat
 	local default = o:GetPropertyValue(propName)
 
 	local el = self.m_controls[identifier].element
-	local isDropDownMenu = (util.is_valid(el) and el:GetClass() == "widropdownmenu")
+	local isDropDownMenu = (util.is_valid(el) and el:IsType(gui.TYPE_WIDROPDOWNMENU))
 	if isDropDownMenu then
 		default = tostring(default)
 	end
@@ -423,13 +422,13 @@ function gui.PFMControlsMenu:OnValueChanged(identifier, value)
 	self.m_skipPropCallback[identifier] = nil
 end
 function gui.PFMControlsMenu:AddHeader(title)
-	local header = gui.create("WIEditableEntry", self)
+	local header = gui.create("editable_entry", self)
 	header:SetEmpty()
 	header:SetCategory(title)
 	return header
 end
 function gui.PFMControlsMenu:AddCollapsibleSubMenu(title, identifier)
-	local collapsible = gui.create("WICollapsibleGroup", self)
+	local collapsible = gui.create("collapsible_group", self)
 	collapsible:SetAutoAlignToParent(true, false)
 	collapsible:SetGroupName(title)
 	collapsible:Expand()
@@ -439,7 +438,7 @@ function gui.PFMControlsMenu:AddCollapsibleSubMenu(title, identifier)
 end
 function gui.PFMControlsMenu:AddSubMenu(identifier, parent)
 	parent = parent or self
-	local el = gui.create("WIPFMControlsMenu", parent)
+	local el = gui.create("pfm_controls_menu", parent)
 	el:SetAutoSizeToContents(true)
 	el:SetAutoFillContentsToHeight(false)
 
@@ -461,7 +460,7 @@ function gui.PFMControlsMenu:ResetControls()
 		if ctrl.element:IsValid() then
 			if ctrl.default ~= nil then
 				self:SetValue(name, ctrl.default)
-				if ctrl.element:GetClass() == "wipfmslider" then
+				if ctrl.element:IsType(gui.TYPE_PFM_SLIDER) then
 					ctrl.element:ResetToDefault()
 				end
 			end
@@ -471,4 +470,4 @@ function gui.PFMControlsMenu:ResetControls()
 		el:ResetControls()
 	end
 end
-gui.register("WIPFMControlsMenu", gui.PFMControlsMenu)
+gui.register("pfm_controls_menu", gui.PFMControlsMenu)

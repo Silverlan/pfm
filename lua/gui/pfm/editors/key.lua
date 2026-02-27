@@ -27,4 +27,4 @@ function gui.PFMGraphKey:OnInitialize()
 		self:SetColor(Color(32, 255, 32))
 	end)
 end
-gui.register("WIPFMGraphKey", gui.PFMGraphKey)
+gui.register("pfm_graph_key", gui.PFMGraphKey)

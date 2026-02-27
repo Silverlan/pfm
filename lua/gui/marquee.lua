@@ -1,8 +1,8 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/vbox.lua")
-include("/gui/hbox.lua")
+include("/gui/layout/vbox.lua")
+include("/gui/layout/hbox.lua")
 
 util.register_class("gui.Marquee", gui.Base)
 
@@ -134,7 +134,7 @@ end
 function gui.Marquee:MoveRight()
 	self:Move(1)
 end
-gui.register("WIMarquee", gui.Marquee)
+gui.register("marquee", gui.Marquee)
 
 ----------------
 
@@ -193,4 +193,4 @@ function gui.Ticker:OnThink()
 	self:MoveDisplayText()
 	self.m_tCurTickTime = self.m_tCurTickTime + self:GetTickTime()
 end
-gui.register("WITicker", gui.Ticker)
+gui.register("ticker", gui.Ticker)

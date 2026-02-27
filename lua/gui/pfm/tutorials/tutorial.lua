@@ -96,7 +96,7 @@ function Element:StartSlide(identifier)
 	end
 	self.m_curSlide = {
 		identifier = identifier,
-		element = gui.create("WITutorialSlide", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1),
+		element = gui.create("tutorial_slide", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1),
 		data = {},
 	}
 	self.m_curSlide.element:SetIdentifier(identifier)
@@ -162,7 +162,7 @@ function Element:PreviousSlide()
 	self.m_prevSlides[#self.m_prevSlides] = nil
 	self:StartSlide(identifier)
 end
-gui.register("WITutorial", Element)
+gui.register("tutorial", Element)
 
 Element.registered_tutorials = Element.registered_tutorials or {}
 Element.register_tutorial = function(identifier, infoFileLocation, fc)
@@ -196,7 +196,7 @@ Element.start_tutorial = function(identifier)
 		return
 	end
 	util.remove(Element.tutorial_element)
-	local elTut = gui.create("WITutorial", pm)
+	local elTut = gui.create("tutorial", pm)
 	Element.tutorial_element = elTut
 	Element.tutorial_identifier = identifier
 	elTut:SetSize(pm:GetWidth(), pm:GetHeight())

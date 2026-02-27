@@ -157,7 +157,7 @@ end
 function Element:OnUpdate()
 	self:UpdateBounds()
 end
-gui.register("WIElementSelectionOutline", Element)
+gui.register("element_selection_outline", Element)
 
 -----------------
 
@@ -319,4 +319,4 @@ end
 function Element:OnUpdate()
 	self:UpdateBounds()
 end
-gui.register("WIGameObjectSelectionOutline", Element)
+gui.register("game_object_selection_outline", Element)

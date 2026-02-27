@@ -82,4 +82,4 @@ function Element:OnUpdate()
 	self.m_bgEls[4]:SetHeight(self:GetHeight() - absPos.y + self.m_elTarget:GetHeight())
 	self.m_bgEls[4]:SetY(self.m_bgEls[3]:GetBottom())
 end
-gui.register("WIModalOverlay", Element)
+gui.register("modal_overlay", Element)

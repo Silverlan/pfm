@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/vbox.lua")
+include("/gui/layout/vbox.lua")
 include("/pfm/fonts.lua")
 
 util.register_class("gui.PFMTitlebar", gui.Base)
@@ -30,4 +30,4 @@ function gui.PFMTitlebar:SetText(text)
 	self.m_text:SetText(text)
 	self.m_text:SizeToContents()
 end
-gui.register("WIPFMTitlebar", gui.PFMTitlebar)
+gui.register("pfm_titlebar", gui.PFMTitlebar)

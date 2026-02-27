@@ -69,7 +69,7 @@ function gui.PFMTimelineDataPoint:InitializeHandleControl()
 	if util.is_valid(self.m_tangentControl) then
 		return
 	end
-	local el = gui.create("WIPFMTimelineTangentControl", self:GetParent())
+	local el = gui.create("pfm_timeline_tangent_control", self:GetParent())
 	el:SetDataPoint(self)
 
 	el:AddCallback("OnInControlMoved", function(el, newPos)
@@ -462,7 +462,7 @@ function gui.PFMTimelineDataPoint:UpdateSelection(elSelectionRect)
 	end
 	return hasSelection
 end
-gui.register("WIPFMTimelineDataPoint", gui.PFMTimelineDataPoint)
+gui.register("pfm_timeline_data_point", gui.PFMTimelineDataPoint)
 
 util.register_class("gui.PFMTimelineDataPointReference")
 function gui.PFMTimelineDataPointReference:__init(dp)

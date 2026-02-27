@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/shaders/pfm/pfm_grid_3d.lua")
+include("/shaders/pfm/grid_3d.lua")
 
 util.register_class("ents.PFMGrid", BaseEntityComponent)
 

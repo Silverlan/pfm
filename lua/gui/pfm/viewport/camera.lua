@@ -62,7 +62,7 @@ function gui.PFMCoreViewportBase:GetActiveCamera()
 	return (scene ~= nil) and scene:GetActiveCamera() or nil
 end
 function gui.PFMCoreViewportBase:InitializeCameraControls()
-	local controls = gui.create("WIHBox", self.m_controls)
+	local controls = gui.create("hbox", self.m_controls)
 	controls:SetName("cc_controls")
 
 	local btGroup = gui.PFMButtonGroup(controls)

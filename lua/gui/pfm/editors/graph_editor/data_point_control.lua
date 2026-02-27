@@ -105,4 +105,4 @@ function gui.PFMDataPointControl:SetMoveModeEnabled(enabled, moveThreshold)
 		self:CallCallbacks("OnMoveComplete", startData, startPos)
 	end
 end
-gui.register("WIPFMDataPointControl", gui.PFMDataPointControl)
+gui.register("pfm_data_point_control", gui.PFMDataPointControl)

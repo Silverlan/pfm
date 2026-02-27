@@ -16,7 +16,7 @@ local function initialize_keyframe_marker_manager()
 			if util.is_valid(elContainer) then
 				-- Boolean types are currently not supported
 				if udm.is_animatable_type(type) and type ~= udm.TYPE_BOOLEAN then
-					local marker = gui.create("WIKeyframeMarker", elPropertyControls)
+					local marker = gui.create("keyframe_marker", elPropertyControls)
 					marker:SetName("keyframe_marker")
 					Element.impl.markerManager:AddMarker(marker, actor, targetPath, type)
 					elContainer:AddIcon(marker)
@@ -41,7 +41,7 @@ function Element:OnInitialize()
 	Element.impl.count = Element.impl.count + 1
 
 	self:SetAutoSizeToContents(false, true)
-	local controls = gui.create("WIPFMControlsMenu", self)
+	local controls = gui.create("pfm_controls_menu", self)
 	controls:SetAutoFillContentsToWidth(true)
 	controls:SetAutoFillContentsToHeight(false)
 	controls:SetFixedHeight(false)
@@ -69,4 +69,4 @@ end
 function Element:GetControlsMenu()
 	return self.m_controls
 end
-gui.register("WIPFMPropertyControls", Element)
+gui.register("pfm_property_controls", Element)

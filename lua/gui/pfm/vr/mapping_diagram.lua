@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2024 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/vbox.lua")
+include("/gui/layout/vbox.lua")
 
 local Element = util.register_class("gui.PfmVrMappingDiagram", gui.Base)
 -- Note: These should correspond to the openvr enums
@@ -30,7 +30,7 @@ function Element:OnInitialize()
 
 	self:SetSize(64, 64)
 
-	local vb = gui.create("WIVBox", self)
+	local vb = gui.create("vbox", self)
 
 	local el = gui.create("WITexturedRect", vb)
 	el:SetMaterial("vr/oculus_button_mapping_diagram")
@@ -42,7 +42,7 @@ function Element:OnInitialize()
 	textContainer:SetAutoSizeToContents(false, true)
 	self.m_textContainer = textContainer
 
-	local textVbox = gui.create("WIVBox", textContainer)
+	local textVbox = gui.create("vbox", textContainer)
 	self.m_textVbox = textVbox
 
 	self.m_textElements = {}
@@ -80,4 +80,4 @@ end
 function Element:OnUpdate()
 	self:SetSize(self.m_textContainer:GetWidth(), self.m_textContainer:GetBottom())
 end
-gui.register("WIPFMVRMappingDiagram", Element)
+gui.register("pfm_vr_mapping_diagram", Element)

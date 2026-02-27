@@ -13,7 +13,7 @@ function Element:OnInitialize()
 	self.m_cvarCallbacks = {}
 	self:SetSize(128, 128)
 
-	local p = gui.create("WIPFMControlsMenu", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	local p = gui.create("pfm_controls_menu", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	p:SetAutoFillContentsToWidth(true)
 	p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
@@ -232,4 +232,4 @@ function Element:OnInitialize()
 	p:ResetControls()
 	skipCallbacks = false
 end
-gui.register("WIPFMSettings", Element)
+gui.register("pfm_settings", Element)

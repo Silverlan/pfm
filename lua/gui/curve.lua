@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/shaders/pfm/pfm_curve.lua")
+include("/shaders/pfm/curve.lua")
 
 util.register_class("gui.Curve", gui.Base)
 
@@ -149,4 +149,4 @@ function gui.Curve:SetLineBuffer(buffer, vertexCount)
 	self.m_vertexCount = vertexCount
 	self:RebuildRenderCommandBuffer()
 end
-gui.register("WICurve", gui.Curve)
+gui.register("curve", gui.Curve)

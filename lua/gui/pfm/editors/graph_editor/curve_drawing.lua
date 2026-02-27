@@ -9,7 +9,7 @@ end
 function gui.PFMTimelineGraphBase:StartCanvasDrawing(actor, propertyPath, valueBaseIndex, valueType)
 	self:EndCanvasDrawing()
 	local el = gui.create(
-		"WICurveCanvas",
+		"curve_canvas",
 		self.m_graphContainer,
 		0,
 		0,

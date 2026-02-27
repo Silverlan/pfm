@@ -307,7 +307,7 @@ console.register_command("util_export_asset", function(pl, ...)
 					local resolution = engine.get_window_resolution()
 					local width = resolution.x
 					local height = resolution.y
-					modelView = gui.create("WIModelView")
+					modelView = gui.create("model_view")
 					modelView:SetSize(width, height)
 					modelView:SetClearColor(Color.Black)
 					modelView:InitializeViewport(width, height)

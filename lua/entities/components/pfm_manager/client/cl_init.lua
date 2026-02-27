@@ -3,7 +3,7 @@
 
 include_component("pfm_selection_wireframe")
 include_component("pfm_skeleton")
-include("/gui/hover_text.lua")
+include("/gui/overlay/hover_text.lua")
 
 local Component = util.register_class("ents.PFMManager", BaseEntityComponent)
 
@@ -24,7 +24,7 @@ function Component:Initialize()
 end
 function Component:GetHoverTextElement()
 	if util.is_valid(self.m_elTextHover) == false then
-		self.m_elTextHover = gui.create("WIHoverText")
+		self.m_elTextHover = gui.create("hover_text")
 	end
 	return self.m_elTextHover
 end

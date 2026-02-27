@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/shaders/pfm/pfm_selection_outline.lua")
+include("/shaders/pfm/selection_outline.lua")
 
 local Component = util.register_class("ents.PFMSelectionWireframe", BaseEntityComponent)
 function Component:Initialize()

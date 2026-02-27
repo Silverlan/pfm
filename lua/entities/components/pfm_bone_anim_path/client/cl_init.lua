@@ -1,8 +1,8 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/shaders/pfm/pfm_lines.lua")
-include("/shaders/pfm/pfm_sprite.lua")
+include("/shaders/pfm/lines.lua")
+include("/shaders/pfm/sprite.lua")
 
 util.register_class("ents.PFMBoneAnimPath", BaseEntityComponent)
 

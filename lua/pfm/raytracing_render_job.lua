@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("/util/class_property.lua")
-include("/shaders/pfm/pfm_calc_image_luminance.lua")
+include("/shaders/pfm/calc_image_luminance.lua")
 include("unirender.lua")
 include("pragma_render_job.lua")
 

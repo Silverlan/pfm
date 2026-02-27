@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2021 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/pfm/popup.lua")
+include("/gui/pfm/dialogs/popup.lua")
 
 util.register_class("pfm.ComponentManager")
 function pfm.ComponentManager:__init()

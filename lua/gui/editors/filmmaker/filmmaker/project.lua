@@ -221,7 +221,7 @@ function Element:InitializeProjectUI(layoutName)
 	if filmClip ~= nil then
 		local timeline = pfmTimeline:GetTimeline()
 
-		filmStrip = gui.create("WIFilmStrip")
+		filmStrip = gui.create("film_strip")
 		self.m_filmStrip = filmStrip
 		filmStrip:SetScrollInputEnabled(true)
 		filmStrip:AddCallback("OnScroll", function(el, x, y)

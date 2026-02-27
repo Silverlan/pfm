@@ -172,7 +172,7 @@ function gui.PFMTimelineMotion:OnDragUpdate(origSelTimes, newSelTimes, isFinal)
 end
 function gui.PFMTimelineMotion:SetTimelineContents(contents)
 	util.remove(self.m_elSelection)
-	local selection = gui.create("WIPFMPartialTimeSelection", contents)
+	local selection = gui.create("pfm_partial_time_selection", contents)
 	selection:GetVisibilityProperty():Link(self:GetVisibilityProperty())
 	selection:SetupTimelineMarkers(contents)
 	selection:SetY(contents:GetUpperTimelineStrip():GetTop())
@@ -195,4 +195,4 @@ function gui.PFMTimelineMotion:SetTimelineContents(contents)
 	self.m_elSelection = selection
 end
 function gui.PFMTimelineMotion:InitializeBookmarks(graphData) end
-gui.register("WIPFMTimelineMotion", gui.PFMTimelineMotion)
+gui.register("pfm_timeline_motion", gui.PFMTimelineMotion)

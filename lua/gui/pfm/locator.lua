@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("slidercursor.lua")
+include("controls/slider/cursor.lua")
 
 util.register_class("gui.PFMLocator", gui.Base)
 
@@ -17,4 +17,4 @@ function gui.PFMLocator:OnInitialize()
 	locator:SetMaterial("gui/pfm/locator")
 	locator:SetColor(Color.Black)
 end
-gui.register("WIPFMLocator", gui.PFMLocator)
+gui.register("pfm_locator", gui.PFMLocator)

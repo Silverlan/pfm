@@ -62,7 +62,7 @@ function Element:OnThink()
 					util.remove(data.elOutline)
 				end
 				if util.is_valid(data.elOutline) == false then
-					local elOutline = gui.create("WIElementSelectionOutline", self:DetermineHighlightItemParent(els))
+					local elOutline = gui.create("element_selection_outline", self:DetermineHighlightItemParent(els))
 					elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
 					elOutline:SetTargetElement(els)
 					elOutline:Update()
@@ -336,7 +336,7 @@ function Element:AddHighlight(el, setAsArrowTarget)
 		end
 		return
 	end
-	local elOutline = gui.create("WIElementSelectionOutline", self:DetermineHighlightItemParent(els))
+	local elOutline = gui.create("element_selection_outline", self:DetermineHighlightItemParent(els))
 	elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MEDIUM)
 	elOutline:SetTargetElement(els)
 	elOutline:Update()
@@ -354,14 +354,14 @@ function Element:SetFocusElement(el)
 		return
 	end
 	self.m_elFocus = el
-	local elOutline = gui.create("WIElementSelectionOutline", self:DetermineHighlightItemParent(el))
+	local elOutline = gui.create("element_selection_outline", self:DetermineHighlightItemParent(el))
 	elOutline:SetTargetElement(el)
 	elOutline:SetOutlineType(gui.ElementSelectionOutline.OUTLINE_TYPE_MINOR)
 	table.insert(self.m_highlightItems, elOutline)
 	table.insert(self.m_highlights, elOutline)
 end
 function Element:CreateButton(parent, text, f)
-	local elBt = gui.create("WIPFMButton", parent)
+	local elBt = gui.create("pfm_button", parent)
 	elBt:SetText(text)
 	elBt:AddCallback("OnPressed", function()
 		f()
@@ -457,7 +457,7 @@ function Element:UpdateConnectorLine()
 		return
 	end
 
-	local l = gui.create("WIElementConnectorLine", self)
+	local l = gui.create("element_connector_line", self)
 	l:SetSize(self:GetSize())
 	l:SetAnchor(0, 0, 1, 1)
 	l:Setup(self.m_messageBox, el)
@@ -518,7 +518,7 @@ function Element:OpenFeedbackPrompt()
 	)
 	local userContents = msg:GetUserContents()
 
-	local p = gui.create("WIPFMControlsMenu", userContents)
+	local p = gui.create("pfm_controls_menu", userContents)
 	p:SetAutoFillContentsToWidth(true)
 	p:SetAutoFillContentsToHeight(false)
 
@@ -553,7 +553,7 @@ function Element:AddMessageBox(msg, audioFile)
 	elTgt = elTgt or self.m_highlights[1] or self
 	local elFocus = util.is_valid(self.m_elFocus) and self.m_elFocus or elTgt
 	self.m_focusElement = elFocus
-	local overlay = gui.create("WIModalOverlay", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	local overlay = gui.create("modal_overlay", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 
 	local el = gui.create("WITransformable", self)
 	el:SetDraggable(true)
@@ -565,7 +565,7 @@ function Element:AddMessageBox(msg, audioFile)
 	el:SetCursor(gui.CURSOR_SHAPE_CROSSHAIR)
 	self.m_messageBox = el
 
-	local vbox = gui.create("WIVBox", el)
+	local vbox = gui.create("vbox", el)
 
 	local msgText = msg
 	if util.get_type_name(msgText) == "LocStr" then
@@ -628,7 +628,7 @@ function Element:AddMessageBox(msg, audioFile)
 	self.m_elCurSlide = elCurSlide
 
 	local buttonContainer = gui.create("WIBase", vbox)
-	local hbox = gui.create("WIHBox", buttonContainer)
+	local hbox = gui.create("hbox", buttonContainer)
 	self.m_buttonPrev = self:CreateButton(
 		hbox,
 		locale.get_text("pfm_go_back") .. " (" .. pfm.get_key_binding("pfm_tutorial_back") .. ")",
@@ -804,20 +804,19 @@ function Element:GetWindowFrameDividers(windowIdentifier)
 	if parent == nil then
 		return
 	end
-	local className = parent:GetClass()
-	if className ~= "wihbox" and className ~= "wivbox" then
+	if not parent:IsType(gui.TYPE_HBOX) and not parent:IsType(gui.TYPE_VBOX) then
 		return
 	end
 	local children = parent:GetChildren()
 	local preDivider
 	local postDivider
 	for i, c in ipairs(children) do
-		if c:GetClass() == "wiresizer" then
+		if c:IsType(gui.TYPE_RESIZER) then
 			preDivider = c
 		end
 		if c == frame then
 			for j = i, #children do
-				if children[j]:GetClass() == "wiresizer" then
+				if children[j]:IsType(gui.TYPE_RESIZER) then
 					postDivider = children[j]
 					break
 				end
@@ -835,12 +834,12 @@ function Element:SetWindowFrameDividerFraction(windowIdentifier, fraction, dontC
 	local preDivider, postDivider, parent = self:GetWindowFrameDividers(windowIdentifier)
 	local children = parent:GetChildren()
 	for i, c in ipairs(children) do
-		if c:GetClass() == "wiresizer" then
+		if c:IsType(gui.TYPE_RESIZER) then
 			preDivider = c
 		end
 		if c == frame then
 			for j = i, #children do
-				if children[j]:GetClass() == "wiresizer" then
+				if children[j]:IsType(gui.TYPE_RESIZER) then
 					postDivider = children[j]
 					break
 				end
@@ -897,4 +896,4 @@ function Element:SetTutorialCompleted()
 		explorer:ReloadPath()
 	end
 end
-gui.register("WITutorialSlide", Element)
+gui.register("tutorial_slide", Element)

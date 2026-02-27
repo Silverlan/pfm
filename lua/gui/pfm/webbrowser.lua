@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/wipfmassetwebbrowser.lua")
+include("/gui/pfm/wipfmassetwebbrowser.lua")
 
 local Element = util.register_class("gui.PFMWebBrowser", gui.Base)
 
@@ -18,7 +18,7 @@ function Element:OnInitialize()
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_bg:SetColor(Color(54, 54, 54))
 
-	self.m_contents = gui.create("WIVBox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_contents = gui.create("vbox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents:SetFixedSize(true)
 
 	local infoBox = gui.create_info_box(
@@ -34,7 +34,7 @@ function Element:OnInitialize()
 		return util.EVENT_REPLY_HANDLED
 	end)
 
-	self.m_browser = gui.create("WIPFMAssetWebBrowser", self.m_contents)
+	self.m_browser = gui.create("pfm_asset_web_browser", self.m_contents)
 	self.m_browser:AddCallback("OnDownloadAssetsImported", function(el, importedAssets)
 		self:CallCallbacks("OnDownloadAssetsImported", importedAssets)
 	end)
@@ -64,4 +64,4 @@ function Element:OnThink()
 		end)
 	end
 end
-gui.register("WIPFMWebBrowser", Element)
+gui.register("pfm_web_browser", Element)

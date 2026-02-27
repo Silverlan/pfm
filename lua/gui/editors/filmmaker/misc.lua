@@ -11,7 +11,7 @@ function Element:BuildKernels()
 	if #tFiles > 0 then
 		return
 	end
-	local rt = gui.create("WIRealtimeRaytracedViewport", self)
+	local rt = gui.create("realtime_raytraced_viewport", self)
 	rt:Refresh(true)
 	self.m_rtBuildKernels = rt
 end
@@ -41,7 +41,7 @@ function Element:SetBuildKernels(buildKernels)
 	if util.is_valid(tabContainer) == false then
 		return
 	end
-	self.m_kernelsBuildMessage = gui.create("WIKernelsBuildMessage", tabContainer)
+	self.m_kernelsBuildMessage = gui.create("kernels_build_message", tabContainer)
 	self.m_kernelProgressBar = self:AddProgressStatusBar("kernel", locale.get_text("pfm_building_kernels"), locale.get_text("pfm_notify_build_kernels_complete"))
 	local tStart = time.real_time()
 	self.m_cbKernelProgress = game.add_callback("Think", function()

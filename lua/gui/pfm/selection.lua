@@ -108,7 +108,7 @@ function gui.PFMSelection:EndSelection()
 	end
 	--end
 end
-gui.register("WIPFMSelection", gui.PFMSelection)
+gui.register("pfm_selection", gui.PFMSelection)
 
 gui.set_mouse_selection_enabled = function(el, enabled)
 	el._impl = el._impl or {}
@@ -127,7 +127,7 @@ gui.set_mouse_selection_enabled = function(el, enabled)
 		if button == input.MOUSE_BUTTON_LEFT then
 			if state == input.STATE_PRESS then
 				if util.is_valid(el._impl.elMouseSelection) == false then
-					el._impl.elMouseSelection = gui.create("WIPFMSelection", el)
+					el._impl.elMouseSelection = gui.create("pfm_selection", el)
 					el._impl.elMouseSelection:StartSelection()
 				end
 			elseif state == input.STATE_RELEASE then

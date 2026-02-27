@@ -12,7 +12,7 @@ include("layout.lua")
 include("misc.lua")
 include("io.lua")
 include("restore.lua")
-include("/gui/pfm/theme_toggle.lua")
+include("/gui/pfm/controls/theme_toggle.lua")
 
 function Element:__init()
 	gui.WIBaseEditor.__init(self)
@@ -29,7 +29,7 @@ end
 function Element:AddVersionInfo(identifier, version, gitInfoPath)
 	local pMenuBarContents = self:GetMenuBarContainer()
 
-	local elRightContents = gui.create("WIHBox", pMenuBarContents)
+	local elRightContents = gui.create("hbox", pMenuBarContents)
 	self.m_menuBarRightContents = elRightContents
 	local function update_size()
 		elRightContents:SetX(pMenuBarContents:GetWidth() - elRightContents:GetWidth())
@@ -92,7 +92,7 @@ function Element:AddVersionInfo(identifier, version, gitInfoPath)
 	el:SetSize(32, pMenuBarContents:GetHeight())
 	el:SetParent(elRightContents, 0)
 
-	local elToggle = gui.create("WIPFMThemeToggle", el)
+	local elToggle = gui.create("pfm_theme_toggle", el)
 	elToggle:CenterToParent()
 end
 function Element:GetWorldAxesGizmo()
@@ -297,7 +297,7 @@ function Element:ShowMatureContentPrompt(onYes, onNo)
 	)
 	local userContents = msg:GetUserContents()
 
-	local p = gui.create("WIPFMControlsMenu", userContents)
+	local p = gui.create("pfm_controls_menu", userContents)
 	p:SetAutoFillContentsToWidth(true)
 	p:SetAutoFillContentsToHeight(false)
 
@@ -312,7 +312,7 @@ end
 function Element:AddProgressStatusBar(identifier, text, notifyText)
 	local infoBar = self:GetInfoBar()
 
-	local statusBar = gui.create("WIProgressStatusInfo")
+	local statusBar = gui.create("progress_status_info")
 	statusBar:SetName("status_info_" .. identifier)
 	statusBar:SetText(text)
 	statusBar:SetProgress(0.0)

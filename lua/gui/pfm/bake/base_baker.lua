@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/pfm/button.lua")
+include("/gui/pfm/controls/button.lua")
 include("/util/window.lua")
 
 pfm = pfm or {}
@@ -124,7 +124,7 @@ end
 
 -----------
 
-local WIPFMActionButton = util.register_class("WIPFMActionButton", gui.PFMButton)
+local WIPFMActionButton = util.register_class("pfm_action_button", gui.PFMButton)
 function WIPFMActionButton:OnInitialize()
 	gui.PFMButton.OnInitialize(self)
 
@@ -132,11 +132,11 @@ function WIPFMActionButton:OnInitialize()
 	self:SetMouseInputEnabled(true)
 	self:SetCursor(gui.CURSOR_SHAPE_HAND)
 end
-gui.register("WIPFMActionButton", WIPFMActionButton)
+gui.register("pfm_action_button", WIPFMActionButton)
 
 -----------
 
-local WIBakeButton = util.register_class("WIBakeButton", WIPFMActionButton)
+local WIBakeButton = util.register_class("bake_button", WIPFMActionButton)
 function WIBakeButton:OnInitialize()
 	WIPFMActionButton.OnInitialize(self)
 
@@ -246,4 +246,4 @@ function WIBakeButton:InitializeProgressBar()
 	progressBar:SetLabelVisible(false)
 	self.m_progressBar = progressBar
 end
-gui.register("WIBakeButton", WIBakeButton)
+gui.register("bake_button", WIBakeButton)

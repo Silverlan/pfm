@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/pfm/popup.lua")
+include("/gui/pfm/dialogs/popup.lua")
 
 pfm.impl = pfm.impl or {}
 function pfm.create_popup_message(msg, duration, type, settings)
@@ -10,7 +10,7 @@ function pfm.create_popup_message(msg, duration, type, settings)
 		return
 	end
 	if util.is_valid(pfm.impl.popup) == false then
-		pfm.impl.popup = gui.create("WIPFMPopup", editor)
+		pfm.impl.popup = gui.create("pfm_popup", editor)
 	end
 	if util.is_valid(pfm.impl.popup) == false then
 		return

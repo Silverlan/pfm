@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/shader_graph/shader_graph.lua")
-include("/gui/selectionrect.lua")
+include("/gui/selection/selectionrect.lua")
 
 local Element = util.register_class("gui.PFMShaderEditor", gui.Base)
 
@@ -30,7 +30,7 @@ function Element:OnInitialize()
 	--elDrag:GetDragArea():SetAutoAlignToParent(true)
 	self.m_transformable = elDrag
 
-	local elGraph = gui.create("WIShaderGraph", elDrag, 0, 0)
+	local elGraph = gui.create("shader_graph", elDrag, 0, 0)
 	self.m_elGraph = elGraph
 	elGraph:SetShaderEditor(self)
 	elGraph:AddCallback("OnNodeSocketValueChanged", function(name, id, val)
@@ -44,7 +44,7 @@ function Element:OnInitialize()
 	end)
 	elGraph:SetPos(szDrag * 0.5 - elGraph:GetWidth() * 0.5, szDrag * 0.5 - elGraph:GetHeight() * 0.5)
 
-	local menuBar = gui.create("WIMenuBar", self, 0, 0, self:GetWidth(), 20, 0, 0, 1, 0)
+	local menuBar = gui.create("menu_bar", self, 0, 0, self:GetWidth(), 20, 0, 0, 1, 0)
 	menuBar
 		:AddItem(locale.get_text("file"), function(pContext)
 			pContext:AddItem(locale.get_text("new"), function()
@@ -207,4 +207,4 @@ function Element:UpdatePath(path)
 	path = util.FilePath(path):GetString()
 	self.m_filePath = path
 end
-gui.register("WIPFMShaderEditor", Element)
+gui.register("pfm_shader_editor", Element)

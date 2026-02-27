@@ -10,7 +10,7 @@ function gui.PFMTimelineTangentControl:OnInitialize()
 	lineIn:SetLineWidth(2)
 	self.m_inLine = lineIn
 
-	local ctrlIn = gui.create("WIPFMDataPointControl", self:GetParent())
+	local ctrlIn = gui.create("pfm_data_point_control", self:GetParent())
 	ctrlIn:SetTangentControl(self)
 	ctrlIn:SetColor(Color.Black)
 	self.m_inCtrl = ctrlIn
@@ -20,7 +20,7 @@ function gui.PFMTimelineTangentControl:OnInitialize()
 	lineOut:SetLineWidth(2)
 	self.m_outLine = lineOut
 
-	local ctrlOut = gui.create("WIPFMDataPointControl", self:GetParent())
+	local ctrlOut = gui.create("pfm_data_point_control", self:GetParent())
 	ctrlOut:SetTangentControl(self)
 	ctrlOut:SetColor(Color.Black)
 	self.m_outCtrl = ctrlOut
@@ -149,4 +149,4 @@ end
 function gui.PFMTimelineTangentControl:OnRemove()
 	util.remove({ self.m_inLine, self.m_outLine, self.m_inCtrl, self.m_outCtrl })
 end
-gui.register("WIPFMTimelineTangentControl", gui.PFMTimelineTangentControl)
+gui.register("pfm_timeline_tangent_control", gui.PFMTimelineTangentControl)

@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2023 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/shaders/pfm/pfm_flat.lua")
+include("/shaders/pfm/flat.lua")
 
 util.register_class("ents.DebugSkeletonDraw", BaseEntityComponent)
 local Component = ents.DebugSkeletonDraw

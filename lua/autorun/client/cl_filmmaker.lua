@@ -65,7 +65,7 @@ tool.open_filmmaker = function(devMode)
 	debug.start_profiling_task("pfm_launch")
 
 	tool.developerMode = devMode or false
-	tool.editor = gui.create("WIFilmmaker")
+	tool.editor = gui.create("filmmaker")
 	tool.filmmaker = tool.editor
 	tool.editor:SetAutoAlignToParent(true)
 	-- tool.editor:SetZPos(1000)

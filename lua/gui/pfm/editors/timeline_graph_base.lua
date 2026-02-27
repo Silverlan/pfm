@@ -2,13 +2,13 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/curve.lua")
-include("/gui/pfm/treeview.lua")
-include("/gui/pfm/grid.lua")
+include("/gui/pfm/containers/tree_view.lua")
+include("/gui/pfm/layout/grid.lua")
 include("/gui/pfm/selection.lua")
-include("/gui/pfm/cursor_tracker.lua")
-include("/gui/selectionrect.lua")
-include("/gui/timelinestrip.lua")
-include("/graph_axis.lua")
+include("/gui/pfm/util/cursor_tracker.lua")
+include("/gui/selection/selectionrect.lua")
+include("/gui/timeline/strip.lua")
+include("/util/graph_axis.lua")
 include("key.lua")
 include("easing.lua")
 
@@ -49,7 +49,7 @@ function gui.PFMTimelineGraphBase:OnInitialize()
 	)
 
 	self.m_transformList = gui.create(
-		"WIPFMTreeView",
+		"pfm_tree_view",
 		self.m_scrollContainer,
 		0,
 		0,
@@ -60,7 +60,7 @@ function gui.PFMTimelineGraphBase:OnInitialize()
 	self.m_transformList:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 
 	local dataAxisStrip =
-		gui.create("WILabelledTimelineStrip", self, listContainer:GetRight(), 0, 30, self:GetHeight(), 0, 0, 0, 1)
+		gui.create("labelled_timeline_strip", self, listContainer:GetRight(), 0, 30, self:GetHeight(), 0, 0, 0, 1)
 	dataAxisStrip:SetHorizontal(false)
 	dataAxisStrip:SetDataAxisInverted(true)
 	-- dataAxisStrip:AddDebugMarkers()
@@ -534,7 +534,7 @@ function gui.PFMTimelineGraphBase:MouseCallback(button, state, mods)
 			self:SetCursorTrackerEnabled(true)
 			if cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT then
 				if util.is_valid(self.m_selectionRect) == false then
-					self.m_selectionRect = gui.create("WISelectionRect", self.m_graphContainer)
+					self.m_selectionRect = gui.create("selection_rect", self.m_graphContainer)
 					self.m_selectionRect:SetPos(self.m_graphContainer:GetCursorPos())
 				end
 			elseif cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_ZOOM then
@@ -1113,7 +1113,7 @@ function gui.PFMTimelineGraphBase:AddGraph(
 	end
 
 	local graph = gui.create(
-		"WIPFMTimelineCurve",
+		"pfm_timeline_curve",
 		self.m_graphContainer,
 		0,
 		0,
@@ -1555,4 +1555,4 @@ end
 	self.m_boneList:SizeToContents()
 	self.m_boneList:SetWidth(204)
 end]]
-gui.register("WIPFMTimelineGraphBase", gui.PFMTimelineGraphBase)
+gui.register("pfm_timeline_graph_base", gui.PFMTimelineGraphBase)

@@ -54,7 +54,7 @@ pfm.register_component_action(
 		util.remove(actionData.baker)
 
 		local baker = add_baker("reflection_probe", pfm.ReflectionProbeBaker, actorData, entActor)
-		local el = gui.create("WIBakeButton", controls)
+		local el = gui.create("bake_button", controls)
 		el:SetName("bake_reflection_probe")
 		el:SetBakeText(locale.get_text("pfm_bake_reflection_probe"))
 		el:SetBaker(baker)
@@ -71,7 +71,7 @@ pfm.register_component_action(
 			actionData.windowHandle:Close()
 		end
 		util.remove(actionData.windowHandle)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetName("view_reflection_probe")
 		bt:SetText(locale.get_text("pfm_view_reflection_probe"))
 		bt:AddCallback("OnPressed", function()
@@ -99,7 +99,7 @@ pfm.register_component_action(
 		util.remove(actionData.baker)
 
 		local baker = add_baker("uv", pfm.UvBaker, actorData, entActor)
-		local el = gui.create("WIBakeButton", controls)
+		local el = gui.create("bake_button", controls)
 		el:SetBakeText(locale.get_text("pfm_bake_uvs"))
 		el:SetBaker(baker)
 		actionData.baker = el
@@ -116,7 +116,7 @@ pfm.register_component_action(
 		util.remove(actionData.baker)
 
 		local baker = add_baker("lightmap", pfm.LightmapBaker, actorData, entActor)
-		local el = gui.create("WIBakeButton", controls)
+		local el = gui.create("bake_button", controls)
 		el:SetName("bake_lightmaps")
 		el:SetBakeText(locale.get_text("pfm_bake_lightmaps"))
 		el:SetBaker(baker)
@@ -136,7 +136,7 @@ pfm.register_component_action(
 		local baker = add_baker("lightmap_render_job", pfm.LightmapBaker, actorData, entActor)
 		baker:SetGenerateRenderJob(true)
 
-		local el = gui.create("WIBakeButton", controls)
+		local el = gui.create("bake_button", controls)
 		el:SetName("create_lightmap_render_job")
 		el:SetBakeText(locale.get_text("pfm_generate_render_job"))
 		el:SetBaker(baker)
@@ -163,7 +163,7 @@ pfm.register_component_action(
 	"pfm_import_direct",
 	"import_direct_lightmap",
 	function(controls, actorData, entActor, actionData)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetText(locale.get_text("pfm_import_direct_lightmap"))
 		bt:AddCallback("OnPressed", function()
 			local c = entActor:GetComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)
@@ -190,7 +190,7 @@ pfm.register_component_action(
 	"pfm_import_indirect",
 	"import_indirect_lightmap",
 	function(controls, actorData, entActor, actionData)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetText(locale.get_text("pfm_import_indirect_lightmap"))
 		bt:AddCallback("OnPressed", function()
 			local c = entActor:GetComponent(ents.COMPONENT_PFM_BAKED_LIGHTING)
@@ -217,7 +217,7 @@ pfm.register_component_action(
 	"pfm_import_render_tool",
 	"import_render_tool_lightmaps",
 	function(controls, actorData, entActor, actionData)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetName("import_lightmaps")
 		bt:SetText(locale.get_text("pfm_import_render_tool_lightmaps"))
 		bt:AddCallback("OnPressed", function()
@@ -261,7 +261,7 @@ pfm.register_component_action(
 			actionData.windowHandle:Close()
 		end
 		util.remove(actionData.windowHandle)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetText(locale.get_text("pfm_view_lightmap_atlas"))
 		bt:AddCallback("OnPressed", function()
 			debug.open_lightmap_atlas_view(entActor, function(windowHandle, contents, controls)
@@ -372,7 +372,7 @@ pfm.register_component_action(
 	"pfm_carve",
 	"carve",
 	function(controls, actorData, entActor, actionData)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetText(locale.get_text("pfm_carve"))
 		bt:AddCallback("OnPressed", function()
 			if util.is_valid(entActor) == false then
@@ -401,7 +401,7 @@ pfm.register_component_action(
 	"pfm_remove_outside_actors",
 	"remove_outside",
 	function(controls, actorData, entActor, actionData)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetText(locale.get_text("pfm_remove_outside"))
 		bt:AddCallback("OnPressed", function()
 			local tRemove = {}
@@ -428,7 +428,7 @@ pfm.register_component_action(
 	"pfm_vr_identify_device",
 	"vr_identify_device",
 	function(controls, actorData, entActor, actionData)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetText(locale.get_text("vr_identify_device"))
 		bt:AddCallback("OnPressed", function()
 			if util.is_valid(entActor) == false then
@@ -449,7 +449,7 @@ pfm.register_component_action(
 	"pfm_start_recording",
 	"vr_start_recording",
 	function(controls, actorData, entActor, actionData)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetText(locale.get_text("vr_start_recording"))
 		bt:AddCallback("OnPressed", function()
 			if util.is_valid(entActor) == false then
@@ -469,7 +469,7 @@ pfm.register_component_action(
 	"pfm_stop_recording",
 	"vr_stop_recording",
 	function(controls, actorData, entActor, actionData)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetText(locale.get_text("vr_stop_recording"))
 		bt:AddCallback("OnPressed", function()
 			if util.is_valid(entActor) == false then
@@ -504,7 +504,7 @@ pfm.register_component_action(
 			actionData.windowHandle:Close()
 		end
 		util.remove(actionData.windowHandle)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetText(locale.get_text("pfm_view_bloom_map"))
 		bt:AddCallback("OnPressed", function()
 			view_bloom_map(entActor, function(windowHandle, contents, controls)
@@ -522,7 +522,7 @@ pfm.register_component_action(
 	"pfm_lua_script_execute",
 	"execute_lua_script",
 	function(controls, actorData, entActor, actionData)
-		local bt = gui.create("WIPFMActionButton", controls)
+		local bt = gui.create("pfm_action_button", controls)
 		bt:SetText(locale.get_text("execute"))
 		bt:AddCallback("OnPressed", function()
 			if util.is_valid(entActor) == false then

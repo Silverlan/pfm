@@ -8,7 +8,7 @@ function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(128, 128)
-	local elCurve = gui.create("WICurve", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	local elCurve = gui.create("curve", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	elCurve:SetHorizontalRange(0.0, 1.0)
 	elCurve:SetVerticalRange(0.0, 1.0)
 	self.m_elCurve = elCurve
@@ -108,4 +108,4 @@ function Element:EndDrawing()
 	self.m_drawing = false
 	self:SetThinkingEnabled(false)
 end
-gui.register("WICurveCanvas", Element)
+gui.register("curve_canvas", Element)

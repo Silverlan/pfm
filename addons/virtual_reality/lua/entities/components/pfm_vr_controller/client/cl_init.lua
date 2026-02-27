@@ -50,7 +50,7 @@ function ents.PFMVRController:GetGUIElement()
 end
 
 function ents.PFMVRController:InitializeInterface()
-	self.m_guiInterface = gui.create("WIPFMVRInterface")
+	self.m_guiInterface = gui.create("pfm_vr_interface")
 	self.m_guiInterface:SetAlwaysUpdate(true) -- The element will not be drawn on screen, but we need it to update anyway
 	self.m_guiInterface:SetVisible(false)
 

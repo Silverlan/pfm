@@ -27,7 +27,7 @@ pfm.register_window = function(name, category, localizedName, factory)
 end
 
 pfm.register_window("actor_editor", "editors", locale.get_text("pfm_actor_editor"), function(pm)
-	local actorEditor = gui.create("WIPFMActorEditor")
+	local actorEditor = gui.create("pfm_actor_editor")
 	actorEditor:AddCallback("OnControlSelected", function(actorEditor, actor, component, controlData, slider)
 		pm:OnActorControlSelected(actorEditor, actor, component, controlData, slider)
 	end)
@@ -37,24 +37,24 @@ pfm.register_window("actor_editor", "editors", locale.get_text("pfm_actor_editor
 	return actorEditor
 end)
 pfm.register_window("bone_retargeting", "editors", locale.get_text("pfm_bone_retargeting"), function(pm)
-	local p = gui.create("WIBoneRetargeting")
+	local p = gui.create("bone_retargeting")
 	pm:OpenModelView()
 	p:SetModelView(pm.m_mdlView)
 	return p
 end)
 pfm.register_window("ik_rig_editor", "editors", locale.get_text("pfm_ik_rig_editor"), function(pm)
-	local p = gui.create("WIIkRigEditor")
+	local p = gui.create("ik_rig_editor")
 	pm:OpenModelView()
 	p:SetModelView(pm.m_mdlView)
 	return p
 end)
 pfm.register_window("model_viewer", "viewers", locale.get_text("pfm_model_viewer"), function(pm)
-	local playerBox = gui.create("WIVBox")
+	local playerBox = gui.create("vbox")
 	playerBox:SetAutoFillContents(true)
 
 	local vrBox = gui.create("WIBase", playerBox)
 	vrBox:SetSize(128, 128)
-	local aspectRatioWrapper = gui.create("WIAspectRatio", vrBox)
+	local aspectRatioWrapper = gui.create("aspect_ratio", vrBox)
 	aspectRatioWrapper:AddCallback("OnAspectRatioChanged", function(el, aspectRatio)
 		if util.is_valid(pm.m_viewport) then
 			local scene = pm.m_viewport:GetScene()
@@ -73,7 +73,7 @@ pfm.register_window("model_viewer", "viewers", locale.get_text("pfm_model_viewer
 	local width = pm:GetWidth()
 	local height = pm:GetHeight()
 	local modelView =
-		gui.create("WIModelView", vpWrapper, 0, 0, vpWrapper:GetWidth(), vpWrapper:GetHeight(), 0, 0, 1, 1)
+		gui.create("model_view", vpWrapper, 0, 0, vpWrapper:GetWidth(), vpWrapper:GetHeight(), 0, 0, 1, 1)
 	modelView:SetClearColor(Color(5, 5, 5, 255))
 	modelView:InitializeViewport(width, height)
 	modelView:SetFov(math.horizontal_fov_to_vertical_fov(45.0, width, height))
@@ -91,7 +91,7 @@ pfm.register_window("model_viewer", "viewers", locale.get_text("pfm_model_viewer
 	return playerBox
 end)
 pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_catalog"), function(pm)
-	local mdlCatalog = gui.create("WIPFMModelCatalog")
+	local mdlCatalog = gui.create("pfm_model_catalog")
 	local explorer = mdlCatalog:GetIconExplorer()
 	explorer:AddCallback("PopulateIconContextMenu", function(explorer, pContext, tSelectedFiles, tExternalFiles)
 		local hasExternalFiles = (#tExternalFiles > 0)
@@ -240,39 +240,39 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 	return mdlCatalog
 end)
 pfm.register_window("material_catalog", "catalogs", locale.get_text("pfm_material_catalog"), function(pm)
-	local el = gui.create("WIPFMMaterialCatalog")
+	local el = gui.create("pfm_material_catalog")
 	return el
 end)
 --[[pfm.register_window("texture_catalog", "catalogs", locale.get_text("pfm_texture_catalog"), function(pm)
-	local el = gui.create("WIPFMTextureCatalog")
+	local el = gui.create("pfm_texture_catalog")
 	return el
 end)]]
 pfm.register_window("particle_catalog", "catalogs", locale.get_text("pfm_particle_catalog"), function(pm)
-	local el = gui.create("WIPFMParticleCatalog")
+	local el = gui.create("pfm_particle_catalog")
 	return el
 end)
 pfm.register_window("tutorial_catalog", "catalogs", locale.get_text("pfm_tutorial_catalog"), function(pm)
-	local el = gui.create("WIPFMTutorialCatalog")
+	local el = gui.create("pfm_tutorial_catalog")
 	return el
 end)
 --[[pfm.register_window("actor_catalog", "catalogs", locale.get_text("pfm_actor_catalog"), function(pm)
-	local el = gui.create("WIPFMActorCatalog")
+	local el = gui.create("pfm_actor_catalog")
 	return el
 end)]]
 pfm.register_window("element_viewer", "editors", locale.get_text("pfm_element_viewer"), function(pm)
-	local el = gui.create("WIPFMElementViewer")
+	local el = gui.create("pfm_element_viewer")
 	return el
 end)
 pfm.register_window("material_editor", "editors", locale.get_text("pfm_material_editor"), function(pm)
-	local el = gui.create("WIPFMMaterialEditor")
+	local el = gui.create("pfm_material_editor")
 	return el
 end)
 pfm.register_window("particle_editor", "editors", locale.get_text("pfm_particle_editor"), function(pm)
-	local el = gui.create("WIPFMParticleEditor")
+	local el = gui.create("pfm_particle_editor")
 	return el
 end)
 pfm.register_window("web_browser", "editors", locale.get_text("pfm_web_browser"), function(pm)
-	local el = gui.create("WIPFMWebBrowser")
+	local el = gui.create("pfm_web_browser")
 	el:AddCallback("OnDetached", function(el, window)
 		window:Maximize()
 	end)
@@ -303,7 +303,7 @@ pfm.register_window("web_browser", "editors", locale.get_text("pfm_web_browser")
 	return el
 end)
 pfm.register_window("code_editor", "editors", locale.get_text("pfm_code_editor"), function(pm)
-	local el = gui.create("WIPFMCodeEditor")
+	local el = gui.create("pfm_code_editor")
 	el:AddCallback("OnDetached", function(el, window)
 		window:Maximize()
 	end)
@@ -331,12 +331,12 @@ pfm.register_window("console", "editors", locale.get_text("console"), function(p
 	return el
 end)
 pfm.register_window("settings", "editors", locale.get_text("pfm_settings"), function(pm)
-	local el = gui.create("WIPFMSettings")
+	local el = gui.create("pfm_settings")
 	return el
 end)
 
 pfm.register_window("primary_viewport", "viewers", locale.get_text("pfm_primary_viewport"), function(pm)
-	local el = gui.create("WIPFMViewport")
+	local el = gui.create("pfm_viewport")
 	el:AddCallback("OnReattached", function(el, window)
 		pm:RequestFocus()
 	end)
@@ -346,7 +346,7 @@ pfm.register_window("primary_viewport", "viewers", locale.get_text("pfm_primary_
 	return el
 end)
 pfm.register_window("secondary_viewport", "viewers", locale.get_text("pfm_secondary_viewport"), function(pm)
-	local el = gui.create("WIPFMViewport")
+	local el = gui.create("pfm_viewport")
 	el:AddCallback("OnReattached", function(el, window)
 		pm:RequestFocus()
 	end)
@@ -354,7 +354,7 @@ pfm.register_window("secondary_viewport", "viewers", locale.get_text("pfm_second
 	return el
 end)
 pfm.register_window("tertiary_viewport", "viewers", locale.get_text("pfm_tertiary_viewport"), function(pm)
-	local el = gui.create("WIPFMViewport")
+	local el = gui.create("pfm_viewport")
 	el:AddCallback("OnReattached", function(el, window)
 		pm:RequestFocus()
 	end)
@@ -362,7 +362,7 @@ pfm.register_window("tertiary_viewport", "viewers", locale.get_text("pfm_tertiar
 	return el
 end)
 pfm.register_window("render", "viewers", locale.get_text("pfm_render"), function(pm)
-	local el = gui.create("WIPFMRenderPreview")
+	local el = gui.create("pfm_render_preview")
 	el:GetVisibilityProperty():AddCallback(function(wasVisible, isVisible)
 		if pm.m_renderWasSceneCameraEnabled == nil then
 			pm.m_renderWasSceneCameraEnabled = ents.PFMCamera.is_camera_enabled()
@@ -388,14 +388,14 @@ pfm.register_window("render", "viewers", locale.get_text("pfm_render"), function
 	return el
 end)
 --[[pfm.register_window("post_processing", "viewers", locale.get_text("pfm_post_processing"), function(pm)
-	return gui.create("WIPFMPostProcessing")
+	return gui.create("pfm_post_processing")
 end)
 pfm.register_window("video_player", "viewers", locale.get_text("pfm_video_player"), function(pm)
-	return gui.create("WIPFMVideoPlayer")
+	return gui.create("pfm_video_player")
 end)]]
 
 pfm.register_window("timeline", "timeline", locale.get_text("pfm_timeline"), function(pm)
-	local pfmTimeline = gui.create("WIPFMTimeline")
+	local pfmTimeline = gui.create("pfm_timeline")
 	pm.m_timeline = pfmTimeline
 
 	local userInteractionTimeStart
@@ -417,7 +417,7 @@ pfm.register_window("timeline", "timeline", locale.get_text("pfm_timeline"), fun
 end)
 
 pfm.register_window("shader_editor", "timeline", locale.get_text("pfm_shader_editor"), function(pm)
-	return gui.create("WIPFMShaderEditor")
+	return gui.create("pfm_shader_editor")
 end)
 
 init_model_asset_drag_and_drop = function(explorer, icon, mdlPath, importAsset)
@@ -441,7 +441,7 @@ init_model_asset_drag_and_drop = function(explorer, icon, mdlPath, importAsset)
 			entGhost = ents.create("pfm_ghost")
 
 			local ghostC = entGhost:GetComponent(ents.COMPONENT_PFM_GHOST)
-			if string.compare(elTgt:GetClass(), "WIViewport", false) and ghostC ~= nil then
+			if elTgt:IsType(gui.TYPE_VIEWPORT) and ghostC ~= nil then
 				ghostC:SetViewport(elTgt)
 			end
 

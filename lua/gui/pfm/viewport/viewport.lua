@@ -2,15 +2,15 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/wiviewport.lua")
-include("/gui/hbox.lua")
-include("/gui/aspectratio.lua")
-include("/gui/pfm/button.lua")
-include("/gui/pfm/playbutton.lua")
-include("/gui/pfm/base_viewport.lua")
-include("/gui/pfm/cursor_tracker.lua")
-include("/gui/draganddrop.lua")
-include("/gui/playbackcontrols.lua")
-include("/gui/raytracedviewport.lua")
+include("/gui/layout/hbox.lua")
+include("/gui/layout/aspect_ratio.lua")
+include("/gui/pfm/controls/button.lua")
+include("/gui/pfm/controls/play_button.lua")
+include("/gui/pfm/viewport/base_viewport.lua")
+include("/gui/pfm/util/cursor_tracker.lua")
+include("/gui/controls/drag_and_drop.lua")
+include("/gui/timeline/playback_controls.lua")
+include("/gui/viewport/raytraced_viewport.lua")
 include("/pfm/fonts.lua")
 include("/pfm/undoredo.lua")
 
@@ -144,7 +144,7 @@ function gui.PFMCoreViewportBase:SetRtViewportRenderer(renderer)
 		return
 	end
 	local rtViewport = gui.create(
-		"WIRealtimeRaytracedViewport",
+		"realtime_raytraced_viewport",
 		self.m_vpContainer,
 		0,
 		0,
@@ -618,7 +618,7 @@ function gui.PFMCoreViewportBase:OnThink()
 
 		if self.m_leftMouseInput then
 			if util.is_valid(self.m_selectionRect) == false then
-				self.m_selectionRect = gui.create("WISelectionRect", self.m_viewport)
+				self.m_selectionRect = gui.create("selection_rect", self.m_viewport)
 				self.m_selectionRect:SetPos(self.m_viewport:GetCursorPos())
 			end
 			return
@@ -859,7 +859,7 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 	end
 	return gui.PFMCoreViewportBase.OnViewportMouseEvent(self, el, mouseButton, state, mods)
 end
-gui.register("WIPFMViewport", gui.PFMViewport)
+gui.register("pfm_viewport", gui.PFMViewport)
 
 function pfm.calc_decal_target_pose(pos, dir)
 	local actor, hitPos, pos, hitData = pfm.raycast(pos, dir, 2048.0)

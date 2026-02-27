@@ -45,4 +45,4 @@ function Element:OnSizeChanged(w, h)
 		self:UpdateTruncatedText()
 	end
 end
-gui.register("WITrimText", Element)
+gui.register("trim_text", Element)

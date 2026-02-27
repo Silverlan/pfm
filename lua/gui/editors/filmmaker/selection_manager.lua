@@ -1,8 +1,8 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/shaders/pfm/pfm_selection.lua")
-include("/shaders/pfm/pfm_selection_wireframe.lua")
+include("/shaders/pfm/selection.lua")
+include("/shaders/pfm/selection_wireframe.lua")
 
 util.register_class("pfm.SelectionManager")
 function pfm.SelectionManager:__init()

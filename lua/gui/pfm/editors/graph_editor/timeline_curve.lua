@@ -6,7 +6,7 @@ function gui.PFMTimelineCurve:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(64, 64)
-	local curve = gui.create("WICurve", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	local curve = gui.create("curve", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_curve = curve
 
 	self.m_dataPoints = {}
@@ -109,7 +109,7 @@ function gui.PFMTimelineCurve:UpdateKeyframes()
 	for i = 0, numKeys - 1 do
 		local kfInfo = editorKeys:GetKeyframeInfo(i)
 		if kfInfoToDataPoint[kfInfo] == nil then
-			local el = gui.create("WIPFMTimelineDataPoint", self)
+			local el = gui.create("pfm_timeline_data_point", self)
 			el:SetSelectable(self:AreDataPointsSelectable())
 			el:SetGraphData(self, kfInfo)
 
@@ -335,4 +335,4 @@ function gui.PFMTimelineCurve:DataTimeToInterfaceTime(t)
 	local graphData = tg:GetGraphCurve(self:GetCurveIndex())
 	return tg:DataTimeToInterfaceTime(graphData, t)
 end
-gui.register("WIPFMTimelineCurve", gui.PFMTimelineCurve)
+gui.register("pfm_timeline_curve", gui.PFMTimelineCurve)

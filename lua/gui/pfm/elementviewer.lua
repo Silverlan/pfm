@@ -1,10 +1,10 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("button.lua")
-include("treeview.lua")
-include("/gui/vbox.lua")
-include("/gui/hbox.lua")
+include("controls/button.lua")
+include("containers/tree_view.lua")
+include("/gui/layout/vbox.lua")
+include("/gui/layout/hbox.lua")
 include("/gui/resizer.lua")
 include("/pfm/history.lua")
 
@@ -21,7 +21,7 @@ function gui.PFMElementViewer:OnInitialize()
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_bg:SetColor(Color(54, 54, 54))
 
-	self.navBar = gui.create("WIHBox", self)
+	self.navBar = gui.create("hbox", self)
 	self:InitializeNavigationBar()
 
 	self.navBar:SetHeight(32)
@@ -89,10 +89,10 @@ function gui.PFMElementViewer:OnInitialize()
 		end)
 	end, true)
 
-	local btSave = gui.create("WIPFMButton", self.m_bg)
+	local btSave = gui.create("pfm_button", self.m_bg)
 	btSave:SetHeight(32)
 	self.m_contents = gui.create(
-		"WIHBox",
+		"hbox",
 		self,
 		0,
 		self.m_btTools:GetBottom(),
@@ -105,10 +105,10 @@ function gui.PFMElementViewer:OnInitialize()
 	)
 	self.m_contents:SetAutoFillContents(true)
 
-	local treeVBox = gui.create("WIVBox", self.m_contents)
+	local treeVBox = gui.create("vbox", self.m_contents)
 	treeVBox:SetAutoFillContents(true)
-	local resizer = gui.create("WIResizer", self.m_contents)
-	local dataVBox = gui.create("WIVBox", self.m_contents)
+	local resizer = gui.create("resizer", self.m_contents)
+	local dataVBox = gui.create("vbox", self.m_contents)
 	dataVBox:SetAutoFillContents(true)
 
 	local function create_header_text(text, parent)
@@ -141,7 +141,7 @@ function gui.PFMElementViewer:OnInitialize()
 		end
 	end)
 	self.m_tree = gui.create(
-		"WIPFMTreeView",
+		"pfm_tree_view",
 		treeScrollContainer,
 		0,
 		0,
@@ -159,7 +159,7 @@ function gui.PFMElementViewer:OnInitialize()
 		end
 	end)
 	self.m_data = gui.create(
-		"WIPFMTreeView",
+		"pfm_tree_view",
 		dataScrollContainer,
 		0,
 		0,
@@ -773,4 +773,4 @@ function gui.PFMElementViewer:InitializeNavigationBar()
 		end)
 	end)
 end
-gui.register("WIPFMElementViewer", gui.PFMElementViewer)
+gui.register("pfm_element_viewer", gui.PFMElementViewer)

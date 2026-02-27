@@ -7,7 +7,7 @@ function gui.PFMCoreViewportBase:InitializeViewport(parent)
 	self.m_vpContainer = vpContainer
 
 	self.m_viewport =
-		gui.create("WIViewport", vpContainer, 0, 0, vpContainer:GetWidth(), vpContainer:GetHeight(), 0, 0, 1, 1)
+		gui.create("viewport", vpContainer, 0, 0, vpContainer:GetWidth(), vpContainer:GetHeight(), 0, 0, 1, 1)
 	self.m_viewport:SetMovementControlsEnabled(false)
 	self.m_viewport:SetName("viewport")
 
@@ -248,7 +248,7 @@ function gui.PFMCoreViewportBase:InitializeControls()
 	controls:SetSize(64, 64)
 	self.m_controls = controls
 
-	self.m_playControls = gui.create("PlaybackControls", controls)
+	self.m_playControls = gui.create("playback_controls", controls)
 	self.m_playControls:SetName("playback_controls")
 	self.m_playControls:CenterToParentX()
 	self.m_playControls:SetAnchor(0.5, 0, 0.5, 0)

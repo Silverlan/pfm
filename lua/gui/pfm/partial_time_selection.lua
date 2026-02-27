@@ -50,7 +50,7 @@ function Element:InitializeBuffer(pos)
 	self.m_elShape:Update()
 	g_triangleBuffers[pos] = self.m_elShape:GetBuffer()
 end
-gui.register("WIPFMTriangle", Element)
+gui.register("pfm_triangle", Element)
 
 local Element = util.register_class("gui.PFMPartialTimeSelectionBar", gui.Base)
 Element.POSITION_LEFT = 0
@@ -61,9 +61,9 @@ function Element:OnInitialize()
 
 	self:SetSize(64, 64 + lineOffset * 2)
 
-	self.m_triTop = gui.create("WIPFMTriangle", self, 0, 0, self:GetWidth(), lineOffset, 0, 0, 1, 0)
+	self.m_triTop = gui.create("pfm_triangle", self, 0, 0, self:GetWidth(), lineOffset, 0, 0, 1, 0)
 	self.m_triBottom =
-		gui.create("WIPFMTriangle", self, 0, self:GetHeight() - lineOffset, self:GetWidth(), lineOffset, 0, 1, 1, 1)
+		gui.create("pfm_triangle", self, 0, self:GetHeight() - lineOffset, self:GetWidth(), lineOffset, 0, 1, 1, 1)
 
 	self.m_centerBar = gui.create("WIRect", self, 0, lineOffset, 64, self:GetHeight() - lineOffset * 2, 0, 0, 1, 1)
 
@@ -108,7 +108,7 @@ function Element:SetBarPosition(pos)
 		self.m_lineOuter:SetAnchor(0, 0, 0, 1)
 	end
 end
-gui.register("WIPFMPartialTimeSelectionBar", Element)
+gui.register("pfm_partial_time_selection_bar", Element)
 
 local Element = util.register_class("gui.PFMPartialTimeSelection", gui.Base)
 Element.MARKER_START_OUTER = 1
@@ -150,7 +150,7 @@ function Element:OnInitialize()
 		end)
 	end
 
-	self.m_leftBar = gui.create("WIPFMPartialTimeSelectionBar", self)
+	self.m_leftBar = gui.create("pfm_partial_time_selection_bar", self)
 	self.m_leftBar:SetBarPosition(gui.PFMPartialTimeSelectionBar.POSITION_LEFT)
 	self.m_leftBar:SetSize(64, self:GetHeight())
 	--self.m_leftBar:SetAnchor(0, 0, 0, 1)
@@ -160,7 +160,7 @@ function Element:OnInitialize()
 		{ nil, Element.MARKER_END_INNER }
 	)
 
-	self.m_rightBar = gui.create("WIPFMPartialTimeSelectionBar", self)
+	self.m_rightBar = gui.create("pfm_partial_time_selection_bar", self)
 	self.m_rightBar:SetBarPosition(gui.PFMPartialTimeSelectionBar.POSITION_RIGHT)
 	self.m_rightBar:SetSize(64, self:GetHeight())
 	self.m_rightBar:SetX(self:GetWidth() - 64)
@@ -376,7 +376,7 @@ function Element:OnMarkerDragUpdate(i)
 end
 function Element:SetupTimelineMarkers(timeline)
 	local function add_marker(i)
-		local el = gui.create("WITimelineMarker", timeline)
+		local el = gui.create("timeline_marker", timeline)
 		el:SetWidth(10)
 		el:SetHeight(timeline:GetHeight())
 		el:SetAxis(timeline:GetTimeAxis():GetAxis())
@@ -555,4 +555,4 @@ function Element:UpdateCenterBar()
 	self.m_leftBar:SetHeight(self:GetHeight())
 	self.m_rightBar:SetHeight(self:GetHeight())
 end
-gui.register("WIPFMPartialTimeSelection", Element)
+gui.register("pfm_partial_time_selection", Element)

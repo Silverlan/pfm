@@ -55,4 +55,4 @@ function Element:OnRemove()
 		os.set_prevent_os_sleep_mode(false)
 	end
 end
-gui.register("WIProgressStatusInfo", Element)
+gui.register("progress_status_info", Element)

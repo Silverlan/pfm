@@ -16,15 +16,15 @@ function gui.PFMWindow:OnInitialize()
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	bg:AddStyleClass("background2")
 
-	local mainBox = gui.create("WIVBox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	local mainBox = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	mainBox:SetFixedSize(true)
 	mainBox:SetAutoFillContentsToWidth(true)
 	self.m_mainBox = mainBox
 
-	self.m_titleBar = gui.create("WIPFMTitlebar", mainBox)
-	local contents = gui.create("WIHBox", mainBox)
+	self.m_titleBar = gui.create("pfm_titlebar", mainBox)
+	local contents = gui.create("hbox", mainBox)
 	gui.create("WIBase", contents, 0, 0, 12, 1) -- Gap
-	self.m_innerContents = gui.create("WIVBox", contents)
+	self.m_innerContents = gui.create("vbox", contents)
 	gui.create("WIBase", contents, 0, 0, 12, 1) -- Gap
 
 	local outline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
@@ -88,4 +88,4 @@ function gui.PFMWindow:OnSizeChanged(w, h)
 	end
 	self.m_mainBox:SetWidth(w)
 end
-gui.register("WIPFMWindow", gui.PFMWindow)
+gui.register("pfm_window", gui.PFMWindow)

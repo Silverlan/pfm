@@ -8,7 +8,7 @@ util.register_class("gui.PFMTimelineGraph", gui.PFMTimelineGraphBase)
 function gui.PFMTimelineGraph:OnInitialize()
 	gui.PFMTimelineGraphBase.OnInitialize(self)
 
-	self.m_grid = gui.create("WIGrid", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_grid = gui.create("grid", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	local session = tool.get_filmmaker():GetSession()
 	local settings = session:GetSettings()
 	local renderSettings = settings:GetRenderSettings()
@@ -37,4 +37,4 @@ function gui.PFMTimelineGraph:UpdateAxisRanges(startOffset, zoomLevel, timeStart
 	end
 	gui.PFMTimelineGraphBase.UpdateAxisRanges(self, startOffset, zoomLevel, timeStartOffset, timeZoomLevel)
 end
-gui.register("WIPFMTimelineGraph", gui.PFMTimelineGraph)
+gui.register("pfm_timeline_graph", gui.PFMTimelineGraph)
