@@ -1,10 +1,10 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("button.lua")
-include("/gui/vbox.lua")
-include("/gui/hbox.lua")
-include("/gui/timeline.lua")
+include("controls/button.lua")
+include("/gui/layout/vbox.lua")
+include("/gui/layout/hbox.lua")
+include("/gui/timeline/timeline.lua")
 include("editors")
 
 util.register_class("gui.PFMTimeline", gui.Base)
@@ -23,12 +23,12 @@ function gui.PFMTimeline:OnInitialize()
 	self.m_bg:AddStyleClass("background2")
 	self.m_bg:SetName("timeline_background")
 
-	self.m_contents = gui.create("WIVBox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_contents = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents:SetName("timeline_contents")
 	self:InitializeToolbar()
 	gui.create("WIBase", self.m_contents):SetSize(1, 7) -- Gap
 
-	self.m_timeline = gui.create("WITimeline", self.m_contents)
+	self.m_timeline = gui.create("timeline", self.m_contents)
 	self.m_timeline:SetName("timeline_strip")
 
 	self.m_timeline:SetZoomLevel(0.0)
@@ -49,11 +49,11 @@ function gui.PFMTimeline:OnInitialize()
 	local contents = self.m_timeline:GetContents()
 
 	self.m_timelineClip =
-		gui.create("WIPFMTimelineClip", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
+		gui.create("pfm_timeline_clip", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
 	self.m_timelineClip:SetName("timeline_clip_editor")
 
 	self.m_timelineMotion =
-		gui.create("WIPFMTimelineMotion", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
+		gui.create("pfm_timeline_motion", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
 	self.m_timelineMotion:SetName("timeline_motion_editor")
 	self.m_timelineMotion:SetTimelineContents(self.m_timeline)
 	self.m_timelineMotion:SetTimeAxis(self.m_timeline:GetTimeAxis())
@@ -61,7 +61,7 @@ function gui.PFMTimeline:OnInitialize()
 	self.m_timelineMotion:SetTimeline(self)
 
 	self.m_timelineGraph =
-		gui.create("WIPFMTimelineGraph", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
+		gui.create("pfm_timeline_graph", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
 	self.m_timelineGraph:SetName("timeline_graph_editor")
 	self.m_timelineGraph:SetTimeAxis(self.m_timeline:GetTimeAxis())
 	self.m_timelineGraph:SetDataAxis(self.m_timeline:GetDataAxis())
@@ -150,7 +150,7 @@ function gui.PFMTimeline:RemoveClip(clip)
 	end
 end
 function gui.PFMTimeline:AddFilmClip(filmStrip, filmClip, fOnSelected)
-	local elClip = gui.create("WIFilmClip", filmStrip.m_container)
+	local elClip = gui.create("film_clip", filmStrip.m_container)
 	table.insert(filmStrip.m_filmClips, elClip)
 
 	elClip:SetClipData(filmClip)
@@ -160,7 +160,7 @@ function gui.PFMTimeline:AddFilmClip(filmStrip, filmClip, fOnSelected)
 	return elClip
 end
 function gui.PFMTimeline:AddAudioClip(group, audioClip, fOnSelected)
-	local elClip = gui.create("WIGenericClip")
+	local elClip = gui.create("generic_clip")
 	elClip:SetClipData(audioClip)
 	elClip:AddStyleClass("timeline_clip_audio")
 	group:AddElement(elClip)
@@ -214,7 +214,7 @@ function gui.PFMTimeline:AddAudioClip(group, audioClip, fOnSelected)
 	return elClip
 end
 function gui.PFMTimeline:AddOverlayClip(group, overlayClip, fOnSelected)
-	local elClip = gui.create("WIGenericClip")
+	local elClip = gui.create("generic_clip")
 	elClip:SetClipData(overlayClip)
 	elClip:AddStyleClass("timeline_clip_overlay")
 	group:AddElement(elClip)
@@ -399,7 +399,7 @@ end
 function gui.PFMTimeline:InitializeToolbar()
 	local toolbar = gui.create("WIBase", self.m_contents, 0, 0, self:GetWidth(), 0)
 	toolbar:SetName("timeline_toolbar")
-	local toolbarLeft = gui.create("WIHBox", toolbar, 0, 0)
+	local toolbarLeft = gui.create("hbox", toolbar, 0, 0)
 	toolbarLeft:SetName("timeline_toolbar_left")
 	local btGroup = gui.PFMButtonGroup(toolbarLeft)
 	self.m_btClipEditor = btGroup:AddIconButton("film", function()
@@ -441,7 +441,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btBookmarkKey:SetName("bookmark")
 	self.m_controlButtons["bookmark"] = self.m_btBookmarkKey
 
-	self.m_entryFields = gui.create("WIHBox", toolbarLeft)
+	self.m_entryFields = gui.create("hbox", toolbarLeft)
 	self.m_entryFields:SetName("kf_fields")
 	self.m_entryFrame = gui.create("WITextEntry", self.m_entryFields, 0, 6, 60, 20)
 	self.m_entryFrame:SetName("frame")
@@ -469,7 +469,7 @@ function gui.PFMTimeline:InitializeToolbar()
 		dps[1]:ChangeDataValue(nil, v)
 	end)
 
-	self.m_controls = gui.create("WIHBox", toolbarLeft)
+	self.m_controls = gui.create("hbox", toolbarLeft)
 	self.m_controls:SetName("timeline_controls")
 
 	local btGroupCtrls = gui.PFMButtonGroup(self.m_controls)
@@ -529,7 +529,7 @@ function gui.PFMTimeline:InitializeToolbar()
 
 	gui.create("WIBase", self.m_controls):SetSize(18, 1) -- Gap
 
-	self.m_tangentControls = gui.create("WIHBox", toolbarLeft)
+	self.m_tangentControls = gui.create("hbox", toolbarLeft)
 	self.m_tangentControls:SetName("timeline_tangent_controls")
 
 	self.m_btTangentLinear = gui.PFMButton.create(self.m_tangentControls, "grapheditor_linear_activated", function()
@@ -630,7 +630,7 @@ function gui.PFMTimeline:InitializeToolbar()
 
 	gui.create("WIBase", self.m_tangentControls):SetSize(18, 1) -- Gap
 
-	self.m_miscGraphControls = gui.create("WIHBox", toolbarLeft)
+	self.m_miscGraphControls = gui.create("hbox", toolbarLeft)
 
 	self.m_btOffsetMode = gui.PFMButton.create(self.m_miscGraphControls, "grapheditor_offset_activated", function()
 		print("TODO: NOT YET IMPLEMENTED")
@@ -650,7 +650,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btUnitize:SetName("unitize")
 	self.m_btUnitize:SetTooltip(locale.get_text("pfm_graph_editor_unitize_mode"))
 
-	self.m_motionControls = gui.create("WIHBox", toolbarLeft)
+	self.m_motionControls = gui.create("hbox", toolbarLeft)
 	self.m_btTimeSelectionMode = gui.PFMButton.create(self.m_motionControls, "timeselectionmode_activated", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
@@ -662,7 +662,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_keyMode:SetName("key_mode")
 
 	gui.create("WIBase", toolbarLeft):SetSize(6, 1) -- Gap
-	self.m_clipControls = gui.create("WIHBox", toolbarLeft)
+	self.m_clipControls = gui.create("hbox", toolbarLeft)
 	self.m_btAddTrackGroup = gui.PFMButton.create(self.m_clipControls, "cp_plus_drop_activated")
 	self.m_btAddTrackGroup:SetName("track_group")
 	self.m_btAddTrackGroup:SetupContextMenu(function(pContext)
@@ -678,7 +678,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btUp:SetName("timeline_up")
 	toolbarLeft:SetHeight(self.m_btClipEditor:GetHeight())
 
-	local toolbarRight = gui.create("WIHBox", toolbar, 0, 0)
+	local toolbarRight = gui.create("hbox", toolbar, 0, 0)
 	toolbarRight:SetName("timeline_toolbar_right")
 	self.m_btLockPlayhead = gui.PFMButton.create(toolbarRight, "timeline_head_activated", function()
 		print("TODO: NOT YET IMPLEMENTED")
@@ -847,7 +847,7 @@ function gui.PFMTimeline:SetDataValue(t, v)
 	self.m_entryFrame:SetText(tostring(t))
 	self.m_entryValue:SetText(tostring(v))
 end
-gui.register("WIPFMTimeline", gui.PFMTimeline)
+gui.register("pfm_timeline", gui.PFMTimeline)
 
 console.register_command("pfm_graph_editor_action", function(pl, ...)
 	local pm = tool.get_filmmaker()
