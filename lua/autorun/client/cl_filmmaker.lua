@@ -56,7 +56,7 @@ end
 tool.load_filmmaker_scripts = function()
 	include("/sfm/project_converter.lua")
 	pfm.register_log_category("sfm")
-	include("/gui/editors/filmmaker/filmmaker.lua")
+	include("/gui/pfm/filmmaker.lua")
 end
 tool.open_filmmaker = function(devMode)
 	tool.load_filmmaker_scripts()

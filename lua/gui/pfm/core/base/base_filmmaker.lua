@@ -1,16 +1,16 @@
 -- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("../base_editor.lua")
+include("/gui/editors/base_editor.lua")
 include("/pfm/project/manager.lua")
 include("/util/retarget.lua")
 
 local Element = util.register_class("gui.WIBaseFilmmaker", gui.WIBaseEditor, pfm.ProjectManager)
 
 include("global_state_data.lua")
+include("io.lua")
 include("layout.lua")
 include("misc.lua")
-include("io.lua")
 include("restore.lua")
 include("/gui/pfm/controls/theme_toggle.lua")
 
