@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/pfm/raycast.lua")
+include("/pfm/scene/raycast.lua")
 
 local Component = util.register_class("ents.PFMRtMover", BaseEntityComponent)
 

@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/layout/vbox.lua")
-include("/pfm/fonts.lua")
+include("/pfm/ui/fonts.lua")
 
 util.register_class("gui.PFMTreeView", gui.Base)
 

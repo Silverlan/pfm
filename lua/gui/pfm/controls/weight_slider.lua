@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/pfm/fonts.lua")
+include("/pfm/ui/fonts.lua")
 include("/gui/pfm/controls/slider/cursor.lua")
 
 util.register_class("gui.PFMWeightSlider", gui.Base)

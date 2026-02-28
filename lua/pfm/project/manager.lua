@@ -1,9 +1,9 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("game_view.lua")
-include("/pfm/animation_cache.lua")
-include("/pfm/performance_cache.lua")
+include("/pfm/scene/game_view.lua")
+include("/pfm/core/animation_cache.lua")
+include("/pfm/core/performance_cache.lua")
 
 pfm = pfm or {}
 

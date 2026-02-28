@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/pfm/wipfmassetwebbrowser.lua")
+include("/gui/pfm/asset_web_browser.lua")
 
 local Element = util.register_class("gui.PFMWebBrowser", gui.Base)
 

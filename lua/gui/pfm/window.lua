@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("titlebar.lua")
+include("layout/title_bar.lua")
 
 util.register_class("gui.PFMWindow", gui.Base)
 
@@ -21,7 +21,7 @@ function gui.PFMWindow:OnInitialize()
 	mainBox:SetAutoFillContentsToWidth(true)
 	self.m_mainBox = mainBox
 
-	self.m_titleBar = gui.create("pfm_titlebar", mainBox)
+	self.m_titleBar = gui.create("pfm_title_bar", mainBox)
 	local contents = gui.create("hbox", mainBox)
 	gui.create("WIBase", contents, 0, 0, 12, 1) -- Gap
 	self.m_innerContents = gui.create("vbox", contents)

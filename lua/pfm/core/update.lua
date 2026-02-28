@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2024 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("util.lua")
+include("/pfm/util/util.lua")
 
 local function extract_update_files(filePath)
 	file.delete_directory("update")

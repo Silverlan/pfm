@@ -3,7 +3,7 @@
 
 include("/gui/controls/drag_and_drop.lua")
 include("/gui/controls/editable_entry.lua")
-include("/pfm/file_index_table.lua")
+include("/pfm/core/file_index_table.lua")
 
 console.register_variable(
 	"pfm_show_external_assets",

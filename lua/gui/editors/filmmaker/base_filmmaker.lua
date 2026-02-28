@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("../base_editor.lua")
-include("/pfm/project_manager.lua")
+include("/pfm/project/manager.lua")
 include("/util/retarget.lua")
 
 local Element = util.register_class("gui.WIBaseFilmmaker", gui.WIBaseEditor, pfm.ProjectManager)

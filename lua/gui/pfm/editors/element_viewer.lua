@@ -6,7 +6,7 @@ include("containers/tree_view.lua")
 include("/gui/layout/vbox.lua")
 include("/gui/layout/hbox.lua")
 include("/gui/resizer.lua")
-include("/pfm/history.lua")
+include("/pfm/core/history.lua")
 
 util.register_class("gui.PFMElementViewer", gui.Base)
 

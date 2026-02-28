@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("/pfm/pfm.lua")
-include("/pfm/project_manager.lua")
+include("/pfm/project/manager.lua")
 
 local Component = util.register_class("ents.PFMProjectManager", BaseEntityComponent)
 

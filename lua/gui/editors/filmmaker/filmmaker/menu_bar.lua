@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2023 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/pfm/optimize.lua")
+include("/pfm/util/optimize.lua")
 
 local Element = gui.WIFilmmaker
 

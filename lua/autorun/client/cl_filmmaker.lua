@@ -1,8 +1,8 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/pfm/loading_screen.lua")
-include("/pfm/cvars.lua")
+include("/gui/pfm/panels/loading_screen.lua")
+include("/pfm/core/cvars.lua")
 
 pfm.show_loading_screen(false)
 

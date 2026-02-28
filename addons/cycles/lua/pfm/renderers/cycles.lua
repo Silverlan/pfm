@@ -6,7 +6,7 @@
     file, You can obtain one at http://mozilla.org/MPL/2.0/.
 ]]
 
-include("/pfm/renderers.lua")
+include("/pfm/rendering/renderers.lua")
 
 local CyclesInfo = util.register_class("pfm.CyclesRendererInfo", pfm.RendererInfo)
 function CyclesInfo:__init(identifier, assetData)

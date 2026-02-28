@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/layout/hbox.lua")
-include("/pfm/fonts.lua")
+include("/pfm/ui/fonts.lua")
 include("/gui/marquee.lua")
 
 util.register_class("gui.PFMInfobar", gui.Base)

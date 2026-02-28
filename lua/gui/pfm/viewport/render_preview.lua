@@ -12,7 +12,7 @@ include("/gui/controls/editable_entry.lua")
 include("/gui/wifiledialog.lua")
 include("/gui/controls/toggle_option.lua")
 include("/gui/pfm/viewport/raytraced_animation_viewport.lua")
-include("/pfm/renderers.lua")
+include("/pfm/rendering/renderers.lua")
 
 util.register_class("gui.PFMRenderPreview", gui.PFMBaseViewport)
 

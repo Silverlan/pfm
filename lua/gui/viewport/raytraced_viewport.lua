@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/pfm/raytracing_render_job.lua")
+include("/pfm/rendering/raytracing_render_job.lua")
 -- include("/shaders/pfm/composite.lua")
 include("/shaders/pfm/calc_image_luminance.lua")
 include("render_image.lua")

@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/pfm/raycast.lua")
+include("/pfm/scene/raycast.lua")
 
 util.register_class("ents.PFMGhost", BaseEntityComponent)
 

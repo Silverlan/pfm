@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("timeline_graph_base.lua")
-include("/gui/pfm/partial_time_selection.lua")
+include("/gui/pfm/timeline/partial_time_selection.lua")
 
 util.register_class("gui.PFMTimelineMotion", gui.PFMTimelineGraphBase)
 

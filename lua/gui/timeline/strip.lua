@@ -3,7 +3,7 @@
 
 include("base_timeline_grid.lua")
 include("/shaders/pfm/timeline.lua")
-include("/pfm/fonts.lua")
+include("/pfm/ui/fonts.lua")
 include("/util/graph_axis.lua")
 
 util.register_class("gui.BaseAxis")

@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2023 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/pfm/renderers.lua")
+include("/pfm/rendering/renderers.lua")
 
 local PragmaInfo = util.register_class("pfm.PragmaRendererInfo", pfm.RendererInfo)
 function PragmaInfo:__init(identifier, assetData)

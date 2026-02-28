@@ -4,7 +4,7 @@
 include("/gui/pfm/controls/button.lua")
 include("/gui/pfm/controls/tab_button.lua")
 include("/gui/layout/hbox.lua")
-include("/pfm/fonts.lua")
+include("/pfm/ui/fonts.lua")
 
 util.register_class("gui.PFMFrame", gui.Base)
 

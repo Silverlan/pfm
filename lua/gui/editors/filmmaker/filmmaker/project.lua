@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2023 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/pfm/playback_state.lua")
+include("/pfm/core/playback_state.lua")
 
 local Element = gui.WIFilmmaker
 

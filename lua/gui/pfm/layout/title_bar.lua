@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/layout/vbox.lua")
-include("/pfm/fonts.lua")
+include("/pfm/ui/fonts.lua")
 
 util.register_class("gui.PFMTitlebar", gui.Base)
 
@@ -30,4 +30,4 @@ function gui.PFMTitlebar:SetText(text)
 	self.m_text:SetText(text)
 	self.m_text:SizeToContents()
 end
-gui.register("pfm_titlebar", gui.PFMTitlebar)
+gui.register("pfm_title_bar", gui.PFMTitlebar)

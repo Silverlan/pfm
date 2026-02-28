@@ -231,4 +231,4 @@ function CommandComposition:Initialize(cmds)
 end
 pfm.register_command("composition", CommandComposition)
 
-include("commands")
+include("/pfm/commands")
