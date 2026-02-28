@@ -1,8 +1,8 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("controls/button.lua")
-include("containers/tree_view.lua")
+include("/gui/pfm/controls/button.lua")
+include("/gui/pfm/containers/tree_view.lua")
 include("/gui/layout/vbox.lua")
 include("/gui/layout/hbox.lua")
 include("/gui/resizer.lua")

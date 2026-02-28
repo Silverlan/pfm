@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("controls_menu/controls_menu.lua")
+include("/gui/pfm/controls_menu/controls_menu.lua")
 
 local Element = util.register_class("gui.PFMBaseSettings", gui.Base)
 function Element:OnRemove()

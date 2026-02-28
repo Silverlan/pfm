@@ -1,7 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("project/packer.lua")
+include("/pfm/project/packer.lua")
 
 function pfm.save_asset_files_as_archive(assetFiles, fileName, onComplete)
 	fileName = file.remove_file_extension(fileName) .. ".zip"

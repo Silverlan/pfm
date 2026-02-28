@@ -1,11 +1,11 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("controls/button.lua")
+include("/gui/pfm/controls/button.lua")
 include("/gui/layout/vbox.lua")
 include("/gui/layout/hbox.lua")
 include("/gui/timeline/timeline.lua")
-include("editors")
+include("/gui/pfm/editors")
 
 util.register_class("gui.PFMTimeline", gui.Base)
 
