@@ -35,7 +35,7 @@ function Component:SetHoverTextVisible(visible)
 	self:GetHoverTextElement():SetVisible(visible)
 end
 function Component:OnRemove()
-	util.remove(self.m_elTextHover)
+	util.remove({self.m_eventBusGroup, self.m_elTextHover})
 end
 function Component:AddOutline(ent)
 	debug.start_profiling_task("pfm_selection_outline")
@@ -145,7 +145,65 @@ function Component:OnCursorTargetActorChanged(hitData)
 	pfm.tag_render_scene_as_dirty()
 end
 function Component:SetProjectManager(pm)
+	util.remove(self.m_eventBusGroup)
+
 	self.m_projectManager = pm
+
+	local eventBus = pm:GetEventBus()
+	self.m_eventBusGroup = eventBus:AddListenerGroup()
+	self.m_eventBusGroup:AddListener("selection.object.changed", function(selectionManager, actor, selected)
+		local entActor = actor:FindEntity()
+		if(util.is_valid(entActor) == false) then return end
+		
+		if(selected == false) then
+			entActor:RemoveComponent("pfm_selection_wireframe")
+			entActor:RemoveComponent("pfm_skeleton")
+			return
+		end
+
+		if entActor:HasComponent(ents.COMPONENT_RENDER) then
+			debug.start_profiling_task("pfm_init_selection")
+
+			if selectionManager:IsSelectionWireframeEnabled() then
+				local c = entActor:AddComponent("pfm_selection_wireframe")
+				if c ~= nil then
+					c:SetPersistent(true)
+				end
+			end
+			if self.m_showBones then
+				entActor:AddComponent("pfm_skeleton")
+			end
+
+			debug.stop_profiling_task()
+		end
+	end)
+	self.m_eventBusGroup:AddListener("selection.wireframe.changed", function(selectionManager, enabled)
+		for object, selected in pairs(selectionManager:GetSelectedObjects()) do
+			local entActor = actor:FindEntity()
+			if util.is_valid(entActor) then
+				if selected.selected and enabled then
+					local c = entActor:AddComponent("pfm_selection_wireframe")
+					if c ~= nil then
+						c:SetPersistent(true)
+					end
+				else
+					entActor:RemoveComponent("pfm_selection_wireframe")
+				end
+			end
+		end
+	end)
+	self.m_eventBusGroup:AddListener("selection.show_bones.changed", function(selectionManager, enabled)
+		for object, selected in pairs(selectionManager:GetSelectedObjects()) do
+			local entActor = actor:FindEntity()
+			if util.is_valid(entActor) then
+				if selected.selected and enabled then
+					entActor:AddComponent("pfm_skeleton")
+				else
+					entActor:RemoveComponent("pfm_skeleton")
+				end
+			end
+		end
+	end)
 end
 function Component:GetProjectManager()
 	return self.m_projectManager

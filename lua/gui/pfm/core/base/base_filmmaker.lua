@@ -129,9 +129,9 @@ function Element:IsEditor()
 	return false
 end
 function Element:InitializeSelectionManager()
-	self.m_selectionManager = pfm.ActorSelectionManager()
-	self.m_selectionManager:AddChangeListener(function(ent, selected)
-		self:OnActorSelectionChanged(ent, selected)
+	self.m_selectionManager = pfm.SelectionManager(self:GetEventBus())
+	self:GetEventBusListenerGroup():AddListener("selection.object.changed", function(selectionManager, actor, selected)
+		self:OnActorSelectionChanged(actor, selected)
 	end)
 end
 function Element:GetSelectionManager()

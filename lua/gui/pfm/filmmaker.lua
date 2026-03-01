@@ -1587,7 +1587,7 @@ function gui.WIFilmmaker:OpenParticleEditor(ptFile, ptName)
 	local tab, ptEd = self:OpenWindow("particle_editor", true)
 	ptEd:LoadParticleSystem(ptFile, ptName)
 end
-function gui.WIFilmmaker:OnActorSelectionChanged(ent, selected)
+function gui.WIFilmmaker:OnActorSelectionChanged(actor, selected)
 	self:TagRenderSceneAsDirty()
 	local vp = self:GetViewport()
 	if util.is_valid(vp) == false then

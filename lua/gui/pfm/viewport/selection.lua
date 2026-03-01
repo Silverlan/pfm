@@ -74,7 +74,7 @@ function gui.PFMCoreViewportBase:SetActorSelectionDirty()
 	self:UpdateThinkState()
 end
 function gui.PFMCoreViewportBase:UpdateMultiActorSelection()
-	local actors = pfm.get_project_manager():GetSelectionManager():GetSelectedActors()
+	local actors = pfm.get_project_manager():GetSelectionManager():GetSelectedObjects()
 	local n = 0
 	for ent, _ in pairs(actors) do
 		if ent:IsValid() then

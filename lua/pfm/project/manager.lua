@@ -4,12 +4,15 @@
 include("/pfm/scene/game_view.lua")
 include("/pfm/core/animation_cache.lua")
 include("/pfm/core/performance_cache.lua")
+include("/pfm/core/event_bus.lua")
 
 pfm = pfm or {}
 
 util.register_class("pfm.ProjectManager", pfm.GameView)
 function pfm.ProjectManager:__init()
 	pfm.GameView.__init(self)
+	self.m_eventBus = pfm.EventBus()
+	self.m_eventBusGroup = self.m_eventBus:AddListenerGroup()
 	self:SetCachedMode(false)
 end
 function pfm.ProjectManager:OnInitialize()
@@ -41,7 +44,10 @@ function pfm.ProjectManager:OnInitialize()
 	self:CreateInitialProject()
 	self.m_map = game.get_map_name()
 end
+function pfm.ProjectManager:GetEventBus() return self.m_eventBus end
+function pfm.ProjectManager:GetEventBusListenerGroup() return self.m_eventBusGroup end
 function pfm.ProjectManager:OnRemove()
+	util.remove(self.m_eventBusGroup)
 	util.remove(self.m_cbDisableEscapeMenu)
 	util.remove(self.m_cbDisableDefaultConsoleInput)
 	util.remove(self.m_cbOnUndoRedoChanged)

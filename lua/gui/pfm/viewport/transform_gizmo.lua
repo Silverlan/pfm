@@ -45,7 +45,7 @@ function gui.PFMCoreViewportBase:SetManipulatorMode(manipulatorMode)
 	if self:UpdateMultiActorSelection() == false then
 		local pfm = pfm.get_project_manager()
 		local selectionManager = pfm:GetSelectionManager()
-		local selectedActors = selectionManager:GetSelectedActors()
+		local selectedActors = selectionManager:GetSelectedObjects()
 		local selectedActorList = {}
 		local num = 0
 		for ent, b in pairs(selectedActors) do
@@ -171,7 +171,7 @@ function gui.PFMCoreViewportBase:UpdateManipulationMode()
 	end
 	local pm = pfm.get_project_manager()
 	local selectionManager = pm:GetSelectionManager()
-	local selectedActors = selectionManager:GetSelectedActors()
+	local selectedActors = selectionManager:GetSelectedObjects()
 	local selectedActorList = {}
 	for ent, b in pairs(selectedActors) do
 		if ent:IsValid() then
@@ -375,7 +375,7 @@ function gui.PFMCoreViewportBase:CreateMultiActorTransformWidget()
 		return
 	end
 
-	local actors = pm:GetSelectionManager():GetSelectedActors()
+	local actors = pm:GetSelectionManager():GetSelectedObjects()
 
 	local posAvg = Vector()
 	local initialActorPoses = {}
@@ -493,7 +493,7 @@ function gui.PFMCoreViewportBase:CreateMultiActorTransformWidget()
 	self.m_transformComponent = trC
 end
 function gui.PFMCoreViewportBase:ScaleSelectedActors(scale)
-	local actors = pfm.get_project_manager():GetSelectionManager():GetSelectedActors()
+	local actors = pfm.get_project_manager():GetSelectionManager():GetSelectedObjects()
 	local center = Vector()
 	local numActors = 0
 	for actor, _ in pairs(actors) do

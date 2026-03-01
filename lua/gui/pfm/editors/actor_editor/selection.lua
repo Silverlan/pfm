@@ -82,10 +82,7 @@ function gui.PFMActorEditor:UpdateSelectedEntities()
 		if el:IsSelected() then
 			local actorData = self.m_treeElementToActorData[el]
 			if actorData ~= nil then
-				local ent = actorData.actor:FindEntity()
-				if ent ~= nil then
-					table.insert(tSelected, ent)
-				end
+				table.insert(tSelected, actorData.actor)
 			end
 		end
 	end)
