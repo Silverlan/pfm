@@ -103,6 +103,7 @@
 			{
 				"uniqueId" {$string type "Uuid"}
 				"name" {$string default ""}
+				"timeFrame" {$string type "TimeFrame"}
 				"activeClip" {
 					$string type "Reference"
 					$string referenceType "FilmClip"

@@ -12,7 +12,7 @@ end
 function gui.FilmClip:OnInitialize()
 	gui.BaseClip.OnInitialize(self)
 
-	self:SetHeight(64)
+	self:SetHeight(45)
 	local w = self:GetWidth()
 	local h = self:GetHeight()
 

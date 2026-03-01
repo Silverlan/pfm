@@ -150,12 +150,7 @@ function gui.PFMTimeline:RemoveClip(clip)
 	end
 end
 function gui.PFMTimeline:AddFilmClip(filmStrip, filmClip, fOnSelected)
-	local elClip = gui.create("film_clip", filmStrip.m_container)
-	table.insert(filmStrip.m_filmClips, elClip)
-
-	elClip:SetClipData(filmClip)
-	filmStrip:ScheduleUpdate()
-
+	local elClip = filmStrip:AddFilmClip(filmClip)
 	self:InitializeClip(elClip, fOnSelected)
 	return elClip
 end

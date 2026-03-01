@@ -241,6 +241,7 @@ function Element:InitializeProjectUI(layoutName)
 			end
 		end
 		filmStrip:SetSize(1024, 64)
+		filmStrip:Setup(session, timeline)
 		filmStrip:Update()
 
 		local pfmClipEditor = pfmTimeline:GetEditorTimelineElement(gui.PFMTimeline.EDITOR_CLIP)
@@ -250,6 +251,7 @@ function Element:InitializeProjectUI(layoutName)
 				timeline:AddTimelineItem(filmClip, filmClip:GetTimeFrame())
 			end
 		end
+		
 		groupPicture:AddElement(filmStrip)
 		self.m_trackGroupPicture = groupPicture
 

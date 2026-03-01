@@ -423,6 +423,7 @@ pfm.create_empty_project = function()
 	shot1:SetName("shot1")
 	shot1:GetTimeFrame():SetDuration(60.0)
 	filmClip:GetTimeFrame():SetDuration(60.0)
+	session:GetTimeFrame():SetDuration(60.0)
 
 	local channelTrackGroup = shot1:AddTrackGroup()
 	channelTrackGroup:SetName("channelTrackGroup")
