@@ -1,0 +1,17 @@
+"wguitextured"
+{
+	"textures"
+	{
+		$string albedo_map "gui/pfm/editors/clip_editor/sequence_filmstrip_background"
+	}
+	"properties"
+	{
+		9slice
+		{
+			$uint32 leftInset 11
+			$uint32 rightInset 11
+			$uint32 topInset 11
+			$uint32 bottomInset 11
+		}
+	}
+}

@@ -1,0 +1,7 @@
+"wguitextured"
+{
+	"textures"
+	{
+		$string albedo_map "gui/pfm/editors/clip_editor/sequence_filmstrip_grab_handle"
+	}
+}
