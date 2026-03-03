@@ -49,11 +49,12 @@ function gui.PFMTimeline:OnInitialize()
 	local contents = self.m_timeline:GetContents()
 
 	self.m_timelineClip =
-		gui.create("pfm_timeline_clip", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
+		gui.create("pfm_timeline_editor_clip", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
 	self.m_timelineClip:SetName("timeline_clip_editor")
+	self.m_timelineClip:SetTimeline(self)
 
 	self.m_timelineMotion =
-		gui.create("pfm_timeline_motion", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
+		gui.create("pfm_timeline_editor_motion", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
 	self.m_timelineMotion:SetName("timeline_motion_editor")
 	self.m_timelineMotion:SetTimelineContents(self.m_timeline)
 	self.m_timelineMotion:SetTimeAxis(self.m_timeline:GetTimeAxis())
@@ -61,7 +62,7 @@ function gui.PFMTimeline:OnInitialize()
 	self.m_timelineMotion:SetTimeline(self)
 
 	self.m_timelineGraph =
-		gui.create("pfm_timeline_graph", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
+		gui.create("pfm_timeline_editor_graph", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
 	self.m_timelineGraph:SetName("timeline_graph_editor")
 	self.m_timelineGraph:SetTimeAxis(self.m_timeline:GetTimeAxis())
 	self.m_timelineGraph:SetDataAxis(self.m_timeline:GetDataAxis())
@@ -363,11 +364,11 @@ function gui.PFMTimeline:GetTimeOffset()
 end
 function gui.PFMTimeline:SetGraphCursorMode(cursorMode)
 	local buttons = {
-		[gui.PFMTimelineGraph.CURSOR_MODE_SELECT] = self.m_btCtrlSelect,
-		[gui.PFMTimelineGraph.CURSOR_MODE_MOVE] = self.m_btCtrlMove,
-		[gui.PFMTimelineGraph.CURSOR_MODE_PAN] = self.m_btCtrlPan,
-		[gui.PFMTimelineGraph.CURSOR_MODE_SCALE] = self.m_btCtrlScale,
-		[gui.PFMTimelineGraph.CURSOR_MODE_ZOOM] = self.m_btCtrlZoom,
+		[gui.pfm.TimelineEditorGraph.CURSOR_MODE_SELECT] = self.m_btCtrlSelect,
+		[gui.pfm.TimelineEditorGraph.CURSOR_MODE_MOVE] = self.m_btCtrlMove,
+		[gui.pfm.TimelineEditorGraph.CURSOR_MODE_PAN] = self.m_btCtrlPan,
+		[gui.pfm.TimelineEditorGraph.CURSOR_MODE_SCALE] = self.m_btCtrlScale,
+		[gui.pfm.TimelineEditorGraph.CURSOR_MODE_ZOOM] = self.m_btCtrlZoom,
 	}
 	for btCursorMode, bt in pairs(buttons) do
 		if bt:IsValid() then
@@ -469,7 +470,7 @@ function gui.PFMTimeline:InitializeToolbar()
 
 	local btGroupCtrls = gui.PFMButtonGroup(self.m_controls)
 	self.m_btCtrlSelect = btGroupCtrls:AddIconButton("cursor-fill", function()
-		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_SELECT)
+		self:SetGraphCursorMode(gui.pfm.TimelineEditorGraph.CURSOR_MODE_SELECT)
 		return true
 	end)
 	self.m_btCtrlSelect:SetTooltip(
@@ -481,7 +482,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_controlButtons["select"] = self.m_btCtrlSelect
 
 	self.m_btCtrlMove = btGroupCtrls:AddIconButton("arrows-move", function()
-		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_MOVE)
+		self:SetGraphCursorMode(gui.pfm.TimelineEditorGraph.CURSOR_MODE_MOVE)
 		return true
 	end)
 	self.m_btCtrlMove:SetTooltip(
@@ -493,7 +494,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_controlButtons["move"] = self.m_btCtrlMove
 
 	self.m_btCtrlPan = btGroupCtrls:AddIconButton("pan", function()
-		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_PAN)
+		self:SetGraphCursorMode(gui.pfm.TimelineEditorGraph.CURSOR_MODE_PAN)
 		return true
 	end)
 	self.m_btCtrlPan:SetTooltip(locale.get_text("pfm_graph_editor_tool_pan", {
@@ -503,7 +504,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_controlButtons["pan"] = self.m_btCtrlPan
 
 	self.m_btCtrlScale = btGroupCtrls:AddIconButton("grapheditor_scale_activated", function()
-		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_SCALE)
+		self:SetGraphCursorMode(gui.pfm.TimelineEditorGraph.CURSOR_MODE_SCALE)
 		return true
 	end)
 	self.m_btCtrlScale:SetTooltip(locale.get_text("pfm_graph_editor_tool_scale", {
@@ -513,7 +514,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_controlButtons["scale"] = self.m_btCtrlScale
 
 	self.m_btCtrlZoom = btGroupCtrls:AddIconButton("grapheditor_zoom_activated", function()
-		self:SetGraphCursorMode(gui.PFMTimelineGraph.CURSOR_MODE_ZOOM)
+		self:SetGraphCursorMode(gui.pfm.TimelineEditorGraph.CURSOR_MODE_ZOOM)
 		return true
 	end)
 	self.m_btCtrlZoom:SetTooltip(locale.get_text("pfm_graph_editor_tool_zoom", {

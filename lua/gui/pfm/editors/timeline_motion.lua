@@ -4,42 +4,42 @@
 include("timeline_graph_base.lua")
 include("/gui/pfm/timeline/partial_time_selection.lua")
 
-util.register_class("gui.PFMTimelineMotion", gui.PFMTimelineGraphBase)
+local TimelineEditorMotion = util.register_class("gui.pfm.TimelineEditorMotion", gui.pfm.TimelineEditorGraphBase)
 
-function gui.PFMTimelineMotion:OnInitialize()
-	gui.PFMTimelineGraphBase.OnInitialize(self)
+function TimelineEditorMotion:OnInitialize()
+	gui.pfm.TimelineEditorGraphBase.OnInitialize(self)
 	self:SetDataPointsSelectable(false)
 	--self.m_listContainer:SetVisible(false)
 	--self.m_dataAxisStrip:SetVisible(false)
 end
-function gui.PFMTimelineMotion:OnRemove()
-	gui.PFMTimelineGraphBase.OnRemove(self)
+function TimelineEditorMotion:OnRemove()
+	gui.pfm.TimelineEditorGraphBase.OnRemove(self)
 	util.remove(self.m_elSelection)
 	util.remove(self.m_cbSelectionSizeUpdate)
 end
-function gui.PFMTimelineMotion:GetSelectionElement()
+function TimelineEditorMotion:GetSelectionElement()
 	return self.m_elSelection
 end
-function gui.PFMTimelineMotion:SetSelectionStart(t)
+function TimelineEditorMotion:SetSelectionStart(t)
 	self.m_elSelection:SetStartTime(t)
 end
-function gui.PFMTimelineMotion:SetSelectionEnd(t)
+function TimelineEditorMotion:SetSelectionEnd(t)
 	self.m_elSelection:SetEndTime(t)
 end
-function gui.PFMTimelineMotion:SetInnerSelectionStart(t)
+function TimelineEditorMotion:SetInnerSelectionStart(t)
 	self.m_elSelection:SetInnerStartTime(t)
 end
-function gui.PFMTimelineMotion:SetInnerSelectionEnd(t)
+function TimelineEditorMotion:SetInnerSelectionEnd(t)
 	self.m_elSelection:SetInnerEndTime(t)
 end
-function gui.PFMTimelineMotion:UpdateCursorTracker(trackerData, tracker, timeLine)
+function TimelineEditorMotion:UpdateCursorTracker(trackerData, tracker, timeLine)
 	if self.m_creatingSelection then
 		self:UpdateSelectionBounds()
 		return
 	end
-	gui.PFMTimelineGraphBase.UpdateCursorTracker(self, trackerData, tracker, timeLine)
+	gui.pfm.TimelineEditorGraphBase.UpdateCursorTracker(self, trackerData, tracker, timeLine)
 end
-function gui.PFMTimelineMotion:UpdateSelectionBounds()
+function TimelineEditorMotion:UpdateSelectionBounds()
 	local pos = self:GetCursorPos()
 	local t = self:GetTimeAxis():GetAxis():XOffsetToValue(pos.x)
 	local tMin = math.min(self.m_selectionStartTime, t)
@@ -50,7 +50,7 @@ function gui.PFMTimelineMotion:UpdateSelectionBounds()
 	self:SetInnerSelectionEnd(tMax)
 	self.m_elSelection:UpdateSelectionBounds()
 end
-function gui.PFMTimelineMotion:MouseCallback(button, state, mods)
+function TimelineEditorMotion:MouseCallback(button, state, mods)
 	if button == input.MOUSE_BUTTON_LEFT then
 		local pos = self:GetCursorPos()
 		local t = self:GetTimeAxis():GetAxis():XOffsetToValue(pos.x)
@@ -70,9 +70,9 @@ function gui.PFMTimelineMotion:MouseCallback(button, state, mods)
 			return util.EVENT_REPLY_HANDLED
 		end
 	end
-	return gui.PFMTimelineGraphBase.MouseCallback(self, button, state, mods)
+	return gui.pfm.TimelineEditorGraphBase.MouseCallback(self, button, state, mods)
 end
-function gui.PFMTimelineMotion:OnDragStart(shouldTransform)
+function TimelineEditorMotion:OnDragStart(shouldTransform)
 	if shouldTransform then
 		local targetActorChannels = {}
 		for _, graphData in ipairs(self.m_graphs) do
@@ -110,7 +110,7 @@ function gui.PFMTimelineMotion:OnDragStart(shouldTransform)
 
 	self.m_selectionPreTransformBounds = self:GetSelectionBounds()
 end
-function gui.PFMTimelineMotion:GetSelectionBounds()
+function TimelineEditorMotion:GetSelectionBounds()
 	return {
 		startTime = self.m_elSelection:GetStartTime(),
 		innerStartTime = self.m_elSelection:GetInnerStartTime(),
@@ -118,11 +118,11 @@ function gui.PFMTimelineMotion:GetSelectionBounds()
 		endTime = self.m_elSelection:GetEndTime(),
 	}
 end
-function gui.PFMTimelineMotion:OnDragEnd()
+function TimelineEditorMotion:OnDragEnd()
 	self.m_targetActorChannels = nil
 	self.m_selectionPreTransformBounds = nil
 end
-function gui.PFMTimelineMotion:OnDragUpdate(origSelTimes, newSelTimes, isFinal)
+function TimelineEditorMotion:OnDragUpdate(origSelTimes, newSelTimes, isFinal)
 	local cmd = pfm.create_command("composition")
 	if self.m_targetActorChannels ~= nil then
 		for actor, channels in pairs(self.m_targetActorChannels) do
@@ -170,7 +170,7 @@ function gui.PFMTimelineMotion:OnDragUpdate(origSelTimes, newSelTimes, isFinal)
 		cmd:Execute()
 	end
 end
-function gui.PFMTimelineMotion:SetTimelineContents(contents)
+function TimelineEditorMotion:SetTimelineContents(contents)
 	util.remove(self.m_elSelection)
 	local selection = gui.create("pfm_partial_time_selection", contents)
 	selection:GetVisibilityProperty():Link(self:GetVisibilityProperty())
@@ -194,5 +194,5 @@ function gui.PFMTimelineMotion:SetTimelineContents(contents)
 	end)
 	self.m_elSelection = selection
 end
-function gui.PFMTimelineMotion:InitializeBookmarks(graphData) end
-gui.register("pfm_timeline_motion", gui.PFMTimelineMotion)
+function TimelineEditorMotion:InitializeBookmarks(graphData) end
+gui.register("pfm_timeline_editor_motion", TimelineEditorMotion)

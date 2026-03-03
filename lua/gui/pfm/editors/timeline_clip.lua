@@ -1,13 +1,12 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-util.register_class("gui.PFMTimelineClip", gui.Base)
+include("timeline_editor_base.lua")
 
-function gui.PFMTimelineClip:__init()
-	gui.Base.__init(self)
-end
-function gui.PFMTimelineClip:OnInitialize()
-	gui.Base.OnInitialize(self)
+local TimelineEditorClip = util.register_class("gui.pfm.TimelineEditorClip", gui.pfm.TimelineEditorBase)
+
+function TimelineEditorClip:OnInitialize()
+	gui.pfm.TimelineEditorBase.OnInitialize(self)
 
 	self.m_trackGroups = {}
 	self:SetSize(256, 64)
@@ -15,7 +14,7 @@ function gui.PFMTimelineClip:OnInitialize()
 	self.m_contents = gui.create("vbox", self.m_contentsScroll, 0, 0, self:GetWidth(), self:GetHeight())
 	self.m_contents:SetAutoFillContentsToWidth(true)
 end
-function gui.PFMTimelineClip:OnSizeChanged(w, h)
+function TimelineEditorClip:OnSizeChanged(w, h)
 	if util.is_valid(self.m_contents) then
 		self.m_contents:SetWidth(w)
 	end
@@ -25,7 +24,7 @@ function gui.PFMTimelineClip:OnSizeChanged(w, h)
 		end
 	end
 end
-function gui.PFMTimelineClip:AddTrackGroup(groupName)
+function TimelineEditorClip:AddTrackGroup(groupName)
 	if util.is_valid(self) == false then
 		return
 	end
@@ -35,4 +34,4 @@ function gui.PFMTimelineClip:AddTrackGroup(groupName)
 	table.insert(self.m_trackGroups, p)
 	return p
 end
-gui.register("pfm_timeline_clip", gui.PFMTimelineClip)
+gui.register("pfm_timeline_editor_clip", TimelineEditorClip)

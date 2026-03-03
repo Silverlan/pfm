@@ -3,10 +3,15 @@
 
 include("film_clip.lua")
 include("sequence_film_strip.lua")
+include("/gui/drag_handle.lua")
 
 local FilmStrip = util.register_class("gui.FilmStrip", gui.Base)
 function FilmStrip:OnInitialize()
 	gui.Base.OnInitialize(self)
+
+	self:SetSize(64,64)
+
+	self:InitializeDragHandle()
 
 	self.m_timeFrame = udm.create_property_from_schema(pfm.udm.SCHEMA, "TimeFrame")
 	self.m_container = gui.create("WIContainer", self)
@@ -14,6 +19,20 @@ function FilmStrip:OnInitialize()
 	self.m_filmClips = {}
 
 	self:InitializeSequenceFilmStrip()
+end
+function FilmStrip:InitializeDragHandle()
+	local dragHandle = gui.create("drag_handle", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	local initialStartOffset
+	dragHandle:AddCallback("OnDragStart", function(dragHandle)
+		local timeLine = self:GetTimeline()
+		initialStartOffset = timeLine:GetStartOffset()
+	end)
+	dragHandle:AddCallback("OnDrag", function(dragHandle, xdelta, ydelta, x, y)
+		local timeLine = self:GetTimeline()
+		local axisTime = timeLine:GetTimeAxis():GetAxis()
+		timeLine:SetStartOffset(initialStartOffset -axisTime:XDeltaToValue(xdelta))
+		timeLine:Update()
+	end)
 end
 function FilmStrip:AddFilmClip(filmClip)
 	local elClip = gui.create("film_clip", self.m_container)

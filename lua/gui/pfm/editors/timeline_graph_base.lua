@@ -1,6 +1,7 @@
 -- SPDX-FileCopyrightText: (c) 2023 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
+include("timeline_editor_base.lua")
 include("/gui/curve.lua")
 include("/gui/pfm/containers/tree_view.lua")
 include("/gui/pfm/layout/grid.lua")
@@ -12,17 +13,17 @@ include("/util/graph_axis.lua")
 include("key.lua")
 include("easing.lua")
 
-util.register_class("gui.PFMTimelineGraphBase", gui.Base)
+local TimelineEditorGraphBase = util.register_class("gui.pfm.TimelineEditorGraphBase", gui.pfm.TimelineEditorBase)
 
 include("graph_editor")
 
-gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT = 0
-gui.PFMTimelineGraphBase.CURSOR_MODE_MOVE = 1
-gui.PFMTimelineGraphBase.CURSOR_MODE_PAN = 2
-gui.PFMTimelineGraphBase.CURSOR_MODE_SCALE = 3
-gui.PFMTimelineGraphBase.CURSOR_MODE_ZOOM = 4
-function gui.PFMTimelineGraphBase:OnInitialize()
-	gui.Base.OnInitialize(self)
+TimelineEditorGraphBase.CURSOR_MODE_SELECT = 0
+TimelineEditorGraphBase.CURSOR_MODE_MOVE = 1
+TimelineEditorGraphBase.CURSOR_MODE_PAN = 2
+TimelineEditorGraphBase.CURSOR_MODE_SCALE = 3
+TimelineEditorGraphBase.CURSOR_MODE_ZOOM = 4
+function TimelineEditorGraphBase:OnInitialize()
+	gui.pfm.TimelineEditorBase.OnInitialize(self)
 
 	self:SetDataPointsSelectable(true)
 	self:SetSize(512, 256)
@@ -74,7 +75,7 @@ function gui.PFMTimelineGraphBase:OnInitialize()
 
 	dataAxisStrip:SetAxis(self.m_dataAxis)
 
-	self:SetCursorMode(gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT)
+	self:SetCursorMode(TimelineEditorGraphBase.CURSOR_MODE_SELECT)
 	self:SetKeyboardInputEnabled(true)
 	self:SetMouseInputEnabled(true)
 	self:SetScrollInputEnabled(true)
@@ -102,14 +103,14 @@ function gui.PFMTimelineGraphBase:OnInitialize()
 		end
 	)
 end
-function gui.PFMTimelineGraphBase:ClearAnimManagerListeners()
+function TimelineEditorGraphBase:ClearAnimManagerListeners()
 	if self.m_animManagerListeners == nil then
 		return
 	end
 	util.remove(self.m_animManagerListeners)
 	self.m_animManagerListeners = nil
 end
-function gui.PFMTimelineGraphBase:InitAnimManagerListeners()
+function TimelineEditorGraphBase:InitAnimManagerListeners()
 	self:ClearAnimManagerListeners()
 
 	self.m_animManagerListeners = {}
@@ -137,7 +138,7 @@ function gui.PFMTimelineGraphBase:InitAnimManagerListeners()
 		end)
 	)
 end
-function gui.PFMTimelineGraphBase:ReloadGraphCurveSegment(i, keyIndex, rebuildCurve)
+function TimelineEditorGraphBase:ReloadGraphCurveSegment(i, keyIndex, rebuildCurve)
 	if rebuildCurve == nil then
 		rebuildCurve = true
 	end
@@ -176,7 +177,7 @@ function gui.PFMTimelineGraphBase:ReloadGraphCurveSegment(i, keyIndex, rebuildCu
 		self:RebuildGraphCurve(i, graphData, true)
 	end
 end
-function gui.PFMTimelineGraphBase:UpdateChannelValue(data)
+function TimelineEditorGraphBase:UpdateChannelValue(data)
 	if self.m_skipUpdateChannelValue then
 		return
 	end
@@ -220,27 +221,27 @@ function gui.PFMTimelineGraphBase:UpdateChannelValue(data)
 		end
 	end
 end
-function gui.PFMTimelineGraphBase:GetTimeAxisExtents()
+function TimelineEditorGraphBase:GetTimeAxisExtents()
 	return self:GetWidth()
 end
-function gui.PFMTimelineGraphBase:GetDataAxisExtents()
+function TimelineEditorGraphBase:GetDataAxisExtents()
 	return self.m_dataAxisStrip:GetHeight()
 end
-function gui.PFMTimelineGraphBase:OnRemove()
+function TimelineEditorGraphBase:OnRemove()
 	util.remove(self.m_cbUpdateFrameRate)
 	util.remove(self.m_cbDataAxisPropertiesChanged)
 	util.remove(self.m_cbOnActorControlSelected)
 	self:ClearAnimManagerListeners()
 	self:ClearKeyframeListeners()
 end
-function gui.PFMTimelineGraphBase:FindGraphDataIndices(actor, targetPath)
+function TimelineEditorGraphBase:FindGraphDataIndices(actor, targetPath)
 	local uuid = tostring(actor:GetUniqueId())
 	if self.m_channelPathToGraphIndices[uuid] == nil then
 		return {}
 	end
 	return self.m_channelPathToGraphIndices[uuid][targetPath] or {}
 end
-function gui.PFMTimelineGraphBase:FindGraphData(actor, targetPath, typeComponentIndex)
+function TimelineEditorGraphBase:FindGraphData(actor, targetPath, typeComponentIndex)
 	local indices = self:FindGraphDataIndices(actor, targetPath)
 	for _, graphIdx in ipairs(indices) do
 		if self.m_graphs[graphIdx].typeComponentIndex == typeComponentIndex then
@@ -248,14 +249,14 @@ function gui.PFMTimelineGraphBase:FindGraphData(actor, targetPath, typeComponent
 		end
 	end
 end
-function gui.PFMTimelineGraphBase:FindGraphCurve(actor, targetPath, typeComponentIndex)
+function TimelineEditorGraphBase:FindGraphCurve(actor, targetPath, typeComponentIndex)
 	local graphData = self:FindGraphData(actor, targetPath, typeComponentIndex)
 	if graphData == nil then
 		return
 	end
 	return graphData.curve
 end
-function gui.PFMTimelineGraphBase:RemoveKeyframe(actor, targetPath, typeComponentIndex, keyIndex)
+function TimelineEditorGraphBase:RemoveKeyframe(actor, targetPath, typeComponentIndex, keyIndex)
 	local pm = pfm.get_project_manager()
 	local animManager = pm:GetAnimationManager()
 
@@ -311,19 +312,19 @@ function gui.PFMTimelineGraphBase:RemoveKeyframe(actor, targetPath, typeComponen
 	self:ReloadGraphCurveSegment(graphIdx, (keyIndex > 0) and (keyIndex - 1) or 0)
 	self.m_skipOnChannelValueChangedCallback = nil
 end
-function gui.PFMTimelineGraphBase:RemoveDataPoint(dp)
+function TimelineEditorGraphBase:RemoveDataPoint(dp)
 	local actor, targetPath, keyIndex, curveData = dp:GetChannelValueData()
 	self:RemoveKeyframe(actor, targetPath, dp:GetTypeComponentIndex(), keyIndex)
 end
-function gui.PFMTimelineGraphBase:GetFilmClip()
+function TimelineEditorGraphBase:GetFilmClip()
 	return self.m_filmClip
 end
-function gui.PFMTimelineGraphBase:Setup(filmClip)
+function TimelineEditorGraphBase:Setup(filmClip)
 	self:ClearKeyframeListeners()
 	self.m_filmClip = filmClip
 	self:InitializeKeyframeListeners(filmClip)
 end
-function gui.PFMTimelineGraphBase:KeyboardCallback(key, scanCode, state, mods)
+function TimelineEditorGraphBase:KeyboardCallback(key, scanCode, state, mods)
 	if key == input.KEY_DELETE then
 		if state == input.STATE_PRESS then
 			local dps = self:GetSelectedDataPoints(false, true)
@@ -386,7 +387,7 @@ function gui.PFMTimelineGraphBase:KeyboardCallback(key, scanCode, state, mods)
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
-function gui.PFMTimelineGraphBase:GetSelectedDataPoints(includeHandles, includePointsIfHandleSelected)
+function TimelineEditorGraphBase:GetSelectedDataPoints(includeHandles, includePointsIfHandleSelected)
 	if includeHandles == nil then
 		includeHandles = true
 	end
@@ -418,13 +419,13 @@ function gui.PFMTimelineGraphBase:GetSelectedDataPoints(includeHandles, includeP
 	end
 	return dps
 end
-function gui.PFMTimelineGraphBase:UpdateSelectedDataPointHandles()
+function TimelineEditorGraphBase:UpdateSelectedDataPointHandles()
 	local dps = self:GetSelectedDataPoints(false, true)
 	for _, dp in ipairs(dps) do
 		dp:UpdateHandles()
 	end
 end
-function gui.PFMTimelineGraphBase:SetCursorTrackerEnabled(enabled)
+function TimelineEditorGraphBase:SetCursorTrackerEnabled(enabled)
 	if enabled then
 		local timeAxis = self.m_timeline:GetTimeline():GetTimeAxis():GetAxis()
 		local dataAxis = self.m_timeline:GetTimeline():GetDataAxis():GetAxis()
@@ -441,7 +442,7 @@ function gui.PFMTimelineGraphBase:SetCursorTrackerEnabled(enabled)
 		self:DisableThinking()
 	end
 end
-function gui.PFMTimelineGraphBase:SetDataPointMoveModeEnabled(dataPoints, enabled, moveThreshold)
+function TimelineEditorGraphBase:SetDataPointMoveModeEnabled(dataPoints, enabled, moveThreshold)
 	local filmClip = self:GetFilmClip()
 	if enabled then
 		self.m_dataPointMoveInfo = {}
@@ -495,7 +496,7 @@ function gui.PFMTimelineGraphBase:SetDataPointMoveModeEnabled(dataPoints, enable
 		pfm.undoredo.push("move_keyframes", cmd)()
 	end
 end
-function gui.PFMTimelineGraphBase:MouseCallback(button, state, mods)
+function TimelineEditorGraphBase:MouseCallback(button, state, mods)
 	self:RequestFocus()
 
 	local isCtrlDown = input.is_ctrl_key_down()
@@ -509,7 +510,7 @@ function gui.PFMTimelineGraphBase:MouseCallback(button, state, mods)
 	if
 		isShiftDown
 		and button == input.MOUSE_BUTTON_LEFT
-		and cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT
+		and cursorMode == TimelineEditorGraphBase.CURSOR_MODE_SELECT
 	then
 		if state == input.STATE_PRESS then
 			if #self.m_graphs == 1 then
@@ -526,22 +527,22 @@ function gui.PFMTimelineGraphBase:MouseCallback(button, state, mods)
 		return util.EVENT_REPLY_HANDLED
 	end
 	if button == input.MOUSE_BUTTON_LEFT then
-		if cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_MOVE then
+		if cursorMode == TimelineEditorGraphBase.CURSOR_MODE_MOVE then
 			local moveEnabled = (state == input.STATE_PRESS)
 			local dataPoints = self:GetSelectedDataPoints()
 			self:SetDataPointMoveModeEnabled(dataPoints, moveEnabled)
 		elseif state == input.STATE_PRESS then
 			self:SetCursorTrackerEnabled(true)
-			if cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT then
+			if cursorMode == TimelineEditorGraphBase.CURSOR_MODE_SELECT then
 				if util.is_valid(self.m_selectionRect) == false then
 					self.m_selectionRect = gui.create("selection_rect", self.m_graphContainer)
 					self.m_selectionRect:SetPos(self.m_graphContainer:GetCursorPos())
 				end
-			elseif cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_ZOOM then
+			elseif cursorMode == TimelineEditorGraphBase.CURSOR_MODE_ZOOM then
 				gui.set_cursor_input_mode(gui.CURSOR_MODE_HIDDEN)
 			end
 		else
-			if cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT then
+			if cursorMode == TimelineEditorGraphBase.CURSOR_MODE_SELECT then
 				if util.is_valid(self.m_selectionRect) then
 					for _, graphData in ipairs(self.m_graphs) do
 						if graphData.curve:IsValid() then
@@ -559,7 +560,7 @@ function gui.PFMTimelineGraphBase:MouseCallback(button, state, mods)
 					end
 					-- TODO: Select or deselect all points on curve if no individual points are within the select bounds, but the curve is
 				end
-			elseif cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_ZOOM then
+			elseif cursorMode == TimelineEditorGraphBase.CURSOR_MODE_ZOOM then
 				gui.set_cursor_input_mode(gui.CURSOR_MODE_NORMAL)
 			end
 
@@ -760,7 +761,7 @@ function gui.PFMTimelineGraphBase:MouseCallback(button, state, mods)
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
-function gui.PFMTimelineGraphBase:ApplyCurveFittingToRange(
+function TimelineEditorGraphBase:ApplyCurveFittingToRange(
 	actorUuid,
 	propertyPath,
 	baseIndex,
@@ -771,7 +772,7 @@ function gui.PFMTimelineGraphBase:ApplyCurveFittingToRange(
 )
 	return channel:ApplyCurveFittingToRange(actorUuid, propertyPath, baseIndex, tStart, tEnd, cmd)
 end
-function gui.PFMTimelineGraphBase:ApplyCurveFitting()
+function TimelineEditorGraphBase:ApplyCurveFitting()
 	local cmd = pfm.create_command("composition")
 	for _, graphData in ipairs(self.m_graphs) do
 		local curve = graphData.curve
@@ -816,7 +817,7 @@ function gui.PFMTimelineGraphBase:ApplyCurveFitting()
 	end
 	pfm.undoredo.push("apply_curve_fitting", cmd)()
 end
-function gui.PFMTimelineGraphBase:ZoomAxes(am, updateDataAxis, updateTimeAxis, useCenterAsPivot, cursorPos)
+function TimelineEditorGraphBase:ZoomAxes(am, updateDataAxis, updateTimeAxis, useCenterAsPivot, cursorPos)
 	useCenterAsPivot = useCenterAsPivot or false
 	local timeLine = self.m_timeline:GetTimeline()
 	local dataAxis = timeLine:GetDataAxis():GetAxis()
@@ -863,7 +864,7 @@ function gui.PFMTimelineGraphBase:ZoomAxes(am, updateDataAxis, updateTimeAxis, u
 		dataAxis:GetZoomLevel()
 	)
 end
-function gui.PFMTimelineGraphBase:OnThink()
+function TimelineEditorGraphBase:OnThink()
 	if self.m_cursorTracker == nil then
 		return
 	end
@@ -877,10 +878,10 @@ function gui.PFMTimelineGraphBase:OnThink()
 	local timeLine = self.m_timeline:GetTimeline()
 	self:UpdateCursorTracker(trackerData, tracker, timeLine)
 end
-function gui.PFMTimelineGraphBase:UpdateCursorTracker(trackerData, tracker, timeLine)
+function TimelineEditorGraphBase:UpdateCursorTracker(trackerData, tracker, timeLine)
 	local dtPos = tracker:GetTotalDeltaPosition()
 	local cursorMode = self:GetCursorMode()
-	if self.m_middleMouseDrag or cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_PAN then
+	if self.m_middleMouseDrag or cursorMode == TimelineEditorGraphBase.CURSOR_MODE_PAN then
 		timeLine
 			:GetTimeAxis()
 			:GetAxis()
@@ -890,43 +891,37 @@ function gui.PFMTimelineGraphBase:UpdateCursorTracker(trackerData, tracker, time
 			:GetAxis()
 			:SetStartOffset(trackerData.dataAxisStartOffset + timeLine:GetDataAxis():GetAxis():XDeltaToValue(dtPos).y)
 		timeLine:Update()
-	elseif self.m_rightClickZoom or cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_ZOOM then
+	elseif self.m_rightClickZoom or cursorMode == TimelineEditorGraphBase.CURSOR_MODE_ZOOM then
 		local dt = (dtPos.x + dtPos.y) / 20.0
 		self:ZoomAxes(dt, true, true, true, tracker:GetStartPos())
 		input.set_cursor_pos(tracker:GetStartPos())
 		tracker:ResetCurPos()
-	elseif cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT then
-	elseif cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_MOVE then
-	elseif cursorMode == gui.PFMTimelineGraphBase.CURSOR_MODE_SCALE then
+	elseif cursorMode == TimelineEditorGraphBase.CURSOR_MODE_SELECT then
+	elseif cursorMode == TimelineEditorGraphBase.CURSOR_MODE_MOVE then
+	elseif cursorMode == TimelineEditorGraphBase.CURSOR_MODE_SCALE then
 	end
 end
-function gui.PFMTimelineGraphBase:ScrollCallback(x, y)
+function TimelineEditorGraphBase:ScrollCallback(x, y)
 	local isCtrlDown = input.is_ctrl_key_down()
 	local isAltDown = input.is_alt_key_down()
 	local updateDataAxis = isCtrlDown or isAltDown
-	local updateTimeAxis = isAltDown
+	local updateTimeAxis = not isCtrlDown
 	if updateDataAxis or updateTimeAxis then
 		self:ZoomAxes(y, updateDataAxis, updateTimeAxis, isAltDown == false)
 		return util.EVENT_REPLY_HANDLED
 	end
 	return util.EVENT_REPLY_UNHANDLED
 end
-function gui.PFMTimelineGraphBase:SetCursorMode(cursorMode)
+function TimelineEditorGraphBase:SetCursorMode(cursorMode)
 	self.m_cursorMode = cursorMode
 end
-function gui.PFMTimelineGraphBase:GetCursorMode()
+function TimelineEditorGraphBase:GetCursorMode()
 	return self.m_cursorMode
 end
-function gui.PFMTimelineGraphBase:SetTimeline(timeline)
-	self.m_timeline = timeline
-end
-function gui.PFMTimelineGraphBase:GetTimeline()
-	return self.m_timeline
-end
-function gui.PFMTimelineGraphBase:SetTimeAxis(timeAxis)
+function TimelineEditorGraphBase:SetTimeAxis(timeAxis)
 	self.m_timeAxis = timeAxis
 end
-function gui.PFMTimelineGraphBase:SetDataAxis(dataAxis)
+function TimelineEditorGraphBase:SetDataAxis(dataAxis)
 	self.m_dataAxis = dataAxis
 	self.m_dataAxisStrip:SetAxis(dataAxis:GetAxis())
 
@@ -935,13 +930,13 @@ function gui.PFMTimelineGraphBase:SetDataAxis(dataAxis)
 		self.m_dataAxisStrip:Update()
 	end)
 end
-function gui.PFMTimelineGraphBase:GetTimeAxis()
+function TimelineEditorGraphBase:GetTimeAxis()
 	return self.m_timeAxis
 end
-function gui.PFMTimelineGraphBase:GetDataAxis()
+function TimelineEditorGraphBase:GetDataAxis()
 	return self.m_dataAxis
 end
-function gui.PFMTimelineGraphBase:UpdateGraphCurveAxisRanges(i)
+function TimelineEditorGraphBase:UpdateGraphCurveAxisRanges(i)
 	local graphData = self.m_graphs[i]
 	local graph = graphData.curve
 	if graph:IsValid() == false then
@@ -955,7 +950,7 @@ function gui.PFMTimelineGraphBase:UpdateGraphCurveAxisRanges(i)
 	local dataRange = { dataAxis:GetStartOffset(), dataAxis:XOffsetToValue(self:GetBottom()) }
 	graph:SetVerticalRange(dataRange[1], dataRange[2])
 end
-function gui.PFMTimelineGraphBase:RebuildGraphCurves()
+function TimelineEditorGraphBase:RebuildGraphCurves()
 	for i = 1, #self.m_graphs do
 		local graphData = self.m_graphs[i]
 		if graphData.curve:IsValid() then
@@ -963,7 +958,7 @@ function gui.PFMTimelineGraphBase:RebuildGraphCurves()
 		end
 	end
 end
-function gui.PFMTimelineGraphBase:InterfaceTimeToDataTime(graphData, t)
+function TimelineEditorGraphBase:InterfaceTimeToDataTime(graphData, t)
 	local animClip = graphData.animClip()
 	if animClip == nil then
 		return t
@@ -972,7 +967,7 @@ function gui.PFMTimelineGraphBase:InterfaceTimeToDataTime(graphData, t)
 	t = graphData.filmClip:LocalizeOffset(t)
 	return t
 end
-function gui.PFMTimelineGraphBase:DataTimeToInterfaceTime(graphData, t)
+function TimelineEditorGraphBase:DataTimeToInterfaceTime(graphData, t)
 	local animClip = graphData.animClip()
 	if animClip == nil then
 		return t
@@ -982,7 +977,7 @@ function gui.PFMTimelineGraphBase:DataTimeToInterfaceTime(graphData, t)
 	return t
 end
 
-function gui.PFMTimelineGraphBase:ReloadGraphCurve(targetPath)
+function TimelineEditorGraphBase:ReloadGraphCurve(targetPath)
 	for i, graphData in ipairs(self.m_graphs) do
 		if graphData.targetPath == targetPath then
 			self:RebuildGraphCurve(i, graphData)
@@ -990,7 +985,7 @@ function gui.PFMTimelineGraphBase:ReloadGraphCurve(targetPath)
 	end
 end
 
-function gui.PFMTimelineGraphBase:RebuildGraphCurve(i, graphData, updateCurveOnly)
+function TimelineEditorGraphBase:RebuildGraphCurve(i, graphData, updateCurveOnly)
 	local animClip = graphData.animClip()
 	local channel = graphData.channel()
 	if animClip == nil or channel == nil then
@@ -1023,7 +1018,7 @@ function gui.PFMTimelineGraphBase:RebuildGraphCurve(i, graphData, updateCurveOnl
 	end, (graphData.valueTranslator ~= nil) and graphData.valueTranslator[1] or nil)
 	graphData.curve:UpdateCurveData(curveValues)
 end
-function gui.PFMTimelineGraphBase:InitializeBookmarks(graphData)
+function TimelineEditorGraphBase:InitializeBookmarks(graphData)
 	if graphData == nil then
 		for _, graphData in ipairs(self.m_graphs) do
 			self:InitializeBookmarks(graphData)
@@ -1047,7 +1042,7 @@ function gui.PFMTimelineGraphBase:InitializeBookmarks(graphData)
 		end
 	end
 end
-function gui.PFMTimelineGraphBase:RemoveGraphCurve(i)
+function TimelineEditorGraphBase:RemoveGraphCurve(i)
 	local graphData = self.m_graphs[i]
 	if graphData.bookmarkSet ~= nil then
 		self.m_timeline:RemoveBookmarkSet(graphData.bookmarkSet)
@@ -1075,10 +1070,10 @@ function gui.PFMTimelineGraphBase:RemoveGraphCurve(i)
 		table.remove(self.m_graphs, #self.m_graphs)
 	end
 end
-function gui.PFMTimelineGraphBase:GetGraphCurve(i)
+function TimelineEditorGraphBase:GetGraphCurve(i)
 	return self.m_graphs[i]
 end
-function gui.PFMTimelineGraphBase:ReloadGraphView()
+function TimelineEditorGraphBase:ReloadGraphView()
 	local list = self:GetPropertyList()
 	local selected = {}
 	for el, b in pairs(list:GetSelectedElements()) do
@@ -1092,13 +1087,13 @@ function gui.PFMTimelineGraphBase:ReloadGraphView()
 		el:SetSelected(true)
 	end
 end
-function gui.PFMTimelineGraphBase:SetDataPointsSelectable(selectable)
+function TimelineEditorGraphBase:SetDataPointsSelectable(selectable)
 	self.m_dataPointsSelectable = selectable
 end
-function gui.PFMTimelineGraphBase:AreDataPointsSelectable()
+function TimelineEditorGraphBase:AreDataPointsSelectable()
 	return self.m_dataPointsSelectable
 end
-function gui.PFMTimelineGraphBase:AddGraph(
+function TimelineEditorGraphBase:AddGraph(
 	filmClip,
 	track,
 	actor,
@@ -1164,15 +1159,15 @@ function gui.PFMTimelineGraphBase:AddGraph(
 	end
 	return graph, idx
 end
-function gui.PFMTimelineGraphBase:GetGraphs()
+function TimelineEditorGraphBase:GetGraphs()
 	return self.m_graphs
 end
-function gui.PFMTimelineGraphBase:UpdateAxisRanges(startOffset, zoomLevel, timeStartOffset, timeZoomLevel)
+function TimelineEditorGraphBase:UpdateAxisRanges(startOffset, zoomLevel, timeStartOffset, timeZoomLevel)
 	for i = 1, #self.m_graphs do
 		self:UpdateGraphCurveAxisRanges(i)
 	end
 end
-function gui.PFMTimelineGraphBase:GetTimeRange()
+function TimelineEditorGraphBase:GetTimeRange()
 	local minTime = math.huge
 	local maxTime = -math.huge
 	for _, graph in ipairs(self.m_graphs) do
@@ -1191,7 +1186,7 @@ function gui.PFMTimelineGraphBase:GetTimeRange()
 	end
 	return minTime, maxTime
 end
-function gui.PFMTimelineGraphBase:GetDataRange()
+function TimelineEditorGraphBase:GetDataRange()
 	local minTime = math.huge
 	local maxTime = -math.huge
 	local minValue = math.huge
@@ -1235,13 +1230,13 @@ function gui.PFMTimelineGraphBase:GetDataRange()
 	end
 	return minTime, maxTime, minValue, maxValue
 end
-function gui.PFMTimelineGraphBase:SetTimeRange(startTime, endTime, margin)
+function TimelineEditorGraphBase:SetTimeRange(startTime, endTime, margin)
 	self.m_timeline:SetTimeRange(startTime, endTime, margin, self.m_dataAxisStrip:GetRight())
 end
-function gui.PFMTimelineGraphBase:SetDataRange(startVal, endVal, margin)
+function TimelineEditorGraphBase:SetDataRange(startVal, endVal, margin)
 	self.m_timeline:SetDataRange(startVal, endVal, margin)
 end
-function gui.PFMTimelineGraphBase:FitViewToDataRange()
+function TimelineEditorGraphBase:FitViewToDataRange()
 	local minTime, maxTime, minVal, maxVal = self:GetDataRange()
 	if math.abs(maxTime - minTime) < 0.001 then
 		-- Time interval is 0, so we add an arbitrary amount of time
@@ -1256,7 +1251,7 @@ function gui.PFMTimelineGraphBase:FitViewToDataRange()
 	self:SetTimeRange(minTime, maxTime, 20.0)
 	self:SetDataRange(minVal, maxVal, 20.0)
 end
-function gui.PFMTimelineGraphBase:SetupControl(
+function TimelineEditorGraphBase:SetupControl(
 	filmClip,
 	actor,
 	targetPath,
@@ -1285,7 +1280,7 @@ function gui.PFMTimelineGraphBase:SetupControl(
 		end
 	end)
 end
-function gui.PFMTimelineGraphBase:AddKeyframe(time)
+function TimelineEditorGraphBase:AddKeyframe(time)
 	if util.is_valid(self.m_timeline) == false then
 		return
 	end
@@ -1315,7 +1310,7 @@ function gui.PFMTimelineGraphBase:AddKeyframe(time)
 		end
 	end
 end
-function gui.PFMTimelineGraphBase:OnVisibilityChanged(visible)
+function TimelineEditorGraphBase:OnVisibilityChanged(visible)
 	input.set_binding_layer_enabled("pfm_graph_editor", visible)
 	input.update_effective_input_bindings()
 
@@ -1325,10 +1320,10 @@ function gui.PFMTimelineGraphBase:OnVisibilityChanged(visible)
 	local timeline = self.m_timeline:GetTimeline()
 	timeline:ClearBookmarks()
 end
-function gui.PFMTimelineGraphBase:GetPropertyList()
+function TimelineEditorGraphBase:GetPropertyList()
 	return self.m_transformList
 end
-function gui.PFMTimelineGraphBase:AddControl(filmClip, actor, controlData, memberInfo, valueTranslator)
+function TimelineEditorGraphBase:AddControl(filmClip, actor, controlData, memberInfo, valueTranslator)
 	local itemCtrl = self.m_transformList:AddItem(controlData.name, nil, nil, controlData.name)
 	itemCtrl:SetName(controlData.path:replace("/", "_"))
 	local function addChannel(item, fValueTranslator, color, typeComponentIndex)
@@ -1502,7 +1497,7 @@ function gui.PFMTimelineGraphBase:AddControl(filmClip, actor, controlData, membe
 	self.m_transformList:SetWidth(204)]]
 	return itemCtrl
 end
---[[function gui.PFMTimelineGraphBase:Setup(actor,channelClip)
+--[[function TimelineEditorGraphBase:Setup(actor,channelClip)
 	local mdlC = actor:FindComponent("pfm_model")
 	if(mdlC == nil or util.is_valid(self.m_boneList) == false) then return end
 
@@ -1555,4 +1550,3 @@ end
 	self.m_boneList:SizeToContents()
 	self.m_boneList:SetWidth(204)
 end]]
-gui.register("pfm_timeline_graph_base", gui.PFMTimelineGraphBase)

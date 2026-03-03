@@ -3,10 +3,11 @@
 
 include("/gui/pfm/curve_canvas.lua")
 
-function gui.PFMTimelineGraphBase:IsInDrawingMode()
+local TimelineEditorGraphBase = gui.pfm.TimelineEditorGraphBase
+function TimelineEditorGraphBase:IsInDrawingMode()
 	return self.m_canvasData ~= nil
 end
-function gui.PFMTimelineGraphBase:StartCanvasDrawing(actor, propertyPath, valueBaseIndex, valueType)
+function TimelineEditorGraphBase:StartCanvasDrawing(actor, propertyPath, valueBaseIndex, valueType)
 	self:EndCanvasDrawing()
 	local el = gui.create(
 		"curve_canvas",
@@ -58,7 +59,7 @@ function gui.PFMTimelineGraphBase:StartCanvasDrawing(actor, propertyPath, valueB
 	)
 	self.m_canvasData = canvasData
 end
-function gui.PFMTimelineGraphBase:EndCanvasDrawing()
+function TimelineEditorGraphBase:EndCanvasDrawing()
 	if self.m_canvasData == nil then
 		return
 	end

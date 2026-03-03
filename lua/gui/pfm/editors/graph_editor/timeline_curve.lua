@@ -114,7 +114,7 @@ function gui.PFMTimelineCurve:UpdateKeyframes()
 			el:SetGraphData(self, kfInfo)
 
 			el:AddCallback("OnMouseEvent", function(el, button, state, mods)
-				if self.m_timelineGraph:GetCursorMode() ~= gui.PFMTimelineGraphBase.CURSOR_MODE_SELECT then
+				if self.m_timelineGraph:GetCursorMode() ~= gui.pfm.TimelineEditorGraphBase.CURSOR_MODE_SELECT then
 					return util.EVENT_REPLY_UNHANDLED
 				end
 				if button == input.MOUSE_BUTTON_LEFT then

@@ -224,14 +224,10 @@ function Element:InitializeProjectUI(layoutName)
 		filmStrip = gui.create("film_strip")
 		self.m_filmStrip = filmStrip
 		filmStrip:SetScrollInputEnabled(true)
+		local pfmClipEditor = pfmTimeline:GetEditorTimelineElement(gui.PFMTimeline.EDITOR_CLIP)
 		filmStrip:AddCallback("OnScroll", function(el, x, y)
-			if timeline:IsValid() then
-				local axis = timeline:GetTimeAxis():GetAxis()
-				timeline:SetStartOffset(axis:GetStartOffset() - y * axis:GetZoomLevelMultiplier())
-				timeline:Update()
-				return util.EVENT_REPLY_HANDLED
-			end
-			return util.EVENT_REPLY_UNHANDLED
+			pfmClipEditor:ZoomTimeAxis(y)
+			return util.EVENT_REPLY_HANDLED
 		end)
 
 		filmStrip:SetSize(1024, 64)
@@ -245,7 +241,6 @@ function Element:InitializeProjectUI(layoutName)
 		end
 		filmStrip:Update()
 
-		local pfmClipEditor = pfmTimeline:GetEditorTimelineElement(gui.PFMTimeline.EDITOR_CLIP)
 		local groupPicture = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_picture"))
 		if filmStrip ~= nil then
 			for _, filmClip in ipairs(filmStrip:GetFilmClips()) do
