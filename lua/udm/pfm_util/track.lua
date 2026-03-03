@@ -169,11 +169,11 @@ function pfm.udm.Track:MoveFilmClipToLeft(fc)
 end
 
 function pfm.udm.Track:UpdateFilmClipTimeFrames()
-	local tStart = 0.0
+	--[[local tStart = 0.0
 	for _, fc in ipairs(self:GetSortedFilmClips()) do
 		local timeFrame = fc:GetTimeFrame()
 		timeFrame:SetStart(tStart)
 		tStart = timeFrame:GetEnd()
-	end
+	end]]
 	self:CallChangeListeners("OnFilmClipTimeFramesUpdated")
 end

@@ -9,9 +9,6 @@ gui.BaseClip.TITLE_COLOR = Color.White
 gui.BaseClip.TITLE_COLOR_SELECTED = Color(63, 53, 20)
 gui.BaseClip.OUTLINE_COLOR = Color(182, 182, 182)
 
-function gui.BaseClip:__init()
-	gui.Base.__init(self)
-end
 function gui.BaseClip:OnInitialize()
 	gui.Base.OnInitialize(self)
 

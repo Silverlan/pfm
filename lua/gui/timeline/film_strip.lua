@@ -21,12 +21,12 @@ function FilmStrip:AddFilmClip(filmClip)
 	table.insert(self.m_filmClips, elClip)
 
 	elClip:SetClipData(filmClip)
+	elClip:SetFilmStrip(self)
 	self:ScheduleUpdate()
 	return elClip
 end
 function FilmStrip:InitializeSequenceFilmStrip()
 	local seqFilmStrip = gui.create("sequence_film_strip", self.m_container)
-	seqFilmStrip:SetFilmStrip(self)
 	seqFilmStrip:SetZPos(-5)
 	seqFilmStrip:GetTimeFrame():SetStart(-2)
 	seqFilmStrip:GetTimeFrame():SetDuration(40)
@@ -36,6 +36,8 @@ function FilmStrip:Setup(session, timeline)
 	self.m_seqFilmStrip:SetTimeFrame(session:GetTimeFrame())
 	timeline:AddTimelineItem(self.m_seqFilmStrip, self.m_seqFilmStrip:GetTimeFrame())
 	self.m_timeline = timeline
+	
+	self.m_seqFilmStrip:SetFilmStrip(self)
 end
 function FilmStrip:GetTimeline() return self.m_timeline end
 function FilmStrip:GetSequenceFilmStrip() return self.m_seqFilmStrip end

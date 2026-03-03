@@ -234,14 +234,15 @@ function Element:InitializeProjectUI(layoutName)
 			return util.EVENT_REPLY_UNHANDLED
 		end)
 
+		filmStrip:SetSize(1024, 64)
+		filmStrip:Setup(session, timeline)
+		
 		local trackFilm = session:GetFilmTrack()
 		if trackFilm ~= nil then
 			for _, filmClip in ipairs(trackFilm:GetFilmClips()) do
 				self:AddFilmClipElement(filmClip)
 			end
 		end
-		filmStrip:SetSize(1024, 64)
-		filmStrip:Setup(session, timeline)
 		filmStrip:Update()
 
 		local pfmClipEditor = pfmTimeline:GetEditorTimelineElement(gui.PFMTimeline.EDITOR_CLIP)

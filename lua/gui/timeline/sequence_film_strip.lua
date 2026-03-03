@@ -1,6 +1,8 @@
 -- SPDX-FileCopyrightText: (c) 2026 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
+include("/gui/drag_handle.lua")
+
 local SequenceFilmStrip = util.register_class("gui.SequenceFilmStrip", gui.Base)
 function SequenceFilmStrip:OnInitialize()
 	gui.Base.OnInitialize(self)
@@ -14,6 +16,8 @@ function SequenceFilmStrip:OnInitialize()
 
 	local leftDragHandle = self:CreateDragHandle(true, 0, 0, 12, self:GetHeight(), 0, 0, 0, 0)
 	local rightDragHandle = self:CreateDragHandle(false, self:GetRight() -12, 0, 12, self:GetHeight(), 1, 0, 1, 0)
+	self.m_leftDragHandle = leftDragHandle
+	self.m_rightDragHandle = rightDragHandle
 
 	local middleBar = gui.create("WIRect", self, 12, 0, self:GetWidth() -(12 +12), self:GetHeight(), 0, 0, 1, 1)
 	middleBar:SetColor(Color.White)
@@ -29,53 +33,34 @@ function SequenceFilmStrip:OnInitialize()
 	sessionName:SetPos(blackBar:GetX() +2, 13)
 end
 function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
-	local dragHandle = gui.create("WIRect", self, x, y, w, h, ax, ay, aw, ah)
-	dragHandle:SetColor(Color.Red)
-	dragHandle:SetCursor(gui.CURSOR_SHAPE_HAND)
-
-	dragHandle:SetMouseInputEnabled(true)
-	dragHandle:AddCallback("OnMouseEvent", function(dragHandle, mouseButton, state, mods)
-		if mouseButton == input.MOUSE_BUTTON_LEFT then
-			if state == input.STATE_PRESS then
-				dragHandle:SetCursorMovementCheckEnabled(true)
-				self.m_dragInitialXOffset = dragHandle:GetCursorPos().x
-				if(startHandle) then
-					self.m_dragInitialEnd = self:GetTimeFrame():GetEnd()
-				end
-			elseif state == input.STATE_RELEASE then
-				dragHandle:SetCursorMovementCheckEnabled(false)
-				self.m_dragInitialXOffset = nil
-				if(startHandle) then
-					self.m_dragInitialEnd = nil
-				end
-			end
-			return util.EVENT_REPLY_HANDLED
-		end
-		return util.EVENT_REPLY_UNHANDLED
-	end)
-	dragHandle:AddCallback("OnCursorMoved", function(dragHandle, x, y)
+	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
+	dragHandle:AddCallback("OnDrag", function(dragHandle, xdelta, ydelta, x, y)
 		if(util.is_valid(self.m_filmStrip) == false) then return end
 		local timeLine = self.m_filmStrip:GetTimeline()
 		if(util.is_valid(timeLine) == false) then return end
-		x = x -self.m_dragInitialXOffset
-		local axisTime = timeLine:GetTimeAxis():GetAxis()
-		local xDragHandle = dragHandle:GetAbsolutePos().x
 		if(startHandle == false) then
-			xDragHandle = xDragHandle +dragHandle:GetWidth()
+			x = x +dragHandle:GetWidth()
 		end
-		local time = axisTime:XOffsetToValue(xDragHandle +x -timeLine:GetAbsolutePos().x)
+		local axisTime = timeLine:GetTimeAxis():GetAxis()
+		local time = axisTime:XOffsetToValue(x)
+		local timeFrame = self:GetTimeFrame()
 		if(startHandle) then
-			self:GetTimeFrame():SetStart(time)
-			self:GetTimeFrame():SetDuration(self.m_dragInitialEnd -time)
+			local endTime = timeFrame:GetEnd()
+			timeFrame:SetStart(time)
+			timeFrame:SetDuration(endTime -time)
 		else
-			self:GetTimeFrame():SetDuration(time -self:GetTimeFrame():GetStart())
+			timeFrame:SetDuration(time -timeFrame:GetStart())
 		end
 	end)
 	return dragHandle
 end
 function SequenceFilmStrip:SetTimeFrame(timeFrame) self.m_timeFrame = timeFrame end
 function SequenceFilmStrip:GetTimeFrame() return self.m_timeFrame end
-function SequenceFilmStrip:SetFilmStrip(filmStrip) self.m_filmStrip = filmStrip end
+function SequenceFilmStrip:SetFilmStrip(filmStrip)
+	self.m_leftDragHandle:SetReferenceElement(filmStrip:GetTimeline())
+	self.m_rightDragHandle:SetReferenceElement(filmStrip:GetTimeline())
+	self.m_filmStrip = filmStrip
+end
 function SequenceFilmStrip:Test()
 	if(not util.is_valid(self.m_filmStrip)) then return end
 	local xLeft
