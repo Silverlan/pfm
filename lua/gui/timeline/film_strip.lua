@@ -52,11 +52,12 @@ function FilmStrip:InitializeSequenceFilmStrip()
 	self.m_seqFilmStrip = seqFilmStrip
 end
 function FilmStrip:Setup(session, timeline)
-	self.m_seqFilmStrip:SetTimeFrame(session:GetTimeFrame())
-	timeline:AddTimelineItem(self.m_seqFilmStrip, self.m_seqFilmStrip:GetTimeFrame())
+	local seqFilmStrip = self.m_seqFilmStrip
+	seqFilmStrip:SetTimeFrame(session:GetTimeFrame())
+	timeline:AddTimelineItem(seqFilmStrip, seqFilmStrip:GetTimeFrame(), seqFilmStrip:GetLeftMargin(), seqFilmStrip:GetRightMargin())
 	self.m_timeline = timeline
 	
-	self.m_seqFilmStrip:SetFilmStrip(self)
+	seqFilmStrip:SetFilmStrip(self)
 end
 function FilmStrip:GetTimeline() return self.m_timeline end
 function FilmStrip:GetSequenceFilmStrip() return self.m_seqFilmStrip end

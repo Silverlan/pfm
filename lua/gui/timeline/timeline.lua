@@ -126,8 +126,8 @@ end
 function gui.Timeline:GetDataAxis()
 	return self.m_dataAxis
 end
-function gui.Timeline:AddTimelineItem(el, timeFrame)
-	self.m_timeAxis:AttachElementToRange(el, timeFrame)
+function gui.Timeline:AddTimelineItem(el, timeFrame, startOffset, endOffset)
+	self.m_timeAxis:AttachElementToRange(el, timeFrame, startOffset, endOffset)
 end
 function gui.Timeline:MouseCallback(mouseButton, state, mods)
 	--[[if(mouseButton == input.MOUSE_BUTTON_LEFT) then

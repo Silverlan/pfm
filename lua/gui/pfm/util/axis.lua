@@ -79,7 +79,7 @@ function gui.Axis:AttachElementToValueWithUdmProperty(el, udmEl, propName, trans
 		end)
 	)
 end
-function gui.Axis:AttachElementToRange(el, timeFrame)
+function gui.Axis:AttachElementToRange(el, timeFrame, startOffset, endOffset)
 	local index = self.m_itemIndex
 	self.m_itemIndex = self.m_itemIndex + 1
 
@@ -87,6 +87,8 @@ function gui.Axis:AttachElementToRange(el, timeFrame)
 	itemData.element = el
 	itemData.value = timeFrame:GetStart()
 	itemData.lengthValue = timeFrame:GetDuration()
+	itemData.startOffset = startOffset or 0
+	itemData.endOffset = endOffset or 0
 	itemData.callbacks = {
 		timeFrame:AddChangeListener("start", function(timeFrame, newValue)
 			self:UpdateAttachment(index, newValue)
@@ -121,13 +123,16 @@ function gui.Axis:UpdateItem(itemData)
 		local v = itemData.value
 		local x = axis:ValueToXOffset(v)
 		local extents = self:IsHorizontal() and itemData.element:GetWidth() or itemData.element:GetHeight()
+		extents = extents -(itemData.startOffset +itemData.endOffset)
 		x = x - extents / 2
 
 		local pos = itemData.element:GetAbsolutePos()
 		if self:IsHorizontal() then
 			pos.x = self:GetAbsolutePos().x + x
+			pos.x = pos.x -itemData.startOffset
 		else
 			pos.y = self:GetAbsolutePos().y + x
+			pos.y = pos.y -itemData.startOffset
 		end
 		itemData.element:SetAbsolutePos(pos)
 	else
@@ -141,10 +146,13 @@ function gui.Axis:UpdateItem(itemData)
 		local pos = itemData.element:GetAbsolutePos()
 		if self:IsHorizontal() then
 			pos.x = xStartAbs
+			pos.x = pos.x -itemData.startOffset
 		else
 			pos.y = xStartAbs
+			pos.y = pos.y -itemData.startOffset
 		end
 		itemData.element:SetAbsolutePos(pos)
+		w = w +itemData.startOffset +itemData.endOffset
 		if self:IsHorizontal() then
 			itemData.element:SetWidth(w)
 		else

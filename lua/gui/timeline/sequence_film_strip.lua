@@ -15,6 +15,7 @@ function SequenceFilmStrip:OnInitialize()
 	local elBg = gui.create("WI9SliceRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	elBg:SetColor(Color(62, 62, 107))
 	elBg:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_background")
+	self.m_elBg = elBg
 
 	local elBgPattern = gui.create("pfm_repeated_textured_rect", elBg)
 	elBgPattern:SetColor(Color(46, 46, 54, 255))
@@ -45,14 +46,24 @@ function SequenceFilmStrip:OnInitialize()
 	sessionName:SizeToContents()
 	sessionName:SetPos(blackBar:GetX() +2, 13)
 end
+function SequenceFilmStrip:GetLeftMargin()
+	local w = self.m_elBg:GetSegmentSize(gui.NineSliceRect.SEGMENT_LEFT_EDGE)
+	return w
+end
+function SequenceFilmStrip:GetRightMargin()
+	local w = self.m_elBg:GetSegmentSize(gui.NineSliceRect.SEGMENT_RIGHT_EDGE)
+	return w
+end
 function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
 	dragHandle:AddCallback("OnDrag", function(dragHandle, xdelta, ydelta, x, y)
 		if(util.is_valid(self.m_filmStrip) == false) then return end
 		local timeLine = self.m_filmStrip:GetTimeline()
 		if(util.is_valid(timeLine) == false) then return end
-		if(startHandle == false) then
-			x = x +dragHandle:GetWidth()
+		if(startHandle) then
+			x = x +self:GetLeftMargin()
+		else
+			x = x +dragHandle:GetWidth() -self:GetRightMargin()
 		end
 		local axisTime = timeLine:GetTimeAxis():GetAxis()
 		local time = axisTime:XOffsetToValue(x)
@@ -65,6 +76,14 @@ function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw,
 			timeFrame:SetDuration(time -timeFrame:GetStart())
 		end
 	end)
+
+	local elTex = gui.create("WITexturedRect", dragHandle)
+	elTex:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_grab_handle")
+	elTex:SetColor(Color(81, 86, 147))
+	elTex:SetSize(3, 23)
+	elTex:CenterToParent()
+	elTex:SetAnchor(0.5, 0.5, 0.5, 0.5)
+
 	return dragHandle
 end
 function SequenceFilmStrip:SetTimeFrame(timeFrame) self.m_timeFrame = timeFrame end
