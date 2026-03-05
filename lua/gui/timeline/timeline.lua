@@ -8,11 +8,8 @@ include("/gui/containers/collapsible_group.lua")
 include("/gui/pfm/widgets/bookmark.lua")
 include("/gui/pfm/util/axis.lua")
 
-util.register_class("gui.Timeline", gui.Base)
-function gui.Timeline:__init()
-	gui.Base.__init(self)
-end
-function gui.Timeline:OnInitialize()
+local Timeline = util.register_class("gui.Timeline", gui.Base)
+function Timeline:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(128, 64)
@@ -74,8 +71,8 @@ function gui.Timeline:OnInitialize()
 		self:OnTimelinePropertiesChanged(true, true)
 	end)
 
-	self.m_playhead = gui.create("playhead", self, 0, self.m_bookmarkBar:GetBottom())
-	self.m_playhead:SetHeight(self:GetHeight())
+	self.m_playhead = self:CreatePlayhead()
+	self.m_playhead:AddStyleClass("timeline_playhead")
 	self.m_playhead:SetTimeOffsetProperty(pfm.get_project_manager():GetTimeProperty())
 
 	self.m_timeAxis = gui.create("axis", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
@@ -92,13 +89,21 @@ function gui.Timeline:OnInitialize()
 	-- TODO
 	self:SetMouseInputEnabled(true)
 end
-function gui.Timeline:AddTimelineElement(item)
+function Timeline:CreatePlayhead()
+	local playhead = gui.create("playhead", self, 0, self.m_bookmarkBar:GetBottom())
+	playhead:SetName("test_anchor_el")
+	playhead:SetHeight(self:GetHeight() - self.m_bookmarkBar:GetBottom())
+	playhead:SetAnchor(gui.ANCHOR_EDGE_TOP, 0)
+	playhead:SetAnchor(gui.ANCHOR_EDGE_BOTTOM, 1)
+	return playhead
+end
+function Timeline:AddTimelineElement(item)
 	table.insert(self.m_timelineItems, item)
 end
-function gui.Timeline:OnRemove()
+function Timeline:OnRemove()
 	util.remove({ self.m_cbOnTimelinePropertiesChanged, self.m_cbTimeAxisPropertiesChanged })
 end
-function gui.Timeline:SetTimeAxis(axis)
+function Timeline:SetTimeAxis(axis)
 	self.m_timeAxis:SetAxis(axis, true)
 	if util.is_valid(self.m_timelineStripLower) then
 		self.m_timelineStripLower:SetAxis(axis)
@@ -117,26 +122,26 @@ function gui.Timeline:SetTimeAxis(axis)
 		self:OnTimelinePropertiesChanged(true, false)
 	end)
 end
-function gui.Timeline:SetDataAxis(axis)
+function Timeline:SetDataAxis(axis)
 	self.m_dataAxis:SetAxis(axis, false)
 end
-function gui.Timeline:GetTimeAxis()
+function Timeline:GetTimeAxis()
 	return self.m_timeAxis
 end
-function gui.Timeline:GetDataAxis()
+function Timeline:GetDataAxis()
 	return self.m_dataAxis
 end
-function gui.Timeline:AddTimelineItem(el, timeFrame, startOffset, endOffset)
+function Timeline:AddTimelineItem(el, timeFrame, startOffset, endOffset)
 	self.m_timeAxis:AttachElementToRange(el, timeFrame, startOffset, endOffset)
 end
-function gui.Timeline:MouseCallback(mouseButton, state, mods)
+function Timeline:MouseCallback(mouseButton, state, mods)
 	--[[if(mouseButton == input.MOUSE_BUTTON_LEFT) then
 		self:SetCursorMoveModeEnabled(state == input.STATE_PRESS)
 		return util.EVENT_REPLY_HANDLED
 	end]]
 	return util.EVENT_REPLY_UNHANDLED
 end
-function gui.Timeline:SetCursorMoveModeEnabled(enabled)
+function Timeline:SetCursorMoveModeEnabled(enabled)
 	if enabled then
 		self:SetCursorMovementCheckEnabled(true)
 		if util.is_valid(self.m_cbMove) == false then
@@ -163,22 +168,22 @@ function gui.Timeline:SetCursorMoveModeEnabled(enabled)
 		end
 	end
 end
-function gui.Timeline:GetContents()
+function Timeline:GetContents()
 	return self.m_contents
 end
-function gui.Timeline:GetPlayhead()
+function Timeline:GetPlayhead()
 	return self.m_playhead
 end
-function gui.Timeline:GetUpperTimelineStrip()
+function Timeline:GetUpperTimelineStrip()
 	return self.m_timelineStripUpper
 end
-function gui.Timeline:GetLowerTimelineStrip()
+function Timeline:GetLowerTimelineStrip()
 	return self.m_timelineStripLower
 end
-function gui.Timeline:GetEndOffset()
+function Timeline:GetEndOffset()
 	return self:GetTimeAxis():GetAxis():XOffsetToValue(self:GetRight())
 end
-function gui.Timeline:OnTimelinePropertiesChanged(updatePlayhead, updateAxis)
+function Timeline:OnTimelinePropertiesChanged(updatePlayhead, updateAxis)
 	for _, item in ipairs(self.m_timelineItems) do
 		if item:IsValid() then
 			item:UpdateAxisPosition()
@@ -212,17 +217,12 @@ function gui.Timeline:OnTimelinePropertiesChanged(updatePlayhead, updateAxis)
 		end
 	end
 end
-function gui.Timeline:ScrollCallback(x, y)
+function Timeline:ScrollCallback(x, y)
 	self:SetZoomLevel(self:GetTimeAxis():GetAxis():GetZoomLevel() - (y / 20.0))
 	self:Update()
 	return util.EVENT_REPLY_HANDLED
 end
-function gui.Timeline:OnSizeChanged(w, h)
-	if util.is_valid(self.m_playhead) then
-		self.m_playhead:SetHeight(h - self.m_bookmarkBar:GetBottom())
-	end
-end
-function gui.Timeline:RemoveBookmarkSet(bms)
+function Timeline:RemoveBookmarkSet(bms)
 	for i, d in ipairs(self.m_bookmarkSets) do
 		if util.is_same_object(d.bookmarkSet, bms) then
 			util.remove(d.elements)
@@ -232,7 +232,7 @@ function gui.Timeline:RemoveBookmarkSet(bms)
 		end
 	end
 end
-function gui.Timeline:AddBookmarkSet(bms, timeFrame)
+function Timeline:AddBookmarkSet(bms, timeFrame)
 	for _, d in ipairs(self.m_bookmarkSets) do
 		if util.is_same_object(d.bookmarkSet, bms) then
 			return -- Bookmark set was already added
@@ -271,7 +271,7 @@ function gui.Timeline:AddBookmarkSet(bms, timeFrame)
 		table.insert(t.elements, el)
 	end
 end
-function gui.Timeline:FindBookmark(t)
+function Timeline:FindBookmark(t)
 	for _, elBlm in ipairs(self:GetBookmarks()) do
 		if elBlm:IsValid() then
 			local bm = elBlm:GetBookmark()
@@ -283,10 +283,10 @@ function gui.Timeline:FindBookmark(t)
 		end
 	end
 end
-function gui.Timeline:GetBookmarks()
+function Timeline:GetBookmarks()
 	return self.m_bookmarks
 end
-function gui.Timeline:AddBookmark(bm, timeFrame)
+function Timeline:AddBookmark(bm, timeFrame)
 	if util.is_valid(self.m_timelineStripUpper) == false then
 		return
 	end
@@ -298,7 +298,7 @@ function gui.Timeline:AddBookmark(bm, timeFrame)
 	table.insert(self.m_bookmarks, p)
 	return p
 end
-function gui.Timeline:ClearBookmarks()
+function Timeline:ClearBookmarks()
 	util.remove(self.m_bookmarks)
 	for _, d in ipairs(self.m_bookmarkSets) do
 		util.remove(d.elements)
@@ -308,7 +308,7 @@ function gui.Timeline:ClearBookmarks()
 	self.m_bookmarks = {}
 	self.m_bookmarkSets = {}
 end
-function gui.Timeline:SetZoomLevel(zoomLevel)
+function Timeline:SetZoomLevel(zoomLevel)
 	if util.is_valid(self.m_timelineStripUpper) == false then
 		return
 	end
@@ -323,7 +323,7 @@ function gui.Timeline:SetZoomLevel(zoomLevel)
 
 	self.m_playhead:UpdateAxisPosition()
 end
-function gui.Timeline:SetStartOffset(offset)
+function Timeline:SetStartOffset(offset)
 	local axis = self:GetTimeAxis():GetAxis()
 	if util.is_valid(self.m_playhead) then
 		local startOffset = offset
@@ -335,10 +335,10 @@ function gui.Timeline:SetStartOffset(offset)
 	end
 	axis:SetStartOffset(offset)
 end
-function gui.Timeline:GetStartOffset()
+function Timeline:GetStartOffset()
 	return self:GetTimeAxis():GetAxis():GetStartOffset()
 end
-function gui.Timeline:OnUpdate()
+function Timeline:OnUpdate()
 	if util.is_valid(self.m_timelineStripUpper) then
 		self.m_timelineStripUpper:Update()
 	end
@@ -347,4 +347,4 @@ function gui.Timeline:OnUpdate()
 	end
 	self:CallCallbacks("OnTimelineUpdate")
 end
-gui.register("timeline", gui.Timeline)
+gui.register("timeline", Timeline)

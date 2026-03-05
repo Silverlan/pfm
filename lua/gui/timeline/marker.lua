@@ -53,11 +53,13 @@ function Element:ClampTimeOffsetToFrameRate(offset)
 	return offset
 end
 function Element:UpdateTimeOffset()
+	local axis = self:GetAxis()
+	if(axis == nil) then return end
 	local pos = self:GetParent():GetCursorPos()
 	if self.m_cursorMoveStartOffset ~= nil then
 		pos = pos + self.m_cursorMoveStartOffset
 	end
-	local offset = self:GetAxis():XOffsetToValue(pos.x)
+	local offset = axis:XOffsetToValue(pos.x)
 
 	if not input.is_alt_key_down() then
 		offset = self:ClampTimeOffsetToFrameRate(offset)

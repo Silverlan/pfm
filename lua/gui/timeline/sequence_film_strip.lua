@@ -56,6 +56,7 @@ function SequenceFilmStrip:GetRightMargin()
 end
 function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
+	dragHandle:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
 	dragHandle:AddCallback("OnDrag", function(dragHandle, xdelta, ydelta, x, y)
 		if(util.is_valid(self.m_filmStrip) == false) then return end
 		local timeLine = self.m_filmStrip:GetTimeline()

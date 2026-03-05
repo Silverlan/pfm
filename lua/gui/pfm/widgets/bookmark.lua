@@ -9,7 +9,7 @@ function gui.PFMBookmark:OnInitialize()
 	self:SetMouseInputEnabled(true)
 	self:SetSize(7, 16)
 	self.m_icon = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_icon:SetMaterial("gui/pfm/timeline_bookmark")
+	self.m_icon:SetMaterial("gui/pfm/timeline/bookmark")
 	self.m_icon:GetColorProperty():Link(self:GetColorProperty())
 
 	self:SetMouseInputEnabled(true)
@@ -24,7 +24,7 @@ function gui.PFMBookmark:MouseCallback(button, state, mods)
 	if button == input.MOUSE_BUTTON_LEFT then
 		if state == input.STATE_PRESS then
 			if util.is_valid(self.m_icon) then
-				self.m_icon:SetMaterial("gui/pfm/timeline_bookmark_selected")
+				self.m_icon:SetMaterial("gui/pfm/timeline/bookmark_selected")
 			end
 		end
 	end

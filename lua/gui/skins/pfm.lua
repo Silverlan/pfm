@@ -48,6 +48,8 @@ t.graph.line = Color(255, 255, 255)
 t.timeline = {}
 t.timeline.text = Color.Black:Copy()
 t.timeline.background = Color(80, 80, 80)
+t.timeline.playhead = Color(94, 112, 132)
+t.timeline.playhead_review = Color(163, 196, 159)
 
 t.actor_editor = {}
 t.actor_editor.collection = Color(204, 204, 204)
@@ -732,6 +734,16 @@ skin["button_disabled"] = {
 skin["timeline_background"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.timeline.background)
+	end,
+}
+skin["timeline_playhead"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.timeline.playhead)
+	end,
+}
+skin["timeline_playhead_review"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.timeline.playhead_review)
 	end,
 }
 skin["timeline_label"] = {

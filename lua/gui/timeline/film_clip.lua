@@ -4,6 +4,7 @@
 include("/pfm/ui/fonts.lua")
 include("/gui/base_clip.lua")
 include("/gui/drag_handle.lua")
+include("playhead.lua")
 
 local FilmClip = util.register_class("gui.FilmClip", gui.BaseClip)
 function FilmClip:OnInitialize()
@@ -31,7 +32,7 @@ function FilmClip:OnInitialize()
 	self:AddStyleClass("timeline_clip_film")
 end
 function FilmClip:OnRemove()
-	util.remove(self.m_onChangeListeners)
+	util.remove(self.m_onChangeListeners, self.m_reviewPlayhead)
 end
 function FilmClip:SetFilmStrip(filmStrip)
 	local timeLine = filmStrip:GetTimeline()
@@ -41,24 +42,44 @@ function FilmClip:SetFilmStrip(filmStrip)
 end
 function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
+	dragHandle:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
 	
 	local dragInfo
+	local function update_review_time_frame(timeFrame)
+		if(startHandle) then
+			dragInfo.reviewTimeFrame:SetStart(timeFrame:GetStart())
+		else
+			dragInfo.reviewTimeFrame:SetStart(timeFrame:GetEnd())
+		end
+	end
 	dragHandle:AddCallback("OnDragStart", function(dragHandle)
-		if(util.is_valid(self.m_filmStrip) == false) then return end
+		if(util.is_valid(self.m_filmStrip, self.m_filmClip) == false) then return end
 		local timeLine = self.m_filmStrip:GetTimeline()
 		local timeFrame = self.m_filmClip:GetTimeFrame()
+		local reviewTimeFrame = udm.create_property_from_schema(pfm.udm.SCHEMA, "TimeFrame")
 		dragInfo = {
 			initialTimeLineStartOffset = timeLine:GetStartOffset(),
 			initialStart = timeFrame:GetStart(),
 			initialDuration = timeFrame:GetDuration(),
 			initialOffset = timeFrame:GetOffset(),
 
+			reviewTimeFrame = reviewTimeFrame,
+
 			updateStart = false,
 			updateDuration = false,
 			updateOffset = false
 		}
+		update_review_time_frame(timeFrame)
+
+		util.remove(self.m_reviewPlayhead)
+		self.m_reviewPlayhead = timeLine:CreatePlayhead()
+		self.m_reviewPlayhead:AddStyleClass("timeline_playhead_review")
+
+		local w2 = self.m_reviewPlayhead:GetWidth() /2
+		timeLine:AddTimelineItem(self.m_reviewPlayhead, reviewTimeFrame, w2, w2)
 	end)
 	dragHandle:AddCallback("OnDragEnd", function(dragHandle)
+		util.remove(self.m_reviewPlayhead)
 		if(dragInfo.updateStart or dragInfo.updateDuration or dragInfo.updateOffset) then
 			local timeFrame = self.m_filmClip:GetTimeFrame()
 
@@ -79,7 +100,7 @@ function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 		dragInfo = nil
 	end)
 	dragHandle:AddCallback("OnDrag", function(dragHandle, xdelta, ydelta, x, y)
-		if(util.is_valid(self.m_filmStrip) == false) then return end
+		if(util.is_valid(self.m_filmStrip, self.m_filmClip) == false) then return end
 		local timeLine = self.m_filmStrip:GetTimeline()
 		if(util.is_valid(timeLine) == false) then return end
 
@@ -133,6 +154,7 @@ function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 		timeFrame:SetStart(start)
 		timeFrame:SetDuration(duration)
 		timeFrame:SetOffset(offset)
+		update_review_time_frame(timeFrame)
 
 		timeLine:Update()
 	end)
