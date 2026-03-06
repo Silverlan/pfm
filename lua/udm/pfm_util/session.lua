@@ -21,6 +21,20 @@ function pfm.udm.Session:GetFilmTrack()
 	end
 end
 
+function pfm.udm.Session:ClampTimeOffsetToFrameRate(offset, clampToAtLeastOneFrame)
+	local frameRate = self:GetSettings():GetFrameRate()
+
+	if(clampToAtLeastOneFrame and frameRate > 0) then
+		offset = math.max(offset, 1.0 /frameRate)
+	end
+
+	-- Clamp to frame rate
+	offset = offset * frameRate
+	offset = math.round(offset)
+	offset = offset / frameRate
+	return offset
+end
+
 function pfm.udm.Session:FindClipAtTimeOffset(t)
 	t = t or self:GetTimeOffset()
 	local filmTrack = self:GetFilmTrack()

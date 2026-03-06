@@ -200,7 +200,6 @@ function Element:InitializeProjectUI(layoutName)
 	end
 
 	local playhead = pfmTimeline:GetPlayhead()
-	playhead:SetFrameRate(self:GetFrameRate())
 	self.m_playhead = playhead
 
 	pfmTimeline:AddCallback("OnClipSelected", function(el, clip)

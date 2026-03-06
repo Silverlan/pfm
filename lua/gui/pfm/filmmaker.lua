@@ -804,14 +804,10 @@ function gui.WIFilmmaker:OnProjectInitialized(project)
 	local settings = session:GetSettings():GetRenderSettings()
 	settings:AddChangeListener("frameRate", function(renderSettings, frameRate)
 		if util.is_valid(self.m_playhead) then
-			self.m_playhead:SetFrameRate(frameRate)
 			local offset = self.m_playhead:ClampTimeOffsetToFrameRate(self.m_playhead:GetTimeOffset())
 			self.m_playhead:SetTimeOffset(offset)
 		end
 	end)
-	if util.is_valid(self.m_playhead) then
-		self.m_playhead:SetFrameRate(settings:GetFrameRate())
-	end
 
 	local track = session:GetFilmTrack()
 	local cb = track:AddChangeListener("OnFilmClipTimeFramesUpdated", function(c)

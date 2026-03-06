@@ -55,6 +55,10 @@ function SequenceFilmStrip:GetRightMargin()
 	return w
 end
 function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
+	local function clamp_to_frame_rate(time, clampToAtLeastOneFrame)
+		return self.m_filmStrip:GetSession():ClampTimeOffsetToFrameRate(time, clampToAtLeastOneFrame)
+	end
+
 	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
 	dragHandle:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
 	dragHandle:AddCallback("OnDrag", function(dragHandle, xdelta, ydelta, x, y)
@@ -71,10 +75,10 @@ function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw,
 		local timeFrame = self:GetTimeFrame()
 		if(startHandle) then
 			local endTime = timeFrame:GetEnd()
-			timeFrame:SetStart(time)
-			timeFrame:SetDuration(endTime -time)
+			timeFrame:SetStart(clamp_to_frame_rate(time))
+			timeFrame:SetDuration(clamp_to_frame_rate(endTime -time, true))
 		else
-			timeFrame:SetDuration(time -timeFrame:GetStart())
+			timeFrame:SetDuration(clamp_to_frame_rate(time -timeFrame:GetStart(), true))
 		end
 	end)
 

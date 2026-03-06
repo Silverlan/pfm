@@ -40,16 +40,22 @@ function FilmClip:SetFilmStrip(filmStrip)
 	self.m_rightDragHandle:SetReferenceElement(timeLine)
 	self.m_filmStrip = filmStrip
 end
+function FilmClip:GetSession() return self.m_filmStrip:GetSession() end
 function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
 	dragHandle:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
 	
+	local function clamp_to_frame_rate(time, clampToAtLeastOneFrame)
+		return self:GetSession():ClampTimeOffsetToFrameRate(time, clampToAtLeastOneFrame)
+	end
 	local dragInfo
 	local function update_review_time_frame(timeFrame)
-		if(startHandle) then
-			dragInfo.reviewTimeFrame:SetStart(timeFrame:GetStart())
+		local useStart = startHandle
+		if(input.is_alt_key_down()) then useStart = not useStart end
+		if(useStart) then
+			dragInfo.reviewTimeFrame:SetStart(clamp_to_frame_rate(timeFrame:GetStart()))
 		else
-			dragInfo.reviewTimeFrame:SetStart(timeFrame:GetEnd())
+			dragInfo.reviewTimeFrame:SetStart(clamp_to_frame_rate(timeFrame:GetEnd()))
 		end
 	end
 	dragHandle:AddCallback("OnDragStart", function(dragHandle)
@@ -117,15 +123,15 @@ function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 		dragInfo.updateOffset = false
 		local function set_start(v)
 			dragInfo.updateStart = true
-			start = v
+			start = clamp_to_frame_rate(v)
 		end
 		local function set_duration(v)
 			dragInfo.updateDuration = true
-			duration = v
+			duration = clamp_to_frame_rate(v, true)
 		end
 		local function set_offset(v)
 			dragInfo.updateOffset = true
-			offset = v
+			offset = clamp_to_frame_rate(v)
 		end
 
 		if(ctrlKeyDown) then
@@ -140,7 +146,7 @@ function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 				if shiftKeyDown then
 					set_start(dragInfo.initialStart +axisTime:XDeltaToValue(xdelta))
 				else
-					timeLine:SetStartOffset(dragInfo.initialTimeLineStartOffset -axisTime:XDeltaToValue(xdelta))
+					timeLine:SetStartOffset(clamp_to_frame_rate(dragInfo.initialTimeLineStartOffset -axisTime:XDeltaToValue(xdelta)))
 				end
 			else
 				if altKeyDown then

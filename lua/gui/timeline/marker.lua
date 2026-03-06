@@ -39,18 +39,8 @@ function Element:SetTimeOffsetProperty(prop)
 		self:UpdateAxisPosition()
 	end)
 end
--- TODO: Get frame rate from project settings
-function Element:SetFrameRate(frameRate)
-	self.m_frameRate = frameRate
-end
 function Element:ClampTimeOffsetToFrameRate(offset)
-	if self.m_frameRate ~= nil then
-		-- Clamp to frame rate
-		offset = offset * self.m_frameRate
-		offset = math.round(offset)
-		offset = offset / self.m_frameRate
-	end
-	return offset
+	return pfm.get_project_manager():GetSession():ClampTimeOffsetToFrameRate(offset)
 end
 function Element:UpdateTimeOffset()
 	local axis = self:GetAxis()
