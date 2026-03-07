@@ -2,6 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("/pfm/ui/fonts.lua")
+include("/pfm/util/clip_edit.lua")
 include("/gui/base_clip.lua")
 include("/gui/drag_handle.lua")
 include("playhead.lua")
@@ -45,65 +46,34 @@ function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
 	dragHandle:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
 	
-	local function clamp_to_frame_rate(time, clampToAtLeastOneFrame)
-		return self:GetSession():ClampTimeOffsetToFrameRate(time, clampToAtLeastOneFrame)
-	end
-	local dragInfo
-	local function update_review_time_frame(timeFrame)
-		local useStart = startHandle
-		if(input.is_alt_key_down()) then useStart = not useStart end
-		if(useStart) then
-			dragInfo.reviewTimeFrame:SetStart(clamp_to_frame_rate(timeFrame:GetStart()))
-		else
-			dragInfo.reviewTimeFrame:SetStart(clamp_to_frame_rate(timeFrame:GetEnd()))
-		end
-	end
+	local clipEditContext
 	dragHandle:AddCallback("OnDragStart", function(dragHandle)
 		if(util.is_valid(self.m_filmStrip, self.m_filmClip) == false) then return end
 		local timeLine = self.m_filmStrip:GetTimeline()
-		local timeFrame = self.m_filmClip:GetTimeFrame()
-		local reviewTimeFrame = udm.create_property_from_schema(pfm.udm.SCHEMA, "TimeFrame")
-		dragInfo = {
-			initialTimeLineStartOffset = timeLine:GetStartOffset(),
-			initialStart = timeFrame:GetStart(),
-			initialDuration = timeFrame:GetDuration(),
-			initialOffset = timeFrame:GetOffset(),
 
-			reviewTimeFrame = reviewTimeFrame,
-
-			updateStart = false,
-			updateDuration = false,
-			updateOffset = false
-		}
-		update_review_time_frame(timeFrame)
-
-		util.remove(self.m_reviewPlayhead)
+		--[[util.remove(self.m_reviewPlayhead)
 		self.m_reviewPlayhead = timeLine:CreatePlayhead()
 		self.m_reviewPlayhead:AddStyleClass("timeline_playhead_review")
 
 		local w2 = self.m_reviewPlayhead:GetWidth() /2
-		timeLine:AddTimelineItem(self.m_reviewPlayhead, reviewTimeFrame, w2, w2)
+		timeLine:AddTimelineItem(self.m_reviewPlayhead, reviewTimeFrame, w2, w2)]]
+
+		local filmClips = {}
+		for _, fc in ipairs(self.m_filmStrip:GetFilmClips()) do
+			table.insert(filmClips, fc:GetClipData())
+		end
+		local timeLineTime = util.FloatProperty(timeLine:GetStartOffset())
+		timeLineTime:AddCallback(function(oldOffset, newOffset)
+			timeLine:SetStartOffset(newOffset)
+		end)
+		clipEditContext = pfm.ClipEditContext(self:GetSession(), filmClips, timeLineTime)
+
 	end)
 	dragHandle:AddCallback("OnDragEnd", function(dragHandle)
-		util.remove(self.m_reviewPlayhead)
-		if(dragInfo.updateStart or dragInfo.updateDuration or dragInfo.updateOffset) then
-			local timeFrame = self.m_filmClip:GetTimeFrame()
+		-- util.remove(self.m_reviewPlayhead)
 
-			local clip = self.m_filmClip
-			local cmd = pfm.create_command("composition")
-			if(dragInfo.updateStart) then
-				cmd:AddSubCommand("set_clip_start", clip, dragInfo.initialStart, timeFrame:GetStart())
-			end
-			if(dragInfo.updateDuration) then
-				cmd:AddSubCommand("set_clip_duration", clip, dragInfo.initialDuration, timeFrame:GetDuration())
-			end
-			if(dragInfo.updateOffset) then
-				cmd:AddSubCommand("set_clip_offset", clip, dragInfo.initialOffset, timeFrame:GetOffset())
-			end
-			pfm.undoredo.push("update_clip", cmd)()
-		end
-
-		dragInfo = nil
+		clipEditContext:PushUndoRedoCommand()
+		clipEditContext = nil
 	end)
 	dragHandle:AddCallback("OnDrag", function(dragHandle, xdelta, ydelta, x, y)
 		if(util.is_valid(self.m_filmStrip, self.m_filmClip) == false) then return end
@@ -111,56 +81,27 @@ function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 		if(util.is_valid(timeLine) == false) then return end
 
 		local axisTime = timeLine:GetTimeAxis():GetAxis()
+
 		local altKeyDown = input.is_alt_key_down()
 		local ctrlKeyDown = input.is_ctrl_key_down()
 		local shiftKeyDown = input.is_shift_key_down()
 
-		local start = dragInfo.initialStart
-		local duration = dragInfo.initialDuration
-		local offset = dragInfo.initialOffset
-		dragInfo.updateStart = false
-		dragInfo.updateDuration = false
-		dragInfo.updateOffset = false
-		local function set_start(v)
-			dragInfo.updateStart = true
-			start = clamp_to_frame_rate(v)
-		end
-		local function set_duration(v)
-			dragInfo.updateDuration = true
-			duration = clamp_to_frame_rate(v, true)
-		end
-		local function set_offset(v)
-			dragInfo.updateOffset = true
-			offset = clamp_to_frame_rate(v)
-		end
-
-		if(ctrlKeyDown) then
-			set_start(dragInfo.initialStart +axisTime:XDeltaToValue(xdelta))
+		local op
+		if(startHandle) then
+			if(altKeyDown) then op = "RippleTrimIn"
+			elseif(ctrlKeyDown) then op = "RippleSlide"
+			elseif(shiftKeyDown) then op = "SlipTrimIn"
+			else op = "RippleSlipTrimIn" end
 		else
-			if(startHandle) then
-				if not altKeyDown then
-					set_offset(dragInfo.initialOffset +axisTime:XDeltaToValue(xdelta))
-				end
-				set_duration(dragInfo.initialDuration -axisTime:XDeltaToValue(xdelta))
-
-				if shiftKeyDown then
-					set_start(dragInfo.initialStart +axisTime:XDeltaToValue(xdelta))
-				else
-					timeLine:SetStartOffset(clamp_to_frame_rate(dragInfo.initialTimeLineStartOffset -axisTime:XDeltaToValue(xdelta)))
-				end
-			else
-				if altKeyDown then
-					set_offset(dragInfo.initialOffset -axisTime:XDeltaToValue(xdelta))
-				end
-				set_duration(dragInfo.initialDuration +axisTime:XDeltaToValue(xdelta))
-			end
+			if(altKeyDown) then op = "RippleSlipTrimOut"
+			elseif(ctrlKeyDown) then op = "BackRippleSlide"
+			elseif(shiftKeyDown) then op = "TrimOut"
+			else op = "RippleTrimOut" end
 		end
 
-		local timeFrame = self.m_filmClip:GetTimeFrame()
-		timeFrame:SetStart(start)
-		timeFrame:SetDuration(duration)
-		timeFrame:SetOffset(offset)
-		update_review_time_frame(timeFrame)
+		clipEditContext:ClearOperations()
+		clipEditContext:AddOperation(op)
+		clipEditContext:Update(self.m_filmClip, axisTime:XDeltaToValue(xdelta))
 
 		timeLine:Update()
 	end)

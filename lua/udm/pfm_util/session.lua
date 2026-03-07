@@ -21,6 +21,12 @@ function pfm.udm.Session:GetFilmTrack()
 	end
 end
 
+function pfm.udm.Session:GetFrameDuration()
+	local frameRate = self:GetSettings():GetFrameRate()
+	if(frameRate == 0) then return 0.0 end
+	return 1.0 /frameRate
+end
+
 function pfm.udm.Session:ClampTimeOffsetToFrameRate(offset, clampToAtLeastOneFrame)
 	local frameRate = self:GetSettings():GetFrameRate()
 
