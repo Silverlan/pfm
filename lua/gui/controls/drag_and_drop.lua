@@ -92,6 +92,18 @@ function gui.DragGhost:SetTargetElement(el, cursorOffset, catName)
 	self.m_cursorOffset = cursorOffset
 	self.m_catName = catName
 
+	-- Cleanup
+	local dragTargets = gui.DragGhost.impl.dragTargets[self.m_catName]
+	if(dragTargets ~= nil) then
+		local newDragTargets = {}
+		for el, b in pairs(dragTargets) do
+			if(el:IsValid()) then
+				newDragTargets[el] = b
+			end
+		end
+		gui.DragGhost.impl.dragTargets[self.m_catName] = newDragTargets
+	end
+
 	self:SetSize(el:GetSize())
 end
 function gui.DragGhost:GetTargetElement()

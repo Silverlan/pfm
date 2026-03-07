@@ -52,7 +52,7 @@ function FilmStrip:AddFilmClip(filmClip)
 
 	return elClip
 end
-function FilmStrip:UpdateFilmClipUi()
+function FilmStrip:GetSortedFilmClips()
 	local filmClips = {}
 	for _,elFilmClip in ipairs(self.m_filmClips) do
 		if(elFilmClip:IsValid()) then
@@ -62,7 +62,10 @@ function FilmStrip:UpdateFilmClipUi()
 	table.sort(filmClips, function(a, b)
 		return a:GetClipData():GetTimeFrame():GetStart() < b:GetClipData():GetTimeFrame():GetStart()
 	end)
-
+	return filmClips
+end
+function FilmStrip:UpdateFilmClipUi()
+	local filmClips = self:GetSortedFilmClips()
 	local halfFrameDur = self.m_session:GetFrameDuration() /2.0
 	for i=1,#filmClips do
 		local filmClip = filmClips[i]

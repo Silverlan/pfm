@@ -32,15 +32,88 @@ function FilmClip:OnInitialize()
 	self.m_rightInnerDragHandle = rightInnerDragHandle
 
 	self:SetMouseInputEnabled(true)
-	self:AddCallback("OnMousePressed", function()
-		self:SetSelected(not self:IsSelected())
-		return util.EVENT_REPLY_HANDLED
-	end)
 
 	self:AddStyleClass("timeline_clip_film")
+	gui.mark_as_drag_and_drop_target(self, "film_clip")
+end
+function FilmClip:SwapWithFilmClip(filmClip)
+	local thisFilmClip = self:GetClipData()
+	if(util.is_same_object(thisFilmClip, filmClip)) then return end -- Nothing to do
+	local filmClips = self.m_filmStrip:GetSortedFilmClips()
+	local idxThis
+	local idxOther
+	local origTimeFrames = {}
+	for i, fc in ipairs(filmClips) do
+		if(util.is_same_object(fc:GetClipData(), self:GetClipData())) then idxThis = i
+		elseif(util.is_same_object(fc:GetClipData(), filmClip)) then idxOther = i end
+	end
+	assert(idxThis ~= nil and idxOther ~= nil)
+	
+	local function swap_film_clips(idx0, idx1)
+		local fc0 = filmClips[idx0]:GetClipData()
+		local fc1 = filmClips[idx1]:GetClipData()
+		local tf0 = fc0:GetTimeFrame()
+		local tf1 = fc1:GetTimeFrame()
+
+		origTimeFrames[fc0] = origTimeFrames[fc0] or tf0:Copy()
+		origTimeFrames[fc1] = origTimeFrames[fc1] or tf1:Copy()
+
+		local tf0Cpy = tf0:Copy()
+		tf0:SetStart(tf1:GetStart())
+		tf0:SetDuration(tf1:GetDuration())
+		tf0:SetOffset(tf1:GetOffset())
+		
+		tf1:SetStart(tf0Cpy:GetStart())
+		tf1:SetDuration(tf0Cpy:GetDuration())
+		tf1:SetOffset(tf0Cpy:GetOffset())
+
+		local tmpFc0 = filmClips[idx0]
+		filmClips[idx0] = filmClips[idx1]
+		filmClips[idx1] = tmpFc0
+	end
+
+	local cmd = pfm.create_command("composition")
+	local function add_film_clip_command(filmClip)
+		cmd:AddSubCommand("set_clip_start", filmClip, origTimeFrames[filmClip]:GetStart(), filmClip:GetTimeFrame():GetStart())
+		cmd:AddSubCommand("set_clip_duration", filmClip, origTimeFrames[filmClip]:GetDuration(), filmClip:GetTimeFrame():GetDuration())
+	end
+
+	if(idxOther > idxThis) then
+		for i=idxThis, idxOther -1 do
+			swap_film_clips(i, i +1)
+			add_film_clip_command(filmClips[i]:GetClipData())
+		end
+	else
+		for i=idxThis, idxOther +1, -1 do
+			swap_film_clips(i, i -1)
+			add_film_clip_command(filmClips[i]:GetClipData())
+		end
+	end
+	add_film_clip_command(filmClips[idxOther]:GetClipData())
+	pfm.undoredo.push("swap_film_clips", cmd)()
+end
+function FilmClip:MouseCallback(mouseButton, state, mods)
+	if mouseButton == input.MOUSE_BUTTON_LEFT then
+		if state == input.STATE_PRESS then
+			util.remove(self.m_dragGhost)
+			local p = gui.create("drag_ghost")
+			self.m_dragGhost = p
+			p:SetTargetElement(self, self:GetCursorPos(), "film_clip")
+			p:AddCallback("OnDragDropped", function(p, dropElement)
+				if(self:IsValid()) then self:SwapWithFilmClip(dropElement:GetClipData()) end
+			end)
+		else
+			if(util.is_valid(self.m_dragGhost) and self.m_dragGhost:IsDragging() == false) then
+				self:SetSelected(not self:IsSelected())
+			end
+			util.remove(self.m_dragGhost)
+		end
+		return util.EVENT_REPLY_HANDLED
+	end
+	return util.EVENT_REPLY_UNHANDLED
 end
 function FilmClip:OnRemove()
-	util.remove(self.m_onChangeListeners, self.m_reviewPlayhead)
+	util.remove(self.m_onChangeListeners, self.m_reviewPlayhead, self.m_dragGhost)
 end
 function FilmClip:SetFilmStrip(filmStrip)
 	local timeLine = filmStrip:GetTimeline()
@@ -70,7 +143,6 @@ function FilmClip:CreateInnerDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 			timeLine:SetStartOffset(newOffset)
 		end)
 		clipEditContext = pfm.ClipEditContext(self:GetSession(), filmClips, timeLineTime)
-
 	end)
 	dragHandle:AddCallback("OnDragEnd", function(dragHandle)
 		clipEditContext:PushUndoRedoCommand()
@@ -120,7 +192,6 @@ function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 			timeLine:SetStartOffset(newOffset)
 		end)
 		clipEditContext = pfm.ClipEditContext(self:GetSession(), filmClips, timeLineTime)
-
 	end)
 	dragHandle:AddCallback("OnDragEnd", function(dragHandle)
 		-- util.remove(self.m_reviewPlayhead)
