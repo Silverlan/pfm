@@ -111,6 +111,7 @@ function ClipEditContext:PushUndoRedoCommand()
 			hasChanges = true
 		end
 	end
+
 	if(hasChanges == false) then return end
 	pfm.undoredo.push("update_clip", cmd)()
 end

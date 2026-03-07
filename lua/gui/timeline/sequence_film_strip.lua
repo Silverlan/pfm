@@ -61,6 +61,39 @@ function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw,
 
 	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
 	dragHandle:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
+	local initialStartTime
+	local initialDuration
+	dragHandle:AddCallback("OnDragStart", function(dragHandle)
+		local timeFrame = self:GetTimeFrame()
+		initialStartTime = timeFrame:GetStart()
+		initialDuration = timeFrame:GetDuration()
+	end)
+	dragHandle:AddCallback("OnDragEnd", function(dragHandle)
+		local cmd = pfm.create_command("composition")
+		local halfFrameDur = self.m_filmStrip:GetSession():GetFrameDuration()
+		local hasChanges = false
+		local timeFrame = self:GetTimeFrame()
+
+		local oldTimeOffset = initialStartTime
+		local newTimeOffset = timeFrame:GetStart()
+		if(math.abs(newTimeOffset -oldTimeOffset) > halfFrameDur) then
+			cmd:AddSubCommand("set_sequence_filmstrip_start_time", oldTimeOffset, newTimeOffset)
+			hasChanges = true
+		end
+
+		local oldDuration = initialDuration
+		local newDuration = timeFrame:GetDuration()
+		if(math.abs(newDuration -oldDuration) > halfFrameDur) then
+			cmd:AddSubCommand("set_sequence_filmstrip_duration", oldDuration, newDuration)
+			hasChanges = true
+		end
+
+		initialStartTime = nil
+		initialDuration = nil
+
+		if(hasChanges == false) then return end
+		pfm.undoredo.push("update_sequence_filmstrip", cmd)()
+	end)
 	dragHandle:AddCallback("OnDrag", function(dragHandle, xdelta, ydelta, x, y)
 		if(util.is_valid(self.m_filmStrip) == false) then return end
 		local timeLine = self.m_filmStrip:GetTimeline()
@@ -75,7 +108,9 @@ function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw,
 		local timeFrame = self:GetTimeFrame()
 		if(startHandle) then
 			local endTime = timeFrame:GetEnd()
-			timeFrame:SetStart(clamp_to_frame_rate(time))
+			local newStart = clamp_to_frame_rate(time)
+			newStart = math.min(newStart, endTime -self.m_filmStrip:GetSession():GetFrameDuration())
+			timeFrame:SetStart(newStart)
 			timeFrame:SetDuration(clamp_to_frame_rate(endTime -time, true))
 		else
 			timeFrame:SetDuration(clamp_to_frame_rate(time -timeFrame:GetStart(), true))
