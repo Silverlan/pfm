@@ -23,8 +23,8 @@ function ClipEditContext:__init(session, filmClips, timeLineTimeProp)
 	self.m_session = session
 	self.m_operations = {}
 end
-function ClipEditContext:AddOperation(opName)
-	local op = pfm.ClipEditContext.Operation[opName](self)
+function ClipEditContext:AddOperation(opName, ...)
+	local op = pfm.ClipEditContext.Operation[opName](self, ...)
 	table.insert(self.m_operations, op)
 end
 function ClipEditContext:ClearOperations(opName)
@@ -272,11 +272,18 @@ function BackRippleSlide:Apply(curIdx, delta)
 end
 
 local RollSlip = util.register_class("pfm.ClipEditContext.Operation.RollSlip", Operation)
-function RollSlip:__init(context)
+function RollSlip:__init(context, withNextClip)
 	Operation.__init(self, context)
+	self.m_withNextClip = withNextClip or false
 end
 function RollSlip:Apply(curIdx, delta)
-	local prevIdx = curIdx -1
+	local prevIdx
+	if(self.m_withNextClip) then
+		prevIdx = curIdx
+		curIdx = curIdx +1
+	else
+		prevIdx = curIdx -1
+	end
 	if(delta < 0) then
 		-- Clamp to start of previous clip
 		delta = self:ClampDeltaLowerBound(delta, self:GetEnd(prevIdx), self:GetStart(prevIdx))
@@ -284,6 +291,7 @@ function RollSlip:Apply(curIdx, delta)
 		-- Clamp to end of next clip
 		delta = self:ClampDeltaUpperBound(delta, self:GetStart(curIdx), self:GetEnd(curIdx))
 	end
+	
 	self:IncDuration(prevIdx, delta)
 
 	self:IncStart(curIdx, delta)

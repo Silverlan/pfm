@@ -17,9 +17,11 @@ function FilmStrip:OnInitialize()
 	self.m_container = gui.create("WIContainer", self)
 	self:GetSizeProperty():Link(self.m_container:GetSizeProperty())
 	self.m_filmClips = {}
+	self.m_listeners = {}
 
 	self:InitializeSequenceFilmStrip()
 end
+function FilmStrip:OnRemove() util.remove(self.m_listeners) end
 function FilmStrip:InitializeDragHandle()
 	local dragHandle = gui.create("drag_handle", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	local initialStartOffset
@@ -42,7 +44,43 @@ function FilmStrip:AddFilmClip(filmClip)
 	elClip:SetClipData(filmClip)
 	elClip:SetFilmStrip(self)
 	self:ScheduleUpdate()
+
+	local timeFrame = filmClip:GetTimeFrame()
+	table.insert(self.m_listeners, timeFrame:AddChangeListener("start", function() self:ScheduleUpdate() end))
+	table.insert(self.m_listeners, timeFrame:AddChangeListener("offset", function() self:ScheduleUpdate() end))
+	table.insert(self.m_listeners, timeFrame:AddChangeListener("duration", function() self:ScheduleUpdate() end))
+
 	return elClip
+end
+function FilmStrip:UpdateFilmClipUi()
+	local filmClips = {}
+	for _,elFilmClip in ipairs(self.m_filmClips) do
+		if(elFilmClip:IsValid()) then
+			table.insert(filmClips, elFilmClip)
+		end
+	end
+	table.sort(filmClips, function(a, b)
+		return a:GetClipData():GetTimeFrame():GetStart() < b:GetClipData():GetTimeFrame():GetStart()
+	end)
+
+	local halfFrameDur = self.m_session:GetFrameDuration() /2.0
+	for i=1,#filmClips do
+		local filmClip = filmClips[i]
+		local filmClipNext = filmClips[i +1]
+		local neighbored = false
+		if(filmClipNext ~= nil) then
+			local timeFrame = filmClip:GetClipData():GetTimeFrame()
+			local timeFrameNext = filmClipNext:GetClipData():GetTimeFrame()
+			if(math.abs(timeFrameNext:GetStart() -timeFrame:GetEnd()) < halfFrameDur) then
+				neighbored = true
+			end
+		end
+
+		filmClip:SetNextNeighbor(neighbored and filmClipNext or nil)
+		if(filmClipNext ~= nil) then
+			filmClipNext:SetPreviousNeighbor(neighbored and filmClip or nil)
+		end
+	end
 end
 function FilmStrip:InitializeSequenceFilmStrip()
 	local seqFilmStrip = gui.create("sequence_film_strip", self.m_container)
@@ -94,5 +132,6 @@ function FilmStrip:OnUpdate()
 		end
 	end
 	self.m_timeFrame = timeFrame or udm.create_property_from_schema(pfm.udm.SCHEMA, "TimeFrame")
+	self:UpdateFilmClipUi()
 end
 gui.register("film_strip", FilmStrip)

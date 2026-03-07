@@ -19,10 +19,17 @@ function FilmClip:OnInitialize()
 	self.m_textDetails:SetFont("pfm_small")
 	self.m_textDetails:SetColor(Color(202, 202, 222))
 
-	local leftDragHandle = self:CreateDragHandle(true, 0, 0, 12, self:GetHeight(), 0, 0, 0, 0)
-	local rightDragHandle = self:CreateDragHandle(false, self:GetRight() -12, 0, 12, self:GetHeight(), 1, 0, 1, 0)
+	local leftDragHandle = self:CreateDragHandle(true, 0, 0, 14, self:GetHeight(), 0, 0, 0, 0)
+	local rightDragHandle = self:CreateDragHandle(false, self:GetRight() -14, 0, 14, self:GetHeight(), 1, 0, 1, 0)
 	self.m_leftDragHandle = leftDragHandle
 	self.m_rightDragHandle = rightDragHandle
+
+	local leftInnerDragHandle = self:CreateInnerDragHandle(true, 0, 0, 6, self:GetHeight(), 0, 0, 0, 0)
+	local rightInnerDragHandle = self:CreateInnerDragHandle(false, self:GetRight() -6, 0, 6, self:GetHeight(), 1, 0, 1, 0)
+	leftInnerDragHandle:SetVisible(false)
+	rightInnerDragHandle:SetVisible(false)
+	self.m_leftInnerDragHandle = leftInnerDragHandle
+	self.m_rightInnerDragHandle = rightInnerDragHandle
 
 	self:SetMouseInputEnabled(true)
 	self:AddCallback("OnMousePressed", function()
@@ -39,9 +46,55 @@ function FilmClip:SetFilmStrip(filmStrip)
 	local timeLine = filmStrip:GetTimeline()
 	self.m_leftDragHandle:SetReferenceElement(timeLine)
 	self.m_rightDragHandle:SetReferenceElement(timeLine)
+	
+	self.m_leftInnerDragHandle:SetReferenceElement(timeLine)
+	self.m_rightInnerDragHandle:SetReferenceElement(timeLine)
 	self.m_filmStrip = filmStrip
 end
 function FilmClip:GetSession() return self.m_filmStrip:GetSession() end
+function FilmClip:CreateInnerDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
+	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
+	dragHandle:SetCursor(gui.CURSOR_SHAPE_CROSSHAIR)
+	
+	local clipEditContext
+	dragHandle:AddCallback("OnDragStart", function(dragHandle)
+		if(util.is_valid(self.m_filmStrip, self.m_filmClip) == false) then return end
+		local timeLine = self.m_filmStrip:GetTimeline()
+
+		local filmClips = {}
+		for _, fc in ipairs(self.m_filmStrip:GetFilmClips()) do
+			table.insert(filmClips, fc:GetClipData())
+		end
+		local timeLineTime = util.FloatProperty(timeLine:GetStartOffset())
+		timeLineTime:AddCallback(function(oldOffset, newOffset)
+			timeLine:SetStartOffset(newOffset)
+		end)
+		clipEditContext = pfm.ClipEditContext(self:GetSession(), filmClips, timeLineTime)
+
+	end)
+	dragHandle:AddCallback("OnDragEnd", function(dragHandle)
+		clipEditContext:PushUndoRedoCommand()
+		clipEditContext = nil
+	end)
+	dragHandle:AddCallback("OnDrag", function(dragHandle, xdelta, ydelta, x, y)
+		if(util.is_valid(self.m_filmStrip, self.m_filmClip) == false) then return end
+		local timeLine = self.m_filmStrip:GetTimeline()
+		if(util.is_valid(timeLine) == false) then return end
+
+		local axisTime = timeLine:GetTimeAxis():GetAxis()
+
+		local altKeyDown = input.is_alt_key_down()
+		local ctrlKeyDown = input.is_ctrl_key_down()
+		local shiftKeyDown = input.is_shift_key_down()
+
+		clipEditContext:ClearOperations()
+		clipEditContext:AddOperation("RollSlip", not startHandle)
+		clipEditContext:Update(self.m_filmClip, axisTime:XDeltaToValue(xdelta))
+
+		timeLine:Update()
+	end)
+	return dragHandle
+end
 function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
 	dragHandle:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
@@ -112,6 +165,16 @@ function FilmClip:UpdateClipData()
 end
 function FilmClip:OnUpdate()
 	self:UpdateFilmClipInfo()
+end
+function FilmClip:SetNextNeighbor(el)
+	self.m_nextNeighbor = el
+
+	self.m_rightInnerDragHandle:SetVisible(el ~= nil)
+end
+function FilmClip:SetPreviousNeighbor(el)
+	self.m_previousNeighbor = el
+
+	self.m_leftInnerDragHandle:SetVisible(el ~= nil)
 end
 function FilmClip:UpdateFilmClipInfo()
 	local filmClip = self.m_filmClip
