@@ -98,7 +98,12 @@ function Element:SetIcon(icon)
 
 		self:UpdateIconPosition()
 	end
+	if(self.m_curIcon ~= nil) then
+		self.m_icon:RemoveStyleClass("button_icon_" .. self.m_curIcon)
+	end
+	self.m_curIcon = icon
 	self.m_icon:AddStyleClass("button_icon_" .. icon)
+	self.m_icon:RefreshSkin()
 end
 function Element:UpdateStyle()
 	for _, c in ipairs({
