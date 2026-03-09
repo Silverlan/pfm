@@ -164,14 +164,10 @@ gui.register("timeline_strip", gui.TimelineStrip)
 -------------
 
 util.register_class("gui.LabelledTimelineStrip", gui.Base)
-
-function gui.LabelledTimelineStrip:__init()
-	gui.Base.__init(self)
-end
 function gui.LabelledTimelineStrip:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 16)
+	self:SetSize(128, 18)
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_bg:AddStyleClass("timeline_background")
 
@@ -219,10 +215,10 @@ function gui.LabelledTimelineStrip:SetFlipped(flipped)
 end
 function gui.LabelledTimelineStrip:GetLabelYPos(el)
 	if self.m_flipped == true then
-		return 5
+		return 6
 	end
 	local offset = self:GetSecAxisExtents(self) - self:GetSecAxisExtents(el)
-	offset = offset - 7
+	offset = offset - 5
 	return offset
 end
 function gui.LabelledTimelineStrip:SetAxis(axis)

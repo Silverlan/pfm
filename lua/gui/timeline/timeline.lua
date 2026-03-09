@@ -35,15 +35,16 @@ function Timeline:OnInitialize()
 	self.m_bookmarks = {}
 	self.m_bookmarkSets = {}
 
+	local timelineStripHeight = 18
 	self.m_timelineStripUpper =
-		gui.create("labelled_timeline_strip", self, 0, self.m_bookmarkBar:GetBottom(), self:GetWidth(), 16, 0, 0, 1, 0)
+		gui.create("labelled_timeline_strip", self, 0, self.m_bookmarkBar:GetBottom(), self:GetWidth(), timelineStripHeight, 0, 0, 1, 0)
 	self.m_timelineStripUpper:SetMouseInputEnabled(true)
 	self.m_timelineStripUpper:SetHorizontal(true)
 	self.m_timelineStripUpper:SetFlipped(false)
 	self.m_timelineStripUpper:AddCallback("OnMouseEvent", onTimelineMouseEvent)
 
 	self.m_timelineStripLower =
-		gui.create("labelled_timeline_strip", self, 0, self:GetBottom() - 16, self:GetWidth(), 16, 0, 1, 1, 1)
+		gui.create("labelled_timeline_strip", self, 0, self:GetBottom() - timelineStripHeight, self:GetWidth(), timelineStripHeight, 0, 1, 1, 1)
 	self.m_timelineStripLower:SetMouseInputEnabled(true)
 	self.m_timelineStripLower:SetHorizontal(true)
 	self.m_timelineStripLower:SetFlipped(true)
