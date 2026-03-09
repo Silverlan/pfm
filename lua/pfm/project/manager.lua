@@ -445,7 +445,10 @@ end
 function pfm.ProjectManager:GetFrameIndexRange()
 	return self:GetSession():GetFrameIndexRange()
 end
-function pfm.ProjectManager:TimeOffsetToFrameOffset(offset)
+function pfm.ProjectManager:TimeOffsetToFrameOffset(offset, clamp)
+	if(clamp) then
+		offset = self:ClampToSessionTimeFrame(offset)
+	end
 	return offset * self:GetFrameRate()
 end
 function pfm.ProjectManager:FrameOffsetToTimeOffset(offset)
@@ -486,6 +489,11 @@ function pfm.ProjectManager:GetPlayheadClipRange()
 	lastFrame = lastFrame - 1
 	return self:TimeOffsetToFrameOffset(clip:GetTimeFrame():GetStart()), lastFrame
 end
+function pfm.ProjectManager:ClampToSessionTimeFrame(t)
+	local session = self:GetSession()
+	local timeFrame = session:GetTimeFrame()
+	return math.clamp(t, timeFrame:GetStart(), timeFrame:GetEnd())
+end
 function pfm.ProjectManager:GoToFrame(frame)
 	self:SetFrameOffset(frame)
 end
@@ -502,62 +510,63 @@ function pfm.ProjectManager:GoToFirstFrame()
 		return
 	end
 	local timeFrame = filmClip:GetTimeFrame()
-	self:SetFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetStart()))
+	self:SetFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetStart(), true))
+end
+function pfm.ProjectManager:GetClipTimePoints()
+	local filmTrack = self:GetSession():GetFilmTrack()
+	local filmClips = filmTrack:GetSortedFilmClips()
+	if(#filmClips == 0) then return {} end
+	local session = self:GetSession()
+	local timeFrame = session:GetTimeFrame()
+
+	local timePoints = {}
+	for _, fc in ipairs(filmClips) do
+		table.insert(timePoints, math.max(fc:GetTimeFrame():GetStart(), timeFrame:GetStart()))
+		table.insert(timePoints, math.min(fc:GetTimeFrame():GetEnd(), timeFrame:GetEnd()))
+	end
+
+	table.insert(timePoints, timeFrame:GetStart())
+	table.insert(timePoints, timeFrame:GetEnd())
+	table.sort(timePoints)
+
+	-- Remove duplicate time points
+	local i = 1
+	while(i < #timePoints -1) do
+		local t0 = timePoints[i]
+		local t1 = timePoints[i +1]
+		if(math.abs(t1 -t0) <= pfm.udm.TimeFrame.EPSILON) then
+			table.remove(timePoints, i)
+		else
+			i = i +1
+		end
+	end
+	return timePoints
 end
 function pfm.ProjectManager:GoToPreviousClip()
-	local filmTrack = self:GetSession():GetFilmTrack()
-	local filmClips = filmTrack:GetFilmClips()
+	local timePoints = self:GetClipTimePoints()
+	if(#timePoints == 0) then return end
 	local offset = self:GetTimeOffset()
-	if #filmClips == 0 then
-		return
-	end
-	for i, filmClipData in ipairs(filmClips) do
-		local timeFrame = filmClipData:GetTimeFrame()
-		if timeFrame:IsInTimeFrame(offset, 0.001) then
-			if i > 1 then
-				local filmClipPrev = filmClips[i - 1]
-				self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClipPrev:GetTimeFrame():GetEnd()))
-				return
-			end
-			-- There is no previous clip, just jump to start of this one
-			self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClipData:GetTimeFrame():GetStart()))
-			return
+	for i=#timePoints, 1, -1 do
+		local tp = timePoints[i]
+		if(tp < offset -pfm.udm.TimeFrame.EPSILON) then
+			offset = tp
+			break
 		end
 	end
-	-- Current offset must be either before first clip or after last clip, so we'll
-	-- just clamp it to whichever it is.
-	local firstTimeFrame = filmClips[1]:GetTimeFrame()
-	local lastTimeFrame = filmClips[#filmClips]:GetTimeFrame()
-	local newOffset = (offset < firstTimeFrame:GetStart()) and firstTimeFrame:GetStart() or lastTimeFrame:GetEnd()
-	self:SetFrameOffset(self:TimeOffsetToFrameOffset(newOffset))
+	self:SetFrameOffset(self:TimeOffsetToFrameOffset(offset, true))
 end
 function pfm.ProjectManager:GoToNextClip()
-	local filmTrack = self:GetSession():GetFilmTrack()
-	local filmClips = filmTrack:GetFilmClips()
+	local timePoints = self:GetClipTimePoints()
+	if(#timePoints == 0) then return end
 	local offset = self:GetTimeOffset()
-	if #filmClips == 0 then
-		return
-	end
-	for i = #filmClips, 1, -1 do
-		local filmClipData = filmClips[i]
-		local timeFrame = filmClipData:GetTimeFrame()
-		if timeFrame:IsInTimeFrame(offset, 0.001) then
-			if i < #filmClips then
-				local filmClipNext = filmClips[i + 1]
-				self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClipNext:GetTimeFrame():GetStart()))
-				return
-			end
-			-- There is no next clip, just jump to end of this one
-			self:SetFrameOffset(self:TimeOffsetToFrameOffset(filmClipData:GetTimeFrame():GetEnd()))
-			return
+	for i=1, #timePoints do
+		local tp = timePoints[i]
+		if(tp > offset +pfm.udm.TimeFrame.EPSILON) then
+			offset = tp
+			break
 		end
 	end
-	-- Current offset must be either before first clip or after last clip, so we'll
-	-- just clamp it to whichever it is.
-	local firstTimeFrame = filmClips[1]:GetTimeFrame()
-	local lastTimeFrame = filmClips[#filmClips]:GetTimeFrame()
-	local newOffset = (offset < firstTimeFrame:GetStart()) and firstTimeFrame:GetStart() or lastTimeFrame:GetEnd()
-	self:SetFrameOffset(self:TimeOffsetToFrameOffset(newOffset))
+	self:SetFrameOffset(self:TimeOffsetToFrameOffset(offset, true))
 end
 function pfm.ProjectManager:GoToLastFrame()
 	local session = self:GetSession()
@@ -566,7 +575,7 @@ function pfm.ProjectManager:GoToLastFrame()
 		return
 	end
 	local timeFrame = filmClip:GetTimeFrame()
-	self:SetFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetEnd()))
+	self:SetFrameOffset(self:TimeOffsetToFrameOffset(timeFrame:GetEnd(), true))
 end
 
 -- These can be overriden by derived classes

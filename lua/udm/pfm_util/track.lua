@@ -54,6 +54,14 @@ function pfm.udm.Track:FindActorAnimationClip(actor, addIfNotExists)
 	return channelClip, true
 end
 
+function pfm.udm.Track:FindFilmClip(t, filmClips)
+	filmClips = filmClips or self:GetSortedFilmClips()
+	if(#filmClips == 0 or t < filmClips[1]:GetTimeFrame():GetStart()) then return end
+	for i, fc in ipairs(filmClips) do
+		if(t <= fc:GetTimeFrame():GetEnd()) then return fc, i end
+	end
+end
+
 function pfm.udm.Track:GetSortedFilmClips()
 	local sorted = {}
 	for _, fc in ipairs(self:GetFilmClips()) do
@@ -169,11 +177,5 @@ function pfm.udm.Track:MoveFilmClipToLeft(fc)
 end
 
 function pfm.udm.Track:UpdateFilmClipTimeFrames()
-	--[[local tStart = 0.0
-	for _, fc in ipairs(self:GetSortedFilmClips()) do
-		local timeFrame = fc:GetTimeFrame()
-		timeFrame:SetStart(tStart)
-		tStart = timeFrame:GetEnd()
-	end]]
 	self:CallChangeListeners("OnFilmClipTimeFramesUpdated")
 end
