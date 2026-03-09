@@ -27,6 +27,10 @@ function pfm.udm.Session:GetFrameDuration()
 	return 1.0 /frameRate
 end
 
+function pfm.udm.Session:GetTimeFrame()
+	return self:GetActiveClip():GetTimeFrame()
+end
+
 function pfm.udm.Session:ClampTimeOffsetToFrameRate(offset, clampToAtLeastOneFrame)
 	local frameRate = self:GetSettings():GetFrameRate()
 

@@ -19,7 +19,7 @@ function Command:ApplyOffset(data, keyName)
 	end
 	clip:GetTimeFrame():SetStart(data:GetValue(keyName, udm.TYPE_FLOAT))
 	local track = clip:GetParent()
-	track:UpdateFilmClipTimeFrames()
+	if(track.UpdateFilmClipTimeFrames ~= nil) then track:UpdateFilmClipTimeFrames() end
 	return true
 end
 function Command:DoExecute(data)

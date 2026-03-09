@@ -19,7 +19,7 @@ function Command:ApplyDuration(data, keyName)
 	end
 	clip:GetTimeFrame():SetDuration(data:GetValue(keyName, udm.TYPE_FLOAT))
 	local track = clip:GetParent()
-	track:UpdateFilmClipTimeFrames()
+	if(track.UpdateFilmClipTimeFrames ~= nil) then track:UpdateFilmClipTimeFrames() end
 	return true
 end
 function Command:DoExecute(data)

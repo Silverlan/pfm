@@ -71,20 +71,21 @@ function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw,
 	dragHandle:AddCallback("OnDragEnd", function(dragHandle)
 		local cmd = pfm.create_command("composition")
 		local halfFrameDur = self.m_filmStrip:GetSession():GetFrameDuration()
+		local activeClip = self.m_filmStrip:GetSession():GetActiveClip()
 		local hasChanges = false
 		local timeFrame = self:GetTimeFrame()
 
 		local oldTimeOffset = initialStartTime
 		local newTimeOffset = timeFrame:GetStart()
 		if(math.abs(newTimeOffset -oldTimeOffset) > halfFrameDur) then
-			cmd:AddSubCommand("set_sequence_filmstrip_start_time", oldTimeOffset, newTimeOffset)
+			cmd:AddSubCommand("set_clip_start", activeClip, oldTimeOffset, newTimeOffset)
 			hasChanges = true
 		end
 
 		local oldDuration = initialDuration
 		local newDuration = timeFrame:GetDuration()
 		if(math.abs(newDuration -oldDuration) > halfFrameDur) then
-			cmd:AddSubCommand("set_sequence_filmstrip_duration", oldDuration, newDuration)
+			cmd:AddSubCommand("set_clip_duration", activeClip, oldDuration, newDuration)
 			hasChanges = true
 		end
 
