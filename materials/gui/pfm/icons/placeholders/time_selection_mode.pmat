@@ -1,0 +1,7 @@
+"wguitextured"
+{
+	"textures"
+	{
+		$string albedo_map "gui/pfm/icons/placeholders/time_selection_mode"
+	}
+}

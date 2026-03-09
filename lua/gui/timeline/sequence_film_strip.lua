@@ -111,6 +111,7 @@ function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw,
 			local newStart = clamp_to_frame_rate(time)
 			newStart = math.min(newStart, endTime -self.m_filmStrip:GetSession():GetFrameDuration())
 			timeFrame:SetStart(newStart)
+			timeFrame:SetOffset(newStart)
 			timeFrame:SetDuration(clamp_to_frame_rate(endTime -time, true))
 		else
 			timeFrame:SetDuration(clamp_to_frame_rate(time -timeFrame:GetStart(), true))

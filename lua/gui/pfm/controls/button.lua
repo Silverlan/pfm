@@ -98,7 +98,7 @@ function Element:SetIcon(icon)
 
 		self:UpdateIconPosition()
 	end
-	self.m_icon:SetMaterial("gui/pfm/icons/" .. icon)
+	self.m_icon:AddStyleClass("button_icon_" .. icon)
 end
 function Element:UpdateStyle()
 	for _, c in ipairs({

@@ -409,7 +409,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btClipEditor:SetTooltip(
 		locale.get_text("pfm_clip_editor", { pfm.get_key_binding("pfm_action select_editor clip") })
 	)
-	self.m_btMotionEditor = btGroup:AddIconButton("", function()
+	self.m_btMotionEditor = btGroup:AddIconButton("motion-editor", function()
 		self:SetEditor(gui.PFMTimeline.EDITOR_MOTION)
 		return true
 	end)
@@ -503,7 +503,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	}))
 	self.m_controlButtons["pan"] = self.m_btCtrlPan
 
-	self.m_btCtrlScale = btGroupCtrls:AddIconButton("grapheditor_scale_activated", function()
+	self.m_btCtrlScale = btGroupCtrls:AddIconButton("graph_editor_scale", function()
 		self:SetGraphCursorMode(gui.pfm.TimelineEditorGraph.CURSOR_MODE_SCALE)
 		return true
 	end)
@@ -513,7 +513,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	}))
 	self.m_controlButtons["scale"] = self.m_btCtrlScale
 
-	self.m_btCtrlZoom = btGroupCtrls:AddIconButton("grapheditor_zoom_activated", function()
+	self.m_btCtrlZoom = btGroupCtrls:AddIconButton("graph_editor_zoom", function()
 		self:SetGraphCursorMode(gui.pfm.TimelineEditorGraph.CURSOR_MODE_ZOOM)
 		return true
 	end)
@@ -528,7 +528,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_tangentControls = gui.create("hbox", toolbarLeft)
 	self.m_tangentControls:SetName("timeline_tangent_controls")
 
-	self.m_btTangentLinear = gui.PFMButton.create(self.m_tangentControls, "grapheditor_linear_activated", function()
+	self.m_btTangentLinear = gui.PFMButton.create(self.m_tangentControls, "graph_editor_tangent_linear", function()
 		self:SetInterpolationMode(pfm.udm.INTERPOLATION_LINEAR)
 	end)
 	self.m_btTangentLinear:SetTooltip(
@@ -539,7 +539,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	)
 	self.m_controlButtons["tangent_linear"] = self.m_btTangentLinear
 
-	self.m_btTangentFlat = gui.PFMButton.create(self.m_tangentControls, "tangents/flat-tangents", function()
+	self.m_btTangentFlat = gui.PFMButton.create(self.m_tangentControls, "graph_editor_tangent_flat", function()
 		self:SetInterpolationMode(pfm.udm.INTERPOLATION_CONSTANT)
 	end)
 	self.m_btTangentFlat:SetTooltip(
@@ -550,7 +550,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	)
 	self.m_controlButtons["tangent_flat"] = self.m_btTangentFlat
 
-	self.m_btTangentSpline = gui.PFMButton.create(self.m_tangentControls, "grapheditor_spline_activated", function()
+	self.m_btTangentSpline = gui.PFMButton.create(self.m_tangentControls, "graph_editor_tangent_spline", function()
 		self:SetInterpolationMode(pfm.udm.INTERPOLATION_BEZIER)
 	end)
 	self.m_btTangentSpline:SetTooltip(
@@ -561,7 +561,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	)
 	self.m_controlButtons["tangent_spline"] = self.m_btTangentSpline
 
-	self.m_btTangentStep = gui.PFMButton.create(self.m_tangentControls, "grapheditor_step_activated", function()
+	self.m_btTangentStep = gui.PFMButton.create(self.m_tangentControls, "graph_editor_tangent_step", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btTangentStep:SetTooltip(
@@ -572,7 +572,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	)
 	self.m_controlButtons["tangent_step"] = self.m_btTangentStep
 
-	self.m_btTangentUnified = gui.PFMButton.create(self.m_tangentControls, "grapheditor_unified_activated", function()
+	self.m_btTangentUnified = gui.PFMButton.create(self.m_tangentControls, "graph_editor_tangent_unified", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btTangentUnified:SetTooltip(
@@ -585,7 +585,7 @@ function gui.PFMTimeline:InitializeToolbar()
 
 	self.m_btTangentEqualize = gui.PFMButton.create(
 		self.m_tangentControls,
-		"grapheditor_isometric_activated",
+		"graph_editor_tangent_equalize",
 		function()
 			print("TODO: NOT YET IMPLEMENTED")
 		end
@@ -598,7 +598,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	)
 	self.m_controlButtons["tangent_equalize"] = self.m_btTangentEqualize
 
-	self.m_btTangentWeighted = gui.PFMButton.create(self.m_tangentControls, "grapheditor_weighted_activated", function()
+	self.m_btTangentWeighted = gui.PFMButton.create(self.m_tangentControls, "graph_editor_tangent_weighted", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btTangentWeighted:SetTooltip(
@@ -611,7 +611,7 @@ function gui.PFMTimeline:InitializeToolbar()
 
 	self.m_btTangentUnweighted = gui.PFMButton.create(
 		self.m_tangentControls,
-		"grapheditor_unweighted_activated",
+		"graph_editor_tangent_unweighted",
 		function()
 			print("TODO: NOT YET IMPLEMENTED")
 		end
@@ -628,38 +628,38 @@ function gui.PFMTimeline:InitializeToolbar()
 
 	self.m_miscGraphControls = gui.create("hbox", toolbarLeft)
 
-	self.m_btOffsetMode = gui.PFMButton.create(self.m_miscGraphControls, "grapheditor_offset_activated", function()
+	self.m_btOffsetMode = gui.PFMButton.create(self.m_miscGraphControls, "graph_editor_offset_mode", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btOffsetMode:SetName("offset_mode")
 	self.m_btOffsetMode:SetTooltip(locale.get_text("pfm_graph_editor_offset_mode"))
 
-	self.m_btAutoFrame = gui.PFMButton.create(self.m_miscGraphControls, "grapheditor_autoframe_activated", function()
+	self.m_btAutoFrame = gui.PFMButton.create(self.m_miscGraphControls, "graph_editor_auto_frame", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btAutoFrame:SetName("auto_frame")
 	self.m_btAutoFrame:SetTooltip(locale.get_text("pfm_graph_editor_autoframe_mode"))
 
-	self.m_btUnitize = gui.PFMButton.create(self.m_miscGraphControls, "grapheditor_unitize_activated", function()
+	self.m_btUnitize = gui.PFMButton.create(self.m_miscGraphControls, "graph_editor_unitize", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btUnitize:SetName("unitize")
 	self.m_btUnitize:SetTooltip(locale.get_text("pfm_graph_editor_unitize_mode"))
 
 	self.m_motionControls = gui.create("hbox", toolbarLeft)
-	self.m_btTimeSelectionMode = gui.PFMButton.create(self.m_motionControls, "timeselectionmode_activated", function()
+	self.m_btTimeSelectionMode = gui.PFMButton.create(self.m_motionControls, "time_selection_mode", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btTimeSelectionMode:SetName("time_selection_mode")
 	gui.create("WIBase", self.m_motionControls):SetSize(18, 1) -- Gap
-	self.m_keyMode = gui.PFMButton.create(self.m_motionControls, "cp_keymode_activated", function()
+	self.m_keyMode = gui.PFMButton.create(self.m_motionControls, "key_mode", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_keyMode:SetName("key_mode")
 
 	gui.create("WIBase", toolbarLeft):SetSize(6, 1) -- Gap
 	self.m_clipControls = gui.create("hbox", toolbarLeft)
-	self.m_btAddTrackGroup = gui.PFMButton.create(self.m_clipControls, "cp_plus_drop_activated")
+	self.m_btAddTrackGroup = gui.PFMButton.create(self.m_clipControls, "add_track_group")
 	self.m_btAddTrackGroup:SetName("track_group")
 	self.m_btAddTrackGroup:SetupContextMenu(function(pContext)
 		pContext:AddItem(locale.get_text("pfm_add_film_clip"), function()
@@ -668,7 +668,7 @@ function gui.PFMTimeline:InitializeToolbar()
 		end)
 	end, true)
 	gui.create("WIBase", self.m_clipControls):SetSize(18, 1) -- Gap
-	self.m_btUp = gui.PFMButton.create(self.m_clipControls, "timeline_up_activated", function()
+	self.m_btUp = gui.PFMButton.create(self.m_clipControls, "timeline_up", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btUp:SetName("timeline_up")
@@ -676,25 +676,25 @@ function gui.PFMTimeline:InitializeToolbar()
 
 	local toolbarRight = gui.create("hbox", toolbar, 0, 0)
 	toolbarRight:SetName("timeline_toolbar_right")
-	self.m_btLockPlayhead = gui.PFMButton.create(toolbarRight, "timeline_head_activated", function()
+	self.m_btLockPlayhead = gui.PFMButton.create(toolbarRight, "lock_playhead", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btLockPlayhead:SetName("lock_playhead")
 	gui.create("WIBase", toolbarRight):SetSize(6, 1) -- Gap
 
-	self.m_btSnap = gui.PFMButton.create(toolbarRight, "snap_activated", function()
+	self.m_btSnap = gui.PFMButton.create(toolbarRight, "snap", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_controlButtons["snap"] = self.m_btSnap
 
 	gui.create("WIBase", toolbarRight):SetSize(6, 1) -- Gap
-	self.m_btSnapFrame = gui.PFMButton.create(toolbarRight, "snap_frame_activated", function()
+	self.m_btSnapFrame = gui.PFMButton.create(toolbarRight, "snap_frame", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_controlButtons["snap_frame"] = self.m_btSnapFrame
 
 	gui.create("WIBase", toolbarRight):SetSize(18, 1) -- Gap
-	self.m_btPlayOnce = gui.PFMButton.create(toolbarRight, "cp_play_once_activated", function()
+	self.m_btPlayOnce = gui.PFMButton.create(toolbarRight, "play_once", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btPlayOnce:SetName("play_once")

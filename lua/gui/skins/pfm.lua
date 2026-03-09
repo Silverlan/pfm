@@ -726,6 +726,81 @@ skin["button_icon"] = {
 		pElement:SetColor(GUI.button.icon)
 	end,
 }
+local function register_icon_type(name, matName)
+	matName = matName or name
+	skin["button_icon_" .. name] = {
+		Initialize = function(GUI, pElement)
+			pElement:SetMaterial("gui/pfm/icons/" .. matName)
+		end,
+	}
+end
+register_icon_type("arrow-repeat")
+register_icon_type("arrows-move")
+register_icon_type("atom")
+register_icon_type("bone")
+register_icon_type("bookmark-fill")
+register_icon_type("box")
+register_icon_type("brightness-alt-high-fill")
+register_icon_type("brightness-high-fill")
+register_icon_type("camera-fill")
+register_icon_type("caret-down-fill")
+register_icon_type("chevron-compact-left")
+register_icon_type("chevron-compact-right")
+register_icon_type("collapse")
+register_icon_type("crosshair2")
+register_icon_type("cursor-fill")
+register_icon_type("expand")
+register_icon_type("eye-fill")
+register_icon_type("eye-slash")
+register_icon_type("film")
+register_icon_type("gear-fill")
+register_icon_type("graph-up")
+register_icon_type("lightbulb-fill")
+register_icon_type("magnet-fill")
+register_icon_type("moon-fill")
+register_icon_type("pan")
+register_icon_type("pause-fill")
+register_icon_type("play-fill")
+register_icon_type("plus-lg")
+register_icon_type("record-fill")
+register_icon_type("scale")
+register_icon_type("skip-backward-fill")
+register_icon_type("skip-end-fill")
+register_icon_type("skip-forward-fill")
+register_icon_type("skip-start-fill")
+register_icon_type("spotlight-beam")
+register_icon_type("volume-mute-fill")
+register_icon_type("volume-off-fill")
+register_icon_type("volume-up-fill")
+
+register_icon_type("motion-editor", "placeholders/motion_editor")
+register_icon_type("add_track_group", "placeholders/add_track_group")
+
+register_icon_type("lock_playhead", "placeholders/lock_playhead")
+register_icon_type("snap", "placeholders/snap")
+register_icon_type("snap_frame", "placeholders/snap_frame")
+register_icon_type("play_once", "placeholders/play_once")
+register_icon_type("timeline_up", "placeholders/timeline_up")
+
+register_icon_type("time_selection_mode", "placeholders/time_selection_mode")
+register_icon_type("key_mode", "placeholders/key_mode")
+
+register_icon_type("graph_editor_scale", "placeholders/graph_editor_scale")
+register_icon_type("graph_editor_zoom", "placeholders/graph_editor_zoom")
+
+register_icon_type("graph_editor_tangent_linear", "placeholders/graph_editor_tangent_linear")
+register_icon_type("graph_editor_tangent_flat", "placeholders/graph_editor_tangent_flat")
+register_icon_type("graph_editor_tangent_spline", "placeholders/graph_editor_tangent_spline")
+register_icon_type("graph_editor_tangent_step", "placeholders/graph_editor_tangent_step")
+register_icon_type("graph_editor_tangent_unified", "placeholders/graph_editor_tangent_unified")
+register_icon_type("graph_editor_tangent_equalize", "placeholders/graph_editor_tangent_equalize")
+register_icon_type("graph_editor_tangent_weighted", "placeholders/graph_editor_tangent_weighted")
+register_icon_type("graph_editor_tangent_unweighted", "placeholders/graph_editor_tangent_unweighted")
+
+register_icon_type("graph_editor_offset_mode", "placeholders/graph_editor_offset_mode")
+register_icon_type("graph_editor_auto_frame", "placeholders/graph_editor_auto_frame")
+register_icon_type("graph_editor_unitize", "placeholders/graph_editor_unitize")
+
 skin["button_disabled"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.button.disabled)
