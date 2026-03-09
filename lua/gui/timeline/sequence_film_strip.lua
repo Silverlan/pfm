@@ -45,7 +45,9 @@ function SequenceFilmStrip:OnInitialize()
 	sessionName:SetFont("pfm_small")
 	sessionName:SizeToContents()
 	sessionName:SetPos(blackBar:GetX() +2, 13)
+	self.m_sessionName = sessionName
 end
+function SequenceFilmStrip:OnRemove() util.remove(self.m_nameChangeListener) end
 function SequenceFilmStrip:GetLeftMargin()
 	local w = self.m_elBg:GetSegmentSize(gui.NineSliceRect.SEGMENT_LEFT_EDGE)
 	return w
@@ -134,5 +136,14 @@ function SequenceFilmStrip:SetFilmStrip(filmStrip)
 	self.m_leftDragHandle:SetReferenceElement(filmStrip:GetTimeline())
 	self.m_rightDragHandle:SetReferenceElement(filmStrip:GetTimeline())
 	self.m_filmStrip = filmStrip
+
+	local session = filmStrip:GetSession()
+	local activeClip = session:GetActiveClip()
+	self.m_sessionName:SetText(activeClip:GetName())
+	self.m_sessionName:SizeToContents()
+	self.m_nameChangeListener = activeClip:AddChangeListener("name", function(activeClip, newName)
+		self.m_sessionName:SetText(newName)
+		self.m_sessionName:SizeToContents()
+	end)
 end
 gui.register("sequence_film_strip", SequenceFilmStrip)
