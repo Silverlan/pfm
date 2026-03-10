@@ -292,6 +292,7 @@ function Timeline:AddBookmark(bm, timeFrame)
 		return
 	end
 	local p = gui.create("pfm_bookmark", self, 0, 5)
+	p:SetTimeline(self)
 	p:SetBookmark(bm)
 	self.m_timeAxis:AttachElementToValueWithUdmProperty(p, bm, "time", function(t)
 		return bm:GetInterfaceTime()

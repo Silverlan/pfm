@@ -65,6 +65,8 @@ function gui.Axis:AttachElementToValue(el, value)
 	itemData.element = el
 	itemData.value = value
 	itemData.callbacks = {}
+	itemData.startOffset = 0
+	itemData.endOffset = 0
 	self.m_items[index] = itemData
 	self:ScheduleUpdate()
 	return index

@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 local Command = util.register_class("pfm.CommandCreateBookmark", pfm.Command)
-function Command:Initialize(filmClip, bmSetName, timestamp)
+function Command:Initialize(filmClip, bmSetName, timestamp, checkExists)
 	pfm.Command.Initialize(self)
 
 	local filmClipUuid = pfm.get_unique_id(filmClip)
@@ -14,12 +14,14 @@ function Command:Initialize(filmClip, bmSetName, timestamp)
 
 	self:AddSubCommand("create_bookmark_set", filmClip, bmSetName)
 
-	local bmSet = filmClip:FindBookmarkSet(bmSetName)
-	if bmSet ~= nil then
-		local bm = bmSet:FindBookmark(timestamp)
-		if bm ~= nil then
-			-- Bookmark already exists
-			return pfm.Command.RESULT_NO_OP
+	if(checkExists ~= false) then
+		local bmSet = filmClip:FindBookmarkSet(bmSetName)
+		if bmSet ~= nil then
+			local bm = bmSet:FindBookmark(timestamp)
+			if bm ~= nil then
+				-- Bookmark already exists
+				return pfm.Command.RESULT_NO_OP
+			end
 		end
 	end
 

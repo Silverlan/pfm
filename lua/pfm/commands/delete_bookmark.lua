@@ -4,8 +4,8 @@
 include("create_bookmark.lua")
 
 local Command = util.register_class("pfm.DeleteCreateBookmark", pfm.CommandCreateBookmark)
-function Command:Initialize(...)
-	return pfm.CommandCreateBookmark.Initialize(self, ...)
+function Command:Initialize(filmClip, bmSetName, timestamp, checkExists)
+	return pfm.CommandCreateBookmark.Initialize(self, filmClip, bmSetName, timestamp, false)
 end
 function Command:DoExecute(...)
 	return pfm.CommandCreateBookmark.DoUndo(self, ...)
