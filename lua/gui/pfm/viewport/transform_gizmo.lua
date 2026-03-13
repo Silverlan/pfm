@@ -48,8 +48,9 @@ function gui.PFMCoreViewportBase:SetManipulatorMode(manipulatorMode)
 		local selectedActors = selectionManager:GetSelectedObjects()
 		local selectedActorList = {}
 		local num = 0
-		for ent, b in pairs(selectedActors) do
-			if ent:IsValid() then
+		for actor, b in pairs(selectedActors) do
+			local ent = actor:FindEntity()
+			if ent ~= nil then
 				table.insert(selectedActorList, ent)
 				num = num + 1
 			end
@@ -173,8 +174,9 @@ function gui.PFMCoreViewportBase:UpdateManipulationMode()
 	local selectionManager = pm:GetSelectionManager()
 	local selectedActors = selectionManager:GetSelectedObjects()
 	local selectedActorList = {}
-	for ent, b in pairs(selectedActors) do
-		if ent:IsValid() then
+	for actor, b in pairs(selectedActors) do
+		local ent = actor:FindEntity()
+		if ent ~= nil then
 			table.insert(selectedActorList, ent)
 		end
 	end
@@ -381,12 +383,13 @@ function gui.PFMCoreViewportBase:CreateMultiActorTransformWidget()
 	local initialActorPoses = {}
 	local count = 0
 	for actor, _ in pairs(actors) do
-		if actor:IsValid() then
-			self:RemoveActorTransformWidget(actor)
-			posAvg = posAvg + actor:GetPos()
+		local ent = actor:FindEntity()
+		if ent ~= nil then
+			self:RemoveActorTransformWidget(ent)
+			posAvg = posAvg + ent:GetPos()
 			count = count + 1
 
-			initialActorPoses[actor] = actor:GetPose()
+			initialActorPoses[ent] = ent:GetPose()
 		end
 	end
 	if count > 0 then
@@ -497,27 +500,29 @@ function gui.PFMCoreViewportBase:ScaleSelectedActors(scale)
 	local center = Vector()
 	local numActors = 0
 	for actor, _ in pairs(actors) do
-		if actor:IsValid() then
-			center = center + actor:GetPos()
+		local ent = actor:FindEntity()
+		if ent ~= nil then
+			center = center + ent:GetPos()
 			numActors = numActors + 1
 		end
 	end
 	center = center / numActors
 	for actor, _ in pairs(actors) do
-		if actor:IsValid() then
-			local pos = actor:GetPos()
+		local ent = actor:FindEntity()
+		if ent ~= nil then
+			local pos = ent:GetPos()
 			pos = pos - center
 			pos = pos * scale
 			pos = pos + center
 			pfm.get_project_manager()
-				:SetActorTransformProperty(actor:GetComponent(ents.COMPONENT_PFM_ACTOR), "position", pos)
+				:SetActorTransformProperty(ent:GetComponent(ents.COMPONENT_PFM_ACTOR), "position", pos)
 			pfm.get_project_manager()
 				:SetActorTransformProperty(
-					actor:GetComponent(ents.COMPONENT_PFM_ACTOR),
+					ent:GetComponent(ents.COMPONENT_PFM_ACTOR),
 					"scale",
-					actor:GetScale() * scale
+					ent:GetScale() * scale
 				)
-			self:OnActorTransformChanged(actor)
+			self:OnActorTransformChanged(ent)
 		end
 	end
 end

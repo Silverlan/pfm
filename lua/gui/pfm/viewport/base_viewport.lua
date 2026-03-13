@@ -3,9 +3,6 @@
 
 util.register_class("gui.PFMBaseViewport", gui.Base)
 
-function gui.PFMBaseViewport:__init()
-	gui.Base.__init(self)
-end
 function gui.PFMBaseViewport:OnInitialize()
 	gui.Base.OnInitialize(self)
 

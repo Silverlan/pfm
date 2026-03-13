@@ -76,8 +76,9 @@ end
 function gui.PFMCoreViewportBase:UpdateMultiActorSelection()
 	local actors = pfm.get_project_manager():GetSelectionManager():GetSelectedObjects()
 	local n = 0
-	for ent, _ in pairs(actors) do
-		if ent:IsValid() then
+	for actor, _ in pairs(actors) do
+		local ent = actor:FindEntity()
+		if ent ~= nil then
 			n = n + 1
 			if n > 1 then
 				break

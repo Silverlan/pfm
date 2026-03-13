@@ -693,6 +693,9 @@ function gui.PFMCoreViewportBase:OnUpdate()
 end
 
 util.register_class("gui.PFMViewport", gui.PFMCoreViewportBase)
+function gui.PFMViewport:__init()
+	gui.PFMCoreViewportBase.__init(self)
+end
 function gui.PFMViewport:OnInitialize()
 	gui.PFMCoreViewportBase.OnInitialize(self)
 end
@@ -802,10 +805,11 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 				local pm = pfm.get_project_manager()
 				local selectionManager = pm:GetSelectionManager()
 				local objs = selectionManager:GetSelectedObjects()
-				local obj = pairs(objs)(objs)
-				if util.is_valid(obj) then
+				local actor = pairs(objs)(objs)
+				local ent = (actor ~= nil) and actor:FindEntity() or nil
+				if ent ~= nil then
 					handled = util.EVENT_REPLY_UNHANDLED
-					entActor = obj
+					entActor = ent
 				end
 			end
 
