@@ -30,7 +30,7 @@ function ButtonGroup:AddButton(bt)
 	self.m_buttons = newButtons
 
 	if #self.m_buttons == 0 then
-		bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_NORMAL or gui.PFMButton.BUTTON_TYPE_TAB)
+		bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB or gui.PFMButton.BUTTON_TYPE_NORMAL)
 	else
 		if #self.m_buttons == 1 then
 			self.m_buttons[1]:SetType(

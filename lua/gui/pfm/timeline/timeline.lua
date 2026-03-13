@@ -435,6 +435,7 @@ function gui.PFMTimeline:InitializeToolbar()
 		tool.get_filmmaker():AddBookmark()
 	end)
 	self.m_btBookmarkKey:SetName("bookmark")
+	self.m_btBookmarkKey:SetTooltip(locale.get_text("pfm_add_bookmark"))
 	self.m_controlButtons["bookmark"] = self.m_btBookmarkKey
 
 	self.m_entryFields = gui.create("hbox", toolbarLeft)
@@ -661,6 +662,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_clipControls = gui.create("hbox", toolbarLeft)
 	self.m_btAddTrackGroup = gui.PFMButton.create(self.m_clipControls, "add_track_group")
 	self.m_btAddTrackGroup:SetName("track_group")
+	self.m_btAddTrackGroup:SetTooltip(locale.get_text("pfm_add_track_group"))
 	self.m_btAddTrackGroup:SetupContextMenu(function(pContext)
 		pContext:AddItem(locale.get_text("pfm_add_film_clip"), function()
 			local filmmaker = tool.get_filmmaker()
@@ -668,10 +670,10 @@ function gui.PFMTimeline:InitializeToolbar()
 		end)
 	end, true)
 	gui.create("WIBase", self.m_clipControls):SetSize(18, 1) -- Gap
-	self.m_btUp = gui.PFMButton.create(self.m_clipControls, "timeline_up", function()
+	--[[self.m_btUp = gui.PFMButton.create(self.m_clipControls, "timeline_up", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btUp:SetName("timeline_up")
+	self.m_btUp:SetName("timeline_up")]]
 	toolbarLeft:SetHeight(self.m_btClipEditor:GetHeight())
 
 	local toolbarRight = gui.create("hbox", toolbar, 0, 0)
@@ -680,17 +682,20 @@ function gui.PFMTimeline:InitializeToolbar()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btLockPlayhead:SetName("lock_playhead")
+	self.m_btLockPlayhead:SetTooltip(locale.get_text("pfm_lock_playhead"))
 	gui.create("WIBase", toolbarRight):SetSize(6, 1) -- Gap
 
 	self.m_btSnap = gui.PFMButton.create(toolbarRight, "snap", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
+	self.m_btSnap:SetTooltip(locale.get_text("pfm_snap"))
 	self.m_controlButtons["snap"] = self.m_btSnap
 
 	gui.create("WIBase", toolbarRight):SetSize(6, 1) -- Gap
 	self.m_btSnapFrame = gui.PFMButton.create(toolbarRight, "snap_frame", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
+	self.m_btSnapFrame:SetTooltip(locale.get_text("pfm_snap_frame"))
 	self.m_controlButtons["snap_frame"] = self.m_btSnapFrame
 
 	gui.create("WIBase", toolbarRight):SetSize(18, 1) -- Gap
@@ -698,10 +703,12 @@ function gui.PFMTimeline:InitializeToolbar()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btPlayOnce:SetName("play_once")
+	self.m_btPlayOnce:SetTooltip(locale.get_text("pfm_play_once"))
 	gui.create("WIBase", toolbarRight):SetSize(6, 1) -- Gap
 	self.m_btMute = gui.PFMButton.create(toolbarRight, "volume-off-fill", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
+	self.m_btMute:SetTooltip(locale.get_text("pfm_mute"))
 	self.m_controlButtons["mute"] = self.m_btMute
 
 	gui.create("WIBase", toolbarRight):SetSize(6, 1) -- Gap
@@ -709,6 +716,7 @@ function gui.PFMTimeline:InitializeToolbar()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btTools:SetName("tools")
+	self.m_btTools:SetTooltip(locale.get_text("pfm_tools"))
 	self.m_btTools:SetupContextMenu(function(pContext)
 		pContext:AddItem(locale.get_text("pfm_fit_view_to_data"), function()
 			self:GetGraphEditor():FitViewToDataRange()
