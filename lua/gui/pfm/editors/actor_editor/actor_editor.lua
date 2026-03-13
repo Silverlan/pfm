@@ -2923,6 +2923,30 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end
 	end
 	pContext
+		:AddItem(locale.get_text("pfm_fly_to_actor"), function()
+			local filmmaker = pfm.get_project_manager()
+			local filmClip = filmmaker:GetActiveFilmClip()
+			if filmClip == nil then
+				return
+			end
+			local actor = filmClip:FindActorByUniqueId(uniqueId)
+			if actor == nil then
+				return
+			end
+			local pm = pfm.get_project_manager()
+			local vp = util.is_valid(pm) and pm:GetViewport() or nil
+			if util.is_valid(vp) == false then
+				return
+			end
+			local entActor = actor:FindEntity()
+			if(entActor == nil) then return end
+			local wc = vp:GetWorkCamera()
+			local vc = util.is_valid(wc) and wc:GetEntity():GetComponent(ents.COMPONENT_VIEWER_CAMERA) or nil
+			if(vc == nil) then return end
+			vc:FlyToTarget(entActor)
+		end)
+		:SetName("fly_to_actor")
+	pContext
 		:AddItem(locale.get_text("pfm_move_work_camera_to_actor"), function()
 			local filmmaker = pfm.get_project_manager()
 			local filmClip = filmmaker:GetActiveFilmClip()

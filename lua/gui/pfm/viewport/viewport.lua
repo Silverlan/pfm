@@ -749,6 +749,21 @@ function gui.PFMViewport:OnViewportMouseEvent(el, mouseButton, state, mods)
 				end
 			end
 		end
+
+		if(self.m_lastClick ~= nil) then
+			local dt = time.real_time() -self.m_lastClick
+			if(dt < 0.3) then -- Double click
+				local workCam = self:GetWorkCamera()
+				if(util.is_valid(workCam)) then
+					local workCameraC = workCam:GetEntity():GetComponent(ents.COMPONENT_PFM_WORK_CAMERA)
+					if(workCameraC ~= nil) then
+						workCameraC:FlyToSelection()
+					end
+				end
+			end
+		end
+		self.m_lastClick = time.real_time()
+
 		return util.EVENT_REPLY_HANDLED
 	end
 

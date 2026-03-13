@@ -48,6 +48,10 @@ function Component:OnEntitySpawn()
 	self:UpdateProject()
 end
 
+function Component:GetProjectManager() return self.m_projectManager end
+
+function Component:GetSelectionManager() return self.m_projectManager:GetSelectionManager() end
+
 function Component:UpdateSceneCamera()
 	if util.is_valid(self.m_initialGameCam) == false then
 		return

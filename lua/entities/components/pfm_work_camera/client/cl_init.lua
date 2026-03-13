@@ -2,16 +2,25 @@
 -- SPDX-License-Identifier: MIT
 
 local Component = util.register_class("ents.PFMWorkCamera", BaseEntityComponent)
-Component:RegisterMember("PivotDistance", udm.TYPE_FLOAT, 50.0, {
-	onChange = function(self)
-		self:UpdatePivotDistance()
-	end,
-	min = 0.0,
-	max = 100000,
-})
 function Component:Initialize()
 	BaseEntityComponent.Initialize(self)
+
+	self.m_viewerCameraC = self:AddEntityComponent("viewer_camera")
+	self:SetPivotDistance(50)
 end
+function Component:FlyToSelection()
+	local ent, manager = ents.citerator(ents.COMPONENT_PFM_MANAGER)()
+	if(manager == nil) then return end
+	local selectionManager = manager:GetSelectionManager()
+	local ents = {}
+	for actor, _ in pairs(selectionManager:GetSelectedObjects()) do
+		local ent = actor:FindEntity()
+		if(ent ~= nil) then table.insert(ents, ent) end
+	end
+	self.m_viewerCameraC:FlyToTarget(ents)
+end
+function Component:SetPivotDistance(d) self.m_viewerCameraC:SetZoom(d) end
+function Component:GetPivotDistance() return self.m_viewerCameraC:GetZoom() end
 function Component:UpdatePivotDistance()
 	local viewerCameraC = self:GetEntity():GetComponent(ents.COMPONENT_VIEWER_CAMERA)
 	if viewerCameraC == nil then
@@ -39,7 +48,6 @@ function Component:OnRemove()
 end
 function Component:OnEntitySpawn()
 	local entCam = self:GetEntity()
-	entCam:AddComponent("viewer_camera")
 	local observerC = entCam:GetComponent(ents.COMPONENT_OBSERVER)
 	if observerC ~= nil then
 		local observableC = entCam:AddComponent(ents.COMPONENT_OBSERVABLE)

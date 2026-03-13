@@ -68,6 +68,10 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 	local btGroup = gui.PFMButtonGroup(controls)
 	self.m_btAutoAim = btGroup:AddIconButton("crosshair2", function()
 		print("TODO")
+		local ent, workCameraC = ents.citerator(ents.COMPONENT_PFM_WORK_CAMERA)()
+		if(workCameraC ~= nil) then
+			workCameraC:FlyToSelection()
+		end
 	end)
 	self.m_btCamera = btGroup:AddGenericButton("", function()
 		self:ToggleCamera()

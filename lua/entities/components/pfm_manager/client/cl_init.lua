@@ -208,6 +208,7 @@ end
 function Component:GetProjectManager()
 	return self.m_projectManager
 end
+function Component:GetSelectionManager() return self.m_projectManager:GetSelectionManager() end
 function Component:IsRecording()
 	local recorderC = self:GetEntity():GetComponent(ents.COMPONENT_PFM_ANIMATION_RECORDER)
 	return recorderC ~= nil and recorderC:IsRecording()
