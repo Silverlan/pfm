@@ -2,6 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/pfm/editors/shader_editor.lua")
+include("/gui/pfm/util/util.lua")
 
 local init_model_asset_drag_and_drop
 
@@ -101,7 +102,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 		if #tSelectedFiles == 1 then
 			local path = tSelectedFiles[1]:GetRelativeAsset()
 			local pItem = pContext:AddItem(locale.get_text("pfm_show_in_model_viewer"), function()
-				local pDialog, frame, el = gui.open_model_dialog()
+				local pDialog, frame, el = gui.pfm.open_model_dialog()
 				el:SetModel(path)
 			end)
 			pItem:SetName("show_in_model_viewer")
@@ -221,7 +222,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 			return
 		end
 		local pItem = pContext:AddItem(locale.get_text("pfm_edit_retarget_rig"), function()
-			gui.open_model_dialog(function(result, mdlName)
+			gui.pfm.open_model_dialog(function(result, mdlName)
 				if result ~= gui.DIALOG_RESULT_OK then
 					return
 				end

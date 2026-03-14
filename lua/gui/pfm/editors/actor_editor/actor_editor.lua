@@ -6,13 +6,14 @@ include("/gui/pfm/containers/tree_view.lua")
 include("/gui/pfm/controls/weight_slider.lua")
 include("/gui/pfm/controls_menu/controls_menu.lua")
 include("/gui/pfm/dialogs/entry_edit_window.lua")
-include("/gui/wimodeldialog.lua")
+include("/gui/model_dialog.lua")
 include("/gui/containers/collapsible_group.lua")
 include("/gui/overlay/optional.lua")
 include("/pfm/scene/raycast.lua")
 include("/pfm/core/component_manager.lua")
 include("/pfm/core/component_actions.lua")
 include("/pfm/util/util.lua")
+include("/gui/pfm/util/util.lua")
 include("/gui/pfm/controls_menu/property_controls.lua")
 
 util.register_class("gui.PFMActorEditor", gui.Base)
@@ -65,7 +66,7 @@ function gui.PFMActorEditor:OnInitialize()
 	end
 	local function addPresetModelActorOption(id, subMenu, type, locId)
 		local subItem = subMenu:AddItem(locale.get_text(locId), function()
-			gui.open_model_dialog(function(dialogResult, mdlName)
+			gui.pfm.open_model_dialog(function(dialogResult, mdlName)
 				if dialogResult ~= gui.DIALOG_RESULT_OK then
 					return
 				end
@@ -3013,7 +3014,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 				return
 			end
 			local filmmaker = pfm.get_project_manager()
-			gui.open_model_dialog(function(dialogResult, mdlName)
+			gui.pfm.open_model_dialog(function(dialogResult, mdlName)
 				if dialogResult ~= gui.DIALOG_RESULT_OK then
 					return
 				end

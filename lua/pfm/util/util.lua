@@ -247,13 +247,9 @@ pfm.util.get_localized_property_name = function(componentName, pathName)
 	return displayName, description
 end
 
-pfm.create_file_open_dialog = function(...)
-	local fileDialog = gui.create_file_open_dialog(...)
-	fileDialog:SetSkin("pfm")
-	return fileDialog
+pfm.create_file_open_dialog = function(fcOnFileSelected)
+	return gui.create_file_open_dialog(fcOnFileSelected, tool.get_filmmaker())
 end
-pfm.create_file_save_dialog = function(...)
-	local fileDialog = gui.create_file_save_dialog(...)
-	fileDialog:SetSkin("pfm")
-	return fileDialog
+pfm.create_file_save_dialog = function(fcOnFileSelected)
+	return gui.create_file_save_dialog(fcOnFileSelected, tool.get_filmmaker())
 end

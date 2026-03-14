@@ -573,7 +573,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 
 					--[[if(self:GetAssetType() == asset.TYPE_MODEL) then
 						pContext:AddItem(locale.get_text("pfm_open_in_model_editor"),function()
-							local dialog,frame,el = gui.open_model_dialog(function(dialogResult,mdlName) end)
+							local dialog,frame,el = gui.pfm.open_model_dialog(function(dialogResult,mdlName) end)
 
 							if(util.is_valid(el) == false) then return end
 							local path = util.Path.CreatePath(assetPath)

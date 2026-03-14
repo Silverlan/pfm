@@ -2,6 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("file.lua")
+include("/gui/pfm/util/util.lua")
 
 local Wrapper = util.register_class("pfm.util.ControlWrapper.ModelFile", pfm.util.ControlWrapper.File)
 function Wrapper:__init(elControls, identifier)
@@ -13,7 +14,7 @@ function Wrapper:InitializeElement()
 		self.m_identifier,
 		self:ToInterfaceValue(self.m_defaultValue or ""),
 		function(resultHandler)
-			gui.open_model_dialog(function(dialogResult, mdlName)
+			gui.pfm.open_model_dialog(function(dialogResult, mdlName)
 				if dialogResult ~= gui.DIALOG_RESULT_OK then
 					return
 				end
