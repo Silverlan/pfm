@@ -13,12 +13,12 @@ function SequenceFilmStrip:OnInitialize()
 	self:SetSize(128, 93)
 
 	local elBg = gui.create("WI9SliceRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	elBg:SetColor(Color(62, 62, 107))
+	elBg:AddStyleClass("timeline_film_strip")
 	elBg:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_background")
 	self.m_elBg = elBg
 
 	local elBgPattern = gui.create("pfm_repeated_textured_rect", elBg)
-	elBgPattern:SetColor(Color(46, 46, 54, 255))
+	elBgPattern:AddStyleClass("timeline_film_strip_dots")
 	elBgPattern:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_pattern")
 	elBg:AddCallback("SetSize", function(p)
 		local offset = 11

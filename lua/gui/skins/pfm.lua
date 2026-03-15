@@ -51,6 +51,10 @@ t.timeline.background = Color(80, 80, 80)
 t.timeline.playhead = Color(94, 112, 132)
 t.timeline.playhead_review = Color(163, 196, 159)
 
+t.timeline.film_strip = {}
+t.timeline.film_strip.background = Color(62, 62, 107)
+t.timeline.film_strip.dots = Color(46, 46, 54, 255)
+
 t.actor_editor = {}
 t.actor_editor.collection = Color(204, 204, 204)
 t.actor_editor.actor = Color(248, 128, 112)
@@ -173,6 +177,16 @@ end]]
 
 local skin = {}
 ------------ Timeline ------------
+skin["timeline_film_strip"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.timeline.film_strip.background)
+	end,
+}
+skin["timeline_film_strip_dots"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.timeline.film_strip.dots)
+	end,
+}
 skin["timeline_clip_film"] = {
 	Initialize = function(GUI, pElement)
 		local elBg = pElement:FindChildByName("background")
@@ -229,6 +243,19 @@ skin["wifiledialog"] = {
 }
 skin["wislider"] = skin["wiprogressbar"]
 -----------------------------------------
+------------- panel -------------
+skin["panel"] = {
+	children = {
+		["witext"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetFont("pfm_medium")
+				pElement:SizeToContents()
+				pElement:SetColor(GUI.text.body)
+			end,
+		},
+	},
+}
+-----------------------------------------
 ------------- WIText -------------
 skin["witext"] = {
 	Initialize = function(GUI, pElement)
@@ -251,8 +278,8 @@ skin["wislider"] = skin["wiprogressbar"]
 ------------ WIButton ------------
 skin["wibutton"] = {
 	Initialize = function(GUI, pElement)
-		local bg = gui.create("WIRect", pElement)
-		bg:SetColor(GUI.background.secondary)
+		local bg = gui.create("WI9SliceRect", pElement)
+		bg:AddStyleClass("button")
 		bg:SetName("background")
 		bg:SetAutoAlignToParent(true)
 		bg:SetZPos(-2)
@@ -267,7 +294,8 @@ skin["wibutton"] = {
 			if pElement.m_pBackground == nil or not pElement.m_pBackground:IsValid() then
 				return
 			end
-			pElement.m_pBackground:SetColor(GUI.background.secondary)
+			pElement.m_pBackground:AddStyleClass("selection_hover")
+			pElement.m_pBackground:RefreshSkin()
 		end
 		local cbCursorEntered = pElement:AddCallback("OnCursorEntered", fcCursorEntered)
 		add_skin_element(pElement, cbCursorEntered)
@@ -279,7 +307,9 @@ skin["wibutton"] = {
 			if pElement.m_pBackground == nil or not pElement.m_pBackground:IsValid() then
 				return
 			end
-			pElement.m_pBackground:SetColor(GUI.background.secondary)
+			pElement.m_pBackground:SetColor(Color.White)
+			pElement.m_pBackground:RemoveStyleClass("selection_hover")
+			pElement.m_pBackground:RefreshSkin()
 		end)
 		add_skin_element(pElement, cbCursorExited)
 		local cbMousePressed = pElement:AddCallback("OnMousePressed", function()
@@ -287,11 +317,9 @@ skin["wibutton"] = {
 			if pElement.m_pBackground == nil or not pElement.m_pBackground:IsValid() then
 				return
 			end
-			local gradient = GUI:BUTTON_BACKGROUND_GRADIENT_SELECTED()
-			if gradient == nil then
-				return
-			end
-			pElement.m_pBackground:SetColor(GUI.background.secondary)
+			pElement.m_pBackground:RemoveStyleClass("button_background_unpressed")
+			pElement.m_pBackground:AddStyleClass("button_background_pressed")
+			pElement.m_pBackground:RefreshSkin()
 		end)
 		add_skin_element(pElement, cbMousePressed)
 		local cbMouseReleased = pElement:AddCallback("OnMouseReleased", function()
@@ -303,11 +331,9 @@ skin["wibutton"] = {
 			if pElement.m_pBackground == nil or not pElement.m_pBackground:IsValid() then
 				return
 			end
-			local gradient = GUI:BACKGROUND_GRADIENT()
-			if gradient == nil then
-				return
-			end
-			pElement.m_pBackground:SetColor(GUI.background.secondary)
+			pElement.m_pBackground:RemoveStyleClass("button_background_pressed")
+			pElement.m_pBackground:AddStyleClass("button_background_unpressed")
+			pElement.m_pBackground:RefreshSkin()
 		end)
 		add_skin_element(pElement, cbMouseReleased)
 
@@ -340,7 +366,8 @@ skin["wibutton"] = {
 				end)
 				add_skin_element(pElement, cbSetSize)
 
-				pElement:SetColorRGB(Color(255, 255, 255, 255))
+				-- pElement:SetColorRGB(Color(255, 255, 255, 255))
+				pElement:SetFont("pfm_medium")
 				pElement:SetText(pElement:GetText():upper())
 				pElement:SizeToContents()
 			end,
@@ -556,6 +583,11 @@ skin["menu_bar"] = {
 		},
 	},
 }
+skin["title_bar"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.background.primary)
+	end
+}
 skin["context_menu_arrow"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.text.body)
@@ -724,6 +756,16 @@ skin["button_background_pressed"] = {
 skin["button_icon"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.button.icon)
+	end,
+}
+skin["tab_button_background_pressed"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.background.selected)
+	end,
+}
+skin["tab_button_background_unpressed"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.background.primary)
 	end,
 }
 local function register_icon_type(name, matName)
