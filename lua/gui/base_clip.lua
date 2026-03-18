@@ -30,7 +30,7 @@ function gui.BaseClip:OnInitialize()
 	self.m_selection:SetZPos(1)
 
 	self.m_text = gui.create("WIText", self, 4, 0, w - 8, 14, 0, 0, 1, 0)
-	self.m_text:SetFont("pfm_small")
+	self.m_text:AddStyleClass("font_small")
 	self.m_text:SetColor(gui.BaseClip.TITLE_COLOR)
 	self.m_text:SetZPos(2)
 

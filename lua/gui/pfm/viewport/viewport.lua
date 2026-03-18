@@ -41,29 +41,29 @@ function gui.PFMCoreViewportBase:OnInitialize()
 	end)
 	self:SetScrollInputEnabled(true)
 
-	local function create_text_element(font, pos, color)
+	local function create_text_element(fontStyle, pos, color)
 		local textColor = Color(182, 182, 182)
 		local el = gui.create("WIText", self.m_titleBar)
-		el:SetFont(font)
+		el:AddStyleClass(fontStyle)
 		el:SetColor(textColor)
 		el:SetPos(pos)
 		return el
 	end
 	local textColor = Color(182, 182, 182)
-	self.m_timeGlobal = create_text_element("pfm_large", Vector2(20, 15), textColor)
+	self.m_timeGlobal = create_text_element("font_large", Vector2(20, 15), textColor)
 	self.m_timeGlobal:SetText(util.get_pretty_time(0.0))
 	self.m_timeGlobal:SizeToContents()
 
-	self.m_timeLocal = create_text_element("pfm_large", Vector2(0, 15), textColor)
+	self.m_timeLocal = create_text_element("font_large", Vector2(0, 15), textColor)
 	self.m_timeLocal:SetText(util.get_pretty_time(0.0))
 	self.m_timeLocal:SizeToContents()
 	self.m_timeLocal:SetAnchor(1, 0, 1, 0)
 
 	textColor = Color(152, 152, 152)
-	self.m_filmClipParent = create_text_element("pfm_medium", Vector2(0, 3), textColor)
+	self.m_filmClipParent = create_text_element("font_medium", Vector2(0, 3), textColor)
 	self.m_filmClipParent:CenterToParentX()
 
-	self.m_filmClip = create_text_element("pfm_medium", Vector2(0, 16), textColor)
+	self.m_filmClip = create_text_element("font_medium", Vector2(0, 16), textColor)
 	self.m_filmClip:CenterToParentX()
 
 	self:SwitchToGameplay(false)

@@ -19,7 +19,7 @@ function gui.PFMTitlebar:OnInitialize()
 
 	self.m_text = gui.create("WIText", self, 11, 8)
 	self.m_text:SetColor(Color.Black)
-	self.m_text:SetFont("pfm_medium")
+	self.m_text:AddStyleClass("font_medium")
 	self.m_text:SetVisible(false)
 end
 function gui.PFMTitlebar:SetText(text)

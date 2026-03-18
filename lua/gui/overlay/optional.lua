@@ -16,7 +16,7 @@ function Element:OnInitialize()
 	bgOutline:SetColor(Color.Black)
 
 	local elText = gui.create("trim_text", self)
-	elText:SetFont("pfm_medium")
+	elText:AddStyleClass("font_medium")
 	elText:SetColor(Color.White)
 	elText:SetX(5)
 	elText:SetWidth(self:GetWidth() - 10)

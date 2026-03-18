@@ -33,6 +33,11 @@ t.text.title = Color.White:Copy()
 t.text.highlight = Color(30, 144, 255, 255)
 t.text.shadow = Color.Black:Copy()
 
+t.text.fonts = {}
+t.text.fonts.small = "pfm_small"
+t.text.fonts.medium = "pfm_medium"
+t.text.fonts.large = "pfm_large"
+
 t.icon = Color.White:Copy()
 
 t.outline = {}
@@ -176,6 +181,24 @@ end
 end]]
 
 local skin = {}
+-------------- Fonts --------------
+skin["font_small"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetFont(GUI.text.fonts.small)
+	end,
+}
+skin["font_medium"] = {
+	Initialize = function(GUI, pElement)
+		print("FONT: ",GUI.text.fonts.medium)
+		pElement:SetFont(GUI.text.fonts.medium)
+	end,
+}
+skin["font_large"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetFont(GUI.text.fonts.large)
+	end,
+}
+-----------------------------------
 ------------ Timeline ------------
 skin["timeline_film_strip"] = {
 	Initialize = function(GUI, pElement)
@@ -235,7 +258,7 @@ skin["wifiledialog"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetFont("pfm_medium")
+				pElement:SetFont(GUI.text.fonts.medium)
 				pElement:SizeToContents()
 			end,
 		},
@@ -248,7 +271,7 @@ skin["panel"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetFont("pfm_medium")
+				pElement:SetFont(GUI.text.fonts.medium)
 				pElement:SizeToContents()
 				pElement:SetColor(GUI.text.body)
 			end,
@@ -367,7 +390,7 @@ skin["wibutton"] = {
 				add_skin_element(pElement, cbSetSize)
 
 				-- pElement:SetColorRGB(Color(255, 255, 255, 255))
-				pElement:SetFont("pfm_medium")
+				pElement:SetFont(GUI.text.fonts.medium)
 				pElement:SetText(pElement:GetText():upper())
 				pElement:SizeToContents()
 			end,
@@ -472,7 +495,7 @@ skin["input_field_outline"] = {
 }
 skin["input_field_text"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetFont("pfm_medium")
+		pElement:SetFont(GUI.text.fonts.medium)
 	end,
 }
 skin["input_field_overlay"] = {
@@ -507,7 +530,7 @@ skin["infobox"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetFont("pfm_medium")
+				pElement:SetFont(GUI.text.fonts.medium)
 				pElement:SizeToContents()
 			end,
 		},
@@ -526,7 +549,7 @@ skin["menu_item"] = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetColor(GUI.text.body)
-				pElement:SetFont("pfm_medium")
+				pElement:SetFont(GUI.text.fonts.medium)
 				pElement:SizeToContents()
 			end,
 		},
@@ -598,7 +621,7 @@ skin["witable"] = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetColor(GUI.text.body)
-				pElement:SetFont("pfm_medium")
+				pElement:SetFont(GUI.text.fonts.medium)
 				pElement:SizeToContents()
 			end,
 		},
@@ -640,7 +663,7 @@ skin["frame_titlebar"] = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetColor(GUI.text.body)
-				pElement:SetFont("pfm_medium")
+				pElement:SetFont(GUI.text.fonts.medium)
 				pElement:SizeToContents()
 			end,
 		},

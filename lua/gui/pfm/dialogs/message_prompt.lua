@@ -20,7 +20,7 @@ function PfmPrompt:OnInitialize()
 	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap
 
 	local elMsg = gui.create("WIText", contents)
-	elMsg:SetFont("pfm_medium")
+	elMsg:AddStyleClass("font_medium")
 	self.m_message = elMsg
 
 	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap

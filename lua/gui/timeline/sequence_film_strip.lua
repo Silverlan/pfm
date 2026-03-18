@@ -42,7 +42,7 @@ function SequenceFilmStrip:OnInitialize()
 	local sessionName = gui.create("WIText", self)
 	sessionName:SetColor(Color.Black)
 	sessionName:SetText("session")
-	sessionName:SetFont("pfm_small")
+	sessionName:AddStyleClass("font_small")
 	sessionName:SizeToContents()
 	sessionName:SetPos(blackBar:GetX() +2, 13)
 	self.m_sessionName = sessionName

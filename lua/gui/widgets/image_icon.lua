@@ -20,7 +20,7 @@ function gui.ImageIcon:OnInitialize()
 	self.m_textBg = textBg
 
 	local elText = gui.create("WIText", self)
-	elText:SetFont("pfm_small")
+	elText:AddStyleClass("font_small")
 	elText:AddStyleClass("label")
 	self.m_text = elText
 

@@ -682,7 +682,7 @@ end
 function gui.PFMTreeViewElement:SetText(text)
 	if util.is_valid(self.m_text) == false then
 		self.m_text = gui.create("WIText", self.m_header)
-		self.m_text:SetFont("pfm_medium")
+		self.m_text:AddStyleClass("font_medium")
 	end
 	self.m_text:SetText(text)
 	self.m_text:SizeToContents()

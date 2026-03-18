@@ -118,7 +118,7 @@ pfm.open_single_value_edit_window = function(title, cb, def)
 		end
 	end)
 	te = p:AddTextField(title .. ":", def or "")
-	te:GetTextElement():SetFont("pfm_medium")
+	te:GetTextElement():AddStyleClass("font_medium")
 
 	p:SetWindowSize(Vector2i(800, 120))
 	p:Update()

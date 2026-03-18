@@ -70,12 +70,12 @@ end
 function Element:SetText(text)
 	if util.is_valid(self.m_text) == false then
 		self.m_text = gui.create("WIText", self)
-		self.m_text:SetFont("pfm_medium")
+		self.m_text:AddStyleClass("font_medium")
 		self.m_text:SetColor(Color(152, 152, 152))
 	end
 	self.m_text:SetText(text)
 	self.m_text:SizeToContents()
-	self.m_text:CenterToParent()
+	self.m_text:SetAutoCenterToParent(true)
 	self.m_text:SetAnchor(0.5, 0.5, 0.5, 0.5)
 end
 function Element:GetText()

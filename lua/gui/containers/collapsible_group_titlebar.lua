@@ -35,7 +35,7 @@ function gui.CollapsibleGroupTitleBar:OnInitialize()
 
 	gui.create("WIBase", self.m_contents, 0, 0, 8, 1) -- Gap
 	self.m_name = gui.create("WIText", self.m_contents, 0, 3)
-	self.m_name:SetFont("pfm_medium")
+	self.m_name:AddStyleClass("font_medium")
 	self.m_name:SetColor(Color(152, 152, 152))
 end
 function gui.CollapsibleGroupTitleBar:GetLeftPadding()

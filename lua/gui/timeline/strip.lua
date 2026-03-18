@@ -260,7 +260,7 @@ function gui.LabelledTimelineStrip:OnUpdate()
 			local pText = self.m_textElements[i + 1]
 			if util.is_valid(pText) == false then
 				pText = gui.create("WIText", self)
-				pText:SetFont("pfm_small")
+				pText:AddStyleClass("font_small")
 				pText:AddStyleClass("timeline_label")
 
 				self.m_textElements[i + 1] = pText

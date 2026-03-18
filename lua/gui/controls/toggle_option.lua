@@ -18,7 +18,7 @@ function gui.ToggleOption:OnInitialize()
 	gui.create("WIBase", self.m_contents, 0, 0, 5, 1) -- Gap
 	self.m_label = gui.create("WIText", self.m_contents)
 	self.m_label:SetColor(Color.White)
-	self.m_label:SetFont("pfm_medium")
+	self.m_label:AddStyleClass("font_medium")
 	self.m_label:SetY(2)
 end
 function gui.ToggleOption:SetChecked(checked)
