@@ -21,6 +21,11 @@ t.text = {}
 t.text.body = Color(255, 153, 0)
 t.text.highlight = Color(30, 144, 255, 255)
 
+t.timeline = {}
+t.timeline.film_strip = {}
+t.timeline.film_strip.background = Color(50, 50, 50)
+t.timeline.film_strip.dots = Color(17, 17, 17, 255)
+
 t.actor_editor = {}
 t.actor_editor.collection = Color(204, 204, 204)
 t.actor_editor.actor = Color(255, 140, 0, 255)
