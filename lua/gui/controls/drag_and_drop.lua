@@ -1,14 +1,11 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-util.register_class("gui.DragGhost", gui.Base)
-gui.DragGhost.impl = util.get_class_value(gui.DragGhost, "impl") or {
+local DragGhost = util.register_class("gui.DragGhost", gui.Base)
+DragGhost.impl = util.get_class_value(DragGhost, "impl") or {
 	dragTargets = {},
 }
-function gui.DragGhost:__init()
-	gui.Base.__init(self)
-end
-function gui.DragGhost:OnInitialize()
+function DragGhost:OnInitialize()
 	self.m_cursorTracker = gui.CursorTracker()
 	self.m_isDragging = false
 	self:SetSize(128, 128)
@@ -36,10 +33,10 @@ function gui.DragGhost:OnInitialize()
 		return util.EVENT_REPLY_UNHANDLED
 	end)
 end
-function gui.DragGhost:IsDragging()
+function DragGhost:IsDragging()
 	return self.m_isDragging
 end
-function gui.DragGhost:StartDragging()
+function DragGhost:StartDragging()
 	if self:IsDragging() then
 		return
 	end
@@ -51,16 +48,17 @@ function gui.DragGhost:StartDragging()
 
 	self:CallCallbacks("OnDragStarted")
 end
-function gui.DragGhost:OnRemove()
+function DragGhost:OnRemove()
 	if util.is_valid(self.m_cbOnMouseRelease) then
 		self.m_cbOnMouseRelease:Remove()
 	end
 	self:ClearHover()
 end
-function gui.DragGhost:OnThink()
+function DragGhost:OnThink()
 	if not self:IsDragging() then
-		local dt = self.m_cursorTracker:Update()
-		if dt.x == 0 and dt.y == 0 then
+		self.m_cursorTracker:Update()
+		local dragThreshold = 20
+		if self.m_cursorTracker:GetTotalDeltaPosition():Length() < dragThreshold then
 			return
 		end
 		self:StartDragging()
@@ -70,7 +68,7 @@ function gui.DragGhost:OnThink()
 	self:SetPos(pos)
 
 	local elCursor = gui.get_element_under_cursor(function(el)
-		local els = gui.DragGhost.impl.dragTargets[self.m_catName]
+		local els = DragGhost.impl.dragTargets[self.m_catName]
 		if els ~= nil and els[el] == true then
 			return true
 		end
@@ -87,13 +85,13 @@ function gui.DragGhost:OnThink()
 		self:ClearHover()
 	end
 end
-function gui.DragGhost:SetTargetElement(el, cursorOffset, catName)
+function DragGhost:SetTargetElement(el, cursorOffset, catName)
 	self.m_targetElement = el
 	self.m_cursorOffset = cursorOffset
 	self.m_catName = catName
 
 	-- Cleanup
-	local dragTargets = gui.DragGhost.impl.dragTargets[self.m_catName]
+	local dragTargets = DragGhost.impl.dragTargets[self.m_catName]
 	if(dragTargets ~= nil) then
 		local newDragTargets = {}
 		for el, b in pairs(dragTargets) do
@@ -101,15 +99,15 @@ function gui.DragGhost:SetTargetElement(el, cursorOffset, catName)
 				newDragTargets[el] = b
 			end
 		end
-		gui.DragGhost.impl.dragTargets[self.m_catName] = newDragTargets
+		DragGhost.impl.dragTargets[self.m_catName] = newDragTargets
 	end
 
 	self:SetSize(el:GetSize())
 end
-function gui.DragGhost:GetTargetElement()
+function DragGhost:GetTargetElement()
 	return self.m_targetElement
 end
-function gui.DragGhost:ClearHover()
+function DragGhost:ClearHover()
 	if self.m_hoverElement == nil then
 		return
 	end
@@ -117,7 +115,7 @@ function gui.DragGhost:ClearHover()
 	self.m_targetElement:CallCallbacks("OnDragTargetHoverStop", self.m_hoverElement)
 	self.m_hoverElement = nil
 end
-function gui.DragGhost:OnDraw()
+function DragGhost:OnDraw()
 	-- TODO: This is no longer functional.
 	-- The new way of doing it would be to render the target element into an image
 	-- and use a WITexturedRect to display it
@@ -132,7 +130,7 @@ function gui.DragGhost:OnDraw()
 	self.m_drawInfo.color = self:GetColor()
 	self.m_targetElement:Draw(self.m_drawInfo, Vector2i(offset.x, offset.y), resolution, Vector2i(offset.x, offset.y))
 end
-gui.register("drag_ghost", gui.DragGhost)
+gui.register("drag_ghost", DragGhost)
 
 gui.enable_drag_and_drop = function(src, catName, fOnGhostCreated)
 	src:AddCallback("OnMouseEvent", function(src, button, state, mods)
@@ -150,6 +148,6 @@ gui.enable_drag_and_drop = function(src, catName, fOnGhostCreated)
 end
 
 gui.mark_as_drag_and_drop_target = function(tgt, catName)
-	gui.DragGhost.impl.dragTargets[catName] = gui.DragGhost.impl.dragTargets[catName] or {}
-	gui.DragGhost.impl.dragTargets[catName][tgt] = true
+	DragGhost.impl.dragTargets[catName] = DragGhost.impl.dragTargets[catName] or {}
+	DragGhost.impl.dragTargets[catName][tgt] = true
 end
