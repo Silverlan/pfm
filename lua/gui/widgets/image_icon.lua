@@ -55,7 +55,6 @@ function gui.ImageIcon:GetText()
 end
 function gui.ImageIcon:SetText(text)
 	self.m_text:SetText(text)
-	self.m_text:SizeToContents()
 	self.m_text:CenterToParentX()
 	self.m_text:SetY(self:GetHeight() - self.m_text:GetHeight() - 4)
 end

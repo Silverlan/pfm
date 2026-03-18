@@ -49,7 +49,6 @@ function Element:OnInitialize()
 	local function add_text(i)
 		local elText = gui.create("WIText", textVbox)
 		elText:SetText(i .. ": -")
-		elText:SizeToContents()
 		elText:SetColor(Color.White)
 		self.m_textElements[i] = elText
 	end
@@ -75,7 +74,6 @@ function Element:SetButtonMapping(button, text)
 	local buttonIdx = buttonToIndex[button]
 	local el = self.m_textElements[buttonIdx + 1]
 	el:SetText((buttonIdx + 1) .. ": " .. text)
-	el:SizeToContents()
 end
 function Element:OnUpdate()
 	self:SetSize(self.m_textContainer:GetWidth(), self.m_textContainer:GetBottom())

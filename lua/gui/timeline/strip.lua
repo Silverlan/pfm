@@ -271,7 +271,6 @@ function gui.LabelledTimelineStrip:OnUpdate()
 				t = self.m_translateValueText(pText, t)
 			end
 			pText:SetText(tostring(t))
-			pText:SizeToContents()
 			local offset = xStartOffset + i * stridePerUnit * multiplier
 			local textOffset = self:GetPrimAxisExtents(pText) * 0.5
 			if self:IsDataAxisInverted() then

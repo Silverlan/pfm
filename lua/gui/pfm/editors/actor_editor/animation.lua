@@ -67,11 +67,9 @@ function gui.PFMActorEditor:OpenPropertyExpressionWindow(actorData, controlData)
 			if res then
 				elMsg:SetText(locale.get_text("pfm_no_error"))
 				elMsg:SetColor(Color.Green)
-				elMsg:SizeToContents()
 			else
 				elMsg:SetText(msg)
 				elMsg:SetColor(Color.Red)
-				elMsg:SizeToContents()
 			end
 		end)
 		timer:Start()

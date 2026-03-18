@@ -189,7 +189,6 @@ function Component:OnTick()
 	local angle = math.acos(dot)
 	local elText = self.m_angleText:GetComponent("gui_3d"):GetGUIElement()
 	elText:SetText(util.round_string(math.deg(angle), 2))
-	elText:SizeToContents()
 
 	local p0 = axisA
 	local p1 = axisB
@@ -213,7 +212,6 @@ function Component:OnTick()
 	self.m_angleTextInv:SetRotation(self.m_angleText:GetRotation() * EulerAngles(0, 180, 0):ToQuaternion())
 	local elTextInv = self.m_angleTextInv:GetComponent("gui_3d"):GetGUIElement()
 	elTextInv:SetText(elText:GetText())
-	elTextInv:SizeToContents()
 end
 ents.COMPONENT_DEBUG_IK_CONSTRAINT_VISUALIZER_BALL_SOCKET =
 	ents.register_component("debug_ik_constraint_visualizer_ball_socket", Component)

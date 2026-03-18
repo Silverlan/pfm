@@ -70,7 +70,6 @@ function PfmEditEntryWindow:AddText(name, text)
 
 	local te = gui.create("WIText")
 	te:SetText(text)
-	te:SizeToContents()
 	te:SetWidth(self:GetWidth())
 	row:InsertElement(1, te)
 	return te

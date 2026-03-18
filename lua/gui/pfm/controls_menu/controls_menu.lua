@@ -209,7 +209,6 @@ function gui.PFMControlsMenu:AddText(name, identifier, default)
 	local c = self:AddContainer(el)
 	apply_tooltip(el, name)
 	el:SetText(default)
-	el:SizeToContents()
 	el:SetHeight(20)
 
 	local wrapper = el:Wrap("editable_entry")

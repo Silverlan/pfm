@@ -8,6 +8,8 @@ function Element:OnInitialize()
 	self:SetSize(1, 1)
 
 	local elText = gui.create("WIText", self)
+	elText:SetAutoSizeToContents(false)
+	elText:SetAutoCenterToParentY(true)
 	elText:AddStyleClass("input_field_text")
 	elText:GetColorProperty():Link(self:GetColorProperty())
 	self.m_elText = elText
@@ -36,9 +38,7 @@ function Element:UpdateTruncatedText()
 	if numChars < #truncatedText then
 		truncatedText = truncatedText:sub(0, numChars) .. "..."
 	end
-	self.m_elText:CenterToParentY()
 	self.m_elText:SetText(truncatedText)
-	self.m_elText:SizeToContents()
 end
 function Element:OnSizeChanged(w, h)
 	if util.is_valid(self.m_elText) then

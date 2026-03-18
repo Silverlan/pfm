@@ -74,9 +74,7 @@ function Element:SetText(text)
 		self.m_text:SetColor(Color(152, 152, 152))
 	end
 	self.m_text:SetText(text)
-	self.m_text:SizeToContents()
 	self.m_text:SetAutoCenterToParent(true)
-	self.m_text:SetAnchor(0.5, 0.5, 0.5, 0.5)
 end
 function Element:GetText()
 	return self.m_text:GetText()
@@ -298,7 +296,7 @@ function gui.PFMButton:SetupContextMenu(fPopulateContextMenu, openOnClick)
 		caret:SetMaterial("gui/pfm/icons/caret-down-fill")
 		caret:AddStyleClass("button_icon")
 		caret:SetX(self:GetWidth() - 22)
-		caret:CenterToParentY()
+		caret:SetAutoCenterToParentY(true)
 		caret:SetAnchor(1, 0, 1, 0)
 		self.m_elCaret = caret
 

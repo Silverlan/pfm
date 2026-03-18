@@ -55,7 +55,6 @@ function Element:AddVersionInfo(identifier, version, gitInfoPath)
 	elVersion:SetColor(Color.White)
 	elVersion:SetText(versionString)
 	elVersion:AddStyleClass("font_medium")
-	elVersion:SizeToContents()
 	elVersion:SetCursor(gui.CURSOR_SHAPE_HAND)
 	elVersion:SetMouseInputEnabled(true)
 	elVersion:AddCallback("OnMouseEvent", function(el, button, state, mods)
@@ -86,14 +85,13 @@ function Element:AddVersionInfo(identifier, version, gitInfoPath)
 	elBeta:SetText("BETA | ")
 	elBeta:AddStyleClass("font_medium")
 	elBeta:SetY(3)
-	elBeta:SizeToContents()
 
 	local el = gui.create("WIBase", elRightContents)
 	el:SetSize(32, pMenuBarContents:GetHeight())
 	el:SetParent(elRightContents, 0)
 
 	local elToggle = gui.create("pfm_theme_toggle", el)
-	elToggle:CenterToParent()
+	elToggle:SetAutoCenterToParent(true)
 end
 function Element:GetWorldAxesGizmo()
 	return self.m_worldAxesGizmo

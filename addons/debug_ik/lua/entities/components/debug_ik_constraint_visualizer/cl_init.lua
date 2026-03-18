@@ -71,7 +71,6 @@ function Component:CreateTextElement(text, col)
 	if col ~= nil then
 		el:SetColor(col)
 	end
-	el:SizeToContents()
 
 	local ent = self:GetEntity():CreateChild("gui_3d")
 	ent:SyncScenes(self:GetEntity())

@@ -71,7 +71,6 @@ end
 function gui.CollapsibleGroupTitleBar:SetGroupName(name)
 	if util.is_valid(self.m_name) then
 		self.m_name:SetText(name)
-		self.m_name:SizeToContents()
 	end
 end
 gui.register("collapsible_group_title_bar", gui.CollapsibleGroupTitleBar)

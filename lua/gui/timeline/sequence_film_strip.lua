@@ -43,7 +43,6 @@ function SequenceFilmStrip:OnInitialize()
 	sessionName:SetColor(Color.Black)
 	sessionName:SetText("session")
 	sessionName:AddStyleClass("font_small")
-	sessionName:SizeToContents()
 	sessionName:SetPos(blackBar:GetX() +2, 13)
 	self.m_sessionName = sessionName
 end
@@ -125,7 +124,7 @@ function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw,
 	elTex:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_grab_handle")
 	elTex:SetColor(Color(81, 86, 147))
 	elTex:SetSize(3, 23)
-	elTex:CenterToParent()
+	elTex:SetAutoCenterToParent(true)
 	elTex:SetAnchor(0.5, 0.5, 0.5, 0.5)
 
 	return dragHandle
@@ -140,10 +139,8 @@ function SequenceFilmStrip:SetFilmStrip(filmStrip)
 	local session = filmStrip:GetSession()
 	local activeClip = session:GetActiveClip()
 	self.m_sessionName:SetText(activeClip:GetName())
-	self.m_sessionName:SizeToContents()
 	self.m_nameChangeListener = activeClip:AddChangeListener("name", function(activeClip, newName)
 		self.m_sessionName:SetText(newName)
-		self.m_sessionName:SizeToContents()
 	end)
 end
 gui.register("sequence_film_strip", SequenceFilmStrip)

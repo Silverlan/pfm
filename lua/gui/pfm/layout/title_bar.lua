@@ -28,6 +28,5 @@ function gui.PFMTitlebar:SetText(text)
 	end
 	self.m_text:SetVisible(#text > 0)
 	self.m_text:SetText(text)
-	self.m_text:SizeToContents()
 end
 gui.register("pfm_title_bar", gui.PFMTitlebar)

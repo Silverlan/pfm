@@ -118,7 +118,6 @@ function gui.PFMElementViewer:OnInitialize()
 		pHeaderText:SetColor(Color(152, 152, 152))
 		pHeaderText:AddStyleClass("font_medium")
 		pHeaderText:SetText(text)
-		pHeaderText:SizeToContents()
 		pHeader:AddCallback("SetSize", function()
 			if pHeaderText:IsValid() == false then
 				return

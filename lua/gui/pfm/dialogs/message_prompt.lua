@@ -70,7 +70,6 @@ function PfmPrompt:SetMessage(msg)
 	self.m_message:SetWidth(512)
 	self.m_message:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
 	self.m_message:SetText(msg)
-	self.m_message:SizeToContents()
 	self:ScheduleUpdate()
 end
 function PfmPrompt:OnSizeChanged(w, h)

@@ -189,7 +189,6 @@ skin["font_small"] = {
 }
 skin["font_medium"] = {
 	Initialize = function(GUI, pElement)
-		print("FONT: ",GUI.text.fonts.medium)
 		pElement:SetFont(GUI.text.fonts.medium)
 	end,
 }
@@ -259,7 +258,6 @@ skin["wifiledialog"] = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetFont(GUI.text.fonts.medium)
-				pElement:SizeToContents()
 			end,
 		},
 	},
@@ -272,7 +270,6 @@ skin["panel"] = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetFont(GUI.text.fonts.medium)
-				pElement:SizeToContents()
 				pElement:SetColor(GUI.text.body)
 			end,
 		},
@@ -392,7 +389,6 @@ skin["wibutton"] = {
 				-- pElement:SetColorRGB(Color(255, 255, 255, 255))
 				pElement:SetFont(GUI.text.fonts.medium)
 				pElement:SetText(pElement:GetText():upper())
-				pElement:SizeToContents()
 			end,
 			Release = clear_element,
 		},
@@ -531,7 +527,6 @@ skin["infobox"] = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetFont(GUI.text.fonts.medium)
-				pElement:SizeToContents()
 			end,
 		},
 	},
@@ -550,7 +545,6 @@ skin["menu_item"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetColor(GUI.text.body)
 				pElement:SetFont(GUI.text.fonts.medium)
-				pElement:SizeToContents()
 			end,
 		},
 	},
@@ -622,7 +616,6 @@ skin["witable"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetColor(GUI.text.body)
 				pElement:SetFont(GUI.text.fonts.medium)
-				pElement:SizeToContents()
 			end,
 		},
 	},
@@ -664,7 +657,6 @@ skin["frame_titlebar"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetColor(GUI.text.body)
 				pElement:SetFont(GUI.text.fonts.medium)
-				pElement:SizeToContents()
 			end,
 		},
 	},

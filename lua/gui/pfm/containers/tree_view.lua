@@ -209,7 +209,7 @@ function gui.PFMTreeViewElement:OnInitialize()
 	end)
 
 	self.m_iconBox = gui.create("hbox", self.m_header, 0, 0, 0, 14)
-	self.m_iconBox:CenterToParentY()
+	self.m_iconBox:SetAutoCenterToParentY(true)
 	self.m_icons = {}
 
 	gui.create("WIBase", self.m_header, 0, 0, 3, 1) -- gap
@@ -445,6 +445,7 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 	self.m_vLine = gui.create("WIRect", self.m_childPrefix, 0, 0, 1, 1)
 	self.m_vLine:SetColor(Color(58, 58, 58))
 	self.m_vLine:SetName("child vertical line indicator")
+	self.m_vLine:SetAutoCenterToParentX(true)
 
 	self.m_vBoxChildren = gui.create("vbox", self.m_childHBox, 0, 0, self:GetWidth(), self:GetHeight())
 	self.m_vBoxChildren:SetFixedWidth(true)
@@ -482,7 +483,6 @@ function gui.PFMTreeViewElement:OnUpdate()
 	if util.is_valid(lastItem) then
 		local y = lastItem:GetY() + lastItem:GetHeader():GetCenterY()
 		self.m_vLine:SetHeight(y + 1)
-		self.m_vLine:CenterToParentX()
 	end
 
 	for _, els in ipairs(self.m_itemElements) do
@@ -683,10 +683,9 @@ function gui.PFMTreeViewElement:SetText(text)
 	if util.is_valid(self.m_text) == false then
 		self.m_text = gui.create("WIText", self.m_header)
 		self.m_text:AddStyleClass("font_medium")
+		self.m_text:SetAutoCenterToParentY(true)
 	end
 	self.m_text:SetText(text)
-	self.m_text:SizeToContents()
-	self.m_text:CenterToParentY()
 
 	local treeView = self:GetTreeView()
 	if util.is_valid(treeView) then

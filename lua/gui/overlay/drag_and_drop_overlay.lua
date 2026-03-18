@@ -8,6 +8,7 @@ function Element:OnInitialize()
 	el:SetColor(Color(0, 0, 0, 230))
 
 	self.m_elText = gui.create("WIText", self)
+	self.m_elText:SetAutoCenterToParent(true)
 
 	self:SetMouseInputEnabled(true)
 	self:SetKeyboardInputEnabled(true)
@@ -22,8 +23,6 @@ function Element:SetText(text, font)
 	local elText = self.m_elText
 	elText:SetFont(font or "pfm_medium")
 	elText:SetText(text:upper())
-	elText:SizeToContents()
-	elText:CenterToParent()
 	elText:SetColor(Color.White)
 	elText:SetAnchor(0.5, 0.5, 0.5, 0.5)
 end

@@ -385,7 +385,6 @@ function Element:UpdateCurrentSlideText(currentSlideIndex, totalSlideCount)
 		return
 	end
 	self.m_elCurSlide:SetText(tostring(currentSlideIndex + 1) .. "/" .. tostring(totalSlideCount))
-	self.m_elCurSlide:SizeToContents()
 end
 function Element:OnSizeChanged(w, h)
 	for _, msgBoxInfo in ipairs(self.m_messageBoxes) do
@@ -622,7 +621,6 @@ function Element:AddMessageBox(msg, audioFile)
 	elCurSlide:AddStyleClass("font_small")
 	elCurSlide:SetColor(Color.White)
 	elCurSlide:SetPos(elBox:GetWidth() - 70, 4)
-	elCurSlide:SizeToContents()
 	elCurSlide:SetAnchor(1, 0, 1, 0)
 	elCurSlide:SetColor(Color.LightGrey)
 	self.m_elCurSlide = elCurSlide
@@ -678,7 +676,6 @@ function Element:AddMessageBox(msg, audioFile)
 	elText:AddStyleClass("font_small")
 	elText:SetPos(7, 4)
 	elText:SetColor(Color.LightGrey)
-	elText:SizeToContents()
 	self.m_iconFeedback = iconFeedback
 
 	elBox:SizeToContents()

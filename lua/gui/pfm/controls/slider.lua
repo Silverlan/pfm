@@ -72,6 +72,7 @@ function Element:OnInitialize()
 	self.m_text = gui.create("WIText", self)
 	self.m_text:AddStyleClass("input_field_text")
 	self.m_text:SetVisible(false)
+	self.m_text:SetAutoCenterToParent(true)
 
 	self.m_leftRightRatio = util.FloatProperty(0.5)
 	self:SetStepSize(0.0)
@@ -428,7 +429,5 @@ function Element:UpdateText()
 		text = text .. " " .. self.m_unit
 	end
 	self.m_text:SetText(text)
-	self.m_text:SizeToContents()
-	self.m_text:CenterToParent(true)
 end
 gui.register("pfm_slider", Element)

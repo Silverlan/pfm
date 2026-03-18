@@ -29,7 +29,6 @@ function Element:AddSupporter(name, color, priority)
 	local elText = gui.create("WIText")
 	elText:SetText(name .. ", ")
 	elText:AddStyleClass("input_field_text")
-	elText:SizeToContents()
 	if color ~= nil then
 		time.create_simple_timer(0.0, function()
 			if elText:IsValid() then
@@ -61,10 +60,10 @@ function gui.PatreonTicker:OnInitialize()
 
 	local patronTickerLabel = gui.create("WIText", self)
 	patronTickerLabel:SetText(locale.get_text("pfm_patrons") .. ":")
-	patronTickerLabel:SizeToContents()
 	patronTickerLabel:AddStyleClass("input_field_text")
 	patronTickerLabel:SetY(5)
 	patronTickerLabel:SetX(5)
+	patronTickerLabel:SetAutoCenterToParentY(true)
 	self.m_patronTickerLabel = patronTickerLabel
 
 	local icon = gui.create("WITexturedRect", self)
@@ -73,6 +72,7 @@ function gui.PatreonTicker:OnInitialize()
 	icon:SetMouseInputEnabled(true)
 	icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 	icon:SetMouseInputEnabled(true)
+	icon:SetAutoCenterToParentY(true)
 	icon:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT then
 			if state == input.STATE_PRESS then
@@ -160,9 +160,6 @@ function gui.PatreonTicker:OnRemove()
 		req:Cancel()
 	end
 end
-function gui.PatreonTicker:OnUpdate()
-	self.m_patronTickerLabel:CenterToParentY()
-end
 function gui.PatreonTicker:UpdateTicker()
 	for _, el in ipairs(self.m_patronTicker.m_marquee:GetElements()) do
 		if el:IsValid() then
@@ -173,9 +170,7 @@ function gui.PatreonTicker:UpdateTicker()
 	self.m_patronTicker.m_marquee:Reset()
 	self.m_patronTicker:Update()
 
-	self.m_patronTickerLabel:SizeToContents()
 	self.m_icon:SetX(self.m_patronTickerLabel:GetRight() + 6)
-	self.m_icon:CenterToParentY()
 	local offset = 10
 	self.m_patronTicker:SetX(self.m_icon:GetRight() + offset)
 	self.m_patronTicker:SetWidth(self:GetWidth() - self.m_patronTicker:GetX())

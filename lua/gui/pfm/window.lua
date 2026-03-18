@@ -56,7 +56,7 @@ function gui.PFMWindow:OnInitialize()
 	pDrag:SetHeight(self.m_titleBar:GetHeight())
 	pDrag:SetAutoAlignToParent(true, false)
 
-	pFrame:CenterToParent()
+	pFrame:SetAutoCenterToParent(true)
 	self.m_frame = pFrame
 end
 function gui.PFMWindow:SetWindowSize(size, minSize, maxSize)
@@ -68,7 +68,6 @@ function gui.PFMWindow:SetWindowSize(size, minSize, maxSize)
 	self.m_frame:SetMinSize(Vector2i(minSize.x, minSize.y))
 	self.m_frame:SetMaxSize(Vector2i(maxSize.x, maxSize.y))
 	self.m_frame:SetSize(size.x, size.y)
-	self.m_frame:CenterToParent()
 end
 function gui.PFMWindow:GetFrame()
 	return self.m_frame

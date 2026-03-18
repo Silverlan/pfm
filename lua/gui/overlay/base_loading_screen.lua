@@ -28,8 +28,6 @@ pfm.show_base_loading_screen = function(enabled, title, logo, loadingText)
 	elTitle:SetColor(Color.White)
 	elTitle:SetFont("loading_main")
 	elTitle:SetText("title")
-	elTitle:SizeToContents()
-	elTitle:SizeToContents()
 	elTitle:SetHeight(elTitle:GetHeight() + 20)
 	elTitle:SetPos(380, 300)
 	elTitle:SetAnchor(0.5, 0.5, 0.5, 0.5)
@@ -38,7 +36,6 @@ pfm.show_base_loading_screen = function(enabled, title, logo, loadingText)
 	elText:SetText(locale.get_text("pfm_loading"))
 	elText:SetColor(Color.White)
 	elText:SetFont("loading_small")
-	elText:SizeToContents()
 	elText:SetPos(380, elTitle:GetBottom() + 30)
 	elText:SetAnchor(0.5, 0.5, 0.5, 0.5)
 	elText:SetHeight(elText:GetHeight() + 10)
@@ -59,12 +56,10 @@ pfm.show_base_loading_screen = function(enabled, title, logo, loadingText)
 
 	-- Init
 	elTitle:SetText(title)
-	elTitle:SizeToContents()
 	elTitle:SetHeight(elTitle:GetHeight() + 20)
 
 	if loadingText ~= nil then
 		elText:SetText(loadingText)
-		elText:SizeToContents()
 		elText:SetHeight(elText:GetHeight() + 10)
 	end
 

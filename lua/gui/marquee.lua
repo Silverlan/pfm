@@ -167,7 +167,6 @@ function gui.Ticker:SetText(text)
 	self.m_displayText = text
 
 	self.m_text:SetText(text)
-	self.m_text:SizeToContents()
 end
 function gui.Ticker:MoveDisplayText()
 	if #self.m_displayText == 0 then
@@ -182,8 +181,7 @@ function gui.Ticker:MoveDisplayText()
 	end
 
 	self.m_text:SetText(self.m_displayText)
-	self.m_text:SizeToContents()
-	self.m_text:CenterToParentY()
+	self.m_text:SetAutoCenterToParentY(true)
 end
 function gui.Ticker:OnThink()
 	self.m_tCurTickTime = self.m_tCurTickTime - gui.get_delta_time()

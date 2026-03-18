@@ -35,7 +35,6 @@ function gui.ToggleOption:Toggle()
 end
 function gui.ToggleOption:SetText(text)
 	self.m_label:SetText(text)
-	self.m_label:SizeToContents()
 end
 function gui.ToggleOption:GetText()
 	return self.m_label:GetText()

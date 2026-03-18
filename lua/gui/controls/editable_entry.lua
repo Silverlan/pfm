@@ -285,7 +285,6 @@ function gui.EditableEntry:UpdateText(value)
 
 	text = text .. value
 	self.m_pText:SetText(text)
-	self.m_pText:SizeToContents()
 	if self.m_centerText then
 		self.m_pText:CenterToParent(true)
 	else

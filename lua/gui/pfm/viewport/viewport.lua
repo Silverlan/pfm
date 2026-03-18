@@ -52,19 +52,17 @@ function gui.PFMCoreViewportBase:OnInitialize()
 	local textColor = Color(182, 182, 182)
 	self.m_timeGlobal = create_text_element("font_large", Vector2(20, 15), textColor)
 	self.m_timeGlobal:SetText(util.get_pretty_time(0.0))
-	self.m_timeGlobal:SizeToContents()
 
 	self.m_timeLocal = create_text_element("font_large", Vector2(0, 15), textColor)
 	self.m_timeLocal:SetText(util.get_pretty_time(0.0))
-	self.m_timeLocal:SizeToContents()
 	self.m_timeLocal:SetAnchor(1, 0, 1, 0)
 
 	textColor = Color(152, 152, 152)
 	self.m_filmClipParent = create_text_element("font_medium", Vector2(0, 3), textColor)
-	self.m_filmClipParent:CenterToParentX()
+	self.m_filmClipParent:SetAutoCenterToParentX(true)
 
 	self.m_filmClip = create_text_element("font_medium", Vector2(0, 16), textColor)
-	self.m_filmClip:CenterToParentX()
+	self.m_filmClip:SetAutoCenterToParentX(true)
 
 	self:SwitchToGameplay(false)
 	self:ScheduleUpdate()
@@ -427,13 +425,11 @@ end
 function gui.PFMCoreViewportBase:SetGlobalTime(time)
 	if util.is_valid(self.m_timeGlobal) then
 		self.m_timeGlobal:SetText(util.get_pretty_time(time))
-		self.m_timeGlobal:SizeToContents()
 	end
 end
 function gui.PFMCoreViewportBase:SetLocalTime(time)
 	if util.is_valid(self.m_timeLocal) then
 		self.m_timeLocal:SetText(util.get_pretty_time(time))
-		self.m_timeLocal:SizeToContents()
 	end
 end
 function gui.PFMCoreViewportBase:SetFilmClipName(name)
@@ -442,7 +438,6 @@ function gui.PFMCoreViewportBase:SetFilmClipName(name)
 			return
 		end
 		self.m_filmClip:SetText(name)
-		self.m_filmClip:SizeToContents()
 
 		self:UpdateFilmLabelPositions()
 	end
@@ -453,7 +448,6 @@ function gui.PFMCoreViewportBase:SetFilmClipParentName(name)
 			return
 		end
 		self.m_filmClipParent:SetText(name)
-		self.m_filmClipParent:SizeToContents()
 
 		self:UpdateFilmLabelPositions()
 	end

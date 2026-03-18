@@ -41,7 +41,6 @@ function gui.BaseClip:SetText(text)
 		return
 	end
 	self.m_text:SetText(text)
-	self.m_text:SizeToContents()
 end
 function gui.BaseClip:IsSelected()
 	return self.m_selected

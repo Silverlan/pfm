@@ -43,7 +43,6 @@ function Element:OnSizeChanged()
 end
 function Element:SetText(text)
 	self.m_elText:SetText(text)
-	self.m_elText:SizeToContents()
 
 	self:SetWidth(self.m_elText:GetWidth() + 100)
 	self:ScheduleUpdate()

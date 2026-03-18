@@ -9,7 +9,6 @@ function Element:OnInitialize()
 	el:SetText(locale.get_text("pfm_building_render_kernels"))
 	el:AddStyleClass("font_large")
 	el:SetColor(Color.White)
-	el:SizeToContents()
 	self.m_elText = el
 
 	self.m_nextUpdate = time.real_time() + 1.0
@@ -26,7 +25,6 @@ function Element:OnThink()
 	local text = locale.get_text("pfm_building_render_kernels")
 	text = text .. string.rep(".", self.m_numDots)
 	self.m_elText:SetText(text)
-	self.m_elText:SizeToContents()
 	self:SetSize(self.m_elText:GetSize())
 end
 gui.register("kernels_build_message", Element)

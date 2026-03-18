@@ -49,11 +49,9 @@ function Element:GetText()
 end
 function Element:SetText(text)
 	self.m_elTextHover:SetText(text)
-	self.m_elTextHover:SizeToContents()
 	self.m_elTextHover:SetHeight(self.m_elTextHover:GetHeight() + 1)
 
 	self.m_elTextShadowHover:SetText(text)
-	self.m_elTextShadowHover:SizeToContents()
 	self.m_elTextShadowHover:SetHeight(self.m_elTextShadowHover:GetHeight() + 1)
 
 	self:SizeToContents()
