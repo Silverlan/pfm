@@ -394,7 +394,7 @@ function Element:OnSizeChanged(w, h)
 			local pos = msgBoxInfo.element:GetPos()
 			pos.x = pos.x * fw
 			pos.y = pos.y * fh
-			msgBoxInfo.element:SetPos(pos)
+			msgBoxInfo.element:ApplyPos(pos)
 			msgBoxInfo.frameSize = Vector2i(w, h)
 		end
 	end

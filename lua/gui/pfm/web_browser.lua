@@ -13,7 +13,7 @@ end
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 128)
+	self:ApplySize(64, 128)
 
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_bg:SetColor(Color(54, 54, 54))

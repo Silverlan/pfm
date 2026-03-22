@@ -15,7 +15,7 @@ function FilmStrip:OnInitialize()
 
 	self.m_timeFrame = udm.create_property_from_schema(pfm.udm.SCHEMA, "TimeFrame")
 	self.m_container = gui.create("WIContainer", self)
-	self:GetSizeProperty():Link(self.m_container:GetSizeProperty())
+	self:SetAutoSizeToContents(true)
 	self.m_filmClips = {}
 	self.m_listeners = {}
 

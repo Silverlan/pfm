@@ -417,7 +417,7 @@ function gui.PFMActorEditor:OnInitialize()
 	local dataVBox
 	local scrollContainer =
 		gui.create("WIScrollContainer", self.m_contents, 0, 0, self.m_contents:GetWidth(), self.m_contents:GetHeight())
-	scrollContainer:AddCallback("SetSize", function(el)
+	scrollContainer:AddCallback("OnSizeChanged", function(el)
 		if self:IsValid() and util.is_valid(dataVBox) then
 			dataVBox:SetWidth(el:GetWidth())
 		end

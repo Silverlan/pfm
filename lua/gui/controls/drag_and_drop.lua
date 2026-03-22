@@ -8,7 +8,7 @@ DragGhost.impl = util.get_class_value(DragGhost, "impl") or {
 function DragGhost:OnInitialize()
 	self.m_cursorTracker = gui.CursorTracker()
 	self.m_isDragging = false
-	self:SetSize(128, 128)
+	self:ApplySize(128, 128)
 	self:EnableThinking()
 
 	self.m_cbOnMouseRelease = input.add_callback("OnMouseInput", function(mouseButton, state, mods)

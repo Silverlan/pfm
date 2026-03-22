@@ -11,7 +11,7 @@ end
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 7)
+	self:ApplySize(128, 7)
 
 	self.m_offsetFromDefaultIndicator = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_offsetFromDefaultIndicator:SetColor(Color(61, 61, 61))
@@ -110,13 +110,13 @@ function Element:OffsetToValue(x)
 end
 function Element:OnSizeChanged()
 	if util.is_valid(self.m_cursorRect) then
-		self.m_cursorRect:SetHeight(self:GetHeight())
+		self.m_cursorRect:ApplyHeight(self:GetHeight())
 	end
 	if util.is_valid(self.m_cursor) then
-		self.m_cursor:SetHeight(self:GetHeight())
+		self.m_cursor:ApplyHeight(self:GetHeight())
 	end
 	if util.is_valid(self.m_bgFilled) then
-		self.m_bgFilled:SetHeight(self:GetHeight())
+		self.m_bgFilled:ApplyHeight(self:GetHeight())
 	end
 	self:ScheduleUpdate()
 end
@@ -133,11 +133,11 @@ function Element:OnUpdate()
 	local x = self:ValueToOffset(self:GetValue())
 	if util.is_valid(self.m_cursor) then
 		--self.m_cursor:SetVisible(true)
-		self.m_cursor:SetX(x)
+		self.m_cursor:ApplyX(x)
 	end
 
 	if util.is_valid(self.m_bgFilled) then
-		self.m_bgFilled:SetWidth(x)
+		self.m_bgFilled:ApplyWidth(x)
 	end
 
 	local default = self:GetDefault()
@@ -151,7 +151,7 @@ function Element:OnUpdate()
 	local xDefault = self:ValueToOffset(default)
 	local xMin = math.min(x, xDefault)
 	local xMax = math.max(x, xDefault)
-	self.m_offsetFromDefaultIndicator:SetX(xMin)
-	self.m_offsetFromDefaultIndicator:SetWidth(xMax - xMin)
+	self.m_offsetFromDefaultIndicator:ApplyX(xMin)
+	self.m_offsetFromDefaultIndicator:ApplyWidth(xMax - xMin)
 end
 gui.register("pfm_slider_bar", Element)

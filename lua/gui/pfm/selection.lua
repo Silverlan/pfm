@@ -12,7 +12,7 @@ end
 function gui.PFMSelection:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(8, 8)
+	self:ApplySize(8, 8)
 	local bg = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	bg:SetOutlineWidth(1)
 	bg:SetColor(Color(160, 160, 160))

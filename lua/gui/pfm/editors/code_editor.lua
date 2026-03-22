@@ -8,7 +8,7 @@ local Element = util.register_class("gui.CodeEditor", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(512, 512)
+	self:ApplySize(512, 512)
 
 	local r = engine.load_library("chromium/pr_chromium")
 	if r ~= true then
@@ -18,7 +18,7 @@ function Element:OnInitialize()
 
 	self.m_webBrowser = self:InitializeBrowser(self, self:GetWidth(), self:GetHeight())
 	if util.is_valid(self.m_webBrowser) then
-		self.m_webBrowser:AddCallback("SetSize", function()
+		self.m_webBrowser:AddCallback("OnSizeChanged", function()
 			-- We don't want to reload the texture constantly if the element is being resized by a user,
 			-- so we'll only update after the element hasn't been resized for at least 0.25 seconds
 			self.m_tNextBrowserResize = time.real_time() + 0.25

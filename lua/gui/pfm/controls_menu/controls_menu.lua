@@ -9,7 +9,7 @@ include("/gui/controls/editable_entry.lua")
 local Element = util.register_class("gui.PFMControlContainer", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
-	self:SetSize(10, 20)
+	self:ApplySize(10, 20)
 end
 function Element:InitializeIconContainer()
 	if util.is_valid(self.m_iconContainer) then
@@ -17,7 +17,7 @@ function Element:InitializeIconContainer()
 	end
 	local el = gui.create("hbox", self)
 	el:SetHeight(self:GetHeight())
-	el:AddCallback("SetSize", function()
+	el:AddCallback("OnSizeChanged", function()
 		self:UpdateSize()
 	end)
 	self.m_iconContainer = el
@@ -39,13 +39,13 @@ function Element:UpdateSize()
 	local w = self:GetWidth()
 	local h = self:GetHeight()
 	if util.is_valid(self.m_iconContainer) then
-		self.m_iconContainer:SetX(w - self.m_iconContainer:GetWidth())
-		self.m_iconContainer:SetHeight(h)
+		self.m_iconContainer:ApplyX(w - self.m_iconContainer:GetWidth())
+		self.m_iconContainer:ApplyHeight(h)
 		w = w - self.m_iconContainer:GetWidth()
 	end
 
 	if self.m_targetElement ~= nil then
-		self.m_targetElement:SetSize(w, h)
+		self.m_targetElement:ApplySize(w, h)
 	end
 	self.m_updatingSize = nil
 end

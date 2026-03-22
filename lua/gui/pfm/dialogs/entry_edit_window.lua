@@ -56,13 +56,13 @@ end
 function PfmEditEntryWindow:OnSizeChanged(w, h)
 	gui.PFMWindow.OnSizeChanged(self, w, h)
 	if util.is_valid(self.m_table) then
-		self.m_table:SetWidth(self:GetWidth() - 13)
+		self.m_table:ApplyWidth(self:GetWidth() - 13)
 	end
 end
 function PfmEditEntryWindow:OnUpdate()
 	gui.PFMWindow.OnUpdate(self)
 	self.m_table:Update()
-	self.m_table:SizeToContents()
+	self.m_table:SizeToContents(true, true, gui.CHANGE_SOURCE_LAYOUT)
 end
 function PfmEditEntryWindow:AddText(name, text)
 	local row = self.m_table:AddRow()

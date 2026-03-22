@@ -10,7 +10,7 @@ function Element:OnInitialize()
 	self.m_btPlay = gui.PFMButton.create(self, "play-fill", function()
 		self:TogglePlay()
 	end)
-	self:GetSizeProperty():Link(self.m_btPlay:GetSizeProperty())
+	self:SetAutoSizeToContents(true)
 end
 function Element:SetType(type)
 	self.m_btPlay:SetType(type)

@@ -21,7 +21,7 @@ end
 function gui.PFMColorSelector:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(192, 270)
+	self:ApplySize(192, 270)
 
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	bg:AddStyleClass("background")

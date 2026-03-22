@@ -76,6 +76,6 @@ function Element:SetButtonMapping(button, text)
 	el:SetText((buttonIdx + 1) .. ": " .. text)
 end
 function Element:OnUpdate()
-	self:SetSize(self.m_textContainer:GetWidth(), self.m_textContainer:GetBottom())
+	self:ApplySize(self.m_textContainer:GetWidth(), self.m_textContainer:GetBottom())
 end
 gui.register("pfm_vr_mapping_diagram", Element)

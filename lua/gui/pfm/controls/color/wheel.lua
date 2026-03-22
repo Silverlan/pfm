@@ -12,7 +12,7 @@ end
 function gui.PFMColorWheel:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(150, 150)
+	self:ApplySize(150, 150)
 	local tex = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	-- The material doesn't matter due to our custom shader, but we do need to specify one
 	tex:SetMaterial("white")

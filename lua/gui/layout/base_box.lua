@@ -27,7 +27,7 @@ function gui.BaseBox:SetBackgroundElement(el)
 end
 function gui.BaseBox:UpdateSize(size)
 	self.m_skipSizeUpdateSchedule = true
-	self:SetSize(size)
+	self:ApplySize(size)
 	self.m_skipSizeUpdateSchedule = nil
 end
 function gui.BaseBox:OnSizeChanged(w, h)
@@ -50,7 +50,7 @@ function gui.BaseBox:OnInitialize()
 		self.m_childCallbacks[elChild] = {}
 		table.insert(
 			self.m_childCallbacks[elChild],
-			elChild:AddCallback("SetSize", function(elChild)
+			elChild:AddCallback("OnSizeChanged", function(elChild)
 				-- Note: We mustn't update if the child is anchored, otherwise we end up in an infinite recursion!
 				if elChild:HasAnchor() then
 					return
@@ -98,7 +98,7 @@ function gui.BaseBox:SetFixedWidth(fixed)
 	else
 		self:SetAutoSizeToContents(not self.m_fixedWidth, not self.m_fixedHeight)
 	end
-	self:SetSize(size) -- Keep our old size for now
+	self:ApplySize(size) -- Keep our old size for now
 end
 function gui.BaseBox:SetFixedHeight(fixed)
 	local size = self:GetSize()
@@ -108,7 +108,7 @@ function gui.BaseBox:SetFixedHeight(fixed)
 	else
 		self:SetAutoSizeToContents(not self.m_fixedWidth, not self.m_fixedHeight)
 	end
-	self:SetSize(size) -- Keep our old size for now
+	self:ApplySize(size) -- Keep our old size for now
 end
 function gui.BaseBox:SetAutoSizeActivated(activated, updateImmediately)
 	if self.m_autoSizeActivated == activated then

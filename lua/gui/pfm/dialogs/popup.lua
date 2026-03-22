@@ -12,7 +12,7 @@ end
 function gui.PFMPopup:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(400, 32)
+	self:ApplySize(400, 32)
 
 	self.m_queue = {}
 	self.m_first = true

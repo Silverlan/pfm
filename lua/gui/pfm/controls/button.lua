@@ -60,7 +60,7 @@ Element.BUTTON_TYPE_TAB = 7
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(32, 26)
+	self:ApplySize(32, 26)
 	local elBg = gui.create("WI9SliceRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_elBg = elBg
 
@@ -72,9 +72,9 @@ function Element:SetText(text)
 		self.m_text = gui.create("WIText", self)
 		self.m_text:AddStyleClass("font_medium")
 		self.m_text:SetColor(Color(152, 152, 152))
+		self.m_text:SetAutoCenterToParent(true)
 	end
 	self.m_text:SetText(text)
-	self.m_text:SetAutoCenterToParent(true)
 end
 function Element:GetText()
 	return self.m_text:GetText()
@@ -190,7 +190,7 @@ function gui.PFMButton:OnInitialize()
 	gui.PFMBaseButton.OnInitialize(self)
 
 	self:SetMouseInputEnabled(true)
-	self:SetSize(64, 30)
+	self:ApplySize(64, 30)
 
 	self.m_pressed = false
 	self.m_enabled = true

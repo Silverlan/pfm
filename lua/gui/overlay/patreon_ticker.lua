@@ -17,7 +17,7 @@ console.register_variable(
 local Element = util.register_class("gui.SupporterTicker", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
-	self:SetSize(256, 64)
+	self:ApplySize(256, 64)
 
 	self.m_marquee = gui.create("marquee", self)
 	self.m_marquee:SetMoveSpeed(20)
@@ -40,7 +40,7 @@ function Element:AddSupporter(name, color, priority)
 end
 function Element:OnSizeChanged(w, h)
 	if util.is_valid(self.m_marquee) then
-		self.m_marquee:SetWidth(w)
+		self.m_marquee:ApplyWidth(w)
 	end
 end
 function Element:OnUpdate()
@@ -163,17 +163,17 @@ end
 function gui.PatreonTicker:UpdateTicker()
 	for _, el in ipairs(self.m_patronTicker.m_marquee:GetElements()) do
 		if el:IsValid() then
-			el:SizeToContents()
+			el:SizeToContents(true, true, gui.CHANGE_SOURCE_LAYOUT)
 		end
 	end
 	self.m_patronTicker.m_marquee:Rearrange()
 	self.m_patronTicker.m_marquee:Reset()
 	self.m_patronTicker:Update()
 
-	self.m_icon:SetX(self.m_patronTickerLabel:GetRight() + 6)
+	self.m_icon:ApplyX(self.m_patronTickerLabel:GetRight() + 6)
 	local offset = 10
-	self.m_patronTicker:SetX(self.m_icon:GetRight() + offset)
-	self.m_patronTicker:SetWidth(self:GetWidth() - self.m_patronTicker:GetX())
+	self.m_patronTicker:ApplyX(self.m_icon:GetRight() + offset)
+	self.m_patronTicker:ApplyWidth(self:GetWidth() - self.m_patronTicker:GetX())
 
 	self.m_patronTicker:SetAnchor(0, 0, 1, 1)
 end

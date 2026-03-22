@@ -9,7 +9,7 @@ end
 function gui.FileEntry:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(256, 28)
+	self:ApplySize(256, 28)
 
 	local browseButton = gui.create("WIButton", self)
 	browseButton:SetName("browse_button")

@@ -6,11 +6,11 @@ local RepeatedTexturedRect = util.register_class("gui.pfm.RepeatedTexturedRect",
 function RepeatedTexturedRect:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 64)
+	self:ApplySize(64, 64)
 
 	local el = gui.create("WI9SliceRectSegment", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
     el:GetColorProperty():Link(self:GetColorProperty())
-	el:AddCallback("SetSize", function(p)
+	el:AddCallback("OnSizeChanged", function(p)
 		local imgWidth = math.max(el:GetTextureSize().x, 1)
 		local scale = el:GetWidth() /imgWidth
 		el:SetRenderImageScale(Vector2(scale, 1.0))

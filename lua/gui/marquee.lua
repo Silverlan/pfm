@@ -15,7 +15,7 @@ function gui.Marquee:__init()
 end
 function gui.Marquee:OnInitialize()
 	gui.Base.OnInitialize(self)
-	self:SetSize(256, 64)
+	self:ApplySize(256, 64)
 
 	self.m_contents = gui.create("WIBase", self)
 
@@ -49,8 +49,8 @@ function gui.Marquee:Clear()
 	self.m_elements = {}
 end
 function gui.Marquee:OnUpdate()
-	self.m_contents:SizeToContents()
-	self.m_contents:SetHeight(self:GetHeight())
+	self.m_contents:SizeToContents(true, true, gui.CHANGE_SOURCE_LAYOUT)
+	self.m_contents:ApplyHeight(self:GetHeight())
 end
 function gui.Marquee:SetMoveSpeed(speed)
 	self.m_moveSpeed = speed
@@ -145,7 +145,7 @@ function gui.Ticker:__init()
 end
 function gui.Ticker:OnInitialize()
 	gui.Base.OnInitialize(self)
-	self:SetSize(256, 64)
+	self:ApplySize(256, 64)
 
 	self.m_text = gui.create("WIText", self)
 	self.m_text:AddStyleClass("input_field_text")

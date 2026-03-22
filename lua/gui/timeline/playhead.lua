@@ -25,7 +25,7 @@ function Playhead:UpdateLineEndPos()
 	if util.is_valid(self.m_line) == false then
 		return
 	end
-	self.m_line:SetHeight(self:GetHeight() - 8 * 2)
+	self.m_line:ApplyHeight(self:GetHeight() - 8 * 2)
 end
 function Playhead:OnSizeChanged(w, h)
 	self:UpdateLineEndPos()

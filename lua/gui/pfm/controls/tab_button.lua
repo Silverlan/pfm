@@ -8,7 +8,7 @@ local Element = util.register_class("gui.PFMTabButton", gui.PFMBaseButton)
 function Element:OnInitialize()
 	gui.PFMBaseButton.OnInitialize(self)
 
-	self:SetSize(128, 32)
+	self:ApplySize(128, 32)
 
 	self:SetType(gui.PFMBaseButton.BUTTON_TYPE_TAB)
 

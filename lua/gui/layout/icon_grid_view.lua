@@ -10,7 +10,7 @@ function gui.IconGridView:__init()
 end
 function gui.IconGridView:OnInitialize()
 	gui.Base.OnInitialize(self)
-	self:SetSize(64, 64)
+	self:ApplySize(64, 64)
 
 	self.m_iconContainer = gui.create("grid_box", self)
 	self.m_icons = {}
@@ -28,7 +28,7 @@ function gui.IconGridView:SetIconFactory(factory)
 end
 function gui.IconGridView:OnSizeChanged(w, h)
 	if util.is_valid(self.m_iconContainer) then
-		self.m_iconContainer:SetWidth(w)
+		self.m_iconContainer:ApplyWidth(w)
 	end
 end
 function gui.IconGridView:DeselectAll()

@@ -12,14 +12,14 @@ end
 function gui.PFMActorCatalog:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 128)
+	self:ApplySize(64, 128)
 
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_bg:SetColor(Color(54, 54, 54))
 
 	local scrollContainer =
 		gui.create("WIScrollContainer", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	scrollContainer:AddCallback("SetSize", function(el)
+	scrollContainer:AddCallback("OnSizeChanged", function(el)
 		if self:IsValid() and util.is_valid(self.m_explorer) then
 			self.m_explorer:SetWidth(el:GetWidth())
 		end

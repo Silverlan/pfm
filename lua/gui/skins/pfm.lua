@@ -366,7 +366,7 @@ skin["wibutton"] = {
 				)
 			end
 		end
-		local cbSetSize = pElement:AddCallback("SetSize", fcSetSize)
+		local cbSetSize = pElement:AddCallback("OnSizeChanged", fcSetSize)
 		fcSetSize()
 		add_skin_element(pElement, cbSetSize)
 	end,
@@ -374,7 +374,7 @@ skin["wibutton"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				local cbSetSize = pElement:AddCallback("SetSize", function()
+				local cbSetSize = pElement:AddCallback("OnSizeChanged", function()
 					local p = pElement:GetParent()
 					if not p:IsValid() then
 						return
@@ -415,7 +415,7 @@ skin["witooltip"] = {
 
 		pText:SetZPos(1)
 
-		local cbSize = pText:AddCallback("SetSize", function(pText)
+		local cbSize = pText:AddCallback("OnSizeChanged", function(pText)
 			local sz = pText:GetSize()
 			pText:SetPos(10, 5)
 

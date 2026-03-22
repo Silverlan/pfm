@@ -108,9 +108,9 @@ end
 function Element:UpdateValue(inputOrigin)
 	local v = self:GetFraction() * (self:GetBounds(self:GetParent()) - self:GetBounds())
 	if self:IsHorizontal() then
-		self:SetX(v)
+		self:ApplyX(v)
 	else
-		self:SetY(v)
+		self:ApplyY(v)
 	end
 	self:CallCallbacks("OnValueChanged", self:GetValue(), self:GetFraction(), inputOrigin)
 end

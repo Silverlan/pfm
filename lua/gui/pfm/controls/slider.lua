@@ -15,7 +15,7 @@ end
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 20)
+	self:ApplySize(128, 20)
 
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	bg:SetColor(Color.Clear)

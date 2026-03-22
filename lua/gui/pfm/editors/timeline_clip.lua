@@ -16,11 +16,11 @@ function TimelineEditorClip:OnInitialize()
 end
 function TimelineEditorClip:OnSizeChanged(w, h)
 	if util.is_valid(self.m_contents) then
-		self.m_contents:SetWidth(w)
+		self.m_contents:ApplyWidth(w)
 	end
 	for _, trackGroup in ipairs(self.m_trackGroups) do
 		if trackGroup:IsValid() then
-			trackGroup:SetWidth(w)
+			trackGroup:ApplyWidth(w)
 		end
 	end
 end

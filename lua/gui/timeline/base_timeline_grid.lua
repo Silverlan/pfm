@@ -20,7 +20,6 @@ function gui.BaseTimelineGrid:OnInitialize()
 	end
 	self.m_startOffset:AddCallback(fOnPropsChanged)
 	self.m_zoomLevel:AddCallback(fOnPropsChanged)
-	self:GetSizeProperty():AddCallback(fOnPropsChanged)
 
 	self.m_axis = util.GraphAxis()
 	self:SetHorizontal(false)
@@ -31,6 +30,9 @@ function gui.BaseTimelineGrid:OnInitialize()
 	self.m_axis:SetZoomLevel(1)
 	self.m_axis:SetStartOffset(0.0)
 	self:ScheduleUpdate()
+end
+function gui.BaseTimelineGrid:OnSizeChanged()
+	self:CallCallbacks("OnTimelinePropertiesChanged")
 end
 function gui.BaseTimelineGrid:GetAxis()
 	return self.m_axis

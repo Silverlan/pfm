@@ -20,7 +20,7 @@ function SequenceFilmStrip:OnInitialize()
 	local elBgPattern = gui.create("pfm_repeated_textured_rect", elBg)
 	elBgPattern:AddStyleClass("timeline_film_strip_dots")
 	elBgPattern:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_pattern")
-	elBg:AddCallback("SetSize", function(p)
+	elBg:AddCallback("OnSizeChanged", function(p)
 		local offset = 11
 		local wPatternDot = 4
 		elBgPattern:SetX(offset)

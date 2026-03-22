@@ -14,7 +14,7 @@ include("ik_rig_editor")
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 128)
+	self:ApplySize(64, 128)
 	self.m_ikRig = util.IkRigConfig()
 	self.m_constraintVisualizers = {}
 	self:UpdateModelView()
@@ -269,7 +269,7 @@ function Element:OnRemove()
 end
 function Element:OnSizeChanged(w, h)
 	if util.is_valid(self.m_controls) then
-		self.m_controls:SetWidth(w)
+		self.m_controls:ApplyWidth(w)
 	end
 end
 function Element:LinkToModelView(mv)

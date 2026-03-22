@@ -11,7 +11,7 @@ end
 function gui.CollapsibleGroupTitleBar:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(256, 20)
+	self:ApplySize(256, 20)
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents = gui.create("hbox", self, 0, 0, self:GetWidth(), 20)
 	self.m_contents:SetAutoAlignToParent(true, false)

@@ -11,7 +11,7 @@ util.register_class("gui.CollapsibleGroup", gui.Base)
 function gui.CollapsibleGroup:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(256, 20)
+	self:ApplySize(256, 20)
 	self.m_base = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight())
 	self.m_base:SetName("global_container")
 	self.m_base:SetFixedWidth(true)
@@ -48,15 +48,15 @@ function gui.CollapsibleGroup:OnInitialize()
 end
 function gui.CollapsibleGroup:OnSizeChanged(w, h)
 	if util.is_valid(self.m_base) then
-		self.m_base:SetWidth(w)
+		self.m_base:ApplyWidth(w)
 	end
 	if util.is_valid(self.m_contents) then
-		self.m_contents:SetWidth(w)
+		self.m_contents:ApplyWidth(w)
 	end
 	if util.is_valid(self.m_titleBar) then
-		self.m_titleBar:SetWidth(w)
+		self.m_titleBar:ApplyWidth(w)
 	end
-	--if(util.is_valid(self.m_contents)) then self.m_contents:SetWidth(w) end
+	--if(util.is_valid(self.m_contents)) then self.m_contents:ApplyWidth(w) end
 end
 function gui.CollapsibleGroup:RemoveGroup(groupName)
 	for i, group in ipairs(self.m_subGroups) do

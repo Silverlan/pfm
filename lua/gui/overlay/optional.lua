@@ -7,7 +7,7 @@ local Element = util.register_class("gui.OptionalOverlay", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 18)
+	self:ApplySize(128, 18)
 
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	bg:SetColor(Color(32, 32, 32))

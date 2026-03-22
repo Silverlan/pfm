@@ -7,7 +7,7 @@ Element.THEME_DARK = 1
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(12, 12)
+	self:ApplySize(12, 12)
 
 	local el = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	el:AddStyleClass("theme_toggle_light")

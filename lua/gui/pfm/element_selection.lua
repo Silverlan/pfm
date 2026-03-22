@@ -9,7 +9,7 @@ Element.OUTLINE_TYPE_CLEAR = 3
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 64)
+	self:ApplySize(64, 64)
 
 	local elOutline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	elOutline:SetColor(pfm.get_color_scheme_color("red"))
@@ -76,13 +76,13 @@ function Element:SetTargetElement(el)
 	for _, el in ipairs(els) do
 		table.insert(
 			self.m_elCallbacks,
-			el:AddCallback("SetSize", function()
+			el:AddCallback("OnSizeChanged", function()
 				self:ScheduleUpdate()
 			end)
 		)
 		table.insert(
 			self.m_elCallbacks,
-			el:AddCallback("SetPos", function()
+			el:AddCallback("OnPosChanged", function()
 				self:ScheduleUpdate()
 			end)
 		)
@@ -98,13 +98,13 @@ function Element:SetTargetElement(el)
 		while parent ~= nil do
 			table.insert(
 				self.m_elCallbacks,
-				parent:AddCallback("SetSize", function()
+				parent:AddCallback("OnSizeChanged", function()
 					self:ScheduleUpdate()
 				end)
 			)
 			table.insert(
 				self.m_elCallbacks,
-				parent:AddCallback("SetPos", function()
+				parent:AddCallback("OnPosChanged", function()
 					self:ScheduleUpdate()
 				end)
 			)
@@ -165,7 +165,7 @@ local Element = util.register_class("gui.GameObjectSelectionOutline", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 64)
+	self:ApplySize(64, 64)
 
 	local elOutline = gui.create("WIOutlinedRect", self)
 	elOutline:SetColor(pfm.get_color_scheme_color("blue"))
@@ -314,7 +314,7 @@ function Element:UpdateBounds()
 	local absPos = self.m_targetElement:GetAbsolutePos()
 	local size = self.m_targetElement:GetSize()
 	self:SetAbsolutePos(absPos)
-	self:SetSize(size)]]
+	self:ApplySize(size)]]
 end
 function Element:OnUpdate()
 	self:UpdateBounds()

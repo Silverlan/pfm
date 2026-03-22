@@ -33,7 +33,7 @@ function gui.PFMMaterialEditor:OnInitialize()
 
 	local controllBoxContainer =
 		gui.create("WIScrollContainer", self.m_contents, 0, 0, self.m_contents:GetWidth(), self.m_contents:GetHeight())
-	controllBoxContainer:AddCallback("SetSize", function(el)
+	controllBoxContainer:AddCallback("OnSizeChanged", function(el)
 		if self:IsValid() and util.is_valid(self.m_controlBox) then
 			self.m_controlBox:SetWidth(el:GetWidth())
 		end
@@ -57,7 +57,7 @@ function gui.PFMMaterialEditor:OnInitialize()
 	self.m_vpBox:SetFixedSize(true)
 	self.m_vpBox:SetAutoFillContents(true)
 	self:InitializeViewport()
-	self.m_vpBox:AddCallback("SetSize", function()
+	self.m_vpBox:AddCallback("OnSizeChanged", function()
 		self:ScheduleRTPreviewUpdate()
 	end)
 	self.m_contents:Update()
@@ -142,7 +142,7 @@ function gui.PFMMaterialEditor:AddTextureSlot(parent, text, texIdentifier, norma
 	texSlot:AddCallback("OnTextureImported", function()
 		self:ApplyTexture(texIdentifier, texSlot:GetTexture())
 	end)
-	box:AddCallback("SetSize", function()
+	box:AddCallback("OnSizeChanged", function()
 		local sz = math.min(box:GetHeight() - 24, box:GetWidth())
 		texSlot:SetSize(sz, sz)
 

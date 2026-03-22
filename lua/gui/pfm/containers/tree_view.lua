@@ -9,7 +9,7 @@ util.register_class("gui.PFMTreeView", gui.Base)
 function gui.PFMTreeView:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 19)
+	self:ApplySize(64, 19)
 	self.m_rootElement = gui.create("pfm_tree_view_element", self)
 	self.m_rootElement:SetName("root")
 	self.m_rootElement:SetWidth(self:GetWidth())
@@ -165,7 +165,7 @@ function gui.PFMTreeView:OnSizeChanged(w, h)
 	if util.is_valid(self.m_rootElement) == false then
 		return
 	end
-	self.m_rootElement:SetWidth(w)
+	self.m_rootElement:ApplyWidth(w)
 end
 function gui.PFMTreeView:GetRoot()
 	return self.m_rootElement
@@ -183,7 +183,7 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self.m_itemElements = {}
 	self.m_identifierToItem = {}
 	self.m_autoSelectChildren = true
-	self:SetSize(64, 19)
+	self:ApplySize(64, 19)
 
 	self.m_vBox = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight())
 	self.m_vBox:SetAutoFillContentsToWidth(true)
@@ -461,7 +461,7 @@ function gui.PFMTreeViewElement:GetChildContentsBox()
 end
 function gui.PFMTreeViewElement:OnSizeChanged(w, h)
 	if util.is_valid(self.m_vBox) then
-		self.m_vBox:SetWidth(w)
+		self.m_vBox:ApplyWidth(w)
 		-- We need to update immediately to avoid some weird twitching effects
 		self.m_vBox:Update()
 	end
@@ -482,7 +482,7 @@ function gui.PFMTreeViewElement:OnUpdate()
 	local lastItem = self.m_items[#self.m_items]
 	if util.is_valid(lastItem) then
 		local y = lastItem:GetY() + lastItem:GetHeader():GetCenterY()
-		self.m_vLine:SetHeight(y + 1)
+		self.m_vLine:ApplyHeight(y + 1)
 	end
 
 	for _, els in ipairs(self.m_itemElements) do
@@ -492,14 +492,14 @@ function gui.PFMTreeViewElement:OnUpdate()
 		if item:IsValid() then
 			local y = item:GetY() + item:GetHeader():GetCenterY()
 			if line:IsValid() then
-				line:SetX(self.m_vLine:GetX() + 1)
-				line:SetY(y)
+				line:ApplyX(self.m_vLine:GetX() + 1)
+				line:ApplyY(y)
 			end
 			if #item:GetItems() > 0 or item.m_fPopulate ~= nil then
 				local expandIcon = self:InitializeExpandIcon(item)
 				if util.is_valid(expandIcon) then
-					expandIcon:SetX(self.m_vLine:GetX() - expandIcon:GetHalfWidth() + 1)
-					expandIcon:SetY(y - expandIcon:GetHalfHeight())
+					expandIcon:ApplyX(self.m_vLine:GetX() - expandIcon:GetHalfWidth() + 1)
+					expandIcon:ApplyY(y - expandIcon:GetHalfHeight())
 				end
 			end
 		end
@@ -507,7 +507,7 @@ function gui.PFMTreeViewElement:OnUpdate()
 
 	self:UpdateChildBoxBounds()
 	self.m_skipSizeUpdateSchedule = true
-	self:SizeToContents()
+	self:SizeToContents(true, true, gui.CHANGE_SOURCE_LAYOUT)
 	self.m_skipSizeUpdateSchedule = nil
 end
 function gui.PFMTreeViewElement:InitializeExpandIcon(item)
@@ -896,7 +896,7 @@ util.register_class("gui.PFMTreeExpandIcon", gui.Base)
 function gui.PFMTreeExpandIcon:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(9, 9)
+	self:ApplySize(9, 9)
 
 	local tex = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	tex:GetColorProperty():Link(self:GetColorProperty())

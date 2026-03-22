@@ -131,7 +131,7 @@ function Element:UpdateLineEndPos()
 	if util.is_valid(self.m_line) == false then
 		return
 	end
-	self.m_line:SetHeight(self:GetHeight())
+	self.m_line:ApplyHeight(self:GetHeight())
 end
 function Element:OnSizeChanged(w, h)
 	self:UpdateLineEndPos()

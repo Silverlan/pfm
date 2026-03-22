@@ -3,7 +3,7 @@
 
 local Element = util.register_class("gui.DragAndDropOverlay", gui.Base)
 function Element:OnInitialize()
-	self:SetSize(128, 128)
+	self:ApplySize(128, 128)
 	local el = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	el:SetColor(Color(0, 0, 0, 230))
 

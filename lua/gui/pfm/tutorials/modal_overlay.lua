@@ -38,13 +38,13 @@ function Element:SetTarget(el)
 	util.remove(self.m_elCallbacks)
 	table.insert(
 		self.m_elCallbacks,
-		el:AddCallback("SetSize", function()
+		el:AddCallback("OnSizeChanged", function()
 			self:ScheduleUpdate()
 		end)
 	)
 	table.insert(
 		self.m_elCallbacks,
-		el:AddCallback("SetPos", function()
+		el:AddCallback("OnPosChanged", function()
 			self:ScheduleUpdate()
 		end)
 	)
@@ -58,28 +58,28 @@ function Element:OnSizeChanged()
 end
 function Element:OnUpdate()
 	if util.is_valid(self.m_elTarget) == false then
-		self.m_bgEls[1]:SetWidth(self:GetWidth())
-		self.m_bgEls[1]:SetHeight(self:GetHeight())
+		self.m_bgEls[1]:ApplyWidth(self:GetWidth())
+		self.m_bgEls[1]:ApplyHeight(self:GetHeight())
 		for i = 2, 4 do
-			self.m_bgEls[i]:SetSize(0, 0)
+			self.m_bgEls[i]:ApplySize(0, 0)
 		end
 		return
 	end
 	local absPos = self.m_elTarget:GetAbsolutePos()
-	self.m_bgEls[1]:SetWidth(self:GetWidth())
-	self.m_bgEls[1]:SetHeight(absPos.y)
+	self.m_bgEls[1]:ApplyWidth(self:GetWidth())
+	self.m_bgEls[1]:ApplyHeight(absPos.y)
 
-	self.m_bgEls[2]:SetY(self.m_bgEls[1]:GetBottom())
-	self.m_bgEls[2]:SetWidth(absPos.x)
-	self.m_bgEls[2]:SetHeight(self.m_elTarget:GetHeight())
+	self.m_bgEls[2]:ApplyY(self.m_bgEls[1]:GetBottom())
+	self.m_bgEls[2]:ApplyWidth(absPos.x)
+	self.m_bgEls[2]:ApplyHeight(self.m_elTarget:GetHeight())
 
-	self.m_bgEls[3]:SetX(absPos.x + self.m_elTarget:GetWidth())
-	self.m_bgEls[3]:SetY(self.m_bgEls[1]:GetBottom())
-	self.m_bgEls[3]:SetWidth(self:GetWidth() - self.m_bgEls[3]:GetX())
-	self.m_bgEls[3]:SetHeight(self.m_elTarget:GetHeight())
+	self.m_bgEls[3]:ApplyX(absPos.x + self.m_elTarget:GetWidth())
+	self.m_bgEls[3]:ApplyY(self.m_bgEls[1]:GetBottom())
+	self.m_bgEls[3]:ApplyWidth(self:GetWidth() - self.m_bgEls[3]:GetX())
+	self.m_bgEls[3]:ApplyHeight(self.m_elTarget:GetHeight())
 
-	self.m_bgEls[4]:SetWidth(self:GetWidth())
-	self.m_bgEls[4]:SetHeight(self:GetHeight() - absPos.y + self.m_elTarget:GetHeight())
-	self.m_bgEls[4]:SetY(self.m_bgEls[3]:GetBottom())
+	self.m_bgEls[4]:ApplyWidth(self:GetWidth())
+	self.m_bgEls[4]:ApplyHeight(self:GetHeight() - absPos.y + self.m_elTarget:GetHeight())
+	self.m_bgEls[4]:ApplyY(self.m_bgEls[3]:GetBottom())
 end
 gui.register("modal_overlay", Element)

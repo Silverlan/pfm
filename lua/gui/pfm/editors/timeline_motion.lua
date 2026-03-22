@@ -179,7 +179,7 @@ function TimelineEditorMotion:SetTimelineContents(contents)
 	selection:SetHeight(contents:GetHeight() - selection:GetY())
 	selection:SetInnerStartPosition(0)
 	selection:SetInnerEndPosition(0)
-	self.m_cbSelectionSizeUpdate = contents:AddCallback("SetSize", function()
+	self.m_cbSelectionSizeUpdate = contents:AddCallback("OnSizeChanged", function()
 		self.m_elSelection:SetHeight(contents:GetHeight() - selection:GetY())
 	end)
 

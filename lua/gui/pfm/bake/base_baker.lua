@@ -128,7 +128,7 @@ local WIPFMActionButton = util.register_class("pfm_action_button", gui.PFMButton
 function WIPFMActionButton:OnInitialize()
 	gui.PFMButton.OnInitialize(self)
 
-	self:SetSize(64, 26)
+	self:ApplySize(64, 26)
 	self:SetMouseInputEnabled(true)
 	self:SetCursor(gui.CURSOR_SHAPE_HAND)
 end
@@ -140,7 +140,7 @@ local WIBakeButton = util.register_class("bake_button", WIPFMActionButton)
 function WIBakeButton:OnInitialize()
 	WIPFMActionButton.OnInitialize(self)
 
-	self:SetSize(64, 26)
+	self:ApplySize(64, 26)
 	self:InitializeProgressBar()
 	self:SetMouseInputEnabled(true)
 	self:SetCursor(gui.CURSOR_SHAPE_HAND)

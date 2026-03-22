@@ -7,7 +7,7 @@ local g_activeProcesses = 0
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(256, 24)
+	self:ApplySize(256, 24)
 	local progressBarBg =
 		gui.create("WIRect", self, 0, self:GetHeight() / 4.0, self:GetWidth(), self:GetHeight() / 2.0, 0, 0, 1, 1)
 	local progressBar =
@@ -35,11 +35,11 @@ function Element:OnSizeChanged()
 	if util.is_valid(self.m_elText) == false then
 		return
 	end
-	self.m_elText:SetX(5)
-	self.m_elText:SetY((self:GetHeight() - self.m_elText:GetHeight()) / 2)
+	self.m_elText:ApplyX(5)
+	self.m_elText:ApplyY((self:GetHeight() - self.m_elText:GetHeight()) / 2)
 
-	self.m_progressBarBg:SetX(self.m_elText:GetRight() + 5)
-	self.m_progressBarBg:SetWidth(self:GetWidth() - self.m_elText:GetRight() - 5)
+	self.m_progressBarBg:ApplyX(self.m_elText:GetRight() + 5)
+	self.m_progressBarBg:ApplyWidth(self:GetWidth() - self.m_elText:GetRight() - 5)
 end
 function Element:SetText(text)
 	self.m_elText:SetText(text)

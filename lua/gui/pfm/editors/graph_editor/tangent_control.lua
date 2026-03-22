@@ -124,7 +124,7 @@ function gui.PFMTimelineTangentControl:UpdateInOutLines(updateIn, updateOut)
 		inDelta = -dataAxis:GetAxis():ValueToXDelta(inDelta)
 
 		local inPos = basePos + Vector2(inTime, inDelta)
-		self.m_inCtrl:SetPos(inPos)
+		self.m_inCtrl:ApplyPos(inPos)
 
 		self.m_inLine:SetStartPos(inPos)
 		self.m_inLine:SetEndPos(Vector2(pos.x, pos.y))
@@ -139,7 +139,7 @@ function gui.PFMTimelineTangentControl:UpdateInOutLines(updateIn, updateOut)
 		outDelta = -dataAxis:GetAxis():ValueToXDelta(outDelta)
 
 		local outPos = basePos + Vector2(outTime, outDelta)
-		self.m_outCtrl:SetPos(outPos)
+		self.m_outCtrl:ApplyPos(outPos)
 
 		self.m_outLine:SetStartPos(outPos)
 		self.m_outLine:SetEndPos(Vector2(pos.x, pos.y))

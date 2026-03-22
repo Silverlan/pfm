@@ -8,7 +8,7 @@ local Element = util.register_class("gui.PFMAssetWebBrowser", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(512, 512)
+	self:ApplySize(512, 512)
 
 	self.m_contents = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents:SetFixedSize(true)

@@ -64,7 +64,7 @@ function Element:OnUpdate()
 end
 function Element:UpdateMarkers() end
 function Element:OnSizeChanged(w, h)
-	self.m_controls:SetWidth(w)
+	self.m_controls:ApplyWidth(w)
 end
 function Element:GetControlsMenu()
 	return self.m_controls

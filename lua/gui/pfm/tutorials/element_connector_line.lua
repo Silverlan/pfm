@@ -31,25 +31,25 @@ function Element:Setup(src, tgt)
 
 	table.insert(
 		self.m_elCallbacks,
-		src:AddCallback("SetSize", function()
+		src:AddCallback("OnSizeChanged", function()
 			self:ScheduleUpdate()
 		end)
 	)
 	table.insert(
 		self.m_elCallbacks,
-		src:AddCallback("SetPos", function()
+		src:AddCallback("OnPosChanged", function()
 			self:ScheduleUpdate()
 		end)
 	)
 	table.insert(
 		self.m_elCallbacks,
-		tgt:AddCallback("SetSize", function()
+		tgt:AddCallback("OnSizeChanged", function()
 			self:ScheduleUpdate()
 		end)
 	)
 	table.insert(
 		self.m_elCallbacks,
-		tgt:AddCallback("SetPos", function()
+		tgt:AddCallback("OnPosChanged", function()
 			self:ScheduleUpdate()
 		end)
 	)
@@ -217,11 +217,11 @@ function Element:OnUpdate()
 	self.m_lineTunnel:SetVisible(showTunnel)
 	if showTunnel then
 		if horizontal then
-			self.m_lineTunnel:SetSize(1, 20)
-			self.m_lineTunnel:SetPos(endPoint.x, endPoint.y - self.m_lineTunnel:GetHalfHeight())
+			self.m_lineTunnel:ApplySize(1, 20)
+			self.m_lineTunnel:ApplyPos(endPoint.x, endPoint.y - self.m_lineTunnel:GetHalfHeight())
 		else
-			self.m_lineTunnel:SetSize(20, 1)
-			self.m_lineTunnel:SetPos(endPoint.x - self.m_lineTunnel:GetHalfWidth(), endPoint.y)
+			self.m_lineTunnel:ApplySize(20, 1)
+			self.m_lineTunnel:ApplyPos(endPoint.x - self.m_lineTunnel:GetHalfWidth(), endPoint.y)
 		end
 	end
 end

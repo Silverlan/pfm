@@ -16,7 +16,7 @@ end
 function gui.PFMElementViewer:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 128)
+	self:ApplySize(64, 128)
 
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_bg:SetColor(Color(54, 54, 54))
@@ -118,7 +118,7 @@ function gui.PFMElementViewer:OnInitialize()
 		pHeaderText:SetColor(Color(152, 152, 152))
 		pHeaderText:AddStyleClass("font_medium")
 		pHeaderText:SetText(text)
-		pHeader:AddCallback("SetSize", function()
+		pHeader:AddCallback("OnSizeChanged", function()
 			if pHeaderText:IsValid() == false then
 				return
 			end
@@ -134,7 +134,7 @@ function gui.PFMElementViewer:OnInitialize()
 	-- Tree
 	local treeScrollContainerBg = gui.create("WIBase", treeVBox, 0, 0, 64, 128)
 	local treeScrollContainer = gui.create("WIScrollContainer", treeScrollContainerBg, 0, 0, 64, 128, 0, 0, 1, 1)
-	treeScrollContainerBg:AddCallback("SetSize", function(el)
+	treeScrollContainerBg:AddCallback("OnSizeChanged", function(el)
 		if self:IsValid() and util.is_valid(self.m_tree) then
 			self.m_tree:SetWidth(el:GetWidth())
 		end
@@ -152,7 +152,7 @@ function gui.PFMElementViewer:OnInitialize()
 	-- Data
 	local dataScrollContainerBg = gui.create("WIBase", dataVBox, 0, 0, 64, 128)
 	local dataScrollContainer = gui.create("WIScrollContainer", dataScrollContainerBg, 0, 0, 64, 128, 0, 0, 1, 1)
-	dataScrollContainerBg:AddCallback("SetSize", function(el)
+	dataScrollContainerBg:AddCallback("OnSizeChanged", function(el)
 		if self:IsValid() and util.is_valid(self.m_data) then
 			self.m_data:SetWidth(el:GetWidth())
 		end
@@ -692,7 +692,7 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 end
 function gui.PFMElementViewer:OnSizeChanged(w, h)
 	if util.is_valid(self.m_btTools) then
-		self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())
+		self.m_btTools:ApplyX(self:GetWidth() - self.m_btTools:GetWidth())
 	end
 end
 function gui.PFMElementViewer:InitializeNavigationBar()

@@ -17,7 +17,7 @@ function gui.BaseClip:OnInitialize()
 
 	local w = 128
 	local h = 23
-	self:SetSize(w, h)
+	self:ApplySize(w, h)
 
 	self.m_bg = gui.create("WIRect", self, 0, 0, w, h, 0, 0, 1, 1)
 	self.m_bg:SetName("background")

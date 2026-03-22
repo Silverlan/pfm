@@ -21,7 +21,7 @@ end
 function gui.Curve:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 128)
+	self:ApplySize(128, 128)
 	self.m_shader = shader.get("pfm_curve")
 
 	self:SetHorizontalRange(0, 0)

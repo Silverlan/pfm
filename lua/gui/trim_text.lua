@@ -5,7 +5,7 @@ local Element = util.register_class("gui.TrimText", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(1, 1)
+	self:ApplySize(1, 1)
 
 	local elText = gui.create("WIText", self)
 	elText:SetAutoSizeToContents(false)

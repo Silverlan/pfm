@@ -32,7 +32,7 @@ end
 function gui.BoneRetargeting:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 128)
+	self:ApplySize(64, 128)
 	self:UpdateModelView()
 
 	local scrollContainer = gui.create("WIScrollContainer", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
@@ -330,7 +330,7 @@ function gui.BoneRetargeting:OnRemove()
 end
 function gui.BoneRetargeting:OnSizeChanged(w, h)
 	if util.is_valid(self.m_controls) then
-		self.m_controls:SetWidth(w)
+		self.m_controls:ApplyWidth(w)
 	end
 end
 function gui.BoneRetargeting:GetSourceModel()

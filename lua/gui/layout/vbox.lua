@@ -17,9 +17,9 @@ function gui.VBox:OnUpdate()
 	local children = self:GetChildren()
 	for i, child in ipairs(children) do
 		if child:IsVisible() and self:IsBackgroundElement(child) == false then
-			child:SetY(y)
+			child:ApplyY(y)
 			if self.m_autoFillWidth == true and child:HasAnchor() == false then
-				child:SetWidth(math.max(size.x, 0))
+				child:ApplyWidth(math.max(size.x, 0))
 			end
 			y = y + child:GetHeight()
 			w = math.max(w, child:GetRight())
@@ -55,14 +55,14 @@ function gui.VBox:OnUpdate()
 				sizeAdd = (size.y - children[lastChild]:GetBottom())
 				height = children[autoFillChild]:GetHeight() + sizeAdd
 			end
-			children[autoFillChild]:SetHeight(height)
+			children[autoFillChild]:ApplyHeight(height)
 			children[autoFillChild]:Update()
 
 			if sizeAdd ~= nil then
 				for i = autoFillChild + 1, #children do
 					local child = children[i]
 					if child:IsVisible() and self:IsBackgroundElement(child) == false then
-						child:SetY(child:GetY() + sizeAdd)
+						child:ApplyY(child:GetY() + sizeAdd)
 					end
 				end
 			end

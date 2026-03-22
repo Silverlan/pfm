@@ -6,7 +6,7 @@ local Element = util.register_class("gui.PFMSliderArrow", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(12, 20)
+	self:ApplySize(12, 20)
 
 	local elIcon = gui.create("WITexturedRect", self)
 	elIcon:SetMaterial("gui/pfm/arrow_left")

@@ -11,7 +11,7 @@ end
 function gui.PFMWindow:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(256, 128)
+	self:ApplySize(256, 128)
 
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	bg:AddStyleClass("background2")
@@ -85,6 +85,6 @@ function gui.PFMWindow:OnSizeChanged(w, h)
 	if util.is_valid(self.m_mainBox) == false then
 		return
 	end
-	self.m_mainBox:SetWidth(w)
+	self.m_mainBox:ApplyWidth(w)
 end
 gui.register("pfm_window", gui.PFMWindow)

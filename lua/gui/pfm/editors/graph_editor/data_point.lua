@@ -62,7 +62,7 @@ function gui.PFMTimelineDataPoint:OnUpdate()
 	if util.is_valid(self.m_tangentControl) == false then
 		return
 	end
-	self.m_tangentControl:SetPos(self:GetCenter())
+	self.m_tangentControl:ApplyPos(self:GetCenter())
 	self.m_tangentControl:Update()
 end
 function gui.PFMTimelineDataPoint:InitializeHandleControl()

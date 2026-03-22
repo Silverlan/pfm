@@ -455,7 +455,7 @@ function Element:SetupTimelineMarkers(timeline)
 
 	self.m_timeline = timeline
 	util.remove({ self.m_timelineMarkers, self.m_cbOnTimelineSizeChanged })
-	self.m_cbOnTimelineSizeChanged = timeline:AddCallback("SetSize", function(timeline)
+	self.m_cbOnTimelineSizeChanged = timeline:AddCallback("OnSizeChanged", function(timeline)
 		for _, el in ipairs(self.m_timelineMarkers) do
 			el:SetHeight(timeline:GetHeight())
 		end

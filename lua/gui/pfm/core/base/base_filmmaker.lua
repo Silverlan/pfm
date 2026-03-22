@@ -34,8 +34,8 @@ function Element:AddVersionInfo(identifier, version, gitInfoPath)
 	local function update_size()
 		elRightContents:SetX(pMenuBarContents:GetWidth() - elRightContents:GetWidth())
 	end
-	pMenuBarContents:AddCallback("SetSize", update_size)
-	elRightContents:AddCallback("SetSize", update_size)
+	pMenuBarContents:AddCallback("OnSizeChanged", update_size)
+	elRightContents:AddCallback("OnSizeChanged", update_size)
 
 	-- Version Info
 	local engineInfo = engine.get_info()

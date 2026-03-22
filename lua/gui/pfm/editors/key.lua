@@ -11,7 +11,7 @@ end
 function gui.PFMGraphKey:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(4, 4)
+	self:ApplySize(4, 4)
 
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	bg:GetColorProperty():Link(self:GetColorProperty())

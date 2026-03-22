@@ -17,9 +17,9 @@ function gui.HBox:OnUpdate()
 	local children = self:GetChildren()
 	for i, child in ipairs(children) do
 		if child:IsVisible() and self:IsBackgroundElement(child) == false then
-			child:SetX(x)
+			child:ApplyX(x)
 			if self.m_autoFillHeight == true and child:HasAnchor() == false then
-				child:SetHeight(math.max(size.y, 0))
+				child:ApplyHeight(math.max(size.y, 0))
 			end
 			x = x + child:GetWidth()
 			h = math.max(h, child:GetBottom())
@@ -48,14 +48,14 @@ function gui.HBox:OnUpdate()
 			sizeAdd = (size.x - children[lastChild]:GetRight())
 			width = children[autoFillChild]:GetWidth() + sizeAdd
 		end
-		children[autoFillChild]:SetWidth(width)
+		children[autoFillChild]:ApplyWidth(width)
 		children[autoFillChild]:Update()
 
 		if sizeAdd ~= nil then
 			for i = autoFillChild + 1, #children do
 				local child = children[i]
 				if child:IsVisible() and self:IsBackgroundElement(child) == false then
-					child:SetX(child:GetX() + sizeAdd)
+					child:ApplyX(child:GetX() + sizeAdd)
 				end
 			end
 		end

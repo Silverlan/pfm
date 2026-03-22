@@ -14,7 +14,7 @@ end
 function gui.PFMFrame:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(256, 128)
+	self:ApplySize(256, 128)
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_bg:AddStyleClass("background2")
 

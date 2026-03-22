@@ -12,7 +12,7 @@ end
 function gui.PFMWeightSlider:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 33)
+	self:ApplySize(128, 33)
 
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_bg:SetColor(Color(38, 38, 38))
@@ -73,13 +73,13 @@ function gui.PFMWeightSlider:SetStepSize(stepSize)
 end
 function gui.PFMWeightSlider:OnSizeChanged(w, h)
 	if util.is_valid(self.m_startIndicator) then
-		self.m_startIndicator:SetX(self.m_sliderBar:GetX() + self.m_sliderBar:FractionToX(0))
+		self.m_startIndicator:ApplyX(self.m_sliderBar:GetX() + self.m_sliderBar:FractionToX(0))
 	end
 	if util.is_valid(self.m_centerIndicator) then
-		self.m_centerIndicator:SetX(self.m_sliderBar:GetX() + self.m_sliderBar:FractionToX(0.5))
+		self.m_centerIndicator:ApplyX(self.m_sliderBar:GetX() + self.m_sliderBar:FractionToX(0.5))
 	end
 	if util.is_valid(self.m_endIndicator) then
-		self.m_endIndicator:SetX(self.m_sliderBar:GetX() + self.m_sliderBar:FractionToX(1.0))
+		self.m_endIndicator:ApplyX(self.m_sliderBar:GetX() + self.m_sliderBar:FractionToX(1.0))
 	end
 end
 gui.register("pfm_weight_slider", gui.PFMWeightSlider)
@@ -94,7 +94,7 @@ end
 function gui.PFMWeightSliderBar:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 15)
+	self:ApplySize(128, 15)
 
 	self.m_sliderLine = gui.create("WIRect", self, 0, 0, self:GetWidth(), 3, 0, 0, 1, 0)
 	self.m_sliderLine:SetColor(Color.Black)

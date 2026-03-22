@@ -88,13 +88,13 @@ function gui.GridBox:OnUpdate()
 				y = y + child:GetHeight() + self:GetVerticalSpacing()
 				x = 0
 			end
-			child:SetPos(x, y)
+			child:ApplyPos(x, y)
 			x = child:GetRight() + self:GetHorizontalSpacing()
 		end
 	end
 	y = y + (childHeight or 0)
 	if y ~= self:GetHeight() then
-		self:SetHeight(y)
+		self:ApplyHeight(y)
 	end
 end
 gui.register("grid_box", gui.GridBox)

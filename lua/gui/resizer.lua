@@ -12,7 +12,7 @@ function gui.Resizer:OnInitialize()
 	gui.Base.OnInitialize(self)
 	self:SetMouseInputEnabled(true)
 
-	self:SetSize(8, 8)
+	self:ApplySize(8, 8)
 	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	bg:GetColorProperty():Link(self:GetColorProperty())
 	self:AddStyleClass("background")
@@ -33,7 +33,7 @@ function gui.Resizer:OnInitialize()
 		self:SetResizeMode(gui.Resizer.RESIZE_MODE_HORIZONTAL)
 	end
 	self:SetFraction(0.5)
-	parent:AddCallback("SetSize", function(p)
+	parent:AddCallback("OnSizeChanged", function(p)
 		self.m_updateRequired = true
 	end)
 	parent:AddCallback("OnContentsUpdated", function(p)

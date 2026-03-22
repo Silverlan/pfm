@@ -88,7 +88,7 @@ function gui.PFMCoreViewportBase:OnInitialize()
 		end)
 	end
 
-	self.m_titleBar:AddCallback("SetSize", function()
+	self.m_titleBar:AddCallback("OnSizeChanged", function()
 		self:UpdateFilmLabelPositions()
 	end)
 end
@@ -454,10 +454,10 @@ function gui.PFMCoreViewportBase:SetFilmClipParentName(name)
 end
 function gui.PFMCoreViewportBase:UpdateFilmLabelPositions()
 	if util.is_valid(self.m_filmClipParent) then
-		self.m_filmClipParent:SetX(self.m_titleBar:GetWidth() * 0.5 - self.m_filmClipParent:GetWidth() * 0.5)
+		self.m_filmClipParent:ApplyX(self.m_titleBar:GetWidth() * 0.5 - self.m_filmClipParent:GetWidth() * 0.5)
 	end
 	if util.is_valid(self.m_filmClip) then
-		self.m_filmClip:SetX(self.m_titleBar:GetWidth() * 0.5 - self.m_filmClip:GetWidth() * 0.5)
+		self.m_filmClip:ApplyX(self.m_titleBar:GetWidth() * 0.5 - self.m_filmClip:GetWidth() * 0.5)
 	end
 end
 function gui.PFMCoreViewportBase:MarkActorAsDirty(ent)
@@ -681,7 +681,7 @@ function gui.PFMCoreViewportBase:OnSizeChanged(w, h)
 end
 function gui.PFMCoreViewportBase:OnUpdate()
 	if util.is_valid(self.m_timeLocal) then
-		self.m_timeLocal:SetX(self.m_titleBar:GetWidth() - self.m_timeLocal:GetWidth() - 20)
+		self.m_timeLocal:ApplyX(self.m_titleBar:GetWidth() - self.m_timeLocal:GetWidth() - 20)
 	end
 	self:UpdateFilmLabelPositions()
 end

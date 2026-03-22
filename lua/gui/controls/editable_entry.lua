@@ -9,7 +9,7 @@ end
 function gui.EditableEntry:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 32)
+	self:ApplySize(128, 32)
 	self.m_centerText = true
 
 	self.m_descContainer = gui.create("WIBase", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)

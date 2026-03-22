@@ -1048,7 +1048,7 @@ function gui.PFMRenderPreview:InitializeControls()
 
 	local controlsRight = gui.create("hbox", controlsWrapper)
 	self.m_controlsRight = controlsRight
-	controlsWrapper:AddCallback("SetSize", function()
+	controlsWrapper:AddCallback("OnSizeChanged", function()
 		controlsRight:SetX(controlsWrapper:GetWidth() - controlsRight:GetWidth())
 	end)
 

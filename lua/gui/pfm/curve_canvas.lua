@@ -7,7 +7,7 @@ local Element = util.register_class("gui.CurveCanvas", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 128)
+	self:ApplySize(128, 128)
 	local elCurve = gui.create("curve", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	elCurve:SetHorizontalRange(0.0, 1.0)
 	elCurve:SetVerticalRange(0.0, 1.0)

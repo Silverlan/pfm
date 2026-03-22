@@ -9,7 +9,7 @@ end
 function gui.ToggleOption:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 18)
+	self:ApplySize(128, 18)
 
 	self.m_contents = gui.create("hbox", self, 0, 0, self:GetWidth(), self:GetHeight())
 	self.m_contents:SetFixedWidth(true)

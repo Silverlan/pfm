@@ -156,9 +156,9 @@ function gui.Axis:UpdateItem(itemData)
 		itemData.element:SetAbsolutePos(pos)
 		w = w +itemData.startOffset +itemData.endOffset
 		if self:IsHorizontal() then
-			itemData.element:SetWidth(w)
+			itemData.element:ApplyWidth(w)
 		else
-			itemData.element:SetHeight(w)
+			itemData.element:ApplyHeight(w)
 		end
 	end
 end

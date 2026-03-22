@@ -9,11 +9,11 @@ end
 function gui.AspectRatio:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(512, 512)
+	self:ApplySize(512, 512)
 
 	self.m_background = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_background:SetColor(Color.Black)
-	self.m_background:AddCallback("SetSize", function()
+	self.m_background:AddCallback("OnSizeChanged", function()
 		self:Update()
 	end)
 
@@ -50,7 +50,7 @@ function gui.AspectRatio:OnUpdate()
 	local size = self:GetSize()
 	local ratio = self:GetAspectRatio()
 	local w, h = util.clamp_resolution_to_aspect_ratio(size.x, size.y, ratio)
-	self.m_targetElement:SetSize(w, h)
-	self.m_targetElement:SetPos(size.x * 0.5 - w * 0.5, size.y * 0.5 - h * 0.5)
+	self.m_targetElement:ApplySize(w, h)
+	self.m_targetElement:ApplyPos(size.x * 0.5 - w * 0.5, size.y * 0.5 - h * 0.5)
 end
 gui.register("aspect_ratio", gui.AspectRatio)
