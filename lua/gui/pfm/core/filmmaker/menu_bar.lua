@@ -36,16 +36,16 @@ function Element:InitializeMenuBar()
 
 	local pMenuBar = self.m_menuBar
 	pMenuBar
-		:AddItem(locale.get_text("file"), function(pContext)
-			--[[pContext:AddItem(locale.get_text("open") .. "...",function(pItem)
+		:AddItem(gui.Loc("file"), function(pContext)
+			--[[pContext:AddItem(glocale.get_text("open") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
 
 		end)]]
 
-			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("new"))
+			local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("new"))
 			pItem:SetName("new")
 			pSubMenu:SetName("new_menu")
-			local pSubItem = pSubMenu:AddItem(locale.get_text("pfm_simple_project"), function(pItem)
+			local pSubItem = pSubMenu:AddItem(gui.Loc("pfm_simple_project"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -53,9 +53,9 @@ function Element:InitializeMenuBar()
 					self:CreateSimpleProject()
 				end)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_simple_project"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_simple_project"))
 			pSubItem:SetName("simple_project")
-			local pSubItem = pSubMenu:AddItem(locale.get_text("pfm_empty_project"), function(pItem)
+			local pSubItem = pSubMenu:AddItem(gui.Loc("pfm_empty_project"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -63,7 +63,7 @@ function Element:InitializeMenuBar()
 					self:CreateEmptyProject()
 				end)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_empty_project"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_empty_project"))
 			pSubItem:SetName("empty_project")
 			pSubMenu:ScheduleUpdate()
 
@@ -112,7 +112,7 @@ function Element:InitializeMenuBar()
 			pSubItem:SetName("open")
 			if self:IsDeveloperModeEnabled() then
 				local projectFileName = self:GetProjectFileName()
-				local pSubItem = pContext:AddItem(locale.get_text("reopen"), function(pItem)
+				local pSubItem = pContext:AddItem(gui.Loc("reopen"), function(pItem)
 					if util.is_valid(self) == false then
 						return
 					end
@@ -142,7 +142,7 @@ function Element:InitializeMenuBar()
 				itemSave:SetEnabled(false)
 			end
 
-			local pSubItem = pContext:AddItem(locale.get_text("save_as"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("save_as"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -152,21 +152,21 @@ function Element:InitializeMenuBar()
 					end
 				end)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_save_as"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_save_as"))
 			pSubItem:SetName("save_as")
 
-			local pSubItem = pContext:AddItem(locale.get_text("save_copy"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("save_copy"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
 				self:Save(nil, false, true)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_save_copy"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_save_copy"))
 			pSubItem:SetName("save_copy")
 
 			local recentFiles = self.m_settings:GetArrayValues("recent_projects", udm.TYPE_STRING)
 			if #recentFiles > 0 then
-				local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("recent_projects"))
+				local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("recent_projects"))
 				pItem:SetName("recent_projects")
 				pSubMenu:SetName("recent_projects_menu")
 				for _, f in ipairs(recentFiles) do
@@ -231,10 +231,10 @@ function Element:InitializeMenuBar()
 				pFileDialog:Update()
 			end
 
-			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("import"))
+			local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("import"))
 			pItem:SetName("import")
 			pSubMenu:SetName("import_menu")
-			local pSubItem = pSubMenu:AddItem(locale.get_text("map"), function(pItem)
+			local pSubItem = pSubMenu:AddItem(gui.Loc("map"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -254,9 +254,9 @@ function Element:InitializeMenuBar()
 				end
 				initMapDialog(pFileDialog)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_import_map"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_import_map"))
 			pSubItem:SetName("map")
-			local pSubItem = pSubMenu:AddItem(locale.get_text("pfm_sfm_project"), function(pItem)
+			local pSubItem = pSubMenu:AddItem(gui.Loc("pfm_sfm_project"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -320,10 +320,10 @@ function Element:InitializeMenuBar()
 				end
 				self.m_openDialogue:Update()
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_import_sfm_project"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_import_sfm_project"))
 			pSubItem:SetName("sfm_project")
 			if self:IsDeveloperModeEnabled() then
-				local pSubItem = pSubMenu:AddItem(locale.get_text("pfm_pfm_project"), function(pItem)
+				local pSubItem = pSubMenu:AddItem(gui.Loc("pfm_pfm_project"), function(pItem)
 					if util.is_valid(self) == false then
 						return
 					end
@@ -348,11 +348,11 @@ function Element:InitializeMenuBar()
 			end
 			pSubMenu:ScheduleUpdate()
 
-			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("export"))
+			local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("export"))
 			pItem:SetName("export")
 			pSubMenu:SetName("export_menu")
 
-			local pSubItem = pSubMenu:AddItem(locale.get_text("map"), function(pItem)
+			local pSubItem = pSubMenu:AddItem(gui.Loc("map"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -390,13 +390,13 @@ function Element:InitializeMenuBar()
 				end
 				self:LogWarn("Unable to export map: " .. errMsg)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_export_map"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_export_map"))
 			pSubItem:SetName("export_map")
 
 			self:PopulateCustomMenuOptions("export", pSubMenu)
 			pSubMenu:ScheduleUpdate()
 
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_change_map"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_change_map"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -423,7 +423,7 @@ function Element:InitializeMenuBar()
 				end
 				initMapDialog(pFileDialog)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_change_map"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_change_map"))
 			pSubItem:SetName("change_map")
 			--[[pContext:AddItem(locale.get_text("pfm_export_blender_scene") .. "...",function(pItem)
 			local dialoge = pfm.create_file_save_dialog(function(pDialoge)
@@ -448,7 +448,7 @@ function Element:InitializeMenuBar()
 					dialoge:Update()
 				end)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_pack_project"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_pack_project"))
 			pSubItem:SetName("pack_project")
 			--[[pContext:AddItem(locale.get_text("save") .. "...",function(pItem)
 			if(util.is_valid(self) == false) then return end
@@ -459,11 +459,11 @@ function Element:InitializeMenuBar()
 			node:SaveToBinary(ds)
 			print("Size: ",ds:GetSize())
 		end)]]
-			--[[pContext:AddItem(locale.get_text("close"),function(pItem)
+			--[[pContext:AddItem(gui.Loc("close"),function(pItem)
 			if(util.is_valid(self) == false) then return end
 			tool.close_filmmaker()
 		end)]]
-			local pSubItem = pContext:AddItem(locale.get_text("close"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("close"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -472,7 +472,7 @@ function Element:InitializeMenuBar()
 				end)
 			end)
 			pSubItem:SetName("close")
-			local pSubItem = pContext:AddItem(locale.get_text("exit"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("exit"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -491,18 +491,18 @@ function Element:InitializeMenuBar()
 			pContext:ScheduleUpdate()
 		end)
 		:SetName("file")
-	--[[pMenuBar:AddItem(locale.get_text("edit"),function(pContext)
+	--[[pMenuBar:AddItem(gui.Loc("edit"),function(pContext)
 
 	end)
-	pMenuBar:AddItem(locale.get_text("windows"),function(pContext)
+	pMenuBar:AddItem(gui.Loc("windows"),function(pContext)
 
 	end)
-	pMenuBar:AddItem(locale.get_text("view"),function(pContext)
+	pMenuBar:AddItem(gui.Loc("view"),function(pContext)
 
 	end)]]
 
 	pMenuBar
-		:AddItem(locale.get_text("edit"), function(pContext)
+		:AddItem(gui.Loc("edit"), function(pContext)
 			local undoText = pfm.get_undo_text()
 			if undoText ~= nil then
 				undoText = " (" .. undoText .. ")"
@@ -533,7 +533,7 @@ function Element:InitializeMenuBar()
 				pItemRedo:SetEnabled(false)
 			end
 
-			local pItemCopy = pContext:AddItem(locale.get_text("copy"), function(pItem)
+			local pItemCopy = pContext:AddItem(gui.Loc("copy"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -551,7 +551,7 @@ function Element:InitializeMenuBar()
 				numSelectedActors = #actorEditor:GetSelectedActors()
 			end
 
-			local pItemPaste = pContext:AddItem(locale.get_text("paste"), function(pItem)
+			local pItemPaste = pContext:AddItem(gui.Loc("paste"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -568,13 +568,13 @@ function Element:InitializeMenuBar()
 				pItemPaste:SetEnabled(false)
 			end
 
-			local pItemClearUndoStack = pContext:AddItem(locale.get_text("pfm_clear_undo_stack"), function(pItem)
+			local pItemClearUndoStack = pContext:AddItem(gui.Loc("pfm_clear_undo_stack"), function(pItem)
 				pfm.undoredo.clear()
 			end)
 			pItemClearUndoStack:SetName("clear_undo_stack")
 
 			local pItemSaveUndoStack = pContext:AddItem(
-				locale.get_text("pfm_save_undo_stack_to_clipboard"),
+				gui.Loc("pfm_save_undo_stack_to_clipboard"),
 				function(pItem)
 					local udmFile = udm.create()
 					local udmData = udmFile:GetAssetData():GetData()
@@ -587,7 +587,7 @@ function Element:InitializeMenuBar()
 			)
 			pItemSaveUndoStack:SetName("save_undo_stack")
 
-			local pItemDelete = pContext:AddItem(locale.get_text("delete"), function(pItem)
+			local pItemDelete = pContext:AddItem(gui.Loc("delete"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -605,7 +605,7 @@ function Element:InitializeMenuBar()
 			end
 
 			pContext
-				:AddItem(locale.get_text("pfm_menu_reload_game_view"), function(pItem)
+				:AddItem(gui.Loc("pfm_menu_reload_game_view"), function(pItem)
 					if util.is_valid(self) == false then
 						return
 					end
@@ -618,12 +618,12 @@ function Element:InitializeMenuBar()
 		:SetName("edit")
 	if self:IsDeveloperModeEnabled() then
 		pMenuBar
-			:AddItem(locale.get_text("render"), function(pContext)
-				local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pbr"))
+			:AddItem(gui.Loc("render"), function(pContext)
+				local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("pbr"))
 				pItem:SetName("import")
 				pSubMenu:SetName("pbr_menu")
 				local pSubItem = pSubMenu:AddItem(
-					locale.get_text("pfm_generate_ambient_occlusion_maps"),
+					gui.Loc("pfm_generate_ambient_occlusion_maps"),
 					function(pItem)
 						if util.is_valid(self) == false then
 							return
@@ -645,9 +645,9 @@ function Element:InitializeMenuBar()
 						end
 					end
 				)
-				pSubItem:SetTooltip(locale.get_text("pfm_menu_generate_ao"))
+				pSubItem:SetTooltip(gui.Loc("pfm_menu_generate_ao"))
 				pSubItem:SetName("pbr")
-				local pSubItem = pSubMenu:AddItem(locale.get_text("pfm_rebuild_reflection_probes"), function(pItem) end)
+				local pSubItem = pSubMenu:AddItem(gui.Loc("pfm_rebuild_reflection_probes"), function(pItem) end)
 				pSubItem:SetName("rebuild_reflection_probes")
 				pSubMenu:ScheduleUpdate()
 
@@ -655,18 +655,18 @@ function Element:InitializeMenuBar()
 			end)
 			:SetName("render")
 	end
-	--[[pMenuBar:AddItem(locale.get_text("map"),function(pContext)
-		pContext:AddItem(locale.get_text("pfm_generate_lightmaps"),function(pItem)
+	--[[pMenuBar:AddItem(gui.Loc("map"),function(pContext)
+		pContext:AddItem(gui.Loc("pfm_generate_lightmaps"),function(pItem)
 			
 		end)
-		pContext:AddItem(locale.get_text("pfm_write_lightmaps_to_bsp"),function(pItem)
+		pContext:AddItem(gui.Loc("pfm_write_lightmaps_to_bsp"),function(pItem)
 			
 		end)
 		pContext:Update()
 	end)]]
 	pMenuBar
-		:AddItem(locale.get_text("preferences"), function(pContext)
-			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("language"))
+		:AddItem(gui.Loc("preferences"), function(pContext)
+			local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("language"))
 			pItem:SetName("language")
 			pSubMenu:SetName("language_menu")
 			for lan, lanLoc in pairs(locale.get_languages()) do
@@ -699,10 +699,10 @@ function Element:InitializeMenuBar()
 					)
 				end)
 			end
-			pItem:SetTooltip(locale.get_text("pfm_menu_change_language"))
+			pItem:SetTooltip(gui.Loc("pfm_menu_change_language"))
 			pSubMenu:ScheduleUpdate()
 
-			pContext:AddItem(locale.get_text("settings"), function(pItem)
+			pContext:AddItem(gui.Loc("settings"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -713,8 +713,8 @@ function Element:InitializeMenuBar()
 		end)
 		:SetName("preferences")
 	pMenuBar
-		:AddItem(locale.get_text("tools"), function(pContext)
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_convert_map_to_actors"), function(pItem)
+		:AddItem(gui.Loc("tools"), function(pContext)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_convert_map_to_actors"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -745,9 +745,9 @@ function Element:InitializeMenuBar()
 					end
 				)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_convert_map_to_actors"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_convert_map_to_actors"))
 			pSubItem:SetName("convert_map_to_actors")
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_convert_static_actors_to_map"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_convert_static_actors_to_map"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -768,17 +768,17 @@ function Element:InitializeMenuBar()
 					)
 				end)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_convert_static_actors_to_map"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_convert_static_actors_to_map"))
 			pSubItem:SetName("convert_static_actors_to_map")
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_build_kernels"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_build_kernels"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
 				self:BuildKernels()
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_build_kernels"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_build_kernels"))
 			pSubItem:SetName("build_kernels")
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_start_lua_debugger_server"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_start_lua_debugger_server"), function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -792,7 +792,7 @@ function Element:InitializeMenuBar()
 					}
 				)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_start_lua_debugger_server"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_start_lua_debugger_server"))
 			pSubItem:SetName("start_lua_debugger_server")
 			if self:IsDeveloperModeEnabled() then
 				local recorder
@@ -847,17 +847,17 @@ function Element:InitializeMenuBar()
 				end)
 				pSubItem:SetName("randomize_uuids")
 
-				local pSubItem = pContext:AddItem(locale.get_text("pfm_reload_in_dev_mode"), function(pItem)
+				local pSubItem = pContext:AddItem(gui.Loc("pfm_reload_in_dev_mode"), function(pItem)
 					console.run("pfm -log all -dev -reload")
 				end)
 				pSubItem:SetName("reload_in_dev_mode")
 
-				local pSubItem = pContext:AddItem(locale.get_text("pfm_reload_in_dev_mode"), function(pItem)
+				local pSubItem = pContext:AddItem(gui.Loc("pfm_reload_in_dev_mode"), function(pItem)
 					console.run("pfm -log all -dev -reload")
 				end)
 				pSubItem:SetName("reload_in_dev_mode")
 
-				local pSubItem = pContext:AddItem(locale.get_text("pfm_optimize_project"), function(pItem)
+				local pSubItem = pContext:AddItem(gui.Loc("pfm_optimize_project"), function(pItem)
 					pfm.open_message_prompt(
 						locale.get_text("pfm_prompt_continue"),
 						locale.get_text("pfm_prompt_action_cannot_be_undone"),
@@ -884,7 +884,7 @@ function Element:InitializeMenuBar()
 		if #tFiles == 0 then
 			return
 		end
-		local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("layout"))
+		local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("layout"))
 		pItem:SetName("layout")
 		pSubMenu:SetName("layout_menu")
 		for _, f in ipairs(tFiles) do
@@ -899,35 +899,35 @@ function Element:InitializeMenuBar()
 		end
 		pSubMenu:ScheduleUpdate()
 
-		local pSubItem = pContext:AddItem(locale.get_text("pfm_save_current_layout_state_as_default"), function(pItem)
+		local pSubItem = pContext:AddItem(gui.Loc("pfm_save_current_layout_state_as_default"), function(pItem)
 			if util.is_valid(self) == false then
 				return
 			end
 			self:SaveWindowLayoutState("cfg/pfm/default_layout_state.udm", true)
 		end)
-		pSubItem:SetTooltip(locale.get_text("pfm_menu_context_save_layout_state_as_default"))
+		pSubItem:SetTooltip(gui.Loc("pfm_menu_context_save_layout_state_as_default"))
 		pSubItem:SetName("save_current_layout_state_as_default")
-		local pSubItem = pContext:AddItem(locale.get_text("pfm_restore_default_layout_state"), function(pItem)
+		local pSubItem = pContext:AddItem(gui.Loc("pfm_restore_default_layout_state"), function(pItem)
 			if util.is_valid(self) == false then
 				return
 			end
 			self:RestoreWindowLayoutState("cfg/pfm/default_layout_state.udm")
 		end)
-		pSubItem:SetTooltip(locale.get_text("pfm_menu_context_restore_default_layout_state"))
+		pSubItem:SetTooltip(gui.Loc("pfm_menu_context_restore_default_layout_state"))
 		pSubItem:SetName("restore_default_layout_state")
 
-		local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_theme"))
+		local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("pfm_theme"))
 		pItem:SetName("theme")
 		pSubMenu:SetName("theme_menu")
 		local tFiles, tDirs = file.find("lua/gui/skins/*.lua")
 		local themes = {}
 		for _, f in ipairs(tFiles) do
 			f = file.remove_file_extension(f, { "lua" })
-			local name = locale.get_text("pfm_theme_" .. f)
+			local name = gui.Loc("pfm_theme_" .. f)
 			table.insert(themes, { name, f })
 		end
 		table.sort(themes, function(a, b)
-			return a[1] < b[1]
+			return pfm.util.get_ui_text(a[1]) < pfm.util.get_ui_text(b[1])
 		end)
 		for _, themeInfo in ipairs(themes) do
 			local pItemLan = pSubMenu:AddItem(themeInfo[1], function(pItem)
@@ -937,11 +937,11 @@ function Element:InitializeMenuBar()
 				console.run("pfm_theme", themeInfo[2])
 			end)
 		end
-		pItem:SetTooltip(locale.get_text("pfm_menu_theme"))
+		pItem:SetTooltip(gui.Loc("pfm_menu_theme"))
 		pSubMenu:ScheduleUpdate()
 
 		if self:IsDeveloperModeEnabled() then
-			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("font"))
+			local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("font"))
 			pItem:SetName("font")
 			pSubMenu:SetName("font_menu")
 			for _, name in ipairs(engine.get_font_sets()) do
@@ -957,37 +957,37 @@ function Element:InitializeMenuBar()
 					gui.reload_text_elements()
 				end)
 			end
-			pItem:SetTooltip(locale.get_text("pfm_menu_theme"))
+			pItem:SetTooltip(gui.Loc("pfm_menu_theme"))
 			pSubMenu:ScheduleUpdate()
 		end
 
-		local pSubItem = pContext:AddItem(locale.get_text("pfm_toggle_console"), function(pItem)
+		local pSubItem = pContext:AddItem(gui.Loc("pfm_toggle_console"), function(pItem)
 			engine.toggle_console()
 		end)
-		pSubItem:SetTooltip(locale.get_text("pfm_menu_context_toggle_console"))
+		pSubItem:SetTooltip(gui.Loc("pfm_menu_context_toggle_console"))
 		pSubItem:SetName("toggle_console")
 
 		pContext:ScheduleUpdate()
 	end)
 	pMenuBar
-		:AddItem(locale.get_text("help"), function(pContext)
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_getting_started"), function(pItem)
+		:AddItem(gui.Loc("help"), function(pContext)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_getting_started"), function(pItem)
 				self:ShowCloseConfirmation(function(res)
 					self:LoadTutorial("intro")
 				end)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_getting_started"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_getting_started"))
 			pSubItem:SetName("getting_started")
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_tutorial_catalog"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_tutorial_catalog"), function(pItem)
 				self:GoToWindow("tutorial_catalog")
 			end)
 			pSubItem:SetName("tutorial_catalog")
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_wiki"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_wiki"), function(pItem)
 				self:OpenUrlInBrowser("https://wiki.pragma-engine.com/books/pragma-filmmaker")
 			end)
 			pSubItem:SetName("wiki")
 
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_report_a_bug"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_report_a_bug"), function(pItem)
 				file.create_path("temp")
 
 				-- Delete existing engine info dumps
@@ -1012,7 +1012,7 @@ function Element:InitializeMenuBar()
 			end)
 			pSubItem:SetName("report_a_bug")
 
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_request_a_feature"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_request_a_feature"), function(pItem)
 				util.open_url_in_browser("https://github.com/Silverlan/pfm/issues")
 
 				pfm.open_message_prompt(
@@ -1025,22 +1025,22 @@ function Element:InitializeMenuBar()
 			pSubItem:SetName("request_a_feature")
 
 			if self:AreAutomaticUpdatesEnabled() then
-				local pSubItem = pContext:AddItem(locale.get_text("pfm_check_for_updates"), function(pItem)
+				local pSubItem = pContext:AddItem(gui.Loc("pfm_check_for_updates"), function(pItem)
 					self:CheckForUpdates(true)
 				end)
 				pSubItem:SetName("check_for_updates")
 			end
 
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_open_user_data_directory"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_open_user_data_directory"), function(pItem)
 				engine.open_user_data_dir_in_explorer()
 			end)
 			pSubItem:SetName("open_user_data_directory")
 
-			local pSubItem = pContext:AddItem(locale.get_text("pfm_community"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_community"), function(pItem)
 				local engineInfo = engine.get_info()
 				self:OpenUrlInBrowser(engineInfo.discordURL)
 			end)
-			pSubItem:SetTooltip(locale.get_text("pfm_menu_context_pfm_community"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_pfm_community"))
 			pSubItem:SetName("community")
 			pContext:ScheduleUpdate()
 		end)

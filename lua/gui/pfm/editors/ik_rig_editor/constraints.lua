@@ -126,7 +126,7 @@ function Element:AddConstraint(item, boneName, type)
 	local visualize = false
 	icon:SetMouseInputEnabled(true)
 	icon:SetCursor(gui.CURSOR_SHAPE_HAND)
-	icon:SetTooltip(locale.get_text("pfm_rig_editor_visualize_constraint"))
+	icon:SetTooltip(gui.Loc("pfm_rig_editor_visualize_constraint"))
 	local function toggle_constraint_visualization()
 		if visualize then
 			visualize = false

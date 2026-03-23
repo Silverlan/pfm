@@ -659,7 +659,7 @@ function Element:AddMessageBox(msg, audioFile)
 		end)
 		iconAudio:SetSize(20, 20)
 		iconAudio:SetPos(xOffset, 0)
-		iconAudio:SetTooltip(locale.get_text("pfm_toggle_audio"))
+		iconAudio:SetTooltip(gui.Loc("pfm_toggle_audio"))
 		self.m_iconAudio = iconAudio
 
 		xOffset = iconAudio:GetRight() + 5
@@ -670,7 +670,7 @@ function Element:AddMessageBox(msg, audioFile)
 	end)
 	iconFeedback:SetSize(20, 20)
 	iconFeedback:SetPos(xOffset, 0)
-	iconFeedback:SetTooltip(locale.get_text("pfm_feedback"))
+	iconFeedback:SetTooltip(gui.Loc("pfm_feedback"))
 	local elText = gui.create("WIText", iconFeedback)
 	elText:SetText("F")
 	elText:AddStyleClass("font_small")

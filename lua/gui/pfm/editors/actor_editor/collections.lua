@@ -60,7 +60,7 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 				end
 				pContext:SetPos(input.get_cursor_pos())
 
-				pContext:AddItem(locale.get_text("pfm_add_collection"), function()
+				pContext:AddItem(gui.Loc("pfm_add_collection"), function()
 					itemGroup:Expand()
 					local child = itemGroup:AddItem("")
 					local initialText = ""
@@ -82,20 +82,20 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 						end
 					end)
 				end)
-				pContext:AddItem(locale.get_text("pfm_expand_all"), function()
+				pContext:AddItem(gui.Loc("pfm_expand_all"), function()
 					itemGroup:ExpandAll()
 				end)
-				pContext:AddItem(locale.get_text("pfm_collapse_all"), function()
+				pContext:AddItem(gui.Loc("pfm_collapse_all"), function()
 					itemGroup:CollapseAll()
 				end)
 				if isRoot ~= true then
-					pContext:AddItem(locale.get_text("pfm_remove_collection"), function()
+					pContext:AddItem(gui.Loc("pfm_remove_collection"), function()
 						pfm.undoredo.push(
 							"delete_collection",
 							pfm.create_command("delete_collection", self:GetFilmClip(), parent)
 						)()
 					end)
-					pContext:AddItem(locale.get_text("rename"), function()
+					pContext:AddItem(gui.Loc("rename"), function()
 						local te = gui.create(
 							"WITextEntry",
 							itemGroup,
@@ -121,7 +121,7 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 					end)
 				end
 				if tool.get_filmmaker():IsDeveloperModeEnabled() then
-					pContext:AddItem(locale.get_text("pfm_copy_id"), function()
+					pContext:AddItem(gui.Loc("pfm_copy_id"), function()
 						util.set_clipboard_string(tostring(parent:GetUniqueId()))
 					end)
 				end

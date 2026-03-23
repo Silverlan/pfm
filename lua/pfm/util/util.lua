@@ -221,6 +221,11 @@ pfm.util.extract_archive = function(zipFile, extractLocation)
 	return zipFile:ExtractFiles(extractLocation, true)
 end
 
+pfm.util.get_ui_text = function(textRef)
+	if(type(textRef) == "string") then return textRef end
+	return textRef:Resolve()
+end
+
 pfm.util.get_localized_property_name = function(componentName, pathName)
 	if pathName == nil then
 		local path = componentName
@@ -237,12 +242,12 @@ pfm.util.get_localized_property_name = function(componentName, pathName)
 	local locId = "c_" .. componentName .. "_p_" .. propName
 	local res, text = locale.get_text(locId, true)
 	if res == true then
-		displayName = text
+		displayName = gui.Loc(locId)
 	end
 
 	local res, textDesc = locale.get_text(locId .. "_desc", true)
 	if res == true then
-		description = textDesc
+		description = gui.Loc(locId .. "_desc")
 	end
 	return displayName, description
 end

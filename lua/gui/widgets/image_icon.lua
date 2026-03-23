@@ -57,6 +57,12 @@ end
 function gui.ImageIcon:SetText(text)
 	self.m_text:SetText(text)
 end
+function gui.ImageIcon:SetPrefixText(text)
+	self.m_text:SetPrefixText(text)
+end
+function gui.ImageIcon:SetSuffixText(text)
+	self.m_text:SetSuffixText(text)
+end
 function gui.ImageIcon:GetTextureElement()
 	return self.m_texture
 end

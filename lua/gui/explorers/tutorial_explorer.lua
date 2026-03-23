@@ -109,10 +109,12 @@ function Element:ApplyAsset(path, importAsset)
 			local res, text = locale.get_text("pfm_tutorial_" .. name, true)
 			if res ~= false then
 				local posInSeries = udmData:GetValue("position_in_series", udm.TYPE_UINT32)
+				local prefixText = ""
 				if posInSeries ~= nil then
-					text = string.fill_zeroes(tostring(posInSeries), 2) .. " - " .. text
+					prefixText = string.fill_zeroes(tostring(posInSeries), 2) .. " - "
 				end
-				self:SetText(text)
+				self:SetPrefixText(prefixText)
+				self:SetText(gui.Loc("pfm_tutorial_" .. name))
 			end
 		end
 

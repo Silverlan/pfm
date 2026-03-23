@@ -33,7 +33,7 @@ pfm.show_base_loading_screen = function(enabled, title, logo, loadingText)
 	elTitle:SetAnchor(0.5, 0.5, 0.5, 0.5)
 
 	local elText = gui.create("WIText", elBase)
-	elText:SetText(locale.get_text("pfm_loading"))
+	elText:SetText(gui.Loc("pfm_loading"))
 	elText:SetColor(Color.White)
 	elText:SetFont("loading_small")
 	elText:SetPos(380, elTitle:GetBottom() + 30)

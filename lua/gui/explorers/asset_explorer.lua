@@ -32,7 +32,7 @@ function gui.AssetExplorer:OnInitialize()
 	end)
 	self:AddCallback("PopulateContextMenu", function(self, pContext)
 		pContext
-			:AddItem(locale.get_text("pfm_asset_import_all"), function()
+			:AddItem(gui.Loc("pfm_asset_import_all"), function()
 				for _, icon in ipairs(self:GetIcons()) do
 					if icon:IsValid() and icon:IsDirectory() == false then
 						self:ImportAsset(icon)
@@ -326,6 +326,8 @@ function gui.AssetExplorer:ImportAsset(el)
 	end
 end
 function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
+	-- TODO: Handle gui.Loc properly
+	assetName = pfm.util.get_ui_text(assetName)
 	if #assetName == 0 then
 		return
 	end
@@ -408,7 +410,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 			local hasExternalFiles = (#tExternalFiles > 0)
 			if hasExternalFiles then
 				pContext
-					:AddItem(locale.get_text("pfm_asset_import"), function()
+					:AddItem(gui.Loc("pfm_asset_import"), function()
 						for _, el in ipairs(tExternalFiles) do
 							if el:IsValid() then
 								self:ImportAsset(el)
@@ -418,7 +420,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 					:SetName("import_asset")
 			else
 				pContext
-					:AddItem(locale.get_text("pfm_asset_icon_reload"), function()
+					:AddItem(gui.Loc("pfm_asset_icon_reload"), function()
 						for _, el in ipairs(tSelectedFiles) do
 							if el:IsValid() then
 								el:Reload()
@@ -443,7 +445,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 				end
 				if #tSelected == 1 then
 					pContext
-						:AddItem(locale.get_text("pfm_asset_icon_copy_path_to_clipboard"), function()
+						:AddItem(gui.Loc("pfm_asset_icon_copy_path_to_clipboard"), function()
 							util.set_clipboard_string(tSelectedFiles[1]:GetIconLocation())
 						end)
 						:SetName("copy_icon_path_to_clipboard")
@@ -458,7 +460,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 					end
 				end
 				if #exportable > 0 then
-					local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_asset_export"))
+					local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("pfm_asset_export"))
 					pItem:SetName("export_asset")
 					pSubMenu
 						:AddItem("glTF", function()
@@ -511,7 +513,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 							if result == false then
 								console.print_warning("Unable to export asset: ", err)
 								pfm.create_popup_message(
-									locale.get_text("pfm_popup_failed_to_export", { err }),
+									gui.Loc("pfm_popup_failed_to_export", { err }),
 									nil,
 									gui.InfoBox.TYPE_ERROR
 								)
@@ -525,7 +527,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 			if self:IsSpecialDirectoryEnabled("favorites") then
 				if numInFavorites == #tSelected then
 					pContext
-						:AddItem(locale.get_text("pfm_asset_icon_remove_from_favorites"), function()
+						:AddItem(gui.Loc("pfm_asset_icon_remove_from_favorites"), function()
 							for _, el in ipairs(tSelected) do
 								if el:IsValid() then
 									local path = el:GetRelativeAsset()
@@ -536,7 +538,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 						:SetName("remove_from_favorites")
 				else
 					pContext
-						:AddItem(locale.get_text("pfm_asset_icon_add_to_favorites"), function()
+						:AddItem(gui.Loc("pfm_asset_icon_add_to_favorites"), function()
 							for _, el in ipairs(tSelected) do
 								if el:IsValid() then
 									local path = el:GetRelativeAsset()
@@ -550,7 +552,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 			if #tSelectedFiles == 1 then
 				local assetPath = tSelectedFiles[1]:GetAsset()
 				pContext
-					:AddItem(locale.get_text("pfm_copy_path"), function()
+					:AddItem(gui.Loc("pfm_copy_path"), function()
 						local path = file.remove_file_extension(assetPath)
 						util.set_clipboard_string(path .. "." .. self.m_extensions[1])
 					end)
@@ -559,7 +561,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 				local path = tSelectedFiles[1]:GetRelativeAsset()
 				if asset.exists(path, self:GetAssetType()) then
 					pContext
-						:AddItem(locale.get_text("pfm_open_in_explorer"), function()
+						:AddItem(gui.Loc("pfm_open_in_explorer"), function()
 							local filePath = util.Path.CreateFilePath(assetPath)
 							filePath:PopFront()
 							filePath = asset.find_file(filePath:GetString(), asset.TYPE_MODEL)
@@ -572,7 +574,7 @@ function gui.AssetExplorer:AddItem(assetName, isDirectory, fDirClickHandler)
 						:SetName("open_in_explorer")
 
 					--[[if(self:GetAssetType() == asset.TYPE_MODEL) then
-						pContext:AddItem(locale.get_text("pfm_open_in_model_editor"),function()
+						pContext:AddItem(gui.Loc("pfm_open_in_model_editor"),function()
 							local dialog,frame,el = gui.pfm.open_model_dialog(function(dialogResult,mdlName) end)
 
 							if(util.is_valid(el) == false) then return end
@@ -651,12 +653,12 @@ function gui.AssetExplorer:ListFiles()
 	end
 	if self:IsAtRoot() then
 		if self:IsSpecialDirectoryEnabled("favorites") then
-			self:AddAsset(locale.get_text("favorites"), true, function()
+			self:AddAsset(gui.Loc("favorites"), true, function()
 				self:GoToSpecialDirectory("fav")
 			end)
 		end
 		if self:IsSpecialDirectoryEnabled("new") then
-			self:AddAsset(locale.get_text("new"), true, function()
+			self:AddAsset(gui.Loc("new"), true, function()
 				self:GoToSpecialDirectory("new")
 			end)
 		end

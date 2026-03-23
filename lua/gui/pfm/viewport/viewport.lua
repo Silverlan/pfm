@@ -369,7 +369,7 @@ function gui.PFMCoreViewportBase:OnViewportMouseEvent(el, mouseButton, state, mo
 						end
 
 						if hitData.mesh ~= nil and hitData.primitiveIndex ~= nil then
-							pContext:AddItem(locale.get_text("pfm_copy_hit_position"), function()
+							pContext:AddItem(gui.Loc("pfm_copy_hit_position"), function()
 								util.set_clipboard_string(tostring(hitPos))
 							end)
 

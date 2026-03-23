@@ -246,11 +246,12 @@ function gui.EditableEntry:UpdateText(value)
 		return
 	end
 	local text = self.m_baseText
+	local suffix = ""
 	if value == nil then
 		self.m_curPresetOption = nil
 		if util.is_valid(self.m_target) then
 			if not self.m_target:IsType(gui.TYPE_WIBASE) then
-				text = text .. ": "
+				suffix = suffix .. ": "
 				if self.m_target:IsType(gui.TYPE_WIDROPDOWNMENU) then
 					local selectedOption = self.m_target:GetSelectedOption()
 					if selectedOption ~= -1 then
@@ -275,7 +276,7 @@ function gui.EditableEntry:UpdateText(value)
 			value = ""
 		end
 	else
-		text = text .. ": "
+		suffix = suffix .. ": "
 	end
 
 	local handled, newValueText = self:CallCallbacks("TranslateValueText", value)
@@ -283,7 +284,8 @@ function gui.EditableEntry:UpdateText(value)
 		value = newValueText
 	end
 
-	text = text .. value
+	suffix = suffix .. value
+	self.m_pText:SetSuffixText(suffix)
 	self.m_pText:SetText(text)
 	if self.m_centerText then
 		self.m_pText:CenterToParent(true)

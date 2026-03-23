@@ -53,7 +53,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_btTools:SetName("new_actor_button")
 	self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())
 	local function addPresetActorOption(id, subMenu, type, locId, callback)
-		local subItem = subMenu:AddItem(locale.get_text(locId), function()
+		local subItem = subMenu:AddItem(gui.Loc(locId), function()
 			local actor = self:CreatePresetActor(type)
 			if callback ~= nil then
 				callback()
@@ -61,11 +61,11 @@ function gui.PFMActorEditor:OnInitialize()
 
 			pfm.undoredo.push("add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
 		end)
-		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
+		subItem:SetTooltip(gui.Loc(locId .. "_desc"))
 		subItem:SetName(id)
 	end
 	local function addPresetModelActorOption(id, subMenu, type, locId)
-		local subItem = subMenu:AddItem(locale.get_text(locId), function()
+		local subItem = subMenu:AddItem(gui.Loc(locId), function()
 			gui.pfm.open_model_dialog(function(dialogResult, mdlName)
 				if dialogResult ~= gui.DIALOG_RESULT_OK then
 					return
@@ -77,7 +77,7 @@ function gui.PFMActorEditor:OnInitialize()
 				pfm.undoredo.push("add_actor", pfm.create_command("add_actor", self:GetFilmClip(), { actor }))
 			end)
 		end)
-		subItem:SetTooltip(locale.get_text(locId .. "_desc"))
+		subItem:SetTooltip(gui.Loc(locId .. "_desc"))
 		subItem:SetName(id)
 	end
 	self.m_btTools:SetupContextMenu(function(pContext)
@@ -110,7 +110,7 @@ function gui.PFMActorEditor:OnInitialize()
 		end
 
 		-- Scene
-		local sceneItem, sceneMenu = pContext:AddSubMenu(locale.get_text("pfm_scene"))
+		local sceneItem, sceneMenu = pContext:AddSubMenu(gui.Loc("pfm_scene"))
 		sceneItem:SetName("scene")
 
 		addPresetModelActorOption(
@@ -124,7 +124,7 @@ function gui.PFMActorEditor:OnInitialize()
 			addPresetActorOption("sky", sceneMenu, gui.PFMActorEditor.ACTOR_PRESET_TYPE_SKY, "pfm_add_sky")
 		end
 
-		local subItem = sceneMenu:AddItem(locale.get_text("pfm_create_new_scene"), function()
+		local subItem = sceneMenu:AddItem(gui.Loc("pfm_create_new_scene"), function()
 			local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 				if fileName == nil then
 					return
@@ -144,11 +144,11 @@ function gui.PFMActorEditor:OnInitialize()
 			})
 			pFileDialog:Update()
 		end)
-		subItem:SetTooltip(locale.get_text("pfm_create_new_scene_desc"))
+		subItem:SetTooltip(gui.Loc("pfm_create_new_scene_desc"))
 		subItem:SetName("scene")
 
 		-- Props
-		local propItem, propMenu = pContext:AddSubMenu(locale.get_text("pfm_props"))
+		local propItem, propMenu = pContext:AddSubMenu(gui.Loc("pfm_props"))
 		propItem:SetName("prop")
 
 		addPresetModelActorOption(
@@ -165,7 +165,7 @@ function gui.PFMActorEditor:OnInitialize()
 		)
 
 		-- Effects
-		local effectsItem, effectsMenu = pContext:AddSubMenu(locale.get_text("pfm_effects"))
+		local effectsItem, effectsMenu = pContext:AddSubMenu(gui.Loc("pfm_effects"))
 		effectsItem:SetName("effects")
 
 		addPresetActorOption(
@@ -196,7 +196,7 @@ function gui.PFMActorEditor:OnInitialize()
 			"pfm_create_new_shader_input"
 		)
 
-		--[[pContext:AddItem(locale.get_text("pfm_create_new_volume_simple"),function()
+		--[[pContext:AddItem(gui.Loc("pfm_create_new_volume_simple"),function()
 			local actor = self:CreateNewActor()
 			if(actor == nil) then return end
 			local mdlC = self:CreateNewActorComponent(actor,"pfm_model",false,function(mdlC) actor:ChangeModel("cube_volumetric") end)
@@ -215,7 +215,7 @@ function gui.PFMActorEditor:OnInitialize()
 		)
 
 		-- Lights
-		local lightsItem, lightsMenu = pContext:AddSubMenu(locale.get_text("pfm_lights"))
+		local lightsItem, lightsMenu = pContext:AddSubMenu(gui.Loc("pfm_lights"))
 		lightsItem:SetName("lights")
 
 		addPresetActorOption(
@@ -237,7 +237,7 @@ function gui.PFMActorEditor:OnInitialize()
 			"pfm_create_new_directional_light"
 		)
 
-		local pBakingItem, pBakingMenu = pContext:AddSubMenu(locale.get_text("pfm_baking"))
+		local pBakingItem, pBakingMenu = pContext:AddSubMenu(gui.Loc("pfm_baking"))
 		pBakingItem:SetName("baking")
 		if hasLightmapperComponent == false then
 			addPresetActorOption(
@@ -255,7 +255,7 @@ function gui.PFMActorEditor:OnInitialize()
 		)
 
 		if hasVrManagerComponent == false then
-			local pVrItem, pVrMenu = pContext:AddSubMenu(locale.get_text("virtual_reality"))
+			local pVrItem, pVrMenu = pContext:AddSubMenu(gui.Loc("virtual_reality"))
 			pVrItem:SetName("virtual_reality")
 			addPresetActorOption(
 				"vr_manager",
@@ -276,7 +276,7 @@ function gui.PFMActorEditor:OnInitialize()
 		end
 
 		-- Misc
-		local miscItem, miscMenu = pContext:AddSubMenu(locale.get_text("pfm_misc"))
+		local miscItem, miscMenu = pContext:AddSubMenu(gui.Loc("pfm_misc"))
 		miscItem:SetName("misc")
 
 		addPresetActorOption("actor", miscMenu, gui.PFMActorEditor.ACTOR_PRESET_TYPE_ACTOR, "pfm_create_new_actor")
@@ -289,7 +289,7 @@ function gui.PFMActorEditor:OnInitialize()
 		)
 
 		if tool.get_filmmaker():IsDeveloperModeEnabled() then
-			local pConstraintItem, pConstraintMenu = pContext:AddSubMenu(locale.get_text("pfm_constraints"))
+			local pConstraintItem, pConstraintMenu = pContext:AddSubMenu(gui.Loc("pfm_constraints"))
 			pConstraintItem:SetName("constraints")
 			addPresetActorOption(
 				"copy_location_constraint",
@@ -361,7 +361,7 @@ function gui.PFMActorEditor:OnInitialize()
 		pBakingMenu:Update()
 		miscMenu:Update()
 
-		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_preset"))
+		--[[local pEntsItem,pEntsMenu = pContext:AddSubMenu(gui.Loc("pfm_add_preset"))
 		local types = ents.get_registered_entity_types()
 		table.sort(types)
 		for _,typeName in ipairs(types) do
@@ -387,7 +387,7 @@ function gui.PFMActorEditor:OnInitialize()
 			end
 		end
 		pContext:AddLine()
-		pContext:AddItem(locale.get_text("pfm_reset_history"),function()
+		pContext:AddItem(gui.Loc("pfm_reset_history"),function()
 			history:Clear()
 		end)]]
 	end, true)
@@ -749,12 +749,12 @@ function gui.PFMActorEditor:MouseCallback(button, state, mods)
 		pContext:SetPos(input.get_cursor_pos())
 
 		pContext
-			:AddItem(locale.get_text("pfm_copy_actors"), function()
+			:AddItem(gui.Loc("pfm_copy_actors"), function()
 				self:CopyToClipboard()
 			end)
 			:SetName("copy_actors")
 		pContext
-			:AddItem(locale.get_text("pfm_paste_actors"), function()
+			:AddItem(gui.Loc("pfm_paste_actors"), function()
 				self:PasteFromClipboard()
 			end)
 			:SetName("paste_actors")
@@ -1247,7 +1247,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 		local metaInfoOpt = memberInfo:FindTypeMetaData(ents.ComponentInfo.MemberInfo.TYPE_META_DATA_OPTIONAL)
 		if metaInfoOpt ~= nil and util.is_valid(container) then
 			local elCheckbox = gui.create("WICheckbox")
-			elCheckbox:SetTooltip(locale.get_text("pfm_click_toggle_property"))
+			elCheckbox:SetTooltip(gui.Loc("pfm_click_toggle_property"))
 			container:AddIcon(elCheckbox)
 
 			local componentName, memberName =
@@ -1485,7 +1485,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 		end
 		if hasExpr then
 			context
-				:AddItem(locale.get_text("pfm_clear_expression"), function()
+				:AddItem(gui.Loc("pfm_clear_expression"), function()
 					local cmd = pfm.create_command("composition")
 					for _, pd in ipairs(propDatas) do
 						cmd:AddSubCommand(
@@ -1501,7 +1501,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 				:SetName("clear_expression")
 			if #propDatas == 1 then
 				context
-					:AddItem(locale.get_text("pfm_copy_expression"), function()
+					:AddItem(gui.Loc("pfm_copy_expression"), function()
 						local expr = animManager:GetValueExpression(
 							clickedPropData.actorData.actor,
 							clickedPropData.controlData.path
@@ -1516,14 +1516,14 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 		end
 		if #propDatas == 1 then
 			context
-				:AddItem(locale.get_text("pfm_set_expression"), function()
+				:AddItem(gui.Loc("pfm_set_expression"), function()
 					self:OpenPropertyExpressionWindow(clickedPropData.actorData, clickedPropData.controlData)
 				end)
 				:SetName("set_expression")
 		end
 		if #propDatas == 1 and clickedPropData.controlData.path ~= nil then
 			context
-				:AddItem(locale.get_text("pfm_copy_property_path"), function()
+				:AddItem(gui.Loc("pfm_copy_property_path"), function()
 					util.set_clipboard_string(
 						ents.create_uri(clickedPropData.actorData.actor:GetUniqueId(), clickedPropData.controlData.path)
 					)
@@ -1550,7 +1550,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 		end
 		if #cdsWithAnimData > 0 then
 			context
-				:AddItem(locale.get_text("pfm_clear_animation"), function()
+				:AddItem(gui.Loc("pfm_clear_animation"), function()
 					tool.get_filmmaker()
 					local cmd = pfm.create_command("composition")
 					local actors = {}
@@ -1575,7 +1575,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 		end
 		if #cdsWithoutAnimData > 0 then
 			context
-				:AddItem(locale.get_text("pfm_make_animated"), function()
+				:AddItem(gui.Loc("pfm_make_animated"), function()
 					local cmd = pfm.create_command("composition")
 					local actors = {}
 					for _, cdData in ipairs(cdsWithoutAnimData) do
@@ -1610,7 +1610,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 
 			if #controlDataMemberInfos > 0 then
 				context
-					:AddItem(locale.get_text("pfm_set_to_default"), function()
+					:AddItem(gui.Loc("pfm_set_to_default"), function()
 						local cmd = pfm.create_command("composition")
 						for _, cdInfo in ipairs(controlDataMemberInfos) do
 							local controlData = cdInfo.controlData
@@ -1671,7 +1671,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 				})
 			end
 
-			local ctItem, ctMenu = context:AddSubMenu(locale.get_text("pfm_add_constraint"))
+			local ctItem, ctMenu = context:AddSubMenu(gui.Loc("pfm_add_constraint"))
 			ctItem:SetName("add_constraint")
 			if self:AddContextMenuConstraintOptions(context, t[1], t[2]) == false then
 				context:RemoveSubMenu(ctMenu)
@@ -1694,7 +1694,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 		local prop = props[1]
 		if clickedPropData.controlData.type < udm.TYPE_COUNT then
 			context
-				:AddItem(locale.get_text("pfm_add_driver"), function()
+				:AddItem(gui.Loc("pfm_add_driver"), function()
 					local actor = self:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ANIMATION_DRIVER, {
 						["updateActorComponents"] = false,
 					})
@@ -1783,7 +1783,7 @@ function gui.PFMActorEditor:PopulatePropertyContextMenu(context, propDatas, clic
 
 	if #propDatas == 1 and clickedPropData.controlData.type == ents.MEMBER_TYPE_COMPONENT_PROPERTY then
 		context
-			:AddItem(locale.get_text("pfm_go_to_property"), function()
+			:AddItem(gui.Loc("pfm_go_to_property"), function()
 				local val = clickedPropData.controlData.getValue()
 				if val == nil then
 					return
@@ -1917,12 +1917,12 @@ function gui.PFMActorEditor:AddControl(
 									pContext:SetPos(input.get_cursor_pos())
 
 									local ikItem, ikMenu =
-										pContext:AddSubMenu(locale.get_text("pfm_actor_editor_add_ik_control"))
+										pContext:AddSubMenu(gui.Loc("pfm_actor_editor_add_ik_control"))
 									ikItem:SetName("add_ik_control")
 									parent = bone:GetParent():GetParent()
 									for i = 2, numParents do
 										local subItem = ikMenu:AddItem(
-											locale.get_text(
+											gui.Loc(
 												"pfm_actor_editor_add_ik_control_chain",
 												{ i + 1, parent:GetName() }
 											),
@@ -2217,7 +2217,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 								pContext:SetPos(input.get_cursor_pos())
 
 								pContext
-									:AddItem(locale.get_text("pfm_go_to_driver_property"), function()
+									:AddItem(gui.Loc("pfm_go_to_driver_property"), function()
 										local tDriver = find_property_object_entry(elActor, "constraint", "driver")
 										if #tDriver > 0 then
 											local driverData = tDriver[1]
@@ -2232,7 +2232,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 									end)
 									:SetName("go_to_driver_property")
 								pContext
-									:AddItem(locale.get_text("remove"), function()
+									:AddItem(gui.Loc("remove"), function()
 										self:RemoveConstraint(drivenData.actorData.actor)
 									end)
 									:SetName("remove")
@@ -2300,13 +2300,13 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 			end
 			if actorDriver ~= nil then
 				iconData.icon:SetTooltip(
-					locale.get_text(
+					gui.Loc(
 						"pfm_constraint_to",
 						{ constraintName, tDriver[1].originalProperty, actorDriver:GetName() }
 					)
 				)
 			else
-				iconData.icon:SetTooltip(locale.get_text("pfm_constraint", { constraintName }))
+				iconData.icon:SetTooltip(gui.Loc("pfm_constraint", { constraintName }))
 			end
 
 			local elDrivenObject = iconData.element
@@ -2326,7 +2326,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 
 		local tIcons = add_icon(el, "animation_driver", "gui/pfm/icon_driver")
 		for _, iconData in ipairs(tIcons) do
-			iconData.icon:SetTooltip(locale.get_text("pfm_animation_driver"))
+			iconData.icon:SetTooltip(gui.Loc("pfm_animation_driver"))
 			iconData.element.__elDriverActorData = {
 				icon = iconData.icon,
 				driverActorElement = el,
@@ -2380,7 +2380,7 @@ function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData, controlData)
 			icon:SetName("animated")
 			icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 			icon:SetMouseInputEnabled(true)
-			icon:SetTooltip(locale.get_text("pfm_animated"))
+			icon:SetTooltip(gui.Loc("pfm_animated"))
 			util.remove(icon.__cbShowAnim)
 			icon.__cbShowAnim = icon:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
 				if button == input.MOUSE_BUTTON_LEFT then
@@ -2404,7 +2404,7 @@ function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData, controlData)
 			icon:SetName("math_expr")
 			icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 			icon:SetMouseInputEnabled(true)
-			icon:SetTooltip(locale.get_text("pfm_math_expression", { channel:GetExpression() }))
+			icon:SetTooltip(gui.Loc("pfm_math_expression", { channel:GetExpression() }))
 			util.remove(icon.__cbEditMathExpression)
 			icon.__cbEditMathExpression = icon:AddCallback("OnMouseEvent", function(wrapper, button, state, mods)
 				if button == input.MOUSE_BUTTON_LEFT then
@@ -2681,6 +2681,8 @@ pfm.populate_actor_component_context_menu = function(pContext, actor, t, localeI
 			local res, displayName = locale.get_text("c_category_" .. childLocaleId, true)
 			if res == false then
 				displayName = name
+			else
+				displayName = gui.Loc("c_category_" .. childLocaleId)
 			end
 
 			table.insert(tChildren, {
@@ -2691,7 +2693,7 @@ pfm.populate_actor_component_context_menu = function(pContext, actor, t, localeI
 			})
 		end
 		table.sort(tChildren, function(a, b)
-			return a.displayName < b.displayName
+			return pfm.util.get_ui_text(a.displayName) < pfm.util.get_ui_text(b.displayName)
 		end)
 		local hiddenCategories = {
 			["gameplay"] = true,
@@ -2718,11 +2720,13 @@ pfm.populate_actor_component_context_menu = function(pContext, actor, t, localeI
 		local valid, n = locale.get_text("c_" .. name, nil, true)
 		if valid then
 			displayName = n
+		else
+			displayName = gui.Loc("c_" .. name)
 		end
 		list[i] = { name, displayName }
 	end
 	table.sort(list, function(a, b)
-		return a[2] < b[2]
+		return pfm.util.get_ui_text(a[2]) < pfm.util.get_ui_text(b[2])
 	end)
 
 	for _, nameInfo in ipairs(list) do
@@ -2748,7 +2752,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		--[[for _, name in ipairs(ents.find_installed_custom_components()) do
 			newComponentMap[name] = true
 		end]]
-		local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(locale.get_text("pfm_add_component"))
+		local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(gui.Loc("pfm_add_component"))
 		pComponentsItem:SetName("add_component")
 		pfm.populate_actor_component_context_menu(pComponentsMenu, actor)
 		pComponentsMenu:Update()
@@ -2757,7 +2761,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 
 	local uniqueId = tostring(actor:GetUniqueId())
 	pContext
-		:AddItem(locale.get_text("pfm_export_animation"), function()
+		:AddItem(gui.Loc("pfm_export_animation"), function()
 			local entActor = actor:FindEntity()
 			if util.is_valid(entActor) == false then
 				return
@@ -2785,7 +2789,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end
 
 		if hasMaterials then
-			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
+			local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("pfm_edit_material"))
 			pItem:SetName("edit_material")
 			for matPath, _ in pairs(materials) do
 				local matName = file.get_file_name(matPath)
@@ -2804,7 +2808,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end
 
 		pContext
-			:AddItem(locale.get_text("pfm_export_model"), function()
+			:AddItem(gui.Loc("pfm_export_model"), function()
 				local exportInfo = game.Model.ExportInfo()
 				local result, err = mdl:Export(exportInfo)
 				if result then
@@ -2818,7 +2822,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			:SetName("export_model")
 
 		pContext
-			:AddItem(locale.get_text("pfm_edit_ik_rig"), function()
+			:AddItem(gui.Loc("pfm_edit_ik_rig"), function()
 				local filmmaker = pfm.get_project_manager()
 				local tab, el = filmmaker:OpenWindow("ik_rig_editor")
 				filmmaker:GoToWindow("ik_rig_editor")
@@ -2829,7 +2833,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			:SetName("edit_ik_rig")
 
 		pContext
-			:AddItem(locale.get_text("pfm_copy_animation_data"), function()
+			:AddItem(gui.Loc("pfm_copy_animation_data"), function()
 				local filmmaker = pfm.get_project_manager()
 				local actorEditor = filmmaker:GetActorEditor()
 				if util.is_valid(actorEditor) == false then
@@ -2839,7 +2843,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			end)
 			:SetName("copy_animation_data")
 		pContext
-			:AddItem(locale.get_text("pfm_paste_animation_data"), function()
+			:AddItem(gui.Loc("pfm_paste_animation_data"), function()
 				local filmmaker = pfm.get_project_manager()
 				local actorEditor = filmmaker:GetActorEditor()
 				if util.is_valid(actorEditor) == false then
@@ -2854,7 +2858,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		actors = { actor }
 	end
 	pContext
-		:AddItem(locale.get_text("pfm_copy_actors"), function()
+		:AddItem(gui.Loc("pfm_copy_actors"), function()
 			local filmmaker = pfm.get_project_manager()
 			local actorEditor = filmmaker:GetActorEditor()
 			if util.is_valid(actorEditor) == false then
@@ -2864,7 +2868,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end)
 		:SetName("copy_actors")
 	pContext
-		:AddItem(locale.get_text("pfm_paste_actors"), function()
+		:AddItem(gui.Loc("pfm_paste_actors"), function()
 			local filmmaker = pfm.get_project_manager()
 			local actorEditor = filmmaker:GetActorEditor()
 			if util.is_valid(actorEditor) == false then
@@ -2876,7 +2880,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 	local mdl = actor:GetModel()
 	if mdl ~= nil then
 		pContext
-			:AddItem(locale.get_text("pfm_pack_model"), function()
+			:AddItem(gui.Loc("pfm_pack_model"), function()
 				local job = pfm.pack_models({ mdl })
 				if job ~= false then
 					job:Start()
@@ -2885,12 +2889,12 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			end)
 			:SetName("pack_model")
 		pContext
-			:AddItem(locale.get_text("pfm_copy_model_path_to_clipboard"), function()
+			:AddItem(gui.Loc("pfm_copy_model_path_to_clipboard"), function()
 				util.set_clipboard_string(mdl)
 			end)
 			:SetName("copy_model_path_to_clipboard")
 		pContext
-			:AddItem(locale.get_text("pfm_show_in_explorer"), function()
+			:AddItem(gui.Loc("pfm_show_in_explorer"), function()
 				local filePath = asset.find_file(mdl, asset.TYPE_MODEL)
 				if filePath == nil then
 					return
@@ -2905,7 +2909,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		local mdlObj = game.get_model(mdl)
 		if mdlObj ~= nil then
 			local pSeqItem, pSeqMenu = pContext:AddSubMenu(
-				locale.get_text("pfm_import_sequence"),
+				gui.Loc("pfm_import_sequence"),
 				nil,
 				function(pItem, pMenu)
 					local animNames = mdlObj:GetAnimationNames()
@@ -2922,7 +2926,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end
 	end
 	pContext
-		:AddItem(locale.get_text("pfm_fly_to_actor"), function()
+		:AddItem(gui.Loc("pfm_fly_to_actor"), function()
 			local filmmaker = pfm.get_project_manager()
 			local filmClip = filmmaker:GetActiveFilmClip()
 			if filmClip == nil then
@@ -2946,7 +2950,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end)
 		:SetName("fly_to_actor")
 	pContext
-		:AddItem(locale.get_text("pfm_move_work_camera_to_actor"), function()
+		:AddItem(gui.Loc("pfm_move_work_camera_to_actor"), function()
 			local filmmaker = pfm.get_project_manager()
 			local filmClip = filmmaker:GetActiveFilmClip()
 			if filmClip == nil then
@@ -2966,7 +2970,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end)
 		:SetName("move_work_camera_to_actor")
 	pContext
-		:AddItem(locale.get_text("pfm_move_actor_to_work_camera"), function()
+		:AddItem(gui.Loc("pfm_move_actor_to_work_camera"), function()
 			local filmmaker = pfm.get_project_manager()
 			local pm = pfm.get_project_manager()
 			local vp = util.is_valid(pm) and pm:GetViewport() or nil
@@ -2989,7 +2993,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end)
 		:SetName("move_actor_to_work_camera")
 	pContext
-		:AddItem(locale.get_text("pfm_toggle_camera_link"), function()
+		:AddItem(gui.Loc("pfm_toggle_camera_link"), function()
 			local filmmaker = pfm.get_project_manager()
 			local actorEditor = filmmaker:GetActorEditor()
 			if util.is_valid(actorEditor) == false then
@@ -3006,7 +3010,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end)
 		:SetName("dissolve_single_value_channels")
 	pContext
-		:AddItem(locale.get_text("pfm_retarget"), function()
+		:AddItem(gui.Loc("pfm_retarget"), function()
 			local ent = actor:FindEntity()
 			if ent == nil then
 				return
@@ -3075,7 +3079,7 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 		end)
 	end
 	pContext
-		:AddItem(locale.get_text("pfm_copy_id"), function()
+		:AddItem(gui.Loc("pfm_copy_id"), function()
 			util.set_clipboard_string(tostring(actor:GetUniqueId()))
 		end)
 		:SetName("copy_id")

@@ -610,7 +610,7 @@ function TimelineEditorGraphBase:MouseCallback(button, state, mods)
 			end
 
 			pContext
-				:AddItem(locale.get_text("pfm_fit_view_to_data"), function()
+				:AddItem(gui.Loc("pfm_fit_view_to_data"), function()
 					if self:IsValid() then
 						self:FitViewToDataRange()
 					end
@@ -618,7 +618,7 @@ function TimelineEditorGraphBase:MouseCallback(button, state, mods)
 				:SetName("fit_view_to_data")
 
 			pContext
-				:AddItem(locale.get_text("pfm_generate_keyframes"), function()
+				:AddItem(gui.Loc("pfm_generate_keyframes"), function()
 					if self:IsValid() then
 						self:ApplyCurveFitting()
 					end
@@ -697,13 +697,13 @@ function TimelineEditorGraphBase:MouseCallback(button, state, mods)
 					:SetName("paste_panima_channel_data")
 			end
 
-			local pItem, pSubMenuInterp = pContext:AddSubMenu(locale.get_text("pfm_graph_editor_interpolation"))
+			local pItem, pSubMenuInterp = pContext:AddSubMenu(gui.Loc("pfm_graph_editor_interpolation"))
 			pItem:SetName("interpolation")
 			local esInterpolation = get_enum_set("Interpolation")
 			for val, name in ipairs(esInterpolation) do
 				val = val - 1
 				pSubMenuInterp
-					:AddItem(locale.get_text("pfm_graph_editor_interpolation_" .. name), function()
+					:AddItem(gui.Loc("pfm_graph_editor_interpolation_" .. name), function()
 						local timeline = self:GetTimeline()
 						timeline:SetInterpolationMode(val)
 					end)
@@ -711,19 +711,19 @@ function TimelineEditorGraphBase:MouseCallback(button, state, mods)
 			end
 			pSubMenuInterp:Update()
 
-			local pItem, pSubMenuInterp = pContext:AddSubMenu(locale.get_text("pfm_graph_editor_easing_mode"))
+			local pItem, pSubMenuInterp = pContext:AddSubMenu(gui.Loc("pfm_graph_editor_easing_mode"))
 			pItem:SetName("easing_mode")
 			local esEasing = get_enum_set("EasingMode")
 			for val, name in ipairs(esEasing) do
 				val = val - 1
-				pSubMenuInterp:AddItem(locale.get_text("pfm_graph_editor_easing_mode_" .. name), function()
+				pSubMenuInterp:AddItem(gui.Loc("pfm_graph_editor_easing_mode_" .. name), function()
 					local timeline = self:GetTimeline()
 					timeline:SetEasingMode(val)
 				end)
 			end
 
 			pSubMenuInterp
-				:AddItem(locale.get_text("pfm_overview"), function()
+				:AddItem(gui.Loc("pfm_overview"), function()
 					if self:IsValid() then
 						local pm = tool.get_filmmaker()
 						local webBrowser = pm:OpenWindow(pfm.WINDOW_WEB_BROWSER)
@@ -737,13 +737,13 @@ function TimelineEditorGraphBase:MouseCallback(button, state, mods)
 
 			pSubMenuInterp:Update()
 
-			local pItem, pSubMenuHandleMode = pContext:AddSubMenu(locale.get_text("pfm_graph_editor_handle_type"))
+			local pItem, pSubMenuHandleMode = pContext:AddSubMenu(gui.Loc("pfm_graph_editor_handle_type"))
 			pItem:SetName("handle_type")
 			local esHandleMode = get_enum_set("KeyframeHandleType")
 			for val, name in ipairs(esHandleMode) do
 				val = val - 1
 				pSubMenuHandleMode
-					:AddItem(locale.get_text("pfm_graph_editor_handle_type_" .. name), function()
+					:AddItem(gui.Loc("pfm_graph_editor_handle_type_" .. name), function()
 						local timeline = self:GetTimeline()
 						timeline:SetHandleType(val)
 					end)
@@ -1397,13 +1397,13 @@ function TimelineEditorGraphBase:AddControl(filmClip, actor, controlData, member
 			end
 		end
 	elseif memberInfo.type == udm.TYPE_EULER_ANGLES then
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_pitch")), nil, pfm.get_color_scheme_color("red"), 0)
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_yaw")), nil, pfm.get_color_scheme_color("green"), 1)
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_roll")), nil, pfm.get_color_scheme_color("blue"), 2)
+		addChannel(itemCtrl:AddItem(gui.Loc("euler_pitch")), nil, pfm.get_color_scheme_color("red"), 0)
+		addChannel(itemCtrl:AddItem(gui.Loc("euler_yaw")), nil, pfm.get_color_scheme_color("green"), 1)
+		addChannel(itemCtrl:AddItem(gui.Loc("euler_roll")), nil, pfm.get_color_scheme_color("blue"), 2)
 	elseif memberInfo.type == udm.TYPE_QUATERNION then
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_pitch")), nil, pfm.get_color_scheme_color("red"), 0)
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_yaw")), nil, pfm.get_color_scheme_color("green"), 1)
-		addChannel(itemCtrl:AddItem(locale.get_text("euler_roll")), nil, pfm.get_color_scheme_color("blue"), 2)
+		addChannel(itemCtrl:AddItem(gui.Loc("euler_pitch")), nil, pfm.get_color_scheme_color("red"), 0)
+		addChannel(itemCtrl:AddItem(gui.Loc("euler_yaw")), nil, pfm.get_color_scheme_color("green"), 1)
+		addChannel(itemCtrl:AddItem(gui.Loc("euler_roll")), nil, pfm.get_color_scheme_color("blue"), 2)
 	end
 	if controlData.type == "flexController" then
 		if controlData.dualChannel ~= true then
@@ -1436,13 +1436,13 @@ function TimelineEditorGraphBase:AddControl(filmClip, actor, controlData, member
 			local leftProperty = controlData.getLeftProperty(component)
 			local leftChannel = track:FindFlexControllerChannel(leftProperty)
 			if leftChannel ~= nil then
-				addChannel(leftChannel, itemCtrl:AddItem(locale.get_text("left")))
+				addChannel(leftChannel, itemCtrl:AddItem(gui.Loc("left")))
 			end
 
 			local rightProperty = controlData.getRightProperty(component)
 			local rightChannel = track:FindFlexControllerChannel(rightProperty)
 			if rightChannel ~= nil then
-				addChannel(rightChannel, itemCtrl:AddItem(locale.get_text("right")))
+				addChannel(rightChannel, itemCtrl:AddItem(gui.Loc("right")))
 			end
 		end
 	elseif controlData.type == "bone" then
@@ -1482,7 +1482,7 @@ function TimelineEditorGraphBase:AddControl(filmClip, actor, controlData, member
 	--float log
 	--local type = self:GetValues():GetValueType()
 	if(layer ~= nil) then
-		local label = locale.get_text("position")
+		local label = gui.Loc("position")
 		self:AddTransform(layer,itemCtrl,label .. " X",Color.Red,function(v) return v end)
 		self:AddTransform(layer,itemCtrl,label .. " X",Color.Red,function(v) return v.x end)
 		--Color(227,90,90)
@@ -1525,7 +1525,7 @@ end
 			local log = bonePosChannel:GetLog()
 			local layer = log:GetLayers():FindByName("vector3 log")
 			if(layer ~= nil) then
-				local label = locale.get_text("position")
+				local label = gui.Loc("position")
 				self:AddTransform(layer,itemBone,label .. " X",Color.Red,function(v) return v.x end)
 				--Color(227,90,90)
 				self:AddTransform(layer,itemBone,label .. " Y",Color.Lime,function(v) return v.y end)
@@ -1538,7 +1538,7 @@ end
 			local log = boneRotChannel:GetLog()
 			local layer = log:GetLayers():FindByName("quaternion log")
 			if(layer ~= nil) then
-				local label = locale.get_text("rotation")
+				local label = gui.Loc("rotation")
 				self:AddTransform(layer,itemBone,label .. " X",Color.Red,function(v) return v:ToEulerAngles().p end)
 				self:AddTransform(layer,itemBone,label .. " Y",Color.Lime,function(v) return v:ToEulerAngles().y end)
 				self:AddTransform(layer,itemBone,label .. " Z",Color.Blue,function(v) return v:ToEulerAngles().r end)

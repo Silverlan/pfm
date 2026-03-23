@@ -128,7 +128,7 @@ function gui.PatreonTicker:SetShowInactiveSupporters(shouldShow)
 	self.m_shouldShowInactiveSupporters = shouldShow
 	local sf = shouldShow and "on" or "off"
 	self.m_icon:SetMaterial("gui/pfm/icon_item_visible_" .. sf)
-	self.m_icon:SetTooltip(locale.get_text("pfm_supporter_ticker_show_" .. (shouldShow and "active" or "inactive")))
+	self.m_icon:SetTooltip(gui.Loc("pfm_supporter_ticker_show_" .. (shouldShow and "active" or "inactive")))
 	self:UpdateSupporterList()
 end
 function gui.PatreonTicker:ShouldShowInactiveSupporters()

@@ -240,7 +240,7 @@ function Element:InitializeProjectUI(layoutName)
 		end
 		filmStrip:Update()
 
-		local groupPicture = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_picture"))
+		local groupPicture = pfmClipEditor:AddTrackGroup(gui.Loc("pfm_clip_editor_picture"))
 		if filmStrip ~= nil then
 			for _, filmClip in ipairs(filmStrip:GetFilmClips()) do
 				timeline:AddTimelineItem(filmClip, filmClip:GetTimeFrame())
@@ -251,7 +251,7 @@ function Element:InitializeProjectUI(layoutName)
 		self.m_trackGroupPicture = groupPicture
 
 		local timeFrame = filmClip:GetTimeFrame()
-		local groupSound = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_sound"))
+		local groupSound = pfmClipEditor:AddTrackGroup(gui.Loc("pfm_clip_editor_sound"))
 		groupSound:SetMouseInputEnabled(true)
 		groupSound:AddCallback("OnMouseEvent", function(groupSound, button, state, mods)
 			if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
@@ -284,7 +284,7 @@ function Element:InitializeProjectUI(layoutName)
 			end
 		end
 
-		local groupOverlay = pfmClipEditor:AddTrackGroup(locale.get_text("pfm_clip_editor_overlay"))
+		local groupOverlay = pfmClipEditor:AddTrackGroup(gui.Loc("pfm_clip_editor_overlay"))
 		local trackGroupOverlay = filmClip:FindTrackGroup("Overlay")
 		if trackGroupOverlay ~= nil then
 			for _, track in ipairs(trackGroupOverlay:GetTracks()) do

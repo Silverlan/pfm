@@ -40,7 +40,7 @@ function Element:OnInitialize()
 		self:SetPath(pEntry:GetText())
 	end)
 	self.m_teLocationWrapper = self.m_teLocation:Wrap("editable_entry")
-	self.m_teLocationWrapper:SetText(locale.get_text("explorer_location"))
+	self.m_teLocationWrapper:SetText(gui.Loc("explorer_location"))
 
 	local p = gui.create("pfm_controls_menu", self.m_contents)
 	p:SetAutoFillContentsToWidth(true)
@@ -51,11 +51,11 @@ function Element:OnInitialize()
 
 	if self.m_externalAssetsEnabled ~= false then
 		local elShowExternalAssets, wrapper = p:AddDropDownMenu(
-			locale.get_text("pfm_show_external_assets"),
+			gui.Loc("pfm_show_external_assets"),
 			"show_external_assets",
 			{
-				{ "0", locale.get_text("no") },
-				{ "1", locale.get_text("yes") },
+				{ "0", gui.Loc("no") },
+				{ "1", gui.Loc("yes") },
 			},
 			console.get_convar_bool("pfm_show_external_assets") and "1" or "0",
 			function()
@@ -78,11 +78,11 @@ function Element:OnInitialize()
 
 	-- Explorer Mode
 	local elExplorerMode, wrapper = p:AddDropDownMenu(
-		locale.get_text("pfm_view_mode"),
+		gui.Loc("pfm_view_mode"),
 		"explorer_mode",
 		{
-			{ tostring(Element.VIEW_MODE_ICON), locale.get_text("pfm_view_mode_icons") },
-			{ tostring(Element.VIEW_MODE_LIST), locale.get_text("pfm_view_mode_list") },
+			{ tostring(Element.VIEW_MODE_ICON), gui.Loc("pfm_view_mode_icons") },
+			{ tostring(Element.VIEW_MODE_LIST), gui.Loc("pfm_view_mode_list") },
 		},
 		tostring(Element.VIEW_MODE_ICON),
 		function()
@@ -147,7 +147,7 @@ function Element:OnInitialize()
 			self.m_explorer:ListFiles()
 		end)
 		local wrapper = self.m_teFilter:Wrap("editable_entry")
-		wrapper:SetText(locale.get_text("filter"))
+		wrapper:SetText(gui.Loc("filter"))
 		wrapper:SetName("filter")
 	end
 

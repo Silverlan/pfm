@@ -84,7 +84,7 @@ function gui.PFMMaterialEditor:InitializeCyclesOptions(ctrlVbox, shader)
 			end,
 			0.001
 		)
-		-- ctrlSSSFactor:SetTooltip(locale.get_text("sss_factor_desc"))
+		-- ctrlSSSFactor:SetTooltip(gui.Loc("sss_factor_desc"))
 		self:LinkControlToMaterialParameter("factor", ctrlSSSFactor, { "subsurface_scattering" })
 
 		-- Subsurface color

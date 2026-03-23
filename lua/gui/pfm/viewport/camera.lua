@@ -80,18 +80,18 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 	self.m_btCamera:SetName("cc_camera")
 	self.m_btCamera:SetupContextMenu(function(pContext)
 		local sceneCamera = self:IsSceneCamera()
-		local camName = sceneCamera and locale.get_text("pfm_scene_camera") or locale.get_text("pfm_work_camera")
-		pContext:AddItem(locale.get_text("pfm_switch_to_camera", { camName }), function()
+		local camName = sceneCamera and gui.Loc("pfm_scene_camera") or gui.Loc("pfm_work_camera")
+		pContext:AddItem(gui.Loc("pfm_switch_to_camera", { camName }), function()
 			self:ToggleCamera()
 		end)
-		pContext:AddItem(locale.get_text("pfm_switch_to_gameplay"), function()
+		pContext:AddItem(gui.Loc("pfm_switch_to_gameplay"), function()
 			self:SwitchToGameplay()
 		end)
-		pContext:AddItem(locale.get_text("pfm_copy_to_camera", { camName }), function() end) -- TODO
+		pContext:AddItem(gui.Loc("pfm_copy_to_camera", { camName }), function() end) -- TODO
 
 		pContext:AddLine()
 
-		local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_change_scene_camera"))
+		local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("pfm_change_scene_camera"))
 		local pm = pfm.get_project_manager()
 		local session = (pm ~= nil) and pm:GetSession() or nil
 		local filmClip = (session ~= nil) and session:FindClipAtTimeOffset(pm:GetTimeOffset()) or nil
@@ -107,7 +107,7 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 			end
 		end
 
-		-- pSubMenu:AddItem(locale.get_text("pfm_new_camera"),function() end) -- TODO
+		-- pSubMenu:AddItem(gui.Loc("pfm_new_camera"),function() end) -- TODO
 		pSubMenu:AddLine()
 		-- TODO: Add all available cameras
 		pSubMenu:Update()
@@ -115,7 +115,7 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 		pContext:AddLine()
 
 		if sceneCamera then
-			pContext:AddItem(locale.get_text("pfm_select_actor"), function()
+			pContext:AddItem(gui.Loc("pfm_select_actor"), function()
 				local camC = ents.PFMCamera.get_active_camera()
 				local actorC = (camC ~= nil) and camC:GetEntity():GetComponent(ents.COMPONENT_PFM_ACTOR) or nil
 				if actorC == nil then
@@ -127,7 +127,7 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 
 			pContext:AddLine()
 
-			pContext:AddItem(locale.get_text("pfm_show_camera_in_element_viewer"), function()
+			pContext:AddItem(gui.Loc("pfm_show_camera_in_element_viewer"), function()
 				local camC = ents.PFMCamera.get_active_camera()
 				if util.is_valid(camC) == false then
 					return
@@ -135,7 +135,7 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 				pfm.get_project_manager():ShowInElementViewer(camC:GetCameraData())
 			end)
 		end
-		pContext:AddItem(locale.get_text("pfm_auto_aim_work_camera"), function() end) -- TODO
+		pContext:AddItem(gui.Loc("pfm_auto_aim_work_camera"), function() end) -- TODO
 	end)
 	self:SwitchToSceneCamera()
 	self.m_btGear = btGroup:AddIconButton("gear-fill", function()
@@ -364,7 +364,7 @@ function gui.PFMCoreViewportBase:SwitchToSceneCamera(camOverride)
 		self:SwitchToCamera(cam)
 		local name = cam:GetEntity():GetName()
 		if #name == 0 then
-			name = locale.get_text("pfm_scene_camera")
+			name = gui.Loc("pfm_scene_camera")
 		end
 		if util.is_valid(self.m_btCamera) then
 			self.m_btCamera:SetText(name)
@@ -433,7 +433,7 @@ function gui.PFMCoreViewportBase:SwitchToWorkCamera(ignoreGameplay)
 		self:SwitchToCamera(cam)
 	end
 	if util.is_valid(self.m_btCamera) then
-		self.m_btCamera:SetText(locale.get_text("pfm_work_camera"))
+		self.m_btCamera:SetText(gui.Loc("pfm_work_camera"))
 	end
 
 	for ent, c in ents.citerator(ents.COMPONENT_PFM_CAMERA) do

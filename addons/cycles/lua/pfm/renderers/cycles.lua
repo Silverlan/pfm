@@ -54,7 +54,7 @@ function CyclesInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 		},
 	}, tostring(renderSettings:GetDeviceType()))
 	elSettings.m_ctrlDeviceType = ctrl
-	wrapper:SetTooltip(locale.get_text("pfm_render_setting_device_type"))
+	wrapper:SetTooltip(gui.Loc("pfm_render_setting_device_type"))
 	elSettings:LinkToUDMProperty("device_type", renderSettings, "deviceType")
 
 	-- Denoise Mode
@@ -66,7 +66,7 @@ function CyclesInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 		{ tostring(pfm.RaytracingRenderJob.Settings.DENOISE_MODE_OPEN_IMAGE), "Intel Open Image Denoise" },
 	}, tostring(renderSettings:GetDenoiseMode()))
 	elSettings.m_ctrlDenoiseMode = ctrl
-	wrapper:SetTooltip(locale.get_text("pfm_render_setting_denoise_mode"))
+	wrapper:SetTooltip(gui.Loc("pfm_render_setting_denoise_mode"))
 	elSettings:LinkToUDMProperty("denoise_mode", renderSettings, "denoiseMode")
 
 	-- Sample count
@@ -81,7 +81,7 @@ function CyclesInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 		true
 	)
 	elSettings.m_ctrlSamplesPerPixel = ctrl
-	ctrl:SetTooltip(locale.get_text("pfm_render_setting_ssp"))
+	ctrl:SetTooltip(gui.Loc("pfm_render_setting_ssp"))
 	elSettings:LinkToUDMProperty("samples_per_pixel", renderSettings, "samples")
 
 	-- Max transparency bounces
@@ -96,7 +96,7 @@ function CyclesInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 		true
 	)
 	elSettings.m_ctrlMaxTransparencyBounces = ctrl
-	ctrl:SetTooltip(locale.get_text("pfm_render_setting_max_transparency_bounces"))
+	ctrl:SetTooltip(gui.Loc("pfm_render_setting_max_transparency_bounces"))
 	elSettings:LinkToUDMProperty("max_transparency_bounces", renderSettings, "maxTransparencyBounces")
 
 	-- Light intensity factor
@@ -108,7 +108,7 @@ function CyclesInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 		20
 	)
 	elSettings.m_ctrlLightIntensityFactor = ctrl
-	ctrl:SetTooltip(locale.get_text("pfm_render_setting_light_intensity_factor"))
+	ctrl:SetTooltip(gui.Loc("pfm_render_setting_light_intensity_factor"))
 	elSettings:LinkToUDMProperty("light_intensity_factor", renderSettings, "lightIntensityFactor")
 
 	-- Emission strength
@@ -126,7 +126,7 @@ function CyclesInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 		end
 	)
 	elSettings.m_ctrlEmissionStrength = ctrl
-	ctrl:SetTooltip(locale.get_text("pfm_render_setting_emission_strength"))
+	ctrl:SetTooltip(gui.Loc("pfm_render_setting_emission_strength"))
 	elSettings:LinkToUDMProperty("emission_strength", renderSettings, "emissionStrength")
 
 	ctrl, wrapper = elSettings:AddToggleControl(
@@ -137,24 +137,24 @@ function CyclesInfo:InitializeUIRenderSettingControls(elParentSettings, renderSe
 			elSettings.m_ctrlProgressiveRefinement:SetVisible(elSettings.m_ctrlProgressive:IsChecked())
 		end
 	)
-	ctrl:SetTooltip(locale.get_text("pfm_render_setting_progressive"))
+	ctrl:SetTooltip(gui.Loc("pfm_render_setting_progressive"))
 	elSettings.m_ctrlProgressive = ctrl
 	elSettings.m_ctrlPreCalcLight = elSettings:AddToggleControl(
 		pfm.LocStr("pfm_render_precalc_light"),
 		"precalc_light",
 		renderSettings:ShouldPreCalculateLight()
 	)
-	elSettings.m_ctrlPreCalcLight:SetTooltip(locale.get_text("pfm_render_setting_precalc_light"))
+	elSettings.m_ctrlPreCalcLight:SetTooltip(gui.Loc("pfm_render_setting_precalc_light"))
 	elSettings.m_ctrlProgressiveRefinement = elSettings:AddToggleControl(
 		pfm.LocStr("pfm_render_progressive_refinement"),
 		"progressive_refine",
 		renderSettings:IsProgressiveRefinementEnabled()
 	)
-	elSettings.m_ctrlProgressiveRefinement:SetTooltip(locale.get_text("pfm_render_setting_progressive_refinement"))
+	elSettings.m_ctrlProgressiveRefinement:SetTooltip(gui.Loc("pfm_render_setting_progressive_refinement"))
 
 	local hasOptixCap = self:HasCapability("optix")
 	elSettings.m_ctrlOptix = elSettings:AddToggleControl(locale.get_text("pfm_use_optix"), "use_optix", hasOptixCap)
-	elSettings.m_ctrlOptix:SetTooltip(locale.get_text("pfm_render_setting_optix"))
+	elSettings.m_ctrlOptix:SetTooltip(gui.Loc("pfm_render_setting_optix"))
 
 	if not hasOptixCap then
 		elSettings:SetControlEnabled("use_optix", false)

@@ -247,7 +247,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(selectedItems, proper
 										)
 										item:SetName("child_of_positional")
 										item:SetTooltip(
-											locale.get_text("pfm_create_child_of_constraint_type_positional_desc")
+											gui.Loc("pfm_create_child_of_constraint_type_positional_desc")
 										)
 
 										local translationalPropertyPath
@@ -286,7 +286,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(selectedItems, proper
 												)
 												item:SetName("child_of_translational")
 												item:SetTooltip(
-													locale.get_text(
+													gui.Loc(
 														"pfm_create_child_of_constraint_type_translational_desc"
 													)
 												)
@@ -323,7 +323,7 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(selectedItems, proper
 										)
 										item:SetName("child_of_rotational")
 										item:SetTooltip(
-											locale.get_text("pfm_create_child_of_constraint_type_rotational_desc")
+											gui.Loc("pfm_create_child_of_constraint_type_rotational_desc")
 										)
 									end
 								end

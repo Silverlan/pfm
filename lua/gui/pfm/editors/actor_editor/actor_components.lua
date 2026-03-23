@@ -198,13 +198,13 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 	local locId = "c_" .. componentType
 	local res, text = locale.get_text(locId, true)
 	if res == true then
-		displayName = text
+		displayName = gui.Loc(locId)
 	end
 
 	local description
 	local res, textDesc = locale.get_text(locId .. "_desc", true)
 	if res == true then
-		description = textDesc
+		description = gui.Loc(locId .. "_desc")
 	end
 
 	local componentData = actorData.componentData[componentId]

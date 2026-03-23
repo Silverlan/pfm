@@ -52,7 +52,9 @@ function PfmPrompt:AddButton(id, text)
 		if self:CallCallbacks("OnButtonPressed", id) == util.EVENT_REPLY_HANDLED then
 			return
 		end
-		self:GetFrame():Remove()
+		if self:IsValid() then
+			self:GetFrame():Remove()
+		end
 	end)
 	elBt:SizeToContents()
 	gui.create("WIBase", self.m_boxButtons, 0, 0, 8, 1) -- Gap

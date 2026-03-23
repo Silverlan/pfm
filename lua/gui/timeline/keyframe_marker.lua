@@ -34,13 +34,13 @@ function Element:SetKeyframeState(state)
 	self:RemoveStyleClass("keyframe_marker_animated_frame")
 	if state == Element.STATE_STATIC then
 		mat = "gui/pfm/keyframe_marker_static"
-		self:SetTooltip(locale.get_text("pfm_animate_property"))
+		self:SetTooltip(gui.Loc("pfm_animate_property"))
 		self:AddStyleClass("keyframe_marker_static")
 	elseif state == Element.STATE_ANIMATED then
-		self:SetTooltip(locale.get_text("pfm_add_keyframe"))
+		self:SetTooltip(gui.Loc("pfm_add_keyframe"))
 		self:AddStyleClass("keyframe_marker_animated")
 	elseif state == Element.STATE_ANIMATED_FRAME then
-		self:SetTooltip(locale.get_text("pfm_remove_keyframe"))
+		self:SetTooltip(gui.Loc("pfm_remove_keyframe"))
 		self:AddStyleClass("keyframe_marker_animated_frame")
 	end
 	self:RefreshSkin()

@@ -801,7 +801,7 @@ function gui.PFMParticleEditor:PopulateAttributes(propertyType, opType, udmOpera
 				sliderCtrl:SetText(locName)
 				sliderCtrl:SetRange(min, max)
 				sliderCtrl:SetDefault(default)
-				-- sliderCtrl:SetTooltip(locale.get_text("pfm_metalness_desc"))
+				-- sliderCtrl:SetTooltip(gui.Loc("pfm_metalness_desc"))
 				sliderCtrl:SetStepSize(stepSize)
 
 				local val = get_key_value(name)

@@ -408,7 +408,7 @@ function Element:SetText(text)
 	if util.is_valid(self.m_text) == false then
 		return
 	end
-	self.m_text:SetVisible(#text > 0)
+	self.m_text:SetVisible(#pfm.util.get_ui_text(text) > 0)
 	self.m_baseText = text
 	self:UpdateText()
 end
@@ -420,14 +420,15 @@ function Element:UpdateText()
 	if self.m_baseText == nil then
 		return
 	end
-	local text = self.m_baseText .. ": "
-	text = text .. util.round_string(self:GetLeftValue(), self.m_numDecimalPlaces)
+	local suffix = ": "
+	suffix = suffix .. util.round_string(self:GetLeftValue(), self.m_numDecimalPlaces)
 	if self:GetLeftRightValueRatio() ~= 0.5 then
-		text = text .. " / " .. util.round_string(self:GetRightValue(), self.m_numDecimalPlaces)
+		suffix = suffix .. " / " .. util.round_string(self:GetRightValue(), self.m_numDecimalPlaces)
 	end
 	if self.m_unit ~= nil then
-		text = text .. " " .. self.m_unit
+		suffix = suffix .. " " .. self.m_unit
 	end
-	self.m_text:SetText(text)
+	self.m_text:SetSuffixText(suffix)
+	self.m_text:SetText(self.m_baseText)
 end
 gui.register("pfm_slider", Element)

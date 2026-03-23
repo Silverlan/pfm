@@ -27,7 +27,7 @@ pfm.register_window = function(name, category, localizedName, factory)
 	pfm["WINDOW_" .. name:upper() .. "_UI_ID"] = "window_" .. name
 end
 
-pfm.register_window("actor_editor", "editors", locale.get_text("pfm_actor_editor"), function(pm)
+pfm.register_window("actor_editor", "editors", gui.Loc("pfm_actor_editor"), function(pm)
 	local actorEditor = gui.create("pfm_actor_editor")
 	actorEditor:AddCallback("OnControlSelected", function(actorEditor, actor, component, controlData, slider)
 		pm:OnActorControlSelected(actorEditor, actor, component, controlData, slider)
@@ -37,19 +37,19 @@ pfm.register_window("actor_editor", "editors", locale.get_text("pfm_actor_editor
 	end)
 	return actorEditor
 end)
-pfm.register_window("bone_retargeting", "editors", locale.get_text("pfm_bone_retargeting"), function(pm)
+pfm.register_window("bone_retargeting", "editors", gui.Loc("pfm_bone_retargeting"), function(pm)
 	local p = gui.create("bone_retargeting")
 	pm:OpenModelView()
 	p:SetModelView(pm.m_mdlView)
 	return p
 end)
-pfm.register_window("ik_rig_editor", "editors", locale.get_text("pfm_ik_rig_editor"), function(pm)
+pfm.register_window("ik_rig_editor", "editors", gui.Loc("pfm_ik_rig_editor"), function(pm)
 	local p = gui.create("ik_rig_editor")
 	pm:OpenModelView()
 	p:SetModelView(pm.m_mdlView)
 	return p
 end)
-pfm.register_window("model_viewer", "viewers", locale.get_text("pfm_model_viewer"), function(pm)
+pfm.register_window("model_viewer", "viewers", gui.Loc("pfm_model_viewer"), function(pm)
 	local playerBox = gui.create("vbox")
 	playerBox:SetAutoFillContents(true)
 
@@ -91,7 +91,7 @@ pfm.register_window("model_viewer", "viewers", locale.get_text("pfm_model_viewer
 	end
 	return playerBox
 end)
-pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_catalog"), function(pm)
+pfm.register_window("model_catalog", "catalogs", gui.Loc("pfm_model_catalog"), function(pm)
 	local mdlCatalog = gui.create("pfm_model_catalog")
 	local explorer = mdlCatalog:GetIconExplorer()
 	explorer:AddCallback("PopulateIconContextMenu", function(explorer, pContext, tSelectedFiles, tExternalFiles)
@@ -101,17 +101,17 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 		end
 		if #tSelectedFiles == 1 then
 			local path = tSelectedFiles[1]:GetRelativeAsset()
-			local pItem = pContext:AddItem(locale.get_text("pfm_show_in_model_viewer"), function()
+			local pItem = pContext:AddItem(gui.Loc("pfm_show_in_model_viewer"), function()
 				local pDialog, frame, el = gui.pfm.open_model_dialog()
 				el:SetModel(path)
 			end)
 			pItem:SetName("show_in_model_viewer")
-			pItem:SetTooltip(locale.get_text("pfm_model_context_model_viewer"))
+			pItem:SetTooltip(gui.Loc("pfm_model_context_model_viewer"))
 
 			local filePath = asset.find_file(path, asset.TYPE_MODEL)
 			if filePath ~= nil then
 				filePath = asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. filePath
-				local pItem = pContext:AddItem(locale.get_text("pfm_edit_udm_data"), function()
+				local pItem = pContext:AddItem(gui.Loc("pfm_edit_udm_data"), function()
 					local filmmaker = tool.get_filmmaker()
 					filmmaker:OpenFileInUdmEditor(filePath)
 				end)
@@ -119,16 +119,16 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 			end
 
 			if asset.is_loaded(path, asset.TYPE_MODEL) == false then
-				local pItem = pContext:AddItem(locale.get_text("pfm_load"), function()
+				local pItem = pContext:AddItem(gui.Loc("pfm_load"), function()
 					game.load_model(path)
 				end)
 				pItem:SetName("load")
-				pItem:SetTooltip(locale.get_text("pfm_model_context_load"))
+				pItem:SetTooltip(gui.Loc("pfm_model_context_load"))
 			else
 				local mdl = game.load_model(path)
 				local materials = mdl:GetMaterials()
 				if #materials > 0 then
-					local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("pfm_edit_material"))
+					local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("pfm_edit_material"))
 					for _, mat in pairs(materials) do
 						if mat ~= nil and mat:IsError() == false then
 							local name = file.remove_file_extension(file.get_file_name(mat:GetName()))
@@ -137,7 +137,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 							end)
 						end
 					end
-					pItem:SetTooltip(locale.get_text("pfm_model_context_edit_material"))
+					pItem:SetTooltip(gui.Loc("pfm_model_context_edit_material"))
 					pSubMenu:Update()
 				end
 
@@ -151,7 +151,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 						if formatType ~= false then
 							if formatType == udm.FORMAT_TYPE_BINARY then
 								local pItem = pContext:AddItem(
-									locale.get_text("pfm_convert_to_ascii_format"),
+									gui.Loc("pfm_convert_to_ascii_format"),
 									function()
 										local newFileName, err = udm.convert_udm_file_to_ascii(filePath)
 										if newFileName == false then
@@ -165,10 +165,10 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 									end
 								)
 								pItem:SetName("convert_to_ascii")
-								pItem:SetTooltip(locale.get_text("pfm_model_context_convert_to_ascii"))
+								pItem:SetTooltip(gui.Loc("pfm_model_context_convert_to_ascii"))
 							else
 								local pItem = pContext:AddItem(
-									locale.get_text("pfm_convert_to_binary_format"),
+									gui.Loc("pfm_convert_to_binary_format"),
 									function()
 										local newFileName, err = udm.convert_udm_file_to_binary(filePath)
 										if newFileName == false then
@@ -182,7 +182,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 									end
 								)
 								pItem:SetName("convert_to_binary")
-								pItem:SetTooltip(locale.get_text("pfm_model_context_convert_to_binary"))
+								pItem:SetTooltip(gui.Loc("pfm_model_context_convert_to_binary"))
 							end
 						end
 					end
@@ -191,7 +191,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 		end
 
 		if #tSelectedFiles > 0 then
-			local pItem = pContext:AddItem(locale.get_text("pfm_pack_model"), function()
+			local pItem = pContext:AddItem(gui.Loc("pfm_pack_model"), function()
 				local mdls = {}
 				for _, f in ipairs(tSelectedFiles) do
 					table.insert(mdls, f:GetRelativeAsset())
@@ -203,7 +203,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 				end
 			end)
 			pItem:SetName("pack_model")
-			pItem:SetTooltip(locale.get_text("pfm_model_context_pack_model"))
+			pItem:SetTooltip(gui.Loc("pfm_model_context_pack_model"))
 		end
 	end)
 	explorer:AddCallback("OnIconAdded", function(explorer, icon)
@@ -221,7 +221,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 		if asset.exists(path, asset.TYPE_MODEL) == false then
 			return
 		end
-		local pItem = pContext:AddItem(locale.get_text("pfm_edit_retarget_rig"), function()
+		local pItem = pContext:AddItem(gui.Loc("pfm_edit_retarget_rig"), function()
 			gui.pfm.open_model_dialog(function(result, mdlName)
 				if result ~= gui.DIALOG_RESULT_OK then
 					return
@@ -230,7 +230,7 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 			end)
 		end)
 		pItem:SetName("edit_retarget_rig")
-		pItem:SetTooltip(locale.get_text("pfm_model_context_retarget_rig"))
+		pItem:SetTooltip(gui.Loc("pfm_model_context_retarget_rig"))
 	end)
 	local listExplorer = mdlCatalog:GetListExplorer()
 	listExplorer:AddCallback("OnFileRowAdded", function(listExplorer, row, filePath)
@@ -240,39 +240,39 @@ pfm.register_window("model_catalog", "catalogs", locale.get_text("pfm_model_cata
 	end)
 	return mdlCatalog
 end)
-pfm.register_window("material_catalog", "catalogs", locale.get_text("pfm_material_catalog"), function(pm)
+pfm.register_window("material_catalog", "catalogs", gui.Loc("pfm_material_catalog"), function(pm)
 	local el = gui.create("pfm_material_catalog")
 	return el
 end)
---[[pfm.register_window("texture_catalog", "catalogs", locale.get_text("pfm_texture_catalog"), function(pm)
+--[[pfm.register_window("texture_catalog", "catalogs", gui.Loc("pfm_texture_catalog"), function(pm)
 	local el = gui.create("pfm_texture_catalog")
 	return el
 end)]]
-pfm.register_window("particle_catalog", "catalogs", locale.get_text("pfm_particle_catalog"), function(pm)
+pfm.register_window("particle_catalog", "catalogs", gui.Loc("pfm_particle_catalog"), function(pm)
 	local el = gui.create("pfm_particle_catalog")
 	return el
 end)
-pfm.register_window("tutorial_catalog", "catalogs", locale.get_text("pfm_tutorial_catalog"), function(pm)
+pfm.register_window("tutorial_catalog", "catalogs", gui.Loc("pfm_tutorial_catalog"), function(pm)
 	local el = gui.create("pfm_tutorial_catalog")
 	return el
 end)
---[[pfm.register_window("actor_catalog", "catalogs", locale.get_text("pfm_actor_catalog"), function(pm)
+--[[pfm.register_window("actor_catalog", "catalogs", gui.Loc("pfm_actor_catalog"), function(pm)
 	local el = gui.create("pfm_actor_catalog")
 	return el
 end)]]
-pfm.register_window("element_viewer", "editors", locale.get_text("pfm_element_viewer"), function(pm)
+pfm.register_window("element_viewer", "editors", gui.Loc("pfm_element_viewer"), function(pm)
 	local el = gui.create("pfm_element_viewer")
 	return el
 end)
-pfm.register_window("material_editor", "editors", locale.get_text("pfm_material_editor"), function(pm)
+pfm.register_window("material_editor", "editors", gui.Loc("pfm_material_editor"), function(pm)
 	local el = gui.create("pfm_material_editor")
 	return el
 end)
-pfm.register_window("particle_editor", "editors", locale.get_text("pfm_particle_editor"), function(pm)
+pfm.register_window("particle_editor", "editors", gui.Loc("pfm_particle_editor"), function(pm)
 	local el = gui.create("pfm_particle_editor")
 	return el
 end)
-pfm.register_window("web_browser", "editors", locale.get_text("pfm_web_browser"), function(pm)
+pfm.register_window("web_browser", "editors", gui.Loc("pfm_web_browser"), function(pm)
 	local el = gui.create("pfm_web_browser")
 	el:AddCallback("OnDetached", function(el, window)
 		window:Maximize()
@@ -303,14 +303,14 @@ pfm.register_window("web_browser", "editors", locale.get_text("pfm_web_browser")
 	end)
 	return el
 end)
-pfm.register_window("code_editor", "editors", locale.get_text("pfm_code_editor"), function(pm)
+pfm.register_window("code_editor", "editors", gui.Loc("pfm_code_editor"), function(pm)
 	local el = gui.create("pfm_code_editor")
 	el:AddCallback("OnDetached", function(el, window)
 		window:Maximize()
 	end)
 	return el
 end)
-pfm.register_window("console", "editors", locale.get_text("console"), function(pm)
+pfm.register_window("console", "editors", gui.Loc("console"), function(pm)
 	local elConsole = gui.get_console()
 	if util.is_valid(elConsole) == false then
 		return
@@ -331,12 +331,12 @@ pfm.register_window("console", "editors", locale.get_text("console"), function(p
 	elConsole:SetAnchor(0, 0, 1, 1)
 	return el
 end)
-pfm.register_window("settings", "editors", locale.get_text("pfm_settings"), function(pm)
+pfm.register_window("settings", "editors", gui.Loc("pfm_settings"), function(pm)
 	local el = gui.create("pfm_settings")
 	return el
 end)
 
-pfm.register_window("primary_viewport", "viewers", locale.get_text("pfm_primary_viewport"), function(pm)
+pfm.register_window("primary_viewport", "viewers", gui.Loc("pfm_primary_viewport"), function(pm)
 	local el = gui.create("pfm_viewport")
 	el:AddCallback("OnReattached", function(el, window)
 		pm:RequestFocus()
@@ -346,7 +346,7 @@ pfm.register_window("primary_viewport", "viewers", locale.get_text("pfm_primary_
 	end)
 	return el
 end)
-pfm.register_window("secondary_viewport", "viewers", locale.get_text("pfm_secondary_viewport"), function(pm)
+pfm.register_window("secondary_viewport", "viewers", gui.Loc("pfm_secondary_viewport"), function(pm)
 	local el = gui.create("pfm_viewport")
 	el:AddCallback("OnReattached", function(el, window)
 		pm:RequestFocus()
@@ -354,7 +354,7 @@ pfm.register_window("secondary_viewport", "viewers", locale.get_text("pfm_second
 	el:InitializeCustomScene()
 	return el
 end)
-pfm.register_window("tertiary_viewport", "viewers", locale.get_text("pfm_tertiary_viewport"), function(pm)
+pfm.register_window("tertiary_viewport", "viewers", gui.Loc("pfm_tertiary_viewport"), function(pm)
 	local el = gui.create("pfm_viewport")
 	el:AddCallback("OnReattached", function(el, window)
 		pm:RequestFocus()
@@ -362,7 +362,7 @@ pfm.register_window("tertiary_viewport", "viewers", locale.get_text("pfm_tertiar
 	el:InitializeCustomScene()
 	return el
 end)
-pfm.register_window("render", "viewers", locale.get_text("pfm_render"), function(pm)
+pfm.register_window("render", "viewers", gui.Loc("pfm_render"), function(pm)
 	local el = gui.create("pfm_render_preview")
 	el:GetVisibilityProperty():AddCallback(function(wasVisible, isVisible)
 		if pm.m_renderWasSceneCameraEnabled == nil then
@@ -388,14 +388,14 @@ pfm.register_window("render", "viewers", locale.get_text("pfm_render"), function
 	end)
 	return el
 end)
---[[pfm.register_window("post_processing", "viewers", locale.get_text("pfm_post_processing"), function(pm)
+--[[pfm.register_window("post_processing", "viewers", gui.Loc("pfm_post_processing"), function(pm)
 	return gui.create("pfm_post_processing")
 end)
-pfm.register_window("video_player", "viewers", locale.get_text("pfm_video_player"), function(pm)
+pfm.register_window("video_player", "viewers", gui.Loc("pfm_video_player"), function(pm)
 	return gui.create("pfm_video_player")
 end)]]
 
-pfm.register_window("timeline", "timeline", locale.get_text("pfm_timeline"), function(pm)
+pfm.register_window("timeline", "timeline", gui.Loc("pfm_timeline"), function(pm)
 	local pfmTimeline = gui.create("pfm_timeline")
 	pm.m_timeline = pfmTimeline
 
@@ -417,7 +417,7 @@ pfm.register_window("timeline", "timeline", locale.get_text("pfm_timeline"), fun
 	return pfmTimeline
 end)
 
-pfm.register_window("shader_editor", "timeline", locale.get_text("pfm_shader_editor"), function(pm)
+pfm.register_window("shader_editor", "timeline", gui.Loc("pfm_shader_editor"), function(pm)
 	return gui.create("pfm_shader_editor")
 end)
 

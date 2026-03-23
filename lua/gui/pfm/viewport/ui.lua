@@ -27,15 +27,15 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 	local p = self.m_settingsBox
 	p:SetName("vp_settings")
 
-	--[[local ctrlRt,wrapper = p:AddDropDownMenu(locale.get_text("pfm_viewport_rt_enabled"),"rt_enabled",{
-		{"disabled",locale.get_text("disabled")},
-		{"cycles",locale.get_text("pfm_render_engine_cycles")},
-		{"luxcorerender",locale.get_text("pfm_render_engine_luxcorerender")}
+	--[[local ctrlRt,wrapper = p:AddDropDownMenu(gui.Loc("pfm_viewport_rt_enabled"),"rt_enabled",{
+		{"disabled",gui.Loc("disabled")},
+		{"cycles",gui.Loc("pfm_render_engine_cycles")},
+		{"luxcorerender",gui.Loc("pfm_render_engine_luxcorerender")}
 	},0)]]
 	-- Live raytracing
-	local ctrlRt = p:AddDropDownMenu(locale.get_text("pfm_viewport_rt_enabled"), "rt_enabled", {
-		{ "0", locale.get_text("disabled") },
-		{ "1", locale.get_text("enabled") },
+	local ctrlRt = p:AddDropDownMenu(gui.Loc("pfm_viewport_rt_enabled"), "rt_enabled", {
+		{ "0", gui.Loc("disabled") },
+		{ "1", gui.Loc("enabled") },
 	}, 0)
 	self.m_ctrlRt = ctrlRt
 	-- wrapper:SetUseAltMode(true)
@@ -76,7 +76,7 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 	}
 	local ctrlViewportMode, wrapper, container
 	ctrlViewportMode, wrapper, container =
-		p:AddDropDownMenu(locale.get_text("pfm_viewport_mode"), "viewport_mode", options, "auto")
+		p:AddDropDownMenu(gui.Loc("pfm_viewport_mode"), "viewport_mode", options, "auto")
 	self.m_ctrlViewportMode = ctrlViewportMode
 	self.m_ctrlViewportContainer = container
 	self.m_ctrlViewportMode:AddCallback("OnOptionSelected", function(el, idx)
@@ -105,8 +105,8 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 	end)
 	self.m_ctrlViewportContainer:SetVisible(false)
 
-	self.m_ctrlToneMapping = p:AddDropDownMenu(locale.get_text("pfm_viewport_tonemapping"), "tonemapping", {
-		{ "gamma_correction", locale.get_text("gamma_correction") },
+	self.m_ctrlToneMapping = p:AddDropDownMenu(gui.Loc("pfm_viewport_tonemapping"), "tonemapping", {
+		{ "gamma_correction", gui.Loc("gamma_correction") },
 		{ "reinhard", "Reinhard" },
 		{ "hejil_richard", "Hejil-Richard" },
 		{ "uncharted", "Uncharted" },
@@ -118,19 +118,19 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 		pfm.tag_render_scene_as_dirty()
 	end)
 
-	self.m_ctrlTransformSpace = p:AddDropDownMenu(locale.get_text("pfm_transform_space"), "transform_space", {
-		{ "global", locale.get_text("pfm_transform_space_global") },
-		{ "local", locale.get_text("pfm_transform_space_local") },
-		{ "view", locale.get_text("pfm_transform_space_view") },
+	self.m_ctrlTransformSpace = p:AddDropDownMenu(gui.Loc("pfm_transform_space"), "transform_space", {
+		{ "global", gui.Loc("pfm_transform_space_global") },
+		{ "local", gui.Loc("pfm_transform_space_local") },
+		{ "view", gui.Loc("pfm_transform_space_view") },
 	}, "global")
 	self.m_ctrlTransformSpace:AddCallback("OnOptionSelected", function(el, idx)
 		self:ReloadManipulatorMode()
 	end)
 
 	self.m_ctrlTransformKeyframes =
-		p:AddDropDownMenu(locale.get_text("pfm_transform_keyframes"), "transform_keyframes", {
-			{ "0", locale.get_text("no") },
-			{ "1", locale.get_text("yes") },
+		p:AddDropDownMenu(gui.Loc("pfm_transform_keyframes"), "transform_keyframes", {
+			{ "0", gui.Loc("no") },
+			{ "1", gui.Loc("yes") },
 		}, 0)
 
 	local gridSteps = { 0, 1, 2, 4, 8, 16, 32, 64, 128 }
@@ -139,7 +139,7 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 		table.insert(options, { tostring(v), tostring(v) })
 	end
 	self.m_ctrlSnapToGridSpacing =
-		p:AddDropDownMenu(locale.get_text("pfm_transform_snap_to_grid_spacing"), "snap_to_grid_spacing", options, "0")
+		p:AddDropDownMenu(gui.Loc("pfm_transform_snap_to_grid_spacing"), "snap_to_grid_spacing", options, "0")
 	self.m_ctrlSnapToGridSpacing:AddCallback("OnOptionSelected", function(el, idx)
 		local spacing =
 			toint(self.m_ctrlSnapToGridSpacing:GetOptionValue(self.m_ctrlSnapToGridSpacing:GetSelectedOption()))
@@ -152,7 +152,7 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 		table.insert(options, { tostring(v), tostring(v) })
 	end
 	self.m_ctrlAngularSpacing =
-		p:AddDropDownMenu(locale.get_text("pfm_transform_angular_spacing"), "angular_spacing", options, "0")
+		p:AddDropDownMenu(gui.Loc("pfm_transform_angular_spacing"), "angular_spacing", options, "0")
 	self.m_ctrlAngularSpacing:AddCallback("OnOptionSelected", function(el, idx)
 		local spacing = toint(self.m_ctrlAngularSpacing:GetOptionValue(self.m_ctrlAngularSpacing:GetSelectedOption()))
 		self:SetAngularSpacing(spacing)
@@ -182,7 +182,7 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 		{ "16", "Shadow Map Depth" },
 		{ "17", "Forward+ Heatmap" },
 	}
-	self.m_ctrlDebugMode = p:AddDropDownMenu(locale.get_text("pfm_debug_mode"), "debug_mode", options, "0")
+	self.m_ctrlDebugMode = p:AddDropDownMenu(gui.Loc("pfm_debug_mode"), "debug_mode", options, "0")
 	self.m_ctrlDebugMode:AddCallback("OnOptionSelected", function(el, idx)
 		local mode = toint(self.m_ctrlDebugMode:GetOptionValue(self.m_ctrlDebugMode:GetSelectedOption()))
 		console.run("render_debug_mode", mode)
@@ -190,9 +190,9 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 	end)
 	-- end
 
-	self.m_ctrlShowBones = p:AddDropDownMenu(locale.get_text("pfm_show_bones"), "show_bones", {
-		{ "0", locale.get_text("no") },
-		{ "1", locale.get_text("yes") },
+	self.m_ctrlShowBones = p:AddDropDownMenu(gui.Loc("pfm_show_bones"), "show_bones", {
+		{ "0", gui.Loc("no") },
+		{ "1", gui.Loc("yes") },
 	}, 1)
 	self.m_ctrlShowBones:AddCallback("OnOptionSelected", function(el, idx)
 		local enabled = toboolean(self.m_ctrlShowBones:GetOptionValue(self.m_ctrlShowBones:GetSelectedOption()))
@@ -201,9 +201,9 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 	end)
 
 	self.m_ctrlShowSelectionWireframe =
-		p:AddDropDownMenu(locale.get_text("pfm_show_selection_wireframe"), "show_selection_wireframe", {
-			{ "0", locale.get_text("no") },
-			{ "1", locale.get_text("yes") },
+		p:AddDropDownMenu(gui.Loc("pfm_show_selection_wireframe"), "show_selection_wireframe", {
+			{ "0", gui.Loc("no") },
+			{ "1", gui.Loc("yes") },
 		}, 1)
 	self.m_ctrlShowSelectionWireframe:AddCallback("OnOptionSelected", function(el, idx)
 		local enabled = toboolean(
@@ -213,9 +213,9 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 		pfm.tag_render_scene_as_dirty()
 	end)
 
-	self.m_ctrlShowAxes = p:AddDropDownMenu(locale.get_text("pfm_show_axes"), "show_axes", {
-		{ "0", locale.get_text("no") },
-		{ "1", locale.get_text("yes") },
+	self.m_ctrlShowAxes = p:AddDropDownMenu(gui.Loc("pfm_show_axes"), "show_axes", {
+		{ "0", gui.Loc("no") },
+		{ "1", gui.Loc("yes") },
 	}, 1)
 	self.m_ctrlShowAxes:AddCallback("OnOptionSelected", function(el, idx)
 		local enabled = toboolean(self.m_ctrlShowAxes:GetOptionValue(self.m_ctrlShowAxes:GetSelectedOption()))
@@ -226,7 +226,7 @@ function gui.PFMCoreViewportBase:InitializeSettings(parent)
 		pfm.tag_render_scene_as_dirty()
 	end)
 
-	self.m_refreshRtView = p:AddButton(locale.get_text("pfm_refresh_rt_view"), "refresh_rt_view", function()
+	self.m_refreshRtView = p:AddButton(gui.Loc("pfm_refresh_rt_view"), "refresh_rt_view", function()
 		self.m_ctrlRt:SelectOption(0)
 		self.m_ctrlRt:SelectOption(1)
 	end)

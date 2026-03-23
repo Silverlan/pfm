@@ -56,12 +56,12 @@ function Element:OnInitialize()
 	local p = self.m_settingsBox
 	local elWindowMode, wrapper
 	elWindowMode, wrapper = p:AddDropDownMenu(
-		locale.get_text("window_mode"),
+		gui.Loc("window_mode"),
 		"window_mode",
 		{
-			{ "0", locale.get_text("windowmode_fullscreen") },
-			{ "1", locale.get_text("windowmode_windowed") },
-			{ "2", locale.get_text("windowmode_noborder_window") },
+			{ "0", gui.Loc("windowmode_fullscreen") },
+			{ "1", gui.Loc("windowmode_windowed") },
+			{ "2", gui.Loc("windowmode_noborder_window") },
 		},
 		console.get_convar_string("cl_render_window_mode"),
 		function()
@@ -87,7 +87,7 @@ function Element:OnInitialize()
 	end
 	local elResolution, wrapper
 	elResolution, wrapper = p:AddDropDownMenu(
-		locale.get_text("resolution"),
+		gui.Loc("resolution"),
 		"resolution",
 		options,
 		console.get_convar_string("cl_window_resolution"),
@@ -105,7 +105,7 @@ function Element:OnInitialize()
 
 	if(engine.is_managed_by_package_manager() == false) then
 		self:AddToggleControl(
-			locale.get_text("pfm_enable_experimental_updates"),
+			gui.Loc("pfm_enable_experimental_updates"),
 			"enable_experimental_updates",
 			"pfm_enable_experimental_updates",
 			console.get_convar_bool("pfm_enable_experimental_updates"),
@@ -115,7 +115,7 @@ function Element:OnInitialize()
 		)
 
 		self:AddToggleControl(
-			locale.get_text("pfm_should_check_for_updates"),
+			gui.Loc("pfm_should_check_for_updates"),
 			"should_check_for_updates",
 			"pfm_should_check_for_updates",
 			console.get_convar_bool("pfm_should_check_for_updates"),
@@ -126,7 +126,7 @@ function Element:OnInitialize()
 	end
 
 	self:AddToggleControl(
-		locale.get_text("pfm_tutorial_audio_enabled"),
+		gui.Loc("pfm_tutorial_audio_enabled"),
 		"tutorial_audio_enabled",
 		"pfm_tutorial_audio_enabled",
 		console.get_convar_bool("pfm_tutorial_audio_enabled"),
@@ -136,7 +136,7 @@ function Element:OnInitialize()
 	)
 
 	self:AddToggleControl(
-		locale.get_text("pfm_developer_mode_enabled"),
+		gui.Loc("pfm_developer_mode_enabled"),
 		"developer_mode_enabled",
 		"pfm_developer_mode_enabled",
 		console.get_convar_bool("pfm_developer_mode_enabled"),
@@ -146,7 +146,7 @@ function Element:OnInitialize()
 	)
 
 	self:AddToggleControl(
-		locale.get_text("pfm_keep_current_layout_setting"),
+		gui.Loc("pfm_keep_current_layout_setting"),
 		"keep_current_layout",
 		"pfm_keep_current_layout",
 		console.get_convar_bool("pfm_keep_current_layout"),
@@ -156,7 +156,7 @@ function Element:OnInitialize()
 	)
 
 	self:AddToggleControl(
-		locale.get_text("pfm_save_layout"),
+		gui.Loc("pfm_save_layout"),
 		"save_layout",
 		"pfm_save_layout",
 		console.get_convar_bool("pfm_save_layout"),
@@ -166,7 +166,7 @@ function Element:OnInitialize()
 	)
 
 	self:AddToggleControl(
-		locale.get_text("pfm_save_undo_stack"),
+		gui.Loc("pfm_save_undo_stack"),
 		"save_undo_stack",
 		"pfm_save_undo_stack",
 		console.get_convar_bool("pfm_save_undo_stack"),
@@ -176,7 +176,7 @@ function Element:OnInitialize()
 	)
 
 	self:AddToggleControl(
-		locale.get_text("pfm_autosave_enabled"),
+		gui.Loc("pfm_autosave_enabled"),
 		"autosave_enabled",
 		"pfm_autosave_enabled",
 		console.get_convar_bool("pfm_autosave_enabled"),
@@ -186,7 +186,7 @@ function Element:OnInitialize()
 	)
 
 	self:AddSliderControl(
-		locale.get_text("pfm_autosave_time_interval"),
+		gui.Loc("pfm_autosave_time_interval"),
 		"autosave_time_interval",
 		"pfm_autosave_time_interval",
 		console.get_convar_float("pfm_autosave_time_interval") / 60,
@@ -199,7 +199,7 @@ function Element:OnInitialize()
 	)
 
 	self:AddSliderControl(
-		locale.get_text("pfm_autosave_max_count"),
+		gui.Loc("pfm_autosave_max_count"),
 		"autosave_max_count",
 		"pfm_autosave_max_count",
 		console.get_convar_int("pfm_autosave_max_count"),
@@ -213,7 +213,7 @@ function Element:OnInitialize()
 	)
 
 	self:AddSliderControl(
-		locale.get_text("pfm_max_undo_steps"),
+		gui.Loc("pfm_max_undo_steps"),
 		"max_undo_steps",
 		"pfm_max_undo_steps",
 		console.get_convar_int("pfm_max_undo_steps"),

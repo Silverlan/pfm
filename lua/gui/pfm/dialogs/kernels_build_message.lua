@@ -6,7 +6,7 @@ function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	local el = gui.create("WIText", self)
-	el:SetText(locale.get_text("pfm_building_render_kernels"))
+	el:SetText(gui.Loc("pfm_building_render_kernels"))
 	el:AddStyleClass("font_large")
 	el:SetColor(Color.White)
 	self.m_elText = el

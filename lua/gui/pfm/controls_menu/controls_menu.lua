@@ -288,7 +288,9 @@ function gui.PFMControlsMenu:AddDropDownMenu(name, identifier, options, defaultO
 	local menu = gui.create("WIDropDownMenu")
 	local c = self:AddContainer(menu)
 	for _, option in pairs(options) do
-		menu:AddOption(tostring(option[2]), tostring(option[1]))
+		local text = option[2]
+		if(util.get_type_name(text) ~= "Loc") then text = tostring(text) end
+		menu:AddOption(text, tostring(option[1]))
 	end
 	local wrapper = menu:Wrap("editable_entry")
 	c:SetTargetElement(wrapper)

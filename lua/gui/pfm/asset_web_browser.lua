@@ -20,7 +20,7 @@ function Element:OnInitialize()
 	self.m_settingsBox = p
 
 	local elBookmarks, wrapper
-	elBookmarks, wrapper = p:AddDropDownMenu("Bookmarks", "bookmark", {}, "pfm_wiki", function(menu, option)
+	elBookmarks, wrapper = p:AddDropDownMenu(locale.get_text("pfm_bookmarks"), "bookmark", {}, "pfm_wiki", function(menu, option)
 		local id = menu:GetOptionValue(option)
 		local i = self.m_linkMap[id]
 		if i == nil then

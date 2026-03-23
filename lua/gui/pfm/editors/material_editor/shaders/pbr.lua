@@ -177,7 +177,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		end,
 		0.01
 	)
-	ctrlMetalness:SetTooltip(locale.get_text("pfm_metalness_desc"))
+	ctrlMetalness:SetTooltip(gui.Loc("pfm_metalness_desc"))
 	self:LinkControlToMaterialParameter("metalness_factor", ctrlMetalness)
 
 	-- Roughness
@@ -192,14 +192,14 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		end,
 		0.01
 	)
-	ctrlRoughness:SetTooltip(locale.get_text("pfm_roughness_desc"))
+	ctrlRoughness:SetTooltip(gui.Loc("pfm_roughness_desc"))
 	self:LinkControlToMaterialParameter("roughness_factor", ctrlRoughness)
 
 	-- Wetness
 	ctrlWetness = ctrlVbox:AddSliderControl(locale.get_text("wetness"), "wetness", 0.0, 0.0, 1.0, function(el, value)
 		self:SetMaterialParameter("float", "wetness_factor", value)
 	end, 0.01)
-	ctrlWetness:SetTooltip(locale.get_text("pfm_wetness_desc"))
+	ctrlWetness:SetTooltip(gui.Loc("pfm_wetness_desc"))
 	self:LinkControlToMaterialParameter("wetness_factor", ctrlWetness)
 
 	-- Emission factor
@@ -212,7 +212,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 			self:SetMaterialParameter("vector", "emission_factor", tostring(vCol))
 		end
 	)
-	ctrlEmissionFactor:SetTooltip(locale.get_text("pfm_emission_factor_desc"))
+	ctrlEmissionFactor:SetTooltip(gui.Loc("pfm_emission_factor_desc"))
 	self:LinkControlToMaterialParameter("emission_factor", ctrlEmissionFactor, nil, function(block)
 		if block:HasValue("emission_factor") == false then
 			return
@@ -233,7 +233,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		end,
 		0.01
 	)
-	ctrlEmissionStrength:SetTooltip(locale.get_text("pfm_emission_strength_desc"))
+	ctrlEmissionStrength:SetTooltip(gui.Loc("pfm_emission_strength_desc"))
 	self:LinkControlToMaterialParameter("emission_strength", ctrlEmissionStrength)
 
 	-- Ao factor
@@ -248,7 +248,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		end,
 		0.01
 	)
-	ctrlAoFactor:SetTooltip(locale.get_text("pfm_ao_factor_desc"))
+	ctrlAoFactor:SetTooltip(gui.Loc("pfm_ao_factor_desc"))
 	self:LinkControlToMaterialParameter("ao_factor", ctrlAoFactor)
 
 	-- IOR
@@ -320,7 +320,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		0.01
 	)
 	self.m_ctrlAlphaCutoff = ctrlAlphaCutoff
-	-- ctrlAlphaCutoff:SetTooltip(locale.get_text("alpha_cutoff_desc"))
+	-- ctrlAlphaCutoff:SetTooltip(gui.Loc("alpha_cutoff_desc"))
 	self:LinkControlToMaterialParameter("alpha_cutoff", ctrlAlphaCutoff)
 	ctrlAlphaCutoff:SetVisible(false)
 
@@ -338,7 +338,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		0.01
 	)
 	self.m_ctrlAlphaFactor = ctrlAlphaFactor
-	-- ctrlAlphaFactor:SetTooltip(locale.get_text("alpha_cutoff_desc"))
+	-- ctrlAlphaFactor:SetTooltip(gui.Loc("alpha_cutoff_desc"))
 	self:LinkControlToMaterialParameter("alpha_factor", ctrlAlphaFactor)
 	ctrlAlphaFactor:SetVisible(false)
 
@@ -528,10 +528,10 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 		end,
 		0.01
 	)
-	ctrlHairPerSquareMeter:SetTooltip(locale.get_text("pfm_mated_hair_per_square_meter_desc"))
-	ctrlHairRandomLengthFactor:SetTooltip(locale.get_text("pfm_mated_hair_random_hair_length_factor_desc"))
-	ctrlHairSegmentCount:SetTooltip(locale.get_text("pfm_mated_hair_segment_count_desc"))
-	ctrlHairStrength:SetTooltip(locale.get_text("pfm_mated_hair_strength_desc"))
+	ctrlHairPerSquareMeter:SetTooltip(gui.Loc("pfm_mated_hair_per_square_meter_desc"))
+	ctrlHairRandomLengthFactor:SetTooltip(gui.Loc("pfm_mated_hair_random_hair_length_factor_desc"))
+	ctrlHairSegmentCount:SetTooltip(gui.Loc("pfm_mated_hair_segment_count_desc"))
+	ctrlHairStrength:SetTooltip(gui.Loc("pfm_mated_hair_strength_desc"))
 	self:LinkControlToMaterialParameter("hair_per_square_meter", ctrlHairPerSquareMeter, hairBlock)
 	self:LinkControlToMaterialParameter("hair_segment_count", ctrlHairSegmentCount, hairBlock)
 	self:LinkControlToMaterialParameter("hair_thickness", ctrlHairThickness, hairBlock)
