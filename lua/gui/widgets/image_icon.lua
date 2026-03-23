@@ -19,9 +19,10 @@ function gui.ImageIcon:OnInitialize()
 	textBg:AddStyleClass("label_background")
 	self.m_textBg = textBg
 
-	local elText = gui.create("WIText", self)
+	local elText = gui.create("WIText", textBg)
 	elText:AddStyleClass("font_small")
 	elText:AddStyleClass("label")
+	elText:SetAutoCenterToParent(true)
 	self.m_text = elText
 
 	local outline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
@@ -55,8 +56,6 @@ function gui.ImageIcon:GetText()
 end
 function gui.ImageIcon:SetText(text)
 	self.m_text:SetText(text)
-	self.m_text:CenterToParentX()
-	self.m_text:SetY(self:GetHeight() - self.m_text:GetHeight() - 4)
 end
 function gui.ImageIcon:GetTextureElement()
 	return self.m_texture
