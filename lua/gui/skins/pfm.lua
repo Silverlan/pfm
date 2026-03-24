@@ -42,6 +42,7 @@ t.icon = Color.White:Copy()
 
 t.outline = {}
 t.outline.color = Color(30, 30, 30, 255)
+t.outline.color_secondary = Color(80, 80, 80, 255)
 t.outline.focus = Color.DodgerBlue:Copy()
 
 t.overlay = {}
@@ -497,7 +498,7 @@ skin["input_field_text"] = {
 skin["input_field_overlay"] = {
 	Initialize = function(GUI, pElement)
 		local bg = gui.create("WIRect", pElement, 0, 0, pElement:GetWidth(), pElement:GetHeight(), 0, 0, 1, 1)
-		bg:SetColor(Color(50, 50, 50))
+		bg:SetColor(GUI.background.secondary)
 		bg:SetZPos(-10000)
 		bg:SetBackgroundElement(true)
 		bg:SetName("background")
@@ -505,7 +506,7 @@ skin["input_field_overlay"] = {
 
 		local outline =
 			gui.create("WIOutlinedRect", pElement, 0, 0, pElement:GetWidth(), pElement:GetHeight(), 0, 0, 1, 1)
-		outline:SetColor(Color(80, 80, 80))
+		outline:SetColor(GUI.outline.color_secondary)
 		outline:SetZPos(-9000)
 		outline:SetBackgroundElement(true)
 		outline:SetName("outline")

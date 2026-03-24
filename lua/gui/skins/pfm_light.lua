@@ -9,54 +9,53 @@ include("pfm.lua")
 
 local t = {}
 t.background = {}
-t.background.primary = Color(245, 245, 245, 255) -- very light gray
-t.background.secondary = Color(230, 230, 230, 255) -- light gray
-t.background.tertiary = Color(255, 255, 255, 255) -- white
-t.background.selected = Color(215, 215, 215, 255) -- medium light gray
+t.background.primary = Color(245, 245, 245, 255)
+t.background.secondary = Color(230, 230, 230, 255)
+t.background.tertiary = Color(255, 255, 255, 255)
+t.background.selected = Color(215, 215, 215, 255)
+t.background.selected_hover = Color(200, 200, 200, 255)
+t.background.hover = Color(230, 230, 230, 255)
 
--- Buttons
 t.button = {}
-t.button.background = Color(255, 255, 255, 255) -- default button fill
-t.button.background_unpressed = Color.White:Copy() -- matches primary bg
-t.button.background_pressed = Color(200, 200, 200, 255) -- darker on press
-t.button.icon = Color(80, 80, 80, 255) -- dark icon
+t.button.background = Color(255, 255, 255, 255)
+t.button.background_unpressed = Color.White:Copy()
+t.button.background_pressed = Color(200, 200, 200, 255)
+t.button.icon = Color(120, 120, 120, 255)
 
--- Slider
 t.slider = {}
 t.slider.color = Color.RoyalBlue
 
--- Text
 t.text = {}
-t.text.body = Color(50, 50, 50, 255) -- dark gray
-t.text.tab = Color.Black:Copy() -- pure black
+t.text.body = Color(50, 50, 50, 255)
+t.text.tab = Color.Black:Copy()
 t.text.title = Color.Black:Copy()
 t.text.highlight = Color(30, 144, 255, 255)
 
--- Misc icons & outlines
 t.icon = Color.Black:Copy()
 t.outline = {}
-t.outline.color = Color(200, 200, 200, 255) -- subtle border
-t.outline.focus = Color.DodgerBlue:Copy() -- blue focus ring
+t.outline.color = Color(200, 200, 200, 255)
+t.outline.color_secondary = Color(200, 200, 200, 255)
+t.outline.focus = Color.DodgerBlue:Copy()
 
--- Overlay (e.g. modal backgrounds, scrims)
 t.overlay = {}
-t.overlay.color = Color.Black:Copy() -- semi-transparent black if you adjust alpha elsewhere
+t.overlay.color = Color.Black:Copy()
 
--- Graphs
 t.graph = {}
-t.graph.line = Color(0, 0, 0, 255) -- black graph lines
+t.graph.line = Color(0, 0, 0, 255)
 
--- Timeline
 t.timeline = {}
 t.timeline.text = Color.Black:Copy()
 t.timeline.background = Color(220, 220, 220, 255)
 
--- Actor Editor
+t.timeline.film_strip = {}
+t.timeline.film_strip.background = Color(62, 62, 107)
+t.timeline.film_strip.dots = Color(46, 46, 54, 255)
+
 t.actor_editor = {}
-t.actor_editor.collection = Color(150, 150, 150, 255) -- mid gray
-t.actor_editor.actor = Color(70, 130, 180, 255) -- steel blue
-t.actor_editor.component = Color(46, 139, 87, 255) -- sea green
-t.actor_editor.property = Color(80, 80, 80, 255) -- dark gray
+t.actor_editor.collection = Color(150, 150, 150, 255)
+t.actor_editor.actor = Color(70, 130, 180, 255)
+t.actor_editor.component = Color(46, 139, 87, 255)
+t.actor_editor.property = Color(80, 80, 80, 255)
 
 t.ICON_CACHE = gui.PFMIconCache()
 
