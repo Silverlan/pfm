@@ -51,11 +51,17 @@ function gui.CursorTracker:Update(pos)
 		return dt
 	end
 	self.m_accDelta = self.m_accDelta + dt
-	if self:IsSticky() then
-		self.m_startPos = self.m_startPos + dt
-		input.set_cursor_pos(self.m_origCursorPos)
-		self.m_curPos = self.m_origCursorPos:Copy()
-	else
+	local sticky = self:IsSticky()
+	if sticky then
+		local newStartPos = self.m_startPos + dt
+		if(input.set_cursor_pos(self.m_origCursorPos)) then
+			self.m_startPos = newStartPos
+			self.m_curPos = self.m_origCursorPos:Copy()
+		else -- Fallback for systems that don't allow changing cursor position (e.g. Wayland)
+			sticky = false
+		end
+	end
+	if not sticky then
 		self.m_curPos = self.m_curPos + dt
 	end
 	self:CallCallbacks("OnCursorMoved", dt)

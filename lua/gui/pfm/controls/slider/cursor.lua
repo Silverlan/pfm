@@ -127,7 +127,9 @@ function Element:SetCursorDragModeEnabled(enabled)
 	if enabled then
 		self.m_cursorTracker = gui.CursorTracker()
 		self.m_cursorTracker:SetSticky(true)
-		gui.set_cursor_input_mode(gui.CURSOR_MODE_HIDDEN)
+		gui.set_cursor_input_mode(gui.CURSOR_MODE_DISABLED)
+		local window = self:GetRootWindow()
+		window:SetCursorShape(gui.CURSOR_SHAPE_HIDDEN)
 		self.m_dragStartValue = self:GetValue()
 		self:SetThinkingEnabled(true)
 
@@ -142,6 +144,8 @@ function Element:SetCursorDragModeEnabled(enabled)
 	end
 	self.m_cursorTracker = nil
 	gui.set_cursor_input_mode(gui.CURSOR_MODE_NORMAL)
+	local window = self:GetRootWindow()
+	window:SetCursorShape(gui.CURSOR_SHAPE_DEFAULT)
 	self.m_dragStartValue = nil
 	self:SetThinkingEnabled(false)
 
