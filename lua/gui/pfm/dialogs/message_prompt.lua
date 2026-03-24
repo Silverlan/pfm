@@ -21,6 +21,7 @@ function PfmPrompt:OnInitialize()
 
 	local elMsg = gui.create("WIText", contents)
 	elMsg:AddStyleClass("font_medium")
+	elMsg:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
 	self.m_message = elMsg
 
 	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap
@@ -70,7 +71,6 @@ function PfmPrompt:AddStandardButtons(bts)
 end
 function PfmPrompt:SetMessage(msg)
 	self.m_message:SetWidth(512)
-	self.m_message:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
 	self.m_message:SetText(msg)
 	self:ScheduleUpdate()
 end
