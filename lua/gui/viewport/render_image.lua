@@ -220,6 +220,7 @@ function gui.RenderImage:SetDOFState(b)
 		createInfo.postCreateLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 		createInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
 		createInfo.format = prosper.FORMAT_R8G8B8A8_UNORM
+		createInfo.debugName = "render_image_staging_img"
 		local img = prosper.create_image(createInfo)
 		img:SetDebugName("render_image_staging_img")
 		local samplerCreateInfo = prosper.SamplerCreateInfo()

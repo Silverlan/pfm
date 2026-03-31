@@ -62,6 +62,7 @@ function pfm.PragmaRenderScene:UpdateDownSampledRenderTexture()
 	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
 	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
 	imgCreateInfo.postCreateLayout = prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+	imgCreateInfo.debugName = "pr_renderer_downsampled"
 	local img = prosper.create_image(imgCreateInfo)
 	local tex = prosper.create_texture(
 		img,
@@ -492,6 +493,7 @@ function pfm.PragmaRenderJob:FinalizeFrame()
 				createInfo.width = width
 				createInfo.height = height * 2
 				createInfo.postCreateLayout = prosper.IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL
+				createInfo.debugName = "pr_renderer_stereo_equi_img"
 
 				img = prosper.create_image(createInfo)
 				img:SetDebugName("pr_renderer_stereo_equi_img")

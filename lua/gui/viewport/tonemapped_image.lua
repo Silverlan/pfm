@@ -155,6 +155,7 @@ function gui.ToneMappedImage:SetDOFState(b)
 		createInfo.postCreateLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
 		createInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
 		createInfo.format = prosper.FORMAT_R8G8B8A8_UNORM
+		createInfo.debugName = "tone_mapped_image_staging"
 		local img = prosper.create_image(createInfo)
 		local samplerCreateInfo = prosper.SamplerCreateInfo()
 		samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors

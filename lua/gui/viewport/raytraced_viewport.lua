@@ -60,6 +60,7 @@ function gui.RaytracedViewport:SetTextureFromImageBuffer(imgBuf)
 		prosper.IMAGE_USAGE_TRANSFER_SRC_BIT,
 		prosper.IMAGE_USAGE_TRANSFER_DST_BIT
 	)
+	imgCreateInfo.debugName = "raytraced_viewport"
 	img = prosper.create_image(imgBuf, imgCreateInfo)
 
 	local imgViewCreateInfo = prosper.ImageViewCreateInfo()
@@ -159,6 +160,7 @@ function gui.RaytracedViewport:InitializeLDRRenderTarget(w, h)
 	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
 	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
 	imgCreateInfo.postCreateLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+	imgCreateInfo.debugName = "raytraced_viewport_ldr"
 	local img = prosper.create_image(imgCreateInfo)
 	local samplerCreateInfo = prosper.SamplerCreateInfo()
 	samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors

@@ -22,6 +22,7 @@ function util.ImagePostProcessor:InitializeSceneTexture(w, h)
 	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
 	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
 	imgCreateInfo.postCreateLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+	imgCreateInfo.debugName = "raytraced_viewport_scene"
 	local imgHdr = prosper.create_image(imgCreateInfo)
 	local samplerCreateInfo = prosper.SamplerCreateInfo()
 	samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors
@@ -61,6 +62,7 @@ function util.ImagePostProcessor:InitializeDepthTexture(w, h, nearZ, farZ)
 	imgCreateInfo.tiling = prosper.IMAGE_TILING_OPTIMAL
 	imgCreateInfo.memoryFeatures = prosper.MEMORY_FEATURE_GPU_BULK_BIT
 	imgCreateInfo.postCreateLayout = prosper.IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+	imgCreateInfo.debugName = "raytraced_viewport_depth"
 	local imgDepth = prosper.create_image(imgCreateInfo)
 	local samplerCreateInfo = prosper.SamplerCreateInfo()
 	samplerCreateInfo.addressModeU = prosper.SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE -- TODO: This should be the default for the SamplerCreateInfo struct; TODO: Add additional constructors
