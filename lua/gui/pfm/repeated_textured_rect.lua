@@ -8,7 +8,7 @@ function RepeatedTexturedRect:OnInitialize()
 
 	self:ApplySize(64, 64)
 
-	local el = gui.create("WI9SliceRectSegment", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	local el = gui.create("WISegmentedRectSegment", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
     el:GetColorProperty():Link(self:GetColorProperty())
 	el:AddCallback("OnSizeChanged", function(p)
 		local imgWidth = math.max(el:GetTextureSize().x, 1)
