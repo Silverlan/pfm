@@ -19,7 +19,16 @@ function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:ApplySize(512, 512)
-
+	self:ScheduleUpdate()
+end
+function Element:OnUpdate()
+	-- Chromium is expensive, so we'll delay the initialization until needed
+	self:InitializeChromium()
+end
+function Element:InitializeChromium()
+	if(self.m_chromiumInitialized) then return end
+	self.m_chromiumInitialized = true
+	
 	local r = engine.load_library("chromium/pr_chromium")
 	if r ~= true then
 		console.print_warning("An error occured trying to load the 'pr_chromium' module: ", r)
@@ -35,6 +44,11 @@ function Element:OnInitialize()
 			self.m_tNextBrowserResize = time.real_time() + 0.25
 			self:SetThinkingEnabled(true)
 		end)
+	end
+
+	if(self.m_initialUrl ~= nil) then
+		self:SetUrl(self.m_initialUrl)
+		self.m_initialUrl = nil
 	end
 end
 function Element:ReloadURL()
@@ -52,6 +66,7 @@ function Element:GetUrl()
 end
 function Element:SetUrl(url)
 	if util.is_valid(self.m_webBrowser) == false then
+		self.m_initialUrl = url
 		return
 	end
 	self.m_lastUrl = url
@@ -69,6 +84,7 @@ function Element:OnThink()
 	self.m_tNextBrowserResize = nil
 	self:SetThinkingEnabled(false)
 
+	if(util.is_valid(self.m_webBrowser) == false) then return end
 	local w = self.m_webBrowser:GetWidth()
 	local h = self.m_webBrowser:GetHeight()
 
