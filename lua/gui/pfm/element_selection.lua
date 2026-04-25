@@ -1,6 +1,8 @@
 -- SPDX-FileCopyrightText: (c) 2023 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
+include("arrow_indicator.lua")
+
 local Element = util.register_class("gui.ElementSelectionOutline", gui.Base)
 Element.OUTLINE_TYPE_MAJOR = 0
 Element.OUTLINE_TYPE_MINOR = 1
@@ -176,6 +178,9 @@ function Element:OnInitialize()
 	self.m_elCallbacks = {}
 
 	self:SetThinkingEnabled(true)
+
+	local arrow = gui.create("pfm_arrow_indicator", self)
+	self.m_arrow = arrow
 end
 function Element:SetOutlineType(type)
 	if type == Element.OUTLINE_TYPE_MINOR then
@@ -188,7 +193,7 @@ function Element:SetOutlineType(type)
 	end
 end
 function Element:OnRemove()
-	util.remove(self.m_elCallbacks)
+	util.remove(self.m_elCallbacks, self.m_arrow)
 end
 function Element:SetTarget(vp, ent)
 	self.m_viewport = vp
@@ -230,14 +235,14 @@ function Element:IsTargetInView()
 	end
 	local vpData = ents.ClickComponent.get_viewport_data(self.m_viewport)
 	if util.is_valid(vpData.camera) == false then
-		return false
+		return false, vpData
 	end
 	local plane = math.Plane(vpData.camera:GetEntity():GetForward(), vpData.camera:GetNearPlaneCenter())
 	local points = { self.m_targetEntity:GetPos() }
 	for _, p in ipairs(points) do
 		local side = geometry.get_side_of_point_to_plane(plane:GetNormal(), plane:GetDistance(), p)
 		if side == geometry.PLANE_SIDE_BACK then
-			return false
+			return false, vpData
 		end
 	end
 	return true, vpData
@@ -267,27 +272,80 @@ function Element:IsTargetInFullView()
 	return is_point_in_bounds(self.m_elOutline:GetPos())
 		and is_point_in_bounds(Vector2(self.m_elOutline:GetRight(), self.m_elOutline:GetBottom()))
 end
+function Element:UpdateArrow(centerPoint, visArea)
+	local points = self:GetTargetPoints()
+	local inView, vpData = self:IsTargetInView()
+
+	local res = math.calc_screenspace_info_from_worldspace_position(
+		centerPoint,
+		vpData.camera:GetProjectionMatrix() *vpData.camera:GetViewMatrix(),
+		vpData.width,
+		vpData.height
+	)
+
+	local x = res.x -self.m_arrow:GetHalfWidth()
+	local y = res.y -self.m_arrow:GetHalfHeight()
+
+	local pos = Vector2(x, y)
+	local rot = math.rad(math.deg(res.angle) -90)
+
+	-- If the target is visible, we'll point downwards at it
+	local targetPos = Vector2(
+		self.m_elOutline:GetCenterX() -self.m_arrow:GetHalfWidth(),
+		self.m_elOutline:GetY() -self.m_arrow:GetHeight()
+	)
+	local targetRot = 0.0
+
+	pos = pos:Lerp(targetPos, visArea)
+	rot = math.lerp_angle(rot, targetRot, visArea)
+
+	self.m_arrow:SetPos(pos)
+	self.m_arrow:SetArrowRotation(math.deg(rot))
+	self.m_arrow:ClampPositionToParentBounds()
+	self.m_arrow:SetBounceFactor(1.0) -- visArea)
+end
 function Element:OnThink()
+	local points = self:GetTargetPoints()
+	local centerPoint = Vector()
+	local maxy = -math.huge
+	for _,p in ipairs(points) do
+		maxy = math.max(maxy, p.y)
+		centerPoint = centerPoint +p
+	end
+	centerPoint.y = maxy
+	if(#points > 0) then centerPoint = centerPoint /#points end
+
+	local visArea = 0.0
+
 	local inView, vpData = self:IsTargetInView()
 	if inView == false then
 		self.m_elOutline:SetVisible(false)
+		self:UpdateArrow(centerPoint, visArea)
 		return
 	end
-	self.m_elOutline:SetVisible(true)
-	local points = self:GetTargetPoints()
 
 	local min2d = Vector2(math.huge, math.huge)
 	local max2d = Vector2(-math.huge, -math.huge)
-	local points2d = {}
+	local numInBounds = 0
 	for _, p in ipairs(points) do
-		local uv = ents.ClickComponent.world_space_point_to_screen_space_uv(p, nil, vpData)
+		local uv, dist, inBounds = ents.ClickComponent.world_space_point_to_screen_space_uv(p, nil, vpData)
 		local p = Vector2(uv.x * vpData.width, uv.y * vpData.height)
 		min2d.x = math.min(min2d.x, p.x)
 		min2d.y = math.min(min2d.y, p.y)
 
 		max2d.x = math.max(max2d.x, p.x)
 		max2d.y = math.max(max2d.y, p.y)
+		if(inBounds) then
+			numInBounds = numInBounds +1
+		end
 	end
+
+	if(numInBounds == 0) then
+		self.m_elOutline:SetVisible(false)
+		self:UpdateArrow(centerPoint, visArea)
+		return
+	end
+	self.m_elOutline:SetVisible(true)
 
 	local center = (min2d + max2d) / 2.0
 	local extent = max2d - center
@@ -295,11 +353,19 @@ function Element:OnThink()
 	min2d = center - extent
 	max2d = center + extent
 
+	local fullExtents = max2d - min2d
+	local fullArea = fullExtents.x *fullExtents.y
+	min2d = min2d:Clamp(Vector2(0, 0), self:GetSize())
+	max2d = max2d:Clamp(Vector2(0, 0), self:GetSize())
+
+	local extents = max2d - min2d
+	local area = extents.x *extents.y
+
+	if(fullArea < 0.0001) then visArea = 1.0
+	else visArea = area /fullArea end
 	self.m_elOutline:SetPos(min2d)
-	self.m_elOutline:SetSize(max2d - min2d)
-	--local min,max = renderC:GetRenderBounds()
-	--
-	--function ents.ClickComponent.world_space_point_to_screen_space_uv(point,callback,vpData)
+	self.m_elOutline:SetSize(extents)
+	self:UpdateArrow(centerPoint, visArea)
 end
 function Element:UpdateBounds()
 	if util.is_valid(self.m_targetElement) == false then
