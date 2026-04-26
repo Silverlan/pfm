@@ -1,0 +1,56 @@
+-- SPDX-FileCopyrightText: (c) 2026 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
+
+include("pfm.lua")
+
+-------------------------------------------
+------------ START OF SETTINGS ------------
+-------------------------------------------
+
+local function hex(hexColor) return Color.CreateFromHexColor(hexColor) end
+
+local t = {}
+t.background = {}
+t.background.primary = hex("161d24")
+t.background.secondary = hex("1f2c39")
+t.background.selected = Color(50, 50, 50)
+
+t.button = {}
+t.button.background_pressed = Color(160, 160, 160)
+t.button.icon = Color(180, 180, 180)
+
+t.text = {}
+t.text.body = hex("ffffff")
+t.text.highlight = hex("3facff")
+
+t.timeline = {}
+t.timeline.film_strip = {}
+t.timeline.film_strip.background = Color(50, 50, 50)
+t.timeline.film_strip.dots = Color(17, 17, 17, 255)
+
+t.actor_editor = {}
+t.actor_editor.collection = Color(204, 204, 204)
+t.actor_editor.actor = Color(255, 140, 0, 255)
+t.actor_editor.component = Color(160, 80, 226, 255)
+t.actor_editor.property = Color(230, 230, 230)
+
+t.outline = {}
+t.outline.color = Color(17, 17, 17, 255)
+t.outline.focus = Color.DodgerBlue:Copy()
+
+t.ICON_CACHE = gui.PFMIconCache()
+
+t.STYLE_SHEETS = {}
+t.STYLE_SHEETS[".stop-top"] = {
+	["stop-color"] = "#" .. t.background.secondary:ToHexColor(),
+}
+t.STYLE_SHEETS[".stop-bottom"] = {
+	["stop-color"] = "#" .. t.background.secondary:ToHexColor(),
+}
+t.STYLE_SHEETS[".rect"] = {
+	["stroke"] = "#" .. t.background.selected:ToHexColor(),
+}
+
+local skin = {}
+
+gui.register_skin("pfm_knockout", t, skin, "pfm")
