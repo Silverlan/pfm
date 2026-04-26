@@ -34,6 +34,7 @@ pfm_menu_context_save_copy = "Saves a copy of the project with a new file name. 
 pfm_menu_context_save_layout_state_as_default = "Saves the current window layout state as the default, which will be restored the next time you launch PFM."
 pfm_menu_context_simple_project = "Creates a new project populated with some basic commonly used actors, like a sky and a camera."
 pfm_menu_context_start_lua_debugger_server = "This allows debugging with breakpoints and step-by-step code execution for Lua-scripts using Visual Studio Code."
+pfm_menu_font = "Change the font of the PFM interface."
 pfm_menu_generate_ao = "Generates ambient occlusion maps for all dynamic actors in the current project that don't already have one."
 pfm_menu_pack_project = "Packs the current project, including all assets used by it, into an archive, which can be shared with other people."
 pfm_menu_reload_game_view = "Reload Game View"

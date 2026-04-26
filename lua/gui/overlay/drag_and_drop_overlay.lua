@@ -21,7 +21,7 @@ function Element:OnInitialize()
 end
 function Element:SetText(text, font)
 	local elText = self.m_elText
-	elText:SetFont(font or "pfm_medium")
+	elText:SetFont(font or "pfm_default_medium")
 	elText:SetText(text:upper())
 	elText:SetColor(Color.White)
 	elText:SetAnchor(0.5, 0.5, 0.5, 0.5)

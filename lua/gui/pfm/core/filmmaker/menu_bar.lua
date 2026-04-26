@@ -930,7 +930,7 @@ function Element:InitializeMenuBar()
 			return pfm.util.get_ui_text(a[1]) < pfm.util.get_ui_text(b[1])
 		end)
 		for _, themeInfo in ipairs(themes) do
-			local pItemLan = pSubMenu:AddItem(themeInfo[1], function(pItem)
+			pSubMenu:AddItem(themeInfo[1], function(pItem)
 				if util.is_valid(self) == false then
 					return
 				end
@@ -940,26 +940,19 @@ function Element:InitializeMenuBar()
 		pItem:SetTooltip(gui.Loc("pfm_menu_theme"))
 		pSubMenu:ScheduleUpdate()
 
-		if self:IsDeveloperModeEnabled() then
-			local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("font"))
-			pItem:SetName("font")
-			pSubMenu:SetName("font_menu")
-			for _, name in ipairs(engine.get_font_sets()) do
-				local pItemLan = pSubMenu:AddItem(name, function(pItem)
-					if util.is_valid(self) == false then
-						return
-					end
-					local fontSet = "source-han-sans" --engine.get_default_font_set_name()
-					local fontFeatures = bit.bor(engine.FONT_FEATURE_FLAG_SANS_BIT, engine.FONT_FEATURE_FLAG_MONO_BIT)
-					engine.create_font("pfm_small", fontSet, fontFeatures, 10, true)
-					engine.create_font("pfm_medium", fontSet, fontFeatures, 12, true)
-					engine.create_font("pfm_large", fontSet, fontFeatures, 20, true)
-					gui.reload_text_elements()
-				end)
-			end
-			pItem:SetTooltip(gui.Loc("pfm_menu_theme"))
-			pSubMenu:ScheduleUpdate()
+		local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("pfm_font"))
+		pItem:SetName("font")
+		pSubMenu:SetName("font_menu")
+		for _, fontSet in ipairs(pfm.get_font_sets()) do
+			pSubMenu:AddItem(fontSet, function(pItem)
+				if util.is_valid(self) == false then
+					return
+				end
+				console.run("pfm_font", fontSet)
+			end)
 		end
+		pItem:SetTooltip(gui.Loc("pfm_menu_font"))
+		pSubMenu:ScheduleUpdate()
 
 		local pSubItem = pContext:AddItem(gui.Loc("pfm_toggle_console"), function(pItem)
 			engine.toggle_console()

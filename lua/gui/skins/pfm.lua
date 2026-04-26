@@ -2,6 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/assets/icon_cache.lua")
+include("/pfm/ui/fonts.lua")
 
 -------------------------------------------
 ------------ START OF SETTINGS ------------
@@ -32,11 +33,6 @@ t.text.tab = Color.White:Copy()
 t.text.title = Color.White:Copy()
 t.text.highlight = Color(30, 144, 255, 255)
 t.text.shadow = Color.Black:Copy()
-
-t.text.fonts = {}
-t.text.fonts.small = "pfm_small"
-t.text.fonts.medium = "pfm_medium"
-t.text.fonts.large = "pfm_large"
 
 t.icon = Color.White:Copy()
 
@@ -185,17 +181,17 @@ local skin = {}
 -------------- Fonts --------------
 skin["font_small"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetFont(GUI.text.fonts.small)
+		pElement:SetFont(pfm.get_font("small"))
 	end,
 }
 skin["font_medium"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetFont(GUI.text.fonts.medium)
+		pElement:SetFont(pfm.get_font("medium"))
 	end,
 }
 skin["font_large"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetFont(GUI.text.fonts.large)
+		pElement:SetFont(pfm.get_font("large"))
 	end,
 }
 -----------------------------------
@@ -258,7 +254,7 @@ skin["wifiledialog"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetFont(GUI.text.fonts.medium)
+				pElement:SetFont(pfm.get_font("medium"))
 			end,
 		},
 	},
@@ -270,7 +266,7 @@ skin["panel"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetFont(GUI.text.fonts.medium)
+				pElement:SetFont(pfm.get_font("medium"))
 				pElement:SetColor(GUI.text.body)
 			end,
 		},
@@ -388,7 +384,7 @@ skin["wibutton"] = {
 				add_skin_element(pElement, cbSetSize)
 
 				-- pElement:SetColorRGB(Color(255, 255, 255, 255))
-				pElement:SetFont(GUI.text.fonts.medium)
+				pElement:SetFont(pfm.get_font("medium"))
 				pElement:SetText(pElement:GetText():upper())
 			end,
 			Release = clear_element,
@@ -492,7 +488,7 @@ skin["input_field_outline"] = {
 }
 skin["input_field_text"] = {
 	Initialize = function(GUI, pElement)
-		pElement:SetFont(GUI.text.fonts.medium)
+		pElement:SetFont(pfm.get_font("medium"))
 	end,
 }
 skin["input_field_overlay"] = {
@@ -527,7 +523,7 @@ skin["infobox"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
-				pElement:SetFont(GUI.text.fonts.medium)
+				pElement:SetFont(pfm.get_font("medium"))
 			end,
 		},
 	},
@@ -545,7 +541,7 @@ skin["menu_item"] = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetColor(GUI.text.body)
-				pElement:SetFont(GUI.text.fonts.medium)
+				pElement:SetFont(pfm.get_font("medium"))
 			end,
 		},
 	},
@@ -616,7 +612,7 @@ skin["witable"] = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetColor(GUI.text.body)
-				pElement:SetFont(GUI.text.fonts.medium)
+				pElement:SetFont(pfm.get_font("medium"))
 			end,
 		},
 	},
@@ -657,7 +653,7 @@ skin["frame_titlebar"] = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
 				pElement:SetColor(GUI.text.body)
-				pElement:SetFont(GUI.text.fonts.medium)
+				pElement:SetFont(pfm.get_font("medium"))
 			end,
 		},
 	},

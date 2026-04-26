@@ -37,6 +37,7 @@ include("/pfm/util/particle_system.lua")
 include("/pfm/project/auto_save.lua")
 include("/pfm/util/util.lua")
 include("/pfm/core/addons.lua")
+include("/pfm/ui/fonts.lua")
 include("/util/table_bininsert.lua")
 include("core/filmmaker")
 
