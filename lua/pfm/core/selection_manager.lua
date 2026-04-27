@@ -32,6 +32,8 @@ function SelectionManager:SetShowBones(enabled)
 	self.m_eventBus:Emit("selection.show_bones.changed", self, enabled)
 end
 
+function SelectionManager:ShouldShowBones() return self.m_showBones end
+
 function SelectionManager:GetSelectedObjects()
 	return self.m_selectionData
 end

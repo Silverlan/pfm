@@ -170,7 +170,7 @@ function Component:SetProjectManager(pm)
 					c:SetPersistent(true)
 				end
 			end
-			if self.m_showBones then
+			if selectionManager:ShouldShowBones() then
 				entActor:AddComponent("pfm_skeleton")
 			end
 
