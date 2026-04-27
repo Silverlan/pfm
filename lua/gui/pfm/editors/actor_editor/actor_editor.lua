@@ -408,7 +408,11 @@ function gui.PFMActorEditor:OnInitialize()
 
 	local treeScrollContainerBg = gui.create("WIRect", self.m_contents, 0, 0, 64, 128)
 	treeScrollContainerBg:AddStyleClass("background")
+	self.m_treeScrollContainerBg = treeScrollContainerBg
 	local treeScrollContainer = gui.create("WIScrollContainer", treeScrollContainerBg, 0, 0, 64, 128, 0, 0, 1, 1)
+	treeScrollContainer:AddCallback("OnSizeChanged", function(el)
+		self:ResizeTreeToContents()
+	end)
 	self.m_treeScrollContainer = treeScrollContainer
 
 	local resizer = gui.create("resizer", self.m_contents)
@@ -458,13 +462,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_tree:AddCallback("OnContentsWidthDirty", function()
 		time.create_simple_timer(0.0, function()
 			if self:IsValid() and util.is_valid(self.m_tree) then
-				local w = self.m_tree:CalcContentsWidth()
-				local scrollBar = treeScrollContainer:GetVerticalScrollBar()
-				if util.is_valid(scrollBar) and scrollBar:IsVisible() then
-					w = w + 20
-				end
-				w = math.max(w, treeScrollContainerBg:GetWidth())
-				self.m_tree:SetWidth(w)
+				self:ResizeTreeToContents()
 			end
 		end)
 	end)
@@ -485,6 +483,15 @@ function gui.PFMActorEditor:OnInitialize()
 	self:InitAnimManagerListeners()
 
 	self:SetMouseInputEnabled(true)
+end
+function gui.PFMActorEditor:ResizeTreeToContents()
+	local w = self.m_tree:CalcContentsWidth()
+	local scrollBar = self.m_treeScrollContainer:GetVerticalScrollBar()
+	if util.is_valid(scrollBar) and scrollBar:IsVisible() then
+		w = w + 20
+	end
+	w = math.max(w, self.m_treeScrollContainerBg:GetWidth())
+	self.m_tree:SetWidth(w)
 end
 function gui.PFMActorEditor:ClearEmptyComponentPropertyGroups()
 	local tNew = {}
