@@ -25,9 +25,31 @@ function gui.BaseBox:SetBackgroundElement(el)
 	self.m_backgroundElements = self.m_backgroundElements or {}
 	self.m_backgroundElements[el] = true
 end
+function gui.BaseBox:UpdateNonAnchoredSize(curSize, size)
+	if(size == curSize) then return end
+	local xAnchor = self:HasHorizontalAnchor()
+	local yAnchor = self:HasVerticalAnchor()
+	if(not xAnchor and not yAnchor) then
+		self:UpdateSize(size)
+	elseif(not xAnchor and size.x ~= curSize.x) then
+		self:UpdateWidth(size.x)
+	elseif(not yAnchor and size.y ~= curSize.y) then
+		self:UpdateHeight(size.y)
+	end
+end
 function gui.BaseBox:UpdateSize(size)
 	self.m_skipSizeUpdateSchedule = true
-	self:ApplySize(size)
+	self:SetSize(size, gui.CHANGE_SOURCE_CONTENT)
+	self.m_skipSizeUpdateSchedule = nil
+end
+function gui.BaseBox:UpdateWidth(w)
+	self.m_skipSizeUpdateSchedule = true
+	self:SetWidth(w, gui.CHANGE_SOURCE_CONTENT)
+	self.m_skipSizeUpdateSchedule = nil
+end
+function gui.BaseBox:UpdateHeight(h)
+	self.m_skipSizeUpdateSchedule = true
+	self:SetHeight(h, gui.CHANGE_SOURCE_CONTENT)
 	self.m_skipSizeUpdateSchedule = nil
 end
 function gui.BaseBox:OnSizeChanged(w, h)
@@ -52,7 +74,7 @@ function gui.BaseBox:OnInitialize()
 			self.m_childCallbacks[elChild],
 			elChild:AddCallback("OnSizeChanged", function(elChild)
 				-- Note: We mustn't update if the child is anchored, otherwise we end up in an infinite recursion!
-				if elChild:HasAnchor() then
+				if self:HasBoxAlignedAnchor(elChild) then
 					return
 				end
 				self.m_sizeUpdateRequired = true
@@ -160,3 +182,4 @@ end
 function gui.BaseBox:IsVerticalBox()
 	return false
 end
+function gui.BaseBox:HasBoxAlignedAnchor(el) return false end

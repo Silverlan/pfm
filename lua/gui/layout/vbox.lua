@@ -71,9 +71,7 @@ function gui.VBox:OnUpdate()
 	if self.m_sizeUpdateRequired then
 		size.x = math.max(size.x, 0)
 		size.y = math.max(size.y, 0)
-		if size ~= curSize and self:HasAnchor() == false then
-			self:UpdateSize(size)
-		end
+		self:UpdateNonAnchoredSize(curSize, size)
 		self:CallCallbacks("OnContentsUpdated")
 		self.m_sizeUpdateRequired = nil
 	end
@@ -81,4 +79,5 @@ end
 function gui.VBox:IsVerticalBox()
 	return true
 end
+function gui.VBox:HasBoxAlignedAnchor(el) return el:HasVerticalAnchor() end
 gui.register("vbox", gui.VBox)

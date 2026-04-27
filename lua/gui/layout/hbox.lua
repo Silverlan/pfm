@@ -66,9 +66,7 @@ function gui.HBox:OnUpdate()
 		end
 		size.x = math.max(size.x, 0)
 		size.y = math.max(size.y, 0)
-		if size ~= curSize and self:HasAnchor() == false then
-			self:UpdateSize(size)
-		end
+		self:UpdateNonAnchoredSize(curSize, size)
 		self:CallCallbacks("OnContentsUpdated")
 		self.m_sizeUpdateRequired = nil
 	end
@@ -76,4 +74,5 @@ end
 function gui.HBox:IsHorizontalBox()
 	return true
 end
+function gui.HBox:HasBoxAlignedAnchor(el) return el:HasHorizontalAnchor() end
 gui.register("hbox", gui.HBox)
