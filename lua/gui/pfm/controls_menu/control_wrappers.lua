@@ -51,6 +51,9 @@ function Wrapper:OnControlValueChanged(val, isFinal, initialValue)
 		return
 	end
 	val = self:FromInterfaceValue(val)
+	if(initialValue ~= nil) then
+		initialValue = self:FromInterfaceValue(initialValue)
+	end
 	self.m_valueHandler(val, isFinal, initialValue)
 end
 function Wrapper:GetWrapperElement()
