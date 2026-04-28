@@ -38,6 +38,7 @@ function Component:OnRemove()
 	util.remove({self.m_eventBusGroup, self.m_elTextHover})
 end
 function Component:AddOutline(ent)
+	if(self:GetSelectionManager():IsSelectionWireframeEnabled() == false) then return end
 	debug.start_profiling_task("pfm_selection_outline")
 	ent:AddComponent(ents.COMPONENT_PFM_SELECTION_WIREFRAME)
 	debug.stop_profiling_task()
@@ -178,7 +179,7 @@ function Component:SetProjectManager(pm)
 		end
 	end)
 	self.m_eventBusGroup:AddListener("selection.wireframe.changed", function(selectionManager, enabled)
-		for object, selected in pairs(selectionManager:GetSelectedObjects()) do
+		for actor, selected in pairs(selectionManager:GetSelectedObjects()) do
 			local entActor = actor:FindEntity()
 			if util.is_valid(entActor) then
 				if selected.selected and enabled then
@@ -193,7 +194,7 @@ function Component:SetProjectManager(pm)
 		end
 	end)
 	self.m_eventBusGroup:AddListener("selection.show_bones.changed", function(selectionManager, enabled)
-		for object, selected in pairs(selectionManager:GetSelectedObjects()) do
+		for actor, selected in pairs(selectionManager:GetSelectedObjects()) do
 			local entActor = actor:FindEntity()
 			if util.is_valid(entActor) then
 				if selected.selected and enabled then
