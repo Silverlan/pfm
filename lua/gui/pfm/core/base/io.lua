@@ -127,6 +127,16 @@ function Element:KeyboardCallback(key, scanCode, state, mods)
 				pfm.redo()
 			end
 			return util.EVENT_REPLY_HANDLED
+		elseif key == input.KEY_KP_ADD or key == input.GLFW_KEY_EQUAL then
+			if state == input.STATE_PRESS then
+				pfm.increase_font_size()
+			end
+			return util.EVENT_REPLY_HANDLED
+		elseif key == input.KEY_KP_SUBTRACT or key == input.GLFW_KEY_MINUS then
+			if state == input.STATE_PRESS then
+				pfm.decrease_font_size()
+			end
+			return util.EVENT_REPLY_HANDLED
 		end
 	else
 		-- TODO: UNDO ME

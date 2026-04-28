@@ -135,6 +135,13 @@ console.register_variable(
 	"Font to use for the PFM interface. Leave empty to use the default."
 )
 console.register_variable(
+	"pfm_font_size_offset",
+	udm.TYPE_INT32,
+	0,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"Font size offset for PFM. Positive values increase the font size, negative values decrease it."
+)
+console.register_variable(
 	"pfm_sensitive_content_enabled",
 	udm.TYPE_BOOLEAN,
 	false,
@@ -147,6 +154,17 @@ console.add_change_callback("pfm_theme", function(old, new)
 		tool.get_filmmaker():UpdateSkin()
 	end
 end)
+local function reload_skin_and_text_elements(refreshSkin)
+	local pm = tool.get_filmmaker()
+	if util.is_valid(pm) then
+		-- Re-apply skin (this will update fonts as well)
+		local curSkin = pm:GetSkinName()
+		pm:ResetSkin()
+		pm:SetSkin(curSkin)
+		if(refreshSkin) then pm:RefreshSkin() end
+		gui.reload_text_elements()
+	end
+end
 console.add_change_callback("pfm_font", function(old, new)
 	if(#new == 0) then new = engine.get_default_font_set_name() end
 	if(pfm.is_valid_font_set(new) == false) then
@@ -157,13 +175,8 @@ console.add_change_callback("pfm_font", function(old, new)
 		)
 		return
 	end
-
-	local pm = tool.get_filmmaker()
-	if util.is_valid(pm) then
-		-- Re-apply skin (this will update fonts as well)
-		local curSkin = pm:GetSkinName()
-		pm:ResetSkin()
-		pm:SetSkin(curSkin)
-		gui.reload_text_elements()
-	end
+	reload_skin_and_text_elements()
+end)
+console.add_change_callback("pfm_font_size_offset", function()
+	reload_skin_and_text_elements(true)
 end)
