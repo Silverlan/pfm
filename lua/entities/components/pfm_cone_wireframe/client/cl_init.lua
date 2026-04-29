@@ -29,6 +29,7 @@ function Component:InitializeModel()
 
 	local mat = asset.create_material("pfm_wireframe_line")
 	mat:SetTexture("albedo_map", "white")
+	mat:SetProperty("render_layer", udm.TYPE_STRING, "helper")
 	mat:UpdateTextures()
 	mat:InitializeShaderDescriptorSet()
 	mat:SetLoaded(true)

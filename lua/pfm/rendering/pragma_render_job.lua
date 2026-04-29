@@ -13,6 +13,12 @@ function pfm.PragmaRenderScene:__init(width, height, ssFactor)
 	local gameScene = game.get_scene()
 	local gameRenderer = gameScene:GetRenderer()
 	local scene = ents.create_scene(sceneCreateInfo, gameScene)
+
+	-- Hide gizmos and helpers from the render
+	local visMask = scene:GetVisibilityMask()
+	visMask = bit.band(visMask, bit.bnot(bit.bor(game.RENDER_LAYER_HELPER, game.RENDER_LAYER_GIZMO)))
+	scene:SetVisibilityMask(visMask)
+
 	self.m_scene = scene
 
 	-- Create temporary renderer

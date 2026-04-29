@@ -4,5 +4,6 @@
 	{
 		$vec3 color_factor [4.3,1,0]
 		$float outline_width 0.004
+		$string render_layer "helper"
 	}
 }
