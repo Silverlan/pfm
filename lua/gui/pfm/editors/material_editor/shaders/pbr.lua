@@ -850,18 +850,19 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 	local shouldApplyMatParam = false
 	for _, propInfo in ipairs(shaderMat:GetProperties()) do
 		if bit.band(propInfo.propertyFlags, shader.ShaderMaterial.Property.FLAG_HIDE_IN_EDITOR_BIT) == 0 then
-			local localizedText = propInfo.name
-			local result, str = locale.get_text("mat_prop_" .. propInfo.name, true)
+			local param = propInfo.parameter
+			local localizedText = param.name
+			local result, str = locale.get_text("mat_prop_" .. param.name, true)
 			if result then
 				localizedText = str
 			end
 			local propCtrlInfo = {
 				specializationType = propInfo.specializationType,
-				minValue = propInfo.minValue,
-				maxValue = propInfo.maxValue,
-				defaultValue = propInfo.defaultValue,
+				minValue = param.minValue,
+				maxValue = param.maxValue,
+				defaultValue = param.defaultValue,
 			}
-			local opts = propInfo:GetOptions()
+			local opts = param:GetOptions()
 			if opts ~= nil then
 				local evals = {}
 				for name, val in pairs(opts) do
@@ -869,26 +870,27 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 				end
 				propCtrlInfo.enumValues = evals
 			end
-			local wrapper = ctrlVbox:AddPropertyControl(propInfo.type, propInfo.name, localizedText, propCtrlInfo)
+			local udmType = shader.Socket.to_udm_type(param.type)
+			local wrapper = ctrlVbox:AddPropertyControl(udmType, param.name, localizedText, propCtrlInfo)
 			if wrapper ~= nil then
 				wrapper:SetOnChangeValueHandler(function(val, isFinal, initialValue)
 					if not shouldApplyMatParam then
 						return
 					end
-					self:SetMaterialParameter(propInfo.type, propInfo.name, val)
+					self:SetMaterialParameter(udmType, param.name, val)
 
 					if
-						propInfo.name == "alpha_mode"
-						or propInfo.name == "alpha_cutoff"
-						or propInfo.name == "alpha_factor"
+						param.name == "alpha_mode"
+						or param.name == "alpha_cutoff"
+						or param.name == "alpha_factor"
 					then
 						self:UpdateAlphaMode()
 					end
 				end)
-				self:LinkControlToMaterialParameter(propInfo.name, wrapper)
+				self:LinkControlToMaterialParameter(param.name, wrapper)
 			end
 
-			self.m_matPropElements[propInfo.name] = {
+			self.m_matPropElements[param.name] = {
 				wrapper = wrapper,
 			}
 		end
