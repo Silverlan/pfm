@@ -115,7 +115,7 @@ function shader.PFMGrid3D:Draw(drawCmd, origin, spacing, radius, scene, m)
 	end
 	local vertCount = math.ceil((radius * 8) / spacing)
 	baseShader:RecordBindVertexBuffers(bindState, { vertexBuffer })
-	baseShader:RecordBindDescriptorSet(bindState, scene:GetCameraDescriptorSet())
+	baseShader:RecordBindDescriptorSet(bindState, scene:GetCurrentFrameCameraDescriptorSet())
 	self:OnDraw(drawCmd)
 	self.m_dsPushConstants:Seek(0)
 	self.m_dsPushConstants:WriteMat4(m)

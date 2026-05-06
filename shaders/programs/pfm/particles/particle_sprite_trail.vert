@@ -48,7 +48,7 @@ void main()
 	float rad = min(get_particle_radius(),l);
 	dtPosWs *= l;
 
-	vec3 vDirToBeam = vecWorldPos -u_renderSettings.posCam.xyz;
+	vec3 vDirToBeam = vecWorldPos -get_cam_pos();
 	vec3 vTangentY = cross(vDirToBeam,dtPosWs);
 	vTangentY = normalize(vTangentY);
 

@@ -8,7 +8,7 @@
 
 void main()
 {
-	vec3 camPos = u_renderSettings.posCam.xyz;
+	vec3 camPos = get_cam_pos();
 	vec3 vertexPos = in_vert_pos.xyz;
 	vertexPos = (get_model_matrix() *vec4(vertexPos,1.0)).xyz;
 	float distance = length(vertexPos -camPos);

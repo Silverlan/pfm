@@ -11,14 +11,14 @@ local function initialize_keyframe_marker_manager()
 	Element.impl.markerManager = gui.KeyframeMarkerManager()
 	Element.impl.cbPropertyControlAdded = pfm.add_event_listener(
 		"OnActorPropertyControlAdded",
-		function(actor, targetPath, type, wrapper, elPropertyControls)
+		function(actor, targetPath, propInfo, wrapper, elPropertyControls)
 			local elContainer = wrapper:GetContainerElement()
 			if util.is_valid(elContainer) then
 				-- Boolean types are currently not supported
-				if udm.is_animatable_type(type) and type ~= udm.TYPE_BOOLEAN then
+				if udm.is_animatable_type(propInfo.type) and bit.band(propInfo.flags, ents.ComponentInfo.MemberInfo.FLAG_NOT_ANIMATABLE_BIT) == 0 and propInfo.type ~= udm.TYPE_BOOLEAN then
 					local marker = gui.create("keyframe_marker", elPropertyControls)
 					marker:SetName("keyframe_marker")
-					Element.impl.markerManager:AddMarker(marker, actor, targetPath, type)
+					Element.impl.markerManager:AddMarker(marker, actor, targetPath, propInfo.type)
 					elContainer:AddIcon(marker)
 					marker:SetY(4)
 				end

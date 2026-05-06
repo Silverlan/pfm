@@ -1193,7 +1193,10 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 					"OnActorPropertyControlAdded",
 					actor,
 					controlData.path,
-					memberInfo.type,
+					{
+						type = memberInfo.type,
+						flags = memberInfo:GetFlags()
+					},
 					wrapper,
 					animSetControls
 				)

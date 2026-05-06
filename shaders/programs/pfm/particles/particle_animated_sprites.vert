@@ -77,13 +77,13 @@ void main()
 	vec3 vecWorldPos = get_particle_pos();//verts[get_vertex_index()];//get_particle_pos();
 	if(useCamBias)
 	{
-		vec3 vEyeDir = normalize(u_renderSettings.posCam.xyz -vecWorldPos);
+		vec3 vEyeDir = normalize(get_cam_pos() -vecWorldPos);
 		vEyeDir *= camBias;
 		vecWorldPos += vEyeDir;
 	}
 
 	float rad = get_particle_radius();
-	vec3 vecCameraPos = u_renderSettings.posCam.xyz;
+	vec3 vecCameraPos = get_cam_pos();
 	vec3 vecViewToPos = vecWorldPos -vecCameraPos;
 	float flLength = length(vecViewToPos);
 	if(flLength < rad /2)
