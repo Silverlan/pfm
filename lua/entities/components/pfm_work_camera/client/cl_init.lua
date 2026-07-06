@@ -81,6 +81,9 @@ function Component:UpdateMovementProperties()
 	end
 	local movementC = self:GetEntity():AddComponent(ents.COMPONENT_MOVEMENT)
 	local speed = console.get_convar_float("pfm_camera_speed")
+	if input.is_alt_key_down() then
+		speed = speed * console.get_convar_float("pfm_camera_speed_alt_multiplier")
+	end
 	if input.is_shift_key_down() then
 		speed = speed * console.get_convar_float("pfm_camera_speed_shift_multiplier")
 	end

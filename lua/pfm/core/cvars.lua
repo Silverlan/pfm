@@ -121,6 +121,13 @@ console.register_variable(
 	"Multiplier for the camera speed if the shift-key is held."
 )
 console.register_variable(
+	"pfm_camera_speed_alt_multiplier",
+	udm.TYPE_FLOAT,
+	0.5,
+	bit.bor(console.FLAG_BIT_ARCHIVE),
+	"Multiplier for the camera speed if the alt-key is held."
+)
+console.register_variable(
 	"pfm_theme",
 	udm.TYPE_STRING,
 	"",
