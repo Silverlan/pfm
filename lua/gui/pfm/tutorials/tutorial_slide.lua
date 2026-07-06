@@ -869,7 +869,9 @@ function Element:IsAudioEnabled()
 end
 function Element:UpdateAudio()
 	local enabled = self:IsAudioEnabled()
-	self.m_iconAudio:SetIcon(enabled and "volume-up-fill" or "volume-mute-fill", false)
+	if util.is_valid(self.m_iconAudio) then
+		self.m_iconAudio:SetIcon(enabled and "volume-up-fill" or "volume-mute-fill", false)
+	end
 
 	if enabled == false then
 		if self.m_sound ~= nil then
