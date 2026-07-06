@@ -1,6 +1,10 @@
 -- SPDX-FileCopyrightText: (c) 2023 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
+local function clamp_fov(fov)
+	return math.clamp(fov, 1.0, 179.0)
+end
+
 console.register_command("pfm_action", function(pl, ...)
 	local pm = tool.get_filmmaker()
 	if util.is_valid(pm) == false then
@@ -36,9 +40,9 @@ console.register_command("pfm_action", function(pl, ...)
 		local cam = pm:GetGameplayCamera()
 		if util.is_valid(cam) then
 			if args[2] == "in" then
-				cam:SetFOV(cam:GetFOV() + 1.0)
+				cam:SetFOV(clamp_fov(cam:GetFOV() + 1.0))
 			elseif args[2] == "out" then
-				cam:SetFOV(cam:GetFOV() - 1.0)
+				cam:SetFOV(clamp_fov(cam:GetFOV() - 1.0))
 			end
 		end
 
