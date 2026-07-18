@@ -72,6 +72,8 @@ tool.open_filmmaker = function(devMode)
 
 	tool.editor:Open()
 	debug.stop_profiling_task()
+
+	engine.hide_splash_screen()
 	return tool.editor
 end
 
