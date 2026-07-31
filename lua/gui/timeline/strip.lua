@@ -218,7 +218,7 @@ function gui.LabelledTimelineStrip:GetLabelYPos(el)
 		return 6
 	end
 	local offset = self:GetSecAxisExtents(self) - self:GetSecAxisExtents(el)
-	offset = offset - 5
+	offset = offset - 3
 	return offset
 end
 function gui.LabelledTimelineStrip:SetAxis(axis)

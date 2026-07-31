@@ -250,7 +250,7 @@ skin["wiprogressbar"] = {
 skin["wislider"] = skin["wiprogressbar"]
 -----------------------------------------
 ------------- WIFileDialog -------------
-skin["wifiledialog"] = {
+skin["file_dialog"] = {
 	children = {
 		["witext"] = {
 			Initialize = function(GUI, pElement)
@@ -617,6 +617,36 @@ skin["witable"] = {
 		},
 	},
 }
+skin["table_row_header"] = {
+	Initialize = function(GUI, pElement)
+		local bg = gui.create("WIRect", pElement)
+		bg:SetZPos(0)
+		bg:SetColor(GUI.background.tertiary)
+		bg:SetName("background")
+		bg:SetAutoAlignToParent(true)
+		add_skin_element(pElement, bg)
+	end,
+	Release = clear_element,
+	children = {
+		["witablecell"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetZPos(1)
+				local fcSetSize = function()
+					local sz = pElement:GetSize()
+					local c = pElement:GetFirstChild("witext")
+					if c ~= nil and c:IsValid() then
+						c:SetY(sz.y * 0.5 - c:GetHeight() * 0.5)
+						c:SetX(sz.x * 0.5 - c:GetWidth() * 0.5)
+					end
+				end
+				local cbSetSize = pElement:AddCallback("OnSizeChanged", fcSetSize)
+				add_skin_element(pElement, cbSetSize)
+				fcSetSize()
+			end,
+			Release = clear_element,
+		},
+	},
+}
 skin["image_icon"] = {
 	children = {
 		["label"] = {
@@ -768,6 +798,11 @@ skin["button_background_pressed"] = {
 skin["button_icon"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.button.icon)
+	end,
+}
+skin["caret"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.text.body)
 	end,
 }
 skin["tab_button_background_pressed"] = {

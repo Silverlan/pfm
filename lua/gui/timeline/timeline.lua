@@ -85,14 +85,13 @@ function Timeline:OnInitialize()
 	self:SetScrollInputEnabled(true)
 	self:SetZoomLevel(1)
 	self:SetStartOffset(0.0)
-	self:Update()
 
 	-- TODO
 	self:SetMouseInputEnabled(true)
+	self:ScheduleUpdate()
 end
 function Timeline:CreatePlayhead()
 	local playhead = gui.create("playhead", self, 0, self.m_bookmarkBar:GetBottom())
-	playhead:SetName("test_anchor_el")
 	playhead:SetHeight(self:GetHeight() - self.m_bookmarkBar:GetBottom())
 	playhead:SetAnchor(gui.ANCHOR_EDGE_TOP, 0)
 	playhead:SetAnchor(gui.ANCHOR_EDGE_BOTTOM, 1)

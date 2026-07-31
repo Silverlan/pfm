@@ -154,8 +154,12 @@ function gui.WIFilmmaker:OnInitialize()
 
 	-- infoBar:AddIcon("third_party/twitter_logo",engineInfo.twitterURL,"Twitter")
 	-- infoBar:AddIcon("third_party/reddit_logo",engineInfo.redditURL,"Reddit")
-	infoBar:AddIcon("third_party/github_logo_small", engineInfo.gitHubURL, "GitHub")
-	infoBar:AddIcon("third_party/discord_logo_small", engineInfo.discordURL, "Discord")
+	if(engineInfo.gitHubURL) then
+		infoBar:AddIcon("third_party/github_logo_small", engineInfo.gitHubURL, "GitHub")
+	end
+	if(engineInfo.discordURL ~= nil) then
+		infoBar:AddIcon("third_party/discord_logo_small", engineInfo.discordURL, "Discord")
+	end
 
 	local gap = gui.create("WIBase")
 	gap:SetSize(10, 1)

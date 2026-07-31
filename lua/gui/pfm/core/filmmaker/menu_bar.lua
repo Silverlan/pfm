@@ -998,12 +998,6 @@ function Element:InitializeMenuBar()
 					file.delete("temp/" .. f)
 				end
 
-				local fileName = engine.generate_info_dump("temp/engine_info_dump")
-				if fileName ~= nil then
-					util.open_path_in_explorer(file.get_file_path(fileName), file.get_file_name(fileName))
-				end
-				util.open_url_in_browser("https://github.com/Silverlan/pfm/issues")
-
 				pfm.open_message_prompt(
 					locale.get_text("pfm_report_a_bug"),
 					(fileName ~= nil) and locale.get_text("pfm_report_a_bug_message")
@@ -1011,6 +1005,14 @@ function Element:InitializeMenuBar()
 					gui.PfmPrompt.BUTTON_OK,
 					function(bt) end
 				)
+				pfm.create_popup_message(locale.get_text("pfm_report_a_bug_generating_info_dump"), 2)
+				time.create_simple_timer(1.0, function()
+					local fileName = engine.generate_info_dump("temp/engine_info_dump")
+					if fileName ~= nil then
+						util.open_path_in_explorer(file.get_file_path(fileName), file.get_file_name(fileName))
+					end
+					util.open_url_in_browser("https://github.com/Silverlan/pfm/issues")
+				end)
 			end)
 			pSubItem:SetName("report_a_bug")
 
@@ -1038,11 +1040,22 @@ function Element:InitializeMenuBar()
 			end)
 			pSubItem:SetName("open_user_data_directory")
 
-			local pSubItem = pContext:AddItem(gui.Loc("pfm_community"), function(pItem)
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_discord_server"), function(pItem)
 				local engineInfo = engine.get_info()
-				self:OpenUrlInBrowser(engineInfo.discordURL)
+				if(engineInfo.discordURL ~= nil) then
+					self:OpenUrlInBrowser(engineInfo.discordURL)
+				end
 			end)
-			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_pfm_community"))
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_pfm_discord_server"))
+			pContext:ScheduleUpdate()
+
+			local pSubItem = pContext:AddItem(gui.Loc("pfm_community_forum"), function(pItem)
+				local engineInfo = engine.get_info()
+				if(engineInfo.forumURL ~= nil) then
+					self:OpenUrlInBrowser(engineInfo.forumURL)
+				end
+			end)
+			pSubItem:SetTooltip(gui.Loc("pfm_menu_context_pfm_community_forum"))
 			pSubItem:SetName("community")
 			pContext:ScheduleUpdate()
 		end)
