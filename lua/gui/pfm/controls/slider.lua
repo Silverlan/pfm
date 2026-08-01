@@ -346,6 +346,7 @@ function Element:MouseCallback(button, state, mods)
 		util.remove(self.m_elEntry)
 		local el = gui.create("WINumericEntry", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 		el:SetText(tostring(self:GetValue()))
+		el:SetStepArrowsEnabled(false)
 		el:AddCallback("OnTextEntered", function(...)
 			util.remove(el, true)
 			local val = tonumber(el:GetText()) or 0.0

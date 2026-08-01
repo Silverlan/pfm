@@ -602,7 +602,7 @@ skin["title_bar"] = {
 		pElement:SetColor(GUI.background.primary)
 	end
 }
-skin["context_menu_arrow"] = {
+skin["arrow"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.text.body)
 	end,
@@ -614,6 +614,73 @@ skin["witable"] = {
 				pElement:SetColor(GUI.text.body)
 				pElement:SetFont(pfm.get_font("medium"))
 			end,
+		},
+	},
+}
+skin["table_row"] = {
+	Initialize = function(GUI, pElement)
+		local bg = gui.create("WIRect", pElement)
+		bg:SetZPos(0)
+		bg:SetName("background")
+		bg:SetAutoAlignToParent(true)
+		bg:SetVisible(false)
+		add_skin_element(pElement, bg)
+
+		local cbCursorEntered = pElement:AddCallback("OnCursorEntered", function()
+			if pElement:IsSelected() then
+				return
+			end
+			local bg = pElement:FindChildByName("background")
+			if bg ~= nil and bg:IsValid() then
+				bg:SetVisible(true)
+				bg:SetColorRGB(GUI.background.selected_hover)--TABLE_ROW_COLOR_HOVER)
+			end
+		end)
+		local cbCursorExited = pElement:AddCallback("OnCursorExited", function()
+			if pElement:IsSelected() then
+				return
+			end
+			local bg = pElement:FindChildByName("background")
+			if bg ~= nil and bg:IsValid() then
+				bg:SetVisible(false)
+			end
+		end)
+		local cbSelected = pElement:AddCallback("OnSelected", function()
+			local bg = pElement:FindChildByName("background")
+			if bg ~= nil and bg:IsValid() then
+				bg:SetVisible(true)
+				bg:SetColorRGB(GUI.background.selected)--TABLE_ROW_COLOR_SELECTED)
+			end
+		end)
+		local cbDeselected = pElement:AddCallback("OnDeselected", function()
+			local bg = pElement:FindChildByName("background")
+			if bg ~= nil and bg:IsValid() then
+				bg:SetVisible(false)
+			end
+		end)
+		add_skin_element(pElement, cbCursorEntered)
+		add_skin_element(pElement, cbCursorExited)
+		add_skin_element(pElement, cbSelected)
+		add_skin_element(pElement, cbDeselected)
+	end,
+	Release = clear_element,
+	children = {
+		["witablecell"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetZPos(1)
+			end,
+		},
+		["witext"] = {
+			Initialize = function(GUI, pElement)
+				local pCell = pElement:GetParent()
+				if
+					not pCell:IsValid()
+					or (not pCell:IsType(gui.TYPE_WIDROPDOWNMENU) and not pCell:IsType(gui.TYPE_WITEXTENTRYBASE))
+				then
+					pElement:SetColor(GUI.text.body)
+				end
+			end,
+			Release = clear_element,
 		},
 	},
 }
@@ -644,6 +711,11 @@ skin["table_row_header"] = {
 				fcSetSize()
 			end,
 			Release = clear_element,
+		},
+		["witext"] = {
+			Initialize = function(GUI, pElement)
+				pElement:SetColor(GUI.text.body)
+			end,
 		},
 	},
 }
