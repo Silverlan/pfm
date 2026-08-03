@@ -501,7 +501,7 @@ function gui.PFMTreeViewElement:OnUpdate()
 					expandIcon:ApplyX(self.m_vLine:GetX() - expandIcon:GetHalfWidth() + 1)
 					expandIcon:ApplyY(y - expandIcon:GetHalfHeight())
 				end
-			end
+			else util.remove(item.m_expandIcon) end
 		end
 	end
 
