@@ -139,7 +139,6 @@ function gui.PFMParticleEditor:PopulatePropertyTree()
 			el:AddCallback("OnMouseEvent", function(src, button, state, mods)
 				if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 					local pContext = gui.open_context_menu(self)
-					pContext:SetPos(input.get_cursor_pos())
 					fPopulateContextMenu(pContext)
 					pContext:Update()
 					return util.EVENT_REPLY_HANDLED
@@ -262,7 +261,6 @@ function gui.PFMParticleEditor:AddParticleChildItem(childName)
 	el:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 			local pContext = gui.open_context_menu(self)
-			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem(locale.get_text("remove"), function()
 				util.remove(el)
 
@@ -394,7 +392,6 @@ function gui.PFMParticleEditor:ReloadParticleProperties()
 				el:AddCallback("OnMouseEvent", function(el, button, state, mods)
 					if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 						local pContext = gui.open_context_menu(self)
-						pContext:SetPos(input.get_cursor_pos())
 						pContext:AddItem(locale.get_text("remove"), function()
 							self.m_propertyItems[propertyType]:ScheduleUpdate()
 							self.m_operatorData[el] = nil
@@ -1017,7 +1014,6 @@ function gui.PFMParticleEditor:CreateParticleSystem(fileName, ptName)
 	el:AddCallback("OnMouseEvent",function(el,button,state,mods)
 		if(button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS) then
 			local pContext = gui.open_context_menu(self)
-			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem("Remove",function() -- TODO: Localization
 				self.m_operatorData[el] = nil
 				print("Remove initializer...")
@@ -1107,7 +1103,6 @@ function gui.PFMParticleEditor:PopulateProperty(ptC, propertyType, property)
 	el:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 			local pContext = gui.open_context_menu(self)
-			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem(locale.get_text("remove"), function()
 				self.m_propertyItems[propertyType]:ScheduleUpdate()
 				self.m_operatorData[el] = nil

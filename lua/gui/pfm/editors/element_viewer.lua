@@ -426,7 +426,6 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 						if util.is_valid(pContext) == false then
 							return
 						end
-						pContext:SetPos(input.get_cursor_pos())
 						pContext:AddItem(locale.get_text("pfm_make_root"), function()
 							self:MakeElementRoot(node)
 						end)
@@ -571,7 +570,6 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 						if util.is_valid(pContext) == false then
 							return
 						end
-						pContext:SetPos(input.get_cursor_pos())
 						pContext:AddItem(locale.get_text("pfm_add_item"), function()
 							node:Resize(node:GetSize() + 1)
 							elTreeChild:Collapse()
@@ -606,7 +604,6 @@ function gui.PFMElementViewer:AddUDMNode(parent, node, name, elTreeParent, elTre
 					if util.is_valid(pContext) == false then
 						return
 					end
-					pContext:SetPos(input.get_cursor_pos())
 					pContext:AddItem(locale.get_text("copy_to_clipboard"), function()
 						local el = udm.create_element()
 						el:SetValue(name, node:GetType(), node:GetValue())

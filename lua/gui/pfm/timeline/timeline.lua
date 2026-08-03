@@ -178,7 +178,6 @@ function gui.PFMTimeline:AddAudioClip(group, audioClip, fOnSelected)
 			if util.is_valid(pContext) == false then
 				return
 			end
-			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem("Remove", function()
 				pfm.undoredo.push("delete_audio_clip", pfm.create_command("delete_audio_clip", audioClip))()
 			end)

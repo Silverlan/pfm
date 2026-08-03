@@ -28,7 +28,6 @@ function gui.PFMRenderResultWindow:__init(parent)
 			if util.is_valid(pContext) == false then
 				return
 			end
-			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem("Save", function()
 				print("TODO: Saving not yet implemented!")
 			end)

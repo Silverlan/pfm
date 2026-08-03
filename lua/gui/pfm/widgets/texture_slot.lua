@@ -103,7 +103,6 @@ function gui.PFMTextureSlot:MouseCallback(button, state, mods)
 		if util.is_valid(pContext) == false then
 			return
 		end
-		pContext:SetPos(input.get_cursor_pos())
 		pContext:AddItem(locale.get_text("clear"), function()
 			if self.m_clearTex ~= nil then
 				self:SetTexture(self.m_clearTex)

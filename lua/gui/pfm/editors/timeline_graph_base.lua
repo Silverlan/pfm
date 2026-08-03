@@ -587,7 +587,6 @@ function TimelineEditorGraphBase:MouseCallback(button, state, mods)
 			if util.is_valid(pContext) == false then
 				return
 			end
-			pContext:SetPos(input.get_cursor_pos())
 
 			local schema = pfm.udm.get_schema()
 

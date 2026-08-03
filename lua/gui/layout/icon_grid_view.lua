@@ -102,7 +102,6 @@ function gui.IconGridView:MouseCallback(button, action, mods)
 	if action == input.STATE_PRESS and button == input.MOUSE_BUTTON_RIGHT then
 		local pContext = gui.open_context_menu(self)
 		if util.is_valid(pContext) then
-			pContext:SetPos(input.get_cursor_pos())
 			self:CallCallbacks("PopulateContextMenu", pContext)
 			pContext:Update()
 			return util.EVENT_REPLY_HANDLED

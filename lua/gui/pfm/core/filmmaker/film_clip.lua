@@ -146,7 +146,6 @@ function Element:AddFilmClipElement(filmClip)
 			if util.is_valid(pContext) == false then
 				return
 			end
-			pContext:SetPos(input.get_cursor_pos())
 			self:PopulateClipContextMenu(filmClip, pContext)
 			pContext:AddItem(locale.get_text("pfm_add_clip_after"), function()
 				local p = pfm.open_single_value_edit_window(locale.get_text("name"), function(ok, val)

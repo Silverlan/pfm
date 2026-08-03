@@ -259,7 +259,6 @@ function Element:InitializeProjectUI(layoutName)
 				if util.is_valid(pContext) == false then
 					return
 				end
-				pContext:SetPos(input.get_cursor_pos())
 				pContext:AddItem("Add Track", function()
 					local p = pfm.open_single_value_edit_window("Track Name", function(ok, val)
 						if self:IsValid() == false then

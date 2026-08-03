@@ -162,7 +162,6 @@ function gui.PFMActorEditor:StartConstraintDragAndDropMode(selectedItems, proper
 				if util.is_valid(pContext) == false then
 					return
 				end
-				pContext:SetPos(input.get_cursor_pos())
 
 				local constraintTypes = elData.constraintTypes
 

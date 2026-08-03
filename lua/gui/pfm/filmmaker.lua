@@ -767,7 +767,6 @@ function gui.WIFilmmaker:AddAudioTrack(track)
 			if util.is_valid(pContext) == false then
 				return
 			end
-			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem("Add Audio Clip", function()
 				local pFileDialog = pfm.create_file_open_dialog(function(el, fileName)
 					if fileName == nil then

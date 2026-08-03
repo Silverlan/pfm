@@ -753,7 +753,6 @@ function gui.PFMActorEditor:MouseCallback(button, state, mods)
 		if util.is_valid(pContext) == false then
 			return
 		end
-		pContext:SetPos(input.get_cursor_pos())
 
 		pContext
 			:AddItem(gui.Loc("pfm_copy_actors"), function()
@@ -1924,7 +1923,6 @@ function gui.PFMActorEditor:AddControl(
 									if util.is_valid(pContext) == false then
 										return
 									end
-									pContext:SetPos(input.get_cursor_pos())
 
 									local ikItem, ikMenu =
 										pContext:AddSubMenu(gui.Loc("pfm_actor_editor_add_ik_control"))
@@ -1969,7 +1967,6 @@ function gui.PFMActorEditor:AddControl(
 			if util.is_valid(pContext) == false then
 				return
 			end
-			pContext:SetPos(input.get_cursor_pos())
 
 			self:PopulatePropertyContextMenu(pContext, self:GetSelectedProperties(), {
 				actorData = actorData,
@@ -2224,7 +2221,6 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 								if util.is_valid(pContext) == false then
 									return
 								end
-								pContext:SetPos(input.get_cursor_pos())
 
 								pContext
 									:AddItem(gui.Loc("pfm_go_to_driver_property"), function()

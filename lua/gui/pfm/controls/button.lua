@@ -332,7 +332,7 @@ function gui.PFMButton:OpenContextMenu()
 		return
 	end
 	local pos = self:GetAbsolutePos()
-	pContext:SetPos(pos.x, pos.y + self:GetHeight())
+	pContext:SetOriginPos(pos.x, pos.y + self:GetHeight())
 	self.m_fPopulateContextMenu(pContext)
 	self:CallCallbacks("PopulateContextMenu", pContext)
 	pContext:Update()

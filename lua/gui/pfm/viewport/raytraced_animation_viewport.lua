@@ -22,7 +22,6 @@ function gui.PFMRaytracedAnimationViewport:OnInitialize()
 				if util.is_valid(pContext) == false then
 					return
 				end
-				pContext:SetPos(input.get_cursor_pos())
 
 				local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("save_as"))
 				local hdr = self.m_saveAsHdr

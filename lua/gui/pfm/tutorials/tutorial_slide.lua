@@ -597,7 +597,6 @@ function Element:AddMessageBox(msg, audioFile)
 				if state == input.STATE_PRESS then
 					local pContext = gui.open_context_menu(self)
 					if util.is_valid(pContext) then
-						pContext:SetPos(input.get_cursor_pos())
 						pContext:AddItem("Translate to " .. locale.get_language(), function()
 							self:Translate(msgBoxInfo, msg)
 						end)

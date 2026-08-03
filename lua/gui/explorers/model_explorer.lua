@@ -53,7 +53,6 @@ function gui.ModelExplorer:OnFilesDropped(tFiles)
 	end
 	local pContext = gui.open_context_menu(self)
 	if util.is_valid(pContext) then
-		pContext:SetPos(input.get_cursor_pos())
 		pContext
 			:AddItem(locale.get_text("pfm_import_as_single_model"), function()
 				import_dropped_files(true)

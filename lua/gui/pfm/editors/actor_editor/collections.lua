@@ -58,7 +58,6 @@ function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 				if util.is_valid(pContext) == false then
 					return util.EVENT_REPLY_HANDLED
 				end
-				pContext:SetPos(input.get_cursor_pos())
 
 				pContext:AddItem(gui.Loc("pfm_add_collection"), function()
 					itemGroup:Expand()

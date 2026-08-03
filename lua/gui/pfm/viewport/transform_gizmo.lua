@@ -747,7 +747,6 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 			if util.is_valid(pContext) == false then
 				return
 			end
-			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem(locale.get_text("pfm_set_position"), function()
 				local tePos
 				local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_position"), function(ok)
@@ -805,7 +804,6 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 			if util.is_valid(pContext) == false then
 				return
 			end
-			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem(locale.get_text("pfm_set_rotation"), function()
 				local teRot
 				local p = pfm.open_entry_edit_window(locale.get_text("pfm_set_rotation"), function(ok)

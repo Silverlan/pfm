@@ -319,7 +319,6 @@ function Element:AddControl(item, boneName, controlType)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) then
-				pContext:SetPos(input.get_cursor_pos())
 				pContext:AddItem("Remove", function()
 					self:RemoveControl(boneName)
 				end)
@@ -381,7 +380,6 @@ function Element:InitializeBoneControls(mdl)
 			if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 				local pContext = gui.open_context_menu(self)
 				if util.is_valid(pContext) then
-					pContext:SetPos(input.get_cursor_pos())
 					self:PopulateBoneContextMenu(pContext, boneDst:GetName())
 					pContext:Update()
 					return util.EVENT_REPLY_HANDLED

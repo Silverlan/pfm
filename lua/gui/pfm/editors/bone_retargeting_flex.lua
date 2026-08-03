@@ -212,7 +212,6 @@ function gui.BoneRetargeting:InitializeFlexControls(mdlDst, mdlSrc)
 			if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
 				local pContext = gui.open_context_menu(self)
 				if util.is_valid(pContext) then
-					pContext:SetPos(input.get_cursor_pos())
 					pContext:AddItem(locale.get_text("add_mapping"), function()
 						self:MapFlexController(i - 1, -1)
 					end)

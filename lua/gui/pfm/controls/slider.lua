@@ -373,7 +373,6 @@ function Element:MouseCallback(button, state, mods)
 		if util.is_valid(pContext) == false then
 			return
 		end
-		pContext:SetPos(input.get_cursor_pos())
 		local default = self:GetDefault()
 		if default ~= nil then
 			pContext:AddItem(locale.get_text("reset"), function()

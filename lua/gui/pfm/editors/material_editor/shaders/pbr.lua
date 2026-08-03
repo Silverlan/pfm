@@ -737,8 +737,6 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 					if state == input.STATE_PRESS then
 						local pContext = gui.open_context_menu(self)
 						if util.is_valid(pContext) then
-							pContext:SetPos(input.get_cursor_pos())
-
 							local identifierToElement = {}
 							for _, texName in ipairs(asset.find("matcaps/*", asset.TYPE_TEXTURE)) do
 								texName = file.remove_file_extension(

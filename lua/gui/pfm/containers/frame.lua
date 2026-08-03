@@ -40,7 +40,7 @@ function gui.PFMFrame:OnInitialize()
 			return
 		end
 		local pos = self.m_btAddPanel:GetAbsolutePos()
-		pContext:SetPos(pos.x, pos.y + self.m_btAddPanel:GetHeight())
+		pContext:SetOriginPos(pos.x, pos.y + self.m_btAddPanel:GetHeight())
 		self:CallCallbacks("PopulateWindowMenu", pContext)
 		pContext:Update()
 	end)
@@ -213,7 +213,6 @@ function gui.PFMFrame:AddTab(identifier, name, panel)
 			if util.is_valid(pContext) == false then
 				return
 			end
-			pContext:SetPos(input.get_cursor_pos())
 			pContext:AddItem(locale.get_text("detach"), function()
 				if not self:IsValid() then
 					return

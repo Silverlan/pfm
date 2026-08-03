@@ -408,7 +408,6 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 			if util.is_valid(pContext) == false then
 				return
 			end
-			pContext:SetPos(input.get_cursor_pos())
 
 			pfm.populate_actor_context_menu(pContext, actor, true)
 			pContext:AddItem(locale.get_text("rename"), function()
@@ -459,7 +458,7 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 			local pContext = gui.open_context_menu(self)
 			if util.is_valid(pContext) then
 				local pos = itemAddComponent:GetAbsolutePos()
-				pContext:SetPos(pos.x, pos.y + itemAddComponent:GetHeight())
+				pContext:SetOriginPos(pos.x, pos.y + itemAddComponent:GetHeight())
 				pContext:AddCallback("OnRemove", function()
 					itemAddComponent:SetSelected(false)
 				end)
