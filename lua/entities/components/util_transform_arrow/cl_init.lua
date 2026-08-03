@@ -74,7 +74,7 @@ function Component:Initialize()
 
 	renderC:SetExemptFromOcclusionCulling(true)
 	renderC:SetDepthPassEnabled(false)
-	renderC:SetDepthBias(185, 180)
+	-- renderC:SetDepthBias(185, 180)
 
 	clickC:SetPriority(100)
 end

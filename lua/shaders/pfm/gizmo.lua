@@ -12,7 +12,7 @@ end
 function shader.PFMGizmo:InitializePipeline(pipelineInfo, pipelineIdx)
 	shader.BaseTexturedLit3D.InitializePipeline(self, pipelineInfo, pipelineIdx)
 
-	pipelineInfo:SetDepthTestEnabled(true)
+	pipelineInfo:SetDepthTestEnabled(false)
 	pipelineInfo:SetDepthWritesEnabled(true)
 end
 shader.register("pfm_gizmo", shader.PFMGizmo)
