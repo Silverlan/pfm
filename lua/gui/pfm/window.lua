@@ -3,11 +3,9 @@
 
 include("layout/title_bar.lua")
 
-util.register_class("gui.PFMWindow", gui.Base)
+local MARGIN_SIZE = 12
 
-function gui.PFMWindow:__init()
-	gui.Base.__init(self)
-end
+util.register_class("gui.PFMWindow", gui.Base)
 function gui.PFMWindow:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -23,9 +21,9 @@ function gui.PFMWindow:OnInitialize()
 
 	self.m_titleBar = gui.create("pfm_title_bar", mainBox)
 	local contents = gui.create("hbox", mainBox)
-	gui.create("WIBase", contents, 0, 0, 12, 1) -- Gap
+	gui.create("WIBase", contents, 0, 0, MARGIN_SIZE, 1) -- Gap
 	self.m_innerContents = gui.create("vbox", contents)
-	gui.create("WIBase", contents, 0, 0, 12, 1) -- Gap
+	gui.create("WIBase", contents, 0, 0, MARGIN_SIZE, 1) -- Gap
 
 	local outline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	outline:AddStyleClass("outline")
@@ -59,6 +57,7 @@ function gui.PFMWindow:OnInitialize()
 	pFrame:SetAutoCenterToParent(true)
 	self.m_frame = pFrame
 end
+function gui.PFMWindow:GetMarginSize() return MARGIN_SIZE end
 function gui.PFMWindow:SetWindowSize(size, minSize, maxSize)
 	if util.is_valid(self.m_frame) == false then
 		return

@@ -22,6 +22,10 @@ function PfmPrompt:OnInitialize()
 	local elMsg = gui.create("WIText", contents)
 	elMsg:AddStyleClass("font_medium")
 	elMsg:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
+	elMsg:SetSkinCallbacksEnabled(true)
+	elMsg:AddCallback("OnSkinApplied", function()
+		self:ScheduleUpdate()
+	end)
 	self.m_message = elMsg
 
 	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap
@@ -82,7 +86,7 @@ function PfmPrompt:OnUpdate()
 	self.m_message:UpdateSubLines()
 	local w = math.max(self.m_message:GetTextWidth(), self.m_boxButtons:GetWidth())
 
-	self:SetWindowSize(Vector2i(w + 20, self.m_message:GetHeight() + self.m_userContents:GetHeight() + 95))
+	self:SetWindowSize(Vector2i(w +self:GetMarginSize() *2, self.m_message:GetHeight() + self.m_userContents:GetHeight() + 95))
 end
 gui.register("pfm_prompt", PfmPrompt)
 
