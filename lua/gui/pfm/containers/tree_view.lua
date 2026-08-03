@@ -515,7 +515,7 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 		return item.m_expandIcon
 	end
 	local expandIcon = gui.create("pfm_tree_expand_icon", self.m_childPrefix)
-	expandIcon:SetColor(Color(80, 80, 80))
+	expandIcon:AddStyleClass("tree_expand_icon")
 	expandIcon:AddCallback("OnExpand", function()
 		if item:IsValid() == false then
 			return

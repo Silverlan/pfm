@@ -867,6 +867,11 @@ skin["button_background_pressed"] = {
 		pElement:SetColor(GUI.button.background_pressed)
 	end,
 }
+skin["tree_expand_icon"] = {
+	Initialize = function(GUI, pElement)
+		pElement:SetColor(GUI.button.background)
+	end,
+}
 skin["button_icon"] = {
 	Initialize = function(GUI, pElement)
 		pElement:SetColor(GUI.button.icon)
