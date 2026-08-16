@@ -131,7 +131,6 @@ end
 function Component:GetCameraData()
 	return self.m_cameraData
 end
-local MODEL_VERTEX_COUNT = 32
 function Component:InitializeModel()
 	if self.m_frustumModel ~= nil then
 		return self.m_frustumModel
@@ -144,6 +143,7 @@ function Component:InitializeModel()
 	subMesh:SetGeometryType(game.Model.Mesh.Sub.GEOMETRY_TYPE_LINES)
 
 	local indices = {}
+	local MODEL_VERTEX_COUNT = 32
 	for i = 1, MODEL_VERTEX_COUNT do
 		local v = game.Model.Vertex(Vector(), Vector2(0, 0), Vector(0, 0, 0))
 		local idx = subMesh:AddVertex(v)
