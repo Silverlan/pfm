@@ -765,7 +765,7 @@ skin["background"] = {
 		pElement:SetColor(GUI.background.primary)
 	end,
 }
-skin["wishadergraph"] = {
+skin["shader_graph"] = {
 	children = {
 		["node_background_selected"] = {
 			Initialize = function(GUI, pElement)
