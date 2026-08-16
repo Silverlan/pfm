@@ -200,7 +200,7 @@ function gui.PFMControlsMenu:AddInfo(name, identifier)
 	apply_text(wrapper, name)
 	if identifier ~= nil then
 		wrapper:SetName(identifier)
-		self:AddControl(identifier, el, wrapper, c)
+		self:AddControl(identifier, el, wrapper, name, c)
 	end
 	return el, wrapper, c
 end
@@ -363,6 +363,8 @@ function gui.PFMControlsMenu:SetValue(identifier, value)
 		ctrl.element:SetText(tostring(value))
 	elseif ctrl.element:IsType(gui.TYPE_TOGGLE_OPTION) then
 		ctrl.element:SetChecked(value)
+	elseif ctrl.element:IsType(gui.TYPE_WIBASE) then
+		apply_text(ctrl.wrapper, value)
 	else
 		ctrl.element:SetValue(value)
 	end

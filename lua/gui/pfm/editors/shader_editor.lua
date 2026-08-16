@@ -28,6 +28,7 @@ function Element:OnInitialize()
 	local elDrag = gui.create("WITransformable", self, szDrag * -0.5, szDrag * -0.5, szDrag, szDrag)
 	--elDrag:SetDraggable(true)
 	--elDrag:GetDragArea():SetAutoAlignToParent(true)
+	elDrag:SetMovementPadding(0)
 	self.m_transformable = elDrag
 
 	local elGraph = gui.create("shader_graph", elDrag, 0, 0)
@@ -50,6 +51,21 @@ function Element:OnInitialize()
 			pContext:AddItem(locale.get_text("new"), function()
 				self.m_elGraph:Clear()
 				self.m_filePath = nil
+
+				local pFileDialog
+				pFileDialog = pfm.create_file_save_dialog(function(pDialoge, fileName)
+					if fileName == nil then
+						return
+					end
+					fileName = file.remove_file_extension(fileName, { shader.ShaderGraph.EXTENSION_ASCII, shader.ShaderGraph.EXTENSION_BINARY })
+					if(#fileName == 0) then return end
+					fileName = fileName .. "." .. shader.ShaderGraph.EXTENSION_ASCII
+					local filePath = pDialoge:GetFilePath(true)
+					self:UpdatePath(filePath)
+				end)
+				pFileDialog:SetRootPath(util.DirPath(shader.ShaderGraph.ROOT_PATH, "object"):GetString())
+				pFileDialog:SetExtensions({ shader.ShaderGraph.EXTENSION_ASCII, shader.ShaderGraph.EXTENSION_BINARY })
+				pFileDialog:Update()
 			end)
 			pContext:AddItem(locale.get_text("open") .. "...", function()
 				if self:IsValid() == false then
@@ -63,7 +79,7 @@ function Element:OnInitialize()
 					local graphIdentifier = get_graph_identifier_from_file_path(filePath)
 					local graph, err = shader.load_shader_graph(graphIdentifier)
 					if graph == nil then
-						self:LogWarn("Failed to load shader graph '" .. graphIdentifier .. "': " .. err)
+						pfm.create_popup_message(err, 5, gui.InfoBox.TYPE_ERROR)
 					else
 						self:LogInfo("Loaded shader graph '" .. graphIdentifier .. "'!")
 						graph = graph:Copy()
@@ -120,10 +136,39 @@ function Element:OnInitialize()
 				local filePath = shader.ShaderGraph.get_file_path("object", graphIdentifier)
 				util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
 			end)
+			pContext:AddItem("Clamp View", function()
+				if self:IsValid() == false then
+					return
+				end
+
+				self:ClampView()
+			end)
 
 			pContext:ScheduleUpdate()
 		end)
 		:SetName("view")
+end
+function Element:ClampView()
+	local min = Vector2(math.huge, math.huge)
+	local max = Vector2(-math.huge, -math.huge)
+	local nodeData = self.m_elGraph:GetNodeData()
+	for _, data in pairs(nodeData) do
+		if data.frame:IsValid() then
+			local pos = data.frame:GetPos()
+			local sz = data.frame:GetSize()
+			local endPos = pos +sz
+			min.x = math.min(min.x, pos.x)
+			min.y = math.min(min.y, pos.y)
+
+			max.x = math.max(max.x, endPos.x)
+			max.y = math.max(max.y, endPos.y)
+		end
+	end
+
+	local pos = self.m_elGraph:GetPos() +min
+	local offset = Vector2(50, 50)
+	pos = pos -offset
+	self.m_transformable:SetPos(-pos.x, -pos.y)
 end
 function Element:OnRemove()
 	util.remove(self.m_cbRenderSceneDirty)
@@ -148,11 +193,13 @@ end
 function Element:OnThink()
 	if self.m_shaderReloadTime ~= nil and time.cur_time() >= self.m_shaderReloadTime then
 		self.m_shaderReloadTime = nil
-		local graphIdentifier = get_graph_identifier_from_file_path(self.m_filePath)
-		local shaderType = "object"
-		local graph = self.m_elGraph:GetGraph()
-		shader.sync_shader_graph(shaderType, graphIdentifier, graph)
-		shader.reload_graph_shader(graphIdentifier)
+		if(self.m_filePath ~= nil) then
+			local graphIdentifier = get_graph_identifier_from_file_path(self.m_filePath)
+			local shaderType = "object"
+			local graph = self.m_elGraph:GetGraph()
+			shader.sync_shader_graph(shaderType, graphIdentifier, graph)
+			shader.reload_graph_shader(graphIdentifier)
+		end
 		pfm.tag_render_scene_as_dirty()
 	end
 	if self.m_shaderReloadTime == nil then
