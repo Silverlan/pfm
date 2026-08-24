@@ -18,19 +18,18 @@ function Component:Initialize()
 		end
 	end
 
-	self:AddEntityComponent(ents.COMPONENT_RENDER)
+	local renderC = self:AddEntityComponent(ents.COMPONENT_RENDER)
 	self:AddEntityComponent(ents.COMPONENT_MODEL)
 	self:AddEntityComponent("pfm_editor_actor") -- Required so the ik control can be detected for mouse hover
 	self:AddEntityComponent("debug_dotted_line")
 	self:AddEntityComponent("pfm_overlay_object")
-	self:BindEvent(ents.TransformComponent.EVENT_ON_POSE_CHANGED, "OnPoseChanged")
-	self.m_debugBoxC = self:AddEntityComponent(ents.COMPONENT_DEBUG_BOX)
 	local scalerC = self:AddEntityComponent("fixed_size_scaler")
 	scalerC:SetBaseScale(1.5)
 
-	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
+	renderC:SetExemptFromOcclusionCulling(true)
+	renderC:SetDepthPassEnabled(false)
 
-	self:UpdateDebugBoxScale()
+	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
 end
 
 function Component:UpdateSelection()
@@ -74,22 +73,8 @@ function Component:UpdateColor()
 	end
 	baseColor = baseColor:Copy()
 
-	self.m_debugBoxC:SetColorOverride(baseColor)
-	self.m_debugBoxC:SetIgnoreDepthBuffer(true)
-	baseColor.a = self:IsSelected() and 200 or 100
 	self:GetEntity():SetColor(baseColor)
-end
-
-function Component:UpdateDebugBoxScale()
-	if util.is_valid(self.m_debugBoxC) == false then
-		return
-	end
-	local scale = self:GetEntity():GetScale()
-	self.m_debugBoxC:SetBounds(-scale, scale)
-end
-
-function Component:OnPoseChanged()
-	self:UpdateDebugBoxScale()
+	self:GetEntity():SetSkin(self:IsSelected() and 1 or 0)
 end
 
 function Component:OnRemove()

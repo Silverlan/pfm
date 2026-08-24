@@ -13,6 +13,7 @@
 
 #include "flat.glsl"
 #include "/common/inputs/textures/albedo_map.glsl"
+#include "/common/inputs/material.glsl"
 #include "/common/pixel_outputs/fs_bloom_color.glsl"
 #include "/common/vertex_outputs/vertex_data.glsl"
 
@@ -20,6 +21,8 @@ void main()
 {
 	fs_color = texture(u_albedoMap,get_vertex_uv());
 	vec4 colorMod = get_instance_color();
+	colorMod.rgb *= get_mat_color_factor();
+	colorMod.a *= get_mat_alpha_factor();
 	fs_color.r *= colorMod.r;
 	fs_color.g *= colorMod.g;
 	fs_color.b *= colorMod.b;

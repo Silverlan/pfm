@@ -92,6 +92,8 @@ function Component:Initialize()
 	end
 
 	self.m_listeners = {}
+
+	self:GetEntity():SetColor(Color(0, 128, 255, 64))
 end
 function Component:OnTurnOn()
 	if self.m_frustumModel == nil then

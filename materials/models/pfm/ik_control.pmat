@@ -1,0 +1,13 @@
+"pfm_flat"
+{
+	"textures"
+	{
+		$string albedo_map "white"
+	}
+	"properties"
+	{
+		$string render_layer "gizmo"
+		$float alpha_factor 0.392
+		$int32 alpha_mode 2
+	}
+}

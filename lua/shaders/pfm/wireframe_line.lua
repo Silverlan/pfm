@@ -33,3 +33,12 @@ function Shader:OnBindEntity(ent)
 	self:RecordPushConstants(self.m_dsPushConstants, shader.TexturedLit3D.PUSH_CONSTANTS_USER_DATA_OFFSET)
 end
 shader.register("pfm_wireframe_line", Shader)
+
+local Shader = util.register_class("shader.PFMWireframeLineNoDepth", shader.PFMWireframeLine)
+
+function Shader:InitializePipeline(pipelineInfo, pipelineIdx)
+	shader.PFMWireframeLine.InitializePipeline(self, pipelineInfo, pipelineIdx)
+
+	pipelineInfo:SetDepthTestEnabled(false)
+end
+shader.register("pfm_wireframe_line_no_depth", Shader)

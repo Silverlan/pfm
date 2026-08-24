@@ -12,6 +12,8 @@ function Component:Initialize()
 	self:AddEntityComponent("pfm_overlay_object")
 
 	self.m_listeners = {}
+
+	self:GetEntity():SetColor(Color(0, 128, 255, 64))
 end
 function Component:OnRemove()
 	util.remove(self.m_listeners)
