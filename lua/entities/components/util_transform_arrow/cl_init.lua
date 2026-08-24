@@ -11,6 +11,8 @@ util.register_class("ents.UtilTransformArrowComponent", BaseEntityComponent)
 include("model.lua")
 include("gizmo.lua")
 
+local LINE_LENGTH = 32768
+
 local Component = ents.UtilTransformArrowComponent
 
 local defaultMemberFlags = bit.band(
@@ -85,13 +87,13 @@ function Component:SetCamera(cam)
 end
 function Component:UpdateAxisGuides()
 	if self:GetAxisGuidesEnabled() == false then
-		util.remove(self.m_debugLine)
+		util.remove(self.m_entLine)
 		return
 	end
 	self:UpdateLine()
 end
 function Component:UpdateLine()
-	util.remove(self.m_debugLine)
+	util.remove(self.m_entLine)
 	if self:GetEntity():IsSpawned() == false or self:GetAxisGuidesEnabled() == false then
 		return
 	end
@@ -107,9 +109,15 @@ function Component:UpdateLine()
 		return
 	end
 	local colC = self:GetEntity():GetComponent(ents.COMPONENT_COLOR)
-	local drawInfo = debug.DrawInfo()
-	drawInfo:SetColor((colC ~= nil) and Color(colC:GetColor()) or Color.White)
-	self.m_debugLine = debug.draw_line(Vector(-1000, 0, 0), Vector(1000, 0, 0), drawInfo)
+
+	local ent = ents.create("entity")
+	ent:AddComponent("pfm_line")
+	ent:SetColor((colC ~= nil) and Color(colC:GetColor()) or Color.White)
+	self:GetEntity():AddChild(ent)
+	ent:SetParent(self:GetEntity())
+	ent:SetScale(Vector(1, 1, LINE_LENGTH))
+	ent:Spawn()
+	self.m_entLine = ent
 end
 function Component:OnEntitySpawn()
 	self:UpdateAxis()
@@ -119,7 +127,7 @@ end
 function Component:OnRemove()
 	util.remove(self.m_elLine)
 	util.remove(self.m_cbOnMouseRelease)
-	util.remove(self.m_debugLine)
+	util.remove(self.m_entLine)
 	util.remove(self.m_cbOnTransformChanged)
 end
 
@@ -320,20 +328,21 @@ end
 function Component:GetReferenceAxis()
 	return self:GetAxis()
 end
-function Component:UpdateDebugLine()
-	if util.is_valid(self.m_debugLine) == false then
+function Component:UpdateLinePose()
+	if util.is_valid(self.m_entLine) == false then
 		return
 	end
 	local pose = self:GetBasePose()
 	if pose == nil then
 		return
 	end
-	self.m_debugLine:SetPos(self:GetEntity():GetPos())
-	self.m_debugLine:SetRotation(self:GetEntity():GetRotation() * EulerAngles(0, -90, 0):ToQuaternion())
+	local pose = self:GetEntity():GetPose()
+	pose:TranslateLocal(Vector(0, 0, -LINE_LENGTH /2.0))
+	self.m_entLine:SetPose(pose)
 end
 function Component:OnTick(dt)
 	self:UpdateTransformLine()
-	self:UpdateDebugLine() -- TODO: This doesn't belong here, move it to a render callback
+	self:UpdateLinePose()
 	if self:IsSelected() ~= true then
 		return
 	end

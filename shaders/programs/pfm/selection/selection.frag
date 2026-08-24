@@ -13,9 +13,10 @@
 
 #include "selection.glsl"
 #include "/common/pixel_outputs/fs_bloom_color.glsl"
+#include "/common/inputs/entity.glsl"
 
 void main()
 {
-	fs_color = vec4(0,128,255,255) /255.0;//u_pushConstants.selectionColor;
+	fs_color = u_instance.data.color;
 	extract_bright_color(fs_color);
 }

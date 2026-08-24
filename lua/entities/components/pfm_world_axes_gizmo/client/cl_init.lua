@@ -14,37 +14,28 @@ function Component:Initialize()
 	self:BindEvent(ents.ToggleComponent.EVENT_ON_TURN_OFF, "UpdateGizmo")
 
 	self:SetTickPolicy(ents.TICK_POLICY_ALWAYS)
+
+	self.m_entLines = {}
 end
 function Component:OnRemove()
-	util.remove(self.m_debugObject)
 	util.remove(self.m_cbUpdate)
 end
 function Component:UpdateGizmo()
 	if self:GetEntity():IsEnabled() == false then
-		util.remove(self.m_debugObject)
 		util.remove(self.m_cbUpdate)
+		util.remove(self.m_entLines)
+		self.m_entLines = {}
 		return
 	end
-	if util.is_valid(self.m_debugObject) then
-		return
-	end
-	local l = 1
-	local drawInfo = debug.DrawInfo()
-	drawInfo:SetColor(Color.Red)
-	local o0 = debug.draw_line(Vector(0, 0, 0), Vector(l, 0, 0), drawInfo)
-	drawInfo:SetColor(Color.Green)
-	local o1 = debug.draw_line(Vector(0, 0, 0), Vector(0, l, 0), drawInfo)
-	drawInfo:SetColor(Color.Blue)
-	local o2 = debug.draw_line(Vector(0, 0, 0), Vector(0, 0, l), drawInfo)
-	self.m_debugObject = debug.create_collection({ o0, o1, o2 })
+	self:CreateLine(math.AXIS_X, Color.Red, EulerAngles(0,90,0), -vector.RIGHT)
+	self:CreateLine(math.AXIS_Y, Color.Green, EulerAngles(-90,0,0), vector.UP)
+	self:CreateLine(math.AXIS_Z, Color.Blue, EulerAngles(0,0,0), vector.FORWARD)
+	util.remove(self.m_cbUpdate)
 	self.m_cbUpdate = game.add_callback("PreRenderScenes", function()
 		self:UpdatePos()
 	end)
 end
 function Component:UpdatePos()
-	if util.is_valid(self.m_debugObject) == false then
-		return
-	end
 	local pm = tool.get_filmmaker()
 	local vp = util.is_valid(pm) and pm:GetViewport() or nil
 	vp = util.is_valid(vp) and vp:GetViewport() or nil
@@ -61,9 +52,25 @@ function Component:UpdatePos()
 
 	local pos = np + dir * 20 + (np - npL):GetNormal() * -2.5 + (npB - np):GetNormal() * 2.5
 	self:GetEntity():SetPos(pos)
-	self.m_debugObject:SetPos(self:GetEntity():GetPos())
+	for axis, ent in pairs(self.m_entLines) do
+		if(ent:IsValid()) then
+			ent:SetPos(pos)
+		end
+	end
 end
-function Component:OnEntitySpawn()
-	self:UpdateGizmo()
+function Component:CreateLine(axis, color, ang, dir)
+	if(util.is_valid(self.m_entLines[axis])) then return end
+	local relPose = math.Transform(Vector(), ang:ToQuaternion())
+	local pose = self:GetEntity():GetPose()
+	pose = pose *relPose
+
+	local ent = ents.create("entity")
+	ent:AddComponent("pfm_line")
+	ent:SetColor(color)
+	self:GetEntity():AddChild(ent)
+	ent:SetPose(pose)
+	ent:SetParent(self:GetEntity())
+	ent:Spawn()
+	self.m_entLines[axis] = ent
 end
 ents.register_component("pfm_world_axes_gizmo", Component, "pfm", ents.EntityComponent.FREGISTER_BIT_HIDE_IN_EDITOR)

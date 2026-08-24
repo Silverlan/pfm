@@ -6,10 +6,6 @@ local Shader = util.register_class("shader.PFMWireframeLine", shader.BaseTexture
 Shader.FragmentShader = "programs/pfm/selection/selection"
 Shader.VertexShader = "programs/pfm/selection/selection"
 Shader.ShaderMaterial = "basic"
-Shader.LINE_COLOR = Color(0, 128, 255, 16):ToVector4()
-Shader.SetLineColor = function(color)
-	Shader.LINE_COLOR = color:ToVector4()
-end
 function Shader:Initialize()
 	self:SetDepthPrepassEnabled(false)
 	self.m_dsPushConstants = util.DataStream(util.SIZEOF_VECTOR4)
@@ -19,6 +15,7 @@ function Shader:InitializePipeline(pipelineInfo, pipelineIdx)
 
 	pipelineInfo:SetPolygonMode(prosper.POLYGON_MODE_LINE)
 	pipelineInfo:SetPrimitiveTopology(prosper.PRIMITIVE_TOPOLOGY_LINE_LIST)
+	pipelineInfo:SetLineWidth(2)
 	pipelineInfo:SetDepthWritesEnabled(true)
 end
 function Shader:InitializeGfxPipelinePushConstantRanges()
@@ -32,7 +29,7 @@ function Shader:OnBindEntity(ent)
 	local drawCmd = self:GetCurrentCommandBuffer()
 
 	self.m_dsPushConstants:Seek(0)
-	self.m_dsPushConstants:WriteVector4(Color.White:ToVector4()) --Shader.LINE_COLOR)
+	self.m_dsPushConstants:WriteVector4(Color.White:ToVector4())
 	self:RecordPushConstants(self.m_dsPushConstants, shader.TexturedLit3D.PUSH_CONSTANTS_USER_DATA_OFFSET)
 end
 shader.register("pfm_wireframe_line", Shader)

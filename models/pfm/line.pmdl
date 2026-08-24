@@ -1,0 +1,52 @@
+"assetData"
+{
+	$array baseMeshGroups [uint32;1][0]
+	$array materialPaths [string;1]["models/pfm/"]
+	$array materials [string;1]["white_wireframe"]
+	$bool static true
+	"meshGroups"
+	{
+		"reference"
+		{
+			$uint32 index 0
+			$array meshes [element;1][
+				{
+					$uint32 referenceId 4294967295
+					$array subMeshes [element;1][
+						{
+							"assetData"
+							{
+								$uint8 alphaCount 0
+								$string geometryType "Lines"
+								$arrayLz4 indices [uint16;2][0,1]
+								$stransform pose [[0,0,0][1,0,0,0][1,1,1]]
+								$uint32 skinMaterialIndex 0
+								$arrayLz4 vertices [vec3;2][
+									[0,0,0],
+									[0,0,1]
+								]
+							}
+							$string assetType "PMESH"
+							$uint32 assetVersion 1
+						}
+					]
+				}
+			]
+		}
+	}
+	"render"
+	{
+		"bounds"
+		{
+			$vec3 min [-1,-1,-1]
+			$vec3 max [1,1,1]
+		}
+	}
+	$array skins [element;1][
+		{
+			$array materials [uint32;1][0]
+		}
+	]
+}
+$string assetType "PMDL"
+$uint32 assetVersion 1
