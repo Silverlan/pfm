@@ -1934,7 +1934,11 @@ function gui.WIFilmmaker:RestoreActorsFromUdmElement(filmClip, data, keepOrigina
 			local parentCollections = udmData:GetArrayValues("parentCollections", udm.TYPE_STRING)
 
 			local group = filmClip:GetScene()
-			group = actorEditor:FindCollection(parentCollections, true, group)
+			local pcReverse = {}
+			for i=#parentCollections, 1, -1 do
+				table.insert(pcReverse, parentCollections[i])
+			end
+			group = actorEditor:FindCollection(pcReverse, true, group)
 			local actor = group:AddActor()
 			actor:Reinitialize(udmData:Get("data"))
 			for ent, c in ents.citerator(ents.COMPONENT_PFM_FILM_CLIP) do
@@ -1971,7 +1975,8 @@ function gui.WIFilmmaker:RestoreActorsFromUdmElement(filmClip, data, keepOrigina
 		local item = root
 		if #actor.parentCollections > 0 then
 			item = item:FindItemByText("Scene")
-			for _, colName in ipairs(actor.parentCollections) do
+			for i=#actor.parentCollections, 1, -1 do
+				local colName = actor.parentCollections[i]
 				if util.is_valid(item) then
 					item = item:FindItemByText(colName)
 				else
