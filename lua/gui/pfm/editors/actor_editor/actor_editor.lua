@@ -2749,94 +2749,113 @@ pfm.populate_actor_component_context_menu = function(pContext, actor, t, localeI
 	end
 end
 
-pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, hitMaterial)
-	pfm.get_project_manager():CallCallbacks("PopulateActorContextMenu", pContext, actor)
+pfm.populate_actor_context_menu = function(pContext, actors, hitMaterial)
+	pfm.get_project_manager():CallCallbacks("PopulateActorContextMenu", pContext, actors)
 
-	-- Components
-	local entActor = actor:FindEntity()
-	if util.is_valid(entActor) then
-		--[[for _, name in ipairs(ents.find_installed_custom_components()) do
-			newComponentMap[name] = true
-		end]]
-		local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(gui.Loc("pfm_add_component"))
-		pComponentsItem:SetName("add_component")
-		pfm.populate_actor_component_context_menu(pComponentsMenu, actor)
-		pComponentsMenu:Update()
-	end
-	--
-
-	local uniqueId = tostring(actor:GetUniqueId())
-	pContext
-		:AddItem(gui.Loc("pfm_export_animation"), function()
-			local entActor = actor:FindEntity()
-			if util.is_valid(entActor) == false then
-				return
-			end
-			local filmmaker = pfm.get_project_manager()
-			filmmaker:ExportAnimation(entActor)
-		end)
-		:SetName("export_animation")
-
-	local entActor = actor:FindEntity()
-	local renderC = util.is_valid(entActor) and entActor:GetComponent(ents.COMPONENT_RENDER) or nil
-	local mdl = util.is_valid(entActor) and entActor:GetModel() or nil
-	if renderC ~= nil and mdl ~= nil then
-		local materials = {}
-		local hasMaterials = false
-		for _, mesh in ipairs(renderC:GetRenderMeshes()) do
-			local mat = mdl:GetMaterial(mesh:GetSkinTextureIndex())
-			if util.is_valid(mat) then
-				local name = mat:GetName()
-				if #name > 0 then
-					materials[name] = mat
-					hasMaterials = true
-				end
-			end
+	if(#actors == 1) then
+		local actor = actors[1]
+		-- Components
+		local entActor = actor:FindEntity()
+		if util.is_valid(entActor) then
+			--[[for _, name in ipairs(ents.find_installed_custom_components()) do
+				newComponentMap[name] = true
+			end]]
+			local pComponentsItem, pComponentsMenu = pContext:AddSubMenu(gui.Loc("pfm_add_component"))
+			pComponentsItem:SetName("add_component")
+			pfm.populate_actor_component_context_menu(pComponentsMenu, actor)
+			pComponentsMenu:Update()
 		end
-
-		if hasMaterials then
-			local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("pfm_edit_material"))
-			pItem:SetName("edit_material")
-			for matPath, _ in pairs(materials) do
-				local matName = file.get_file_name(matPath)
-				local item = pSubMenu:AddItem(matName, function()
-					pfm.get_project_manager():OpenMaterialEditor(matPath, mdl:GetName())
-				end)
-				local normMatPath = string.replace(matPath, "/", "_")
-				item:SetName(normMatPath)
-
-				if hitMaterial ~= nil and matPath == hitMaterial:GetName() then
-					local el = gui.create("WIOutlinedRect", item, 0, 0, item:GetWidth(), item:GetHeight(), 0, 0, 1, 1)
-					el:SetColor(pfm.get_color_scheme_color("green"))
-				end
-			end
-			pSubMenu:Update()
-		end
+		--
 
 		pContext
-			:AddItem(gui.Loc("pfm_export_model"), function()
-				local exportInfo = game.Model.ExportInfo()
-				local result, err = mdl:Export(exportInfo)
-				if result then
-					print("Model exported successfully!")
-					local filePath = err
-					util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
-				else
-					console.print_warning("Unable to export model: ", err)
+			:AddItem(gui.Loc("pfm_export_animation"), function()
+				local entActor = actor:FindEntity()
+				if util.is_valid(entActor) == false then
+					return
 				end
-			end)
-			:SetName("export_model")
-
-		pContext
-			:AddItem(gui.Loc("pfm_edit_ik_rig"), function()
 				local filmmaker = pfm.get_project_manager()
-				local tab, el = filmmaker:OpenWindow("ik_rig_editor")
-				filmmaker:GoToWindow("ik_rig_editor")
-				if util.is_valid(el) then
-					el:SetReferenceModel(mdl:GetName())
-				end
+				filmmaker:ExportAnimation(entActor)
 			end)
-			:SetName("edit_ik_rig")
+			:SetName("export_animation")
+	end
+
+	local mdlMap = {}
+	for _, actor in ipairs(actors) do
+		local mdl = actor:GetModel()
+		if(mdl ~= nil) then
+			mdlMap[mdl] = true
+		end
+	end
+	local mdls = {}
+	for mdl, _ in pairs(mdlMap) do
+		table.insert(mdls, mdl)
+	end
+
+	if #actors == 1 then
+		local actor = actors[1]
+		local entActor = actor:FindEntity()
+		local renderC = util.is_valid(entActor) and entActor:GetComponent(ents.COMPONENT_RENDER) or nil
+		local mdl = util.is_valid(entActor) and entActor:GetModel() or nil
+		if renderC ~= nil and mdl ~= nil then
+			local materials = {}
+			local hasMaterials = false
+			for _, mesh in ipairs(renderC:GetRenderMeshes()) do
+				local mat = mdl:GetMaterial(mesh:GetSkinTextureIndex())
+				if util.is_valid(mat) then
+					local name = mat:GetName()
+					if #name > 0 then
+						materials[name] = mat
+						hasMaterials = true
+					end
+				end
+			end
+
+			if hasMaterials then
+				local pItem, pSubMenu = pContext:AddSubMenu(gui.Loc("pfm_edit_material"))
+				pItem:SetName("edit_material")
+				for matPath, _ in pairs(materials) do
+					local matName = file.get_file_name(matPath)
+					local item = pSubMenu:AddItem(matName, function()
+						pfm.get_project_manager():OpenMaterialEditor(matPath, mdl:GetName())
+					end)
+					local normMatPath = string.replace(matPath, "/", "_")
+					item:SetName(normMatPath)
+
+					if hitMaterial ~= nil and matPath == hitMaterial:GetName() then
+						local el = gui.create("WIOutlinedRect", item, 0, 0, item:GetWidth(), item:GetHeight(), 0, 0, 1, 1)
+						el:SetColor(pfm.get_color_scheme_color("green"))
+					end
+				end
+				pSubMenu:Update()
+			end
+		end
+
+		if mdl ~= nil then
+			pContext
+				:AddItem(gui.Loc("pfm_export_model"), function()
+					local exportInfo = game.Model.ExportInfo()
+					local result, err = mdl:Export(exportInfo)
+					if result then
+						print("Model exported successfully!")
+						local filePath = err
+						util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
+					else
+						console.print_warning("Unable to export model: ", err)
+					end
+				end)
+				:SetName("export_model")
+
+			pContext
+				:AddItem(gui.Loc("pfm_edit_ik_rig"), function()
+					local filmmaker = pfm.get_project_manager()
+					local tab, el = filmmaker:OpenWindow("ik_rig_editor")
+					filmmaker:GoToWindow("ik_rig_editor")
+					if util.is_valid(el) then
+						el:SetReferenceModel(mdl:GetName())
+					end
+				end)
+				:SetName("edit_ik_rig")
+		end
 
 		pContext
 			:AddItem(gui.Loc("pfm_copy_animation_data"), function()
@@ -2859,10 +2878,6 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			end)
 			:SetName("paste_animation_data")
 	end
-	local actors
-	if copyPasteSelected == nil then
-		actors = { actor }
-	end
 	pContext
 		:AddItem(gui.Loc("pfm_copy_actors"), function()
 			local filmmaker = pfm.get_project_manager()
@@ -2883,54 +2898,58 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			actorEditor:PasteFromClipboard()
 		end)
 		:SetName("paste_actors")
-	local mdl = actor:GetModel()
-	if mdl ~= nil then
+		
+	if #mdls > 0 then
 		pContext
 			:AddItem(gui.Loc("pfm_pack_model"), function()
-				local job = pfm.pack_models({ mdl })
+				local job = pfm.pack_models(mdls)
 				if job ~= false then
 					job:Start()
 					job:Wait()
 				end
 			end)
 			:SetName("pack_model")
-		pContext
-			:AddItem(gui.Loc("pfm_copy_model_path_to_clipboard"), function()
-				util.set_clipboard_string(mdl)
-			end)
-			:SetName("copy_model_path_to_clipboard")
-		pContext
-			:AddItem(gui.Loc("pfm_show_in_explorer"), function()
-				local filePath = asset.find_file(mdl, asset.TYPE_MODEL)
-				if filePath == nil then
-					return
-				end
-				util.open_path_in_explorer(
-					asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. file.get_file_path(filePath),
-					file.get_file_name(filePath)
-				)
-			end)
-			:SetName("show_in_explorer")
-
-		local mdlObj = game.get_model(mdl)
-		if mdlObj ~= nil then
-			local pSeqItem, pSeqMenu = pContext:AddSubMenu(
-				gui.Loc("pfm_import_sequence"),
-				nil,
-				function(pItem, pMenu)
-					local animNames = mdlObj:GetAnimationNames()
-					table.sort(animNames)
-					for _, animName in ipairs(animNames) do
-						pMenu:AddItem(animName, function()
-							pfm.get_project_manager():ImportSequence(actor, animName)
-						end)
+		if(#mdls == 1) then
+			local mdl = mdls[1]
+			pContext
+				:AddItem(gui.Loc("pfm_copy_model_path_to_clipboard"), function()
+					util.set_clipboard_string(mdl)
+				end)
+				:SetName("copy_model_path_to_clipboard")
+			pContext
+				:AddItem(gui.Loc("pfm_show_in_explorer"), function()
+					local filePath = asset.find_file(mdl, asset.TYPE_MODEL)
+					if filePath == nil then
+						return
 					end
-					pMenu:Update()
-				end
-			)
-			pSeqItem:SetName("import_sequence")
+					util.open_path_in_explorer(
+						asset.get_asset_root_directory(asset.TYPE_MODEL) .. "/" .. file.get_file_path(filePath),
+						file.get_file_name(filePath)
+					)
+				end)
+				:SetName("show_in_explorer")
+
+			local mdlObj = game.get_model(mdl)
+			if mdlObj ~= nil then
+				local pSeqItem, pSeqMenu = pContext:AddSubMenu(
+					gui.Loc("pfm_import_sequence"),
+					nil,
+					function(pItem, pMenu)
+						local animNames = mdlObj:GetAnimationNames()
+						table.sort(animNames)
+						for _, animName in ipairs(animNames) do
+							pMenu:AddItem(animName, function()
+								pfm.get_project_manager():ImportSequence(actor, animName)
+							end)
+						end
+						pMenu:Update()
+					end
+				)
+				pSeqItem:SetName("import_sequence")
+			end
 		end
 	end
+
 	pContext
 		:AddItem(gui.Loc("pfm_fly_to_actor"), function()
 			local filmmaker = pfm.get_project_manager()
@@ -2938,155 +2957,160 @@ pfm.populate_actor_context_menu = function(pContext, actor, copyPasteSelected, h
 			if filmClip == nil then
 				return
 			end
-			local actor = filmClip:FindActorByUniqueId(uniqueId)
-			if actor == nil then
-				return
-			end
 			local pm = pfm.get_project_manager()
 			local vp = util.is_valid(pm) and pm:GetViewport() or nil
 			if util.is_valid(vp) == false then
 				return
 			end
-			local entActor = actor:FindEntity()
-			if(entActor == nil) then return end
 			local wc = vp:GetWorkCamera()
 			local vc = util.is_valid(wc) and wc:GetEntity():GetComponent(ents.COMPONENT_VIEWER_CAMERA) or nil
 			if(vc == nil) then return end
-			vc:FlyToTarget(entActor)
+			local entActors = {}
+			for _, actor in ipairs(actors) do
+				local entActor = actor:FindEntity()
+				if entActor ~= nil then
+					table.insert(entActors, entActor)
+				end
+			end
+			if #entActors == 0 then return end
+			vc:FlyToTarget(entActors)
 		end)
 		:SetName("fly_to_actor")
-	pContext
-		:AddItem(gui.Loc("pfm_move_work_camera_to_actor"), function()
-			local filmmaker = pfm.get_project_manager()
-			local filmClip = filmmaker:GetActiveFilmClip()
-			if filmClip == nil then
-				return
-			end
-			local actor = filmClip:FindActorByUniqueId(uniqueId)
-			if actor == nil then
-				return
-			end
-			local pm = pfm.get_project_manager()
-			local vp = util.is_valid(pm) and pm:GetViewport() or nil
-			if util.is_valid(vp) == false then
-				return
-			end
-			vp:SetWorkCameraPose(actor:GetAbsolutePose())
-			pfm.get_project_manager():TagRenderSceneAsDirty()
-		end)
-		:SetName("move_work_camera_to_actor")
-	pContext
-		:AddItem(gui.Loc("pfm_move_actor_to_work_camera"), function()
-			local filmmaker = pfm.get_project_manager()
-			local pm = pfm.get_project_manager()
-			local vp = util.is_valid(pm) and pm:GetViewport() or nil
-			if util.is_valid(vp) == false then
-				return
-			end
-			local ent = actor:FindEntity()
-			if ent == nil then
-				return
-			end
-			local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
-			if actorC == nil then
-				return
-			end
-			local pose = vp:GetWorkCameraPose()
-			if pose == nil then
-				return
-			end
-			filmmaker:SetActorTransformProperty(actorC, "position", pose:GetOrigin(), true)
-		end)
-		:SetName("move_actor_to_work_camera")
-	pContext
-		:AddItem(gui.Loc("pfm_toggle_camera_link"), function()
-			local filmmaker = pfm.get_project_manager()
-			local actorEditor = filmmaker:GetActorEditor()
-			if util.is_valid(actorEditor) == false then
-				return
-			end
-			actorEditor:ToggleCameraLink(actor)
-		end)
-		:SetName("toggle_camera_link")
-	pContext
-		:AddItem("Dissolve Anim", function()
-			local cmd = pfm.create_command("composition")
-			actor:DissolveSingleValueAnimationChannels(cmd)
-			pfm.undoredo.push("dissolve", cmd)()
-		end)
-		:SetName("dissolve_single_value_channels")
-	pContext
-		:AddItem(gui.Loc("pfm_retarget"), function()
-			local ent = actor:FindEntity()
-			if ent == nil then
-				return
-			end
-			local filmmaker = pfm.get_project_manager()
-			gui.pfm.open_model_dialog(function(dialogResult, mdlName)
-				if dialogResult ~= gui.DIALOG_RESULT_OK then
+	if #actors == 1 then
+		local actor = actors[1]
+		pContext
+			:AddItem(gui.Loc("pfm_move_work_camera_to_actor"), function()
+				local filmmaker = pfm.get_project_manager()
+				local filmClip = filmmaker:GetActiveFilmClip()
+				if filmClip == nil then
 					return
 				end
-				if util.is_valid(ent) == false then
+				local actor = filmClip:FindActorByUniqueId(uniqueId)
+				if actor == nil then
 					return
 				end
+				local pm = pfm.get_project_manager()
+				local vp = util.is_valid(pm) and pm:GetViewport() or nil
+				if util.is_valid(vp) == false then
+					return
+				end
+				vp:SetWorkCameraPose(actor:GetAbsolutePose())
+				pfm.get_project_manager():TagRenderSceneAsDirty()
+			end)
+			:SetName("move_work_camera_to_actor")
+		pContext
+			:AddItem(gui.Loc("pfm_move_actor_to_work_camera"), function()
+				local filmmaker = pfm.get_project_manager()
+				local pm = pfm.get_project_manager()
+				local vp = util.is_valid(pm) and pm:GetViewport() or nil
+				if util.is_valid(vp) == false then
+					return
+				end
+				local ent = actor:FindEntity()
+				if ent == nil then
+					return
+				end
+				local actorC = ent:GetComponent(ents.COMPONENT_PFM_ACTOR)
+				if actorC == nil then
+					return
+				end
+				local pose = vp:GetWorkCameraPose()
+				if pose == nil then
+					return
+				end
+				filmmaker:SetActorTransformProperty(actorC, "position", pose:GetOrigin(), true)
+			end)
+			:SetName("move_actor_to_work_camera")
+		pContext
+			:AddItem(gui.Loc("pfm_toggle_camera_link"), function()
 				local filmmaker = pfm.get_project_manager()
 				local actorEditor = filmmaker:GetActorEditor()
 				if util.is_valid(actorEditor) == false then
 					return
 				end
-				-- filmmaker:RetargetActor(ent, mdlName)
-
-				local collection = gui.PFMActorEditor.COLLECTION_ACTORS
-				local group = actor:GetParent()
-				if group ~= nil and group.TypeName == "Group" then
-					collection = group:GetName()
-				end
-				local impostor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR, {
-					name = actor:GetName() .. "_retarget",
-					collection = collection,
-					updateActorComponents = false,
-					modelName = mdlName,
-					enableIk = false,
-				})
-				actorEditor:CreateNewActorComponent(impostor, "impostor", false)
-				actorEditor:UpdateActorComponents(impostor)
-
-				local cmd = pfm.create_command("composition")
-				cmd:AddSubCommand("add_actor", actorEditor:GetFilmClip(), { impostor })
-				local res, subCmd = cmd:AddSubCommand("composition")
-				subCmd:AddSubCommand("create_component", actor, "impersonatee")
-				subCmd:AddSubCommand("create_component", actor, "retarget_rig")
-				subCmd:AddSubCommand("create_component", actor, "retarget_morph")
-				subCmd:AddSubCommand(
-					"set_actor_property",
-					actor,
-					"ec/impersonatee/impostorTarget",
-					nil,
-					ents.UniversalEntityReference(impostor:GetUniqueId()),
-					ents.MEMBER_TYPE_ENTITY
-				)
-				subCmd:Execute()
-				pfm.undoredo.push("retarget", cmd)
+				actorEditor:ToggleCameraLink(actor)
 			end)
-		end)
-		:SetName("retarget")
+			:SetName("toggle_camera_link")
+		pContext
+			:AddItem("Dissolve Anim", function()
+				local cmd = pfm.create_command("composition")
+				actor:DissolveSingleValueAnimationChannels(cmd)
+				pfm.undoredo.push("dissolve", cmd)()
+			end)
+			:SetName("dissolve_single_value_channels")
+		pContext
+			:AddItem(gui.Loc("pfm_retarget"), function()
+				local ent = actor:FindEntity()
+				if ent == nil then
+					return
+				end
+				local filmmaker = pfm.get_project_manager()
+				gui.pfm.open_model_dialog(function(dialogResult, mdlName)
+					if dialogResult ~= gui.DIALOG_RESULT_OK then
+						return
+					end
+					if util.is_valid(ent) == false then
+						return
+					end
+					local filmmaker = pfm.get_project_manager()
+					local actorEditor = filmmaker:GetActorEditor()
+					if util.is_valid(actorEditor) == false then
+						return
+					end
+					-- filmmaker:RetargetActor(ent, mdlName)
 
-	if pfm.get_project_manager():IsDeveloperModeEnabled() then
-		pContext:AddItem("Assign entity to x", function()
-			_G.x = actor:FindEntity()
-		end)
-		pContext:AddItem("Assign entity to y", function()
-			_G.y = actor:FindEntity()
-		end)
-		pContext:AddItem("Assign animation to a", function()
-			local animManager = tool.get_filmmaker():GetAnimationManager()
-			local anim = animManager:FindAnimation(actor)
-			_G.a = anim
-		end)
+					local collection = gui.PFMActorEditor.COLLECTION_ACTORS
+					local group = actor:GetParent()
+					if group ~= nil and group.TypeName == "Group" then
+						collection = group:GetName()
+					end
+					local impostor = actorEditor:CreatePresetActor(gui.PFMActorEditor.ACTOR_PRESET_TYPE_ARTICULATED_ACTOR, {
+						name = actor:GetName() .. "_retarget",
+						collection = collection,
+						updateActorComponents = false,
+						modelName = mdlName,
+						enableIk = false,
+					})
+					actorEditor:CreateNewActorComponent(impostor, "impostor", false)
+					actorEditor:UpdateActorComponents(impostor)
+
+					local cmd = pfm.create_command("composition")
+					cmd:AddSubCommand("add_actor", actorEditor:GetFilmClip(), { impostor })
+					local res, subCmd = cmd:AddSubCommand("composition")
+					subCmd:AddSubCommand("create_component", actor, "impersonatee")
+					subCmd:AddSubCommand("create_component", actor, "retarget_rig")
+					subCmd:AddSubCommand("create_component", actor, "retarget_morph")
+					subCmd:AddSubCommand(
+						"set_actor_property",
+						actor,
+						"ec/impersonatee/impostorTarget",
+						nil,
+						ents.UniversalEntityReference(impostor:GetUniqueId()),
+						ents.MEMBER_TYPE_ENTITY
+					)
+					subCmd:Execute()
+					pfm.undoredo.push("retarget", cmd)
+				end)
+			end)
+			:SetName("retarget")
+
+		if pfm.get_project_manager():IsDeveloperModeEnabled() then
+			pContext:AddItem("Assign entity to x", function()
+				_G.x = actor:FindEntity()
+			end)
+			pContext:AddItem("Assign entity to y", function()
+				_G.y = actor:FindEntity()
+			end)
+			pContext:AddItem("Assign animation to a", function()
+				local animManager = tool.get_filmmaker():GetAnimationManager()
+				local anim = animManager:FindAnimation(actor)
+				_G.a = anim
+			end)
+		end
+		pContext
+			:AddItem(gui.Loc("pfm_copy_id"), function()
+				util.set_clipboard_string(tostring(actor:GetUniqueId()))
+			end)
+			:SetName("copy_id")
 	end
-	pContext
-		:AddItem(gui.Loc("pfm_copy_id"), function()
-			util.set_clipboard_string(tostring(actor:GetUniqueId()))
-		end)
-		:SetName("copy_id")
 end

@@ -392,7 +392,6 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 		util.remove({ nameChangeListener, onMovedListener })
 	end)
 
-	local uniqueId = tostring(actor:GetUniqueId())
 	itemActor:AddCallback("OnSelectionChanged", function(el, selected)
 		local entActor = actor:FindEntity()
 		if util.is_valid(entActor) then
@@ -409,29 +408,53 @@ function gui.PFMActorEditor:AddActor(actor, parentItem)
 				return
 			end
 
-			pfm.populate_actor_context_menu(pContext, actor, true)
-			pContext:AddItem(locale.get_text("rename"), function()
-				local te =
-					gui.create("WITextEntry", itemActor, 0, 0, itemActor:GetWidth(), itemActor:GetHeight(), 0, 0, 1, 1)
-				te:SetText(actor:GetName())
-				te:RequestFocus()
-				te:AddCallback("OnFocusKilled", function()
-					pfm.undoredo.push(
-						"rename_actor",
-						pfm.create_command("rename_actor", actor, actor:GetName(), te:GetText())
-					)()
-
-					te:RemoveSafely()
-				end)
-			end)
-			pContext:AddItem(locale.get_text("remove"), function()
-				local parent = itemActor:GetParentItem()
-				self:RemoveActors({ uniqueId })
-				if util.is_valid(parent) then
-					parent:FullUpdate()
+			if not itemActor:IsSelected() then
+				-- TODO: This should be core behavior in TreeView
+				if input.is_ctrl_key_down() == false then
+					self.m_tree:DeselectAll()
 				end
-			end)
-			pContext:Update()
+				itemActor:Select()
+			end
+
+			local actors = {}
+			for item, data in pairs(self.m_treeElementToActorData) do
+				if item:IsValid() and item:IsSelected() then
+					table.insert(actors, data.actor)
+				end
+			end
+
+			if #actors > 0 then
+				pfm.populate_actor_context_menu(pContext, actors)
+				if #actors == 1 then
+					pContext:AddItem(locale.get_text("rename"), function()
+						local te =
+							gui.create("WITextEntry", itemActor, 0, 0, itemActor:GetWidth(), itemActor:GetHeight(), 0, 0, 1, 1)
+						te:SetText(actor:GetName())
+						te:RequestFocus()
+						te:AddCallback("OnFocusKilled", function()
+							pfm.undoredo.push(
+								"rename_actor",
+								pfm.create_command("rename_actor", actor, actor:GetName(), te:GetText())
+							)()
+
+							te:RemoveSafely()
+						end)
+					end)
+				end
+				pContext:AddItem(locale.get_text("remove"), function()
+					local uuids = {}
+					for _, actor in ipairs(actors) do
+						local uniqueId = tostring(actor:GetUniqueId())
+						table.insert(uuids, uniqueId)
+					end
+					local parent = itemActor:GetParentItem()
+					self:RemoveActors(uuids)
+					if util.is_valid(parent) then
+						parent:FullUpdate()
+					end
+				end)
+				pContext:Update()
+			end
 			return util.EVENT_REPLY_HANDLED
 		end
 		if button == input.MOUSE_BUTTON_LEFT then

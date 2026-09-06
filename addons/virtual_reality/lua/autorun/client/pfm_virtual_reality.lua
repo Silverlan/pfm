@@ -104,7 +104,9 @@ local function set_vr_target(pm, targetActor)
 end
 
 pfm.add_event_listener("OnFilmmakerLaunched", function(pm)
-	pm:AddEventListener("PopulateActorContextMenu", function(pm, pContext, actor)
+	pm:AddEventListener("PopulateActorContextMenu", function(pm, pContext, actors)
+		if #actors > 1 then return end
+		local actor = actors[1]
 		local entActor = actor:FindEntity()
 		if
 			util.is_valid(entActor)

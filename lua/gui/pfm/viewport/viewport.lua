@@ -364,7 +364,7 @@ function gui.PFMCoreViewportBase:OnViewportMouseEvent(el, mouseButton, state, mo
 						end
 						local actor = (actorC ~= nil) and actorC:GetActorData() or nil
 						if actor ~= nil then
-							pfm.populate_actor_context_menu(pContext, actor, nil, hitMaterial)
+							pfm.populate_actor_context_menu(pContext, {actor}, hitMaterial)
 						end
 
 						if hitData.mesh ~= nil and hitData.primitiveIndex ~= nil then

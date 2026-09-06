@@ -111,7 +111,9 @@ function Component:OnEntitySpawn()
 
 	--[[local pm = tool.get_filmmaker()
 	if util.is_valid(pm) then
-		self.m_cbPopulateActorContextMenu = pm:AddCallback("PopulateActorContextMenu", function(pm, pContext, actor)
+		self.m_cbPopulateActorContextMenu = pm:AddCallback("PopulateActorContextMenu", function(pm, pContext, actors)
+			if #actors > 1 then return end
+			local actor = actors[1]
 			local pItem, pSubMenu = pContext:AddSubMenu(locale.get_text("virtual_reality"))
 
 			pSubMenu:AddItem(locale.get_text("set_animation_target"), function()
