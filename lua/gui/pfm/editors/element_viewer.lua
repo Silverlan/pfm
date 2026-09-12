@@ -3,8 +3,6 @@
 
 include("/gui/pfm/controls/button.lua")
 include("/gui/pfm/containers/tree_view.lua")
-include("/gui/layout/vbox.lua")
-include("/gui/layout/hbox.lua")
 include("/gui/resizer.lua")
 include("/pfm/core/history.lua")
 

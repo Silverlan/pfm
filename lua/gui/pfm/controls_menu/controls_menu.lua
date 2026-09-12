@@ -1,7 +1,6 @@
 -- SPDX-FileCopyrightText: (c) 2024 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/layout/vbox.lua")
 include("/gui/pfm/controls/slider.lua")
 include("/gui/controls/file_entry.lua")
 include("/gui/controls/editable_entry.lua")
@@ -54,21 +53,24 @@ function Element:OnSizeChanged(w, h)
 end
 gui.register("pfm_control_container", Element)
 
-util.register_class("gui.PFMControlsMenu", gui.VBox)
+util.register_class("gui.PFMControlsMenu", gui.Base)
 
 include("control_wrappers.lua")
 
-function gui.PFMControlsMenu:__init()
-	gui.VBox.__init(self)
-end
 function gui.PFMControlsMenu:OnInitialize()
-	gui.VBox.OnInitialize(self)
+	gui.Base.OnInitialize(self)
 
+	self:SetSize(64, 64)
+
+	self.m_controlContainer = gui.create("vbox", self)
 	self.m_controls = {}
 	self.m_orderedControlNames = {}
 	self.m_subMenus = {}
 	self.m_subMenuNameIndices = {}
-	self:SetAutoFillContents(true)
+	self.m_controlContainer:SetAutoFillContents(true)
+	self.m_controlContainer:SetAutoAlignToParent(true, false)
+	self.m_controlContainer:SetAutoSizeToContents(false, true)
+	self:SetAutoSizeToContents(false, true)
 end
 function gui.PFMControlsMenu:GetControlCount()
 	local n = 0
@@ -163,7 +165,7 @@ local function apply_text(el, loc)
 	el:SetText(loc:GetText())
 end
 function gui.PFMControlsMenu:AddContainer(el)
-	local container = gui.create("pfm_control_container", self)
+	local container = gui.create("pfm_control_container", self.m_controlContainer)
 	container:SetTargetElement(el)
 	return container
 end
@@ -425,13 +427,13 @@ function gui.PFMControlsMenu:OnValueChanged(identifier, value)
 	self.m_skipPropCallback[identifier] = nil
 end
 function gui.PFMControlsMenu:AddHeader(title)
-	local header = gui.create("editable_entry", self)
+	local header = gui.create("editable_entry", self.m_controlContainer)
 	header:SetEmpty()
 	header:SetCategory(title)
 	return header
 end
 function gui.PFMControlsMenu:AddCollapsibleSubMenu(title, identifier)
-	local collapsible = gui.create("collapsible_group", self)
+	local collapsible = gui.create("collapsible_group", self.m_controlContainer)
 	collapsible:SetAutoAlignToParent(true, false)
 	collapsible:SetGroupName(title)
 	collapsible:Expand()
@@ -439,16 +441,30 @@ function gui.PFMControlsMenu:AddCollapsibleSubMenu(title, identifier)
 	elSubMenu:SetAutoAlignToParent(true, false)
 	return elSubMenu, collapsible
 end
+function gui.PFMControlsMenu:SetAutoFillContentsToWidth(autoFill)
+	self.m_controlContainer:SetAutoFillContentsToWidth(autoFill)
+end
+function gui.PFMControlsMenu:SetAutoFillContentsToHeight(autoFill)
+	self.m_controlContainer:SetAutoFillContentsToHeight(autoFill)
+end
+function gui.PFMControlsMenu:SetFixedWidth(fixedWidth)
+	self.m_controlContainer:SetFixedWidth(fixedWidth)
+end
+function gui.PFMControlsMenu:SetFixedHeight(fixedHeight)
+	self.m_controlContainer:SetFixedHeight(fixedHeight)
+end
 function gui.PFMControlsMenu:AddSubMenu(identifier, parent)
 	parent = parent or self
 	local el = gui.create("pfm_controls_menu", parent)
-	el:SetAutoSizeToContents(true)
-	el:SetAutoFillContentsToHeight(false)
+	el.m_controlContainer:SetAutoFillContentsToHeight(false)
+	el.m_controlContainer:SetAutoAlignToParent(true, false)
+	el.m_controlContainer:SetAutoSizeToContents(false, true)
+	el:SetAutoSizeToContents(false, true)
 
 	local o = gui.create("WIOutlinedRect", el, 0, 0, el:GetWidth(), el:GetHeight(), 0, 0, 1, 1)
 	o:SetColor(Color(100, 100, 100, 255))
 	o:SetZPos(1)
-	el:SetBackgroundElement(o)
+	o:SetBackgroundElement(true)
 
 	table.insert(self.m_subMenus, el)
 	if identifier ~= nil then

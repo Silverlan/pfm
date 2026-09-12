@@ -1,7 +1,6 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/layout/hbox.lua")
 include("/modules/json.lua")
 
 locale.load("pfm_misc.txt")
@@ -50,11 +49,12 @@ gui.register("supporter_ticker", Element)
 
 -----------------
 
-util.register_class("gui.PatreonTicker", gui.HBox)
+util.register_class("gui.PatreonTicker", gui.Base)
 function gui.PatreonTicker:OnInitialize()
-	gui.HBox.OnInitialize(self)
+	gui.Base.OnInitialize(self)
 
-	self:SetAutoFillContents(true)
+	self.m_contents = gui.create("hbox", self)
+	self.m_contents:SetAutoFillContents(true)
 
 	gui.create("WIBase", self, 0, 0, 10, 1) -- Gap
 

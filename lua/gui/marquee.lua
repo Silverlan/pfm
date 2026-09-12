@@ -1,9 +1,6 @@
 -- SPDX-FileCopyrightText: (c) 2020 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/layout/vbox.lua")
-include("/gui/layout/hbox.lua")
-
 util.register_class("gui.Marquee", gui.Base)
 
 gui.get_delta_time = function()

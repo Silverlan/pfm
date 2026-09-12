@@ -1099,7 +1099,7 @@ function gui.PFMActorEditor:OnControlSelected(actor, actorData, udmComponent, co
 			container = c
 		elseif memberInfo.type == ents.MEMBER_TYPE_ELEMENT then
 			local bt, wrapper, c = animSetControls:AddButton(
-				locale.get_text("edit") .. " " .. displayName,
+				locale.get_text("edit") .. " " .. displayName:Resolve(),
 				memberInfo.name,
 				function()
 					local filmmaker = tool.get_filmmaker()

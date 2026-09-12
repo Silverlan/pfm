@@ -4,8 +4,6 @@
 include("/gui/pfm/controls/color_entry.lua")
 include("/gui/pfm/controls/slider.lua")
 include("/gui/controls/editable_entry.lua")
-include("/gui/layout/hbox.lua")
-include("/gui/layout/vbox.lua")
 include("/gui/pfm/containers/tree_view.lua")
 
 locale.load("pfm_particle_editor.txt")

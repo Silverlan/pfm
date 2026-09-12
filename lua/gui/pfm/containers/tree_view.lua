@@ -1,7 +1,6 @@
 -- SPDX-FileCopyrightText: (c) 2019 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/layout/vbox.lua")
 include("/pfm/ui/fonts.lua")
 
 util.register_class("gui.PFMTreeView", gui.Base)
@@ -198,10 +197,10 @@ function gui.PFMTreeViewElement:OnInitialize()
 	end)
 	self.m_selection =
 		gui.create("WIRect", self.m_header, 0, 0, self.m_header:GetWidth(), self.m_header:GetHeight(), 0, 0, 1, 1)
+	self.m_selection:SetBackgroundElement(true)
 	self.m_selection:AddStyleClass("selection")
 	self.m_header:SetFixedWidth(true)
 	self.m_header:SetFixedHeight(true)
-	self.m_header:SetBackgroundElement(self.m_selection)
 	self.m_header:SetName("header")
 	self.m_header:SetMouseInputEnabled(true)
 	self.m_header:AddCallback("OnDoubleClick", function(el)

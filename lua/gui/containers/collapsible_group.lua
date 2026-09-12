@@ -2,8 +2,6 @@
 -- SPDX-License-Identifier: MIT
 
 include("collapsible_group_titlebar.lua")
-include("/gui/layout/vbox.lua")
-include("/gui/layout/hbox.lua")
 include("/gui/pfm/controls/button.lua")
 
 util.register_class("gui.CollapsibleGroup", gui.Base)

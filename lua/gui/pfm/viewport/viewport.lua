@@ -2,7 +2,6 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/wiviewport.lua")
-include("/gui/layout/hbox.lua")
 include("/gui/layout/aspect_ratio.lua")
 include("/gui/pfm/controls/button.lua")
 include("/gui/pfm/controls/play_button.lua")

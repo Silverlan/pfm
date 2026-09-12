@@ -2,7 +2,6 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/layout/aspect_ratio.lua")
-include("/gui/layout/hbox.lua")
 include("/gui/resizer.lua")
 include("/gui/pfm/controls/slider.lua")
 include("/gui/pfm/controls/button.lua")

@@ -40,16 +40,15 @@ function Element:OnInitialize()
 	end
 	Element.impl.count = Element.impl.count + 1
 
-	self:SetAutoSizeToContents(false, true)
 	local controls = gui.create("pfm_controls_menu", self)
+	self.m_controls = controls
 	controls:SetAutoFillContentsToWidth(true)
 	controls:SetAutoFillContentsToHeight(false)
 	controls:SetFixedHeight(false)
 	controls:AddCallback("OnContentsUpdated", function()
 		self:UpdateMarkers()
 	end)
-
-	self.m_controls = controls
+	self:SetAutoSizeToContents(false, true)
 
 	self.m_markerManager = gui.KeyframeMarkerManager()
 end

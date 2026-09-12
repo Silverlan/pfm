@@ -1,7 +1,6 @@
 -- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/layout/vbox.lua")
 include("/gui/info_box.lua")
 include("/util/util_asset_import.lua")
 

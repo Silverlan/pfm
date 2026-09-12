@@ -5,8 +5,6 @@ include("core/base/base_filmmaker.lua")
 
 util.register_class("gui.WIFilmmaker", gui.WIBaseFilmmaker)
 
-include("/gui/layout/vbox.lua")
-include("/gui/layout/hbox.lua")
 include("/gui/resizer.lua")
 include("/gui/timeline/film_strip.lua")
 include("/gui/timeline/generic_clip.lua")

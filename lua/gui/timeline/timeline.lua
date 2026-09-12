@@ -3,7 +3,6 @@
 
 include("/gui/timeline/strip.lua")
 include("/gui/timeline/playhead.lua")
-include("/gui/layout/vbox.lua")
 include("/gui/containers/collapsible_group.lua")
 include("/gui/pfm/widgets/bookmark.lua")
 include("/gui/pfm/util/axis.lua")

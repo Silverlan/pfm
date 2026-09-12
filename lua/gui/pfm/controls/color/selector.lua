@@ -5,7 +5,6 @@ include("wheel.lua")
 include("/gui/pfm/controls/brightness_slider.lua")
 include("/gui/pfm/controls/slider.lua")
 include("/gui/controls/editable_entry.lua")
-include("/gui/layout/vbox.lua")
 
 util.register_class("gui.PFMColorSelector", gui.Base)
 

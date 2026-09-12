@@ -2,8 +2,6 @@
 -- SPDX-License-Identifier: MIT
 
 include("/gui/pfm/controls/button.lua")
-include("/gui/layout/vbox.lua")
-include("/gui/layout/hbox.lua")
 include("/gui/timeline/timeline.lua")
 include("/gui/pfm/editors")
 

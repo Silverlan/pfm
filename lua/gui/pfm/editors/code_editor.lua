@@ -1,8 +1,6 @@
 -- SPDX-FileCopyrightText: (c) 2023 Silverlan <opensource@pragma-engine.com>
 -- SPDX-License-Identifier: MIT
 
-include("/gui/layout/vbox.lua")
-
 local Element = util.register_class("gui.CodeEditor", gui.Base)
 
 function Element:OnInitialize()
