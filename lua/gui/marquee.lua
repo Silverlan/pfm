@@ -178,7 +178,7 @@ function gui.Ticker:MoveDisplayText()
 	end
 
 	self.m_text:SetText(self.m_displayText)
-	self.m_text:SetAutoCenterToParentY(true)
+	self.m_text:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 end
 function gui.Ticker:OnThink()
 	self.m_tCurTickTime = self.m_tCurTickTime - gui.get_delta_time()

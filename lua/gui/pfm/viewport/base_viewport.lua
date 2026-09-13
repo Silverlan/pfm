@@ -10,11 +10,10 @@ function gui.PFMBaseViewport:OnInitialize()
 	local hViewport = 221
 	self:SetSize(128, hViewport + hBottom)
 
-	self.m_contents = gui.create("hbox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_contents:SetAutoFillContents(true)
+	self.m_contents = gui.create("hbox", self)
+	--self.m_contents:AddStyleClass("viewport_container")
 
 	self.m_vpContents = gui.create("vbox", self.m_contents)
-	self.m_vpContents:SetAutoFillContents(true)
 	self.m_vpContents:SetName("left_contents")
 
 	local titleBar = gui.create("WIBase", self.m_vpContents)
@@ -24,7 +23,7 @@ function gui.PFMBaseViewport:OnInitialize()
 
 	self.m_rtBox = gui.create("WIRect", self.m_vpContents, 0, 0, 128, 128)
 	self.m_rtBox:SetColor(Color.Black)
-	self.m_vpContents:SetAutoFillTarget(self.m_rtBox)
+	-- self.m_vpContents:SetAutoFillTarget(self.m_rtBox)
 	self.m_aspectRatioWrapper =
 		gui.create("aspect_ratio", self.m_rtBox, 0, 0, self.m_rtBox:GetWidth(), self.m_rtBox:GetHeight(), 0, 0, 1, 1)
 	self:InitializeViewport(self.m_aspectRatioWrapper)
@@ -32,7 +31,7 @@ function gui.PFMBaseViewport:OnInitialize()
 	if self.m_settingsEnabled ~= false then
 		gui.create("resizer", self.m_contents):SetFraction(0.85)
 
-		local scrollContainer = gui.create("WIScrollContainer", self.m_contents, 0, 0, self.m_contents:GetWidth(), self.m_contents:GetHeight())
+		local scrollContainer = gui.create("WIScrollContainer", self.m_contents)
 		scrollContainer:SetContentsWidthFixed(true)
 		scrollContainer:GetVerticalScrollBar():SetScrollAmount(1)
 		self.m_scrollContainer = scrollContainer
@@ -48,7 +47,7 @@ function gui.PFMBaseViewport:InitializeViewport(parent) end
 function gui.PFMBaseViewport:InitializeSettings(parent)
 	local p = gui.create("pfm_controls_menu", parent)
 	p:SetName("controls_menu")
-	p:SetAutoAlignToParent(true, false)
+	p:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	p:SetAutoSizeToContents(false, true)
 	self.m_settingsBox = p
 end

@@ -3,7 +3,7 @@
 
 function gui.PFMMaterialEditor:InitializeEyeControls()
 	local mapVbox = gui.create("vbox", self.m_controlBox)
-	mapVbox:SetAutoFillContents(true)
+	-- mapVbox:SetAutoFillContents(true)
 
 	-- Noise map
 	local numMaps = 6

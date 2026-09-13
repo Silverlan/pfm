@@ -23,10 +23,10 @@ function gui.PFMParticleEditor:OnInitialize()
 	self.m_bg:SetColor(Color(54, 54, 54))
 
 	self.m_contents = gui.create("hbox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight() - 64, 0, 0, 1, 1)
-	self.m_contents:SetAutoFillContents(true)
+	-- self.m_contents:SetAutoFillContents(true)
 
 	self.m_controlsContents = gui.create("hbox", self.m_contents)
-	self.m_controlsContents:SetAutoFillContents(true)
+	-- self.m_controlsContents:SetAutoFillContents(true)
 
 	self.m_tree = gui.create("pfm_tree_view", self.m_controlsContents)
 	self.m_tree:AddCallback("OnItemSelectChanged", function(tree, el, selected)
@@ -50,7 +50,7 @@ function gui.PFMParticleEditor:OnInitialize()
 	gui.create("resizer", self.m_controlsContents):SetFraction(0.5)
 
 	self.m_propertiesBox = gui.create("vbox", self.m_controlsContents)
-	self.m_propertiesBox:SetAutoFillContentsToWidth(true)
+	-- self.m_propertiesBox:SetAutoFillContentsToWidth(true)
 
 	gui.create("resizer", self.m_contents):SetFraction(0.66)
 
@@ -60,7 +60,7 @@ function gui.PFMParticleEditor:OnInitialize()
 	self.m_contents:Update()
 
 	self.m_vpBox = gui.create("vbox", vpContents, 0, 0, vpContents:GetWidth(), vpContents:GetHeight(), 0, 0, 1, 1)
-	self.m_vpBox:SetAutoFillContents(true)
+	-- self.m_vpBox:SetAutoFillContents(true)
 	self:InitializeViewport()
 
 	gui.create("resizer", self.m_vpBox):SetFraction(0.75)
@@ -78,7 +78,7 @@ function gui.PFMParticleEditor:OnInitialize()
 		1,
 		1
 	)
-	self.m_renderControlsVbox:SetAutoFillContents(true)
+	-- self.m_renderControlsVbox:SetAutoFillContents(true)
 	self:InitializeViewportControls()
 
 	self.m_properties = {}

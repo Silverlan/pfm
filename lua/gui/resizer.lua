@@ -34,6 +34,7 @@ function gui.Resizer:OnInitialize()
 	end
 	self:SetFraction(0.5)
 	parent:AddCallback("OnSizeChanged", function(p)
+		if self.m_updating then return end
 		self.m_updateRequired = true
 	end)
 	parent:AddCallback("OnContentsUpdated", function(p)
@@ -184,7 +185,9 @@ function gui.Resizer:UpdateFraction()
 	self:SetExtent(self.m_element1, e1)
 	-- We need to update the parent VBox/HBox element right away,
 	-- in case there are other resizer elements within it
+	self.m_updating = true
 	self:GetParent():Update()
+	self.m_updating = false
 end
 function gui.Resizer:GetExtent(el)
 	local mode = self:GetResizeMode()

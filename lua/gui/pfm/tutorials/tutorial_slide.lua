@@ -518,8 +518,8 @@ function Element:OpenFeedbackPrompt()
 	local userContents = msg:GetUserContents()
 
 	local p = gui.create("pfm_controls_menu", userContents)
-	p:SetAutoFillContentsToWidth(true)
-	p:SetAutoFillContentsToHeight(false)
+	-- p:SetAutoFillContentsToWidth(true)
+	-- p:SetAutoFillContentsToHeight(false)
 
 	messageEntry = gui.create("WITextEntry", p)
 	messageEntry:SetSize(512, 64)
@@ -560,7 +560,7 @@ function Element:AddMessageBox(msg, audioFile)
 	el:SetSize(400, 128)
 	el:SetMouseInputEnabled(true)
 	el:SetZPos(100)
-	el:GetDragArea():SetAutoAlignToParent(true)
+	el:GetDragArea():SetAlignment(gui.ALIGNMENT_FILL)
 	el:SetCursor(gui.CURSOR_SHAPE_CROSSHAIR)
 	self.m_messageBox = el
 

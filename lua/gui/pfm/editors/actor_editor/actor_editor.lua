@@ -37,17 +37,16 @@ function gui.PFMActorEditor:OnInitialize()
 
 	self:SetSize(64, 128)
 
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("background2")
+	self.m_root = gui.create("vbox", self)
+	self.m_root:AddStyleClass("fill")
 
-	self.navBar = gui.create("hbox", self)
+	self.navBar = gui.create("hbox", self.m_root)
+	self.navBar:AddStyleClass("actor_editor_navigation_bar")
 	self:InitializeNavigationBar()
 
-	self.navBar:SetHeight(32)
-	self.navBar:SetAnchor(0, 0, 1, 0)
 	self.m_activeControls = {}
 
-	self.m_btTools = gui.PFMButton.create(self, "gear-fill", function()
+	self.m_btTools = gui.PFMButton.create(self.m_root, "gear-fill", function()
 		print("TODO")
 	end)
 	self.m_btTools:SetName("new_actor_button")
@@ -392,24 +391,10 @@ function gui.PFMActorEditor:OnInitialize()
 		end)]]
 	end, true)
 
-	self.m_contents = gui.create(
-		"hbox",
-		self,
-		0,
-		self.m_btTools:GetBottom(),
-		self:GetWidth(),
-		self:GetHeight() - self.m_btTools:GetBottom(),
-		0,
-		0,
-		1,
-		1
-	)
-	self.m_contents:SetAutoFillContents(true)
+	self.m_contents = gui.create("hbox", self.m_root)
+	self.m_contents:AddStyleClass("actor_editor_tree_container")
 
-	local treeScrollContainerBg = gui.create("WIRect", self.m_contents, 0, 0, 64, 128)
-	treeScrollContainerBg:AddStyleClass("background")
-	self.m_treeScrollContainerBg = treeScrollContainerBg
-	local treeScrollContainer = gui.create("WIScrollContainer", treeScrollContainerBg, 0, 0, 64, 128, 0, 0, 1, 1)
+	local treeScrollContainer = gui.create("WIScrollContainer", self.m_contents)
 	treeScrollContainer:AddCallback("OnSizeChanged", function(el)
 		self:ResizeTreeToContents()
 	end)
@@ -420,28 +405,21 @@ function gui.PFMActorEditor:OnInitialize()
 
 	local dataVBox
 	local scrollContainer =
-		gui.create("WIScrollContainer", self.m_contents, 0, 0, self.m_contents:GetWidth(), self.m_contents:GetHeight())
+		gui.create("WIScrollContainer", self.m_contents)
 	scrollContainer:AddCallback("OnSizeChanged", function(el)
 		if self:IsValid() and util.is_valid(dataVBox) then
 			dataVBox:SetWidth(el:GetWidth())
 		end
 	end)
 
-	dataVBox = gui.create("vbox", scrollContainer, 0, 0, scrollContainer:GetWidth(), scrollContainer:GetHeight())
+	dataVBox = gui.create("vbox", scrollContainer)
 	dataVBox:SetFixedWidth(true)
 
 	self.m_propertyContainer = dataVBox
 	self.m_componentPropertyGroups = {}
 	self.m_sliderControls = {}
 
-	self.m_tree = gui.create(
-		"pfm_tree_view",
-		treeScrollContainer,
-		0,
-		0,
-		treeScrollContainer:GetWidth(),
-		treeScrollContainer:GetHeight()
-	)
+	self.m_tree = gui.create("pfm_tree_view",treeScrollContainer)
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 	self.m_tree:SetName("actor_tree")
 	self.m_treeElementToActorData = {}
@@ -490,7 +468,7 @@ function gui.PFMActorEditor:ResizeTreeToContents()
 	if util.is_valid(scrollBar) and scrollBar:IsVisible() then
 		w = w + 20
 	end
-	w = math.max(w, self.m_treeScrollContainerBg:GetWidth())
+	w = math.max(w, self.m_contents:GetWidth())
 	self.m_tree:SetWidth(w)
 end
 function gui.PFMActorEditor:ClearEmptyComponentPropertyGroups()
@@ -531,7 +509,7 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 	if util.is_valid(actorGroup) == false then
 		local collapsible = gui.create("collapsible_group", self.m_propertyContainer)
 		collapsible:AddStyleClass("act_ed_actor")
-		collapsible:SetAutoAlignToParent(true, false)
+		collapsible:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 		collapsible:SetGroupName(actor:GetName())
 		collapsible:Expand()
 		actorGroup = collapsible
@@ -551,7 +529,7 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 		collapsibleContents:GetHeight()
 	)
 	animSetControls:AddStyleClass("act_ed_property")
-	animSetControls:SetAutoAlignToParent(true, false)
+	animSetControls:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	animSetControls:SetName("property_controls")
 	animSetControls:GetControlsMenu():AddCallback("OnControlAdded", function(el, name, ctrl, wrapper)
 		if wrapper ~= nil then
@@ -993,7 +971,7 @@ function gui.PFMActorEditor:AddProperty(name, child, fInitPropertyEl)
 	elLabel:SetName(name)
 	elLabel:SetText(name)
 	elLabel:AddStyleClass("font_medium")
-	elLabel:SetAutoCenterToParentY(true)
+	elLabel:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	elLabel:SetX(5)
 
 	local elProperty = fInitPropertyEl(self.m_propertiesElementsVBox)

@@ -16,7 +16,7 @@ function gui.PFMWindow:OnInitialize()
 
 	local mainBox = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	mainBox:SetFixedSize(true)
-	mainBox:SetAutoFillContentsToWidth(true)
+	-- mainBox:SetAutoFillContentsToWidth(true)
 	self.m_mainBox = mainBox
 
 	self.m_titleBar = gui.create("pfm_title_bar", mainBox)
@@ -52,9 +52,9 @@ function gui.PFMWindow:OnInitialize()
 
 	local pDrag = pFrame:GetDragArea()
 	pDrag:SetHeight(self.m_titleBar:GetHeight())
-	pDrag:SetAutoAlignToParent(true, false)
+	pDrag:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 
-	pFrame:SetAutoCenterToParent(true)
+	pFrame:SetAlignment(gui.ALIGNMENT_CENTER)
 	self.m_frame = pFrame
 end
 function gui.PFMWindow:GetMarginSize() return MARGIN_SIZE end

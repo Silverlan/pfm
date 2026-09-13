@@ -9,7 +9,7 @@ function gui.VideoExplorer:OnInitialize()
 	gui.AssetExplorer.OnInitialize(self)
 
 	self.m_previewVideo = gui.create("VRVideoPlayer", self)
-	self.m_previewVideo:SetAutoAlignToParent(true)
+	self.m_previewVideo:SetAlignment(gui.ALIGNMENT_FILL)
 	self.m_previewVideo:SetBackgroundElement(true, true)
 	self.m_previewVideo:SetZPos(100)
 	self.m_previewVideo:SetVisible(false)

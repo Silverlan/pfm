@@ -12,7 +12,7 @@ function TimelineEditorClip:OnInitialize()
 	self:SetSize(256, 64)
 	self.m_contentsScroll = gui.create("WIScrollContainer", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents = gui.create("vbox", self.m_contentsScroll, 0, 0, self:GetWidth(), self:GetHeight())
-	self.m_contents:SetAutoFillContentsToWidth(true)
+	-- self.m_contents:SetAutoFillContentsToWidth(true)
 end
 function TimelineEditorClip:OnSizeChanged(w, h)
 	if util.is_valid(self.m_contents) then

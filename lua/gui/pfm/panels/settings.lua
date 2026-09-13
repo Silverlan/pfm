@@ -14,8 +14,8 @@ function Element:OnInitialize()
 	self:SetSize(128, 128)
 
 	local p = gui.create("pfm_controls_menu", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	p:SetAutoFillContentsToWidth(true)
-	p:SetAutoFillContentsToHeight(false)
+	-- p:SetAutoFillContentsToWidth(true)
+	-- p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
 end
 function Element:AddToggleControl(name, identifier, conVar, defaultValue, callback)

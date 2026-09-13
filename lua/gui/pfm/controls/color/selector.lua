@@ -26,14 +26,14 @@ function gui.PFMColorSelector:OnInitialize()
 	bg:AddStyleClass("background")
 
 	local bgOutline = gui.create("WIOutlinedRect", bg)
-	bgOutline:SetAutoAlignToParent(true)
+	bgOutline:SetAlignment(gui.ALIGNMENT_FILL)
 	bgOutline:AddStyleClass("outline")
 
 	self.m_contents = gui.create("hbox", self)
 	gui.create("WIBase", self.m_contents, 0, 0, 10, 1) -- Gap
 
 	self.m_coreContents = gui.create("vbox", self.m_contents)
-	self.m_coreContents:SetAutoFillContentsToWidth(true)
+	-- self.m_coreContents:SetAutoFillContentsToWidth(true)
 	gui.create("WIBase", self.m_coreContents, 0, 0, 1, 10) -- Gap
 
 	local selectorContents = gui.create("hbox", self.m_coreContents)

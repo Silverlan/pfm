@@ -77,7 +77,7 @@ function gui.RMAComposerDialog:OnInitialize()
 
 	local function add_slot(parent, tex, defaultChannel)
 		local vbox = gui.create("vbox", parent, 0, 0, 200, 200)
-		vbox:SetAutoFillContentsToWidth(true)
+		-- vbox:SetAutoFillContentsToWidth(true)
 		local texSlot = gui.create("pfm_texture_slot", vbox)
 		texSlot:SetSize(200, 200)
 		texSlot:SetTexture(tex)
@@ -164,7 +164,7 @@ function gui.RMAComposerDialog:OnInitialize()
 	self.m_workflow = workflow
 
 	hbox:Update()
-	contents:SetAutoFillContentsToWidth(true)
+	-- contents:SetAutoFillContentsToWidth(true)
 
 	gui.create("WIBase", contents, 0, 0, 1, 20) -- Spacing
 

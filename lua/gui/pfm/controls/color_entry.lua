@@ -31,7 +31,7 @@ function gui.PFMColorEntry:OpenColorSelector()
 
 	local elWrapper = gui.create("WIBase", tool.get_filmmaker())
 	elWrapper:SetZPos(10000)
-	elWrapper:SetAutoAlignToParent(true)
+	elWrapper:SetAlignment(gui.ALIGNMENT_FILL)
 	elWrapper:SetMouseInputEnabled(true)
 	elWrapper:RequestFocus()
 	elWrapper:TrapFocus()

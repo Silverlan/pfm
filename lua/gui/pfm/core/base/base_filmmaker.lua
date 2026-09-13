@@ -27,7 +27,7 @@ function Element:GetRightMenuBarContents()
 	return self.m_menuBarRightContents
 end
 function Element:AddVersionInfo(identifier, version, gitInfoPath)
-	local pMenuBarContents = self:GetMenuBarContainer()
+	--[[local pMenuBarContents = self:GetMenuBarContainer()
 
 	local elRightContents = gui.create("hbox", pMenuBarContents)
 	self.m_menuBarRightContents = elRightContents
@@ -91,7 +91,7 @@ function Element:AddVersionInfo(identifier, version, gitInfoPath)
 	el:SetParent(elRightContents, 0)
 
 	local elToggle = gui.create("pfm_theme_toggle", el)
-	elToggle:SetAutoCenterToParent(true)
+	elToggle:SetAlignment(gui.ALIGNMENT_CENTER)]]
 end
 function Element:GetWorldAxesGizmo()
 	return self.m_worldAxesGizmo
@@ -296,8 +296,8 @@ function Element:ShowMatureContentPrompt(onYes, onNo)
 	local userContents = msg:GetUserContents()
 
 	local p = gui.create("pfm_controls_menu", userContents)
-	p:SetAutoFillContentsToWidth(true)
-	p:SetAutoFillContentsToHeight(false)
+	-- p:SetAutoFillContentsToWidth(true)
+	-- p:SetAutoFillContentsToHeight(false)
 
 	ctrl, wrapper = p:AddToggleControl(pfm.LocStr("pfm_remember_my_choice"), "remember_my_choice", false)
 	p:SetWidth(200)

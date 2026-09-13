@@ -298,7 +298,7 @@ skin["wibutton"] = {
 		local bg = gui.create("WI9SliceRect", pElement)
 		bg:AddStyleClass("button")
 		bg:SetName("background")
-		bg:SetAutoAlignToParent(true)
+		bg:SetAlignment(gui.ALIGNMENT_FILL)
 		bg:SetZPos(-2)
 		pElement.m_pBackground = bg
 		add_skin_element(pElement, bg)
@@ -402,12 +402,12 @@ skin["witooltip"] = {
 		pText:SetColorRGB(GUI.text.body)
 		local pRect = gui.create("WIRect", pElement)
 		pRect:SetColor(GUI.background.primary)
-		pRect:SetAutoAlignToParent(true)
+		pRect:SetAlignment(gui.ALIGNMENT_FILL)
 		pRect:SetZPos(0)
 
 		local pRectOutline = gui.create("WIOutlinedRect", pElement)
 		pRectOutline:SetColor(GUI.outline.color)
-		pRectOutline:SetAutoAlignToParent(true)
+		pRectOutline:SetAlignment(gui.ALIGNMENT_FILL)
 		pRectOutline:SetZPos(0)
 
 		pText:SetZPos(1)
@@ -622,7 +622,7 @@ skin["table_row"] = {
 		local bg = gui.create("WIRect", pElement)
 		bg:SetZPos(0)
 		bg:SetName("background")
-		bg:SetAutoAlignToParent(true)
+		bg:SetAlignment(gui.ALIGNMENT_FILL)
 		bg:SetVisible(false)
 		add_skin_element(pElement, bg)
 
@@ -690,7 +690,7 @@ skin["table_row_header"] = {
 		bg:SetZPos(0)
 		bg:SetColor(GUI.background.tertiary)
 		bg:SetName("background")
-		bg:SetAutoAlignToParent(true)
+		bg:SetAlignment(gui.ALIGNMENT_FILL)
 		add_skin_element(pElement, bg)
 	end,
 	Release = clear_element,

@@ -51,7 +51,7 @@ pfm.register_window("ik_rig_editor", "editors", gui.Loc("pfm_ik_rig_editor"), fu
 end)
 pfm.register_window("model_viewer", "viewers", gui.Loc("pfm_model_viewer"), function(pm)
 	local playerBox = gui.create("vbox")
-	playerBox:SetAutoFillContents(true)
+	-- playerBox:SetAutoFillContents(true)
 
 	local vrBox = gui.create("WIBase", playerBox)
 	vrBox:SetSize(128, 128)

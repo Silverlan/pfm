@@ -42,7 +42,7 @@ function Element:OnInitialize()
 	self.m_infoBox = infoBox
 
 	self.m_contents:Update()
-	self.m_contents:SetAutoFillContents(true)
+	-- self.m_contents:SetAutoFillContents(true)
 
 	self:SetThinkingEnabled(true)
 	self.m_firstTimeInit = false

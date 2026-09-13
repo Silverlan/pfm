@@ -67,7 +67,7 @@ tool.open_filmmaker = function(devMode)
 	tool.developerMode = devMode or false
 	tool.editor = gui.create("filmmaker")
 	tool.filmmaker = tool.editor
-	tool.editor:SetAutoAlignToParent(true)
+	tool.editor:SetAlignment(gui.ALIGNMENT_FILL)
 	-- tool.editor:SetZPos(1000)
 
 	tool.editor:Open()

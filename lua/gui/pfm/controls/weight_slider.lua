@@ -98,7 +98,7 @@ function gui.PFMWeightSliderBar:OnInitialize()
 
 	self.m_sliderLine = gui.create("WIRect", self, 0, 0, self:GetWidth(), 3, 0, 0, 1, 0)
 	self.m_sliderLine:SetColor(Color.Black)
-	self.m_sliderLine:SetAutoCenterToParent(true)
+	self.m_sliderLine:SetAlignment(gui.ALIGNMENT_CENTER)
 
 	local cursorRect = gui.create("WIRect", self, 0, 0, 12, 15)
 	cursorRect:SetColor(Color(126, 126, 126))

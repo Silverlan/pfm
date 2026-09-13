@@ -58,10 +58,10 @@ function gui.PFMCoreViewportBase:OnInitialize()
 
 	textColor = Color(152, 152, 152)
 	self.m_filmClipParent = create_text_element("font_medium", Vector2(0, 3), textColor)
-	self.m_filmClipParent:SetAutoCenterToParentX(true)
+	self.m_filmClipParent:SetHorizontalAlignment(gui.ALIGNMENT_CENTER)
 
 	self.m_filmClip = create_text_element("font_medium", Vector2(0, 16), textColor)
-	self.m_filmClip:SetAutoCenterToParentX(true)
+	self.m_filmClip:SetHorizontalAlignment(gui.ALIGNMENT_CENTER)
 
 	self:SwitchToGameplay(false)
 	self:ScheduleUpdate()
@@ -675,7 +675,7 @@ function gui.PFMCoreViewportBase:GetViewport()
 	return self.m_viewport
 end
 function gui.PFMCoreViewportBase:OnSizeChanged(w, h)
-	self:Update()
+	-- self:Update()
 end
 function gui.PFMCoreViewportBase:OnUpdate()
 	if util.is_valid(self.m_timeLocal) then

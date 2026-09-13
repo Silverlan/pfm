@@ -101,13 +101,13 @@ function gui.PFMElementViewer:OnInitialize()
 		1,
 		1
 	)
-	self.m_contents:SetAutoFillContents(true)
+	-- self.m_contents:SetAutoFillContents(true)
 
 	local treeVBox = gui.create("vbox", self.m_contents)
-	treeVBox:SetAutoFillContents(true)
+	-- treeVBox:SetAutoFillContents(true)
 	local resizer = gui.create("resizer", self.m_contents)
 	local dataVBox = gui.create("vbox", self.m_contents)
-	dataVBox:SetAutoFillContents(true)
+	-- dataVBox:SetAutoFillContents(true)
 
 	local function create_header_text(text, parent)
 		local pHeader = gui.create("WIRect", parent, 0, 0, parent:GetWidth(), 21, 0, 0, 1, 0)

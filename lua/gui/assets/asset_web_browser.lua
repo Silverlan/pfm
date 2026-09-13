@@ -145,7 +145,7 @@ function Element:InitializeLog(parent)
 
 	local scrollContainer = gui.create("WIScrollContainer", elBg)
 	scrollContainer:SetAutoStickToBottom(true)
-	scrollContainer:SetAutoAlignToParent(true)
+	scrollContainer:SetAlignment(gui.ALIGNMENT_FILL)
 
 	local log = gui.create("WITextEntry", scrollContainer)
 	log:SetMultiLine(true)

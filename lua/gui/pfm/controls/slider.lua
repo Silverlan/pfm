@@ -72,7 +72,7 @@ function Element:OnInitialize()
 	self.m_text = gui.create("WIText", self)
 	self.m_text:AddStyleClass("input_field_text")
 	self.m_text:SetVisible(false)
-	self.m_text:SetAutoCenterToParent(true)
+	self.m_text:SetAlignment(gui.ALIGNMENT_CENTER)
 
 	self.m_leftRightRatio = util.FloatProperty(0.5)
 	self:SetStepSize(0.0)

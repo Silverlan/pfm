@@ -11,7 +11,7 @@ function Element:OnInitialize()
 	local elIcon = gui.create("WITexturedRect", self)
 	elIcon:SetMaterial("gui/pfm/arrow_left")
 	elIcon:SetSize(5, 7)
-	elIcon:SetAutoCenterToParent(true)
+	elIcon:SetAlignment(gui.ALIGNMENT_CENTER)
 	self.m_elIcon = elIcon
 
 	self:SetMouseInputEnabled(true)

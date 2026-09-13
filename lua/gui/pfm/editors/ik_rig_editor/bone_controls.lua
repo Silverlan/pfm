@@ -331,8 +331,8 @@ function Element:AddControl(item, boneName, controlType)
 	child.__controlType = controlType
 	local ctrlsParent = child:AddItem("")
 	local ctrl = gui.create("pfm_controls_menu", ctrlsParent, 0, 0, ctrlsParent:GetWidth(), ctrlsParent:GetHeight())
-	ctrl:SetAutoAlignToParent(true, false)
-	ctrl:SetAutoFillContentsToHeight(false)
+	ctrl:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
+	-- ctrl:SetAutoFillContentsToHeight(false)
 	ctrl:AddSliderControl("Rigidity", "rigidity", 1.0, 1.0, 100.0, function(el, value)
 		control.rigidity = value
 	end, 1.0)

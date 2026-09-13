@@ -14,8 +14,6 @@ function gui.PFMFrame:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:ApplySize(256, 128)
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("background2")
 
 	--[[self.m_btClose = gui.PFMButton.create(self, "gui/pfm/icon_clear", "gui/pfm/icon_clear_activated", function()
 		print("TODO")
@@ -24,15 +22,19 @@ function gui.PFMFrame:OnInitialize()
 	self.m_btClose:SetPos(self:GetWidth() - self.m_btClose:GetWidth() - 7, 10)
 	self.m_btClose:SetAnchor(1, 0, 1, 0)]]
 
-	self.m_contents = gui.create("WIBase", self, 0, 28, self:GetWidth(), self:GetHeight() - 28, 0, 0, 1, 1)
+	local root = gui.create("vbox", self)
+	root:AddStyleClass("fill")
+
 	self.m_tabs = {}
-	self.m_tabButtonContainer = gui.create("hbox", self)
+	self.m_tabButtonContainer = gui.create("hbox", root)
 	self.m_tabButtonContainer:SetHeight(28)
 	self.m_tabButtonContainer:SetName("tab_button_container")
+	self.m_tabButtonContainer:AddStyleClass("tab_button_container")
+
+	self.m_contents = gui.create("WIBase", root)
 
 	self.m_tbGroup = gui.PFMButtonGroup(self.m_tabButtonContainer, true)
 
-	gui.create("WIBase", self.m_tabButtonContainer):SetSize(5, 1) -- Gap
 	self.m_btAddPanel = gui.PFMButton.create(self.m_tabButtonContainer, "plus-lg", function()
 		local pContext = gui.open_context_menu(self)
 		if util.is_valid(pContext) == false then
@@ -44,7 +46,6 @@ function gui.PFMFrame:OnInitialize()
 		pContext:Update()
 	end)
 	self.m_btAddPanel:SetName("panel_add_button")
-	gui.create("WIBase", self.m_tabButtonContainer):SetSize(5, 1) -- Gap
 
 	self:SetThinkingEnabled(true)
 	self.m_detachedWindows = {}

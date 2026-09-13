@@ -54,7 +54,7 @@ function gui.PatreonTicker:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self.m_contents = gui.create("hbox", self)
-	self.m_contents:SetAutoFillContents(true)
+	-- self.m_contents:SetAutoFillContents(true)
 
 	gui.create("WIBase", self, 0, 0, 10, 1) -- Gap
 
@@ -63,7 +63,7 @@ function gui.PatreonTicker:OnInitialize()
 	patronTickerLabel:AddStyleClass("input_field_text")
 	patronTickerLabel:SetY(5)
 	patronTickerLabel:SetX(5)
-	patronTickerLabel:SetAutoCenterToParentY(true)
+	patronTickerLabel:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	self.m_patronTickerLabel = patronTickerLabel
 
 	local icon = gui.create("WITexturedRect", self)
@@ -72,7 +72,7 @@ function gui.PatreonTicker:OnInitialize()
 	icon:SetMouseInputEnabled(true)
 	icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 	icon:SetMouseInputEnabled(true)
-	icon:SetAutoCenterToParentY(true)
+	icon:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	icon:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT then
 			if state == input.STATE_PRESS then

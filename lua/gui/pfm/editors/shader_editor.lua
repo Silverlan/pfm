@@ -27,7 +27,7 @@ function Element:OnInitialize()
 	local szDrag = 100000
 	local elDrag = gui.create("WITransformable", self, szDrag * -0.5, szDrag * -0.5, szDrag, szDrag)
 	--elDrag:SetDraggable(true)
-	--elDrag:GetDragArea():SetAutoAlignToParent(true)
+	--elDrag:GetDragArea():SetAlignment(gui.ALIGNMENT_FILL)
 	elDrag:SetMovementPadding(0)
 	self.m_transformable = elDrag
 

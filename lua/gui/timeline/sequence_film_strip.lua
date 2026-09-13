@@ -124,7 +124,7 @@ function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw,
 	elTex:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_grab_handle")
 	elTex:SetColor(Color(81, 86, 147))
 	elTex:SetSize(3, 23)
-	elTex:SetAutoCenterToParent(true)
+	elTex:SetAlignment(gui.ALIGNMENT_CENTER)
 	elTex:SetAnchor(0.5, 0.5, 0.5, 0.5)
 
 	return dragHandle

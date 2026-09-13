@@ -12,11 +12,11 @@ function Element:OnInitialize()
 
 	self.m_contents = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents:SetFixedSize(true)
-	self.m_contents:SetAutoFillContents(true)
+	-- self.m_contents:SetAutoFillContents(true)
 
 	local p = gui.create("pfm_controls_menu", self.m_contents)
-	p:SetAutoFillContentsToWidth(true)
-	p:SetAutoFillContentsToHeight(false)
+	-- p:SetAutoFillContentsToWidth(true)
+	-- p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
 
 	local elBookmarks, wrapper
@@ -69,7 +69,7 @@ function Element:OnInitialize()
 		local log = self:InitializeLog(self.m_contents)
 		log:SetName("log")
 		log:SetSize(self:GetWidth(), 80)
-		self.m_contents:SetAutoFillTarget(self.m_webBrowser)
+		-- self.m_contents:SetAutoFillTarget(self.m_webBrowser)
 
 		self.m_webBrowser:AddCallback("OnDownloadStarted", function(el, id, path)
 			if util.is_valid(self.m_log) == false then
@@ -360,7 +360,7 @@ function Element:InitializeLog(parent)
 
 	local scrollContainer = gui.create("WIScrollContainer", elBg)
 	scrollContainer:SetAutoStickToBottom(true)
-	scrollContainer:SetAutoAlignToParent(true)
+	scrollContainer:SetAlignment(gui.ALIGNMENT_FILL)
 
 	local log = gui.create("WITextEntry", scrollContainer)
 	log:SetMultiLine(true)

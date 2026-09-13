@@ -67,8 +67,8 @@ function gui.PFMControlsMenu:OnInitialize()
 	self.m_orderedControlNames = {}
 	self.m_subMenus = {}
 	self.m_subMenuNameIndices = {}
-	self.m_controlContainer:SetAutoFillContents(true)
-	self.m_controlContainer:SetAutoAlignToParent(true, false)
+	-- self.m_controlContainer:SetAutoFillContents(true)
+	self.m_controlContainer:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	self.m_controlContainer:SetAutoSizeToContents(false, true)
 	self:SetAutoSizeToContents(false, true)
 end
@@ -434,18 +434,18 @@ function gui.PFMControlsMenu:AddHeader(title)
 end
 function gui.PFMControlsMenu:AddCollapsibleSubMenu(title, identifier)
 	local collapsible = gui.create("collapsible_group", self.m_controlContainer)
-	collapsible:SetAutoAlignToParent(true, false)
+	collapsible:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	collapsible:SetGroupName(title)
 	collapsible:Expand()
 	local elSubMenu = self:AddSubMenu(identifier, collapsible:GetContents())
-	elSubMenu:SetAutoAlignToParent(true, false)
+	elSubMenu:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	return elSubMenu, collapsible
 end
 function gui.PFMControlsMenu:SetAutoFillContentsToWidth(autoFill)
-	self.m_controlContainer:SetAutoFillContentsToWidth(autoFill)
+	-- self.m_controlContainer:SetAutoFillContentsToWidth(autoFill)
 end
 function gui.PFMControlsMenu:SetAutoFillContentsToHeight(autoFill)
-	self.m_controlContainer:SetAutoFillContentsToHeight(autoFill)
+	-- self.m_controlContainer:SetAutoFillContentsToHeight(autoFill)
 end
 function gui.PFMControlsMenu:SetFixedWidth(fixedWidth)
 	self.m_controlContainer:SetFixedWidth(fixedWidth)
@@ -456,8 +456,8 @@ end
 function gui.PFMControlsMenu:AddSubMenu(identifier, parent)
 	parent = parent or self
 	local el = gui.create("pfm_controls_menu", parent)
-	el.m_controlContainer:SetAutoFillContentsToHeight(false)
-	el.m_controlContainer:SetAutoAlignToParent(true, false)
+	-- el.m_controlContainer:SetAutoFillContentsToHeight(false)
+	el.m_controlContainer:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	el.m_controlContainer:SetAutoSizeToContents(false, true)
 	el:SetAutoSizeToContents(false, true)
 

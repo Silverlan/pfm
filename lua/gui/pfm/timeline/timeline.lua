@@ -66,8 +66,8 @@ function gui.PFMTimeline:OnInitialize()
 	self.m_timelineGraph:SetDataAxis(self.m_timeline:GetDataAxis())
 	self.m_timelineGraph:SetTimeline(self)
 
-	self.m_contents:SetAutoFillContentsToHeight(true)
-	self.m_contents:SetAutoFillContentsToWidth(true)
+	-- self.m_contents:SetAutoFillContentsToHeight(true)
+	-- self.m_contents:SetAutoFillContentsToWidth(true)
 	self.m_contents:SetSize(self:GetSize())
 	self.m_contents:Update()
 

@@ -726,7 +726,7 @@ function gui.WIFilmmaker:AddUndoMessage(msg)
 
 	local elText = gui.create("WIText", msgEl)
 	elText:SetText(msg)
-	elText:SetAutoCenterToParentY(true)
+	elText:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	elText:SetX(10)
 	msgEl:SetWidth(elText:GetWidth() + 20)
 	infoBar:AddRightElement(msgEl, 0)

@@ -14,7 +14,7 @@ function gui.CollapsibleGroupTitleBar:OnInitialize()
 	self:ApplySize(256, 20)
 	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents = gui.create("hbox", self, 0, 0, self:GetWidth(), 20)
-	self.m_contents:SetAutoAlignToParent(true, false)
+	self.m_contents:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	self.m_contents:SetFixedWidth(true)
 	self.m_bg:AddStyleClass("background")
 

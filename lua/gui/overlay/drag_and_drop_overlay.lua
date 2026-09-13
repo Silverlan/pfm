@@ -8,7 +8,7 @@ function Element:OnInitialize()
 	el:SetColor(Color(0, 0, 0, 230))
 
 	self.m_elText = gui.create("WIText", self)
-	self.m_elText:SetAutoCenterToParent(true)
+	self.m_elText:SetAlignment(gui.ALIGNMENT_CENTER)
 
 	self:SetMouseInputEnabled(true)
 	self:SetKeyboardInputEnabled(true)

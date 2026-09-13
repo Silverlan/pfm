@@ -42,8 +42,8 @@ function Element:OnInitialize()
 
 	local controls = gui.create("pfm_controls_menu", self)
 	self.m_controls = controls
-	controls:SetAutoFillContentsToWidth(true)
-	controls:SetAutoFillContentsToHeight(false)
+	-- controls:SetAutoFillContentsToWidth(true)
+	-- controls:SetAutoFillContentsToHeight(false)
 	controls:SetFixedHeight(false)
 	controls:AddCallback("OnContentsUpdated", function()
 		self:UpdateMarkers()

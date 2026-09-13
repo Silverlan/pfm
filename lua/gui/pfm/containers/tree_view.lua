@@ -185,7 +185,7 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self:ApplySize(64, 19)
 
 	self.m_vBox = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight())
-	self.m_vBox:SetAutoFillContentsToWidth(true)
+	-- self.m_vBox:SetAutoFillContentsToWidth(true)
 	self.m_vBox:SetName("contents_wrapper")
 
 	self.m_header = gui.create("hbox", self.m_vBox, 0, 0, self:GetWidth(), self:GetHeight())
@@ -208,7 +208,7 @@ function gui.PFMTreeViewElement:OnInitialize()
 	end)
 
 	self.m_iconBox = gui.create("hbox", self.m_header, 0, 0, 0, 14)
-	self.m_iconBox:SetAutoCenterToParentY(true)
+	self.m_iconBox:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	self.m_icons = {}
 
 	gui.create("WIBase", self.m_header, 0, 0, 3, 1) -- gap
@@ -435,7 +435,7 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 	end
 	self.m_childHBox = gui.create("hbox", self.m_vBox, 0, 0, self.m_vBox:GetWidth(), self.m_vBox:GetHeight())
 	self.m_childHBox:SetFixedWidth(true)
-	self.m_childHBox:SetAutoFillContentsToWidth(true)
+	-- self.m_childHBox:SetAutoFillContentsToWidth(true)
 	self.m_childHBox:SetName("child contents box with prefix")
 
 	self.m_childPrefix = gui.create("WIBase", self.m_childHBox, 0, 0, 18, self.m_childHBox:GetHeight())
@@ -444,11 +444,11 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 	self.m_vLine = gui.create("WIRect", self.m_childPrefix, 0, 0, 1, 1)
 	self.m_vLine:SetColor(Color(58, 58, 58))
 	self.m_vLine:SetName("child vertical line indicator")
-	self.m_vLine:SetAutoCenterToParentX(true)
+	self.m_vLine:SetHorizontalAlignment(gui.ALIGNMENT_CENTER)
 
 	self.m_vBoxChildren = gui.create("vbox", self.m_childHBox, 0, 0, self:GetWidth(), self:GetHeight())
 	self.m_vBoxChildren:SetFixedWidth(true)
-	self.m_vBoxChildren:SetAutoFillContentsToWidth(true)
+	-- self.m_vBoxChildren:SetAutoFillContentsToWidth(true)
 	self.m_vBoxChildren:SetName("child contents box")
 
 	if self:IsCollapsed() then
@@ -682,7 +682,7 @@ function gui.PFMTreeViewElement:SetText(text)
 	if util.is_valid(self.m_text) == false then
 		self.m_text = gui.create("WIText", self.m_header)
 		self.m_text:AddStyleClass("font_medium")
-		self.m_text:SetAutoCenterToParentY(true)
+		self.m_text:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	end
 	self.m_text:SetText(text)
 

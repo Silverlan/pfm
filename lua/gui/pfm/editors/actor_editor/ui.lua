@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 function gui.PFMActorEditor:InitializeNavigationBar()
-	--[[self.m_btHome = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_home","gui/pfm/icon_nav_home_activated",function()
+	self.m_btHome = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_home","gui/pfm/icon_nav_home_activated",function()
 		if(self.m_rootNode == nil) then return end
 		self:GetHistory():Clear()
 		self:GetHistory():Add(self.m_rootNode)
@@ -59,5 +59,5 @@ function gui.PFMActorEditor:InitializeNavigationBar()
 		pContext:AddItem(locale.get_text("pfm_reset_history"),function()
 			history:Clear()
 		end)
-	end)]]
+	end)
 end

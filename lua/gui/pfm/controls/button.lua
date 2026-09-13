@@ -72,7 +72,7 @@ function Element:SetText(text)
 		self.m_text = gui.create("WIText", self)
 		self.m_text:AddStyleClass("font_medium")
 		self.m_text:SetColor(Color(152, 152, 152))
-		self.m_text:SetAutoCenterToParent(true)
+		self.m_text:SetAlignment(gui.ALIGNMENT_CENTER)
 	end
 	self.m_text:SetText(text)
 end
@@ -296,7 +296,7 @@ function gui.PFMButton:SetupContextMenu(fPopulateContextMenu, openOnClick)
 		caret:SetMaterial("gui/pfm/icons/caret-down-fill")
 		caret:AddStyleClass("button_icon")
 		caret:SetX(self:GetWidth() - 22)
-		caret:SetAutoCenterToParentY(true)
+		caret:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 		caret:SetAnchor(1, 0, 1, 0)
 		self.m_elCaret = caret
 

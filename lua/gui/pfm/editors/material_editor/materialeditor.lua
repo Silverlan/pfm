@@ -29,7 +29,7 @@ function gui.PFMMaterialEditor:OnInitialize()
 	self.m_bg:SetColor(Color(54, 54, 54))
 
 	self.m_contents = gui.create("hbox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight() - 64, 0, 0, 1, 1) -- -64 for the save button
-	self.m_contents:SetAutoFillContents(true)
+	-- self.m_contents:SetAutoFillContents(true)
 
 	local controllBoxContainer =
 		gui.create("WIScrollContainer", self.m_contents, 0, 0, self.m_contents:GetWidth(), self.m_contents:GetHeight())
@@ -46,7 +46,7 @@ function gui.PFMMaterialEditor:OnInitialize()
 		controllBoxContainer:GetWidth(),
 		controllBoxContainer:GetHeight()
 	)
-	self.m_controlBox:SetAutoFillContentsToWidth(true)
+	-- self.m_controlBox:SetAutoFillContentsToWidth(true)
 
 	gui.create("resizer", self.m_contents):SetFraction(0.5)
 
@@ -55,7 +55,7 @@ function gui.PFMMaterialEditor:OnInitialize()
 
 	self.m_vpBox = gui.create("vbox", vpContents, 0, 0, vpContents:GetWidth(), vpContents:GetHeight(), 0, 0, 1, 1)
 	self.m_vpBox:SetFixedSize(true)
-	self.m_vpBox:SetAutoFillContents(true)
+	-- self.m_vpBox:SetAutoFillContents(true)
 	self:InitializeViewport()
 	self.m_vpBox:AddCallback("OnSizeChanged", function()
 		self:ScheduleRTPreviewUpdate()
@@ -77,7 +77,7 @@ function gui.PFMMaterialEditor:OnInitialize()
 		1,
 		1
 	)
-	self.m_renderControlsVbox:SetAutoFillContents(true)
+	-- self.m_renderControlsVbox:SetAutoFillContents(true)
 	self:InitializePreviewControls()
 
 	self.m_contents:Update()
