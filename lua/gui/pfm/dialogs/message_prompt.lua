@@ -17,8 +17,6 @@ function PfmPrompt:OnInitialize()
 
 	local contents = self:GetContents()
 
-	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap
-
 	local elMsg = gui.create("WIText", contents)
 	elMsg:AddStyleClass("font_medium")
 	elMsg:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
@@ -28,15 +26,11 @@ function PfmPrompt:OnInitialize()
 	end)
 	self.m_message = elMsg
 
-	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap
-
 	local userContents = gui.create("vbox", contents) -- Space for custom content
 	self.m_userContents = userContents
 
 	local boxButtons = gui.create("hbox", contents)
 	self.m_boxButtons = boxButtons
-
-	boxButtons:SetX(contents:GetWidth() - boxButtons:GetWidth())
 end
 function PfmPrompt:GetUserContents()
 	return self.m_userContents
@@ -62,7 +56,6 @@ function PfmPrompt:AddButton(id, text)
 		end
 	end)
 	elBt:SizeToContents()
-	gui.create("WIBase", self.m_boxButtons, 0, 0, 8, 1) -- Gap
 	self.m_boxButtons:ScheduleUpdate()
 
 	self:ScheduleUpdate()
@@ -74,7 +67,7 @@ function PfmPrompt:AddStandardButtons(bts)
 	end
 end
 function PfmPrompt:SetMessage(msg)
-	self.m_message:SetWidth(512)
+	--self.m_message:SetWidth(512)
 	self.m_message:SetText(msg)
 	self:ScheduleUpdate()
 end

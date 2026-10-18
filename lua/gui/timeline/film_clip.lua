@@ -11,7 +11,7 @@ local FilmClip = util.register_class("gui.FilmClip", gui.BaseClip)
 function FilmClip:OnInitialize()
 	gui.BaseClip.OnInitialize(self)
 
-	self:SetHeight(45)
+	self:AddStyleClass("film-clip")
 	local w = self:GetWidth()
 	local h = self:GetHeight()
 

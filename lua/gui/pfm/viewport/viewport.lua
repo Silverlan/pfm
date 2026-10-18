@@ -31,8 +31,6 @@ function gui.PFMCoreViewportBase:OnInitialize()
 
 	gui.PFMBaseViewport.OnInitialize(self)
 
-	self.m_titleBar:SetHeight(37)
-
 	self.m_gameplayEnabled = true
 	self.m_cameraView = gui.PFMCoreViewportBase.CAMERA_VIEW_GAME
 	self.m_aspectRatioWrapper:AddCallback("OnAspectRatioChanged", function(el, aspectRatio)
@@ -40,28 +38,22 @@ function gui.PFMCoreViewportBase:OnInitialize()
 	end)
 	self:SetScrollInputEnabled(true)
 
-	local function create_text_element(fontStyle, pos, color)
-		local textColor = Color(182, 182, 182)
-		local el = gui.create("WIText", self.m_titleBar)
+	local function create_text_element(fontStyle, parent)
+		local el = gui.create("WIText", parent or self.m_titleBar)
 		el:AddStyleClass(fontStyle)
-		el:SetColor(textColor)
-		el:SetPos(pos)
 		return el
 	end
-	local textColor = Color(182, 182, 182)
-	self.m_timeGlobal = create_text_element("font_large", Vector2(20, 15), textColor)
+	self.m_timeGlobal = create_text_element("font_large")
 	self.m_timeGlobal:SetText(util.get_pretty_time(0.0))
 
-	self.m_timeLocal = create_text_element("font_large", Vector2(0, 15), textColor)
+	local labelBox = gui.create("vbox", self.m_titleBar)
+	labelBox:AddStyleClass("viewport__film-clip-labels")
+	self.m_filmClipParent = create_text_element("font_medium", labelBox)
+
+	self.m_filmClip = create_text_element("font_medium", labelBox)
+
+	self.m_timeLocal = create_text_element("font_large")
 	self.m_timeLocal:SetText(util.get_pretty_time(0.0))
-	self.m_timeLocal:SetAnchor(1, 0, 1, 0)
-
-	textColor = Color(152, 152, 152)
-	self.m_filmClipParent = create_text_element("font_medium", Vector2(0, 3), textColor)
-	self.m_filmClipParent:SetHorizontalAlignment(gui.ALIGNMENT_CENTER)
-
-	self.m_filmClip = create_text_element("font_medium", Vector2(0, 16), textColor)
-	self.m_filmClip:SetHorizontalAlignment(gui.ALIGNMENT_CENTER)
 
 	self:SwitchToGameplay(false)
 	self:ScheduleUpdate()
@@ -86,10 +78,6 @@ function gui.PFMCoreViewportBase:OnInitialize()
 			end
 		end)
 	end
-
-	self.m_titleBar:AddCallback("OnSizeChanged", function()
-		self:UpdateFilmLabelPositions()
-	end)
 end
 function gui.PFMCoreViewportBase:UpdateAspectRatio()
 	if util.is_valid(self.m_viewport) == false or util.is_valid(self.m_aspectRatioWrapper) == false then
@@ -436,8 +424,6 @@ function gui.PFMCoreViewportBase:SetFilmClipName(name)
 			return
 		end
 		self.m_filmClip:SetText(name)
-
-		self:UpdateFilmLabelPositions()
 	end
 end
 function gui.PFMCoreViewportBase:SetFilmClipParentName(name)
@@ -446,16 +432,6 @@ function gui.PFMCoreViewportBase:SetFilmClipParentName(name)
 			return
 		end
 		self.m_filmClipParent:SetText(name)
-
-		self:UpdateFilmLabelPositions()
-	end
-end
-function gui.PFMCoreViewportBase:UpdateFilmLabelPositions()
-	if util.is_valid(self.m_filmClipParent) then
-		self.m_filmClipParent:ApplyX(self.m_titleBar:GetWidth() * 0.5 - self.m_filmClipParent:GetWidth() * 0.5)
-	end
-	if util.is_valid(self.m_filmClip) then
-		self.m_filmClip:ApplyX(self.m_titleBar:GetWidth() * 0.5 - self.m_filmClip:GetWidth() * 0.5)
 	end
 end
 function gui.PFMCoreViewportBase:MarkActorAsDirty(ent)
@@ -676,12 +652,6 @@ function gui.PFMCoreViewportBase:GetViewport()
 end
 function gui.PFMCoreViewportBase:OnSizeChanged(w, h)
 	-- self:Update()
-end
-function gui.PFMCoreViewportBase:OnUpdate()
-	if util.is_valid(self.m_timeLocal) then
-		self.m_timeLocal:ApplyX(self.m_titleBar:GetWidth() - self.m_timeLocal:GetWidth() - 20)
-	end
-	self:UpdateFilmLabelPositions()
 end
 
 util.register_class("gui.PFMViewport", gui.PFMCoreViewportBase)

@@ -62,7 +62,7 @@ function gui.Resizer:UpdateResizeElements()
 	-- We'll assume the resizer should affect the previous and next elements of its parents children
 	local child0
 	local child1
-	local children = parent:GetChildren()
+	local children = self:GetNonBackgroundChildren(parent)
 	for i, child in ipairs(children) do
 		if child == self then
 			child0 = children[i - 1]
@@ -71,6 +71,18 @@ function gui.Resizer:UpdateResizeElements()
 		end
 	end
 	self:SetElements(child0, child1)
+	for _, el in ipairs({child0, child1}) do
+		if util.is_valid(el) then
+			if mode == gui.Resizer.RESIZE_MODE_VERTICAL then
+				if el.SetFixedWidth then el:SetFixedWidth(true) end
+			else
+				if el.SetFixedHeight then el:SetFixedHeight(true) end
+			end
+		end
+	end
+	if util.is_valid(child1) and parent.SetChildFlex then
+		parent:SetChildFlex(child1, 1) -- Last child should always fill remaining space
+	end
 	if util.is_valid(child0) and util.is_valid(child1) then
 		if mode == gui.Resizer.RESIZE_MODE_VERTICAL then
 			local w = child0:GetWidth() + child1:GetWidth()
@@ -141,9 +153,19 @@ function gui.Resizer:GetRangeExtents()
 	end
 	return self:GetExtent(self.m_element0) + self:GetExtent(self) + self:GetExtent(self.m_element1)
 end
+function gui.Resizer:GetNonBackgroundChildren(el)
+	local children = el:GetChildren()
+	for i=#children, 1, -1 do
+		local child = children[i]
+		if(child:IsBackgroundElement()) then
+			table.remove(children, i)
+		end
+	end
+	return children
+end
 function gui.Resizer:FindBorderingElements()
 	local before, after
-	local children = self:GetParent():GetChildren()
+	local children = self:GetNonBackgroundChildren(self:GetParent())
 	for i, child in ipairs(children) do
 		if child == self.m_element0 then
 			before = children[i - 1]

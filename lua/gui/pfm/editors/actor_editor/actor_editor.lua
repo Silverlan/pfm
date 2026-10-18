@@ -41,7 +41,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_root:AddStyleClass("fill")
 
 	self.navBar = gui.create("hbox", self.m_root)
-	self.navBar:AddStyleClass("actor_editor_navigation_bar")
+	self.navBar:AddStyleClass("actor-editor__nav")
 	self:InitializeNavigationBar()
 
 	self.m_activeControls = {}
@@ -392,7 +392,7 @@ function gui.PFMActorEditor:OnInitialize()
 	end, true)
 
 	self.m_contents = gui.create("hbox", self.m_root)
-	self.m_contents:AddStyleClass("actor_editor_tree_container")
+	self.m_contents:AddStyleClass("actor-editor__tree")
 
 	local treeScrollContainer = gui.create("WIScrollContainer", self.m_contents)
 	treeScrollContainer:AddCallback("OnSizeChanged", function(el)

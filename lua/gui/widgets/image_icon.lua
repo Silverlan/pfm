@@ -9,43 +9,36 @@ function gui.ImageIcon:OnInitialize()
 	gui.Base.OnInitialize(self)
 	self:SetSize(128, 128)
 
-	local bg = gui.create("WIBase", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg = bg
+	self:AddStyleClass("image-icon")
 
-	local el = gui.create("WITexturedRect", bg, 0, 0, bg:GetWidth(), bg:GetHeight(), 0, 0, 1, 1)
-	self.m_texture = el
+	local contents = gui.create("vbox", self)
+	contents:AddStyleClass("image-icon__content")
+	self.m_contents = contents
 
-	local textBg = gui.create("WIRect", self, 0, self:GetHeight() - 18, self:GetWidth(), 18, 0, 1, 1, 1)
-	textBg:AddStyleClass("label_background")
-	self.m_textBg = textBg
+	local texWrapper = gui.create("vbox", contents)
+	texWrapper:AddStyleClass("image-icon__image-wrapper")
 
-	local elText = gui.create("WIText", textBg)
-	elText:AddStyleClass("font_small")
-	elText:AddStyleClass("label")
-	elText:SetAlignment(gui.ALIGNMENT_CENTER)
-	self.m_text = elText
+	local tex = gui.create("WITexturedRect", texWrapper)
+	tex:AddStyleClass("image-icon__image")
+	self.m_texture = tex
 
-	local outline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	outline:AddStyleClass("outline")
-	self.m_outline = outline
+	local labelContainer = gui.create("vbox", contents)
+	labelContainer:AddStyleClass("image-icon__label-container")
+
+	local text = gui.create("WIText", labelContainer)
+	text:AddStyleClass("font_small")
+	text:AddStyleClass("label")
+	text:AddStyleClass("image-icon__label")
+	self.m_text = text
 
 	self:SetSelected(false)
-	self:AddStyleClass("image_icon")
-end
-function gui.ImageIcon:SetImageOnly(imageOnly)
-	self.m_textBg:SetVisible(not imageOnly)
-	self.m_text:SetVisible(not imageOnly)
-	self.m_outline:SetVisible(not imageOnly)
 end
 function gui.ImageIcon:SetSelected(selected)
 	if selected == self.m_selected then
 		return
 	end
 	self.m_selected = selected
-	self.m_outline:RemoveStyleClass("outline")
-	self.m_outline:RemoveStyleClass("outline_focus")
-	self.m_outline:AddStyleClass(selected and "outline_focus" or "outline")
-	self.m_outline:RefreshSkin()
+	self:SetInputState(selected and gui.INPUT_STATE_FOCUSED or gui.INPUT_STATE_NONE)
 	self:CallCallbacks("OnSelectionChanged", selected)
 end
 function gui.ImageIcon:IsSelected()
@@ -65,12 +58,6 @@ function gui.ImageIcon:SetSuffixText(text)
 end
 function gui.ImageIcon:GetTextureElement()
 	return self.m_texture
-end
-function gui.ImageIcon:GetBackgroundElement()
-	return self.m_bg
-end
-function gui.ImageIcon:GetTextBackgroundElement()
-	return self.m_textBg
 end
 function gui.ImageIcon:GetMaterial()
 	return self.m_texture:GetMaterial()
@@ -92,7 +79,6 @@ function gui.ImageIcon:SetMaterial(mat, w, h)
 			end
 		end
 	end
-	self.m_texture:CenterToParent()
 end
 function gui.ImageIcon:SetTexture(tex, w, h)
 	self.m_texture:SetTexture(tex)
@@ -100,6 +86,5 @@ function gui.ImageIcon:SetTexture(tex, w, h)
 	h = h or self:GetHeight()
 
 	self.m_texture:SetSize(w, h)
-	self.m_texture:CenterToParent()
 end
 gui.register("image_icon", gui.ImageIcon)

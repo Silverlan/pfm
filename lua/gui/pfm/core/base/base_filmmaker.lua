@@ -27,15 +27,10 @@ function Element:GetRightMenuBarContents()
 	return self.m_menuBarRightContents
 end
 function Element:AddVersionInfo(identifier, version, gitInfoPath)
-	--[[local pMenuBarContents = self:GetMenuBarContainer()
+	local pMenuBarContents = self:GetMenuBar():GetContents()
 
 	local elRightContents = gui.create("hbox", pMenuBarContents)
 	self.m_menuBarRightContents = elRightContents
-	local function update_size()
-		elRightContents:SetX(pMenuBarContents:GetWidth() - elRightContents:GetWidth())
-	end
-	pMenuBarContents:AddCallback("OnSizeChanged", update_size)
-	elRightContents:AddCallback("OnSizeChanged", update_size)
 
 	-- Version Info
 	local engineInfo = engine.get_info()
@@ -52,10 +47,9 @@ function Element:AddVersionInfo(identifier, version, gitInfoPath)
 	end
 	versionString = versionString .. "]"
 	local elVersion = gui.create("WIText", elRightContents)
-	elVersion:SetColor(Color.White)
 	elVersion:SetText(versionString)
 	elVersion:AddStyleClass("font_medium")
-	elVersion:SetCursor(gui.CURSOR_SHAPE_HAND)
+	elVersion:AddStyleClass("link")
 	elVersion:SetMouseInputEnabled(true)
 	elVersion:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
@@ -64,34 +58,19 @@ function Element:AddVersionInfo(identifier, version, gitInfoPath)
 			return util.EVENT_REPLY_HANDLED
 		end
 	end)
-	elVersion:AddCallback("OnCursorEntered", function()
-		elVersion:AddStyleClass("text_highlight")
-		elVersion:RefreshSkin()
-	end)
-	elVersion:AddCallback("OnCursorExited", function()
-		elVersion:RemoveStyleClass("text_highlight")
-		elVersion:RefreshSkin()
-	end)
 
-	elVersion:SetY(3)
 	log.info(identifier .. " Version: " .. versionString)
-
-	local elGap = gui.create("WIBase", elRightContents)
-	elGap:SetSize(5, 1)
 
 	local elBeta = gui.create("WIText")
 	elBeta:SetParent(elRightContents, 0)
 	elBeta:AddStyleClass("beta_info")
 	elBeta:SetText("BETA | ")
 	elBeta:AddStyleClass("font_medium")
-	elBeta:SetY(3)
 
 	local el = gui.create("WIBase", elRightContents)
-	el:SetSize(32, pMenuBarContents:GetHeight())
 	el:SetParent(elRightContents, 0)
 
 	local elToggle = gui.create("pfm_theme_toggle", el)
-	elToggle:SetAlignment(gui.ALIGNMENT_CENTER)]]
 end
 function Element:GetWorldAxesGizmo()
 	return self.m_worldAxesGizmo

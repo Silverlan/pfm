@@ -244,21 +244,19 @@ end
 function gui.PFMCoreViewportBase:InitializeControls()
 	gui.PFMBaseViewport.InitializeControls(self)
 
-	local controls = gui.create("WIBase", self.m_vpContents)
-	controls:SetSize(64, 64)
+	local controls = gui.create("hbox", self.m_vpContents)
+	controls:AddStyleClass("viewport__controls")
 	self.m_controls = controls
 
-	self.m_playControls = gui.create("playback_controls", controls)
-	self.m_playControls:SetName("playback_controls")
-	self.m_playControls:CenterToParentX()
-	self.m_playControls:SetAnchor(0.5, 0, 0.5, 0)
-	self.m_playControls:LinkToPFMProject(pfm.get_project_manager())
-	self.m_btPlay = self.m_playControls:GetPlayButton()
-
-	controls:SizeToContents()
 	if self.m_manipulatorControlsEnabled ~= false then
 		self:InitializeManipulatorControls()
 	end
+
+	self.m_playControls = gui.create("playback_controls", controls)
+	self.m_playControls:SetName("playback_controls")
+	self.m_playControls:LinkToPFMProject(pfm.get_project_manager())
+	self.m_btPlay = self.m_playControls:GetPlayButton()
+
 	if self.m_cameraControlsEnabled ~= false then
 		self:InitializeCameraControls()
 	end

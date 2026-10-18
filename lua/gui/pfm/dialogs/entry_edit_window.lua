@@ -16,7 +16,6 @@ function PfmEditEntryWindow:OnInitialize()
 	local t = gui.create("WITable", contents)
 	t:RemoveStyleClass("WITable")
 	t:SetWidth(self:GetWidth() - 13)
-	t:SetRowHeight(28)
 	self.m_table = t
 
 	gui.create("WIBase", contents, 0, 0, 1, 3) -- Gap

@@ -11,12 +11,6 @@ function gui.AspectRatio:OnInitialize()
 
 	self:ApplySize(512, 512)
 
-	self.m_background = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_background:SetColor(Color.Black)
-	self.m_background:AddCallback("OnSizeChanged", function()
-		self:Update()
-	end)
-
 	self:AddCallback("OnChildAdded", function(el, elChild)
 		self.m_targetElement = elChild
 	end)
@@ -29,9 +23,6 @@ function gui.AspectRatio:OnInitialize()
 	self.m_aspectRatio = util.FloatProperty(1.0)
 	self:SetAspectRatio(16.0 / 9.0)
 end
-function gui.AspectRatio:SetBackgroundColor(col)
-	self.m_background:SetColor(col)
-end
 function gui.AspectRatio:SetAspectRatio(aspectRatio)
 	self.m_aspectRatio:Set(aspectRatio)
 	self:Update()
@@ -43,7 +34,7 @@ end
 function gui.AspectRatio:GetAspectRatioProperty()
 	return self.m_aspectRatio
 end
-function gui.AspectRatio:OnUpdate()
+function gui.AspectRatio:OnSizeChanged(w, h)
 	if util.is_valid(self.m_targetElement) == false then
 		return
 	end

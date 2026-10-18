@@ -63,7 +63,7 @@ function gui.PFMCoreViewportBase:GetActiveCamera()
 end
 function gui.PFMCoreViewportBase:InitializeCameraControls()
 	local controls = gui.create("hbox", self.m_controls)
-	controls:SetSize(32, 32)
+	controls:AddStyleClass("viewport__camera-controls")
 	controls:SetName("cc_controls")
 
 	local btGroup = gui.PFMButtonGroup(controls)
@@ -142,10 +142,7 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 		print("TODO")
 	end)
 	self.m_btGear:SetName("cc_options")
-	controls:SetHeight(self.m_btAutoAim:GetHeight())
 	controls:Update()
-	controls:SetX(self.m_controls:GetWidth() - controls:GetWidth() - 3)
-	controls:SetAnchor(1, 1, 1, 1)
 	self.manipulatorControls = controls
 end
 function gui.PFMCoreViewportBase:IsGameplayEnabled()

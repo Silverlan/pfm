@@ -11,21 +11,24 @@ function gui.PFMBaseViewport:OnInitialize()
 	self:SetSize(128, hViewport + hBottom)
 
 	self.m_contents = gui.create("hbox", self)
+	self.m_contents:AddStyleClass("fill")
+	self.m_contents:AddStyleClass("viewport__content-area")
 	--self.m_contents:AddStyleClass("viewport_container")
 
 	self.m_vpContents = gui.create("vbox", self.m_contents)
+	self.m_vpContents:AddStyleClass("viewport__viewport-area")
 	self.m_vpContents:SetName("left_contents")
 
-	local titleBar = gui.create("WIBase", self.m_vpContents)
-	titleBar:SetWidth(self.m_vpContents:GetWidth())
-	titleBar:SetHeight(0)
+	local titleBar = gui.create("hbox", self.m_vpContents)
+	titleBar:AddStyleClass("viewport__title-bar")
 	self.m_titleBar = titleBar
 
-	self.m_rtBox = gui.create("WIRect", self.m_vpContents, 0, 0, 128, 128)
-	self.m_rtBox:SetColor(Color.Black)
-	-- self.m_vpContents:SetAutoFillTarget(self.m_rtBox)
+	self.m_rtBox = gui.create("WIBase", self.m_vpContents)
+	self.m_rtBox:AddStyleClass("aspect-ratio-wrapper")
+
 	self.m_aspectRatioWrapper =
-		gui.create("aspect_ratio", self.m_rtBox, 0, 0, self.m_rtBox:GetWidth(), self.m_rtBox:GetHeight(), 0, 0, 1, 1)
+		gui.create("aspect_ratio", self.m_rtBox)
+	self.m_aspectRatioWrapper:AddStyleClass("aspect-ratio")
 	self:InitializeViewport(self.m_aspectRatioWrapper)
 
 	if self.m_settingsEnabled ~= false then

@@ -874,10 +874,7 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 	)
 	self.m_btScreen:SetName("manip_screen")
 
-	controls:SetHeight(self.m_btSelect:GetHeight())
 	controls:Update()
-	controls:SetX(3)
-	controls:SetAnchor(0, 1, 0, 1)
 	self.manipulatorControls = controls
 end
 

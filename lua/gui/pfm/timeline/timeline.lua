@@ -17,17 +17,16 @@ function gui.PFMTimeline:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(256, 128)
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("background2")
-	self.m_bg:SetName("timeline_background")
 
-	self.m_contents = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_contents = gui.create("vbox", self)
 	self.m_contents:SetName("timeline_contents")
+	self.m_contents:AddStyleClass("timeline__content-area")
 	self:InitializeToolbar()
 	gui.create("WIBase", self.m_contents):SetSize(1, 7) -- Gap
 
 	self.m_timeline = gui.create("timeline", self.m_contents)
 	self.m_timeline:SetName("timeline_strip")
+	self.m_contents:SetChildFlex(self.m_timeline, 1.0)
 
 	self.m_timeline:SetZoomLevel(0.0)
 	self.m_timeline:SetStartOffset(1.0)
