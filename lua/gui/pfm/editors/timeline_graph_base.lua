@@ -27,8 +27,6 @@ function TimelineEditorGraphBase:OnInitialize()
 
 	self:SetDataPointsSelectable(true)
 	self:SetSize(512, 256)
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(128, 128, 128))
 
 	self.m_graphContainer = gui.create("WIBase", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 

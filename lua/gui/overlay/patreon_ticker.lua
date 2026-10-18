@@ -56,8 +56,6 @@ function gui.PatreonTicker:OnInitialize()
 	self.m_contents = gui.create("hbox", self)
 	-- self.m_contents:SetAutoFillContents(true)
 
-	gui.create("WIBase", self, 0, 0, 10, 1) -- Gap
-
 	local patronTickerLabel = gui.create("WIText", self)
 	patronTickerLabel:SetText(locale.get_text("pfm_patrons") .. ":")
 	patronTickerLabel:AddStyleClass("input_field_text")

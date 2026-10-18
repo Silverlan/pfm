@@ -14,9 +14,6 @@ function gui.PFMInfobar:OnInitialize()
 
 	self:SetSize(256, 24)
 
-	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	bg:AddStyleClass("background")
-
 	self.m_contents = gui.create("WIBase", self, 0, 0, self:GetWidth(), self:GetHeight())
 
 	self.m_iconContainer = gui.create("hbox", self)

@@ -13,8 +13,6 @@ function gui.Resizer:OnInitialize()
 	self:SetMouseInputEnabled(true)
 
 	self:ApplySize(8, 8)
-	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	bg:GetColorProperty():Link(self:GetColorProperty())
 	self:AddStyleClass("background")
 
 	self.m_dotContainer = gui.create("WIBase", self)

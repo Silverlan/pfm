@@ -168,8 +168,6 @@ function gui.LabelledTimelineStrip:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(128, 18)
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("timeline_background")
 
 	self.m_strip = gui.create("timeline_strip", self, 0, 0, self:GetWidth(), 6)
 	self.m_strip:AddCallback("OnTimelinePropertiesChanged", function()

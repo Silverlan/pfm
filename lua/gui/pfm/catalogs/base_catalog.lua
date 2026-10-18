@@ -25,10 +25,7 @@ function Element:OnInitialize()
 
 	self:ApplySize(64, 128)
 
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("background2")
-
-	self.m_contents = gui.create("vbox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_contents = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents:SetName("contents")
 	self.m_contents:SetFixedSize(true)
 	-- self.m_contents:SetAutoFillContents(true)

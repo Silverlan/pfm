@@ -8,7 +8,7 @@ local TimelineEditorGraph = util.register_class("gui.pfm.TimelineEditorGraph", g
 function TimelineEditorGraph:OnInitialize()
 	gui.pfm.TimelineEditorGraphBase.OnInitialize(self)
 
-	self.m_grid = gui.create("grid", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	self.m_grid = gui.create("grid", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	local session = tool.get_filmmaker():GetSession()
 	local settings = session:GetSettings()
 	local renderSettings = settings:GetRenderSettings()

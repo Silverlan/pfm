@@ -19,10 +19,7 @@ function gui.PFMParticleEditor:OnInitialize()
 
 	self:ApplySize(64, 128)
 
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(54, 54, 54))
-
-	self.m_contents = gui.create("hbox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight() - 64, 0, 0, 1, 1)
+	self.m_contents = gui.create("hbox", self, 0, 0, self:GetWidth(), self:GetHeight() - 64, 0, 0, 1, 1)
 	-- self.m_contents:SetAutoFillContents(true)
 
 	self.m_controlsContents = gui.create("hbox", self.m_contents)
@@ -97,7 +94,7 @@ function gui.PFMParticleEditor:OnInitialize()
 	end
 
 	-- Save
-	local btSave = gui.create("pfm_button", self.m_bg)
+	local btSave = gui.create("pfm_button", self)
 	local pBg = gui.create("WIRect", btSave, 0, 0, btSave:GetWidth(), btSave:GetHeight(), 0, 0, 1, 1)
 	pBg:SetVisible(false)
 	self.m_saveBg = pBg
@@ -106,12 +103,12 @@ function gui.PFMParticleEditor:OnInitialize()
 	btSave:AddCallback("OnPressed", function(btRaytracying)
 		self:Save()
 	end)
-	btSave:SetWidth(self.m_bg:GetWidth())
-	btSave:SetY(self.m_bg:GetBottom() - btSave:GetHeight() - 32)
+	btSave:SetWidth(self:GetWidth())
+	btSave:SetY(self:GetBottom() - btSave:GetHeight() - 32)
 	btSave:SetAnchor(0, 1, 1, 1)
 	self.m_btSave = btSave
 
-	local btOpenInExplorer = gui.create("pfm_button", self.m_bg)
+	local btOpenInExplorer = gui.create("pfm_button", self)
 	btOpenInExplorer:SetText(locale.get_text("pfm_open_in_explorer"))
 	btOpenInExplorer:SetHeight(32)
 	btOpenInExplorer:AddCallback("OnPressed", function(btRaytracying)
@@ -121,8 +118,8 @@ function gui.PFMParticleEditor:OnInitialize()
 		end
 		util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
 	end)
-	btOpenInExplorer:SetWidth(self.m_bg:GetWidth())
-	btOpenInExplorer:SetY(self.m_bg:GetBottom() - btOpenInExplorer:GetHeight())
+	btOpenInExplorer:SetWidth(self:GetWidth())
+	btOpenInExplorer:SetY(self:GetBottom() - btOpenInExplorer:GetHeight())
 	btOpenInExplorer:SetAnchor(0, 1, 1, 1)
 
 	self.m_propertyItems = {}

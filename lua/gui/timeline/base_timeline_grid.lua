@@ -6,9 +6,6 @@ include("/util/graph_axis.lua")
 
 util.register_class("gui.BaseTimelineGrid", gui.Base)
 
-function gui.BaseTimelineGrid:__init()
-	gui.Base.__init(self)
-end
 function gui.BaseTimelineGrid:OnInitialize()
 	gui.Base.OnInitialize(self)
 

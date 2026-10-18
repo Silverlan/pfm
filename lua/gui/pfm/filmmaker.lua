@@ -159,14 +159,6 @@ function gui.WIFilmmaker:OnInitialize()
 		infoBar:AddIcon("third_party/discord_logo_small", engineInfo.discordURL, "Discord")
 	end
 
-	local gap = gui.create("WIBase")
-	gap:SetSize(10, 1)
-	infoBar:AddRightElement(gap)
-
-	local gap = gui.create("WIBase")
-	gap:SetSize(10, 1)
-	infoBar:AddRightElement(gap, 0)
-
 	infoBar:Update()
 
 	local sceneCreateInfo = ents.SceneComponent.CreateInfo()

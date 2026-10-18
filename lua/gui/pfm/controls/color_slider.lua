@@ -20,10 +20,9 @@ function gui.PFMColorSlider:OnInitialize()
 	self:SetStepSize(0.1)
 	self:AddCallback("OnLeftValueChanged", function(el, val)
 		local hsv = util.HSVColor(val, 1.0, 1.0)
-		self.m_bg:SetColor(hsv:ToRGBColor())
+		--self.m_bg:SetColor(hsv:ToRGBColor())
 
 		self:CallCallbacks("OnValueChanged", hsv)
 	end)
-	self.m_bg:SetZPos(-10)
 end
 gui.register("pfm_color_slider", gui.PFMColorSlider)

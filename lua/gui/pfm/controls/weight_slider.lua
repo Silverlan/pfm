@@ -14,9 +14,6 @@ function gui.PFMWeightSlider:OnInitialize()
 
 	self:ApplySize(128, 33)
 
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(38, 38, 38))
-
 	self.m_sliderBar = gui.create("pfm_weight_slider_bar", self, 18, 19)
 	self.m_sliderBar:SetWidth(self:GetWidth() - 18 * 2)
 	self.m_sliderBar:SetAnchor(0, 0, 1, 0)

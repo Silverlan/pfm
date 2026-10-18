@@ -12,11 +12,9 @@ function gui.CollapsibleGroupTitleBar:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:ApplySize(256, 20)
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	self.m_contents = gui.create("hbox", self, 0, 0, self:GetWidth(), 20)
 	self.m_contents:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	self.m_contents:SetFixedWidth(true)
-	self.m_bg:AddStyleClass("background")
 
 	self.m_leftPadding = gui.create("WIBase", self.m_contents, 0, 0, 7, 1) -- Gap
 	self.m_collapsed = false

@@ -16,9 +16,6 @@ function gui.PFMElementViewer:OnInitialize()
 
 	self:ApplySize(64, 128)
 
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(54, 54, 54))
-
 	self.navBar = gui.create("hbox", self)
 	self:InitializeNavigationBar()
 
@@ -87,7 +84,7 @@ function gui.PFMElementViewer:OnInitialize()
 		end)
 	end, true)
 
-	local btSave = gui.create("pfm_button", self.m_bg)
+	local btSave = gui.create("pfm_button", self)
 	btSave:SetHeight(32)
 	self.m_contents = gui.create(
 		"hbox",
@@ -208,8 +205,8 @@ function gui.PFMElementViewer:OnInitialize()
 	btSave:AddCallback("OnPressed", function()
 		self:Save()
 	end)
-	btSave:SetWidth(self.m_bg:GetWidth())
-	btSave:SetY(self.m_bg:GetBottom() - btSave:GetHeight())
+	-- btSave:SetWidth(self.m_bg:GetWidth())
+	-- btSave:SetY(self.m_bg:GetBottom() - btSave:GetHeight())
 	btSave:SetAnchor(0, 1, 1, 1)
 	self.m_btSave = btSave
 end

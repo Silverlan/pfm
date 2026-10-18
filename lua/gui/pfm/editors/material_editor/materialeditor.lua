@@ -25,10 +25,8 @@ function gui.PFMMaterialEditor:OnInitialize()
 
 	self.m_linkedMaterialParameterElements = {}
 	self.m_texSlots = {}
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(54, 54, 54))
 
-	self.m_contents = gui.create("hbox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight() - 64, 0, 0, 1, 1) -- -64 for the save button
+	self.m_contents = gui.create("hbox", self, 0, 0, self:GetWidth(), self:GetHeight() - 64, 0, 0, 1, 1) -- -64 for the save button
 	-- self.m_contents:SetAutoFillContents(true)
 
 	local controllBoxContainer =

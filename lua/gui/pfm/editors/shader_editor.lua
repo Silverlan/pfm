@@ -20,9 +20,6 @@ function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:ApplySize(512, 256)
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(128, 128, 128))
-	self.m_bg:SetColor(Color(64, 64, 64))
 
 	local szDrag = 100000
 	local elDrag = gui.create("WITransformable", self, szDrag * -0.5, szDrag * -0.5, szDrag, szDrag)
