@@ -719,6 +719,7 @@ function gui.PFMCoreViewportBase:SetScaleManipulatorMode()
 end
 function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 	local controls = gui.create("hbox", self.m_controls)
+	controls:AddStyleClass("viewport__transform-controls")
 	controls:SetName("manip_controls")
 
 	local btGroup = gui.PFMButtonGroup(controls)

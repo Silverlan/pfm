@@ -61,6 +61,7 @@ function Element:OnInitialize()
 
 	self:SetAutoSizeToContents(true)
 	local contents = gui.create("hbox", self)
+	contents:AddStyleClass("button__content-area")
 	self.m_contents = contents
 
 	self:SetType(gui.PFMBaseButton.BUTTON_TYPE_NORMAL)
@@ -96,49 +97,49 @@ function Element:SetIcon(icon)
 	self.m_icon:RefreshSkin()
 end
 function Element:UpdateStyle()
-	--[[for _, c in ipairs({
-		"button",
-		"button_left",
-		"button_right",
-		"button_middle",
-		"button_tab_left",
-		"button_tab_right",
-		"button_tab_middle",
-		"button_tab",
+	for _, c in ipairs({
+		"button--standalone",
+		"button--left",
+		"button--right",
+		"button--middle",
+		"button-tab--left",
+		"button-tab--right",
+		"button-tab--middle",
+		"button-tab--standalone",
 	}) do
-		self.m_elBg:RemoveStyleClass(c)
+		self:RemoveStyleClass(c)
 	end
 
 	local type = self:GetType()
 	if type == Element.BUTTON_TYPE_LEFT then
-		self.m_elBg:AddStyleClass("button_left")
+		self:AddStyleClass("button--left")
 	elseif type == Element.BUTTON_TYPE_RIGHT then
-		self.m_elBg:AddStyleClass("button_right")
+		self:AddStyleClass("button--right")
 	elseif type == Element.BUTTON_TYPE_MIDDLE then
-		self.m_elBg:AddStyleClass("button_middle")
+		self:AddStyleClass("button--middle")
 	elseif type == Element.BUTTON_TYPE_TAB_LEFT then
-		self.m_elBg:AddStyleClass("button_tab_left")
+		self:AddStyleClass("button-tab--left")
 	elseif type == Element.BUTTON_TYPE_TAB_RIGHT then
-		self.m_elBg:AddStyleClass("button_tab_right")
+		self:AddStyleClass("button-tab--right")
 	elseif type == Element.BUTTON_TYPE_TAB_MIDDLE then
-		self.m_elBg:AddStyleClass("button_tab_middle")
+		self:AddStyleClass("button-tab--middle")
 	elseif type == Element.BUTTON_TYPE_TAB then
-		self.m_elBg:AddStyleClass("button_tab")
+		self:AddStyleClass("button-tab--standalone")
 	else
-		self.m_elBg:AddStyleClass("button")
+		self:AddStyleClass("button--standalone")
 	end
-	self.m_elBg:RefreshSkin()]]
+	self:RefreshSkin()
 end
 function Element:SetPressed(pressed)
 	self.m_pressed = pressed
 	--[[if pressed then
-		self.m_elBg:RemoveStyleClass("button_background_unpressed")
-		self.m_elBg:AddStyleClass("button_background_pressed")
+		self:RemoveStyleClass("button_background_unpressed")
+		self:AddStyleClass("button_background_pressed")
 	else
-		self.m_elBg:RemoveStyleClass("button_background_pressed")
-		self.m_elBg:AddStyleClass("button_background_unpressed")
+		self:RemoveStyleClass("button_background_pressed")
+		self:AddStyleClass("button_background_unpressed")
 	end
-	self.m_elBg:RefreshSkin()]]
+	self:RefreshSkin()]]
 	self:OnActiveStateChanged(pressed)
 end
 function Element:OnActiveStateChanged(pressed) end
@@ -189,16 +190,16 @@ function gui.PFMButton:SetEnabled(enabled)
 	self.m_enabled = enabled
 	--[[if(enabled)  then
 		if(self.m_enabledStyleClass ~= nil) then
-			self.m_elBg:AddStyleClass(self.m_enabledStyleClass)
+			self:AddStyleClass(self.m_enabledStyleClass)
 		end
-		self.m_elBg:RemoveStyleClass(self.m_disabledStyleClass or "button_disabled")
+		self:RemoveStyleClass(self.m_disabledStyleClass or "button_disabled")
 	else
 		if(self.m_enabledStyleClass ~= nil) then
-			self.m_elBg:RemoveStyleClass(self.m_enabledStyleClass)
+			self:RemoveStyleClass(self.m_enabledStyleClass)
 		end
-		self.m_elBg:AddStyleClass(self.m_disabledStyleClass or "button_disabled")
+		self:AddStyleClass(self.m_disabledStyleClass or "button_disabled")
 	end
-	self.m_elBg:RefreshSkin()]]
+	self:RefreshSkin()]]
 end
 function gui.PFMButton:IsEnabled()
 	return self.m_enabled

@@ -81,7 +81,7 @@ function Element:OnInitialize()
 		return util.EVENT_REPLY_HANDLED
 	end)
 
-	self:AddStyleClass("input_field")
+	self:AddStyleClass("input-field")
 end
 function Element:OnCursorEntered()
 	self.m_elArrowLeft:SetVisible(true)

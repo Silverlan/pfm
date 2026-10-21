@@ -37,7 +37,7 @@ function gui.EditableEntry:OnInitialize()
 			end)
 			elChild:SetVisible(false)
 		elseif elChild:IsType(gui.TYPE_PFM_COLOR_ENTRY) then
-			self:RemoveStyleClass("input_field")
+			self:RemoveStyleClass("input-field")
 			self:AddStyleClass("input_field_outline")
 			self.m_activeTarget = true
 			self.m_descContainer:SetZPos(10)
@@ -82,7 +82,7 @@ function gui.EditableEntry:OnInitialize()
 	self:SetMouseInputEnabled(true)
 
 	self:SetText("")
-	self:AddStyleClass("input_field")
+	self:AddStyleClass("input-field")
 end
 function gui.EditableEntry:GetTarget()
 	return self.m_target
