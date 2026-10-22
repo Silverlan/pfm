@@ -11,9 +11,10 @@ function gui.ToggleOption:OnInitialize()
 
 	self:ApplySize(128, 18)
 
-	self.m_contents = gui.create("hbox", self, 0, 0, self:GetWidth(), self:GetHeight())
-	self.m_contents:SetFixedWidth(true)
-	self.m_contents:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
+	self.m_contents = gui.create_hbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight())
+		:SetFixedWidth(true)
+		:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	self.m_checkbox = gui.create("WICheckbox", self.m_contents)
 	gui.create("WIBase", self.m_contents, 0, 0, 5, 1) -- Gap
 	self.m_label = gui.create("WIText", self.m_contents)

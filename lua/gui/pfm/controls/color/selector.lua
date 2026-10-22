@@ -29,14 +29,14 @@ function gui.PFMColorSelector:OnInitialize()
 	bgOutline:SetAlignment(gui.ALIGNMENT_FILL)
 	bgOutline:AddStyleClass("outline")
 
-	self.m_contents = gui.create("hbox", self)
+	self.m_contents = gui.create_hbox(self)
 	gui.create("WIBase", self.m_contents, 0, 0, 10, 1) -- Gap
 
-	self.m_coreContents = gui.create("vbox", self.m_contents)
+	self.m_coreContents = gui.create_vbox(self.m_contents)
 	-- self.m_coreContents:SetAutoFillContentsToWidth(true)
 	gui.create("WIBase", self.m_coreContents, 0, 0, 1, 10) -- Gap
 
-	local selectorContents = gui.create("hbox", self.m_coreContents)
+	local selectorContents = gui.create_hbox(self.m_coreContents)
 	self.m_colorWheel = gui.create("pfm_color_wheel", selectorContents)
 	self.m_colorWheel:AddCallback("OnUserInputStarted", function()
 		self:CallCallbacks("OnUserInputStarted")

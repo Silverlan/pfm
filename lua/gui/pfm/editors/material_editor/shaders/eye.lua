@@ -2,7 +2,7 @@
 -- SPDX-License-Identifier: MIT
 
 function gui.PFMMaterialEditor:InitializeEyeControls()
-	local mapVbox = gui.create("vbox", self.m_controlBox)
+	local mapVbox = gui.create_vbox(self.m_controlBox)
 	-- mapVbox:SetAutoFillContents(true)
 
 	-- Noise map

@@ -16,8 +16,8 @@ function gui.PFMInfobar:OnInitialize()
 
 	self.m_contents = gui.create("WIBase", self, 0, 0, self:GetWidth(), self:GetHeight())
 
-	self.m_iconContainer = gui.create("hbox", self)
-	self.m_iconContainer:SetName("icon_container")
+	self.m_iconContainer = gui.create_hbox(self)
+		:SetName("icon_container")
 end
 function gui.PFMInfobar:GetContents()
 	return self.m_contents

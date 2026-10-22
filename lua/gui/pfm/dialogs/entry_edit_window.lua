@@ -20,7 +20,7 @@ function PfmEditEntryWindow:OnInitialize()
 
 	gui.create("WIBase", contents, 0, 0, 1, 3) -- Gap
 
-	local boxButtons = gui.create("hbox", contents)
+	local boxButtons = gui.create_hbox(contents)
 
 	local btOk = gui.create("pfm_button", boxButtons)
 	btOk:SetWidth(73)

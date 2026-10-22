@@ -10,9 +10,10 @@ function gui.CollapsibleGroup:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:ApplySize(256, 20)
-	self.m_base = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight())
-	self.m_base:SetName("global_container")
-	self.m_base:SetFixedWidth(true)
+	self.m_base = gui.create_vbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight())
+		:SetName("global_container")
+		:SetFixedWidth(true)
 
 	self.m_titleBar =
 		gui.create("collapsible_group_title_bar", self.m_base, 0, 0, self.m_base:GetWidth(), self:GetHeight())
@@ -24,9 +25,10 @@ function gui.CollapsibleGroup:OnInitialize()
 		self:OnExpand()
 	end)
 
-	self.m_contents = gui.create("vbox", self.m_base, 0, 0, self.m_base:GetWidth(), self:GetHeight())
-	self.m_contents:SetName("inner_contents")
-	self.m_contents:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
+	self.m_contents = gui.create_vbox(self.m_base)
+		:SetSize(self.m_base:GetWidth(), self:GetHeight())
+		:SetName("inner_contents")
+		:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	--[[self.m_bgBottom = gui.create("WIRect",self.m_base,0,self.m_base:GetBottom() -5,self.m_base:GetWidth(),5)--,0,1,1,1)
 	local bgColor = Color(40,40,45)
 	self.m_bgBottom:SetColor(bgColor)]]

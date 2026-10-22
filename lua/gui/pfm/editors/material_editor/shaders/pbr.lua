@@ -4,7 +4,7 @@
 include("/util/game_shader_register.lua")
 
 function gui.PFMMaterialEditor:InitializePBRControls()
-	local mapVbox = gui.create("vbox", self.m_controlBox)
+	local mapVbox = gui.create_vbox(self.m_controlBox)
 	-- mapVbox:SetAutoFillContentsToWidth(true)
 
 	-- Shader
@@ -655,7 +655,7 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 	self.m_matPropElements = {}
 	self.m_linkedMaterialParameterElements = {}
 
-	local mapVbox = gui.create("vbox", self.m_controlBox)
+	local mapVbox = gui.create_vbox(self.m_controlBox)
 	-- mapVbox:SetAutoFillContentsToWidth(true)
 	self.m_mapVbox = mapVbox
 

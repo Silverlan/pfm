@@ -19,10 +19,12 @@ function gui.PFMParticleEditor:OnInitialize()
 
 	self:ApplySize(64, 128)
 
-	self.m_contents = gui.create("hbox", self, 0, 0, self:GetWidth(), self:GetHeight() - 64, 0, 0, 1, 1)
+	self.m_contents = gui.create_hbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight() - 64)
+		:SetAnchor(0, 0, 1, 1)
 	-- self.m_contents:SetAutoFillContents(true)
 
-	self.m_controlsContents = gui.create("hbox", self.m_contents)
+	self.m_controlsContents = gui.create_hbox(self.m_contents)
 	-- self.m_controlsContents:SetAutoFillContents(true)
 
 	self.m_tree = gui.create("pfm_tree_view", self.m_controlsContents)
@@ -46,7 +48,7 @@ function gui.PFMParticleEditor:OnInitialize()
 
 	gui.create("resizer", self.m_controlsContents):SetFraction(0.5)
 
-	self.m_propertiesBox = gui.create("vbox", self.m_controlsContents)
+	self.m_propertiesBox = gui.create_vbox(self.m_controlsContents)
 	-- self.m_propertiesBox:SetAutoFillContentsToWidth(true)
 
 	gui.create("resizer", self.m_contents):SetFraction(0.66)
@@ -56,25 +58,18 @@ function gui.PFMParticleEditor:OnInitialize()
 
 	self.m_contents:Update()
 
-	self.m_vpBox = gui.create("vbox", vpContents, 0, 0, vpContents:GetWidth(), vpContents:GetHeight(), 0, 0, 1, 1)
+	self.m_vpBox = gui.create_vbox(vpContents)
+		:SetSize(vpContents:GetWidth(), vpContents:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
 	-- self.m_vpBox:SetAutoFillContents(true)
 	self:InitializeViewport()
 
 	gui.create("resizer", self.m_vpBox):SetFraction(0.75)
 
 	self.m_renderControlsWrapper = gui.create("WIBase", self.m_vpBox, 0, 0, 100, 100)
-	self.m_renderControlsVbox = gui.create(
-		"vbox",
-		self.m_renderControlsWrapper,
-		0,
-		0,
-		self.m_renderControlsWrapper:GetWidth(),
-		self.m_renderControlsWrapper:GetHeight(),
-		0,
-		0,
-		1,
-		1
-	)
+	self.m_renderControlsVbox = gui.create_vbox(self.m_renderControlsWrapper)
+		:SetSize(self.m_renderControlsWrapper:GetWidth(), self.m_renderControlsWrapper:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
 	-- self.m_renderControlsVbox:SetAutoFillContents(true)
 	self:InitializeViewportControls()
 

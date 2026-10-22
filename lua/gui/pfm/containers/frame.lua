@@ -22,15 +22,15 @@ function gui.PFMFrame:OnInitialize()
 	self.m_btClose:SetPos(self:GetWidth() - self.m_btClose:GetWidth() - 7, 10)
 	self.m_btClose:SetAnchor(1, 0, 1, 0)]]
 
-	local root = gui.create("vbox", self)
-	root:AddStyleClass("fill")
-	root:AddStyleClass("frame__content-area")
+	local root = gui.create_vbox(self)
+		:AddStyleClass("fill")
+		:AddStyleClass("frame__content-area")
 
 	self.m_tabs = {}
-	self.m_tabButtonContainer = gui.create("hbox", root)
-	self.m_tabButtonContainer:SetHeight(28)
-	self.m_tabButtonContainer:SetName("tab_button_container")
-	self.m_tabButtonContainer:AddStyleClass("frame__button-container")
+	self.m_tabButtonContainer = gui.create_hbox(root)
+		:SetHeight(28)
+		:SetName("tab_button_container")
+		:AddStyleClass("frame__button-container")
 
 	self.m_contents = gui.create("WIBase", root)
 	root:SetChildFlex(self.m_contents, 1.0)

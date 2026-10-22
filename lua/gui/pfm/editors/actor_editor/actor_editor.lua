@@ -37,11 +37,11 @@ function gui.PFMActorEditor:OnInitialize()
 
 	self:SetSize(64, 128)
 
-	self.m_root = gui.create("vbox", self)
-	self.m_root:AddStyleClass("fill")
+	self.m_root = gui.create_vbox(self)
+		:AddStyleClass("fill")
 
-	self.navBar = gui.create("hbox", self.m_root)
-	self.navBar:AddStyleClass("actor-editor__nav")
+	self.navBar = gui.create_hbox(self.m_root)
+		:AddStyleClass("actor-editor__nav")
 	self:InitializeNavigationBar()
 
 	self.m_activeControls = {}
@@ -391,8 +391,8 @@ function gui.PFMActorEditor:OnInitialize()
 		end)]]
 	end, true)
 
-	self.m_contents = gui.create("hbox", self.m_root)
-	self.m_contents:AddStyleClass("actor-editor__tree")
+	self.m_contents = gui.create_hbox(self.m_root)
+		:AddStyleClass("actor-editor__tree")
 
 	local treeScrollContainer = gui.create("WIScrollContainer", self.m_contents)
 	treeScrollContainer:AddCallback("OnSizeChanged", function(el)
@@ -412,8 +412,8 @@ function gui.PFMActorEditor:OnInitialize()
 		end
 	end)
 
-	dataVBox = gui.create("vbox", scrollContainer)
-	dataVBox:SetFixedWidth(true)
+	dataVBox = gui.create_vbox(scrollContainer)
+		:SetFixedWidth(true)
 
 	self.m_propertyContainer = dataVBox
 	self.m_componentPropertyGroups = {}

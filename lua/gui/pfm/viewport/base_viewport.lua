@@ -10,17 +10,17 @@ function gui.PFMBaseViewport:OnInitialize()
 	local hViewport = 221
 	self:SetSize(128, hViewport + hBottom)
 
-	self.m_contents = gui.create("hbox", self)
-	self.m_contents:AddStyleClass("fill")
-	self.m_contents:AddStyleClass("viewport__content-area")
+	self.m_contents = gui.create_hbox(self)
+		:AddStyleClass("fill")
+		:AddStyleClass("viewport__content-area")
 	--self.m_contents:AddStyleClass("viewport_container")
 
-	self.m_vpContents = gui.create("vbox", self.m_contents)
-	self.m_vpContents:AddStyleClass("viewport__viewport-area")
-	self.m_vpContents:SetName("left_contents")
+	self.m_vpContents = gui.create_vbox(self.m_contents)
+		:AddStyleClass("viewport__viewport-area")
+		:SetName("left_contents")
 
-	local titleBar = gui.create("hbox", self.m_vpContents)
-	titleBar:AddStyleClass("viewport__title-bar")
+	local titleBar = gui.create_hbox(self.m_vpContents)
+		:AddStyleClass("viewport__title-bar")
 	self.m_titleBar = titleBar
 
 	self.m_rtBox = gui.create("WIBase", self.m_vpContents)

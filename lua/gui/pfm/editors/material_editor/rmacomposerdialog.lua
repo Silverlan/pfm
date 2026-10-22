@@ -76,7 +76,8 @@ function gui.RMAComposerDialog:OnInitialize()
 	local el = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 
 	local function add_slot(parent, tex, defaultChannel)
-		local vbox = gui.create("vbox", parent, 0, 0, 200, 200)
+		local vbox = gui.create_vbox(parent)
+			:SetSize(200, 200)
 		-- vbox:SetAutoFillContentsToWidth(true)
 		local texSlot = gui.create("pfm_texture_slot", vbox)
 		texSlot:SetSize(200, 200)
@@ -100,9 +101,8 @@ function gui.RMAComposerDialog:OnInitialize()
 		return elLabel, texSlot
 	end
 
-	local contents = gui.create("vbox", el)
-	gui.create("WIBase", contents, 0, 0, 1, 30) -- Spacing
-	local hbox = gui.create("hbox", contents)
+	local contents = gui.create_vbox(el)
+	local hbox = gui.create_hbox(contents)
 	local slotR, texSlotAo = add_slot(hbox, "white", gui.TexturedShape.CHANNEL_RED)
 	local slotG, texSlotRoughness = add_slot(hbox, "white", gui.TexturedShape.CHANNEL_GREEN)
 	local slotB, texSlotMetalness = add_slot(hbox, "white", gui.TexturedShape.CHANNEL_BLUE)

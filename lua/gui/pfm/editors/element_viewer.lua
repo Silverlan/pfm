@@ -16,7 +16,7 @@ function gui.PFMElementViewer:OnInitialize()
 
 	self:ApplySize(64, 128)
 
-	self.navBar = gui.create("hbox", self)
+	self.navBar = gui.create_hbox(self)
 	self:InitializeNavigationBar()
 
 	self.navBar:SetHeight(32)
@@ -86,24 +86,16 @@ function gui.PFMElementViewer:OnInitialize()
 
 	local btSave = gui.create("pfm_button", self)
 	btSave:SetHeight(32)
-	self.m_contents = gui.create(
-		"hbox",
-		self,
-		0,
-		self.m_btTools:GetBottom(),
-		self:GetWidth(),
-		self:GetHeight() - self.m_btTools:GetBottom() - btSave:GetHeight(),
-		0,
-		0,
-		1,
-		1
-	)
+	self.m_contents = gui.create_hbox(self)
+		:SetPos(0, self.m_btTools:GetBottom())
+		:SetSize(self:GetWidth(), self:GetHeight() - self.m_btTools:GetBottom() - btSave:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
 	-- self.m_contents:SetAutoFillContents(true)
 
-	local treeVBox = gui.create("vbox", self.m_contents)
+	local treeVBox = gui.create_vbox(self.m_contents)
 	-- treeVBox:SetAutoFillContents(true)
 	local resizer = gui.create("resizer", self.m_contents)
-	local dataVBox = gui.create("vbox", self.m_contents)
+	local dataVBox = gui.create_vbox(self.m_contents)
 	-- dataVBox:SetAutoFillContents(true)
 
 	local function create_header_text(text, parent)

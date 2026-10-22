@@ -142,9 +142,9 @@ function Element:InitializeLayout(layoutFileName)
 	local function addFrameContainer(fcId, container, parent)
 		local elContents
 		if container:IsHorizontal() then
-			elContents = gui.create("hbox", parent)
+			elContents = gui.create_hbox(parent)
 		else
-			elContents = gui.create("vbox", parent)
+			elContents = gui.create_vbox(parent)
 		end
 		local frameContainerId = "frame_container_" .. fcId
 		elContents:SetName(frameContainerId)

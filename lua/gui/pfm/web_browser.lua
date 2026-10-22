@@ -15,8 +15,10 @@ function Element:OnInitialize()
 
 	self:ApplySize(64, 128)
 
-	self.m_contents = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_contents:SetFixedSize(true)
+	self.m_contents = gui.create_vbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
+		:SetFixedSize(true)
 
 	local infoBox = gui.create_info_box(
 		self.m_contents,

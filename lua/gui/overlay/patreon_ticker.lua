@@ -53,7 +53,7 @@ util.register_class("gui.PatreonTicker", gui.Base)
 function gui.PatreonTicker:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self.m_contents = gui.create("hbox", self)
+	self.m_contents = gui.create_hbox(self)
 	-- self.m_contents:SetAutoFillContents(true)
 
 	local patronTickerLabel = gui.create("WIText", self)

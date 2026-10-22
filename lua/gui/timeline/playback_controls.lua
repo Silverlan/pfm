@@ -20,7 +20,7 @@ function gui.PlaybackControls:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetAutoSizeToContents(true)
-	local controls = gui.create("hbox", self)
+	local controls = gui.create_hbox(self)
 	local btGroup = gui.PFMButtonGroup(controls)
 
 	self.m_btFirstFrame = btGroup:AddIconButton("skip-backward-fill", function()

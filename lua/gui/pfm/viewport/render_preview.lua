@@ -1043,10 +1043,10 @@ function gui.PFMRenderPreview:InitializeControls()
 	self.m_playControls:SetAnchor(0.5, 0, 0.5, 0)
 	self.m_playControls:LinkToPFMProject(tool.get_filmmaker())
 
-	local controlsLeft = gui.create("hbox", controlsWrapper)
+	local controlsLeft = gui.create_hbox(controlsWrapper)
 	self.m_controlsLeft = controlsLeft
 
-	local controlsRight = gui.create("hbox", controlsWrapper)
+	local controlsRight = gui.create_hbox(controlsWrapper)
 	self.m_controlsRight = controlsRight
 	controlsWrapper:AddCallback("OnSizeChanged", function()
 		controlsRight:SetX(controlsWrapper:GetWidth() - controlsRight:GetWidth())
@@ -1083,7 +1083,7 @@ function gui.PFMRenderPreview:InitializeControls()
 	end)
 	self.m_btStop:SetVisible(false)
 
-	local btContainer = gui.create("hbox", controlsLeft)
+	local btContainer = gui.create_hbox(controlsLeft)
 	self.m_renderBtContainer = btContainer
 	self.m_btRefreshPreview = create_button(
 		btContainer,

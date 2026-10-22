@@ -11,7 +11,8 @@ function TimelineEditorClip:OnInitialize()
 	self.m_trackGroups = {}
 	self:SetSize(256, 64)
 	self.m_contentsScroll = gui.create("WIScrollContainer", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_contents = gui.create("vbox", self.m_contentsScroll, 0, 0, self:GetWidth(), self:GetHeight())
+	self.m_contents = gui.create_vbox(self.m_contentsScroll)
+		:SetSize(self:GetWidth(), self:GetHeight())
 	-- self.m_contents:SetAutoFillContentsToWidth(true)
 end
 function TimelineEditorClip:OnSizeChanged(w, h)

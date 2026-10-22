@@ -244,8 +244,8 @@ end
 function gui.PFMCoreViewportBase:InitializeControls()
 	gui.PFMBaseViewport.InitializeControls(self)
 
-	local controls = gui.create("hbox", self.m_vpContents)
-	controls:AddStyleClass("viewport__controls")
+	local controls = gui.create_hbox(self.m_vpContents)
+		:AddStyleClass("viewport__controls")
 	self.m_controls = controls
 
 	if self.m_manipulatorControlsEnabled ~= false then

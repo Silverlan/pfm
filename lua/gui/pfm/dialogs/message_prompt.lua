@@ -26,10 +26,10 @@ function PfmPrompt:OnInitialize()
 	end)
 	self.m_message = elMsg
 
-	local userContents = gui.create("vbox", contents) -- Space for custom content
+	local userContents = gui.create_vbox(contents) -- Space for custom content
 	self.m_userContents = userContents
 
-	local boxButtons = gui.create("hbox", contents)
+	local boxButtons = gui.create_hbox(contents)
 	self.m_boxButtons = boxButtons
 end
 function PfmPrompt:GetUserContents()

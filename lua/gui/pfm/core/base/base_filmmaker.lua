@@ -29,7 +29,7 @@ end
 function Element:AddVersionInfo(identifier, version, gitInfoPath)
 	local pMenuBarContents = self:GetMenuBar():GetContents()
 
-	local elRightContents = gui.create("hbox", pMenuBarContents)
+	local elRightContents = gui.create_hbox(pMenuBarContents)
 	self.m_menuBarRightContents = elRightContents
 
 	-- Version Info

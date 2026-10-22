@@ -60,8 +60,8 @@ function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetAutoSizeToContents(true)
-	local contents = gui.create("hbox", self)
-	contents:AddStyleClass("button__content-area")
+	local contents = gui.create_hbox(self)
+		:AddStyleClass("button__content-area")
 	self.m_contents = contents
 
 	self:SetType(gui.PFMBaseButton.BUTTON_TYPE_NORMAL)

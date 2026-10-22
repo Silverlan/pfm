@@ -718,9 +718,9 @@ function gui.PFMCoreViewportBase:SetScaleManipulatorMode()
 	self:SetManipulatorMode(gui.PFMCoreViewportBase.MANIPULATOR_MODE_SCALE)
 end
 function gui.PFMCoreViewportBase:InitializeManipulatorControls()
-	local controls = gui.create("hbox", self.m_controls)
-	controls:AddStyleClass("viewport__transform-controls")
-	controls:SetName("manip_controls")
+	local controls = gui.create_hbox(self.m_controls)
+		:AddStyleClass("viewport__transform-controls")
+		:SetName("manip_controls")
 
 	local btGroup = gui.PFMButtonGroup(controls)
 	self.m_btSelect = btGroup:AddIconButton("cursor-fill", function()

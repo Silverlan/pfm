@@ -46,8 +46,8 @@ function gui.PFMCoreViewportBase:OnInitialize()
 	self.m_timeGlobal = create_text_element("font_large")
 	self.m_timeGlobal:SetText(util.get_pretty_time(0.0))
 
-	local labelBox = gui.create("vbox", self.m_titleBar)
-	labelBox:AddStyleClass("viewport__film-clip-labels")
+	local labelBox = gui.create_vbox(self.m_titleBar)
+		:AddStyleClass("viewport__film-clip-labels")
 	self.m_filmClipParent = create_text_element("font_medium", labelBox)
 
 	self.m_filmClip = create_text_element("font_medium", labelBox)

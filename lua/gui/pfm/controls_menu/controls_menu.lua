@@ -14,8 +14,8 @@ function Element:InitializeIconContainer()
 	if util.is_valid(self.m_iconContainer) then
 		return
 	end
-	local el = gui.create("hbox", self)
-	el:SetHeight(self:GetHeight())
+	local el = gui.create_hbox(self)
+		:SetHeight(self:GetHeight())
 	el:AddCallback("OnSizeChanged", function()
 		self:UpdateSize()
 	end)
@@ -62,7 +62,7 @@ function gui.PFMControlsMenu:OnInitialize()
 
 	self:SetSize(64, 64)
 
-	self.m_controlContainer = gui.create("vbox", self)
+	self.m_controlContainer = gui.create_vbox(self)
 	self.m_controls = {}
 	self.m_orderedControlNames = {}
 	self.m_subMenus = {}

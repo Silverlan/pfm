@@ -11,19 +11,19 @@ function gui.ImageIcon:OnInitialize()
 
 	self:AddStyleClass("image-icon")
 
-	local contents = gui.create("vbox", self)
-	contents:AddStyleClass("image-icon__content")
+	local contents = gui.create_vbox(self)
+		:AddStyleClass("image-icon__content")
 	self.m_contents = contents
 
-	local texWrapper = gui.create("vbox", contents)
-	texWrapper:AddStyleClass("image-icon__image-wrapper")
+	local texWrapper = gui.create_vbox(contents)
+		:AddStyleClass("image-icon__image-wrapper")
 
 	local tex = gui.create("WITexturedRect", texWrapper)
 	tex:AddStyleClass("image-icon__image")
 	self.m_texture = tex
 
-	local labelContainer = gui.create("vbox", contents)
-	labelContainer:AddStyleClass("image-icon__label-container")
+	local labelContainer = gui.create_vbox(contents)
+		:AddStyleClass("image-icon__label-container")
 
 	local text = gui.create("WIText", labelContainer)
 	text:AddStyleClass("font_small")

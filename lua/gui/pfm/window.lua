@@ -12,12 +12,12 @@ function gui.PFMWindow:OnInitialize()
 	self:SetAutoSizeToContents(false, true)
 	self:AddStyleClass("window")
 
-	local mainBox = gui.create("vbox", self)
-	mainBox:AddStyleClass("window__content-area")
+	local mainBox = gui.create_vbox(self)
+		:AddStyleClass("window__content-area")
 	self.m_mainBox = mainBox
 
-	local titleBar = gui.create("hbox", mainBox)
-	titleBar:AddStyleClass("window__title-bar")
+	local titleBar = gui.create_hbox(mainBox)
+		:AddStyleClass("window__title-bar")
 
 	local titleText = gui.create("WIText", titleBar)
 	titleText:AddStyleClass("font_medium")

@@ -184,11 +184,13 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self.m_autoSelectChildren = true
 	self:ApplySize(64, 19)
 
-	self.m_vBox = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight())
+	self.m_vBox = gui.create_vbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight())
 	-- self.m_vBox:SetAutoFillContentsToWidth(true)
 	self.m_vBox:SetName("contents_wrapper")
 
-	self.m_header = gui.create("hbox", self.m_vBox, 0, 0, self:GetWidth(), self:GetHeight())
+	self.m_header = gui.create_hbox(self.m_vBox)
+		:SetSize(self:GetWidth(), self:GetHeight())
 	self.m_header:AddCallback("OnCursorEntered",function()
 		self:OnCursorEnteredItem()
 	end)
@@ -207,11 +209,10 @@ function gui.PFMTreeViewElement:OnInitialize()
 		self:Toggle()
 	end)
 
-	self.m_iconBox = gui.create("hbox", self.m_header, 0, 0, 0, 14)
-	self.m_iconBox:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
+	self.m_iconBox = gui.create_hbox(self.m_header)
+		:SetSize(0, 14)
+		:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	self.m_icons = {}
-
-	gui.create("WIBase", self.m_header, 0, 0, 3, 1) -- gap
 
 	self:SetMouseInputEnabled(true)
 	self:SetAutoSizeToContents(false, true)
@@ -433,10 +434,11 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 	if util.is_valid(self.m_childHBox) then
 		return
 	end
-	self.m_childHBox = gui.create("hbox", self.m_vBox, 0, 0, self.m_vBox:GetWidth(), self.m_vBox:GetHeight())
-	self.m_childHBox:SetFixedWidth(true)
+	self.m_childHBox = gui.create_hbox(self.m_vBox)
+		:SetSize(self.m_vBox:GetWidth(), self.m_vBox:GetHeight())
+		:SetFixedWidth(true)
+		:SetName("child contents box with prefix")
 	-- self.m_childHBox:SetAutoFillContentsToWidth(true)
-	self.m_childHBox:SetName("child contents box with prefix")
 
 	self.m_childPrefix = gui.create("WIBase", self.m_childHBox, 0, 0, 18, self.m_childHBox:GetHeight())
 	self.m_childPrefix:SetName("child prefix rect")
@@ -446,10 +448,11 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 	self.m_vLine:SetName("child vertical line indicator")
 	self.m_vLine:SetHorizontalAlignment(gui.ALIGNMENT_CENTER)
 
-	self.m_vBoxChildren = gui.create("vbox", self.m_childHBox, 0, 0, self:GetWidth(), self:GetHeight())
-	self.m_vBoxChildren:SetFixedWidth(true)
+	self.m_vBoxChildren = gui.create_vbox(self.m_childHBox)
+		:SetSize(self:GetWidth(), self:GetHeight())
+		:SetFixedWidth(true)
+		:SetName("child contents box")
 	-- self.m_vBoxChildren:SetAutoFillContentsToWidth(true)
-	self.m_vBoxChildren:SetName("child contents box")
 
 	if self:IsCollapsed() then
 		self.m_childHBox:SetVisible(false)

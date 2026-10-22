@@ -564,7 +564,7 @@ function Element:AddMessageBox(msg, audioFile)
 	el:SetCursor(gui.CURSOR_SHAPE_CROSSHAIR)
 	self.m_messageBox = el
 
-	local vbox = gui.create("vbox", el)
+	local vbox = gui.create_vbox(el)
 
 	local msgText = msg
 	if util.get_type_name(msgText) == "LocStr" then
@@ -625,7 +625,7 @@ function Element:AddMessageBox(msg, audioFile)
 	self.m_elCurSlide = elCurSlide
 
 	local buttonContainer = gui.create("WIBase", vbox)
-	local hbox = gui.create("hbox", buttonContainer)
+	local hbox = gui.create_hbox(buttonContainer)
 	self.m_buttonPrev = self:CreateButton(
 		hbox,
 		locale.get_text("pfm_go_back") .. " (" .. pfm.get_key_binding("pfm_tutorial_back") .. ")",
@@ -800,7 +800,7 @@ function Element:GetWindowFrameDividers(windowIdentifier)
 	if parent == nil then
 		return
 	end
-	if not parent:IsType(gui.TYPE_HBOX) and not parent:IsType(gui.TYPE_VBOX) then
+	if not parent:IsType(gui.TYPE_FLEXBOX) then
 		return
 	end
 	local children = parent:GetChildren()

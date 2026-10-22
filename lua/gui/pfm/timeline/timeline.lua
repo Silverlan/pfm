@@ -18,11 +18,10 @@ function gui.PFMTimeline:OnInitialize()
 
 	self:SetSize(256, 128)
 
-	self.m_contents = gui.create("vbox", self)
-	self.m_contents:SetName("timeline_contents")
-	self.m_contents:AddStyleClass("timeline__content-area")
+	self.m_contents = gui.create_vbox(self)
+		:SetName("timeline_contents")
+		:AddStyleClass("timeline__content-area")
 	self:InitializeToolbar()
-	gui.create("WIBase", self.m_contents):SetSize(1, 7) -- Gap
 
 	self.m_timeline = gui.create("timeline", self.m_contents)
 	self.m_timeline:SetName("timeline_strip")
@@ -391,8 +390,8 @@ end
 function gui.PFMTimeline:InitializeToolbar()
 	local toolbar = gui.create("WIBase", self.m_contents, 0, 0, self:GetWidth(), 0)
 	toolbar:SetName("timeline_toolbar")
-	local toolbarLeft = gui.create("hbox", toolbar, 0, 0)
-	toolbarLeft:SetName("timeline_toolbar_left")
+	local toolbarLeft = gui.create_hbox(toolbar)
+		:SetName("timeline_toolbar_left")
 	local btGroup = gui.PFMButtonGroup(toolbarLeft)
 	self.m_btClipEditor = btGroup:AddIconButton("film", function()
 		pfm.undoredo.push(
@@ -434,8 +433,8 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btBookmarkKey:SetTooltip(gui.Loc("pfm_add_bookmark"))
 	self.m_controlButtons["bookmark"] = self.m_btBookmarkKey
 
-	self.m_entryFields = gui.create("hbox", toolbarLeft)
-	self.m_entryFields:SetName("kf_fields")
+	self.m_entryFields = gui.create_hbox(toolbarLeft)
+		:SetName("kf_fields")
 	self.m_entryFrame = gui.create("WITextEntry", self.m_entryFields, 0, 6, 60, 20)
 	self.m_entryFrame:SetName("frame")
 	self.m_entryValue = gui.create("WITextEntry", self.m_entryFields, 0, 6, 60, 20)
@@ -462,8 +461,8 @@ function gui.PFMTimeline:InitializeToolbar()
 		dps[1]:ChangeDataValue(nil, v)
 	end)
 
-	self.m_controls = gui.create("hbox", toolbarLeft)
-	self.m_controls:SetName("timeline_controls")
+	self.m_controls = gui.create_hbox(toolbarLeft)
+		:SetName("timeline_controls")
 
 	local btGroupCtrls = gui.PFMButtonGroup(self.m_controls)
 	self.m_btCtrlSelect = btGroupCtrls:AddIconButton("cursor-fill", function()
@@ -522,8 +521,8 @@ function gui.PFMTimeline:InitializeToolbar()
 
 	gui.create("WIBase", self.m_controls):SetSize(18, 1) -- Gap
 
-	self.m_tangentControls = gui.create("hbox", toolbarLeft)
-	self.m_tangentControls:SetName("timeline_tangent_controls")
+	self.m_tangentControls = gui.create_hbox(toolbarLeft)
+		:SetName("timeline_tangent_controls")
 
 	self.m_btTangentLinear = gui.PFMButton.create(self.m_tangentControls, "graph_editor_tangent_linear", function()
 		self:SetInterpolationMode(pfm.udm.INTERPOLATION_LINEAR)
@@ -623,7 +622,7 @@ function gui.PFMTimeline:InitializeToolbar()
 
 	gui.create("WIBase", self.m_tangentControls):SetSize(18, 1) -- Gap
 
-	self.m_miscGraphControls = gui.create("hbox", toolbarLeft)
+	self.m_miscGraphControls = gui.create_hbox(toolbarLeft)
 
 	self.m_btOffsetMode = gui.PFMButton.create(self.m_miscGraphControls, "graph_editor_offset_mode", function()
 		print("TODO: NOT YET IMPLEMENTED")
@@ -643,7 +642,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btUnitize:SetName("unitize")
 	self.m_btUnitize:SetTooltip(gui.Loc("pfm_graph_editor_unitize_mode"))
 
-	self.m_motionControls = gui.create("hbox", toolbarLeft)
+	self.m_motionControls = gui.create_hbox(toolbarLeft)
 	self.m_btTimeSelectionMode = gui.PFMButton.create(self.m_motionControls, "time_selection_mode", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
@@ -655,7 +654,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_keyMode:SetName("key_mode")
 
 	gui.create("WIBase", toolbarLeft):SetSize(6, 1) -- Gap
-	self.m_clipControls = gui.create("hbox", toolbarLeft)
+	self.m_clipControls = gui.create_hbox(toolbarLeft)
 	self.m_btAddTrackGroup = gui.PFMButton.create(self.m_clipControls, "add_track_group")
 	self.m_btAddTrackGroup:SetName("track_group")
 	self.m_btAddTrackGroup:SetTooltip(gui.Loc("pfm_add_track_group"))
@@ -672,7 +671,7 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btUp:SetName("timeline_up")]]
 	toolbarLeft:SetHeight(self.m_btClipEditor:GetHeight())
 
-	local toolbarRight = gui.create("hbox", toolbar, 0, 0)
+	local toolbarRight = gui.create_hbox(toolbar)
 	toolbarRight:SetName("timeline_toolbar_right")
 	self.m_btLockPlayhead = gui.PFMButton.create(toolbarRight, "lock_playhead", function()
 		print("TODO: NOT YET IMPLEMENTED")

@@ -24,7 +24,7 @@ function gui.Resizer:OnInitialize()
 	end
 
 	local parent = self:GetParent()
-	if parent:IsType(gui.TYPE_HBOX) then
+	if parent:IsHorizontalBox() then
 		self:SetResizeMode(gui.Resizer.RESIZE_MODE_VERTICAL)
 	else
 		self:SetResizeMode(gui.Resizer.RESIZE_MODE_HORIZONTAL)
@@ -45,7 +45,7 @@ function gui.Resizer:OnInitialize()
 end
 function gui.Resizer:UpdateResizeElements()
 	local parent = self:GetParent()
-	if not parent:IsType(gui.TYPE_HBOX) and not parent:IsType(gui.TYPE_VBOX) then
+	if not parent:IsType(gui.TYPE_FLEXBOX) then
 		return
 	end
 	-- If we're a parent of a hbox or vbox, we'll assign some default parameters for convenience
