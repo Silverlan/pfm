@@ -11,13 +11,12 @@ function gui.CollapsibleGroup:OnInitialize()
 
 	self:ApplySize(256, 20)
 	self.m_base = gui.create_vbox(self)
-		:SetSize(self:GetWidth(), self:GetHeight())
 		:SetName("global_container")
-		:SetFixedWidth(true)
+		:AddStyleClass("collapsible-panel__content-area")
 
 	self.m_titleBar =
-		gui.create("collapsible_group_title_bar", self.m_base, 0, 0, self.m_base:GetWidth(), self:GetHeight())
-	self.m_titleBar:SetName("titlebar")
+		gui.create("collapsible_group_title_bar", self.m_base)
+		:SetName("titlebar")
 	self.m_titleBar:AddCallback("OnCollapse", function()
 		self:OnCollapse()
 	end)
@@ -26,37 +25,11 @@ function gui.CollapsibleGroup:OnInitialize()
 	end)
 
 	self.m_contents = gui.create_vbox(self.m_base)
-		:SetSize(self.m_base:GetWidth(), self:GetHeight())
 		:SetName("inner_contents")
-		:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
-	--[[self.m_bgBottom = gui.create("WIRect",self.m_base,0,self.m_base:GetBottom() -5,self.m_base:GetWidth(),5)--,0,1,1,1)
-	local bgColor = Color(40,40,45)
-	self.m_bgBottom:SetColor(bgColor)]]
 
-	--[[self:AddCallback("OnTimelineUpdate",function(el,elWrapper,elTimeline)
-		local x = elTimeline:ValueToXOffset(0.0)
-		if(x < 0) then
-			local w = elWrapper:GetWidth()
-			w = w +elWrapper:GetX()
-			elWrapper:SetX(0)
-			elWrapper:SetWidth(w)
-		end
-	end)]]
 	self.m_subGroups = {}
 	self:Collapse()
 	self:SetAutoSizeToContents(false, true)
-end
-function gui.CollapsibleGroup:OnSizeChanged(w, h)
-	if util.is_valid(self.m_base) then
-		self.m_base:ApplyWidth(w)
-	end
-	if util.is_valid(self.m_contents) then
-		self.m_contents:ApplyWidth(w)
-	end
-	if util.is_valid(self.m_titleBar) then
-		self.m_titleBar:ApplyWidth(w)
-	end
-	--if(util.is_valid(self.m_contents)) then self.m_contents:ApplyWidth(w) end
 end
 function gui.CollapsibleGroup:RemoveGroup(groupName)
 	for i, group in ipairs(self.m_subGroups) do
@@ -72,11 +45,9 @@ function gui.CollapsibleGroup:AddGroup(groupName)
 		return
 	end
 	local p = gui.create("collapsible_group", self.m_contents)
-	p:SetName("group_" .. groupName)
-	p:SetWidth(self.m_contents:GetWidth())
-	p:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
+		:SetName("group_" .. groupName)
+		:AddStyleClass("collapsible-panel--sub")
 	p:SetGroupName(groupName)
-	p.m_titleBar:SetLeftPadding(self.m_titleBar:GetLeftPadding() + 8)
 	table.insert(self.m_subGroups, p)
 	return p
 end

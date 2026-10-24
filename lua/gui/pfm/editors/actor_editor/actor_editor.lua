@@ -406,6 +406,7 @@ function gui.PFMActorEditor:OnInitialize()
 	local dataVBox
 	local scrollContainer =
 		gui.create("WIScrollContainer", self.m_contents)
+	-- TODO: Use style?
 	scrollContainer:AddCallback("OnSizeChanged", function(el)
 		if self:IsValid() and util.is_valid(dataVBox) then
 			dataVBox:SetWidth(el:GetWidth())
@@ -422,6 +423,7 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_tree = gui.create("pfm_tree_view",treeScrollContainer)
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 	self.m_tree:SetName("actor_tree")
+	self.m_tree:SetAutoSizeToContents(true)
 	self.m_treeElementToActorData = {}
 	self.m_collectionItems = {}
 	self.m_actorUniqueIdToTreeElement = {}
@@ -464,12 +466,7 @@ function gui.PFMActorEditor:OnInitialize()
 end
 function gui.PFMActorEditor:ResizeTreeToContents()
 	local w = self.m_tree:CalcContentsWidth()
-	local scrollBar = self.m_treeScrollContainer:GetVerticalScrollBar()
-	if util.is_valid(scrollBar) and scrollBar:IsVisible() then
-		w = w + 20
-	end
-	w = math.max(w, self.m_contents:GetWidth())
-	self.m_tree:SetWidth(w)
+	--self.m_tree:SetWidth(w)
 end
 function gui.PFMActorEditor:ClearEmptyComponentPropertyGroups()
 	local tNew = {}

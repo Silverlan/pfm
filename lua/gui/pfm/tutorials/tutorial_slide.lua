@@ -533,7 +533,6 @@ function Element:OpenFeedbackPrompt()
 		messageChanged = true
 	end)
 
-	gui.create("WIBase", userContents, 0, 0, 1, 12) -- Gap
 	p:Update()
 	p:SizeToContents()
 

@@ -7,7 +7,6 @@ function gui.PFMActorEditor:InitializeNavigationBar()
 		self:GetHistory():Clear()
 		self:GetHistory():Add(self.m_rootNode)
 	end)
-	gui.create("WIBase",self.navBar):SetSize(5,1) -- Gap
 
 	self.m_btUp = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_up","gui/pfm/icon_nav_up_activated",function()
 		print("TODO")
@@ -15,8 +14,6 @@ function gui.PFMActorEditor:InitializeNavigationBar()
 	self.m_btUp:SetupContextMenu(function(pContext)
 		print("TODO")
 	end)
-
-	gui.create("WIBase",self.navBar):SetSize(5,1) -- Gap
 
 	self.m_btBack = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_back","gui/pfm/icon_nav_back_activated",function()
 		self:GetHistory():GoBack()
@@ -37,8 +34,6 @@ function gui.PFMActorEditor:InitializeNavigationBar()
 			history:Clear()
 		end)
 	end)
-
-	gui.create("WIBase",self.navBar):SetSize(5,1) -- Gap
 
 	self.m_btForward = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_forward","gui/pfm/icon_nav_forward_activated",function()
 		self:GetHistory():GoForward()

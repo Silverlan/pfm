@@ -16,7 +16,6 @@ function gui.ToggleOption:OnInitialize()
 		:SetFixedWidth(true)
 		:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	self.m_checkbox = gui.create("WICheckbox", self.m_contents)
-	gui.create("WIBase", self.m_contents, 0, 0, 5, 1) -- Gap
 	self.m_label = gui.create("WIText", self.m_contents)
 	self.m_label:SetColor(Color.White)
 	self.m_label:AddStyleClass("font_medium")

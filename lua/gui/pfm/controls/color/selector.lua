@@ -30,11 +30,9 @@ function gui.PFMColorSelector:OnInitialize()
 	bgOutline:AddStyleClass("outline")
 
 	self.m_contents = gui.create_hbox(self)
-	gui.create("WIBase", self.m_contents, 0, 0, 10, 1) -- Gap
 
 	self.m_coreContents = gui.create_vbox(self.m_contents)
 	-- self.m_coreContents:SetAutoFillContentsToWidth(true)
-	gui.create("WIBase", self.m_coreContents, 0, 0, 1, 10) -- Gap
 
 	local selectorContents = gui.create_hbox(self.m_coreContents)
 	self.m_colorWheel = gui.create("pfm_color_wheel", selectorContents)
@@ -82,8 +80,6 @@ function gui.PFMColorSelector:OnInitialize()
 	brightnessSlider:SetAnchor(1, 0, 1, 1)
 	self.m_brightnessSlider = brightnessSlider
 	self.m_coreContents:SetWidth(selectorContents:GetWidth())
-
-	gui.create("WIBase", self.m_coreContents, 0, 0, 1, 10) -- Gap
 
 	self.m_colorRect = gui.create("WIRect", self.m_coreContents)
 	self.m_colorRect:SetHeight(24)
@@ -230,9 +226,6 @@ function gui.PFMColorSelector:OnInitialize()
 	self:SelectColor(Color.White)
 	self:SetColorMode(gui.PFMColorSelector.COLOR_MODE_RGB)
 	colorMode:SelectOption(0)
-
-	gui.create("WIBase", self.m_contents, 0, 0, 10, 1) -- Gap
-	gui.create("WIBase", self.m_coreContents, 0, 0, 1, 10) -- Gap
 
 	self.m_coreContents:Update()
 	self.m_contents:Update()

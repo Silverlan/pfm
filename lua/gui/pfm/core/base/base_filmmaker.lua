@@ -283,8 +283,6 @@ function Element:ShowMatureContentPrompt(onYes, onNo)
 	p:Update()
 	p:SizeToContents()
 	p:ResetControls()
-
-	gui.create("WIBase", userContents, 0, 0, 1, 12) -- Gap
 end
 function Element:AddProgressStatusBar(identifier, text, notifyText)
 	local infoBar = self:GetInfoBar()

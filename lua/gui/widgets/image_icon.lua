@@ -38,7 +38,7 @@ function gui.ImageIcon:SetSelected(selected)
 		return
 	end
 	self.m_selected = selected
-	self:SetInputState(selected and gui.INPUT_STATE_FOCUSED or gui.INPUT_STATE_NONE)
+	self:SetState(gui.STATE_SELECTED, selected)
 	self:CallCallbacks("OnSelectionChanged", selected)
 end
 function gui.ImageIcon:IsSelected()

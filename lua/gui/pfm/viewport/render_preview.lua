@@ -1095,14 +1095,10 @@ function gui.PFMRenderPreview:InitializeControls()
 	)
 	self.m_btRefreshPreview:SetTooltip(gui.Loc("pfm_refresh_preview"))
 
-	gui.create("WIBase", btContainer, 0, 0, 5, 1) -- Gap
-
 	self.m_btRefresh = create_button(btContainer, "bt_render_image", gui.Loc("pfm_render_image"), function()
 		self:Refresh()
 	end)
 	self.m_btRefresh:SetTooltip(gui.Loc("pfm_render_frame"))
-
-	gui.create("WIBase", btContainer, 0, 0, 5, 1) -- Gap
 
 	self.m_btPrepare = create_button(
 		controlsRight,
@@ -1113,8 +1109,6 @@ function gui.PFMRenderPreview:InitializeControls()
 		end
 	)
 	self.m_btPrepare:SetTooltip(gui.Loc("pfm_create_render_job_desc"))
-
-	gui.create("WIBase", controlsRight, 0, 0, 5, 1) -- Gap
 
 	local btTools = gui.PFMButton.create(controlsRight, "gear-fill", function() end)
 	self.m_btTools = btTools

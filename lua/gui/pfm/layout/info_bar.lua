@@ -55,7 +55,5 @@ function gui.PFMInfobar:AddIcon(material, url, tooltip, onClick)
 		end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
-
-	gui.create("WIBase", self.m_iconContainer, 0, 0, 5, 1) -- Gap
 end
 gui.register("pfm_info_bar", gui.PFMInfobar)

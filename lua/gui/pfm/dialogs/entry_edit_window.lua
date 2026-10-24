@@ -11,14 +11,10 @@ function PfmEditEntryWindow:OnInitialize()
 
 	local contents = self:GetContents()
 
-	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap
-
 	local t = gui.create("WITable", contents)
 	t:RemoveStyleClass("WITable")
 	t:SetWidth(self:GetWidth() - 13)
 	self.m_table = t
-
-	gui.create("WIBase", contents, 0, 0, 1, 3) -- Gap
 
 	local boxButtons = gui.create_hbox(contents)
 
@@ -32,8 +28,6 @@ function PfmEditEntryWindow:OnInitialize()
 		self:GetFrame():Remove()
 	end)
 	btOk:SizeToContents()
-
-	gui.create("WIBase", boxButtons, 0, 0, 8, 1) -- Gap
 
 	local btCancel = gui.create("pfm_button", boxButtons)
 	btCancel:SetWidth(73)

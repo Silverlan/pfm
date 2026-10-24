@@ -14,13 +14,15 @@ local function initialize_keyframe_marker_manager()
 		function(actor, targetPath, propInfo, wrapper, elPropertyControls)
 			local elContainer = wrapper:GetContainerElement()
 			if util.is_valid(elContainer) then
-				-- Boolean types are currently not supported
-				if udm.is_animatable_type(propInfo.type) and bit.band(propInfo.flags, ents.ComponentInfo.MemberInfo.FLAG_NOT_ANIMATABLE_BIT) == 0 and propInfo.type ~= udm.TYPE_BOOLEAN then
-					local marker = gui.create("keyframe_marker", elPropertyControls)
-					marker:SetName("keyframe_marker")
-					Element.impl.markerManager:AddMarker(marker, actor, targetPath, propInfo.type)
-					elContainer:AddIcon(marker)
-					marker:SetY(4)
+				local iconContainer = elContainer:InitializeIconContainer()
+				if(util.is_valid(iconContainer)) then
+					-- Boolean types are currently not supported
+					if udm.is_animatable_type(propInfo.type) and bit.band(propInfo.flags, ents.ComponentInfo.MemberInfo.FLAG_NOT_ANIMATABLE_BIT) == 0 and propInfo.type ~= udm.TYPE_BOOLEAN then
+						local marker = gui.create("keyframe_marker", iconContainer)
+						marker:AddStyleClass("property-control__keyframe")
+						marker:SetName("keyframe_marker")
+						Element.impl.markerManager:AddMarker(marker, actor, targetPath, propInfo.type)
+					end
 				end
 			end
 		end
@@ -42,9 +44,6 @@ function Element:OnInitialize()
 
 	local controls = gui.create("pfm_controls_menu", self)
 	self.m_controls = controls
-	-- controls:SetAutoFillContentsToWidth(true)
-	-- controls:SetAutoFillContentsToHeight(false)
-	controls:SetFixedHeight(false)
 	controls:AddCallback("OnContentsUpdated", function()
 		self:UpdateMarkers()
 	end)
@@ -62,10 +61,6 @@ function Element:OnUpdate()
 	self:UpdateMarkers()
 end
 function Element:UpdateMarkers() end
-function Element:OnSizeChanged(w, h)
-	self.m_controls:ApplyWidth(w)
-	self.m_controls:ScheduleUpdate()
-end
 function Element:GetControlsMenu()
 	return self.m_controls
 end

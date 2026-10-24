@@ -51,11 +51,9 @@ function Element:OnInitialize()
 		self.m_textElements[i] = elText
 	end
 
-	gui.create("WIBase", textVbox, 0, 0, 1, 5) -- Gap
 	for i = 1, 7 do
 		add_text(i)
 	end
-	gui.create("WIBase", textVbox, 0, 0, 1, 5) -- Gap
 	self:ScheduleUpdate()
 end
 local buttonToIndex = {

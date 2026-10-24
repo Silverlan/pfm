@@ -692,7 +692,6 @@ function gui.PFMElementViewer:InitializeNavigationBar()
 			self:GetHistory():Add(self.m_rootNode)
 		end
 	)
-	gui.create("WIBase", self.navBar):SetSize(5, 1) -- Gap
 
 	self.m_btUp = gui.PFMButton.create(self.navBar, "gui/pfm/icon_nav_up", "gui/pfm/icon_nav_up_activated", function()
 		print("TODO")
@@ -700,8 +699,6 @@ function gui.PFMElementViewer:InitializeNavigationBar()
 	self.m_btUp:SetupContextMenu(function(pContext)
 		print("TODO")
 	end)
-
-	gui.create("WIBase", self.navBar):SetSize(5, 1) -- Gap
 
 	self.m_btBack = gui.PFMButton.create(
 		self.navBar,
@@ -727,8 +724,6 @@ function gui.PFMElementViewer:InitializeNavigationBar()
 			history:Clear()
 		end)
 	end)
-
-	gui.create("WIBase", self.navBar):SetSize(5, 1) -- Gap
 
 	self.m_btForward = gui.PFMButton.create(
 		self.navBar,

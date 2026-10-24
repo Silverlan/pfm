@@ -8,48 +8,29 @@ include("/gui/controls/editable_entry.lua")
 local Element = util.register_class("gui.PFMControlContainer", gui.Base)
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
-	self:ApplySize(10, 20)
+	self:SetAutoSizeToContents(true)
+	self:AddStyleClass("input-control-container")
+
+	local container = gui.create_hbox(self)
+	container:AddStyleClass("input-control-wrapper__content-area")
+	self.m_container = container
 end
 function Element:InitializeIconContainer()
 	if util.is_valid(self.m_iconContainer) then
-		return
+		return self.m_iconContainer
 	end
-	local el = gui.create_hbox(self)
-		:SetHeight(self:GetHeight())
-	el:AddCallback("OnSizeChanged", function()
-		self:UpdateSize()
-	end)
+	local el = gui.create_hbox(self.m_container)
+	el:AddStyleClass("property-control__icon-container")
 	self.m_iconContainer = el
+	return el
 end
 function Element:AddIcon(elIcon)
 	self:InitializeIconContainer()
 	elIcon:SetParent(self.m_iconContainer)
 end
 function Element:SetTargetElement(el)
-	el:SetParent(self)
+	el:SetParent(self.m_container)
 	self.m_targetElement = el
-end
-function Element:UpdateSize()
-	-- Prevent infinite recursion
-	if self.m_updatingSize then
-		return
-	end
-	self.m_updatingSize = true
-	local w = self:GetWidth()
-	local h = self:GetHeight()
-	if util.is_valid(self.m_iconContainer) then
-		self.m_iconContainer:ApplyX(w - self.m_iconContainer:GetWidth())
-		self.m_iconContainer:ApplyHeight(h)
-		w = w - self.m_iconContainer:GetWidth()
-	end
-
-	if self.m_targetElement ~= nil then
-		self.m_targetElement:ApplySize(w, h)
-	end
-	self.m_updatingSize = nil
-end
-function Element:OnSizeChanged(w, h)
-	self:UpdateSize()
 end
 gui.register("pfm_control_container", Element)
 
@@ -61,15 +42,14 @@ function gui.PFMControlsMenu:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(64, 64)
+	self:AddStyleClass("input-control-panel")
 
 	self.m_controlContainer = gui.create_vbox(self)
+		:AddStyleClass("input-control-panel__content-area")
 	self.m_controls = {}
 	self.m_orderedControlNames = {}
 	self.m_subMenus = {}
 	self.m_subMenuNameIndices = {}
-	-- self.m_controlContainer:SetAutoFillContents(true)
-	self.m_controlContainer:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
-	self.m_controlContainer:SetAutoSizeToContents(false, true)
 	self:SetAutoSizeToContents(false, true)
 end
 function gui.PFMControlsMenu:GetControlCount()
@@ -109,8 +89,8 @@ function gui.PFMControlsMenu:SetControlEnabled(name, enabled)
 	if util.is_valid(self.m_controls[name].disabledOverlay) then
 		return
 	end
-	local el = gui.create("WIRect", wrapper, 0, 0, wrapper:GetWidth(), wrapper:GetHeight(), 0, 0, 1, 1)
-	el:SetColor(Color(20, 20, 20, 200))
+	local el = gui.create("WIBase", wrapper, 0, 0, wrapper:GetWidth(), wrapper:GetHeight(), 0, 0, 1, 1)
+	el:AddStyleClass("input-field__disabled-overlay")
 	el:SetMouseInputEnabled(true)
 	el:AddCallback("OnMouseEvent", function()
 		return util.EVENT_REPLY_HANDLED
@@ -195,7 +175,6 @@ function gui.PFMControlsMenu:AddInfo(name, identifier)
 	local el = gui.create("WIBase")
 	local c = self:AddContainer(el)
 	apply_tooltip(el, name)
-	el:SetSize(1, 20)
 
 	local wrapper = el:Wrap("editable_entry")
 	c:SetTargetElement(wrapper)
@@ -211,7 +190,6 @@ function gui.PFMControlsMenu:AddText(name, identifier, default)
 	local c = self:AddContainer(el)
 	apply_tooltip(el, name)
 	el:SetText(default)
-	el:SetHeight(20)
 
 	local wrapper = el:Wrap("editable_entry")
 	c:SetTargetElement(wrapper)
@@ -434,11 +412,9 @@ function gui.PFMControlsMenu:AddHeader(title)
 end
 function gui.PFMControlsMenu:AddCollapsibleSubMenu(title, identifier)
 	local collapsible = gui.create("collapsible_group", self.m_controlContainer)
-	collapsible:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	collapsible:SetGroupName(title)
 	collapsible:Expand()
 	local elSubMenu = self:AddSubMenu(identifier, collapsible:GetContents())
-	elSubMenu:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	return elSubMenu, collapsible
 end
 function gui.PFMControlsMenu:SetAutoFillContentsToWidth(autoFill)
@@ -448,23 +424,14 @@ function gui.PFMControlsMenu:SetAutoFillContentsToHeight(autoFill)
 	-- self.m_controlContainer:SetAutoFillContentsToHeight(autoFill)
 end
 function gui.PFMControlsMenu:SetFixedWidth(fixedWidth)
-	self.m_controlContainer:SetFixedWidth(fixedWidth)
+	--self.m_controlContainer:SetFixedWidth(fixedWidth)
 end
 function gui.PFMControlsMenu:SetFixedHeight(fixedHeight)
-	self.m_controlContainer:SetFixedHeight(fixedHeight)
+	--self.m_controlContainer:SetFixedHeight(fixedHeight)
 end
 function gui.PFMControlsMenu:AddSubMenu(identifier, parent)
 	parent = parent or self
 	local el = gui.create("pfm_controls_menu", parent)
-	-- el.m_controlContainer:SetAutoFillContentsToHeight(false)
-	el.m_controlContainer:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
-	el.m_controlContainer:SetAutoSizeToContents(false, true)
-	el:SetAutoSizeToContents(false, true)
-
-	local o = gui.create("WIOutlinedRect", el, 0, 0, el:GetWidth(), el:GetHeight(), 0, 0, 1, 1)
-	o:SetColor(Color(100, 100, 100, 255))
-	o:SetZPos(1)
-	o:SetBackgroundElement(true)
 
 	table.insert(self.m_subMenus, el)
 	if identifier ~= nil then

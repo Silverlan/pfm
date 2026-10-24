@@ -9,14 +9,9 @@ function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(12, 12)
-
-	local el = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	el:SetMaterial("gui/pfm/keyframe_marker")
-	self.m_elTexture = el
+	self:AddStyleClass("keyframe");
 
 	self:SetMouseInputEnabled(true)
-	self:SetCursor(gui.CURSOR_SHAPE_HAND)
-	el:GetColorProperty():Link(self:GetColorProperty())
 
 	self:SetKeyframeState(Element.STATE_STATIC)
 end
@@ -28,23 +23,22 @@ function Element:SetKeyframeState(state)
 		return
 	end
 	self.m_keyframeState = state
-	local mat = "gui/pfm/keyframe_marker"
-	self:RemoveStyleClass("keyframe_marker_static")
-	self:RemoveStyleClass("keyframe_marker_animated")
-	self:RemoveStyleClass("keyframe_marker_animated_frame")
+
+	self:RemoveStyleClass("keyframe--static")
+	self:RemoveStyleClass("keyframe--animated")
+	self:RemoveStyleClass("keyframe--animated-current-frame")
 	if state == Element.STATE_STATIC then
-		mat = "gui/pfm/keyframe_marker_static"
 		self:SetTooltip(gui.Loc("pfm_animate_property"))
-		self:AddStyleClass("keyframe_marker_static")
+		self:AddStyleClass("keyframe--static")
 	elseif state == Element.STATE_ANIMATED then
 		self:SetTooltip(gui.Loc("pfm_add_keyframe"))
-		self:AddStyleClass("keyframe_marker_animated")
+		self:AddStyleClass("keyframe--animated")
 	elseif state == Element.STATE_ANIMATED_FRAME then
 		self:SetTooltip(gui.Loc("pfm_remove_keyframe"))
-		self:AddStyleClass("keyframe_marker_animated_frame")
+		self:AddStyleClass("keyframe--animated")
+		self:AddStyleClass("keyframe--animated-current-frame")
 	end
 	self:RefreshSkin()
-	self.m_elTexture:SetMaterial(mat)
 end
 function Element:MouseCallback(button, state, mods)
 	if button == input.MOUSE_BUTTON_LEFT then

@@ -42,7 +42,6 @@ function gui.PFMTreeView:CalcContentsWidth()
 		return self.m_contentsWidth
 	end
 	self.m_contentsWidth = self.m_rootElement:CalcContentsWidth()
-	self.m_contentsWidth = self.m_contentsWidth + 10 -- Margin
 	return self.m_contentsWidth
 end
 function gui.PFMTreeView:GetItemHeight()
@@ -191,18 +190,17 @@ function gui.PFMTreeViewElement:OnInitialize()
 
 	self.m_header = gui.create_hbox(self.m_vBox)
 		:SetSize(self:GetWidth(), self:GetHeight())
+		:AddStyleClass("tree-item")
 	self.m_header:AddCallback("OnCursorEntered",function()
 		self:OnCursorEnteredItem()
 	end)
 	self.m_header:AddCallback("OnCursorExited",function()
 		self:OnCursorExitedItem()
 	end)
-	self.m_selection =
-		gui.create("WIRect", self.m_header, 0, 0, self.m_header:GetWidth(), self.m_header:GetHeight(), 0, 0, 1, 1)
+	--[[self.m_selection =
+		gui.create("WIBase", self.m_header, 0, 0, self.m_header:GetWidth(), self.m_header:GetHeight(), 0, 0, 1, 1)
 	self.m_selection:SetBackgroundElement(true)
-	self.m_selection:AddStyleClass("selection")
-	self.m_header:SetFixedWidth(true)
-	self.m_header:SetFixedHeight(true)
+	self.m_selection:AddStyleClass("selection")]]
 	self.m_header:SetName("header")
 	self.m_header:SetMouseInputEnabled(true)
 	self.m_header:AddCallback("OnDoubleClick", function(el)
@@ -215,11 +213,11 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self.m_icons = {}
 
 	self:SetMouseInputEnabled(true)
-	self:SetAutoSizeToContents(false, true)
+	self:SetAutoSizeToContents(true) -- false, true)
 	self:SetSelected(false)
 end
 function gui.PFMTreeViewElement:UpdateHoverStyle()
-	local visible = self.m_cursorHover or self:IsSelected()
+	--[[local visible = self.m_cursorHover or self:IsSelected()
 	self.m_selection:SetVisible(visible)
 
 	if(self.m_cursorHover) then
@@ -228,7 +226,7 @@ function gui.PFMTreeViewElement:UpdateHoverStyle()
 		self.m_selection:RemoveStyleClass("hover")
 		self.m_selection:RemoveStyleClass("selection_hover")
 	end
-	self.m_selection:RefreshSkin()
+	self.m_selection:RefreshSkin()]]
 end
 function gui.PFMTreeViewElement:OnCursorEnteredItem()
 	self.m_cursorHover = true
@@ -435,8 +433,6 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 		return
 	end
 	self.m_childHBox = gui.create_hbox(self.m_vBox)
-		:SetSize(self.m_vBox:GetWidth(), self.m_vBox:GetHeight())
-		:SetFixedWidth(true)
 		:SetName("child contents box with prefix")
 	-- self.m_childHBox:SetAutoFillContentsToWidth(true)
 
@@ -449,8 +445,6 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 	self.m_vLine:SetHorizontalAlignment(gui.ALIGNMENT_CENTER)
 
 	self.m_vBoxChildren = gui.create_vbox(self.m_childHBox)
-		:SetSize(self:GetWidth(), self:GetHeight())
-		:SetFixedWidth(true)
 		:SetName("child contents box")
 	-- self.m_vBoxChildren:SetAutoFillContentsToWidth(true)
 
@@ -462,7 +456,7 @@ function gui.PFMTreeViewElement:GetChildContentsBox()
 	return self.m_childHBox
 end
 function gui.PFMTreeViewElement:OnSizeChanged(w, h)
-	if util.is_valid(self.m_vBox) then
+	--[[if util.is_valid(self.m_vBox) then
 		self.m_vBox:ApplyWidth(w)
 		-- We need to update immediately to avoid some weird twitching effects
 		self.m_vBox:Update()
@@ -470,7 +464,7 @@ function gui.PFMTreeViewElement:OnSizeChanged(w, h)
 	if self.m_skipSizeUpdateSchedule then
 		return
 	end
-	self:ScheduleUpdate()
+	self:ScheduleUpdate()]]
 end
 function gui.PFMTreeViewElement:OnUpdate()
 	if util.is_valid(self.m_vLine) == false then
@@ -517,7 +511,7 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 		return item.m_expandIcon
 	end
 	local expandIcon = gui.create("pfm_tree_expand_icon", self.m_childPrefix)
-	expandIcon:AddStyleClass("tree_expand_icon")
+	expandIcon:AddStyleClass("tree__expansion-icon")
 	expandIcon:AddCallback("OnExpand", function()
 		if item:IsValid() == false then
 			return
@@ -713,9 +707,7 @@ function gui.PFMTreeViewElement:SetSelected(selected, selectChildren)
 	if util.is_valid(treeView) then
 		treeView:OnElementSelectionChanged(self, selected)
 	end
-	if util.is_valid(self.m_selection) then
-		self.m_selection:SetVisible(selected)
-	end
+	self.m_header:SetState(gui.STATE_SELECTED, selected)
 	if selected then
 		self:CallCallbacks("OnSelected")
 	else
