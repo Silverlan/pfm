@@ -1,0 +1,353 @@
+{
+	"theme" {
+		inherits: "layout"
+	}
+	".fill" {
+		width: "100%"
+		height: "100%"
+	}
+
+	// Base Editor
+	".editor__content-area" {
+		width: "100%"
+		flex: 1.0
+	}
+	/*".pfm_info_bar": {
+		width: "100%"
+		height: 24
+	}*/
+
+	// Actor Editor
+	".actor-editor__nav" {
+		width: "100%"
+		height: 32
+	}
+	".actor-editor__tree" {
+		width: "100%"
+		flex: 1.0
+		alignItems: "stretch"/*
+		fixedHeight: true*/
+	}
+	".actor-editor__data-view" {
+		width: "100%"
+	}
+
+	// Frame
+	".frame__content-area" {
+		alignItems: "stretch"
+	}
+	".frame__button-container" {
+		height: 28
+	}
+
+	// Menues
+	".menu-bar" {
+		width: "100%"
+		height: 24
+	}
+	".menu-bar__content-area" {
+		width: "100%"
+		justifyContent: "spaceBetween"
+	}
+	".arrow" {
+		width: 8
+		height: 8
+	}
+
+	// Aspect-ratio
+	".aspect-ratio-wrapper" {
+	   flex: 1
+	   backgroundColor: "#000000"
+	}
+	".aspect-ratio" {
+		width: "100%"
+		height: "100%"
+	}
+
+	// Viewport
+	".viewport__title-bar" {
+		width: "100%"
+		height: 37
+		justifyContent: "spaceBetween"
+	}
+	".viewport__film-clip-labels" {
+		alignItems: "center"
+	}
+	".viewport__content-area" {
+		alignItems: "stretch"
+	}
+	".viewport__content-area--fixed-width" {
+		width: "100%"
+	}
+	".viewport__content-area--fixed-height" {
+		height: "100%"
+	}
+	".viewport__viewport-area" {
+		height: "100%"
+	}
+	".viewport__controls" {
+		width: "100%"
+		justifyContent: "spaceBetween"
+	}
+	".viewport__camera-controls" {
+		flex: 1
+		justifyContent: "end"
+	}
+	".viewport__transform-controls" {
+		flex: 1
+	}
+
+	// Timeline
+	".timeline__content-area" {
+		width: "100%"
+		height: "100%"
+		alignItems: "stretch"
+	}
+
+	// Button
+	".button__icon" {
+		width: 18
+		height: 18
+	}
+	".button__icon--arrow-repeat" {
+		material: "gui/pfm/icons/arrow-repeat"
+	}
+	".button__icon--arrows-move" {
+		material: "gui/pfm/icons/arrows-move"
+	}
+	".button__icon--atom" {
+		material: "gui/pfm/icons/atom"
+	}
+	".button__icon--bone" {
+		material: "gui/pfm/icons/bone"
+	}
+	".button__icon--bookmark-fill" {
+		material: "gui/pfm/icons/bookmark-fill"
+	}
+	".button__icon--box" {
+		material: "gui/pfm/icons/box"
+	}
+	".button__icon--brightness-alt-high-fill" {
+		material: "gui/pfm/icons/brightness-alt-high-fill"
+	}
+	".button__icon--brightness-high-fill" {
+		material: "gui/pfm/icons/brightness-high-fill"
+	}
+	".button__icon--camera-fill" {
+		material: "gui/pfm/icons/camera-fill"
+	}
+	".button__icon--caret-down-fill" {
+		material: "gui/pfm/icons/caret-down-fill"
+	}
+	".button__icon--chevron-compact-left" {
+		material: "gui/pfm/icons/chevron-compact-left"
+	}
+	".button__icon--chevron-compact-right" {
+		material: "gui/pfm/icons/chevron-compact-right"
+	}
+	".button__icon--collapse" {
+		material: "gui/pfm/icons/collapse"
+	}
+	".button__icon--crosshair2" {
+		material: "gui/pfm/icons/crosshair2"
+	}
+	".button__icon--cursor-fill" {
+		material: "gui/pfm/icons/cursor-fill"
+	}
+	".button__icon--expand" {
+		material: "gui/pfm/icons/expand"
+	}
+	".button__icon--eye-fill" {
+		material: "gui/pfm/icons/eye-fill"
+	}
+	".button__icon--eye-slash" {
+		material: "gui/pfm/icons/eye-slash"
+	}
+	".button__icon--film" {
+		material: "gui/pfm/icons/film"
+	}
+	".button__icon--gear-fill" {
+		material: "gui/pfm/icons/gear-fill"
+	}
+	".button__icon--graph-up" {
+		material: "gui/pfm/icons/graph-up"
+	}
+	".button__icon--lightbulb-fill" {
+		material: "gui/pfm/icons/lightbulb-fill"
+	}
+	".button__icon--magnet-fill" {
+		material: "gui/pfm/icons/magnet-fill"
+	}
+	".button__icon--moon-fill" {
+		material: "gui/pfm/icons/moon-fill"
+	}
+	".button__icon--pan" {
+		material: "gui/pfm/icons/pan"
+	}
+	".button__icon--pause-fill" {
+		material: "gui/pfm/icons/pause-fill"
+	}
+	".button__icon--play-fill" {
+		material: "gui/pfm/icons/play-fill"
+	}
+	".button__icon--plus-lg" {
+		material: "gui/pfm/icons/plus-lg"
+	}
+	".button__icon--record-fill" {
+		material: "gui/pfm/icons/record-fill"
+	}
+	".button__icon--scale" {
+		material: "gui/pfm/icons/scale"
+	}
+	".button__icon--skip-backward-fill" {
+		material: "gui/pfm/icons/skip-backward-fill"
+	}
+	".button__icon--skip-end-fill" {
+		material: "gui/pfm/icons/skip-end-fill"
+	}
+	".button__icon--skip-forward-fill" {
+		material: "gui/pfm/icons/skip-forward-fill"
+	}
+	".button__icon--skip-start-fill" {
+		material: "gui/pfm/icons/skip-start-fill"
+	}
+	".button__icon--spotlight-beam" {
+		material: "gui/pfm/icons/spotlight-beam"
+	}
+	".button__icon--volume-mute-fill" {
+		material: "gui/pfm/icons/volume-mute-fill"
+	}
+	".button__icon--volume-off-fill" {
+		material: "gui/pfm/icons/volume-off-fill"
+	}
+	".button__icon--volume-up-fill" {
+		material: "gui/pfm/icons/volume-up-fill"
+	}
+	".button__icon--motion-editor" {
+		material: "gui/pfm/icons/placeholders/motion_editor"
+	}
+	".button__icon--add_track_group" {
+		material: "gui/pfm/icons/placeholders/add_track_group"
+	}
+	".button__icon--lock_playhead" {
+		material: "gui/pfm/icons/placeholders/lock_playhead"
+	}
+	".button__icon--snap" {
+		material: "gui/pfm/icons/placeholders/snap"
+	}
+	".button__icon--snap_frame" {
+		material: "gui/pfm/icons/placeholders/snap_frame"
+	}
+	".button__icon--play_once" {
+		material: "gui/pfm/icons/placeholders/play_once"
+	}
+	".button__icon--timeline_up" {
+		material: "gui/pfm/icons/placeholders/timeline_up"
+	}
+	".button__icon--time_selection_mode" {
+		material: "gui/pfm/icons/placeholders/time_selection_mode"
+	}
+	".button__icon--key_mode" {
+		material: "gui/pfm/icons/placeholders/key_mode"
+	}
+	".button__icon--graph_editor_scale" {
+		material: "gui/pfm/icons/placeholders/graph_editor_scale"
+	}
+	".button__icon--graph_editor_zoom" {
+		material: "gui/pfm/icons/placeholders/graph_editor_zoom"
+	}
+	".button__icon--graph_editor_tangent_linear" {
+		material: "gui/pfm/icons/placeholders/graph_editor_tangent_linear"
+	}
+	".button__icon--graph_editor_tangent_flat" {
+		material: "gui/pfm/icons/placeholders/graph_editor_tangent_flat"
+	}
+	".button__icon--graph_editor_tangent_spline" {
+		material: "gui/pfm/icons/placeholders/graph_editor_tangent_spline"
+	}
+	".button__icon--graph_editor_tangent_step" {
+		material: "gui/pfm/icons/placeholders/graph_editor_tangent_step"
+	}
+	".button__icon--graph_editor_tangent_unified" {
+		material: "gui/pfm/icons/placeholders/graph_editor_tangent_unified"
+	}
+	".button__icon--graph_editor_tangent_equalize" {
+		material: "gui/pfm/icons/placeholders/graph_editor_tangent_equalize"
+	}
+	".button__icon--graph_editor_tangent_weighted" {
+		material: "gui/pfm/icons/placeholders/graph_editor_tangent_weighted"
+	}
+	".button__icon--graph_editor_tangent_unweighted" {
+		material: "gui/pfm/icons/placeholders/graph_editor_tangent_unweighted"
+	}
+	".button__icon--graph_editor_offset_mode" {
+		material: "gui/pfm/icons/placeholders/graph_editor_offset_mode"
+	}
+	".button__icon--graph_editor_auto_frame" {
+		material: "gui/pfm/icons/placeholders/graph_editor_auto_frame"
+	}
+	".button__icon--graph_editor_unitize" {
+		material: "gui/pfm/icons/placeholders/graph_editor_unitize"
+	}
+
+	// Theme-toggle
+	".theme-toggle--light" {
+		material: "gui/pfm/icons/brightness-high-fill"
+	}
+	".theme-toggle--dark" {
+		material: "gui/pfm/icons/moon-fill"
+	}
+
+	// Image icon
+	".image-icon__content" {
+		width: "100%"
+		height: "100%"
+		alignItems: "center"
+		justifyContent: "center"
+	}
+	".image-icon__image-wrapper" {
+		flex: 1
+		justifyContent: "center"
+	}
+	".image-icon__image" {
+		width: 64
+		height: 64
+	}
+	".image-icon__label-container" {
+		width: "100%"
+		alignItems: "center"
+	}
+	".image-icon__label" {}
+
+	// Film Clip
+	".film-clip" {
+		height: 45
+	}
+
+	// Info Box
+	".info-box" {
+		width: 128
+		decorators: {
+			"left-bar" {
+				type: "WIRect"
+				width: 4
+				height: "100%"
+			}
+		}
+	}
+
+	// Window
+	".window" {
+		width: "100%"
+	}
+	".window__content-area" {
+		width: "100%"
+	}
+	".window__title-bar" {
+		width: "100%"
+		height: 24
+	}
+	".window__backdrop" {
+		backgroundColor: "#888888"
+	}
+}
