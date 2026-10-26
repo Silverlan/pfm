@@ -18,7 +18,7 @@ function gui.PFMTreeView:OnInitialize()
 	self.m_selectedElements = {}
 	self.m_contentsWidth = 0
 
-	self:SetAutoSizeToContents(false, true)
+	self:SetAutoSizeToContents(true)
 	self:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 	self:SetAutoSelectChildren(true)
 	self:ScheduleUpdate()

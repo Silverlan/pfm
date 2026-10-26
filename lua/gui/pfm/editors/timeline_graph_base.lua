@@ -28,43 +28,27 @@ function TimelineEditorGraphBase:OnInitialize()
 	self:SetDataPointsSelectable(true)
 	self:SetSize(512, 256)
 
-	self.m_graphContainer = gui.create("WIBase", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
+	local contents = gui.create_hbox(self)
+		:AddStyleClass("timeline-editor__content-area")
 
-	local listContainer = gui.create("WIRect", self, 0, 0, 204, self:GetHeight(), 0, 0, 0, 1)
-	listContainer:SetColor(Color(38, 38, 38))
-	self.m_listContainer = listContainer
+	self.m_scrollContainer = gui.create("WIScrollContainer", contents)
+		:AddStyleClass("timeline-editor__property-container")
 
-	self.m_scrollContainer = gui.create(
-		"WIScrollContainer",
-		listContainer,
-		0,
-		0,
-		listContainer:GetWidth(),
-		listContainer:GetHeight(),
-		0,
-		0,
-		1,
-		1
-	)
-
-	self.m_transformList = gui.create(
-		"pfm_tree_view",
-		self.m_scrollContainer,
-		0,
-		0,
-		self.m_scrollContainer:GetWidth(),
-		self.m_scrollContainer:GetHeight()
-	)
+	self.m_transformList = gui.create("pfm_tree_view", self.m_scrollContainer)
 	self.m_transformList:SetName("properties")
 	self.m_transformList:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 
 	local dataAxisStrip =
-		gui.create("labelled_timeline_strip", self, listContainer:GetRight(), 0, 30, self:GetHeight(), 0, 0, 0, 1)
+		gui.create("labelled_timeline_strip", contents)
+		:AddStyleClass("timeline-editor__data-axis")
 	dataAxisStrip:SetHorizontal(false)
 	dataAxisStrip:SetDataAxisInverted(true)
 	-- dataAxisStrip:AddDebugMarkers()
 	-- dataAxisStrip:SetFlipped(true)
 	self.m_dataAxisStrip = dataAxisStrip
+
+	self.m_graphContainer = gui.create("WIBase", contents)
+		:AddStyleClass("timeline-editor__graph-container")
 
 	self.m_graphs = {}
 	self.m_channelPathToGraphIndices = {}
@@ -1104,18 +1088,9 @@ function TimelineEditorGraphBase:AddGraph(
 		return
 	end
 
-	local graph = gui.create(
-		"pfm_timeline_curve",
-		self.m_graphContainer,
-		0,
-		0,
-		self.m_graphContainer:GetWidth(),
-		self.m_graphContainer:GetHeight(),
-		0,
-		0,
-		1,
-		1
-	)
+	local graph = gui.create("pfm_timeline_curve", self.m_graphContainer)
+		:SetSize(self.m_graphContainer:GetWidth(), self.m_graphContainer:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
 	graph:SetDataPointsSelectable(self:AreDataPointsSelectable())
 	graph:SetTimelineGraph(self)
 	graph:SetColor(colorCurve)

@@ -19,7 +19,11 @@ function FilmStrip:OnInitialize()
 	self.m_filmClips = {}
 	self.m_listeners = {}
 
-	self:InitializeSequenceFilmStrip()
+	local seqFilmStrip = gui.create("sequence_film_strip", self.m_container)
+	seqFilmStrip:SetZPos(-5)
+	seqFilmStrip:GetTimeFrame():SetStart(-2)
+	seqFilmStrip:GetTimeFrame():SetDuration(40)
+	self.m_seqFilmStrip = seqFilmStrip
 end
 function FilmStrip:OnRemove() util.remove(self.m_listeners) end
 function FilmStrip:InitializeDragHandle()
@@ -84,13 +88,6 @@ function FilmStrip:UpdateFilmClipUi()
 			filmClipNext:SetPreviousNeighbor(neighbored and filmClip or nil)
 		end
 	end
-end
-function FilmStrip:InitializeSequenceFilmStrip()
-	local seqFilmStrip = gui.create("sequence_film_strip", self.m_container)
-	seqFilmStrip:SetZPos(-5)
-	seqFilmStrip:GetTimeFrame():SetStart(-2)
-	seqFilmStrip:GetTimeFrame():SetDuration(40)
-	self.m_seqFilmStrip = seqFilmStrip
 end
 function FilmStrip:Setup(session, timeline)
 	local seqFilmStrip = self.m_seqFilmStrip

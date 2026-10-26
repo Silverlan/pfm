@@ -307,6 +307,7 @@
 	}
 	".image-icon__image-wrapper" {
 		flex: 1
+		// width: "100%"
 		justifyContent: "center"
 	}
 	".image-icon__image" {
@@ -318,11 +319,6 @@
 		alignItems: "center"
 	}
 	".image-icon__label" {}
-
-	// Film Clip
-	".film-clip" {
-		height: 45
-	}
 
 	// Info Box
 	".info-box" {

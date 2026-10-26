@@ -15,9 +15,8 @@ function FilmClip:OnInitialize()
 	local w = self:GetWidth()
 	local h = self:GetHeight()
 
-	self.m_textDetails = gui.create("WIText", self, 4, h - 14, w - 8, 14, 0, 1, 1, 1)
-	self.m_textDetails:AddStyleClass("font_small")
-	self.m_textDetails:SetColor(Color(202, 202, 222))
+	self.m_textDetails = gui.create("WIText", self.m_body)
+		:AddStyleClass("clip__details")
 
 	local leftDragHandle = self:CreateDragHandle(true, 0, 0, 14, self:GetHeight(), 0, 0, 0, 0)
 	local rightDragHandle = self:CreateDragHandle(false, self:GetRight() -14, 0, 14, self:GetHeight(), 1, 0, 1, 0)

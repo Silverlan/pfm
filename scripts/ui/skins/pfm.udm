@@ -25,12 +25,74 @@
 		}
 	}
 
+	// Grid-box
+	".gridbox" {
+		spacing: 10
+	}
+
+	// Tooltip
+	".tooltip" {
+		backgroundColor: "$COLOR_BG_PANEL"
+		outlineColor: "$COLOR_BORDER"
+		outlineWidth: 1
+	}
+
+	// Table
+	".table__row" {
+		height: 22
+	}
+	".table__row--selectable::selection" {
+		type: "WIRect"
+		width: "100%"
+		height: "100%"
+		visible: false
+		color: "$COLOR_SELECTED"
+	}
+	".table__row--selectable:hover::selection" {
+		color: "$COLOR_HOVER"
+		visible: true
+	}
+	".table__row--selectable:selected::selection" {
+		color: "$COLOR_ACCENT"
+		visible: true
+	}
+	".table__row--selectable:selected:hover::selection" {
+		color: "$COLOR_BG_RAISED"
+		visible: true
+	}
+
+	// Timeline 
+	".timeline__content-area" {
+		width: "100%"
+		height: "100%"
+	}
+	".timeline__bookmark-bar" {
+		width: "100%"
+		height: 16
+	}
+	".timeline__axis" {
+		width: "100%"
+	}
+	".timeline__playhead" {
+		
+	}
+	".timeline__strip" {
+		flex: 1
+		width: "100%"
+	}
+	".timeline__editor" {
+		height: "100%"
+	}
+
 	// Image icon
 	".image-icon" {
 		outlineColor: "$COLOR_BORDER"
 		outlineWidth: 1
 	}
-	".image-icon:focused" {
+	".image-icon:hover" {
+		outlineColor: "$COLOR_HOVER"
+	}
+	".image-icon:selected" {
 		outlineColor: "$COLOR_BORDER_FOCUS"
 	}
 	".image-icon__label-container" {
@@ -307,5 +369,82 @@
 	}
 	"pfm_info_bar" {
 		backgroundColor: "$COLOR_BG_RAISED"
+	}
+
+	// Film Clip
+	".clip__content-area" {
+		width: "100%"
+		height: 45
+		backgroundColor: "#ff0000"
+		outlineColor: "#00ff00"
+		outlineWidth: 2
+	}
+	".clip__header" {
+		backgroundColor: "#00ff00"
+	}
+	".clip__title" {
+		
+	}
+	".clip__body" {
+		flex: 1
+	}
+	".clip__details" {
+		
+	}
+
+	// Timeline-Editor
+	".timeline-editor__content-area" {
+		width: "100%"
+		height: "100%"
+	}
+	".timeline-editor__property-container" {
+		width: 100
+		height: "100%"
+		backgroundColor: "#ff0000"
+	}
+	".timeline-editor__data-axis" {
+		width: 35
+		backgroundColor: "#666666"
+	}
+	".timeline-editor__graph-container" {
+		flex: 1
+	}
+	".timeline-editor__grid" {
+		width: "100%"
+		height: "100%"
+	}
+
+	// Data-Point
+	".data-point" {
+		width: 4
+		height: 4
+		backgroundColor: "#888888"
+	}
+	".data-point:selected" {
+		backgroundColor: "#ff0000"
+	}
+	".data-point__control" {
+		backgroundColor: "#ff7700"
+	}
+	".data-point__control--in" {}
+	".data-point__control--out" {}
+	".data-point-control__line" {}
+	".data-point-control__line--in" {
+		color: "#ff0000"
+	}
+	".data-point-control__line--out" {
+		color: "#00ffff"
+	}
+	".data-point__control--aligned" {}
+	".data-point__control--vector" {}
+	".data-point__control--free" {}
+	".data-point-control__line--aligned" {
+		color: "#ff8888"
+	}
+	".data-point-control__line--vector" {
+		color: "#88ff88"
+	}
+	".data-point-control__line--free" {
+		color: "#000000"
 	}
 }

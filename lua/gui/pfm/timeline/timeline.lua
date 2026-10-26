@@ -45,21 +45,24 @@ function gui.PFMTimeline:OnInitialize()
 	local contents = self.m_timeline:GetContents()
 
 	self.m_timelineClip =
-		gui.create("pfm_timeline_editor_clip", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
-	self.m_timelineClip:SetName("timeline_clip_editor")
+		gui.create("pfm_timeline_editor_clip", contents)
+		:SetName("timeline_clip_editor")
+		:AddStyleClass("timeline__editor")
 	self.m_timelineClip:SetTimeline(self)
 
 	self.m_timelineMotion =
-		gui.create("pfm_timeline_editor_motion", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
-	self.m_timelineMotion:SetName("timeline_motion_editor")
+		gui.create("pfm_timeline_editor_motion", contents)
+		:SetName("timeline_motion_editor")
+		:AddStyleClass("timeline__editor")
 	self.m_timelineMotion:SetTimelineContents(self.m_timeline)
 	self.m_timelineMotion:SetTimeAxis(self.m_timeline:GetTimeAxis())
 	self.m_timelineMotion:SetDataAxis(self.m_timeline:GetDataAxis())
 	self.m_timelineMotion:SetTimeline(self)
 
 	self.m_timelineGraph =
-		gui.create("pfm_timeline_editor_graph", contents, 0, 0, contents:GetWidth(), contents:GetHeight(), 0, 0, 1, 1)
-	self.m_timelineGraph:SetName("timeline_graph_editor")
+		gui.create("pfm_timeline_editor_graph", contents)
+		:SetName("timeline_graph_editor")
+		:AddStyleClass("timeline__editor")
 	self.m_timelineGraph:SetTimeAxis(self.m_timeline:GetTimeAxis())
 	self.m_timelineGraph:SetDataAxis(self.m_timeline:GetDataAxis())
 	self.m_timelineGraph:SetTimeline(self)
