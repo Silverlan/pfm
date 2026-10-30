@@ -226,6 +226,16 @@ function Element:OnInitialize()
 		true
 	)
 
+	self:AddToggleControl(
+		gui.Loc("pfm_use_servo_browser_engine"),
+		"use_servo_browser_engine",
+		"pfm_experimental_use_servo_browser_engine",
+		console.get_convar_bool("pfm_experimental_use_servo_browser_engine"),
+		function(el, checked)
+			self:SetConVar("pfm_experimental_use_servo_browser_engine", checked and "1" or "0")
+		end
+	)
+
 	p:Update()
 	p:SizeToContents()
 

@@ -370,6 +370,12 @@
 	"pfm_info_bar" {
 		backgroundColor: "$COLOR_BG_RAISED"
 	}
+	".web_browser" {
+		flex: 1
+	}
+	".frame__content-area .info-box" {
+		width: "100%"
+	}
 
 	// Film Clip
 	".clip__content-area" {

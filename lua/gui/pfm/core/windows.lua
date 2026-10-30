@@ -273,7 +273,7 @@ pfm.register_window("particle_editor", "editors", gui.Loc("pfm_particle_editor")
 	return el
 end)
 pfm.register_window("web_browser", "editors", gui.Loc("pfm_web_browser"), function(pm)
-	local el = gui.create("pfm_web_browser")
+	local el = gui.create("pfm_web_browser_panel")
 	el:AddCallback("OnDetached", function(el, window)
 		window:Maximize()
 	end)

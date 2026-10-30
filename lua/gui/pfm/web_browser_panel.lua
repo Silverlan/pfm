@@ -1,0 +1,67 @@
+-- SPDX-FileCopyrightText: (c) 2022 Silverlan <opensource@pragma-engine.com>
+-- SPDX-License-Identifier: MIT
+
+include("/gui/pfm/asset_web_browser.lua")
+
+local Element = util.register_class("gui.PFMWebBrowserPanel", gui.Base)
+
+function Element:OnFocusGained()
+	if util.is_valid(self.m_browser) then
+		self.m_browser:RequestFocus()
+	end
+end
+function Element:OnInitialize()
+	gui.Base.OnInitialize(self)
+
+	self:ApplySize(64, 128)
+
+	self.m_contents = gui.create_vbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
+		:SetFixedSize(true)
+
+	local infoBox = gui.create_info_box(
+		self.m_contents,
+		locale.get_text("pfm_web_browser_info", { "{[l:model_catalog]}", "{[/l]}" })
+	)
+	infoBox:GetTextElement():AddCallback("HandleLinkTagAction", function(el, arg)
+		local pm = pfm.get_project_manager()
+		if util.is_valid(pm) then
+			pm:OpenWindow("model_catalog")
+			pm:GoToWindow("model_catalog")
+		end
+		return util.EVENT_REPLY_HANDLED
+	end)
+
+	self.m_browser = gui.create("pfm_asset_web_browser", self.m_contents)
+		:AddStyleClass("web_browser")
+	self.m_browser:AddCallback("OnDownloadAssetsImported", function(el, importedAssets)
+		self:CallCallbacks("OnDownloadAssetsImported", importedAssets)
+	end)
+	infoBox:SizeToContents()
+	self.m_infoBox = infoBox
+
+	self.m_contents:Update()
+	-- self.m_contents:SetAutoFillContents(true)
+
+	self:SetThinkingEnabled(true)
+	self.m_firstTimeInit = false
+end
+function Element:GetBrowser()
+	return self.m_browser
+end
+function Element:OnThink()
+	if self.m_firstTimeInit == false then
+		self.m_firstTimeInit = true
+		-- TODO: This is a work-around for a bug where the web-browser would not load the URL initially, and the info box would take up
+		-- too much space on the GUI, hiding the browser.
+		self.m_infoBox:SizeToContents()
+		time.create_simple_timer(1.0, function()
+			if self:IsValid() == false then
+				return
+			end
+			self:GetBrowser():ReloadURL()
+		end)
+	end
+end
+gui.register("pfm_web_browser_panel", Element)
