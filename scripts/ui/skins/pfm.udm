@@ -23,6 +23,59 @@
 			COLOR_WARNING: "#ffff00"
 			COLOR_ERROR: "#ff0000"
 		}
+		materials: {
+			"BUTTON" {
+				"textures"
+				{
+					"albedo_map" {
+						texture: "gui/pfm/button"
+						cache: false
+						styleSheet: {
+							".stop-top" {
+								"stop-color": "$COLOR_BG_PANEL"
+							}
+							".stop-bottom" {
+								"stop-color": "$COLOR_BG_APP"
+							}
+						}
+					}
+				}
+				"properties"
+				{
+					"9slice": {
+						leftInset: 10
+						rightInset: 10
+						topInset: 10
+						bottomInset: 10
+					}
+				}
+			}
+			"BUTTON_LEFT" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_left" } }
+			}
+			"BUTTON_MIDDLE" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_middle" } }
+			}
+			"BUTTON_RIGHT" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_right" } }
+			}
+
+			"BUTTON_TAB_LEFT" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_tab_left" } }
+			}
+			"BUTTON_TAB_MIDDLE" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_tab_middle" } }
+			}
+			"BUTTON_TAB_RIGHT" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_tab_right" } }
+			}
+		}
 	}
 
 	// Grid-box
@@ -107,39 +160,47 @@
 	}
 
 	// Buttons
+	".button:hover" { backgroundColor: "$COLOR_HOVER" }
+	".button:pressed" { backgroundColor: "$COLOR_SELECTED" }
 	".button--standalone" {
 		background: {
-			nineSliceMaterial: "gui/pfm/button"
+			nineSliceMaterial: "$BUTTON"
 		}
 	}
 	".button--left" {
 		background: {
-			nineSliceMaterial: "gui/pfm/button_left"
+			nineSliceMaterial: "$BUTTON_LEFT"
 		}
 	}
 	".button--middle" {
 		background: {
-			nineSliceMaterial: "gui/pfm/button_middle"
+			nineSliceMaterial: "$BUTTON_MIDDLE"
 		}
 	}
 	".button--right" {
 		background: {
-			nineSliceMaterial: "gui/pfm/button_right"
+			nineSliceMaterial: "$BUTTON_RIGHT"
 		}
+	}
+	".button-tab" {
+		height: "100%"
+	}
+	".button-tab .button__content-area" {
+		alignX: "center"
 	}
 	".button-tab--left" {
 		background: {
-			nineSliceMaterial: "gui/pfm/button_tab_left"
+			nineSliceMaterial: "$BUTTON_TAB_LEFT"
 		}
 	}
 	".button-tab--middle" {
 		background: {
-			nineSliceMaterial: "gui/pfm/button_tab_middle"
+			nineSliceMaterial: "$BUTTON_TAB_MIDDLE"
 		}
 	}
 	".button-tab--right" {
 		background: {
-			nineSliceMaterial: "gui/pfm/button_tab_right"
+			nineSliceMaterial: "$BUTTON_TAB_RIGHT"
 		}
 	}
 	".button__content-area" {
@@ -149,6 +210,9 @@
 		alignItems: "center"
 		minHeight: 32
 		alignY: "center"
+	}
+	".button-tab .button__content-area" {
+		minHeight: 0
 	}
 
 	// Text

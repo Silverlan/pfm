@@ -60,6 +60,7 @@ function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetAutoSizeToContents(true)
+	self:AddStyleClass("button")
 	local contents = gui.create_hbox(self)
 		:AddStyleClass("button__content-area")
 	self.m_contents = contents
@@ -111,35 +112,35 @@ function Element:UpdateStyle()
 	end
 
 	local type = self:GetType()
+	local isTab = false
 	if type == Element.BUTTON_TYPE_LEFT then
 		self:AddStyleClass("button--left")
 	elseif type == Element.BUTTON_TYPE_RIGHT then
 		self:AddStyleClass("button--right")
 	elseif type == Element.BUTTON_TYPE_MIDDLE then
 		self:AddStyleClass("button--middle")
-	elseif type == Element.BUTTON_TYPE_TAB_LEFT then
-		self:AddStyleClass("button-tab--left")
-	elseif type == Element.BUTTON_TYPE_TAB_RIGHT then
-		self:AddStyleClass("button-tab--right")
-	elseif type == Element.BUTTON_TYPE_TAB_MIDDLE then
-		self:AddStyleClass("button-tab--middle")
-	elseif type == Element.BUTTON_TYPE_TAB then
-		self:AddStyleClass("button-tab--standalone")
 	else
-		self:AddStyleClass("button--standalone")
+		isTab = true
+		if type == Element.BUTTON_TYPE_TAB_LEFT then
+			self:AddStyleClass("button-tab--left")
+		elseif type == Element.BUTTON_TYPE_TAB_RIGHT then
+			self:AddStyleClass("button-tab--right")
+		elseif type == Element.BUTTON_TYPE_TAB_MIDDLE then
+			self:AddStyleClass("button-tab--middle")
+		elseif type == Element.BUTTON_TYPE_TAB then
+			self:AddStyleClass("button-tab--standalone")
+		else
+			isTab = false
+			self:AddStyleClass("button--standalone")
+		end
 	end
+	if isTab then self:AddStyleClass("button-tab")
+	else self:RemoveStyleClass("button-tab") end
 	self:RefreshSkin()
 end
 function Element:SetPressed(pressed)
 	self.m_pressed = pressed
-	--[[if pressed then
-		self:RemoveStyleClass("button_background_unpressed")
-		self:AddStyleClass("button_background_pressed")
-	else
-		self:RemoveStyleClass("button_background_pressed")
-		self:AddStyleClass("button_background_unpressed")
-	end
-	self:RefreshSkin()]]
+	self:SetState(gui.STATE_PRESSED, pressed)
 	self:OnActiveStateChanged(pressed)
 end
 function Element:OnActiveStateChanged(pressed) end
