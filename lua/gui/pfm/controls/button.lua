@@ -59,7 +59,7 @@ Element.BUTTON_TYPE_TAB = 7
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetAutoSizeToContents(true)
+	self:SetAutoSizeToContents(true, false)
 	self:AddStyleClass("button")
 	local contents = gui.create_hbox(self)
 		:AddStyleClass("button__content-area")
@@ -70,7 +70,7 @@ end
 function Element:SetText(text)
 	if util.is_valid(self.m_text) == false then
 		self.m_text = gui.create("WIText", self.m_contents)
-		self.m_text:AddStyleClass("font_medium")
+		self.m_text:AddStyleClass("button__text")
 	end
 	self.m_text:SetText(text)
 end

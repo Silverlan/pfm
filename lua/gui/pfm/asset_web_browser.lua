@@ -49,6 +49,9 @@ function Element:OnInitialize()
 		end
 		self.m_webBrowser:SetUrl(el:GetText())
 	end)
+	if(not tool.is_developer_mode_enabled()) then
+		wrapper:SetVisible(false)
+	end
 	p:Update()
 	p:SizeToContents()
 
@@ -68,10 +71,12 @@ function Element:OnInitialize()
 		end
 		self.m_webBrowser:SetSize(self:GetWidth(), 400)
 
-		local log = self:InitializeLog(self.m_contents)
-		log:SetName("log")
-		log:SetSize(self:GetWidth(), 80)
-		-- self.m_contents:SetAutoFillTarget(self.m_webBrowser)
+		if(tool.is_developer_mode_enabled()) then
+			local log = self:InitializeLog(self.m_contents)
+			log:SetName("log")
+			log:SetSize(self:GetWidth(), 80)
+			-- self.m_contents:SetAutoFillTarget(self.m_webBrowser)
+		end
 
 		self.m_webBrowser:AddCallback("OnDownloadStarted", function(el, id, path)
 			if util.is_valid(self.m_log) == false then
@@ -369,16 +374,8 @@ function Element:InitializeLog(parent)
 	log:SetEditable(false)
 	log:SetSelectable(true)
 
-	engine.create_font(
-		"chromium_log",
-		engine.get_default_font_set_name(),
-		bit.bor(engine.FONT_FEATURE_FLAG_SANS_BIT, engine.FONT_FEATURE_FLAG_MONO_BIT),
-		12
-	)
-
 	local elText = log:GetTextElement()
 	elText:SetMaxLineCount(100)
-	elText:SetFont("chromium_log")
 	elText:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
 	elText:SetTagsEnabled(true)
 	log:SetWidth(self:GetWidth())

@@ -160,6 +160,16 @@
 	}
 
 	// Buttons
+	".button" {
+		height: 32
+	}
+	".button__icon" {
+		color: "$COLOR_ACCENT"
+		alignY: "center"
+	}
+	".button__text" {
+		alignY: "center"
+	}
 	".button:hover" { backgroundColor: "$COLOR_HOVER" }
 	".button:pressed" { backgroundColor: "$COLOR_SELECTED" }
 	".button--standalone" {
@@ -185,9 +195,6 @@
 	".button-tab" {
 		height: "100%"
 	}
-	".button-tab .button__content-area" {
-		alignX: "center"
-	}
 	".button-tab--left" {
 		background: {
 			nineSliceMaterial: "$BUTTON_TAB_LEFT"
@@ -208,11 +215,10 @@
 		spacing: 5
 		justifyContent: "center"
 		alignItems: "center"
-		minHeight: 32
 		alignY: "center"
 	}
 	".button-tab .button__content-area" {
-		minHeight: 0
+		alignX: "center"
 	}
 
 	// Text
@@ -230,11 +236,6 @@
 	// Base Editor
 	".editor" {
 		backgroundColor: "$COLOR_BG_APP"
-	}
-
-	// Button
-	".button__icon" {
-		color: "$COLOR_ACCENT"
 	}
 
 	// Info Box
@@ -424,6 +425,14 @@
 		padding: 0
 	}
 
+	// Web Browser
+	".web_browser" {
+		flex: 1
+	}
+	"pfm_asset_web_browser asset_web_browser" {
+		flex: 1
+	}
+
 	// Misc
 	".beta_info" {
 		color: "#ff0000"
@@ -433,9 +442,6 @@
 	}
 	"pfm_info_bar" {
 		backgroundColor: "$COLOR_BG_RAISED"
-	}
-	".web_browser" {
-		flex: 1
 	}
 	".frame__content-area .info-box" {
 		width: "100%"
