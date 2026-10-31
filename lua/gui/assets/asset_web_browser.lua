@@ -14,7 +14,7 @@ console.register_variable(
 )
 
 console.register_variable(
-	"pfm_use_servo_browser_engine",
+	"pfm_experimental_use_servo_browser_engine",
 	udm.TYPE_BOOLEAN,
 	false,
 	bit.bor(console.FLAG_BIT_ARCHIVE),
@@ -36,7 +36,7 @@ function Element:InitializeBrowser()
 	local browser = gui.create("pfm_web_browser", self)
 	browser:SetAlignment(gui.ALIGNMENT_FILL)
 	
-	local useServo = console.get_convar_bool("pfm_use_servo_browser_engine")
+	local useServo = console.get_convar_bool("pfm_experimental_use_servo_browser_engine")
 	local engine = useServo and "servo" or "chromium"
 	self:LogInfo("Using browser engine '{}'...", engine)
 	if(engine == "chromium") then browser:SetBrowserEngine(gui.PFMWebBrowser.BROWSER_ENGINE_CHROMIUM)
