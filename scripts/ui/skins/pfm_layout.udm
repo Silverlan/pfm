@@ -19,8 +19,11 @@
 
 	// Actor Editor
 	".actor-editor__nav" {
-		width: "100%"
 		height: 32
+	}
+	".actor-editor__nav-bar" {
+		width: "100%"
+		justifyContent: "spaceBetween"
 	}
 	".actor-editor__tree" {
 		width: "100%"
@@ -289,6 +292,23 @@
 	".button__icon--graph_editor_unitize" {
 		material: "gui/pfm/icons/placeholders/graph_editor_unitize"
 	}
+
+	".button__icon--nav-home" {
+		material: "gui/pfm/icons/home"
+	}
+	".button__icon--nav-up" {
+		material: "gui/pfm/icons/arrow-up"
+	}
+	".button__icon--nav-back" {
+		material: "gui/pfm/icons/arrow-left"
+	}
+	".button__icon--nav-forward" {
+		material: "gui/pfm/icons/arrow-right"
+	}
+	".button__icon--nav-return" {
+		material: "gui/pfm/icons/arrow-return"
+	}
+	// gui/pfm/icon_nav_home_activated",
 
 	// Theme-toggle
 	".theme-toggle--light" {

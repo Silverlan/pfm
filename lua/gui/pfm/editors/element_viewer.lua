@@ -16,11 +16,11 @@ function gui.PFMElementViewer:OnInitialize()
 
 	self:ApplySize(64, 128)
 
-	self.navBar = gui.create_hbox(self)
+	self.m_nav = gui.create_hbox(self)
 	self:InitializeNavigationBar()
 
-	self.navBar:SetHeight(32)
-	self.navBar:SetAnchor(0, 0, 1, 0)
+	self.m_nav:SetHeight(32)
+	self.m_nav:SetAnchor(0, 0, 1, 0)
 
 	self.m_btTools = gui.PFMButton.create(self, "gear-fill", function()
 		print("TODO")
@@ -681,7 +681,7 @@ function gui.PFMElementViewer:OnSizeChanged(w, h)
 end
 function gui.PFMElementViewer:InitializeNavigationBar()
 	self.m_btHome = gui.PFMButton.create(
-		self.navBar,
+		self.m_nav,
 		"gui/pfm/icon_nav_home",
 		"gui/pfm/icon_nav_home_activated",
 		function()
@@ -693,7 +693,7 @@ function gui.PFMElementViewer:InitializeNavigationBar()
 		end
 	)
 
-	self.m_btUp = gui.PFMButton.create(self.navBar, "gui/pfm/icon_nav_up", "gui/pfm/icon_nav_up_activated", function()
+	self.m_btUp = gui.PFMButton.create(self.m_nav, "gui/pfm/icon_nav_up", "gui/pfm/icon_nav_up_activated", function()
 		print("TODO")
 	end)
 	self.m_btUp:SetupContextMenu(function(pContext)
@@ -701,7 +701,7 @@ function gui.PFMElementViewer:InitializeNavigationBar()
 	end)
 
 	self.m_btBack = gui.PFMButton.create(
-		self.navBar,
+		self.m_nav,
 		"gui/pfm/icon_nav_back",
 		"gui/pfm/icon_nav_back_activated",
 		function()
@@ -726,7 +726,7 @@ function gui.PFMElementViewer:InitializeNavigationBar()
 	end)
 
 	self.m_btForward = gui.PFMButton.create(
-		self.navBar,
+		self.m_nav,
 		"gui/pfm/icon_nav_forward",
 		"gui/pfm/icon_nav_forward_activated",
 		function()

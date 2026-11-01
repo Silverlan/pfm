@@ -40,13 +40,16 @@ function gui.PFMActorEditor:OnInitialize()
 	self.m_root = gui.create_vbox(self)
 		:AddStyleClass("fill")
 
-	self.navBar = gui.create_hbox(self.m_root)
+	self.m_navBar = gui.create_hbox(self.m_root)
+		:AddStyleClass("actor-editor__nav-bar")
+
+	self.m_nav = gui.create_hbox(self.m_navBar)
 		:AddStyleClass("actor-editor__nav")
 	self:InitializeNavigationBar()
 
 	self.m_activeControls = {}
 
-	self.m_btTools = gui.PFMButton.create(self.m_root, "gear-fill", function()
+	self.m_btTools = gui.PFMButton.create(self.m_navBar, "gear-fill", function()
 		print("TODO")
 	end)
 	self.m_btTools:SetName("new_actor_button")
