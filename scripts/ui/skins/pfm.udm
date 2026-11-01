@@ -79,7 +79,40 @@
 				inherits: "BUTTON"
 				"textures" { "albedo_map" { texture: "gui/pfm/button_tab_right" } }
 			}
+
+			"ICON_EXPAND" {
+				"textures"
+				{
+					"albedo_map" {
+						texture: "gui/pfm/plus-circle"
+						cache: false
+						width: 9
+						height: 9
+						styleSheet: {
+							".background" { fill: "$COLOR_BG_APP" }
+							".bi" { fill: "$COLOR_BORDER" }
+						}
+					}
+				}
+			}
+			"ICON_COLLAPSE" {
+				inherits: "ICON_EXPAND"
+				"textures" { "albedo_map" { texture: "gui/pfm/dash-circle" } }
+			}
 		}
+	}
+
+	// Expanion-icon
+	".expansion-icon::icon" {
+		type: "WITexturedRect"
+		width: "100%"
+		height: "100%"
+	}
+	".expansion-icon--expand::icon" {
+		material: "$ICON_EXPAND"
+	}
+	".expansion-icon--collapse::icon" {
+		material: "$ICON_COLLAPSE"
 	}
 
 	// Grid-box

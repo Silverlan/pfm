@@ -892,9 +892,7 @@ function gui.PFMTreeExpandIcon:OnInitialize()
 
 	self:ApplySize(9, 9)
 
-	local tex = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	tex:GetColorProperty():Link(self:GetColorProperty())
-	self.m_tex = tex
+	self:AddStyleClass("expansion-icon")
 
 	self:SetMouseInputEnabled(true)
 	self:Collapse(true)
@@ -906,21 +904,21 @@ function gui.PFMTreeExpandIcon:Expand()
 	if self:IsCollapsed() == false then
 		return
 	end
-	if util.is_valid(self.m_tex) then
-		self.m_tex:SetMaterial("gui/pfm/icons/collapse")
-	end
+	self:RemoveStyleClass("expansion-icon--expand")
+	self:AddStyleClass("expansion-icon--collapse")
 	self.m_collapsed = false
 	self:CallCallbacks("OnExpand")
+	self:RefreshSkin()
 end
 function gui.PFMTreeExpandIcon:Collapse(force)
 	if self:IsCollapsed() and not force then
 		return
 	end
-	if util.is_valid(self.m_tex) then
-		self.m_tex:SetMaterial("gui/pfm/icons/expand")
-	end
+	self:RemoveStyleClass("expansion-icon--collapse")
+	self:AddStyleClass("expansion-icon--expand")
 	self.m_collapsed = true
 	self:CallCallbacks("OnCollapse")
+	self:RefreshSkin()
 end
 function gui.PFMTreeExpandIcon:Toggle()
 	if self:IsCollapsed() then
