@@ -63,6 +63,10 @@
 				"textures" { "albedo_map" { texture: "gui/pfm/button_right" } }
 			}
 
+			"BUTTON_TAB" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_tab" } }
+			}
 			"BUTTON_TAB_LEFT" {
 				inherits: "BUTTON"
 				"textures" { "albedo_map" { texture: "gui/pfm/button_tab_left" } }
@@ -195,6 +199,11 @@
 	".button-tab" {
 		height: "100%"
 	}
+	".button-tab--standalone" {
+		background: {
+			nineSliceMaterial: "$BUTTON_TAB"
+		}
+	}
 	".button-tab--left" {
 		background: {
 			nineSliceMaterial: "$BUTTON_TAB_LEFT"
@@ -211,14 +220,12 @@
 		}
 	}
 	".button__content-area" {
-		padding: [8, 5, 8, 5]
+		paddingX: 8
 		spacing: 5
-		justifyContent: "center"
-		alignItems: "center"
 		alignY: "center"
 	}
 	".button-tab .button__content-area" {
-		alignX: "center"
+		paddingX: 20
 	}
 
 	// Text
