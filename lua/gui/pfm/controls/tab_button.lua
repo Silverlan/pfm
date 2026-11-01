@@ -15,46 +15,39 @@ function Element:OnInitialize()
 	self.m_progressBar = gui.create("pfm_progress_bar", self, 0, self:GetHeight() - 5, self:GetWidth(), 5, 0, 1, 1, 1)
 	self.m_progressBar:SetVisible(false)
 
-	local elDetach = gui.create("WITexturedRect", self)
-	elDetach:SetMaterial("gui/pfm/icon_detach")
-	elDetach:SetName("detach_icon")
-	elDetach:AddStyleClass("link")
-	elDetach:SetCursor(gui.CURSOR_SHAPE_HAND)
-	elDetach:SizeToTexture()
-	elDetach:SetSize(8, 8)
-	elDetach:SetPos(self:GetWidth() - elDetach:GetWidth() - 3, 3)
-	elDetach:SetAnchor(1, 0, 1, 0)
-	elDetach:AddStyleClass("overlay")
-	elDetach:SetMouseInputEnabled(true)
-	elDetach:AddCallback("OnMouseEvent", function(elDetach, button, state, mods)
-		local frame = self:GetFrame()
-		if util.is_valid(frame) == false then
-			return util.EVENT_REPLY_UNHANDLED
-		end
-		if button == input.MOUSE_BUTTON_LEFT then
-			if state == input.STATE_PRESS then
-				time.create_simple_timer(0.0, function()
-					local frame = self:IsValid() and self:GetFrame() or nil
-					if util.is_valid(frame) == false then
-						return
-					end
-					frame:DetachTab(self)
-				end)
-			end
-			return util.EVENT_REPLY_HANDLED
-		end
-		return util.EVENT_REPLY_UNHANDLED
-	end)
-
 	self:SetMouseInputEnabled(true)
 
 	self:SetActive(false)
 	self:EnableThinking()
 
 	self:SetSize(132, 28)
+
+	gui.enable_drag_and_drop(self, "Panel", function(elGhost)
+		elGhost:SetAlpha(128)
+		local droppedOnTabBar = false
+		elGhost:AddCallback("OnDragDropped", function(elGhost, elHover)
+			droppedOnTabBar = true
+			local targetFrame = elHover:FindAncestorByClass("pfm_frame")
+			if(targetFrame == nil) then return end
+			local frame = self:GetFrame()
+			if(util.is_same_object(frame, targetFrame)) then return end
+			frame:MovePanelToFrame(self.m_panelIdentifier, targetFrame)
+		end)
+		elGhost:AddCallback("OnDragStopped", function(elGhost)
+			if(droppedOnTabBar) then return end
+			time.create_simple_timer(0.0, function()
+				local frame = self:IsValid() and self:GetFrame() or nil
+				if util.is_valid(frame) == false then
+					return
+				end
+				frame:DetachTab(self)
+			end)
+		end)
+	end)
 end
-function Element:SetFrame(frame)
+function Element:SetFrame(frame, identifier)
 	self.m_frame = frame
+	self.m_panelIdentifier = identifier
 end
 function Element:GetFrame()
 	return self.m_frame

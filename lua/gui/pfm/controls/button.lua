@@ -7,6 +7,13 @@ function ButtonGroup:__init(hbox, tabButtons)
 	self.m_tabButtons = tabButtons or false
 	self.m_buttons = {}
 end
+function ButtonGroup:GetVisibleButtons()
+	local buttons = {}
+	for _, bt in ipairs(self.m_buttons) do
+		if(bt:IsValid() and bt:IsVisible()) then table.insert(buttons, bt) end
+	end
+	return buttons
+end
 function ButtonGroup:AddIconButton(icon, onPressed)
 	local bt = gui.PFMButton.create(self.m_hbox, icon, onPressed)
 	self:AddButton(bt)
@@ -19,6 +26,38 @@ function ButtonGroup:AddGenericButton(text, onPressed)
 	self:AddButton(bt)
 	return bt
 end
+function ButtonGroup:RemoveButton(bt)
+	for i, btOther in ipairs(self.m_buttons) do
+		if(btOther:IsValid() and util.is_same_object(btOther, bt)) then
+			table.remove(self.m_buttons, i)
+			self:UpdateButtons()
+			return true
+		end
+	end
+	return false
+end
+function ButtonGroup:UpdateButtons()
+	local buttons = self:GetVisibleButtons()
+	local n = #buttons
+	for i=1, #buttons do
+		local bt = buttons[i]
+		if n == 1 then
+			bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB or gui.PFMButton.BUTTON_TYPE_NORMAL)
+		elseif i == 1 then
+			bt:SetType(
+				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_LEFT or gui.PFMButton.BUTTON_TYPE_LEFT
+			)
+		elseif i == n then
+			bt:SetType(
+				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_RIGHT or gui.PFMButton.BUTTON_TYPE_RIGHT
+			)
+		else
+			bt:SetType(
+				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_MIDDLE or gui.PFMButton.BUTTON_TYPE_MIDDLE
+			)
+		end
+	end
+end
 function ButtonGroup:AddButton(bt)
 	local newButtons = {}
 	for _,bt in ipairs(self.m_buttons) do
@@ -28,22 +67,8 @@ function ButtonGroup:AddButton(bt)
 	end
 	self.m_buttons = newButtons
 
-	if #self.m_buttons == 0 then
-		bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB or gui.PFMButton.BUTTON_TYPE_NORMAL)
-	else
-		if #self.m_buttons == 1 then
-			self.m_buttons[1]:SetType(
-				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_LEFT or gui.PFMButton.BUTTON_TYPE_LEFT
-			)
-		end
-		bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_RIGHT or gui.PFMButton.BUTTON_TYPE_RIGHT)
-		if #self.m_buttons > 1 then
-			self.m_buttons[#self.m_buttons]:SetType(
-				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_MIDDLE or gui.PFMButton.BUTTON_TYPE_MIDDLE
-			)
-		end
-	end
 	table.insert(self.m_buttons, bt)
+	self:UpdateButtons()
 	return bt
 end
 
