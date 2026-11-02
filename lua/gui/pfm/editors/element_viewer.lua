@@ -16,16 +16,21 @@ function gui.PFMElementViewer:OnInitialize()
 
 	self:ApplySize(64, 128)
 
-	self.m_nav = gui.create_hbox(self)
+	self.m_root = gui.create_vbox(self)
+		:AddStyleClass("fill")
+
+	self.m_navBar = gui.create_hbox(self.m_root)
+		:AddStyleClass("editor__nav-bar")
+
+	self.m_nav = gui.create_hbox(self.m_navBar)
+		:AddStyleClass("editor__nav")
 	self:InitializeNavigationBar()
 
-	self.m_nav:SetHeight(32)
-	self.m_nav:SetAnchor(0, 0, 1, 0)
 
-	self.m_btTools = gui.PFMButton.create(self, "gear-fill", function()
+	self.m_toolsBar = gui.create_hbox(self.m_navBar)
+	self.m_btTools = gui.PFMButton.create(self.m_toolsBar, "gear-fill", function()
 		print("TODO")
 	end)
-	self.m_btTools:SetX(self:GetWidth() - self.m_btTools:GetWidth())
 	self.m_btTools:SetupContextMenu(function(pContext)
 		pContext:AddItem(locale.get_text("new"), function()
 			local path = tool.get_filmmaker():GetFileDialogPath("udm_path")
@@ -84,75 +89,36 @@ function gui.PFMElementViewer:OnInitialize()
 		end)
 	end, true)
 
-	local btSave = gui.create("pfm_button", self)
-	btSave:SetHeight(32)
-	self.m_contents = gui.create_hbox(self)
-		:SetPos(0, self.m_btTools:GetBottom())
-		:SetSize(self:GetWidth(), self:GetHeight() - self.m_btTools:GetBottom() - btSave:GetHeight())
-		:SetAnchor(0, 0, 1, 1)
-	-- self.m_contents:SetAutoFillContents(true)
+	local btSave = gui.create("pfm_button", self.m_toolsBar)
+	self.m_contents = gui.create_hbox(self.m_root)
+		:AddStyleClass("editor__tree")
 
 	local treeVBox = gui.create_vbox(self.m_contents)
-	-- treeVBox:SetAutoFillContents(true)
 	local resizer = gui.create("resizer", self.m_contents)
 	local dataVBox = gui.create_vbox(self.m_contents)
-	-- dataVBox:SetAutoFillContents(true)
 
 	local function create_header_text(text, parent)
-		local pHeader = gui.create("WIRect", parent, 0, 0, parent:GetWidth(), 21, 0, 0, 1, 0)
-		pHeader:SetColor(Color(35, 35, 35))
+		local pHeader = gui.create_hbox(parent)
+		pHeader:AddStyleClass("header")
 		local pHeaderText = gui.create("WIText", pHeader)
-		pHeaderText:SetColor(Color(152, 152, 152))
-		pHeaderText:AddStyleClass("font_medium")
 		pHeaderText:SetText(text)
-		pHeader:AddCallback("OnSizeChanged", function()
-			if pHeaderText:IsValid() == false then
-				return
-			end
-			pHeaderText:SetPos(
-				pHeader:GetWidth() * 0.5 - pHeaderText:GetWidth() * 0.5,
-				pHeader:GetHeight() * 0.5 - pHeaderText:GetHeight() * 0.5
-			)
-		end)
 	end
 	create_header_text(locale.get_text("tree"), treeVBox)
 	create_header_text(locale.get_text("data"), dataVBox)
 
 	-- Tree
-	local treeScrollContainerBg = gui.create("WIBase", treeVBox, 0, 0, 64, 128)
-	local treeScrollContainer = gui.create("WIScrollContainer", treeScrollContainerBg, 0, 0, 64, 128, 0, 0, 1, 1)
-	treeScrollContainerBg:AddCallback("OnSizeChanged", function(el)
-		if self:IsValid() and util.is_valid(self.m_tree) then
-			self.m_tree:SetWidth(el:GetWidth())
-		end
-	end)
-	self.m_tree = gui.create(
-		"pfm_tree_view",
-		treeScrollContainer,
-		0,
-		0,
-		treeScrollContainer:GetWidth(),
-		treeScrollContainer:GetHeight()
-	)
+	local treeScrollContainer = gui.create("WIScrollContainer", treeVBox)
+	treeScrollContainer:AddStyleClass("udm-editor__scroll-container")
+	self.m_tree = gui.create("pfm_tree_view", treeScrollContainer)
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_SINGLE)
+	self.m_tree:SetAutoSizeToContents(true)
 
 	-- Data
-	local dataScrollContainerBg = gui.create("WIBase", dataVBox, 0, 0, 64, 128)
-	local dataScrollContainer = gui.create("WIScrollContainer", dataScrollContainerBg, 0, 0, 64, 128, 0, 0, 1, 1)
-	dataScrollContainerBg:AddCallback("OnSizeChanged", function(el)
-		if self:IsValid() and util.is_valid(self.m_data) then
-			self.m_data:SetWidth(el:GetWidth())
-		end
-	end)
-	self.m_data = gui.create(
-		"pfm_tree_view",
-		dataScrollContainer,
-		0,
-		0,
-		dataScrollContainer:GetWidth(),
-		dataScrollContainer:GetHeight()
-	)
+	local dataScrollContainer = gui.create("WIScrollContainer", dataVBox)
+	dataScrollContainer:AddStyleClass("udm-editor__scroll-container")
+	self.m_data = gui.create("pfm_tree_view", dataScrollContainer)
 	self.m_data:SetSelectable(gui.Table.SELECTABLE_MODE_SINGLE)
+	self.m_data:SetAutoSizeToContents(true)
 
 	self.m_treeElementToDataElement = {}
 	self.m_history = pfm.History()
@@ -190,16 +156,13 @@ function gui.PFMElementViewer:OnInitialize()
 	end)
 
 	-- Save
-	local pBg = gui.create("WIRect", btSave, 0, 0, btSave:GetWidth(), btSave:GetHeight(), 0, 0, 1, 1)
+	local pBg = gui.create("WIRect", btSave)
 	pBg:SetVisible(false)
 	self.m_saveBg = pBg
 	btSave:SetText(locale.get_text("save"))
 	btSave:AddCallback("OnPressed", function()
 		self:Save()
 	end)
-	-- btSave:SetWidth(self.m_bg:GetWidth())
-	-- btSave:SetY(self.m_bg:GetBottom() - btSave:GetHeight())
-	btSave:SetAnchor(0, 1, 1, 1)
 	self.m_btSave = btSave
 end
 function gui.PFMElementViewer:UpdateSaveButton(saved)
@@ -680,10 +643,7 @@ function gui.PFMElementViewer:OnSizeChanged(w, h)
 	end
 end
 function gui.PFMElementViewer:InitializeNavigationBar()
-	self.m_btHome = gui.PFMButton.create(
-		self.m_nav,
-		"gui/pfm/icon_nav_home",
-		"gui/pfm/icon_nav_home_activated",
+	self.m_btHome = gui.PFMButton.create(self.m_nav, "nav-home",
 		function()
 			if self.m_rootNode == nil then
 				return
@@ -693,17 +653,14 @@ function gui.PFMElementViewer:InitializeNavigationBar()
 		end
 	)
 
-	self.m_btUp = gui.PFMButton.create(self.m_nav, "gui/pfm/icon_nav_up", "gui/pfm/icon_nav_up_activated", function()
+	self.m_btUp = gui.PFMButton.create(self.m_nav, "nav-up", function()
 		print("TODO")
 	end)
 	self.m_btUp:SetupContextMenu(function(pContext)
 		print("TODO")
 	end)
 
-	self.m_btBack = gui.PFMButton.create(
-		self.m_nav,
-		"gui/pfm/icon_nav_back",
-		"gui/pfm/icon_nav_back_activated",
+	self.m_btBack = gui.PFMButton.create(self.m_nav, "nav-back",
 		function()
 			self:GetHistory():GoBack()
 		end
@@ -725,10 +682,7 @@ function gui.PFMElementViewer:InitializeNavigationBar()
 		end)
 	end)
 
-	self.m_btForward = gui.PFMButton.create(
-		self.m_nav,
-		"gui/pfm/icon_nav_forward",
-		"gui/pfm/icon_nav_forward_activated",
+	self.m_btForward = gui.PFMButton.create(self.m_nav, "nav-forward",
 		function()
 			self:GetHistory():GoForward()
 		end

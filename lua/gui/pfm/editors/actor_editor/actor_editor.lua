@@ -35,16 +35,16 @@ engine.load_library("pr_ik")
 function gui.PFMActorEditor:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 128)
+	self:ApplySize(64, 128)
 
 	self.m_root = gui.create_vbox(self)
 		:AddStyleClass("fill")
 
 	self.m_navBar = gui.create_hbox(self.m_root)
-		:AddStyleClass("actor-editor__nav-bar")
+		:AddStyleClass("editor__nav-bar")
 
 	self.m_nav = gui.create_hbox(self.m_navBar)
-		:AddStyleClass("actor-editor__nav")
+		:AddStyleClass("editor__nav")
 	self:InitializeNavigationBar()
 
 	self.m_activeControls = {}
@@ -395,12 +395,9 @@ function gui.PFMActorEditor:OnInitialize()
 	end, true)
 
 	self.m_contents = gui.create_hbox(self.m_root)
-		:AddStyleClass("actor-editor__tree")
+		:AddStyleClass("editor__tree")
 
 	local treeScrollContainer = gui.create("WIScrollContainer", self.m_contents)
-	treeScrollContainer:AddCallback("OnSizeChanged", function(el)
-		self:ResizeTreeToContents()
-	end)
 	self.m_treeScrollContainer = treeScrollContainer
 
 	local resizer = gui.create("resizer", self.m_contents)
@@ -442,13 +439,6 @@ function gui.PFMActorEditor:OnInitialize()
 		end
 		self:ScheduleUpdateSelectedEntities()
 	end)
-	self.m_tree:AddCallback("OnContentsWidthDirty", function()
-		time.create_simple_timer(0.0, function()
-			if self:IsValid() and util.is_valid(self.m_tree) then
-				self:ResizeTreeToContents()
-			end
-		end)
-	end)
 	--[[self.m_data = gui.create("WITable",dataVBox,0,0,dataVBox:GetWidth(),dataVBox:GetHeight(),0,0,1,1)
 
 	self.m_data:SetRowHeight(self.m_tree:GetRowHeight())
@@ -466,10 +456,6 @@ function gui.PFMActorEditor:OnInitialize()
 	self:InitAnimManagerListeners()
 
 	self:SetMouseInputEnabled(true)
-end
-function gui.PFMActorEditor:ResizeTreeToContents()
-	local w = self.m_tree:CalcContentsWidth()
-	--self.m_tree:SetWidth(w)
 end
 function gui.PFMActorEditor:ClearEmptyComponentPropertyGroups()
 	local tNew = {}

@@ -18,18 +18,17 @@
 	}*/
 
 	// Actor Editor
-	".actor-editor__nav" {
+	".editor__nav" {
 		height: 32
 	}
-	".actor-editor__nav-bar" {
+	".editor__nav-bar" {
 		width: "100%"
 		justifyContent: "spaceBetween"
 	}
-	".actor-editor__tree" {
+	".editor__tree" {
 		width: "100%"
 		flex: 1.0
-		alignItems: "stretch"/*
-		fixedHeight: true*/
+		alignItems: "stretch"
 	}
 	".actor-editor__data-view" {
 		width: "100%"

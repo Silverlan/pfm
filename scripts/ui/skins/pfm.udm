@@ -486,6 +486,13 @@
 	".frame__content-area .info-box" {
 		width: "100%"
 	}
+	".udm-editor__scroll-container" {
+		flex: 1
+	}
+
+	".header" {
+		justifyContent: "center"
+	}
 
 	// Film Clip
 	".clip__content-area" {
