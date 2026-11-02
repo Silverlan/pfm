@@ -9,25 +9,18 @@ function Playhead:OnInitialize()
 	gui.TimelineMarker.OnInitialize(self)
 
 	self:SetSize(11, 128)
-	self.m_line = gui.create("WIRect", self, 5, 8, 1, self:GetHeight() - 8 * 2)
-	self.m_top = gui.create("WITexturedRect", self, 0, 0, 11, 16)
-	self.m_top:SetMaterial("gui/pfm/timeline/upper_playhead")
-	self.m_bottom = gui.create("WITexturedRect", self, 0, self:GetBottom() - 16, 11, 16, 0, 1, 0, 1)
-	self.m_bottom:SetMaterial("gui/pfm/timeline/lower_playhead")
 
-	self.m_line:GetColorProperty():Link(self:GetColorProperty())
-	self.m_top:GetColorProperty():Link(self:GetColorProperty())
-	self.m_bottom:GetColorProperty():Link(self:GetColorProperty())
+	local contents = gui.create_vbox(self)
+		:AddStyleClass("fill")
+		:AddStyleClass("playhead__content-area")
 
-	self:UpdateLineEndPos()
-end
-function Playhead:UpdateLineEndPos()
-	if util.is_valid(self.m_line) == false then
-		return
-	end
-	self.m_line:ApplyHeight(self:GetHeight() - 8 * 2)
-end
-function Playhead:OnSizeChanged(w, h)
-	self:UpdateLineEndPos()
+	self.m_top = gui.create("WIBase", contents)
+		:AddStyleClass("playhead__icon")
+		:AddStyleClass("playhead__icon--upper")
+	self.m_line = gui.create("WIBase", contents)
+		:AddStyleClass("playhead__line")
+	self.m_bottom = gui.create("WIBase", contents)
+		:AddStyleClass("playhead__icon")
+		:AddStyleClass("playhead__icon--lower")
 end
 gui.register("playhead", Playhead)

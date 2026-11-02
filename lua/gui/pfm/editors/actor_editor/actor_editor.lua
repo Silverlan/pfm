@@ -956,9 +956,7 @@ function gui.PFMActorEditor:AddProperty(name, child, fInitPropertyEl)
 	local elLabel = gui.create("WIText", elLabelContainer)
 	elLabel:SetName(name)
 	elLabel:SetText(name)
-	elLabel:AddStyleClass("font_medium")
 	elLabel:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
-	elLabel:SetX(5)
 
 	local elProperty = fInitPropertyEl(self.m_propertiesElementsVBox)
 	if util.is_valid(elProperty) then

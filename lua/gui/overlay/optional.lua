@@ -9,19 +9,7 @@ function Element:OnInitialize()
 
 	self:ApplySize(128, 18)
 
-	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	bg:SetColor(Color(32, 32, 32))
-
-	local bgOutline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	bgOutline:SetColor(Color.Black)
-
 	local elText = gui.create("trim_text", self)
-	elText:AddStyleClass("font_medium")
-	elText:SetColor(Color.White)
-	elText:SetX(5)
-	elText:SetWidth(self:GetWidth() - 10)
-	elText:SetHeight(self:GetHeight())
-	elText:SetAnchor(0, 0, 1, 1)
 	self.m_elText = elText
 
 	self:SetMouseInputEnabled(true)

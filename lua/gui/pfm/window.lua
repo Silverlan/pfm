@@ -20,7 +20,6 @@ function gui.PFMWindow:OnInitialize()
 		:AddStyleClass("window__title-bar")
 
 	local titleText = gui.create("WIText", titleBar)
-	titleText:AddStyleClass("font_medium")
 	titleText:SetVisible(false)
 	self.m_titleText = titleText
 

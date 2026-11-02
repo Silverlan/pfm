@@ -130,6 +130,7 @@ function gui.PFMFrame:RemoveTab(identifier)
 	if self.m_activeTabId == identifier then
 		self:SelectFreeTab()
 	end
+	self.m_tbGroup:UpdateButtons()
 end
 function gui.PFMFrame:SelectFreeTab(tabId)
 	local function selectTab(i)

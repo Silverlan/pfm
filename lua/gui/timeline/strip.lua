@@ -258,7 +258,6 @@ function gui.LabelledTimelineStrip:OnUpdate()
 			local pText = self.m_textElements[i + 1]
 			if util.is_valid(pText) == false then
 				pText = gui.create("WIText", self)
-				pText:AddStyleClass("font_small")
 				pText:AddStyleClass("timeline_label")
 
 				self.m_textElements[i + 1] = pText
@@ -311,7 +310,6 @@ function gui.LabelledTimelineStrip:AddDebugMarkers()
 	self.m_debugMarkers = {}
 	for _, v in ipairs({ 0, -1, 1 }) do
 		local el = gui.create("WIRect", self)
-		el:SetColor(Color.Red)
 		table.insert(self.m_debugMarkers, { el, v })
 	end
 end

@@ -616,11 +616,6 @@ function Element:AddMessageBox(msg, audioFile)
 
 	local elCurSlide = gui.create("WIText", elBox)
 	elCurSlide:SetText("")
-	elCurSlide:AddStyleClass("font_small")
-	elCurSlide:SetColor(Color.White)
-	elCurSlide:SetPos(elBox:GetWidth() - 70, 4)
-	elCurSlide:SetAnchor(1, 0, 1, 0)
-	elCurSlide:SetColor(Color.LightGrey)
 	self.m_elCurSlide = elCurSlide
 
 	local buttonContainer = gui.create("WIBase", vbox)
@@ -650,30 +645,20 @@ function Element:AddMessageBox(msg, audioFile)
 
 	local hasAudio = self.m_tutorial:IsAudioEnabled()
 		and (audioFile ~= nil and asset.exists(audioFile, asset.TYPE_AUDIO))
-	local xOffset = 5
 	if hasAudio then
 		local iconAudio = gui.PFMButton.create(el, "volume-up-fill", function()
 			self:ToggleAudio()
 		end)
-		iconAudio:SetSize(20, 20)
-		iconAudio:SetPos(xOffset, 0)
 		iconAudio:SetTooltip(gui.Loc("pfm_toggle_audio"))
 		self.m_iconAudio = iconAudio
-
-		xOffset = iconAudio:GetRight() + 5
 	end
 
 	local iconFeedback = gui.PFMButton.create(el, "gui/pfm/icon_blank", "gui/pfm/icon_blank_activated", function()
 		self:OpenFeedbackPrompt()
 	end)
-	iconFeedback:SetSize(20, 20)
-	iconFeedback:SetPos(xOffset, 0)
 	iconFeedback:SetTooltip(gui.Loc("pfm_feedback"))
 	local elText = gui.create("WIText", iconFeedback)
 	elText:SetText("F")
-	elText:AddStyleClass("font_small")
-	elText:SetPos(7, 4)
-	elText:SetColor(Color.LightGrey)
 	self.m_iconFeedback = iconFeedback
 
 	elBox:SizeToContents()

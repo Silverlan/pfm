@@ -26,7 +26,6 @@ function gui.ImageIcon:OnInitialize()
 		:AddStyleClass("image-icon__label-container")
 
 	local text = gui.create("WIText", labelContainer)
-	text:AddStyleClass("font_small")
 	text:AddStyleClass("label")
 	text:AddStyleClass("image-icon__label")
 	self.m_text = text

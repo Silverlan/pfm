@@ -18,7 +18,6 @@ function PfmPrompt:OnInitialize()
 	local contents = self:GetContents()
 
 	local elMsg = gui.create("WIText", contents)
-	elMsg:AddStyleClass("font_medium")
 	elMsg:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
 	elMsg:SetSkinCallbacksEnabled(true)
 	elMsg:AddCallback("OnSkinApplied", function()

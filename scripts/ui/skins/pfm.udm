@@ -163,9 +163,7 @@
 	".timeline__axis" {
 		width: "100%"
 	}
-	".timeline__playhead" {
-		
-	}
+	".timeline__playhead" {}
 	".timeline__strip" {
 		flex: 1
 		width: "100%"
@@ -465,12 +463,53 @@
 		padding: 0
 	}
 
+	// Playhead
+	".playhead__content-area" {
+		alignItems: "center"
+	}
+	".playhead__icon" {
+		width: 11
+		height: 16
+	}
+	".playhead__icon--upper" {}
+	".playhead__icon--upper::icon" {
+		type: "WITexturedRect"
+		width: "100%"
+		height: "100%"
+		material: "gui/pfm/timeline/upper_playhead"
+	}
+	".playhead__line" {
+		flex: 1
+		width: 1
+		backgroundColor: "$COLOR_BORDER"
+	}
+	".playhead__icon--lower" {}
+	".playhead__icon--lower::icon" {
+		type: "WITexturedRect"
+		width: "100%"
+		height: "100%"
+		material: "gui/pfm/timeline/lower_playhead"
+	}
+
 	// Web Browser
 	".web_browser" {
 		flex: 1
 	}
 	"pfm_asset_web_browser asset_web_browser" {
 		flex: 1
+	}
+
+	// Text-entry
+	".text-entry" {
+		backgroundColor: "$COLOR_BG_APP"
+		outlineColor: "$COLOR_BORDER"
+		outlineWidth: 1
+	}
+	".text-entry__caret" {
+		backgroundColor: "$COLOR_BORDER"
+	}
+	".text-selection" {
+		backgroundColor: "$COLOR_SELECTED"
 	}
 
 	// Misc

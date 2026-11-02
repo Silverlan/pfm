@@ -37,12 +37,9 @@ function SequenceFilmStrip:OnInitialize()
 	self.m_rightDragHandle = rightDragHandle
 
 	local blackBar = gui.create("WIRect", self, 12, self:GetHeight() /2.0 -(27 /2.0), self:GetWidth() -(12 +12), 27, 0, 0, 1, 1)
-	blackBar:SetColor(Color.Black)
 
 	local sessionName = gui.create("WIText", self)
-	sessionName:SetColor(Color.Black)
 	sessionName:SetText("session")
-	sessionName:AddStyleClass("font_small")
 	sessionName:SetPos(blackBar:GetX() +2, 13)
 	self.m_sessionName = sessionName
 end

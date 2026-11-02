@@ -87,6 +87,9 @@ end
 function Timeline:CreatePlayhead()
 	local playhead = gui.create("playhead", self)
 		:AddStyleClass("timeline__playhead")
+	playhead:SetHeight(self:GetHeight() - self.m_bookmarkBar:GetBottom())
+	playhead:SetAnchor(gui.ANCHOR_EDGE_TOP, 0)
+	playhead:SetAnchor(gui.ANCHOR_EDGE_BOTTOM, 1)
 	return playhead
 end
 function Timeline:AddTimelineElement(item)

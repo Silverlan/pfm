@@ -7,8 +7,6 @@ function Element:OnInitialize()
 
 	local el = gui.create("WIText", self)
 	el:SetText(gui.Loc("pfm_building_render_kernels"))
-	el:AddStyleClass("font_large")
-	el:SetColor(Color.White)
 	self.m_elText = el
 
 	self.m_nextUpdate = time.real_time() + 1.0

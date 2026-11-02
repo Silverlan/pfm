@@ -8,15 +8,7 @@ function Element:OnInitialize()
 
 	self:SetZPos(100000)
 
-	local elTextShadow = gui.create("WIText", self)
-	elTextShadow:SetColor(Color.Black)
-	elTextShadow:SetPos(2, 2)
-	elTextShadow:AddStyleClass("font_small")
-	elTextShadow:AddStyleClass("text_shadow")
-
 	local elText = gui.create("WIText", self)
-	elText:SetColor(Color.White)
-	elText:AddStyleClass("font_small")
 
 	self.m_elTextHover = elText
 	self.m_elTextShadowHover = elTextShadow
