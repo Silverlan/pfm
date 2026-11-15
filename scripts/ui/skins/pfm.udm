@@ -207,6 +207,7 @@
 	}
 	".button:hover" { backgroundColor: "$COLOR_HOVER" }
 	".button:pressed" { backgroundColor: "$COLOR_SELECTED" }
+	".button:disabled" { backgroundColor: "$COLOR_ACCENT" }
 	".button--standalone" {
 		background: {
 			nineSliceMaterial: "$BUTTON"

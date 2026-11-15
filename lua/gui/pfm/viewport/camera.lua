@@ -142,6 +142,7 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 		print("TODO")
 	end)
 	self.m_btGear:SetName("cc_options")
+	self.m_btGear:SetEnabled(false)
 	controls:Update()
 	self.manipulatorControls = controls
 end

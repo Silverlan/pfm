@@ -200,12 +200,6 @@ function gui.PFMButton:OnInitialize()
 	self.m_pressed = false
 	self.m_enabled = true
 end
-function gui.PFMButton:SetEnabledStyleClass(styleClass)
-	self.m_enabledStyleClass = styleClass
-end
-function gui.PFMButton:SetDisabledStyleClass(styleClass)
-	self.m_disabledStyleClass = styleClass
-end
 function gui.PFMButton:SetEnabled(enabled)
 	if enabled == self:IsEnabled() then
 		return
@@ -213,19 +207,8 @@ function gui.PFMButton:SetEnabled(enabled)
 	if enabled == false then
 		self:SetActivated(false)
 	end
+	self:SetState(gui.STATE_DISABLED, not enabled)
 	self.m_enabled = enabled
-	--[[if(enabled)  then
-		if(self.m_enabledStyleClass ~= nil) then
-			self:AddStyleClass(self.m_enabledStyleClass)
-		end
-		self:RemoveStyleClass(self.m_disabledStyleClass or "button_disabled")
-	else
-		if(self.m_enabledStyleClass ~= nil) then
-			self:RemoveStyleClass(self.m_enabledStyleClass)
-		end
-		self:AddStyleClass(self.m_disabledStyleClass or "button_disabled")
-	end
-	self:RefreshSkin()]]
 end
 function gui.PFMButton:IsEnabled()
 	return self.m_enabled
