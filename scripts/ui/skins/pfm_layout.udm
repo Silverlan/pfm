@@ -41,6 +41,9 @@
 	".frame__button-container" {
 		height: 28
 	}
+	".frame__button-container .button" {
+		height: 28
+	}
 
 	// Menues
 	".menu-bar" {
@@ -120,6 +123,9 @@
 	".button__icon--atom" {
 		material: "gui/pfm/icons/atom"
 	}
+	".button__icon--blank" {
+		material: "gui/pfm/icons/blank"
+	}
 	".button__icon--bone" {
 		material: "gui/pfm/icons/bone"
 	}
@@ -146,6 +152,9 @@
 	}
 	".button__icon--chevron-compact-right" {
 		material: "gui/pfm/icons/chevron-compact-right"
+	}
+	".button__icon--clear" {
+		material: "gui/pfm/icons/clear"
 	}
 	".button__icon--collapse" {
 		material: "gui/pfm/icons/collapse"

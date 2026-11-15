@@ -300,6 +300,13 @@
 		outlineColor: "$COLOR_BORDER"
 		outlineWidth: 1
 	}
+	".context-menu__scroll-container" {
+		width: 250
+		// maxHeight: 120
+	}
+	".context-menu__content-area" {
+		width: "100%"
+	}
 	
 	".scrollbar" {
 		backgroundColor: "$COLOR_BG_RAISED"
@@ -318,18 +325,10 @@
 		minHeight: 10
 	}
 
-	".testtt" {
-		width: 150
-		maxHeight: 120
-	}
-	".testtt .vbox .menu-item" {
-		//alignX: "stretch"
+	// Menu-bar
+	".menu-item" {
 		height: 24
 	}
-	".context-emnu-vbox-test" {
-		width: "100%"
-	}
-
 	".menu-item__content-area" {
 		padding: [8, 2, 8, 2]
 	}
@@ -338,16 +337,23 @@
 		alignItems: "center"
 		width: "100%"
 	}
+	".context-menu__scroll-container .vbox .menu-item" {
+		height: 24
+	}
 	".menu-item::selection-bar" {
 		type: "WIRect"
 		width: "100%"
-		height: "4"
+		height: 4
 		alignY: "bottom"
 		visible: false
 		color: "$COLOR_SELECTED"
 	}
 	".menu-item:hover::selection-bar" {
 		visible: true
+	}
+	".menu-item:disabled" { backgroundColor: "$COLOR_ACCENT" }
+	".menu-item:disabled::selection-bar" {
+		visible: false
 	}
 	".menu-bar__content-area" {
 		backgroundColor: "$COLOR_BG_RAISED"
