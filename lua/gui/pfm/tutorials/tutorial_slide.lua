@@ -634,8 +634,8 @@ function Element:AddMessageBox(msg, audioFile)
 			self.m_tutorial:NextSlide()
 		end
 	)
-	self.m_buttonNext:SetEnabledStyleClass("tutorial_button_enabled")
-	self.m_buttonNext:SetDisabledStyleClass("tutorial_button_disabled")
+	-- self.m_buttonNext:SetEnabledStyleClass("tutorial_button_enabled")
+	-- self.m_buttonNext:SetDisabledStyleClass("tutorial_button_disabled")
 	hbox:Update()
 	self.m_buttonEnd = self:CreateButton(buttonContainer, locale.get_text("pfm_end_tutorial"), function()
 		self.m_tutorial:EndTutorial()
@@ -653,7 +653,7 @@ function Element:AddMessageBox(msg, audioFile)
 		self.m_iconAudio = iconAudio
 	end
 
-	local iconFeedback = gui.PFMButton.create(el, "gui/pfm/icon_blank", "gui/pfm/icon_blank_activated", function()
+	local iconFeedback = gui.PFMButton.create(el, "blank", function()
 		self:OpenFeedbackPrompt()
 	end)
 	iconFeedback:SetTooltip(gui.Loc("pfm_feedback"))
