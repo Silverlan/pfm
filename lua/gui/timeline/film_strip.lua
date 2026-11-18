@@ -92,7 +92,7 @@ end
 function FilmStrip:Setup(session, timeline)
 	local seqFilmStrip = self.m_seqFilmStrip
 	seqFilmStrip:SetTimeFrame(session:GetTimeFrame())
-	timeline:AddTimelineItem(seqFilmStrip, seqFilmStrip:GetTimeFrame(), seqFilmStrip:GetLeftMargin(), seqFilmStrip:GetRightMargin())
+	timeline:AddTimelineItem(seqFilmStrip, seqFilmStrip:GetTimeFrame(), function() return seqFilmStrip:GetLeftMargin() end, function() return seqFilmStrip:GetRightMargin() end)
 	self.m_timeline = timeline
 	self.m_session = session
 	

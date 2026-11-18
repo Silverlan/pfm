@@ -62,13 +62,8 @@ function SequenceFilmStrip:OnSizeChanged(w, h)
 	self.m_lowerPerforations:SetWidth(w)
 end
 function SequenceFilmStrip:OnRemove() util.remove(self.m_nameChangeListener) end
-function SequenceFilmStrip:GetLeftMargin()
-	debug.print(self.m_leftDragHandle:GetWidth())
-	return self.m_leftDragHandle:GetWidth()
-end
-function SequenceFilmStrip:GetRightMargin()
-	return self.m_rightDragHandle:GetWidth()
-end
+function SequenceFilmStrip:GetLeftMargin() return self.m_leftDragHandle:GetWidth() end
+function SequenceFilmStrip:GetRightMargin() return self.m_rightDragHandle:GetWidth() end
 function SequenceFilmStrip:CreateDragHandle(startHandle)
 	local function clamp_to_frame_rate(time, clampToAtLeastOneFrame)
 		return self.m_filmStrip:GetSession():ClampTimeOffsetToFrameRate(time, clampToAtLeastOneFrame)

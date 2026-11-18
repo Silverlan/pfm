@@ -27,11 +27,12 @@ function gui.PFMWindow:OnInitialize()
 
 	-- Create frame
 	local parent = self:GetParent()
-	local pBg = gui.create("WIBase", parent, 0, 0, parent:GetWidth(), parent:GetHeight(), 0, 0, 1, 1)
-	pBg:AddStyleClass("window__backdrop")
-	self:RemoveElementOnRemoval(pBg)
+	local container = gui.create("WIBase", parent, 0, 0, parent:GetWidth(), parent:GetHeight(), 0, 0, 1, 1)
+	container:AddStyleClass("window__backdrop")
+	self.m_container = container
+	self:RemoveElementOnRemoval(container)
 
-	local pFrame = gui.create("WITransformable", parent)
+	local pFrame = gui.create("WITransformable", container)
 	pFrame:SetDraggable(true)
 	pFrame:SetResizable(false)
 	pFrame:SetZPos(200000)
@@ -61,6 +62,9 @@ function gui.PFMWindow:SetWindowSize(size, minSize, maxSize)
 	--self.m_frame:SetMinSize(Vector2i(minSize.x, minSize.y))
 	--self.m_frame:SetMaxSize(Vector2i(maxSize.x, maxSize.y))
 	--self.m_frame:SetSize(size.x, size.y)
+end
+function gui.PFMWindow:GetContainer()
+	return self.m_container
 end
 function gui.PFMWindow:GetFrame()
 	return self.m_frame

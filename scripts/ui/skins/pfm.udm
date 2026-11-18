@@ -671,4 +671,22 @@
 	".sequence-filmstrip__perforations" {
 		height: 4
 	}
+
+	// Filmstrip shot drag handles
+	".sequence-filmstrip-shot__drag-container" {
+		width: "100%"
+		height: "100%"
+	}
+	".sequence-filmstrip-shot__drag-handle" {
+		width: 14
+		height: "100%"
+	}
+	".sequence-filmstrip-shot__inner-contents" {
+		height: "100%"
+		flex: 1
+	}
+
+	"witablecell" {
+		height: 32
+	}
 }

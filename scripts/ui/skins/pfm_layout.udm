@@ -367,6 +367,7 @@
 	// Window
 	".window" {
 		width: "100%"
+		backgroundColor: "#aaaaaa"
 	}
 	".window__content-area" {
 		width: "100%"

@@ -12,19 +12,28 @@ function FilmClip:OnInitialize()
 	gui.BaseClip.OnInitialize(self)
 
 	self:AddStyleClass("film-clip")
-	local w = self:GetWidth()
-	local h = self:GetHeight()
 
 	self.m_textDetails = gui.create("WIText", self.m_body)
 		:AddStyleClass("clip__details")
 
-	local leftDragHandle = self:CreateDragHandle(true, 0, 0, 14, self:GetHeight(), 0, 0, 0, 0)
-	local rightDragHandle = self:CreateDragHandle(false, self:GetRight() -14, 0, 14, self:GetHeight(), 1, 0, 1, 0)
+	local dragContainer = gui.create_hbox(self)
+		:AddStyleClass("sequence-filmstrip-shot__drag-container")
+		:SetBackgroundElement(true)
+	self.m_dragContainer = dragContainer
+
+	local leftDragHandle = self:CreateDragHandle(true)
+		:AddStyleClass("sequence-filmstrip-shot__drag-handle")
+	local leftInnerDragHandle = self:CreateInnerDragHandle(true)
+		:AddStyleClass("sequence-filmstrip-shot__drag-handle")
+	gui.create("WIBase", dragContainer)
+		:AddStyleClass("sequence-filmstrip-shot__inner-contents")
+	local rightInnerDragHandle = self:CreateInnerDragHandle(false)
+		:AddStyleClass("sequence-filmstrip-shot__drag-handle")
+	local rightDragHandle = self:CreateDragHandle(false)
+		:AddStyleClass("sequence-filmstrip-shot__drag-handle")
 	self.m_leftDragHandle = leftDragHandle
 	self.m_rightDragHandle = rightDragHandle
 
-	local leftInnerDragHandle = self:CreateInnerDragHandle(true, 0, 0, 6, self:GetHeight(), 0, 0, 0, 0)
-	local rightInnerDragHandle = self:CreateInnerDragHandle(false, self:GetRight() -6, 0, 6, self:GetHeight(), 1, 0, 1, 0)
 	leftInnerDragHandle:SetVisible(false)
 	rightInnerDragHandle:SetVisible(false)
 	self.m_leftInnerDragHandle = leftInnerDragHandle
@@ -124,8 +133,8 @@ function FilmClip:SetFilmStrip(filmStrip)
 	self.m_filmStrip = filmStrip
 end
 function FilmClip:GetSession() return self.m_filmStrip:GetSession() end
-function FilmClip:CreateInnerDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
-	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
+function FilmClip:CreateInnerDragHandle(startHandle)
+	local dragHandle = gui.create("drag_handle", self.m_dragContainer)
 	dragHandle:SetCursor(gui.CURSOR_SHAPE_CROSSHAIR)
 	
 	local clipEditContext
@@ -166,8 +175,8 @@ function FilmClip:CreateInnerDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
 	end)
 	return dragHandle
 end
-function FilmClip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
-	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
+function FilmClip:CreateDragHandle(startHandle)
+	local dragHandle = gui.create("drag_handle", self.m_dragContainer)
 	dragHandle:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
 	
 	local clipEditContext
