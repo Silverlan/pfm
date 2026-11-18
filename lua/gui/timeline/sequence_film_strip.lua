@@ -12,52 +12,70 @@ function SequenceFilmStrip:OnInitialize()
 
 	self:SetSize(128, 93)
 
-	local elBg = gui.create("WI9SliceRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	elBg:AddStyleClass("timeline_film_strip")
-	elBg:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_background")
-	self.m_elBg = elBg
+	local contents = gui.create_hbox(self)
+		:AddStyleClass("sequence-filmstrip__content-area")
+	self.m_contents = contents
 
-	local elBgPattern = gui.create("pfm_repeated_textured_rect", elBg)
-	elBgPattern:AddStyleClass("timeline_film_strip_dots")
-	elBgPattern:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_pattern")
-	elBg:AddCallback("OnSizeChanged", function(p)
-		local offset = 11
-		local wPatternDot = 4
-		elBgPattern:SetX(offset)
-
-		local w = elBg:GetWidth() -offset *2
-		w = w -math.floor(w %wPatternDot)
-		elBgPattern:SetWidth(w)
-		elBgPattern:SetHeight(elBg:GetHeight())
-	end)
-
-	local leftDragHandle = self:CreateDragHandle(true, 0, 0, 12, self:GetHeight(), 0, 0, 0, 0)
-	local rightDragHandle = self:CreateDragHandle(false, self:GetRight() -12, 0, 12, self:GetHeight(), 1, 0, 1, 0)
+	local leftDragHandle = self:CreateDragHandle(true)
+		:AddStyleClass("sequence-filmstrip__drag-handle")
+	local innerContents = gui.create("WIBase", self.m_contents)
+		:AddStyleClass("sequence-filmstrip__contents")
+	local rightDragHandle = self:CreateDragHandle(false)
+		:AddStyleClass("sequence-filmstrip__drag-handle")
 	self.m_leftDragHandle = leftDragHandle
 	self.m_rightDragHandle = rightDragHandle
 
-	local blackBar = gui.create("WIRect", self, 12, self:GetHeight() /2.0 -(27 /2.0), self:GetWidth() -(12 +12), 27, 0, 0, 1, 1)
+	local vertContents = gui.create_vbox(innerContents)
+		:AddStyleClass("sequence-filmstrip__contents-vbox")
+	local upper = gui.create_vbox(vertContents)
+		:AddStyleClass("sequence-filmstrip__row")
+		:AddStyleClass("sequence-filmstrip__row--top")
+	self.m_upper = upper
 
-	local sessionName = gui.create("WIText", self)
+	local upperPerforations = gui.create("pfm_repeated_textured_rect", upper)
+		:AddStyleClass("sequence-filmstrip__perforations")
+	upperPerforations:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_pattern")
+	self.m_upperPerforations = upperPerforations
+
+	local blackBar = gui.create("WIBase", vertContents)
+		:AddStyleClass("sequence-filmstrip__background-bar")
+	local lower = gui.create_vbox(vertContents)
+		:AddStyleClass("sequence-filmstrip__row")
+		:AddStyleClass("sequence-filmstrip__row--bottom")
+
+	local lowerPerforations = gui.create("pfm_repeated_textured_rect", lower)
+		:AddStyleClass("sequence-filmstrip__perforations")
+	lowerPerforations:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_pattern")
+	self.m_lowerPerforations = lowerPerforations
+
+	local sessionName = gui.create("WIText", upper)
 	sessionName:SetText("session")
-	sessionName:SetPos(blackBar:GetX() +2, 13)
 	self.m_sessionName = sessionName
+
+	self:AddStyleClass("sequence-filmstrip")
+end
+function SequenceFilmStrip:OnSizeChanged(w, h)
+	if(util.is_valid(self.m_upperPerforations) == false) then return end
+	local w = self.m_upper:GetWidth()
+	w = w -math.floor(w %self.m_upper:GetHeight())
+	self.m_upperPerforations:SetWidth(w)
+	self.m_lowerPerforations:SetWidth(w)
 end
 function SequenceFilmStrip:OnRemove() util.remove(self.m_nameChangeListener) end
 function SequenceFilmStrip:GetLeftMargin()
-	local w = self.m_elBg:GetSegmentSize(gui.NineSliceRect.SEGMENT_LEFT_EDGE)
-	return w
+	debug.print(self.m_leftDragHandle:GetWidth())
+	return self.m_leftDragHandle:GetWidth()
 end
 function SequenceFilmStrip:GetRightMargin()
-	local w = self.m_elBg:GetSegmentSize(gui.NineSliceRect.SEGMENT_RIGHT_EDGE)
-	return w
+	return self.m_rightDragHandle:GetWidth()
 end
-function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw, ah)
+function SequenceFilmStrip:CreateDragHandle(startHandle)
 	local function clamp_to_frame_rate(time, clampToAtLeastOneFrame)
 		return self.m_filmStrip:GetSession():ClampTimeOffsetToFrameRate(time, clampToAtLeastOneFrame)
 	end
 
-	local dragHandle = gui.create("drag_handle", self, x, y, w, h, ax, ay, aw, ah)
+	local dragHandle = gui.create("drag_handle", self.m_contents)
+	dragHandle:AddStyleClass("drag_handle")
 	dragHandle:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
 	local initialStartTime
 	local initialDuration
@@ -116,13 +134,6 @@ function SequenceFilmStrip:CreateDragHandle(startHandle, x, y, w, h, ax, ay, aw,
 			timeFrame:SetDuration(clamp_to_frame_rate(time -timeFrame:GetStart(), true))
 		end
 	end)
-
-	local elTex = gui.create("WITexturedRect", dragHandle)
-	elTex:SetMaterial("gui/pfm/editors/clip_editor/sequence_filmstrip_grab_handle")
-	elTex:SetColor(Color(81, 86, 147))
-	elTex:SetSize(3, 23)
-	elTex:SetAlignment(gui.ALIGNMENT_CENTER)
-	elTex:SetAnchor(0.5, 0.5, 0.5, 0.5)
 
 	return dragHandle
 end

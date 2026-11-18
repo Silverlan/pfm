@@ -617,6 +617,7 @@ function gui.DirectoryAssetIcon:__init()
 end
 function gui.DirectoryAssetIcon:ApplyAsset(path, importAsset)
 	self:SetMaterial("gui/pfm/folder", 64, 64)
+	self:SetType(gui.ImageIcon.TYPE_DIRECTORY)
 end
 function gui.DirectoryAssetIcon:GetTypeIdentifier()
 	return "directory"

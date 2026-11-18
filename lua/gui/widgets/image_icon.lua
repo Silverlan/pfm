@@ -2,9 +2,8 @@
 -- SPDX-License-Identifier: MIT
 
 util.register_class("gui.ImageIcon", gui.Base)
-function gui.ImageIcon:__init()
-	gui.Base.__init(self)
-end
+gui.ImageIcon.TYPE_DIRECTORY = 0
+gui.ImageIcon.TYPE_FILE = 1
 function gui.ImageIcon:OnInitialize()
 	gui.Base.OnInitialize(self)
 	self:SetSize(128, 128)
@@ -31,6 +30,17 @@ function gui.ImageIcon:OnInitialize()
 	self.m_text = text
 
 	self:SetSelected(false)
+	self:SetType(gui.ImageIcon.TYPE_FILE)
+end
+function gui.ImageIcon:SetType(type)
+	if(type == gui.ImageIcon.TYPE_DIRECTORY) then
+		self.m_texture:RemoveStyleClass("image-icon__image--file")
+		self.m_texture:AddStyleClass("image-icon__image--directory")
+	else
+		self.m_texture:RemoveStyleClass("image-icon__image--directory")
+		self.m_texture:AddStyleClass("image-icon__image--file")
+	end
+	self.m_texture:RefreshSkin()
 end
 function gui.ImageIcon:SetSelected(selected)
 	if selected == self.m_selected then

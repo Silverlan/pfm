@@ -67,6 +67,7 @@ function Timeline:OnInitialize()
 		self:OnTimelinePropertiesChanged(true, true)
 	end)
 
+	self.m_playheads = {}
 	self.m_playhead = self:CreatePlayhead()
 	self.m_playhead:SetTimeOffsetProperty(pfm.get_project_manager():GetTimeProperty())
 
@@ -87,11 +88,24 @@ end
 function Timeline:CreatePlayhead()
 	local playhead = gui.create("playhead", self)
 		:AddStyleClass("timeline__playhead")
-	playhead:SetHeight(self:GetHeight() - self.m_bookmarkBar:GetBottom())
-	playhead:SetAnchor(gui.ANCHOR_EDGE_TOP, 0)
-	playhead:SetAnchor(gui.ANCHOR_EDGE_BOTTOM, 1)
+	table.insert(self.m_playheads, playhead)
+	self:UpdatePlayheadSizes()
 	return playhead
 end
+function Timeline:UpdatePlayheadSizes()
+	if(util.is_valid(self.m_bookmarkBar, self.m_timelineStripUpper) == false) then return end
+	-- TODO: It would be better to handle this using a style class
+	local y = self.m_bookmarkBar:GetBottom()
+	local h = self:GetHeight() - self.m_bookmarkBar:GetBottom()
+	for _, playhead in ipairs(self.m_playheads) do
+		if(playhead:IsValid()) then
+			playhead:SetY(y)
+			playhead:SetHeight(h)
+		end
+	end
+end
+function Timeline:OnSizeChanged(w, h) self:UpdatePlayheadSizes() end
+function Timeline:OnSkinApplied() self:UpdatePlayheadSizes() end
 function Timeline:AddTimelineElement(item)
 	table.insert(self.m_timelineItems, item)
 end

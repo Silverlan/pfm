@@ -338,7 +338,11 @@
 		// width: "100%"
 		justifyContent: "center"
 	}
-	".image-icon__image" {
+	".image-icon__image--file" {
+		width: 128
+		height: "auto"
+	}
+	".image-icon__image--directory" {
 		width: 64
 		height: 64
 	}

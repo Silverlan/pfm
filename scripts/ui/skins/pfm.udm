@@ -616,4 +616,59 @@
 	".data-point-control__line--free" {
 		color: "#000000"
 	}
+
+	// Sequence filmstrip
+	".sequence-filmstrip" {
+		height: 100
+		background: {
+			nineSliceMaterial: "gui/pfm/editors/clip_editor/sequence_filmstrip_background"
+			color: "#888888"
+		}
+	}
+	".sequence-filmstrip__content-area" {
+		width: "100%"
+		height: "100%"
+	}
+	".sequence-filmstrip__drag-handle" {
+		width: 12
+		height: "100%"
+	}
+	".sequence-filmstrip__drag-handle::icon" {
+		type: "WITexturedRect"
+		material: "gui/pfm/editors/clip_editor/sequence_filmstrip_grab_handle"
+		width: 3
+		height: 23
+		color: "#515693"
+		alignX: "center"
+		alignY: "center"
+	}
+	".sequence-filmstrip__contents" {
+		flex: 1
+		height: "100%"
+	}
+	".sequence-filmstrip__contents-vbox" {
+		width: "100%"
+		height: "100%"
+	}
+	".sequence-filmstrip__background-bar" {
+		height: 27
+		backgroundColor: "#000000"
+	}
+	".sequence-filmstrip__row" {
+		width: "100%"
+		flex: 1
+	}
+	".sequence-filmstrip__row--top" {
+		paddingTop: 5
+	}
+	".sequence-filmstrip__row--bottom" {
+		justifyContent: "end"
+		marginBottom: 5
+	}
+	".sequence-filmstrip__shot" {
+		alignY: "center"
+	}
+	".sequence-filmstrip__perforations" {
+		height: 4
+	}
 }

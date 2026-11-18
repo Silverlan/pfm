@@ -1,0 +1,7 @@
+"wguitextured"
+{
+	"textures"
+	{
+		albedo_map: "gui/pfm/icons/clear"
+	}
+}

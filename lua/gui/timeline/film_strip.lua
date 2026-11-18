@@ -42,7 +42,7 @@ function FilmStrip:InitializeDragHandle()
 end
 function FilmStrip:AddFilmClip(filmClip)
 	local elClip = gui.create("film_clip", self.m_container)
-	elClip:SetY(self.m_seqFilmStrip:GetHeight() /2 -elClip:GetHeight() /2)
+		:AddStyleClass("sequence-filmstrip__shot")
 	table.insert(self.m_filmClips, elClip)
 
 	elClip:SetClipData(filmClip)
