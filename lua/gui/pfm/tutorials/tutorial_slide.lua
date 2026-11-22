@@ -99,10 +99,6 @@ function Element:OnThink()
 	self:UpdateConnectorLine()
 end
 function Element:OnRemove()
-	if self.m_feedbackCurlRequest ~= nil then
-		self.m_feedbackCurlRequest:Cancel()
-		self.m_feedbackCurlRequest = nil
-	end
 	if self.m_sound ~= nil then
 		self.m_sound:Stop()
 	end
@@ -381,10 +377,13 @@ function Element:AddGenericMessageBox(locArgs)
 	self:AddMessageBox(pfm.LocStr("pfm_tut_" .. identifier, locArgs), audioFile)
 end
 function Element:UpdateCurrentSlideText(currentSlideIndex, totalSlideCount)
-	if util.is_valid(self.m_elCurSlide) == false then
+	if util.is_valid(self.m_slideProgress) == false then
 		return
 	end
-	self.m_elCurSlide:SetText(tostring(currentSlideIndex + 1) .. "/" .. tostring(totalSlideCount))
+	local progress = 0.0
+	if(totalSlideCount == 1) then progress = 1.0
+	else progress = currentSlideIndex /(totalSlideCount -1) end
+	self.m_slideProgress:SetProgress(progress)
 end
 function Element:OnSizeChanged(w, h)
 	for _, msgBoxInfo in ipairs(self.m_messageBoxes) do
@@ -463,85 +462,6 @@ function Element:UpdateConnectorLine()
 	self.m_connectorLine = l
 	self.m_connectorLineTarget = el
 end
-function Element:SendSlideFeedback(message)
-	if pfm.util.init_curl() == false then
-		return false
-	end
-	local tutId = gui.Tutorial.get_current_tutorial_identifier()
-	if tutId == nil or self.m_identifier == nil then
-		return false
-	end
-	if self.m_feedbackCurlRequest ~= nil then
-		self.m_feedbackCurlRequest:Cancel()
-		self.m_feedbackCurlRequest = nil
-	end
-	local requestData = curl.RequestData()
-	requestData:SetPostKeyValues({
-		["tutorial"] = tutId,
-		["slide"] = self.m_identifier,
-		["message"] = message,
-	})
-	requestData.timeoutMs = 30 * 1000
-	local request = curl.request("https://wiki.pragma-engine.com/pfm/tutorial_feedback.php", requestData)
-	request:Start()
-	self.m_feedbackCurlRequest = request
-	return true
-end
-function Element:OpenFeedbackPrompt()
-	local messageEntry
-	local maxCharacters = 200
-	local messageChanged = false
-	local msg = pfm.open_message_prompt(
-		locale.get_text("pfm_feedback"),
-		locale.get_text("pfm_tutorial_feedback", { tostring(maxCharacters) }),
-		bit.bor(gui.PfmPrompt.BUTTON_OK, gui.PfmPrompt.BUTTON_CANCEL),
-		function(bt)
-			if bt == gui.PfmPrompt.BUTTON_OK then
-				if messageChanged == false then
-					return
-				end
-				local text = messageEntry:GetText()
-				if #text > 0 then
-					if self:SendSlideFeedback(text:sub(0, maxCharacters)) then
-						pfm.create_popup_message(locale.get_text("pfm_tutorial_feedback_submitted"), 5)
-					else
-						pfm.create_popup_message(
-							locale.get_text("pfm_tutorial_feedback_submission_failed"),
-							5,
-							gui.InfoBox.TYPE_WARNING
-						)
-					end
-				end
-			end
-		end
-	)
-	local userContents = msg:GetUserContents()
-
-	local p = gui.create("pfm_controls_menu", userContents)
-	-- p:SetAutoFillContentsToWidth(true)
-	-- p:SetAutoFillContentsToHeight(false)
-
-	messageEntry = gui.create("WITextEntry", p)
-	messageEntry:SetSize(512, 64)
-	messageEntry:SetMultiLine(true)
-	messageEntry:SetText(locale.get_text("pfm_tutorial_feedback_enter_message_here"))
-	messageEntry:SetMaxLength(maxCharacters)
-	local cb
-	cb = messageEntry:AddCallback("OnFocusGained", function()
-		util.remove(cb)
-		messageEntry:SetText("")
-		messageChanged = true
-	end)
-
-	p:Update()
-	p:SizeToContents()
-
-	msg:Update()
-	p:SetWidth(msg:GetContents():GetWidth() - 19)
-	p:Update()
-	p:SizeToContents()
-	p:ResetControls()
-end
 function Element:AddMessageBox(msg, audioFile)
 	local elTgt
 	local numHighlights = #self.m_highlights + #self.m_namedHighlights
@@ -559,6 +479,7 @@ function Element:AddMessageBox(msg, audioFile)
 	el:SetSize(400, 128)
 	el:SetMouseInputEnabled(true)
 	el:SetZPos(100)
+	el:SetAutoSizeToContents(false, true)
 	el:GetDragArea():SetAlignment(gui.ALIGNMENT_FILL)
 	el:SetCursor(gui.CURSOR_SHAPE_CROSSHAIR)
 	self.m_messageBox = el
@@ -586,7 +507,6 @@ function Element:AddMessageBox(msg, audioFile)
 	elBox:SetSkinCallbacksEnabled(true)
 	elBox:AddCallback("OnSkinApplied", function()
 		elBox:SizeToContents()
-		el:SetHeight(elBox:GetHeight() + 28)
 	end)
 
 	if tool.get_filmmaker():IsDeveloperModeEnabled() then
@@ -614,21 +534,21 @@ function Element:AddMessageBox(msg, audioFile)
 		end)
 	end
 
-	local elCurSlide = gui.create("WIText", elBox)
-	elCurSlide:SetText("")
-	self.m_elCurSlide = elCurSlide
+	local slideProgress = gui.create("WIProgressBar", vbox)
+	slideProgress:AddStyleClass("tutorial-slide__progress-bar")
+	slideProgress:SetLabelVisible(false)
+	self.m_slideProgress = slideProgress
 
-	local buttonContainer = gui.create("WIBase", vbox)
-	local hbox = gui.create_hbox(buttonContainer)
+	local buttonContainer = gui.create_hbox(vbox)
 	self.m_buttonPrev = self:CreateButton(
-		hbox,
+		buttonContainer,
 		locale.get_text("pfm_go_back") .. " (" .. pfm.get_key_binding("pfm_tutorial_back") .. ")",
 		function()
 			self.m_tutorial:PreviousSlide()
 		end
 	)
 	self.m_buttonNext = self:CreateButton(
-		hbox,
+		buttonContainer,
 		locale.get_text("pfm_continue") .. " (" .. pfm.get_key_binding("pfm_tutorial_next") .. ")",
 		function()
 			self.m_tutorial:NextSlide()
@@ -636,12 +556,10 @@ function Element:AddMessageBox(msg, audioFile)
 	)
 	-- self.m_buttonNext:SetEnabledStyleClass("tutorial_button_enabled")
 	-- self.m_buttonNext:SetDisabledStyleClass("tutorial_button_disabled")
-	hbox:Update()
 	self.m_buttonEnd = self:CreateButton(buttonContainer, locale.get_text("pfm_end_tutorial"), function()
 		self.m_tutorial:EndTutorial()
 	end)
 	self.m_buttonEnd:SetX(elBox:GetWidth() - self.m_buttonEnd:GetWidth())
-	buttonContainer:SizeToContents()
 
 	local hasAudio = self.m_tutorial:IsAudioEnabled()
 		and (audioFile ~= nil and asset.exists(audioFile, asset.TYPE_AUDIO))
@@ -652,14 +570,6 @@ function Element:AddMessageBox(msg, audioFile)
 		iconAudio:SetTooltip(gui.Loc("pfm_toggle_audio"))
 		self.m_iconAudio = iconAudio
 	end
-
-	local iconFeedback = gui.PFMButton.create(el, "blank", function()
-		self:OpenFeedbackPrompt()
-	end)
-	iconFeedback:SetTooltip(gui.Loc("pfm_feedback"))
-	local elText = gui.create("WIText", iconFeedback)
-	elText:SetText("F")
-	self.m_iconFeedback = iconFeedback
 
 	elBox:SizeToContents()
 	elBox:Update()

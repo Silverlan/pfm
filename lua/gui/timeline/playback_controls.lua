@@ -46,6 +46,7 @@ function gui.PlaybackControls:OnInitialize()
 	end)
 	self.m_btRecord:SetTooltip(gui.Loc("pfm_playback_record"))
 	self.m_btRecord:SetName("pc_record")
+	self.m_btRecord:SetEnabled(false)
 
 	self.m_btPlay = gui.create("pfm_play_button", controls)
 	self.m_btPlay:SetTooltip(gui.Loc("pfm_playback_play"))

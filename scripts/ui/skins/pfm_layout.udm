@@ -379,4 +379,25 @@
 	".window__backdrop" {
 		backgroundColor: "#888888"
 	}
+
+	// Tutorial Slide
+	".tutorial-slide__progress-bar" {
+		width: "100%"
+		height: 5
+		backgroundColor: "#ff0000"
+	}
+	".tutorial-slide__progress-bar .progress-bar__fill" {
+		backgroundColor: "#ffff00"
+	}
+	".connector-line" {
+		color: "#aaaaaa"
+	}
+
+	// Misc
+	".modal_overlay" {
+		"background": {
+			color: "#050505"
+			alpha: 200
+		}
+	}
 }

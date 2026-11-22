@@ -167,7 +167,7 @@ util.register_class("gui.LabelledTimelineStrip", gui.Base)
 function gui.LabelledTimelineStrip:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 18)
+	self:SetSize(128, 24)
 
 	self.m_strip = gui.create("timeline_strip", self, 0, 0, self:GetWidth(), 6)
 	self.m_strip:AddCallback("OnTimelinePropertiesChanged", function()

@@ -279,6 +279,7 @@
 
 	// Info Box
 	".info-box" {
+		width: "100%"
 		backgroundColor: "$COLOR_BG_PANEL"
 	}
 	".info-box--info::left-bar" {
