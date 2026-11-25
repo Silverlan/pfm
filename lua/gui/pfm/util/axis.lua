@@ -4,9 +4,6 @@
 include("/util/graph_axis.lua")
 
 util.register_class("gui.Axis", gui.Base)
-function gui.Axis:__init()
-	gui.Base.__init(self)
-end
 function gui.Axis:OnInitialize()
 	gui.Base.OnInitialize(self)
 	self.m_items = {}
@@ -68,6 +65,8 @@ function gui.Axis:AttachElementToValue(el, value)
 	itemData.callbacks = {}
 	itemData.startOffset = 0
 	itemData.endOffset = 0
+	local cb = el:AddCallback("OnSizeChanged", function() self:ScheduleUpdate() end)
+	table.insert(itemData.callbacks, cb)
 	self.m_items[index] = itemData
 	self:ScheduleUpdate()
 	return index

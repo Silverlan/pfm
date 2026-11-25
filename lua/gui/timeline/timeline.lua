@@ -46,6 +46,9 @@ function Timeline:OnInitialize()
 	self.m_timelineStripUpper:SetHorizontal(true)
 	self.m_timelineStripUpper:SetFlipped(false)
 	self.m_timelineStripUpper:AddCallback("OnMouseEvent", onTimelineMouseEvent)
+	local function update_playheads() self:UpdatePlayheadSizes() end
+	self.m_timelineStripUpper:AddCallback("OnSizeChanged", update_playheads)
+	self.m_timelineStripUpper:AddCallback("OnPosChanged", update_playheads)
 
 	self.m_innerContents = gui.create_vbox(contents)
 		:AddStyleClass("timeline__strip")
@@ -57,6 +60,8 @@ function Timeline:OnInitialize()
 	self.m_timelineStripLower:SetHorizontal(true)
 	self.m_timelineStripLower:SetFlipped(true)
 	self.m_timelineStripLower:AddCallback("OnMouseEvent", onTimelineMouseEvent)
+	self.m_timelineStripLower:AddCallback("OnSizeChanged", update_playheads)
+	self.m_timelineStripLower:AddCallback("OnPosChanged", update_playheads)
 	--[[self.m_timelineStripLower:SetValueTextTranslationFunction(function(elText,t)
 		elText:SetTooltip("Test")
 		return t -- tool.get_filmmaker():TimeOffsetToFrameOffset(t) -tool.get_filmmaker():TimeOffsetToFrameOffset(math.floor(t))
@@ -81,7 +86,7 @@ function Timeline:OnInitialize()
 	self:SetZoomLevel(1)
 	self:SetStartOffset(0.0)
 
-	-- TODO
+	self:SetSkinCallbacksEnabled(true)
 	self:SetMouseInputEnabled(true)
 	self:ScheduleUpdate()
 end
@@ -93,15 +98,22 @@ function Timeline:CreatePlayhead()
 	return playhead
 end
 function Timeline:UpdatePlayheadSizes()
-	if(util.is_valid(self.m_bookmarkBar, self.m_timelineStripUpper) == false) then return end
-	-- TODO: It would be better to handle this using a style class
-	local y = self.m_bookmarkBar:GetBottom()
-	local h = self:GetHeight() - self.m_bookmarkBar:GetBottom()
+	if(util.is_valid(self.m_timelineStripLower, self.m_timelineStripUpper) == false) then return end
+	local playheads = {}
 	for _, playhead in ipairs(self.m_playheads) do
 		if(playhead:IsValid()) then
-			playhead:SetY(y)
-			playhead:SetHeight(h)
+			table.insert(playheads, playhead)
 		end
+	end
+	if(#playheads == 0) then return end
+	local refPlayhead = playheads[1]
+	-- TODO: It would be better to handle this using a style class
+	local y = self.m_timelineStripUpper:GetBottom() -refPlayhead:GetTopIcon():GetHeight()
+	local yBottom = self.m_timelineStripLower:GetTop() +refPlayhead:GetBottomIcon():GetHeight()
+	local h = yBottom -y
+	for _, playhead in ipairs(playheads) do
+		playhead:SetY(y)
+		playhead:SetHeight(h)
 	end
 end
 function Timeline:OnSizeChanged(w, h) self:UpdatePlayheadSizes() end

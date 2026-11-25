@@ -29,6 +29,7 @@ function PfmPrompt:OnInitialize()
 	self.m_userContents = userContents
 
 	local boxButtons = gui.create_hbox(contents)
+		:AddStyleClass("button-group")
 	self.m_boxButtons = boxButtons
 end
 function PfmPrompt:GetUserContents()

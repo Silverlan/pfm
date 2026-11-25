@@ -917,6 +917,7 @@ end
 function TimelineEditorGraphBase:GetDataAxis()
 	return self.m_dataAxis
 end
+function TimelineEditorGraphBase:GetTimeAxisStartOffset() return self.m_graphContainer:GetLeft() end
 function TimelineEditorGraphBase:UpdateGraphCurveAxisRanges(i)
 	local graphData = self.m_graphs[i]
 	local graph = graphData.curve
@@ -924,7 +925,7 @@ function TimelineEditorGraphBase:UpdateGraphCurveAxisRanges(i)
 		return
 	end
 	local timeAxis = self:GetTimeAxis():GetAxis()
-	local timeRange = { timeAxis:GetStartOffset(), timeAxis:XOffsetToValue(self:GetRight()) }
+	local timeRange = { timeAxis:XOffsetToValue(self:GetTimeAxisStartOffset()), timeAxis:XOffsetToValue(self:GetRight()) }
 	graph:SetHorizontalRange(timeRange[1], timeRange[2])
 
 	local dataAxis = self:GetDataAxis():GetAxis()

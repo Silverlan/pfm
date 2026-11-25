@@ -367,7 +367,7 @@
 	// Window
 	".window" {
 		width: "100%"
-		backgroundColor: "#aaaaaa"
+		backgroundColor: "#ffffff"
 	}
 	".window__content-area" {
 		width: "100%"
@@ -384,10 +384,10 @@
 	".tutorial-slide__progress-bar" {
 		width: "100%"
 		height: 5
-		backgroundColor: "#ff0000"
+		backgroundColor: "#000000"
 	}
 	".tutorial-slide__progress-bar .progress-bar__fill" {
-		backgroundColor: "#ffff00"
+		backgroundColor: "#ffffff"
 	}
 	".connector-line" {
 		color: "#aaaaaa"
@@ -396,7 +396,7 @@
 	// Misc
 	".modal_overlay" {
 		"background": {
-			color: "#050505"
+			color: "#000000"
 			alpha: 200
 		}
 	}

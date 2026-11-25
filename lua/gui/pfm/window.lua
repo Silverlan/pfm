@@ -23,7 +23,8 @@ function gui.PFMWindow:OnInitialize()
 	titleText:SetVisible(false)
 	self.m_titleText = titleText
 
-	self.m_contents = mainBox
+	self.m_contents = gui.create_vbox(mainBox)
+		:AddStyleClass("window__message-area")
 
 	-- Create frame
 	local parent = self:GetParent()

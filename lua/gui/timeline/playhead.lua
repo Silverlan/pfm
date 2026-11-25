@@ -23,4 +23,6 @@ function Playhead:OnInitialize()
 		:AddStyleClass("playhead__icon")
 		:AddStyleClass("playhead__icon--lower")
 end
+function Playhead:GetTopIcon() return self.m_top end
+function Playhead:GetBottomIcon() return self.m_bottom end
 gui.register("playhead", Playhead)

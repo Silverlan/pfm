@@ -72,11 +72,13 @@ function Element:OnInitialize()
 	self.m_centerBar:GetColorProperty():Link(self:GetColorProperty())
 
 	local lineInner = gui.create("WIRect", self)
-	lineInner:SetColor(Color.Black)
+	lineInner:AddStyleClass("time-selection__line")
+	lineInner:AddStyleClass("time-selection__line--outer")
 	self.m_lineInner = lineInner
 
 	local lineOuter = gui.create("WIRect", self)
-	lineOuter:SetColor(Color.White)
+	lineOuter:AddStyleClass("time-selection__line")
+	lineOuter:AddStyleClass("time-selection__line--inner")
 	self.m_lineOuter = lineOuter
 end
 function Element:SetBarPosition(pos)
@@ -197,15 +199,19 @@ function Element:OnInitialize()
 		return targetMarkers
 	end)
 
-	local col = Color(0, 64, 0, 255)
-	self.m_leftBar:SetColor(col)
-	self.m_rightBar:SetColor(col)
-	self.m_centerBar:SetColor(col)
-	self:SetAlpha(128)
+	self:AddStyleClass("time-selection")
+	self.m_leftBar:AddStyleClass("time-selection-segment")
+	self.m_leftBar:AddStyleClass("time-selection-segment--left")
+	self.m_rightBar:AddStyleClass("time-selection-segment")
+	self.m_rightBar:AddStyleClass("time-selection-segment--right")
+	self.m_centerBar:AddStyleClass("time-selection-segment")
+	self.m_centerBar:AddStyleClass("time-selection-segment--middle")
 
 	self.m_timelineMarkers = {}
 
 	self:SetMouseInputEnabled(true)
+
+	self:SetWidth(0)
 end
 function Element:MouseCallback(button, state, mods)
 	if button == input.MOUSE_BUTTON_LEFT then

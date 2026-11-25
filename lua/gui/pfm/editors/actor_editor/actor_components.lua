@@ -209,15 +209,15 @@ function gui.PFMActorEditor:AddActorComponent(entActor, itemActor, actorData, co
 
 	local componentData = actorData.componentData[componentId]
 	local itemComponent = actorData.componentsEntry:AddItem(displayName, nil, nil, componentType)
-	itemComponent:AddStyleClass("act_ed_component")
+	itemComponent:AddStyleClass("editor__actor-component")
 	if description ~= nil then
 		itemComponent:SetTooltip(description)
 	end
 
 	local matPath = "gui/pfm/icons/components/" .. componentType
 	if asset.exists(matPath, asset.TYPE_MATERIAL) then
-		itemComponent:AddIcon(matPath)
-		itemActor:AddUniqueIcon(matPath)
+		itemComponent:AddIcon(matPath, {"editor-icon", "editor-component-icon"})
+		itemActor:AddUniqueIcon(matPath, {"editor-icon", "editor-property-icon"})
 	end
 	actorData.treeElementToComponentId[itemComponent] = componentId
 	actorData.componentData[componentId].itemComponent = itemComponent

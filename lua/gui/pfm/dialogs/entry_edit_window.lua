@@ -17,6 +17,7 @@ function PfmEditEntryWindow:OnInitialize()
 	self.m_table = t
 
 	local boxButtons = gui.create_hbox(contents)
+		:AddStyleClass("button-group")
 
 	local btOk = gui.create("pfm_button", boxButtons)
 	btOk:SetText(locale.get_text("ok"))

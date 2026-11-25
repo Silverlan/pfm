@@ -401,14 +401,18 @@ end
 function gui.PFMTreeViewElement:ClearIcons()
 	util.remove(self.m_icons)
 end
-function gui.PFMTreeViewElement:AddIcon(material)
+function gui.PFMTreeViewElement:AddIcon(material, styleClass)
 	local icon = gui.create("WITexturedRect", self.m_iconBox)
 	icon:SetSize(14, 14)
 	icon:SetMaterial(material)
 	table.insert(self.m_icons, icon)
+
+	styleClass = styleClass or {}
+	if(type(styleClass) ~= "table") then styleClass = {styleClass} end
+	for _, sc in ipairs(styleClass) do icon:AddStyleClass(sc) end
 	return icon
 end
-function gui.PFMTreeViewElement:AddUniqueIcon(material)
+function gui.PFMTreeViewElement:AddUniqueIcon(material, styleClass)
 	for _, icon in ipairs(self.m_icons) do
 		if
 			icon:IsValid()
@@ -417,7 +421,7 @@ function gui.PFMTreeViewElement:AddUniqueIcon(material)
 			return icon
 		end
 	end
-	return self:AddIcon(material)
+	return self:AddIcon(material, styleClass)
 end
 function gui.PFMTreeViewElement:GetHeader()
 	return self.m_header

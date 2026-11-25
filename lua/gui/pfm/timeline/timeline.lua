@@ -10,9 +10,6 @@ util.register_class("gui.PFMTimeline", gui.Base)
 gui.PFMTimeline.EDITOR_CLIP = 0
 gui.PFMTimeline.EDITOR_MOTION = 1
 gui.PFMTimeline.EDITOR_GRAPH = 2
-function gui.PFMTimeline:__init()
-	gui.Base.__init(self)
-end
 function gui.PFMTimeline:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -391,8 +388,9 @@ function gui.PFMTimeline:ClearBookmarks()
 	self.m_timeline:ClearBookmarks()
 end
 function gui.PFMTimeline:InitializeToolbar()
-	local toolbar = gui.create("WIBase", self.m_contents, 0, 0, self:GetWidth(), 0)
-	toolbar:SetName("timeline_toolbar")
+	local toolbar = gui.create_hbox(self.m_contents)
+		:SetName("timeline_toolbar")
+		:AddStyleClass("timeline__toolbar")
 	local toolbarLeft = gui.create_hbox(toolbar)
 		:SetName("timeline_toolbar_left")
 	local btGroup = gui.PFMButtonGroup(toolbarLeft)
@@ -560,23 +558,27 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btTangentStep = gui.PFMButton.create(self.m_tangentControls, "graph_editor_tangent_step", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btTangentStep:SetTooltip(
-		gui.Loc(
-			"pfm_graph_editor_tangent_step",
-			{ pfm.get_key_binding("pfm_graph_editor_action select tangent_step") }
+		:SetVisible(false)
+		:AddStyleClass("button-tangent--step")
+		:SetTooltip(
+			gui.Loc(
+				"pfm_graph_editor_tangent_step",
+				{ pfm.get_key_binding("pfm_graph_editor_action select tangent_step") }
+			)
 		)
-	)
 	self.m_controlButtons["tangent_step"] = self.m_btTangentStep
 
 	self.m_btTangentUnified = gui.PFMButton.create(self.m_tangentControls, "graph_editor_tangent_unified", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btTangentUnified:SetTooltip(
+		:SetVisible(false)
+		:SetTooltip(
 		gui.Loc(
 			"pfm_graph_editor_tangent_unified",
 			{ pfm.get_key_binding("pfm_graph_editor_action select tangent_unify") }
 		)
 	)
+	self.m_btTangentUnified:SetEnabled(false)
 	self.m_controlButtons["tangent_unify"] = self.m_btTangentUnified
 
 	self.m_btTangentEqualize = gui.PFMButton.create(
@@ -586,23 +588,27 @@ function gui.PFMTimeline:InitializeToolbar()
 			print("TODO: NOT YET IMPLEMENTED")
 		end
 	)
-	self.m_btTangentEqualize:SetTooltip(
-		gui.Loc(
-			"pfm_graph_editor_tangent_isometric",
-			{ pfm.get_key_binding("pfm_graph_editor_action select tangent_equalize") }
+		:SetVisible(false)
+		:SetTooltip(
+			gui.Loc(
+				"pfm_graph_editor_tangent_isometric",
+				{ pfm.get_key_binding("pfm_graph_editor_action select tangent_equalize") }
+			)
 		)
-	)
+	self.m_btTangentEqualize:SetEnabled(false)
 	self.m_controlButtons["tangent_equalize"] = self.m_btTangentEqualize
 
 	self.m_btTangentWeighted = gui.PFMButton.create(self.m_tangentControls, "graph_editor_tangent_weighted", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btTangentWeighted:SetTooltip(
-		gui.Loc(
-			"pfm_graph_editor_tangent_weighted",
-			{ pfm.get_key_binding("pfm_graph_editor_action select tangent_weighted") }
+		:SetVisible(false)
+		:SetTooltip(
+			gui.Loc(
+				"pfm_graph_editor_tangent_weighted",
+				{ pfm.get_key_binding("pfm_graph_editor_action select tangent_weighted") }
+			)
 		)
-	)
+	self.m_btTangentWeighted:SetEnabled(false)
 	self.m_controlButtons["tangent_weighted"] = self.m_btTangentWeighted
 
 	self.m_btTangentUnweighted = gui.PFMButton.create(
@@ -612,12 +618,14 @@ function gui.PFMTimeline:InitializeToolbar()
 			print("TODO: NOT YET IMPLEMENTED")
 		end
 	)
-	self.m_btTangentUnweighted:SetTooltip(
-		gui.Loc(
-			"pfm_graph_editor_tangent_unweighted",
-			{ pfm.get_key_binding("pfm_graph_editor_action select tangent_unweighted") }
+		:SetVisible(false)
+		:SetTooltip(
+			gui.Loc(
+				"pfm_graph_editor_tangent_unweighted",
+				{ pfm.get_key_binding("pfm_graph_editor_action select tangent_unweighted") }
+			)
 		)
-	)
+	self.m_btTangentUnweighted:SetEnabled(false)
 	self.m_controlButtons["tangent_unweighted"] = self.m_btTangentUnweighted
 
 	self.m_miscGraphControls = gui.create_hbox(toolbarLeft)
@@ -625,30 +633,40 @@ function gui.PFMTimeline:InitializeToolbar()
 	self.m_btOffsetMode = gui.PFMButton.create(self.m_miscGraphControls, "graph_editor_offset_mode", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btOffsetMode:SetName("offset_mode")
-	self.m_btOffsetMode:SetTooltip(gui.Loc("pfm_graph_editor_offset_mode"))
+		:SetVisible(false)
+		:SetName("offset_mode")
+		:SetTooltip(gui.Loc("pfm_graph_editor_offset_mode"))
+	self.m_btOffsetMode:SetEnabled(false)
 
 	self.m_btAutoFrame = gui.PFMButton.create(self.m_miscGraphControls, "graph_editor_auto_frame", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btAutoFrame:SetName("auto_frame")
-	self.m_btAutoFrame:SetTooltip(gui.Loc("pfm_graph_editor_autoframe_mode"))
+		:SetVisible(false)
+		:SetName("auto_frame")
+		:SetTooltip(gui.Loc("pfm_graph_editor_autoframe_mode"))
+	self.m_btAutoFrame:SetEnabled(false)
 
 	self.m_btUnitize = gui.PFMButton.create(self.m_miscGraphControls, "graph_editor_unitize", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btUnitize:SetName("unitize")
-	self.m_btUnitize:SetTooltip(gui.Loc("pfm_graph_editor_unitize_mode"))
+		:SetVisible(false)
+		:SetName("unitize")
+		:SetTooltip(gui.Loc("pfm_graph_editor_unitize_mode"))
+	self.m_btUnitize:SetEnabled(false)
 
 	self.m_motionControls = gui.create_hbox(toolbarLeft)
 	self.m_btTimeSelectionMode = gui.PFMButton.create(self.m_motionControls, "time_selection_mode", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btTimeSelectionMode:SetName("time_selection_mode")
+		:SetVisible(false)
+		:SetName("time_selection_mode")
+	self.m_btTimeSelectionMode:SetEnabled(false)
 	self.m_keyMode = gui.PFMButton.create(self.m_motionControls, "key_mode", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_keyMode:SetName("key_mode")
+		:SetVisible(false)
+		:SetName("key_mode")
+	self.m_keyMode:SetEnabled(false)
 
 	self.m_clipControls = gui.create_hbox(toolbarLeft)
 	self.m_btAddTrackGroup = gui.PFMButton.create(self.m_clipControls, "add_track_group")
@@ -664,37 +682,45 @@ function gui.PFMTimeline:InitializeToolbar()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
 	self.m_btUp:SetName("timeline_up")]]
-	toolbarLeft:SetHeight(self.m_btClipEditor:GetHeight())
 
 	local toolbarRight = gui.create_hbox(toolbar)
 	toolbarRight:SetName("timeline_toolbar_right")
 	self.m_btLockPlayhead = gui.PFMButton.create(toolbarRight, "lock_playhead", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btLockPlayhead:SetName("lock_playhead")
-	self.m_btLockPlayhead:SetTooltip(gui.Loc("pfm_lock_playhead"))
+		:SetVisible(false)
+		:SetName("lock_playhead")
+		:SetTooltip(gui.Loc("pfm_lock_playhead"))
+	self.m_btLockPlayhead:SetEnabled(false)
 
 	self.m_btSnap = gui.PFMButton.create(toolbarRight, "snap", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btSnap:SetTooltip(gui.Loc("pfm_snap"))
+		:SetVisible(false)
+		:SetTooltip(gui.Loc("pfm_snap"))
+	self.m_btSnap:SetEnabled(false)
 	self.m_controlButtons["snap"] = self.m_btSnap
 
 	self.m_btSnapFrame = gui.PFMButton.create(toolbarRight, "snap_frame", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btSnapFrame:SetTooltip(gui.Loc("pfm_snap_frame"))
+		:SetVisible(false)
+		:SetTooltip(gui.Loc("pfm_snap_frame"))
+	self.m_btSnapFrame:SetEnabled(false)
 	self.m_controlButtons["snap_frame"] = self.m_btSnapFrame
 
 	self.m_btPlayOnce = gui.PFMButton.create(toolbarRight, "play_once", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btPlayOnce:SetName("play_once")
-	self.m_btPlayOnce:SetTooltip(gui.Loc("pfm_play_once"))
+		:SetVisible(false)
+		:SetName("play_once")
+		:SetTooltip(gui.Loc("pfm_play_once"))
+	self.m_btPlayOnce:SetEnabled(false)
 	self.m_btMute = gui.PFMButton.create(toolbarRight, "volume-off-fill", function()
 		print("TODO: NOT YET IMPLEMENTED")
 	end)
-	self.m_btMute:SetTooltip(gui.Loc("pfm_mute"))
+		:SetTooltip(gui.Loc("pfm_mute"))
+	self.m_btMute:SetEnabled(false)
 	self.m_controlButtons["mute"] = self.m_btMute
 
 	self.m_btTools = gui.PFMButton.create(toolbarRight, "gear-fill", function()
@@ -711,13 +737,6 @@ function gui.PFMTimeline:InitializeToolbar()
 	for name, el in pairs(self.m_controlButtons) do
 		el:SetName(name)
 	end
-
-	toolbarRight:SetHeight(self.m_btLockPlayhead:GetHeight())
-	toolbarRight:Update()
-	toolbarRight:SetX(toolbar:GetWidth() - toolbarRight:GetWidth())
-	toolbarRight:SetAnchor(1, 0, 1, 0)
-	toolbar:SetHeight(toolbarLeft:GetHeight())
-	toolbar:SetAnchor(0, 0, 1, 0)
 end
 function gui.PFMTimeline:GetControlButton(identifier)
 	return self.m_controlButtons[identifier]

@@ -2,26 +2,54 @@
 	"theme" {
 		inherits: "pfm_layout"
 		constants: {
-			STYLE_TEXT_PRIMARY: "#000000"
-			STYLE_TEXT_LINK: "#0000ff"
-			STYLE_TEXT_INVERSE: "#ffffff"
+			// Text
+			STYLE_TEXT_PRIMARY:   "#24292f"
+			COLOR_TEXT_MUTED:     "#57606a"
+			COLOR_TEXT_DISABLED:  "#8c959f"
+			STYLE_TEXT_INVERSE:   "#ffffff"
+			STYLE_TEXT_LINK:      "#0969da"
+			COLOR_ICON:           "#57606a"
 
-			COLOR_BG_APP: "#ffffff"
-			COLOR_BG_PANEL: "#aaaaaa"
-			COLOR_BG_RAISED: "#cccccc"
-			COLOR_BG_INPUT: "#dddddd"
-			COLOR_HOVER: "#dddddd"
-			COLOR_SELECTED: "#ffff00"
+			// Surfaces
+			COLOR_BG_APP:         "#ffffff"
+			COLOR_BG_INSET:       "#f0f2f4"
+			COLOR_BG_PANEL:       "#f6f8fa"
+			COLOR_BG_RAISED:      "#dddddd"
+			COLOR_BG_INPUT:       "#ffffff"
+			COLOR_BG_SCRIM:       "#000000"
 
-			COLOR_ACCENT: "#444444"
+			// Interaction states
+			COLOR_HOVER:          "#e3e3e3"
+			COLOR_PRESSED:        "#dcdcdc"
+			COLOR_SELECTED:       "#dddddd"
+			COLOR_SELECTED_HOVER: "#cccccc"
+			COLOR_DISABLED_BG:    "#888888"
 
-			COLOR_BORDER: "#000000"
-			COLOR_BORDER_FOCUS: "#00ffff"
+			// Borders
+			COLOR_BORDER:         "#8c959f"
+			COLOR_BORDER_SUBTLE:  "#d1d9e0"
+			COLOR_BORDER_FOCUS:   "#0969da"
 
-			COLOR_INFO: "#00ffff"
-			COLOR_SUCCESS: "#00ff00"
-			COLOR_WARNING: "#ffff00"
-			COLOR_ERROR: "#ff0000"
+			// Emphasis
+			COLOR_ACCENT:         "#0969da"
+
+			// Status
+			COLOR_INFO:           "#0969da"
+			COLOR_SUCCESS:        "#1a7f37"
+			COLOR_WARNING:        "#9a6700"
+			COLOR_ERROR:          "#cf222e"
+
+			// Misc
+			COLOR_PLAYHEAD:         "#cf222e"
+			COLOR_KEYFRAME:         "#57606a"
+			COLOR_KEYFRAME_CURRENT: "#0969da"
+			COLOR_TANGENT_IN:       "#8250df"
+			COLOR_TANGENT_OUT:      "#1a7f37"
+			COLOR_CLIP:             "#eaeef2"
+			COLOR_CLIP_HEADER:      "#d1d9e0"
+
+			// Alpha
+			ALPHA_SCRIM: 120
 		}
 		materials: {
 			"BUTTON" {
@@ -32,10 +60,10 @@
 						cache: false
 						styleSheet: {
 							".stop-top" {
-								"stop-color": "$COLOR_BG_PANEL"
+								"stop-color": "$COLOR_BG_RAISED"
 							}
 							".stop-bottom" {
-								"stop-color": "$COLOR_BG_APP"
+								"stop-color": "$COLOR_BG_PANEL"
 							}
 						}
 					}
@@ -90,7 +118,7 @@
 						height: 9
 						styleSheet: {
 							".background" { fill: "$COLOR_BG_APP" }
-							".bi" { fill: "$COLOR_BORDER" }
+							".bi" { fill: "$COLOR_ICON" }
 						}
 					}
 				}
@@ -122,9 +150,12 @@
 
 	// Tooltip
 	".tooltip" {
+		// maxWidth: 512
 		backgroundColor: "$COLOR_BG_PANEL"
 		outlineColor: "$COLOR_BORDER"
 		outlineWidth: 1
+		paddingX: 8
+		paddingY: 4
 	}
 
 	// Table
@@ -143,11 +174,11 @@
 		visible: true
 	}
 	".table__row--selectable:selected::selection" {
-		color: "$COLOR_ACCENT"
+		color: "$COLOR_SELECTED"
 		visible: true
 	}
 	".table__row--selectable:selected:hover::selection" {
-		color: "$COLOR_BG_RAISED"
+		color: "$COLOR_SELECTED_HOVER"
 		visible: true
 	}
 
@@ -155,6 +186,10 @@
 	".timeline__content-area" {
 		width: "100%"
 		height: "100%"
+	}
+	".timeline__toolbar" {
+		justifyContent: "spaceBetween"
+		width: "100%"
 	}
 	".timeline__bookmark-bar" {
 		width: "100%"
@@ -171,6 +206,37 @@
 	".timeline__editor" {
 		height: "100%"
 	}
+	".bookmark" {
+		width: 7
+		height: 16
+		material: "gui/pfm/timeline/bookmark"
+	}
+	".bookmark:selected" {
+		material: "gui/pfm/timeline/bookmark_selected"
+	}
+
+	// Actor Editor
+	".editor__actor witext" {
+		color: "#4682b4"
+	}
+	".editor__actor-collection witext" {
+		color: "#969696"
+	}
+	".editor__actor-property witext" {
+		color: "#505050"
+	}
+	".editor__actor-component witext" {
+		color: "#2e8b57"
+	}
+
+	// Icons
+	".editor-icon" {color: "$COLOR_ACCENT"}
+	".editor-actor-icon" {}
+	".editor-component-icon" {}
+	".editor-property-icon" {}
+	".editor-property-icon--animated" {}
+	".editor-property-icon--math-expression" {}
+	".editor-actor-icon--constraint" {}
 
 	// Image icon
 	".image-icon" {
@@ -178,7 +244,7 @@
 		outlineWidth: 1
 	}
 	".image-icon:hover" {
-		outlineColor: "$COLOR_HOVER"
+		outlineColor: "$COLOR_ACCENT"
 	}
 	".image-icon:selected" {
 		outlineColor: "$COLOR_BORDER_FOCUS"
@@ -187,27 +253,20 @@
 		backgroundColor: "$COLOR_BG_RAISED"
 	}
 
-	// Inputs
-	".input-field" {
-		backgroundColor: "$COLOR_BG_INPUT"
-		outlineColor: "$COLOR_BORDER"
-		outlineWidth: 1
-	}
-
 	// Buttons
 	".button" {
 		height: 32
 	}
 	".button__icon" {
-		color: "$COLOR_ACCENT"
+		color: "$COLOR_ICON"
 		alignY: "center"
 	}
 	".button__text" {
 		alignY: "center"
 	}
 	".button:hover" { backgroundColor: "$COLOR_HOVER" }
-	".button:pressed" { backgroundColor: "$COLOR_SELECTED" }
-	".button:disabled" { backgroundColor: "$COLOR_ACCENT" }
+	".button:pressed" { backgroundColor: "$COLOR_PRESSED" }
+	".button:disabled" { backgroundColor: "$COLOR_DISABLED_BG" }
 	".button--standalone" {
 		background: {
 			nineSliceMaterial: "$BUTTON"
@@ -310,14 +369,14 @@
 	}
 	
 	".scrollbar" {
-		backgroundColor: "$COLOR_BG_RAISED"
+		backgroundColor: "$COLOR_BG_INSET"
 	}
 
 	".scrollbar__button" {
-		backgroundColor: "$COLOR_ACCENT"
+		backgroundColor: "$COLOR_BG_RAISED"
 	}
 	".scrollbar__slider-bar" {
-		backgroundColor: "$COLOR_BG_PANEL"
+		backgroundColor: "$COLOR_BG_RAISED"
 	}
 	".scrollbar__slider-bar--horizontal" {
 		minWidth: 10
@@ -347,12 +406,12 @@
 		height: 4
 		alignY: "bottom"
 		visible: false
-		color: "$COLOR_SELECTED"
+		color: "$COLOR_BORDER_FOCUS"
 	}
 	".menu-item:hover::selection-bar" {
 		visible: true
 	}
-	".menu-item:disabled" { backgroundColor: "$COLOR_ACCENT" }
+	".menu-item:disabled" { backgroundColor: "$COLOR_DISABLED_BG" }
 	".menu-item:disabled::selection-bar" {
 		visible: false
 	}
@@ -362,7 +421,7 @@
 
 	// Tree
 	".tree__expansion-icon" {
-		color: "#000000"
+		color: "$COLOR_ICON"
 	}
 	".tree-item::selection" {
 		type: "WIRect"
@@ -381,27 +440,29 @@
 	}
 	".tree-item:selected:hover::selection" {
 		visible: true
-		color: "$COLOR_HOVER"
+		color: "$COLOR_SELECTED_HOVER"
 	}
 
 	// Input controls
 	".input-field" {
 		flex: 1
-		backgroundColor: "$COLOR_BG_PANEL"
-		outlineColor: "$COLOR_BORDER"
-		outlineWidth: 1
+		backgroundColor: "$COLOR_BG_INPUT"
 	}
 	".input-field__disabled-overlay" {
 		background {
-			color: "$COLOR_ACCENT"
-			alpha: 200
+			color: "$COLOR_DISABLED_BG"
+			alpha: "$ALPHA_SCRIM"
 		}
 	}
 	".input-control-panel" {
 		width: "100%"
+		backgroundColor: "$COLOR_BORDER"
 	}
 	".input-control-panel__content-area" {
 		width: "100%"
+		spacing: 1
+		paddingTop: 1
+		paddingBottom: 1
 	}
 	".input-control-wrapper__content-area" {
 		width: "100%"
@@ -426,13 +487,13 @@
 		type: "WITexturedRect"
 		width: "100%"
 		height: "100%"
-		color: "#ffffff"
+		color: "$COLOR_KEYFRAME"
 	}
 	".keyframe--animated::icon" {
 		material: "gui/pfm/keyframe_marker"
 	}
 	".keyframe--animated-current-frame::icon" {
-		color: "#ff0000"
+		color: "$COLOR_KEYFRAME_CURRENT"
 	}
 	".keyframe--static::icon" {
 		material: "gui/pfm/keyframe_marker_static"
@@ -466,6 +527,9 @@
 	}
 
 	// Viewport
+	".viewport__title-bar" {
+		paddingX: 5
+	}
 	".viewport__controls" {
 		margin: 0
 		padding: 0
@@ -485,11 +549,12 @@
 		width: "100%"
 		height: "100%"
 		material: "gui/pfm/timeline/upper_playhead"
+		color: "$COLOR_PLAYHEAD"
 	}
 	".playhead__line" {
 		flex: 1
 		width: 1
-		backgroundColor: "$COLOR_BORDER"
+		backgroundColor: "$COLOR_PLAYHEAD"
 	}
 	".playhead__icon--lower" {}
 	".playhead__icon--lower::icon" {
@@ -497,6 +562,7 @@
 		width: "100%"
 		height: "100%"
 		material: "gui/pfm/timeline/lower_playhead"
+		color: "$COLOR_PLAYHEAD"
 	}
 
 	// Web Browser
@@ -509,7 +575,7 @@
 
 	// Text-entry
 	".text-entry" {
-		backgroundColor: "$COLOR_BG_APP"
+		backgroundColor: "$COLOR_BG_INPUT"
 		outlineColor: "$COLOR_BORDER"
 		outlineWidth: 1
 	}
@@ -545,22 +611,21 @@
 	".clip__content-area" {
 		width: "100%"
 		height: 45
-		backgroundColor: "#ff0000"
-		outlineColor: "#00ff00"
+		backgroundColor: "$COLOR_CLIP"
+		outlineColor: "$COLOR_BORDER"
 		outlineWidth: 2
 	}
 	".clip__header" {
-		backgroundColor: "#00ff00"
+		backgroundColor: "$COLOR_CLIP_HEADER"
+		paddingLeft: 5
+		paddingTop: 2
 	}
-	".clip__title" {
-		
-	}
+	".clip__title" {}
 	".clip__body" {
 		flex: 1
+		paddingLeft: 5
 	}
-	".clip__details" {
-		
-	}
+	".clip__details" {}
 
 	// Timeline-Editor
 	".timeline-editor__content-area" {
@@ -570,11 +635,11 @@
 	".timeline-editor__property-container" {
 		width: 100
 		height: "100%"
-		backgroundColor: "#ff0000"
+		backgroundColor: "$COLOR_BG_PANEL"
 	}
 	".timeline-editor__data-axis" {
 		width: 35
-		backgroundColor: "#666666"
+		backgroundColor: "$COLOR_BG_RAISED"
 	}
 	".timeline-editor__graph-container" {
 		flex: 1
@@ -588,22 +653,22 @@
 	".data-point" {
 		width: 4
 		height: 4
-		backgroundColor: "#888888"
+		backgroundColor: "$COLOR_ICON"
 	}
 	".data-point:selected" {
-		backgroundColor: "#ff0000"
+		backgroundColor: "$COLOR_SELECTED"
 	}
 	".data-point__control" {
-		backgroundColor: "#ff7700"
+		backgroundColor: "$COLOR_ACCENT"
 	}
 	".data-point__control--in" {}
 	".data-point__control--out" {}
 	".data-point-control__line" {}
 	".data-point-control__line--in" {
-		color: "#ff0000"
+		color: "$COLOR_TANGENT_IN"
 	}
 	".data-point-control__line--out" {
-		color: "#00ffff"
+		color: "$COLOR_TANGENT_OUT"
 	}
 	".data-point__control--aligned" {}
 	".data-point__control--vector" {}
@@ -689,5 +754,62 @@
 
 	"witablecell" {
 		height: 32
+	}
+
+	// Tutorial Slide
+	".tutorial-slide__progress-bar" {
+		backgroundColor: "$COLOR_BG_INSET"
+	}
+	".tutorial-slide__progress-bar .progress-bar__fill" {
+		backgroundColor: "$COLOR_ACCENT"
+	}
+	".connector-line" {
+		color: "$COLOR_BORDER_SUBTLE"
+	}
+
+	// Time Selection
+	".time-selection" {
+		alpha: 128
+	}
+	".time-selection-segment" {
+		color: "#004000"
+	}
+	".time-selection-segment--left" {}
+	".time-selection-segment--right" {}
+	".time-selection-segment--middle" {}
+	".time-selection__line" {}
+	".time-selection__line--inner" {
+		color: "#ffffff"
+	}
+	".time-selection__line--outer" {
+		color: "#000000"
+	}
+
+	// Window
+	".window" {
+		backgroundColor: "$COLOR_BG_PANEL"
+	}
+	".window__title-bar" {
+		paddingX: 5
+		backgroundColor: "$COLOR_BG_RAISED"
+	}
+	".window__content-area" {}
+	".window__message-area" {
+		padding: 10
+		spacing: 4
+	}
+	".window__backdrop" {
+		backgroundColor: "$COLOR_BG_SCRIM"
+	}
+
+	// Misc
+	".modal_overlay" {
+		"background": {
+			color: "$COLOR_BG_SCRIM"
+			alpha: "$ALPHA_SCRIM"
+		}
+	}
+	".button-group" {
+		spacing: 5
 	}
 }

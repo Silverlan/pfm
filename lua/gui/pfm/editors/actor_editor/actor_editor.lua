@@ -494,7 +494,7 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 	end
 	if util.is_valid(actorGroup) == false then
 		local collapsible = gui.create("collapsible_group", self.m_propertyContainer)
-		collapsible:AddStyleClass("act_ed_actor")
+		collapsible:AddStyleClass("editor__actor")
 		collapsible:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 		collapsible:SetGroupName(actor:GetName())
 		collapsible:Expand()
@@ -502,7 +502,7 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 		self.m_componentPropertyGroups[uuid] = { collapsibleGroup = collapsible, componentGroups = {} }
 	end
 	local collapsible = actorGroup:AddGroup(locale.get_text("c_" .. ctype))
-	collapsible:AddStyleClass("act_ed_component")
+	collapsible:AddStyleClass("editor__actor-component")
 	collapsible:Expand()
 	local collapsibleContents = collapsible:GetContents()
 
@@ -514,7 +514,7 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 		collapsibleContents:GetWidth(),
 		collapsibleContents:GetHeight()
 	)
-	animSetControls:AddStyleClass("act_ed_property")
+	animSetControls:AddStyleClass("editor__actor-property")
 	animSetControls:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	animSetControls:SetName("property_controls")
 	animSetControls:GetControlsMenu():AddCallback("OnControlAdded", function(el, name, ctrl, wrapper)
@@ -1918,7 +1918,7 @@ function gui.PFMActorEditor:AddControl(
 	local displayName, description = pfm.util.get_localized_property_name(identifier)
 
 	local child = baseItem:AddItem(displayName, nil, nil, identifier)
-	child:AddStyleClass("act_ed_property")
+	child:AddStyleClass("editor__actor-property")
 	child:SetName(util.Path.CreateFilePath(identifier):GetBack())
 	if description ~= nil then
 		child:SetTooltip(description)
@@ -2157,12 +2157,12 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 		return find_property_object_entry(elActor, componentType, "drivenObject")
 	end
 
-	local function add_icon(elActor, componentType, icon)
+	local function add_icon(elActor, componentType, icon, styleClass)
 		local tIcons = {}
 		local tDriven = find_driven_object_entry(elActor, componentType)
 		if #tDriven > 0 then
 			for _, drivenData in ipairs(tDriven) do
-				local icon = drivenData.element:AddIcon(icon)
+				local icon = drivenData.element:AddIcon(icon, styleClass)
 				if util.is_valid(icon) then
 					icon:SetName(componentType)
 					icon:SetCursor(gui.CURSOR_SHAPE_HAND)
@@ -2228,7 +2228,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 	end
 
 	self:IterateActors(function(el)
-		local tIcons = add_icon(el, "constraint", "gui/pfm/icon_constraint")
+		local tIcons = add_icon(el, "constraint", "gui/pfm/icon_constraint", {"editor-icon", "editor-actor-icon", "editor-actor-icon--constraint"})
 		for _, iconData in ipairs(tIcons) do
 			local constraintType
 			for _, ctName in ipairs({
@@ -2292,7 +2292,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 			})
 		end
 
-		local tIcons = add_icon(el, "animation_driver", "gui/pfm/icon_driver")
+		local tIcons = add_icon(el, "animation_driver", "gui/pfm/icon_driver", {"editor-icon", "editor-actor-icon", "editor-actor-icon--constraint"})
 		for _, iconData in ipairs(tIcons) do
 			iconData.icon:SetTooltip(gui.Loc("pfm_animation_driver"))
 			iconData.element.__elDriverActorData = {
@@ -2343,7 +2343,7 @@ function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData, controlData)
 	el:ClearIcons()
 	local channel = self:GetAnimationChannel(actorData.actor, controlData.path, false)
 	if channel ~= nil then
-		local icon = el:AddUniqueIcon("gui/pfm/icon_animated")
+		local icon = el:AddUniqueIcon("gui/pfm/icon_animated", {"editor-icon", "editor-property-icon", "editor-property-icon--animated"})
 		if util.is_valid(icon) then
 			icon:SetName("animated")
 			icon:SetCursor(gui.CURSOR_SHAPE_HAND)
@@ -2367,7 +2367,7 @@ function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData, controlData)
 	end
 	local hasExpression = (channel ~= nil and channel:GetExpression() ~= nil)
 	if hasExpression then
-		local icon = el:AddUniqueIcon("gui/pfm/icon_math_expression")
+		local icon = el:AddUniqueIcon("gui/pfm/icon_math_expression", {"editor-icon", "editor-property-icon", "editor-property-icon--math-expression"})
 		if util.is_valid(icon) then
 			icon:SetName("math_expr")
 			icon:SetCursor(gui.CURSOR_SHAPE_HAND)
