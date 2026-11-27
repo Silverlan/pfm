@@ -866,7 +866,7 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 	end)
 	self.m_btRotate:SetName("manip_rotate")
 
-	self.m_btScreen = btGroup:AddIconButton("arrows-move", function()
+	self.m_btScreen = btGroup:AddIconButton("scale-3d", function()
 		self:SetScaleManipulatorMode()
 		return true
 	end)

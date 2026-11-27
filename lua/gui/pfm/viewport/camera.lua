@@ -74,6 +74,7 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 			workCameraC:FlyToSelection()
 		end
 	end)
+	self.m_btAutoAim:SetEnabled(false)
 	self.m_btCamera = btGroup:AddGenericButton("", function()
 		self:ToggleCamera()
 	end)

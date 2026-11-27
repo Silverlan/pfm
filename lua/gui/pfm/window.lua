@@ -18,6 +18,7 @@ function gui.PFMWindow:OnInitialize()
 
 	local titleBar = gui.create_hbox(mainBox)
 		:AddStyleClass("window__title-bar")
+	self.m_titleBar = titleBar
 
 	local titleText = gui.create("WIText", titleBar)
 	titleText:SetVisible(false)

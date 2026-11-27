@@ -32,6 +32,7 @@
 
 			// Emphasis
 			COLOR_ACCENT:         "#0969da"
+			COLOR_ACCENT_SUBTLE:  "#a9c7f0" // e.g. slider-fill
 
 			// Status
 			COLOR_INFO:           "#0969da"
@@ -49,7 +50,7 @@
 			COLOR_CLIP_HEADER:      "#d1d9e0"
 
 			// Alpha
-			ALPHA_SCRIM: 120
+			ALPHA_SCRIM: 180
 		}
 		materials: {
 			"BUTTON" {
@@ -261,6 +262,7 @@
 		color: "$COLOR_ICON"
 		alignY: "center"
 	}
+	".button__context-trigger" {}
 	".button__text" {
 		alignY: "center"
 	}
@@ -566,7 +568,7 @@
 	}
 
 	// Web Browser
-	".web_browser" {
+	".web-browser" {
 		flex: 1
 	}
 	"pfm_asset_web_browser asset_web_browser" {
@@ -587,6 +589,9 @@
 	}
 
 	// Misc
+	".slider-fill" {
+		color: "$COLOR_ACCENT_SUBTLE"
+	}
 	".beta_info" {
 		color: "#ff0000"
 	}
@@ -797,13 +802,20 @@
 	".window__message-area" {
 		padding: 10
 		spacing: 4
+		width: "100%"
+	}
+	".window__message" {
+		flex: 1
 	}
 	".window__backdrop" {
-		backgroundColor: "$COLOR_BG_SCRIM"
+		background: {
+			color: "$COLOR_BG_SCRIM"
+			alpha: "$ALPHA_SCRIM"
+		}
 	}
 
 	// Misc
-	".modal_overlay" {
+	".modal-overlay" {
 		"background": {
 			color: "$COLOR_BG_SCRIM"
 			alpha: "$ALPHA_SCRIM"

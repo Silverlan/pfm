@@ -34,7 +34,7 @@ function Element:OnInitialize()
 	end)
 
 	self.m_browser = gui.create("pfm_asset_web_browser", self.m_contents)
-		:AddStyleClass("web_browser")
+		:AddStyleClass("web-browser")
 	self.m_browser:AddCallback("OnDownloadAssetsImported", function(el, importedAssets)
 		self:CallCallbacks("OnDownloadAssetsImported", importedAssets)
 	end)

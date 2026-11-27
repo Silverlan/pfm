@@ -18,6 +18,7 @@ function PfmPrompt:OnInitialize()
 	local contents = self:GetContents()
 
 	local elMsg = gui.create("WIText", contents)
+		:AddStyleClass("window__message")
 	elMsg:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
 	elMsg:SetSkinCallbacksEnabled(true)
 	elMsg:AddCallback("OnSkinApplied", function()
@@ -31,6 +32,12 @@ function PfmPrompt:OnInitialize()
 	local boxButtons = gui.create_hbox(contents)
 		:AddStyleClass("button-group")
 	self.m_boxButtons = boxButtons
+
+	local dragArea = self:GetFrame():GetDragArea()
+		:SetParent(self.m_titleBar)
+		:SetBackgroundElement(true)
+		:SetSize(self.m_titleBar:GetSize())
+		:SetAnchor(0, 0, 1, 1)
 end
 function PfmPrompt:GetUserContents()
 	return self.m_userContents

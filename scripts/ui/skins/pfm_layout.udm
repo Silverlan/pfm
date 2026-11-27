@@ -210,6 +210,9 @@
 	".button__icon--scale" {
 		material: "gui/pfm/icons/scale"
 	}
+	".button__icon--scale-3d" {
+		material: "gui/pfm/icons/scale_3d"
+	}
 	".button__icon--skip-backward-fill" {
 		material: "gui/pfm/icons/skip-backward-fill"
 	}

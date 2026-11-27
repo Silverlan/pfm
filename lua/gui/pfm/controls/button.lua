@@ -258,16 +258,15 @@ function gui.PFMButton:SetMaterial(mat)
 	end]]
 end
 function gui.PFMButton:SetupContextMenu(fPopulateContextMenu, openOnClick)
-	if util.is_valid(self.m_elCaret) == false then
-		local caret = gui.create("WITexturedRect", self.m_contents)
-		caret:SetMaterial("gui/pfm/icons/caret-down-fill")
-		caret:AddStyleClass("button__icon")
-		self.m_elCaret = caret
-	end
-
 	self.m_fPopulateContextMenu = fPopulateContextMenu
+	util.remove(self.m_contextTrigger)
 	self.m_contextTrigger = gui.create("WIBase", self.m_contents)
-	self.m_contextTrigger:SetMouseInputEnabled(true)
+		:SetMouseInputEnabled(true)
+		:SetAutoSizeToContents(true)
+
+	local icon = gui.create("WITexturedRect", self.m_contextTrigger)
+		:AddStyleClass("button__icon")
+		:AddStyleClass("button__icon--caret-down-fill")
 	self.m_contextTrigger:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button ~= input.MOUSE_BUTTON_LEFT or self:IsEnabled() == false then
 			return util.EVENT_REPLY_UNHANDLED
@@ -282,6 +281,7 @@ function gui.PFMButton:SetupContextMenu(fPopulateContextMenu, openOnClick)
 			self:OpenContextMenu()
 		end)
 	end
+
 end
 function gui.PFMButton:OpenContextMenu()
 	if self.m_fPopulateContextMenu == nil then
