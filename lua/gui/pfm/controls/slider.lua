@@ -66,7 +66,7 @@ function Element:OnInitialize()
 	end)]]
 
 	self.m_text = gui.create("WIText", self)
-	self.m_text:AddStyleClass("input_field_text")
+	self.m_text:AddStyleClass("input-field__text")
 	self.m_text:SetVisible(false)
 	self.m_text:SetAlignment(gui.ALIGNMENT_CENTER)
 

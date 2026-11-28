@@ -145,7 +145,7 @@ function gui.Ticker:OnInitialize()
 	self:ApplySize(256, 64)
 
 	self.m_text = gui.create("WIText", self)
-	self.m_text:AddStyleClass("input_field_text")
+	self.m_text:AddStyleClass("input-field__text")
 	--self:SetAutoSizeToContents(true)
 	self:EnableThinking()
 

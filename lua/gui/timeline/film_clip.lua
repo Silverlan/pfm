@@ -11,7 +11,7 @@ local FilmClip = util.register_class("gui.FilmClip", gui.BaseClip)
 function FilmClip:OnInitialize()
 	gui.BaseClip.OnInitialize(self)
 
-	self:AddStyleClass("film-clip")
+	self:AddStyleClass("clip")
 
 	self.m_textDetails = gui.create("WIText", self.m_body)
 		:AddStyleClass("clip__details")
@@ -41,7 +41,6 @@ function FilmClip:OnInitialize()
 
 	self:SetMouseInputEnabled(true)
 
-	self:AddStyleClass("timeline_clip_film")
 	gui.mark_as_drag_and_drop_target(self, "film_clip")
 end
 function FilmClip:SwapWithFilmClip(filmClip)

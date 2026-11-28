@@ -14,7 +14,7 @@ function gui.EditableEntry:OnInitialize()
 
 	self.m_descContainer = gui.create("WIBase", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	local pText = gui.create("WIText", self.m_descContainer)
-	pText:AddStyleClass("input_field_text")
+	pText:AddStyleClass("input-field__text")
 	self.m_pText = pText
 
 	local cbOnChildAdded

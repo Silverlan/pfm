@@ -18,7 +18,7 @@ function Element:OnInitialize()
 
 	local elText = gui.create("WIText", self)
 	elText:SetColor(Color(51, 51, 51))
-	elText:AddStyleClass("input_field_text")
+	elText:AddStyleClass("input-field__text")
 	self.m_elText = elText
 
 	if g_activeProcesses == 0 then

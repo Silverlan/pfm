@@ -209,7 +209,8 @@ function gui.PFMTreeViewElement:OnInitialize()
 
 	self.m_iconBox = gui.create_hbox(self.m_header)
 		:SetSize(0, 14)
-		:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
+		:AddStyleClass("tree-item__icon-container")
+		:SetVisible(false)
 	self.m_icons = {}
 
 	self:SetMouseInputEnabled(true)
@@ -406,6 +407,8 @@ function gui.PFMTreeViewElement:AddIcon(material, styleClass)
 	icon:SetSize(14, 14)
 	icon:SetMaterial(material)
 	table.insert(self.m_icons, icon)
+
+	self.m_iconBox:SetVisible(true)
 
 	styleClass = styleClass or {}
 	if(type(styleClass) ~= "table") then styleClass = {styleClass} end

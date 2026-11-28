@@ -200,6 +200,7 @@
 		width: "100%"
 	}
 	".timeline__playhead" {}
+	".timeline-axis__text" {}
 	".timeline__strip" {
 		flex: 1
 		width: "100%"
@@ -425,6 +426,14 @@
 	".tree__expansion-icon" {
 		color: "$COLOR_ICON"
 	}
+	".tree-item__icon-container" {
+		alignY: "center"
+		height: "100%"
+		alignItems: "center"
+		paddingLeft: 2
+		paddingRight: 3
+		paddingBottom: 2
+	}
 	".tree-item::selection" {
 		type: "WIRect"
 		width: "100%"
@@ -455,6 +464,9 @@
 			color: "$COLOR_DISABLED_BG"
 			alpha: "$ALPHA_SCRIM"
 		}
+	}
+	".input-field__text" {
+		// TODO: Medium font?
 	}
 	".input-control-panel" {
 		width: "100%"
@@ -613,6 +625,7 @@
 	}
 
 	// Film Clip
+	".clip" {}
 	".clip__content-area" {
 		width: "100%"
 		height: 45

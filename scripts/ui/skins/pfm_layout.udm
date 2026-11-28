@@ -78,6 +78,14 @@
 	".viewport__film-clip-labels" {
 		alignItems: "center"
 	}
+	".viewport__local-time" {
+		// TODO: Large font
+	}
+	".viewport__global-time" {
+		// TODO: Large font
+	}
+	".viewport__clip-label" {}
+	".viewport__parent-clip-label" {}
 	".viewport__content-area" {
 		alignItems: "stretch"
 	}

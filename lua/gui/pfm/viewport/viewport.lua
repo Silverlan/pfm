@@ -38,21 +38,21 @@ function gui.PFMCoreViewportBase:OnInitialize()
 	end)
 	self:SetScrollInputEnabled(true)
 
-	local function create_text_element(fontStyle, parent)
+	local function create_text_element(styleClass, parent)
 		local el = gui.create("WIText", parent or self.m_titleBar)
-		el:AddStyleClass(fontStyle)
+		el:AddStyleClass(styleClass)
 		return el
 	end
-	self.m_timeGlobal = create_text_element("font_large")
+	self.m_timeGlobal = create_text_element("viewport__global-time")
 	self.m_timeGlobal:SetText(util.get_pretty_time(0.0))
 
 	local labelBox = gui.create_vbox(self.m_titleBar)
 		:AddStyleClass("viewport__film-clip-labels")
-	self.m_filmClipParent = create_text_element("font_medium", labelBox)
+	self.m_filmClipParent = create_text_element("viewport__parent-clip-label", labelBox)
 
-	self.m_filmClip = create_text_element("font_medium", labelBox)
+	self.m_filmClip = create_text_element("viewport__clip-label", labelBox)
 
-	self.m_timeLocal = create_text_element("font_large")
+	self.m_timeLocal = create_text_element("viewport__local-time")
 	self.m_timeLocal:SetText(util.get_pretty_time(0.0))
 
 	self:SwitchToGameplay(false)

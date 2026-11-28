@@ -932,7 +932,6 @@ function gui.PFMActorEditor:AddProperty(name, child, fInitPropertyEl)
 		local elLabel = gui.create("WIText",elLabelContainer)
 		elLabel:SetText(name)
 		elLabel:SetColor(Color(200,200,200))
-		elLabel:AddStyleClass("font_medium")
 		elLabel:CenterToParentY()
 		elLabel:SetX(5)
 

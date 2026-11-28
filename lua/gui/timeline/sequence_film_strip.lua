@@ -70,7 +70,6 @@ function SequenceFilmStrip:CreateDragHandle(startHandle)
 	end
 
 	local dragHandle = gui.create("drag_handle", self.m_contents)
-	dragHandle:AddStyleClass("drag_handle")
 	dragHandle:SetCursor(gui.CURSOR_SHAPE_HRESIZE)
 	local initialStartTime
 	local initialDuration

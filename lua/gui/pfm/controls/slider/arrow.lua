@@ -15,7 +15,6 @@ function Element:OnInitialize()
 	self.m_elIcon = elIcon
 
 	self:SetMouseInputEnabled(true)
-	self:AddStyleClass("input_field_overlay")
 end
 function Element:SetArrowType(type)
 	self.m_elIcon:SetMaterial("gui/pfm/arrow_" .. type)
