@@ -140,7 +140,7 @@ gui.enable_drag_and_drop = function(src, catName, fOnGhostCreated)
 			if fOnGhostCreated ~= nil then
 				fOnGhostCreated(p)
 			end
-			return util.EVENT_REPLY_HANDLED
+			return util.EVENT_REPLY_UNHANDLED
 		end
 	end)
 	--

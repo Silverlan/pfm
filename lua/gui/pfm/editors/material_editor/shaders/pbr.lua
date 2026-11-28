@@ -4,8 +4,8 @@
 include("/util/game_shader_register.lua")
 
 function gui.PFMMaterialEditor:InitializePBRControls()
-	local mapVbox = gui.create("vbox", self.m_controlBox)
-	mapVbox:SetAutoFillContentsToWidth(true)
+	local mapVbox = gui.create_vbox(self.m_controlBox)
+	-- mapVbox:SetAutoFillContentsToWidth(true)
 
 	-- Shader
 	--[[ctrlVbox:AddDropDownMenu("shader","shader",{
@@ -128,7 +128,7 @@ function gui.PFMMaterialEditor:InitializePBRControls()
 	resizer:SetMoverMode(true)]]
 
 	local ctrlVbox = gui.create("pfm_controls_menu", self.m_controlBox)
-	ctrlVbox:SetAutoFillContentsToHeight(true)
+	-- ctrlVbox:SetAutoFillContentsToHeight(true)
 	ctrlVbox:SetFixedHeight(false)
 	self.m_ctrlVBox = ctrlVbox
 
@@ -655,16 +655,16 @@ function gui.PFMMaterialEditor:InitializeShaderMaterialControls()
 	self.m_matPropElements = {}
 	self.m_linkedMaterialParameterElements = {}
 
-	local mapVbox = gui.create("vbox", self.m_controlBox)
-	mapVbox:SetAutoFillContentsToWidth(true)
+	local mapVbox = gui.create_vbox(self.m_controlBox)
+	-- mapVbox:SetAutoFillContentsToWidth(true)
 	self.m_mapVbox = mapVbox
 
 	local mainCtrlMenu = gui.create("pfm_controls_menu", mapVbox)
-	mainCtrlMenu:SetAutoFillContentsToHeight(true)
+	-- mainCtrlMenu:SetAutoFillContentsToHeight(true)
 	mainCtrlMenu:SetFixedHeight(false)
 
 	local ctrlVbox = gui.create("pfm_controls_menu", self.m_controlBox)
-	ctrlVbox:SetAutoFillContentsToHeight(true)
+	-- ctrlVbox:SetAutoFillContentsToHeight(true)
 	ctrlVbox:SetFixedHeight(false)
 	self.m_ctrlVBox = ctrlVbox
 

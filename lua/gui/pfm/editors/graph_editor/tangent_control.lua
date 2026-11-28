@@ -6,23 +6,27 @@ function gui.PFMTimelineTangentControl:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	local lineIn = gui.create("WILine", self:GetParent())
-	lineIn:SetColor(Color.Red)
+		:AddStyleClass("data-point-control__line")
+		:AddStyleClass("data-point-control__line--in")
 	lineIn:SetLineWidth(2)
 	self.m_inLine = lineIn
 
 	local ctrlIn = gui.create("pfm_data_point_control", self:GetParent())
+		:AddStyleClass("data-point__control")
+		:AddStyleClass("data-point__control--in")
 	ctrlIn:SetTangentControl(self)
-	ctrlIn:SetColor(Color.Black)
 	self.m_inCtrl = ctrlIn
 
 	local lineOut = gui.create("WILine", self:GetParent())
-	lineOut:SetColor(Color.Aqua)
+		:AddStyleClass("data-point-control__line")
+		:AddStyleClass("data-point-control__line--out")
 	lineOut:SetLineWidth(2)
 	self.m_outLine = lineOut
 
 	local ctrlOut = gui.create("pfm_data_point_control", self:GetParent())
+		:AddStyleClass("data-point__control")
+		:AddStyleClass("data-point__control--out")
 	ctrlOut:SetTangentControl(self)
-	ctrlOut:SetColor(Color.Black)
 	self.m_outCtrl = ctrlOut
 
 	self.m_inCtrl:AddCallback("OnMoved", function(ctrl, newPos)
@@ -51,12 +55,8 @@ function gui.PFMTimelineTangentControl:OnInitialize()
 	self.m_outCtrl:GetVisibilityProperty():Link(self:GetVisibilityProperty())
 end
 function gui.PFMTimelineTangentControl:UpdateHandleType(handle, type)
-	local colorScheme = pfm.get_color_scheme()
-	local cpColor = colorScheme:GetColor("orange")
-
 	local elLine
 	local elCtrl
-	local lineColor
 	if handle == pfm.udm.EditorGraphCurveKeyData.HANDLE_IN then
 		elLine = self.m_inLine
 		elCtrl = self.m_inCtrl
@@ -65,15 +65,26 @@ function gui.PFMTimelineTangentControl:UpdateHandleType(handle, type)
 		elCtrl = self.m_outCtrl
 	end
 
+	elCtrl:RemoveStyleClass("data-point__control--aligned")
+	elCtrl:RemoveStyleClass("data-point__control--vector")
+	elCtrl:RemoveStyleClass("data-point__control--free")
+
+	elLine:RemoveStyleClass("data-point-control__line--aligned")
+	elLine:RemoveStyleClass("data-point-control__line--vector")
+	elLine:RemoveStyleClass("data-point-control__line--free")
+
+	local stylePostfix
 	if type == pfm.udm.KEYFRAME_HANDLE_TYPE_ALIGNED then
-		lineColor = colorScheme:GetColor("lightRed")
+		stylePostfix = "aligned"
 	elseif type == pfm.udm.KEYFRAME_HANDLE_TYPE_VECTOR then
-		lineColor = colorScheme:GetColor("lightGreen")
+		stylePostfix = "vector"
 	else
-		lineColor = colorScheme:GetColor("black")
+		stylePostfix = "free"
 	end
-	elLine:SetColor(lineColor)
-	elCtrl:SetColor(cpColor)
+	elCtrl:AddStyleClass("data-point__control--" .. stylePostfix)
+	elLine:AddStyleClass("data-point-control__line--" .. stylePostfix)
+	elCtrl:RefreshSkin()
+	elLine:RefreshSkin()
 end
 function gui.PFMTimelineTangentControl:GetInControl()
 	return self.m_inCtrl
@@ -98,7 +109,6 @@ function gui.PFMTimelineTangentControl:UpdateInOutLines(updateIn, updateOut)
 		return
 	end
 	local pos = self:GetCenter()
-
 	local curve = self.m_dataPoint:GetGraphCurve()
 
 	local editorChannel = curve:GetEditorChannel()

@@ -6,9 +6,7 @@ function gui.PFMDataPointControl:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:SetSize(4, 4)
-	local el = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_elPoint = el
-	el:GetColorProperty():Link(self:GetColorProperty())
+	self:AddStyleClass("data-point")
 
 	self:SetSelectable(true)
 	self.m_selected = false
@@ -37,7 +35,7 @@ function gui.PFMDataPointControl:SetSelected(selected)
 		return
 	end
 	self.m_selected = selected
-	self:SetColor(selected and Color.Red or Color.White)
+	self:SetState(gui.STATE_SELECTED, selected)
 	self:SetMoveModeEnabled(false)
 	self:OnSelectionChanged(selected)
 	self:CallCallbacks("OnSelectionChanged", selected)

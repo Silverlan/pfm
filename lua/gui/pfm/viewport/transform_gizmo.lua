@@ -718,8 +718,9 @@ function gui.PFMCoreViewportBase:SetScaleManipulatorMode()
 	self:SetManipulatorMode(gui.PFMCoreViewportBase.MANIPULATOR_MODE_SCALE)
 end
 function gui.PFMCoreViewportBase:InitializeManipulatorControls()
-	local controls = gui.create("hbox", self.m_controls)
-	controls:SetName("manip_controls")
+	local controls = gui.create_hbox(self.m_controls)
+		:AddStyleClass("viewport__transform-controls")
+		:SetName("manip_controls")
 
 	local btGroup = gui.PFMButtonGroup(controls)
 	self.m_btSelect = btGroup:AddIconButton("cursor-fill", function()
@@ -865,7 +866,7 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 	end)
 	self.m_btRotate:SetName("manip_rotate")
 
-	self.m_btScreen = btGroup:AddIconButton("arrows-move", function()
+	self.m_btScreen = btGroup:AddIconButton("scale-3d", function()
 		self:SetScaleManipulatorMode()
 		return true
 	end)
@@ -874,10 +875,7 @@ function gui.PFMCoreViewportBase:InitializeManipulatorControls()
 	)
 	self.m_btScreen:SetName("manip_screen")
 
-	controls:SetHeight(self.m_btSelect:GetHeight())
 	controls:Update()
-	controls:SetX(3)
-	controls:SetAnchor(0, 1, 0, 1)
 	self.manipulatorControls = controls
 end
 

@@ -4,23 +4,15 @@
 include("/pfm/ui/fonts.lua")
 
 util.register_class("gui.CollapsibleGroupTitleBar", gui.Base)
-
-function gui.CollapsibleGroupTitleBar:__init()
-	gui.Base.__init(self)
-end
 function gui.CollapsibleGroupTitleBar:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:ApplySize(256, 20)
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_contents = gui.create("hbox", self, 0, 0, self:GetWidth(), 20)
-	self.m_contents:SetAutoAlignToParent(true, false)
-	self.m_contents:SetFixedWidth(true)
-	self.m_bg:AddStyleClass("background")
+	self:SetAutoSizeToContents(true)
+	self.m_contents = gui.create_hbox(self)
+	self.m_contents:AddStyleClass("collapsible-panel-title-bar")
 
-	self.m_leftPadding = gui.create("WIBase", self.m_contents, 0, 0, 7, 1) -- Gap
 	self.m_collapsed = false
-	self.m_button = gui.create("WITexturedRect", self.m_contents)
+	self.m_button = gui.create("WIBase", self.m_contents)
 	self.m_button:SetMouseInputEnabled(true)
 	self.m_button:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT and state == input.STATE_PRESS then
@@ -28,36 +20,27 @@ function gui.CollapsibleGroupTitleBar:OnInitialize()
 			return util.EVENT_REPLY_HANDLED
 		end
 	end)
-	self.m_button:SetMaterial("gui/pfm/arrow_right")
-	self.m_button:SetSize(5, 7)
-	self.m_button:SetY(8)
+	self.m_button:AddStyleClass("collapsible-panel__button")
+	self.m_button:AddStyleClass("collapsible-panel__button--collapsed")
 	self.m_button:SetMouseInputEnabled(true)
-
-	gui.create("WIBase", self.m_contents, 0, 0, 8, 1) -- Gap
-	self.m_name = gui.create("WIText", self.m_contents, 0, 3)
-	self.m_name:AddStyleClass("font_medium")
-	self.m_name:SetColor(Color(152, 152, 152))
-end
-function gui.CollapsibleGroupTitleBar:GetLeftPadding()
-	return self.m_leftPaddingSz or 0
-end
-function gui.CollapsibleGroupTitleBar:SetLeftPadding(padding)
-	self.m_leftPaddingSz = padding
-	self.m_leftPadding:SetWidth(padding + 7)
+	
+	self.m_name = gui.create("WIText", self.m_contents)
 end
 function gui.CollapsibleGroupTitleBar:Collapse()
 	self.m_collapsed = true
 	if util.is_valid(self.m_button) then
-		self.m_button:SetMaterial("gui/pfm/arrow_right")
-		self.m_button:SetSize(5, 7)
+		self.m_button:RemoveStyleClass("collapsible-panel__button--expanded")
+		self.m_button:AddStyleClass("collapsible-panel__button--collapsed")
+		self.m_button:RefreshSkin()
 	end
 	self:CallCallbacks("OnCollapse")
 end
 function gui.CollapsibleGroupTitleBar:Expand()
 	self.m_collapsed = false
 	if util.is_valid(self.m_button) then
-		self.m_button:SetMaterial("gui/pfm/arrow_down")
-		self.m_button:SetSize(7, 5)
+		self.m_button:RemoveStyleClass("collapsible-panel__button--collapsed")
+		self.m_button:AddStyleClass("collapsible-panel__button--expanded")
+		self.m_button:RefreshSkin()
 	end
 	self:CallCallbacks("OnExpand")
 end

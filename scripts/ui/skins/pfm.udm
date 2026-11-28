@@ -1,0 +1,852 @@
+{
+	"theme" {
+		inherits: "pfm_layout"
+		constants: {
+			// Text
+			STYLE_TEXT_PRIMARY:   "#24292f"
+			COLOR_TEXT_MUTED:     "#57606a"
+			COLOR_TEXT_DISABLED:  "#8c959f"
+			STYLE_TEXT_INVERSE:   "#ffffff"
+			STYLE_TEXT_LINK:      "#0969da"
+			COLOR_ICON:           "#57606a"
+
+			// Surfaces
+			COLOR_BG_APP:         "#ffffff"
+			COLOR_BG_INSET:       "#f0f2f4"
+			COLOR_BG_PANEL:       "#f6f8fa"
+			COLOR_BG_RAISED:      "#dddddd"
+			COLOR_BG_INPUT:       "#ffffff"
+			COLOR_BG_SCRIM:       "#000000"
+
+			// Interaction states
+			COLOR_HOVER:          "#e3e3e3"
+			COLOR_PRESSED:        "#dcdcdc"
+			COLOR_SELECTED:       "#dddddd"
+			COLOR_SELECTED_HOVER: "#cccccc"
+			COLOR_DISABLED_BG:    "#888888"
+
+			// Borders
+			COLOR_BORDER:         "#8c959f"
+			COLOR_BORDER_SUBTLE:  "#d1d9e0"
+			COLOR_BORDER_FOCUS:   "#0969da"
+
+			// Emphasis
+			COLOR_ACCENT:         "#0969da"
+			COLOR_ACCENT_SUBTLE:  "#a9c7f0" // e.g. slider-fill
+
+			// Status
+			COLOR_INFO:           "#0969da"
+			COLOR_SUCCESS:        "#1a7f37"
+			COLOR_WARNING:        "#9a6700"
+			COLOR_ERROR:          "#cf222e"
+
+			// Misc
+			COLOR_PLAYHEAD:         "#cf222e"
+			COLOR_KEYFRAME:         "#57606a"
+			COLOR_KEYFRAME_CURRENT: "#0969da"
+			COLOR_TANGENT_IN:       "#8250df"
+			COLOR_TANGENT_OUT:      "#1a7f37"
+			COLOR_CLIP:             "#eaeef2"
+			COLOR_CLIP_HEADER:      "#d1d9e0"
+
+			// Alpha
+			ALPHA_SCRIM: 180
+		}
+		materials: {
+			"BUTTON" {
+				"textures"
+				{
+					"albedo_map" {
+						texture: "gui/pfm/button"
+						cache: false
+						styleSheet: {
+							".stop-top" {
+								"stop-color": "$COLOR_BG_RAISED"
+							}
+							".stop-bottom" {
+								"stop-color": "$COLOR_BG_PANEL"
+							}
+						}
+					}
+				}
+				"properties"
+				{
+					"9slice": {
+						leftInset: 10
+						rightInset: 10
+						topInset: 10
+						bottomInset: 10
+					}
+				}
+			}
+			"BUTTON_LEFT" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_left" } }
+			}
+			"BUTTON_MIDDLE" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_middle" } }
+			}
+			"BUTTON_RIGHT" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_right" } }
+			}
+
+			"BUTTON_TAB" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_tab" } }
+			}
+			"BUTTON_TAB_LEFT" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_tab_left" } }
+			}
+			"BUTTON_TAB_MIDDLE" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_tab_middle" } }
+			}
+			"BUTTON_TAB_RIGHT" {
+				inherits: "BUTTON"
+				"textures" { "albedo_map" { texture: "gui/pfm/button_tab_right" } }
+			}
+
+			"ICON_EXPAND" {
+				"textures"
+				{
+					"albedo_map" {
+						texture: "gui/pfm/plus-circle"
+						cache: false
+						width: 9
+						height: 9
+						styleSheet: {
+							".background" { fill: "$COLOR_BG_APP" }
+							".bi" { fill: "$COLOR_ICON" }
+						}
+					}
+				}
+			}
+			"ICON_COLLAPSE" {
+				inherits: "ICON_EXPAND"
+				"textures" { "albedo_map" { texture: "gui/pfm/dash-circle" } }
+			}
+		}
+	}
+
+	// Expanion-icon
+	".expansion-icon::icon" {
+		type: "WITexturedRect"
+		width: "100%"
+		height: "100%"
+	}
+	".expansion-icon--expand::icon" {
+		material: "$ICON_EXPAND"
+	}
+	".expansion-icon--collapse::icon" {
+		material: "$ICON_COLLAPSE"
+	}
+
+	// Grid-box
+	".gridbox" {
+		spacing: 10
+	}
+
+	// Tooltip
+	".tooltip" {
+		// maxWidth: 512
+		backgroundColor: "$COLOR_BG_PANEL"
+		outlineColor: "$COLOR_BORDER"
+		outlineWidth: 1
+		paddingX: 8
+		paddingY: 4
+	}
+
+	// Table
+	".table__row" {
+		height: 22
+	}
+	".table__row--selectable::selection" {
+		type: "WIRect"
+		width: "100%"
+		height: "100%"
+		visible: false
+		color: "$COLOR_SELECTED"
+	}
+	".table__row--selectable:hover::selection" {
+		color: "$COLOR_HOVER"
+		visible: true
+	}
+	".table__row--selectable:selected::selection" {
+		color: "$COLOR_SELECTED"
+		visible: true
+	}
+	".table__row--selectable:selected:hover::selection" {
+		color: "$COLOR_SELECTED_HOVER"
+		visible: true
+	}
+
+	// Timeline 
+	".timeline__content-area" {
+		width: "100%"
+		height: "100%"
+	}
+	".timeline__toolbar" {
+		justifyContent: "spaceBetween"
+		width: "100%"
+	}
+	".timeline__bookmark-bar" {
+		width: "100%"
+		height: 16
+	}
+	".timeline__axis" {
+		width: "100%"
+	}
+	".timeline__playhead" {}
+	".timeline-axis__text" {}
+	".timeline__strip" {
+		flex: 1
+		width: "100%"
+	}
+	".timeline__editor" {
+		height: "100%"
+	}
+	".bookmark" {
+		width: 7
+		height: 16
+		material: "gui/pfm/timeline/bookmark"
+	}
+	".bookmark:selected" {
+		material: "gui/pfm/timeline/bookmark_selected"
+	}
+
+	// Actor Editor
+	".editor__actor witext" {
+		color: "#4682b4"
+	}
+	".editor__actor-collection witext" {
+		color: "#969696"
+	}
+	".editor__actor-property witext" {
+		color: "#505050"
+	}
+	".editor__actor-component witext" {
+		color: "#2e8b57"
+	}
+
+	// Icons
+	".editor-icon" {color: "$COLOR_ACCENT"}
+	".editor-actor-icon" {}
+	".editor-component-icon" {}
+	".editor-property-icon" {}
+	".editor-property-icon--animated" {}
+	".editor-property-icon--math-expression" {}
+	".editor-actor-icon--constraint" {}
+
+	// Image icon
+	".image-icon" {
+		outlineColor: "$COLOR_BORDER"
+		outlineWidth: 1
+	}
+	".image-icon:hover" {
+		outlineColor: "$COLOR_ACCENT"
+	}
+	".image-icon:selected" {
+		outlineColor: "$COLOR_BORDER_FOCUS"
+	}
+	".image-icon__label-container" {
+		backgroundColor: "$COLOR_BG_RAISED"
+	}
+	".image-icon:hover .image-icon__label-container" {
+		backgroundColor: "$COLOR_SELECTED_HOVER"
+	}
+	".image-icon:selected .image-icon__label-container" {
+		backgroundColor: "$COLOR_ACCENT_SUBTLE"
+	}
+
+	// Buttons
+	".button" {
+		height: 32
+	}
+	".button__icon" {
+		color: "$COLOR_ICON"
+		alignY: "center"
+	}
+	".button__context-trigger" {}
+	".button__text" {
+		alignY: "center"
+	}
+	".button:hover" { backgroundColor: "$COLOR_HOVER" }
+	".button:pressed" { backgroundColor: "$COLOR_PRESSED" }
+	".button:disabled" { backgroundColor: "$COLOR_DISABLED_BG" }
+	".button--standalone" {
+		background: {
+			nineSliceMaterial: "$BUTTON"
+		}
+	}
+	".button--left" {
+		background: {
+			nineSliceMaterial: "$BUTTON_LEFT"
+		}
+	}
+	".button--middle" {
+		background: {
+			nineSliceMaterial: "$BUTTON_MIDDLE"
+		}
+	}
+	".button--right" {
+		background: {
+			nineSliceMaterial: "$BUTTON_RIGHT"
+		}
+	}
+	".button-tab" {
+		height: "100%"
+	}
+	".button-tab--standalone" {
+		background: {
+			nineSliceMaterial: "$BUTTON_TAB"
+		}
+	}
+	".button-tab--left" {
+		background: {
+			nineSliceMaterial: "$BUTTON_TAB_LEFT"
+		}
+	}
+	".button-tab--middle" {
+		background: {
+			nineSliceMaterial: "$BUTTON_TAB_MIDDLE"
+		}
+	}
+	".button-tab--right" {
+		background: {
+			nineSliceMaterial: "$BUTTON_TAB_RIGHT"
+		}
+	}
+	".button__content-area" {
+		paddingX: 8
+		spacing: 5
+		alignY: "center"
+	}
+	".button-tab .button__content-area" {
+		paddingX: 20
+	}
+
+	// Text
+	"witext" {
+		style: "$STYLE_TEXT_PRIMARY"
+	}
+	".link" {
+		style: "$STYLE_TEXT_LINK"
+		cursor: "hand"
+	}
+	".link:hover" {
+		style: "$STYLE_TEXT_PRIMARY"
+	}
+
+	// Base Editor
+	".editor" {
+		backgroundColor: "$COLOR_BG_APP"
+	}
+
+	// Info Box
+	".info-box" {
+		width: "100%"
+		backgroundColor: "$COLOR_BG_PANEL"
+	}
+	".info-box--info::left-bar" {
+		backgroundColor: "$COLOR_INFO"
+	}
+	".info-box--success::left-bar" {
+		backgroundColor: "$COLOR_SUCCESS"
+	}
+	".info-box--warning::left-bar" {
+		backgroundColor: "$COLOR_WARNING"
+	}
+	".info-box--error::left-bar" {
+		backgroundColor: "$COLOR_ERROR"
+	}
+
+	// Menues
+	".context-menu" {
+		backgroundColor: "$COLOR_BG_RAISED"
+		outlineColor: "$COLOR_BORDER"
+		outlineWidth: 1
+	}
+	".context-menu__scroll-container" {
+		width: 250
+		// maxHeight: 120
+	}
+	".context-menu__content-area" {
+		width: "100%"
+	}
+	
+	".scrollbar" {
+		backgroundColor: "$COLOR_BG_INSET"
+	}
+
+	".scrollbar__button" {
+		backgroundColor: "$COLOR_BG_RAISED"
+	}
+	".scrollbar__slider-bar" {
+		backgroundColor: "$COLOR_BG_RAISED"
+	}
+	".scrollbar__slider-bar--horizontal" {
+		minWidth: 10
+	}
+	".scrollbar__slider-bar--vertical" {
+		minHeight: 10
+	}
+
+	// Menu-bar
+	".menu-item" {
+		height: 24
+	}
+	".menu-item__content-area" {
+		padding: [8, 2, 8, 2]
+	}
+	".context-menu .menu-item__content-area" {
+		justifyContent: "spaceBetween"
+		alignItems: "center"
+		width: "100%"
+	}
+	".context-menu__scroll-container .vbox .menu-item" {
+		height: 24
+	}
+	".menu-item::selection-bar" {
+		type: "WIRect"
+		width: "100%"
+		height: 4
+		alignY: "bottom"
+		visible: false
+		color: "$COLOR_BORDER_FOCUS"
+	}
+	".menu-item:hover::selection-bar" {
+		visible: true
+	}
+	".menu-item:disabled" { backgroundColor: "$COLOR_DISABLED_BG" }
+	".menu-item:disabled::selection-bar" {
+		visible: false
+	}
+	".menu-bar__content-area" {
+		backgroundColor: "$COLOR_BG_RAISED"
+	}
+
+	// Tree
+	".tree__expansion-icon" {
+		color: "$COLOR_ICON"
+	}
+	".tree-item__icon-container" {
+		alignY: "center"
+		height: "100%"
+		alignItems: "center"
+		paddingLeft: 2
+		paddingRight: 3
+		paddingBottom: 2
+	}
+	".tree-item::selection" {
+		type: "WIRect"
+		width: "100%"
+		height: "100%"
+		visible: false
+		color: "$COLOR_SELECTED"
+	}
+	".tree-item:hover::selection" {
+		visible: true
+		color: "$COLOR_HOVER"
+	}
+	".tree-item:selected::selection" {
+		visible: true
+		color: "$COLOR_SELECTED"
+	}
+	".tree-item:selected:hover::selection" {
+		visible: true
+		color: "$COLOR_SELECTED_HOVER"
+	}
+
+	// Input controls
+	".input-field" {
+		flex: 1
+		backgroundColor: "$COLOR_BG_INPUT"
+	}
+	".input-field__disabled-overlay" {
+		background {
+			color: "$COLOR_DISABLED_BG"
+			alpha: "$ALPHA_SCRIM"
+		}
+	}
+	".input-field__text" {
+		// TODO: Medium font?
+	}
+	".input-control-panel" {
+		width: "100%"
+		backgroundColor: "$COLOR_BORDER"
+	}
+	".input-control-panel__content-area" {
+		width: "100%"
+		spacing: 1
+		paddingTop: 1
+		paddingBottom: 1
+	}
+	".input-control-wrapper__content-area" {
+		width: "100%"
+	}
+	".input-control-container" {}
+
+	".property-control__icon-container" {
+		width: 20
+		height: "100%"
+		alignItems: "center"
+		justifyContent: "center"
+	}
+	".property-control__keyframe" {}
+
+	// Keyframe
+	".keyframe" {
+		width: 12
+		height: 12
+		cursor: "hand"
+	}
+	".keyframe::icon" {
+		type: "WITexturedRect"
+		width: "100%"
+		height: "100%"
+		color: "$COLOR_KEYFRAME"
+	}
+	".keyframe--animated::icon" {
+		material: "gui/pfm/keyframe_marker"
+	}
+	".keyframe--animated-current-frame::icon" {
+		color: "$COLOR_KEYFRAME_CURRENT"
+	}
+	".keyframe--static::icon" {
+		material: "gui/pfm/keyframe_marker_static"
+	}
+
+	// Collapsible Group
+	".collapsible-panel__content-area" {
+		width: "100%"
+	}
+	".collapsible-panel--sub" {
+		width: "100%"
+	}
+	".collapsible-panel-title-bar" {}
+	".collapsible-panel__button" {
+		width: 16
+	}
+	".collapsible-panel__button::icon" {
+		type: "WITexturedRect"
+		alignX: "center"
+		alignY: "center"
+	}
+	".collapsible-panel__button--collapsed::icon" {
+		material: "gui/pfm/arrow_right"
+		width: 5
+		height: 7
+	}
+	".collapsible-panel__button--expanded::icon" {
+		material: "gui/pfm/arrow_down"
+		width: 7
+		height: 5
+	}
+
+	// Viewport
+	".viewport__title-bar" {
+		paddingX: 5
+	}
+	".viewport__controls" {
+		margin: 0
+		padding: 0
+	}
+
+	// Playhead
+	".playhead__content-area" {
+		alignItems: "center"
+	}
+	".playhead__icon" {
+		width: 11
+		height: 16
+	}
+	".playhead__icon--upper" {}
+	".playhead__icon--upper::icon" {
+		type: "WITexturedRect"
+		width: "100%"
+		height: "100%"
+		material: "gui/pfm/timeline/upper_playhead"
+		color: "$COLOR_PLAYHEAD"
+	}
+	".playhead__line" {
+		flex: 1
+		width: 1
+		backgroundColor: "$COLOR_PLAYHEAD"
+	}
+	".playhead__icon--lower" {}
+	".playhead__icon--lower::icon" {
+		type: "WITexturedRect"
+		width: "100%"
+		height: "100%"
+		material: "gui/pfm/timeline/lower_playhead"
+		color: "$COLOR_PLAYHEAD"
+	}
+
+	// Web Browser
+	".web-browser" {
+		flex: 1
+	}
+	"pfm_asset_web_browser asset_web_browser" {
+		flex: 1
+	}
+
+	// Text-entry
+	".text-entry" {
+		backgroundColor: "$COLOR_BG_INPUT"
+		outlineColor: "$COLOR_BORDER"
+		outlineWidth: 1
+	}
+	".text-entry__caret" {
+		backgroundColor: "$COLOR_BORDER"
+	}
+	".text-selection" {
+		backgroundColor: "$COLOR_SELECTED"
+	}
+
+	// Misc
+	".slider-fill" {
+		color: "$COLOR_ACCENT_SUBTLE"
+	}
+	".beta_info" {
+		color: "#ff0000"
+	}
+	"resizer" {
+		backgroundColor: "$COLOR_BG_RAISED"
+	}
+	"pfm_info_bar" {
+		backgroundColor: "$COLOR_BG_RAISED"
+	}
+	".frame__content-area .info-box" {
+		width: "100%"
+	}
+	".udm-editor__scroll-container" {
+		flex: 1
+	}
+
+	".header" {
+		justifyContent: "center"
+	}
+
+	// Film Clip
+	".clip" {}
+	".clip__content-area" {
+		width: "100%"
+		height: 45
+		backgroundColor: "$COLOR_CLIP"
+		outlineColor: "$COLOR_BORDER"
+		outlineWidth: 2
+	}
+	".clip__header" {
+		backgroundColor: "$COLOR_CLIP_HEADER"
+		paddingLeft: 5
+		paddingTop: 2
+	}
+	".clip__title" {}
+	".clip__body" {
+		flex: 1
+		paddingLeft: 5
+	}
+	".clip__details" {}
+
+	// Timeline-Editor
+	".timeline-editor__content-area" {
+		width: "100%"
+		height: "100%"
+	}
+	".timeline-editor__property-container" {
+		width: 100
+		height: "100%"
+		backgroundColor: "$COLOR_BG_PANEL"
+	}
+	".timeline-editor__data-axis" {
+		width: 35
+		backgroundColor: "$COLOR_BG_RAISED"
+	}
+	".timeline-editor__graph-container" {
+		flex: 1
+	}
+	".timeline-editor__grid" {
+		width: "100%"
+		height: "100%"
+	}
+
+	// Data-Point
+	".data-point" {
+		width: 4
+		height: 4
+		backgroundColor: "$COLOR_ICON"
+	}
+	".data-point:selected" {
+		backgroundColor: "$COLOR_SELECTED"
+	}
+	".data-point__control" {
+		backgroundColor: "$COLOR_ACCENT"
+	}
+	".data-point__control--in" {}
+	".data-point__control--out" {}
+	".data-point-control__line" {}
+	".data-point-control__line--in" {
+		color: "$COLOR_TANGENT_IN"
+	}
+	".data-point-control__line--out" {
+		color: "$COLOR_TANGENT_OUT"
+	}
+	".data-point__control--aligned" {}
+	".data-point__control--vector" {}
+	".data-point__control--free" {}
+	".data-point-control__line--aligned" {
+		color: "#ff8888"
+	}
+	".data-point-control__line--vector" {
+		color: "#88ff88"
+	}
+	".data-point-control__line--free" {
+		color: "#000000"
+	}
+
+	// Sequence filmstrip
+	".sequence-filmstrip" {
+		height: 100
+		background: {
+			nineSliceMaterial: "gui/pfm/editors/clip_editor/sequence_filmstrip_background"
+			color: "#888888"
+		}
+	}
+	".sequence-filmstrip__content-area" {
+		width: "100%"
+		height: "100%"
+	}
+	".sequence-filmstrip__drag-handle" {
+		width: 12
+		height: "100%"
+	}
+	".sequence-filmstrip__drag-handle::icon" {
+		type: "WITexturedRect"
+		material: "gui/pfm/editors/clip_editor/sequence_filmstrip_grab_handle"
+		width: 3
+		height: 23
+		color: "#515693"
+		alignX: "center"
+		alignY: "center"
+	}
+	".sequence-filmstrip__contents" {
+		flex: 1
+		height: "100%"
+	}
+	".sequence-filmstrip__contents-vbox" {
+		width: "100%"
+		height: "100%"
+	}
+	".sequence-filmstrip__background-bar" {
+		height: 27
+		backgroundColor: "#000000"
+	}
+	".sequence-filmstrip__row" {
+		width: "100%"
+		flex: 1
+	}
+	".sequence-filmstrip__row--top" {
+		paddingTop: 5
+	}
+	".sequence-filmstrip__row--bottom" {
+		justifyContent: "end"
+		marginBottom: 5
+	}
+	".sequence-filmstrip__shot" {
+		alignY: "center"
+	}
+	".sequence-filmstrip__perforations" {
+		height: 4
+	}
+
+	// Filmstrip shot drag handles
+	".sequence-filmstrip-shot__drag-container" {
+		width: "100%"
+		height: "100%"
+	}
+	".sequence-filmstrip-shot__drag-handle" {
+		width: 14
+		height: "100%"
+	}
+	".sequence-filmstrip-shot__inner-contents" {
+		height: "100%"
+		flex: 1
+	}
+
+	"witablecell" {
+		height: 32
+	}
+
+	// Tutorial Slide
+	".tutorial-slide__progress-bar" {
+		background {
+			color: "$COLOR_BG_INSET"
+			alpha: 0
+		}
+	}
+	".tutorial-slide__progress-bar .progress-bar__fill" {
+		background {
+			color: "#00ff00"
+			alpha: 255
+		}
+	}
+	".connector-line" {
+		color: "$COLOR_BORDER_SUBTLE"
+	}
+
+	// Time Selection
+	".time-selection" {
+		alpha: 128
+	}
+	".time-selection-segment" {
+		color: "#004000"
+	}
+	".time-selection-segment--left" {}
+	".time-selection-segment--right" {}
+	".time-selection-segment--middle" {}
+	".time-selection__line" {}
+	".time-selection__line--inner" {
+		color: "#ffffff"
+	}
+	".time-selection__line--outer" {
+		color: "#000000"
+	}
+
+	// Window
+	".window" {
+		backgroundColor: "$COLOR_BG_PANEL"
+	}
+	".window__title-bar" {
+		paddingX: 5
+		backgroundColor: "$COLOR_BG_RAISED"
+	}
+	".window__content-area" {}
+	".window__message-area" {
+		padding: 10
+		spacing: 4
+		width: "100%"
+	}
+	".window__message" {
+		flex: 1
+	}
+	".window__backdrop" {
+		background: {
+			color: "$COLOR_BG_SCRIM"
+			alpha: "$ALPHA_SCRIM"
+		}
+	}
+
+	// Misc
+	".modal-overlay" {
+		"background": {
+			color: "$COLOR_BG_SCRIM"
+			alpha: "$ALPHA_SCRIM"
+		}
+	}
+	".button-group" {
+		spacing: 5
+	}
+}

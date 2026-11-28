@@ -30,49 +30,50 @@ function Timeline:OnInitialize()
 		return util.EVENT_REPLY_HANDLED
 	end
 
-	self.m_bookmarkBar = gui.create("WIBase", self, 0, 0, self:GetWidth(), 16, 0, 0, 1, 0)
+	local contents = gui.create_vbox(self)
+	contents:AddStyleClass("timeline__content-area")
+	self.m_contents = contents
+
+	self.m_bookmarkBar = gui.create("WIBase", contents)
+		:AddStyleClass("timeline__bookmark-bar")
 	self.m_bookmarks = {}
 	self.m_bookmarkSets = {}
 
-	local timelineStripHeight = 18
 	self.m_timelineStripUpper =
-		gui.create("labelled_timeline_strip", self, 0, self.m_bookmarkBar:GetBottom(), self:GetWidth(), timelineStripHeight, 0, 0, 1, 0)
-	self.m_timelineStripUpper:SetMouseInputEnabled(true)
+		gui.create("labelled_timeline_strip", contents)
+		:SetMouseInputEnabled(true)
+		:AddStyleClass("timeline__axis")
 	self.m_timelineStripUpper:SetHorizontal(true)
 	self.m_timelineStripUpper:SetFlipped(false)
 	self.m_timelineStripUpper:AddCallback("OnMouseEvent", onTimelineMouseEvent)
+	local function update_playheads() self:UpdatePlayheadSizes() end
+	self.m_timelineStripUpper:AddCallback("OnSizeChanged", update_playheads)
+	self.m_timelineStripUpper:AddCallback("OnPosChanged", update_playheads)
+
+	self.m_innerContents = gui.create_vbox(contents)
+		:AddStyleClass("timeline__strip")
 
 	self.m_timelineStripLower =
-		gui.create("labelled_timeline_strip", self, 0, self:GetBottom() - timelineStripHeight, self:GetWidth(), timelineStripHeight, 0, 1, 1, 1)
-	self.m_timelineStripLower:SetMouseInputEnabled(true)
+		gui.create("labelled_timeline_strip", contents)
+		:SetMouseInputEnabled(true)
+		:AddStyleClass("timeline__axis")
 	self.m_timelineStripLower:SetHorizontal(true)
 	self.m_timelineStripLower:SetFlipped(true)
 	self.m_timelineStripLower:AddCallback("OnMouseEvent", onTimelineMouseEvent)
+	self.m_timelineStripLower:AddCallback("OnSizeChanged", update_playheads)
+	self.m_timelineStripLower:AddCallback("OnPosChanged", update_playheads)
 	--[[self.m_timelineStripLower:SetValueTextTranslationFunction(function(elText,t)
 		elText:SetTooltip("Test")
 		return t -- tool.get_filmmaker():TimeOffsetToFrameOffset(t) -tool.get_filmmaker():TimeOffsetToFrameOffset(math.floor(t))
 	end)]]
-
-	self.m_contents = gui.create(
-		"WIBase",
-		self,
-		0,
-		self.m_timelineStripUpper:GetBottom(),
-		self:GetWidth(),
-		self.m_timelineStripLower:GetTop() - self.m_timelineStripUpper:GetBottom(),
-		0,
-		0,
-		1,
-		1
-	)
 
 	self.m_timelineItems = {}
 	self.m_cbOnTimelinePropertiesChanged = pfm.get_project_manager():GetTimeProperty():AddCallback(function()
 		self:OnTimelinePropertiesChanged(true, true)
 	end)
 
+	self.m_playheads = {}
 	self.m_playhead = self:CreatePlayhead()
-	self.m_playhead:AddStyleClass("timeline_playhead")
 	self.m_playhead:SetTimeOffsetProperty(pfm.get_project_manager():GetTimeProperty())
 
 	self.m_timeAxis = gui.create("axis", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
@@ -85,17 +86,38 @@ function Timeline:OnInitialize()
 	self:SetZoomLevel(1)
 	self:SetStartOffset(0.0)
 
-	-- TODO
+	self:SetSkinCallbacksEnabled(true)
 	self:SetMouseInputEnabled(true)
 	self:ScheduleUpdate()
 end
 function Timeline:CreatePlayhead()
-	local playhead = gui.create("playhead", self, 0, self.m_bookmarkBar:GetBottom())
-	playhead:SetHeight(self:GetHeight() - self.m_bookmarkBar:GetBottom())
-	playhead:SetAnchor(gui.ANCHOR_EDGE_TOP, 0)
-	playhead:SetAnchor(gui.ANCHOR_EDGE_BOTTOM, 1)
+	local playhead = gui.create("playhead", self)
+		:AddStyleClass("timeline__playhead")
+	table.insert(self.m_playheads, playhead)
+	self:UpdatePlayheadSizes()
 	return playhead
 end
+function Timeline:UpdatePlayheadSizes()
+	if(util.is_valid(self.m_timelineStripLower, self.m_timelineStripUpper) == false) then return end
+	local playheads = {}
+	for _, playhead in ipairs(self.m_playheads) do
+		if(playhead:IsValid()) then
+			table.insert(playheads, playhead)
+		end
+	end
+	if(#playheads == 0) then return end
+	local refPlayhead = playheads[1]
+	-- TODO: It would be better to handle this using a style class
+	local y = self.m_timelineStripUpper:GetBottom() -refPlayhead:GetTopIcon():GetHeight()
+	local yBottom = self.m_timelineStripLower:GetTop() +refPlayhead:GetBottomIcon():GetHeight()
+	local h = yBottom -y
+	for _, playhead in ipairs(playheads) do
+		playhead:SetY(y)
+		playhead:SetHeight(h)
+	end
+end
+function Timeline:OnSizeChanged(w, h) self:UpdatePlayheadSizes() end
+function Timeline:OnSkinApplied() self:UpdatePlayheadSizes() end
 function Timeline:AddTimelineElement(item)
 	table.insert(self.m_timelineItems, item)
 end
@@ -168,7 +190,7 @@ function Timeline:SetCursorMoveModeEnabled(enabled)
 	end
 end
 function Timeline:GetContents()
-	return self.m_contents
+	return self.m_innerContents
 end
 function Timeline:GetPlayhead()
 	return self.m_playhead
@@ -289,7 +311,7 @@ function Timeline:AddBookmark(bm, timeFrame)
 	if util.is_valid(self.m_timelineStripUpper) == false then
 		return
 	end
-	local p = gui.create("pfm_bookmark", self, 0, 5)
+	local p = gui.create("pfm_bookmark", self)
 	p:SetTimeline(self)
 	p:SetBookmark(bm)
 	self.m_timeAxis:AttachElementToValueWithUdmProperty(p, bm, "time", function(t)

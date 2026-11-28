@@ -14,8 +14,6 @@ function gui.PFMFrame:OnInitialize()
 	gui.Base.OnInitialize(self)
 
 	self:ApplySize(256, 128)
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("background2")
 
 	--[[self.m_btClose = gui.PFMButton.create(self, "gui/pfm/icon_clear", "gui/pfm/icon_clear_activated", function()
 		print("TODO")
@@ -24,15 +22,22 @@ function gui.PFMFrame:OnInitialize()
 	self.m_btClose:SetPos(self:GetWidth() - self.m_btClose:GetWidth() - 7, 10)
 	self.m_btClose:SetAnchor(1, 0, 1, 0)]]
 
-	self.m_contents = gui.create("WIBase", self, 0, 28, self:GetWidth(), self:GetHeight() - 28, 0, 0, 1, 1)
+	local root = gui.create_vbox(self)
+		:AddStyleClass("fill")
+		:AddStyleClass("frame__content-area")
+
 	self.m_tabs = {}
-	self.m_tabButtonContainer = gui.create("hbox", self)
-	self.m_tabButtonContainer:SetHeight(28)
-	self.m_tabButtonContainer:SetName("tab_button_container")
+	self.m_tabButtonContainer = gui.create_hbox(root)
+		:SetHeight(28)
+		:SetName("tab_button_container")
+		:AddStyleClass("frame__button-container")
+	gui.mark_as_drag_and_drop_target(self.m_tabButtonContainer, "Panel")
+
+	self.m_contents = gui.create("WIBase", root)
+	root:SetChildFlex(self.m_contents, 1.0)
 
 	self.m_tbGroup = gui.PFMButtonGroup(self.m_tabButtonContainer, true)
 
-	gui.create("WIBase", self.m_tabButtonContainer):SetSize(5, 1) -- Gap
 	self.m_btAddPanel = gui.PFMButton.create(self.m_tabButtonContainer, "plus-lg", function()
 		local pContext = gui.open_context_menu(self)
 		if util.is_valid(pContext) == false then
@@ -44,7 +49,6 @@ function gui.PFMFrame:OnInitialize()
 		pContext:Update()
 	end)
 	self.m_btAddPanel:SetName("panel_add_button")
-	gui.create("WIBase", self.m_tabButtonContainer):SetSize(5, 1) -- Gap
 
 	self:SetThinkingEnabled(true)
 	self.m_detachedWindows = {}
@@ -88,7 +92,7 @@ function gui.PFMFrame:SetActiveTab(tabId)
 
 	self.m_activeTabButton = bt
 	self.m_activeTabPanel = bt:GetContents()
-	self.m_activeTabIndex = tabId
+	self.m_activeTabId = self.m_tabs[tabId].identifier
 
 	if util.is_valid(bt) then
 		bt:SetActive(true)
@@ -102,7 +106,7 @@ function gui.PFMFrame:GetTabId(identifier)
 	end
 end
 function gui.PFMFrame:GetSelectedTabId()
-	return self.m_activeTabIndex
+	return self:GetTabId(self.m_activeTabId)
 end
 function gui.PFMFrame:GetTabIdentifier(i)
 	if i == nil or self.m_tabs[i] == nil then
@@ -123,11 +127,12 @@ function gui.PFMFrame:RemoveTab(identifier)
 		tabData.button:Remove()
 	end
 	table.remove(self.m_tabs, i)
-	if self.m_activeTabIndex == i then
+	if self.m_activeTabId == identifier then
 		self:SelectFreeTab()
 	end
+	self.m_tbGroup:UpdateButtons()
 end
-function gui.PFMFrame:SelectFreeTab()
+function gui.PFMFrame:SelectFreeTab(tabId)
 	local function selectTab(i)
 		local tab = self.m_tabs[i]
 		if tab == nil or util.is_valid(tab.window) then
@@ -136,13 +141,14 @@ function gui.PFMFrame:SelectFreeTab()
 		self:SetActiveTab(i)
 		return true
 	end
-	if selectTab(self.m_activeTabIndex) then
+	tabId = tabId or self:GetSelectedTabId() or 1
+	if selectTab(tabId) then
 		return
 	end
-	if selectTab(self.m_activeTabIndex - 1) then
+	if selectTab(tabId - 1) then
 		return
 	end
-	if selectTab(self.m_activeTabIndex + 1) then
+	if selectTab(tabId + 1) then
 		return
 	end
 	for i = 1, #self.m_tabs do
@@ -159,9 +165,9 @@ function gui.PFMFrame:FindTabIdentifier(el)
 	end
 end
 function gui.PFMFrame:FindTabData(name)
-	for _, tab in ipairs(self.m_tabs) do
+	for i, tab in ipairs(self.m_tabs) do
 		if name == tab.identifier then
-			return tab
+			return tab, i
 		end
 	end
 end
@@ -193,6 +199,32 @@ end
 function gui.PFMFrame:GetTabContainer()
 	return self.m_tabButtonContainer
 end
+function gui.PFMFrame:AddPanel(identifier, panel, bt)
+	self.m_tbGroup:AddButton(bt)
+	panel:SetParent(self.m_contents)
+	panel:SetPos(0, 0)
+	panel:SetSize(self.m_contents:GetWidth(), self.m_contents:GetHeight())
+	panel:SetAnchor(0, 0, 1, 1)
+
+	bt:SetFrame(self, identifier)
+	bt:SetParent(self.m_tabButtonContainer)
+	bt:SetContents(panel)
+
+	table.insert(self.m_tabs, {
+		identifier = identifier,
+		button = bt,
+		panel = panel,
+	})
+end
+function gui.PFMFrame:MovePanelToFrame(identifier, targetFrame)
+	local tabData, i = self:FindTabData(identifier)
+	if tabData == nil then return end
+	if(self.m_tbGroup:RemoveButton(tabData.button) == false) then return end
+	table.remove(self.m_tabs, i)
+	targetFrame:AddPanel(identifier, tabData.panel, tabData.button)
+	if(self.m_activeTabId == identifier) then self:SelectFreeTab(i) end
+	targetFrame:SetActiveTab(identifier)
+end
 function gui.PFMFrame:AddTab(identifier, name, panel)
 	if util.is_valid(self.m_contents) == false or util.is_valid(self.m_tabButtonContainer) == false then
 		panel:RemoveSafely()
@@ -201,10 +233,10 @@ function gui.PFMFrame:AddTab(identifier, name, panel)
 	local bt = gui.create("pfm_tab_button", self.m_tabButtonContainer)
 	bt:SetText(name)
 	bt:SetName(identifier .. "_tab_button")
-	bt:SetFrame(self)
 	bt:AddCallback("OnPressed", function()
-		local tabId = self:GetTabId(identifier)
-		self:SetActiveTab(tabId)
+		local frame = bt:GetFrame()
+		local tabId = frame:GetTabId(identifier)
+		frame:SetActiveTab(tabId)
 	end)
 	bt:AddCallback("OnMouseEvent", function(bt, button, state, mods)
 		if button == input.MOUSE_BUTTON_RIGHT and state == input.STATE_PRESS then
@@ -229,19 +261,7 @@ function gui.PFMFrame:AddTab(identifier, name, panel)
 		end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
-	self.m_tbGroup:AddButton(bt)
-	panel:SetParent(self.m_contents)
-	panel:SetPos(0, 0)
-	panel:SetSize(self.m_contents:GetWidth(), self.m_contents:GetHeight())
-	panel:SetAnchor(0, 0, 1, 1)
-
-	bt:SetContents(panel)
-
-	table.insert(self.m_tabs, {
-		identifier = identifier,
-		button = bt,
-		panel = panel,
-	})
+	self:AddPanel(identifier, panel, bt)
 	return #self.m_tabs
 end
 function gui.PFMFrame:GetTabs()
@@ -312,13 +332,14 @@ function gui.PFMFrame:DetachTab(identifier, width, height)
 	end
 
 	local i = self:GetTabId(identifier)
-	if i ~= nil and self.m_activeTabIndex == i then
+	if i ~= nil and self:GetSelectedTabId() == i then
 		self:SelectFreeTab()
 	end
 	if panel:IsValid() then
 		panel:SetVisible(true)
 		panel:CallCallbacks("OnDetached", windowHandle)
 	end
+	self.m_tbGroup:UpdateButtons()
 	return windowHandle
 end
 
@@ -391,5 +412,6 @@ function gui.PFMFrame:AttachTab(identifier)
 	if panel:IsValid() then
 		panel:CallCallbacks("OnReattached")
 	end
+	self.m_tbGroup:UpdateButtons()
 end
 gui.register("pfm_frame", gui.PFMFrame)

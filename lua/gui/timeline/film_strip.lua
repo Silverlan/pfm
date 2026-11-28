@@ -19,7 +19,11 @@ function FilmStrip:OnInitialize()
 	self.m_filmClips = {}
 	self.m_listeners = {}
 
-	self:InitializeSequenceFilmStrip()
+	local seqFilmStrip = gui.create("sequence_film_strip", self.m_container)
+	seqFilmStrip:SetZPos(-5)
+	seqFilmStrip:GetTimeFrame():SetStart(-2)
+	seqFilmStrip:GetTimeFrame():SetDuration(40)
+	self.m_seqFilmStrip = seqFilmStrip
 end
 function FilmStrip:OnRemove() util.remove(self.m_listeners) end
 function FilmStrip:InitializeDragHandle()
@@ -38,7 +42,7 @@ function FilmStrip:InitializeDragHandle()
 end
 function FilmStrip:AddFilmClip(filmClip)
 	local elClip = gui.create("film_clip", self.m_container)
-	elClip:SetY(self.m_seqFilmStrip:GetHeight() /2 -elClip:GetHeight() /2)
+		:AddStyleClass("sequence-filmstrip__shot")
 	table.insert(self.m_filmClips, elClip)
 
 	elClip:SetClipData(filmClip)
@@ -85,17 +89,10 @@ function FilmStrip:UpdateFilmClipUi()
 		end
 	end
 end
-function FilmStrip:InitializeSequenceFilmStrip()
-	local seqFilmStrip = gui.create("sequence_film_strip", self.m_container)
-	seqFilmStrip:SetZPos(-5)
-	seqFilmStrip:GetTimeFrame():SetStart(-2)
-	seqFilmStrip:GetTimeFrame():SetDuration(40)
-	self.m_seqFilmStrip = seqFilmStrip
-end
 function FilmStrip:Setup(session, timeline)
 	local seqFilmStrip = self.m_seqFilmStrip
 	seqFilmStrip:SetTimeFrame(session:GetTimeFrame())
-	timeline:AddTimelineItem(seqFilmStrip, seqFilmStrip:GetTimeFrame(), seqFilmStrip:GetLeftMargin(), seqFilmStrip:GetRightMargin())
+	timeline:AddTimelineItem(seqFilmStrip, seqFilmStrip:GetTimeFrame(), function() return seqFilmStrip:GetLeftMargin() end, function() return seqFilmStrip:GetRightMargin() end)
 	self.m_timeline = timeline
 	self.m_session = session
 	

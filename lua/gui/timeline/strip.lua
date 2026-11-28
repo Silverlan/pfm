@@ -167,9 +167,7 @@ util.register_class("gui.LabelledTimelineStrip", gui.Base)
 function gui.LabelledTimelineStrip:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(128, 18)
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("timeline_background")
+	self:SetSize(128, 24)
 
 	self.m_strip = gui.create("timeline_strip", self, 0, 0, self:GetWidth(), 6)
 	self.m_strip:AddCallback("OnTimelinePropertiesChanged", function()
@@ -260,8 +258,7 @@ function gui.LabelledTimelineStrip:OnUpdate()
 			local pText = self.m_textElements[i + 1]
 			if util.is_valid(pText) == false then
 				pText = gui.create("WIText", self)
-				pText:AddStyleClass("font_small")
-				pText:AddStyleClass("timeline_label")
+				pText:AddStyleClass("timeline-axis__text")
 
 				self.m_textElements[i + 1] = pText
 			end
@@ -313,7 +310,6 @@ function gui.LabelledTimelineStrip:AddDebugMarkers()
 	self.m_debugMarkers = {}
 	for _, v in ipairs({ 0, -1, 1 }) do
 		local el = gui.create("WIRect", self)
-		el:SetColor(Color.Red)
 		table.insert(self.m_debugMarkers, { el, v })
 	end
 end

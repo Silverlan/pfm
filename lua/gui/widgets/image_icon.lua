@@ -2,50 +2,52 @@
 -- SPDX-License-Identifier: MIT
 
 util.register_class("gui.ImageIcon", gui.Base)
-function gui.ImageIcon:__init()
-	gui.Base.__init(self)
-end
+gui.ImageIcon.TYPE_DIRECTORY = 0
+gui.ImageIcon.TYPE_FILE = 1
 function gui.ImageIcon:OnInitialize()
 	gui.Base.OnInitialize(self)
 	self:SetSize(128, 128)
 
-	local bg = gui.create("WIBase", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg = bg
+	self:AddStyleClass("image-icon")
 
-	local el = gui.create("WITexturedRect", bg, 0, 0, bg:GetWidth(), bg:GetHeight(), 0, 0, 1, 1)
-	self.m_texture = el
+	local contents = gui.create_vbox(self)
+		:AddStyleClass("image-icon__content")
+	self.m_contents = contents
 
-	local textBg = gui.create("WIRect", self, 0, self:GetHeight() - 18, self:GetWidth(), 18, 0, 1, 1, 1)
-	textBg:AddStyleClass("label_background")
-	self.m_textBg = textBg
+	local texWrapper = gui.create_vbox(contents)
+		:AddStyleClass("image-icon__image-wrapper")
 
-	local elText = gui.create("WIText", textBg)
-	elText:AddStyleClass("font_small")
-	elText:AddStyleClass("label")
-	elText:SetAutoCenterToParent(true)
-	self.m_text = elText
+	local tex = gui.create("WITexturedRect", texWrapper)
+	tex:AddStyleClass("image-icon__image")
+	self.m_texture = tex
 
-	local outline = gui.create("WIOutlinedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	outline:AddStyleClass("outline")
-	self.m_outline = outline
+	local labelContainer = gui.create_vbox(contents)
+		:AddStyleClass("image-icon__label-container")
+
+	local text = gui.create("WIText", labelContainer)
+	text:AddStyleClass("label")
+	text:AddStyleClass("image-icon__label")
+	self.m_text = text
 
 	self:SetSelected(false)
-	self:AddStyleClass("image_icon")
+	self:SetType(gui.ImageIcon.TYPE_FILE)
 end
-function gui.ImageIcon:SetImageOnly(imageOnly)
-	self.m_textBg:SetVisible(not imageOnly)
-	self.m_text:SetVisible(not imageOnly)
-	self.m_outline:SetVisible(not imageOnly)
+function gui.ImageIcon:SetType(type)
+	if(type == gui.ImageIcon.TYPE_DIRECTORY) then
+		self.m_texture:RemoveStyleClass("image-icon__image--file")
+		self.m_texture:AddStyleClass("image-icon__image--directory")
+	else
+		self.m_texture:RemoveStyleClass("image-icon__image--directory")
+		self.m_texture:AddStyleClass("image-icon__image--file")
+	end
+	self.m_texture:RefreshSkin()
 end
 function gui.ImageIcon:SetSelected(selected)
 	if selected == self.m_selected then
 		return
 	end
 	self.m_selected = selected
-	self.m_outline:RemoveStyleClass("outline")
-	self.m_outline:RemoveStyleClass("outline_focus")
-	self.m_outline:AddStyleClass(selected and "outline_focus" or "outline")
-	self.m_outline:RefreshSkin()
+	self:SetState(gui.STATE_SELECTED, selected)
 	self:CallCallbacks("OnSelectionChanged", selected)
 end
 function gui.ImageIcon:IsSelected()
@@ -65,12 +67,6 @@ function gui.ImageIcon:SetSuffixText(text)
 end
 function gui.ImageIcon:GetTextureElement()
 	return self.m_texture
-end
-function gui.ImageIcon:GetBackgroundElement()
-	return self.m_bg
-end
-function gui.ImageIcon:GetTextBackgroundElement()
-	return self.m_textBg
 end
 function gui.ImageIcon:GetMaterial()
 	return self.m_texture:GetMaterial()
@@ -92,7 +88,6 @@ function gui.ImageIcon:SetMaterial(mat, w, h)
 			end
 		end
 	end
-	self.m_texture:CenterToParent()
 end
 function gui.ImageIcon:SetTexture(tex, w, h)
 	self.m_texture:SetTexture(tex)
@@ -100,6 +95,5 @@ function gui.ImageIcon:SetTexture(tex, w, h)
 	h = h or self:GetHeight()
 
 	self.m_texture:SetSize(w, h)
-	self.m_texture:CenterToParent()
 end
 gui.register("image_icon", gui.ImageIcon)

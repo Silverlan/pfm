@@ -7,6 +7,13 @@ function ButtonGroup:__init(hbox, tabButtons)
 	self.m_tabButtons = tabButtons or false
 	self.m_buttons = {}
 end
+function ButtonGroup:GetVisibleButtons()
+	local buttons = {}
+	for _, bt in ipairs(self.m_buttons) do
+		if(bt:IsValid() and bt:IsVisible()) then table.insert(buttons, bt) end
+	end
+	return buttons
+end
 function ButtonGroup:AddIconButton(icon, onPressed)
 	local bt = gui.PFMButton.create(self.m_hbox, icon, onPressed)
 	self:AddButton(bt)
@@ -14,11 +21,42 @@ function ButtonGroup:AddIconButton(icon, onPressed)
 end
 function ButtonGroup:AddGenericButton(text, onPressed)
 	local bt = gui.create("pfm_button", self.m_hbox)
-	bt:SetWidth(128)
 	bt:SetText(text)
 	bt:AddCallback("OnPressed", onPressed)
 	self:AddButton(bt)
 	return bt
+end
+function ButtonGroup:RemoveButton(bt)
+	for i, btOther in ipairs(self.m_buttons) do
+		if(btOther:IsValid() and util.is_same_object(btOther, bt)) then
+			table.remove(self.m_buttons, i)
+			self:UpdateButtons()
+			return true
+		end
+	end
+	return false
+end
+function ButtonGroup:UpdateButtons()
+	local buttons = self:GetVisibleButtons()
+	local n = #buttons
+	for i=1, #buttons do
+		local bt = buttons[i]
+		if n == 1 then
+			bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB or gui.PFMButton.BUTTON_TYPE_NORMAL)
+		elseif i == 1 then
+			bt:SetType(
+				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_LEFT or gui.PFMButton.BUTTON_TYPE_LEFT
+			)
+		elseif i == n then
+			bt:SetType(
+				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_RIGHT or gui.PFMButton.BUTTON_TYPE_RIGHT
+			)
+		else
+			bt:SetType(
+				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_MIDDLE or gui.PFMButton.BUTTON_TYPE_MIDDLE
+			)
+		end
+	end
 end
 function ButtonGroup:AddButton(bt)
 	local newButtons = {}
@@ -29,22 +67,8 @@ function ButtonGroup:AddButton(bt)
 	end
 	self.m_buttons = newButtons
 
-	if #self.m_buttons == 0 then
-		bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB or gui.PFMButton.BUTTON_TYPE_NORMAL)
-	else
-		if #self.m_buttons == 1 then
-			self.m_buttons[1]:SetType(
-				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_LEFT or gui.PFMButton.BUTTON_TYPE_LEFT
-			)
-		end
-		bt:SetType(self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_RIGHT or gui.PFMButton.BUTTON_TYPE_RIGHT)
-		if #self.m_buttons > 1 then
-			self.m_buttons[#self.m_buttons]:SetType(
-				self.m_tabButtons and gui.PFMButton.BUTTON_TYPE_TAB_MIDDLE or gui.PFMButton.BUTTON_TYPE_MIDDLE
-			)
-		end
-	end
 	table.insert(self.m_buttons, bt)
+	self:UpdateButtons()
 	return bt
 end
 
@@ -60,19 +84,18 @@ Element.BUTTON_TYPE_TAB = 7
 function Element:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:ApplySize(32, 26)
-	local elBg = gui.create("WI9SliceRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_elBg = elBg
+	self:SetAutoSizeToContents(true, false)
+	self:AddStyleClass("button")
+	local contents = gui.create_hbox(self)
+		:AddStyleClass("button__content-area")
+	self.m_contents = contents
 
-	elBg:GetColorProperty():Link(self:GetColorProperty())
 	self:SetType(gui.PFMBaseButton.BUTTON_TYPE_NORMAL)
 end
 function Element:SetText(text)
 	if util.is_valid(self.m_text) == false then
-		self.m_text = gui.create("WIText", self)
-		self.m_text:AddStyleClass("font_medium")
-		self.m_text:SetColor(Color(152, 152, 152))
-		self.m_text:SetAutoCenterToParent(true)
+		self.m_text = gui.create("WIText", self.m_contents)
+		self.m_text:AddStyleClass("button__text")
 	end
 	self.m_text:SetText(text)
 end
@@ -88,87 +111,70 @@ function Element:GetType()
 end
 function Element:SetIcon(icon)
 	if util.is_valid(self.m_icon) == false then
-		local elIcon = gui.create("WITexturedRect", self)
-		elIcon:SetSize(18, 18)
-		elIcon:SetMaterial("gui/pfm/cursor-fill")
-		elIcon:AddStyleClass("button_icon")
+		local elIcon = gui.create("WITexturedRect", self.m_contents)
+		elIcon:AddStyleClass("button__icon")
 		self.m_icon = elIcon
-
-		self:UpdateIconPosition()
 	end
 	if(self.m_curIcon ~= nil) then
-		self.m_icon:RemoveStyleClass("button_icon_" .. self.m_curIcon)
+		self.m_icon:RemoveStyleClass("button__icon--" .. self.m_curIcon)
 	end
 	self.m_curIcon = icon
-	self.m_icon:AddStyleClass("button_icon_" .. icon)
+	self.m_icon:AddStyleClass("button__icon--" .. icon)
 	self.m_icon:RefreshSkin()
 end
 function Element:UpdateStyle()
 	for _, c in ipairs({
-		"button",
-		"button_left",
-		"button_right",
-		"button_middle",
-		"button_tab_left",
-		"button_tab_right",
-		"button_tab_middle",
-		"button_tab",
+		"button--standalone",
+		"button--left",
+		"button--right",
+		"button--middle",
+		"button-tab--left",
+		"button-tab--right",
+		"button-tab--middle",
+		"button-tab--standalone",
 	}) do
-		self.m_elBg:RemoveStyleClass(c)
+		self:RemoveStyleClass(c)
 	end
 
 	local type = self:GetType()
+	local isTab = false
 	if type == Element.BUTTON_TYPE_LEFT then
-		self.m_elBg:AddStyleClass("button_left")
+		self:AddStyleClass("button--left")
 	elseif type == Element.BUTTON_TYPE_RIGHT then
-		self.m_elBg:AddStyleClass("button_right")
+		self:AddStyleClass("button--right")
 	elseif type == Element.BUTTON_TYPE_MIDDLE then
-		self.m_elBg:AddStyleClass("button_middle")
-	elseif type == Element.BUTTON_TYPE_TAB_LEFT then
-		self.m_elBg:AddStyleClass("button_tab_left")
-	elseif type == Element.BUTTON_TYPE_TAB_RIGHT then
-		self.m_elBg:AddStyleClass("button_tab_right")
-	elseif type == Element.BUTTON_TYPE_TAB_MIDDLE then
-		self.m_elBg:AddStyleClass("button_tab_middle")
-	elseif type == Element.BUTTON_TYPE_TAB then
-		self.m_elBg:AddStyleClass("button_tab")
+		self:AddStyleClass("button--middle")
 	else
-		self.m_elBg:AddStyleClass("button")
+		isTab = true
+		if type == Element.BUTTON_TYPE_TAB_LEFT then
+			self:AddStyleClass("button-tab--left")
+		elseif type == Element.BUTTON_TYPE_TAB_RIGHT then
+			self:AddStyleClass("button-tab--right")
+		elseif type == Element.BUTTON_TYPE_TAB_MIDDLE then
+			self:AddStyleClass("button-tab--middle")
+		elseif type == Element.BUTTON_TYPE_TAB then
+			self:AddStyleClass("button-tab--standalone")
+		else
+			isTab = false
+			self:AddStyleClass("button--standalone")
+		end
 	end
-	self.m_elBg:RefreshSkin()
+	if isTab then self:AddStyleClass("button-tab")
+	else self:RemoveStyleClass("button-tab") end
+	self:RefreshSkin()
 end
 function Element:SetPressed(pressed)
 	self.m_pressed = pressed
-	if pressed then
-		self.m_elBg:RemoveStyleClass("button_background_unpressed")
-		self.m_elBg:AddStyleClass("button_background_pressed")
-	else
-		self.m_elBg:RemoveStyleClass("button_background_pressed")
-		self.m_elBg:AddStyleClass("button_background_unpressed")
-	end
-	self.m_elBg:RefreshSkin()
+	self:SetState(gui.STATE_PRESSED, pressed)
 	self:OnActiveStateChanged(pressed)
 end
 function Element:OnActiveStateChanged(pressed) end
 function Element:IsPressed()
 	return self.m_pressed or false
 end
-local MIDDLE_SEGMENT_WIDTH = 24 -- Width of "gui/pfm/bt_middle"
-function Element:CalcWidthWithMargin(requestSize)
-	local size = requestSize
-	local m = requestSize % MIDDLE_SEGMENT_WIDTH
-	if m > 0 then
-		size = size + (MIDDLE_SEGMENT_WIDTH - m)
-	end
-	return size, MIDDLE_SEGMENT_WIDTH
-end
 function Element:SizeToContents()
 	local sz = self.m_text:GetWidth()
-	local margin = 20
-	local middleSize = sz + margin
-	middleSize = self:CalcWidthWithMargin(middleSize)
-	local totalSize = middleSize
-	self:SetWidth(totalSize)
+	self:SetWidth(sz)
 end
 
 util.register_class("gui.PFMButton", gui.PFMBaseButton)
@@ -190,16 +196,9 @@ function gui.PFMButton:OnInitialize()
 	gui.PFMBaseButton.OnInitialize(self)
 
 	self:SetMouseInputEnabled(true)
-	self:ApplySize(64, 30)
 
 	self.m_pressed = false
 	self.m_enabled = true
-end
-function gui.PFMButton:SetEnabledStyleClass(styleClass)
-	self.m_enabledStyleClass = styleClass
-end
-function gui.PFMButton:SetDisabledStyleClass(styleClass)
-	self.m_disabledStyleClass = styleClass
 end
 function gui.PFMButton:SetEnabled(enabled)
 	if enabled == self:IsEnabled() then
@@ -208,19 +207,8 @@ function gui.PFMButton:SetEnabled(enabled)
 	if enabled == false then
 		self:SetActivated(false)
 	end
+	self:SetState(gui.STATE_DISABLED, not enabled)
 	self.m_enabled = enabled
-	if(enabled)  then
-		if(self.m_enabledStyleClass ~= nil) then
-			self.m_elBg:AddStyleClass(self.m_enabledStyleClass)
-		end
-		self.m_elBg:RemoveStyleClass(self.m_disabledStyleClass or "button_disabled")
-	else
-		if(self.m_enabledStyleClass ~= nil) then
-			self.m_elBg:RemoveStyleClass(self.m_enabledStyleClass)
-		end
-		self.m_elBg:AddStyleClass(self.m_disabledStyleClass or "button_disabled")
-	end
-	self.m_elBg:RefreshSkin()
 end
 function gui.PFMButton:IsEnabled()
 	return self.m_enabled
@@ -260,53 +248,25 @@ function gui.PFMButton:SetMaterials(unpressedMat, pressedMat)
 	if texInfo == nil then
 		return
 	end
-	self:SetSize(texInfo:GetWidth(), texInfo:GetHeight())
 end
 function gui.PFMButton:SetIcon(icon, updateSize)
 	gui.PFMBaseButton.SetIcon(self, icon)
-	if updateSize ~= false then
-		self:SetSize(30, 30)
-	end
 end
 function gui.PFMButton:SetMaterial(mat)
 	--[[if mat ~= nil and util.is_valid(self.m_button) then
 		self.m_button:SetMaterial(mat)
 	end]]
 end
-function gui.PFMButton:UpdateIconPosition()
-	if util.is_valid(self.m_icon) == false then
-		return
-	end
-	self.m_icon:ClearAnchor()
-	self.m_icon:CenterToParent()
-	if util.is_valid(self.m_elCaret) then
-		local maxX = self:GetWidth() - 26
-		local right = self.m_icon:GetRight()
-		if right > maxX then
-			self.m_icon:SetX(maxX - self.m_icon:GetWidth())
-		end
-	end
-	local xAnchor = self.m_icon:GetCenter().x / self:GetWidth()
-	self.m_icon:SetAnchor(xAnchor, 0.5, xAnchor, 0.5)
-end
 function gui.PFMButton:SetupContextMenu(fPopulateContextMenu, openOnClick)
-	if util.is_valid(self.m_elCaret) == false then
-		self:SetWidth(self:GetWidth() + 22)
-		local caret = gui.create("WITexturedRect", self, 0, 0, 16, 16)
-		caret:SetMaterial("gui/pfm/icons/caret-down-fill")
-		caret:AddStyleClass("button_icon")
-		caret:SetX(self:GetWidth() - 22)
-		caret:SetAutoCenterToParentY(true)
-		caret:SetAnchor(1, 0, 1, 0)
-		self.m_elCaret = caret
-
-		self:UpdateIconPosition()
-	end
-
 	self.m_fPopulateContextMenu = fPopulateContextMenu
-	local w = 22
-	self.m_contextTrigger = gui.create("WIBase", self, self:GetWidth() - w, 0, w, self:GetHeight(), 1, 0, 1, 0)
-	self.m_contextTrigger:SetMouseInputEnabled(true)
+	util.remove(self.m_contextTrigger)
+	self.m_contextTrigger = gui.create("WIBase", self.m_contents)
+		:SetMouseInputEnabled(true)
+		:SetAutoSizeToContents(true)
+
+	local icon = gui.create("WITexturedRect", self.m_contextTrigger)
+		:AddStyleClass("button__icon")
+		:AddStyleClass("button__icon--caret-down-fill")
 	self.m_contextTrigger:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button ~= input.MOUSE_BUTTON_LEFT or self:IsEnabled() == false then
 			return util.EVENT_REPLY_UNHANDLED
@@ -321,6 +281,7 @@ function gui.PFMButton:SetupContextMenu(fPopulateContextMenu, openOnClick)
 			self:OpenContextMenu()
 		end)
 	end
+
 end
 function gui.PFMButton:OpenContextMenu()
 	if self.m_fPopulateContextMenu == nil then

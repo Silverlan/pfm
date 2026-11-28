@@ -40,7 +40,7 @@ function gui.BoneRetargeting:OnInitialize()
 
 	local controls =
 		gui.create("pfm_controls_menu", scrollContainer, 0, 0, scrollContainer:GetWidth(), scrollContainer:GetHeight())
-	controls:SetAutoFillContentsToHeight(false)
+	-- controls:SetAutoFillContentsToHeight(false)
 	controls:SetFixedHeight(false)
 	self:SetThinkingEnabled(true)
 	self.m_controls = controls

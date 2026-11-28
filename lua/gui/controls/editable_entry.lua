@@ -14,7 +14,7 @@ function gui.EditableEntry:OnInitialize()
 
 	self.m_descContainer = gui.create("WIBase", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
 	local pText = gui.create("WIText", self.m_descContainer)
-	pText:AddStyleClass("input_field_text")
+	pText:AddStyleClass("input-field__text")
 	self.m_pText = pText
 
 	local cbOnChildAdded
@@ -37,7 +37,7 @@ function gui.EditableEntry:OnInitialize()
 			end)
 			elChild:SetVisible(false)
 		elseif elChild:IsType(gui.TYPE_PFM_COLOR_ENTRY) then
-			self:RemoveStyleClass("input_field")
+			self:RemoveStyleClass("input-field")
 			self:AddStyleClass("input_field_outline")
 			self.m_activeTarget = true
 			self.m_descContainer:SetZPos(10)
@@ -82,7 +82,7 @@ function gui.EditableEntry:OnInitialize()
 	self:SetMouseInputEnabled(true)
 
 	self:SetText("")
-	self:AddStyleClass("input_field")
+	self:AddStyleClass("input-field")
 end
 function gui.EditableEntry:GetTarget()
 	return self.m_target

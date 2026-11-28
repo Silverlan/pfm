@@ -17,7 +17,7 @@ function Element:OnInitialize()
 	self.m_offsetFromDefaultIndicator:SetColor(Color(61, 61, 61))
 
 	local bgFilled = gui.create("WIRect", self)
-	bgFilled:AddStyleClass("slider_filled")
+	bgFilled:AddStyleClass("slider-fill")
 	self.m_bgFilled = bgFilled
 
 	local cursorRect = gui.create("WIRect", self, 0, 0, 1, self:GetHeight())

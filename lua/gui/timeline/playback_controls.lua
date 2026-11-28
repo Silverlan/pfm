@@ -19,7 +19,8 @@ end
 function gui.PlaybackControls:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	local controls = gui.create("hbox", self)
+	self:SetAutoSizeToContents(true)
+	local controls = gui.create_hbox(self)
 	local btGroup = gui.PFMButtonGroup(controls)
 
 	self.m_btFirstFrame = btGroup:AddIconButton("skip-backward-fill", function()
@@ -40,12 +41,12 @@ function gui.PlaybackControls:OnInitialize()
 	self.m_btPrevFrame:SetTooltip(gui.Loc("pfm_playback_previous_frame"))
 	self.m_btPrevFrame:SetName("pc_prev_frame")
 
-	gui.create("WIBase", controls, 0, 0, 1, 1) -- Gap
 	self.m_btRecord = btGroup:AddIconButton("record-fill", function()
 		self:CallCallbacks("OnButtonPressed", gui.PlaybackControls.BUTTON_RECORD)
 	end)
 	self.m_btRecord:SetTooltip(gui.Loc("pfm_playback_record"))
 	self.m_btRecord:SetName("pc_record")
+	self.m_btRecord:SetEnabled(false)
 
 	self.m_btPlay = gui.create("pfm_play_button", controls)
 	self.m_btPlay:SetTooltip(gui.Loc("pfm_playback_play"))
@@ -77,7 +78,6 @@ function gui.PlaybackControls:OnInitialize()
 	self.m_btLastFrame:SetTooltip(gui.Loc("pfm_playback_last_frame"))
 	self.m_btLastFrame:SetName("pc_last_frame")
 
-	controls:SetHeight(self.m_btFirstFrame:GetHeight())
 	controls:Update()
 	self.m_playControls = controls
 

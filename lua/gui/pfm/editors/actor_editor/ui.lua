@@ -2,23 +2,22 @@
 -- SPDX-License-Identifier: MIT
 
 function gui.PFMActorEditor:InitializeNavigationBar()
-	--[[self.m_btHome = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_home","gui/pfm/icon_nav_home_activated",function()
+	self.m_btHome = gui.PFMButton.create(self.m_nav,"nav-home",function()
 		if(self.m_rootNode == nil) then return end
 		self:GetHistory():Clear()
 		self:GetHistory():Add(self.m_rootNode)
 	end)
-	gui.create("WIBase",self.navBar):SetSize(5,1) -- Gap
+	self.m_btHome:SetEnabled(false)
 
-	self.m_btUp = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_up","gui/pfm/icon_nav_up_activated",function()
+	self.m_btUp = gui.PFMButton.create(self.m_nav,"nav-up",function()
 		print("TODO")
 	end)
 	self.m_btUp:SetupContextMenu(function(pContext)
 		print("TODO")
 	end)
+	self.m_btUp:SetEnabled(false)
 
-	gui.create("WIBase",self.navBar):SetSize(5,1) -- Gap
-
-	self.m_btBack = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_back","gui/pfm/icon_nav_back_activated",function()
+	self.m_btBack = gui.PFMButton.create(self.m_nav,"nav-back",function()
 		self:GetHistory():GoBack()
 	end)
 	self.m_btBack:SetupContextMenu(function(pContext)
@@ -37,10 +36,9 @@ function gui.PFMActorEditor:InitializeNavigationBar()
 			history:Clear()
 		end)
 	end)
+	self.m_btBack:SetEnabled(false)
 
-	gui.create("WIBase",self.navBar):SetSize(5,1) -- Gap
-
-	self.m_btForward = gui.PFMButton.create(self.navBar,"gui/pfm/icon_nav_forward","gui/pfm/icon_nav_forward_activated",function()
+	self.m_btForward = gui.PFMButton.create(self.m_nav,"nav-forward",function()
 		self:GetHistory():GoForward()
 	end)
 	self.m_btForward:SetupContextMenu(function(pContext)
@@ -59,5 +57,6 @@ function gui.PFMActorEditor:InitializeNavigationBar()
 		pContext:AddItem(locale.get_text("pfm_reset_history"),function()
 			history:Clear()
 		end)
-	end)]]
+	end)
+	self.m_btForward:SetEnabled(false)
 end

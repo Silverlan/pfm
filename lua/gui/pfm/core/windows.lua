@@ -50,8 +50,8 @@ pfm.register_window("ik_rig_editor", "editors", gui.Loc("pfm_ik_rig_editor"), fu
 	return p
 end)
 pfm.register_window("model_viewer", "viewers", gui.Loc("pfm_model_viewer"), function(pm)
-	local playerBox = gui.create("vbox")
-	playerBox:SetAutoFillContents(true)
+	local playerBox = gui.create_vbox()
+	-- playerBox:SetAutoFillContents(true)
 
 	local vrBox = gui.create("WIBase", playerBox)
 	vrBox:SetSize(128, 128)
@@ -273,7 +273,7 @@ pfm.register_window("particle_editor", "editors", gui.Loc("pfm_particle_editor")
 	return el
 end)
 pfm.register_window("web_browser", "editors", gui.Loc("pfm_web_browser"), function(pm)
-	local el = gui.create("pfm_web_browser")
+	local el = gui.create("pfm_web_browser_panel")
 	el:AddCallback("OnDetached", function(el, window)
 		window:Maximize()
 	end)

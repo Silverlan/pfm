@@ -14,9 +14,6 @@ function gui.PFMWeightSlider:OnInitialize()
 
 	self:ApplySize(128, 33)
 
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(38, 38, 38))
-
 	self.m_sliderBar = gui.create("pfm_weight_slider_bar", self, 18, 19)
 	self.m_sliderBar:SetWidth(self:GetWidth() - 18 * 2)
 	self.m_sliderBar:SetAnchor(0, 0, 1, 0)
@@ -27,13 +24,11 @@ function gui.PFMWeightSlider:OnInitialize()
 	local color = Color(152, 152, 152)
 	self.m_labelL = gui.create("WIText", self)
 	self.m_labelL:SetText(gui.Loc("pfm_weight_slider_left"))
-	self.m_labelL:AddStyleClass("font_medium")
 	self.m_labelL:SetColor(color)
 	self.m_labelL:SetPos(4, 15)
 
 	self.m_labelR = gui.create("WIText", self)
 	self.m_labelR:SetText(gui.Loc("pfm_weight_slider_right"))
-	self.m_labelR:AddStyleClass("font_medium")
 	self.m_labelR:SetColor(color)
 	self.m_labelR:SetPos(self:GetWidth() - self.m_labelR:GetWidth() - 5, 15)
 	self.m_labelR:SetAnchor(1, 1, 1, 1)
@@ -98,7 +93,7 @@ function gui.PFMWeightSliderBar:OnInitialize()
 
 	self.m_sliderLine = gui.create("WIRect", self, 0, 0, self:GetWidth(), 3, 0, 0, 1, 0)
 	self.m_sliderLine:SetColor(Color.Black)
-	self.m_sliderLine:SetAutoCenterToParent(true)
+	self.m_sliderLine:SetAlignment(gui.ALIGNMENT_CENTER)
 
 	local cursorRect = gui.create("WIRect", self, 0, 0, 12, 15)
 	cursorRect:SetColor(Color(126, 126, 126))

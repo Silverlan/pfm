@@ -11,20 +11,15 @@ function PfmEditEntryWindow:OnInitialize()
 
 	local contents = self:GetContents()
 
-	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap
-
 	local t = gui.create("WITable", contents)
 	t:RemoveStyleClass("WITable")
 	t:SetWidth(self:GetWidth() - 13)
-	t:SetRowHeight(28)
 	self.m_table = t
 
-	gui.create("WIBase", contents, 0, 0, 1, 3) -- Gap
-
-	local boxButtons = gui.create("hbox", contents)
+	local boxButtons = gui.create_hbox(contents)
+		:AddStyleClass("button-group")
 
 	local btOk = gui.create("pfm_button", boxButtons)
-	btOk:SetWidth(73)
 	btOk:SetText(locale.get_text("ok"))
 	btOk:AddCallback("OnPressed", function()
 		if self:CallCallbacks("OnOk") == util.EVENT_REPLY_HANDLED then
@@ -32,12 +27,8 @@ function PfmEditEntryWindow:OnInitialize()
 		end
 		self:GetFrame():Remove()
 	end)
-	btOk:SizeToContents()
-
-	gui.create("WIBase", boxButtons, 0, 0, 8, 1) -- Gap
 
 	local btCancel = gui.create("pfm_button", boxButtons)
-	btCancel:SetWidth(73)
 	btCancel:SetText(locale.get_text("cancel"))
 	btCancel:AddCallback("OnPressed", function()
 		if self:CallCallbacks("OnCancel") == util.EVENT_REPLY_HANDLED then
@@ -45,10 +36,6 @@ function PfmEditEntryWindow:OnInitialize()
 		end
 		self:GetFrame():Remove()
 	end)
-	btCancel:SizeToContents()
-
-	boxButtons:Update()
-	boxButtons:SetX(contents:GetWidth() - boxButtons:GetWidth())
 end
 function PfmEditEntryWindow:GetTable()
 	return self.m_table
@@ -95,7 +82,7 @@ function PfmEditEntryWindow:AddNumericEntryField(name, value)
 	return textEntry
 end
 pfm.open_entry_edit_window = function(title, cb)
-	local p = gui.create("pfm_entry_edit_window")
+	local p = gui.create("pfm_entry_edit_window", tool.get_filmmaker())
 	p:SetTitle(title)
 	if cb ~= nil then
 		p:AddCallback("OnOk", function()
@@ -117,10 +104,9 @@ pfm.open_single_value_edit_window = function(title, cb, def)
 		end
 	end)
 	te = p:AddTextField(title .. ":", def or "")
-	te:GetTextElement():AddStyleClass("font_medium")
 
 	p:SetWindowSize(Vector2i(800, 120))
-	p:Update()
+	p:ScheduleUpdate()
 	return p, te
 end
 gui.register("pfm_entry_edit_window", PfmEditEntryWindow)

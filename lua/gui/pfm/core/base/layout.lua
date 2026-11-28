@@ -142,13 +142,14 @@ function Element:InitializeLayout(layoutFileName)
 	local function addFrameContainer(fcId, container, parent)
 		local elContents
 		if container:IsHorizontal() then
-			elContents = gui.create("hbox", parent)
+			elContents = gui.create_hbox(parent)
 		else
-			elContents = gui.create("vbox", parent)
+			elContents = gui.create_vbox(parent)
 		end
 		local frameContainerId = "frame_container_" .. fcId
 		elContents:SetName(frameContainerId)
-		elContents:SetAutoFillContents(true)
+		elContents:AddStyleClass("fill")
+		-- elContents:SetAutoFillContents(true)
 
 		local frames = {}
 		local dividers = {}
@@ -186,7 +187,7 @@ function Element:InitializeLayout(layoutFileName)
 		}
 	end
 	for fcId, containerInfo in pairs(layout:GetFrameContainers()) do
-		addFrameContainer(fcId, containerInfo.container, self.m_contents)
+		addFrameContainer(fcId, containerInfo.container, self:GetContentsElement())
 	end
 end
 function Element:GetFrameContainerData(identifier)

@@ -30,7 +30,7 @@ function gui.PFMActorEditor:GetCollectionItems()
 end
 function gui.PFMActorEditor:AddCollectionItem(parentItem, parent, isRoot)
 	local itemGroup = parentItem:AddItem(parent:GetName(), nil, nil, tostring(parent:GetUniqueId()))
-	itemGroup:AddStyleClass("act_ed_collection")
+	itemGroup:AddStyleClass("editor__actor-collection")
 	-- Remove stale items
 	for i = #self.m_collectionItems, 1, -1 do
 		local item = self.m_collectionItems[i]

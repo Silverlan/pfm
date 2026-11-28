@@ -9,8 +9,8 @@ function Element:OnInitialize()
 
 	local elText = gui.create("WIText", self)
 	elText:SetAutoSizeToContents(false)
-	elText:SetAutoCenterToParentY(true)
-	elText:AddStyleClass("input_field_text")
+	elText:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
+	elText:AddStyleClass("input-field__text")
 	elText:GetColorProperty():Link(self:GetColorProperty())
 	self.m_elText = elText
 end

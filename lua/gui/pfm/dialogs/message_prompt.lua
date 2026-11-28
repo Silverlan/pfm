@@ -17,10 +17,8 @@ function PfmPrompt:OnInitialize()
 
 	local contents = self:GetContents()
 
-	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap
-
 	local elMsg = gui.create("WIText", contents)
-	elMsg:AddStyleClass("font_medium")
+		:AddStyleClass("window__message")
 	elMsg:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
 	elMsg:SetSkinCallbacksEnabled(true)
 	elMsg:AddCallback("OnSkinApplied", function()
@@ -28,15 +26,18 @@ function PfmPrompt:OnInitialize()
 	end)
 	self.m_message = elMsg
 
-	gui.create("WIBase", contents, 0, 0, 1, 12) -- Gap
-
-	local userContents = gui.create("vbox", contents) -- Space for custom content
+	local userContents = gui.create_vbox(contents) -- Space for custom content
 	self.m_userContents = userContents
 
-	local boxButtons = gui.create("hbox", contents)
+	local boxButtons = gui.create_hbox(contents)
+		:AddStyleClass("button-group")
 	self.m_boxButtons = boxButtons
 
-	boxButtons:SetX(contents:GetWidth() - boxButtons:GetWidth())
+	local dragArea = self:GetFrame():GetDragArea()
+		:SetParent(self.m_titleBar)
+		:SetBackgroundElement(true)
+		:SetSize(self.m_titleBar:GetSize())
+		:SetAnchor(0, 0, 1, 1)
 end
 function PfmPrompt:GetUserContents()
 	return self.m_userContents
@@ -62,7 +63,6 @@ function PfmPrompt:AddButton(id, text)
 		end
 	end)
 	elBt:SizeToContents()
-	gui.create("WIBase", self.m_boxButtons, 0, 0, 8, 1) -- Gap
 	self.m_boxButtons:ScheduleUpdate()
 
 	self:ScheduleUpdate()
@@ -74,7 +74,7 @@ function PfmPrompt:AddStandardButtons(bts)
 	end
 end
 function PfmPrompt:SetMessage(msg)
-	self.m_message:SetWidth(512)
+	--self.m_message:SetWidth(512)
 	self.m_message:SetText(msg)
 	self:ScheduleUpdate()
 end

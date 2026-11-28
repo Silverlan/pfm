@@ -4,13 +4,11 @@
 include("/util/graph_axis.lua")
 
 util.register_class("gui.Axis", gui.Base)
-function gui.Axis:__init()
-	gui.Base.__init(self)
-end
 function gui.Axis:OnInitialize()
 	gui.Base.OnInitialize(self)
 	self.m_items = {}
 	self.m_itemIndex = 0
+	self:SetSkinCallbacksEnabled(true)
 end
 function gui.Axis:OnRemove()
 	if util.is_valid(self.m_cbOnPropertiesChanged) then
@@ -67,6 +65,8 @@ function gui.Axis:AttachElementToValue(el, value)
 	itemData.callbacks = {}
 	itemData.startOffset = 0
 	itemData.endOffset = 0
+	local cb = el:AddCallback("OnSizeChanged", function() self:ScheduleUpdate() end)
+	table.insert(itemData.callbacks, cb)
 	self.m_items[index] = itemData
 	self:ScheduleUpdate()
 	return index
@@ -80,6 +80,16 @@ function gui.Axis:AttachElementToValueWithUdmProperty(el, udmEl, propName, trans
 			self:UpdateAttachment(i, (translateTime ~= nil) and translateTime(newTime) or newTime)
 		end)
 	)
+end
+local function get_start_offset(itemData)
+	local startOffset = itemData.startOffset or 0
+	if(type(startOffset) == "function") then startOffset = startOffset() end
+	return startOffset
+end
+local function get_end_offset(itemData)
+	local endOffset = itemData.endOffset or 0
+	if(type(endOffset) == "function") then endOffset = endOffset() end
+	return endOffset
 end
 function gui.Axis:AttachElementToRange(el, timeFrame, startOffset, endOffset)
 	local index = self.m_itemIndex
@@ -105,6 +115,8 @@ end
 function gui.Axis:OnUpdate()
 	self:UpdateItems()
 end
+
+function gui.Axis:OnSkinApplied() self:ScheduleUpdate() end
 function gui.Axis:UpdateItems()
 	local invalidItems = {}
 	for i, itemData in pairs(self.m_items) do
@@ -125,16 +137,18 @@ function gui.Axis:UpdateItem(itemData)
 		local v = itemData.value
 		local x = axis:ValueToXOffset(v)
 		local extents = self:IsHorizontal() and itemData.element:GetWidth() or itemData.element:GetHeight()
-		extents = extents -(itemData.startOffset +itemData.endOffset)
+		local startOffset = get_start_offset(itemData)
+		local endOffset = get_end_offset(itemData)
+		extents = extents -(startOffset +endOffset)
 		x = x - extents / 2
 
 		local pos = itemData.element:GetAbsolutePos()
 		if self:IsHorizontal() then
 			pos.x = self:GetAbsolutePos().x + x
-			pos.x = pos.x -itemData.startOffset
+			pos.x = pos.x -startOffset
 		else
 			pos.y = self:GetAbsolutePos().y + x
-			pos.y = pos.y -itemData.startOffset
+			pos.y = pos.y -startOffset
 		end
 		itemData.element:SetAbsolutePos(pos)
 	else
@@ -146,15 +160,17 @@ function gui.Axis:UpdateItem(itemData)
 		local w = axis:ValueToXOffset(endOffset) - axis:ValueToXOffset(startOffset)
 		local xStartAbs = (self:IsHorizontal() and self:GetAbsolutePos().x or self:GetAbsolutePos().y) + xStart
 		local pos = itemData.element:GetAbsolutePos()
+		startOffset = get_start_offset(itemData)
+		endOffset = get_end_offset(itemData)
 		if self:IsHorizontal() then
 			pos.x = xStartAbs
-			pos.x = pos.x -itemData.startOffset
+			pos.x = pos.x -startOffset
 		else
 			pos.y = xStartAbs
-			pos.y = pos.y -itemData.startOffset
+			pos.y = pos.y -startOffset
 		end
 		itemData.element:SetAbsolutePos(pos)
-		w = w +itemData.startOffset +itemData.endOffset
+		w = w +startOffset +endOffset
 		if self:IsHorizontal() then
 			itemData.element:ApplyWidth(w)
 		else

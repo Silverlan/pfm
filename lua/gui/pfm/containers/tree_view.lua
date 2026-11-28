@@ -18,7 +18,7 @@ function gui.PFMTreeView:OnInitialize()
 	self.m_selectedElements = {}
 	self.m_contentsWidth = 0
 
-	self:SetAutoSizeToContents(false, true)
+	self:SetAutoSizeToContents(true)
 	self:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 	self:SetAutoSelectChildren(true)
 	self:ScheduleUpdate()
@@ -42,7 +42,6 @@ function gui.PFMTreeView:CalcContentsWidth()
 		return self.m_contentsWidth
 	end
 	self.m_contentsWidth = self.m_rootElement:CalcContentsWidth()
-	self.m_contentsWidth = self.m_contentsWidth + 10 -- Margin
 	return self.m_contentsWidth
 end
 function gui.PFMTreeView:GetItemHeight()
@@ -184,41 +183,42 @@ function gui.PFMTreeViewElement:OnInitialize()
 	self.m_autoSelectChildren = true
 	self:ApplySize(64, 19)
 
-	self.m_vBox = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight())
-	self.m_vBox:SetAutoFillContentsToWidth(true)
+	self.m_vBox = gui.create_vbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight())
+	-- self.m_vBox:SetAutoFillContentsToWidth(true)
 	self.m_vBox:SetName("contents_wrapper")
 
-	self.m_header = gui.create("hbox", self.m_vBox, 0, 0, self:GetWidth(), self:GetHeight())
+	self.m_header = gui.create_hbox(self.m_vBox)
+		:SetSize(self:GetWidth(), self:GetHeight())
+		:AddStyleClass("tree-item")
 	self.m_header:AddCallback("OnCursorEntered",function()
 		self:OnCursorEnteredItem()
 	end)
 	self.m_header:AddCallback("OnCursorExited",function()
 		self:OnCursorExitedItem()
 	end)
-	self.m_selection =
-		gui.create("WIRect", self.m_header, 0, 0, self.m_header:GetWidth(), self.m_header:GetHeight(), 0, 0, 1, 1)
+	--[[self.m_selection =
+		gui.create("WIBase", self.m_header, 0, 0, self.m_header:GetWidth(), self.m_header:GetHeight(), 0, 0, 1, 1)
 	self.m_selection:SetBackgroundElement(true)
-	self.m_selection:AddStyleClass("selection")
-	self.m_header:SetFixedWidth(true)
-	self.m_header:SetFixedHeight(true)
+	self.m_selection:AddStyleClass("selection")]]
 	self.m_header:SetName("header")
 	self.m_header:SetMouseInputEnabled(true)
 	self.m_header:AddCallback("OnDoubleClick", function(el)
 		self:Toggle()
 	end)
 
-	self.m_iconBox = gui.create("hbox", self.m_header, 0, 0, 0, 14)
-	self.m_iconBox:SetAutoCenterToParentY(true)
+	self.m_iconBox = gui.create_hbox(self.m_header)
+		:SetSize(0, 14)
+		:AddStyleClass("tree-item__icon-container")
+		:SetVisible(false)
 	self.m_icons = {}
 
-	gui.create("WIBase", self.m_header, 0, 0, 3, 1) -- gap
-
 	self:SetMouseInputEnabled(true)
-	self:SetAutoSizeToContents(false, true)
+	self:SetAutoSizeToContents(true) -- false, true)
 	self:SetSelected(false)
 end
 function gui.PFMTreeViewElement:UpdateHoverStyle()
-	local visible = self.m_cursorHover or self:IsSelected()
+	--[[local visible = self.m_cursorHover or self:IsSelected()
 	self.m_selection:SetVisible(visible)
 
 	if(self.m_cursorHover) then
@@ -227,7 +227,7 @@ function gui.PFMTreeViewElement:UpdateHoverStyle()
 		self.m_selection:RemoveStyleClass("hover")
 		self.m_selection:RemoveStyleClass("selection_hover")
 	end
-	self.m_selection:RefreshSkin()
+	self.m_selection:RefreshSkin()]]
 end
 function gui.PFMTreeViewElement:OnCursorEnteredItem()
 	self.m_cursorHover = true
@@ -402,14 +402,20 @@ end
 function gui.PFMTreeViewElement:ClearIcons()
 	util.remove(self.m_icons)
 end
-function gui.PFMTreeViewElement:AddIcon(material)
+function gui.PFMTreeViewElement:AddIcon(material, styleClass)
 	local icon = gui.create("WITexturedRect", self.m_iconBox)
 	icon:SetSize(14, 14)
 	icon:SetMaterial(material)
 	table.insert(self.m_icons, icon)
+
+	self.m_iconBox:SetVisible(true)
+
+	styleClass = styleClass or {}
+	if(type(styleClass) ~= "table") then styleClass = {styleClass} end
+	for _, sc in ipairs(styleClass) do icon:AddStyleClass(sc) end
 	return icon
 end
-function gui.PFMTreeViewElement:AddUniqueIcon(material)
+function gui.PFMTreeViewElement:AddUniqueIcon(material, styleClass)
 	for _, icon in ipairs(self.m_icons) do
 		if
 			icon:IsValid()
@@ -418,7 +424,7 @@ function gui.PFMTreeViewElement:AddUniqueIcon(material)
 			return icon
 		end
 	end
-	return self:AddIcon(material)
+	return self:AddIcon(material, styleClass)
 end
 function gui.PFMTreeViewElement:GetHeader()
 	return self.m_header
@@ -433,10 +439,9 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 	if util.is_valid(self.m_childHBox) then
 		return
 	end
-	self.m_childHBox = gui.create("hbox", self.m_vBox, 0, 0, self.m_vBox:GetWidth(), self.m_vBox:GetHeight())
-	self.m_childHBox:SetFixedWidth(true)
-	self.m_childHBox:SetAutoFillContentsToWidth(true)
-	self.m_childHBox:SetName("child contents box with prefix")
+	self.m_childHBox = gui.create_hbox(self.m_vBox)
+		:SetName("child contents box with prefix")
+	-- self.m_childHBox:SetAutoFillContentsToWidth(true)
 
 	self.m_childPrefix = gui.create("WIBase", self.m_childHBox, 0, 0, 18, self.m_childHBox:GetHeight())
 	self.m_childPrefix:SetName("child prefix rect")
@@ -444,12 +449,11 @@ function gui.PFMTreeViewElement:InitializeChildBox()
 	self.m_vLine = gui.create("WIRect", self.m_childPrefix, 0, 0, 1, 1)
 	self.m_vLine:SetColor(Color(58, 58, 58))
 	self.m_vLine:SetName("child vertical line indicator")
-	self.m_vLine:SetAutoCenterToParentX(true)
+	self.m_vLine:SetHorizontalAlignment(gui.ALIGNMENT_CENTER)
 
-	self.m_vBoxChildren = gui.create("vbox", self.m_childHBox, 0, 0, self:GetWidth(), self:GetHeight())
-	self.m_vBoxChildren:SetFixedWidth(true)
-	self.m_vBoxChildren:SetAutoFillContentsToWidth(true)
-	self.m_vBoxChildren:SetName("child contents box")
+	self.m_vBoxChildren = gui.create_vbox(self.m_childHBox)
+		:SetName("child contents box")
+	-- self.m_vBoxChildren:SetAutoFillContentsToWidth(true)
 
 	if self:IsCollapsed() then
 		self.m_childHBox:SetVisible(false)
@@ -459,7 +463,7 @@ function gui.PFMTreeViewElement:GetChildContentsBox()
 	return self.m_childHBox
 end
 function gui.PFMTreeViewElement:OnSizeChanged(w, h)
-	if util.is_valid(self.m_vBox) then
+	--[[if util.is_valid(self.m_vBox) then
 		self.m_vBox:ApplyWidth(w)
 		-- We need to update immediately to avoid some weird twitching effects
 		self.m_vBox:Update()
@@ -467,7 +471,7 @@ function gui.PFMTreeViewElement:OnSizeChanged(w, h)
 	if self.m_skipSizeUpdateSchedule then
 		return
 	end
-	self:ScheduleUpdate()
+	self:ScheduleUpdate()]]
 end
 function gui.PFMTreeViewElement:OnUpdate()
 	if util.is_valid(self.m_vLine) == false then
@@ -514,7 +518,7 @@ function gui.PFMTreeViewElement:InitializeExpandIcon(item)
 		return item.m_expandIcon
 	end
 	local expandIcon = gui.create("pfm_tree_expand_icon", self.m_childPrefix)
-	expandIcon:AddStyleClass("tree_expand_icon")
+	expandIcon:AddStyleClass("tree__expansion-icon")
 	expandIcon:AddCallback("OnExpand", function()
 		if item:IsValid() == false then
 			return
@@ -681,8 +685,7 @@ end
 function gui.PFMTreeViewElement:SetText(text)
 	if util.is_valid(self.m_text) == false then
 		self.m_text = gui.create("WIText", self.m_header)
-		self.m_text:AddStyleClass("font_medium")
-		self.m_text:SetAutoCenterToParentY(true)
+		self.m_text:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	end
 	self.m_text:SetText(text)
 
@@ -710,9 +713,7 @@ function gui.PFMTreeViewElement:SetSelected(selected, selectChildren)
 	if util.is_valid(treeView) then
 		treeView:OnElementSelectionChanged(self, selected)
 	end
-	if util.is_valid(self.m_selection) then
-		self.m_selection:SetVisible(selected)
-	end
+	self.m_header:SetState(gui.STATE_SELECTED, selected)
 	if selected then
 		self:CallCallbacks("OnSelected")
 	else
@@ -897,9 +898,7 @@ function gui.PFMTreeExpandIcon:OnInitialize()
 
 	self:ApplySize(9, 9)
 
-	local tex = gui.create("WITexturedRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	tex:GetColorProperty():Link(self:GetColorProperty())
-	self.m_tex = tex
+	self:AddStyleClass("expansion-icon")
 
 	self:SetMouseInputEnabled(true)
 	self:Collapse(true)
@@ -911,21 +910,21 @@ function gui.PFMTreeExpandIcon:Expand()
 	if self:IsCollapsed() == false then
 		return
 	end
-	if util.is_valid(self.m_tex) then
-		self.m_tex:SetMaterial("gui/pfm/icons/collapse")
-	end
+	self:RemoveStyleClass("expansion-icon--expand")
+	self:AddStyleClass("expansion-icon--collapse")
 	self.m_collapsed = false
 	self:CallCallbacks("OnExpand")
+	self:RefreshSkin()
 end
 function gui.PFMTreeExpandIcon:Collapse(force)
 	if self:IsCollapsed() and not force then
 		return
 	end
-	if util.is_valid(self.m_tex) then
-		self.m_tex:SetMaterial("gui/pfm/icons/expand")
-	end
+	self:RemoveStyleClass("expansion-icon--collapse")
+	self:AddStyleClass("expansion-icon--expand")
 	self.m_collapsed = true
 	self:CallCallbacks("OnCollapse")
+	self:RefreshSkin()
 end
 function gui.PFMTreeExpandIcon:Toggle()
 	if self:IsCollapsed() then

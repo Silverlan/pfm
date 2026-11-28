@@ -17,10 +17,6 @@ function Element:OnInitialize()
 
 	self:ApplySize(128, 20)
 
-	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	bg:SetColor(Color.Clear)
-	self.m_bg = bg
-
 	self.m_sliderBarUpper = gui.create("pfm_slider_bar", self, 0, 3)
 	self.m_sliderBarUpper:SetWidth(self:GetWidth())
 	self.m_sliderBarUpper:SetHeight(self:GetHeight() - 6)
@@ -70,9 +66,9 @@ function Element:OnInitialize()
 	end)]]
 
 	self.m_text = gui.create("WIText", self)
-	self.m_text:AddStyleClass("input_field_text")
+	self.m_text:AddStyleClass("input-field__text")
 	self.m_text:SetVisible(false)
-	self.m_text:SetAutoCenterToParent(true)
+	self.m_text:SetAlignment(gui.ALIGNMENT_CENTER)
 
 	self.m_leftRightRatio = util.FloatProperty(0.5)
 	self:SetStepSize(0.0)
@@ -85,7 +81,7 @@ function Element:OnInitialize()
 		return util.EVENT_REPLY_HANDLED
 	end)
 
-	self:AddStyleClass("input_field")
+	self:AddStyleClass("input-field")
 end
 function Element:OnCursorEntered()
 	self.m_elArrowLeft:SetVisible(true)

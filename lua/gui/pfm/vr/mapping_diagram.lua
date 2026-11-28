@@ -28,7 +28,7 @@ function Element:OnInitialize()
 
 	self:SetSize(64, 64)
 
-	local vb = gui.create("vbox", self)
+	local vb = gui.create_vbox(self)
 
 	local el = gui.create("WITexturedRect", vb)
 	el:SetMaterial("vr/oculus_button_mapping_diagram")
@@ -40,7 +40,7 @@ function Element:OnInitialize()
 	textContainer:SetAutoSizeToContents(false, true)
 	self.m_textContainer = textContainer
 
-	local textVbox = gui.create("vbox", textContainer)
+	local textVbox = gui.create_vbox(textContainer)
 	self.m_textVbox = textVbox
 
 	self.m_textElements = {}
@@ -51,11 +51,9 @@ function Element:OnInitialize()
 		self.m_textElements[i] = elText
 	end
 
-	gui.create("WIBase", textVbox, 0, 0, 1, 5) -- Gap
 	for i = 1, 7 do
 		add_text(i)
 	end
-	gui.create("WIBase", textVbox, 0, 0, 1, 5) -- Gap
 	self:ScheduleUpdate()
 end
 local buttonToIndex = {

@@ -7,8 +7,8 @@ function Element:OnInitialize()
 
 	self.m_bgEls = {}
 	for i = 1, 4 do
-		local el = gui.create("WIRect", self)
-		el:SetColor(Color(5, 5, 5, 200))
+		local el = gui.create("WIBase", self)
+		el:AddStyleClass("modal-overlay")
 		table.insert(self.m_bgEls, el)
 	end
 

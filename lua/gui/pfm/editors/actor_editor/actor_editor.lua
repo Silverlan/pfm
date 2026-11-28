@@ -35,19 +35,21 @@ engine.load_library("pr_ik")
 function gui.PFMActorEditor:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self:SetSize(64, 128)
+	self:ApplySize(64, 128)
 
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("background2")
+	self.m_root = gui.create_vbox(self)
+		:AddStyleClass("fill")
 
-	self.navBar = gui.create("hbox", self)
+	self.m_navBar = gui.create_hbox(self.m_root)
+		:AddStyleClass("editor__nav-bar")
+
+	self.m_nav = gui.create_hbox(self.m_navBar)
+		:AddStyleClass("editor__nav")
 	self:InitializeNavigationBar()
 
-	self.navBar:SetHeight(32)
-	self.navBar:SetAnchor(0, 0, 1, 0)
 	self.m_activeControls = {}
 
-	self.m_btTools = gui.PFMButton.create(self, "gear-fill", function()
+	self.m_btTools = gui.PFMButton.create(self.m_navBar, "gear-fill", function()
 		print("TODO")
 	end)
 	self.m_btTools:SetName("new_actor_button")
@@ -392,27 +394,10 @@ function gui.PFMActorEditor:OnInitialize()
 		end)]]
 	end, true)
 
-	self.m_contents = gui.create(
-		"hbox",
-		self,
-		0,
-		self.m_btTools:GetBottom(),
-		self:GetWidth(),
-		self:GetHeight() - self.m_btTools:GetBottom(),
-		0,
-		0,
-		1,
-		1
-	)
-	self.m_contents:SetAutoFillContents(true)
+	self.m_contents = gui.create_hbox(self.m_root)
+		:AddStyleClass("editor__tree")
 
-	local treeScrollContainerBg = gui.create("WIRect", self.m_contents, 0, 0, 64, 128)
-	treeScrollContainerBg:AddStyleClass("background")
-	self.m_treeScrollContainerBg = treeScrollContainerBg
-	local treeScrollContainer = gui.create("WIScrollContainer", treeScrollContainerBg, 0, 0, 64, 128, 0, 0, 1, 1)
-	treeScrollContainer:AddCallback("OnSizeChanged", function(el)
-		self:ResizeTreeToContents()
-	end)
+	local treeScrollContainer = gui.create("WIScrollContainer", self.m_contents)
 	self.m_treeScrollContainer = treeScrollContainer
 
 	local resizer = gui.create("resizer", self.m_contents)
@@ -420,30 +405,25 @@ function gui.PFMActorEditor:OnInitialize()
 
 	local dataVBox
 	local scrollContainer =
-		gui.create("WIScrollContainer", self.m_contents, 0, 0, self.m_contents:GetWidth(), self.m_contents:GetHeight())
+		gui.create("WIScrollContainer", self.m_contents)
+	-- TODO: Use style?
 	scrollContainer:AddCallback("OnSizeChanged", function(el)
 		if self:IsValid() and util.is_valid(dataVBox) then
 			dataVBox:SetWidth(el:GetWidth())
 		end
 	end)
 
-	dataVBox = gui.create("vbox", scrollContainer, 0, 0, scrollContainer:GetWidth(), scrollContainer:GetHeight())
-	dataVBox:SetFixedWidth(true)
+	dataVBox = gui.create_vbox(scrollContainer)
+		:SetFixedWidth(true)
 
 	self.m_propertyContainer = dataVBox
 	self.m_componentPropertyGroups = {}
 	self.m_sliderControls = {}
 
-	self.m_tree = gui.create(
-		"pfm_tree_view",
-		treeScrollContainer,
-		0,
-		0,
-		treeScrollContainer:GetWidth(),
-		treeScrollContainer:GetHeight()
-	)
+	self.m_tree = gui.create("pfm_tree_view",treeScrollContainer)
 	self.m_tree:SetSelectable(gui.Table.SELECTABLE_MODE_MULTI)
 	self.m_tree:SetName("actor_tree")
+	self.m_tree:SetAutoSizeToContents(true)
 	self.m_treeElementToActorData = {}
 	self.m_collectionItems = {}
 	self.m_actorUniqueIdToTreeElement = {}
@@ -458,13 +438,6 @@ function gui.PFMActorEditor:OnInitialize()
 			self:InitializeDirtyActorComponents(uniqueId)
 		end
 		self:ScheduleUpdateSelectedEntities()
-	end)
-	self.m_tree:AddCallback("OnContentsWidthDirty", function()
-		time.create_simple_timer(0.0, function()
-			if self:IsValid() and util.is_valid(self.m_tree) then
-				self:ResizeTreeToContents()
-			end
-		end)
 	end)
 	--[[self.m_data = gui.create("WITable",dataVBox,0,0,dataVBox:GetWidth(),dataVBox:GetHeight(),0,0,1,1)
 
@@ -483,15 +456,6 @@ function gui.PFMActorEditor:OnInitialize()
 	self:InitAnimManagerListeners()
 
 	self:SetMouseInputEnabled(true)
-end
-function gui.PFMActorEditor:ResizeTreeToContents()
-	local w = self.m_tree:CalcContentsWidth()
-	local scrollBar = self.m_treeScrollContainer:GetVerticalScrollBar()
-	if util.is_valid(scrollBar) and scrollBar:IsVisible() then
-		w = w + 20
-	end
-	w = math.max(w, self.m_treeScrollContainerBg:GetWidth())
-	self.m_tree:SetWidth(w)
 end
 function gui.PFMActorEditor:ClearEmptyComponentPropertyGroups()
 	local tNew = {}
@@ -530,15 +494,15 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 	end
 	if util.is_valid(actorGroup) == false then
 		local collapsible = gui.create("collapsible_group", self.m_propertyContainer)
-		collapsible:AddStyleClass("act_ed_actor")
-		collapsible:SetAutoAlignToParent(true, false)
+		collapsible:AddStyleClass("editor__actor")
+		collapsible:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 		collapsible:SetGroupName(actor:GetName())
 		collapsible:Expand()
 		actorGroup = collapsible
 		self.m_componentPropertyGroups[uuid] = { collapsibleGroup = collapsible, componentGroups = {} }
 	end
 	local collapsible = actorGroup:AddGroup(locale.get_text("c_" .. ctype))
-	collapsible:AddStyleClass("act_ed_component")
+	collapsible:AddStyleClass("editor__actor-component")
 	collapsible:Expand()
 	local collapsibleContents = collapsible:GetContents()
 
@@ -550,8 +514,8 @@ function gui.PFMActorEditor:AddComponentPropertyGroup(actor, udmComponent)
 		collapsibleContents:GetWidth(),
 		collapsibleContents:GetHeight()
 	)
-	animSetControls:AddStyleClass("act_ed_property")
-	animSetControls:SetAutoAlignToParent(true, false)
+	animSetControls:AddStyleClass("editor__actor-property")
+	animSetControls:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	animSetControls:SetName("property_controls")
 	animSetControls:GetControlsMenu():AddCallback("OnControlAdded", function(el, name, ctrl, wrapper)
 		if wrapper ~= nil then
@@ -968,7 +932,6 @@ function gui.PFMActorEditor:AddProperty(name, child, fInitPropertyEl)
 		local elLabel = gui.create("WIText",elLabelContainer)
 		elLabel:SetText(name)
 		elLabel:SetColor(Color(200,200,200))
-		elLabel:AddStyleClass("font_medium")
 		elLabel:CenterToParentY()
 		elLabel:SetX(5)
 
@@ -992,9 +955,7 @@ function gui.PFMActorEditor:AddProperty(name, child, fInitPropertyEl)
 	local elLabel = gui.create("WIText", elLabelContainer)
 	elLabel:SetName(name)
 	elLabel:SetText(name)
-	elLabel:AddStyleClass("font_medium")
-	elLabel:SetAutoCenterToParentY(true)
-	elLabel:SetX(5)
+	elLabel:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 
 	local elProperty = fInitPropertyEl(self.m_propertiesElementsVBox)
 	if util.is_valid(elProperty) then
@@ -1956,7 +1917,7 @@ function gui.PFMActorEditor:AddControl(
 	local displayName, description = pfm.util.get_localized_property_name(identifier)
 
 	local child = baseItem:AddItem(displayName, nil, nil, identifier)
-	child:AddStyleClass("act_ed_property")
+	child:AddStyleClass("editor__actor-property")
 	child:SetName(util.Path.CreateFilePath(identifier):GetBack())
 	if description ~= nil then
 		child:SetTooltip(description)
@@ -2195,12 +2156,12 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 		return find_property_object_entry(elActor, componentType, "drivenObject")
 	end
 
-	local function add_icon(elActor, componentType, icon)
+	local function add_icon(elActor, componentType, icon, styleClass)
 		local tIcons = {}
 		local tDriven = find_driven_object_entry(elActor, componentType)
 		if #tDriven > 0 then
 			for _, drivenData in ipairs(tDriven) do
-				local icon = drivenData.element:AddIcon(icon)
+				local icon = drivenData.element:AddIcon(icon, styleClass)
 				if util.is_valid(icon) then
 					icon:SetName(componentType)
 					icon:SetCursor(gui.CURSOR_SHAPE_HAND)
@@ -2266,7 +2227,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 	end
 
 	self:IterateActors(function(el)
-		local tIcons = add_icon(el, "constraint", "gui/pfm/icon_constraint")
+		local tIcons = add_icon(el, "constraint", "gui/pfm/icon_constraint", {"editor-icon", "editor-actor-icon", "editor-actor-icon--constraint"})
 		for _, iconData in ipairs(tIcons) do
 			local constraintType
 			for _, ctName in ipairs({
@@ -2330,7 +2291,7 @@ function gui.PFMActorEditor:UpdateConstraintPropertyIcons()
 			})
 		end
 
-		local tIcons = add_icon(el, "animation_driver", "gui/pfm/icon_driver")
+		local tIcons = add_icon(el, "animation_driver", "gui/pfm/icon_driver", {"editor-icon", "editor-actor-icon", "editor-actor-icon--constraint"})
 		for _, iconData in ipairs(tIcons) do
 			iconData.icon:SetTooltip(gui.Loc("pfm_animation_driver"))
 			iconData.element.__elDriverActorData = {
@@ -2381,7 +2342,7 @@ function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData, controlData)
 	el:ClearIcons()
 	local channel = self:GetAnimationChannel(actorData.actor, controlData.path, false)
 	if channel ~= nil then
-		local icon = el:AddUniqueIcon("gui/pfm/icon_animated")
+		local icon = el:AddUniqueIcon("gui/pfm/icon_animated", {"editor-icon", "editor-property-icon", "editor-property-icon--animated"})
 		if util.is_valid(icon) then
 			icon:SetName("animated")
 			icon:SetCursor(gui.CURSOR_SHAPE_HAND)
@@ -2405,7 +2366,7 @@ function gui.PFMActorEditor:DoUpdatePropertyIcons(actorData, controlData)
 	end
 	local hasExpression = (channel ~= nil and channel:GetExpression() ~= nil)
 	if hasExpression then
-		local icon = el:AddUniqueIcon("gui/pfm/icon_math_expression")
+		local icon = el:AddUniqueIcon("gui/pfm/icon_math_expression", {"editor-icon", "editor-property-icon", "editor-property-icon--math-expression"})
 		if util.is_valid(icon) then
 			icon:SetName("math_expr")
 			icon:SetCursor(gui.CURSOR_SHAPE_HAND)

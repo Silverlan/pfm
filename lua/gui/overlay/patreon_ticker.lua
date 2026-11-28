@@ -27,7 +27,7 @@ end
 function Element:AddSupporter(name, color, priority)
 	local elText = gui.create("WIText")
 	elText:SetText(name .. ", ")
-	elText:AddStyleClass("input_field_text")
+	elText:AddStyleClass("input-field__text")
 	if color ~= nil then
 		time.create_simple_timer(0.0, function()
 			if elText:IsValid() then
@@ -53,17 +53,15 @@ util.register_class("gui.PatreonTicker", gui.Base)
 function gui.PatreonTicker:OnInitialize()
 	gui.Base.OnInitialize(self)
 
-	self.m_contents = gui.create("hbox", self)
-	self.m_contents:SetAutoFillContents(true)
-
-	gui.create("WIBase", self, 0, 0, 10, 1) -- Gap
+	self.m_contents = gui.create_hbox(self)
+	-- self.m_contents:SetAutoFillContents(true)
 
 	local patronTickerLabel = gui.create("WIText", self)
 	patronTickerLabel:SetText(locale.get_text("pfm_patrons") .. ":")
-	patronTickerLabel:AddStyleClass("input_field_text")
+	patronTickerLabel:AddStyleClass("input-field__text")
 	patronTickerLabel:SetY(5)
 	patronTickerLabel:SetX(5)
-	patronTickerLabel:SetAutoCenterToParentY(true)
+	patronTickerLabel:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	self.m_patronTickerLabel = patronTickerLabel
 
 	local icon = gui.create("WITexturedRect", self)
@@ -72,7 +70,7 @@ function gui.PatreonTicker:OnInitialize()
 	icon:SetMouseInputEnabled(true)
 	icon:SetCursor(gui.CURSOR_SHAPE_HAND)
 	icon:SetMouseInputEnabled(true)
-	icon:SetAutoCenterToParentY(true)
+	icon:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	icon:AddCallback("OnMouseEvent", function(el, button, state, mods)
 		if button == input.MOUSE_BUTTON_LEFT then
 			if state == input.STATE_PRESS then

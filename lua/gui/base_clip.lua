@@ -5,10 +5,6 @@ include("/gui/selection/outline.lua")
 
 util.register_class("gui.BaseClip", gui.Base)
 
-gui.BaseClip.TITLE_COLOR = Color.White
-gui.BaseClip.TITLE_COLOR_SELECTED = Color(63, 53, 20)
-gui.BaseClip.OUTLINE_COLOR = Color(182, 182, 182)
-
 function gui.BaseClip:OnInitialize()
 	gui.Base.OnInitialize(self)
 
@@ -16,23 +12,19 @@ function gui.BaseClip:OnInitialize()
 	local h = 23
 	self:ApplySize(w, h)
 
-	self.m_bg = gui.create("WIRect", self, 0, 0, w, h, 0, 0, 1, 1)
-	self.m_bg:SetName("background")
-	self.m_bg:SetColor(Color(121, 121, 121))
+	self:SetAutoSizeToContents(true)
 
-	self.m_bgOutline = gui.create("WIOutlinedRect", self, 0, 0, w, h, 0, 0, 1, 1)
-	self.m_bgOutline:SetName("outline")
-	self.m_bgOutline:SetColor(gui.BaseClip.OUTLINE_COLOR)
-	self.m_bgOutline:SetOutlineWidth(2)
+	local contents = gui.create_vbox(self)
+		:AddStyleClass("clip__content-area")
 
-	self.m_selection = gui.create("selection_outline", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_selection:SetVisible(false)
-	self.m_selection:SetZPos(1)
+	local header = gui.create_vbox(contents)
+		:AddStyleClass("clip__header")
+	self.m_text = gui.create("WIText", header)
+		:AddStyleClass("clip__title")
 
-	self.m_text = gui.create("WIText", self, 4, 0, w - 8, 14, 0, 0, 1, 0)
-	self.m_text:AddStyleClass("font_small")
-	self.m_text:SetColor(gui.BaseClip.TITLE_COLOR)
-	self.m_text:SetZPos(2)
+	local body = gui.create_vbox(contents)
+		:AddStyleClass("clip__body")
+	self.m_body = body
 
 	self:SetSelected(false)
 end
@@ -50,10 +42,7 @@ function gui.BaseClip:SetSelected(selected)
 		return
 	end
 	self.m_selected = selected
-	self.m_selection:SetVisible(selected)
-	if self.m_text:IsValid() then
-		self.m_text:SetColor(selected and Color(63, 53, 20) or Color.White)
-	end
+	self:SetState(gui.STATE_SELECTED, selected)
 	if selected then
 		self:CallCallbacks("OnSelected")
 	else

@@ -25,11 +25,11 @@ function gui.PFMMaterialEditor:OnInitialize()
 
 	self.m_linkedMaterialParameterElements = {}
 	self.m_texSlots = {}
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(54, 54, 54))
 
-	self.m_contents = gui.create("hbox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight() - 64, 0, 0, 1, 1) -- -64 for the save button
-	self.m_contents:SetAutoFillContents(true)
+	self.m_contents = gui.create_hbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight() - 64) -- -64 for the save button
+		:SetAnchor(0, 0, 1, 1)
+	-- self.m_contents:SetAutoFillContents(true)
 
 	local controllBoxContainer =
 		gui.create("WIScrollContainer", self.m_contents, 0, 0, self.m_contents:GetWidth(), self.m_contents:GetHeight())
@@ -38,24 +38,20 @@ function gui.PFMMaterialEditor:OnInitialize()
 			self.m_controlBox:SetWidth(el:GetWidth())
 		end
 	end)
-	self.m_controlBox = gui.create(
-		"vbox",
-		controllBoxContainer,
-		0,
-		0,
-		controllBoxContainer:GetWidth(),
-		controllBoxContainer:GetHeight()
-	)
-	self.m_controlBox:SetAutoFillContentsToWidth(true)
+	self.m_controlBox = gui.create_vbox(controllBoxContainer)
+		:SetSize(controllBoxContainer:GetWidth(), controllBoxContainer:GetHeight())
+	-- self.m_controlBox:SetAutoFillContentsToWidth(true)
 
 	gui.create("resizer", self.m_contents):SetFraction(0.5)
 
 	-- Viewport
 	local vpContents = gui.create("WIBase", self.m_contents, 0, 0, self:GetWidth(), self:GetHeight())
 
-	self.m_vpBox = gui.create("vbox", vpContents, 0, 0, vpContents:GetWidth(), vpContents:GetHeight(), 0, 0, 1, 1)
-	self.m_vpBox:SetFixedSize(true)
-	self.m_vpBox:SetAutoFillContents(true)
+	self.m_vpBox = gui.create_vbox(vpContents)
+		:SetSize(vpContents:GetWidth(), vpContents:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
+		:SetFixedSize(true)
+	-- self.m_vpBox:SetAutoFillContents(true)
 	self:InitializeViewport()
 	self.m_vpBox:AddCallback("OnSizeChanged", function()
 		self:ScheduleRTPreviewUpdate()
@@ -65,19 +61,10 @@ function gui.PFMMaterialEditor:OnInitialize()
 	gui.create("resizer", self.m_vpBox):SetFraction(0.75)
 
 	self.m_renderControlsWrapper = gui.create("WIBase", self.m_vpBox, 0, 0, 100, 100)
-	self.m_renderControlsVbox = gui.create(
-		"vbox",
-		self.m_renderControlsWrapper,
-		0,
-		0,
-		self.m_renderControlsWrapper:GetWidth(),
-		self.m_renderControlsWrapper:GetHeight(),
-		0,
-		0,
-		1,
-		1
-	)
-	self.m_renderControlsVbox:SetAutoFillContents(true)
+	self.m_renderControlsVbox = gui.create_vbox(self.m_renderControlsWrapper)
+		:SetSize(self.m_renderControlsWrapper:GetWidth(), self.m_renderControlsWrapper:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
+	-- self.m_renderControlsVbox:SetAutoFillContents(true)
 	self:InitializePreviewControls()
 
 	self.m_contents:Update()
@@ -123,7 +110,7 @@ function gui.PFMMaterialEditor:AddTextureSlot(parent, text, texIdentifier, norma
 	local box = gui.create("WIBase", parent, 0, 0, 256, 128)
 
 	local te
-	local hBoxTexSlots = gui.create("hbox", box)
+	local hBoxTexSlots = gui.create_hbox(box)
 	local texSlot = gui.create("pfm_texture_slot", hBoxTexSlots, box:GetWidth() / 2 - 64, 0, 128 - 24, 128 - 24)
 	texSlot:SetMouseInputEnabled(true)
 	texSlot:SetNormalMap(normalMap or false)

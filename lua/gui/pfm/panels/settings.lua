@@ -14,8 +14,8 @@ function Element:OnInitialize()
 	self:SetSize(128, 128)
 
 	local p = gui.create("pfm_controls_menu", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	p:SetAutoFillContentsToWidth(true)
-	p:SetAutoFillContentsToHeight(false)
+	-- p:SetAutoFillContentsToWidth(true)
+	-- p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
 end
 function Element:AddToggleControl(name, identifier, conVar, defaultValue, callback)
@@ -224,6 +224,16 @@ function Element:OnInitialize()
 		end,
 		1,
 		true
+	)
+
+	self:AddToggleControl(
+		gui.Loc("pfm_use_servo_browser_engine"),
+		"use_servo_browser_engine",
+		"pfm_experimental_use_servo_browser_engine",
+		console.get_convar_bool("pfm_experimental_use_servo_browser_engine"),
+		function(el, checked)
+			self:SetConVar("pfm_experimental_use_servo_browser_engine", checked and "1" or "0")
+		end
 	)
 
 	p:Update()

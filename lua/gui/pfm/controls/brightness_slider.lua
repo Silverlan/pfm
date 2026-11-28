@@ -22,7 +22,7 @@ function gui.PFMBrightnessSlider:OnInitialize()
 
 	local locator = gui.create("pfm_locator", self)
 	local cursor = locator:Wrap("pfm_slider_cursor")
-	cursor:SetAutoCenterToParentX(true)
+	cursor:SetHorizontalAlignment(gui.ALIGNMENT_CENTER)
 	cursor:SetType(gui.PFMSliderCursor.TYPE_VERTICAL)
 	cursor:AddCallback("OnValueChanged", function(el, value, fraction)
 		self:CallCallbacks("OnBrightnessChanged", 1.0 - fraction)

@@ -149,8 +149,8 @@ function Element:AddConstraint(item, boneName, type)
 
 	local ctrlsParent = child:AddItem("")
 	local ctrl = gui.create("pfm_controls_menu", ctrlsParent, 0, 0, ctrlsParent:GetWidth(), ctrlsParent:GetHeight())
-	ctrl:SetAutoAlignToParent(true, false)
-	ctrl:SetAutoFillContentsToHeight(false)
+	ctrl:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
+	-- ctrl:SetAutoFillContentsToHeight(false)
 
 	local singleAxis
 	local minLimits, maxLimits

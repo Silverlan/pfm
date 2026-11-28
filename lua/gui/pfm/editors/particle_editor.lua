@@ -19,14 +19,13 @@ function gui.PFMParticleEditor:OnInitialize()
 
 	self:ApplySize(64, 128)
 
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:SetColor(Color(54, 54, 54))
+	self.m_contents = gui.create_hbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight() - 64)
+		:SetAnchor(0, 0, 1, 1)
+	-- self.m_contents:SetAutoFillContents(true)
 
-	self.m_contents = gui.create("hbox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight() - 64, 0, 0, 1, 1)
-	self.m_contents:SetAutoFillContents(true)
-
-	self.m_controlsContents = gui.create("hbox", self.m_contents)
-	self.m_controlsContents:SetAutoFillContents(true)
+	self.m_controlsContents = gui.create_hbox(self.m_contents)
+	-- self.m_controlsContents:SetAutoFillContents(true)
 
 	self.m_tree = gui.create("pfm_tree_view", self.m_controlsContents)
 	self.m_tree:AddCallback("OnItemSelectChanged", function(tree, el, selected)
@@ -49,8 +48,8 @@ function gui.PFMParticleEditor:OnInitialize()
 
 	gui.create("resizer", self.m_controlsContents):SetFraction(0.5)
 
-	self.m_propertiesBox = gui.create("vbox", self.m_controlsContents)
-	self.m_propertiesBox:SetAutoFillContentsToWidth(true)
+	self.m_propertiesBox = gui.create_vbox(self.m_controlsContents)
+	-- self.m_propertiesBox:SetAutoFillContentsToWidth(true)
 
 	gui.create("resizer", self.m_contents):SetFraction(0.66)
 
@@ -59,26 +58,19 @@ function gui.PFMParticleEditor:OnInitialize()
 
 	self.m_contents:Update()
 
-	self.m_vpBox = gui.create("vbox", vpContents, 0, 0, vpContents:GetWidth(), vpContents:GetHeight(), 0, 0, 1, 1)
-	self.m_vpBox:SetAutoFillContents(true)
+	self.m_vpBox = gui.create_vbox(vpContents)
+		:SetSize(vpContents:GetWidth(), vpContents:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
+	-- self.m_vpBox:SetAutoFillContents(true)
 	self:InitializeViewport()
 
 	gui.create("resizer", self.m_vpBox):SetFraction(0.75)
 
 	self.m_renderControlsWrapper = gui.create("WIBase", self.m_vpBox, 0, 0, 100, 100)
-	self.m_renderControlsVbox = gui.create(
-		"vbox",
-		self.m_renderControlsWrapper,
-		0,
-		0,
-		self.m_renderControlsWrapper:GetWidth(),
-		self.m_renderControlsWrapper:GetHeight(),
-		0,
-		0,
-		1,
-		1
-	)
-	self.m_renderControlsVbox:SetAutoFillContents(true)
+	self.m_renderControlsVbox = gui.create_vbox(self.m_renderControlsWrapper)
+		:SetSize(self.m_renderControlsWrapper:GetWidth(), self.m_renderControlsWrapper:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
+	-- self.m_renderControlsVbox:SetAutoFillContents(true)
 	self:InitializeViewportControls()
 
 	self.m_properties = {}
@@ -97,7 +89,7 @@ function gui.PFMParticleEditor:OnInitialize()
 	end
 
 	-- Save
-	local btSave = gui.create("pfm_button", self.m_bg)
+	local btSave = gui.create("pfm_button", self)
 	local pBg = gui.create("WIRect", btSave, 0, 0, btSave:GetWidth(), btSave:GetHeight(), 0, 0, 1, 1)
 	pBg:SetVisible(false)
 	self.m_saveBg = pBg
@@ -106,12 +98,12 @@ function gui.PFMParticleEditor:OnInitialize()
 	btSave:AddCallback("OnPressed", function(btRaytracying)
 		self:Save()
 	end)
-	btSave:SetWidth(self.m_bg:GetWidth())
-	btSave:SetY(self.m_bg:GetBottom() - btSave:GetHeight() - 32)
+	btSave:SetWidth(self:GetWidth())
+	btSave:SetY(self:GetBottom() - btSave:GetHeight() - 32)
 	btSave:SetAnchor(0, 1, 1, 1)
 	self.m_btSave = btSave
 
-	local btOpenInExplorer = gui.create("pfm_button", self.m_bg)
+	local btOpenInExplorer = gui.create("pfm_button", self)
 	btOpenInExplorer:SetText(locale.get_text("pfm_open_in_explorer"))
 	btOpenInExplorer:SetHeight(32)
 	btOpenInExplorer:AddCallback("OnPressed", function(btRaytracying)
@@ -121,8 +113,8 @@ function gui.PFMParticleEditor:OnInitialize()
 		end
 		util.open_path_in_explorer(file.get_file_path(filePath), file.get_file_name(filePath))
 	end)
-	btOpenInExplorer:SetWidth(self.m_bg:GetWidth())
-	btOpenInExplorer:SetY(self.m_bg:GetBottom() - btOpenInExplorer:GetHeight())
+	btOpenInExplorer:SetWidth(self:GetWidth())
+	btOpenInExplorer:SetY(self:GetBottom() - btOpenInExplorer:GetHeight())
 	btOpenInExplorer:SetAnchor(0, 1, 1, 1)
 
 	self.m_propertyItems = {}

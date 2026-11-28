@@ -10,13 +10,15 @@ function Element:OnInitialize()
 
 	self:ApplySize(512, 512)
 
-	self.m_contents = gui.create("vbox", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_contents:SetFixedSize(true)
-	self.m_contents:SetAutoFillContents(true)
+	self.m_contents = gui.create_vbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
+		:SetFixedSize(true)
+	-- self.m_contents:SetAutoFillContents(true)
 
 	local p = gui.create("pfm_controls_menu", self.m_contents)
-	p:SetAutoFillContentsToWidth(true)
-	p:SetAutoFillContentsToHeight(false)
+	-- p:SetAutoFillContentsToWidth(true)
+	-- p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
 
 	local elBookmarks, wrapper
@@ -47,6 +49,9 @@ function Element:OnInitialize()
 		end
 		self.m_webBrowser:SetUrl(el:GetText())
 	end)
+	if(not tool.is_developer_mode_enabled()) then
+		wrapper:SetVisible(false)
+	end
 	p:Update()
 	p:SizeToContents()
 
@@ -66,10 +71,12 @@ function Element:OnInitialize()
 		end
 		self.m_webBrowser:SetSize(self:GetWidth(), 400)
 
-		local log = self:InitializeLog(self.m_contents)
-		log:SetName("log")
-		log:SetSize(self:GetWidth(), 80)
-		self.m_contents:SetAutoFillTarget(self.m_webBrowser)
+		if(tool.is_developer_mode_enabled()) then
+			local log = self:InitializeLog(self.m_contents)
+			log:SetName("log")
+			log:SetSize(self:GetWidth(), 80)
+			-- self.m_contents:SetAutoFillTarget(self.m_webBrowser)
+		end
 
 		self.m_webBrowser:AddCallback("OnDownloadStarted", function(el, id, path)
 			if util.is_valid(self.m_log) == false then
@@ -360,23 +367,15 @@ function Element:InitializeLog(parent)
 
 	local scrollContainer = gui.create("WIScrollContainer", elBg)
 	scrollContainer:SetAutoStickToBottom(true)
-	scrollContainer:SetAutoAlignToParent(true)
+	scrollContainer:SetAlignment(gui.ALIGNMENT_FILL)
 
 	local log = gui.create("WITextEntry", scrollContainer)
 	log:SetMultiLine(true)
 	log:SetEditable(false)
 	log:SetSelectable(true)
 
-	engine.create_font(
-		"chromium_log",
-		engine.get_default_font_set_name(),
-		bit.bor(engine.FONT_FEATURE_FLAG_SANS_BIT, engine.FONT_FEATURE_FLAG_MONO_BIT),
-		12
-	)
-
 	local elText = log:GetTextElement()
 	elText:SetMaxLineCount(100)
-	elText:SetFont("chromium_log")
 	elText:SetAutoBreakMode(gui.Text.AUTO_BREAK_WHITESPACE)
 	elText:SetTagsEnabled(true)
 	log:SetWidth(self:GetWidth())

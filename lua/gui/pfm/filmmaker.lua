@@ -25,7 +25,7 @@ include("/gui/pfm/catalogs")
 include("/gui/pfm/viewport/render_preview.lua")
 include("/gui/pfm/editors/material_editor/materialeditor.lua")
 include("/gui/pfm/editors/particle_editor.lua")
-include("/gui/pfm/web_browser.lua")
+include("/gui/pfm/web_browser_panel.lua")
 include("/gui/pfm/editors/code_editor.lua")
 include("/gui/pfm/panels/loading_screen.lua")
 include("/gui/pfm/panels/settings.lua")
@@ -158,14 +158,6 @@ function gui.WIFilmmaker:OnInitialize()
 	if(engineInfo.discordURL ~= nil) then
 		infoBar:AddIcon("third_party/discord_logo_small", engineInfo.discordURL, "Discord")
 	end
-
-	local gap = gui.create("WIBase")
-	gap:SetSize(10, 1)
-	infoBar:AddRightElement(gap)
-
-	local gap = gui.create("WIBase")
-	gap:SetSize(10, 1)
-	infoBar:AddRightElement(gap, 0)
 
 	infoBar:Update()
 
@@ -726,7 +718,7 @@ function gui.WIFilmmaker:AddUndoMessage(msg)
 
 	local elText = gui.create("WIText", msgEl)
 	elText:SetText(msg)
-	elText:SetAutoCenterToParentY(true)
+	elText:SetVerticalAlignment(gui.ALIGNMENT_CENTER)
 	elText:SetX(10)
 	msgEl:SetWidth(elText:GetWidth() + 20)
 	infoBar:AddRightElement(msgEl, 0)

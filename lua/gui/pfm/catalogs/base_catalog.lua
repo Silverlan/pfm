@@ -25,13 +25,12 @@ function Element:OnInitialize()
 
 	self:ApplySize(64, 128)
 
-	self.m_bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_bg:AddStyleClass("background2")
-
-	self.m_contents = gui.create("vbox", self.m_bg, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	self.m_contents:SetName("contents")
-	self.m_contents:SetFixedSize(true)
-	self.m_contents:SetAutoFillContents(true)
+	self.m_contents = gui.create_vbox(self)
+		:SetSize(self:GetWidth(), self:GetHeight())
+		:SetAnchor(0, 0, 1, 1)
+		:SetName("contents")
+		:SetFixedSize(true)
+	-- self.m_contents:SetAutoFillContents(true)
 
 	self.m_fit = self:InitializeFileIndexTable()
 
@@ -43,8 +42,8 @@ function Element:OnInitialize()
 	self.m_teLocationWrapper:SetText(gui.Loc("explorer_location"))
 
 	local p = gui.create("pfm_controls_menu", self.m_contents)
-	p:SetAutoFillContentsToWidth(true)
-	p:SetAutoFillContentsToHeight(false)
+	-- p:SetAutoFillContentsToWidth(true)
+	-- p:SetAutoFillContentsToHeight(false)
 	self.m_settingsBox = p
 
 	self.m_mode = Element.VIEW_MODE_ICON
@@ -106,7 +105,7 @@ function Element:OnInitialize()
 
 	local explorer = self:CreateIconExplorer(scrollContainer)
 	explorer:Setup()
-	explorer:SetAutoAlignToParent(true, false)
+	explorer:SetHorizontalAlignment(gui.ALIGNMENT_FILL)
 	self:InitializeExplorer(explorer)
 	self.m_explorer = explorer
 
@@ -116,7 +115,7 @@ function Element:OnInitialize()
 		gui.WIFileExplorer.COLUMN_TYPE,
 		gui.WIFileExplorer.COLUMN_DATE_MODIFIED,
 	})
-	listExplorer:SetAutoAlignToParent(true, true)
+	listExplorer:SetAlignment(gui.ALIGNMENT_FILL)
 	listExplorer:SetRootPath(explorer:GetRootPath())
 	listExplorer:SetPath(explorer:GetPath())
 	listExplorer:AddCallback("OnFileMouseEvent", function(listExplorer, row, filePath, button, state, mods)

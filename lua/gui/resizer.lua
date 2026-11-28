@@ -13,9 +13,6 @@ function gui.Resizer:OnInitialize()
 	self:SetMouseInputEnabled(true)
 
 	self:ApplySize(8, 8)
-	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	bg:GetColorProperty():Link(self:GetColorProperty())
-	self:AddStyleClass("background")
 
 	self.m_dotContainer = gui.create("WIBase", self)
 	self.m_dots = {}
@@ -27,13 +24,14 @@ function gui.Resizer:OnInitialize()
 	end
 
 	local parent = self:GetParent()
-	if parent:IsType(gui.TYPE_HBOX) then
+	if parent:IsHorizontalBox() then
 		self:SetResizeMode(gui.Resizer.RESIZE_MODE_VERTICAL)
 	else
 		self:SetResizeMode(gui.Resizer.RESIZE_MODE_HORIZONTAL)
 	end
 	self:SetFraction(0.5)
 	parent:AddCallback("OnSizeChanged", function(p)
+		if self.m_updating then return end
 		self.m_updateRequired = true
 	end)
 	parent:AddCallback("OnContentsUpdated", function(p)
@@ -47,7 +45,7 @@ function gui.Resizer:OnInitialize()
 end
 function gui.Resizer:UpdateResizeElements()
 	local parent = self:GetParent()
-	if not parent:IsType(gui.TYPE_HBOX) and not parent:IsType(gui.TYPE_VBOX) then
+	if not parent:IsType(gui.TYPE_FLEXBOX) then
 		return
 	end
 	-- If we're a parent of a hbox or vbox, we'll assign some default parameters for convenience
@@ -61,7 +59,7 @@ function gui.Resizer:UpdateResizeElements()
 	-- We'll assume the resizer should affect the previous and next elements of its parents children
 	local child0
 	local child1
-	local children = parent:GetChildren()
+	local children = self:GetNonBackgroundChildren(parent)
 	for i, child in ipairs(children) do
 		if child == self then
 			child0 = children[i - 1]
@@ -70,6 +68,18 @@ function gui.Resizer:UpdateResizeElements()
 		end
 	end
 	self:SetElements(child0, child1)
+	for _, el in ipairs({child0, child1}) do
+		if util.is_valid(el) then
+			if mode == gui.Resizer.RESIZE_MODE_VERTICAL then
+				if el.SetFixedWidth then el:SetFixedWidth(true) end
+			else
+				if el.SetFixedHeight then el:SetFixedHeight(true) end
+			end
+		end
+	end
+	if util.is_valid(child1) and parent.SetChildFlex then
+		parent:SetChildFlex(child1, 1) -- Last child should always fill remaining space
+	end
 	if util.is_valid(child0) and util.is_valid(child1) then
 		if mode == gui.Resizer.RESIZE_MODE_VERTICAL then
 			local w = child0:GetWidth() + child1:GetWidth()
@@ -140,9 +150,19 @@ function gui.Resizer:GetRangeExtents()
 	end
 	return self:GetExtent(self.m_element0) + self:GetExtent(self) + self:GetExtent(self.m_element1)
 end
+function gui.Resizer:GetNonBackgroundChildren(el)
+	local children = el:GetChildren()
+	for i=#children, 1, -1 do
+		local child = children[i]
+		if(child:IsBackgroundElement()) then
+			table.remove(children, i)
+		end
+	end
+	return children
+end
 function gui.Resizer:FindBorderingElements()
 	local before, after
-	local children = self:GetParent():GetChildren()
+	local children = self:GetNonBackgroundChildren(self:GetParent())
 	for i, child in ipairs(children) do
 		if child == self.m_element0 then
 			before = children[i - 1]
@@ -184,7 +204,9 @@ function gui.Resizer:UpdateFraction()
 	self:SetExtent(self.m_element1, e1)
 	-- We need to update the parent VBox/HBox element right away,
 	-- in case there are other resizer elements within it
+	self.m_updating = true
 	self:GetParent():Update()
+	self.m_updating = false
 end
 function gui.Resizer:GetExtent(el)
 	local mode = self:GetResizeMode()

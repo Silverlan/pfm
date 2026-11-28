@@ -62,9 +62,9 @@ function gui.PFMCoreViewportBase:GetActiveCamera()
 	return (scene ~= nil) and scene:GetActiveCamera() or nil
 end
 function gui.PFMCoreViewportBase:InitializeCameraControls()
-	local controls = gui.create("hbox", self.m_controls)
-	controls:SetSize(32, 32)
-	controls:SetName("cc_controls")
+	local controls = gui.create_hbox(self.m_controls)
+		:AddStyleClass("viewport__camera-controls")
+		:SetName("cc_controls")
 
 	local btGroup = gui.PFMButtonGroup(controls)
 	self.m_btAutoAim = btGroup:AddIconButton("crosshair2", function()
@@ -74,6 +74,7 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 			workCameraC:FlyToSelection()
 		end
 	end)
+	self.m_btAutoAim:SetEnabled(false)
 	self.m_btCamera = btGroup:AddGenericButton("", function()
 		self:ToggleCamera()
 	end)
@@ -142,10 +143,8 @@ function gui.PFMCoreViewportBase:InitializeCameraControls()
 		print("TODO")
 	end)
 	self.m_btGear:SetName("cc_options")
-	controls:SetHeight(self.m_btAutoAim:GetHeight())
+	self.m_btGear:SetEnabled(false)
 	controls:Update()
-	controls:SetX(self.m_controls:GetWidth() - controls:GetWidth() - 3)
-	controls:SetAnchor(1, 1, 1, 1)
 	self.manipulatorControls = controls
 end
 function gui.PFMCoreViewportBase:IsGameplayEnabled()

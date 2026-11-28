@@ -14,13 +14,10 @@ function gui.PFMInfobar:OnInitialize()
 
 	self:SetSize(256, 24)
 
-	local bg = gui.create("WIRect", self, 0, 0, self:GetWidth(), self:GetHeight(), 0, 0, 1, 1)
-	bg:AddStyleClass("background")
-
 	self.m_contents = gui.create("WIBase", self, 0, 0, self:GetWidth(), self:GetHeight())
 
-	self.m_iconContainer = gui.create("hbox", self)
-	self.m_iconContainer:SetName("icon_container")
+	self.m_iconContainer = gui.create_hbox(self)
+		:SetName("icon_container")
 end
 function gui.PFMInfobar:GetContents()
 	return self.m_contents
@@ -58,7 +55,5 @@ function gui.PFMInfobar:AddIcon(material, url, tooltip, onClick)
 		end
 		return util.EVENT_REPLY_UNHANDLED
 	end)
-
-	gui.create("WIBase", self.m_iconContainer, 0, 0, 5, 1) -- Gap
 end
 gui.register("pfm_info_bar", gui.PFMInfobar)
