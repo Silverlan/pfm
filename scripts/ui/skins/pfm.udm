@@ -254,6 +254,12 @@
 	".image-icon__label-container" {
 		backgroundColor: "$COLOR_BG_RAISED"
 	}
+	".image-icon:hover .image-icon__label-container" {
+		backgroundColor: "$COLOR_SELECTED_HOVER"
+	}
+	".image-icon:selected .image-icon__label-container" {
+		backgroundColor: "$COLOR_ACCENT_SUBTLE"
+	}
 
 	// Buttons
 	".button" {
@@ -776,10 +782,16 @@
 
 	// Tutorial Slide
 	".tutorial-slide__progress-bar" {
-		backgroundColor: "$COLOR_BG_INSET"
+		background {
+			color: "$COLOR_BG_INSET"
+			alpha: 0
+		}
 	}
 	".tutorial-slide__progress-bar .progress-bar__fill" {
-		backgroundColor: "$COLOR_ACCENT"
+		background {
+			color: "#00ff00"
+			alpha: 255
+		}
 	}
 	".connector-line" {
 		color: "$COLOR_BORDER_SUBTLE"

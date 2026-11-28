@@ -365,6 +365,8 @@
 
 	// Info Box
 	".info-box" {
+		paddingLeft: 10
+		paddingRight: 5
 		width: 128
 		decorators: {
 			"left-bar" {
